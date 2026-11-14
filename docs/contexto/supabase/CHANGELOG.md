@@ -2,6 +2,17 @@
 
 Diff semântico gerado a cada coleta em que algo mudou.
 
+## 2026-11-14 05:09 UTC
+
+- **constraints** removido (1): `public.user_roles.user_roles_no_special_agent`
+- **constraints** alterado (1): `public.contacts.chk_conversation_status_values`
+- **functions** adicionado (4): `public.guard_conversation_status_direct_update()`, `public.set_conversations_status(p_contact_ids uuid[], p_next text, p_expected_current text, p_reason text, p_restore boolean)`, `public.sweep_stuck_outbound_messages(p_min_age interval, p_limit integer)`, `public.transfer_conversation(p_contact_id uuid, p_to_agent_id uuid, p_to_queue_id uuid, p_note text, p_expected_agent_id uuid, p_expect_unassigned boolean)`
+- **functions** removido (1): `public.transfer_conversation(p_contact_id uuid, p_to_agent_id uuid, p_to_queue_id uuid, p_note text, p_expected_agent_id uuid)`
+- **functions** alterado (24): `public.admin_set_role(_user_id uuid, _role app_role)`, `public.can_edit_contact(p_assigned_to uuid, p_queue_id uuid)`, `public.can_edit_contact(p_assigned_to uuid, p_queue_id uuid, p_visible_agent_ids uuid[], p_profile_id uuid, p_is_admin boolean)`, `public.dispatch_scheduled_messages(p_limit integer)`, `public.effective_role(_user_id uuid)`, `public.enforce_conversation_status_transition()`, `public.enqueue_group_outbound_message(p_group_id uuid, p_client_message_id uuid, p_content text, p_message_type text, p_media_url text, p_reply_to_id uuid, p_whatsapp_connection_id uuid, p_caption text)`, `public.enqueue_outbound_message(p_contact_id uuid, p_client_message_id uuid, p_content text, p_message_type text, p_media_url text, p_reply_to_id uuid, p_whatsapp_connection_id uuid, p_caption text)`, `public.enqueue_rich_outbound_message(p_contact_id uuid, p_client_message_id uuid, p_display_content text, p_message_type text, p_delivery_payload jsonb, p_reply_to_id uuid, p_whatsapp_connection_id uuid)`, `public.force_conversation_closure_author()`, `public.get_my_protection_policy()`, `public.get_profile_id_for_user(_user_id uuid)`, `public.has_role(_user_id uuid, _role app_role)`, `public.is_admin(_user_id uuid)`, `public.is_admin_or_supervisor(_user_id uuid)`, `public.is_contact_visible_to_user(_contact_id uuid, _user_id uuid)`, `public.log_message_attempt(p_message_id uuid, p_attempt_no integer, p_outcome text, p_error_code text, p_error_message text, p_provider_status integer, p_provider_response jsonb, p_duration_ms integer)`, `public.mark_outbound_post_started(p_message_id uuid, p_claim_token uuid)`, `public.multiplix_audiences_validate_shared_roles()`, `public.require_contact_edit_permission(p_contact_id uuid)`, `public.resolve_outbound_whatsapp_connection(p_explicit_connection_id uuid, p_assigned_connection_id uuid)`, `public.set_conversation_status(p_contact_id uuid, p_next text, p_reason text)`, `public.sync_profile_role_from_user_roles()`, `public.user_has_permission(_user_id uuid, _permission_name text)`
+- **migrations** adicionado (5): `20261113171300_conversation_status_regras_e_so_por_rpc`, `20261113171400_varredura_mensagens_presas_em_enviando`, `20261113171500_transfer_conversation_cas_sem_dono`, `20261113171600_agendadas_conexao_do_contato_caida`, `20261113172000_remove_enum_special_agent`
+- **triggers** adicionado (1): `public.contacts.trg_contacts_conversation_status_rpc_only`
+- **types/enums** alterado (1): `public.app_role`
+
 ## 2026-11-14 03:48 UTC
 
 - **lints** removido (1): `view_security_definer:public.catalog_send_stats`

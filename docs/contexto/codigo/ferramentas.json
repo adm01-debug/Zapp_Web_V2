@@ -3,12 +3,12 @@
  "format_version": 2,
  "stack": {
   "linguagens": [
-   "TypeScript (4324)",
-   "SQL (1321)",
-   "Markdown (1118)",
+   "TypeScript (4332)",
+   "SQL (1329)",
+   "Markdown (1120)",
    "JSON (605)",
    "JavaScript (466)",
-   "Shell (235)",
+   "Shell (237)",
    "Python (119)",
    "YAML (30)"
   ],
@@ -79,7 +79,7 @@
   "principais": {
    "@supabase/supabase-js": "^2.117.3",
    "@tanstack/react-query": "^5.105.0",
-   "@tanstack/react-virtual": "^3.14.24",
+   "@tanstack/react-virtual": "^3.14.26",
    "date-fns": "^3.6.0",
    "framer-motion": "^12.43.0",
    "i18next": "^26.5.12",
@@ -88,7 +88,7 @@
    "react-day-picker": "^8.10.2",
    "react-dom": "^19.3.1",
    "react-hook-form": "^7.91.0",
-   "react-i18next": "^17.1.9",
+   "react-i18next": "^17.1.13",
    "react-resizable-panels": "^2.1.9",
    "react-router-dom": "^7",
    "recharts": "^3.10.1",
@@ -1197,7 +1197,7 @@
   {
    "arquivo": "docs/DB-INVENTORY.md",
    "titulo": "Inventário de objetos do banco — `public`",
-   "linhas": 289
+   "linhas": 290
   },
   {
    "arquivo": "docs/DB-SECURITY.md",
@@ -1640,7 +1640,7 @@
    {
     "pacote": "@elevenlabs/react",
     "servico": "ElevenLabs",
-    "versao": "^1.20.2"
+    "versao": "^1.21.1"
    },
    {
     "pacote": "i18next",
@@ -1650,7 +1650,7 @@
    {
     "pacote": "react-i18next",
     "servico": "i18next",
-    "versao": "^17.1.9"
+    "versao": "^17.1.13"
    },
    {
     "pacote": "@tanstack/react-query",
@@ -3077,8 +3077,7 @@
     "valores": [
      "admin",
      "supervisor",
-     "agent",
-     "special_agent"
+     "agent"
     ]
    }
   ],

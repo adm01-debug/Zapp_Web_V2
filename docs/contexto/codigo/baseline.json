@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "e50daef6a4d1e8bbb3a543413bd0867f8ba9759d",
+  "commit": "ab657aa34e9642d2992cb8fc813548edeb69b1bf",
   "branch": "main",
-  "data_commit": "2026-11-14T00:52:43-03:00",
+  "data_commit": "2026-11-14T01:44:54-03:00",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "ab657aa",
+    "data": "2026-11-14",
+    "assunto": "chore(pacote): pacote 5 — #3037, #3034, #3033, #2971, #2943, #2838 e #2894 concluídas e num ciclo de CI (#3064)"
+   },
    {
     "sha": "e50daef",
     "data": "2026-11-14",
@@ -126,18 +131,13 @@
     "sha": "382307a",
     "data": "2026-11-13",
     "assunto": "Contrato DB offline: bloco C do login gate deixa de dar falso vermelho de p95 (#3028)"
-   },
-   {
-    "sha": "e903a7e",
-    "data": "2026-11-13",
-    "assunto": "fix(talkx): isola queryKeys do cmd-palette para evitar cache poisoning (#2869)"
    }
   ],
-  "arquivos_mudados_7d": 906,
+  "arquivos_mudados_7d": 973,
   "pastas_mais_mudadas_30d": [
    {
     "pasta": "src/components/inbox",
-    "mudancas": 673
+    "mudancas": 689
    },
    {
     "pasta": "docs/reconciliation/reaudit",
@@ -149,7 +149,7 @@
    },
    {
     "pasta": "supabase/functions/_shared",
-    "mudancas": 218
+    "mudancas": 226
    },
    {
     "pasta": "docs/_arquivo/analise-prs",
@@ -157,11 +157,11 @@
    },
    {
     "pasta": "src/hooks/__tests__",
-    "mudancas": 152
+    "mudancas": 153
    },
    {
     "pasta": "src/hooks/integrations",
-    "mudancas": 133
+    "mudancas": 134
    },
    {
     "pasta": "src/components/dashboard",
@@ -177,7 +177,7 @@
    },
    {
     "pasta": "src/hooks/chat",
-    "mudancas": 110
+    "mudancas": 112
    },
    {
     "pasta": "src/components/contacts",
@@ -199,15 +199,15 @@
   "arquivos_mais_mudados_90d": [
    {
     "arquivo": "supabase/deployment-manifest.json",
-    "mudancas": 20
+    "mudancas": 21
    },
    {
     "arquivo": ".github/workflows/ci.yml",
-    "mudancas": 12
+    "mudancas": 13
    },
    {
     "arquivo": "ESTADO.md",
-    "mudancas": 12
+    "mudancas": 13
    },
    {
     "arquivo": "RELATORIO_CI.md",
@@ -226,11 +226,19 @@
     "mudancas": 11
    },
    {
+    "arquivo": "scripts/db-audit/grants-baseline.json",
+    "mudancas": 11
+   },
+   {
+    "arquivo": ".github/workflows/db-guard.yml",
+    "mudancas": 10
+   },
+   {
     "arquivo": "PENDENCIAS.md",
     "mudancas": 10
    },
    {
-    "arquivo": "scripts/db-audit/grants-baseline.json",
+    "arquivo": "docs/DB-INVENTORY.md",
     "mudancas": 10
    },
    {
@@ -238,12 +246,12 @@
     "mudancas": 10
    },
    {
-    "arquivo": ".github/workflows/db-guard.yml",
-    "mudancas": 9
+    "arquivo": "src/integrations/supabase/types.ts",
+    "mudancas": 10
    },
    {
-    "arquivo": "docs/DB-INVENTORY.md",
-    "mudancas": 9
+    "arquivo": "supabase/schema-manifest.json",
+    "mudancas": 10
    },
    {
     "arquivo": "docs/talkx/ESTADOS.md",
@@ -258,12 +266,12 @@
     "mudancas": 9
    },
    {
-    "arquivo": "src/integrations/supabase/types.ts",
-    "mudancas": 9
+    "arquivo": "docs/contexto/regras/manual/regras.md",
+    "mudancas": 8
    },
    {
-    "arquivo": "supabase/schema-manifest.json",
-    "mudancas": 9
+    "arquivo": "package.json",
+    "mudancas": 8
    },
    {
     "arquivo": "scripts/ci/ci-docs-baseline.unit.mjs",
@@ -278,30 +286,22 @@
     "mudancas": 8
    },
    {
+    "arquivo": "supabase/schema-catalog.json",
+    "mudancas": 8
+   },
+   {
     "arquivo": ".github/workflows/e2e-logado-isolado.yml",
     "mudancas": 7
    },
    {
     "arquivo": "AGENTS.md",
     "mudancas": 7
-   },
-   {
-    "arquivo": "docs/audits/PLANO_GITHUB_ACTIONS_100_ETAPAS_2026-10-01.md",
-    "mudancas": 7
-   },
-   {
-    "arquivo": "docs/contexto/regras/manual/regras.md",
-    "mudancas": 7
-   },
-   {
-    "arquivo": "package.json",
-    "mudancas": 7
    }
   ],
   "autores_30d": [
    {
     "autor": "adm01-debug",
-    "commits": 286
+    "commits": 287
    },
    {
     "autor": "github-actions[bot]",
@@ -309,29 +309,29 @@
    },
    {
     "autor": "dependabot[bot]",
-    "commits": 6
+    "commits": 5
    }
   ]
  },
  "contagens": {
-  "arquivos_total": 8561,
-  "arquivos_codigo": 4907,
-  "linhas_codigo": 910575,
+  "arquivos_total": 8581,
+  "arquivos_codigo": 4915,
+  "linhas_codigo": 912403,
   "rotas": 18,
   "rotas_http_backend": 11,
   "vistas_por_id": 55,
   "itens_menu": 61,
-  "modulos": 145,
-  "componentes": 915,
+  "modulos": 147,
+  "componentes": 916,
   "hooks": 501,
   "edge_functions": 92,
   "tabelas": 218,
-  "migrations": 1121,
-  "cron_jobs": 26,
-  "testes": 2676,
+  "migrations": 1129,
+  "cron_jobs": 27,
+  "testes": 2680,
   "workflows": 22,
   "scripts": 429,
-  "docs_md": 1118
+  "docs_md": 1120
  },
  "por_pasta": {
   "docs/_arquivo": {
@@ -464,7 +464,7 @@
   },
   "e2e/fixtures": {
    "arquivos": 19,
-   "linhas": 3276
+   "linhas": 3275
   },
   "e2e/inbox-contact-sidebar.spec.ts": {
    "arquivos": 1,
@@ -608,7 +608,7 @@
   },
   "scripts/ci": {
    "arquivos": 219,
-   "linhas": 48656
+   "linhas": 48767
   },
   "scripts/db-audit": {
    "arquivos": 81,
@@ -640,7 +640,7 @@
   },
   "scripts/inventario": {
    "arquivos": 4,
-   "linhas": 811
+   "linhas": 830
   },
   "scripts/lib": {
    "arquivos": 2,
@@ -674,13 +674,9 @@
    "arquivos": 2,
    "linhas": 413
   },
-  "scripts/team-chat-db-validate.mjs": {
-   "arquivos": 1,
-   "linhas": 130
-  },
-  "scripts/team-chat-db-validate.unit.mjs": {
-   "arquivos": 1,
-   "linhas": 164
+  "scripts/team-chat": {
+   "arquivos": 2,
+   "linhas": 294
   },
   "scripts/ui-audit": {
    "arquivos": 7,
@@ -696,15 +692,15 @@
   },
   "src/__tests__": {
    "arquivos": 12,
-   "linhas": 1690
+   "linhas": 1728
   },
   "src/adapters": {
    "arquivos": 5,
    "linhas": 638
   },
   "src/components": {
-   "arquivos": 2223,
-   "linhas": 377929
+   "arquivos": 2225,
+   "linhas": 378085
   },
   "src/config": {
    "arquivos": 3,
@@ -723,8 +719,8 @@
    "linhas": 3293
   },
   "src/hooks": {
-   "arquivos": 1000,
-   "linhas": 163207
+   "arquivos": 1002,
+   "linhas": 163725
   },
   "src/i18n": {
    "arquivos": 2,
@@ -732,11 +728,11 @@
   },
   "src/integrations": {
    "arquivos": 4,
-   "linhas": 15599
+   "linhas": 15727
   },
   "src/lib": {
-   "arquivos": 289,
-   "linhas": 39429
+   "arquivos": 293,
+   "linhas": 39715
   },
   "src/main.tsx": {
    "arquivos": 1,
@@ -744,7 +740,7 @@
   },
   "src/pages": {
    "arquivos": 73,
-   "linhas": 11213
+   "linhas": 11211
   },
   "src/providers": {
    "arquivos": 10,
@@ -760,7 +756,7 @@
   },
   "src/services": {
    "arquivos": 38,
-   "linhas": 5839
+   "linhas": 5866
   },
   "src/styles": {
    "arquivos": 10,
@@ -780,7 +776,7 @@
   },
   "supabase/functions": {
    "arquivos": 409,
-   "linhas": 123596
+   "linhas": 124117
   },
   "tailwind.config.ts": {
    "arquivos": 1,
@@ -792,7 +788,7 @@
   },
   "vite.config.ts": {
    "arquivos": 1,
-   "linhas": 132
+   "linhas": 159
   },
   "vitest.config.ts": {
    "arquivos": 1,
@@ -806,7 +802,7 @@
  "maiores_arquivos": [
   {
    "arquivo": "src/integrations/supabase/types.ts",
-   "linhas": 15526
+   "linhas": 15654
   },
   {
    "arquivo": "scripts/regras_negocio/generate.py",
@@ -817,6 +813,10 @@
    "linhas": 1802
   },
   {
+   "arquivo": "supabase/functions/evolution-api/index.ts",
+   "linhas": 1515
+  },
+  {
    "arquivo": "scripts/ci/ci-local.mjs",
    "linhas": 1497
   },
@@ -825,12 +825,8 @@
    "linhas": 1484
   },
   {
-   "arquivo": "supabase/functions/evolution-api/index.ts",
-   "linhas": 1479
-  },
-  {
    "arquivo": "supabase/functions/_shared/evolution-webhook-messages.ts",
-   "linhas": 1448
+   "linhas": 1483
   },
   {
    "arquivo": "supabase/functions/_shared/ai-usage.ts",
@@ -906,11 +902,11 @@
   }
  ],
  "qualidade": {
-  "any": 373,
+  "any": 374,
   "console_log": 419,
   "ts_ignore": 0,
   "eslint_disable": 1,
-  "todos": 50,
+  "todos": 51,
   "arquivos_acima_500_linhas": 104
  },
  "todos": [
@@ -1191,6 +1187,12 @@
    "texto": "schema exportado tem casos de payload válido,"
   },
   {
+   "arquivo": "vite.config.ts",
+   "linha": 96,
+   "tipo": "TODO",
+   "texto": "modulo dele vira peso de first"
+  },
+  {
    "arquivo": "docs/_arquivo/inventario/gen_report.py",
    "linha": 74,
    "tipo": "TODO",
@@ -1278,21 +1280,18 @@
   ],
   "tabelas_com_drift_migration_vs_types": [
    "app_settings",
-   "copilot_insights",
-   "copilot_sessions",
    "edge_rate_limits",
    "feature_flags",
    "global_settings",
-   "instance_pauses",
-   "messages",
-   "talkx_blacklist",
    "talkx_contact_attributes",
    "talkx_settings"
   ],
   "rpcs_sem_definicao": [
+   "admin_set_role",
    "complete_crm_sync_outbox",
    "get_companies_by_phones_batch",
    "get_contact_360_by_phone",
+   "has_role",
    "multiplix_count_audience",
    "multiplix_list_ramos",
    "multiplix_list_ufs",
@@ -1371,6 +1370,7 @@
    "FilterOption",
    "FloatingParticles",
    "HandoffDialog",
+   "HighContrastProvider",
    "InboxEmptyState",
    "InfoBanner",
    "InsightCard",

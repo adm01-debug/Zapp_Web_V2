@@ -15,24 +15,30 @@ BEGIN
   FOR UPDATE;
   v_encontrado := FOUND;
 
-  -- Autorizacao (e, para o chamador comum, tambem a EXISTENCIA) em UM unico ponto. Antes da
-  -- correcao, esta RPC levantava 'contact not found: <uuid>' aqui -- o mesmo oraculo de UUID do
-  -- SEC-RLS-02 por outro caminho (SEC-RLS-02: qualquer `authenticated` enumera contatos).
+  -- Autorização (e, para o chamador comum, também a EXISTÊNCIA) em UM único ponto (SEC-RLS-02).
   PERFORM public.require_contact_edit_permission(p_contact_id);
 
-  -- Chamador privilegiado (service_role/postgres/cron): require_contact_edit_permission nao checa
-  -- existencia, entao a inexistencia e recusada com a MESMA excecao de autorizacao -- nada aqui
-  -- distingue "nao existe" de "nao posso ver".
+  -- Chamador privilegiado: require_contact_edit_permission não checa existência; a inexistência
+  -- é recusada com a MESMA exceção de autorização.
   IF NOT v_encontrado THEN
     RAISE EXCEPTION 'contact_not_authorized' USING ERRCODE = '42501';
   END IF;
 
-  -- No-op idempotente: ja esta no estado desejado (o no-op VEM DEPOIS da autorizacao: um chamador
-  -- sem permissao nao pode inferir o estado atual do contato pelo silencio da RPC).
   IF v_current = p_next THEN
     RETURN;
   END IF;
 
+  -- Decisão do dono (2026-11-13): aguardando não é arquivada.
+  IF v_current = 'waiting' AND p_next = 'archived' THEN
+    RAISE EXCEPTION 'conversation_waiting_cannot_be_archived'
+      USING ERRCODE = 'check_violation',
+            DETAIL = 'Conversa aguardando atendimento não pode ser arquivada. Atenda ou encerre antes.';
+  END IF;
+
+  -- Origem legada (pending/closed/NULL) de propósito sem caminho aqui (revisão #3064): em
+  -- produção há 0 linhas nesses estados (SELECT de 2026-11-14: 4328 open, 17 resolved), a
+  -- coluna é NOT NULL DEFAULT 'open' e nenhuma função/tela grava pending/closed; com 0 linhas
+  -- o bloco $check$ acima troca o CHECK pelos 4 estados canônicos, então elas deixam de existir.
   IF v_current = 'open'     AND p_next IN ('waiting', 'resolved', 'archived') THEN v_allowed := TRUE; END IF;
   IF v_current = 'waiting'  AND p_next IN ('open', 'resolved')                THEN v_allowed := TRUE; END IF;
   IF v_current = 'resolved' AND p_next IN ('open', 'archived')                THEN v_allowed := TRUE; END IF;

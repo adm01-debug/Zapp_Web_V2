@@ -35506,7 +35506,7 @@
           "conversation_status"
         ],
         "deferrable": false,
-        "definition": "CHECK (conversation_status IS NULL OR (conversation_status = ANY (ARRAY['open'::text, 'pending'::text, 'waiting'::text, 'resolved'::text, 'closed'::text, 'archived'::text])))",
+        "definition": "CHECK (conversation_status IS NULL OR (conversation_status = ANY (ARRAY['open'::text, 'waiting'::text, 'resolved'::text, 'archived'::text])))",
         "name": "chk_conversation_status_values",
         "on_delete": null,
         "on_update": null,
@@ -46515,23 +46515,6 @@
       },
       {
         "columns": [
-          "role"
-        ],
-        "deferrable": false,
-        "definition": "CHECK (role <> 'special_agent'::app_role)",
-        "name": "user_roles_no_special_agent",
-        "on_delete": null,
-        "on_update": null,
-        "ref_columns": [],
-        "ref_schema": null,
-        "ref_table": null,
-        "schema": "public",
-        "table": "user_roles",
-        "type": "CHECK",
-        "validated": true
-      },
-      {
-        "columns": [
           "id"
         ],
         "deferrable": false,
@@ -47916,9 +47899,13 @@
             {
               "file": "supabase/migrations/20260924125400_fix_audit_role_changes_function_name_mismatch.sql",
               "hits": 1
+            },
+            {
+              "file": "supabase/migrations/20261113172000_remove_enum_special_agent.sql",
+              "hits": 3
             }
           ],
-          "code_total_files": 3,
+          "code_total_files": 4,
           "cron": [],
           "db": [],
           "triggers": [],
@@ -49528,9 +49515,17 @@
             {
               "file": "supabase/migrations/20261101213000_rls_update_with_check_explicit.sql",
               "hits": 1
+            },
+            {
+              "file": "supabase/migrations/20261113130100_transfer_conversation_unica_e_fila_aguardando.sql",
+              "hits": 1
+            },
+            {
+              "file": "supabase/migrations/20261113171500_transfer_conversation_cas_sem_dono.sql",
+              "hits": 1
             }
           ],
-          "code_total_files": 13,
+          "code_total_files": 15,
           "cron": [],
           "db": [
             "public.can_delete_contacts",
@@ -49620,9 +49615,17 @@
             {
               "file": "supabase/migrations/20261101213000_rls_update_with_check_explicit.sql",
               "hits": 1
+            },
+            {
+              "file": "supabase/migrations/20261113130100_transfer_conversation_unica_e_fila_aguardando.sql",
+              "hits": 1
+            },
+            {
+              "file": "supabase/migrations/20261113171500_transfer_conversation_cas_sem_dono.sql",
+              "hits": 1
             }
           ],
-          "code_total_files": 13,
+          "code_total_files": 15,
           "cron": [],
           "db": [
             "public.can_delete_contacts",
@@ -52277,9 +52280,13 @@
             {
               "file": "supabase/migrations/20261011133612_dispatch_scheduled_messages.sql",
               "hits": 2
+            },
+            {
+              "file": "supabase/migrations/20261113171600_agendadas_conexao_do_contato_caida.sql",
+              "hits": 5
             }
           ],
-          "code_total_files": 1,
+          "code_total_files": 2,
           "cron": [],
           "db": [],
           "triggers": [],
@@ -52290,7 +52297,7 @@
           "search_path=pg_catalog, public"
         ],
         "definition": null,
-        "definition_sha": "2f5cd94b9b75fe85",
+        "definition_sha": "01820b34f72eb2fa",
         "execute_api_roles": "service_role",
         "execute_public": false,
         "is_trigger_fn": false,
@@ -52453,9 +52460,13 @@
             {
               "file": "supabase/migrations/20261103201500_remove_pagamentos_e_special_agent.sql",
               "hits": 1
+            },
+            {
+              "file": "supabase/migrations/20261113172000_remove_enum_special_agent.sql",
+              "hits": 3
             }
           ],
-          "code_total_files": 2,
+          "code_total_files": 3,
           "cron": [],
           "db": [],
           "triggers": [],
@@ -52574,9 +52585,13 @@
             {
               "file": "supabase/migrations/20261014160000_ingest_inbound_message_reabre_conversa.sql",
               "hits": 1
+            },
+            {
+              "file": "supabase/migrations/20261113171300_conversation_status_regras_e_so_por_rpc.sql",
+              "hits": 3
             }
           ],
-          "code_total_files": 3,
+          "code_total_files": 4,
           "cron": [],
           "db": [],
           "triggers": [
@@ -52589,7 +52604,7 @@
           "search_path=public, pg_temp"
         ],
         "definition": null,
-        "definition_sha": "241d58b5d018c1fa",
+        "definition_sha": "15b9ce1d75f8242c",
         "execute_api_roles": null,
         "execute_public": false,
         "is_trigger_fn": true,
@@ -53014,9 +53029,13 @@
             {
               "file": "src/hooks/groups/actions.ts",
               "hits": 1
+            },
+            {
+              "file": "supabase/migrations/20261113130000_envio_sem_conexao_de_teste_nem_fallback_silencioso.sql",
+              "hits": 2
             }
           ],
-          "code_total_files": 1,
+          "code_total_files": 2,
           "cron": [],
           "db": [],
           "triggers": [],
@@ -53079,11 +53098,19 @@
               "hits": 1
             },
             {
+              "file": "supabase/migrations/20261113130000_envio_sem_conexao_de_teste_nem_fallback_silencioso.sql",
+              "hits": 3
+            },
+            {
               "file": "supabase/migrations/20261113170400_reaplica_whatsapp_media_select_scope.sql",
+              "hits": 1
+            },
+            {
+              "file": "supabase/migrations/20261113171600_agendadas_conexao_do_contato_caida.sql",
               "hits": 1
             }
           ],
-          "code_total_files": 9,
+          "code_total_files": 11,
           "cron": [],
           "db": [
             "public.dispatch_scheduled_messages",
@@ -53119,9 +53146,13 @@
             {
               "file": "src/services/outbound-message.service.ts",
               "hits": 1
+            },
+            {
+              "file": "supabase/migrations/20261113130000_envio_sem_conexao_de_teste_nem_fallback_silencioso.sql",
+              "hits": 2
             }
           ],
-          "code_total_files": 1,
+          "code_total_files": 2,
           "cron": [],
           "db": [],
           "triggers": [],
@@ -53707,8 +53738,13 @@
       {
         "args": "",
         "callers": {
-          "code": [],
-          "code_total_files": 0,
+          "code": [
+            {
+              "file": "supabase/migrations/20261113130300_conversation_closures_closed_by_do_autor.sql",
+              "hits": 1
+            }
+          ],
+          "code_total_files": 1,
           "cron": [],
           "db": [],
           "triggers": [
@@ -54502,9 +54538,13 @@
             {
               "file": "supabase/migrations/20261015225226_ct091_contact_protection_policy.sql",
               "hits": 2
+            },
+            {
+              "file": "supabase/migrations/20261113172000_remove_enum_special_agent.sql",
+              "hits": 1
             }
           ],
-          "code_total_files": 1,
+          "code_total_files": 2,
           "cron": [],
           "db": [],
           "triggers": [],
@@ -54733,7 +54773,7 @@
               "hits": 1
             }
           ],
-          "code_total_files": 69,
+          "code_total_files": 72,
           "cron": [],
           "db": [
             "public.assume_conversation",
@@ -55638,6 +55678,43 @@
         "callers": {
           "code": [
             {
+              "file": "supabase/migrations/20261113171300_conversation_status_regras_e_so_por_rpc.sql",
+              "hits": 1
+            }
+          ],
+          "code_total_files": 1,
+          "cron": [],
+          "db": [],
+          "triggers": [
+            "public.contacts.trg_contacts_conversation_status_rpc_only"
+          ],
+          "views": []
+        },
+        "comment": null,
+        "config": [
+          "search_path=pg_catalog, public"
+        ],
+        "definition": null,
+        "definition_sha": "cbeadf9729d89089",
+        "execute_api_roles": "service_role",
+        "execute_public": false,
+        "is_trigger_fn": true,
+        "kind": "function",
+        "language": "plpgsql",
+        "leakproof": false,
+        "name": "guard_conversation_status_direct_update",
+        "owner": "postgres",
+        "returns": "trigger",
+        "schema": "public",
+        "security_definer": false,
+        "strict": false,
+        "volatility": "volatile"
+      },
+      {
+        "args": "",
+        "callers": {
+          "code": [
+            {
               "file": "supabase/migrations/20260909220000_add_message_delivery_and_atomic_closure_rpcs.sql",
               "hits": 1
             },
@@ -56282,7 +56359,7 @@
               "hits": 4
             }
           ],
-          "code_total_files": 34,
+          "code_total_files": 35,
           "cron": [],
           "db": [
             "public.enforce_contacts_consent_status_guard",
@@ -56851,7 +56928,7 @@
               "hits": 2
             }
           ],
-          "code_total_files": 33,
+          "code_total_files": 34,
           "cron": [],
           "db": [
             "public.admin_list_cron_jobs",
@@ -57015,7 +57092,7 @@
               "hits": 2
             }
           ],
-          "code_total_files": 401,
+          "code_total_files": 403,
           "cron": [],
           "db": [
             "public.add_agent_xp",
@@ -57290,7 +57367,7 @@
               "hits": 1
             }
           ],
-          "code_total_files": 53,
+          "code_total_files": 56,
           "cron": [],
           "db": [
             "public.can_access_realtime_topic",
@@ -58247,13 +58324,23 @@
         "callers": {
           "code": [
             {
+              "file": "supabase/functions/message-delivery/index.ts",
+              "hits": 1
+            },
+            {
               "file": "supabase/migrations/20261011124430_message_attempts.sql",
               "hits": 1
+            },
+            {
+              "file": "supabase/migrations/20261113171400_varredura_mensagens_presas_em_enviando.sql",
+              "hits": 3
             }
           ],
-          "code_total_files": 1,
+          "code_total_files": 3,
           "cron": [],
-          "db": [],
+          "db": [
+            "public.sweep_stuck_outbound_messages"
+          ],
           "triggers": [],
           "views": []
         },
@@ -58524,6 +58611,10 @@
               "hits": 2
             },
             {
+              "file": "supabase/functions/_shared/evolution-webhook-messages.ts",
+              "hits": 1
+            },
+            {
               "file": "supabase/functions/message-delivery/index.ts",
               "hits": 1
             },
@@ -58532,7 +58623,7 @@
               "hits": 2
             }
           ],
-          "code_total_files": 3,
+          "code_total_files": 4,
           "cron": [],
           "db": [],
           "triggers": [],
@@ -59006,9 +59097,13 @@
             {
               "file": "supabase/migrations/20261026090300_revoke_multiplix_anon_public_execute.sql",
               "hits": 1
+            },
+            {
+              "file": "supabase/migrations/20261113172000_remove_enum_special_agent.sql",
+              "hits": 1
             }
           ],
-          "code_total_files": 4,
+          "code_total_files": 5,
           "cron": [],
           "db": [],
           "triggers": [
@@ -62018,16 +62113,21 @@
             {
               "file": "supabase/migrations/20261016010011_set_conversation_status_waiting_para_archived.sql",
               "hits": 2
+            },
+            {
+              "file": "supabase/migrations/20261113171300_conversation_status_regras_e_so_por_rpc.sql",
+              "hits": 3
             }
           ],
-          "code_total_files": 4,
+          "code_total_files": 5,
           "cron": [],
           "db": [
             "public.add_contact_tag",
             "public.add_wa_tag_if_not_exists",
             "public.remove_contact_tag",
             "public.remove_wa_tag_by_prefix",
-            "public.set_conversation_status"
+            "public.set_conversation_status",
+            "public.set_conversations_status"
           ],
           "triggers": [],
           "views": []
@@ -62324,8 +62424,13 @@
       {
         "args": "p_explicit_connection_id uuid, p_assigned_connection_id uuid",
         "callers": {
-          "code": [],
-          "code_total_files": 0,
+          "code": [
+            {
+              "file": "supabase/migrations/20261113130000_envio_sem_conexao_de_teste_nem_fallback_silencioso.sql",
+              "hits": 7
+            }
+          ],
+          "code_total_files": 1,
           "cron": [],
           "db": [
             "public.enqueue_group_outbound_message",
@@ -63479,11 +63584,17 @@
             {
               "file": "supabase/migrations/20260924221209_harden_security_definer_rpcs_pii_gaps.sql",
               "hits": 1
+            },
+            {
+              "file": "supabase/migrations/20261113171300_conversation_status_regras_e_so_por_rpc.sql",
+              "hits": 4
             }
           ],
-          "code_total_files": 5,
+          "code_total_files": 6,
           "cron": [],
-          "db": [],
+          "db": [
+            "public.set_conversations_status"
+          ],
           "triggers": [],
           "views": []
         },
@@ -63492,7 +63603,7 @@
           "search_path=public, pg_temp"
         ],
         "definition": null,
-        "definition_sha": "eadaedd44f137bf2",
+        "definition_sha": "c7257c082766add7",
         "execute_api_roles": "authenticated, service_role",
         "execute_public": false,
         "is_trigger_fn": false,
@@ -63502,6 +63613,45 @@
         "name": "set_conversation_status",
         "owner": "postgres",
         "returns": "void",
+        "schema": "public",
+        "security_definer": true,
+        "strict": false,
+        "volatility": "volatile"
+      },
+      {
+        "args": "p_contact_ids uuid[], p_next text, p_expected_current text, p_reason text, p_restore boolean",
+        "callers": {
+          "code": [
+            {
+              "file": "src/hooks/inbox/conversationArchive.ts",
+              "hits": 1
+            },
+            {
+              "file": "supabase/migrations/20261113171300_conversation_status_regras_e_so_por_rpc.sql",
+              "hits": 2
+            }
+          ],
+          "code_total_files": 2,
+          "cron": [],
+          "db": [],
+          "triggers": [],
+          "views": []
+        },
+        "comment": "P1-2 (2026-11-13): set_conversation_status em lote (até 500, em ordem de id). p_expected_current = só muda quem ainda está nesse estado. Devolve UMA linha por id: outcome changed | already_in_state | state_changed | waiting_cannot_be_archived | invalid_transition | not_authorized (inexistente e sem permissão têm a mesma resposta; previous_status só é devolvido depois da autorização). p_restore=true: desfazer de arquivamento archived -> resolved sem novo encerramento (só com encerramento prévio).",
+        "config": [
+          "search_path=public, pg_temp"
+        ],
+        "definition": null,
+        "definition_sha": "75055e410f69b22d",
+        "execute_api_roles": "authenticated, service_role",
+        "execute_public": false,
+        "is_trigger_fn": false,
+        "kind": "function",
+        "language": "plpgsql",
+        "leakproof": false,
+        "name": "set_conversations_status",
+        "owner": "postgres",
+        "returns": "TABLE(contact_id uuid, previous_status text, outcome text)",
         "schema": "public",
         "security_definer": true,
         "strict": false,
@@ -64088,6 +64238,41 @@
         "volatility": "volatile"
       },
       {
+        "args": "p_min_age interval, p_limit integer",
+        "callers": {
+          "code": [
+            {
+              "file": "supabase/migrations/20261113171400_varredura_mensagens_presas_em_enviando.sql",
+              "hits": 3
+            }
+          ],
+          "code_total_files": 1,
+          "cron": [],
+          "db": [],
+          "triggers": [],
+          "views": []
+        },
+        "comment": "P1-1 (2026-11-13): varre mensagens de agente presas em sending. Nunca reenvia: falha o que comprovadamente não saiu, manda para resolução manual o que é ambíguo, grava message_attempts.",
+        "config": [
+          "search_path=pg_catalog, public"
+        ],
+        "definition": null,
+        "definition_sha": "287ced7d5599e3bd",
+        "execute_api_roles": "service_role",
+        "execute_public": false,
+        "is_trigger_fn": false,
+        "kind": "function",
+        "language": "plpgsql",
+        "leakproof": false,
+        "name": "sweep_stuck_outbound_messages",
+        "owner": "postgres",
+        "returns": "jsonb",
+        "schema": "public",
+        "security_definer": true,
+        "strict": false,
+        "volatility": "volatile"
+      },
+      {
         "args": "p_limit integer",
         "callers": {
           "code": [
@@ -64200,9 +64385,13 @@
             {
               "file": "supabase/migrations/20261103201500_remove_pagamentos_e_special_agent.sql",
               "hits": 1
+            },
+            {
+              "file": "supabase/migrations/20261113172000_remove_enum_special_agent.sql",
+              "hits": 1
             }
           ],
-          "code_total_files": 3,
+          "code_total_files": 4,
           "cron": [],
           "db": [],
           "triggers": [
@@ -67070,42 +67259,38 @@
         "volatility": "volatile"
       },
       {
-        "args": "p_contact_id uuid, p_to_agent_id uuid, p_to_queue_id uuid, p_note text, p_expected_agent_id uuid",
+        "args": "p_contact_id uuid, p_to_agent_id uuid, p_to_queue_id uuid, p_note text, p_expected_agent_id uuid, p_expect_unassigned boolean",
         "callers": {
           "code": [
             {
-              "file": "src/components/inbox/ChatPanel.tsx",
-              "hits": 1
-            },
-            {
-              "file": "src/components/inbox/RealtimeCollaboration.tsx",
-              "hits": 1
-            },
-            {
-              "file": "src/hooks/chat/useConversationActions.ts",
-              "hits": 1
-            },
-            {
-              "file": "src/hooks/inbox/useInboxBulkActions.ts",
-              "hits": 1
+              "file": "src/lib/inbox/transferConversation.ts",
+              "hits": 3
             },
             {
               "file": "supabase/migrations/20261015182236_transfer_conversation_limpa_agente_e_cas.sql",
               "hits": 1
+            },
+            {
+              "file": "supabase/migrations/20261113130100_transfer_conversation_unica_e_fila_aguardando.sql",
+              "hits": 3
+            },
+            {
+              "file": "supabase/migrations/20261113171500_transfer_conversation_cas_sem_dono.sql",
+              "hits": 3
             }
           ],
-          "code_total_files": 5,
+          "code_total_files": 4,
           "cron": [],
           "db": [],
           "triggers": [],
           "views": []
         },
-        "comment": "R2-INB-009 item 88 + PK-03 + P0-3/P1-3 (2026-11-13): ÚNICA versão. Transferência atômica (UPDATE contacts + INSERT conversation_events). Destino fila libera o contato (assigned_to NULL) e open->waiting; destino agente mantém a fila e waiting->open. p_expected_agent_id = compare-and-set do dono (40001). SECURITY DEFINER com can_edit_contact; service_role livre.",
+        "comment": "R2-INB-009 item 88 + PK-03 + P0-3/P1-3 + revisão #3037: ÚNICA versão. Transferência atômica (UPDATE contacts + INSERT conversation_events). Fila libera o contato e open->waiting; agente mantém a fila e waiting->open. Compare-and-set: p_expected_agent_id (dono esperado) ou p_expect_unassigned (esperava sem dono) -> 40001 se mudou. SECURITY DEFINER com can_edit_contact; service_role livre.",
         "config": [
           "search_path=public, pg_temp"
         ],
         "definition": null,
-        "definition_sha": "d2e3d792914e73b1",
+        "definition_sha": "675b5eac94a20398",
         "execute_api_roles": "authenticated, service_role",
         "execute_public": false,
         "is_trigger_fn": false,
@@ -68400,9 +68585,17 @@
             {
               "file": "supabase/migrations/20261016013528_scheduled_messages_state_machine.sql",
               "hits": 5
+            },
+            {
+              "file": "supabase/migrations/20261113130000_envio_sem_conexao_de_teste_nem_fallback_silencioso.sql",
+              "hits": 3
+            },
+            {
+              "file": "supabase/migrations/20261113171600_agendadas_conexao_do_contato_caida.sql",
+              "hits": 1
             }
           ],
-          "code_total_files": 20,
+          "code_total_files": 22,
           "cron": [],
           "db": [
             "public.app_bootstrap",
@@ -89550,6 +89743,36 @@
         "statements": 4,
         "statements_sha": "5cbb8e805435a890",
         "version": "20261113171200"
+      },
+      {
+        "name": "conversation_status_regras_e_so_por_rpc",
+        "statements": 24,
+        "statements_sha": "a712458e769b2bf8",
+        "version": "20261113171300"
+      },
+      {
+        "name": "varredura_mensagens_presas_em_enviando",
+        "statements": 12,
+        "statements_sha": "cd6b3374915ad39b",
+        "version": "20261113171400"
+      },
+      {
+        "name": "transfer_conversation_cas_sem_dono",
+        "statements": 11,
+        "statements_sha": "fce1b935486d56eb",
+        "version": "20261113171500"
+      },
+      {
+        "name": "agendadas_conexao_do_contato_caida",
+        "statements": 9,
+        "statements_sha": "d89cf1b2fd551bc2",
+        "version": "20261113171600"
+      },
+      {
+        "name": "remove_enum_special_agent",
+        "statements": 74,
+        "statements_sha": "15ff118555369a97",
+        "version": "20261113172000"
       }
     ],
     "policies": [
@@ -100428,6 +100651,17 @@
         "timing": "BEFORE"
       },
       {
+        "definition": "CREATE TRIGGER trg_contacts_conversation_status_rpc_only BEFORE UPDATE OF conversation_status ON contacts FOR EACH ROW WHEN (old.conversation_status IS DISTINCT FROM new.conversation_status) EXECUTE FUNCTION guard_conversation_status_direct_update()",
+        "events": "UPDATE",
+        "function": "public.guard_conversation_status_direct_update",
+        "level": "ROW",
+        "name": "trg_contacts_conversation_status_rpc_only",
+        "schema": "public",
+        "status": "enabled",
+        "table": "contacts",
+        "timing": "BEFORE"
+      },
+      {
         "definition": "CREATE TRIGGER trg_contacts_fsm_transition BEFORE UPDATE ON contacts FOR EACH ROW WHEN (old.conversation_status IS DISTINCT FROM new.conversation_status) EXECUTE FUNCTION enforce_conversation_status_transition()",
         "events": "UPDATE",
         "function": "public.enforce_conversation_status_transition",
@@ -102078,8 +102312,7 @@
         "values": [
           "admin",
           "supervisor",
-          "agent",
-          "special_agent"
+          "agent"
         ]
       },
       {

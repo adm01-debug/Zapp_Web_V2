@@ -1128,3 +1128,8 @@ SQL em `migrations/<versao>_<nome>.sql`. Mudanças feitas pelo Dashboard/SQL Edi
 | 20261113170900 | [reaplica_update_own_profile_sem_email](migrations/20261113170900_reaplica_update_own_profile_sem_email.sql) | 4 |
 | 20261113171100 | [reaplica_chatbot_flows_ai_l1](migrations/20261113171100_reaplica_chatbot_flows_ai_l1.sql) | 5 |
 | 20261113171200 | [reaplica_parciais_comments_team_chat_delete](migrations/20261113171200_reaplica_parciais_comments_team_chat_delete.sql) | 4 |
+| 20261113171300 | [conversation_status_regras_e_so_por_rpc](migrations/20261113171300_conversation_status_regras_e_so_por_rpc.sql) | 24 |
+| 20261113171400 | [varredura_mensagens_presas_em_enviando](migrations/20261113171400_varredura_mensagens_presas_em_enviando.sql) | 12 |
+| 20261113171500 | [transfer_conversation_cas_sem_dono](migrations/20261113171500_transfer_conversation_cas_sem_dono.sql) | 11 |
+| 20261113171600 | [agendadas_conexao_do_contato_caida](migrations/20261113171600_agendadas_conexao_do_contato_caida.sql) | 9 |
+| 20261113172000 | [remove_enum_special_agent](migrations/20261113172000_remove_enum_special_agent.sql) | 74 |

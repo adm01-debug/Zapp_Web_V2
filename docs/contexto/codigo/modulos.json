@@ -2759,7 +2759,7 @@
    "modulo": "components/inbox",
    "arquivos": 261,
    "testes": 331,
-   "linhas": 44954,
+   "linhas": 45016,
    "itens_menu": [
     "Chat"
    ],
@@ -3086,6 +3086,7 @@
     "search_contacts",
     "search_knowledge_base",
     "set_conversation_status",
+    "set_conversations_status",
     "talk_me_claim",
     "talk_me_list_pending_messages",
     "talk_me_list_queues",
@@ -3186,8 +3187,7 @@
      "close_conversation_atomic",
      "get_team_profiles",
      "log_search_event",
-     "set_conversation_status",
-     "transfer_conversation"
+     "set_conversation_status"
     ]
    },
    "importado_por_outros_modulos": [
@@ -3247,7 +3247,9 @@
     "lib",
     "lib/aiRequest",
     "lib/calls",
+    "lib/inbox",
     "lib/journey",
+    "lib/whatsapp",
     "services",
     "types",
     "utils"
@@ -4226,6 +4228,7 @@
     "search_team_messages",
     "sentiment_trend",
     "set_conversation_status",
+    "set_conversations_status",
     "set_default_whatsapp_connection",
     "set_department_whatsapp_config",
     "set_team_member_pref",
@@ -5288,6 +5291,7 @@
     "search_contacts",
     "search_email_threads",
     "set_conversation_status",
+    "set_conversations_status",
     "transfer_conversation",
     "user_has_permission"
    ],
@@ -6042,6 +6046,7 @@
     "search_team_messages",
     "sentiment_trend",
     "set_conversation_status",
+    "set_conversations_status",
     "set_default_whatsapp_connection",
     "set_department_whatsapp_config",
     "set_team_member_pref",
@@ -7580,13 +7585,13 @@
   },
   {
    "modulo": "components/theme",
-   "arquivos": 3,
+   "arquivos": 5,
    "testes": 4,
-   "linhas": 478,
+   "linhas": 506,
    "itens_menu": [],
    "telas": [],
    "rotas_http": [],
-   "componentes": 2,
+   "componentes": 3,
    "hooks_locais": [
     "useChatTextSize",
     "useHighContrast"
@@ -7709,9 +7714,7 @@
    "rpcs": [],
    "buckets": [],
    "canais_realtime": [],
-   "env": [
-    "DEV"
-   ],
+   "env": [],
    "flags": [],
    "papeis": [],
    "diretos": {
@@ -9064,7 +9067,7 @@
    "modulo": "hooks/chat",
    "arquivos": 48,
    "testes": 51,
-   "linhas": 8148,
+   "linhas": 8162,
    "itens_menu": [],
    "telas": [],
    "rotas_http": [],
@@ -9272,6 +9275,7 @@
     "reopen_conversation",
     "search_contacts",
     "set_conversation_status",
+    "set_conversations_status",
     "set_team_member_pref",
     "transfer_conversation",
     "transfer_team_conversation_department",
@@ -9329,8 +9333,7 @@
      "get_conversation_tab_counts",
      "get_team_profiles",
      "reopen_conversation",
-     "set_conversation_status",
-     "transfer_conversation"
+     "set_conversation_status"
     ]
    },
    "importado_por_outros_modulos": [
@@ -9359,6 +9362,7 @@
     "hooks/auth",
     "hooks/crm",
     "hooks/groups",
+    "hooks/inbox",
     "hooks/reactions",
     "hooks/realtime",
     "hooks/storage",
@@ -9369,7 +9373,9 @@
     "integrations/supabase",
     "lib",
     "lib/calls",
+    "lib/inbox",
     "lib/journey",
+    "lib/whatsapp",
     "services",
     "types",
     "utils"
@@ -10535,7 +10541,7 @@
    "modulo": "hooks/groups",
    "arquivos": 3,
    "testes": 1,
-   "linhas": 261,
+   "linhas": 264,
    "itens_menu": [],
    "telas": [],
    "rotas_http": [],
@@ -10585,7 +10591,8 @@
    "depende_de_modulos": [
     "hooks/ui",
     "integrations/supabase",
-    "lib"
+    "lib",
+    "lib/whatsapp"
    ],
    "pacotes_externos": [
     "sonner"
@@ -10594,8 +10601,8 @@
   {
    "modulo": "hooks/inbox",
    "arquivos": 20,
-   "testes": 34,
-   "linhas": 3533,
+   "testes": 36,
+   "linhas": 3684,
    "itens_menu": [],
    "telas": [],
    "rotas_http": [],
@@ -10740,6 +10747,7 @@
     "get_last_message_dates",
     "inbox_unread_total",
     "search_contacts",
+    "set_conversations_status",
     "set_default_whatsapp_connection",
     "transfer_conversation",
     "user_has_permission"
@@ -10786,8 +10794,8 @@
     "rpcs": [
      "delivery_stats",
      "inbox_unread_total",
-     "set_default_whatsapp_connection",
-     "transfer_conversation"
+     "set_conversations_status",
+     "set_default_whatsapp_connection"
     ]
    },
    "importado_por_outros_modulos": [
@@ -10795,6 +10803,7 @@
     "components/inbox",
     "components/notifications",
     "components/settings",
+    "hooks/chat",
     "pages"
    ],
    "depende_de_modulos": [
@@ -10813,6 +10822,7 @@
     "lib",
     "lib/aiRequest",
     "lib/audio",
+    "lib/inbox",
     "services",
     "types",
     "utils"
@@ -10829,7 +10839,7 @@
    "modulo": "hooks/integrations",
    "arquivos": 57,
    "testes": 57,
-   "linhas": 11289,
+   "linhas": 11292,
    "itens_menu": [],
    "telas": [],
    "rotas_http": [],
@@ -11226,6 +11236,7 @@
     "integrations/supabase",
     "lib",
     "lib/calls",
+    "lib/whatsapp",
     "services",
     "services/crm",
     "types",
@@ -11916,7 +11927,7 @@
    "modulo": "hooks/system",
    "arquivos": 42,
    "testes": 20,
-   "linhas": 6072,
+   "linhas": 6073,
    "itens_menu": [],
    "telas": [],
    "rotas_http": [],
@@ -12670,6 +12681,7 @@
     "search_team_messages",
     "sentiment_trend",
     "set_conversation_status",
+    "set_conversations_status",
     "set_default_whatsapp_connection",
     "set_department_whatsapp_config",
     "set_team_member_pref",
@@ -13523,7 +13535,7 @@
    "modulo": "integrations/supabase",
    "arquivos": 3,
    "testes": 1,
-   "linhas": 15587,
+   "linhas": 15715,
    "itens_menu": [],
    "telas": [],
    "rotas_http": [],
@@ -13606,6 +13618,7 @@
     "hooks/voice",
     "lib",
     "lib/calls",
+    "lib/inbox",
     "pages",
     "pages/admin",
     "pages/queue-details",
@@ -14046,6 +14059,44 @@
    ]
   },
   {
+   "modulo": "lib/inbox",
+   "arquivos": 1,
+   "testes": 1,
+   "linhas": 56,
+   "itens_menu": [],
+   "telas": [],
+   "rotas_http": [],
+   "componentes": 0,
+   "hooks_locais": [],
+   "hooks_definidos": [],
+   "edges": [],
+   "tabelas": [],
+   "rpcs": [
+    "transfer_conversation"
+   ],
+   "buckets": [],
+   "canais_realtime": [],
+   "env": [],
+   "flags": [],
+   "papeis": [],
+   "diretos": {
+    "edges": [],
+    "tabelas": [],
+    "rpcs": [
+     "transfer_conversation"
+    ]
+   },
+   "importado_por_outros_modulos": [
+    "components/inbox",
+    "hooks/chat",
+    "hooks/inbox"
+   ],
+   "depende_de_modulos": [
+    "integrations/supabase"
+   ],
+   "pacotes_externos": []
+  },
+  {
    "modulo": "lib/journey",
    "arquivos": 6,
    "testes": 5,
@@ -14180,6 +14231,42 @@
     "lib"
    ],
    "pacotes_externos": []
+  },
+  {
+   "modulo": "lib/whatsapp",
+   "arquivos": 1,
+   "testes": 1,
+   "linhas": 108,
+   "itens_menu": [],
+   "telas": [],
+   "rotas_http": [],
+   "componentes": 0,
+   "hooks_locais": [],
+   "hooks_definidos": [],
+   "edges": [],
+   "tabelas": [],
+   "rpcs": [],
+   "buckets": [],
+   "canais_realtime": [],
+   "env": [],
+   "flags": [],
+   "papeis": [],
+   "diretos": {
+    "edges": [],
+    "tabelas": [],
+    "rpcs": []
+   },
+   "importado_por_outros_modulos": [
+    "components/inbox",
+    "hooks/chat",
+    "hooks/groups",
+    "hooks/integrations",
+    "services"
+   ],
+   "depende_de_modulos": [],
+   "pacotes_externos": [
+    "sonner"
+   ]
   },
   {
    "modulo": "pages",
@@ -14895,6 +14982,7 @@
     "search_team_messages",
     "sentiment_trend",
     "set_conversation_status",
+    "set_conversations_status",
     "set_default_whatsapp_connection",
     "set_department_whatsapp_config",
     "set_team_member_pref",
@@ -16160,6 +16248,7 @@
     "search_team_messages",
     "sentiment_trend",
     "set_conversation_status",
+    "set_conversations_status",
     "set_default_whatsapp_connection",
     "set_department_whatsapp_config",
     "set_team_member_pref",
@@ -16393,7 +16482,7 @@
    "modulo": "services",
    "arquivos": 17,
    "testes": 0,
-   "linhas": 2563,
+   "linhas": 2590,
    "itens_menu": [],
    "telas": [],
    "rotas_http": [],
@@ -16523,6 +16612,7 @@
     "hooks/realtime",
     "integrations/supabase",
     "lib",
+    "lib/whatsapp",
     "services/crm",
     "types"
    ],

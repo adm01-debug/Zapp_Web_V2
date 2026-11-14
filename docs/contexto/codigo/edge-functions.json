@@ -1678,13 +1678,15 @@
    "nome": "evolution-api",
    "entrada": "supabase/functions/evolution-api/index.ts",
    "arquivos": 1,
-   "linhas": 1479,
+   "linhas": 1515,
    "verify_jwt": true,
    "metodos": [],
    "tabelas": [
     "audit_logs",
     "contacts",
     "global_settings",
+    "messages",
+    "profiles",
     "whatsapp_connections"
    ],
    "rpcs": [
@@ -2206,7 +2208,7 @@
    "nome": "message-delivery",
    "entrada": "supabase/functions/message-delivery/index.ts",
    "arquivos": 1,
-   "linhas": 819,
+   "linhas": 872,
    "verify_jwt": true,
    "metodos": [
     "POST"
@@ -2221,6 +2223,7 @@
     "claim_outbound_message",
     "complete_outbound_message",
     "fail_outbound_message",
+    "log_message_attempt",
     "mark_outbound_post_started"
    ],
    "env": [],

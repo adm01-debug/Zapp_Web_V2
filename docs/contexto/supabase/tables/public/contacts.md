@@ -72,7 +72,7 @@
 | nome | tipo | definição | on delete | on update | validada |
 |---|---|---|---|---|---|
 | chk_contact_type | CHECK | `CHECK (contact_type = ANY (ARRAY['cliente'::text, 'fornecedor'::text, 'transportadora'::text, 'colaborador'::text, 'prestador_servico'::text, 'parceiro'::text]))` |  |  | sim |
-| chk_conversation_status_values | CHECK | `CHECK (conversation_status IS NULL OR (conversation_status = ANY (ARRAY['open'::text, 'pending'::text, 'waiting'::text, 'resolved'::text, 'closed'::text, 'archived'::text])))` |  |  | sim |
+| chk_conversation_status_values | CHECK | `CHECK (conversation_status IS NULL OR (conversation_status = ANY (ARRAY['open'::text, 'waiting'::text, 'resolved'::text, 'archived'::text])))` |  |  | sim |
 | contacts_ai_priority_canonical | CHECK | `CHECK (ai_is_canonical_priority(ai_priority))` |  |  | sim |
 | contacts_ai_projection_analysis_id_fkey | FOREIGN KEY | `FOREIGN KEY (ai_projection_analysis_id) REFERENCES conversation_analyses(id) ON DELETE SET NULL` | SET NULL | NO ACTION | sim |
 | contacts_ai_sentiment_canonical | CHECK | `CHECK (ai_is_canonical_sentiment(ai_sentiment))` |  |  | sim |
@@ -204,6 +204,7 @@
 | trg_audit_contact_deletion_change | AFTER | UPDATE | ROW | enabled | public.audit_contact_deletion_change |
 | trg_audit_contact_purge | AFTER | DELETE | ROW | enabled | public.audit_contact_deletion_change |
 | trg_contacts_consent_status_guard | BEFORE | UPDATE | ROW | enabled | public.enforce_contacts_consent_status_guard |
+| trg_contacts_conversation_status_rpc_only | BEFORE | UPDATE | ROW | enabled | public.guard_conversation_status_direct_update |
 | trg_contacts_fsm_transition | BEFORE | UPDATE | ROW | enabled | public.enforce_conversation_status_transition |
 | trg_log_assignment_change | AFTER | UPDATE | ROW | enabled | public.log_assignment_change |
 | trg_normalize_contact_phone | BEFORE | INSERT OR UPDATE | ROW | enabled | public.normalize_contact_phone |

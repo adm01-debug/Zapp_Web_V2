@@ -1151,6 +1151,7 @@
     "search_team_messages",
     "sentiment_trend",
     "set_conversation_status",
+    "set_conversations_status",
     "set_default_whatsapp_connection",
     "set_department_whatsapp_config",
     "set_team_member_pref",
@@ -1312,7 +1313,7 @@
     "toolbar",
     "user"
    ],
-   "arquivos_puxados": 1480
+   "arquivos_puxados": 1484
   },
   {
    "protegida": false,
@@ -1416,7 +1417,7 @@
    "papeis": [
     "alert"
    ],
-   "arquivos_puxados": 53
+   "arquivos_puxados": 54
   },
   {
    "protegida": false,
@@ -1534,7 +1535,7 @@
     "alert",
     "supervisor"
    ],
-   "arquivos_puxados": 68
+   "arquivos_puxados": 69
   },
   {
    "protegida": true,
@@ -1625,7 +1626,7 @@
     "alert",
     "supervisor"
    ],
-   "arquivos_puxados": 63
+   "arquivos_puxados": 64
   },
   {
    "protegida": false,
@@ -1708,7 +1709,7 @@
    "papeis": [
     "alert"
    ],
-   "arquivos_puxados": 63
+   "arquivos_puxados": 64
   },
   {
    "protegida": false,
@@ -2092,6 +2093,7 @@
     "reopen_conversation",
     "search_contacts",
     "set_conversation_status",
+    "set_conversations_status",
     "transfer_conversation",
     "user_has_permission"
    ],
@@ -2160,7 +2162,7 @@
     "toolbar",
     "user"
    ],
-   "arquivos_puxados": 402
+   "arquivos_puxados": 404
   },
   {
    "protegida": false,
@@ -2234,7 +2236,7 @@
    "papeis": [
     "alert"
    ],
-   "arquivos_puxados": 55
+   "arquivos_puxados": 56
   },
   {
    "protegida": false,
@@ -2371,7 +2373,7 @@
     "presentation",
     "status"
    ],
-   "arquivos_puxados": 77
+   "arquivos_puxados": 78
   },
   {
    "protegida": true,
@@ -2449,7 +2451,7 @@
    "papeis": [
     "status"
    ],
-   "arquivos_puxados": 60
+   "arquivos_puxados": 61
   },
   {
    "protegida": false,
@@ -2647,7 +2649,7 @@
     "status",
     "supervisor"
    ],
-   "arquivos_puxados": 142
+   "arquivos_puxados": 145
   },
   {
    "protegida": true,
@@ -2788,7 +2790,7 @@
     "status",
     "supervisor"
    ],
-   "arquivos_puxados": 120
+   "arquivos_puxados": 123
   },
   {
    "protegida": false,
@@ -3164,7 +3166,7 @@
    "papeis": [
     "status"
    ],
-   "arquivos_puxados": 59
+   "arquivos_puxados": 60
   },
   {
    "id": "admin",
@@ -3275,7 +3277,7 @@
     "tablist",
     "tabpanel"
    ],
-   "arquivos_puxados": 95
+   "arquivos_puxados": 96
   },
   {
    "id": "agents",
@@ -3383,7 +3385,7 @@
     "status",
     "supervisor"
    ],
-   "arquivos_puxados": 88
+   "arquivos_puxados": 89
   },
   {
    "id": "ai-usage",
@@ -3510,7 +3512,7 @@
    "papeis": [
     "status"
    ],
-   "arquivos_puxados": 59
+   "arquivos_puxados": 60
   },
   {
    "id": "catalog",
@@ -3623,7 +3625,7 @@
     "radiogroup",
     "status"
    ],
-   "arquivos_puxados": 122
+   "arquivos_puxados": 123
   },
   {
    "id": "chatbot",
@@ -3807,7 +3809,7 @@
     "status",
     "supervisor"
    ],
-   "arquivos_puxados": 105
+   "arquivos_puxados": 106
   },
   {
    "id": "contacts",
@@ -4014,7 +4016,7 @@
     "status",
     "supervisor"
    ],
-   "arquivos_puxados": 216
+   "arquivos_puxados": 217
   },
   {
    "id": "crm360",
@@ -4113,7 +4115,7 @@
     "status",
     "supervisor"
    ],
-   "arquivos_puxados": 80
+   "arquivos_puxados": 81
   },
   {
    "id": "dashboard",
@@ -4321,7 +4323,7 @@
     "status",
     "supervisor"
    ],
-   "arquivos_puxados": 199
+   "arquivos_puxados": 200
   },
   {
    "id": "diagnostics",
@@ -4497,7 +4499,7 @@
     "status",
     "toolbar"
    ],
-   "arquivos_puxados": 104
+   "arquivos_puxados": 105
   },
   {
    "id": "evolution-monitor",
@@ -4609,7 +4611,7 @@
     "tab",
     "tablist"
    ],
-   "arquivos_puxados": 101
+   "arquivos_puxados": 102
   },
   {
    "id": "gmail",
@@ -4696,7 +4698,7 @@
     "status",
     "toolbar"
    ],
-   "arquivos_puxados": 78
+   "arquivos_puxados": 79
   },
   {
    "id": "gmail-webhook",
@@ -4802,7 +4804,7 @@
     "note",
     "presentation"
    ],
-   "arquivos_puxados": 41
+   "arquivos_puxados": 42
   },
   {
    "id": "inbox",
@@ -5302,6 +5304,7 @@
     "search_contacts",
     "search_knowledge_base",
     "set_conversation_status",
+    "set_conversations_status",
     "talk_me_claim",
     "talk_me_list_pending_messages",
     "talk_me_list_queues",
@@ -5385,7 +5388,7 @@
     "toolbar",
     "user"
    ],
-   "arquivos_puxados": 631
+   "arquivos_puxados": 633
   },
   {
    "id": "integrations",
@@ -5484,7 +5487,7 @@
     "alert",
     "supervisor"
    ],
-   "arquivos_puxados": 76
+   "arquivos_puxados": 77
   },
   {
    "id": "knowledge",
@@ -5680,7 +5683,7 @@
     "region",
     "status"
    ],
-   "arquivos_puxados": 63
+   "arquivos_puxados": 64
   },
   {
    "id": "nps",
@@ -6080,6 +6083,7 @@
     "search_contacts",
     "search_email_threads",
     "set_conversation_status",
+    "set_conversations_status",
     "transfer_conversation",
     "user_has_permission"
    ],
@@ -6150,7 +6154,7 @@
     "toolbar",
     "user"
    ],
-   "arquivos_puxados": 436
+   "arquivos_puxados": 438
   },
   {
    "id": "omnichannel",
@@ -6245,7 +6249,7 @@
    ],
    "flags": [],
    "papeis": [],
-   "arquivos_puxados": 50
+   "arquivos_puxados": 51
   },
   {
    "id": "privacy",
@@ -6308,7 +6312,7 @@
    ],
    "flags": [],
    "papeis": [],
-   "arquivos_puxados": 47
+   "arquivos_puxados": 48
   },
   {
    "id": "public-api",
@@ -6513,7 +6517,7 @@
     "presentation",
     "status"
    ],
-   "arquivos_puxados": 58
+   "arquivos_puxados": 59
   },
   {
    "id": "search-insights",
@@ -6660,7 +6664,7 @@
     "status",
     "supervisor"
    ],
-   "arquivos_puxados": 111
+   "arquivos_puxados": 112
   },
   {
    "id": "sentiment",
@@ -6865,7 +6869,7 @@
     "tablist",
     "user"
    ],
-   "arquivos_puxados": 160
+   "arquivos_puxados": 161
   },
   {
    "id": "sla",
@@ -7028,7 +7032,7 @@
     "system",
     "user"
    ],
-   "arquivos_puxados": 91
+   "arquivos_puxados": 92
   },
   {
    "id": "talkx",
@@ -7299,7 +7303,7 @@
     "tab",
     "tablist"
    ],
-   "arquivos_puxados": 246
+   "arquivos_puxados": 247
   },
   {
    "id": "talkx-kit",
@@ -7466,7 +7470,7 @@
     "tab",
     "tablist"
    ],
-   "arquivos_puxados": 138
+   "arquivos_puxados": 139
   },
   {
    "id": "team-chat",
@@ -7696,7 +7700,7 @@
     "tablist",
     "toolbar"
    ],
-   "arquivos_puxados": 157
+   "arquivos_puxados": 158
   },
   {
    "id": "telemetry",
@@ -7966,7 +7970,7 @@
     "status",
     "supervisor"
    ],
-   "arquivos_puxados": 134
+   "arquivos_puxados": 135
   },
   {
    "id": "wa-flows",
@@ -8094,7 +8098,7 @@
     "alert",
     "supervisor"
    ],
-   "arquivos_puxados": 73
+   "arquivos_puxados": 74
   },
   {
    "id": "wallet",
@@ -8225,7 +8229,7 @@
     "log",
     "status"
    ],
-   "arquivos_puxados": 60
+   "arquivos_puxados": 61
   }
  ],
  "menu": [

@@ -684,7 +684,7 @@
   {
    "arquivo": "scripts/db-audit/check-e2e-fixtures.sql",
    "descricao": null,
-   "linhas": 111,
+   "linhas": 112,
    "env": [],
    "npm_scripts": [],
    "workflows": [],
@@ -4397,7 +4397,7 @@
   {
    "arquivo": "scripts/inventario/gerar-repo.mjs",
    "descricao": "Inventario gerado do lado do repositorio (sem acesso ao banco):  - edge functions: linhas, segredos lidos (Deno.env.get) e quem as invoca (src, migrations, outras edges, e2e, CI)",
-   "linhas": 95,
+   "linhas": 114,
    "env": [],
    "npm_scripts": [],
    "workflows": [
@@ -4575,7 +4575,7 @@
    "orfao": false
   },
   {
-   "arquivo": "scripts/team-chat-db-validate.mjs",
+   "arquivo": "scripts/team-chat/team-chat-db-validate.mjs",
    "descricao": "* E97-E99: Team Chat DB validation script.",
    "linhas": 130,
    "env": [],

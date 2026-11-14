@@ -1,8 +1,8 @@
 {
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
- "nos": 2322,
- "arestas": 8083,
+ "nos": 2326,
+ "arestas": 8099,
  "hubs": [
   {
    "arquivo": "src/lib/utils.ts",
@@ -10,7 +10,7 @@
   },
   {
    "arquivo": "src/integrations/supabase/client.ts",
-   "importado_por": 416
+   "importado_por": 417
   },
   {
    "arquivo": "src/components/ui/button.tsx",
@@ -561,18 +561,18 @@
    "importado_por": 68
   },
   {
+   "modulo": "integrations/supabase",
+   "depende_de": 1,
+   "importado_por": 66
+  },
+  {
    "modulo": "pages",
    "depende_de": 64,
    "importado_por": 3
   },
   {
-   "modulo": "integrations/supabase",
-   "depende_de": 1,
-   "importado_por": 65
-  },
-  {
    "modulo": "components/inbox",
-   "depende_de": 44,
+   "depende_de": 46,
    "importado_por": 14
   },
   {
@@ -582,7 +582,7 @@
   },
   {
    "modulo": "hooks/integrations",
-   "depende_de": 21,
+   "depende_de": 22,
    "importado_por": 26
   },
   {
@@ -591,14 +591,14 @@
    "importado_por": 33
   },
   {
+   "modulo": "hooks/chat",
+   "depende_de": 23,
+   "importado_por": 17
+  },
+  {
    "modulo": "components/layout",
    "depende_de": 18,
    "importado_por": 19
-  },
-  {
-   "modulo": "hooks/chat",
-   "depende_de": 20,
-   "importado_por": 17
   },
   {
    "modulo": "hooks/auth",
@@ -607,7 +607,7 @@
   },
   {
    "modulo": "services",
-   "depende_de": 6,
+   "depende_de": 7,
    "importado_por": 25
   },
   {
@@ -626,6 +626,11 @@
    "importado_por": 6
   },
   {
+   "modulo": "hooks/inbox",
+   "depende_de": 19,
+   "importado_por": 6
+  },
+  {
    "modulo": "hooks/realtime",
    "depende_de": 10,
    "importado_por": 15
@@ -639,11 +644,6 @@
    "modulo": "hooks/communication",
    "depende_de": 12,
    "importado_por": 12
-  },
-  {
-   "modulo": "hooks/inbox",
-   "depende_de": 18,
-   "importado_por": 5
   },
   {
    "modulo": "components/contacts",

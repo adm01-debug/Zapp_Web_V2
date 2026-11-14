@@ -28,7 +28,6 @@
 
 | nome | tipo | definição | on delete | on update | validada |
 |---|---|---|---|---|---|
-| user_roles_no_special_agent | CHECK | `CHECK (role <> 'special_agent'::app_role)` |  |  | sim |
 | user_roles_pkey | PRIMARY KEY | `PRIMARY KEY (id)` |  |  | sim |
 | user_roles_user_id_fkey | FOREIGN KEY | `FOREIGN KEY (user_id) REFERENCES auth.users(id) ON DELETE CASCADE` | CASCADE | NO ACTION | sim |
 | user_roles_user_id_role_key | UNIQUE | `UNIQUE (user_id, role)` |  |  | sim |

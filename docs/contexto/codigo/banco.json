@@ -8,7 +8,7 @@
   "supabase/migrations",
   "typeorm"
  ],
- "migrations": 1121,
+ "migrations": 1129,
  "seeds": [
   "e2e/fixtures/seed-talk-me.sql",
   "e2e/fixtures/seed-talkx-segment.sql",
@@ -35,8 +35,7 @@
   "app_role": [
    "admin",
    "supervisor",
-   "agent",
-   "special_agent"
+   "agent"
   ],
   "channel_type": [
    "whatsapp",
@@ -133,7 +132,6 @@
   "admin_cron_jobs_permitidos",
   "admin_inbox_silence",
   "admin_list_cron_jobs",
-  "admin_set_role",
   "admin_toggle_cron_job",
   "admin_unlock_login",
   "agent_workload",
@@ -270,6 +268,7 @@
   "fn_list_audio_memes_for_user",
   "fn_send_audio_meme",
   "fn_toggle_user_meme_favorite",
+  "force_conversation_closure_author",
   "get_ai_jobs_cron_secret",
   "get_ai_usage_outbox_drain_cron_secret",
   "get_avatars_refresh_cron_secret",
@@ -311,6 +310,7 @@
   "guard_contact_note_identity",
   "guard_conversation_closure_request_id",
   "guard_conversation_event_closure_id",
+  "guard_conversation_status_direct_update",
   "guard_message_delivery_internal_fields",
   "guard_message_immutable_columns",
   "guard_message_provenance_fields",
@@ -323,7 +323,6 @@
   "handle_message_gamification",
   "handle_new_user",
   "handle_new_user_role",
-  "has_role",
   "heartbeat_ai_job",
   "heartbeat_multiplix_item",
   "inbox_unread_total",
@@ -464,6 +463,7 @@
   "resolve_applicable_first_response_minutes",
   "resolve_contact_guard_actor",
   "resolve_network_policy",
+  "resolve_outbound_whatsapp_connection",
   "resolve_sla_alert",
   "resolve_talkx_outcome_unknown",
   "resolve_unconfirmed_message",
@@ -493,6 +493,7 @@
   "set_call_agent_notes",
   "set_contact_blocked",
   "set_conversation_status",
+  "set_conversations_status",
   "set_default_whatsapp_connection",
   "set_department_whatsapp_config",
   "set_instance_token",
@@ -509,6 +510,7 @@
   "supabase_migrations",
   "sweep_multiplix_stuck_items",
   "sweep_multiplix_stuck_recipients",
+  "sweep_stuck_outbound_messages",
   "sweep_talkx_stuck_recipients",
   "sync_contact_status_on_closure",
   "sync_profile_role_from_user_roles",
@@ -812,6 +814,13 @@
    "funcao": "enforce_contacts_consent_status_guard"
   },
   {
+   "nome": "trg_contacts_conversation_status_rpc_only",
+   "quando": "before",
+   "evento": "update of conversation_status",
+   "tabela": "contacts",
+   "funcao": "guard_conversation_status_direct_update"
+  },
+  {
    "nome": "trg_contacts_fsm_transition",
    "quando": "before",
    "evento": "update",
@@ -859,6 +868,13 @@
    "evento": "update",
    "tabela": "contacts",
    "funcao": "update_updated_at_column"
+  },
+  {
+   "nome": "trg_conversation_closures_force_author",
+   "quando": "before",
+   "evento": "insert or update of closed_by",
+   "tabela": "conversation_closures",
+   "funcao": "force_conversation_closure_author"
   },
   {
    "nome": "trg_enqueue_crm_sync_from_closure",
@@ -1846,6 +1862,11 @@
    "nome": "multiplix-send-trigger",
    "agenda": "*/2 * * * *",
    "migration": "20260927320000_multiplix_cron_scheduler.sql"
+  },
+  {
+   "nome": "outbound-sending-sweeper",
+   "agenda": "* * * * *",
+   "migration": "20261113171400_varredura_mensagens_presas_em_enviando.sql"
   },
   {
    "nome": "purge-qr-attempts",
@@ -8246,6 +8267,7 @@
     "trg_audit_contact_deletion_change",
     "trg_audit_contact_purge",
     "trg_contacts_consent_status_guard",
+    "trg_contacts_conversation_status_rpc_only",
     "trg_contacts_fsm_transition",
     "trg_log_assignment_change",
     "trg_normalize_contact_phone",
@@ -8668,6 +8690,7 @@
     "crm-integration"
    ],
    "triggers": [
+    "trg_conversation_closures_force_author",
     "trg_enqueue_crm_sync_from_closure",
     "trg_gamification_on_closure",
     "trg_guard_conversation_closure_request_id",
@@ -9952,23 +9975,22 @@
    "colunas_types": {
     "content": "string",
     "created_at": "string",
+    "data": "Json | null",
     "dismissed_at": "string | null",
     "id": "string",
     "insight_type": "string",
+    "latency_ms": "number | null",
     "model_version": "string | null",
     "profile_id": "string",
     "session_id": "string",
     "shown_at": "string | null",
     "source": "string",
     "state_version": "number",
+    "tier": "number",
     "used_at": "string | null"
    },
    "drift": {
-    "so_na_migration": [
-     "tier",
-     "latency_ms",
-     "data"
-    ],
+    "so_na_migration": [],
     "so_no_types": []
    },
    "usada_no_front": 1,
@@ -10557,17 +10579,21 @@
     "brinde_meter": "number",
     "brinde_quantity": "number | null",
     "brinde_responsible": "string | null",
+    "brinde_state": "Json",
     "closed_at": "string | null",
-    "comm_style": "string[]",
+    "comm_style": "string | null",
     "contact_id": "string",
     "conversation_id": "string",
     "created_at": "string",
     "decision_role": "string | null",
     "id": "string",
+    "intent": "string | null",
+    "last_processed_message_at": "string | null",
     "last_tick_at": "string | null",
     "occasion": "string | null",
     "profile_id": "string",
     "sale_stage": "string",
+    "sentiment": "string | null",
     "stakeholders": "Json",
     "started_at": "string",
     "state_version": "number",
@@ -10575,12 +10601,7 @@
     "updated_at": "string"
    },
    "drift": {
-    "so_na_migration": [
-     "brinde_state",
-     "last_processed_message_at",
-     "intent",
-     "sentiment"
-    ],
+    "so_na_migration": [],
     "so_no_types": []
    },
    "usada_no_front": 1,
@@ -14369,6 +14390,9 @@
     "created_at": "string",
     "id": "string",
     "instance": "string",
+    "investigated_at": "string | null",
+    "investigated_by": "string | null",
+    "investigation_notes": "string | null",
     "paused_by": "string | null",
     "paused_until": "string",
     "reason": "string",
@@ -14376,11 +14400,7 @@
     "resumed_by": "string | null"
    },
    "drift": {
-    "so_na_migration": [
-     "investigated_at",
-     "investigated_by",
-     "investigation_notes"
-    ],
+    "so_na_migration": [],
     "so_no_types": []
    },
    "usada_no_front": 1,
@@ -16107,12 +16127,14 @@
     "delivery_claimed_at": "string | null",
     "delivery_claimed_by": "string | null",
     "delivery_last_claim_token": "string | null",
+    "delivery_post_started_at": "string | null",
     "external_id": "string | null",
     "id": "string",
     "is_deleted": "boolean | null",
     "is_edited": "boolean",
     "is_read": "boolean | null",
     "link_preview": "Json | null",
+    "manually_resolved_at": "string | null",
     "media_filename": "string | null",
     "media_meta": "Json | null",
     "media_mimetype": "string | null",
@@ -16135,10 +16157,7 @@
     "whatsapp_group_id": "string | null"
    },
    "drift": {
-    "so_na_migration": [
-     "delivery_post_started_at",
-     "manually_resolved_at"
-    ],
+    "so_na_migration": [],
     "so_no_types": []
    },
    "usada_no_front": 46,
@@ -16151,6 +16170,7 @@
     "automation-suggest-reply",
     "chatbot-l1",
     "connection-health-check",
+    "evolution-api",
     "message-delivery",
     "migrate-media-storage",
     "recover-corrupted-audios",
@@ -19988,6 +20008,7 @@
     "copilot-live",
     "create-user",
     "crm-integration",
+    "evolution-api",
     "get-sip-password",
     "message-delivery",
     "multiplix-audience",
@@ -24164,19 +24185,18 @@
     "created_at": "string",
     "expires_at": "string | null",
     "id": "string",
+    "import_batch_id": "string | null",
     "origin": "string",
     "phone": "string | null",
     "reason": "string | null",
     "reason_code": "string | null",
+    "removal_reason": "string | null",
     "removed_at": "string | null",
     "removed_by": "string | null",
     "source_message_id": "string | null"
    },
    "drift": {
-    "so_na_migration": [
-     "import_batch_id",
-     "removal_reason"
-    ],
+    "so_na_migration": [],
     "so_no_types": []
    },
    "usada_no_front": 2,
@@ -29282,7 +29302,7 @@
      "tipo": "app_role",
      "nn": true,
      "pk": false,
-     "default": "'agent'",
+     "default": "'agent'::public.app_role",
      "ref": null
     },
     "user_id": {
@@ -31671,7 +31691,7 @@
   },
   {
    "nome": "admin_set_role",
-   "definida": true,
+   "definida": false,
    "usada_em": 1
   },
   {
@@ -32046,7 +32066,7 @@
   },
   {
    "nome": "has_role",
-   "definida": true,
+   "definida": false,
    "usada_em": 1
   },
   {
@@ -32125,6 +32145,11 @@
    "usada_em": 1
   },
   {
+   "nome": "log_message_attempt",
+   "definida": true,
+   "usada_em": 1
+  },
+  {
    "nome": "log_search_event",
    "definida": true,
    "usada_em": 1
@@ -32147,7 +32172,7 @@
   {
    "nome": "mark_outbound_post_started",
    "definida": true,
-   "usada_em": 1
+   "usada_em": 2
   },
   {
    "nome": "mark_pause_investigated",
@@ -32435,6 +32460,11 @@
    "usada_em": 2
   },
   {
+   "nome": "set_conversations_status",
+   "definida": true,
+   "usada_em": 1
+  },
+  {
    "nome": "set_default_whatsapp_connection",
    "definida": true,
    "usada_em": 1
@@ -32597,7 +32627,7 @@
   {
    "nome": "transfer_conversation",
    "definida": true,
-   "usada_em": 4
+   "usada_em": 1
   },
   {
    "nome": "transfer_team_conversation_department",

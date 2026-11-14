@@ -151,6 +151,7 @@ BEGIN
             WHEN sqlerrm LIKE '%active_profile_not_found%' THEN 'autor_inativo'
             WHEN sqlerrm LIKE '%message_contact_not_authorized%' THEN 'contato_invalido'
             WHEN sqlerrm LIKE '%no_connected_whatsapp_connection%'
+              OR sqlerrm LIKE '%contact_whatsapp_connection_disconnected%'
               OR sqlerrm LIKE '%selected_whatsapp_connection_unavailable%'
               OR sqlerrm LIKE '%whatsapp_connection_out_of_scope%' THEN 'conexao_invalida'
             ELSE 'enqueue_failed'

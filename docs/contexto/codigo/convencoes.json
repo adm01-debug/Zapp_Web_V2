@@ -7,7 +7,7 @@
    "src/pages (18)"
   ],
   "componentes": [
-   "src/components (881)",
+   "src/components (882)",
    "src/pages (26)",
    "src/features (2)"
   ],
@@ -17,12 +17,12 @@
    "src/contexts (2)"
   ],
   "servicos_logica": [
-   "src/lib (150)",
+   "src/lib (152)",
    "src/services (20)",
    "src/utils (8)"
   ],
   "testes": [
-   "co-localizado (__tests__) (1997)",
+   "co-localizado (__tests__) (2001)",
    "outro (234)",
    "co-localizado (*.test) (183)"
   ],
@@ -42,13 +42,13 @@
  "nomenclatura": {
   "componentes": "PascalCase (90%)",
   "hooks": "use + PascalCase",
-  "servicos": "camelCase (73%)",
+  "servicos": "camelCase (74%)",
   "edge_functions": "kebab-case (96%)",
   "tabelas": "snake_case (92%)"
  },
  "barrels_index": 70,
  "extensao_componentes": [
-  ".tsx (915)"
+  ".tsx (916)"
  ],
  "alias_imports": {
   "(raiz)": {
@@ -59,11 +59,11 @@
  "commits": {
   "convencao": "conventional commits (observado)",
   "exemplos": [
+   "chore(pacote): pacote 5 — #3037, #3034, #3033, #2971, #2943, #2838 e #2894 concluídas e num ciclo de CI (#3064)",
    "docs(prod-readiness): fechamento — pacote 2, migrations aplicadas, E2E verde e pendências do dono (#3061)",
    "chore(pacote): pacote 4 — #3048, #3049, #3050, #3051, #3052, #3054, #3055 e #3058 num ciclo de CI (#3063)",
    "chore(db): pacote de 11 migrations aprovadas — segurança, horário noturno, scheduler do Talk X e reaplicações do ledger (#3062)",
-   "chore(db-audit): regenera baselines de storage.buckets e cron.job (#3053)",
-   "chore: pacote 2 — login sem 401, linha SIP, Gmail sem 409, Team Chat ?cid=, Talk X e PD79 (#3046)"
+   "chore(db-audit): regenera baselines de storage.buckets e cron.job (#3053)"
   ]
  },
  "pr_template": ".github/PULL_REQUEST_TEMPLATE.md",

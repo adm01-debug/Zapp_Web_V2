@@ -1,6 +1,6 @@
 # 07 · REGRAS DE NEGÓCIO
 
-> Gerado automaticamente por AI Context Sync v1.3.2 · commit `e50daef6a4` · branch `main` · 2026-11-14 04:03 UTC
+> Gerado automaticamente por AI Context Sync v1.3.2 · commit `ab657aa34e` · branch `main` · 2026-11-14 05:05 UTC
 > Não edite à mão — regras humanas vão em `manual/`.
 
 ## A. Regras escritas por humanos (`manual/` — prioridade máxima, nunca sobrescrito)
@@ -16,7 +16,7 @@
 
 ## 2. Atores / perfis e o que cada um pode fazer
 
-Papéis reais do sistema (enum `app_role`, `src/lib/appRole.ts:13`): **`admin` · `supervisor` · `agent` · `special_agent`**.
+Papéis reais do sistema (enum `app_role`, `src/lib/appRole.ts:13`): **`admin` · `supervisor` · `agent`**. O rótulo `special_agent` ainda existe no enum do banco até a migration `20261113172000_remove_enum_special_agent` ser aplicada (PR aguardando o dono); nenhuma função, policy ou tela o usa.
 `leader`, `owner` e `customer` **não são papéis**: `owner`/`admin`/`member` são papéis *dentro de um grupo do Team Chat*
 (`team_conversation_members.member_role`, migration `20260927270019`); "líder" = supervisor. Medido em 2026-11-03:
 4 admins, 3 supervisores, 4 agentes, 0 `special_agent`.
@@ -26,7 +26,7 @@ Papéis reais do sistema (enum `app_role`, `src/lib/appRole.ts:13`): **`admin` �
 | **admin** | **Só ele** cria e remove a infraestrutura do atendimento: conexões WhatsApp, filas e membros, usuários e seus papéis (`user_roles`), horário comercial, SLA (`sla_configurations`), limites de campanha (`talkx_settings`), automações, chatbot, templates, blacklist, `app_settings`, provedores de IA, bloqueio de IP/país, logs de auditoria. **Único** que apaga dados em massa (contatos, campanhas, playbooks, logs). | — |
 | **supervisor** | Tudo do agente **mais**: enxerga e intervém em **qualquer** conversa e contato (reatribui, muda status, encerra — `is_admin_or_supervisor` em ~120 funções); configura regras de SLA, automações e relatórios agendados; amplia a visibilidade de um agente (`agent_visibility_grants`); vê tentativas de login; **dispara campanhas** (`confirm_talkx_campaign_launch` → `talkx_confirm_launch_unauthorized` para quem não é admin/supervisor). | Criar ou apagar conexão, fila ou usuário; mexer em configuração global. |
 | **agent** | Só o que é dele ou da sua fila (`can_edit_contact` = atendente dono **ou** membro da fila): cria contato, envia mensagem, cria/edita suas tarefas, agendamentos e **rascunhos** de campanha. | Ver ou mexer em conversa que não é sua nem da sua fila; mudar o próprio papel/permissões (`prevent_profile_privilege_escalation`); apagar contato ou mensagem; alterar qualquer configuração; **disparar** campanha. |
-| **special_agent** | **Papel excluído por decisão do dono (2026-11-03).** Era agent + flag `profiles.can_download`; a flag continua existindo no agente comum (protegida por `20261012032331`). Nenhum agente de IA deve atribuir, tratar ou exibir esse papel; a tarefa pendente é removê-lo (enum `app_role`, CHECK de `profiles.role`, `effective_role`, 16 arquivos em `src/`, 4 edge functions — DDL em produção, PR aguardando o dono). | **pendente de remoção** — 0 usuários hoje |
+| **special_agent** | **Papel excluído por decisão do dono (2026-11-03).** Era agent + flag `profiles.can_download`; a flag continua existindo no agente comum (protegida por `20261012032331`). Nenhum agente de IA deve atribuir, tratar ou exibir esse papel. Já removido de funções, policies, CHECK de `profiles.role`, `effective_role`, `src/` e edges (`20261103201500`, #2692); o último resíduo — o rótulo no enum `app_role` — sai com `20261113172000_remove_enum_special_agent` (DDL em produção, PR aguardando o dono). | **removido** — 0 usuários |
 
 Evidência: 18 policies RLS citam só `admin`, 10 tabelas só admin lê; funções `effective_role`, `is_admin`,
 `is_admin_or_supervisor`, `can_edit_contact`, `require_contact_edit_permission` (banco ao vivo, 2026-11-03).
@@ -38,6 +38,7 @@ Evidência: 18 policies RLS citam só `admin`, 10 tabelas só admin lê; funçõ
 | Regra | Estado | Evidência |
 |---|---|---|
 | Estados: `open`, `waiting`, `resolved`, `archived`. Transições permitidas: open → waiting/resolved/archived · waiting → open/resolved · resolved → open/archived · archived → open. | **existe** | `supabase/migrations/20260905090000_contacts_fsm_trigger.sql` |
+| **Conversa `waiting` (Aguardando) não pode ir direto para `archived`** (decisão do dono, 2026-11-13): sem atendente, ela sumiria da fila sem ninguém atender. Precisa ser atendida (`open`) ou encerrada (`resolved`) antes; só então pode ser arquivada. O banco recusa com `conversation_waiting_cannot_be_archived` (gatilho de FSM e `set_conversation_status`/`set_conversations_status`); a tela esconde "Arquivar" nas conversas aguardando e o arquivamento em lote pula essas conversas e avisa quantas ficaram de fora. Supera a ADR-005 neste ponto. | **existe** (PR #3037) | `supabase/migrations/20261113171300_conversation_status_regras_e_so_por_rpc.sql`; `src/hooks/inbox/conversationArchive.ts` (`canArchiveConversation`) |
 | Quem muda status: admin/supervisor, ou o atendente dono da conversa / membro da fila dela (`can_edit_contact`). | **existe** | `supabase/migrations/20260930090000_harden_status_and_wa_tag_rpc_authorization.sql` (`set_conversation_status`, `require_contact_edit_permission`) |
 | Cliente manda mensagem em conversa `resolved`/`archived` → reabre sozinha: volta para `open` **com o mesmo atendente** se ela tinha dono; sem dono vai para `waiting`. Decisão do dono: manter — as conversas tendem a ficar sempre com os mesmos atendentes, e isso é desejado. | **existe** | `supabase/migrations/20261013210003_reabre_conversa_com_nova_mensagem.sql` (`trg_conversation_reopen_on_inbound`) |
 | Tempo sem resposta do atendente **não** muda o status para `waiting`. Continua como está. | **decisão** (nada a implementar) | — |
@@ -315,9 +316,7 @@ Demais dúvidas: nenhuma (entrevista concluída em 2026-11-03). Novas dúvidas: 
 | `audit_logs` | Block authenticated inserts on audit_logs | INSERT | authenticated | permissive |  | `false` |
 | `webauthn_challenges` | Block anon access to webauthn challenges | ALL | anon | permissive | `false` | `false` |
 | `warroom_alerts` | Admins can delete warroom alerts | DELETE | authenticated | permissive | `is_admin_or_supervisor(auth.uid())` |  |
-| `blocked_ips` | Only admins can view blocked IPs | SELECT | authenticated | permissive | `EXISTS (SELECT 1 FROM user_roles WHERE user_id = auth.uid() AND role = 'admin') OR is_admin_or_supervisor(auth.uid())` |  |
 | `user_devices` | Admins can view all user devices | SELECT | authenticated | permissive | `is_admin_or_supervisor(auth.uid())` |  |
-| `user_roles` | Only admins can manage roles | ALL | authenticated | permissive | `public.has_role(auth.uid(), 'admin')` | `public.has_role(auth.uid(), 'admin')` |
 | `agent_stats` | Only admins can update agent stats | UPDATE | authenticated | permissive | `public.is_admin_or_supervisor(auth.uid())` |  |
 | `nps_surveys` | Users can create own NPS surveys | INSERT | authenticated | permissive |  | `agent_id IS NOT NULL AND agent_id IN ( SELECT id FROM public.profiles WHERE user_id = auth.uid() )` |
 | `team_conversations` | Members can view their conversations | SELECT | authenticated | permissive | `public.is_team_conversation_member(auth.uid(), id) OR created_by = (SELECT p.id FROM public.profiles p WHERE p.user_id = auth.uid() LIMIT 1)` |  |
@@ -344,9 +343,6 @@ Demais dúvidas: nenhuma (entrevista concluída em 2026-11-03). Novas dúvidas: 
 | `sla_rules` | Admins and supervisors can insert SLA rules | INSERT | authenticated | permissive |  | `public.is_admin_or_supervisor(auth.uid())` |
 | `sla_rules` | Admins and supervisors can update SLA rules | UPDATE | authenticated | permissive | `public.is_admin_or_supervisor(auth.uid())` |  |
 | `sla_rules` | Admins and supervisors can delete SLA rules | DELETE | authenticated | permissive | `public.is_admin_or_supervisor(auth.uid())` |  |
-| `ai_providers` | Admins can insert AI providers | INSERT | authenticated | permissive |  | `public.has_role(auth.uid(), 'admin')` |
-| `ai_providers` | Admins can update AI providers | UPDATE | authenticated | permissive | `public.has_role(auth.uid(), 'admin')` |  |
-| `ai_providers` | Admins can delete AI providers | DELETE | authenticated | permissive | `public.has_role(auth.uid(), 'admin')` |  |
 | `talkx_campaigns` | Users can view own campaigns | SELECT | authenticated | permissive | `created_by = (SELECT id FROM public.profiles WHERE user_id = auth.uid() LIMIT 1)` |  |
 | `talkx_campaigns` | Admins can view all campaigns | SELECT | authenticated | permissive | `public.is_admin_or_supervisor(auth.uid())` |  |
 | `talkx_recipients` | Users can view recipients of own campaigns | SELECT | authenticated | permissive | `EXISTS ( SELECT 1 FROM public.talkx_campaigns tc WHERE tc.id = campaign_id AND (tc.created_by = (SELECT id FROM public.profiles WHERE user_id = auth.uid() LIMIT 1) OR public.is_admin_or_supervisor(auth.uid())) )` |  |
@@ -363,7 +359,6 @@ Demais dúvidas: nenhuma (entrevista concluída em 2026-11-03). Novas dúvidas: 
 | `number_reputation` | Authenticated can view reputation | SELECT | authenticated | permissive | `true` |  |
 | `conversation_memory` | Agents can insert memory for their contacts | INSERT | authenticated | permissive |  | `public.is_contact_visible_to_user(contact_id, auth.uid())` |
 | `conversation_memory` | Agents can update memory for their contacts | UPDATE | authenticated | permissive | `public.is_contact_visible_to_user(contact_id, auth.uid())` |  |
-| `conversation_closures` | Agents can create closures for their contacts | INSERT | authenticated | permissive |  | `public.is_contact_visible_to_user(contact_id, auth.uid())` |
 | `number_reputation` | Admins can insert reputation | INSERT | authenticated | permissive |  | `public.is_admin_or_supervisor(auth.uid())` |
 | `number_reputation` | Admins can update reputation | UPDATE | authenticated | permissive | `public.is_admin_or_supervisor(auth.uid())` |  |
 | `talkx_blacklist` | Admins can add to blacklist | INSERT | authenticated | permissive |  | `public.is_admin_or_supervisor(auth.uid())` |
@@ -392,12 +387,8 @@ Demais dúvidas: nenhuma (entrevista concluída em 2026-11-03). Novas dúvidas: 
 | `client_wallet_rules` | Wallet rules visible to admins only | SELECT | authenticated | permissive | `public.is_admin_or_supervisor(auth.uid())` |  |
 | `automations` | Automations visible to admins only | SELECT | authenticated | permissive | `public.is_admin_or_supervisor(auth.uid())` |  |
 | `queue_members` | Queue members visible to admins or self | SELECT | authenticated | permissive | `public.is_admin_or_supervisor(auth.uid()) OR profile_id = (SELECT id FROM public.profiles WHERE user_id = auth.uid() LIMIT 1)` |  |
-| `ai_providers` | Admins can view AI providers | SELECT | authenticated | permissive | `public.has_role(auth.uid(), 'admin')` |  |
 | `audit_logs` | Block direct audit log inserts | INSERT | authenticated | permissive |  | `false` |
 | `user_roles` | Users view own roles, admins view all | SELECT | authenticated | permissive | `user_id = auth.uid() OR is_admin_or_supervisor(auth.uid())` |  |
-| `channel_connections` | Admins full access to channels | ALL | authenticated | permissive | `has_role(auth.uid(), 'admin')` | `has_role(auth.uid(), 'admin')` |
-| `password_reset_requests` | Admins can update reset requests without token access | UPDATE | authenticated | permissive | `has_role(auth.uid(), 'admin')` | `has_role(auth.uid(), 'admin')` |
-| `password_reset_requests` | Admins can delete password reset requests | DELETE | authenticated | permissive | `public.has_role(auth.uid(), 'admin')` |  |
 | `gmail_accounts` | Users can view their own gmail accounts | SELECT | authenticated | permissive | `user_id = auth.uid()` |  |
 | `message_reactions` | Users can view reactions on accessible messages | SELECT | authenticated | permissive | `message_id IN ( SELECT m.id FROM messages m WHERE m.contact_id IN ( SELECT c.id FROM contacts c WHERE c.assigned_to IN ( SELECT p.id FROM profiles p WHERE p.user_id = auth.uid() ) OR c.assigned_to IS NULL ) ) OR is_admin_or_supervisor(auth.uid())` |  |
 | `storage.objects` | Admins can delete team chat files | DELETE | authenticated | permissive | `((bucket_id = 'team-chat-files'::text) AND is_admin_or_supervisor(auth.uid()))` |  |
@@ -422,6 +413,16 @@ Demais dúvidas: nenhuma (entrevista concluída em 2026-11-03). Novas dúvidas: 
 | `email_attachments` | Users can view attachments of own accounts | SELECT | authenticated | permissive | `EXISTS ( SELECT 1 FROM public.email_messages em JOIN public.gmail_accounts ga ON ga.id = em.gmail_account_id WHERE em.id = email_attachments.email_message_id AND (ga.user_id = auth.uid() OR is_admin_or_supervisor(auth.uid())) )` |  |
 | `email_attachments` | service_role inserts email attachments | INSERT | service_role | permissive |  | `true` |
 | `permissions` | Admins can manage permissions | ALL | authenticated | permissive | `is_admin(auth.uid())` | `is_admin(auth.uid())` |
+| `role_permissions` | Admins can manage role permissions | ALL | authenticated | permissive | `is_admin(auth.uid())` | `is_admin(auth.uid())` |
+| `permissions` | Admin supervisor can view permissions | SELECT | authenticated | permissive | `is_admin_or_supervisor(auth.uid())` |  |
+| `role_permissions` | Admin supervisor can view role permissions | SELECT | authenticated | permissive | `is_admin_or_supervisor(auth.uid())` |  |
+| `conversation_sla` | conversation_sla_select_policy | SELECT | authenticated | permissive | `is_admin_or_supervisor(auth.uid()) OR contact_id IN ( SELECT c.id FROM public.contacts c WHERE c.assigned_to IN (SELECT get_visible_agent_ids(auth.uid())) )` |  |
+| `blocked_ips` | Admins can insert blocked IPs | INSERT | authenticated | permissive |  | `is_admin(auth.uid())` |
+| `blocked_ips` | Admins can update blocked IPs | UPDATE | authenticated | permissive | `is_admin(auth.uid())` |  |
+| `blocked_ips` | Admins can delete blocked IPs | DELETE | authenticated | permissive | `is_admin(auth.uid())` |  |
+| `blocked_countries` | Admins can insert blocked countries | INSERT | authenticated | permissive |  | `is_admin(auth.uid())` |
+| `blocked_countries` | Admins can delete blocked countries | DELETE | authenticated | permissive | `is_admin(auth.uid())` |  |
+| `allowed_countries` | Admins can insert allowed countries | INSERT | authenticated | permissive |  | `is_admin(auth.uid())` |
 | … +272 linhas — lista completa em `context.json` | | | | | | |
 
 ## C. Restrições de dados (obrigatório / único / default / CHECK / FK / calculada)
@@ -887,6 +888,8 @@ Demais dúvidas: nenhuma (entrevista concluída em 2026-11-03). Novas dúvidas: 
 | trg_talkx_blacklist_reason_active | BEFORE INSERT OR UPDATE OF REASON_CODE | `talkx_blacklist` | `talkx_blacklist_reason_active_guard` |  |
 | trg_talkx_blacklist_audit | BEFORE INSERT OR UPDATE | `talkx_blacklist` | `talkx_blacklist_audit_trigger` |  |
 | trg_talkx_blacklist_no_delete | BEFORE DELETE | `talkx_blacklist` | `talkx_blacklist_no_delete` |  |
+| trg_conversation_closures_force_author | BEFORE INSERT OR UPDATE OF CLOSED_BY | `conversation_closures` | `force_conversation_closure_author` |  |
+| trg_contacts_conversation_status_rpc_only | BEFORE UPDATE OF CONVERSATION_STATUS | `contacts` | `guard_conversation_status_direct_update` | `OLD.conversation_status IS DISTINCT FROM NEW.conversation_status` |
 | update_queues_updated_at | BEFORE UPDATE | `queues` | `update_updated_at_column` |  |
 | update_rate_limit_configs_updated_at | BEFORE UPDATE | `rate_limit_configs` | `update_updated_at_column` |  |
 | update_messages_updated_at | BEFORE UPDATE | `messages` | `update_updated_at_column` |  |
@@ -960,10 +963,6 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `persist_sentiment_alert` | sentiment notification title and message are required | `supabase/migrations/20260922220000_atomic_call_and_sentiment_notifications.sql` |
 | `persist_sentiment_alert` | sentiment audit identity conflict | `supabase/migrations/20260922220000_atomic_call_and_sentiment_notifications.sql` |
 | `persist_sentiment_alert` | sentiment notification identity conflict | `supabase/migrations/20260922220000_atomic_call_and_sentiment_notifications.sql` |
-| `admin_set_role` | jwt_session_required | `supabase/migrations/20260925100657_admin_set_role_last_admin_floor.sql` |
-| `admin_set_role` | admin_required | `supabase/migrations/20260925100657_admin_set_role_last_admin_floor.sql` |
-| `admin_set_role` | cannot_demote_self | `supabase/migrations/20260925100657_admin_set_role_last_admin_floor.sql` |
-| `admin_set_role` | cannot_demote_last_admin | `supabase/migrations/20260925100657_admin_set_role_last_admin_floor.sql` |
 | `get_instance_token` | service_role_required | `supabase/migrations/20260925190000_whatsapp_connections_instance_token_vault.sql` |
 | `set_instance_token` | service_role_required | `supabase/migrations/20260925190000_whatsapp_connections_instance_token_vault.sql` |
 | `set_instance_token` | invalid_instance_token | `supabase/migrations/20260925190000_whatsapp_connections_instance_token_vault.sql` |
@@ -992,7 +991,6 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `grant_agent_achievement` | p_xp_reward cannot be negative, got % | `supabase/migrations/20260928110000_fix_grant_agent_achievement_conflict_target.sql` |
 | `grant_agent_achievement` | p_xp_reward exceeds single-call maximum of 500, got % | `supabase/migrations/20260928110000_fix_grant_agent_achievement_conflict_target.sql` |
 | `grant_agent_achievement` | achievement type % requires service_role or admin privileges | `supabase/migrations/20260928110000_fix_grant_agent_achievement_conflict_target.sql` |
-| `enforce_conversation_status_transition` | Invalid conversation_status transition: % -> % | `supabase/migrations/20260929560000_contacts_conversation_status_and_grants.sql` |
 | `claim_multiplix_recipient` | service_role_required | `supabase/migrations/20260929600000_multiplix_send_engine_fixes.sql` |
 | `claim_multiplix_recipient` | invalid_multiplix_delivery_claim | `supabase/migrations/20260929600000_multiplix_send_engine_fixes.sql` |
 | `sweep_multiplix_stuck_recipients` | service_role_required | `supabase/migrations/20260929600000_multiplix_send_engine_fixes.sql` |
@@ -1197,7 +1195,12 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `duplicate_talkx_campaign` | talkx_campaign_role_required | `supabase/migrations/20261003202707_talkx_counters_checklist_duplicate.sql` |
 | `duplicate_talkx_campaign` | talkx_campaign_not_found | `supabase/migrations/20261003202707_talkx_counters_checklist_duplicate.sql` |
 | `duplicate_talkx_campaign` | talkx_campaign_not_found | `supabase/migrations/20261003202707_talkx_counters_checklist_duplicate.sql` |
-| … +686 linhas — lista completa em `context.json` | | |
+| `duplicate_talkx_campaign` | talkx_campaign_not_authorized | `supabase/migrations/20261003202707_talkx_counters_checklist_duplicate.sql` |
+| `delete_talkx_campaign` | authentication_required | `supabase/migrations/20261003202707_talkx_counters_checklist_duplicate.sql` |
+| `delete_talkx_campaign` | active_profile_not_found | `supabase/migrations/20261003202707_talkx_counters_checklist_duplicate.sql` |
+| `delete_talkx_campaign` | talkx_campaign_role_required | `supabase/migrations/20261003202707_talkx_counters_checklist_duplicate.sql` |
+| `delete_talkx_campaign` | talkx_campaign_not_found | `supabase/migrations/20261003202707_talkx_counters_checklist_duplicate.sql` |
+| … +693 linhas — lista completa em `context.json` | | |
 
 ## E. Estados, máquinas de estado e transições
 
@@ -1586,10 +1589,10 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `type` | `website` | escreve | `src/components/inbox/LinkPreview.tsx` |
 | `type` | `whatsapp` | escreve | `src/components/inbox/contact-details/ContactActionButtons.tsx` |
 | `consent_status` | `opt_in` | escreve | `src/adapters/evolutionAdapter.ts` |
-| `conversation_status` | `archived` | compara, escreve | `src/components/inbox/ContactDetails.tsx`<br>`src/components/inbox/VirtualizedRealtimeList.tsx`<br>`src/components/inbox/conversation-list/StatusChips.tsx`<br>`src/hooks/inbox/chipCounts.ts`<br>`src/hooks/inbox/conversationArchive.ts`<br>… +1 |
+| `conversation_status` | `archived` | compara, escreve | `src/components/inbox/ContactDetails.tsx`<br>`src/components/inbox/VirtualizedRealtimeList.tsx`<br>`src/components/inbox/conversation-list/StatusChips.tsx`<br>`src/hooks/inbox/chipCounts.ts`<br>`src/hooks/inbox/conversationArchive.ts` |
 | `conversation_status` | `open` | compara, escreve, filtra | `src/adapters/evolutionAdapter.ts`<br>`src/components/omnichannel/OmnichannelInbox.tsx`<br>`src/features/talk-me/useTalkMeQueue.ts`<br>`src/hooks/analytics/useDashboardData.ts`<br>`src/hooks/business/useQueueAnalytics.ts`<br>… +3 |
 | `conversation_status` | `resolved` | compara, filtra | `src/components/inbox/CloseConversationDialog.tsx`<br>`src/components/inbox/VirtualizedRealtimeList.tsx`<br>`src/hooks/analytics/useGoalNotifications.ts`<br>`src/hooks/analytics/useGoalsDashboard.ts`<br>`src/hooks/business/useQueueAnalytics.ts`<br>… +2 |
-| `conversation_status` | `waiting` | compara, filtra | `src/features/talk-me/useTalkMeQueue.ts`<br>`src/hooks/agents/useAgentPendingCounts.ts`<br>`src/hooks/inbox/chipCounts.ts` |
+| `conversation_status` | `waiting` | compara, filtra | `src/components/inbox/VirtualizedRealtimeList.tsx`<br>`src/components/inbox/chat/ChatPanelHeader.tsx`<br>`src/components/inbox/contact-details/ContactActionButtons.tsx`<br>`src/features/talk-me/useTalkMeQueue.ts`<br>`src/hooks/agents/useAgentPendingCounts.ts`<br>… +1 |
 | `status` | `403` | compara | `src/lib/rlsError.ts` |
 | `status` | `CHANNEL_ERROR` | compara | `src/hooks/communication/useAudioMemes.ts`<br>`src/hooks/realtime/useSupabaseRealtime.ts`<br>`src/hooks/team-chat/useTeamConversations.ts`<br>`src/hooks/team-chat/useTeamMessageReactions.ts`<br>`src/hooks/team-chat/useTeamMessages.ts`<br>… +1 |
 | `status` | `CLOSED` | compara | `src/hooks/realtime/useSupabaseRealtime.ts` |
@@ -1602,7 +1605,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `status` | `answered` | compara, escreve | `src/components/calls/CallDialog.tsx`<br>`src/hooks/communication/useCallEngineSink.ts`<br>`src/lib/calls/WhatsAppCallAdapter.ts`<br>`src/lib/calls/callStatus.ts` |
 | `status` | `approved` | compara, escreve | `src/components/catalog/WhatsAppTemplatesManager.tsx`<br>`src/components/security/PasswordResetRequestsPanel.tsx`<br>`src/components/talkx/TalkXCampaignWizard.tsx`<br>`src/components/talkx/TalkXTemplates.tsx`<br>`src/components/talkx/TalkXWizardDelivery.tsx`<br>… +1 |
 | `status` | `approved_email_failed` | escreve | `supabase/functions/approve-password-reset/index.ts` |
-| `status` | `archived` | escreve | `supabase/functions/gmail-send/index.ts` |
+| `status` | `archived` | compara, escreve | `src/hooks/inbox/conversationArchive.ts`<br>`supabase/functions/gmail-send/index.ts` |
 | `status` | `atencao` | compara | `src/components/dashboard/overview/QueueHealthTable.tsx` |
 | `status` | `ativo` | escreve | `src/components/crm360/CompanyFormDialog.tsx` |
 | `status` | `attention` | compara, escreve | `src/components/talkx/tracking/TalkXResumeChecklist.tsx`<br>`src/hooks/integrations/useTalkXResumeChecklist.ts` |
@@ -1921,7 +1924,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | SlaTimelinePeriod | 24h \| 7d \| 30d \| all | `src/lib/slaTimeline.ts` |
 | SLA_TRANSFER_EVENT_TYPES | 'transfer', 'queue_transfer', 'overload_reassign', 'absence_reassign', | `src/lib/slaTimeline.ts` |
 | SLA_ASSIGN_EVENT_TYPES | 'assign' | `src/lib/slaTimeline.ts` |
-| … +134 linhas — lista completa em `context.json` | | |
+| … +135 linhas — lista completa em `context.json` | | |
 
 ## F. Validações de entrada
 
@@ -2462,7 +2465,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | View | SELECT |
 |---|---|
 | `whatsapp_connections_public` | `SELECT id, name, status, is_default FROM public.whatsapp_connections` |
-| `whatsapp_connections_safe` | `select id, name, phone_number, status, is_default, case when public.has_role(auth.uid(), 'admin') then qr_code else null end as qr_code, case when public.has_role(auth.uid(), 'admin') then instance_id else null end as instance_id, farewell_message, farewell_enabled, battery_level, is_plugged, retry_ …` |
+| `whatsapp_connections_safe` | `SELECT id, name, phone_number, status, is_default, CASE WHEN public.has_role(auth.uid(), 'admin'::public.app_role) THEN qr_code ELSE NULL::text END AS qr_code, CASE WHEN public.has_role(auth.uid(), 'admin'::public.app_role) THEN instance_id ELSE NULL::text END AS instance_id, farewell_message, farew …` |
 | `whatsapp_connections_agent` | `SELECT id, name, status, phone_number, is_default FROM public.whatsapp_connections` |
 | `profiles_public` | `SELECT id, user_id, name, avatar_url, is_active, department, job_title FROM public.profiles` |
 | `channel_connections_safe` | `SELECT id, channel_type, name, status, is_active, external_account_id, external_page_id, webhook_url, whatsapp_connection_id, created_at, updated_at, created_by FROM public.channel_connections` |
@@ -2885,6 +2888,10 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 - **canTouchSupabaseClient()** — `src/hooks/gmail/useUnreadEmailCount.ts`
   ```
   if (import.meta.env.MODE !== 'test') return true; return isVitestMock(supabase.from) || isVitestMock(supabase.channel);
+  ```
+- **canArchiveConversation(status: string | null | undefined)** — `src/hooks/inbox/conversationArchive.ts`
+  ```
+  return status !== 'waiting' && status !== 'archived';
   ```
 - **generateInstanceName(name: string)** — `src/hooks/inbox/useConnectionsManager.ts`
   ```
@@ -3815,7 +3822,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `AGENT_SENDER_LABEL` | `'Atendente'` | `src/hooks/chat/useContactMedia.ts` |
 | `MEDIA_PAGE_SIZE` | `60` | `src/hooks/chat/useContactMedia.ts` |
 | `NOT_DELETED_OR` | `'is_deleted.is.null,is_deleted.eq.false'` | `src/hooks/chat/useContactMedia.ts` |
-| … +637 linhas — lista completa em `context.json` | | |
+| … +640 linhas — lista completa em `context.json` | | |
 
 ### H.2 Prazos, expirações e janelas de tempo
 
@@ -4121,7 +4128,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `LEAST(((p_day + 1)::timestamp AT TIME ZONE v_tz) - interval '1 microsecond', v_now), v_tz);` | `supabase/migrations/20261010060000_talkx_monitor_panel.sql` |
 | `count(*) FILTER (WHERE replied_at >= v_now - interval '10 minutes'),` | `supabase/migrations/20261010060000_talkx_monitor_panel.sql` |
 | `count(*) FILTER (WHERE replied_at >= v_now - interval '20 minutes'` | `supabase/migrations/20261010060000_talkx_monitor_panel.sql` |
-| … +74 linhas — lista completa em `context.json` | |
+| … +77 linhas — lista completa em `context.json` | |
 
 ### H.3 Limites de paginação
 
@@ -4139,7 +4146,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | 1 | `src/components/contacts/useContactFormValidation.ts` |
 | 50 | `src/components/diagnostics/ConnectionHealthPanel.tsx` |
 | 20 | `src/components/inbox/WhisperMode.tsx` |
-| 1 | `src/components/inbox/useChatMediaSending.ts` |
+| 10 | `src/components/inbox/useChatMediaSending.ts` |
 | 1 | `src/components/inbox/useFileUploadLogic.ts` |
 | 10 | `src/components/inbox/useGlobalSearchData.ts` |
 | 15 | `src/components/inbox/useGlobalSearchData.ts` |
@@ -4207,7 +4214,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | 1 | `src/hooks/integrations/useTalkXResumeChecklist.ts` |
 | 1 | `src/hooks/integrations/useTalkXServiceStatus.ts` |
 | 10 | `src/hooks/integrations/useTalkXTemplates.ts` |
-| 1 | `src/hooks/integrations/useWhatsAppStatus.ts` |
+| 10 | `src/hooks/integrations/useWhatsAppStatus.ts` |
 | 50 | `src/hooks/queues/useQueueDetails.ts` |
 | 200 | `src/hooks/security/useAuditLogDashboard.ts` |
 | 1 | `src/hooks/sla/useApplicableSLA.ts` |
@@ -4566,7 +4573,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | not-visible | `scripts/ci/e2e-isolated-tour.unit.mjs` |
 | private-file-canary | `scripts/ci/e2e-isolated-tour.unit.mjs` |
 | synthetic-login-failure | `scripts/ci/e2e-isolated-tour.unit.mjs` |
-| … +1792 linhas — lista completa em `context.json` | |
+| … +1791 linhas — lista completa em `context.json` | |
 
 ## J. Controle de acesso no código (checagens de perfil/permissão)
 
@@ -4637,7 +4644,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `owner` | `supabase/migrations/20260927270018_team_chat_e28_fix_find_or_create_race.sql` |
 | `anon` | `supabase/migrations/20260927340000_fix_add_agent_xp_negative_and_guard.sql` |
 
-## K. Testes como especificação (21866 testes em 2310 arquivos — nomes completos em `context.json`)
+## K. Testes como especificação (21926 testes em 2314 arquivos — nomes completos em `context.json`)
 
 | Arquivo | Testes | Exemplos do que o sistema DEVE fazer |
 |---|---|---|
@@ -4653,8 +4660,8 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `src/hooks/__tests__/useEvolutionApi.test.ts` | 69 | useEvolutionApi - Exhaustive Test Suite · Initialization · starts with isLoading = false · exposes all supported functions … |
 | `src/hooks/__tests__/useSipClient.test.ts` | 69 | useSipClient · should start with disconnected status · should set connecting status when connect is called · should become registered when registerer fires Registered … |
 | `supabase/functions/talkx-send/index.test.ts` | 69 | personalize resolves the built-in placeholders (nome/apelido/empresa/saudacao) · personalize falls back to a bracket placeholder for an unresolved variable instead of throwing · personalize substitutes the real value when the contact has that custom field · personalize resolves multiple custom values in the same message … |
+| `supabase/functions/evolution-api/index.test.ts` | 68 | R2-API-001: ${action} sem papel devolve 403 e não produz I/O no provedor · R2-API-001: admin conserva a operação (set-webhook chega ao provedor) · R2-API-001: ${action} sem papel devolve 403 e não produz I/O no provedor · R2-API-001: ação desconhecida com admin passa o gate e cai no 404 do handler … |
 | `src/lib/journey/__tests__/mappers.test.ts` | 66 | mapMessages · agrupa mensagens seguidas do MESMO autor em até 10 min · na virada de 10 min: exatamente 10 min agrupa, 10 min + 1 ms não agrupa · autores diferentes não entram na mesma rajada … |
-| `supabase/functions/evolution-api/index.test.ts` | 65 | R2-API-001: ${action} sem papel devolve 403 e não produz I/O no provedor · R2-API-001: admin conserva a operação (set-webhook chega ao provedor) · R2-API-001: ${action} sem papel devolve 403 e não produz I/O no provedor · R2-API-001: ação desconhecida com admin passa o gate e cai no 404 do handler … |
 | `src/lib/journey/__tests__/periodRange.test.ts` | 64 | resolveRange — atalhos (D04) · any devolve intervalo aberto e não marca inválido · today cobre o dia inteiro do relógio do aparelho · ${preset} começa em (hoje − ${dias - 1}) 00:00 e vai até o fim de hoje … |
 | `src/components/inbox/location-picker/__tests__/useAddressAutocomplete.test.tsx` | 62 | useAddressAutocomplete · proximidade depende das coordenadas, não da identidade do objeto · %s: centro equivalente conserva destaque e seleção sem repetir a busca · novo objeto com coordenadas zero não aborta nem substitui a consulta em voo … |
 | `src/components/settings/theme/__tests__/presets.test.ts` | 54 | §1 catálogo · tem 19 presets com ids únicos · corporate é o primeiro · ordem é clássicas (10) seguidas de GX (9) … |
@@ -4664,13 +4671,13 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `src/lib/journey/__tests__/stats.test.ts` | 50 | computeJourneyStats — totais por categoria (S074) · conta cada categoria separada e a soma em  · linha com data inválida não entra na conta nem produz NaN · entrada vazia devolve zeros sem estourar … |
 | `src/components/ai/__tests__/AutoTicketClassifier.test.tsx` | 49 | AutoTicketClassifier · Rendering · renders title · renders auto-classify switch … |
 | `src/components/omnichannel/__tests__/OmnichannelInbox.test.tsx` | 49 | OmnichannelInbox · Projeção canônica de conversas · mostra a última mensagem de cada conversa em vez de só o cadastro · marca não lidas com a contagem vinda da projeção … |
+| `supabase/functions/message-delivery/index.test.ts` | 49 | message delivery rejects methods other than POST before reading secrets · message delivery rejects unauthenticated callers before reading the body · message delivery builds an Evolution poll only from a valid persisted payload · message delivery rejects a malformed persisted contact payload … |
+| `src/hooks/inbox/__tests__/useInboxBulkActions.test.ts` | 48 | useInboxBulkActions — seleção · estado inicial: fora do modo de seleção, sem ids e sem loading · toggleSelectionMode liga e, ao desligar, limpa a seleção · toggleSelection alterna o id e devolve um Set NOVO (não muta o anterior) … |
 | `src/hooks/system/__tests__/useDiagnosticsData.test.ts` | 48 | useDiagnosticsData — mensagens da janela de 24 h · conta só as mensagens do agente dentro da janela e calcula as taxas · as falhas recentes trazem só id, horário e motivo — sem nome nem conteúdo · base vazia: taxas 0 (sem divisão por zero) e nenhuma busca de contato … |
 | `src/components/inbox/contact-details/__tests__/ContactHeaderSection.test.tsx` | 47 | ContactHeaderSection · renders contact first name · renders company name · does not render phone number or WhatsApp link … |
 | `tests/contracts/ai-routing.contract.test.ts` | 47 | IA-031/034 — resolveProvider: um padrão por finalidade, nunca arbitrário · exatamente 1 padrão ativo para a finalidade → resolve para ele · 0 padrões → NO_PROVIDER (a ausência vira indisponibilidade explícita) · 2+ padrões para a mesma finalidade → AMBIGUOUS_PROVIDER (jamais escolher uma) … |
 | `src/components/ai/__tests__/ChurnPredictionDashboard.test.tsx` | 46 | ChurnPredictionDashboard · Rendering · renders title · renders subtitle … |
 | `src/components/performance/__tests__/PerformanceMonitor.test.tsx` | 46 | PerformanceMonitor · Rendering · renders title · renders subtitle … |
-| `src/hooks/inbox/__tests__/useInboxBulkActions.test.ts` | 45 | useInboxBulkActions — seleção · estado inicial: fora do modo de seleção, sem ids e sem loading · toggleSelectionMode liga e, ao desligar, limpa a seleção · toggleSelection alterna o id e devolve um Set NOVO (não muta o anterior) … |
-| `supabase/functions/message-delivery/index.test.ts` | 45 | message delivery rejects methods other than POST before reading secrets · message delivery rejects unauthenticated callers before reading the body · message delivery builds an Evolution poll only from a valid persisted payload · message delivery rejects a malformed persisted contact payload … |
 | `src/components/catalog/__tests__/ExternalProductManagement.test.tsx` | 43 | ExternalProductManagement · mostra o título e a contagem total de produtos · E32: chip de sync recente mostra  · E32: chip de sync com mais de 24h mostra data/hora (tom neutro) … |
 | `src/components/catalog/__tests__/CatalogRail.test.tsx` | 42 | CatalogRail — E51 banner · renderiza a copy do banner e nao inclui o placeholder do mock · usa o 1o produto em destaque COM imagem (ignora destaque sem foto) · le a foto de primary_image_url (campo canonico do ExternalProduct) … |
 | `src/components/catalog/__tests__/SendProductDialog.test.tsx` | 42 | SendProductDialog — Fase 7 (E72-E75 parcial) · mostra o contador de caracteres da mensagem (E73) · acima de 2000 caracteres, desabilita  · dentro do limite,  … |
@@ -4780,6 +4787,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `supabase/functions/send-scheduled-report/index.test.ts` | 25 | auth: sem identidade → 401 e zero lookup/Resend/service-role · auth: x-cron-secret errado → 401 sem efeito · auth: CRON_SECRET vazio → x-cron-secret não autoriza (fail closed) · auth: Bearer inválido → 401 sem efeito … |
 | `e2e/navegacao-modulos.spec.ts` | 24 | Navegação por todos os módulos (desktop) · abre as 42 entradas mapeadas, o modo Quadro de Tarefas e a busca global sem erro de console nem requisição falha · Navegação por todos os módulos (celular 390x844) · abre as 42 entradas mapeadas pelo menu móvel, o modo Quadro de Tarefas e a busca do cabeçalho sem erro de console nem requisição falha … |
 | `src/components/inbox/__tests__/ConversationTabs.test.tsx` | 24 | etapa 75 — ConversationTabs (8 abas da fusão) · renderiza as 8 abas e nenhuma aba removida · badge de Tarefas mostra tasksOpen · não renderiza badge quando o contador é zero … |
+| `src/components/inbox/__tests__/VirtualizedRealtimeList.test.tsx` | 24 | VirtualizedRealtimeList — badge de canal e mini-avatar do atendente · mostra o badge do canal para Instagram, mas não para WhatsApp · esconde o mini-avatar quando a conversa é do próprio usuário logado (compara com o profile.id, não com o auth id — #349) · sem entrada no agentsMap para o assigned_to, não quebra e não mostra mini-avatar … |
 | `src/components/inbox/chat/__tests__/ChatSearchBar.test.tsx` | 24 | ChatSearchBar · renders nothing when closed · renders input and filters when open · finds messages by text content … |
 | `src/hooks/__tests__/useBitrixApi.test.ts` | 24 | useBitrixApi · initializes with loading false · initializes with error null · exposes listLeads function … |
 | `src/hooks/evolution/__tests__/useEvolutionMessaging.test.ts` | 24 | mapeamento ação -> payload da edge function · $name envia $action com o corpo do roteador · envia a mensagem pelo caminho da edge function, nunca direto para a Evolution · expõe exatamente as funções do contrato (nada a mais, nada a menos) … |
@@ -4823,7 +4831,6 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `tests/contracts/contraste-aa-componentes.contract.test.ts` | 22 | contraste AA — o parser de tokens não pode quebrar por causa do arquivo · acha o token no SEGUNDO bloco :root (tokens.css com 2 blocos) · ignora menção ao seletor dentro de comentário · não se perde com chave aninhada dentro do bloco … |
 | `src/__tests__/a11y/icon-button-names.test.ts` | 21 | varredura de botões de ícone — casos sintéticos · detecta <Button size=\ · não acusa quando há aria-label · não acusa quando há title … |
 | `src/components/calls/__tests__/calls-access.test.ts` | 21 | Telefonia — acesso e fronteiras (T07) · encontra a superfície de telefonia (o teste não passa por vacuidade) · nenhum arquivo da telefonia carrega a chave service_role · o hook de SIP não fala SIP direto: a fronteira é o adapter (invariante do T09) … |
-| `src/components/inbox/__tests__/VirtualizedRealtimeList.test.tsx` | 21 | VirtualizedRealtimeList — badge de canal e mini-avatar do atendente · mostra o badge do canal para Instagram, mas não para WhatsApp · esconde o mini-avatar quando a conversa é do próprio usuário logado (compara com o profile.id, não com o auth id — #349) · sem entrada no agentsMap para o assigned_to, não quebra e não mostra mini-avatar … |
 | `src/components/inbox/chat/__tests__/ConversationTabs.cp8.test.tsx` | 21 | CP8 · geometria das 8 abas · a barra mantém a altura do header do painel (53px) e não volta aos 48px do plano · a aba ativa mede 36px (h-9) — dentro do alvo 36±2 do E.2 · todas as 8 abas têm a mesma altura (nenhuma aba encolhe ao ser selecionada) … |
 | `src/components/inbox/tabs/__tests__/fileDisplay.card.test.ts` | 21 | formatCardDate (S22) — data curta do cartão · mesmo dia local vira  · dia anterior vira  · virada de dia 23:59 → 00:01: a mensagem das 23:59 vira  … |
 | `src/components/talkx/__tests__/TalkXRecipientRowActions.test.tsx` | 21 | TalkXRecipientRowActions · renderiza  · renderiza  · NÃO renderiza  … |
@@ -4941,7 +4948,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `src/components/calls/__tests__/RecordingPlayer.test.tsx` | 16 | RecordingPlayer (T67) · helpers reais de Edge recebem auth e anon key sinteticos do mock · nao renderiza nada quando a chamada nao tem gravacao · nao renderiza nem requisita quando a chamada nao diz que tem … |
 | `src/components/contacts/__tests__/BulkActionsBar.test.tsx` | 16 | BulkActionsBar — ações em lote (etapa 81) · não renderiza sem seleção · Tag acrescenta a tag só em quem ainda não tem · Atribuir grava assigned_to em todos os selecionados … |
 | `src/components/dashboard/__tests__/useSentimentData.test.tsx` | 16 | useSentimentData · monta sem lançar exceção e sai do loading (guarda contra TDZ de fetchData no useEffect) · erro na RPC é capturado — nunca escapa do hook e loading sempre volta a false · falha na leitura secundária de agentes mantém os dados principais e sinaliza leitura incompleta … |
-| … +2010 linhas — lista completa em `context.json` | | |
+| … +2014 linhas — lista completa em `context.json` | | |
 
 ## L. Eventos de webhook tratados (contratos com sistemas externos)
 
@@ -5017,9 +5024,9 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `notify_due_tasks` | `src/components/tasks/shared/WorkItemSheet.tsx` |
 | `notify_due_tasks` | `src/components/tasks/shared/cardActions.ts` |
 | `.add('animate-pulse-subtle'` | `src/components/team-chat/TeamMessageItem.tsx` |
-| `.add('high-contrast'` | `src/components/theme/HighContrastToggle.tsx` |
-| `.add('large-text'` | `src/components/theme/HighContrastToggle.tsx` |
-| `.add('reduced-motion'` | `src/components/theme/HighContrastToggle.tsx` |
+| `.add('high-contrast'` | `src/components/theme/HighContrastProvider.tsx` |
+| `.add('large-text'` | `src/components/theme/HighContrastProvider.tsx` |
+| `.add('reduced-motion'` | `src/components/theme/HighContrastProvider.tsx` |
 | `invoke(` | `src/hooks/auth/useWebAuthn.ts` |
 | `invoke(` | `src/hooks/chat/useAutomationSuggestions.ts` |
 | `notify` | `src/hooks/chat/useExclusiveAudio.ts` |
@@ -5084,6 +5091,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `publish(` | `src/lib/calls/tabLeaderStore.ts` |
 | `messages.create` | `src/lib/journey/rawRows.ts` |
 | `notify_on_warning` | `src/lib/schemas/slaRule.ts` |
+| `notify` | `src/lib/whatsapp/sendConnection.ts` |
 | `invoke(` | `src/pages/ResetPassword.tsx` |
 | `invoke(` | `src/services/evolution.service.ts` |
 | `enqueue(` | `src/services/outbound-message.service.ts` |
@@ -5151,6 +5159,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | A regra e travada por scripts/ci/playwright-config-e81.unit.mjs. | `playwright.config.ts` |
 | outro SO não pode ser comparada com o render do Linux do `e2e-logado.yml`. | `playwright.config.ts` |
 | a propria porta e' o comportamento util. O que nao pode acontecer e' | `playwright.config.ts` |
+| bundle-budget lista os chunks iniciais; vendor-radix nao pode | `vite.config.ts` |
 | sem esta regra cai num chunk "dist-*" importado pelo ChatPanel. | `vite.config.ts` |
 | carga 33 e mais de 5 s com a maquina em carga 46-51 — ou seja, reprovava por PRAZO e nao | `vitest.contracts.config.ts` |
 | Unskewed requests must not pay the worst-case retention (nonce map capacity). | `infrastructure/preview-egress-proxy/main_test.go` |
@@ -5355,6 +5364,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | * `HOVER_REVEAL_TAP` acrescenta o alvo de toque mínimo de 40 px | `src/components/inbox/hoverActions.ts` |
 | muda de tamanho. Onde o ponto é um contêiner de ações, o mínimo vale para a | `src/components/inbox/hoverActions.ts` |
 | * Regra (medida em produção em 03/10, item 6 do S41): | `src/components/inbox/resolveActiveTab.ts` |
+| de teste do E2E — mesma regra do banco (resolve_outbound_whatsapp_connection). | `src/components/inbox/useChatMediaSending.ts` |
 | ausente (objeto orfao); `null` = estado indeterminado (a consulta falhou). Somente | `src/components/inbox/useFileUploadLogic.ts` |
 | for incerto: o retry nao pode refazer o upload (URL novo mudaria a actionKey) nem criar | `src/components/inbox/useFileUploadLogic.ts` |
 | * Mínimo de caracteres para a busca virar evento (abaixo disso é navegação, não consulta). */ | `src/components/inbox/useGlobalSearchData.ts` |
@@ -5441,6 +5451,4 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | * A varredura do periodo pode parar quando o item MAIS ANTIGO carregado ja cruzou o limite que | `src/components/inbox/tabs/FilesTab.tsx` |
 | #144/OTH-002: erro na contagem nao pode virar "0" confirmado — vira "indisponivel" (—). | `src/components/inbox/tabs/FilesTab.tsx` |
 | identidade de cada item sai de `resolveSenderIdentity` no cartao. D06: a permissao de | `src/components/inbox/tabs/FilesTab.tsx` |
-| arquivos que estao nele. Enquanto o item mais antigo carregado nao cruzar o limite que | `src/components/inbox/tabs/FilesTab.tsx` |
-| sincrona dentro do efeito) e o efeito nao pode chamar `setState` direto, entao o espelho e | `src/components/inbox/tabs/FilesTab.tsx` |
-| … +1709 linhas — lista completa em `context.json` | |
+| … +1715 linhas — lista completa em `context.json` | |

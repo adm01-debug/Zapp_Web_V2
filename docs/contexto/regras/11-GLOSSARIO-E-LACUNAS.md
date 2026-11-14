@@ -1,6 +1,6 @@
 # 11 · GLOSSÁRIO, DADOS DE REFERÊNCIA E LACUNAS
 
-> Gerado automaticamente por AI Context Sync v1.3.2 · commit `e50daef6a4` · branch `main` · 2026-11-14 04:03 UTC
+> Gerado automaticamente por AI Context Sync v1.3.2 · commit `ab657aa34e` · branch `main` · 2026-11-14 05:05 UTC
 > Não edite à mão — regras humanas vão em `manual/`.
 
 ## Glossário do domínio (entidades do sistema)
@@ -103,7 +103,7 @@
 | `gmail_accounts` | _(sem COMMENT ON TABLE — significado não documentado)_ | 16 colunas | migration |
 | `gmail_oauth_states` | [RLS-sem-policy: intencional] Estados temporários do fluxo OAuth do Gmail (PKCE/state). Criados e consumidos pela edge function gmail-oauth (service_role). Expiração automática. | 6 colunas | migration |
 | `goals_configurations` | _(sem COMMENT ON TABLE — significado não documentado)_ | 10 colunas | migration |
-| `instance_pauses` | _(sem COMMENT ON TABLE — significado não documentado)_ | 9 colunas | types.ts |
+| `instance_pauses` | _(sem COMMENT ON TABLE — significado não documentado)_ | 12 colunas | types.ts |
 | `ip_whitelist` | _(sem COMMENT ON TABLE — significado não documentado)_ | 5 colunas | migration |
 | `knowledge_base_articles` | _(sem COMMENT ON TABLE — significado não documentado)_ | 11 colunas | migration |
 | `knowledge_base_files` | _(sem COMMENT ON TABLE — significado não documentado)_ | 9 colunas | migration |
@@ -116,7 +116,7 @@
 | `message_reactions` | _(sem COMMENT ON TABLE — significado não documentado)_ | 6 colunas | migration |
 | `message_reports` | _(sem COMMENT ON TABLE — significado não documentado)_ | 9 colunas | migration |
 | `message_templates` | _(sem COMMENT ON TABLE — significado não documentado)_ | 10 colunas | migration |
-| `messages` | Mensagens de todas as origens. O trigger trg_sicoob_reply (Sicoob Bridge) foi removido em 29/09/2026. | 41 colunas | migration |
+| `messages` | Mensagens de todas as origens. O trigger trg_sicoob_reply (Sicoob Bridge) foi removido em 29/09/2026. | 43 colunas | migration |
 | `meta_capi_events` | _(sem COMMENT ON TABLE — significado não documentado)_ | 11 colunas | migration |
 | `mfa_sessions` | _(sem COMMENT ON TABLE — significado não documentado)_ | 6 colunas | migration |
 | `multiplix_audience_members` | _(sem COMMENT ON TABLE — significado não documentado)_ | 6 colunas | migration |
@@ -178,7 +178,7 @@
 | `supabase_migrations.version_reservations` | _(sem COMMENT ON TABLE — significado não documentado)_ | 4 colunas | migration |
 | `tags` | Etiquetas aplicaveis a contatos (contact_tags). | 1 colunas | migration |
 | `talkx_alerts` | X033: alertas do motor Talk X. Um alerta aberto por (tipo, campanha); fechado sozinho quando o sinal deixa de disparar (resolved_at). Escrito por talkx_engine_alerts (service_role), lido por admin/supervisor. | 6 colunas | migration |
-| `talkx_blacklist` | _(sem COMMENT ON TABLE — significado não documentado)_ | 13 colunas | migration |
+| `talkx_blacklist` | _(sem COMMENT ON TABLE — significado não documentado)_ | 15 colunas | migration |
 | `talkx_campaign_events` | _(sem COMMENT ON TABLE — significado não documentado)_ | 8 colunas | migration |
 | `talkx_campaign_segments` | Talk X (X057): segmentos de uma campanha, em ordem (position 1..10). A ordem define qual segmento "ganha" quando o mesmo contato aparece em mais de um. | 7 colunas | migration |
 | `talkx_campaigns` | _(sem COMMENT ON TABLE — significado não documentado)_ | 72 colunas | migration |
@@ -307,7 +307,7 @@
 | `AudienceFilterKey` (TS) | contact_status \| company \| funnel_stage \| seller \| rfm \| location |  | `src/components/talkx/TalkXAudienceFilters.tsx` |
 | `TalkXPreviewMode` (TS) | raw \| resolved |  | `src/components/talkx/TalkXMessagePreview.tsx` |
 | `TalkXTopView` (TS) | tabs \| wizard \| monitor \| scheduled \| running \| paused \| report |  | `src/components/talkx/TalkXView.tsx` |
-| … +356 linhas — lista completa em `context.json` | | | |
+| … +357 linhas — lista completa em `context.json` | | | |
 
 ## Dados de referência (seed — planos, categorias, perfis fixos)
 
@@ -392,8 +392,6 @@
 | status | valor `string` para `call_status` usado no código não existe em nenhum enum do banco/TS | `compara:src/hooks/communication/useIncomingCallListener.ts` |
 | status | valor `string` para `transcription_status` usado no código não existe em nenhum enum do banco/TS | `compara:supabase/functions/ai-transcribe-audio/index.ts` |
 | status | valor `string` para `connection_status` usado no código não existe em nenhum enum do banco/TS | `compara:src/hooks/integrations/useTalkXServerResumePrecheck.ts` |
-| coluna | coluna `delivery_post_started_at` usada no código não existe no schema de `messages` |  |
-| coluna | coluna `manually_resolved_at` usada no código não existe no schema de `messages` |  |
 | coluna | coluna `company_id` usada no código não existe no schema de `contacts` |  |
 | coluna | coluna `company` usada no código não existe no schema de `talkx_blacklist` |  |
 | tabela | tabela `a` usada no código não existe nas migrations/types do repo | `scripts/ai-context/cenarios.mjs` |

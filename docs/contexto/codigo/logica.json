@@ -1,14 +1,14 @@
 {
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
- "total": 203,
+ "total": 205,
  "por_camada": {
   "adapters": 2,
   "config": 2,
   "contexts": 2,
   "data": 5,
   "integrations": 3,
-  "lib": 150,
+  "lib": 152,
   "providers": 1,
   "python": 9,
   "segments": 1,
@@ -728,7 +728,7 @@
    "zod_schemas": 0,
    "flags": [],
    "papeis": [],
-   "usado_por": 378,
+   "usado_por": 379,
    "usado_por_modulos": [
     "components/admin",
     "components/agents",
@@ -790,6 +790,7 @@
     "hooks/voice",
     "lib",
     "lib/calls",
+    "lib/inbox",
     "pages",
     "pages/admin",
     "services"
@@ -837,7 +838,7 @@
     "TablesUpdate"
    ],
    "export_default": null,
-   "linhas": 15526,
+   "linhas": 15654,
    "tabelas": [],
    "rpcs": [],
    "edges": [],
@@ -3034,6 +3035,36 @@
     "hooks/integrations"
    ],
    "coberto_por_testes": 3,
+   "orfao": false
+  },
+  {
+   "arquivo": "src/lib/inbox/transferConversation.ts",
+   "camada": "lib",
+   "exports": [
+    "TRANSFER_CONFLICT_MESSAGE",
+    "TransferConversationInput",
+    "transferConversation",
+    "transferErrorMessage"
+   ],
+   "export_default": null,
+   "linhas": 56,
+   "tabelas": [],
+   "rpcs": [
+    "transfer_conversation"
+   ],
+   "edges": [],
+   "env": [],
+   "externos": [],
+   "zod_schemas": 0,
+   "flags": [],
+   "papeis": [],
+   "usado_por": 4,
+   "usado_por_modulos": [
+    "components/inbox",
+    "hooks/chat",
+    "hooks/inbox"
+   ],
+   "coberto_por_testes": 1,
    "orfao": false
   },
   {
@@ -5372,6 +5403,43 @@
    "orfao": false
   },
   {
+   "arquivo": "src/lib/whatsapp/sendConnection.ts",
+   "camada": "lib",
+   "exports": [
+    "ConnectionIdentity",
+    "E2E_FIXTURE_INSTANCE_ID",
+    "WHATSAPP_DISCONNECTED_DESCRIPTION",
+    "WHATSAPP_DISCONNECTED_TITLE",
+    "WhatsAppDisconnectedError",
+    "describeWhatsAppDisconnected",
+    "isTestFixtureConnection",
+    "surfaceWhatsAppDisconnected",
+    "withoutTestFixtureConnections"
+   ],
+   "export_default": null,
+   "linhas": 108,
+   "tabelas": [],
+   "rpcs": [],
+   "edges": [],
+   "env": [],
+   "externos": [
+    "sonner"
+   ],
+   "zod_schemas": 0,
+   "flags": [],
+   "papeis": [],
+   "usado_por": 6,
+   "usado_por_modulos": [
+    "components/inbox",
+    "hooks/chat",
+    "hooks/groups",
+    "hooks/integrations",
+    "services"
+   ],
+   "coberto_por_testes": 1,
+   "orfao": false
+  },
+  {
    "arquivo": "src/lib/zappSchemas.ts",
    "camada": "lib",
    "exports": [
@@ -5994,7 +6062,7 @@
     "sendRichOutboundMessage"
    ],
    "export_default": null,
-   "linhas": 538,
+   "linhas": 565,
    "tabelas": [],
    "rpcs": [
     "enqueue_outbound_message",

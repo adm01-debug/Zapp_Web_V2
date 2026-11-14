@@ -1,7 +1,7 @@
 {
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
- "total": 915,
+ "total": 916,
  "orfaos": 51,
  "nomes_duplicados": {
   "AchievementBadge": [
@@ -56,6 +56,10 @@
   "HandoffDialog": [
    "src/components/inbox/collaboration/HandoffDialog.tsx",
    "src/components/inbox/RealtimeCollaboration.tsx"
+  ],
+  "HighContrastProvider": [
+   "src/components/theme/HighContrastProvider.tsx",
+   "src/components/theme/HighContrastToggle.tsx"
   ],
   "InboxEmptyState": [
    "src/components/ui/empty-states.tsx",
@@ -5044,7 +5048,7 @@
     "ChatPanelHeader"
    ],
    "export_default": null,
-   "linhas": 262,
+   "linhas": 265,
    "dominio": "components/inbox",
    "hooks_locais": [
     "useApplicableSLA",
@@ -5634,7 +5638,7 @@
     "ChatPanel"
    ],
    "export_default": null,
-   "linhas": 558,
+   "linhas": 561,
    "dominio": "components/inbox",
    "hooks_locais": [
     "useAmbientColor",
@@ -5798,7 +5802,7 @@
     "ContactActionButtons"
    ],
    "export_default": null,
-   "linhas": 241,
+   "linhas": 244,
    "dominio": "components/inbox",
    "hooks_locais": [
     "useContactUnreadEmails",
@@ -6236,7 +6240,7 @@
     "ConversationListSidebar"
    ],
    "export_default": null,
-   "linhas": 647,
+   "linhas": 653,
    "dominio": "components/inbox",
    "hooks_locais": [
     "useIsMobile",
@@ -7018,7 +7022,7 @@
     "ViewersIndicator"
    ],
    "export_default": null,
-   "linhas": 126,
+   "linhas": 137,
    "dominio": "components/inbox",
    "hooks_locais": [],
    "tabelas": [
@@ -8034,7 +8038,7 @@
     "VirtualizedRealtimeList"
    ],
    "export_default": null,
-   "linhas": 790,
+   "linhas": 793,
    "dominio": "components/inbox",
    "hooks_locais": [
     "useAgentsLite",
@@ -13067,6 +13071,20 @@
    "orfao": false
   },
   {
+   "arquivo": "src/components/theme/HighContrastProvider.tsx",
+   "exports": [
+    "HighContrastProvider"
+   ],
+   "export_default": null,
+   "linhas": 135,
+   "dominio": "components/theme",
+   "hooks_locais": [],
+   "tabelas": [],
+   "edges": [],
+   "usado_por": 2,
+   "orfao": false
+  },
+  {
    "arquivo": "src/components/theme/HighContrastToggle.tsx",
    "exports": [
     "AccessibilitySettings",
@@ -13074,14 +13092,14 @@
     "HighContrastToggle"
    ],
    "export_default": null,
-   "linhas": 330,
+   "linhas": 190,
    "dominio": "components/theme",
    "hooks_locais": [
     "useHighContrast"
    ],
    "tabelas": [],
    "edges": [],
-   "usado_por": 3,
+   "usado_por": 1,
    "orfao": false
   },
   {

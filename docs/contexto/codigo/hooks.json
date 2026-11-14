@@ -601,7 +601,7 @@
    "hooks_exportados": [
     "useChatPanelHandlers"
    ],
-   "linhas": 749,
+   "linhas": 760,
    "dominio": "components/inbox",
    "tabelas": [
     "contacts",
@@ -811,7 +811,7 @@
    "hooks_exportados": [
     "useChatMediaSending"
    ],
-   "linhas": 188,
+   "linhas": 210,
    "dominio": "components/inbox",
    "tabelas": [
     "contacts",
@@ -1605,28 +1605,26 @@
    "coberto_por_testes": 9
   },
   {
-   "arquivo": "src/components/theme/HighContrastToggle.tsx",
+   "arquivo": "src/components/theme/highContrastContext.ts",
    "hooks_exportados": [
     "useHighContrast"
    ],
-   "linhas": 330,
+   "linhas": 33,
    "dominio": "components/theme",
    "tabelas": [],
    "rpcs": [],
    "edges": [],
    "hooks_internos": [
-    "useContext",
-    "useEffect",
-    "useState"
+    "useContext"
    ],
    "canais_realtime": [],
    "usado_por": 3,
    "usado_por_arquivos": [
-    "src/components/layout/Sidebar.tsx",
-    "src/components/transitions/useTransitionPreferences.ts",
-    "src/providers/AppProviders.tsx"
+    "src/components/theme/HighContrastProvider.tsx",
+    "src/components/theme/HighContrastToggle.tsx",
+    "src/components/transitions/useTransitionPreferences.ts"
    ],
-   "coberto_por_testes": 9
+   "coberto_por_testes": 2
   },
   {
    "arquivo": "src/components/theme/useChatTextSize.ts",
@@ -3362,7 +3360,7 @@
    "hooks_exportados": [
     "useConversationActions"
    ],
-   "linhas": 388,
+   "linhas": 396,
    "dominio": "hooks/chat",
    "tabelas": [
     "conversation_snoozes",
@@ -3372,8 +3370,7 @@
    ],
    "rpcs": [
     "reopen_conversation",
-    "set_conversation_status",
-    "transfer_conversation"
+    "set_conversation_status"
    ],
    "edges": [],
    "hooks_internos": [
@@ -3910,7 +3907,7 @@
    "hooks_exportados": [
     "useNewConversation"
    ],
-   "linhas": 166,
+   "linhas": 172,
    "dominio": "hooks/chat",
    "tabelas": [
     "contacts",
@@ -7352,7 +7349,7 @@
    "hooks_exportados": [
     "useGroupActions"
    ],
-   "linhas": 230,
+   "linhas": 233,
    "dominio": "hooks/groups",
    "tabelas": [
     "contacts",
@@ -7560,15 +7557,13 @@
    "hooks_exportados": [
     "useInboxBulkActions"
    ],
-   "linhas": 321,
+   "linhas": 336,
    "dominio": "hooks/inbox",
    "tabelas": [
     "contacts",
     "messages"
    ],
-   "rpcs": [
-    "transfer_conversation"
-   ],
+   "rpcs": [],
    "edges": [
     "batch-fetch-avatars"
    ],
@@ -9216,7 +9211,7 @@
    "hooks_exportados": [
     "useWhatsAppStatus"
    ],
-   "linhas": 329,
+   "linhas": 332,
    "dominio": "hooks/integrations",
    "tabelas": [
     "contacts",
@@ -11064,7 +11059,7 @@
    "hooks_exportados": [
     "useUndoableAction"
    ],
-   "linhas": 209,
+   "linhas": 210,
    "dominio": "hooks/system",
    "tabelas": [],
    "rpcs": [],

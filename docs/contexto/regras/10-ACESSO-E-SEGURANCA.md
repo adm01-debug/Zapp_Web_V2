@@ -1,6 +1,6 @@
 # 10 · ACESSO E SEGURANÇA — quem pode o quê
 
-> Gerado automaticamente por AI Context Sync v1.3.2 · commit `e50daef6a4` · branch `main` · 2026-11-14 04:03 UTC
+> Gerado automaticamente por AI Context Sync v1.3.2 · commit `ab657aa34e` · branch `main` · 2026-11-14 05:05 UTC
 > Não edite à mão — regras humanas vão em `manual/`.
 
 ## Perfis / roles identificados
@@ -25,16 +25,16 @@
 | `agent_presence` | enabled | authenticated: true | authenticated: user_id = auth.uid() | authenticated: user_id = auth.uid() | — |
 | `agent_skills` | enabled | authenticated: public.is_admin_or_supervisor(auth.uid())<br>authenticated: profile_id IN (SELECT id FROM public.profiles WHERE user_id = auth.uid()) OR is_admin_or_supervisor(auth.uid()) | authenticated: public.is_admin_or_supervisor(auth.uid()) | authenticated: public.is_admin_or_supervisor(auth.uid()) | authenticated: public.is_admin_or_supervisor(auth.uid()) |
 | `agent_stats` | enabled | authenticated: profile_id IN (SELECT p.id FROM profiles p WHERE p.user_id = auth.uid()) OR is_admin_or_supervisor(auth.uid()) | authenticated: (profile_id IN (SELECT id FROM profiles WHERE user_id = auth.uid()) OR is_admin_or_supervisor(auth.uid())) AND ( is_admin_or_ | authenticated: public.is_admin_or_supervisor(auth.uid()) | — |
-| `agent_visibility_grants` | enabled | authenticated: public.is_admin_or_supervisor(auth.uid())<br>authenticated: has_role(auth.uid(), 'agent'::app_role) AND agent_id IN (SELECT p.id FROM profiles p WHERE p.user_id = auth.uid()) | authenticated: public.is_admin_or_supervisor(auth.uid()) | authenticated: public.is_admin_or_supervisor(auth.uid()) | authenticated: public.is_admin_or_supervisor(auth.uid()) |
+| `agent_visibility_grants` | enabled | authenticated: public.is_admin_or_supervisor(auth.uid())<br>authenticated: public.has_role(auth.uid(), 'agent'::public.app_role) AND agent_id IN (SELECT p.id FROM public.profiles p WHERE p.user_id = a | authenticated: public.is_admin_or_supervisor(auth.uid()) | authenticated: public.is_admin_or_supervisor(auth.uid()) | authenticated: public.is_admin_or_supervisor(auth.uid()) |
 | `ai_budget_reservations` | enabled | — | — | — | — |
 | `ai_conversation_tags` | enabled | authenticated: contact_id IN ( SELECT c.id FROM public.contacts c WHERE c.assigned_to IN ( SELECT p.id FROM public.profiles p WHERE p.user_i | authenticated: contact_id IN ( SELECT c.id FROM contacts c WHERE c.assigned_to IN (SELECT id FROM profiles WHERE user_id = auth.uid()) ) OR  | authenticated: public.is_admin_or_supervisor(auth.uid()) | authenticated: public.is_admin_or_supervisor(auth.uid())<br>authenticated: EXISTS ( SELECT 1 FROM public.contacts c JOIN public.profiles p ON p.id = c.assigned_to WHERE c.id = ai_conversation_tags.con |
 | `ai_jobs` | enabled | — | — | — | — |
 | `ai_model_prices` | enabled | authenticated: true | — | — | — |
-| `ai_providers` | enabled | authenticated: public.has_role(auth.uid(), 'admin') | authenticated: public.has_role(auth.uid(), 'admin') | authenticated: public.has_role(auth.uid(), 'admin') | authenticated: public.has_role(auth.uid(), 'admin') |
+| `ai_providers` | enabled | authenticated: public.has_role(auth.uid(), 'admin'::public.app_role) | authenticated: public.has_role(auth.uid(), 'admin'::public.app_role) | authenticated: public.has_role(auth.uid(), 'admin'::public.app_role) | authenticated: public.has_role(auth.uid(), 'admin'::public.app_role) |
 | `ai_usage_logs` | enabled | authenticated: public.is_admin_or_supervisor(auth.uid())<br>authenticated: user_id = auth.uid() | service_role: true | — | — |
 | `ai_usage_outbox` | enabled | service_role: true | service_role: true | service_role: true | service_role: true |
 | `allowed_countries` | enabled | authenticated: public.is_admin_or_supervisor(auth.uid()) | authenticated: is_admin(auth.uid()) | — | authenticated: is_admin(auth.uid()) |
-| `app_settings` | enabled | authenticated: EXISTS ( SELECT 1 FROM public.user_roles ur WHERE ur.user_id = (SELECT auth.uid()) AND ur.role = 'admin' ) | authenticated: EXISTS ( SELECT 1 FROM public.user_roles ur WHERE ur.user_id = (SELECT auth.uid()) AND ur.role = 'admin' ) | authenticated: EXISTS ( SELECT 1 FROM public.user_roles ur WHERE ur.user_id = (SELECT auth.uid()) AND ur.role = 'admin' ) | authenticated: EXISTS ( SELECT 1 FROM public.user_roles ur WHERE ur.user_id = (SELECT auth.uid()) AND ur.role = 'admin' ) |
+| `app_settings` | enabled | authenticated: EXISTS ( SELECT 1 FROM public.user_roles ur WHERE ur.user_id = (SELECT auth.uid() AS uid) AND ur.role = 'admin'::public.app_r | authenticated: EXISTS ( SELECT 1 FROM public.user_roles ur WHERE ur.user_id = (SELECT auth.uid() AS uid) AND ur.role = 'admin'::public.app_r | authenticated: EXISTS ( SELECT 1 FROM public.user_roles ur WHERE ur.user_id = (SELECT auth.uid() AS uid) AND ur.role = 'admin'::public.app_r | authenticated: EXISTS ( SELECT 1 FROM public.user_roles ur WHERE ur.user_id = (SELECT auth.uid() AS uid) AND ur.role = 'admin'::public.app_r |
 | `audio_meme_favorites` | enabled | authenticated: user_id = auth.uid() | authenticated: user_id = auth.uid() | authenticated: user_id = auth.uid() | authenticated: user_id = auth.uid() |
 | `audio_memes` | enabled | authenticated: true | authenticated: uploaded_by = auth.uid() | authenticated: (uploaded_by = auth.uid()) OR is_admin_or_supervisor(auth.uid()) | authenticated: uploaded_by = auth.uid() OR public.is_admin_or_supervisor(auth.uid()) |
 | `audit_logs` | enabled | authenticated: (SELECT public.has_role((SELECT auth.uid()), 'admin'::public.app_role)) | authenticated: false<br>authenticated: false | authenticated: false | authenticated: false |
@@ -43,7 +43,7 @@
 | `automations` | enabled | authenticated: true<br>authenticated: public.is_admin_or_supervisor(auth.uid()) | authenticated: public.is_admin_or_supervisor(auth.uid()) | authenticated: public.is_admin_or_supervisor(auth.uid()) | authenticated: public.is_admin_or_supervisor(auth.uid()) |
 | `away_messages` | enabled | authenticated: public.is_admin_or_supervisor(auth.uid())<br>authenticated: true | authenticated: public.is_admin_or_supervisor(auth.uid()) | authenticated: public.is_admin_or_supervisor(auth.uid()) | authenticated: public.is_admin_or_supervisor(auth.uid()) |
 | `blocked_countries` | enabled | authenticated: public.is_admin_or_supervisor(auth.uid()) | authenticated: is_admin(auth.uid()) | — | authenticated: is_admin(auth.uid()) |
-| `blocked_ips` | enabled | authenticated: EXISTS (SELECT 1 FROM user_roles WHERE user_id = auth.uid() AND role = 'admin') OR is_admin_or_supervisor(auth.uid()) | authenticated: is_admin(auth.uid()) | authenticated: is_admin(auth.uid()) | authenticated: is_admin(auth.uid()) |
+| `blocked_ips` | enabled | authenticated: EXISTS ( SELECT 1 FROM public.user_roles WHERE user_roles.user_id = auth.uid() AND user_roles.role = 'admin'::public.app_role | authenticated: is_admin(auth.uid()) | authenticated: is_admin(auth.uid()) | authenticated: is_admin(auth.uid()) |
 | `business_hours` | enabled | authenticated: public.is_admin_or_supervisor(auth.uid())<br>authenticated: true | authenticated: public.is_admin_or_supervisor(auth.uid()) | authenticated: public.is_admin_or_supervisor(auth.uid()) | authenticated: public.is_admin_or_supervisor(auth.uid()) |
 | `calls` | enabled | authenticated: agent_id IN (SELECT id FROM profiles WHERE user_id = auth.uid()) OR public.is_admin_or_supervisor(auth.uid()) | authenticated: agent_id = public.get_profile_id_for_user(auth.uid()) AND ( public.is_admin_or_supervisor(auth.uid()) OR contact_id IS NULL O | authenticated: agent_id IN (SELECT id FROM public.profiles WHERE user_id = auth.uid()) | — |
 | `campaign_ab_variants` | enabled | authenticated: auth.uid() IS NOT NULL | authenticated: EXISTS ( SELECT 1 FROM public.campaigns c WHERE c.id = campaign_id AND (c.created_by = get_profile_id_for_user(auth.uid()) OR | authenticated: EXISTS ( SELECT 1 FROM public.campaigns c WHERE c.id = campaign_id AND (c.created_by = get_profile_id_for_user(auth.uid()) OR | authenticated: EXISTS ( SELECT 1 FROM public.campaigns c WHERE c.id = campaign_id AND (c.created_by = get_profile_id_for_user(auth.uid()) OR |
@@ -53,7 +53,7 @@
 | `catalog_rate_limit_hits` | enabled | — | — | — | — |
 | `catalog_rate_limits` | enabled | — | — | — | — |
 | `catalog_send_events` | enabled | authenticated: agent_id IN (SELECT profiles.id FROM profiles WHERE profiles.user_id = auth.uid()) OR is_admin_or_supervisor(auth.uid()) | authenticated: agent_id IN (SELECT profiles.id FROM profiles WHERE profiles.user_id = auth.uid()) OR is_admin_or_supervisor(auth.uid()) | — | — |
-| `channel_connections` | enabled | authenticated: has_role(auth.uid(), 'admin') | authenticated: has_role(auth.uid(), 'admin') | authenticated: has_role(auth.uid(), 'admin') | authenticated: has_role(auth.uid(), 'admin') |
+| `channel_connections` | enabled | authenticated: public.has_role(auth.uid(), 'admin'::public.app_role) | authenticated: public.has_role(auth.uid(), 'admin'::public.app_role) | authenticated: public.has_role(auth.uid(), 'admin'::public.app_role) | authenticated: public.has_role(auth.uid(), 'admin'::public.app_role) |
 | `channel_routing_rules` | enabled | authenticated: public.is_admin_or_supervisor(auth.uid())<br>authenticated: true | authenticated: public.is_admin_or_supervisor(auth.uid()) | authenticated: public.is_admin_or_supervisor(auth.uid()) | authenticated: public.is_admin_or_supervisor(auth.uid()) |
 | `chatbot_executions` | enabled | authenticated: public.is_admin_or_supervisor(auth.uid())<br>authenticated: contact_id IN ( SELECT c.id FROM contacts c WHERE c.assigned_to IN (SELECT p.id FROM profiles p WHERE p.user_id = auth.uid()) | authenticated: public.is_admin_or_supervisor(auth.uid()) | authenticated: public.is_admin_or_supervisor(auth.uid()) | authenticated: public.is_admin_or_supervisor(auth.uid()) |
 | `chatbot_flows` | enabled | authenticated: true<br>authenticated: is_admin_or_supervisor(auth.uid()) | authenticated: is_admin_or_supervisor(auth.uid())<br>authenticated: public.is_admin_or_supervisor(auth.uid()) | authenticated: is_admin_or_supervisor(auth.uid()) | authenticated: is_admin_or_supervisor(auth.uid()) |
@@ -65,10 +65,10 @@
 | `contact_deletion_audit` | enabled | authenticated: public.is_admin_or_supervisor(auth.uid()) | authenticated: false | authenticated: false | authenticated: false |
 | `contact_identity_map` | enabled | authenticated: is_admin_or_supervisor(auth.uid()) | — | — | — |
 | `contact_notes` | enabled | authenticated: contact_id IN ( SELECT c.id FROM contacts c WHERE c.assigned_to IN (SELECT profiles.id FROM profiles WHERE profiles.user_id =<br>authenticated: public.is_contact_visible_to_user(contact_id, auth.uid()) | authenticated: author_id IN (SELECT id FROM profiles WHERE user_id = auth.uid())<br>authenticated: author_id = public.get_profile_id_for_user(auth.uid()) AND public.is_contact_visible_to_user(contact_id, auth.uid()) | authenticated: author_id IN (SELECT id FROM profiles WHERE user_id = auth.uid())<br>authenticated: author_id = public.get_profile_id_for_user(auth.uid()) AND public.is_contact_visible_to_user(contact_id, auth.uid()) | authenticated: author_id IN (SELECT id FROM profiles WHERE user_id = auth.uid())<br>authenticated: author_id = public.get_profile_id_for_user(auth.uid()) AND public.is_contact_visible_to_user(contact_id, auth.uid()) |
-| `contact_protection_policy` | enabled | authenticated: public.has_role(auth.uid(), 'admin') | authenticated: public.has_role(auth.uid(), 'admin') | authenticated: public.has_role(auth.uid(), 'admin') | authenticated: public.has_role(auth.uid(), 'admin') |
+| `contact_protection_policy` | enabled | authenticated: public.has_role(auth.uid(), 'admin'::public.app_role) | authenticated: public.has_role(auth.uid(), 'admin'::public.app_role) | authenticated: public.has_role(auth.uid(), 'admin'::public.app_role) | authenticated: public.has_role(auth.uid(), 'admin'::public.app_role) |
 | `contacts` | enabled | authenticated: public.can_edit_contact(assigned_to, queue_id, (SELECT array_agg(v) FROM public.get_visible_agent_ids(auth.uid()) v), (SELECT | authenticated: public.is_admin_or_supervisor(auth.uid()) OR ( assigned_to IS NOT NULL AND assigned_to IN ( SELECT id FROM public.profiles WH | authenticated: public.can_edit_contact(assigned_to, queue_id, (SELECT array_agg(v) FROM public.get_visible_agent_ids(auth.uid()) v), (SELECT | — |
 | `conversation_analyses` | enabled | authenticated: contact_id IN ( SELECT c.id FROM public.contacts c WHERE c.assigned_to IN ( SELECT p.id FROM public.profiles p WHERE p.user_i | authenticated: analyzed_by = public.get_profile_id_for_user(auth.uid()) AND public.is_contact_visible_to_user(contact_id, auth.uid()) | — | — |
-| `conversation_closures` | enabled | authenticated: is_contact_visible_to_user(contact_id, auth.uid()) OR is_admin_or_supervisor(auth.uid()) | authenticated: public.is_contact_visible_to_user(contact_id, auth.uid()) | — | — |
+| `conversation_closures` | enabled | authenticated: is_contact_visible_to_user(contact_id, auth.uid()) OR is_admin_or_supervisor(auth.uid()) | authenticated: public.is_contact_visible_to_user(contact_id, auth.uid()) AND closed_by IS NOT DISTINCT FROM public.get_profile_id_for_user(a | — | — |
 | `conversation_events` | enabled | authenticated: is_contact_visible_to_user(contact_id, auth.uid()) OR is_admin_or_supervisor(auth.uid()) | authenticated: public.is_contact_visible_to_user(contact_id, auth.uid()) AND ( public.is_admin_or_supervisor(auth.uid()) OR performed_by IS  | — | — |
 | `conversation_memory` | enabled | authenticated: is_contact_visible_to_user(contact_id, auth.uid()) OR is_admin_or_supervisor(auth.uid()) | authenticated: public.is_contact_visible_to_user(contact_id, auth.uid()) | authenticated: public.is_contact_visible_to_user(contact_id, auth.uid()) | — |
 | `conversation_sla` | enabled | authenticated: is_admin_or_supervisor(auth.uid()) OR contact_id IN ( SELECT c.id FROM public.contacts c WHERE c.assigned_to IN (SELECT get_v | authenticated: public.is_admin_or_supervisor(auth.uid()) | authenticated: public.is_admin_or_supervisor(auth.uid()) | — |
@@ -136,7 +136,7 @@
 | `multiplix_events` | enabled | authenticated: EXISTS ( SELECT 1 FROM public.multiplix_dispatches md WHERE md.id = multiplix_events.dispatch_id AND ( md.created_by = (SELEC | — | — | — |
 | `multiplix_recipients` | forced | authenticated: EXISTS ( SELECT 1 FROM public.multiplix_dispatches md WHERE md.id = multiplix_recipients.dispatch_id AND ( md.created_by = (S | — | — | authenticated: public.is_admin_or_supervisor(auth.uid()) AND EXISTS ( SELECT 1 FROM public.multiplix_dispatches md WHERE md.id = multiplix_r |
 | `multiplix_voice_assets` | enabled | authenticated: EXISTS ( SELECT 1 FROM public.multiplix_voice_grants g WHERE g.voice_id = multiplix_voice_assets.voice_id AND g.revoked_at IS | — | — | — |
-| `multiplix_voice_grants` | enabled | authenticated: public.is_admin_or_supervisor(auth.uid())<br>authenticated: revoked_at IS NULL AND ( (roles IS NOT NULL AND EXISTS ( SELECT 1 FROM unnest(roles) AS r WHERE public.has_role(auth.uid(), r | — | — | — |
+| `multiplix_voice_grants` | enabled | authenticated: public.is_admin_or_supervisor(auth.uid())<br>authenticated: revoked_at IS NULL AND ( (roles IS NOT NULL AND EXISTS ( SELECT 1 FROM unnest(multiplix_voice_grants.roles) r(r) WHERE public | — | — | — |
 | `notifications` | enabled | authenticated: user_id = auth.uid() | authenticated: user_id = (SELECT auth.uid()) AND type = 'goal' AND is_read IS FALSE AND read_at IS NULL AND created_at BETWEEN now() - inter | authenticated: user_id = (SELECT auth.uid())<br>authenticated: user_id = auth.uid() | authenticated: user_id = auth.uid() |
 | `nps_surveys` | enabled | authenticated: public.is_admin_or_supervisor(auth.uid()) OR agent_id = (SELECT id FROM public.profiles WHERE user_id = auth.uid() LIMIT 1) | authenticated: agent_id IS NOT NULL AND agent_id IN ( SELECT id FROM public.profiles WHERE user_id = auth.uid() ) | authenticated: public.is_admin_or_supervisor(auth.uid()) | authenticated: public.is_admin_or_supervisor(auth.uid()) |
 | `number_reputation` | enabled | authenticated: true | authenticated: public.is_admin_or_supervisor(auth.uid()) | authenticated: public.is_admin_or_supervisor(auth.uid()) | — |
@@ -144,7 +144,7 @@
 | `optout_call_log` | não encontrado | sem RLS | sem RLS | sem RLS | sem RLS |
 | `outbox_events` | enabled | service_role: true | service_role: true | service_role: true | service_role: true |
 | `passkey_credentials` | enabled | authenticated: user_id = auth.uid() | — | authenticated: user_id = auth.uid() | authenticated: user_id = auth.uid() |
-| `password_reset_requests` | enabled | authenticated: false | anon: user_id IS NOT NULL AND status = 'pending' AND reviewed_by IS NULL AND reviewed_at IS NULL AND rejection_reason IS NULL AND token_expi<br>authenticated: user_id = auth.uid() | authenticated: has_role(auth.uid(), 'admin') | authenticated: public.has_role(auth.uid(), 'admin') |
+| `password_reset_requests` | enabled | authenticated: false | anon: user_id IS NOT NULL AND status = 'pending' AND reviewed_by IS NULL AND reviewed_at IS NULL AND rejection_reason IS NULL AND token_expi<br>authenticated: user_id = auth.uid() | authenticated: public.has_role(auth.uid(), 'admin'::public.app_role) | authenticated: public.has_role(auth.uid(), 'admin'::public.app_role) |
 | `performance_snapshots` | enabled | authenticated: public.is_admin_or_supervisor(auth.uid())<br>authenticated: profile_id = (SELECT id FROM public.profiles WHERE user_id = auth.uid() LIMIT 1) | authenticated: profile_id = (SELECT id FROM public.profiles WHERE user_id = auth.uid() LIMIT 1) | — | authenticated: public.is_admin_or_supervisor(auth.uid()) |
 | `permissions` | enabled | authenticated: is_admin(auth.uid())<br>authenticated: is_admin_or_supervisor(auth.uid()) | authenticated: is_admin(auth.uid()) | authenticated: is_admin(auth.uid()) | authenticated: is_admin(auth.uid()) |
 | `pinned_conversations` | enabled | authenticated: pinned_by IN (SELECT profiles.id FROM profiles WHERE profiles.user_id = auth.uid()) | authenticated: pinned_by IN (SELECT profiles.id FROM profiles WHERE profiles.user_id = auth.uid()) AND EXISTS (SELECT 1 FROM public.contacts | authenticated: pinned_by IN (SELECT profiles.id FROM profiles WHERE profiles.user_id = auth.uid()) | authenticated: pinned_by IN (SELECT profiles.id FROM profiles WHERE profiles.user_id = auth.uid()) |
@@ -221,7 +221,7 @@
 | `team_messages` | enabled | authenticated: public.is_team_conversation_member(auth.uid(), conversation_id) | authenticated: public.is_team_conversation_member(auth.uid(), conversation_id) AND sender_id = (SELECT p.id FROM public.profiles p WHERE p.u | authenticated: sender_id = current_profile_id() | authenticated: sender_id = (SELECT p.id FROM public.profiles p WHERE p.user_id = auth.uid() LIMIT 1) |
 | `training_sessions` | enabled | authenticated: profile_id = get_profile_id_for_user(auth.uid()) OR is_admin_or_supervisor(auth.uid()) | authenticated: profile_id = get_profile_id_for_user(auth.uid()) OR is_admin_or_supervisor(auth.uid()) | authenticated: profile_id = get_profile_id_for_user(auth.uid()) OR is_admin_or_supervisor(auth.uid()) | authenticated: profile_id = get_profile_id_for_user(auth.uid()) OR is_admin_or_supervisor(auth.uid()) |
 | `user_devices` | enabled | authenticated: user_id = auth.uid()<br>authenticated: is_admin_or_supervisor(auth.uid()) | authenticated: user_id = auth.uid() | authenticated: user_id = auth.uid() | authenticated: user_id = auth.uid() |
-| `user_roles` | enabled | authenticated: public.has_role(auth.uid(), 'admin')<br>authenticated: user_id = auth.uid() OR is_admin_or_supervisor(auth.uid()) | authenticated: public.has_role(auth.uid(), 'admin') | authenticated: public.has_role(auth.uid(), 'admin') | authenticated: public.has_role(auth.uid(), 'admin') |
+| `user_roles` | enabled | authenticated: user_id = auth.uid() OR is_admin_or_supervisor(auth.uid())<br>authenticated: public.has_role(auth.uid(), 'admin'::public.app_role) | authenticated: public.has_role(auth.uid(), 'admin'::public.app_role) | authenticated: public.has_role(auth.uid(), 'admin'::public.app_role) | authenticated: public.has_role(auth.uid(), 'admin'::public.app_role) |
 | `user_service_accounts` | enabled | authenticated: auth.uid() = user_id<br>authenticated: is_admin_or_supervisor(auth.uid()) | authenticated: is_admin_or_supervisor(auth.uid()) | authenticated: is_admin_or_supervisor(auth.uid()) | authenticated: is_admin_or_supervisor(auth.uid()) |
 | `user_sessions` | enabled | authenticated: user_id = auth.uid() | authenticated: user_id = auth.uid() | authenticated: user_id = auth.uid() | authenticated: user_id = auth.uid() |
 | `user_settings` | enabled | authenticated: user_id = auth.uid() | authenticated: user_id = auth.uid() | authenticated: user_id = auth.uid() | — |
@@ -241,7 +241,7 @@
 
 > `—` com RLS ligado = ninguém além de service_role. `sem RLS` = qualquer chave anon lê/escreve tudo.
 
-## Onde o RLS é IGNORADO (service_role) — 765 arquivo(s)
+## Onde o RLS é IGNORADO (service_role) — 773 arquivo(s)
 
 - `docs/_arquivo/auditoria-supabase/propostas/01_revogar_grants_anon.sql`
 - `docs/migration/source-ddl/table_gmail_accounts.sql`
@@ -340,8 +340,8 @@
 - `scripts/supabase_snapshot/snapshot.py`
 - `scripts/tarefas/seed-local-imagens.ts`
 - `scripts/tarefas/seed-local-imagens.unit.mjs`
-- `scripts/team-chat-db-validate.mjs`
-- `scripts/team-chat-db-validate.unit.mjs`
+- `scripts/team-chat/team-chat-db-validate.mjs`
+- `scripts/team-chat/team-chat-db-validate.unit.mjs`
 - `src/__tests__/rls-boundary.test.ts`
 - `src/components/calls/__tests__/calls-access.test.ts`
 - `src/components/inbox/AudioMessagePlayer.tsx`
@@ -393,7 +393,7 @@
 - `supabase/functions/_shared/evolution-webhook-messages.ts`
 - `supabase/functions/_shared/rate-limit-log.ts`
 - `supabase/functions/_shared/request-policy.ts`
-- … +615 (lista completa em `context.json`)
+- … +623 (lista completa em `context.json`)
 
 ## Funções SQL `SECURITY DEFINER` (rodam com privilégio do dono, ignoram RLS)
 
@@ -508,6 +508,7 @@
 - `fn_list_audio_memes_for_user`
 - `fn_send_audio_meme`
 - `fn_toggle_user_meme_favorite`
+- `force_conversation_closure_author`
 - `get_ai_jobs_cron_secret`
 - `get_ai_usage_outbox_drain_cron_secret`
 - `get_avatars_refresh_cron_secret`
@@ -695,6 +696,7 @@
 - `set_call_agent_notes`
 - `set_contact_blocked`
 - `set_conversation_status`
+- `set_conversations_status`
 - `set_default_whatsapp_connection`
 - `set_department_whatsapp_config`
 - `set_instance_token`
@@ -706,6 +708,7 @@
 - `store_gmail_tokens`
 - `sweep_multiplix_stuck_items`
 - `sweep_multiplix_stuck_recipients`
+- `sweep_stuck_outbound_messages`
 - `sweep_talkx_stuck_recipients`
 - `sync_profile_role_from_user_roles`
 - `sync_thread_last_sender`
@@ -855,7 +858,7 @@ Middleware matcher (Next.js): nenhum
 | grant | anon, authenticated, service_role | all | `talkx_settings` |
 | grant | anon, authenticated, service_role | execute | `multiplix_audiences_validate_shared_roles`, `auth.uid`, `auth.uid` |
 | grant | authenticated | delete | `multiplix_recipients` |
-| grant | authenticated | execute | `get_team_profiles`, `fn_list_audio_memes_for_user`, `fn_toggle_user_meme_favorite`, `fn_list_audio_meme_categories`, `fn_send_audio_meme`, `mark_first_response`, `mark_first_response`, `mark_first_response`, `get_conversation_tab_counts`, `update_talkx_template_with_snapshot`, `increment_talkx_template_use`, `enqueue_outbound_message`, `enqueue_outbound_message`, `enqueue_rich_outbound_message`, `replace_talkx_draft_recipients` … +162 |
+| grant | authenticated | execute | `get_team_profiles`, `fn_list_audio_memes_for_user`, `fn_toggle_user_meme_favorite`, `fn_list_audio_meme_categories`, `fn_send_audio_meme`, `mark_first_response`, `mark_first_response`, `mark_first_response`, `get_conversation_tab_counts`, `update_talkx_template_with_snapshot`, `increment_talkx_template_use`, `enqueue_outbound_message`, `enqueue_outbound_message`, `enqueue_rich_outbound_message`, `replace_talkx_draft_recipients` … +167 |
 | grant | authenticated | insert | `search_events` |
 | grant | authenticated | insert, select | `t3_errs` |
 | grant | authenticated | insert, update, delete | `feature_flags` |
@@ -868,13 +871,13 @@ Middleware matcher (Next.js): nenhum
 | grant | authenticated, anon, service_role | execute | `pg_temp.assert_permitido`, `pg_temp.assert_negado`, `is_contact_visible_to_user`, `get_visible_agent_ids`, `get_profile_id_for_user`, `is_admin_or_supervisor` |
 | grant | authenticated, anon, service_role | insert | `prova_hz503_asserts` |
 | grant | authenticated, anon, service_role | select, insert, update, delete | `password_reset_requests`, `conversation_analyses` |
-| grant | authenticated, service_role | execute | `get_department_whatsapp_credentials`, `get_crm_sync_health`, `get_crm_sync_health`, `merge_contacts_atomic`, `get_profile_id_for_user`, `get_visible_agent_ids`, `is_contact_visible_to_user`, `close_conversation_atomic`, `is_valid_talkx_schedule_timezone`, `is_valid_talkx_schedule_timezone`, `set_conversation_status`, `get_last_message_dates`, `dashboard_leaderboard`, `search_contacts`, `search_contacts` … +116 |
+| grant | authenticated, service_role | execute | `get_department_whatsapp_credentials`, `get_crm_sync_health`, `get_crm_sync_health`, `merge_contacts_atomic`, `get_profile_id_for_user`, `get_visible_agent_ids`, `is_contact_visible_to_user`, `close_conversation_atomic`, `is_valid_talkx_schedule_timezone`, `is_valid_talkx_schedule_timezone`, `set_conversation_status`, `get_last_message_dates`, `dashboard_leaderboard`, `search_contacts`, `search_contacts` … +120 |
 | grant | authenticated, service_role | select | `talkx_campaign_optouts`, `talkx_engine_health`, `talkx_engine_health`, `talkx_ddd_regions`, `security_acl_alerts`, `talkx_campaign_optouts`, `profiles`, `user_roles`, `t88_ids`, `profiles`, `profiles` |
 | grant | authenticated, service_role | select, insert, update | `messages` |
 | grant | authenticated, service_role | select, insert, update, delete | `contact_notes`, `contact_protection_policy` |
-| grant | postgres | execute | `set_conversation_status`, `set_conversation_status`, `set_conversation_status` |
+| grant | postgres | execute | `set_conversation_status`, `set_conversation_status`, `set_conversation_status`, `set_conversation_status` |
 | grant | service_role | all | `audio_meme_favorites`, `link_preview_cache`, `link_preview_cache_metrics`, `talkx_links`, `talkx_link_clicks`, `talkx_conversions`, `talkx_settings`, `multiplix_delivery_items`, `ai_budget_reservations`, `ai_jobs`, `talkx_test_send_claims`, `talkx_optout_keywords`, `talkx_delivery_log`, `talkx_alerts`, `talkx_storage_purge_queue` … +15 |
-| grant | service_role | execute | `cleanup_link_preview_cache`, `encrypt_gmail_token`, `decrypt_gmail_token`, `get_gmail_tokens`, `store_gmail_tokens`, `get_identity_matrix`, `consume_rate_limit`, `phone_variants`, `ingest_inbound_message`, `claim_crm_sync_outbox`, `claim_crm_sync_outbox_by_id`, `complete_crm_sync_outbox`, `fail_crm_sync_outbox`, `complete_crm_sync_outbox`, `fail_crm_sync_outbox` … +211 |
+| grant | service_role | execute | `cleanup_link_preview_cache`, `encrypt_gmail_token`, `decrypt_gmail_token`, `get_gmail_tokens`, `store_gmail_tokens`, `get_identity_matrix`, `consume_rate_limit`, `phone_variants`, `ingest_inbound_message`, `claim_crm_sync_outbox`, `claim_crm_sync_outbox_by_id`, `complete_crm_sync_outbox`, `fail_crm_sync_outbox`, `complete_crm_sync_outbox`, `fail_crm_sync_outbox` … +216 |
 | grant | service_role | select | `gmail_accounts_safe`, `gmail_accounts_safe`, `password_reset_requests_safe`, `profiles_public`, `searchbox_budget_alert_cron`, `sla_alert_events` |
 | grant | service_role | select, insert | `contact_deletion_audit`, `audit_logs`, `contact_block_audit` |
 | grant | service_role | select, insert, update | `multiplix_events`, `searchbox_budget_alert_emails`, `talkx_segment_library_history`, `talkx_contact_attributes`, `public` |
@@ -884,16 +887,16 @@ Middleware matcher (Next.js): nenhum
 | grant | service_role, authenticated, postgres | execute | `search_contacts` |
 | grant | service_role, postgres | execute | `mcp_exec`, `mcp_exec_many` |
 | revoke | PUBLIC | all | `get_identity_matrix`, `enqueue_crm_sync_from_closure`, `enforce_talkx_campaign_mutability`, `enforce_talkx_recipient_snapshot_mutability`, `enforce_talkx_campaign_mutability`, `enforce_talkx_recipient_snapshot_mutability`, `enforce_talkx_campaign_mutability`, `is_valid_talkx_schedule_timezone`, `talkx_overview_stats`, `talkx_campaign_report`, `talkx_segment_tags`, `talkx_benchmarks`, `talkx_links`, `talkx_link_clicks`, `talkx_conversions` … +44 |
-| revoke | PUBLIC | execute | `record_failed_login`, `messages_sla_first_response_trigger`, `calculate_level`, `normalize_contact_phone`, `dashboard_kpi`, `dashboard_contact_counts`, `dashboard_hourly_volume`, `grant_agent_achievement`, `grant_agent_achievement`, `add_agent_xp`, `update_agent_streak`, `increment_agent_messages`, `increment_agent_resolutions`, `set_conversation_status`, `accept_department_invite` … +25 |
-| revoke | PUBLIC, anon | all | `mark_first_response`, `mark_first_response`, `mark_first_response`, `get_crm_sync_health`, `get_crm_sync_health`, `merge_contacts_atomic`, `get_profile_id_for_user`, `get_visible_agent_ids`, `is_contact_visible_to_user`, `get_conversation_tab_counts`, `update_talkx_template_with_snapshot`, `increment_talkx_template_use`, `enqueue_outbound_message`, `close_conversation_atomic`, `replace_talkx_draft_recipients` … +120 |
-| revoke | PUBLIC, anon | execute | `clear_login_attempts`, `get_department_whatsapp_credentials`, `get_identity_matrix`, `get_own_lockout_status`, `effective_role`, `is_admin`, `is_ip_blocked`, `is_ip_whitelisted`, `is_country_allowed`, `is_country_blocked`, `audit_role_permissions_changes`, `sync_profile_role_from_user_roles`, `sync_thread_last_sender`, `update_device_last_seen`, `update_global_settings_updated_at` … +67 |
-| revoke | PUBLIC, anon, authenticated | all | `encrypt_gmail_token`, `decrypt_gmail_token`, `get_gmail_tokens`, `store_gmail_tokens`, `register_first_response_internal`, `register_first_response_internal`, `claim_crm_sync_outbox`, `claim_crm_sync_outbox_by_id`, `complete_crm_sync_outbox`, `fail_crm_sync_outbox`, `complete_crm_sync_outbox`, `fail_crm_sync_outbox`, `upsert_crm_contact_link_guarded`, `redact_crm_sync_on_contact_delete`, `claim_crm_sync_outbox` … +204 |
+| revoke | PUBLIC | execute | `record_failed_login`, `messages_sla_first_response_trigger`, `calculate_level`, `normalize_contact_phone`, `dashboard_kpi`, `dashboard_contact_counts`, `dashboard_hourly_volume`, `grant_agent_achievement`, `grant_agent_achievement`, `add_agent_xp`, `update_agent_streak`, `increment_agent_messages`, `increment_agent_resolutions`, `set_conversation_status`, `accept_department_invite` … +26 |
+| revoke | PUBLIC, anon | all | `mark_first_response`, `mark_first_response`, `mark_first_response`, `get_crm_sync_health`, `get_crm_sync_health`, `merge_contacts_atomic`, `get_profile_id_for_user`, `get_visible_agent_ids`, `is_contact_visible_to_user`, `get_conversation_tab_counts`, `update_talkx_template_with_snapshot`, `increment_talkx_template_use`, `enqueue_outbound_message`, `close_conversation_atomic`, `replace_talkx_draft_recipients` … +123 |
+| revoke | PUBLIC, anon | execute | `clear_login_attempts`, `get_department_whatsapp_credentials`, `get_identity_matrix`, `get_own_lockout_status`, `effective_role`, `is_admin`, `is_ip_blocked`, `is_ip_whitelisted`, `is_country_allowed`, `is_country_blocked`, `audit_role_permissions_changes`, `sync_profile_role_from_user_roles`, `sync_thread_last_sender`, `update_device_last_seen`, `update_global_settings_updated_at` … +68 |
+| revoke | PUBLIC, anon, authenticated | all | `encrypt_gmail_token`, `decrypt_gmail_token`, `get_gmail_tokens`, `store_gmail_tokens`, `register_first_response_internal`, `register_first_response_internal`, `claim_crm_sync_outbox`, `claim_crm_sync_outbox_by_id`, `complete_crm_sync_outbox`, `fail_crm_sync_outbox`, `complete_crm_sync_outbox`, `fail_crm_sync_outbox`, `upsert_crm_contact_link_guarded`, `redact_crm_sync_on_contact_delete`, `claim_crm_sync_outbox` … +210 |
 | revoke | PUBLIC, anon, authenticated | all privileges | `webhook_failures` |
 | revoke | PUBLIC, anon, authenticated | execute | `consume_rate_limit`, `phone_variants`, `ingest_inbound_message`, `reschedule_talkx_recipient`, `transition_talkx_campaign`, `expire_stale_agent_presence`, `handle_message_gamification`, `handle_conversation_closure_gamification`, `get_department_whatsapp_credentials`, `get_department_whatsapp_api_key`, `record_incoming_call_event`, `sanitize_reset_request`, `team_receipts_fill_conversation_id`, `team_reactions_force_conversation_id`, `sanitize_reset_request` … +24 |
 | revoke | PUBLIC, anon, authenticated | truncate, references, trigger | `public` |
 | revoke | PUBLIC, anon, authenticated, service_role | all | `talkx_template_variants`, `talkx_template_versions`, `enforce_talkx_campaign_mutability`, `enforce_talkx_recipient_snapshot_mutability`, `supabase_migrations.version_reservations`, `supabase_migrations.reserve_migration_version`, `contact_deletion_audit`, `apply_zapp_cron_secrets_l5`, `apply_zapp_cron_secrets_l5`, `resolve_contact_guard_actor`, `prevent_contact_queue_hijack`, `prevent_contact_assignee_hijack`, `increment_talkx_template_use`, `multiplix_events`, `message_reactions_normalize_author` … +10 |
 | revoke | PUBLIC, anon, authenticated, service_role | execute | `audit_contact_deletion_change`, `audit_contact_address_change`, `audit_role_changes`, `audit_role_permissions_changes`, `department_audit_logs_fill_profile_name`, `record_talkx_campaign_lifecycle_event`, `set_talkx_recipient_status_changed_at`, `conversation_task_rearm_on_remind_change`, `audit_contact_block_change`, `sanitize_reset_request`, `rate_limit_reset_requests` |
-| revoke | PUBLIC, anon, service_role | all | `enqueue_outbound_message`, `enqueue_rich_outbound_message`, `replace_talkx_draft_recipients`, `save_talkx_campaign_draft`, `enqueue_outbound_message`, `enqueue_outbound_message`, `enqueue_rich_outbound_message`, `enqueue_outbound_message`, `log_unauthorized_inbox_scope`, `enqueue_group_outbound_message`, `admin_list_cron_jobs`, `admin_toggle_cron_job`, `set_contact_blocked`, `crisis_room_snapshot`, `talkx_block_recipient` |
+| revoke | PUBLIC, anon, service_role | all | `enqueue_outbound_message`, `enqueue_rich_outbound_message`, `replace_talkx_draft_recipients`, `save_talkx_campaign_draft`, `enqueue_outbound_message`, `enqueue_outbound_message`, `enqueue_rich_outbound_message`, `enqueue_outbound_message`, `log_unauthorized_inbox_scope`, `enqueue_group_outbound_message`, `admin_list_cron_jobs`, `admin_toggle_cron_job`, `set_contact_blocked`, `crisis_room_snapshot`, `talkx_block_recipient` … +3 |
 | revoke | anon | all | `feature_flags`, `search_my_calls`, `my_calls_kpi`, `upsert_my_call`, `set_call_agent_notes`, `team_conversations`, `team_conversation_members`, `team_messages`, `team_message_reactions`, `team_message_receipts`, `departments`, `department_invitations`, `department_invites`, `department_audit_logs`, `multiplix_dispatches` … +30 |
 | revoke | anon | all privileges | `contact_notes` |
 | revoke | anon | delete | `passkey_credentials` |
@@ -931,7 +934,7 @@ Middleware matcher (Next.js): nenhum
 | revoke | authenticated, service_role | truncate, references, trigger, maintain | `contact_notes` |
 | revoke | authenticated, service_role | update, delete, truncate | `audit_logs`, `department_audit_logs` |
 | revoke | public | all | `cleanup_link_preview_cache`, `search_my_calls`, `my_calls_kpi`, `upsert_my_call`, `set_call_agent_notes`, `persist_conversation_analysis`, `replace_ai_conversation_tags`, `enqueue_crm_sync_from_closure`, `persist_conversation_analysis`, `ai_usage_outbox`, `outbox_events`, `e2e_cleanup_conversation_closures`, `talkx_benchmarks`, `talkx_insights`, `evaluate_feature_flags` … +5 |
-| revoke | public, anon | all | `catalog_rate_limit_hit`, `ai_usage_summary`, `ai_usage_cost_summary`, `catalog_rate_limit_hit`, `transfer_conversation`, `ai_usage_cost_summary`, `catalog_rate_limit_hit`, `talkx_resolve_audience`, `can_access_realtime_topic`, `reopen_conversation`, `set_voip_profile_credentials`, `agent_workload`, `transfer_conversation`, `search_insights`, `inbox_wait_summary` … +1 |
+| revoke | public, anon | all | `catalog_rate_limit_hit`, `ai_usage_summary`, `ai_usage_cost_summary`, `catalog_rate_limit_hit`, `transfer_conversation`, `ai_usage_cost_summary`, `catalog_rate_limit_hit`, `talkx_resolve_audience`, `can_access_realtime_topic`, `reopen_conversation`, `set_voip_profile_credentials`, `agent_workload`, `transfer_conversation`, `search_insights`, `inbox_wait_summary` … +3 |
 | revoke | public, anon, authenticated | all | `talkx_suppress_contact`, `talkx_suppress_contact`, `ai_rate_limit_hit`, `ai_rate_limit_purge`, `ai_budget_reservations`, `ai_budget_reserve`, `ai_budget_settle`, `ai_budget_release`, `ai_budget_reconcile`, `ai_jobs`, `get_ai_jobs_cron_secret`, `enqueue_ai_job`, `claim_ai_jobs`, `heartbeat_ai_job`, `finish_ai_job` … +34 |
 | revoke | public, anon, authenticated | execute | `talkx_segment_versions_trim`, `talkx_segment_block_in_use`, `whisper_messages_valida_audio_path`, `whisper_messages_valida_audio_path` |
 | revoke | public, anon, authenticated, service_role | all | `set_default_whatsapp_connection`, `voip_profile_credentials` |
