@@ -128,6 +128,11 @@ export default function TalkXView() {
   // yet. It is safe to keep the current editor alive, but a reload must still
   // resolve the ID from the canonical query before opening it.
   const [localDraftRouteId, setLocalDraftRouteId] = useState<string | null>(null);
+  // Rascunho criado por ESTE editor (rota wizard=new trocada pelo id no primeiro
+  // autosave). O editor vivo já é dono do estado: trocar a key quando a lista de
+  // campanhas traz a linha remontaria o wizard com o snapshot do autosave e
+  // descartaria o que o usuário mudou depois dele (ex.: origem Segmento salvo).
+  const [createdDraftRouteId, setCreatedDraftRouteId] = useState<string | null>(null);
 
   const writeWizardRoute = useCallback((route: TalkXWizardRoute | null, replace = false) => {
     if (replace) replaceTalkXWizardRoute(route);
@@ -148,6 +153,7 @@ export default function TalkXView() {
     // truth for back/forward. Resetting here also guarantees a draft from the
     // previous route cannot survive navigation to another campaign.
     setLocalDraftRouteId(null);
+    setCreatedDraftRouteId(null);
     setWizardRoute(parsedWizard.route);
     setWizardInitial(undefined);
 
@@ -246,7 +252,12 @@ export default function TalkXView() {
     ? campaigns.find((candidate) => candidate.id === wizardRoute.campaignId) ?? null
     : null;
   const routedCampaignIsEditable = routedCampaign?.status === 'draft' || routedCampaign?.status === 'scheduled';
-  const wizardCampaign = editingCampaign?.id ? editingCampaign : routedCampaignIsEditable ? routedCampaign : editingCampaign;
+  const editorOwnsCreatedDraft = !!createdDraftRouteId
+    && localDraftRouteId === createdDraftRouteId
+    && wizardRoute?.campaignId === createdDraftRouteId;
+  const wizardCampaign = editingCampaign?.id
+    ? editingCampaign
+    : editorOwnsCreatedDraft ? null : routedCampaignIsEditable ? routedCampaign : editingCampaign;
 
   useEffect(() => {
     if (!wizardRoute || wizardRoute.campaignId === 'new' || isLoading) return;
@@ -363,6 +374,7 @@ export default function TalkXView() {
   const onDraftIdentity = useCallback((campaignId: string) => {
     setLocalDraftRouteId(campaignId);
     if (wizardRoute?.campaignId === 'new') {
+      setCreatedDraftRouteId(campaignId);
       writeWizardRoute({ campaignId, step: wizardRoute.step }, true);
     }
   }, [wizardRoute, writeWizardRoute]);
