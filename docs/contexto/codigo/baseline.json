@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "91c63ff8cff64f9edf87658b134497c05a378c73",
+  "commit": "371a7c0065af9d177c68e2be1870f9d7309a8158",
   "branch": "main",
-  "data_commit": "2026-11-14T06:48:07-03:00",
+  "data_commit": "2026-11-14T07:21:34-03:00",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "371a7c0",
+    "data": "2026-11-14",
+    "assunto": "fix(e2e): discador da Telefonia espera e fecha o aviso de SIP antes de digitar (#3079)"
+   },
    {
     "sha": "91c63ff",
     "data": "2026-11-14",
@@ -126,11 +131,6 @@
     "sha": "51bd8cb",
     "data": "2026-11-13",
     "assunto": "Aba Arquivos: botão Encaminhar do cartão, lista e tabela passa a encaminhar (#3004)"
-   },
-   {
-    "sha": "2bfcdbd",
-    "data": "2026-11-13",
-    "assunto": "Chat de equipe: não-membro do canal deixa de ver botões de busca e adicionar membros, e o item silenciar, que não faziam"
    }
   ],
   "arquivos_mudados_7d": 979,
@@ -316,7 +316,7 @@
  "contagens": {
   "arquivos_total": 8583,
   "arquivos_codigo": 4917,
-  "linhas_codigo": 912661,
+  "linhas_codigo": 912667,
   "rotas": 18,
   "rotas_http_backend": 11,
   "vistas_por_id": 55,
@@ -576,7 +576,7 @@
   },
   "e2e/telefonia.spec.ts": {
    "arquivos": 1,
-   "linhas": 445
+   "linhas": 451
   },
   "e2e/theme-alto-contraste.spec.ts": {
    "arquivos": 1,
