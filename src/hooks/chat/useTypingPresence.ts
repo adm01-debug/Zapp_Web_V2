@@ -2,6 +2,7 @@ import { useEffect, useState, useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { RealtimeChannel } from '@supabase/supabase-js';
 import { log } from '@/lib/logger';
+import { publishTypingByUser, clearTypingByUser } from './typingPresenceStore';
 
 interface TypingUser {
   oderId: string;
@@ -183,6 +184,7 @@ export function useTypingPresence({
         // continua vindo do broadcast, que não passa por este handler.
         if (!ownUserId) {
           setTypingUsers([]);
+          clearTypingByUser(conversationId);
           return;
         }
 
@@ -209,6 +211,10 @@ export function useTypingPresence({
         // NOTA (R2-INB-026): presença de agente NÃO liga `isContactTyping`. O
         // indicador do contato (usuário final) vem só do broadcast abaixo; antes,
         // colega digitando era exibido como se o contato estivesse digitando.
+
+        // Publica para quem mais precisa deste dado (ex. ViewersIndicator) sem
+        // abrir uma segunda inscrição no mesmo canal — ver typingPresenceStore.ts.
+        publishTypingByUser(conversationId, Object.fromEntries(users.map((u) => [u.oderId, true])));
       });
 
       // Handle join event
@@ -275,6 +281,9 @@ export function useTypingPresence({
 
     return () => {
       disposed = true;
+      // Sem isso, quem só lê o store (ViewersIndicator) continuava mostrando o
+      // último "digitando" publicado mesmo depois que esta inscrição fechou.
+      clearTypingByUser(conversationId);
       if (typingTimeoutRef.current) {
         clearTimeout(typingTimeoutRef.current);
       }
