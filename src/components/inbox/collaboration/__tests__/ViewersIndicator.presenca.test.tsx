@@ -23,11 +23,6 @@ type MaybeSingle = () => Promise<{ data: unknown; error: unknown }>;
 
 const h = vi.hoisted(() => ({
   channel: {} as unknown,
-  // Canal de leitura de digitação (`typing:${contactId}`) aberto desde o fix:
-  // a mesma fábrica de canal falso devolvia UM singleton para qualquer tópico,
-  // o que fazia o segundo `supabase.channel(...)` sobrescrever `_cb` do
-  // primeiro. Precisa de uma instância própria por tópico.
-  typingChannel: {} as unknown,
   warn: vi.fn(),
   calls: [] as string[],
   maybeSingle: null as unknown,
@@ -40,7 +35,7 @@ vi.mock('@/lib/logger', () => ({
 
 vi.mock('@/integrations/supabase/client', () => ({
   supabase: {
-    channel: (topic: string) => (topic.startsWith('typing:') ? h.typingChannel : h.channel),
+    channel: () => h.channel,
     removeChannel: () => {
       h.calls.push('removeChannel');
       return Promise.resolve('ok');
@@ -58,6 +53,10 @@ vi.mock('@/hooks/auth/useAuth', () => ({
 }));
 
 import { useConversationViewers } from '../ViewersIndicator';
+// Real (não mockado): é o mesmo store que o useTypingPresence publica em
+// produção — exercitar via ele, não via um segundo canal fake, é o que prova
+// que o ViewersIndicator não abre uma segunda inscrição no mesmo tópico.
+import { publishTypingByUser } from '@/hooks/chat/typingPresenceStore';
 
 function makeChannel(): FakeChannel {
   const channel: FakeChannel = {
@@ -85,7 +84,6 @@ beforeEach(() => {
   h.calls = [];
   h.warn.mockReset();
   h.channel = makeChannel();
-  h.typingChannel = makeChannel();
   h.maybeSingle = () => Promise.resolve({ data: null, error: null });
   cleanup();
 });
@@ -124,7 +122,6 @@ describe('ViewersIndicator — presença (L9)', () => {
 
   it('no cleanup, encerra a inscrição antes de remover o canal', async () => {
     const channel = h.channel as FakeChannel;
-    const typingChannel = h.typingChannel as FakeChannel;
     const { unmount } = renderHook(() => useConversationViewers('c1'));
 
     await act(async () => {
@@ -134,20 +131,18 @@ describe('ViewersIndicator — presença (L9)', () => {
     unmount();
 
     expect(channel.unsubscribe).toHaveBeenCalled();
-    expect(typingChannel.unsubscribe).toHaveBeenCalled();
-    // Canal da conversa e canal de leitura de digitação, cada um fecha a
-    // inscrição antes de sair.
-    expect(h.calls).toEqual(['unsubscribe', 'removeChannel', 'unsubscribe', 'removeChannel']);
+    // Só o canal da própria conversa: não há segundo canal `typing:${id}` —
+    // ler o is_typing real do `typingPresenceStore` não abre nem fecha canal.
+    expect(h.calls).toEqual(['unsubscribe', 'removeChannel']);
   });
 
-  it('acende is_typing quando o canal real de digitação publica o colega digitando', async () => {
+  it('acende is_typing quando o typingPresenceStore publica o colega digitando', async () => {
     // Prova do bug: a presença do canal da conversa (`channel`) sempre chega
-    // com is_typing:false (é o que o track acima só manda); sem ler o canal
-    // real de digitação (`typing:c1`, o mesmo que o campo de mensagem usa via
-    // `useTypingPresence`) o aviso "Digitando..." nunca liga.
+    // com is_typing:false (é o que o track acima só manda); sem ler o que o
+    // `useTypingPresence` publica no store (mesmo id desta conversa) o aviso
+    // "Digitando..." nunca liga.
     h.maybeSingle = () => Promise.resolve({ data: { name: 'Eu', avatar_url: null }, error: null });
     const channel = h.channel as FakeChannel;
-    const typingChannel = h.typingChannel as FakeChannel;
 
     const { result } = renderHook(() => useConversationViewers('c1'));
 
@@ -162,9 +157,9 @@ describe('ViewersIndicator — presença (L9)', () => {
       expect.objectContaining({ id: 'ana', is_typing: false }),
     ]);
 
-    // Ana começa a digitar: o canal real publica isTyping:true para o id dela.
-    typingChannel._state = { 'ana#scope': [{ oderId: 'ana', isTyping: true }] };
-    act(() => { typingChannel._syncHandlers.forEach((cb) => cb()); });
+    // Ana começa a digitar: useTypingPresence (dono real da inscrição em
+    // `typing:c1`) publica isTyping:true para o id dela no store compartilhado.
+    act(() => { publishTypingByUser('c1', { ana: true }); });
 
     expect(result.current).toEqual([
       expect.objectContaining({ id: 'ana', is_typing: true }),

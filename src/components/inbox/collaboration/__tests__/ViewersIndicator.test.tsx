@@ -75,9 +75,10 @@ describe('useConversationViewers', () => {
   it('sai do canal ao desmontar', () => {
     const { unmount } = renderHook(() => useConversationViewers('c1'));
     unmount();
-    // Um para o canal de presença da conversa, outro para o canal de leitura
-    // de digitação (`typing:${contactId}`) usado para repassar o is_typing real.
-    expect(sb.removed).toHaveBeenCalledTimes(2);
+    // Só o canal de presença da conversa: o is_typing real vem do
+    // typingPresenceStore (publicado pelo useTypingPresence), não de um
+    // segundo canal — ver ViewersIndicator.presenca.test.tsx.
+    expect(sb.removed).toHaveBeenCalledTimes(1);
   });
 });
 

@@ -9,6 +9,7 @@ import { Eye, Edit3 } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { useAuth } from '@/hooks/auth/useAuth';
+import { subscribeTypingByUser } from '@/hooks/chat/typingPresenceStore';
 
 const log = getLogger('ViewersIndicator');
 
@@ -33,11 +34,13 @@ export function useConversationViewers(contactId: string) {
 
     // Quem está digitando AGORA: o `track` abaixo (status "estou vendo a tela")
     // manda `is_typing: false` uma vez e nunca é atualizado — por isso o aviso
-    // nunca acendia. A fonte real é o canal de presença que o campo de mensagem
-    // já publica (`useTypingPresence`, canal `typing:${contactId}`, mesmo id
-    // desta conversa); aqui só lemos (sem `track`) para repassar o estado real.
-    const typingByUserId: Record<string, boolean> = {};
-    const typingChannel = supabase.channel(`typing:${contactId}`);
+    // nunca acendia. A fonte real é o `useTypingPresence` do campo de mensagem,
+    // que publica no `typingPresenceStore` (mesmo id desta conversa). NÃO abrimos
+    // um segundo canal `typing:${contactId}` aqui: `supabase.channel(topic)`
+    // devolve o MESMO objeto já assinado pelo ChatPanel, e adicionar um listener
+    // de presença num canal já assinado lança exceção (RealtimeChannel.on) —
+    // além de o cleanup daqui derrubar o canal que o chat ainda usa.
+    let typingByUserId: Record<string, boolean> = {};
 
     const buildViewers = () => {
       const state = channel.presenceState();
@@ -57,21 +60,10 @@ export function useConversationViewers(contactId: string) {
       setViewers(presentViewers);
     };
 
-    typingChannel
-      .on('presence', { event: 'sync' }, () => {
-        const typingState = typingChannel.presenceState();
-        Object.keys(typingByUserId).forEach((key) => delete typingByUserId[key]);
-        Object.values(typingState).forEach((presences) => {
-          if (!Array.isArray(presences)) return;
-          presences.forEach((p) => {
-            const presence = p as Record<string, unknown>;
-            const identity = presence.oderId as string | undefined;
-            if (identity) typingByUserId[identity] = Boolean(presence.isTyping);
-          });
-        });
-        buildViewers();
-      })
-      .subscribe();
+    const unsubscribeTyping = subscribeTypingByUser(contactId, (typing) => {
+      typingByUserId = typing;
+      buildViewers();
+    });
 
     channel
       .on('presence', { event: 'sync' }, buildViewers)
@@ -104,8 +96,7 @@ export function useConversationViewers(contactId: string) {
       // socket pode continuar recebendo eventos do canal já removido.
       void channel.unsubscribe();
       void supabase.removeChannel(channel).catch(() => {});
-      void typingChannel.unsubscribe();
-      void supabase.removeChannel(typingChannel).catch(() => {});
+      unsubscribeTyping();
     };
   }, [contactId, user?.id]);
 
