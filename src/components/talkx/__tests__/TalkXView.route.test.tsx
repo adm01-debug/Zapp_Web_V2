@@ -187,6 +187,23 @@ describe('TalkXView wizard route integration', () => {
     expect(f.wizardMounts).toBe(1);
   });
 
+  it('campanha que deixa de ser editável durante a edição (disparo começou) + voltar: aviso e lista', async () => {
+    const toastError = vi.spyOn(toast, 'error');
+    const { rerender } = render(<TalkXView />);
+    await waitFor(() => expect(screen.getByTestId('wizard')).toHaveAttribute('data-campaign-id', 'draft_1'));
+
+    f.campaigns = [{ ...draft, status: 'sending' }];
+    rerender(<TalkXView />);
+    await act(async () => {
+      window.history.replaceState(null, '', '/?view=talkx&wizard=draft_1&step=2');
+      window.dispatchEvent(new PopStateEvent('popstate'));
+    });
+
+    await waitFor(() => expect(screen.queryByTestId('wizard')).not.toBeInTheDocument());
+    expect(toastError).toHaveBeenCalledWith(expect.stringContaining('Somente rascunhos'));
+    toastError.mockRestore();
+  });
+
   // Lançar e voltar no navegador: o monitor substitui a entrada atual, a anterior ainda aponta
   // para ?wizard=<id>&step=3, mas a campanha já está enviando. Como na main, o wizard não reabre:
   // aparece o aviso de que só rascunhos/agendadas são editáveis e o usuário volta à lista.

@@ -150,7 +150,11 @@ export default function TalkXView() {
     // Exceção: voltar/avançar entre passos do rascunho que o autosave desta sessão criou
     // (onDraftIdentity) — a entrada anterior já tem ?wizard=<id>; zerar aqui remontaria o
     // wizard (lista com o rascunho) ou expulsaria o usuário (lista ainda sem ele).
-    const keepLocalDraft = localDraftRouteId !== null && parsedWizard.route?.campaignId === localDraftRouteId;
+    // Só enquanto a campanha segue editável: se a lista já a traz fora de draft/scheduled
+    // (disparo começou, lançada em outra aba), o voltar cai no aviso e na lista, como antes.
+    const listedLocalDraft = campaigns.find((candidate) => candidate.id === localDraftRouteId);
+    const keepLocalDraft = localDraftRouteId !== null && parsedWizard.route?.campaignId === localDraftRouteId
+      && (!listedLocalDraft || listedLocalDraft.status === 'draft' || listedLocalDraft.status === 'scheduled');
     if (!keepLocalDraft) setLocalDraftRouteId(null);
     setWizardRoute(parsedWizard.route);
     setWizardInitial(undefined);
