@@ -14803,6 +14803,20 @@ export type Database = {
         Args: { p_contact_id: string; p_next: string; p_reason?: string }
         Returns: undefined
       }
+      set_conversations_status: {
+        Args: {
+          p_contact_ids: string[]
+          p_expected_current?: string
+          p_next: string
+          p_reason?: string
+          p_restore?: boolean
+        }
+        Returns: {
+          contact_id: string
+          outcome: string
+          previous_status: string
+        }[]
+      }
       set_default_whatsapp_connection: {
         Args: { p_connection_id: string }
         Returns: string
@@ -14856,6 +14870,10 @@ export type Database = {
       sweep_multiplix_stuck_recipients: {
         Args: { p_limit?: number }
         Returns: number
+      }
+      sweep_stuck_outbound_messages: {
+        Args: { p_limit?: number; p_min_age?: string }
+        Returns: Json
       }
       sweep_talkx_stuck_recipients: {
         Args: { p_limit?: number }
@@ -15267,6 +15285,7 @@ export type Database = {
       transfer_conversation: {
         Args: {
           p_contact_id: string
+          p_expect_unassigned?: boolean
           p_expected_agent_id?: string
           p_note?: string
           p_to_agent_id?: string
@@ -15321,7 +15340,6 @@ export type Database = {
           p_avatar_url?: string
           p_birthday?: string
           p_display_name?: string
-          p_email?: string
           p_phone?: string
           p_signature?: string
         }
