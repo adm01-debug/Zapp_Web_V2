@@ -1,9 +1,9 @@
 {
  "meta": {
-  "sha": "6663bfee5c010899597040cdb5048aae7c88ffde",
+  "sha": "9f52b5754ab51dca36cfcb0ae18ec38f514acdc9",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-14 13:18 UTC",
+  "generated_at": "2026-11-14 13:43 UTC",
   "files_total": 8426,
   "code_files": 6218,
   "code_lines": 1085493
@@ -395295,10 +395295,19 @@
   }
  },
  "git": {
-  "sha": "6663bfee5c010899597040cdb5048aae7c88ffde",
+  "sha": "9f52b5754ab51dca36cfcb0ae18ec38f514acdc9",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "9f52b57",
+    "date": "2026-11-14",
+    "author": "adm01-debug",
+    "subject": "fix(db-audit): teste do enum special_agent não morre por broken pipe do grep | head (#3086)",
+    "files": [
+     "supabase/tests/db-audit/remove-enum-special-agent.test.sh"
+    ]
+   },
    {
     "sha": "6663bfe",
     "date": "2026-11-14",
@@ -396029,16 +396038,6 @@
      "src/components/team-chat/TeamChatPanel.tsx",
      "src/components/team-chat/__tests__/TeamChatPanel.nao-membro.test.tsx"
     ]
-   },
-   {
-    "sha": "fe4959b",
-    "date": "2026-11-13",
-    "author": "adm01-debug",
-    "subject": "Painel de e-mail avisa se copiar o e-mail do contato deu certo ou falhou (#3006)",
-    "files": [
-     "src/components/email/EmailContactPanel.tsx",
-     "src/components/email/__tests__/EmailContactPanel.test.tsx"
-    ]
    }
   ],
   "hot_files": [
@@ -396095,6 +396094,10 @@
     3
    ],
    [
+    "supabase/tests/db-audit/remove-enum-special-agent.test.sh",
+    2
+   ],
+   [
     "src/hooks/inbox/__tests__/useInboxBulkActions.test.ts",
     2
    ],
@@ -396116,10 +396119,6 @@
    ],
    [
     "src/components/talkx/TalkXView.tsx",
-    2
-   ],
-   [
-    "src/components/talkx/__tests__/TalkXView.route.test.tsx",
     2
    ]
   ]

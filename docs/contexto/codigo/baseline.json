@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "6663bfee5c010899597040cdb5048aae7c88ffde",
+  "commit": "9f52b5754ab51dca36cfcb0ae18ec38f514acdc9",
   "branch": "main",
-  "data_commit": "2026-11-14T09:46:04-03:00",
+  "data_commit": "2026-11-14T10:34:29-03:00",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "9f52b57",
+    "data": "2026-11-14",
+    "assunto": "fix(db-audit): teste do enum special_agent não morre por broken pipe do grep | head (#3086)"
+   },
    {
     "sha": "6663bfe",
     "data": "2026-11-14",
@@ -126,14 +131,9 @@
     "sha": "d1af577",
     "data": "2026-11-13",
     "assunto": "feat: migrar Dialog→TalkXDialogShell em Supressão e TemplateEditor (X050) (#2553)"
-   },
-   {
-    "sha": "7c3ef80",
-    "data": "2026-11-13",
-    "assunto": "Testes que montam as telas NotFound, VerifyEmail e MetaCAPIView (#3007)"
    }
   ],
-  "arquivos_mudados_7d": 894,
+  "arquivos_mudados_7d": 888,
   "pastas_mais_mudadas_30d": [
    {
     "pasta": "src/components/inbox",
