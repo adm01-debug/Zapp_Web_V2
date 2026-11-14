@@ -198,11 +198,12 @@ async function abrirDiscador(page: Page) {
   // que sobe no canto inferior direito ~150-330 ms depois do painel, por cima da
   // 2ª linha do teclado. Um clique em '5' durante a entrada perdia o pointerup para
   // o aviso (o Playwright só confere o alvo no pointerdown) e o dígito sumia sem
-  // erro. O painel não remonta. O agente fecha o aviso antes de discar.
+  // erro. O painel não remonta. Espera o aviso sair (duration 4 s + saída, sonner.tsx)
+  // antes de discar. Fechar pelo botão disputava com o próprio auto-fechamento: no
+  // WebKit o botão saía do DOM no meio do clique e o teste esperava um alvo que sumiu.
   const avisoSip = page.locator('[data-sonner-toast]').filter({ hasText: 'Senha SIP não configurada' });
   await expect(avisoSip).toBeVisible({ timeout: BOOT_DEADLINE_MS });
-  await avisoSip.getByRole('button', { name: 'Close toast' }).click();
-  await expect(avisoSip).toHaveCount(0);
+  await expect(avisoSip).toHaveCount(0, { timeout: 15_000 });
   return page.getByTestId('tel-new-call-panel');
 }
 
