@@ -19365,11 +19365,11 @@
   {
    "arquivo": "src/lib/__tests__/chunkReload.test.ts",
    "tipo": "unit",
-   "linhas": 150,
+   "linhas": 198,
    "testa": [
     "src/lib/chunkReload.ts"
    ],
-   "casos": 13
+   "casos": 16
   },
   {
    "arquivo": "src/lib/__tests__/clipboard.test.ts",

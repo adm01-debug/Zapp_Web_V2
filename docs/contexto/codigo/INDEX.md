@@ -1,7 +1,7 @@
 # Contexto do projeto para agentes de IA
 
 GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.
-Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR dela) a cada push em `main` e a cada 10 minutos pelo workflow `contexto.yml`; índice único das três fontes em `docs/contexto/00-INDEX.md`. Gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `4432834d6968179eca283e479e8d5b70dc02cea8` (2026-11-14T05:07:11-03:00).
+Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR dela) a cada push em `main` e a cada 10 minutos pelo workflow `contexto.yml`; índice único das três fontes em `docs/contexto/00-INDEX.md`. Gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `6081024b16468954e0d9186197934f1a6026b0cf` (2026-11-14T05:49:49-03:00).
 
 ## Como usar (leia antes de planejar ou executar qualquer tarefa)
 1. **Tela/rota/menu** → `rotas.json` (url/vista/menu → arquivo → hooks → tabelas → edges; `rotas_http_backend` para APIs) e `modulos.json` (módulo inteiro + dependências entre módulos).
@@ -36,7 +36,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 |---|---|
 | arquivos_total | 8581 |
 | arquivos_codigo | 4915 |
-| linhas_codigo | 912462 |
+| linhas_codigo | 912541 |
 | rotas | 18 |
 | rotas_http_backend | 11 |
 | vistas_por_id | 55 |
@@ -393,8 +393,8 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - possiveis_segredos_no_codigo: 4 — ex.: scripts/ai-context/cenarios.mjs:102, scripts/ci/edge-coverage-authz.unit.mjs:398, scripts/ci/inventario-banco.unit.mjs:147
 
 ## Grafo de código (graphify)
-- 58016 nós · 120121 arestas · 4219 comunidades · grafo do commit `4432834d`
-- comunidades maiores: react (704), client.ts (685), vitest (649), badge.tsx (552), utils.ts (534), TalkXSuppression.tsx (531), ExternalProductManagement.tsx (531), ref_node_fs (493), framer-motion (425), @tanstack/react-query (421), cn (419), chat.ts (409)
+- 58017 nós · 120122 arestas · 4323 comunidades · grafo do commit `6081024b`
+- comunidades maiores: TalkXSuppression.tsx (1320), lucide-react (923), ref_node_fs (567), vitest (561), utils.ts (499), DashboardView.tsx (434), react-router-dom (423), schemas.ts (406), cn (397), e2e-isolated-runtime.unit.mjs (391), useAuth (377), react (368)
 - símbolos mais chamados: cn() (src/lib/utils.ts), useAuth() (src/hooks/auth/useAuth.tsx), jsonResponse() (supabase/functions/_shared/validation.ts), errorResponse() (supabase/functions/_shared/validation.ts), handleCors() (supabase/functions/_shared/validation.ts), fail() (scripts/e2e-isolated/network-proof-policy.mjs), Logger (supabase/functions/_shared/validation.ts), requireEnv() (supabase/functions/_shared/validation.ts), fmtInt() (src/components/talkx/kit/format.ts), validationErrorResponse() (supabase/functions/_shared/schemas.ts), .from() (supabase/functions/_shared/evolution-types.ts), useUserRole() (src/hooks/system/useUserRole.ts)
 - consulta local: `graphify query "<pergunta>"`, `graphify path "<A>" "<B>"`, `graphify explain "<X>"`
 
@@ -518,6 +518,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - CHANGELOG topo: [Unreleased]
 
 ## Últimos commits
+- 2026-11-14 `6081024` fix(chunk-reload): F5/navegação não dispara mais uma segunda recarga automática (#3075)
 - 2026-11-14 `4432834` fix(talkx): autosave do rascunho novo não remonta o wizard de campanha (#3073)
 - 2026-11-14 `58f1713` fix(e2e): prontidão de Contatos imune ao aria-hidden do modal de boas-vindas (#3071)
 - 2026-11-14 `ff0a5db` chore(db): sincronizar artefatos do banco e contagens do inventário (#3070)
@@ -532,7 +533,6 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - 2026-11-13 `098a648` fix(evolution-api): connect da go nunca mais devolve 500 e busca a credencial da instância sozinho (#3045)
 - 2026-11-13 `a49ef4a` feat: unificar ciclo de vida de campanha em useTalkXLifecycle nas 5 telas (X051) (#2555)
 - 2026-11-13 `19104e8` feat(multiplix): retomar disparo pausado em um clique (#3043)
-- 2026-11-13 `48f9754` test(e2e): linha de base de tarefas pula sem CAPTURA_DIR em vez de derrubar a rodada (#3032)
 
 ## Arquivos deste diretório
 - `docs/contexto/codigo/rotas.json`

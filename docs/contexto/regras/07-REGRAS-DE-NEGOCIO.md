@@ -1,6 +1,6 @@
 # 07 · REGRAS DE NEGÓCIO
 
-> Gerado automaticamente por AI Context Sync v1.3.2 · commit `4432834d69` · branch `main` · 2026-11-14 08:12 UTC
+> Gerado automaticamente por AI Context Sync v1.3.2 · commit `6081024b16` · branch `main` · 2026-11-14 08:50 UTC
 > Não edite à mão — regras humanas vão em `manual/`.
 
 ## A. Regras escritas por humanos (`manual/` — prioridade máxima, nunca sobrescrito)
@@ -3822,7 +3822,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `AGENT_SENDER_LABEL` | `'Atendente'` | `src/hooks/chat/useContactMedia.ts` |
 | `MEDIA_PAGE_SIZE` | `60` | `src/hooks/chat/useContactMedia.ts` |
 | `NOT_DELETED_OR` | `'is_deleted.is.null,is_deleted.eq.false'` | `src/hooks/chat/useContactMedia.ts` |
-| … +640 linhas — lista completa em `context.json` | | |
+| … +641 linhas — lista completa em `context.json` | | |
 
 ### H.2 Prazos, expirações e janelas de tempo
 
@@ -4644,7 +4644,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `owner` | `supabase/migrations/20260927270018_team_chat_e28_fix_find_or_create_race.sql` |
 | `anon` | `supabase/migrations/20260927340000_fix_add_agent_xp_negative_and_guard.sql` |
 
-## K. Testes como especificação (21927 testes em 2314 arquivos — nomes completos em `context.json`)
+## K. Testes como especificação (21931 testes em 2314 arquivos — nomes completos em `context.json`)
 
 | Arquivo | Testes | Exemplos do que o sistema DEVE fazer |
 |---|---|---|
@@ -4879,6 +4879,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `src/hooks/sla/__tests__/useContactSlaTimeline.test.tsx` | 19 | useContactSlaTimeline — marcos reais · monta os marcos das linhas gravadas, do mais recente para o mais antigo · aplica o prazo da hierarquia do contato (2min), não o padrão do sistema · lê só o contato pedido e só os eventos de transferência do TR1 … |
 | `src/hooks/sla/__tests__/useSLAConfigurations.test.tsx` | 19 | useSLAConfigurations — leitura · carrega as configurações ordenando por prioridade crescente · leitura que volta nula sem erro deixa a lista vazia · erro de RLS na leitura deixa a lista vazia sem travar a tela … |
 | `src/hooks/ui/__tests__/useVolumeRocker.test.tsx` | 19 | useVolumeRocker — painel, matriz de opções e fechamento · com enabled=false não muta, não ajusta, não abre e ignora a roda · com wheelEnabled=false a roda não ajusta nada (e a página pode rolar), mas as setas continuam · a roda ajusta ±step (com o painel aberto) e impede a rolagem da página junto … |
+| `src/lib/__tests__/chunkReload.test.ts` | 19 | chunkReload — reconhecimento · reconhece as mensagens de chunk sem diferenciar maiusculas · reconhece erro nomeado ChunkLoadError sem mensagem conhecida · nao confunde erro comum com falha de chunk … |
 | `src/lib/__tests__/filesPeriod.test.ts` | 19 | filesPeriod — buildPeriodRange · all (Qualquer data) e last_interaction não filtram · Hoje vai da meia-noite ao fim do dia LOCAL · Últimos 7 dias começa no início do 7º dia anterior e termina no fim de hoje … |
 | `src/lib/__tests__/postLoginRedirect.test.ts` | 19 | resolverDestinoPosLogin — destino interno preservado · usa ?next= e preserva query e hash · usa state.from como Location inteiro (shape do ProtectedRoute) · aceita state.from como string … |
 | `supabase/functions/_shared/observability.test.ts` | 19 | correlation: ecoa o x-request-id válido do cliente · correlation: gera UUID quando o cabeçalho não veio · correlation: valor fora do formato é descartado (não ecoa espaço/meta-caractere) · correlation: valor curto demais é descartado … |
@@ -4947,7 +4948,6 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `src/components/calls/__tests__/CallHistoryCells.test.tsx` | 16 | CallContactCell (T48) · peer_name vence os outros dois · sem peer_name cai no contact_name · sem nome nenhum mostra o telefone formatado … |
 | `src/components/calls/__tests__/RecordingPlayer.test.tsx` | 16 | RecordingPlayer (T67) · helpers reais de Edge recebem auth e anon key sinteticos do mock · nao renderiza nada quando a chamada nao tem gravacao · nao renderiza nem requisita quando a chamada nao diz que tem … |
 | `src/components/contacts/__tests__/BulkActionsBar.test.tsx` | 16 | BulkActionsBar — ações em lote (etapa 81) · não renderiza sem seleção · Tag acrescenta a tag só em quem ainda não tem · Atribuir grava assigned_to em todos os selecionados … |
-| `src/components/dashboard/__tests__/useSentimentData.test.tsx` | 16 | useSentimentData · monta sem lançar exceção e sai do loading (guarda contra TDZ de fetchData no useEffect) · erro na RPC é capturado — nunca escapa do hook e loading sempre volta a false · falha na leitura secundária de agentes mantém os dados principais e sinaliza leitura incompleta … |
 | … +2014 linhas — lista completa em `context.json` | | |
 
 ## L. Eventos de webhook tratados (contratos com sistemas externos)

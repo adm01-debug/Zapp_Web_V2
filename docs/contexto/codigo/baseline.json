@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "4432834d6968179eca283e479e8d5b70dc02cea8",
+  "commit": "6081024b16468954e0d9186197934f1a6026b0cf",
   "branch": "main",
-  "data_commit": "2026-11-14T05:07:11-03:00",
+  "data_commit": "2026-11-14T05:49:49-03:00",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "6081024",
+    "data": "2026-11-14",
+    "assunto": "fix(chunk-reload): F5/navegação não dispara mais uma segunda recarga automática (#3075)"
+   },
    {
     "sha": "4432834",
     "data": "2026-11-14",
@@ -126,14 +131,9 @@
     "sha": "fe4959b",
     "data": "2026-11-13",
     "assunto": "Painel de e-mail avisa se copiar o e-mail do contato deu certo ou falhou (#3006)"
-   },
-   {
-    "sha": "eb93d55",
-    "data": "2026-11-13",
-    "assunto": "fix(edge): copiloto RADAR extrai JSON via parseJsonObject (#3001)"
    }
   ],
-  "arquivos_mudados_7d": 973,
+  "arquivos_mudados_7d": 975,
   "pastas_mais_mudadas_30d": [
    {
     "pasta": "src/components/inbox",
@@ -173,7 +173,7 @@
    },
    {
     "pasta": "src/lib/__tests__",
-    "mudancas": 118
+    "mudancas": 119
    },
    {
     "pasta": "src/hooks/chat",
@@ -316,7 +316,7 @@
  "contagens": {
   "arquivos_total": 8581,
   "arquivos_codigo": 4915,
-  "linhas_codigo": 912462,
+  "linhas_codigo": 912541,
   "rotas": 18,
   "rotas_http_backend": 11,
   "vistas_por_id": 55,
@@ -732,7 +732,7 @@
   },
   "src/lib": {
    "arquivos": 293,
-   "linhas": 39715
+   "linhas": 39794
   },
   "src/main.tsx": {
    "arquivos": 1,

@@ -59,11 +59,11 @@
  "commits": {
   "convencao": "conventional commits (observado)",
   "exemplos": [
+   "fix(chunk-reload): F5/navegação não dispara mais uma segunda recarga automática (#3075)",
    "fix(talkx): autosave do rascunho novo não remonta o wizard de campanha (#3073)",
    "fix(e2e): prontidão de Contatos imune ao aria-hidden do modal de boas-vindas (#3071)",
    "chore(db): sincronizar artefatos do banco e contagens do inventário (#3070)",
-   "fix(e2e): atualizar hash de enqueue_outbound_message no harness isolado (#3069)",
-   "docs(prod-readiness): fechamento — repo = ledger (exceto 5 do #3064), contexto verde e produção sem erro (#3066)"
+   "fix(e2e): atualizar hash de enqueue_outbound_message no harness isolado (#3069)"
   ]
  },
  "pr_template": ".github/PULL_REQUEST_TEMPLATE.md",
