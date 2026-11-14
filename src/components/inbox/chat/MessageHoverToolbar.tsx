@@ -5,6 +5,7 @@ import { Reply, Forward, Copy, MoreVertical, Trash2, CheckCheck, EyeOff, Pencil,
 import { Message } from '@/types/chat';
 import { TextToSpeechButton } from '../TextToSpeechButton';
 import { MessageSendHistorySheet } from './MessageSendHistorySheet';
+import { markUnreadInZapp } from '@/services/message-unread.service';
 import { useEvolutionApi } from '@/hooks/integrations/useEvolutionApi';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -96,14 +97,30 @@ export function MessageHoverToolbar({
   }, [instanceName, externalId, contactJid, isSent, markMessageAsRead]);
 
   const handleMarkUnread = useCallback(async () => {
-    if (!externalId || !instanceName || !contactJid) return;
-    try {
-      await markMessageAsUnread(instanceName, { remoteJid: contactJid, fromMe: isSent, id: externalId });
-      toast.success('Marcada como não lida');
-    } catch {
+    // Estado do Zapp primeiro (é o que o selo e a lista leem). Depois, bônus no
+    // WhatsApp pela ação `mark-unread` da edge (evolution-api): na Evolution v2 ela
+    // chama /chat/markChatUnread; na Evolution GO, que não tem essa rota, responde
+    // 200 com `notSupported` — isso NÃO é erro para o atendente, a marcação do Zapp
+    // já valeu. Falha do provedor também só vira log.
+    const local = await markUnreadInZapp(message);
+    if (local === 'erro') {
       toast.error('Erro ao marcar como não lida');
+      return;
     }
-  }, [instanceName, externalId, contactJid, isSent, markMessageAsUnread]);
+    if (local === 'sem_mensagem_do_contato') {
+      toast.info('Nenhuma mensagem do cliente para marcar como não lida');
+      return;
+    }
+    if (externalId && instanceName && contactJid) {
+      try {
+        const res = await markMessageAsUnread(instanceName, { remoteJid: contactJid, fromMe: isSent, id: externalId }) as { notSupported?: boolean } | null | undefined;
+        if (res?.notSupported) log.info('Provedor sem "marcar como não lida"; mantida só no Zapp');
+      } catch (err) {
+        log.warn('WhatsApp não marcou como não lida; mantida no Zapp', err);
+      }
+    }
+    toast.success('Marcada como não lida');
+  }, [message, instanceName, externalId, contactJid, isSent, markMessageAsUnread]);
 
   const canEdit = isSent && message.type === 'text' && onEditStart && (() => {
     const ts = message.timestamp instanceof Date ? message.timestamp : new Date(message.created_at || String(message.timestamp));

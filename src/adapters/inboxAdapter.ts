@@ -40,6 +40,10 @@ export function mapMessageRowToMessage(row: MessageRow): Message {
     isEdited: !!(row as { is_edited?: boolean }).is_edited,
     is_deleted: row.is_deleted ?? false,
     external_id: row.external_id || undefined,
+    // P1-9: o player de áudio lê o status pela prop camelCase (`MessageBubble` →
+    // `AudioMessagePlayer`); sem este campo o UPDATE de `transcription_status`
+    // chega em `useMessages` e não muda o balão (processing/failed).
+    transcriptionStatus: ((row as { transcription_status?: string | null }).transcription_status as Message['transcriptionStatus']) || null,
     ...(row.message_type === 'location' ? { location: parseLocation(row.content) } : {}),
   };
 }

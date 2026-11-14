@@ -13,15 +13,15 @@
  *  - OS DOIS canais revalidam: `messages` (chegou mensagem / foi lida) e
  *    `contacts` (o recorte de contatos visíveis mudou) — um escopo que valesse
  *    só para a leitura inicial deixaria o selo velho na tela;
+ *  - recibo de mensagem NOSSA (UPDATE sent→delivered→read) NÃO recalcula o
+ *    selo (P1-9): só mensagem do contato com `is_read` mudando;
  *  - rajada de eventos vira UMA recontagem (debounce), não uma por evento;
- *  - reconexão: a PRIMEIRA inscrição não dispara consulta nova (a consulta
- *    inicial já cobre), mas a VOLTA do canal depois de uma queda revalida — os
- *    eventos que passaram enquanto o canal estava fora do ar não se recuperam
- *    sozinhos;
+ *  - reconexão: a VOLTA do canal depois de uma queda revalida (o
+ *    `onReconnect` do canal compartilhado) — os eventos que passaram enquanto o
+ *    canal estava fora do ar não se recuperam sozinhos;
  *  - desabilitado não consulta nem assina;
- *  - tópico exclusivo por instância (dois consumidores simultâneos não podem
- *    dividir `supabase.channel` — ver src/lib/realtimeTopic.ts) e canal limpo ao
- *    desmontar;
+ *  - os canais são os GLOBAIS compartilhados (`global-messages-realtime` e
+ *    `global-contacts-realtime`): a aba mantém uma assinatura por tabela;
  *  - o total do Teams é exposto pelo MESMO hook via `useTeamUnreadTotal` (lido do
  *    cache do inbox, sem consulta nova);
  *  - o título da aba ganha o prefixo "(n)" com não lidas e volta ao normal
@@ -32,17 +32,35 @@ import { renderHook, waitFor, act } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+interface RealtimeConfigMock {
+  channelName: string;
+  table: string;
+  enabled?: boolean;
+  onInsert?: (p: unknown) => void;
+  onUpdate?: (p: unknown) => void;
+  onDelete?: (p: unknown) => void;
+  onAll?: (p: unknown) => void;
+  onReconnect?: () => void;
+}
+
 const mocks = vi.hoisted(() => ({
   rpc: vi.fn(),
-  channel: vi.fn(),
-  removeChannel: vi.fn(),
+  realtime: [] as RealtimeConfigMock[],
 }));
 
 vi.mock('@/integrations/supabase/client', () => ({
   supabase: {
     rpc: (...args: unknown[]) => mocks.rpc(...args),
-    channel: (...args: unknown[]) => mocks.channel(...args),
-    removeChannel: (...args: unknown[]) => mocks.removeChannel(...args),
+  },
+}));
+
+// O canal real (compartilhado por nome, com contagem de donos) é coberto nos
+// testes de useSupabaseRealtime; aqui interessa o que o selo assina e faz.
+vi.mock('@/hooks/realtime/useSupabaseRealtime', () => ({
+  useSupabaseRealtime: (config: RealtimeConfigMock) => {
+    if (config.enabled === false) return;
+    const i = mocks.realtime.findIndex((c) => c.table === config.table);
+    if (i >= 0) mocks.realtime[i] = config; else mocks.realtime.push(config);
   },
 }));
 
@@ -53,26 +71,24 @@ vi.mock('@/hooks/auth/useAuth', () => ({
 import { useInboxUnreadTotal } from '../useInboxUnreadTotal';
 import { teamUnreadTotalQueryKey } from '@/hooks/team-chat/useTeamUnreadTotal';
 
-/** Canal de realtime falso: guarda o callback de status e os handlers por tabela. */
+/** Dispara um evento no canal compartilhado da tabela. */
+function emitir(table: string, eventType: 'INSERT' | 'UPDATE' | 'DELETE' = 'INSERT', payload: Record<string, unknown> = {}) {
+  const cfg = mocks.realtime.find((c) => c.table === table);
+  const full = { eventType, new: {}, old: {}, ...payload };
+  cfg?.onAll?.(full);
+  if (eventType === 'INSERT') cfg?.onInsert?.(full);
+  if (eventType === 'UPDATE') cfg?.onUpdate?.(full);
+  if (eventType === 'DELETE') cfg?.onDelete?.(full);
+}
+
 function mockChannel() {
-  const handlers = new Map<string, () => void>();
-  let subscribeCb: ((status: string) => void) | undefined;
-  const channel = {
-    on: vi.fn((_event: string, filter: { table: string }, callback: () => void) => {
-      handlers.set(filter.table, callback);
-      return channel;
-    }),
-    subscribe: vi.fn((cb?: (status: string) => void) => {
-      subscribeCb = cb;
-      return channel;
-    }),
-  };
-  mocks.channel.mockReturnValue(channel);
   return {
-    channel,
-    emitirTabela: (table: string) => handlers.get(table)?.(),
-    emitirStatus: (status: string) => subscribeCb?.(status),
-    tabelas: () => Array.from(handlers.keys()),
+    emitirTabela: (table: string) => emitir(table),
+    // O limite de reconexão do useSupabaseRealtime é por identidade do callback:
+    // os dois canais usam o MESMO callback, então a queda vira uma recontagem só.
+    reconectar: () => mocks.realtime.find((c) => c.table === 'messages')?.onReconnect?.(),
+    mesmoCallbackDeReconexao: () => new Set(mocks.realtime.map((c) => c.onReconnect)).size === 1,
+    tabelas: () => mocks.realtime.map((c) => c.table),
   };
 }
 
@@ -94,9 +110,9 @@ function esconderAba() {
 
 beforeEach(() => {
   vi.clearAllMocks();
+  mocks.realtime = [];
   document.title = 'Zapp Web';
   mockTotal(0);
-  mockChannel();
 });
 
 afterEach(() => {
@@ -162,21 +178,43 @@ describe('useInboxUnreadTotal — selo do Chat, título da aba e total do Teams'
     expect(mocks.rpc).toHaveBeenCalledTimes(2);
   });
 
-  it('reconexão: a primeira inscrição não consulta de novo; a volta do canal revalida', async () => {
-    const { emitirStatus } = mockChannel();
+  it('recibo de mensagem nossa não recalcula o selo; is_read do contato mudando recalcula', async () => {
     const { result } = renderHook(() => useInboxUnreadTotal(), { wrapper: createWrapper().wrapper });
     await waitFor(() => expect(result.current.count).toBe(0));
     expect(mocks.rpc).toHaveBeenCalledTimes(1);
 
-    // primeira inscrição: a consulta inicial já cobre, nada de consulta extra
-    act(() => { emitirStatus('SUBSCRIBED'); });
+    // recibo (delivered/read) de mensagem do agente: não é "não lida do contato"
+    await act(async () => {
+      emitir('messages', 'UPDATE', { new: { sender: 'agent', status: 'read' }, old: { id: 'm1' } });
+    });
+    await new Promise((r) => setTimeout(r, 700));
     expect(mocks.rpc).toHaveBeenCalledTimes(1);
 
-    // caiu: os eventos desta janela se perdem
-    act(() => { emitirStatus('CHANNEL_ERROR'); });
+    // UPDATE do contato sem mudar is_read (ex.: transcrição): também não
+    await act(async () => {
+      emitir('messages', 'UPDATE', { new: { sender: 'contact', is_read: false }, old: { is_read: false } });
+    });
+    await new Promise((r) => setTimeout(r, 700));
+    expect(mocks.rpc).toHaveBeenCalledTimes(1);
 
+    // a conversa foi lida: recalcula
+    mockTotal(2);
+    await act(async () => {
+      emitir('messages', 'UPDATE', { new: { sender: 'contact', is_read: true }, old: { is_read: false } });
+    });
+    await waitFor(() => expect(result.current.count).toBe(2), { timeout: 2000 });
+    expect(mocks.rpc).toHaveBeenCalledTimes(2);
+  });
+
+  it('reconexão: a volta do canal revalida na hora', async () => {
+    const { reconectar, mesmoCallbackDeReconexao } = mockChannel();
+    const { result } = renderHook(() => useInboxUnreadTotal(), { wrapper: createWrapper().wrapper });
+    await waitFor(() => expect(result.current.count).toBe(0));
+    expect(mocks.rpc).toHaveBeenCalledTimes(1);
+
+    expect(mesmoCallbackDeReconexao()).toBe(true);
     mockTotal(5);
-    act(() => { emitirStatus('SUBSCRIBED'); });
+    act(() => { reconectar(); });
 
     await waitFor(() => expect(result.current.count).toBe(5));
     expect(mocks.rpc).toHaveBeenCalledTimes(2);
@@ -191,27 +229,17 @@ describe('useInboxUnreadTotal — selo do Chat, título da aba e total do Teams'
     expect(result.current.count).toBe(0);
     expect(result.current.isLoading).toBe(false);
     expect(mocks.rpc).not.toHaveBeenCalled();
-    expect(mocks.channel).not.toHaveBeenCalled();
+    expect(mocks.realtime).toHaveLength(0);
   });
 
-  it('tópico exclusivo por instância e canal limpo ao desmontar', async () => {
-    const { channel } = mockChannel();
-    const { result, unmount } = renderHook(
-      () => useInboxUnreadTotal(),
-      { wrapper: createWrapper().wrapper },
-    );
+  it('assina os canais GLOBAIS compartilhados, não um canal exclusivo do selo', async () => {
+    const { result } = renderHook(() => useInboxUnreadTotal(), { wrapper: createWrapper().wrapper });
     await waitFor(() => expect(result.current.count).toBe(0));
 
-    // segundo consumidor simultâneo (barra lateral + barra do celular)
-    renderHook(() => useInboxUnreadTotal(), { wrapper: createWrapper().wrapper });
-
-    const nomes = mocks.channel.mock.calls.map(call => call[0] as string);
-    expect(nomes).toHaveLength(2);
-    expect(nomes[0]).not.toBe(nomes[1]);
-    expect(nomes[0].startsWith('inbox-unread-total')).toBe(true);
-
-    unmount();
-    expect(mocks.removeChannel).toHaveBeenCalledWith(channel);
+    expect(mocks.realtime.map((c) => [c.table, c.channelName]).sort()).toEqual([
+      ['contacts', 'global-contacts-realtime'],
+      ['messages', 'global-messages-realtime'],
+    ]);
   });
 
   it('expõe o total do Teams lido do cache do inbox, sem consulta nova', async () => {
@@ -265,6 +293,5 @@ describe('useInboxUnreadTotal — selo do Chat, título da aba e total do Teams'
 
     // a tela já saiu: nem contagem nova nem "(3)" pendurado no título
     expect(document.title).toBe('Zapp Web');
-    expect(mocks.removeChannel).toHaveBeenCalledTimes(1);
   });
 });

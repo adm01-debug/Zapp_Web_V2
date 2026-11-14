@@ -57,7 +57,6 @@ canal (o corte por linha é a RLS da tabela); `usuário`/`contato`/`conversa`/`m
 | `sla-breaches` | `conversation_sla` | — | global | `src/hooks/sla/useSLANotifications.ts:67` |
 | `warroom-alerts-realtime` | `warroom_alerts` | — | global | `src/hooks/business/useWarRoomAlerts.ts:128` |
 | `work-items:{profileId}:{rand}` | `conversation_tasks` | `created_by=eq.{profileId}` | usuário | `src/hooks/tasks/useMyWorkItems.ts:262` |
-| `transcription-{messageId}` | `messages` | `id=eq.{messageId}` | mensagem | `src/components/inbox/AudioMessagePlayer.tsx:45` |
 | `transcription-notifications` | `messages` | — | global | `src/hooks/communication/useTranscriptionNotifications.ts:39` |
 | `message-status-{contactId}` | `messages` | `contact_id=eq.{contactId}` | conversa | `src/hooks/chat/useMessageStatus.ts:67` |
 | `reactions:{messageId}` | `message_reactions` | `message_id=eq.{messageId}` | mensagem | `src/hooks/chat/useMessageReactions.ts:35` |

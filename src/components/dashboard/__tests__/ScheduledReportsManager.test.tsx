@@ -9,6 +9,7 @@ import { ScheduledReportsManager } from '../ScheduledReportsManager';
 const mocks = vi.hoisted(() => ({
   configs: [] as Array<Record<string, unknown>>,
   mutate: vi.fn(),
+  deleteMutate: vi.fn(),
 }));
 
 vi.mock('@/hooks/dashboard/useScheduledReportConfigs', () => ({
@@ -17,7 +18,7 @@ vi.mock('@/hooks/dashboard/useScheduledReportConfigs', () => ({
     isLoading: false,
     createConfig: { mutate: mocks.mutate, isPending: false },
     toggleActive: { mutate: vi.fn() },
-    deleteConfig: { mutate: vi.fn() },
+    deleteConfig: { mutate: mocks.deleteMutate },
   }),
 }));
 
@@ -63,5 +64,44 @@ describe('ScheduledReportsManager — frequência "Personalizada"', () => {
     const linha = screen.getByText('Fechamento do mês').closest('div')!.parentElement as HTMLElement;
     expect(within(linha).getByText('Personalizada')).toBeInTheDocument();
     expect(within(linha).queryByText('custom')).not.toBeInTheDocument();
+  });
+});
+
+describe('ScheduledReportsManager — exclusão pede confirmação', () => {
+  beforeEach(() => {
+    mocks.configs.length = 0;
+    mocks.deleteMutate.mockClear();
+    mocks.configs.push({
+      id: 'cfg-1',
+      name: 'Fechamento do mês',
+      report_type: 'performance',
+      frequency: 'weekly',
+      recipients: ['gestor@empresa.com'],
+      is_active: true,
+      created_at: '2026-10-08T12:00:00.000Z',
+    });
+  });
+
+  it('clicar na lixeira abre o diálogo e NÃO exclui antes de confirmar', () => {
+    render(<ScheduledReportsManager />);
+    fireEvent.click(screen.getByRole('button', { name: 'Excluir relatório Fechamento do mês' }));
+    expect(screen.getByRole('alertdialog')).toBeInTheDocument();
+    expect(mocks.deleteMutate).not.toHaveBeenCalled();
+  });
+
+  it('"Cancelar" fecha o diálogo sem excluir', () => {
+    render(<ScheduledReportsManager />);
+    fireEvent.click(screen.getByRole('button', { name: 'Excluir relatório Fechamento do mês' }));
+    fireEvent.click(within(screen.getByRole('alertdialog')).getByRole('button', { name: 'Cancelar' }));
+    expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument();
+    expect(mocks.deleteMutate).not.toHaveBeenCalled();
+  });
+
+  it('"Excluir" no diálogo chama deleteConfig.mutate com o id', () => {
+    render(<ScheduledReportsManager />);
+    fireEvent.click(screen.getByRole('button', { name: 'Excluir relatório Fechamento do mês' }));
+    fireEvent.click(within(screen.getByRole('alertdialog')).getByRole('button', { name: 'Excluir' }));
+    expect(mocks.deleteMutate).toHaveBeenCalledTimes(1);
+    expect(mocks.deleteMutate).toHaveBeenCalledWith('cfg-1');
   });
 });

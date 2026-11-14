@@ -464,3 +464,53 @@ describe('resposta `notSupported` (Evolution GO sem a rota da v2)', () => {
     expect(h.toast.error).toHaveBeenCalledWith('Recurso não suportado pelo provedor de WhatsApp em uso.');
   });
 });
+
+describe('Edge non-2xx (FunctionsHttpError): mensagem vem do corpo', () => {
+  /** `error` no formato do supabase-js para resposta non-2xx: `context` é a Response. */
+  function functionsHttpError(body: string, status = 500) {
+    return Object.assign(new Error('Edge Function returned a non-2xx status code'), {
+      name: 'FunctionsHttpError',
+      context: new Response(body, { status, headers: { 'Content-Type': 'application/json' } }),
+    });
+  }
+
+  async function failureOf(error: unknown) {
+    h.invoke.mockResolvedValue({ data: null, error });
+    const { result } = renderHook(() => useEvolutionApiCore());
+    let failure!: Error & { cause?: unknown };
+    await act(async () => {
+      await result.current
+        .callApi('connect', { instanceName })
+        .catch((e: unknown) => { failure = e as typeof failure; });
+    });
+    return failure;
+  }
+
+  it('usa body.message no lugar do texto genérico do SDK', async () => {
+    const original = functionsHttpError(JSON.stringify({ error: true, message: 'Apenas administradores podem executar esta ação.' }), 403);
+    const failure = await failureOf(original);
+    expect(failure.message).toBe('Apenas administradores podem executar esta ação.');
+    expect(failure.cause).toBe(original);
+  });
+
+  it('cai em body.error (string) quando não há message', async () => {
+    const failure = await failureOf(functionsHttpError(JSON.stringify({ error: 'Rate limit exceeded' }), 429));
+    expect(failure.message).toBe('Rate limit exceeded');
+  });
+
+  it('corpo não-JSON mantém o erro original do SDK', async () => {
+    const original = functionsHttpError('<html>bad gateway</html>', 502);
+    const failure = await failureOf(original);
+    expect(failure).toBe(original);
+    expect(failure.message).toBe('Edge Function returned a non-2xx status code');
+  });
+
+  it('withToast mostra a mensagem do corpo ao operador', async () => {
+    h.invoke.mockResolvedValue({ data: null, error: functionsHttpError(JSON.stringify({ message: 'Credencial da instância inválida.' }), 401) });
+    const { result } = renderHook(() => useEvolutionApiCore());
+    await act(async () => {
+      await result.current.withToast('connect', { instanceName }, 'ok', 'Erro ao conectar').catch(() => undefined);
+    });
+    expect(h.toast.error).toHaveBeenCalledWith('Credencial da instância inválida.');
+  });
+});

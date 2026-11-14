@@ -326,7 +326,12 @@ export async function handleTalkxScheduler(
           'talkx_campaign_window_open',
           { p_campaign_id: campaign.id, p_at: nowIso },
         );
-        if (winErr || windowOpen !== true) {
+        // A RPC é RETURNS TABLE(allowed, reason, next_window): o PostgREST devolve
+        // um array de linhas. `true` puro segue aceito (contrato antigo).
+        const windowRow = Array.isArray(windowOpen) ? windowOpen[0] : windowOpen;
+        const isWindowOpen = windowOpen === true
+          || (windowRow as { allowed?: unknown } | null | undefined)?.allowed === true;
+        if (winErr || !isWindowOpen) {
           log.info(`Campanha fora da janela de envio: ${campaign.name} (${campaign.id})`, {
             campaignId: campaign.id,
             windowOpen,

@@ -1,0 +1,5 @@
+{
+  "inicio": {"sha": "bd62fc9d9771a079b712d532d66adbddfb9576bb", "quando": "2026-11-11T23:52Z", "ci": "pendente na fila", "vermelho_herdado": "E2E logado (workflow_run, e2e-logado.yml): authenticated-1/2/3 com routine-ownership-failed desde 9727aaedd; authenticated-2 já falhava antes (navegacao-modulos.spec.ts: 409 em notifications e requests externos bloqueados)"},
+  "correcao": {"pr": 2974, "merge_sha": "a082adc179bbab733daf4ffbe3b4865c149770c9", "ci_no_sha_do_merge": "todos success (CI Gate, Build, TypeCheck, Unit 1-3, E2E Playwright, DB Guard, Edge contracts, Security, Workflow lint, Node CI Scripts, Vercel V2/V3)"},
+  "depois": {"sha_main_na_leitura": "1616f7b73", "e2e_logado": "ainda vermelho: restore-versioned-routine-owners passa; novo bloqueio em seed-suite-and-verify-providers (code verify-providers), run 43180553304"}
+}
