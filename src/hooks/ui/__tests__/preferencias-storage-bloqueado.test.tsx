@@ -23,7 +23,6 @@ vi.mock('@/hooks/system/useUserRole', () => ({
     permissions: [],
     isAdmin: false,
     isSupervisor: false,
-    isSpecialAgent: false,
     hasRole: () => false,
     loading: false,
     rolesLoadError: false,

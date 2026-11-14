@@ -659,6 +659,16 @@ jobs:
           TALKX_BLACKLIST_RECONCILIA_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
           SKIP_DOCKER_SHIM: "1"
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash supabase/tests/db-audit/talkx-blacklist-reconcilia.test.sh
+      # 20261113172000: recria public.app_role sem 'special_agent' (papel extinto em 2026-11-03).
+      # A prova monta o estado de producao (migrations reais + harness das 21 policies, view e
+      # funcoes dependentes), prova guardas fechadas, aplica 2x, compara policies/view/ACL
+      # antes x depois, roda papeis reais, sessao aberta antes da troca e rollback.
+      # SKIP_DOCKER_SHIM=1: usa um segundo banco (espelho) e uma sessao psql longa no container.
+      - name: Simular remocao do rotulo special_agent do enum app_role
+        env:
+          REMOVE_ENUM_SPECIAL_AGENT_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
+          SKIP_DOCKER_SHIM: "1"
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash supabase/tests/db-audit/remove-enum-special-agent.test.sh
       - name: Simular publicação Realtime da blacklist Talk X com escopo de colunas
         env:
           TALKX_BLACKLIST_REALTIME_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}

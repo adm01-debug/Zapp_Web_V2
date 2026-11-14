@@ -48,7 +48,6 @@ vi.mock('@/hooks/system/useUserRole', () => ({
     permissions: ['multiplix.dispatch.create'],
     isAdmin: false,
     isSupervisor: true,
-    isSpecialAgent: false,
     hasRole: (r: string) => r === 'supervisor',
     loading: false,
     permissionsLoading: false,
