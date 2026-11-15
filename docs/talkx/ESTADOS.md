@@ -64,6 +64,6 @@ forçado antes da consulta real. Implementação (arquivo:linha):
 - `src/components/talkx/kit/forcedState.ts:63`
 - `src/components/talkx/kit/forcedState.ts:72`
 - `src/components/talkx/kit/states.tsx:9`
-- `src/components/talkx/kit/states.tsx:327`
+- `src/components/talkx/kit/states.tsx:344`
 
 Estados sem nenhuma tela adotando: CRM 360 indisponível, Sem permissão.
