@@ -41,7 +41,7 @@ export function ScopeRulesList({ scope }: ScopeRulesListProps) {
     return undefined;
   };
 
-  if (isError) {
+  if (isError && !rules.length) {
     return (
       <div role="alert" className="flex items-center gap-2 pt-4 text-sm text-destructive">
         <AlertTriangle className="w-4 h-4 shrink-0" aria-hidden="true" />

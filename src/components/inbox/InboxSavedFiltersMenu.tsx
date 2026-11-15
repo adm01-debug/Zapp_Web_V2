@@ -194,7 +194,7 @@ export function InboxSavedFiltersMenu({ current, onApply }: InboxSavedFiltersMen
               <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
                 Filtros salvos
               </p>
-              {loadError ? (
+              {loadError && !presets.length ? (
                 <p role="alert" className="px-1 py-2 text-xs text-destructive">
                   Erro ao carregar filtros salvos.
                 </p>
