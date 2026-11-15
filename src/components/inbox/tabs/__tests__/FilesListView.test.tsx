@@ -31,6 +31,7 @@ function renderList(overrides: Partial<React.ComponentProps<typeof FilesListView
     onSelect: vi.fn(),
     onToggleSelection: vi.fn(),
     onPreview: vi.fn(),
+    onForward: vi.fn(),
     onRequestDelete: vi.fn(),
     ...overrides,
   };
@@ -58,7 +59,7 @@ describe('FilesListView (etapas 21-22)', () => {
       .toHaveTextContent('Ana Cliente');
 
     expect(screen.getAllByRole('button', { name: 'Visualizar' })).toHaveLength(2);
-    expect(screen.getAllByRole('button', { name: 'Encaminhar' })[0]).toBeDisabled();
+    expect(screen.getAllByRole('button', { name: 'Encaminhar' })[0]).toBeEnabled();
     expect(screen.getAllByRole('button', { name: 'Mais ações' })).toHaveLength(2);
   });
 
