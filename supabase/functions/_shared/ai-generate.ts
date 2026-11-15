@@ -233,15 +233,60 @@ export const DEFAULT_AI_BUDGET_TOKENS = 200_000;
  *
  * Pura e determinística (não lê relógio nem ambiente) — por isso é testável direto.
  */
+/**
+ * Teto de tokens que UMA imagem ocupa na janela de visão. O base64 da imagem NÃO é
+ * texto: contar caractere por caractere estourava a reserva com qualquer foto acima de
+ * ~590 KB (200k de teto ÷ 4 chars por token) e devolvia 429 sem nem chamar o modelo.
+ * 1600 é o custo de uma imagem de ~1,15 MP nos provedores de visão que o roteador usa
+ * — limite superior de propósito: estimar a mais só reduz a folga da reserva, e o
+ * `settleBudget` corrige depois com o uso medido.
+ */
+export const VISION_TOKENS_POR_IMAGEM = 1_600;
+
+/**
+ * Troca cada parte `image_url` por um marcador e conta quantas imagens havia, para a
+ * estimativa cobrar VISÃO por imagem em vez de cobrar o base64 por caractere. Pura;
+ * nunca lança; corta ciclo (pelo caminho) e profundidade para não travar em estrutura
+ * exótica — nesse caso cai no comportamento antigo.
+ */
+function separarImagens(messages: unknown): { texto: unknown; imagens: number } {
+  let imagens = 0;
+  const noCaminho = new WeakSet<object>();
+  const limpa = (valor: unknown, nivel: number): unknown => {
+    if (nivel > 8 || valor === null || typeof valor !== "object") return valor;
+    if (noCaminho.has(valor as object)) return null;
+    noCaminho.add(valor as object);
+    try {
+      if (Array.isArray(valor)) return valor.map((item) => limpa(item, nivel + 1));
+      const obj = valor as Record<string, unknown>;
+      if (obj.type === "image_url") {
+        imagens++;
+        return { type: "image_url" };
+      }
+      const saida: Record<string, unknown> = {};
+      for (const [chave, item] of Object.entries(obj)) saida[chave] = limpa(item, nivel + 1);
+      return saida;
+    } finally {
+      noCaminho.delete(valor as object);
+    }
+  };
+  try {
+    return { texto: limpa(messages, 0), imagens };
+  } catch {
+    return { texto: messages, imagens: 0 };
+  }
+}
+
 export function estimateAiTokens(messages: unknown, maxTokens: number | null | undefined): number {
+  const { texto, imagens } = separarImagens(messages);
   let serialized = "";
   try {
-    serialized = JSON.stringify(messages) ?? "";
+    serialized = JSON.stringify(texto) ?? "";
   } catch {
     // Circular/exótico não pode derrubar o despacho: sem medida da entrada, fica a saída.
     serialized = "";
   }
-  const inputTokens = Math.ceil(serialized.length / 4);
+  const inputTokens = Math.ceil(serialized.length / 4) + imagens * VISION_TOKENS_POR_IMAGEM;
   const bruto = typeof maxTokens === "number" && Number.isFinite(maxTokens) ? maxTokens : 1024;
   const outputTokens = Math.ceil(bruto);
   return Math.max(1, inputTokens + outputTokens);

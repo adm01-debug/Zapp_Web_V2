@@ -11,6 +11,7 @@
 import { assertEquals } from "https://deno.land/std@0.224.0/assert/mod.ts";
 import { handleAiMultimodalAnalysis, type AiMultimodalAnalysisDeps } from "./index.ts";
 import type { GenerateParams, GenerateResult } from "../_shared/ai-generate.ts";
+import { AiImageInputError, type InlineImage } from "../_shared/ai-image-input.ts";
 
 const URL_EDGE = "https://edge.invalid/functions/v1/ai-multimodal-analysis";
 const BODY_VALIDO = { imageUrl: "https://cdn.exemplo.test/logo.png", conversationContext: "cliente mandou o logo" };
@@ -40,18 +41,40 @@ function respostaDoProvedor(status: number, content: unknown): GenerateResult {
   } as unknown as GenerateResult;
 }
 
-/** deps falsificadas: usuário autenticado, guardas liberadas e provedor controlado pelo caso. */
+/** PNG 1x1 embutido — o que o preparo de imagem devolve no lugar da URL privada. */
+const DATA_URL = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAAC0lEQVR4nGP4z8AAAAMBAQAY3Y2wAAAAAElFTkSuQmCC";
+const IMAGEM_EMBUTIDA: InlineImage = {
+  dataUrl: DATA_URL,
+  mime: "image/png",
+  bytes: 70,
+  bucket: "whatsapp-media",
+  path: "conversa/foto.png",
+};
+
+/** deps falsificadas: usuário autenticado, guardas liberadas, preparo de imagem e provedor controlados pelo caso. */
 function depsCom(provedor: (p: GenerateParams) => GenerateResult) {
   const chamadas: GenerateParams[] = [];
+  const imagens: string[] = [];
   const deps: AiMultimodalAnalysisDeps = {
     authorize: () => Promise.resolve({ userId: "user-sintetico" }),
     enforceGuards: () => Promise.resolve(null),
+    prepareImage: (url) => {
+      imagens.push(url);
+      return Promise.resolve(IMAGEM_EMBUTIDA);
+    },
     generate: (p) => {
       chamadas.push(p);
       return Promise.resolve(provedor(p));
     },
   };
-  return { deps, chamadas };
+  return { deps, chamadas, imagens };
+}
+
+/** Primeira parte `image_url` da mensagem de visão que foi ao provedor. */
+function urlDaImagemEnviada(p: GenerateParams): string {
+  const partes = (p.messages as Array<{ content: Array<Record<string, unknown>> }>)[0].content;
+  const parte = partes.find((c) => c.type === "image_url") as { image_url: { url: string } } | undefined;
+  return parte?.image_url.url ?? "";
 }
 
 Deno.test("ai-multimodal-analysis: preflight OPTIONS responde CORS sem autenticar nem chamar o provedor", async () => {
@@ -152,4 +175,42 @@ Deno.test("ai-multimodal-analysis: provedor 429/402 propaga o status e falha gen
     await res.body?.cancel();
     assertEquals(res.status, esperado, `provedor ${status}`);
   }
+});
+
+Deno.test("ai-multimodal-analysis: o provedor recebe a imagem EMBUTIDA, nunca a URL do bucket privado", async () => {
+  const { deps, chamadas, imagens } = depsCom(() => respostaDoProvedor(200, JSON.stringify(SAIDA_VALIDA)));
+  const urlPrivada = "https://proj.supabase.co/storage/v1/object/sign/whatsapp-media/conversa/foto.png?token=jwt";
+  const res = await handleAiMultimodalAnalysis(pedido({ ...BODY_VALIDO, imageUrl: urlPrivada }), deps);
+  await res.body?.cancel();
+  assertEquals(res.status, 200);
+  assertEquals(imagens, [urlPrivada], "a URL crua tem de ir para o preparo");
+  assertEquals(chamadas.length, 1);
+  assertEquals(urlDaImagemEnviada(chamadas[0]), DATA_URL, "o modelo tem de receber data URL");
+  assertEquals(urlDaImagemEnviada(chamadas[0]).startsWith("http"), false, "URL de storage nao pode chegar ao modelo");
+});
+
+Deno.test("ai-multimodal-analysis: imagem recusada no preparo devolve o status tipado e nao gasta provedor", async () => {
+  for (const [code, esperado] of [["IMAGE_URL_INVALID", 400], ["IMAGE_TOO_LARGE", 413], ["IMAGE_TYPE_INVALID", 415]] as const) {
+    const { deps, chamadas } = depsCom(() => respostaDoProvedor(200, JSON.stringify(SAIDA_VALIDA)));
+    deps.prepareImage = () => Promise.reject(new AiImageInputError(code, "whatsapp-media/conversa/foto.png recusada"));
+    const res = await handleAiMultimodalAnalysis(pedido(BODY_VALIDO), deps);
+    const corpo = await res.text();
+    assertEquals(res.status, esperado, code);
+    assertEquals(corpo.includes(code), true, `o codigo tipado tem de sair na resposta (${code})`);
+    assertEquals(corpo.includes("conversa/foto.png"), false, "locator do objeto privado nao pode vazar");
+    assertEquals(chamadas.length, 0, `provedor nao pode ser chamado (${code})`);
+  }
+});
+
+Deno.test("ai-multimodal-analysis: a identidade de download e a do CHAMADOR (JWT do pedido), nunca service role", async () => {
+  const { deps } = depsCom(() => respostaDoProvedor(200, JSON.stringify(SAIDA_VALIDA)));
+  let identidade: unknown = null;
+  deps.prepareImage = (_url, options) => {
+    identidade = options.storageIdentity;
+    return Promise.resolve(IMAGEM_EMBUTIDA);
+  };
+  const res = await handleAiMultimodalAnalysis(pedido(BODY_VALIDO), deps);
+  await res.body?.cancel();
+  assertEquals(res.status, 200);
+  assertEquals(identidade, { kind: "user", bearerToken: "jwt-sintetico" });
 });

@@ -668,6 +668,40 @@ describe('(9) estimateAiTokens: a estimativa cresce com a entrada e nunca é zer
     expect(estimateAiTokens(undefined, undefined)).toBeGreaterThanOrEqual(1);
   });
 
+  it('imagem embutida NÃO é cobrada como texto: foto de 600 KB cabe no teto padrão', async () => {
+    const { estimateAiTokens, DEFAULT_AI_BUDGET_TOKENS } = await carregarDespacho();
+
+    // 600 KiB de JPEG → ~819.200 caracteres de base64. Pela conta antiga
+    // (JSON.stringify / 4) isso sozinho estimava ~204.800 tokens e a reserva negava.
+    const base64 = 'A'.repeat(Math.ceil((600 * 1024 * 4) / 3));
+    const comFoto = [
+      {
+        role: 'user',
+        content: [
+          { type: 'image_url', image_url: { url: `data:image/jpeg;base64,${base64}` } },
+          { type: 'text', text: 'Analise esta imagem enviada pelo cliente.' },
+        ],
+      },
+    ];
+
+    const estimado = estimateAiTokens(comFoto, 1024);
+    expect(estimado, 'a foto não pode estourar o teto padrão do orçamento').toBeLessThan(
+      DEFAULT_AI_BUDGET_TOKENS,
+    );
+    expect(estimado, 'visão tem custo: a imagem não pode sair de graça').toBeGreaterThan(1024);
+
+    // Duas imagens custam mais que uma, e a diferença é o custo de visão por imagem.
+    const comDuas = [
+      { role: 'user', content: [...comFoto[0].content, { type: 'image_url', image_url: { url: 'data:image/png;base64,AAAA' } }] },
+    ];
+    expect(estimateAiTokens(comDuas, 1024)).toBeGreaterThan(estimado);
+
+    // O texto continua medido: mais texto, mais estimativa.
+    const soTexto = estimateAiTokens([{ role: 'user', content: 'x'.repeat(4000) }], 1024);
+    const maisTexto = estimateAiTokens([{ role: 'user', content: 'x'.repeat(40000) }], 1024);
+    expect(maisTexto).toBeGreaterThan(soTexto);
+  });
+
   it('a SAÍDA usa `maxTokens` quando informado (senão 1024)', async () => {
     const { estimateAiTokens } = await carregarDespacho();
     // Sem entrada mensurável (undefined → ''), a parcela da saída domina a conta.
