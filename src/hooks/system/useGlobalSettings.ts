@@ -43,12 +43,17 @@ async function fetchGlobalSettings(): Promise<GlobalSetting[]> {
  * atualizado por um deles aparece imediatamente nos outros e uma instância que
  * monta depois já encontra o dado (não repassa o carregando).
  */
-export function useGlobalSettings() {
+export function useGlobalSettings(options?: { enabled?: boolean }) {
   const queryClient = useQueryClient();
+  // `global_settings` só é legível pelo admin (RLS): quem monta a tela sabendo que
+  // o papel não permite passa `enabled: false` e a consulta nem sai — antes ela
+  // saia sempre e voltava recusada.
+  const habilitado = options?.enabled ?? true;
 
   const { data: settings = SEM_CONFIGURACOES, isLoading } = useQuery({
     queryKey: GLOBAL_SETTINGS_QUERY_KEY,
     queryFn: fetchGlobalSettings,
+    enabled: habilitado,
     staleTime: 5 * 60 * 1000, // 5 min — deduplica entre todos os consumidores
     gcTime: 10 * 60 * 1000,
   });

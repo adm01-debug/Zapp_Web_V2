@@ -44,17 +44,37 @@ export function MFAVerify({
 
   const handleVerify = async () => {
     if (code.length !== 6) return;
-    
-    const verifiedFactor = factors.find(f => f.status === 'verified');
-    if (!verifiedFactor) {
-      setError('Nenhum fator MFA encontrado');
-      return;
-    }
 
     setVerifying(true);
     setError('');
-    
+
     try {
+      // O código pode chegar (digitado, colado ou preenchido pelo gerenciador de
+      // senhas) ANTES de `fetchFactors` responder: o input só fica bloqueado
+      // enquanto `loading`, que nasce false. Sem resolver a lista aqui a tela
+      // afirmava 'Nenhum fator MFA encontrado' — falta de dado apresentada como
+      // dado — e, como a auto-verificação observa só `code`, nada tentava de novo
+      // quando os fatores chegavam: a pessoa travava no login com 2FA.
+      let disponiveis = factors;
+      if (disponiveis.length === 0) {
+        try {
+          disponiveis = await fetchFactors();
+        } catch {
+          setError('Não foi possível carregar seus métodos de verificação. Tente novamente.');
+          setCode('');
+          return;
+        }
+      }
+
+      const verifiedFactor = disponiveis.find(f => f.status === 'verified');
+      if (!verifiedFactor) {
+        // Limpa o campo: sem isso o código de 6 dígitos ficava parado na tela e a
+        // auto-verificação (dep `[code]`) nunca disparava de novo.
+        setError('Nenhum fator MFA encontrado');
+        setCode('');
+        return;
+      }
+
       await verifyTOTP(verifiedFactor.id, code);
       onSuccess?.();
     } catch (err: unknown) {
