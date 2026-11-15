@@ -12,6 +12,7 @@ const f = vi.hoisted(() => ({
   create: vi.fn(), update: vi.fn(), saveDraft: vi.fn(), replace: vi.fn(), snapshot: vi.fn(), start: vi.fn(), log: vi.fn(),
   resolveAudience: vi.fn(async (_rules: unknown, _limit?: number) => [] as unknown[]),
   countAudience: vi.fn(async (_rules: unknown) => 0),
+  supabaseFrom: vi.fn(),
   // Histórico de versões: consumido pelo TalkXTemplateEditor (renderizado nesta
   // suíte). O wizard NÃO o usa: resolve a versão por current_version_id.
   fetchVersionHistory: vi.fn(async (_templateId: string) => [] as { id: string; version_number: number }[]),
@@ -22,8 +23,14 @@ const f = vi.hoisted(() => ({
   // V25 — usuário logado (profiles.id) e segmentos do passo 1.
   profile: { id: 'profile-1', name: 'Ana Silva', email: 'ana@example.com' } as { id: string; name: string; email: string } | null,
   segments: [] as { id: string; name: string; description: string; status: string; estimated_count: number }[],
+  segmentsError: null as Error | null,
+  segmentsLoading: false,
   // X124 — perfis devolvidos pela consulta de responsáveis (admin/supervisor ativos).
   owners: [] as { id: string; name: string | null; email: string | null }[],
+  // Total da uniao de segmentos. `undefined` cai no padrao (>= 1); um teste que
+  // precise do zero atribui 0 aqui, senao o gate do passo 1 nunca e exercido.
+  segmentUnionTotal: undefined as number | undefined,
+  queryErrors: {} as Record<string, Error>,
   queryCalls: [] as CapturedQuery[],
 }));
 
@@ -58,7 +65,13 @@ vi.mock('@/hooks/integrations/useTalkXSegments', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@/hooks/integrations/useTalkXSegments')>();
   return {
     ...actual,
-    useTalkXSegments: () => ({ segments: f.segments }),
+    useTalkXSegments: () => ({
+      segments: f.segmentsError ? [] : f.segments,
+      isLoading: f.segmentsLoading,
+      isError: !!f.segmentsError,
+      error: f.segmentsError,
+      refetch: vi.fn(),
+    }),
     resolveAudience: f.resolveAudience,
     countAudience: f.countAudience,
   };
@@ -84,21 +97,32 @@ vi.mock('@/hooks/integrations/useTalkXTemplates', () => ({
   }),
 }));
 vi.mock('@/hooks/integrations/useTalkXEvents', () => ({ useTalkXEventLogger: () => f.log }));
-vi.mock('@/integrations/supabase/client', () => ({ supabase: { from: vi.fn() } }));
+vi.mock('@/integrations/supabase/client', () => ({ supabase: { from: f.supabaseFrom } }));
 vi.mock('@/lib/supabaseHelpers', () => ({ fromTable: vi.fn() }));
 vi.mock('@/hooks/system/useCRMIntegrationEnabled', () => ({ useCRMIntegrationEnabled: () => false }));
 vi.mock('@/hooks/crm/useExternalContact360Batch', () => ({ useExternalContact360Batch: () => ({ batchData: new Map(), lookup: () => undefined, isLoading: false, isConfigured: false }) }));
 vi.mock('@tanstack/react-query', () => ({
-  useQuery: (options: { queryKey?: unknown[]; queryFn?: CapturedQuery['queryFn'] }) => {
+  useQuery: (options: { queryKey?: unknown[]; queryFn?: CapturedQuery['queryFn']; enabled?: boolean }) => {
     f.queryCalls.push({ queryKey: options.queryKey ?? [], queryFn: options.queryFn });
     const key = String(options.queryKey?.[0]);
-    const data = key === 'wa-connections-talkx' ? f.connections
+    const error = f.queryErrors[key] ?? null;
+    const data = error ? undefined
+      : key === 'wa-connections-talkx' ? f.connections
       : key === 'talkx-audience-contacts' ? f.contacts
         : key === 'talkx-audience-count' ? f.contacts.length
-          : key === 'talkx-owner-profiles' ? f.owners
-            : key === 'talkx-draft-recipient-ids' ? f.persistedRecipientIds?.map((recipient) => recipient.contact_id)
-              : undefined;
-    return { data, isFetching: false };
+          : key === 'talkx-wizard-segment-union-total' ? (f.segmentUnionTotal ?? (f.contacts.length || 1))
+            : key === 'talkx-owner-profiles' ? f.owners
+              : key === 'talkx-draft-recipient-ids' ? f.persistedRecipientIds?.map((recipient) => recipient.contact_id)
+                : undefined;
+    return {
+      data,
+      error,
+      isError: !!error,
+      isSuccess: !error && data !== undefined,
+      isLoading: options.enabled !== false && !error && data === undefined,
+      isFetching: false,
+      refetch: vi.fn(async () => ({ data, error })),
+    };
   },
   useMutation: () => ({ mutate: vi.fn(), mutateAsync: vi.fn() }),
   useQueryClient: () => ({ invalidateQueries: vi.fn(), setQueryData: vi.fn(), getQueryData: vi.fn() }),
@@ -151,10 +175,15 @@ describe('useCampaignEditor — draft integrity', () => {
     f.templates = [];
     f.profile = { id: 'profile-1', name: 'Ana Silva', email: 'ana@example.com' };
     f.segments = [];
+    f.segmentsError = null;
+    f.segmentsLoading = false;
+    f.queryErrors = {};
+    f.segmentUnionTotal = undefined;
     f.connections = [{ id: 'connection-1', name: 'Principal', status: 'connected', instance_id: 'evolution-principal' }];
     f.queryCalls.length = 0;
     f.resolveAudience.mockResolvedValue(f.contacts);
     f.countAudience.mockResolvedValue(f.contacts.length);
+    f.supabaseFrom.mockReset();
     window.sessionStorage.clear();
     window.history.replaceState(null, '', '/');
   });
@@ -790,10 +819,15 @@ describe('useCampaignEditor — V25 (responsável, nome mínimo, segmentos ativo
     f.templates = [];
     f.profile = { id: 'profile-1', name: 'Ana Silva', email: 'ana@example.com' };
     f.segments = [];
+    f.segmentsError = null;
+    f.segmentsLoading = false;
+    f.queryErrors = {};
+    f.segmentUnionTotal = undefined;
     f.connections = [{ id: 'connection-1', name: 'Principal', status: 'connected', instance_id: 'evolution-principal' }];
     f.queryCalls.length = 0;
     f.resolveAudience.mockResolvedValue(f.contacts);
     f.countAudience.mockResolvedValue(f.contacts.length);
+    f.supabaseFrom.mockReset();
     window.sessionStorage.clear();
     window.history.replaceState(null, '', '/');
   });
@@ -815,6 +849,106 @@ describe('useCampaignEditor — V25 (responsável, nome mínimo, segmentos ativo
 
     act(() => result.current.setName('abcd'));
     expect(result.current.canProceed[1]).toBe(true);
+  });
+
+  it('não trata falha na contagem da audiência como zero válido nem permite avançar/lançar', async () => {
+    f.queryErrors['talkx-audience-count'] = new Error('banco indisponível');
+    const { result } = renderHook(() => useCampaignEditor(null, vi.fn()));
+
+    act(() => { result.current.setName('Campanha'); result.current.toggleContact('contact-1'); });
+
+    expect(result.current.audienceQueryError?.message).toBe('banco indisponível');
+    expect(result.current.canProceed[1]).toBe(false);
+    await act(async () => {
+      await expect(result.current.handleSave('launch')).rejects.toThrow('Revise público, mensagem, agendamento e confirmações');
+    });
+    expect(f.saveDraft).not.toHaveBeenCalled();
+    expect(f.start).not.toHaveBeenCalled();
+  });
+
+  it('não aceita uma conexão salva sem conseguir confirmar que ela está ativa', () => {
+    f.queryErrors['wa-connections-talkx'] = new Error('timeout');
+    const campaign = {
+      id: 'campaign-existing',
+      status: 'draft',
+      name: 'Campanha',
+      audience_source: 'contacts',
+      whatsapp_connection_id: 'connection-1',
+    } as never;
+    const { result } = renderHook(() => useCampaignEditor(campaign, vi.fn()));
+
+    expect(result.current.connectionQueryError?.message).toBe('timeout');
+    expect(result.current.canProceed[1]).toBe(false);
+  });
+
+  it('propaga erro do Supabase na leitura de conexões em vez de convertê-lo em lista vazia', async () => {
+    const chain = {
+      select: vi.fn(() => chain),
+      eq: vi.fn(() => chain),
+      not: vi.fn(() => chain),
+      neq: vi.fn(async () => ({ data: null, error: { message: 'RLS bloqueou a leitura' } })),
+    };
+    f.supabaseFrom.mockReturnValue(chain);
+    renderHook(() => useCampaignEditor(null, vi.fn()));
+
+    const query = capturedQuery('wa-connections-talkx');
+    if (!query?.queryFn) throw new Error('consulta de conexões sem queryFn');
+    await expect(query.queryFn({ signal: new AbortController().signal })).rejects.toThrow('RLS bloqueou a leitura');
+  });
+
+  it('não avança com erro da RPC de união de segmentos nem usa a estimativa velha do segmento', () => {
+    f.queryErrors['talkx-wizard-segment-union-total'] = new Error('RPC indisponível');
+    f.segments = [{ id: 'seg-1', name: 'VIP', description: '', status: 'active', estimated_count: 12 }];
+    const campaign = {
+      id: 'campaign-segment',
+      status: 'draft',
+      name: 'Campanha',
+      audience_source: 'segment',
+      segment_ids: ['seg-1'],
+      whatsapp_connection_id: 'connection-1',
+    } as never;
+    const { result } = renderHook(() => useCampaignEditor(campaign, vi.fn()));
+
+    expect(result.current.audienceQueryError?.message).toBe('RPC indisponível');
+    expect(result.current.canProceed[1]).toBe(false);
+  });
+
+  // O gate `(segmentUnionTotal ?? 0) > 0` tem de travar o passo 1 quando a RPC
+  // responde zero: segmento que existe mas nao casa com ninguem nao vira campanha.
+  // Sem este caso o fake devolvia sempre >= 1 e o bloqueio nunca era exercido.
+  it('não avança quando a união dos segmentos volta zero contato', () => {
+    f.segmentUnionTotal = 0;
+    f.segments = [{ id: 'seg-1', name: 'VIP', description: '', status: 'active', estimated_count: 12 }];
+    const campaign = {
+      id: 'campaign-segment-vazio',
+      status: 'draft',
+      name: 'Campanha',
+      audience_source: 'segment',
+      segment_ids: ['seg-1'],
+      whatsapp_connection_id: 'connection-1',
+    } as never;
+    const { result } = renderHook(() => useCampaignEditor(campaign, vi.fn()));
+
+    expect(result.current.audienceQueryError ?? null).toBeNull();
+    expect(result.current.canProceed[1]).toBe(false);
+  });
+
+  it('não lança quando o snapshot do servidor volta sem nenhum elegível', async () => {
+    f.snapshot.mockResolvedValue({ eligible: 0, suppressed: 3, skipped_invalid: 0 });
+    const { result } = renderHook(() => useCampaignEditor(null, vi.fn()));
+    act(() => {
+      result.current.setName('Campanha de teste');
+      result.current.toggleContact('contact-1');
+      result.current.setMessageTemplate('Olá {{nome}}');
+      result.current.setConfirmConsent(true);
+      result.current.setConfirmContent(true);
+      result.current.setConfirmSuppression(true);
+    });
+
+    await act(async () => {
+      await expect(result.current.handleSave('launch')).rejects.toThrow('não tem contatos elegíveis');
+    });
+    expect(f.start).not.toHaveBeenCalled();
   });
 
   it('mostra o aviso de nome curto apenas com 1–2 caracteres', () => {
@@ -990,10 +1124,15 @@ describe('useCampaignEditor — V26 (editor de mensagem, só-mídia e versão do
     f.templates = [];
     f.profile = { id: 'profile-1', name: 'Ana Silva', email: 'ana@example.com' };
     f.segments = [];
+    f.segmentsError = null;
+    f.segmentsLoading = false;
+    f.queryErrors = {};
+    f.segmentUnionTotal = undefined;
     f.connections = [{ id: 'connection-1', name: 'Principal', status: 'connected', instance_id: 'evolution-principal' }];
     f.queryCalls.length = 0;
     f.resolveAudience.mockResolvedValue(f.contacts);
     f.countAudience.mockResolvedValue(f.contacts.length);
+    f.supabaseFrom.mockReset();
     // clearAllMocks não remove implementações: zera explicitamente entre testes.
     f.fetchVersionHistory.mockResolvedValue([]);
     window.sessionStorage.clear();
@@ -1231,10 +1370,15 @@ describe('useCampaignEditor — E73 (saída do wizard antes do autosave)', () =>
     f.templates = [];
     f.profile = { id: 'profile-1', name: 'Ana Silva', email: 'ana@example.com' };
     f.segments = [];
+    f.segmentsError = null;
+    f.segmentsLoading = false;
+    f.queryErrors = {};
+    f.segmentUnionTotal = undefined;
     f.connections = [{ id: 'connection-1', name: 'Principal', status: 'connected', instance_id: 'evolution-principal' }];
     f.queryCalls.length = 0;
     f.resolveAudience.mockResolvedValue(f.contacts);
     f.countAudience.mockResolvedValue(f.contacts.length);
+    f.supabaseFrom.mockReset();
     window.sessionStorage.clear();
     window.history.replaceState(null, '', '/');
   });
@@ -1348,10 +1492,15 @@ describe('useCampaignEditor — X123 (autosave desde o passo 1, uso do segmento 
     f.templates = [];
     f.profile = { id: 'profile-1', name: 'Ana Silva', email: 'ana@example.com' };
     f.segments = [];
+    f.segmentsError = null;
+    f.segmentsLoading = false;
+    f.queryErrors = {};
+    f.segmentUnionTotal = undefined;
     f.connections = [{ id: 'connection-1', name: 'Principal', status: 'connected', instance_id: 'evolution-principal' }];
     f.queryCalls.length = 0;
     f.resolveAudience.mockResolvedValue(f.contacts);
     f.countAudience.mockResolvedValue(f.contacts.length);
+    f.supabaseFrom.mockReset();
     window.sessionStorage.clear();
     window.history.replaceState(null, '', '/');
   });

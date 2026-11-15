@@ -396,6 +396,15 @@ function StepAudience({ ed }: { ed: WizardState }) {
                 {(ed.connections ?? []).map((c) => <SelectItem key={c.id} value={c.id}>{c.name} ({c.phone_number || 'sem número'})</SelectItem>)}
               </SelectContent>
             </Select>
+            {ed.connectionQueryError && (
+              <div className="mt-1.5 flex items-center gap-2">
+                <p role="alert" className="text-2xs text-dash-red">Não foi possível validar as conexões ativas: {ed.connectionQueryError.message}</p>
+                <button type="button" className="shrink-0 text-2xs underline" onClick={() => void ed.refetchConnections()}>Tentar novamente</button>
+              </div>
+            )}
+            {!ed.connectionQueryError && ed.connectionQueryLoading && (
+              <p role="status" className="mt-1.5 text-2xs text-muted-foreground">Validando conexões ativas…</p>
+            )}
           </div>
         </div>
         <div className="mt-3 grid grid-cols-1 md:grid-cols-[2fr_1fr] gap-3">
@@ -419,7 +428,7 @@ function StepAudience({ ed }: { ed: WizardState }) {
             </Select>
           </div>
         </div>
-        {(ed.connections ?? []).length === 0 && (
+        {(ed.connections ?? []).length === 0 && !ed.connectionQueryLoading && !ed.connectionQueryError && (
           <div className="mt-3">
             <TalkXWhatsAppDisconnectedState onConnect={() => navigateToView('connections')} />
           </div>
@@ -427,6 +436,15 @@ function StepAudience({ ed }: { ed: WizardState }) {
       </SectionCard>
 
       <SectionCard icon={Users} title="Origem do público" subtitle="Escolha de onde virão os contatos para esta campanha.">
+        {ed.audienceQueryError && (
+          <div className="mb-3 flex flex-wrap items-center gap-2">
+            <p role="alert" className="text-xs text-dash-red">Não foi possível validar a audiência: {ed.audienceQueryError.message}</p>
+            <button type="button" className="text-xs underline" onClick={() => void ed.refetchAudience()}>Tentar novamente</button>
+          </div>
+        )}
+        {!ed.audienceQueryError && ed.audienceQueryLoading && (
+          <p role="status" className="mb-3 text-xs text-muted-foreground">Validando filtros e tamanho do público…</p>
+        )}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
           <SourceCard icon={Users} title="Contatos ZAPP" desc="Use seus contatos da plataforma com filtros avançados." active={ed.audienceSource === 'contacts'} onClick={() => ed.setAudienceSource('contacts')} />
           <SourceCard icon={Bookmark} title="Segmento salvo" desc="Utilize um segmento de audiência já salvo." active={ed.audienceSource === 'segment'} onClick={() => ed.setAudienceSource('segment')} disabled={activeSegments.length === 0} badge={activeSegments.length === 0 ? 'Nenhum segmento salvo' : `${activeSegments.length} segmentos`} />
@@ -451,8 +469,11 @@ function StepAudience({ ed }: { ed: WizardState }) {
                 );
               })}
             </div>
-            {filteredSegments.length === 0 && (
+            {filteredSegments.length === 0 && !ed.audienceQueryLoading && !ed.audienceQueryError && (
               <p className="mt-3 text-xs text-muted-foreground">Nenhum segmento encontrado.</p>
+            )}
+            {filteredSegments.length === 0 && !ed.audienceQueryError && ed.audienceQueryLoading && (
+              <p role="status" className="mt-3 text-xs text-muted-foreground">Carregando segmentos e estimativa…</p>
             )}
             {ed.selectedSegments.length > 0 && (
               <div className="mt-3">
@@ -476,7 +497,7 @@ function StepAudience({ ed }: { ed: WizardState }) {
 
       {ed.audienceSource === 'contacts' && (
         <SectionCard icon={Filter} title="Filtros de audiência" subtitle="Refine seu público com regras (mesmas dos segmentos) e selecione os contatos."
-          right={<span className="text-3xs text-muted-foreground">{typeof ed.audienceCount === 'number' ? `${fmtInt(ed.audienceCount)} contatos atendem aos filtros` : 'Contando público…'}</span>}>
+          right={<span className="text-3xs text-muted-foreground">{ed.audienceQueryError ? 'Contagem indisponível' : typeof ed.audienceCount === 'number' ? `${fmtInt(ed.audienceCount)} contatos atendem aos filtros` : 'Contando público…'}</span>}>
           <TalkXAudienceFilters
             rules={ed.audienceRules}
             onChange={ed.setAudienceRules}
@@ -499,6 +520,8 @@ function StepAudience({ ed }: { ed: WizardState }) {
             toggleContact={ed.toggleContact}
             selectAll={ed.selectAll}
             clearFilters={ed.clearFilters}
+            isLoading={ed.audienceQueryLoading}
+            hasError={Boolean(ed.audienceQueryError)}
           />
           </div>
         </SectionCard>
