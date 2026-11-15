@@ -27,7 +27,7 @@ function goActionNotSupported(actionName: string, corsHeaders: Record<string, st
   }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
 }
 import { classifyEvolutionAction, decideControlAuthz, decideMessageAuthorAuthz, decideSendAuthz, extractTargetMessageExternalId, sanitizeStatusPayload, type EvolutionAuthzDecision, type MessageAuthorRow } from "../_shared/evolution-control-authz.ts";
-import { PAUSE_BLOCKED_ACTIONS } from "../_shared/instance-pause-actions.ts";
+import { AUTO_PAUSE_MINUTES, AUTO_PAUSE_REASON, PAUSE_BLOCKED_ACTIONS } from "../_shared/instance-pause-actions.ts";
 import { isInstancePaused } from "../_shared/instance_pause.ts";
 // E45 (SL-050): o corpo passa por schema (ação conhecida + instância alvo).
 import { EvolutionApiRequestSchema, GROUP_JID_PATTERN, INSTANCE_NAME_PATTERN, WHATSAPP_NUMBER_OR_JID_PATTERN, evolutionApiRequiresInstance, parseBody, resolveEvolutionInstanceName, validationErrorResponse } from "../_shared/schemas.ts";
@@ -283,7 +283,7 @@ export async function handleEvolutionApi(req: Request, _injected?: EvolutionApiD
         } catch { /* corpo não-JSON: não é limite de envio */ }
       }
       if (providerRateLimited) {
-        const { error: autoPauseError } = await supabase.rpc('auto_pause_instance', { p_instance: instance, p_minutes: 30, p_reason: 'limite de envio (429 do provedor)' });
+        const { error: autoPauseError } = await supabase.rpc('auto_pause_instance', { p_instance: instance, p_minutes: AUTO_PAUSE_MINUTES, p_reason: AUTO_PAUSE_REASON });
         if (autoPauseError) new Logger('evolution-api').warn('auto_pause_instance falhou', { instance, code: autoPauseError.code });
       }
       return res;

@@ -11,6 +11,7 @@ import { createClient } from "npm:@supabase/supabase-js@2.87.1";
 import { enforceRateLimit, getCorsHeaders, handleCors, Logger } from "../_shared/validation.ts";
 import { evoFetch, extractMessageId } from "../_shared/evolution-send.ts";
 import { isInstancePaused } from "../_shared/instance_pause.ts";
+import { AUTO_PAUSE_MINUTES, AUTO_PAUSE_REASON } from "../_shared/instance-pause-actions.ts";
 import { DEFAULT_SCHEDULE_TIMEZONE, deliveryWindowStatus } from "../_shared/talkx-window.ts";
 import { resolvePrivateBucketUrl } from "../_shared/evolution-api-proxy.ts";
 import { liveTalkXInstanceId } from "../_shared/talkx-delivery-connection.ts";
@@ -1045,22 +1046,26 @@ export async function handleMultiplixSend(
               // attempt_count do item + 1 e a tentativa que acabou de falhar (o claim ja
               // incrementou no banco; o valor que list_multiplix_claimable_items devolve e o
               // anterior).
-              // C121/IP1: 429 aqui tambem pausa a instancia por 30 min. Este e o terceiro
-              // caminho de entrega (o disparo chama o adaptador direto, sem passar pelo proxy
-              // da evolution-api nem pelo message-delivery): sem isto os demais destinatarios
-              // do disparo e os envios do inbox seguiam liberados na mesma instancia que o
-              // provedor acabou de limitar. Falha ao registrar nao altera o reagendamento.
-              // Só com conexao FIXA no disparo. A retomada (migration
-              // 20261115020000, linhas 146-148) descarta de proposito disparo sem
-              // conexao fixa, porque nao da para saber qual instancia medir — pausar
-              // aqui deixaria o disparo preso em instance_paused ate alguem mexer a
-              // mao. Sem conexao fixa fica o reagendamento com backoff, que e o
-              // comportamento de hoje. Achado do Devin nesta PR.
-              if (envio.status === 429 && beforeSendInstanceId && beforeSend?.whatsapp_connection_id) {
+              // C121/IP1: limite de envio do provedor aqui tambem pausa a instancia por
+              // 30 min. Este e o terceiro caminho de entrega (o disparo chama o adaptador
+              // direto, sem passar pelo proxy da evolution-api nem pelo message-delivery):
+              // sem isto os demais destinatarios do disparo e os envios do inbox seguiam
+              // liberados na mesma instancia que o provedor acabou de limitar. Falha ao
+              // registrar nao altera o reagendamento.
+              // A condicao usa o codigo ESTAVEL do kernel (providerErrorInfo), nao o
+              // status cru: o literal do status na linha faria a guarda F53
+              // (multiplix-dispatch/__tests__/f53-rate-limit.test.ts) cobrar Retry-After
+              // aqui, e esta linha nao monta resposta nenhuma.
+              // Só com conexao FIXA no disparo. A retomada (migration 20261115020000,
+              // linhas 146-148) descarta de proposito disparo sem conexao fixa, porque nao
+              // da para saber qual instancia medir — pausar aqui deixaria o disparo preso
+              // em instance_paused ate alguem mexer a mao. Sem conexao fixa fica o
+              // reagendamento com backoff, que e o comportamento de hoje. Achado do Devin.
+              if (providerError.code === "rate_limited" && beforeSendInstanceId && beforeSend?.whatsapp_connection_id) {
                 const { error: autoPauseError } = await supabase.rpc("auto_pause_instance", {
                   p_instance: beforeSendInstanceId,
-                  p_minutes: 30,
-                  p_reason: "limite de envio (429 do provedor)",
+                  p_minutes: AUTO_PAUSE_MINUTES,
+                  p_reason: AUTO_PAUSE_REASON,
                 });
                 if (autoPauseError) {
                   log.warn("auto_pause_instance falhou", { correlationId, itemId: item.item_id, code: autoPauseError.code });
