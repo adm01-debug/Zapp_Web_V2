@@ -2053,6 +2053,36 @@ Deno.test("F60: erro do item que NAO e permanente nao marca risco (nao pausa por
 // duplicar mensagem) - por isso a guarda abaixo.
 // -----------------------------------------------------------------------------
 
+// C121/IP1: a auto-pausa do 429 vale so com conexao FIXA no disparo. A retomada
+// (migration 20261115020000, linhas 146-148) descarta disparo sem conexao fixa de
+// proposito, porque nao da para saber qual instancia medir; pausar nesse caso
+// deixaria o disparo preso em instance_paused ate alguem mexer a mao. Sem conexao
+// fixa fica o reagendamento com backoff. Achado do Devin na #3144.
+Deno.test("C121/IP1: 429 em disparo SEM conexao fixa reagenda mas NAO pausa a instancia", async () => {
+  const opts: MockOpts = {
+    cronVaultResult: TEST_CRON_SECRET,
+    dispatch: dispatchRow({ status: "sending", total_recipients: 1, whatsapp_connection_id: null }),
+    recipients: [recipientRow(1, "5511955550701")],
+  };
+  const ctx = newCtx(opts);
+  const provider = stubProviderRejecting({ error: { code: "429", message: "too many requests" } }, 429);
+  try {
+    const res = await handleMultiplixSend(makePost({ cronSecret: TEST_CRON_SECRET }), mockDeps(opts, ctx));
+    assert(res.status === 200, `esperado 200, recebido ${res.status}`);
+    await res.json();
+  } finally {
+    provider.restore();
+  }
+  assert(
+    rpcs(ctx, "auto_pause_instance").length === 0,
+    "sem conexao fixa a pausa deixaria o disparo preso: nao pode pausar",
+  );
+  assert(
+    rpcs(ctx, "reschedule_multiplix_item").length === 1,
+    "o item ainda tem de voltar para a fila com backoff",
+  );
+});
+
 Deno.test("MX05: 429 do provedor reagenda o item com backoff limitado (nunca 'failed' terminal)", async () => {
   const opts: MockOpts = {
     cronVaultResult: TEST_CRON_SECRET,

@@ -1050,7 +1050,13 @@ export async function handleMultiplixSend(
               // da evolution-api nem pelo message-delivery): sem isto os demais destinatarios
               // do disparo e os envios do inbox seguiam liberados na mesma instancia que o
               // provedor acabou de limitar. Falha ao registrar nao altera o reagendamento.
-              if (envio.status === 429 && beforeSendInstanceId) {
+              // Só com conexao FIXA no disparo. A retomada (migration
+              // 20261115020000, linhas 146-148) descarta de proposito disparo sem
+              // conexao fixa, porque nao da para saber qual instancia medir — pausar
+              // aqui deixaria o disparo preso em instance_paused ate alguem mexer a
+              // mao. Sem conexao fixa fica o reagendamento com backoff, que e o
+              // comportamento de hoje. Achado do Devin nesta PR.
+              if (envio.status === 429 && beforeSendInstanceId && beforeSend?.whatsapp_connection_id) {
                 const { error: autoPauseError } = await supabase.rpc("auto_pause_instance", {
                   p_instance: beforeSendInstanceId,
                   p_minutes: 30,
