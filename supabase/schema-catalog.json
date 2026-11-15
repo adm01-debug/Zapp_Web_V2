@@ -918,6 +918,7 @@
         "copilot_sessions.last_processed_message_at:timestamp with time zone:nullable",
         "copilot_sessions.intent:text:nullable",
         "copilot_sessions.sentiment:text:nullable",
+        "copilot_sessions.last_contact_message_at:timestamp with time zone:nullable",
         "copilot_usage.id:uuid:not-null",
         "copilot_usage.conversation_id:uuid:not-null",
         "copilot_usage.seller_id:uuid:not-null",
@@ -2993,7 +2994,7 @@
         "warroom_agent_today",
         "warroom_queue_stats"
     ],
-    "generated_at": "2026-11-14",
+    "generated_at": "2026-11-15",
     "format_version": 2,
     "check_constraints": [
         "agent_mini_game_xp_daily.agent_mini_game_xp_daily_game_id_check:CHECK ((game_id = ANY (ARRAY['speed-typing'::text, 'quiz'::text, 'response-match'::text, 'emoji-decode'::text])))",
@@ -3279,6 +3280,7 @@
         "enforce_scheduled_message_state",
         "enforce_talkx_campaign_mutability",
         "enforce_talkx_recipient_snapshot_mutability",
+        "enqueue_copilot_tick_on_contact_message",
         "enqueue_crm_sync_from_closure",
         "ensure_single_default_ai_provider",
         "ensure_single_default_filter",
