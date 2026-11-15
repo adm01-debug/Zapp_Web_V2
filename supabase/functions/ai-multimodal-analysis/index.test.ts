@@ -179,7 +179,7 @@ Deno.test("ai-multimodal-analysis: provedor 429/402 propaga o status e falha gen
 
 Deno.test("ai-multimodal-analysis: o provedor recebe a imagem EMBUTIDA, nunca a URL do bucket privado", async () => {
   const { deps, chamadas, imagens } = depsCom(() => respostaDoProvedor(200, JSON.stringify(SAIDA_VALIDA)));
-  const urlPrivada = "https://proj.supabase.co/storage/v1/object/whatsapp-media/conversa/foto.png";
+  const urlPrivada = "https://proj.supabase.co/storage/v1/object/sign/whatsapp-media/conversa/foto.png?token=jwt";
   const res = await handleAiMultimodalAnalysis(pedido({ ...BODY_VALIDO, imageUrl: urlPrivada }), deps);
   await res.body?.cancel();
   assertEquals(res.status, 200);
