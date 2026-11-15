@@ -50,7 +50,7 @@
     },
     {
       "path": "src/components/admin/VisibilityGrantsManager.tsx",
-      "sha256": "cea7fea2880f8d1ad85589cc194eb1e5b2f3f5c787768dc9dc08e7c15d9211ff"
+      "sha256": "3879f2f18f14122f59edc43a823a58fc51a6474ec7a52a5e51fb21288c4398da"
     },
     {
       "path": "src/components/agents/ConfigurePermissionsDialog.tsx",
@@ -106,7 +106,7 @@
     },
     {
       "path": "src/components/chatbot/ChatbotNodeDialogs.tsx",
-      "sha256": "221f76753680fcb04c9053af96cd698d62c8bf63f622e7dcf6e2fb4af4b10944"
+      "sha256": "4499060a0108313ae41e9772007d2b1b827fba838bd8b7788f5a02bb4dbaae69"
     },
     {
       "path": "src/components/cognitive/FeatureSpotlight.tsx",
@@ -134,7 +134,7 @@
     },
     {
       "path": "src/components/connections/ConnectionsView.tsx",
-      "sha256": "5efa44c15d8c8521ba6c38f0c6d69c554755fc7dc6464c827a7b0ba9e884211e"
+      "sha256": "1e204cc7e9653c01ba076a6436a4dded975f2f4e995db8f9402816fca992fd82"
     },
     {
       "path": "src/components/connections/NumberReputationMonitor.tsx",
@@ -190,7 +190,7 @@
     },
     {
       "path": "src/components/dashboard/ActivityHeatmap.tsx",
-      "sha256": "cc77d6aa3e966fd0a5624deff2aca285172742d24c8f7e7d4643e4145ff9784c"
+      "sha256": "db83c2a58cc0b2410f512e48a51c87cbbd32dae667778dd5398781f46885c815"
     },
     {
       "path": "src/components/dashboard/ConversationHeatmap.tsx",
@@ -282,7 +282,7 @@
     },
     {
       "path": "src/components/inbox/AudioMessagePlayer.tsx",
-      "sha256": "7892babbbc8a7ce79ec1f6cb6f945fe192312e5794fe95b8a501802b91058fbd"
+      "sha256": "7c65c2cae687cdd8338194d447ffe74f65a1f10e55b99524bc245fec41afd209"
     },
     {
       "path": "src/components/inbox/chat/AIEnhanceButton.tsx",
@@ -318,7 +318,7 @@
     },
     {
       "path": "src/components/inbox/chat/MessageHoverToolbar.tsx",
-      "sha256": "8684670b61a6671b4ddeb35277cb865fc21258960b3efb8a29b67e38e92f1cfc"
+      "sha256": "5cc85837ca3eaca8ccdba085b8db29df8b2f55e4b263828d6ba7c5051d88d67e"
     },
     {
       "path": "src/components/inbox/chat/messageUtils.tsx",
@@ -330,15 +330,15 @@
     },
     {
       "path": "src/components/inbox/chat/SendErrorBanner.tsx",
-      "sha256": "8952f8c6832ca63ca134088e4c364b9f8a70e8ffb2b85f0bd2bd65fa63bbb471"
+      "sha256": "a60bb2e6307af8942584ecd27c86cf468e0d34b9309340b9fe07dde23ed43ac5"
     },
     {
       "path": "src/components/inbox/chat/useChatPanelHandlers.ts",
-      "sha256": "7a6edc9a15ea44db348676421f4621bee5d3222298c336412023ca17637212c1"
+      "sha256": "11acdaae021fc0eee4a3db44537c03ec91b3b111deb6605f222407e9174625d3"
     },
     {
       "path": "src/components/inbox/ChatPanel.tsx",
-      "sha256": "f60416a97a528aeb28858af90a7f23233ee7263f42d71a5935bbd433937862d1"
+      "sha256": "08dde083c45e821e091da0bc35153a959c2314a69a3bf39d2c1c86788af2de61"
     },
     {
       "path": "src/components/inbox/CloseConversationDialog.tsx",
@@ -350,7 +350,7 @@
     },
     {
       "path": "src/components/inbox/collaboration/ViewersIndicator.tsx",
-      "sha256": "cebc09bfb7330c9864b99b256dba7fe34fc7730987a7196d534570917e8161bb"
+      "sha256": "bd481545a67fceed371c31699eb7971562ee23a37e76e3d6481f57d230f14792"
     },
     {
       "path": "src/components/inbox/contact-details/EditContactDialog.tsx",
@@ -386,7 +386,7 @@
     },
     {
       "path": "src/components/inbox/RealtimeCollaboration.tsx",
-      "sha256": "58dac359451ede752521db4b99c2bfb57c1c6ee4a08b7b7a658c407594392672"
+      "sha256": "7c83c9a9e92a45b3ebb663a30b0394f6de54076e2d3b86b2911d70fb5847843c"
     },
     {
       "path": "src/components/inbox/RealtimeInboxView.tsx",
@@ -426,7 +426,7 @@
     },
     {
       "path": "src/components/inbox/useChatMediaSending.ts",
-      "sha256": "b6941ada556c2148b076f51f5f0d5a32917031f1d1e80ac57da9fe3488b8709c"
+      "sha256": "341547d487d333e1a1594d49263e436e64a053ce238f252cbd1679c833d99d01"
     },
     {
       "path": "src/components/inbox/useFileUploadLogic.ts",
@@ -438,7 +438,7 @@
     },
     {
       "path": "src/components/inbox/VirtualizedRealtimeList.tsx",
-      "sha256": "c22e6fbac3a90aa2f49360744e31f53d02dfea32312d3f16b30a696f7dbff6c6"
+      "sha256": "38bfa9227269b004cf6cc3ce6a26bcc8bc0862838c7cd5ea3be113b716a02c36"
     },
     {
       "path": "src/components/inbox/VoiceChanger.tsx",
@@ -498,7 +498,7 @@
     },
     {
       "path": "src/components/omnichannel/ChannelRoutingRules.tsx",
-      "sha256": "9ca363c67a62add0072d04d9c02ae6c432a35e2999a1f80d3a0651cd3b173aff"
+      "sha256": "ab0de2e1d0add4f502ec4a0e17de80190c21a7bf9604069cf85849ab06a2e265"
     },
     {
       "path": "src/components/omnichannel/OmnichannelInbox.tsx",
@@ -506,7 +506,7 @@
     },
     {
       "path": "src/components/omnichannel/OmnichannelManager.tsx",
-      "sha256": "f0bf8b5505ea79a3139e7ed81edda7cb479ad7effc9f2d42c509aa5457cc23aa"
+      "sha256": "c640653a8cf6a28c0634a31b63f9422797d5ba494581f6660cf3058a1f5396d6"
     },
     {
       "path": "src/components/onboarding/checklistSteps.ts",
@@ -558,11 +558,11 @@
     },
     {
       "path": "src/components/reports/ConversationHeatmap.tsx",
-      "sha256": "f2c12c97346f33ff2ebcf69e953c4841090e4ac9713ce6dc9eb38796a34846ed"
+      "sha256": "16f3f38090da2a763390a2a62343238e5455834195b4e5d862e5b2d124d7580b"
     },
     {
       "path": "src/components/reports/DemandForecast.tsx",
-      "sha256": "1afd548edce927d6f542eb97e56a8e84d43d5cd0c5ab75cc9337a13445574ee0"
+      "sha256": "d996359208b5d4ab21eebe04c6e2ba2c9dec3c0d494a787500a22cfc0cbef303"
     },
     {
       "path": "src/components/reports/PeriodComparison.tsx",
@@ -666,7 +666,7 @@
     },
     {
       "path": "src/components/settings/SkillBasedRoutingSettings.tsx",
-      "sha256": "6e607b53e63c03f8b7f5db68f853a54b38fd8ad47efc65750d584231d0a5f712"
+      "sha256": "cf68027a81b491efa2825a83c6e937d2b7cc6f360137732c5a173d3e512e0718"
     },
     {
       "path": "src/components/settings/sla/SLARuleFormDialog.tsx",
@@ -694,7 +694,7 @@
     },
     {
       "path": "src/components/talkx/TalkXCampaignRunning.tsx",
-      "sha256": "f9214fc42b000ec2509fd00d24e6fd2883db7d00628c1316c6c290dba31fb9d1"
+      "sha256": "7d7f578a29f44319758d0bc50e8f2ede29a606650105a0129d95e69611bf9dcb"
     },
     {
       "path": "src/components/talkx/TalkXOverview.tsx",
@@ -731,10 +731,6 @@
     {
       "path": "src/components/team-chat/TeamMemberProfileHeader.tsx",
       "sha256": "e93a6e92523ae67275635217f8f470f936860fa6586162a5647c29e389069f59"
-    },
-    {
-      "path": "src/components/theme/HighContrastToggle.tsx",
-      "sha256": "c464aba8de189fbb21e3f9200f1059e20e7988ddc0f3d729e0b6c5d73ea4fbd1"
     },
     {
       "path": "src/components/ThemeInitializer.tsx",
@@ -866,7 +862,7 @@
     },
     {
       "path": "src/hooks/auth/useAuthForm.ts",
-      "sha256": "78cbaf6f67b6930350fe3eb334e3f55b360d9211f8e964cd7736f1684c7c3020"
+      "sha256": "654448dfc6985247b5afa2134071a6e8987da67c774a84652cd1ef383326908d"
     },
     {
       "path": "src/hooks/business/useClientWallet.ts",
@@ -914,7 +910,7 @@
     },
     {
       "path": "src/hooks/chat/useTypingPresence.ts",
-      "sha256": "9446a42dc67d81e918924c1375525080fcb9cfba9a2b4af2419274cf46ae21b8"
+      "sha256": "b33831ffd721304d499b727f4bb4f933006446025edae2410b0c30e39d5619fd"
     },
     {
       "path": "src/hooks/communication/useVoiceAgent.ts",
@@ -930,7 +926,7 @@
     },
     {
       "path": "src/hooks/evolution/useEvolutionApiCore.ts",
-      "sha256": "eb445ebcbf64651f2e571bd30cc52e9f09f425ba51ec804804658e54dd786114"
+      "sha256": "35c52cae48a26c2f1f68624d04e115e5e7e413655ed8a8d5873d232d7aea96ce"
     },
     {
       "path": "src/hooks/evolution/useEvolutionGroups.ts",
@@ -938,11 +934,11 @@
     },
     {
       "path": "src/hooks/evolution/useEvolutionInstance.ts",
-      "sha256": "a44fed36d3d14e5f576fade69b6a38012c975ad6ec23cad11d7a99a8502caf57"
+      "sha256": "8ab25c4a88bbe5bff53d1b646017cae0b7045d1338b3b69c2505bd46a4ae4845"
     },
     {
       "path": "src/hooks/evolution/useEvolutionMessaging.ts",
-      "sha256": "f354124491a85b9f1db42ae88bf2e0d8e283e33f6027172db92d6f4b6fb079ed"
+      "sha256": "c86ceabb901081d4e6d145f0d55179a25c4f8718aac75bc9060b8b3fd16f95a6"
     },
     {
       "path": "src/hooks/gamification/useAgentCelebrations.ts",
@@ -978,11 +974,11 @@
     },
     {
       "path": "src/hooks/integrations/useWhatsAppStatus.ts",
-      "sha256": "ecaecdf055b5e21723d4013e5c127bf87202a3d94e8778cd360808dff2394e95"
+      "sha256": "2bd9aac239b336e4ba5106ae5bb116a30f496bc386861e2c10ea37ad1ada0192"
     },
     {
       "path": "src/hooks/integrations/useWhatsAppTemplates.ts",
-      "sha256": "c52dd6ef2bc6538ff1719b847cd661e5e4f1b7746721dcbd7e418ce55bb0997f"
+      "sha256": "def497df1612043e6186104b6d480df45d2906d965a30afb5e9625a5e9cf3e09"
     },
     {
       "path": "src/hooks/performance/useMonitoring.ts",
@@ -1110,7 +1106,7 @@
     },
     {
       "path": "src/pages/admin/useRolesPageState.ts",
-      "sha256": "3fc84811b72e09666f099a566d0cc2ded50c77049a91dbf6d08b2ce622e69423"
+      "sha256": "49313e3e7277c8fb740741856d0e47b2fd9950689b4f04c75cbd6432e9635513"
     },
     {
       "path": "src/pages/AdminTelemetriaPage.tsx",
@@ -1125,16 +1121,12 @@
       "sha256": "a5fcdf5aaa50498a48f243ff1a37591a0f2e348bc1e60fe2e2d61322ae7c894e"
     },
     {
-      "path": "src/pages/ForgotPassword.tsx",
-      "sha256": "df410e0e6805dad27e1213bc590cae2bd035af8062e72bd92cf45c94530c61cf"
-    },
-    {
       "path": "src/pages/Install.tsx",
       "sha256": "7d4ef926259dd48774d1653295d3c0a13cca97f3e1660a06f9a75207b57efd91"
     },
     {
       "path": "src/pages/ResetPassword.tsx",
-      "sha256": "9db0c4e9a005c3a1ab5eb2a7764948b99fdfc15a5c20b2cdebf33ab4058bab7f"
+      "sha256": "465065f17c7f4685d9869c34800947a5b3b703e84b0dc5e8f3adc533f3073d61"
     },
     {
       "path": "src/pages/SSOCallback.tsx",
@@ -1146,7 +1138,7 @@
     },
     {
       "path": "src/pages/VerifyEmail.tsx",
-      "sha256": "dfa3bdf465eb5b2bfd6260c27f8dd16950db6ffc6552581cfd9ed81892b518bb"
+      "sha256": "29c205cc07e7efd79d3502b248c66e54fc6b5980bd7a372aa250707fadf6ac78"
     },
     {
       "path": "src/services/evolution.service.ts",
@@ -1190,7 +1182,7 @@
     },
     {
       "path": "supabase/functions/_shared/evolution-control-authz.ts",
-      "sha256": "080fae3bd0f209963db341860d8c2d4078917624efb5bcdddcf6c88c0f9cb3fe"
+      "sha256": "1e7c1156ca0d9029629c4de07d16030197667cd23b11bfd4d4583b0124926291"
     },
     {
       "path": "supabase/functions/_shared/hmac-validation.ts",
@@ -1226,15 +1218,15 @@
     },
     {
       "path": "supabase/functions/cleanup-rate-limit-logs/index.ts",
-      "sha256": "6f851c4c4500137cfa90a5ccdb2598db77d0758f1bf8e866f674e0a74c2ad082"
+      "sha256": "0a55ad677fa500a11f2932cf437fa529703fce6c898a66f12d021ee01816c0f1"
     },
     {
       "path": "supabase/functions/evolution-api/index.ts",
-      "sha256": "39445353477463534590f13cfa3c4f9da43d6d5b5b4e97fa089397ab3588573d"
+      "sha256": "e841c2f3a4325c9042c4e922cae7937dbf8e8efcea0659107cbd94ef16c3fe28"
     },
     {
       "path": "supabase/functions/external-db-bridge/index.ts",
-      "sha256": "d5ac631407b3e03c8680673baa0e1f1e1993aa220bad8a1ff86977743f859cad"
+      "sha256": "7281bbc7ae04c8af342461dbb5e1239fbc4ccc3258c18593775eb80db623a83a"
     },
     {
       "path": "supabase/functions/get-sip-password/index.ts",
@@ -1242,11 +1234,11 @@
     },
     {
       "path": "supabase/functions/gmail-oauth/index.ts",
-      "sha256": "8af4daac0dfc5781739927b55346fd696f0e19b3dd56ed394ee5b37014ee4e97"
+      "sha256": "4763cafb6f20b19f884f79188da7baf73ed0c8e6631f82eb9f20ed05476c493d"
     },
     {
       "path": "supabase/functions/gmail-webhook/index.ts",
-      "sha256": "a0f202121028febcc9b4a9789f0298f8be2f531ba66b2cb087fcc4b0107fd43c"
+      "sha256": "bc2cc23c437b15ab7d51847c7055e0d4003b110fc5f100e3034ec2069819c5e1"
     },
     {
       "path": "supabase/functions/multiplix-dispatch/actions/blocks.ts",
@@ -1258,7 +1250,7 @@
     },
     {
       "path": "supabase/functions/multiplix-send/index.ts",
-      "sha256": "b1ee6b5ae71fa74cbf9ce5a13fb03df769253e8835037fbe613855382bb1b998"
+      "sha256": "5e71ccc78bb828cf5f6cc523c0feaeb3eafad5e9e7eb00e3ae1d1ca13a42a09a"
     },
     {
       "path": "supabase/functions/send-rate-limit-alert/index.ts",
@@ -1274,7 +1266,7 @@
     },
     {
       "path": "supabase/functions/talkx-scheduler/index.ts",
-      "sha256": "3c644b0daf5116eae08b5542d78cee3bb9d1266a23d4fd9f1d40f37dd9dfde71"
+      "sha256": "49951e8fa36a0daf26e4cb7ecad806d2d87234959bf78c56387a72b9ce37518a"
     },
     {
       "path": "supabase/functions/talkx-send/_test-utils.ts",
@@ -1282,7 +1274,7 @@
     },
     {
       "path": "supabase/functions/talkx-send/index.ts",
-      "sha256": "d6cf2119ff0c57f4314b0521c6323d6e73092c0ce7a5f39d3493208fcdbd9b0d"
+      "sha256": "17bffd8d9260ecc0e63e0e85372b0b8d8be7f36177e0ae72075346f8619900ba"
     },
     {
       "path": "supabase/functions/talkx-storage-purge/index.ts",
@@ -2926,7 +2918,7 @@
       "message": "'@/integrations/supabase/client' import is restricted from being used by a pattern. Componentes e pages nao importam o client do Supabase: mova o acesso a dados para um hook em src/hooks ou um service em src/services.",
       "spanHash": "88aba2a3242ff46e1adcfff272394b9d139f514f7979d49b8b4ead0ea66278cb",
       "lineHash": "88aba2a3242ff46e1adcfff272394b9d139f514f7979d49b8b4ead0ea66278cb",
-      "contextHash": "86687ab36501912870fc046c75c295656c71986f41960e3ecf539f8835143489"
+      "contextHash": "e8cc681b7088e0b5f190ab695cb3850a01503e15cde46fb1d99fd0f69743a27a"
     },
     {
       "file": "src/components/inbox/chat/AIEnhanceButton.tsx",
@@ -3168,23 +3160,9 @@
     },
     {
       "file": "src/components/inbox/chat/MessageHoverToolbar.tsx",
-      "line": 110,
-      "column": 13,
-      "endLine": 110,
-      "endColumn": 23,
-      "severity": 2,
-      "ruleId": "react-hooks/purity",
-      "messageId": null,
-      "message": "Error: Cannot call impure function during render `Date.now` is an impure function. Calling an impure function can produce unstable results that update unpredictably when the component happens to re-render. (https://react.dev/reference/rules/components-and-hooks-must-be-pure#components-and-hooks-must-be-idempotent). <ROOT>/src/components/inbox/chat/MessageHoverToolbar.tsx:110:13 108 | const canEdit = isSent && message.type === 'text' && onEditStart && (() => { 109 | const ts = message.timestamp instanceof Date ? message.timestamp : new Date(message.created_at || String(message.timestamp)); > 110 | return (Date.now() - ts.getTime()) / 60000 <= 15; | ^^^^^^^^^^ Cannot call impure function 111 | })(); 112 | 113 | return (",
-      "spanHash": "d8171d118e19556010680eb7b3001365c6aed91869027eb5edd26dca0c6c2609",
-      "lineHash": "55eeb28b65e5e61c3046801066171b782a763a89991151458ad8a3162a6c557d",
-      "contextHash": "d88fcce011a9af04812337ca9d47e94547b7ec8bd244b0fc1898d855d37da37b"
-    },
-    {
-      "file": "src/components/inbox/chat/MessageHoverToolbar.tsx",
-      "line": 9,
+      "line": 10,
       "column": 1,
-      "endLine": 9,
+      "endLine": 10,
       "endColumn": 59,
       "severity": 1,
       "ruleId": "no-restricted-imports",
@@ -3193,6 +3171,20 @@
       "spanHash": "88aba2a3242ff46e1adcfff272394b9d139f514f7979d49b8b4ead0ea66278cb",
       "lineHash": "88aba2a3242ff46e1adcfff272394b9d139f514f7979d49b8b4ead0ea66278cb",
       "contextHash": "043a2660bddb4f17ef4fe161caceb78eb6bd8ccc30fabdab7f31ec5ed281b7a7"
+    },
+    {
+      "file": "src/components/inbox/chat/MessageHoverToolbar.tsx",
+      "line": 140,
+      "column": 13,
+      "endLine": 140,
+      "endColumn": 23,
+      "severity": 2,
+      "ruleId": "react-hooks/purity",
+      "messageId": null,
+      "message": "Error: Cannot call impure function during render `Date.now` is an impure function. Calling an impure function can produce unstable results that update unpredictably when the component happens to re-render. (https://react.dev/reference/rules/components-and-hooks-must-be-pure#components-and-hooks-must-be-idempotent). <ROOT>/src/components/inbox/chat/MessageHoverToolbar.tsx:140:13 138 | const canEdit = isSent && message.type === 'text' && onEditStart && (() => { 139 | const ts = message.timestamp instanceof Date ? message.timestamp : new Date(message.created_at || String(message.timestamp)); > 140 | return (Date.now() - ts.getTime()) / 60000 <= 15; | ^^^^^^^^^^ Cannot call impure function 141 | })(); 142 | 143 | return (",
+      "spanHash": "d8171d118e19556010680eb7b3001365c6aed91869027eb5edd26dca0c6c2609",
+      "lineHash": "55eeb28b65e5e61c3046801066171b782a763a89991151458ad8a3162a6c557d",
+      "contextHash": "d88fcce011a9af04812337ca9d47e94547b7ec8bd244b0fc1898d855d37da37b"
     },
     {
       "file": "src/components/inbox/chat/messageUtils.tsx",
@@ -3252,9 +3244,9 @@
     },
     {
       "file": "src/components/inbox/chat/SendErrorBanner.tsx",
-      "line": 132,
+      "line": 140,
       "column": 9,
-      "endLine": 132,
+      "endLine": 140,
       "endColumn": 32,
       "severity": 2,
       "ruleId": "local/no-secret-compare",
@@ -3280,9 +3272,9 @@
     },
     {
       "file": "src/components/inbox/ChatPanel.tsx",
-      "line": 258,
+      "line": 285,
       "column": 39,
-      "endLine": 258,
+      "endLine": 285,
       "endColumn": 64,
       "severity": 1,
       "ruleId": "react-hooks/exhaustive-deps",
@@ -3350,9 +3342,9 @@
     },
     {
       "file": "src/components/inbox/collaboration/ViewersIndicator.tsx",
-      "line": 23,
+      "line": 24,
       "column": 17,
-      "endLine": 23,
+      "endLine": 24,
       "endColumn": 39,
       "severity": 1,
       "ruleId": "react-refresh/only-export-components",
@@ -3910,23 +3902,23 @@
     },
     {
       "file": "src/components/inbox/VirtualizedRealtimeList.tsx",
-      "line": 172,
+      "line": 173,
       "column": 23,
-      "endLine": 172,
+      "endLine": 173,
       "endColumn": 37,
       "severity": 1,
       "ruleId": "react-hooks/incompatible-library",
       "messageId": null,
-      "message": "Compilation Skipped: Use of incompatible library This API returns functions which cannot be memoized without leading to stale UI. To prevent this, by default React Compiler will skip memoizing this component/hook. However, you may see issues if values from this API are passed to other components/hooks that are memoized. <ROOT>/src/components/inbox/VirtualizedRealtimeList.tsx:172:23 170 | // TanStack Virtual retorna funcoes nao memoizaveis pelo React Compiler — mesma 171 | // limitacao ja aceita na baseline do ratchet para este mesmo hook. > 172 | const virtualizer = useVirtualizer({ | ^^^^^^^^^^^^^^ TanStack Virtual's `useVirtualizer()` API returns functions that cannot be memoized safely 173 | count: flatRows.length, 174 | getScrollElement, 175 | estimateSize,",
+      "message": "Compilation Skipped: Use of incompatible library This API returns functions which cannot be memoized without leading to stale UI. To prevent this, by default React Compiler will skip memoizing this component/hook. However, you may see issues if values from this API are passed to other components/hooks that are memoized. <ROOT>/src/components/inbox/VirtualizedRealtimeList.tsx:173:23 171 | // TanStack Virtual retorna funcoes nao memoizaveis pelo React Compiler — mesma 172 | // limitacao ja aceita na baseline do ratchet para este mesmo hook. > 173 | const virtualizer = useVirtualizer({ | ^^^^^^^^^^^^^^ TanStack Virtual's `useVirtualizer()` API returns functions that cannot be memoized safely 174 | count: flatRows.length, 175 | getScrollElement, 176 | estimateSize,",
       "spanHash": "f4e0eaa448a4a05be7d6db80323e491f2377e2c17a034e8f2ee6e2bd44a923b0",
       "lineHash": "c198de567abd89b5e249ef2ea843524d4f27a54f243ab646c25ccaf2785a33ac",
       "contextHash": "142d513f7c3d82d5e1a989b146f50b4cfa57ada24f79b2440fadea157a5a71b5"
     },
     {
       "file": "src/components/inbox/VirtualizedRealtimeList.tsx",
-      "line": 236,
+      "line": 237,
       "column": 84,
-      "endLine": 236,
+      "endLine": 237,
       "endColumn": 110,
       "severity": 2,
       "ruleId": "local/no-secret-compare",
@@ -4218,9 +4210,37 @@
     },
     {
       "file": "src/components/omnichannel/OmnichannelManager.tsx",
-      "line": 275,
+      "line": 101,
+      "column": 5,
+      "endLine": 101,
+      "endColumn": 23,
+      "severity": 2,
+      "ruleId": "local/no-secret-compare",
+      "messageId": "noSecretCompare",
+      "message": "Comparação direta de credencial \"key\": use timingSafeStringEqual(_shared/cron-secret-auth.ts).",
+      "spanHash": "189c362b74bd0dd21ee41c9c12297978bb7e728abb841417d7fa8abf2ebec23d",
+      "lineHash": "1ec7246bedbd8cf18fe83a422afcd097b80fead8ca95ad8e9b334747eb05f82b",
+      "contextHash": "6bd2bf08decc2d7596f06c7f8a378bc2d2f19bfe560dae8e92f82fd4714ccfdf"
+    },
+    {
+      "file": "src/components/omnichannel/OmnichannelManager.tsx",
+      "line": 101,
+      "column": 76,
+      "endLine": 101,
+      "endColumn": 98,
+      "severity": 2,
+      "ruleId": "local/no-secret-compare",
+      "messageId": "noSecretCompare",
+      "message": "Comparação direta de credencial \"key\": use timingSafeStringEqual(_shared/cron-secret-auth.ts).",
+      "spanHash": "4223147fef1dfe58fca3e471b9cb9762f1047e88a12e97720c57cfd5cc6bd410",
+      "lineHash": "1ec7246bedbd8cf18fe83a422afcd097b80fead8ca95ad8e9b334747eb05f82b",
+      "contextHash": "6bd2bf08decc2d7596f06c7f8a378bc2d2f19bfe560dae8e92f82fd4714ccfdf"
+    },
+    {
+      "file": "src/components/omnichannel/OmnichannelManager.tsx",
+      "line": 292,
       "column": 24,
-      "endLine": 275,
+      "endLine": 292,
       "endColumn": 42,
       "severity": 2,
       "ruleId": "local/no-secret-compare",
@@ -4243,34 +4263,6 @@
       "spanHash": "88aba2a3242ff46e1adcfff272394b9d139f514f7979d49b8b4ead0ea66278cb",
       "lineHash": "88aba2a3242ff46e1adcfff272394b9d139f514f7979d49b8b4ead0ea66278cb",
       "contextHash": "d6fe74e8a879f3e8480fd9733cb54f00ac8dde9d306c534571392d66ef8f012e"
-    },
-    {
-      "file": "src/components/omnichannel/OmnichannelManager.tsx",
-      "line": 97,
-      "column": 5,
-      "endLine": 97,
-      "endColumn": 23,
-      "severity": 2,
-      "ruleId": "local/no-secret-compare",
-      "messageId": "noSecretCompare",
-      "message": "Comparação direta de credencial \"key\": use timingSafeStringEqual(_shared/cron-secret-auth.ts).",
-      "spanHash": "189c362b74bd0dd21ee41c9c12297978bb7e728abb841417d7fa8abf2ebec23d",
-      "lineHash": "1ec7246bedbd8cf18fe83a422afcd097b80fead8ca95ad8e9b334747eb05f82b",
-      "contextHash": "6bd2bf08decc2d7596f06c7f8a378bc2d2f19bfe560dae8e92f82fd4714ccfdf"
-    },
-    {
-      "file": "src/components/omnichannel/OmnichannelManager.tsx",
-      "line": 97,
-      "column": 76,
-      "endLine": 97,
-      "endColumn": 98,
-      "severity": 2,
-      "ruleId": "local/no-secret-compare",
-      "messageId": "noSecretCompare",
-      "message": "Comparação direta de credencial \"key\": use timingSafeStringEqual(_shared/cron-secret-auth.ts).",
-      "spanHash": "4223147fef1dfe58fca3e471b9cb9762f1047e88a12e97720c57cfd5cc6bd410",
-      "lineHash": "1ec7246bedbd8cf18fe83a422afcd097b80fead8ca95ad8e9b334747eb05f82b",
-      "contextHash": "6bd2bf08decc2d7596f06c7f8a378bc2d2f19bfe560dae8e92f82fd4714ccfdf"
     },
     {
       "file": "src/components/onboarding/checklistSteps.ts",
@@ -4536,7 +4528,7 @@
       "message": "'@/integrations/supabase/client' import is restricted from being used by a pattern. Componentes e pages nao importam o client do Supabase: mova o acesso a dados para um hook em src/hooks ou um service em src/services.",
       "spanHash": "88aba2a3242ff46e1adcfff272394b9d139f514f7979d49b8b4ead0ea66278cb",
       "lineHash": "88aba2a3242ff46e1adcfff272394b9d139f514f7979d49b8b4ead0ea66278cb",
-      "contextHash": "430c2bc9626668803fcb542c5eb750b718b3960784bf0d51638ab9b5c9a4b71f"
+      "contextHash": "d45505f517fa9abe19372a8a37b8410c21bfd5bdb812bbcd996021e2e5c213ba"
     },
     {
       "file": "src/components/reports/DemandForecast.tsx",
@@ -4550,7 +4542,7 @@
       "message": "'@/integrations/supabase/client' import is restricted from being used by a pattern. Componentes e pages nao importam o client do Supabase: mova o acesso a dados para um hook em src/hooks ou um service em src/services.",
       "spanHash": "88aba2a3242ff46e1adcfff272394b9d139f514f7979d49b8b4ead0ea66278cb",
       "lineHash": "88aba2a3242ff46e1adcfff272394b9d139f514f7979d49b8b4ead0ea66278cb",
-      "contextHash": "430c2bc9626668803fcb542c5eb750b718b3960784bf0d51638ab9b5c9a4b71f"
+      "contextHash": "d45505f517fa9abe19372a8a37b8410c21bfd5bdb812bbcd996021e2e5c213ba"
     },
     {
       "file": "src/components/reports/PeriodComparison.tsx",
@@ -5352,9 +5344,9 @@
     },
     {
       "file": "src/components/talkx/TalkXCampaignRunning.tsx",
-      "line": 633,
+      "line": 681,
       "column": 18,
-      "endLine": 633,
+      "endLine": 681,
       "endColumn": 37,
       "severity": 2,
       "ruleId": "local/no-secret-compare",
@@ -5366,9 +5358,9 @@
     },
     {
       "file": "src/components/talkx/TalkXCampaignRunning.tsx",
-      "line": 633,
+      "line": 681,
       "column": 53,
-      "endLine": 633,
+      "endLine": 681,
       "endColumn": 71,
       "severity": 2,
       "ruleId": "local/no-secret-compare",
@@ -5629,20 +5621,6 @@
       "spanHash": "5e5bd5db98611b0b74785eb900c0a3b3e9f46627a1ab0b7cda8ef577c12bdd5d",
       "lineHash": "e137d85d52171b0c3411c67b12da646b838d0f04f54eb056b06e65203786cefc",
       "contextHash": "690b50742c86b238c7d9cae848e6aace280791ff192da9fded4cd15dde00a893"
-    },
-    {
-      "file": "src/components/theme/HighContrastToggle.tsx",
-      "line": 166,
-      "column": 17,
-      "endLine": 166,
-      "endColumn": 32,
-      "severity": 1,
-      "ruleId": "react-refresh/only-export-components",
-      "messageId": "namedExport",
-      "message": "Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components.",
-      "spanHash": "1d47e0fb61b64a12b518802825fef3f73b7024da704371ecad2947cb57c599b0",
-      "lineHash": "d2a0fc9cac6a9e7a75ba3937ad3521845f5bf19ebe59f843374fc6c6dddb6314",
-      "contextHash": "a4a61ba0eb69786698df4de36ad0043edbb5d9471bef839f423a281b84b655aa"
     },
     {
       "file": "src/components/ThemeInitializer.tsx",
@@ -6654,10 +6632,10 @@
     },
     {
       "file": "src/hooks/chat/useTypingPresence.ts",
-      "line": 171,
-      "column": 13,
-      "endLine": 171,
-      "endColumn": 32,
+      "line": 192,
+      "column": 15,
+      "endLine": 192,
+      "endColumn": 34,
       "severity": 2,
       "ruleId": "local/no-secret-compare",
       "messageId": "noSecretCompare",
@@ -6710,9 +6688,9 @@
     },
     {
       "file": "src/hooks/evolution/useEvolutionApiCore.ts",
-      "line": 72,
+      "line": 104,
       "column": 50,
-      "endLine": 72,
+      "endLine": 104,
       "endColumn": 53,
       "severity": 2,
       "ruleId": "@typescript-eslint/no-explicit-any",
@@ -6990,28 +6968,28 @@
     },
     {
       "file": "src/hooks/integrations/useWhatsAppStatus.ts",
-      "line": 283,
+      "line": 320,
       "column": 5,
-      "endLine": 283,
+      "endLine": 320,
       "endColumn": 14,
       "severity": 2,
       "ruleId": "react-hooks/set-state-in-effect",
       "messageId": null,
-      "message": "Error: Calling setState synchronously within an effect can trigger cascading renders Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following: * Update external systems with the latest state from React. * Subscribe for updates from some external system, calling setState in a callback function when external state changes. Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect). <ROOT>/src/hooks/integrations/useWhatsAppStatus.ts:283:5 281 | 282 | useEffect(() => { > 283 | fetchData(); | ^^^^^^^^^ Avoid calling setState() directly within an effect 284 | }, [fetchData]); 285 | 286 | return {",
+      "message": "Error: Calling setState synchronously within an effect can trigger cascading renders Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following: * Update external systems with the latest state from React. * Subscribe for updates from some external system, calling setState in a callback function when external state changes. Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect). <ROOT>/src/hooks/integrations/useWhatsAppStatus.ts:320:5 318 | 319 | useEffect(() => { > 320 | fetchData(); | ^^^^^^^^^ Avoid calling setState() directly within an effect 321 | }, [fetchData]); 322 | 323 | return {",
       "spanHash": "9f1d76c025605bd3eae6e38282899b99ba7785a23050d8b5f9c02906e10b92d6",
       "lineHash": "7978dd47b71847f4677826ba6758beb8d8499455c6d93a04362171ee6901329e",
       "contextHash": "8aaba8ce2470dc5c155c0cd964eab13fa6e61650d48259b871503595a6b29173"
     },
     {
       "file": "src/hooks/integrations/useWhatsAppTemplates.ts",
-      "line": 82,
+      "line": 96,
       "column": 21,
-      "endLine": 82,
+      "endLine": 96,
       "endColumn": 35,
       "severity": 2,
       "ruleId": "react-hooks/set-state-in-effect",
       "messageId": null,
-      "message": "Error: Calling setState synchronously within an effect can trigger cascading renders Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following: * Update external systems with the latest state from React. * Subscribe for updates from some external system, calling setState in a callback function when external state changes. Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect). <ROOT>/src/hooks/integrations/useWhatsAppTemplates.ts:82:21 80 | }, []); 81 | > 82 | useEffect(() => { fetchTemplates(); }, [fetchTemplates]); | ^^^^^^^^^^^^^^ Avoid calling setState() directly within an effect 83 | 84 | const extractVariables = (text: string): string[] => { 85 | const matches = text.match(/\\{\\{(\\d+)\\}\\}/g);",
+      "message": "Error: Calling setState synchronously within an effect can trigger cascading renders Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following: * Update external systems with the latest state from React. * Subscribe for updates from some external system, calling setState in a callback function when external state changes. Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect). <ROOT>/src/hooks/integrations/useWhatsAppTemplates.ts:96:21 94 | }, []); 95 | > 96 | useEffect(() => { fetchTemplates(); }, [fetchTemplates]); | ^^^^^^^^^^^^^^ Avoid calling setState() directly within an effect 97 | 98 | const extractVariables = (text: string): string[] => { 99 | const matches = text.match(/\\{\\{(\\d+)\\}\\}/g);",
       "spanHash": "eaa8ee18e082ea9c8549f3ce3d845c14254ed73e29e5a00979b99de0fb306d1c",
       "lineHash": "95ae83c913620cb51ec99c4ddf9fc9bb773e6acd8ff7dcf03ef456919b6478f0",
       "contextHash": "5f6df524d4b6843e3e2e2ee9a77d6186c5578081852d7b25b42418194bf96c25"
@@ -7620,37 +7598,37 @@
     },
     {
       "file": "src/pages/admin/useRolesPageState.ts",
-      "line": 73,
+      "line": 74,
       "column": 26,
-      "endLine": 73,
+      "endLine": 74,
       "endColumn": 36,
       "severity": 2,
       "ruleId": "react-hooks/set-state-in-effect",
       "messageId": null,
-      "message": "Error: Calling setState synchronously within an effect can trigger cascading renders Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following: * Update external systems with the latest state from React. * Subscribe for updates from some external system, calling setState in a callback function when external state changes. Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect). <ROOT>/src/pages/admin/useRolesPageState.ts:73:26 71 | }; 72 | > 73 | useEffect(() => { void fetchUsers(); }, []); | ^^^^^^^^^^ Avoid calling setState() directly within an effect 74 | useEffect(() => { if (showAddDialog) void fetchAvailableUsers(); }, [showAddDialog, users]); 75 | 76 | const handleAddRole = async () => {",
+      "message": "Error: Calling setState synchronously within an effect can trigger cascading renders Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following: * Update external systems with the latest state from React. * Subscribe for updates from some external system, calling setState in a callback function when external state changes. Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect). <ROOT>/src/pages/admin/useRolesPageState.ts:74:26 72 | }; 73 | > 74 | useEffect(() => { void fetchUsers(); }, []); | ^^^^^^^^^^ Avoid calling setState() directly within an effect 75 | useEffect(() => { if (showAddDialog) void fetchAvailableUsers(); }, [showAddDialog, users]); 76 | 77 | // R2-AUTH-008: atribuir/remover role aqui tem que passar pela mesma RPC",
       "spanHash": "0b4cd9404c42e32b73f5d17454b2b290be93eb965418b9efec6332ea88641c55",
       "lineHash": "58b263bae30dda5fcffc85e67a2e5157468f6cb75e1f4f9afa7df6cb9c20d234",
       "contextHash": "9e6a80164d9b6485a6cc00fb80575982e34686abf2a54b1eb8ba59392533a9ac"
     },
     {
       "file": "src/pages/admin/useRolesPageState.ts",
-      "line": 74,
+      "line": 75,
       "column": 45,
-      "endLine": 74,
+      "endLine": 75,
       "endColumn": 64,
       "severity": 2,
       "ruleId": "react-hooks/set-state-in-effect",
       "messageId": null,
-      "message": "Error: Calling setState synchronously within an effect can trigger cascading renders Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following: * Update external systems with the latest state from React. * Subscribe for updates from some external system, calling setState in a callback function when external state changes. Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect). <ROOT>/src/pages/admin/useRolesPageState.ts:74:45 72 | 73 | useEffect(() => { void fetchUsers(); }, []); > 74 | useEffect(() => { if (showAddDialog) void fetchAvailableUsers(); }, [showAddDialog, users]); | ^^^^^^^^^^^^^^^^^^^ Avoid calling setState() directly within an effect 75 | 76 | const handleAddRole = async () => { 77 | if (!selectedUser || !selectedRole) return;",
+      "message": "Error: Calling setState synchronously within an effect can trigger cascading renders Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following: * Update external systems with the latest state from React. * Subscribe for updates from some external system, calling setState in a callback function when external state changes. Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect). <ROOT>/src/pages/admin/useRolesPageState.ts:75:45 73 | 74 | useEffect(() => { void fetchUsers(); }, []); > 75 | useEffect(() => { if (showAddDialog) void fetchAvailableUsers(); }, [showAddDialog, users]); | ^^^^^^^^^^^^^^^^^^^ Avoid calling setState() directly within an effect 76 | 77 | // R2-AUTH-008: atribuir/remover role aqui tem que passar pela mesma RPC 78 | // atômica `admin_set_role` que useAdminData.handleRoleChange já usa — a",
       "spanHash": "8d7b0013ee55471080af8c1a60eeacfb729c54ff30321fda5b858521efeaddcd",
       "lineHash": "7c920d2ff7886a434b36fb62882f129b79a6b10e598d40a8d1891e6d4c0cbdac",
-      "contextHash": "ce651d4c80b8039b348651ef88d0ad1bda002f13d82cd5bfd0e02ba4876fa9bb"
+      "contextHash": "d721844362728cb204ac0024758654f73aacbc148c251e1aa38b4981034f7225"
     },
     {
       "file": "src/pages/admin/useRolesPageState.ts",
-      "line": 74,
+      "line": 75,
       "column": 71,
-      "endLine": 74,
+      "endLine": 75,
       "endColumn": 93,
       "severity": 1,
       "ruleId": "react-hooks/exhaustive-deps",
@@ -7658,7 +7636,7 @@
       "message": "React Hook useEffect has a missing dependency: 'fetchAvailableUsers'. Either include it or remove the dependency array.",
       "spanHash": "2f224d5c38c4c739504be082550c1d3cfafe4259b0f469290b1f8dd1c357b3c8",
       "lineHash": "7c920d2ff7886a434b36fb62882f129b79a6b10e598d40a8d1891e6d4c0cbdac",
-      "contextHash": "ce651d4c80b8039b348651ef88d0ad1bda002f13d82cd5bfd0e02ba4876fa9bb"
+      "contextHash": "d721844362728cb204ac0024758654f73aacbc148c251e1aa38b4981034f7225"
     },
     {
       "file": "src/pages/AdminTelemetriaPage.tsx",
@@ -7703,20 +7681,6 @@
       "contextHash": "2fbc7dd7c81be3f48ad2d467c436cf9a31a7b07dc283c342b8acbbd8246aac3b"
     },
     {
-      "file": "src/pages/ForgotPassword.tsx",
-      "line": 7,
-      "column": 1,
-      "endLine": 7,
-      "endColumn": 59,
-      "severity": 1,
-      "ruleId": "no-restricted-imports",
-      "messageId": "patternWithCustomMessage",
-      "message": "'@/integrations/supabase/client' import is restricted from being used by a pattern. Componentes e pages nao importam o client do Supabase: mova o acesso a dados para um hook em src/hooks ou um service em src/services.",
-      "spanHash": "88aba2a3242ff46e1adcfff272394b9d139f514f7979d49b8b4ead0ea66278cb",
-      "lineHash": "88aba2a3242ff46e1adcfff272394b9d139f514f7979d49b8b4ead0ea66278cb",
-      "contextHash": "96e60eb3e6a7d7b6f77c5b74ff6d988150c3aa67e77407549e5fba6a178a4338"
-    },
-    {
       "file": "src/pages/Install.tsx",
       "line": 21,
       "column": 5,
@@ -7756,7 +7720,7 @@
       "message": "'@/integrations/supabase/client' import is restricted from being used by a pattern. Componentes e pages nao importam o client do Supabase: mova o acesso a dados para um hook em src/hooks ou um service em src/services.",
       "spanHash": "88aba2a3242ff46e1adcfff272394b9d139f514f7979d49b8b4ead0ea66278cb",
       "lineHash": "88aba2a3242ff46e1adcfff272394b9d139f514f7979d49b8b4ead0ea66278cb",
-      "contextHash": "96e60eb3e6a7d7b6f77c5b74ff6d988150c3aa67e77407549e5fba6a178a4338"
+      "contextHash": "33d056f19755b8b10a919a7da4e90991932dfca05a8b602c332564f7e76c50bf"
     },
     {
       "file": "src/pages/SSOCallback.tsx",
@@ -8152,9 +8116,9 @@
     },
     {
       "file": "supabase/functions/_shared/evolution-control-authz.ts",
-      "line": 238,
+      "line": 338,
       "column": 29,
-      "endLine": 238,
+      "endLine": 338,
       "endColumn": 47,
       "severity": 2,
       "ruleId": "local/no-secret-compare",
@@ -8166,9 +8130,9 @@
     },
     {
       "file": "supabase/functions/_shared/evolution-control-authz.ts",
-      "line": 238,
+      "line": 338,
       "column": 51,
-      "endLine": 238,
+      "endLine": 338,
       "endColumn": 73,
       "severity": 2,
       "ruleId": "local/no-secret-compare",
@@ -8180,9 +8144,9 @@
     },
     {
       "file": "supabase/functions/_shared/evolution-control-authz.ts",
-      "line": 238,
+      "line": 338,
       "column": 9,
-      "endLine": 238,
+      "endLine": 338,
       "endColumn": 25,
       "severity": 2,
       "ruleId": "local/no-secret-compare",
@@ -8194,9 +8158,9 @@
     },
     {
       "file": "supabase/functions/_shared/evolution-control-authz.ts",
-      "line": 239,
+      "line": 339,
       "column": 9,
-      "endLine": 239,
+      "endLine": 339,
       "endColumn": 32,
       "severity": 2,
       "ruleId": "local/no-secret-compare",
@@ -8208,9 +8172,9 @@
     },
     {
       "file": "supabase/functions/_shared/evolution-control-authz.ts",
-      "line": 244,
+      "line": 344,
       "column": 9,
-      "endLine": 244,
+      "endLine": 344,
       "endColumn": 26,
       "severity": 2,
       "ruleId": "local/no-secret-compare",
@@ -8446,9 +8410,9 @@
     },
     {
       "file": "supabase/functions/evolution-api/index.ts",
-      "line": 255,
+      "line": 351,
       "column": 13,
-      "endLine": 255,
+      "endLine": 351,
       "endColumn": 37,
       "severity": 2,
       "ruleId": "local/no-secret-compare",
@@ -8460,9 +8424,9 @@
     },
     {
       "file": "supabase/functions/external-db-bridge/index.ts",
-      "line": 56,
+      "line": 66,
       "column": 45,
-      "endLine": 56,
+      "endLine": 66,
       "endColumn": 48,
       "severity": 2,
       "ruleId": "@typescript-eslint/no-explicit-any",
@@ -8824,9 +8788,9 @@
     },
     {
       "file": "supabase/functions/talkx-send/index.ts",
-      "line": 523,
+      "line": 540,
       "column": 15,
-      "endLine": 523,
+      "endLine": 540,
       "endColumn": 43,
       "severity": 2,
       "ruleId": "local/no-secret-compare",
@@ -8838,9 +8802,9 @@
     },
     {
       "file": "supabase/functions/talkx-send/index.ts",
-      "line": 526,
+      "line": 543,
       "column": 22,
-      "endLine": 526,
+      "endLine": 543,
       "endColumn": 45,
       "severity": 2,
       "ruleId": "local/no-secret-compare",
@@ -8852,9 +8816,9 @@
     },
     {
       "file": "supabase/functions/talkx-send/index.ts",
-      "line": 528,
+      "line": 545,
       "column": 22,
-      "endLine": 528,
+      "endLine": 545,
       "endColumn": 62,
       "severity": 2,
       "ruleId": "local/no-secret-compare",
