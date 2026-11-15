@@ -1,7 +1,7 @@
 /**
  * CV-051–060 — Painel RADAR flutuante.
- * Pop-up encãixado no Chat Panel: arrastável, 3 modos, mobile bottom drawer,
- * "ãão perturbe", acessibilidade, atalhos de teclado, indicador de pensamento.
+ * Pop-up encaixado no Chat Panel: arrastável, 3 modos, mobile bottom drawer,
+ * "não perturbe", acessibilidade, atalhos de teclado, indicador de pensamento.
  */
 import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { X, Minimize2, Maximize2, Minus, BellOff, Bell, RefreshCw, Radar } from 'lucide-react';

@@ -105,16 +105,24 @@ export function useCopilotSession(contactId: string | undefined): UseCopilotSess
     if (!contactId || !chave) return;
     let cancelado = false;
     void (async () => {
-      const { data, error } = await supabase
-        .from('copilot_sessions')
-        .select(COLUNAS)
-        .eq('contact_id', contactId)
-        .order('started_at', { ascending: false })
-        .limit(1)
-        .maybeSingle();
-      if (cancelado) return;
-      // Erro (ex.: tabela ainda sem as colunas do motor) = sem RADAR, sem quebrar a Inbox.
-      const session = !error && data ? toCopilotSessionState(data as unknown as Record<string, unknown>) : null;
+      let session: CopilotSessionState | null = null;
+      try {
+        const { data, error } = await supabase
+          .from('copilot_sessions')
+          .select(COLUNAS)
+          .eq('contact_id', contactId)
+          .order('started_at', { ascending: false })
+          .limit(1)
+          .maybeSingle();
+        if (cancelado) return;
+        // Erro (ex.: tabela ainda sem as colunas do motor) = sem RADAR, sem quebrar a Inbox.
+        session = !error && data ? toCopilotSessionState(data as unknown as Record<string, unknown>) : null;
+      } catch {
+        // A consulta pode lancar (rede, cliente sem o metodo): o contrato acima e
+        // "sem RADAR, sem quebrar a Inbox", e promessa rejeitada quebraria a tela.
+        if (cancelado) return;
+        session = null;
+      }
       setLido({ chave, contactId, session });
     })();
     return () => {
