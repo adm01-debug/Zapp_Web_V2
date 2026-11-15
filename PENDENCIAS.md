@@ -396,3 +396,50 @@ mensagem do cliente) e deixa a linha marcada para conferência humana. É o comp
 Sobra de real: 3 mensagens `failed` e 1 presa em `sending` na conexão de produção, em 44 dias.
 
 ---
+
+## 11. CORRIGIDO em 15/11 — o modelo de IA padrão do sistema tinha sido retirado pelo fornecedor
+
+**Não precisa de nada seu. Está consertado.** Fica registrado porque explica por que a IA do sistema
+andava falhando e porque foi uma mudança feita direto na configuração de produção.
+
+**O que estava acontecendo:** a tabela `ai_providers` tinha o DeepSeek como provedor padrão
+(`is_default = true`, atendendo `copilot`, `analysis`, `summary`, `tagging`, `auto_reply`) com o modelo
+`deepseek-v4-flash`. Esse identificador de modelo **foi retirado pela DeepSeek** e substituído por
+`deepseek-flash`. Toda função que pedia o modelo pelo roteador recebia erro do fornecedor.
+
+**Prova, dos logs de produção do dia 14/11** (`ai_usage_logs`, mesma chave de API, mesmo dia):
+
+| Modelo enviado | Função | Resultado |
+|---|---|---|
+| `deepseek-flash` | `ai-proxy` | **success** |
+| `deepseek-v4-flash` | `voice-agent` | **HTTP 400** |
+| `deepseek-v4-flash` | `ai-conversation-summary` | **HTTP 400** |
+
+HTTP 400 (Bad Request) é o que a API devolve quando o modelo pedido não existe. O `ai-proxy` escapava
+porque recebe o nome do modelo na própria requisição; as outras pegam do banco.
+
+Confirmação de que o identificador novo é o certo: além do sucesso acima, o histórico mostra
+`deepseek-v4-flash` com sucesso só até **09/09/2026** — depois disso, nunca mais.
+
+**O que eu mudei:** uma linha na configuração, com guarda para não acertar outra linha por engano:
+
+```sql
+update ai_providers set model = 'deepseek-flash'
+ where name = 'DeepSeek' and model = 'deepseek-v4-flash';
+-- 1 linha afetada
+```
+
+Nenhuma mudança de código foi necessária: `deepseek-v4-flash` não aparece em nenhum arquivo de produção
+(só em três arquivos de teste, como texto de exemplo). O roteador
+(`supabase/functions/_shared/ai-providers.ts`) lê a tabela a cada chamada, sem cache, então a correção
+passou a valer de imediato.
+
+**O que eu NÃO provei:** não executei uma chamada de produto depois da correção. As edges de IA exigem
+token de usuário real (`service_role` recebe 401, e está certo que receba), e eu não usaria a credencial
+de um usuário para um teste. A confirmação final aparece sozinha no próximo uso: o registro em
+`ai_usage_logs` passará a mostrar `deepseek-flash` com `success` no lugar do HTTP 400.
+
+**Observação anotada, sem ação:** `ai-routing.ts:75-77` e `ai-providers.ts:81,134` guardam modelos de
+último recurso (`gpt-4o`, `google/gemini-3-flash-preview`) usados só se um provedor ativo ficar sem modelo
+definido. Hoje nenhum provedor ativo está nessa situação, então não mexi. Vale revisar quando sobrar
+tempo, porque `gpt-4o` como padrão de `openai_compatible` iria para a API da DeepSeek e falharia.
