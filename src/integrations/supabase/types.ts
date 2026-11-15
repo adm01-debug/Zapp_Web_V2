@@ -997,6 +997,63 @@ export type Database = {
           },
         ]
       }
+      away_message_log: {
+        Row: {
+          contact_id: string
+          id: string
+          sent_at: string
+          whatsapp_connection_id: string
+        }
+        Insert: {
+          contact_id: string
+          id?: string
+          sent_at?: string
+          whatsapp_connection_id: string
+        }
+        Update: {
+          contact_id?: string
+          id?: string
+          sent_at?: string
+          whatsapp_connection_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "away_message_log_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "contacts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "away_message_log_whatsapp_connection_id_fkey"
+            columns: ["whatsapp_connection_id"]
+            isOneToOne: false
+            referencedRelation: "whatsapp_connections"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "away_message_log_whatsapp_connection_id_fkey"
+            columns: ["whatsapp_connection_id"]
+            isOneToOne: false
+            referencedRelation: "whatsapp_connections_agent"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "away_message_log_whatsapp_connection_id_fkey"
+            columns: ["whatsapp_connection_id"]
+            isOneToOne: false
+            referencedRelation: "whatsapp_connections_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "away_message_log_whatsapp_connection_id_fkey"
+            columns: ["whatsapp_connection_id"]
+            isOneToOne: false
+            referencedRelation: "whatsapp_connections_safe"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       away_messages: {
         Row: {
           content: string | null
@@ -14280,6 +14337,10 @@ export type Database = {
         Returns: number
       }
       reassign_overloaded_agents: { Args: never; Returns: number }
+      record_away_message: {
+        Args: { p_connection_id: string; p_contact_id: string }
+        Returns: boolean
+      }
       record_failed_login: {
         Args: { p_email: string; p_ip_address?: string; p_user_agent?: string }
         Returns: {
@@ -14848,6 +14909,10 @@ export type Database = {
       }
       set_voip_profile_credentials: {
         Args: { p_profile_id: string; p_ramal: string; p_sip_password: string }
+        Returns: string
+      }
+      should_send_away_message: {
+        Args: { p_connection_id: string; p_contact_id: string }
         Returns: string
       }
       skill_based_assign: { Args: { p_queue_id: string }; Returns: string }
