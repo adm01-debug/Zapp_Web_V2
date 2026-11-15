@@ -8,7 +8,7 @@
   },
   "summary": {
     "function_count": 92,
-    "source_file_count": 179,
+    "source_file_count": 180,
     "verify_jwt_true": 77,
     "verify_jwt_false": 15
   },
@@ -248,6 +248,11 @@
       "path": "supabase/functions/_shared/instance_pause.ts",
       "bytes": 1010,
       "sha256": "13a83be08c82f3e01f55031f273ca7e999132e9487b8badfda08caf413220d49"
+    },
+    {
+      "path": "supabase/functions/_shared/instance-pause-actions.ts",
+      "bytes": 595,
+      "sha256": "6b1b66e14ea781bdedb55cb8e7246a4a45e5de7b41854a76f7f2a26b6a4f5430"
     },
     {
       "path": "supabase/functions/_shared/media-egress.ts",
@@ -641,8 +646,8 @@
     },
     {
       "path": "supabase/functions/evolution-api/index.ts",
-      "bytes": 104679,
-      "sha256": "e841c2f3a4325c9042c4e922cae7937dbf8e8efcea0659107cbd94ef16c3fe28"
+      "bytes": 106604,
+      "sha256": "36be22135023ae7e3a53c634cdf146895731a4a4b67d7ed2eedae29767d4d225"
     },
     {
       "path": "supabase/functions/evolution-sync/index.ts",
@@ -1939,7 +1944,7 @@
       "name": "evolution-api",
       "entrypoint": "supabase/functions/evolution-api/index.ts",
       "verify_jwt": true,
-      "source_sha256": "97177988d07b34d0eb14d53c049ece8060196aca460bce7f0aac4c3f3cc206bf",
+      "source_sha256": "74ac76af4041ab7572575d030ee5840e480b85697b1091790e9e55943e29f048",
       "source_files": [
         "supabase/functions/_shared/cors-origins.ts",
         "supabase/functions/_shared/cron-secret-auth.ts",
@@ -1953,6 +1958,8 @@
         "supabase/functions/_shared/evolution-sync-actions.ts",
         "supabase/functions/_shared/evolution-types.ts",
         "supabase/functions/_shared/hmac-validation.ts",
+        "supabase/functions/_shared/instance_pause.ts",
+        "supabase/functions/_shared/instance-pause-actions.ts",
         "supabase/functions/_shared/media-egress.ts",
         "supabase/functions/_shared/rate-limit-log.ts",
         "supabase/functions/_shared/request-policy.ts",
@@ -2811,5 +2818,5 @@
       ]
     }
   ],
-  "manifest_sha256": "def318ea302d9ccc5f0baa0e99de7f54d2ea2dea21ac05cef4b9b9c5b0e2b6b7"
+  "manifest_sha256": "594c785ae9466ebcc74d3851b5ee4c61d3b6c8f6d805830f172a35b3c157f331"
 }
