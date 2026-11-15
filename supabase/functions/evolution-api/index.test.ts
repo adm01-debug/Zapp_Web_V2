@@ -363,6 +363,37 @@ for (const rpcFails of [false, true]) {
   });
 }
 
+// Achado do Codex na #3144: o provedor pode devolver 429 com Content-Type JSON e
+// corpo VAZIO. O proxy lia esse corpo com `response.json()` sem guarda, lancava, o
+// erro caia no catch de conexao, o proxy ainda RETENTAVA contra o provedor que acabou
+// de recusar e a resposta virava `{ error: true, status: 504 }` — o limite de envio
+// desaparecia do corpo e a auto-pausa nunca via o 429.
+Deno.test("C121/IP1: 429 com Content-Type JSON e corpo vazio preserva o status e pausa", async () => {
+  const provider = Deno.serve({ hostname: "127.0.0.1", port: 0, onListen() {} }, () =>
+    new Response(null, { status: 429, headers: { "Content-Type": "application/json" } }));
+  const addr = provider.addr as Deno.NetAddr;
+  Deno.env.set("EVOLUTION_API_URL", `http://127.0.0.1:${addr.port}`);
+  const autoPauseCalls: Record<string, unknown>[] = [];
+  resetInstanceTokenCache();
+  try {
+    const supabase = pauseServiceClient({
+      paused: false, instanceToken: "vault-instance-token", autoPauseCalls,
+    });
+    const res = await handleEvolutionApi(
+      controlRequest("send-text", { instanceName: "PRINCIPAL", number: "5511999999999", text: "oi" }),
+      { callerClient: makeCallerClient({ isAdminOrSupervisor: true }), supabase },
+    );
+    const json = await res.json();
+    assertEquals(json.status, 429, "o status do provedor tem de sobreviver ao corpo vazio");
+    assertEquals(autoPauseCalls.length, 1, "429 com corpo vazio tambem pausa a instancia");
+    assertEquals(autoPauseCalls[0].p_instance, "PRINCIPAL");
+    assertEquals(autoPauseCalls[0].p_minutes, 30);
+  } finally {
+    resetInstanceTokenCache();
+    await provider.shutdown();
+  }
+});
+
 // ─── R2-API-014 (P2) ────────────────────────────────────────────────────────
 // Falha ao ler a privacidade atual NÃO pode virar abertura dos outros campos.
 // Antes: GET /user/privacy falhando deixava `current = {}` e o merge fabricava
