@@ -14,7 +14,7 @@ interface ScopeRulesListProps {
 }
 
 export function ScopeRulesList({ scope }: ScopeRulesListProps) {
-  const { rules, isLoading, deleteRule, toggleRule } = useSLARules(scope);
+  const { rules, isLoading, isError, deleteRule, toggleRule } = useSLARules(scope);
   const [showDialog, setShowDialog] = useState(false);
   const [editingRule, setEditingRule] = useState<SLARule | null>(null);
 
@@ -40,6 +40,15 @@ export function ScopeRulesList({ scope }: ScopeRulesListProps) {
     if (scope === 'contact_type') return rule.contact_type ?? undefined;
     return undefined;
   };
+
+  if (isError && !rules.length) {
+    return (
+      <div role="alert" className="flex items-center gap-2 pt-4 text-sm text-destructive">
+        <AlertTriangle className="w-4 h-4 shrink-0" aria-hidden="true" />
+        Erro ao carregar regras de SLA.
+      </div>
+    );
+  }
 
   if (isLoading) {
     return (

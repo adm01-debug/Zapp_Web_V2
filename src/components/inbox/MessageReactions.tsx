@@ -140,6 +140,7 @@ export function MessageReactions({
     removeReaction,
     hasReacted: hasReactedDoHook,
     isReacting,
+    isError,
     currentProfileId,
   } = useMessageReactions(messageId, {
     instanceName,
@@ -195,6 +196,7 @@ export function MessageReactions({
     <div
       data-testid="message-reactions"
       data-pending={isReacting ? 'true' : 'false'}
+      data-error={isError ? 'true' : 'false'}
       aria-busy={isReacting}
       className={cn('flex items-center gap-1 flex-wrap', isSent ? 'justify-end' : 'justify-start')}
     >
@@ -332,6 +334,7 @@ export function QuickReactionBar({
     removeReaction,
     hasReacted: hasReactedDoHook,
     isReacting,
+    isError,
     currentProfileId,
   } = useMessageReactions(messageId, {
     instanceName,
@@ -364,6 +367,7 @@ export function QuickReactionBar({
       data-testid="quick-reaction-bar"
       data-profile-ready={currentProfileId ? 'true' : 'false'}
       data-pending={isReacting ? 'true' : 'false'}
+      data-error={isError ? 'true' : 'false'}
       aria-busy={isReacting}
       className={cn(
         `absolute -top-9 flex items-center ${HOVER_REVEAL_TAP} transition-all duration-200 z-20`,
