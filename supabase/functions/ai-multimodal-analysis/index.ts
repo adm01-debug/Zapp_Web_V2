@@ -6,11 +6,25 @@ import { enforceAiGuards } from "../_shared/ai-guards.ts";
 import { parseJsonObject } from "../_shared/ai-json.ts";
 import { MultimodalAnalysisEnvelope, buildAiEnvelope, parseModelOutput } from "../_shared/ai-response-contracts.ts";
 import { AiMultimodalAnalysisSchema } from "../_shared/schemas.ts";
+import { AiImageInputError, toInlineImage } from "../_shared/ai-image-input.ts";
 
 export interface AiMultimodalAnalysisDeps {
   authorize?: (req: Request) => Promise<{ userId: string } | Response>;
   enforceGuards?: (opts: { functionName: string; userId: string; req: Request }) => Promise<Response | null>;
   generate?: (params: GenerateParams) => Promise<GenerateResult>;
+  /** Injeção para teste; em produção o download real do objeto do Storage. */
+  inlineImage?: typeof toInlineImage;
+}
+
+/**
+ * JWT do chamador, extraído do header `Authorization` (`Bearer <jwt>`,
+ * case-insensitive). É ele que autoriza o download do objeto PRIVADO sob a
+ * identidade do usuário — a policy de `storage.objects` decide (R2-INF-022).
+ */
+function bearerTokenDoPedido(req: Request): string {
+  const header = req.headers.get("authorization") ?? "";
+  if (!header.toLowerCase().startsWith("bearer ")) return "";
+  return header.slice(7).trim();
 }
 
 export async function handleAiMultimodalAnalysis(
@@ -59,13 +73,40 @@ Responda APENAS em JSON:
   "confidence": <0 a 1>
 }`;
 
+    // O bucket `whatsapp-media` é PRIVADO (`public=false`): a URL
+    // `/object/public/...` devolve HTTP 400 para terceiros e o modelo NÃO
+    // consegue buscar a imagem. Então o objeto é baixado no servidor sob a
+    // identidade do CHAMADOR (anon key + JWT do pedido) e vai EMBUTIDO como
+    // data URL — o mesmo caminho de `classify-emoji`/`classify-sticker`.
+    const inlineImage = deps.inlineImage ?? toInlineImage;
+    let imageDataUrl: string;
+    try {
+      const inline = await inlineImage(imageUrl, {
+        storageIdentity: {
+          kind: "user",
+          bearerToken: bearerTokenDoPedido(req),
+          anonKey: Deno.env.get("SUPABASE_ANON_KEY") || Deno.env.get("SUPABASE_PUBLISHABLE_KEY") || "",
+        },
+      });
+      imageDataUrl = inline.dataUrl;
+    } catch (err) {
+      // O `message` do `AiImageInputError` carrega `<bucket>/<path>` — locator
+      // de objeto privado que não pode ir para o log; registra-se só o código
+      // tipado (estável). Sem imagem não há análise: recusa em 422, antes de
+      // qualquer chamada ao provedor pago.
+      log.error("image-input-failed", {
+        code: err instanceof AiImageInputError ? err.code : "IMAGE_INPUT_UNKNOWN",
+      });
+      return errorResponse("Imagem nao pode ser obtida para analise.", 422, req);
+    }
+
     // Mensagem com imagem no formato vision
     const visionMessage = {
       role: "user" as const,
       content: [
         {
           type: "image_url",
-          image_url: { url: imageUrl },
+          image_url: { url: imageDataUrl },
         },
         {
           type: "text",

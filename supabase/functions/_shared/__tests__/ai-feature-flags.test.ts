@@ -40,6 +40,42 @@ Deno.test("CV-010: capabilityFlagKeyForFunction retorna a chave correta", () => 
   assertEquals(key, "ai.capability.copilot_live");
 });
 
+/**
+ * CV-081-102: as 7 edges de análise contextual do RADAR consomem a MESMA
+ * capacidade. Sem entrada no mapa `capabilityFlagKeyForFunction` devolve `null`
+ * e o gate LIBERA a função — a chave desligada não barraria o provedor pago.
+ */
+const EDGES_DO_RADAR = [
+  "ai-objection-handler",
+  "ai-price-anchor",
+  "ai-loss-risk",
+  "ai-product-recommendation",
+  "ai-deadline-calculator",
+  "ai-lead-temperature",
+  "ai-multimodal-analysis",
+] as const;
+
+Deno.test("CV-081-102: as 7 edges do RADAR estão no mapa sob copilot_live", () => {
+  for (const fn of EDGES_DO_RADAR) {
+    assertEquals(AI_CAPABILITY_BY_FUNCTION[fn], "copilot_live", fn);
+    assertEquals(capabilityFlagKeyForFunction(fn), "ai.capability.copilot_live", fn);
+  }
+});
+
+Deno.test("CV-081-102: flag=false bloqueia as 7 edges do RADAR com 503", async () => {
+  for (const fn of EDGES_DO_RADAR) {
+    const resp = await enforceAiCapability({
+      functionName: fn,
+      req: mockReq(),
+      readFlag: flagReader(false),
+    });
+    assertNotEquals(resp, null, fn);
+    assertEquals(resp!.status, 503, fn);
+    const body = await resp!.json();
+    assertEquals(body.code, "AI_CAPABILITY_DISABLED", fn);
+  }
+});
+
 Deno.test("CV-010: função desconhecida não retorna chave", () => {
   assertEquals(capabilityFlagKeyForFunction("funcao-inexistente"), null);
 });
