@@ -1,0 +1,3231 @@
+[
+ {
+  "branch": "claude__feat-talkx-x074-analytics-rpcs-261101-2300",
+  "titulo": "Descricao das 3 analises de campanha nao aparece no catalogo do banco",
+  "arquivos": [
+   "supabase/migrations/20261101223000_talkx_x074_analytics_rpcs.sql"
+  ],
+  "valor": "baixo",
+  "classe": "sql",
+  "bloqueio": "migration_producao",
+  "prova": "ausente: COMMENT ON FUNCTION em supabase/migrations/20261108201000_talkx_x074_analytics_rpcs.sql (arquivo termina no GRANT, linha 152); grep de COMMENT ON FUNCTION public.talkx_* em supabase/ e script",
+  "revisor": "nao_refutado",
+  "frente": "incorp-c1-65.json"
+ },
+ {
+  "branch": "claude__fix-ci-talkx-report-test-261108-2152",
+  "titulo": "Nome do responsavel no relatorio da campanha sem nenhum teste",
+  "arquivos": [
+   "src/components/talkx/report/__tests__/TalkXCampaignReport.test.tsx"
+  ],
+  "valor": "baixo",
+  "classe": "teste",
+  "bloqueio": "nenhum",
+  "prova": "main TalkXCampaignReport.test.tsx:163 renderiza sem a prop creators; grep -rn creators em src/components/talkx/report/__tests__/ = 0 resultados. Produção usa em TalkXCampaignReport.tsx:327",
+  "revisor": "nao_refutado",
+  "frente": "incorp-c1-65.json"
+ },
+ {
+  "branch": "claude__fix-esm-sh-import-regression-261108-2319",
+  "titulo": "Nome do responsável pela campanha no relatório não é testado",
+  "arquivos": [
+   "src/components/talkx/report/__tests__/TalkXCampaignReport.test.tsx"
+  ],
+  "valor": "baixo",
+  "classe": "teste",
+  "bloqueio": "nenhum",
+  "prova": "src/components/talkx/report/__tests__/TalkXCampaignReport.test.tsx:163 e .segmento.test.tsx:121 montam <TalkXCampaignReport campaign={campaign} onBack={vi.fn()} /> sem a prop creators; a linha Respons",
+  "revisor": "nao_refutado",
+  "frente": "incorp-c1-65.json"
+ },
+ {
+  "branch": "claude__fix-esm-sh-import-regression-261108-2319",
+  "titulo": "Rótulos do cartão de resumo do relatório (Destinatários, A confirmar, Duração) sem teste que os proteja",
+  "arquivos": [
+   "src/components/talkx/report/__tests__/TalkXCampaignReport.test.tsx"
+  ],
+  "valor": "baixo",
+  "classe": "teste",
+  "bloqueio": "nenhum",
+  "prova": "TalkXCampaignReport.tsx:247,253,254 renderiza os rótulos; grep em src/ só acha asserção deles em useTalkXLifecycle.test.tsx:547 e TalkXWizardReview.lifecycle.test.tsx:126 (outros componentes), nenhum ",
+  "revisor": "nao_refutado",
+  "frente": "incorp-c1-65.json"
+ },
+ {
+  "branch": "claude_05__wonderful-goodall-94qjyg",
+  "titulo": "Relatorio de campanha: o nome do responsavel nao tem teste que avise se parar de aparecer",
+  "arquivos": [
+   "src/components/talkx/report/__tests__/TalkXCampaignReport.test.tsx"
+  ],
+  "valor": "baixo",
+  "classe": "teste",
+  "bloqueio": "nenhum",
+  "prova": "main: src/components/talkx/report/__tests__/TalkXCampaignReport.test.tsx (215 linhas, 13 it) sem nenhuma ocorrencia de 'creators' nem 'Responsavel'; o campo e renderizado em src/components/talkx/repor",
+  "revisor": "nao_refutado",
+  "frente": "incorp-c1-65.json"
+ },
+ {
+  "branch": "claude__fix-talkx-report-test-suite-261108-2355",
+  "titulo": "Tela de relatório: ninguém testa se os números do Resumo aparecem",
+  "arquivos": [
+   "src/components/talkx/report/__tests__/TalkXCampaignReport.test.tsx"
+  ],
+  "valor": "baixo",
+  "classe": "teste",
+  "bloqueio": "nenhum",
+  "prova": "Rótulos existem em TalkXCampaignReport.tsx:247,253,254 e o cartão em :315, mas nenhum teste da main cita 'A confirmar' nem 'Resumo da Campanha' (grep em src/**/*.test.tsx = 0 hits); o teste da main só",
+  "revisor": "nao_refutado",
+  "frente": "incorp-c2-65.json"
+ },
+ {
+  "branch": "claude__fix-talkx-report-test-suite-261108-2355",
+  "titulo": "Nome do responsável da campanha no relatório fica sem teste",
+  "arquivos": [
+   "src/components/talkx/report/__tests__/TalkXCampaignReport.test.tsx"
+  ],
+  "valor": "baixo",
+  "classe": "teste",
+  "bloqueio": "nenhum",
+  "prova": "TalkXCampaignReport.tsx:327 mostra MetaRow 'Responsável' a partir de creators; os 2 testes da tela na main renderizam sem essa informação — TalkXCampaignReport.test.tsx:163 e TalkXCampaignReport.segme",
+  "revisor": "nao_refutado",
+  "frente": "incorp-c2-65.json"
+ },
+ {
+  "branch": "codex__fix-lint-phone-settings-20261101",
+  "titulo": "Botao de dispensar alerta de fila nao diz de qual fila e, para quem usa leitor de tela",
+  "arquivos": [
+   "src/components/queues/QueueAlertsDisplay.tsx"
+  ],
+  "valor": "baixo",
+  "classe": "front",
+  "bloqueio": "nenhum",
+  "prova": "main src/components/queues/QueueAlertsDisplay.tsx:93 = aria-label={`Dispensar alerta ${alertLabels[alert.type]}`} — sem ${alert.queueName}; a branch tem `Dispensar alerta da fila ${alert.queueName}: $",
+  "revisor": "nao_refutado",
+  "frente": "incorp-c2-65.json"
+ },
+ {
+  "branch": "fix__ci-verde-261021",
+  "titulo": "Login: nada testa se o aviso de e-mail invalido aparece na tela",
+  "arquivos": [
+   "e2e/auth.spec.ts"
+  ],
+  "valor": "medio",
+  "classe": "teste",
+  "bloqueio": "nenhum",
+  "prova": "e2e/auth.spec.ts:23 da main so checa validity.typeMismatch do navegador; nenhum teste cobre o zod de src/hooks/auth/useAuthForm.ts:12 que renderiza src/pages/Auth.tsx:152",
+  "revisor": "nao_refutado",
+  "frente": "obs-lote1.json"
+ },
+ {
+  "branch": "claude__fix-talkx-test-suite-261108-2330",
+  "titulo": "Mapa de calor pode trocar domingo por segunda sem ninguem perceber",
+  "arquivos": [
+   "src/components/talkx/report/__tests__/TalkXCampaignReport.test.tsx"
+  ],
+  "valor": "medio",
+  "classe": "teste",
+  "bloqueio": "nenhum",
+  "prova": "src/components/talkx/report/__tests__/TalkXCampaignReport.test.tsx:115-118 (main) — unico teste positivo do helper e grid[0][7] (segunda); nenhuma assertiva em grid[1] ou grid[6]. talkxReportData.ts:2",
+  "revisor": "sem_revisor",
+  "frente": "obs-lote3.json"
+ },
+ {
+  "branch": "claude__fix-x051-remote-completion-test-261108-2057",
+  "titulo": "Relatorio: mapa de calor pode jogar domingo no dia errado sem ninguem perceber",
+  "arquivos": [
+   "src/components/talkx/report/__tests__/TalkXCampaignReport.test.tsx"
+  ],
+  "valor": "medio",
+  "classe": "teste",
+  "bloqueio": "nenhum",
+  "prova": "wt-main src/components/talkx/report/__tests__/TalkXCampaignReport.test.tsx:108-123 so testa grid[0][7] (segunda), grade vazia e nulls; nenhum caso de domingo (linha 6) nem terca, tabela em report/talk",
+  "revisor": "nao_refutado",
+  "frente": "obs-lote3.json"
+ },
+ {
+  "branch": "claude__fix-talkx-test-suite-261108-2330",
+  "titulo": "Cartao 'Resumo da Campanha' e o nome do responsavel nunca sao verificados",
+  "arquivos": [
+   "src/components/talkx/report/__tests__/TalkXCampaignReport.test.tsx"
+  ],
+  "valor": "baixo",
+  "classe": "teste",
+  "bloqueio": "nenhum",
+  "prova": "src/components/talkx/report/__tests__/TalkXCampaignReport.test.tsx:163 (main) — renderReport monta sem a prop creators; grep por 'Resumo da Campanha'/'A confirmar' em src/components/talkx/**/__tests__",
+  "revisor": "sem_revisor",
+  "frente": "obs-lote3.json"
+ },
+ {
+  "branch": "claude__fix-x051-remote-completion-test-261108-2057",
+  "titulo": "Relatorio: nome do responsavel da campanha pode sumir da tela sem teste acusar",
+  "arquivos": [
+   "src/components/talkx/report/__tests__/TalkXCampaignReport.test.tsx"
+  ],
+  "valor": "baixo",
+  "classe": "teste",
+  "bloqueio": "nenhum",
+  "prova": "wt-main .../TalkXCampaignReport.test.tsx:159-166 renderiza sem a prop creators e grep creators em src/components/talkx/report/__tests__/ = 0; render condicional em report/TalkXCampaignReport.tsx:327",
+  "revisor": "nao_refutado",
+  "frente": "obs-lote3.json"
+ },
+ {
+  "branch": "claude__fix-x051-remote-completion-test-261108-2057",
+  "titulo": "Relatorio: cartao Resumo (Destinatarios, A confirmar, Duracao) sem nenhum teste",
+  "arquivos": [
+   "src/components/talkx/report/__tests__/TalkXCampaignReport.test.tsx"
+  ],
+  "valor": "baixo",
+  "classe": "teste",
+  "bloqueio": "nenhum",
+  "prova": "ausente: grep -rln \"A confirmar\" e \"Resumo da Campanha\" em wt-main/src --include=*.test.tsx = 0 resultados; rotulos vivos em report/TalkXCampaignReport.tsx:247-254 e :315",
+  "revisor": "nao_refutado",
+  "frente": "obs-lote3.json"
+ },
+ {
+  "branch": "claude__feat-e71-skip-draft-prs-281026-0250",
+  "titulo": "PR em rascunho ainda gasta ~45 min de fila com o teste E2E completo",
+  "arquivos": [
+   ".github/workflows/ci.yml"
+  ],
+  "valor": "baixo",
+  "classe": "ci",
+  "bloqueio": "ci_workflow",
+  "prova": ".github/workflows/ci.yml:440-443 (job e2e, timeout-minutes: 45, sem linha `if:`) na main e07525143; e2e nao aparece em nenhum `needs:` (so :229 e :410)",
+  "revisor": "nao_refutado",
+  "frente": "obs-lote4.json"
+ },
+ {
+  "branch": "claude__fix-evolution-connect-500-261113-1721",
+  "titulo": "Sem teste que garanta o aviso ao operador quando a conexao e apagada e nao recriada",
+  "arquivos": [
+   "supabase/functions/evolution-api/index.test.ts"
+  ],
+  "valor": "baixo",
+  "classe": "teste",
+  "bloqueio": "nenhum",
+  "prova": "connect-orfa-prazo.test.ts:210 e a unica mencao a \"removida\" nos testes da main e e assercao NEGATIVA (!r.text.includes). grep \"removida|503\" em supabase/functions/evolution-api/*.test.ts nao acha nen",
+  "revisor": "nao_refutado",
+  "frente": "obs-lote4.json"
+ },
+ {
+  "branch": "claude__fix-radar-shortcut-key-261108-2059",
+  "titulo": "Relatorio TalkX: domingo no mapa de calor nao tem teste nenhum",
+  "arquivos": [
+   "src/components/talkx/report/__tests__/TalkXCampaignReport.test.tsx"
+  ],
+  "valor": "baixo",
+  "classe": "teste",
+  "bloqueio": "nenhum",
+  "prova": "main src/components/talkx/report/__tests__/TalkXCampaignReport.test.tsx:115-117 so afirma grid[0][7] (segunda); nenhuma linha do arquivo cita grid[1] ou grid[6] (grep sem resultado)",
+  "revisor": "nao_refutado",
+  "frente": "obs-lote4.json"
+ },
+ {
+  "branch": "claude__fix-radar-shortcut-key-261108-2059",
+  "titulo": "Relatorio TalkX: nome do responsavel da campanha sem teste",
+  "arquivos": [
+   "src/components/talkx/report/__tests__/TalkXCampaignReport.test.tsx"
+  ],
+  "valor": "baixo",
+  "classe": "teste",
+  "bloqueio": "nenhum",
+  "prova": "main TalkXCampaignReport.tsx:327 renderiza Responsavel via creators[campaign.owner], mas o teste da main nunca passa creators: render em TalkXCampaignReport.test.tsx:160-161 so manda campaign e onBack",
+  "revisor": "nao_refutado",
+  "frente": "obs-lote4.json"
+ },
+ {
+  "branch": "claude__fix-talkx-test-suite-261109-0910",
+  "titulo": "Envio no domingo pode cair no dia errado do mapa de calor sem ninguem ver",
+  "arquivos": [
+   "src/components/talkx/report/__tests__/TalkXCampaignReport.test.tsx"
+  ],
+  "valor": "baixo",
+  "classe": "teste",
+  "bloqueio": "nenhum",
+  "prova": "main TalkXCampaignReport.test.tsx:115-118 so afirma grid[0][7] (segunda); nenhum grid[5]/grid[6] na main. TalkXReportHeatmap.test.tsx:38 usa matriz feita a mao, nao exercita o mapeamento de dia.",
+  "revisor": "nao_refutado",
+  "frente": "obs-lote4.json"
+ },
+ {
+  "branch": "claude__fix-talkx-test-suite-261109-0910",
+  "titulo": "Nome do responsavel e os numeros do Resumo do relatorio sem nenhum teste",
+  "arquivos": [
+   "src/components/talkx/report/__tests__/TalkXCampaignReport.test.tsx"
+  ],
+  "valor": "baixo",
+  "classe": "teste",
+  "bloqueio": "nenhum",
+  "prova": "main TalkXCampaignReport.tsx:327 desenha Responsavel via creators e :247,253,254 os rotulos; nenhum teste da main passa creators a esse componente nem afirma esses rotulos (grep em src/**/__tests__ va",
+  "revisor": "nao_refutado",
+  "frente": "obs-lote4.json"
+ },
+ {
+  "branch": "claude__fix-z017-z020-auth-cors-261018-1950",
+  "titulo": "Impede que um arquivo de controle do npm entre no repositorio por acidente",
+  "arquivos": [
+   ".gitignore"
+  ],
+  "valor": "baixo",
+  "classe": "ci",
+  "bloqueio": "nenhum",
+  "prova": ".gitignore da main (146 linhas) so ignora deno.lock em :115-117; `grep -n package-lock .gitignore` → exit 1. Nenhuma regra para package-lock.json",
+  "revisor": "nao_refutado",
+  "frente": "obs-lote4.json"
+ },
+ {
+  "branch": "claude__feat-radar-fase6-261108-1933",
+  "titulo": "Mapa de calor do relatório pode trocar o dia da semana sem ninguém notar",
+  "arquivos": [
+   "src/components/talkx/report/__tests__/TalkXCampaignReport.test.tsx"
+  ],
+  "valor": "medio",
+  "classe": "teste",
+  "bloqueio": "nenhum",
+  "prova": "main .../TalkXCampaignReport.test.tsx:115 só afirma grid[0][7] (segunda); nenhuma asserção para terça (linha 1) nem domingo (linha 6). Branch assert grid[1][9] e grid[6][9].",
+  "revisor": "nao_refutado",
+  "frente": "obs-wdnl8q6md.json"
+ },
+ {
+  "branch": "claude__fix-pd79-compat-pre-migration-261111",
+  "titulo": "Nada no CI impede a reconciliação de desfazer correção manual do supervisor",
+  "arquivos": [
+   "supabase/functions/_shared/__tests__/effect-reconcile.test.ts"
+  ],
+  "valor": "medio",
+  "classe": "teste",
+  "bloqueio": "nenhum",
+  "prova": "grep -c manually_resolved_at em supabase/functions/_shared/__tests__/effect-reconcile.test.ts = 0; o stub da main trata .is() como no-op (:86). Guarda viva e sem teste: effect-reconcile.ts:462-469",
+  "revisor": "nao_refutado",
+  "frente": "obs-wdnl8q6md.json"
+ },
+ {
+  "branch": "fix__ci-workflows-vermelhos",
+  "titulo": "CI baixa Playwright sem versao fixada: suite de navegador quebra sozinha",
+  "arquivos": [
+   ".github/workflows/ci.yml",
+   ".github/workflows/e2e-talkx.yml",
+   ".github/workflows/e2e-logado.yml",
+   ".github/toolchain.json"
+  ],
+  "valor": "medio",
+  "classe": "ci",
+  "bloqueio": "ci_workflow",
+  "prova": "wt-main/.github/workflows/ci.yml:490 'run: bunx playwright install-deps chromium firefox webkit' sem versao (:484 usa playwright@1.64.1); e2e-talkx.yml:98 idem. Guardas nao pegam: workflow-contracts.u",
+  "revisor": "nao_refutado",
+  "frente": "obs-wdnl8q6md.json"
+ },
+ {
+  "branch": "fix__ci-workflows-vermelhos",
+  "titulo": "Log do CI acusa contrato de banco quebrado mesmo quando o teste passa",
+  "arquivos": [
+   "scripts/db-audit/consolidar-veredito.test.mjs"
+  ],
+  "valor": "medio",
+  "classe": "teste",
+  "bloqueio": "nenhum",
+  "prova": "wt-main/scripts/db-audit/consolidar-veredito.test.mjs:168 execFileSync sem stdio:['pipe','pipe','pipe']; medido com node: sem a opcao o '::error::' do filho vaza para o stderr do pai E continua em err",
+  "revisor": "nao_refutado",
+  "frente": "obs-wdnl8q6md.json"
+ },
+ {
+  "branch": "claude__feat-copiloto-edge-fases8-10-261024-1700",
+  "titulo": "Link de imagem enviado pelo cliente entra sem limite de tamanho na analise por IA",
+  "arquivos": [
+   "supabase/functions/ai-multimodal-analysis/index.ts"
+  ],
+  "valor": "baixo",
+  "classe": "edge",
+  "bloqueio": "nenhum",
+  "prova": "supabase/functions/_shared/schemas.ts:201 (main) = \"imageUrl: z.string().url(),\" sem .max(); a branch tinha \"mediaUrl: z.string().url().max(2048)\" (patch ai-multimodal-analysis/index.ts, BodySchema)",
+  "revisor": "nao_refutado",
+  "frente": "obs-wdnl8q6md.json"
+ },
+ {
+  "branch": "claude__feat-radar-fase6-261108-1933",
+  "titulo": "Resumo do relatório e nome do responsável não têm teste de tela",
+  "arquivos": [
+   "src/components/talkx/report/__tests__/TalkXCampaignReport.test.tsx"
+  ],
+  "valor": "baixo",
+  "classe": "teste",
+  "bloqueio": "nenhum",
+  "prova": "main test:56-66 mocka os 3 gráficos e :165 renderiza sem `creators`; \"Resumo da Campanha\" (componente :315) e Responsável (:327) não aparecem em nenhum .test.tsx da main.",
+  "revisor": "nao_refutado",
+  "frente": "obs-wdnl8q6md.json"
+ },
+ {
+  "branch": "claude__fix-pd79-compat-pre-migration-261111",
+  "titulo": "Painel de mensagens em dúvida abre com dado velho e insiste a cada 30s em erro",
+  "arquivos": [
+   "src/hooks/delivery/useUnconfirmedMessages.ts",
+   "src/hooks/delivery/__tests__/useUnconfirmedMessages.test.tsx"
+  ],
+  "valor": "baixo",
+  "classe": "front",
+  "bloqueio": "nenhum",
+  "prova": "src/hooks/delivery/useUnconfirmedMessages.ts:55 na main = 'refetchInterval: 30_000', sem staleTime/refetchOnMount/refetchOnWindowFocus e sem backoff (grep: nenhum errorUpdateCount no arquivo)",
+  "revisor": "nao_refutado",
+  "frente": "obs-wdnl8q6md.json"
+ },
+ {
+  "branch": "claude__fix-evolution-connect-500-261113-1721",
+  "titulo": "Falha ao recriar a conexão do WhatsApp não tem nenhum teste que garanta o aviso",
+  "arquivos": [
+   "supabase/functions/evolution-api/index.test.ts"
+  ],
+  "valor": "medio",
+  "classe": "teste",
+  "bloqueio": "nenhum",
+  "prova": "main: connect-orfa-prazo.test.ts:155-158 sempre responde 200 no /instance/create; nenhum *.test.ts cita 'removida da Evolution GO' → index.ts:1005 (retry) e :1009 (503) sem teste",
+  "revisor": "nao_refutado",
+  "frente": "obs-wtw0p5nzz.json"
+ },
+ {
+  "branch": "claude__fix-talkx-test-suite-261109-0910",
+  "titulo": "Nome do responsavel pode sumir do relatorio da campanha sem ninguem notar",
+  "arquivos": [
+   "src/components/talkx/report/__tests__/TalkXCampaignReport.test.tsx"
+  ],
+  "valor": "medio",
+  "classe": "teste",
+  "bloqueio": "nenhum",
+  "prova": "TalkXCampaignReport.test.tsx:163 renderiza sem a prop creators e segmento.test.tsx:121 tambem; TalkXCampaignReport.tsx:74,327 usa creators para o campo Responsavel. Nenhum teste da main passa creators",
+  "revisor": "nao_refutado",
+  "frente": "obs-wtw0p5nzz.json"
+ },
+ {
+  "branch": "claude__fix-talkx-test-suite-261109-0910",
+  "titulo": "Respostas de domingo podem cair no dia errado do mapa de calor sem teste pegar",
+  "arquivos": [
+   "src/components/talkx/report/__tests__/TalkXCampaignReport.test.tsx"
+  ],
+  "valor": "medio",
+  "classe": "teste",
+  "bloqueio": "nenhum",
+  "prova": "TalkXCampaignReport.test.tsx:115-118 so afirma [0][7] (segunda); grep de grid[6] em src/**/*.test.* = vazio. Domingo=linha 6 em talkxReportData.ts:29 fica sem guarda.",
+  "revisor": "nao_refutado",
+  "frente": "obs-wtw0p5nzz.json"
+ },
+ {
+  "branch": "fix__ci-verde-261021",
+  "titulo": "Ninguem testa se a tela de login avisa \"Email inválido\" ao digitar errado",
+  "arquivos": [
+   "e2e/auth.spec.ts"
+  ],
+  "valor": "medio",
+  "classe": "teste",
+  "bloqueio": "nenhum",
+  "prova": "e2e/auth.spec.ts:23 (main) so checa o bloqueio do navegador (validity.typeMismatch); \"Email inválido\" tem 0 ocorrencias em e2e/, embora a main renderize em src/pages/Auth.tsx:152",
+  "revisor": "nao_refutado",
+  "frente": "obs-wtw0p5nzz.json"
+ },
+ {
+  "branch": "fix__ci-workflows-vermelhos",
+  "titulo": "CI baixa o Playwright sem versao fixa em 2 passos; pode puxar release trocado",
+  "arquivos": [
+   ".github/workflows/ci.yml",
+   ".github/workflows/e2e-talkx.yml",
+   ".github/toolchain.json"
+  ],
+  "valor": "medio",
+  "classe": "ci",
+  "bloqueio": "ci_workflow",
+  "prova": "main: ci.yml:490 'run: bunx playwright install-deps chromium firefox webkit' e e2e-talkx.yml:98 'bunx playwright install-deps chromium' — sem @1.64.1; branch pina os dois (ci.yml:332, e2e-talkx.yml:95",
+  "revisor": "nao_refutado",
+  "frente": "obs-wtw0p5nzz.json"
+ },
+ {
+  "branch": "claude__chore-auditoria-supabase-final-251025-1655",
+  "titulo": "Relatório da main diz que não existe teste de RLS no CI, mas existem 6",
+  "arquivos": [
+   "auditoria-supabase/RELATORIO_AUDITORIA_SUPABASE.md:819"
+  ],
+  "valor": "baixo",
+  "classe": "ci",
+  "bloqueio": "nenhum",
+  "prova": "main auditoria-supabase/RELATORIO_AUDITORIA_SUPABASE.md:650 S12-006 'Nenhum test file de RLS no db-guard.yml atual' x .github/workflows/db-guard.yml:304,449,830,1356,1480,1819",
+  "revisor": "nao_refutado",
+  "frente": "obs-wtw0p5nzz.json"
+ },
+ {
+  "branch": "claude__feat-e71-skip-draft-prs-281026-0250",
+  "titulo": "Em PR rascunho o teste E2E de 45 min ainda roda e atrasa a fila de CI",
+  "arquivos": [
+   ".github/workflows/ci.yml"
+  ],
+  "valor": "baixo",
+  "classe": "ci",
+  "bloqueio": "ci_workflow",
+  "prova": "wt-main .github/workflows/ci.yml:440-443: job e2e (timeout 45) sem 'if' de draft; os gates da main existem so em :86 (unit-tests) e :230 (build)",
+  "revisor": "nao_refutado",
+  "frente": "obs-wtw0p5nzz.json"
+ },
+ {
+  "branch": "claude__feat-radar-fase6-261108-1933",
+  "titulo": "Relatorio TalkX: resumo e nome do responsavel ficam sem teste na main",
+  "arquivos": [
+   "src/components/talkx/report/__tests__/TalkXCampaignReport.test.tsx"
+  ],
+  "valor": "baixo",
+  "classe": "teste",
+  "bloqueio": "nenhum",
+  "prova": "main: TalkXCampaignReport.test.tsx:158-165 renderiza sem prop creators e nenhum teste cita 'Resumo da Campanha' (grep acha so TalkXCampaignReport.tsx:315,327)",
+  "revisor": "nao_refutado",
+  "frente": "obs-wtw0p5nzz.json"
+ },
+ {
+  "branch": "claude__fix-evolution-connect-500-261113-1721",
+  "titulo": "Queda da Evolution GO em 2 etapas da conexão não tem teste de regressão",
+  "arquivos": [
+   "supabase/functions/evolution-api/index.test.ts"
+  ],
+  "valor": "baixo",
+  "classe": "teste",
+  "bloqueio": "nenhum",
+  "prova": "main: index.ts:896 (status dentro do connect) e :1032 (delete falho) sem teste — connect-go-token.test.ts:135,148,165 e connect-orfa-prazo.test.ts:153 sempre respondem 200 no status",
+  "revisor": "nao_refutado",
+  "frente": "obs-wtw0p5nzz.json"
+ },
+ {
+  "branch": "claude__fix-logger-vitest-mock-261017-1000",
+  "titulo": "Filtro que flagra cliente tentando dar ordem a IA do copiloto: so nesta branch",
+  "arquivos": [
+   "src/hooks/copilot/usePromptInjectionGuard.ts"
+  ],
+  "valor": "baixo",
+  "classe": "front",
+  "bloqueio": "nenhum",
+  "prova": "ausente: src/hooks/copilot/usePromptInjectionGuard.ts (ls na main: No such file); git grep 'usePromptInjectionGuard|INJECTION_PATTERNS|jailbreak|CV-113' em src/ e supabase/ da main = 0. Ninguem import",
+  "revisor": "nao_refutado",
+  "frente": "obs-wtw0p5nzz.json"
+ },
+ {
+  "branch": "claude__fix-radar-shortcut-key-261108-2059",
+  "titulo": "Teste que garante que o mapa de calor nao erra o domingo",
+  "arquivos": [
+   "src/components/talkx/report/__tests__/TalkXCampaignReport.test.tsx"
+  ],
+  "valor": "baixo",
+  "classe": "teste",
+  "bloqueio": "nenhum",
+  "prova": "main .../TalkXCampaignReport.test.tsx:115-118 so checa grid[0][7] (segunda); nenhuma asserção grid[1]/grid[6] nem célula zerada no único arquivo que usa talkxReportHeatmapFromTimestamps (talkxReportDa",
+  "revisor": "nao_refutado",
+  "frente": "obs-wtw0p5nzz.json"
+ },
+ {
+  "branch": "claude__fix-radar-shortcut-key-261108-2059",
+  "titulo": "Teste que garante que o nome do responsavel aparece no relatorio da campanha",
+  "arquivos": [
+   "src/components/talkx/report/__tests__/TalkXCampaignReport.test.tsx"
+  ],
+  "valor": "baixo",
+  "classe": "teste",
+  "bloqueio": "nenhum",
+  "prova": "main TalkXCampaignReport.tsx:327 renderiza \"Responsável\" só com campaign.owner+creators; main test.tsx:164-166 renderiza sem creators e o fixture (test.tsx:127-153) nao tem owner — \"Responsável\" nao a",
+  "revisor": "nao_refutado",
+  "frente": "obs-wtw0p5nzz.json"
+ },
+ {
+  "branch": "claude__fix-settings-salvar-aparencia-261025-1905",
+  "titulo": "Segmentos em modo grade: fechar o painel com Esc larga o foco do teclado no vazio",
+  "arquivos": [
+   "src/components/talkx/TalkXSegments.tsx"
+  ],
+  "valor": "baixo",
+  "classe": "front",
+  "bloqueio": "nenhum",
+  "prova": "TalkXSegments.tsx:58 selectedRowRef e HTMLTableRowElement e so e ligado no <tr> (:536); o cartao da grade (:512) nao recebe ref, logo closePanel (:96-98) foca null. A branch registra ref p/ linha e ca",
+  "revisor": "nao_refutado",
+  "frente": "obs-wtw0p5nzz.json"
+ },
+ {
+  "branch": "claude__fix-talkx-test-suite-261109-0910",
+  "titulo": "Cartao Resumo do relatorio pode perder campos sem teste reclamar",
+  "arquivos": [
+   "src/components/talkx/report/__tests__/TalkXCampaignReport.test.tsx"
+  ],
+  "valor": "baixo",
+  "classe": "teste",
+  "bloqueio": "nenhum",
+  "prova": "ausente: grep de 'Resumo da Campanha' em src/**/*.test.tsx = vazio, embora exista em TalkXCampaignReport.tsx:315; rotulos Destinatarios/A confirmar/Duracao (linhas 247,253,254) sem assercao.",
+  "revisor": "nao_refutado",
+  "frente": "obs-wtw0p5nzz.json"
+ },
+ {
+  "branch": "claude__fix-x051-remote-completion-test-261108-2057",
+  "titulo": "Relatório: nenhum teste garante que resumo e responsável aparecem na tela",
+  "arquivos": [
+   "src/components/talkx/report/__tests__/TalkXCampaignReport.test.tsx"
+  ],
+  "valor": "baixo",
+  "classe": "teste",
+  "bloqueio": "nenhum",
+  "prova": "src/components/talkx/report/__tests__/TalkXCampaignReport.test.tsx:56-65 mocka os 3 subcomponentes; ausente: asserção de 'Resumo da Campanha', 'A confirmar' e prop creators em qualquer teste",
+  "revisor": "nao_refutado",
+  "frente": "obs-wtw0p5nzz.json"
+ },
+ {
+  "branch": "claude__fix-z017-z020-auth-cors-261018-1950",
+  "titulo": "Regra que impede o lockfile errado (npm) de entrar no repo ainda falta na main",
+  "arquivos": [
+   ".gitignore"
+  ],
+  "valor": "baixo",
+  "classe": "ci",
+  "bloqueio": "nenhum",
+  "prova": "ausente: regra 'package-lock.json' no .gitignore da main (wt-main/.gitignore so tem deno.lock:116, __pycache__/:134, .vercel:131; grep package-lock = sem resultado)",
+  "revisor": "nao_refutado",
+  "frente": "obs-wtw0p5nzz.json"
+ },
+ {
+  "branch": "claude__ga-ci-verde-261020",
+  "titulo": "No Mac o atalho aparece como \"Ctrl\" em vez do símbolo ⌘ que o usuário vê no teclado",
+  "arquivos": [
+   "src/hooks/ui/useCustomShortcuts.ts"
+  ],
+  "valor": "baixo",
+  "classe": "front",
+  "bloqueio": "nenhum",
+  "prova": "main src/hooks/ui/useCustomShortcuts.ts:272 `if (binding.modifiers.ctrlKey) parts.push('Ctrl');` sem variante de Mac, enquanto src/components/a11y/a11yComponents.tsx:75 já usa ⌘ no Mac",
+  "revisor": "nao_refutado",
+  "frente": "obs-wtw0p5nzz.json"
+ },
+ {
+  "branch": "claude__ga-ci-verde-261020",
+  "titulo": "Lista de destinatários da campanha diz \"nenhum destinatário\" mesmo quando é só o filtro que não achou ninguém",
+  "arquivos": [
+   "src/components/talkx/tracking/TalkXRecipientsTable.tsx"
+  ],
+  "valor": "baixo",
+  "classe": "front",
+  "bloqueio": "nenhum",
+  "prova": "main src/components/talkx/tracking/TalkXRecipientsTable.tsx:183 tem só \"Nenhum destinatário nesta campanha.\"; ausente: texto p/ filtro ativo (\"Nenhum destinatário para os filtros aplicados.\")",
+  "revisor": "nao_refutado",
+  "frente": "obs-wtw0p5nzz.json"
+ },
+ {
+  "branch": "fix__ci-verde-261021",
+  "titulo": "Indice do Talk X descreve errado o arquivo ESTADOS.md para quem consulta",
+  "arquivos": [
+   "docs/talkx/README.md"
+  ],
+  "valor": "baixo",
+  "classe": "docs",
+  "bloqueio": "nenhum",
+  "prova": "docs/talkx/README.md:21 (main) diz \"Estados e transições observados no motor de campanhas\", mas docs/talkx/ESTADOS.md:1 e \"matriz tela × estado\" gerada por scripts/talkx/gen-estados.mjs",
+  "revisor": "nao_refutado",
+  "frente": "obs-wtw0p5nzz.json"
+ },
+ {
+  "branch": "fix__ci-workflows-vermelhos",
+  "titulo": "Log da auditoria do banco mostra erro falso mesmo com tudo verde",
+  "arquivos": [
+   "scripts/db-audit/consolidar-veredito.test.mjs"
+  ],
+  "valor": "baixo",
+  "classe": "teste",
+  "bloqueio": "nenhum",
+  "prova": "main: consolidar-veredito.test.mjs:168 execFileSync(..., { cwd, env, encoding }) sem stdio; branch usa stdio:['pipe','pipe','pipe'] (:175). Testei: stderr do filho vaza para o pai mesmo capturado",
+  "revisor": "nao_refutado",
+  "frente": "obs-wtw0p5nzz.json"
+ },
+ {
+  "branch": "claude__charming-mccarthy-jbxy56",
+  "titulo": "Rollback das edge functions pode republicar a propria versao quebrada",
+  "arquivos": [
+   ".github/workflows/deploy-functions.yml"
+  ],
+  "valor": "alto",
+  "classe": "ci",
+  "bloqueio": "ci_workflow",
+  "evidencia": ".github/workflows/deploy-functions.yml:91 grupo unico; :165-176 pega o 1o Deployment success sem excluir GITHUB_SHA; :494 so deno check, sem deno test",
+  "refutacao_tentada": "nao_refutado",
+  "motivo_revisor": "deploy-functions.yml:175-181 pega o 1o Deployment success sem excluir GITHUB_SHA; :203 is-ancestor aceita o proprio SHA; grep 'deno test' no arquivo = 0",
+  "frente": "pend-lote1.json"
+ },
+ {
+  "branch": "claude__fix-ga-fase1-lote-banco-261020-2200",
+  "titulo": "Queda de conexao com o banco passa como \"tudo ok\" na checagem automatica",
+  "arquivos": [
+   "scripts/db-audit/check-migration-drift.mjs"
+  ],
+  "valor": "alto",
+  "classe": "script",
+  "bloqueio": "nenhum",
+  "evidencia": "scripts/db-audit/check-migration-drift.mjs:916 compare() ainda retorna 4 campos; grep de return 3/pendingOnly/pendingApply/--json = 0; unicos returns 942,951,957,965,973,986,1003",
+  "refutacao_tentada": "nao_refutado",
+  "motivo_revisor": "check-migration-drift.mjs:916 compare() retorna 4 campos; :965 falha de psql devolve 2, mesmo codigo lido como apply-pendente; zero process.argv/--json no arqui",
+  "frente": "pend-lote1.json"
+ },
+ {
+  "branch": "claude__fix-ga-fase1-lote-banco-261020-2200",
+  "titulo": "Aviso de atualizacao de banco pendente confunde-se com erro de infraestrutura no relatorio do CI",
+  "arquivos": [
+   "scripts/db-audit/lote-pendente.mjs"
+  ],
+  "valor": "alto",
+  "classe": "script",
+  "bloqueio": "nenhum",
+  "evidencia": "scripts/db-audit/lote-pendente.mjs:61 ainda 'else if (rc === 2)'; :49 ainda passa a flag morta '--classificar'; docstring :9-14 descreve exit 2 como apply-pendente",
+  "refutacao_tentada": "nao_refutado",
+  "motivo_revisor": "lote-pendente.mjs:49 ainda passa --classificar (flag morta: drift script nao le argv); :61 else if (rc === 2) escreve \"apply aguardado\"; docstring :9-14 descrev",
+  "frente": "pend-lote1.json"
+ },
+ {
+  "branch": "claude__fix-ga-fase1-lote-banco-261020-2200",
+  "titulo": "Verificacao de banco no envio para producao fica verde mesmo quando nao consegue conferir nada",
+  "arquivos": [
+   ".github/workflows/db-live-guard.yml"
+  ],
+  "valor": "alto",
+  "classe": "ci",
+  "bloqueio": "ci_workflow",
+  "evidencia": ".github/workflows/db-live-guard.yml:155 if [ \"$rc\" -eq 2 ] && [ \"$GITHUB_EVENT_NAME\" = \"push\" ] (unico -eq do arquivo)",
+  "refutacao_tentada": "nao_refutado",
+  "motivo_revisor": "db-live-guard.yml:155 rc -eq 2 + push -> exit 0; o passo credencial (:98-126) so valida URL/TLS, nao conecta, e consolidar-veredito.mjs le apenas outcome do pas",
+  "frente": "pend-lote1.json"
+ },
+ {
+  "branch": "claude__fix-ga-fase1-lote-banco-261020-2200",
+  "titulo": "Conferencia de tipos do banco se auto-dispensa quando a conexao falha",
+  "arquivos": [
+   ".github/workflows/types-sync.yml"
+  ],
+  "valor": "alto",
+  "classe": "ci",
+  "bloqueio": "ci_workflow",
+  "evidencia": ".github/workflows/types-sync.yml:342 if [ \"$drift_exit\" -eq 2 ]; then -> :343 awaiting_apply=true (passo apply-pending)",
+  "refutacao_tentada": "nao_refutado",
+  "motivo_revisor": "types-sync.yml:342 drift_exit -eq 2 -> :343 awaiting_apply=true, consumido em :447 e :512 para pular o gate; nenhuma distincao de falha de infra.",
+  "frente": "pend-lote1.json"
+ },
+ {
+  "branch": "claude__fix-ga-fase78-perimetro-custo-261020-2200",
+  "titulo": "Cache de testes estourou os 10 GB do repo e comeca a ser descartado",
+  "arquivos": [
+   ".github/workflows/ci.yml",
+   "scripts/ci/workflow-contracts.unit.mjs"
+  ],
+  "valor": "alto",
+  "classe": "ci",
+  "bloqueio": "ci_workflow",
+  "evidencia": "ci.yml:474-477 ainda usa actions/cache combinado, chave pw-cfw-...-${{ runner.os }}, sem restore/save separados; port exige soltar workflow-contracts.unit.mjs:255 (exige actions/cache@)",
+  "refutacao_tentada": "nao_refutado",
+  "motivo_revisor": "ci.yml:473-477 ainda e actions/cache@55cc834 combinado, key pw-cfw-${{hashFiles('bun.lock')}}-${{runner.os}}; contrato workflow-contracts.unit.mjs:255,450 exige",
+  "frente": "pend-lote1.json"
+ },
+ {
+  "branch": "claude__fix-ga-resto-dbmigrate-20261021-0729",
+  "titulo": "Conferir uma migration ainda trava esperando aprovacao do dono",
+  "arquivos": [
+   ".github/workflows/db-migrate.yml"
+  ],
+  "valor": "alto",
+  "classe": "ci",
+  "bloqueio": "ci_workflow",
+  "evidencia": ".github/workflows/db-migrate.yml:71 unico job `migrate:`; 1493 linhas; grep de apply_all_missing|confirm_destructive|banco-leitura|gh workflow run = 0 ocorrencias de codigo",
+  "refutacao_tentada": "nao_refutado",
+  "motivo_revisor": ".github/workflows/db-migrate.yml:71-79 job unico `migrate` com `environment: producao-ddl` (:75) cobre preflight (:175) e dry-run (:907); API: producao-ddl exig",
+  "frente": "pend-lote1.json"
+ },
+ {
+  "branch": "claude__fix-ga-resto-typessync-20261021-0730",
+  "titulo": "Trava que impede o robô de apagar tabela em uso continua desligada",
+  "arquivos": [
+   ".github/workflows/types-sync.yml"
+  ],
+  "valor": "alto",
+  "classe": "ci",
+  "bloqueio": "ci_workflow",
+  "evidencia": ".github/workflows/types-sync.yml:408 sobrescreve o catálogo e :485 o compara com ele mesmo; grep 'catalog.base' em .github/workflows = zero",
+  "refutacao_tentada": "nao_refutado",
+  "motivo_revisor": "types-sync.yml:405-409 copia /tmp/catalog.new.json sobre supabase/schema-catalog.json ANTES do Gate 3 em :485, que compara os dois -> arquivos identicos, gate t",
+  "frente": "pend-lote1.json"
+ },
+ {
+  "branch": "claude__fix-ga-resto-typessync-20261021-0730",
+  "titulo": "Mudança de banco feita por fora é aprovada sozinha, sem ninguém olhar",
+  "arquivos": [
+   ".github/workflows/types-sync.yml",
+   "scripts/db-audit/drift-explicado.mjs"
+  ],
+  "valor": "alto",
+  "classe": "ci",
+  "bloqueio": "ci_workflow",
+  "evidencia": ".github/workflows/types-sync.yml:758-759 auto-merge só com `pull-request-number != ''`; grep 'drift-explicado' e 'needs-human' em .github/workflows = zero",
+  "refutacao_tentada": "nao_refutado",
+  "motivo_revisor": "types-sync.yml:756-762 habilita auto-merge so com pull-request-number != ''. drift-explicado.mjs existe (scripts/db-audit/, exit 1 = DDL por fora) mas tem 0 ref",
+  "frente": "pend-lote1.json"
+ },
+ {
+  "branch": "claude_juca__practical-rubin-8xnw0u",
+  "titulo": "Importar/exportar templates de mensagem em planilha (CSV/JSON) não existe",
+  "arquivos": [
+   "src/components/talkx/talkxTemplateFile.ts"
+  ],
+  "valor": "alto",
+  "classe": "front",
+  "bloqueio": "nenhum",
+  "evidencia": "arquivo ausente na main (ls src/components/talkx/talkxTemplateFile.ts: No such file); grep -rn 'talkxTemplateFile|parseTemplateFile' src = 0 ocorrências",
+  "refutacao_tentada": "nao_refutado",
+  "motivo_revisor": "Ausente: nao ha src/components/talkx/talkxTemplateFile.ts (ls falha) e grep talkxTemplateFile|parseTemplateFile em src = 0. Unico CSV do modulo e src/lib/talkxC",
+  "frente": "pend-lote1.json"
+ },
+ {
+  "branch": "claude_juca__practical-rubin-8xnw0u",
+  "titulo": "Tela de importação com prévia e aviso de nome repetido não existe",
+  "arquivos": [
+   "src/components/talkx/TalkXTemplateImportDialog.tsx"
+  ],
+  "valor": "alto",
+  "classe": "front",
+  "bloqueio": "nenhum",
+  "evidencia": "arquivo ausente na main (ls: No such file); grep -rn 'TalkXTemplateImportDialog' src = 0 ocorrências",
+  "refutacao_tentada": "nao_refutado",
+  "motivo_revisor": "Ausente: grep -rn TalkXTemplateImportDialog src = 0 ocorrencias; nenhum dialogo de importacao de template em src/components/talkx (ls do diretorio nao lista o a",
+  "frente": "pend-lote1.json"
+ },
+ {
+  "branch": "claude_juca__practical-rubin-8xnw0u",
+  "titulo": "Lista de templates não tem botões de baixar nem de importar",
+  "arquivos": [
+   "src/components/talkx/TalkXTemplates.tsx",
+   "src/components/talkx/__tests__/TalkXTemplatesRail.test.tsx"
+  ],
+  "valor": "alto",
+  "classe": "front",
+  "bloqueio": "nenhum",
+  "evidencia": "TalkXTemplates.tsx:313 rightSlot só tem 'Novo Template'; grep 'Download|Upload|canDownload|Export|Importar' no arquivo = só essa linha",
+  "refutacao_tentada": "nao_refutado",
+  "motivo_revisor": "src/components/talkx/TalkXTemplates.tsx:313 rightSlot={<PrimaryButton icon={Plus} onClick={openNew}>Novo Template</PrimaryButton>}; grep Download|Upload|Import|",
+  "frente": "pend-lote1.json"
+ },
+ {
+  "branch": "claude_juca__practical-rubin-8xnw0u",
+  "titulo": "Na lista de campanhas não dá para pausar/cancelar/excluir várias de uma vez",
+  "arquivos": [
+   "src/components/talkx/TalkXOverview.tsx",
+   "src/components/talkx/kit/constants.ts",
+   "src/components/talkx/kit/rail.tsx"
+  ],
+  "valor": "alto",
+  "classe": "front",
+  "bloqueio": "nenhum",
+  "evidencia": "TalkXOverview.tsx:92,349 mantém seleção mas nunca usa TalkXBulkBar (grep: só kit/table.tsx:76, TalkXSegments.tsx:475, TalkXSuppression.tsx:598); :466 TipCard com texto fixo e rail.tsx:101 sem onNext",
+  "refutacao_tentada": "nao_refutado",
+  "motivo_revisor": "TalkXOverview.tsx:92 selected e :348-351 passa a selecao ao TalkXTable, mas nenhum consumo: TalkXBulkBar so em TalkXSegments.tsx:475 e TalkXSuppression.tsx:598;",
+  "frente": "pend-lote1.json"
+ },
+ {
+  "branch": "claude_juca__practical-rubin-8xnw0u",
+  "titulo": "Acesso negado pelo banco no Talk X mostra erro genérico, não 'sem permissão'",
+  "arquivos": [
+   "src/components/talkx/kit/states.tsx"
+  ],
+  "valor": "alto",
+  "classe": "front",
+  "bloqueio": "nenhum",
+  "evidencia": "kit/states.tsx:355-357: if (query.isError) return <TalkXErrorState .../> — não olha error.code; grep 42501 em src/components/talkx = só testes/comentário",
+  "refutacao_tentada": "nao_refutado",
+  "motivo_revisor": "kit/states.tsx:355-357 if (query.isError) return <TalkXErrorState error={query.error}/> sem olhar code; TalkXNoPermissionState so em states.tsx:343 (estado forc",
+  "frente": "pend-lote1.json"
+ },
+ {
+  "branch": "claude__charming-mccarthy-jbxy56",
+  "titulo": "Testes que travam o rollback seguro e os testes antes de publicar",
+  "arquivos": [
+   "scripts/ci/deploy-functions-workflow.unit.mjs"
+  ],
+  "valor": "medio",
+  "classe": "teste",
+  "bloqueio": "ci_workflow",
+  "evidencia": "scripts/ci/deploy-functions-workflow.unit.mjs:49 fixa ^  group: deploy-edge-functions-...$; nenhum assert de 'deno test' nem de pular o SHA atual",
+  "refutacao_tentada": "nao_refutado",
+  "motivo_revisor": "scripts/ci/deploy-functions-workflow.unit.mjs:38-52 cobre so ancestral e grupo; nenhum .unit.mjs cita rollback_to_last_success nem 'deno test' no deploy",
+  "frente": "pend-lote1.json"
+ },
+ {
+  "branch": "claude__fix-ga-fase1-lote-banco-261020-2200",
+  "titulo": "Faltam testes que provem que falha de senha do banco nao vira \"apply pendente\"",
+  "arquivos": [
+   "scripts/db-audit/check-migration-drift.test.mjs"
+  ],
+  "valor": "medio",
+  "classe": "teste",
+  "bloqueio": "nenhum",
+  "evidencia": "scripts/db-audit/check-migration-drift.test.mjs:577 e :1228 ainda assert.equal(result.status, 1) para ledger: []; :225 runGuard sem argv; sem --json",
+  "refutacao_tentada": "nao_refutado",
+  "motivo_revisor": "check-migration-drift.test.mjs:1185/1197/1211 fixam status 2 para falha de conexao -- o mesmo codigo de apply-pendente; :577 e :1228 seguem status 1 para ledger",
+  "frente": "pend-lote1.json"
+ },
+ {
+  "branch": "claude__fix-ga-fase1-lote-banco-261020-2200",
+  "titulo": "Faltam testes com banco falso para o aviso de atualizacao pendente",
+  "arquivos": [
+   "scripts/db-audit/lote-pendente.test.mjs"
+  ],
+  "valor": "medio",
+  "classe": "teste",
+  "bloqueio": "nenhum",
+  "evidencia": "scripts/db-audit/lote-pendente.test.mjs:95 test('W26: exit 2 escreve summary \"apply aguardado\"') e :101 assert.equal(exitCode, 2); grep runRealLote = 0",
+  "refutacao_tentada": "nao_refutado",
+  "motivo_revisor": "lote-pendente.test.mjs:24-60 runWithMock reimplementa a logica num wrapper (nao roda o script real); runReal :63 apaga DESTINO_URL; :95/:101 fixam exit 2 = \"app",
+  "frente": "pend-lote1.json"
+ },
+ {
+  "branch": "claude__fix-ga-fase1-lote-banco-261020-2200",
+  "titulo": "Script de verificacao do banco aceita rodar arquivo SQL de fora do projeto",
+  "arquivos": [
+   "scripts/db-audit/run-runtime-contract.mjs"
+  ],
+  "valor": "medio",
+  "classe": "script",
+  "bloqueio": "nenhum",
+  "evidencia": "scripts/db-audit/run-runtime-contract.mjs:31 importa so { dirname, join }; :274 so existsSync(invocacao.arquivo); :284 passa o caminho cru ao psql",
+  "refutacao_tentada": "nao_refutado",
+  "motivo_revisor": "run-runtime-contract.mjs:186-187 so exige sufixo .sql; :31 importa apenas { dirname, join } (sem resolve/relative); :274 existsSync e :284 passa invocacao.arqui",
+  "frente": "pend-lote1.json"
+ },
+ {
+  "branch": "claude__fix-ga-fase1-lote-banco-261020-2200",
+  "titulo": "Falta teste provando que SQL de fora do projeto e recusado",
+  "arquivos": [
+   "scripts/ci/db-migrate-contratos.unit.mjs"
+  ],
+  "valor": "medio",
+  "classe": "teste",
+  "bloqueio": "nenhum",
+  "evidencia": "scripts/ci/db-migrate-contratos.unit.mjs: grep 'traversal|fora do repo' = 0; helpers existem (extrairInvocacoes :12, rodaExecutor :86)",
+  "refutacao_tentada": "nao_refutado",
+  "motivo_revisor": "scripts/ci/db-migrate-contratos.unit.mjs: nenhum dos 19 testes (:22 a :401) cobre caminho fora do repo; grep traversal/fora do repo/etc-passwd = 0 (outros guard",
+  "frente": "pend-lote1.json"
+ },
+ {
+  "branch": "claude__fix-ga-fase78-perimetro-custo-261020-2200",
+  "titulo": "Relatorio de CI mostra custo e taxa de falha como '—' em 21 linhas",
+  "arquivos": [
+   "scripts/ci/actions-kpi.mjs",
+   "docs/ci/README.md",
+   "scripts/ci/render-workflow-docs.mjs"
+  ],
+  "valor": "medio",
+  "classe": "script",
+  "bloqueio": "nenhum",
+  "evidencia": "actions-kpi.mjs exporta ate publicarIssue:199, sem montarKpi/gravarKpi/percentil/KPI_JSON_PATH; render-workflow-docs.mjs:160-161 le docs/ci/kpi.json, ausente de docs/ci/",
+  "refutacao_tentada": "nao_refutado",
+  "motivo_revisor": "actions-kpi.mjs: ultimo export e publicarIssue:199; sem montarKpi/gravarKpi/percentil/KPI_JSON. docs/ci/kpi.json nao existe; render-workflow-docs.mjs:160-161 ca",
+  "frente": "pend-lote1.json"
+ },
+ {
+  "branch": "claude__fix-ga-fase78-perimetro-custo-261020-2200",
+  "titulo": "Falha do relatorio de custo ainda derruba a auditoria semanal de branches",
+  "arquivos": [
+   ".github/workflows/branch-hygiene-audit.yml"
+  ],
+  "valor": "medio",
+  "classe": "ci",
+  "bloqueio": "ci_workflow",
+  "evidencia": "branch-hygiene-audit.yml:63-74 roda node scripts/ci/actions-kpi.mjs sem continue-on-error, sem KPI_JSON_PATH, sem upload do artifact e sem job publicar-kpi",
+  "refutacao_tentada": "nao_refutado",
+  "motivo_revisor": "branch-hygiene-audit.yml:63-74 roda 'node scripts/ci/actions-kpi.mjs' com set -euo pipefail, sem continue-on-error, sem KPI_JSON_PATH, sem upload-artifact e sem",
+  "frente": "pend-lote1.json"
+ },
+ {
+  "branch": "claude__fix-ga-fase78-perimetro-custo-261020-2200",
+  "titulo": "Mesmo desperdicio de cache no fluxo de testes do Talk X",
+  "arquivos": [
+   ".github/workflows/e2e-talkx.yml"
+  ],
+  "valor": "medio",
+  "classe": "ci",
+  "bloqueio": "ci_workflow",
+  "evidencia": "e2e-talkx.yml:86-90 com actions/cache combinado, chave pw-c-${{ hashFiles('bun.lock') }}-${{ runner.os }}",
+  "refutacao_tentada": "nao_refutado",
+  "motivo_revisor": "e2e-talkx.yml:86-90: actions/cache combinado, path ~/.cache/ms-playwright, key pw-c-${{hashFiles('bun.lock')}}-${{runner.os}}. Sem restore/save separados.",
+  "frente": "pend-lote1.json"
+ },
+ {
+  "branch": "claude__fix-ga-fase78-perimetro-custo-261020-2200",
+  "titulo": "Lista de acoes permitidas bloquearia o novo cache: job morre na largada",
+  "arquivos": [
+   "scripts/ci/allowed-actions.json",
+   "scripts/ci/github-settings-baseline.json"
+  ],
+  "valor": "medio",
+  "classe": "ci",
+  "bloqueio": "decisao_dono",
+  "evidencia": "allowed-actions.json:9 tem so \"actions/cache\"; selected_actions_patterns do baseline tambem — faltam actions/cache/restore e actions/cache/save, e o perimetro vivo precisa do mesmo",
+  "refutacao_tentada": "nao_refutado",
+  "motivo_revisor": "allowed-actions.json:9 so 'actions/cache'; baseline selected_actions_patterns idem. Ausencia confirmada, mas portar so o arquivo sem mudar o perimetro vivo deix",
+  "frente": "pend-lote1.json"
+ },
+ {
+  "branch": "claude__fix-ga-fase78-perimetro-custo-261020-2200",
+  "titulo": "Falha de largada de um fluxo nao gera aviso: quebra passa em silencio",
+  "arquivos": [
+   ".github/workflows/notifica-falha-main.yml"
+  ],
+  "valor": "medio",
+  "classe": "ci",
+  "bloqueio": "ci_workflow",
+  "evidencia": "notifica-falha-main.yml:35 if: conclusion == 'failure' (sem startup_failure) e corpo montado por actions/github-script na linha 40",
+  "refutacao_tentada": "nao_refutado",
+  "motivo_revisor": "notifica-falha-main.yml:35 if: github.event.workflow_run.conclusion == 'failure' (unica ocorrencia de 'conclusion'); corpo montado em actions/github-script:40. ",
+  "frente": "pend-lote1.json"
+ },
+ {
+  "branch": "claude__fix-ga-fase78-perimetro-custo-261020-2200",
+  "titulo": "Guarda do perimetro nao ve retencao de artefatos nem regras de merge",
+  "arquivos": [
+   "scripts/ci/github-settings-guard.mjs",
+   "scripts/ci/github-settings-baseline.json"
+  ],
+  "valor": "medio",
+  "classe": "script",
+  "bloqueio": "decisao_dono",
+  "evidencia": "grep -i 'graphql|retention|artifact-and-log' em github-settings-guard.mjs → 0 ocorrencias; baseline (medido_em 2026-11-02) sem chave de retencao",
+  "refutacao_tentada": "nao_refutado",
+  "motivo_revisor": "github-settings-guard.mjs: 0 ocorrencias de graphql/retention/retencao; checagens sao 154-345 (branch protection, repo, actions, workflow perms, selected action",
+  "frente": "pend-lote1.json"
+ },
+ {
+  "branch": "claude__fix-ga-fase78-perimetro-custo-261020-2200",
+  "titulo": "Sem teste do gerador de numeros do relatorio de CI",
+  "arquivos": [
+   "scripts/ci/actions-kpi.unit.mjs"
+  ],
+  "valor": "medio",
+  "classe": "teste",
+  "bloqueio": "nenhum",
+  "evidencia": "grep 'montarKpi|gravarKpi|percentil|KPI_JSON' em scripts/ci/actions-kpi.unit.mjs → 0 ocorrencias",
+  "refutacao_tentada": "nao_refutado",
+  "motivo_revisor": "scripts/ci/actions-kpi.unit.mjs tem 12 testes (linhas 29-184: agregar, janela, duracao, maisLentos, tabela, coletarRuns/Jobs, corpoDoKpi); nenhum de montarKpi/g",
+  "frente": "pend-lote1.json"
+ },
+ {
+  "branch": "claude__fix-ga-fase78-perimetro-custo-261020-2200",
+  "titulo": "Script que aplica o perimetro do GitHub sozinho nao existe na main",
+  "arquivos": [
+   "scripts/ci/aplicar-perimetro.mjs",
+   "scripts/ci/aplicar-perimetro.unit.mjs",
+   "scripts/ci/github-settings-guard.mjs"
+  ],
+  "valor": "medio",
+  "classe": "script",
+  "bloqueio": "decisao_dono",
+  "evidencia": "aplicar-perimetro.mjs/.unit.mjs ausentes de scripts/ci; baseline da branch mudaria required checks e apagaria environments; guard:349-360 ainda restaura strict/allow_auto_merge por PATCH",
+  "refutacao_tentada": "nao_refutado",
+  "motivo_revisor": "aplicar-perimetro.mjs e .unit.mjs ausentes de scripts/ci (ls). guard:348-364 restaura apenas branch_protection_main.strict e merge.allow_auto_merge via PATCH; d",
+  "frente": "pend-lote1.json"
+ },
+ {
+  "branch": "claude__fix-ga-resto-typessync-20261021-0730",
+  "titulo": "Sincronização roda com mudança do banco ainda não aplicada e pode desfazer o lote",
+  "arquivos": [
+   ".github/workflows/types-sync.yml",
+   "scripts/db-audit/gate1-pendente.mjs"
+  ],
+  "valor": "medio",
+  "classe": "ci",
+  "bloqueio": "ci_workflow",
+  "evidencia": ".github/workflows/types-sync.yml:445-450 só ecoa awaiting_apply; :126 não expõe 'pendente'; grep 'gate1-pendente' e 'pending-versions' em .github/workflows = zero",
+  "refutacao_tentada": "nao_refutado",
+  "motivo_revisor": "Parcial na main: :126 expoe awaiting_apply booleano (de lote-pendente.mjs :339) e :447-450 so ecoa notice, usado apenas para suprimir issue em :512. gate1-pende",
+  "frente": "pend-lote1.json"
+ },
+ {
+  "branch": "claude__fix-ga-resto-typessync-20261021-0730",
+  "titulo": "Alarme falso de banco fora de sincronia enquanto o lote ainda não foi aplicado",
+  "arquivos": [
+   ".github/workflows/db-live-guard.yml",
+   "scripts/db-audit/drift-explicado.mjs"
+  ],
+  "valor": "medio",
+  "classe": "ci",
+  "bloqueio": "ci_workflow",
+  "evidencia": ".github/workflows/db-live-guard.yml:254 e :269 chamam check-catalog-fresh/check-manifest-fresh direto, sem elif; grep 'pending-versions' no arquivo = zero",
+  "refutacao_tentada": "nao_refutado",
+  "motivo_revisor": "db-live-guard.yml:243-254 (catalog) e :258-269 (manifest) chamam check-catalog-fresh/check-manifest-fresh sem nenhum ramo de pendencia; o tratamento de apply pe",
+  "frente": "pend-lote1.json"
+ },
+ {
+  "branch": "claude__fix-ga-resto-typessync-20261021-0730",
+  "titulo": "Nada detecta alteração de banco aplicada fora do caminho oficial",
+  "arquivos": [
+   ".github/workflows/db-live-guard.yml",
+   "scripts/db-audit/check-deployments-ledger.mjs"
+  ],
+  "valor": "medio",
+  "classe": "ci",
+  "bloqueio": "ci_workflow",
+  "evidencia": ".github/workflows/db-live-guard.yml:49-51 permissions só contents:read + issues:write; grep 'check-deployments-ledger' em .github/workflows = zero",
+  "refutacao_tentada": "nao_refutado",
+  "motivo_revisor": "db-live-guard.yml:48-51 permissions = contents:read + issues:write (sem deployments:read); check-deployments-ledger.mjs existe em scripts/db-audit/ com teste, m",
+  "frente": "pend-lote1.json"
+ },
+ {
+  "branch": "claude__fix-ga-resto-typessync-20261021-0730",
+  "titulo": "Aplicação de mudança no banco não deixa registro de quem aplicou o quê",
+  "arquivos": [
+   ".github/workflows/db-migrate.yml"
+  ],
+  "valor": "medio",
+  "classe": "ci",
+  "bloqueio": "ci_workflow",
+  "evidencia": ".github/workflows/db-migrate.yml:75 tem environment: producao-ddl, mas grep 'deployments|createDeployment' no arquivo = zero; check-deployments-ledger.mjs:46 lê d.payload.versions",
+  "refutacao_tentada": "nao_refutado",
+  "motivo_revisor": "db-migrate.yml:59-60 permissions = contents:read; grep -i deployment no arquivo = 0 (so :75 environment: producao-ddl). Unico deployments:write do repo e deploy",
+  "frente": "pend-lote1.json"
+ },
+ {
+  "branch": "claude__fix-ga-resto-typessync-20261021-0730",
+  "titulo": "Relatório de saúde do banco não lista o novo item de verificação",
+  "arquivos": [
+   "scripts/db-audit/consolidar-veredito.mjs"
+  ],
+  "valor": "medio",
+  "classe": "script",
+  "bloqueio": "ci_workflow",
+  "evidencia": "scripts/db-audit/consolidar-veredito.mjs:31-47 PASSOS sem 'ddl-fora-do-fluxo'; :104 trata outcome '' como '❌ (ausente)' e derruba o job se entrar sozinho",
+  "refutacao_tentada": "nao_refutado",
+  "motivo_revisor": "consolidar-veredito.mjs:31-53 PASSOS tem 12 ids (migrations..runtime-config), sem ddl-fora-do-fluxo; ORDEM_CAUSA :57-70 idem; :101-104 trata outcome '' como '❌ ",
+  "frente": "pend-lote1.json"
+ },
+ {
+  "branch": "claude__fix-ga-resto-typessync-20261021-0730",
+  "titulo": "Faltam os testes que impedem alguém de desligar essas travas de novo",
+  "arquivos": [
+   "scripts/ci/ga20-ga25-contratos.unit.mjs",
+   ".github/workflows/ci.yml"
+  ],
+  "valor": "medio",
+  "classe": "teste",
+  "bloqueio": "ci_workflow",
+  "evidencia": "scripts/ci/ga20-ga25-contratos.unit.mjs não existe na main (ls = No such file); seria coletado por .github/workflows/ci.yml:166 `node --test scripts/ci/*.unit.mjs`",
+  "refutacao_tentada": "nao_refutado",
+  "motivo_revisor": "scripts/ci/ga20-ga25-contratos.unit.mjs nao existe (ls). Os testes dos scripts existem e rodam (db-guard.yml:222 varre db-audit/*.test.mjs), mas nenhum assert d",
+  "frente": "pend-lote1.json"
+ },
+ {
+  "branch": "claude_juca__practical-rubin-8xnw0u",
+  "titulo": "Painel 'Status dos serviços' (WhatsApp/CRM/Tempo real) não abre em lugar nenhum",
+  "arquivos": [
+   "src/components/talkx/kit/ServiceStatusSheet.tsx",
+   "src/components/talkx/kit/states.tsx",
+   "src/components/talkx/TalkXView.tsx"
+  ],
+  "valor": "medio",
+  "classe": "front",
+  "bloqueio": "nenhum",
+  "evidencia": "ServiceStatusSheet.tsx ausente (ls: No such file); grep onViewStatus na main = só kit/states.tsx:163,165,175 e kit/__tests__/states.test.tsx:102-110 — nenhum chamador passa a prop",
+  "refutacao_tentada": "nao_refutado",
+  "motivo_revisor": "Sem ServiceStatusSheet (find = so o hook). useTalkXServiceStatus.ts:28-32 expoe apenas whatsapp e :21-24 diz crm/realtime fora do escopo; onViewStatus so declar",
+  "frente": "pend-lote1.json"
+ },
+ {
+  "branch": "claude_juca__practical-rubin-8xnw0u",
+  "titulo": "Faltam provas automáticas da leitura de planilha de templates",
+  "arquivos": [
+   "src/components/talkx/__tests__/talkxTemplateFile.test.ts"
+  ],
+  "valor": "medio",
+  "classe": "teste",
+  "bloqueio": "nenhum",
+  "evidencia": "ls src/components/talkx/__tests__ | grep -i template: só TalkXTemplateEditor.*, TalkXTemplateKpis, TalkXTemplates.* — nenhum talkxTemplateFile.test.ts",
+  "refutacao_tentada": "nao_refutado",
+  "motivo_revisor": "Ausente: ls src/components/talkx/__tests__ nao tem talkxTemplateFile.test.ts (so TalkXTemplateEditor.*, TalkXTemplateKpis, TalkXTemplates.*); nem ha o modulo so",
+  "frente": "pend-lote1.json"
+ },
+ {
+  "branch": "claude_juca__practical-rubin-8xnw0u",
+  "titulo": "Faltam provas automáticas da tela de importação de templates",
+  "arquivos": [
+   "src/components/talkx/__tests__/TalkXTemplateImportDialog.test.tsx"
+  ],
+  "valor": "medio",
+  "classe": "teste",
+  "bloqueio": "nenhum",
+  "evidencia": "ls src/components/talkx/__tests__ não lista TalkXTemplateImportDialog.test.tsx (só TalkXTemplateEditor.*/TalkXTemplates.*)",
+  "refutacao_tentada": "nao_refutado",
+  "motivo_revisor": "Ausente: ls src/components/talkx/__tests__ nao lista TalkXTemplateImportDialog.test.tsx; grep TalkXTemplateImportDialog em src = 0, logo nao ha componente nem p",
+  "frente": "pend-lote1.json"
+ },
+ {
+  "branch": "claude_juca__practical-rubin-8xnw0u",
+  "titulo": "Faltam provas automáticas das ações em massa de campanhas",
+  "arquivos": [
+   "src/components/talkx/__tests__/TalkXOverview.bulk.test.tsx"
+  ],
+  "valor": "medio",
+  "classe": "teste",
+  "bloqueio": "nenhum",
+  "evidencia": "ls src/components/talkx/__tests__ | grep Overview: comparativo, filters, lifecycle, states, table — nenhum .bulk.test.tsx",
+  "refutacao_tentada": "nao_refutado",
+  "motivo_revisor": "Ausente: testes de Overview na main sao comparativo, filters, lifecycle, states e table (ls src/components/talkx/__tests__); nenhum TalkXOverview.bulk.test.tsx ",
+  "frente": "pend-lote1.json"
+ },
+ {
+  "branch": "codex__publish-followup-20261021",
+  "titulo": "Falta a prova automatica de que o registro de buscas nao vaza dado pessoal",
+  "arquivos": [
+   "supabase/tests/search_events.sql"
+  ],
+  "valor": "medio",
+  "classe": "teste",
+  "bloqueio": "nenhum",
+  "evidencia": "supabase/tests/search_events.sql:1-21 cobre so T1..T8 (pre-RPC); grep -rn log_search_event supabase/tests/ = 0 ocorrencias; arquivo com 440 linhas, sem client_event_id",
+  "refutacao_tentada": "nao_refutado",
+  "motivo_revisor": "Confirmado: filtro PII da RPC em supabase/migrations/20261031130000_search_event_rpc.sql:72-78 sem teste; search_events.sql:94 ainda espera colunas sem client_e",
+  "frente": "pend-lote1.json"
+ },
+ {
+  "branch": "claude__charming-mccarthy-jbxy56",
+  "titulo": "Relatorio de custo do CI olha os runs recentes, nao os mais demorados",
+  "arquivos": [
+   "scripts/ci/actions-kpi.mjs"
+  ],
+  "valor": "baixo",
+  "classe": "script",
+  "bloqueio": "nenhum",
+  "evidencia": "scripts/ci/actions-kpi.mjs:179 coletarJobs sem maxRuns; :230 slice(0,50) corta pelos mais recentes — ja limita as chamadas, mas enviesa o ranking",
+  "refutacao_tentada": "nao_refutado",
+  "motivo_revisor": "scripts/ci/actions-kpi.mjs:177-179 coletarJobs sem maxRuns; :231 slice(0,50) sobre runsNaJanela (ordem da API = recentes); ordenacao por minutos so dentro da am",
+  "frente": "pend-lote1.json"
+ },
+ {
+  "branch": "claude__charming-mccarthy-jbxy56",
+  "titulo": "Teste do teto de consultas do relatorio de custo do CI",
+  "arquivos": [
+   "scripts/ci/actions-kpi.unit.mjs"
+  ],
+  "valor": "baixo",
+  "classe": "teste",
+  "bloqueio": "nenhum",
+  "evidencia": "scripts/ci/actions-kpi.unit.mjs: grep maxRuns = 0; os testes de coletarJobs (:146, :167) cobrem so nome do workflow e paginacao",
+  "refutacao_tentada": "nao_refutado",
+  "motivo_revisor": "scripts/ci/actions-kpi.unit.mjs: grep maxRuns = 0; :146 e :167 cobrem so nome do workflow e paginacao; nenhum teste do corte de 50 runs da linha 231",
+  "frente": "pend-lote1.json"
+ },
+ {
+  "branch": "claude__charming-mccarthy-jbxy56",
+  "titulo": "Teste que mantem a divergencia de banco na 1a linha do log",
+  "arquivos": [
+   "scripts/ci/migration-drift-stdout.unit.mjs",
+   "scripts/db-audit/check-migration-drift.mjs"
+  ],
+  "valor": "baixo",
+  "classe": "teste",
+  "bloqueio": "nenhum",
+  "evidencia": "arquivo ausente; comportamento existe em scripts/db-audit/check-migration-drift.mjs:926,945,980; check-migration-drift.test.mjs:1226-1300 testa o formato no stderr, nao a ordem no stdout",
+  "refutacao_tentada": "nao_refutado",
+  "motivo_revisor": "Comportamento ja na main (check-migration-drift.mjs:979-982), mas o teste falta: check-migration-drift.test.mjs:1299 so checa stderr; scripts/ci/migration-drift",
+  "frente": "pend-lote1.json"
+ },
+ {
+  "branch": "claude__charming-mccarthy-jbxy56",
+  "titulo": "Teste que protege a conferencia do ledger contra cabecalho do psql",
+  "arquivos": [
+   "scripts/ci/verify-ledger-statements.unit.mjs",
+   "scripts/db-audit/verify-ledger-statements.mjs"
+  ],
+  "valor": "baixo",
+  "classe": "teste",
+  "bloqueio": "nenhum",
+  "evidencia": "scripts/ci/verify-ledger-statements.unit.mjs:28-111 (11 testes) sem caso de cabecalho '--'; protecao em scripts/db-audit/verify-ledger-statements.mjs:48; grep GA05 = 0",
+  "refutacao_tentada": "nao_refutado",
+  "motivo_revisor": "Sem caso de cabecalho em verify-ledger-statements.unit.mjs:28-119; porem o psql roda -At (verify-ledger-statements.mjs:86) e :44-47 falha fechado: cenario impos",
+  "frente": "pend-lote1.json"
+ },
+ {
+  "branch": "claude__fix-ga-fase78-perimetro-custo-261020-2200",
+  "titulo": "Testes da guarda para retencao e leitura das regras de merge",
+  "arquivos": [
+   "scripts/ci/github-settings-guard.unit.mjs"
+  ],
+  "valor": "baixo",
+  "classe": "teste",
+  "bloqueio": "nenhum",
+  "evidencia": "grep -i 'graphql|retention' em scripts/ci/github-settings-guard.unit.mjs → 0 ocorrencias",
+  "refutacao_tentada": "nao_refutado",
+  "motivo_revisor": "grep -i 'graphql|retention|retencao' em scripts/ci/github-settings-guard.unit.mjs → 0 ocorrencias na main atual.",
+  "frente": "pend-lote1.json"
+ },
+ {
+  "branch": "claude__fix-ga-fase78-perimetro-custo-261020-2200",
+  "titulo": "Nada confere a versao do Go da imagem do proxy, que diverge hoje",
+  "arquivos": [
+   "scripts/ci/docker-pins.unit.mjs",
+   "infrastructure/preview-egress-proxy/Dockerfile",
+   ".github/toolchain.json"
+  ],
+  "valor": "baixo",
+  "classe": "teste",
+  "bloqueio": "ci_workflow",
+  "evidencia": "docker-pins.unit.mjs nao existe na main; Dockerfile:1 FROM golang:1.27-alpine vs go.mod:3 'go 1.24.0' e toolchain.json:5 \"go\": \"1.24.x\"",
+  "refutacao_tentada": "nao_refutado",
+  "motivo_revisor": "scripts/ci/docker-pins.unit.mjs nao existe; nenhum script em scripts/ci ou .github cita 'golang:' nem 'preview-egress-proxy'. Dockerfile:1 golang:1.27-alpine vs",
+  "frente": "pend-lote1.json"
+ },
+ {
+  "branch": "claude__fix-ga-fase78-perimetro-custo-261020-2200",
+  "titulo": "Atualizador de versoes de ferramentas ignora Go, zizmor e shellcheck",
+  "arquivos": [
+   "scripts/ci/bump-toolchain.mjs",
+   ".github/toolchain.json"
+  ],
+  "valor": "baixo",
+  "classe": "script",
+  "bloqueio": "nenhum",
+  "evidencia": "bump-toolchain.mjs:57-82 lista so bun, deno, supabase-cli, playwright e actionlint-version; toolchain.json tem go, zizmor e shellcheck-version fora do bump",
+  "refutacao_tentada": "nao_refutado",
+  "motivo_revisor": "bump-toolchain.mjs:57-82 FERRAMENTAS = bun, deno, supabase-cli, playwright, actionlint-version. toolchain.json tem go:1.24.x, zizmor-version e shellcheck-versio",
+  "frente": "pend-lote1.json"
+ },
+ {
+  "branch": "claude__feat-copiloto-edges-261101-1330",
+  "titulo": "Botao de desligar a IA do Copiloto nao desliga as 7 funcoes que cobram",
+  "arquivos": [
+   "supabase/functions/_shared/ai-feature-flags.ts",
+   "supabase/functions/_shared/__tests__/ai-feature-flags.test.ts"
+  ],
+  "valor": "alto",
+  "classe": "edge",
+  "bloqueio": "nenhum",
+  "evidencia": "ai-feature-flags.ts:59-78 o mapa AI_CAPABILITY_BY_FUNCTION termina em \"copilot-live\" (:77) e nao lista nenhuma das 7 edges; :240-241 key===null => gate libera e gasta provedor",
+  "refutacao_tentada": "nao_refutado",
+  "motivo_revisor": "main ai-feature-flags.ts:59-78 encerra o mapa em \"copilot-live\":77; as 7 edges existem e passam o proprio slug (ai-product-recommendation/index.ts:27); :239-240",
+  "frente": "pend-lote2.json"
+ },
+ {
+  "branch": "claude__feat-copiloto-edges-261101-1330",
+  "titulo": "Analise de foto e figurinha do cliente nao funciona: o modelo nao abre a imagem",
+  "arquivos": [
+   "supabase/functions/ai-multimodal-analysis/index.ts",
+   "supabase/functions/_shared/ai-image-input.ts"
+  ],
+  "valor": "alto",
+  "classe": "edge",
+  "bloqueio": "nenhum",
+  "evidencia": "ai-multimodal-analysis/index.ts:67-68 manda image_url:{url:imageUrl} cru de bucket privado; helper toInlineImage existe (ai-image-input.ts:308) e so classify-emoji/classify-sticker usam",
+  "refutacao_tentada": "nao_refutado",
+  "motivo_revisor": "main ai-multimodal-analysis/index.ts:67-68 manda image_url:{url:imageUrl} cru (useImageAnalysis.ts:48 nao assina); toInlineImage (ai-image-input.ts:308) so em c",
+  "frente": "pend-lote2.json"
+ },
+ {
+  "branch": "claude__fix-copilot-tick-atomicity-261101-1430",
+  "titulo": "Garantir no banco que sugestoes do Copiloto e avanco da conversa sejam gravados juntos",
+  "arquivos": [
+   "supabase/migrations/20261115010000_copilot_live_motor.sql"
+  ],
+  "valor": "alto",
+  "classe": "sql",
+  "bloqueio": "migration_producao",
+  "evidencia": "supabase/migrations: ultima copilot e 20261115010000_copilot_live_motor.sql; nenhuma *commit_tick*; grep commit_copilot_tick em supabase/ = 0 ocorrencias",
+  "refutacao_tentada": "nao_refutado",
+  "motivo_revisor": "Nenhuma RPC equivalente: migrations/*.sql sem INSERT em copilot_insights; so merge_brinde_state (20261031110000_copilot_live_helpers.sql:5) e trigger enqueue (2",
+  "frente": "pend-lote2.json"
+ },
+ {
+  "branch": "claude__fix-copilot-tick-atomicity-261101-1430",
+  "titulo": "Parar de perder sugestoes do Copiloto quando a gravacao falha no meio",
+  "arquivos": [
+   "supabase/functions/_shared/copilot-tick.ts"
+  ],
+  "valor": "alto",
+  "classe": "edge",
+  "bloqueio": "migration_producao",
+  "evidencia": "supabase/functions/_shared/copilot-tick.ts:514-519 update(copilot_sessions) e :531 insert(copilot_insights) ainda separados; .rpc( = 0 no arquivo",
+  "refutacao_tentada": "nao_refutado",
+  "motivo_revisor": "copilot-tick.ts:515-519 update(copilot_sessions) move last_processed_message_at (:200) e :531 insert(copilot_insights) separado, throw sem rollback; 0 .rpc( no ",
+  "frente": "pend-lote2.json"
+ },
+ {
+  "branch": "claude__fix-db-live-migrations-261107-1623",
+  "titulo": "Recriar o banco pelos arquivos apagaria reacoes de contato dos clientes",
+  "arquivos": [
+   "supabase/migrations/20261107121000_message_reactions_one_per_agent.sql"
+  ],
+  "valor": "alto",
+  "classe": "sql",
+  "bloqueio": "migration_producao",
+  "evidencia": "supabase/migrations/20261107121000_message_reactions_one_per_agent.sql:22-30 (DELETE sem filtro user_id IS NOT NULL); :3-4 CREATE TABLE AS SELECT; :9 REVOKE sem service_role",
+  "refutacao_tentada": "nao_refutado",
+  "motivo_revisor": "main wt-main/supabase/migrations/20261107121000_message_reactions_one_per_agent.sql:22-30: DELETE com row_number() PARTITION BY (message_id,user_id) SEM 'WHERE ",
+  "frente": "pend-lote2.json"
+ },
+ {
+  "branch": "claude__fix-ga-fase23-edge-e2e-261020-2200",
+  "titulo": "Volta atras do deploy das integracoes pode republicar a versao quebrada",
+  "arquivos": [
+   ".github/workflows/deploy-functions.yml",
+   "scripts/edge-deploy/resolve-rollback-ref.mjs"
+  ],
+  "valor": "alto",
+  "classe": "ci",
+  "bloqueio": "ci_workflow",
+  "evidencia": ".github/workflows/deploy-functions.yml:147-180 resolve o rollback inline sem comparar com o SHA atual; git grep resolve-rollback-ref em .github/ nao retorna nada (script existe e tem unit, sem chamado",
+  "refutacao_tentada": "nao_refutado",
+  "motivo_revisor": "deploy-functions.yml:143-182 resolve inline sem pular o SHA atual; grep resolve-rollback-ref em .github/ = 0 hits, logo scripts/edge-deploy/resolve-rollback-ref",
+  "frente": "pend-lote2.json"
+ },
+ {
+  "branch": "claude__fix-ga-resto-sonar-contracts-20261021-0726",
+  "titulo": "Trava que impede o robo de apagar tabela em uso esta desligada",
+  "arquivos": [
+   ".github/workflows/types-sync.yml"
+  ],
+  "valor": "alto",
+  "classe": "ci",
+  "bloqueio": "ci_workflow",
+  "evidencia": "types-sync.yml:408 copia /tmp/catalog.new.json sobre supabase/schema-catalog.json e :485 compara os dois — mesmo job gates-e-pr (:364)",
+  "refutacao_tentada": "nao_refutado",
+  "motivo_revisor": "types-sync.yml:408 copia /tmp/catalog.new.json sobre supabase/schema-catalog.json e :485 compara os dois no mesmo job gates-e-pr (:364); check-remocoes-destruti",
+  "frente": "pend-lote2.json"
+ },
+ {
+  "branch": "claude__w21-classificar-migration-drift",
+  "titulo": "Guarda do banco acusa erro falso quando a migration espera o apply do dia",
+  "arquivos": [
+   "scripts/db-audit/check-migration-drift.mjs",
+   "scripts/db-audit/lote-pendente.mjs",
+   ".github/workflows/db-live-guard.yml",
+   ".github/workflows/types-sync.yml"
+  ],
+  "valor": "alto",
+  "classe": "script",
+  "bloqueio": "nenhum",
+  "evidencia": "check-migration-drift.mjs:938 main() nao le process.argv (0 hits de 'classificar'); :642-647 arquivo sem registro vai para errors -> :988 return 1; lote-pendente.mjs:49 chama --classificar",
+  "refutacao_tentada": "nao_refutado",
+  "motivo_revisor": "check-migration-drift.mjs:933-1006 main() nao le process.argv (0 hits de 'classificar'/'argv' no arquivo); :642-647 arquivo sem registro -> errors -> :988 retur",
+  "frente": "pend-lote2.json"
+ },
+ {
+  "branch": "claude__w21-classificar-migration-drift",
+  "titulo": "Dois novos casos de excecao do guarda ficariam sem classificacao e passariam como limpos",
+  "arquivos": [
+   "scripts/db-audit/check-migration-drift.mjs"
+  ],
+  "valor": "alto",
+  "classe": "script",
+  "bloqueio": "nenhum",
+  "evidencia": "check-migration-drift.mjs: continue em :726, :750, :772, :789, :824 (5 ramos de excecao na main; a branch W21 cobria so 3)",
+  "refutacao_tentada": "nao_refutado",
+  "motivo_revisor": "check-migration-drift.mjs: 5 ramos de excecao com continue em :726 :750 :772 :789 :824 (comment-only, name-only, pinned-marker, registered-tombstone, pinned-rep",
+  "frente": "pend-lote2.json"
+ },
+ {
+  "branch": "claude__w21-classificar-migration-drift",
+  "titulo": "Falha de conexao com o banco e reportada como 'apply aguardado', escondendo problema real",
+  "arquivos": [
+   "scripts/db-audit/check-migration-drift.mjs",
+   "scripts/db-audit/lote-pendente.mjs"
+  ],
+  "valor": "alto",
+  "classe": "script",
+  "bloqueio": "nenhum",
+  "evidencia": "check-migration-drift.mjs:942 e :965 retornam 2 em falha de leitura/consulta; lote-pendente.mjs:61-62 mapeia rc===2 para 'apply aguardado' (neutro)",
+  "refutacao_tentada": "nao_refutado",
+  "motivo_revisor": "check-migration-drift.mjs:942 e :965 return 2 em falha de leitura/consulta (test.mjs:1185,:1197,:1211 confirmam status 2); lote-pendente.mjs:61-70 rc===2 -> 'ap",
+  "frente": "pend-lote2.json"
+ },
+ {
+  "branch": "claude_pink__cool-dijkstra-xk9ek2",
+  "titulo": "Senhas do sistema ficam visíveis no servidor durante a publicação",
+  "arquivos": [
+   ".github/workflows/deploy-functions.yml"
+  ],
+  "valor": "alto",
+  "classe": "ci",
+  "bloqueio": "ci_workflow",
+  "evidencia": ".github/workflows/deploy-functions.yml:315 `supabase secrets set CRON_SECRET=\"$CRON_SECRET\"`; idem :370-373, :412-415, :441-444; zero `--env-file`/`mktemp` no arquivo",
+  "refutacao_tentada": "nao_refutado",
+  "motivo_revisor": "deploy-functions.yml:315 passa o valor na linha de comando (idem :370,:412,:441); grep --env-file e mktemp no arquivo = 0. Ausencia confirmada.",
+  "frente": "pend-lote2.json"
+ },
+ {
+  "branch": "pr-2550",
+  "titulo": "Marcar varias campanhas e nao poder fazer nada com elas",
+  "arquivos": [
+   "src/components/talkx/TalkXOverview.tsx",
+   "src/components/talkx/kit/table.tsx"
+  ],
+  "valor": "alto",
+  "classe": "front",
+  "bloqueio": "decisao_dono",
+  "evidencia": "src/components/talkx/TalkXOverview.tsx:92 (selected) e :344-351 (selectable/selected/selectionResetKey) sem TalkXBulkBar; componente existe em kit/table.tsx:76 e e usado so em TalkXSegments.tsx:475 e ",
+  "refutacao_tentada": "nao_refutado",
+  "motivo_revisor": "Ausente: TalkXOverview.tsx:92 e :348-351 tem selecao, mas `selected` nunca e lido; TalkXBulkBar (kit/table.tsx:76) so em TalkXSegments.tsx:475 e TalkXSuppressio",
+  "frente": "pend-lote2.json"
+ },
+ {
+  "branch": "claude__chore-secdef-guard-ci-test-261107-1600",
+  "titulo": "Falta o teste que impede o retorno da falha de permissao na gamificacao",
+  "arquivos": [
+   "scripts/db-audit/secdef-guard-check.test.sh",
+   "supabase/migrations/20261107153000_fix_gamification_streak_resolutions_guard.sql",
+   "scripts/db-tests/01-security-grants.sql"
+  ],
+  "valor": "medio",
+  "classe": "teste",
+  "bloqueio": "ci_workflow",
+  "evidencia": "main nao tem o arquivo (ls scripts/db-audit/ sem secdef-guard*); nenhum teste checa a forma do guard: grep \"role() = 'anon' OR\" em scripts/+supabase/tests = 0",
+  "refutacao_tentada": "nao_refutado",
+  "motivo_revisor": "Fix JA esta na main (migrations/20261107153000_fix_gamification_streak_resolutions_guard.sql:15,48). Teste ausente: db-tests/01-security-grants.sql:12 so checa ",
+  "frente": "pend-lote2.json"
+ },
+ {
+  "branch": "claude__feat-completar-c121-ddl-261101-1345",
+  "titulo": "Falta a prova automatica de que so admin/supervisor marca pausa como investigada",
+  "arquivos": [
+   "supabase/tests/instance_pause_investigation.sql",
+   "supabase/migrations/20261111181000_instance_pause_investigation.sql",
+   "supabase/migrations/20261112160000_talkx_blacklist_reconcilia_e_higiene.sql",
+   "supabase/tests/instance_pauses.sql"
+  ],
+  "valor": "medio",
+  "classe": "teste",
+  "bloqueio": "nenhum",
+  "evidencia": "supabase/tests/ da main nao tem instance_pause_investigation.sql (so instance_pauses.sql, sem 'investig'); a RPC existe em supabase/migrations/20261111181000_instance_pause_investigation.sql:66",
+  "refutacao_tentada": "nao_refutado",
+  "motivo_revisor": "main so prova service_role recusado + admin ok (supabase/tests/db-audit/talkx-blacklist-reconcilia.test.sh:270-278); nenhum teste chama a RPC como agente p/ cob",
+  "frente": "pend-lote2.json"
+ },
+ {
+  "branch": "claude__feat-copiloto-cv011-020-migrations-261016-1930",
+  "titulo": "Copiloto so gasta IA quando o vendedor esta com a conversa aberta",
+  "arquivos": [
+   "supabase/migrations/20261016193400_copilot_presence.sql",
+   "supabase/migrations/20261115010000_copilot_live_motor.sql",
+   "supabase/functions/_shared/copilot-tick.ts"
+  ],
+  "valor": "medio",
+  "classe": "sql",
+  "bloqueio": "migration_producao",
+  "evidencia": "grep copilot_presence/copilot_has_presence na main: so docs/_arquivo/. Guardas do motor em supabase/migrations/20261115010000_copilot_live_motor.sql:60-110 nao checam presenca.",
+  "refutacao_tentada": "nao_refutado",
+  "motivo_revisor": "Nao achei equivalente. Guardas na main: supabase/migrations/20261115010000_copilot_live_motor.sql:60-85 (flag, contact_type, assigned_to) e supabase/functions/_",
+  "frente": "pend-lote2.json"
+ },
+ {
+  "branch": "claude__feat-copiloto-cv011-020-migrations-261016-1930",
+  "titulo": "Prazo e limpeza automatica dos dados do copiloto (LGPD)",
+  "arquivos": [
+   "supabase/migrations/20261016193500_copilot_retention.sql",
+   "supabase/migrations/20261026130300_copilot_feedback.sql",
+   "supabase/migrations/20261030110000_copilot_insights.sql"
+  ],
+  "valor": "medio",
+  "classe": "sql",
+  "bloqueio": "decisao_dono",
+  "evidencia": "grep run_copilot_retention/copilot_retention_aggregates na main: zero. supabase/migrations/20261026130300_copilot_feedback.sql:8-9 guarda suggestion_text/sent_text sem retained_at.",
+  "refutacao_tentada": "nao_refutado",
+  "motivo_revisor": "Nenhum cron/DELETE sobre tabelas do copiloto na main: grep 'cron.schedule' em supabase/migrations/*.sql nao casa com copilot; supabase/migrations/20261026130300",
+  "frente": "pend-lote2.json"
+ },
+ {
+  "branch": "claude__feat-cores-prioridade-d12-261101-1425",
+  "titulo": "Travar que a prioridade Media apareca ambar, e nunca azul, nos chips",
+  "arquivos": [
+   "src/components/tasks/__tests__/movimentoEContraste.test.tsx"
+  ],
+  "valor": "medio",
+  "classe": "teste",
+  "bloqueio": "nenhum",
+  "evidencia": "src/components/tasks/__tests__/movimentoEContraste.test.tsx:177-184 so checa high e urgent; nenhuma linha com medium nem text-primary no arquivo",
+  "refutacao_tentada": "nao_refutado",
+  "motivo_revisor": "Comportamento ja esta na main (src/components/tasks/shared/PriorityChip.tsx:6 = bg-warning/15 + --warning-text), mas o teste do chip nao cobre medium: movimento",
+  "frente": "pend-lote2.json"
+ },
+ {
+  "branch": "claude__feat-cores-prioridade-d12-261101-1425",
+  "titulo": "Garantir que o texto da prioridade Urgente continue legivel no fundo vermelho mais forte",
+  "arquivos": [
+   "src/components/tasks/__tests__/movimentoEContraste.test.tsx"
+  ],
+  "valor": "medio",
+  "classe": "teste",
+  "bloqueio": "nenhum",
+  "evidencia": "src/components/tasks/__tests__/movimentoEContraste.test.tsx:170 mede so alfa 0.15; grep 0.2/destructive-20 no arquivo nao retorna caso de teste",
+  "refutacao_tentada": "nao_refutado",
+  "motivo_revisor": "Urgente usa bg-destructive/20 (PriorityChip.tsx:13) e o medidor da main so compoe alfa 0.15 (movimentoEContraste.test.tsx:170); nenhum teste em src mede 0.2 sob",
+  "frente": "pend-lote2.json"
+ },
+ {
+  "branch": "claude__feat-cores-prioridade-d12-261101-1425",
+  "titulo": "Travar que a pilula do painel e o chip das listas usem exatamente as mesmas cores",
+  "arquivos": [
+   "src/components/tasks/__tests__/primitivosCompartilhados.test.tsx"
+  ],
+  "valor": "medio",
+  "classe": "teste",
+  "bloqueio": "nenhum",
+  "evidencia": "primitivosCompartilhados.test.tsx:23 importa so PriorityPill; nenhum teste em src importa PriorityChip e PriorityPill juntos (grep -rl cruzado = vazio)",
+  "refutacao_tentada": "nao_refutado",
+  "motivo_revisor": "Mapas identicos na main (PriorityChip.tsx:5-13 = PriorityPill.tsx:13-17) mas sem trava: nenhum teste importa os dois. Nota: se 'chip das listas' for PriorityCel",
+  "frente": "pend-lote2.json"
+ },
+ {
+  "branch": "claude__feat-E90-main-failure-notify-261101-1730",
+  "titulo": "Dono nao recebe WhatsApp quando algo critico quebra na main",
+  "arquivos": [
+   ".github/workflows/main-failure-notify.yml",
+   ".github/workflows/notifica-falha-main.yml",
+   "docs/audits/PLANO_GITHUB_ACTIONS_100_ETAPAS_2026-10-01.md"
+  ],
+  "valor": "medio",
+  "classe": "ci",
+  "bloqueio": "decisao_dono",
+  "evidencia": ".github/workflows/ da main tem 21 arquivos, sem main-failure-notify.yml; grep JOAQUIM_WHATSAPP_NUMBER/hstgr.cloud em .github/ = vazio; E90 segue '- [ ]' em docs/audits/PLANO_GITHUB_ACTIONS_100_ETAPAS_",
+  "refutacao_tentada": "nao_refutado",
+  "motivo_revisor": "Main so abre issue (.github/workflows/notifica-falha-main.yml:62-77); nenhum envio WhatsApp/Evolution em .github (grep send/text, EVOLUTION_INSTANCE_TOKEN, WHAT",
+  "frente": "pend-lote2.json"
+ },
+ {
+  "branch": "claude__feat-E90-main-failure-notify-261101-1730",
+  "titulo": "Issue de falha na main leva comentario repetido em falhas seguidas",
+  "arquivos": [
+   ".github/workflows/notifica-falha-main.yml"
+  ],
+  "valor": "medio",
+  "classe": "ci",
+  "bloqueio": "ci_workflow",
+  "evidencia": ".github/workflows/notifica-falha-main.yml:62-63 = 'if (existente) { await github.rest.issues.createComment(' sem checagem de tempo; unico updated_at no arquivo e :50 (corpo da mensagem), nenhum DEDUP",
+  "refutacao_tentada": "nao_refutado",
+  "motivo_revisor": "notifica-falha-main.yml:62-68 da main comenta direto no 'if (existente)' sem janela de tempo; grep dedup/DEDUP no arquivo = 0; diff contra a branch mostra que D",
+  "frente": "pend-lote2.json"
+ },
+ {
+  "branch": "claude__feat-incidentes-pausa-investigados-261024-1640",
+  "titulo": "Sem teste que prove que so admin/supervisor marca pausa como investigada",
+  "arquivos": [
+   "supabase/tests/instance_pause_investigation.sql",
+   "supabase/migrations/20261111181000_instance_pause_investigation.sql",
+   "supabase/tests/db-audit/talkx-blacklist-reconcilia.test.sh"
+  ],
+  "valor": "medio",
+  "classe": "teste",
+  "bloqueio": "nenhum",
+  "evidencia": "main: supabase/tests/ nao tem instance_pause_investigation.sql (so instance_pauses.sql, 0 ocorrencias de 'investig'); db-audit/talkx-blacklist-reconcilia.test.sh:275 cobre apenas o ACL",
+  "refutacao_tentada": "nao_refutado",
+  "motivo_revisor": "supabase/tests/instance_pauses.sql: 0 ocorrencias de 'investig' (tem 42501 so p/ pause/resume, L151/L289/L464); db-audit/talkx-blacklist-reconcilia.test.sh:271-",
+  "frente": "pend-lote2.json"
+ },
+ {
+  "branch": "claude__feat-talkx-x070-suppression-reasons-261101-2230",
+  "titulo": "Falta teste automatico provando quem pode criar motivo de bloqueio no Talk X",
+  "arquivos": [
+   "scripts/db-audit/talkx-suppression-reasons.test.sh",
+   "supabase/tests/db-audit/talkx-blacklist-reconcilia.test.sh",
+   "scripts/db-audit/talkx-suppression-reasons.smoke.sh",
+   ".github/workflows/db-guard.yml"
+  ],
+  "valor": "medio",
+  "classe": "teste",
+  "bloqueio": "nenhum",
+  "evidencia": "talkx-blacklist-reconcilia.test.sh:238 cria motivo como postgres; nenhum teste da main assere RLS do catalogo por papel, 23503 nem desativar motivo de sistema (smoke.sh:25,63 so estrutural)",
+  "refutacao_tentada": "nao_refutado",
+  "motivo_revisor": "Policies so na migration 20261108100000...sql:241-251, sem teste: reconcilia.test.sh:238 cria como postgres e so testa inativo (:239); smoke.sh:52,70 estrutural",
+  "frente": "pend-lote2.json"
+ },
+ {
+  "branch": "claude__feat-ui-visual-texto-longo-261101-1445",
+  "titulo": "Titulo e texto de cartao estouram quando o conteudo e longo",
+  "arquivos": [
+   "src/components/ui/card.tsx",
+   "src/components/ui/__tests__/card.test.tsx"
+  ],
+  "valor": "medio",
+  "classe": "front",
+  "bloqueio": "nenhum",
+  "evidencia": "wt-main/src/components/ui/card.tsx:86,97,104,109,115 sem min-w-0/break-words e CardTitle ainda leading-none; card.test.tsx:103,113,125 esperam leading-none",
+  "refutacao_tentada": "nao_refutado",
+  "motivo_revisor": "card.tsx:86 (CardHeader), :97 (CardTitle 'leading-none', sem break-words/min-w-0), :104 (CardDescription), :109 (CardContent), :115 (CardFooter); card.test.tsx:",
+  "frente": "pend-lote2.json"
+ },
+ {
+  "branch": "claude__feat-ui-visual-texto-longo-261101-1445",
+  "titulo": "Rotulo de formulario em duas linhas fica com as linhas coladas",
+  "arquivos": [
+   "src/components/ui/label.tsx"
+  ],
+  "valor": "medio",
+  "classe": "front",
+  "bloqueio": "nenhum",
+  "evidencia": "wt-main/src/components/ui/label.tsx:7 = cva(\"text-sm font-medium leading-none ...\"); grep leading-snug em src/components/ui/ = nenhum",
+  "refutacao_tentada": "nao_refutado",
+  "motivo_revisor": "label.tsx:7 = cva(\"text-sm font-medium leading-none peer-disabled:...\"); grep leading-snug em src/components/ui/*.tsx = nenhum; nenhum teste cobre labelVariants",
+  "frente": "pend-lote2.json"
+ },
+ {
+  "branch": "claude__feat-ui-visual-texto-longo-261101-1445",
+  "titulo": "Aba com nome comprido empurra e deforma a barra de abas",
+  "arquivos": [
+   "src/components/ui/tabs.tsx",
+   "src/components/diagnostics/DiagnosticsView.tsx"
+  ],
+  "valor": "medio",
+  "classe": "front",
+  "bloqueio": "nenhum",
+  "evidencia": "wt-main/src/components/ui/tabs.tsx:26-34 sem min-w-0 e sem children/span; portar o span truncate clipa o selo em DiagnosticsView.tsx:155",
+  "refutacao_tentada": "nao_refutado",
+  "motivo_revisor": "tabs.tsx:16-20 (TabsList sem min-w-0/overflow) e :26-34 (TabsTrigger whitespace-nowrap, sem min-w-0/children span); so 2 de 29 usos de TabsList tratam overflow ",
+  "frente": "pend-lote2.json"
+ },
+ {
+  "branch": "claude__feat-ui-visual-texto-longo-261101-1445",
+  "titulo": "Falta teste que garanta que textos longos nao quebram a tela",
+  "arquivos": [
+   "src/components/ui/__tests__/primitivos-texto-longo-a11y.test.tsx"
+  ],
+  "valor": "medio",
+  "classe": "teste",
+  "bloqueio": "nenhum",
+  "evidencia": "arquivo ausente em wt-main/src/components/ui/__tests__/ (so primitivos-a11y-pt.test.tsx, que cobre nome acessivel PT-BR); grep TEXTO_120 em src/ = nenhum",
+  "refutacao_tentada": "nao_refutado",
+  "motivo_revisor": "src/components/ui/__tests__/ (33 arquivos) nao tem primitivos-texto-longo-a11y.test.tsx; primitivos-a11y-pt.test.tsx:17-31 cobre so nome acessivel PT-BR; grep T",
+  "frente": "pend-lote2.json"
+ },
+ {
+  "branch": "claude__fix-ci-E69-E71-draft-filter-261101-1830",
+  "titulo": "Testes de navegador nao rodam em PR rascunho: poupa 45 min de CI por envio",
+  "arquivos": [
+   ".github/workflows/ci.yml"
+  ],
+  "valor": "medio",
+  "classe": "ci",
+  "bloqueio": "ci_workflow",
+  "evidencia": ".github/workflows/ci.yml:440-443 job e2e sem `if:`; fora de ci-gate.needs (ci.yml:410) e dos required checks (scripts/ci/github-settings-baseline.json) -> portavel sozinho, 1 linha",
+  "refutacao_tentada": "nao_refutado",
+  "motivo_revisor": "ci.yml:440-444 job e2e sem `if:` (unicos filtros de draft: ci.yml:86 unit-tests, ci.yml:230 build); fora de ci-gate.needs (ci.yml:410) e dos required checks do ",
+  "frente": "pend-lote2.json"
+ },
+ {
+  "branch": "claude__fix-ci-E69-E71-draft-filter-261101-1830",
+  "titulo": "Auditoria de seguranca nao roda em rascunho: poupa 20 min, mas exige mexer no portao",
+  "arquivos": [
+   ".github/workflows/ci.yml",
+   "scripts/ci/ci-gate.unit.mjs"
+  ],
+  "valor": "medio",
+  "classe": "ci",
+  "bloqueio": "ci_workflow",
+  "evidencia": "ci.yml:296-299 sem `if:`; gate exige success estrito (ci.yml:426) e scripts/ci/ci-gate.unit.mjs:33-37 fixa security=='success()' + cenario draft_security_skipped como falha (:87-90)",
+  "refutacao_tentada": "nao_refutado",
+  "motivo_revisor": "ci.yml:296-300 job security sem `if:`; gate exige success estrito em ci.yml:426 e ci-gate.unit.mjs:33-37 fixa security=='success()' com draft_security_skipped c",
+  "frente": "pend-lote2.json"
+ },
+ {
+  "branch": "claude__fix-copilot-rls-supervisor-261101-1530",
+  "titulo": "Vendedor pode dar nota a si mesmo no Copilot e travar o supervisor",
+  "arquivos": [
+   "supabase/migrations/20261107133000_fix_copilot_rls_open_policies.sql",
+   "supabase/migrations/20261031100000_copilot_fases13_15_tabelas.sql"
+  ],
+  "valor": "medio",
+  "classe": "sql",
+  "bloqueio": "migration_producao",
+  "evidencia": "20261107133000_fix_copilot_rls_open_policies.sql:49 INSERT CHECK (scored_by = auth.uid()); :51 UPDATE scored_by; :61 moments INSERT tagged_by. Nenhum is_admin_or_supervisor em migration copilot na mai",
+  "refutacao_tentada": "nao_refutado",
+  "motivo_revisor": "Confirmei: 20261107133000_fix_copilot_rls_open_policies.sql:49 INSERT CHECK (scored_by=auth.uid()), :51 UPDATE scored_by; :61 moments tagged_by. Zero is_admin_o",
+  "frente": "pend-lote2.json"
+ },
+ {
+  "branch": "claude__fix-copilot-tick-atomicity-261101-1430",
+  "titulo": "Teste automatico do Copiloto precisa cobrir a nova forma de gravar",
+  "arquivos": [
+   "supabase/functions/_shared/__tests__/copilot-tick.test.ts"
+  ],
+  "valor": "medio",
+  "classe": "teste",
+  "bloqueio": "nenhum",
+  "evidencia": "supabase/functions/_shared/__tests__/copilot-tick.test.ts:22 writes={updates,inserts} e asserts em :114, :132, :139-147, :165, :174, :182",
+  "refutacao_tentada": "nao_refutado",
+  "motivo_revisor": "__tests__/copilot-tick.test.ts:22 writes={updates,inserts} e fake client sem metodo rpc (0 ocorrencias); asserts :132/:139/:174/:182 so na gravacao em duas etap",
+  "frente": "pend-lote2.json"
+ },
+ {
+  "branch": "claude__fix-db-live-migrations-261107-1623",
+  "titulo": "Busca por telefone fica diferente se o banco for recriado pelos arquivos",
+  "arquivos": [
+   "supabase/migrations/20261107122000_contacts_phone_search_digits.sql"
+  ],
+  "valor": "medio",
+  "classe": "sql",
+  "bloqueio": "migration_producao",
+  "evidencia": "supabase/migrations/20261107122000_contacts_phone_search_digits.sql:5 regexp_replace(phone,'\\D',...) sem coalesce; :7 indice contacts_phone_search_digits_trgm_idx; sem COMMENT",
+  "refutacao_tentada": "nao_refutado",
+  "motivo_revisor": "main .../20261107122000_contacts_phone_search_digits.sql:5 regexp_replace(phone,'\\D') sem coalesce e :7 indice contacts_phone_search_digits_trgm_idx; producao t",
+  "frente": "pend-lote2.json"
+ },
+ {
+  "branch": "claude__fix-db-live-migrations-261107-1623",
+  "titulo": "Auditoria do banco segue com excecao que esconde os dois arquivos errados",
+  "arquivos": [
+   "scripts/db-audit/migration-evidence.json",
+   "scripts/db-audit/check-migration-drift.mjs"
+  ],
+  "valor": "medio",
+  "classe": "script",
+  "bloqueio": "nenhum",
+  "evidencia": "scripts/db-audit/migration-evidence.json:1255 e :1268 ainda tem kind ledger-divergence/pinned-replay; check-migration-drift.mjs:818 acusa excecao obsoleta quando o arquivo passa a bater",
+  "refutacao_tentada": "nao_refutado",
+  "motivo_revisor": "main scripts/db-audit/migration-evidence.json:1255-1259 e 1268-1272 mantem kind 'ledger-divergence/pinned-replay' para as duas migrations; scripts/db-audit/chec",
+  "frente": "pend-lote2.json"
+ },
+ {
+  "branch": "claude__fix-db-migrate-ga04-ga05-261016-0011",
+  "titulo": "Falta teste provando que ledger com cabeçalho do psql não barra migração",
+  "arquivos": [
+   "scripts/ci/verify-ledger-statements.unit.mjs",
+   "scripts/db-audit/verify-ledger-statements.mjs"
+  ],
+  "valor": "medio",
+  "classe": "teste",
+  "bloqueio": "nenhum",
+  "evidencia": "grep GA05/ga05_fixture em scripts/ci = vazio; codigo ja na main (verify-ledger-statements.mjs:48-49 flatMap(splitStatements)); ancora em verify-ledger-statements.unit.mjs:102",
+  "refutacao_tentada": "nao_refutado",
+  "motivo_revisor": "Ausência confirmada: scripts/ci/verify-ledger-statements.unit.mjs (119 linhas) não tem caso com '--'; remover flatMap de verify-ledger-statements.mjs:48-49 não ",
+  "frente": "pend-lote2.json"
+ },
+ {
+  "branch": "claude__fix-ga-fase0-banco-e2e-261020-2200",
+  "titulo": "Falta trava que impede alguem quebrar a conferencia do ledger do banco no CI",
+  "arquivos": [
+   "scripts/ci/verify-ledger-statements.unit.mjs",
+   "scripts/db-audit/verify-ledger-statements.mjs"
+  ],
+  "valor": "medio",
+  "classe": "teste",
+  "bloqueio": "nenhum",
+  "evidencia": "verify-ledger-statements.mjs:48 normaliza via splitStatements, mas verify-ledger-statements.unit.mjs:28-117 (11 testes) nao tem nenhum caso com cabecalho '--'",
+  "refutacao_tentada": "nao_refutado",
+  "motivo_revisor": "verify-ledger-statements.unit.mjs:29-76 — todos os 11 casos passam `bruto` ja normalizado; removendo o flatMap(splitStatements) de verify-ledger-statements.mjs:",
+  "frente": "pend-lote2.json"
+ },
+ {
+  "branch": "claude__fix-ga-fase0-banco-e2e-261020-2200",
+  "titulo": "Falta trava que impede alguem quebrar a prova de migration aplicada no CI",
+  "arquivos": [
+   "scripts/ci/confirm-hash.unit.mjs",
+   "scripts/db-audit/validate-runtime-proof.mjs"
+  ],
+  "valor": "medio",
+  "classe": "teste",
+  "bloqueio": "nenhum",
+  "evidencia": "validate-runtime-proof.mjs:643,649,611 ja separa stdout/stderr, mas confirm-hash.unit.mjs:20-74 (5 testes E64/F-11) nao tem caso de stdout",
+  "refutacao_tentada": "nao_refutado",
+  "motivo_revisor": "confirm-hash.unit.mjs:74-88 so faz grep de texto no script; db-migrate-contratos.unit.mjs:357,365,383,398 cobrem stdout vazio apenas nas falhas, nenhum caso de ",
+  "frente": "pend-lote2.json"
+ },
+ {
+  "branch": "claude__fix-ga-fase23-edge-e2e-261020-2200",
+  "titulo": "Senhas das integracoes viajam na linha de comando do deploy",
+  "arquivos": [
+   ".github/workflows/deploy-functions.yml"
+  ],
+  "valor": "medio",
+  "classe": "ci",
+  "bloqueio": "ci_workflow",
+  "evidencia": ".github/workflows/deploy-functions.yml:315,370,412,441 usam supabase secrets set NOME=\"$VALOR\"; grep --env-file e mktemp no arquivo: zero ocorrencias",
+  "refutacao_tentada": "nao_refutado",
+  "motivo_revisor": "deploy-functions.yml:315,370,412,441,549 usam supabase secrets set NOME=\"$VALOR\" no argv; grep --env-file e mktemp no arquivo = 0 ocorrencias; nenhum script de ",
+  "frente": "pend-lote2.json"
+ },
+ {
+  "branch": "claude__fix-ga-fase23-edge-e2e-261020-2200",
+  "titulo": "Mexer em arquivo de teste dispara deploy de producao sem necessidade",
+  "arquivos": [
+   ".github/workflows/deploy-functions.yml",
+   "supabase/functions/_shared/__fixtures__/evolution-call-offer.json"
+  ],
+  "valor": "medio",
+  "classe": "ci",
+  "bloqueio": "ci_workflow",
+  "evidencia": ".github/workflows/deploy-functions.yml:42 exclui so 'fixtures/**', que nao casa __fixtures__; existem 4 arquivos vivos em supabase/functions/_shared/__fixtures__/evolution-call-*.json",
+  "refutacao_tentada": "nao_refutado",
+  "motivo_revisor": "deploy-functions.yml:41 exclui so '!supabase/functions/**/fixtures/**', que nao casa __fixtures__; os 4 json de supabase/functions/_shared/__fixtures__/ so sao ",
+  "frente": "pend-lote2.json"
+ },
+ {
+  "branch": "claude__fix-ga-resto-sonar-contracts-20261021-0726",
+  "titulo": "Senha do banco de producao fica visivel para todo o resto do robo de migration",
+  "arquivos": [
+   ".github/workflows/db-migrate.yml",
+   "scripts/ci/db-migrate-workflow.unit.mjs"
+  ],
+  "valor": "medio",
+  "classe": "ci",
+  "bloqueio": "ci_workflow",
+  "evidencia": "db-migrate.yml:164 DESTINO_URL e :170 SUPABASE_DB_URL gravados via appendFileSync(process.env.GITHUB_ENV, ...); nenhum id: credencial no arquivo",
+  "refutacao_tentada": "nao_refutado",
+  "motivo_revisor": "db-migrate.yml:164 e :170 gravam DESTINO_URL e SUPABASE_DB_URL via appendFileSync(GITHUB_ENV); nenhum 'id: credencial' no arquivo",
+  "frente": "pend-lote2.json"
+ },
+ {
+  "branch": "claude__fix-ga-resto-sonar-contracts-20261021-0726",
+  "titulo": "Senha do banco fica visivel para todo o resto do robo do guarda vivo",
+  "arquivos": [
+   ".github/workflows/db-live-guard.yml"
+  ],
+  "valor": "medio",
+  "classe": "ci",
+  "bloqueio": "ci_workflow",
+  "evidencia": "db-live-guard.yml:99 tem id: credencial mas :124 ainda faz appendFileSync(process.env.GITHUB_ENV, `DESTINO_URL=...`)",
+  "refutacao_tentada": "nao_refutado",
+  "motivo_revisor": "db-live-guard.yml:99 tem id: credencial, mas ele so alimenta steps.credencial.outcome (:142,:163...); :124 ainda faz appendFileSync(GITHUB_ENV, DESTINO_URL=...)",
+  "frente": "pend-lote2.json"
+ },
+ {
+  "branch": "claude__fix-ga-resto-sonar-contracts-20261021-0726",
+  "titulo": "Senha do banco fica visivel para todo o resto do robo de sincronizar tipos",
+  "arquivos": [
+   ".github/workflows/types-sync.yml"
+  ],
+  "valor": "medio",
+  "classe": "ci",
+  "bloqueio": "ci_workflow",
+  "evidencia": "types-sync.yml:177 appendFileSync(process.env.GITHUB_ENV, `DESTINO_URL=...`); passo sem id: credencial e :182/:260 comentam que os seguintes herdam do GITHUB_ENV",
+  "refutacao_tentada": "nao_refutado",
+  "motivo_revisor": "types-sync.yml:177 appendFileSync(GITHUB_ENV, DESTINO_URL=...); passo sem id: e :182/:260 dizem que os seguintes herdam do GITHUB_ENV",
+  "frente": "pend-lote2.json"
+ },
+ {
+  "branch": "claude__fix-ga-resto-sonar-contracts-20261021-0726",
+  "titulo": "Senha do banco fica visivel para todo o resto do robo de evidencia do ledger",
+  "arquivos": [
+   ".github/workflows/targeted-ledger-evidence.yml"
+  ],
+  "valor": "medio",
+  "classe": "ci",
+  "bloqueio": "ci_workflow",
+  "evidencia": "targeted-ledger-evidence.yml:85 appendFileSync(process.env.GITHUB_ENV, `DESTINO_URL=...`); nenhum id: credencial no arquivo",
+  "refutacao_tentada": "nao_refutado",
+  "motivo_revisor": "targeted-ledger-evidence.yml:85 appendFileSync(GITHUB_ENV, DESTINO_URL=...) e :86 PGSSLMODE; nenhum 'id: credencial' nas 107 linhas",
+  "frente": "pend-lote2.json"
+ },
+ {
+  "branch": "claude__fix-ga-resto-sonar-contracts-20261021-0726",
+  "titulo": "Dois robos baixam imagem de banco sem conferir a identidade do arquivo",
+  "arquivos": [
+   ".github/workflows/db-live-guard.yml",
+   ".github/workflows/types-sync.yml"
+  ],
+  "valor": "medio",
+  "classe": "ci",
+  "bloqueio": "ci_workflow",
+  "evidencia": "db-live-guard.yml:287 e types-sync.yml:202 usam GHCR_IMG=\"ghcr.io/supabase/postgres-meta:v0.98.0\" (tag mutavel, sem @sha256)",
+  "refutacao_tentada": "nao_refutado",
+  "motivo_revisor": "db-live-guard.yml:287 e types-sync.yml:202 usam ghcr.io/supabase/postgres-meta:v0.98.0 sem @sha256; check-workflow-pins.mjs:7 so exige digest em variaveis *_IMA",
+  "frente": "pend-lote2.json"
+ },
+ {
+  "branch": "claude__fix-ga-resto-sonar-contracts-20261021-0726",
+  "titulo": "Faltam 5 testes que avisariam se essas protecoes do CI fossem desligadas de novo",
+  "arquivos": [
+   "scripts/ci/workflow-contracts.unit.mjs"
+  ],
+  "valor": "medio",
+  "classe": "teste",
+  "bloqueio": "nenhum",
+  "evidencia": "workflow-contracts.unit.mjs tem 626 linhas e so 1 teste GA99 (:607 'notifica monitora apenas workflows que existem'); nenhum teste de Gate 3/HEAD, GITHUB_ENV, digest, GA04 ou GA55",
+  "refutacao_tentada": "nao_refutado",
+  "motivo_revisor": "workflow-contracts.unit.mjs: 626 linhas, unico teste GA e GA99 (:607); grep GA04/GA55 em scripts/ e docs/agentes/ = 0; sem teste de Gate3-vs-HEAD, escopo de GIT",
+  "frente": "pend-lote2.json"
+ },
+ {
+  "branch": "claude__fix-ga-resto-sonar-contracts-20261021-0726",
+  "titulo": "O teste do robo de migration ainda garante o jeito antigo e inseguro de passar a senha",
+  "arquivos": [
+   "scripts/ci/db-migrate-workflow.unit.mjs"
+  ],
+  "valor": "medio",
+  "classe": "teste",
+  "bloqueio": "nenhum",
+  "evidencia": "db-migrate-workflow.unit.mjs:56 e :90 exigem appendFileSync(process.env.GITHUB_ENV, `DESTINO_URL=...`/`SUPABASE_DB_URL=...`) como invariante",
+  "refutacao_tentada": "nao_refutado",
+  "motivo_revisor": "db-migrate-workflow.unit.mjs:56 e :90 exigem appendFileSync(process.env.GITHUB_ENV, DESTINO_URL=.../SUPABASE_DB_URL=...) como invariante R2-INF-003",
+  "frente": "pend-lote2.json"
+ },
+ {
+  "branch": "claude__fix-talkx-segmentos-estimativa-261025-2110",
+  "titulo": "Publico estimado mostra a base inteira quando a regra e \"em breve\"",
+  "arquivos": [
+   "src/hooks/integrations/useTalkXSegments.ts",
+   "src/components/talkx/TalkXCampaignWizard.tsx",
+   "src/components/talkx/segments/TalkXSegmentBuilder.tsx",
+   "src/components/talkx/TalkXSegments.tsx"
+  ],
+  "valor": "medio",
+  "classe": "front",
+  "bloqueio": "nenhum",
+  "evidencia": "useTalkXSegments.ts:360-371 useAudienceEstimate chama countAudience(complete) sem guarda; :177 splitRules descarta comingSoon e :186 remove grupo vazio; wizard :698 e builder :289 nao aceitam null",
+  "refutacao_tentada": "nao_refutado",
+  "motivo_revisor": "main useTalkXSegments.ts:360-372 useAudienceEstimate chama countAudience(complete) sem guarda; splitRules:177 descarta comingSoon e :186 remove grupo vazio -> r",
+  "frente": "pend-lote2.json"
+ },
+ {
+  "branch": "claude__fix-talkx-segmentos-estimativa-261025-2110",
+  "titulo": "Botao Atualizar da biblioteca perde o recalculo de todos se um falhar",
+  "arquivos": [
+   "src/hooks/integrations/useTalkXSegments.ts",
+   "src/components/talkx/TalkXSegments.tsx"
+  ],
+  "valor": "medio",
+  "classe": "front",
+  "bloqueio": "nenhum",
+  "evidencia": "useTalkXSegments.ts:789-796 usa Promise.all, onSuccess so invalidate(), sem onError/toast, e o update :793 nao le res.error; zero ocorrencias de allSettled no arquivo",
+  "refutacao_tentada": "nao_refutado",
+  "motivo_revisor": "main useTalkXSegments.ts:789-796 refreshEstimates usa Promise.all, update em :793 nao le error, onSuccess so invalidate() e sem onError/toast; grep -c allSettle",
+  "frente": "pend-lote2.json"
+ },
+ {
+  "branch": "claude__fix-talkx-segmentos-estimativa-261025-2110",
+  "titulo": "Painel Detalhes fica aberto num segmento que ja nao existe mais",
+  "arquivos": [
+   "src/components/talkx/TalkXSegments.tsx"
+  ],
+  "valor": "medio",
+  "classe": "front",
+  "bloqueio": "nenhum",
+  "evidencia": "TalkXSegments.tsx:196-205 o seenInListRef limpa so selectedIds (checkbox); o rail monta em `selected` (:586-588) e setSelected(null) existe so em :97, :245, :292 e :347",
+  "refutacao_tentada": "nao_refutado",
+  "motivo_revisor": "main TalkXSegments.tsx:196-205 o efeito fantasma limpa so selectedIds; :88-94 selectedSegment devolve a copia stale quando !cached e o rail :586-588 monta em `s",
+  "frente": "pend-lote2.json"
+ },
+ {
+  "branch": "claude__fix-talkx-segmentos-estimativa-261025-2110",
+  "titulo": "Falta teste que prove o \"—\" do publico e a falha parcial do Atualizar",
+  "arquivos": [
+   "src/hooks/integrations/__tests__/useTalkXSegments.estimativa.test.tsx"
+  ],
+  "valor": "medio",
+  "classe": "teste",
+  "bloqueio": "nenhum",
+  "evidencia": "src/hooks/integrations/__tests__ tem acoesEmMassa, dia-calendario, rpcDesacoplada, test.ts e viewMode; nenhum estimativa.test.tsx (ls do worktree da main)",
+  "refutacao_tentada": "nao_refutado",
+  "motivo_revisor": "ls src/hooks/integrations/__tests__ na main: sem estimativa.test.tsx; useTalkXSegments.test.ts:216-235 cobre splitRules/rulesToPostgrest, nao o estado nulo da e",
+  "frente": "pend-lote2.json"
+ },
+ {
+  "branch": "claude__fix-talkx-segmentos-estimativa-261025-2110",
+  "titulo": "Falta teste que prove o fechamento do painel do segmento fantasma",
+  "arquivos": [
+   "src/components/talkx/__tests__/TalkXSegments.selecaoFantasma.test.tsx"
+  ],
+  "valor": "medio",
+  "classe": "teste",
+  "bloqueio": "nenhum",
+  "evidencia": "src/components/talkx/__tests__ nao tem selecaoFantasma (ls); grep -rln fantasma em src/components/talkx acha so o codigo TalkXSegments.tsx:192",
+  "refutacao_tentada": "nao_refutado",
+  "motivo_revisor": "ls src/components/talkx/__tests__ na main: sem selecaoFantasma; grep fantasma|ghost|seenInList em src nao acha teste de talkx; detailPanel.test.tsx:126-305 cobr",
+  "frente": "pend-lote2.json"
+ },
+ {
+  "branch": "claude__fix-talkx-segmentos-regressao-261101-1944",
+  "titulo": "Painel do segmento esconde critérios acima de 5 e não tem data nem amostra",
+  "arquivos": [
+   "src/components/talkx/TalkXSegments.tsx"
+  ],
+  "valor": "medio",
+  "classe": "front",
+  "bloqueio": "nenhum",
+  "evidencia": "src/components/talkx/TalkXSegments.tsx:782 `rulesFlat.slice(0, 5)`; :757-800 SegmentDetailRail sem MetaRow \"Criado em\" e sem bloco \"Amostra de contatos\" (est.sample)",
+  "refutacao_tentada": "nao_refutado",
+  "motivo_revisor": "Confirmado ausente: TalkXSegments.tsx:782 slice(0,5) sem \"+N\"; MetaRows :788-790 só Público/Origem/Último uso. est.sample existe (useTalkXSegments.ts:366) mas s",
+  "frente": "pend-lote2.json"
+ },
+ {
+  "branch": "claude__fix-talkx-segmentos-regressao-261101-1944",
+  "titulo": "Botão de recontar público não avisa que está contando e aceita clique duplo",
+  "arquivos": [
+   "src/components/talkx/TalkXSegments.tsx"
+  ],
+  "valor": "medio",
+  "classe": "front",
+  "bloqueio": "nenhum",
+  "evidencia": "src/components/talkx/TalkXSegments.tsx:794 `<GhostButton icon={RefreshCw} onClick={() => refetchEst()}>Recontar público</GhostButton>` — sem disabled, sem animate-spin, sem isFetching",
+  "refutacao_tentada": "nao_refutado",
+  "motivo_revisor": "Confirmado ausente: TalkXSegments.tsx:794 GhostButton sem disabled/animate-spin; :761 só desestrutura {data,refetch}. O isFetching do mesmo hook já é usado em T",
+  "frente": "pend-lote2.json"
+ },
+ {
+  "branch": "claude__fix-talkx-segmentos-regressao-261101-1944",
+  "titulo": "Na visão em grade, fechar o painel perde o lugar de onde o usuário clicou",
+  "arquivos": [
+   "src/components/talkx/TalkXSegments.tsx"
+  ],
+  "valor": "medio",
+  "classe": "front",
+  "bloqueio": "nenhum",
+  "evidencia": "src/components/talkx/TalkXSegments.tsx:58 `useRef<HTMLTableRowElement>`; :536 ref só no <tr>; :512-516 cartão da grade sem ref → :96 closePanel não devolve foco na grade",
+  "refutacao_tentada": "nao_refutado",
+  "motivo_revisor": "Confirmado ausente: TalkXSegments.tsx:58 useRef<HTMLTableRowElement>; :536 ref só no <tr>; :513 cartão da grade (role=button) sem ref; :96 closePanel faz row?.f",
+  "frente": "pend-lote2.json"
+ },
+ {
+  "branch": "claude__fix-talkx-segmentos-regressao-261101-1944",
+  "titulo": "Faltam 6 testes que impediriam essa regressão de voltar",
+  "arquivos": [
+   "src/components/talkx/__tests__/TalkXSegments.detailPanel.test.tsx"
+  ],
+  "valor": "medio",
+  "classe": "teste",
+  "bloqueio": "nenhum",
+  "evidencia": "src/components/talkx/__tests__/TalkXSegments.detailPanel.test.tsx: 317 linhas, 11 `it(`; grep por \"Criado em|Amostra de contatos|segments-grid|font-semibold|viewMode\" → vazio",
+  "refutacao_tentada": "nao_refutado",
+  "motivo_revisor": "Parcial: main já tem TalkXSegments.viewMode.test.tsx:67-107 (segments-grid, conteúdo do cartão) e detailPanel.test.tsx:305 (Recontar). Seguem sem teste: Criado ",
+  "frente": "pend-lote2.json"
+ },
+ {
+  "branch": "claude__fix-teste-notas-titulo-erro-261101-1410",
+  "titulo": "Teste nao avisa se a mensagem de erro ao editar nota de colega mudar",
+  "arquivos": [
+   "src/components/contacts/__tests__/ContactNotes.editarFixar.test.tsx",
+   "src/hooks/crm/useContactNotes.ts"
+  ],
+  "valor": "medio",
+  "classe": "teste",
+  "bloqueio": "nenhum",
+  "evidencia": "ContactNotes.editarFixar.test.tsx:263 so exige variant destructive; o titulo 'Erro ao atualizar nota' de useContactNotes.ts:157 nao aparece em nenhum teste (grep em src: so :157 e ContactNotes.tsx:211",
+  "refutacao_tentada": "nao_refutado",
+  "motivo_revisor": "Ausente confirmado: editarFixar.test.tsx:263 so exige variant destructive; grep de 'Erro ao atualizar nota' na main acha so useContactNotes.ts:157 e o comentari",
+  "frente": "pend-lote2.json"
+ },
+ {
+  "branch": "claude__infra-c121-ddl-261101-1350",
+  "titulo": "Investigacao de pausa pode ser atribuida a quem nao investigou",
+  "arquivos": [
+   "supabase/migrations/20261111181000_instance_pause_investigation.sql"
+  ],
+  "valor": "medio",
+  "classe": "sql",
+  "bloqueio": "migration_producao",
+  "evidencia": "supabase/migrations/20261111181000_instance_pause_investigation.sql:125 usa COALESCE(investigated_by, v_profile); grep 'CASE WHEN investigated_at' em supabase/ = zero hits; unico CREATE OR REPLACE da ",
+  "refutacao_tentada": "nao_refutado",
+  "motivo_revisor": "main: unico CREATE OR REPLACE em 20261111181000_instance_pause_investigation.sql:66; UPDATE :124-126 usa COALESCE(investigated_by,v_profile) e COALESCE(v_notes,",
+  "frente": "pend-lote2.json"
+ },
+ {
+  "branch": "claude__w21-classificar-migration-drift",
+  "titulo": "Sem testes, o modo de classificacao pode voltar a quebrar sem ninguem perceber",
+  "arquivos": [
+   "scripts/db-audit/check-migration-drift.test.mjs"
+  ],
+  "valor": "medio",
+  "classe": "teste",
+  "bloqueio": "nenhum",
+  "evidencia": "check-migration-drift.test.mjs:157-169 runGuard sem parametro scriptArgs; 0 ocorrencias de 'scriptArgs|classificar' no arquivo",
+  "refutacao_tentada": "nao_refutado",
+  "motivo_revisor": "check-migration-drift.test.mjs:157-169 runGuard({files,ledger,evidence,destino,schemaVersion,psqlFailCount,psqlFailMessage,retryDelaysMs,symlinks}) — sem script",
+  "frente": "pend-lote2.json"
+ },
+ {
+  "branch": "claude__w21-classificar-migration-drift",
+  "titulo": "O teste do lote finge o resultado em vez de rodar o script, por isso nao pegou a falha",
+  "arquivos": [
+   "scripts/db-audit/lote-pendente.test.mjs",
+   "scripts/db-audit/lote-pendente.mjs"
+  ],
+  "valor": "medio",
+  "classe": "teste",
+  "bloqueio": "nenhum",
+  "evidencia": "lote-pendente.test.mjs:24-60 runWithMock escreve wrapper temporario que reimplementa a logica; :63-70 runReal roda sem DESTINO_URL (nao chama o drift-script)",
+  "refutacao_tentada": "nao_refutado",
+  "motivo_revisor": "lote-pendente.test.mjs:24-60 runWithMock escreve run.mjs que reimplementa a logica ('Como nao temos override'); :63-70 runReal faz delete env.DESTINO_URL, logo ",
+  "frente": "pend-lote2.json"
+ },
+ {
+  "branch": "claude_pink__cool-dijkstra-xk9ek2",
+  "titulo": "Voltar atrás numa publicação pode ser cancelada ou repetir a versão ruim",
+  "arquivos": [
+   ".github/workflows/deploy-functions.yml"
+  ],
+  "valor": "medio",
+  "classe": "ci",
+  "bloqueio": "ci_workflow",
+  "evidencia": ".github/workflows/deploy-functions.yml:91 group único `deploy-edge-functions-...`; :167-177 aceita o 1o deployment com sucesso sem comparar dep.sha com GITHUB_SHA",
+  "refutacao_tentada": "nao_refutado",
+  "motivo_revisor": "deploy-functions.yml:91-92 grupo unico; :167-178 pega o 1o Deployment success sem comparar com GITHUB_SHA, e deployment-record.mjs:49 grava state=success por ru",
+  "frente": "pend-lote2.json"
+ },
+ {
+  "branch": "claude_pink__cool-dijkstra-xk9ek2",
+  "titulo": "Pane do CRM externo derruba a publicação de todas as funções",
+  "arquivos": [
+   ".github/workflows/deploy-functions.yml"
+  ],
+  "valor": "medio",
+  "classe": "ci",
+  "bloqueio": "ci_workflow",
+  "evidencia": ".github/workflows/deploy-functions.yml:342-345 `exit 1` no preflight do CRM dentro do bloco `[ \"$FN\" = \"crm-integration\" ] || [ -z \"$FN\" ]`; sem CRM_PREFLIGHT_FAILED",
+  "refutacao_tentada": "nao_refutado",
+  "motivo_revisor": "deploy-functions.yml:320-344: exit 1 no preflight do CRM dentro do bloco que inclui FN vazio (deploy total); grep CRM_PREFLIGHT no arquivo = 0. Ausencia confirm",
+  "frente": "pend-lote2.json"
+ },
+ {
+  "branch": "claude_pink__cool-dijkstra-xk9ek2",
+  "titulo": "Não fica registrado quem aplicou cada mudança no banco de produção",
+  "arquivos": [
+   "scripts/db-migrate/register-deployments.mjs",
+   ".github/workflows/db-migrate.yml"
+  ],
+  "valor": "medio",
+  "classe": "script",
+  "bloqueio": "ci_workflow",
+  "evidencia": "pasta scripts/db-migrate/ não existe na main (ls scripts/ lista db, db-audit, db-tests, mas não db-migrate); nada registra o Deployment que o detector procura",
+  "refutacao_tentada": "nao_refutado",
+  "motivo_revisor": "scripts/db-migrate/ nao existe e db-migrate.yml tem 0 ocorrencias de 'deployment' (so environment producao-ddl:75). Ausencia confirmada; valor baixo pois essa r",
+  "frente": "pend-lote2.json"
+ },
+ {
+  "branch": "claude_pink__cool-dijkstra-xk9ek2",
+  "titulo": "Teste renomeado ou apagado deixa de rodar sem ninguém perceber",
+  "arquivos": [
+   "scripts/ci/check-test-inventory.mjs",
+   "scripts/ci/check-test-inventory.unit.mjs"
+  ],
+  "valor": "medio",
+  "classe": "script",
+  "bloqueio": "nenhum",
+  "evidencia": "grep padroesYamlSemArquivo em scripts/ci/check-test-inventory.mjs → 0; as APIs do hunk existem: casaPadrao:123, suitesNodeNoDisco:167, padroesNodeDosWorkflows:173, orfaosDoInventario:193",
+  "refutacao_tentada": "nao_refutado",
+  "motivo_revisor": "check-test-inventory.mjs so vai disco->YAML (orfaosDoInventario:193, suitesNodeOrfas:180); padroesYamlSemArquivo = 0 e nada checa padrao do YAML sem arquivo no ",
+  "frente": "pend-lote2.json"
+ },
+ {
+  "branch": "claude_pink__cool-dijkstra-xk9ek2",
+  "titulo": "Função pode ir ao ar sem a configuração que precisa e só quebra em produção",
+  "arquivos": [
+   "scripts/ci/check-edge-envs.mjs",
+   "scripts/ci/edge-env-baseline.json"
+  ],
+  "valor": "medio",
+  "classe": "script",
+  "bloqueio": "nenhum",
+  "evidencia": "ls scripts/ci/ | grep edge-env → vazio (só check-edge-error-exposure.mjs/.unit.mjs); nem o script nem o baseline existem na main",
+  "refutacao_tentada": "nao_refutado",
+  "motivo_revisor": "check-edge-envs.mjs e edge-env-baseline.json nao existem em scripts/ci/. O dado existe (inventario/gerar-repo.mjs:57 segredos_lidos) mas nada barra deploy; so 3",
+  "frente": "pend-lote2.json"
+ },
+ {
+  "branch": "fix__f1a-lote-b-useteamchatnotifications",
+  "titulo": "Chat interno: cada mensagem gera consulta extra ao banco em todo usuario online",
+  "arquivos": [
+   "src/hooks/chat/useTeamChatNotifications.ts",
+   "src/hooks/team-chat/useTeamConversations.ts",
+   "src/hooks/team-chat/queryKeys.ts"
+  ],
+  "valor": "medio",
+  "classe": "front",
+  "bloqueio": "nenhum",
+  "evidencia": "wt-main/src/hooks/chat/useTeamChatNotifications.ts:186-188 consulta team_conversation_members em todo INSERT; linha 1 nao importa useContext e o arquivo nao cita getQueryData/queryKeys.inbox",
+  "refutacao_tentada": "sem_revisor",
+  "motivo_revisor": "",
+  "frente": "pend-lote2.json"
+ },
+ {
+  "branch": "fix__f1a-lote-b-useteamchatnotifications",
+  "titulo": "Testes do alerta do chat interno afirmam o oposto do proprio titulo",
+  "arquivos": [
+   "src/hooks/chat/__tests__/useTeamChatNotifications.canal-estavel.test.tsx"
+  ],
+  "valor": "medio",
+  "classe": "teste",
+  "bloqueio": "nenhum",
+  "evidencia": "wt-main/src/hooks/chat/__tests__/useTeamChatNotifications.canal-estavel.test.tsx:145 titulo 'usa o cache do inbox sem consultar o banco' vs :152 expect(h.fromTables).toContain(...); idem :156/:164 e :",
+  "refutacao_tentada": "nao_refutado",
+  "motivo_revisor": "src/hooks/chat/__tests__/useTeamChatNotifications.canal-estavel.test.tsx na main: titulo :145 'sem consultar o banco' vs :152 toContain('team_conversation_membe",
+  "frente": "pend-lote2.json"
+ },
+ {
+  "branch": "hermes__robustez-primitivos-ui-2610121626bec5-2610141859e423",
+  "titulo": "Leitor de tela nao descreve caixas de dialogo sem texto de apoio",
+  "arquivos": [
+   "src/components/ui/dialog.tsx"
+  ],
+  "valor": "medio",
+  "classe": "front",
+  "bloqueio": "nenhum",
+  "evidencia": "wt-main/src/components/ui/dialog.tsx:67-88 DialogContent so com size/showCloseButton/container; grep por describedby|temFilhoDescricao|useId no arquivo: zero match",
+  "refutacao_tentada": "nao_refutado",
+  "motivo_revisor": "wt-main/src/components/ui/dialog.tsx:70-77 DialogContent repassa props cru, sem useId/guarda de descricao; mitigado só por chamador (command.tsx:31, command-pal",
+  "frente": "pend-lote2.json"
+ },
+ {
+  "branch": "hermes__robustez-primitivos-ui-2610121626bec5-2610141859e423",
+  "titulo": "Atalho 'pular para navegacao' nao leva o usuario ao menu",
+  "arquivos": [
+   "src/components/ui/skip-link.tsx",
+   "src/components/layout/Sidebar.tsx"
+  ],
+  "valor": "medio",
+  "classe": "front",
+  "bloqueio": "nenhum",
+  "evidencia": "skip-link.tsx:20-27 handleClick = scrollIntoView + focus?.(), sem tabindex; Sidebar.tsx:101 <nav id=\"main-navigation\"> sem tabIndex, logo nao recebe foco",
+  "refutacao_tentada": "nao_refutado",
+  "motivo_revisor": "skip-link.tsx:25 focus?.() sem setar tabindex e Sidebar.tsx:101 <nav id=\"main-navigation\"> sem tabIndex. Só #main-content funciona (AppShell.tsx:128 tabIndex={-",
+  "frente": "pend-lote2.json"
+ },
+ {
+  "branch": "hermes__robustez-primitivos-ui-2610121626bec5-2610141859e423",
+  "titulo": "Aviso de tela some depois de sair da pagina e pode travar a interface",
+  "arquivos": [
+   "src/components/ui/visually-hidden.tsx"
+  ],
+  "valor": "medio",
+  "classe": "front",
+  "bloqueio": "nenhum",
+  "evidencia": "visually-hidden.tsx:37 setTimeout(() => setAnnouncement(message), 100) solto em useAnnounce, sem useRef nem useEffect de limpeza",
+  "refutacao_tentada": "nao_refutado",
+  "motivo_revisor": "visually-hidden.tsx:37 setTimeout solto, sem useRef/cleanup. Impacto baixo: useAnnounce tem zero consumidores (o usado é a11yHooks.tsx:97 useAnnouncer).",
+  "frente": "pend-lote2.json"
+ },
+ {
+  "branch": "hermes__robustez-primitivos-ui-2610121626bec5-2610141859e423",
+  "titulo": "Cabecalhos de tabela nao sao anunciados como cabecalho de coluna",
+  "arquivos": [
+   "src/components/ui/table.tsx"
+  ],
+  "valor": "medio",
+  "classe": "front",
+  "bloqueio": "nenhum",
+  "evidencia": "table.tsx:44-45 TableHead = ({ className, ...props }, ref) e <th> sem scope; grep \"scope\" no arquivo: zero match",
+  "refutacao_tentada": "nao_refutado",
+  "motivo_revisor": "table.tsx:44-54 TableHead sem scope e nenhum dos 66 usos de <TableHead> passa scope; só tabelas com <th> cru têm (talkx/kit/table.tsx:162, AIUsageUsersTab.tsx:4",
+  "frente": "pend-lote2.json"
+ },
+ {
+  "branch": "hermes__robustez-primitivos-ui-2610121626bec5-2610141859e423",
+  "titulo": "Faltam testes que impecam essas falhas de acessibilidade de voltar",
+  "arquivos": [
+   "src/components/ui/__tests__/robustez-primitivos.test.tsx"
+  ],
+  "valor": "medio",
+  "classe": "teste",
+  "bloqueio": "nenhum",
+  "evidencia": "arquivo inexistente em wt-main/src/components/ui/__tests__/ (32 testes listados, nenhum robustez-primitivos); grep scope|aria-hidden|describedby nos 4 testes de a11y: so skip-link.test.tsx:23,26",
+  "refutacao_tentada": "nao_refutado",
+  "motivo_revisor": "Nao existe src/components/ui/__tests__/robustez-primitivos.test.tsx (32 arquivos no dir) e grep 'robustez' em src/ nao acha nenhum teste de primitivo a11y.",
+  "frente": "pend-lote2.json"
+ },
+ {
+  "branch": "hermes__telefonia-fase8-motion-a11y-responsivo-2610031530007c",
+  "titulo": "Aviso de chamada recebida salta 100px na tela mesmo com animações desligadas",
+  "arquivos": [
+   "src/components/calls/IncomingCallAlert.tsx",
+   "src/App.tsx",
+   "src/components/calls/__tests__/telefoniaMotion.test.tsx"
+  ],
+  "valor": "medio",
+  "classe": "front",
+  "bloqueio": "nenhum",
+  "evidencia": "IncomingCallAlert.tsx:236-239 anima y:-100 e scale com spring sem useReducedMotion; App.tsx:214-216 limita MotionConfig a AppRoutes, e o alerta mora em App.tsx:116 (DeferredProviders, App.tsx:202)",
+  "refutacao_tentada": "nao_refutado",
+  "motivo_revisor": "Confirmei: IncomingCallAlert.tsx:235-239 (y:-100, scale, spring) e grep -c useReducedMotion = 0; fora do MotionConfig (App.tsx:116+202 vs 214-216). Sem telefoni",
+  "frente": "pend-lote2.json"
+ },
+ {
+  "branch": "hermes__telefonia-fase8-motion-a11y-responsivo-2610031530007c",
+  "titulo": "Botões do aviso de chamada crescem/encolhem ao passar o mouse mesmo com animações desligadas",
+  "arquivos": [
+   "src/components/calls/CallDialog.tsx",
+   "src/App.tsx"
+  ],
+  "valor": "medio",
+  "classe": "front",
+  "bloqueio": "nenhum",
+  "evidencia": "CallDialog.tsx:343,364,386,397 usam whileHover scale 1.1 / whileTap scale 0.9 e o arquivo nao tem useReducedMotion (grep sem resultado); montado pelo IncomingCallAlert, fora do MotionConfig de App.tsx",
+  "refutacao_tentada": "nao_refutado",
+  "motivo_revisor": "Confirmei: CallDialog.tsx:343,364,386,397 whileHover scale 1.1/whileTap 0.9; import linha 2 so motion+AnimatePresence, grep -c useReducedMotion = 0; montado for",
+  "frente": "pend-lote2.json"
+ },
+ {
+  "branch": "pr-213",
+  "titulo": "Telas podem voltar a sair desalinhadas sem ninguem ser avisado",
+  "arquivos": [
+   ".github/workflows/ci.yml",
+   "scripts/ui-audit/layout-guard.mjs",
+   "scripts/ui-audit/layout-guard.unit.mjs"
+  ],
+  "valor": "medio",
+  "classe": "ci",
+  "bloqueio": "ci_workflow",
+  "evidencia": ".github/workflows/ci.yml:182 roda so layout-guard.unit.mjs (fixtures em tmpdir); nenhuma linha roda layout-guard.mjs contra src/",
+  "refutacao_tentada": "sem_revisor",
+  "motivo_revisor": "",
+  "frente": "pend-lote2.json"
+ },
+ {
+  "branch": "pr-2550",
+  "titulo": "Prova automatica da barra de acoes em massa das campanhas",
+  "arquivos": [
+   "src/components/talkx/__tests__/TalkXOverview.bulk.test.tsx"
+  ],
+  "valor": "medio",
+  "classe": "teste",
+  "bloqueio": "nenhum",
+  "evidencia": "src/components/talkx/__tests__/ tem so TalkXOverview.{comparativo,filters,lifecycle,states,table}.test.tsx; nenhum .bulk.",
+  "refutacao_tentada": "nao_refutado",
+  "motivo_revisor": "Ausente: nao existe src/components/talkx/__tests__/TalkXOverview.bulk.test.tsx; TalkXOverview.table.test.tsx:313-338 so prova reset da selecao, nenhuma acao em ",
+  "frente": "pend-lote2.json"
+ },
+ {
+  "branch": "pr-2550",
+  "titulo": "Sem permissao no banco aparece como erro generico nas telas de Campanhas",
+  "arquivos": [
+   "src/components/talkx/kit/states.tsx"
+  ],
+  "valor": "medio",
+  "classe": "front",
+  "bloqueio": "nenhum",
+  "evidencia": "src/components/talkx/kit/states.tsx:355-357: if (query.isError) retorna sempre TalkXErrorState; grep 42501 em src/components/talkx acha so comentario em TalkXCampaignWizard.tsx:544",
+  "refutacao_tentada": "nao_refutado",
+  "motivo_revisor": "Ausente: kit/states.tsx:355-357 cai sempre em TalkXErrorState; TalkXNoPermissionState (:193) so via forced='perm' (:343). src/lib/rlsError.ts existe mas nenhum ",
+  "frente": "pend-lote2.json"
+ },
+ {
+  "branch": "claude__chore-plano-E19-E20-E21-261101-1740",
+  "titulo": "Painel de auditoria do CI mostra 3 etapas pendentes que ja estao prontas",
+  "arquivos": [
+   "docs/audits/PLANO_GITHUB_ACTIONS_100_ETAPAS_2026-10-01.md",
+   ".github/workflows/types-sync.yml",
+   "scripts/ci/ci-docs-baseline.unit.mjs"
+  ],
+  "valor": "baixo",
+  "classe": "docs",
+  "bloqueio": "nenhum",
+  "evidencia": "PLANO_GITHUB_ACTIONS_100_ETAPAS_2026-10-01.md:507 '- [ ] **E19**', :512 E20, :514 E21; tabela vai de :133 E18 direto a :134 E22; ja implementado em types-sync.yml:485,541,604,722",
+  "refutacao_tentada": "nao_refutado",
+  "motivo_revisor": "main: PLANO_...2026-10-01.md:507 '- [ ] **E19**', :512 E20, :514 E21; tabela :133 E18 -> :134 E22. Codigo ja existe: types-sync.yml:485 (gate3 por objetos), :55",
+  "frente": "pend-lote2.json"
+ },
+ {
+  "branch": "claude__chore-plano-E19-E20-E21-261101-1740",
+  "titulo": "Ficha das etapas E19/E20/E21 diz 'nao implementado' contra o codigo real",
+  "arquivos": [
+   "docs/reconciliation/tasks/P006.json",
+   "scripts/ci/ci-docs-baseline.unit.mjs"
+  ],
+  "valor": "baixo",
+  "classe": "docs",
+  "bloqueio": "nenhum",
+  "evidencia": "docs/reconciliation/tasks/P006.json tasks E19/E20/E21: status=NOT_IMPLEMENTED, acceptance.state=NOT_IMPLEMENTED, pr_numbers=[]; guard ci-docs-baseline.unit.mjs:317 casa isso com os checkboxes do plano",
+  "refutacao_tentada": "nao_refutado",
+  "motivo_revisor": "main docs/reconciliation/tasks/P006.json: E19/E20/E21 status=NOT_IMPLEMENTED, acceptance=NOT_IMPLEMENTED, pr_numbers=[], commits=[]; assessment E19 diz 'Gate 3 ",
+  "frente": "pend-lote2.json"
+ },
+ {
+  "branch": "claude__chore-plano-E19-E20-E21-261101-1740",
+  "titulo": "Placar do pacote de reconciliacao do CI esta 3 etapas atrasado",
+  "arquivos": [
+   "docs/reconciliation/PLAN_REGISTRY.json",
+   "docs/reconciliation/README.md"
+  ],
+  "valor": "baixo",
+  "classe": "docs",
+  "bloqueio": "nenhum",
+  "evidencia": "PLAN_REGISTRY.json:211 '\"DONE_VERIFIED\": 23' e :216 '\"NOT_IMPLEMENTED\": 15' no record_id P006 (:207); branch tinha 26/12",
+  "refutacao_tentada": "nao_refutado",
+  "motivo_revisor": "main docs/reconciliation/PLAN_REGISTRY.json:207 record_id P006, :211 \"DONE_VERIFIED\": 23 e :216 \"NOT_IMPLEMENTED\": 15 — nao foi para 26/12.",
+  "frente": "pend-lote2.json"
+ },
+ {
+  "branch": "claude__chore-plano-E19-E20-E21-261101-1740",
+  "titulo": "Total geral de etapas concluidas do projeto esta 3 abaixo do real",
+  "arquivos": [
+   "docs/reconciliation/MASTER_LEDGER.json",
+   "docs/reconciliation/README.md"
+  ],
+  "valor": "baixo",
+  "classe": "docs",
+  "bloqueio": "nenhum",
+  "evidencia": "MASTER_LEDGER.json (minificado, 2 linhas) agregado global: DONE_VERIFIED=271 e NOT_IMPLEMENTED=220; branch tinha 274/217",
+  "refutacao_tentada": "nao_refutado",
+  "motivo_revisor": "main docs/reconciliation/MASTER_LEDGER.json:1 (minificado) agregado global: \"DONE_VERIFIED\":271,\"NOT_IMPLEMENTED\":220 — nao foi para 274/217.",
+  "frente": "pend-lote2.json"
+ },
+ {
+  "branch": "claude__confident-bardeen-ndq0ch",
+  "titulo": "Reset de senha: recusa de permissao aparece em ingles cru para o admin",
+  "arquivos": [
+   "src/components/security/PasswordResetRequestsPanel.tsx",
+   "src/components/security/__tests__/PasswordResetRequestsPanel.acesso-negado.test.tsx",
+   "supabase/functions/approve-password-reset/index.ts",
+   "src/lib/rlsError.ts"
+  ],
+  "valor": "baixo",
+  "classe": "front",
+  "bloqueio": "nenhum",
+  "evidencia": "PasswordResetRequestsPanel.tsx:33,:52 fazem new Error(parsed.message) e descartam status=403; edge devolve 403 'Only admins can approve password resets' (approve-password-reset/index.ts:130,:151); nen",
+  "refutacao_tentada": "nao_refutado",
+  "motivo_revisor": "PasswordResetRequestsPanel.tsx:33 joga new Error(parsed.message) e perde status=403; :40 chama isAccessDeniedError no Error pelado, e rlsError.ts:49 precisa de ",
+  "frente": "pend-lote2.json"
+ },
+ {
+  "branch": "claude__docs-g9-absorb-261019-1300",
+  "titulo": "Backlog de 190 melhorias tecnicas existe so na branch e se perde ao fecha-la",
+  "arquivos": [
+   "docs/plans/PLANO_CORRECOES_190_ETAPAS_2026-10-19.md"
+  ],
+  "valor": "baixo",
+  "classe": "docs",
+  "bloqueio": "nenhum",
+  "evidencia": "git ls-tree HEAD -- docs/plans/PLANO_CORRECOES_190_ETAPAS_2026-10-19.md: vazio; 62 planos em docs/plans/, nenhum com 'CORRECOES'; grep 'PLANO DE CORRECOES E MELHORIAS' em docs/: 0",
+  "refutacao_tentada": "nao_refutado",
+  "motivo_revisor": "main nao tem docs/plans/PLANO_CORRECOES_190_ETAPAS_2026-10-19.md (ls-tree vazio); grep 'PLANO DE CORRECOES E MELHORIAS' na main so bate em analise-prs/resgate-2",
+  "frente": "pend-lote2.json"
+ },
+ {
+  "branch": "claude__feat-copiloto-cv011-020-migrations-261016-1930",
+  "titulo": "Politica de retencao publicada nao cita o copiloto",
+  "arquivos": [
+   "docs/LGPD-RETENTION-POLICY.md"
+  ],
+  "valor": "baixo",
+  "classe": "docs",
+  "bloqueio": "nenhum",
+  "evidencia": "docs/LGPD-RETENTION-POLICY.md:3 '**Versao:** 1.0'; secoes 4.1-4.5 (linhas 50-96), nenhuma 4.6 nem mencao a copilot.",
+  "refutacao_tentada": "nao_refutado",
+  "motivo_revisor": "docs/LGPD-RETENTION-POLICY.md:3 segue '**Versao:** 1.0'; secoes 4.1-4.5 (linhas 50-96), sem 4.6; grep -i copilot no arquivo = vazio.",
+  "frente": "pend-lote2.json"
+ },
+ {
+  "branch": "claude__feat-copiloto-cv011-020-migrations-261016-1930",
+  "titulo": "Inventario de canais ao vivo nao lista o painel do copiloto",
+  "arquivos": [
+   "docs/REALTIME-CHANNELS-INVENTORY.md",
+   "src/hooks/copilot/useLiveSuggestions.ts"
+  ],
+  "valor": "baixo",
+  "classe": "docs",
+  "bloqueio": "nenhum",
+  "evidencia": "grep -i copilot docs/REALTIME-CHANNELS-INVENTORY.md = vazio, mas o canal existe: src/hooks/copilot/useLiveSuggestions.ts:121 channel(`copilot_insights:${sessionId}`).",
+  "refutacao_tentada": "nao_refutado",
+  "motivo_revisor": "docs/REALTIME-CHANNELS-INVENTORY.md secoes 2 (linha 38) e 5 (linha 101-125) nao citam copilot_insights; grep -i copilot no arquivo = vazio. O canal existe (src/",
+  "frente": "pend-lote2.json"
+ },
+ {
+  "branch": "claude__feat-copiloto-edges-261101-1330",
+  "titulo": "Sugestao de produto pronta no codigo, mas nenhuma tela do sistema usa",
+  "arquivos": [
+   "src/hooks/copilot/index.ts",
+   "src/hooks/copilot/useProductRecommendation.ts"
+  ],
+  "valor": "baixo",
+  "classe": "front",
+  "bloqueio": "nenhum",
+  "evidencia": "src/hooks/copilot/index.ts nao exporta useProductRecommendation (so useImageAnalysis em :58-59) e grep -rln em src/ acha apenas a propria definicao: hook orfao",
+  "refutacao_tentada": "nao_refutado",
+  "motivo_revisor": "main src/hooks/copilot/index.ts:58-59 exporta so useImageAnalysis; useProductRecommendation aparece so na propria definicao; RadarPanel.tsx:85 suggestedProducts",
+  "frente": "pend-lote2.json"
+ },
+ {
+  "branch": "claude__feat-pausa-entrega-campanhas-261101-1400",
+  "titulo": "Operador vê código técnico em vez do motivo da pausa do disparo",
+  "arquivos": [
+   "src/components/multiplix/MultiplixMonitor.tsx",
+   "supabase/functions/multiplix-send/index.ts"
+  ],
+  "valor": "baixo",
+  "classe": "front",
+  "bloqueio": "nenhum",
+  "evidencia": "src/components/multiplix/MultiplixMonitor.tsx:482-490 trata legacy/daily_limit/connection_lost/outside_window e cai no fallback cru; multiplix-send/index.ts:917 grava 'instance_paused'",
+  "refutacao_tentada": "nao_refutado",
+  "motivo_revisor": "main MultiplixMonitor.tsx:482-490 cobre só legacy/daily_limit/connection_lost/outside_window e cai em `Pausado automaticamente: ${pause_reason}`; multiplix-send",
+  "frente": "pend-lote2.json"
+ },
+ {
+  "branch": "claude__fix-codex-findings-161016-1906",
+  "titulo": "Testes de banco no CI podem falhar por falta de memoria compartilhada",
+  "arquivos": [
+   "scripts/db-audit/ai-projection-version-guard.test.mjs",
+   "scripts/db-audit/talkx-engine-window-contract.test.mjs"
+  ],
+  "valor": "baixo",
+  "classe": "teste",
+  "bloqueio": "nenhum",
+  "evidencia": "ai-projection-version-guard.test.mjs:191 e talkx-engine-window-contract.test.mjs:124-125 sem --shm-size; unico hit no repo e scripts/e2e-isolated/network-proof.mjs:227",
+  "refutacao_tentada": "nao_refutado",
+  "motivo_revisor": "Ausencia confirmada: sem --shm-size em ai-projection-version-guard.test.mjs:191 e talkx-engine-window-contract.test.mjs:123-127; unico hit no repo: scripts/e2e-",
+  "frente": "pend-lote2.json"
+ },
+ {
+  "branch": "claude__fix-codex-findings-161016-1906",
+  "titulo": "Inbox offline so mostra conversas salvas no segundo desenho da tela",
+  "arquivos": [
+   "src/hooks/system/useOfflineCache.ts",
+   "scripts/ci/eslint-baseline.json"
+  ],
+  "valor": "baixo",
+  "classe": "front",
+  "bloqueio": "nenhum",
+  "evidencia": "useOfflineCache.ts:63 useState(null) e effect :80-86 chamando setCachedData; aviso aceito em scripts/ci/eslint-baseline.json:1020,7194",
+  "refutacao_tentada": "nao_refutado",
+  "motivo_revisor": "Ausencia confirmada: useOfflineCache.ts:63 useState(null) + effect :80-86 setCachedData; eslint-baseline.json:7193-7200 ainda aceita react-hooks/set-state-in-ef",
+  "frente": "pend-lote2.json"
+ },
+ {
+  "branch": "claude__fix-copilot-rls-supervisor-261101-1530",
+  "titulo": "Nota ou aprendizado errado no Copilot nao pode ser corrigido nem apagado",
+  "arquivos": [
+   "supabase/migrations/20261107133000_fix_copilot_rls_open_policies.sql",
+   "supabase/migrations/20261107163000_fix_copilot_rls_wrong_join_column.sql"
+  ],
+  "valor": "baixo",
+  "classe": "sql",
+  "bloqueio": "migration_producao",
+  "evidencia": "grep copilot_learning_moments_update|_delete|copilot_conversation_scores_delete em supabase/migrations/ da main: zero ocorrencias; PK por conversa em 20261031100000:130.",
+  "refutacao_tentada": "nao_refutado",
+  "motivo_revisor": "Confirmei: grep copilot_learning_moments_update|_delete|copilot_conversation_scores_delete na main = 0; PK conversation_id em 20261031100000:129-130. db_list_po",
+  "frente": "pend-lote2.json"
+ },
+ {
+  "branch": "claude__fix-copilot-tick-atomicity-261101-1430",
+  "titulo": "Atualizar o inventario do banco para o guardiao de mudancas nao travar o deploy",
+  "arquivos": [
+   "supabase/schema-manifest.json",
+   "supabase/schema-catalog.json",
+   "scripts/db-audit/grants-baseline.json"
+  ],
+  "valor": "baixo",
+  "classe": "script",
+  "bloqueio": "migration_producao",
+  "evidencia": "supabase/schema-manifest.json:5492 lista f:merge_brinde_state e 0 ocorrencias de commit_copilot_tick (idem schema-catalog.json)",
+  "refutacao_tentada": "nao_refutado",
+  "motivo_revisor": "commit_copilot_tick: 0 em supabase/schema-manifest.json, schema-catalog.json e scripts/db-audit/grants-baseline.json. Nao trava hoje (func inexistente na produc",
+  "frente": "pend-lote2.json"
+ },
+ {
+  "branch": "claude__fix-db-guard-pguser-261019-1430",
+  "titulo": "Guarda de configuracao do GitHub ainda tenta consertar sozinha e falha",
+  "arquivos": [
+   "scripts/ci/github-settings-guard.mjs"
+  ],
+  "valor": "baixo",
+  "classe": "ci",
+  "bloqueio": "ci_workflow",
+  "evidencia": "scripts/ci/github-settings-guard.mjs:348 'async function restaurar(campo)' + :530-543 laco de restauracao + :599 forcar",
+  "refutacao_tentada": "nao_refutado",
+  "motivo_revisor": "main scripts/ci/github-settings-guard.mjs:348 'async function restaurar(campo)' com PATCH em :352 e :359; laco em :534-545; 'forcar: restauracoesEfetivas.length",
+  "frente": "pend-lote2.json"
+ },
+ {
+  "branch": "claude__fix-db-guard-pguser-261019-1430",
+  "titulo": "Testes da guarda exigem a tentativa de conserto que deveria sair",
+  "arquivos": [
+   "scripts/ci/github-settings-guard.unit.mjs"
+  ],
+  "valor": "baixo",
+  "classe": "teste",
+  "bloqueio": "ci_workflow",
+  "evidencia": "scripts/ci/github-settings-guard.unit.mjs:204 e :318 exigem r.out.includes('Restaurado')",
+  "refutacao_tentada": "nao_refutado",
+  "motivo_revisor": "main scripts/ci/github-settings-guard.unit.mjs:204 assert.ok(r.out.includes('Restaurado')) e :318 assert.ok(r.out.includes('Restaurado:')); tambem :216, :258, :",
+  "frente": "pend-lote2.json"
+ },
+ {
+  "branch": "claude__fix-db-guard-pguser-261019-1430",
+  "titulo": "Painel do CI promete 'restaurar configuracoes', coisa que nao acontece",
+  "arquivos": [
+   ".github/workflows/settings-guard.yml"
+  ],
+  "valor": "baixo",
+  "classe": "ci",
+  "bloqueio": "ci_workflow",
+  "evidencia": ".github/workflows/settings-guard.yml:45-47 nome do step 'Verificar e restaurar configuracoes' e 'restaura via PATCH'",
+  "refutacao_tentada": "nao_refutado",
+  "motivo_revisor": "main .github/workflows/settings-guard.yml:45 step '🛡️ Verificar e restaurar configuracoes' e :47 comentario 'restaura via PATCH e abre/atualiza issue'.",
+  "frente": "pend-lote2.json"
+ },
+ {
+  "branch": "claude__fix-db-guard-pguser-261019-1430",
+  "titulo": "Checklist de auditoria do GitHub segue com a etapa GA77 em aberto",
+  "arquivos": [
+   "docs/audits/PLANO_GITHUB_ACTIONS_100_ETAPAS_2026-10-15.md"
+  ],
+  "valor": "baixo",
+  "classe": "docs",
+  "bloqueio": "nenhum",
+  "evidencia": "docs/audits/PLANO_GITHUB_ACTIONS_100_ETAPAS_2026-10-15.md:328 '- [ ] **GA77**'",
+  "refutacao_tentada": "nao_refutado",
+  "motivo_revisor": "main docs/audits/PLANO_GITHUB_ACTIONS_100_ETAPAS_2026-10-15.md:328 '- [ ] **GA77** · P2 · C · Remover a \"restauracao\" do guard' — caixa nao marcada.",
+  "frente": "pend-lote2.json"
+ },
+ {
+  "branch": "claude__fix-db-guard-pguser-261019-1430",
+  "titulo": "Guarda de configuracao nao roda ao mudar suas proprias regras",
+  "arquivos": [
+   ".github/workflows/settings-guard.yml"
+  ],
+  "valor": "baixo",
+  "classe": "ci",
+  "bloqueio": "ci_workflow",
+  "evidencia": ".github/workflows/settings-guard.yml:8-12 so schedule '15 7 * * *' e workflow_dispatch, sem gatilho push",
+  "refutacao_tentada": "nao_refutado",
+  "motivo_revisor": "main .github/workflows/settings-guard.yml:8-12: so 'schedule' com cron '15 7 * * *' e 'workflow_dispatch'. Sem 'push'/'pull_request'; nenhum outro workflow cham",
+  "frente": "pend-lote2.json"
+ },
+ {
+  "branch": "claude__fix-E71-draft-skip-security-e2e-261101-1200",
+  "titulo": "Economizar 45 min de maquina nao rodando o teste E2E em PR rascunho",
+  "arquivos": [
+   ".github/workflows/ci.yml"
+  ],
+  "valor": "baixo",
+  "classe": "ci",
+  "bloqueio": "ci_workflow",
+  "evidencia": ".github/workflows/ci.yml:440-444 job e2e vai de 'timeout-minutes: 45' direto para 'steps:', sem 'if:'; e2e nao esta no ci-gate (ci.yml:410) nem nos checks obrigatorios",
+  "refutacao_tentada": "nao_refutado",
+  "motivo_revisor": ".github/workflows/ci.yml:440-444 job e2e vai de 'timeout-minutes: 45' direto para 'steps:' sem 'if:'; unit-tests (ci.yml:86) e build (ci.yml:230) tem 'if: githu",
+  "frente": "pend-lote2.json"
+ },
+ {
+  "branch": "claude__fix-ga-fase0-banco-e2e-261020-2200",
+  "titulo": "Rodar o CI na mao cancela a verificacao do codigo que acabou de entrar na main",
+  "arquivos": [
+   ".github/workflows/ci.yml"
+  ],
+  "valor": "baixo",
+  "classe": "ci",
+  "bloqueio": "ci_workflow",
+  "evidencia": ".github/workflows/ci.yml:34 ainda e 'group: ci-${{ github.event.pull_request.number || github.ref }}' — dispatch manual divide o grupo com o push",
+  "refutacao_tentada": "nao_refutado",
+  "motivo_revisor": ".github/workflows/ci.yml:34 segue 'group: ci-${{ github.event.pull_request.number || github.ref }}', sem github.run_id para dispatch (padrao que db-live-guard.y",
+  "frente": "pend-lote2.json"
+ },
+ {
+  "branch": "claude__fix-ga-fase0-banco-e2e-261020-2200",
+  "titulo": "Teste travado no CI aparece como 'cancelado' e nao como 'falhou' no relatorio",
+  "arquivos": [
+   ".github/workflows/ci.yml"
+  ],
+  "valor": "baixo",
+  "classe": "ci",
+  "bloqueio": "ci_workflow",
+  "evidencia": ".github/workflows/ci.yml:109 roda 'bun vitest run --shard=...' sem 'timeout 11m' e o job tem timeout-minutes: 12 em :81",
+  "refutacao_tentada": "nao_refutado",
+  "motivo_revisor": ".github/workflows/ci.yml:109 roda 'bun vitest run --shard' cru com timeout-minutes: 12 em :81; nenhum 'timeout Nm' em .github/workflows/*.yml",
+  "frente": "pend-lote2.json"
+ },
+ {
+  "branch": "claude__fix-ga-resto-docs-regen-20261021-0726",
+  "titulo": "Texto do CODEOWNERS ainda diz que tudo precisa de aprovação, mas não precisa",
+  "arquivos": [
+   ".github/CODEOWNERS",
+   "docs/agentes/github-ci.md",
+   "scripts/ci/github-settings-baseline.json"
+  ],
+  "valor": "baixo",
+  "classe": "docs",
+  "bloqueio": "nenhum",
+  "evidencia": ".github/CODEOWNERS:11 'Todas as mudanças requerem aprovação do admin' x docs/agentes/github-ci.md:35 'review obrigatório | nenhum (deliberado)' e baseline required_approving_review_count:0",
+  "refutacao_tentada": "nao_refutado",
+  "motivo_revisor": "Divergência confirmada na main: .github/CODEOWNERS:11 'Todas as mudanças requerem aprovação do admin' x docs/agentes/github-ci.md:35 'review obrigatório | nenhu",
+  "frente": "pend-lote2.json"
+ },
+ {
+  "branch": "claude__fix-ga-resto-docs-regen-20261021-0726",
+  "titulo": "Rotina do placar do Talk X roda a cada mudança da main e sem limite de tempo",
+  "arquivos": [
+   ".github/workflows/talkx-status-regen.yml"
+  ],
+  "valor": "baixo",
+  "classe": "ci",
+  "bloqueio": "ci_workflow",
+  "evidencia": ".github/workflows/talkx-status-regen.yml:29-31 'on: push: branches: [main]' sem 'paths:'; :40 'cancel-in-progress: false'; :53 sem 'timeout-minutes' (grep timeout-minutes = 0 ocorrências)",
+  "refutacao_tentada": "nao_refutado",
+  "motivo_revisor": "timeout-minutes ausente confirmado (0 ocorrências em talkx-status-regen.yml; types-sync.yml:65/116/372 tem). Já o 'paths' é deliberado: scripts/talkx/v4-status.",
+  "frente": "pend-lote2.json"
+ },
+ {
+  "branch": "claude__fix-ga-resto-docs-regen-20261021-0726",
+  "titulo": "Aviso do robô do placar do Talk X contradiz o próprio merge automático",
+  "arquivos": [
+   ".github/workflows/talkx-status-regen.yml"
+  ],
+  "valor": "baixo",
+  "classe": "ci",
+  "bloqueio": "ci_workflow",
+  "evidencia": ".github/workflows/talkx-status-regen.yml:98 'Revisão humana e checks da PR continuam obrigatórios.' x :167 'gh pr merge --auto --squash'",
+  "refutacao_tentada": "nao_refutado",
+  "motivo_revisor": "Contradição presente na main: talkx-status-regen.yml:98 'Revisão humana e checks da PR continuam obrigatórios' x :167 'gh pr merge --auto --squash'; mesmo texto",
+  "frente": "pend-lote2.json"
+ },
+ {
+  "branch": "claude__fix-ga-resto-docs-regen-20261021-0726",
+  "titulo": "Gerador da documentação de CI corta descrições longas e não pode ser testado",
+  "arquivos": [
+   "scripts/ci/render-workflow-docs.mjs"
+  ],
+  "valor": "baixo",
+  "classe": "script",
+  "bloqueio": "nenhum",
+  "evidencia": "scripts/ci/render-workflow-docs.mjs:77-100 extrairNaoEBug faz 'break' em linha de continuação; nenhum 'export' no arquivo (grep export = só o import de node:url na :35)",
+  "refutacao_tentada": "nao_refutado",
+  "motivo_revisor": "Confirmado: scripts/ci/render-workflow-docs.mjs extrairNaoEBug dá break em qualquer linha que não casa '^#\\s+-\\s+<k>:' (continuação encerra o bloco); grep de 'e",
+  "frente": "pend-lote2.json"
+ },
+ {
+  "branch": "claude__fix-ga-resto-docs-regen-20261021-0726",
+  "titulo": "Faltam travas automáticas que impediriam esses 3 textos de voltar a divergir",
+  "arquivos": [
+   "scripts/ci/docs-deploy-coerencia.unit.mjs"
+  ],
+  "valor": "baixo",
+  "classe": "teste",
+  "bloqueio": "nenhum",
+  "evidencia": "scripts/ci/docs-deploy-coerencia.unit.mjs tem 49 linhas e 4 testes, todos GA37/README (:16, :31, :40, :45); nenhum cobre CODEOWNERS, talkx-status-regen nem extrairNaoEBug",
+  "refutacao_tentada": "nao_refutado",
+  "motivo_revisor": "scripts/ci/docs-deploy-coerencia.unit.mjs tem 49 linhas/4 testes (:16 :31 :40 :45), todos GA37/README. CODEOWNERS só aparece em scripts/ai-context/gerar.mjs; ta",
+  "frente": "pend-lote2.json"
+ },
+ {
+  "branch": "claude__fix-ga-resto-sonar-contracts-20261021-0726",
+  "titulo": "776 arquivos de auditoria antigos ainda poluem o painel de qualidade do codigo",
+  "arquivos": [
+   ".sonarcloud.properties"
+  ],
+  "valor": "baixo",
+  "classe": "ci",
+  "bloqueio": "decisao_dono",
+  "evidencia": ".sonarcloud.properties: sonar.exclusions=supabase/schema-manifest.json (sem docs/reconciliation/**); find docs/reconciliation -type f = 776 arquivos",
+  "refutacao_tentada": "nao_refutado",
+  "motivo_revisor": ".sonarcloud.properties sonar.exclusions=supabase/schema-manifest.json (unico valor, sem docs/reconciliation/**); find docs/reconciliation -type f = 776",
+  "frente": "pend-lote2.json"
+ },
+ {
+  "branch": "claude__fix-ga-resto-sonar-contracts-20261021-0726",
+  "titulo": "Script de auditoria aceita caminho de plano fora do projeto",
+  "arquivos": [
+   "scripts/ci/matriz-oth013-validar.py"
+  ],
+  "valor": "baixo",
+  "classe": "script",
+  "bloqueio": "nenhum",
+  "evidencia": "matriz-oth013-validar.py:104-108 só resolve e checa is_file(); nenhuma comparação com ROOT.resolve() nos parents",
+  "refutacao_tentada": "nao_refutado",
+  "motivo_revisor": "matriz-oth013-validar.py:104-108 resolve argv[1] e so checa is_file(); ROOT (:12) nunca e comparado com os parents do caminho",
+  "frente": "pend-lote2.json"
+ },
+ {
+  "branch": "claude__fix-ga-resto-sonar-contracts-20261021-0726",
+  "titulo": "Script do portao destrutivo aceita caminho com salto de pasta",
+  "arquivos": [
+   "scripts/db-audit/check-remocoes-destrutivas.mjs"
+  ],
+  "valor": "baixo",
+  "classe": "script",
+  "bloqueio": "nenhum",
+  "evidencia": "check-remocoes-destrutivas.mjs:35-47 lê process.argv[2]/[3] e só valida existência e JSON; nenhuma recusa de segmento '..'",
+  "refutacao_tentada": "nao_refutado",
+  "motivo_revisor": "check-remocoes-destrutivas.mjs:35-36 le argv[2]/[3] e ler() :38-49 so valida existsSync e JSON.parse; nenhuma recusa de segmento '..' nem checagem contra ROOT (",
+  "frente": "pend-lote2.json"
+ },
+ {
+  "branch": "claude__fix-paleta-filtros-celebracoes-261025-2110",
+  "titulo": "Leitor de tela conta errado os itens da busca rapida (Ctrl+K)",
+  "arquivos": [
+   "src/components/ui/command-palette.tsx",
+   "src/components/ui/__tests__/command-palette.a11y.test.tsx"
+  ],
+  "valor": "baixo",
+  "classe": "front",
+  "bloqueio": "nenhum",
+  "evidencia": "command-palette.tsx:271 abre role=\"listbox\" e os botoes de 'Buscas recentes' (:277-283) e 'Limpar' (:278) ficam dentro dele sem role=\"option\"; a11y.test.tsx (21 casos) nao cobre",
+  "refutacao_tentada": "nao_refutado",
+  "motivo_revisor": "Defeito vivo: command-palette.tsx:271 role=listbox envolve 'Buscas recentes' (:277-286) e 'Limpar' (:278) sem role=option; a11y.test.tsx:44 so checa aria-contro",
+  "frente": "pend-lote2.json"
+ },
+ {
+  "branch": "claude__fix-talkx-segmentos-regressao-261101-1944",
+  "titulo": "Cartão da grade não mostra a descrição do segmento",
+  "arquivos": [
+   "src/components/talkx/TalkXSegments.tsx"
+  ],
+  "valor": "baixo",
+  "classe": "front",
+  "bloqueio": "nenhum",
+  "evidencia": "src/components/talkx/TalkXSegments.tsx:512-521 cartão da grade tem nome, pills, nº de critérios e público; nenhuma referência a s.description (só a lista, :541, mostra)",
+  "refutacao_tentada": "nao_refutado",
+  "motivo_revisor": "Confirmado ausente: TalkXSegments.tsx:513-520 cartão tem nome, pills, nº de critérios e público; nenhuma referência a s.description. A lista mostra em :541-542 ",
+  "frente": "pend-lote2.json"
+ },
+ {
+  "branch": "claude__fix-talkx-segmentos-regressao-261101-1944",
+  "titulo": "Nome do segmento aparece sem negrito nos cartões da grade",
+  "arquivos": [
+   "src/components/talkx/TalkXSegments.tsx"
+  ],
+  "valor": "baixo",
+  "classe": "front",
+  "bloqueio": "nenhum",
+  "evidencia": "src/components/talkx/TalkXSegments.tsx:514 `className=\"text-sm font--semibold text-foreground line-clamp-2\"` (duplo hífen = classe inexistente); a linha da lista :540 usa font-semibold",
+  "refutacao_tentada": "nao_refutado",
+  "motivo_revisor": "Confirmado: TalkXSegments.tsx:514 font--semibold (duplo hífen, classe inexistente); grep em src/ acha essa string só aí; a lista usa font-semibold em :541.",
+  "frente": "pend-lote2.json"
+ },
+ {
+  "branch": "claude__fix-teste-notas-titulo-erro-261101-1410",
+  "titulo": "Teste da ordem das notas passa sem conferir de verdade a lista paginada",
+  "arquivos": [
+   "src/components/contacts/__tests__/ContactNotes.ordemFoco.test.tsx",
+   "src/services/contact.service.ts"
+  ],
+  "valor": "baixo",
+  "classe": "teste",
+  "bloqueio": "nenhum",
+  "evidencia": "ordemFoco.test.tsx:49 ignora q.range e :55-56,85 cortam por _limit, mas contact.service.ts:136 chama .range e nunca .limit, logo _limit fica null e nada e truncado",
+  "refutacao_tentada": "nao_refutado",
+  "motivo_revisor": "Confirmado: ordemFoco.test.tsx:49 ignora range e :55-56,85 cortam por _limit, mas contact.service.ts:134-136 usa .order x2 + .range(from,to) e nunca .limit",
+  "frente": "pend-lote2.json"
+ },
+ {
+  "branch": "claude__ga-ci-batch-ga49-ga54-ga60-ga64-231023",
+  "titulo": "Robô de tipos do banco dispara duas vezes a cada sincronização",
+  "arquivos": [
+   ".github/workflows/types-sync.yml"
+  ],
+  "valor": "baixo",
+  "classe": "ci",
+  "bloqueio": "ci_workflow",
+  "evidencia": ".github/workflows/types-sync.yml:30-36 nega só grants-baseline.json; known-violations.json aparece apenas no add-paths (:668) e o gatilho inclui scripts/db-audit/**",
+  "refutacao_tentada": "nao_refutado",
+  "motivo_revisor": "main: types-sync.yml:32 'scripts/db-audit/**' + :36 nega SO grants-baseline.json; known-violations.json entra no PR em :668 (add-paths) sem negacao -> merge do ",
+  "frente": "pend-lote2.json"
+ },
+ {
+  "branch": "claude__ga-ci-batch-ga49-ga54-ga60-ga64-231023",
+  "titulo": "Sincronização manual de tipos é engolida pelo push da main",
+  "arquivos": [
+   ".github/workflows/types-sync.yml"
+  ],
+  "valor": "baixo",
+  "classe": "ci",
+  "bloqueio": "ci_workflow",
+  "evidencia": ".github/workflows/types-sync.yml:53 group: types-sync-${{ github.ref }}-${{ github.event_name == 'schedule' && github.run_id || 'push' }} — dispatch cai no grupo 'push'",
+  "refutacao_tentada": "nao_refutado",
+  "motivo_revisor": "main: types-sync.yml:53 group com ternario schedule?run_id:'push'; workflow_dispatch (:42) cai no grupo 'push'; nenhum outro trecho separa dispatch",
+  "frente": "pend-lote2.json"
+ },
+ {
+  "branch": "claude__ga-ci-batch-ga49-ga54-ga60-ga64-231023",
+  "titulo": "Resumo do robô de tipos é publicado mesmo quando a execução é cancelada",
+  "arquivos": [
+   ".github/workflows/types-sync.yml"
+  ],
+  "valor": "baixo",
+  "classe": "ci",
+  "bloqueio": "ci_workflow",
+  "evidencia": ".github/workflows/types-sync.yml:766-767 '- name: Job summary' / 'if: always()'; regra própria do repo pede !cancelled() (scripts/ci/workflow-invariants.mjs:8-9)",
+  "refutacao_tentada": "nao_refutado",
+  "motivo_revisor": "main: types-sync.yml:766-767 'Job summary' com if: always(); nota: workflow-invariants.mjs:91 so checa job-level em ci.yml, nao cobre este passo",
+  "frente": "pend-lote2.json"
+ },
+ {
+  "branch": "claude__ga-ci-batch-ga49-ga54-ga60-ga64-231023",
+  "titulo": "Verificador de workflows segue cego a erro de formato no auditor de branches",
+  "arquivos": [
+   ".github/actionlint.yaml",
+   ".github/workflows/branch-hygiene-audit.yml"
+  ],
+  "valor": "baixo",
+  "classe": "ci",
+  "bloqueio": "ci_workflow",
+  "evidencia": ".github/actionlint.yaml:6-8 mantém ignore 'could not parse as YAML' para branch-hygiene-audit.yml; nenhum guard depende dele",
+  "refutacao_tentada": "nao_refutado",
+  "motivo_revisor": "main: .github/actionlint.yaml:6-8 mantem ignore 'could not parse as YAML' p/ branch-hygiene-audit.yml; o YAML parseia OK hoje e nenhum guard em scripts/ci depen",
+  "frente": "pend-lote2.json"
+ },
+ {
+  "branch": "claude__ga-ci-batch-ga49-ga54-ga60-ga64-231023",
+  "titulo": "Relatório semanal de CI não avisa quando um branch recebe empurrões em excesso",
+  "arquivos": [
+   "scripts/ci/actions-kpi.mjs",
+   "scripts/ci/actions-kpi.unit.mjs",
+   ".github/workflows/branch-hygiene-audit.yml"
+  ],
+  "valor": "baixo",
+  "classe": "script",
+  "bloqueio": "nenhum",
+  "evidencia": "grep detectarLote|tabelaLote|LIMITE_PUSHES|'Lotes de push' em scripts/ci/actions-kpi.mjs e actions-kpi.unit.mjs → vazio; chamador ativo em branch-hygiene-audit.yml:74",
+  "refutacao_tentada": "nao_refutado",
+  "motivo_revisor": "main: actions-kpi.mjs:24-124 exporta so duracaoMinutos/runsNaJanela/agregar/paginaTemMais/maisLentos/tabela/tabelaLentos/corpoDoKpi; grep lote|LIMITE_PUSHES vaz",
+  "frente": "pend-lote2.json"
+ },
+ {
+  "branch": "claude__tender-heisenberg-a4jk3s",
+  "titulo": "Alerta de CI do types-sync volta a repetir aviso depois de 20 comentarios",
+  "arquivos": [
+   ".github/workflows/types-sync.yml"
+  ],
+  "valor": "baixo",
+  "classe": "ci",
+  "bloqueio": "ci_workflow",
+  "evidencia": ".github/workflows/types-sync.yml:574-593 rotacao cria comentario e da return ANTES do dedupe, que so comeca em :594 e retorna em :604",
+  "refutacao_tentada": "nao_refutado",
+  "motivo_revisor": "main types-sync.yml:575 'if (ultimaPagina > 20)' comenta e return em :592, antes do dedupe que so comeca em :594 e suprime em :605-606. Ordem invertida (dedupe ",
+  "frente": "pend-lote2.json"
+ },
+ {
+  "branch": "claude__w85-w86-w87-ossf-scorecard",
+  "titulo": "Projeto sem nota automatica de seguranca; ma configuracao passa batido",
+  "arquivos": [
+   ".github/workflows/scorecard.yml",
+   "docs/ci/README.md",
+   "scripts/ci/ci-docs-baseline.unit.mjs"
+  ],
+  "valor": "baixo",
+  "classe": "ci",
+  "bloqueio": "ci_workflow",
+  "evidencia": "scorecard.yml ausente dos 21 YAML em .github/workflows/; action segue liberada em scripts/ci/allowed-actions.json:18 e no baseline selected_actions_patterns",
+  "refutacao_tentada": "nao_refutado",
+  "motivo_revisor": "Confirmei ausencia: 21 YAML em .github/workflows sem scorecard.yml; docs/ci/README.md:7 '21 workflows' e tabela sem Scorecard; so resta a action liberada em scr",
+  "frente": "pend-lote2.json"
+ },
+ {
+  "branch": "claude_pink__cool-dijkstra-xk9ek2",
+  "titulo": "Arquivos de teste disparam publicação em produção sem necessidade",
+  "arquivos": [
+   ".github/workflows/deploy-functions.yml"
+  ],
+  "valor": "baixo",
+  "classe": "ci",
+  "bloqueio": "ci_workflow",
+  "evidencia": ".github/workflows/deploy-functions.yml:42 só `- '!supabase/functions/**/fixtures/**'`; `__fixtures__` ausente no bloco paths (:36-42)",
+  "refutacao_tentada": "nao_refutado",
+  "motivo_revisor": "deploy-functions.yml:36-42 so exclui *.test.ts, *.md e fixtures/**; grep __fixtures__ no arquivo = 0. Ausencia confirmada.",
+  "frente": "pend-lote2.json"
+ },
+ {
+  "branch": "claude_pink__cool-dijkstra-xk9ek2",
+  "titulo": "Sem aviso quando uma branch dispara automação em excesso e gasta robôs",
+  "arquivos": [
+   "scripts/ci/actions-kpi.mjs",
+   "scripts/ci/actions-kpi.unit.mjs"
+  ],
+  "valor": "baixo",
+  "classe": "script",
+  "bloqueio": "nenhum",
+  "evidencia": "grep -c branchesQuentes scripts/ci/actions-kpi.mjs → 0; pontos de encaixe existem: principal() em :221 e .slice(0, 50) em :231",
+  "refutacao_tentada": "nao_refutado",
+  "motivo_revisor": "actions-kpi.mjs agrega so por workflow (agregar:39-57); branchesQuentes = 0; branch-hygiene-audit.yml:87-160 lista branches podaveis, nao consumo de runner por ",
+  "frente": "pend-lote2.json"
+ },
+ {
+  "branch": "claude_pink__cool-dijkstra-xk9ek2",
+  "titulo": "Alteração só de documentação espera checagens de banco à toa",
+  "arquivos": [
+   ".github/workflows/db-guard.yml"
+  ],
+  "valor": "baixo",
+  "classe": "ci",
+  "bloqueio": "ci_workflow",
+  "evidencia": "grep -c CONTRATOS_PULADOS .github/workflows/db-guard.yml → 0; não há passo 'Detectar PR apenas-docs' no arquivo",
+  "refutacao_tentada": "nao_refutado",
+  "motivo_revisor": "db-guard.yml: CONTRATOS_PULADOS = 0 e nenhum passo detecta PR so-docs. db-guard.yml:17 veda filtro de paths, logo o pulo dentro do job e a forma correta. Ausenc",
+  "frente": "pend-lote2.json"
+ },
+ {
+  "branch": "claude_pink__cool-dijkstra-xk9ek2",
+  "titulo": "Atualizações automáticas de dependências chegam desagrupadas",
+  "arquivos": [
+   ".github/dependabot.yml"
+  ],
+  "valor": "baixo",
+  "classe": "ci",
+  "bloqueio": "ci_workflow",
+  "evidencia": ".github/dependabot.yml:30 e :70 só têm grupos deps-semanal, codeql-action, actions-misc; gomod (:88) e docker (:107) sem `groups`; grep scorecard em .github/ → 0",
+  "refutacao_tentada": "nao_refutado",
+  "motivo_revisor": "dependabot.yml:88 (gomod) e :107 (docker) sem groups - ausencia confirmada. A parte 'scorecard' e inerte: nenhum workflow em .github/ usa ossf/scorecard-action.",
+  "frente": "pend-lote2.json"
+ },
+ {
+  "branch": "claude_pink__cool-dijkstra-xk9ek2",
+  "titulo": "Ferramenta de segurança dos workflows fica sem atualização automática",
+  "arquivos": [
+   "scripts/ci/bump-toolchain.mjs"
+  ],
+  "valor": "baixo",
+  "classe": "script",
+  "bloqueio": "nenhum",
+  "evidencia": "scripts/ci/bump-toolchain.mjs só lista bun:60, deno:65, supabase/cli:70, playwright:75, actionlint:80; grep -c zizmor → 0",
+  "refutacao_tentada": "nao_refutado",
+  "motivo_revisor": "bump-toolchain.mjs:57-83 cobre so bun/deno/supabase-cli/playwright/actionlint; zizmor esta pinado em .github/toolchain.json:15-17 e usado em ci.yml:350-396, sem",
+  "frente": "pend-lote2.json"
+ },
+ {
+  "branch": "codex__consolida-docs-deploy-ga98",
+  "titulo": "Texto longo de aviso do CI some da documentacao sem ninguem perceber",
+  "arquivos": [
+   "scripts/ci/render-workflow-docs.mjs"
+  ],
+  "valor": "baixo",
+  "classe": "script",
+  "bloqueio": "nenhum",
+  "evidencia": "scripts/ci/render-workflow-docs.mjs:95-96 ainda e 'if (/^#\\s*$/.test(linha)) continue; break;' sem tratar linha de continuacao; sem export e sem guarda de main (arquivo termina em console.log na :216)",
+  "refutacao_tentada": "nao_refutado",
+  "motivo_revisor": "AUSENTE na main: render-workflow-docs.mjs:94-96 ainda 'if (/^#\\s*$/.test(linha)) continue; break;'; grep export = 0 hits; argv so :197 (--check); termina em wri",
+  "frente": "pend-lote2.json"
+ },
+ {
+  "branch": "codex__consolida-docs-deploy-ga98",
+  "titulo": "Falta o teste que impede esse texto de aviso de desaparecer de novo",
+  "arquivos": [
+   "scripts/ci/render-workflow-docs.multiline.unit.mjs"
+  ],
+  "valor": "baixo",
+  "classe": "teste",
+  "bloqueio": "nenhum",
+  "evidencia": "scripts/ci nao tem nenhum render-workflow-docs*.unit.mjs na main; .github/workflows/ci.yml:166 roda 'node --test scripts/ci/*.unit.mjs', logo o teste entraria no CI sem registro manual",
+  "refutacao_tentada": "nao_refutado",
+  "motivo_revisor": "AUSENTE na main: scripts/ci/ tem so render-workflow-docs.mjs, nenhum render-workflow-docs*.unit.mjs; unico citador de extrairNaoEBug e o proprio .mjs:77,135; ci",
+  "frente": "pend-lote2.json"
+ },
+ {
+  "branch": "hermes__robustez-primitivos-ui-2610121626bec5-2610141859e423",
+  "titulo": "Mini-grafico decorativo e lido em voz alta e poluiu o leitor de tela",
+  "arquivos": [
+   "src/components/ui/sparkline.tsx"
+  ],
+  "valor": "baixo",
+  "classe": "front",
+  "bloqueio": "nenhum",
+  "evidencia": "sparkline.tsx:31 <svg width={width} height={height} className={className} viewBox={...}> sem aria-hidden",
+  "refutacao_tentada": "nao_refutado",
+  "motivo_revisor": "sparkline.tsx:31 <svg> sem aria-hidden; consumidores também não envolvem (SLAMetricCards.tsx:77,100,118).",
+  "frente": "pend-lote2.json"
+ },
+ {
+  "branch": "hermes__robustez-primitivos-ui-2610121626bec5-2610141859e423",
+  "titulo": "Grupo de avatares pode mostrar foto errada ao trocar a lista",
+  "arquivos": [
+   "src/components/ui/avatar.tsx"
+  ],
+  "valor": "baixo",
+  "classe": "front",
+  "bloqueio": "nenhum",
+  "evidencia": "avatar.tsx:173 key={index} no AvatarGroup (chave por posicao, nao por conteudo)",
+  "refutacao_tentada": "nao_refutado",
+  "motivo_revisor": "avatar.tsx:173 key={index} em AvatarGroup. Impacto nulo hoje: grep por AvatarGroup fora de ui/avatar.tsx retorna zero usos.",
+  "frente": "pend-lote2.json"
+ },
+ {
+  "branch": "hermes__telefonia-fase8-motion-a11y-responsivo-2610031530007c",
+  "titulo": "Ícone do aviso de chamada pulsa sem parar mesmo com animações desligadas",
+  "arquivos": [
+   "src/components/calls/IncomingCallAlert.tsx",
+   "src/components/calls/CallDialog.tsx"
+  ],
+  "valor": "baixo",
+  "classe": "front",
+  "bloqueio": "nenhum",
+  "evidencia": "IncomingCallAlert.tsx:251-252 animate scale [1,1.2,1] com repeat: Infinity sem portao; mesmo padrao em CallDialog.tsx:304,310",
+  "refutacao_tentada": "nao_refutado",
+  "motivo_revisor": "Confirmei: IncomingCallAlert.tsx:251-252 scale [1,1.2,1] repeat Infinity e CallDialog.tsx:301-313 (transition 304 e 310) repeat Infinity, ambos sem portao de mo",
+  "frente": "pend-lote2.json"
+ },
+ {
+  "branch": "hermes__telefonia-fase8-motion-a11y-responsivo-2610031530007c",
+  "titulo": "Painel lateral de Telefonia troca de conteúdo sem transição suave",
+  "arquivos": [
+   "src/components/calls/TelefoniaView.tsx",
+   "src/components/calls/SelectedCallPanel.tsx",
+   "src/components/calls/NewCallPanel.tsx"
+  ],
+  "valor": "baixo",
+  "classe": "front",
+  "bloqueio": "nenhum",
+  "evidencia": "TelefoniaView.tsx:280-287 troca SelectedCallPanel/ActiveCallPanel/NewCallPanel em div simples, sem motion.* (grep 'motion.' so acha o comentario da linha 217); SelectedCallPanel e NewCallPanel nao imp",
+  "refutacao_tentada": "nao_refutado",
+  "motivo_revisor": "Confirmei ausencia em 2 dos 3 painéis: TelefoniaView.tsx:278-288 troca em div simples e SelectedCallPanel/NewCallPanel tem 0 framer-motion. Nota: ActiveCallPane",
+  "frente": "pend-lote2.json"
+ },
+ {
+  "branch": "pr-2550",
+  "titulo": "Dica do dia das Campanhas e sempre a mesma frase, sem poder trocar",
+  "arquivos": [
+   "src/components/talkx/kit/rail.tsx",
+   "src/components/talkx/kit/constants.ts",
+   "src/components/talkx/TalkXOverview.tsx"
+  ],
+  "valor": "baixo",
+  "classe": "front",
+  "bloqueio": "nenhum",
+  "evidencia": "src/components/talkx/kit/rail.tsx:101 TipCard({ tip }) sem onNext; src/components/talkx/TalkXOverview.tsx:466 dica fixa; grep TIPS em src/components/talkx = nada",
+  "refutacao_tentada": "nao_refutado",
+  "motivo_revisor": "Ausente: kit/rail.tsx:101 TipCard({tip}) sem onNext; TalkXOverview.tsx:466 frase fixa; kit/constants.ts termina em TALKX_CHANNELS (:81-83), sem TIPS.",
+  "frente": "pend-lote2.json"
+ },
+ {
+  "branch": "pr-2550",
+  "titulo": "Prova automatica das acoes rapidas e da dica do dia na Visao geral",
+  "arquivos": [
+   "src/components/talkx/__tests__/TalkXOverview.rail.test.tsx"
+  ],
+  "valor": "baixo",
+  "classe": "teste",
+  "bloqueio": "nenhum",
+  "evidencia": "ausente em src/components/talkx/__tests__/ (listagem nao tem TalkXOverview.rail.test.tsx)",
+  "refutacao_tentada": "nao_refutado",
+  "motivo_revisor": "Ausente: nao existe TalkXOverview.rail.test.tsx; grep por 'Dica do dia|TipCard|HeroCard|RecentList|Acoes rapidas' nos __tests__ do talkx nao acha nenhum TalkXOv",
+  "frente": "pend-lote2.json"
+ },
+ {
+  "branch": "pr-2550",
+  "titulo": "Painel Ver status dos servicos (WhatsApp/CRM/Tempo real) nao existe",
+  "arquivos": [
+   "src/components/talkx/kit/states.tsx",
+   "src/components/talkx/talkxShared.ts"
+  ],
+  "valor": "baixo",
+  "classe": "front",
+  "bloqueio": "nenhum",
+  "evidencia": "kit/states.tsx:163-175 TalkXCrmUnavailableState aceita onViewStatus mas nenhuma tela passa (grep onViewStatus em src acha so states.tsx e kit/__tests__/states.test.tsx:102-110); ServiceStatusSheet nao",
+  "refutacao_tentada": "nao_refutado",
+  "motivo_revisor": "Ausente: nenhum ServiceStatusSheet em src; onViewStatus so em kit/states.tsx:163-175 e no teste do kit. useTalkXServiceStatus.ts:20-23 registra que CRM e Realti",
+  "frente": "pend-lote2.json"
+ },
+ {
+  "branch": "pr-2926",
+  "titulo": "Robo de limpeza pode apagar arquivo e comitar como se fosse formatacao",
+  "arquivos": [
+   "scripts/maintenance/run.mjs"
+  ],
+  "valor": "baixo",
+  "classe": "script",
+  "bloqueio": "nenhum",
+  "evidencia": "wt-main/scripts/maintenance/run.mjs:148-189: changed() checa indice, nao-rastreado, escopo e --numstat; nao ha git diff --raw, logo delecao (0\\tN) passa",
+  "refutacao_tentada": "nao_refutado",
+  "motivo_revisor": "Confirmei ausencia: run.mjs:148-189 e 286-289 so validam numstat (delecao da 0\\tN e passa); nao existe git diff --raw nem --diff-filter. Mitigacao parcial: dele",
+  "frente": "pend-lote2.json"
+ },
+ {
+  "branch": "pr-2926",
+  "titulo": "Faltam testes que provem as travas de seguranca do robo de limpeza",
+  "arquivos": [
+   "scripts/maintenance/maintenance.unit.mjs"
+  ],
+  "valor": "baixo",
+  "classe": "teste",
+  "bloqueio": "nenhum",
+  "evidencia": "wt-main/scripts/maintenance/maintenance.unit.mjs tem 27 testes (l.123-368), nenhum sobre lista do Prettier, arquivo gerado, delecao ou commit com hooks",
+  "refutacao_tentada": "nao_refutado",
+  "motivo_revisor": "Confirmei: maintenance.unit.mjs tem 27 testes (l.123-368) e nenhum cobre lista do Prettier corrompida, arquivo gerado, delecao ou commit com hooks; grep por pre",
+  "frente": "pend-lote2.json"
+ },
+ {
+  "branch": "pr-2926",
+  "titulo": "Manual de manutencao cita arquivo de exemplo que nao existe no projeto",
+  "arquivos": [
+   "scripts/maintenance/README.md",
+   "scripts/maintenance/config.example.json"
+  ],
+  "valor": "baixo",
+  "classe": "docs",
+  "bloqueio": "nenhum",
+  "evidencia": "wt-main/scripts/maintenance/README.md:7 cita config.example.json; ls wt-main/scripts/maintenance/config.example.json = No such file",
+  "refutacao_tentada": "nao_refutado",
+  "motivo_revisor": "Confirmei: README.md:7 cita config.example.json e ls scripts/maintenance/config.example.json = No such file; nenhuma outra referencia no repo fora dos dossies.",
+  "frente": "pend-lote2.json"
+ }
+]

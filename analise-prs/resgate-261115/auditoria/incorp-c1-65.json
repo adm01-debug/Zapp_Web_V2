@@ -1,0 +1,74 @@
+{
+ "modo": "incorporada",
+ "contagem": {
+  "branches": 65,
+  "sem_resultado": 0,
+  "veredito_ok": 61,
+  "veredito_derrubado": 4,
+  "achados_brutos": 12,
+  "refutados": 7,
+  "confirmados": 5
+ },
+ "a_recuperar": [
+  {
+   "branch": "claude__feat-talkx-x074-analytics-rpcs-261101-2300",
+   "titulo": "Descricao das 3 analises de campanha nao aparece no catalogo do banco",
+   "arquivos": [
+    "supabase/migrations/20261101223000_talkx_x074_analytics_rpcs.sql"
+   ],
+   "valor": "baixo",
+   "classe": "sql",
+   "bloqueio": "migration_producao",
+   "prova": "ausente: COMMENT ON FUNCTION em supabase/migrations/20261108201000_talkx_x074_analytics_rpcs.sql (arquivo termina no GRANT, linha 152); grep de COMMENT ON FUNCTION public.talkx_* em supabase/ e script",
+   "revisor": "nao_refutado"
+  },
+  {
+   "branch": "claude__fix-ci-talkx-report-test-261108-2152",
+   "titulo": "Nome do responsavel no relatorio da campanha sem nenhum teste",
+   "arquivos": [
+    "src/components/talkx/report/__tests__/TalkXCampaignReport.test.tsx"
+   ],
+   "valor": "baixo",
+   "classe": "teste",
+   "bloqueio": "nenhum",
+   "prova": "main TalkXCampaignReport.test.tsx:163 renderiza sem a prop creators; grep -rn creators em src/components/talkx/report/__tests__/ = 0 resultados. Produção usa em TalkXCampaignReport.tsx:327",
+   "revisor": "nao_refutado"
+  },
+  {
+   "branch": "claude__fix-esm-sh-import-regression-261108-2319",
+   "titulo": "Nome do responsável pela campanha no relatório não é testado",
+   "arquivos": [
+    "src/components/talkx/report/__tests__/TalkXCampaignReport.test.tsx"
+   ],
+   "valor": "baixo",
+   "classe": "teste",
+   "bloqueio": "nenhum",
+   "prova": "src/components/talkx/report/__tests__/TalkXCampaignReport.test.tsx:163 e .segmento.test.tsx:121 montam <TalkXCampaignReport campaign={campaign} onBack={vi.fn()} /> sem a prop creators; a linha Respons",
+   "revisor": "nao_refutado"
+  },
+  {
+   "branch": "claude__fix-esm-sh-import-regression-261108-2319",
+   "titulo": "Rótulos do cartão de resumo do relatório (Destinatários, A confirmar, Duração) sem teste que os proteja",
+   "arquivos": [
+    "src/components/talkx/report/__tests__/TalkXCampaignReport.test.tsx"
+   ],
+   "valor": "baixo",
+   "classe": "teste",
+   "bloqueio": "nenhum",
+   "prova": "TalkXCampaignReport.tsx:247,253,254 renderiza os rótulos; grep em src/ só acha asserção deles em useTalkXLifecycle.test.tsx:547 e TalkXWizardReview.lifecycle.test.tsx:126 (outros componentes), nenhum ",
+   "revisor": "nao_refutado"
+  },
+  {
+   "branch": "claude_05__wonderful-goodall-94qjyg",
+   "titulo": "Relatorio de campanha: o nome do responsavel nao tem teste que avise se parar de aparecer",
+   "arquivos": [
+    "src/components/talkx/report/__tests__/TalkXCampaignReport.test.tsx"
+   ],
+   "valor": "baixo",
+   "classe": "teste",
+   "bloqueio": "nenhum",
+   "prova": "main: src/components/talkx/report/__tests__/TalkXCampaignReport.test.tsx (215 linhas, 13 it) sem nenhuma ocorrencia de 'creators' nem 'Responsavel'; o campo e renderizado em src/components/talkx/repor",
+   "revisor": "nao_refutado"
+  }
+ ]
+}

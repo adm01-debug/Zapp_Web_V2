@@ -1,0 +1,13 @@
+{
+ "modo": "incorporada",
+ "contagem": {
+  "branches": 9,
+  "sem_resultado": 0,
+  "veredito_ok": 9,
+  "veredito_derrubado": 0,
+  "achados_brutos": 1,
+  "refutados": 1,
+  "confirmados": 0
+ },
+ "a_recuperar": []
+}
