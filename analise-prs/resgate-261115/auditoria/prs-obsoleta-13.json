@@ -1,0 +1,13 @@
+{
+ "modo": "obsoleta",
+ "contagem": {
+  "branches": 13,
+  "sem_resultado": 0,
+  "veredito_ok": 13,
+  "veredito_derrubado": 0,
+  "achados_brutos": 0,
+  "refutados": 0,
+  "confirmados": 0
+ },
+ "a_recuperar": []
+}

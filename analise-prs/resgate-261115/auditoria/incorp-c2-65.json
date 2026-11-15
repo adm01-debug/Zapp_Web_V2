@@ -1,0 +1,50 @@
+{
+ "modo": "incorporada",
+ "contagem": {
+  "branches": 65,
+  "sem_resultado": 0,
+  "veredito_ok": 63,
+  "veredito_derrubado": 2,
+  "achados_brutos": 9,
+  "refutados": 6,
+  "confirmados": 3
+ },
+ "a_recuperar": [
+  {
+   "branch": "claude__fix-talkx-report-test-suite-261108-2355",
+   "titulo": "Tela de relatório: ninguém testa se os números do Resumo aparecem",
+   "arquivos": [
+    "src/components/talkx/report/__tests__/TalkXCampaignReport.test.tsx"
+   ],
+   "valor": "baixo",
+   "classe": "teste",
+   "bloqueio": "nenhum",
+   "prova": "Rótulos existem em TalkXCampaignReport.tsx:247,253,254 e o cartão em :315, mas nenhum teste da main cita 'A confirmar' nem 'Resumo da Campanha' (grep em src/**/*.test.tsx = 0 hits); o teste da main só",
+   "revisor": "nao_refutado"
+  },
+  {
+   "branch": "claude__fix-talkx-report-test-suite-261108-2355",
+   "titulo": "Nome do responsável da campanha no relatório fica sem teste",
+   "arquivos": [
+    "src/components/talkx/report/__tests__/TalkXCampaignReport.test.tsx"
+   ],
+   "valor": "baixo",
+   "classe": "teste",
+   "bloqueio": "nenhum",
+   "prova": "TalkXCampaignReport.tsx:327 mostra MetaRow 'Responsável' a partir de creators; os 2 testes da tela na main renderizam sem essa informação — TalkXCampaignReport.test.tsx:163 e TalkXCampaignReport.segme",
+   "revisor": "nao_refutado"
+  },
+  {
+   "branch": "codex__fix-lint-phone-settings-20261101",
+   "titulo": "Botao de dispensar alerta de fila nao diz de qual fila e, para quem usa leitor de tela",
+   "arquivos": [
+    "src/components/queues/QueueAlertsDisplay.tsx"
+   ],
+   "valor": "baixo",
+   "classe": "front",
+   "bloqueio": "nenhum",
+   "prova": "main src/components/queues/QueueAlertsDisplay.tsx:93 = aria-label={`Dispensar alerta ${alertLabels[alert.type]}`} — sem ${alert.queueName}; a branch tem `Dispensar alerta da fila ${alert.queueName}: $",
+   "revisor": "nao_refutado"
+  }
+ ]
+}
