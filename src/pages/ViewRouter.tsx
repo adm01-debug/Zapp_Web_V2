@@ -139,7 +139,14 @@ export function ViewRouter({ currentView, userId, canGoBack, canGoForward, onGoB
     }
     if (!authorized) {
       if (currentView === 'talkx') {
-        return <TalkXNoPermissionState />;
+        // X048 — o botao "Falar com o administrador" só é desenhado quando a acao
+        // existe (kit/states.tsx). Sem a prop, a tela de sem-permissao do Talk X
+        // ficava sem saida nenhuma para o atendente.
+        return (
+          <TalkXNoPermissionState
+            onContactAdmin={onNavigateTo ? () => onNavigateTo('team-chat') : undefined}
+          />
+        );
       }
       return <RestrictedView onNavigateTo={onNavigateTo} />;
     }
