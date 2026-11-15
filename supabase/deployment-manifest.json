@@ -8,7 +8,7 @@
   },
   "summary": {
     "function_count": 92,
-    "source_file_count": 178,
+    "source_file_count": 179,
     "verify_jwt_true": 77,
     "verify_jwt_false": 15
   },
@@ -245,6 +245,11 @@
       "sha256": "cf58dbc890e8c4cf62425b8a5645af291b953264998cd327e5cc4fd4c895956b"
     },
     {
+      "path": "supabase/functions/_shared/instance_pause.ts",
+      "bytes": 1010,
+      "sha256": "13a83be08c82f3e01f55031f273ca7e999132e9487b8badfda08caf413220d49"
+    },
+    {
       "path": "supabase/functions/_shared/media-egress.ts",
       "bytes": 9251,
       "sha256": "34b05e8b43243148f90a9775003f5088dd0092556013a61e5eabaf6d6b25cf78"
@@ -366,8 +371,8 @@
     },
     {
       "path": "supabase/functions/_shared/talkx-resume-policy.ts",
-      "bytes": 6735,
-      "sha256": "b0499bf37d1fd912b67e59e3617ebb2ca589a6976e037527cfdcd79e0256de80"
+      "bytes": 7509,
+      "sha256": "e731cf7293e5ccc72248a188bbafff023a64ed7753b95676176c5ba2e839958b"
     },
     {
       "path": "supabase/functions/_shared/talkx-tracking-token.ts",
@@ -716,8 +721,8 @@
     },
     {
       "path": "supabase/functions/message-delivery/index.ts",
-      "bytes": 40290,
-      "sha256": "cb5501a002993a677ffd973203ee51fb1250ac9e4780b6507780f52441c1d4ee"
+      "bytes": 41092,
+      "sha256": "275a01a34da3060f40158de10d35e97b7f3ace122e701b66760f107e784dc1cd"
     },
     {
       "path": "supabase/functions/metrics/index.ts",
@@ -766,8 +771,8 @@
     },
     {
       "path": "supabase/functions/multiplix-send/index.ts",
-      "bytes": 66698,
-      "sha256": "5e71ccc78bb828cf5f6cc523c0feaeb3eafad5e9e7eb00e3ae1d1ca13a42a09a"
+      "bytes": 67219,
+      "sha256": "561ee437fcc21bfaa596518bfd54028580a093888f6a8f2999ceee9d367d3b6c"
     },
     {
       "path": "supabase/functions/multiplix-voices/index.ts",
@@ -851,8 +856,8 @@
     },
     {
       "path": "supabase/functions/talkx-scheduler/index.ts",
-      "bytes": 19935,
-      "sha256": "49951e8fa36a0daf26e4cb7ecad806d2d87234959bf78c56387a72b9ce37518a"
+      "bytes": 21614,
+      "sha256": "9aee41e2338cec1de582ef85cc1b239e1c2d1ac2899ef2d7981f6f4f9415cb1b"
     },
     {
       "path": "supabase/functions/talkx-send/index.ts",
@@ -861,8 +866,8 @@
     },
     {
       "path": "supabase/functions/talkx-send/process-recipient.ts",
-      "bytes": 33902,
-      "sha256": "d80bab8a62362e8f9a029a7daa48558a004cbdf0f67c2f0398d12ca4886db728"
+      "bytes": 34293,
+      "sha256": "39fda4b61b1d2e50561fcb583974f2fca4d50a2edb68bf3eb02f3a5d1b038be4"
     },
     {
       "path": "supabase/functions/talkx-storage-purge/index.ts",
@@ -2213,7 +2218,7 @@
       "name": "message-delivery",
       "entrypoint": "supabase/functions/message-delivery/index.ts",
       "verify_jwt": true,
-      "source_sha256": "4229fd8f587692889c62f67ef35f99f5a6ebe4b5579db882233cd7713ff38e76",
+      "source_sha256": "3b70bdeaf18291c282dab7e3111b4ae8a22f8b1f02b3acb2413f85ba7618bdf0",
       "source_files": [
         "supabase/functions/_shared/ai-jobs.ts",
         "supabase/functions/_shared/cors-origins.ts",
@@ -2225,6 +2230,7 @@
         "supabase/functions/_shared/evolution-send.ts",
         "supabase/functions/_shared/evolution-types.ts",
         "supabase/functions/_shared/hmac-validation.ts",
+        "supabase/functions/_shared/instance_pause.ts",
         "supabase/functions/_shared/media-egress.ts",
         "supabase/functions/_shared/messaging/errors.ts",
         "supabase/functions/_shared/rate-limit-log.ts",
@@ -2327,7 +2333,7 @@
       "name": "multiplix-send",
       "entrypoint": "supabase/functions/multiplix-send/index.ts",
       "verify_jwt": true,
-      "source_sha256": "11e576b6e85144eb9acd1165534ace6d849ed79543d977a7ffd415a16eb04dfc",
+      "source_sha256": "881592b8853d70a32e06e20e478ef0a87b4af4d9a02ff24ff51f4d9a01faa2c5",
       "source_files": [
         "supabase/functions/_shared/cors-origins.ts",
         "supabase/functions/_shared/evolution-api-proxy.ts",
@@ -2337,6 +2343,7 @@
         "supabase/functions/_shared/evolution-send.ts",
         "supabase/functions/_shared/evolution-types.ts",
         "supabase/functions/_shared/hmac-validation.ts",
+        "supabase/functions/_shared/instance_pause.ts",
         "supabase/functions/_shared/media-egress.ts",
         "supabase/functions/_shared/messaging/eligibility.ts",
         "supabase/functions/_shared/messaging/errors.ts",
@@ -2619,10 +2626,11 @@
       "name": "talkx-scheduler",
       "entrypoint": "supabase/functions/talkx-scheduler/index.ts",
       "verify_jwt": true,
-      "source_sha256": "fce949b959dd5059b70ae43b77a98254de267e29e435fb2e350dc2b64cb3e003",
+      "source_sha256": "bd547c6d84c59028bf843b4f067eeb525ae12bb2ac51df28d89c5f1936715e6c",
       "source_files": [
         "supabase/functions/_shared/cors-origins.ts",
         "supabase/functions/_shared/hmac-validation.ts",
+        "supabase/functions/_shared/instance_pause.ts",
         "supabase/functions/_shared/rate-limit-log.ts",
         "supabase/functions/_shared/request-policy.ts",
         "supabase/functions/_shared/talkx-resume-policy.ts",
@@ -2635,7 +2643,7 @@
       "name": "talkx-send",
       "entrypoint": "supabase/functions/talkx-send/index.ts",
       "verify_jwt": true,
-      "source_sha256": "a3e31b75f0e1f7edbbde01acf7a860aab6514af03a57e8be1f2ae7ebf5ad77a1",
+      "source_sha256": "ec40217faf19a91b25851c14d44cdb8b2edade5aa07bfb2d59ccdfe9b5a8400e",
       "source_files": [
         "supabase/functions/_shared/ai-jobs.ts",
         "supabase/functions/_shared/cors-origins.ts",
@@ -2647,6 +2655,7 @@
         "supabase/functions/_shared/evolution-send.ts",
         "supabase/functions/_shared/evolution-types.ts",
         "supabase/functions/_shared/hmac-validation.ts",
+        "supabase/functions/_shared/instance_pause.ts",
         "supabase/functions/_shared/media-egress.ts",
         "supabase/functions/_shared/messaging/eligibility.ts",
         "supabase/functions/_shared/messaging/errors.ts",
@@ -2802,5 +2811,5 @@
       ]
     }
   ],
-  "manifest_sha256": "920e07f0e372310dff0a7dc888fd3cee82cef30473b0249a482d6c2443432b5f"
+  "manifest_sha256": "5a319b7b7dc395b8fc991ca8cd2181a3d36702eaa03a85cc259028b635251037"
 }

@@ -253,3 +253,24 @@ Deno.test("[#121A] não retoma às 14:00 quando o business_hours salvo é 15:00�
   });
   assert(invalida.resume === false, `configuração inválida não pode retomar: ${invalida.because}`);
 });
+
+Deno.test("C121: instance_paused só retoma com a pausa da instância acabada e a conexão de pé", () => {
+  assert((AUTO_RESUME_REASONS as readonly string[]).includes("instance_paused"), "instance_paused é motivo de retomada automática");
+  const row: PausedCampaignRow = {
+    id: "inst-1", name: "Pausada pela instância", pause_reason: "instance_paused", ...JANELA, whatsapp_connection_id: "conn-1",
+  };
+  const conectada = connectionStatusResolver(new Map([["conn-1", "connected"]]));
+  const caida = connectionStatusResolver(new Map([["conn-1", "disconnected"]]));
+
+  const aindaPausada = selectResumableCampaigns([row], conectada, DENTRO_DA_JANELA, null, () => true);
+  assert(aindaPausada[0].resume === false, "instância ainda pausada: não retoma");
+
+  const conexaoCaida = selectResumableCampaigns([row], caida, DENTRO_DA_JANELA, null, () => false);
+  assert(conexaoCaida[0].resume === false, "conexão fora do ar: não retoma");
+
+  const liberada = selectResumableCampaigns([row], conectada, DENTRO_DA_JANELA, null, () => false);
+  assert(liberada[0].resume === true, "pausa acabou, conexão ok, dentro da janela: retoma");
+
+  const padrao = selectResumableCampaigns([row], conectada, DENTRO_DA_JANELA);
+  assert(padrao[0].resume === true, "sem o predicado (chamadores antigos) o comportamento é o de antes");
+});

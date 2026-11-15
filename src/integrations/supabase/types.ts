@@ -3493,6 +3493,7 @@ export type Database = {
           decision_role: string | null
           id: string
           intent: string | null
+          last_contact_message_at: string | null
           last_processed_message_at: string | null
           last_tick_at: string | null
           occasion: string | null
@@ -3523,6 +3524,7 @@ export type Database = {
           decision_role?: string | null
           id?: string
           intent?: string | null
+          last_contact_message_at?: string | null
           last_processed_message_at?: string | null
           last_tick_at?: string | null
           occasion?: string | null
@@ -3553,6 +3555,7 @@ export type Database = {
           decision_role?: string | null
           id?: string
           intent?: string | null
+          last_contact_message_at?: string | null
           last_processed_message_at?: string | null
           last_tick_at?: string | null
           occasion?: string | null

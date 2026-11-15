@@ -165,10 +165,14 @@ describe('Fila por Segmento — TalkXSegmentProgressTable (X149)', () => {
     const { container } = render(<TalkXSegmentProgressTable rows={seis} segmentNames={nomes} />);
     const html = container.innerHTML;
 
-    // nenhuma cor crua: hex, rgb( ou hsl( direto
+    // nenhuma cor crua: hex, rgb( ou hsl( seguido de numero. `hsl(var(--token))` e
+    // referencia a token, nao cor crua, e e justamente a forma que este teste promove —
+    // por isso o limite e `hsl(\s*\d`, como em coresCruasInboxCrm.test.tsx:188 e
+    // fundacaoVisual.test.tsx. O `\bhsla?\(` anterior era largo demais e barrava a
+    // propria classe sancionada `text-[hsl(var(--primary-text))]`.
     expect(html).not.toMatch(/#[0-9a-fA-F]{3,8}\b/);
-    expect(html).not.toMatch(/\brgba?\(/i);
-    expect(html).not.toMatch(/\bhsla?\(/i);
+    expect(html).not.toMatch(/\brgba?\(\s*\d/i);
+    expect(html).not.toMatch(/\bhsla?\(\s*\d/i);
 
     const barra = screen.getAllByTestId('talkx-segment-progress-bar')[0];
     expect(barra.className).toContain('motion-safe:transition-[width]');

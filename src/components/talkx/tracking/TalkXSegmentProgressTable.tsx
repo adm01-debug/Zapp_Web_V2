@@ -146,7 +146,7 @@ export function TalkXSegmentProgressTable({
         <button
           type="button"
           onClick={() => setOpen(true)}
-          className="inline-flex items-center gap-1 text-2xs font-semibold text-primary-glow hover:text-primary"
+          className="inline-flex items-center gap-1 text-2xs font-semibold text-[hsl(var(--primary-text))] hover:text-primary"
         >
           Ver todos
           <ArrowRight className="h-3.5 w-3.5" />
