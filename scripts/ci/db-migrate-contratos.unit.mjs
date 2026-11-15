@@ -408,3 +408,36 @@ test('W28: validate-runtime-proof — JSON valido mas proof errado sai com 1', (
   assert.equal(r.status, 1, 'exit 1 quando proof diverge do contrato');
   assert.match(r.stderr, /runtime inesperado|migration cancelada/, 'mensagem de divergencia no stderr');
 });
+
+// GA18: o `-f` do contrato ia cru para o psql-safe, resolvido contra o cwd. Um
+// contrato com traversal fazia o executor ler SQL de FORA do repo e apresentar o
+// resultado como prova de runtime da migration. Os dois casos abaixo fecham o
+// par: o `-f` que so parece existir (dentro de comentario do -c) nao vira
+// arquivo, e o `-f` que aponta para fora do repo aborta antes de rodar nada.
+test('GA18: -f escrito em comentario do -c nao vira arquivo', () => {
+  const texto =
+    '              RUNTIME=$(node x.mjs -X -v ON_ERROR_STOP=1 -At -c "\n' +
+    'SELECT 1 -- -f scripts/db-audit/evil.sql\n' +
+    '              ")';
+  const [inv] = extrairInvocacoes(texto, '20260101000000', 'sintetico');
+  assert.equal(inv.arquivo, null, 'comentario nao pode promover o -f a arquivo');
+  assert.match(inv.sql, /SELECT 1/, 'o SQL inline continua sendo o corpo do -c');
+});
+
+test('GA18: -f com traversal sai com 2 e nao chega ao psql', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'contratos-ga18-'));
+  try {
+    writeFileSync(
+      join(dir, '20990303000000.sql'),
+      '            *)\n' +
+        '              RUNTIME=$(node x.mjs -X -v ON_ERROR_STOP=1 -At \\\n' +
+        '                -f ../fora.sql)\n',
+    );
+    const r = rodaExecutor('20990303000000', dir);
+    assert.equal(r.status, 2, 'exit 2 quando o -f escapa do repo');
+    assert.equal(r.stdout, '', 'nao pode imprimir prova para o workflow');
+    assert.match(r.stderr, /::error::contrato com -f fora do repo/, 'o erro tem de ser do executor');
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
