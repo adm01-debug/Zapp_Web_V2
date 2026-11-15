@@ -308,6 +308,25 @@ Deno.test("C121/IP1: mark-read passa e send-status é bloqueado com a instância
   }
 });
 
+// Achado do Devin na #3144: `send-template` entrega template aprovado pela Meta no
+// flavor v2 e tem entrada na UI (SendTemplateDialog). Fora do conjunto, saía durante
+// a pausa e o 429 dele não acionava a auto-pausa.
+Deno.test("C121/IP1: send-template é bloqueado com a instância pausada", async () => {
+  const fake = createFakeEvolution();
+  Deno.env.set("EVOLUTION_API_URL", fake.url);
+  try {
+    const res = await handleEvolutionApi(
+      controlRequest("send-template", { instanceName: "PRINCIPAL", number: "5511999999999", templateName: "boas_vindas", templateLanguage: "pt_BR" }),
+      { callerClient: makeCallerClient({ isAdminOrSupervisor: true }), supabase: pauseServiceClient({ paused: true, connection: { id: "x" } }) },
+    );
+    const json = await res.json();
+    assertEquals(json.paused, true);
+    assertEquals(fake.posts.length, 0, "template não pode sair durante a pausa");
+  } finally {
+    await fake.stop();
+  }
+});
+
 // 429 do provedor num envio grava a pausa automática (30 min, instância correta) e
 // preserva a resposta original; falha da RPC não altera a resposta.
 for (const rpcFails of [false, true]) {

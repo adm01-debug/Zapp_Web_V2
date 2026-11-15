@@ -7,4 +7,8 @@
 export const PAUSE_BLOCKED_ACTIONS: ReadonlySet<string> = new Set([
   'send-text', 'send-media', 'send-audio', 'send-sticker', 'send-location',
   'send-contact', 'send-poll', 'send-list', 'send-buttons', 'send-ptv', 'send-status',
+  // `send-template` entrega template aprovado pela Meta no flavor v2 e tem entrada
+  // na UI (SendTemplateDialog): sem estar aqui, template saía durante a pausa e o
+  // 429 dele nao acionava a auto-pausa.
+  'send-template',
 ]);
