@@ -102,9 +102,14 @@ export function useObjectionHandler({
   const local = useMemo((): ObjectionResult => {
     if (!clientText) return { detected: false, type: null, isSmokescreen: false, treatmentSteps: [], suggestedReply: '' };
     const lower = clientText.toLowerCase();
+    // Vence a categoria com MAIS gatilhos no texto, nao a primeira da lista: em
+    // "Cotei em outra empresa, o prazo deles e melhor" o primeiro acerto e prazo
+    // (1 gatilho) e a objecao real e concorrente (2 gatilhos).
     let detectedType: ObjeçãoType | null = null;
+    let maxMatches = 0;
     for (const [type, triggers] of Object.entries(OBJECTION_TRIGGERS) as [ObjeçãoType, string[]][]) {
-      if (triggers.some((t) => lower.includes(t))) { detectedType = type; break; }
+      const matchCount = triggers.filter((t) => lower.includes(t)).length;
+      if (matchCount > maxMatches) { maxMatches = matchCount; detectedType = type; }
     }
     if (!detectedType) return { detected: false, type: null, isSmokescreen: false, treatmentSteps: [], suggestedReply: '' };
     const hasBuySignal = SMOKESCREEN_SIGNALS.some((s) => lower.includes(s));
