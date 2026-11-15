@@ -19,7 +19,7 @@
  * esquema atual (colunas brinde_*, `copilot_insights.content`).
  */
 import { z } from "https://esm.sh/zod@3.23.8";
-import type { SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.87.1";
+import type { SupabaseClient } from "npm:@supabase/supabase-js@2.87.1";
 
 export const COPILOT_TICK_KIND = "copilot.tick";
 export const COPILOT_FUNCTION_NAME = "copilot-live";
