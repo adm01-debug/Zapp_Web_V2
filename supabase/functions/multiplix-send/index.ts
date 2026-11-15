@@ -1045,6 +1045,21 @@ export async function handleMultiplixSend(
               // attempt_count do item + 1 e a tentativa que acabou de falhar (o claim ja
               // incrementou no banco; o valor que list_multiplix_claimable_items devolve e o
               // anterior).
+              // C121/IP1: 429 aqui tambem pausa a instancia por 30 min. Este e o terceiro
+              // caminho de entrega (o disparo chama o adaptador direto, sem passar pelo proxy
+              // da evolution-api nem pelo message-delivery): sem isto os demais destinatarios
+              // do disparo e os envios do inbox seguiam liberados na mesma instancia que o
+              // provedor acabou de limitar. Falha ao registrar nao altera o reagendamento.
+              if (envio.status === 429 && beforeSendInstanceId) {
+                const { error: autoPauseError } = await supabase.rpc("auto_pause_instance", {
+                  p_instance: beforeSendInstanceId,
+                  p_minutes: 30,
+                  p_reason: "limite de envio (429 do provedor)",
+                });
+                if (autoPauseError) {
+                  log.warn("auto_pause_instance falhou", { correlationId, itemId: item.item_id, code: autoPauseError.code });
+                }
+              }
               const attempt = (typeof item.attempt_count === "number" ? item.attempt_count : 0) + 1;
               const decision = planRetry(providerError, attempt);
               // Sem retryAfter o kernel ja decidiu dead_letter (attempt >= MAX_ATTEMPTS).

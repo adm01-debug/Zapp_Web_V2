@@ -2107,6 +2107,11 @@ Deno.test("MX05: 429 do provedor reagenda o item com backoff limitado (nunca 'fa
   assert(payload.provider_status === 429, `provider_status inesperado: ${String(payload.provider_status)}`);
   // E o item nao conta como falha na resposta do worker.
   assert(corpo.failed === 0, `o reagendamento nao pode contar como falha: ${JSON.stringify(corpo)}`);
+  // C121/IP1: o 429 tambem pausa a instancia 30 min, senao os demais destinatarios e o
+  // inbox seguem enviando pela instancia que o provedor acabou de limitar.
+  const pausas = rpcs(ctx, "auto_pause_instance");
+  assert(pausas.length === 1, `429 do disparo tem de registrar a pausa automatica (chamadas: ${pausas.length})`);
+  assert(pausas[0].args.p_minutes === 30, `a pausa automatica e de 30 min, veio ${String(pausas[0].args.p_minutes)}`);
 });
 
 Deno.test("MX05/guarda: erro PERMANENTE continua indo para dead letter (nao vira retentativa)", async () => {
