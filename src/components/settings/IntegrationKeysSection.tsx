@@ -38,7 +38,7 @@ function dataRegistradaEm(iso: string | null | undefined): string | null {
 
 export function IntegrationKeysSection() {
   const { isAdmin, loading: roleLoading } = useUserRole();
-  const { settings, isLoading, getSetting, addSetting } = useGlobalSettings();
+  const { settings, isLoading, getSetting, addSetting } = useGlobalSettings({ enabled: isAdmin });
   const [editValues, setEditValues] = useState<Record<string, string>>({});
   const [savingKey, setSavingKey] = useState<string | null>(null);
 
