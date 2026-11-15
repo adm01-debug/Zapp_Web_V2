@@ -1,4 +1,4 @@
-import { useMemo, useRef } from 'react';
+import { lazy, Suspense, useMemo, useRef } from 'react';
 import { cn } from '@/lib/utils';
 import { Message } from '@/types/chat';
 // CV-061 — ghost text overlay (texto fantasma)
@@ -30,6 +30,11 @@ import { InputPreviewBars } from './InputPreviewBars';
 import { useChatInputLogic, setNativeValue } from './useChatInputLogic';
 import { ConnectionHealthBanner } from './ConnectionHealthBanner';
 import { useConnectionHealthBanner } from '@/hooks/inbox/useConnectionHealthBanner';
+import { RadarBoundary } from '@/components/inbox/copilot/RadarBoundary';
+
+// CV-051..060 — painel RADAR ao vivo (Fases 4-6), sob demanda. Sem sessao do motor
+// (capacidade ai.capability.copilot_live desligada) ele nao renderiza nada.
+const RadarLive = lazy(() => import('@/components/inbox/copilot/RadarLive'));
 
 interface QuickReplyItem {
   id: string;
@@ -226,6 +231,18 @@ export function ChatInputArea(props: ChatInputAreaProps) {
           clientName={contactName}
           onInsertText={(text) => setNativeValue(inputRef, text)}
         />
+      )}
+
+      {!logic.isMobile && !editingMessage && contactId && (
+        <RadarBoundary>
+          <Suspense fallback={null}>
+            <RadarLive
+              className="px-4 pt-2"
+              contactId={contactId}
+              onDraftText={(text) => setNativeValue(inputRef, text)}
+            />
+          </Suspense>
+        </RadarBoundary>
       )}
 
       <div className={cn("px-4 py-3 border-t border-border bg-inbox-panel", logic.isMobile && "px-2.5 py-2 safe-area-bottom")}>
