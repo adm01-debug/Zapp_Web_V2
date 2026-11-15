@@ -128,6 +128,12 @@ export function ChatInputArea(props: ChatInputAreaProps) {
     [quickReplies],
   );
   const lastClientMessage = radarMessages.filter((m) => m.sender === 'contact').slice(-1)[0]?.content;
+  // Id da ultima mensagem do contato: muda a cada mensagem recebida e e o sinal
+  // que faz o RADAR procurar a sessao que o motor acabou de criar (RadarLive).
+  const lastContactMessageId = useMemo(
+    () => [...messages].reverse().find((m) => m.sender === 'contact')?.id,
+    [messages],
+  );
   // CV-071..150 — dias desde a última mensagem do cliente (risco de perda, Fase 8)
   const daysSinceLastContact = useMemo(() => {
     const ultima = [...messages].reverse().find((m) => m.sender === 'contact');
@@ -239,6 +245,7 @@ export function ChatInputArea(props: ChatInputAreaProps) {
             <RadarLive
               className="px-4 pt-2"
               contactId={contactId}
+              lastContactMessageId={lastContactMessageId}
               onDraftText={(text) => setNativeValue(inputRef, text)}
             />
           </Suspense>
