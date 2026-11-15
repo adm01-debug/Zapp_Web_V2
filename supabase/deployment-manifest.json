@@ -8,7 +8,7 @@
   },
   "summary": {
     "function_count": 92,
-    "source_file_count": 179,
+    "source_file_count": 180,
     "verify_jwt_true": 77,
     "verify_jwt_false": 15
   },
@@ -156,8 +156,8 @@
     },
     {
       "path": "supabase/functions/_shared/evolution-api-proxy.ts",
-      "bytes": 17091,
-      "sha256": "61a4c20841cf933d69fee36a985577402791e02682f8129db8f06a193c710bf0"
+      "bytes": 17485,
+      "sha256": "c7cb01170632ad14b1a947de7fbf1b3cd84ca97180744d9c8f85623c61d3673a"
     },
     {
       "path": "supabase/functions/_shared/evolution-control-authz.ts",
@@ -248,6 +248,11 @@
       "path": "supabase/functions/_shared/instance_pause.ts",
       "bytes": 1010,
       "sha256": "13a83be08c82f3e01f55031f273ca7e999132e9487b8badfda08caf413220d49"
+    },
+    {
+      "path": "supabase/functions/_shared/instance-pause-actions.ts",
+      "bytes": 1485,
+      "sha256": "217fb09ce441a57b01ff5e00bc8e0b9bde3fc8363904dbc46df58a93ba21262e"
     },
     {
       "path": "supabase/functions/_shared/media-egress.ts",
@@ -641,8 +646,8 @@
     },
     {
       "path": "supabase/functions/evolution-api/index.ts",
-      "bytes": 104679,
-      "sha256": "e841c2f3a4325c9042c4e922cae7937dbf8e8efcea0659107cbd94ef16c3fe28"
+      "bytes": 106641,
+      "sha256": "bcbbf4eed94a64f17b0d54d654346ef9ccb76f4d305616c6a10f7d0f23603fdf"
     },
     {
       "path": "supabase/functions/evolution-sync/index.ts",
@@ -721,8 +726,8 @@
     },
     {
       "path": "supabase/functions/message-delivery/index.ts",
-      "bytes": 41092,
-      "sha256": "275a01a34da3060f40158de10d35e97b7f3ace122e701b66760f107e784dc1cd"
+      "bytes": 41979,
+      "sha256": "fd1a3a521d63a1f025c638335b861d72821365907c2752f9dded095632d19248"
     },
     {
       "path": "supabase/functions/metrics/index.ts",
@@ -771,8 +776,8 @@
     },
     {
       "path": "supabase/functions/multiplix-send/index.ts",
-      "bytes": 67219,
-      "sha256": "561ee437fcc21bfaa596518bfd54028580a093888f6a8f2999ceee9d367d3b6c"
+      "bytes": 69166,
+      "sha256": "5b8460b17a9e2471fc3b7c9566b1238bb0ef4301626b4d9e3fa64977c9eea1da"
     },
     {
       "path": "supabase/functions/multiplix-voices/index.ts",
@@ -866,8 +871,8 @@
     },
     {
       "path": "supabase/functions/talkx-send/process-recipient.ts",
-      "bytes": 34293,
-      "sha256": "39fda4b61b1d2e50561fcb583974f2fca4d50a2edb68bf3eb02f3a5d1b038be4"
+      "bytes": 35835,
+      "sha256": "0d271615292cfb6c07d1e8a97483430a65ad065419d954687f1931ee5642363c"
     },
     {
       "path": "supabase/functions/talkx-storage-purge/index.ts",
@@ -1939,7 +1944,7 @@
       "name": "evolution-api",
       "entrypoint": "supabase/functions/evolution-api/index.ts",
       "verify_jwt": true,
-      "source_sha256": "97177988d07b34d0eb14d53c049ece8060196aca460bce7f0aac4c3f3cc206bf",
+      "source_sha256": "8a3bd4c970997593dc07f1f3ccc35ec3b18f3f8c5b2a4def459766bb00295f15",
       "source_files": [
         "supabase/functions/_shared/cors-origins.ts",
         "supabase/functions/_shared/cron-secret-auth.ts",
@@ -1953,6 +1958,8 @@
         "supabase/functions/_shared/evolution-sync-actions.ts",
         "supabase/functions/_shared/evolution-types.ts",
         "supabase/functions/_shared/hmac-validation.ts",
+        "supabase/functions/_shared/instance_pause.ts",
+        "supabase/functions/_shared/instance-pause-actions.ts",
         "supabase/functions/_shared/media-egress.ts",
         "supabase/functions/_shared/rate-limit-log.ts",
         "supabase/functions/_shared/request-policy.ts",
@@ -2218,7 +2225,7 @@
       "name": "message-delivery",
       "entrypoint": "supabase/functions/message-delivery/index.ts",
       "verify_jwt": true,
-      "source_sha256": "3b70bdeaf18291c282dab7e3111b4ae8a22f8b1f02b3acb2413f85ba7618bdf0",
+      "source_sha256": "4b63ab12b330239b67af2ade9d629430e2b203d75587068c4237801492ce919f",
       "source_files": [
         "supabase/functions/_shared/ai-jobs.ts",
         "supabase/functions/_shared/cors-origins.ts",
@@ -2231,6 +2238,7 @@
         "supabase/functions/_shared/evolution-types.ts",
         "supabase/functions/_shared/hmac-validation.ts",
         "supabase/functions/_shared/instance_pause.ts",
+        "supabase/functions/_shared/instance-pause-actions.ts",
         "supabase/functions/_shared/media-egress.ts",
         "supabase/functions/_shared/messaging/errors.ts",
         "supabase/functions/_shared/rate-limit-log.ts",
@@ -2333,7 +2341,7 @@
       "name": "multiplix-send",
       "entrypoint": "supabase/functions/multiplix-send/index.ts",
       "verify_jwt": true,
-      "source_sha256": "881592b8853d70a32e06e20e478ef0a87b4af4d9a02ff24ff51f4d9a01faa2c5",
+      "source_sha256": "003629855ff430714491eac973fab59f80a763dbe860b9a42887bfb7394d5220",
       "source_files": [
         "supabase/functions/_shared/cors-origins.ts",
         "supabase/functions/_shared/evolution-api-proxy.ts",
@@ -2344,6 +2352,7 @@
         "supabase/functions/_shared/evolution-types.ts",
         "supabase/functions/_shared/hmac-validation.ts",
         "supabase/functions/_shared/instance_pause.ts",
+        "supabase/functions/_shared/instance-pause-actions.ts",
         "supabase/functions/_shared/media-egress.ts",
         "supabase/functions/_shared/messaging/eligibility.ts",
         "supabase/functions/_shared/messaging/errors.ts",
@@ -2643,7 +2652,7 @@
       "name": "talkx-send",
       "entrypoint": "supabase/functions/talkx-send/index.ts",
       "verify_jwt": true,
-      "source_sha256": "ec40217faf19a91b25851c14d44cdb8b2edade5aa07bfb2d59ccdfe9b5a8400e",
+      "source_sha256": "d61dd8fb0aba8291864802218ab78e8ce2b0256e7a318659fe27019a0ed0844e",
       "source_files": [
         "supabase/functions/_shared/ai-jobs.ts",
         "supabase/functions/_shared/cors-origins.ts",
@@ -2656,6 +2665,7 @@
         "supabase/functions/_shared/evolution-types.ts",
         "supabase/functions/_shared/hmac-validation.ts",
         "supabase/functions/_shared/instance_pause.ts",
+        "supabase/functions/_shared/instance-pause-actions.ts",
         "supabase/functions/_shared/media-egress.ts",
         "supabase/functions/_shared/messaging/eligibility.ts",
         "supabase/functions/_shared/messaging/errors.ts",
@@ -2811,5 +2821,5 @@
       ]
     }
   ],
-  "manifest_sha256": "def318ea302d9ccc5f0baa0e99de7f54d2ea2dea21ac05cef4b9b9c5b0e2b6b7"
+  "manifest_sha256": "8f1e2920054ad4bde35cb210eef7ab38587f7b80c18faa55b9b944bfaebfdc9d"
 }

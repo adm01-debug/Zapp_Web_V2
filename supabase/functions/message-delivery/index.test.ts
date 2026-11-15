@@ -386,6 +386,28 @@ Deno.test('PD-80: 401 do provedor vira code=instance_unavailable; POST iniciado 
   assertEqual(rpcCalled(client, 'enqueue_ai_job'), false, 'enqueue_ai_job não chamado');
 });
 
+// C121/IP1: este e o caminho REAL de entrega da inbox — deliverOutbound chama o
+// adaptador direto, sem passar pelo proxy da evolution-api. Sem a auto-pausa aqui, o
+// limite do provedor nao freava o fluxo principal de atendimento (achado do Codex na #3144).
+Deno.test('C121/IP1: 429 do provedor na entrega pausa a instância por 30 min', async () => {
+  const client = makeClient({ claim: { data: [CLAIM], error: null } });
+  await handleMessageDeliveryRequest(postRequest(), makeDeps(client, async () =>
+    jsonOf(429, { message: 'Too Many Requests' })));
+  const pausa = rpcArgs(client, 'auto_pause_instance');
+  if (!pausa) throw new Error('auto_pause_instance não foi chamado');
+  assertEqual(pausa.p_instance, 'main', 'auto_pause p_instance');
+  assertEqual(pausa.p_minutes, 30, 'auto_pause p_minutes');
+});
+
+// Só o limite de envio pausa: rejeição definitiva por conteúdo não pode tirar a
+// instância do ar.
+Deno.test('C121/IP1: rejeição 400 do provedor NÃO pausa a instância', async () => {
+  const client = makeClient({ claim: { data: [CLAIM], error: null } });
+  await handleMessageDeliveryRequest(postRequest(), makeDeps(client, async () =>
+    jsonOf(400, { message: 'Bad Request' })));
+  assertEqual(rpcCalled(client, 'auto_pause_instance'), false, 'auto_pause_instance não deve ser chamado');
+});
+
 Deno.test('PD-80: 429 do provedor vira code=rate_limited; POST iniciado chama failClaim', async () => {
   const client = makeClient({ claim: { data: [CLAIM], error: null } });
   const response = await handleMessageDeliveryRequest(postRequest(), makeDeps(client, async () =>
