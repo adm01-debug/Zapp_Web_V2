@@ -169,6 +169,46 @@ export async function readCapabilityFlag(key: string): Promise<boolean | null> {
   }
 }
 
+/**
+ * Variante fail-closed: AUSÊNCIA da linha vale DESLIGADA.
+ * Para capacidades que "nascem desligadas" (ex.: `copilot_live`) — o operador precisa
+ * ligar de propósito; ao contrário do padrão IA-009 onde ausência = LIGADA.
+ */
+export async function readCapabilityFlagFailClosed(key: string): Promise<boolean | null> {
+  try {
+    const supabase = await getServiceClient();
+    const { data, error } = await supabase
+      .from("feature_flags")
+      .select("enabled")
+      .eq("key", key)
+      .maybeSingle();
+    if (error) {
+      console.warn(JSON.stringify({
+        level: "warn",
+        source: "edge",
+        msg: "[ai-feature-flags] falha ao ler a flag de capacidade; capacidade BLOQUEADA (fail-closed)",
+        key,
+        error: error.message ?? String(error),
+      }));
+      return null;
+    }
+    // Linha ausente = DESLIGADA (capacidade nasce desligada; sem seed o operador não ligou).
+    if (data === null || data === undefined) return false;
+    const enabled = (data as { enabled?: unknown }).enabled;
+    if (typeof enabled !== "boolean") return null;
+    return enabled;
+  } catch (err) {
+    console.warn(JSON.stringify({
+      level: "warn",
+      source: "edge",
+      msg: "[ai-feature-flags] leitura da flag indisponivel; capacidade BLOQUEADA (fail-closed)",
+      key,
+      error: err instanceof Error ? err.message : String(err),
+    }));
+    return null;
+  }
+}
+
 /** Resposta explícita de capacidade desativada (status >= 500 não esconde o motivo). */
 function capabilityDisabledResponse(req: Request): Response {
   return new Response(
