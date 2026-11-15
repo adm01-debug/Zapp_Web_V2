@@ -11,7 +11,7 @@ import { FileThumb } from './FileThumb';
 import { FileActionsMenu } from './FileActionsMenu';
 import { AudioPlayButton } from './AudioPlayButton';
 import { SenderAvatar } from './SenderAvatar';
-import { FILE_ACTION_BUTTON, FILE_ACTION_BUTTON_DISABLED } from './fileActionButton';
+import { FILE_ACTION_BUTTON } from './fileActionButton';
 
 /**
  * Tabela da aba Arquivos (etapas 23-24). `SortableHeader` portado do `ContactsTable` com
@@ -109,6 +109,7 @@ interface FilesTableViewProps {
   onSelect: (item: ContactMediaItem) => void;
   onToggleSelection: (id: string) => void;
   onPreview: (item: ContactMediaItem) => void;
+  onForward: (item: ContactMediaItem) => void;
   onRequestDelete: (item: ContactMediaItem) => void;
 }
 
@@ -125,6 +126,7 @@ export function FilesTableView({
   onSelect,
   onToggleSelection,
   onPreview,
+  onForward,
   onRequestDelete,
 }: FilesTableViewProps) {
   const showSender = containerWidth === null || containerWidth >= 720;
@@ -241,7 +243,7 @@ export function FilesTableView({
                     <button type="button" aria-label="Visualizar" className={FILE_ACTION_BUTTON} onClick={() => onPreview(item)}>
                       <Eye className="w-3.5 h-3.5" />
                     </button>
-                    <button type="button" aria-label="Encaminhar" title="Disponível em breve" disabled className={FILE_ACTION_BUTTON_DISABLED}>
+                    <button type="button" aria-label="Encaminhar" className={FILE_ACTION_BUTTON} onClick={() => onForward(item)}>
                       <Share2 className="w-3.5 h-3.5" />
                     </button>
                     <FileActionsMenu item={item} onRequestDelete={onRequestDelete} />

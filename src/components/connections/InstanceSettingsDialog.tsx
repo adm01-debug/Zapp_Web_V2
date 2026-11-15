@@ -192,7 +192,7 @@ export function InstanceSettingsDialog({ open, onOpenChange, instanceName, conne
       <DialogContent aria-describedby={undefined} className="sm:max-w-2xl max-h-[85vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2"><Settings className="w-5 h-5 text-primary" />Configurações — {connectionName}</DialogTitle>
-          <DialogDescription>Gerencie configurações, perfil, privacidade, e presença da instância</DialogDescription>
+          <DialogDescription>Gerencie configurações, perfil, privacidade e presença da instância</DialogDescription>
         </DialogHeader>
         <Tabs defaultValue="settings">
           <TabsList className="flex w-full justify-start overflow-x-auto">

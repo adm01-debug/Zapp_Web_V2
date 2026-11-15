@@ -10,7 +10,7 @@ const api = vi.hoisted(() => ({
   acceptInvite: vi.fn(),
   toggleEphemeral: vi.fn(),
 }));
-const toastMock = vi.hoisted(() => ({ success: vi.fn(), error: vi.fn() }));
+const toastMock = vi.hoisted(() => ({ success: vi.fn(), error: vi.fn(), warning: vi.fn() }));
 
 vi.mock('@/hooks/integrations/useEvolutionApi', () => ({ useEvolutionApi: () => api }));
 vi.mock('sonner', () => ({ toast: toastMock }));
@@ -52,34 +52,104 @@ describe('JoinGroupByInviteDialog', () => {
     await waitFor(() => expect(onJoined).toHaveBeenCalled());
   });
 
-  it('provedor sem suporte (notSupported) vira aviso de erro e não abre a prévia', async () => {
+  it('sem prévia na conexão (notSupported, Evolution GO) avisa em português e libera entrar sem prévia', async () => {
     api.getInviteInfo.mockRejectedValue(Object.assign(new Error('invite-info não é suportado na Evolution GO.'), { notSupported: true }));
+    api.acceptInvite.mockResolvedValue({});
     render(<JoinGroupByInviteDialog open onOpenChange={vi.fn()} connections={[conexao]} />);
 
     fireEvent.change(screen.getByLabelText(/link ou código/i), { target: { value: 'AbC123' } });
     fireEvent.click(screen.getByRole('button', { name: /ver convite/i }));
 
-    await waitFor(() => expect(toastMock.error).toHaveBeenCalledWith('invite-info não é suportado na Evolution GO.'));
+    await waitFor(() => expect(toastMock.warning).toHaveBeenCalledWith('A prévia do convite não está disponível nesta conexão do WhatsApp (Evolution GO).'));
+    expect(toastMock.error).not.toHaveBeenCalled();
     expect(screen.queryByTestId('previa-convite')).not.toBeInTheDocument();
-    expect(api.acceptInvite).not.toHaveBeenCalled();
+    expect(screen.getByTestId('convite-sem-previa')).toBeInTheDocument();
+
+    const entrar = screen.getByRole('button', { name: /entrar no grupo/i });
+    expect(entrar).toBeEnabled();
+    fireEvent.click(entrar);
+    await waitFor(() => expect(api.acceptInvite).toHaveBeenCalledWith('PRINCIPAL', 'AbC123'));
+  });
+
+  it('erro de verdade na prévia continua erro e não libera entrar', async () => {
+    api.getInviteInfo.mockRejectedValue(new Error('Convite expirado'));
+    render(<JoinGroupByInviteDialog open onOpenChange={vi.fn()} connections={[conexao]} />);
+
+    fireEvent.change(screen.getByLabelText(/link ou código/i), { target: { value: 'AbC123' } });
+    fireEvent.click(screen.getByRole('button', { name: /ver convite/i }));
+
+    await waitFor(() => expect(toastMock.error).toHaveBeenCalledWith('Convite expirado'));
+    expect(screen.getByRole('button', { name: /entrar no grupo/i })).toBeDisabled();
+  });
+
+  it('trocar o link depois do aviso volta a exigir a consulta', async () => {
+    api.getInviteInfo.mockRejectedValue(Object.assign(new Error('x'), { notSupported: true }));
+    render(<JoinGroupByInviteDialog open onOpenChange={vi.fn()} connections={[conexao]} />);
+
+    fireEvent.change(screen.getByLabelText(/link ou código/i), { target: { value: 'AbC123' } });
+    fireEvent.click(screen.getByRole('button', { name: /ver convite/i }));
+    await screen.findByTestId('convite-sem-previa');
+
+    fireEvent.change(screen.getByLabelText(/link ou código/i), { target: { value: 'Outro99' } });
+    expect(screen.queryByTestId('convite-sem-previa')).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /entrar no grupo/i })).toBeDisabled();
   });
 });
 
+function escolherDuracao(opcao: string) {
+  const trigger = screen.getByRole('combobox', { name: 'Duração' });
+  trigger.focus();
+  fireEvent.keyDown(trigger, { key: 'Enter' });
+  fireEvent.click(screen.getByRole('option', { name: opcao }));
+}
+
 describe('GroupEphemeralDialog', () => {
-  it('aplica a duração escolhida (padrão: desligado = 0) no grupo pela conexão dele', async () => {
+  it('nada vem pré-selecionado: Aplicar fica desabilitado até escolher a duração', () => {
+    render(<GroupEphemeralDialog open onOpenChange={vi.fn()} instanceName="PRINCIPAL" groupJid="123@g.us" groupName="Fornecedores" />);
+    expect(screen.getByRole('combobox', { name: 'Duração' })).toHaveTextContent('Escolha a duração');
+    expect(screen.getByRole('button', { name: /^aplicar$/i })).toBeDisabled();
+    expect(api.toggleEphemeral).not.toHaveBeenCalled();
+  });
+
+  it('aplica a duração escolhida no grupo pela conexão dele', async () => {
     api.toggleEphemeral.mockResolvedValue({});
     const onOpenChange = vi.fn();
     render(<GroupEphemeralDialog open onOpenChange={onOpenChange} instanceName="PRINCIPAL" groupJid="123@g.us" groupName="Fornecedores" />);
 
+    escolherDuracao('7 dias');
+    fireEvent.click(screen.getByRole('button', { name: /^aplicar$/i }));
+
+    await waitFor(() => expect(api.toggleEphemeral).toHaveBeenCalledWith('PRINCIPAL', '123@g.us', 604800));
+    expect(toastMock.success).toHaveBeenCalledWith('Mensagens temporárias ativadas');
+    expect(onOpenChange).toHaveBeenCalledWith(false);
+  });
+
+  it('desligar só quando escolhido explicitamente', async () => {
+    api.toggleEphemeral.mockResolvedValue({});
+    render(<GroupEphemeralDialog open onOpenChange={vi.fn()} instanceName="PRINCIPAL" groupJid="123@g.us" groupName="Fornecedores" />);
+
+    escolherDuracao('Desligado');
     fireEvent.click(screen.getByRole('button', { name: /^aplicar$/i }));
 
     await waitFor(() => expect(api.toggleEphemeral).toHaveBeenCalledWith('PRINCIPAL', '123@g.us', 0));
     expect(toastMock.success).toHaveBeenCalledWith('Mensagens temporárias desligadas');
-    expect(onOpenChange).toHaveBeenCalledWith(false);
+  });
+
+  it('notSupported (Evolution GO) vira aviso em português, não erro com nome de rota', async () => {
+    api.toggleEphemeral.mockRejectedValue(Object.assign(new Error('toggle-ephemeral não é suportado na Evolution GO.'), { notSupported: true }));
+    render(<GroupEphemeralDialog open onOpenChange={vi.fn()} instanceName="PRINCIPAL" groupJid="123@g.us" groupName="Fornecedores" />);
+
+    escolherDuracao('24 horas');
+    fireEvent.click(screen.getByRole('button', { name: /^aplicar$/i }));
+
+    await waitFor(() => expect(toastMock.warning).toHaveBeenCalledWith('Mensagens temporárias não está disponível nesta conexão do WhatsApp (Evolution GO).'));
+    expect(toastMock.error).not.toHaveBeenCalled();
+    expect(toastMock.success).not.toHaveBeenCalled();
   });
 
   it('grupo sem conexão vinculada não chama a Edge', async () => {
     render(<GroupEphemeralDialog open onOpenChange={vi.fn()} instanceName="" groupJid="123@g.us" groupName="X" />);
+    escolherDuracao('24 horas');
     fireEvent.click(screen.getByRole('button', { name: /^aplicar$/i }));
     await waitFor(() => expect(toastMock.error).toHaveBeenCalled());
     expect(api.toggleEphemeral).not.toHaveBeenCalled();

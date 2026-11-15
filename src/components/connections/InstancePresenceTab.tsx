@@ -6,6 +6,7 @@ import { Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useEvolutionApi } from '@/hooks/integrations/useEvolutionApi';
 import { PRESENCE_OPTIONS, type Presenca } from './instancePresenceOptions';
+import { isEvolutionNotSupported, mensagemNaoSuportado } from '@/lib/evolutionNotSupported';
 
 /**
  * Aba "Presença" do InstanceSettingsDialog.
@@ -14,7 +15,7 @@ import { PRESENCE_OPTIONS, type Presenca } from './instancePresenceOptions';
  * Edge, mas nenhuma tela o chamava — e o #2054 apagou a rota. Esta aba é a
  * porta de entrada que faltava, no diálogo de administração da conexão (a
  * ação é de admin/supervisor). Na Evolution GO a rota não existe: a Edge
- * responde `notSupported` e o aviso aparece como erro, nunca como sucesso.
+ * responde `notSupported`: vira um aviso em português (nunca sucesso).
  */
 export function PresenceTabContent({ instanceName }: { instanceName: string }) {
   const { setPresence } = useEvolutionApi();
@@ -27,6 +28,10 @@ export function PresenceTabContent({ instanceName }: { instanceName: string }) {
       await setPresence(instanceName, presenca);
       toast.success('Presença atualizada');
     } catch (err) {
+      if (isEvolutionNotSupported(err)) {
+        toast.warning(mensagemNaoSuportado('A troca de presença'));
+        return;
+      }
       toast.error(err instanceof Error && err.message ? err.message : 'Não foi possível atualizar a presença');
     } finally {
       setEnviando(false);
