@@ -11,7 +11,7 @@ import { HeroBenefits } from '@/components/auth/HeroBenefits';
 import { useAuthForm } from '@/hooks/auth/useAuthForm';
 import { GOOGLE_OAUTH_ENABLED } from '@/integrations/supabase/client';
 import { Link } from 'react-router-dom';
-import heroWorldmap from '@/assets/hero-worldmap.jpg';
+import heroWorldmap from '@/assets/hero-worldmap.webp';
 
 export default function Auth() {
   const {
