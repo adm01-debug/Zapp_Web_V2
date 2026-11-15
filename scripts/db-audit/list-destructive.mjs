@@ -8,7 +8,10 @@
 //   REVOKE ...                retirada de privilegio muda o plano de acesso
 //   TRUNCATE ...              apaga todas as linhas fora de transacao visivel
 //   DELETE FROM ...           DML destrutiva em migration versionada
-//   ALTER ... DROP COLUMN|CONSTRAINT (coberto pelo DROP generico acima)
+//   ALTER ... DROP <coluna|constraint>  (COLUMN e opcional no PostgreSQL; as
+//                             sub-acoes DROP DEFAULT/NOT NULL/IDENTITY/EXPRESSION
+//                             de ALTER COLUMN nao contam)
+//   DELETE FROM / TRUNCATE embutidos em CTE (`WITH … AS (DELETE …)`)
 //
 // Fail-closed: arquivo ilegivel ou fora de forma => exit 2, nunca "limpo".
 // Linha reportada e aproximada (comentarios/strings multilinha viram um
@@ -18,10 +21,21 @@ import { readFileSync } from 'node:fs';
 import { stripSqlComments } from './sql-lexer.mjs';
 
 const RE_DESTRUTIVO = /^\s*(DROP\s|REVOKE\s|TRUNCATE\s|DELETE\s+FROM\b)/i;
+// `DELETE`/`TRUNCATE` tambem destroem quando NAO estao na cabeca do statement: um
+// `WITH x AS (DELETE FROM t RETURNING id) SELECT …` comeca por `WITH` e escapava do
+// ancoramento em `^`. O lexer ja tornou comentario, string e corpo dollar-quoted
+// opacos, entao procurar no statement inteiro nao cria falso positivo de texto.
+const RE_DESTRUTIVO_EMBUTIDO = /\b(DELETE\s+FROM|TRUNCATE)\b/i;
 // ALTER so e destrutivo quando derruba coluna ou constraint (o plano cita
 // `ALTER … DROP`); um ALTER ADD COLUMN e rotina e nao pode barrar o lote.
 const RE_ALTER = /^\s*ALTER\b/i;
-const RE_ALTER_DROP = /\bDROP\s+(COLUMN|CONSTRAINT)\b/i;
+// No PostgreSQL a palavra COLUMN e OPCIONAL: `ALTER TABLE t DROP apelido` e
+// `ALTER TABLE t DROP IF EXISTS apelido` removem a coluna do mesmo jeito. Exigir
+// COLUMN|CONSTRAINT deixava as duas formas passarem como migration limpa. Agora
+// qualquer `DROP <algo>` dentro de um ALTER conta, MENOS as sub-acoes de
+// `ALTER COLUMN`, que nao removem dado nem estrutura: DROP DEFAULT, DROP NOT NULL,
+// DROP IDENTITY, DROP EXPRESSION.
+const RE_ALTER_DROP = /\bDROP\s+(?!DEFAULT\b|NOT\s+NULL\b|IDENTITY\b|EXPRESSION\b|GENERATED\b|SYSTEM\b)/i;
 
 /**
  * @param {string} sql texto da migration
@@ -35,6 +49,10 @@ export function listarDestrutivos(sql) {
     const m = RE_DESTRUTIVO.exec(parte);
     let tipo = m ? m[1].trim().split(/\s+/)[0].toUpperCase() : null;
     if (!tipo && RE_ALTER.test(parte) && RE_ALTER_DROP.test(parte)) tipo = 'DROP';
+    if (!tipo) {
+      const emb = RE_DESTRUTIVO_EMBUTIDO.exec(parte);
+      if (emb) tipo = emb[1].trim().split(/\s+/)[0].toUpperCase();
+    }
     if (tipo) {
       const cabeca = parte.trim().slice(0, 120).replace(/\s+/g, ' ');
       const linha = projetado.slice(0, offset).split('\n').length;
