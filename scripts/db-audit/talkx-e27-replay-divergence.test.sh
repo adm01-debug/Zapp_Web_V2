@@ -54,9 +54,13 @@ allowlist="$repo_root/scripts/db-audit/replay-known-failures.json"
 # ---- fixtures: as 3 tabelas do E27 + a publicacao do Realtime --------------------
 subir_pg() {
   docker run --rm -d --name "$container_name" -e POSTGRES_PASSWORD=x "$postgres_image" -c wal_level=logical >/dev/null
-  local pronto=false
+  # A imagem oficial sobe um servidor TEMPORARIO (so socket, para o initdb) e o derruba
+  # antes do definitivo: `SELECT 1` pelo socket passa no temporario e a fixture seguinte
+  # cai no shutdown ou no socket ausente. Pronto = 2 marcadores (temporario + definitivo).
+  local pronto=false markers
   for _ in $(seq 1 90); do
-    if docker exec "$container_name" psql -X -U postgres -d postgres -Atqc 'SELECT 1' >/dev/null 2>&1; then
+    markers="$(docker logs "$container_name" 2>&1 | grep -c 'database system is ready to accept connections' || true)"
+    if [[ "$markers" -ge 2 ]] && docker exec "$container_name" psql -X -U postgres -d postgres -Atqc 'SELECT 1' >/dev/null 2>&1; then
       pronto=true; break
     fi
     sleep 1

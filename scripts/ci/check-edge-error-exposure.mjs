@@ -227,6 +227,62 @@ function exposicoesEmRespostasManuais(limpo) {
 }
 
 /**
+ * Variáveis que guardam o `error` de uma chamada ao PostgREST/Supabase
+ * (`const { data, error: rpcErr } = await supabase.rpc(...)`/`.from(...)`).
+ * O `.message` delas é texto do Postgres (`column "x" does not exist`, `permission
+ * denied for function y`, `canceling statement due to statement timeout`): nome de
+ * tabela/coluna/função interna. Ele não pode ir cru ao corpo da resposta em
+ * NENHUM status — nem num 409 (#2880: talkx-send/multiplix-send devolviam
+ * `{ error: error.message }` do `transition_*`). Para devolver o código da
+ * exceção (`RAISE EXCEPTION 'talkx_campaign_not_found'`) o call site saneia antes
+ * (allowlist `^[a-z0-9_]{1,80}$`) e responde com a variável saneada.
+ */
+function declaracoesDeErro(limpo) {
+  const declaracoes = [];
+  const atribuicao = /\{([^{}]*)\}\s*=\s*await\s+[^;]*?\.(?:rpc|from)\s*\(/gu;
+  for (const m of limpo.matchAll(atribuicao)) {
+    for (const parte of m[1].split(",")) {
+      const campo = parte.trim().match(/^error\b(?:\s*:\s*([A-Za-z_$][\w$]*))?/u);
+      if (campo) declaracoes.push({ nome: campo[1] ?? "error", indice: m.index, doBanco: true });
+    }
+  }
+  // `catch (error)` redeclara o nome: daí em diante ele é a exceção do catch,
+  // não o erro do PostgREST (escopo aproximado pela declaração mais próxima).
+  for (const m of limpo.matchAll(/\bcatch\s*\(\s*([A-Za-z_$][\w$]*)/gu)) {
+    declaracoes.push({ nome: m[1], indice: m.index, doBanco: false });
+  }
+  return declaracoes;
+}
+
+/** `.message` de erro do PostgREST no corpo de qualquer resposta (qualquer status). */
+function exposicoesDeErroDoBanco(limpo) {
+  const declaracoes = declaracoesDeErro(limpo);
+  const nomes = new Set(declaracoes.filter((d) => d.doBanco).map((d) => d.nome));
+  if (nomes.size === 0) return [];
+  const achados = [];
+  const linhas = limpo.split("\n");
+  for (const chamada of limpo.matchAll(RESPOSTAS_MANUAIS)) {
+    const abre = limpo.indexOf("(", chamada.index);
+    const fecha = fimDoBloco(limpo, abre);
+    const linha = limpo.slice(0, chamada.index).split("\n").length;
+    const textoLinha = (linhas[linha - 1] ?? "").trim();
+    if (textoLinha.startsWith("*")) continue;
+    const corpo = separarArgumentos(limpo.slice(abre + 1, fecha))[0] ?? "";
+    for (const nome of nomes) {
+      const re = new RegExp(`(?<![\\w$.])${nome.replace(/\$/gu, "\\$")}\\??\\.message\\b`, "u");
+      if (!re.test(corpo)) continue;
+      const maisProxima = declaracoes
+        .filter((d) => d.nome === nome && d.indice < chamada.index)
+        .sort((a, b) => b.indice - a.indice)[0];
+      if (!maisProxima?.doBanco) continue;
+      achados.push({ arquivo: "", linha, padrao: "error.message do banco na resposta", trecho: textoLinha.slice(0, 120) });
+      break;
+    }
+  }
+  return achados;
+}
+
+/**
  * Devolve as exposições encontradas num fonte. Função pura — sem I/O, é o contrato dos testes.
  * Linhas de comentário são ignoradas; a varredura por linha (legado) roda junto com a leitura
  * da chamada inteira (R2-INF-016), para que a ordem dos argumentos não esconda nada.
@@ -245,7 +301,7 @@ export function acharExposicoes(fonte, arquivo = "arquivo.ts") {
     }
   }
 
-  for (const achado of exposicoesEmRespostasManuais(limpo)) {
+  for (const achado of [...exposicoesEmRespostasManuais(limpo), ...exposicoesDeErroDoBanco(limpo)]) {
     // A varredura por linha já apontou esta linha: não conta duas vezes o mesmo vazamento.
     if (achados.some((a) => a.linha === achado.linha)) continue;
     achados.push({ ...achado, arquivo });
@@ -283,7 +339,8 @@ export function main(raiz = RAIZ_PADRAO, argv = process.argv.slice(2)) {
   }
   console.error(`FALHA: ${achados.length} exposicao(oes) de detalhe interno na resposta HTTP:`);
   for (const a of achados) console.error(`  ${a.arquivo}:${a.linha} [${a.padrao}] ${a.trecho}`);
-  console.error("Use internalErrorResponse(err, req) de _shared/validation.ts nos catch de 5xx.");
+  console.error("Use internalErrorResponse(err, req) de _shared/validation.ts nos catch de 5xx;");
+  console.error("erro do banco em 4xx: responda o codigo saneado (/^[a-z0-9_]{1,80}$/), nunca error.message.");
   return 1;
 }
 

@@ -3,6 +3,7 @@ import { parseBody, validationErrorResponse } from "../_shared/schemas.ts";
 import { extractUserIdFromRequest } from "../_shared/ai-usage.ts";
 import { generateWithRouting, type GenerateParams, type GenerateResult } from "../_shared/ai-generate.ts";
 import { enforceAiGuards } from "../_shared/ai-guards.ts";
+import { parseJsonObject } from "../_shared/ai-json.ts";
 import { LossRiskEnvelope, buildAiEnvelope, parseModelOutput } from "../_shared/ai-response-contracts.ts";
 import { AiLossRiskSchema } from "../_shared/schemas.ts";
 
@@ -88,11 +89,7 @@ Analise e responda APENAS em JSON:
     const content = (data as { choices?: Array<{ message?: { content?: unknown } }> })
       .choices?.[0]?.message?.content;
 
-    let rawOutput: unknown = null;
-    try {
-      const jsonMatch = (content as string).match(/\{[\s\S]*\}/);
-      if (jsonMatch) rawOutput = JSON.parse(jsonMatch[0]);
-    } catch { rawOutput = null; }
+    const rawOutput = parseJsonObject(content as string);
 
     const validated = parseModelOutput(LossRiskEnvelope, rawOutput);
     if (!validated.ok) {
