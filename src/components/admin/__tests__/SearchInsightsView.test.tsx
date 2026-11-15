@@ -5,7 +5,8 @@
  *  - os KPIs vêm da RPC canônica `search_insights` (janela de 30 dias por padrão) e
  *    a taxa de clique é calculada pelo hook (clicks / total), inclusive a parcela de
  *    buscas sem resultado calculada sobre o total pelo componente;
- *  - as listas de termos ficam sempre vazias (privacidade preservada pela RPC);
+ *  - `average_term_length` e `searches_by_kind` aparecem na tela (antes eram descartados
+ *    pelo hook e as duas tabelas de termos ficavam sempre vazias);
  *  - a tela não oferece NENHUMA forma de exportar/baixar/imprimir (informação não sai);
  *  - o erro da RPC (a RPC nega não-admin/não-supervisor com 42501) aparece em
  *    `role=alert` com opção de tentar de novo.
@@ -25,6 +26,8 @@ const PAYLOAD = {
   total_searches: 1234,
   searches_without_results: 308,
   searches_with_click: 518,
+  average_term_length: 7.4,
+  searches_by_kind: { contact: 300, message: 218 },
 };
 
 function renderView() {
@@ -50,9 +53,17 @@ describe('SearchInsightsView — números da busca global (HZ1-06)', () => {
     expect(screen.getByText('25,0%')).toBeInTheDocument();          // 308/1234 sem resultado
     expect(screen.getByText('518 clique(s)')).toBeInTheDocument();
 
-    // listas sempre vazias (privacidade: RPC canônica não armazena termos)
-    expect(screen.getByText('Nenhum termo registrado no período.')).toBeInTheDocument();
-    expect(screen.getByText('Nenhum termo sem resultado no período.')).toBeInTheDocument();
+    // os dois campos que o hook descartava agora chegam à tela
+    expect(screen.getByText('7,4')).toBeInTheDocument();                // tamanho médio do termo
+    expect(screen.getByText('Cliques por tipo de resultado')).toBeInTheDocument();
+    expect(screen.getByText('contact')).toBeInTheDocument();
+    expect(screen.getByText('300')).toBeInTheDocument();
+    expect(screen.getByText('message')).toBeInTheDocument();
+    expect(screen.getByText('218')).toBeInTheDocument();
+
+    // nenhuma tabela morta de termos (a RPC não devolve termo algum)
+    expect(screen.queryByText(/Mais buscadas/)).toBeNull();
+    expect(screen.queryByText(/Sem resultado$/)).toBeNull();
 
     expect(rpcMock).toHaveBeenCalledWith('search_insights', { p_days: 30 });
   });
@@ -90,12 +101,19 @@ describe('SearchInsightsView — números da busca global (HZ1-06)', () => {
 
     expect(await screen.findByText('Nenhuma busca registrada no período.')).toBeInTheDocument();
     expect(screen.getAllByText('0,0%')).toHaveLength(2); // taxa de clique e sem resultado
-    expect(screen.getByText('Nenhum termo sem resultado no período.')).toBeInTheDocument();
+  });
+
+  it('linha ausente na resposta vira erro visível, não zero silencioso', async () => {
+    rpcMock.mockResolvedValue({ data: [], error: null });
+    renderView();
+
+    const alert = await screen.findByRole('alert');
+    expect(alert).toHaveTextContent('Resposta vazia ou inválida da RPC search_insights.');
   });
 
   it('melhor caso: taxa de clique e sem resultado em 100% (fração 1) não viram NaN', async () => {
     rpcMock.mockResolvedValue({
-      data: [{ total_searches: 10, searches_without_results: 10, searches_with_click: 10 }],
+      data: [{ total_searches: 10, searches_without_results: 10, searches_with_click: 10, average_term_length: 4 }],
       error: null,
     });
     renderView();
