@@ -431,7 +431,13 @@ function useDebouncedValue<T>(value: T, delayMs: number): T {
 
 export function useCampaignEditor(campaign: TalkXCampaign | null, onClose: () => void, initial?: { segmentIds?: string[]; templateId?: string; step?: WizardStep }) {
   const { saveDraftCampaign, updateCampaign, snapshotDraftAudience, startCampaign } = useTalkX();
-  const { segments } = useTalkXSegments();
+  const {
+    segments,
+    isLoading: segmentsLoading,
+    isError: segmentsIsError,
+    error: segmentsError,
+    refetch: refetchSegments,
+  } = useTalkXSegments();
   const { templates } = useTalkXTemplates();
   const { profile } = useAuth();
 
@@ -548,17 +554,21 @@ export function useCampaignEditor(campaign: TalkXCampaign | null, onClose: () =>
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [templateId, templates.length]);
 
-  const { data: connectionCandidates } = useQuery({
+  const connectionQuery = useQuery({
     queryKey: ['wa-connections-talkx'],
     queryFn: async () => {
-      const { data } = await supabase.from('whatsapp_connections')
+      const { data, error } = await supabase.from('whatsapp_connections')
         .select('id, name, phone_number, status, instance_id')
         .eq('status', 'connected')
         .not('instance_id', 'is', null)
         .neq('instance_id', '');
+      // Engolir o erro transformava falha de rede/RLS em "nenhuma conexão": a
+      // tela mostrava "WhatsApp desconectado" e o passo 1 liberava mesmo assim.
+      if (error) throw new Error(error.message);
       return data || [];
     },
   });
+  const { data: connectionCandidates } = connectionQuery;
 
   // The query excludes the common bad states. This in-memory guard covers
   // whitespace-only instance IDs and protects callers/tests that hydrate a
@@ -567,6 +577,14 @@ export function useCampaignEditor(campaign: TalkXCampaign | null, onClose: () =>
     () => (connectionCandidates ?? []).filter(isLiveTalkXConnection),
     [connectionCandidates],
   );
+  const connectionQueryError = connectionQuery.isError ? connectionQuery.error as Error : null;
+  const connectionQueryLoading = connectionQuery.isLoading;
+  // Uma conexão só vale depois de CONFIRMADA ativa pelo servidor; id salvo em
+  // rascunho não substitui a confirmação.
+  const connectionIsReady = connectionQuery.isSuccess
+    && !connectionQuery.isError
+    && connections.some((connection) => connection.id === connectionId);
+  const refetchConnections = useCallback(() => connectionQuery.refetch(), [connectionQuery]);
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -610,7 +628,7 @@ export function useCampaignEditor(campaign: TalkXCampaign | null, onClose: () =>
   // `resolveAudience`/`countAudience` ainda não aceitam AbortSignal; o
   // cancelamento é aplicado aqui, no ponto de uso (sem tocar no arquivo do
   // motor): o resultado de uma consulta já substituída não hidrata a lista.
-  const { data: contacts } = useQuery({
+  const contactsQuery = useQuery({
     queryKey: ['talkx-audience-contacts', audienceRulesKey],
     queryFn: async ({ signal }) => {
       const rows = await resolveAudience(effectiveAudienceRules, AUDIENCE_PREVIEW_LIMIT);
@@ -619,8 +637,9 @@ export function useCampaignEditor(campaign: TalkXCampaign | null, onClose: () =>
     },
     enabled: audienceSource === 'contacts',
   });
+  const { data: contacts } = contactsQuery;
 
-  const { data: audienceCount } = useQuery({
+  const audienceCountQuery = useQuery({
     queryKey: ['talkx-audience-count', audienceRulesKey],
     queryFn: async ({ signal }) => {
       const total = await countAudience(effectiveAudienceRules);
@@ -629,6 +648,7 @@ export function useCampaignEditor(campaign: TalkXCampaign | null, onClose: () =>
     },
     enabled: audienceSource === 'contacts',
   });
+  const { data: audienceCount } = audienceCountQuery;
 
   // Um draft existente precisa reabrir a sua audiência real. Sem este
   // round-trip, um autosave posterior poderia substituir destinatários por uma
@@ -695,11 +715,45 @@ export function useCampaignEditor(campaign: TalkXCampaign | null, onClose: () =>
   // servidor deduplica contatos presentes em mais de um segmento. O total
   // NUNCA é soma das contagens individuais (soma conta duplicado duas
   // vezes) nem fallback para estimated_count de um segmento só.
-  const { data: segmentUnionTotal } = useQuery({
+  const segmentUnionQuery = useQuery({
     queryKey: ['talkx-wizard-segment-union-total', segmentIds],
     queryFn: () => countAudience(null, segmentIds),
     enabled: audienceSource === 'segment' && segmentIds.length > 0,
   });
+  const { data: segmentUnionTotal } = segmentUnionQuery;
+
+  // Falha ou carregamento das consultas de audiência NÃO é público vazio: o
+  // passo 1 só libera depois de o servidor confirmar a origem escolhida e a
+  // contagem correspondente.
+  const audienceQueryError = (audienceSource === 'contacts'
+    ? contactsQuery.error ?? audienceCountQuery.error
+    : audienceSource === 'segment'
+      ? segmentsError ?? segmentUnionQuery.error
+      : null) as Error | null;
+  const audienceQueryLoading = audienceSource === 'contacts'
+    ? contactsQuery.isLoading || audienceCountQuery.isLoading
+    : audienceSource === 'segment'
+      ? segmentsLoading || (segmentIds.length > 0 && segmentUnionQuery.isLoading)
+      : false;
+  const audienceQueryReady = audienceSource === 'contacts'
+    ? contactsQuery.isSuccess && audienceCountQuery.isSuccess && !audienceQueryError
+    : audienceSource === 'segment'
+      ? !segmentsLoading
+        && !segmentsIsError
+        && segmentIds.length > 0
+        && selectedSegments.length === segmentIds.length
+        && selectedSegments.every((segment) => segment.status === 'active')
+        && segmentUnionQuery.isSuccess
+        && !audienceQueryError
+      : false;
+
+  const refetchAudience = useCallback(async () => {
+    if (audienceSource === 'contacts') {
+      await Promise.all([contactsQuery.refetch(), audienceCountQuery.refetch()]);
+    } else if (audienceSource === 'segment') {
+      await Promise.all([refetchSegments(), ...(segmentIds.length > 0 ? [segmentUnionQuery.refetch()] : [])]);
+    }
+  }, [audienceSource, contactsQuery, audienceCountQuery, refetchSegments, segmentIds.length, segmentUnionQuery]);
 
   const companies = useMemo(() => {
     if (!contacts) return [] as string[];
@@ -871,7 +925,13 @@ export function useCampaignEditor(campaign: TalkXCampaign | null, onClose: () =>
   }, [filteredContacts, selectedContacts]);
 
   const canProceed = useMemo(() => ({
-    1: name.trim().length >= CAMPAIGN_NAME_MIN_LENGTH && name.trim().length <= CAMPAIGN_NAME_MAX_LENGTH && !!connectionId && (audienceSource === 'segment' ? segmentIds.length > 0 : audienceSource === 'contacts' ? selectedContacts.length > 0 : false),
+    1: name.trim().length >= CAMPAIGN_NAME_MIN_LENGTH
+      && name.trim().length <= CAMPAIGN_NAME_MAX_LENGTH
+      && connectionIsReady
+      && audienceQueryReady
+      && (audienceSource === 'segment'
+        ? segmentIds.length > 0 && selectedSegments.length === segmentIds.length && (segmentUnionTotal ?? 0) > 0
+        : audienceSource === 'contacts' ? selectedContacts.length > 0 : false),
     // V26 — só-mídia passa: aceita texto OU uma mídia real (URL preenchida; a RPC
     // exige media_url e media_type juntos, então um tipo sem URL não pode avançar).
     // X128 — o teto do provedor bloqueia o passo: acima de MESSAGE_LIMIT a própria
@@ -880,7 +940,7 @@ export function useCampaignEditor(campaign: TalkXCampaign | null, onClose: () =>
       && (messageTemplate.trim().length > 0 || (hasMedia && mediaUrl.trim().length > 0)),
     3: scheduleConfigIsValid,
     4: confirmConsent && confirmContent && confirmSuppression,
-  }), [name, connectionId, audienceSource, segmentIds, selectedContacts.length, messageTemplate, hasMedia, mediaUrl, scheduleConfigIsValid, confirmConsent, confirmContent, confirmSuppression]);
+  }), [name, connectionIsReady, audienceQueryReady, audienceSource, segmentIds, selectedSegments.length, selectedContacts.length, segmentUnionTotal, messageTemplate, hasMedia, mediaUrl, scheduleConfigIsValid, confirmConsent, confirmContent, confirmSuppression]);
 
   const buildPayload = useCallback((): Partial<TalkXCampaign> => ({
     name, description: description || null, objective, message_template: messageTemplate,
@@ -983,6 +1043,11 @@ export function useCampaignEditor(campaign: TalkXCampaign | null, onClose: () =>
         expectedRevision: draftRevisionRef.current,
       });
       setSnapshotSuppressedCount(snapshot?.suppressed ?? 0);
+      // Agendar/lançar sem nenhum elegível gerava campanha que nunca envia:
+      // o snapshot transacional é a última palavra sobre o público.
+      if (mode !== 'draft' && (snapshot?.eligible ?? 0) <= 0) {
+        throw new Error('A audiência não tem contatos elegíveis para agendamento ou envio. Revise os filtros e as seleções.');
+      }
       if (source === 'manual' && audienceSource === 'segment' && selectedSegments.length > 0) {
         const ids = selectedSegments.map((s) => s.id);
         await fromTable('talkx_segments').update({ last_used_at: new Date().toISOString() }).in('id', ids);
@@ -1147,6 +1212,8 @@ export function useCampaignEditor(campaign: TalkXCampaign | null, onClose: () =>
     contactSearch, setContactSearch, saving, companyFilter, setCompanyFilter,
     // V24 — regras de audiência (mesmo motor dos segmentos)
     audienceRules, setAudienceRules, addAudienceRule, updateAudienceRule, removeAudienceRule, setGroupMatch, audienceCount,
+    audienceQueryError, audienceQueryLoading, refetchAudience,
+    connectionQueryError, connectionQueryLoading, refetchConnections,
     lastAutosave, autosaveStatus, autosaveError, autosaveIsDirty, retryAutosave, // E68
     hasUnsavedChanges, flushPendingAutosave, // E73: proteção da saída sem beforeunload
     discardPendingChanges, // TL-138: saída com "Descartar rascunho" não pode ser desfeita pelo flush
