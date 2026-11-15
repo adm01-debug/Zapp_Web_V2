@@ -62,4 +62,15 @@ describe('useObjectionHandler', () => {
     );
     expect(result.current.isSmokescreen).toBe(true);
   });
+
+  // Com duas categorias no mesmo texto, vence a que tem MAIS gatilhos, não a
+  // primeira da lista. Aqui "prazo" casa 1 gatilho e aparece antes de
+  // "concorrente", que casa 2 ("cotei" e "outra empresa") e é a objeção real.
+  it('com mais de uma categoria no texto, escolhe a de mais gatilhos', () => {
+    const { result } = renderHook(() =>
+      useObjectionHandler({ clientText: 'Cotei em outra empresa, o prazo deles é melhor.' }),
+    );
+    expect(result.current.detected).toBe(true);
+    expect(result.current.type).toBe('concorrente');
+  });
 });
