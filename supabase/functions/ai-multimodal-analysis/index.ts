@@ -6,11 +6,25 @@ import { enforceAiGuards } from "../_shared/ai-guards.ts";
 import { parseJsonObject } from "../_shared/ai-json.ts";
 import { MultimodalAnalysisEnvelope, buildAiEnvelope, parseModelOutput } from "../_shared/ai-response-contracts.ts";
 import { AiMultimodalAnalysisSchema } from "../_shared/schemas.ts";
+import { AiImageInputError, toInlineImage, type InlineImage, type InlineImageOptions } from "../_shared/ai-image-input.ts";
 
 export interface AiMultimodalAnalysisDeps {
   authorize?: (req: Request) => Promise<{ userId: string } | Response>;
   enforceGuards?: (opts: { functionName: string; userId: string; req: Request }) => Promise<Response | null>;
   generate?: (params: GenerateParams) => Promise<GenerateResult>;
+  /** Preparo da imagem (injetado no teste); o padrao e `toInlineImage`. */
+  prepareImage?: (imageUrl: string, options: InlineImageOptions) => Promise<InlineImage>;
+}
+
+/**
+ * JWT do chamador, extraido do header `Authorization` (`Bearer <jwt>`,
+ * case-insensitive). O token cru e o que autoriza o download do objeto PRIVADO
+ * sob a identidade do usuario — a policy de `storage.objects` decide.
+ */
+function bearerTokenDoPedido(req: Request): string {
+  const header = req.headers.get("authorization") ?? "";
+  if (!header.toLowerCase().startsWith("bearer ")) return "";
+  return header.slice(7).trim();
 }
 
 export async function handleAiMultimodalAnalysis(
@@ -59,13 +73,34 @@ Responda APENAS em JSON:
   "confidence": <0 a 1>
 }`;
 
+    // A imagem vive em bucket PRIVADO (`whatsapp-media`: public=false): a URL crua
+    // nao abre para o provedor, e a analise voltava sempre sem ver a foto. O objeto
+    // e baixado aqui, sob a identidade do CHAMADOR, e embutido como data URL — o
+    // mesmo caminho fechado que `classify-sticker`/`classify-emoji` ja usam (a
+    // allowlist de buckets do helper tambem recusa URL de fora).
+    const prepareImage = deps.prepareImage ?? toInlineImage;
+    let imagem: InlineImage;
+    try {
+      imagem = await prepareImage(imageUrl, {
+        storageIdentity: { kind: "user", bearerToken: bearerTokenDoPedido(req) },
+      });
+    } catch (err) {
+      // Recusa TIPADA e sem gastar provedor. A mensagem do helper carrega
+      // `<bucket>/<path>` (locator de objeto privado), por isso so o codigo sai.
+      if (err instanceof AiImageInputError) {
+        log.warn("Imagem recusada na preparacao", { code: err.code });
+        return errorResponse(`Imagem nao pode ser analisada: ${err.code}`, err.status, req);
+      }
+      throw err;
+    }
+
     // Mensagem com imagem no formato vision
     const visionMessage = {
       role: "user" as const,
       content: [
         {
           type: "image_url",
-          image_url: { url: imageUrl },
+          image_url: { url: imagem.dataUrl },
         },
         {
           type: "text",
