@@ -43,7 +43,7 @@ interface InboxSavedFiltersMenuProps {
 }
 
 export function InboxSavedFiltersMenu({ current, onApply }: InboxSavedFiltersMenuProps) {
-  const { presets, savePreset, deletePreset, isSaving, isDeleting } = useInboxFilterPresets();
+  const { presets, savePreset, deletePreset, isSaving, isDeleting, isError: loadError } = useInboxFilterPresets();
   const [isOpen, setIsOpen] = useState(false);
   const [dialogMode, setDialogMode] = useState<'save' | 'rename' | null>(null);
   const [renameTarget, setRenameTarget] = useState<InboxFilterPreset | null>(null);
@@ -194,7 +194,11 @@ export function InboxSavedFiltersMenu({ current, onApply }: InboxSavedFiltersMen
               <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
                 Filtros salvos
               </p>
-              {presets.length === 0 ? (
+              {loadError && !presets.length ? (
+                <p role="alert" className="px-1 py-2 text-xs text-destructive">
+                  Erro ao carregar filtros salvos.
+                </p>
+              ) : presets.length === 0 ? (
                 <p className="px-1 py-2 text-xs text-muted-foreground">
                   Nenhum filtro salvo ainda.
                 </p>
@@ -247,7 +251,7 @@ export function InboxSavedFiltersMenu({ current, onApply }: InboxSavedFiltersMen
                 className="flex items-center justify-between gap-2 rounded-md border border-border bg-muted px-2 py-1.5"
               >
                 <span className="truncate text-xs text-muted-foreground">
-                  Filtro “{removed.name}” excluído.
+                  {`Filtro “${removed.name}” excluído.`}
                 </span>
                 <Button
                   type="button"
