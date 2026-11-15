@@ -10,9 +10,17 @@ type SubTab = 'active' | 'completed' | 'all';
 interface GoalsTableProps {
   goals: Goal[];
   onConfigure: () => void;
+  /** Título do card; acompanha o período escolhido (dia/semana/mês). */
+  title?: string;
+  subtitle?: string;
 }
 
-export function GoalsTable({ goals, onConfigure }: GoalsTableProps) {
+export function GoalsTable({
+  goals,
+  onConfigure,
+  title = 'Metas do dia',
+  subtitle = 'Acompanhe o progresso das suas metas ativas.',
+}: GoalsTableProps) {
   const [subTab, setSubTab] = useState<SubTab>('active');
   const reducedMotion = useReducedMotion();
 
@@ -38,8 +46,8 @@ export function GoalsTable({ goals, onConfigure }: GoalsTableProps) {
     <DashboardCard testid="goals-table-card" variant="comfortable">
       <SectionHeader
         icon={Target}
-        title="Metas do dia"
-        subtitle="Acompanhe o progresso das suas metas ativas."
+        title={title}
+        subtitle={subtitle}
         tileSize={44}
         size="lg"
         right={(
