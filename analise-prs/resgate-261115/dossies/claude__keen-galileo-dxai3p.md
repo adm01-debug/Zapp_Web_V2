@@ -1,0 +1,38 @@
+# Dossiê — `claude/keen-galileo-dxai3p` (PR #2354)
+
+- Ref: `origin/claude/keen-galileo-dxai3p` · tip `172c19c4` · merge-base `3d0b46c7` (2026-10-30) · 46 commits ahead
+- Propósito: sessão de "corrigir workflows com falha no CI" de 2026-10-29/30. O que sobrou no diff contra a main: (1) relatórios de sessão (`PENDENCIAS.md`, `docs/ci/PENDENCIAS.md`, `docs/ci/RELATORIO_CI.md`, `docs/ci/RELATORIO_CI_FINAL.md`), (2) try/catch no `gh pr list` de `scripts/ci/fila-merge.mjs`, (3) cast `any` em `contact.service.ts` para contornar `RejectExcessProperties` do types-sync quando `is_pinned` não existia nos tipos/produção.
+- Triagem anterior (2026-11-08): OBSOLETA. **Confirmado** com prova abaixo.
+
+## Arquivo × achado × evidência
+
+| Arquivo | Status mecânico | Achado | Evidência |
+|---|---|---|---|
+| `docs/ci/RELATORIO_CI_FINAL.md` | IDENTICAL_TO_MAIN | Já na main byte a byte | `origin/main:docs/ci/RELATORIO_CI_FINAL.md:4` cita a própria branch |
+| `scripts/ci/fila-merge.mjs` | NEW_FILE_ABSENT_IN_MAIN (CONFLICT) | **Incorporada e depois removida de propósito.** O try/catch com fallback `decidir([], checksObrigatorios())` entrou na main em `bcb11c845` (PR #2394, "trata falha de gh pr list"), versão mais completa (log + `execComRetry` + JSON.parse protegido — `41853318c^:scripts/ci/fila-merge.mjs:141-159`). Depois o script inteiro e `.github/workflows/auto-update-pr-branch.yml` foram apagados em `41853318c` (pacote 6, PR #3113; 419 deleções). Nada mais referencia `fila-merge` na main fora de `docs/_arquivo/` | `git show bcb11c845 -- scripts/ci/fila-merge.mjs` linhas +80..+87; `git ls-tree origin/main scripts/ci/` sem o arquivo |
+| `src/services/contact.service.ts` | ABSENT_APPLIES_CLEAN | **Obsoleta.** O cast `pinField: any` / `update(updates as any)` existia só para passar no types-sync enquanto `contact_notes.is_pinned` não estava nos tipos. Hoje `origin/main:src/integrations/supabase/types.ts:2350/2362/2374` tem `is_pinned` em Row/Insert/Update de `contact_notes` (desde `a8d2b6380`, 2026-10-27), a migration `20261026200000` está no ledger de produção e a coluna existe (`db_query`: `version=20261026200000`, `col:is_pinned`). A main mantém a versão tipada (`contact.service.ts:182-185`, `:205`); aplicar o patch só reintroduziria `any` + 2 `eslint-disable` sem ganho | `git grep -n is_pinned origin/main -- src/services/contact.service.ts`; query no banco oficial |
+| `PENDENCIAS.md` | BOTH_CHANGED (CONFLICT) | **Obsoleta.** Branch acrescenta §6-8 (copilot-reviewer failure não-required; `deno install` ausente em deploy-functions; migrations `20261030100000/110000` sem apply). Na main o arquivo foi totalmente reescrito (`# PENDÊNCIAS CI — 2026-11-12`). Os 3 itens estão resolvidos: `deploy-functions.yml:473-488` tem o step `deno install`; as duas migrations constam em `supabase_migrations.schema_migrations` (query); copilot-reviewer já documentado em `origin/main:docs/ci/PENDENCIAS.md` ("NAO e required check") | `git show origin/main:PENDENCIAS.md \| head`; `git grep -n "deno install" origin/main -- .github/workflows/deploy-functions.yml` |
+| `docs/ci/PENDENCIAS.md` | BOTH_CHANGED (CONFLICT) | **Obsoleta.** Relatório de sessão 2026-10-30 (cabeçalho cita a própria branch e SHA `3bdbdef2`). Na main o arquivo é o relatório de 2026-10-31 (`claude/hopeful-knuth-4brqti`, PR #2407/#2411), que o substitui; versões antigas arquivadas em `docs/_arquivo/PENDENCIAS.md` | `git show origin/main:docs/ci/PENDENCIAS.md \| head -15` |
+| `docs/ci/RELATORIO_CI.md` | BOTH_CHANGED (CONFLICT) | **Obsoleta.** Mesmo caso: relatório da sessão 2026-10-30; main tem o de 2026-10-31 e o `RELATORIO_CI_FINAL.md` desta mesma branch já está na main | `git show origin/main:docs/ci/RELATORIO_CI.md \| head -15` |
+
+## Veredito
+
+**OBSOLETA** (confiança alta). Única mudança de código viva (`fila-merge.mjs`) foi incorporada em versão melhor e depois removida junto com o workflow que a usava; o cast em `contact.service.ts` perdeu a razão de existir (tipos e coluna em produção já têm `is_pinned`); os docs são relatórios de sessão superados por relatórios posteriores já na main. Nenhuma lacuna a recuperar.
+
+`apagar_branch_seguro = true`.
+
+## Verificação adversarial
+
+Papel: refutar o veredito OBSOLETA. **Não foi possível refutar — concordo com OBSOLETA e com `apagar_branch_seguro = true`.**
+
+Tentativas de refutação e o que cada uma mostrou:
+
+1. **Há algum hunk útil fora dos docs?** `git diff 3d0b46c7 origin/claude/keen-galileo-dxai3p --stat` fecha em exatamente 6 arquivos (585 inserções, 9 deleções): 4 relatórios de sessão, `scripts/ci/fila-merge.mjs` (+13/-9... na prática +8/-4 linhas úteis) e `src/services/contact.service.ts` (+7/-5). Nenhum arquivo de `supabase/`, `.github/workflows/`, `e2e/` ou `src/` além desse único serviço. Não existe hunk escondido.
+
+2. **`scripts/ci/fila-merge.mjs` — a substituição alegada existe?** Sim, e vai além: o try/catch com fallback `decidir([], checksObrigatorios())` entrou na main em `bcb11c845` ("fix(ci): corrige hash Deno tslib@2.8.1 e trata falha de gh pr list (#2394)", 2026-10-30 19:12) e depois **o arquivo e o workflow que o consumia foram removidos no mesmo commit**: `git show --stat 41853318c -- scripts/ci/fila-merge.mjs .github/workflows/auto-update-pr-branch.yml` → `215 + 204 = 419 deleções` ("chore(pacote): pacote 6 — as 26 PRs abertas integradas num ciclo de CI (#3113)"). `git ls-tree origin/main scripts/ci/fila-merge.mjs` e `git ls-tree origin/main .github/workflows/auto-update-pr-branch.yml` voltam vazios. `git log --diff-filter=D -- scripts/ci/fila-merge.mjs` aponta só `41853318c` — remoção deliberada, não perda. As únicas referências remanescentes na main estão em `docs/_arquivo/**` e `analise-prs/prs.csv` (histórico). Aplicar o hunk recriaria um script órfão.
+
+3. **`src/services/contact.service.ts` — o patch é melhoria ou regressão?** Regressão. O diff **adiciona** `const pinField: any` + `update(updates as any)` + 2 `eslint-disable @typescript-eslint/no-explicit-any` e **remove** o comentário explicativo. A main (`origin/main:src/services/contact.service.ts:174-178` no insert e `:205` no update) mantém a versão tipada, sem `any`. O motivo do cast desapareceu: `origin/main:src/integrations/supabase/types.ts:2350/2362/2374` têm `is_pinned` em Row/Insert/Update de `contact_notes`, e a produção confirma — `db_query` em `tnnnlkbymytvtqngbbqh`: `supabase_migrations.schema_migrations` contém `20261026200000`, `20261030100000` e `20261030110000` (3 linhas). Resgatar aqui pioraria a main.
+
+4. **Os docs descrevem pendência ainda viva?** Não. Os 3 itens novos do `PENDENCIAS.md` da branch estão resolvidos na main: `deno install` existe em `origin/main:.github/workflows/deploy-functions.yml:473-488`; as migrations `20261030100000_copilot_sessions.sql` e `20261030110000_copilot_insights.sql` estão no repo (`git ls-tree origin/main supabase/migrations/`) **e** aplicadas em produção (query acima); o `copilot-pull-request-reviewer` está documentado como não-required em `origin/main:docs/ci/PENDENCIAS.md:13` e §1. Os relatórios foram superados: `origin/main:PENDENCIAS.md:1` = `# PENDÊNCIAS CI — 2026-11-12`; `origin/main:docs/ci/PENDENCIAS.md:3` = 2026-10-31; `origin/main:docs/ci/RELATORIO_CI.md:3-5` = 2026-10-31, `claude/hopeful-knuth-4brqti` / PR #2407+#2411. E `git diff origin/claude/keen-galileo-dxai3p:docs/ci/RELATORIO_CI_FINAL.md origin/main:docs/ci/RELATORIO_CI_FINAL.md` sai vazio — o relatório final desta própria branch já está na main byte a byte.
+
+Conclusão: o único artefato que a main não tem é um try/catch para um script que a main apagou de propósito, e um `any` que a main já dispensou. Veredito final **OBSOLETA**, branch pode ser apagada.
