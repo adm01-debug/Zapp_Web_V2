@@ -1,5 +1,5 @@
 import { assertEquals, assert } from "https://deno.land/std@0.168.0/testing/asserts.ts";
-import { handleEvolutionApi } from "./index.ts";
+import { handleEvolutionApi, type EvolutionApiDeps } from "./index.ts";
 import { EvolutionApiRequestSchema } from "../_shared/schemas.ts";
 import { createFakeEvolution } from "../_shared/__tests__/fake-evolution.ts";
 import { resetInstanceTokenCache } from "../_shared/evolution-instance-token.ts";
@@ -233,6 +233,164 @@ Deno.test("R2-API-001: envio direto de agente sem contato visível é negado (fa
     assertEquals(fake.posts.length, 0, "envio negado não pode chegar ao provedor");
   } finally {
     await fake.stop();
+  }
+});
+
+// ─── C121/IP1: pausa de instância ───────────────────────────────────────────
+// A pausa (manual ou automática, tabela instance_pauses) é o freio de envio por
+// número. Aqui: envio bloqueado antes do provedor, ação que não entrega conteúdo
+// continua passando, e 429 do provedor registra a pausa automática.
+
+type ServiceClient = NonNullable<EvolutionApiDeps["supabase"]>;
+
+/** Service client fake: `is_instance_paused` controlado e `auto_pause_instance` registrado. */
+function pauseServiceClient(opts: {
+  paused?: boolean | null;
+  pausedError?: { code: string; message: string } | null;
+  instanceToken?: string | null;
+  autoPauseCalls?: Record<string, unknown>[];
+  autoPauseError?: { code: string; message: string } | null;
+  connection?: Record<string, unknown> | null;
+}): ServiceClient {
+  const client = {
+    from: () => makeQuery(opts.connection ?? null),
+    rpc: (fn: string, args: Record<string, unknown>) => {
+      if (fn === "get_instance_token") {
+        return Promise.resolve({ data: opts.instanceToken ?? null, error: null });
+      }
+      if (fn === "is_instance_paused") {
+        return Promise.resolve({ data: opts.paused ?? false, error: opts.pausedError ?? null });
+      }
+      if (fn === "auto_pause_instance") {
+        opts.autoPauseCalls?.push(args);
+        return Promise.resolve({ data: null, error: opts.autoPauseError ?? null });
+      }
+      return Promise.resolve({ data: null, error: null });
+    },
+  };
+  return client as unknown as ServiceClient;
+}
+
+Deno.test("C121/IP1: envio em instância pausada é bloqueado sem chegar ao provedor", async () => {
+  const fake = createFakeEvolution();
+  Deno.env.set("EVOLUTION_API_URL", fake.url);
+  try {
+    const res = await handleEvolutionApi(
+      controlRequest("send-text", { instanceName: "PRINCIPAL", number: "5511999999999", text: "oi" }),
+      { callerClient: makeCallerClient({ isAdminOrSupervisor: true }), supabase: pauseServiceClient({ paused: true }) },
+    );
+    const json = await res.json();
+    assertEquals(json.paused, true);
+    assertEquals(json.error, true);
+    assertEquals(fake.posts.length, 0, "instância pausada não pode enviar ao provedor");
+  } finally {
+    await fake.stop();
+  }
+});
+
+Deno.test("C121/IP1: mark-read passa e send-status é bloqueado com a instância pausada", async () => {
+  const fake = createFakeEvolution();
+  Deno.env.set("EVOLUTION_API_URL", fake.url);
+  try {
+    const supabase = pauseServiceClient({ paused: true, connection: { id: "x" } });
+    const status = await handleEvolutionApi(
+      controlRequest("send-status", { instanceName: "PRINCIPAL", text: "oi" }),
+      { callerClient: makeCallerClient({ isAdminOrSupervisor: true }), supabase },
+    );
+    assertEquals((await status.json()).paused, true);
+    const read = await handleEvolutionApi(
+      controlRequest("mark-read", { instanceName: "PRINCIPAL", key: { remoteJid: "5511999999999@s.whatsapp.net", fromMe: false, id: "M1" } }),
+      { callerClient: makeCallerClient({ isAdminOrSupervisor: true }), supabase },
+    );
+    assert((await read.json()).paused !== true, "mark-read não é entrega de conteúdo");
+  } finally {
+    await fake.stop();
+  }
+});
+
+// Achado do Devin na #3144: `send-template` entrega template aprovado pela Meta no
+// flavor v2 e tem entrada na UI (SendTemplateDialog). Fora do conjunto, saía durante
+// a pausa e o 429 dele não acionava a auto-pausa.
+Deno.test("C121/IP1: send-template é bloqueado com a instância pausada", async () => {
+  const fake = createFakeEvolution();
+  Deno.env.set("EVOLUTION_API_URL", fake.url);
+  try {
+    const res = await handleEvolutionApi(
+      controlRequest("send-template", { instanceName: "PRINCIPAL", number: "5511999999999", templateName: "boas_vindas", templateLanguage: "pt_BR" }),
+      { callerClient: makeCallerClient({ isAdminOrSupervisor: true }), supabase: pauseServiceClient({ paused: true, connection: { id: "x" } }) },
+    );
+    const json = await res.json();
+    assertEquals(json.paused, true);
+    assertEquals(fake.posts.length, 0, "template não pode sair durante a pausa");
+  } finally {
+    await fake.stop();
+  }
+});
+
+// 429 do provedor num envio grava a pausa automática (30 min, instância correta) e
+// preserva a resposta original; falha da RPC não altera a resposta.
+for (const rpcFails of [false, true]) {
+  Deno.test(`C121/IP1: 429 do provedor em send-text chama auto_pause_instance (RPC ${rpcFails ? "com erro" : "ok"})`, async () => {
+    const provider = Deno.serve({ hostname: "127.0.0.1", port: 0, onListen() {} }, () =>
+      new Response(JSON.stringify({ error: "too many requests" }), { status: 429, headers: { "Content-Type": "application/json" } }));
+    const addr = provider.addr as Deno.NetAddr;
+    Deno.env.set("EVOLUTION_API_URL", `http://127.0.0.1:${addr.port}`);
+    const autoPauseCalls: Record<string, unknown>[] = [];
+    // O cache de token por isolate guarda o "sem credencial" dos testes anteriores:
+    // sem limpar antes, o proxy falha fechado e nunca chega ao 429 do provedor.
+    resetInstanceTokenCache();
+    try {
+      const supabase = pauseServiceClient({
+        paused: false,
+        instanceToken: "vault-instance-token",
+        autoPauseCalls,
+        autoPauseError: rpcFails ? { code: "42501", message: "negado" } : null,
+      });
+      const res = await handleEvolutionApi(
+        controlRequest("send-text", { instanceName: "PRINCIPAL", number: "5511999999999", text: "oi" }),
+        { callerClient: makeCallerClient({ isAdminOrSupervisor: true }), supabase },
+      );
+      const json = await res.json();
+      assertEquals(json.error, true, "resposta original do provedor preservada");
+      assertEquals(json.status, 429, "status do provedor preservado no corpo");
+      assertEquals(autoPauseCalls.length, 1, "exatamente uma pausa automática");
+      assertEquals(autoPauseCalls[0].p_instance, "PRINCIPAL");
+      assertEquals(autoPauseCalls[0].p_minutes, 30);
+    } finally {
+      resetInstanceTokenCache();
+      await provider.shutdown();
+    }
+  });
+}
+
+// Achado do Codex na #3144: o provedor pode devolver 429 com Content-Type JSON e
+// corpo VAZIO. O proxy lia esse corpo com `response.json()` sem guarda, lancava, o
+// erro caia no catch de conexao, o proxy ainda RETENTAVA contra o provedor que acabou
+// de recusar e a resposta virava `{ error: true, status: 504 }` — o limite de envio
+// desaparecia do corpo e a auto-pausa nunca via o 429.
+Deno.test("C121/IP1: 429 com Content-Type JSON e corpo vazio preserva o status e pausa", async () => {
+  const provider = Deno.serve({ hostname: "127.0.0.1", port: 0, onListen() {} }, () =>
+    new Response(null, { status: 429, headers: { "Content-Type": "application/json" } }));
+  const addr = provider.addr as Deno.NetAddr;
+  Deno.env.set("EVOLUTION_API_URL", `http://127.0.0.1:${addr.port}`);
+  const autoPauseCalls: Record<string, unknown>[] = [];
+  resetInstanceTokenCache();
+  try {
+    const supabase = pauseServiceClient({
+      paused: false, instanceToken: "vault-instance-token", autoPauseCalls,
+    });
+    const res = await handleEvolutionApi(
+      controlRequest("send-text", { instanceName: "PRINCIPAL", number: "5511999999999", text: "oi" }),
+      { callerClient: makeCallerClient({ isAdminOrSupervisor: true }), supabase },
+    );
+    const json = await res.json();
+    assertEquals(json.status, 429, "o status do provedor tem de sobreviver ao corpo vazio");
+    assertEquals(autoPauseCalls.length, 1, "429 com corpo vazio tambem pausa a instancia");
+    assertEquals(autoPauseCalls[0].p_instance, "PRINCIPAL");
+    assertEquals(autoPauseCalls[0].p_minutes, 30);
+  } finally {
+    resetInstanceTokenCache();
+    await provider.shutdown();
   }
 });
 

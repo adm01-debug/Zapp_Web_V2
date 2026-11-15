@@ -154,3 +154,97 @@ export async function markPauseInvestigated(
     ja_investigada: raw.ja_investigada === true,
   };
 }
+
+/** C121 — janela do histórico lido pelo painel de Conexões (série 24h/7d). */
+export const PAUSES_HISTORY_DAYS = 7;
+/** Mesma faixa do CHECK de `pause_instance` (migration IP1): o banco recusa fora dela. */
+export const PAUSE_MIN_MINUTES = 5;
+export const PAUSE_MAX_MINUTES = 1440;
+const HISTORY_PAGE = 1000;
+const HISTORY_MAX_PAGES = 10;
+
+/**
+ * C121 — pausas ABERTAS + histórico da janela, mais recentes primeiro. As abertas são
+ * lidas à parte (no máximo 1 por instância) para nunca ficarem atrás do limite de
+ * página, e o histórico é paginado para a série não perder registro em silêncio.
+ */
+export async function fetchInstancePausesWindow(
+  days = PAUSES_HISTORY_DAYS,
+): Promise<InstancePause[]> {
+  const since = new Date(Date.now() - days * 86_400_000).toISOString();
+  const byId = new Map<string, InstancePause>();
+  const collect = (data: unknown) => {
+    for (const raw of Array.isArray(data) ? data : []) {
+      const row = mapPause(raw as Record<string, unknown>);
+      if (row) byId.set(row.id, row);
+    }
+  };
+  const open = await supabase
+    .from('instance_pauses')
+    .select(SELECT_COLUMNS)
+    .is('resumed_at', null);
+  if (open.error) {
+    log.error(PAUSES_LOAD_ERROR, open.error);
+    throw new Error(PAUSES_LOAD_ERROR);
+  }
+  collect(open.data);
+  for (let page = 0; page < HISTORY_MAX_PAGES; page++) {
+    const { data, error } = await supabase
+      .from('instance_pauses')
+      .select(SELECT_COLUMNS)
+      .gte('created_at', since)
+      .order('created_at', { ascending: false })
+      .range(page * HISTORY_PAGE, (page + 1) * HISTORY_PAGE - 1);
+    if (error) {
+      log.error(PAUSES_LOAD_ERROR, error);
+      throw new Error(PAUSES_LOAD_ERROR);
+    }
+    collect(data);
+    if ((data?.length ?? 0) < HISTORY_PAGE) break;
+  }
+  return [...byId.values()].sort((a, b) => b.created_at.localeCompare(a.created_at));
+}
+
+/** Mensagem pt-BR por exceção de `pause_instance`/`resume_instance` (migration IP1). */
+export function pauseActionErrorMessage(error: NonNullable<DbError>): string {
+  const text = `${error.code ?? ''} ${error.message ?? ''}`;
+  if (text.includes('somente_staff_pausa_instancia') || text.includes('somente_staff_retoma_instancia')) {
+    return 'Só administradores e supervisores podem pausar ou retomar envios.';
+  }
+  if (text.includes('sessao_nao_autenticada')) {
+    return 'Sua sessão expirou. Entre de novo para pausar ou retomar envios.';
+  }
+  if (text.includes('minutos_fora_da_faixa_5_1440')) {
+    return `Informe de ${PAUSE_MIN_MINUTES} a ${PAUSE_MAX_MINUTES} minutos.`;
+  }
+  if (text.includes('motivo_obrigatorio')) return 'Informe o motivo da pausa.';
+  if (text.includes('instancia_invalida')) return 'Essa conexão não tem instância válida.';
+  if (error.code === '42501') return 'Você não tem permissão para pausar ou retomar envios.';
+  return 'Não foi possível concluir a ação na pausa da instância.';
+}
+
+/** RPC `pause_instance` (staff; estende a pausa aberta em vez de criar outra). */
+export async function pauseInstance(
+  instance: string,
+  minutes: number,
+  reason: string,
+): Promise<void> {
+  const { error } = await supabase.rpc('pause_instance', {
+    p_instance: instance,
+    p_minutes: minutes,
+    p_reason: reason,
+  });
+  if (error) {
+    log.error('pause_instance falhou', error);
+    throw new Error(pauseActionErrorMessage(error));
+  }
+}
+
+/** RPC `resume_instance` (staff; idempotente — 0 quando não havia pausa aberta). */
+export async function resumeInstance(instance: string): Promise<void> {
+  const { error } = await supabase.rpc('resume_instance', { p_instance: instance });
+  if (error) {
+    log.error('resume_instance falhou', error);
+    throw new Error(pauseActionErrorMessage(error));
+  }
+}

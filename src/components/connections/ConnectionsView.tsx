@@ -23,6 +23,7 @@ import { BusinessHoursDialog } from './BusinessHoursDialog';
 import { ConnectionQueuesDialog } from './ConnectionQueuesDialog';
 import { InstanceSettingsDialog } from './InstanceSettingsDialog';
 import { NumberReputationMonitor } from './NumberReputationMonitor';
+import { InstancePausesPanel } from './InstancePausesPanel';
 import { ConnectionCard } from './ConnectionCard';
 import { INSTANCE_TOKEN_ERROR_CODES, useConnectionsManager } from '@/hooks/inbox/useConnectionsManager';
 import { SyncCredentialAction } from './SyncCredentialAction';
@@ -279,6 +280,7 @@ export function ConnectionsView() {
       <BusinessHoursDialog open={businessHoursDialog.open} onOpenChange={(open) => setBusinessHoursDialog(prev => ({ ...prev, open }))} connectionId={businessHoursDialog.connectionId} connectionName={businessHoursDialog.connectionName} />
       <ConnectionQueuesDialog open={queuesDialog.open} onOpenChange={(open) => setQueuesDialog(prev => ({ ...prev, open }))} connectionId={queuesDialog.connectionId} connectionName={queuesDialog.connectionName} />
       <InstanceSettingsDialog open={settingsDialog.open} onOpenChange={(open) => setSettingsDialog(prev => ({ ...prev, open }))} instanceName={settingsDialog.instanceName} connectionName={settingsDialog.connectionName} />
+      <InstancePausesPanel connections={connections} />
       <NumberReputationMonitor />
     </div>
   );
