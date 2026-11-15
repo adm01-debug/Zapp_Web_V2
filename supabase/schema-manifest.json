@@ -5304,7 +5304,7 @@
         "f:talkx_campaign_report(p_campaign uuid)": "9871676b089b141135bb87bd76ea1482",
         "f:team_reactions_force_conversation_id()": "98e5ecce2040c37e3656d9d6e797b477",
         "f:trg_user_sessions_auth_session_guard()": "0792b13b527dd93db11a5d734de09b06",
-        "f:trigger_pending_multiplix_dispatches()": "23d966951a258d4d790309ed184d9883",
+        "f:trigger_pending_multiplix_dispatches()": "0a058446be4cdcd7a65113284bace6f0",
         "f:ai_is_canonical_sentiment(p_value text)": "ce155274f9c44537e680ecc88de13f7d",
         "f:cancel_ai_job(p_id uuid, p_reason text)": "41658436ebd5771c46ea897ca5a17156",
         "f:claim_due_csat_surveys(p_limit integer)": "66a1eb7e4e5214a89358928527885c6e",
@@ -6472,7 +6472,7 @@
         "e:public.multiplix_dispatch_status|postgres|USAGE|grantor=postgres": "68934a3e9455fa72420237eb05902327",
         "e:public.multiplix_recipient_status|postgres|USAGE|grantor=postgres": "68934a3e9455fa72420237eb05902327"
     },
-    "generated_at": "2026-11-15T03:07:06Z",
+    "generated_at": "2026-11-15T05:16:27Z",
     "column_grants": {
         "r:public.departments.id|authenticated|INSERT|grantor=postgres": "68934a3e9455fa72420237eb05902327",
         "r:public.departments.id|authenticated|SELECT|grantor=postgres": "68934a3e9455fa72420237eb05902327",
