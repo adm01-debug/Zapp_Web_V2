@@ -11,6 +11,7 @@ import {
 } from '../_shared/validation.ts';
 import { resolvePrivateBucketUrl } from '../_shared/evolution-api-proxy.ts';
 import { evoFetch, extractMessageId } from '../_shared/evolution-send.ts';
+import { isInstancePaused } from '../_shared/instance_pause.ts';
 import { resolveInstanceToken, type InstanceTokenClient } from '../_shared/evolution-instance-token.ts';
 import { providerErrorInfo } from '../_shared/messaging/errors.ts';
 import {
@@ -749,6 +750,16 @@ export async function handleMessageDeliveryRequest(
       if (!richPayload) throw new Error('missing_rich_delivery_payload');
     }
     const outbound = providerPayload(claim, mediaUrl, richPayload);
+    // C121: instância pausada não envia. A checagem vem ANTES do carimbo durável e do
+    // POST: nada foi ao provedor (sem efeito incerto, sem reconciliação), então encerra
+    // como falha visível. Leitura da RPC é fail-open (ver _shared/instance_pause.ts): a
+    // pausa é proteção operacional, não pré-requisito de entrega.
+    if (await isInstancePaused(service, claim.whatsapp_instance_name,
+      (code) => console.error(JSON.stringify({ event: 'message_delivery_pause_check_error', code })))) {
+      await failClaim(service, claim);
+      console.error(JSON.stringify({ event: 'message_delivery_instance_paused' }));
+      return errorResponse('Instance is paused; resend after it is resumed', 409, req);
+    }
     // Fix #4: resolver o token da instância ANTES do carimbo — se o lookup falhar,
     // nada foi enviado ainda (erro pré-dispatch sem ambiguidade).
     const instanceToken = await resolveInstanceToken(service, claim.whatsapp_instance_name) ?? undefined;

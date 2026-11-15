@@ -189,6 +189,8 @@ function makeClient(cfg: {
   /** Linhas de `contacts` e `whatsapp_connections` (classificação do claim vazio). */
   contacts?: RpcResult[];
   connections?: RpcResult[];
+  /** C121: resposta de `is_instance_paused` (default: não pausada). */
+  instancePaused?: boolean;
 }): FakeClient {
   const rpcCalls: { fn: string; args?: Row }[] = [];
   const messagesQueue: RpcResult[] = [...(cfg.messages ?? [])];
@@ -219,6 +221,7 @@ function makeClient(cfg: {
       if (fn === 'claim_outbound_message') return cfg.claim ?? { data: [], error: null };
       if (fn === 'complete_outbound_message') return cfg.complete ?? { data: { id: 'msg-1', status: 'sent' }, error: null };
       if (fn === 'enqueue_ai_job') return { data: 'job-1', error: null };
+      if (fn === 'is_instance_paused') return { data: cfg.instancePaused === true, error: null };
       return { data: null, error: null };
     },
   };
@@ -295,6 +298,54 @@ function assertReconcileEnqueued(client: FakeClient, expectedExternalId: string 
   assertEqual(payload.source_id, MESSAGE_ID, 'reconcile payload.source_id');
   assertEqual(payload.external_id, expectedExternalId, 'reconcile payload.external_id');
 }
+
+// ── C121: pausa de instância ─────────────────────────────────────────────────
+// Instância pausada não envia. A checagem roda ANTES do carimbo durável
+// (mark_outbound_post_started) e do POST: nada saiu, então não há efeito
+// incerto e nada a reconciliar — o claim encerra como falha visível.
+Deno.test('C121: instância pausada não posta ao provedor e encerra em 409', async () => {
+  const client = makeClient({ claim: { data: [CLAIM], error: null }, instancePaused: true });
+  let posts = 0;
+  const response = await handleMessageDeliveryRequest(postRequest(), makeDeps(client, async () => {
+    posts++;
+    return jsonOf(200, { key: { id: 'nao-deveria-enviar' } });
+  }));
+  assertStatus(response.status, 409);
+  assertEqual(posts, 0, 'nenhum POST ao provedor com a instância pausada');
+  assertEqual(rpcArgs(client, 'is_instance_paused')?.p_instance, 'main', 'instância consultada');
+  assertFailClaim(client);
+  assertEqual(rpcCalled(client, 'mark_outbound_post_started'), false, 'não carimba o POST');
+  assertEqual(rpcCalled(client, 'enqueue_ai_job'), false, 'nada a reconciliar: o POST não saiu');
+});
+
+// Fail-open: a pausa é proteção operacional, não pré-requisito de entrega — a
+// RPC indisponível NÃO pode derrubar o envio (ver _shared/instance_pause.ts).
+Deno.test('C121: erro na leitura da pausa não bloqueia o envio (fail-open)', async () => {
+  const client = makeClient({
+    claim: { data: [CLAIM], error: null },
+    rpcErrors: { is_instance_paused: { code: '42501' } },
+  });
+  let posts = 0;
+  const response = await handleMessageDeliveryRequest(postRequest(), makeDeps(client, async () => {
+    posts++;
+    return jsonOf(200, { key: { id: 'wa-message-id' } });
+  }));
+  assertEqual(posts, 1, 'o envio segue quando a leitura da pausa falha');
+  assertStatus(response.status, 200);
+});
+
+// Guarda de ordem no FONTE: o teste de comportamento acima prova o caminho
+// pausado, e este impede que uma refatoração mova a checagem para depois do
+// carimbo/POST (aí a pausa chegaria tarde, com a mensagem já no provedor).
+Deno.test('C121: a checagem de pausa roda antes do carimbo e do POST ao provedor', async () => {
+  const src = await Deno.readTextFile(new URL('./index.ts', import.meta.url));
+  const pausa = src.indexOf('await isInstancePaused(');
+  const carimbo = src.indexOf("mark_outbound_post_started'", pausa);
+  const envio = src.indexOf('providerPostAttempted = true;', pausa);
+  if (pausa < 0 || carimbo < 0 || envio < 0 || pausa > carimbo || pausa > envio) {
+    throw new Error('isInstancePaused precisa vir antes de carimbar e de postar ao provedor');
+  }
+});
 
 Deno.test('PD-80: recusa de número pelo provedor vira code=invalid_number, não ambíguo; POST iniciado chama failClaim', async () => {
   const client = makeClient({ claim: { data: [CLAIM], error: null } });

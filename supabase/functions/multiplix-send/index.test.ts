@@ -201,6 +201,8 @@ interface MockOpts {
   windowClosesAfterStart?: boolean;
   /** MX07: resposta da RPC get_instance_token (null = instância sem token cadastrado) */
   instanceToken?: string | null;
+  /** C121: resposta da RPC is_instance_paused (default: instancia nao pausada) */
+  instancePaused?: boolean;
   /** R2-API-013: a RPC do heartbeat se comporta como o PostgrestBuilder do supabase-js --
    * builder THENABLE LAZY, que so despacha a requisicao quando alguem consome a promessa. */
   lazyHeartbeat?: boolean;
@@ -346,6 +348,10 @@ function mockDeps(opts: MockOpts, ctx: MockCtx): any {
             return Promise.resolve({ data: opts.cronVaultResult ?? null, error: null });
           case "is_admin_or_supervisor":
             return Promise.resolve({ data: opts.isAdminOrSupervisor === true, error: null });
+          // C121: o `default` deste stub responde `true` a RPC desconhecida — sem este
+          // caso explicito toda instancia pareceria pausada e nenhum envio sairia.
+          case "is_instance_paused":
+            return Promise.resolve({ data: opts.instancePaused === true, error: null });
           case "user_has_permission": {
             // F25/MX09: nomes de permissao diferentes decidem entradas
             // diferentes — o stub responde pela permissao PEDIDA, em vez de um
@@ -1332,6 +1338,24 @@ Deno.test("F10: janela que fecha no meio do disparo pausa com motivo 'outside_wi
   assert(pause.args.p_pause_reason === "outside_window", `motivo esperado 'outside_window', veio ${pause.args.p_pause_reason}`);
   assert(rpcs(ctx, "claim_multiplix_item").length === 0, "nao pode reivindicar com a janela fechada");
   assert(providerPosts === 0, "nao pode enviar com a janela fechada");
+});
+
+Deno.test("C121: instancia pausada pausa o disparo com motivo 'instance_paused' e nao envia", async () => {
+  // A pausa da instancia vale para TODO caminho de envio: aqui o disparo para com o
+  // motivo proprio (a janela esta aberta e a conexao de pe, entao 'outside_window' e
+  // 'connection_lost' estariam errados) e nada vai ao provedor.
+  const opts: MockOpts = {
+    cronVaultResult: TEST_CRON_SECRET,
+    dispatch: dispatchRow({ status: "sending" }),
+    recipients: [recipientRow(1, "5511922222222")],
+    suppressedPhones: [],
+    instancePaused: true,
+  };
+  const { ctx, providerPosts } = await runWithProviderBlocked(opts);
+  const pause = rpcs(ctx, "transition_multiplix_dispatch").find((call) => call.args.p_action === "pause");
+  assert(pause, "esperava pausa quando a instancia esta pausada");
+  assert(pause.args.p_pause_reason === "instance_paused", `motivo esperado 'instance_paused', veio ${pause.args.p_pause_reason}`);
+  assert(providerPosts === 0, "nao pode enviar com a instancia pausada");
 });
 
 // ------------------------------------------------------------------- F11a (laco)
