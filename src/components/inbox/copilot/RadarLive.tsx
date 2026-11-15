@@ -10,6 +10,7 @@
  * Convive com o RadarPhase7Panel (ghost text, templates e voz, tudo local): aqui
  * só entra o que vem do motor de IA, então não há cartão repetido.
  */
+import { useEffect, useRef } from 'react';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useCopilotSession } from '@/hooks/copilot/useCopilotSession';
 import { useLiveSuggestions } from '@/hooks/copilot/useLiveSuggestions';
@@ -20,13 +21,32 @@ export interface RadarLiveProps {
   contactId: string;
   onDraftText: (text: string) => void;
   className?: string;
+  /**
+   * Id da ultima mensagem recebida do contato. Sinal de que a sessao do contato
+   * pode ter acabado de nascer: ver o efeito de descoberta abaixo.
+   */
+  lastContactMessageId?: string;
 }
 
-export default function RadarLive({ contactId, onDraftText, className }: RadarLiveProps) {
+export default function RadarLive({ contactId, onDraftText, className, lastContactMessageId }: RadarLiveProps) {
   const { user } = useAuth();
   const { session, loading: sessionLoading, refresh: refreshSession } = useCopilotSession(contactId);
   const live = useLiveSuggestions(session?.id ?? null, refreshSession);
   const panel = useRadarPanel(user?.id, contactId);
+
+  // Sem sessao carregada nao existe assinatura de insights (useLiveSuggestions
+  // exige sessionId) e `copilot_sessions` nao esta no Realtime: nada reconsulta,
+  // e o painel so aparecia ao reabrir a conversa. O gatilho AFTER INSERT em
+  // `messages` grava a sessao na mesma transacao da mensagem, antes de enfileirar
+  // o job de IA, entao quando a mensagem chega ao cliente a linha ja existe e uma
+  // consulta basta. Com sessao em maos quem avisa volta a ser o insight novo.
+  // Montagem nao conta: a consulta inicial do hook ja acontece.
+  const vistaNaMontagem = useRef(lastContactMessageId);
+  useEffect(() => {
+    if (vistaNaMontagem.current === lastContactMessageId) return;
+    vistaNaMontagem.current = lastContactMessageId;
+    if (!session) refreshSession();
+  }, [lastContactMessageId, session, refreshSession]);
 
   if (!session) return null;
 

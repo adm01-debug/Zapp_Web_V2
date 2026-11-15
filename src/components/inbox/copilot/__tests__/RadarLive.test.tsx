@@ -83,6 +83,22 @@ describe('RadarLive', () => {
     expect(await screen.findByRole('complementary', { name: /RADAR Copiloto/i })).toBeTruthy();
     expect(screen.getAllByText('Negociando').length).toBeGreaterThan(0);
   });
+
+  // `copilot_sessions` nao esta no Realtime e a assinatura de insights exige um
+  // sessionId: sem esta reconsulta o painel so aparecia ao reabrir a conversa.
+  it('acha a sessao criada apos a mensagem recebida, sem reabrir a conversa', async () => {
+    maybeSingle.mockResolvedValueOnce({ data: null, error: null });
+    const { container, rerender } = render(
+      <RadarLive contactId="c1" onDraftText={vi.fn()} lastContactMessageId="m1" />,
+    );
+    await waitFor(() => expect(maybeSingle).toHaveBeenCalled());
+    expect(container.innerHTML).toBe('');
+
+    // Mensagem nova do contato: o motor criou a sessao no tick dela.
+    maybeSingle.mockResolvedValueOnce({ data: LINHA, error: null });
+    rerender(<RadarLive contactId="c1" onDraftText={vi.fn()} lastContactMessageId="m2" />);
+    expect(await screen.findByRole('complementary', { name: /RADAR Copiloto/i })).toBeTruthy();
+  });
 });
 
 describe('atalhos do RadarPanel', () => {
