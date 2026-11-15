@@ -311,8 +311,25 @@ export interface TalkXQueryBoundaryProps {
 }
 
 /**
+ * Código do Postgres para negação de privilégio. O PostgREST devolve esse `code`
+ * cru quando uma policy de RLS barra a leitura, e o Talk X vive atrás de RLS.
+ */
+const CODIGO_SEM_PERMISSAO = '42501';
+
+/**
+ * Distingue "o banco te negou" de "deu erro". A diferença importa para quem usa:
+ * erro pede "tentar novamente", falta de permissão pede falar com o administrador
+ * — e tentar de novo nunca vai resolver.
+ */
+function ehNegacaoDePermissao(error: unknown): boolean {
+  if (!error || typeof error !== 'object') return false;
+  const code = (error as { code?: unknown }).code;
+  return code != null && String(code) === CODIGO_SEM_PERMISSAO;
+}
+
+/**
  * Decide o que mostrar para uma consulta, nesta ordem:
- * carregando -> erro -> vazio -> conteúdo.
+ * carregando -> sem permissão -> erro -> vazio -> conteúdo.
  *
  * REGRA CRÍTICA: nunca mostra o vazio quando há erro — se a consulta falhou,
  * mostra o erro (com retry), nunca "não há nada".
@@ -351,17 +368,28 @@ export function TalkXQueryBoundary({
     );
   }
 
-  // 2. Erro — tem precedência sobre o vazio. Nunca mostra o vazio com erro.
+  // 2. Sem permissão — o banco NEGOU (42501), não falhou. Mostrar "tentar
+  // novamente" aqui manda o operador repetir para sempre uma ação que a policy
+  // nunca vai deixar passar; o caminho certo é falar com o administrador.
+  if (query.isError && ehNegacaoDePermissao(query.error)) {
+    return (
+      <div data-talkx-query="perm">
+        <TalkXNoPermissionState />
+      </div>
+    );
+  }
+
+  // 3. Erro — tem precedência sobre o vazio. Nunca mostra o vazio com erro.
   if (query.isError) {
     return <TalkXErrorState entity={entity} error={query.error} onRetry={onRetry} />;
   }
 
-  // 3. Vazio (apenas quando NÃO há erro nem carregamento).
+  // 4. Vazio (apenas quando NÃO há erro nem carregamento).
   if (isEmpty) {
     return <div data-talkx-query="empty">{empty}</div>;
   }
 
-  // 4. Conteúdo — marca aria-busy quando há refetch em andamento.
+  // 5. Conteúdo — marca aria-busy quando há refetch em andamento.
   return (
     <div aria-busy={query.isFetching ? 'true' : undefined} data-talkx-query="content">
       {children}

@@ -77,6 +77,27 @@ describe('TalkXQueryBoundary (matriz de estados — X047)', () => {
     expect(screen.getByText(/campanhas/i)).toBeTruthy();
   });
 
+  it('negacao do banco (42501): mostra "sem permissao", nao o erro generico', () => {
+    // O PostgREST devolve o code cru do Postgres quando a policy de RLS barra a
+    // leitura. Antes isso caia no erro generico com "Tentar novamente" — botao
+    // que manda o operador repetir para sempre algo que a policy nunca libera.
+    const negado = Object.assign(new Error('permission denied for table talkx_campaigns'), { code: '42501' });
+    const { container } = renderBoundary(query({ isError: true, error: negado }), true);
+    expect(screen.getByText(/nao tem permissao|não tem permissão/i)).toBeTruthy();
+    expect(screen.queryByText(/Tentar novamente/i)).toBeNull();
+    expect(screen.queryByText('vazio')).toBeNull();
+    expect(screen.queryByText('conteudo')).toBeNull();
+    expect(container.querySelector('[data-talkx-query="perm"]')).toBeTruthy();
+  });
+
+  it('erro COM code diferente de 42501 continua no erro generico', () => {
+    const outro = Object.assign(new Error('timeout'), { code: '57014' });
+    const { container } = renderBoundary(query({ isError: true, error: outro }), true);
+    expect(container.querySelector('[data-talkx-query="perm"]')).toBeNull();
+    expect(screen.getByText(/campanhas/i)).toBeTruthy();
+    expect(screen.getByText(/Tentar novamente/i)).toBeTruthy();
+  });
+
   it('vazio sem erro: mostra o vazio', () => {
     const { container } = renderBoundary(query(), true);
     expect(screen.getByText('vazio')).toBeTruthy();
