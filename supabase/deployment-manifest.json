@@ -441,8 +441,8 @@
     },
     {
       "path": "supabase/functions/ai-jobs-worker/index.ts",
-      "bytes": 24029,
-      "sha256": "a1268d5e6bd69416193a57c3e028d2e242fcaae197c18feee17e58c5e84d5390"
+      "bytes": 24018,
+      "sha256": "8fbdc00375dc35cbba6c02044ebfeac31e029a9e96248a12105b5f8d5c02b6be"
     },
     {
       "path": "supabase/functions/ai-kb-ingest/index.ts",
@@ -1101,7 +1101,7 @@
       "name": "ai-jobs-worker",
       "entrypoint": "supabase/functions/ai-jobs-worker/index.ts",
       "verify_jwt": true,
-      "source_sha256": "85fc59f18283d8678f5159189bf3033c07995219fc451fcb1737e07b28912f05",
+      "source_sha256": "46dabedbba2e4295f4d02a758c46852e2b367c197c5a44a20c325ca97c935193",
       "source_files": [
         "supabase/functions/_shared/ai-budget.ts",
         "supabase/functions/_shared/ai-capabilities.ts",
@@ -2802,5 +2802,5 @@
       ]
     }
   ],
-  "manifest_sha256": "83f299fc370c5b0eef559b48b919a10b34a5dcc99d8d93b5d2915920179a9d50"
+  "manifest_sha256": "37603165618b29957edd0407941167005e28e58caf64381dfa555cedde857b79"
 }
