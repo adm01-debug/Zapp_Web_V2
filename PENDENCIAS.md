@@ -306,3 +306,140 @@ senão fica trabalho parado.
 a medição registrada no próprio arquivo, faço os mocks dos testes e mergeio; ou **"deixa o painel desligado"** e
 eu arquivo formalmente. Enquanto não responder, **nada se perde**: o `RadarLive` e o teste dele seguem na
 `main`, intactos.
+
+---
+
+# PENDÊNCIAS — Chaves de IA e MFA (2026-11-15)
+
+Levantamento do assistente de IA, medido direto na produção (`tnnnlkbymytvtqngbbqh`). Cada número
+abaixo saiu de uma consulta real, citada no item.
+
+## 7. ElevenLabs sem crédito e/ou com chave inválida — voz e transcrição estão fora do ar
+
+**O que isso significa pro negócio:** o sistema não transcreve áudio de WhatsApp e não gera voz.
+Qualquer recurso de voz do assistente nasce quebrado enquanto isso não for resolvido.
+
+**Prova** (`ai_usage_logs`, filtrando `status='error'`):
+
+| Data | Função | Modelo | Erro |
+|---|---|---|---|
+| 2026-11-14 | `ai-transcribe-audio` | `scribe_v2` | `elevenlabs_http_401` (2×) |
+| 2026-11-14 | `elevenlabs-tts-stream` | `eleven_flash_v2_5` | `ElevenLabs HTTP 402` |
+| 2026-11-07 | `elevenlabs-tts` | `eleven_v3` | `ElevenLabs HTTP 401` |
+
+Leitura dos códigos: **401 = chave rejeitada** (inválida, revogada ou expirada); **402 = Payment
+Required**, isto é, **crédito/plano esgotado** na conta ElevenLabs.
+
+Observação importante: `elevenlabs-scribe-token` teve **8 sucessos**, o que mostra que a edge e a
+configuração do projeto estão de pé — o que falha é a credencial/saldo no provedor.
+
+**O que eu preciso que você faça** (não consigo fazer, é conta e pagamento):
+1. Entrar em https://elevenlabs.io → **Usage / Billing** e ver se o crédito acabou. Se acabou, recarregar
+   ou subir o plano.
+2. Em **Profile → API Keys**, conferir se a chave em uso ainda existe e está ativa. Se foi revogada,
+   gerar uma nova.
+3. Me avisar "chave nova gerada" — **não cole a chave no chat**. Eu te passo o comando exato para
+   gravá-la como segredo (`supabase secrets set`), ou você grava pelo painel do Supabase em
+   Edge Functions → Secrets.
+
+Depois disso eu reexecuto uma transcrição de teste e te mostro o resultado.
+
+## 8. Nenhum dos 10 usuários tem segundo fator (MFA) ativo
+
+**Prova:** `select count(1) from auth.users` → **10**; `select count(1) from auth.mfa_factors` → **0**.
+
+**O que isso significa pro negócio:** quem descobrir a senha de um usuário entra na conta direto. Não há
+segunda barreira. Em um sistema que opera o WhatsApp da empresa e a base de contatos, isso é o risco
+aberto mais relevante que encontrei.
+
+**Por que travou em você:** ativar MFA obrigatório muda o login de todo mundo — cada pessoa passa a
+precisar cadastrar o app autenticador no próximo acesso. É decisão de negócio, não técnica.
+
+**O que eu preciso que você decida:** uma das três.
+- **(a) Obrigatório para todos** — mais seguro; todo mundo cadastra no próximo login.
+- **(b) Obrigatório só para quem é admin** — protege quem tem mais poder, sem atrito no time todo.
+- **(c) Opcional** — fica disponível, cada um ativa se quiser (na prática, quase ninguém ativa).
+
+Responda "MFA a", "MFA b" ou "MFA c" e eu implemento ponta a ponta (tela de cadastro, verificação no
+login, recuperação).
+
+## 9. Custo de IA inauditável — a tabela de preços está vazia
+
+**Prova:** `select count(1) from ai_model_prices` → **0 linhas**.
+
+**O que isso significa pro negócio:** o sistema registra cada chamada de IA em `ai_usage_logs`, mas sem
+preço por modelo ele não sabe transformar isso em dinheiro. Você não tem como ver quanto a IA custou no
+mês, nem receber alerta de estouro.
+
+**Isso é trabalho meu, não seu** — já está na minha fila: preencher a tabela com os preços públicos
+vigentes por modelo e ligar o cálculo. Fica aqui registrado só para você saber que o número de custo que
+aparecer antes disso é zero por falta de dado, não por não ter gasto.
+
+## 10. Esclarecimento — os 173 jobs de IA "falhados" NÃO são problema
+
+Para você não se assustar se vir esse número em algum painel.
+
+**Prova:** `ai_jobs` com `status='failed'` → 173, dos quais **169 com código `UNCONFIRMED`**. Cruzando o
+`source_id` de cada um com `messages` e com a conexão de origem:
+
+| Conexão | Jobs |
+|---|---|
+| `[E2E] Conexão WhatsApp Teste` | **165** |
+| `Promo Brindes WhatsApp` (real) | 4 |
+
+Os 165 são da conexão de teste automatizado, que fica **desconectada de propósito** — é assim que o teste
+prova que o sistema lida com falha de envio. E `UNCONFIRMED` é desfecho **projetado**, documentado em
+`supabase/functions/_shared/effect-reconcile.ts:35`: a Evolution GO não oferece consulta de histórico por
+mensagem, então quando a confirmação não chega o sistema **se recusa a reenviar** (reenviar duplicaria a
+mensagem do cliente) e deixa a linha marcada para conferência humana. É o comportamento correto.
+
+Sobra de real: 3 mensagens `failed` e 1 presa em `sending` na conexão de produção, em 44 dias.
+
+---
+
+## 11. CORRIGIDO em 15/11 — o modelo de IA padrão do sistema tinha sido retirado pelo fornecedor
+
+**Não precisa de nada seu. Está consertado.** Fica registrado porque explica por que a IA do sistema
+andava falhando e porque foi uma mudança feita direto na configuração de produção.
+
+**O que estava acontecendo:** a tabela `ai_providers` tinha o DeepSeek como provedor padrão
+(`is_default = true`, atendendo `copilot`, `analysis`, `summary`, `tagging`, `auto_reply`) com o modelo
+`deepseek-v4-flash`. Esse identificador de modelo **foi retirado pela DeepSeek** e substituído por
+`deepseek-flash`. Toda função que pedia o modelo pelo roteador recebia erro do fornecedor.
+
+**Prova, dos logs de produção do dia 14/11** (`ai_usage_logs`, mesma chave de API, mesmo dia):
+
+| Modelo enviado | Função | Resultado |
+|---|---|---|
+| `deepseek-flash` | `ai-proxy` | **success** |
+| `deepseek-v4-flash` | `voice-agent` | **HTTP 400** |
+| `deepseek-v4-flash` | `ai-conversation-summary` | **HTTP 400** |
+
+HTTP 400 (Bad Request) é o que a API devolve quando o modelo pedido não existe. O `ai-proxy` escapava
+porque recebe o nome do modelo na própria requisição; as outras pegam do banco.
+
+Confirmação de que o identificador novo é o certo: além do sucesso acima, o histórico mostra
+`deepseek-v4-flash` com sucesso só até **09/09/2026** — depois disso, nunca mais.
+
+**O que eu mudei:** uma linha na configuração, com guarda para não acertar outra linha por engano:
+
+```sql
+update ai_providers set model = 'deepseek-flash'
+ where name = 'DeepSeek' and model = 'deepseek-v4-flash';
+-- 1 linha afetada
+```
+
+Nenhuma mudança de código foi necessária: `deepseek-v4-flash` não aparece em nenhum arquivo de produção
+(só em três arquivos de teste, como texto de exemplo). O roteador
+(`supabase/functions/_shared/ai-providers.ts`) lê a tabela a cada chamada, sem cache, então a correção
+passou a valer de imediato.
+
+**O que eu NÃO provei:** não executei uma chamada de produto depois da correção. As edges de IA exigem
+token de usuário real (`service_role` recebe 401, e está certo que receba), e eu não usaria a credencial
+de um usuário para um teste. A confirmação final aparece sozinha no próximo uso: o registro em
+`ai_usage_logs` passará a mostrar `deepseek-flash` com `success` no lugar do HTTP 400.
+
+**Observação anotada, sem ação:** `ai-routing.ts:75-77` e `ai-providers.ts:81,134` guardam modelos de
+último recurso (`gpt-4o`, `google/gemini-3-flash-preview`) usados só se um provedor ativo ficar sem modelo
+definido. Hoje nenhum provedor ativo está nessa situação, então não mexi. Vale revisar quando sobrar
+tempo, porque `gpt-4o` como padrão de `openai_compatible` iria para a API da DeepSeek e falharia.
