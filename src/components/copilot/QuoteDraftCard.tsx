@@ -6,6 +6,7 @@
 import { FileText, Copy, Check } from 'lucide-react';
 import { useState } from 'react';
 import { cn } from '@/lib/utils';
+import { avisarCopia, copiarTexto } from '@/lib/clipboard';
 import type { QuoteDraft } from '@/hooks/copilot/useQuoteDraft';
 
 interface QuoteDraftCardProps {
@@ -19,8 +20,10 @@ export function QuoteDraftCard({ draft, onUseText, className }: QuoteDraftCardPr
 
   if (!draft.ready) return null;
 
-  const handleCopy = () => {
-    navigator.clipboard.writeText(draft.textSummary).catch(() => {});
+  const handleCopy = async () => {
+    const ok = await copiarTexto(draft.textSummary);
+    avisarCopia(ok);
+    if (!ok) return;
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };

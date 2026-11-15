@@ -457,6 +457,7 @@ describe('vistas da aba Arquivos (A03/A04)', () => {
       onSelect: vi.fn(),
       onToggleSelection: vi.fn(),
       onPreview: vi.fn(),
+      onForward: vi.fn(),
       onRequestDelete: vi.fn(),
     };
     render(<FilesListView {...props} />);
@@ -483,6 +484,7 @@ describe('vistas da aba Arquivos (A03/A04)', () => {
       onSelect: vi.fn(),
       onToggleSelection: vi.fn(),
       onPreview: vi.fn(),
+      onForward: vi.fn(),
       onRequestDelete: vi.fn(),
     };
     render(<FilesTableView {...props} />);

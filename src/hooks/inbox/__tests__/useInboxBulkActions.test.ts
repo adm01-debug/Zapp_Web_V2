@@ -41,7 +41,7 @@ interface UndoOptions {
 }
 
 const mocks = vi.hoisted(() => ({
-  toast: { success: vi.fn(), error: vi.fn(), info: vi.fn() },
+  toast: { success: vi.fn(), error: vi.fn(), info: vi.fn(), warning: vi.fn() },
   execute: vi.fn(),
   invoke: vi.fn(),
   from: vi.fn(),
@@ -73,6 +73,8 @@ let lastUndo: UndoOptions | null = null;
 let rpcFailures: Record<string, unknown> = {};
 let rpcCalls: { name: string; args: Record<string, unknown> }[] = [];
 
+const ECHO_ROWS: DbResult = { data: '__echo__' };
+
 function buildChain(
   call: RecordedCall,
   result: DbResult,
@@ -91,7 +93,12 @@ function buildChain(
     // controlado) também vale quando o UPDATE pede as linhas de volta.
     select: () => chain,
     then: (onFulfilled: (v: unknown) => unknown, onRejected?: (e: unknown) => unknown) => {
-      const base = opts.delayUntil ? opts.delayUntil.then(() => result) : Promise.resolve(result);
+      // Sem resultado enfileirado, um UPDATE com `.select('id')` devolve as linhas que o
+      // filtro atingiu (todas as do `.in('id', …)`), como o PostgREST faria.
+      const final = result === ECHO_ROWS
+        ? { data: ((call.filters.id as string[] | undefined) ?? []).map((id) => ({ id })), error: null }
+        : result;
+      const base = opts.delayUntil ? opts.delayUntil.then(() => final) : Promise.resolve(final);
       return base.then(onFulfilled, onRejected);
     },
   };
@@ -170,7 +177,7 @@ beforeEach(() => {
     update: (payload: unknown) => {
       const call: RecordedCall = { table, op: 'update', payload, filters: {} };
       recorded.push(call);
-      return buildChain(call, updateQueue.shift() ?? { data: null, error: null }, {
+      return buildChain(call, updateQueue.shift() ?? ECHO_ROWS, {
         delayUntil: updateGate,
       });
     },
@@ -572,7 +579,7 @@ describe('useInboxBulkActions — bulkArchive', () => {
     expect(refetch).toHaveBeenCalledTimes(2);
   });
 
-  it('desfazer: original fora de open/pending (waiting/resolved) volta como "open" — archived só transita para open/pending no banco', async () => {
+  it('desfazer: original fora de open/pending (waiting/resolved) é restaurado em dois passos — archived→open→original', async () => {
     selectQueue.push({
       data: [
         { id: c1, conversation_status: 'waiting' },
@@ -591,8 +598,78 @@ describe('useInboxBulkActions — bulkArchive', () => {
     });
 
     const restores = contactUpdates().slice(1);
-    expect(restores).toHaveLength(1);
-    expect(restores[0]).toMatchObject({ payload: { conversation_status: 'open' }, filters: { id: [c1, c2] } });
+    // Passo 1: todos de archived para open (única transição válida a partir de archived).
+    expect(restores[0]).toMatchObject({ payload: { conversation_status: 'open' }, filters: { id: [c1, c2], conversation_status: 'archived' } });
+    // Passo 2: cada grupo volta ao status original.
+    expect(restores).toHaveLength(3);
+    expect(restores.slice(1)).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ payload: { conversation_status: 'waiting' }, filters: { id: [c1], conversation_status: 'open' } }),
+        expect.objectContaining({ payload: { conversation_status: 'resolved' }, filters: { id: [c2], conversation_status: 'open' } }),
+      ]),
+    );
+  });
+
+  it('desfazer com mistura de status e falha no passo 2: segue os outros grupos, recarrega a lista e avisa "X de Y"', async () => {
+    selectQueue.push({
+      data: [
+        { id: c1, conversation_status: 'open' },
+        { id: c2, conversation_status: 'waiting' },
+        { id: c3, conversation_status: 'resolved' },
+      ],
+      error: null,
+    });
+    const { result, refetch } = renderInbox();
+    selectIds(result, [c1, c2, c3]);
+    await act(async () => {
+      await result.current.bulkArchive();
+    });
+    refetch.mockClear();
+
+    // undo: [open c1] ok · [passo 1 c2,c3 → open] ok · [waiting c2] ok · [resolved c3] FALHA
+    updateQueue.push(
+      { data: [{ id: c1 }], error: null },
+      { data: [{ id: c2 }, { id: c3 }], error: null },
+      { data: [{ id: c2 }], error: null },
+      { data: null, error: { message: 'Invalid conversation_status transition' } },
+    );
+    let thrown: unknown = null;
+    await act(async () => {
+      try { await lastUndo?.undoAction(); } catch (e) { thrown = e; }
+    });
+
+    const restores = contactUpdates().slice(1);
+    // Sem o "fallback" para open: c3 já está em open depois do passo 1.
+    expect(restores).toHaveLength(4);
+    expect(thrown).toBeInstanceOf(Error);
+    expect(refetch).toHaveBeenCalledTimes(1);
+    expect(mocks.toast.warning).toHaveBeenCalledWith('2 de 3 restaurados');
+  });
+
+  it('desfazer não força de volta quem saiu do arquivo na janela: cada passo filtra o status esperado e só segue com os ids devolvidos', async () => {
+    selectQueue.push({ data: [{ id: c1, conversation_status: 'resolved' }, { id: c2, conversation_status: 'waiting' }], error: null });
+    const { result, refetch } = renderInbox();
+    selectIds(result, [c1, c2]);
+    await act(async () => {
+      await result.current.bulkArchive();
+    });
+    refetch.mockClear();
+
+    // c1 foi reaberto por mensagem nova: o passo 1 (filtrado por archived) só devolve c2.
+    updateQueue.push({ data: [{ id: c2 }], error: null });
+    await act(async () => {
+      await lastUndo?.undoAction();
+    });
+
+    const restores = contactUpdates().slice(1);
+    expect(restores[0]).toMatchObject({ payload: { conversation_status: 'open' }, filters: { id: [c1, c2], conversation_status: 'archived' } });
+    expect(restores).toHaveLength(2);
+    expect(restores[1]).toMatchObject({ payload: { conversation_status: 'waiting' }, filters: { id: [c2], conversation_status: 'open' } });
+    // Nenhum UPDATE leva c1 para resolved.
+    expect(restores.some((r) => (r.filters.id as string[]).includes(c1) && (r.payload as { conversation_status: string }).conversation_status === 'resolved')).toBe(false);
+    expect(refetch).toHaveBeenCalledTimes(1);
+    expect(mocks.toast.info).toHaveBeenCalledWith('1 de 2 restaurados — as demais já tinham sido reabertas');
+    expect(mocks.toast.warning).not.toHaveBeenCalled();
   });
 
   it('desfazer: contato já archived antes da seleção NÃO é aberto — excluído do lote desde o início', async () => {
