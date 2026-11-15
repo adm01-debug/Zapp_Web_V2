@@ -251,7 +251,7 @@ export function InboxSavedFiltersMenu({ current, onApply }: InboxSavedFiltersMen
                 className="flex items-center justify-between gap-2 rounded-md border border-border bg-muted px-2 py-1.5"
               >
                 <span className="truncate text-xs text-muted-foreground">
-                  Filtro "{removed.name}" excluído.
+                  {`Filtro “${removed.name}” excluído.`}
                 </span>
                 <Button
                   type="button"
