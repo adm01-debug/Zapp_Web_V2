@@ -42,10 +42,10 @@ confere que todo caminho listado é consumidor de verdade; ela não obriga a lis
 |---|---|
 | Tabelas (`tables`) | 212 |
 | Views (`views`) | 13 |
-| Colunas (`columns`) | 2364 |
+| Colunas (`columns`) | 2365 |
 | Funções (`functions`) | 396 |
 | Assinaturas de função (`function_signatures`) | 398 |
-| Funções de gatilho (`trigger_functions`) | 102 |
+| Funções de gatilho (`trigger_functions`) | 103 |
 | Restrições de verificação (`check_constraints`) | 249 |
 
 As tabelas estão inventariadas uma a uma na seção seguinte. Views, funções, colunas e restrições
