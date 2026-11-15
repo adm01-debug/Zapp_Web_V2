@@ -8,9 +8,10 @@
   "valor": "baixo",
   "classe": "sql",
   "bloqueio": "migration_producao",
-  "prova": "ausente: COMMENT ON FUNCTION em supabase/migrations/20261108201000_talkx_x074_analytics_rpcs.sql (arquivo termina no GRANT, linha 152); grep de COMMENT ON FUNCTION public.talkx_* em supabase/ e script",
+  "prova": "ausente: COMMENT ON FUNCTION em supabase/migrations/20261108201000_talkx_x074_analytics_rpcs.sql (arquivo termina no GRANT, linha 152); grep de COMMENT ON FUNCTION public.talkx_* em supabase/ e scripts/ da main: 0 ocorrencias; producao obj_description = null nas 3",
   "revisor": "nao_refutado",
-  "frente": "incorp-c1-65.json"
+  "frente": "incorp-c1-65.json",
+  "motivo_revisor": "main supabase/migrations/20261108201000_talkx_x074_analytics_rpcs.sql:152 acaba no GRANT, zero COMMENT; prod obj_description=null nas 3 (query 15/11); contexto functions.md:432,437,478 sem descricao. So doc."
  },
  {
   "branch": "claude__fix-ci-talkx-report-test-261108-2152",
@@ -23,7 +24,8 @@
   "bloqueio": "nenhum",
   "prova": "main TalkXCampaignReport.test.tsx:163 renderiza sem a prop creators; grep -rn creators em src/components/talkx/report/__tests__/ = 0 resultados. Produção usa em TalkXCampaignReport.tsx:327",
   "revisor": "nao_refutado",
-  "frente": "incorp-c1-65.json"
+  "frente": "incorp-c1-65.json",
+  "motivo_revisor": "Confirmei: main usa creators em TalkXCampaignReport.tsx:327 e nenhum teste passa a prop (test.tsx:171 e segmento.test.tsx:118 passam so campaign/onBack; route.test.tsx:74 mocka a tela inteira)."
  },
  {
   "branch": "claude__fix-esm-sh-import-regression-261108-2319",
@@ -34,9 +36,10 @@
   "valor": "baixo",
   "classe": "teste",
   "bloqueio": "nenhum",
-  "prova": "src/components/talkx/report/__tests__/TalkXCampaignReport.test.tsx:163 e .segmento.test.tsx:121 montam <TalkXCampaignReport campaign={campaign} onBack={vi.fn()} /> sem a prop creators; a linha Respons",
+  "prova": "src/components/talkx/report/__tests__/TalkXCampaignReport.test.tsx:163 e .segmento.test.tsx:121 montam <TalkXCampaignReport campaign={campaign} onBack={vi.fn()} /> sem a prop creators; a linha Responsável em TalkXCampaignReport.tsx:327 fica sem cobertura",
   "revisor": "nao_refutado",
-  "frente": "incorp-c1-65.json"
+  "frente": "incorp-c1-65.json",
+  "motivo_revisor": "Ausencia confirmada: __tests__/TalkXCampaignReport.test.tsx:163 e .segmento.test.tsx:121 montam sem creators; linha viva em TalkXCampaignReport.tsx:327, coluna owner existe (migration 20261001271230)"
  },
  {
   "branch": "claude__fix-esm-sh-import-regression-261108-2319",
@@ -47,9 +50,10 @@
   "valor": "baixo",
   "classe": "teste",
   "bloqueio": "nenhum",
-  "prova": "TalkXCampaignReport.tsx:247,253,254 renderiza os rótulos; grep em src/ só acha asserção deles em useTalkXLifecycle.test.tsx:547 e TalkXWizardReview.lifecycle.test.tsx:126 (outros componentes), nenhum ",
+  "prova": "TalkXCampaignReport.tsx:247,253,254 renderiza os rótulos; grep em src/ só acha asserção deles em useTalkXLifecycle.test.tsx:547 e TalkXWizardReview.lifecycle.test.tsx:126 (outros componentes), nenhum no teste do relatório",
   "revisor": "nao_refutado",
-  "frente": "incorp-c1-65.json"
+  "frente": "incorp-c1-65.json",
+  "motivo_revisor": "Ausencia confirmada: labels em TalkXCampaignReport.tsx:247,253,254 sem assercao nos 6 it do teste do relatorio (linhas 168-201); grep so acha em dialogPresets.test.tsx:154 e useTalkXLifecycle.test.tsx:547"
  },
  {
   "branch": "claude_05__wonderful-goodall-94qjyg",
@@ -60,9 +64,10 @@
   "valor": "baixo",
   "classe": "teste",
   "bloqueio": "nenhum",
-  "prova": "main: src/components/talkx/report/__tests__/TalkXCampaignReport.test.tsx (215 linhas, 13 it) sem nenhuma ocorrencia de 'creators' nem 'Responsavel'; o campo e renderizado em src/components/talkx/repor",
+  "prova": "main: src/components/talkx/report/__tests__/TalkXCampaignReport.test.tsx (215 linhas, 13 it) sem nenhuma ocorrencia de 'creators' nem 'Responsavel'; o campo e renderizado em src/components/talkx/report/TalkXCampaignReport.tsx:327",
   "revisor": "nao_refutado",
-  "frente": "incorp-c1-65.json"
+  "frente": "incorp-c1-65.json",
+  "motivo_revisor": "Ausencia confirmada: __tests__/TalkXCampaignReport.test.tsx e .segmento.test.tsx sem 'creators'; campo em TalkXCampaignReport.tsx:327. Tip da branch nao tem o teste (so commit morto 77fb7eb40:200)."
  },
  {
   "branch": "claude__fix-talkx-report-test-suite-261108-2355",
@@ -73,9 +78,10 @@
   "valor": "baixo",
   "classe": "teste",
   "bloqueio": "nenhum",
-  "prova": "Rótulos existem em TalkXCampaignReport.tsx:247,253,254 e o cartão em :315, mas nenhum teste da main cita 'A confirmar' nem 'Resumo da Campanha' (grep em src/**/*.test.tsx = 0 hits); o teste da main só",
+  "prova": "Rótulos existem em TalkXCampaignReport.tsx:247,253,254 e o cartão em :315, mas nenhum teste da main cita 'A confirmar' nem 'Resumo da Campanha' (grep em src/**/*.test.tsx = 0 hits); o teste da main só confere data-testid (TalkXCampaignReport.test.tsx:185-187).",
   "revisor": "nao_refutado",
-  "frente": "incorp-c2-65.json"
+  "frente": "incorp-c2-65.json",
+  "motivo_revisor": "Confirmado ausente: TalkXCampaignReport.test.tsx:176-188 só checa testids; 0 hits de 'Resumo da Campanha'/'A confirmar' em testes, embora existam em TalkXCampaignReport.tsx:315,253."
  },
  {
   "branch": "claude__fix-talkx-report-test-suite-261108-2355",
@@ -86,9 +92,10 @@
   "valor": "baixo",
   "classe": "teste",
   "bloqueio": "nenhum",
-  "prova": "TalkXCampaignReport.tsx:327 mostra MetaRow 'Responsável' a partir de creators; os 2 testes da tela na main renderizam sem essa informação — TalkXCampaignReport.test.tsx:163 e TalkXCampaignReport.segme",
+  "prova": "TalkXCampaignReport.tsx:327 mostra MetaRow 'Responsável' a partir de creators; os 2 testes da tela na main renderizam sem essa informação — TalkXCampaignReport.test.tsx:163 e TalkXCampaignReport.segmento.test.tsx:121 (ambos só campaign+onBack).",
   "revisor": "nao_refutado",
-  "frente": "incorp-c2-65.json"
+  "frente": "incorp-c2-65.json",
+  "motivo_revisor": "Confirmado ausente: TalkXCampaignReport.tsx:327 usa creators; renders em test.tsx:163 e segmento.test.tsx:121 não passam creators, e TalkXView.route.test.tsx:74-81 mocka a tela."
  },
  {
   "branch": "codex__fix-lint-phone-settings-20261101",
@@ -99,9 +106,10 @@
   "valor": "baixo",
   "classe": "front",
   "bloqueio": "nenhum",
-  "prova": "main src/components/queues/QueueAlertsDisplay.tsx:93 = aria-label={`Dispensar alerta ${alertLabels[alert.type]}`} — sem ${alert.queueName}; a branch tem `Dispensar alerta da fila ${alert.queueName}: $",
+  "prova": "main src/components/queues/QueueAlertsDisplay.tsx:93 = aria-label={`Dispensar alerta ${alertLabels[alert.type]}`} — sem ${alert.queueName}; a branch tem `Dispensar alerta da fila ${alert.queueName}: ${alertLabels[alert.type]}`",
   "revisor": "nao_refutado",
-  "frente": "incorp-c2-65.json"
+  "frente": "incorp-c2-65.json",
+  "motivo_revisor": "main src/components/queues/QueueAlertsDisplay.tsx:93 ainda = `Dispensar alerta ${alertLabels[alert.type]}` sem queueName; nome da fila so como texto irmao em :70, sem sr-only/aria-describedby"
  },
  {
   "branch": "fix__ci-verde-261021",
@@ -114,7 +122,8 @@
   "bloqueio": "nenhum",
   "prova": "e2e/auth.spec.ts:23 da main so checa validity.typeMismatch do navegador; nenhum teste cobre o zod de src/hooks/auth/useAuthForm.ts:12 que renderiza src/pages/Auth.tsx:152",
   "revisor": "nao_refutado",
-  "frente": "obs-lote1.json"
+  "frente": "obs-lote1.json",
+  "motivo_revisor": "Confirmei: e2e/auth.spec.ts:23 so checa validity.typeMismatch e nenhum teste de src/ ou e2e/ assere 'Email invalido' no login (zod useAuthForm.ts:12, alerta Auth.tsx:152). Lacuna so de teste."
  },
  {
   "branch": "claude__fix-talkx-test-suite-261108-2330",
@@ -125,7 +134,7 @@
   "valor": "medio",
   "classe": "teste",
   "bloqueio": "nenhum",
-  "prova": "src/components/talkx/report/__tests__/TalkXCampaignReport.test.tsx:115-118 (main) — unico teste positivo do helper e grid[0][7] (segunda); nenhuma assertiva em grid[1] ou grid[6]. talkxReportData.ts:2",
+  "prova": "src/components/talkx/report/__tests__/TalkXCampaignReport.test.tsx:115-118 (main) — unico teste positivo do helper e grid[0][7] (segunda); nenhuma assertiva em grid[1] ou grid[6]. talkxReportData.ts:29 define Sun:6",
   "revisor": "sem_revisor",
   "frente": "obs-lote3.json"
  },
@@ -138,9 +147,10 @@
   "valor": "medio",
   "classe": "teste",
   "bloqueio": "nenhum",
-  "prova": "wt-main src/components/talkx/report/__tests__/TalkXCampaignReport.test.tsx:108-123 so testa grid[0][7] (segunda), grade vazia e nulls; nenhum caso de domingo (linha 6) nem terca, tabela em report/talk",
+  "prova": "wt-main src/components/talkx/report/__tests__/TalkXCampaignReport.test.tsx:108-123 so testa grid[0][7] (segunda), grade vazia e nulls; nenhum caso de domingo (linha 6) nem terca, tabela em report/talkxReportData.ts:29",
   "revisor": "nao_refutado",
-  "frente": "obs-lote3.json"
+  "frente": "obs-lote3.json",
+  "motivo_revisor": "Ausencia confirmada: TalkXCampaignReport.test.tsx:108-123 so testa vazio, grid[0][7] (segunda) e nulls; unico consumidor e TalkXCampaignReport.tsx:189-191. TalkXReportHeatmap.test.tsx:38 cobre so rotulos Seg..Dom, nao o mapeamento de talkxReportData.ts:29."
  },
  {
   "branch": "claude__fix-talkx-test-suite-261108-2330",
@@ -151,7 +161,7 @@
   "valor": "baixo",
   "classe": "teste",
   "bloqueio": "nenhum",
-  "prova": "src/components/talkx/report/__tests__/TalkXCampaignReport.test.tsx:163 (main) — renderReport monta sem a prop creators; grep por 'Resumo da Campanha'/'A confirmar' em src/components/talkx/**/__tests__",
+  "prova": "src/components/talkx/report/__tests__/TalkXCampaignReport.test.tsx:163 (main) — renderReport monta sem a prop creators; grep por 'Resumo da Campanha'/'A confirmar' em src/components/talkx/**/__tests__ nao retorna nada",
   "revisor": "sem_revisor",
   "frente": "obs-lote3.json"
  },
@@ -166,7 +176,8 @@
   "bloqueio": "nenhum",
   "prova": "wt-main .../TalkXCampaignReport.test.tsx:159-166 renderiza sem a prop creators e grep creators em src/components/talkx/report/__tests__/ = 0; render condicional em report/TalkXCampaignReport.tsx:327",
   "revisor": "nao_refutado",
-  "frente": "obs-lote3.json"
+  "frente": "obs-lote3.json",
+  "motivo_revisor": "Ausencia confirmada: render condicional em TalkXCampaignReport.tsx:327 (owner existe em producao, talkx_campaigns.owner uuid); teste da main :127-166 nao passa creators nem owner; TalkXView.route.test.tsx:74 mocka a tela e nao assere a prop."
  },
  {
   "branch": "claude__fix-x051-remote-completion-test-261108-2057",
@@ -179,7 +190,8 @@
   "bloqueio": "nenhum",
   "prova": "ausente: grep -rln \"A confirmar\" e \"Resumo da Campanha\" em wt-main/src --include=*.test.tsx = 0 resultados; rotulos vivos em report/TalkXCampaignReport.tsx:247-254 e :315",
   "revisor": "nao_refutado",
-  "frente": "obs-lote3.json"
+  "frente": "obs-lote3.json",
+  "motivo_revisor": "Ausencia confirmada: grep \"A confirmar\" e \"Resumo da Campanha\" em todo *.test.ts(x) = 0. Rotulos vivos em TalkXCampaignReport.tsx:247-254/:315, talkxCsv.ts:72-78 e talkxReportPdf.ts:66-74; talkxCsv.test.ts:15-27 so testa escape de formula."
  },
  {
   "branch": "claude__feat-e71-skip-draft-prs-281026-0250",
@@ -192,7 +204,8 @@
   "bloqueio": "ci_workflow",
   "prova": ".github/workflows/ci.yml:440-443 (job e2e, timeout-minutes: 45, sem linha `if:`) na main e07525143; e2e nao aparece em nenhum `needs:` (so :229 e :410)",
   "revisor": "nao_refutado",
-  "frente": "obs-lote4.json"
+  "frente": "obs-lote4.json",
+  "motivo_revisor": "Ausencia confirmada: ci.yml:440-444 (job e2e sem `if:`), draft #3146 rodou E2E hoje 16:51:44->17:02:22 = 10m38s, nao 45min. Portar SO o e2e: node-scripts/security quebram scripts/ci/ci-gate.unit.mjs:31"
  },
  {
   "branch": "claude__fix-evolution-connect-500-261113-1721",
@@ -203,9 +216,10 @@
   "valor": "baixo",
   "classe": "teste",
   "bloqueio": "nenhum",
-  "prova": "connect-orfa-prazo.test.ts:210 e a unica mencao a \"removida\" nos testes da main e e assercao NEGATIVA (!r.text.includes). grep \"removida|503\" em supabase/functions/evolution-api/*.test.ts nao acha nen",
+  "prova": "connect-orfa-prazo.test.ts:210 e a unica mencao a \"removida\" nos testes da main e e assercao NEGATIVA (!r.text.includes). grep \"removida|503\" em supabase/functions/evolution-api/*.test.ts nao acha nenhum teste do 503",
   "revisor": "nao_refutado",
-  "frente": "obs-lote4.json"
+  "frente": "obs-lote4.json",
+  "motivo_revisor": "index.ts:1010 tem o aviso 503, mas nenhum teste o exercita: create sempre responde 200 (connect-orfa-prazo.test.ts:156-158; varredura :175-199); :210 so nega 'removida'; connect-go-token.test.ts:153,173,272 so checam create nao chamado"
  },
  {
   "branch": "claude__fix-radar-shortcut-key-261108-2059",
@@ -218,7 +232,8 @@
   "bloqueio": "nenhum",
   "prova": "main src/components/talkx/report/__tests__/TalkXCampaignReport.test.tsx:115-117 so afirma grid[0][7] (segunda); nenhuma linha do arquivo cita grid[1] ou grid[6] (grep sem resultado)",
   "revisor": "nao_refutado",
-  "frente": "obs-lote4.json"
+  "frente": "obs-lote4.json",
+  "motivo_revisor": "Confirmei ausencia: unica assercao do mapa na main e grid[0][7] (segunda) em src/components/talkx/report/__tests__/TalkXCampaignReport.test.tsx:115-117; grep 'grid\\[' na main so acha :117 e TalkXReportHeatmap.tsx:72. Domingo=linha 6 nasce do remap WEEKDAY_INDEX Sun:6 em talkxReportData.ts:29, usado em producao por TalkXCampaignReport.tsx:189-191. Parcialmente coberto: TalkXReportHeatmap.test.tsx:40 prova a ordem Seg..Dom na tela, mas nao a contagem do timestamp de domingo."
  },
  {
   "branch": "claude__fix-radar-shortcut-key-261108-2059",
@@ -231,7 +246,8 @@
   "bloqueio": "nenhum",
   "prova": "main TalkXCampaignReport.tsx:327 renderiza Responsavel via creators[campaign.owner], mas o teste da main nunca passa creators: render em TalkXCampaignReport.test.tsx:160-161 so manda campaign e onBack",
   "revisor": "nao_refutado",
-  "frente": "obs-lote4.json"
+  "frente": "obs-lote4.json",
+  "motivo_revisor": "Confirmei ausencia: a linha Responsavel (TalkXCampaignReport.tsx:327, creators[campaign.owner]) recebe creators de verdade em TalkXView.tsx:454-456, mas nenhum teste da main passa a prop: TalkXCampaignReport.test.tsx:163 e TalkXCampaignReport.segmento.test.tsx:121 montam so campaign+onBack; TalkXView.route.test.tsx:74-75 mocka o componente; grep 'creators' em src/components/talkx so acha testes de TalkXOverview."
  },
  {
   "branch": "claude__fix-talkx-test-suite-261109-0910",
@@ -244,7 +260,8 @@
   "bloqueio": "nenhum",
   "prova": "main TalkXCampaignReport.test.tsx:115-118 so afirma grid[0][7] (segunda); nenhum grid[5]/grid[6] na main. TalkXReportHeatmap.test.tsx:38 usa matriz feita a mao, nao exercita o mapeamento de dia.",
   "revisor": "nao_refutado",
-  "frente": "obs-lote4.json"
+  "frente": "obs-lote4.json",
+  "motivo_revisor": "main talkxReportData.ts:29 mapeia Sun:6, mas TalkXCampaignReport.test.tsx:117 so afirma grid[0][7]; :84-91 usa domingo e conta baldes, nao a linha; Heatmap.test.tsx:38 usa matriz fixa. Ausencia confirmada."
  },
  {
   "branch": "claude__fix-talkx-test-suite-261109-0910",
@@ -255,9 +272,10 @@
   "valor": "baixo",
   "classe": "teste",
   "bloqueio": "nenhum",
-  "prova": "main TalkXCampaignReport.tsx:327 desenha Responsavel via creators e :247,253,254 os rotulos; nenhum teste da main passa creators a esse componente nem afirma esses rotulos (grep em src/**/__tests__ va",
+  "prova": "main TalkXCampaignReport.tsx:327 desenha Responsavel via creators e :247,253,254 os rotulos; nenhum teste da main passa creators a esse componente nem afirma esses rotulos (grep em src/**/__tests__ vazio).",
   "revisor": "nao_refutado",
-  "frente": "obs-lote4.json"
+  "frente": "obs-lote4.json",
+  "motivo_revisor": "TalkXView.tsx:456 passa creators em producao; os dois renders da main (TalkXCampaignReport.test.tsx:163 e segmento.test.tsx:121) omitem creators e nenhum teste afirma rotulos/numeros do Resumo (:245-254)."
  },
  {
   "branch": "claude__fix-z017-z020-auth-cors-261018-1950",
@@ -270,7 +288,8 @@
   "bloqueio": "nenhum",
   "prova": ".gitignore da main (146 linhas) so ignora deno.lock em :115-117; `grep -n package-lock .gitignore` → exit 1. Nenhuma regra para package-lock.json",
   "revisor": "nao_refutado",
-  "frente": "obs-lote4.json"
+  "frente": "obs-lote4.json",
+  "motivo_revisor": ".gitignore da main (146 linhas) nao tem regra de package-lock (grep exit 1); :115-117 so deno.lock. Nenhum guard em .husky/pre-commit ou scripts/ci bloqueia. Ausencia real, mas valor baixo: nao rastreado."
  },
  {
   "branch": "claude__feat-radar-fase6-261108-1933",
@@ -283,7 +302,8 @@
   "bloqueio": "nenhum",
   "prova": "main .../TalkXCampaignReport.test.tsx:115 só afirma grid[0][7] (segunda); nenhuma asserção para terça (linha 1) nem domingo (linha 6). Branch assert grid[1][9] e grid[6][9].",
   "revisor": "nao_refutado",
-  "frente": "obs-wdnl8q6md.json"
+  "frente": "obs-wdnl8q6md.json",
+  "motivo_revisor": "Ausência confirmada: test.tsx:117 é a única asserção de grade (grid[0][7]=segunda); WEEKDAY_INDEX em talkxReportData.ts:29 sem teste p/ terça e domingo; função viva em TalkXCampaignReport.tsx:189"
  },
  {
   "branch": "claude__fix-pd79-compat-pre-migration-261111",
@@ -296,7 +316,8 @@
   "bloqueio": "nenhum",
   "prova": "grep -c manually_resolved_at em supabase/functions/_shared/__tests__/effect-reconcile.test.ts = 0; o stub da main trata .is() como no-op (:86). Guarda viva e sem teste: effect-reconcile.ts:462-469",
   "revisor": "nao_refutado",
-  "frente": "obs-wdnl8q6md.json"
+  "frente": "obs-wdnl8q6md.json",
+  "motivo_revisor": "Confirmei: guarda viva em effect-reconcile.ts:468, effect-reconcile.test.ts sem 'manually_resolved_at' e stub .is() no-op em :86. Só o teste pós-DDL da branch é portável; o pré-DDL falharia."
  },
  {
   "branch": "fix__ci-workflows-vermelhos",
@@ -310,9 +331,10 @@
   "valor": "medio",
   "classe": "ci",
   "bloqueio": "ci_workflow",
-  "prova": "wt-main/.github/workflows/ci.yml:490 'run: bunx playwright install-deps chromium firefox webkit' sem versao (:484 usa playwright@1.64.1); e2e-talkx.yml:98 idem. Guardas nao pegam: workflow-contracts.u",
+  "prova": "wt-main/.github/workflows/ci.yml:490 'run: bunx playwright install-deps chromium firefox webkit' sem versao (:484 usa playwright@1.64.1); e2e-talkx.yml:98 idem. Guardas nao pegam: workflow-contracts.unit.mjs:295 deixa @versao opcional",
   "revisor": "nao_refutado",
-  "frente": "obs-wdnl8q6md.json"
+  "frente": "obs-wdnl8q6md.json",
+  "motivo_revisor": "main: ci.yml:490 e e2e-talkx.yml:98 sem @1.64.1; guarda deixa a versao opcional (workflow-contracts.unit.mjs:295). Mas e2e-logado.yml nao tem o passo e toolchain.json ja fixa 1.64.1"
  },
  {
   "branch": "fix__ci-workflows-vermelhos",
@@ -323,9 +345,10 @@
   "valor": "medio",
   "classe": "teste",
   "bloqueio": "nenhum",
-  "prova": "wt-main/scripts/db-audit/consolidar-veredito.test.mjs:168 execFileSync sem stdio:['pipe','pipe','pipe']; medido com node: sem a opcao o '::error::' do filho vaza para o stderr do pai E continua em err",
+  "prova": "wt-main/scripts/db-audit/consolidar-veredito.test.mjs:168 execFileSync sem stdio:['pipe','pipe','pipe']; medido com node: sem a opcao o '::error::' do filho vaza para o stderr do pai E continua em erro.stderr",
   "revisor": "nao_refutado",
-  "frente": "obs-wdnl8q6md.json"
+  "frente": "obs-wdnl8q6md.json",
+  "motivo_revisor": "Prova viva: run 43761199914 (main e07525143) VERDE com annotation failure 'Contrato vivo quebrado em: Fixtures de E2E em producao (E85)'; consolidar-veredito.test.mjs:168 sem stdio"
  },
  {
   "branch": "claude__feat-copiloto-edge-fases8-10-261024-1700",
@@ -338,7 +361,8 @@
   "bloqueio": "nenhum",
   "prova": "supabase/functions/_shared/schemas.ts:201 (main) = \"imageUrl: z.string().url(),\" sem .max(); a branch tinha \"mediaUrl: z.string().url().max(2048)\" (patch ai-multimodal-analysis/index.ts, BodySchema)",
   "revisor": "nao_refutado",
-  "frente": "obs-wdnl8q6md.json"
+  "frente": "obs-wdnl8q6md.json",
+  "motivo_revisor": "main schemas.ts:201 `imageUrl: z.string().url()` sem .max(), e sem teto a montante (ai-guards.ts/validation.ts). Mas o arquivo da branch nao e portavel: usa mediaUrl/mediaType e API velha de generateWithRouting."
  },
  {
   "branch": "claude__feat-radar-fase6-261108-1933",
@@ -351,7 +375,8 @@
   "bloqueio": "nenhum",
   "prova": "main test:56-66 mocka os 3 gráficos e :165 renderiza sem `creators`; \"Resumo da Campanha\" (componente :315) e Responsável (:327) não aparecem em nenhum .test.tsx da main.",
   "revisor": "nao_refutado",
-  "frente": "obs-wdnl8q6md.json"
+  "frente": "obs-wdnl8q6md.json",
+  "motivo_revisor": "Ausência confirmada: 'Resumo da Campanha' só em TalkXCampaignReport.tsx:315 e 'Responsável' em :327 (creators real vem de TalkXView.tsx:456); nenhum .test.tsx da main cita os dois rótulos"
  },
  {
   "branch": "claude__fix-pd79-compat-pre-migration-261111",
@@ -365,7 +390,8 @@
   "bloqueio": "nenhum",
   "prova": "src/hooks/delivery/useUnconfirmedMessages.ts:55 na main = 'refetchInterval: 30_000', sem staleTime/refetchOnMount/refetchOnWindowFocus e sem backoff (grep: nenhum errorUpdateCount no arquivo)",
   "revisor": "nao_refutado",
-  "frente": "obs-wdnl8q6md.json"
+  "frente": "obs-wdnl8q6md.json",
+  "motivo_revisor": "Confirmei useUnconfirmedMessages.ts:55 = refetchInterval 30_000, sem staleTime/refetchOnMount. Mas janela velha é <=30s, não 5min; portar o arquivo da branch perde o invalidate de :77-79."
  },
  {
   "branch": "claude__fix-evolution-connect-500-261113-1721",
@@ -378,7 +404,8 @@
   "bloqueio": "nenhum",
   "prova": "main: connect-orfa-prazo.test.ts:155-158 sempre responde 200 no /instance/create; nenhum *.test.ts cita 'removida da Evolution GO' → index.ts:1005 (retry) e :1009 (503) sem teste",
   "revisor": "nao_refutado",
-  "frente": "obs-wtw0p5nzz.json"
+  "frente": "obs-wtw0p5nzz.json",
+  "motivo_revisor": "Ausência confirmada: aviso 503 só em evolution-api/index.ts:1010; grep repo-wide por 'removida da Evolution' não acha teste. connect-orfa-prazo.test.ts:211 assere o oposto; :226 exige create.length===1 (nunca o retry de index.ts:1003)."
  },
  {
   "branch": "claude__fix-talkx-test-suite-261109-0910",
@@ -389,9 +416,10 @@
   "valor": "medio",
   "classe": "teste",
   "bloqueio": "nenhum",
-  "prova": "TalkXCampaignReport.test.tsx:163 renderiza sem a prop creators e segmento.test.tsx:121 tambem; TalkXCampaignReport.tsx:74,327 usa creators para o campo Responsavel. Nenhum teste da main passa creators",
+  "prova": "TalkXCampaignReport.test.tsx:163 renderiza sem a prop creators e segmento.test.tsx:121 tambem; TalkXCampaignReport.tsx:74,327 usa creators para o campo Responsavel. Nenhum teste da main passa creators.",
   "revisor": "nao_refutado",
-  "frente": "obs-wtw0p5nzz.json"
+  "frente": "obs-wtw0p5nzz.json",
+  "motivo_revisor": "Confirmado ausente na main: TalkXCampaignReport.test.tsx:163 e TalkXCampaignReport.segmento.test.tsx:121 renderizam sem creators, e grep de 'owner|objective' em src/components/talkx/report/__tests__/ = vazio, logo TalkXCampaignReport.tsx:327 (MetaRow Responsavel) nunca executa. Nota: a resolucao creators[owner] tem guarda em OUTRA tela (TalkXOverview.table.test.tsx:248 'por Ana Silva'), nao no cartao do relatorio."
  },
  {
   "branch": "claude__fix-talkx-test-suite-261109-0910",
@@ -404,7 +432,8 @@
   "bloqueio": "nenhum",
   "prova": "TalkXCampaignReport.test.tsx:115-118 so afirma [0][7] (segunda); grep de grid[6] em src/**/*.test.* = vazio. Domingo=linha 6 em talkxReportData.ts:29 fica sem guarda.",
   "revisor": "nao_refutado",
-  "frente": "obs-wtw0p5nzz.json"
+  "frente": "obs-wtw0p5nzz.json",
+  "motivo_revisor": "Confirmado ausente: TalkXCampaignReport.test.tsx:115-118 so afirma grid[0][7]; grep de 'grid[6]' em src/**/*.test.* = vazio. O helper esta vivo (TalkXCampaignReport.tsx:189-191) e talkxReportData.ts:29 mapeia Sun=6 sem teste. TalkXReportHeatmap.test.tsx:38 so prova o rotulo 'Dom' na linha 6, nao que um carimbo de domingo caia nela."
  },
  {
   "branch": "fix__ci-verde-261021",
@@ -417,7 +446,8 @@
   "bloqueio": "nenhum",
   "prova": "e2e/auth.spec.ts:23 (main) so checa o bloqueio do navegador (validity.typeMismatch); \"Email inválido\" tem 0 ocorrencias em e2e/, embora a main renderize em src/pages/Auth.tsx:152",
   "revisor": "nao_refutado",
-  "frente": "obs-wtw0p5nzz.json"
+  "frente": "obs-wtw0p5nzz.json",
+  "motivo_revisor": "Confirmei a ausência: e2e/auth.spec.ts:23 só checa validity.typeMismatch; a mensagem de useAuthForm.ts:12 não tem teste (grep \"Email inválido\" nos testes só acha ForgotPassword.test.tsx:107)"
  },
  {
   "branch": "fix__ci-workflows-vermelhos",
@@ -430,9 +460,10 @@
   "valor": "medio",
   "classe": "ci",
   "bloqueio": "ci_workflow",
-  "prova": "main: ci.yml:490 'run: bunx playwright install-deps chromium firefox webkit' e e2e-talkx.yml:98 'bunx playwright install-deps chromium' — sem @1.64.1; branch pina os dois (ci.yml:332, e2e-talkx.yml:95",
+  "prova": "main: ci.yml:490 'run: bunx playwright install-deps chromium firefox webkit' e e2e-talkx.yml:98 'bunx playwright install-deps chromium' — sem @1.64.1; branch pina os dois (ci.yml:332, e2e-talkx.yml:95)",
   "revisor": "nao_refutado",
-  "frente": "obs-wtw0p5nzz.json"
+  "frente": "obs-wtw0p5nzz.json",
+  "motivo_revisor": "Ausencia confirmada: main ci.yml:490 'bunx playwright install-deps chromium firefox webkit' e e2e-talkx.yml:98 sem @1.64.1, contra o proprio comentario ci.yml:481-483. Nenhum guard exige pin nesses 2 passos (check-workflow-pins.mjs:155 so compara pins existentes)."
  },
  {
   "branch": "claude__chore-auditoria-supabase-final-251025-1655",
@@ -445,7 +476,8 @@
   "bloqueio": "nenhum",
   "prova": "main auditoria-supabase/RELATORIO_AUDITORIA_SUPABASE.md:650 S12-006 'Nenhum test file de RLS no db-guard.yml atual' x .github/workflows/db-guard.yml:304,449,830,1356,1480,1819",
   "revisor": "nao_refutado",
-  "frente": "obs-wtw0p5nzz.json"
+  "frente": "obs-wtw0p5nzz.json",
+  "motivo_revisor": "Confirmei: auditoria-supabase/RELATORIO_AUDITORIA_SUPABASE.md:649 e :742 dizem que falta teste de RLS, mas .github/workflows/db-guard.yml:304,449,830,1356,1480,1819 roda 6 scripts *-rls*.test.sh de scripts/db-audit/"
  },
  {
   "branch": "claude__feat-e71-skip-draft-prs-281026-0250",
@@ -458,7 +490,8 @@
   "bloqueio": "ci_workflow",
   "prova": "wt-main .github/workflows/ci.yml:440-443: job e2e (timeout 45) sem 'if' de draft; os gates da main existem so em :86 (unit-tests) e :230 (build)",
   "revisor": "nao_refutado",
-  "frente": "obs-wtw0p5nzz.json"
+  "frente": "obs-wtw0p5nzz.json",
+  "motivo_revisor": "Confirmei a ausencia na main: ci.yml:440-443 job e2e (timeout 45) sem nenhum 'if'; gates de draft so em :86 e :230. e2e fora de needs do ci-gate (:410) e fora dos required checks (github-settings-baseline.json: so CI Gate/Build/TypeCheck), logo pular em draft nao trava merge. Atencao: portar a branch INTEIRA seria regressao (ela tambem pula node-scripts :107 e security :225, que estao em needs do ci-gate sem tolerancia a skipped -> ci-gate falharia); so o gate do e2e e aproveitavel."
  },
  {
   "branch": "claude__feat-radar-fase6-261108-1933",
@@ -471,7 +504,8 @@
   "bloqueio": "nenhum",
   "prova": "main: TalkXCampaignReport.test.tsx:158-165 renderiza sem prop creators e nenhum teste cita 'Resumo da Campanha' (grep acha so TalkXCampaignReport.tsx:315,327)",
   "revisor": "nao_refutado",
-  "frente": "obs-wtw0p5nzz.json"
+  "frente": "obs-wtw0p5nzz.json",
+  "motivo_revisor": "Confirmei a ausencia: componente mostra o cartao e o Responsavel (src/components/talkx/report/TalkXCampaignReport.tsx:315,327) mas 'Resumo da Campanha'/'Responsavel' nao aparecem em nenhum teste (grep em src/ e e2e/ = 0); o teste atual (src/components/talkx/report/__tests__/TalkXCampaignReport.test.tsx:168-213) cobre so titulo, nome, 3 cartoes e falha de PDF. Ressalva: o arquivo da branch e uma versao ANTERIOR (sem o teste de falha de PDF que a main tem em :201) e usa rotulos que nao existem mais no componente da main ('Desempenho da Campanha', 'Clicaram' = 0 hits em TalkXCampaignReport.tsx) — portar o arquivo inteiro seria regressao; so as 2 assercoes (Resumo + nome 'Fulana de Tal') sao aproveitaveis."
  },
  {
   "branch": "claude__fix-evolution-connect-500-261113-1721",
@@ -484,7 +518,8 @@
   "bloqueio": "nenhum",
   "prova": "main: index.ts:896 (status dentro do connect) e :1032 (delete falho) sem teste — connect-go-token.test.ts:135,148,165 e connect-orfa-prazo.test.ts:153 sempre respondem 200 no status",
   "revisor": "nao_refutado",
-  "frente": "obs-wtw0p5nzz.json"
+  "frente": "obs-wtw0p5nzz.json",
+  "motivo_revisor": "Ausência confirmada: status caído no connect (index.ts:895) sem teste - stubs sempre 200 em connect-go-token.test.ts:135,148,165 e connect-orfa-prazo.test.ts:153; DELETE falho (index.ts:994 -> 409 em :1034) só roda na varredura :175-199 sem assert de corpo; único 409 testado é v2 (session-flavor-routes.test.ts:313)."
  },
  {
   "branch": "claude__fix-logger-vitest-mock-261017-1000",
@@ -495,9 +530,10 @@
   "valor": "baixo",
   "classe": "front",
   "bloqueio": "nenhum",
-  "prova": "ausente: src/hooks/copilot/usePromptInjectionGuard.ts (ls na main: No such file); git grep 'usePromptInjectionGuard|INJECTION_PATTERNS|jailbreak|CV-113' em src/ e supabase/ da main = 0. Ninguem import",
+  "prova": "ausente: src/hooks/copilot/usePromptInjectionGuard.ts (ls na main: No such file); git grep 'usePromptInjectionGuard|INJECTION_PATTERNS|jailbreak|CV-113' em src/ e supabase/ da main = 0. Ninguem importa nem na branch.",
   "revisor": "nao_refutado",
-  "frente": "obs-wtw0p5nzz.json"
+  "frente": "obs-wtw0p5nzz.json",
+  "motivo_revisor": "Ausente na main: src/hooks/copilot/index.ts:76-98 lista CV-110/111/112/114/116/117, sem CV-113; grep prompt-injection/jailbreak em src+supabase=0; useGuardrails.ts:12-17 so checa qualidade da resposta"
  },
  {
   "branch": "claude__fix-radar-shortcut-key-261108-2059",
@@ -508,9 +544,10 @@
   "valor": "baixo",
   "classe": "teste",
   "bloqueio": "nenhum",
-  "prova": "main .../TalkXCampaignReport.test.tsx:115-118 so checa grid[0][7] (segunda); nenhuma asserção grid[1]/grid[6] nem célula zerada no único arquivo que usa talkxReportHeatmapFromTimestamps (talkxReportDa",
+  "prova": "main .../TalkXCampaignReport.test.tsx:115-118 so checa grid[0][7] (segunda); nenhuma asserção grid[1]/grid[6] nem célula zerada no único arquivo que usa talkxReportHeatmapFromTimestamps (talkxReportData.ts:99-114 remapeia domingo p/ linha 6)",
   "revisor": "nao_refutado",
-  "frente": "obs-wtw0p5nzz.json"
+  "frente": "obs-wtw0p5nzz.json",
+  "motivo_revisor": "Ausencia confirmada na main de hoje: TalkXCampaignReport.test.tsx:108-123 é o único bloco de talkxReportHeatmapFromTimestamps (grep: só test.tsx, talkxReportData.ts e TalkXCampaignReport.tsx usam a função) e só afirma grid[0][7]:117 (segunda) + grade vazia:109-113 + nulls:119-122. Nenhuma asserção de grid[1]/grid[6], apesar de talkxReportData.ts:29 mapear Sun→6. TalkXReportHeatmap.test.tsx:38 só prova os rótulos Seg..Dom do componente com matriz já pronta, não o mapeamento do timestamp. Portar não é regressão: 2026-10-11T12:00Z é domingo 09h em Sao_Paulo, logo grid[6][9]=1 passa na main como está — são 3 asserções somadas ao arquivo existente."
  },
  {
   "branch": "claude__fix-radar-shortcut-key-261108-2059",
@@ -521,9 +558,10 @@
   "valor": "baixo",
   "classe": "teste",
   "bloqueio": "nenhum",
-  "prova": "main TalkXCampaignReport.tsx:327 renderiza \"Responsável\" só com campaign.owner+creators; main test.tsx:164-166 renderiza sem creators e o fixture (test.tsx:127-153) nao tem owner — \"Responsável\" nao a",
+  "prova": "main TalkXCampaignReport.tsx:327 renderiza \"Responsável\" só com campaign.owner+creators; main test.tsx:164-166 renderiza sem creators e o fixture (test.tsx:127-153) nao tem owner — \"Responsável\" nao aparece em nenhum teste",
   "revisor": "nao_refutado",
-  "frente": "obs-wtw0p5nzz.json"
+  "frente": "obs-wtw0p5nzz.json",
+  "motivo_revisor": "Ausencia confirmada na main de hoje: TalkXCampaignReport.tsx:327 só renderiza \"Responsável\" quando campaign.owner && creators[owner], e nenhum teste da main cobre esse par — grep \"creators\" em src/components/talkx/report/__tests__/ = zero ocorrências; o fixture de test.tsx:127-152 não tem owner e renderReport:163 monta sem creators; o segmento.test.tsx não cita owner/creators/Responsável. Os únicos creators= em testes são {} em TalkXOverview.lifecycle.test.tsx:99 e TalkXPeriodo.semConsumidor.test.tsx:134 (outras telas). Portar é viável: useTalkX.ts:72 tem owner?: string|null e a prop creators existe em TalkXCampaignReport.tsx:73. Valor baixo (1 asserção), mas é lacuna real."
  },
  {
   "branch": "claude__fix-settings-salvar-aparencia-261025-1905",
@@ -534,9 +572,10 @@
   "valor": "baixo",
   "classe": "front",
   "bloqueio": "nenhum",
-  "prova": "TalkXSegments.tsx:58 selectedRowRef e HTMLTableRowElement e so e ligado no <tr> (:536); o cartao da grade (:512) nao recebe ref, logo closePanel (:96-98) foca null. A branch registra ref p/ linha e ca",
+  "prova": "TalkXSegments.tsx:58 selectedRowRef e HTMLTableRowElement e so e ligado no <tr> (:536); o cartao da grade (:512) nao recebe ref, logo closePanel (:96-98) foca null. A branch registra ref p/ linha e cartao.",
   "revisor": "nao_refutado",
-  "frente": "obs-wtw0p5nzz.json"
+  "frente": "obs-wtw0p5nzz.json",
+  "motivo_revisor": "Lacuna confirmada na main: src/components/talkx/TalkXSegments.tsx:536 liga selectedRowRef so no <tr>; o cartao da grade (:512) tem tabIndex=0 mas nenhum ref, e closePanel (:95-98) chama row?.focus() com row=null. Nao ha equivalente em outra camada (grep rowRefs/restoreFocus em src/ e e2e/ nao acha nada para segmentos) e o teste so cobre a tabela (TalkXSegments.detailPanel.test.tsx:146,157). Ressalva de impacto: o foco so cai no body quando ele estava dentro do painel (clicar o ✕ em :768 ou Tab); se o usuario so clicou o cartao e apertou Esc, o foco fica no proprio cartao. Portar exige apenas registrar o ref no cartao, nao o arquivo da branch (versao anterior, com viewMode via props e SegmentGridCard)."
  },
  {
   "branch": "claude__fix-talkx-test-suite-261109-0910",
@@ -549,7 +588,8 @@
   "bloqueio": "nenhum",
   "prova": "ausente: grep de 'Resumo da Campanha' em src/**/*.test.tsx = vazio, embora exista em TalkXCampaignReport.tsx:315; rotulos Destinatarios/A confirmar/Duracao (linhas 247,253,254) sem assercao.",
   "revisor": "nao_refutado",
-  "frente": "obs-wtw0p5nzz.json"
+  "frente": "obs-wtw0p5nzz.json",
+  "motivo_revisor": "Confirmado ausente: grep de 'Resumo da Campanha' em testes = vazio (so TalkXCampaignReport.tsx:315 e TalkXCampaignScheduled.tsx:764 no codigo); 'Destinat' em src/components/talkx/report/__tests__/ = vazio; 'A confirmar' aparece so em talkxReportPdf.ts:73 e talkxCsv.ts:78, sem assercao em src/lib/__tests__/talkxCsv.test.ts. A main mocka os tres filhos (TalkXCampaignReport.test.tsx:56-65), por isso perdeu as assercoes de tela real."
  },
  {
   "branch": "claude__fix-x051-remote-completion-test-261108-2057",
@@ -562,7 +602,8 @@
   "bloqueio": "nenhum",
   "prova": "src/components/talkx/report/__tests__/TalkXCampaignReport.test.tsx:56-65 mocka os 3 subcomponentes; ausente: asserção de 'Resumo da Campanha', 'A confirmar' e prop creators em qualquer teste",
   "revisor": "nao_refutado",
-  "frente": "obs-wtw0p5nzz.json"
+  "frente": "obs-wtw0p5nzz.json",
+  "motivo_revisor": "main: TalkXCampaignReport.test.tsx:163 renderiza sem prop creators; asserts :168-214 cobrem só heading/nome/3 testids/PDF. 'Resumo da Campanha' (.tsx:315), 'A confirmar' (:253), 'Responsável' (:327) sem asserção"
  },
  {
   "branch": "claude__fix-z017-z020-auth-cors-261018-1950",
@@ -575,7 +616,8 @@
   "bloqueio": "nenhum",
   "prova": "ausente: regra 'package-lock.json' no .gitignore da main (wt-main/.gitignore so tem deno.lock:116, __pycache__/:134, .vercel:131; grep package-lock = sem resultado)",
   "revisor": "nao_refutado",
-  "frente": "obs-wtw0p5nzz.json"
+  "frente": "obs-wtw0p5nzz.json",
+  "motivo_revisor": "Confirmei a ausencia: wt-main/.gitignore nao tem 'package-lock.json' (tem deno.lock:116, .vercel:131, __pycache__/:134) e nao ha guarda equivalente (so .prettierignore:14, que apenas formata; scripts/ci/workflow-contracts.unit.mjs:104 so exige --ignore-scripts). Sem dano hoje: git ls-files = so bun.lock; CHANGELOG.md:55 ja removeu o arquivo. Higiene de 2 linhas."
  },
  {
   "branch": "claude__ga-ci-verde-261020",
@@ -588,7 +630,8 @@
   "bloqueio": "nenhum",
   "prova": "main src/hooks/ui/useCustomShortcuts.ts:272 `if (binding.modifiers.ctrlKey) parts.push('Ctrl');` sem variante de Mac, enquanto src/components/a11y/a11yComponents.tsx:75 já usa ⌘ no Mac",
   "revisor": "nao_refutado",
-  "frente": "obs-wtw0p5nzz.json"
+  "frente": "obs-wtw0p5nzz.json",
+  "motivo_revisor": "main src/hooks/ui/useCustomShortcuts.ts:272 ainda fixa 'Ctrl'; só InboxEmptyChat.tsx:115 troca p/ ⌘. Settings:51, KeyboardShortcutsDialog:74 e KeyboardShortcutsHelp:60 seguem 'Ctrl' no Mac."
  },
  {
   "branch": "claude__ga-ci-verde-261020",
@@ -601,7 +644,8 @@
   "bloqueio": "nenhum",
   "prova": "main src/components/talkx/tracking/TalkXRecipientsTable.tsx:183 tem só \"Nenhum destinatário nesta campanha.\"; ausente: texto p/ filtro ativo (\"Nenhum destinatário para os filtros aplicados.\")",
   "revisor": "nao_refutado",
-  "frente": "obs-wtw0p5nzz.json"
+  "frente": "obs-wtw0p5nzz.json",
+  "motivo_revisor": "main TalkXRecipientsTable.tsx:179-183: isEmpty=rows.length===0 com msg única 'Nenhum destinatário nesta campanha.'; filtros vão ao servidor (linhas 102-103), logo filtro vazio cai na msg errada."
  },
  {
   "branch": "fix__ci-verde-261021",
@@ -614,7 +658,8 @@
   "bloqueio": "nenhum",
   "prova": "docs/talkx/README.md:21 (main) diz \"Estados e transições observados no motor de campanhas\", mas docs/talkx/ESTADOS.md:1 e \"matriz tela × estado\" gerada por scripts/talkx/gen-estados.mjs",
   "revisor": "nao_refutado",
-  "frente": "obs-wtw0p5nzz.json"
+  "frente": "obs-wtw0p5nzz.json",
+  "motivo_revisor": "Confirmado: docs/talkx/README.md:21 fala de \"estados e transições do motor\", mas ESTADOS.md:1 é matriz tela × estado e não tem seção de transições; a máquina de estados é ARQUITETURA.md (README.md:16)"
  },
  {
   "branch": "fix__ci-workflows-vermelhos",
@@ -627,7 +672,8 @@
   "bloqueio": "nenhum",
   "prova": "main: consolidar-veredito.test.mjs:168 execFileSync(..., { cwd, env, encoding }) sem stdio; branch usa stdio:['pipe','pipe','pipe'] (:175). Testei: stderr do filho vaza para o pai mesmo capturado",
   "revisor": "nao_refutado",
-  "frente": "obs-wtw0p5nzz.json"
+  "frente": "obs-wtw0p5nzz.json",
+  "motivo_revisor": "Ausencia confirmada: consolidar-veredito.test.mjs:168 execFileSync sem stdio. Reproduzi: o ::error:: impresso em consolidar-veredito.mjs:179 vaza para o stderr do pai (mesmo com encoding capturando 576 bytes) e vira anotacao do job com teste verde."
  },
  {
   "branch": "claude__charming-mccarthy-jbxy56",
@@ -654,7 +700,7 @@
   "bloqueio": "nenhum",
   "evidencia": "scripts/db-audit/check-migration-drift.mjs:916 compare() ainda retorna 4 campos; grep de return 3/pendingOnly/pendingApply/--json = 0; unicos returns 942,951,957,965,973,986,1003",
   "refutacao_tentada": "nao_refutado",
-  "motivo_revisor": "check-migration-drift.mjs:916 compare() retorna 4 campos; :965 falha de psql devolve 2, mesmo codigo lido como apply-pendente; zero process.argv/--json no arqui",
+  "motivo_revisor": "check-migration-drift.mjs:916 compare() retorna 4 campos; :965 falha de psql devolve 2, mesmo codigo lido como apply-pendente; zero process.argv/--json no arquivo (grep argv = 0).",
   "frente": "pend-lote1.json"
  },
  {
@@ -668,7 +714,7 @@
   "bloqueio": "nenhum",
   "evidencia": "scripts/db-audit/lote-pendente.mjs:61 ainda 'else if (rc === 2)'; :49 ainda passa a flag morta '--classificar'; docstring :9-14 descreve exit 2 como apply-pendente",
   "refutacao_tentada": "nao_refutado",
-  "motivo_revisor": "lote-pendente.mjs:49 ainda passa --classificar (flag morta: drift script nao le argv); :61 else if (rc === 2) escreve \"apply aguardado\"; docstring :9-14 descrev",
+  "motivo_revisor": "lote-pendente.mjs:49 ainda passa --classificar (flag morta: drift script nao le argv); :61 else if (rc === 2) escreve \"apply aguardado\"; docstring :9-14 descreve exit 2 como apply-pendente.",
   "frente": "pend-lote1.json"
  },
  {
@@ -682,7 +728,7 @@
   "bloqueio": "ci_workflow",
   "evidencia": ".github/workflows/db-live-guard.yml:155 if [ \"$rc\" -eq 2 ] && [ \"$GITHUB_EVENT_NAME\" = \"push\" ] (unico -eq do arquivo)",
   "refutacao_tentada": "nao_refutado",
-  "motivo_revisor": "db-live-guard.yml:155 rc -eq 2 + push -> exit 0; o passo credencial (:98-126) so valida URL/TLS, nao conecta, e consolidar-veredito.mjs le apenas outcome do pas",
+  "motivo_revisor": "db-live-guard.yml:155 rc -eq 2 + push -> exit 0; o passo credencial (:98-126) so valida URL/TLS, nao conecta, e consolidar-veredito.mjs le apenas outcome do passo.",
   "frente": "pend-lote1.json"
  },
  {
@@ -711,7 +757,7 @@
   "bloqueio": "ci_workflow",
   "evidencia": "ci.yml:474-477 ainda usa actions/cache combinado, chave pw-cfw-...-${{ runner.os }}, sem restore/save separados; port exige soltar workflow-contracts.unit.mjs:255 (exige actions/cache@)",
   "refutacao_tentada": "nao_refutado",
-  "motivo_revisor": "ci.yml:473-477 ainda e actions/cache@55cc834 combinado, key pw-cfw-${{hashFiles('bun.lock')}}-${{runner.os}}; contrato workflow-contracts.unit.mjs:255,450 exige",
+  "motivo_revisor": "ci.yml:473-477 ainda e actions/cache@55cc834 combinado, key pw-cfw-${{hashFiles('bun.lock')}}-${{runner.os}}; contrato workflow-contracts.unit.mjs:255,450 exige 'actions/cache@'. Nenhum restore/save na main.",
   "frente": "pend-lote1.json"
  },
  {
@@ -725,7 +771,7 @@
   "bloqueio": "ci_workflow",
   "evidencia": ".github/workflows/db-migrate.yml:71 unico job `migrate:`; 1493 linhas; grep de apply_all_missing|confirm_destructive|banco-leitura|gh workflow run = 0 ocorrencias de codigo",
   "refutacao_tentada": "nao_refutado",
-  "motivo_revisor": ".github/workflows/db-migrate.yml:71-79 job unico `migrate` com `environment: producao-ddl` (:75) cobre preflight (:175) e dry-run (:907); API: producao-ddl exig",
+  "motivo_revisor": ".github/workflows/db-migrate.yml:71-79 job unico `migrate` com `environment: producao-ddl` (:75) cobre preflight (:175) e dry-run (:907); API: producao-ddl exige revisor adm01-debug",
   "frente": "pend-lote1.json"
  },
  {
@@ -739,7 +785,7 @@
   "bloqueio": "ci_workflow",
   "evidencia": ".github/workflows/types-sync.yml:408 sobrescreve o catálogo e :485 o compara com ele mesmo; grep 'catalog.base' em .github/workflows = zero",
   "refutacao_tentada": "nao_refutado",
-  "motivo_revisor": "types-sync.yml:405-409 copia /tmp/catalog.new.json sobre supabase/schema-catalog.json ANTES do Gate 3 em :485, que compara os dois -> arquivos identicos, gate t",
+  "motivo_revisor": "types-sync.yml:405-409 copia /tmp/catalog.new.json sobre supabase/schema-catalog.json ANTES do Gate 3 em :485, que compara os dois -> arquivos identicos, gate tautologico. Nenhum catalog.base/git show no job (:380-485).",
   "frente": "pend-lote1.json"
  },
  {
@@ -754,7 +800,7 @@
   "bloqueio": "ci_workflow",
   "evidencia": ".github/workflows/types-sync.yml:758-759 auto-merge só com `pull-request-number != ''`; grep 'drift-explicado' e 'needs-human' em .github/workflows = zero",
   "refutacao_tentada": "nao_refutado",
-  "motivo_revisor": "types-sync.yml:756-762 habilita auto-merge so com pull-request-number != ''. drift-explicado.mjs existe (scripts/db-audit/, exit 1 = DDL por fora) mas tem 0 ref",
+  "motivo_revisor": "types-sync.yml:756-762 habilita auto-merge so com pull-request-number != ''. drift-explicado.mjs existe (scripts/db-audit/, exit 1 = DDL por fora) mas tem 0 referencias em .github/workflows/; nenhum label needs-human.",
   "frente": "pend-lote1.json"
  },
  {
@@ -768,7 +814,7 @@
   "bloqueio": "nenhum",
   "evidencia": "arquivo ausente na main (ls src/components/talkx/talkxTemplateFile.ts: No such file); grep -rn 'talkxTemplateFile|parseTemplateFile' src = 0 ocorrências",
   "refutacao_tentada": "nao_refutado",
-  "motivo_revisor": "Ausente: nao ha src/components/talkx/talkxTemplateFile.ts (ls falha) e grep talkxTemplateFile|parseTemplateFile em src = 0. Unico CSV do modulo e src/lib/talkxC",
+  "motivo_revisor": "Ausente: nao ha src/components/talkx/talkxTemplateFile.ts (ls falha) e grep talkxTemplateFile|parseTemplateFile em src = 0. Unico CSV do modulo e src/lib/talkxCsv.ts:2 (relatorio de campanha).",
   "frente": "pend-lote1.json"
  },
  {
@@ -782,7 +828,7 @@
   "bloqueio": "nenhum",
   "evidencia": "arquivo ausente na main (ls: No such file); grep -rn 'TalkXTemplateImportDialog' src = 0 ocorrências",
   "refutacao_tentada": "nao_refutado",
-  "motivo_revisor": "Ausente: grep -rn TalkXTemplateImportDialog src = 0 ocorrencias; nenhum dialogo de importacao de template em src/components/talkx (ls do diretorio nao lista o a",
+  "motivo_revisor": "Ausente: grep -rn TalkXTemplateImportDialog src = 0 ocorrencias; nenhum dialogo de importacao de template em src/components/talkx (ls do diretorio nao lista o arquivo).",
   "frente": "pend-lote1.json"
  },
  {
@@ -797,7 +843,7 @@
   "bloqueio": "nenhum",
   "evidencia": "TalkXTemplates.tsx:313 rightSlot só tem 'Novo Template'; grep 'Download|Upload|canDownload|Export|Importar' no arquivo = só essa linha",
   "refutacao_tentada": "nao_refutado",
-  "motivo_revisor": "src/components/talkx/TalkXTemplates.tsx:313 rightSlot={<PrimaryButton icon={Plus} onClick={openNew}>Novo Template</PrimaryButton>}; grep Download|Upload|Import|",
+  "motivo_revisor": "src/components/talkx/TalkXTemplates.tsx:313 rightSlot={<PrimaryButton icon={Plus} onClick={openNew}>Novo Template</PrimaryButton>}; grep Download|Upload|Import|Export|Baixar|csv no arquivo = 0.",
   "frente": "pend-lote1.json"
  },
  {
@@ -813,7 +859,7 @@
   "bloqueio": "nenhum",
   "evidencia": "TalkXOverview.tsx:92,349 mantém seleção mas nunca usa TalkXBulkBar (grep: só kit/table.tsx:76, TalkXSegments.tsx:475, TalkXSuppression.tsx:598); :466 TipCard com texto fixo e rail.tsx:101 sem onNext",
   "refutacao_tentada": "nao_refutado",
-  "motivo_revisor": "TalkXOverview.tsx:92 selected e :348-351 passa a selecao ao TalkXTable, mas nenhum consumo: TalkXBulkBar so em TalkXSegments.tsx:475 e TalkXSuppression.tsx:598;",
+  "motivo_revisor": "TalkXOverview.tsx:92 selected e :348-351 passa a selecao ao TalkXTable, mas nenhum consumo: TalkXBulkBar so em TalkXSegments.tsx:475 e TalkXSuppression.tsx:598; TalkXOverview.tsx:469 so acoes de linha.",
   "frente": "pend-lote1.json"
  },
  {
@@ -827,7 +873,7 @@
   "bloqueio": "nenhum",
   "evidencia": "kit/states.tsx:355-357: if (query.isError) return <TalkXErrorState .../> — não olha error.code; grep 42501 em src/components/talkx = só testes/comentário",
   "refutacao_tentada": "nao_refutado",
-  "motivo_revisor": "kit/states.tsx:355-357 if (query.isError) return <TalkXErrorState error={query.error}/> sem olhar code; TalkXNoPermissionState so em states.tsx:343 (estado forc",
+  "motivo_revisor": "kit/states.tsx:355-357 if (query.isError) return <TalkXErrorState error={query.error}/> sem olhar code; TalkXNoPermissionState so em states.tsx:343 (estado forcado) e ViewRouter.tsx:146 (papeis, canAccess:134), nao 42501.",
   "frente": "pend-lote1.json"
  },
  {
@@ -855,7 +901,7 @@
   "bloqueio": "nenhum",
   "evidencia": "scripts/db-audit/check-migration-drift.test.mjs:577 e :1228 ainda assert.equal(result.status, 1) para ledger: []; :225 runGuard sem argv; sem --json",
   "refutacao_tentada": "nao_refutado",
-  "motivo_revisor": "check-migration-drift.test.mjs:1185/1197/1211 fixam status 2 para falha de conexao -- o mesmo codigo de apply-pendente; :577 e :1228 seguem status 1 para ledger",
+  "motivo_revisor": "check-migration-drift.test.mjs:1185/1197/1211 fixam status 2 para falha de conexao -- o mesmo codigo de apply-pendente; :577 e :1228 seguem status 1 para ledger vazio; runGuard :225 sem argv.",
   "frente": "pend-lote1.json"
  },
  {
@@ -869,7 +915,7 @@
   "bloqueio": "nenhum",
   "evidencia": "scripts/db-audit/lote-pendente.test.mjs:95 test('W26: exit 2 escreve summary \"apply aguardado\"') e :101 assert.equal(exitCode, 2); grep runRealLote = 0",
   "refutacao_tentada": "nao_refutado",
-  "motivo_revisor": "lote-pendente.test.mjs:24-60 runWithMock reimplementa a logica num wrapper (nao roda o script real); runReal :63 apaga DESTINO_URL; :95/:101 fixam exit 2 = \"app",
+  "motivo_revisor": "lote-pendente.test.mjs:24-60 runWithMock reimplementa a logica num wrapper (nao roda o script real); runReal :63 apaga DESTINO_URL; :95/:101 fixam exit 2 = \"apply aguardado\".",
   "frente": "pend-lote1.json"
  },
  {
@@ -883,7 +929,7 @@
   "bloqueio": "nenhum",
   "evidencia": "scripts/db-audit/run-runtime-contract.mjs:31 importa so { dirname, join }; :274 so existsSync(invocacao.arquivo); :284 passa o caminho cru ao psql",
   "refutacao_tentada": "nao_refutado",
-  "motivo_revisor": "run-runtime-contract.mjs:186-187 so exige sufixo .sql; :31 importa apenas { dirname, join } (sem resolve/relative); :274 existsSync e :284 passa invocacao.arqui",
+  "motivo_revisor": "run-runtime-contract.mjs:186-187 so exige sufixo .sql; :31 importa apenas { dirname, join } (sem resolve/relative); :274 existsSync e :284 passa invocacao.arquivo cru ao psql-safe com -f.",
   "frente": "pend-lote1.json"
  },
  {
@@ -897,7 +943,7 @@
   "bloqueio": "nenhum",
   "evidencia": "scripts/ci/db-migrate-contratos.unit.mjs: grep 'traversal|fora do repo' = 0; helpers existem (extrairInvocacoes :12, rodaExecutor :86)",
   "refutacao_tentada": "nao_refutado",
-  "motivo_revisor": "scripts/ci/db-migrate-contratos.unit.mjs: nenhum dos 19 testes (:22 a :401) cobre caminho fora do repo; grep traversal/fora do repo/etc-passwd = 0 (outros guard",
+  "motivo_revisor": "scripts/ci/db-migrate-contratos.unit.mjs: nenhum dos 19 testes (:22 a :401) cobre caminho fora do repo; grep traversal/fora do repo/etc-passwd = 0 (outros guards, ex. check-catalog-fresh.test.mjs:232, tem esse teste).",
   "frente": "pend-lote1.json"
  },
  {
@@ -913,7 +959,7 @@
   "bloqueio": "nenhum",
   "evidencia": "actions-kpi.mjs exporta ate publicarIssue:199, sem montarKpi/gravarKpi/percentil/KPI_JSON_PATH; render-workflow-docs.mjs:160-161 le docs/ci/kpi.json, ausente de docs/ci/",
   "refutacao_tentada": "nao_refutado",
-  "motivo_revisor": "actions-kpi.mjs: ultimo export e publicarIssue:199; sem montarKpi/gravarKpi/percentil/KPI_JSON. docs/ci/kpi.json nao existe; render-workflow-docs.mjs:160-161 ca",
+  "motivo_revisor": "actions-kpi.mjs: ultimo export e publicarIssue:199; sem montarKpi/gravarKpi/percentil/KPI_JSON. docs/ci/kpi.json nao existe; render-workflow-docs.mjs:160-161 cai no '—' (21x em docs/ci/README.md).",
   "frente": "pend-lote1.json"
  },
  {
@@ -927,7 +973,7 @@
   "bloqueio": "ci_workflow",
   "evidencia": "branch-hygiene-audit.yml:63-74 roda node scripts/ci/actions-kpi.mjs sem continue-on-error, sem KPI_JSON_PATH, sem upload do artifact e sem job publicar-kpi",
   "refutacao_tentada": "nao_refutado",
-  "motivo_revisor": "branch-hygiene-audit.yml:63-74 roda 'node scripts/ci/actions-kpi.mjs' com set -euo pipefail, sem continue-on-error, sem KPI_JSON_PATH, sem upload-artifact e sem",
+  "motivo_revisor": "branch-hygiene-audit.yml:63-74 roda 'node scripts/ci/actions-kpi.mjs' com set -euo pipefail, sem continue-on-error, sem KPI_JSON_PATH, sem upload-artifact e sem job publicar-kpi (grep KPI: so 45,63,74,184).",
   "frente": "pend-lote1.json"
  },
  {
@@ -956,7 +1002,7 @@
   "bloqueio": "decisao_dono",
   "evidencia": "allowed-actions.json:9 tem so \"actions/cache\"; selected_actions_patterns do baseline tambem — faltam actions/cache/restore e actions/cache/save, e o perimetro vivo precisa do mesmo",
   "refutacao_tentada": "nao_refutado",
-  "motivo_revisor": "allowed-actions.json:9 so 'actions/cache'; baseline selected_actions_patterns idem. Ausencia confirmada, mas portar so o arquivo sem mudar o perimetro vivo deix",
+  "motivo_revisor": "allowed-actions.json:9 so 'actions/cache'; baseline selected_actions_patterns idem. Ausencia confirmada, mas portar so o arquivo sem mudar o perimetro vivo deixa guard:270-285 vermelho.",
   "frente": "pend-lote1.json"
  },
  {
@@ -970,7 +1016,7 @@
   "bloqueio": "ci_workflow",
   "evidencia": "notifica-falha-main.yml:35 if: conclusion == 'failure' (sem startup_failure) e corpo montado por actions/github-script na linha 40",
   "refutacao_tentada": "nao_refutado",
-  "motivo_revisor": "notifica-falha-main.yml:35 if: github.event.workflow_run.conclusion == 'failure' (unica ocorrencia de 'conclusion'); corpo montado em actions/github-script:40. ",
+  "motivo_revisor": "notifica-falha-main.yml:35 if: github.event.workflow_run.conclusion == 'failure' (unica ocorrencia de 'conclusion'); corpo montado em actions/github-script:40. startup_failure fica sem issue.",
   "frente": "pend-lote1.json"
  },
  {
@@ -985,7 +1031,7 @@
   "bloqueio": "decisao_dono",
   "evidencia": "grep -i 'graphql|retention|artifact-and-log' em github-settings-guard.mjs → 0 ocorrencias; baseline (medido_em 2026-11-02) sem chave de retencao",
   "refutacao_tentada": "nao_refutado",
-  "motivo_revisor": "github-settings-guard.mjs: 0 ocorrencias de graphql/retention/retencao; checagens sao 154-345 (branch protection, repo, actions, workflow perms, selected action",
+  "motivo_revisor": "github-settings-guard.mjs: 0 ocorrencias de graphql/retention/retencao; checagens sao 154-345 (branch protection, repo, actions, workflow perms, selected actions, rulesets, environments). Baseline sem chave de retencao.",
   "frente": "pend-lote1.json"
  },
  {
@@ -999,7 +1045,7 @@
   "bloqueio": "nenhum",
   "evidencia": "grep 'montarKpi|gravarKpi|percentil|KPI_JSON' em scripts/ci/actions-kpi.unit.mjs → 0 ocorrencias",
   "refutacao_tentada": "nao_refutado",
-  "motivo_revisor": "scripts/ci/actions-kpi.unit.mjs tem 12 testes (linhas 29-184: agregar, janela, duracao, maisLentos, tabela, coletarRuns/Jobs, corpoDoKpi); nenhum de montarKpi/g",
+  "motivo_revisor": "scripts/ci/actions-kpi.unit.mjs tem 12 testes (linhas 29-184: agregar, janela, duracao, maisLentos, tabela, coletarRuns/Jobs, corpoDoKpi); nenhum de montarKpi/gravarKpi/percentil/KPI_JSON.",
   "frente": "pend-lote1.json"
  },
  {
@@ -1015,7 +1061,7 @@
   "bloqueio": "decisao_dono",
   "evidencia": "aplicar-perimetro.mjs/.unit.mjs ausentes de scripts/ci; baseline da branch mudaria required checks e apagaria environments; guard:349-360 ainda restaura strict/allow_auto_merge por PATCH",
   "refutacao_tentada": "nao_refutado",
-  "motivo_revisor": "aplicar-perimetro.mjs e .unit.mjs ausentes de scripts/ci (ls). guard:348-364 restaura apenas branch_protection_main.strict e merge.allow_auto_merge via PATCH; d",
+  "motivo_revisor": "aplicar-perimetro.mjs e .unit.mjs ausentes de scripts/ci (ls). guard:348-364 restaura apenas branch_protection_main.strict e merge.allow_auto_merge via PATCH; demais campos restauravel:false.",
   "frente": "pend-lote1.json"
  },
  {
@@ -1030,7 +1076,7 @@
   "bloqueio": "ci_workflow",
   "evidencia": ".github/workflows/types-sync.yml:445-450 só ecoa awaiting_apply; :126 não expõe 'pendente'; grep 'gate1-pendente' e 'pending-versions' em .github/workflows = zero",
   "refutacao_tentada": "nao_refutado",
-  "motivo_revisor": "Parcial na main: :126 expoe awaiting_apply booleano (de lote-pendente.mjs :339) e :447-450 so ecoa notice, usado apenas para suprimir issue em :512. gate1-pende",
+  "motivo_revisor": "Parcial na main: :126 expoe awaiting_apply booleano (de lote-pendente.mjs :339) e :447-450 so ecoa notice, usado apenas para suprimir issue em :512. gate1-pendente.mjs (24h+correlacao tsc) tem 0 refs em workflows.",
   "frente": "pend-lote1.json"
  },
  {
@@ -1045,7 +1091,7 @@
   "bloqueio": "ci_workflow",
   "evidencia": ".github/workflows/db-live-guard.yml:254 e :269 chamam check-catalog-fresh/check-manifest-fresh direto, sem elif; grep 'pending-versions' no arquivo = zero",
   "refutacao_tentada": "nao_refutado",
-  "motivo_revisor": "db-live-guard.yml:243-254 (catalog) e :258-269 (manifest) chamam check-catalog-fresh/check-manifest-fresh sem nenhum ramo de pendencia; o tratamento de apply pe",
+  "motivo_revisor": "db-live-guard.yml:243-254 (catalog) e :258-269 (manifest) chamam check-catalog-fresh/check-manifest-fresh sem nenhum ramo de pendencia; o tratamento de apply pendente existe so no passo migrations :141-157 (evento push).",
   "frente": "pend-lote1.json"
  },
  {
@@ -1060,7 +1106,7 @@
   "bloqueio": "ci_workflow",
   "evidencia": ".github/workflows/db-live-guard.yml:49-51 permissions só contents:read + issues:write; grep 'check-deployments-ledger' em .github/workflows = zero",
   "refutacao_tentada": "nao_refutado",
-  "motivo_revisor": "db-live-guard.yml:48-51 permissions = contents:read + issues:write (sem deployments:read); check-deployments-ledger.mjs existe em scripts/db-audit/ com teste, m",
+  "motivo_revisor": "db-live-guard.yml:48-51 permissions = contents:read + issues:write (sem deployments:read); check-deployments-ledger.mjs existe em scripts/db-audit/ com teste, mas 0 referencias em .github/workflows/.",
   "frente": "pend-lote1.json"
  },
  {
@@ -1074,7 +1120,7 @@
   "bloqueio": "ci_workflow",
   "evidencia": ".github/workflows/db-migrate.yml:75 tem environment: producao-ddl, mas grep 'deployments|createDeployment' no arquivo = zero; check-deployments-ledger.mjs:46 lê d.payload.versions",
   "refutacao_tentada": "nao_refutado",
-  "motivo_revisor": "db-migrate.yml:59-60 permissions = contents:read; grep -i deployment no arquivo = 0 (so :75 environment: producao-ddl). Unico deployments:write do repo e deploy",
+  "motivo_revisor": "db-migrate.yml:59-60 permissions = contents:read; grep -i deployment no arquivo = 0 (so :75 environment: producao-ddl). Unico deployments:write do repo e deploy-functions.yml:122. Ledger DB (:927-984) grava o que, nao o Deployment com payload.versions.",
   "frente": "pend-lote1.json"
  },
  {
@@ -1088,7 +1134,7 @@
   "bloqueio": "ci_workflow",
   "evidencia": "scripts/db-audit/consolidar-veredito.mjs:31-47 PASSOS sem 'ddl-fora-do-fluxo'; :104 trata outcome '' como '❌ (ausente)' e derruba o job se entrar sozinho",
   "refutacao_tentada": "nao_refutado",
-  "motivo_revisor": "consolidar-veredito.mjs:31-53 PASSOS tem 12 ids (migrations..runtime-config), sem ddl-fora-do-fluxo; ORDEM_CAUSA :57-70 idem; :101-104 trata outcome '' como '❌ ",
+  "motivo_revisor": "consolidar-veredito.mjs:31-53 PASSOS tem 12 ids (migrations..runtime-config), sem ddl-fora-do-fluxo; ORDEM_CAUSA :57-70 idem; :101-104 trata outcome '' como '❌ (ausente)', logo portar so a entrada derruba o job.",
   "frente": "pend-lote1.json"
  },
  {
@@ -1103,7 +1149,7 @@
   "bloqueio": "ci_workflow",
   "evidencia": "scripts/ci/ga20-ga25-contratos.unit.mjs não existe na main (ls = No such file); seria coletado por .github/workflows/ci.yml:166 `node --test scripts/ci/*.unit.mjs`",
   "refutacao_tentada": "nao_refutado",
-  "motivo_revisor": "scripts/ci/ga20-ga25-contratos.unit.mjs nao existe (ls). Os testes dos scripts existem e rodam (db-guard.yml:222 varre db-audit/*.test.mjs), mas nenhum assert d",
+  "motivo_revisor": "scripts/ci/ga20-ga25-contratos.unit.mjs nao existe (ls). Os testes dos scripts existem e rodam (db-guard.yml:222 varre db-audit/*.test.mjs), mas nenhum assert do wiring: check-remocoes-destrutivas.unit.mjs:147-156 nao checa o catalogo base.",
   "frente": "pend-lote1.json"
  },
  {
@@ -1119,7 +1165,7 @@
   "bloqueio": "nenhum",
   "evidencia": "ServiceStatusSheet.tsx ausente (ls: No such file); grep onViewStatus na main = só kit/states.tsx:163,165,175 e kit/__tests__/states.test.tsx:102-110 — nenhum chamador passa a prop",
   "refutacao_tentada": "nao_refutado",
-  "motivo_revisor": "Sem ServiceStatusSheet (find = so o hook). useTalkXServiceStatus.ts:28-32 expoe apenas whatsapp e :21-24 diz crm/realtime fora do escopo; onViewStatus so declar",
+  "motivo_revisor": "Sem ServiceStatusSheet (find = so o hook). useTalkXServiceStatus.ts:28-32 expoe apenas whatsapp e :21-24 diz crm/realtime fora do escopo; onViewStatus so declarado em states.tsx:163-175, nunca passado (:341, __dev__/TalkXKit.tsx:185).",
   "frente": "pend-lote1.json"
  },
  {
@@ -1133,7 +1179,7 @@
   "bloqueio": "nenhum",
   "evidencia": "ls src/components/talkx/__tests__ | grep -i template: só TalkXTemplateEditor.*, TalkXTemplateKpis, TalkXTemplates.* — nenhum talkxTemplateFile.test.ts",
   "refutacao_tentada": "nao_refutado",
-  "motivo_revisor": "Ausente: ls src/components/talkx/__tests__ nao tem talkxTemplateFile.test.ts (so TalkXTemplateEditor.*, TalkXTemplateKpis, TalkXTemplates.*); nem ha o modulo so",
+  "motivo_revisor": "Ausente: ls src/components/talkx/__tests__ nao tem talkxTemplateFile.test.ts (so TalkXTemplateEditor.*, TalkXTemplateKpis, TalkXTemplates.*); nem ha o modulo sob teste (item 1).",
   "frente": "pend-lote1.json"
  },
  {
@@ -1147,7 +1193,7 @@
   "bloqueio": "nenhum",
   "evidencia": "ls src/components/talkx/__tests__ não lista TalkXTemplateImportDialog.test.tsx (só TalkXTemplateEditor.*/TalkXTemplates.*)",
   "refutacao_tentada": "nao_refutado",
-  "motivo_revisor": "Ausente: ls src/components/talkx/__tests__ nao lista TalkXTemplateImportDialog.test.tsx; grep TalkXTemplateImportDialog em src = 0, logo nao ha componente nem p",
+  "motivo_revisor": "Ausente: ls src/components/talkx/__tests__ nao lista TalkXTemplateImportDialog.test.tsx; grep TalkXTemplateImportDialog em src = 0, logo nao ha componente nem prova.",
   "frente": "pend-lote1.json"
  },
  {
@@ -1161,7 +1207,7 @@
   "bloqueio": "nenhum",
   "evidencia": "ls src/components/talkx/__tests__ | grep Overview: comparativo, filters, lifecycle, states, table — nenhum .bulk.test.tsx",
   "refutacao_tentada": "nao_refutado",
-  "motivo_revisor": "Ausente: testes de Overview na main sao comparativo, filters, lifecycle, states e table (ls src/components/talkx/__tests__); nenhum TalkXOverview.bulk.test.tsx ",
+  "motivo_revisor": "Ausente: testes de Overview na main sao comparativo, filters, lifecycle, states e table (ls src/components/talkx/__tests__); nenhum TalkXOverview.bulk.test.tsx nem teste de acao em massa de campanha.",
   "frente": "pend-lote1.json"
  },
  {
@@ -1175,7 +1221,7 @@
   "bloqueio": "nenhum",
   "evidencia": "supabase/tests/search_events.sql:1-21 cobre so T1..T8 (pre-RPC); grep -rn log_search_event supabase/tests/ = 0 ocorrencias; arquivo com 440 linhas, sem client_event_id",
   "refutacao_tentada": "nao_refutado",
-  "motivo_revisor": "Confirmado: filtro PII da RPC em supabase/migrations/20261031130000_search_event_rpc.sql:72-78 sem teste; search_events.sql:94 ainda espera colunas sem client_e",
+  "motivo_revisor": "Confirmado: filtro PII da RPC em supabase/migrations/20261031130000_search_event_rpc.sql:72-78 sem teste; search_events.sql:94 ainda espera colunas sem client_event_id e 1 policy INSERT (migration:33 removeu) — teste obsoleto/falharia. Prova auto so no cliente (useGlobalSearchData.eventos.test.tsx:144-158)",
   "frente": "pend-lote1.json"
  },
  {
@@ -1189,7 +1235,7 @@
   "bloqueio": "nenhum",
   "evidencia": "scripts/ci/actions-kpi.mjs:179 coletarJobs sem maxRuns; :230 slice(0,50) corta pelos mais recentes — ja limita as chamadas, mas enviesa o ranking",
   "refutacao_tentada": "nao_refutado",
-  "motivo_revisor": "scripts/ci/actions-kpi.mjs:177-179 coletarJobs sem maxRuns; :231 slice(0,50) sobre runsNaJanela (ordem da API = recentes); ordenacao por minutos so dentro da am",
+  "motivo_revisor": "scripts/ci/actions-kpi.mjs:177-179 coletarJobs sem maxRuns; :231 slice(0,50) sobre runsNaJanela (ordem da API = recentes); ordenacao por minutos so dentro da amostra (:81)",
   "frente": "pend-lote1.json"
  },
  {
@@ -1218,7 +1264,7 @@
   "bloqueio": "nenhum",
   "evidencia": "arquivo ausente; comportamento existe em scripts/db-audit/check-migration-drift.mjs:926,945,980; check-migration-drift.test.mjs:1226-1300 testa o formato no stderr, nao a ordem no stdout",
   "refutacao_tentada": "nao_refutado",
-  "motivo_revisor": "Comportamento ja na main (check-migration-drift.mjs:979-982), mas o teste falta: check-migration-drift.test.mjs:1299 so checa stderr; scripts/ci/migration-drift",
+  "motivo_revisor": "Comportamento ja na main (check-migration-drift.mjs:979-982), mas o teste falta: check-migration-drift.test.mjs:1299 so checa stderr; scripts/ci/migration-drift-stdout.unit.mjs ausente",
   "frente": "pend-lote1.json"
  },
  {
@@ -1233,7 +1279,7 @@
   "bloqueio": "nenhum",
   "evidencia": "scripts/ci/verify-ledger-statements.unit.mjs:28-111 (11 testes) sem caso de cabecalho '--'; protecao em scripts/db-audit/verify-ledger-statements.mjs:48; grep GA05 = 0",
   "refutacao_tentada": "nao_refutado",
-  "motivo_revisor": "Sem caso de cabecalho em verify-ledger-statements.unit.mjs:28-119; porem o psql roda -At (verify-ledger-statements.mjs:86) e :44-47 falha fechado: cenario impos",
+  "motivo_revisor": "Sem caso de cabecalho em verify-ledger-statements.unit.mjs:28-119; porem o psql roda -At (verify-ledger-statements.mjs:86) e :44-47 falha fechado: cenario impossivel, risco nulo",
   "frente": "pend-lote1.json"
  },
  {
@@ -1263,7 +1309,7 @@
   "bloqueio": "ci_workflow",
   "evidencia": "docker-pins.unit.mjs nao existe na main; Dockerfile:1 FROM golang:1.27-alpine vs go.mod:3 'go 1.24.0' e toolchain.json:5 \"go\": \"1.24.x\"",
   "refutacao_tentada": "nao_refutado",
-  "motivo_revisor": "scripts/ci/docker-pins.unit.mjs nao existe; nenhum script em scripts/ci ou .github cita 'golang:' nem 'preview-egress-proxy'. Dockerfile:1 golang:1.27-alpine vs",
+  "motivo_revisor": "scripts/ci/docker-pins.unit.mjs nao existe; nenhum script em scripts/ci ou .github cita 'golang:' nem 'preview-egress-proxy'. Dockerfile:1 golang:1.27-alpine vs go.mod:3 'go 1.24.0' e toolchain.json:5 go 1.24.x.",
   "frente": "pend-lote1.json"
  },
  {
@@ -1278,7 +1324,7 @@
   "bloqueio": "nenhum",
   "evidencia": "bump-toolchain.mjs:57-82 lista so bun, deno, supabase-cli, playwright e actionlint-version; toolchain.json tem go, zizmor e shellcheck-version fora do bump",
   "refutacao_tentada": "nao_refutado",
-  "motivo_revisor": "bump-toolchain.mjs:57-82 FERRAMENTAS = bun, deno, supabase-cli, playwright, actionlint-version. toolchain.json tem go:1.24.x, zizmor-version e shellcheck-versio",
+  "motivo_revisor": "bump-toolchain.mjs:57-82 FERRAMENTAS = bun, deno, supabase-cli, playwright, actionlint-version. toolchain.json tem go:1.24.x, zizmor-version e shellcheck-version fora do bump.",
   "frente": "pend-lote1.json"
  },
  {
@@ -1293,7 +1339,7 @@
   "bloqueio": "nenhum",
   "evidencia": "ai-feature-flags.ts:59-78 o mapa AI_CAPABILITY_BY_FUNCTION termina em \"copilot-live\" (:77) e nao lista nenhuma das 7 edges; :240-241 key===null => gate libera e gasta provedor",
   "refutacao_tentada": "nao_refutado",
-  "motivo_revisor": "main ai-feature-flags.ts:59-78 encerra o mapa em \"copilot-live\":77; as 7 edges existem e passam o proprio slug (ai-product-recommendation/index.ts:27); :239-240",
+  "motivo_revisor": "main ai-feature-flags.ts:59-78 encerra o mapa em \"copilot-live\":77; as 7 edges existem e passam o proprio slug (ai-product-recommendation/index.ts:27); :239-240 key===null => return null, gate libera",
   "frente": "pend-lote2.json"
  },
  {
@@ -1308,7 +1354,7 @@
   "bloqueio": "nenhum",
   "evidencia": "ai-multimodal-analysis/index.ts:67-68 manda image_url:{url:imageUrl} cru de bucket privado; helper toInlineImage existe (ai-image-input.ts:308) e so classify-emoji/classify-sticker usam",
   "refutacao_tentada": "nao_refutado",
-  "motivo_revisor": "main ai-multimodal-analysis/index.ts:67-68 manda image_url:{url:imageUrl} cru (useImageAnalysis.ts:48 nao assina); toInlineImage (ai-image-input.ts:308) so em c",
+  "motivo_revisor": "main ai-multimodal-analysis/index.ts:67-68 manda image_url:{url:imageUrl} cru (useImageAnalysis.ts:48 nao assina); toInlineImage (ai-image-input.ts:308) so em classify-emoji/classify-sticker",
   "frente": "pend-lote2.json"
  },
  {
@@ -1322,7 +1368,7 @@
   "bloqueio": "migration_producao",
   "evidencia": "supabase/migrations: ultima copilot e 20261115010000_copilot_live_motor.sql; nenhuma *commit_tick*; grep commit_copilot_tick em supabase/ = 0 ocorrencias",
   "refutacao_tentada": "nao_refutado",
-  "motivo_revisor": "Nenhuma RPC equivalente: migrations/*.sql sem INSERT em copilot_insights; so merge_brinde_state (20261031110000_copilot_live_helpers.sql:5) e trigger enqueue (2",
+  "motivo_revisor": "Nenhuma RPC equivalente: migrations/*.sql sem INSERT em copilot_insights; so merge_brinde_state (20261031110000_copilot_live_helpers.sql:5) e trigger enqueue (20261115010000:48). pg_proc producao: 0",
   "frente": "pend-lote2.json"
  },
  {
@@ -1336,7 +1382,7 @@
   "bloqueio": "migration_producao",
   "evidencia": "supabase/functions/_shared/copilot-tick.ts:514-519 update(copilot_sessions) e :531 insert(copilot_insights) ainda separados; .rpc( = 0 no arquivo",
   "refutacao_tentada": "nao_refutado",
-  "motivo_revisor": "copilot-tick.ts:515-519 update(copilot_sessions) move last_processed_message_at (:200) e :531 insert(copilot_insights) separado, throw sem rollback; 0 .rpc( no ",
+  "motivo_revisor": "copilot-tick.ts:515-519 update(copilot_sessions) move last_processed_message_at (:200) e :531 insert(copilot_insights) separado, throw sem rollback; 0 .rpc( no arquivo. Insights perdidos",
   "frente": "pend-lote2.json"
  },
  {
@@ -1350,7 +1396,7 @@
   "bloqueio": "migration_producao",
   "evidencia": "supabase/migrations/20261107121000_message_reactions_one_per_agent.sql:22-30 (DELETE sem filtro user_id IS NOT NULL); :3-4 CREATE TABLE AS SELECT; :9 REVOKE sem service_role",
   "refutacao_tentada": "nao_refutado",
-  "motivo_revisor": "main wt-main/supabase/migrations/20261107121000_message_reactions_one_per_agent.sql:22-30: DELETE com row_number() PARTITION BY (message_id,user_id) SEM 'WHERE ",
+  "motivo_revisor": "main wt-main/supabase/migrations/20261107121000_message_reactions_one_per_agent.sql:22-30: DELETE com row_number() PARTITION BY (message_id,user_id) SEM 'WHERE user_id IS NOT NULL'; user_id NULL = reacao do CLIENTE (20261006222504:36-37; 20261007001008:15,70). Prod/ledger filtra (43fb7342a:...:40). Sem mitigacao em outra camada (grep one_per_agent).",
   "frente": "pend-lote2.json"
  },
  {
@@ -1363,9 +1409,9 @@
   "valor": "alto",
   "classe": "ci",
   "bloqueio": "ci_workflow",
-  "evidencia": ".github/workflows/deploy-functions.yml:147-180 resolve o rollback inline sem comparar com o SHA atual; git grep resolve-rollback-ref em .github/ nao retorna nada (script existe e tem unit, sem chamado",
+  "evidencia": ".github/workflows/deploy-functions.yml:147-180 resolve o rollback inline sem comparar com o SHA atual; git grep resolve-rollback-ref em .github/ nao retorna nada (script existe e tem unit, sem chamador)",
   "refutacao_tentada": "nao_refutado",
-  "motivo_revisor": "deploy-functions.yml:143-182 resolve inline sem pular o SHA atual; grep resolve-rollback-ref em .github/ = 0 hits, logo scripts/edge-deploy/resolve-rollback-ref",
+  "motivo_revisor": "deploy-functions.yml:143-182 resolve inline sem pular o SHA atual; grep resolve-rollback-ref em .github/ = 0 hits, logo scripts/edge-deploy/resolve-rollback-ref.mjs:28-36 (que pula) nao tem chamador",
   "frente": "pend-lote2.json"
  },
  {
@@ -1379,7 +1425,7 @@
   "bloqueio": "ci_workflow",
   "evidencia": "types-sync.yml:408 copia /tmp/catalog.new.json sobre supabase/schema-catalog.json e :485 compara os dois — mesmo job gates-e-pr (:364)",
   "refutacao_tentada": "nao_refutado",
-  "motivo_revisor": "types-sync.yml:408 copia /tmp/catalog.new.json sobre supabase/schema-catalog.json e :485 compara os dois no mesmo job gates-e-pr (:364); check-remocoes-destruti",
+  "motivo_revisor": "types-sync.yml:408 copia /tmp/catalog.new.json sobre supabase/schema-catalog.json e :485 compara os dois no mesmo job gates-e-pr (:364); check-remocoes-destrutivas.unit.mjs:147 nao cobre isso",
   "frente": "pend-lote2.json"
  },
  {
@@ -1396,7 +1442,7 @@
   "bloqueio": "nenhum",
   "evidencia": "check-migration-drift.mjs:938 main() nao le process.argv (0 hits de 'classificar'); :642-647 arquivo sem registro vai para errors -> :988 return 1; lote-pendente.mjs:49 chama --classificar",
   "refutacao_tentada": "nao_refutado",
-  "motivo_revisor": "check-migration-drift.mjs:933-1006 main() nao le process.argv (0 hits de 'classificar'/'argv' no arquivo); :642-647 arquivo sem registro -> errors -> :988 retur",
+  "motivo_revisor": "check-migration-drift.mjs:933-1006 main() nao le process.argv (0 hits de 'classificar'/'argv' no arquivo); :642-647 arquivo sem registro -> errors -> :988 return 1; lote-pendente.mjs:49 passa --classificar",
   "frente": "pend-lote2.json"
  },
  {
@@ -1410,7 +1456,7 @@
   "bloqueio": "nenhum",
   "evidencia": "check-migration-drift.mjs: continue em :726, :750, :772, :789, :824 (5 ramos de excecao na main; a branch W21 cobria so 3)",
   "refutacao_tentada": "nao_refutado",
-  "motivo_revisor": "check-migration-drift.mjs: 5 ramos de excecao com continue em :726 :750 :772 :789 :824 (comment-only, name-only, pinned-marker, registered-tombstone, pinned-rep",
+  "motivo_revisor": "check-migration-drift.mjs: 5 ramos de excecao com continue em :726 :750 :772 :789 :824 (comment-only, name-only, pinned-marker, registered-tombstone, pinned-replay); depende do item 1, que nao existe na main",
   "frente": "pend-lote2.json"
  },
  {
@@ -1425,7 +1471,7 @@
   "bloqueio": "nenhum",
   "evidencia": "check-migration-drift.mjs:942 e :965 retornam 2 em falha de leitura/consulta; lote-pendente.mjs:61-62 mapeia rc===2 para 'apply aguardado' (neutro)",
   "refutacao_tentada": "nao_refutado",
-  "motivo_revisor": "check-migration-drift.mjs:942 e :965 return 2 em falha de leitura/consulta (test.mjs:1185,:1197,:1211 confirmam status 2); lote-pendente.mjs:61-70 rc===2 -> 'ap",
+  "motivo_revisor": "check-migration-drift.mjs:942 e :965 return 2 em falha de leitura/consulta (test.mjs:1185,:1197,:1211 confirmam status 2); lote-pendente.mjs:61-70 rc===2 -> 'apply aguardado'; db-live-guard.yml:155-158 rc 2 em push -> exit 0",
   "frente": "pend-lote2.json"
  },
  {
@@ -1452,9 +1498,9 @@
   "valor": "alto",
   "classe": "front",
   "bloqueio": "decisao_dono",
-  "evidencia": "src/components/talkx/TalkXOverview.tsx:92 (selected) e :344-351 (selectable/selected/selectionResetKey) sem TalkXBulkBar; componente existe em kit/table.tsx:76 e e usado so em TalkXSegments.tsx:475 e ",
+  "evidencia": "src/components/talkx/TalkXOverview.tsx:92 (selected) e :344-351 (selectable/selected/selectionResetKey) sem TalkXBulkBar; componente existe em kit/table.tsx:76 e e usado so em TalkXSegments.tsx:475 e TalkXSuppression.tsx:598",
   "refutacao_tentada": "nao_refutado",
-  "motivo_revisor": "Ausente: TalkXOverview.tsx:92 e :348-351 tem selecao, mas `selected` nunca e lido; TalkXBulkBar (kit/table.tsx:76) so em TalkXSegments.tsx:475 e TalkXSuppressio",
+  "motivo_revisor": "Ausente: TalkXOverview.tsx:92 e :348-351 tem selecao, mas `selected` nunca e lido; TalkXBulkBar (kit/table.tsx:76) so em TalkXSegments.tsx:475 e TalkXSuppression.tsx:598. Nada de bulk em talkx fora de Segments.",
   "frente": "pend-lote2.json"
  },
  {
@@ -1470,7 +1516,7 @@
   "bloqueio": "ci_workflow",
   "evidencia": "main nao tem o arquivo (ls scripts/db-audit/ sem secdef-guard*); nenhum teste checa a forma do guard: grep \"role() = 'anon' OR\" em scripts/+supabase/tests = 0",
   "refutacao_tentada": "nao_refutado",
-  "motivo_revisor": "Fix JA esta na main (migrations/20261107153000_fix_gamification_streak_resolutions_guard.sql:15,48). Teste ausente: db-tests/01-security-grants.sql:12 so checa ",
+  "motivo_revisor": "Fix JA esta na main (migrations/20261107153000_fix_gamification_streak_resolutions_guard.sql:15,48). Teste ausente: db-tests/01-security-grants.sql:12 so checa grant anon; nenhum .test.sh cita as 2 RPCs",
   "frente": "pend-lote2.json"
  },
  {
@@ -1487,7 +1533,7 @@
   "bloqueio": "nenhum",
   "evidencia": "supabase/tests/ da main nao tem instance_pause_investigation.sql (so instance_pauses.sql, sem 'investig'); a RPC existe em supabase/migrations/20261111181000_instance_pause_investigation.sql:66",
   "refutacao_tentada": "nao_refutado",
-  "motivo_revisor": "main so prova service_role recusado + admin ok (supabase/tests/db-audit/talkx-blacklist-reconcilia.test.sh:270-278); nenhum teste chama a RPC como agente p/ cob",
+  "motivo_revisor": "main so prova service_role recusado + admin ok (supabase/tests/db-audit/talkx-blacklist-reconcilia.test.sh:270-278); nenhum teste chama a RPC como agente p/ cobrir is_admin_or_supervisor (migration:82)",
   "frente": "pend-lote2.json"
  },
  {
@@ -1503,7 +1549,7 @@
   "bloqueio": "migration_producao",
   "evidencia": "grep copilot_presence/copilot_has_presence na main: so docs/_arquivo/. Guardas do motor em supabase/migrations/20261115010000_copilot_live_motor.sql:60-110 nao checam presenca.",
   "refutacao_tentada": "nao_refutado",
-  "motivo_revisor": "Nao achei equivalente. Guardas na main: supabase/migrations/20261115010000_copilot_live_motor.sql:60-85 (flag, contact_type, assigned_to) e supabase/functions/_",
+  "motivo_revisor": "Nao achei equivalente. Guardas na main: supabase/migrations/20261115010000_copilot_live_motor.sql:60-85 (flag, contact_type, assigned_to) e supabase/functions/_shared/copilot-tick.ts:427,442,522 (skips: capability_disabled/no_new_contact_messages/stale_state). Zero mencao a presenca/visibilidade em copilot-tick.ts, copilot-live/index.ts ou src/hooks/copilot/. Nota: portar a tabela sozinha seria codigo morto — falta heartbeat no front e checagem na edge.",
   "frente": "pend-lote2.json"
  },
  {
@@ -1519,7 +1565,7 @@
   "bloqueio": "decisao_dono",
   "evidencia": "grep run_copilot_retention/copilot_retention_aggregates na main: zero. supabase/migrations/20261026130300_copilot_feedback.sql:8-9 guarda suggestion_text/sent_text sem retained_at.",
   "refutacao_tentada": "nao_refutado",
-  "motivo_revisor": "Nenhum cron/DELETE sobre tabelas do copiloto na main: grep 'cron.schedule' em supabase/migrations/*.sql nao casa com copilot; supabase/migrations/20261026130300",
+  "motivo_revisor": "Nenhum cron/DELETE sobre tabelas do copiloto na main: grep 'cron.schedule' em supabase/migrations/*.sql nao casa com copilot; supabase/migrations/20261026130300_copilot_feedback.sql:8-9 guarda suggestion_text/sent_text sem retained_at nem expurgo; copilot_insights/copilot_sessions (20261030100000/110000) tambem sem retencao.",
   "frente": "pend-lote2.json"
  },
  {
@@ -1533,7 +1579,7 @@
   "bloqueio": "nenhum",
   "evidencia": "src/components/tasks/__tests__/movimentoEContraste.test.tsx:177-184 so checa high e urgent; nenhuma linha com medium nem text-primary no arquivo",
   "refutacao_tentada": "nao_refutado",
-  "motivo_revisor": "Comportamento ja esta na main (src/components/tasks/shared/PriorityChip.tsx:6 = bg-warning/15 + --warning-text), mas o teste do chip nao cobre medium: movimento",
+  "motivo_revisor": "Comportamento ja esta na main (src/components/tasks/shared/PriorityChip.tsx:6 = bg-warning/15 + --warning-text), mas o teste do chip nao cobre medium: movimentoEContraste.test.tsx:177-185 so high/urgent.",
   "frente": "pend-lote2.json"
  },
  {
@@ -1547,7 +1593,7 @@
   "bloqueio": "nenhum",
   "evidencia": "src/components/tasks/__tests__/movimentoEContraste.test.tsx:170 mede so alfa 0.15; grep 0.2/destructive-20 no arquivo nao retorna caso de teste",
   "refutacao_tentada": "nao_refutado",
-  "motivo_revisor": "Urgente usa bg-destructive/20 (PriorityChip.tsx:13) e o medidor da main so compoe alfa 0.15 (movimentoEContraste.test.tsx:170); nenhum teste em src mede 0.2 sob",
+  "motivo_revisor": "Urgente usa bg-destructive/20 (PriorityChip.tsx:13) e o medidor da main so compoe alfa 0.15 (movimentoEContraste.test.tsx:170); nenhum teste em src mede 0.2 sobre card. Ausencia confirmada.",
   "frente": "pend-lote2.json"
  },
  {
@@ -1561,7 +1607,7 @@
   "bloqueio": "nenhum",
   "evidencia": "primitivosCompartilhados.test.tsx:23 importa so PriorityPill; nenhum teste em src importa PriorityChip e PriorityPill juntos (grep -rl cruzado = vazio)",
   "refutacao_tentada": "nao_refutado",
-  "motivo_revisor": "Mapas identicos na main (PriorityChip.tsx:5-13 = PriorityPill.tsx:13-17) mas sem trava: nenhum teste importa os dois. Nota: se 'chip das listas' for PriorityCel",
+  "motivo_revisor": "Mapas identicos na main (PriorityChip.tsx:5-13 = PriorityPill.tsx:13-17) mas sem trava: nenhum teste importa os dois. Nota: se 'chip das listas' for PriorityCell, taskRowCells.tsx:53-58 divergem de proposito.",
   "frente": "pend-lote2.json"
  },
  {
@@ -1575,9 +1621,9 @@
   "valor": "medio",
   "classe": "ci",
   "bloqueio": "decisao_dono",
-  "evidencia": ".github/workflows/ da main tem 21 arquivos, sem main-failure-notify.yml; grep JOAQUIM_WHATSAPP_NUMBER/hstgr.cloud em .github/ = vazio; E90 segue '- [ ]' em docs/audits/PLANO_GITHUB_ACTIONS_100_ETAPAS_",
+  "evidencia": ".github/workflows/ da main tem 21 arquivos, sem main-failure-notify.yml; grep JOAQUIM_WHATSAPP_NUMBER/hstgr.cloud em .github/ = vazio; E90 segue '- [ ]' em docs/audits/PLANO_GITHUB_ACTIONS_100_ETAPAS_2026-10-01.md:866",
   "refutacao_tentada": "nao_refutado",
-  "motivo_revisor": "Main so abre issue (.github/workflows/notifica-falha-main.yml:62-77); nenhum envio WhatsApp/Evolution em .github (grep send/text, EVOLUTION_INSTANCE_TOKEN, WHAT",
+  "motivo_revisor": "Main so abre issue (.github/workflows/notifica-falha-main.yml:62-77); nenhum envio WhatsApp/Evolution em .github (grep send/text, EVOLUTION_INSTANCE_TOKEN, WHATSAPP_NUMBER = 0) e E90 segue '- [ ]' em docs/audits/PLANO_GITHUB_ACTIONS_100_ETAPAS_2026-10-01.md:866",
   "frente": "pend-lote2.json"
  },
  {
@@ -1591,7 +1637,7 @@
   "bloqueio": "ci_workflow",
   "evidencia": ".github/workflows/notifica-falha-main.yml:62-63 = 'if (existente) { await github.rest.issues.createComment(' sem checagem de tempo; unico updated_at no arquivo e :50 (corpo da mensagem), nenhum DEDUP",
   "refutacao_tentada": "nao_refutado",
-  "motivo_revisor": "notifica-falha-main.yml:62-68 da main comenta direto no 'if (existente)' sem janela de tempo; grep dedup/DEDUP no arquivo = 0; diff contra a branch mostra que D",
+  "motivo_revisor": "notifica-falha-main.yml:62-68 da main comenta direto no 'if (existente)' sem janela de tempo; grep dedup/DEDUP no arquivo = 0; diff contra a branch mostra que DEDUP_HORAS=1 + checagem de updated_at existem so na branch",
   "frente": "pend-lote2.json"
  },
  {
@@ -1607,7 +1653,7 @@
   "bloqueio": "nenhum",
   "evidencia": "main: supabase/tests/ nao tem instance_pause_investigation.sql (so instance_pauses.sql, 0 ocorrencias de 'investig'); db-audit/talkx-blacklist-reconcilia.test.sh:275 cobre apenas o ACL",
   "refutacao_tentada": "nao_refutado",
-  "motivo_revisor": "supabase/tests/instance_pauses.sql: 0 ocorrencias de 'investig' (tem 42501 so p/ pause/resume, L151/L289/L464); db-audit/talkx-blacklist-reconcilia.test.sh:271-",
+  "motivo_revisor": "supabase/tests/instance_pauses.sql: 0 ocorrencias de 'investig' (tem 42501 so p/ pause/resume, L151/L289/L464); db-audit/talkx-blacklist-reconcilia.test.sh:271-276 so testa grant service_role + admin OK",
   "frente": "pend-lote2.json"
  },
  {
@@ -1624,7 +1670,7 @@
   "bloqueio": "nenhum",
   "evidencia": "talkx-blacklist-reconcilia.test.sh:238 cria motivo como postgres; nenhum teste da main assere RLS do catalogo por papel, 23503 nem desativar motivo de sistema (smoke.sh:25,63 so estrutural)",
   "refutacao_tentada": "nao_refutado",
-  "motivo_revisor": "Policies so na migration 20261108100000...sql:241-251, sem teste: reconcilia.test.sh:238 cria como postgres e so testa inativo (:239); smoke.sh:52,70 estrutural",
+  "motivo_revisor": "Policies so na migration 20261108100000...sql:241-251, sem teste: reconcilia.test.sh:238 cria como postgres e so testa inativo (:239); smoke.sh:52,70 estrutural e nao-CI (:2)",
   "frente": "pend-lote2.json"
  },
  {
@@ -1639,7 +1685,7 @@
   "bloqueio": "nenhum",
   "evidencia": "wt-main/src/components/ui/card.tsx:86,97,104,109,115 sem min-w-0/break-words e CardTitle ainda leading-none; card.test.tsx:103,113,125 esperam leading-none",
   "refutacao_tentada": "nao_refutado",
-  "motivo_revisor": "card.tsx:86 (CardHeader), :97 (CardTitle 'leading-none', sem break-words/min-w-0), :104 (CardDescription), :109 (CardContent), :115 (CardFooter); card.test.tsx:",
+  "motivo_revisor": "card.tsx:86 (CardHeader), :97 (CardTitle 'leading-none', sem break-words/min-w-0), :104 (CardDescription), :109 (CardContent), :115 (CardFooter); card.test.tsx:103,113,125 ainda exigem leading-none. Nenhuma regra global: grep overflow-wrap/word-break em src/index.css = 0.",
   "frente": "pend-lote2.json"
  },
  {
@@ -1653,7 +1699,7 @@
   "bloqueio": "nenhum",
   "evidencia": "wt-main/src/components/ui/label.tsx:7 = cva(\"text-sm font-medium leading-none ...\"); grep leading-snug em src/components/ui/ = nenhum",
   "refutacao_tentada": "nao_refutado",
-  "motivo_revisor": "label.tsx:7 = cva(\"text-sm font-medium leading-none peer-disabled:...\"); grep leading-snug em src/components/ui/*.tsx = nenhum; nenhum teste cobre labelVariants",
+  "motivo_revisor": "label.tsx:7 = cva(\"text-sm font-medium leading-none peer-disabled:...\"); grep leading-snug em src/components/ui/*.tsx = nenhum; nenhum teste cobre labelVariants.",
   "frente": "pend-lote2.json"
  },
  {
@@ -1668,7 +1714,7 @@
   "bloqueio": "nenhum",
   "evidencia": "wt-main/src/components/ui/tabs.tsx:26-34 sem min-w-0 e sem children/span; portar o span truncate clipa o selo em DiagnosticsView.tsx:155",
   "refutacao_tentada": "nao_refutado",
-  "motivo_revisor": "tabs.tsx:16-20 (TabsList sem min-w-0/overflow) e :26-34 (TabsTrigger whitespace-nowrap, sem min-w-0/children span); so 2 de 29 usos de TabsList tratam overflow ",
+  "motivo_revisor": "tabs.tsx:16-20 (TabsList sem min-w-0/overflow) e :26-34 (TabsTrigger whitespace-nowrap, sem min-w-0/children span); so 2 de 29 usos de TabsList tratam overflow localmente. Ressalva: portar o span truncate clipa o selo em DiagnosticsView.tsx:152-159 — min-w-0/overflow-x e seguro, truncate nao.",
   "frente": "pend-lote2.json"
  },
  {
@@ -1682,7 +1728,7 @@
   "bloqueio": "nenhum",
   "evidencia": "arquivo ausente em wt-main/src/components/ui/__tests__/ (so primitivos-a11y-pt.test.tsx, que cobre nome acessivel PT-BR); grep TEXTO_120 em src/ = nenhum",
   "refutacao_tentada": "nao_refutado",
-  "motivo_revisor": "src/components/ui/__tests__/ (33 arquivos) nao tem primitivos-texto-longo-a11y.test.tsx; primitivos-a11y-pt.test.tsx:17-31 cobre so nome acessivel PT-BR; grep T",
+  "motivo_revisor": "src/components/ui/__tests__/ (33 arquivos) nao tem primitivos-texto-longo-a11y.test.tsx; primitivos-a11y-pt.test.tsx:17-31 cobre so nome acessivel PT-BR; grep TEXTO_120 em src/ = nenhum.",
   "frente": "pend-lote2.json"
  },
  {
@@ -1696,7 +1742,7 @@
   "bloqueio": "ci_workflow",
   "evidencia": ".github/workflows/ci.yml:440-443 job e2e sem `if:`; fora de ci-gate.needs (ci.yml:410) e dos required checks (scripts/ci/github-settings-baseline.json) -> portavel sozinho, 1 linha",
   "refutacao_tentada": "nao_refutado",
-  "motivo_revisor": "ci.yml:440-444 job e2e sem `if:` (unicos filtros de draft: ci.yml:86 unit-tests, ci.yml:230 build); fora de ci-gate.needs (ci.yml:410) e dos required checks do ",
+  "motivo_revisor": "ci.yml:440-444 job e2e sem `if:` (unicos filtros de draft: ci.yml:86 unit-tests, ci.yml:230 build); fora de ci-gate.needs (ci.yml:410) e dos required checks do baseline",
   "frente": "pend-lote2.json"
  },
  {
@@ -1711,7 +1757,7 @@
   "bloqueio": "ci_workflow",
   "evidencia": "ci.yml:296-299 sem `if:`; gate exige success estrito (ci.yml:426) e scripts/ci/ci-gate.unit.mjs:33-37 fixa security=='success()' + cenario draft_security_skipped como falha (:87-90)",
   "refutacao_tentada": "nao_refutado",
-  "motivo_revisor": "ci.yml:296-300 job security sem `if:`; gate exige success estrito em ci.yml:426 e ci-gate.unit.mjs:33-37 fixa security=='success()' com draft_security_skipped c",
+  "motivo_revisor": "ci.yml:296-300 job security sem `if:`; gate exige success estrito em ci.yml:426 e ci-gate.unit.mjs:33-37 fixa security=='success()' com draft_security_skipped como falha (:88-90)",
   "frente": "pend-lote2.json"
  },
  {
@@ -1724,9 +1770,9 @@
   "valor": "medio",
   "classe": "sql",
   "bloqueio": "migration_producao",
-  "evidencia": "20261107133000_fix_copilot_rls_open_policies.sql:49 INSERT CHECK (scored_by = auth.uid()); :51 UPDATE scored_by; :61 moments INSERT tagged_by. Nenhum is_admin_or_supervisor em migration copilot na mai",
+  "evidencia": "20261107133000_fix_copilot_rls_open_policies.sql:49 INSERT CHECK (scored_by = auth.uid()); :51 UPDATE scored_by; :61 moments INSERT tagged_by. Nenhum is_admin_or_supervisor em migration copilot na main.",
   "refutacao_tentada": "nao_refutado",
-  "motivo_revisor": "Confirmei: 20261107133000_fix_copilot_rls_open_policies.sql:49 INSERT CHECK (scored_by=auth.uid()), :51 UPDATE scored_by; :61 moments tagged_by. Zero is_admin_o",
+  "motivo_revisor": "Confirmei: 20261107133000_fix_copilot_rls_open_policies.sql:49 INSERT CHECK (scored_by=auth.uid()), :51 UPDATE scored_by; :61 moments tagged_by. Zero is_admin_or_supervisor em migration copilot. Live DB idem.",
   "frente": "pend-lote2.json"
  },
  {
@@ -1740,7 +1786,7 @@
   "bloqueio": "nenhum",
   "evidencia": "supabase/functions/_shared/__tests__/copilot-tick.test.ts:22 writes={updates,inserts} e asserts em :114, :132, :139-147, :165, :174, :182",
   "refutacao_tentada": "nao_refutado",
-  "motivo_revisor": "__tests__/copilot-tick.test.ts:22 writes={updates,inserts} e fake client sem metodo rpc (0 ocorrencias); asserts :132/:139/:174/:182 so na gravacao em duas etap",
+  "motivo_revisor": "__tests__/copilot-tick.test.ts:22 writes={updates,inserts} e fake client sem metodo rpc (0 ocorrencias); asserts :132/:139/:174/:182 so na gravacao em duas etapas. Item dependente dos 1-2",
   "frente": "pend-lote2.json"
  },
  {
@@ -1754,7 +1800,7 @@
   "bloqueio": "migration_producao",
   "evidencia": "supabase/migrations/20261107122000_contacts_phone_search_digits.sql:5 regexp_replace(phone,'\\D',...) sem coalesce; :7 indice contacts_phone_search_digits_trgm_idx; sem COMMENT",
   "refutacao_tentada": "nao_refutado",
-  "motivo_revisor": "main .../20261107122000_contacts_phone_search_digits.sql:5 regexp_replace(phone,'\\D') sem coalesce e :7 indice contacts_phone_search_digits_trgm_idx; producao t",
+  "motivo_revisor": "main .../20261107122000_contacts_phone_search_digits.sql:5 regexp_replace(phone,'\\D') sem coalesce e :7 indice contacts_phone_search_digits_trgm_idx; producao tem idx_contacts_phone_search_digits_trgm (supabase/schema-manifest.json:2973) e nao ha COMMENT. Nenhum arquivo posterior corrige (grep phone_search_digits).",
   "frente": "pend-lote2.json"
  },
  {
@@ -1769,7 +1815,7 @@
   "bloqueio": "nenhum",
   "evidencia": "scripts/db-audit/migration-evidence.json:1255 e :1268 ainda tem kind ledger-divergence/pinned-replay; check-migration-drift.mjs:818 acusa excecao obsoleta quando o arquivo passa a bater",
   "refutacao_tentada": "nao_refutado",
-  "motivo_revisor": "main scripts/db-audit/migration-evidence.json:1255-1259 e 1268-1272 mantem kind 'ledger-divergence/pinned-replay' para as duas migrations; scripts/db-audit/chec",
+  "motivo_revisor": "main scripts/db-audit/migration-evidence.json:1255-1259 e 1268-1272 mantem kind 'ledger-divergence/pinned-replay' para as duas migrations; scripts/db-audit/check-migration-drift.mjs:817-819 acusa 'excecao pinned-replay obsoleta' quando arquivo passa a bater com o ledger.",
   "frente": "pend-lote2.json"
  },
  {
@@ -1784,7 +1830,7 @@
   "bloqueio": "nenhum",
   "evidencia": "grep GA05/ga05_fixture em scripts/ci = vazio; codigo ja na main (verify-ledger-statements.mjs:48-49 flatMap(splitStatements)); ancora em verify-ledger-statements.unit.mjs:102",
   "refutacao_tentada": "nao_refutado",
-  "motivo_revisor": "Ausência confirmada: scripts/ci/verify-ledger-statements.unit.mjs (119 linhas) não tem caso com '--'; remover flatMap de verify-ledger-statements.mjs:48-49 não ",
+  "motivo_revisor": "Ausência confirmada: scripts/ci/verify-ledger-statements.unit.mjs (119 linhas) não tem caso com '--'; remover flatMap de verify-ledger-statements.mjs:48-49 não quebraria nenhum teste atual.",
   "frente": "pend-lote2.json"
  },
  {
@@ -1799,7 +1845,7 @@
   "bloqueio": "nenhum",
   "evidencia": "verify-ledger-statements.mjs:48 normaliza via splitStatements, mas verify-ledger-statements.unit.mjs:28-117 (11 testes) nao tem nenhum caso com cabecalho '--'",
   "refutacao_tentada": "nao_refutado",
-  "motivo_revisor": "verify-ledger-statements.unit.mjs:29-76 — todos os 11 casos passam `bruto` ja normalizado; removendo o flatMap(splitStatements) de verify-ledger-statements.mjs:",
+  "motivo_revisor": "verify-ledger-statements.unit.mjs:29-76 — todos os 11 casos passam `bruto` ja normalizado; removendo o flatMap(splitStatements) de verify-ledger-statements.mjs:48 nenhum teste falha",
   "frente": "pend-lote2.json"
  },
  {
@@ -1814,7 +1860,7 @@
   "bloqueio": "nenhum",
   "evidencia": "validate-runtime-proof.mjs:643,649,611 ja separa stdout/stderr, mas confirm-hash.unit.mjs:20-74 (5 testes E64/F-11) nao tem caso de stdout",
   "refutacao_tentada": "nao_refutado",
-  "motivo_revisor": "confirm-hash.unit.mjs:74-88 so faz grep de texto no script; db-migrate-contratos.unit.mjs:357,365,383,398 cobrem stdout vazio apenas nas falhas, nenhum caso de ",
+  "motivo_revisor": "confirm-hash.unit.mjs:74-88 so faz grep de texto no script; db-migrate-contratos.unit.mjs:357,365,383,398 cobrem stdout vazio apenas nas falhas, nenhum caso de sucesso",
   "frente": "pend-lote2.json"
  },
  {
@@ -1828,7 +1874,7 @@
   "bloqueio": "ci_workflow",
   "evidencia": ".github/workflows/deploy-functions.yml:315,370,412,441 usam supabase secrets set NOME=\"$VALOR\"; grep --env-file e mktemp no arquivo: zero ocorrencias",
   "refutacao_tentada": "nao_refutado",
-  "motivo_revisor": "deploy-functions.yml:315,370,412,441,549 usam supabase secrets set NOME=\"$VALOR\" no argv; grep --env-file e mktemp no arquivo = 0 ocorrencias; nenhum script de ",
+  "motivo_revisor": "deploy-functions.yml:315,370,412,441,549 usam supabase secrets set NOME=\"$VALOR\" no argv; grep --env-file e mktemp no arquivo = 0 ocorrencias; nenhum script de edge-deploy escreve env-file",
   "frente": "pend-lote2.json"
  },
  {
@@ -1843,7 +1889,7 @@
   "bloqueio": "ci_workflow",
   "evidencia": ".github/workflows/deploy-functions.yml:42 exclui so 'fixtures/**', que nao casa __fixtures__; existem 4 arquivos vivos em supabase/functions/_shared/__fixtures__/evolution-call-*.json",
   "refutacao_tentada": "nao_refutado",
-  "motivo_revisor": "deploy-functions.yml:41 exclui so '!supabase/functions/**/fixtures/**', que nao casa __fixtures__; os 4 json de supabase/functions/_shared/__fixtures__/ so sao ",
+  "motivo_revisor": "deploy-functions.yml:41 exclui so '!supabase/functions/**/fixtures/**', que nao casa __fixtures__; os 4 json de supabase/functions/_shared/__fixtures__/ so sao lidos por _shared/__tests__/evolution-call-events.test.ts:62",
   "frente": "pend-lote2.json"
  },
  {
@@ -1915,7 +1961,7 @@
   "bloqueio": "ci_workflow",
   "evidencia": "db-live-guard.yml:287 e types-sync.yml:202 usam GHCR_IMG=\"ghcr.io/supabase/postgres-meta:v0.98.0\" (tag mutavel, sem @sha256)",
   "refutacao_tentada": "nao_refutado",
-  "motivo_revisor": "db-live-guard.yml:287 e types-sync.yml:202 usam ghcr.io/supabase/postgres-meta:v0.98.0 sem @sha256; check-workflow-pins.mjs:7 so exige digest em variaveis *_IMA",
+  "motivo_revisor": "db-live-guard.yml:287 e types-sync.yml:202 usam ghcr.io/supabase/postgres-meta:v0.98.0 sem @sha256; check-workflow-pins.mjs:7 so exige digest em variaveis *_IMAGE do YAML",
   "frente": "pend-lote2.json"
  },
  {
@@ -1929,7 +1975,7 @@
   "bloqueio": "nenhum",
   "evidencia": "workflow-contracts.unit.mjs tem 626 linhas e so 1 teste GA99 (:607 'notifica monitora apenas workflows que existem'); nenhum teste de Gate 3/HEAD, GITHUB_ENV, digest, GA04 ou GA55",
   "refutacao_tentada": "nao_refutado",
-  "motivo_revisor": "workflow-contracts.unit.mjs: 626 linhas, unico teste GA e GA99 (:607); grep GA04/GA55 em scripts/ e docs/agentes/ = 0; sem teste de Gate3-vs-HEAD, escopo de GIT",
+  "motivo_revisor": "workflow-contracts.unit.mjs: 626 linhas, unico teste GA e GA99 (:607); grep GA04/GA55 em scripts/ e docs/agentes/ = 0; sem teste de Gate3-vs-HEAD, escopo de GITHUB_ENV ou digest do GHCR_IMG",
   "frente": "pend-lote2.json"
  },
  {
@@ -1960,7 +2006,7 @@
   "bloqueio": "nenhum",
   "evidencia": "useTalkXSegments.ts:360-371 useAudienceEstimate chama countAudience(complete) sem guarda; :177 splitRules descarta comingSoon e :186 remove grupo vazio; wizard :698 e builder :289 nao aceitam null",
   "refutacao_tentada": "nao_refutado",
-  "motivo_revisor": "main useTalkXSegments.ts:360-372 useAudienceEstimate chama countAudience(complete) sem guarda; splitRules:177 descarta comingSoon e :186 remove grupo vazio -> r",
+  "motivo_revisor": "main useTalkXSegments.ts:360-372 useAudienceEstimate chama countAudience(complete) sem guarda; splitRules:177 descarta comingSoon e :186 remove grupo vazio -> rules {groups:[]} = base inteira; builder:289 e wizard:698 usam est?.count ?? 0",
   "frente": "pend-lote2.json"
  },
  {
@@ -1975,7 +2021,7 @@
   "bloqueio": "nenhum",
   "evidencia": "useTalkXSegments.ts:789-796 usa Promise.all, onSuccess so invalidate(), sem onError/toast, e o update :793 nao le res.error; zero ocorrencias de allSettled no arquivo",
   "refutacao_tentada": "nao_refutado",
-  "motivo_revisor": "main useTalkXSegments.ts:789-796 refreshEstimates usa Promise.all, update em :793 nao le error, onSuccess so invalidate() e sem onError/toast; grep -c allSettle",
+  "motivo_revisor": "main useTalkXSegments.ts:789-796 refreshEstimates usa Promise.all, update em :793 nao le error, onSuccess so invalidate() e sem onError/toast; grep -c allSettled no arquivo = 0",
   "frente": "pend-lote2.json"
  },
  {
@@ -1989,7 +2035,7 @@
   "bloqueio": "nenhum",
   "evidencia": "TalkXSegments.tsx:196-205 o seenInListRef limpa so selectedIds (checkbox); o rail monta em `selected` (:586-588) e setSelected(null) existe so em :97, :245, :292 e :347",
   "refutacao_tentada": "nao_refutado",
-  "motivo_revisor": "main TalkXSegments.tsx:196-205 o efeito fantasma limpa so selectedIds; :88-94 selectedSegment devolve a copia stale quando !cached e o rail :586-588 monta em `s",
+  "motivo_revisor": "main TalkXSegments.tsx:196-205 o efeito fantasma limpa so selectedIds; :88-94 selectedSegment devolve a copia stale quando !cached e o rail :586-588 monta em `selected`; setSelected(null) so em :97, :245, :292, :347",
   "frente": "pend-lote2.json"
  },
  {
@@ -2003,7 +2049,7 @@
   "bloqueio": "nenhum",
   "evidencia": "src/hooks/integrations/__tests__ tem acoesEmMassa, dia-calendario, rpcDesacoplada, test.ts e viewMode; nenhum estimativa.test.tsx (ls do worktree da main)",
   "refutacao_tentada": "nao_refutado",
-  "motivo_revisor": "ls src/hooks/integrations/__tests__ na main: sem estimativa.test.tsx; useTalkXSegments.test.ts:216-235 cobre splitRules/rulesToPostgrest, nao o estado nulo da e",
+  "motivo_revisor": "ls src/hooks/integrations/__tests__ na main: sem estimativa.test.tsx; useTalkXSegments.test.ts:216-235 cobre splitRules/rulesToPostgrest, nao o estado nulo da estimativa; refreshEstimates em testes so como spy (route.test.tsx:212)",
   "frente": "pend-lote2.json"
  },
  {
@@ -2017,7 +2063,7 @@
   "bloqueio": "nenhum",
   "evidencia": "src/components/talkx/__tests__ nao tem selecaoFantasma (ls); grep -rln fantasma em src/components/talkx acha so o codigo TalkXSegments.tsx:192",
   "refutacao_tentada": "nao_refutado",
-  "motivo_revisor": "ls src/components/talkx/__tests__ na main: sem selecaoFantasma; grep fantasma|ghost|seenInList em src nao acha teste de talkx; detailPanel.test.tsx:126-305 cobr",
+  "motivo_revisor": "ls src/components/talkx/__tests__ na main: sem selecaoFantasma; grep fantasma|ghost|seenInList em src nao acha teste de talkx; detailPanel.test.tsx:126-305 cobre Esc/✕/↻, nunca segmento apagado fora da tela",
   "frente": "pend-lote2.json"
  },
  {
@@ -2031,7 +2077,7 @@
   "bloqueio": "nenhum",
   "evidencia": "src/components/talkx/TalkXSegments.tsx:782 `rulesFlat.slice(0, 5)`; :757-800 SegmentDetailRail sem MetaRow \"Criado em\" e sem bloco \"Amostra de contatos\" (est.sample)",
   "refutacao_tentada": "nao_refutado",
-  "motivo_revisor": "Confirmado ausente: TalkXSegments.tsx:782 slice(0,5) sem \"+N\"; MetaRows :788-790 só Público/Origem/Último uso. est.sample existe (useTalkXSegments.ts:366) mas s",
+  "motivo_revisor": "Confirmado ausente: TalkXSegments.tsx:782 slice(0,5) sem \"+N\"; MetaRows :788-790 só Público/Origem/Último uso. est.sample existe (useTalkXSegments.ts:366) mas só é usado em TalkXSegmentBuilder.tsx:294 e TalkXCampaignWizard.tsx:705, nunca no SegmentDetailRail.",
   "frente": "pend-lote2.json"
  },
  {
@@ -2045,7 +2091,7 @@
   "bloqueio": "nenhum",
   "evidencia": "src/components/talkx/TalkXSegments.tsx:794 `<GhostButton icon={RefreshCw} onClick={() => refetchEst()}>Recontar público</GhostButton>` — sem disabled, sem animate-spin, sem isFetching",
   "refutacao_tentada": "nao_refutado",
-  "motivo_revisor": "Confirmado ausente: TalkXSegments.tsx:794 GhostButton sem disabled/animate-spin; :761 só desestrutura {data,refetch}. O isFetching do mesmo hook já é usado em T",
+  "motivo_revisor": "Confirmado ausente: TalkXSegments.tsx:794 GhostButton sem disabled/animate-spin; :761 só desestrutura {data,refetch}. O isFetching do mesmo hook já é usado em TalkXSegmentBuilder.tsx:53 e TalkXCampaignWizard.tsx:697.",
   "frente": "pend-lote2.json"
  },
  {
@@ -2059,7 +2105,7 @@
   "bloqueio": "nenhum",
   "evidencia": "src/components/talkx/TalkXSegments.tsx:58 `useRef<HTMLTableRowElement>`; :536 ref só no <tr>; :512-516 cartão da grade sem ref → :96 closePanel não devolve foco na grade",
   "refutacao_tentada": "nao_refutado",
-  "motivo_revisor": "Confirmado ausente: TalkXSegments.tsx:58 useRef<HTMLTableRowElement>; :536 ref só no <tr>; :513 cartão da grade (role=button) sem ref; :96 closePanel faz row?.f",
+  "motivo_revisor": "Confirmado ausente: TalkXSegments.tsx:58 useRef<HTMLTableRowElement>; :536 ref só no <tr>; :513 cartão da grade (role=button) sem ref; :96 closePanel faz row?.focus() e na grade row é null.",
   "frente": "pend-lote2.json"
  },
  {
@@ -2073,7 +2119,7 @@
   "bloqueio": "nenhum",
   "evidencia": "src/components/talkx/__tests__/TalkXSegments.detailPanel.test.tsx: 317 linhas, 11 `it(`; grep por \"Criado em|Amostra de contatos|segments-grid|font-semibold|viewMode\" → vazio",
   "refutacao_tentada": "nao_refutado",
-  "motivo_revisor": "Parcial: main já tem TalkXSegments.viewMode.test.tsx:67-107 (segments-grid, conteúdo do cartão) e detailPanel.test.tsx:305 (Recontar). Seguem sem teste: Criado ",
+  "motivo_revisor": "Parcial: main já tem TalkXSegments.viewMode.test.tsx:67-107 (segments-grid, conteúdo do cartão) e detailPanel.test.tsx:305 (Recontar). Seguem sem teste: Criado em, Amostra de contatos, font-semibold, descrição no cartão e foco na grade.",
   "frente": "pend-lote2.json"
  },
  {
@@ -2086,9 +2132,9 @@
   "valor": "medio",
   "classe": "teste",
   "bloqueio": "nenhum",
-  "evidencia": "ContactNotes.editarFixar.test.tsx:263 so exige variant destructive; o titulo 'Erro ao atualizar nota' de useContactNotes.ts:157 nao aparece em nenhum teste (grep em src: so :157 e ContactNotes.tsx:211",
+  "evidencia": "ContactNotes.editarFixar.test.tsx:263 so exige variant destructive; o titulo 'Erro ao atualizar nota' de useContactNotes.ts:157 nao aparece em nenhum teste (grep em src: so :157 e ContactNotes.tsx:211)",
   "refutacao_tentada": "nao_refutado",
-  "motivo_revisor": "Ausente confirmado: editarFixar.test.tsx:263 so exige variant destructive; grep de 'Erro ao atualizar nota' na main acha so useContactNotes.ts:157 e o comentari",
+  "motivo_revisor": "Ausente confirmado: editarFixar.test.tsx:263 so exige variant destructive; grep de 'Erro ao atualizar nota' na main acha so useContactNotes.ts:157 e o comentario ContactNotes.tsx:211",
   "frente": "pend-lote2.json"
  },
  {
@@ -2100,9 +2146,9 @@
   "valor": "medio",
   "classe": "sql",
   "bloqueio": "migration_producao",
-  "evidencia": "supabase/migrations/20261111181000_instance_pause_investigation.sql:125 usa COALESCE(investigated_by, v_profile); grep 'CASE WHEN investigated_at' em supabase/ = zero hits; unico CREATE OR REPLACE da ",
+  "evidencia": "supabase/migrations/20261111181000_instance_pause_investigation.sql:125 usa COALESCE(investigated_by, v_profile); grep 'CASE WHEN investigated_at' em supabase/ = zero hits; unico CREATE OR REPLACE da funcao e 20261111181000:66",
   "refutacao_tentada": "nao_refutado",
-  "motivo_revisor": "main: unico CREATE OR REPLACE em 20261111181000_instance_pause_investigation.sql:66; UPDATE :124-126 usa COALESCE(investigated_by,v_profile) e COALESCE(v_notes,",
+  "motivo_revisor": "main: unico CREATE OR REPLACE em 20261111181000_instance_pause_investigation.sql:66; UPDATE :124-126 usa COALESCE(investigated_by,v_profile) e COALESCE(v_notes,investigation_notes); zero hits 'CASE WHEN investigated' em supabase/; 20261112160000 so GRANT:181 e indice:188",
   "frente": "pend-lote2.json"
  },
  {
@@ -2116,7 +2162,7 @@
   "bloqueio": "nenhum",
   "evidencia": "check-migration-drift.test.mjs:157-169 runGuard sem parametro scriptArgs; 0 ocorrencias de 'scriptArgs|classificar' no arquivo",
   "refutacao_tentada": "nao_refutado",
-  "motivo_revisor": "check-migration-drift.test.mjs:157-169 runGuard({files,ledger,evidence,destino,schemaVersion,psqlFailCount,psqlFailMessage,retryDelaysMs,symlinks}) — sem script",
+  "motivo_revisor": "check-migration-drift.test.mjs:157-169 runGuard({files,ledger,evidence,destino,schemaVersion,psqlFailCount,psqlFailMessage,retryDelaysMs,symlinks}) — sem scriptArgs; 0 hits de scriptArgs/classificar no arquivo",
   "frente": "pend-lote2.json"
  },
  {
@@ -2131,7 +2177,7 @@
   "bloqueio": "nenhum",
   "evidencia": "lote-pendente.test.mjs:24-60 runWithMock escreve wrapper temporario que reimplementa a logica; :63-70 runReal roda sem DESTINO_URL (nao chama o drift-script)",
   "refutacao_tentada": "nao_refutado",
-  "motivo_revisor": "lote-pendente.test.mjs:24-60 runWithMock escreve run.mjs que reimplementa a logica ('Como nao temos override'); :63-70 runReal faz delete env.DESTINO_URL, logo ",
+  "motivo_revisor": "lote-pendente.test.mjs:24-60 runWithMock escreve run.mjs que reimplementa a logica ('Como nao temos override'); :63-70 runReal faz delete env.DESTINO_URL, logo nunca chama o drift-script",
   "frente": "pend-lote2.json"
  },
  {
@@ -2145,7 +2191,7 @@
   "bloqueio": "ci_workflow",
   "evidencia": ".github/workflows/deploy-functions.yml:91 group único `deploy-edge-functions-...`; :167-177 aceita o 1o deployment com sucesso sem comparar dep.sha com GITHUB_SHA",
   "refutacao_tentada": "nao_refutado",
-  "motivo_revisor": "deploy-functions.yml:91-92 grupo unico; :167-178 pega o 1o Deployment success sem comparar com GITHUB_SHA, e deployment-record.mjs:49 grava state=success por ru",
+  "motivo_revisor": "deploy-functions.yml:91-92 grupo unico; :167-178 pega o 1o Deployment success sem comparar com GITHUB_SHA, e deployment-record.mjs:49 grava state=success por run. Ausencia confirmada.",
   "frente": "pend-lote2.json"
  },
  {
@@ -2159,7 +2205,7 @@
   "bloqueio": "ci_workflow",
   "evidencia": ".github/workflows/deploy-functions.yml:342-345 `exit 1` no preflight do CRM dentro do bloco `[ \"$FN\" = \"crm-integration\" ] || [ -z \"$FN\" ]`; sem CRM_PREFLIGHT_FAILED",
   "refutacao_tentada": "nao_refutado",
-  "motivo_revisor": "deploy-functions.yml:320-344: exit 1 no preflight do CRM dentro do bloco que inclui FN vazio (deploy total); grep CRM_PREFLIGHT no arquivo = 0. Ausencia confirm",
+  "motivo_revisor": "deploy-functions.yml:320-344: exit 1 no preflight do CRM dentro do bloco que inclui FN vazio (deploy total); grep CRM_PREFLIGHT no arquivo = 0. Ausencia confirmada.",
   "frente": "pend-lote2.json"
  },
  {
@@ -2174,7 +2220,7 @@
   "bloqueio": "ci_workflow",
   "evidencia": "pasta scripts/db-migrate/ não existe na main (ls scripts/ lista db, db-audit, db-tests, mas não db-migrate); nada registra o Deployment que o detector procura",
   "refutacao_tentada": "nao_refutado",
-  "motivo_revisor": "scripts/db-migrate/ nao existe e db-migrate.yml tem 0 ocorrencias de 'deployment' (so environment producao-ddl:75). Ausencia confirmada; valor baixo pois essa r",
+  "motivo_revisor": "scripts/db-migrate/ nao existe e db-migrate.yml tem 0 ocorrencias de 'deployment' (so environment producao-ddl:75). Ausencia confirmada; valor baixo pois essa rota nao e a padrao (db-migrate.yml:18-26).",
   "frente": "pend-lote2.json"
  },
  {
@@ -2189,7 +2235,7 @@
   "bloqueio": "nenhum",
   "evidencia": "grep padroesYamlSemArquivo em scripts/ci/check-test-inventory.mjs → 0; as APIs do hunk existem: casaPadrao:123, suitesNodeNoDisco:167, padroesNodeDosWorkflows:173, orfaosDoInventario:193",
   "refutacao_tentada": "nao_refutado",
-  "motivo_revisor": "check-test-inventory.mjs so vai disco->YAML (orfaosDoInventario:193, suitesNodeOrfas:180); padroesYamlSemArquivo = 0 e nada checa padrao do YAML sem arquivo no ",
+  "motivo_revisor": "check-test-inventory.mjs so vai disco->YAML (orfaosDoInventario:193, suitesNodeOrfas:180); padroesYamlSemArquivo = 0 e nada checa padrao do YAML sem arquivo no disco. Ausencia confirmada.",
   "frente": "pend-lote2.json"
  },
  {
@@ -2204,7 +2250,7 @@
   "bloqueio": "nenhum",
   "evidencia": "ls scripts/ci/ | grep edge-env → vazio (só check-edge-error-exposure.mjs/.unit.mjs); nem o script nem o baseline existem na main",
   "refutacao_tentada": "nao_refutado",
-  "motivo_revisor": "check-edge-envs.mjs e edge-env-baseline.json nao existem em scripts/ci/. O dado existe (inventario/gerar-repo.mjs:57 segredos_lidos) mas nada barra deploy; so 3",
+  "motivo_revisor": "check-edge-envs.mjs e edge-env-baseline.json nao existem em scripts/ci/. O dado existe (inventario/gerar-repo.mjs:57 segredos_lidos) mas nada barra deploy; so 3 funcoes tem preflight.",
   "frente": "pend-lote2.json"
  },
  {
@@ -2232,9 +2278,9 @@
   "valor": "medio",
   "classe": "teste",
   "bloqueio": "nenhum",
-  "evidencia": "wt-main/src/hooks/chat/__tests__/useTeamChatNotifications.canal-estavel.test.tsx:145 titulo 'usa o cache do inbox sem consultar o banco' vs :152 expect(h.fromTables).toContain(...); idem :156/:164 e :",
+  "evidencia": "wt-main/src/hooks/chat/__tests__/useTeamChatNotifications.canal-estavel.test.tsx:145 titulo 'usa o cache do inbox sem consultar o banco' vs :152 expect(h.fromTables).toContain(...); idem :156/:164 e :178/:187",
   "refutacao_tentada": "nao_refutado",
-  "motivo_revisor": "src/hooks/chat/__tests__/useTeamChatNotifications.canal-estavel.test.tsx na main: titulo :145 'sem consultar o banco' vs :152 toContain('team_conversation_membe",
+  "motivo_revisor": "src/hooks/chat/__tests__/useTeamChatNotifications.canal-estavel.test.tsx na main: titulo :145 'sem consultar o banco' vs :152 toContain('team_conversation_members'); idem :156/:164 e :178/:187. Cache semeado em :147,:158,:180 nunca e lido pelo hook.",
   "frente": "pend-lote2.json"
  },
  {
@@ -2248,7 +2294,7 @@
   "bloqueio": "nenhum",
   "evidencia": "wt-main/src/components/ui/dialog.tsx:67-88 DialogContent so com size/showCloseButton/container; grep por describedby|temFilhoDescricao|useId no arquivo: zero match",
   "refutacao_tentada": "nao_refutado",
-  "motivo_revisor": "wt-main/src/components/ui/dialog.tsx:70-77 DialogContent repassa props cru, sem useId/guarda de descricao; mitigado só por chamador (command.tsx:31, command-pal",
+  "motivo_revisor": "wt-main/src/components/ui/dialog.tsx:70-77 DialogContent repassa props cru, sem useId/guarda de descricao; mitigado só por chamador (command.tsx:31, command-palette.tsx:240).",
   "frente": "pend-lote2.json"
  },
  {
@@ -2263,7 +2309,7 @@
   "bloqueio": "nenhum",
   "evidencia": "skip-link.tsx:20-27 handleClick = scrollIntoView + focus?.(), sem tabindex; Sidebar.tsx:101 <nav id=\"main-navigation\"> sem tabIndex, logo nao recebe foco",
   "refutacao_tentada": "nao_refutado",
-  "motivo_revisor": "skip-link.tsx:25 focus?.() sem setar tabindex e Sidebar.tsx:101 <nav id=\"main-navigation\"> sem tabIndex. Só #main-content funciona (AppShell.tsx:128 tabIndex={-",
+  "motivo_revisor": "skip-link.tsx:25 focus?.() sem setar tabindex e Sidebar.tsx:101 <nav id=\"main-navigation\"> sem tabIndex. Só #main-content funciona (AppShell.tsx:128 tabIndex={-1}).",
   "frente": "pend-lote2.json"
  },
  {
@@ -2291,7 +2337,7 @@
   "bloqueio": "nenhum",
   "evidencia": "table.tsx:44-45 TableHead = ({ className, ...props }, ref) e <th> sem scope; grep \"scope\" no arquivo: zero match",
   "refutacao_tentada": "nao_refutado",
-  "motivo_revisor": "table.tsx:44-54 TableHead sem scope e nenhum dos 66 usos de <TableHead> passa scope; só tabelas com <th> cru têm (talkx/kit/table.tsx:162, AIUsageUsersTab.tsx:4",
+  "motivo_revisor": "table.tsx:44-54 TableHead sem scope e nenhum dos 66 usos de <TableHead> passa scope; só tabelas com <th> cru têm (talkx/kit/table.tsx:162, AIUsageUsersTab.tsx:42).",
   "frente": "pend-lote2.json"
  },
  {
@@ -2321,7 +2367,7 @@
   "bloqueio": "nenhum",
   "evidencia": "IncomingCallAlert.tsx:236-239 anima y:-100 e scale com spring sem useReducedMotion; App.tsx:214-216 limita MotionConfig a AppRoutes, e o alerta mora em App.tsx:116 (DeferredProviders, App.tsx:202)",
   "refutacao_tentada": "nao_refutado",
-  "motivo_revisor": "Confirmei: IncomingCallAlert.tsx:235-239 (y:-100, scale, spring) e grep -c useReducedMotion = 0; fora do MotionConfig (App.tsx:116+202 vs 214-216). Sem telefoni",
+  "motivo_revisor": "Confirmei: IncomingCallAlert.tsx:235-239 (y:-100, scale, spring) e grep -c useReducedMotion = 0; fora do MotionConfig (App.tsx:116+202 vs 214-216). Sem telefoniaMotion.test.tsx cobrindo o alerta.",
   "frente": "pend-lote2.json"
  },
  {
@@ -2334,9 +2380,9 @@
   "valor": "medio",
   "classe": "front",
   "bloqueio": "nenhum",
-  "evidencia": "CallDialog.tsx:343,364,386,397 usam whileHover scale 1.1 / whileTap scale 0.9 e o arquivo nao tem useReducedMotion (grep sem resultado); montado pelo IncomingCallAlert, fora do MotionConfig de App.tsx",
+  "evidencia": "CallDialog.tsx:343,364,386,397 usam whileHover scale 1.1 / whileTap scale 0.9 e o arquivo nao tem useReducedMotion (grep sem resultado); montado pelo IncomingCallAlert, fora do MotionConfig de App.tsx:214",
   "refutacao_tentada": "nao_refutado",
-  "motivo_revisor": "Confirmei: CallDialog.tsx:343,364,386,397 whileHover scale 1.1/whileTap 0.9; import linha 2 so motion+AnimatePresence, grep -c useReducedMotion = 0; montado for",
+  "motivo_revisor": "Confirmei: CallDialog.tsx:343,364,386,397 whileHover scale 1.1/whileTap 0.9; import linha 2 so motion+AnimatePresence, grep -c useReducedMotion = 0; montado fora do MotionConfig (App.tsx:214).",
   "frente": "pend-lote2.json"
  },
  {
@@ -2366,7 +2412,7 @@
   "bloqueio": "nenhum",
   "evidencia": "src/components/talkx/__tests__/ tem so TalkXOverview.{comparativo,filters,lifecycle,states,table}.test.tsx; nenhum .bulk.",
   "refutacao_tentada": "nao_refutado",
-  "motivo_revisor": "Ausente: nao existe src/components/talkx/__tests__/TalkXOverview.bulk.test.tsx; TalkXOverview.table.test.tsx:313-338 so prova reset da selecao, nenhuma acao em ",
+  "motivo_revisor": "Ausente: nao existe src/components/talkx/__tests__/TalkXOverview.bulk.test.tsx; TalkXOverview.table.test.tsx:313-338 so prova reset da selecao, nenhuma acao em massa.",
   "frente": "pend-lote2.json"
  },
  {
@@ -2380,7 +2426,7 @@
   "bloqueio": "nenhum",
   "evidencia": "src/components/talkx/kit/states.tsx:355-357: if (query.isError) retorna sempre TalkXErrorState; grep 42501 em src/components/talkx acha so comentario em TalkXCampaignWizard.tsx:544",
   "refutacao_tentada": "nao_refutado",
-  "motivo_revisor": "Ausente: kit/states.tsx:355-357 cai sempre em TalkXErrorState; TalkXNoPermissionState (:193) so via forced='perm' (:343). src/lib/rlsError.ts existe mas nenhum ",
+  "motivo_revisor": "Ausente: kit/states.tsx:355-357 cai sempre em TalkXErrorState; TalkXNoPermissionState (:193) so via forced='perm' (:343). src/lib/rlsError.ts existe mas nenhum arquivo de src/components/talkx o importa.",
   "frente": "pend-lote2.json"
  },
  {
@@ -2396,7 +2442,7 @@
   "bloqueio": "nenhum",
   "evidencia": "PLANO_GITHUB_ACTIONS_100_ETAPAS_2026-10-01.md:507 '- [ ] **E19**', :512 E20, :514 E21; tabela vai de :133 E18 direto a :134 E22; ja implementado em types-sync.yml:485,541,604,722",
   "refutacao_tentada": "nao_refutado",
-  "motivo_revisor": "main: PLANO_...2026-10-01.md:507 '- [ ] **E19**', :512 E20, :514 E21; tabela :133 E18 -> :134 E22. Codigo ja existe: types-sync.yml:485 (gate3 por objetos), :55",
+  "motivo_revisor": "main: PLANO_...2026-10-01.md:507 '- [ ] **E19**', :512 E20, :514 E21; tabela :133 E18 -> :134 E22. Codigo ja existe: types-sync.yml:485 (gate3 por objetos), :558 (dedupe E20), :722 (head_branch E21).",
   "frente": "pend-lote2.json"
  },
  {
@@ -2411,7 +2457,7 @@
   "bloqueio": "nenhum",
   "evidencia": "docs/reconciliation/tasks/P006.json tasks E19/E20/E21: status=NOT_IMPLEMENTED, acceptance.state=NOT_IMPLEMENTED, pr_numbers=[]; guard ci-docs-baseline.unit.mjs:317 casa isso com os checkboxes do plano",
   "refutacao_tentada": "nao_refutado",
-  "motivo_revisor": "main docs/reconciliation/tasks/P006.json: E19/E20/E21 status=NOT_IMPLEMENTED, acceptance=NOT_IMPLEMENTED, pr_numbers=[], commits=[]; assessment E19 diz 'Gate 3 ",
+  "motivo_revisor": "main docs/reconciliation/tasks/P006.json: E19/E20/E21 status=NOT_IMPLEMENTED, acceptance=NOT_IMPLEMENTED, pr_numbers=[], commits=[]; assessment E19 diz 'Gate 3 ainda conta linhas' vs types-sync.yml:467-485.",
   "frente": "pend-lote2.json"
  },
  {
@@ -2456,9 +2502,9 @@
   "valor": "baixo",
   "classe": "front",
   "bloqueio": "nenhum",
-  "evidencia": "PasswordResetRequestsPanel.tsx:33,:52 fazem new Error(parsed.message) e descartam status=403; edge devolve 403 'Only admins can approve password resets' (approve-password-reset/index.ts:130,:151); nen",
+  "evidencia": "PasswordResetRequestsPanel.tsx:33,:52 fazem new Error(parsed.message) e descartam status=403; edge devolve 403 'Only admins can approve password resets' (approve-password-reset/index.ts:130,:151); nenhum fragmento de rlsError.ts:22-27 bate",
   "refutacao_tentada": "nao_refutado",
-  "motivo_revisor": "PasswordResetRequestsPanel.tsx:33 joga new Error(parsed.message) e perde status=403; :40 chama isAccessDeniedError no Error pelado, e rlsError.ts:49 precisa de ",
+  "motivo_revisor": "PasswordResetRequestsPanel.tsx:33 joga new Error(parsed.message) e perde status=403; :40 chama isAccessDeniedError no Error pelado, e rlsError.ts:49 precisa de status/code 403 (fragmentos :22-27 nao batem com 'Only admins can approve password resets'), entao o texto em ingles vai ao toast.",
   "frente": "pend-lote2.json"
  },
  {
@@ -2472,7 +2518,7 @@
   "bloqueio": "nenhum",
   "evidencia": "git ls-tree HEAD -- docs/plans/PLANO_CORRECOES_190_ETAPAS_2026-10-19.md: vazio; 62 planos em docs/plans/, nenhum com 'CORRECOES'; grep 'PLANO DE CORRECOES E MELHORIAS' em docs/: 0",
   "refutacao_tentada": "nao_refutado",
-  "motivo_revisor": "main nao tem docs/plans/PLANO_CORRECOES_190_ETAPAS_2026-10-19.md (ls-tree vazio); grep 'PLANO DE CORRECOES E MELHORIAS' na main so bate em analise-prs/resgate-2",
+  "motivo_revisor": "main nao tem docs/plans/PLANO_CORRECOES_190_ETAPAS_2026-10-19.md (ls-tree vazio); grep 'PLANO DE CORRECOES E MELHORIAS' na main so bate em analise-prs/resgate-261115/dossies/claude__docs-g9-absorb-261019-1300.md:1",
   "frente": "pend-lote2.json"
  },
  {
@@ -2501,7 +2547,7 @@
   "bloqueio": "nenhum",
   "evidencia": "grep -i copilot docs/REALTIME-CHANNELS-INVENTORY.md = vazio, mas o canal existe: src/hooks/copilot/useLiveSuggestions.ts:121 channel(`copilot_insights:${sessionId}`).",
   "refutacao_tentada": "nao_refutado",
-  "motivo_revisor": "docs/REALTIME-CHANNELS-INVENTORY.md secoes 2 (linha 38) e 5 (linha 101-125) nao citam copilot_insights; grep -i copilot no arquivo = vazio. O canal existe (src/",
+  "motivo_revisor": "docs/REALTIME-CHANNELS-INVENTORY.md secoes 2 (linha 38) e 5 (linha 101-125) nao citam copilot_insights; grep -i copilot no arquivo = vazio. O canal existe (src/hooks/copilot/useLiveSuggestions.ts:121) e a tabela esta na publication (supabase/migrations/20261030110000_copilot_insights.sql:39), logo a lacuna de doc e real.",
   "frente": "pend-lote2.json"
  },
  {
@@ -2516,7 +2562,7 @@
   "bloqueio": "nenhum",
   "evidencia": "src/hooks/copilot/index.ts nao exporta useProductRecommendation (so useImageAnalysis em :58-59) e grep -rln em src/ acha apenas a propria definicao: hook orfao",
   "refutacao_tentada": "nao_refutado",
-  "motivo_revisor": "main src/hooks/copilot/index.ts:58-59 exporta so useImageAnalysis; useProductRecommendation aparece so na propria definicao; RadarPanel.tsx:85 suggestedProducts",
+  "motivo_revisor": "main src/hooks/copilot/index.ts:58-59 exporta so useImageAnalysis; useProductRecommendation aparece so na propria definicao; RadarPanel.tsx:85 suggestedProducts=[] e RadarLive.tsx:54-66 nao passa a prop",
   "frente": "pend-lote2.json"
  },
  {
@@ -2531,7 +2577,7 @@
   "bloqueio": "nenhum",
   "evidencia": "src/components/multiplix/MultiplixMonitor.tsx:482-490 trata legacy/daily_limit/connection_lost/outside_window e cai no fallback cru; multiplix-send/index.ts:917 grava 'instance_paused'",
   "refutacao_tentada": "nao_refutado",
-  "motivo_revisor": "main MultiplixMonitor.tsx:482-490 cobre só legacy/daily_limit/connection_lost/outside_window e cai em `Pausado automaticamente: ${pause_reason}`; multiplix-send",
+  "motivo_revisor": "main MultiplixMonitor.tsx:482-490 cobre só legacy/daily_limit/connection_lost/outside_window e cai em `Pausado automaticamente: ${pause_reason}`; multiplix-send/index.ts:917 grava 'instance_paused'. Sem outro label (grep pause_reason em src/ só acha esse ponto).",
   "frente": "pend-lote2.json"
  },
  {
@@ -2546,7 +2592,7 @@
   "bloqueio": "nenhum",
   "evidencia": "ai-projection-version-guard.test.mjs:191 e talkx-engine-window-contract.test.mjs:124-125 sem --shm-size; unico hit no repo e scripts/e2e-isolated/network-proof.mjs:227",
   "refutacao_tentada": "nao_refutado",
-  "motivo_revisor": "Ausencia confirmada: sem --shm-size em ai-projection-version-guard.test.mjs:191 e talkx-engine-window-contract.test.mjs:123-127; unico hit no repo: scripts/e2e-",
+  "motivo_revisor": "Ausencia confirmada: sem --shm-size em ai-projection-version-guard.test.mjs:191 e talkx-engine-window-contract.test.mjs:123-127; unico hit no repo: scripts/e2e-isolated/network-proof.mjs:227",
   "frente": "pend-lote2.json"
  },
  {
@@ -2561,7 +2607,7 @@
   "bloqueio": "nenhum",
   "evidencia": "useOfflineCache.ts:63 useState(null) e effect :80-86 chamando setCachedData; aviso aceito em scripts/ci/eslint-baseline.json:1020,7194",
   "refutacao_tentada": "nao_refutado",
-  "motivo_revisor": "Ausencia confirmada: useOfflineCache.ts:63 useState(null) + effect :80-86 setCachedData; eslint-baseline.json:7193-7200 ainda aceita react-hooks/set-state-in-ef",
+  "motivo_revisor": "Ausencia confirmada: useOfflineCache.ts:63 useState(null) + effect :80-86 setCachedData; eslint-baseline.json:7193-7200 ainda aceita react-hooks/set-state-in-effect em useOfflineCache.ts:83",
   "frente": "pend-lote2.json"
  },
  {
@@ -2576,7 +2622,7 @@
   "bloqueio": "migration_producao",
   "evidencia": "grep copilot_learning_moments_update|_delete|copilot_conversation_scores_delete em supabase/migrations/ da main: zero ocorrencias; PK por conversa em 20261031100000:130.",
   "refutacao_tentada": "nao_refutado",
-  "motivo_revisor": "Confirmei: grep copilot_learning_moments_update|_delete|copilot_conversation_scores_delete na main = 0; PK conversation_id em 20261031100000:129-130. db_list_po",
+  "motivo_revisor": "Confirmei: grep copilot_learning_moments_update|_delete|copilot_conversation_scores_delete na main = 0; PK conversation_id em 20261031100000:129-130. db_list_policies producao: scores so SELECT/INSERT/UPDATE, moments so SELECT/INSERT.",
   "frente": "pend-lote2.json"
  },
  {
@@ -2592,7 +2638,7 @@
   "bloqueio": "migration_producao",
   "evidencia": "supabase/schema-manifest.json:5492 lista f:merge_brinde_state e 0 ocorrencias de commit_copilot_tick (idem schema-catalog.json)",
   "refutacao_tentada": "nao_refutado",
-  "motivo_revisor": "commit_copilot_tick: 0 em supabase/schema-manifest.json, schema-catalog.json e scripts/db-audit/grants-baseline.json. Nao trava hoje (func inexistente na produc",
+  "motivo_revisor": "commit_copilot_tick: 0 em supabase/schema-manifest.json, schema-catalog.json e scripts/db-audit/grants-baseline.json. Nao trava hoje (func inexistente na producao); so necessario se 1 entrar",
   "frente": "pend-lote2.json"
  },
  {
@@ -2606,7 +2652,7 @@
   "bloqueio": "ci_workflow",
   "evidencia": "scripts/ci/github-settings-guard.mjs:348 'async function restaurar(campo)' + :530-543 laco de restauracao + :599 forcar",
   "refutacao_tentada": "nao_refutado",
-  "motivo_revisor": "main scripts/ci/github-settings-guard.mjs:348 'async function restaurar(campo)' com PATCH em :352 e :359; laco em :534-545; 'forcar: restauracoesEfetivas.length",
+  "motivo_revisor": "main scripts/ci/github-settings-guard.mjs:348 'async function restaurar(campo)' com PATCH em :352 e :359; laco em :534-545; 'forcar: restauracoesEfetivas.length > 0' em :599. Codigo de restauracao intacto.",
   "frente": "pend-lote2.json"
  },
  {
@@ -2620,7 +2666,7 @@
   "bloqueio": "ci_workflow",
   "evidencia": "scripts/ci/github-settings-guard.unit.mjs:204 e :318 exigem r.out.includes('Restaurado')",
   "refutacao_tentada": "nao_refutado",
-  "motivo_revisor": "main scripts/ci/github-settings-guard.unit.mjs:204 assert.ok(r.out.includes('Restaurado')) e :318 assert.ok(r.out.includes('Restaurado:')); tambem :216, :258, :",
+  "motivo_revisor": "main scripts/ci/github-settings-guard.unit.mjs:204 assert.ok(r.out.includes('Restaurado')) e :318 assert.ok(r.out.includes('Restaurado:')); tambem :216, :258, :332 dependem do mesmo texto.",
   "frente": "pend-lote2.json"
  },
  {
@@ -2662,7 +2708,7 @@
   "bloqueio": "ci_workflow",
   "evidencia": ".github/workflows/settings-guard.yml:8-12 so schedule '15 7 * * *' e workflow_dispatch, sem gatilho push",
   "refutacao_tentada": "nao_refutado",
-  "motivo_revisor": "main .github/workflows/settings-guard.yml:8-12: so 'schedule' com cron '15 7 * * *' e 'workflow_dispatch'. Sem 'push'/'pull_request'; nenhum outro workflow cham",
+  "motivo_revisor": "main .github/workflows/settings-guard.yml:8-12: so 'schedule' com cron '15 7 * * *' e 'workflow_dispatch'. Sem 'push'/'pull_request'; nenhum outro workflow chama o guard (grep 'github-settings-guard' em .github/workflows retorna so settings-guard.yml:53).",
   "frente": "pend-lote2.json"
  },
  {
@@ -2676,7 +2722,7 @@
   "bloqueio": "ci_workflow",
   "evidencia": ".github/workflows/ci.yml:440-444 job e2e vai de 'timeout-minutes: 45' direto para 'steps:', sem 'if:'; e2e nao esta no ci-gate (ci.yml:410) nem nos checks obrigatorios",
   "refutacao_tentada": "nao_refutado",
-  "motivo_revisor": ".github/workflows/ci.yml:440-444 job e2e vai de 'timeout-minutes: 45' direto para 'steps:' sem 'if:'; unit-tests (ci.yml:86) e build (ci.yml:230) tem 'if: githu",
+  "motivo_revisor": ".github/workflows/ci.yml:440-444 job e2e vai de 'timeout-minutes: 45' direto para 'steps:' sem 'if:'; unit-tests (ci.yml:86) e build (ci.yml:230) tem 'if: github.event.pull_request.draft != true', e2e nao; unico 'if' dentro do job e cache/failure; e2e fora do ci-gate (ci.yml:409)",
   "frente": "pend-lote2.json"
  },
  {
@@ -2690,7 +2736,7 @@
   "bloqueio": "ci_workflow",
   "evidencia": ".github/workflows/ci.yml:34 ainda e 'group: ci-${{ github.event.pull_request.number || github.ref }}' — dispatch manual divide o grupo com o push",
   "refutacao_tentada": "nao_refutado",
-  "motivo_revisor": ".github/workflows/ci.yml:34 segue 'group: ci-${{ github.event.pull_request.number || github.ref }}', sem github.run_id para dispatch (padrao que db-live-guard.y",
+  "motivo_revisor": ".github/workflows/ci.yml:34 segue 'group: ci-${{ github.event.pull_request.number || github.ref }}', sem github.run_id para dispatch (padrao que db-live-guard.yml:32 e types-sync.yml:53 ja usam)",
   "frente": "pend-lote2.json"
  },
  {
@@ -2720,7 +2766,7 @@
   "bloqueio": "nenhum",
   "evidencia": ".github/CODEOWNERS:11 'Todas as mudanças requerem aprovação do admin' x docs/agentes/github-ci.md:35 'review obrigatório | nenhum (deliberado)' e baseline required_approving_review_count:0",
   "refutacao_tentada": "nao_refutado",
-  "motivo_revisor": "Divergência confirmada na main: .github/CODEOWNERS:11 'Todas as mudanças requerem aprovação do admin' x docs/agentes/github-ci.md:35 'review obrigatório | nenhu",
+  "motivo_revisor": "Divergência confirmada na main: .github/CODEOWNERS:11 'Todas as mudanças requerem aprovação do admin' x docs/agentes/github-ci.md:35 'review obrigatório | nenhum' e baseline required_approving_review_count:0. ADR-004:57 já documenta a política real",
   "frente": "pend-lote2.json"
  },
  {
@@ -2734,7 +2780,7 @@
   "bloqueio": "ci_workflow",
   "evidencia": ".github/workflows/talkx-status-regen.yml:29-31 'on: push: branches: [main]' sem 'paths:'; :40 'cancel-in-progress: false'; :53 sem 'timeout-minutes' (grep timeout-minutes = 0 ocorrências)",
   "refutacao_tentada": "nao_refutado",
-  "motivo_revisor": "timeout-minutes ausente confirmado (0 ocorrências em talkx-status-regen.yml; types-sync.yml:65/116/372 tem). Já o 'paths' é deliberado: scripts/talkx/v4-status.",
+  "motivo_revisor": "timeout-minutes ausente confirmado (0 ocorrências em talkx-status-regen.yml; types-sync.yml:65/116/372 tem). Já o 'paths' é deliberado: scripts/talkx/v4-status.mjs:227/239 lê git log de origin/main; filtrar paths perderia merges com marcador (X<NNN>)",
   "frente": "pend-lote2.json"
  },
  {
@@ -2748,7 +2794,7 @@
   "bloqueio": "ci_workflow",
   "evidencia": ".github/workflows/talkx-status-regen.yml:98 'Revisão humana e checks da PR continuam obrigatórios.' x :167 'gh pr merge --auto --squash'",
   "refutacao_tentada": "nao_refutado",
-  "motivo_revisor": "Contradição presente na main: talkx-status-regen.yml:98 'Revisão humana e checks da PR continuam obrigatórios' x :167 'gh pr merge --auto --squash'; mesmo texto",
+  "motivo_revisor": "Contradição presente na main: talkx-status-regen.yml:98 'Revisão humana e checks da PR continuam obrigatórios' x :167 'gh pr merge --auto --squash'; mesmo texto em types-sync.yml:661 x :764. Nenhum guard cobre",
   "frente": "pend-lote2.json"
  },
  {
@@ -2762,7 +2808,7 @@
   "bloqueio": "nenhum",
   "evidencia": "scripts/ci/render-workflow-docs.mjs:77-100 extrairNaoEBug faz 'break' em linha de continuação; nenhum 'export' no arquivo (grep export = só o import de node:url na :35)",
   "refutacao_tentada": "nao_refutado",
-  "motivo_revisor": "Confirmado: scripts/ci/render-workflow-docs.mjs extrairNaoEBug dá break em qualquer linha que não casa '^#\\s+-\\s+<k>:' (continuação encerra o bloco); grep de 'e",
+  "motivo_revisor": "Confirmado: scripts/ci/render-workflow-docs.mjs extrairNaoEBug dá break em qualquer linha que não casa '^#\\s+-\\s+<k>:' (continuação encerra o bloco); grep de 'export' no arquivo = 0 ocorrências, logo não importável em teste",
   "frente": "pend-lote2.json"
  },
  {
@@ -2776,7 +2822,7 @@
   "bloqueio": "nenhum",
   "evidencia": "scripts/ci/docs-deploy-coerencia.unit.mjs tem 49 linhas e 4 testes, todos GA37/README (:16, :31, :40, :45); nenhum cobre CODEOWNERS, talkx-status-regen nem extrairNaoEBug",
   "refutacao_tentada": "nao_refutado",
-  "motivo_revisor": "scripts/ci/docs-deploy-coerencia.unit.mjs tem 49 linhas/4 testes (:16 :31 :40 :45), todos GA37/README. CODEOWNERS só aparece em scripts/ai-context/gerar.mjs; ta",
+  "motivo_revisor": "scripts/ci/docs-deploy-coerencia.unit.mjs tem 49 linhas/4 testes (:16 :31 :40 :45), todos GA37/README. CODEOWNERS só aparece em scripts/ai-context/gerar.mjs; talkx-status-regen-workflow.unit.mjs cobre push/PR, não paths/timeout/texto",
   "frente": "pend-lote2.json"
  },
  {
@@ -2818,7 +2864,7 @@
   "bloqueio": "nenhum",
   "evidencia": "check-remocoes-destrutivas.mjs:35-47 lê process.argv[2]/[3] e só valida existência e JSON; nenhuma recusa de segmento '..'",
   "refutacao_tentada": "nao_refutado",
-  "motivo_revisor": "check-remocoes-destrutivas.mjs:35-36 le argv[2]/[3] e ler() :38-49 so valida existsSync e JSON.parse; nenhuma recusa de segmento '..' nem checagem contra ROOT (",
+  "motivo_revisor": "check-remocoes-destrutivas.mjs:35-36 le argv[2]/[3] e ler() :38-49 so valida existsSync e JSON.parse; nenhuma recusa de segmento '..' nem checagem contra ROOT (:34)",
   "frente": "pend-lote2.json"
  },
  {
@@ -2833,7 +2879,7 @@
   "bloqueio": "nenhum",
   "evidencia": "command-palette.tsx:271 abre role=\"listbox\" e os botoes de 'Buscas recentes' (:277-283) e 'Limpar' (:278) ficam dentro dele sem role=\"option\"; a11y.test.tsx (21 casos) nao cobre",
   "refutacao_tentada": "nao_refutado",
-  "motivo_revisor": "Defeito vivo: command-palette.tsx:271 role=listbox envolve 'Buscas recentes' (:277-286) e 'Limpar' (:278) sem role=option; a11y.test.tsx:44 so checa aria-contro",
+  "motivo_revisor": "Defeito vivo: command-palette.tsx:271 role=listbox envolve 'Buscas recentes' (:277-286) e 'Limpar' (:278) sem role=option; a11y.test.tsx:44 so checa aria-controls. Main resolveu so o id duplicado (:128-133).",
   "frente": "pend-lote2.json"
  },
  {
@@ -2847,7 +2893,7 @@
   "bloqueio": "nenhum",
   "evidencia": "src/components/talkx/TalkXSegments.tsx:512-521 cartão da grade tem nome, pills, nº de critérios e público; nenhuma referência a s.description (só a lista, :541, mostra)",
   "refutacao_tentada": "nao_refutado",
-  "motivo_revisor": "Confirmado ausente: TalkXSegments.tsx:513-520 cartão tem nome, pills, nº de critérios e público; nenhuma referência a s.description. A lista mostra em :541-542 ",
+  "motivo_revisor": "Confirmado ausente: TalkXSegments.tsx:513-520 cartão tem nome, pills, nº de critérios e público; nenhuma referência a s.description. A lista mostra em :541-542 (\"Sem descrição\" como fallback).",
   "frente": "pend-lote2.json"
  },
  {
@@ -2890,7 +2936,7 @@
   "bloqueio": "ci_workflow",
   "evidencia": ".github/workflows/types-sync.yml:30-36 nega só grants-baseline.json; known-violations.json aparece apenas no add-paths (:668) e o gatilho inclui scripts/db-audit/**",
   "refutacao_tentada": "nao_refutado",
-  "motivo_revisor": "main: types-sync.yml:32 'scripts/db-audit/**' + :36 nega SO grants-baseline.json; known-violations.json entra no PR em :668 (add-paths) sem negacao -> merge do ",
+  "motivo_revisor": "main: types-sync.yml:32 'scripts/db-audit/**' + :36 nega SO grants-baseline.json; known-violations.json entra no PR em :668 (add-paths) sem negacao -> merge do sync redispara",
   "frente": "pend-lote2.json"
  },
  {
@@ -2933,7 +2979,7 @@
   "bloqueio": "ci_workflow",
   "evidencia": ".github/actionlint.yaml:6-8 mantém ignore 'could not parse as YAML' para branch-hygiene-audit.yml; nenhum guard depende dele",
   "refutacao_tentada": "nao_refutado",
-  "motivo_revisor": "main: .github/actionlint.yaml:6-8 mantem ignore 'could not parse as YAML' p/ branch-hygiene-audit.yml; o YAML parseia OK hoje e nenhum guard em scripts/ci depen",
+  "motivo_revisor": "main: .github/actionlint.yaml:6-8 mantem ignore 'could not parse as YAML' p/ branch-hygiene-audit.yml; o YAML parseia OK hoje e nenhum guard em scripts/ci depende do ignore",
   "frente": "pend-lote2.json"
  },
  {
@@ -2949,7 +2995,7 @@
   "bloqueio": "nenhum",
   "evidencia": "grep detectarLote|tabelaLote|LIMITE_PUSHES|'Lotes de push' em scripts/ci/actions-kpi.mjs e actions-kpi.unit.mjs → vazio; chamador ativo em branch-hygiene-audit.yml:74",
   "refutacao_tentada": "nao_refutado",
-  "motivo_revisor": "main: actions-kpi.mjs:24-124 exporta so duracaoMinutos/runsNaJanela/agregar/paginaTemMais/maisLentos/tabela/tabelaLentos/corpoDoKpi; grep lote|LIMITE_PUSHES vaz",
+  "motivo_revisor": "main: actions-kpi.mjs:24-124 exporta so duracaoMinutos/runsNaJanela/agregar/paginaTemMais/maisLentos/tabela/tabelaLentos/corpoDoKpi; grep lote|LIMITE_PUSHES vazio; chamador em branch-hygiene-audit.yml:74",
   "frente": "pend-lote2.json"
  },
  {
@@ -2963,7 +3009,7 @@
   "bloqueio": "ci_workflow",
   "evidencia": ".github/workflows/types-sync.yml:574-593 rotacao cria comentario e da return ANTES do dedupe, que so comeca em :594 e retorna em :604",
   "refutacao_tentada": "nao_refutado",
-  "motivo_revisor": "main types-sync.yml:575 'if (ultimaPagina > 20)' comenta e return em :592, antes do dedupe que so comeca em :594 e suprime em :605-606. Ordem invertida (dedupe ",
+  "motivo_revisor": "main types-sync.yml:575 'if (ultimaPagina > 20)' comenta e return em :592, antes do dedupe que so comeca em :594 e suprime em :605-606. Ordem invertida (dedupe antes) nao esta na main; scripts/ci/issue-rotativa.mjs nao e importado pelo workflow (so por seu unit test).",
   "frente": "pend-lote2.json"
  },
  {
@@ -2979,7 +3025,7 @@
   "bloqueio": "ci_workflow",
   "evidencia": "scorecard.yml ausente dos 21 YAML em .github/workflows/; action segue liberada em scripts/ci/allowed-actions.json:18 e no baseline selected_actions_patterns",
   "refutacao_tentada": "nao_refutado",
-  "motivo_revisor": "Confirmei ausencia: 21 YAML em .github/workflows sem scorecard.yml; docs/ci/README.md:7 '21 workflows' e tabela sem Scorecard; so resta a action liberada em scr",
+  "motivo_revisor": "Confirmei ausencia: 21 YAML em .github/workflows sem scorecard.yml; docs/ci/README.md:7 '21 workflows' e tabela sem Scorecard; so resta a action liberada em scripts/ci/allowed-actions.json:18",
   "frente": "pend-lote2.json"
  },
  {
@@ -3008,7 +3054,7 @@
   "bloqueio": "nenhum",
   "evidencia": "grep -c branchesQuentes scripts/ci/actions-kpi.mjs → 0; pontos de encaixe existem: principal() em :221 e .slice(0, 50) em :231",
   "refutacao_tentada": "nao_refutado",
-  "motivo_revisor": "actions-kpi.mjs agrega so por workflow (agregar:39-57); branchesQuentes = 0; branch-hygiene-audit.yml:87-160 lista branches podaveis, nao consumo de runner por ",
+  "motivo_revisor": "actions-kpi.mjs agrega so por workflow (agregar:39-57); branchesQuentes = 0; branch-hygiene-audit.yml:87-160 lista branches podaveis, nao consumo de runner por branch. Ausencia confirmada.",
   "frente": "pend-lote2.json"
  },
  {
@@ -3022,7 +3068,7 @@
   "bloqueio": "ci_workflow",
   "evidencia": "grep -c CONTRATOS_PULADOS .github/workflows/db-guard.yml → 0; não há passo 'Detectar PR apenas-docs' no arquivo",
   "refutacao_tentada": "nao_refutado",
-  "motivo_revisor": "db-guard.yml: CONTRATOS_PULADOS = 0 e nenhum passo detecta PR so-docs. db-guard.yml:17 veda filtro de paths, logo o pulo dentro do job e a forma correta. Ausenc",
+  "motivo_revisor": "db-guard.yml: CONTRATOS_PULADOS = 0 e nenhum passo detecta PR so-docs. db-guard.yml:17 veda filtro de paths, logo o pulo dentro do job e a forma correta. Ausencia confirmada.",
   "frente": "pend-lote2.json"
  },
  {
@@ -3050,7 +3096,7 @@
   "bloqueio": "nenhum",
   "evidencia": "scripts/ci/bump-toolchain.mjs só lista bun:60, deno:65, supabase/cli:70, playwright:75, actionlint:80; grep -c zizmor → 0",
   "refutacao_tentada": "nao_refutado",
-  "motivo_revisor": "bump-toolchain.mjs:57-83 cobre so bun/deno/supabase-cli/playwright/actionlint; zizmor esta pinado em .github/toolchain.json:15-17 e usado em ci.yml:350-396, sem",
+  "motivo_revisor": "bump-toolchain.mjs:57-83 cobre so bun/deno/supabase-cli/playwright/actionlint; zizmor esta pinado em .github/toolchain.json:15-17 e usado em ci.yml:350-396, sem bump. Ausencia confirmada.",
   "frente": "pend-lote2.json"
  },
  {
@@ -3064,7 +3110,7 @@
   "bloqueio": "nenhum",
   "evidencia": "scripts/ci/render-workflow-docs.mjs:95-96 ainda e 'if (/^#\\s*$/.test(linha)) continue; break;' sem tratar linha de continuacao; sem export e sem guarda de main (arquivo termina em console.log na :216)",
   "refutacao_tentada": "nao_refutado",
-  "motivo_revisor": "AUSENTE na main: render-workflow-docs.mjs:94-96 ainda 'if (/^#\\s*$/.test(linha)) continue; break;'; grep export = 0 hits; argv so :197 (--check); termina em wri",
+  "motivo_revisor": "AUSENTE na main: render-workflow-docs.mjs:94-96 ainda 'if (/^#\\s*$/.test(linha)) continue; break;'; grep export = 0 hits; argv so :197 (--check); termina em writeFile :214-216",
   "frente": "pend-lote2.json"
  },
  {
@@ -3078,7 +3124,7 @@
   "bloqueio": "nenhum",
   "evidencia": "scripts/ci nao tem nenhum render-workflow-docs*.unit.mjs na main; .github/workflows/ci.yml:166 roda 'node --test scripts/ci/*.unit.mjs', logo o teste entraria no CI sem registro manual",
   "refutacao_tentada": "nao_refutado",
-  "motivo_revisor": "AUSENTE na main: scripts/ci/ tem so render-workflow-docs.mjs, nenhum render-workflow-docs*.unit.mjs; unico citador de extrairNaoEBug e o proprio .mjs:77,135; ci",
+  "motivo_revisor": "AUSENTE na main: scripts/ci/ tem so render-workflow-docs.mjs, nenhum render-workflow-docs*.unit.mjs; unico citador de extrairNaoEBug e o proprio .mjs:77,135; ci.yml:164-165 roda node --test scripts/ci/*.unit.mjs",
   "frente": "pend-lote2.json"
  },
  {
@@ -3121,7 +3167,7 @@
   "bloqueio": "nenhum",
   "evidencia": "IncomingCallAlert.tsx:251-252 animate scale [1,1.2,1] com repeat: Infinity sem portao; mesmo padrao em CallDialog.tsx:304,310",
   "refutacao_tentada": "nao_refutado",
-  "motivo_revisor": "Confirmei: IncomingCallAlert.tsx:251-252 scale [1,1.2,1] repeat Infinity e CallDialog.tsx:301-313 (transition 304 e 310) repeat Infinity, ambos sem portao de mo",
+  "motivo_revisor": "Confirmei: IncomingCallAlert.tsx:251-252 scale [1,1.2,1] repeat Infinity e CallDialog.tsx:301-313 (transition 304 e 310) repeat Infinity, ambos sem portao de movimento reduzido.",
   "frente": "pend-lote2.json"
  },
  {
@@ -3135,9 +3181,9 @@
   "valor": "baixo",
   "classe": "front",
   "bloqueio": "nenhum",
-  "evidencia": "TelefoniaView.tsx:280-287 troca SelectedCallPanel/ActiveCallPanel/NewCallPanel em div simples, sem motion.* (grep 'motion.' so acha o comentario da linha 217); SelectedCallPanel e NewCallPanel nao imp",
+  "evidencia": "TelefoniaView.tsx:280-287 troca SelectedCallPanel/ActiveCallPanel/NewCallPanel em div simples, sem motion.* (grep 'motion.' so acha o comentario da linha 217); SelectedCallPanel e NewCallPanel nao importam framer-motion",
   "refutacao_tentada": "nao_refutado",
-  "motivo_revisor": "Confirmei ausencia em 2 dos 3 painéis: TelefoniaView.tsx:278-288 troca em div simples e SelectedCallPanel/NewCallPanel tem 0 framer-motion. Nota: ActiveCallPane",
+  "motivo_revisor": "Confirmei ausencia em 2 dos 3 painéis: TelefoniaView.tsx:278-288 troca em div simples e SelectedCallPanel/NewCallPanel tem 0 framer-motion. Nota: ActiveCallPanel.tsx:68-74 ja anima 120ms.",
   "frente": "pend-lote2.json"
  },
  {
@@ -3167,7 +3213,7 @@
   "bloqueio": "nenhum",
   "evidencia": "ausente em src/components/talkx/__tests__/ (listagem nao tem TalkXOverview.rail.test.tsx)",
   "refutacao_tentada": "nao_refutado",
-  "motivo_revisor": "Ausente: nao existe TalkXOverview.rail.test.tsx; grep por 'Dica do dia|TipCard|HeroCard|RecentList|Acoes rapidas' nos __tests__ do talkx nao acha nenhum TalkXOv",
+  "motivo_revisor": "Ausente: nao existe TalkXOverview.rail.test.tsx; grep por 'Dica do dia|TipCard|HeroCard|RecentList|Acoes rapidas' nos __tests__ do talkx nao acha nenhum TalkXOverview.*.",
   "frente": "pend-lote2.json"
  },
  {
@@ -3180,9 +3226,9 @@
   "valor": "baixo",
   "classe": "front",
   "bloqueio": "nenhum",
-  "evidencia": "kit/states.tsx:163-175 TalkXCrmUnavailableState aceita onViewStatus mas nenhuma tela passa (grep onViewStatus em src acha so states.tsx e kit/__tests__/states.test.tsx:102-110); ServiceStatusSheet nao",
+  "evidencia": "kit/states.tsx:163-175 TalkXCrmUnavailableState aceita onViewStatus mas nenhuma tela passa (grep onViewStatus em src acha so states.tsx e kit/__tests__/states.test.tsx:102-110); ServiceStatusSheet nao existe na main",
   "refutacao_tentada": "nao_refutado",
-  "motivo_revisor": "Ausente: nenhum ServiceStatusSheet em src; onViewStatus so em kit/states.tsx:163-175 e no teste do kit. useTalkXServiceStatus.ts:20-23 registra que CRM e Realti",
+  "motivo_revisor": "Ausente: nenhum ServiceStatusSheet em src; onViewStatus so em kit/states.tsx:163-175 e no teste do kit. useTalkXServiceStatus.ts:20-23 registra que CRM e Realtime nao tem sinal no codigo.",
   "frente": "pend-lote2.json"
  },
  {
@@ -3196,7 +3242,7 @@
   "bloqueio": "nenhum",
   "evidencia": "wt-main/scripts/maintenance/run.mjs:148-189: changed() checa indice, nao-rastreado, escopo e --numstat; nao ha git diff --raw, logo delecao (0\\tN) passa",
   "refutacao_tentada": "nao_refutado",
-  "motivo_revisor": "Confirmei ausencia: run.mjs:148-189 e 286-289 so validam numstat (delecao da 0\\tN e passa); nao existe git diff --raw nem --diff-filter. Mitigacao parcial: dele",
+  "motivo_revisor": "Confirmei ausencia: run.mjs:148-189 e 286-289 so validam numstat (delecao da 0\\tN e passa); nao existe git diff --raw nem --diff-filter. Mitigacao parcial: delecao feita por gate cai no freeze run.mjs:481/486.",
   "frente": "pend-lote2.json"
  },
  {
@@ -3210,7 +3256,7 @@
   "bloqueio": "nenhum",
   "evidencia": "wt-main/scripts/maintenance/maintenance.unit.mjs tem 27 testes (l.123-368), nenhum sobre lista do Prettier, arquivo gerado, delecao ou commit com hooks",
   "refutacao_tentada": "nao_refutado",
-  "motivo_revisor": "Confirmei: maintenance.unit.mjs tem 27 testes (l.123-368) e nenhum cobre lista do Prettier corrompida, arquivo gerado, delecao ou commit com hooks; grep por pre",
+  "motivo_revisor": "Confirmei: maintenance.unit.mjs tem 27 testes (l.123-368) e nenhum cobre lista do Prettier corrompida, arquivo gerado, delecao ou commit com hooks; grep por prettierignore/types.ts/unlink/hooksPath no arquivo = vazio.",
   "frente": "pend-lote2.json"
  },
  {

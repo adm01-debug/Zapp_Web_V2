@@ -12,6 +12,20 @@ procurando o comportamento equivalente na `main` por comportamento e não por ca
 Só sobrevive o que o revisor adversarial não conseguiu derrubar, e cada sobrevivente cita
 `arquivo:linha` da `main` provando a ausência.
 
+**Cobertura real do revisor, item a item.** Dos 226 confirmados, **222 trazem o parecer do
+revisor** em `motivo_revisor`. Os outros **4 não têm revisão registrada** e não devem ser lidos
+como igualmente verificados:
+
+| item | branch | por quê |
+|---|---|---|
+| Mapa de calor pode trocar domingo por segunda | `claude__fix-talkx-test-suite-261108-2330` | marcado `sem_revisor` no resultado da frente |
+| Cartão "Resumo da Campanha" e nome do responsável sem teste | `claude__fix-talkx-test-suite-261108-2330` | marcado `sem_revisor` |
+| 2 itens das frentes de lacunas | — | o resultado da frente não gravou o campo |
+
+Os dois primeiros têm equivalente confirmado **com** revisor em outras branches
+(`claude__fix-x051-remote-completion-test-261108-2057`), então a lacuna em si está verificada —
+o que falta é o parecer daquele registro, não a evidência do problema.
+
 A verdade sobre a `main` foi sempre um checkout limpo em `origin/main`, nunca o checkout de
 trabalho — este fica em outra branch e enganaria o agente.
 
@@ -31,6 +45,13 @@ trabalho — este fica em outra branch e enganaria o agente.
 | `pend-lote2.json` | lacunas | 173 | - | - | 173 | 40 | 133 |
 | `prs-incorporada-23.json` | veredito | 23 | 23 | 0 | 0 | 0 | 0 |
 | `prs-obsoleta-13.json` | veredito | 13 | 13 | 0 | 0 | 0 | 0 |
+
+> **226 é a contagem de EVIDÊNCIAS confirmadas, não de tarefas distintas.** A mesma lacuna
+> aparece em várias branches com redação diferente, e o agrupamento mecânico por palavras não
+> as junta justamente por isso. O sinal está nos arquivos: **24 itens apontam para o mesmo
+> `src/components/talkx/report/__tests__/TalkXCampaignReport.test.tsx`**, 11 para
+> `.github/workflows/ci.yml` e 10 para `.github/workflows/types-sync.yml`. Quem for planejar
+> trabalho a partir desta lista deve agrupar por arquivo antes de contar.
 
 Vereditos do ledger derrubados pela auditoria: **31**. 
 Alegações refutadas pelo revisor adversarial: **153**. 
@@ -77,6 +98,13 @@ passadas concordam no essencial e divergem na margem, o que mede a estabilidade 
 | Acesso negado pelo banco no Talk X mostra erro genérico, não 'sem permissão' | `src/components/talkx/kit/states.tsx` | kit/states.tsx:355-357: if (query.isError) return <TalkXErrorState .../> — não olha error.code; grep 42501 em src/components/talkx = só testes/comentá | `claude_juca__practical-rubin-8xnw0u` |
 
 A lista completa dos itens confirmados, com prova de cada um, está em `itens-confirmados.json`.
+
+**Correção aplicada antes de publicar.** A primeira versão deste consolidado trazia 146 pareceres
+do revisor cortados em exatamente 160 caracteres, vários no meio da conclusão — corte do
+pós-processamento (`.slice(0, 160)` e `.slice(0, 200)` nos scripts das frentes), não do modelo.
+O texto íntegro estava nos journals das execuções e foi restaurado: 144 pareceres, 46 que estavam
+vazios, 20 provas e 11 evidências. Restam 9 campos no tamanho original porque o journal não tinha
+versão mais longa — esses são o que o agente realmente escreveu.
 
 ## Itens desta lista já resgatados em 15/11
 
