@@ -471,8 +471,8 @@
     },
     {
       "path": "supabase/functions/ai-multimodal-analysis/index.ts",
-      "bytes": 5178,
-      "sha256": "0c761b68cc72b5d55b98de50b1b20d1364e5fe315aabce717979953dc07fdcdf"
+      "bytes": 6971,
+      "sha256": "49e3d52685563489104a8d5f8b0ab2eac5d163484076490f7651f96e7a988f36"
     },
     {
       "path": "supabase/functions/ai-objection-handler/index.ts",
@@ -1216,7 +1216,7 @@
       "name": "ai-multimodal-analysis",
       "entrypoint": "supabase/functions/ai-multimodal-analysis/index.ts",
       "verify_jwt": true,
-      "source_sha256": "d44d1cfce42256e999a510361f47bed6d33fcdf3efd9f9e0c83c44e86edbab6b",
+      "source_sha256": "8d4ce637f52d5af807628a7dd04269ca930487677691c2ec6e2c6a5c574f5bf8",
       "source_files": [
         "supabase/functions/_shared/ai-budget.ts",
         "supabase/functions/_shared/ai-capabilities.ts",
@@ -1224,6 +1224,7 @@
         "supabase/functions/_shared/ai-feature-flags.ts",
         "supabase/functions/_shared/ai-generate.ts",
         "supabase/functions/_shared/ai-guards.ts",
+        "supabase/functions/_shared/ai-image-input.ts",
         "supabase/functions/_shared/ai-json.ts",
         "supabase/functions/_shared/ai-providers.ts",
         "supabase/functions/_shared/ai-response-contracts.ts",
@@ -1237,6 +1238,7 @@
         "supabase/functions/_shared/request-policy.ts",
         "supabase/functions/_shared/schemas.ts",
         "supabase/functions/_shared/secure-random.ts",
+        "supabase/functions/_shared/ssrf.ts",
         "supabase/functions/_shared/validation.ts",
         "supabase/functions/ai-multimodal-analysis/index.ts"
       ]
@@ -2821,5 +2823,5 @@
       ]
     }
   ],
-  "manifest_sha256": "8f1e2920054ad4bde35cb210eef7ab38587f7b80c18faa55b9b944bfaebfdc9d"
+  "manifest_sha256": "53cd960f4d5899b9e9f489bccece8bcedb65c31bf3bc097ac5d92cd10adc3cc3"
 }
