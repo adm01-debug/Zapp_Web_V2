@@ -65,6 +65,12 @@ test('destrava os checks do PR aberto com GITHUB_TOKEN', () => {
   assert.match(workflow, /approveWorkflowRun/u);
 });
 
+test('workflow_dispatch privilegiado so executa a partir da main', () => {
+  // O job tem contents/pull-requests/actions:write: disparado a mao de uma
+  // branch qualquer, abriria PR e aprovaria runs com o conteudo daquela branch.
+  assert.match(workflow, /regen:[\s\S]*?if:\s*github\.ref\s*==\s*['"]refs\/heads\/main['"]/u);
+});
+
 test('continua regenerando o placar pelo gerador oficial', () => {
   assert.match(workflow, /node scripts\/talkx\/v4-status\.mjs/u);
 });

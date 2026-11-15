@@ -5,8 +5,9 @@
  * Faz UMA consulta à RPC canônica `search_insights(p_days)` (migration
  * 20261016013134) e normaliza a linha retornada para a tela.
  *
- * Sem PII: `search_events` não persiste os termos buscados. Por isso as listas
- * de termos ficam vazias; somente métricas agregadas são exibidas.
+ * Sem PII: `search_events` não persiste os termos buscados — a RPC só devolve
+ * agregados (contagens, tamanho médio do termo e cliques por tipo). Não há como
+ * listar termos mais buscados nem termos sem resultado.
  * Visibilidade: quem barra é a própria RPC — ela nega quem não é admin/supervisor
  * (42501). O hook não acrescenta nem contorna recorte de papel.
  */
@@ -18,12 +19,6 @@ export type SearchInsightsPeriod = 7 | 30 | 90;
 export const SEARCH_INSIGHTS_PERIODS: readonly SearchInsightsPeriod[] = [7, 30, 90];
 export const DEFAULT_SEARCH_INSIGHTS_PERIOD: SearchInsightsPeriod = 30;
 
-/** Linha das tabelas de topo. `count` é quantas buscas usaram o termo. */
-export interface SearchInsightTerm {
-  term: string;
-  count: number;
-}
-
 export interface SearchInsights {
   /** Janela (em dias) que a RPC aplicou na agregação. */
   days: number;
@@ -32,33 +27,13 @@ export interface SearchInsights {
   clicks: number;
   /** Fração 0..1 — quantas buscas geraram clique. */
   clickRate: number;
-  topQueries: SearchInsightTerm[];
-  noResultTerms: SearchInsightTerm[];
+  /** Média de caracteres do termo buscado (o termo em si não é armazenado). */
+  averageTermLength: number;
+  /** Cliques por tipo de resultado (`message`, `contact`, …). */
+  searchesByKind: Record<string, number>;
 }
 
 export const searchInsightsQueryKey = (days: number) => ['search-insights', days] as const;
-
-function toCount(value: unknown): number {
-  return typeof value === 'number' && Number.isFinite(value) ? value : 0;
-}
-
-/** Normaliza a linha agregada da RPC canônica. */
-export function parseSearchInsights(raw: unknown, days: number): SearchInsights {
-  const row = (raw && typeof raw === 'object' ? raw : {}) as Record<string, unknown>;
-  const total = toCount(row.total_searches);
-  const clicks = toCount(row.searches_with_click);
-
-  return {
-    days,
-    total,
-    noResults: toCount(row.searches_without_results),
-    clicks,
-    clickRate: total > 0 ? clicks / total : 0,
-    // O schema canônico preserva privacidade e não armazena termos.
-    topQueries: [],
-    noResultTerms: [],
-  };
-}
 
 export class SearchInsightsError extends Error {
   constructor(message: string) {
@@ -67,10 +42,64 @@ export class SearchInsightsError extends Error {
   }
 }
 
+/**
+ * Contagem inteira não negativa. Valor ausente ou de tipo inesperado NÃO vira
+ * zero silencioso: um KPI errado na tela de admin é pior que um erro visível.
+ */
+function toCount(value: unknown, field: string): number {
+  const parsed = typeof value === 'number' || typeof value === 'string' ? Number(value) : NaN;
+  if (!Number.isFinite(parsed) || parsed < 0 || !Number.isInteger(parsed)) {
+    throw new SearchInsightsError(`Resposta inválida da RPC search_insights (${field}).`);
+  }
+  return parsed;
+}
+
+function toAverage(value: unknown): number {
+  const parsed = typeof value === 'number' || typeof value === 'string' ? Number(value) : NaN;
+  if (!Number.isFinite(parsed) || parsed < 0) {
+    throw new SearchInsightsError('Resposta inválida da RPC search_insights (average_term_length).');
+  }
+  return parsed;
+}
+
+/** Normaliza a linha agregada da RPC canônica (aceita a linha ou o array dela). */
+export function parseSearchInsights(raw: unknown, days: number): SearchInsights {
+  const row = Array.isArray(raw) ? raw[0] : raw;
+  if (!row || typeof row !== 'object' || Array.isArray(row)) {
+    throw new SearchInsightsError('Resposta vazia ou inválida da RPC search_insights.');
+  }
+  const data = row as Record<string, unknown>;
+  const total = toCount(data.total_searches, 'total_searches');
+  const noResults = toCount(data.searches_without_results, 'searches_without_results');
+  const clicks = toCount(data.searches_with_click, 'searches_with_click');
+  if (noResults > total || clicks > total) {
+    throw new SearchInsightsError('Contagens inconsistentes na resposta da RPC search_insights.');
+  }
+
+  const rawKinds = data.searches_by_kind;
+  if (rawKinds !== undefined && rawKinds !== null && (typeof rawKinds !== 'object' || Array.isArray(rawKinds))) {
+    throw new SearchInsightsError('Resposta inválida da RPC search_insights (searches_by_kind).');
+  }
+  const searchesByKind: Record<string, number> = {};
+  for (const [kind, value] of Object.entries((rawKinds ?? {}) as Record<string, unknown>)) {
+    if (kind.trim()) searchesByKind[kind] = toCount(value, `searches_by_kind.${kind}`);
+  }
+
+  return {
+    days,
+    total,
+    noResults,
+    clicks,
+    clickRate: total > 0 ? clicks / total : 0,
+    averageTermLength: toAverage(data.average_term_length ?? 0),
+    searchesByKind,
+  };
+}
+
 async function fetchSearchInsights(days: number): Promise<SearchInsights> {
   const { data, error } = await supabase.rpc('search_insights', { p_days: days });
   if (error) throw new SearchInsightsError(error.message);
-  return parseSearchInsights(data?.[0], days);
+  return parseSearchInsights(data, days);
 }
 
 export function useSearchInsights(days: SearchInsightsPeriod = DEFAULT_SEARCH_INSIGHTS_PERIOD) {

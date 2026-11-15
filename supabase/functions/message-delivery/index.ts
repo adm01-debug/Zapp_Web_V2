@@ -11,6 +11,7 @@ import {
 } from '../_shared/validation.ts';
 import { resolvePrivateBucketUrl } from '../_shared/evolution-api-proxy.ts';
 import { evoFetch, extractMessageId } from '../_shared/evolution-send.ts';
+import { AUTO_PAUSE_MINUTES, AUTO_PAUSE_REASON } from '../_shared/instance-pause-actions.ts';
 import { isInstancePaused } from '../_shared/instance_pause.ts';
 import { resolveInstanceToken, type InstanceTokenClient } from '../_shared/evolution-instance-token.ts';
 import { providerErrorInfo } from '../_shared/messaging/errors.ts';
@@ -804,6 +805,20 @@ export async function handleMessageDeliveryRequest(
 
     if (!providerResponse.ok) {
       const failure = classifyProviderFailure(providerResponse.status, providerData ?? raw);
+      // C121/IP1: 429 aqui tambem pausa a instancia por 30 min. Este e o caminho
+      // real de entrega da inbox (deliverOutbound chama o adaptador direto, sem
+      // passar pelo proxy da evolution-api), entao sem isto a protecao nao valia no
+      // fluxo principal de atendimento. Falha ao registrar nao altera a resposta.
+      if (providerResponse.status === 429 && claim.whatsapp_instance_name) {
+        const { error: autoPauseError } = await service.rpc('auto_pause_instance', {
+          p_instance: claim.whatsapp_instance_name,
+          p_minutes: AUTO_PAUSE_MINUTES,
+          p_reason: AUTO_PAUSE_REASON,
+        });
+        if (autoPauseError) {
+          console.warn(JSON.stringify({ event: 'auto_pause_instance_failed', code: autoPauseError.code }));
+        }
+      }
       if (failure.ambiguous) {
         // POST efeito incerto (408/425/5xx): o provedor pode ter processado — reconciliar.
         await enqueueDeliveryReconciliation(service, claim, null);

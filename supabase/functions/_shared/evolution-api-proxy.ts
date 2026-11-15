@@ -213,14 +213,16 @@ export async function proxyToEvolution(
         continue;
       }
 
+      // O `content-type` pode dizer JSON e o corpo vir vazio ou quebrado. Com
+      // `response.json()` sem guarda isso LANCAVA: o erro caia no catch de conexao
+      // abaixo, o proxy tentava de novo contra um provedor que acabou de recusar, e a
+      // resposta virava `{ error: true, status: 504 }` — escondendo o status real do
+      // provedor de todo mundo que le este corpo (inclusive a auto-pausa do C121 por
+      // limite de envio). Agora o corpo e lido como texto e so depois interpretado,
+      // igual ao que o ramo nao-JSON ja fazia. Achado do Codex na #3144.
       let data: unknown;
-      const contentType = response.headers.get('content-type') || '';
-      if (contentType.includes('application/json')) {
-        data = await response.json();
-      } else {
-        const text = await response.text();
-        try { data = JSON.parse(text); } catch { data = { rawResponse: text, status: response.status }; }
-      }
+      const text = await response.text();
+      try { data = JSON.parse(text); } catch { data = { rawResponse: text, status: response.status }; }
 
       if (!response.ok) {
         const errorData = data as Record<string, unknown>;

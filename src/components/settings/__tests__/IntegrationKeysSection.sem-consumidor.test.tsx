@@ -127,6 +127,18 @@ describe('IntegrationKeysSection — chave registrada não é a chave usada', ()
     expect(screen.queryByPlaceholderText('Nova chave para substituir...')).not.toBeInTheDocument();
   });
 
+  // `global_settings` só é legível pelo admin (RLS): quem não é admin nem deve
+  // disparar a consulta — antes ela saia e voltava recusada pela policy.
+  it('sem o papel de admin a consulta a global_settings nem sai', async () => {
+    roleState.isAdmin = false;
+    const { container } = renderizar();
+
+    await waitFor(() => {
+      expect(container).toBeEmptyDOMElement();
+    });
+    expect(mockOrder).not.toHaveBeenCalled();
+  });
+
   it('o admin não tem botão para revelar o valor e o segredo não vai para a tela', async () => {
     renderizar();
 

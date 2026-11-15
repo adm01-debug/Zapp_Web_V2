@@ -16,6 +16,7 @@ import { evoFetch, extractMessageId } from "../_shared/evolution-send.ts";
 import { DEFAULT_SCHEDULE_TIMEZONE, deliveryWindowStatus, type DndSetting } from "../_shared/talkx-window.ts";
 import { pauseReasonForWindow } from "../_shared/talkx-resume-policy.ts";
 import { isInstancePaused } from "../_shared/instance_pause.ts";
+import { AUTO_PAUSE_MINUTES, AUTO_PAUSE_REASON, PROVIDER_RATE_LIMIT_STATUS } from "../_shared/instance-pause-actions.ts";
 import { resolvePrivateBucketUrl } from "../_shared/evolution-api-proxy.ts";
 import { liveTalkXInstanceId } from "../_shared/talkx-delivery-connection.ts";
 import {
@@ -617,6 +618,29 @@ export async function processRecipient(
     if (sendResponse.status >= 500) {
       throw new Error(`talkx_provider_outcome_unknown: HTTP ${sendResponse.status}`);
     }
+    // C121/IP1: limite de envio do provedor numa campanha tambem pausa a instancia.
+    // Quarto e ultimo caminho de entrega (achado do Codex na #3144): o talkx-send
+    // chama o provedor direto por evoFetch, sem passar pelo proxy da evolution-api,
+    // pelo message-delivery nem pelo multiplix-send.
+    // A pausa vem ANTES de interpretar o corpo: o provedor pode devolver o limite com
+    // corpo vazio ou em texto, e a leitura JSON abaixo lanca nesse caso (o destinatario
+    // vai para quarentena), deixando a instancia liberada. Achado do Devin nesta PR.
+    // Seguro porque a campanha SEMPRE tem conexao fixa (campaign.whatsapp_connection_id)
+    // e o talkx-scheduler retoma campanha pausada por instancia: 'instance_paused' esta
+    // em AUTO_RESUME_REASONS (_shared/talkx-resume-policy.ts:35) e a retomada so a
+    // mantem pausada enquanto is_instance_paused responder true.
+    // Falha ao registrar a pausa nao altera o tratamento do destinatario.
+    if (sendResponse.status === PROVIDER_RATE_LIMIT_STATUS && beforeSendInstanceId) {
+      const { error: autoPauseError } = await supabase.rpc("auto_pause_instance", {
+        p_instance: beforeSendInstanceId,
+        p_minutes: AUTO_PAUSE_MINUTES,
+        p_reason: AUTO_PAUSE_REASON,
+      });
+      if (autoPauseError) {
+        log.warn("auto_pause_instance falhou", { correlationId, campaignId, code: autoPauseError.code });
+      }
+    }
+
     let sendResult: Record<string, unknown>;
     try {
       sendResult = await sendResponse.json();
