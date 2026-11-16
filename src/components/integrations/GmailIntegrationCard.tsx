@@ -15,7 +15,7 @@ import {
 import { useUserRole } from '@/hooks/system/useUserRole';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { AlertTriangle, Loader2, RefreshCw } from 'lucide-react';
+import { AlertTriangle, KeyRound, Loader2, RefreshCw } from 'lucide-react';
 
 /** Texto por tipo de falha do RPC (42501 admin_required / 22023 purge_not_allowed). */
 function purgeErrorCopy(error: GmailPurgeError | null | undefined): string {
@@ -201,7 +201,7 @@ function GmailPurgeSection({ accounts }: { accounts: GmailAccount[] }) {
 }
 
 export function GmailIntegrationCard() {
-  const { accounts = [], activeAccount, accountsLoading, accountsError, refetchAccounts, disconnectGmail, syncInbox, connectGmail } = useGmail();
+  const { accounts = [], activeAccount, accountsLoading, accountsError, refetchAccounts, disconnectGmail, syncInbox, connectGmail, needsReconnect } = useGmail();
 
   // R2-API-059: a lista de contas vazia so significa "desconectado" quando a
   // consulta terminou bem. Enquanto carrega (ou quando falha) o cartao nao pode
@@ -265,11 +265,19 @@ export function GmailIntegrationCard() {
       <CardFooter className="gap-2 pt-0">
         {activeAccount ? (
           <>
-            <Button size="sm" variant="outline" disabled={syncInbox.isPending} onClick={() => syncInbox.mutate({})}>
-              {/* E47: spinner durante sync */}
-              {syncInbox.isPending ? <Loader2 className="w-3 h-3 animate-spin mr-1" /> : <RefreshCw className="w-3 h-3 mr-1" />}
-              Sincronizar
-            </Button>
+            {needsReconnect ? (
+              // Conta em reauth_required: sincronizar só devolveria 409 de novo.
+              <Button size="sm" variant="outline" disabled={connectGmail.isPending} onClick={() => connectGmail.mutate()}>
+                {connectGmail.isPending ? <Loader2 className="w-3 h-3 animate-spin mr-1" /> : <KeyRound className="w-3 h-3 mr-1" />}
+                Reconectar
+              </Button>
+            ) : (
+              <Button size="sm" variant="outline" disabled={syncInbox.isPending} onClick={() => syncInbox.mutate({})}>
+                {/* E47: spinner durante sync */}
+                {syncInbox.isPending ? <Loader2 className="w-3 h-3 animate-spin mr-1" /> : <RefreshCw className="w-3 h-3 mr-1" />}
+                Sincronizar
+              </Button>
+            )}
             <Button size="sm" variant="ghost" onClick={() => disconnectGmail.mutate(activeAccount.id)}>
               Desconectar
             </Button>

@@ -73,7 +73,7 @@ export function EmailChatInbox({ embedded = false }: EmailChatInboxProps) {
   );
   const {
     accounts, accountsLoading, accountsError, refetchAccounts, activeAccount,
-    threads, threadsLoading, threadsError, connectGmail, labels, syncInbox,
+    threads, threadsLoading, threadsError, connectGmail, labels, syncInbox, needsReconnect,
     syncLabels, unreadCount, threadsTotalCount, threadsPageCount, subscribeToThreads, requestedThread, downloadAttachment,
     refetchThreads,
   } = useGmail(accountId, selectedThreadId, listQuery);
@@ -319,7 +319,7 @@ export function EmailChatInbox({ embedded = false }: EmailChatInboxProps) {
 
       <div className="flex min-h-0 flex-1">
         <aside data-testid="email-thread-list" className={cn('w-full shrink-0 border-r border-border bg-inbox-panel md:w-[330px] xl:w-[370px]', selectedThread ? 'hidden md:flex md:flex-col' : 'flex flex-col')}>
-          <EmailThreadList threads={threads} totalCount={threadsTotalCount} page={page} pageCount={threadsPageCount} threadsLoading={threadsLoading} threadsError={threadsError} labels={labels} unreadCount={unreadCount} filters={filters} onFiltersChange={updateFilters} onSearchChange={setSearch} onResetFilters={resetFilters} onPageChange={next => setPage(threadsLoading ? next : Math.min(next, Math.max(1, threadsPageCount)))} globalSearchQuery={globalSearchQuery} onClearGlobalSearch={clearGlobalSearch} selectedThreadId={selectedThread?.id || null} activeAccountEmail={activeAccount.email_address} onSelectThread={thread => navigateToThread(thread.id)} onNewEmail={() => { setComposerTo(''); setShowComposer(true); }} onSync={() => syncInbox.mutate({})} isSyncing={syncInbox.isPending} />
+          <EmailThreadList threads={threads} totalCount={threadsTotalCount} page={page} pageCount={threadsPageCount} threadsLoading={threadsLoading} threadsError={threadsError} labels={labels} unreadCount={unreadCount} filters={filters} onFiltersChange={updateFilters} onSearchChange={setSearch} onResetFilters={resetFilters} onPageChange={next => setPage(threadsLoading ? next : Math.min(next, Math.max(1, threadsPageCount)))} globalSearchQuery={globalSearchQuery} onClearGlobalSearch={clearGlobalSearch} selectedThreadId={selectedThread?.id || null} activeAccountEmail={activeAccount.email_address} onSelectThread={thread => navigateToThread(thread.id)} onNewEmail={() => { setComposerTo(''); setShowComposer(true); }} onSync={() => syncInbox.mutate({})} isSyncing={syncInbox.isPending} needsReconnect={needsReconnect} onReconnect={() => connectGmail.mutate()} isReconnecting={connectGmail.isPending} />
         </aside>
         <section data-testid="email-conversation" aria-label="Conteúdo da conversa" className={cn('min-w-0 flex-1 flex-col bg-background', !selectedThread ? 'hidden md:flex' : 'flex')}>
           {selectedThread ? <EmailChatThread key={`${activeAccount.id}:${selectedThread.id}`} accountId={activeAccount.id} thread={selectedThread} labels={labels} onContextDataChange={handleThreadContextChange} onBack={() => navigateToThread(null, true)} onToggleDetails={toggleDetails} showDetailsButton /> : (

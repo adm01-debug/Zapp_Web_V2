@@ -30,6 +30,7 @@ vi.mock('@/hooks/integrations/useGmail', () => ({
     disconnectGmail: { mutate: disconnectGmailMutate },
     syncInbox: { mutate: syncInboxMutate, isPending: false },
     connectGmail: { mutate: connectGmailMutate, isPending: false },
+    needsReconnect: config.activeAccount?.sync_status === 'reauth_required',
   }),
 }));
 
@@ -85,5 +86,16 @@ describe('GmailIntegrationCard — falha de consulta (R2-API-059)', () => {
     render(<GmailIntegrationCard />);
     expect(screen.getByText('Conectado')).toBeInTheDocument();
     expect(screen.getByText('contato@promobrindes.com.br')).toBeInTheDocument();
+  });
+
+  it('conta em reauth_required: oferece Reconectar no lugar de Sincronizar', () => {
+    config.activeAccount = { ...account, sync_status: 'reauth_required' } as GmailAccount;
+    syncInboxMutate.mockClear();
+    connectGmailMutate.mockClear();
+    render(<GmailIntegrationCard />);
+    expect(screen.queryByRole('button', { name: /Sincronizar/ })).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: /Reconectar/ }));
+    expect(connectGmailMutate).toHaveBeenCalledTimes(1);
+    expect(syncInboxMutate).not.toHaveBeenCalled();
   });
 });

@@ -314,6 +314,14 @@ export async function handleGmailSync(req: Request): Promise<Response> {
     const isSyncAction = body.action === "sync-inbox" || body.action === "sync-incremental";
     const claim = isSyncAction ? await claimGmailAccountSync(supabase, account) : null;
     if (isSyncAction && !claim) {
+      // Conta já marcada `reauth_required` (token revogado/expirado): o claim
+      // recusa, mas NÃO é "outra sincronização em andamento". Responde com o
+      // mesmo payload do ramo de reautenticação abaixo — sem isso o cliente lia
+      // o 409 sem `code` como "já em andamento" a cada novo clique em Sync.
+      if (account.sync_status === "reauth_required") {
+        log.done(GMAIL_REAUTH_HTTP_STATUS, { action: body.action, reauth_required: true, reason: "account_reauth_required" });
+        return jsonResponse(gmailReauthErrorPayload(), GMAIL_REAUTH_HTTP_STATUS, req);
+      }
       log.done(409, { action: body.action, reason: "sync_already_claimed" });
       return errorResponse("Gmail sync already in progress", 409, req);
     }

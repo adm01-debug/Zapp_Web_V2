@@ -6,7 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { GenericEmptyState } from '@/components/ui/GenericEmptyState';
-import { Mail, Search, RefreshCw, Pencil, Inbox, Loader2, Clock, AlertTriangle, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Mail, Search, RefreshCw, Pencil, Inbox, Loader2, Clock, AlertTriangle, ChevronLeft, ChevronRight, KeyRound } from 'lucide-react';
 import { useGmail, type EmailThread, type EmailThreadListQueryWithStatus, type EmailThreadStatusFilter } from '@/hooks/integrations/useGmail';
 import { EMAIL_THREAD_DEFAULT_FILTERS } from '@/lib/emailThreadQuery';
 import { EmailThreadView } from './EmailThreadView';
@@ -64,7 +64,7 @@ export default function GmailInboxView() {
     activeAccount, accountsLoading, accountsError, refetchAccounts,
     threads, threadsLoading, threadsError, refetchThreads,
     threadsTotalCount, threadsPageCount,
-    labels, syncInbox, unreadCount, subscribeToThreads,
+    labels, syncInbox, unreadCount, subscribeToThreads, needsReconnect, connectGmail,
   } = useGmail(undefined, null, listQuery);
   // Ajuste durante o render (react-hooks/set-state-in-effect proíbe setState síncrono
   // dentro do efeito): se o total encolher — realtime ou filtro —, a página desce para
@@ -151,7 +151,12 @@ export default function GmailInboxView() {
             {unreadCount > 0 && <Badge variant="default" className="text-3xs px-1.5 py-0">{unreadCount} novo{unreadCount > 1 ? 's' : ''}</Badge>}
           </div>
           <Button variant="default" size="sm" onClick={() => setShowComposer(true)}><Pencil className="w-3.5 h-3.5 mr-1" />Compor</Button>
-          <Button variant="outline" size="sm" onClick={() => syncInbox.mutate({})} disabled={syncInbox.isPending}><RefreshCw className={`w-3.5 h-3.5 mr-1 ${syncInbox.isPending ? 'motion-safe:animate-spin' : ''}`} />Sync</Button>
+          {/* Conta em reauth_required: sincronizar só devolveria 409 de novo — o botão vira "Reconectar". */}
+          {needsReconnect ? (
+            <Button variant="outline" size="sm" onClick={() => connectGmail.mutate()} disabled={connectGmail.isPending} title="Sessão do Gmail expirada"><KeyRound className="w-3.5 h-3.5 mr-1" />Reconectar</Button>
+          ) : (
+            <Button variant="outline" size="sm" onClick={() => syncInbox.mutate({})} disabled={syncInbox.isPending}><RefreshCw className={`w-3.5 h-3.5 mr-1 ${syncInbox.isPending ? 'motion-safe:animate-spin' : ''}`} />Sync</Button>
+          )}
         </div>
         <div className="flex items-center gap-2">
           <div className="relative flex-1"><Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" /><Input value={searchQuery} onChange={(e) => { setSearchQuery(e.target.value); setPage(1); }} placeholder="Buscar emails..." className="h-8 pl-8 text-sm" /></div>
@@ -188,7 +193,9 @@ export default function GmailInboxView() {
             ) : threads.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-16 text-muted-foreground">
                 <Inbox className="w-12 h-12 mb-3 opacity-20" /><p className="text-sm">{searchQuery ? 'Nenhum email encontrado' : 'Nenhum email nesta pasta'}</p>
-                {!searchQuery && <Button variant="link" size="sm" className="mt-2" onClick={() => syncInbox.mutate({})}>Sincronizar emails</Button>}
+                {!searchQuery && (needsReconnect
+                  ? <Button variant="link" size="sm" className="mt-2" onClick={() => connectGmail.mutate()} disabled={connectGmail.isPending}>Reconectar Gmail</Button>
+                  : <Button variant="link" size="sm" className="mt-2" onClick={() => syncInbox.mutate({})}>Sincronizar emails</Button>)}
               </div>
             ) : <div>{threads.map((thread) => <ThreadListItem key={thread.id} thread={thread} isSelected={false} onClick={() => setSelectedThread(thread)} />)}</div>}
           </ScrollArea>

@@ -17,18 +17,18 @@ function json(body: unknown, status = 200): Response {
   return new Response(JSON.stringify(body), { status, headers: { "Content-Type": "application/json" } });
 }
 
-function setup(mode: "reauth" | "partial") {
+function setup(mode: "reauth" | "partial" | "already-reauth" | "syncing") {
   const account: Row = {
     id: ACCOUNT_ID,
     user_id: USER_ID,
     email_address: "mailbox@example.invalid",
     is_active: true,
-    sync_status: "synced",
+    sync_status: mode === "already-reauth" ? "reauth_required" : mode === "syncing" ? "syncing" : "synced",
     error_count: 2,
     next_attempt_at: null,
     token_expires_at: mode === "reauth" ? EXPIRED : VALID,
     history_id: "100",
-    updated_at: INITIAL_UPDATED_AT,
+    updated_at: mode === "syncing" ? new Date().toISOString() : INITIAL_UPDATED_AT,
   };
   const calls: Captured[] = [];
   const originalFetch = globalThis.fetch;
@@ -123,6 +123,38 @@ Deno.test("gmail-sync: falha parcial incremental mantém cursor e agenda backoff
     assertEquals(fixture.account.error_count, 3);
     assert(new Date(String(fixture.account.next_attempt_at)).getTime() > Date.now());
     assert(String(fixture.account.last_error).includes("3 tentativa(s)"));
+  } finally {
+    fixture.restore();
+  }
+});
+
+Deno.test("gmail-sync: conta já em reauth_required devolve 409 reauth_required (não 'já em andamento')", async () => {
+  const fixture = setup("already-reauth");
+  try {
+    for (const action of ["sync-inbox", "sync-incremental"] as const) {
+      const response = await handleGmailSync(request(action));
+      assertEquals(response.status, 409);
+      assertEquals(await response.json(), {
+        code: "reauth_required",
+        error: "Sessão do Gmail expirada — reconecte a conta",
+      });
+    }
+    assertEquals(fixture.account.sync_status, "reauth_required");
+    assertEquals(fixture.calls.filter((call) => call.method === "PATCH").length, 0, "nada é gravado na conta");
+    assertEquals(fixture.calls.filter((call) => new URL(call.url).hostname !== new URL(SUPABASE_URL).hostname).length, 0);
+  } finally {
+    fixture.restore();
+  }
+});
+
+Deno.test("gmail-sync: outra sincronização recente em andamento segue 409 sem code", async () => {
+  const fixture = setup("syncing");
+  try {
+    const response = await handleGmailSync(request("sync-inbox"));
+    assertEquals(response.status, 409);
+    const body = await response.json();
+    assertEquals(body.code, undefined);
+    assert(String(body.error).includes("already in progress"));
   } finally {
     fixture.restore();
   }
