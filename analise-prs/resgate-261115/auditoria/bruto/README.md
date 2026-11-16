@@ -41,6 +41,28 @@ completude da trilha, não porque corriam risco: o original continua na branch n
 O que é mesmo autoral desta sessão são os `args-*`, `auto*`, `backlog-resgate`, `audit.json`
 e os dossiês.
 
+### Como os nomes de `diarios-sessao/` foram montados — e o acidente que isso causou
+
+Os arquivos que vinham de subpastas foram achatados trocando `/` por `_`: `p006/branch.json`
+virou `p006_branch.json`. Isso **colidiu** com um arquivo de mesmo nome que já existia solto na
+raiz do scratchpad, e a cópia sobrescreveu a outra em silêncio. Um antagonista encontrou a
+colisão depois do primeiro commit.
+
+Só houve **uma** colisão em todo o conjunto, e ela importava: as duas versões do ledger P006
+discordam em três status, e a que estava sendo descartada era a **mais conservadora**
+(`PARTIAL` e `NOT_IMPLEMENTED` onde a outra diz `DONE_VERIFIED`). Numa auditoria, perder o lado
+cético é perder o lado que importa.
+
+As duas estão preservadas:
+
+| Arquivo | Origem | `git hash-object` |
+|---|---|---|
+| `p006_branch.json` | `p006/branch.json` (subpasta) | `83a205a2…` |
+| `RAIZ__p006_branch.json` | `p006_branch.json` (raiz do scratchpad) | `bb37135a…` |
+
+O prefixo `RAIZ__` marca a cópia que veio da raiz. Ao comparar os dois, trate o
+`RAIZ__` como a leitura mais rigorosa.
+
 ## Como isto se liga ao resultado
 
 O `itens-confirmados.json` da pasta de cima é o **destilado** destes diários: cada um dos 226
