@@ -21,7 +21,7 @@ PR, que entrou na medição depois de ser publicada: são **221 branches de trab
 agentes**, mais esta.
 
 Para cada branch, os arquivos que ela **introduz** em relação ao seu ponto de bifurcação
-(`git diff --name-only --diff-filter=AMR $(git merge-base origin/main B) B`) passam por três
+(`git diff --name-only --diff-filter=AMRT $(git merge-base origin/main B) B`) passam por três
 provas, em ordem:
 
 1. **Mesmo caminho, mesmo byte** — `git rev-parse B:arquivo` igual a
@@ -36,11 +36,12 @@ provas, em ordem:
 | Resultado | Pares (arquivo, branch) |
 |---|---|
 | Mesmo caminho e mesmo byte, ou mesmo blob em outro caminho | 1.084 |
-| Contido linha por linha | 208 |
+| Contido linha por linha | 201 |
 | **NOVO** — não existe na `main` em caminho nenhum | 730 (558 caminhos distintos) |
 | **PARCIAL** — a `main` tem o arquivo, falta alguma linha | 2.934 |
+| **PARCIAL-REMOÇÃO** — a `main` tem todas as linhas da branch, mas a branch REMOVEU linha que a `main` ainda tem | 7 |
 
-Os 1.084 + 208 são o ganho desta medição em relação a olhar nome de arquivo: trabalho que **já
+Os 1.084 + 201 são o ganho desta medição em relação a olhar nome de arquivo: trabalho que **já
 está** incorporado, parte dele em caminho diferente do original.
 
 ### Por que o filtro de linha mudou, e o que isso alterou
@@ -55,6 +56,28 @@ Efeito medido da correção nesta base: **exatamente 1 par** mudou de lado, `CON
 `PARCIAL` 2.933 → 2.934. O par é `infrastructure/preview-egress-proxy/go.mod` em
 `claude_pink/cool-dijkstra-xk9ek2` — um `go.mod`, onde linha curta (`go 1.22`) é justamente o que
 importa. A fila de adjudicação não se moveu, porque `go.mod` não é código de aplicação.
+
+### Remover também é trabalho: dois pontos cegos maiores
+
+O erro de concepção mais grave do gate original não era de filtro, e aparece em duas camadas: eu
+tratei "a `main` tem o que a branch tem" como equivalente a "o trabalho da branch está
+incorporado". **Remover é trabalho**, e nenhuma das duas formas de remoção contava.
+
+- **Deleção de arquivo.** O filtro `AMR` descarta `Deleted`, então uma branch cujo trabalho é
+  remover código morto saía com tudo zerado — igual a uma branch sem pendência, e "nada a fazer"
+  é justamente o que autoriza fechar. Medido: **4 branches, 12 arquivos**, detalhados em
+  `analise-prs/RECUPERACAO-261116-DELECOES.md`.
+- **Remoção de linha.** Se a branch tira uma instrução de arquivo que continua existindo,
+  `linhas(branch) − linhas(main)` fica vazio e o par saía como `CONTIDO`. O teste correto precisa
+  do ponto de bifurcação: linha que existia lá, a branch tirou e a `main` ainda tem. Medido:
+  **7 dos 208 pares `CONTIDO`**, nominalmente em
+  `analise-prs/recuperacao-261116-remocoes-de-linha.tsv` — e **dois são migration**, a categoria
+  de maior risco do inventário.
+
+Os dois achados são do Codex, na revisão desta PR. Outros três mecanismos corretos foram cobertos
+com impacto zero nesta base: modo de arquivo (`100644` contra `100755`), troca de tipo de arquivo
+(`T`, e a `main` não tem symlink nenhum) e branch já incorporada por merge, que passa a ser
+marcada `INCONCLUSIVA-ANCESTRAL` em vez de sair da fila em silêncio.
 
 ## O recorte que importa
 
