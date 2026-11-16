@@ -22,19 +22,22 @@ const ERROR_BACKOFF_BASE_MS = 60_000;
 const ERROR_BACKOFF_MAX_MS = 10 * 60_000;
 
 /**
- * Falhas SEGUIDAS por consulta, para o recuo abaixo. Nao da para usar o
- * `errorUpdateCount` do react-query: ele e' o total de erros da sessao e NAO zera no
- * sucesso, entao `erro, erro, erro, erro, sucesso, erro` cobraria 10 min pela primeira
+ * Falhas SEGUIDAS por INSTANCIA de query, para o recuo abaixo.
+ *
+ * Nao da para usar o `errorUpdateCount` do react-query: ele e' o total de erros da sessao
+ * e NAO zera no sucesso, entao `erro x4, sucesso, erro` cobraria 10 min pela primeira
  * falha depois da recuperacao. Tambem nao serve o `fetchFailureCount`, que conta
- * tentativa DENTRO de uma busca e zera a cada nova. Achado da Devin e do Codex na
- * PR #3194.
+ * tentativa DENTRO de uma busca e zera a cada nova.
+ *
+ * A chave e' o objeto da query, nao o `queryHash`: o hash e' estavel, e uma conversa
+ * fechada por mais que o `gcTime` (30 min, `src/lib/queryClient.ts`) sai do cache e volta
+ * como query NOVA. Com chave por hash, ela herdaria a contagem antiga e a primeira falha
+ * da nova consulta ja cobraria 10 min. Sendo `WeakMap` por instancia, a entrada morre com
+ * a query -- sem herdar historico e sem precisar de teto de tamanho.
+ *
+ * Achados da Devin e do Codex na PR #3194.
  */
-const falhasSeguidas = new Map<string, { errosVistos: number; seguidas: number }>();
-
-/** Usado pelo teste para isolar um caso do outro. */
-export function resetBackoffUnconfirmed(): void {
-  falhasSeguidas.clear();
-}
+const falhasSeguidas = new WeakMap<object, { errosVistos: number; seguidas: number }>();
 
 /**
  * Intervalo do polling a partir do estado da query.
@@ -49,35 +52,30 @@ export function resetBackoffUnconfirmed(): void {
  * oferece recarga manual, entao o recuo nao pode herdar historico: o preco de errar para
  * cima e' o painel sumir por 10 min por causa de uma falha so.
  *
+ * SO o sucesso zera a contagem. O react-query poe `status: 'pending'` ao comecar uma
+ * busca enquanto `data` ainda e' `undefined`, e o callback e' reavaliado nessa transicao
+ * -- numa consulta que falha desde a abertura a sequencia e' `pending -> error ->
+ * pending -> error`, e zerar em `pending` prendia o recuo em 1 min.
+ *
  * O callback e' reavaliado a cada render, nao so' na troca de estado; por isso a mesma
  * falha nao e' contada duas vezes -- o `errorUpdateCount` serve de identidade do erro,
  * nao de contador.
  */
 export function unconfirmedRefetchInterval(q: {
-  queryHash: string;
   state: { status: string; errorUpdateCount?: number };
 }): number {
   if (q.state.status !== 'error') {
-    // SO o sucesso zera a contagem. O react-query poe `status: 'pending'` ao comecar uma
-    // busca enquanto `data` ainda e' `undefined`, e o callback e' reavaliado nessa
-    // transicao -- entao, numa consulta que falha desde a abertura (sem dado em cache), a
-    // sequencia e' `pending -> error -> pending -> error`. Apagar a contagem em `pending`
-    // fazia toda falha ser tratada como a primeira: o recuo nunca passava de 1 min,
-    // justamente no caso para o qual ele existe. Achado da Devin e do Codex na PR #3194.
-    if (q.state.status === 'success') falhasSeguidas.delete(q.queryHash);
+    if (q.state.status === 'success') falhasSeguidas.delete(q);
     return POLL_MS;
   }
   const errosVistos = q.state.errorUpdateCount ?? 1;
-  const anterior = falhasSeguidas.get(q.queryHash);
+  const anterior = falhasSeguidas.get(q);
   const seguidas = anterior === undefined
     ? 1
     : anterior.errosVistos === errosVistos
       ? anterior.seguidas
       : anterior.seguidas + 1;
-  // Teto de entradas: conversa que ficou em erro e foi fechada nao deixa a tabela crescer
-  // sem limite. 500 e' muito acima do numero de conversas abertas ao mesmo tempo.
-  if (falhasSeguidas.size > 500) falhasSeguidas.clear();
-  falhasSeguidas.set(q.queryHash, { errosVistos, seguidas });
+  falhasSeguidas.set(q, { errosVistos, seguidas });
   return Math.min(ERROR_BACKOFF_BASE_MS * 2 ** (seguidas - 1), ERROR_BACKOFF_MAX_MS);
 }
 
