@@ -116,6 +116,32 @@ describe('talkxReportData', () => {
       const grid = talkxReportHeatmapFromTimestamps(['2026-10-05T10:00:00Z'], 'America/Sao_Paulo');
       expect(grid[0][7]).toBe(1);
     });
+    it('domingo cai na linha 6, nao na linha 0 — guarda do mapeamento de dia', () => {
+      // 2026-10-11T10:00:00Z e domingo 07h em Sao_Paulo. A tabela WEEKDAY_INDEX
+      // (talkxReportData.ts:29) usa Segunda=0 ... Domingo=6, ao contrario do
+      // getDay() do JS, que comeca no domingo. Sem esta guarda, trocar as duas
+      // convencoes joga o envio de domingo na linha da segunda e ninguem ve.
+      const grid = talkxReportHeatmapFromTimestamps(['2026-10-11T10:00:00Z'], 'America/Sao_Paulo');
+      expect(grid[6][7]).toBe(1);
+      expect(grid[0][7]).toBe(0);
+    });
+    it('terca cai na linha 1 — fecha o intervalo entre segunda e domingo', () => {
+      const grid = talkxReportHeatmapFromTimestamps(['2026-10-06T10:00:00Z'], 'America/Sao_Paulo');
+      expect(grid[1][7]).toBe(1);
+      expect(grid[0][7]).toBe(0);
+      expect(grid[6][7]).toBe(0);
+    });
+    it('a semana inteira mapeia uma linha distinta por dia', () => {
+      // 2026-10-05 e segunda; sete dias seguidos cobrem as 7 linhas, uma vez cada.
+      const semana = [
+        '2026-10-05T10:00:00Z', '2026-10-06T10:00:00Z', '2026-10-07T10:00:00Z',
+        '2026-10-08T10:00:00Z', '2026-10-09T10:00:00Z', '2026-10-10T10:00:00Z',
+        '2026-10-11T10:00:00Z',
+      ];
+      const grid = talkxReportHeatmapFromTimestamps(semana, 'America/Sao_Paulo');
+      expect(grid.map((linha) => linha[7])).toEqual([1, 1, 1, 1, 1, 1, 1]);
+      expect(grid.flat().reduce((a, b) => a + b, 0)).toBe(7);
+    });
     it('ignora valores null e undefined', () => {
       const grid = talkxReportHeatmapFromTimestamps([null, undefined], 'America/Sao_Paulo');
       expect(grid.flat().every((v) => v === 0)).toBe(true);
@@ -156,11 +182,11 @@ describe('TalkXCampaignReport', () => {
     state.report = null;
   });
 
-  function renderReport() {
+  function renderReport(campanha: TalkXCampaign = campaign, creators?: Record<string, string>) {
     const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
     return render(
       <QueryClientProvider client={qc}>
-        <TalkXCampaignReport campaign={campaign} onBack={vi.fn()} />
+        <TalkXCampaignReport campaign={campanha} creators={creators} onBack={vi.fn()} />
       </QueryClientProvider>,
     );
   }
@@ -173,6 +199,57 @@ describe('TalkXCampaignReport', () => {
     renderReport();
     expect(screen.getByText('Campanha Teste')).toBeInTheDocument();
   });
+  it('mostra o nome do Responsável quando a campanha tem dono e o mapa de criadores chega', async () => {
+    // TalkXCampaignReport.tsx:327 só desenha "Responsável" com campaign.owner E
+    // creators[owner]. Nenhum teste passava a prop creators, então o campo podia
+    // sumir da tela sem nada reclamar.
+    state.report = {
+      kpis: {
+        total_recipients: 100, sent_count: 100, delivered_count: 90,
+        read_count: 50, failed_count: 5, outcome_unknown_count: 5,
+        delivery_rate_pct: 90, duration_secs: 300,
+      },
+    };
+    renderReport({ ...campaign, owner: 'user-7' }, { 'user-7': 'Joaquim Ataides' });
+    expect(await screen.findByText('Responsável')).toBeInTheDocument();
+    expect(screen.getByText('Joaquim Ataides')).toBeInTheDocument();
+  });
+
+  it('omite o Responsável quando o dono não está no mapa de criadores', async () => {
+    state.report = {
+      kpis: {
+        total_recipients: 100, sent_count: 100, delivered_count: 90,
+        read_count: 50, failed_count: 5, outcome_unknown_count: 5,
+        delivery_rate_pct: 90, duration_secs: 300,
+      },
+    };
+    renderReport({ ...campaign, owner: 'user-7' }, { 'outro-user': 'Alguem' });
+    await screen.findByText('Resumo da Campanha');
+    expect(screen.queryByText('Responsável')).toBeNull();
+  });
+
+  it('cartão "Resumo da Campanha" mostra os rótulos e os números dos KPIs', async () => {
+    // Os rótulos vivem em TalkXCampaignReport.tsx:247-254 e o cartão em :315.
+    // Nenhum teste da main afirmava nenhum deles: o cartão podia perder campos
+    // em silêncio.
+    state.report = {
+      kpis: {
+        total_recipients: 100, sent_count: 100, delivered_count: 90,
+        read_count: 50, failed_count: 5, outcome_unknown_count: 7,
+        delivery_rate_pct: 90, duration_secs: 300,
+      },
+    };
+    renderReport();
+    expect(await screen.findByText('Resumo da Campanha')).toBeInTheDocument();
+    for (const rotulo of ['Destinatários', 'Enviados', 'Entregues', 'Respostas', 'Lidas', 'Falhas', 'A confirmar', 'Duração']) {
+      expect(screen.getByText(rotulo)).toBeInTheDocument();
+    }
+    // "A confirmar" = outcome_unknown_count: o numero tem de vir do KPI, nao de
+    // outro campo. 7 e distinto de todos os outros valores deste fixture.
+    expect(screen.getByText('7')).toBeInTheDocument();
+    expect(screen.getByText('Fuso do relatório')).toBeInTheDocument();
+  });
+
   it('renderiza os três cartões gráficos quando KPIs estão disponíveis', async () => {
     state.report = {
       kpis: {
