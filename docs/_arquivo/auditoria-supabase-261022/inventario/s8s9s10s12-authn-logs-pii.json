@@ -1,0 +1,59 @@
+{
+  "_auditoria": "ZAPP WEB V2 — Autenticação, Logs, PII (S8, S9, S10, S12)",
+  "_data": "2026-10-22",
+  "mfa": {
+    "achado_id": "S8-01",
+    "severidade": "MÉDIO",
+    "total_usuarios": 10,
+    "com_mfa": 0,
+    "descricao": "Nenhum dos 10 usuários tem MFA habilitado — Auth → MFA settings pode forçar para admins"
+  },
+  "storage_buckets": [
+    { "nome": "audio-memes", "publico": true, "limite_mb": 5 },
+    { "nome": "audio-messages", "publico": false, "limite_mb": 50 },
+    { "nome": "avatars", "publico": true, "limite_mb": 5 },
+    { "nome": "custom-emojis", "publico": true, "limite_mb": 0.5 },
+    { "nome": "multiplix-voice", "publico": false, "limite_mb": null, "achado": "S8-02: SEM LIMITE DE TAMANHO — risco de abuso de storage" },
+    { "nome": "stickers", "publico": true, "limite_mb": 5 },
+    { "nome": "team-chat-files", "publico": false, "limite_mb": 10 },
+    { "nome": "whatsapp-media", "publico": false, "limite_mb": 100 }
+  ],
+  "sessoes_jwt": {
+    "achado_id": "S9-01",
+    "severidade": "MÉDIO",
+    "total": 222,
+    "sem_expiracao": 222,
+    "com_expiracao": 0,
+    "descricao": "JWT sem claim exp configurado — token válido indefinidamente se não invalidado manualmente"
+  },
+  "audit_logs_7d": {
+    "tabela_audit_log_entries": "NÃO EXISTE — relation not found",
+    "audit_logs_acoes": {
+      "login": 51500,
+      "client_error": 10,
+      "role_auto_provisioned": 1,
+      "role_granted": 1
+    }
+  },
+  "pg_net_7d": {
+    "total_calls": 1225,
+    "ok_200": 1152,
+    "timeouts": 72,
+    "erros_4xx5xx": 1,
+    "achado_id": "S10-01",
+    "severidade": "INFO",
+    "descricao": "72 timeouts em 7 dias — monitorar se aumenta"
+  },
+  "tabelas_pii": {
+    "total": 14,
+    "colunas_pii": ["email", "phone", "ip_address"],
+    "ttl_jobs_encontrados": [
+      "cleanup-edge-rate-limits",
+      "cleanup-link-preview-cache",
+      "crm-sync-outbox-cleanup"
+    ],
+    "achado_id": "S12-01",
+    "severidade": "MÉDIO",
+    "descricao": "login_attempts sem TTL explícito — acumula IPs indefinidamente (LGPD). Migration 20261026110300 em PR #2186 adiciona cron de limpeza 90 dias."
+  }
+}
