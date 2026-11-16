@@ -20,6 +20,13 @@ import { fireEvent, render, screen } from '@testing-library/react';
  * `closest('[role="button"]')` devolve o cartão.
  */
 
+// A biblioteca de templates passou a ler a permissao de download (exportar CSV/JSON
+// e importar). Sem AuthProvider no render, useAuth lanca; o mock mantem o foco
+// do teste no que ele mede.
+vi.mock('@/hooks/system/useDownloadPermission', () => ({
+  useDownloadPermission: () => ({ canDownload: true, isLoading: false }),
+}));
+
 vi.mock('@/hooks/integrations/useTalkXSettings', () => ({
   useTalkXSettings: () => ({
     data: [

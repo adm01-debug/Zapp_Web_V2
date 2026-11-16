@@ -76,6 +76,10 @@ vi.mock('@/integrations/supabase/client', () => ({
   },
 }));
 
+vi.mock('@/hooks/system/useDownloadPermission', () => ({
+  useDownloadPermission: () => ({ canDownload: true, isLoading: false }),
+}));
+
 const supa = vi.hoisted(() => {
   const state = { data: [] as Array<Record<string, unknown>> | null, error: null as unknown };
   const chain: Record<string, unknown> = {};
@@ -204,6 +208,17 @@ describe('X092 — painel lateral da tela 04 (Templates)', () => {
     expect(screen.getByText('Templates que convertem, recomendações sob medida para o seu negócio.')).toBeTruthy();
     expect(screen.getByText('Do zero')).toBeTruthy();
     expect(screen.queryByText('Do zero ou com IA')).toBeNull();
+  });
+
+  // X092 — "Importar templates" aparece em Ações rápidas quando canDownload é true (X093).
+  it('"Importar templates" em Ações rápidas abre o dialog de importação (X093)', () => {
+    renderComQc(<TalkXTemplates onUseTemplate={vi.fn()} />);
+
+    const importBtn = screen.getByRole('button', { name: /Importar templates/i });
+    expect(importBtn).toBeTruthy();
+    fireEvent.click(importBtn);
+    // O dialog de importação deve aparecer
+    expect(screen.getByText('Importar Templates')).toBeTruthy();
   });
 });
 
