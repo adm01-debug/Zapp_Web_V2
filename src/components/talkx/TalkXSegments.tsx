@@ -55,7 +55,14 @@ export function TalkXSegments({ onUseCampaign }: Props) {
   const [saving, setSaving] = useState(false);
   // X112 — alternância lista/grade da biblioteca de segmentos.
   const [viewMode, setViewMode] = useState<'list' | 'grid'>('list');
-  const selectedRowRef = useRef<HTMLTableRowElement | null>(null);
+  // Volta o foco para onde o usuário clicou ao fechar o painel. Vale para a linha
+  // da tabela E para o cartão da grade (só um dos dois está em tela por vez), por
+  // isso HTMLElement: com HTMLTableRowElement o cartão não podia registrar o ref e
+  // o Esc na grade largava o foco no <body>.
+  const selectedRowRef = useRef<HTMLElement | null>(null);
+  // Ref de callback (e não o objeto direto) porque o mesmo alvo é um <tr> na lista
+  // e uma <div> na grade — só um está em tela por vez.
+  const bindSelectedRow = useCallback((el: HTMLElement | null) => { selectedRowRef.current = el; }, []);
   // TL-134: gaveta "Meus segmentos" (<xl) e guarda de edição suja do construtor
   // (o construtor registra a guarda via onGuardChange a cada render).
   const [sideListOpen, setSideListOpen] = useState(false);
@@ -197,6 +204,11 @@ export function TalkXSegments({ onUseCampaign }: Props) {
   useEffect(() => {
     const listIds = new Set(segments.map((s) => s.id));
     segments.forEach((s) => seenInListRef.current.add(s.id));
+    // O painel de detalhe lê `selected`, que é uma cópia da linha: se o segmento
+    // saiu da lista (apagado aqui, em outra aba ou por ação em massa) o painel
+    // continuava aberto mostrando dados que já não existem, com os botões Editar /
+    // Usar em campanha apontando para um id morto.
+    if (selected && seenInListRef.current.has(selected.id) && !listIds.has(selected.id)) setSelected(null);
     const ghosts = selectedIds.filter((id) => seenInListRef.current.has(id) && !listIds.has(id));
     if (ghosts.length === 0) return;
     const stillAlive = selectedIds.filter((id) => listIds.has(id));
@@ -509,11 +521,12 @@ export function TalkXSegments({ onUseCampaign }: Props) {
                 const originLabel = s.origin === 'crm360' ? 'CRM 360°' : s.origin === 'zapp' ? 'ZAPP' : 'Personalizado';
                 const statusLabel = s.status === 'active' ? 'Ativo' : s.status === 'inactive' ? 'Inativo' : 'Rascunho';
                 return (
-                  <div key={s.id} data-testid="segment-card" role="button" tabIndex={0} onKeyDown={(e) => { if ((e.key === 'Enter' || e.key === ' ') && e.target === e.currentTarget) { e.preventDefault(); setSelected(s); } }} onClick={() => setSelected(s)} className={cn('bg-card border border-border/70 rounded-xl p-3 cursor-pointer hover:bg-muted/20 transition-colors space-y-2', selected?.id === s.id && 'ring-1 ring-primary')}>
+                  <div key={s.id} data-testid="segment-card" role="button" tabIndex={0} ref={selected?.id === s.id ? bindSelectedRow : null} onKeyDown={(e) => { if ((e.key === 'Enter' || e.key === ' ') && e.target === e.currentTarget) { e.preventDefault(); setSelected(s); } }} onClick={() => setSelected(s)} className={cn('bg-card border border-border/70 rounded-xl p-3 cursor-pointer hover:bg-muted/20 transition-colors space-y-2', selected?.id === s.id && 'ring-1 ring-primary')}>
                     <div className="flex items-start justify-between gap-2">
-                      <p className="text-sm font--semibold text-foreground line-clamp-2">{s.name}</p>
+                      <p className="text-sm font-semibold text-foreground line-clamp-2">{s.name}</p>
                       <button type="button" onClick={(e) => { e.stopPropagation(); void toggleFav(s); }} aria-label={s.is_favorite ? 'Remover favorito' : 'Favoritar'} className="shrink-0 text-muted-foreground hover:text-dash-amber">{s.is_favorite ? <Star className="w-4 h-4 text-dash-amber fill-dash-amber" /> : <StarOff className="w-4 h-4" />}</button>
                     </div>
+                    <p className="text-2xs text-foreground-secondary line-clamp-2">{s.description || 'Sem descrição'}</p>
                     <div className="flex flex-wrap gap-1">
                       <Pill label={originLabel} tone={s.origin === 'crm360' ? 'violet' : 'info'} />
                       <Pill label={statusLabel} tone={s.status === 'active' ? 'success' : 'muted'} dot />
@@ -533,7 +546,7 @@ export function TalkXSegments({ onUseCampaign }: Props) {
                 </tr></thead>
                 <tbody>
                   {paged.map((s) => (
-                    <tr key={s.id} data-testid="segment-card" ref={selected?.id === s.id ? selectedRowRef : null} tabIndex={0} onKeyDown={(e) => { if ((e.key === 'Enter' || e.key === ' ') && e.target === e.currentTarget) { e.preventDefault(); setSelected(s); } }} className={cn('border-b border-border/40 hover:bg-muted/20 cursor-pointer transition-colors', selected?.id === s.id && 'bg-primary/5')} onClick={() => setSelected(s)}>
+                    <tr key={s.id} data-testid="segment-card" ref={selected?.id === s.id ? bindSelectedRow : null} tabIndex={0} onKeyDown={(e) => { if ((e.key === 'Enter' || e.key === ' ') && e.target === e.currentTarget) { e.preventDefault(); setSelected(s); } }} className={cn('border-b border-border/40 hover:bg-muted/20 cursor-pointer transition-colors', selected?.id === s.id && 'bg-primary/5')} onClick={() => setSelected(s)}>
                       <Td><div onClick={(e) => e.stopPropagation()}><input type="checkbox" checked={selectedIds.includes(s.id)} onChange={() => toggleSelect(s.id)} aria-label={`Selecionar ${s.name}`} className="w-3.5 h-3.5 accent-primary cursor-pointer" /></div></Td>
                       <Td><button type="button" onClick={(e) => { e.stopPropagation(); void toggleFav(s); }} aria-label={s.is_favorite ? 'Remover favorito' : 'Favoritar'} className="text-muted-foreground hover:text-dash-amber">{s.is_favorite ? <Star className="w-4 h-4 text-dash-amber fill-dash-amber" /> : <StarOff className="w-4 h-4" />}</button></Td>
                       <Td>
@@ -758,7 +771,7 @@ function SegmentDetailRail({ s, onEdit, onCampaign, onClose, onFavorite }: {
   s: TalkXSegment; onEdit: () => void; onCampaign: () => void; onClose: () => void;
   onFavorite: () => void;
 }) {
-  const { data: est, refetch: refetchEst } = useAudienceEstimate(s.rules, true);
+  const { data: est, refetch: refetchEst, isFetching: estFetching } = useAudienceEstimate(s.rules, true);
   const rulesFlat = (s.rules?.groups ?? []).flatMap((g) => g.rules);
   const originLabel = s.origin === 'crm360' ? 'Dados do CRM 360°, sincronizado' : s.origin === 'zapp' ? 'Dados do ZAPP, em tempo real' : 'Personalizado';
   return (
@@ -782,16 +795,42 @@ function SegmentDetailRail({ s, onEdit, onCampaign, onClose, onFavorite }: {
             {rulesFlat.slice(0, 5).map((r) => (
               <p key={r.id} className="text-xs text-foreground-secondary py-0.5">{describeRule(r)}</p>
             ))}
+            {/* Acima de 5 o painel cortava em silêncio: o usuário não tinha como
+                saber que o segmento filtra por mais coisas do que ele está lendo. */}
+            {rulesFlat.length > 5 && (
+              <p className="text-2xs text-muted-foreground py-0.5">+{rulesFlat.length - 5} critério{rulesFlat.length - 5 === 1 ? '' : 's'} — abra em Editar segmento</p>
+            )}
           </div>
         )}
         <MetaRow label="Público estimado" value={<span className="font-bold text-sm">{est?.count != null ? fmtInt(est.count) : s.estimated_count != null ? fmtInt(s.estimated_count) : '—'} contatos</span>} />
         <MetaRow label="Origem" value={originLabel} />
+        <MetaRow label="Criado em" value={s.created_at ? fmtDateTime(s.created_at) : '—'} />
         <MetaRow label="Último uso" value={s.last_used_at ? fmtDateTime(s.last_used_at) : 'Nunca'} />
+        {/* A amostra já vinha do hook (useAudienceEstimate) e era mostrada no
+            construtor e no wizard, mas nunca aqui: conferir quem cai no segmento
+            exigia abrir o construtor. */}
+        {est?.sample && est.sample.length > 0 && (
+          <div>
+            <p className="text-xs font-semibold text-foreground mb-1">Amostra de contatos (5)</p>
+            {est.sample.map((c) => (
+              <div key={c.id} className="flex items-center gap-2 py-1">
+                <InitialsAvatar name={c.name || '?'} size={24} />
+                <div className="min-w-0">
+                  <p className="text-xs font-medium text-foreground truncate">{c.name}</p>
+                  <p className="text-2xs text-foreground-secondary truncate">{c.phone}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
         <div className="flex flex-col gap-2 mt-1">
           <PrimaryButton icon={Zap} onClick={onCampaign} disabled={s.status !== 'active'} className="w-full justify-center">Usar em campanha</PrimaryButton>
           {s.status !== 'active' && <p className="text-xs text-destructive text-center">Segmento inativo: não pode ser usado em campanha.</p>}
           <GhostButton icon={Pencil} onClick={onEdit} className="w-full justify-center">Editar segmento</GhostButton>
-          <GhostButton icon={RefreshCw} onClick={() => refetchEst()} className="w-full justify-center">Recontar público</GhostButton>
+          {/* Sem disabled/spinner o botão aceitava clique duplo e não dava sinal
+              nenhum de que estava contando. O isFetching é do mesmo hook já usado
+              no construtor (TalkXSegmentBuilder) e no wizard. */}
+          <GhostButton icon={RefreshCw} onClick={() => refetchEst()} disabled={estFetching} className={cn('w-full justify-center', estFetching && 'opacity-60 [&_svg]:motion-safe:animate-spin')}>{estFetching ? 'Recontando…' : 'Recontar público'}</GhostButton>
           <GhostButton icon={s.is_favorite ? StarOff : Star} onClick={onFavorite} className="w-full justify-center">{s.is_favorite ? 'Desfavoritar' : 'Favoritar'}</GhostButton>
         </div>
       </div>

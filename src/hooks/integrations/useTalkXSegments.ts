@@ -165,8 +165,13 @@ export function isRuleComplete(rule: SegmentRule): boolean {
  * estimativa. Grupos que ficam sem nenhuma condição completa são descartados,
  * como já faz o `rulesToPostgrest`.
  */
-export function splitRules(rules: SegmentRules | null | undefined): { complete: SegmentRules; incompleteCount: number } {
+export function splitRules(rules: SegmentRules | null | undefined): { complete: SegmentRules; incompleteCount: number; comingSoonCount: number } {
   let incompleteCount = 0;
+  // Quantas das descartadas saíram por "em breve". Uma condição em branco é o
+  // usuário no meio da digitação (a tela mantém a contagem anterior de propósito);
+  // uma condição "em breve" está pronta e vai continuar fora para sempre, então um
+  // segmento feito só delas não tem público conhecido — e não é "toda a base".
+  let comingSoonCount = 0;
   const groups = (rules?.groups ?? [])
     .map((group) => {
       const completeRules = group.rules.filter((rule) => {
@@ -176,6 +181,7 @@ export function splitRules(rules: SegmentRules | null | undefined): { complete: 
         // publicação via validateSegment, sem quebrar o catálogo v2.
         if (RULE_FIELDS.find((f) => f.value === rule.field)?.comingSoon) {
           incompleteCount += 1;
+          comingSoonCount += 1;
           return false;
         }
         if (isRuleComplete(rule)) return true;
@@ -185,7 +191,7 @@ export function splitRules(rules: SegmentRules | null | undefined): { complete: 
       return { ...group, rules: completeRules };
     })
     .filter((group) => group.rules.length > 0);
-  return { complete: { groups }, incompleteCount };
+  return { complete: { groups }, incompleteCount, comingSoonCount };
 }
 
 // Escapa \ ANTES de escapar " — em um unico passe, para nao deixar uma barra
@@ -359,12 +365,20 @@ export async function resolveAudience(rules: SegmentRules | null | undefined, li
 
 export function useAudienceEstimate(rules: SegmentRules | null | undefined, enabled = true) {
   const key = JSON.stringify(rules ?? null);
-  const { complete, incompleteCount } = splitRules(rules);
+  const { complete, incompleteCount, comingSoonCount } = splitRules(rules);
   return useQuery({
     queryKey: ['talkx-audience-estimate', key],
     queryFn: async () => {
+      // Todas as condições do segmento são "em breve": `complete` virou
+      // {groups: []}, que para o countAudience significa "toda a base" — a tela
+      // mostrava a base inteira como se fosse o público do segmento. Sem condição
+      // nenhuma o segmento é mesmo toda a base e a contagem vale; condição em
+      // branco (digitação em curso) mantém o comportamento de antes.
+      if (complete.groups.length === 0 && comingSoonCount > 0) {
+        return { count: null as number | null, sample: [] as AudienceContact[], incompleteCount };
+      }
       const [count, sample] = await Promise.all([countAudience(complete), resolveAudience(complete, 5)]);
-      return { count, sample, incompleteCount };
+      return { count: count as number | null, sample, incompleteCount };
     },
     enabled,
     staleTime: 15_000,
@@ -788,12 +802,22 @@ export function useTalkXSegments() {
 
   const refreshEstimates = useMutation({
     mutationFn: async (segments: TalkXSegment[]) => {
-      await Promise.all(segments.map(async (s) => {
+      // Um segmento que falha (RLS, rede, regra que o PostgREST recusa) não pode
+      // cancelar o recálculo dos outros — com Promise.all a primeira rejeição
+      // abortava o botão "Atualizar" inteiro e ninguém era avisado. `allSettled`
+      // leva todos até o fim; o erro do update (que antes era ignorado) entra na conta.
+      const results = await Promise.allSettled(segments.map(async (s) => {
         const estimated_count = await countAudience(s.rules);
-        if (estimated_count !== s.estimated_count) await fromTable('talkx_segments').update({ estimated_count }).eq('id', s.id);
+        if (estimated_count === s.estimated_count) return;
+        const { error } = await fromTable('talkx_segments').update({ estimated_count }).eq('id', s.id);
+        if (error) throw error;
       }));
+      const falhas = results.filter((r) => r.status === 'rejected').length;
+      if (falhas > 0) throw new Error(`${falhas} de ${segments.length} segmento(s) não recalculado(s)`);
     },
-    onSuccess: () => invalidate(),
+    // Mesmo com falha parcial a lista volta do servidor: o que deu certo já mudou no banco.
+    onSettled: () => invalidate(),
+    onError: (e: Error) => toast.error(`Recontagem incompleta: ${e.message}`),
   });
 
   // X114 — seleção em massa da biblioteca. Guardamos só os ids: "selecionar
