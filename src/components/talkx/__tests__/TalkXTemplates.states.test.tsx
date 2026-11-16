@@ -2,6 +2,13 @@ import { describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
+// A biblioteca de templates passou a ler a permissao de download (exportar CSV/JSON
+// e importar). Sem AuthProvider no render, useAuth lanca; o mock mantem o foco
+// do teste no que ele mede.
+vi.mock('@/hooks/system/useDownloadPermission', () => ({
+  useDownloadPermission: () => ({ canDownload: true, isLoading: false }),
+}));
+
 vi.mock('@/integrations/supabase/client', () => ({
   supabase: { rpc: vi.fn().mockResolvedValue({ data: null, error: null }) },
 }));

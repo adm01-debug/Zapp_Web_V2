@@ -98,16 +98,21 @@ export function RecentList({ items }: { items: RecentItem[] }) {
   );
 }
 
-export function TipCard({ tip }: { tip: string }) {
+/** X082 — `onNext` avança a dica manualmente (offset +1). */
+export function TipCard({ tip, onNext }: { tip: string; onNext?: () => void }) {
   return (
     <div className="flex items-start gap-2.5 p-3 rounded-xl bg-success/8 border border-success/20">
       <div className="w-6 h-6 rounded-full bg-success/20 flex items-center justify-center shrink-0 mt-0.5">
         <Lightbulb className="w-3 h-3 text-success" />
       </div>
-      <div>
+      <div className="flex-1 min-w-0">
         <p className="text-2xs font-semibold text-success uppercase tracking-wide mb-0.5">Dica do dia</p>
         <p className="text-xs text-foreground leading-snug">{tip}</p>
       </div>
+      {onNext && (
+        <button type="button" onClick={onNext} aria-label="Próxima dica"
+          className="shrink-0 text-success/70 hover:text-success transition-colors text-sm font-semibold leading-none mt-0.5">›</button>
+      )}
     </div>
   );
 }

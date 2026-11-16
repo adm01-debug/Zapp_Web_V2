@@ -30,6 +30,13 @@ beforeAll(() => {
 
 const dados = vi.hoisted(() => ({ templates: [] as Array<Record<string, unknown>> }));
 
+// A biblioteca de templates passou a ler a permissao de download (exportar CSV/JSON
+// e importar). Sem AuthProvider no render, useAuth lanca; o mock mantem o foco
+// do teste no que ele mede.
+vi.mock('@/hooks/system/useDownloadPermission', () => ({
+  useDownloadPermission: () => ({ canDownload: true, isLoading: false }),
+}));
+
 vi.mock('@/hooks/integrations/useTalkXTemplates', () => ({
   useTalkXTemplates: () => ({
     templates: dados.templates,

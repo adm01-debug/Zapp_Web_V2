@@ -644,10 +644,14 @@ export default function TalkXView() {
             isError={isError} error={campaignsError} onRetry={() => refetchCampaigns()}
             onNew={() => openNew()} onEdit={openEdit} onView={onView} onViewScheduled={openScheduled} onViewRunning={onViewRunning} onDuplicate={duplicateCampaign}
             onStart={(id) => { void startCampaign(id); }}
-            onPause={async (id) => { try { await pauseCampaign(id); toast.info('Campanha pausada'); } catch { toast.error('Erro ao pausar'); } }}
-            onCancel={async (id) => { try { await cancelCampaign(id); toast.info('Campanha cancelada'); } catch { toast.error('Erro ao cancelar'); } }}
-            onDelete={(id) => deleteCampaign.mutate(id)}
-            onGoTab={(tab) => { if (tab === 'templates') goTab('templates'); else if (tab === 'segments') goTab('segments'); }}
+            // O `throw` depois do toast e' o que deixa a acao em massa saber QUAL
+            // campanha falhou: sem ele a selecao era limpa inteira, inclusive a que
+            // continuou enviando. A acao de linha nao passa por aqui (vai pelo
+            // controlador de ciclo de vida), entao nada mais muda de comportamento.
+            onPause={async (id) => { try { await pauseCampaign(id); toast.info('Campanha pausada'); } catch (e) { toast.error('Erro ao pausar'); throw e; } }}
+            onCancel={async (id) => { try { await cancelCampaign(id); toast.info('Campanha cancelada'); } catch (e) { toast.error('Erro ao cancelar'); throw e; } }}
+            onDelete={(id) => deleteCampaign.mutateAsync(id)}
+            onGoTab={(tab) => { if (tab === 'templates') goTab('templates'); else if (tab === 'segments') goTab('segments'); else if (tab === 'contacts') navigateToView('contacts'); }}
           />
         </TabsContent>
         <TabsContent value="segments" className="mt-4">

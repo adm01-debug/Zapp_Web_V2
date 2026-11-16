@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import {
   Users, Play, CheckCircle2, Target, Send, Eye, Pencil, Zap, Plus,
-  FileText, Bookmark, BarChart3, ChevronDown, ChevronRight,
+  FileText, Bookmark, BarChart3, ChevronDown, ChevronRight, Upload, Pause, Ban, Trash2,
 } from 'lucide-react';
 import { ProgressBar, VerTodasButton } from '@/components/dashboard/overview/DashboardCard';
 import type { TalkXCampaign } from '@/hooks/integrations/useTalkX';
@@ -10,8 +10,8 @@ import {
   CAMPAIGN_STATUS, FilterBarV2, TalkXPagination, TalkXTable, StatusPill, RailCard, RailAction, IconTile,
   EntityCell, ChannelCell, ProgressCell, ResultsCell, DateByCell,
   TalkXEmptyState, TalkXFilteredEmptyState, TalkXSkeletonRows, KpiCard, KpiCardSkeleton, HeroCard, RecentList, TipCard,
-  InsightCard, TalkXQueryBoundary,
-  fmtInt, pct, fmtAgo, OBJECTIVES, TALKX_CHANNELS,
+  InsightCard, TalkXQueryBoundary, TalkXBulkBar, TalkXConfirmDialog,
+  fmtInt, pct, fmtAgo, OBJECTIVES, TALKX_CHANNELS, TIPS,
 } from './talkxShared';
 import type { TalkXColumn, TalkXSort, RowAction } from './talkxShared';
 import type { TalkXPeriodRange } from './kit/periods';
@@ -65,13 +65,14 @@ interface Props {
   onStart?: (id: string) => void;
   onPause?: (id: string, reason: string) => void;
   onCancel?: (id: string) => void;
-  onDelete: (id: string) => void;
+  /** Devolve promessa quando o chamador sabe o resultado: o lote usa isso para manter selecionado o que falhou. */
+  onDelete: (id: string) => void | Promise<unknown>;
   onGoTab: (tab: string) => void;
 }
 
 const OBJ_COLOR: Record<string, 'blue' | 'green' | 'red' | 'violet' | 'amber'> = { vendas: 'green', engajamento: 'blue', reativacao: 'amber', relacionamento: 'violet', pesquisa: 'blue', institucional: 'red' };
 
-export function TalkXOverview({ campaigns, segments, creators, isLoading, isError, error, onRetry, onNew, onEdit, onView, onViewScheduled, onViewRunning, onDuplicate, onDelete, onGoTab }: Props) {
+export function TalkXOverview({ campaigns, segments, creators, isLoading, isError, error, onRetry, onNew, onEdit, onView, onViewScheduled, onViewRunning, onDuplicate, onPause, onCancel, onDelete, onGoTab }: Props) {
   const saved = useMemo(() => loadFilters(), []);
   const { data: insights } = useTalkXInsights();
   // X051 — UM controlador para iniciar/pausar/retomar/cancelar: a Visão geral
@@ -95,6 +96,11 @@ export function TalkXOverview({ campaigns, segments, creators, isLoading, isErro
   // N35 — os blocos que o mock não tem ficam abaixo da tabela e recolhidos por padrão.
   const [draftsOpen, setDraftsOpen] = useState(false);
   const [insightsOpen, setInsightsOpen] = useState(false);
+  // X082 — dica do dia: índice muda por dia + offset manual (seta ›).
+  // dayBase é calculado uma vez na montagem (lazy initializer) para evitar impureza.
+  const [dayBase] = useState(() => Math.floor(Date.now() / 86400000));
+  const [tipOffset, setTipOffset] = useState(0);
+  const tipIndex = (dayBase + tipOffset) % TIPS.length;
 
   // X080 — as ações de linha (matriz por status + confirmação das ações que
   // mudam o estado da campanha) ficam em um lugar só e servem a tabela, a grade
@@ -217,7 +223,77 @@ export function TalkXOverview({ campaigns, segments, creators, isLoading, isErro
 
   const pageItems = sorted.slice((page - 1) * pageSize, page * pageSize);
   // Mudou o recorte (filtro, período, busca, página, ordenação) → a seleção é zerada.
-  const selectionKey = [status, objective, channel, segment, creator, period ?? '', search.trim(), page, pageSize, sort?.key ?? '', sort?.dir ?? ''].join('|');
+  const recorteAtual = [status, objective, channel, segment, creator, period ?? '', search.trim(), page, pageSize, sort?.key ?? '', sort?.dir ?? ''].join('|');
+
+  /**
+   * A seleção morre quando o recorte muda. Esta limpeza vivia só no efeito do
+   * `TalkXTable` (`kit/table.tsx:119-125`), que deixa de existir quando a busca
+   * não acha nada ou quando a grade está ativa — e aí a barra continuava montada,
+   * resolvendo os alvos na coleção COMPLETA: dava para excluir rascunho que o
+   * filtro tinha escondido. Aqui ela fica com quem é dono da seleção, então vale
+   * em tabela, grade e estado vazio. `layout` não entra na chave: trocar
+   * lista/grade preserva a seleção, como desenhado.
+   */
+  const prevRecorte = React.useRef(recorteAtual);
+  React.useEffect(() => {
+    if (prevRecorte.current === recorteAtual) return;
+    prevRecorte.current = recorteAtual;
+    setSelected((atual) => (atual.size > 0 ? new Set() : atual));
+  }, [recorteAtual]);
+
+  // X081 — ações em massa: conta as elegíveis no conjunto selecionado.
+  // A matriz é a MESMA de `campaignRowActions` e a de `delete_talkx_campaign`
+  // (`supabase/migrations/20261003202707_talkx_counters_checklist_duplicate.sql`,
+  // que aceita só draft e scheduled). Oferecer `cancelled` habilitava um botão
+  // que a RPC recusa com `talkx_campaign_not_deletable`, e deixava de fora a
+  // agendada que o menu da linha já exclui.
+  const selectedList = useMemo(() => campaigns.filter((c) => selected.has(c.id)), [campaigns, selected]);
+  const pauseEligible  = selectedList.filter((c) => c.status === 'sending');
+  const cancelEligible = selectedList.filter((c) => c.status === 'sending' || c.status === 'paused' || c.status === 'scheduled');
+  const deleteEligible = selectedList.filter((c) => c.status === 'draft' || c.status === 'scheduled');
+  const bulkLabel = (count: number, label: string) => count > 0 ? `${label} (${count} de ${selected.size})` : label;
+
+  /**
+   * Ação em massa: UMA confirmação para o conjunto, e depois a operação em TODAS
+   * as elegíveis. Chamar `rowActions.run` em laço não funcionava — cada chamada
+   * substitui a mesma intenção do controlador de ciclo de vida
+   * (`useTalkXLifecycle.request` → `setIntent(next)`, sem fila), então a
+   * confirmação executava só a última. E `onDelete` em laço disparava a exclusão
+   * sem confirmação nenhuma.
+   */
+  const [bulkIntent, setBulkIntent] = useState<{ kind: 'pause' | 'cancel' | 'delete'; targets: TalkXCampaign[] } | null>(null);
+  const [bulkPending, setBulkPending] = useState(false);
+
+  const BULK_COPY = {
+    pause: { icon: Pause, iconColor: 'amber' as const, tone: 'primary' as const, title: 'Pausar campanhas', verb: 'Pausar', consequence: 'O envio para quem ainda não recebeu fica parado até você retomar.' },
+    cancel: { icon: Ban, iconColor: 'red' as const, tone: 'danger' as const, title: 'Cancelar campanhas', verb: 'Cancelar', consequence: 'Cancelar não tem volta: quem ainda não recebeu não recebe mais.' },
+    delete: { icon: Trash2, iconColor: 'red' as const, tone: 'danger' as const, title: 'Excluir campanhas', verb: 'Excluir', consequence: 'A exclusão não tem volta.' },
+  };
+
+  const runBulk = async () => {
+    if (!bulkIntent) return;
+    setBulkPending(true);
+    // Quem falha fica selecionado, para a pessoa tentar de novo sem recomeçar a
+    // seleção. Hoje os handlers da TalkXView engolem o erro de pausar/cancelar e
+    // a exclusão usa `mutate` (não devolve a promessa), então nada chega aqui
+    // como rejeição — a conta sai certa no momento em que eles propagarem.
+    const falharam = new Set<string>();
+    try {
+      for (const c of bulkIntent.targets) {
+        try {
+          if (bulkIntent.kind === 'pause') await onPause?.(c.id, '');
+          else if (bulkIntent.kind === 'cancel') await onCancel?.(c.id);
+          else await onDelete(c.id);
+        } catch {
+          falharam.add(c.id);
+        }
+      }
+      setSelected(falharam);
+    } finally {
+      setBulkPending(false);
+      setBulkIntent(null);
+    }
+  };
 
   // X077 — os cinco números do topo saem da RPC `talkx_overview_stats` para o período da
   // barra (padrão: 30 dias); nenhum KPI é calculado aqui. Campo ausente = "Sem dados ainda".
@@ -332,6 +408,31 @@ export function TalkXOverview({ campaigns, segments, creators, isLoading, isErro
           view={layout} onView={setLayout}
         />
 
+        {/* X081 — barra de seleção em massa */}
+        {selected.size > 0 && (
+          <TalkXBulkBar
+            count={selected.size}
+            onClear={() => setSelected(new Set())}
+            actions={<>
+              <button type="button" disabled={pauseEligible.length === 0}
+                onClick={() => setBulkIntent({ kind: 'pause', targets: pauseEligible })}
+                className="text-xs font-semibold text-foreground-secondary hover:text-foreground disabled:opacity-40 transition-colors">
+                {bulkLabel(pauseEligible.length, 'Pausar')}
+              </button>
+              <button type="button" disabled={cancelEligible.length === 0}
+                onClick={() => setBulkIntent({ kind: 'cancel', targets: cancelEligible })}
+                className="text-xs font-semibold text-foreground-secondary hover:text-foreground disabled:opacity-40 transition-colors">
+                {bulkLabel(cancelEligible.length, 'Cancelar')}
+              </button>
+              <button type="button" disabled={deleteEligible.length === 0}
+                onClick={() => setBulkIntent({ kind: 'delete', targets: deleteEligible })}
+                className="text-xs font-semibold text-destructive hover:text-destructive/80 disabled:opacity-40 transition-colors">
+                {bulkLabel(deleteEligible.length, 'Excluir')}
+              </button>
+            </>}
+          />
+        )}
+
         {/* Tabela */}
         <section className="rounded-2xl bg-card border border-border/70 overflow-hidden">
           {filtered.length === 0 ? (
@@ -348,7 +449,7 @@ export function TalkXOverview({ campaigns, segments, creators, isLoading, isErro
               selectable
               selected={selected}
               onSelectionChange={setSelected}
-              selectionResetKey={selectionKey}
+              selectionResetKey={recorteAtual}
               sort={sort}
               onSortChange={(next) => { setSort(next); setPage(1); }}
               rowLabel={(c) => c.name}
@@ -450,9 +551,10 @@ export function TalkXOverview({ campaigns, segments, creators, isLoading, isErro
         />
         <RailCard icon={Zap} title="Ações rápidas">
           <div className="space-y-1.5">
-            <RailAction icon={Plus}     color="blue"   title="Nova campanha"      subtitle="Criar do zero"          onClick={onNew} />
-            <RailAction icon={FileText} color="violet" title="Usar template"      subtitle="Escolher da biblioteca" onClick={() => onGoTab('templates')} />
-            <RailAction icon={Bookmark} color="green"  title="Criar segmento"     subtitle="Definir público-alvo"   onClick={() => onGoTab('segments')} />
+            <RailAction icon={Plus}     color="blue"   title="Nova campanha"      subtitle="Criar do zero"              onClick={onNew} />
+            <RailAction icon={FileText} color="violet" title="Usar template"      subtitle="Escolher da biblioteca"     onClick={() => onGoTab('templates')} />
+            <RailAction icon={Bookmark} color="green"  title="Criar segmento"     subtitle="Definir público-alvo"       onClick={() => onGoTab('segments')} />
+            <RailAction icon={Upload}   color="amber"  title="Importar contatos"  subtitle="Adicionar novos contatos"   onClick={() => onGoTab('contacts')} />
           </div>
         </RailCard>
         <RailCard icon={BarChart3} title="Últimas campanhas" right={<VerTodasButton onClick={clear} />}>
@@ -463,12 +565,28 @@ export function TalkXOverview({ campaigns, segments, creators, isLoading, isErro
             })} />
           )}
         </RailCard>
-        <TipCard tip="Segmentar por ramo ajuda a direcionar a mensagem ao público certo." />
+        <TipCard tip={TIPS[tipIndex]} onNext={() => setTipOffset((o) => (o + 1) % TIPS.length)} />
       </div>
 
       {/* X080 — duplicar/excluir seguem nas confirmações de linha; X051 — ciclo de vida usa um diálogo único. */}
       {rowActions.dialogs}
       <TalkXLifecycleDialog controller={lifecycle} />
+      {bulkIntent && (
+        <TalkXConfirmDialog
+          open
+          onClose={() => setBulkIntent(null)}
+          onConfirm={runBulk}
+          loading={bulkPending}
+          icon={BULK_COPY[bulkIntent.kind].icon}
+          iconColor={BULK_COPY[bulkIntent.kind].iconColor}
+          tone={BULK_COPY[bulkIntent.kind].tone}
+          title={BULK_COPY[bulkIntent.kind].title}
+          description={`${BULK_COPY[bulkIntent.kind].verb} ${bulkIntent.targets.length} ${bulkIntent.targets.length === 1 ? 'campanha' : 'campanhas'} de uma vez?`}
+          consequence={BULK_COPY[bulkIntent.kind].consequence}
+          confirmLabel={`${BULK_COPY[bulkIntent.kind].verb} ${bulkIntent.targets.length}`}
+          details={bulkIntent.targets.slice(0, 8).map((c) => ({ label: c.name, value: CAMPAIGN_STATUS[c.status]?.label ?? c.status }))}
+        />
+      )}
     </div>
     </TalkXQueryBoundary>
   );
