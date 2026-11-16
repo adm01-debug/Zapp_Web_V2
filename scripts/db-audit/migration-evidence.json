@@ -1254,15 +1254,15 @@
     {
       "version": "20261107121000",
       "filename": "20261107121000_message_reactions_one_per_agent.sql",
-      "file_sha256": "48ec6d470455d321c88030a3a988d4ef569f8ce269ae8402c5434632180ac6af",
-      "file_sql_sha256": "f12dff50d3a46fe9de568f827a75039dc5d823e1f8699e226e9e7f6d8236c99a",
+      "file_sha256": "e533309becbc4cc98790c2e8cf19bd222cbbd24ff1b6387eed6d52d01f47a5f4",
+      "file_sql_sha256": "aa36053d3a9077e56439e5370a6d6a2b49a9028269b20a83fec96413d564583f",
       "kind": "ledger-divergence/pinned-replay",
       "ledger_name": "message_reactions_one_per_agent",
       "ledger_statements_sha256": "4596797fb188bb0fe8aac39145ea01af98e224134a1fcf69d88944388702585e",
       "ledger_sql_sha256": "63932370962219ecaf8bdff7e3b3abd5897e06e9dba9a7caf442ee828c50b454",
       "reason": "safer-replay",
       "related_migration": null,
-      "justification": "O arquivo usa CREATE TABLE AS SELECT e INSERT DISTINCT ON para o rebuild; o ledger preserva 10 instrucoes com schema de colunas explicito, row_number() OVER e COMMENTs finais. Arquivo renomeado de _constraint para corresponder ao nome aplicado em producao. Migration imutavel; hashes medidos em 09/11/2026."
+      "justification": "O arquivo usa CREATE TABLE AS SELECT para o rebuild; o ledger preserva 10 instrucoes com schema de colunas explicito, row_number() OVER e COMMENTs finais. Arquivo renomeado de _constraint para corresponder ao nome aplicado em producao. O LEDGER (o que rodou em producao) permanece intocado e imutavel. O ARQUIVO, cujo papel declarado aqui e safer-replay, foi corrigido em 16/11/2026 por destruir dado num replay: (1) o DELETE nao filtrava user_id IS NOT NULL e, como PARTITION BY agrupa os NULL entre si, apagava reacoes de CONTATO que a constraint UNIQUE (message_id, user_id) jamais rejeitaria -- NULL e distinto de NULL no Postgres -- e 109 das 115 reacoes do projeto oficial sao de contato; (2) a tabela de rollback guardava, via DISTINCT ON ... ORDER BY created_at DESC, a linha SOBREVIVENTE em vez das removidas, entao nao permitia desfazer nada. Hashes do arquivo remedidos apos a correcao; os hashes do ledger nao mudaram."
     },
     {
       "version": "20261107122000",
