@@ -404,6 +404,11 @@ jobs:
 
       - name: Aplicar candidatos no worktree
         run: |
+          # O Gate 3 compara catalogo ANTIGO x NOVO. Este passo sobrescreve o
+          # catalogo do worktree com o candidato, entao a copia de antes do
+          # sobrescrito tem de ser guardada aqui — sem ela o gate comparava o
+          # candidato consigo mesmo e nunca bloqueava nada.
+          cp supabase/schema-catalog.json /tmp/catalog.old.json
           if [ "${{ needs.ler-banco.outputs.types_changed }}" = true ]; then cp /tmp/types.new.ts src/integrations/supabase/types.ts; fi
           if [ "${{ needs.ler-banco.outputs.catalog_changed }}" = true ]; then cp /tmp/catalog.new.json supabase/schema-catalog.json; fi
           if [ "${{ needs.ler-banco.outputs.manifest_changed }}" = true ]; then cp /tmp/manifest.new.json supabase/schema-manifest.json; fi
@@ -482,7 +487,7 @@ jobs:
           # F-01 (auditoria 2026-09-27): mesmo pipefail dos Gates 1 e 2 — sem ele o
           # tee sempre saia 0 e o gate passava mesmo com o script bloqueando.
           set -o pipefail
-          if node scripts/db-audit/check-remocoes-destrutivas.mjs supabase/schema-catalog.json /tmp/catalog.new.json 2>&1 | tee /tmp/gate3.log; then
+          if node scripts/db-audit/check-remocoes-destrutivas.mjs /tmp/catalog.old.json /tmp/catalog.new.json 2>&1 | tee /tmp/gate3.log; then
             echo "passed=true" >> "$GITHUB_OUTPUT"
           else
             echo "passed=false" >> "$GITHUB_OUTPUT"

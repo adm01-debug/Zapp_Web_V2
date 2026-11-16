@@ -251,7 +251,28 @@ export default defineConfig({
     {
       name: 'firefox-email-navy',
       testMatch: /email-navy-visual\.spec\.ts/,
-      use: { ...devices['Desktop Firefox'], viewport: { width: 1280, height: 900 }, colorScheme: 'dark' },
+      // O Firefox desta spec morria com `Page crashed` / `Target crashed` no runner:
+      // 2 falhas numa execucao, 4 na seguinte, 6 na outra, sempre em testes
+      // diferentes e so neste projeto (chromium-email-navy e webkit-email-navy
+      // nunca falham). Nao e asserção: as mensagens sao crash do processo de
+      // conteudo, e os `element(s) not found` vem da aba ja morta.
+      // A spec e' pesada (app em tema escuro, 1280x900, screenshots fullPage) e o
+      // Firefox a divide em varios processos de conteudo; com 2 workers no mesmo
+      // runner de 2 nucleos, um deles e' derrubado por falta de memoria.
+      // Um unico processo de conteudo elimina o filho que morre, sem afrouxar
+      // nenhuma asserção: todo teste continua rodando e medindo o mesmo.
+      use: {
+        ...devices['Desktop Firefox'],
+        viewport: { width: 1280, height: 900 },
+        colorScheme: 'dark',
+        launchOptions: {
+          firefoxUserPrefs: {
+            'dom.ipc.processCount': 1,
+            'browser.tabs.remote.autostart': false,
+            'fission.autostart': false,
+          },
+        },
+      },
     },
     {
       name: 'webkit-email-navy',
