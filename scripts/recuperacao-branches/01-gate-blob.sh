@@ -57,7 +57,14 @@ for br in $(git for-each-ref --format='%(refname:short)' refs/remotes/origin | g
     [ -z "$f" ] && continue
     bb=$(git rev-parse "$br:$f" 2>/dev/null) || { uniq=$((uniq+1)); echo -e "$br\t$f\tSEM-BLOB" >> "$OUT/unicos.tsv"; continue; }
     mbh=$(git rev-parse "origin/main:$f" 2>/dev/null || echo "")
-    if [ "$bb" = "$mbh" ]; then same=$((same+1)); continue; fi
+    # O MODO faz parte do trabalho: tornar um script executavel (100644 -> 100755) deixa
+    # o conteudo e o SHA do blob iguais, mas a mudanca nao esta na main. Sem comparar o
+    # modo, o arquivo saia classificado como incorporado. Achado do Codex na PR #3192;
+    # medido nesta base: 0 pares com blob igual e modo diferente, entao a saida da
+    # medicao fica inalterada e a guarda vale para execucao futura.
+    bmo=$(git ls-tree "$br" -- "$f" | awk '{print $1}')
+    mmo=$(git ls-tree origin/main -- "$f" | awk '{print $1}')
+    if [ "$bb" = "$mbh" ] && [ "$bmo" = "$mmo" ]; then same=$((same+1)); continue; fi
     if grep -qxF "$bb" "$OUT/main-blobs.txt"; then moved=$((moved+1)); continue; fi
     uniq=$((uniq+1)); echo -e "$br\t$f\t$bb" >> "$OUT/unicos.tsv"
   done
