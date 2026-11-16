@@ -89,6 +89,34 @@ Resultado: **31 vereditos derrubados**, **153 alegações refutadas**, **226 evi
 confirmadas** (151 sem bloqueio, 58 de CI/workflow, 10 de migration em produção, 7 de decisão do
 dono).
 
+Distribuição dos vereditos nas 329 entradas:
+
+| Veredito | Quantas | O que significa |
+|---|---|---|
+| `INCORPORADA` | 162 | O trabalho já está na `main`, provado por conteúdo |
+| `OBSOLETA` | 105 | A `main` seguiu outro caminho; não há o que resgatar |
+| `PERDIDA_PARCIAL` | 54 | Parte do trabalho não chegou à `main` |
+| `PERDIDA_TOTAL` | 5 | Nada do trabalho chegou à `main` |
+| `DECISAO_DONO` | 3 | Depende de escolha de negócio, não de engenharia |
+
+**328 de 329** passaram pela verificação adversarial — não 329. A exceção é
+`claude__chore-remove-hook-morto-talksuppression-261024-1541` (veredito `OBSOLETA`), e está
+nomeada aqui para não virar um "todas" que não é verdade. 47 entradas foram reexaminadas, 165
+registram ao menos uma lacuna e 267 receberam **recomendação** de apagar — recomendação que
+**não foi executada**: nenhuma branch foi apagada nesta sessão.
+
+### 3.2.1 Onde está cada branch, uma a uma
+
+O documento irmão **`RELATORIO-ANEXO-BRANCHES.md`** traz, sem corte nenhum:
+
+- **Parte A** — as **288 branches que existem hoje no `origin`**: 281 com veredito, resumo e
+  lacunas; e as 7 que não foram auditadas, cada uma com o motivo (ramo principal, branch gerada,
+  automação, ou criada nesta sessão).
+- **Parte B** — as **329 entradas auditadas**, incluindo as de PR fechada cuja branch já não
+  existe, agrupadas por veredito, com o resumo completo e as lacunas item a item.
+- **Parte C** — as **25 PRs mergeadas** nesta sessão com o que cada uma resolve e **como foi
+  verificada**, a 1 PR que recusei e fechei, e as 3 que ficaram abertas.
+
 ### 3.3 O que ficou versionado
 
 - `analise-prs/resgate-261115/dossies/` — 329 dossiês (PR #3141)
@@ -392,7 +420,7 @@ proteção de branch recusa.
    dependentes de decisão do dono por tocarem workflow.
 6. **Retomar o lado local** pelo critério da seção 9, publicando em `refs/salvo/*`.
 
-**Comece lendo:** `analise-prs/resgate-261115/auditoria/README.md`, depois
+**Comece lendo:** `RELATORIO-ANEXO-BRANCHES.md` (branch a branch), depois `analise-prs/resgate-261115/auditoria/README.md`, depois
 `auditoria/bruto/README.md` e `auditoria/ferramentas/README.md`. O
 `HANDOFF-SESSAO-2026-11-15.md` nesta mesma pasta traz o estado narrado de main, banco e
 pendências pela sessão anterior a esta.
