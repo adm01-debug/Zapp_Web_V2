@@ -1,4 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
+import type { ComponentProps } from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { TalkXTemplateImportDialog } from '../TalkXTemplateImportDialog';
 import type { TalkXTemplate } from '@/hooks/integrations/useTalkXTemplates';
@@ -99,8 +100,19 @@ describe('X093 · TalkXTemplateImportDialog', () => {
  * `onImport` — e falham contra o codigo anterior por COMPORTAMENTO, nao por
  * import ausente.
  */
+type OnImport = ComponentProps<typeof TalkXTemplateImportDialog>['onImport'];
+
+/**
+ * `makeOnImport` devolve mock sem tipo: passado direto no JSX o TypeScript
+ * infere pelo prop, mas guardado numa variavel e repassado por um helper ele
+ * nao casa (TS2322). O `typecheck-ratchet` do CI roda `tsc -b --force`, que
+ * checa os testes tambem — `tsc -p tsconfig.app.json` nao pega isso.
+ */
+const makeOnImportTipado = (result = { imported: 1, skipped: 0, errors: 0 }) =>
+  vi.fn<OnImport>().mockResolvedValue(result);
+
 describe('X093 · o que o banco recusa nao chega em onImport', () => {
-  async function subir(json: string, onImport: ReturnType<typeof vi.fn>) {
+  async function subir(json: string, onImport: ReturnType<typeof makeOnImportTipado>) {
     render(
       <TalkXTemplateImportDialog existingTemplates={[]} onImport={onImport} onClose={vi.fn()} />,
     );
@@ -113,7 +125,7 @@ describe('X093 · o que o banco recusa nao chega em onImport', () => {
   }
 
   it('descricao de 4001 caracteres nao entra na importacao', async () => {
-    const onImport = makeOnImport();
+    const onImport = makeOnImportTipado();
     const botao = await subir(
       JSON.stringify([{ name: 'Oferta', content: 'Olá', description: 'd'.repeat(4001) }]),
       onImport,
@@ -124,7 +136,7 @@ describe('X093 · o que o banco recusa nao chega em onImport', () => {
   });
 
   it('descricao de 4000 caracteres entra normalmente', async () => {
-    const onImport = makeOnImport();
+    const onImport = makeOnImportTipado();
     const botao = await subir(
       JSON.stringify([{ name: 'Oferta', content: 'Olá', description: 'd'.repeat(4000) }]),
       onImport,
@@ -136,7 +148,7 @@ describe('X093 · o que o banco recusa nao chega em onImport', () => {
   });
 
   it('tag de 65 caracteres nao entra na importacao', async () => {
-    const onImport = makeOnImport();
+    const onImport = makeOnImportTipado();
     const botao = await subir(
       JSON.stringify([{ name: 'Oferta', content: 'Olá', tags: 'a'.repeat(65) }]),
       onImport,
@@ -146,7 +158,7 @@ describe('X093 · o que o banco recusa nao chega em onImport', () => {
   });
 
   it('status invalido nao entra na importacao', async () => {
-    const onImport = makeOnImport();
+    const onImport = makeOnImportTipado();
     const botao = await subir(
       JSON.stringify([{ name: 'Oferta', content: 'Olá', status: 'pendente' }]),
       onImport,
@@ -156,7 +168,7 @@ describe('X093 · o que o banco recusa nao chega em onImport', () => {
   });
 
   it('linha boa continua entrando junto com uma ruim de fora', async () => {
-    const onImport = makeOnImport();
+    const onImport = makeOnImportTipado();
     const botao = await subir(
       JSON.stringify([
         { name: 'Boa', content: 'Olá' },
@@ -167,6 +179,6 @@ describe('X093 · o que o banco recusa nao chega em onImport', () => {
     expect(botao.textContent).toContain('Importar 1');
     fireEvent.click(botao);
     await waitFor(() => expect(onImport).toHaveBeenCalledTimes(1));
-    expect(onImport.mock.calls[0][0].map((p: { row: { name: string } }) => p.row.name)).toEqual(['Boa']);
+    expect(onImport.mock.calls[0][0].map((p) => p.row.name)).toEqual(['Boa']);
   });
 });
