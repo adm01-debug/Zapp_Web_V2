@@ -22,22 +22,57 @@ const ERROR_BACKOFF_BASE_MS = 60_000;
 const ERROR_BACKOFF_MAX_MS = 10 * 60_000;
 
 /**
+ * Falhas SEGUIDAS por consulta, para o recuo abaixo. Nao da para usar o
+ * `errorUpdateCount` do react-query: ele e' o total de erros da sessao e NAO zera no
+ * sucesso, entao `erro, erro, erro, erro, sucesso, erro` cobraria 10 min pela primeira
+ * falha depois da recuperacao. Tambem nao serve o `fetchFailureCount`, que conta
+ * tentativa DENTRO de uma busca e zera a cada nova. Achado da Devin e do Codex na
+ * PR #3194.
+ */
+const falhasSeguidas = new Map<string, { errosVistos: number; seguidas: number }>();
+
+/** Usado pelo teste para isolar um caso do outro. */
+export function resetBackoffUnconfirmed(): void {
+  falhasSeguidas.clear();
+}
+
+/**
  * Intervalo do polling a partir do estado da query.
  *
  * Em regime normal o painel repergunta a cada 30 s. Sob ERRO o intervalo dobra a cada
- * tentativa (1, 2, 4, 8 min, teto de 10) e volta sozinho para 30 s assim que a consulta
- * tem sucesso. Sem isso, uma falha persistente -- permissao negada, RPC fora do schema
- * cache, instabilidade do banco -- faz cada conversa aberta bater de 30 em 30 s para
- * sempre, somando carga justamente quando o banco ja esta em dificuldade.
+ * falha SEGUIDA (1, 2, 4, 8 min, teto de 10) e volta a 30 s no primeiro sucesso, que
+ * tambem zera a contagem. Sem isso, uma falha persistente -- permissao negada, RPC fora
+ * do schema cache, instabilidade do banco -- faz cada conversa aberta bater de 30 em
+ * 30 s para sempre, somando carga justamente quando o banco ja esta em dificuldade.
  *
- * Exportada para teste: e' funcao pura do estado da query.
+ * O `UnconfirmedMessagesPanel` esconde o painel enquanto a consulta esta em erro e nao
+ * oferece recarga manual, entao o recuo nao pode herdar historico: o preco de errar para
+ * cima e' o painel sumir por 10 min por causa de uma falha so.
+ *
+ * O callback e' reavaliado a cada render, nao so' na troca de estado; por isso a mesma
+ * falha nao e' contada duas vezes -- o `errorUpdateCount` serve de identidade do erro,
+ * nao de contador.
  */
 export function unconfirmedRefetchInterval(q: {
+  queryHash: string;
   state: { status: string; errorUpdateCount?: number };
 }): number {
-  if (q.state.status !== 'error') return POLL_MS;
-  const tentativas = Math.max(1, q.state.errorUpdateCount ?? 1);
-  return Math.min(ERROR_BACKOFF_BASE_MS * 2 ** (tentativas - 1), ERROR_BACKOFF_MAX_MS);
+  if (q.state.status !== 'error') {
+    falhasSeguidas.delete(q.queryHash);
+    return POLL_MS;
+  }
+  const errosVistos = q.state.errorUpdateCount ?? 1;
+  const anterior = falhasSeguidas.get(q.queryHash);
+  const seguidas = anterior === undefined
+    ? 1
+    : anterior.errosVistos === errosVistos
+      ? anterior.seguidas
+      : anterior.seguidas + 1;
+  // Teto de entradas: conversa que ficou em erro e foi fechada nao deixa a tabela crescer
+  // sem limite. 500 e' muito acima do numero de conversas abertas ao mesmo tempo.
+  if (falhasSeguidas.size > 500) falhasSeguidas.clear();
+  falhasSeguidas.set(q.queryHash, { errosVistos, seguidas });
+  return Math.min(ERROR_BACKOFF_BASE_MS * 2 ** (seguidas - 1), ERROR_BACKOFF_MAX_MS);
 }
 
 export function useUnconfirmedMessages(
