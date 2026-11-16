@@ -19,8 +19,11 @@ const selected = (project, file) => (!project.testMatch || matches(project.testM
 
 test('Tarefas R1: o CI público seleciona o Chromium deslogado que inclui seus três casos', () => {
   const code = stepsOf(jobOf(read('.github/workflows/ci.yml'), 'e2e')).map(shellCode).filter(value => /\bbun run test:e2e\b/.test(value));
-  assert.equal(code.length, 1);
-  const selectedProjects = [...code[0].matchAll(/--project(?:=|\s+)([a-z0-9-]+)/g)].map(match => match[1]);
+  // O job pode ter mais de uma invocacao: firefox-email-navy roda sozinho, com
+  // --workers=1 (ver scripts/ci/ci-e2e-projects.unit.mjs). O que este guard
+  // garante e que `chromium` siga selecionado em alguma delas.
+  assert.ok(code.length >= 1, 'o job e2e do ci.yml tem de invocar o Playwright');
+  const selectedProjects = code.flatMap(value => [...value.matchAll(/--project(?:=|\s+)([a-z0-9-]+)/g)].map(match => match[1]));
   assert.ok(selectedProjects.includes('chromium'));
   assert.equal(selected(chromium, 'tarefas-quadro.spec.ts'), true);
   assert.equal(selected(chromium, 'auth.spec.ts'), true);
