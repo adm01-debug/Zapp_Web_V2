@@ -1,0 +1,13 @@
+# branch	arquivo_que_a_branch_apaga_e_a_main_ainda_tem
+claude/chore-remove-hook-morto-talksuppression-261024-1541	src/hooks/integrations/__tests__/useTalkXSuppression.hook-morto.test.ts
+claude/chore-remove-hook-morto-talksuppression-261024-1541	src/hooks/integrations/useTalkXSuppression.ts
+claude/confident-bardeen-ndq0ch	src/hooks/integrations/__tests__/useTalkXSuppression.test.tsx
+claude/feat-ui-visual-texto-longo-261101-1445	e2e/__screenshots__/contacts-cards-dark-linux.png
+claude/feat-ui-visual-texto-longo-261101-1445	e2e/__screenshots__/contacts-cards-light-linux.png
+claude/feat-ui-visual-texto-longo-261101-1445	e2e/__screenshots__/contacts-list-dark-linux.png
+claude/feat-ui-visual-texto-longo-261101-1445	e2e/__screenshots__/contacts-list-light-linux.png
+claude/feat-ui-visual-texto-longo-261101-1445	e2e/__screenshots__/contacts-table-dark-linux.png
+claude/feat-ui-visual-texto-longo-261101-1445	e2e/__screenshots__/contacts-table-light-linux.png
+claude/wizardly-ride-dimxnt	.github/workflows/vercel-env-cleanup.yml
+claude/wizardly-ride-dimxnt	scripts/ci/vercel-env-cleanup.mjs
+claude/wizardly-ride-dimxnt	scripts/ci/vercel-env-cleanup.unit.mjs
