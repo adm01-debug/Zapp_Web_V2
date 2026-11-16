@@ -17,6 +17,29 @@ export interface UnconfirmedMessage {
 // webhook ainda pode chegar e fechar a linha sozinho.
 const AMBIGUOUS_THRESHOLD_MS = 2 * 60 * 1000;
 
+const POLL_MS = 30_000;
+const ERROR_BACKOFF_BASE_MS = 60_000;
+const ERROR_BACKOFF_MAX_MS = 10 * 60_000;
+
+/**
+ * Intervalo do polling a partir do estado da query.
+ *
+ * Em regime normal o painel repergunta a cada 30 s. Sob ERRO o intervalo dobra a cada
+ * tentativa (1, 2, 4, 8 min, teto de 10) e volta sozinho para 30 s assim que a consulta
+ * tem sucesso. Sem isso, uma falha persistente -- permissao negada, RPC fora do schema
+ * cache, instabilidade do banco -- faz cada conversa aberta bater de 30 em 30 s para
+ * sempre, somando carga justamente quando o banco ja esta em dificuldade.
+ *
+ * Exportada para teste: e' funcao pura do estado da query.
+ */
+export function unconfirmedRefetchInterval(q: {
+  state: { status: string; errorUpdateCount?: number };
+}): number {
+  if (q.state.status !== 'error') return POLL_MS;
+  const tentativas = Math.max(1, q.state.errorUpdateCount ?? 1);
+  return Math.min(ERROR_BACKOFF_BASE_MS * 2 ** (tentativas - 1), ERROR_BACKOFF_MAX_MS);
+}
+
 export function useUnconfirmedMessages(
   conversationContactId: string | null | undefined,
   conversationGroupId?: string | null,
@@ -52,7 +75,7 @@ export function useUnconfirmedMessages(
       return (data ?? []) as unknown as UnconfirmedMessage[];
     },
     enabled: !!conversationContactId || !!conversationGroupId,
-    refetchInterval: 30_000,
+    refetchInterval: unconfirmedRefetchInterval,
   });
 
   const resolveMutation = useMutation({
