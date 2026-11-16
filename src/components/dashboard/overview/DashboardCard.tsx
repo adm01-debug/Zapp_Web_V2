@@ -275,17 +275,20 @@ interface GhostButtonProps {
   className?: string;
   title?: string;
   size?: 'sm' | 'md';
+  /** Usa semântica nativa para impedir ações inválidas, inclusive por teclado. */
+  disabled?: boolean;
 }
 
 /** Botão bordado dos mockups ("Exportar", ícone download, chevron circular). */
-export function GhostButton({ children, onClick, icon: Icon, className, title, size = 'md' }: GhostButtonProps) {
+export function GhostButton({ children, onClick, icon: Icon, className, title, size = 'md', disabled = false }: GhostButtonProps) {
   const h = size === 'sm' ? 'h-8 text-xs' : 'h-9 text-[13px]';
   return (
     <button
       type="button"
       title={title}
       onClick={onClick}
-      className={cn('inline-flex items-center gap-2 rounded-lg border border-border/70 bg-input/40 text-foreground font-medium hover:bg-muted/50 transition-colors shrink-0', h, children ? 'px-3.5' : 'w-9 justify-center', className)}
+      disabled={disabled}
+      className={cn('inline-flex items-center gap-2 rounded-lg border border-border/70 bg-input/40 text-foreground font-medium hover:bg-muted/50 transition-colors shrink-0 disabled:pointer-events-none disabled:cursor-not-allowed', h, children ? 'px-3.5' : 'w-9 justify-center', className)}
     >
       {Icon && <Icon className="w-4 h-4" />}
       {children}
