@@ -1,0 +1,35 @@
+[
+ {
+  "commit": "970626f31",
+  "arquivo": "src/hooks/system/useUserSettings.ts",
+  "linhas": 16,
+  "amostra": [
+   "  const aplicarPreferencias = useCallback(",
+   "    (theme: unknown, language: unknown) => {",
+   "            business_hours_enabled:",
+   "              data.business_hours_enabled ?? DEFAULT_SETTINGS.business_hours_enabled,",
+   "            business_hours_start:",
+   "              data.business_hours_start ?? DEFAULT_SETTINGS.business_hours_start,"
+  ]
+ },
+ {
+  "commit": "c83138cd8",
+  "arquivo": "src/hooks/system/useUserSettings.ts",
+  "linhas": 4,
+  "amostra": [
+   "            title: 'Não foi possível carregar suas configurações',",
+   "              'Os valores exibidos são os padrões. Recarregue a página para tentar de novo.',",
+   "            title: 'Não foi possível carregar suas configurações',",
+   "              'Os valores exibidos são os padrões. Recarregue a página para tentar de novo.',"
+  ]
+ },
+ {
+  "commit": "a031d8e8e",
+  "arquivo": "src/hooks/system/useUserSettings.ts",
+  "linhas": 2,
+  "amostra": [
+   "              title: 'Não foi possível carregar suas configurações',",
+   "                'Os valores exibidos são os padrões. Recarregue a página para tentar de novo.',"
+  ]
+ }
+]

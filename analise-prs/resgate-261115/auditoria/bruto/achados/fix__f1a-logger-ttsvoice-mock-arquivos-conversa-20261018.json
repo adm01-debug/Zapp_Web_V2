@@ -1,0 +1,23 @@
+[
+ {
+  "commit": "8cd0c0b26",
+  "arquivo": "src/components/inbox/__tests__/arquivos-ver-na-conversa.test.tsx",
+  "linhas": 62,
+  "amostra": [
+   "  const consulta: unknown = new Proxy(",
+   "        if (prop === 'then')",
+   "          return (resolve: (v: unknown) => unknown) =>",
+   "            Promise.resolve({ data: [], error: null }).then(resolve);",
+   "        if (prop === 'maybeSingle' || prop === 'single')",
+   "          return async () => ({ data: null, error: null });"
+  ]
+ },
+ {
+  "commit": "d08b8e84c",
+  "arquivo": "src/components/inbox/__tests__/arquivos-ver-na-conversa.test.tsx",
+  "linhas": 1,
+  "amostra": [
+   "  createLogger: () => mocks.logStub,"
+  ]
+ }
+]

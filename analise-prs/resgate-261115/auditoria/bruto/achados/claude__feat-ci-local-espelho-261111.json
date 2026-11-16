@@ -1,0 +1,154 @@
+[
+ {
+  "commit": "e5be346ea",
+  "arquivo": "scripts/ci/ci-local-lib.mjs",
+  "linhas": 98,
+  "amostra": [
+   "const EXPR = /\\$\\{\\{\\s*([\\s\\S]+?)\\s*\\}\\}/g;",
+   "export function resolverReferencia(ref, ctx) {",
+   "  const r = ref.trim();",
+   "  const partes = r.split('.');",
+   "  const [raiz, ...resto] = partes;",
+   "  const pegar = (obj, chaves) => chaves.reduce((acc, k) => (acc == null ? undefined : acc[k]), obj);"
+  ]
+ },
+ {
+  "commit": "e5be346ea",
+  "arquivo": "scripts/ci/ci-local.mjs",
+  "linhas": 144,
+  "amostra": [
+   "import { tmpdir } from 'node:os';",
+   "import { join, resolve } from 'node:path';",
+   "const RAIZ = resolve(",
+   "  const a = { workflows: null, jobs: null, rapido: false, listar: false, base: 'origin/main' };",
+   "    else if (x === '--workflow') a.workflows = argv[++i].split(',');",
+   "    else if (x === '--job') a.jobs = argv[++i].split(',');"
+  ]
+ },
+ {
+  "commit": "e5be346ea",
+  "arquivo": "scripts/ci/ci-local.unit.mjs",
+  "linhas": 3,
+  "amostra": [
+   "import { readFileSync } from 'node:fs';",
+   "    () => avaliarExpressao(\"contains(github.event_name, 'pull')\", ctx),",
+   "    ExpressaoNaoSuportada"
+  ]
+ },
+ {
+  "commit": "26d980b7d",
+  "arquivo": "scripts/ci/ci-local-lib.mjs",
+  "linhas": 7,
+  "amostra": [
+   "import { existsSync } from 'node:fs';",
+   "export function ambienteIsolado(homeJob, base = process.env, existe = existsSync) {",
+   "  const seExiste = (p) => (existe(p) ? p : undefined);",
+   "    GIT_CONFIG_GLOBAL: base.GIT_CONFIG_GLOBAL ?? seExiste(join(real, '.gitconfig')),",
+   "    GH_CONFIG_DIR: base.GH_CONFIG_DIR ?? seExiste(join(real, '.config', 'gh')),",
+   "    DOCKER_CONFIG: base.DOCKER_CONFIG ?? seExiste(join(real, '.docker')),"
+  ]
+ },
+ {
+  "commit": "26d980b7d",
+  "arquivo": "scripts/ci/ci-local.mjs",
+  "linhas": 3,
+  "amostra": [
+   "  ambienteIsolado,",
+   "        const homeJob = mkdtempSync(join(tmpdir(), `ci-local-home-${jobId}-`));",
+   "          ...ambienteIsolado(homeJob),"
+  ]
+ },
+ {
+  "commit": "26d980b7d",
+  "arquivo": "scripts/ci/ci-local.unit.mjs",
+  "linhas": 2,
+  "amostra": [
+   "  assert.equal(env.GIT_CONFIG_GLOBAL, '/home/fulano/.gitconfig');",
+   "  assert.equal(env.GH_CONFIG_DIR, '/home/fulano/.config/gh');"
+  ]
+ },
+ {
+  "commit": "12cae16b0",
+  "arquivo": "scripts/ci/ci-local-integracao.unit.mjs",
+  "linhas": 5,
+  "amostra": [
+   "  return { ...env, ...extra };",
+   "  assert.match(r.out, /requer sudo — pulado \\(só no GitHub\\)/);",
+   "  const r = rodar(src, ['--rapido', '--workflow', 'ci'], { PATH: `${fake}:${process.env.PATH}` });",
+   "  assert.deepEqual(recebidos.slice(0, 3), ['vitest', 'related', '--run']);",
+   "  assert.deepEqual(recebidos.slice(3).sort(), [\"src/x'$(touch PWNED)'.ts\", 'src/ação b.ts'].sort());"
+  ]
+ },
+ {
+  "commit": "12cae16b0",
+  "arquivo": "scripts/ci/ci-local-lib.mjs",
+  "linhas": 4,
+  "amostra": [
+   "/** Linhas de um passo que pedem root (sudo/apt): só fazem sentido no runner descartável. */",
+   "    .filter((l) => /(?:^|[\\s;&|(`])(?:sudo|apt-get|apt|dpkg)(?=\\s|$)/.test(l))",
+   "  const gitconfig = copiar(base.GIT_CONFIG_GLOBAL ?? join(real, '.gitconfig'), '.gitconfig');",
+   "  const gh = copiar(base.GH_CONFIG_DIR ?? join(real, '.config', 'gh'), join('.config', 'gh'));"
+  ]
+ },
+ {
+  "commit": "12cae16b0",
+  "arquivo": "scripts/ci/ci-local.mjs",
+  "linhas": 35,
+  "amostra": [
+   "const limpeza = { grupos: new Set(), containers: new Set(), dirs: new Set(), marca: null };",
+   "function matarGrupo(pid) {",
+   "  if (!pid) return;",
+   "    process.kill(-pid, 'SIGKILL');",
+   "function matarMarcados(chave, valor) {",
+   "    if (environ.split('\\0').includes(marca)) {"
+  ]
+ },
+ {
+  "commit": "e2f7ba407",
+  "arquivo": "scripts/ci/ci-local-integracao.unit.mjs",
+  "linhas": 13,
+  "amostra": [
+   "test('containers criados durante a execução são removidos; os que já existiam nunca', (t) => {",
+   "      - run: docker run -d alpine sleep 1000",
+   "  const reg = join(raiz, 'docker-chamadas');",
+   "  const criado = join(raiz, 'criado');",
+   "echo \"$*\" >> \"${reg}\"",
+   "    case \"$*\" in *label=ci-local=1*) exit 0 ;; esac"
+  ]
+ },
+ {
+  "commit": "e2f7ba407",
+  "arquivo": "scripts/ci/ci-local-lib.mjs",
+  "linhas": 2,
+  "amostra": [
+   "export function containersCriadosNaExecucao(antes, depois, runAtual) {",
+   "  return depois.filter((c) => !antes.has(c.id) && (!c.run || c.run === runAtual));"
+  ]
+ },
+ {
+  "commit": "e2f7ba407",
+  "arquivo": "scripts/ci/ci-local.mjs",
+  "linhas": 21,
+  "amostra": [
+   "  containersCriadosNaExecucao,",
+   "  containersAntes: null, // Set de ids existentes no início (null = docker indisponível)",
+   "/** Ids de todos os containers da máquina (null se o docker não respondeu). */",
+   "function listarContainers() {",
+   "  const r = docker(['ps', '-a', '--no-trunc', '--format', FORMATO_PS]);",
+   "  if (r.error || r.status !== 0) return null;"
+  ]
+ },
+ {
+  "commit": "e2f7ba407",
+  "arquivo": "scripts/ci/ci-local.unit.mjs",
+  "linhas": 10,
+  "amostra": [
+   "  containersCriadosNaExecucao,",
+   "test('containers removidos no fim: só os criados durante a execução, nunca os que já existiam', () => {",
+   "  const antes = new Set(['a1', 'b2']);",
+   "  const depois = lerListaContainers(",
+   "      'a1\\t\\tpostgres-do-usuario\\tpostgres:17',",
+   "      'b2\\t/tmp/ci-local-outro\\tci-local-antigo\\tpostgres:17',"
+  ]
+ }
+]

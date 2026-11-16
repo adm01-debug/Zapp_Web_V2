@@ -1,0 +1,89 @@
+[
+ {
+  "commit": "5ccda9a62",
+  "arquivo": "src/components/catalog/SendTemplateDialog.tsx",
+  "linhas": 5,
+  "amostra": [
+   "  const { data: conexoes = [] } = useConnectionOptions();",
+   "  const variaveis = template.variables ?? [];",
+   "  const instancia = conexoes.find((c) => c.id === conexao)?.instance_id ?? '';",
+   "          <DialogDescription>Precisa ser um template aprovado pela Meta numa conexão WhatsApp Business.</DialogDescription>",
+   "            <Select value={conexao} onValueChange={setConexao}>"
+  ]
+ },
+ {
+  "commit": "5ccda9a62",
+  "arquivo": "src/components/catalog/WhatsAppTemplatesManager.tsx",
+  "linhas": 1,
+  "amostra": [
+   "                            {canWrite && <Button variant=\"ghost\" size=\"icon\" className=\"h-8 w-8\" aria-label={`Enviar ${template.name}`} onClick={() =>"
+  ]
+ },
+ {
+  "commit": "5ccda9a62",
+  "arquivo": "src/components/catalog/__tests__/SendTemplateDialog.test.tsx",
+  "linhas": 7,
+  "amostra": [
+   "const toastMock = vi.hoisted(() => ({ success: vi.fn(), error: vi.fn() }));",
+   "vi.mock('@/integrations/supabase/client', () => ({",
+   "      select: () => ({",
+   "        order: () => Promise.resolve({ data: [{ id: 'c1', name: 'Principal', instance_id: 'PRINCIPAL' }], error: null }),",
+   "import type { WhatsAppTemplate } from '@/hooks/integrations/useWhatsAppTemplates';",
+   "beforeEach(() => { vi.clearAllMocks(); });"
+  ]
+ },
+ {
+  "commit": "5ccda9a62",
+  "arquivo": "src/components/connections/InstanceSettingsDialog.tsx",
+  "linhas": 1,
+  "amostra": [
+   "          <DialogDescription>Gerencie configurações, perfil, privacidade, e presença da instância</DialogDescription>"
+  ]
+ },
+ {
+  "commit": "5ccda9a62",
+  "arquivo": "src/components/connections/__tests__/InstancePresenceTab.test.tsx",
+  "linhas": 3,
+  "amostra": [
+   "const toastMock = vi.hoisted(() => ({ success: vi.fn(), error: vi.fn() }));",
+   "  it('notSupported (Evolution GO) aparece como erro, nunca como sucesso', async () => {",
+   "    await waitFor(() => expect(toastMock.error).toHaveBeenCalledWith('set-presence não é suportado na Evolution GO.'));"
+  ]
+ },
+ {
+  "commit": "5ccda9a62",
+  "arquivo": "src/components/groups/GroupEvolutionDialogs.tsx",
+  "linhas": 7,
+  "amostra": [
+   "    if (!aberto) { setConvite(''); setInfo(null); }",
+   "            <Select value={conexaoEfetiva} onValueChange={(v) => { setConexao(v); setInfo(null); }}>",
+   "              <Input id=\"convite-link\" value={convite} onChange={(e) => { setConvite(e.target.value); setInfo(null); }}",
+   "          <Button onClick={() => { void entrar(); }} disabled={!info || entrando}>",
+   "  const [duracao, setDuracao] = useState<string>('0');",
+   "            <SelectTrigger id=\"duracao-temporarias\" aria-label=\"Duração\"><SelectValue /></SelectTrigger>"
+  ]
+ },
+ {
+  "commit": "5ccda9a62",
+  "arquivo": "src/components/groups/__tests__/GroupEvolutionDialogs.test.tsx",
+  "linhas": 5,
+  "amostra": [
+   "const toastMock = vi.hoisted(() => ({ success: vi.fn(), error: vi.fn() }));",
+   "  it('provedor sem suporte (notSupported) vira aviso de erro e não abre a prévia', async () => {",
+   "    await waitFor(() => expect(toastMock.error).toHaveBeenCalledWith('invite-info não é suportado na Evolution GO.'));",
+   "    expect(api.acceptInvite).not.toHaveBeenCalled();",
+   "  it('aplica a duração escolhida (padrão: desligado = 0) no grupo pela conexão dele', async () => {"
+  ]
+ },
+ {
+  "commit": "5ccda9a62",
+  "arquivo": "src/hooks/connections/useConnectionOptions.ts",
+  "linhas": 4,
+  "amostra": [
+   "/** Conexões WhatsApp para escolher em formulários (id, nome e instância da Evolution). */",
+   "export function useConnectionOptions(enabled = true) {",
+   "    queryKey: ['whatsapp-connection-options'],",
+   "      const { data, error } = await supabase"
+  ]
+ }
+]

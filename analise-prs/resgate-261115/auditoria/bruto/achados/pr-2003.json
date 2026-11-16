@@ -1,0 +1,26 @@
+[
+ {
+  "commit": "d3489a7dd",
+  "arquivo": "src/components/inbox/copilot/RadarCards.tsx",
+  "linhas": 4,
+  "amostra": [
+   "          {suggestions.map((s, i) => (",
+   "          {alerts.map((a, i) => (",
+   "          {products.map((p, i) => (",
+   "          {stakeholders?.map((s, i) => ("
+  ]
+ },
+ {
+  "commit": "d3489a7dd",
+  "arquivo": "src/components/inbox/copilot/__tests__/RadarPanel.test.tsx",
+  "linhas": 12,
+  "amostra": [
+   "import { render, screen, act } from '@testing-library/react';",
+   "import userEvent from '@testing-library/user-event';",
+   "  it('chama onToggleCollapsed ao clicar em recolher', async () => {",
+   "    await userEvent.click(screen.getByLabelText(/Recolher painel RADAR/i));",
+   "  it('chama onSetMode ao clicar em Foco', async () => {",
+   "    await userEvent.click(screen.getByRole('button', { name: /Foco/i }));"
+  ]
+ }
+]

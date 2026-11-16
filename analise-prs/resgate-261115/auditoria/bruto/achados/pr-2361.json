@@ -1,0 +1,403 @@
+[
+ {
+  "commit": "c3f7c9c03",
+  "arquivo": "src/hooks/copilot/useStallDetector.ts",
+  "linhas": 3,
+  "amostra": [
+   "import { useMemo } from 'react';",
+   "  return useMemo(() => {",
+   "  }, [lastClientMessage, minutesSinceLastMessage]);"
+  ]
+ },
+ {
+  "commit": "e50dca404",
+  "arquivo": "src/hooks/copilot/useDeadlineCalculator.ts",
+  "linhas": 4,
+  "amostra": [
+   "}): DeadlineResult {",
+   "    if (!eventDate) {",
+   "      return { feasibility: 'ok', productionDays: 0, lastOrderDate: null, daysUntilEvent: null, message: 'Informe a data do evento para calcular o pra",
+   "    if (daysUntilEvent >= prodDays + 3) {"
+  ]
+ },
+ {
+  "commit": "e50dca404",
+  "arquivo": "src/hooks/copilot/useFirstResponseScript.ts",
+  "linhas": 29,
+  "amostra": [
+   "  business_hours: {",
+   "    script: 'Olá, {{nome}}! 😊 Bem-vindo à Promo Brindes! Sou {{vendedor}} e estou aqui para te ajudar. Como posso te auxiliar hoje?',",
+   "    hint: 'Horário comercial — resposta calorosa',",
+   "  after_hours: {",
+   "    script: 'Olá, {{nome}}! 🌙 Recebemos sua mensagem fora do horário comercial. Nosso atendimento é de segunda a sexta das 8h às 18h. Mas já deixei su",
+   "    hint: 'Fora do horário — aviso + compromisso',"
+  ]
+ },
+ {
+  "commit": "e50dca404",
+  "arquivo": "src/hooks/copilot/useFollowUpContent.ts",
+  "linhas": 16,
+  "amostra": [
+   "export interface UseFollowUpContentOptions {",
+   "  messages: Array<{ content: string; sender: string }>;",
+   "  contactName?: string;",
+   "  daysSinceContact: number;",
+   "  caneta: 'canetas personalizadas',",
+   "  camiseta: 'camisetas',"
+  ]
+ },
+ {
+  "commit": "e50dca404",
+  "arquivo": "src/hooks/copilot/useFollowUpTiming.ts",
+  "linhas": 6,
+  "amostra": [
+   "export function useFollowUpTiming({",
+   "  lastClientMessage,",
+   "  leadTemperature,",
+   "  lastClientMessage: string;",
+   "  leadTemperature: 'cold' | 'warm' | 'hot';",
+   "}): FollowUpSuggestion {"
+  ]
+ },
+ {
+  "commit": "e50dca404",
+  "arquivo": "src/hooks/copilot/useFreightEstimate.ts",
+  "linhas": 4,
+  "amostra": [
+   "  SP: 'SP', RJ: 'RJ', MG: 'MG', ES: 'RJ',",
+   "  PR: 'Sul', SC: 'Sul', RS: 'Sul',",
+   "  BA: 'Nordeste', CE: 'Nordeste', PE: 'Nordeste', MA: 'Nordeste', PB: 'Nordeste',",
+   "  RN: 'Nordeste', AL: 'Nordeste', SE: 'Nordeste', PI: 'Nordeste',"
+  ]
+ },
+ {
+  "commit": "e50dca404",
+  "arquivo": "src/hooks/copilot/useHonestUrgency.ts",
+  "linhas": 20,
+  "amostra": [
+   "export function useHonestUrgency({",
+   "  daysUntilEvent,",
+   "  productionDays,",
+   "  daysUntilEvent: number | null;",
+   "  productionDays: number;",
+   "  stockUnits?: number;"
+  ]
+ },
+ {
+  "commit": "e50dca404",
+  "arquivo": "src/hooks/copilot/useKitSuggestion.ts",
+  "linhas": 27,
+  "amostra": [
+   "    triggers: ['caneta', 'bloco', 'caderno'],",
+   "      kitName: 'Kit Escritório',",
+   "      items: ['Caneta metálica', 'Bloco de anotações', 'Porta-cartão'],",
+   "      theme: 'Produtividade / Corporativo',",
+   "      script: 'Posso montar um Kit Escritório com caneta + bloco + porta-cartão — perfeito para eventos corporativos e treinamentos. Interesse?',",
+   "      estimatedMultiplier: 2.5,"
+  ]
+ },
+ {
+  "commit": "e50dca404",
+  "arquivo": "src/hooks/copilot/useLeadThermometer.ts",
+  "linhas": 6,
+  "amostra": [
+   "  messages: Array<{ content: string; sender: string }>;",
+   "}): LeadThermometerResult {",
+   "    if (score >= 3 || hotHits.length > 0) {",
+   "      return { temperature: 'hot', score, signals: hotHits, recommendedAction: 'Faça a proposta agora e sugira fechar.' };",
+   "    if (score >= 1) {",
+   "      return { temperature: 'warm', score, signals: warmHits, recommendedAction: 'Aprofunde o interesse. Envie amostra ou mockup.' };"
+  ]
+ },
+ {
+  "commit": "e50dca404",
+  "arquivo": "src/hooks/copilot/useQuoteDraft.ts",
+  "linhas": 5,
+  "amostra": [
+   "  validity: string;",
+   "      return { ready: false, clientName, items: [], totalValue: 0, validity: '', paymentTerms: '', deliveryDate: '', observations: [], textSummary: ''",
+   "    const deliveryDate = new Date(now + deliveryDays * 86_400_000).toLocaleDateString('pt-BR');",
+   "    const validity = new Date(now + 5 * 86_400_000).toLocaleDateString('pt-BR');",
+   "      `Validade da proposta: ${validity}`,"
+  ]
+ },
+ {
+  "commit": "e50dca404",
+  "arquivo": "src/hooks/copilot/useSpeedToLead.ts",
+  "linhas": 1,
+  "amostra": [
+   "    const currentTime = now ?? 0;"
+  ]
+ },
+ {
+  "commit": "6d3f36129",
+  "arquivo": "src/hooks/copilot/useAudioTone.ts",
+  "linhas": 28,
+  "amostra": [
+   "  /** Confiança 0–1. */",
+   "  /** Indicadores textuais que dispararam a classificação. */",
+   "  /** Sugestão de postura para o vendedor. */",
+   "    'absurdo', 'inaceitável', 'péssimo', 'horrível', 'ridículo', 'uma vergonha',",
+   "    'não aguento', 'que raiva', 'furioso', 'indignado', 'exijo', 'imediatamente',",
+   "    'já falei', 'de novo', 'não entende', 'sempre assim', 'toda vez',"
+  ]
+ },
+ {
+  "commit": "6d3f36129",
+  "arquivo": "src/hooks/copilot/useBiasChecker.ts",
+  "linhas": 49,
+  "amostra": [
+   "export type BiasCategory =",
+   "  | 'unrealistic_promise'",
+   "  | 'competitor_derogation'",
+   "  | 'excessive_informality'",
+   "  | 'pressure_tactic'",
+   "  | 'exclusionary_language';"
+  ]
+ },
+ {
+  "commit": "6d3f36129",
+  "arquivo": "src/hooks/copilot/useBrandColors.ts",
+  "linhas": 44,
+  "amostra": [
+   "  /** Nome aproximado em PT-BR. */",
+   "  /** Uso sugerido: primária, secundária, texto, fundo. */",
+   "  /** Sugestão de processo de impressão baseado na paleta. */",
+   "  /** Número máximo de cores que a técnica suporta sem sobrecusto. */",
+   "/** Cores nomeadas comuns em PT-BR → hex aproximado. */",
+   "  vermelho: '#e53935',"
+  ]
+ },
+ {
+  "commit": "6d3f36129",
+  "arquivo": "src/hooks/copilot/useConversationScore.ts",
+  "linhas": 46,
+  "amostra": [
+   "  /** 0–100, inteiro. */",
+   "  /** Recomendação principal para melhorar o score. */",
+   "export interface UseConversationScoreOptions {",
+   "  /** Completude do checklist B·R·I·N·D·E. */",
+   "  brinde: BrindeCompleteness;",
+   "  /** Tempo médio de resposta do vendedor em segundos. */"
+  ]
+ },
+ {
+  "commit": "6d3f36129",
+  "arquivo": "src/hooks/copilot/useCopilotLearning.ts",
+  "linhas": 8,
+  "amostra": [
+   "export interface UseCopilotLearningOptions {",
+   "  /** Callback para persistir o registro (ex: Supabase via edge). */",
+   "  onRecord?: (record: LearningRecord) => void;",
+   "export function useCopilotLearning({ conversationId, onRecord }: UseCopilotLearningOptions) {",
+   "      const entry: LearningRecord = {",
+   "        suggestionId,"
+  ]
+ },
+ {
+  "commit": "6d3f36129",
+  "arquivo": "src/hooks/copilot/useCopilotSupervisor.ts",
+  "linhas": 16,
+  "amostra": [
+   "export type InsightSource =",
+   "  | 'purchase_signal'",
+   "  | 'speed_to_lead'",
+   "  | 'discount_guardrail'",
+   "  /** Insights priorizados para exibição (máx. 2). */",
+   "  /** Total de insights disponíveis (incluindo suprimidos). */"
+  ]
+ },
+ {
+  "commit": "6d3f36129",
+  "arquivo": "src/hooks/copilot/useCostDashboard.ts",
+  "linhas": 3,
+  "amostra": [
+   "export function useCostDashboard({",
+   "  sessions: Array<{ tokensUsed: number; suggestionsGenerated: number; suggestionsUsed: number }>;",
+   "}): CopilotCostMetrics {"
+  ]
+ },
+ {
+  "commit": "6d3f36129",
+  "arquivo": "src/hooks/copilot/useDataMasking.ts",
+  "linhas": 36,
+  "amostra": [
+   "  /** Índice inicial no texto original. */",
+   "  /** Texto com dados mascarados. */",
+   "  /** Lista dos campos detectados. */",
+   "  /** True se algum dado foi encontrado. */",
+   "    regex: /\\b\\d{3}[.\\s]?\\d{3}[.\\s]?\\d{3}[-.\\s]?\\d{2}\\b/g,",
+   "    mask: (m) => m.replace(/\\d(?=\\d{2})/g, '*'),"
+  ]
+ },
+ {
+  "commit": "6d3f36129",
+  "arquivo": "src/hooks/copilot/useGuardrails.ts",
+  "linhas": 3,
+  "amostra": [
+   "    return GUARDRAIL_RULES",
+   "      .filter((r) => lower.includes(r.pattern))",
+   "      .map(({ rule, severity, message }) => ({ rule, severity, message }));"
+  ]
+ },
+ {
+  "commit": "6d3f36129",
+  "arquivo": "src/hooks/copilot/useLearningMoment.ts",
+  "linhas": 49,
+  "amostra": [
+   "export type LearningMomentType =",
+   "  | 'new_objection'",
+   "  | 'unknown_product'",
+   "  | 'successful_close'",
+   "  | 'missed_upsell'",
+   "  | 'price_negotiation_won'"
+  ]
+ },
+ {
+  "commit": "a9635e133",
+  "arquivo": "src/components/copilot/RadarPhase8Panel.tsx",
+  "linhas": 2,
+  "amostra": [
+   "    (!objectionDismissed && objection) ||",
+   "      {!objectionDismissed && objection && ("
+  ]
+ },
+ {
+  "commit": "a9635e133",
+  "arquivo": "src/components/copilot/RadarPhase8to15Panel.tsx",
+  "linhas": 1,
+  "amostra": [
+   "    deliveryDays: deadline.productionDays,"
+  ]
+ },
+ {
+  "commit": "e4ad52378",
+  "arquivo": "src/hooks/copilot/useCoachingTip.ts",
+  "linhas": 8,
+  "amostra": [
+   "    check: (t) => t.length > 300,",
+   "    tip: { tip: 'Mensagem muito longa. Quebre em partes menores para facilitar a leitura.', category: 'content', priority: 'medium' },",
+   "    check: (t) => /!{2,}/.test(t),",
+   "    tip: { tip: 'Múltiplos \"!\" podem soar agressivos. Use com moderação.', category: 'tone', priority: 'low' },",
+   "    check: (t) => /não posso|não consigo/i.test(t),",
+   "    tip: { tip: 'Reformule o \"não posso\" em positivo: \"O que posso fazer é...\"', category: 'technique', priority: 'high' },"
+  ]
+ },
+ {
+  "commit": "c3ecda4d6",
+  "arquivo": "src/hooks/copilot/index.ts",
+  "linhas": 8,
+  "amostra": [
+   "export type { UseAudioToneOptions, AudioToneResult, AudioToneType } from './useAudioTone';",
+   "export type { UseBrandColorsOptions, BrandColorsResult, BrandColor } from './useBrandColors';",
+   "export type { UseDataMaskingOptions, DataMaskingResult, MaskedField } from './useDataMasking';",
+   "export type { UseBiasCheckerOptions, BiasCheckerResult, BiasFlag, BiasCategory } from './useBiasChecker';",
+   "export type { UseCopilotSupervisorOptions, SupervisorResult, CopilotInsight, InsightPriority, InsightSource } from './useCopilotSupervisor';",
+   "export type { UseConversationScoreOptions, ConversationScoreResult, BrindeCompleteness } from './useConversationScore';"
+  ]
+ },
+ {
+  "commit": "7d4ce88a9",
+  "arquivo": "supabase/functions/copilot-live/index.ts",
+  "linhas": 39,
+  "amostra": [
+   "import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';",
+   "const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;",
+   "const SUPABASE_SERVICE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;",
+   "  session_id: string;",
+   "  profile_id: string;",
+   "  messages: Array<{ content: string; sender: 'contact' | 'vendor'; created_at: string }>;"
+  ]
+ },
+ {
+  "commit": "7d4ce88a9",
+  "arquivo": "supabase/migrations/20261030100000_copilot_sessions.sql",
+  "linhas": 1,
+  "amostra": [
+   "  conversation_id     uuid        NOT NULL REFERENCES public.conversations(id) ON DELETE CASCADE,"
+  ]
+ },
+ {
+  "commit": "5d3e99b6f",
+  "arquivo": "src/hooks/copilot/useDataMasking.ts",
+  "linhas": 6,
+  "amostra": [
+   "  { type: 'cpf', regex: /\\b\\d{3}[.\\s]?\\d{3}[.\\s]?\\d{3}[-.\\s]?\\d{2}\\b/g, mask: (m) => m.replace(/\\d(?=\\d{2})/g, '*') },",
+   "  { type: 'cnpj', regex: /\\b\\d{2}[.\\s]?\\d{3}[.\\s]?\\d{3}[/\\s]?\\d{4}[-.\\s]?\\d{2}\\b/g, mask: (m) => m.replace(/\\d(?=\\d{4})/g, '*') },",
+   "  { type: 'email', regex: /\\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Z|a-z]{2,}\\b/g, mask: (m) => { const [local, domain] = m.split('@'); return `${local",
+   "  { type: 'phone', regex: /\\b(?:\\+55\\s?)?(?:\\(?\\d{2}\\)?\\s?)(?:9\\s?)?\\d{4}[-.\\s]?\\d{4}\\b/g, mask: (m) => m.replace(/\\d(?=\\d{4}$)/g, '*') },",
+   "  { type: 'cep', regex: /\\b\\d{5}-?\\d{3}\\b/g, mask: (m) => m.replace(/\\d(?=\\d{3})/g, '*') },",
+   "          maskedText = maskedText.slice(0, adjustedIndex) + masked + maskedText.slice(adjustedIndex + original.length);"
+  ]
+ },
+ {
+  "commit": "f6c44b208",
+  "arquivo": "src/__tests__/useConversationScore.test.ts",
+  "linhas": 24,
+  "amostra": [
+   "import { useConversationScore } from '@/hooks/copilot/useConversationScore';",
+   "  it('returns zero score for empty messages', () => {",
+   "      useConversationScore({ messages: [] })",
+   "    expect(result.current.score).toBe(0);",
+   "    expect(result.current.hasPersonalData).toBe(false);",
+   "  it('detects budget field from client message', () => {"
+  ]
+ },
+ {
+  "commit": "f6c44b208",
+  "arquivo": "supabase/functions/copilot-live/index.ts",
+  "linhas": 6,
+  "amostra": [
+   "    const { data: session, error: sessionError } = await supabase",
+   "          contact_id: user.id, // placeholder — enriched by future tick",
+   "          ...(payload.brinde_meter !== undefined && { brinde_meter: payload.brinde_meter }),",
+   "        { onConflict: 'conversation_id', ignoreDuplicates: false }",
+   "    if (sessionError) {",
+   "      console.error('session upsert error', sessionError);"
+  ]
+ },
+ {
+  "commit": "1eea98aab",
+  "arquivo": "src/hooks/copilot/useQuoteDraft.ts",
+  "linhas": 1,
+  "amostra": [
+   "    const validityDate = new Date(now + VALIDITY_DAYS * 86_400_000).toLocaleDateString('pt-BR');"
+  ]
+ },
+ {
+  "commit": "70f1b5b32",
+  "arquivo": "src/hooks/copilot/useQuoteDraft.ts",
+  "linhas": 1,
+  "amostra": [
+   "    const ts = now ?? Date.now();"
+  ]
+ },
+ {
+  "commit": "70f1b5b32",
+  "arquivo": "src/hooks/copilot/useSpeedToLead.ts",
+  "linhas": 1,
+  "amostra": [
+   "    const currentTime = now ?? Date.now();"
+  ]
+ },
+ {
+  "commit": "70f1b5b32",
+  "arquivo": "supabase/functions/copilot-live/index.ts",
+  "linhas": 2,
+  "amostra": [
+   "      .select('profile_id')",
+   "    if (existingSession && existingSession.profile_id !== user.id) {"
+  ]
+ },
+ {
+  "commit": "4f651f7dc",
+  "arquivo": "supabase/functions/copilot-live/index.ts",
+  "linhas": 4,
+  "amostra": [
+   "    const { data: conversation } = await supabase",
+   "      .from('conversations')",
+   "      .eq('id', payload.conversation_id)",
+   "    const contactId = conversation?.contact_id ?? user.id;"
+  ]
+ }
+]

@@ -1,0 +1,972 @@
+{
+  "summary": "Reconfere, contra a main atual, cada lacuna de trabalho perdido do ledger de resgate e refuta as alegacoes de pendencia",
+  "agentCount": 15,
+  "logs": [
+    "revalidando 8 branches com trabalho perdido contra a main atual",
+    "confirmados pendentes: 45 · refutados pelo adversarial: 20 · ja na main: 22 · obsoletos: 4 · indecisos: 0"
+  ],
+  "result": {
+    "contagem": {
+      "pendente": 65,
+      "ja_na_main": 22,
+      "obsoleta": 4,
+      "indeciso": 0,
+      "refutados": 20,
+      "confirmados": 45,
+      "branches_sem_resultado": 0
+    },
+    "pendentes_confirmados": [
+      {
+        "branch": "claude__charming-mccarthy-jbxy56",
+        "titulo": "Rollback das edge functions pode republicar a propria versao quebrada",
+        "arquivos": [
+          ".github/workflows/deploy-functions.yml"
+        ],
+        "valor": "alto",
+        "classe": "ci",
+        "bloqueio": "ci_workflow",
+        "evidencia": ".github/workflows/deploy-functions.yml:91 grupo unico; :165-176 pega o 1o Deployment success sem excluir GITHUB_SHA; :494 so deno check, sem deno test",
+        "refutacao_tentada": "nao_refutado",
+        "motivo_revisor": "deploy-functions.yml:175-181 pega o 1o Deployment success sem excluir GITHUB_SHA; :203 is-ancestor aceita o proprio SHA; grep 'deno test' no arquivo = 0"
+      },
+      {
+        "branch": "claude__fix-ga-fase1-lote-banco-261020-2200",
+        "titulo": "Queda de conexao com o banco passa como \"tudo ok\" na checagem automatica",
+        "arquivos": [
+          "scripts/db-audit/check-migration-drift.mjs"
+        ],
+        "valor": "alto",
+        "classe": "script",
+        "bloqueio": "nenhum",
+        "evidencia": "scripts/db-audit/check-migration-drift.mjs:916 compare() ainda retorna 4 campos; grep de return 3/pendingOnly/pendingApply/--json = 0; unicos returns 942,951,957,965,973,986,1003",
+        "refutacao_tentada": "nao_refutado",
+        "motivo_revisor": "check-migration-drift.mjs:916 compare() retorna 4 campos; :965 falha de psql devolve 2, mesmo codigo lido como apply-pendente; zero process.argv/--json no arqui"
+      },
+      {
+        "branch": "claude__fix-ga-fase1-lote-banco-261020-2200",
+        "titulo": "Aviso de atualizacao de banco pendente confunde-se com erro de infraestrutura no relatorio do CI",
+        "arquivos": [
+          "scripts/db-audit/lote-pendente.mjs"
+        ],
+        "valor": "alto",
+        "classe": "script",
+        "bloqueio": "nenhum",
+        "evidencia": "scripts/db-audit/lote-pendente.mjs:61 ainda 'else if (rc === 2)'; :49 ainda passa a flag morta '--classificar'; docstring :9-14 descreve exit 2 como apply-pendente",
+        "refutacao_tentada": "nao_refutado",
+        "motivo_revisor": "lote-pendente.mjs:49 ainda passa --classificar (flag morta: drift script nao le argv); :61 else if (rc === 2) escreve \"apply aguardado\"; docstring :9-14 descrev"
+      },
+      {
+        "branch": "claude__fix-ga-fase1-lote-banco-261020-2200",
+        "titulo": "Verificacao de banco no envio para producao fica verde mesmo quando nao consegue conferir nada",
+        "arquivos": [
+          ".github/workflows/db-live-guard.yml"
+        ],
+        "valor": "alto",
+        "classe": "ci",
+        "bloqueio": "ci_workflow",
+        "evidencia": ".github/workflows/db-live-guard.yml:155 if [ \"$rc\" -eq 2 ] && [ \"$GITHUB_EVENT_NAME\" = \"push\" ] (unico -eq do arquivo)",
+        "refutacao_tentada": "nao_refutado",
+        "motivo_revisor": "db-live-guard.yml:155 rc -eq 2 + push -> exit 0; o passo credencial (:98-126) so valida URL/TLS, nao conecta, e consolidar-veredito.mjs le apenas outcome do pas"
+      },
+      {
+        "branch": "claude__fix-ga-fase1-lote-banco-261020-2200",
+        "titulo": "Conferencia de tipos do banco se auto-dispensa quando a conexao falha",
+        "arquivos": [
+          ".github/workflows/types-sync.yml"
+        ],
+        "valor": "alto",
+        "classe": "ci",
+        "bloqueio": "ci_workflow",
+        "evidencia": ".github/workflows/types-sync.yml:342 if [ \"$drift_exit\" -eq 2 ]; then -> :343 awaiting_apply=true (passo apply-pending)",
+        "refutacao_tentada": "nao_refutado",
+        "motivo_revisor": "types-sync.yml:342 drift_exit -eq 2 -> :343 awaiting_apply=true, consumido em :447 e :512 para pular o gate; nenhuma distincao de falha de infra."
+      },
+      {
+        "branch": "claude__fix-ga-fase78-perimetro-custo-261020-2200",
+        "titulo": "Cache de testes estourou os 10 GB do repo e comeca a ser descartado",
+        "arquivos": [
+          ".github/workflows/ci.yml",
+          "scripts/ci/workflow-contracts.unit.mjs"
+        ],
+        "valor": "alto",
+        "classe": "ci",
+        "bloqueio": "ci_workflow",
+        "evidencia": "ci.yml:474-477 ainda usa actions/cache combinado, chave pw-cfw-...-${{ runner.os }}, sem restore/save separados; port exige soltar workflow-contracts.unit.mjs:255 (exige actions/cache@)",
+        "refutacao_tentada": "nao_refutado",
+        "motivo_revisor": "ci.yml:473-477 ainda e actions/cache@55cc834 combinado, key pw-cfw-${{hashFiles('bun.lock')}}-${{runner.os}}; contrato workflow-contracts.unit.mjs:255,450 exige"
+      },
+      {
+        "branch": "claude__fix-ga-resto-dbmigrate-20261021-0729",
+        "titulo": "Conferir uma migration ainda trava esperando aprovacao do dono",
+        "arquivos": [
+          ".github/workflows/db-migrate.yml"
+        ],
+        "valor": "alto",
+        "classe": "ci",
+        "bloqueio": "ci_workflow",
+        "evidencia": ".github/workflows/db-migrate.yml:71 unico job `migrate:`; 1493 linhas; grep de apply_all_missing|confirm_destructive|banco-leitura|gh workflow run = 0 ocorrencias de codigo",
+        "refutacao_tentada": "nao_refutado",
+        "motivo_revisor": ".github/workflows/db-migrate.yml:71-79 job unico `migrate` com `environment: producao-ddl` (:75) cobre preflight (:175) e dry-run (:907); API: producao-ddl exig"
+      },
+      {
+        "branch": "claude__fix-ga-resto-typessync-20261021-0730",
+        "titulo": "Trava que impede o robô de apagar tabela em uso continua desligada",
+        "arquivos": [
+          ".github/workflows/types-sync.yml"
+        ],
+        "valor": "alto",
+        "classe": "ci",
+        "bloqueio": "ci_workflow",
+        "evidencia": ".github/workflows/types-sync.yml:408 sobrescreve o catálogo e :485 o compara com ele mesmo; grep 'catalog.base' em .github/workflows = zero",
+        "refutacao_tentada": "nao_refutado",
+        "motivo_revisor": "types-sync.yml:405-409 copia /tmp/catalog.new.json sobre supabase/schema-catalog.json ANTES do Gate 3 em :485, que compara os dois -> arquivos identicos, gate t"
+      },
+      {
+        "branch": "claude__fix-ga-resto-typessync-20261021-0730",
+        "titulo": "Mudança de banco feita por fora é aprovada sozinha, sem ninguém olhar",
+        "arquivos": [
+          ".github/workflows/types-sync.yml",
+          "scripts/db-audit/drift-explicado.mjs"
+        ],
+        "valor": "alto",
+        "classe": "ci",
+        "bloqueio": "ci_workflow",
+        "evidencia": ".github/workflows/types-sync.yml:758-759 auto-merge só com `pull-request-number != ''`; grep 'drift-explicado' e 'needs-human' em .github/workflows = zero",
+        "refutacao_tentada": "nao_refutado",
+        "motivo_revisor": "types-sync.yml:756-762 habilita auto-merge so com pull-request-number != ''. drift-explicado.mjs existe (scripts/db-audit/, exit 1 = DDL por fora) mas tem 0 ref"
+      },
+      {
+        "branch": "claude_juca__practical-rubin-8xnw0u",
+        "titulo": "Importar/exportar templates de mensagem em planilha (CSV/JSON) não existe",
+        "arquivos": [
+          "src/components/talkx/talkxTemplateFile.ts"
+        ],
+        "valor": "alto",
+        "classe": "front",
+        "bloqueio": "nenhum",
+        "evidencia": "arquivo ausente na main (ls src/components/talkx/talkxTemplateFile.ts: No such file); grep -rn 'talkxTemplateFile|parseTemplateFile' src = 0 ocorrências",
+        "refutacao_tentada": "nao_refutado",
+        "motivo_revisor": "Ausente: nao ha src/components/talkx/talkxTemplateFile.ts (ls falha) e grep talkxTemplateFile|parseTemplateFile em src = 0. Unico CSV do modulo e src/lib/talkxC"
+      },
+      {
+        "branch": "claude_juca__practical-rubin-8xnw0u",
+        "titulo": "Tela de importação com prévia e aviso de nome repetido não existe",
+        "arquivos": [
+          "src/components/talkx/TalkXTemplateImportDialog.tsx"
+        ],
+        "valor": "alto",
+        "classe": "front",
+        "bloqueio": "nenhum",
+        "evidencia": "arquivo ausente na main (ls: No such file); grep -rn 'TalkXTemplateImportDialog' src = 0 ocorrências",
+        "refutacao_tentada": "nao_refutado",
+        "motivo_revisor": "Ausente: grep -rn TalkXTemplateImportDialog src = 0 ocorrencias; nenhum dialogo de importacao de template em src/components/talkx (ls do diretorio nao lista o a"
+      },
+      {
+        "branch": "claude_juca__practical-rubin-8xnw0u",
+        "titulo": "Lista de templates não tem botões de baixar nem de importar",
+        "arquivos": [
+          "src/components/talkx/TalkXTemplates.tsx",
+          "src/components/talkx/__tests__/TalkXTemplatesRail.test.tsx"
+        ],
+        "valor": "alto",
+        "classe": "front",
+        "bloqueio": "nenhum",
+        "evidencia": "TalkXTemplates.tsx:313 rightSlot só tem 'Novo Template'; grep 'Download|Upload|canDownload|Export|Importar' no arquivo = só essa linha",
+        "refutacao_tentada": "nao_refutado",
+        "motivo_revisor": "src/components/talkx/TalkXTemplates.tsx:313 rightSlot={<PrimaryButton icon={Plus} onClick={openNew}>Novo Template</PrimaryButton>}; grep Download|Upload|Import|"
+      },
+      {
+        "branch": "claude_juca__practical-rubin-8xnw0u",
+        "titulo": "Na lista de campanhas não dá para pausar/cancelar/excluir várias de uma vez",
+        "arquivos": [
+          "src/components/talkx/TalkXOverview.tsx",
+          "src/components/talkx/kit/constants.ts",
+          "src/components/talkx/kit/rail.tsx"
+        ],
+        "valor": "alto",
+        "classe": "front",
+        "bloqueio": "nenhum",
+        "evidencia": "TalkXOverview.tsx:92,349 mantém seleção mas nunca usa TalkXBulkBar (grep: só kit/table.tsx:76, TalkXSegments.tsx:475, TalkXSuppression.tsx:598); :466 TipCard com texto fixo e rail.tsx:101 sem onNext",
+        "refutacao_tentada": "nao_refutado",
+        "motivo_revisor": "TalkXOverview.tsx:92 selected e :348-351 passa a selecao ao TalkXTable, mas nenhum consumo: TalkXBulkBar so em TalkXSegments.tsx:475 e TalkXSuppression.tsx:598;"
+      },
+      {
+        "branch": "claude_juca__practical-rubin-8xnw0u",
+        "titulo": "Acesso negado pelo banco no Talk X mostra erro genérico, não 'sem permissão'",
+        "arquivos": [
+          "src/components/talkx/kit/states.tsx"
+        ],
+        "valor": "alto",
+        "classe": "front",
+        "bloqueio": "nenhum",
+        "evidencia": "kit/states.tsx:355-357: if (query.isError) return <TalkXErrorState .../> — não olha error.code; grep 42501 em src/components/talkx = só testes/comentário",
+        "refutacao_tentada": "nao_refutado",
+        "motivo_revisor": "kit/states.tsx:355-357 if (query.isError) return <TalkXErrorState error={query.error}/> sem olhar code; TalkXNoPermissionState so em states.tsx:343 (estado forc"
+      },
+      {
+        "branch": "claude__charming-mccarthy-jbxy56",
+        "titulo": "Testes que travam o rollback seguro e os testes antes de publicar",
+        "arquivos": [
+          "scripts/ci/deploy-functions-workflow.unit.mjs"
+        ],
+        "valor": "medio",
+        "classe": "teste",
+        "bloqueio": "ci_workflow",
+        "evidencia": "scripts/ci/deploy-functions-workflow.unit.mjs:49 fixa ^  group: deploy-edge-functions-...$; nenhum assert de 'deno test' nem de pular o SHA atual",
+        "refutacao_tentada": "nao_refutado",
+        "motivo_revisor": "scripts/ci/deploy-functions-workflow.unit.mjs:38-52 cobre so ancestral e grupo; nenhum .unit.mjs cita rollback_to_last_success nem 'deno test' no deploy"
+      },
+      {
+        "branch": "claude__fix-ga-fase1-lote-banco-261020-2200",
+        "titulo": "Faltam testes que provem que falha de senha do banco nao vira \"apply pendente\"",
+        "arquivos": [
+          "scripts/db-audit/check-migration-drift.test.mjs"
+        ],
+        "valor": "medio",
+        "classe": "teste",
+        "bloqueio": "nenhum",
+        "evidencia": "scripts/db-audit/check-migration-drift.test.mjs:577 e :1228 ainda assert.equal(result.status, 1) para ledger: []; :225 runGuard sem argv; sem --json",
+        "refutacao_tentada": "nao_refutado",
+        "motivo_revisor": "check-migration-drift.test.mjs:1185/1197/1211 fixam status 2 para falha de conexao -- o mesmo codigo de apply-pendente; :577 e :1228 seguem status 1 para ledger"
+      },
+      {
+        "branch": "claude__fix-ga-fase1-lote-banco-261020-2200",
+        "titulo": "Faltam testes com banco falso para o aviso de atualizacao pendente",
+        "arquivos": [
+          "scripts/db-audit/lote-pendente.test.mjs"
+        ],
+        "valor": "medio",
+        "classe": "teste",
+        "bloqueio": "nenhum",
+        "evidencia": "scripts/db-audit/lote-pendente.test.mjs:95 test('W26: exit 2 escreve summary \"apply aguardado\"') e :101 assert.equal(exitCode, 2); grep runRealLote = 0",
+        "refutacao_tentada": "nao_refutado",
+        "motivo_revisor": "lote-pendente.test.mjs:24-60 runWithMock reimplementa a logica num wrapper (nao roda o script real); runReal :63 apaga DESTINO_URL; :95/:101 fixam exit 2 = \"app"
+      },
+      {
+        "branch": "claude__fix-ga-fase1-lote-banco-261020-2200",
+        "titulo": "Script de verificacao do banco aceita rodar arquivo SQL de fora do projeto",
+        "arquivos": [
+          "scripts/db-audit/run-runtime-contract.mjs"
+        ],
+        "valor": "medio",
+        "classe": "script",
+        "bloqueio": "nenhum",
+        "evidencia": "scripts/db-audit/run-runtime-contract.mjs:31 importa so { dirname, join }; :274 so existsSync(invocacao.arquivo); :284 passa o caminho cru ao psql",
+        "refutacao_tentada": "nao_refutado",
+        "motivo_revisor": "run-runtime-contract.mjs:186-187 so exige sufixo .sql; :31 importa apenas { dirname, join } (sem resolve/relative); :274 existsSync e :284 passa invocacao.arqui"
+      },
+      {
+        "branch": "claude__fix-ga-fase1-lote-banco-261020-2200",
+        "titulo": "Falta teste provando que SQL de fora do projeto e recusado",
+        "arquivos": [
+          "scripts/ci/db-migrate-contratos.unit.mjs"
+        ],
+        "valor": "medio",
+        "classe": "teste",
+        "bloqueio": "nenhum",
+        "evidencia": "scripts/ci/db-migrate-contratos.unit.mjs: grep 'traversal|fora do repo' = 0; helpers existem (extrairInvocacoes :12, rodaExecutor :86)",
+        "refutacao_tentada": "nao_refutado",
+        "motivo_revisor": "scripts/ci/db-migrate-contratos.unit.mjs: nenhum dos 19 testes (:22 a :401) cobre caminho fora do repo; grep traversal/fora do repo/etc-passwd = 0 (outros guard"
+      },
+      {
+        "branch": "claude__fix-ga-fase78-perimetro-custo-261020-2200",
+        "titulo": "Relatorio de CI mostra custo e taxa de falha como '—' em 21 linhas",
+        "arquivos": [
+          "scripts/ci/actions-kpi.mjs",
+          "docs/ci/README.md",
+          "scripts/ci/render-workflow-docs.mjs"
+        ],
+        "valor": "medio",
+        "classe": "script",
+        "bloqueio": "nenhum",
+        "evidencia": "actions-kpi.mjs exporta ate publicarIssue:199, sem montarKpi/gravarKpi/percentil/KPI_JSON_PATH; render-workflow-docs.mjs:160-161 le docs/ci/kpi.json, ausente de docs/ci/",
+        "refutacao_tentada": "nao_refutado",
+        "motivo_revisor": "actions-kpi.mjs: ultimo export e publicarIssue:199; sem montarKpi/gravarKpi/percentil/KPI_JSON. docs/ci/kpi.json nao existe; render-workflow-docs.mjs:160-161 ca"
+      },
+      {
+        "branch": "claude__fix-ga-fase78-perimetro-custo-261020-2200",
+        "titulo": "Falha do relatorio de custo ainda derruba a auditoria semanal de branches",
+        "arquivos": [
+          ".github/workflows/branch-hygiene-audit.yml"
+        ],
+        "valor": "medio",
+        "classe": "ci",
+        "bloqueio": "ci_workflow",
+        "evidencia": "branch-hygiene-audit.yml:63-74 roda node scripts/ci/actions-kpi.mjs sem continue-on-error, sem KPI_JSON_PATH, sem upload do artifact e sem job publicar-kpi",
+        "refutacao_tentada": "nao_refutado",
+        "motivo_revisor": "branch-hygiene-audit.yml:63-74 roda 'node scripts/ci/actions-kpi.mjs' com set -euo pipefail, sem continue-on-error, sem KPI_JSON_PATH, sem upload-artifact e sem"
+      },
+      {
+        "branch": "claude__fix-ga-fase78-perimetro-custo-261020-2200",
+        "titulo": "Mesmo desperdicio de cache no fluxo de testes do Talk X",
+        "arquivos": [
+          ".github/workflows/e2e-talkx.yml"
+        ],
+        "valor": "medio",
+        "classe": "ci",
+        "bloqueio": "ci_workflow",
+        "evidencia": "e2e-talkx.yml:86-90 com actions/cache combinado, chave pw-c-${{ hashFiles('bun.lock') }}-${{ runner.os }}",
+        "refutacao_tentada": "nao_refutado",
+        "motivo_revisor": "e2e-talkx.yml:86-90: actions/cache combinado, path ~/.cache/ms-playwright, key pw-c-${{hashFiles('bun.lock')}}-${{runner.os}}. Sem restore/save separados."
+      },
+      {
+        "branch": "claude__fix-ga-fase78-perimetro-custo-261020-2200",
+        "titulo": "Lista de acoes permitidas bloquearia o novo cache: job morre na largada",
+        "arquivos": [
+          "scripts/ci/allowed-actions.json",
+          "scripts/ci/github-settings-baseline.json"
+        ],
+        "valor": "medio",
+        "classe": "ci",
+        "bloqueio": "decisao_dono",
+        "evidencia": "allowed-actions.json:9 tem so \"actions/cache\"; selected_actions_patterns do baseline tambem — faltam actions/cache/restore e actions/cache/save, e o perimetro vivo precisa do mesmo",
+        "refutacao_tentada": "nao_refutado",
+        "motivo_revisor": "allowed-actions.json:9 so 'actions/cache'; baseline selected_actions_patterns idem. Ausencia confirmada, mas portar so o arquivo sem mudar o perimetro vivo deix"
+      },
+      {
+        "branch": "claude__fix-ga-fase78-perimetro-custo-261020-2200",
+        "titulo": "Falha de largada de um fluxo nao gera aviso: quebra passa em silencio",
+        "arquivos": [
+          ".github/workflows/notifica-falha-main.yml"
+        ],
+        "valor": "medio",
+        "classe": "ci",
+        "bloqueio": "ci_workflow",
+        "evidencia": "notifica-falha-main.yml:35 if: conclusion == 'failure' (sem startup_failure) e corpo montado por actions/github-script na linha 40",
+        "refutacao_tentada": "nao_refutado",
+        "motivo_revisor": "notifica-falha-main.yml:35 if: github.event.workflow_run.conclusion == 'failure' (unica ocorrencia de 'conclusion'); corpo montado em actions/github-script:40. "
+      },
+      {
+        "branch": "claude__fix-ga-fase78-perimetro-custo-261020-2200",
+        "titulo": "Guarda do perimetro nao ve retencao de artefatos nem regras de merge",
+        "arquivos": [
+          "scripts/ci/github-settings-guard.mjs",
+          "scripts/ci/github-settings-baseline.json"
+        ],
+        "valor": "medio",
+        "classe": "script",
+        "bloqueio": "decisao_dono",
+        "evidencia": "grep -i 'graphql|retention|artifact-and-log' em github-settings-guard.mjs → 0 ocorrencias; baseline (medido_em 2026-11-02) sem chave de retencao",
+        "refutacao_tentada": "nao_refutado",
+        "motivo_revisor": "github-settings-guard.mjs: 0 ocorrencias de graphql/retention/retencao; checagens sao 154-345 (branch protection, repo, actions, workflow perms, selected action"
+      },
+      {
+        "branch": "claude__fix-ga-fase78-perimetro-custo-261020-2200",
+        "titulo": "Sem teste do gerador de numeros do relatorio de CI",
+        "arquivos": [
+          "scripts/ci/actions-kpi.unit.mjs"
+        ],
+        "valor": "medio",
+        "classe": "teste",
+        "bloqueio": "nenhum",
+        "evidencia": "grep 'montarKpi|gravarKpi|percentil|KPI_JSON' em scripts/ci/actions-kpi.unit.mjs → 0 ocorrencias",
+        "refutacao_tentada": "nao_refutado",
+        "motivo_revisor": "scripts/ci/actions-kpi.unit.mjs tem 12 testes (linhas 29-184: agregar, janela, duracao, maisLentos, tabela, coletarRuns/Jobs, corpoDoKpi); nenhum de montarKpi/g"
+      },
+      {
+        "branch": "claude__fix-ga-fase78-perimetro-custo-261020-2200",
+        "titulo": "Script que aplica o perimetro do GitHub sozinho nao existe na main",
+        "arquivos": [
+          "scripts/ci/aplicar-perimetro.mjs",
+          "scripts/ci/aplicar-perimetro.unit.mjs",
+          "scripts/ci/github-settings-guard.mjs"
+        ],
+        "valor": "medio",
+        "classe": "script",
+        "bloqueio": "decisao_dono",
+        "evidencia": "aplicar-perimetro.mjs/.unit.mjs ausentes de scripts/ci; baseline da branch mudaria required checks e apagaria environments; guard:349-360 ainda restaura strict/allow_auto_merge por PATCH",
+        "refutacao_tentada": "nao_refutado",
+        "motivo_revisor": "aplicar-perimetro.mjs e .unit.mjs ausentes de scripts/ci (ls). guard:348-364 restaura apenas branch_protection_main.strict e merge.allow_auto_merge via PATCH; d"
+      },
+      {
+        "branch": "claude__fix-ga-resto-typessync-20261021-0730",
+        "titulo": "Sincronização roda com mudança do banco ainda não aplicada e pode desfazer o lote",
+        "arquivos": [
+          ".github/workflows/types-sync.yml",
+          "scripts/db-audit/gate1-pendente.mjs"
+        ],
+        "valor": "medio",
+        "classe": "ci",
+        "bloqueio": "ci_workflow",
+        "evidencia": ".github/workflows/types-sync.yml:445-450 só ecoa awaiting_apply; :126 não expõe 'pendente'; grep 'gate1-pendente' e 'pending-versions' em .github/workflows = zero",
+        "refutacao_tentada": "nao_refutado",
+        "motivo_revisor": "Parcial na main: :126 expoe awaiting_apply booleano (de lote-pendente.mjs :339) e :447-450 so ecoa notice, usado apenas para suprimir issue em :512. gate1-pende"
+      },
+      {
+        "branch": "claude__fix-ga-resto-typessync-20261021-0730",
+        "titulo": "Alarme falso de banco fora de sincronia enquanto o lote ainda não foi aplicado",
+        "arquivos": [
+          ".github/workflows/db-live-guard.yml",
+          "scripts/db-audit/drift-explicado.mjs"
+        ],
+        "valor": "medio",
+        "classe": "ci",
+        "bloqueio": "ci_workflow",
+        "evidencia": ".github/workflows/db-live-guard.yml:254 e :269 chamam check-catalog-fresh/check-manifest-fresh direto, sem elif; grep 'pending-versions' no arquivo = zero",
+        "refutacao_tentada": "nao_refutado",
+        "motivo_revisor": "db-live-guard.yml:243-254 (catalog) e :258-269 (manifest) chamam check-catalog-fresh/check-manifest-fresh sem nenhum ramo de pendencia; o tratamento de apply pe"
+      },
+      {
+        "branch": "claude__fix-ga-resto-typessync-20261021-0730",
+        "titulo": "Nada detecta alteração de banco aplicada fora do caminho oficial",
+        "arquivos": [
+          ".github/workflows/db-live-guard.yml",
+          "scripts/db-audit/check-deployments-ledger.mjs"
+        ],
+        "valor": "medio",
+        "classe": "ci",
+        "bloqueio": "ci_workflow",
+        "evidencia": ".github/workflows/db-live-guard.yml:49-51 permissions só contents:read + issues:write; grep 'check-deployments-ledger' em .github/workflows = zero",
+        "refutacao_tentada": "nao_refutado",
+        "motivo_revisor": "db-live-guard.yml:48-51 permissions = contents:read + issues:write (sem deployments:read); check-deployments-ledger.mjs existe em scripts/db-audit/ com teste, m"
+      },
+      {
+        "branch": "claude__fix-ga-resto-typessync-20261021-0730",
+        "titulo": "Aplicação de mudança no banco não deixa registro de quem aplicou o quê",
+        "arquivos": [
+          ".github/workflows/db-migrate.yml"
+        ],
+        "valor": "medio",
+        "classe": "ci",
+        "bloqueio": "ci_workflow",
+        "evidencia": ".github/workflows/db-migrate.yml:75 tem environment: producao-ddl, mas grep 'deployments|createDeployment' no arquivo = zero; check-deployments-ledger.mjs:46 lê d.payload.versions",
+        "refutacao_tentada": "nao_refutado",
+        "motivo_revisor": "db-migrate.yml:59-60 permissions = contents:read; grep -i deployment no arquivo = 0 (so :75 environment: producao-ddl). Unico deployments:write do repo e deploy"
+      },
+      {
+        "branch": "claude__fix-ga-resto-typessync-20261021-0730",
+        "titulo": "Relatório de saúde do banco não lista o novo item de verificação",
+        "arquivos": [
+          "scripts/db-audit/consolidar-veredito.mjs"
+        ],
+        "valor": "medio",
+        "classe": "script",
+        "bloqueio": "ci_workflow",
+        "evidencia": "scripts/db-audit/consolidar-veredito.mjs:31-47 PASSOS sem 'ddl-fora-do-fluxo'; :104 trata outcome '' como '❌ (ausente)' e derruba o job se entrar sozinho",
+        "refutacao_tentada": "nao_refutado",
+        "motivo_revisor": "consolidar-veredito.mjs:31-53 PASSOS tem 12 ids (migrations..runtime-config), sem ddl-fora-do-fluxo; ORDEM_CAUSA :57-70 idem; :101-104 trata outcome '' como '❌ "
+      },
+      {
+        "branch": "claude__fix-ga-resto-typessync-20261021-0730",
+        "titulo": "Faltam os testes que impedem alguém de desligar essas travas de novo",
+        "arquivos": [
+          "scripts/ci/ga20-ga25-contratos.unit.mjs",
+          ".github/workflows/ci.yml"
+        ],
+        "valor": "medio",
+        "classe": "teste",
+        "bloqueio": "ci_workflow",
+        "evidencia": "scripts/ci/ga20-ga25-contratos.unit.mjs não existe na main (ls = No such file); seria coletado por .github/workflows/ci.yml:166 `node --test scripts/ci/*.unit.mjs`",
+        "refutacao_tentada": "nao_refutado",
+        "motivo_revisor": "scripts/ci/ga20-ga25-contratos.unit.mjs nao existe (ls). Os testes dos scripts existem e rodam (db-guard.yml:222 varre db-audit/*.test.mjs), mas nenhum assert d"
+      },
+      {
+        "branch": "claude_juca__practical-rubin-8xnw0u",
+        "titulo": "Painel 'Status dos serviços' (WhatsApp/CRM/Tempo real) não abre em lugar nenhum",
+        "arquivos": [
+          "src/components/talkx/kit/ServiceStatusSheet.tsx",
+          "src/components/talkx/kit/states.tsx",
+          "src/components/talkx/TalkXView.tsx"
+        ],
+        "valor": "medio",
+        "classe": "front",
+        "bloqueio": "nenhum",
+        "evidencia": "ServiceStatusSheet.tsx ausente (ls: No such file); grep onViewStatus na main = só kit/states.tsx:163,165,175 e kit/__tests__/states.test.tsx:102-110 — nenhum chamador passa a prop",
+        "refutacao_tentada": "nao_refutado",
+        "motivo_revisor": "Sem ServiceStatusSheet (find = so o hook). useTalkXServiceStatus.ts:28-32 expoe apenas whatsapp e :21-24 diz crm/realtime fora do escopo; onViewStatus so declar"
+      },
+      {
+        "branch": "claude_juca__practical-rubin-8xnw0u",
+        "titulo": "Faltam provas automáticas da leitura de planilha de templates",
+        "arquivos": [
+          "src/components/talkx/__tests__/talkxTemplateFile.test.ts"
+        ],
+        "valor": "medio",
+        "classe": "teste",
+        "bloqueio": "nenhum",
+        "evidencia": "ls src/components/talkx/__tests__ | grep -i template: só TalkXTemplateEditor.*, TalkXTemplateKpis, TalkXTemplates.* — nenhum talkxTemplateFile.test.ts",
+        "refutacao_tentada": "nao_refutado",
+        "motivo_revisor": "Ausente: ls src/components/talkx/__tests__ nao tem talkxTemplateFile.test.ts (so TalkXTemplateEditor.*, TalkXTemplateKpis, TalkXTemplates.*); nem ha o modulo so"
+      },
+      {
+        "branch": "claude_juca__practical-rubin-8xnw0u",
+        "titulo": "Faltam provas automáticas da tela de importação de templates",
+        "arquivos": [
+          "src/components/talkx/__tests__/TalkXTemplateImportDialog.test.tsx"
+        ],
+        "valor": "medio",
+        "classe": "teste",
+        "bloqueio": "nenhum",
+        "evidencia": "ls src/components/talkx/__tests__ não lista TalkXTemplateImportDialog.test.tsx (só TalkXTemplateEditor.*/TalkXTemplates.*)",
+        "refutacao_tentada": "nao_refutado",
+        "motivo_revisor": "Ausente: ls src/components/talkx/__tests__ nao lista TalkXTemplateImportDialog.test.tsx; grep TalkXTemplateImportDialog em src = 0, logo nao ha componente nem p"
+      },
+      {
+        "branch": "claude_juca__practical-rubin-8xnw0u",
+        "titulo": "Faltam provas automáticas das ações em massa de campanhas",
+        "arquivos": [
+          "src/components/talkx/__tests__/TalkXOverview.bulk.test.tsx"
+        ],
+        "valor": "medio",
+        "classe": "teste",
+        "bloqueio": "nenhum",
+        "evidencia": "ls src/components/talkx/__tests__ | grep Overview: comparativo, filters, lifecycle, states, table — nenhum .bulk.test.tsx",
+        "refutacao_tentada": "nao_refutado",
+        "motivo_revisor": "Ausente: testes de Overview na main sao comparativo, filters, lifecycle, states e table (ls src/components/talkx/__tests__); nenhum TalkXOverview.bulk.test.tsx "
+      },
+      {
+        "branch": "codex__publish-followup-20261021",
+        "titulo": "Falta a prova automatica de que o registro de buscas nao vaza dado pessoal",
+        "arquivos": [
+          "supabase/tests/search_events.sql"
+        ],
+        "valor": "medio",
+        "classe": "teste",
+        "bloqueio": "nenhum",
+        "evidencia": "supabase/tests/search_events.sql:1-21 cobre so T1..T8 (pre-RPC); grep -rn log_search_event supabase/tests/ = 0 ocorrencias; arquivo com 440 linhas, sem client_event_id",
+        "refutacao_tentada": "nao_refutado",
+        "motivo_revisor": "Confirmado: filtro PII da RPC em supabase/migrations/20261031130000_search_event_rpc.sql:72-78 sem teste; search_events.sql:94 ainda espera colunas sem client_e"
+      },
+      {
+        "branch": "claude__charming-mccarthy-jbxy56",
+        "titulo": "Relatorio de custo do CI olha os runs recentes, nao os mais demorados",
+        "arquivos": [
+          "scripts/ci/actions-kpi.mjs"
+        ],
+        "valor": "baixo",
+        "classe": "script",
+        "bloqueio": "nenhum",
+        "evidencia": "scripts/ci/actions-kpi.mjs:179 coletarJobs sem maxRuns; :230 slice(0,50) corta pelos mais recentes — ja limita as chamadas, mas enviesa o ranking",
+        "refutacao_tentada": "nao_refutado",
+        "motivo_revisor": "scripts/ci/actions-kpi.mjs:177-179 coletarJobs sem maxRuns; :231 slice(0,50) sobre runsNaJanela (ordem da API = recentes); ordenacao por minutos so dentro da am"
+      },
+      {
+        "branch": "claude__charming-mccarthy-jbxy56",
+        "titulo": "Teste do teto de consultas do relatorio de custo do CI",
+        "arquivos": [
+          "scripts/ci/actions-kpi.unit.mjs"
+        ],
+        "valor": "baixo",
+        "classe": "teste",
+        "bloqueio": "nenhum",
+        "evidencia": "scripts/ci/actions-kpi.unit.mjs: grep maxRuns = 0; os testes de coletarJobs (:146, :167) cobrem so nome do workflow e paginacao",
+        "refutacao_tentada": "nao_refutado",
+        "motivo_revisor": "scripts/ci/actions-kpi.unit.mjs: grep maxRuns = 0; :146 e :167 cobrem so nome do workflow e paginacao; nenhum teste do corte de 50 runs da linha 231"
+      },
+      {
+        "branch": "claude__charming-mccarthy-jbxy56",
+        "titulo": "Teste que mantem a divergencia de banco na 1a linha do log",
+        "arquivos": [
+          "scripts/ci/migration-drift-stdout.unit.mjs",
+          "scripts/db-audit/check-migration-drift.mjs"
+        ],
+        "valor": "baixo",
+        "classe": "teste",
+        "bloqueio": "nenhum",
+        "evidencia": "arquivo ausente; comportamento existe em scripts/db-audit/check-migration-drift.mjs:926,945,980; check-migration-drift.test.mjs:1226-1300 testa o formato no stderr, nao a ordem no stdout",
+        "refutacao_tentada": "nao_refutado",
+        "motivo_revisor": "Comportamento ja na main (check-migration-drift.mjs:979-982), mas o teste falta: check-migration-drift.test.mjs:1299 so checa stderr; scripts/ci/migration-drift"
+      },
+      {
+        "branch": "claude__charming-mccarthy-jbxy56",
+        "titulo": "Teste que protege a conferencia do ledger contra cabecalho do psql",
+        "arquivos": [
+          "scripts/ci/verify-ledger-statements.unit.mjs",
+          "scripts/db-audit/verify-ledger-statements.mjs"
+        ],
+        "valor": "baixo",
+        "classe": "teste",
+        "bloqueio": "nenhum",
+        "evidencia": "scripts/ci/verify-ledger-statements.unit.mjs:28-111 (11 testes) sem caso de cabecalho '--'; protecao em scripts/db-audit/verify-ledger-statements.mjs:48; grep GA05 = 0",
+        "refutacao_tentada": "nao_refutado",
+        "motivo_revisor": "Sem caso de cabecalho em verify-ledger-statements.unit.mjs:28-119; porem o psql roda -At (verify-ledger-statements.mjs:86) e :44-47 falha fechado: cenario impos"
+      },
+      {
+        "branch": "claude__fix-ga-fase78-perimetro-custo-261020-2200",
+        "titulo": "Testes da guarda para retencao e leitura das regras de merge",
+        "arquivos": [
+          "scripts/ci/github-settings-guard.unit.mjs"
+        ],
+        "valor": "baixo",
+        "classe": "teste",
+        "bloqueio": "nenhum",
+        "evidencia": "grep -i 'graphql|retention' em scripts/ci/github-settings-guard.unit.mjs → 0 ocorrencias",
+        "refutacao_tentada": "nao_refutado",
+        "motivo_revisor": "grep -i 'graphql|retention|retencao' em scripts/ci/github-settings-guard.unit.mjs → 0 ocorrencias na main atual."
+      },
+      {
+        "branch": "claude__fix-ga-fase78-perimetro-custo-261020-2200",
+        "titulo": "Nada confere a versao do Go da imagem do proxy, que diverge hoje",
+        "arquivos": [
+          "scripts/ci/docker-pins.unit.mjs",
+          "infrastructure/preview-egress-proxy/Dockerfile",
+          ".github/toolchain.json"
+        ],
+        "valor": "baixo",
+        "classe": "teste",
+        "bloqueio": "ci_workflow",
+        "evidencia": "docker-pins.unit.mjs nao existe na main; Dockerfile:1 FROM golang:1.27-alpine vs go.mod:3 'go 1.24.0' e toolchain.json:5 \"go\": \"1.24.x\"",
+        "refutacao_tentada": "nao_refutado",
+        "motivo_revisor": "scripts/ci/docker-pins.unit.mjs nao existe; nenhum script em scripts/ci ou .github cita 'golang:' nem 'preview-egress-proxy'. Dockerfile:1 golang:1.27-alpine vs"
+      },
+      {
+        "branch": "claude__fix-ga-fase78-perimetro-custo-261020-2200",
+        "titulo": "Atualizador de versoes de ferramentas ignora Go, zizmor e shellcheck",
+        "arquivos": [
+          "scripts/ci/bump-toolchain.mjs",
+          ".github/toolchain.json"
+        ],
+        "valor": "baixo",
+        "classe": "script",
+        "bloqueio": "nenhum",
+        "evidencia": "bump-toolchain.mjs:57-82 lista so bun, deno, supabase-cli, playwright e actionlint-version; toolchain.json tem go, zizmor e shellcheck-version fora do bump",
+        "refutacao_tentada": "nao_refutado",
+        "motivo_revisor": "bump-toolchain.mjs:57-82 FERRAMENTAS = bun, deno, supabase-cli, playwright, actionlint-version. toolchain.json tem go:1.24.x, zizmor-version e shellcheck-versio"
+      }
+    ]
+  },
+  "workflowProgress": [
+    {
+      "type": "workflow_phase",
+      "index": 1,
+      "title": "Verificar"
+    },
+    {
+      "type": "workflow_phase",
+      "index": 2,
+      "title": "Refutar"
+    },
+    {
+      "type": "workflow_agent",
+      "index": 1,
+      "label": "verificar:claude__fix-ga-resto-dbmigrate-20261021-0729",
+      "phaseIndex": 1,
+      "phaseTitle": "Verificar",
+      "agentId": "a74113bae762920bb",
+      "model": "claude-opus-5",
+      "state": "done",
+      "startedAt": 1794770869684,
+      "queuedAt": 1794770869648,
+      "attempt": 1,
+      "lastToolName": "StructuredOutput",
+      "lastToolSummary": "claude__fix-ga-resto-dbmigrate-20261021-0729",
+      "promptPreview": "REGRAS DE LEITURA (obrigatorias):\n- A VERDADE sobre o que esta na main e o checkout em /tmp/claude-0/-home-user-Zapp-Web-V2/19ff5006-3a0f-568b-84a1-eb12d2182604/scratchpad/wt-main (origin/main 42b436bf6 + 1 commit so de e2e). Use SEMPRE caminhos absolutos dentro dele, por exemplo /tmp/claude-0/-home-user-Zapp-Web-V2/19ff5006-3a0f-568b-84a1-eb12d2182604/scratchpad/wt-main/src/...\n- NUNCA leia /home…",
+      "promptFramed": true,
+      "lastProgressAt": 1794770976355,
+      "tokens": 117090,
+      "toolCalls": 9,
+      "durationMs": 106670,
+      "resultPreview": "{\"id\":\"claude__fix-ga-resto-dbmigrate-20261021-0729\",\"itens\":[{\"titulo\":\"Conferir uma migration ainda trava esperando aprovacao do dono\",\"arquivos\":[\".github/workflows/db-migrate.yml\"],\"valor\":\"alto\",\"classe\":\"ci\",\"estado\":\"pendente\",\"bloqueio\":\"ci_workflow\",\"evidencia\":\".github/workflows/db-migrate.yml:71 unico job `migrate:`; 1493 linhas; grep de apply_all_missing|confirm_destructive|banco-leitu…"
+    },
+    {
+      "type": "workflow_agent",
+      "index": 2,
+      "label": "verificar:claude__fix-ga-fase78-perimetro-custo-261020",
+      "phaseIndex": 1,
+      "phaseTitle": "Verificar",
+      "agentId": "a062b04e09ed3feaf",
+      "model": "claude-opus-5",
+      "state": "done",
+      "startedAt": 1794770869685,
+      "queuedAt": 1794770869648,
+      "attempt": 1,
+      "lastToolName": "StructuredOutput",
+      "lastToolSummary": "claude__fix-ga-fase78-perimetro-custo-261020-2200",
+      "promptPreview": "REGRAS DE LEITURA (obrigatorias):\n- A VERDADE sobre o que esta na main e o checkout em /tmp/claude-0/-home-user-Zapp-Web-V2/19ff5006-3a0f-568b-84a1-eb12d2182604/scratchpad/wt-main (origin/main 42b436bf6 + 1 commit so de e2e). Use SEMPRE caminhos absolutos dentro dele, por exemplo /tmp/claude-0/-home-user-Zapp-Web-V2/19ff5006-3a0f-568b-84a1-eb12d2182604/scratchpad/wt-main/src/...\n- NUNCA leia /home…",
+      "promptFramed": true,
+      "lastProgressAt": 1794771016324,
+      "tokens": 128209,
+      "toolCalls": 10,
+      "durationMs": 144469,
+      "resultPreview": "{\"id\":\"claude__fix-ga-fase78-perimetro-custo-261020-2200\",\"nota\":\"12 lacunas do ledger + 2 que o dossie tambem afirma fora da main (aplicar-perimetro, bump-toolchain). Nada impediu a conferencia.\",\"itens\":[{\"titulo\":\"Cache de testes estourou os 10 GB do repo e comeca a ser descartado\",\"arquivos\":[\".github/workflows/ci.yml\",\"scripts/ci/workflow-contracts.unit.mjs\"],\"valor\":\"alto\",\"classe\":\"ci\",\"est…"
+    },
+    {
+      "type": "workflow_agent",
+      "index": 3,
+      "label": "verificar:claude__feat-completar-c121-261101-1330",
+      "phaseIndex": 1,
+      "phaseTitle": "Verificar",
+      "agentId": "ac27683c5cd0050c8",
+      "model": "claude-opus-5",
+      "state": "done",
+      "startedAt": 1794770976365,
+      "queuedAt": 1794770869648,
+      "attempt": 1,
+      "lastToolName": "StructuredOutput",
+      "lastToolSummary": "claude__feat-completar-c121-261101-1330",
+      "promptPreview": "REGRAS DE LEITURA (obrigatorias):\n- A VERDADE sobre o que esta na main e o checkout em /tmp/claude-0/-home-user-Zapp-Web-V2/19ff5006-3a0f-568b-84a1-eb12d2182604/scratchpad/wt-main (origin/main 42b436bf6 + 1 commit so de e2e). Use SEMPRE caminhos absolutos dentro dele, por exemplo /tmp/claude-0/-home-user-Zapp-Web-V2/19ff5006-3a0f-568b-84a1-eb12d2182604/scratchpad/wt-main/src/...\n- NUNCA leia /home…",
+      "promptFramed": true,
+      "lastProgressAt": 1794771055996,
+      "tokens": 124044,
+      "toolCalls": 9,
+      "durationMs": 79631,
+      "resultPreview": "{\"id\":\"claude__feat-completar-c121-261101-1330\",\"itens\":[{\"titulo\":\"Numero pausa sozinho quando o WhatsApp acusa limite de envio\",\"arquivos\":[\"supabase/functions/evolution-api/index.ts\",\"supabase/functions/_shared/instance-pause-actions.ts\"],\"valor\":\"alto\",\"classe\":\"edge\",\"estado\":\"ja_na_main\",\"bloqueio\":\"nenhum\",\"evidencia\":\"supabase/functions/evolution-api/index.ts:286 chama auto_pause_instance …"
+    },
+    {
+      "type": "workflow_agent",
+      "index": 4,
+      "label": "verificar:claude_juca__practical-rubin-8xnw0u",
+      "phaseIndex": 1,
+      "phaseTitle": "Verificar",
+      "agentId": "a06b2cac55232124d",
+      "model": "claude-opus-5",
+      "state": "done",
+      "startedAt": 1794771016385,
+      "queuedAt": 1794770869649,
+      "attempt": 1,
+      "lastToolName": "StructuredOutput",
+      "lastToolSummary": "claude_juca__practical-rubin-8xnw0u",
+      "promptPreview": "REGRAS DE LEITURA (obrigatorias):\n- A VERDADE sobre o que esta na main e o checkout em /tmp/claude-0/-home-user-Zapp-Web-V2/19ff5006-3a0f-568b-84a1-eb12d2182604/scratchpad/wt-main (origin/main 42b436bf6 + 1 commit so de e2e). Use SEMPRE caminhos absolutos dentro dele, por exemplo /tmp/claude-0/-home-user-Zapp-Web-V2/19ff5006-3a0f-568b-84a1-eb12d2182604/scratchpad/wt-main/src/...\n- NUNCA leia /home…",
+      "promptFramed": true,
+      "lastProgressAt": 1794771079427,
+      "tokens": 116077,
+      "toolCalls": 8,
+      "durationMs": 63041,
+      "resultPreview": "{\"id\":\"claude_juca__practical-rubin-8xnw0u\",\"itens\":[{\"titulo\":\"Importar/exportar templates de mensagem em planilha (CSV/JSON) não existe\",\"arquivos\":[\"src/components/talkx/talkxTemplateFile.ts\"],\"valor\":\"alto\",\"classe\":\"front\",\"estado\":\"pendente\",\"bloqueio\":\"nenhum\",\"evidencia\":\"arquivo ausente na main (ls src/components/talkx/talkxTemplateFile.ts: No such file); grep -rn 'talkxTemplateFile|parse…"
+    },
+    {
+      "type": "workflow_agent",
+      "index": 5,
+      "label": "verificar:claude__charming-mccarthy-jbxy56",
+      "phaseIndex": 1,
+      "phaseTitle": "Verificar",
+      "agentId": "a776342b1b74e9ca2",
+      "model": "claude-opus-5",
+      "state": "done",
+      "startedAt": 1794771056001,
+      "queuedAt": 1794770869649,
+      "attempt": 1,
+      "lastToolName": "StructuredOutput",
+      "lastToolSummary": "claude__charming-mccarthy-jbxy56",
+      "promptPreview": "REGRAS DE LEITURA (obrigatorias):\n- A VERDADE sobre o que esta na main e o checkout em /tmp/claude-0/-home-user-Zapp-Web-V2/19ff5006-3a0f-568b-84a1-eb12d2182604/scratchpad/wt-main (origin/main 42b436bf6 + 1 commit so de e2e). Use SEMPRE caminhos absolutos dentro dele, por exemplo /tmp/claude-0/-home-user-Zapp-Web-V2/19ff5006-3a0f-568b-84a1-eb12d2182604/scratchpad/wt-main/src/...\n- NUNCA leia /home…",
+      "promptFramed": true,
+      "lastProgressAt": 1794771191994,
+      "tokens": 129613,
+      "toolCalls": 11,
+      "durationMs": 135992,
+      "resultPreview": "{\"id\":\"claude__charming-mccarthy-jbxy56\",\"itens\":[{\"titulo\":\"Rollback das edge functions pode republicar a propria versao quebrada\",\"arquivos\":[\".github/workflows/deploy-functions.yml\"],\"valor\":\"alto\",\"classe\":\"ci\",\"estado\":\"pendente\",\"bloqueio\":\"ci_workflow\",\"evidencia\":\".github/workflows/deploy-functions.yml:91 grupo unico; :165-176 pega o 1o Deployment success sem excluir GITHUB_SHA; :494 so de…"
+    },
+    {
+      "type": "workflow_agent",
+      "index": 6,
+      "label": "verificar:codex__publish-followup-20261021",
+      "phaseIndex": 1,
+      "phaseTitle": "Verificar",
+      "agentId": "ace9b18c72e0d288b",
+      "model": "claude-opus-5",
+      "state": "done",
+      "startedAt": 1794771079433,
+      "queuedAt": 1794770869649,
+      "attempt": 1,
+      "lastToolName": "StructuredOutput",
+      "lastToolSummary": "codex__publish-followup-20261021",
+      "promptPreview": "REGRAS DE LEITURA (obrigatorias):\n- A VERDADE sobre o que esta na main e o checkout em /tmp/claude-0/-home-user-Zapp-Web-V2/19ff5006-3a0f-568b-84a1-eb12d2182604/scratchpad/wt-main (origin/main 42b436bf6 + 1 commit so de e2e). Use SEMPRE caminhos absolutos dentro dele, por exemplo /tmp/claude-0/-home-user-Zapp-Web-V2/19ff5006-3a0f-568b-84a1-eb12d2182604/scratchpad/wt-main/src/...\n- NUNCA leia /home…",
+      "promptFramed": true,
+      "lastProgressAt": 1794771176152,
+      "tokens": 125520,
+      "toolCalls": 11,
+      "durationMs": 96718,
+      "resultPreview": "{\"id\":\"codex__publish-followup-20261021\",\"itens\":[{\"titulo\":\"Contagem de buscas inflada: cada clique virava uma busca nova\",\"arquivos\":[\"src/components/inbox/useGlobalSearchData.ts\"],\"valor\":\"alto\",\"classe\":\"front\",\"estado\":\"ja_na_main\",\"bloqueio\":\"nenhum\",\"evidencia\":\"src/components/inbox/useGlobalSearchData.ts:50 createSearchEventId; :113 lastSearchEvent com eventId; :135-136 p_event_id/p_result…"
+    },
+    {
+      "type": "workflow_agent",
+      "index": 7,
+      "label": "verificar:claude__fix-ga-fase1-lote-banco-261020-2200",
+      "phaseIndex": 1,
+      "phaseTitle": "Verificar",
+      "agentId": "a388e67e39a3bd7b1",
+      "model": "claude-opus-5",
+      "state": "done",
+      "startedAt": 1794771176157,
+      "queuedAt": 1794770869649,
+      "attempt": 1,
+      "lastToolName": "StructuredOutput",
+      "lastToolSummary": "claude__fix-ga-fase1-lote-banco-261020-2200",
+      "promptPreview": "REGRAS DE LEITURA (obrigatorias):\n- A VERDADE sobre o que esta na main e o checkout em /tmp/claude-0/-home-user-Zapp-Web-V2/19ff5006-3a0f-568b-84a1-eb12d2182604/scratchpad/wt-main (origin/main 42b436bf6 + 1 commit so de e2e). Use SEMPRE caminhos absolutos dentro dele, por exemplo /tmp/claude-0/-home-user-Zapp-Web-V2/19ff5006-3a0f-568b-84a1-eb12d2182604/scratchpad/wt-main/src/...\n- NUNCA leia /home…",
+      "promptFramed": true,
+      "lastProgressAt": 1794771231256,
+      "tokens": 111287,
+      "toolCalls": 7,
+      "durationMs": 55098,
+      "resultPreview": "{\"id\":\"claude__fix-ga-fase1-lote-banco-261020-2200\",\"itens\":[{\"titulo\":\"Queda de conexao com o banco passa como \\\"tudo ok\\\" na checagem automatica\",\"arquivos\":[\"scripts/db-audit/check-migration-drift.mjs\"],\"valor\":\"alto\",\"classe\":\"script\",\"estado\":\"pendente\",\"bloqueio\":\"nenhum\",\"evidencia\":\"scripts/db-audit/check-migration-drift.mjs:916 compare() ainda retorna 4 campos; grep de return 3/pendingOnl…"
+    },
+    {
+      "type": "workflow_agent",
+      "index": 8,
+      "label": "verificar:claude__fix-ga-resto-typessync-20261021-0730",
+      "phaseIndex": 1,
+      "phaseTitle": "Verificar",
+      "agentId": "ad3d50cc3059ff31e",
+      "model": "claude-opus-5",
+      "state": "done",
+      "startedAt": 1794771191998,
+      "queuedAt": 1794770869649,
+      "attempt": 1,
+      "lastToolName": "StructuredOutput",
+      "lastToolSummary": "claude__fix-ga-resto-typessync-20261021-0730",
+      "promptPreview": "REGRAS DE LEITURA (obrigatorias):\n- A VERDADE sobre o que esta na main e o checkout em /tmp/claude-0/-home-user-Zapp-Web-V2/19ff5006-3a0f-568b-84a1-eb12d2182604/scratchpad/wt-main (origin/main 42b436bf6 + 1 commit so de e2e). Use SEMPRE caminhos absolutos dentro dele, por exemplo /tmp/claude-0/-home-user-Zapp-Web-V2/19ff5006-3a0f-568b-84a1-eb12d2182604/scratchpad/wt-main/src/...\n- NUNCA leia /home…",
+      "promptFramed": true,
+      "lastProgressAt": 1794771254195,
+      "tokens": 113798,
+      "toolCalls": 7,
+      "durationMs": 62196,
+      "resultPreview": "{\"id\":\"claude__fix-ga-resto-typessync-20261021-0730\",\"itens\":[{\"titulo\":\"Trava que impede o robô de apagar tabela em uso continua desligada\",\"arquivos\":[\".github/workflows/types-sync.yml\"],\"valor\":\"alto\",\"classe\":\"ci\",\"estado\":\"pendente\",\"bloqueio\":\"ci_workflow\",\"evidencia\":\".github/workflows/types-sync.yml:408 sobrescreve o catálogo e :485 o compara com ele mesmo; grep 'catalog.base' em .github/w…"
+    },
+    {
+      "type": "workflow_agent",
+      "index": 9,
+      "label": "refutar:claude__fix-ga-resto-dbmigrate-20261021-0729",
+      "phaseIndex": 2,
+      "phaseTitle": "Refutar",
+      "agentId": "ad40ccbaf4ad37834",
+      "model": "claude-opus-5",
+      "state": "done",
+      "startedAt": 1794771231278,
+      "queuedAt": 1794770976399,
+      "attempt": 1,
+      "lastToolName": "StructuredOutput",
+      "lastToolSummary": "claude__fix-ga-resto-dbmigrate-20261021-0729",
+      "promptPreview": "REGRAS DE LEITURA (obrigatorias):\n- A VERDADE sobre o que esta na main e o checkout em /tmp/claude-0/-home-user-Zapp-Web-V2/19ff5006-3a0f-568b-84a1-eb12d2182604/scratchpad/wt-main (origin/main 42b436bf6 + 1 commit so de e2e). Use SEMPRE caminhos absolutos dentro dele, por exemplo /tmp/claude-0/-home-user-Zapp-Web-V2/19ff5006-3a0f-568b-84a1-eb12d2182604/scratchpad/wt-main/src/...\n- NUNCA leia /home…",
+      "promptFramed": true,
+      "lastProgressAt": 1794771475915,
+      "tokens": 150741,
+      "toolCalls": 21,
+      "durationMs": 244637,
+      "resultPreview": "{\"id\":\"claude__fix-ga-resto-dbmigrate-20261021-0729\",\"revisados\":[{\"titulo\":\"Conferir uma migration ainda trava esperando aprovacao do dono\",\"refutado\":false,\"motivo\":\".github/workflows/db-migrate.yml:71-79 job unico `migrate` com `environment: producao-ddl` (:75) cobre preflight (:175) e dry-run (:907); API: producao-ddl exige revisor adm01-debug\"},{\"titulo\":\"As 16 conferencias de pos-aplicacao s…"
+    },
+    {
+      "type": "workflow_agent",
+      "index": 10,
+      "label": "refutar:claude__fix-ga-fase78-perimetro-custo-261020",
+      "phaseIndex": 2,
+      "phaseTitle": "Refutar",
+      "agentId": "a62385a0201007942",
+      "model": "claude-opus-5",
+      "state": "done",
+      "startedAt": 1794771254200,
+      "queuedAt": 1794771016427,
+      "attempt": 1,
+      "lastToolName": "StructuredOutput",
+      "lastToolSummary": "claude__fix-ga-fase78-perimetro-custo-261020-2200",
+      "promptPreview": "REGRAS DE LEITURA (obrigatorias):\n- A VERDADE sobre o que esta na main e o checkout em /tmp/claude-0/-home-user-Zapp-Web-V2/19ff5006-3a0f-568b-84a1-eb12d2182604/scratchpad/wt-main (origin/main 42b436bf6 + 1 commit so de e2e). Use SEMPRE caminhos absolutos dentro dele, por exemplo /tmp/claude-0/-home-user-Zapp-Web-V2/19ff5006-3a0f-568b-84a1-eb12d2182604/scratchpad/wt-main/src/...\n- NUNCA leia /home…",
+      "promptFramed": true,
+      "lastProgressAt": 1794771374596,
+      "tokens": 118870,
+      "toolCalls": 16,
+      "durationMs": 120395,
+      "resultPreview": "{\"id\":\"claude__fix-ga-fase78-perimetro-custo-261020-2200\",\"revisados\":[{\"titulo\":\"Cache de testes estourou os 10 GB do repo e comeca a ser descartado\",\"refutado\":false,\"motivo\":\"ci.yml:473-477 ainda e actions/cache@55cc834 combinado, key pw-cfw-${{hashFiles('bun.lock')}}-${{runner.os}}; contrato workflow-contracts.unit.mjs:255,450 exige 'actions/cache@'. Nenhum restore/save na main.\"},{\"titulo\":\"R…"
+    },
+    {
+      "type": "workflow_agent",
+      "index": 11,
+      "label": "refutar:claude_juca__practical-rubin-8xnw0u",
+      "phaseIndex": 2,
+      "phaseTitle": "Refutar",
+      "agentId": "a8fa737b368db8fc2",
+      "model": "claude-opus-5",
+      "state": "done",
+      "startedAt": 1794771374600,
+      "queuedAt": 1794771079467,
+      "attempt": 1,
+      "lastToolName": "StructuredOutput",
+      "lastToolSummary": "revisao-adversarial-claude_juca__practical-rubin-8xnw0u",
+      "promptPreview": "REGRAS DE LEITURA (obrigatorias):\n- A VERDADE sobre o que esta na main e o checkout em /tmp/claude-0/-home-user-Zapp-Web-V2/19ff5006-3a0f-568b-84a1-eb12d2182604/scratchpad/wt-main (origin/main 42b436bf6 + 1 commit so de e2e). Use SEMPRE caminhos absolutos dentro dele, por exemplo /tmp/claude-0/-home-user-Zapp-Web-V2/19ff5006-3a0f-568b-84a1-eb12d2182604/scratchpad/wt-main/src/...\n- NUNCA leia /home…",
+      "promptFramed": true,
+      "lastProgressAt": 1794771476510,
+      "tokens": 122939,
+      "toolCalls": 16,
+      "durationMs": 101909,
+      "resultPreview": "{\"id\":\"revisao-adversarial-claude_juca__practical-rubin-8xnw0u\",\"revisados\":[{\"titulo\":\"Importar/exportar templates de mensagem em planilha (CSV/JSON) não existe\",\"refutado\":false,\"motivo\":\"Ausente: nao ha src/components/talkx/talkxTemplateFile.ts (ls falha) e grep talkxTemplateFile|parseTemplateFile em src = 0. Unico CSV do modulo e src/lib/talkxCsv.ts:2 (relatorio de campanha).\"},{\"titulo\":\"Tela…"
+    },
+    {
+      "type": "workflow_agent",
+      "index": 12,
+      "label": "refutar:codex__publish-followup-20261021",
+      "phaseIndex": 2,
+      "phaseTitle": "Refutar",
+      "agentId": "a05b61948c467885f",
+      "model": "claude-opus-5",
+      "state": "done",
+      "startedAt": 1794771475921,
+      "queuedAt": 1794771176188,
+      "attempt": 1,
+      "lastToolName": "StructuredOutput",
+      "lastToolSummary": "codex__publish-followup-20261021",
+      "promptPreview": "REGRAS DE LEITURA (obrigatorias):\n- A VERDADE sobre o que esta na main e o checkout em /tmp/claude-0/-home-user-Zapp-Web-V2/19ff5006-3a0f-568b-84a1-eb12d2182604/scratchpad/wt-main (origin/main 42b436bf6 + 1 commit so de e2e). Use SEMPRE caminhos absolutos dentro dele, por exemplo /tmp/claude-0/-home-user-Zapp-Web-V2/19ff5006-3a0f-568b-84a1-eb12d2182604/scratchpad/wt-main/src/...\n- NUNCA leia /home…",
+      "promptFramed": true,
+      "lastProgressAt": 1794771535202,
+      "tokens": 113839,
+      "toolCalls": 10,
+      "durationMs": 59281,
+      "resultPreview": "{\"id\":\"codex__publish-followup-20261021\",\"revisados\":[{\"titulo\":\"Falta a prova automatica de que o registro de buscas nao vaza dado pessoal\",\"refutado\":false,\"motivo\":\"Confirmado: filtro PII da RPC em supabase/migrations/20261031130000_search_event_rpc.sql:72-78 sem teste; search_events.sql:94 ainda espera colunas sem client_event_id e 1 policy INSERT (migration:33 removeu) — teste obsoleto/falhar…"
+    },
+    {
+      "type": "workflow_agent",
+      "index": 13,
+      "label": "refutar:claude__charming-mccarthy-jbxy56",
+      "phaseIndex": 2,
+      "phaseTitle": "Refutar",
+      "agentId": "abe600ff78bdfe2ca",
+      "model": "claude-opus-5",
+      "state": "done",
+      "startedAt": 1794771476515,
+      "queuedAt": 1794771192027,
+      "attempt": 1,
+      "lastToolName": "StructuredOutput",
+      "lastToolSummary": "claude__charming-mccarthy-jbxy56",
+      "promptPreview": "REGRAS DE LEITURA (obrigatorias):\n- A VERDADE sobre o que esta na main e o checkout em /tmp/claude-0/-home-user-Zapp-Web-V2/19ff5006-3a0f-568b-84a1-eb12d2182604/scratchpad/wt-main (origin/main 42b436bf6 + 1 commit so de e2e). Use SEMPRE caminhos absolutos dentro dele, por exemplo /tmp/claude-0/-home-user-Zapp-Web-V2/19ff5006-3a0f-568b-84a1-eb12d2182604/scratchpad/wt-main/src/...\n- NUNCA leia /home…",
+      "promptFramed": true,
+      "lastProgressAt": 1794771743540,
+      "tokens": 171832,
+      "toolCalls": 42,
+      "durationMs": 267025,
+      "resultPreview": "{\"id\":\"claude__charming-mccarthy-jbxy56\",\"revisados\":[{\"titulo\":\"Rollback das edge functions pode republicar a propria versao quebrada\",\"refutado\":false,\"motivo\":\"deploy-functions.yml:175-181 pega o 1o Deployment success sem excluir GITHUB_SHA; :203 is-ancestor aceita o proprio SHA; grep 'deno test' no arquivo = 0\"},{\"titulo\":\"Testes que travam o rollback seguro e os testes antes de publicar\",\"ref…"
+    },
+    {
+      "type": "workflow_agent",
+      "index": 14,
+      "label": "refutar:claude__fix-ga-fase1-lote-banco-261020-2200",
+      "phaseIndex": 2,
+      "phaseTitle": "Refutar",
+      "agentId": "ad6be13e8baed8466",
+      "model": "claude-opus-5",
+      "state": "done",
+      "startedAt": 1794771535207,
+      "queuedAt": 1794771231309,
+      "attempt": 1,
+      "lastToolName": "StructuredOutput",
+      "lastToolSummary": "claude__fix-ga-fase1-lote-banco-261020-2200",
+      "promptPreview": "REGRAS DE LEITURA (obrigatorias):\n- A VERDADE sobre o que esta na main e o checkout em /tmp/claude-0/-home-user-Zapp-Web-V2/19ff5006-3a0f-568b-84a1-eb12d2182604/scratchpad/wt-main (origin/main 42b436bf6 + 1 commit so de e2e). Use SEMPRE caminhos absolutos dentro dele, por exemplo /tmp/claude-0/-home-user-Zapp-Web-V2/19ff5006-3a0f-568b-84a1-eb12d2182604/scratchpad/wt-main/src/...\n- NUNCA leia /home…",
+      "promptFramed": true,
+      "lastProgressAt": 1794771683206,
+      "tokens": 140324,
+      "toolCalls": 21,
+      "durationMs": 147999,
+      "resultPreview": "{\"id\":\"claude__fix-ga-fase1-lote-banco-261020-2200\",\"revisados\":[{\"titulo\":\"Queda de conexao com o banco passa como \\\"tudo ok\\\" na checagem automatica\",\"refutado\":false,\"motivo\":\"check-migration-drift.mjs:916 compare() retorna 4 campos; :965 falha de psql devolve 2, mesmo codigo lido como apply-pendente; zero process.argv/--json no arquivo (grep argv = 0).\"},{\"titulo\":\"Aviso de atualizacao de banc…"
+    },
+    {
+      "type": "workflow_agent",
+      "index": 15,
+      "label": "refutar:claude__fix-ga-resto-typessync-20261021-0730",
+      "phaseIndex": 2,
+      "phaseTitle": "Refutar",
+      "agentId": "a4605923acbcb6928",
+      "model": "claude-opus-5",
+      "state": "done",
+      "startedAt": 1794771683211,
+      "queuedAt": 1794771254230,
+      "attempt": 1,
+      "lastToolName": "StructuredOutput",
+      "lastToolSummary": "claude__fix-ga-resto-typessync-20261021-0730",
+      "promptPreview": "REGRAS DE LEITURA (obrigatorias):\n- A VERDADE sobre o que esta na main e o checkout em /tmp/claude-0/-home-user-Zapp-Web-V2/19ff5006-3a0f-568b-84a1-eb12d2182604/scratchpad/wt-main (origin/main 42b436bf6 + 1 commit so de e2e). Use SEMPRE caminhos absolutos dentro dele, por exemplo /tmp/claude-0/-home-user-Zapp-Web-V2/19ff5006-3a0f-568b-84a1-eb12d2182604/scratchpad/wt-main/src/...\n- NUNCA leia /home…",
+      "promptFramed": true,
+      "lastProgressAt": 1794771887677,
+      "tokens": 144144,
+      "toolCalls": 19,
+      "durationMs": 204465,
+      "resultPreview": "{\"id\":\"claude__fix-ga-resto-typessync-20261021-0730\",\"revisados\":[{\"titulo\":\"Trava que impede o robô de apagar tabela em uso continua desligada\",\"refutado\":false,\"motivo\":\"types-sync.yml:405-409 copia /tmp/catalog.new.json sobre supabase/schema-catalog.json ANTES do Gate 3 em :485, que compara os dois -> arquivos identicos, gate tautologico. Nenhum catalog.base/git show no job (:380-485).\"},{\"titu…"
+    }
+  ],
+  "totalTokens": 1928327,
+  "totalToolCalls": 217
+}

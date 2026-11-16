@@ -1,0 +1,34 @@
+[
+ {
+  "commit": "97de666c9",
+  "arquivo": "src/hooks/evolution/__tests__/rotas-chamadas-existem.test.ts",
+  "linhas": 16,
+  "amostra": [
+   "const acoesDoRoteador = new Set(",
+   "  [...readFileSync(ROUTER, 'utf8').matchAll(/action === '([a-z0-9-]+)'/g)].map((m) => m[1]),",
+   "function acoesChamadasPeloApp(): Array<{ acao: string; arquivo: string }> {",
+   "  const achados: Array<{ acao: string; arquivo: string }> = [];",
+   "  for (const arquivo of fontes(SRC)) {",
+   "    const texto = readFileSync(arquivo, 'utf8');"
+  ]
+ },
+ {
+  "commit": "97de666c9",
+  "arquivo": "supabase/functions/evolution-api/index.test.ts",
+  "linhas": 3,
+  "amostra": [
+   "    assertEquals(fake.calls[0].path, \"/chat/markMessageAsUnread/PRINCIPAL\");",
+   "    assertEquals(fake.calls[0].body, { readMessages: [key] });",
+   "    assertEquals(fake.calls[0].body, { number: \"5511999999999\", template });"
+  ]
+ },
+ {
+  "commit": "97de666c9",
+  "arquivo": "supabase/functions/evolution-api/index.ts",
+  "linhas": 2,
+  "amostra": [
+   "      return await proxy(`/chat/markMessageAsUnread/${instance}`, 'POST', { readMessages: [body.key] });",
+   "      return await proxy(`/message/sendTemplate/${instance}`, 'POST', { number: body.number, template: body.template });"
+  ]
+ }
+]
