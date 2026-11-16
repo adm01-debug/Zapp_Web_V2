@@ -69,7 +69,22 @@ ReactDOM.createRoot(rootElement).render(
 );
 
 // Accessibility auditing in development mode, deferred so it never blocks preview boot.
-if (import.meta.env.DEV) {
+//
+// Fica FORA da automacao (`navigator.webdriver`). O E2E roda contra este mesmo
+// dev server, e aqui o custo nao e' o aviso no console: o dev server entrega
+// 4.559.240 bytes de `@axe-core/react` (medido em 16/11/2026) para dentro da
+// pagina, e o `axe.default(..., 1000, ...)` abaixo re-audita a arvore React
+// INTEIRA a cada ciclo de render, para sempre. Somado ao `axe.min.js` que as
+// specs injetam por conta propria (+580 KB), isso derrubava o processo de
+// conteudo do Firefox com `Page crashed` nos testes do painel CRM
+// (`e2e/email-navy-visual.spec.ts:343` e `:418`).
+//
+// Nenhuma cobertura se perde: toda spec que afere acessibilidade injeta o
+// proprio axe (`addScriptTag`) e afirma `violations` — ver
+// `a11y-tarefas-dashboard.spec.ts:16`, `monitoring.spec.ts:28` e
+// `email-navy-visual.spec.ts:154`. Esta auditoria do app so escreve aviso no
+// console; nao afirma nada.
+if (import.meta.env.DEV && !navigator.webdriver) {
   window.setTimeout(() => {
     import('@axe-core/react').then((axe) => {
       axe.default(React, ReactDOM, 1000, undefined, undefined, (results) => {
