@@ -3,11 +3,18 @@ import { toast } from 'sonner';
 import { TalkXTemplateEditor } from './TalkXTemplateEditor';
 import {
   Plus, FileText, Star, Pencil, Trash2, Copy, Image, Video, Music, Check, ChevronRight, BarChart3,
-  Sparkles, TrendingUp, Lightbulb,
+  Sparkles, TrendingUp, Lightbulb, Download, Upload,
 } from 'lucide-react';
 import { PrimaryButton, Pill } from '@/components/dashboard/overview/DashboardCard';
 import { cn } from '@/lib/utils';
 import { useTalkXTemplates, type TalkXTemplate } from '@/hooks/integrations/useTalkXTemplates';
+import { useDownloadPermission } from '@/hooks/system/useDownloadPermission';
+import { TalkXTemplateImportDialog } from './TalkXTemplateImportDialog';
+import {
+  serializeTemplatesToCsv, serializeTemplatesToJson, downloadTemplateFile,
+  serializarTags, desserializarTags, nomeDeCopia,
+  type TemplateImportRow, type ConflictAction,
+} from './talkxTemplateFile';
 import { useTalkXTemplateLibraryStats, pointsDelta } from '@/hooks/integrations/useTalkXTemplateStats';
 import { RailCard, RailAction, HeroCard, TalkXEmptyState, TalkXFilteredEmptyState, TalkXSkeletonRows, FilterBarV2, TalkXPagination, TEMPLATE_CATEGORIES, TEMPLATE_STATUS, extractVariables, fmtInt, fmtDateTime, fmtTime, TalkXConfirmDialog } from './talkxShared';
 import { useTalkXFilterState } from './kit/useFilterState';
@@ -101,6 +108,8 @@ export function TalkXTemplates({ onUseTemplate, startNew, onStartNewHandled, onO
   const [galleryMode, setGalleryMode] = useState<GalleryMode>(lerModoGaleria);
   /** T04-040: galeria ordenada por taxa de resposta (aberta pelo "Ver todos"). */
   const [orderByReply, setOrderByReply] = useState(false);
+  const [showImport, setShowImport] = useState(false);
+  const { canDownload } = useDownloadPermission();
 
   const trocarModo = (modo: GalleryMode) => { setGalleryMode(modo); salvarModoGaleria(modo); };
 
@@ -124,6 +133,78 @@ export function TalkXTemplates({ onUseTemplate, startNew, onStartNewHandled, onO
     setRoute(nextRoute);
     pushTalkXTemplateRoute(nextRoute);
   }, []);
+
+  const handleExportCsv = useCallback(() => {
+    const rows: TemplateImportRow[] = templates.map((t) => ({
+      name: t.name, content: t.content, description: t.description ?? '',
+      category: t.category, tags: serializarTags(t.tags), status: t.status,
+    }));
+    downloadTemplateFile('talkx-templates.csv', serializeTemplatesToCsv(rows), 'text/csv');
+    toast.success('Templates exportados em CSV.');
+  }, [templates]);
+
+  const handleExportJson = useCallback(() => {
+    const rows: TemplateImportRow[] = templates.map((t) => ({
+      name: t.name, content: t.content, description: t.description ?? undefined,
+      category: t.category, tags: serializarTags(t.tags), status: t.status,
+    }));
+    downloadTemplateFile('talkx-templates.json', serializeTemplatesToJson(rows), 'application/json');
+    toast.success('Templates exportados em JSON.');
+  }, [templates]);
+
+  const handleImport = useCallback(async (
+    rows: Array<{ row: TemplateImportRow; action: ConflictAction }>,
+  ): Promise<{ imported: number; skipped: number; errors: number }> => {
+    let imported = 0; let skipped = 0; let errors = 0;
+    for (const { row, action } of rows) {
+      if (action === 'skip') { skipped++; continue; }
+      const campos = {
+        // `undefined` desaparece do corpo JSON e `p_description` e' argumento
+        // obrigatorio de update_talkx_template_with_snapshot
+        // (`useTalkXTemplates.ts:38-42` tipa o override como `string | null`):
+        // sobrescrever template sem descricao falhava. `null` mantem o argumento
+        // no corpo e e' o que o tipo pede.
+        content: row.content,
+        description: row.description || null,
+        category: row.category || 'geral',
+        tags: desserializarTags(row.tags),
+        status: (row.status as TalkXTemplate['status']) || 'draft',
+      };
+      try {
+        // O diálogo manda 'overwrite' tanto para o nome que já existe quanto
+        // para o nome novo (`TalkXTemplateImportDialog.tsx:92`), então o que
+        // decide é achar ou não o template: achou, atualiza; não achou, cria.
+        // O parser detecta conflito com `raw.name.trim()` (talkxTemplateFile.ts),
+        // entao a busca tem de usar a MESMA representacao: sem isso, um nome com
+        // espaco (` Oferta `) aparecia como conflito e a sobrescrita criava um
+        // segundo registro, deixando o original intacto.
+        const nome = row.name.trim();
+        const existente = action === 'overwrite' ? templates.find((t) => t.name.trim() === nome) : undefined;
+        if (existente) {
+          // Antes, 'overwrite' chamava createTemplate, que faz INSERT: o template
+          // original ficava com o conteúdo antigo (inclusive nas campanhas que o
+          // referenciam) e aparecia um segundo com o mesmo nome. Atualizar pelo id
+          // preserva a identidade e grava versão com controle de concorrência.
+          await updateTemplate.mutateAsync({
+            id: existente.id,
+            expectedUpdatedAt: existente.updated_at,
+            name: nome,
+            ...campos,
+          });
+        } else {
+          await createTemplate.mutateAsync({
+            name: action === 'copy' ? nomeDeCopia(nome) : nome,
+            ...campos,
+          });
+        }
+        imported++;
+      } catch {
+        errors++;
+      }
+    }
+    if (imported > 0) void refetch();
+    return { imported, skipped, errors };
+  }, [createTemplate, updateTemplate, templates, refetch]);
 
   // X094 — o endereço acompanha a troca feita DENTRO do editor (biblioteca lateral)
   // sem mexer no estado do React: remontar o editor aqui perderia a edição em curso
@@ -310,7 +391,26 @@ export function TalkXTemplates({ onUseTemplate, startNew, onStartNewHandled, onO
           filters={filterDefs} values={filterValues} onFilter={(k, v) => { setFilterValue(k as 'cat' | 'st', v); setPage(1); }}
           hasActive={hasActive} onClear={limparFiltros}
           view={galleryMode} onView={trocarModo}
-          rightSlot={<PrimaryButton icon={Plus} onClick={openNew}>Novo Template</PrimaryButton>}
+          rightSlot={
+            <div className="flex items-center gap-2">
+              {canDownload && templates.length > 0 && (
+                <>
+                  <button type="button" onClick={handleExportCsv} className="inline-flex items-center gap-1.5 h-8 px-3 rounded-lg border border-border/70 bg-input/40 text-xs font-medium text-foreground-secondary hover:bg-muted/50">
+                    <Download className="w-3.5 h-3.5" />CSV
+                  </button>
+                  <button type="button" onClick={handleExportJson} className="inline-flex items-center gap-1.5 h-8 px-3 rounded-lg border border-border/70 bg-input/40 text-xs font-medium text-foreground-secondary hover:bg-muted/50">
+                    <Download className="w-3.5 h-3.5" />JSON
+                  </button>
+                </>
+              )}
+              {canDownload && (
+                <button type="button" onClick={() => setShowImport(true)} className="inline-flex items-center gap-1.5 h-8 px-3 rounded-lg border border-border/70 bg-input/40 text-xs font-medium text-foreground-secondary hover:bg-muted/50">
+                  <Upload className="w-3.5 h-3.5" />Importar
+                </button>
+              )}
+              <PrimaryButton icon={Plus} onClick={openNew}>Novo Template</PrimaryButton>
+            </div>
+          }
         />
 
         <TalkXQueryBoundary
@@ -414,7 +514,9 @@ export function TalkXTemplates({ onUseTemplate, startNew, onStartNewHandled, onO
           <div className="space-y-2">
             <RailAction icon={Plus} title="Criar template" subtitle="Do zero" onClick={openNew} />
             <RailAction icon={Copy} color="violet" title="Duplicar template" subtitle="Baseado em um existente" onClick={() => selected ? duplicateTemplate.mutate(selected) : openNew()} />
-
+            {canDownload && (
+              <RailAction icon={Upload} color="blue" title="Importar templates" subtitle="CSV ou JSON" onClick={() => setShowImport(true)} />
+            )}
           </div>
         </RailCard>
       </div>
@@ -437,6 +539,14 @@ export function TalkXTemplates({ onUseTemplate, startNew, onStartNewHandled, onO
         entityName={deleting?.name}
         loading={deleteTemplate.isPending}
       />
+
+      {showImport && (
+        <TalkXTemplateImportDialog
+          existingTemplates={templates}
+          onImport={handleImport}
+          onClose={() => setShowImport(false)}
+        />
+      )}
     </div>
   );
 }
