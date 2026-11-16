@@ -12,13 +12,14 @@ git ls-tree -r origin/main | awk '{print $3}' | sort -u > "$OUT/main-blobs.txt"
 
 : > "$OUT/resumo.tsv"
 : > "$OUT/unicos.tsv"
+: > "$OUT/delecoes.tsv"
 
 # `refname:short` de `refs/remotes/origin/HEAD` encurta para o nome nu `origin` em clones
 # que tenham esse alias, e `origin` escaparia de um filtro escrito so com `origin/...`:
 # a main entraria no resumo como branch extra de zero arquivo. Achado da Devin na PR #3192;
 # neste clone nao ha `origin/HEAD`, mas o filtro cobre o caso de qualquer forma.
 for br in $(git for-each-ref --format='%(refname:short)' refs/remotes/origin | grep -vE '^origin$|^origin/(HEAD|main|contexto)$'); do
-  mb=$(git merge-base origin/main "$br" 2>/dev/null) || { echo -e "$br\tERRO\t-\t-\t-" >> "$OUT/resumo.tsv"; continue; }
+  mb=$(git merge-base origin/main "$br" 2>/dev/null) || { echo -e "$br\tERRO\t-\t-\t-\t-" >> "$OUT/resumo.tsv"; continue; }
   tip=$(git rev-parse "$br")
   # Branch JA incorporada por merge: ela e ancestral da main, o ponto de bifurcacao e o
   # proprio tip e `git diff $mb $br` sai vazio. Dois achados da PR #3192 se cruzam aqui:
@@ -32,11 +33,24 @@ for br in $(git for-each-ref --format='%(refname:short)' refs/remotes/origin | g
   # branch e marcada INCONCLUSIVA e vai para adjudicacao manual, nunca sai da fila em
   # silencio. Medido em 16/11/2026: nenhuma das 222 branches cai neste caso.
   if [ "$tip" = "$mb" ]; then
-    echo -e "$br\t$tip\tINCONCLUSIVA-ANCESTRAL\t-\t-\t-" >> "$OUT/resumo.tsv"
+    echo -e "$br\t$tip\tINCONCLUSIVA-ANCESTRAL\t-\t-\t-\t-" >> "$OUT/resumo.tsv"
     continue
   fi
   # arquivos adicionados/modificados pela branch desde o ponto de bifurcacao
   mapfile -t files < <(git diff --name-only --diff-filter=AMR "$mb" "$br" 2>/dev/null)
+  # Apagar arquivo TAMBEM e trabalho. Com o filtro `AMR` sozinho, uma branch cujo
+  # trabalho e' remover codigo morto saia do inventario com tudo zerado, igual a uma
+  # branch sem pendencia nenhuma -- e "nada a fazer" e justamente o que autoriza fechar
+  # a branch. Achado do Codex na PR #3192; medido nesta base: 4 branches e 12 arquivos,
+  # entre elas uma cujo trabalho inteiro e' a remocao. Conta so a delecao que a main NAO
+  # incorporou: se a main tambem nao tem mais o arquivo, a remocao chegou.
+  del=0
+  while IFS= read -r f; do
+    [ -z "$f" ] && continue
+    if git cat-file -e "origin/main:$f" 2>/dev/null; then
+      del=$((del+1)); echo -e "$br\t$f" >> "$OUT/delecoes.tsv"
+    fi
+  done < <(git diff --name-only --diff-filter=D "$mb" "$br" 2>/dev/null)
   n=${#files[@]}
   same=0; moved=0; uniq=0
   for f in "${files[@]}"; do
@@ -47,6 +61,6 @@ for br in $(git for-each-ref --format='%(refname:short)' refs/remotes/origin | g
     if grep -qxF "$bb" "$OUT/main-blobs.txt"; then moved=$((moved+1)); continue; fi
     uniq=$((uniq+1)); echo -e "$br\t$f\t$bb" >> "$OUT/unicos.tsv"
   done
-  echo -e "$br\t$tip\t$n\t$same\t$moved\t$uniq" >> "$OUT/resumo.tsv"
+  echo -e "$br\t$tip\t$n\t$same\t$moved\t$uniq\t$del" >> "$OUT/resumo.tsv"
 done
 echo "FIM"
