@@ -144,3 +144,52 @@ test('E21: o head_branch do filtro e o mesmo `branch:` do create-pull-request', 
     'o filtro head_branch precisa usar a mesma branch que o PR abre',
   );
 });
+
+/**
+ * O Gate 3 ("remocoes destrutivas") roda no job `gates-e-pr`, DEPOIS do passo
+ * "Aplicar candidatos no worktree" — que sobrescreve
+ * `supabase/schema-catalog.json` com o candidato. Chamar
+ * `check-remocoes-destrutivas.mjs supabase/schema-catalog.json
+ * /tmp/catalog.new.json` ali comparava o candidato consigo mesmo: dois arquivos
+ * identicos, zero objetos removidos, gate sempre verde. Um `DROP TABLE` de
+ * tabela ainda consumida pelo `src/` passava direto para a PR de sync.
+ *
+ * O desenho travado aqui: o catalogo da `main` e copiado para
+ * `/tmp/catalog.old.json` ANTES do sobrescrito, e o Gate 3 compara essa copia
+ * com o candidato.
+ */
+test('Gate 3: o catalogo da main e guardado antes de ser sobrescrito', () => {
+  const iGate = workflow.indexOf('check-remocoes-destrutivas.mjs');
+  assert.ok(iGate > 0, 'nao achei a chamada do check-remocoes-destrutivas.mjs');
+  const antes = workflow.slice(0, iGate);
+  // Ha dois passos "Aplicar candidatos no worktree" (um por job); o que importa
+  // para o Gate 3 e o ultimo antes dele, no job `gates-e-pr`.
+  const iSobrescrito = antes.lastIndexOf('cp /tmp/catalog.new.json supabase/schema-catalog.json');
+  assert.ok(iSobrescrito > 0, 'nao achei o passo que sobrescreve o catalogo antes do Gate 3');
+  const iCopia = antes.lastIndexOf('cp supabase/schema-catalog.json /tmp/catalog.old.json');
+  assert.ok(iCopia > 0, 'o catalogo da main precisa ser copiado para /tmp/catalog.old.json');
+  assert.ok(
+    iCopia < iSobrescrito,
+    'a copia tem de vir ANTES do sobrescrito, senao guarda o candidato',
+  );
+});
+
+test('Gate 3: a comparacao usa a copia antiga, nao o worktree sobrescrito', () => {
+  const m = /check-remocoes-destrutivas\.mjs\s+(\S+)\s+(\S+)/u.exec(workflow);
+  assert.ok(m, 'nao achei a chamada do check-remocoes-destrutivas.mjs no workflow');
+  assert.equal(m[1], '/tmp/catalog.old.json', 'o catalogo ANTIGO do Gate 3 mudou');
+  assert.equal(m[2], '/tmp/catalog.new.json', 'o catalogo NOVO do Gate 3 mudou');
+  assert.notEqual(
+    m[1],
+    'supabase/schema-catalog.json',
+    'comparar o worktree deixa o gate vacuo: o arquivo ja foi sobrescrito',
+  );
+});
+
+test('Gate 3: roda depois do passo que sobrescreve o catalogo', () => {
+  assert.ok(
+    workflow.indexOf('cp /tmp/catalog.new.json supabase/schema-catalog.json') <
+      workflow.indexOf('check-remocoes-destrutivas.mjs'),
+    'se o Gate 3 passar a rodar antes do sobrescrito, a copia antiga deixa de ser necessaria',
+  );
+});
