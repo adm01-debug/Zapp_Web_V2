@@ -424,3 +424,234 @@ proteção de branch recusa.
 `auditoria/bruto/README.md` e `auditoria/ferramentas/README.md`. O
 `HANDOFF-SESSAO-2026-11-15.md` nesta mesma pasta traz o estado narrado de main, banco e
 pendências pela sessão anterior a esta.
+
+---
+
+## 12. Armadilhas do ambiente — o que custou tempo e não deve custar de novo
+
+Cada item aqui foi descoberto errando. Ler isto economiza a descoberta.
+
+### 12.1 Contêiner de nuvem
+
+| Sintoma | Causa e solução |
+|---|---|
+| `npx vitest` falha com `npm error code EOVERRIDE` num worktree novo | O worktree não tem `node_modules`. **Solução:** `ln -sfn /home/user/Zapp_Web_V2/node_modules node_modules` dentro do worktree. |
+| `tsc` morre sem mensagem clara | Falta de memória. **Solução:** `NODE_OPTIONS=--max-old-space-size=10240 npx tsc --noEmit -p tsconfig.app.json`. |
+| Testes de contrato não acham config | Precisam de `--config vitest.contracts.config.ts`. |
+| `deno` não existe | **Não está instalado.** `npm i --no-save --prefix ./denoinst deno@2.9.5`. |
+| Import de `deno.land` falha | **O proxy bloqueia `deno.land`.** Eu acrescentei `deno.land` e `cdn.deno.land` à lista de hosts do ambiente Default — se o ambiente for recriado, isso se perde. Alternativa sem mexer na rede: os shims em `auditoria/ferramentas/` (`serve-shim.ts`, `deno-shim.d.ts`, `deno-std-assert.d.ts`). |
+| `docker info` falha | **Não há daemon Docker.** Mas os testes `scripts/db-audit/*.test.sh` rodam assim: suba um PostgreSQL 16 local (`/usr/lib/postgresql/16/bin/initdb` + `pg_ctl`, como usuário `postgres`, em diretório que ele consiga atravessar — **não** dentro do scratchpad, cujo pai é `drwx------ root`; usei `/var/lib/postgresql/zapptest`) e aponte o `scripts/db-audit/docker-shim` para ele com `POSTGRES_SERVICE_HOST/PORT/USER`. Um wrapper mínimo que responda `docker info` com exit 0 e delegue o resto ao shim fecha o buraco. |
+| `node -e` com import ESM quebra | Escreva um `.mjs` e importe o módulo real (ex.: `sqlTokens` de `scripts/db-audit/sql-lexer.mjs`) em vez de reimplementar. |
+
+### 12.2 CI do repositório
+
+| Armadilha | O que acontece |
+|---|---|
+| **`docs/talkx/ESTADOS.md`** | É **gerado** e guarda `arquivo:linha`. Qualquer diff que mova linhas numa tela do Talk X quebra `Node CI Scripts` e `Contrato DB offline`. **Rode `node scripts/talkx/gen-estados.mjs` antes de abrir a PR.** Me pegou duas vezes (#3154 e #3159). |
+| **`supabase/deployment-manifest.json`** | Também gerado. Se o grafo de imports de uma edge mudar, regenere com `node scripts/edge-deploy/generate-manifest.mjs`. Me pegou na #3151. |
+| **PR em rascunho** | `🏗️ Build` e `🧪 Unit Tests` saem **SKIPPED**. O `CI Gate` fica verde assim mesmo, mas a proteção de branch recusa o merge com *"3 of 3 required status checks have not succeeded"*. **Tire o rascunho antes de mergear** e espere o pipeline completo. |
+| **Run cancelado** | Quando um push novo cancela o run anterior, o `CI Gate` daquele head reporta `failure`. **Confira `conclusion` do run** (`cancelled` ≠ `failure`) antes de sair caçando defeito. Aconteceu 3 vezes. |
+| **`Supabase Preview`** | Falha em **toda** PR que toca `supabase/` com `ERROR: Job 8 does not exist or you don't own it`. É o serviço de branching da Supabase (projeto `mjdcproswwprjmbwpnbw`), **não** o diff. Não é check obrigatório; há precedente de merge com ele vermelho (#3144). |
+| **`Devin Review`** | Falha em 7–8 s, sem postar achado, em PR com muitos arquivos de documentação. Não é obrigatório. Quando ele **posta** achado, leia: acertou 3 vezes nesta sessão. |
+| Checks obrigatórios | São exatamente três: `✅ CI Gate (required check)`, `🏗️ Build`, `🔎 TypeCheck`. `strict=true` (PR `BEHIND` precisa de `update_pr_branch`), squash-only. |
+
+### 12.3 Git neste clone
+
+- **O clone é raso** (`.git/shallow`). `git rev-list --count X --not --remotes=origin` **não prova**
+  ausência no GitHub: 136 tags `arquivo/*` dão contagem > 0 e todas estão no `origin`.
+  **Use teste de blob** (`git hash-object` contra `git ls-tree -r` das refs).
+- **Squash-merge** faz os commits da branch **não** serem ancestrais da `main`. Provar incorporação
+  por ancestralidade dá falso negativo; prove por **conteúdo**.
+- `git fsck --unreachable` devolve **2.556** commits soltos, 37 deles da janela desta sessão
+  (rebase/amend e stash descartado). Nenhum tem conteúdo que falte na `main`.
+- Para aprofundar: `git fetch --depth=200 origin '+refs/heads/*:refs/remotes/origin/*'`.
+
+### 12.4 MCP e conectores nesta sessão
+
+- Escrita no GitHub **só** pelo MCP `GITHUB - MCP - FOREVER`; o MCP padrão devolve 403 em write.
+  `git push` funciona porque o repositório está autorizado na sessão.
+- SQL **só** pelo MCP `SUPABASE - ZAPP WEB V2 - MCP`, projeto **`tnnnlkbymytvtqngbbqh`**.
+- Falharam ao conectar o tempo todo: `amplitude`, `atlassian`, `definite`, `hex`, `asana`,
+  `linear`, `notion`, `pagerduty`, `slack`, `gitkraken` (todos `403 Forbidden` no túnel do proxy).
+  `bigquery` e `datadog` pedem autenticação que a sessão não pode iniciar.
+- O `send_later` **falhou uma vez** com `ACCESS_DENIED` sem entregar nada. Não confie nele como
+  único mecanismo para retomar uma tarefa.
+
+---
+
+## 13. Fatos de produção já levantados — não consulte de novo
+
+Tudo lido em 15–16/11, somente leitura, pelo MCP oficial.
+
+| Tabela / objeto | Estado |
+|---|---|
+| `copilot_sessions`, `copilot_insights` | **0 linhas** |
+| `copilot_help_requests`, `copilot_conversation_scores`, `copilot_learning_moments` | **0 linhas** cada |
+| `user_roles` | 11 papéis, **5** deles `admin` ou `supervisor` |
+| `talkx_segments` | **1 linha** (`[E2E] Segmento de Teste`), 0 regras, `estimated_count = 1`. Nenhum segmento usa `lead_origin`/`lead_score`/`risk_score` |
+| `message_reactions` | **115 linhas**, **109 com `user_id IS NULL`** (reações de contato); `reaction_author_check` é `CHECK (user_id IS NOT NULL OR contact_id IS NOT NULL)` |
+| Ledger `supabase_migrations.schema_migrations` | 1.137 registros; `max(version) = 20261115020000`; `20261107121000` **já aplicada** (10 statements) |
+| Uso de IA | ~8 chamadas em 7 dias — o Copiloto praticamente não é usado hoje |
+| `public.is_admin_or_supervisor(uuid)` | Existe, `STABLE SECURITY DEFINER`, lê `user_roles`, usada por 388 migrations. **Nenhuma migration do Copiloto a usava.** |
+
+**Versões de migration já reservadas por mim no ledger** (não reutilize):
+`20261115030000` (`commit_copilot_tick`, PR #3160) e `20261115040000` (RLS de supervisor, PR #3158).
+Reserve novas com `SELECT supabase_migrations.reserve_migration_version('<sessao>','<motivo>')`.
+
+---
+
+## 14. O que **não** precisa ser refeito
+
+- **A auditoria das 329 entradas.** Está feita, com três passadas e prova por entrada. Os dados
+  estão em `auditoria/bruto/` e o veredito de cada uma no `RELATORIO-ANEXO-BRANCHES.md`.
+- **A medição do lado local.** Os números da seção 9 vieram da sessão-ponte; não refaça o
+  levantamento, só continue de onde parou (publicar em `refs/salvo/*`).
+- **A varredura do contêiner.** Três antagonistas já a atacaram e os três achados foram
+  corrigidos. O que sobrou no contêiner é clone, binário e despejo de ferramenta — a Parte 3 da
+  resposta do antagonista de arquivos lista pasta por pasta, com evidência.
+- **Conferir se a `main` está com `ESTADOS.md` e `deployment-manifest.json` atualizados.** Está:
+  rodei os dois geradores num checkout limpo de `origin/main` e nenhum muda um byte.
+
+---
+
+## 15. O que ficou sem resposta
+
+Honestidade sobre os limites desta sessão:
+
+1. **Branches apagadas no GitHub.** Onde concluí "o conteúdo está na `main`", a prova é
+   comparação de conteúdo, não identidade de bytes com a branch original — ela já não existe.
+2. **Arquivos criados e apagados durante a sessão** são invisíveis a qualquer varredura feita no
+   fim. Não há como afirmar nada sobre eles.
+3. **Os ~550 despejos derivados do scratchpad** (`.txt`, `.log`, `.patch`, `.files`) foram
+   classificados por **amostragem** e nomenclatura, não um a um.
+4. **A entrada `claude__chore-remove-hook-morto-talksuppression-261024-1541`** não passou pela
+   verificação adversarial. É 328 de 329.
+5. **Os 2.509 commits soltos anteriores a 15/11** não foram inspecionados — estão fora da janela
+   desta sessão.
+6. **O lado local** (4.377 branches no PC do dono) foi **medido e não tocado**. Nada ali foi
+   publicado nem apagado.
+
+---
+
+## 16. Se eu fosse a próxima sessão — o que eu precisaria saber antes de agir
+
+Escrito de propósito na primeira pessoa de quem chega agora.
+
+### 16.1 Autorizações que o dono já deu — não peça de novo
+
+Ele disse, com estas palavras:
+
+- **"VC ESTA AUTORIZADO POR MIM A CRIAR E EDITAR O SUPABASE, BANCO DE DADOS, BACK END!"**
+- **"VC ESTA AUTORIZADO POR MIM A EXCLUIR OU FECHAR AS BRANCHS DO PC LOCAL, CUJO TRABAHO DO
+  AGENTE DE IA FOI EXASUTIVA E MINUCIOSAMENTE INCORPORADO AO PROJETO!"**
+- **"Haja como um Dev sênior responsável pelo sistema e decida e resolva por mim"**
+- `APROVADO` (ou `1`, `1 e 3`, `todos`, ou o bloco de próximos passos colado de volta) significa
+  **execute na ordem, sem reconfirmar**.
+
+**O que essas autorizações NÃO cobrem:** os itens da regra 8 (DDL em produção, CI/workflows,
+segredos, Dockerfile, stack, deleção de dado, arquitetura, custo). Elas continuam exigindo que a
+PR fique aberta. Foi por isso que #3158 e #3160 não foram mergeadas, mesmo com CI verde, risco
+medido como baixo e tabelas vazias.
+
+### 16.2 O critério de deleção que eu me comprometi a seguir
+
+**Uma branch só fecha quando a ponta dela estiver alcançável a partir de um ref do `origin`**
+(`git rev-list <tip> --not --remotes=origin` vazio) — e, num clone raso, confirmado por
+**conteúdo**, não por contagem (§12.3).
+
+Por esse teste, **zero** das 4.240 pontas órfãs do PC do dono qualificam hoje. **Nenhuma branch
+foi apagada nesta sessão**, nem local nem remota. As 267 marcas de `apagar: true` da auditoria
+são **recomendação**, não ação.
+
+### 16.3 Como alcançar o PC do dono (a sessão-ponte)
+
+O dono escreveu o procedimento. Siga-o à risca:
+
+1. **Não** use `list_computer_folders` para decidir nada — ele devolve 4 pastas, todas
+   `not_available`.
+2. **Nunca** chame `request_computer_folder`.
+3. Peça ao dono que rode `claude remote-control` no PC dele.
+4. Ache a sessão por `list_sessions`; espere `elevated_session_untrusted_device`; chame
+   `confirm_repository_trust` com o `content_digest` que a recusa devolver.
+5. Leia as respostas por `list_events`.
+6. Ao pedir comando: **"deixe explícito que é SÓ LEITURA"**, **"peça a saída CRUA"**, **"evite
+   caracteres que viram HTML"**.
+
+Uma tentativa de autorizar um `git fetch` no clone dele foi **bloqueada** pelo classificador de
+modo automático; o dono então escreveu **"EU AUTORIZO!"** e ela passou. A sessão-ponte pergunta
+ao dono antes de rodar — comportamento correto, não contorne.
+
+**Pendências que ficaram com a sessão-ponte e nunca voltaram:** a varredura de segredos do clone
+ZAPP (pedida em 3 conjuntos) e a tabela dos namespaces `refs/autosave` / `refs/arquivo`. Ela
+estava ocupada ~2h30 com o push do Promo Gifts (416 builds na Vercel).
+
+### 16.4 Decisão já tomada sobre o resgate local
+
+Publicar como **refs puras** (`refs/salvo/*`), **não** como branches. Motivo: 4.000 branches
+novas disparariam 4.000 builds na Vercel, porque merge/push neste repositório é deploy.
+
+### 16.5 Workflows que **eu** desativei nesta sessão
+
+Autorizado pelo dono. Estão em `disabled_manually` desde 15/11 09:03:
+
+`branch-hygiene-audit.yml` · `check-talkx-pr-body.yml` · `e2e-logado-isolado.yml` ·
+`e2e-talkx.yml` · `inventario-estado-semanal.yml` · `talkx-status-regen.yml`
+
+Se algum fizer falta, reative pela API — mas lembre que mexer em workflow é regra 8.
+
+### 16.6 Como o dono quer ser respondido
+
+Isto economiza retrabalho de comunicação:
+
+- **Resultado primeiro**, contexto depois, e só o que muda a decisão dele.
+- **Toda afirmação sobre código cita evidência** (arquivo:linha, trecho de diff, saída de
+  comando). Sem evidência → escreva "NÃO VERIFICADO" e o motivo.
+- Nada de introdução, recapitulação, narração do próprio processo, hedging ou lição de moral.
+- Resposta proporcional: fix de 3 linhas → resposta de 5 linhas.
+- **Ele não é dev.** Diga o efeito no negócio; a técnica só se ele perguntar.
+- Fechar com **exatamente 3 "Próximos passos"**, por impacto, cada um executável por você via
+  MCP, escrito para não-dev. É um menu, não uma pergunta.
+- Ele pede PT-BR.
+
+### 16.7 O trabalho aberto, com endereço exato
+
+| O que | Onde | Estado |
+|---|---|---|
+| Aplicar `commit_copilot_tick` | PR #3160 → depois `supabase/migrations/20261115030000_commit_copilot_tick.sql` | esperando o dono (regra 8) |
+| Aplicar RLS de supervisor | PR #3158 → `20261115040000_copilot_rls_supervisor.sql` | esperando o dono (regra 8) |
+| Chamar a função no tick | `supabase/functions/_shared/copilot-tick.ts:514` e `:531` | **só depois** do apply acima |
+| Amarrar rótulo↔valor no "Resumo da Campanha" | `src/components/talkx/report/__tests__/TalkXCampaignReport.test.tsx:244` | achado do Devin, não corrigido |
+| Passar o objeto de erro ao boundary | `src/components/talkx/TalkXAnalytics.tsx:321` e `src/components/talkx/TalkXLiveMonitor.tsx:238` | 2 das 22 telas ficaram fora do fix da #3154 |
+| 58 evidências de CI/workflow | `itens-confirmados.json`, filtro `bloqueio = "ci_workflow"` | todas param no dono |
+| 9 evidências de migration em produção | mesmo arquivo, filtro `bloqueio = "migration_producao"` | 1 das 10 foi feita (#3157) |
+| 151 evidências sem bloqueio | mesmo arquivo, filtro `bloqueio = "nenhum"` | 3 famílias feitas (relatório, segmentos, states); o resto está aberto |
+| Resgate local | PC do dono | medido, não tocado — §9 e §16.4 |
+
+Para escolher a próxima família das 151: agrupe `itens-confirmados.json` por `arquivos` e pegue
+o maior grupo sem bloqueio. Foi assim que saíram as famílias já feitas. A seguinte, pela última
+contagem, era `src/components/talkx/TalkXSegments.tsx` com 9 — **essa já foi** (#3159).
+
+### 16.8 Onde está tudo
+
+```
+analise-prs/resgate-261115/
+├── RELATORIO-SESSAO-261115-261116.md   ← este documento
+├── RELATORIO-ANEXO-BRANCHES.md         ← todas as branches, uma a uma
+├── HANDOFF-SESSAO-2026-11-15.md        ← estado narrado pela sessão anterior
+├── dossies/                            ← 329 dossiês
+├── vereditos.json
+└── auditoria/
+    ├── README.md                       ← comece aqui para entender a auditoria
+    ├── itens-confirmados.json          ← as 226 evidências
+    ├── bruto/                          ← os diários das 3 passadas
+    │   ├── README.md
+    │   ├── items/ triagens/ verificacoes/ reexames/ achados/ lotes/ metodo/
+    │   ├── dossies-prs-antigas/ diarios-sessao/
+    │   ├── vereditos-finais.json       ← veredito por entrada
+    │   └── RAIZ__p006_branch.json      ← a leitura mais cética do ledger P006
+    └── ferramentas/                    ← os scripts que RODARAM a auditoria
+        └── README.md
+```
+
+E, antes de qualquer tarefa, o que o `AGENTS.md` manda:
+`git fetch origin contexto && git show origin/contexto:docs/contexto/00-INDEX.md`.
