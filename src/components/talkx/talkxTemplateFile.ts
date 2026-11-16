@@ -24,6 +24,8 @@ export const TEMPLATE_FILE_MAX_BYTES = 2 * 1024 * 1024; // 2 MB
 export const TEMPLATE_NAME_MAX = 200;
 export const TEMPLATE_CONTENT_MAX = 65536;
 export const TEMPLATE_DESCRIPTION_MAX = 4000;
+export const TEMPLATE_TAGS_MAX = 50;
+export const TEMPLATE_TAG_MAX = 64;
 
 /**
  * Nome da copia, caber no limite do banco.
@@ -212,6 +214,20 @@ export interface TemplateRowIssue {
   message: string;
 }
 
+/**
+ * Linha que NAO pode ser importada.
+ *
+ * Antes o dialogo tratava como bloqueante so `name` e `content`, em tres pontos
+ * diferentes. Problema de descricao, status ou tags aparecia em vermelho mas a
+ * linha seguia marcada "Ok" e ia para a gravacao, que o banco recusava. Todo
+ * problema que o parser registra espelha uma restricao do trigger/RPC ou a
+ * lista fechada de categorias do app, entao qualquer um deles bloqueia — e
+ * agora por um unico predicado, usado por envio, contagem e estado visual.
+ */
+export function linhaBloqueada(row: ParsedTemplateRow): boolean {
+  return row.issues.length > 0;
+}
+
 export interface ParsedTemplateRow {
   index: number;
   raw: TemplateImportRow;
@@ -339,6 +355,24 @@ export function parseTemplateFile(
     const validStatuses = ['draft', 'review', 'approved'];
     if (raw.status && !validStatuses.includes(raw.status)) {
       issues.push({ field: 'status', message: `Status inválido: "${raw.status}". Use draft, review ou approved.` });
+    }
+
+    // O trigger `validate_talkx_template_input` e a RPC recusam mais de 50 tags
+    // e tag fora de 1..64 pontos de codigo
+    // (20260909210000_canonicalize_talkx_template_history.sql:429 e 553). Sem esta
+    // checagem a linha aparecia como "Ok", o usuario confirmava e a gravacao
+    // falhava no banco — o erro so aparecia depois de tentar.
+    const tagsDaLinha = desserializarTags(raw.tags);
+    if (tagsDaLinha.length > TEMPLATE_TAGS_MAX) {
+      issues.push({ field: 'tags', message: `Tags demais (${tagsDaLinha.length} > ${TEMPLATE_TAGS_MAX}).` });
+    } else {
+      const longa = tagsDaLinha.find((t) => contarPontos(t) > TEMPLATE_TAG_MAX);
+      if (longa !== undefined) {
+        issues.push({
+          field: 'tags',
+          message: `Tag muito longa (${contarPontos(longa)} > ${TEMPLATE_TAG_MAX} caracteres): "${Array.from(longa).slice(0, 24).join('')}…".`,
+        });
+      }
     }
 
     const isConflict = !!raw.name?.trim() && existingNames.has(raw.name.trim());
