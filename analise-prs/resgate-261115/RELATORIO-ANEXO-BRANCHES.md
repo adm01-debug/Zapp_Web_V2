@@ -20,7 +20,7 @@ Anexo do `RELATORIO-SESSAO-261115-261116.md`. Gerado dos dados da auditoria
 | `automation/types-sync` | 2026-11-15 `556547903` | Branch de automação do `types-sync`; 3 PRs já mergeadas a partir dela (#44, #55, #60). |
 | `claude/docs-trilha-auditoria-261116-0940` | 2026-11-16 `b5211e693` | Criada **nesta sessão** — PR #3162 (trilha da auditoria, ferramentas, handoff e este relatório). |
 | `claude/feat-copilot-tick-transacao-261116-0115` | 2026-11-16 `04cab2193` | Criada **nesta sessão** — PR #3160 (`commit_copilot_tick`), aberta pela regra 8. |
-| `claude/feat-copiloto-edges-261115-1555` | 2026-11-15 `8ea3e73f7` | Criada **nesta sessão**. É a branch da **PR #3146, que eu recusei e fechei**: o cálculo de merge do GitHub mostrava que ela apagaria 7.945 linhas de trabalho do mesmo dia. As 10 linhas que de fato faltavam foram reconstruídas como PR #3155, já mergeada. A branch continua viva, sem PR aberta, e **pode ser apagada** — seu conteúdo útil está na `main`. |
+| `claude/feat-copiloto-edges-261115-1555` | 2026-11-15 `8ea3e73f7` | Criada **nesta sessão**. É a branch da **PR #3146, que eu recusei e fechei**: cortada de uma `main` que, no fechamento, estava dez merges à frente, desconhecendo 8.408 inserções do mesmo dia (a PR estava `CONFLICTING`). As 10 linhas que de fato faltavam foram reconstruídas como PR #3155, já mergeada. A branch continua viva, sem PR aberta, e **pode ser apagada** — seu conteúdo útil está na `main`. |
 | `claude/fix-copilot-rls-supervisor-261116-0105` | 2026-11-16 `3fc22c050` | Criada **nesta sessão** — PR #3158 (RLS de supervisor do Copiloto), aberta pela regra 8. |
 | `contexto` | 2026-11-16 `efd6cb025` | Branch **gerada** por automação (`.github/workflows/contexto.yml`), regenerada a cada 10 min. Nunca se edita nem se abre PR dela. |
 | `main` | 2026-11-15 `b7c27b00b` | Ramo principal. |
@@ -1472,7 +1472,11 @@ Inclui entradas cuja branch **já não existe** no `origin` (PR fechada com a br
 
 ### B.1 — As que a auditoria marcou como perda (total ou parcial)
 
-São estas que sustentam as 226 evidências do `itens-confirmados.json`.
+Destas saem **178 das 226 evidências** do `itens-confirmados.json`. As outras **48 vêm de 22
+branches listadas em B.2** (40 de obsoletas, 8 de incorporadas): são resíduos colhidos pelas
+frentes `obs-*.json` e `incorp-*.json` em branches que, no conjunto, não tinham o que resgatar —
+36 de valor baixo e 12 de valor médio. A fonte completa das 226 é o `itens-confirmados.json`, não
+esta seção.
 
 #### Perda total — 5 entradas
 
@@ -2239,7 +2243,9 @@ Motor do Copiloto RADAR (copilot.tick, migration, worker), banco, hooks, 11 comp
 
 ### B.2 — Incorporadas e obsoletas
 
-Para estas a auditoria concluiu que não há o que resgatar. O resumo de cada uma diz por quê.
+Para estas a auditoria concluiu que **o conjunto** não vale resgate — mas 22 delas deixaram 48
+evidências pontuais no `itens-confirmados.json`, descritas no resumo de cada uma. O resumo de cada
+uma diz por quê.
 
 #### Incorporada — 162 entradas
 
@@ -2786,9 +2792,13 @@ Para estas a auditoria concluiu que não há o que resgatar. O resumo de cada um
 
 ## Parte C — As PRs desta sessão, uma a uma
 
-### C.1 — Mergeadas (25)
+### C.0 — Herdadas da sessão anterior (8, **não** são desta sessão)
 
-Ordem cronológica de merge. "Verificado" é o que foi **rodado**, não o que deveria funcionar.
+Mergeadas entre 01:05 e 06:16 UTC de 15/11 pela sessão `session_014nTibTykNrjRNPQMaaWCKN` (a #3126
+foi produzida pela sessão paralela `session_01Gd4dBiEeda4v7TMQdTsLVe` e a #3136 pelo bot
+`github-actions`). Estão aqui só para dar o estado da `main` que esta sessão recebeu; o
+`HANDOFF-SESSAO-2026-11-15.md` §1 as reivindica como os merges daquela sessão, junto com a #3124,
+que esta lista nem continha. **Esta sessão começou às 13:08 UTC de 15/11, com a #3139.**
 
 | # | O que resolve | Como foi verificado |
 |---|---|---|
@@ -2800,6 +2810,13 @@ Ordem cronológica de merge. "Verificado" é o que foi **rodado**, não o que de
 | [#3136](https://github.com/adm01-debug/Zapp_Web_V2/pull/3136) | Sincroniza artefatos derivados do banco | guards do repo |
 | [#3137](https://github.com/adm01-debug/Zapp_Web_V2/pull/3137) | Fundo do login em WebP — libera 40 KB e destrava o teto de assets | guard de tamanho de bundle |
 | [#3138](https://github.com/adm01-debug/Zapp_Web_V2/pull/3138) | Endurece o filtro da ponte de banco externo contra nome reservado do PostgREST | contrato de edge |
+
+### C.1 — Mergeadas nesta sessão (17)
+
+Ordem cronológica de merge. "Verificado" é o que foi **rodado**, não o que deveria funcionar.
+
+| # | O que resolve | Como foi verificado |
+|---|---|---|
 | [#3139](https://github.com/adm01-debug/Zapp_Web_V2/pull/3139) | **Monta o painel RADAR ao vivo na Inbox** — resgate da #2419 e da branch `radar-motor-copilot-live` | CI verde |
 | [#3140](https://github.com/adm01-debug/Zapp_Web_V2/pull/3140) | Botão da tela sem permissão do Talk X e escolha da objeção pelo copiloto | CI verde |
 | [#3141](https://github.com/adm01-debug/Zapp_Web_V2/pull/3141) | **Os 329 dossiês**, um por branch/PR fechada | documentação da auditoria |
@@ -2814,17 +2831,23 @@ Ordem cronológica de merge. "Verificado" é o que foi **rodado**, não o que de
 | [#3153](https://github.com/adm01-debug/Zapp_Web_V2/pull/3153) | **Prova** de que nenhuma branch fechada levou trabalho junto: `itens-confirmados.json` com 226 evidências | a própria auditoria de 3 passadas |
 | [#3154](https://github.com/adm01-debug/Zapp_Web_V2/pull/3154) | Quem não tem permissão para de ver "erro, tente novamente" | CI verde; `ESTADOS.md` regenerado (o guard pegou o deslocamento de linha) |
 | [#3155](https://github.com/adm01-debug/Zapp_Web_V2/pull/3155) | **O botão de desligar a IA passa a desligar as 7 funções que cobram** | CI verde + `Deploy Edge Functions` SUCCESS + capacidade posta em `true` pelo dono às 23:38:07 UTC |
-| [#3156](https://github.com/adm01-debug/Zapp_Web_V2/pull/3156) | Três defeitos do relatório de campanha que nenhum teste pegava | 6 testes novos, cada um provado por mutação |
+| [#3156](https://github.com/adm01-debug/Zapp_Web_V2/pull/3156) | Três defeitos do relatório de campanha que nenhum teste pegava | 6 testes novos; 3 mutações do código de produção derrubam 5 testes — 4 dos novos mais 1 pré-existente. Dois dos novos (`a semana inteira mapeia uma linha distinta por dia` e `omite o Responsável quando o dono não está no mapa de criadores`) não têm mutação registrada que os derrube |
 | [#3157](https://github.com/adm01-debug/Zapp_Web_V2/pull/3157) | **Recriar o banco pelos arquivos deixa de apagar reação de cliente** | `check-migration-drift` 1137 arquivos exit 0; 95/95 no teste do guard; conferido no ledger que a migration já estava aplicada (merge não roda DDL) |
 | [#3159](https://github.com/adm01-debug/Zapp_Web_V2/pull/3159) | **Oito defeitos da biblioteca de segmentos**, incluindo público estimado = base inteira | 16 testes novos; **prova inversa nos 9 fixes**; suíte completa de `src` 16.407 passed / 0 failed |
 
 ### C.2 — Fechada sem merge (1)
 
 **[#3146](https://github.com/adm01-debug/Zapp_Web_V2/pull/3146) — "Kill switch do Copiloto passa a valer para as 7 edges de IA".**
-Recusei o merge. A PR estava `mergeable: false, dirty`, e o cálculo de merge do GitHub mostrava
-que ela **apagaria 7.945 linhas** de trabalho do mesmo dia — a pausa por instância da #3144 e meu
-próprio fix do estimador de tokens. Reconstruí só as 10 linhas que de fato faltavam como
-**#3155**, que foi mergeada. Fechei a #3146 com a explicação completa.
+Recusei o merge. A PR estava `mergeable: CONFLICTING` (`dirty`): o único commit da branch
+(`8ea3e73f`) foi cortado de `ed33ecac` e, no fechamento, a `main` já estava dez merges à frente,
+desconhecendo **8.408 inserções** (`git diff --shortstat ed33ecac fd2a19ff`) — a pausa por
+instância da #3144 e meu próprio fix do estimador de tokens. Reconstruí só as 10 linhas que de
+fato faltavam como **#3155**, que foi mergeada. Fechei a #3146 com a explicação completa.
+
+> **Correção:** a versão anterior deste anexo dizia que "o cálculo de merge do GitHub mostrava que
+> ela apagaria 7.945 linhas". Esse número é **falso** e a atribuição ao GitHub também: o cálculo da
+> #3146 é 6 arquivos, +417/−44, e uma PR `CONFLICTING` não tem merge calculado. Ver §7.6 do
+> relatório.
 A branch `claude/feat-copiloto-edges-261115-1555` continua viva e **pode ser apagada**.
 
 ### C.3 — Abertas, esperando o dono (3)

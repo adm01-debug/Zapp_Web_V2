@@ -29,7 +29,9 @@ A interpretação adotada: **fechar branch exige prova, não impressão.** Isso 
 
 ## 2. O que entrou em produção
 
-25 PRs mergeadas na janela da sessão. As que mudam comportamento para o usuário:
+17 PRs mergeadas nesta sessão (#3139 a #3159). Outras 8 (#3125–#3138) foram mergeadas na mesma
+janela de calendário pela sessão anterior e estão separadas na Parte C.0 do anexo. As que mudam
+comportamento para o usuário:
 
 | PR | O que muda para o negócio |
 |---|---|
@@ -85,9 +87,10 @@ Três passadas, cada uma com um agente diferente e um papel diferente:
    busca por caminho; a busca por comportamento, não).
 3. **Reexame** — terceira passada nas entradas em que a verificação derrubou o veredito.
 
-Resultado: **31 vereditos derrubados**, **153 alegações refutadas**, **226 evidências
-confirmadas** (151 sem bloqueio, 58 de CI/workflow, 10 de migration em produção, 7 de decisão do
-dono).
+Resultado: **22 vereditos derrubados** (31 somando os contadores por lote; 9 entradas aparecem
+duas vezes porque as 92 branches `OBSOLETA` foram auditadas por duas frentes independentes —
+ver 7.1), **153 alegações refutadas**, **226 evidências confirmadas** (151 sem bloqueio, 58 de
+CI/workflow, 10 de migration em produção, 7 de decisão do dono).
 
 Distribuição dos vereditos nas 329 entradas:
 
@@ -113,15 +116,20 @@ O documento irmão **`RELATORIO-ANEXO-BRANCHES.md`** traz, sem corte nenhum:
   lacunas; e as 7 que não foram auditadas, cada uma com o motivo (ramo principal, branch gerada,
   automação, ou criada nesta sessão).
 - **Parte B** — as **329 entradas auditadas**, incluindo as de PR fechada cuja branch já não
-  existe, agrupadas por veredito, com o resumo completo e as lacunas item a item.
-- **Parte C** — as **25 PRs mergeadas** nesta sessão com o que cada uma resolve e **como foi
-  verificada**, a 1 PR que recusei e fechei, e as 3 que ficaram abertas.
+  existe, agrupadas por veredito, com o resumo completo de cada uma. As lacunas aparecem item a
+  item só nas **62 entradas de B.1** (perda total, perda parcial e decisão do dono) — 385 lacunas.
+  As 267 entradas de B.2 (`INCORPORADA` e `OBSOLETA`) vêm só com o resumo: 103 delas têm 373
+  lacunas registradas no `auditoria/bruto/vereditos-finais.json` que o anexo não lista (a maioria
+  de valor `nenhum`, mas 66 de valor `baixo` e 6 de valor `medio`). Para essas, a fonte é o JSON.
+- **Parte C** — as **17 PRs mergeadas** nesta sessão com o que cada uma resolve e **como foi
+  verificada**, as 8 herdadas da sessão anterior, a 1 PR que recusei e fechei, e as 3 que
+  ficaram abertas.
 
 ### 3.3 O que ficou versionado
 
 - `analise-prs/resgate-261115/dossies/` — 329 dossiês (PR #3141)
-- `analise-prs/resgate-261115/auditoria/` — o destilado: `itens-confirmados.json` com as 226
-  evidências + 13 arquivos de lote (PR #3153)
+- `analise-prs/resgate-261115/auditoria/` — o destilado: `README.md`, `itens-confirmados.json`
+  com as 226 evidências e 12 arquivos de lote (PR #3153, 14 arquivos no total)
 - `analise-prs/resgate-261115/auditoria/bruto/` — **os diários que sustentam tudo isso**
   (PR #3162, ver seção 6)
 - `analise-prs/resgate-261115/auditoria/ferramentas/` — **os scripts que rodaram a auditoria**
@@ -161,7 +169,12 @@ qualquer outro) escopando tudo pelo **autor da linha**. Só que a Fase 13 é jus
 supervisor — os comentários da migration de criação dizem "pedidos de ajuda **AO** supervisor",
 "pontuação de conversa **PELO** supervisor". Efeito hoje em produção:
 
-1. `copilot_help_requests` — o vendedor grava o pedido e **ninguém consegue ler**. Recurso morto.
+1. `copilot_help_requests` — INSERT e SELECT têm o mesmo predicado (`seller_id = auth.uid()`),
+   então **só o próprio vendedor lê o pedido que ele mesmo gravou; o supervisor, que é o
+   destinatário, não lê**. Não existe policy de supervisor na tabela. Recurso morto: o pedido de
+   ajuda nunca chega a quem deveria atendê-lo. (Hoje o efeito é teórico em dobro — nenhum código
+   do repo lê ou grava a tabela: a única referência fora de migrations é o tipo gerado em
+   `src/integrations/supabase/types.ts:3280`.)
 2. `copilot_conversation_scores` — **qualquer vendedor pontua qualquer conversa**, inclusive a
    própria. E como `conversation_id` é PRIMARY KEY e o UPDATE exige autoria, quem pontua primeiro
    **trava** a nota: o supervisor não consegue inserir nem atualizar.
@@ -306,12 +319,24 @@ tabela.
 
 Corrigido com aviso destacado no README da auditoria e repetido na seção 3.4 acima.
 
-### 7.6 Quase mergeei uma PR que apagaria 7.945 linhas
+### 7.6 Quase mergeei uma PR cortada de uma `main` dez merges atrasada — e justifiquei com um número inventado
 
-A #3146 estava `mergeable: false, dirty`, e o cálculo de merge do GitHub mostrava que ela
-**apagaria 7.945 linhas** de trabalho do mesmo dia (a pausa por instância da #3144 e meu próprio
-fix do estimador). Recusei, reconstruí só as 10 linhas que faltavam como #3155 e fechei a #3146
-com explicação.
+A #3146 estava `mergeable: CONFLICTING` (`mergeable_state: dirty`). A branch tinha um único commit
+(`8ea3e73f`, 15/11 16:29:49Z, nunca reescrito) cortado de `ed33ecac` (15/11 16:26:29Z); quando a
+fechei, às 16/11 00:14:48Z, a `main` já estava dez merges à frente, em `fd2a19ff`. Recusei,
+reconstruí só as 10 linhas que faltavam como #3155 e fechei a #3146 com explicação.
+
+**Correção de métrica.** A versão anterior deste relatório dizia que "o cálculo de merge do GitHub
+mostrava que ela apagaria 7.945 linhas". **O número 7.945 é falso e a atribuição também.** O que o
+GitHub calcula para a #3146 é 6 arquivos, **+417/−44** — e, estando `CONFLICTING`, ele se recusou a
+calcular um merge: um merge não apaga em silêncio linhas que a branch não toca, ele conflita, que é
+o que aconteceu. Nenhum diff reproduz 7.945: a divergência de dois pontos
+`git diff --shortstat <main> 8ea3e73f` nos doze estados da `main` daquela janela dá 88, 210, 739,
+1.760, 1.761, 1.815, 1.970, 7.989, 8.310, 8.327, **8.364** (estado da `main` no instante do
+fechamento) e 8.443. O trabalho da `main` que a branch desconhecia é
+`git diff --shortstat ed33ecac fd2a19ff` = **8.408 inserções**. A decisão de recusar continua
+certa; a métrica que citei para justificá-la era inventada. O mesmo número errado está publicado no
+comentário de fechamento da #3146 (`issuecomment-6903771601`) — ver "Próximos passos".
 
 ### 7.7 Descrevi uma opção de forma imprecisa para o dono
 
@@ -343,8 +368,9 @@ teste e corpo da PR reescritos.
 ### 7.11 Usei uma métrica que não prova o que eu disse que provava
 
 **O clone é raso** (`.git/shallow`). Logo `git rev-list --count X --not --remotes=origin > 0`
-**não prova** ausência no GitHub — infla. Prova: 136 tags locais dão contagem > 0 e **todas estão
-no `origin`**. O erro é conservador (faz suspeitar demais, nunca liberar de menos) e a conclusão
+**não prova** ausência no GitHub — infla. Prova: as 136 tags locais estão **todas no `origin`** e
+mesmo assim 95 delas dão contagem > 0 (10.080 somadas) — porque a branch de origem foi apagada,
+não porque o conteúdo sumiu. O erro é conservador (faz suspeitar demais, nunca liberar de menos) e a conclusão
 se sustentou porque quem a carregou foi o teste de **conteúdo**. Mas eu apresentei a contagem com
 mais firmeza do que ela merecia.
 
@@ -368,8 +394,10 @@ encontrados por antagonistas (seção 6.3).
   `tnnnlkbymytvtqngbbqh` foi `SELECT`, exceto a reserva atômica de versão de migration, que é o
   mecanismo documentado em `docs/agentes/banco.md`.
 - **`Supabase Preview` vermelho é herdado**, não do diff: o serviço de branching da Supabase
-  falha com `ERROR: Job 8 does not exist` em toda PR que toca `supabase/`. Confirmado pelo app
-  (`project mjdcproswwprjmbwpnbw`) e já havia precedente de merge com ele vermelho.
+  falha com `ERROR: Job 8 does not exist` em toda PR que toca `supabase/`. Confirmado no check run
+  de cada PR (o `details_url` aponta para o projeto de preview **efêmero daquela PR**:
+  `bcaftxzkgaxyjqtltwyh` na #3158, `ycuflbrkdymifqrtjmst` na #3160) e já havia precedente de merge
+  com ele vermelho (#3144).
 
 ---
 
@@ -451,15 +479,19 @@ Cada item aqui foi descoberto errando. Ler isto economiza a descoberta.
 | **`supabase/deployment-manifest.json`** | Também gerado. Se o grafo de imports de uma edge mudar, regenere com `node scripts/edge-deploy/generate-manifest.mjs`. Me pegou na #3151. |
 | **PR em rascunho** | `🏗️ Build` e `🧪 Unit Tests` saem **SKIPPED**. O `CI Gate` fica verde assim mesmo, mas a proteção de branch recusa o merge com *"3 of 3 required status checks have not succeeded"*. **Tire o rascunho antes de mergear** e espere o pipeline completo. |
 | **Run cancelado** | Quando um push novo cancela o run anterior, o `CI Gate` daquele head reporta `failure`. **Confira `conclusion` do run** (`cancelled` ≠ `failure`) antes de sair caçando defeito. Aconteceu 3 vezes. |
-| **`Supabase Preview`** | Falha em **toda** PR que toca `supabase/` com `ERROR: Job 8 does not exist or you don't own it`. É o serviço de branching da Supabase (projeto `mjdcproswwprjmbwpnbw`), **não** o diff. Não é check obrigatório; há precedente de merge com ele vermelho (#3144). |
+| **`Supabase Preview`** | Falha em **toda** PR que toca `supabase/` com `ERROR: Job 8 does not exist or you don't own it`. É o serviço de branching da Supabase (GitHub App `supabase`, id 330661), **não** o diff. O projeto de preview é **efêmero e um por PR** — `bcaftxzkgaxyjqtltwyh` na #3158, `ycuflbrkdymifqrtjmst` na #3160, `rnnhwphhgzeorfrrvlwf` na #3144, `mjdcproswwprjmbwpnbw` na #3157 — então não use nenhum deles como identificador estável; o projeto da integração é o oficial `tnnnlkbymytvtqngbbqh`. PR que não toca `supabase/` sai `skipped` ("No changes detected in `supabase` directory"). Não é check obrigatório; há precedente de merge com ele vermelho (#3144). |
 | **`Devin Review`** | Falha em 7–8 s, sem postar achado, em PR com muitos arquivos de documentação. Não é obrigatório. Quando ele **posta** achado, leia: acertou 3 vezes nesta sessão. |
-| Checks obrigatórios | São exatamente três: `✅ CI Gate (required check)`, `🏗️ Build`, `🔎 TypeCheck`. `strict=true` (PR `BEHIND` precisa de `update_pr_branch`), squash-only. |
+| Checks obrigatórios | São exatamente três: `✅ CI Gate (required check)`, `🏗️ Build`, `🔎 TypeCheck`. `strict=true` (PR `BEHIND` precisa de `update_pr_branch`), `enforce_admins=true`. **Squash-only é regra do `AGENTS.md`, não configuração do GitHub**: a API mostra `allow_squash_merge=true`, `allow_merge_commit=true`, `allow_rebase_merge=true` e nenhum ruleset (`rulesets?includes_parents=true` → `[]`). O que a `main` impõe é `required_linear_history=true`, que barra merge commit mas **permite rebase merge**. O baseline versionado `scripts/ci/github-settings-baseline.json` ainda diz `allow_merge_commit=false`/`allow_rebase_merge=false` — divergência que o Settings Guard não detecta, porque o token dele não lê `merge.*` e o item sai como `NAO VERIFICAVEL` com o job verde (run 43824057102). Mergeie por squash por disciplina, não porque o GitHub obrigue. |
 
 ### 12.3 Git neste clone
 
 - **O clone é raso** (`.git/shallow`). `git rev-list --count X --not --remotes=origin` **não prova**
-  ausência no GitHub: 136 tags `arquivo/*` dão contagem > 0 e todas estão no `origin`.
-  **Use teste de blob** (`git hash-object` contra `git ls-tree -r` das refs).
+  ausência no GitHub: as 136 tags `arquivo/*` estão **todas** no `origin` (`ls-remote`: 0 ausentes,
+  154 refs `arquivo/*` remotas) e, ainda assim, lidas uma a uma, **95 dão contagem > 0** e 41 dão 0
+  (as 136 juntas num único `rev-list` dão 10.080). O corte não é aleatório: das 95, **94 têm a
+  branch `origin/<mesmo nome>` apagada**; as 41 que dão 0 têm a branch ainda viva. Ou seja, essa
+  contagem mede **branch apagada**, não conteúdo ausente. **Use teste de blob**
+  (`git hash-object` contra `git ls-tree -r` das refs).
 - **Squash-merge** faz os commits da branch **não** serem ancestrais da `main`. Provar incorporação
   por ancestralidade dá falso negativo; prove por **conteúdo**.
 - `git fsck --unreachable` devolve **2.556** commits soltos, 37 deles da janela desta sessão
@@ -479,24 +511,33 @@ Cada item aqui foi descoberto errando. Ler isto economiza a descoberta.
 
 ---
 
-## 13. Fatos de produção já levantados — não consulte de novo
+## 13. Fatos de produção levantados em 15–16/11 (somente leitura) — reconfira os voláteis
 
 Tudo lido em 15–16/11, somente leitura, pelo MCP oficial.
 
+> Contagens de linha e uso de IA são fotografias de 16/11 até ~10:30 UTC. As tabelas do Copiloto e
+> `ai_usage_logs` começaram a receber tráfego real às 10:12 de 16/11 — **reconsulte-as**. O que é
+> estrutural (schema, ledger, assinatura de função, constraints) pode ser reaproveitado sem
+> reconsulta.
+
 | Tabela / objeto | Estado |
 |---|---|
-| `copilot_sessions`, `copilot_insights` | **0 linhas** |
+| `copilot_sessions`, `copilot_insights` | **0 linhas até 16/11 ~10:12 UTC; o Copiloto entrou em uso nesse horário.** Em 16/11 10:45 UTC: 3 sessões / 19 insights, crescendo (`copilot-live` em produção). **Reconsulte antes de qualquer DDL nessas duas tabelas** (#3160 `commit_copilot_tick`, #3158 RLS). |
 | `copilot_help_requests`, `copilot_conversation_scores`, `copilot_learning_moments` | **0 linhas** cada |
 | `user_roles` | 11 papéis, **5** deles `admin` ou `supervisor` |
 | `talkx_segments` | **1 linha** (`[E2E] Segmento de Teste`), 0 regras, `estimated_count = 1`. Nenhum segmento usa `lead_origin`/`lead_score`/`risk_score` |
 | `message_reactions` | **115 linhas**, **109 com `user_id IS NULL`** (reações de contato); `reaction_author_check` é `CHECK (user_id IS NOT NULL OR contact_id IS NOT NULL)` |
 | Ledger `supabase_migrations.schema_migrations` | 1.137 registros; `max(version) = 20261115020000`; `20261107121000` **já aplicada** (10 statements) |
-| Uso de IA | ~8 chamadas em 7 dias — o Copiloto praticamente não é usado hoje |
+| Uso de IA | ~8 chamadas em 7 dias até a madrugada de 16/11; a partir das 10:13 de 16/11, 26 chamadas de `copilot-live` em ~50 min. O Copiloto **passou a ser usado** — não trate como ocioso. |
 | `public.is_admin_or_supervisor(uuid)` | Existe, `STABLE SECURITY DEFINER`, lê `user_roles`, usada por 388 migrations. **Nenhuma migration do Copiloto a usava.** |
 
-**Versões de migration já reservadas por mim no ledger** (não reutilize):
-`20261115030000` (`commit_copilot_tick`, PR #3160) e `20261115040000` (RLS de supervisor, PR #3158).
-Reserve novas com `SELECT supabase_migrations.reserve_migration_version('<sessao>','<motivo>')`.
+**Versões de migration já reservadas por mim em `supabase_migrations.version_reservations`** (não
+reutilize; elas **não** aparecem no ledger `schema_migrations`, cujo `max(version)` segue em
+`20261115020000`): `20261115030000` (`commit_copilot_tick`, PR #3160) e `20261115040000` (RLS de
+supervisor, PR #3158). Reserve novas com
+`SELECT supabase_migrations.reserve_migration_version('<sessao>','<motivo>')` — a função já toma o
+maior entre ledger e reservas, então ela não colide com as duas acima; a checagem manual de
+`max(version)` só no ledger, sim.
 
 ---
 
@@ -646,9 +687,11 @@ analise-prs/resgate-261115/
     ├── bruto/                          ← os diários das 3 passadas
     │   ├── README.md
     │   ├── items/ triagens/ verificacoes/ reexames/ achados/ lotes/ metodo/
-    │   ├── dossies-prs-antigas/ diarios-sessao/
-    │   ├── vereditos-finais.json       ← veredito por entrada
-    │   └── RAIZ__p006_branch.json      ← a leitura mais cética do ledger P006
+    │   ├── dossies-prs-antigas/
+    │   ├── diarios-sessao/
+    │   │   └── RAIZ__p006_branch.json  ← a leitura mais cética do ledger P006
+    │   ├── perda-intermediaria.json
+    │   └── vereditos-finais.json       ← veredito por entrada
     └── ferramentas/                    ← os scripts que RODARAM a auditoria
         └── README.md
 ```
