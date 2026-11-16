@@ -1,0 +1,87 @@
+{
+ "id": "claude__fix-copilot-rls-supervisor-261101-1530",
+ "kind": "branch",
+ "ref": "origin/claude/fix-copilot-rls-supervisor-261101-1530",
+ "tip": "f7ceab5081f5ce1f8c09e21ad94d6ac73e89398a",
+ "merge_base": "1252bb5a41123ba4d49efd84d0f91604bff6c87c",
+ "ahead": 14,
+ "last_commit_date": "2026-11-01",
+ "merge_base_date": "2026-11-01",
+ "prs_with_same_tip": [
+  2485
+ ],
+ "triagem_2804": {
+  "2485": "DECISAO_DONO"
+ },
+ "closure_comment": {},
+ "files": [
+  {
+   "path": ".github/.ci-trigger",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "patch_lines": 7,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 0,
+    "missing_in_main": 0,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [],
+    "still_sample": [],
+    "same_basename_in_main": []
+   }
+  },
+  {
+   "path": "supabase/migrations/20261031150000_copilot_rls_supervisor_only.sql",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "patch_lines": 44,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 31,
+    "missing_in_main": 31,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "-- Segurança: restricao supervisor/admin em copilot_learning_moments (INSERT)",
+     "-- e copilot_conversation_scores (UPDATE).",
+     "-- Motivo: learning_moments e scores sao marcacoes de qualidade feitas pelo supervisor",
+     "-- sobre conversas do vendedor. Deixar qualquer vendedor inserir ou editar esses registros",
+     "-- abriria a porta para manipulacao das proprias avaliacoes.",
+     "-- Evidencia de callers: busca em src/ e supabase/functions/ em 2026-11-01 nao encontrou",
+     "-- nenhum chamador dessas duas operacoes -- tabelas criadas mas ainda sem uso no front-end",
+     "-- nem nas edge functions. Zero risco de quebrar fluxo existente.",
+     "-- O que muda:",
+     "--   copilot_learning_moments  INSERT: era aberto a todo authenticated; agora so supervisor/admin",
+     "--   copilot_conversation_scores UPDATE: era aberto a todo authenticated; agora so supervisor/admin",
+     "-- O que NAO muda (permissoes de vendedor preservadas):",
+     "--   copilot_outcomes           INSERT/SELECT  -- vendedor pode gravar e ler",
+     "--   copilot_objection_catalog  INSERT/SELECT  -- vendedor pode gravar e ler",
+     "--   copilot_usage              INSERT/SELECT  -- vendedor pode gravar e ler",
+     "--   copilot_seller_settings    INSERT/SELECT/UPDATE -- vendedor pode gravar, ler e editar (policy nao isola por linha: USING(true))",
+     "--   copilot_help_requests      INSERT/SELECT  -- vendedor pode gravar e ler",
+     "--   copilot_learning_moments   SELECT         -- vendedor pode ler (so nao pode inserir)",
+     "--   copilot_conversation_scores INSERT/SELECT -- vendedor pode inserir e ler (so nao pode atualizar)",
+     "-- copilot_learning_moments: substitui INSERT aberto por INSERT supervisor/admin",
+     "DROP POLICY IF EXISTS \"copilot_learning_moments_insert\" ON public.copilot_learning_moments;",
+     "CREATE POLICY \"copilot_learning_moments_insert\"",
+     "  ON public.copilot_learning_moments FOR INSERT TO authenticated",
+     "  WITH CHECK (public.is_admin_or_supervisor(auth.uid()));",
+     "-- copilot_conversation_scores: substitui UPDATE aberto por UPDATE supervisor/admin"
+    ],
+    "still_sample": [],
+    "same_basename_in_main": []
+   }
+  }
+ ],
+ "counts": {
+  "migrations": "1",
+  "workflows": "1",
+  "src": "0",
+  "edges": "0",
+  "docs_only": "no",
+  "lines_branch_has_main_lacks": "39",
+  "lines_main_has_branch_lacks": "0"
+ },
+ "auto": "TRABALHO_AUSENTE_APLICA_LIMPO",
+ "n_files_with_gaps": 1,
+ "gap_lines_total": 31
+}

@@ -1,0 +1,51 @@
+{
+ "id": "claude__fix-axe-email-webkit-contrast-261101-2325",
+ "kind": "branch",
+ "ref": "origin/claude/fix-axe-email-webkit-contrast-261101-2325",
+ "tip": "7ddc2cc949aa97e44bf0b10880bdda1b78423e64",
+ "merge_base": "1252bb5a41123ba4d49efd84d0f91604bff6c87c",
+ "ahead": 1,
+ "last_commit_date": "2026-11-01",
+ "merge_base_date": "2026-11-01",
+ "prs_with_same_tip": [
+  2541
+ ],
+ "triagem_2804": {
+  "2541": "PERDIDA"
+ },
+ "closure_comment": {},
+ "files": [
+  {
+   "path": "e2e/email-navy-visual.spec.ts",
+   "status": "BOTH_CHANGED",
+   "hunk": "CONFLICT",
+   "patch_lines": 12,
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 0,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/email/EmailChatInbox.tsx",
+   "status": "BOTH_CHANGED",
+   "hunk": "PRESENT_REVERSE_APPLIES",
+   "patch_lines": 13
+  }
+ ],
+ "counts": {
+  "migrations": "0",
+  "workflows": "0",
+  "src": "1",
+  "edges": "0",
+  "docs_only": "no",
+  "lines_branch_has_main_lacks": "25",
+  "lines_main_has_branch_lacks": "242"
+ },
+ "auto": "INCORPORADA_PROVA_LINHAS",
+ "n_files_with_gaps": 0,
+ "gap_lines_total": 0
+}

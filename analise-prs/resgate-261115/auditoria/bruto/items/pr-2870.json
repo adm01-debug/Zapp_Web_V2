@@ -1,0 +1,594 @@
+{
+ "id": "pr-2870",
+ "kind": "pr",
+ "ref": "refs/remotes/pr/2870",
+ "pr": 2870,
+ "tip": "48fd3845c79100b157aee94affd2a1d40d2ab761",
+ "merge_base": "2d97c44cfe7f2fa8a3ca572f8f5689118328e858",
+ "ahead": 49,
+ "last_commit_date": "2026-11-09",
+ "merge_base_date": "2026-10-24",
+ "triagem_2804": null,
+ "closure_comment": null,
+ "files": [
+  {
+   "path": ".github/workflows/db-guard.yml",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 12,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "          N008_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "ESTADO.md",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 13,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 1,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "| `ai-kb-ingest` | A | `src/hooks/integrations/useKnowledgeBase.ts:130` · `src/hooks/integrations/useKnowledgeBase.ts:201` |"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "PENDENCIAS.md",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 477,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 138,
+    "missing_in_main": 137,
+    "removed": 205,
+    "removed_still_in_main": 3,
+    "missing_sample": [
+     "# PENDENCIAS.md — Workflows com falha não corrigível via código",
+     "_Atualizado em 2026-11-09 por sessão `claude_05/festive-carson-ub43wu`._",
+     "## 1. DB Live Guard — falhas em contrato vivo (investigação pendente)",
+     "**Runs com falha:**",
+     "- [41318522203](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41318522203) — SHA `532aa09b` (2026-11-01T14:54Z): 3 contratos reais (migrations/ledger,",
+     "- [42525294301](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/42525294301) — SHA `e6e467b9` (2026-11-08T21:26Z): paridade tripla, catálogo, manifesto,",
+     "- [42525240682](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/42525240682) — SHA `e6e467b9` (2026-11-08T21:27Z): idem",
+     "**Diagnóstico dos runs de Nov/08 (42525294301 / 42525240682):**",
+     "Ambos rodaram sobre SHA `e6e467b96f12dfca1e12bab7847fad6ddef3c397`, que é **anterior ao HEAD atual** da main (`9183f0f6`). Naquele momento o `types.ts` estava s",
+     "**Run de Nov/01 (41318522203) — 3 contratos reais:**",
+     "Este run falhou com divergências de DDL/migrations/ACL — requer análise do artifact `db-live-evidence-{run_id}-1`. Este workflow **não é required check** — não ",
+     "**O que o Joaquim precisa fazer:**",
+     "1. Aguardar o run agendado de 06:13 UTC de 09/11 — se verde, confirma que Nov/08 foi transitório",
+     "2. Se ainda falhar: baixar artifact `db-live-evidence-{run_id}-1` e diagnosticar o contrato que diverge",
+     "3. Se \"Verificar frescor do types.ts\" falhar: disparar `workflow_dispatch` do `types-sync.yml` em `main`",
+     "## 2. Running Copilot Code Review — limite de cota do plano (HTTP 402)",
+     "**Runs com falha confirmados (exemplos):**",
+     "- [41167331596](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41167331596) — 2026-10-31T04:08Z",
+     "- [41166869775](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41166869775) — 2026-10-31T04:02Z",
+     "- múltiplos anteriores no mesmo dia",
+     "**Workflow:** Dinâmico do GitHub Copilot — **não tem arquivo no repositório**.",
+     "**O que falha:** Step \"Processing Request (Linux)\" termina com `errorType: 'quota'`, HTTP 402,",
+     "\"You've reached your additional usage limit for your plan\". A mensagem de firewall que aparece",
+     "no log é secundária — a causa real é esgotamento de cota de uso do Copilot Code Review.",
+     "**Por que não foi corrigido:** Workflow dinâmico do GitHub Copilot — sem código no repositório."
+    ],
+    "still_sample": [
+     "   ```sql",
+     "   ```sql",
+     "   ```sql"
+    ]
+   }
+  },
+  {
+   "path": "RELATORIO_CI.md",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 317,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 73,
+    "missing_in_main": 70,
+    "removed": 152,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "# RELATORIO_CI.md — Estado dos Workflows de CI",
+     "_Gerado em 2026-11-02 pela sessão `claude_05/festive-carson-ub43wu`._  ",
+     "_Objetivo: documentar baseline × final desta sessão e inventário completo dos workflows._",
+     "## 1. Baseline local (medido nesta sessão)",
+     "| Check | Resultado | Detalhes |",
+     "| `bun install` | ✅ OK | Dependências instaladas sem erro |",
+     "| `bun run build` | ✅ OK | 323 KB < budget 325 KB |",
+     "| Lint ratchet | ✅ OK | baseline=819, atual=813, novas=0, removidas=6 |",
+     "| Typecheck ratchet | ✅ OK | baseline=93, atual=3, novas=0, removidas=90 |",
+     "| Migrations estrutura | ✅ OK | 1073 arquivos válidos em `supabase/migrations/` |",
+     "**Notas:**",
+     "- O typecheck ratchet terminou com SIGABRT (OOM no runner) na primeira execução do fork, mas passou corretamente na segunda execução com resultado `baseline=93,",
+     "- Sem nenhuma nova dívida de lint ou typecheck introduzida por esta sessão.",
+     "## 2. Inventário completo de workflows — estado verificado em 2026-11-02T00:28Z",
+     "### Required checks (6) — estado na `main`",
+     "| Workflow / Check | Arquivo | Último run concluído na `main` | Conclusão | SHA |",
+     "|---|---|---|---|---|",
+     "| `🔍 Lint & TypeCheck` | `ci.yml` | [41343946533](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41343946533) | ✅ success | `3b5f8a96` |",
+     "| `🧪 Unit Tests` | `ci.yml` | [41343946533](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41343946533) | ✅ success (com 410 skips pré-existentes) | `3",
+     "| `🏗️ Build` | `ci.yml` | [41343946533](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41343946533) | ✅ success | `3b5f8a96` |",
+     "| `🔒 Security Audit` | `ci.yml` | [41343946533](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41343946533) | ✅ success | `3b5f8a96` |",
+     "| `Contrato DB offline` | `db-guard.yml` | [41364695562](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41364695562) | ⏳ queued (attempt 3, PR #2542 `c",
+     "| `🎭 E2E Tests (Playwright)` | `e2e-logado.yml` | [41350571737](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41350571737) | ⚠️ cancelled (concorrênci",
+     "**Notas sobre required checks:**",
+     "- `CI/CD Pipeline` run `41343946533` = `success` na `main` SHA `3b5f8a96` (2026-11-01T19:52Z) — todos os 6 required checks verdes nesse SHA."
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "playwright.config.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 13,
+   "hunk": "PRESENT_REVERSE_APPLIES"
+  },
+  {
+   "path": "scripts/ci/fila-merge.mjs",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "patch_lines": 42,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 15,
+    "missing_in_main": 15,
+    "removed": 2,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "// Executa um comando com retry automático para erros transitórios de rede",
+     "// (HTTP 504, Gateway Timeout, ECONNRESET, ETIMEDOUT). Erros permanentes",
+     "// (403, 404, 422, auth) propagam imediatamente sem nenhum retry.",
+     "function execComRetry(cmd, args, opts, { tentativas = 3, esperas = [5000, 10000, 20000] } = {}) {",
+     "  for (let i = 0; ; i++) {",
+     "    try {",
+     "      return execFileSync(cmd, args, opts);",
+     "    } catch (err) {",
+     "      const stderr = String(err.stderr ?? '');",
+     "      const transitorio = /504|Gateway Timeout|timeout expired|ECONNRESET|ETIMEDOUT|unexpected end of JSON/i.test(stderr);",
+     "      if (!transitorio || i >= tentativas - 1) throw err;",
+     "      const espera = esperas[i] ?? esperas.at(-1);",
+     "      Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, espera);",
+     "  const json = execComRetry(resolverExecutavel('gh'), [",
+     "  const behindBy = async (head) => Number(execComRetry(resolverExecutavel('gh'), ["
+    ],
+    "still_sample": [],
+    "same_basename_in_main": []
+   }
+  },
+  {
+   "path": "scripts/db-audit/team-receipts-reactions-conversation-id.test.sh",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 15,
+   "hunk": "PRESENT_REVERSE_APPLIES"
+  },
+  {
+   "path": "scripts/db-audit/user-sessions-expire.test.sh",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 14,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 2,
+    "missing_in_main": 2,
+    "removed": 1,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "PG_IMG=\"${N008_POSTGRES_IMAGE:-postgres:17-alpine}\"",
+     "docker run --rm -d --name \"$CNAME\" -e POSTGRES_PASSWORD=postgres -e POSTGRES_DB=postgres \"$PG_IMG\" >/dev/null"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/inbox/ai-tools/__tests__/a11y-ferramentas-ia.test.tsx",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/components/inbox/chat/__tests__/ChatMessagesArea.agrupar-envio.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 36,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 10,
+    "missing_in_main": 10,
+    "removed": 1,
+    "removed_still_in_main": 1,
+    "missing_sample": [
+     "import { describe, it, expect, vi, beforeAll, afterAll, beforeEach } from 'vitest';",
+     "let getBCRSpy: ReturnType<typeof vi.spyOn>;",
+     "  // TanStack Virtual v3 usa getBoundingClientRect() no elemento de scroll para calcular",
+     "  // a altura do viewport; jsdom retorna 0 por padrão, impedindo a renderização de items.",
+     "  getBCRSpy = vi.spyOn(Element.prototype, 'getBoundingClientRect').mockReturnValue({",
+     "    height: 600, width: 800, top: 0, left: 0, right: 800, bottom: 600, x: 0, y: 0,",
+     "    toJSON: () => ({}),",
+     "  } as DOMRect);",
+     "afterAll(() => {",
+     "  getBCRSpy.mockRestore();"
+    ],
+    "still_sample": [
+     "import { describe, it, expect, vi, beforeAll, beforeEach } from 'vitest';"
+    ]
+   }
+  },
+  {
+   "path": "src/components/inbox/chat/__tests__/ChatMessagesArea.movimento-reduzido.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 36,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 10,
+    "missing_in_main": 10,
+    "removed": 1,
+    "removed_still_in_main": 1,
+    "missing_sample": [
+     "import { describe, it, expect, vi, beforeAll, afterAll, beforeEach } from 'vitest';",
+     "let getBCRSpy: ReturnType<typeof vi.spyOn>;",
+     "  // TanStack Virtual v3 usa getBoundingClientRect() no elemento de scroll para calcular",
+     "  // a altura do viewport; jsdom retorna 0 por padrão, impedindo a renderização de items.",
+     "  getBCRSpy = vi.spyOn(Element.prototype, 'getBoundingClientRect').mockReturnValue({",
+     "    height: 600, width: 800, top: 0, left: 0, right: 800, bottom: 600, x: 0, y: 0,",
+     "    toJSON: () => ({}),",
+     "  } as DOMRect);",
+     "afterAll(() => {",
+     "  getBCRSpy.mockRestore();"
+    ],
+    "still_sample": [
+     "import { describe, it, expect, vi, beforeAll, beforeEach } from 'vitest';"
+    ]
+   }
+  },
+  {
+   "path": "src/components/inbox/chat/__tests__/ChatMessagesArea.pagination.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 36,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 12,
+    "missing_in_main": 0,
+    "removed": 1,
+    "removed_still_in_main": 0,
+    "missing_sample": [],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/talkx/report/__tests__/TalkXCampaignReport.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 15,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 3,
+    "missing_in_main": 0,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/ui/command-palette.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 91,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 18,
+    "missing_in_main": 13,
+    "removed": 6,
+    "removed_still_in_main": 2,
+    "missing_sample": [
+     "    if (allItems[selectedIndex]) {",
+     "      document.getElementById(`cmd-option-${allItems[selectedIndex].id}`)?.scrollIntoView?.({ block: 'nearest' });",
+     "  }, [selectedIndex, allItems]);",
+     "            autoComplete=\"off\" autoCorrect=\"off\" spellCheck={false}",
+     "            role=\"combobox\" aria-label=\"Buscar comandos\" aria-expanded=\"true\" aria-autocomplete=\"list\"",
+     "            aria-controls=\"cmd-palette-list\"",
+     "            aria-activedescendant={allItems[selectedIndex] ? `cmd-option-${allItems[selectedIndex].id}` : undefined} />",
+     "          {query && !isSearching && allItems.length > 0 ? `${allItems.length} resultado${allItems.length !== 1 ? 's' : ''}` : ''}",
+     "              <div id=\"cmd-palette-list\" role=\"listbox\" aria-label=\"Acesso rápido\">",
+     "                        <button key={`recent-${cmd.id}`} id={`cmd-option-${cmd.id}`} role=\"option\" aria-selected={idx === selectedIndex} onClick={() => executeC",
+     "                    <button key={cmd.id} id={`cmd-option-${cmd.id}`} role=\"option\" aria-selected={recentCommands.length + idx === selectedIndex} onClick={() => ",
+     "              <div id=\"cmd-palette-list\" role=\"listbox\" aria-label=\"Resultados de busca\">",
+     "                        <motion.button key={item.id} id={`cmd-option-${item.id}`} role=\"option\" aria-selected={gi === selectedIndex} initial={{ opacity: 0, x: -"
+    ],
+    "still_sample": [
+     "            autoComplete=\"off\" autoCorrect=\"off\" spellCheck={false} />",
+     "              <div>"
+    ]
+   }
+  },
+  {
+   "path": "src/hooks/auth/useAuth.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 28,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 3,
+    "missing_in_main": 2,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "        void offlineSendQueue.clear();",
+     "       void offlineSendQueue.clear();"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/hooks/chat/__tests__/useTeamChatNotifications.canal-estavel.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 61,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 15,
+    "missing_in_main": 15,
+    "removed": 2,
+    "removed_still_in_main": 1,
+    "missing_sample": [
+     "  notificacoes: [] as unknown[],",
+     "type NotificacaoFalsa = { title: string; options?: NotificationOptions; onclick: (() => void) | null };",
+     "class FakeNotification {",
+     "  static permission: NotificationPermission = 'granted';",
+     "  static requestPermission = vi.fn(async () => 'granted' as NotificationPermission);",
+     "  onclick: (() => void) | null = null;",
+     "  close = vi.fn();",
+     "  constructor(public title: string, public options?: NotificationOptions) {",
+     "    (h.notificacoes as NotificacaoFalsa[]).push(this);",
+     "const notificadas = () => h.notificacoes as NotificacaoFalsa[];",
+     "  h.notificacoes = [];",
+     "  FakeNotification.permission = 'granted';",
+     "  Object.defineProperty(window, 'Notification', { configurable: true, value: FakeNotification });",
+     "    expect(notificadas().some(n => n.title === '💬 Teams: Ana')).toBe(true);",
+     "    expect(h.notificacoes.length).toBeGreaterThan(0);"
+    ],
+    "still_sample": [
+     "    expect(h.show).toHaveBeenCalled();"
+    ]
+   }
+  },
+  {
+   "path": "src/hooks/chat/useTeamChatNotifications.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 101,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 22,
+    "missing_in_main": 16,
+    "removed": 23,
+    "removed_still_in_main": 3,
+    "missing_sample": [
+     "import { useEffect, useLayoutEffect, useRef, useSyncExternalStore } from 'react';",
+     "  // HZ5-09: refs para funções instáveis — a assinatura não precisa ser recriada",
+     "  // quando o volume/quiet-hours muda; o handler sempre lê o valor atual pelo ref.",
+     "  // Atualização em useLayoutEffect (não durante render) para satisfazer react-hooks/refs.",
+     "  // useLayoutEffect corre antes de useEffect, então os refs estão frescos quando o canal dispara.",
+     "  useLayoutEffect(() => {",
+     "      .channel(`team-chat-notifications:${profile.id}`)",
+     "        if (notifSettingsRef.current.soundEnabled && !isQuietHoursRef.current()) {",
+     "          playTeamChatSound(notifSettingsRef.current.soundVolume);",
+     "        // HZ3-001: usa a Notification API diretamente — não depende de service worker",
+     "        // nem de assinatura push. O liga/desliga de avisos do chat interno continua",
+     "        // valendo por `notifSettings.browserNotifications`.",
+     "        if (notifSettingsRef.current.browserNotifications && !isQuietHoursRef.current()) {",
+     "          showBrowserNotification(`💬 Teams: ${senderName}`, body, {",
+     "            onClick: () => navigateToView('team-chat'),",
+     "  }, [profile]);"
+    ],
+    "still_sample": [
+     "import { useEffect, useRef, useSyncExternalStore } from 'react';",
+     "            body,",
+     "              conversationId: msg.conversation_id,"
+    ]
+   }
+  },
+  {
+   "path": "src/hooks/contacts/__tests__/useContainerColumns.test.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 39,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 14,
+    "missing_in_main": 1,
+    "removed": 11,
+    "removed_still_in_main": 9,
+    "missing_sample": [
+     "      writable: true,"
+    ],
+    "still_sample": [
+     "        width: this.largura,",
+     "        height: 0,",
+     "        top: 0,",
+     "        left: 0,",
+     "        right: this.largura,",
+     "        bottom: 0,",
+     "        x: 0,",
+     "        y: 0,",
+     "        toJSON: () => ({}),"
+    ]
+   }
+  },
+  {
+   "path": "src/hooks/inbox/useInboxFilters.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 83,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 17,
+    "missing_in_main": 5,
+    "removed": 18,
+    "removed_still_in_main": 6,
+    "missing_sample": [
+     "    const rawTypeParam = searchParams.get('type');",
+     "    // undefined = sem param na URL → usa prefs salvas; null = param presente mas inválido/all → ignora salvas",
+     "    const contactTypeUrl = rawTypeParam === null ? undefined : normalizeContactType(rawTypeParam);",
+     "      // Param na URL (mesmo inválido) cancela o fallback para prefs salvas.",
+     "      contactType: contactTypeUrl !== undefined ? contactTypeUrl : (storedPrefs?.contactType ?? null),"
+    ],
+    "still_sample": [
+     "  try {",
+     "  } catch {",
+     "    return null;",
+     "    if (value && value !== 'all') {",
+     "    } else {",
+     "  }, [applyPrefs]);"
+    ]
+   }
+  },
+  {
+   "path": "src/hooks/integrations/__tests__/useTalkXSuppression.test.ts",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "patch_lines": 380,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 4,
+    "missing_in_main": 4,
+    "removed": 260,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "// Y05 / TL-002 — hook `useTalkXSuppression` removido (lista morta).",
+     "// Os contratos do módulo são verificados em:",
+     "//   useTalkXSuppression.hook-morto.test.ts  (guarda REINTRODUCAO)",
+     "//   useTalkXSuppressionActivity.test.ts     (trilha de atividade, se existir)"
+    ],
+    "still_sample": [],
+    "same_basename_in_main": []
+   }
+  },
+  {
+   "path": "src/hooks/integrations/useKnowledgeBase.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 29,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 5,
+    "missing_in_main": 2,
+    "removed": 1,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "    if (articlesRes.error) { setError(articlesRes.error.message); setLoading(false); return; }",
+     "    if (filesRes.error) { setError(filesRes.error.message); setLoading(false); return; }"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/hooks/integrations/useTalkXSegments.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 13,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 0,
+    "removed": 1,
+    "removed_still_in_main": 0,
+    "missing_sample": [],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/hooks/integrations/useTalkXSuppression.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 123,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 2,
+    "missing_in_main": 1,
+    "removed": 78,
+    "removed_still_in_main": 6,
+    "missing_sample": [
+     "/* Z008 — tipos exportados usados por telas e testes do módulo                */"
+    ],
+    "still_sample": [
+     "    queryFn: async () => {",
+     "        .order('created_at', { ascending: false })",
+     "      if (error) throw error;",
+     "      if (error) throw error;",
+     "      if (error) throw error;",
+     "  return {"
+    ]
+   }
+  },
+  {
+   "path": "src/hooks/system/useDiagnosticsData.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 13,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 1,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "    if (connectionsCountError) dbError = dbError ?? connectionsCountError;"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/hooks/team-chat/useTeamReadState.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 24,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 3,
+    "missing_in_main": 1,
+    "removed": 2,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  }, [conversationId, queryClient, hasOwnMessages]);"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "supabase/deployment-manifest.json",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 42,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 6,
+    "missing_in_main": 6,
+    "removed": 6,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "      \"bytes\": 7475,",
+     "      \"sha256\": \"3171ca7e6dba15bc607cad8b3cc7f4b97ca78b5b34076bd8d5e123c845db3624\"",
+     "      \"bytes\": 29419,",
+     "      \"sha256\": \"a855f8fff5630320909d7a091d9276c7466dbaca6d0b92c1c1d274847c8ef343\"",
+     "      \"source_sha256\": \"d705c4d930193bc59135b515a45090779835110b2fadd0adac9f420851e30324\",",
+     "  \"manifest_sha256\": \"42fcdc0b3046b16ee740b3ec41ec6ff675087b215442e10d2ec4693011feca8f\""
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "supabase/migrations/20261026210300_reconcile_team_reactions_force_conversation_id_trig.sql",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 31,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 22,
+    "missing_in_main": 3,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "-- Reconcilia drift: função e trigger existem em produção sem migration.",
+     "-- A função é chamada pelo trigger BEFORE INSERT OR UPDATE em team_message_reactions",
+     "-- para preencher conversation_id a partir da mensagem pai (team_messages)."
+    ],
+    "still_sample": []
+   }
+  }
+ ],
+ "auto": "MISTO_CONFLITO",
+ "n_files_with_gaps": 21,
+ "gap_lines_total": 348
+}

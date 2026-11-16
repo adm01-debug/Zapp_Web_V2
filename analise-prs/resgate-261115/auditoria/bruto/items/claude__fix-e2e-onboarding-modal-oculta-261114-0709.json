@@ -1,0 +1,60 @@
+{
+ "id": "claude__fix-e2e-onboarding-modal-oculta-261114-0709",
+ "kind": "branch",
+ "ref": "origin/claude/fix-e2e-onboarding-modal-oculta-261114-0709",
+ "tip": "eeeace208e2b054d3e72d73fbcc72dad7e317319",
+ "merge_base": "ff0a5dbca72a7ccd2904c854660ef5921accf8e2",
+ "ahead": 1,
+ "last_commit_date": "2026-11-14",
+ "merge_base_date": "2026-11-14",
+ "prs_with_same_tip": [
+  3072
+ ],
+ "triagem_2804": {
+  "3072": null
+ },
+ "closure_comment": {
+  "3072": {
+   "title": "test(e2e): preparo do tour de onboarding enxerga Contatos sob o modal de boas-vindas",
+   "last_comment": "Fechando como duplicada: a #3071 (`58f1713bae`, já na `main`) aplicou a mesma correção em `e2e/fixtures/onboarding-isolated.ts`. Ela usa `includeHidden: true` em `main`, no `heading` e na `tab` Todos e explica o mesmo `hideOthers` do WelcomeModal. Por isso esta PR entrou em conflito, e não sobra nad"
+  }
+ },
+ "files": [
+  {
+   "path": "e2e/fixtures/onboarding-isolated.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 30,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 9,
+    "missing_in_main": 9,
+    "removed": 3,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  // O WelcomeModal (Dialog modal do Radix) chama `hideOthers` ao montar e põe",
+     "  // aria-hidden=\"true\" no wrapper do <main> (AppShell.tsx:123). A abertura dele",
+     "  // disputa com o lazy de Contatos, e este fluxo EXIGE o modal aberto logo",
+     "  // depois (tourVisible). A prontidão da tela não pode depender de quem chega",
+     "  // primeiro; a visibilidade real continua exigida pelos toBeVisible abaixo.",
+     "  const sobModal = { includeHidden: true } as const;",
+     "    .getByRole('main', { name: 'Conteúdo principal', ...sobModal })",
+     "    .getByRole('heading', { level: 1, name: 'Contatos', ...sobModal });",
+     "  await expect(page.getByRole('tab', { name: /Todos/, ...sobModal })).toBeVisible();"
+    ],
+    "still_sample": []
+   }
+  }
+ ],
+ "counts": {
+  "migrations": "0",
+  "workflows": "0",
+  "src": "0",
+  "edges": "0",
+  "docs_only": "no",
+  "lines_branch_has_main_lacks": "10",
+  "lines_main_has_branch_lacks": "6"
+ },
+ "auto": "MISTO_CONFLITO",
+ "n_files_with_gaps": 1,
+ "gap_lines_total": 9
+}

@@ -1,0 +1,71 @@
+{
+ "id": "claude__fix-talkx-report-test-suite-261108-2355",
+ "kind": "branch",
+ "ref": "origin/claude/fix-talkx-report-test-suite-261108-2355",
+ "tip": "784bb18a75b87421f97c25f991f15a21b743b81f",
+ "merge_base": "9183f0f6fa4296cd07c585602bc5ea88ada5d98d",
+ "ahead": 1,
+ "last_commit_date": "2026-11-08",
+ "merge_base_date": "2026-11-08",
+ "prs_with_same_tip": [
+  2864
+ ],
+ "triagem_2804": {
+  "2864": null
+ },
+ "closure_comment": {},
+ "files": [
+  {
+   "path": "src/components/talkx/report/__tests__/TalkXCampaignReport.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 149,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 111,
+    "missing_in_main": 96,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "vi.mock('recharts', () => {",
+     "  const Box = ({ children }: { children?: React.ReactNode }) => <div>{children}</div>;",
+     "  const SvgBox = ({ children }: { children?: React.ReactNode }) => <svg>{children}</svg>;",
+     "    ComposedChart: SvgBox,",
+     "    AreaChart: SvgBox,",
+     "    Area: () => null,",
+     "    Line: () => null,",
+     "    XAxis: () => null,",
+     "    YAxis: () => null,",
+     "    CartesianGrid: () => null,",
+     "    Tooltip: () => null,",
+     "    ResponsiveContainer: Box,",
+     "import { TalkXCampaignReport } from '@/components/talkx/report/TalkXCampaignReport';",
+     "import {",
+     "  talkxReportHeatmapFromTimestamps,",
+     "  talkxReportSeriesFromRows,",
+     "  type TalkXReportRecipientRow,",
+     "} from '@/components/talkx/report/talkxReportData';",
+     "const TZ = 'America/Sao_Paulo';",
+     "const ROWS: TalkXReportRecipientRow[] = [",
+     "  { sent_at: '2026-10-05T12:00:00.000Z', delivered_at: '2026-10-05T12:01:00.000Z', replied_at: '2026-10-05T12:05:00.000Z' },",
+     "  { sent_at: '2026-10-06T12:00:00.000Z', delivered_at: null, replied_at: null },",
+     "  { sent_at: '2026-10-11T12:00:00.000Z', delivered_at: '2026-10-11T12:02:00.000Z', replied_at: null },",
+     "const CAMPAIGN = {",
+     "  id: 'c1',"
+    ],
+    "still_sample": []
+   }
+  }
+ ],
+ "counts": {
+  "migrations": "0",
+  "workflows": "0",
+  "src": "1",
+  "edges": "0",
+  "docs_only": "no",
+  "lines_branch_has_main_lacks": "149",
+  "lines_main_has_branch_lacks": "162"
+ },
+ "auto": "MISTO_CONFLITO",
+ "n_files_with_gaps": 1,
+ "gap_lines_total": 96
+}

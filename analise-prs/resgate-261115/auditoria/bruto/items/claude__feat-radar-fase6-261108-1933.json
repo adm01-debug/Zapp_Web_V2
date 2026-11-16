@@ -1,0 +1,220 @@
+{
+ "id": "claude__feat-radar-fase6-261108-1933",
+ "kind": "branch",
+ "ref": "origin/claude/feat-radar-fase6-261108-1933",
+ "tip": "03e96a7005c4d583b4e6597c0705c4109581cb3c",
+ "merge_base": "9183f0f6fa4296cd07c585602bc5ea88ada5d98d",
+ "ahead": 8,
+ "last_commit_date": "2026-11-08",
+ "merge_base_date": "2026-11-08",
+ "prs_with_same_tip": [
+  2825
+ ],
+ "triagem_2804": {
+  "2825": null
+ },
+ "closure_comment": {},
+ "files": [
+  {
+   "path": "src/components/copilot/RadarPhase6Panel.tsx",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "patch_lines": 325,
+   "line_check": {
+    "added": 249,
+    "missing_in_main": 249,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     " * CV-051–060 — RadarPhase6Panel: painel flutuante do RADAR.",
+     " *   CV-051: flutua ancorado à direita sem cobrir o campo de digitação.",
+     " *   CV-052: modos mini/normal/foco — persiste por conversa via useRadarPanel.",
+     " *   CV-053: cards (Etapa, B·R·I·N·D·E, Sugestões, Próximo passo, Alertas,",
+     " *           Produtos, Quem decide).",
+     " *   CV-054: indicador \"pensando\" com timeout de 10 s e mensagem de erro.",
+     " *   CV-055: timeline de insights acumulados na sessão.",
+     " *   CV-056: Ctrl+Shift+R abre/fecha o painel.",
+     " *   CV-057: aria-live=\"polite\" para novas sugestões.",
+     " *   CV-058: botão \"não perturbe\" por conversa + mudo global 30 min.",
+     " *   CV-059: estado vindo exclusivamente de useRadarPanel.",
+     " *   CV-060: mobile (<640 px) exibe drawer inferior com sugestão e próximo passo.",
+     "import { useEffect, useRef } from 'react';",
+     "import { X, ChevronUp, Maximize2, Minimize2, BellOff, Bell, Loader2, Clock, AlertCircle } from 'lucide-react';",
+     "import { cn } from '@/lib/utils';",
+     "import { useRadarPanel, type RadarInsight } from '@/hooks/copilot/useRadarPanel';",
+     "import { Button } from '@/components/ui/button';",
+     "import { Badge } from '@/components/ui/badge';",
+     "import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';",
+     "// ---------------------------------------------------------------------------",
+     "// Tipos",
+     "// ---------------------------------------------------------------------------",
+     "export interface RadarPhase6PanelProps {",
+     "  conversationId: string;",
+     "  contactName: string;"
+    ],
+    "still_sample": [],
+    "same_basename_in_main": []
+   }
+  },
+  {
+   "path": "src/components/copilot/index.ts",
+   "status": "MAIN_UNCHANGED_SINCE_BASE",
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "patch_lines": 15,
+   "line_check": {
+    "added": 4,
+    "missing_in_main": 4,
+    "removed": 1,
+    "removed_still_in_main": 1,
+    "missing_sample": [
+     " * Barrel de componentes do Copiloto de Vendas (RADAR) — Fases 6–13.",
+     "// CV-051–060 — Fase 6: painel flutuante",
+     "export { RadarPhase6Panel } from './RadarPhase6Panel';",
+     "export type { RadarPhase6PanelProps } from './RadarPhase6Panel';"
+    ],
+    "still_sample": [
+     " * Barrel de componentes do Copiloto de Vendas (RADAR) — Fases 7–13."
+    ]
+   }
+  },
+  {
+   "path": "src/components/inbox/ChatPanel.tsx",
+   "status": "BOTH_CHANGED",
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "patch_lines": 28,
+   "line_check": {
+    "added": 8,
+    "missing_in_main": 6,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "// CV-051–060 — painel flutuante RADAR Fase 6",
+     "const RadarPhase6Panel = lazy(() => import('@/components/copilot/RadarPhase6Panel').then(m => ({ default: m.RadarPhase6Panel })));",
+     "      {/* CV-051–060 — painel flutuante RADAR Fase 6 */}",
+     "        <RadarPhase6Panel",
+     "          conversationId={conversation.id}",
+     "          contactName={conversation.contact.name}"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/talkx/report/__tests__/TalkXCampaignReport.test.tsx",
+   "status": "BOTH_CHANGED",
+   "hunk": "CONFLICT",
+   "patch_lines": 145,
+   "line_check": {
+    "added": 71,
+    "missing_in_main": 64,
+    "removed": 20,
+    "removed_still_in_main": 7,
+    "missing_sample": [
+     "  state: { recipients: [] as unknown[], report: null as unknown },",
+     "      eq: () => builder, not: () => builder, order: () => builder, limit: () => builder,",
+     "      channel: realtimeChannel, removeChannel: vi.fn(),",
+     "vi.mock('recharts', () => {",
+     "  const Box = ({ children }: { children?: React.ReactNode }) => <div>{children}</div>;",
+     "  const SvgBox = ({ children }: { children?: React.ReactNode }) => <svg>{children}</svg>;",
+     "    ComposedChart: SvgBox, AreaChart: SvgBox, Area: () => null, Line: () => null,",
+     "    XAxis: () => null, YAxis: () => null, CartesianGrid: () => null, Tooltip: () => null,",
+     "    ResponsiveContainer: Box,",
+     "import { TalkXCampaignReport } from '@/components/talkx/report/TalkXCampaignReport';",
+     "import {",
+     "  talkxReportHeatmapFromTimestamps, talkxReportSeriesFromRows,",
+     "  type TalkXReportRecipientRow,",
+     "} from '@/components/talkx/report/talkxReportData';",
+     "const TZ = 'America/Sao_Paulo';",
+     "const ROWS: TalkXReportRecipientRow[] = [",
+     "  { sent_at: '2026-10-05T12:00:00.000Z', delivered_at: '2026-10-05T12:01:00.000Z', replied_at: '2026-10-05T12:05:00.000Z' },",
+     "  { sent_at: '2026-10-06T12:00:00.000Z', delivered_at: null, replied_at: null },",
+     "  { sent_at: '2026-10-11T12:00:00.000Z', delivered_at: '2026-10-11T12:02:00.000Z', replied_at: null },",
+     "const CAMPAIGN = {",
+     "  id: 'c1', name: 'Campanha Relatório X164', message_template: 'Olá {{nome}}',",
+     "  variables_config: [], typing_delay_min: 1500, typing_delay_max: 4000,",
+     "  send_interval_min: 8000, send_interval_max: 20000, status: 'completed',",
+     "  total_recipients: 3, sent_count: 3, failed_count: 0, delivered_count: 2,",
+     "  read_count: 1, replied_count: 1, outcome_unknown_count: 0,"
+    ],
+    "still_sample": [
+     "  state: {",
+     "    recipients: [] as unknown[],",
+     "    report: null as unknown,",
+     "        return builder;",
+     "      limit: () => builder,",
+     "      channel: realtimeChannel,",
+     "      removeChannel: vi.fn(),"
+    ]
+   }
+  },
+  {
+   "path": "src/hooks/copilot/useRadarPanel.ts",
+   "status": "BOTH_CHANGED",
+   "hunk": "CONFLICT",
+   "patch_lines": 214,
+   "line_check": {
+    "added": 160,
+    "missing_in_main": 149,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     " * CV-051–060 — Fase 6 do RADAR: estado central do painel flutuante.",
+     " * Responsabilidades:",
+     " *   CV-052: modo (mini/normal/foco) persistido por conversa no localStorage.",
+     " *   CV-054: estado \"pensando\" com timeout automático de 10 s.",
+     " *   CV-055: timeline de insights acumulados na sessão.",
+     " *   CV-058: modo \"não perturbe\" — por conversa ou por 30 min globais.",
+     " *   CV-059: fonte única de estado; aba IA e \"Visão\" lêem o mesmo store.",
+     "import { useState, useCallback, useRef, useEffect } from 'react';",
+     "// ---------------------------------------------------------------------------",
+     "// Tipos públicos",
+     "// ---------------------------------------------------------------------------",
+     "export type RadarPanelMode = 'mini' | 'normal' | 'focus';",
+     "export interface RadarInsight {",
+     "  id: string;",
+     "  text: string;",
+     "  messageId?: string;",
+     "  timestamp: number;",
+     "export interface RadarPanelState {",
+     "  open: boolean;",
+     "  mode: RadarPanelMode;",
+     "  thinking: boolean;",
+     "  /** Mensagem exibida quando o timeout estoura (CV-054). */",
+     "  thinkingError: string | null;",
+     "  /** Histórico de insights da sessão (CV-055). */",
+     "  timeline: RadarInsight[];"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/hooks/shortcuts/defaultShortcuts.ts",
+   "status": "MAIN_UNCHANGED_SINCE_BASE",
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "patch_lines": 21,
+   "line_check": {
+    "added": 3,
+    "missing_in_main": 3,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  // CV-056 — painel flutuante RADAR Fase 6",
+     "  { id: 'radar-toggle', name: 'Painel RADAR', description: 'Abre ou fecha o painel RADAR de análise de vendas', defaultKey: 'a', defaultModifiers: { ctrlKey: tr",
+     "  'radar-toggle',"
+    ],
+    "still_sample": []
+   }
+  }
+ ],
+ "counts": {
+  "migrations": "0",
+  "workflows": "0",
+  "src": "6",
+  "edges": "0",
+  "docs_only": "no",
+  "lines_branch_has_main_lacks": "617",
+  "lines_main_has_branch_lacks": "342"
+ },
+ "auto": "MISTO_CONFLITO",
+ "n_files_with_gaps": 6,
+ "gap_lines_total": 483
+}

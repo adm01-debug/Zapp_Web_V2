@@ -1,0 +1,62 @@
+{
+ "id": "pr-3016",
+ "kind": "pr",
+ "ref": "refs/remotes/pr/3016",
+ "pr": 3016,
+ "tip": "1c067b913cee632fa2d5a6f83d0056dbcaa1383a",
+ "merge_base": "cca5655b81667d40e43da5ca55a29c3e5b8b5848",
+ "ahead": 1,
+ "last_commit_date": "2026-11-12",
+ "merge_base_date": "2026-11-12",
+ "triagem_2804": null,
+ "closure_comment": {
+  "title": "Create eslint.yml",
+  "last_comment": "Fechando por ser redundante e nociva. Duas verificações independentes confirmaram. Nada se perde: | - O lint já roda no `ci.yml`, no job \"Lint & TypeCheck\", com `lint-ratchet` (barra só dívida nova). | - Este modelo do GitHub roda `eslint .` no repo inteiro, que tem 801 ocorrências antigas no baseline. |"
+ },
+ "files": [
+  {
+   "path": ".github/workflows/eslint.yml",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "patch_lines": 58,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 45,
+    "missing_in_main": 45,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "# This workflow uses actions that are not certified by GitHub.",
+     "# They are provided by a third-party and are governed by",
+     "# separate terms of service, privacy policy, and support",
+     "# documentation.",
+     "# ESLint is a tool for identifying and reporting on patterns",
+     "# found in ECMAScript/JavaScript code.",
+     "# More details at https://github.com/eslint/eslint",
+     "# and https://eslint.org",
+     "name: ESLint",
+     "  push:",
+     "    branches: [ \"main\" ]",
+     "  pull_request:",
+     "    # The branches below must be a subset of the branches above",
+     "    branches: [ \"main\" ]",
+     "  schedule:",
+     "    - cron: '20 20 * * 4'",
+     "jobs:",
+     "  eslint:",
+     "    name: Run eslint scanning",
+     "    runs-on: ubuntu-latest",
+     "    permissions:",
+     "      contents: read",
+     "      security-events: write",
+     "      actions: read # only required for a private repository by github/codeql-action/upload-sarif to get the Action run status",
+     "    steps:"
+    ],
+    "still_sample": [],
+    "same_basename_in_main": []
+   }
+  }
+ ],
+ "auto": "TRABALHO_AUSENTE_APLICA_LIMPO",
+ "n_files_with_gaps": 1,
+ "gap_lines_total": 45
+}

@@ -1,0 +1,69 @@
+{
+ "id": "claude__fix-gr016-playwright-workers-011101",
+ "kind": "branch",
+ "ref": "origin/claude/fix-gr016-playwright-workers-011101",
+ "tip": "901357404c7cad5fcc398fdf2e66512077e16956",
+ "merge_base": "1252bb5a41123ba4d49efd84d0f91604bff6c87c",
+ "ahead": 3,
+ "last_commit_date": "2026-11-01",
+ "merge_base_date": "2026-11-01",
+ "prs_with_same_tip": [
+  2536
+ ],
+ "triagem_2804": {
+  "2536": "OBSOLETA"
+ },
+ "closure_comment": {},
+ "files": [
+  {
+   "path": ".github/ci-refresh",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "patch_lines": 7,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 0,
+    "missing_in_main": 0,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [],
+    "still_sample": [],
+    "same_basename_in_main": []
+   }
+  },
+  {
+   "path": "playwright.config.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 31,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 6,
+    "missing_in_main": 5,
+    "removed": 7,
+    "removed_still_in_main": 2,
+    "missing_sample": [
+     "  // W75/GR-016: 2 workers sempre. O Email fixture sobe um Vite completo e captura",
+     "  // artefatos visuais; com 1 worker no CI, specs independentes esperavam em fila",
+     "  // e ultrapassavam o timeout (cold-start starvation). Pool de 2 é suficiente.",
+     "    // A porta vem do próprio ambiente quando PLAYWRIGHT_BASE_URL é definida.",
+     "    // Sem isso, a suite é fixa em 5173 e, com `reuseExistingServer` fora do CI,"
+    ],
+    "still_sample": [
+     "    // A porta vem do proprio ambiente quando PLAYWRIGHT_BASE_URL e' definida.",
+     "    // Sem isso, a suite e' fixa em 5173 e, com `reuseExistingServer` fora do CI,"
+    ]
+   }
+  }
+ ],
+ "counts": {
+  "migrations": "0",
+  "workflows": "1",
+  "src": "0",
+  "edges": "0",
+  "docs_only": "no",
+  "lines_branch_has_main_lacks": "13",
+  "lines_main_has_branch_lacks": "13"
+ },
+ "auto": "MISTO_CONFLITO",
+ "n_files_with_gaps": 1,
+ "gap_lines_total": 7
+}

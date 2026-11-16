@@ -1,0 +1,35 @@
+{
+ "id": "pr-3121",
+ "kind": "pr",
+ "ref": "refs/remotes/pr/3121",
+ "pr": 3121,
+ "tip": "e59d06a935654f9b9e31186d66d2cbc09ed069d5",
+ "merge_base": "3c64a5454ab2269c2db2361adb858aedac009d2c",
+ "ahead": 1,
+ "last_commit_date": "2026-11-14",
+ "merge_base_date": "2026-11-14",
+ "triagem_2804": null,
+ "closure_comment": {
+  "title": "docs(pendencias): painel RADAR pronto e teto de bundle saturado (decisão do dono)",
+  "last_comment": "Incorporada pelo pacote 7 (#3123, mergeado em `b24e3150004c`). Fechando esta. |  | **Prova:** o `PENDENCIAS.md` da `main` contém o item 6 inteiro desta branch — a `main` **adiciona 27 linhas e remove 0** em relação a ela (as 27 são o item 3-A, dos segredos da Vercel, que vem da outra PR do pacote). |  | A d"
+ },
+ "files": [
+  {
+   "path": "PENDENCIAS.md",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 61,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 40,
+    "missing_in_main": 0,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [],
+    "still_sample": []
+   }
+  }
+ ],
+ "auto": "INCORPORADA_PROVA_LINHAS",
+ "n_files_with_gaps": 0,
+ "gap_lines_total": 0
+}

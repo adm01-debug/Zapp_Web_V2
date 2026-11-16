@@ -1,0 +1,49 @@
+{
+ "id": "claude__fix-typecheck-suppression-261019-1342",
+ "kind": "branch",
+ "ref": "origin/claude/fix-typecheck-suppression-261019-1342",
+ "tip": "ec57655d549eb83a1102e3dbb2f4989e22a265fc",
+ "merge_base": "ee294749175799481deb9fc69e1d31fac6675f3e",
+ "ahead": 1,
+ "last_commit_date": "2026-10-19",
+ "merge_base_date": "2026-10-18",
+ "prs_with_same_tip": [
+  2111
+ ],
+ "triagem_2804": {
+  "2111": "JA_NA_MAIN"
+ },
+ "closure_comment": {},
+ "files": [
+  {
+   "path": "src/hooks/integrations/useTalkXSuppression.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 29,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 3,
+    "missing_in_main": 3,
+    "removed": 2,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "export type SuppressionReasonCode = 'manual' | 'opt_out' | 'invalid_number' | 'lgpd' | 'no_commercial_permission' | 'bounce';",
+     "  reason_code: SuppressionReasonCode | null;",
+     "  reason_code?: SuppressionReasonCode;"
+    ],
+    "still_sample": []
+   }
+  }
+ ],
+ "counts": {
+  "migrations": "0",
+  "workflows": "0",
+  "src": "1",
+  "edges": "0",
+  "docs_only": "no",
+  "lines_branch_has_main_lacks": "148",
+  "lines_main_has_branch_lacks": "39"
+ },
+ "auto": "MISTO_CONFLITO",
+ "n_files_with_gaps": 1,
+ "gap_lines_total": 3
+}

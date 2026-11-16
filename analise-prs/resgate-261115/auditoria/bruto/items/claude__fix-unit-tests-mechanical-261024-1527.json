@@ -1,0 +1,82 @@
+{
+ "id": "claude__fix-unit-tests-mechanical-261024-1527",
+ "kind": "branch",
+ "ref": "origin/claude/fix-unit-tests-mechanical-261024-1527",
+ "tip": "af3fa1db777b150698beace933043ed75ac945bb",
+ "merge_base": "b1fe88215b4861121c912140d7968581e26e9111",
+ "ahead": 1,
+ "last_commit_date": "2026-10-24",
+ "merge_base_date": "2026-10-24",
+ "prs_with_same_tip": [
+  2228
+ ],
+ "triagem_2804": {
+  "2228": "OBSOLETA"
+ },
+ "closure_comment": {},
+ "files": [
+  {
+   "path": "src/components/admin/__tests__/useAdminDataCreateUser.test.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 185,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 46,
+    "missing_in_main": 35,
+    "removed": 28,
+    "removed_still_in_main": 23,
+    "missing_sample": [
+     "const { mockInvokeEdge, mockReadEdgeError, mockRefreshSession, mockFrom, mockUpload } = vi.hoisted(() => ({",
+     "  mockReadEdgeError: vi.fn(),",
+     "vi.mock('@/lib/invokeEdge', () => ({",
+     "  invokeEdge: (...args: unknown[]) => mockInvokeEdge(...args),",
+     "  readEdgeError: (...args: unknown[]) => mockReadEdgeError(...args),",
+     "    auth: { refreshSession: (...args: unknown[]) => mockRefreshSession(...args) },",
+     "    from: (...args: unknown[]) => mockFrom(...args),",
+     "  SUPABASE_URL: 'https://example.supabase.co',",
+     "function httpError(status: number, message: string) {",
+     "    context: { status },",
+     "    _parsedMessage: message,",
+     "    _parsedStatus: status,",
+     "    mockInvokeEdge.mockResolvedValue({ data: { success: true, user_id: 'u-1' }, error: null });",
+     "    mockReadEdgeError.mockImplementation(async (err: { _parsedStatus?: number; _parsedMessage?: string }) => ({",
+     "      status: err?._parsedStatus ?? null,",
+     "      message: err?._parsedMessage ?? 'Erro ao criar usuário',",
+     "    mockFrom.mockImplementation(() => ({",
+     "    expect(body?.body).toMatchObject({",
+     "    const err = httpError(422, 'A user with this email address has already been registered');",
+     "    mockInvokeEdge.mockRejectedValue(err);",
+     "    const err = httpError(",
+     "      \"Invalid enum value. Expected 'admin' | 'supervisor' | 'agent' | 'special_agent', received 'chefe'\",",
+     "    mockInvokeEdge.mockRejectedValue(err);",
+     "    const err401 = httpError(401, 'Não autorizado');",
+     "      .mockRejectedValueOnce(err401)"
+    ],
+    "still_sample": [
+     "const { mockInvokeEdge, mockRefreshSession, mockFrom, mockUpload } = vi.hoisted(() => ({",
+     "    auth: { refreshSession: mockRefreshSession },",
+     "    from: mockFrom.mockImplementation(() => ({",
+     "      select: vi.fn(() =>",
+     "        Object.assign(Promise.resolve({ data: [], error: null }), {",
+     "          order: vi.fn().mockResolvedValue({ data: [], error: null }),",
+     "    })),",
+     "function httpError(status: number, body: string, contentType = 'application/json') {",
+     "    context: new Response(body, { status, headers: { 'Content-Type': contentType } }),",
+     "    mockInvokeEdge.mockResolvedValue({ success: true, user_id: 'u-1' });"
+    ]
+   }
+  }
+ ],
+ "counts": {
+  "migrations": "0",
+  "workflows": "0",
+  "src": "1",
+  "edges": "0",
+  "docs_only": "no",
+  "lines_branch_has_main_lacks": "50",
+  "lines_main_has_branch_lacks": "64"
+ },
+ "auto": "MISTO_CONFLITO",
+ "n_files_with_gaps": 1,
+ "gap_lines_total": 58
+}

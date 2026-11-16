@@ -1,0 +1,49 @@
+[
+ {
+  "commit": "2fe27059f",
+  "arquivo": "scripts/ai-context/gerar.mjs",
+  "linhas": 299,
+  "amostra": [
+   "const FORMAT_VERSION = 1;",
+   "const OUT = path.resolve(ROOT, argOf('--out', process.env.AI_CONTEXT_DIR || 'inventario/ia'));",
+   "const SKIP_DIRS = new Set(['node_modules', '.git', 'dist', 'build', '.next', '.nuxt', '.turbo', '.vercel', 'coverage',",
+   "  'out', '.cache', '.parcel-cache', 'tmp', '.tmp', 'vendor', '__pycache__', '.venv', 'venv', 'playwright-report', 'test-results',",
+   "  'storybook-static', '.idea', '.vscode', 'supabase-export']);",
+   "const CODE_EXT = new Set(['.ts', '.tsx', '.js', '.jsx', '.mjs', '.cjs', '.mts', '.cts']);"
+  ]
+ },
+ {
+  "commit": "1fbdeee8e",
+  "arquivo": "scripts/ai-context/gerar.mjs",
+  "linhas": 39,
+  "amostra": [
+   "  role: /\\b(?:role|roles|papel|userRole|requiredRole|allowedRoles|hasRole|requireRole)\\b\\s*(?:[:=!]==?|\\(|\\.includes\\(|:\\s*\\[)\\s*\\[?\\s*['\"`](\\w+)['\"`]",
+   "  const re = /(?:export\\s+)?const\\s+(\\w+)\\s*=\\s*(?:lazy\\w*|React\\.lazy|loadable|defineAsyncComponent)\\s*\\(\\s*(?:\\(\\)\\s*=>\\s*)?import\\(\\s*['\"]([^'\"]+)[",
+   "const routeFiles = uniq([...CODE_FILES.filter((f) => !FILE.get(f)?.teste && (/<Route\\b/.test(FILE.get(f).conteudo) || /create(Browser|Hash|Memory)Rout",
+   "      const p = /\\bpath=[\"']([^\"']*)[\"']/.exec(attrs); const isIndex = /\\bindex\\b/.test(attrs);",
+   "    const re2 = /\\{\\s*(?:[^{}]*?\\b)?path:\\s*['\"]([^'\"]*)['\"]([^{}]*?(?:\\{[^{}]*\\}[^{}]*?)*)/g; let mm;",
+   "    while ((mm = re2.exec(src))) {"
+  ]
+ },
+ {
+  "commit": "1fbdeee8e",
+  "arquivo": "scripts/ai-context/gerar.unit.mjs",
+  "linhas": 5,
+  "amostra": [
+   "  w(root, 'src/components/layout/sidebarNav.ts', `export const sidebarGroups = [{ title: 'Principal', items: [{ id: 'home', label: 'Início', path: '/a",
+   "  w(root, 'supabase/migrations/001_init.sql', `create table public.contacts (id uuid primary key default gen_random_uuid(), name text not null, email ",
+   "create trigger trg_pay after insert on public.payments for each row execute function public.is_admin();`);",
+   "  assert.deepEqual(Object.keys(t.colunas), ['createdAt', 'id', 'name', 'phone'], 'email removida, phone adicionada');",
+   "  assert.deepEqual(t.drift, { so_na_migration: ['createdAt'], so_no_types: ['extra_col'] });"
+  ]
+ },
+ {
+  "commit": "540d46212",
+  "arquivo": "scripts/ai-context/gerar.mjs",
+  "linhas": 2,
+  "amostra": [
+   "    const bodyStatements = bodies.flatMap((b) => { const inner = b.replace(/^\\$\\w*\\$|\\$\\w*\\$$/g, '').replace(/\\$(\\w*)\\$[\\s\\S]*?\\$\\1\\$/g, \"''\"); if (/\\",
+   "    for (const stRaw of [...sqlNoBody.split(';'), ...bodyStatements]) {"
+  ]
+ }
+]

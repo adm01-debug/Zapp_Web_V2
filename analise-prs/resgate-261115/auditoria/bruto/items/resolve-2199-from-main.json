@@ -1,0 +1,87 @@
+{
+ "id": "resolve-2199-from-main",
+ "kind": "branch",
+ "ref": "origin/resolve-2199-from-main",
+ "tip": "4940f384757f7921b3eac8d29f2cc9c40ee602a0",
+ "merge_base": "1252bb5a41123ba4d49efd84d0f91604bff6c87c",
+ "ahead": 3,
+ "last_commit_date": "2026-11-01",
+ "merge_base_date": "2026-11-01",
+ "prs_with_same_tip": [
+  2431
+ ],
+ "triagem_2804": {
+  "2431": "OBSOLETA"
+ },
+ "closure_comment": {},
+ "files": [
+  {
+   "path": "scripts/db-audit/docker-shim",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 13,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 2,
+    "missing_in_main": 2,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "      [[ \"$role\" == pg_* ]] && continue  # nunca dropar roles built-in do PostgreSQL (pg_read_all_settings, pg_create_subscription, etc.)",
+     "      [[ \"$role\" == \"postgres\" ]] && continue  # superusuário padrão não pode ser dropado"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/test/setup.ts",
+   "status": "MAIN_UNCHANGED_SINCE_BASE",
+   "patch_lines": 46,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 22,
+    "missing_in_main": 18,
+    "removed": 5,
+    "removed_still_in_main": 5,
+    "missing_sample": [
+     "Object.defineProperty(Element.prototype, 'getBoundingClientRect', {",
+     "  value: function (this: Element) {",
+     "    const styleEl = this as HTMLElement;",
+     "    const styleHeight = styleEl.style ? parseInt(styleEl.style.height, 10) : NaN;",
+     "    const h = Number.isFinite(styleHeight) && styleHeight > 0 ? styleHeight : 600;",
+     "    return { width: 800, height: h, top: 0, left: 0, right: 800, bottom: h, x: 0, y: 0, toJSON: () => ({}) };",
+     "// MOCK clientHeight / clientWidth — @tanstack/react-virtual no jsdom.",
+     "// O virtualizador usa scrollElement.clientHeight como tamanho do viewport para",
+     "// decidir quais itens renderizar. O jsdom nao implementa layout CSS: o valor e",
+     "// sempre 0, getVirtualItems() devolve [] e nenhum item aparece no DOM do teste.",
+     "// Fixar 600 x 800 e coerente com o getBoundingClientRect acima e suficiente para",
+     "// os testes de regressao de loop (ChatMessagesArea.loop) e qualquer outro que",
+     "// monte um virtualizador sem mock proprio de clientHeight.",
+     "// Testes que precisam de valor especifico definem vi.spyOn(el, 'clientHeight', ...).",
+     "Object.defineProperty(HTMLElement.prototype, 'clientHeight', {",
+     "  get() { return 600; },",
+     "Object.defineProperty(HTMLElement.prototype, 'clientWidth', {",
+     "  get() { return 800; },"
+    ],
+    "still_sample": [
+     "Object.defineProperty(HTMLElement.prototype, 'getBoundingClientRect', {",
+     "  // Sem `writable`, `elemento.getBoundingClientRect = ...` falha em modo estrito.",
+     "  writable: true,",
+     "  value: function () {",
+     "    return { width: 800, height: 600, top: 0, left: 0, right: 800, bottom: 600, x: 0, y: 0, toJSON: () => ({}) };"
+    ]
+   }
+  }
+ ],
+ "counts": {
+  "migrations": "0",
+  "workflows": "0",
+  "src": "1",
+  "edges": "0",
+  "docs_only": "no",
+  "lines_branch_has_main_lacks": "36",
+  "lines_main_has_branch_lacks": "45"
+ },
+ "auto": "MISTO_CONFLITO",
+ "n_files_with_gaps": 2,
+ "gap_lines_total": 25
+}

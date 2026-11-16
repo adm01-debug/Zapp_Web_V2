@@ -1,0 +1,75 @@
+{
+ "id": "claude__fix-deploy-deno-frozen-v2",
+ "kind": "branch",
+ "ref": "origin/claude/fix-deploy-deno-frozen-v2",
+ "tip": "ae1adcf5fcc53787b4a22417a48a702c0953cab1",
+ "merge_base": "1a9858b236fd3d8e02e4d640a74426cc568ef757",
+ "ahead": 3,
+ "last_commit_date": "2026-10-31",
+ "merge_base_date": "2026-10-31",
+ "prs_with_same_tip": [
+  2412
+ ],
+ "triagem_2804": {
+  "2412": "OBSOLETA"
+ },
+ "closure_comment": {},
+ "files": [
+  {
+   "path": ".github/workflows/deploy-functions.yml",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 32,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 9,
+    "missing_in_main": 9,
+    "removed": 10,
+    "removed_still_in_main": 3,
+    "missing_sample": [
+     "      - name: Instalar dependencias node_modules (deno install)",
+     "        # tem `/// <reference types=\"node\" />` que forca resolucao de @types/node.",
+     "        # @types/node e declarado em supabase/functions/deno.json imports para que",
+     "        # o deno install o instale com estrutura gerenciada pelo Deno.",
+     "        # npm install direto nao funciona: Deno 2.9.5 nao reconhece node_modules",
+     "        # criado fora da sua propria estrutura gerenciada (W101, run 41162076060).",
+     "        # --frozen=false e necessario porque scripts/ci/deno.lock tem zero entradas",
+     "        # npm; o lockfile e atualizado localmente no CI sem impactar o repositorio.",
+     "        run: deno install --config supabase/functions/deno.json --frozen=false"
+    ],
+    "still_sample": [
+     "      - name: Instalar dependencias node_modules (deno install + @types/node)",
+     "        run: |",
+     "          set -euo pipefail"
+    ]
+   }
+  },
+  {
+   "path": "supabase/functions/deno.json",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 7,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 1,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "{\"lock\":\"../../scripts/ci/deno.lock\",\"nodeModulesDir\":\"auto\",\"imports\":{\"@types/node\":\"npm:@types/node@^22\"},\"compilerOptions\":{\"skipLibCheck\":true}}"
+    ],
+    "still_sample": []
+   }
+  }
+ ],
+ "counts": {
+  "migrations": "0",
+  "workflows": "1",
+  "src": "0",
+  "edges": "1",
+  "docs_only": "no",
+  "lines_branch_has_main_lacks": "27",
+  "lines_main_has_branch_lacks": "71"
+ },
+ "auto": "MISTO_CONFLITO",
+ "n_files_with_gaps": 2,
+ "gap_lines_total": 13
+}

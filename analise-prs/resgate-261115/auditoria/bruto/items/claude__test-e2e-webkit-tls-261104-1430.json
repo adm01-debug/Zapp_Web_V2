@@ -1,0 +1,264 @@
+{
+ "id": "claude__test-e2e-webkit-tls-261104-1430",
+ "kind": "branch",
+ "ref": "origin/claude/test-e2e-webkit-tls-261104-1430",
+ "tip": "48b7ada595132338c23aa32598e18381cffdf9c0",
+ "merge_base": "46a0257333ea2cc9fe47a8bebe5450baaaf8afc4",
+ "ahead": 5,
+ "last_commit_date": "2026-11-04",
+ "merge_base_date": "2026-11-04",
+ "prs_with_same_tip": [],
+ "triagem_2804": {},
+ "closure_comment": {},
+ "files": [
+  {
+   "path": ".github/workflows/e2e-logado-isolado.yml",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 17,
+   "hunk": "PRESENT_REVERSE_APPLIES"
+  },
+  {
+   "path": "e2e/location-picker.spec.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 65,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 34,
+    "missing_in_main": 3,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "          if (key === 'ArrowDown' || key === 'Enter') observe(`${type}:${key}`);",
+     "    console.info('E71_KEYBOARD_DIAGNOSTIC', JSON.stringify({",
+     "    }));"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "e2e/tarefas-quadro.spec.ts",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "playwright.config.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 30,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 5,
+    "missing_in_main": 1,
+    "removed": 6,
+    "removed_still_in_main": 1,
+    "missing_sample": [
+     "      testIgnore: /auth\\.spec\\.ts|auth\\.setup\\.ts|conversation\\.spec\\.ts|messaging\\.spec\\.ts|location-picker\\.spec\\.ts|contact-address\\.spec\\.ts|contact-map-pin"
+    ],
+    "still_sample": [
+     "      testMatch: /auth\\.spec\\.ts/,"
+    ]
+   }
+  },
+  {
+   "path": "scripts/ci/e2e-auth-isolation.unit.mjs",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "scripts/ci/e2e-isolated-gateway.unit.mjs",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 116,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 93,
+    "missing_in_main": 0,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "scripts/ci/e2e-isolated-runtime-probe.unit.mjs",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "scripts/ci/e2e-isolated-runtime.unit.mjs",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 318,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 176,
+    "missing_in_main": 4,
+    "removed": 9,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "async function controllerFixture(t, fault, manifest = value => value, tlsDiagnostic) {",
+     "  for (const name of ['run.mjs', 'runtime-contract.mjs', 'stack.mjs', 'migrations.mjs', 'results.mjs', 'images.lock.json', 'tls.mjs', 'tls-probe.mjs', 'tls-edge",
+     "      const metadata = { Id: name + '-id', Config: { Labels: labels, User: argv.includes('--user') ? valueAfter(argv, '--user') : '' }, State: { Running: true }",
+     "  const result = { tlsDiagnosticLog, diagnosticCredentials, exit, state, calls, migrationCalls, seedCalls, browserCalls, listCalls, credentialFilesSeen, contain"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "scripts/ci/e2e-isolated-tls-preparation.unit.mjs",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "scripts/ci/e2e-isolated-tls.unit.mjs",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 610,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 509,
+    "missing_in_main": 5,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "import { certificateFailure, assertTlsClientContext, probeClient, probeBrowsers, probeEdge } from '../e2e-isolated/tls-probe.mjs';",
+     "          if (url.startsWith(TLS_ORIGIN)) return { status: () => fault === 'positive-status' && engine === affected ? 503 : 200 };",
+     "assert.equal(tlsDiagnosticCases.length, 48);",
+     "            if (url === TLS_ORIGIN + '/__e2e/tls-probe') return { status: () => 200 };",
+     "  if (spec.recognized) assert.ok(outcome.value);"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "scripts/ci/e2e-isolated.unit.mjs",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "scripts/ci/e2e-tarefas-project.unit.mjs",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "scripts/e2e-isolated/README.md",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 52,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 16,
+    "missing_in_main": 0,
+    "removed": 11,
+    "removed_still_in_main": 0,
+    "missing_sample": [],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "scripts/e2e-isolated/admission.mjs",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "scripts/e2e-isolated/gateway.mjs",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 65,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 21,
+    "missing_in_main": 0,
+    "removed": 5,
+    "removed_still_in_main": 0,
+    "missing_sample": [],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "scripts/e2e-isolated/run.mjs",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 196,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 66,
+    "missing_in_main": 1,
+    "removed": 11,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "    const metadata = ['images.json', 'bundles.json', 'tls-proof.json', 'migration-sources.json', 'migration-results.json', 'readiness.json', 'seed-ready.json', "
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "scripts/e2e-isolated/runtime-contract.mjs",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 27,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 3,
+    "missing_in_main": 2,
+    "removed": 2,
+    "removed_still_in_main": 1,
+    "missing_sample": [
+     "  'DISPLAY', 'XAUTHORITY', 'XDG_RUNTIME_DIR', 'LD_LIBRARY_PATH', 'PLAYWRIGHT_FIREFOX_POLICIES_JSON',",
+     "  if (env.PLAYWRIGHT_FIREFOX_POLICIES_JSON !== undefined && env.PLAYWRIGHT_FIREFOX_POLICIES_JSON !== '/run/zapp-e2e-tls/firefox-policies.json') fail('invalid-br"
+    ],
+    "still_sample": [
+     "  'DISPLAY', 'XAUTHORITY', 'XDG_RUNTIME_DIR', 'LD_LIBRARY_PATH',"
+    ]
+   }
+  },
+  {
+   "path": "scripts/e2e-isolated/runtime-probe.mjs",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "scripts/e2e-isolated/tls-edge-probe.ts",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "scripts/e2e-isolated/tls-probe.mjs",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 176,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 142,
+    "missing_in_main": 4,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "function navigationDiagnostic(page, url, runId, sourceSha) {",
+     "          const observation = navigationDiagnostic(negative, controlUrl(kind), runId, sourceSha);",
+     "          } finally { observation.stop(); await negative.close(); }",
+     "          if (!certificateFailure(rejection, kind, name)) fail('browser-' + name + '-' + kind + '-not-certificate-error', rejection);"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "scripts/e2e-isolated/tls.mjs",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/config/__tests__/supabase.test.ts",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/config/supabase.ts",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  }
+ ],
+ "counts": {
+  "migrations": "0",
+  "workflows": "1",
+  "src": "2",
+  "edges": "0",
+  "docs_only": "no",
+  "lines_branch_has_main_lacks": "87",
+  "lines_main_has_branch_lacks": "2004"
+ },
+ "auto": "MISTO_CONFLITO",
+ "n_files_with_gaps": 7,
+ "gap_lines_total": 22
+}

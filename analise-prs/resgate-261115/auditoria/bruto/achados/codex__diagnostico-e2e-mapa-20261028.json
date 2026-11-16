@@ -1,0 +1,24 @@
+[
+ {
+  "commit": "1b6166c6c",
+  "arquivo": "src/hooks/contacts/__tests__/ContactsView.v2Flags.test.tsx",
+  "linhas": 6,
+  "amostra": [
+   "    const titulos = Array.from(container.querySelectorAll('h1'));",
+   "    expect(titulos[0].textContent).toBe('Contatos');",
+   "    expect(titulos[0].className).toContain('sr-only');",
+   "    expect(areas.indexOf('area-stats')).toBeLessThan(areas.indexOf('area-tabs'));",
+   "    expect(areas.indexOf('area-stats')).toBeLessThan(areas.indexOf('area-toolbar'));",
+   "    render(<ContactsView />, { wrapper: createWrapper() });"
+  ]
+ },
+ {
+  "commit": "5cbd3d5f7",
+  "arquivo": "src/components/contacts/__tests__/ContactDialogs.fabToque.test.ts",
+  "linhas": 2,
+  "amostra": [
+   "    expect(fab).not.toMatch(/\\bz-(?:3[0-9]|[4-9][0-9])\\b/);",
+   "  it('continua portal, fora do scroller que recortaria o fixed', () => {"
+  ]
+ }
+]

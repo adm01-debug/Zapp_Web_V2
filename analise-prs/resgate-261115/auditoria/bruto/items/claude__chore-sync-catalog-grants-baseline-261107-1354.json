@@ -1,0 +1,49 @@
+{
+ "id": "claude__chore-sync-catalog-grants-baseline-261107-1354",
+ "kind": "branch",
+ "ref": "origin/claude/chore-sync-catalog-grants-baseline-261107-1354",
+ "tip": "e30d4ca0816a78ba6208743b5259095dc96d1624",
+ "merge_base": "0601e3b64e4d1c867827f4a045ac984a0ecee4f5",
+ "ahead": 1,
+ "last_commit_date": "2026-11-07",
+ "merge_base_date": "2026-11-07",
+ "prs_with_same_tip": [],
+ "triagem_2804": {},
+ "closure_comment": {},
+ "files": [
+  {
+   "path": "scripts/db-audit/grants-baseline.json",
+   "status": "BOTH_CHANGED",
+   "hunk": "CONFLICT",
+   "patch_lines": 28,
+   "line_check": {
+    "added": 5,
+    "missing_in_main": 4,
+    "removed": 5,
+    "removed_still_in_main": 2,
+    "missing_sample": [
+     "    \"generated_at\": \"2026-11-07\",",
+     "    \"anon_execute\": [],",
+     "    \"authenticated_execute_count\": 222,",
+     "    \"service_role_execute_count\": 392,"
+    ],
+    "still_sample": [
+     "    \"anon_execute\": [",
+     "    \"how_to_regenerate\": \"scripts/db-audit/grants-baseline.sql (E26)\","
+    ]
+   }
+  }
+ ],
+ "counts": {
+  "migrations": "0",
+  "workflows": "0",
+  "src": "0",
+  "edges": "0",
+  "docs_only": "no",
+  "lines_branch_has_main_lacks": "105",
+  "lines_main_has_branch_lacks": "7"
+ },
+ "auto": "MISTO_CONFLITO",
+ "n_files_with_gaps": 1,
+ "gap_lines_total": 6
+}

@@ -1,0 +1,429 @@
+{
+ "id": "claude__feat-talkx-x003-demo-fixtures-261101-2143",
+ "kind": "branch",
+ "ref": "origin/claude/feat-talkx-x003-demo-fixtures-261101-2143",
+ "tip": "f9ca26332f1a975c4020d212706642d2cf143e4b",
+ "merge_base": "1252bb5a41123ba4d49efd84d0f91604bff6c87c",
+ "ahead": 7,
+ "last_commit_date": "2026-11-01",
+ "merge_base_date": "2026-11-01",
+ "prs_with_same_tip": [
+  2520
+ ],
+ "triagem_2804": {
+  "2520": "OBSOLETA"
+ },
+ "closure_comment": {},
+ "files": [
+  {
+   "path": "e2e/fixtures/talkx-demo.ts",
+   "status": "BOTH_CHANGED",
+   "hunk": "CONFLICT",
+   "patch_lines": 114,
+   "line_check": {
+    "added": 15,
+    "missing_in_main": 15,
+    "removed": 15,
+    "removed_still_in_main": 14,
+    "missing_sample": [
+     " *   - `rest/v1/talkx_*`            -> GET devolve a fixture da tela; escrita -> 403",
+     " *   - `rest/v1/rpc/talkx_*`        -> escrita não prevista (403)",
+     " *   - `functions/v1/talkx-*`       -> escrita não prevista (403)",
+     " * -- o demo nunca grava nem envia nada em produção. Criadores (`get_team_profiles`)",
+     " * tela -- a etapa que cria uma tabela/RPC Talk X acrescenta a resposta dela no",
+     " * Supabase falsa (injetada no localStorage, deslogada -- sem secrets) e o mock dos",
+     " * existe quando tem dados. Referenciar uma fixture vazia (`{}`) é erro -- nunca",
+     "        'O contrato de crescimento exige que a fixture da tela nasça na etapa daquela tela -- ' +",
+     "/** Slugs (`NN-nome`) das fixtures que têm dados reais -- hoje só a tela 01. */",
+     " * (não populada). A régua usa isto para PULAR telas sem fixture -- a ausência",
+     "const FAKE_EXP = 4102444800; // 2100-01-01T00:00:00Z -- nunca expira no teste",
+     "  // Perfil do usuário fake. PostgREST devolve ARRAY num select de tabela -- e o",
+     "  // Papéis do usuário fake (RoleService.fetchUserRoles -> user_roles.select('role')).",
+     "  // Permissão nomeada (RoleService.checkPermission -> rpc/user_has_permission).",
+     " * (notificações, contadores, etc.) respondem vazias -- o spec visual nunca toca"
+    ],
+    "still_sample": [
+     " *   - `rest/v1/talkx_*`            → GET devolve a fixture da tela; escrita → 403",
+     " *   - `rest/v1/rpc/talkx_*`        → escrita não prevista (403)",
+     " * — o demo nunca grava nem envia nada em produção. Criadores (`get_team_profiles`)",
+     " * tela — a etapa que cria uma tabela/RPC Talk X acrescenta a resposta dela no",
+     " * Supabase falsa (injetada no localStorage, deslogada — sem secrets) e o mock dos",
+     " * existe quando tem dados. Referenciar uma fixture vazia (`{}`) é erro — nunca",
+     "        'O contrato de crescimento exige que a fixture da tela nasça na etapa daquela tela — ' +",
+     "/** Slugs (`NN-nome`) das fixtures que têm dados reais — hoje só a tela 01. */",
+     " * (não populada). A régua usa isto para PULAR telas sem fixture — a ausência",
+     "const FAKE_EXP = 4102444800; // 2100-01-01T00:00:00Z — nunca expira no teste"
+    ]
+   }
+  },
+  {
+   "path": "e2e/fixtures/talkx-demo/01-campanhas-visao-geral.json",
+   "status": "MAIN_UNCHANGED_SINCE_BASE",
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "patch_lines": 1084,
+   "line_check": {
+    "added": 61,
+    "missing_in_main": 59,
+    "removed": 915,
+    "removed_still_in_main": 915,
+    "missing_sample": [
+     "      \"id\": \"demo-c01\",",
+     "      \"message_template\": \"Olá {{nome}}, temos novidades na Linha Office! Confira nosso catálogo em promobrindes.com.br 🗂️\",",
+     "      \"total_recipients\": 1500,",
+     "      \"sent_count\": 800,",
+     "      \"failed_count\": 50,",
+     "      \"delivered_count\": 750,",
+     "      \"read_count\": 500,",
+     "      \"replied_count\": 120,",
+     "      \"segment_id\": \"demo-s01\",",
+     "      \"created_at\": \"2026-10-20T09:00:00.000Z\",",
+     "      \"updated_at\": \"2026-11-01T08:00:00.000Z\",",
+     "      \"started_at\": \"2026-11-01T07:30:00.000Z\",",
+     "      \"completed_at\": null",
+     "      \"id\": \"demo-c02\",",
+     "      \"name\": \"Promoção de Outubro\",",
+     "      \"message_template\": \"{{nome}}, promoções especiais de outubro aguardam você! Desconto de até 30% em brindes corporativos.\",",
+     "      \"total_recipients\": 2000,",
+     "      \"segment_id\": \"demo-s02\",",
+     "      \"created_at\": \"2026-10-25T14:00:00.000Z\",",
+     "      \"updated_at\": \"2026-10-30T11:00:00.000Z\",",
+     "      \"scheduled_at\": \"2026-11-05T10:00:00.000Z\",",
+     "      \"completed_at\": null",
+     "      \"id\": \"demo-c03\",",
+     "      \"message_template\": \"Feliz Dia do Cliente, {{nome}}! Presenteie sua equipe com brindes personalizados Promo Brindes.\",",
+     "      \"total_recipients\": 3200,"
+    ],
+    "still_sample": [
+     "      \"id\": \"camp-001\",",
+     "      \"message_template\": \"Olá {{nome}}, Lançamento Linha Office!\",",
+     "      \"description\": null,",
+     "      \"objective\": \"engajamento\",",
+     "      \"total_recipients\": 1420,",
+     "      \"sent_count\": 1364,",
+     "      \"failed_count\": 56,",
+     "      \"delivered_count\": 1364,",
+     "      \"read_count\": 0,",
+     "      \"replied_count\": 0,"
+    ]
+   }
+  },
+  {
+   "path": "e2e/fixtures/talkx-demo/tela-01.json",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "patch_lines": 7,
+   "line_check": {
+    "added": 0,
+    "missing_in_main": 0,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [],
+    "still_sample": [],
+    "same_basename_in_main": []
+   }
+  },
+  {
+   "path": "e2e/fixtures/talkx-demo/tela-02.json",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "patch_lines": 7,
+   "line_check": {
+    "added": 0,
+    "missing_in_main": 0,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [],
+    "still_sample": [],
+    "same_basename_in_main": []
+   }
+  },
+  {
+   "path": "e2e/fixtures/talkx-demo/tela-03.json",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "patch_lines": 7,
+   "line_check": {
+    "added": 0,
+    "missing_in_main": 0,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [],
+    "still_sample": [],
+    "same_basename_in_main": []
+   }
+  },
+  {
+   "path": "e2e/fixtures/talkx-demo/tela-04.json",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "patch_lines": 7,
+   "line_check": {
+    "added": 0,
+    "missing_in_main": 0,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [],
+    "still_sample": [],
+    "same_basename_in_main": []
+   }
+  },
+  {
+   "path": "e2e/fixtures/talkx-demo/tela-05.json",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "patch_lines": 7,
+   "line_check": {
+    "added": 0,
+    "missing_in_main": 0,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [],
+    "still_sample": [],
+    "same_basename_in_main": []
+   }
+  },
+  {
+   "path": "e2e/fixtures/talkx-demo/tela-06.json",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "patch_lines": 7,
+   "line_check": {
+    "added": 0,
+    "missing_in_main": 0,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [],
+    "still_sample": [],
+    "same_basename_in_main": []
+   }
+  },
+  {
+   "path": "e2e/fixtures/talkx-demo/tela-07.json",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "patch_lines": 7,
+   "line_check": {
+    "added": 0,
+    "missing_in_main": 0,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [],
+    "still_sample": [],
+    "same_basename_in_main": []
+   }
+  },
+  {
+   "path": "e2e/fixtures/talkx-demo/tela-08.json",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "patch_lines": 7,
+   "line_check": {
+    "added": 0,
+    "missing_in_main": 0,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [],
+    "still_sample": [],
+    "same_basename_in_main": []
+   }
+  },
+  {
+   "path": "e2e/fixtures/talkx-demo/tela-09.json",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "patch_lines": 7,
+   "line_check": {
+    "added": 0,
+    "missing_in_main": 0,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [],
+    "still_sample": [],
+    "same_basename_in_main": []
+   }
+  },
+  {
+   "path": "e2e/fixtures/talkx-demo/tela-10.json",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "patch_lines": 7,
+   "line_check": {
+    "added": 0,
+    "missing_in_main": 0,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [],
+    "still_sample": [],
+    "same_basename_in_main": []
+   }
+  },
+  {
+   "path": "e2e/fixtures/talkx-demo/tela-11.json",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "patch_lines": 7,
+   "line_check": {
+    "added": 0,
+    "missing_in_main": 0,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [],
+    "still_sample": [],
+    "same_basename_in_main": []
+   }
+  },
+  {
+   "path": "e2e/fixtures/talkx-demo/tela-12.json",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "patch_lines": 7,
+   "line_check": {
+    "added": 0,
+    "missing_in_main": 0,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [],
+    "still_sample": [],
+    "same_basename_in_main": []
+   }
+  },
+  {
+   "path": "e2e/fixtures/talkx-demo/tela-13.json",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "patch_lines": 7,
+   "line_check": {
+    "added": 0,
+    "missing_in_main": 0,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [],
+    "still_sample": [],
+    "same_basename_in_main": []
+   }
+  },
+  {
+   "path": "e2e/fixtures/talkx-demo/tela-14.json",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "patch_lines": 7,
+   "line_check": {
+    "added": 0,
+    "missing_in_main": 0,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [],
+    "still_sample": [],
+    "same_basename_in_main": []
+   }
+  },
+  {
+   "path": "e2e/fixtures/talkx-demo/tela-15.json",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "patch_lines": 7,
+   "line_check": {
+    "added": 0,
+    "missing_in_main": 0,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [],
+    "still_sample": [],
+    "same_basename_in_main": []
+   }
+  },
+  {
+   "path": "e2e/fixtures/talkx-demo/tela-16.json",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "patch_lines": 7,
+   "line_check": {
+    "added": 0,
+    "missing_in_main": 0,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [],
+    "still_sample": [],
+    "same_basename_in_main": []
+   }
+  },
+  {
+   "path": "e2e/fixtures/talkx-demo/tela-17.json",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "patch_lines": 7,
+   "line_check": {
+    "added": 0,
+    "missing_in_main": 0,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [],
+    "still_sample": [],
+    "same_basename_in_main": []
+   }
+  },
+  {
+   "path": "e2e/talkx-demo.spec.ts",
+   "status": "BOTH_CHANGED",
+   "hunk": "CONFLICT",
+   "patch_lines": 89,
+   "line_check": {
+    "added": 35,
+    "missing_in_main": 32,
+    "removed": 23,
+    "removed_still_in_main": 21,
+    "missing_sample": [
+     "import { mockTalkXVisual, fixtureDaTela, ESCRITA_NAO_PREVISTA } from './fixtures/talkx-demo';",
+     "declare global {",
+     "  interface Window {",
+     "    __BOOT_DEADLINE_MS?: number;",
+     "test.beforeEach(async ({ page }) => {",
+     "  await page.addInitScript(() => {",
+     "    window.__BOOT_DEADLINE_MS = 60000;",
+     "test.describe('tela 01 — Campanhas — Visão geral (X003)', () => {",
+     "  test('exibe a lista de campanhas da fixture', async ({ page }) => {",
+     "    const slug = fixtureDaTela('01');",
+     "    test.skip(!slug, 'fixture da tela 01 ainda não tem dados');",
+     "    await mockTalkXVisual(page, slug!);",
+     "    await expect(page.getByRole('tab', { name: 'Visão geral' })).toBeVisible({ timeout: 30_000 });",
+     "    // Label do KPI é hardcoded no JSX de TalkXOverview — verifica que a seção renderizou",
+     "    // Valor da fixture 01-campanhas.json: 24 campanhas (talkx_campaigns). Se o RPC",
+     "    // ou o mapeamento regredir, esta assertion captura antes de qualquer smoke visual.",
+     "    await expect(page.getByText('24').first()).toBeVisible();",
+     "    // Usa campanhas completed/scheduled/draft: não aparecem no rail de recentes",
+     "    // (apenas campanhas em andamento aparecem lá), evitando falso positivo se a",
+     "    // tabela não renderizar mas o rail sim.",
+     "    await expect(page.getByText('Reativação Clientes Inativos').first()).toBeVisible();",
+     "    await expect(page.getByText('Promoção de Outubro').first()).toBeVisible();",
+     "    await expect(page.getByText('Volta às Aulas 2027').first()).toBeVisible();",
+     "  test('mock bloqueia escritas inesperadas', async ({ page }) => {",
+     "    const slug = fixtureDaTela('01');"
+    ],
+    "still_sample": [
+     "import { mockTalkXBackend, ESCRITA_NAO_PREVISTA } from './fixtures/talkx-demo';",
+     " * Demonstração determinística do Talk X (plano V4, etapa X003).",
+     " * A Visão geral é renderizada com os dados do mock (tela 01) — sem login no",
+     " * banco de produção para os dados do módulo, sem gravar nem enviar nada. O",
+     " * relógio é fixado com page.clock; qualquer escrita não prevista é bloqueada",
+     " * pelo mock com 403 \"escrita não prevista\".",
+     "test.describe('Talk X — demo determinística (fixture da tela 01)', () => {",
+     "  test('Visão geral renderiza o mock e bloqueia escrita não prevista', async ({ page }) => {",
+     "    await mockTalkXBackend(page, '01-campanhas-visao-geral');",
+     "    // Relógio fixo: o mesmo \"agora\" em toda execução (base da régua visual em X004)."
+    ]
+   }
+  }
+ ],
+ "counts": {
+  "migrations": "0",
+  "workflows": "0",
+  "src": "0",
+  "edges": "0",
+  "docs_only": "no",
+  "lines_branch_has_main_lacks": "144",
+  "lines_main_has_branch_lacks": "1151"
+ },
+ "auto": "MISTO_CONFLITO",
+ "n_files_with_gaps": 3,
+ "gap_lines_total": 1056
+}

@@ -1,0 +1,52 @@
+{
+ "id": "claude__feat-metas-seletor-periodo-261101-1400",
+ "kind": "branch",
+ "ref": "origin/claude/feat-metas-seletor-periodo-261101-1400",
+ "tip": "ee60ee60dc232a1f2a4ff53decd57e62b0e71ab5",
+ "merge_base": "3b5f8a96db0337af7310eec1b0dc5f86bb45912c",
+ "ahead": 6,
+ "last_commit_date": "2026-11-01",
+ "merge_base_date": "2026-11-01",
+ "prs_with_same_tip": [
+  2468
+ ],
+ "triagem_2804": {
+  "2468": "DUPLICATA_PROVAVEL"
+ },
+ "closure_comment": {},
+ "files": [
+  {
+   "path": "src/components/dashboard/GoalsDashboard.tsx",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/components/dashboard/__tests__/GoalsDashboard.test.tsx",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/components/dashboard/goals/GoalsTable.tsx",
+   "status": "BOTH_CHANGED",
+   "hunk": "PRESENT_REVERSE_APPLIES",
+   "patch_lines": 34
+  },
+  {
+   "path": "src/hooks/analytics/useGoalsDashboard.ts",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  }
+ ],
+ "counts": {
+  "migrations": "0",
+  "workflows": "0",
+  "src": "4",
+  "edges": "0",
+  "docs_only": "no",
+  "lines_branch_has_main_lacks": "1",
+  "lines_main_has_branch_lacks": "1"
+ },
+ "auto": "INCORPORADA_PROVA_PATCH",
+ "n_files_with_gaps": 0,
+ "gap_lines_total": 0
+}

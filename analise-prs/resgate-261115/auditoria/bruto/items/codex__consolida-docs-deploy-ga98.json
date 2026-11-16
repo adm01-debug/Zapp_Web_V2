@@ -1,0 +1,86 @@
+{
+ "id": "codex__consolida-docs-deploy-ga98",
+ "kind": "branch",
+ "ref": "origin/codex/consolida-docs-deploy-ga98",
+ "tip": "dc65649add980b32ee86cc6f3a66b42f448d3e11",
+ "merge_base": "c3669c9016e3aa4f414fc42dce9e2a9f4e8bea91",
+ "ahead": 1,
+ "last_commit_date": "2026-10-28",
+ "merge_base_date": "2026-10-28",
+ "prs_with_same_tip": [],
+ "triagem_2804": {},
+ "closure_comment": {},
+ "files": [
+  {
+   "path": "scripts/ci/render-workflow-docs.mjs",
+   "status": "MAIN_UNCHANGED_SINCE_BASE",
+   "patch_lines": 33,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 8,
+    "missing_in_main": 7,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "    // Uma linha mais indentada continua a descricao do item anterior (GA98).",
+     "    const cont = /^#\\s{5,}(\\S.*?)\\s*$/.exec(linha);",
+     "    if (cont && itens.length > 0) {",
+     "      itens[itens.length - 1].descricao += ' ' + cont[1];",
+     "export { extrairDocs, extrairNaoEBug };",
+     "// O parser pode ser importado nos contratos sem regenerar arquivos.",
+     "if (process.argv[1] === fileURLToPath(import.meta.url)) {"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "scripts/ci/render-workflow-docs.multiline.unit.mjs",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "patch_lines": 33,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 21,
+    "missing_in_main": 21,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "import assert from 'node:assert/strict';",
+     "import test from 'node:test';",
+     "import { extrairDocs, extrairNaoEBug } from './render-workflow-docs.mjs';",
+     "test('GA98: descricao nao-e-bug continua na linha seguinte', () => {",
+     "  const texto = [",
+     "    '# docs:',",
+     "    '#   gatilho: x',",
+     "    '#   prova: y',",
+     "    '#   falha: z',",
+     "    '#   avisa: w',",
+     "    '# nao-e-bug:',",
+     "    '#   - item longo: primeira parte',",
+     "    '#     segunda parte da mesma descricao',",
+     "    '# =================================================',",
+     "    'name: X',",
+     "  ].join('\\n');",
+     "  assert.deepEqual(extrairNaoEBug(texto), [",
+     "    { chave: 'item longo', descricao: 'primeira parte segunda parte da mesma descricao' },",
+     "test('GA98: bloco docs mantém os quatro campos', () => {",
+     "  const texto = '# docs:\\n#   gatilho: x\\n#   prova: y\\n#   falha: z\\n#   avisa: w\\nname: X\\n';",
+     "  assert.deepEqual(extrairDocs(texto), { gatilho: 'x', prova: 'y', falha: 'z', avisa: 'w' });"
+    ],
+    "still_sample": [],
+    "same_basename_in_main": []
+   }
+  }
+ ],
+ "counts": {
+  "migrations": "0",
+  "workflows": "0",
+  "src": "0",
+  "edges": "0",
+  "docs_only": "no",
+  "lines_branch_has_main_lacks": "38",
+  "lines_main_has_branch_lacks": "0"
+ },
+ "auto": "TRABALHO_AUSENTE_APLICA_LIMPO",
+ "n_files_with_gaps": 2,
+ "gap_lines_total": 28
+}

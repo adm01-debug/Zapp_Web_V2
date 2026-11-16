@@ -1,0 +1,14 @@
+[
+ {
+  "commit": "25876de64",
+  "arquivo": "src/components/talkx/TalkXCampaignRunning.tsx",
+  "linhas": 5,
+  "amostra": [
+   "import { useTalkXLifecycle, TalkXLifecycleDialog } from './useTalkXLifecycle';",
+   "  const lifecycle = useTalkXLifecycle();",
+   "      lifecycle.close();",
+   "              resuming={lifecycle.isPending && lifecycle.intent?.kind === 'resume'}",
+   "      {/* Diálogo unificado de ciclo de vida (pausa / cancelar / retomar) — X051 */}"
+  ]
+ }
+]

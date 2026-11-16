@@ -1,0 +1,60 @@
+{
+ "id": "claude__fix-e2e-logado-w71-gr029-261102",
+ "kind": "branch",
+ "ref": "origin/claude/fix-e2e-logado-w71-gr029-261102",
+ "tip": "e00c8857bd36085547840ce5f26497115b4d54eb",
+ "merge_base": "1252bb5a41123ba4d49efd84d0f91604bff6c87c",
+ "ahead": 1,
+ "last_commit_date": "2026-11-01",
+ "merge_base_date": "2026-11-01",
+ "prs_with_same_tip": [
+  2564
+ ],
+ "triagem_2804": {
+  "2564": "OBSOLETA"
+ },
+ "closure_comment": {},
+ "files": [
+  {
+   "path": ".github/workflows/e2e-logado.yml",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 74,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 16,
+    "missing_in_main": 12,
+    "removed": 7,
+    "removed_still_in_main": 1,
+    "missing_sample": [
+     "# supervisor -- enxerga Campanhas/Talk X) apenas depois de o codigo chegar a main",
+     "# (via workflow_run que aguarda o CI/CD Pipeline passar) ou em dispatch feito sobre",
+     "  # W71: dispara quando o CI/CD Pipeline conclui com sucesso na main, em vez",
+     "  # de direto no push -- garante que a suite so roda com o app num estado valido.",
+     "  workflow_run:",
+     "  group: ${{ (github.event_name == 'workflow_run' || github.ref == 'refs/heads/main') && 'e2e-logado' || format('e2e-logado-branch-{0}', github.run_id) }}",
+     "    name: 🎧 E2E logado (Playwright)",
+     "    # W71: so roda quando o CI passou (workflow_run conclusion=success) ou em dispatch manual.",
+     "    if: |",
+     "      (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success') ||",
+     "        if: github.event_name == 'workflow_dispatch' && github.ref != 'refs/heads/main'",
+     "      - name: 🎧 Install Playwright (Chromium, Firefox, WebKit)"
+    ],
+    "still_sample": [
+     "  group: ${{ github.ref == 'refs/heads/main' && 'e2e-logado' || format('e2e-logado-branch-{0}', github.run_id) }}"
+    ]
+   }
+  }
+ ],
+ "counts": {
+  "migrations": "0",
+  "workflows": "1",
+  "src": "0",
+  "edges": "0",
+  "docs_only": "no",
+  "lines_branch_has_main_lacks": "229",
+  "lines_main_has_branch_lacks": "139"
+ },
+ "auto": "MISTO_CONFLITO",
+ "n_files_with_gaps": 1,
+ "gap_lines_total": 13
+}

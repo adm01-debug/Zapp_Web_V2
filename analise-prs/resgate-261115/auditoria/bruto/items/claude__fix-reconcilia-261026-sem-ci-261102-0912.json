@@ -1,0 +1,122 @@
+{
+ "id": "claude__fix-reconcilia-261026-sem-ci-261102-0912",
+ "kind": "branch",
+ "ref": "origin/claude/fix-reconcilia-261026-sem-ci-261102-0912",
+ "tip": "757b6b3622e942338a3cdae78d0b94cbdc800656",
+ "merge_base": "b4a1d8f6f381e519300810fae22491c5d9fbc64f",
+ "ahead": 2,
+ "last_commit_date": "2026-11-02",
+ "merge_base_date": "2026-11-02",
+ "prs_with_same_tip": [],
+ "triagem_2804": {},
+ "closure_comment": {},
+ "files": [
+  {
+   "path": "scripts/db-audit/replay-known-failures.json",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 32,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 10,
+    "missing_in_main": 5,
+    "removed": 1,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  \"_atualizado_em\": \"2026-11-01\",",
+     "    \"20261026220300_classificar_rls_sem_policy.sql\": {",
+     "      \"motivo\": \"COMMENT ON TABLE public._zapp_fn_before falha no replay: tabela criada fora das migrations, existe apenas no canonico. Canonico: tabela existe ",
+     "    \"20261026230300_decidir_schemas_backup.sql\": {",
+     "      \"motivo\": \"DROP SCHEMA ops_backup falha no replay: schema criado manualmente como backup, nao existe no banco vazio. Canonico: schema existia ate ser drop"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "scripts/db-audit/team-receipts-reactions-conversation-id.test.sh",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 414,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 9,
+    "missing_in_main": 9,
+    "removed": 302,
+    "removed_still_in_main": 300,
+    "missing_sample": [
+     "# (docs/reconciliation/reports/team-chat/CODE_DATAPASE_TRUTH_TEAM_CHAT.md:148-160).",
+     "#               insere direto com `conversation_id: conversationId`: a reação sume da conversa real",
+     "# TEAM_CID_PRESTATE=1us o bloco B SEM aplicar a migration — eé assim que se prova o vermelho",
+     "migration=\"$repo_root/supabase/migrations/20261009241237_team_receipts_reactions_conversation_id_forced_v2.sql\"",
+     "    -c \"SET ROLE authenticated; SELECT set_config('request.jwt.claims', '$jwst', false); $sql\"",
+     "CREATE CREATE SCHEMA auth;",
+     "CREATE FU9\u0002CTCU�\u0012\u0006\u0017WF��V�B��\u0005$UEU$�2\u0007WV�B\u0004�\u0014�uT\u0014tR\u00077\u0016�\u00055D\u0014$�P�\u0002\u0004\u00152\u0002BB\u00054T�T5B\u00066�\u0016�W66R��\u0002\u0002\u0002\u0002\u0002\u0002\u0006�V�Ɩb�7W'&V�E�6WGF��r�w&W\u0017VW7B�wB�6�\u0016���7V\"r�\u0007G'VR��\u0002rr���\u0002\u0002\u0002\u0002\u0002\u0002\u0006�",
+     "       nullif(current_setting('request.jwt.claim.role', true), '''),",
+     "GRANT USABE ON SCHEMA "
+    ],
+    "still_sample": [
+     "# (docs/reconciliation/reports/team-chat/CODE_DATABASE_TRUTH_TEAM_CHAT.md:148-160).",
+     "#               insere direto com `conversation_id: conversationId`: a reação some da conversa real",
+     "# TEAM_CID_PRESTATE=1 roda o bloco B SEM aplicar a migration — é assim que se prova o vermelho",
+     "migration=\"$repo_root/supabase/migrations/20261006222024_team_receipts_reactions_conversation_id_forced.sql\"",
+     "    -c \"SET ROLE authenticated; SELECT set_config('request.jwt.claims', '$jwt', false); $sql\"",
+     "CREATE SCHEMA auth;",
+     "CREATE FUNCTION auth.uid() RETURNS uuid LANGUAGE sql STABLE",
+     "       nullif(current_setting('request.jwt.claim.sub', true), ''),",
+     "       nullif(current_setting('request.jwt.claims', true), '')::jsonb ->> 'sub'",
+     "     )::uuid $$;"
+    ]
+   }
+  },
+  {
+   "path": "supabase/migrations/20261026240300_drop_bkp_261023.sql",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 37,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 25,
+    "missing_in_main": 25,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "-- Migração: DROP schema _bkp_261023",
+     "-- Versão: 20261026240300",
+     "-- Reservada em: 2026-10-27 (sessão claude_04/clever-ramanujan-xllbpo)",
+     "-- ⚠️  NÃO APLICAR ANTES DE 22/11/2026",
+     "-- Contexto:",
+     "--   _bkp_261023 é snapshot de segurança criado em 23/10/2026 antes de migrations críticas",
+     "--   do GOAL \"Backend 100% operacional\". Conteúdo ao momento da reserva:",
+     "--     contacts (3730 linhas, 1192 kB) — verificar contra public.contacts ao aplicar",
+     "--     schema_migrations (922 linhas, 1568 kB)",
+     "--     functions_before (356 funções, 600 kB)",
+     "--     policies_before (456 políticas, 264 kB)",
+     "--     user_settings, team_messages, global_settings, csat_surveys, agent_stats",
+     "-- Pré-requisito para aplicar (executar manualmente ANTES do db_query):",
+     "--   SELECT count(*) FROM _bkp_261023.contacts;           -- deve bater ≥ 3730",
+     "--   SELECT count(*) FROM public.contacts WHERE deleted_at IS NULL;",
+     "--   -- Se a produção perdeu contatos desde 23/10/2026, investigar ANTES de dropar.",
+     "--   -- Confirmar que nenhum incidente de dados ocorreu entre 23/10 e a data de apply.",
+     "-- Registro no ledger (executar junto com o DROP em uma única chamada db_query):",
+     "--   INSERT INTO supabase_migrations.schema_migrations(version, name, statements)",
+     "--   VALUES ('20261026240300', 'drop_bkp_261023', ARRAY['DROP SCHEMA _bkp_261023 CASCADE'])",
+     "--   ON CONFLICT DO NOTHING RETURNING version;",
+     "-- Após o apply: confirmar que 'DROP SCHEMA _bkp_261023 CASCADE' foi aplicado com",
+     "--   SELECT schema_name FROM information_schema.schemata WHERE schema_name = '_bkp_261023';",
+     "--   -- deve retornar 0 linhas.",
+     "DROP SCHEMA _bkp_261023 CASCADE;"
+    ],
+    "still_sample": []
+   }
+  }
+ ],
+ "counts": {
+  "migrations": "1",
+  "workflows": "0",
+  "src": "0",
+  "edges": "0",
+  "docs_only": "no",
+  "lines_branch_has_main_lacks": "50",
+  "lines_main_has_branch_lacks": "367"
+ },
+ "auto": "MISTO_CONFLITO",
+ "n_files_with_gaps": 3,
+ "gap_lines_total": 339
+}

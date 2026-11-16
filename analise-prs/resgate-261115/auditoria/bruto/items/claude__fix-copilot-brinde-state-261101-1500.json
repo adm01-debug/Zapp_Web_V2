@@ -1,0 +1,49 @@
+{
+ "id": "claude__fix-copilot-brinde-state-261101-1500",
+ "kind": "branch",
+ "ref": "origin/claude/fix-copilot-brinde-state-261101-1500",
+ "tip": "bbccc427fd38446d07ef4cbcc5519065e693728e",
+ "merge_base": "1252bb5a41123ba4d49efd84d0f91604bff6c87c",
+ "ahead": 5,
+ "last_commit_date": "2026-11-01",
+ "merge_base_date": "2026-11-01",
+ "prs_with_same_tip": [
+  2483
+ ],
+ "triagem_2804": {
+  "2483": "PERDIDA"
+ },
+ "closure_comment": {},
+ "files": [
+  {
+   "path": "supabase/migrations/20261031140000_copilot_sessions_brinde_state.sql",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 17,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 9,
+    "missing_in_main": 3,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "-- a coluna não existia — CREATE da função passou (plpgsql lazy validation) mas o UPDATE falha em runtime.",
+     "-- Nenhum caller TS encontrado em 2026-11-01; migration aditiva, segura aplicar antes do código que consumir.",
+     "  'CV-026 — estado acumulado B·R·I·N·D·E da sessão; atualizado atomicamente por merge_brinde_state().';"
+    ],
+    "still_sample": []
+   }
+  }
+ ],
+ "counts": {
+  "migrations": "1",
+  "workflows": "0",
+  "src": "0",
+  "edges": "0",
+  "docs_only": "no",
+  "lines_branch_has_main_lacks": "3",
+  "lines_main_has_branch_lacks": "3"
+ },
+ "auto": "MISTO_CONFLITO",
+ "n_files_with_gaps": 1,
+ "gap_lines_total": 3
+}

@@ -1,0 +1,82 @@
+{
+ "id": "fix__f1a-lote-b-connectioncard-dialog",
+ "kind": "branch",
+ "ref": "origin/fix/f1a-lote-b-connectioncard-dialog",
+ "tip": "ab04821621026d5fa515818c5bdcac98783a4b3d",
+ "merge_base": "9d65fed626e05a9582c56badade4d2e6afaf9356",
+ "ahead": 2,
+ "last_commit_date": "2026-10-18",
+ "merge_base_date": "2026-10-18",
+ "prs_with_same_tip": [
+  2059
+ ],
+ "triagem_2804": {
+  "2059": "JA_NA_MAIN"
+ },
+ "closure_comment": {},
+ "files": [
+  {
+   "path": "src/components/connections/ConnectionCard.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 447,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 220,
+    "missing_in_main": 190,
+    "removed": 65,
+    "removed_still_in_main": 61,
+    "missing_sample": [
+     "  DropdownMenu,",
+     "  DropdownMenuContent,",
+     "  DropdownMenuItem,",
+     "  DropdownMenuSeparator,",
+     "  DropdownMenuTrigger,",
+     "  Smartphone,",
+     "  MoreVertical,",
+     "  Trash2,",
+     "  Copy,",
+     "  QrCode,",
+     "  Wifi,",
+     "  WifiOff,",
+     "  Star,",
+     "  Clock,",
+     "  Loader2,",
+     "  RefreshCw,",
+     "  History,",
+     "  Link2,",
+     "  Settings,",
+     "  BatteryCharging,",
+     "  BatteryLow,",
+     "  BatteryMedium,",
+     "  BatteryFull,",
+     "  FileClock,",
+     "  HeartPulse,"
+    ],
+    "still_sample": [
+     "  DropdownMenu, DropdownMenuContent, DropdownMenuItem,",
+     "  DropdownMenuSeparator, DropdownMenuTrigger,",
+     "  Smartphone, MoreVertical, Trash2, Copy, QrCode, Wifi, WifiOff,",
+     "  Star, Clock, Loader2, RefreshCw, History, Link2, Settings,",
+     "  BatteryCharging, BatteryLow, BatteryMedium, BatteryFull, FileClock, HeartPulse,",
+     "  connection, syncingHistory, disconnecting = false,",
+     "  onShowQrCode, onCopyId, onDisconnect, onSetDefault, onDelete,",
+     "  onBusinessHours, onQueues, onSettings, onSyncHistory,",
+     "  historyNotSupported = false, onHealthCheck, checkingHealth,",
+     "  // Enquanto o desconectar está em voo (estado `disconnecting` vindo da view),"
+    ]
+   }
+  }
+ ],
+ "counts": {
+  "migrations": "0",
+  "workflows": "0",
+  "src": "1",
+  "edges": "0",
+  "docs_only": "no",
+  "lines_branch_has_main_lacks": "249",
+  "lines_main_has_branch_lacks": "85"
+ },
+ "auto": "MISTO_CONFLITO",
+ "n_files_with_gaps": 1,
+ "gap_lines_total": 251
+}

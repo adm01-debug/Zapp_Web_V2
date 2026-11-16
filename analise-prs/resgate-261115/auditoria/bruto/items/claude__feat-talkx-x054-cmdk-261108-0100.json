@@ -1,0 +1,145 @@
+{
+ "id": "claude__feat-talkx-x054-cmdk-261108-0100",
+ "kind": "branch",
+ "ref": "origin/claude/feat-talkx-x054-cmdk-261108-0100",
+ "tip": "2bbbe224e1f51445b69db5a11063929aa4c55831",
+ "merge_base": "b5ad544ec05fdb1383603e1ca006af957d1c29c9",
+ "ahead": 2,
+ "last_commit_date": "2026-11-07",
+ "merge_base_date": "2026-11-07",
+ "prs_with_same_tip": [
+  2788
+ ],
+ "triagem_2804": {
+  "2788": "DUPLICATA_PROVAVEL"
+ },
+ "closure_comment": {},
+ "files": [
+  {
+   "path": "src/components/CommandPalette.tsx",
+   "status": "BOTH_CHANGED",
+   "hunk": "CONFLICT",
+   "patch_lines": 45,
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 19,
+    "removed_still_in_main": 5,
+    "missing_sample": [
+     "import { useState, useMemo } from 'react';"
+    ],
+    "still_sample": [
+     "  const openPalette = () => { setRecent(getRecent()); setOpen(true); };",
+     "  useEffect(() => {",
+     "          if (next) setRecent(getRecent());",
+     "    document.addEventListener('open-global-search', openPalette);",
+     "  }, []);"
+    ]
+   }
+  },
+  {
+   "path": "src/components/keyboard/CommandPaletteHost.tsx",
+   "status": "BOTH_CHANGED",
+   "hunk": "CONFLICT",
+   "patch_lines": 45,
+   "line_check": {
+    "added": 3,
+    "missing_in_main": 2,
+    "removed": 10,
+    "removed_still_in_main": 9,
+    "missing_sample": [
+     " * pesar o chunk de entrada: o palette + os hooks de dados (catálogo e Talk X)",
+     "      onSearch={searchCatalogProducts}"
+    ],
+    "still_sample": [
+     "import { useCallback } from 'react';",
+     "import { searchCommandSources, searchContactCommands } from '@/lib/commandPaletteSearch';",
+     " * pesar o chunk de entrada: o palette + os hooks de dados (catálogo, contatos e Talk X)",
+     "  const searchCommands = useCallback(",
+     "    (query: string) => searchCommandSources(query, [",
+     "      { kind: 'catalog', search: searchCatalogProducts },",
+     "      { kind: 'contacts', search: searchContactCommands },",
+     "    [searchCatalogProducts],",
+     "      onSearch={searchCommands}"
+    ]
+   }
+  },
+  {
+   "path": "src/components/talkx/TalkXView.tsx",
+   "status": "BOTH_CHANGED",
+   "hunk": "CONFLICT",
+   "patch_lines": 77,
+   "line_check": {
+    "added": 14,
+    "missing_in_main": 2,
+    "removed": 10,
+    "removed_still_in_main": 3,
+    "missing_sample": [
+     "    <div className=\"p-4\" role=\"status\" aria-live=\"polite\" aria-busy=\"true\">",
+     "          className=\"min-h-full w-full min-w-0 bg-background p-6\""
+    ],
+    "still_sample": [
+     "    <div role=\"status\" aria-live=\"polite\" aria-busy=\"true\">",
+     "          className=\"min-h-full w-full min-w-0 bg-background\"",
+     "          </button>"
+    ]
+   }
+  },
+  {
+   "path": "src/hooks/integrations/__tests__/useTalkXCommandItems.test.ts",
+   "status": "BOTH_CHANGED",
+   "hunk": "CONFLICT",
+   "patch_lines": 86,
+   "line_check": {
+    "added": 56,
+    "missing_in_main": 11,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "    client.setQueryData(['talkx-campaigns'], [",
+     "    client.setQueryData(['talkx-segments'], []);",
+     "    client.setQueryData(['talkx-templates'], []);",
+     "    client.setQueryData(['talkx-campaigns'], [",
+     "    client.setQueryData(['talkx-segments'], []);",
+     "    client.setQueryData(['talkx-templates'], []);",
+     "    item?.action();",
+     "    client.setQueryData(['talkx-campaigns'], []);",
+     "    client.setQueryData(['talkx-segments'], [",
+     "    client.setQueryData(['talkx-templates'], []);",
+     "    item?.action();"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/hooks/integrations/useTalkXCommandItems.ts",
+   "status": "BOTH_CHANGED",
+   "hunk": "CONFLICT",
+   "patch_lines": 102,
+   "line_check": {
+    "added": 47,
+    "missing_in_main": 3,
+    "removed": 14,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "    queryKey: ['talkx-campaigns'],",
+     "    queryKey: ['talkx-segments'],",
+     "    queryKey: ['talkx-templates'],"
+    ],
+    "still_sample": []
+   }
+  }
+ ],
+ "counts": {
+  "migrations": "0",
+  "workflows": "0",
+  "src": "5",
+  "edges": "0",
+  "docs_only": "no",
+  "lines_branch_has_main_lacks": "31",
+  "lines_main_has_branch_lacks": "100"
+ },
+ "auto": "MISTO_CONFLITO",
+ "n_files_with_gaps": 5,
+ "gap_lines_total": 36
+}

@@ -1,0 +1,128 @@
+{
+ "id": "claude_04__gifted-ride-xq3mj4",
+ "kind": "branch",
+ "ref": "origin/claude_04/gifted-ride-xq3mj4",
+ "tip": "fb3676d4a371676498928755977843e8e7ed86f1",
+ "merge_base": "1252bb5a41123ba4d49efd84d0f91604bff6c87c",
+ "ahead": 3,
+ "last_commit_date": "2026-11-01",
+ "merge_base_date": "2026-11-01",
+ "prs_with_same_tip": [
+  2525
+ ],
+ "triagem_2804": {
+  "2525": "JA_NA_MAIN"
+ },
+ "closure_comment": {},
+ "files": [
+  {
+   "path": "PENDENCIAS.md",
+   "status": "BOTH_CHANGED",
+   "hunk": "CONFLICT",
+   "patch_lines": 122,
+   "line_check": {
+    "added": 31,
+    "missing_in_main": 30,
+    "removed": 59,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "# PENDENCIAS.md — Workflows com falha não corrigível sem ação do Joaquim",
+     "_Atualizado em 2026-11-01 23:15 UTC por sessão `claude_04/gifted-ride-xq3mj4`._",
+     "## 1. DB Live Guard — diagnosticar artefato de evidência",
+     "**Workflow:** `db-live-guard.yml`  ",
+     "**Run:** [41318522203](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41318522203)  ",
+     "**Commit:** `532aa09b`  ",
+     "**Hora:** 2026-11-01 ~15:29 UTC  ",
+     "**O que falhou:** 7 de 7 passos do contrato vivo falharam simultaneamente. Os logs reais estão no artefato `db-live-evidence-41318522203-1`.",
+     "**O que o Joaquim precisa fazer:**",
+     "1. Abrir o artefato: https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41318522203/artifacts/13089517610",
+     "2. Baixar e inspecionar `step-migrations.log` para verificar se há drift de migration.",
+     "3. Verificar `step-types.log` para saber se `types.ts` está desatualizado.",
+     "4. Se for problema de conectividade (todos os logs mostram timeout ou \"connection refused\"), verificar validade do secret `DESTINO_URL` em Settings → Secrets → ",
+     "**Atenção:** run `41356605138` estava `pending` na HEAD `1252bb5a` (iniciado 22:20 UTC). Se passou verde, o problema foi transitório; se falhou, os logs do novo",
+     "**Por que agente não resolve:** os logs de falha estão em artefatos ZIP (não acessíveis via MCP). Sem ler o conteúdo de `step-migrations.log` ou `step-catalog.l",
+     "## 2. DB Migrate — item resolvido (orphan entries sendo reconciliadas via PRs)",
+     "**Contexto:** o run [41307726882](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41307726882) falhou com \"9 versões faltando para target `2026103013512",
+     "**Correção em andamento (agente, sem ação do Joaquim necessária):**",
+     "- PR #2525 (`claude_04/gifted-ride-xq3mj4`) — reconcilia `20261031170000` e `20261101213000` (auto_merge ativo)",
+     "- PR #2533 (`claude/chore-reconcile-ledger-drift-261101-2249`) — reconcilia `20261030145126` (auto_merge ativo)",
+     "Após merge das duas PRs, o próximo run do `db-live-guard` deve passar no passo \"Paridade tripla\". Nenhuma ação do Joaquim necessária para este item.",
+     "## 3. PRs em CI — aguardando merge automático (23:15 UTC 2026-11-01)",
+     "Todas com auto_merge (SQUASH) ativo; mergearão sozinhas quando os 6 required checks passarem:",
+     "| PR | Branch | O que corrige | Status CI |",
+     "| **#2513** | `claude/fix-email-navy-contrast-261101-2057` | Contraste WCAG AA (accessibility.css) | db-guard queued; ci.yml iniciando |"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "RELATORIO_CI.md",
+   "status": "BOTH_CHANGED",
+   "hunk": "CONFLICT",
+   "patch_lines": 320,
+   "line_check": {
+    "added": 48,
+    "missing_in_main": 47,
+    "removed": 171,
+    "removed_still_in_main": 6,
+    "missing_sample": [
+     "# RELATORIO_CI.md — Diagnóstico e Estado dos Workflows",
+     "**Data:** 2026-11-01  ",
+     "**Branch de trabalho:** `claude_04/gifted-ride-xq3mj4`  ",
+     "**HEAD da main:** `1252bb5a41123ba4d49efd84d0f91604bff6c87c`",
+     "## Baseline — Workflows com falha na main (2026-11-01)",
+     "Dos 17 workflows ativos, 5 tiveram o último run com `conclusion: failure` na branch `main`:",
+     "| Workflow | Run ID | Commit | Falha |",
+     "| CI/CD Pipeline (E2E Playwright) | 41240478106 | `ad7c48f` | Contraste WCAG AA < 4.5:1 em high-contrast |",
+     "| Deploy Edge Functions | 41307703680 | `532aa09` | `deno install` não instala `@types/node` sem import real |",
+     "| E2E logado | 41240478106 | `ad7c48f` | Mesma causa raiz do item acima |",
+     "| DB Live Guard | 41318522203 | `532aa09` | 7 de 7 passos falharam (causa no artefato) |",
+     "| DB Migrate | 41307726882 | `1252bb5` | 9 versões faltando para target `20261030135126` |",
+     "## Diagnóstico Detalhado",
+     "### 1. CI/CD Pipeline — E2E Tests (Playwright) `🎭`",
+     "**Run:** 41240478106 | **Required check:** `🎭 E2E Tests (Playwright)`",
+     "**Causa raiz:** `src/styles/accessibility.css` — bloco `.dark.high-contrast` declara 21 tokens CSS sem `!important`. A função `applyThemePreset()` em `src/compo",
+     "**Correção em andamento:** [PR #2513](https://github.com/adm01-debug/Zapp_Web_V2/pull/2513) — branch `claude/fix-email-navy-contrast-261101-2057`. Adiciona `!im",
+     "### 2. Deploy Edge Functions",
+     "**Run:** 41307703680",
+     "**Causa raiz:** `deno install --config supabase/functions/deno.json` no Deno 2.9.5 não instala pacotes declarados apenas no mapa `imports` do `deno.json` sem qu",
+     "**Correção em andamento:** [PR #2508](https://github.com/adm01-debug/Zapp_Web_V2/pull/2508) — branch `claude/fix-deploy-functions-types-node-011101`. Adiciona `",
+     "### 3. E2E logado",
+     "**Run:** mesmo run 41240478106 que o item 1.",
+     "**Causa raiz:** idêntica ao item 1 — mesmo teste de contraste WCAG AA. **Corrigida pela mesma PR #2513.**",
+     "### 4. DB Live Guard"
+    ],
+    "still_sample": [
+     "|---|---|---|",
+     "|---|---|---|",
+     "|---|---|",
+     "|---|---|---|",
+     "|---|---|",
+     "| Verificação | Baseline | Final |"
+    ]
+   }
+  },
+  {
+   "path": "supabase/migrations/20261031170000_high3-fk-indexes.sql",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "supabase/migrations/20261101213000_rls_update_with_check_explicit.sql",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  }
+ ],
+ "counts": {
+  "migrations": "2",
+  "workflows": "0",
+  "src": "0",
+  "edges": "0",
+  "docs_only": "no",
+  "lines_branch_has_main_lacks": "77",
+  "lines_main_has_branch_lacks": "848"
+ },
+ "auto": "MISTO_CONFLITO",
+ "n_files_with_gaps": 2,
+ "gap_lines_total": 83
+}

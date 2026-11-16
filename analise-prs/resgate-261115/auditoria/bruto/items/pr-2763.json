@@ -1,0 +1,28 @@
+{
+ "id": "pr-2763",
+ "kind": "pr",
+ "ref": "refs/remotes/pr/2763",
+ "pr": 2763,
+ "tip": "3cb2a76d131007bce10c51af9a2b50dab862859a",
+ "merge_base": "761ab3b056f8245e11e2bf001d8180b7124d2be8",
+ "ahead": 5,
+ "last_commit_date": "2026-11-07",
+ "merge_base_date": "2026-11-07",
+ "triagem_2804": "DECISAO_DONO",
+ "closure_comment": null,
+ "files": [
+  {
+   "path": "supabase/migrations/20261107133000_fix_copilot_rls_open_policies.sql",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "supabase/migrations/20261107163000_fix_copilot_rls_wrong_join_column.sql",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  }
+ ],
+ "auto": "INCORPORADA_PROVA_PATCH",
+ "n_files_with_gaps": 0,
+ "gap_lines_total": 0
+}

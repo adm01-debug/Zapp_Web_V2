@@ -1,0 +1,11 @@
+[
+ {
+  "commit": "251aacc82",
+  "arquivo": "supabase/functions/copilot-live/index.test.ts",
+  "linhas": 2,
+  "amostra": [
+   "      if (metodo === \"PATCH\") return Promise.resolve(json({ code: \"PGRST116\", message: \"0 rows\" }, 406));",
+   "      return Promise.resolve(json([{ contact_id: \"contato-de-outro-dono\" }]));"
+  ]
+ }
+]

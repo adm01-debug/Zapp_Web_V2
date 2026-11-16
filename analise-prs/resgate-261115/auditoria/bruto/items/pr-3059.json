@@ -1,0 +1,26 @@
+{
+ "id": "pr-3059",
+ "kind": "pr",
+ "ref": "refs/remotes/pr/3059",
+ "pr": 3059,
+ "tip": "b9a7e5596e17dd6d09239614b07d809be98faae5",
+ "merge_base": "f32855df69f21c7bb6b0dba89451fc886b059e58",
+ "ahead": 2,
+ "last_commit_date": "2026-11-14",
+ "merge_base_date": "2026-11-13",
+ "triagem_2804": null,
+ "closure_comment": {
+  "title": "feat(db): cria RPCs should_send_away_message e record_away_message da ausência",
+  "last_comment": "Conteúdo integrado na `main` pelo pacote 6 ([#3113](https://github.com/adm01-debug/Zapp_Web_V2/pull/3113), commit `41853318cd`). |  | Conferido byte a byte depois do merge: o arquivo desta PR está idêntico na `main`. O vermelho aqui não era bug — `Unit Tests (3/3)` e `Build` foram **cancelados pela fila"
+ },
+ "files": [
+  {
+   "path": "supabase/migrations/20261113170200_away_message_rpcs.sql",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  }
+ ],
+ "auto": "INCORPORADA_PROVA_PATCH",
+ "n_files_with_gaps": 0,
+ "gap_lines_total": 0
+}

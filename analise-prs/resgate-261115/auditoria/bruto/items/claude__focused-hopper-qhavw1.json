@@ -1,0 +1,230 @@
+{
+ "id": "claude__focused-hopper-qhavw1",
+ "kind": "branch",
+ "ref": "origin/claude/focused-hopper-qhavw1",
+ "tip": "c4500536e2545201015c8b9f402a8c79f22aa243",
+ "merge_base": "c4c7139e75aa326cc21823e816d1e7f526b67412",
+ "ahead": 24,
+ "last_commit_date": "2026-11-02",
+ "merge_base_date": "2026-10-30",
+ "prs_with_same_tip": [
+  2586
+ ],
+ "triagem_2804": {
+  "2586": "JA_NA_MAIN"
+ },
+ "closure_comment": {},
+ "files": [
+  {
+   "path": ".github/workflows/deploy-functions.yml",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 84,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 31,
+    "missing_in_main": 0,
+    "removed": 18,
+    "removed_still_in_main": 8,
+    "missing_sample": [],
+    "still_sample": [
+     "              exit 1",
+     "            node -e \"const fs=require('fs');const d=JSON.parse(fs.readFileSync('/tmp/promogifts-preflight.json','utf8'));if(!Array.isArray(d))process.exit(1);co",
+     "            echo \"Setando endpoint e credencial server-side do catalogo nas edges\"",
+     "            if [ \"$REESCREVER\" = \"true\" ]; then",
+     "              supabase secrets set \\",
+     "                PROMOGIFTS_SUPABASE_URL=\"$PROMOGIFTS_SUPABASE_URL\" \\",
+     "                PROMOGIFTS_SUPABASE_SERVICE_ROLE_KEY=\"$PROMOGIFTS_SUPABASE_SERVICE_ROLE_KEY\" \\",
+     "                --project-ref \"$PROJECT_REF\""
+    ]
+   }
+  },
+  {
+   "path": ".github/workflows/e2e-logado.yml",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 88,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 20,
+    "missing_in_main": 14,
+    "removed": 7,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "# supervisor -- enxerga Campanhas/Talk X) apenas depois de o codigo chegar a main",
+     "# (via workflow_run, quando CI/CD Pipeline conclui com sucesso na main) ou em",
+     "# dispatch feito sobre main. Workflows de PR nao podem referenciar secrets",
+     "  workflow_run:",
+     "# GA62: dispatch fora da main recebe grupo proprio (run_id) para nao deslocar",
+     "# run pendente da main antes de o step \"Somente executa na main\" cancela-la.",
+     "    if: (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success') || github.event_name == 'workflow_dispatch'",
+     "    # Relogio por grupo (valor na matriz). O grupo authenticated era cortado aos 15 min",
+     "    # em TODOS os commits da main (ex.: 3b5f8a9, 20:07:15 -> 20:22:32 UTC) antes do",
+     "    # fim: o Playwright morria antes de imprimir quais testes",
+     "    # falharam e o relatorio nunca subia. Com 45 min a suite termina e mostra o defeito.",
+     "            timeout-minutes: 15",
+     "            timeout-minutes: 15",
+     "        if: github.event_name == 'workflow_dispatch' && github.ref != 'refs/heads/main'"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "PENDENCIAS.md",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 132,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 59,
+    "missing_in_main": 59,
+    "removed": 39,
+    "removed_still_in_main": 4,
+    "missing_sample": [
+     "# PENDENCIAS.md — Workflows com falha não corrigível via código",
+     "_Atualizado em 2026-10-31 por sessão `fix/ci-workflows`._",
+     "## 1. DB Live Guard — falhas em contrato vivo (investigação pendente)",
+     "**Último run com falha:** [41162077590](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41162077590)  ",
+     "**Head SHA:** vários (pós-merge de `main`)",
+     "**O que falha:**",
+     "- Step \"Consolidar veredito do contrato vivo\" — artifact `13027601857` contém evidências",
+     "- Compara o estado do banco de produção com artefatos do repositório (types.ts, schema-catalog.json,",
+     "  schema-manifest.json)",
+     "**Falhas identificadas no run 41162077590 (3 contratos reais, não deriva transitória):**",
+     "1. **migrations/ledger** — diferença entre migrations no disco (`supabase/migrations/`) e entradas no ledger do banco",
+     "2. **ACL/mcp_exec** — contrato de permissão `mcp_exec` não satisfeito",
+     "3. **configuração runtime** — `runtime-config` com divergência detectada",
+     "**Por que não foi corrigido:** DB Live Guard conecta ao banco de produção e exige análise",
+     "das evidências no artifact `db-live-evidence-{run_id}-1` para diagnosticar cada divergência.",
+     "Requer acesso ao banco de produção para comparação e possível migration corretiva. Este",
+     "workflow **não é um required check** — não bloqueia merges na `main`.",
+     "**O que o Joaquim precisa fazer:**",
+     "1. Disparar manualmente o DB Live Guard via `workflow_dispatch` em `.github/workflows/db-live-guard.yml`",
+     "2. Se falhar, os logs do artifact `db-live-evidence-{run_id}-1` mostrarão qual passo tem diferença real",
+     "3. Se o passo \"Verificar frescor do types.ts\" falhar: disparar `workflow_dispatch` do `types-sync.yml` **na branch `main`**",
+     "4. Se o passo \"Comparar migrations com schema_migrations\" falhar: verificar se há migration",
+     "   no disco (em `supabase/migrations/`) sem entrada no ledger",
+     "## 2. Running Copilot Code Review — limite de cota do plano (HTTP 402)",
+     "**Runs com falha confirmados (exemplos):**"
+    ],
+    "still_sample": [
+     "|---|---|",
+     "|---|---|",
+     "|---|---|",
+     "|---|---|"
+    ]
+   }
+  },
+  {
+   "path": "RELATORIO_CI.md",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 400,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 171,
+    "missing_in_main": 164,
+    "removed": 122,
+    "removed_still_in_main": 4,
+    "missing_sample": [
+     "# RELATORIO_CI.md — Diagnóstico e Estado Final dos Workflows",
+     "**Data:** 2026-10-31  ",
+     "**Branch de trabalho:** `fix/ci-workflows`  ",
+     "**PR:** A abrir para `main`",
+     "## 1. Origem da sessão — rejeição anterior",
+     "A sessão anterior (branch `claude/kind-gates-87mwoe`) foi rejeitada porque:",
+     "1. O RELATORIO_CI.md apresentava o `🏗️ Build` como `success` na tabela de prova, mas o campo",
+     "   \"estado final\" registrava `Build ❌ FAILING` — contradição interna.",
+     "2. O bundle reportado (359,5 KB) excedia o budget então declarado (300 KB).",
+     "3. Os runs do branch (41165573879 / 41165575429) ficaram em `queued` e nunca foram validados.",
+     "4. Ausência de inventário completo das falhas da `main` e de baseline local.",
+     "## 2. Baseline local — início desta sessão (2026-10-31 ~04:00Z)",
+     "Medições na branch `fix/ci-workflows` = `main` SHA `1a9858b236`:",
+     "| Verificação | Resultado | Detalhe |",
+     "| `bun run build` | ✅ exit 0 | Bundle inicial: **323,0 KB gzip** — abaixo do budget de **325 KB** (SL-103D, 2026-10-26) |",
+     "| `bun run typecheck` | ✅ exit 0 | Sem erros de tipo |",
+     "| `bun run lint` | ✅ exit 0 | Sem warnings (o warning pré-existente foi resolvido em sessão anterior) |",
+     "| `bun run test` | ✅ evidência CI | Run 41162012506 — 3 shards Unit Tests: success |",
+     "### 2a. Budget de bundle",
+     "O arquivo `performance-budget.json` registra:",
+     "```json",
+     "\"initial-js\": { \"maxKB\": 325, \"description\": \"... SL-103D em 2026-10-26, teto relaxado +33 KB ...\" }",
+     "Build atual: **323,0 KB** — passa o budget de 325 KB com margem de 2 KB.  ",
+     "O build nunca esteve em 359,5 KB no estado atual da `main`; esse valor era de uma branch de feature",
+     "desatualizada na sessão anterior."
+    ],
+    "still_sample": [
+     "|---|---|",
+     "|---|---|",
+     "|---|---|",
+     "|---|---|---|"
+    ]
+   }
+  },
+  {
+   "path": "docs/ci/README.md",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 38,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 4,
+    "missing_in_main": 1,
+    "removed": 4,
+    "removed_still_in_main": 1,
+    "missing_sample": [
+     "| E2E logado | [`e2e-logado.yml`](../../.github/workflows/e2e-logado.yml) | workflow_run (CI/CD Pipeline concluiu com sucesso na main) e dispatch sobre main | o"
+    ],
+    "still_sample": [
+     "- **Gatilho:** agendado (semanal) e dispatch"
+    ]
+   }
+  },
+  {
+   "path": "scripts/db-audit/recuperacao-anonima-pedido-reset.test.sh",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/components/inbox/chat/__tests__/ChatMessagesArea.agrupar-envio.test.tsx",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/components/inbox/chat/__tests__/ChatMessagesArea.loop.test.tsx",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/components/inbox/chat/__tests__/ChatMessagesArea.movimento-reduzido.test.tsx",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/hooks/integrations/__tests__/useCustomEmojis.upload.test.tsx",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "supabase/functions/deno.json",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 13,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 0,
+    "removed": 4,
+    "removed_still_in_main": 0,
+    "missing_sample": [],
+    "still_sample": []
+   }
+  }
+ ],
+ "counts": {
+  "migrations": "0",
+  "workflows": "2",
+  "src": "4",
+  "edges": "1",
+  "docs_only": "no",
+  "lines_branch_has_main_lacks": "493",
+  "lines_main_has_branch_lacks": "1027"
+ },
+ "auto": "MISTO_CONFLITO",
+ "n_files_with_gaps": 5,
+ "gap_lines_total": 255
+}

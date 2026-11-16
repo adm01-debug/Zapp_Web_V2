@@ -1,0 +1,48 @@
+{
+ "id": "claude__feat-radar-panels-8to15-261108-1906",
+ "kind": "branch",
+ "ref": "origin/claude/feat-radar-panels-8to15-261108-1906",
+ "tip": "5472e47682ae8c147178f9a3923e7ae9faab0158",
+ "merge_base": "9183f0f6fa4296cd07c585602bc5ea88ada5d98d",
+ "ahead": 3,
+ "last_commit_date": "2026-11-08",
+ "merge_base_date": "2026-11-08",
+ "prs_with_same_tip": [
+  2820
+ ],
+ "triagem_2804": {
+  "2820": null
+ },
+ "closure_comment": {},
+ "files": [
+  {
+   "path": "src/components/inbox/chat/ChatInputArea.tsx",
+   "status": "BOTH_CHANGED",
+   "hunk": "CONFLICT",
+   "patch_lines": 30,
+   "line_check": {
+    "added": 9,
+    "missing_in_main": 2,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "// CV-071..150 — painel RADAR das Fases 8-15 (objeções, catálogo, termômetro, coaching)",
+     "          className=\"px-4 pt-1\""
+    ],
+    "still_sample": []
+   }
+  }
+ ],
+ "counts": {
+  "migrations": "0",
+  "workflows": "0",
+  "src": "1",
+  "edges": "0",
+  "docs_only": "no",
+  "lines_branch_has_main_lacks": "3",
+  "lines_main_has_branch_lacks": "9"
+ },
+ "auto": "MISTO_CONFLITO",
+ "n_files_with_gaps": 1,
+ "gap_lines_total": 2
+}

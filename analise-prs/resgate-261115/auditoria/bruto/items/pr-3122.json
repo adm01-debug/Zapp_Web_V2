@@ -1,0 +1,26 @@
+{
+ "id": "pr-3122",
+ "kind": "pr",
+ "ref": "refs/remotes/pr/3122",
+ "pr": 3122,
+ "tip": "81dceafd29aae18517235b7d9e8a88f8a0244eed",
+ "merge_base": "3c64a5454ab2269c2db2361adb858aedac009d2c",
+ "ahead": 1,
+ "last_commit_date": "2026-11-14",
+ "merge_base_date": "2026-11-14",
+ "triagem_2804": null,
+ "closure_comment": {
+  "title": "test(e2e): multiplix prova o confirm (F51) — destrava o \"E2E logado\" da main",
+  "last_comment": "Incorporada pelo pacote 7 (#3123, mergeado em `b24e3150004c`). Fechando esta. |  | **Prova byte-a-byte:** o único arquivo que esta branch tocou (`e2e/multiplix.spec.ts`) está **byte-idêntico** na `main` (blob SHA igual). |  | O `🎭 E2E Tests (Playwright)` fechou **verde** no pacote. A suíte `E2E logado`, que"
+ },
+ "files": [
+  {
+   "path": "e2e/multiplix.spec.ts",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  }
+ ],
+ "auto": "INCORPORADA_PROVA_PATCH",
+ "n_files_with_gaps": 0,
+ "gap_lines_total": 0
+}

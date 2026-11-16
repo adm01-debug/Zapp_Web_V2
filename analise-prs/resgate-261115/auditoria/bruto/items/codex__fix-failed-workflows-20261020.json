@@ -1,0 +1,587 @@
+{
+ "id": "codex__fix-failed-workflows-20261020",
+ "kind": "branch",
+ "ref": "origin/codex/fix-failed-workflows-20261020",
+ "tip": "bf0ce76953011856fa1601c039a4e660f08c652d",
+ "merge_base": "d7af7a671ca2bd7005b75b0aa54c0f0c4672befc",
+ "ahead": 2,
+ "last_commit_date": "2026-10-21",
+ "merge_base_date": "2026-10-19",
+ "prs_with_same_tip": [
+  2139,
+  2443
+ ],
+ "triagem_2804": {
+  "2139": "OBSOLETA",
+  "2443": "OBSOLETA"
+ },
+ "closure_comment": {},
+ "files": [
+  {
+   "path": ".github/toolchain.json",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": ".github/workflows/ci.yml",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 132,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 48,
+    "missing_in_main": 9,
+    "removed": 9,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "          deno test --config scripts/ci/deno.json --frozen --allow-env --allow-read --allow-net=127.0.0.1 $(git ls-files 'supabase/functions/**/*.test.ts')",
+     "      # E72: a cobertura publicada só é útil como diagnóstico do push da main;",
+     "      # PRs não acumulam esse artefato e o dispatch manual permanece sem upload.",
+     "      - name: 📊 Upload coverage report",
+     "        if: always() && github.event_name == 'push' && github.ref == 'refs/heads/main'",
+     "          name: coverage-report",
+     "          path: coverage/",
+     "          retention-days: 7",
+     "        run: bunx playwright@1.64.1 install-deps chromium firefox webkit"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": ".github/workflows/db-migrate.yml",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 19,
+   "hunk": "PRESENT_REVERSE_APPLIES"
+  },
+  {
+   "path": ".github/workflows/deploy-functions.yml",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 31,
+   "hunk": "PRESENT_REVERSE_APPLIES"
+  },
+  {
+   "path": ".github/workflows/e2e-logado.yml",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 18,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 2,
+    "missing_in_main": 2,
+    "removed": 2,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "        run: bunx playwright@1.64.1 install --with-deps chromium firefox webkit",
+     "        run: bunx playwright@1.64.1 install-deps chromium firefox webkit"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": ".github/workflows/e2e-talkx.yml",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 18,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 2,
+    "missing_in_main": 1,
+    "removed": 2,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "        run: bunx playwright@1.64.1 install-deps chromium"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": ".github/workflows/notifica-falha-main.yml",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 13,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 2,
+    "missing_in_main": 0,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [],
+    "still_sample": []
+   }
+  },
+  {
+   "path": ".github/workflows/talkx-status-regen.yml",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 16,
+   "hunk": "PRESENT_REVERSE_APPLIES"
+  },
+  {
+   "path": ".github/workflows/vercel-env-cleanup.yml",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 36,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 12,
+    "missing_in_main": 0,
+    "removed": 2,
+    "removed_still_in_main": 0,
+    "missing_sample": [],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "ESTADO.md",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 190,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 48,
+    "missing_in_main": 23,
+    "removed": 58,
+    "removed_still_in_main": 2,
+    "missing_sample": [
+     "O quadro `## Totais",
+     "| E | 20 |",
+     "| **total** | **84** |",
+     "| `ai-kb-ingest` | A | `src/hooks/integrations/useKnowledgeBase.ts:126` · `src/hooks/integrations/useKnowledgeBase.ts:197` |",
+     "| `ai-transcribe-audio` | A | `src/components/inbox/AudioMessagePlayer.tsx:66` · `supabase/functions/_shared/evolution-webhook-messages.ts:1400` |",
+     "| `ai-usage-outbox-drain` | E | — sem chamador no repositório — |",
+     "| `approve-password-reset` | A | `src/components/security/PasswordResetRequestsPanel.tsx:31` · `src/components/security/PasswordResetRequestsPanel.tsx:43` · `sr",
+     "| `auth-login` | A | `src/lib/serverLogin.ts:149` · `supabase/config.toml:39` |",
+     "| `batch-fetch-avatars` | A | `src/hooks/chat/useNewConversation.ts:143` · `src/hooks/chat/useNewConversation.ts:151` · `src/hooks/inbox/useInboxBulkActions.ts:",
+     "| `chatbot-l1` | A | `src/components/settings/ChatbotL1Config.tsx:235` · `supabase/functions/_shared/evolution-webhook-messages.ts:590` |",
+     "| `classify-audio-meme` | A | `src/components/settings/media-library/AIGenerateDialog.tsx:59` · `src/hooks/communication/useAudioMemes.ts:243` |",
+     "| `classify-sticker` | A | `src/components/inbox/chat/MessageBubble.tsx:328` · `src/hooks/sticker-picker/useStickerPicker.ts:148` · `supabase/functions/_shared/",
+     "| `connection-health-check` | A | `src/components/connections/ConnectionsView.tsx:101` · `src/components/diagnostics/ConnectionHealthPanel.tsx:95` · `src/compon",
+     "| `create-user` | A | `src/components/admin/useAdminData.ts:448` · `src/components/admin/useAdminData.ts:455` |",
+     "| `elevenlabs-tts` | A | `src/components/inbox/TextToAudioButton.tsx:80` · `src/components/inbox/VoiceSelector.tsx:99` |",
+     "| `evolution-api` | A | `src/components/monitoring/MonitoringConnectionsList.tsx:38` · `src/components/monitoring/MonitoringConnectionsList.tsx:54` · `src/hooks",
+     "| `evolution-sync` | A | `src/components/connections/ConnectionsView.tsx:76` |",
+     "| `evolution-webhook` | A | `src/components/monitoring/hooks/useMonitoringActions.ts:31` · `src/components/monitoring/hooks/useMonitoringActions.ts:60` · `supab",
+     "| `message-delivery` | A | `src/lib/invokeEdge.ts:24` · `src/services/outbound-message.service.ts:456` · `supabase/config.toml:49` |",
+     "| `multiplix-dispatch` | A | `src/hooks/integrations/useMultiplixDispatches.ts:132` |",
+     "| `talkx-send` | A | `src/hooks/integrations/useTalkX.ts:509` · `src/hooks/integrations/useTalkX.ts:525` · `src/hooks/integrations/useTalkX.ts:534` · `src/hooks",
+     "## Órfãs (20) — GATE B",
+     "- `ai-usage-outbox-drain`"
+    ],
+    "still_sample": [
+     "|---|---|",
+     "## Totais"
+    ]
+   }
+  },
+  {
+   "path": "FEATURE_REGISTRY.md",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 55,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 10,
+    "missing_in_main": 3,
+    "removed": 7,
+    "removed_still_in_main": 1,
+    "missing_sample": [
+     "| Full | 44 |",
+     "| Partial | 12 |",
+     "| `talkx-kit` | `TalkXKitView` | `src/components/talkx/__dev__/TalkXKit.tsx` | Partial | `src/components/talkx/__dev__/TalkXKit.tsx` |"
+    ],
+    "still_sample": [
+     "| Partial | 11 |"
+    ]
+   }
+  },
+  {
+   "path": "TESTING_CONVENTION.md",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 33,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 8,
+    "missing_in_main": 2,
+    "removed": 7,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  as guardas `*.unit.mjs` de `scripts/ci/`; as suítes de deploy e os contratos de",
+     "  `node --test scripts/ci/*.unit.mjs`."
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "docs/DB-INVENTORY.md",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 333,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 127,
+    "missing_in_main": 13,
+    "removed": 127,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "(campo `generated_at`: 2026-10-16, regenerado por",
+     "| Tabelas (`tables`) | 170 |",
+     "| Colunas (`columns`) | 1987 |",
+     "| Funções (`functions`) | 279 |",
+     "| Assinaturas de função (`function_signatures`) | 280 |",
+     "| Funções de gatilho (`trigger_functions`) | 72 |",
+     "| Restrições de verificação (`check_constraints`) | 168 |",
+     "| `agent_stats` | Agregado de gamificação do agente (XP, nível, enviadas, conquistas) | ativo | `src/components/dashboard/AgentPerformancePanel.tsx`, `src/compo",
+     "| `contact_purchases` | Histórico de compras do contato (valor, moeda e status) | ativo | `src/components/contacts/ContactPurchaseHistory.tsx`, `src/components/",
+     "| `conversation_memory` | Memória da conversa para a IA (fatos, objeções e promessas) | ativo | `src/components/inbox/contact-details/ConversationMemorySection.",
+     "| `department_invitations` | Convites de departamento (código, e-mail, papel e validade) | parcial | `scripts/db-audit/department-invite-contract-audit-vocabula",
+     "| `department_invites` | Convites de departamento por código, com validade | ativo | `src/hooks/team-chat/README.md`, `src/hooks/team-chat/__tests__/departmentI",
+     "| `talkx_conversions` | Conversões atribuídas aos links das campanhas TalkX | parcial | `scripts/db-audit/talkx-attribution.test.sh`, `scripts/db-audit/talkx-co"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "docs/audits/PLANO_GITHUB_ACTIONS_100_ETAPAS_2026-10-01.md",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 15,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 2,
+    "missing_in_main": 1,
+    "removed": 2,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "| **E62** destino do `db-migrate.yml` | `[~]` **PARCIAL** | PR #1778 extraiu 12 contratos para `scripts/db-audit/run-runtime-contract.mjs`; hoje `.github/workfl"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "docs/ci/README.md",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 129,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 40,
+    "missing_in_main": 9,
+    "removed": 21,
+    "removed_still_in_main": 4,
+    "missing_sample": [
+     "**15 workflows.**",
+     "| CodeQL | [`codeql.yml`](../../.github/workflows/codeql.yml) | agendado (semanal) e dispatch | analise estatica de seguranca (SAST) de src, scripts, functions ",
+     "- **O que prova:** quais branches sao podaveis e quais PRs estao paradas ha mais de 7 dias",
+     "- **Quando falha:** relatorio nao e publicado nem a issue e atualizada",
+     "- **O que prova:** lint, tipos, testes, build, security e E2E do codigo",
+     "- **Gatilho:** push na main e dispatch sobre main",
+     "- **O que prova:** o fluxo logado (Playwright com login real) contra producao",
+     "- **Quando falha:** artefato do Playwright e issue/relatorio; nunca roda em PR de terceiro",
+     "- **Quem é avisado:** issue de E2E e autor do push"
+    ],
+    "still_sample": [
+     "| Settings Guard | [`settings-guard.yml`](../../.github/workflows/settings-guard.yml) | agendado e dispatch | o perimetro do GitHub (branch protection, merge, e",
+     "- **Gatilho:** pull_request, push na main e dispatch",
+     "- **Quem é avisado:** quem disparou",
+     "- **Quem é avisado:** quem disparou"
+    ]
+   }
+  },
+  {
+   "path": "docs/talkx/README.md",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "scripts/ci/check-talkx-docs.unit.mjs",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "scripts/ci/check-workflow-pins.unit.mjs",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 37,
+   "hunk": "PRESENT_REVERSE_APPLIES"
+  },
+  {
+   "path": "scripts/ci/ci-docs-baseline.unit.mjs",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 62,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 11,
+    "missing_in_main": 11,
+    "removed": 11,
+    "removed_still_in_main": 3,
+    "missing_sample": [
+     "  '- [x] **E76** - `bunx playwright@1.64.1` -> `bunx playwright`.',",
+     "  '- [~] **E76** - AGUARDA RUNTIME (paridade 1.64.1 entre lock e workflows).',",
+     "  '| **E76** | `[~]` AGUARDA RUNTIME | `bun.lock` + os 3 workflows (1.64.1) | nao ha mismatch; remover o pin e opcao da E75 |',",
+     "test('inventario: 15 YAML em .github/workflows e a fonte gerada em paridade', async () => {",
+     "  assert.equal(arquivos.length, 15);",
+     "  assert.match(readme, /\\*\\*15 workflows\\.\\*\\*/);",
+     "  assert.ok(/playwright@1\\.64\\.1/.test(lock));",
+     "  assert.ok(/playwright-core@1\\.64\\.1/.test(lock));",
+     "  assert.ok(/@playwright\\/test@1\\.64\\.1/.test(lock));",
+     "    assert.ok(wf.includes('playwright@1.64.1'));",
+     "  assert.match(e76.linha, /1\\.64\\.1/);"
+    ],
+    "still_sample": [
+     "  '- [x] **E76** - `bunx playwright@1.63.0` -> `bunx playwright`.',",
+     "  '- [~] **E76** - AGUARDA RUNTIME (paridade 1.63.0 entre lock e workflows).',",
+     "  '| **E76** | `[~]` AGUARDA RUNTIME | `bun.lock` + os 3 workflows (1.63.0) | nao ha mismatch; remover o pin e opcao da E75 |',"
+    ]
+   }
+  },
+  {
+   "path": "scripts/ci/docs-estado-registry-convention.unit.mjs",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "scripts/ci/edge-coverage-authz.unit.mjs",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 13,
+   "hunk": "PRESENT_REVERSE_APPLIES"
+  },
+  {
+   "path": "scripts/ci/evolution-edge-fixes.unit.mjs",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 31,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 6,
+    "missing_in_main": 6,
+    "removed": 5,
+    "removed_still_in_main": 1,
+    "missing_sample": [
+     "test(\"rotas legadas da Evolution V2 permanecem explícitas no handler\", () => {",
+     "  // A implantação V2 ainda sustenta estas rotas; a flavor GO responde com a",
+     "  // mensagem de incompatibilidade quando necessário. O contrato aqui impede",
+     "  // que elas desapareçam silenciosamente sem uma decisão de compatibilidade.",
+     "    assert.notEqual(",
+     "      `action ${action} precisa continuar explícita para a flavor V2`,"
+    ],
+    "still_sample": [
+     "    assert.equal("
+    ]
+   }
+  },
+  {
+   "path": "scripts/ci/github-settings-guard.unit.mjs",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 15,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 2,
+    "missing_in_main": 2,
+    "removed": 2,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "    'banco-leitura', 'db-ledger-evidence', 'legacy-import-destrutivo',",
+     "    'perimetro-leitura', 'producao-ddl', 'producao-edge-functions',"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "scripts/ci/marcador-specs.mjs",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "scripts/ci/playwright-version-lock.unit.mjs",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 20,
+   "hunk": "PRESENT_REVERSE_APPLIES"
+  },
+  {
+   "path": "scripts/ci/workflow-contracts.unit.mjs",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 13,
+   "hunk": "PRESENT_REVERSE_APPLIES"
+  },
+  {
+   "path": "scripts/vercel/ignore-build.unit.mjs",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 51,
+   "hunk": "PRESENT_REVERSE_APPLIES"
+  },
+  {
+   "path": "src/App.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 19,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 0,
+    "missing_in_main": 0,
+    "removed": 2,
+    "removed_still_in_main": 0,
+    "missing_sample": [],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/__tests__/a11y/icon-buttons-baseline.json",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 60,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 0,
+    "missing_in_main": 0,
+    "removed": 25,
+    "removed_still_in_main": 0,
+    "missing_sample": [],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/__tests__/reduzirMovimentoInboxCrmConexoes.test.tsx",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/components/admin/AdminView.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 101,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 32,
+    "missing_in_main": 2,
+    "removed": 16,
+    "removed_still_in_main": 4,
+    "missing_sample": [
+     "  AlertTriangle, ChevronLeft, ChevronRight,",
+     "type AdminTab = 'users' | 'audit' | 'crm';"
+    ],
+    "still_sample": [
+     "  // A aba \"Tarefas agendadas\" é SÓ de admin: as RPCs que ela usa",
+     "  // (`admin_list_cron_jobs`/`admin_toggle_cron_job`) recusam quem não é admin — um",
+     "  // supervisor não deve nem ver a aba (evita abrir uma tela que só daria acesso negado).",
+     "    ...(isAdmin ? ([['cron', CalendarClock, 'Tarefas agendadas']] as const) : []),"
+    ]
+   }
+  },
+  {
+   "path": "src/components/catalog/useSendProduct.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 12,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 0,
+    "removed": 1,
+    "removed_still_in_main": 0,
+    "missing_sample": [],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/connections/ConnectionsView.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 29,
+   "hunk": "PRESENT_REVERSE_APPLIES"
+  },
+  {
+   "path": "src/components/inbox/CRMAutoSync.tsx",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/components/schedule/ScheduleCalendarView.tsx",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/components/shared/ConversationEmptyState.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 86,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 37,
+    "missing_in_main": 4,
+    "removed": 8,
+    "removed_still_in_main": 2,
+    "missing_sample": [
+     "          transition={reduzido ? undefined : { duration: 18, repeat: Infinity, ease: 'linear' }}",
+     "            transition={reduzido ? undefined : { duration: 3, repeat: Infinity, ease: 'easeInOut' }}",
+     "            transition={reduzido ? undefined : { duration: 2, repeat: Infinity, ease: 'easeInOut' }}",
+     "            transition={reduzido ? undefined : { duration: 2, repeat: Infinity, ease: 'easeInOut', delay: 0.7 }}"
+    ],
+    "still_sample": [
+     "        </div>",
+     "    </div>"
+    ]
+   }
+  },
+  {
+   "path": "src/components/wallet/ClientWalletView.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 27,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 4,
+    "missing_in_main": 0,
+    "removed": 2,
+    "removed_still_in_main": 0,
+    "missing_sample": [],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/hooks/__tests__/helpers/alertBehaviorTestKit.ts",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/hooks/__tests__/useNotifications.contagem-reconciliada.test.tsx",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/hooks/__tests__/useNotifications.test.tsx",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/hooks/integrations/__tests__/useCustomEmojis.upload.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 19,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 5,
+    "missing_in_main": 4,
+    "removed": 1,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "      const query = {",
+     "        order: () => query,",
+     "        range: () => Promise.resolve({ data: [emoji()], error: null }),",
+     "      return query;"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/hooks/ui/useScreenProtection.ts",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/lib/lazyToast.ts",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/lib/sonner-loader.ts",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/styles/utilities.css",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  }
+ ],
+ "counts": {
+  "migrations": "0",
+  "workflows": "9",
+  "src": "18",
+  "edges": "0",
+  "docs_only": "no",
+  "lines_branch_has_main_lacks": "652",
+  "lines_main_has_branch_lacks": "1187"
+ },
+ "auto": "MISTO_CONFLITO",
+ "n_files_with_gaps": 15,
+ "gap_lines_total": 109
+}

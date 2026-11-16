@@ -1,0 +1,97 @@
+{
+ "id": "claude__chore-reconcile-ledger-drift-261101-2249",
+ "kind": "branch",
+ "ref": "origin/claude/chore-reconcile-ledger-drift-261101-2249",
+ "tip": "2388e1ac52b22578880c3a5d6d408a4436ac16f0",
+ "merge_base": "1252bb5a41123ba4d49efd84d0f91604bff6c87c",
+ "ahead": 3,
+ "last_commit_date": "2026-11-01",
+ "merge_base_date": "2026-11-01",
+ "prs_with_same_tip": [
+  2533
+ ],
+ "triagem_2804": {
+  "2533": "JA_NA_MAIN"
+ },
+ "closure_comment": {},
+ "files": [
+  {
+   "path": "scripts/db-audit/replay-known-failures.json",
+   "status": "BOTH_CHANGED",
+   "hunk": "CONFLICT",
+   "patch_lines": 56,
+   "line_check": {
+    "added": 8,
+    "missing_in_main": 6,
+    "removed": 5,
+    "removed_still_in_main": 4,
+    "missing_sample": [
+     "  \"_atualizado_em\": \"2026-11-01\",",
+     "      \"motivo\": \"CREATE POLCIY IE NOT EXISTS nao existe no PostgreSQL. Superada por talkx_settings_policies_replay_safe e talkx_settings_replay_idempotent. Cano",
+     "      \"motivo\": \"cannot change return type. reminders_pending nunca existiu no canonico; o campo foi abandonado (decisao 20261003-121143). Se a aba um dia preci",
+     "      \"motivo\": \"Mesta funcao e mesmo motivo do anterior.\"",
+     "      \"motivo\": \"column 'media_path' of relation 'team_chat_media_acl_r2_db_020_rb' does not exist no replay. A tabela de rollback ja foi criada anteriormente n",
+     "      \"motivo\": \"CREATE POLICY sem DROP POLICY IF EXISTS. A migration 20261030145126 (reconciliacao de drift do ledger) cria as mesmas 7 politicas de copilot co"
+    ],
+    "still_sample": [
+     "      \"motivo\": \"CREATE POLICY IF NOT EXISTS nao existe no PostgreSQL. Superada por talkx_settings_policies_replay_safe e talkx_settings_replay_idempotent. Cano",
+     "      \"motivo\": \"cannot change return type. reminders_pending nunca existiu no canonico; o campo foi abandonado (decisao 20261003-121143). Se a aba um dia preci",
+     "      \"motivo\": \"Mesma funcao e mesmo motivo do anterior.\"",
+     "      \"motivo\": \"column 'media_path' of relation 'team_chat_media_acl_r2_db_020_rb' does not exist no replay. A tabela de rollback ja foi criada anteriormente n"
+    ]
+   }
+  },
+  {
+   "path": "supabase/migrations/20261030145126_copilot_fases13_15_tabelas.sql",
+   "status": "BOTH_CHANGED",
+   "hunk": "CONFLICT",
+   "patch_lines": 122,
+   "line_check": {
+    "added": 103,
+    "missing_in_main": 96,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "CREATE TABLE IF NOT EXISTS public.copilot_outcomes (",
+     "  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),",
+     "  conversation_id UUID NOT NULL,",
+     "  contact_id UUID NOT NULL,",
+     "  seller_id UUID NOT NULL,",
+     "  outcome TEXT NOT NULL CHECK (outcome IN ('closed', 'lost')),",
+     "  deal_value NUMERIC,",
+     "  segment TEXT,",
+     "  created_at TIMESTAMPTZ NOT NULL DEFAULT now()",
+     "DROP POLICY IF EXISTS \"copilot_outcomes_insert\" ON public.copilot_outcomes;",
+     "CREATE POLICY \"copilot_outcomes_insert\" ON public.copilot_outcomes",
+     "  FOR INSERT TO authenticated WITH CHECK (true);",
+     "DROP POLICY IF EXISTS \"copilot_outcomes_select\" ON public.copilot_outcomes;",
+     "CREATE POLICY \"copilot_outcomes_select\" ON public.copilot_outcomes",
+     "  FOR SELECT TO authenticated USING (true);",
+     "CREATE TABLE IF NOT EXISTS public.copilot_objection_catalog (",
+     "  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),",
+     "  conversation_id UUID NOT NULL,",
+     "  objection_type TEXT NOT NULL,",
+     "  treatment_text TEXT NOT NULL,",
+     "  submitted_by UUID NOT NULL,",
+     "  status TEXT NOT NULL DEFAULT 'pending_review',",
+     "  created_at TIMESTAMPTZ NOT NULL DEFAULT now()",
+     "DROP POLICY IF EXISTS \"copilot_objection_catalog_insert\" ON public.copilot_objection_catalog;",
+     "CREATE POLICY \"copilot_objection_catalog_insert\" ON public.copilot_objection_catalog"
+    ],
+    "still_sample": []
+   }
+  }
+ ],
+ "counts": {
+  "migrations": "1",
+  "workflows": "0",
+  "src": "0",
+  "edges": "0",
+  "docs_only": "no",
+  "lines_branch_has_main_lacks": "116",
+  "lines_main_has_branch_lacks": "34"
+ },
+ "auto": "MISTO_CONFLITO",
+ "n_files_with_gaps": 2,
+ "gap_lines_total": 106
+}

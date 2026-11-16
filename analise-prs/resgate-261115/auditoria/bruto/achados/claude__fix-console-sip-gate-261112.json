@@ -1,0 +1,21 @@
+[
+ {
+  "commit": "8d877f7f9",
+  "arquivo": "src/lib/calls/sipProvisioning.ts",
+  "linhas": 4,
+  "amostra": [
+   "    const until = Number(globalThis.localStorage?.getItem(SIP_NOT_CONFIGURED_STORAGE_KEY));",
+   "    return Number.isFinite(until) && until > now;",
+   "  if (sipSabidamenteNaoConfigurado(Date.now())) return null;",
+   "      if (error) lembrarSipNaoConfigurado(Date.now());"
+  ]
+ },
+ {
+  "commit": "32463ff8b",
+  "arquivo": "src/hooks/communication/useSipClient.ts",
+  "linhas": 1,
+  "amostra": [
+   "    onBecameLeader: () => { void connectWithStoredCredentials({ ignorarTrava: false }); },"
+  ]
+ }
+]

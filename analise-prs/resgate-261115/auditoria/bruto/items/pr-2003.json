@@ -1,0 +1,254 @@
+{
+ "id": "pr-2003",
+ "kind": "pr",
+ "ref": "refs/remotes/pr/2003",
+ "pr": 2003,
+ "tip": "b93278e0d66c19e509cd4832c54949016c15340e",
+ "merge_base": "76ddbc630bbe86377c113fc84e3bae170e0e0777",
+ "ahead": 4,
+ "last_commit_date": "2026-10-16",
+ "merge_base_date": "2026-10-16",
+ "triagem_2804": "PERDIDA",
+ "closure_comment": null,
+ "files": [
+  {
+   "path": "src/components/inbox/copilot/RadarCards.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 275,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 192,
+    "missing_in_main": 11,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "const STAGE_LABELS: Record<string, string> = {",
+     "  E1: 'Recepção', E2: 'Descoberta', E3: 'Proposta', E4: 'Negociação', E5: 'Fechamento', E6: 'Pós-venda',",
+     "const STAGE_COLORS: Record<string, string> = {",
+     "  E1: 'bg-slate-400', E2: 'bg-blue-400', E3: 'bg-indigo-400', E4: 'bg-amber-400', E5: 'bg-green-400', E6: 'bg-emerald-500',",
+     "  const label = stage ? STAGE_LABELS[stage] ?? stage : 'Aguardando...';",
+     "    <span className={cn('ml-auto mr-1 h-1.5 w-1.5 rounded-full shrink-0', STAGE_COLORS[stage] ?? 'bg-muted')} />",
+     "        <span className={cn('rounded px-1.5 py-0.5 text-[11px] font-bold text-white', stage ? STAGE_COLORS[stage] : 'bg-muted')}>",
+     "          {stage ?? '—'}",
+     "        <span className=\"text-xs text-muted-foreground\">{label}</span>",
+     "                onKeyDown={(e) => e.key === 'Enter' && onUse(s.text)}",
+     "    <span className=\"ml-auto mr-1 rounded-full bg-amber-500 px-1 text-[9px] font-bold text-white\">{alerts.length}</span>"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/inbox/copilot/RadarPanel.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 457,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 360,
+    "missing_in_main": 36,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     " * Pop-up encaixado no Chat Panel: arrastável, 3 modos, mobile bottom drawer,",
+     " * \"não perturbe\", acessibilidade, atalhos de teclado, indicador de pensamento.",
+     "// ─── Props ────────────────────────────────────────────────────",
+     "// ─── Mode buttons ─────────────────────────────────────────────",
+     "// ─── Timeout para \"RADAR pensando\" (CV-054) ──────────────────",
+     "  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);",
+     "  const prevLoadingRef = useRef(false);",
+     "    if (suggestionsLoading && !prevLoadingRef.current) {",
+     "      timeoutRef.current = setTimeout(() => setTimedOut(true), THINKING_TIMEOUT_MS);",
+     "    if (!suggestionsLoading) {",
+     "      if (timeoutRef.current) clearTimeout(timeoutRef.current);",
+     "    prevLoadingRef.current = suggestionsLoading;",
+     "    return () => { if (timeoutRef.current) clearTimeout(timeoutRef.current); };",
+     "  // CV-055 — aria-live anuncia novas sugestões",
+     "  const latestSuggestionText = suggestions[0]?.text ?? null;",
+     "  // ─── Drag logic (CV-051) ──────────────────────────────────",
+     "  // ─── Keyboard shortcuts (CV-056) ─────────────────────────",
+     "      if (e.ctrlKey && e.shiftKey && e.key === 'R') {",
+     "      if (e.ctrlKey && !e.shiftKey && (e.key === '1' || e.key === '2' || e.key === '3')) {",
+     "        const idx = parseInt(e.key) - 1;",
+     "  }, [onToggleCollapsed, onUseSuggestion, suggestions]);",
+     "  // ─── Mobile detection ─────────────────────────────────────",
+     "  // ─── Mini mode ────────────────────────────────────────────",
+     "        {suggestions.length > 0 && (",
+     "  // ─── Mobile bottom drawer (CV-060) ───────────────────────"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/inbox/copilot/__tests__/RadarPanel.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 186,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 127,
+    "missing_in_main": 0,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/hooks/chat/useNextBestAction.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 16,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 3,
+    "missing_in_main": 3,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "/** Chave de query para invalidação via useConversationPanelInvalidation. */",
+     "export function nextBestActionKey(contactId: string) {",
+     "  return ['next-best-action', contactId] as const;"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/hooks/copilot/useCopilotSession.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 31,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 16,
+    "missing_in_main": 8,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     " * CV-051–060 stub — implementação completa em CV-061+.",
+     " * Define CopilotSessionState e useCopilotSession para satisfazer os imports",
+     " * de RadarCards.tsx e RadarPanel.tsx durante o desenvolvimento.",
+     "  stage: string | null;",
+     "  temperature: number | null;",
+     "/** Stub — retorna null até CV-061+ implementar a busca real. */",
+     "export function useCopilotSession(_conversationId?: string): CopilotSessionState | null {",
+     "  return null;"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/hooks/copilot/useLiveSuggestions.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 22,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 10,
+    "missing_in_main": 7,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     " * CV-051–060 stub — implementação completa em CV-061+.",
+     " * Define LiveSuggestion e useLiveSuggestions para satisfazer os imports",
+     " * de RadarCards.tsx e RadarPanel.tsx durante o desenvolvimento.",
+     "  confidence?: number;",
+     "/** Stub — retorna array vazio até CV-061+ implementar a busca real. */",
+     "export function useLiveSuggestions(_conversationId?: string): LiveSuggestion[] {",
+     "  return [];"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/hooks/copilot/useRadarPanel.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 138,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 95,
+    "missing_in_main": 9,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  const [state, setState] = useState<RadarPanelState>(() =>",
+     "    userId ? loadState(userId) : DEFAULT_STATE,",
+     "    if (userId) setState(loadState(userId));",
+     "  }, [userId]);",
+     "      setState((prev) => {",
+     "        const next = { ...prev, ...patch };",
+     "        return next;",
+     "        update({ dndConversationId: null, dndUntil: Date.now() + 30 * 60 * 1000 });",
+     "    (state.dndUntil !== null && Date.now() < state.dndUntil);"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/hooks/shortcuts/defaultShortcuts.ts",
+   "status": "MAIN_UNCHANGED_SINCE_BASE",
+   "patch_lines": 106,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 13,
+    "missing_in_main": 13,
+    "removed": 35,
+    "removed_still_in_main": 35,
+    "missing_sample": [
+     "  // Task shortcuts (etapa 77)",
+     "  // RADAR copiloto (CV-056) — atalhos do painel de sugestões ao vivo",
+     "  { id: 'radar-toggle', name: 'Abrir/fechar RADAR', description: 'Expande ou recolhe o painel RADAR', defaultKey: 'L', defaultModifiers: { ctrlKey: true, shiftK",
+     "  { id: 'radar-use-1', name: 'Usar sugestão 1', description: 'Aplica a primeira sugestão do RADAR na caixa de digitação', defaultKey: '1', defaultModifiers: { c",
+     "  { id: 'radar-use-2', name: 'Usar sugestão 2', description: 'Aplica a segunda sugestão do RADAR na caixa de digitação', defaultKey: '2', defaultModifiers: { ct",
+     "  { id: 'radar-use-3', name: 'Usar sugestão 3', description: 'Aplica a terceira sugestão do RADAR na caixa de digitação', defaultKey: '3', defaultModifiers: { c",
+     "  { id: 'radar-next-card', name: 'Próximo cartão RADAR', description: 'Move o foco para o próximo cartão do painel RADAR', defaultKey: ']', defaultModifiers: { ",
+     "  // RADAR (CV-056) — sem executor global ainda; cada instância de RadarPanel captura por conta",
+     "  'radar-toggle',",
+     "  'radar-use-1',",
+     "  'radar-use-2',",
+     "  'radar-use-3',",
+     "  'radar-next-card',"
+    ],
+    "still_sample": [
+     "  // Mudo do áudio EM REPRODUÇÃO (auditoria de paridade V3→V2 do doc 06). Sem",
+     "  // modificador e sem escopo: vale em qualquer view e é ignorado dentro de campo",
+     "  // de texto (a lista branca do registry não inclui este id). Não colide com o",
+     "  // `M` local do player (`useVolumeRocker`, E16): o registry captura na janela e",
+     "  // faz `stopPropagation`, então o toque chega uma vez só.",
+     "  // Task shortcuts (etapa 77) — valem só em `?view=tasks` (E09: a antiga view",
+     "  // `pipeline` saiu do escopo; o Quadro é um modo de Tarefas).",
+     "  // O módulo recebe o comando pelo evento `tasks-shortcut` (o registry não",
+     "  // conhece o estado de tela do módulo); a guarda de input é a do handler",
+     "  // global, que ignora qualquer um destes ids dentro de INPUT/TEXTAREA."
+    ]
+   }
+  },
+  {
+   "path": "src/hooks/tasks/workItemAggregates.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 328,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 4,
+    "missing_in_main": 4,
+    "removed": 112,
+    "removed_still_in_main": 112,
+    "missing_sample": [
+     " * R2-MOD-058 — regra Única de \"prazo vencido\" do módulo de Tarefas. O app grava",
+     "  return texto.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();",
+     "  return due < startOfDay(addDays(now, 7));",
+     "  if (isOverdue(dueDate, now)) return 'Atrasada';"
+    ],
+    "still_sample": [
+     " * R2-MOD-058 — regra ÚNICA de \"prazo vencido\" do módulo de Tarefas. O app grava",
+     " * dois tipos de prazo (`temHora`) e cada um vence de um jeito:",
+     " *  - **com hora marcada** (ex.: hoje às 9h): vence no INSTANTE — às 15h do mesmo",
+     " *    dia já está atrasado;",
+     " *  - **de dia inteiro** (23:59 e 00:00 locais, a convenção dos chips",
+     " *    \"Hoje/Amanhã/Próx. semana\" e do QuickAdd da Agenda): vence quando o dia",
+     " *    LOCAL termina — às 15h do mesmo dia ainda é \"Hoje\".",
+     " * Antes o badge do menu comparava o prazo com o instante e o módulo (KPI, seções",
+     " * e chip) só com o início do dia: a mesma tarefa acendia o menu e não aparecia em",
+     " * \"Atrasadas\" na lista que deveria explicá-la. Agora badge, `bucketByDue`"
+    ]
+   }
+  }
+ ],
+ "auto": "MISTO_CONFLITO",
+ "n_files_with_gaps": 8,
+ "gap_lines_total": 238
+}

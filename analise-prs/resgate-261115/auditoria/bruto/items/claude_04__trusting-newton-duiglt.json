@@ -1,0 +1,233 @@
+{
+ "id": "claude_04__trusting-newton-duiglt",
+ "kind": "branch",
+ "ref": "origin/claude_04/trusting-newton-duiglt",
+ "tip": "fddda42f3b67a2ccc73457dbcfec7945c1ac9a66",
+ "merge_base": "2d97c44cfe7f2fa8a3ca572f8f5689118328e858",
+ "ahead": 6,
+ "last_commit_date": "2026-11-01",
+ "merge_base_date": "2026-10-24",
+ "prs_with_same_tip": [
+  2540
+ ],
+ "triagem_2804": {
+  "2540": "JA_NA_MAIN"
+ },
+ "closure_comment": {},
+ "files": [
+  {
+   "path": "scripts/ci/fila-merge.mjs",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "hunk": "CONFLICT",
+   "patch_lines": 34,
+   "line_check": {
+    "added": 11,
+    "missing_in_main": 11,
+    "removed": 1,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "async function execComRetry(cmd, args, opts, maxTentativas = 4) {",
+     "  const esperas = [5000, 10000, 20000];",
+     "  for (let i = 0; i < maxTentativas; i++) {",
+     "    try {",
+     "      return execFileSync(cmd, args, opts);",
+     "    } catch (err) {",
+     "      const stderr = String(err.stderr ?? err.stdout ?? err.message ?? '');",
+     "      const ehTransiente = /HTTP 5\\d\\d|ECONNRESET|ETIMEDOUT|EHOSTUNREACH|ENOTFOUND|unexpected end of JSON/.test(stderr);",
+     "      if (!ehTransiente || i === maxTentativas - 1) throw err;",
+     "      await new Promise((r) => setTimeout(r, esperas[Math.min(i, esperas.length - 1)]));",
+     "  const json = await execComRetry(resolverExecutavel('gh'), ["
+    ],
+    "still_sample": [],
+    "same_basename_in_main": []
+   }
+  },
+  {
+   "path": "src/components/admin/__tests__/AdminView.limiteChats.test.tsx",
+   "status": "BOTH_CHANGED",
+   "hunk": "CONFLICT",
+   "patch_lines": 13,
+   "line_check": {
+    "added": 2,
+    "missing_in_main": 0,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/admin/__tests__/AdminView.ramalAdmin.test.tsx",
+   "status": "BOTH_CHANGED",
+   "hunk": "CONFLICT",
+   "patch_lines": 13,
+   "line_check": {
+    "added": 2,
+    "missing_in_main": 0,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/agents/__tests__/AgentsView.pendencias.test.tsx",
+   "status": "BOTH_CHANGED",
+   "hunk": "CONFLICT",
+   "patch_lines": 14,
+   "line_check": {
+    "added": 3,
+    "missing_in_main": 3,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "    channel: () => ({ on: vi.fn().mockReturnThis(), subscribe: vi.fn().mockReturnThis() }),",
+     "    removeChannel: vi.fn(),",
+     "    functions: { invoke: vi.fn().mockResolvedValue({ data: null, error: null }) },"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/inbox/ai-tools/__tests__/a11y-ferramentas-ia.test.tsx",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/hooks/team-chat/__tests__/useTeamMessages.canal-e-reconexao.test.tsx",
+   "status": "BOTH_CHANGED",
+   "hunk": "CONFLICT",
+   "patch_lines": 21,
+   "line_check": {
+    "added": 2,
+    "missing_in_main": 2,
+    "removed": 1,
+    "removed_still_in_main": 1,
+    "missing_sample": [
+     "    const { queryClient, unmount } = render('conv-1');",
+     "    unmount();"
+    ],
+    "still_sample": [
+     "    const { queryClient } = render('conv-1');"
+    ]
+   }
+  },
+  {
+   "path": "src/pages/__tests__/ChatPopup.messageBalloon.test.tsx",
+   "status": "BOTH_CHANGED",
+   "hunk": "CONFLICT",
+   "patch_lines": 73,
+   "line_check": {
+    "added": 21,
+    "missing_in_main": 19,
+    "removed": 9,
+    "removed_still_in_main": 9,
+    "missing_sample": [
+     "import { describe, it, expect, vi, beforeEach, afterEach, beforeAll } from 'vitest';",
+     "      select: () => ({ eq: () => ({ single: async () => ({ data: CONTACT_ROW, error: null }), maybeSingle: async () => ({ data: null, error: null }) }) }),",
+     "    channel: () => ({ on: vi.fn().mockReturnThis(), subscribe: vi.fn().mockReturnThis() }),",
+     "    auth: {",
+     "      getSession: vi.fn().mockResolvedValue({ data: { session: null }, error: null }),",
+     "      onAuthStateChange: vi.fn().mockReturnValue({ data: { subscription: { unsubscribe: vi.fn() } } }),",
+     "  const originalOffsetHeight = Object.getOwnPropertyDescriptor(proto, 'offsetHeight');",
+     "  const originalClientHeight = Object.getOwnPropertyDescriptor(proto, 'clientHeight');",
+     "  const heightGetter = function (this: HTMLElement) {",
+     "  // virtual-core reads offsetHeight for item measurement and clientHeight for",
+     "  // the scroll-container viewport (observeElementRect → getRect). Both need a",
+     "  // non-zero value so the virtualizer renders visible rows in jsdom.",
+     "  Object.defineProperty(proto, 'offsetHeight', { configurable: true, get: heightGetter });",
+     "  Object.defineProperty(proto, 'clientHeight', { configurable: true, get: heightGetter });",
+     "      if (originalOffsetHeight) Object.defineProperty(proto, 'offsetHeight', originalOffsetHeight);",
+     "      if (originalClientHeight) Object.defineProperty(proto, 'clientHeight', originalClientHeight);",
+     "beforeAll(async () => {",
+     "  await import('@/components/inbox/ChatPanel');",
+     "}, 120_000);"
+    ],
+    "still_sample": [
+     "import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';",
+     "      select: () => ({ eq: () => ({ single: async () => ({ data: CONTACT_ROW, error: null }) }) }),",
+     "    channel: () => ({ on: () => ({ subscribe: () => ({}) }) }),",
+     "  const original = Object.getOwnPropertyDescriptor(proto, 'offsetHeight');",
+     "  Object.defineProperty(proto, 'offsetHeight', {",
+     "    configurable: true,",
+     "    get(this: HTMLElement) {",
+     "      return this.getAttribute('role') === 'log' ? ALTURA_JANELA : ALTURA_ESTIMADA;",
+     "      if (original) Object.defineProperty(proto, 'offsetHeight', original);"
+    ]
+   }
+  },
+  {
+   "path": "src/pages/__tests__/ChatPopup.pagination.test.tsx",
+   "status": "BOTH_CHANGED",
+   "hunk": "CONFLICT",
+   "patch_lines": 69,
+   "line_check": {
+    "added": 20,
+    "missing_in_main": 18,
+    "removed": 7,
+    "removed_still_in_main": 7,
+    "missing_sample": [
+     "  const originalOffsetHeight = Object.getOwnPropertyDescriptor(proto, 'offsetHeight');",
+     "  const originalClientHeight = Object.getOwnPropertyDescriptor(proto, 'clientHeight');",
+     "  const heightGetter = function (this: HTMLElement) {",
+     "  // virtual-core reads offsetHeight for item measurement and clientHeight for",
+     "  // the scroll-container viewport (observeElementRect → getRect). Both need a",
+     "  // non-zero value so the virtualizer renders visible rows in jsdom.",
+     "  Object.defineProperty(proto, 'offsetHeight', { configurable: true, get: heightGetter });",
+     "  Object.defineProperty(proto, 'clientHeight', { configurable: true, get: heightGetter });",
+     "      if (originalOffsetHeight) Object.defineProperty(proto, 'offsetHeight', originalOffsetHeight);",
+     "      if (originalClientHeight) Object.defineProperty(proto, 'clientHeight', originalClientHeight);",
+     "      select: () => ({ eq: () => ({ single: async () => ({ data: CONTACT_ROW, error: null }), maybeSingle: async () => ({ data: null, error: null }) }) }),",
+     "    functions: { invoke: vi.fn(async () => ({ data: null, error: null })) },",
+     "    channel: () => ({ on: vi.fn().mockReturnThis(), subscribe: vi.fn().mockReturnThis() }),",
+     "    removeChannel: vi.fn(),",
+     "let _layout: { mockRestore: () => void };",
+     "  _layout = medirLayout();",
+     "afterEach(() => {",
+     "  _layout.mockRestore();"
+    ],
+    "still_sample": [
+     "  const original = Object.getOwnPropertyDescriptor(proto, 'offsetHeight');",
+     "  Object.defineProperty(proto, 'offsetHeight', {",
+     "    configurable: true,",
+     "    get(this: HTMLElement) {",
+     "      return this.getAttribute('role') === 'log' ? ALTURA_JANELA : ALTURA_ESTIMADA;",
+     "      if (original) Object.defineProperty(proto, 'offsetHeight', original);",
+     "      select: () => ({ eq: () => ({ single: async () => ({ data: CONTACT_ROW, error: null }) }) }),"
+    ]
+   }
+  },
+  {
+   "path": "src/services/chat.service.ts",
+   "status": "BOTH_CHANGED",
+   "hunk": "CONFLICT",
+   "patch_lines": 26,
+   "line_check": {
+    "added": 10,
+    "missing_in_main": 5,
+    "removed": 2,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "    const mimeType = blob.type.split(';')[0] || 'audio/webm';",
+     "    const MIME_TO_EXT: Record<string, string> = {",
+     "      'audio/wav': 'wav',",
+     "    const ext = MIME_TO_EXT[mimeType] ?? mimeType.split('/')[1] ?? 'webm';",
+     "    const fileName = `${contactId}/${Date.now()}.${ext}`;"
+    ],
+    "still_sample": []
+   }
+  }
+ ],
+ "counts": {
+  "migrations": "0",
+  "workflows": "0",
+  "src": "8",
+  "edges": "0",
+  "docs_only": "no",
+  "lines_branch_has_main_lacks": "264",
+  "lines_main_has_branch_lacks": "84"
+ },
+ "auto": "MISTO_CONFLITO",
+ "n_files_with_gaps": 6,
+ "gap_lines_total": 75
+}

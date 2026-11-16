@@ -1,0 +1,270 @@
+{
+ "id": "claude__fix-ga-resto-docs-regen-20261021-0726",
+ "kind": "branch",
+ "ref": "origin/claude/fix-ga-resto-docs-regen-20261021-0726",
+ "tip": "52761c075664078a4892990e4e66420062b941b5",
+ "merge_base": "d7af7a671ca2bd7005b75b0aa54c0f0c4672befc",
+ "ahead": 1,
+ "last_commit_date": "2026-10-21",
+ "merge_base_date": "2026-10-19",
+ "prs_with_same_tip": [
+  2144
+ ],
+ "triagem_2804": {
+  "2144": "OBSOLETA"
+ },
+ "closure_comment": {},
+ "files": [
+  {
+   "path": ".github/CODEOWNERS",
+   "status": "MAIN_UNCHANGED_SINCE_BASE",
+   "patch_lines": 16,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 2,
+    "missing_in_main": 2,
+    "removed": 2,
+    "removed_still_in_main": 2,
+    "missing_sample": [
+     "# DEFAULT OWNER (roteamento de revisão; review obrigatório: nenhum — deliberado,",
+     "# vários agentes com auto-merge; ver CLAUDE.md seção 0 e perímetro do GitHub)"
+    ],
+    "still_sample": [
+     "# DEFAULT OWNER",
+     "# Todas as mudanças requerem aprovação do admin"
+    ]
+   }
+  },
+  {
+   "path": ".github/PULL_REQUEST_TEMPLATE.md",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 17,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 2,
+    "missing_in_main": 2,
+    "removed": 2,
+    "removed_still_in_main": 1,
+    "missing_sample": [
+     "<!-- Migration tem passo obrigatório DEPOIS do merge; edge alterada dispara deploy sozinho no push; marcar só o que se aplica -->",
+     "- [ ] **Edge?** → push na `main` dispara `deploy-functions` sozinho (só `supabase/functions/**`, `config.toml`); dispatch manual só para rollback/uma função"
+    ],
+    "still_sample": [
+     "<!-- Estes dois têm passo obrigatório DEPOIS do merge; marcar só o que se aplica -->"
+    ]
+   }
+  },
+  {
+   "path": ".github/workflows/db-guard.yml",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 20,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 8,
+    "missing_in_main": 6,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "      # GA98: o teste existia em scripts/db-audit mas nenhum passo o rodava (orfao).",
+     "      # Usa `docker logs` para readiness e um container por caso (RED/GREEN/dentes) —",
+     "      # criterio E47: SKIP_DOCKER_SHIM=1.",
+     "      - name: Simular ponteiro da versao corrente de template Talk X",
+     "          TALKX_CTV_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}",
+     "        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talkx-current-template-version.test.sh"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": ".github/workflows/notifica-falha-main.yml",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 13,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 2,
+    "missing_in_main": 2,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "#   falha: a falha original passa desapercebida sem a issue",
+     "#   avisa: issue de ops no repositorio"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": ".github/workflows/talkx-status-regen.yml",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 67,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 15,
+    "missing_in_main": 15,
+    "removed": 6,
+    "removed_still_in_main": 4,
+    "missing_sample": [
+     "#   gatilho: push na main filtrado (docs/talkx/**, scripts/talkx/**); schedule semanal (seg 07:45 UTC); dispatch",
+     "    # GA96: sem filtro cada push na main gerava run — 21 runs desde 13/10 sem",
+     "    # nenhuma mudança no placar. O placar deriva de docs/talkx + scripts/talkx.",
+     "    paths:",
+     "      - 'docs/talkx/**'",
+     "      - 'scripts/talkx/**'",
+     "  cancel-in-progress: true",
+     "    timeout-minutes: 10",
+     "    # GA96: escrita confinada aos passos do PR abaixo (create-pull-request +",
+     "    # destravar checks); checkout e regen só leem (o Actions não permite",
+     "    # `permissions:` por step — o confinamento é não ter nenhum outro passo de escrita).",
+     "      # GA96 (MECA 21/10): fetch-depth: 1 do plano é inválido aqui — o regen",
+     "      # lê `git log origin/main` (v4-status.mjs detectDoneSteps) e precisa do",
+     "      # histórico de títulos. Mantido 0, com `git fetch origin main` no passo seguinte.",
+     "            Auto-merge (squash) ligado no passo abaixo: mergeia sozinho quando os checks passam."
+    ],
+    "still_sample": [
+     "#   gatilho: push na main; schedule semanal (seg 07:45 UTC); dispatch",
+     "concurrency:",
+     "  cancel-in-progress: false",
+     "            Revisão humana e checks da PR continuam obrigatórios."
+    ]
+   }
+  },
+  {
+   "path": "CLAUDE.md",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 55,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 10,
+    "missing_in_main": 10,
+    "removed": 16,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "**Agendamentos sem colisão (medidos nos YAMLs em 2026-10-21):** types-sync `49 5 * * 1` (seg), db-live-guard `13 6 * * 1` (seg; push na `main` também dispara — ",
+     "**Retificação 2026-10-07 (decisão do Joaquim): o parágrafo abaixo descreve 28/08–07/10. Desde 07/10 o deploy voltou a ser AUTOMÁTICO no push na `main` filtrado ",
+     "(isso causa passthrough para o Docker real). Eram 11 em 02/10; em 2026-10-21 são **58** passos",
+     "(medir com `grep 'SKIP_DOCKER_SHIM' .github/workflows/db-guard.yml | grep -v '#' | wc -l` —",
+     "só linhas de `env:`, sem comentário). A lista fechada de nomes foi superada: vale o critério,",
+     "não a lista. Inclui `talkx-current-template-version.test.sh` (passo próprio desde GA98).",
+     "(lista removida em GA98: os 11 nomes estavam defasados — 58 passos medidos em 21/10; vale o critério acima, não a lista.)",
+     "ou depende de PostgREST — se sim, adicionar `SKIP_DOCKER_SHIM: \"1\"`. (A lista de 11 nomes que",
+     "ficava aqui foi removida em GA98 por estar defasada — 16 passos no plano de 15/10, 58 medidos",
+     "em 21/10.)"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "docs/DEPLOYMENT.md",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 70,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 17,
+    "missing_in_main": 17,
+    "removed": 13,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "> **Edge Functions sobem automaticamente** no push na `main` (filtrado por pasta — ver [Edge Functions](#edge-functions)). O front (Vercel) também é automático.",
+     "### 2. Deploy de Edge Functions (automático no push + manual para rollback)",
+     "Desde 07/10/2026 (decisão do Joaquim) o push na `main` que toca `supabase/functions/**`",
+     "ou `supabase/config.toml` dispara `deploy-functions.yml` sozinho — só a função cujo bundle",
+     "divergiu do publicado é republicada. O `workflow_dispatch` manual segue para rollback",
+     "(`source_ref`), uma função só (`function_name`), dry-run e rotação de secrets.",
+     "Push na main (edge alterada) → deploy-functions.yml dispara sozinho",
+     "GitHub Actions → deploy-functions.yml → Run workflow (só para rollback/uma função)",
+     "> **Não use `supabase functions deploy` direto em produção** — bypassa o gate do CI obrigatório e a comparação de digest local × remoto.",
+     "> As edge functions publicadas precisam bater com o repo (ver cabeçalho do `deploy-functions.yml`).",
+     "### Deploy (automático no push; manual só para rollback)",
+     "O push na `main` com alteração em edge dispara o deploy sozinho (filtrado por pasta).",
+     "O dispatch manual (`workflow_dispatch`) serve para rollback, função única, dry-run e",
+     "rotação de secrets. Nenhum agente dispara esse workflow de forma autônoma fora do push.",
+     "Push na main (edge alterada) → deploy automático",
+     "GitHub → Actions → deploy-functions.yml → Run workflow (só rollback/uma função)",
+     "- [ ] Se há edge function nova/alterada: `deploy-functions.yml` dispara sozinho no push (só confirmar o run verde)"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "scripts/ci/docs-deploy-coerencia.unit.mjs",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 94,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 69,
+    "missing_in_main": 66,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "import { fileURLToPath } from 'node:url';",
+     "import { dirname, join } from 'node:path';",
+     "import { extrairDocs, extrairNaoEBug } from './render-workflow-docs.mjs';",
+     "const RAIZ = join(dirname(fileURLToPath(import.meta.url)), '..', '..');",
+     "const ler = (p) => readFile(join(RAIZ, p), 'utf8');",
+     "// GA37 — verificação: teste de documento que proíbe \"merge não deploya\".",
+     "// Desde 07/10/2026 o push na main com edge alterada dispara deploy-functions",
+     "// sozinho; a doc que diz o contrário (manual-only) está errada.",
+     "const FRASES_MANUAL_ONLY = [",
+     "  'NÃO sobem automaticamente',",
+     "  'somente via `workflow_dispatch`',",
+     "  'não sobe sozinha',",
+     "  'NÃO deploya edge function',",
+     "test('GA37: DEPLOYMENT.md descreve deploy automático de edge (sem manual-only)', async () => {",
+     "  const doc = await ler('docs/DEPLOYMENT.md');",
+     "  for (const f of FRASES_MANUAL_ONLY) {",
+     "    assert.ok(!doc.includes(f), `DEPLOYMENT.md ainda diz: ${f}`);",
+     "  assert.ok(doc.includes('07/10/2026'), 'DEPLOYMENT.md sem o marco do deploy automático');",
+     "  assert.ok(/dispara.*sozinho|automático no push/i.test(doc), 'DEPLOYMENT.md sem menção ao disparo automático');",
+     "test('GA37: PULL_REQUEST_TEMPLATE sem manual-only, com automático', async () => {",
+     "  const tpl = await ler('.github/PULL_REQUEST_TEMPLATE.md');",
+     "  assert.ok(!tpl.includes('não sobe sozinha'), 'template ainda diz que a função não sobe sozinha');",
+     "  assert.ok(!tpl.includes('disparar `deploy-functions` após o merge'), 'template ainda manda disparar após o merge');",
+     "  assert.ok(tpl.includes('dispara `deploy-functions` sozinho'), 'template sem o comportamento automático');",
+     "test('GA37: CLAUDE.md marca o período manual como histórico com retificação 07/10', async () => {"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "scripts/ci/render-workflow-docs.mjs",
+   "status": "MAIN_UNCHANGED_SINCE_BASE",
+   "patch_lines": 51,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 14,
+    "missing_in_main": 10,
+    "removed": 4,
+    "removed_still_in_main": 4,
+    "missing_sample": [
+     "    // Continuacao de item de varias linhas: `#     <texto>` (indentado além do `-`)",
+     "    // compoe a descricao do item anterior em vez de encerrar o bloco (GA98).",
+     "    const cont = /^#\\s{5,}(\\S.*?)\\s*$/.exec(linha);",
+     "    if (cont && itens.length > 0) {",
+     "      itens[itens.length - 1].descricao += ' ' + cont[1];",
+     "export { extrairDocs, extrairNaoEBug };",
+     "// Fluxo executável (só quando rodado direto; importável para testes — GA98).",
+     "if (process.argv[1] === fileURLToPath(import.meta.url)) {",
+     "if (process.argv[1] === fileURLToPath(import.meta.url) && process.argv.includes('--check')) {",
+     "} // fim do fluxo executável (só roda direto)"
+    ],
+    "still_sample": [
+     "if (process.argv.includes('--check')) {",
+     "await mkdir(dirname(README), { recursive: true });",
+     "await writeFile(README, conteudo, 'utf8');",
+     "console.log(`docs/ci/README.md gerado a partir de ${docs.length} workflows.`);"
+    ]
+   }
+  }
+ ],
+ "counts": {
+  "migrations": "0",
+  "workflows": "5",
+  "src": "0",
+  "edges": "0",
+  "docs_only": "no",
+  "lines_branch_has_main_lacks": "926",
+  "lines_main_has_branch_lacks": "280"
+ },
+ "auto": "MISTO_CONFLITO",
+ "n_files_with_gaps": 9,
+ "gap_lines_total": 141
+}

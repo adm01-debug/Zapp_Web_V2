@@ -1,0 +1,49 @@
+{
+ "id": "claude__fix-unit-tests-inbox-261023-1108",
+ "kind": "branch",
+ "ref": "origin/claude/fix-unit-tests-inbox-261023-1108",
+ "tip": "1a77ca4853dd4f5ddb1f5b69bc74bef9fc7287e0",
+ "merge_base": "1252bb5a41123ba4d49efd84d0f91604bff6c87c",
+ "ahead": 4,
+ "last_commit_date": "2026-11-01",
+ "merge_base_date": "2026-11-01",
+ "prs_with_same_tip": [
+  2417
+ ],
+ "triagem_2804": {
+  "2417": "OBSOLETA"
+ },
+ "closure_comment": {},
+ "files": [
+  {
+   "path": "src/test/setup.ts",
+   "status": "MAIN_UNCHANGED_SINCE_BASE",
+   "patch_lines": 14,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 3,
+    "missing_in_main": 3,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "// @tanstack/virtual-core >=3.19 mede o contêiner por clientWidth/clientHeight (jsdom: 0).",
+     "Object.defineProperty(HTMLElement.prototype, 'clientHeight', { configurable: true, get() { return 600; } });",
+     "Object.defineProperty(HTMLElement.prototype, 'clientWidth', { configurable: true, get() { return 800; } });"
+    ],
+    "still_sample": []
+   }
+  }
+ ],
+ "counts": {
+  "migrations": "0",
+  "workflows": "0",
+  "src": "1",
+  "edges": "0",
+  "docs_only": "no",
+  "lines_branch_has_main_lacks": "3",
+  "lines_main_has_branch_lacks": "0"
+ },
+ "auto": "TRABALHO_AUSENTE_APLICA_LIMPO",
+ "n_files_with_gaps": 1,
+ "gap_lines_total": 3
+}

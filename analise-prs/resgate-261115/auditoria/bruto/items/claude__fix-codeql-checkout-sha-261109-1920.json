@@ -1,0 +1,108 @@
+{
+ "id": "claude__fix-codeql-checkout-sha-261109-1920",
+ "kind": "branch",
+ "ref": "origin/claude/fix-codeql-checkout-sha-261109-1920",
+ "tip": "7bf81f91ccbe9d6ffe5f151860e32f7e2ed3ea97",
+ "merge_base": "fe6c6b0bf83dbeeec257016e85013314d7d9ff93",
+ "ahead": 3,
+ "last_commit_date": "2026-11-09",
+ "merge_base_date": "2026-11-09",
+ "prs_with_same_tip": [
+  2906
+ ],
+ "triagem_2804": {
+  "2906": null
+ },
+ "closure_comment": {},
+ "files": [
+  {
+   "path": ".github/workflows/e2e-logado-isolado.yml",
+   "status": "BOTH_CHANGED",
+   "hunk": "CONFLICT",
+   "patch_lines": 228,
+   "line_check": {
+    "added": 38,
+    "missing_in_main": 34,
+    "removed": 38,
+    "removed_still_in_main": 34,
+    "missing_sample": [
+     "#   prova: login e 15 projetos; network-proof mede conectividade nativa; network-proof-contexts compara Library e Test reais em loopback com TLS e canario",
+     "#   falha: isolamento, TLS, testes, protocolo ou limpeza invalidos bloqueiam; somente network-proof exige dummy previamente carregada",
+     "#   avisa: autor e revisor via check; relatorios fechados; contextos distingue coleta, API, online natural e Test; nenhum corte libera a suite autenticada",
+     "# PR continua com um teste setup. A suite completa exige dispatch explicito;",
+     "# o workflow legado permanece desativado ate a prova nativa dos cinco grupos.",
+     "name: E2E isolado - login e suite completa",
+     "        description: Escopo da prova no backend descartavel",
+     "              case \"$scope\" in login|full-suite|network-proof|network-proof-contexts) ;; *) echo '::error::Escopo de execucao invalido.'; exit 1 ;; esac",
+     "            *) echo '::error::Evento nao permitido neste workflow.'; exit 1 ;;",
+     "            echo '::error::SHA de checkout invalido.'",
+     "      - name: Checkout do codigo da revisao",
+     "    name: Bootstrap e login real no ambiente descartavel",
+     "      - name: Checkout do codigo da revisao",
+     "      - name: Preparar Bun da versao do repositorio",
+     "      - name: Instalar dependencias antes do ambiente sem saida de rede",
+     "      - name: Executar bootstrap, admissao e login reais",
+     "      - name: Publicar somente o diagnostico redigido do ambiente local",
+     "    name: Suite isolada (${{ matrix.name }})",
+     "          # Cada shard autenticado recebe backend proprio e executa workers1:",
+     "          # as fixtures compartilham estado dentro de um backend. A selecao e a",
+     "          # execucao usam o mesmo shard fechado pelo controller.",
+     "      - name: Checkout do SHA validado da revisao",
+     "      - name: Preparar Bun da versao do repositorio",
+     "      - name: Instalar dependencias antes do ambiente sem saida de rede",
+     "      - name: Validar grupo e executar a suite no backend descartavel"
+    ],
+    "still_sample": [
+     "#   prova: login e 15 projetos; network-proof mede conectividade nativa; network-proof-contexts compara Library e Test reais em loopback com TLS e canário",
+     "#   falha: isolamento, TLS, testes, protocolo ou limpeza inválidos bloqueiam; somente network-proof exige dummy previamente carregada",
+     "#   avisa: autor e revisor via check; relatórios fechados; contextos distingue coleta, API, online natural e Test; nenhum corte libera a suíte autenticada",
+     "# PR continua com um teste setup. A suíte completa exige dispatch explícito;",
+     "# o workflow legado permanece desativado até a prova nativa dos cinco grupos.",
+     "name: E2E isolado - login e suíte completa",
+     "        description: Escopo da prova no backend descartável",
+     "              case \"$scope\" in login|full-suite|network-proof|network-proof-contexts) ;; *) echo '::error::Escopo de execução inválido.'; exit 1 ;; esac",
+     "            *) echo '::error::Evento não permitido neste workflow.'; exit 1 ;;",
+     "            echo '::error::SHA de checkout inválido.'"
+    ]
+   }
+  },
+  {
+   "path": "docs/ci/README.md",
+   "status": "BOTH_CHANGED",
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "patch_lines": 30,
+   "line_check": {
+    "added": 5,
+    "missing_in_main": 5,
+    "removed": 5,
+    "removed_still_in_main": 5,
+    "missing_sample": [
+     "| E2E isolado - login e suite completa | [`e2e-logado-isolado.yml`](../../.github/workflows/e2e-logado-isolado.yml) | pull_request valida login; dispatch escolh",
+     "### E2E isolado - login e suite completa (`e2e-logado-isolado.yml`)",
+     "- **O que prova:** login e 15 projetos; network-proof mede conectividade nativa; network-proof-contexts compara Library e Test reais em loopback com TLS e canar",
+     "- **Quando falha:** isolamento, TLS, testes, protocolo ou limpeza invalidos bloqueiam; somente network-proof exige dummy previamente carregada",
+     "- **Quem é avisado:** autor e revisor via check; relatorios fechados; contextos distingue coleta, API, online natural e Test; nenhum corte libera a suite autent"
+    ],
+    "still_sample": [
+     "| E2E isolado - login e suíte completa | [`e2e-logado-isolado.yml`](../../.github/workflows/e2e-logado-isolado.yml) | pull_request valida login; dispatch escolh",
+     "### E2E isolado - login e suíte completa (`e2e-logado-isolado.yml`)",
+     "- **O que prova:** login e 15 projetos; network-proof mede conectividade nativa; network-proof-contexts compara Library e Test reais em loopback com TLS e canár",
+     "- **Quando falha:** isolamento, TLS, testes, protocolo ou limpeza inválidos bloqueiam; somente network-proof exige dummy previamente carregada",
+     "- **Quem é avisado:** autor e revisor via check; relatórios fechados; contextos distingue coleta, API, online natural e Test; nenhum corte libera a suíte autent"
+    ]
+   }
+  }
+ ],
+ "counts": {
+  "migrations": "0",
+  "workflows": "1",
+  "src": "0",
+  "edges": "0",
+  "docs_only": "no",
+  "lines_branch_has_main_lacks": "47",
+  "lines_main_has_branch_lacks": "47"
+ },
+ "auto": "MISTO_CONFLITO",
+ "n_files_with_gaps": 2,
+ "gap_lines_total": 78
+}

@@ -1,0 +1,57 @@
+{
+ "id": "automation__inventario-estado",
+ "kind": "branch",
+ "ref": "origin/automation/inventario-estado",
+ "tip": "72de368f70becd047494a8d4a3cdfb95f93883e1",
+ "merge_base": "4de9160124c633d37a2f4d14eaf48792574e9567",
+ "ahead": 2,
+ "last_commit_date": "2026-11-09",
+ "merge_base_date": "2026-11-09",
+ "prs_with_same_tip": [
+  2848
+ ],
+ "triagem_2804": {
+  "2848": null
+ },
+ "closure_comment": {},
+ "files": [
+  {
+   "path": "inventario/estado/banco.json",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "inventario/estado/edges.json",
+   "status": "BOTH_CHANGED",
+   "hunk": "CONFLICT",
+   "patch_lines": 7,
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 1,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "{\"gerado_em\":\"2026-11-09T10:27:23.128Z\",\"total\":85,\"sem_chamador_no_repo\":[\"auto-close-conversations\",\"cleanup-rate-limit-logs\",\"csp-report\",\"elevenlabs-agent-t"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "inventario/estado/rotas.json",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  }
+ ],
+ "counts": {
+  "migrations": "0",
+  "workflows": "0",
+  "src": "0",
+  "edges": "0",
+  "docs_only": "no",
+  "lines_branch_has_main_lacks": "1",
+  "lines_main_has_branch_lacks": "1"
+ },
+ "auto": "MISTO_CONFLITO",
+ "n_files_with_gaps": 1,
+ "gap_lines_total": 1
+}

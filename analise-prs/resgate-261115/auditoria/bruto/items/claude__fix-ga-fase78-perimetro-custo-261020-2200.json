@@ -1,0 +1,785 @@
+{
+ "id": "claude__fix-ga-fase78-perimetro-custo-261020-2200",
+ "kind": "branch",
+ "ref": "origin/claude/fix-ga-fase78-perimetro-custo-261020-2200",
+ "tip": "1b2db4d1b64b221ac7e2b09a445e80150cc43775",
+ "merge_base": "d7af7a671ca2bd7005b75b0aa54c0f0c4672befc",
+ "ahead": 1,
+ "last_commit_date": "2026-10-20",
+ "merge_base_date": "2026-10-19",
+ "prs_with_same_tip": [
+  2129
+ ],
+ "triagem_2804": {
+  "2129": "JA_NA_MAIN"
+ },
+ "closure_comment": {},
+ "files": [
+  {
+   "path": ".github/dependabot.yml",
+   "status": "MAIN_UNCHANGED_SINCE_BASE",
+   "patch_lines": 14,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 3,
+    "missing_in_main": 3,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "          # GA88: scorecard-action isolado abria PR propria a cada bump; no grupo",
+     "          # de actions ela anda junto sem quebrar o Scorecard agendado.",
+     "          - \"ossf/scorecard-action*\""
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": ".github/toolchain.json",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 17,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 4,
+    "removed_still_in_main": 4,
+    "missing_sample": [
+     "  \"playwright\": \"1.63.0\""
+    ],
+    "still_sample": [
+     "  \"actionlint-version\": \"1.7.7\",",
+     "  \"actionlint-sha256\": \"023070a287cd8cccd71515fedc843f1985bf96c436b7effaecce67290e7e0757\",",
+     "  \"zizmor-version\": \"1.30.1\",",
+     "  \"zizmor-sha256\": \"e65324f4430c2717591937edcec90ccbefaf14c174f8ec9415e03ca875b46e1a\""
+    ]
+   }
+  },
+  {
+   "path": ".github/workflows/branch-hygiene-audit.yml",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 90,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 63,
+    "missing_in_main": 49,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "        # GA92: continue-on-error — o KPI (1.014 runs em 7 d) estourava o limite de",
+     "        # 1.000 requisicoes/h do GITHUB_TOKEN e abortava o hygiene de segunda",
+     "        # (19/10). Junto com a amostragem no coletarJobs, o job nunca trava por",
+     "        # causa do KPI. GA93: grava docs/ci/kpi.json no workspace; o job",
+     "        # `publicar-kpi` abre/atualiza a PR `automation/kpi` com o arquivo.",
+     "        continue-on-error: true",
+     "          KPI_JSON_PATH: ${{ runner.temp }}/kpi.json",
+     "      - name: Arquivar kpi.json",
+     "        if: always()",
+     "        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2",
+     "          name: kpi-json-${{ github.run_id }}",
+     "          path: ${{ runner.temp }}/kpi.json",
+     "          if-no-files-found: ignore",
+     "          retention-days: 7",
+     "  # GA93: publica o kpi.json real (cancelados precoces, minutos desperdicados,",
+     "  # p50/p95, causas por conclusion) numa PR `automation/kpi`. Merge MANUAL —",
+     "  # sem auto-merge: dado semanal pequeno, revisao humana de 1 min. Depois do",
+     "  # merge, o render-workflow-docs preenche as colunas de custo/falha do README",
+     "  # (antes ficavam em \"—\"). Job separado do `audit` para ele continuar",
+     "  # somente-leitura (contents:read).",
+     "  publicar-kpi:",
+     "    name: 📊 Publicar kpi.json",
+     "    needs: [audit]",
+     "    timeout-minutes: 10",
+     "      contents: write # push do branch automation/kpi"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": ".github/workflows/ci.yml",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 67,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 33,
+    "missing_in_main": 24,
+    "removed": 3,
+    "removed_still_in_main": 3,
+    "missing_sample": [
+     "  # GA87: a imagem do preview-egress-proxy e construida (sem push) no CI —",
+     "  # decide a #1956 (golang 1.24 → 1.27 sem a imagem ser construida em lugar",
+     "  # nenhum). Nao e required check: so prova que o Dockerfile + go.mod compilam.",
+     "  egress-image:",
+     "    name: 🐳 Egress proxy image (build, sem push)",
+     "      - name: 🐳 Build da imagem (sem push)",
+     "        run: docker build --file infrastructure/preview-egress-proxy/Dockerfile infrastructure/preview-egress-proxy",
+     "      # GA89: restore em todo run, SAVE só em push na main. O `actions/cache`",
+     "      # (restore+save juntos) salvava em PR e prendia um cache por",
+     "      # `refs/pull/N/merge` (~2,6 GB em 9 caches); agora PR só restaura (do",
+     "      # cache da main via restore-keys) e só a main salva. O sufixo run_id no",
+     "      # save evita o erro \"cache already exists\" (a chave exata nunca repete).",
+     "      - name: 💾 Restaura cache dos browsers Playwright",
+     "        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0",
+     "          key: pw-cfw-${{ hashFiles('bun.lock') }}-${{ runner.os }}-${{ github.run_id }}",
+     "          restore-keys: |",
+     "            pw-cfw-${{ hashFiles('bun.lock') }}-${{ runner.os }}-",
+     "      # GA89: salva o cache UMA vez por estado novo do lock — só em push na",
+     "      # main. PRs nunca salvam (antes cada PR prendia um cache em",
+     "      # `refs/pull/N/merge`). Chave com run_id: nunca colide com save anterior.",
+     "      - name: 💾 Salva cache dos browsers Playwright (só push na main)",
+     "        if: github.event_name == 'push' && github.ref == 'refs/heads/main'",
+     "        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0",
+     "          key: pw-cfw-${{ hashFiles('bun.lock') }}-${{ runner.os }}-${{ github.run_id }}"
+    ],
+    "still_sample": [
+     "      - name: 💾 Cache dos browsers Playwright",
+     "        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0",
+     "          key: pw-cfw-${{ hashFiles('bun.lock') }}-${{ runner.os }}"
+    ]
+   }
+  },
+  {
+   "path": ".github/workflows/e2e-logado.yml",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 39,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 14,
+    "missing_in_main": 13,
+    "removed": 3,
+    "removed_still_in_main": 1,
+    "missing_sample": [
+     "      # GA89: restore em todo run, save só na main (comentario completo no ci.yml).",
+     "      - name: 💾 Restaura cache dos browsers Playwright",
+     "        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0",
+     "          key: pw-cfw-${{ hashFiles('bun.lock') }}-${{ runner.os }}-${{ github.run_id }}",
+     "          restore-keys: |",
+     "            pw-cfw-${{ hashFiles('bun.lock') }}-${{ runner.os }}-",
+     "      # GA89: salva o cache UMA vez por estado novo do lock — só em push na",
+     "      # main (este workflow roda pós-merge; o dispatch manual nao salva).",
+     "      - name: 💾 Salva cache dos browsers Playwright (só push na main)",
+     "        if: github.event_name == 'push' && github.ref == 'refs/heads/main'",
+     "        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0",
+     "          path: ~/.cache/ms-playwright",
+     "          key: pw-cfw-${{ hashFiles('bun.lock') }}-${{ runner.os }}-${{ github.run_id }}"
+    ],
+    "still_sample": [
+     "        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0"
+    ]
+   }
+  },
+  {
+   "path": ".github/workflows/e2e-talkx.yml",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 39,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 14,
+    "missing_in_main": 12,
+    "removed": 3,
+    "removed_still_in_main": 3,
+    "missing_sample": [
+     "      # GA89: restore em todo run, save só na main (comentario completo no ci.yml).",
+     "      - name: 💾 Restaura cache dos browsers Playwright",
+     "        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0",
+     "          key: pw-c-${{ hashFiles('bun.lock') }}-${{ runner.os }}-${{ github.run_id }}",
+     "          restore-keys: |",
+     "            pw-c-${{ hashFiles('bun.lock') }}-${{ runner.os }}-",
+     "      # GA89: salva o cache UMA vez por estado novo do lock — só em push na",
+     "      # main. Chave `c` (só Chromium): nao serve nem herda de quem usa `cfw`.",
+     "      - name: 💾 Salva cache dos browsers Playwright (só push na main)",
+     "        if: github.event_name == 'push' && github.ref == 'refs/heads/main'",
+     "        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0",
+     "          key: pw-c-${{ hashFiles('bun.lock') }}-${{ runner.os }}-${{ github.run_id }}"
+    ],
+    "still_sample": [
+     "      - name: 💾 Cache dos browsers Playwright",
+     "        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0",
+     "          key: pw-c-${{ hashFiles('bun.lock') }}-${{ runner.os }}"
+    ]
+   }
+  },
+  {
+   "path": ".github/workflows/notifica-falha-main.yml",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 84,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 32,
+    "missing_in_main": 32,
+    "removed": 32,
+    "removed_still_in_main": 31,
+    "missing_sample": [
+     "    # GA95: `startup_failure` tambem notifica (foi a falha do branch-hygiene em 15/10).",
+     "    if: ${{ github.event.workflow_run.conclusion == 'failure' || github.event.workflow_run.conclusion == 'startup_failure' }}",
+     "        # GA95: payload montado com jq (nada de objeto JS inline) e RUN_URL do",
+     "        # `workflow_run.html_url` (o campo certo; interpolar outro dava URL",
+     "        # malformada). Sem actions/github-script: gh + jq bastam.",
+     "        env:",
+     "          GH_TOKEN: ${{ github.token }}",
+     "          WF_NAME: ${{ github.event.workflow_run.name }}",
+     "          WF_BRANCH: ${{ github.event.workflow_run.head_branch }}",
+     "          WF_SHA: ${{ github.event.workflow_run.head_sha }}",
+     "          WF_URL: ${{ github.event.workflow_run.html_url }}",
+     "          WF_UPDATED: ${{ github.event.workflow_run.updated_at }}",
+     "          WF_CONCLUSAO: ${{ github.event.workflow_run.conclusion }}",
+     "        run: |",
+     "          set -euo pipefail",
+     "          TITULO=\"[falha-main] ${WF_NAME} falhou na main\"",
+     "          CORPO=$(jq -n \\",
+     "            --arg nome \"$WF_NAME\" \\",
+     "            --arg conclusao \"$WF_CONCLUSAO\" \\",
+     "            --arg branch \"$WF_BRANCH\" \\",
+     "            --arg sha \"${WF_SHA:0:7}\" \\",
+     "            --arg url \"$WF_URL\" \\",
+     "            --arg quando \"$WF_UPDATED\" \\",
+     "            '\"**Workflow:** \\($nome)\\n**Conclusao:** \\($conclusao)\\n**Branch:** \\($branch)\\n**Commit:** \\($sha)\\n**Run:** \\($url)\\n**Quando:** \\($quando)\"' | jq",
+     "          EXISTENTE=$(gh issue list --state open --limit 100 --json number,title \\"
+    ],
+    "still_sample": [
+     "    if: ${{ github.event.workflow_run.conclusion == 'failure' }}",
+     "        with:",
+     "          script: |",
+     "            const wf = context.payload.workflow_run;",
+     "            const titulo = `[falha-main] ${wf.name} falhou na main`;",
+     "            const corpo = [",
+     "              `**Workflow:** ${wf.name}`,",
+     "              `**Branch:** ${wf.head_branch}`,",
+     "              `**Commit:** ${wf.head_sha.slice(0, 7)}`,",
+     "              `**Run:** ${wf.html_url}`,"
+    ]
+   }
+  },
+  {
+   "path": ".github/workflows/vercel-env-cleanup.yml",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 18,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 3,
+    "missing_in_main": 2,
+    "removed": 2,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "      - name: Setup Node",
+     "          # Fonte unica (.github/toolchain.json): node 24."
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "infrastructure/preview-egress-proxy/Dockerfile",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 10,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 1,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "FROM golang:1.24-alpine@sha256:8bee1901f1e530bfb4a7850aa7a479d17ae3a18beb6e09064ed54cfd245b7191 AS build"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "scripts/ci/actions-kpi.mjs",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 121,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 74,
+    "missing_in_main": 74,
+    "removed": 2,
+    "removed_still_in_main": 2,
+    "missing_sample": [
+     "// GA93: percentil de duracoes (p50/p95 por workflow, em minutos).",
+     "export function percentil(valores, p) {",
+     "  const xs = [...(valores ?? [])].filter(Number.isFinite).sort((a, b) => a - b);",
+     "  if (!xs.length) return 0;",
+     "  const pos = Math.min(xs.length - 1, Math.floor((p / 100) * xs.length));",
+     "  return Math.round(xs[pos] * 10) / 10;",
+     "// GA93: monta o kpi.json por arquivo de workflow (chave = nome do .yml, que e o",
+     "// que o render-workflow-docs le). `mapaNomeArquivo` traduz `run.name` (nome",
+     "// amigavel do workflow) para o arquivo .yml — construido lendo o `name:` de cada",
+     "// YAML. Campos por arquivo: custo_semana_min, taxa_falha_7d (lidos pelo render),",
+     "// cancelados_precoces (cancelado com < 1 min, nem comecou), minutos_desperdicados",
+     "// (soma dos cancelados), p50_min/p95_min e causas (contagem por conclusion).",
+     "export function montarKpi(runs, jobs, { janelaDias = 7, agora = Date.now(), mapaNomeArquivo = {} } = {}) {",
+     "  const naJanela = runsNaJanela(runs, { janelaDias, agora });",
+     "  const porArquivo = new Map();",
+     "  const paraArquivo = (nome) => mapaNomeArquivo[nome] ?? nome;",
+     "  for (const run of naJanela) {",
+     "    const arq = paraArquivo(run.name || run.workflow_id || '(sem nome)');",
+     "    if (!porArquivo.has(arq)) {",
+     "      porArquivo.set(arq, { runs: [], conclusoes: {}, canceladosPrecoces: 0, minutosDesperdicados: 0 });",
+     "    const e = porArquivo.get(arq);",
+     "    e.runs.push(run);",
+     "    const c = run.conclusion ?? 'desconhecida';",
+     "    e.conclusoes[c] = (e.conclusoes[c] ?? 0) + 1;",
+     "    const min = duracaoMinutos(run);"
+    ],
+    "still_sample": [
+     "  { repo, token, porPagina = POR_PAGINA, maxPaginas = 100, pedir: buscar = pedir } = {},",
+     "  for (const run of runs ?? []) {"
+    ]
+   }
+  },
+  {
+   "path": "scripts/ci/actions-kpi.unit.mjs",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 136,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 65,
+    "missing_in_main": 59,
+    "removed": 3,
+    "removed_still_in_main": 2,
+    "missing_sample": [
+     "import { mkdtempSync, readFileSync as lerArquivo, rmSync } from 'node:fs';",
+     "import { tmpdir } from 'node:os';",
+     "import { join } from 'node:path';",
+     "  gravarKpi,",
+     "  montarKpi,",
+     "  percentil,",
+     "  // GA92: o passo do KPI nao pode derrubar o hygiene de segunda se a API",
+     "  // limitar (1.014 runs em 7 d > limite de 1.000/h do GITHUB_TOKEN).",
+     "  assert.match(job, /continue-on-error:\\s*true/, 'KPI com continue-on-error (GA92)');",
+     "  assert.match(job, /KPI_JSON_PATH/, 'KPI grava o kpi.json (GA93)');",
+     "  const jobs = await coletarJobs([{ id: 1, name: 'CI', conclusion: 'failure' }], { repo: 'o/r', token: 't', pedir: pedirFake });",
+     "  const jobs = await coletarJobs([{ id: 7, name: 'CI', conclusion: 'timed_out' }], { repo: 'o/r', token: 't', pedir: pedirFake });",
+     "// ---------------------------------------------------------------- GA92/GA93",
+     "test('GA92: coletarJobs ignora runs verdes (1 GET por run so onde doi)', async () => {",
+     "  const runs = [",
+     "    { id: 1, name: 'CI', conclusion: 'success' },",
+     "    { id: 2, name: 'CI', conclusion: 'success' },",
+     "  const jobs = await coletarJobs(runs, { repo: 'o/r', token: 't', pedir: pedirFake });",
+     "  assert.equal(jobs.length, 0);",
+     "  assert.equal(chamadas.length, 0, 'run verde nao gera chamada de jobs');",
+     "test('GA92: fixture com 1.500 runs com falha gera < 300 chamadas', async () => {",
+     "  let chamadas = 0;",
+     "  const pedirFake = async () => {",
+     "    chamadas += 1;",
+     "  const runs = Array.from({ length: 1500 }, (_, i) => ({ id: i + 1, name: 'CI', conclusion: 'failure' }));"
+    ],
+    "still_sample": [
+     "  const jobs = await coletarJobs([{ id: 1, name: 'CI' }], { repo: 'o/r', token: 't', pedir: pedirFake });",
+     "  const jobs = await coletarJobs([{ id: 7, name: 'CI' }], { repo: 'o/r', token: 't', pedir: pedirFake });"
+    ]
+   }
+  },
+  {
+   "path": "scripts/ci/allowed-actions.json",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 33,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 8,
+    "missing_in_main": 3,
+    "removed": 7,
+    "removed_still_in_main": 6,
+    "missing_sample": [
+     "    \"actions/cache/restore\",",
+     "    \"actions/cache/save\",",
+     "    \"supabase/setup-cli\""
+    ],
+    "still_sample": [
+     "    \"oven-sh/setup-bun\",",
+     "    \"denoland/setup-deno\",",
+     "    \"supabase/setup-cli\",",
+     "    \"peter-evans/create-pull-request\",",
+     "    \"gitleaks/gitleaks-action\",",
+     "    \"actions/dependency-review-action\","
+    ]
+   }
+  },
+  {
+   "path": "scripts/ci/aplicar-perimetro.mjs",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "patch_lines": 161,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 116,
+    "missing_in_main": 116,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "#!/usr/bin/env node",
+     " * GA80 — Perímetro só por script versionado.",
+     " * Aplica `scripts/ci/github-settings-baseline.json` no repositório vivo.",
+     " * DRY-RUN POR PADRÃO: só lista os PATCHes que faria. Aplicar exige",
+     " * `--apply --confirm=APLICAR-PERIMETRO` e token com `administration:write`",
+     " * (nunca o GITHUB_TOKEN de workflow). PATCH manual (curl, MCP, console do",
+     " * GitHub) é proibido pelo CLAUDE.md, seção 0 — foi assim que o `strict`",
+     " * regrediu 4 vezes e o `CodeQL` entrou por API sem baseline.",
+     " * Uso:",
+     " *   node scripts/ci/aplicar-perimetro.mjs                       # dry-run",
+     " *   node scripts/ci/aplicar-perimetro.mjs --apply --confirm=APLICAR-PERIMETRO",
+     " * Verificação da GA80: dry-run sem diferença contra o vivo.",
+     "import { readFileSync } from 'node:fs';",
+     "import { pathToFileURL } from 'node:url';",
+     "const REPO = process.env.GITHUB_REPOSITORY ?? 'adm01-debug/Zapp_Web_V2';",
+     "const TOKEN = process.env.PERIMETER_APPLY_TOKEN ?? process.env.GITHUB_TOKEN ?? '';",
+     "const [OWNER, REPO_NAME] = REPO.split('/');",
+     "const BRANCH = 'main';",
+     "const baseline = JSON.parse(",
+     "  readFileSync(new URL('./github-settings-baseline.json', import.meta.url), 'utf8'),",
+     "const args = new Set(process.argv.slice(2));",
+     "const QUER_APLICAR = args.has('--apply');",
+     "const CONFIRM = (process.argv.find((a) => a.startsWith('--confirm=')) ?? '=').slice('--confirm='.length);",
+     "function api(path, metodo = 'GET', corpo) {",
+     "  return fetch(`https://api.github.com${path}`, {"
+    ],
+    "still_sample": [],
+    "same_basename_in_main": []
+   }
+  },
+  {
+   "path": "scripts/ci/aplicar-perimetro.unit.mjs",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "patch_lines": 120,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 84,
+    "missing_in_main": 84,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "import { describe, it } from 'node:test';",
+     "import assert from 'node:assert/strict';",
+     "import { spawnSync } from 'node:child_process';",
+     "import { dirname, join } from 'node:path';",
+     "import { fileURLToPath } from 'node:url';",
+     "import { planejar } from './aplicar-perimetro.mjs';",
+     "// GA80: perimetro so por script versionado (dry-run por padrao).",
+     "// O script roda de VERDADE (child process) com fetch stubbed.",
+     "const SCRIPT = join(dirname(fileURLToPath(import.meta.url)), 'aplicar-perimetro.mjs');",
+     "const BASE = JSON.parse(",
+     "  (await import('node:fs')).readFileSync(join(dirname(fileURLToPath(import.meta.url)), 'github-settings-baseline.json'), 'utf8'),",
+     "function stub(vivo) {",
+     "  return [",
+     "    'globalThis.fetch = async (url, opts) => {',",
+     "    '  const p = String(url).replace(\"https://api.github.com\", \"\");',",
+     "    '  const method = String((opts && opts.method) || \"GET\").toUpperCase();',",
+     "    `  const VIVO = ${JSON.stringify(vivo)};`,",
+     "    '  const send = (obj, status) => ({ ok: (status ?? 200) >= 200 && (status ?? 200) < 300, status: status ?? 200, text: async () => JSON.stringify(obj), json:",
+     "    '  if (method === \"GET\" && p.endsWith(\"/branches/main/protection\")) return send(VIVO.protection);',",
+     "    '  if (method === \"GET\" && p === \"/repos/o/r\") return send(VIVO.repo);',",
+     "    '  if (method === \"GET\" && p.endsWith(\"/actions/permissions/selected-actions\")) return send({ patterns_allowed: VIVO.patterns });',",
+     "    '  return send({});',",
+     "    '};',",
+     "  ].join('\\n');",
+     "function vivoIgualAoBaseline() {"
+    ],
+    "still_sample": [],
+    "same_basename_in_main": []
+   }
+  },
+  {
+   "path": "scripts/ci/bump-toolchain.mjs",
+   "status": "MAIN_UNCHANGED_SINCE_BASE",
+   "patch_lines": 40,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 14,
+    "missing_in_main": 14,
+    "removed": 4,
+    "removed_still_in_main": 4,
+    "missing_sample": [
+     "    // GA88: chave canonica do toolchain.json ('actionlint', sem duplicata).",
+     "    chave: 'actionlint',",
+     "  // GA88: go/zizmor/shellcheck passam a ser cobertos (antes so bun/deno/cli).",
+     "  // Playwright fora daqui de proposito: a versao e resolvida no bun.lock",
+     "  // (devDependency) e conferida pelo check-workflow-pins contra o toolchain.",
+     "    chave: 'go',",
+     "    repo: 'golang/go',",
+     "    changelog: 'https://github.com/golang/go/releases',",
+     "    chave: 'zizmor',",
+     "    repo: 'zizmor-rs/zizmor',",
+     "    changelog: 'https://github.com/zizmor-rs/zizmor/releases',",
+     "    chave: 'shellcheck-version',",
+     "    repo: 'koalaman/shellcheck',",
+     "    changelog: 'https://github.com/koalaman/shellcheck/releases',"
+    ],
+    "still_sample": [
+     "    chave: 'playwright',",
+     "    repo: 'microsoft/playwright',",
+     "    changelog: 'https://github.com/microsoft/playwright/releases',",
+     "    chave: 'actionlint-version',"
+    ]
+   }
+  },
+  {
+   "path": "scripts/ci/docker-pins.unit.mjs",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "patch_lines": 57,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 37,
+    "missing_in_main": 37,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "import { describe, it } from 'node:test';",
+     "import assert from 'node:assert/strict';",
+     "import { readFileSync } from 'node:fs';",
+     "import { dirname, join } from 'node:path';",
+     "import { fileURLToPath } from 'node:url';",
+     "// GA87: Go alinhado — tag do Dockerfile == toolchain (.github/toolchain.json,",
+     "// chave `go`), sempre com digest. Decide a #1956: sem build no CI a imagem",
+     "// andava sozinha (golang 1.27 no Dockerfile, 1.24 no go.mod/toolchain).",
+     "const RAIZ = join(dirname(fileURLToPath(import.meta.url)), '..', '..');",
+     "function ler() {",
+     "  const toolchain = JSON.parse(readFileSync(join(RAIZ, '.github', 'toolchain.json'), 'utf8'));",
+     "  const dockerfile = readFileSync(join(RAIZ, 'infrastructure', 'preview-egress-proxy', 'Dockerfile'), 'utf8');",
+     "  const gomod = readFileSync(join(RAIZ, 'infrastructure', 'preview-egress-proxy', 'go.mod'), 'utf8');",
+     "  return { toolchain, dockerfile, gomod };",
+     "describe('docker-pins (GA87)', () => {",
+     "  it('tag golang do Dockerfile acompanha o major.minor do toolchain', () => {",
+     "    const { toolchain, dockerfile } = ler();",
+     "    const m = /^FROM golang:([0-9]+\\.[0-9]+[^@\\s]*)@sha256:[0-9a-f]{64}/m.exec(dockerfile);",
+     "    assert.ok(m, 'FROM golang sem tag+digest');",
+     "    const baseToolchain = String(toolchain.go).replace(/\\.x$/, '');",
+     "    assert.ok(",
+     "      m[1] === baseToolchain || m[1].startsWith(`${baseToolchain}-`) || m[1].startsWith(`${baseToolchain}.`),",
+     "      `Dockerfile golang:${m[1]} != toolchain go ${toolchain.go}`,",
+     "  it('go.mod na mesma familia do toolchain', () => {",
+     "    const { toolchain, gomod } = ler();"
+    ],
+    "still_sample": [],
+    "same_basename_in_main": []
+   }
+  },
+  {
+   "path": "scripts/ci/github-settings-baseline.json",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 58,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 12,
+    "missing_in_main": 12,
+    "removed": 11,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "    \"actions/cache/restore\",",
+     "    \"actions/cache/save\",",
+     "    \"actions/dependency-review-action\",",
+     "    \"denoland/setup-deno\",",
+     "    \"gitleaks/gitleaks-action\",",
+     "    \"oven-sh/setup-bun\",",
+     "    \"peter-evans/create-pull-request\",",
+     "    \"supabase/setup-cli\"",
+     "    \"prefixos\": [",
+     "      \"Preview – \",",
+     "      \"Production – \"",
+     "  \"artifact_and_log_retention_days\": 14"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "scripts/ci/github-settings-guard.mjs",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 444,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 142,
+    "missing_in_main": 118,
+    "removed": 101,
+    "removed_still_in_main": 99,
+    "missing_sample": [
+     " * (`github-settings-baseline.json`) e abre/atualiza a issue de alerta.",
+     " * GA77: o guard NAO restaura nada sozinho — PATCH (manual ou automatico) fora",
+     " * de script versionado e proibido (CLAUDE.md, secao 0). Divergencia vira alerta",
+     " * para gente; a aplicacao do perimetro vive em `scripts/ci/aplicar-perimetro.mjs`",
+     " * (GA80) e exige aprovacao.",
+     " * Divergência: abre/atualiza a issue [settings-guard] (sem PATCH automatico).",
+     " * Tudo OK: fecha a issue se estiver aberta.",
+     "// GA78: rotina unica de issue de alerta (dedupe + rotacao E51/W91).",
+     "import { abrirOuRotacionar, encontrarIssue, fecharSeAberta } from './issue-rotativa.mjs';",
+     "// escritas (issues) continuam com o GITHUB_TOKEN. GA77: sem PATCH de restauracao.",
+     "// GA76: leitura via GraphQL (repository.autoMergeAllowed e irmaos). O REST",
+     "// `GET /repos` omite os campos de merge para tokens sem permissao push/admin;",
+     "// o GraphQL expos os mesmos campos sob outro conjunto de permissoes, entao o",
+     "// guard tenta os dois antes de declarar ponto cego.",
+     "async function ghGraphQL(query, variables) {",
+     "  const corpo = JSON.stringify({ query, variables });",
+     "  const tentar = async (tok) => {",
+     "    const res = await fetch('https://api.github.com/graphql', {",
+     "      method: 'POST',",
+     "        'Content-Type': 'application/json',",
+     "      body: corpo,",
+     "    if (res.status === 401) throw new TokenRecusado('/graphql');",
+     "      throw new NaoVerificavel('/graphql', res.status, text.slice(0, 200));",
+     "      throw new Error(`GitHub API POST /graphql → ${res.status}: ${text}`);",
+     "    return await tentar(adminToken);"
+    ],
+    "still_sample": [
+     " * (`github-settings-baseline.json`) e restaura o que sabe restaurar.",
+     " * Regressão: restaura via PATCH (o que suporta) e abre/atualiza a issue",
+     " * [settings-guard]. Tudo OK: fecha a issue se estiver aberta.",
+     "const escritoPeloGuard = (registro) => registro?.user?.login === AUTOR_DO_GUARD;",
+     "// escritas (issues, PATCH de restauracao) continuam com o GITHUB_TOKEN.",
+     "// `restauravel` diz se o guard sabe desfazer a divergência sozinho.",
+     "      // Sem o bloco de checks o PATCH do sub-recurso nao tem o que atualizar.",
+     "      restauravel: !checksDesligados,",
+     "    if (!repo || typeof repo !== 'object' || !Object.hasOwn(repo, campo) || repo[campo] === null) {",
+     "    const encontrado = repo[campo];"
+    ]
+   }
+  },
+  {
+   "path": "scripts/ci/github-settings-guard.unit.mjs",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 259,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 106,
+    "missing_in_main": 89,
+    "removed": 36,
+    "removed_still_in_main": 32,
+    "missing_sample": [
+     "import { readFileSync } from 'node:fs';",
+     "// GA75: sem `step-security/harden-runner` (removido do baseline e do",
+     "// allowed-actions: passava no check de pins e morreria com startup_failure).",
+     "const SELECTED_PATTERNS = \"['oven-sh/setup-bun','denoland/setup-deno','supabase/setup-cli','peter-evans/create-pull-request','gitleaks/gitleaks-action','actions",
+     "    // GA79: dias de retencao devolvidos pelo stub (default = baseline = 14).",
+     "    retencaoDias = 14,",
+     "    // GA76: sobrescrevem o corpo de /graphql e de GET /repos (modo gqlCompleta).",
+     "    gqlSus = null,",
+     "    repoSus = null,",
+     "    // GA75: sobrescreve o corpo de selected-actions (sufixo @* / pattern extra).",
+     "    selectedSus = null,",
+     "  const prot =",
+     "    }[modo] ?? PROT_OK;",
+     "    // GA76: REST so com os 2 campos REST-only; o GraphQL completa o resto.",
+     "    gqlCompleta: \"send({ id: 1, squash_merge_commit_message: 'PR_BODY', squash_merge_commit_title: 'PR_TITLE', security_and_analysis: { secret_scanning: { statu",
+     "  const repoEfetivo = repoSus ?? repo;",
+     "  // GA79: retencao de artifacts/logs; tokenReal/semEscopo devolvem 403.",
+     "  const retencao =",
+     "    modo === 'tokenReal' || modo === 'semEscopo' ? SEM_ESCOPO : `send({ retention_days: ${Number(retencaoDias)} })`;",
+     "  // GA76: GraphQL de merge.*; tokenReal/semEscopo recusam (403), parcial expoe",
+     "  // so 2 campos, gqlErro devolve `errors` (fallback para o REST).",
+     "  const GQL_OK =",
+     "    'send({ data: { repository: { autoMergeAllowed: true, squashMergeAllowed: true, mergeCommitAllowed: false, rebaseMergeAllowed: false, deleteBranchOnMerge: t",
+     "  const GQL_PARCIAL = 'send({ data: { repository: { autoMergeAllowed: true, deleteBranchOnMerge: true } } })';",
+     "  const gql ="
+    ],
+    "still_sample": [
+     "    patchStatus = 200,",
+     "  const prot = {",
+     "    ok: PROT_OK,",
+     "    regressao: PROT_REGRESSAO,",
+     "    semChecks: `send({ required_status_checks: null, enforce_admins: { enabled: true }, required_linear_history: { enabled: true }, allow_force_pushes: { enable",
+     "    semEscopo: SEM_ESCOPO,",
+     "    tokenReal: SEM_ESCOPO,",
+     "    parcial: PROT_OK,",
+     "    injecao: \"send({ required_status_checks: { strict: 'false\\\\n::error::forged', contexts: ['ci'] }, enforce_admins: { enabled: true }, required_linear_history",
+     "  }[modo];"
+    ]
+   }
+  },
+  {
+   "path": "scripts/ci/issue-rotativa.mjs",
+   "status": "MAIN_UNCHANGED_SINCE_BASE",
+   "patch_lines": 124,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 48,
+    "missing_in_main": 48,
+    "removed": 9,
+    "removed_still_in_main": 9,
+    "missing_sample": [
+     "// Valores vindos da API entram no log: quebras de linha sao neutralizadas.",
+     "// (Mesma regra do settings-guard; sem isto um number forjado quebra o log.)",
+     "const semQuebra = (valor) => String(valor).replace(/[\\r\\n\\u0000-\\u001f\\u007f]/g, ' ');",
+     " * Dedupe opcional por causa: com `marcador` + `janelaMs`, suprime o comentário",
+     " * quando o marcador já foi registrado por `autor` há menos de `janelaMs`",
+     " * (olha as 2 últimas páginas; comentário alheio depois do marcador não zera;",
+     " * marcador colado por terceiro não conta — repo público). Usado pelo",
+     " * settings-guard (causa 6 h / ponto cego 7 d), db-live-guard e types-sync.",
+     " * Retorna o número da issue ativa (nova ou existente), ou `null` suprimido",
+     " * por dedupe. `suprimido: true` no retorno objeto quando chamado com",
+     " * `detalhar: true`.",
+     "export async function abrirOuRotacionar({ gh, owner, repo, label, title, body, marcador = null, janelaMs = 0, autor = null, detalhar = false }) {",
+     "    // GA78: dedupe por causa antes de qualquer escrita.",
+     "    if (marcador && janelaMs > 0) {",
+     "      const registro = await registroMaisRecenteCom(gh, owner, repo, existing, marcador, autor);",
+     "      const idadeMs = registro ? Date.now() - new Date(registro.created_at).getTime() : Infinity;",
+     "      if (registro && idadeMs < janelaMs) {",
+     "        console.log(`Dedupe: mesma causa (${marcador}) ha menos de ${Math.round(janelaMs / 3600000)} h; comentario suprimido (issue #${existing.number}).`);",
+     "        return detalhar ? { numero: existing.number, suprimido: true } : existing.number;",
+     "      // GA78: issue rotacionada (legivel demais) fecha como `not_planned` —",
+     "      // nao foi \"resolvida\", foi substituida pela continuacao.",
+     "        state_reason: 'not_planned',",
+     "      console.log(`Issue #${semQuebra(existing.number)} rotacionada → #${semQuebra(nova.number)}`);",
+     "    console.log(`Issue #${semQuebra(existing.number)} atualizada com novo comentario.`);",
+     "    return detalhar ? { numero: existing.number, suprimido: false } : existing.number;"
+    ],
+    "still_sample": [
+     " * Retorna o número da issue ativa (nova ou existente).",
+     "export async function abrirOuRotacionar({ gh, owner, repo, label, title, body }) {",
+     "        state_reason: 'completed',",
+     "      console.log(`Issue #${existing.number} rotacionada → #${nova.number}`);",
+     "    console.log(`Issue #${existing.number} atualizada com novo comentário.`);",
+     "    return existing.number;",
+     "  console.log(`Issue #${nova.number} aberta.`);",
+     "  return nova.number;",
+     "  console.log(`Issue #${existing.number} fechada.`);"
+    ]
+   }
+  },
+  {
+   "path": "scripts/ci/issue-rotativa.unit.mjs",
+   "status": "MAIN_UNCHANGED_SINCE_BASE",
+   "patch_lines": 100,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 66,
+    "missing_in_main": 50,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "// --- GA78: rotacao fecha como not_planned + dedupe por marcador ---",
+     "test(\"GA78: issue rotacionada fecha como not_planned (nao completed)\", async () => {",
+     "    \"POST /repos/o/r/issues/7/comments\": (body) => { calls.push({ op: \"resumo\", body }); return {}; },",
+     "  await abrirOuRotacionar({ gh, owner: \"o\", repo: \"r\", label: \"L\", title: \"T\", body: \"ALERTA\" });",
+     "  const fechar = calls.find((c) => c.op === \"fechar\");",
+     "  assert.equal(fechar.body.state, \"closed\");",
+     "  assert.equal(fechar.body.state_reason, \"not_planned\");",
+     "function mkDedupeGh(comentarios, calls) {",
+     "  const issue = { number: 42, title: \"T\", comments: comentarios.length };",
+     "  return mkGh({",
+     "    \"GET /repos/o/r/issues/42/comments\": () => comentarios,",
+     "    \"POST /repos/o/r/issues/42/comments\": (body) => { calls.push(body); return {}; },",
+     "    \"POST /repos/o/r/issues\": () => ({ number: 43 }),",
+     "const AGORA = Date.now();",
+     "const iso = (ms) => new Date(ms).toISOString();",
+     "test(\"GA78: dedupe suprime comentario com mesma causa dentro da janela\", async () => {",
+     "  const gh = mkDedupeGh(",
+     "    [{ body: \"<!-- causa:abc--> alerta\", created_at: iso(AGORA - 60_000), user: { login: \"guard\" } }],",
+     "    calls,",
+     "  const r = await abrirOuRotacionar({",
+     "    gh, owner: \"o\", repo: \"r\", label: \"L\", title: \"T\", body: \"novo\",",
+     "    marcador: \"<!-- causa:abc-->\", janelaMs: 6 * 3600_000, autor: \"guard\", detalhar: true,",
+     "  assert.deepEqual(r, { numero: 42, suprimido: true });",
+     "  assert.equal(calls.length, 0);",
+     "test(\"GA78: dedupe volta a comentar apos a janela\", async () => {"
+    ],
+    "still_sample": []
+   }
+  }
+ ],
+ "counts": {
+  "migrations": "0",
+  "workflows": "8",
+  "src": "0",
+  "edges": "0",
+  "docs_only": "no",
+  "lines_branch_has_main_lacks": "1519",
+  "lines_main_has_branch_lacks": "855"
+ },
+ "auto": "MISTO_CONFLITO",
+ "n_files_with_gaps": 21,
+ "gap_lines_total": 1037
+}

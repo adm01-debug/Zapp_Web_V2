@@ -1,0 +1,149 @@
+{
+ "id": "claude__fix-multiplix-retomar-seguro-261114",
+ "kind": "branch",
+ "ref": "origin/claude/fix-multiplix-retomar-seguro-261114",
+ "tip": "941d989d23a9d8674c6dbba3d3ec8af85f483472",
+ "merge_base": "33ed0eaa9cf9e838bd3a741ed016652e52dc04b1",
+ "ahead": 5,
+ "last_commit_date": "2026-11-14",
+ "merge_base_date": "2026-11-14",
+ "prs_with_same_tip": [
+  3089
+ ],
+ "triagem_2804": {
+  "3089": null
+ },
+ "closure_comment": {
+  "3089": {
+   "title": "fix(multiplix): retomar confirma pelo status; iniciar sem fila exige o confirm",
+   "last_comment": "Conteúdo integrado na `main` pelo pacote 6 ([#3113](https://github.com/adm01-debug/Zapp_Web_V2/pull/3113), commit `41853318cd`). |  | Conferido byte a byte depois do merge: os 13 arquivos de código, teste e migration desta PR estão idênticos na `main`. Os três restantes: |  | - `deployment-manifest.json` e"
+  }
+ },
+ "files": [
+  {
+   "path": ".github/workflows/db-guard.yml",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 20,
+   "hunk": "PRESENT_REVERSE_APPLIES"
+  },
+  {
+   "path": "ESTADO.md",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 13,
+   "hunk": "PRESENT_REVERSE_APPLIES"
+  },
+  {
+   "path": "docs/contexto/regras/manual/regras.md",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/components/multiplix/MultiplixMonitor.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 145,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 42,
+    "missing_in_main": 2,
+    "removed": 24,
+    "removed_still_in_main": 2,
+    "missing_sample": [
+     "              {isPaused && !isLegacyUnqueued && <button type=\"button\" onClick={() => { void resumeDispatch(); }} disabled={resuming} aria-busy={resuming} classN",
+     "              {needsConfirmToStart && <button type=\"button\" onClick={() => setConfirmResume(true)} className=\"h-9 px-3.5 rounded-lg border border-primary/40 bg-"
+    ],
+    "still_sample": [
+     "      toast.success('Disparo retomado');",
+     "    } catch (e) {"
+    ]
+   }
+  },
+  {
+   "path": "src/components/multiplix/MultiplixView.tsx",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/components/multiplix/__tests__/MultiplixMonitor.confirm.test.tsx",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/hooks/integrations/__tests__/multiplixResume.test.ts",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/hooks/integrations/__tests__/useMultiplixDispatches.criacao.test.tsx",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/hooks/integrations/multiplixActionErrors.ts",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/hooks/integrations/multiplixResume.ts",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/hooks/integrations/useMultiplixDispatches.ts",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "supabase/deployment-manifest.json",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 31,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 4,
+    "missing_in_main": 4,
+    "removed": 4,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "      \"bytes\": 66698,",
+     "      \"sha256\": \"5e71ccc78bb828cf5f6cc523c0feaeb3eafad5e9e7eb00e3ae1d1ca13a42a09a\"",
+     "      \"source_sha256\": \"11e576b6e85144eb9acd1165534ace6d849ed79543d977a7ffd415a16eb04dfc\",",
+     "  \"manifest_sha256\": \"a2e6010fc90d5b509fb9e3f5efc3bbba1a958e939042d3c0db79add3c7d83612\""
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "supabase/functions/multiplix-send/index.test.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 124,
+   "hunk": "PRESENT_REVERSE_APPLIES"
+  },
+  {
+   "path": "supabase/functions/multiplix-send/index.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 35,
+   "hunk": "PRESENT_REVERSE_APPLIES"
+  },
+  {
+   "path": "supabase/migrations/20261114130000_multiplix_start_exige_confirmacao.sql",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "supabase/tests/db-audit/multiplix-start-exige-confirmacao.test.sh",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  }
+ ],
+ "counts": {
+  "migrations": "1",
+  "workflows": "1",
+  "src": "8",
+  "edges": "2",
+  "docs_only": "no",
+  "lines_branch_has_main_lacks": "96",
+  "lines_main_has_branch_lacks": "164"
+ },
+ "auto": "MISTO_CONFLITO",
+ "n_files_with_gaps": 2,
+ "gap_lines_total": 8
+}

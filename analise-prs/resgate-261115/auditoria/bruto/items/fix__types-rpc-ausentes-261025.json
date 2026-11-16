@@ -1,0 +1,156 @@
+{
+ "id": "fix__types-rpc-ausentes-261025",
+ "kind": "branch",
+ "ref": "origin/fix/types-rpc-ausentes-261025",
+ "tip": "9fe3cd827c360e1538dd64c1428574136da397b1",
+ "merge_base": "2d97c44cfe7f2fa8a3ca572f8f5689118328e858",
+ "ahead": 3,
+ "last_commit_date": "2026-10-25",
+ "merge_base_date": "2026-10-24",
+ "prs_with_same_tip": [
+  2244,
+  2441
+ ],
+ "triagem_2804": {
+  "2244": "JA_NA_MAIN",
+  "2441": "JA_NA_MAIN"
+ },
+ "closure_comment": {},
+ "files": [
+  {
+   "path": "src/hooks/auth/useAuth.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 30,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 5,
+    "missing_in_main": 4,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "        // Fila offline é por usuário: o próximo login na mesma máquina não pode",
+     "        // drenar mensagens do atendente que saiu.",
+     "        void offlineSendQueue.clear();",
+     "       void offlineSendQueue.clear();"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/integrations/supabase/types.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 183,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 103,
+    "missing_in_main": 20,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "        Args: Record<PropertyKey, never>",
+     "          last_return_message: string | null",
+     "          last_run_at: string | null",
+     "          last_status: string | null",
+     "      app_bootstrap: {",
+     "        Args: Record<PropertyKey, never>",
+     "      inbox_unread_total: {",
+     "        Args: Record<PropertyKey, never>",
+     "      transfer_conversation:",
+     "              p_note?: string | null",
+     "              p_to_agent_id?: string | null",
+     "              p_to_queue_id?: string | null",
+     "              p_expected_agent_id?: string | null",
+     "              p_note?: string | null",
+     "              p_to_agent_id?: string | null",
+     "              p_to_queue_id?: string | null",
+     "      warroom_agent_today: {",
+     "        Args: { p_date?: string }",
+     "      warroom_queue_stats: {",
+     "        Args: Record<PropertyKey, never>"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/lib/offlineQueue.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 52,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 17,
+    "missing_in_main": 13,
+    "removed": 3,
+    "removed_still_in_main": 1,
+    "missing_sample": [
+     "   * Quando fornecido, a drenagem só entrega itens cujo `userId` bata (ou itens sem",
+     "   * `userId`, para compatibilidade com itens gravados antes do campo existir).",
+     "   * `null` ou `undefined` = sem filtro (todos os itens são drenados).",
+     "  currentUserId?: string | null;",
+     "        const all = await list();",
+     "        pending = drainOptions.currentUserId != null",
+     "          ? all.filter((m) => !m.userId || m.userId === drainOptions.currentUserId)",
+     "          : all;",
+     "    /** Lida no momento do evento — não no registro — para pegar a sessão atual. */",
+     "    getCurrentUserId?: () => string | null;",
+     "    void queue.drain(deliver, {",
+     "      onError: options.onError,",
+     "      currentUserId: options.getCurrentUserId ? options.getCurrentUserId() : undefined,"
+    ],
+    "still_sample": [
+     "        pending = await list();"
+    ]
+   }
+  },
+  {
+   "path": "src/services/chat.service.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 21,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 6,
+    "missing_in_main": 6,
+    "removed": 2,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "    const mimeSubtype = blob.type.split('/')[1]?.split(';')[0] ?? '';",
+     "    const extMap: Record<string, string> = { mp4: 'm4a' };",
+     "    const ext = extMap[mimeSubtype] ?? (mimeSubtype || 'webm');",
+     "    const contentType = blob.type.split(';')[0] || 'audio/webm';",
+     "    const fileName = `${contactId}/${Date.now()}.${ext}`;",
+     "      .upload(fileName, blob, { contentType });"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/services/outbound-message.service.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 28,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 3,
+    "missing_in_main": 3,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "import { readAuthenticatedUserId } from '@/lib/mediaVolumeStore';",
+     "  getCurrentUserId: readAuthenticatedUserId,",
+     "    userId: readAuthenticatedUserId() ?? undefined,"
+    ],
+    "still_sample": []
+   }
+  }
+ ],
+ "counts": {
+  "migrations": "0",
+  "workflows": "0",
+  "src": "5",
+  "edges": "0",
+  "docs_only": "no",
+  "lines_branch_has_main_lacks": "392",
+  "lines_main_has_branch_lacks": "2986"
+ },
+ "auto": "MISTO_CONFLITO",
+ "n_files_with_gaps": 5,
+ "gap_lines_total": 47
+}

@@ -1,0 +1,72 @@
+{
+ "id": "claude__feat-multiplix-cron-instancia-pausada-261101-1410",
+ "kind": "branch",
+ "ref": "origin/claude/feat-multiplix-cron-instancia-pausada-261101-1410",
+ "tip": "81dc9cfaa991cf4ff0b5a39d72ecfbda0ecc874f",
+ "merge_base": "1252bb5a41123ba4d49efd84d0f91604bff6c87c",
+ "ahead": 3,
+ "last_commit_date": "2026-11-01",
+ "merge_base_date": "2026-11-01",
+ "prs_with_same_tip": [
+  2476
+ ],
+ "triagem_2804": {
+  "2476": "DUPLICATA_PROVAVEL"
+ },
+ "closure_comment": {},
+ "files": [
+  {
+   "path": "supabase/migrations/20261101150000_multiplix_cron_retoma_instancia_pausada.sql",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "patch_lines": 232,
+   "line_check": {
+    "added": 207,
+    "missing_in_main": 207,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "-- multiplix_cron_retoma_instancia_pausada (C121, opcao A)",
+     "-- O worker do Multiplix passou a pausar o dispatch com pause_reason='instance_paused'",
+     "-- quando a instancia esta pausada (instance_pauses). Sem esta migration o cron nunca",
+     "-- retoma esse motivo e o dispatch fica parado ate retomada manual.",
+     "-- Mudanca MINIMA sobre o corpo vigente em producao (lido por pg_get_functiondef):",
+     "--   1) DECLARE: nova variavel v_instance.",
+     "--   2) Retomada: 'instance_paused' entra na lista aceita (alem de outside_window/daily_limit).",
+     "--   3) Para 'instance_paused', so retoma quando NAO ha pausa aberta e vigente:",
+     "--      - conexao fixa: pela instancia dela (mesmo criterio de is_instance_paused);",
+     "--      - conexao NULL (o worker resolve a 1a conectada): so retoma se nenhuma instancia",
+     "--        esta pausada, conservador de proposito.",
+     "-- Assinatura, SECURITY DEFINER, search_path e o restante do corpo ficam identicos.",
+     "-- Rollback: CREATE OR REPLACE com o corpo anterior (sem v_instance, IN ('outside_window','daily_limit')",
+     "-- e sem o bloco 'instance_paused'). Nada de DROP.",
+     "CREATE OR REPLACE FUNCTION public.trigger_pending_multiplix_dispatches()",
+     " RETURNS void",
+     " LANGUAGE plpgsql",
+     " SECURITY DEFINER",
+     " SET search_path TO 'public', 'pg_temp'",
+     "AS $function$",
+     "DECLARE",
+     "  v_candidate   record;  -- id + conexao/motivo do candidato do tick",
+     "  v_instance    text;",
+     "  v_send_url    text;",
+     "  v_anon_key    text;"
+    ],
+    "still_sample": [],
+    "same_basename_in_main": []
+   }
+  }
+ ],
+ "counts": {
+  "migrations": "1",
+  "workflows": "0",
+  "src": "0",
+  "edges": "0",
+  "docs_only": "no",
+  "lines_branch_has_main_lacks": "226",
+  "lines_main_has_branch_lacks": "0"
+ },
+ "auto": "TRABALHO_AUSENTE_APLICA_LIMPO",
+ "n_files_with_gaps": 1,
+ "gap_lines_total": 207
+}

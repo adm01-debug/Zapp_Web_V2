@@ -1,0 +1,270 @@
+{
+ "id": "claude__fix-ci-tests-261019-1200",
+ "kind": "branch",
+ "ref": "origin/claude/fix-ci-tests-261019-1200",
+ "tip": "16a4c54f0aaabc4ad8bd77a919c9d04cdc38f891",
+ "merge_base": "ee294749175799481deb9fc69e1d31fac6675f3e",
+ "ahead": 2,
+ "last_commit_date": "2026-10-19",
+ "merge_base_date": "2026-10-18",
+ "prs_with_same_tip": [
+  2098
+ ],
+ "triagem_2804": {
+  "2098": "OBSOLETA"
+ },
+ "closure_comment": {},
+ "files": [
+  {
+   "path": "src/__tests__/a11y/icon-buttons-baseline.json",
+   "status": "BOTH_CHANGED",
+   "hunk": "CONFLICT",
+   "patch_lines": 60,
+   "line_check": {
+    "added": 0,
+    "missing_in_main": 0,
+    "removed": 25,
+    "removed_still_in_main": 0,
+    "missing_sample": [],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/__tests__/reduzirMovimentoInboxCrmConexoes.test.tsx",
+   "status": "BOTH_CHANGED",
+   "hunk": "CONFLICT",
+   "patch_lines": 76,
+   "line_check": {
+    "added": 22,
+    "missing_in_main": 15,
+    "removed": 19,
+    "removed_still_in_main": 18,
+    "missing_sample": [
+     "  QUEUE_GOAL_METRICS: [],",
+     "  goalMetricPercent: () => null,",
+     "  worstCrossedGoalBand: () => null,",
+     "  formatGoalMetricValue: (v: number) => String(v),",
+     "vi.mock('@/hooks/ui/useCustomShortcuts', () => ({",
+     "  useCustomShortcuts: () => ({ shortcuts: {}, formatShortcut: () => [] }),",
+     "vi.mock('@/hooks/shortcuts/defaultShortcuts', () => ({",
+     "  listarAtalhosEditaveis: () => [],",
+     "vi.mock('@/components/shared/ConversationEmptyState', () => ({",
+     "  ConversationEmptyState: () => <div data-testid=\"conversation-empty-state\" />,",
+     "// ── Inbox: o vazio do chat foi refatorado para ConversationEmptyState (sem animações próprias) ──",
+     "  it('com a preferência ligada renderiza sem erro', () => {",
+     "    render(<InboxEmptyChat />);",
+     "  it('controle: sem a preferência também renderiza sem erro', () => {",
+     "    render(<InboxEmptyChat />);"
+    ],
+    "still_sample": [
+     "// ── Inbox: o vazio do chat tem três laços infinitos ──────────────────────────",
+     "  it('com a preferência ligada as animações nascem no estado final (nenhum laço)', () => {",
+     "    const { container } = render(<InboxEmptyChat />);",
+     "    const cartao = container.querySelector('.text-center') as HTMLElement;",
+     "    expect(cartao.style.opacity).not.toBe('0');",
+     "    expect(cartao.style.transform).not.toContain('translate');",
+     "    const orbitas = container.querySelector('.w-28') as HTMLElement;",
+     "    for (const caixa of Array.from(orbitas.children) as HTMLElement[]) {",
+     "      expect(caixa.style.opacity).toBe('');",
+     "      expect(caixa.style.transform).toBe('');"
+    ]
+   }
+  },
+  {
+   "path": "src/components/connections/ConnectionsView.tsx",
+   "status": "BOTH_CHANGED",
+   "hunk": "CONFLICT",
+   "patch_lines": 27,
+   "line_check": {
+    "added": 3,
+    "missing_in_main": 0,
+    "removed": 1,
+    "removed_still_in_main": 0,
+    "missing_sample": [],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/inbox/CRMAutoSync.tsx",
+   "status": "BOTH_CHANGED",
+   "hunk": "CONFLICT",
+   "patch_lines": 213,
+   "line_check": {
+    "added": 41,
+    "missing_in_main": 39,
+    "removed": 114,
+    "removed_still_in_main": 114,
+    "missing_sample": [
+     "import { useState, useEffect, useCallback } from 'react';",
+     "import { supabase } from '@/integrations/supabase/client';",
+     "import { getLogger } from '@/lib/logger';",
+     "const log = getLogger('CRMAutoSync');",
+     "  contactId: string;",
+     "  externalId?: string | null;",
+     "  onSyncComplete?: () => void;",
+     "interface SyncResult {",
+     "  synced: boolean;",
+     "  error?: string;",
+     "export function CRMAutoSync({ contactId, externalId, onSyncComplete }: CRMAutoSyncProps) {",
+     "  const [isSyncing, setIsSyncing] = useState(false);",
+     "  const [lastResult, setLastResult] = useState<SyncResult | null>(null);",
+     "  const handleSync = useCallback(async () => {",
+     "    if (isSyncing) return;",
+     "    setIsSyncing(true);",
+     "      const { data, error } = await supabase.functions.invoke('crm-sync', {",
+     "        body: { contactId, externalId },",
+     "      if (error) throw error;",
+     "      setLastResult({ synced: true });",
+     "      onSyncComplete?.();",
+     "      toast.success('Sincronizado com CRM externo');",
+     "      log.debug('CRM sync ok', data);",
+     "    } catch (err) {",
+     "      const msg = err instanceof Error ? err.message : 'Erro desconhecido';"
+    ],
+    "still_sample": [
+     " * CRMAutoSync",
+     " * Componente invisível renderizado no cabeçalho da conversa (`ChatPanel`).",
+     " * O auto-sync disparado NO NAVEGADOR foi removido: o gatilho de banco",
+     " * `trg_enqueue_crm_sync_from_closure`",
+     " * (`supabase/migrations/20260908180000_crm_contact_links_and_sync_outbox.sql:66-104`)",
+     " * já enfileira TODA closure no outbox, idempotente por `closure:<id>`, a partir",
+     " * de `conversation_closures`. O disparo no navegador só duplicava a fila — e,",
+     " * para conversa resolvida sem linha em `conversation_closures`, a Edge respondia",
+     " * 409 ('Resolve the conversation before syncing') e o `onError` zerava os refs,",
+     " * repetindo a chamada a cada re-render (o objeto `conversation` muda a cada"
+    ]
+   }
+  },
+  {
+   "path": "src/components/schedule/ScheduleCalendarView.tsx",
+   "status": "BOTH_CHANGED",
+   "hunk": "CONFLICT",
+   "patch_lines": 26,
+   "line_check": {
+    "added": 3,
+    "missing_in_main": 0,
+    "removed": 1,
+    "removed_still_in_main": 0,
+    "missing_sample": [],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/team-chat/TeamFileUploader.tsx",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/components/team-chat/useTeamChatPanel.ts",
+   "status": "BOTH_CHANGED",
+   "hunk": "CONFLICT",
+   "patch_lines": 167,
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 72,
+    "removed_still_in_main": 72,
+    "missing_sample": [
+     "import { toast } from '@/lib/lazyToast';"
+    ],
+    "still_sample": [
+     "import { toast } from 'sonner';",
+     "  // Rascunho e resposta são da conversa: o painel não remonta ao trocar de",
+     "  // conversa, então o reset acontece no render (mesmo padrão de",
+     "  // useFilesViewState). Sem isso o texto de uma conversa aparece na outra e o",
+     "  // autosave do rascunho grava na chave errada — idem para o reply_to.",
+     "  // TC-007: a fonte única do mute é a membership (`team_conversation_members.is_muted`) —",
+     "  // exatamente onde `useToggleMuteConversation` grava. Antes a leitura vinha de",
+     "  // `user_settings.muted_conversations`, então o estado exibido não refletia o banco.",
+     "  // Cartão \"transferir conversa de departamento\": o vínculo da conversa é o",
+     "  // próprio departamento, então só faz sentido oferecer o seletor para quem já"
+    ]
+   }
+  },
+  {
+   "path": "src/components/wallet/ClientWalletView.tsx",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/hooks/__tests__/useRateLimitLogs.test.tsx",
+   "status": "BOTH_CHANGED",
+   "hunk": "CONFLICT",
+   "patch_lines": 96,
+   "line_check": {
+    "added": 14,
+    "missing_in_main": 11,
+    "removed": 19,
+    "removed_still_in_main": 7,
+    "missing_sample": [
+     "function makeChain(data: typeof mockLogs | null, error: Error | null = null, count = 0) {",
+     "  const promise = Promise.resolve({ data, error, count });",
+     "  const chain: Record<string, unknown> = {};",
+     "  ['select', 'ilike', 'eq', 'neq', 'order', 'limit', 'range', 'filter', 'match'].forEach((m) => {",
+     "    chain[m] = () => chain;",
+     "  chain.abortSignal = () => promise;",
+     "  return chain;",
+     "    mockFrom.mockReturnValue(makeChain(mockLogs, null, mockLogs.length));",
+     "    mockFrom.mockReturnValue(makeChain([], null, 0));",
+     "    mockFrom.mockReturnValue(makeChain(null, new Error('fail')));",
+     "    mockFrom.mockReturnValue(makeChain(updated, null, updated.length));"
+    ],
+    "still_sample": [
+     "function queryResult(data: typeof mockLogs | null, error: Error | null = null) {",
+     "  const result = Promise.resolve({ data, error });",
+     "  return Object.assign(result, { abortSignal: vi.fn(() => result) });",
+     "    mockFrom.mockReturnValue({",
+     "    mockFrom.mockReturnValue({",
+     "    mockFrom.mockReturnValue({",
+     "    await act(async () => { await vi.advanceTimersByTimeAsync(30_000); });"
+    ]
+   }
+  },
+  {
+   "path": "src/hooks/__tests__/useTeamChatNotifications.global.test.tsx",
+   "status": "BOTH_CHANGED",
+   "hunk": "CONFLICT",
+   "patch_lines": 65,
+   "line_check": {
+    "added": 9,
+    "missing_in_main": 9,
+    "removed": 4,
+    "removed_still_in_main": 4,
+    "missing_sample": [
+     "import { QueryClient, QueryClientProvider } from '@tanstack/react-query';",
+     "  createLogger: () => ({ error: vi.fn(), debug: vi.fn(), info: vi.fn(), warn: vi.fn() }),",
+     "function renderWithQC(ui: React.ReactElement) {",
+     "  const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });",
+     "  return render(<QueryClientProvider client={qc}>{ui}</QueryClientProvider>);",
+     "    renderWithQC(<TeamChatNotificationsListener />);",
+     "    renderWithQC(<TeamChatNotificationsListener />);",
+     "    renderWithQC(<TeamChatNotificationsListener />);",
+     "    renderWithQC(<TeamChatNotificationsListener />);"
+    ],
+    "still_sample": [
+     "    render(<TeamChatNotificationsListener />);",
+     "    render(<TeamChatNotificationsListener />);",
+     "    render(<TeamChatNotificationsListener />);",
+     "    render(<TeamChatNotificationsListener />);"
+    ]
+   }
+  },
+  {
+   "path": "src/hooks/ui/useScreenProtection.ts",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  }
+ ],
+ "counts": {
+  "migrations": "0",
+  "workflows": "0",
+  "src": "11",
+  "edges": "0",
+  "docs_only": "no",
+  "lines_branch_has_main_lacks": "224",
+  "lines_main_has_branch_lacks": "370"
+ },
+ "auto": "MISTO_CONFLITO",
+ "n_files_with_gaps": 5,
+ "gap_lines_total": 290
+}

@@ -1,0 +1,1808 @@
+{
+ "id": "codex__publish-followup-20261021",
+ "kind": "branch",
+ "ref": "origin/codex/publish-followup-20261021",
+ "tip": "47b1c07e37ebf221e7ac713dea0b80e33541fc3b",
+ "merge_base": "1fb282e64c66ae8af16d36bbda8e199c9ce2a58c",
+ "ahead": 1,
+ "last_commit_date": "2026-10-21",
+ "merge_base_date": "2026-10-21",
+ "prs_with_same_tip": [
+  2442
+ ],
+ "triagem_2804": {
+  "2442": "JA_NA_MAIN"
+ },
+ "closure_comment": {},
+ "files": [
+  {
+   "path": ".github/toolchain.json",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": ".github/workflows/ci.yml",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 121,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 34,
+    "missing_in_main": 10,
+    "removed": 13,
+    "removed_still_in_main": 5,
+    "missing_sample": [
+     "#   prova: tipos, testes Vitest/Node, build, security e E2E do codigo; mutacao do mapa informativa",
+     "#   falha: PR fica vermelho; o bloqueio de merge segue os checks exigidos na configuracao do repositorio",
+     "# CI em PR: typecheck, Vitest, guards Node/Deno, build, security e E2E; mutacao do mapa e informativa.",
+     "      - name: 🦕 Setup Deno for coverage guards",
+     "        run: node --test scripts/ci/*.unit.mjs scripts/vercel/*.unit.mjs",
+     "      # WebKit a cada run. A chave carrega a versão explícita do Playwright",
+     "      # (para invalidar caches feitos por uma versão antiga), o hash do bun.lock e",
+     "      # o CONJUNTO de browsers: um cache",
+     "          key: pw-cfw-1.64.1-${{ hashFiles('bun.lock') }}-${{ runner.os }}",
+     "        run: bunx playwright@1.64.1 install-deps chromium firefox webkit"
+    ],
+    "still_sample": [
+     "#   falha: PR fica vermelho e o merge e bloqueado pelos required checks",
+     "# nao-e-bug:",
+     "      # WebKit a cada run. A chave carrega o hash do bun.lock (o Playwright é",
+     "      # devDependency e a versão está no lock) e o CONJUNTO de browsers: um cache",
+     "          key: pw-cfw-${{ hashFiles('bun.lock') }}-${{ runner.os }}"
+    ]
+   }
+  },
+  {
+   "path": ".github/workflows/db-live-guard.yml",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 30,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 11,
+    "missing_in_main": 2,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "      # INV-LIVE: verifica somente catálogos (RLS, views, grants e funções). O SQL",
+     "      # é read-only e falha fechado se o alvo não parecer o banco oficial."
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": ".github/workflows/e2e-logado.yml",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 34,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 6,
+    "missing_in_main": 6,
+    "removed": 6,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "      # E68: cache dos browsers (ver ci.yml para o racional completo). A versão",
+     "      # explícita invalida caches criados por Playwright antigo; hash do lock e",
+     "      # conjunto de browsers evitam divergência de dependências/engines.",
+     "          key: pw-cfw-1.64.1-${{ hashFiles('bun.lock') }}-${{ runner.os }}",
+     "        run: bunx playwright@1.64.1 install --with-deps chromium firefox webkit",
+     "        run: bunx playwright@1.64.1 install-deps chromium firefox webkit"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": ".github/workflows/e2e-talkx.yml",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 34,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 6,
+    "missing_in_main": 5,
+    "removed": 6,
+    "removed_still_in_main": 4,
+    "missing_sample": [
+     "      # E68: cache dos browsers (ver ci.yml para o racional completo). A versão",
+     "      # explícita invalida caches antigos; aqui só Chromium entra (`c`), então a",
+     "      # chave não pode herdar o cache `cfw` de quem precisa dos três engines.",
+     "          key: pw-c-1.64.1-${{ hashFiles('bun.lock') }}-${{ runner.os }}",
+     "        run: bunx playwright@1.64.1 install-deps chromium"
+    ],
+    "still_sample": [
+     "      # E68: cache dos browsers (ver ci.yml para o racional completo). Aqui só o",
+     "      # Chromium entra, então a chave usa o conjunto `c` -- ela não pode herdar um",
+     "      # cache `cfw` nem ser usada por quem precisa dos três engines.",
+     "          key: pw-c-${{ hashFiles('bun.lock') }}-${{ runner.os }}"
+    ]
+   }
+  },
+  {
+   "path": ".github/workflows/notifica-falha-main.yml",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 13,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 2,
+    "missing_in_main": 2,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "#   falha: issue de operacao criada ou atualizada com o workflow que falhou",
+     "#   avisa: mantenedores e revisores da main pelo issue de falha"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": ".github/workflows/talkx-status-regen.yml",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 28,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 5,
+    "missing_in_main": 4,
+    "removed": 4,
+    "removed_still_in_main": 1,
+    "missing_sample": [
+     "  # Não cancelar uma regeneração em andamento: push para main não é interruptível",
+     "  # com segurança enquanto a PR automática está sendo preparada/atualizada.",
+     "    # workflow_dispatch permite escolher qualquer ref; os passos seguintes usam",
+     "    # contents/pull-requests/actions:write e devem executar apenas com código main."
+    ],
+    "still_sample": [
+     "concurrency:"
+    ]
+   }
+  },
+  {
+   "path": ".github/workflows/vercel-env-cleanup.yml",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 60,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 26,
+    "missing_in_main": 15,
+    "removed": 3,
+    "removed_still_in_main": 1,
+    "missing_sample": [
+     "#   gatilho: workflow_dispatch com modo dry-run por padrão",
+     "#   prova: lista variáveis Vercel allowlisted sem imprimir seus valores",
+     "#   falha: execução vermelha e nenhuma variável removida antes da seleção explícita de apply",
+     "#   avisa: operador que disparou pelo log e status do workflow",
+     "    # workflow_dispatch pode escolher uma branch arbitrária; nunca execute código",
+     "    # dela com credenciais que alcançam o projeto Vercel.",
+     "      - name: Setup Node",
+     "      - name: Apply exige token Vercel de escrita explícito",
+     "        if: inputs.dry_run == '0'",
+     "          VERCEL_WRITE_TOKEN: ${{ secrets.VERCEL_WRITE_TOKEN }}",
+     "        run: |",
+     "          if [[ -z \"$VERCEL_WRITE_TOKEN\" ]]; then",
+     "            echo '::error::Apply bloqueado: configure VERCEL_WRITE_TOKEN com escopo de escrita.'",
+     "            exit 1",
+     "          VERCEL_TOKEN: ${{ inputs.dry_run == '0' && secrets.VERCEL_WRITE_TOKEN || secrets.VERCEL_READONLY_TOKEN }}"
+    ],
+    "still_sample": [
+     "          VERCEL_TOKEN: ${{ secrets.VERCEL_READONLY_TOKEN }}"
+    ]
+   }
+  },
+  {
+   "path": "CLAUDE.md",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 64,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 16,
+    "missing_in_main": 16,
+    "removed": 15,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "## Perímetro do GitHub — último baseline disponível (2026-10-16)",
+     "**no mesmo PR**. Os valores são os do baseline local medido em 16/10/2026; não foram reconsultados ao vivo nesta",
+     "auditoria. O `settings-guard` compara a realidade com o baseline, mas seu token não consegue ler branch protection",
+     "(403 administrativo); portanto, não tratar o baseline como prova do estado remoto atual.",
+     "| Branch protection — required checks | **6 no baseline**: `🔎 TypeCheck` · `🧪 Unit Tests (1/3)` · `🧪 Unit Tests (2/3)` · `🧪 Unit Tests (3/3)` · `🏗️ Build` · `🧩 ",
+     "| Branch protection — `strict` | `true` no baseline `2026-10-16`; remoto não verificado nesta auditoria | baseline local |",
+     "| Branch protection — `enforce_admins` | `true` no baseline `2026-10-16`; remoto não verificado nesta auditoria | baseline local |",
+     "| Branch protection — review obrigatório | `0` no baseline `2026-10-16`; remoto não verificado nesta auditoria | baseline local |",
+     "| Environments | **6 no baseline**: `banco-leitura` · `db-ledger-evidence` · `legacy-import-destrutivo` · `perimetro-leitura` · `producao-ddl` · `producao-edge-",
+     "Inventário atual medido em 2026-10-21: **15** arquivos em `.github/workflows/` + **3** dinâmicos = **18**; `docs/ci/README.md` é a fonte gerada de nomes e conta",
+     "O registro abaixo contém auditorias históricas. Consulte o inventário gerado e o baseline datado antes de assumir que",
+     "uma configuração remota ainda está vigente.",
+     "**Medição histórica dos required checks da `main`** (25/09; não representa evidência remota atual): `🔍 Lint & TypeCheck`,",
+     "`🧪 Unit Tests`, `🏗️ Build`, `🔒 Security Audit`, `Contrato DB offline` e `🎭 E2E Tests (Playwright)`. O baseline local",
+     "posterior de 16/10 registra nomes diferentes, descritos na tabela acima; o estado remoto atual precisa de leitura com",
+     "permissão administrativa. Não inferir required checks a partir dos jobs existentes no YAML."
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "ESTADO.md",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 162,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 41,
+    "missing_in_main": 25,
+    "removed": 35,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "Base: `dia/2026-10-21`. 84 edges com `index.ts` em `supabase/functions/`.",
+     "| E | 20 |",
+     "| **total** | **84** |",
+     "| `ai-transcribe-audio` | A | `src/components/inbox/AudioMessagePlayer.tsx:62` · `supabase/functions/_shared/evolution-webhook-messages.ts:1400` |",
+     "| `ai-usage-outbox-drain` | E | — sem chamador no repositório — |",
+     "| `approve-password-reset` | A | `src/components/security/PasswordResetRequestsPanel.tsx:31` · `src/components/security/PasswordResetRequestsPanel.tsx:43` |",
+     "| `auth-login` | A | `src/lib/serverLogin.ts:149` · `supabase/config.toml:39` |",
+     "| `batch-fetch-avatars` | A | `src/hooks/inbox/useInboxBulkActions.ts:245` · `src/hooks/chat/useNewConversation.ts:143` · `src/hooks/chat/useNewConversation.ts:",
+     "| `classify-audio-meme` | A | `src/hooks/communication/useAudioMemes.ts:243` · `src/components/settings/media-library/AIGenerateDialog.tsx:59` |",
+     "| `classify-emoji` | A | `src/hooks/integrations/useCustomEmojis.ts:142` · `src/components/settings/media-library/useMediaUpload.ts:76` · `src/components/settin",
+     "| `classify-sticker` | A | `src/components/inbox/chat/MessageBubble.tsx:328` · `src/hooks/sticker-picker/useStickerPicker.ts:148` |",
+     "| `connection-health-check` | A | `src/components/connections/ConnectionsView.tsx:99` · `src/components/diagnostics/ConnectionHealthPanel.tsx:95` · `src/compone",
+     "| `create-user` | A | `src/components/admin/useAdminData.ts:448` · `src/components/admin/useAdminData.ts:455` |",
+     "| `elevenlabs-tts` | A | `src/components/inbox/TextToAudioButton.tsx:80` · `src/components/inbox/VoiceSelector.tsx:99` |",
+     "| `evolution-api` | A | `src/components/monitoring/MonitoringConnectionsList.tsx:38` · `src/components/monitoring/MonitoringConnectionsList.tsx:54` · `src/hooks",
+     "| `evolution-sync` | A | `src/components/connections/ConnectionsView.tsx:74` |",
+     "| `evolution-webhook` | A | `src/components/monitoring/hooks/useMonitoringActions.ts:31` · `src/components/monitoring/hooks/useMonitoringActions.ts:60` |",
+     "| `invite-user` | A | `src/components/agents/InviteAgentDialog.tsx:48` |",
+     "| `message-delivery` | A | `src/lib/invokeEdge.ts:24` · `src/services/outbound-message.service.ts:456` |",
+     "| `multiplix-send` | A | `src/hooks/integrations/useMultiplixDispatches.ts:408` |",
+     "| `promogifts-catalog` | A | `src/hooks/integrations/useCatalogQuickSearch.ts:12` · `src/hooks/integrations/useExternalCatalog.ts:182` |",
+     "| `revoke-auth-sessions` | A | `src/components/admin/ForceLogoutButton.tsx:40` · `src/hooks/ui/useDeviceDetection.ts:131` · `src/hooks/ui/useDeviceDetection.ts:",
+     "| `talkx-send` | A | `src/hooks/integrations/useTalkX.ts:509` · `src/hooks/integrations/useTalkX.ts:525` · `src/hooks/integrations/useTalkX.ts:534` |",
+     "## Órfãs (20) — GATE B",
+     "- `ai-usage-outbox-drain`"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "FEATURE_REGISTRY.md",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 62,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 10,
+    "missing_in_main": 5,
+    "removed": 7,
+    "removed_still_in_main": 1,
+    "missing_sample": [
+     "Base: `dia/2026-10-21`. 55 views (`VIEW_MAP` + `SPECIAL_VIEWS`).",
+     "| Full | 43 |",
+     "| Partial | 12 |",
+     "| **total** | **55** |",
+     "| `talkx-kit` | `TalkXKitView` | `src/components/talkx/__dev__/TalkXKit.tsx` | Partial | `src/components/talkx/__dev__/TalkXKit.tsx` |"
+    ],
+    "still_sample": [
+     "| Partial | 11 |"
+    ]
+   }
+  },
+  {
+   "path": "TESTING_CONVENTION.md",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 62,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 20,
+    "missing_in_main": 20,
+    "removed": 13,
+    "removed_still_in_main": 8,
+    "missing_sample": [
+     "* Execução manual da suíte completa (não é um gate do CI mínimo atual):",
+     "* No CI mínimo, o job `Node CI Scripts` instala Deno 2.9.5 e executa",
+     "  `node --test scripts/ci/*.unit.mjs scripts/vercel/*.unit.mjs`. A guarda",
+     "  `scripts/ci/edge-coverage-authz.unit.mjs` invoca Deno para testar somente os cinco",
+     "  arquivos de autorização listados nela e recalcular a régua de cobertura. O CI mínimo",
+     "  não executa todos os testes de Edge nem `deno check`.",
+     "* Moram em `scripts/ci/`, `scripts/vercel/`, `scripts/edge-deploy/`, `scripts/talkx/`, `scripts/db-audit/`",
+     "  (as suites extras seguem padrão próprio; em `db-audit` há também contratos `.test.mjs`).",
+     "  mínima **não** roda os contratos `.test.mjs` de `scripts/db-audit/`.",
+     "* CI mínima, job \"Node CI Scripts\":",
+     "  `node --test scripts/ci/*.unit.mjs scripts/vercel/*.unit.mjs`.",
+     "* CI do banco, workflow `db-guard.yml`: roda",
+     "  `node --test scripts/db-audit/*.test.mjs` e os testes SQL/Docker declarados",
+     "  individualmente nesse workflow. Não confundir os dois gates.",
+     "* Rodar um só: `node --test scripts/ci/<arquivo>.unit.mjs` ou `node --test scripts/vercel/<arquivo>.unit.mjs`.",
+     "  `scripts/ci/*.unit.mjs` e `scripts/vercel/*.unit.mjs` no gate mínimo; os gates",
+     "  de deploy e banco têm comandos próprios, declarados nos workflows correspondentes.",
+     "As camadas 3, 4 e 5 **não** entram no `zapp-verify`. O CI mínimo (`.github/workflows/ci.yml`)",
+     "roda as guardas Node, incluindo a medição Deno restrita de autorização; não executa a suíte",
+     "Deno completa. O E2E tem job próprio, com os projetos e ambiente definidos no workflow."
+    ],
+    "still_sample": [
+     "* Comando (CI, passo \"Run executable Edge handler contracts\"):",
+     "  O `deno check --config scripts/ci/deno.json --frozen supabase/functions/*/index.ts`",
+     "  roda antes, no mesmo job.",
+     "* Moram em `scripts/ci/`, `scripts/edge-deploy/`, `scripts/talkx/`, `scripts/db-audit/`",
+     "  (os três últimos com o mesmo padrão de nome; em `db-audit` há dois `.test.mjs`).",
+     "* Rodar um só: `node --test scripts/ci/<arquivo>.unit.mjs`.",
+     "As camadas 3, 4 e 5 **não** entram no `zapp-verify`: rodam na CI (`.github/workflows/ci.yml`)",
+     "e, no caso do E2E, pelo job próprio com banco local."
+    ]
+   }
+  },
+  {
+   "path": "docs/DB-INVENTORY.md",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 147,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 21,
+    "missing_in_main": 14,
+    "removed": 18,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "(campo `generated_at`: 2026-10-16; identidade do banco: schema=`public` database=`postgres`",
+     "| Tabelas (`tables`) | 170 |",
+     "| Colunas (`columns`) | 1987 |",
+     "| Funções (`functions`) | 279 |",
+     "| Assinaturas de função (`function_signatures`) | 280 |",
+     "| Funções de gatilho (`trigger_functions`) | 72 |",
+     "| Restrições de verificação (`check_constraints`) | 168 |",
+     "Status apurado sobre o catálogo commitado (`generated_at` 2026-10-16) e os",
+     "| `ai_conversation_tags` | Tags sugeridas pela IA em conversa/contato, com confiança e origem | ativo | `src/components/docs/__tests__/SystemFeaturesView.test.t",
+     "| `connection_alert_preferences` | Preferências de alertas de conexão por usuário e canal | ativo | `src/components/alerts/__tests__/EvolutionDisconnectBanner.a",
+     "| `gmail_oauth_states` | Estados OAuth temporários do Gmail, com expiração e consumo único | ativo | `supabase/functions/gmail-oauth/index.test.ts`, `supabase/f",
+     "| `search_events` | Eventos de busca sem termo bruto; contêm user_id/created_at e são consultados por RPC agregada | ativo | `src/components/inbox/__tests__/use",
+     "| `talkx_storage_purge_queue` | Fila de expurgo de objetos do Storage com tentativas e estado de processamento | ativo | `supabase/functions/talkx-storage-purge",
+     "As contagens de 28/08 (124 tabelas) são históricas; o snapshot local atual do catálogo tem 170."
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "docs/audits/PLANO_GITHUB_ACTIONS_100_ETAPAS_2026-10-01.md",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 49,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 10,
+    "missing_in_main": 9,
+    "removed": 9,
+    "removed_still_in_main": 4,
+    "missing_sample": [
+     "**Inventário atual (medido em 2026-10-21):** **15** arquivos YAML em `.github/workflows/`, mais os",
+     "**18** no total. A fonte operacional canônica é o arquivo **gerado** `docs/ci/README.md`",
+     "| **E11** corrigir o `CLAUDE.md` nos 5 pontos | `[x]` **CONCLUÍDA** | Snapshot histórico de 03/10: `CLAUDE.md` (contagem então 16/19, `strict` único, `required_",
+     "| **E62** destino do `db-migrate.yml` | `[~]` **PARCIAL** | PR #1778 extraiu 12 contratos para `scripts/db-audit/run-runtime-contract.mjs`; hoje `.github/workfl",
+     "| **E96** `docs/ci/README.md` gerado | `[x]` **CONCLUÍDA** | PR #1859 — `docs/ci/README.md` + `scripts/ci/render-workflow-docs.mjs`; o README entregue em 03/10 ",
+     "- [ ] **E88** · B · G-35 · **NÃO IMPLEMENTADA**: a configuração atual do `ci.yml` executa",
+     "  `firefox-auth` e `webkit-auth` também no PR, e `e2e-logado.yml` mantém a cobertura autenticada",
+     "  dedicada; isso não equivale a mover a cobertura para fora do PR. Manter pendente até medir custo e",
+     "  duração e decidir explicitamente se a cobertura deve sair do `ci.yml`."
+    ],
+    "still_sample": [
+     "| **E11** corrigir o `CLAUDE.md` nos 5 pontos | `[x]` **CONCLUÍDA** | `CLAUDE.md` (contagem 16/19, `strict` único, `required_reviewers`, cadência do guarda vivo",
+     "- [ ] **E88** · B · G-35 · `ci.yml` job `e2e`: `--project=chromium` é o único deslogado que exercita `auth.spec.ts` com",
+     "  Chromium; `firefox-auth`/`webkit-auth` só valem em `main` → mover para `e2e-logado` (que já instala os 3 engines) e",
+     "  deixar o PR só com Chromium. Verificação: job `e2e` de PR < 90 s com cache (E68)."
+    ]
+   }
+  },
+  {
+   "path": "docs/audits/edge-functions-authz-coverage.md",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 17,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 2,
+    "missing_in_main": 2,
+    "removed": 2,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "| cron-secret-auth.ts | 48 | 51 | 94.1% |",
+     "| **Total** | **264** | **367** | **71.9%** |"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "docs/ci/README.md",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 130,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 40,
+    "missing_in_main": 19,
+    "removed": 22,
+    "removed_still_in_main": 3,
+    "missing_sample": [
+     "**15 workflows.**",
+     "| CI/CD Pipeline | [`ci.yml`](../../.github/workflows/ci.yml) | pull_request, push na main e dispatch | tipos, testes Vitest/Node, build, security e E2E do codi",
+     "| CodeQL | [`codeql.yml`](../../.github/workflows/codeql.yml) | agendado (semanal) e dispatch | analise estatica de seguranca (SAST) de src, scripts, functions ",
+     "| Notifica falha na main | [`notifica-falha-main.yml`](../../.github/workflows/notifica-falha-main.yml) | workflow_run (conclusao dos workflows principais na ma",
+     "| V043-V065 Vercel Env Cleanup | [`vercel-env-cleanup.yml`](../../.github/workflows/vercel-env-cleanup.yml) | workflow_dispatch com modo dry-run por padrão | li",
+     "- **O que prova:** quais branches sao podaveis e quais PRs estao paradas ha mais de 7 dias",
+     "- **Quando falha:** relatorio nao e publicado nem a issue e atualizada",
+     "- **O que prova:** tipos, testes Vitest/Node, build, security e E2E do codigo; mutacao do mapa informativa",
+     "- **Quando falha:** PR fica vermelho; o bloqueio de merge segue os checks exigidos na configuracao do repositorio",
+     "- **Gatilho:** push na main e dispatch sobre main",
+     "- **O que prova:** o fluxo logado (Playwright com login real) contra producao",
+     "- **Quando falha:** artefato do Playwright e issue/relatorio; nunca roda em PR de terceiro",
+     "- **Quem é avisado:** issue de E2E e autor do push",
+     "- **Quando falha:** issue de operacao criada ou atualizada com o workflow que falhou",
+     "- **Quem é avisado:** mantenedores e revisores da main pelo issue de falha",
+     "- **Gatilho:** workflow_dispatch com modo dry-run por padrão",
+     "- **O que prova:** lista variáveis Vercel allowlisted sem imprimir seus valores",
+     "- **Quando falha:** execução vermelha e nenhuma variável removida antes da seleção explícita de apply",
+     "- **Quem é avisado:** operador que disparou pelo log e status do workflow"
+    ],
+    "still_sample": [
+     "| Settings Guard | [`settings-guard.yml`](../../.github/workflows/settings-guard.yml) | agendado e dispatch | o perimetro do GitHub (branch protection, merge, e",
+     "- **Quem é avisado:** quem disparou",
+     "- **Quem é avisado:** quem disparou"
+    ]
+   }
+  },
+  {
+   "path": "docs/talkx/README.md",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 12,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "| [ESTADOS.md](./ESTADOS.md) | Estados de tela observados no código, com referências para os componentes |"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "scripts/ci/check-talkx-docs.unit.mjs",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 12,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 0,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "scripts/ci/ci-artifacts.unit.mjs",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 46,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 7,
+    "missing_in_main": 6,
+    "removed": 13,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     " *   - cobertura            -> fora do CI minimo (nao publica artifact);",
+     "test('E72: cobertura nao publica artifact no CI minimo', () => {",
+     "  assert.ok(!todosOsUploads().some(({ nome }) => /coverage-report/i.test(nome)), 'coverage-report foi removido do CI minimo');",
+     "    uploads.map(({ nome }) => nome).sort(),",
+     "    ['📦 Upload build artifacts', '📊 Upload Playwright report'].sort(),",
+     "    'o CI minimo publica somente dist sob dispatch e relatório Playwright em falha',"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "scripts/ci/ci-docs-baseline.unit.mjs",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 75,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 14,
+    "missing_in_main": 14,
+    "removed": 12,
+    "removed_still_in_main": 1,
+    "missing_sample": [
+     "test('inventario: 15 YAML em .github/workflows e a fonte gerada em paridade', async () => {",
+     "  assert.equal(arquivos.length, 15);",
+     "  assert.match(readme, /\\*\\*15 workflows\\.\\*\\*/);",
+     "  assert.deepEqual(violacoesContagemClaude(await readFile(CLAUDE, 'utf8'), 15), []);",
+     "  assert.match(claude, /\\|\\s*Branch protection — `strict`\\s*\\|\\s*`true` no baseline `2026-10-16`/);",
+     "  for (const check of baseline.branch_protection_main.required_status_checks) {",
+     "    assert.ok(claude.includes(check), `CLAUDE.md não registra o required check do baseline: ${check}`);",
+     "test('plano: inventario atual e 15 YAML com fonte gerada', async () => {",
+     "  assert.match(chato, /\\*\\*15\\*\\* arquivos YAML em `\\.github\\/workflows\\/`/);",
+     "  assert.ok(/playwright@1\\.64\\.1/.test(lock));",
+     "  assert.ok(/playwright-core@1\\.64\\.1/.test(lock));",
+     "  assert.ok(/@playwright\\/test@1\\.64\\.1/.test(lock));",
+     "    assert.ok(wf.includes('playwright@1.64.1'));",
+     "  assert.match(e76.linha, /1\\.64\\.1/);"
+    ],
+    "still_sample": [
+     "  assert.match(claude, /\\|\\s*Branch protection — `strict`\\s*\\|\\s*\\*\\*`true`\\*\\*/);"
+    ]
+   }
+  },
+  {
+   "path": "scripts/ci/ci-e2e-projects.unit.mjs",
+   "status": "MAIN_UNCHANGED_SINCE_BASE",
+   "patch_lines": 31,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 6,
+    "missing_in_main": 6,
+    "removed": 12,
+    "removed_still_in_main": 12,
+    "missing_sample": [
+     "// E88: os projetos cross-browser de auth são executados nos workflows de CI e",
+     "// pós-merge. A lista precisa refletir o YAML real: ela protege contra remover",
+     "// cobertura dos dois caminhos, sem impor uma decisão de custo já superada.",
+     "test('E88: firefox-auth/webkit-auth seguem cobertos no ci.yml', () => {",
+     "      doCi.includes(nome),",
+     "      `\"${nome}\" precisa permanecer no ci.yml para cobrir o caminho de auth em PR`,"
+    ],
+    "still_sample": [
+     "// E88 (PLANO_GITHUB_ACTIONS_100_ETAPAS_2026-10-01, G-35): o job E2E de PR do `ci.yml`",
+     "// é o caminho mais caro do pipeline e já exercita `auth.spec.ts` pelo projeto",
+     "// `chromium`; `firefox-auth`/`webkit-auth` rodavam ali por herança, não por",
+     "// precisarem de PR. Passaram para o `e2e-logado.yml`, que já instala os 3 engines: o",
+     "// PR deixa de subir 2 engines e a cobertura cross-browser da tela de login continua",
+     "// existindo depois do merge. Os 3 testes abaixo travam a mudança (ida E volta): se",
+     "// alguém devolver os projetos ao PR, o primeiro reprova; se alguém apagá-los do",
+     "// workflow logado, o segundo reprova.",
+     "test('E88: o job E2E de PR (ci.yml) não roda firefox-auth/webkit-auth', () => {",
+     "      !doCi.includes(nome),"
+    ]
+   }
+  },
+  {
+   "path": "scripts/ci/confirm-hash.unit.mjs",
+   "status": "MAIN_UNCHANGED_SINCE_BASE",
+   "patch_lines": 18,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 5,
+    "missing_in_main": 5,
+    "removed": 2,
+    "removed_still_in_main": 2,
+    "missing_sample": [
+     "  // W28: a validação roda inline no workflow e importa a mesma primitiva testada abaixo.",
+     "  assert.match(workflow, /confirm-hash\\.mjs/, 'o workflow precisa importar a primitiva de composição');",
+     "  assert.match(workflow, /comporHashConfirmacao\\(/, 'o workflow precisa comparar a confirmação composta');",
+     "  assert.match(workflow, /commitSha: process\\.env\\.GITHUB_SHA/);",
+     "  assert.match(workflow, /confirmacao !== process\\.env\\.CONFIRM_RUNTIME_SHA256/);"
+    ],
+    "still_sample": [
+     "  // W28: a composicao vive em validate-runtime-proof.mjs; o workflow invoca o script externo.",
+     "  assert.match(workflow, /validate-runtime-proof\\.mjs/, 'o workflow precisa invocar o script de validacao externo');"
+    ]
+   }
+  },
+  {
+   "path": "scripts/ci/docs-estado-registry-convention.unit.mjs",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 112,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 34,
+    "missing_in_main": 32,
+    "removed": 19,
+    "removed_still_in_main": 18,
+    "missing_sample": [
+     "  const violações = [];",
+     "    if (ancoras.length === 0) {",
+     "      violações.push(`\\`${linha.edge}\\` (grupo ${linha.grupo}) não tem âncora nem declara órfã`);",
+     "      if (!fs.existsSync(caminho)) {",
+     "        violações.push(`\\`${ancora}\\` para \\`${linha.edge}\\`: arquivo inexistente`);",
+     "      if (!conteudo.includes(linha.edge)) violações.push(`âncora desatualizada: ${ancora} não cita \\`${linha.edge}\\``);",
+     "  assert.deepEqual(violações, [], `ESTADO.md tem âncoras inválidas:\\n${violações.join('\\n')}`);",
+     "  const totalDeclarado = Number(doc.match(/^\\| \\*\\*total\\*\\* \\| \\*\\*(\\d+)\\*\\* \\|$/m)?.[1]);",
+     "  assert.equal(totalDeclarado, viewsReais.length, 'o total publicado deve acompanhar o ViewRouter');",
+     "  assert.equal(linhasRegistro.length, totalDeclarado, 'o total publicado deve acompanhar as linhas da tabela');",
+     "  const indice = linhas.findIndex((l) => {",
+     "    const texto = l.trim();",
+     "    return texto.startsWith(primeiraLinha) || texto.startsWith(`run: ${primeiraLinha}`);",
+     "  let run = linhas[indice].trim().startsWith('run:') ? indice : indice - 1;",
+     "  assert.ok(run >= 0, `comando \\`${primeiraLinha}\\` perdeu seu passo run:`);",
+     "  const inline = linhas[run].trim().match(/^run:\\s*(\\S.*)$/);",
+     "  if (inline && !/^[>|]/.test(inline[1])) return normalizaEspacos(inline[1]);",
+     "  assert.ok(linhas[run].includes('>-'), `comando \\`${primeiraLinha}\\` não está em bloco run: >-`);",
+     "  // 4. a CI mínima roda node:test; a régua de autorização usa Deno como subprocesso,",
+     "  // mas não declara a suíte Deno completa nem deno check como gates.",
+     "  assert.ok(ci.includes('uses: denoland/setup-deno@'), 'Node CI Scripts precisa instalar Deno para a régua de cobertura');",
+     "  assert.ok(ci.includes(\"deno-version: '2.9.5'\"), 'Node CI Scripts precisa fixar a versão canônica do Deno');",
+     "  assert.ok(doc.includes('scripts/ci/edge-coverage-authz.unit.mjs'), 'TESTING_CONVENTION.md não descreve a régua Deno que a CI executa');",
+     "  assert.ok(doc.includes('não executa todos os testes de Edge nem `deno check`'), 'TESTING_CONVENTION.md afirma incorretamente que a CI executa a suíte Deno com",
+     "  const edgeCoverage = ler('scripts/ci/edge-coverage-authz.unit.mjs');"
+    ],
+    "still_sample": [
+     "    assert.ok(ancoras.length > 0, `\\`${linha.edge}\\` (grupo ${linha.grupo}) não tem âncora nem declara órfã`);",
+     "      assert.ok(fs.existsSync(caminho), `ESTADO.md cita \\`${ancora}\\` para \\`${linha.edge}\\`, arquivo que não existe`);",
+     "      assert.ok(",
+     "        conteudo.includes(linha.edge),",
+     "        `âncora desatualizada: ${ancora} não cita \\`${linha.edge}\\``,",
+     "  const indice = linhas.findIndex((l) => l.trim().startsWith(primeiraLinha));",
+     "  let run = indice - 1;",
+     "  assert.ok(run >= 0 && linhas[run].includes('>-'), `comando \\`${primeiraLinha}\\` não está em bloco run: >-`);",
+     "  // 4. os comandos de CI citados precisam estar no ci.yml, incluindo a linha completa de node:test.",
+     "  for (const trecho of ["
+    ]
+   }
+  },
+  {
+   "path": "scripts/ci/edge-coverage-authz.unit.mjs",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 13,
+   "hunk": "PRESENT_REVERSE_APPLIES"
+  },
+  {
+   "path": "scripts/ci/evolution-edge-fixes.unit.mjs",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 46,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 14,
+    "missing_in_main": 14,
+    "removed": 20,
+    "removed_still_in_main": 2,
+    "missing_sample": [
+     "test(\"histórico de mensagens sem equivalente na GO falha fechado e preserva o flavor V2 (SL-075 E43)\", () => {",
+     "  // Só as duas ações abaixo foram confirmadas sem equivalente GO. Não inferir",
+     "  // incompatibilidade a partir do nome de outras ações: E43 documenta que a",
+     "  // lista histórica precisa ser revalidada contra a versão atual da GO.",
+     "  for (const action of [\"find-messages\", \"find-status-messages\"]) {",
+     "    const start = apiSrc.indexOf(`if (action === '${action}')`);",
+     "    assert.notEqual(start, -1, `${action}: manter suporte do flavor V2`);",
+     "    const nextAction = apiSrc.indexOf(\"\\n    if (action ===\", start + 1);",
+     "    const block = apiSrc.slice(start, nextAction === -1 ? undefined : nextAction);",
+     "    const guard = block.indexOf(`if (isGoFlavor) return goHistoryNotSupported('${action}', corsHeaders);`);",
+     "    const io = block.search(/(?:return\\s+await\\s+proxy\\(|=\\s*await\\s+proxy\\()/);",
+     "    assert.notEqual(guard, -1, `${action}: flavor GO deve falhar fechado com erro explícito`);",
+     "    assert.notEqual(io, -1, `${action}: manter proxy compatível com V2`);",
+     "    assert.ok(guard < io, `${action}: verificar flavor antes de qualquer I/O`);"
+    ],
+    "still_sample": [
+     "  for (const action of [",
+     "    assert.equal("
+    ]
+   }
+  },
+  {
+   "path": "scripts/ci/github-settings-guard.unit.mjs",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 15,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 2,
+    "missing_in_main": 2,
+    "removed": 2,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "    'banco-leitura', 'db-ledger-evidence', 'legacy-import-destrutivo',",
+     "    'perimetro-leitura', 'producao-ddl', 'producao-edge-functions',"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "scripts/ci/marcador-specs.mjs",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 35,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 2,
+    "missing_in_main": 1,
+    "removed": 10,
+    "removed_still_in_main": 6,
+    "missing_sample": [
+     "/** Titulo configuravel, especifico quando so falha o setup de autenticacao. */"
+    ],
+    "still_sample": [
+     "  const lista = normalizar(nomes);",
+     " * Título da issue de acordo com a causa detectada.",
+     " * Prefixo \"[e2e-logado]\" é mantido para que o workflow de fechamento ache a issue pelo título.",
+     "export function tituloDe(nomes) {",
+     "  if (eLoginFalhou(nomes)) return '[e2e-logado] login E2E falhou';",
+     "  return '[e2e-logado] Suíte logada quebrada na main';"
+    ]
+   }
+  },
+  {
+   "path": "scripts/ci/marcador-specs.unit.mjs",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 15,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 4,
+    "missing_in_main": 3,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "    tituloDe(['some-spec-chromium'], { tituloBase: '[e2e-logado] falha customizada' }),",
+     "    '[e2e-logado] falha customizada',",
+     "    'preserva o titulo-base customizavel para falhas fora do login',"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "scripts/ci/security-workflow.unit.mjs",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 15,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 3,
+    "missing_in_main": 3,
+    "removed": 1,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  const secretRefs = [...workflow.matchAll(/\\$\\{\\{([\\s\\S]*?)\\}\\}/gu)]",
+     "    .flatMap(([, expression]) => [...expression.matchAll(/\\bsecrets\\.([A-Za-z_][A-Za-z0-9_]*)/gu)])",
+     "    .map(([, name]) => name);"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "scripts/ci/talkx-status-regen-workflow.unit.mjs",
+   "status": "MAIN_UNCHANGED_SINCE_BASE",
+   "patch_lines": 15,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 2,
+    "missing_in_main": 2,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "test('workflow_dispatch privilegiado só executa a partir da main', () => {",
+     "  assert.match(workflow, /regen:[\\s\\S]*?if:\\s*github\\.ref\\s*==\\s*['\"]refs\\/heads\\/main['\"]/u);"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "scripts/ci/vercel-env-cleanup-workflow.unit.mjs",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "patch_lines": 22,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 11,
+    "missing_in_main": 11,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "import assert from 'node:assert/strict';",
+     "import { readFile } from 'node:fs/promises';",
+     "import test from 'node:test';",
+     "const workflow = await readFile(new URL('../../.github/workflows/vercel-env-cleanup.yml', import.meta.url), 'utf8');",
+     "test('Vercel cleanup jamais usa credencial privilegiada a partir de ref não-main', () => {",
+     "  assert.match(workflow, /cleanup:[\\s\\S]*?if:\\s*github\\.ref\\s*==\\s*['\"]refs\\/heads\\/main['\"]/u);",
+     "  assert.match(workflow, /permissions:\\s*\\n\\s+contents:\\s*read/u);",
+     "test('dry-run usa somente token de leitura; apply exige credencial de escrita explícita', () => {",
+     "  assert.match(workflow, /VERCEL_TOKEN:\\s*\\$\\{\\{\\s*inputs\\.dry_run\\s*==\\s*'0'\\s*&&\\s*secrets\\.VERCEL_WRITE_TOKEN\\s*\\|\\|\\s*secrets\\.VERCEL_READONLY_TOKEN\\s*\\}\\}/",
+     "  assert.match(workflow, /if:\\s*inputs\\.dry_run\\s*==\\s*'0'[\\s\\S]*?secrets\\.VERCEL_WRITE_TOKEN/u);",
+     "  assert.match(workflow, /Apply bloqueado: configure VERCEL_WRITE_TOKEN/u);"
+    ],
+    "still_sample": [],
+    "same_basename_in_main": []
+   }
+  },
+  {
+   "path": "scripts/ci/workflow-contracts.unit.mjs",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 31,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 3,
+    "missing_in_main": 3,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "const toolchain = JSON.parse(await readFile(new URL('../../.github/toolchain.json', import.meta.url), 'utf8'));",
+     "    if (conjunto && !chave.startsWith(`pw-${conjunto}-${toolchain.playwright}-`)) {",
+     "      problemas.push(`${nome}: chave não inclui a versão Playwright ${toolchain.playwright}; cache antigo pode esconder browsers incompatíveis`);"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "scripts/db-audit/check-migration-drift.mjs",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 13,
+   "hunk": "PRESENT_REVERSE_APPLIES"
+  },
+  {
+   "path": "scripts/db-audit/check-migration-drift.test.mjs",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 24,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 10,
+    "missing_in_main": 3,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "test('pinned-replay rejeita sql-sha256 redundante no manifesto', () => {",
+     "      overrides: { 'sql-sha256': statementsHash(statements) },",
+     "  assert.match(result.stderr, /campos ausentes ou desconhecidos/);"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "scripts/db-audit/known-violations.json",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 25,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 1,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "    \"rpc:get_search_insights:src/hooks/admin/useSearchInsights.ts (2026-10-21)\": \"O hook foi alinhado ao RPC agregado real public.search_insights, presente no c"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "scripts/db-audit/migration-evidence.json",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 534,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 57,
+    "missing_in_main": 2,
+    "removed": 112,
+    "removed_still_in_main": 3,
+    "missing_sample": [
+     "      \"file_sha256\": \"8e5ec526e02e4545d9804e0da3cd6a5687eab426e2cd9d454f1cb2a7be95d2f3\",",
+     "      \"justification\": \"Consulta somente leitura ao ledger canônico via MCP em 2026-10-21: a versão/nome correspondem e statements=[]; o arquivo documenta a dec"
+    ],
+    "still_sample": [
+     "      \"kind\": \"ledger-divergence/pinned-replay\",",
+     "      \"reason\": \"ledger-summary\",",
+     "      \"related_migration\": null,"
+    ]
+   }
+  },
+  {
+   "path": "scripts/db-audit/n011-storage-policies-dedup.test.mjs",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 238,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 77,
+    "missing_in_main": 76,
+    "removed": 58,
+    "removed_still_in_main": 12,
+    "missing_sample": [
+     "// supabase/migrations/ e simula a primeira deduplicacao e a repeticao posterior,",
+     "// aplicando CREATE POLICY / DROP POLICY / ALTER POLICY.",
+     "//   (a) antes da primeira deduplicacao (20261011000019), o par de DELETE em avatars",
+     "//       existe e tem papel/USING identicos; depois resta apenas a policy original;",
+     "//   (b) a migration repetida (20261016105108) e no-op no historico atual, porque as",
+     "//       policies-alvo ja foram removidas por migrations anteriores;",
+     "//   (c) o no-op nao toca em outras policies, inclusive a policy administrativa de",
+     "//       audio-memes criada depois da primeira deduplicacao;",
+     "//   (d) o SQL da migration repetida so contem os dois DROP POLICY IF EXISTS esperados;",
+     "//   (e) o rollback reintroduz policies legadas redundantes, com assinatura equivalente",
+     "//       as policies mantidas; ele restaura esses nomes, nao o catalogo exato atual.",
+     "// A prova RED→GREEN com e sem aplicação da migration é a integração PostgreSQL",
+     "// `n011-storage-avatar-policies-dedup.test.sh`; este contrato offline verifica o",
+     "// histórico e os bytes do SQL, não simula a ausência de execução com variável env.",
+     "const FIX_ANTERIOR = '20261011000019_n011_storage_drop_duplicate_avatar_policies.sql';",
+     "const caminhoFixAnterior = join(dirMig, FIX_ANTERIOR);",
+     "// Se o arquivo sumir no checkout, `depois` modela o estado anterior e os contratos",
+     "// de conteúdo abaixo falham. Não há modo env que finja ter aplicado SQL no simulador.",
+     "const semFix = !existsSync(caminhoFix);",
+     "const assinaturaLeituraAvatar = (reg) => [",
+     "  reg.cmd.toUpperCase(),",
+     "  reg.roles,",
+     "  (reg.using ?? '').replace(/::text/g, '').replace(/[()]/g, '').replace(/\\s+/g, ' ').trim(),",
+     "].join(' | ');",
+     "// A prova pertence ao ponto histórico da migration, não ao estado atual depois"
+    ],
+    "still_sample": [
+     "const semFix = process.env.N011_WITHOUT_FIX === '1' || !existsSync(caminhoFix);",
+     "const arquivosBase = arquivosTodos.filter((a) => a !== caminhoFix);",
+     "  ['stickers', 'SELECT', 'Anyone can view stickers'],",
+     "  ['stickers', 'DELETE', 'Users can delete own stickers'],",
+     "  ['audio-memes', 'SELECT', 'Public read audio memes'],",
+     "  ['custom-emojis', 'SELECT', 'Public read for custom emojis'],",
+     "  ['custom-emojis', 'DELETE', 'Users can delete own custom emojis'],",
+     "console.log(`FATO: migrations lidas = ${arquivosBase.length}`);",
+     "console.log(`FATO: modo = ${semFix ? 'SEM FIX (estado anterior)' : 'com o fix aplicado'}`);",
+     "  if (semFix) {"
+    ]
+   }
+  },
+  {
+   "path": "scripts/db-audit/talkx-analytics-contract.test.mjs",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 22,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 8,
+    "missing_in_main": 7,
+    "removed": 3,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "test('Talk X ranqueia \"Mais convertidos\" por taxa de resposta, nunca por uso', () => {",
+     "  const ranking = templates.match(/const topConverted = useMemo\\([\\s\\S]*?\\n  \\);/)?.[0] ?? '';",
+     "  assert.match(ranking, /conversion\\.ranking\\?\\.items/);",
+     "  assert.match(ranking, /\\.slice\\(0, 3\\)/);",
+     "  assert.doesNotMatch(ranking, /use_count/);",
+     "  assert.match(templates, /Templates com melhor taxa de resposta\\./);",
+     "  assert.match(templates, /formatReplyRate\\(item\\.replyRatePct\\)/);"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "scripts/db-audit/talkx-schedule-timezone-contract.test.mjs",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "scripts/vercel/ignore-build.unit.mjs",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 77,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 11,
+    "missing_in_main": 8,
+    "removed": 8,
+    "removed_still_in_main": 2,
+    "missing_sample": [
+     "function run(env = {}, cwd = process.cwd()) {",
+     "    execSync(`sh \"${SCRIPT}\"`, { env: fullEnv, cwd, stdio: 'pipe' });",
+     "const emptyRepo = mkdtempSync(join(tmpdir(), 'ignore-build-empty-'));",
+     "  run({ VERCEL_ENV: 'production', HOME: tmpRepo }),",
+     "  run({ VERCEL_ENV: 'preview', HOME: '/nonexistent', PATH: '/usr/bin:/bin' }, emptyRepo),",
+     "  run({ VERCEL_ENV: 'preview', VERCEL_GIT_PREVIOUS_SHA: base }, tmpRepo),",
+     "  run({ VERCEL_ENV: 'preview', VERCEL_GIT_PREVIOUS_SHA: base }, tmpRepo),",
+     "rmSync(emptyRepo, { recursive: true, force: true });"
+    ],
+    "still_sample": [
+     "  run({ VERCEL_ENV: 'production', HOME: tmpRepo }, 1),",
+     "  run({ VERCEL_ENV: 'preview', VERCEL_GIT_PREVIOUS_SHA: base }, 0, tmpRepo),"
+    ]
+   }
+  },
+  {
+   "path": "src/components/admin/SearchInsightsView.tsx",
+   "status": "MAIN_UNCHANGED_SINCE_BASE",
+   "patch_lines": 198,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 45,
+    "missing_in_main": 25,
+    "removed": 68,
+    "removed_still_in_main": 68,
+    "missing_sample": [
+     " * Tela de admin com os agregados da busca global (RPC `search_insights`):",
+     " * total, média de tamanho, cliques, buscas sem resultado e tipos clicados.",
+     " * O termo não é persistido; a tela não tenta reconstruir nem expor consultas.",
+     " * Privacidade: eventos têm user_id e data/hora, mas nunca armazenam texto livre.",
+     " * O acesso aos agregados é restrito à própria RPC para admin/supervisor.",
+     "            Visão agregada de uso; o texto digitado não é armazenado.",
+     "        <div className=\"grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4\" aria-busy=\"true\">",
+     "          {[0, 1, 2, 3].map((i) => (",
+     "          <div className=\"grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4\">",
+     "                  <SearchCheck className=\"h-3.5 w-3.5\" aria-hidden=\"true\" /> Tamanho médio do termo",
+     "                <p className=\"mt-1 text-2xl font-bold text-foreground\">{data.averageTermLength.toLocaleString('pt-BR', { maximumFractionDigits: 1 })}</p>",
+     "                <p className=\"text-xs text-muted-foreground\">caracteres por busca</p>",
+     "              A coleta não guarda os termos pesquisados nem permite listar buscas individuais. As métricas abaixo",
+     "              são agregadas; os tipos indicam apenas resultados que receberam clique.",
+     "              <CardTitle className=\"text-sm font-medium\">Cliques por tipo de resultado</CardTitle>",
+     "              {Object.keys(data.searchesByKind).length === 0 ? (",
+     "                <p className=\"py-6 text-center text-sm text-muted-foreground\">",
+     "                  {data.total === 0 ? 'Nenhuma busca registrada no período.' : 'Nenhum clique por tipo registrado no período.'}",
+     "                    <TableRow><TableHead>Tipo de resultado</TableHead><TableHead className=\"w-24 text-right\">Cliques</TableHead></TableRow>",
+     "                    {Object.entries(data.searchesByKind).sort(([a], [b]) => a.localeCompare(b)).map(([kind, count]) => (",
+     "                      <TableRow key={kind}>",
+     "                        <TableCell>{kind}</TableCell>",
+     "                        <TableCell className=\"text-right font-medium text-foreground\">{formatNumber(count)}</TableCell>",
+     "              `(${formatRate(noResultRate)}), tamanho médio de ${data.averageTermLength} caracteres; ` +",
+     "              `nenhum termo individual é armazenado.`}"
+    ],
+    "still_sample": [
+     " * Tela de admin com os KPIs da busca global (RPC `get_search_insights`):",
+     " * total de buscas, taxa de clique, buscas sem resultado, top 10 consultas e",
+     " * top 10 termos sem resultado. Leitura apenas — esta tela NÃO exporta, não",
+     " * imprime, não copia e não baixa nada (a informação não sai do sistema).",
+     " * Sem PII: os termos vêm normalizados pela RPC (`term_normalized`), nunca de",
+     " * contato, telefone ou conversa.",
+     "  type SearchInsightTerm,",
+     "function TermTable({",
+     "  title,",
+     "  emptyMessage,"
+    ]
+   }
+  },
+  {
+   "path": "src/components/admin/__tests__/SearchInsightsView.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 159,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 33,
+    "missing_in_main": 28,
+    "removed": 48,
+    "removed_still_in_main": 19,
+    "missing_sample": [
+     "/** HZ1-06 — a tela consome somente os agregados que a migration realmente expõe. */",
+     "const PAYLOAD = [{",
+     "  average_term_length: 10.4,",
+     "  searches_by_kind: { contact: 300, message: 218 },",
+     "beforeEach(() => rpcMock.mockReset());",
+     "describe('SearchInsightsView — agregados minimizados (HZ1-06)', () => {",
+     "  it('mostra métricas e tipos clicados usando a RPC e o shape do banco', async () => {",
+     "    expect(screen.getByText('42,0%')).toBeInTheDocument();",
+     "    expect(screen.getByText('25,0%')).toBeInTheDocument();",
+     "    expect(screen.getByText('10,4')).toBeInTheDocument();",
+     "    expect(screen.getByText('Cliques por tipo de resultado')).toBeInTheDocument();",
+     "    expect(screen.getByText('contact')).toBeInTheDocument();",
+     "    expect(screen.getByText('message')).toBeInTheDocument();",
+     "  it('não inventa nem expõe termos: o armazenamento só possui agregados sem texto livre', async () => {",
+     "    expect(screen.getByText(/texto digitado não é armazenado/i)).toBeInTheDocument();",
+     "    expect(screen.queryByText(/placa de obra|caneca personalizada|azulejo/i)).toBeNull();",
+     "  it('mostra erro de permissão e permite repetir a consulta', async () => {",
+     "  it('estado vazio usa os agregados sem transformar null da média em NaN', async () => {",
+     "      data: [{",
+     "        total_searches: 0,",
+     "        searches_without_results: 0,",
+     "        searches_with_click: 0,",
+     "        average_term_length: null,",
+     "        searches_by_kind: {},",
+     "    expect(screen.getAllByText('0,0%')).toHaveLength(2);"
+    ],
+    "still_sample": [
+     " * HZ1-06 — tela \"Insights de Busca\" (admin/supervisor).",
+     " * O que esta prova cobre:",
+     " *  - a tela não oferece NENHUMA forma de exportar/baixar/imprimir (informação não sai);",
+     " *  - o erro da RPC (a RPC nega não-admin/não-supervisor com 42501) aparece em",
+     " *    `role=alert` com opção de tentar de novo.",
+     "const PAYLOAD = {",
+     "beforeEach(() => {",
+     "  rpcMock.mockReset();",
+     "describe('SearchInsightsView — números da busca global (HZ1-06)', () => {",
+     "    expect(screen.getByText('25,0%')).toBeInTheDocument();          // 308/1234 sem resultado"
+    ]
+   }
+  },
+  {
+   "path": "src/components/connections/ConnectionCard.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 59,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 23,
+    "missing_in_main": 10,
+    "removed": 6,
+    "removed_still_in_main": 3,
+    "missing_sample": [
+     "  // A desconexão só fecha o diálogo quando o handler confirma sucesso. Falha,",
+     "  // retorno `false` ou rejeição mantêm o diálogo aberto e mostram erro; isso evita",
+     "  // sinalizar visualmente que a sessão caiu quando o banco/provedor recusou.",
+     "    if (!open && (disconnectPending || disconnecting)) return;",
+     "    if (disconnectPending || disconnecting) return;",
+     "      const success = await onDisconnect(connection);",
+     "      if (success === false) {",
+     "        setDisconnectError('Não foi possível desconectar a conexão. Verifique o estado e tente novamente.');",
+     "    } catch {",
+     "      setDisconnectError('Não foi possível desconectar a conexão. Verifique o estado e tente novamente.');"
+    ],
+    "still_sample": [
+     "  // Enquanto o desconectar está em voo (estado `disconnecting` vindo da view),",
+     "  // o diálogo fica aberto com o spinner; só fecha quando onDisconnect resolve.",
+     "    setConfirmDisconnect(false);"
+    ]
+   }
+  },
+  {
+   "path": "src/components/inbox/GlobalSearch.tsx",
+   "status": "MAIN_UNCHANGED_SINCE_BASE",
+   "patch_lines": 13,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 1,
+    "removed_still_in_main": 1,
+    "missing_sample": [
+     "    registerResultClick(result.type);"
+    ],
+    "still_sample": [
+     "    registerResultClick();"
+    ]
+   }
+  },
+  {
+   "path": "src/components/inbox/__tests__/useGlobalSearchData.eventos.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 101,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 29,
+    "missing_in_main": 24,
+    "removed": 10,
+    "removed_still_in_main": 10,
+    "missing_sample": [
+     " * `supabase/migrations/20261026100000_search_event_rpc.sql`) complementa a tabela",
+     " * `log_search_event(p_term, p_result_count, p_clicked, p_event_id, p_result_kind)`.",
+     " * O termo é descartado na RPC; o ID permite atualizar o mesmo evento no clique.",
+     " * Uma busca e seu clique usam o mesmo identificador para contar como um evento.",
+     "  it('busca com 3+ caracteres registra UMA chamada com id estável e a contagem', async () => {",
+     "    expect(h.state.rpcCalls[0].fn).toBe('log_search_event');",
+     "    expect(h.state.rpcCalls[0].args).toMatchObject({",
+     "      p_term: 'objeto', p_result_count: 1, p_clicked: false, p_result_kind: null,",
+     "    expect(h.state.rpcCalls[0].args.p_event_id).toEqual(expect.stringMatching(/^[0-9a-f-]{36}$/i));",
+     "    expect(h.state.rpcCalls[0].args).toMatchObject({",
+     "      p_term: 'vazio', p_result_count: 0, p_clicked: false, p_result_kind: null,",
+     "  it('busca curta não marca evento anterior e a busca retomada recebe novo ID', async () => {",
+     "    const primeiroId = h.state.rpcCalls[0].args.p_event_id;",
+     "      await hook.result.current.performSearch('ab', TYPES, 'all', []);",
+     "    act(() => hook.result.current.registerResultClick('message'));",
+     "    expect(h.state.rpcCalls).toHaveLength(2);",
+     "    const segundoId = h.state.rpcCalls[1].args.p_event_id;",
+     "    expect(segundoId).not.toBe(primeiroId);",
+     "    act(() => hook.result.current.registerResultClick('message'));",
+     "    await waitFor(() => expect(h.state.rpcCalls).toHaveLength(3));",
+     "    expect(h.state.rpcCalls[2].args.p_event_id).toBe(segundoId);",
+     "        args: expect.objectContaining({",
+     "          p_term: 'zzzz', p_result_count: 1, p_clicked: true, p_result_kind: 'message',",
+     "      expect(clique?.args.p_event_id).toBe(h.state.rpcCalls[0].args.p_event_id);"
+    ],
+    "still_sample": [
+     " * `supabase/migrations/20261016112552_search_events.sql`) fecha a tabela",
+     " * `log_search_event(p_term, p_result_count, p_clicked)`. O termo vai NORMALIZADO",
+     " * Vermelho antes: zero chamadas à RPC. Verde depois: uma chamada por busca e",
+     " * uma por clique, sem nunca derrubar a busca.",
+     "  it('busca com 3+ caracteres registra UMA chamada, com o termo e a contagem', async () => {",
+     "    expect(h.state.rpcCalls[0]).toEqual({",
+     "      fn: 'log_search_event',",
+     "      args: { p_term: 'objeto', p_result_count: 1, p_clicked: false },",
+     "    expect(h.state.rpcCalls[0].args).toEqual({ p_term: 'vazio', p_result_count: 0, p_clicked: false });",
+     "        args: { p_term: 'zzzz', p_result_count: 1, p_clicked: true },"
+    ]
+   }
+  },
+  {
+   "path": "src/components/inbox/useGlobalSearchData.ts",
+   "status": "MAIN_UNCHANGED_SINCE_BASE",
+   "patch_lines": 114,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 42,
+    "missing_in_main": 37,
+    "removed": 13,
+    "removed_still_in_main": 13,
+    "missing_sample": [
+     "/** UUID aleatório estável também em browsers sem `crypto.randomUUID`. */",
+     "function createSearchEventId(): string | null {",
+     "  const cryptoApi = globalThis.crypto;",
+     "  if (typeof cryptoApi?.randomUUID === 'function') return cryptoApi.randomUUID();",
+     "  if (typeof cryptoApi?.getRandomValues !== 'function') return null;",
+     "  const bytes = cryptoApi.getRandomValues(new Uint8Array(16));",
+     "  bytes[6] = (bytes[6] & 0x0f) | 0x40;",
+     "  bytes[8] = (bytes[8] & 0x3f) | 0x80;",
+     "  const hex = Array.from(bytes, (byte) => byte.toString(16).padStart(2, '0')).join('');",
+     "  return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;",
+     "  p_event_id: string;",
+     "  p_result_kind: SearchResult['type'] | null;",
+     " * A função é versionada por migration, mas ainda não está em",
+     " * `src/integrations/supabase/types.ts` (arquivo gerado pelo types-sync). O",
+     " * cliente tipado recusaria o nome da RPC, então a chamada passa por este facade.",
+     "  const lastSearchEvent = useRef<{ term: string; resultCount: number; eventId: string; clicked: boolean } | null>(null);",
+     "  const logSearchEvent = useCallback(async (",
+     "    term: string,",
+     "    resultCount: number,",
+     "    eventId: string,",
+     "    clicked: boolean,",
+     "    resultKind: SearchResult['type'] | null = null,",
+     "  ) => {",
+     "        p_event_id: eventId,",
+     "        p_result_kind: resultKind,"
+    ],
+    "still_sample": [
+     " * `log_search_event(text, integer, boolean)` nasce na migration desta trilha",
+     " * (`supabase/migrations/20261016112552_search_events.sql`) e ainda NÃO está em",
+     " * `src/integrations/supabase/types.ts` — arquivo GERADO pelo types-sync, que não",
+     " * é deste cartão. O cliente tipado recusaria o nome da função, então a chamada",
+     " * passa por este facade estreito.",
+     "  const lastSearchEvent = useRef<{ term: string; resultCount: number; clicked: boolean } | null>(null);",
+     "  const logSearchEvent = useCallback(async (term: string, resultCount: number, clicked: boolean) => {",
+     "  const registerResultClick = useCallback(() => {",
+     "    void logSearchEvent(last.term, last.resultCount, true);",
+     "      if (cleanQuery.length >= MIN_SEARCH_EVENT_TERM_LENGTH && cleanQuery !== lastLoggedTerm.current) {"
+    ]
+   }
+  },
+  {
+   "path": "src/components/talkx/TalkXCampaignWizard.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 130,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 30,
+    "missing_in_main": 28,
+    "removed": 11,
+    "removed_still_in_main": 8,
+    "missing_sample": [
+     "    <button type=\"button\" onClick={onClick} disabled={disabled} aria-pressed={active} className={cn('relative text-left rounded-xl border p-3.5 transition-all f",
+     "            <Label htmlFor=\"talkx-campaign-name\" className=\"text-xs text-foreground-secondary\">Nome da campanha</Label>",
+     "            <Input id=\"talkx-campaign-name\" value={ed.name} onChange={(e) => ed.setName(e.target.value)} placeholder=\"Ex: Lançamento Linha Office\" aria-invalid=",
+     "          {ed.connectionQueryError && (",
+     "            <div className=\"mt-1.5 flex items-center gap-2\">",
+     "              <p role=\"alert\" className=\"text-2xs text-dash-red\">Não foi possível validar as conexões ativas: {ed.connectionQueryError.message}</p>",
+     "              <button type=\"button\" className=\"shrink-0 text-2xs underline\" onClick={() => void ed.refetchConnections()}>Tentar novamente</button>",
+     "          {!ed.connectionQueryError && ed.connectionQueryLoading && (",
+     "            <p role=\"status\" className=\"mt-1.5 text-2xs text-muted-foreground\">Validando conexões ativas…</p>",
+     "          <div><Label htmlFor=\"talkx-campaign-description\" className=\"text-xs text-foreground-secondary\">Descrição (opcional)</Label><Input id=\"talkx-campaign-d",
+     "        {(ed.connections ?? []).length === 0 && !ed.connectionQueryLoading && !ed.connectionQueryError && (",
+     "        {ed.audienceQueryError && (",
+     "          <div className=\"mb-3 flex flex-wrap items-center gap-2\">",
+     "            <p role=\"alert\" className=\"text-xs text-dash-red\">Não foi possível validar a audiência: {ed.audienceQueryError.message}</p>",
+     "            {!ed.hasUnsupportedAudienceRules && <button type=\"button\" className=\"text-xs underline\" onClick={() => void ed.refetchAudience()}>Tentar novamente</",
+     "        {!ed.audienceQueryError && ed.audienceQueryLoading && (",
+     "          <p role=\"status\" className=\"mb-3 text-xs text-muted-foreground\">Validando filtros e tamanho do público…</p>",
+     "                const perSegment = ed.segmentEstimates?.[s.id] ?? null;",
+     "            {filteredSegments.length === 0 && !ed.audienceQueryLoading && !ed.audienceQueryError && (",
+     "            {filteredSegments.length === 0 && !ed.audienceQueryError && ed.audienceQueryLoading && (",
+     "              <p role=\"status\" className=\"mt-3 text-xs text-muted-foreground\">Carregando segmentos e estimativa…</p>",
+     "          right={<span className=\"text-3xs text-muted-foreground\">{ed.audienceQueryError ? 'Contagem indisponível' : typeof ed.audienceCount === 'number' ? `${f",
+     "            isLoading={ed.audienceQueryLoading}",
+     "            hasError={Boolean(ed.audienceQueryError)}",
+     "          <StatTile icon={Users} color=\"blue\" label=\"Público total (estimado)\" value={ed.audienceMetricsKnown ? fmtInt(ed.audienceTotal) : ed.audienceSummaryLoa"
+    ],
+    "still_sample": [
+     "    <button type=\"button\" onClick={onClick} disabled={disabled} className={cn('relative text-left rounded-xl border p-3.5 transition-all flex items-start gap-3'",
+     "            <Label className=\"text-xs text-foreground-secondary\">Nome da campanha</Label>",
+     "            <Input value={ed.name} onChange={(e) => ed.setName(e.target.value)} placeholder=\"Ex: Lançamento Linha Office\" aria-invalid={nameTooShort || nameTooL",
+     "          <div><Label className=\"text-xs text-foreground-secondary\">Descrição (opcional)</Label><Input value={ed.description} onChange={(e) => ed.setDescription",
+     "        {(ed.connections ?? []).length === 0 && (",
+     "                const perSegment = ed.segmentEstimates?.[s.id] ?? s.estimated_count ?? null;",
+     "            {filteredSegments.length === 0 && (",
+     "          right={<span className=\"text-3xs text-muted-foreground\">{typeof ed.audienceCount === 'number' ? `${fmtInt(ed.audienceCount)} contatos atendem aos filt"
+    ]
+   }
+  },
+  {
+   "path": "src/components/talkx/TalkXContactSelector.tsx",
+   "status": "MAIN_UNCHANGED_SINCE_BASE",
+   "patch_lines": 32,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 6,
+    "missing_in_main": 5,
+    "removed": 1,
+    "removed_still_in_main": 1,
+    "missing_sample": [
+     "  isLoading?: boolean;",
+     "  hasError?: boolean;",
+     "  isLoading = false, hasError = false,",
+     "          <p role={isLoading ? 'status' : undefined} className=\"text-sm text-muted-foreground text-center py-8\">",
+     "            {isLoading ? 'Carregando contatos…' : hasError ? 'Não foi possível carregar contatos. Tente novamente.' : contactSearch ? 'Nenhum contato encontrado"
+    ],
+    "still_sample": [
+     "          <p className=\"text-sm text-muted-foreground text-center py-8\">{contactSearch ? 'Nenhum contato encontrado' : 'Nenhum contato disponível'}</p>"
+    ]
+   }
+  },
+  {
+   "path": "src/components/talkx/__tests__/TalkXMultiSegmentos.test.tsx",
+   "status": "MAIN_UNCHANGED_SINCE_BASE",
+   "patch_lines": 65,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 20,
+    "missing_in_main": 19,
+    "removed": 6,
+    "removed_still_in_main": 6,
+    "missing_sample": [
+     "  summarizeAudience: vi.fn(async (_rules: unknown, segmentIds?: string[]) => ({",
+     "    matched: segmentIds?.length === 2 ? 7 : 5,",
+     "    eligible: segmentIds?.length === 2 ? 7 : 5,",
+     "    suppressed: 0,",
+     "    invalid_phone: 0,",
+     "    legacy_or_deleted: 0,",
+     "    summarizeAudience: f.summarizeAudience,",
+     "    const data = key === 'talkx-wizard-segment-union-total' ? {",
+     "      matched: 7,",
+     "      eligible: 7,",
+     "      suppressed: 0,",
+     "      invalid_phone: 0,",
+     "      legacy_or_deleted: 0,",
+     "  it('o total é a união via UMA chamada summarizeAudience(null, ids) — não a soma (5+5=10)', async () => {",
+     "    // A consulta da união existe e chama o RPC UMA vez com a lista completa,",
+     "    // preservando também a decomposição de elegíveis/suprimidos.",
+     "    f.summarizeAudience.mockClear();",
+     "    expect(f.summarizeAudience).toHaveBeenCalledTimes(1);",
+     "    expect(f.summarizeAudience).toHaveBeenCalledWith(null, ['seg-a', 'seg-b']);"
+    ],
+    "still_sample": [
+     "    const data = key === 'talkx-wizard-segment-union-total' ? 7",
+     "  it('o total é a união via UMA chamada countAudience(null, ids) — não a soma (5+5=10)', async () => {",
+     "    // A consulta da união existe e chama o RPC UMA vez com a lista completa.",
+     "    f.countAudience.mockClear();",
+     "    expect(f.countAudience).toHaveBeenCalledTimes(1);",
+     "    expect(f.countAudience).toHaveBeenCalledWith(null, ['seg-a', 'seg-b']);"
+    ]
+   }
+  },
+  {
+   "path": "src/components/talkx/__tests__/useCampaignEditor.test.tsx",
+   "status": "MAIN_UNCHANGED_SINCE_BASE",
+   "patch_lines": 205,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 91,
+    "missing_in_main": 75,
+    "removed": 9,
+    "removed_still_in_main": 9,
+    "missing_sample": [
+     "  summarizeAudience: vi.fn(async (_rules: unknown, _segmentIds?: string[]) => ({ matched: 1, eligible: 1, suppressed: 0, invalid_phone: 0, legacy_or_deleted: 0 ",
+     "  supabaseFrom: vi.fn(),",
+     "  segmentsError: null as Error | null,",
+     "  segmentsLoading: false,",
+     "  queryErrors: {} as Record<string, Error>,",
+     "    useTalkXSegments: () => ({",
+     "      segments: f.segmentsError ? [] : f.segments,",
+     "      isLoading: f.segmentsLoading,",
+     "      isError: !!f.segmentsError,",
+     "      error: f.segmentsError,",
+     "      refetch: vi.fn(),",
+     "    summarizeAudience: f.summarizeAudience,",
+     "vi.mock('@/integrations/supabase/client', () => ({ supabase: { from: f.supabaseFrom } }));",
+     "  useQuery: (options: { queryKey?: unknown[]; queryFn?: CapturedQuery['queryFn']; enabled?: boolean }) => {",
+     "    const error = f.queryErrors[key] ?? null;",
+     "    const data = error ? undefined : key === 'wa-connections-talkx' ? f.connections",
+     "      : key === 'talkx-audience-count' || key === 'talkx-wizard-segment-union-total' ? { matched: 1, eligible: f.contacts.length || 1, suppressed: 0, invalid_ph",
+     "      data,",
+     "      error,",
+     "      isError: !!error,",
+     "      isSuccess: !error && data !== undefined,",
+     "      isLoading: options.enabled !== false && !error && data === undefined,",
+     "      isFetching: false,",
+     "      refetch: vi.fn(async () => ({ data, error })),",
+     "    f.segmentsError = null;"
+    ],
+    "still_sample": [
+     "    useTalkXSegments: () => ({ segments: f.segments }),",
+     "vi.mock('@/integrations/supabase/client', () => ({ supabase: { from: vi.fn() } }));",
+     "  useQuery: (options: { queryKey?: unknown[]; queryFn?: CapturedQuery['queryFn'] }) => {",
+     "    const data = key === 'wa-connections-talkx' ? f.connections",
+     "        : key === 'talkx-audience-count' ? f.contacts.length",
+     "    return { data, isFetching: false };",
+     "    f.countAudience.mockClear();",
+     "    expect(f.countAudience).toHaveBeenCalledTimes(1);",
+     "    expect(rulesToPostgrest(f.countAudience.mock.calls[0][0] as SegmentRules)).toBe('city.eq.\"Sao Paulo\"');"
+    ]
+   }
+  },
+  {
+   "path": "src/components/talkx/useCampaignEditor.ts",
+   "status": "MAIN_UNCHANGED_SINCE_BASE",
+   "patch_lines": 313,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 130,
+    "missing_in_main": 129,
+    "removed": 26,
+    "removed_still_in_main": 26,
+    "missing_sample": [
+     "import { useTalkXSegments, resolveAudience, countAudience, summarizeAudience, RULE_FIELDS, RULE_OPS, emptyRules, type AudienceSummary, type SegmentRules, type S",
+     "  const {",
+     "    segments,",
+     "    isLoading: segmentsLoading,",
+     "    isError: segmentsIsError,",
+     "    error: segmentsError,",
+     "    refetch: refetchSegments,",
+     "  } = useTalkXSegments();",
+     "  const [audienceSnapshot, setAudienceSnapshot] = useState<{ key: string; summary: AudienceSummary } | null>(null);",
+     "  const connectionQuery = useQuery({",
+     "      const { data, error } = await supabase.from('whatsapp_connections')",
+     "  const { data: connectionCandidates, isError: connectionIsError, isLoading: connectionQueryLoading, error: connectionError } = connectionQuery;",
+     "  const connectionQueryError = connectionIsError ? connectionError as Error : null;",
+     "  const connectionIsReady = connectionQuery.isSuccess",
+     "    && !connectionIsError",
+     "    && connections.some((connection) => connection.id === connectionId);",
+     "  const hasCompleteAudienceRules = effectiveAudienceRules.groups.some((group) => group.rules.length > 0);",
+     "  const hasUnsupportedAudienceRules = audienceSource === 'contacts' && audienceRules.groups.some((group) =>",
+     "    group.rules.some((rule) => rule.field === 'real_sector' || rule.field === 'real_uf'),",
+     "  const unsupportedAudienceRuleError = useMemo(",
+     "    () => hasUnsupportedAudienceRules",
+     "      ? new Error('Setor/UF reais ainda precisam de pré-resolução Singu; remova esses filtros antes de salvar ou avançar.')",
+     "      : null,",
+     "    [hasUnsupportedAudienceRules],",
+     "  const contactsQuery = useQuery({"
+    ],
+    "still_sample": [
+     "import { useTalkXSegments, resolveAudience, countAudience, RULE_FIELDS, RULE_OPS, emptyRules, type SegmentRules, type SegmentRule, type SegmentRuleGroup, type R",
+     "  const { segments } = useTalkXSegments();",
+     "  const [snapshotSuppressedCount, setSnapshotSuppressedCount] = useState(0);",
+     "  const { data: connectionCandidates } = useQuery({",
+     "      const { data } = await supabase.from('whatsapp_connections')",
+     "  const { data: contacts } = useQuery({",
+     "  const { data: audienceCount } = useQuery({",
+     "      const total = await countAudience(effectiveAudienceRules);",
+     "      return total;",
+     "    enabled: audienceSource === 'contacts',"
+    ]
+   }
+  },
+  {
+   "path": "src/hooks/admin/useSearchInsights.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 148,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 44,
+    "missing_in_main": 38,
+    "removed": 46,
+    "removed_still_in_main": 14,
+    "missing_sample": [
+     " * HZ1-06: agrega, via `search_insights(p_days)`, métricas minimizadas de busca.",
+     " * A tabela não armazena o termo digitado; portanto esta API não pode fornecer",
+     " * termos mais buscados nem termos sem resultado.",
+     "  /** Janela (em dias) solicitada e aplicada pela RPC. */",
+     "  averageTermLength: number;",
+     "  searchesByKind: Record<string, number>;",
+     "function toCount(value: unknown, field: string): number {",
+     "  const parsed = typeof value === 'number' || typeof value === 'string' ? Number(value) : NaN;",
+     "  if (!Number.isFinite(parsed) || parsed < 0 || !Number.isInteger(parsed)) {",
+     "    throw new SearchInsightsError(`Resposta inválida da RPC search_insights (${field}).`);",
+     "  return parsed;",
+     "function toAverage(value: unknown): number {",
+     "  const parsed = typeof value === 'number' || typeof value === 'string' ? Number(value) : NaN;",
+     "  if (!Number.isFinite(parsed) || parsed < 0) {",
+     "    throw new SearchInsightsError('Resposta inválida da RPC search_insights (average_term_length).');",
+     "  return parsed;",
+     "/** Normaliza o retorno tabular real de `public.search_insights(integer)`. */",
+     "export function parseSearchInsights(raw: unknown, requestedDays = DEFAULT_SEARCH_INSIGHTS_PERIOD): SearchInsights {",
+     "  const row = Array.isArray(raw) ? raw[0] : raw;",
+     "  if (!row || typeof row !== 'object' || Array.isArray(row)) {",
+     "    throw new SearchInsightsError('Resposta vazia ou inválida da RPC search_insights.');",
+     "  const data = row as Record<string, unknown>;",
+     "  const total = toCount(data.total_searches, 'total_searches');",
+     "  const noResults = toCount(data.searches_without_results, 'searches_without_results');",
+     "  const clicks = toCount(data.searches_with_click, 'searches_with_click');"
+    ],
+    "still_sample": [
+     " * HZ1-06: números da busca global para a tela de admin \"Insights de Busca\".",
+     " * Visibilidade: quem barra é a própria RPC — ela nega quem não é admin/supervisor",
+     " * (42501). O hook não acrescenta nem contorna recorte de papel.",
+     "/** Linha das tabelas de topo. `count` é quantas buscas usaram o termo. */",
+     "export interface SearchInsightTerm {",
+     "  term: string;",
+     "  count: number;",
+     "  /** Janela (em dias) que a RPC aplicou na agregação. */",
+     "  topQueries: SearchInsightTerm[];",
+     "  noResultTerms: SearchInsightTerm[];"
+    ]
+   }
+  },
+  {
+   "path": "src/hooks/integrations/__tests__/useTalkXSegments.test.ts",
+   "status": "MAIN_UNCHANGED_SINCE_BASE",
+   "patch_lines": 107,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 25,
+    "missing_in_main": 24,
+    "removed": 21,
+    "removed_still_in_main": 21,
+    "missing_sample": [
+     "  it('lead_origin é suportado pela coluna/RPC; lead_score e risk_score continuam indisponíveis', () => {",
+     "    expect(RULE_FIELDS.find((field) => field.value === 'lead_origin')?.comingSoon).not.toBe(true);",
+     "    expect(RULE_FIELDS.filter((field) => field.comingSoon).map((field) => field.value).sort()).toEqual(['lead_score', 'real_sector', 'real_uf', 'risk_score']);",
+     "// A ponte Singu consulta empresas/endereços fora de contacts e a RPC de audiência",
+     "// não recebe p_contact_ids nem aceita esses campos. Mantê-los no catálogo como",
+     "// comingSoon evita oferecer filtros que virariam uma audiência mais ampla.",
+     "    expect(byField.real_sector).toMatchObject({ kind: 'enum', category: 'basico', comingSoon: true });",
+     "    expect(byField.real_uf).toMatchObject({ kind: 'enum', category: 'basico', comingSoon: true });",
+     "  it('não converte essas regras em filtro parcial nem envia RPC sem pré-resolução', async () => {",
+     "    const rules = { groups: [{ id: 'g', match: 'and' as const, rules: [regra('real_sector', 'eq', 'varejo')] }] };",
+     "    vi.mocked(supabase.rpc).mockClear();",
+     "    expect(splitRules(rules).incompleteCount).toBe(1);",
+     "    await expect(countAudience(rules)).rejects.toThrow('pré-resolução em p_contact_ids');",
+     "    expect(supabase.rpc).not.toHaveBeenCalled();",
+     "  // A coluna contacts.lead_origin existe e a RPC de audiência a aceita; manter",
+     "  // o filtro é necessário para que a prévia não conte público mais amplo.",
+     "  it('lead_origin usa a coluna/RPC na estimativa e no PostgREST', () => {",
+     "    expect(RULE_FIELDS.find((f) => f.value === 'lead_origin')?.comingSoon).not.toBe(true);",
+     "    })).toBe('lead_origin.eq.\"whatsapp\"');",
+     "    expect(incompleteCount).toBe(0);",
+     "    expect(rulesToPostgrest(complete)).toBe('lead_origin.eq.\"whatsapp\"');",
+     "  it('real_* fica fora da estimativa até a pré-resolução existir', () => {",
+     "    expect(incompleteCount).toBe(3);",
+     "    expect(complete.groups.every((group) => group.rules.length === 0)).toBe(true);"
+    ],
+    "still_sample": [
+     "  it('lead_origin, lead_score e risk_score ficam \"em breve\": nada grava/calcula essas colunas e o filtro seria morto', () => {",
+     "    expect(RULE_FIELDS.filter((f) => f.comingSoon).map((f) => f.value).sort()).toEqual(['lead_origin', 'lead_score', 'risk_score']);",
+     "// Ponte Singu (recon t_0ed9b4f1): setor de atividade REAL (companies.ramo_atividade) e UF REAL",
+     "// (company_addresses.estado is_primary) entram no catalogo como kind enum com igualdade EXATA.",
+     "// O valor gravado e a string crua que a Edge leva ao Singu — por isso o campo NAO traz `options`",
+     "// (a lista de ramos/UFs vem da RPC, nao de uma constante do front) e a UI cai na caixa de texto.",
+     "// company/city/state continuam sendo texto livre: os segmentos ja salvos dependem deles.",
+     "    expect(byField.real_sector).toMatchObject({ kind: 'enum', category: 'basico' });",
+     "    expect(byField.real_uf).toMatchObject({ kind: 'enum', category: 'basico' });",
+     "  // t_bbe423a7 — contacts.lead_origin: nenhum fluxo de criação do Zapp grava a coluna (o contato"
+    ]
+   }
+  },
+  {
+   "path": "src/hooks/integrations/useTalkXSegments.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 150,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 56,
+    "missing_in_main": 47,
+    "removed": 19,
+    "removed_still_in_main": 15,
+    "missing_sample": [
+     "  // Setor/UF reais vivem na ponte Singu, não em contacts nem na whitelist da",
+     "  // RPC de audiência. Permanecem indisponíveis até a pré-resolução gerar",
+     "  // p_contact_ids; oferecer o filtro agora produziria falha, nunca uma estimativa.",
+     "  { value: 'real_sector', label: 'Setor de atividade (real)', kind: 'enum', category: 'basico', comingSoon: true },",
+     "  { value: 'real_uf', label: 'UF (real)', kind: 'enum', category: 'basico', comingSoon: true },",
+     "        // \"Em breve\" (lead_score/risk_score/real_sector/real_uf): a regra é completa e bem descrita",
+     "  // Estes campos vivem na ponte Singu, não em contacts; até serem traduzidos",
+     "  // para p_contact_ids, não podem virar filtros PostgREST nem regras da RPC.",
+     "  if (r.field === 'real_sector' || r.field === 'real_uf') return null;",
+     " * Os campos reais de Singu não são colunas de `contacts`. Até existir a",
+     " * pré-resolução que produza `p_contact_ids`, enviá-los como regras comuns faria",
+     " * a RPC interpretar um filtro incompleto e poderia ampliar o público. Falha",
+     " * antes da rede em vez de descartar ou repassar silenciosamente a regra.",
+     "function validarRegrasDeAudiencia(rules: SegmentRules | null | undefined): void {",
+     "  for (const group of rules?.groups ?? []) {",
+     "      if (rule.field === 'real_sector' || rule.field === 'real_uf') {",
+     "        throw new Error(`Regra ${rule.field} requer pré-resolução em p_contact_ids`);",
+     "export interface AudienceSummary {",
+     "  matched: number;",
+     "  eligible: number;",
+     "  suppressed: number;",
+     "  invalid_phone: number;",
+     "  legacy_or_deleted: number;",
+     "function audienceSummaryFromRpc(value: unknown): AudienceSummary {",
+     "  if (!value || typeof value !== 'object' || Array.isArray(value)) {"
+    ],
+    "still_sample": [
+     "  // Setor de atividade e UF REAIS (ponte Singu): o valor vive em",
+     "  // companies.ramo_atividade / company_addresses.estado (is_primary) e nao em",
+     "  // public.contacts, entao nao vem de texto livre digitado no Zapp. kind enum",
+     "  // com igualdade exata (eq/neq/is_empty); sem `options` fixas — a lista de",
+     "  // ramos/UFs vem da RPC do Singu, e uma constante local ofereceria valor que a",
+     "  // ponte pode recusar. Sem `category` nova: entram no grupo básico junto de",
+     "  // Empresa/Cidade/UF. company/city/state seguem intactos (segmentos salvos).",
+     "        // \"Em breve\" (lead_score/risk_score): a regra é completa e bem descrita",
+     " * X017 — a contagem do público é decidida no servidor pela RPC",
+     " * talkx_resolve_audience (X016), com o MESMO critério de elegibilidade do"
+    ]
+   }
+  },
+  {
+   "path": "supabase/functions/connection-health-check/index.test.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 138,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 60,
+    "missing_in_main": 50,
+    "removed": 5,
+    "removed_still_in_main": 5,
+    "missing_sample": [
+     "  /** preferências de notificação por usuário (sem opt-in não há push/e-mail) */",
+     "  alertPreferences: Array<Record<string, unknown>>;",
+     "    alertPreferences: [],",
+     "    const dedupeKey = pending.dedupe_key;",
+     "    if (typeof dedupeKey === 'string' && fake.alerts.some((alert) => alert.dedupe_key === dedupeKey)) {",
+     "      return { data: null, error: { code: '23505', message: 'duplicate dedupe_key' } };",
+     "    const inserted = { id: `alert-${fake.alerts.length + 1}`, ...pending };",
+     "    fake.alerts.push(inserted);",
+     "    return { data: [inserted], error: null };",
+     "    return { data: fake.alertPreferences, error: null };",
+     "    const data = fake.rows",
+     "        .map((r) => ({ ...r, status: fake.statusById[r.id] ?? null }));",
+     "      data,",
+     "Deno.test('webhook parado: alerta mesmo com status já connected e notifica só na primeira gravação', async () => {",
+     "  fake.lastInbound = [{ created_at: new Date(Date.now() - 31 * 60 * 1000).toISOString() }];",
+     "  fake.alertPreferences = [{",
+     "    user_id: 'opted-in-user',",
+     "    push_enabled: true,",
+     "    email_enabled: false,",
+     "    alert_on_degraded: true,",
+     "    alert_on_disconnected: false,",
+     "  const primeira = await run(fake);",
+     "  const segunda = await run(fake);",
+     "  const payloadPrimeira = await primeira.json() as { alerts_created: number };",
+     "  const payloadSegunda = await segunda.json() as { alerts_created: number };"
+    ],
+    "still_sample": [
+     "    fake.alerts.push(pending);",
+     "    return { data: null, error: null };",
+     "    return {",
+     "      data: fake.rows",
+     "        .map((r) => ({ ...r, status: fake.statusById[r.id] ?? null })),"
+    ]
+   }
+  },
+  {
+   "path": "supabase/functions/connection-health-check/index.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 158,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 53,
+    "missing_in_main": 38,
+    "removed": 28,
+    "removed_still_in_main": 14,
+    "missing_sample": [
+     "interface ConnectionAlertPreference {",
+     "  push_enabled: boolean;",
+     "  email_enabled: boolean;",
+     "  alert_on_degraded: boolean;",
+     "  alert_on_disconnected: boolean;",
+     "/** Opt-in explícito para a categoria da preferência armazenada pelo próprio usuário. */",
+     "function prefMatchesKind(pref: ConnectionAlertPreference, kind: 'disconnected' | 'degraded'): boolean {",
+     "  return kind === 'disconnected' ? pref.alert_on_disconnected : pref.alert_on_degraded;",
+     "  args: { alert: AlertToCreate; prefs: ConnectionAlertPreference[]; resendKey: string | undefined },",
+     "  const pushUserIds = opted.filter((p) => p.push_enabled).map((p) => p.user_id).filter(Boolean);",
+     "  const emailUserIds = opted.filter((p) => p.email_enabled).map((p) => p.user_id).filter(Boolean);",
+     "            // Degradação pelo socket (webhook parado) independe de transição",
+     "            // persistida do status: a linha pode continuar `connected` enquanto",
+     "            // o health estiver `degraded`. Enfileirar dentro do bloco de mudança",
+     "            // de status omitia justamente o caso normal (connected -> connected).",
+     "            if (healthStatus === 'degraded' && openReason === 'webhook_silent') {",
+     "    const persistedAlerts: AlertToCreate[] = [];",
+     "      const reasonLabel = alert.reason ? REASON_LABEL[alert.reason] : null;",
+     "      const title = alert.kind === 'disconnected'",
+     "        ? `WhatsApp ${alert.instance_id} desconectado`",
+     "        : `Conexão ${alert.instance_id} degradada`;",
+     "      const message = alert.kind === 'disconnected'",
+     "        ? `A instância ${alert.instance_id} perdeu conexão com o WhatsApp${reasonLabel ? ` (${reasonLabel})` : ''}.`",
+     "        : `A instância ${alert.instance_id}: ${reasonLabel ?? 'conexão degradada'}.`;",
+     "      // A notificação externa acompanha somente um alerta realmente persistido."
+    ],
+    "still_sample": [
+     "/** Preferência de canal: opt-in explícito por tipo de alerta ('all' vale para todos). */",
+     "function prefMatchesKind(pref: Record<string, unknown>, kind: 'disconnected' | 'degraded'): boolean {",
+     "  const t = pref['alert_type'];",
+     "  return t === 'all' || t === kind;",
+     "              // Degradação pelo socket (webhook parado): entra no funil de alerta",
+     "              // com o próprio tipo — o warroom registra 'warning' e o push/e-mail",
+     "              // respeitam o opt-in de 'degraded'.",
+     "                alertsToCreate.push({ connection_id: conn.id, instance_id: conn.instance_id, phone: conn.phone_number, kind: 'degraded', reason: openReason });",
+     "      await supabase.from('warroom_alerts').insert({",
+     "      }).then(({ error }) => {"
+    ]
+   }
+  },
+  {
+   "path": "supabase/migrations/20261016240000_search_events_rls_decision.sql",
+   "status": "MAIN_UNCHANGED_SINCE_BASE",
+   "patch_lines": 34,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 10,
+    "missing_in_main": 10,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "--     — usuários autenticados podem apenas gravar eventos com seu próprio user_id.",
+     "--   • Nenhum hook de frontend faz SELECT direto na tabela. A RPC de leitura",
+     "--     canônica é public.search_insights(p_days), que retorna contagens, média",
+     "--     do tamanho e agregados por tipo; ela não retorna termos pesquisados.",
+     "--   • A tabela não armazena o termo digitado nem seu hash. O evento NÃO é",
+     "--     anônimo: user_id e created_at permitem atribuí-lo a um usuário e horário.",
+     "--     A RPC expõe apenas agregados a admin/supervisor.",
+     "--   • Além de não haver policy SELECT, a migration revoga o privilégio SELECT",
+     "--     de anon/authenticated. A leitura direta não deve ser descrita como retorno",
+     "--     de linhas vazio: pode falhar por privilégio antes de a RLS ser avaliada."
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "supabase/migrations/20261026100000_search_event_rpc.sql",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "patch_lines": 120,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 100,
+    "missing_in_main": 100,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "-- search_event_rpc",
+     "-- A migration de eventos criou a tabela, mas o frontend passou a chamar esta RPC",
+     "-- sem que ela tivesse sido versionada. O evento da busca e o clique precisam",
+     "-- compartilhar um ID opaco para o clique atualizar a linha, sem contar outra busca.",
+     "-- O texto da busca é usado apenas em memória para validação e comprimento; nunca é",
+     "-- persistido, incluído em retorno, ou escrito em mensagem de erro.",
+     "-- Rollback:",
+     "--   drop function if exists public.log_search_event(text, integer, boolean, uuid, text);",
+     "--   drop index if exists public.search_events_user_event_id_key;",
+     "--   alter table public.search_events drop column if exists client_event_id;",
+     "--   create policy \"Users can register their own search events\" on public.search_events",
+     "--     for insert to authenticated with check (user_id = (select auth.uid()));",
+     "--   grant insert on table public.search_events to authenticated;",
+     "alter table public.search_events",
+     "  add column client_event_id uuid;",
+     "update public.search_events",
+     "   set client_event_id = gen_random_uuid()",
+     " where client_event_id is null;",
+     "alter table public.search_events",
+     "  alter column client_event_id set default gen_random_uuid(),",
+     "  alter column client_event_id set not null;",
+     "create unique index search_events_user_event_id_key",
+     "  on public.search_events (user_id, client_event_id);",
+     "-- A tabela deixa de aceitar INSERT direto do cliente: isso impediria a RPC de",
+     "-- aplicar o mesmo filtro de PII e a correlação idempotente de busca/clique."
+    ],
+    "still_sample": [],
+    "same_basename_in_main": []
+   }
+  },
+  {
+   "path": "supabase/tests/search_events.sql",
+   "status": "MAIN_UNCHANGED_SINCE_BASE",
+   "patch_lines": 443,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 210,
+    "missing_in_main": 150,
+    "removed": 50,
+    "removed_still_in_main": 50,
+    "missing_sample": [
+     "-- (cartão t_a86eec01, migration base 20261016013134_search_events.sql e RPC",
+     "-- 20261026100000_search_event_rpc.sql).",
+     "--   T1) o agente só registra pela RPC autenticada, que não aceita identidade",
+     "--       informada pelo cliente;",
+     "--   T2) não há escrita nem leitura direta na tabela por papéis de cliente;",
+     "--   T9) log_search_event descarta PII, registra uma busca uma vez, e correlaciona",
+     "--       clique/replay pelo mesmo ID opaco e tipo real sem inflar a contagem.",
+     "  IF v_cols <> ARRAY['id','user_id','term_length','had_results','result_kind','clicked','created_at','client_event_id'] THEN",
+     "  -- T1-estrutura: RLS ligada e nenhuma policy; somente a RPC SECURITY DEFINER escreve.",
+     "    RAISE EXCEPTION 'T1 FALHOU: search_events tem % policies (esperado 0; escrita somente pela RPC)', v_n;",
+     "  RAISE NOTICE 'T1/T5 OK: colunas=%, RLS=on, sem policies de cliente', v_cols;",
+     "  -- ACL: authenticated não escreve nem lê diretamente (a RPC é o único caminho).",
+     "  IF has_table_privilege('authenticated', 'public.search_events', 'INSERT') THEN",
+     "    RAISE EXCEPTION 'T2 FALHOU: authenticated tem INSERT direto em search_events';",
+     "  -- Até a própria linha é negada por INSERT direto.",
+     "      VALUES (v_agente, 7, true);",
+     "    RAISE EXCEPTION 'T2 FALHOU: agente inseriu diretamente a própria linha';",
+     "  -- Também não pode escolher outro user_id.",
+     "    RAISE EXCEPTION 'T2 FALHOU: agente inseriu diretamente em nome de outro usuário';",
+     "  IF v_depois <> v_antes THEN",
+     "    RAISE EXCEPTION 'T2 FALHOU: INSERT direto alterou a tabela (antes=% depois=%)', v_antes, v_depois;",
+     "  RAISE NOTICE 'T1/T2 OK: INSERT próprio/alheio e leitura direta negados; escrita passa pela RPC';",
+     "-- ============ T9: RPC segura, idempotente e sem texto persistido ============",
+     "  v_evento uuid := 'e9000000-0000-0000-0000-000000000001';",
+     "  v_evento_sem_resultado uuid := 'e9000000-0000-0000-0000-000000000002';"
+    ],
+    "still_sample": [
+     "  v_pol      integer;",
+     "  v_pol_cmd  text;",
+     "  v_pol_roles text[];",
+     "  IF v_cols <> ARRAY['id','user_id','term_length','had_results','result_kind','clicked','created_at'] THEN",
+     "  -- T1-estrutura: RLS ligada e UMA única policy, de INSERT para authenticated.",
+     "  SELECT count(*), min(polcmd), min(polroles::text) INTO v_n, v_pol_cmd, v_pol_roles",
+     "  IF v_n <> 1 THEN",
+     "    RAISE EXCEPTION 'T1 FALHOU: search_events tem % policies (esperado 1, de INSERT)', v_n;",
+     "  END IF;",
+     "  IF v_pol_cmd <> 'a' THEN"
+    ]
+   }
+  }
+ ],
+ "counts": {
+  "migrations": "2",
+  "workflows": "8",
+  "src": "14",
+  "edges": "2",
+  "docs_only": "no",
+  "lines_branch_has_main_lacks": "2771",
+  "lines_main_has_branch_lacks": "3763"
+ },
+ "auto": "MISTO_CONFLITO",
+ "n_files_with_gaps": 54,
+ "gap_lines_total": 1560
+}

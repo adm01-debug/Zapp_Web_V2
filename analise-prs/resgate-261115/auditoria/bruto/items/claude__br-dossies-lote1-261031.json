@@ -1,0 +1,189 @@
+{
+ "id": "claude__br-dossies-lote1-261031",
+ "kind": "branch",
+ "ref": "origin/claude/br-dossies-lote1-261031",
+ "tip": "27835467776dcbe41d86cf9458d0157fddffea80",
+ "merge_base": "004e74a8c596959f45f61c8b0b64b30a70c1ff19",
+ "ahead": 1,
+ "last_commit_date": "2026-10-31",
+ "merge_base_date": "2026-10-31",
+ "prs_with_same_tip": [
+  2413
+ ],
+ "triagem_2804": {
+  "2413": "OBSOLETA"
+ },
+ "closure_comment": {},
+ "files": [
+  {
+   "path": "analise/dossies/automation-types-sync.md",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "patch_lines": 37,
+   "line_check": {
+    "added": 19,
+    "missing_in_main": 19,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "# Dossiê: automation/types-sync",
+     "**Data:** 2026-10-31  ",
+     "**Sessão:** claude/trusting-albattani-9x3ipg (S6)  ",
+     "**Tip SHA:** f5e651e01  ",
+     "**Veredito:** SUPERADA  ",
+     "**Confiança:** 0.97  ",
+     "## Evidência",
+     "Clone completo confirmado (`git rev-parse --is-shallow-repository` = `false`).",
+     "git merge-tree --write-tree origin/main origin/automation/types-sync",
+     "→ f7b413078b11e47b67f521e0a5d32ea294583c83  (= main tree)",
+     "O merge-tree produziu exatamente a árvore da `main`: todos os arquivos já estão incorporados.",
+     "## Conteúdo da branch",
+     "3 commits reais (excluindo merges):",
+     "- `e03ca7020` `chore(db): sincronizar artefatos com o banco [auto]`",
+     "- `cdd67d810` `fix(db-inventory): adiciona 33 tabelas ausentes e corrige contagens (tables=204, views=13)`",
+     "- `f5e651e01` `fix(db-inventory): corrige email_signatures, talkx_segment_fields e voip_profile_credentials`",
+     "Esses fixes de db-inventory/sincronização de artefatos chegaram à `main` por outros PRs de sync automático.",
+     "## Ação",
+     "Branch remota apagada (conteúdo 100% na `main`)."
+    ],
+    "still_sample": [],
+    "same_basename_in_main": [
+     "docs/_arquivo/analise/dossies/automation-types-sync.md"
+    ],
+    "missing_vs_same_basename": 0
+   }
+  },
+  {
+   "path": "analise/dossies/claude-fervent-noether-vvq63j.md",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "patch_lines": 35,
+   "line_check": {
+    "added": 18,
+    "missing_in_main": 18,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "# Dossiê: claude/fervent-noether-vvq63j",
+     "**Data:** 2026-10-31  ",
+     "**Sessão:** claude/trusting-albattani-9x3ipg (S6)  ",
+     "**Tip SHA:** 95295a7cb  ",
+     "**Veredito:** SUPERADA  ",
+     "**Confiança:** 0.97  ",
+     "## Evidência",
+     "Clone completo confirmado (`git rev-parse --is-shallow-repository` = `false`).",
+     "git merge-tree --write-tree origin/main origin/claude/fervent-noether-vvq63j",
+     "→ f7b413078b11e47b67f521e0a5d32ea294583c83  (= main tree)",
+     "## Conteúdo da branch",
+     "3 commits reais:",
+     "- `96ea831e2` `docs(mapa): registra segundo mês medido do Search Box (out/2026)`",
+     "- `9a9e97357` `fix(ci): atualiza hash pngjs no deno.lock (CDN esm.sh drift)`",
+     "- `95295a7cb` `fix(ci): reverte hash pngjs@5.0.0 para hash original do esm.sh`",
+     "A correção do hash pngjs no deno.lock chegou à `main` por outro PR. Os docs de mapa também chegaram.",
+     "## Ação",
+     "Branch remota apagada (conteúdo 100% na `main`)."
+    ],
+    "still_sample": [],
+    "same_basename_in_main": [
+     "docs/_arquivo/analise/dossies/claude-fervent-noether-vvq63j.md"
+    ],
+    "missing_vs_same_basename": 0
+   }
+  },
+  {
+   "path": "analise/dossies/claude-fix-deploy-functions-2408.md",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "patch_lines": 48,
+   "line_check": {
+    "added": 24,
+    "missing_in_main": 24,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "# Dossiê: claude/fix-deploy-functions-2408",
+     "**Data:** 2026-10-31  ",
+     "**Sessão:** claude/trusting-albattani-9x3ipg (S6)  ",
+     "**Tip SHA:** b643d5d43  ",
+     "**Veredito:** COBERTA (delta não integrado, mas problema já resolvido na main)  ",
+     "**Confiança:** 0.90  ",
+     "## Evidência",
+     "Clone completo confirmado (`git rev-parse --is-shallow-repository` = `false`).",
+     "git merge-tree --write-tree origin/main origin/claude/fix-deploy-functions-2408",
+     "→ 2d22aca2283fa14623b5172e2498a1386d90f954  (≠ main tree)",
+     "O merge-tree diferiu: a branch tem conteúdo não idêntico à `main`.",
+     "## Delta vs main (2 arquivos, 1 commit)",
+     "b643d5d43 fix(ci): corrige deploy-functions — instala @types/node via import explícito",
+     "- `supabase/functions/deno.json`: adiciona `\"imports\": {\"@types/node\": \"npm:@types/node@^22\"}`",
+     "- `PENDENCIAS.md`: reformata texto de falha do DB Live Guard",
+     "## Por que foi descartada (não aberta como PR)",
+     "O problema raiz (`@types/node` não resolvendo no deno check) foi **corrigido na main via PR #2407**",
+     "(commit `004e74a8c`), que instalou `@types/node@25.9.9` via `npm install` direto no workflow",
+     "`deploy-functions.yml`.",
+     "A abordagem desta branch (via `imports` no `deno.json`) é uma via alternativa para o mesmo problema.",
+     "Combiná-las causaria conflito de versão: `deno.json` fixaria `^22.x` enquanto o workflow instala `25.9.9`.",
+     "O deploy-functions está verde na main desde o merge de #2407.",
+     "## Ação",
+     "Branch remota apagada. Problema resolvido via #2407."
+    ],
+    "still_sample": [],
+    "same_basename_in_main": [
+     "docs/_arquivo/analise/dossies/claude-fix-deploy-functions-2408.md"
+    ],
+    "missing_vs_same_basename": 0
+   }
+  },
+  {
+   "path": "analise/progresso.json",
+   "status": "BOTH_CHANGED",
+   "hunk": "CONFLICT",
+   "patch_lines": 54,
+   "line_check": {
+    "added": 36,
+    "missing_in_main": 25,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "      \"verificado_em\": \"2026-10-30\",",
+     "      \"verificacao_sessao\": \"claude/trusting-albattani-9x3ipg\",",
+     "      \"notas\": \"Fases 1-2 do plano de telefonia (biblioteca de domínio + contrato de dados). Conteúdo 100% em main: migration 20260926800000 em produção, src/li",
+     "      \"branch\": \"automation/types-sync\",",
+     "      \"tip_sha\": \"f5e651e01\",",
+     "      \"confianca\": 0.97,",
+     "      \"dossie\": \"analise/dossies/automation-types-sync.md\",",
+     "      \"analisado_em\": \"2026-10-31\",",
+     "      \"sessao\": \"claude/trusting-albattani-9x3ipg\",",
+     "      \"notas\": \"merge-tree produce tree = main tree (f7b413078b11e47b67f521e0a5d32ea294583c83). Fixes de db-inventory chegaram à main por outros PRs. Branch apa",
+     "      \"branch\": \"claude/fervent-noether-vvq63j\",",
+     "      \"tip_sha\": \"95295a7cb\",",
+     "      \"confianca\": 0.97,",
+     "      \"dossie\": \"analise/dossies/claude-fervent-noether-vvq63j.md\",",
+     "      \"analisado_em\": \"2026-10-31\",",
+     "      \"sessao\": \"claude/trusting-albattani-9x3ipg\",",
+     "      \"notas\": \"merge-tree produce tree = main tree (f7b413078b11e47b67f521e0a5d32ea294583c83). Correção hash pngjs chegou à main. Branch apagada.\"",
+     "      \"branch\": \"claude/fix-deploy-functions-2408\",",
+     "      \"tip_sha\": \"b643d5d43\",",
+     "      \"veredito\": \"COBERTA\",",
+     "      \"confianca\": 0.9,",
+     "      \"dossie\": \"analise/dossies/claude-fix-deploy-functions-2408.md\",",
+     "      \"analisado_em\": \"2026-10-31\",",
+     "      \"sessao\": \"claude/trusting-albattani-9x3ipg\",",
+     "      \"notas\": \"merge-tree difere da main. Delta: deno.json adiciona npm:@types/node@^22. Problema resolvido na main via #2407 (npm install no workflow). Aborda"
+    ],
+    "still_sample": []
+   }
+  }
+ ],
+ "counts": {
+  "migrations": "0",
+  "workflows": "0",
+  "src": "0",
+  "edges": "0",
+  "docs_only": "no",
+  "lines_branch_has_main_lacks": "128",
+  "lines_main_has_branch_lacks": "194"
+ },
+ "auto": "MISTO_CONFLITO",
+ "n_files_with_gaps": 4,
+ "gap_lines_total": 86
+}

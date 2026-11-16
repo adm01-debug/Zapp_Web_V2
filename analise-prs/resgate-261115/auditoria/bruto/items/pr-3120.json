@@ -1,0 +1,55 @@
+{
+ "id": "pr-3120",
+ "kind": "pr",
+ "ref": "refs/remotes/pr/3120",
+ "pr": 3120,
+ "tip": "d1ccc2912fa51af5a17437920a36ecd3c92c1d26",
+ "merge_base": "3c64a5454ab2269c2db2361adb858aedac009d2c",
+ "ahead": 1,
+ "last_commit_date": "2026-11-14",
+ "merge_base_date": "2026-11-14",
+ "triagem_2804": null,
+ "closure_comment": {
+  "title": "[superada pelo pacote 7] fix(ci): cluster nativo em porta livre — abordagem que falhou no ",
+  "last_comment": "Fechando: **a abordagem desta PR foi superada**, não incorporada. Sendo explícito porque a diferença importa. |  | O que esta PR propunha: mover o cluster PostgreSQL nativo do runner para a porta 5433 (`pg_conftool` + `pg_ctlcluster`). **Falhou no CI real** — o step morreu em 3 s com exit 1, depois de i"
+ },
+ "files": [
+  {
+   "path": ".github/workflows/db-guard.yml",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 42,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 19,
+    "missing_in_main": 19,
+    "removed": 6,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "      - name: Provar EXECUTE de merge_brinde_state (cluster nativo do runner, porta livre)",
+     "        # proprio: nao serve nem o docker-shim (o Postgres compartilhado deste job e por",
+     "        # TCP, e criar nele as roles globais anon/authenticated/service_role contaminaria",
+     "        # os outros testes) nem o retry-disposable, que esperava",
+     "        # /var/run/postgresql/.s.PGSQL.5432 e falhou 6 vezes no run 43629536345.",
+     "        # A 1a versao deste passo (14/11, run 43633207624) so fazia `systemctl start",
+     "        # postgresql` e tambem falhou, deixando a main vermelha. Causa: o cluster nativo",
+     "        # do runner ja vem criado na porta 5432 -- a MESMA que o service container deste",
+     "        # job publica no host --, entao o bind falha; e `postgresql.service` no Ubuntu e",
+     "        # um meta-servico que sai 0 mesmo assim. O socket nunca aparecia e as 6",
+     "        # tentativas esgotavam (\"connection to server on socket ... No such file or",
+     "        # directory\"). Aqui o cluster e movido para a 5433 antes de subir; o pg_wrapper",
+     "        # do Debian faz `sudo -u postgres psql` achar a porta sozinho.",
+     "          ver=\"$(pg_lsclusters -h | awk 'NR==1{print $1}')\"",
+     "          echo \"cluster nativo: versao $ver\"",
+     "          if [ \"$(pg_lsclusters -h | awk 'NR==1{print $4}')\" = \"online\" ]; then",
+     "            sudo pg_ctlcluster \"$ver\" main stop",
+     "          sudo pg_conftool \"$ver\" main set port 5433",
+     "          sudo pg_ctlcluster \"$ver\" main start"
+    ],
+    "still_sample": []
+   }
+  }
+ ],
+ "auto": "MISTO_CONFLITO",
+ "n_files_with_gaps": 1,
+ "gap_lines_total": 19
+}

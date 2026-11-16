@@ -1,0 +1,948 @@
+{
+ "id": "claude__br-dossies-lote4-261031",
+ "kind": "branch",
+ "ref": "origin/claude/br-dossies-lote4-261031",
+ "tip": "01fff64d1d2e1b7c6033861e749f755ac65a512b",
+ "merge_base": "004e74a8c596959f45f61c8b0b64b30a70c1ff19",
+ "ahead": 1,
+ "last_commit_date": "2026-10-31",
+ "merge_base_date": "2026-10-31",
+ "prs_with_same_tip": [
+  2429
+ ],
+ "triagem_2804": {
+  "2429": "OBSOLETA"
+ },
+ "closure_comment": {},
+ "files": [
+  {
+   "path": "analise/dossies/chore-regen-edge-manifest-261030.md",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "patch_lines": 35,
+   "line_check": {
+    "added": 16,
+    "missing_in_main": 16,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "# Dossiê: claude/chore-regen-edge-manifest-261030-0830",
+     "## Identificação",
+     "- **Branch**: `claude/chore-regen-edge-manifest-261030-0830`",
+     "- **Analisado em**: 2026-10-31",
+     "- **Sessão**: `claude/trusting-albattani-9x3ipg`",
+     "## Veredito: COBERTA (confiança 0.90)",
+     "Regeneração do manifesto de edge functions (`supabase/deployment-manifest.json`). A main já tem o manifesto atualizado com a versão mais recente resultante do d",
+     "## Evidência",
+     "### merge-tree",
+     "git merge-tree --write-tree origin/main origin/claude/chore-regen-edge-manifest-261030-0830",
+     "→ exit 1 — 1 conflito",
+     "CONFLICT (content): supabase/deployment-manifest.json",
+     "### Estado em main",
+     "`supabase/deployment-manifest.json` em main foi atualizado por deploys posteriores ao deploy desta branch; o manifesto da main é mais recente.",
+     "## Decisão",
+     "**Branch apagada.** Manifesto de edge functions já atualizado em main por deploys posteriores."
+    ],
+    "still_sample": [],
+    "same_basename_in_main": [
+     "docs/_arquivo/analise/dossies/chore-regen-edge-manifest-261030.md"
+    ],
+    "missing_vs_same_basename": 0
+   }
+  },
+  {
+   "path": "analise/dossies/codex-consolida-contatos-fab.md",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "patch_lines": 36,
+   "line_check": {
+    "added": 16,
+    "missing_in_main": 16,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "# Dossiê: codex/consolida-contatos-fab",
+     "## Identificação",
+     "- **Branch**: `codex/consolida-contatos-fab`",
+     "- **Analisado em**: 2026-10-31",
+     "- **Sessão**: `claude/trusting-albattani-9x3ipg`",
+     "## Veredito: COBERTA (confiança 0.90)",
+     "Consolidação do FAB de Contatos feita pelo agente Codex. Os arquivos novos já estão em main.",
+     "## Evidência",
+     "### merge-tree",
+     "git merge-tree --write-tree origin/main origin/codex/consolida-contatos-fab",
+     "→ exit 1 — 2 conflitos de conteúdo + 3 conflitos add/add (arquivos de teste)",
+     "Os 3 arquivos de teste \"novos\" já existem em main via outro PR com conteúdo diferente (conflitos add/add).",
+     "### Estado em main",
+     "Os 3 arquivos de teste novos já existem em main com versão canônica. A consolidação do FAB de Contatos já foi integrada.",
+     "## Decisão",
+     "**Branch apagada.** Consolidação do FAB de Contatos já em main."
+    ],
+    "still_sample": [],
+    "same_basename_in_main": [
+     "docs/_arquivo/analise/dossies/codex-consolida-contatos-fab.md"
+    ],
+    "missing_vs_same_basename": 0
+   }
+  },
+  {
+   "path": "analise/dossies/codex-sincronizacao-canonica-20261016.md",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "patch_lines": 36,
+   "line_check": {
+    "added": 16,
+    "missing_in_main": 16,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "# Dossiê: codex/sincronizacao-canonica-20261016",
+     "## Identificação",
+     "- **Branch**: `codex/sincronizacao-canonica-20261016`",
+     "- **Analisado em**: 2026-10-31",
+     "- **Sessão**: `claude/trusting-albattani-9x3ipg`",
+     "## Veredito: COBERTA (confiança 0.90)",
+     "Sincronização canônica feita pelo agente Codex em 16/10. As mudanças já estão em main.",
+     "## Evidência",
+     "### merge-tree",
+     "git merge-tree --write-tree origin/main origin/codex/sincronizacao-canonica-20261016",
+     "→ exit 1 — 2 conflitos em arquivos existentes",
+     "Nenhum arquivo novo — apenas conflitos de conteúdo em arquivos existentes.",
+     "### Estado em main",
+     "Os 2 arquivos com conflito já têm as mudanças de sincronização aplicadas em main.",
+     "## Decisão",
+     "**Branch apagada.** Sincronização canônica já em main."
+    ],
+    "still_sample": [],
+    "same_basename_in_main": [
+     "docs/_arquivo/analise/dossies/codex-sincronizacao-canonica-20261016.md"
+    ],
+    "missing_vs_same_basename": 0
+   }
+  },
+  {
+   "path": "analise/dossies/dia-2026-10-23.md",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "patch_lines": 36,
+   "line_check": {
+    "added": 16,
+    "missing_in_main": 16,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "# Dossiê: dia/2026-10-23",
+     "## Identificação",
+     "- **Branch**: `dia/2026-10-23`",
+     "- **Analisado em**: 2026-10-31",
+     "- **Sessão**: `claude/trusting-albattani-9x3ipg`",
+     "## Veredito: COBERTA (confiança 0.90)",
+     "Branch de lote do dia 23/10. Todo o conteúdo já está em main.",
+     "## Evidência",
+     "### merge-tree",
+     "git merge-tree --write-tree origin/main origin/dia/2026-10-23",
+     "→ exit 1 — 14 conflitos em arquivos existentes",
+     "Nenhum arquivo novo — apenas conflitos de conteúdo em 14 arquivos existentes. Branch de lote diário cujo conteúdo foi mergeado na `main` no ciclo normal.",
+     "### Estado em main",
+     "Os 14 arquivos com conflito já têm o conteúdo do lote 23/10 aplicado em main.",
+     "## Decisão",
+     "**Branch apagada.** Lote dia/2026-10-23 já em main."
+    ],
+    "still_sample": [],
+    "same_basename_in_main": [
+     "docs/_arquivo/analise/dossies/dia-2026-10-23.md"
+    ],
+    "missing_vs_same_basename": 0
+   }
+  },
+  {
+   "path": "analise/dossies/feat-copiloto-cv061-070-ghost-text.md",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "patch_lines": 40,
+   "line_check": {
+    "added": 21,
+    "missing_in_main": 21,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "# Dossiê: claude/feat-copiloto-cv061-070-ghost-text-261016-2200",
+     "## Identificação",
+     "- **Branch**: `claude/feat-copiloto-cv061-070-ghost-text-261016-2200`",
+     "- **Analisado em**: 2026-10-31",
+     "- **Sessão**: `claude/trusting-albattani-9x3ipg`",
+     "## Veredito: COBERTA (confiança 0.92)",
+     "Copiloto RADAR Fase 7 — ghost text, smart templates, voice dictation. Supersedida pelo PR #2361 que mergeou as fases 8–15 com versões canônicas dos mesmos compo",
+     "## Evidência",
+     "### merge-tree",
+     "git merge-tree --write-tree origin/main origin/claude/feat-copiloto-cv061-070-ghost-text-261016-2200",
+     "→ exit 1 — 8 conflitos",
+     "CONFLICT (add/add): src/components/copilot/CopilotFeedback.tsx",
+     "CONFLICT (add/add): src/components/copilot/RadarPhase7Panel.tsx",
+     "CONFLICT (add/add): src/hooks/copilot/useGhostText.ts",
+     "CONFLICT (add/add): src/hooks/copilot/useSmartTemplates.ts",
+     "CONFLICT (add/add): src/hooks/copilot/useVoiceDictation.ts",
+     "+ 3 conflitos de conteúdo em arquivos existentes",
+     "### Estado em main",
+     "Os 5 arquivos novos já existem em main via PR #2361 (squash merge das fases 8–15); a versão de main é a canônica. GhostTextOverlay, AttachmentSuggestion e Smart",
+     "## Decisão",
+     "**Branch apagada.** Fase 7 do Copiloto RADAR supersedida pelo PR #2361. Versões canônicas já em main."
+    ],
+    "still_sample": [],
+    "same_basename_in_main": [
+     "docs/_arquivo/analise/dossies/feat-copiloto-cv061-070-ghost-text.md"
+    ],
+    "missing_vs_same_basename": 0
+   }
+  },
+  {
+   "path": "analise/dossies/feat-media-migration-tool.md",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "patch_lines": 36,
+   "line_check": {
+    "added": 16,
+    "missing_in_main": 16,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "# Dossiê: feat/media-migration-tool-261024-2336",
+     "## Identificação",
+     "- **Branch**: `feat/media-migration-tool-261024-2336`",
+     "- **Analisado em**: 2026-10-31",
+     "- **Sessão**: `claude/trusting-albattani-9x3ipg`",
+     "## Veredito: COBERTA (confiança 0.90)",
+     "Ferramenta de migração de mídia. O arquivo novo já está em main.",
+     "## Evidência",
+     "### merge-tree",
+     "git merge-tree --write-tree origin/main origin/feat/media-migration-tool-261024-2336",
+     "→ exit 1 — 1 conflito add/add (MediaMigrationTool.tsx)",
+     "`MediaMigrationTool.tsx` já existe em main via outro PR com conteúdo diferente (conflito add/add).",
+     "### Estado em main",
+     "`MediaMigrationTool.tsx` já existe em main com versão canônica.",
+     "## Decisão",
+     "**Branch apagada.** MediaMigrationTool já em main."
+    ],
+    "still_sample": [],
+    "same_basename_in_main": [
+     "docs/_arquivo/analise/dossies/feat-media-migration-tool.md"
+    ],
+    "missing_vs_same_basename": 0
+   }
+  },
+  {
+   "path": "analise/dossies/fix-ci-mocks-framer-261025.md",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "patch_lines": 34,
+   "line_check": {
+    "added": 15,
+    "missing_in_main": 15,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "# Dossiê: claude/fix-ci-mocks-framer-261025-1700",
+     "## Identificação",
+     "- **Branch**: `claude/fix-ci-mocks-framer-261025-1700`",
+     "- **Analisado em**: 2026-10-31",
+     "- **Sessão**: `claude/trusting-albattani-9x3ipg`",
+     "## Veredito: COBERTA (confiança 0.90)",
+     "Adiciona mocks do framer-motion para testes que falhavam no CI. Todos os mocks já foram aplicados em main por outros PRs de correção de CI que correram em paral",
+     "## Evidência",
+     "### merge-tree",
+     "git merge-tree --write-tree origin/main origin/claude/fix-ci-mocks-framer-261025-1700",
+     "→ exit 1 — 7 conflitos em arquivos de teste",
+     "### Estado em main",
+     "Os 7 arquivos de teste com conflito já têm as correções de mock em main, aplicadas por outros PRs do mesmo período.",
+     "## Decisão",
+     "**Branch apagada.** Mocks do framer-motion já em main."
+    ],
+    "still_sample": [],
+    "same_basename_in_main": [
+     "docs/_arquivo/analise/dossies/fix-ci-mocks-framer-261025.md"
+    ],
+    "missing_vs_same_basename": 0
+   }
+  },
+  {
+   "path": "analise/dossies/fix-ci-talkx-segments-261025.md",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "patch_lines": 34,
+   "line_check": {
+    "added": 15,
+    "missing_in_main": 15,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "# Dossiê: claude/fix-ci-talkx-segments-261025-1330",
+     "## Identificação",
+     "- **Branch**: `claude/fix-ci-talkx-segments-261025-1330`",
+     "- **Analisado em**: 2026-10-31",
+     "- **Sessão**: `claude/trusting-albattani-9x3ipg`",
+     "## Veredito: COBERTA (confiança 0.90)",
+     "Fix do hook useTalkXSegments que falhava no CI. A correção já está em main.",
+     "## Evidência",
+     "### merge-tree",
+     "git merge-tree --write-tree origin/main origin/claude/fix-ci-talkx-segments-261025-1330",
+     "→ exit 1 — 1 conflito (useTalkXSegments)",
+     "### Estado em main",
+     "`useTalkXSegments` em main já tem a correção aplicada por outro PR.",
+     "## Decisão",
+     "**Branch apagada.** Fix do useTalkXSegments já em main."
+    ],
+    "still_sample": [],
+    "same_basename_in_main": [
+     "docs/_arquivo/analise/dossies/fix-ci-talkx-segments-261025.md"
+    ],
+    "missing_vs_same_basename": 0
+   }
+  },
+  {
+   "path": "analise/dossies/fix-ci-teamchat-mount-261025.md",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "patch_lines": 34,
+   "line_check": {
+    "added": 15,
+    "missing_in_main": 15,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "# Dossiê: claude/fix-ci-teamchat-mount-261025-1340",
+     "## Identificação",
+     "- **Branch**: `claude/fix-ci-teamchat-mount-261025-1340`",
+     "- **Analisado em**: 2026-10-31",
+     "- **Sessão**: `claude/trusting-albattani-9x3ipg`",
+     "## Veredito: COBERTA (confiança 0.90)",
+     "Fix do teste de mount do team-chat que falhava no CI. A correção já está em main.",
+     "## Evidência",
+     "### merge-tree",
+     "git merge-tree --write-tree origin/main origin/claude/fix-ci-teamchat-mount-261025-1340",
+     "→ exit 1 — 1 conflito (team-chat mount test)",
+     "### Estado em main",
+     "O teste de mount do team-chat já corrigido em main.",
+     "## Decisão",
+     "**Branch apagada.** Fix de mount test do team-chat já em main."
+    ],
+    "still_sample": [],
+    "same_basename_in_main": [
+     "docs/_arquivo/analise/dossies/fix-ci-teamchat-mount-261025.md"
+    ],
+    "missing_vs_same_basename": 0
+   }
+  },
+  {
+   "path": "analise/dossies/fix-ci-testes-admin-261025.md",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "patch_lines": 36,
+   "line_check": {
+    "added": 16,
+    "missing_in_main": 16,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "# Dossiê: claude/fix-ci-testes-admin-261025-1709",
+     "## Identificação",
+     "- **Branch**: `claude/fix-ci-testes-admin-261025-1709`",
+     "- **Analisado em**: 2026-10-31",
+     "- **Sessão**: `claude/trusting-albattani-9x3ipg`",
+     "## Veredito: COBERTA (confiança 0.90)",
+     "Correções de testes de admin que falhavam no CI. As correções já estão em main.",
+     "## Evidência",
+     "### merge-tree",
+     "git merge-tree --write-tree origin/main origin/claude/fix-ci-testes-admin-261025-1709",
+     "→ exit 1 — 7 conflitos em arquivos de teste",
+     "Nenhum arquivo novo — apenas conflitos de conteúdo em arquivos de teste existentes.",
+     "### Estado em main",
+     "Os 7 arquivos de teste com conflito já têm as correções aplicadas em main por outros PRs de correção de CI do mesmo período.",
+     "## Decisão",
+     "**Branch apagada.** Correções de testes de admin já em main."
+    ],
+    "still_sample": [],
+    "same_basename_in_main": [
+     "docs/_arquivo/analise/dossies/fix-ci-testes-admin-261025.md"
+    ],
+    "missing_vs_same_basename": 0
+   }
+  },
+  {
+   "path": "analise/dossies/fix-ci-testes-geral-261025.md",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "patch_lines": 36,
+   "line_check": {
+    "added": 16,
+    "missing_in_main": 16,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "# Dossiê: claude/fix-ci-testes-geral-261025-1709",
+     "## Identificação",
+     "- **Branch**: `claude/fix-ci-testes-geral-261025-1709`",
+     "- **Analisado em**: 2026-10-31",
+     "- **Sessão**: `claude/trusting-albattani-9x3ipg`",
+     "## Veredito: COBERTA (confiança 0.90)",
+     "Correções gerais de testes que falhavam no CI. As correções já estão em main.",
+     "## Evidência",
+     "### merge-tree",
+     "git merge-tree --write-tree origin/main origin/claude/fix-ci-testes-geral-261025-1709",
+     "→ exit 1 — 3 conflitos em arquivos de teste",
+     "Nenhum arquivo novo — apenas conflitos de conteúdo em arquivos de teste existentes.",
+     "### Estado em main",
+     "Os 3 arquivos de teste com conflito já têm as correções aplicadas em main por outros PRs de correção de CI do mesmo período.",
+     "## Decisão",
+     "**Branch apagada.** Correções gerais de testes já em main."
+    ],
+    "still_sample": [],
+    "same_basename_in_main": [
+     "docs/_arquivo/analise/dossies/fix-ci-testes-geral-261025.md"
+    ],
+    "missing_vs_same_basename": 0
+   }
+  },
+  {
+   "path": "analise/dossies/fix-ci-testes-inbox-261025.md",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "patch_lines": 36,
+   "line_check": {
+    "added": 16,
+    "missing_in_main": 16,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "# Dossiê: claude/fix-ci-testes-inbox-261025-1710",
+     "## Identificação",
+     "- **Branch**: `claude/fix-ci-testes-inbox-261025-1710`",
+     "- **Analisado em**: 2026-10-31",
+     "- **Sessão**: `claude/trusting-albattani-9x3ipg`",
+     "## Veredito: COBERTA (confiança 0.90)",
+     "Correções de testes do inbox que falhavam no CI. As correções já estão em main.",
+     "## Evidência",
+     "### merge-tree",
+     "git merge-tree --write-tree origin/main origin/claude/fix-ci-testes-inbox-261025-1710",
+     "→ exit 1 — 5 conflitos em arquivos de teste",
+     "Nenhum arquivo novo — apenas conflitos de conteúdo em arquivos de teste existentes.",
+     "### Estado em main",
+     "Os 5 arquivos de teste com conflito já têm as correções aplicadas em main por outros PRs de correção de CI do mesmo período.",
+     "## Decisão",
+     "**Branch apagada.** Correções de testes do inbox já em main."
+    ],
+    "still_sample": [],
+    "same_basename_in_main": [
+     "docs/_arquivo/analise/dossies/fix-ci-testes-inbox-261025.md"
+    ],
+    "missing_vs_same_basename": 0
+   }
+  },
+  {
+   "path": "analise/dossies/fix-ci-testes-talkx-251025.md",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "patch_lines": 36,
+   "line_check": {
+    "added": 16,
+    "missing_in_main": 16,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "# Dossiê: claude/fix-ci-testes-talkx-251025-1200",
+     "## Identificação",
+     "- **Branch**: `claude/fix-ci-testes-talkx-251025-1200`",
+     "- **Analisado em**: 2026-10-31",
+     "- **Sessão**: `claude/trusting-albattani-9x3ipg`",
+     "## Veredito: COBERTA (confiança 0.90)",
+     "Correções de testes do Talk X que falhavam no CI. As correções já estão em main.",
+     "## Evidência",
+     "### merge-tree",
+     "git merge-tree --write-tree origin/main origin/claude/fix-ci-testes-talkx-251025-1200",
+     "→ exit 1 — 7 conflitos em arquivos de teste",
+     "Nenhum arquivo novo — apenas conflitos de conteúdo em arquivos de teste existentes.",
+     "### Estado em main",
+     "Os 7 arquivos de teste com conflito já têm as correções aplicadas em main por outros PRs de correção de CI do mesmo período.",
+     "## Decisão",
+     "**Branch apagada.** Correções de testes do Talk X já em main."
+    ],
+    "still_sample": [],
+    "same_basename_in_main": [
+     "docs/_arquivo/analise/dossies/fix-ci-testes-talkx-251025.md"
+    ],
+    "missing_vs_same_basename": 0
+   }
+  },
+  {
+   "path": "analise/dossies/fix-ci-testes-ui-261025.md",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "patch_lines": 36,
+   "line_check": {
+    "added": 16,
+    "missing_in_main": 16,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "# Dossiê: claude/fix-ci-testes-ui-261025-1709",
+     "## Identificação",
+     "- **Branch**: `claude/fix-ci-testes-ui-261025-1709`",
+     "- **Analisado em**: 2026-10-31",
+     "- **Sessão**: `claude/trusting-albattani-9x3ipg`",
+     "## Veredito: COBERTA (confiança 0.90)",
+     "Correções de testes de UI que falhavam no CI. As correções já estão em main.",
+     "## Evidência",
+     "### merge-tree",
+     "git merge-tree --write-tree origin/main origin/claude/fix-ci-testes-ui-261025-1709",
+     "→ exit 1 — 6 conflitos em arquivos de teste",
+     "Nenhum arquivo novo — apenas conflitos de conteúdo em arquivos de teste existentes.",
+     "### Estado em main",
+     "Os 6 arquivos de teste com conflito já têm as correções aplicadas em main por outros PRs de correção de CI do mesmo período.",
+     "## Decisão",
+     "**Branch apagada.** Correções de testes de UI já em main."
+    ],
+    "still_sample": [],
+    "same_basename_in_main": [
+     "docs/_arquivo/analise/dossies/fix-ci-testes-ui-261025.md"
+    ],
+    "missing_vs_same_basename": 0
+   }
+  },
+  {
+   "path": "analise/dossies/fix-ci-unit-tests-261025.md",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "patch_lines": 36,
+   "line_check": {
+    "added": 16,
+    "missing_in_main": 16,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "# Dossiê: claude/fix-ci-unit-tests-261025-1230",
+     "## Identificação",
+     "- **Branch**: `claude/fix-ci-unit-tests-261025-1230`",
+     "- **Analisado em**: 2026-10-31",
+     "- **Sessão**: `claude/trusting-albattani-9x3ipg`",
+     "## Veredito: COBERTA (confiança 0.90)",
+     "Correções de unit tests que falhavam no CI. As correções já estão em main.",
+     "## Evidência",
+     "### merge-tree",
+     "git merge-tree --write-tree origin/main origin/claude/fix-ci-unit-tests-261025-1230",
+     "→ exit 1 — 3 conflitos em arquivos de teste",
+     "Nenhum arquivo novo — apenas conflitos de conteúdo em arquivos de teste existentes.",
+     "### Estado em main",
+     "Os 3 arquivos de teste com conflito já têm as correções aplicadas em main por outros PRs de correção de CI do mesmo período.",
+     "## Decisão",
+     "**Branch apagada.** Correções de unit tests já em main."
+    ],
+    "still_sample": [],
+    "same_basename_in_main": [
+     "docs/_arquivo/analise/dossies/fix-ci-unit-tests-261025.md"
+    ],
+    "missing_vs_same_basename": 0
+   }
+  },
+  {
+   "path": "analise/dossies/fix-contatos-cabecalho-fab-261020.md",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "patch_lines": 36,
+   "line_check": {
+    "added": 16,
+    "missing_in_main": 16,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "# Dossiê: claude/fix-contatos-cabecalho-fab-261020-1933",
+     "## Identificação",
+     "- **Branch**: `claude/fix-contatos-cabecalho-fab-261020-1933`",
+     "- **Analisado em**: 2026-10-31",
+     "- **Sessão**: `claude/trusting-albattani-9x3ipg`",
+     "## Veredito: COBERTA (confiança 0.90)",
+     "Fix do cabeçalho e FAB de Contatos. Os arquivos novos já estão em main.",
+     "## Evidência",
+     "### merge-tree",
+     "git merge-tree --write-tree origin/main origin/claude/fix-contatos-cabecalho-fab-261020-1933",
+     "→ exit 1 — 2 conflitos de conteúdo + 2 conflitos add/add",
+     "Os 2 arquivos \"novos\" já existem em main via outro PR anterior com conteúdo diferente (conflitos add/add).",
+     "### Estado em main",
+     "Os 2 arquivos novos já existem em main com versão canônica. As correções de cabeçalho e FAB já foram integradas por outros PRs.",
+     "## Decisão",
+     "**Branch apagada.** Fix de cabeçalho e FAB de Contatos já em main."
+    ],
+    "still_sample": [],
+    "same_basename_in_main": [
+     "docs/_arquivo/analise/dossies/fix-contatos-cabecalho-fab-261020.md"
+    ],
+    "missing_vs_same_basename": 0
+   }
+  },
+  {
+   "path": "analise/dossies/fix-deno-lock-tslib-261030.md",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "patch_lines": 36,
+   "line_check": {
+    "added": 16,
+    "missing_in_main": 16,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "# Dossiê: claude/fix-deno-lock-tslib-261030-1100",
+     "## Identificação",
+     "- **Branch**: `claude/fix-deno-lock-tslib-261030-1100`",
+     "- **Analisado em**: 2026-10-31",
+     "- **Sessão**: `claude/trusting-albattani-9x3ipg`",
+     "## Veredito: COBERTA (confiança 0.90)",
+     "Atualização do deno.lock para incluir tslib. O lock file já foi atualizado em main.",
+     "## Evidência",
+     "### merge-tree",
+     "git merge-tree --write-tree origin/main origin/claude/fix-deno-lock-tslib-261030-1100",
+     "→ exit 1 — 1 conflito (deno.lock)",
+     "Único arquivo: `deno.lock`. O lock file em main já foi atualizado por deploys posteriores e contém a versão mais recente de todas as dependências, inclusive tsl",
+     "### Estado em main",
+     "`deno.lock` em main foi atualizado por deploys e PRs posteriores; a versão de main é a canônica e já inclui tslib.",
+     "## Decisão",
+     "**Branch apagada.** Atualização do deno.lock já em main."
+    ],
+    "still_sample": [],
+    "same_basename_in_main": [
+     "docs/_arquivo/analise/dossies/fix-deno-lock-tslib-261030.md"
+    ],
+    "missing_vs_same_basename": 0
+   }
+  },
+  {
+   "path": "analise/dossies/fix-deploy-functions-deno-auto-20261030.md",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "patch_lines": 36,
+   "line_check": {
+    "added": 16,
+    "missing_in_main": 16,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "# Dossiê: fix/deploy-functions-deno-auto-2026-10-30",
+     "## Identificação",
+     "- **Branch**: `fix/deploy-functions-deno-auto-2026-10-30`",
+     "- **Analisado em**: 2026-10-31",
+     "- **Sessão**: `claude/trusting-albattani-9x3ipg`",
+     "## Veredito: COBERTA (confiança 0.90)",
+     "Fix automático de deploy de edge functions com deno. As correções já estão em main.",
+     "## Evidência",
+     "### merge-tree",
+     "git merge-tree --write-tree origin/main origin/fix/deploy-functions-deno-auto-2026-10-30",
+     "→ exit 1 — 1 conflito em arquivo de configuração",
+     "Nenhum arquivo novo — apenas conflito de conteúdo em arquivo existente.",
+     "### Estado em main",
+     "O arquivo com conflito já tem a correção de deploy deno aplicada em main.",
+     "## Decisão",
+     "**Branch apagada.** Fix de deploy deno auto já em main."
+    ],
+    "still_sample": [],
+    "same_basename_in_main": [
+     "docs/_arquivo/analise/dossies/fix-deploy-functions-deno-auto-20261030.md"
+    ],
+    "missing_vs_same_basename": 0
+   }
+  },
+  {
+   "path": "analise/dossies/fix-deploy-functions-deno-none.md",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "patch_lines": 36,
+   "line_check": {
+    "added": 16,
+    "missing_in_main": 16,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "# Dossiê: claude/fix-deploy-functions-deno-none",
+     "## Identificação",
+     "- **Branch**: `claude/fix-deploy-functions-deno-none`",
+     "- **Analisado em**: 2026-10-31",
+     "- **Sessão**: `claude/trusting-albattani-9x3ipg`",
+     "## Veredito: COBERTA (confiança 0.90)",
+     "Fix do deploy de edge functions com deno. As correções já estão em main.",
+     "## Evidência",
+     "### merge-tree",
+     "git merge-tree --write-tree origin/main origin/claude/fix-deploy-functions-deno-none",
+     "→ exit 1 — 2 conflitos em arquivos de configuração",
+     "Nenhum arquivo novo — apenas conflitos de conteúdo em arquivos existentes.",
+     "### Estado em main",
+     "Os 2 arquivos com conflito já têm as correções aplicadas em main por outros PRs de deploy de edge functions.",
+     "## Decisão",
+     "**Branch apagada.** Fix de deploy de edge functions já em main."
+    ],
+    "still_sample": [],
+    "same_basename_in_main": [
+     "docs/_arquivo/analise/dossies/fix-deploy-functions-deno-none.md"
+    ],
+    "missing_vs_same_basename": 0
+   }
+  },
+  {
+   "path": "analise/dossies/fix-f1a-lote-b-batch8.md",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "patch_lines": 36,
+   "line_check": {
+    "added": 16,
+    "missing_in_main": 16,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "# Dossiê: fix/f1a-lote-b-batch8",
+     "## Identificação",
+     "- **Branch**: `fix/f1a-lote-b-batch8`",
+     "- **Analisado em**: 2026-10-31",
+     "- **Sessão**: `claude/trusting-albattani-9x3ipg`",
+     "## Veredito: COBERTA (confiança 0.90)",
+     "Fix do F1A lote B batch 8. As correções já estão em main.",
+     "## Evidência",
+     "### merge-tree",
+     "git merge-tree --write-tree origin/main origin/fix/f1a-lote-b-batch8",
+     "→ exit 1 — 2 conflitos em arquivos existentes",
+     "Nenhum arquivo novo — apenas conflitos de conteúdo em 2 arquivos existentes.",
+     "### Estado em main",
+     "Os 2 arquivos com conflito já têm as correções do batch 8 aplicadas em main.",
+     "## Decisão",
+     "**Branch apagada.** Fix F1A lote B batch 8 já em main."
+    ],
+    "still_sample": [],
+    "same_basename_in_main": [
+     "docs/_arquivo/analise/dossies/fix-f1a-lote-b-batch8.md"
+    ],
+    "missing_vs_same_basename": 0
+   }
+  },
+  {
+   "path": "analise/dossies/fix-f1a-lote-b-useknowledgebase.md",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "patch_lines": 36,
+   "line_check": {
+    "added": 16,
+    "missing_in_main": 16,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "# Dossiê: fix/f1a-lote-b-useknowledgebase",
+     "## Identificação",
+     "- **Branch**: `fix/f1a-lote-b-useknowledgebase`",
+     "- **Analisado em**: 2026-10-31",
+     "- **Sessão**: `claude/trusting-albattani-9x3ipg`",
+     "## Veredito: COBERTA (confiança 0.90)",
+     "Fix do hook useKnowledgeBase no F1A lote B. As correções já estão em main.",
+     "## Evidência",
+     "### merge-tree",
+     "git merge-tree --write-tree origin/main origin/fix/f1a-lote-b-useknowledgebase",
+     "→ exit 1 — 2 conflitos em arquivos existentes",
+     "Nenhum arquivo novo — apenas conflitos de conteúdo em 2 arquivos existentes.",
+     "### Estado em main",
+     "Os 2 arquivos com conflito já têm as correções do useKnowledgeBase aplicadas em main.",
+     "## Decisão",
+     "**Branch apagada.** Fix useKnowledgeBase F1A lote B já em main."
+    ],
+    "still_sample": [],
+    "same_basename_in_main": [
+     "docs/_arquivo/analise/dossies/fix-f1a-lote-b-useknowledgebase.md"
+    ],
+    "missing_vs_same_basename": 0
+   }
+  },
+  {
+   "path": "analise/dossies/fix-main-tests-231023.md",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "patch_lines": 36,
+   "line_check": {
+    "added": 16,
+    "missing_in_main": 16,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "# Dossiê: claude/fix-main-tests-231023-1530",
+     "## Identificação",
+     "- **Branch**: `claude/fix-main-tests-231023-1530`",
+     "- **Analisado em**: 2026-10-31",
+     "- **Sessão**: `claude/trusting-albattani-9x3ipg`",
+     "## Veredito: COBERTA (confiança 0.90)",
+     "Correções amplas de testes (branch de outubro de 2023). As correções já estão em main.",
+     "## Evidência",
+     "### merge-tree",
+     "git merge-tree --write-tree origin/main origin/claude/fix-main-tests-231023-1530",
+     "→ exit 1 — 23 conflitos em arquivos de teste",
+     "Nenhum arquivo novo — apenas conflitos de conteúdo em 23 arquivos de teste existentes. Branch antiga (outubro 2023); todo o conteúdo foi absorvido por PRs suces",
+     "### Estado em main",
+     "Os 23 arquivos de teste com conflito já têm as correções aplicadas em main; a `main` atual é substancialmente mais avançada que o ponto de fork desta branch.",
+     "## Decisão",
+     "**Branch apagada.** Correções de testes já em main (branch muito antiga, completamente absorvida)."
+    ],
+    "still_sample": [],
+    "same_basename_in_main": [
+     "docs/_arquivo/analise/dossies/fix-main-tests-231023.md"
+    ],
+    "missing_vs_same_basename": 0
+   }
+  },
+  {
+   "path": "analise/dossies/fix-talkx-hook-morto-261025.md",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "patch_lines": 36,
+   "line_check": {
+    "added": 16,
+    "missing_in_main": 16,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "# Dossiê: claude/fix-talkx-hook-morto-261025-1915",
+     "## Identificação",
+     "- **Branch**: `claude/fix-talkx-hook-morto-261025-1915`",
+     "- **Analisado em**: 2026-10-31",
+     "- **Sessão**: `claude/trusting-albattani-9x3ipg`",
+     "## Veredito: COBERTA (confiança 0.90)",
+     "Fix de hook morto do Talk X. Os arquivos novos já estão em main.",
+     "## Evidência",
+     "### merge-tree",
+     "git merge-tree --write-tree origin/main origin/claude/fix-talkx-hook-morto-261025-1915",
+     "→ exit 1 — 12 conflitos de conteúdo + 2 conflitos add/add",
+     "Os 2 arquivos \"novos\" já existem em main via outro PR com conteúdo diferente (conflitos add/add).",
+     "### Estado em main",
+     "Os 2 arquivos novos já existem em main com versão canônica. O hook do Talk X já foi corrigido por outros PRs do mesmo período.",
+     "## Decisão",
+     "**Branch apagada.** Fix do hook morto do Talk X já em main."
+    ],
+    "still_sample": [],
+    "same_basename_in_main": [
+     "docs/_arquivo/analise/dossies/fix-talkx-hook-morto-261025.md"
+    ],
+    "missing_vs_same_basename": 0
+   }
+  },
+  {
+   "path": "analise/dossies/optimistic-hypatia.md",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "patch_lines": 36,
+   "line_check": {
+    "added": 16,
+    "missing_in_main": 16,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "# Dossiê: optimistic-hypatia-5ormu1",
+     "## Identificação",
+     "- **Branch**: `optimistic-hypatia-5ormu1`",
+     "- **Analisado em**: 2026-10-31",
+     "- **Sessão**: `claude/trusting-albattani-9x3ipg`",
+     "## Veredito: COBERTA (confiança 0.90)",
+     "Branch de dossiês de análise de PRs (analise-prs). Os 13 dossiês novos já estão em main.",
+     "## Evidência",
+     "### merge-tree",
+     "git merge-tree --write-tree origin/main origin/optimistic-hypatia-5ormu1",
+     "→ exit 1 — 14 conflitos de conteúdo + 13 conflitos add/add (arquivos de analise-prs)",
+     "Os 13 arquivos \"novos\" (dossiês em `analise/prs/`) já existem em main via PRs de lotes anteriores desta mesma sessão de análise.",
+     "### Estado em main",
+     "Os 13 arquivos de dossiê de analise-prs já existem em main com conteúdo canônico; a `main` contém a versão mais recente de cada dossiê.",
+     "## Decisão",
+     "**Branch apagada.** Dossiês de analise-prs já em main."
+    ],
+    "still_sample": [],
+    "same_basename_in_main": [
+     "docs/_arquivo/analise/dossies/optimistic-hypatia.md"
+    ],
+    "missing_vs_same_basename": 0
+   }
+  },
+  {
+   "path": "analise/dossies/wizardly-meitner.md",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "patch_lines": 36,
+   "line_check": {
+    "added": 16,
+    "missing_in_main": 16,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "# Dossiê: wizardly-meitner-aejx3i",
+     "## Identificação",
+     "- **Branch**: `wizardly-meitner-aejx3i`",
+     "- **Analisado em**: 2026-10-31",
+     "- **Sessão**: `claude/trusting-albattani-9x3ipg`",
+     "## Veredito: COBERTA (confiança 0.90)",
+     "Branch de dossiês de análise de PRs (analise-prs), lote maior. Os 28 dossiês novos já estão em main.",
+     "## Evidência",
+     "### merge-tree",
+     "git merge-tree --write-tree origin/main origin/wizardly-meitner-aejx3i",
+     "→ exit 1 — 13 conflitos de conteúdo + 28 conflitos add/add (arquivos de analise-prs)",
+     "Os 28 arquivos \"novos\" (dossiês em `analise/prs/`) já existem em main via PRs de lotes anteriores desta mesma sessão de análise.",
+     "### Estado em main",
+     "Os 28 arquivos de dossiê de analise-prs já existem em main com conteúdo canônico.",
+     "## Decisão",
+     "**Branch apagada.** Dossiês de analise-prs já em main."
+    ],
+    "still_sample": [],
+    "same_basename_in_main": [
+     "docs/_arquivo/analise/dossies/wizardly-meitner.md"
+    ],
+    "missing_vs_same_basename": 0
+   }
+  },
+  {
+   "path": "analise/progresso.json",
+   "status": "BOTH_CHANGED",
+   "hunk": "CONFLICT",
+   "patch_lines": 549,
+   "line_check": {
+    "added": 428,
+    "missing_in_main": 410,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "Total: 56 entries",
+     "      \"verificado_em\": \"2026-10-30\",",
+     "      \"verificacao_sessao\": \"claude/trusting-albattani-9x3ipg\",",
+     "      \"notas\": \"Fases 1-2 do plano de telefonia (biblioteca de domínio + contrato de dados). Conteúdo 100% em main: migration 20260926800000 em produção, src/li",
+     "      \"branch\": \"automation/types-sync\",",
+     "      \"tip_sha\": \"f5e651e01\",",
+     "      \"confianca\": 0.97,",
+     "      \"dossie\": \"analise/dossies/automation-types-sync.md\",",
+     "      \"analisado_em\": \"2026-10-31\",",
+     "      \"sessao\": \"claude/trusting-albattani-9x3ipg\",",
+     "      \"notas\": \"merge-tree produce tree = main tree (f7b413078b11e47b67f521e0a5d32ea294583c83). Fixes de db-inventory chegaram à main por outros PRs. Branch apa",
+     "      \"branch\": \"claude/fervent-noether-vvq63j\",",
+     "      \"tip_sha\": \"95295a7cb\",",
+     "      \"confianca\": 0.97,",
+     "      \"dossie\": \"analise/dossies/claude-fervent-noether-vvq63j.md\",",
+     "      \"analisado_em\": \"2026-10-31\",",
+     "      \"sessao\": \"claude/trusting-albattani-9x3ipg\",",
+     "      \"notas\": \"merge-tree produce tree = main tree (f7b413078b11e47b67f521e0a5d32ea294583c83). Correção hash pngjs chegou à main. Branch apagada.\"",
+     "      \"branch\": \"claude/fix-deploy-functions-2408\",",
+     "      \"tip_sha\": \"b643d5d43\",",
+     "      \"veredito\": \"COBERTA\",",
+     "      \"confianca\": 0.9,",
+     "      \"dossie\": \"analise/dossies/claude-fix-deploy-functions-2408.md\",",
+     "      \"analisado_em\": \"2026-10-31\",",
+     "      \"sessao\": \"claude/trusting-albattani-9x3ipg\","
+    ],
+    "still_sample": []
+   }
+  }
+ ],
+ "counts": {
+  "migrations": "0",
+  "workflows": "0",
+  "src": "0",
+  "edges": "0",
+  "docs_only": "no",
+  "lines_branch_has_main_lacks": "1230",
+  "lines_main_has_branch_lacks": "155"
+ },
+ "auto": "MISTO_CONFLITO",
+ "n_files_with_gaps": 26,
+ "gap_lines_total": 812
+}

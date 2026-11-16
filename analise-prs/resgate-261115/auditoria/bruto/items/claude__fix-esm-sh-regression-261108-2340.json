@@ -1,0 +1,83 @@
+{
+ "id": "claude__fix-esm-sh-regression-261108-2340",
+ "kind": "branch",
+ "ref": "origin/claude/fix-esm-sh-regression-261108-2340",
+ "tip": "890f8996af58433c69bba068063d2d4d01e1124b",
+ "merge_base": "401ea3d4d12c960ecc6d758943ed1cf77662c80a",
+ "ahead": 3,
+ "last_commit_date": "2026-11-10",
+ "merge_base_date": "2026-11-10",
+ "prs_with_same_tip": [
+  2868
+ ],
+ "triagem_2804": {
+  "2868": null
+ },
+ "closure_comment": {},
+ "files": [
+  {
+   "path": "supabase/deployment-manifest.json",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 51,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 7,
+    "missing_in_main": 5,
+    "removed": 7,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "      \"sha256\": \"347fe67cd97b5b155cc70fe7780f8b9576b28a493cb6e1eb2176ab565defdbd0\"",
+     "      \"sha256\": \"1a5b6681b88f746051ac2f8402c8df7d36d20f455cd37d7586f202eb9a48415b\"",
+     "      \"source_sha256\": \"5c38e53b4541f2dac54cc85307b09b38a9855a7b9ab2f2baae69236d622d86e1\",",
+     "      \"source_sha256\": \"faf1ae39c67918696c649248d5c3d76e2c13109b15507024199a8d276c843512\",",
+     "  \"manifest_sha256\": \"5abb596c25267fe9b705995c8a1851b37364ffe6f29a1006d4ec1b59059b9526\""
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "supabase/functions/cleanup-rate-limit-logs/index.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 10,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 1,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "import { createClient } from 'npm:@supabase/supabase-js@2.87.1';"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "supabase/functions/external-db-proxy/index.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 10,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 1,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "import { createClient } from 'npm:@supabase/supabase-js@2.87.1'"
+    ],
+    "still_sample": []
+   }
+  }
+ ],
+ "counts": {
+  "migrations": "0",
+  "workflows": "0",
+  "src": "0",
+  "edges": "2",
+  "docs_only": "no",
+  "lines_branch_has_main_lacks": "124",
+  "lines_main_has_branch_lacks": "401"
+ },
+ "auto": "MISTO_CONFLITO",
+ "n_files_with_gaps": 3,
+ "gap_lines_total": 7
+}

@@ -1,0 +1,158 @@
+{
+ "id": "claude__fix-teste-notas-titulo-erro-261101-1410",
+ "kind": "branch",
+ "ref": "origin/claude/fix-teste-notas-titulo-erro-261101-1410",
+ "tip": "ac145076c027fe78a721270a5932dc5645e9ad48",
+ "merge_base": "1252bb5a41123ba4d49efd84d0f91604bff6c87c",
+ "ahead": 5,
+ "last_commit_date": "2026-11-01",
+ "merge_base_date": "2026-11-01",
+ "prs_with_same_tip": [
+  2475
+ ],
+ "triagem_2804": {
+  "2475": "OBSOLETA"
+ },
+ "closure_comment": {},
+ "files": [
+  {
+   "path": "src/components/contacts/__tests__/ContactNotes.editarFixar.test.tsx",
+   "status": "MAIN_UNCHANGED_SINCE_BASE",
+   "patch_lines": 199,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 46,
+    "missing_in_main": 43,
+    "removed": 33,
+    "removed_still_in_main": 33,
+    "missing_sample": [
+     "import { TestQueryWrapper } from '@/test/mocks/queryClient';",
+     "import { toast as toastHook } from '@/hooks/ui/use-toast';",
+     " * altera ZERO linhas. A tela grava pelo `useContactNotes` (`editNote`/`togglePin` →",
+     " * `ContactService.updateNote`, que pede a linha de volta com `.select().single()`): sem linha",
+     " * alterada o PostgREST devolve PGRST116, a mutação falha e o toast de erro é do hook.",
+     "  /** false = RLS não alcança a nota: o UPDATE altera zero linhas. */",
+     "  updateAllowed: true,",
+     "      _orders: [] as Array<{ col: string; asc: boolean }>,",
+     "      _range: null as [number, number] | null,",
+     "    q.order = vi.fn((col: string, opts?: { ascending?: boolean }) => {",
+     "      (q._orders as Array<{ col: string; asc: boolean }>).push({ col, asc: opts?.ascending ?? true });",
+     "    q.range = vi.fn((from: number, to: number) => {",
+     "      q._range = [from, to];",
+     "    // A consulta é \"thenable\": o serviço faz `await supabase.from(...)....`.",
+     "        h.updateCalls.push({ id, patch: q._patch as Record<string, unknown> });",
+     "        const row = h.notes.find((n) => n.id === id);",
+     "        if (h.updateAllowed && row) {",
+     "          // Não muta o objeto original (as constantes dos testes são compartilhadas).",
+     "          const atualizada = { ...row, ...(q._patch as Record<string, unknown>) };",
+     "          h.notes = h.notes.map((n) => (n.id === id ? atualizada : n));",
+     "          result = { data: atualizada, error: null };",
+     "          // RLS: UPDATE em nota de outro autor altera ZERO linhas; `.single()` vira PGRST116.",
+     "          result = { data: null, error: { code: 'PGRST116', message: 'JSON object requested, multiple (or no) rows returned' } };",
+     "        const orders = q._orders as Array<{ col: string; asc: boolean }>;",
+     "        const val = (row: Record<string, unknown>, col: string): number | string =>"
+    ],
+    "still_sample": [
+     "import { QueryClient, QueryClientProvider } from '@tanstack/react-query';",
+     "import React from 'react';",
+     " * altera ZERO linhas e o PostgREST responde 204 vazio. Por isso o componente pede",
+     " * a linha de volta (`select('id')`) antes de mexer na tela.",
+     "  /** Vazio = simula PGRST116 (zero linhas afetadas pelo .single()). */",
+     "  updateRows: [{ id: 'x' }] as Array<{ id: string }>,",
+     "const useToastSpy = vi.hoisted(() => vi.fn());",
+     "vi.mock('@/hooks/ui/use-toast', () => ({ toast: useToastSpy, useToast: () => ({ toast: useToastSpy }) }));",
+     "    q.order = vi.fn(() => q);",
+     "    q.limit = vi.fn(() => q);"
+    ]
+   }
+  },
+  {
+   "path": "src/components/contacts/__tests__/ContactNotes.ordemFoco.test.tsx",
+   "status": "MAIN_UNCHANGED_SINCE_BASE",
+   "patch_lines": 182,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 32,
+    "missing_in_main": 31,
+    "removed": 30,
+    "removed_still_in_main": 30,
+    "missing_sample": [
+     "import { TestQueryWrapper } from '@/test/mocks/queryClient';",
+     " * três defeitos — fixada antiga sumia atrás do limite de 20, o foco só era tratado",
+     " * ao abrir o editor (ao fechar caía no body) e faltava o desempate final por `id` desc.",
+     " * Na `main` a ficha lê as notas pelo `useContactNotes` (leitura paginada COMPLETA, sem",
+     " * limite de 20; fixadas primeiro e desempate por `id` desc no hook), então os testes de",
+     " * ordem provam esse caminho. O mock honra `.order()` + `.range()` como o PostgREST.",
+     "  updateAllowed: true,",
+     "      _range: null as [number, number] | null,",
+     "    q.range = vi.fn((from: number, to: number) => {",
+     "      q._range = [from, to];",
+     "    // A consulta é \"thenable\": o serviço faz `await supabase.from(...)....`.",
+     "        h.updateCalls.push({ id, patch: q._patch as Record<string, unknown> });",
+     "        const row = h.notes.find((n) => n.id === id);",
+     "        if (h.updateAllowed && row) {",
+     "          // Não muta o objeto original (as constantes dos testes são compartilhadas).",
+     "          const atualizada = { ...row, ...(q._patch as Record<string, unknown>) };",
+     "          h.notes = h.notes.map((n) => (n.id === id ? atualizada : n));",
+     "          result = { data: atualizada, error: null };",
+     "          // RLS: UPDATE em nota de outro autor altera ZERO linhas; `.single()` vira PGRST116.",
+     "          result = { data: null, error: { code: 'PGRST116', message: 'JSON object requested, multiple (or no) rows returned' } };",
+     "        const range = q._range as [number, number] | null;",
+     "        result = { data: range ? rows.slice(range[0], range[1] + 1) : rows, error: null };",
+     "vi.mock('@/hooks/ui/use-toast', () => ({ toast: vi.fn(), useToast: () => ({ toast: vi.fn() }) }));",
+     "  h.updateAllowed = true;",
+     "  it('fixada mais antiga que as 20 recentes segue visível no topo (leitura paginada completa + hook)', async () => {"
+    ],
+    "still_sample": [
+     "import { QueryClient, QueryClientProvider } from '@tanstack/react-query';",
+     "import React from 'react';",
+     " * três defeitos que o próprio diff mostrava — a lista buscava as 20 mais",
+     " * recentes e só depois punha as fixadas no topo (fixada antiga sumia), o foco",
+     " * só era tratado ao abrir o editor (ao fechar caía no body) e o orderNotes do",
+     " * componente não tinha o desempate final por `id` desc do hook.",
+     " * O mock abaixo HONRA `.order()` + `.limit()` como o PostgREST: ordena a cópia",
+     " * das notas pelas cláusulas registradas e só então corta no limite. Sem isso o",
+     " * teste do ponto 1 passaria antes e depois (o cliente reordenava tudo).",
+     "      _limit: null as number | null,"
+    ]
+   }
+  },
+  {
+   "path": "src/components/contacts/__tests__/ContactNotes.semColuna.test.tsx",
+   "status": "MAIN_UNCHANGED_SINCE_BASE",
+   "patch_lines": 31,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 2,
+    "missing_in_main": 2,
+    "removed": 7,
+    "removed_still_in_main": 7,
+    "missing_sample": [
+     "import { TestQueryWrapper } from '@/test/mocks/queryClient';",
+     "  render(<ContactNotes contactId=\"c1\" />, { wrapper: TestQueryWrapper });"
+    ],
+    "still_sample": [
+     "import { QueryClient, QueryClientProvider } from '@tanstack/react-query';",
+     "import React from 'react';",
+     "function wrapper({ children }: { children: React.ReactNode }) {",
+     "  const queryClient = new QueryClient({",
+     "    defaultOptions: { queries: { retry: false, gcTime: 0 }, mutations: { retry: false } },",
+     "  return <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>;",
+     "  render(<ContactNotes contactId=\"c1\" />, { wrapper });"
+    ]
+   }
+  }
+ ],
+ "counts": {
+  "migrations": "0",
+  "workflows": "0",
+  "src": "3",
+  "edges": "0",
+  "docs_only": "no",
+  "lines_branch_has_main_lacks": "86",
+  "lines_main_has_branch_lacks": "78"
+ },
+ "auto": "TRABALHO_AUSENTE_APLICA_LIMPO",
+ "n_files_with_gaps": 3,
+ "gap_lines_total": 146
+}

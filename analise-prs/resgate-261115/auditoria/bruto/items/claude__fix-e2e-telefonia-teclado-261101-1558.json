@@ -1,0 +1,45 @@
+{
+ "id": "claude__fix-e2e-telefonia-teclado-261101-1558",
+ "kind": "branch",
+ "ref": "origin/claude/fix-e2e-telefonia-teclado-261101-1558",
+ "tip": "e5fd0eb9a63b2cd01f063c9781b515367ef0384b",
+ "merge_base": "1252bb5a41123ba4d49efd84d0f91604bff6c87c",
+ "ahead": 5,
+ "last_commit_date": "2026-11-01",
+ "merge_base_date": "2026-11-01",
+ "prs_with_same_tip": [
+  2489
+ ],
+ "triagem_2804": {
+  "2489": "OBSOLETA"
+ },
+ "closure_comment": {},
+ "files": [
+  {
+   "path": "e2e/telefonia.spec.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 12,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 0,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [],
+    "still_sample": []
+   }
+  }
+ ],
+ "counts": {
+  "migrations": "0",
+  "workflows": "0",
+  "src": "0",
+  "edges": "0",
+  "docs_only": "no",
+  "lines_branch_has_main_lacks": "5",
+  "lines_main_has_branch_lacks": "38"
+ },
+ "auto": "INCORPORADA_PROVA_LINHAS",
+ "n_files_with_gaps": 0,
+ "gap_lines_total": 0
+}

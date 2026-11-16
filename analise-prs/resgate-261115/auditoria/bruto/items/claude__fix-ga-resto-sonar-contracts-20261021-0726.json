@@ -1,0 +1,732 @@
+{
+ "id": "claude__fix-ga-resto-sonar-contracts-20261021-0726",
+ "kind": "branch",
+ "ref": "origin/claude/fix-ga-resto-sonar-contracts-20261021-0726",
+ "tip": "dc8b634941014141d81b0874a273cff3a1029c09",
+ "merge_base": "d7af7a671ca2bd7005b75b0aa54c0f0c4672befc",
+ "ahead": 1,
+ "last_commit_date": "2026-10-21",
+ "merge_base_date": "2026-10-19",
+ "prs_with_same_tip": [
+  2145
+ ],
+ "triagem_2804": {
+  "2145": "OBSOLETA"
+ },
+ "closure_comment": {},
+ "files": [
+  {
+   "path": ".github/workflows/db-live-guard.yml",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 121,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 24,
+    "missing_in_main": 13,
+    "removed": 2,
+    "removed_still_in_main": 2,
+    "missing_sample": [
+     "          appendFileSync(process.env.GITHUB_OUTPUT, `destino=${destinoSeguro}\\n`);",
+     "          DESTINO_URL: ${{ steps.credencial.outputs.destino }}",
+     "          DESTINO_URL: ${{ steps.credencial.outputs.destino }}",
+     "          DESTINO_URL: ${{ steps.credencial.outputs.destino }}",
+     "          DESTINO_URL: ${{ steps.credencial.outputs.destino }}",
+     "          DESTINO_URL: ${{ steps.credencial.outputs.destino }}",
+     "          DESTINO_URL: ${{ steps.credencial.outputs.destino }}",
+     "          DESTINO_URL: ${{ steps.credencial.outputs.destino }}",
+     "          DESTINO_URL: ${{ steps.credencial.outputs.destino }}",
+     "          GHCR_IMG=\"ghcr.io/supabase/postgres-meta:v0.98.0@sha256:cef71ba901751dcc242cc685cf13786935ea8926820fb342f23bb0fbef77de5a\"",
+     "          DESTINO_URL: ${{ steps.credencial.outputs.destino }}",
+     "          DESTINO_URL: ${{ steps.credencial.outputs.destino }}",
+     "          DESTINO_URL: ${{ steps.credencial.outputs.destino }}"
+    ],
+    "still_sample": [
+     "          appendFileSync(process.env.GITHUB_ENV, `DESTINO_URL=${destinoSeguro}\\n`);",
+     "          GHCR_IMG=\"ghcr.io/supabase/postgres-meta:v0.98.0\""
+    ]
+   }
+  },
+  {
+   "path": ".github/workflows/db-migrate.yml",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 233,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 49,
+    "missing_in_main": 30,
+    "removed": 6,
+    "removed_still_in_main": 6,
+    "missing_sample": [
+     "        id: credencial",
+     "          appendFileSync(process.env.GITHUB_OUTPUT, `destino=${tls.connectionString}\\n`);",
+     "          // lista de PG* tratada pelo withPsqlEnvironment. GA21: nenhum passo",
+     "          // redeclara o secret e nenhum DSN vai para o GITHUB_ENV — o mesmo",
+     "          // DSN endurecido (ja mascarado) sai nos outputs deste passo como",
+     "          // destino= e supabase_db_url=; cada passo declara env proprio.",
+     "          appendFileSync(process.env.GITHUB_OUTPUT, `supabase_db_url=${tls.connectionString}\\n`);",
+     "          DESTINO_URL: ${{ steps.credencial.outputs.destino }}",
+     "          DESTINO_URL: ${{ steps.credencial.outputs.destino }}",
+     "          DESTINO_URL: ${{ steps.credencial.outputs.destino }}",
+     "          SUPABASE_DB_URL: ${{ steps.credencial.outputs.supabase_db_url }}",
+     "          SUPABASE_DB_URL: ${{ steps.credencial.outputs.supabase_db_url }}",
+     "          DESTINO_URL: ${{ steps.credencial.outputs.destino }}",
+     "          DESTINO_URL: ${{ steps.credencial.outputs.destino }}",
+     "          DESTINO_URL: ${{ steps.credencial.outputs.destino }}",
+     "          DESTINO_URL: ${{ steps.credencial.outputs.destino }}",
+     "          DESTINO_URL: ${{ steps.credencial.outputs.destino }}",
+     "          DESTINO_URL: ${{ steps.credencial.outputs.destino }}",
+     "          DESTINO_URL: ${{ steps.credencial.outputs.destino }}",
+     "          DESTINO_URL: ${{ steps.credencial.outputs.destino }}",
+     "          DESTINO_URL: ${{ steps.credencial.outputs.destino }}",
+     "          DESTINO_URL: ${{ steps.credencial.outputs.destino }}",
+     "          DESTINO_URL: ${{ steps.credencial.outputs.destino }}",
+     "          DESTINO_URL: ${{ steps.credencial.outputs.destino }}",
+     "          DESTINO_URL: ${{ steps.credencial.outputs.destino }}"
+    ],
+    "still_sample": [
+     "          appendFileSync(process.env.GITHUB_ENV, `DESTINO_URL=${tls.connectionString}\\n`);",
+     "          // lista de PG* tratada pelo withPsqlEnvironment. O `env:` dos passos",
+     "          // redeclarava DESTINO_URL a partir do secret bruto e sobrescrevia o",
+     "          // DSN endurecido do GITHUB_ENV; agora o mesmo DSN endurecido (ja",
+     "          // mascarado) sai no GITHUB_ENV tambem como SUPABASE_DB_URL.",
+     "          appendFileSync(process.env.GITHUB_ENV, `SUPABASE_DB_URL=${tls.connectionString}\\n`);"
+    ]
+   }
+  },
+  {
+   "path": ".github/workflows/e2e-logado.yml",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 62,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 21,
+    "missing_in_main": 15,
+    "removed": 11,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "#   gatilho: fim do CI na main (workflow_run) e dispatch manual",
+     "  # W71/GA08: dispara apos o CI/CD Pipeline concluir na main (nao a cada push —",
+     "  # so quando o codigo ja passou nos checks) ou por dispatch manual. Sem",
+     "  # pull_request de proposito: este workflow usa secrets de login.",
+     "    workflows: ['CI/CD Pipeline']",
+     "# GA09: grupo FIXO \"e2e-logado\" serializa as runs — a nova aguarda em vez de",
+     "# cancelar a atual. Com workflow_run o E2E ja e posterior ao CI; cancelar uma",
+     "# run quase pronta geraria falso negativo. Grupo com ref/sha permitiria 2 runs",
+     "# concorrentes do mesmo suite contra a mesma producao.",
+     "  group: e2e-logado",
+     "    # GA08: dispatch manual ou workflow_run de push na main do proprio repo com",
+     "    # CI verde. Sem as 3 condicoes, um fork com branch main dispara o E2E com",
+     "    # os secrets do repo (Scorecard #40 Dangerous-Workflow).",
+     "      github.event_name == 'workflow_dispatch' ||",
+     "      github.event.workflow_run.head_repository.full_name == github.repository)"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": ".github/workflows/targeted-ledger-evidence.yml",
+   "status": "MAIN_UNCHANGED_SINCE_BASE",
+   "patch_lines": 28,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 3,
+    "missing_in_main": 3,
+    "removed": 1,
+    "removed_still_in_main": 1,
+    "missing_sample": [
+     "        id: credencial",
+     "          appendFileSync(process.env.GITHUB_OUTPUT, `destino=${tls.connectionString}\\n`);",
+     "          DESTINO_URL: ${{ steps.credencial.outputs.destino }}"
+    ],
+    "still_sample": [
+     "          appendFileSync(process.env.GITHUB_ENV, `DESTINO_URL=${tls.connectionString}\\n`);"
+    ]
+   }
+  },
+  {
+   "path": ".github/workflows/types-sync.yml",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 96,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 25,
+    "missing_in_main": 23,
+    "removed": 11,
+    "removed_still_in_main": 10,
+    "missing_sample": [
+     "        id: credencial",
+     "          // GA21: o DSN endurecido sai por outputs do passo, NUNCA pelo",
+     "          // GITHUB_ENV (o arquivo do GITHUB_ENV e lido por todos os passos",
+     "          // seguintes, incluindo actions de terceiros). Cada passo que precisa",
+     "          // do banco declara `env: DESTINO_URL: ${{ steps.credencial.outputs.destino }}`.",
+     "          appendFileSync(process.env.GITHUB_OUTPUT, `destino=${destinoSeguro}\\n`);",
+     "      # PGSSLMODE vem do GITHUB_ENV gravado pelo passo anterior. O DSN (ja",
+     "      # endurecido com TLS) chega por env: proprio a partir do output do passo",
+     "      # de credencial — sem redeclarar o secret cru, que perderia o TLS.",
+     "          GHCR_IMG=\"ghcr.io/supabase/postgres-meta:v0.98.0@sha256:cef71ba901751dcc242cc685cf13786935ea8926820fb342f23bb0fbef77de5a\"",
+     "          DESTINO_URL: ${{ steps.credencial.outputs.destino }}",
+     "      # O DSN chega por env: proprio (output do passo de credencial) — a mesma",
+     "      # razao do passo \"Gerar candidatos\" acima.",
+     "          DESTINO_URL: ${{ steps.credencial.outputs.destino }}",
+     "          DESTINO_URL: ${{ steps.credencial.outputs.destino }}",
+     "          # GA20: o passo \"Aplicar candidatos\" copiou o novo por cima do antigo",
+     "          # ANTES deste gate — comparar supabase/schema-catalog.json seria",
+     "          # comparar o arquivo com ele mesmo (um DROP passaria). O antigo vem",
+     "          # do git HEAD (checkout tem o commit; fetch-depth 1 basta).",
+     "          # F-01: pipefail como nos Gates 1 e 2 — sem ele o tee sai 0 e o gate",
+     "          # passa mesmo com o script bloqueando.",
+     "          git show HEAD:supabase/schema-catalog.json > /tmp/catalog.old.json",
+     "          if node scripts/db-audit/check-remocoes-destrutivas.mjs /tmp/catalog.old.json /tmp/catalog.new.json 2>&1 | tee /tmp/gate3.log; then"
+    ],
+    "still_sample": [
+     "          appendFileSync(process.env.GITHUB_ENV, `DESTINO_URL=${destinoSeguro}\\n`);",
+     "      # DESTINO_URL (ja endurecido com TLS) e PGSSLMODE vem do GITHUB_ENV",
+     "      # gravado pelo passo anterior — sem env: proprio aqui, que sobrescreveria",
+     "      # com o secret cru sem TLS.",
+     "          GHCR_IMG=\"ghcr.io/supabase/postgres-meta:v0.98.0\"",
+     "      # DESTINO_URL (endurecido) vem do GITHUB_ENV do 1o passo — sem env:",
+     "      # proprio aqui pela mesma razao do passo \"Gerar candidatos\" acima.",
+     "          # F-01 (auditoria 2026-09-27): mesmo pipefail dos Gates 1 e 2 — sem ele o",
+     "          # tee sempre saia 0 e o gate passava mesmo com o script bloqueando.",
+     "          if node scripts/db-audit/check-remocoes-destrutivas.mjs supabase/schema-catalog.json /tmp/catalog.new.json 2>&1 | tee /tmp/gate3.log; then"
+    ]
+   }
+  },
+  {
+   "path": ".sonarcloud.properties",
+   "status": "MAIN_UNCHANGED_SINCE_BASE",
+   "patch_lines": 25,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 12,
+    "missing_in_main": 12,
+    "removed": 1,
+    "removed_still_in_main": 1,
+    "missing_sample": [
+     "# GA86 (plano de 15/10/2026): as evidencias de auditoria em docs/reconciliation/",
+     "# saem de TODA a analise (issues + hotspots + CPD). Motivo: sao artefatos",
+     "# GERADOS por harnesses locais de auditoria (probes .mjs/.cjs/.py e relatorios",
+     "# .md de execucao unica) — nunca executam em producao nem no CI de PR, e os",
+     "# padroes que o Sonar acusa neles (path traversal em construtor de relatorio",
+     "# local, Function/eval em fixture de teste, `open()` de caminho de argv em",
+     "# script de bancada) nao sao exploraveis: o harness roda na maquina do auditor",
+     "# sobre fixtures locais. Eram ~270 issues BLOCKER/HIGH em codigo novo (E em",
+     "# seguranca, D em confiabilidade) sem nenhum achado em codigo entregue.",
+     "# Consequencia aceita: quem quiser auditar os harnesses usa o proprio Sonar",
+     "# local; o portao da main volta a medir o codigo entregue.",
+     "sonar.exclusions=supabase/schema-manifest.json,docs/reconciliation/**"
+    ],
+    "still_sample": [
+     "sonar.exclusions=supabase/schema-manifest.json"
+    ]
+   }
+  },
+  {
+   "path": "CLAUDE.md",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 13,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 1,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "**Plano vigente:** `docs/audits/PLANO_GITHUB_ACTIONS_100_ETAPAS_2026-10-15.md` (auditoria exaustiva dos 16 arquivos de `.github/workflows/` (+3 workflows dinâmi"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "scripts/ci/actions-kpi.unit.mjs",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 22,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 2,
+    "missing_in_main": 2,
+    "removed": 2,
+    "removed_still_in_main": 2,
+    "missing_sample": [
+     "const paginaDe = (caminho) => Number(new URL(caminho, 'https://x').searchParams.get('page'));",
+     "  const paginaDeJobs = (caminho) => Number(new URL(caminho, 'https://x').searchParams.get('page'));"
+    ],
+    "still_sample": [
+     "const paginaDe = (caminho) => Number(new URL(caminho, 'http://x').searchParams.get('page'));",
+     "  const paginaDeJobs = (caminho) => Number(new URL(caminho, 'http://x').searchParams.get('page'));"
+    ]
+   }
+  },
+  {
+   "path": "scripts/ci/bump-toolchain.mjs",
+   "status": "MAIN_UNCHANGED_SINCE_BASE",
+   "patch_lines": 15,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 2,
+    "missing_in_main": 2,
+    "removed": 2,
+    "removed_still_in_main": 2,
+    "missing_sample": [
+     "  const lp = semver(local).split('.').map((x) => Number.parseInt(x, 10) || 0);",
+     "  const rp = semver(remota).split('.').map((x) => Number.parseInt(x, 10) || 0);"
+    ],
+    "still_sample": [
+     "  const lp = semver(local).split('.').map((x) => parseInt(x, 10) || 0);",
+     "  const rp = semver(remota).split('.').map((x) => parseInt(x, 10) || 0);"
+    ]
+   }
+  },
+  {
+   "path": "scripts/ci/catalog-ct73-docs.unit.mjs",
+   "status": "MAIN_UNCHANGED_SINCE_BASE",
+   "patch_lines": 13,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 1,
+    "removed_still_in_main": 1,
+    "missing_sample": [
+     "      const kb = Number.parseFloat(m[2].replace(',', '.'));"
+    ],
+    "still_sample": [
+     "      const kb = parseFloat(m[2].replace(',', '.'));"
+    ]
+   }
+  },
+  {
+   "path": "scripts/ci/check-test-inventory.mjs",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 22,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 2,
+    "missing_in_main": 2,
+    "removed": 2,
+    "removed_still_in_main": 2,
+    "missing_sample": [
+     "    for (const nome of readdirSync(abs).sort((a, b) => (a < b ? -1 : a > b ? 1 : 0))) {",
+     "  return [...padroes].sort((a, b) => (a < b ? -1 : a > b ? 1 : 0));"
+    ],
+    "still_sample": [
+     "    for (const nome of readdirSync(abs).sort()) {",
+     "  return [...padroes].sort();"
+    ]
+   }
+  },
+  {
+   "path": "scripts/ci/db-migrate-workflow.unit.mjs",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 76,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 21,
+    "missing_in_main": 21,
+    "removed": 15,
+    "removed_still_in_main": 15,
+    "missing_sample": [
+     "// recebem o DESTINO_URL endurecido por env proprio a partir dos outputs do",
+     "// passo de credencial (GA21: nunca pelo GITHUB_ENV).",
+     "    'somente o passo de validacao pode ler o secret; os demais recebem o DSN endurecido por outputs');",
+     "  // GA21: o DSN endurecido sai por outputs do passo (destino=), nunca pelo",
+     "  // GITHUB_ENV; cada passo do banco declara env proprio.",
+     "  assert.match(workflow, /appendFileSync\\(process\\.env\\.GITHUB_OUTPUT, `destino=\\$\\{tls\\.connectionString\\}\\\\n`\\)/);",
+     "  assert.match(workflow, /DESTINO_URL: \\$\\{\\{ steps\\.credencial\\.outputs\\.destino \\}\\}/);",
+     "  assert.doesNotMatch(workflow, /GITHUB_ENV[^`]*`DESTINO_URL\\s*=/,",
+     "    'DSN voltou para o GITHUB_ENV');",
+     "  assert.ok(tls, 'endurecerDestinoTls recusou o DSN de fixture');",
+     "test('R2-INF-003/GA21: o CLI do Supabase recebe o mesmo DSN endurecido por outputs', () => {",
+     "  // A validacao exporta SUPABASE_DB_URL nos outputs (supabase_db_url=) com a",
+     "  // MESMA string endurecida (e ja mascarada) de DESTINO_URL. A invariante e de",
+     "  // fonte unica: nenhum passo redeclara o secret nem recebe DSN pelo",
+     "  // GITHUB_ENV — os dois passos do CLI declaram env proprio do output.",
+     "    'DESTINO_URL nao pode ser redeclarado por expressao: o valor sai dos outputs do passo de credencial');",
+     "    /appendFileSync\\(process\\.env\\.GITHUB_OUTPUT, `supabase_db_url=\\$\\{tls\\.connectionString\\}\\\\n`\\)/,",
+     "    'o mesmo DSN endurecido tem de sair nos outputs para o CLI do Supabase');",
+     "  // O CLI declara o valor por passo, a partir do output — nunca do GITHUB_ENV.",
+     "  assert.match(executavel, /SUPABASE_DB_URL: \\$\\{\\{ steps\\.credencial\\.outputs\\.supabase_db_url \\}\\}/,",
+     "    'os passos do CLI declaram SUPABASE_DB_URL a partir dos outputs');"
+    ],
+    "still_sample": [
+     "// herdam o DESTINO_URL endurecido do GITHUB_ENV (mesmo padrao do types-sync.yml",
+     "// e do targeted-ledger-evidence.yml).",
+     "    'somente o passo de validacao pode ler o secret; os demais herdam o DSN endurecido do GITHUB_ENV');",
+     "  assert.match(workflow, /appendFileSync\\(process\\.env\\.GITHUB_ENV, `DESTINO_URL=\\$\\{tls\\.connectionString\\}\\\\n`\\)/);",
+     "test('R2-INF-003: o CLI do Supabase recebe o mesmo DSN endurecido via GITHUB_ENV', () => {",
+     "  // A validacao exporta SUPABASE_DB_URL no GITHUB_ENV com a MESMA string",
+     "  // endurecida (e ja mascarada) de DESTINO_URL. A invariante e de fonte unica:",
+     "  // nenhum passo redeclara SUPABASE_DB_URL nem puxa DESTINO_URL pelo contexto",
+     "  // de expressao — todos os passos herdam o valor gravado no GITHUB_ENV.",
+     "    'DESTINO_URL nao pode ser redeclarado por expressao: o valor sai do GITHUB_ENV');"
+    ]
+   }
+  },
+  {
+   "path": "scripts/ci/github-settings-guard.mjs",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 26,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 4,
+    "missing_in_main": 4,
+    "removed": 4,
+    "removed_still_in_main": 3,
+    "missing_sample": [
+     "  const blPatterns = [...(baseline.selected_actions_patterns ?? [])].sort((a, b) => (a < b ? -1 : a > b ? 1 : 0));",
+     "  const encontradosPatterns = [...(sel?.patterns_allowed ?? [])].sort((a, b) => (a < b ? -1 : a > b ? 1 : 0));",
+     "  const encontrados = (dados?.environments ?? []).map((e) => e.name).sort((a, b) => (a < b ? -1 : a > b ? 1 : 0));",
+     "  const esperados = [...baseline.environments].sort((a, b) => (a < b ? -1 : a > b ? 1 : 0));"
+    ],
+    "still_sample": [
+     "  const blPatterns = [...(baseline.selected_actions_patterns ?? [])].sort();",
+     "  const encontrados = (dados?.environments ?? []).map((e) => e.name).sort();",
+     "  const esperados = [...baseline.environments].sort();"
+    ]
+   }
+  },
+  {
+   "path": "scripts/ci/lamejs-attack-indexing.unit.mjs",
+   "status": "MAIN_UNCHANGED_SINCE_BASE",
+   "patch_lines": 12,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 1,
+    "removed_still_in_main": 1,
+    "missing_sample": [
+     "    `nenhum frame acendeu ataque com ordinal 2 ou 3 (so' ${[...ordinais].sort((a, b) => (a < b ? -1 : a > b ? 1 : 0)).join(',') || 'nenhum'}): `"
+    ],
+    "still_sample": [
+     "    `nenhum frame acendeu ataque com ordinal 2 ou 3 (so' ${[...ordinais].sort().join(',') || 'nenhum'}): `"
+    ]
+   }
+  },
+  {
+   "path": "scripts/ci/matriz-oth013-validar.py",
+   "status": "MAIN_UNCHANGED_SINCE_BASE",
+   "patch_lines": 14,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 3,
+    "missing_in_main": 3,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "    plan_path = plan_path.resolve()",
+     "    if ROOT.resolve() not in plan_path.parents and plan_path != ROOT.resolve():",
+     "        fail(f\"plano fora do repositorio: {plan_path}\")"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "scripts/ci/workflow-contracts.unit.mjs",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 232,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 142,
+    "missing_in_main": 131,
+    "removed": 9,
+    "removed_still_in_main": 9,
+    "missing_sample": [
+     "      .sort((a, b) => (a < b ? -1 : a > b ? 1 : 0))",
+     "    } else if ([...conjunto].sort((a, b) => (a < b ? -1 : a > b ? 1 : 0)).join('') !== instalados) {",
+     "  // Indicadores de escrita legítima (sem `.*` — S8786: `gh\\s+api.*update-branch`",
+     "  // tem desempenho super-linear; dois testes de substring disjuntos equivalem).",
+     "  const escritaRun = (l) =>",
+     "    /\\bgit\\s+(?:push|tag)\\b/.test(l) ||",
+     "    (l.includes('gh ') && l.includes('update-branch')) ||",
+     "    /createRef|createTag|update-ref/.test(l);",
+     "    const execRun = linhasExecutaveis(texto).some(escritaRun);",
+     "// GA99 (plano de 15/10/2026): contrato anti-regressão deste plano. Cada teste",
+     "// trava o estado final de uma etapa — se o YAML regredir, o contrato quebra",
+     "// antes do merge. Texto do plano não impede regressão; teste, sim.",
+     "test('GA99: notifica monitora só nomes de workflow que existem', () => {",
+     "  // Um nome renomeado/removido sem atualizar o notifica = falha na main sem",
+     "  // issue (a etapa que avisa o Joaquim deixa de avisar em silêncio).",
+     "  assert.ok(monitorados.length >= 7, `notifica monitora poucos workflows: ${monitorados.length}`);",
+     "    nomes.map((n) => /^name:\\s*(.+?)\\s*$/m.exec(wf[n])?.[1]).filter(Boolean),",
+     "  const faltando = monitorados.filter((m) => !declarados.has(m));",
+     "  assert.deepEqual(faltando, [], `notifica monitora workflow inexistente: ${faltando.join(', ')}`);",
+     "test('GA99: e2e-logado exige o if de GA08 e o grupo fixo de GA09', () => {",
+     "  const texto = wf['e2e-logado.yml'];",
+     "  // if: no JOB (não no step): dispatch manual ou workflow_run de push na main",
+     "  // do próprio repo com CI verde. Sem as 3 condições, um fork com branch main",
+     "  // dispara o E2E com os secrets do repo (Scorecard #40 Dangerous-Workflow).",
+     "  const jobIf = /^  e2e-logado:\\n(?:.*\\n){0,10}?\\s+if:\\s*>-\\s*\\n((?:\\s+.*\\n?)+)/m.exec(texto);"
+    ],
+    "still_sample": [
+     "      .sort()",
+     "    } else if ([...conjunto].sort().join('') !== instalados) {",
+     "  // Indicadores de escrita legítima:",
+     "  //   - `git push` / `git tag` num run:",
+     "  //   - `gh api.*update-branch` (atualiza branch de PR via API)",
+     "  //   - `peter-evans/create-pull-request` (cria commit + push internamente)",
+     "  //   - createRef / createTag / update-ref (chamadas à API de refs)",
+     "  const ESCRITA_RUN = /\\bgit\\s+(?:push|tag)\\b|gh\\s+api.*update-branch|createRef|createTag|update-ref/;",
+     "    const execRun = linhasExecutaveis(texto).some((l) => ESCRITA_RUN.test(l));"
+    ]
+   }
+  },
+  {
+   "path": "scripts/db-audit/check-remocoes-destrutivas.mjs",
+   "status": "MAIN_UNCHANGED_SINCE_BASE",
+   "patch_lines": 28,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 6,
+    "missing_in_main": 5,
+    "removed": 3,
+    "removed_still_in_main": 3,
+    "missing_sample": [
+     "  if (String(arquivo).split(/[\\\\/]/).includes('..')) {",
+     "    console.error('ERRO: caminho com segmento .. recusado: ' + arquivo);",
+     "    ['tabela/view', 'relacao', [...antigo.relacoes].filter((n) => !novo.relacoes.has(n)).sort((a, b) => (a < b ? -1 : a > b ? 1 : 0))],",
+     "    ['funcao', 'funcao', [...antigo.funcoes].filter((n) => !novo.funcoes.has(n)).sort((a, b) => (a < b ? -1 : a > b ? 1 : 0))],",
+     "    ['enum', 'enum', [...antigo.enums].filter((n) => !novo.enums.has(n)).sort((a, b) => (a < b ? -1 : a > b ? 1 : 0))],"
+    ],
+    "still_sample": [
+     "    ['tabela/view', 'relacao', [...antigo.relacoes].filter((n) => !novo.relacoes.has(n)).sort()],",
+     "    ['funcao', 'funcao', [...antigo.funcoes].filter((n) => !novo.funcoes.has(n)).sort()],",
+     "    ['enum', 'enum', [...antigo.enums].filter((n) => !novo.enums.has(n)).sort()],"
+    ]
+   }
+  },
+  {
+   "path": "scripts/db-audit/consolidar-veredito.mjs",
+   "status": "MAIN_UNCHANGED_SINCE_BASE",
+   "patch_lines": 13,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 1,
+    "removed_still_in_main": 1,
+    "missing_sample": [
+     "    `falhas_lista=${[...resultado.nomes].sort((a, b) => (a < b ? -1 : a > b ? 1 : 0)).join(',')}`,"
+    ],
+    "still_sample": [
+     "    `falhas_lista=${[...resultado.nomes].sort().join(',')}`,"
+    ]
+   }
+  },
+  {
+   "path": "scripts/db-audit/replay-local-harness.test.sh",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 96,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 15,
+    "missing_in_main": 15,
+    "removed": 15,
+    "removed_still_in_main": 15,
+    "missing_sample": [
+     "  if [[ \"$2\" = \"$3\" ]]; then echo \"  ok  : $1\"; else echo \"  FALHA: $1 (esperado '$2', obtido '$3')\"; falhou=1; fi",
+     "      [[ \"$prev\" = \"--name\" ]] && name=\"$a\"",
+     "      [[ \"$prev\" = \"--label\" ]] && label=\"$a\"",
+     "    [[ -f \"$STUB_LOG/labels/$last\" ]] && cat \"$STUB_LOG/labels/$last\"",
+     "    [[ \"$pgready\" = 1 ]] && { [[ \"${STUB_NUNCA_PRONTO:-0}\" = 1 ]] && exit 1; exit 0; }",
+     "    [[ \"$grepq\" = 1 ]] && exit 0",
+     "    [[ \"$sh\" = 1 ]] && exit 0",
+     "    if [[ \"$psql\" = 1 ]]; then",
+     "      [[ \"$hasc\" = 1 ]] && exit 0            # alter system do agendador: sem stdin",
+     "          if [[ \"${STUB_FALHA_BOOTSTRAP:-0}\" = 1 ]]; then echo \"ERROR: bootstrap falhou (stub)\" >&2; exit 1; fi",
+     "          if [[ -n \"${STUB_FALHA_MIGRACAO:-}\" ]]; then",
+     "if [[ \"$NOME_A\" = \"hermes-e24-replay\" ]]; then echo \"  FALHA: A: reusa o nome fixo\"; falhou=1; fi",
+     "if [[ \"$RC_C\" -ne 0 ]]; then echo \"  ok  : C: SIGTERM termina com codigo diferente de zero ($RC_C)\"",
+     "if [[ -n \"$NOME_C\" ]] && [[ -n \"$LINHA_RUN\" ]] && [[ -n \"$LINHA_RM\" ]] && [[ \"$LINHA_RM\" -gt \"$LINHA_RUN\" ]]; then",
+     "if [[ \"$falhou\" -eq 0 ]]; then"
+    ],
+    "still_sample": [
+     "  if [ \"$2\" = \"$3\" ]; then echo \"  ok  : $1\"; else echo \"  FALHA: $1 (esperado '$2', obtido '$3')\"; falhou=1; fi",
+     "      [ \"$prev\" = \"--name\" ] && name=\"$a\"",
+     "      [ \"$prev\" = \"--label\" ] && label=\"$a\"",
+     "    [ -f \"$STUB_LOG/labels/$last\" ] && cat \"$STUB_LOG/labels/$last\"",
+     "    [ \"$pgready\" = 1 ] && { [ \"${STUB_NUNCA_PRONTO:-0}\" = 1 ] && exit 1; exit 0; }",
+     "    [ \"$grepq\" = 1 ] && exit 0",
+     "    [ \"$sh\" = 1 ] && exit 0",
+     "    if [ \"$psql\" = 1 ]; then",
+     "      [ \"$hasc\" = 1 ] && exit 0            # alter system do agendador: sem stdin",
+     "          if [ \"${STUB_FALHA_BOOTSTRAP:-0}\" = 1 ]; then echo \"ERROR: bootstrap falhou (stub)\" >&2; exit 1; fi"
+    ]
+   }
+  },
+  {
+   "path": "scripts/db-audit/replay-local.sh",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 55,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 6,
+    "missing_in_main": 6,
+    "removed": 6,
+    "removed_still_in_main": 6,
+    "missing_sample": [
+     "  if [[ \"$dono\" = \"$ROTULO_VALOR\" ]]; then",
+     "if [[ \"$PRONTO\" -ne 1 ]]; then",
+     "if [[ \"$RC_BOOTSTRAP\" -ne 0 ]]; then",
+     "  if [[ $? -eq 0 ]]; then",
+     "if [[ \"$RC\" -eq 1 ]]; then",
+     "        [[ -n \"$arq\" ]] || continue"
+    ],
+    "still_sample": [
+     "  if [ \"$dono\" = \"$ROTULO_VALOR\" ]; then",
+     "if [ \"$PRONTO\" -ne 1 ]; then",
+     "if [ \"$RC_BOOTSTRAP\" -ne 0 ]; then",
+     "  if [ $? -eq 0 ]; then",
+     "if [ \"$RC\" -eq 1 ]; then",
+     "        [ -n \"$arq\" ] || continue"
+    ]
+   }
+  },
+  {
+   "path": "scripts/db-audit/revoke-auth-sessions.test.sh",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 74,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 11,
+    "missing_in_main": 11,
+    "removed": 11,
+    "removed_still_in_main": 11,
+    "missing_sample": [
+     "[[ -f \"$MIGRATION\" ]] || { echo \"[FALHOU] migration nao encontrada: $MIGRATION\"; exit 1; }",
+     "[[ \"$GLOBAL_COUNT\" = \"2\" ]] || { echo \"[FALHOU] global deveria revogar 2 sessoes, revogou $GLOBAL_COUNT\"; exit 1; }",
+     "[[ \"$B_REMAIN\" = \"1\" ]] || { echo \"[FALHOU] global do A nao deveria tocar as sessoes do B\"; exit 1; }",
+     "[[ \"$INV_ACTIVE\" = \"2\" ]] || { echo \"[FALHOU] inventário público do A não ficou coerente (is_active=false)\"; exit 1; }",
+     "[[ \"$LOCAL_COUNT\" = \"1\" ]] || { echo \"[FALHOU] local deveria revogar 1 sessao, revogou $LOCAL_COUNT\"; exit 1; }",
+     "[[ \"$S2_REMAIN\" = \"1\" ]] || { echo \"[FALHOU] local deveria preservar a sessão não-alvo\"; exit 1; }",
+     "[[ \"$OTHERS_COUNT\" = \"1\" ]] || { echo \"[FALHOU] others deveria revogar 1 sessao (a não preservada), revogou $OTHERS_COUNT\"; exit 1; }",
+     "[[ \"$PRESERVED\" = \"1\" ]] || { echo \"[FALHOU] others deveria preservar a sessão indicada\"; exit 1; }",
+     "[[ \"$AFTER_DEACT\" = \"0\" ]] || { echo \"[FALHOU] desativar perfil deveria revogar todas as sessões (sobraram $AFTER_DEACT)\"; exit 1; }",
+     "[[ \"$AFTER_REACT\" = \"0\" ]] || { echo \"[FALHOU] reativar perfil não deveria criar sessão (existem $AFTER_REACT)\"; exit 1; }",
+     "[[ \"$COL_AFTER_RB\" = \"0\" ]] || { echo \"[FALHOU] rollback nao removeu a coluna auth_session_id\"; exit 1; }"
+    ],
+    "still_sample": [
+     "[ -f \"$MIGRATION\" ] || { echo \"[FALHOU] migration nao encontrada: $MIGRATION\"; exit 1; }",
+     "[ \"$GLOBAL_COUNT\" = \"2\" ] || { echo \"[FALHOU] global deveria revogar 2 sessoes, revogou $GLOBAL_COUNT\"; exit 1; }",
+     "[ \"$B_REMAIN\" = \"1\" ] || { echo \"[FALHOU] global do A nao deveria tocar as sessoes do B\"; exit 1; }",
+     "[ \"$INV_ACTIVE\" = \"2\" ] || { echo \"[FALHOU] inventário público do A não ficou coerente (is_active=false)\"; exit 1; }",
+     "[ \"$LOCAL_COUNT\" = \"1\" ] || { echo \"[FALHOU] local deveria revogar 1 sessao, revogou $LOCAL_COUNT\"; exit 1; }",
+     "[ \"$S2_REMAIN\" = \"1\" ] || { echo \"[FALHOU] local deveria preservar a sessão não-alvo\"; exit 1; }",
+     "[ \"$OTHERS_COUNT\" = \"1\" ] || { echo \"[FALHOU] others deveria revogar 1 sessao (a não preservada), revogou $OTHERS_COUNT\"; exit 1; }",
+     "[ \"$PRESERVED\" = \"1\" ] || { echo \"[FALHOU] others deveria preservar a sessão indicada\"; exit 1; }",
+     "[ \"$AFTER_DEACT\" = \"0\" ] || { echo \"[FALHOU] desativar perfil deveria revogar todas as sessões (sobraram $AFTER_DEACT)\"; exit 1; }",
+     "[ \"$AFTER_REACT\" = \"0\" ] || { echo \"[FALHOU] reativar perfil não deveria criar sessão (existem $AFTER_REACT)\"; exit 1; }"
+    ]
+   }
+  },
+  {
+   "path": "scripts/db-audit/run-runtime-contract.mjs",
+   "status": "MAIN_UNCHANGED_SINCE_BASE",
+   "patch_lines": 13,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 1,
+    "removed_still_in_main": 1,
+    "missing_sample": [
+     "  const arquivos = readdirSync(dir).filter((f) => /^\\d{14}\\.sql$/.test(f)).sort((a, b) => (a < b ? -1 : a > b ? 1 : 0));"
+    ],
+    "still_sample": [
+     "  const arquivos = readdirSync(dir).filter((f) => /^\\d{14}\\.sql$/.test(f)).sort();"
+    ]
+   }
+  },
+  {
+   "path": "scripts/edge-deploy/health-check.mjs",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 15,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 2,
+    "missing_in_main": 2,
+    "removed": 2,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "    else if (argv[i] === '--threshold') args.threshold = Number.parseFloat(argv[++i]);",
+     "    else if (argv[i] === '--wait-ms') args.waitMs = Number.parseInt(argv[++i], 10);"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "scripts/edge-deploy/preparar-artifact-deploy.sh",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 22,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 3,
+    "missing_in_main": 3,
+    "removed": 3,
+    "removed_still_in_main": 3,
+    "missing_sample": [
+     "if [[ -d \"$ORIGEM\" ]]; then",
+     "if [[ -f \"$ORIGEM/deploy-output.log\" ]]; then",
+     "  if [[ -n \"${SUPABASE_ACCESS_TOKEN:-}\" ]] && grep -qF -- \"$SUPABASE_ACCESS_TOKEN\" \"$STAGING\"; then"
+    ],
+    "still_sample": [
+     "if [ -d \"$ORIGEM\" ]; then",
+     "if [ -f \"$ORIGEM/deploy-output.log\" ]; then",
+     "  if [ -n \"${SUPABASE_ACCESS_TOKEN:-}\" ] && grep -qF -- \"$SUPABASE_ACCESS_TOKEN\" \"$STAGING\"; then"
+    ]
+   }
+  },
+  {
+   "path": "scripts/talkx/v4-status.mjs",
+   "status": "MAIN_UNCHANGED_SINCE_BASE",
+   "patch_lines": 21,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 2,
+    "missing_in_main": 2,
+    "removed": 2,
+    "removed_still_in_main": 2,
+    "missing_sample": [
+     "  return [...historicoIds].filter((id) => !doneSet.has(id)).sort((a, b) => (a < b ? -1 : a > b ? 1 : 0));",
+     "    .sort((a, b) => (a < b ? -1 : a > b ? 1 : 0));"
+    ],
+    "still_sample": [
+     "  return [...historicoIds].filter((id) => !doneSet.has(id)).sort();",
+     "    .sort();"
+    ]
+   }
+  },
+  {
+   "path": "scripts/talkx/v4-status.unit.mjs",
+   "status": "MAIN_UNCHANGED_SINCE_BASE",
+   "patch_lines": 22,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 2,
+    "missing_in_main": 2,
+    "removed": 2,
+    "removed_still_in_main": 2,
+    "missing_sample": [
+     "  assert.deepEqual([...verifiedDoneSteps(av)].sort((a, b) => (a < b ? -1 : a > b ? 1 : 0)), ['X001', 'X005']);",
+     "  assert.deepEqual([...done].sort((a, b) => (a < b ? -1 : a > b ? 1 : 0)), ['X001', 'X005']);"
+    ],
+    "still_sample": [
+     "  assert.deepEqual([...verifiedDoneSteps(av)].sort(), ['X001', 'X005']);",
+     "  assert.deepEqual([...done].sort(), ['X001', 'X005']);"
+    ]
+   }
+  }
+ ],
+ "counts": {
+  "migrations": "0",
+  "workflows": "5",
+  "src": "0",
+  "edges": "0",
+  "docs_only": "no",
+  "lines_branch_has_main_lacks": "1596",
+  "lines_main_has_branch_lacks": "791"
+ },
+ "auto": "MISTO_CONFLITO",
+ "n_files_with_gaps": 26,
+ "gap_lines_total": 411
+}

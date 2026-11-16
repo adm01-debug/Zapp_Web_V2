@@ -1,0 +1,110 @@
+{
+ "id": "fix__f1a-lote-b-useadmindata-createuser-avatar",
+ "kind": "branch",
+ "ref": "origin/fix/f1a-lote-b-useadmindata-createuser-avatar",
+ "tip": "8e37dd43ebbbda2cd7d4411aab5743728e71aaa0",
+ "merge_base": "bac62ba98454811c3bfd117b838af926b1e795b2",
+ "ahead": 3,
+ "last_commit_date": "2026-10-23",
+ "merge_base_date": "2026-10-23",
+ "prs_with_same_tip": [
+  2070,
+  2440
+ ],
+ "triagem_2804": {
+  "2070": "JA_NA_MAIN",
+  "2440": "JA_NA_MAIN"
+ },
+ "closure_comment": {},
+ "files": [
+  {
+   "path": "src/components/admin/__tests__/adminDownloadPermission.test.ts",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/components/admin/__tests__/useAdminData.erros-auditoria.test.ts",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/components/admin/__tests__/useAdminDataCreateUser.test.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 106,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 32,
+    "missing_in_main": 1,
+    "removed": 9,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "            \"Invalid enum value. Expected 'admin' | 'supervisor' | 'agent' | 'special_agent', received 'chefe'\","
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/admin/useAdminData.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 476,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 188,
+    "missing_in_main": 32,
+    "removed": 156,
+    "removed_still_in_main": 155,
+    "missing_sample": [
+     "  if (msg.includes('email') || msg.includes('e-mail'))",
+     "    return { field: 'email', message: 'Informe um e-mail válido.' };",
+     "  if (msg.includes('senha') || msg.includes('password'))",
+     "      field: 'password',",
+     "      message: `A senha deve ter pelo menos ${MIN_PASSWORD_LENGTH} caracteres.`,",
+     "  if (msg.includes('nome') || msg.includes('name'))",
+     "    return { field: 'name', message: 'Informe o nome do usuário.' };",
+     "        .select(",
+     "          'id, user_id, name, email, avatar_url, nickname, signature, job_title, department, phone, access_level, max_chats, can_download, is_active, created_at",
+     "        const userRole = (roles ?? []).find((r) => r.user_id === profile.user_id);",
+     "      const userIds = [",
+     "        ...new Set(rows.map((l) => l.user_id).filter((id): id is string => id !== null)),",
+     "      const { data: profiles, error: profilesError } =",
+     "        userIds.length > 0",
+     "          ? await supabase.from('profiles').select('user_id, name, email').in('user_id', userIds)",
+     "      const logsWithUsers: AuditLog[] = rows.map((log) => ({",
+     "        user: profiles?.find((p) => p.user_id === log.user_id) || null,",
+     "  const handleRoleChange = useCallback(",
+     "    async (userId: string, newRole: AppRole) => {",
+     "    [fetchData]",
+     "  const handleToggleActive = useCallback(",
+     "    async (user: UserWithRole) => {",
+     "    [fetchData]",
+     "  const handleSaveUser = useCallback(",
+     "    async (editingUser: UserWithRole, avatarFile: File | null): Promise<boolean> => {"
+    ],
+    "still_sample": [
+     "  if (msg.includes('email') || msg.includes('e-mail')) return { field: 'email', message: 'Informe um e-mail válido.' };",
+     "  if (msg.includes('senha') || msg.includes('password')) return { field: 'password', message: `A senha deve ter pelo menos ${MIN_PASSWORD_LENGTH} caracteres.` }",
+     "  if (msg.includes('nome') || msg.includes('name')) return { field: 'name', message: 'Informe o nome do usuário.' };",
+     "        .select('id, user_id, name, email, avatar_url, nickname, signature, job_title, department, phone, access_level, max_chats, can_download, is_active, crea",
+     "        const userRole = (roles ?? []).find(r => r.user_id === profile.user_id);",
+     "      const userIds = [...new Set(rows.map(l => l.user_id).filter((id): id is string => id !== null))];",
+     "      const { data: profiles, error: profilesError } = userIds.length > 0",
+     "        ? await supabase",
+     "          .from('profiles')",
+     "          .select('user_id, name, email')"
+    ]
+   }
+  }
+ ],
+ "counts": {
+  "migrations": "0",
+  "workflows": "0",
+  "src": "4",
+  "edges": "0",
+  "docs_only": "no",
+  "lines_branch_has_main_lacks": "194",
+  "lines_main_has_branch_lacks": "188"
+ },
+ "auto": "MISTO_CONFLITO",
+ "n_files_with_gaps": 2,
+ "gap_lines_total": 188
+}

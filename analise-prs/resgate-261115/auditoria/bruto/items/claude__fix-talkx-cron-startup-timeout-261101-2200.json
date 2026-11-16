@@ -1,0 +1,72 @@
+{
+ "id": "claude__fix-talkx-cron-startup-timeout-261101-2200",
+ "kind": "branch",
+ "ref": "origin/claude/fix-talkx-cron-startup-timeout-261101-2200",
+ "tip": "9db8ac785490c8a6d5e0b15a39b28bcb27d36aff",
+ "merge_base": "1252bb5a41123ba4d49efd84d0f91604bff6c87c",
+ "ahead": 4,
+ "last_commit_date": "2026-11-01",
+ "merge_base_date": "2026-11-01",
+ "prs_with_same_tip": [
+  2514
+ ],
+ "triagem_2804": {
+  "2514": "OBSOLETA"
+ },
+ "closure_comment": {},
+ "files": [
+  {
+   "path": "supabase/migrations/20261026200300_fix-talkx-cron-startup-timeout.sql",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "patch_lines": 250,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 217,
+    "missing_in_main": 217,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "-- Fix: pg_cron talkx-scheduler-1min — 4.007 falhas em 30d (9,3%)",
+     "-- Três causas raiz:",
+     "-- C1: cron.job_run_details sem índice em (jobid, start_time) → varredura 69 MB → timeout de statement",
+     "-- C2: talkx_engine_cron_runs sem filtro de janela → 69 MB scan em todo SELECT da UI",
+     "-- C3: WHEN OTHERS não captura query_canceled (SQLSTATE 57014) no bloco de alertas",
+     "-- Bônus: advisory lock impede sobreposição de ticks quando um tick demora > 1 min",
+     "-- C1: índice composto — elimina seq scan em job_run_details para qualquer jobid",
+     "CREATE INDEX IF NOT EXISTS idx_job_run_details_jobid_start",
+     "  ON cron.job_run_details (jobid, start_time DESC, runid DESC);",
+     "-- Retenção: deleta runs com mais de 30 dias (alinhado com janela de consulta de 14 dias",
+     "-- e análise operacional de 30 dias); evita crescimento ilimitado de 69 MB",
+     "SELECT cron.schedule(",
+     "  'cleanup-cron-run-details-30d',",
+     "  '0 4 * * *',",
+     "  'DELETE FROM cron.job_run_details WHERE end_time < now() - interval ''30 days'' AND end_time IS NOT NULL'",
+     "-- C2: janela de 14 dias no SELECT dinâmico — usa o índice acima",
+     "CREATE OR REPLACE FUNCTION public.talkx_engine_cron_runs(p_limit integer DEFAULT 60)",
+     " RETURNS TABLE(runid bigint, jobid bigint, status text, return_message text, start_time timestamp with time zone, end_time timestamp with time zone)",
+     " LANGUAGE plpgsql",
+     " STABLE SECURITY DEFINER",
+     " SET search_path TO 'public', 'pg_temp'",
+     "AS $function$",
+     "DECLARE",
+     "  v_jobid bigint;",
+     "  v_limit integer;"
+    ],
+    "still_sample": [],
+    "same_basename_in_main": []
+   }
+  }
+ ],
+ "counts": {
+  "migrations": "1",
+  "workflows": "0",
+  "src": "0",
+  "edges": "0",
+  "docs_only": "no",
+  "lines_branch_has_main_lacks": "244",
+  "lines_main_has_branch_lacks": "0"
+ },
+ "auto": "TRABALHO_AUSENTE_APLICA_LIMPO",
+ "n_files_with_gaps": 1,
+ "gap_lines_total": 217
+}

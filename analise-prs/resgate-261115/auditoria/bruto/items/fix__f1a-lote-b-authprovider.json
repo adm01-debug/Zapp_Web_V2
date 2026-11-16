@@ -1,0 +1,97 @@
+{
+ "id": "fix__f1a-lote-b-authprovider",
+ "kind": "branch",
+ "ref": "origin/fix/f1a-lote-b-authprovider",
+ "tip": "81543b967efb9b1fa8002855faf6fabc7ee16f65",
+ "merge_base": "9d65fed626e05a9582c56badade4d2e6afaf9356",
+ "ahead": 2,
+ "last_commit_date": "2026-10-18",
+ "merge_base_date": "2026-10-18",
+ "prs_with_same_tip": [
+  2063
+ ],
+ "triagem_2804": {
+  "2063": "OBSOLETA"
+ },
+ "closure_comment": {},
+ "files": [
+  {
+   "path": "src/components/agents/__tests__/AgentsView.conexoes.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 68,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 15,
+    "missing_in_main": 9,
+    "removed": 5,
+    "removed_still_in_main": 5,
+    "missing_sample": [
+     "    extra: Partial<Conexao> = {}",
+     "  useAgentPendingCounts: () => ({",
+     "    pendingCounts: {},",
+     "// AgentsView monta o InviteAgentDialog (sempre no DOM, mesmo fechado), que lê",
+     "// o papel via useUserRole -> useAuth. Sem AuthProvider no teste, dubla o papel",
+     "// direto — mesmo padrão já usado em AgentsView.capacidade/.pendencias.",
+     "    </MemoryRouter>",
+     "      within(cabecalho).getByText('Não foi possível carregar as conexões do WhatsApp.')",
+     "      within(cabecalho).getByText('Nenhuma conexão de WhatsApp cadastrada.')"
+    ],
+    "still_sample": [
+     "    extra: Partial<Conexao> = {},",
+     "  useAgentPendingCounts: () => ({ pendingCounts: {}, isLoading: false, error: null, refetch: vi.fn() }),",
+     "    </MemoryRouter>,",
+     "      within(cabecalho).getByText('Não foi possível carregar as conexões do WhatsApp.'),",
+     "      within(cabecalho).getByText('Nenhuma conexão de WhatsApp cadastrada.'),"
+    ]
+   }
+  },
+  {
+   "path": "src/components/team-chat/__tests__/team-chat-notifications-mount.test.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 52,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 23,
+    "missing_in_main": 16,
+    "removed": 4,
+    "removed_still_in_main": 4,
+    "missing_sample": [
+     "  createLogger: () => ({ info: vi.fn(), error: vi.fn() }),",
+     "// @/providers/AppProviders é dublado abaixo como passthrough (sem contexto",
+     "// real); DeferredProviders (App.tsx) chama useAuth() direto — dubla também,",
+     "// senão quebra com \"useAuth must be used within an AuthProvider\".",
+     "  useAuth: () => ({ profile: null, user: null, session: null, loading: false }),",
+     "// Dependência real de DeferredProviders (useGlobalIncomingMessageAlerts ->",
+     "// useSupabaseRealtime -> supabase.channel): o assunto aqui é só o listener do",
+     "// Team Chat (TC-007), então essa cadeia vira no-op, como os outros overlays.",
+     "vi.mock('@/components/team-chat/TeamConversationList', () => ({",
+     "  TeamConversationList: () => null,",
+     "vi.mock('@/components/team-chat/NewConversationDialog', () => ({",
+     "  NewConversationDialog: () => null,",
+     "  Button: ({ children }: { children: React.ReactNode }) =>",
+     "    React.createElement('button', null, children),",
+     "    div: ({ children }: { children: React.ReactNode }) =>",
+     "      React.createElement('div', null, children),"
+    ],
+    "still_sample": [
+     "vi.mock('@/components/team-chat/TeamConversationList', () => ({ TeamConversationList: () => null }));",
+     "vi.mock('@/components/team-chat/NewConversationDialog', () => ({ NewConversationDialog: () => null }));",
+     "  Button: ({ children }: { children: React.ReactNode }) => React.createElement('button', null, children),",
+     "    div: ({ children }: { children: React.ReactNode }) => React.createElement('div', null, children),"
+    ]
+   }
+  }
+ ],
+ "counts": {
+  "migrations": "0",
+  "workflows": "0",
+  "src": "2",
+  "edges": "0",
+  "docs_only": "no",
+  "lines_branch_has_main_lacks": "36",
+  "lines_main_has_branch_lacks": "28"
+ },
+ "auto": "MISTO_CONFLITO",
+ "n_files_with_gaps": 2,
+ "gap_lines_total": 34
+}

@@ -1,0 +1,72 @@
+{
+ "id": "claude__fix-canonical-receipt-policies-261020-2005",
+ "kind": "branch",
+ "ref": "origin/claude/fix-canonical-receipt-policies-261020-2005",
+ "tip": "f632880fc2007b9a2111b5eef49f78614a1c21d3",
+ "merge_base": "bac62ba98454811c3bfd117b838af926b1e795b2",
+ "ahead": 2,
+ "last_commit_date": "2026-10-23",
+ "merge_base_date": "2026-10-23",
+ "prs_with_same_tip": [
+  2137
+ ],
+ "triagem_2804": {
+  "2137": "JA_NA_MAIN"
+ },
+ "closure_comment": {},
+ "files": [
+  {
+   "path": "supabase/migrations/20261021000000_recreate_team_message_receipt_policies_canonical.sql",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "patch_lines": 116,
+   "line_check": {
+    "added": 96,
+    "missing_in_main": 96,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "-- =====================================================================",
+     "-- fix: recria canonicamente, e de forma INCONDICIONAL, as duas policies de",
+     "--      receipt do Team Chat (INSERT + SELECT) para convergencia do REPLAY.",
+     "-- =====================================================================",
+     "-- Este arquivo NAO contem nenhum `if not exists`: ele sempre DROP+CREATE as",
+     "-- duas policies. Em producao e no-op funcional; num replay limpo faz o",
+     "-- ambiente novo convergir para o canonico.",
+     "-- ---------------------------------------------------------------------",
+     "-- DEFEITO",
+     "-- ---------------------------------------------------------------------",
+     "-- As duas policies abaixo divergem entre o TEXTO DO ARQUIVO na main e o",
+     "-- EFEITO VIVO em producao:",
+     "--   Arquivo supabase/migrations/20260928430000_team_chat_fix_policies_to_authenticated.sql",
+     "--   cria a FORMA FRACA:",
+     "--     CREATE POLICY \"Conversation members can read receipts\" ON public.team_message_receipts",
+     "--       FOR SELECT TO authenticated USING (is_team_conversation_member(auth.uid(), conversation_id));",
+     "--     CREATE POLICY \"Members can insert own receipts\" ON public.team_message_receipts",
+     "--       FOR INSERT TO authenticated WITH CHECK (profile_id = current_profile_id());",
+     "--   O EFEITO VIVO em producao (lido de pg_policies em 20/10/2026) e o CANONICO:",
+     "--     \"Conversation members can read receipts\" FOR SELECT TO authenticated",
+     "--       USING (is_admin_or_supervisor(auth.uid()) OR (EXISTS (",
+     "--         SELECT 1 FROM team_conversation_members mem",
+     "--           JOIN team_messages tm ON tm.id = team_message_receipts.message_id",
+     "--          WHERE mem.conversation_id = tm.conversation_id",
+     "--            AND mem.profile_id = current_profile_id())));"
+    ],
+    "still_sample": [],
+    "same_basename_in_main": []
+   }
+  }
+ ],
+ "counts": {
+  "migrations": "1",
+  "workflows": "0",
+  "src": "0",
+  "edges": "0",
+  "docs_only": "no",
+  "lines_branch_has_main_lacks": "109",
+  "lines_main_has_branch_lacks": "0"
+ },
+ "auto": "TRABALHO_AUSENTE_APLICA_LIMPO",
+ "n_files_with_gaps": 1,
+ "gap_lines_total": 96
+}

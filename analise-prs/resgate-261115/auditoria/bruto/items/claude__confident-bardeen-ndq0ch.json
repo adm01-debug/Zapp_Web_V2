@@ -1,0 +1,590 @@
+{
+ "id": "claude__confident-bardeen-ndq0ch",
+ "kind": "branch",
+ "ref": "origin/claude/confident-bardeen-ndq0ch",
+ "tip": "229e32a7fd8bedd4ed95ec00ec25a273fd0b4ee1",
+ "merge_base": "17976eb8b877809ba089660f1fb5b86835573c2d",
+ "ahead": 35,
+ "last_commit_date": "2026-10-23",
+ "merge_base_date": "2026-10-23",
+ "prs_with_same_tip": [
+  2195
+ ],
+ "triagem_2804": {
+  "2195": "JA_NA_MAIN"
+ },
+ "closure_comment": {},
+ "files": [
+  {
+   "path": ".github/workflows/db-guard.yml",
+   "status": "BOTH_CHANGED",
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "patch_lines": 12,
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "      PGUSER: postgres"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "ESTADO.md",
+   "status": "BOTH_CHANGED",
+   "hunk": "CONFLICT",
+   "patch_lines": 13,
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 1,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "| `ai-kb-ingest` | A | `src/hooks/integrations/useKnowledgeBase.ts:138` · `src/hooks/integrations/useKnowledgeBase.ts:209` |"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "scripts/db-audit/dashboard-rls-authorization.test.sh",
+   "status": "BOTH_CHANGED",
+   "hunk": "PRESENT_REVERSE_APPLIES",
+   "patch_lines": 13
+  },
+  {
+   "path": "scripts/db-audit/talkx-campaign-recipients-page.test.sh",
+   "status": "MAIN_UNCHANGED_SINCE_BASE",
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "patch_lines": 26,
+   "line_check": {
+    "added": 4,
+    "missing_in_main": 4,
+    "removed": 1,
+    "removed_still_in_main": 1,
+    "missing_sample": [
+     "CREATE TABLE public.contacts (",
+     "  id uuid PRIMARY KEY,",
+     "  name text,",
+     "  phone text"
+    ],
+    "still_sample": [
+     "CREATE TABLE public.contacts (id uuid PRIMARY KEY, name text, phone text);"
+    ]
+   }
+  },
+  {
+   "path": "src/components/inbox/RealtimeInboxView.tsx",
+   "status": "BOTH_CHANGED",
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "patch_lines": 31,
+   "line_check": {
+    "added": 3,
+    "missing_in_main": 3,
+    "removed": 3,
+    "removed_still_in_main": 3,
+    "missing_sample": [
+     "    conversations: inbox.cachedConversations ?? [],",
+     "    () => (inbox.cachedConversations ?? [])",
+     "    () => (inbox.cachedConversations ?? []).reduce((total, c) => total + (c.unreadCount ?? 0), 0),"
+    ],
+    "still_sample": [
+     "    conversations: inbox.cachedConversations,",
+     "    () => inbox.cachedConversations",
+     "    () => inbox.cachedConversations.reduce((total, c) => total + (c.unreadCount ?? 0), 0),"
+    ]
+   }
+  },
+  {
+   "path": "src/components/inbox/ai-tools/__tests__/a11y-ferramentas-ia.test.tsx",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/components/inbox/chat/__tests__/ChatMessagesArea.agrupar-envio.test.tsx",
+   "status": "BOTH_CHANGED",
+   "hunk": "CONFLICT",
+   "patch_lines": 100,
+   "line_check": {
+    "added": 45,
+    "missing_in_main": 40,
+    "removed": 3,
+    "removed_still_in_main": 3,
+    "missing_sample": [
+     "  private static _depth = 0;",
+     "    if (ResizeObserverMock._depth > 0) return;",
+     "    ResizeObserverMock._depth++;",
+     "    try {",
+     "    } finally {",
+     "      ResizeObserverMock._depth--;",
+     "  (globalThis as unknown as { ResizeObserver: typeof ResizeObserverMock }).ResizeObserver = ResizeObserverMock;",
+     "  Object.defineProperty(HTMLElement.prototype, 'getBoundingClientRect', {",
+     "    configurable: true,",
+     "    value: () => ({",
+     "      height: 600, width: 800, top: 0, left: 0,",
+     "      right: 800, bottom: 600, x: 0, y: 0, toJSON: () => ({}),",
+     "vi.mock('@/hooks/reactions/useBatchReactions', () => ({",
+     "  // eslint-disable-next-line @typescript-eslint/no-explicit-any",
+     "  ReactionsBatchProvider: ({ children }: { children: any }) => children,",
+     "vi.mock('@tanstack/react-virtual', () => ({",
+     "  useVirtualizer: (opts: {",
+     "    count: number;",
+     "    estimateSize: () => number;",
+     "    getScrollElement: () => Element | null;",
+     "    getItemKey?: (i: number) => unknown;",
+     "  }) => {",
+     "    const est = opts.estimateSize();",
+     "    const items = Array.from({ length: opts.count }, (_, i) => ({",
+     "      index: i,"
+    ],
+    "still_sample": [
+     "    setTimeout(() => {",
+     "    }, 0);",
+     "      <ChatMessagesArea ref={(r) => { areaRef.current = r; }} {...props} />"
+    ]
+   }
+  },
+  {
+   "path": "src/components/inbox/chat/__tests__/ChatMessagesArea.loop.test.tsx",
+   "status": "BOTH_CHANGED",
+   "hunk": "CONFLICT",
+   "patch_lines": 88,
+   "line_check": {
+    "added": 42,
+    "missing_in_main": 37,
+    "removed": 2,
+    "removed_still_in_main": 2,
+    "missing_sample": [
+     "  private static _depth = 0;",
+     "    if (ResizeObserverMock._depth > 0) return;",
+     "    ResizeObserverMock._depth++;",
+     "    try {",
+     "    } finally {",
+     "      ResizeObserverMock._depth--;",
+     "  (globalThis as unknown as { ResizeObserver: typeof ResizeObserverMock }).ResizeObserver = ResizeObserverMock;",
+     "  Object.defineProperty(HTMLElement.prototype, 'getBoundingClientRect', {",
+     "    configurable: true,",
+     "    value: () => ({",
+     "      height: 600, width: 800, top: 0, left: 0,",
+     "      right: 800, bottom: 600, x: 0, y: 0, toJSON: () => ({}),",
+     "vi.mock('@/hooks/reactions/useBatchReactions', () => ({",
+     "  // eslint-disable-next-line @typescript-eslint/no-explicit-any",
+     "  ReactionsBatchProvider: ({ children }: { children: any }) => children,",
+     "vi.mock('@tanstack/react-virtual', () => ({",
+     "  useVirtualizer: (opts: {",
+     "    count: number;",
+     "    estimateSize: () => number;",
+     "    getScrollElement: () => Element | null;",
+     "    getItemKey?: (i: number) => unknown;",
+     "  }) => {",
+     "    const est = opts.estimateSize();",
+     "    const items = Array.from({ length: opts.count }, (_, i) => ({",
+     "      key: opts.getItemKey ? opts.getItemKey(i) : i,"
+    ],
+    "still_sample": [
+     "    setTimeout(() => {",
+     "    }, 0);"
+    ]
+   }
+  },
+  {
+   "path": "src/components/inbox/chat/__tests__/ChatMessagesArea.movimento-reduzido.test.tsx",
+   "status": "BOTH_CHANGED",
+   "hunk": "CONFLICT",
+   "patch_lines": 100,
+   "line_check": {
+    "added": 45,
+    "missing_in_main": 39,
+    "removed": 3,
+    "removed_still_in_main": 3,
+    "missing_sample": [
+     "  private static _depth = 0;",
+     "    if (ResizeObserverMock._depth > 0) return;",
+     "    ResizeObserverMock._depth++;",
+     "    try {",
+     "    } finally {",
+     "      ResizeObserverMock._depth--;",
+     "  (globalThis as unknown as { ResizeObserver: typeof ResizeObserverMock }).ResizeObserver = ResizeObserverMock;",
+     "  Object.defineProperty(HTMLElement.prototype, 'getBoundingClientRect', {",
+     "    configurable: true,",
+     "    value: () => ({",
+     "      height: 600, width: 800, top: 0, left: 0,",
+     "      right: 800, bottom: 600, x: 0, y: 0, toJSON: () => ({}),",
+     "vi.mock('@/hooks/reactions/useBatchReactions', () => ({",
+     "  // eslint-disable-next-line @typescript-eslint/no-explicit-any",
+     "  ReactionsBatchProvider: ({ children }: { children: any }) => children,",
+     "vi.mock('@tanstack/react-virtual', () => ({",
+     "  useVirtualizer: (opts: {",
+     "    count: number;",
+     "    estimateSize: () => number;",
+     "    getScrollElement: () => Element | null;",
+     "    getItemKey?: (i: number) => unknown;",
+     "  }) => {",
+     "    const est = opts.estimateSize();",
+     "    const items = Array.from({ length: opts.count }, (_, i) => ({",
+     "      key: opts.getItemKey ? opts.getItemKey(i) : i,"
+    ],
+    "still_sample": [
+     "    setTimeout(() => {",
+     "    }, 0);",
+     "      <ChatMessagesArea ref={(r) => { areaRef.current = r; }} {...props} />"
+    ]
+   }
+  },
+  {
+   "path": "src/components/inbox/chat/__tests__/ChatMessagesArea.pagination.test.tsx",
+   "status": "BOTH_CHANGED",
+   "hunk": "CONFLICT",
+   "patch_lines": 88,
+   "line_check": {
+    "added": 42,
+    "missing_in_main": 38,
+    "removed": 2,
+    "removed_still_in_main": 2,
+    "missing_sample": [
+     "  private static _depth = 0;",
+     "    if (ResizeObserverMock._depth > 0) return;",
+     "    ResizeObserverMock._depth++;",
+     "    try {",
+     "    } finally {",
+     "      ResizeObserverMock._depth--;",
+     "  (globalThis as unknown as { ResizeObserver: typeof ResizeObserverMock }).ResizeObserver = ResizeObserverMock;",
+     "  Object.defineProperty(HTMLElement.prototype, 'getBoundingClientRect', {",
+     "    configurable: true,",
+     "    value: () => ({",
+     "      height: 600, width: 800, top: 0, left: 0,",
+     "      right: 800, bottom: 600, x: 0, y: 0, toJSON: () => ({}),",
+     "vi.mock('@/hooks/reactions/useBatchReactions', () => ({",
+     "  // eslint-disable-next-line @typescript-eslint/no-explicit-any",
+     "  ReactionsBatchProvider: ({ children }: { children: any }) => children,",
+     "vi.mock('@tanstack/react-virtual', () => ({",
+     "  useVirtualizer: (opts: {",
+     "    count: number;",
+     "    estimateSize: () => number;",
+     "    getScrollElement: () => Element | null;",
+     "    getItemKey?: (i: number) => unknown;",
+     "  }) => {",
+     "    const est = opts.estimateSize();",
+     "    const items = Array.from({ length: opts.count }, (_, i) => ({",
+     "      index: i,"
+    ],
+    "still_sample": [
+     "    setTimeout(() => {",
+     "    }, 0);"
+    ]
+   }
+  },
+  {
+   "path": "src/components/inbox/tabs/__tests__/FilesTab.fase6.test.tsx",
+   "status": "BOTH_CHANGED",
+   "hunk": "PRESENT_REVERSE_APPLIES",
+   "patch_lines": 13
+  },
+  {
+   "path": "src/components/security/PasswordResetRequestsPanel.tsx",
+   "status": "BOTH_CHANGED",
+   "hunk": "CONFLICT",
+   "patch_lines": 38,
+   "line_check": {
+    "added": 9,
+    "missing_in_main": 9,
+    "removed": 2,
+    "removed_still_in_main": 2,
+    "missing_sample": [
+     "import { isAccessDeniedError, ACCESS_DENIED_MESSAGE } from '@/lib/rlsError';",
+     "      if (error) {",
+     "        const parsed = await parseEdgeError(error, 'Erro ao aprovar');",
+     "        if (isAccessDeniedError(parsed)) throw new Error(ACCESS_DENIED_MESSAGE);",
+     "        throw new Error(parsed.message);",
+     "      if (error) {",
+     "        const parsed = await parseEdgeError(error, 'Erro ao rejeitar');",
+     "        if (isAccessDeniedError(parsed)) throw new Error(ACCESS_DENIED_MESSAGE);",
+     "        throw new Error(parsed.message);"
+    ],
+    "still_sample": [
+     "      if (error) throw new Error((await parseEdgeError(error, 'Erro ao aprovar')).message);",
+     "      if (error) throw new Error((await parseEdgeError(error, 'Erro ao rejeitar')).message);"
+    ]
+   }
+  },
+  {
+   "path": "src/components/talkx/TalkXOverview.tsx",
+   "status": "BOTH_CHANGED",
+   "hunk": "CONFLICT",
+   "patch_lines": 13,
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 1,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "                              <button type=\"button\" disabled={rowActions.pendingId === c.id} aria-busy={rowActions.pendingId === c.id} className=\"h-8 w-8 rounde"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/talkx/useCampaignEditor.ts",
+   "status": "MAIN_UNCHANGED_SINCE_BASE",
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "patch_lines": 13,
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 1,
+    "removed_still_in_main": 1,
+    "missing_sample": [
+     "      await Promise.allSettled("
+    ],
+    "still_sample": [
+     "      await Promise.all("
+    ]
+   }
+  },
+  {
+   "path": "src/components/ui/command-palette.tsx",
+   "status": "BOTH_CHANGED",
+   "hunk": "CONFLICT",
+   "patch_lines": 18,
+   "line_check": {
+    "added": 2,
+    "missing_in_main": 2,
+    "removed": 2,
+    "removed_still_in_main": 1,
+    "missing_sample": [
+     "                  <div role=\"listbox\" aria-label=\"Resultados da busca\" className=\"space-y-0.5\">",
+     "                        <motion.button key={item.id} role=\"option\" aria-selected={gi === selectedIndex} initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, "
+    ],
+    "still_sample": [
+     "                  <div className=\"space-y-0.5\">"
+    ]
+   }
+  },
+  {
+   "path": "src/hooks/auth/useAuth.tsx",
+   "status": "BOTH_CHANGED",
+   "hunk": "CONFLICT",
+   "patch_lines": 28,
+   "line_check": {
+    "added": 3,
+    "missing_in_main": 2,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "        offlineSendQueue.clear().catch((err) => log.error('[AuthProvider] offlineSendQueue.clear failed:', err));",
+     "       offlineSendQueue.clear().catch((err) => log.error('[AuthProvider] offlineSendQueue.clear failed:', err));"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/hooks/chat/useTeamChatNotifications.ts",
+   "status": "BOTH_CHANGED",
+   "hunk": "CONFLICT",
+   "patch_lines": 72,
+   "line_check": {
+    "added": 20,
+    "missing_in_main": 16,
+    "removed": 6,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  // HZ5-09: ID estável por instância do hook — impede recriação do canal Realtime",
+     "  // quando notifSettings/permission mudam. A ref é inicializada uma vez e nunca",
+     "  // recalculada, portanto o mesmo canal sobrevive a re-renders.",
+     "  const channelIdRef = useRef(`team-chat-notifications:${crypto.randomUUID()}`);",
+     "  // Refs para os valores voláteis: o callback do canal lê sempre o valor mais",
+     "  // recente sem precisar recriar o canal quando eles mudam.",
+     "  const showNotificationRef = useRef(showNotification);",
+     "  showNotificationRef.current = showNotification;",
+     "  const permissionRef = useRef(permission);",
+     "  permissionRef.current = permission;",
+     "      .channel(channelIdRef.current)",
+     "        if (notifSettingsRef.current.soundEnabled && !isQuietHoursRef.current()) {",
+     "          playTeamChatSound(notifSettingsRef.current.soundVolume);",
+     "        if (permissionRef.current === 'granted' && notifSettingsRef.current.browserNotifications && !isQuietHoursRef.current()) {",
+     "          await showNotificationRef.current({",
+     "  }, [profile]);"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/hooks/contacts/__tests__/useContainerColumns.test.ts",
+   "status": "BOTH_CHANGED",
+   "hunk": "CONFLICT",
+   "patch_lines": 39,
+   "line_check": {
+    "added": 14,
+    "missing_in_main": 1,
+    "removed": 11,
+    "removed_still_in_main": 9,
+    "missing_sample": [
+     "      writable: true,"
+    ],
+    "still_sample": [
+     "        width: this.largura,",
+     "        height: 0,",
+     "        top: 0,",
+     "        left: 0,",
+     "        right: this.largura,",
+     "        bottom: 0,",
+     "        x: 0,",
+     "        y: 0,",
+     "        toJSON: () => ({}),"
+    ]
+   }
+  },
+  {
+   "path": "src/hooks/integrations/__tests__/useTalkXSegments.test.ts",
+   "status": "MAIN_UNCHANGED_SINCE_BASE",
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "patch_lines": 33,
+   "line_check": {
+    "added": 4,
+    "missing_in_main": 4,
+    "removed": 4,
+    "removed_still_in_main": 4,
+    "missing_sample": [
+     "    expect(RULE_FIELDS.filter((f) => f.comingSoon).map((f) => f.value).sort()).toEqual(['lead_origin', 'lead_score', 'real_sector', 'real_uf', 'risk_score']);",
+     "  it('real_* comingSoon são excluídos pelo splitRules (não entram no conjunto executável)', () => {",
+     "    expect(incompleteCount).toBe(3);",
+     "    expect(complete.groups).toHaveLength(0);"
+    ],
+    "still_sample": [
+     "    expect(RULE_FIELDS.filter((f) => f.comingSoon).map((f) => f.value).sort()).toEqual(['lead_origin', 'lead_score', 'risk_score']);",
+     "  it('real_* continua regra completa na estimativa (splitRules não a descarta)', () => {",
+     "    expect(incompleteCount).toBe(1);",
+     "    expect(complete.groups[0].rules.map((r) => r.field)).toEqual(['real_sector', 'real_uf']);"
+    ]
+   }
+  },
+  {
+   "path": "src/hooks/integrations/__tests__/useTalkXSuppression.test.ts",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/hooks/integrations/__tests__/useTalkXSuppression.test.tsx",
+   "status": "DELETED_IN_BRANCH",
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "patch_lines": 114,
+   "line_check": {
+    "note": "branch deletes file; main still has it"
+   }
+  },
+  {
+   "path": "src/hooks/integrations/useKnowledgeBase.ts",
+   "status": "BOTH_CHANGED",
+   "hunk": "CONFLICT",
+   "patch_lines": 37,
+   "line_check": {
+    "added": 11,
+    "missing_in_main": 4,
+    "removed": 1,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "    if (articlesRes.error) {",
+     "      setError(articlesRes.error.message);",
+     "    if (filesRes.error) {",
+     "      setError(filesRes.error.message);"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/hooks/integrations/useTalkXSegments.ts",
+   "status": "BOTH_CHANGED",
+   "hunk": "CONFLICT",
+   "patch_lines": 113,
+   "line_check": {
+    "added": 28,
+    "missing_in_main": 24,
+    "removed": 7,
+    "removed_still_in_main": 3,
+    "missing_sample": [
+     "export const RULE_FIELDS: { value: RuleField; label: string; kind: 'text' | 'array' | 'number' | 'date' | 'enum' | 'uuid'; category: 'basico' | 'comportamento' ",
+     "  // requiresPreResolution: a resolução de audiência falha fechada enquanto o front",
+     "  // não resolver p_contact_ids via ponte Singu — nunca descarta a regra em silêncio.",
+     "  { value: 'real_sector', label: 'Setor de atividade (real)', kind: 'enum', category: 'basico', requiresPreResolution: true, comingSoon: true },",
+     "  { value: 'real_uf', label: 'UF (real)', kind: 'enum', category: 'basico', requiresPreResolution: true, comingSoon: true },",
+     "  // t_bbe423a7 — contacts.lead_origin: nenhum fluxo de criação do Zapp grava a coluna",
+     "  // (o contato derivado do WhatsApp carrega a origem só na projeção em memória, não na",
+     "  // linha do banco). Filtrar por origem devolveria sempre vazio → \"em breve\".",
+     "        // \"Em breve\" (lead_score/risk_score/lead_origin): a regra é completa e bem descrita",
+     "const quoted = (v: string) => `\"${v.replace(/[\\\\\\\"]/g, (c) => (c === '\\\\' ? '\\\\\\\\' : '\\\\\"'))}\"`;",
+     "  // Campos que requerem pré-resolução (ponte Singu) nunca viram filtro PostgREST:",
+     "  // a regra deve ser resolvida em p_contact_ids antes de chegar ao motor.",
+     "  if (def.requiresPreResolution) return null;",
+     " * Varre todos os grupos/regras e devolve o primeiro campo que requer",
+     " * pré-resolução via ponte Singu (p_contact_ids). Se houver, countAudience e",
+     " * resolveAudience falham fechados antes de chamar a RPC — nunca descartam a",
+     " * regra em silêncio, o que retornaria mais contatos do que o pedido.",
+     "function findPreResolutionField(rules: SegmentRules | null | undefined): string | null {",
+     "      if (RULE_FIELDS.find((f) => f.value === rule.field)?.requiresPreResolution) return rule.field;",
+     "  const preResField = findPreResolutionField(rules);",
+     "  if (preResField) throw new Error(`${preResField} requer p_contact_ids (ponte Singu não resolvida)`);",
+     "  const preResField = findPreResolutionField(rules);",
+     "  if (preResField) throw new Error(`${preResField} requer p_contact_ids (ponte Singu não resolvida)`);",
+     "      await Promise.allSettled(segments.map(async (s) => {"
+    ],
+    "still_sample": [
+     "        // \"Em breve\" (lead_score/risk_score): a regra é completa e bem descrita",
+     "const quoted = (v: string) => `\"${v.replace(/[\\\\\"]/g, (c) => (c === '\\\\' ? '\\\\\\\\' : '\\\\\"'))}\"`;",
+     "      await Promise.all(segments.map(async (s) => {"
+    ]
+   }
+  },
+  {
+   "path": "src/hooks/integrations/useTalkXSuppression.ts",
+   "status": "BOTH_CHANGED",
+   "hunk": "CONFLICT",
+   "patch_lines": 142,
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 0,
+    "removed": 101,
+    "removed_still_in_main": 12,
+    "missing_sample": [],
+    "still_sample": [
+     "/* -------------------------------------------------------------------------- */",
+     "/* -------------------------------------------------------------------------- */",
+     "  id: string;",
+     "  contact_id: string | null;",
+     "  phone: string | null;",
+     "  created_at: string;",
+     "    queryFn: async () => {",
+     "        .order('created_at', { ascending: false })",
+     "      if (error) throw error;",
+     "      if (error) throw error;"
+    ]
+   }
+  },
+  {
+   "path": "src/hooks/team-chat/__tests__/useTeamMessages.canal-e-reconexao.test.tsx",
+   "status": "BOTH_CHANGED",
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "patch_lines": 16,
+   "line_check": {
+    "added": 4,
+    "missing_in_main": 0,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [],
+    "still_sample": []
+   }
+  }
+ ],
+ "counts": {
+  "migrations": "0",
+  "workflows": "1",
+  "src": "21",
+  "edges": "0",
+  "docs_only": "no",
+  "lines_branch_has_main_lacks": "707",
+  "lines_main_has_branch_lacks": "1114"
+ },
+ "auto": "MISTO_CONFLITO",
+ "n_files_with_gaps": 20,
+ "gap_lines_total": 273
+}

@@ -1,0 +1,61 @@
+{
+ "id": "pr-2977",
+ "kind": "pr",
+ "ref": "refs/remotes/pr/2977",
+ "pr": 2977,
+ "tip": "dcc59b5c2dbbea8a8d6475e460896463c89271ad",
+ "merge_base": "55361775364dbd53803a5a7d8f185f1b22d0725c",
+ "ahead": 2,
+ "last_commit_date": "2026-11-12",
+ "merge_base_date": "2026-11-12",
+ "triagem_2804": null,
+ "closure_comment": {
+  "title": "[SUPERSEDIDO] fix(external-db-bridge): validar coluna e operador (SEC-Z018)",
+  "last_comment": "## ⚠️ Contrato DB offline — falha não causada por esta PR |  | **Check que falhou:** \"Simular ACL e persistencia de media_path do Team Chat (R2-DB-020)\" |  | **Erro:** `check constraint \"probe_r2db020_canonical\" of relation \"team_messages\" is violated by some row` |  | O probe tenta adicionar a constraint: | ```s"
+ },
+ "files": [
+  {
+   "path": "supabase/deployment-manifest.json",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 31,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 4,
+    "missing_in_main": 4,
+    "removed": 4,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "      \"bytes\": 10126,",
+     "      \"sha256\": \"7281bbc7ae04c8af342461dbb5e1239fbc4ccc3258c18593775eb80db623a83a\"",
+     "      \"source_sha256\": \"8334cfea60d6efd3372bd766b90e923eedaa9c804cbfcfc4ad663ecb76157489\",",
+     "  \"manifest_sha256\": \"d3d065dc6ec8f1a6e70e0cf4be2eb8d02730c12ff9eb2af76228ee137c7764fa\""
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "supabase/functions/external-db-bridge/index.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 39,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 10,
+    "missing_in_main": 6,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "// SEC-Z018: valida que value é um identificador SQL seguro (nome de coluna).",
+     "function validIdentifier(value: unknown): value is string {",
+     "  return typeof value === 'string' && /^[a-z_][a-z0-9_]*$/i.test(value);",
+     "// Allowlist de operadores aceitos pelo PostgREST",
+     "            if (!validIdentifier(f.column) || !FILTER_OPERATORS.has(f.operator)) {",
+     "          if (!validIdentifier(ord.column)) {"
+    ],
+    "still_sample": []
+   }
+  }
+ ],
+ "auto": "MISTO_CONFLITO",
+ "n_files_with_gaps": 2,
+ "gap_lines_total": 10
+}

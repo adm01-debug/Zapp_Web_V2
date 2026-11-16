@@ -1,0 +1,34 @@
+{
+ "id": "pr-606",
+ "kind": "pr",
+ "ref": "refs/remotes/pr/606",
+ "pr": 606,
+ "tip": "5159bce362bdf84d0997bfe4c46ba5381fac74fb",
+ "merge_base": "521ac3ae0e79f82dcd49657427b387c32323bb9a",
+ "ahead": 4,
+ "last_commit_date": "2026-09-24",
+ "merge_base_date": "2026-09-24",
+ "triagem_2804": "PERDIDA",
+ "closure_comment": null,
+ "files": [
+  {
+   "path": "src/components/layout/AppShell.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 13,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 1,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  const layoutContextValue = useMemo(() => ({ hasBreadcrumbBar: false }), []);"
+    ],
+    "still_sample": []
+   }
+  }
+ ],
+ "auto": "MISTO_CONFLITO",
+ "n_files_with_gaps": 1,
+ "gap_lines_total": 1
+}

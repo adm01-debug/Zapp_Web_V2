@@ -1,0 +1,88 @@
+{
+ "id": "claude__fix-esm-sh-regression-261108-2320",
+ "kind": "branch",
+ "ref": "origin/claude/fix-esm-sh-regression-261108-2320",
+ "tip": "db7fc3750c46250d857db176dc31297fe048415f",
+ "merge_base": "9183f0f6fa4296cd07c585602bc5ea88ada5d98d",
+ "ahead": 1,
+ "last_commit_date": "2026-11-08",
+ "merge_base_date": "2026-11-08",
+ "prs_with_same_tip": [
+  2862
+ ],
+ "triagem_2804": {
+  "2862": null
+ },
+ "closure_comment": {},
+ "files": [
+  {
+   "path": "supabase/functions/cleanup-rate-limit-logs/index.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 116,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 2,
+    "missing_in_main": 1,
+    "removed": 35,
+    "removed_still_in_main": 34,
+    "missing_sample": [
+     " * R2-API-022 (P1) - gate de autorizacao do cleanup-rate-limit-logs."
+    ],
+    "still_sample": [
+     " * R2-API-022 (P1) — gate de autorização do cleanup-rate-limit-logs.",
+     " * Defeito fechado: a rotina de manutenção apagava registros de `rate_limit_logs`,",
+     " * `blocked_ips` e `security_alerts` com a service role SEM nenhuma verificação",
+     " * de quem chamava — qualquer identidade admitida pelo gateway disparava os",
+     " * DELETEs.",
+     " * Regra agora (fixada na decomposição do achado):",
+     " *   - preflight CORS continua livre;",
+     " *   - autorização acontece ANTES de qualquer DELETE;",
+     " *   - execução automática exige `CRON_SECRET` não vazio, enviado no header",
+     " *     dedicado `x-cron-secret`, comparado em tempo constante;"
+    ]
+   }
+  },
+  {
+   "path": "supabase/functions/external-db-proxy/index.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 123,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 4,
+    "missing_in_main": 4,
+    "removed": 33,
+    "removed_still_in_main": 32,
+    "missing_sample": [
+     "import { createClient } from 'npm:@supabase/supabase-js@2.87.1'",
+     "    code === 'PGRST116' ||",
+     "    code === '42P01' ||",
+     "    code === '42501' ||"
+    ],
+    "still_sample": [
+     "// PostgREST/Postgres error codes that signal \"external DB not properly wired\"",
+     "// rather than a real query problem. When these appear, callers should stop",
+     "// polling silently instead of showing a red network error in DevTools.",
+     "    code === 'PGRST116' ||       // PostgREST: relation not found in schema cache",
+     "    code === '42P01' ||          // PostgreSQL: undefined table",
+     "    code === '42501' ||          // PostgreSQL: permission denied (misconfigured key)",
+     "    // Dedicated secret names (not EXTERNAL_SUPABASE_*): that prefix is",
+     "    // owned by crm-integration's deploy-functions.yml preflight, which",
+     "    // overwrites EXTERNAL_SUPABASE_URL on every crm-integration/full deploy.",
+     "    // Sharing it here silently pointed this proxy at the CRM project while"
+    ]
+   }
+  }
+ ],
+ "counts": {
+  "migrations": "0",
+  "workflows": "0",
+  "src": "0",
+  "edges": "2",
+  "docs_only": "no",
+  "lines_branch_has_main_lacks": "5",
+  "lines_main_has_branch_lacks": "73"
+ },
+ "auto": "MISTO_CONFLITO",
+ "n_files_with_gaps": 2,
+ "gap_lines_total": 71
+}

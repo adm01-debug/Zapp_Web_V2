@@ -1,0 +1,136 @@
+{
+ "id": "pr-206",
+ "kind": "pr",
+ "ref": "refs/remotes/pr/206",
+ "pr": 206,
+ "tip": "0411dcfec7921ee1cf54e243838d6913e50fdabf",
+ "merge_base": "cbd7806bd392408b1e7dc73410cc4b913bdcc5c1",
+ "ahead": 3,
+ "last_commit_date": "2026-09-04",
+ "merge_base_date": "2026-09-03",
+ "triagem_2804": "DRIFT",
+ "closure_comment": null,
+ "files": [
+  {
+   "path": "scripts/db-audit/migration-evidence.json",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 24,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 0,
+    "missing_in_main": 0,
+    "removed": 11,
+    "removed_still_in_main": 11,
+    "missing_sample": [],
+    "still_sample": [
+     "      \"version\": \"20260903200000\",",
+     "      \"filename\": \"20260903200000_revoke_anon_record_failed_login.sql\",",
+     "      \"file_sha256\": \"7da8dc6622bfe9d5c86bc12a96f5b9b79ba8aaea54fdeb2c1a2d8fadd49151a0\",",
+     "      \"file_sql_sha256\": \"3c63b6622599f041a9c0f07fc7f43c25534b38eeb345db9dcebee0480d8422cb\",",
+     "      \"ledger_name\": \"revoke_anon_record_failed_login\",",
+     "      \"ledger_sql_sha256\": \"86244998cd0d97e89a90de33cb46e2e4235a316d3a047d98316667e69a548cdb\",",
+     "      \"ledger_statements_sha256\": \"e3d00bd89a2ef72bac40bdc650da39490559c7695acc6374e826eaacf6732860\",",
+     "      \"kind\": \"ledger-divergence/pinned-replay\",",
+     "      \"reason\": \"safer-replay\",",
+     "      \"related_migration\": null,"
+    ]
+   }
+  },
+  {
+   "path": "supabase/migrations/20260902120001_add_department_id_columns.sql",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "supabase/migrations/20260903200000_revoke_anon_record_failed_login.sql",
+   "status": "MAIN_UNCHANGED_SINCE_BASE",
+   "patch_lines": 26,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 4,
+    "removed_still_in_main": 4,
+    "missing_sample": [
+     "REVOKE EXECUTE ON FUNCTION public.record_failed_login(text, text, text) FROM anon;"
+    ],
+    "still_sample": [
+     "DO $$",
+     "BEGIN",
+     "  RAISE NOTICE '20260903200000 revertida por 20260903210000 — no-op no replay';",
+     "END $$;"
+    ]
+   }
+  },
+  {
+   "path": "supabase/migrations/20260903210000_hotfix_restore_anon_record_failed_login.sql",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "supabase/migrations/20260903220000_drop_redundant_indexes.sql",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "supabase/migrations/20260903225000_sla_first_response_v2.sql",
+   "status": "MAIN_UNCHANGED_SINCE_BASE",
+   "patch_lines": 81,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 4,
+    "missing_in_main": 4,
+    "removed": 6,
+    "removed_still_in_main": 6,
+    "missing_sample": [
+     "--    resposta (nao mais a primeira mensagem do historico inteiro);",
+     "-- 2) registro via TRIGGER quando mensagem do atendente chega a status='sent';",
+     "-- 3) corrida de concorrencia fechada com advisory lock + indice unico parcial;",
+     "-- 4) first_response_at usa created_at exato da mensagem (sem drift de now())."
+    ],
+    "still_sample": [
+     "  -- serializa por contato (fecha corrida de UPDATE concorrente)",
+     "  -- base: primeira mensagem do cliente ainda sem resposta do atendente,",
+     "  -- considerando apenas mensagens anteriores a resposta sendo registrada",
+     "  -- sem mensagem do cliente pendente: nada a registrar",
+     "  -- autorizacao: mesmo predicado do contacts_select_policy (RLS nao se aplica",
+     "  -- dentro de SECURITY DEFINER, entao a checagem e explicita aqui)"
+    ]
+   }
+  },
+  {
+   "path": "supabase/migrations/20260903230000_add_fk_indexes.sql",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "supabase/migrations/20260903233000_sla_base_only_valid_messages.sql",
+   "status": "MAIN_UNCHANGED_SINCE_BASE",
+   "patch_lines": 28,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 2,
+    "missing_in_main": 2,
+    "removed": 3,
+    "removed_still_in_main": 3,
+    "missing_sample": [
+     "-- QUALQUER mensagem do atendente, incluindo status 'sending'/'failed'.",
+     "-- Corrige: considera apenas mensagens com status ('sent','delivered','read')."
+    ],
+    "still_sample": [
+     "  -- serializa por contato (fecha corrida de UPDATE concorrente)",
+     "  -- base: primeira mensagem do cliente ainda sem resposta EFETIVA do atendente",
+     "  -- (mensagens sending/failed nao contam como resposta anterior)"
+    ]
+   }
+  },
+  {
+   "path": "supabase/migrations/20260903240000_revoke_excessive_anon_grants.sql",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  }
+ ],
+ "auto": "MISTO_CONFLITO",
+ "n_files_with_gaps": 4,
+ "gap_lines_total": 31
+}

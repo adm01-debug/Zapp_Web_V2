@@ -1,0 +1,478 @@
+{
+ "id": "claude__kind-gates-87mwoe",
+ "kind": "branch",
+ "ref": "origin/claude/kind-gates-87mwoe",
+ "tip": "88291f53a9ccc9468220f64143032c4cf94db093",
+ "merge_base": "61a973da62f30ec37ecdc2e25bdfdbe136d5787d",
+ "ahead": 90,
+ "last_commit_date": "2026-10-31",
+ "merge_base_date": "2026-10-22",
+ "prs_with_same_tip": [
+  2185
+ ],
+ "triagem_2804": {
+  "2185": "OBSOLETA"
+ },
+ "closure_comment": {},
+ "files": [
+  {
+   "path": ".github/workflows/ci.yml",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 12,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "    if: ${{ !cancelled() }}"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "ESTADO.md",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 22,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 2,
+    "missing_in_main": 2,
+    "removed": 2,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "| `ai-kb-ingest` | A | `src/hooks/integrations/useKnowledgeBase.ts:139` · `src/hooks/integrations/useKnowledgeBase.ts:210` |",
+     "| `batch-fetch-avatars` | A | `src/hooks/chat/useNewConversation.ts:143` · `src/hooks/chat/useNewConversation.ts:151` · `src/hooks/inbox/useInboxBulkActions.ts:"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "PENDENCIAS.md",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 429,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 85,
+    "missing_in_main": 84,
+    "removed": 205,
+    "removed_still_in_main": 3,
+    "missing_sample": [
+     "# PENDENCIAS.md — Bloqueios do PR #2185",
+     "Branch: `claude/kind-gates-87mwoe`  ",
+     "Data: 2026-10-31 (atualizado — P1 resolvido; P5 adicionado)  ",
+     "SHA HEAD: `255ec2daf388c1b942135abd563ab751f171d145`",
+     "## ~~P1 — `Contrato DB offline` falha (pré-existente em `main`)~~ — RESOLVIDO",
+     "**Check:** `Contrato DB offline` (job em `db-guard.yml`)  ",
+     "**Status:** ✅ **RESOLVIDO** — conclusão `success` confirmada na `main` SHA `004e74a8c5`  ",
+     "**Evidência:** Run `41162012567` — https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41162012567  ",
+     "**Histórico:** Reproduzia no SHA de `main` antes de qualquer commit deste PR (`ERROR: record \"new\" has no field \"reset_token\"` em `sanitize_reset_request()` lin",
+     "## P2 — `🏗️ Build` falha por budget de bundle (pré-existente em `main`)",
+     "**Check:** `🏗️ Build` (job em `ci.yml`)  ",
+     "**Status:** BLOQUEADO — falha pré-existente em `main`; não é regressão deste PR  ",
+     "**Erro exato:**  ",
+     "initial-js: 359.5 KB gzip > budget 300 KB",
+     "FALHA: budget de bundle estourado",
+     "**Evidência de pré-existência em `main` (medição local, 2026-10-31):**  ",
+     "```bash",
+     "git checkout origin/main -- src/ vite.config.ts package.json performance-budget.json",
+     "bun run build && node scripts/ci/bundle-budget.mjs",
+     "Resultado na `main` (SHA `004e74a8c`):",
+     "JS inicial:  359.5 KB (budget 300 KB, 15 chunks)  ← FALHA",
+     "Branch `255ec2daf`:",
+     "JS inicial:  359.4 KB (budget 300 KB, 15 chunks)  ← FALHA (0.1 KB abaixo do main)",
+     "**Conclusão:** O branch não piorou o bundle em relação a `main`. Diferença de 0.1 KB é irrelevante.",
+     "A falha estava oculta por `if: success()` no job `build` que ficava `skipped`; o fix de `ci.yml`"
+    ],
+    "still_sample": [
+     "   ```sql",
+     "   ```sql",
+     "   ```sql"
+    ]
+   }
+  },
+  {
+   "path": "RELATORIO_CI.md",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 374,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 125,
+    "missing_in_main": 120,
+    "removed": 152,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "# RELATORIO_CI.md — PR #2185 · Branch `claude/kind-gates-87mwoe`",
+     "Data: 2026-10-31 (atualizado — evidências finais coletadas)  ",
+     "SHA final no push: `255ec2daf388c1b942135abd563ab751f171d145`  ",
+     "PR: https://github.com/adm01-debug/Zapp_Web_V2/pull/2185",
+     "## Comparação Baseline × Final",
+     "### Required checks da `main` (6 checks obrigatórios)",
+     "| Check | Baseline (antes dos fixes) | Final (SHA 255ec2da) | Delta |",
+     "| `🔍 Lint & TypeCheck` | ✅ PASSING | ✅ PASSING | = |",
+     "| `🧪 Unit Tests` | ❌ FAILING | ✅ PASSING (corrigido) | ↑ |",
+     "| `🏗️ Build` | ⏭️ SKIPPED (mascarado) | ❌ FAILING (bundle pré-existente em main) | revelado |",
+     "| `🔒 Security Audit` | ✅ PASSING | ✅ PASSING | = |",
+     "| `Contrato DB offline` | ❌ FAILING (pré-existente main) | ✅ PASSING (resolvido em main) | ↑ |",
+     "| `🎭 E2E Tests (Playwright)` | ✅ PASSING | ✅ PASSING | = |",
+     "### Checks não-required",
+     "| Check | Baseline | Final | Delta |",
+     "| `🧩 Node CI Scripts` | ❌ FAILING | ✅ PASSING (corrigido) | ↑ |",
+     "| `🧬 Mutação do mapa (não bloqueante)` | não aplicável | ✅ PASSING | = |",
+     "| `Replay local das migrations` | não aplicável | ✅ PASSING (confirmado) | ↑ |",
+     "| `copilot-pull-request-reviewer` | ❌ HTTP 402 | ❌ HTTP 402 (billing) | = |",
+     "## Prova de Conclusão — Estado na `main` (SHA `004e74a8c596959f45f61c8b0b64b30a70c1ff19`)",
+     "> **TODOS OS 6 REQUIRED CHECKS PASSANDO** na main pós-merge (PR #2407).",
+     "| Workflow | Run | Link | Conclusion |",
+     "| `🔍 Lint & TypeCheck` | `41162007995` | https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41162007995 | ✅ **success** |",
+     "| `🧪 Unit Tests (1/3)` | `41162012506` | https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41162012506 | ✅ **success** |",
+     "| `🧪 Unit Tests (2/3)` | `41162012506` | https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41162012506 | ✅ **success** |"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/inbox/ai-tools/__tests__/a11y-ferramentas-ia.test.tsx",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/components/knowledge/KnowledgeBaseView.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 38,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 16,
+    "missing_in_main": 9,
+    "removed": 1,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  if (error) {",
+     "        <PageHeader title=\"Base de Conhecimento\" subtitle=\"Treine a IA com documentos e artigos da sua empresa\" />",
+     "        <div className=\"flex-1 flex flex-col items-center justify-center gap-4 px-6\">",
+     "          <AlertCircle className=\"w-10 h-10 text-destructive opacity-70\" />",
+     "          <div className=\"text-center\">",
+     "            <p className=\"font-semibold text-sm text-foreground\">Falha ao carregar a base de conhecimento</p>",
+     "            <p className=\"text-xs text-muted-foreground mt-1 max-w-sm\">{error}</p>",
+     "          <Button variant=\"outline\" className=\"gap-2\" onClick={() => void fetchData()}>",
+     "            <RefreshCw className=\"w-4 h-4\" /> Tentar novamente"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/hooks/business/useWarRoomData.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 30,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 4,
+    "missing_in_main": 3,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "/** Máximo de linhas aceito dos RPCs; acima disso o hook lança erro (guarda contra dados corrompidos). */",
+     "      if (rows.length > WARROOM_MAX_ROWS) throw new Error(`warroom_agent_today devolveu ${rows.length} linhas`);",
+     "      if (rows.length > WARROOM_MAX_ROWS) throw new Error(`warroom_queue_stats devolveu ${rows.length} linhas`);"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/hooks/inbox/__tests__/useInboxBulkActions.test.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 109,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 28,
+    "missing_in_main": 10,
+    "removed": 10,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "      payload: expect.objectContaining({ conversation_status: 'archived' }),",
+     "    // c1 (open) restaura para open; c2 (pending) restaura para pending — grupos distintos, 2 updates.",
+     "    expect(restores[0]).toMatchObject({ payload: expect.objectContaining({ conversation_status: 'open' }), filters: { id: [c1] } });",
+     "    expect(restores[1]).toMatchObject({ payload: expect.objectContaining({ conversation_status: 'pending' }), filters: { id: [c2] } });",
+     "  it('conversation_status=\"waiting\" fora de VALID_FROM_ARCHIVED: desfazer restaura para \"open\" (fallback)', async () => {",
+     "      data: [{ id: c3, conversation_status: 'waiting' }],",
+     "    selectIds(result, [c3]);",
+     "    // 'waiting' não está em VALID_FROM_ARCHIVED → fallback para 'open'",
+     "      payload: expect.objectContaining({ conversation_status: 'open' }),",
+     "      filters: { id: [c3] },"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/hooks/inbox/__tests__/useInboxFilters.type-url.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 12,
+   "hunk": "PRESENT_REVERSE_APPLIES"
+  },
+  {
+   "path": "src/hooks/inbox/useInboxBulkActions.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 21,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 6,
+    "missing_in_main": 6,
+    "removed": 2,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "          // archived → somente open/pending são transições válidas no DB.",
+     "          // waiting/resolved/closed mapeiam para open para preservar a transição.",
+     "          const VALID_FROM_ARCHIVED = new Set(['open', 'pending']);",
+     "            const raw = previousStatus.get(id);",
+     "            if (raw === undefined) continue;",
+     "            const status = VALID_FROM_ARCHIVED.has(raw) ? raw : 'open';"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/hooks/inbox/useInboxFilters.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 62,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 17,
+    "missing_in_main": 13,
+    "removed": 5,
+    "removed_still_in_main": 2,
+    "missing_sample": [
+     "  // searchParams precisa ser declarado antes de basePrefs para que o useMemo",
+     "  // abaixo possa ler searchParams.get('type') sem violar a ordem dos hooks.",
+     "      // Usa searchParams (React Router) em vez de window.location para funcionar",
+     "      // em MemoryRouter (testes) e manter sincronismo com o estado do roteador.",
+     "      contactType: normalizeContactType(searchParams.get('type')) ?? storedPrefs?.contactType ?? null,",
+     "  const { chipTab, mainTab, subTab, queueId: selectedQueueId } = prefs;",
+     "  // URL tem precedência sobre o draft: deep-links e back/forward funcionam mesmo",
+     "  // com draft ativo (R2-INB-031). Quando não há ?type= na URL cai no draft/storage.",
+     "  const selectedContactType = normalizeContactType(searchParams.get('type')) ?? prefs.contactType;",
+     "    // Usa window.location.search (URL viva) como base, não o snapshot do React",
+     "    // Router, porque setViewParam/useNavigationHistory usam window.history.pushState",
+     "    // diretamente e o snapshot pode não conter view=inbox.",
+     "    setSearchParams(params, { replace: true });"
+    ],
+    "still_sample": [
+     "  const { chipTab, mainTab, subTab, queueId: selectedQueueId, contactType: selectedContactType } = prefs;",
+     "  }, [applyPrefs]);"
+    ]
+   }
+  },
+  {
+   "path": "src/hooks/integrations/__tests__/useTalkXSuppression.test.ts",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/hooks/integrations/useKnowledgeBase.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 38,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 12,
+    "missing_in_main": 5,
+    "removed": 1,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "    // t_1944d290: erros de RLS/rede não podem virar \"base vazia\" silenciosa",
+     "    if (articlesRes.error) {",
+     "      setError(articlesRes.error.message);",
+     "    if (filesRes.error) {",
+     "      setError(filesRes.error.message);"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/hooks/integrations/useTalkXSegments.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 82,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 25,
+    "missing_in_main": 19,
+    "removed": 4,
+    "removed_still_in_main": 1,
+    "missing_sample": [
+     "  // contacts.lead_origin nunca é gravada pelos fluxos do Zapp (a origem fica",
+     "  // só na projeção em memória, não na linha do banco) → filtrar por ela devolve",
+     "  // sempre vazio; fica \"em breve\" até existir escrita real.",
+     "  // Campos da ponte Singu: o valor vive em companies/company_addresses, não em",
+     "  // public.contacts — não existem como coluna PostgREST e chegam ao motor via",
+     "  // p_contact_ids pré-resolvidos. Falha fechada até o front implementar a",
+     "  // pré-resolução; sem null aqui, um filtro inválido chegaria ao servidor.",
+     "  if (r.field === 'real_sector' || r.field === 'real_uf') return null;",
+     " * Campos que vivem na ponte Singu e chegam ao motor via `p_contact_ids`",
+     " * pré-resolvidos — não podem ser enviados diretamente na regra porque não",
+     " * existem como coluna em `public.contacts`.",
+     " * Enquanto o front não implementar a pré-resolução, ambas as funções de",
+     " * audiência rejeitam de forma explícita para não enviar um payload sem essas",
+     " * regras (o que devolveria MAIS contatos do que o pedido).",
+     "function assertNoSinguFields(rules: SegmentRules | null | undefined): void {",
+     "      if (rule.field === 'real_sector' || rule.field === 'real_uf') {",
+     "        throw new Error(`${rule.field} requer pré-resolução via p_contact_ids antes de chamar o motor`);",
+     "  assertNoSinguFields(rules);",
+     "  assertNoSinguFields(rules);"
+    ],
+    "still_sample": [
+     "  const parts = groups.map((g) => (g.filters.length === 1 ? g.filters[0] : `${g.match}(${g.filters.join(',')})`));"
+    ]
+   }
+  },
+  {
+   "path": "src/hooks/integrations/useTalkXSuppression.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 113,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 0,
+    "removed": 77,
+    "removed_still_in_main": 6,
+    "missing_sample": [],
+    "still_sample": [
+     "    queryFn: async () => {",
+     "        .order('created_at', { ascending: false })",
+     "      if (error) throw error;",
+     "      if (error) throw error;",
+     "      if (error) throw error;",
+     "  return {"
+    ]
+   }
+  },
+  {
+   "path": "src/hooks/system/useDiagnosticsData.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 70,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 30,
+    "missing_in_main": 22,
+    "removed": 10,
+    "removed_still_in_main": 8,
+    "missing_sample": [
+     "    let messagesCount: number | null = null;",
+     "    let messagesCountError: ProbeError | null = null;",
+     "      messagesCount = count ?? null;",
+     "      messagesCountError = error ?? null;",
+     "      messagesCountError = err as ProbeError;",
+     "    // Falha de contagem estimada não pode passar em branco — propaga para o",
+     "    // bloco catch de fetchAll, que a torna visível via coletaFalhou.",
+     "    let connectionsCount: number | null = null;",
+     "    let connectionsCountError: ProbeError | null = null;",
+     "      connectionsCount = count ?? null;",
+     "      connectionsCountError = error ?? null;",
+     "      connectionsCountError = err as ProbeError;",
+     "    // Latência só é exibida quando nenhum erro de banco ocorreu. Se a query de",
+     "    // contatos sucedeu mas a de connections falhou, a latência medida NÃO representa",
+     "    // o estado do banco (que ficou 'down' por connectionsCountError) — exibi-la",
+     "    // como \"Latência crítica: Xms\" seria enganoso (Qodo Finding 4).",
+     "    const dbLatencyFinal = (dbError ?? connectionsCountError) ? null : dbLatency;",
+     "      database: classifyHealth(dbError ?? connectionsCountError, dbLatencyFinal, 500, 2000),",
+     "      dbLatency: dbLatencyFinal,",
+     "      contactsCount: contactsCount ?? 0,",
+     "      messagesCount: messagesCount ?? 0,",
+     "      connectionsCount: connectionsCount ?? 0,"
+    ],
+    "still_sample": [
+     "    const { count: messagesCount, error: messagesCountError } = await supabase",
+     "      .from('messages').select('id', { count: 'estimated', head: true });",
+     "    const { count: connectionsCount, error: connectionsCountError } = await supabase",
+     "      .from('whatsapp_connections').select('id', { count: 'estimated', head: true });",
+     "      dbLatency,",
+     "      contactsCount: contactsCount || 0,",
+     "      messagesCount: messagesCount || 0,",
+     "      connectionsCount: connectionsCount || 0,"
+    ]
+   }
+  },
+  {
+   "path": "src/hooks/system/useUserSettings.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 56,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 14,
+    "missing_in_main": 4,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "            title: 'Não foi possível carregar as configurações',",
+     "            description: 'Os valores exibidos são os padrões. Recarregue a página para tentar de novo.',",
+     "            title: 'Não foi possível carregar as configurações',",
+     "            description: 'Os valores exibidos são os padrões. Recarregue a página para tentar de novo.',"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/hooks/tasks/__tests__/workItemFormat.test.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 16,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 3,
+    "missing_in_main": 2,
+    "removed": 1,
+    "removed_still_in_main": 1,
+    "missing_sample": [
+     "      const agora = new Date(2026, 9, 11, 14, 0);",
+     "      expect(formatWorkItemDate('2026-10-11T17:00:00-03:00', { now: agora })).toBe('Hoje, 17:00');"
+    ],
+    "still_sample": [
+     "    expect(formatWorkItemDate('2026-10-11T17:00:00-03:00', { now: AGORA })).toBe('Hoje, 17:00');"
+    ]
+   }
+  },
+  {
+   "path": "src/test/setup.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 44,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 20,
+    "missing_in_main": 16,
+    "removed": 2,
+    "removed_still_in_main": 2,
+    "missing_sample": [
+     "// Instalado em Element.prototype (não HTMLElement.prototype) para que spies",
+     "// de vi.spyOn(Element.prototype, 'getBoundingClientRect') no mesmo nível",
+     "// possam sobrescrever com larguras específicas (ex.: testes do grid de arquivos",
+     "// em FilesTab.fase6.test.tsx que simulam 959px/1474px para contar colunas).",
+     "Object.defineProperty(Element.prototype, 'getBoundingClientRect', {",
+     "// MOCK clientHeight / clientWidth — @tanstack/react-virtual 3.x no jsdom.",
+     "// A partir da versão 3.x, o virtual-core mede o contêiner via getRect(), que",
+     "// usa `element.clientWidth` / `element.clientHeight` — NÃO getBoundingClientRect.",
+     "// No jsdom esses campos são sempre 0, então o virtualizador calcula 0 itens",
+     "// visíveis e nenhum <div data-testid=\"bubble\"> é montado. O getter abaixo",
+     "// retorna dimensões não-nulas para qualquer Element e é sobrescrito quando",
+     "// um teste precisa de tamanhos específicos (configurable: true).",
+     "Object.defineProperty(Element.prototype, 'clientHeight', {",
+     "  get: function () { return 600; },",
+     "Object.defineProperty(Element.prototype, 'clientWidth', {",
+     "  get: function () { return 800; },"
+    ],
+    "still_sample": [
+     "// Testes que precisam de valores específicos usam vi.spyOn e sobrescrevem isso.",
+     "Object.defineProperty(HTMLElement.prototype, 'getBoundingClientRect', {"
+    ]
+   }
+  }
+ ],
+ "counts": {
+  "migrations": "0",
+  "workflows": "1",
+  "src": "15",
+  "edges": "0",
+  "docs_only": "no",
+  "lines_branch_has_main_lacks": "681",
+  "lines_main_has_branch_lacks": "1861"
+ },
+ "auto": "MISTO_CONFLITO",
+ "n_files_with_gaps": 16,
+ "gap_lines_total": 339
+}

@@ -1,0 +1,79 @@
+{
+ "id": "claude__chore-relatorio-ci-261112-0940",
+ "kind": "branch",
+ "ref": "origin/claude/chore-relatorio-ci-261112-0940",
+ "tip": "5c655b681b72bd7d00e3ee6183725c2b59739f49",
+ "merge_base": "2d1020163e2e46d830154f121be76164bbc9204a",
+ "ahead": 3,
+ "last_commit_date": "2026-11-12",
+ "merge_base_date": "2026-11-12",
+ "prs_with_same_tip": [
+  2990
+ ],
+ "triagem_2804": {
+  "2990": null
+ },
+ "closure_comment": {
+  "2990": {
+   "title": "chore(ci): RELATORIO_CI e PENDENCIAS — vitest VERIFICADO task bhgtzypf7",
+   "last_comment": "[vc]: #B5l6ZyuzSuZilRkc1Zn8qjui6IQcfpwEijWB1LYEC6g=:eyJpc01vbm9yZXBvIjp0cnVlLCJ0eXBlIjoiZ2l0aHViIiwicHJvamVjdHMiOlt7Im5hbWUiOiJ6YXBwX3dlYl92MiIsInByb2plY3RJZCI6InByal9KNHdiOGVneno4aUwxQ0puU09YSkR0cW5idlJwIiwibGl2ZUZlZWRiYWNrIjp7InJlc29sdmVkIjowLCJ1bnJlc29sdmVkIjowLCJ0b3RhbCI6MCwibGluayI6IiJ9LCJpbnNw"
+  }
+ },
+ "files": [
+  {
+   "path": "PENDENCIAS.md",
+   "status": "BOTH_CHANGED",
+   "hunk": "CONFLICT",
+   "patch_lines": 283,
+   "line_check": {
+    "added": 79,
+    "missing_in_main": 0,
+    "removed": 127,
+    "removed_still_in_main": 8,
+    "missing_sample": [],
+    "still_sample": [
+     "|---|---|---|",
+     "|---|---|",
+     "|---|---|---|---|",
+     "|---|---|",
+     "|---|---|",
+     "|---|---|",
+     "|---|---|",
+     "|---|---|"
+    ]
+   }
+  },
+  {
+   "path": "RELATORIO_CI.md",
+   "status": "BOTH_CHANGED",
+   "hunk": "CONFLICT",
+   "patch_lines": 270,
+   "line_check": {
+    "added": 134,
+    "missing_in_main": 5,
+    "removed": 44,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "| DB Guard step 181 (talkx-e27-replay) | ❌ failure | ✅ success (PR #2982, SHA `2d1020163e`) | ✅ RESOLVIDO |",
+     "| Types Sync Gate 2 (usage-guard) | ❌ failure | ✅ success (PR #2983, SHA `bd417f58`) | ✅ RESOLVIDO |",
+     "| Types Sync Gate 1 (TypeScript) | ❌ failure | ✅ success (PR #2988, SHA `0a1e73f2`) | ✅ RESOLVIDO |",
+     "| E2E Logado (routine-ownership) | ❌ failure | ✅ **RESOLVIDO** — PR [#2987](https://github.com/adm01-debug/Zapp_Web_V2/pull/2987) MERGEADA em 11:15Z (SHA `87c5e",
+     "| DB Guard zombie #40410990313 | 🔄 in_progress | Não cancelado — Rule 8 | ⚠️ Rule 8 (cancelamento manual) |"
+    ],
+    "still_sample": []
+   }
+  }
+ ],
+ "counts": {
+  "migrations": "0",
+  "workflows": "0",
+  "src": "0",
+  "edges": "0",
+  "docs_only": "yes",
+  "lines_branch_has_main_lacks": "6",
+  "lines_main_has_branch_lacks": "324"
+ },
+ "auto": "MISTO_CONFLITO",
+ "n_files_with_gaps": 2,
+ "gap_lines_total": 13
+}

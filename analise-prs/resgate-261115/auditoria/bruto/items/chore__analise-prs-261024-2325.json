@@ -1,0 +1,81 @@
+{
+ "id": "chore__analise-prs-261024-2325",
+ "kind": "branch",
+ "ref": "origin/chore/analise-prs-261024-2325",
+ "tip": "1c871e471dc8eb36be4085beae833b7b9105c155",
+ "merge_base": "2d97c44cfe7f2fa8a3ca572f8f5689118328e858",
+ "ahead": 1,
+ "last_commit_date": "2026-10-24",
+ "merge_base_date": "2026-10-24",
+ "prs_with_same_tip": [
+  2242
+ ],
+ "triagem_2804": {
+  "2242": "JA_NA_MAIN"
+ },
+ "closure_comment": {},
+ "files": [
+  {
+   "path": "analise-prs/prs.csv",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "analise-prs/prs.json",
+   "status": "BOTH_CHANGED",
+   "hunk": "CONFLICT",
+   "patch_lines": 2474,
+   "line_check": {
+    "added": 2175,
+    "missing_in_main": 2175,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "    \"number\": 2241,",
+     "    \"title\": \"chore: auditoria exaustiva Supabase — 26 achados (CRITICAL×3 HIGH×6)\",",
+     "    \"draft\": true,",
+     "    \"branch\": \"claude_05/upbeat-faraday-9e99s8\",",
+     "    \"created_at\": \"2026-10-24T21:12:42Z\",",
+     "    \"updated_at\": \"2026-10-24T22:56:19Z\",",
+     "    \"user\": \"adm01-debug\",",
+     "    \"labels\": \"\",",
+     "    \"merge_candidate\": false,",
+     "    \"has_migration_in_body\": true,",
+     "    \"has_edge_fn_in_body\": true,",
+     "    \"has_workflow_in_body\": false,",
+     "    \"rule8\": false,",
+     "    \"html_url\": \"https://github.com/adm01-debug/Zapp_Web_V2/pull/2241\",",
+     "    \"sha\": \"0d204182d681a8671b95511bc7e6893a5e0fbcea\"",
+     "    \"number\": 2240,",
+     "    \"title\": \"feat(talkx): filtros, paginação persistida e URL sync da biblioteca de segmentos [C011]\",",
+     "    \"draft\": false,",
+     "    \"branch\": \"claude/feat-talkx-segmentos-filtros-261024-1753\",",
+     "    \"created_at\": \"2026-10-24T21:09:29Z\",",
+     "    \"updated_at\": \"2026-10-24T21:13:28Z\",",
+     "    \"user\": \"adm01-debug\",",
+     "    \"labels\": \"\",",
+     "    \"merge_candidate\": true,",
+     "    \"has_migration_in_body\": true,"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "analise-prs/regras-de-negocio.md",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  }
+ ],
+ "counts": {
+  "migrations": "0",
+  "workflows": "0",
+  "src": "0",
+  "edges": "0",
+  "docs_only": "yes",
+  "lines_branch_has_main_lacks": "2465",
+  "lines_main_has_branch_lacks": "634"
+ },
+ "auto": "MISTO_CONFLITO",
+ "n_files_with_gaps": 1,
+ "gap_lines_total": 2175
+}

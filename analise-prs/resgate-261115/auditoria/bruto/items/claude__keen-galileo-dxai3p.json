@@ -1,0 +1,206 @@
+{
+ "id": "claude__keen-galileo-dxai3p",
+ "kind": "branch",
+ "ref": "origin/claude/keen-galileo-dxai3p",
+ "tip": "172c19c4382c5201a48b94341db7375e74d0d2a6",
+ "merge_base": "3d0b46c7aad351add37cba3659aa4b6d160d7947",
+ "ahead": 46,
+ "last_commit_date": "2026-10-30",
+ "merge_base_date": "2026-10-30",
+ "prs_with_same_tip": [
+  2354
+ ],
+ "triagem_2804": {
+  "2354": "OBSOLETA"
+ },
+ "closure_comment": {},
+ "files": [
+  {
+   "path": "PENDENCIAS.md",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 46,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 26,
+    "missing_in_main": 23,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "## 6. `copilot-pull-request-reviewer` — failure (não é required check)",
+     "| Campo | Valor |",
+     "| Check | `copilot-pull-request-reviewer` |",
+     "| Conclusão | `failure` (observado em SHA `4c4eda7c`, run [41017783433](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41017783433)) |",
+     "| É required check? | **Não** — não consta nos 6 required checks da `main` (`🔍 Lint & TypeCheck`, `🧪 Unit Tests`, `🏗️ Build`, `🔒 Security Audit`, `Contrato DB o",
+     "| Causa | Bot de review do Copilot reporta findings via anotações; `conclusion=failure` é o comportamento quando o bot identifica sugestões — não impede merge |",
+     "| Por que está bloqueado | Não está bloqueado — é cosmético. A failure deste check não bloqueia PR |",
+     "| Ação necessária | Nenhuma. Behavior by design do `copilot-pull-request-reviewer` workflow |",
+     "## 7. `deploy-functions` — `deno install` ausente antes do typecheck (Regra 8)",
+     "| Campo | Valor |",
+     "| Workflow | `.github/workflows/deploy-functions.yml` |",
+     "| Erro exato | `error: Error: Could not find \"@types/node\" in a node_modules folder. Deno expects the node_modules/ directory to be up to date. Did you forget t",
+     "| Causa raiz | `nodeModulesDir: \"auto\"` em Deno 2.9.5 **não cria** `node_modules` automaticamente durante `deno check` — exige `deno install` explícito. `@types",
+     "| PR de correção | Aberta — aguardando aprovação de Joaquim (**Regra 8**: altera `.github/workflows/deploy-functions.yml`) |",
+     "| Fix exato | Adicionar step `deno install --config supabase/functions/deno.json` após \"Setup Deno\" e antes de \"Typecheck das edge functions\" em `deploy-functio",
+     "| Ação necessária | Joaquim revisar e mergear a PR de fix do `deploy-functions.yml` |",
+     "## 8. `db-live-guard` — drift das migrations do PR #2361 não aplicadas (Regra 8)",
+     "| Campo | Valor |",
+     "| Workflow | `.github/workflows/db-live-guard.yml` |",
+     "| Erro exato | 7 checks falhando no step 23 \"Consolidar veredito do contrato vivo\": `Comparar migrations com schema_migrations`, `Verificar ACL e contrato de mc",
+     "| Causa raiz | PR #2361 (outro agente, mergeado antes desta sessão) adicionou `supabase/functions/copilot-live/index.ts` + 2 migrations (`20261030100000_copilot",
+     "| Por que está bloqueado | Aplicar as migrations `20261030100000` e `20261030110000` em produção exige aprovação no environment `producao-ddl` — **Regra 8 (DDL ",
+     "| Ação necessária | Joaquim acionar `db-migrate.yml` via `workflow_dispatch` na `main` com `apply=false` (dry-run) e depois `apply=true` com confirmação do hash"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "docs/ci/PENDENCIAS.md",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 173,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 104,
+    "missing_in_main": 98,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "# PENDÊNCIAS — Workflows Bloqueados por Regra 8",
+     "**Última atualização:** 2026-10-30T16:00Z  ",
+     "**Branch de origem:** `claude/keen-galileo-dxai3p`  ",
+     "**SHA main de referência:** `3bdbdef2d5a44912021406efb009c1c8075664bf` (main atual, 2026-10-30)",
+     "Estes workflows falharam no baseline e não puderam ser corrigidos por agente porque a correção envolve alteração de workflow CI, migration em produção ou aprova",
+     "## 1. `deploy-functions` — ✅ RESOLVIDO",
+     "**✅ RESOLVIDO em 2026-10-30** — PR [#2371](https://github.com/adm01-debug/Zapp_Web_V2/pull/2371) mergeado por Joaquim.  ",
+     "**Main SHA após merge:** `9f6199a1275a9789041b813c41cd92cc1b35e1f5`",
+     "**Causa raiz resolvida:** step `deno install --config supabase/functions/deno.json` inserido entre \"Setup Deno\" e \"Typecheck das edge functions\" em `.github/wor",
+     "## 2. `db-live-guard` — 2 migrations no repo sem apply em produção",
+     "| Campo | Valor |",
+     "| Workflow | `DB Live Guard` |",
+     "| Último run com falha | [41021208458](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41021208458) |",
+     "| SHA | `3f4e16d2ae91e5dae76a3775049798460782cbf5` |",
+     "| Job | `Contrato DB vivo` (job 123948710854) |",
+     "| Step | 23 — `Consolidar veredito do contrato vivo` |",
+     "**7 checks falhos (variável `FALHAS_LISTA` do log):**",
+     "Auditar configuracao runtime sem dados de clientes",
+     "Comparar migrations com schema_migrations",
+     "Paridade tripla (migrations, edges, grants)",
+     "Regerar catalogo e comparar com o commitado",
+     "Regerar manifesto e comparar com o commitado",
+     "Verificar ACL e contrato de mcp_exec",
+     "Verificar frescor do types.ts",
+     "**Causa raiz:**  "
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "docs/ci/RELATORIO_CI.md",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 198,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 137,
+    "missing_in_main": 132,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "# RELATÓRIO CI — Zapp Web V2",
+     "**Data:** 2026-10-30  ",
+     "**Branch de relatório:** `claude/keen-galileo-dxai3p`  ",
+     "**SHA main de referência:** `3bdbdef2d5a44912021406efb009c1c8075664bf` (main atual, 2026-10-30 — PR #2377 mergeado)  ",
+     "**CI/CD Pipeline (6 required checks):** run [41052020551](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41052020551) SHA `fec9d78e` — **conclusion=suc",
+     "**Sessão:** https://claude.ai/code/session_01RfQzo7rsZ224WzBjCBKxqx",
+     "## 1. Baseline — estado antes das correções",
+     "### 1a. Baseline local",
+     "Tentativa de execução local no container cloud remoto (sessão Claude Code):",
+     "| Comando | Resultado | Motivo |",
+     "| `bun install` | ✅ success | Dependências instaladas com sucesso |",
+     "| `bun run build` | ✅ success | Vite build finalizado em 16.56s, exit 0 — executável localmente |",
+     "| `bun run typecheck` | ❌ SIGABRT | `FATAL ERROR: Ineffective mark-compacts near heap limit Allocation failed - JavaScript heap out of memory` — processo termin",
+     "| `bun run lint` | ❌ exit 1 | 814 problemas (601 errors, 213 warnings) — **baseline pré-existente**, `novas=0` (sem dívida nova nesta sessão) |",
+     "| `bun test` / testes unitários | ✅ success (via CI) | CI job `🧪 Unit Tests` ✅ run [41045101055](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/4104510",
+     "**Evidência substituta:** os jobs obrigatórios da `main` (`🔍 Lint & TypeCheck`, `🏗️ Build`, `🔒 Security Audit`, `🧪 Unit Tests`) são o substituto confiável para ",
+     "### 1b. Inventário de workflows — último run na `main` antes desta sessão (baseline)",
+     "| Workflow | Status baseline | Causa |",
+     "| `settings-guard` | ❌ failure | 403 em `github_get_branch_protection` tratado como regressão |",
+     "| `deploy-functions` | ❌ failure | `manifest is stale` + diretório publicável vazio + `@types/node` Deno error |",
+     "| `db-live-guard` | ❌ failure | 3 migrations no ledger sem arquivo `.sql` (drift) |",
+     "| `db-migrate` | ❌ failure | Mesma causa raiz do drift — environment gate `producao-ddl` by design |",
+     "| `🧪 Unit Tests` (ci.yml) | ❌ failure | Assertion `length === 0` quebrada pelo PR #2358 |",
+     "| `db-guard` (Replay local) | ❌ failure | ECR rate limit — não-required |",
+     "| `branch-hygiene-audit` | ❌ cancelled | Timeout de script — job cancelado ao atingir `timeout-minutes: 10` |"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "docs/ci/RELATORIO_CI_FINAL.md",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "scripts/ci/fila-merge.mjs",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "patch_lines": 24,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 8,
+    "missing_in_main": 8,
+    "removed": 4,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  let json;",
+     "  try {",
+     "    json = execFileSync(resolverExecutavel('gh'), [",
+     "      'pr', 'list', '--repo', repo, '--state', 'open', '--base', 'main', '--limit', '100',",
+     "      '--json', 'number,isDraft,isCrossRepository,baseRefName,headRefOid,autoMergeRequest,mergeStateStatus,statusCheckRollup',",
+     "    ], { encoding: 'utf8' });",
+     "  } catch {",
+     "    return decidir([], checksObrigatorios());"
+    ],
+    "still_sample": [],
+    "same_basename_in_main": []
+   }
+  },
+  {
+   "path": "src/services/contact.service.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 37,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 7,
+    "missing_in_main": 7,
+    "removed": 5,
+    "removed_still_in_main": 5,
+    "missing_sample": [
+     "    // eslint-disable-next-line @typescript-eslint/no-explicit-any",
+     "    const pinField: any = options?.isPinned === true ? { is_pinned: true } : {};",
+     "        // `is_pinned` só entra quando `true`. O spread via `pinField: any` mantém o INSERT",
+     "        // válido antes de a coluna existir em produção (migration 20261026200000).",
+     "        ...pinField,",
+     "     // eslint-disable-next-line @typescript-eslint/no-explicit-any",
+     "     const { data, error } = await supabase.from('contact_notes').update(updates as any).eq('id', noteId).select().single();"
+    ],
+    "still_sample": [
+     "        // `is_pinned` só entra no payload quando for `true` (fixar já na criação). Nunca",
+     "        // enviamos `is_pinned: false`: o `DEFAULT false` da coluna já cobre, e o campo",
+     "        // ausente mantém o INSERT válido antes de a coluna existir em produção.",
+     "        ...(options?.isPinned === true ? { is_pinned: true } : {}),",
+     "     const { data, error } = await supabase.from('contact_notes').update(updates).eq('id', noteId).select().single();"
+    ]
+   }
+  }
+ ],
+ "counts": {
+  "migrations": "0",
+  "workflows": "0",
+  "src": "1",
+  "edges": "0",
+  "docs_only": "no",
+  "lines_branch_has_main_lacks": "541",
+  "lines_main_has_branch_lacks": "668"
+ },
+ "auto": "MISTO_CONFLITO",
+ "n_files_with_gaps": 5,
+ "gap_lines_total": 273
+}

@@ -1,0 +1,707 @@
+{
+ "id": "pr-2926",
+ "kind": "pr",
+ "ref": "refs/remotes/pr/2926",
+ "pr": 2926,
+ "tip": "27e8311a8eebf220cc1cc57dca72cf921c592dc1",
+ "merge_base": "be1c0c7ebb987d757678394e630a99391c444395",
+ "ahead": 2,
+ "last_commit_date": "2026-11-10",
+ "merge_base_date": "2026-11-10",
+ "triagem_2804": null,
+ "closure_comment": {
+  "title": "chore(automacao): conecta testes, grafo e manutenção aos gatilhos",
+  "last_comment": "Fechada por decisão do dono na triagem de 11/11. A automação local (gatilhos, grafo, manutenção) dependia dos agentes que foram desligados; o check `doctor --static` exigiria registrar à mão todo script novo em `automation.config.json` e travaria PRs sem relação. O conflito chegou a ser resolvido (b"
+ },
+ "files": [
+  {
+   "path": ".github/workflows/automation-local.yml",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "patch_lines": 47,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 36,
+    "missing_in_main": 36,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "# docs:",
+     "#   gatilho: PR para main, push em main e execução manual.",
+     "#   prova: Contratos estáticos e suites locais de automação em fixtures isoladas.",
+     "#   falha: O job falha; nenhum patch, commit, publicação ou deploy é executado.",
+     "#   avisa: O check fica vermelho no GitHub para o autor da PR e mantenedores.",
+     "name: Automação local",
+     "  pull_request:",
+     "    branches: [main]",
+     "  push:",
+     "    branches: [main]",
+     "  workflow_dispatch:",
+     "permissions:",
+     "  contents: read",
+     "concurrency:",
+     "  group: automation-local-${{ github.workflow }}-${{ github.ref }}",
+     "  cancel-in-progress: true",
+     "jobs:",
+     "  contracts:",
+     "    name: Contratos da automação local",
+     "    runs-on: ubuntu-latest",
+     "    timeout-minutes: 20",
+     "    steps:",
+     "      - name: Checkout sem credenciais persistentes",
+     "        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6",
+     "        with:"
+    ],
+    "still_sample": [],
+    "same_basename_in_main": []
+   }
+  },
+  {
+   "path": ".gitignore",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 12,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 3,
+    "missing_in_main": 3,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "# Estado local privado dos novos adaptadores de automação",
+     "/.tools/repo-automation/",
+     "/.tools/graphify/local-state/"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "docs/AUTOMACAO_LOCAL.md",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "patch_lines": 718,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 692,
+    "missing_in_main": 692,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "# Automação local — Zapp_Web_V2",
+     "O dispatcher `scripts/automation.mjs` liga as suites, o motor de manutenção e o adaptador de grafo. O perfil versionado `scripts/automation.config.json` é a fon",
+     "## Comandos",
+     "| Alias                        | Comando executado                                       | Efeito                                                               ",
+     "| ---------------------------- | ------------------------------------------------------- | ---------------------------------------------------------------------",
+     "| `automation:doctor`          | `node scripts/automation.mjs doctor`                    | Verifica arquivos, aliases, registros e instalação local de hooks.   ",
+     "| `automation:test`            | `node scripts/automation.mjs test`                      | Roda exclusivamente as suites registradas abaixo.                    ",
+     "| `automation:check`           | `node scripts/automation.mjs check --ref HEAD`          | Inspeciona a referência HEAD em worktree isolada.                    ",
+     "| `automation:heal`            | `node scripts/automation.mjs heal --ref origin/main`    | Propõe e valida correções limitadas a partir de origin/main; não faz ",
+     "| `automation:nightly`         | `node scripts/automation.mjs nightly --ref origin/main` | Atualiza o grafo e tenta manutenção isolada; relata as duas falhas in",
+     "| `automation:graph`           | `node scripts/automation.mjs graph`                     | Encaminha subcomandos do grafo; acrescente status, query, path ou exp",
+     "| `automation:status`          | `node scripts/automation.mjs graph status`              | Mostra a situação local do grafo.                                    ",
+     "| `automation:install-hooks`   | `node scripts/automation.mjs install-hooks`             | Instala pontes locais reversíveis, encadeando hooks originais.       ",
+     "| `automation:uninstall-hooks` | `node scripts/automation.mjs uninstall-hooks`           | Restaura o hooksPath anterior, recusando sobrescrever alteração de te",
+     "O comando estático para CI é `node scripts/automation.mjs doctor --static`. Ele verifica contratos; não comprova merge, execução remota, timer ou ponte instalad",
+     "## Gatilhos e ativação",
+     "| Gatilho                                                  | Cadeia real de execução                                                                            ",
+     "| -------------------------------------------------------- | ---------------------------------------------------------------------------------------------------",
+     "| PR para main / push em main / dispatch                   | `.github/workflows/automation-local.yml` → `doctor --static` → `test` → suites exatas do perfil    ",
+     "| pre-commit com tooling staged                            | Ponte privada → hook original → `automation.mjs hook pre-commit` → suites registradas              ",
+     "| pre-push                                                 | Ponte privada → hook original → doctor local → suites registradas                                  ",
+     "| Fontes staged / post-commit / post-merge / post-checkout | Ponte privada → hook original → adaptador de grafo marca estado sujo                               ",
+     "| Noturno local, previsto 04:30                            | `repo-maintenance.service` → `repo-automation-nightly` → `repo-automation nightly` → `central.mjs` ",
+     "A ponte privada fica em `.tools/repo-automation/`; não substitui os arquivos Husky. Preserva erros, argumentos e stdin dos hooks originais, incluindo commit-msg",
+     "## Suites efetivamente executadas"
+    ],
+    "still_sample": [],
+    "same_basename_in_main": []
+   }
+  },
+  {
+   "path": "docs/agentes/github-ci.md",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 15,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 2,
+    "missing_in_main": 2,
+    "removed": 1,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "--check` roda no CI; não editar à mão). Hoje são **22** arquivos em `.github/workflows/`:",
+     "`automation-local`, `auto-update-pr-branch`, `branch-hygiene-audit`, `ci`, `codeql`, `crm-sync-worker`, `db-guard`,"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "docs/ci/README.md",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 32,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 7,
+    "missing_in_main": 7,
+    "removed": 1,
+    "removed_still_in_main": 1,
+    "missing_sample": [
+     "**22 workflows.**",
+     "| Automação local | [`automation-local.yml`](../../.github/workflows/automation-local.yml) | PR para main, push em main e execução manual. | Contratos estáticos",
+     "### Automação local (`automation-local.yml`)",
+     "- **Gatilho:** PR para main, push em main e execução manual.",
+     "- **O que prova:** Contratos estáticos e suites locais de automação em fixtures isoladas.",
+     "- **Quando falha:** O job falha; nenhum patch, commit, publicação ou deploy é executado.",
+     "- **Quem é avisado:** O check fica vermelho no GitHub para o autor da PR e mantenedores."
+    ],
+    "still_sample": [
+     "**21 workflows.**"
+    ]
+   }
+  },
+  {
+   "path": "graphify.local.json",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "patch_lines": 21,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 13,
+    "missing_in_main": 13,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  \"version\": 1,",
+     "  \"project\": \"Zapp_Web_V2\",",
+     "  \"environment\": \".tools/graphify/.venv\",",
+     "  \"pin\": \"0.9.68\",",
+     "  \"pythonVersion\": \"3.11\",",
+     "  \"state\": \".tools/graphify/local-state\",",
+     "  \"output\": \"graphify-out\",",
+     "  \"adapter\": \"generic\",",
+     "  \"scope\": [\".\"],",
+     "  \"partial\": false,",
+     "  \"timeoutMs\": 1200000,",
+     "  \"minAvailableMb\": 6144,",
+     "  \"metadata\": [\".gitignore\", \".graphifyignore\", \".graphifyrc\", \"package.json\", \"tsconfig.json\"]"
+    ],
+    "still_sample": [],
+    "same_basename_in_main": []
+   }
+  },
+  {
+   "path": "package.json",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 35,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 13,
+    "missing_in_main": 12,
+    "removed": 4,
+    "removed_still_in_main": 3,
+    "missing_sample": [
+     "    \"maintenance:doctor\": \"sh scripts/maintenance/run.sh doctor --root .\",",
+     "    \"maintenance:check\": \"sh scripts/maintenance/run.sh check --root . --ref origin/main\",",
+     "    \"maintenance:heal\": \"sh scripts/maintenance/run.sh heal --root . --ref origin/main\",",
+     "    \"automation:doctor\": \"node scripts/automation.mjs doctor\",",
+     "    \"automation:test\": \"node scripts/automation.mjs test\",",
+     "    \"automation:check\": \"node scripts/automation.mjs check --ref HEAD\",",
+     "    \"automation:heal\": \"node scripts/automation.mjs heal --ref origin/main\",",
+     "    \"automation:nightly\": \"node scripts/automation.mjs nightly --ref origin/main\",",
+     "    \"automation:graph\": \"node scripts/automation.mjs graph\",",
+     "    \"automation:status\": \"node scripts/automation.mjs graph status\",",
+     "    \"automation:install-hooks\": \"node scripts/automation.mjs install-hooks\",",
+     "    \"automation:uninstall-hooks\": \"node scripts/automation.mjs uninstall-hooks\""
+    ],
+    "still_sample": [
+     "    \"maintenance:doctor\": \"node scripts/maintenance/run.mjs doctor --root .\",",
+     "    \"maintenance:check\": \"node scripts/maintenance/run.mjs check --root . --ref origin/main\",",
+     "    \"maintenance:heal\": \"node scripts/maintenance/run.mjs heal --root . --ref origin/main\","
+    ]
+   }
+  },
+  {
+   "path": "scripts/automation.config.json",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "patch_lines": 5143,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 3854,
+    "missing_in_main": 3854,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  \"version\": 1,",
+     "  \"name\": \"Zapp_Web_V2\",",
+     "  \"entrypoint\": \"scripts/automation.mjs\",",
+     "  \"testSuites\": [",
+     "    \"scripts/automation.unit.mjs\",",
+     "    \"scripts/maintenance/maintenance.unit.mjs\",",
+     "    \"scripts/graphify-local.unit.mjs\"",
+     "  \"motor\": [\"sh\", \"scripts/maintenance/run.sh\"],",
+     "  \"motorConfig\": \"scripts/maintenance/config.json\",",
+     "  \"motorSource\": \"scripts/maintenance/run.sh\",",
+     "  \"graph\": [\"node\", \"scripts/graphify-local.mjs\"],",
+     "  \"graphConfig\": \"graphify.local.json\",",
+     "  \"aliases\": {",
+     "    \"automation:doctor\": \"node scripts/automation.mjs doctor\",",
+     "    \"automation:test\": \"node scripts/automation.mjs test\",",
+     "    \"automation:check\": \"node scripts/automation.mjs check --ref HEAD\",",
+     "    \"automation:heal\": \"node scripts/automation.mjs heal --ref origin/main\",",
+     "    \"automation:nightly\": \"node scripts/automation.mjs nightly --ref origin/main\",",
+     "    \"automation:graph\": \"node scripts/automation.mjs graph\",",
+     "    \"automation:status\": \"node scripts/automation.mjs graph status\",",
+     "    \"automation:install-hooks\": \"node scripts/automation.mjs install-hooks\",",
+     "    \"automation:uninstall-hooks\": \"node scripts/automation.mjs uninstall-hooks\"",
+     "  \"registrations\": [",
+     "      \"id\": \"core\",",
+     "      \"kind\": \"tool\","
+    ],
+    "still_sample": [],
+    "same_basename_in_main": []
+   }
+  },
+  {
+   "path": "scripts/automation.mjs",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "patch_lines": 997,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 820,
+    "missing_in_main": 820,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "#!/usr/bin/env node",
+     "import { spawn } from 'node:child_process';",
+     "import {",
+     "  constants,",
+     "  openSync,",
+     "  closeSync,",
+     "  fstatSync,",
+     "  readSync,",
+     "  writeSync,",
+     "  existsSync,",
+     "  lstatSync,",
+     "  mkdirSync,",
+     "  readFileSync,",
+     "  readdirSync,",
+     "  realpathSync,",
+     "  renameSync,",
+     "  rmSync,",
+     "  statSync,",
+     "  writeFileSync,",
+     "  chmodSync,",
+     "} from 'node:fs';",
+     "import { homedir } from 'node:os';",
+     "import { basename, dirname, isAbsolute, join, relative, resolve, sep } from 'node:path';",
+     "import { fileURLToPath } from 'node:url';",
+     "import { createHash, randomUUID } from 'node:crypto';"
+    ],
+    "still_sample": [],
+    "same_basename_in_main": []
+   }
+  },
+  {
+   "path": "scripts/automation.unit.mjs",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "patch_lines": 608,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 486,
+    "missing_in_main": 486,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "import test from 'node:test';",
+     "import assert from 'node:assert/strict';",
+     "import { spawnSync } from 'node:child_process';",
+     "import {",
+     "  appendFileSync,",
+     "  chmodSync,",
+     "  cpSync,",
+     "  existsSync,",
+     "  mkdirSync,",
+     "  mkdtempSync,",
+     "  readFileSync,",
+     "  renameSync,",
+     "  rmSync,",
+     "  statSync,",
+     "  symlinkSync,",
+     "  writeFileSync,",
+     "} from 'node:fs';",
+     "import { tmpdir } from 'node:os';",
+     "import { dirname, join } from 'node:path';",
+     "import { fileURLToPath } from 'node:url';",
+     "import { appendExclude, removeExclude, execute, parseArgs, validateConfig } from './automation.mjs';",
+     "const kit = dirname(fileURLToPath(import.meta.url));",
+     "const text = (p) => readFileSync(p, 'utf8');",
+     "function fixture(",
+     "  { originalHook = '', hookName = 'pre-commit', previous = '.original-hooks' } = {}"
+    ],
+    "still_sample": [],
+    "same_basename_in_main": []
+   }
+  },
+  {
+   "path": "scripts/ci/ci-docs-baseline.unit.mjs",
+   "status": "MAIN_UNCHANGED_SINCE_BASE",
+   "patch_lines": 25,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 4,
+    "missing_in_main": 4,
+    "removed": 4,
+    "removed_still_in_main": 4,
+    "missing_sample": [
+     "test('inventario: 22 YAML em .github/workflows e a fonte gerada em paridade', async () => {",
+     "  assert.equal(arquivos.length, 22);",
+     "  assert.match(readme, /\\*\\*22 workflows\\.\\*\\*/);",
+     "  assert.deepEqual(violacoesContagemClaude(await readFile(CLAUDE, 'utf8'), 22), []);"
+    ],
+    "still_sample": [
+     "test('inventario: 21 YAML em .github/workflows e a fonte gerada em paridade', async () => {",
+     "  assert.equal(arquivos.length, 21);",
+     "  assert.match(readme, /\\*\\*21 workflows\\.\\*\\*/);",
+     "  assert.deepEqual(violacoesContagemClaude(await readFile(CLAUDE, 'utf8'), 21), []);"
+    ]
+   }
+  },
+  {
+   "path": "scripts/graphify-local.mjs",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "patch_lines": 1081,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 903,
+    "missing_in_main": 903,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "#!/usr/bin/env node",
+     "import { spawn } from 'node:child_process';",
+     "import { createReadStream, constants } from 'node:fs';",
+     "import { createHash, randomUUID } from 'node:crypto';",
+     "import {",
+     "  readFile,",
+     "  writeFile,",
+     "  mkdir,",
+     "  lstat,",
+     "  realpath,",
+     "  rename,",
+     "  copyFile,",
+     "  chmod,",
+     "  readdir,",
+     "  open,",
+     "} from 'node:fs/promises';",
+     "import path from 'node:path';",
+     "import { homedir, loadavg, availableParallelism } from 'node:os';",
+     "import { fileURLToPath } from 'node:url';",
+     "const extensions = new Set(",
+     "  '.ts .tsx .js .jsx .mjs .cjs .py .sql .sh .bash .go .rs .java .c .h .cpp .hpp .cs .php .rb .kt .swift .lua .zig .f .f90 .scala .groovy .ex .exs .json .toml .y",
+     "const ignoredParts = new Set([",
+     "  '.git',",
+     "  '.tools',",
+     "  '.venv',"
+    ],
+    "still_sample": [],
+    "same_basename_in_main": []
+   }
+  },
+  {
+   "path": "scripts/graphify-local.unit.mjs",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "patch_lines": 468,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 384,
+    "missing_in_main": 384,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "import test from 'node:test';",
+     "import assert from 'node:assert/strict';",
+     "import {",
+     "  mkdtemp,",
+     "  mkdir,",
+     "  writeFile,",
+     "  readFile,",
+     "  readdir,",
+     "  symlink,",
+     "  open,",
+     "  lstat,",
+     "  rename,",
+     "  truncate,",
+     "} from 'node:fs/promises';",
+     "import { createHash } from 'node:crypto';",
+     "import { tmpdir } from 'node:os';",
+     "import path from 'node:path';",
+     "import { spawnSync } from 'node:child_process';",
+     "import {",
+     "  main,",
+     "  acquire,",
+     "  acquireGlobal,",
+     "  fingerprint,",
+     "  validateGraph,",
+     "  run,"
+    ],
+    "still_sample": [],
+    "same_basename_in_main": []
+   }
+  },
+  {
+   "path": "scripts/maintenance/README.md",
+   "status": "MAIN_UNCHANGED_SINCE_BASE",
+   "patch_lines": 48,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 9,
+    "missing_in_main": 9,
+    "removed": 9,
+    "removed_still_in_main": 9,
+    "missing_sample": [
+     "Configure `config.json` com os comandos reais do repositório, seguindo `config.example.json`. Cada comando é um array de argumentos e não passa por shell. O amb",
+     "npm run test:maintenance",
+     "1. Trava global (`run.sh`/flock) e trava por repositório impedem concorrência. A trava por repositório mantém um `flock` do SO por pipe durante toda a execução,",
+     "2. A worktree é criada sem executar hooks de checkout. `node_modules` é reutilizado por symlink somente quando manifesto, todos os lockfiles e conteúdos de depe",
+     "3. Arquivos `.env`/`.env.*` rastreados, exceto sufixos `.example`/`.sample`, são movidos para quarentena privada fora da worktree antes de qualquer gate/fixer e",
+     "5. Prettier identifica arquivos diferentes sem editar; exit 1 só é aceito com uma lista não vazia de caminhos válidos, sem diagnósticos em stdout/stderr. ESLint",
+     "7. O patch validado é salvo fora do repositório e commitado numa branch local `claude/chore-manutencao-YYMMDD-HHMM-uuid`, com mensagem `style(manutencao): aplic",
+     "O checkout de edição pode estar sujo: suas alterações de código ou tsconfig não são copiadas nem revertidas. `doctor` inspeciona os tsconfigs desse checkout; `c",
+     "Por padrão, relatórios, logs privados e patches ficam em `${XDG_STATE_HOME:-~/.local/state}/repo-maintenance/<hash-do-git-common-dir>/runs/`. Diretórios têm mod"
+    ],
+    "still_sample": [
+     "Configure `config.json` com os comandos reais do repositório, seguindo `config.example.json`. Cada comando é um array de argumentos e não passa por shell. Os qu",
+     "node --test scripts/maintenance/maintenance.unit.mjs",
+     "1. Trava global (`run.sh`/flock) e trava atômica por repositório impedem concorrência.",
+     "2. A worktree é criada com hooks Git desabilitados. `node_modules` é reutilizado por symlink somente quando manifesto e todos os lockfiles existentes forem idên",
+     "3. Arquivos `.env`/`.env.*` rastreados, exceto sufixos `.example`/`.sample`, são movidos para quarentena privada fora da worktree antes de qualquer gate/fixer e",
+     "5. Prettier identifica arquivos diferentes sem editar. ESLint usa configuração isolada com parser do projeto e apenas regras de layout da allowlist; regras do a",
+     "7. O patch validado é salvo fora do repositório e commitado numa branch local `claude/chore-manutencao-YYMMDD-HHMM-uuid`. Os hooks são desabilitados apenas ness",
+     "O checkout de edição pode estar sujo: suas alterações de código não são copiadas nem revertidas. Caches das ferramentas podem ser escritos no `node_modules` com",
+     "Por padrão, relatórios, logs privados e patches ficam em `${XDG_STATE_HOME:-~/.local/state}/repo-maintenance/<hash-do-git-common-dir>/runs/`. Diretórios têm mod"
+    ]
+   }
+  },
+  {
+   "path": "scripts/maintenance/config.example.json",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "patch_lines": 37,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 22,
+    "missing_in_main": 22,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  \"version\": 1,",
+     "  \"manager\": \"npm\",",
+     "  \"tsconfigs\": [\"tsconfig.app.json\", \"tsconfig.node.json\"],",
+     "  \"gates\": [",
+     "    { \"name\": \"lint\", \"command\": [\"node\", \"node_modules/eslint/bin/eslint.js\", \"src\"] },",
+     "      \"name\": \"types\",",
+     "      \"command\": [",
+     "        \"node\",",
+     "        \"scripts/maintenance/typecheck.mjs\",",
+     "        \"tsconfig.app.json\",",
+     "        \"tsconfig.node.json\"",
+     "    { \"name\": \"test\", \"command\": [\"node\", \"node_modules/vitest/vitest.mjs\", \"run\"] },",
+     "      \"name\": \"build\",",
+     "      \"command\": [\"node\", \"node_modules/vite/bin/vite.js\", \"build\"],",
+     "      \"env\": {",
+     "        \"VITE_SUPABASE_URL\": \"https://maintenance.invalid\",",
+     "        \"VITE_SUPABASE_PROJECT_ID\": \"maintenance_test\",",
+     "        \"VITE_SUPABASE_PUBLISHABLE_KEY\": \"sb_publishable_maintenance_test\"",
+     "  \"fix\": { \"roots\": [\"src\"], \"exclude\": [\"src/generated\"], \"eslintRules\": [], \"prettier\": true },",
+     "  \"timeoutMs\": 120000,",
+     "  \"maxFiles\": 20,",
+     "  \"maxChangedLines\": 400"
+    ],
+    "still_sample": [],
+    "same_basename_in_main": []
+   }
+  },
+  {
+   "path": "scripts/maintenance/config.json",
+   "status": "MAIN_UNCHANGED_SINCE_BASE",
+   "patch_lines": 14,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 2,
+    "missing_in_main": 2,
+    "removed": 1,
+    "removed_still_in_main": 1,
+    "missing_sample": [
+     "    \"prettier\": true,",
+     "    \"exclude\": [\"src/integrations/supabase/types.ts\"]"
+    ],
+    "still_sample": [
+     "    \"prettier\": true"
+    ]
+   }
+  },
+  {
+   "path": "scripts/maintenance/lib.mjs",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 690,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 385,
+    "missing_in_main": 321,
+    "removed": 73,
+    "removed_still_in_main": 64,
+    "missing_sample": [
+     "import { constants } from 'node:fs';",
+     "import {",
+     "  mkdir,",
+     "  mkdtemp,",
+     "  readFile,",
+     "  writeFile,",
+     "  stat,",
+     "  realpath,",
+     "  symlink,",
+     "  readdir,",
+     "  lstat,",
+     "  open,",
+     "} from 'node:fs/promises';",
+     "import { StringDecoder } from 'node:string_decoder';",
+     "export const safeEnv = ({ nodeEnv, publicEnv = {}, hooks = false } = {}) => ({",
+     "  ...Object.fromEntries(",
+     "    Object.entries(process.env).filter(([k]) =>",
+     "  CI: 'true',",
+     "  NO_COLOR: '1',",
+     "  ...(nodeEnv ? { NODE_ENV: nodeEnv } : {}),",
+     "  ...(hooks ? { HUSKY: '1' } : {}),",
+     "  ...publicEnv,",
+     "export function run(command, cwd, timeoutMs = 120000, options = {}) {",
+     "      env: safeEnv(options),",
+     "      stdout = '',"
+    ],
+    "still_sample": [
+     "import { mkdir, mkdtemp, readFile, writeFile, stat, realpath, rm, symlink } from 'node:fs/promises';",
+     "export const safeEnv = () =>",
+     "  Object.fromEntries(",
+     "    Object.entries(process.env)",
+     "      .filter(([k]) =>",
+     "        ['PATH', 'HOME', 'TMPDIR', 'TEMP', 'SystemRoot', 'COMSPEC', 'TZ', 'LANG'].includes(k)",
+     "      .concat([",
+     "        ['CI', 'true'],",
+     "        ['NO_COLOR', '1'],",
+     "        ['HUSKY', '0'],"
+    ]
+   }
+  },
+  {
+   "path": "scripts/maintenance/maintenance.unit.mjs",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 614,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 474,
+    "missing_in_main": 383,
+    "removed": 3,
+    "removed_still_in_main": 2,
+    "missing_sample": [
+     "import {",
+     "  mkdtemp,",
+     "  mkdir,",
+     "  writeFile,",
+     "  readFile,",
+     "  symlink,",
+     "  utimes,",
+     "  lstat,",
+     "  rename,",
+     "} from 'node:fs/promises';",
+     "import { spawn } from 'node:child_process';",
+     "import { once } from 'node:events';",
+     "import {",
+     "  git,",
+     "  run,",
+     "  acquire,",
+     "  validateConfig,",
+     "  exists,",
+     "  dependencyFingerprint,",
+     "  inspect,",
+     "  readRegularDependency,",
+     "} from './lib.mjs';",
+     "  assert.match(result.report.message, /Projeto TypeScript vazio/);",
+     "async function saveFixture(f) {",
+     "  await git(f.root, ['add', '.']);"
+    ],
+    "still_sample": [
+     "import { git, run, acquire, validateConfig } from './lib.mjs';",
+     "  assert.match(result.report.message, /nenhum arquivo src/);"
+    ]
+   }
+  },
+  {
+   "path": "scripts/maintenance/run.mjs",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 407,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 183,
+    "missing_in_main": 123,
+    "removed": 53,
+    "removed_still_in_main": 52,
+    "missing_sample": [
+     "  commitWithHooks,",
+     "export async function allowedSourceFiles(root, config, prefix = []) {",
+     "  const files = (await git(root, ['ls-files', '-z', '--', ...config.fix.roots], undefined, prefix))",
+     "  const excluded = ['src/integrations/supabase/types.ts', ...(config.fix.exclude || [])].map(",
+     "    (file) => path.posix.normalize(file.replaceAll('\\\\', '/')).replace(/\\/+$/, '')",
+     "  const allowed = new Set();",
+     "  for (const file of files) {",
+     "      environmentFile(file) ||",
+     "      /(?:^|\\/)(?:__generated__|generated)\\//.test(file) ||",
+     "      /\\.(?:generated|gen)\\./.test(file) ||",
+     "      excluded.some((name) => file === name || file.startsWith(`${name}/`))",
+     "    const header = await readFile(path.join(root, file), 'utf8');",
+     "      /(?:^|\\n)\\s*(?:\\/\\/|\\/\\*|\\*|#|<!--)[^\\n]*(?:@generated\\b|auto[- ]generated|automatically generated|generated automatically|generated by|generated file|ger",
+     "        header",
+     "    if (/[\\r\\n]/.test(file))",
+     "      fail('Nome de arquivo com quebra de linha não suportado pelos scans de formatação');",
+     "    allowed.add(file);",
+     "  return allowed;",
+     "async function changed(root, config, prefix = [], allowed) {",
+     "  if (allowed && files.some((file) => !allowed.has(file)))",
+     "    fail('Correção alterou arquivo gerado ou excluído do escopo');",
+     "  const raw = (await git(root, ['diff', '--raw', '-z', '--no-renames'], undefined, prefix))",
+     "    raw.some(",
+     "      (entry) => entry.startsWith(':') && entry.split(' ')[0].slice(1) !== entry.split(' ')[1]",
+     "    fail('Correção alterou modo/tipo ou removeu arquivo; apenas conteúdo de texto é permitido');"
+    ],
+    "still_sample": [
+     "async function changed(root, config, prefix = []) {",
+     "async function fixes(root, config, jobDir, execute, prefix = []) {",
+     "  const modes = (",
+     "    await git(root, ['ls-files', '-s', '-z', '--', ...config.fix.roots], undefined, prefix)",
+     "    .split('\\0')",
+     "    .filter(Boolean);",
+     "  if (modes.some((line) => line.startsWith('120000 ')))",
+     "    fail('Symlink em src impede correção autônoma');",
+     "  const tracked = new Set(",
+     "    (await git(root, ['ls-files', '-z', '--', ...config.fix.roots], undefined, prefix))"
+    ]
+   }
+  },
+  {
+   "path": "scripts/maintenance/run.sh",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 20,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 2,
+    "missing_in_main": 2,
+    "removed": 2,
+    "removed_still_in_main": 2,
+    "missing_sample": [
+     "state=\"$HOME/.cache/repo-maintenance\"",
+     "exec 9>\"$state/fleet.lock\""
+    ],
+    "still_sample": [
+     "state=\"${XDG_STATE_HOME:-$HOME/.local/state}/repo-maintenance\"",
+     "exec 9>\"$state/global.lock\""
+    ]
+   }
+  }
+ ],
+ "auto": "MISTO_CONFLITO",
+ "n_files_with_gaps": 20,
+ "gap_lines_total": 8216
+}

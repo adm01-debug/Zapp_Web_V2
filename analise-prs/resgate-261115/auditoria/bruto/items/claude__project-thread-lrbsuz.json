@@ -1,0 +1,54 @@
+{
+ "id": "claude__project-thread-lrbsuz",
+ "kind": "branch",
+ "ref": "origin/claude/project-thread-lrbsuz",
+ "tip": "3ff941d8ced40bda2c448586c8450bdd1961ec1e",
+ "merge_base": "1252bb5a41123ba4d49efd84d0f91604bff6c87c",
+ "ahead": 1,
+ "last_commit_date": "2026-11-01",
+ "merge_base_date": "2026-11-01",
+ "prs_with_same_tip": [
+  2524
+ ],
+ "triagem_2804": {
+  "2524": "OBSOLETA"
+ },
+ "closure_comment": {},
+ "files": [
+  {
+   "path": "src/components/admin/__tests__/useAdminData.select.test.ts",
+   "status": "MAIN_UNCHANGED_SINCE_BASE",
+   "patch_lines": 36,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 6,
+    "removed_still_in_main": 6,
+    "missing_sample": [
+     "      for (const m of ['order', 'limit', 'eq', 'in', 'neq', 'range', 'gte', 'lte']) b[m] = () => b;"
+    ],
+    "still_sample": [
+     " * N-216 — Auditoria do admin: select explícito em audit_logs.",
+     " * Antes: `.select('*')`. Depois: só as colunas que a tabela de auditoria usa",
+     " * (id, user_id, action, entity_type, details, created_at). `details` permanece",
+     " * porque a tela a exibe; as demais colunas da linha não voltam ao navegador.",
+     "      for (const m of ['order', 'limit', 'eq', 'in', 'neq', 'range']) b[m] = () => b;",
+     "    // details é exibida na tabela — permanece."
+    ]
+   }
+  }
+ ],
+ "counts": {
+  "migrations": "0",
+  "workflows": "0",
+  "src": "1",
+  "edges": "0",
+  "docs_only": "no",
+  "lines_branch_has_main_lacks": "1",
+  "lines_main_has_branch_lacks": "10"
+ },
+ "auto": "TRABALHO_AUSENTE_APLICA_LIMPO",
+ "n_files_with_gaps": 1,
+ "gap_lines_total": 7
+}

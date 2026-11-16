@@ -1,0 +1,15 @@
+[
+ {
+  "commit": "cc368966b",
+  "arquivo": "src/components/talkx/report/__tests__/TalkXCampaignReport.test.tsx",
+  "linhas": 16,
+  "amostra": [
+   "    React.createElement('div', {",
+   "      'data-testid': 'performance',",
+   "      'data-has-conversion': String(hasConversionSource),",
+   "        <TalkXCampaignReport",
+   "          campaign={campaign as any}",
+   "          onBack={vi.fn()}"
+  ]
+ }
+]

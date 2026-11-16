@@ -1,0 +1,84 @@
+{
+ "id": "fix__f1a-lote-b-batch10",
+ "kind": "branch",
+ "ref": "origin/fix/f1a-lote-b-batch10",
+ "tip": "56187bdaeefff377ea9a2c80ffd8bae8827732b5",
+ "merge_base": "bac62ba98454811c3bfd117b838af926b1e795b2",
+ "ahead": 3,
+ "last_commit_date": "2026-10-23",
+ "merge_base_date": "2026-10-23",
+ "prs_with_same_tip": [
+  2087,
+  2435
+ ],
+ "triagem_2804": {
+  "2087": "OBSOLETA",
+  "2435": "OBSOLETA"
+ },
+ "closure_comment": {},
+ "files": [
+  {
+   "path": "src/components/gmail/__tests__/GmailInboxView.paginacao.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 338,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 142,
+    "missing_in_main": 132,
+    "removed": 44,
+    "removed_still_in_main": 44,
+    "missing_sample": [
+     "vi.mock('@/integrations/supabase/client', () => ({",
+     "  supabase: { rpc: vi.fn(), from: vi.fn(), channel: vi.fn(), removeChannel: vi.fn() },",
+     "vi.mock('@/lib/gmailOAuth', () => ({",
+     "  createGmailOAuthState: vi.fn(() => 'state'),",
+     "  storeGmailOAuthReturnContext: vi.fn(),",
+     "vi.mock('@/hooks/system/useNavigationHistory', () => ({",
+     "  RESERVED_HASHES: new Set(['main-content']),",
+     "  motion: new Proxy(",
+     "      get:",
+     "        () =>",
+     "        ({ children, ...props }: { children?: ReactNode }) =>",
+     "          createElement('div', props, children),",
+     "  Select: ({",
+     "    children,",
+     "    onValueChange,",
+     "    children: ReactNode;",
+     "    onValueChange?: (v: string) => void;",
+     "  }) => <SelectCtx.Provider value={onValueChange ?? (() => {})}>{children}</SelectCtx.Provider>,",
+     "  SelectTrigger: ({ children, ...props }: { children: ReactNode; [key: string]: unknown }) => (",
+     "    <div {...props}>{children}</div>",
+     "  SelectValue: ({ placeholder, ...props }: { placeholder?: string; [key: string]: unknown }) => (",
+     "    <span {...props}>{placeholder}</span>",
+     "vi.mock('@/components/gmail/EmailThreadView', () => ({",
+     "  EmailThreadView: () => <div data-testid=\"thread-view\" />,",
+     "vi.mock('@/components/gmail/EmailComposer', () => ({"
+    ],
+    "still_sample": [
+     "vi.mock('@/integrations/supabase/client', () => ({ supabase: { rpc: vi.fn(), from: vi.fn(), channel: vi.fn(), removeChannel: vi.fn() } }));",
+     "vi.mock('@/lib/gmailOAuth', () => ({ createGmailOAuthState: vi.fn(() => 'state'), storeGmailOAuthReturnContext: vi.fn() }));",
+     "vi.mock('@/hooks/system/useNavigationHistory', () => ({ RESERVED_HASHES: new Set(['main-content']) }));",
+     "  motion: new Proxy({}, { get: () => ({ children, ...props }: { children?: ReactNode }) => createElement('div', props, children) }),",
+     "  Select: ({ children, onValueChange }: { children: ReactNode; onValueChange?: (v: string) => void }) => (",
+     "    <SelectCtx.Provider value={onValueChange ?? (() => {})}>{children}</SelectCtx.Provider>",
+     "  SelectTrigger: ({ children, ...props }: { children: ReactNode; [key: string]: unknown }) => <div {...props}>{children}</div>,",
+     "  SelectValue: ({ placeholder, ...props }: { placeholder?: string; [key: string]: unknown }) => <span {...props}>{placeholder}</span>,",
+     "vi.mock('@/components/gmail/EmailThreadView', () => ({ EmailThreadView: () => <div data-testid=\"thread-view\" /> }));",
+     "vi.mock('@/components/gmail/EmailComposer', () => ({ EmailComposer: () => <div data-testid=\"composer\" /> }));"
+    ]
+   }
+  }
+ ],
+ "counts": {
+  "migrations": "0",
+  "workflows": "0",
+  "src": "1",
+  "edges": "0",
+  "docs_only": "no",
+  "lines_branch_has_main_lacks": "169",
+  "lines_main_has_branch_lacks": "54"
+ },
+ "auto": "MISTO_CONFLITO",
+ "n_files_with_gaps": 1,
+ "gap_lines_total": 176
+}

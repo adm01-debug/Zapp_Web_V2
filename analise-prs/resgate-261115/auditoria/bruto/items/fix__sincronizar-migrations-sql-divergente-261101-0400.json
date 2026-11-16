@@ -1,0 +1,117 @@
+{
+ "id": "fix__sincronizar-migrations-sql-divergente-261101-0400",
+ "kind": "branch",
+ "ref": "origin/fix/sincronizar-migrations-sql-divergente-261101-0400",
+ "tip": "2e2f97fb9d0bd59431d7f6b06c3eb6ac09d4dba6",
+ "merge_base": "1252bb5a41123ba4d49efd84d0f91604bff6c87c",
+ "ahead": 2,
+ "last_commit_date": "2026-11-01",
+ "merge_base_date": "2026-11-01",
+ "prs_with_same_tip": [],
+ "triagem_2804": {},
+ "closure_comment": {},
+ "files": [
+  {
+   "path": "PENDENCIAS.md",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 60,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 37,
+    "missing_in_main": 37,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "## 4. DB Migrate — 3 versões no ledger sem arquivo no disco",
+     "**Versões afetadas (remote_only):** encontradas pelo step \"Paridade arquivos↔ledger\" do",
+     "`db-live-guard`. Versões que existem no ledger do banco mas não têm arquivo em `supabase/migrations/`.",
+     "**Por que não foi corrigido:** Requer análise de cada versão para determinar se o arquivo foi",
+     "deletado por engano, nunca foi commitado, ou se a migration foi aplicada manualmente sem",
+     "passar pelo fluxo de arquivo→PR→merge. Risco de criar arquivo errado e introduzir drift.",
+     "Este workflow **não é um required check** — não bloqueia merges na `main`.",
+     "**O que o Joaquim precisa fazer:**",
+     "1. Consultar `SELECT version, name, statements FROM supabase_migrations.schema_migrations",
+     "   WHERE version NOT IN (SELECT regexp_replace(filename, '^(\\\\d{14}).*$', '\\\\1') FROM ...)` para listar as versões",
+     "2. Para cada versão remote_only: decidir se o arquivo precisa ser criado (reconciliação) ou",
+     "   se a entrada do ledger está errada (correção)",
+     "3. Seguir CLAUDE.md §1 regra 7: o arquivo deve ter o SQL exato aplicado em produção",
+     "## 5. Congelamento de features — PR #2545 (Joaquim, 01/11/2026)",
+     "**Estado:** PR #2545 (feature freeze) aberta com auto-merge desde 2026-11-01 23:36Z.",
+     "**Decisão do Joaquim:** só entram correções dos 9 fluxos críticos de `docs/PRONTO_PRODUCAO.md`,",
+     "CI que impede verificá-los e segurança. Features novas (TalkX V4, Copiloto, a11y) aguardam",
+     "até os fluxos críticos estarem OK em produção.",
+     "**PRs fechadas pelo congelamento (01/11/2026 ~23:48Z):**",
+     "- PR #1930 (db-guard workflow) — branch preservada",
+     "- PR #2426 (branch-hygiene-audit) — branch preservada",
+     "- PR #2491 (migrations copilot fases 13-15) — branch preservada",
+     "- PR #2513 (email navy contrast) — branch preservada",
+     "- PR #2532 (docs GF tasks + PENDENCIAS) — branch `claude/trusting-albattani-9x3ipg` preservada",
+     "**Fix pendente do db-live-guard (não qualificado para o congelamento):**"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "scripts/db-audit/migration-evidence.json",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 70,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 44,
+    "missing_in_main": 4,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "      \"justification\": \"O ledger registrou o ultimo statement como resumo em prosa ('CREATE OR REPLACE FUNCTION public.handle_new_user_role() -- reads trusted_d",
+     "      \"justification\": \"O ledger registrou um DO block simplificado (sem a lista already_fixed); o arquivo contem a versao completa que exclui as 19 funcoes ja ",
+     "      \"justification\": \"O ledger registrou apenas um resumo ('CREATE OR REPLACE FUNCTION public.handle_new_user_role() -- lower() fix'); o arquivo contem a defi",
+     "      \"justification\": \"O ledger armazena o corpo da funcao log_search_event em uppercase inline (single-line) enquanto o arquivo usa lowercase com indentacao m"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "supabase/migrations/20261031100000_copilot_fases13_15_tabelas.sql",
+   "status": "MAIN_UNCHANGED_SINCE_BASE",
+   "patch_lines": 95,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 16,
+    "missing_in_main": 16,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "DROP POLICY IF EXISTS \"copilot_outcomes_insert\" ON public.copilot_outcomes;",
+     "DROP POLICY IF EXISTS \"copilot_outcomes_select\" ON public.copilot_outcomes;",
+     "DROP POLICY IF EXISTS \"copilot_objection_catalog_insert\" ON public.copilot_objection_catalog;",
+     "DROP POLICY IF EXISTS \"copilot_objection_catalog_select\" ON public.copilot_objection_catalog;",
+     "DROP POLICY IF EXISTS \"copilot_usage_insert\" ON public.copilot_usage;",
+     "DROP POLICY IF EXISTS \"copilot_usage_select\" ON public.copilot_usage;",
+     "DROP POLICY IF EXISTS \"copilot_seller_settings_insert\" ON public.copilot_seller_settings;",
+     "DROP POLICY IF EXISTS \"copilot_seller_settings_select\" ON public.copilot_seller_settings;",
+     "DROP POLICY IF EXISTS \"copilot_seller_settings_update\" ON public.copilot_seller_settings;",
+     "DROP POLICY IF EXISTS \"copilot_help_requests_insert\" ON public.copilot_help_requests;",
+     "DROP POLICY IF EXISTS \"copilot_help_requests_select\" ON public.copilot_help_requests;",
+     "DROP POLICY IF EXISTS \"copilot_learning_moments_insert\" ON public.copilot_learning_moments;",
+     "DROP POLICY IF EXISTS \"copilot_learning_moments_select\" ON public.copilot_learning_moments;",
+     "DROP POLICY IF EXISTS \"copilot_conversation_scores_insert\" ON public.copilot_conversation_scores;",
+     "DROP POLICY IF EXISTS \"copilot_conversation_scores_select\" ON public.copilot_conversation_scores;",
+     "DROP POLICY IF EXISTS \"copilot_conversation_scores_update\" ON public.copilot_conversation_scores;"
+    ],
+    "still_sample": []
+   }
+  }
+ ],
+ "counts": {
+  "migrations": "1",
+  "workflows": "0",
+  "src": "0",
+  "edges": "0",
+  "docs_only": "no",
+  "lines_branch_has_main_lacks": "134",
+  "lines_main_has_branch_lacks": "877"
+ },
+ "auto": "MISTO_CONFLITO",
+ "n_files_with_gaps": 3,
+ "gap_lines_total": 57
+}

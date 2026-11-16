@@ -1,0 +1,2470 @@
+{
+ "id": "claude__fix-unit-tests-pre-existentes-261024-1700",
+ "kind": "branch",
+ "ref": "origin/claude/fix-unit-tests-pre-existentes-261024-1700",
+ "tip": "df8883db0e9e4ffababde48b43025437bf7f5a86",
+ "merge_base": "2d97c44cfe7f2fa8a3ca572f8f5689118328e858",
+ "ahead": 87,
+ "last_commit_date": "2026-10-25",
+ "merge_base_date": "2026-10-24",
+ "prs_with_same_tip": [
+  2219
+ ],
+ "triagem_2804": {
+  "2219": "OBSOLETA"
+ },
+ "closure_comment": {},
+ "files": [
+  {
+   "path": ".github/.keep-ci",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "patch_lines": 7,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "ci-trigger-2"
+    ],
+    "still_sample": [],
+    "same_basename_in_main": []
+   }
+  },
+  {
+   "path": "ESTADO.md",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 54,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 8,
+    "missing_in_main": 7,
+    "removed": 8,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "| `ai-kb-ingest` | A | `src/hooks/integrations/useKnowledgeBase.ts:130` · `src/hooks/integrations/useKnowledgeBase.ts:201` |",
+     "| `approve-password-reset` | A | `src/components/security/PasswordResetRequestsPanel.tsx:32` · `src/components/security/PasswordResetRequestsPanel.tsx:47` · `sr",
+     "| `batch-fetch-avatars` | A | `src/hooks/chat/useNewConversation.ts:143` · `src/hooks/chat/useNewConversation.ts:151` · `src/hooks/inbox/useInboxBulkActions.ts:",
+     "| `classify-audio-meme` | A | `src/components/settings/media-library/AIGenerateDialog.tsx:59` · `src/hooks/communication/useAudioMemes.ts:248` |",
+     "| `connection-health-check` | A | `src/components/connections/ConnectionsView.tsx:114` · `src/components/diagnostics/ConnectionHealthPanel.tsx:95` · `src/compon",
+     "| `evolution-sync` | A | `src/components/connections/ConnectionsView.tsx:89` |",
+     "| `migrate-media-storage` | A | `src/components/admin/MediaMigrationTool.tsx:75` |"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "docs/DB-INVENTORY.md",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 13,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 1,
+    "removed_still_in_main": 1,
+    "missing_sample": [
+     "| `user_service_accounts` | Contas de serviço do usuário (tipo, e-mail e estado) | ativo | `src/components/admin/__tests__/AdminView.servicosGoogle.test.tsx`, `"
+    ],
+    "still_sample": [
+     "| `user_service_accounts` | Contas de serviço do usuário (tipo, e-mail e estado) | ativo | `src/components/admin/AdminView.tsx`, `src/components/admin/__tests__"
+    ]
+   }
+  },
+  {
+   "path": "docs/talkx/ARQUITETURA.md",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 15,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 2,
+    "missing_in_main": 2,
+    "removed": 2,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "> `completed/cancelled` abrem o Monitor). `TalkXCampaignPaused.tsx` (TL-075) **passou a existir** e está ligado",
+     "> em `TalkXView.tsx` desde X156 (`paused` abre `TalkXCampaignPaused` em vez de `TalkXCampaignRunning`). \"Lidas/`read_at` E87 ✅\" e \"Tempo médio E88 ✅\""
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "scripts/ci/eslint-baseline.json",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 442,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 99,
+    "missing_in_main": 65,
+    "removed": 97,
+    "removed_still_in_main": 64,
+    "missing_sample": [
+     "      \"sha256\": \"59addfbfddbd1615559e4721fd3410b9a2d83838afdc1fc7cb0e18f536d1aedf\"",
+     "      \"sha256\": \"f11f6513072539bacd2253bd880a28b750d039085f7fa9ef60c6835d4d183aa1\"",
+     "      \"sha256\": \"d2fc7229b9f24f6ffb5fbc8b1a5ed97af3b09e5b922ae5828ebfd9e4bc8fdc80\"",
+     "      \"sha256\": \"da9e4a71aab3be6c0636015b5179986e659e89a79ed17157f2ec369216586c0f\"",
+     "      \"sha256\": \"d1846bce1393d1b77a82aea7ce7ca2881c032991d0b11c7f3b96a405244aa352\"",
+     "      \"sha256\": \"e69607e0897845ceeeeaac09b3d17840d5945349271264bc18a183269bd2e1fd\"",
+     "      \"path\": \"src/components/talkx/TalkXSegments.tsx\",",
+     "      \"sha256\": \"7a9b4f1f06b9119d97eaacc5538e05262b6855d4a638f2e106e445eb9cef1977\"",
+     "      \"sha256\": \"9fb74296a27ef73419c1fdc11d592b4d9eb64fefa288c3fa7f4b2f15afbd2772\"",
+     "      \"sha256\": \"b472a0910ee7cc9ac850f0d8ddc3ca8d2afe2f6f358ccecd235fb46f85117778\"",
+     "      \"sha256\": \"4a349f34699c9b0dd8854cac5fc8d2497642973b89090868a0e4e2d9f653171d\"",
+     "      \"sha256\": \"3e374b338af3de2054635c01660f7c28da52efce98d5aa53c58ae28e007d6c02\"",
+     "      \"path\": \"src/hooks/chat/useTeamChatNotifications.ts\",",
+     "      \"sha256\": \"40cf07f57b8a82a8feaa745f9ad737bd220e450a59f297852becb5b4721f0954\"",
+     "      \"sha256\": \"e0140bc9d4179f2d389190784a31544555b962151673395c4b35b99e55334322\"",
+     "      \"sha256\": \"7261c938862318ead47c0d7999f867502494876e9a7cb1690b37c291e0f0e7a6\"",
+     "      \"sha256\": \"17e3c29b526c1577723ef6b1006ef4d8abf539a058dfd4f171e14e371fbda188\"",
+     "      \"lineHash\": \"5f0b2ba4f2a485636ec96eb3f3aba1c1bd98cef9fc5b4db5706725d7b7cbe925\",",
+     "      \"contextHash\": \"05f437dfb5aec43a4a2a610d5234e1aa796305e5b7d128fa0310786c85f36fd9\"",
+     "      \"file\": \"src/components/talkx/TalkXSegments.tsx\",",
+     "      \"line\": 708,",
+     "      \"endLine\": 708,",
+     "      \"spanHash\": \"ebd63569508cf0687ce5c736173db686d16ea0280ad0f22e9f9c255b93f17851\",",
+     "      \"lineHash\": \"be232994ed28bdc88cee03c64f236900979a2e526c735f75521069e52e75f43b\",",
+     "      \"contextHash\": \"bf0d0d2d3183430f4a70f5e85e86ec0eb83d0775d733cb32e36870e174b800f4\""
+    ],
+    "still_sample": [
+     "      \"path\": \"src/components/talkx/TalkXOverview.tsx\",",
+     "      \"sha256\": \"b4a62dc6de1d9075d33d4eb473f70c9d258ad0a9acf8e1bc4b7997c1ed00842c\"",
+     "      \"file\": \"src/components/talkx/TalkXOverview.tsx\",",
+     "      \"line\": 125,",
+     "      \"column\": 9,",
+     "      \"endLine\": 125,",
+     "      \"endColumn\": 25,",
+     "      \"severity\": 2,",
+     "      \"ruleId\": \"local/no-secret-compare\",",
+     "      \"messageId\": \"noSecretCompare\","
+    ]
+   }
+  },
+  {
+   "path": "scripts/ci/talkx-docs-drift.unit.mjs",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 27,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 4,
+    "missing_in_main": 2,
+    "removed": 4,
+    "removed_still_in_main": 1,
+    "missing_sample": [
+     "  // `TalkXView.tsx` desde X156 (`paused` abre `TalkXCampaignPaused`); os outros dois continuam",
+     "    'TalkXCampaignPaused.tsx deve estar ligado em TalkXView.tsx (X156)',"
+    ],
+    "still_sample": [
+     "  assert.doesNotMatch("
+    ]
+   }
+  },
+  {
+   "path": "scripts/db-audit/known-violations.json",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 52,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 40,
+    "removed_still_in_main": 7,
+    "missing_sample": [
+     "{\"_comment\":\"Baseline (ratchet) do supabase-usage-guard. Entradas aqui são violações CONHECIDAS e aceitas (ex: tabela usada via join indireto, schema divergente"
+    ],
+    "still_sample": [
+     "  \"_gerado_em\": \"2026-08-27\",",
+     "  \"_contexto\": \"docs/audits/EXECUCAO_2026-08-27.md, secao 'Acoplamento quebrado'\",",
+     "  \"_resolvido\": {",
+     "    \"from:department_whatsapp_configs (SL-144)\": \"A tabela department_whatsapp_configs nao existe no schema (ela nao esta em schema-catalog.json nem em nenhuma ",
+     "    \"talkx-rpcs-parcial (X010/X012)\": \"RPCs get_talkx_cron_secret, claim/release_talkx_campaign_worker, talkx_next_recipients (PR #1522/X010) removidos do basel",
+     "    \"multiplix_confirm_dispatch\": \"RPC criado no banco (grant anon_execute em grants-baseline.json PR #1513). Entrada obsoleta removida em 2026-10-02.\",",
+     "    \"set_default_whatsapp_connection (#174, t_720d81a9)\": \"RPC aprovada em t_ae0a55a6; a migration 20261006234158 entra neste empilhamento, a projecao forward-o"
+    ]
+   }
+  },
+  {
+   "path": "src/components/admin/AdminView.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 170,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 27,
+    "missing_in_main": 22,
+    "removed": 24,
+    "removed_still_in_main": 22,
+    "missing_sample": [
+     "  UserPlus, Building, Eye, Loader2, Clock,",
+     "// eslint-disable-next-line no-restricted-imports",
+     "import { supabase } from '@/integrations/supabase/client';",
+     "interface CronJob {",
+     "  jobname: string;",
+     "  schedule: string;",
+     "  active: boolean;",
+     "  last_status: string | null;",
+     "  last_run_at: string | null;",
+     "  last_return_message: string | null;",
+     "  const [cronJobs, setCronJobs] = useState<CronJob[]>([]);",
+     "    if (activeTab !== 'cron' || !isAdmin) return;",
+     "    void (supabase.rpc as unknown as (name: string) => Promise<{ data: CronJob[] | null; error: unknown }>)('admin_list_cron_jobs')",
+     "      .then(({ data, error }) => { if (!error && data) setCronJobs(data); });",
+     "  }, [activeTab, isAdmin]);",
+     "    ...(isAdmin ? [['cron' as AdminTab, Clock, 'Tarefas agendadas'] as const] : []),",
+     "      ) : activeTab === 'cron' ? (",
+     "          {cronJobs.map((job) => (",
+     "            <div key={job.jobname} className=\"flex items-center gap-3 p-3 rounded-lg border\">",
+     "              <Clock className=\"w-4 h-4 text-muted-foreground shrink-0\" />",
+     "              <span className=\"font-mono text-sm\">{job.jobname}</span>",
+     "              <span className=\"text-xs text-muted-foreground\">{job.schedule}</span>"
+    ],
+    "still_sample": [
+     "// O campo \"Limite de Chats\" usa type=number, mas o navegador permite apagar o",
+     "// valor: o Number.parseInt('') virava NaN e o NaN era gravado em profiles.max_chats.",
+     "// O número enviado ao salvar é sempre um inteiro entre 1 e 50.",
+     "// SL-160/P2-3.4: a integração com Google Calendar não existe no produto (não há OAuth",
+     "// nem sincronização em src/ ou supabase/functions — só a tela de demonstração, fora dos",
+     "// grupos principais da navegação). A permissão `google_calendar` era oferecida aqui e",
+     "// gravada em `user_service_accounts` sem nenhum consumidor: fica visível, mas desligada,",
+     "// até a integração real existir.",
+     "  // Filtro de data e paginação da auditoria: o estado vive aqui e o hook",
+     "  // `useAdminData` monta a consulta (ele não guarda estado de filtro)."
+    ]
+   }
+  },
+  {
+   "path": "src/components/admin/MediaMigrationTool.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 304,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 106,
+    "missing_in_main": 79,
+    "removed": 134,
+    "removed_still_in_main": 106,
+    "missing_sample": [
+     "import { useState, useEffect } from 'react';",
+     "// eslint-disable-next-line no-restricted-imports",
+     "import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,",
+     "  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle }",
+     "  from '@/components/ui/alert-dialog';",
+     "interface LogEntry {",
+     "  id: string; user_id: string | null; created_at: string;",
+     "  details: { processed: number; migrated: number; failed: number; ignored?: number };",
+     "interface MigrationResult { processed: number; migrated: number; failed: number; }",
+     "interface MigrationError { message: string; code: string; status?: number; }",
+     "  const [pendingCount, setPendingCount] = useState<number | null>(null);",
+     "  const [countError, setCountError] = useState(false);",
+     "  const [showDialog, setShowDialog] = useState(false);",
+     "  const [migrationError, setMigrationError] = useState<MigrationError | null>(null);",
+     "  const [logs, setLogs] = useState<LogEntry[]>([]);",
+     "  const [profileNames, setProfileNames] = useState<Map<string, string>>(new Map());",
+     "    async function loadCount() {",
+     "        const r1 = await supabase.from('messages')",
+     "          .select('id', { count: 'exact', head: true })",
+     "          .like('media_url', 'https://mmg.whatsapp.net/%');",
+     "        const r2 = await supabase.from('messages')",
+     "          .select('id', { count: 'exact', head: true })",
+     "          .like('media_url', 'https://pps.whatsapp.net/%');",
+     "        if (r1.error || r2.error) { setCountError(true); return; }",
+     "        setPendingCount((r1.count ?? 0) + (r2.count ?? 0));"
+    ],
+    "still_sample": [
+     "import { HardDrive, Play, RefreshCw, CheckCircle, XCircle, Loader2 } from 'lucide-react';",
+     "import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';",
+     "import { Button } from '@/components/ui/button';",
+     "import { Badge } from '@/components/ui/badge';",
+     "import { Progress } from '@/components/ui/progress';",
+     "interface MigrationResult {",
+     "  success: boolean;",
+     "  processed: number;",
+     "  migrated: number;",
+     "  failed: number;"
+    ]
+   }
+  },
+  {
+   "path": "src/components/admin/__tests__/AdminView.a11y.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 39,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 4,
+    "missing_in_main": 2,
+    "removed": 4,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "    fireEvent.click(screen.getByRole('tab', { name: /CRM/ }));",
+     "    fireEvent.click(screen.getByRole('tab', { name: /CRM/ }));"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/admin/__tests__/AdminView.avatarRevogaUrl.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 13,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 2,
+    "missing_in_main": 0,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/admin/__tests__/AdminView.estados-tabelas.test.tsx",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/components/admin/__tests__/AdminView.limiteChats.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 13,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 2,
+    "missing_in_main": 0,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/admin/__tests__/AdminView.ramalAdmin.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 13,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 2,
+    "missing_in_main": 0,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/admin/__tests__/AdminView.section-error-boundary.test.tsx",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/components/admin/__tests__/AdminView.tarefas-agendadas.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 13,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 2,
+    "missing_in_main": 0,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/admin/__tests__/useAdminData.erros-auditoria.test.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 37,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 14,
+    "missing_in_main": 14,
+    "removed": 1,
+    "removed_still_in_main": 1,
+    "missing_sample": [
+     "    auth: {",
+     "      getSession: vi.fn().mockResolvedValue({ data: { session: { access_token: 'tok' } } }),",
+     "      refreshSession: vi.fn().mockResolvedValue({ error: null }),",
+     "    functions: {",
+     "      invoke: vi.fn(async (name: string, opts?: { body?: unknown; headers?: Record<string, string> }) => {",
+     "        const resp = await fetch(`https://local.test/functions/v1/${name}`, {",
+     "          method: 'POST',",
+     "          headers: { 'Content-Type': 'application/json', ...(opts?.headers ?? {}) },",
+     "          body: JSON.stringify(opts?.body),",
+     "        if (!resp.ok) {",
+     "          const text = await resp.text().catch(() => '');",
+     "          return { data: null, error: { message: text, name: 'FunctionsHttpError', context: { status: resp.status } } };",
+     "        const data = await resp.json().catch(() => ({}));",
+     "        return { data, error: null };"
+    ],
+    "still_sample": [
+     "    auth: { getSession: vi.fn().mockResolvedValue({ data: { session: { access_token: 'tok' } } }) },"
+    ]
+   }
+  },
+  {
+   "path": "src/components/admin/__tests__/useAdminData.select.test.ts",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/components/admin/useAdminData.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 23,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 9,
+    "missing_in_main": 7,
+    "removed": 1,
+    "removed_still_in_main": 1,
+    "missing_sample": [
+     "      const signedUsers = await Promise.all(",
+     "        usersWithRoles.map(async (u) => {",
+     "          const path = avatarObjectPath(u.avatar_url);",
+     "          if (!path) return u;",
+     "          const { data } = await supabase.storage",
+     "          return { ...u, avatar_url: data?.signedUrl ?? u.avatar_url };",
+     "      setUsers(signedUsers);"
+    ],
+    "still_sample": [
+     "      setUsers(usersWithRoles);"
+    ]
+   }
+  },
+  {
+   "path": "src/components/agents/__tests__/AgentsView.capacidade.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 13,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 2,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "    removeChannel: vi.fn(),"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/agents/__tests__/AgentsView.conexoes.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 15,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 3,
+    "missing_in_main": 2,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "vi.mock('@/hooks/auth/useAuth', () => ({",
+     "  useAuth: () => ({ profile: { id: 'user-1', name: 'Test', avatar_url: null }, user: { id: 'user-1' } }),"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/agents/__tests__/AgentsView.pendencias.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 13,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 2,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "    removeChannel: vi.fn(),"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/calls/__tests__/RecordingPlayer.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 13,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 1,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  return Promise.resolve(new Response(corpo, { status: 200, headers: { 'Content-Type': 'audio/mpeg' } }));"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/catalog/WhatsAppTemplatesManager.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 52,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 8,
+    "missing_in_main": 7,
+    "removed": 5,
+    "removed_still_in_main": 1,
+    "missing_sample": [
+     "  const { isAdmin } = useUserRole();",
+     "        {isAdmin && <Button onClick={openNew} className=\"gap-2 bg-primary hover:bg-primary/90 w-full sm:w-auto\"><Plus className=\"w-4 h-4\" />Novo Template</Butto",
+     "        {!isAdmin && <p className=\"text-sm text-muted-foreground\">Somente administradores podem criar ou editar templates.</p>}",
+     "              {isAdmin && <Button variant=\"outline\" className=\"mt-4\" onClick={openNew}><Plus className=\"w-4 h-4 mr-2\" />Criar primeiro template</Button>}",
+     "                            {isAdmin && <Button variant=\"ghost\" size=\"icon\" className=\"h-8 w-8\" aria-label={`Editar ${template.name}`} onClick={() => openEdit(t",
+     "                            {isAdmin && <Button variant=\"ghost\" size=\"icon\" className=\"h-8 w-8\" aria-label={`Duplicar ${template.name}`} onClick={() => handleDu",
+     "                            {isAdmin && <Button variant=\"ghost\" size=\"icon\" className=\"h-8 w-8 text-destructive\" aria-label={`Excluir ${template.name}`} onClick"
+    ],
+    "still_sample": [
+     "        <Button onClick={openNew} className=\"gap-2 bg-primary hover:bg-primary/90 w-full sm:w-auto\"><Plus className=\"w-4 h-4\" />Novo Template</Button>"
+    ]
+   }
+  },
+  {
+   "path": "src/components/catalog/__tests__/WhatsAppTemplatesManager.confirmacaoExclusao.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 13,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "vi.mock('@/hooks/system/useUserRole', () => ({ useUserRole: () => ({ isAdmin: true }) }));"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/connections/ConnectionsView.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 92,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 26,
+    "missing_in_main": 20,
+    "removed": 6,
+    "removed_still_in_main": 1,
+    "missing_sample": [
+     "function formatPhoneNumber(raw: string): string {",
+     "  const digits = raw.replace(/\\D/g, '');",
+     "  const local = digits.startsWith('55') ? digits.slice(2) : digits;",
+     "  if (local.length === 11) {",
+     "    return `+55 ${local.slice(0, 2)} ${local.slice(2, 7)}-${local.slice(7)}`;",
+     "  } else if (local.length === 10) {",
+     "    return `+55 ${local.slice(0, 2)} ${local.slice(2, 6)}-${local.slice(6)}`;",
+     "  return digits.length > 0 ? `+${digits}` : '';",
+     "    if (multiConnectionEnabled) { clearAddConnectionError(); setIsAddDialogOpen(true); }",
+     "  const handleAddWithValidation = () => {",
+     "    const digits = newConnection.phone_number.replace(/\\D/g, '');",
+     "    const valid = digits.length >= 10 && !(digits.startsWith('55') && digits.length < 12);",
+     "    if (!valid) {",
+     "      setPhoneError('Informe um número com DDI 55 (ex.: +55 11 99999-0000) ou E.164 válido com outro DDI.');",
+     "    void handleAddConnection();",
+     "          <Dialog open={isAddDialogOpen} onOpenChange={(open) => { if (!open) clearAddConnectionError(); setIsAddDialogOpen(open); }}>",
+     "                <div className=\"space-y-2\"><Label>Número do WhatsApp</Label><Input placeholder=\"+55 11 99999-0000\" value={newConnection.phone_number} onChange={",
+     "                {(addConnectionError || phoneError) && <p role=\"alert\" data-testid=\"add-connection-error\" className=\"text-sm text-destructive\">{addConnectionErr",
+     "                  <Button variant=\"outline\" onClick={() => { clearAddConnectionError(); setPhoneError(null); setIsAddDialogOpen(false); }} disabled={isCreating}",
+     "                  <Button onClick={handleAddWithValidation} className=\"bg-whatsapp hover:bg-whatsapp-dark\" disabled={isCreating}>"
+    ],
+    "still_sample": [
+     "    if (multiConnectionEnabled) setIsAddDialogOpen(true);"
+    ]
+   }
+  },
+  {
+   "path": "src/components/connections/__tests__/ConnectionsView.erro-dialogo.test.tsx",
+   "status": "MAIN_UNCHANGED_SINCE_BASE",
+   "patch_lines": 13,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "    await waitFor(() => expect(trigger).not.toBeDisabled());"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/connections/__tests__/ConnectionsView.telefone-validacao.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 13,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 2,
+    "missing_in_main": 0,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/connections/__tests__/useConnectionsManager.handlers.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 24,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 2,
+    "missing_in_main": 1,
+    "removed": 3,
+    "removed_still_in_main": 1,
+    "missing_sample": [
+     "    await act(async () => { r.result.current.setNewConnection({ name: 'X', phone_number: '11900000001' }); });"
+    ],
+    "still_sample": [
+     "    expect(h.toast).toHaveBeenCalledWith("
+    ]
+   }
+  },
+  {
+   "path": "src/components/dashboard/__tests__/DashboardView.test.tsx",
+   "status": "MAIN_UNCHANGED_SINCE_BASE",
+   "patch_lines": 37,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 4,
+    "missing_in_main": 3,
+    "removed": 11,
+    "removed_still_in_main": 11,
+    "missing_sample": [
+     "  it('semana selecionada: aviso de que KPIs não seguem o período está visível', () => {",
+     "    expect(screen.getByTestId('dash-kpis-period-notice')).toBeInTheDocument();",
+     "  it('período diferente de hoje mantém o rótulo \"Números de hoje\"', () => {"
+    ],
+    "still_sample": [
+     "  it('semana selecionada: passa from/until do período para useDashboardKpi e some com o aviso de \"sempre hoje\"', () => {",
+     "    const calls = vi.mocked(useDashboardKpi).mock.calls;",
+     "    const lastCall = calls[calls.length - 1]?.[0];",
+     "    expect(lastCall?.from).toBeInstanceOf(Date);",
+     "    expect(lastCall?.until).toBeInstanceOf(Date);",
+     "    expect(lastCall!.until!.getTime()).toBeGreaterThan(lastCall!.from!.getTime());",
+     "    // O aviso existia porque os KPIs ignoravam o período; agora que seguem, sai de cena.",
+     "    expect(screen.queryByTestId('dash-kpis-period-notice')).not.toBeInTheDocument();",
+     "  it('período diferente de hoje rotula a zona como \"Números do período\" (o rótulo não mente mais)', () => {",
+     "    expect(screen.getByTestId('dash-zone-numeros')).toHaveTextContent('Números do período');"
+    ]
+   }
+  },
+  {
+   "path": "src/components/inbox/InboxEmptyChat.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 108,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 41,
+    "missing_in_main": 10,
+    "removed": 23,
+    "removed_still_in_main": 17,
+    "missing_sample": [
+     "export function InboxEmptyChat({ onNewConversation, waitingCount, unreadCount }: InboxEmptyChatProps = {}) {",
+     "  const prefersReducedMotion = typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;",
+     "          className={`flex flex-col items-center gap-4${prefersReducedMotion ? '' : ' motion-safe:animate-in fade-in slide-in-from-bottom-2 duration-300'}`}",
+     "            <div className=\"flex gap-4 text-sm text-muted-foreground\">",
+     "                <span data-testid=\"inbox-empty-unread\">{unreadCount} não lida{unreadCount === 1 ? '' : 's'}</span>",
+     "            <Button size=\"sm\" onClick={onNewConversation}>",
+     "            <div data-testid=\"inbox-empty-shortcuts\" className=\"flex flex-col items-center gap-2\">",
+     "                  const keys = formatShortcut(shortcut);",
+     "                          <kbd className=\"rounded-md border border-border bg-muted px-1.5 py-0.5 text-[11px] font-semibold text-foreground shadow-sm\">",
+     "                            <span className=\"text-[10px] text-muted-foreground\">+</span>"
+    ],
+    "still_sample": [
+     "          <div",
+     "            data-testid=\"inbox-empty-shortcuts\"",
+     "            className=\"flex flex-col items-center gap-2\"",
+     "            <span className=\"text-xs font-medium text-muted-foreground\">Atalhos do teclado</span>",
+     "            <div className=\"flex flex-wrap items-center justify-center gap-x-4 gap-y-2\">",
+     "              {atalhos.map((shortcut) => {",
+     "                return (",
+     "                  <div key={shortcut.id} className=\"flex items-center gap-1.5\">",
+     "                    {keys.map((key, index) => (",
+     "                      <span key={`${shortcut.id}-${index}`} className=\"flex items-center gap-1\">"
+    ]
+   }
+  },
+  {
+   "path": "src/components/inbox/RealtimeInboxView.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 41,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 20,
+    "missing_in_main": 11,
+    "removed": 4,
+    "removed_still_in_main": 4,
+    "missing_sample": [
+     "            {inbox.selectedContactFallbackStatus === 'not-found' ? (",
+     "              <div className=\"flex flex-1 flex-col items-center justify-center gap-4 p-8 text-center\">",
+     "                <p className=\"text-base font-medium\">Conversa não encontrada</p>",
+     "                  onClick={() => inbox.setSelectedContactId(null)}",
+     "                  className=\"text-sm text-primary underline-offset-4 hover:underline\"",
+     "                  Voltar à lista",
+     "            ) : inbox.selectedContactFallbackStatus === 'error' ? (",
+     "              <div className=\"flex flex-1 flex-col items-center justify-center gap-4 p-8 text-center\">",
+     "                <p className=\"text-base font-medium\">Não foi possível abrir a conversa</p>",
+     "                {inbox.selectedContactFallbackError && (",
+     "                  <p className=\"text-sm text-muted-foreground\">{inbox.selectedContactFallbackError}</p>"
+    ],
+    "still_sample": [
+     "            <InboxEmptyChat",
+     "              waitingCount={inboxFilters.chipCounts?.waiting ?? 0}",
+     "              unreadCount={inboxFilters.chipCounts?.unread ?? 0}",
+     "              onNewConversation={() => inbox.setShowNewConversation(true)}"
+    ]
+   }
+  },
+  {
+   "path": "src/components/inbox/__tests__/useChatMediaSending.audio-meme-falha.test.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 55,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 9,
+    "missing_in_main": 8,
+    "removed": 6,
+    "removed_still_in_main": 6,
+    "missing_sample": [
+     "// Radix Popover não abre de forma confk\u0013�vel sob jsdom: o pass-through guarda a",
+     "      storage: { from: () => ({ upload: estado.upload, createSignedUrl: estado.createSignedUrl, getPublicUrl: estado.getPublicUrl }) },",
+     "      channel: () => { const ch: { on: (e: string, c: () => unknown) => typeof ch; subscribe: () => { unsubscribe: () => void } } = { on: () => ch, subscribe: (",
+     "      removeChannel: () => Promise.resolve(),",
+     "  // ------------------------------------------ o outro picker que recebe o mesmo hook",
+     "  it('AudioMemePicker ligado ao hook: falha no envio não deixa rejek#�ão não tratada', async () => {",
+     " * o que faltava era o cliente mandar o id da resposta quando o compositor etava",
+     " * respondendo e o envio saría por um destes pickers."
+    ],
+    "still_sample": [
+     "// Radix Popover não abre de forma confiável sob jsdom: o pass-through guarda a",
+     "      storage: { from: () => ({ upload: estado.upload, createSignedUrl: estado.createSignedUrl }) },",
+     "  // --------------------------------- o outro picker que recebe o mesmo hook",
+     "  it('AudioMemePicker ligado ao hook: falha no envio não deixa rejeição não tratada', async () => {",
+     " * o que faltava era o cliente mandar o id da resposta quando o compositor estava",
+     " * respondendo e o envio saía por um destes pickers."
+    ]
+   }
+  },
+  {
+   "path": "src/components/inbox/ai-tools/__tests__/a11y-ferramentas-ia.test.tsx",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/components/inbox/chat/__tests__/ChatMessagesArea.pagination.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 12,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 0,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/integrations/GoogleCalendarIntegration.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 13,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 1,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "            <Switch checked={autoSync} onCheckedChange={setAutoSync} aria-label=\"Sincronização automática\" disabled />"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/keyboard/__tests__/paleta-unica.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 13,
+   "hunk": "PRESENT_REVERSE_APPLIES"
+  },
+  {
+   "path": "src/components/mfa/MFAVerify.tsx",
+   "status": "MAIN_UNCHANGED_SINCE_BASE",
+   "patch_lines": 19,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 4,
+    "missing_in_main": 4,
+    "removed": 2,
+    "removed_still_in_main": 2,
+    "missing_sample": [
+     "    if (code.length === 6 && !verifying && factors.length > 0) {",
+     "      // eslint-disable-next-line react-hooks/set-state-in-effect",
+     "  // eslint-disable-next-line react-hooks/exhaustive-deps",
+     "  }, [code, factors]);"
+    ],
+    "still_sample": [
+     "    if (code.length === 6 && !verifying) {",
+     "  }, [code]);"
+    ]
+   }
+  },
+  {
+   "path": "src/components/security/AuditLogDashboard.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 188,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 69,
+    "missing_in_main": 66,
+    "removed": 18,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "// eslint-disable-next-line no-restricted-imports",
+     "interface Stats {",
+     "  total: number | null;",
+     "  today: number | null;",
+     "  suspicious: number | null;",
+     "  uniqueUsers: number | null;",
+     "  const [stats, setStats] = useState<Stats | null>(null);",
+     "  const [statsError, setStatsError] = useState<string | null>(null);",
+     "  const [profileNames, setProfileNames] = useState<Map<string, string>>(new Map());",
+     "  const fetchStats = useCallback(async () => {",
+     "    const now = Date.now();",
+     "    const ago24h = new Date(now - 24 * 3600000).toISOString();",
+     "    const ago7d = new Date(now - 7 * 24 * 3600000).toISOString();",
+     "    const [r1, r2, r3, r4] = await Promise.all([",
+     "      supabase.from('audit_logs').select('*', { count: 'exact', head: true }),",
+     "      supabase.from('audit_logs').select('*', { count: 'exact', head: true }).gte('created_at', ago24h),",
+     "      supabase.from('audit_logs').select('*', { count: 'exact', head: true }).gte('created_at', ago24h).or('action.like.role_%,action.like.%delete%,action.like.",
+     "      supabase.from('audit_logs').select('user_id').gte('created_at', ago7d).not('user_id', 'is', null),",
+     "    const err = r1.error || r2.error || r3.error || r4.error;",
+     "    if (err) {",
+     "      setStatsError(err.message);",
+     "      setStats(null);",
+     "      return;",
+     "    const uniqueUsers = new Set(",
+     "      (r4.data as Array<{ user_id: string | null }>).map(r => r.user_id).filter(Boolean)"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/security/PasswordResetRequestsPanel.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 36,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 7,
+    "missing_in_main": 7,
+    "removed": 2,
+    "removed_still_in_main": 2,
+    "missing_sample": [
+     "import { isAccessDeniedError, ACCESS_DENIED_MESSAGE } from '@/lib/rlsError';",
+     "      if (error) {",
+     "        if (isAccessDeniedError(error)) throw new Error(ACCESS_DENIED_MESSAGE);",
+     "        throw new Error((await parseEdgeError(error, 'Erro ao aprovar')).message);",
+     "      if (error) {",
+     "        if (isAccessDeniedError(error)) throw new Error(ACCESS_DENIED_MESSAGE);",
+     "        throw new Error((await parseEdgeError(error, 'Erro ao rejeitar')).message);"
+    ],
+    "still_sample": [
+     "      if (error) throw new Error((await parseEdgeError(error, 'Erro ao aprovar')).message);",
+     "      if (error) throw new Error((await parseEdgeError(error, 'Erro ao rejeitar')).message);"
+    ]
+   }
+  },
+  {
+   "path": "src/components/security/__tests__/AuditLogDashboard.corte.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 69,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 24,
+    "missing_in_main": 24,
+    "removed": 16,
+    "removed_still_in_main": 1,
+    "missing_sample": [
+     "    from: vi.fn(() => {",
+     "      const result = Promise.resolve({ count: 0, data: estado.dados, error: null });",
+     "      const b: Record<string, unknown> = {};",
+     "      const chain = () => b;",
+     "      b.select = chain;",
+     "      b.order = chain;",
+     "      b.gte = chain;",
+     "      b.lte = chain;",
+     "      b.not = chain;",
+     "      b.or = chain;",
+     "      b.like = chain;",
+     "      b.eq = chain;",
+     "      b.in = chain;",
+     "      b.limit = chain;",
+     "      (b as unknown as { then: typeof result.then }).then = result.then.bind(result);",
+     "      return b;",
+     "    channel: () => {",
+     "      const ch: Record<string, unknown> = {};",
+     "      ch.on = () => ch;",
+     "      ch.subscribe = () => ch;",
+     "      return ch;",
+     "    removeChannel: vi.fn(),",
+     "    await waitFor(() => expect(screen.getByText(/Logs de Auditoria \\(200\\)/)).toBeInTheDocument());",
+     "    expect(screen.queryByText(/Logs de Auditoria \\(200\\)/)).not.toBeInTheDocument();"
+    ],
+    "still_sample": [
+     "    expect(screen.queryByText('Últimos 200')).not.toBeInTheDocument();"
+    ]
+   }
+  },
+  {
+   "path": "src/components/security/__tests__/PasswordResetRequestsPanel.abas.test.tsx",
+   "status": "MAIN_UNCHANGED_SINCE_BASE",
+   "patch_lines": 21,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 5,
+    "missing_in_main": 4,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "import React from 'react';",
+     "vi.mock('framer-motion', () => ({",
+     "  motion: { div: ({ children, ...p }: React.PropsWithChildren<Record<string, unknown>>) => React.createElement('div', p, children) },",
+     "  AnimatePresence: ({ children }: React.PropsWithChildren) => React.createElement(React.Fragment, null, children),"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/settings/AppearanceSettings.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 23,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 4,
+    "missing_in_main": 0,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/settings/AvatarUpload.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 128,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 32,
+    "missing_in_main": 17,
+    "removed": 22,
+    "removed_still_in_main": 8,
+    "missing_sample": [
+     "function avatarExtFromUrl(url: string | null | undefined): string | null {",
+     "  const caminho = inicio !== -1",
+     "    ? url.slice(inicio + marcador.length).split('?')[0].split('#')[0]",
+     "    : (url.split('/').pop()?.split('?')[0].split('#')[0] ?? '');",
+     "  return caminho ? (caminho.match(/\\.(\\w+)$/) ?? [null, null])[1] : null;",
+     "  const { user, profile } = useAuth();",
+     "        const { data: listedFiles, error: listError } = await supabase.storage",
+     "          .list(user.id);",
+     "        if (!listError && listedFiles) {",
+     "          for (const f of listedFiles) {",
+     "            const oldExt = (f.name.match(/\\.(\\w+)$/) ?? [null, null])[1];",
+     "            if (oldExt && oldExt !== ext) {",
+     "                .remove([`${user.id}/${f.name}`]);",
+     "        } else if (listError) {",
+     "          const prevExt = avatarExtFromUrl(previousUrl);",
+     "          if (prevExt && prevExt !== ext) {",
+     "              .remove([`${user.id}/avatar.${prevExt}`]);"
+    ],
+    "still_sample": [
+     "  const { user, profile, refreshProfile } = useAuth();",
+     "        // Get public URL",
+     "        // Update profile",
+     "        await refreshProfile();",
+     "          const { error: removeError } = await supabase.storage",
+     "            .from('avatars')",
+     "          if (removeError) log.warn('Falha ao remover avatar antigo do bucket', removeError);",
+     "        await refreshProfile();"
+    ]
+   }
+  },
+  {
+   "path": "src/components/settings/IntegrationKeysSection.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 13,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 1,
+    "removed_still_in_main": 1,
+    "missing_sample": [
+     "  const { settings, isLoading, getSetting, addSetting } = useGlobalSettings({ enabled: isAdmin });"
+    ],
+    "still_sample": [
+     "  const { settings, isLoading, getSetting, addSetting } = useGlobalSettings();"
+    ]
+   }
+  },
+  {
+   "path": "src/components/settings/SettingsView.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 35,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 2,
+    "missing_in_main": 1,
+    "removed": 7,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  const { settings, isLoading, updateSettings, toggleWorkDay } = useUserSettings();"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/settings/__tests__/IntegrationKeysSection.sem-consumidor.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 51,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 8,
+    "missing_in_main": 4,
+    "removed": 9,
+    "removed_still_in_main": 2,
+    "missing_sample": [
+     "  it('o botão olho alterna aria-label entre \"Mostrar chave\" e \"Ocultar chave\" com aria-pressed', () => {",
+     "    expect(mockOrder).not.toHaveBeenCalled();",
+     "    const botaoSalvar = await screen.findByRole('button', { name: /salvar/i });",
+     "    const results = await axe(botaoSalvar);"
+    ],
+    "still_sample": [
+     "    renderizar();",
+     "    await waitFor(() => {"
+    ]
+   }
+  },
+  {
+   "path": "src/components/talkx/TalkXCampaignRunning.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 13,
+   "hunk": "PRESENT_REVERSE_APPLIES"
+  },
+  {
+   "path": "src/components/talkx/TalkXOverview.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 101,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 17,
+    "missing_in_main": 16,
+    "removed": 26,
+    "removed_still_in_main": 7,
+    "missing_sample": [
+     "  FileText, Bookmark, BarChart3, Loader2,",
+     "import { EntityCell, ChannelCell, ProgressCell, ResultsCell, DateByCell } from './kit/cells';",
+     "  const handleFilter = (campo: string, val: string) => {",
+     "    if (campo === 'status') { setStatus(val); setPage(1); setSelected(new Set()); }",
+     "    else if (campo === 'objective') { setObjective(val); setPage(1); setSelected(new Set()); }",
+     "    else if (campo === 'channel') { setChannel(val); setPage(1); setSelected(new Set()); }",
+     "    else if (campo === 'segment') { setSegment(val); setPage(1); setSelected(new Set()); }",
+     "    else if (campo === 'creator') { setCreator(val); setPage(1); setSelected(new Set()); }",
+     "    setSelected(new Set());",
+     "                            <EntityCell name={c.name} description={c.description ?? c.message_template} mediaUrl={c.media_url} mediaType={c.media_type} icon={ob",
+     "                        <Td><ChannelCell /></Td>",
+     "                        <Td><div className=\"flex items-center gap-1.5\">{c.status === 'sending' && <span className=\"talkx-dot-pulse\" aria-hidden />}<StatusPill s",
+     "                        <Td><ProgressCell status={c.status} value={progress} /></Td>",
+     "                          <ResultsCell sent={c.sent_count} delivered={c.delivered_count ?? 0} failed={c.failed_count} />",
+     "                          <DateByCell date={when ?? null} by={creators[c.created_by ?? ''] ?? null} />",
+     "                              <button type=\"button\" disabled={rowActions.pendingId === c.id} aria-busy={rowActions.pendingId === c.id} className=\"h-8 w-8 rounde"
+    ],
+    "still_sample": [
+     "  const handleFilter = (key: string, val: string) => {",
+     "    if (key === 'status') { setStatus(val); setPage(1); }",
+     "    else if (key === 'objective') { setObjective(val); setPage(1); }",
+     "    else if (key === 'channel') { setChannel(val); setPage(1); }",
+     "    else if (key === 'segment') { setSegment(val); setPage(1); }",
+     "    else if (key === 'creator') { setCreator(val); setPage(1); }",
+     "                            </span>"
+    ]
+   }
+  },
+  {
+   "path": "src/components/talkx/TalkXSegments.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 443,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 218,
+    "missing_in_main": 150,
+    "removed": 76,
+    "removed_still_in_main": 50,
+    "missing_sample": [
+     "  Archive, AlertTriangle, PowerOff, Tag, List, LayoutGrid,",
+     "import { useTalkXSegments, emptyRules, RULE_FIELDS, RULE_OPS, useAudienceEstimate, countAudience, type TalkXSegment, type TalkXSegmentLibraryStats, type TalkXSe",
+     "function humanizeRule(rule: { field: string; op: string; value: string }): string {",
+     "  if (!fieldDef) return rule.field;",
+     "  if (rule.op === 'in_last_days') return `${fieldDef.label} nos últimos ${rule.value} dias`;",
+     "  if (rule.op === 'not_in_last_days') return `${fieldDef.label} há mais de ${rule.value} dias`;",
+     "  if (rule.op === 'is_set') return `${fieldDef.label} está preenchido`;",
+     "  if (rule.op === 'is_empty') return `${fieldDef.label} está vazio`;",
+     "  const kindOps = (RULE_OPS as Record<string, { value: string; label: string }[]>)[fieldDef.kind] ?? [];",
+     "  const opDef = kindOps.find((o) => o.value === rule.op);",
+     "  return `${fieldDef.label} ${opDef?.label ?? rule.op} ${rule.value}`;",
+     "    segments, isLoading, isError, error, refetch, createSegment, updateSegment, deleteSegment, refreshEstimates = { mutate: (_: unknown[]) => {} },",
+     "    // X112 — alternância lista/grade.",
+     "    viewMode = 'list' as TalkXSegmentsViewMode, setViewMode = () => {},",
+     "  const [selected, setSelected] = useState<string | null>(null);",
+     "  const [savedSegmentOverride, setSavedSegmentOverride] = useState<TalkXSegment | null>(null);",
+     "  const selectedSegment = useMemo(",
+     "    () => {",
+     "      if (!selected) return null;",
+     "      if (savedSegmentOverride?.id === selected) return savedSegmentOverride;",
+     "      return segments.find((s) => s.id === selected) ?? null;",
+     "    [selected, segments, savedSegmentOverride],",
+     "  const closeFocusTargetRef = useRef<HTMLElement | null>(null);",
+     "  const closeDetail = useCallback(() => {",
+     "    closeFocusTargetRef.current?.focus();"
+    ],
+    "still_sample": [
+     "    segments, isLoading, isError, error, refetch, createSegment, updateSegment, deleteSegment,",
+     "  const [selected, setSelected] = useState<TalkXSegment | null>(null);",
+     "    setSelected(s);",
+     "        setSelected(saved);",
+     "        if (selected?.id === deleting.id) setSelected(null);",
+     "              <table className=\"w-full min-w-[820px] border-collapse\">",
+     "                <thead className=\"bg-muted/20 border-b border-border/60\"><tr>",
+     "                  <Th className=\"w-10\"><input type=\"checkbox\" checked={allPageSelected} onChange={toggleAllOnPage} aria-label=\"Selecionar todos os segmentos da ",
+     "                  <Th className=\"w-8\">⭐</Th><Th>Segmento</Th><Th>Origem</Th><Th>Critérios</Th><Th>Público estimado</Th><Th>Último uso</Th><Th>Público relativo</",
+     "                </tr></thead>"
+    ]
+   }
+  },
+  {
+   "path": "src/components/talkx/TalkXTemplateEditor.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 190,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 45,
+    "missing_in_main": 24,
+    "removed": 13,
+    "removed_still_in_main": 1,
+    "missing_sample": [
+     "import React, { useState, useMemo, useRef, useEffect, useSyncExternalStore } from 'react';",
+     "  /** X094 — sub-aba inicial: 'conteudo' | 'ab' | 'historico' (vindo do endereço). */",
+     "  initialTtab?: string;",
+     "export function TalkXTemplateEditor({ templates, isLoading, isError = false, error, onRetry, editing, initialTtab, onClose, onOpenMonitor, onActiveTemplateChang",
+     "  }>>([])",
+     "    const wasShowingVariants = showVariants;",
+     "    if (wasShowingVariants) {",
+     "      setShowVariants(true);",
+     "      void loadVariants(t.id);",
+     "  // X094 — se o editor abre com ttab=ab ou ttab=historico, busca os dados do template inicial.",
+     "    if (initialTtab === 'ab' && editing?.id) {",
+     "      void loadVariants(editing.id);",
+     "    if (initialTtab === 'historico' && editing?.id) {",
+     "      setShowVersions(true);",
+     "      void fetchVersions(editing.id);",
+     "    // eslint-disable-next-line react-hooks/exhaustive-deps",
+     "  }, []);",
+     "              onRetry={onRetry ?? (() => { void refetchTemplates(); })}",
+     "        {/* X094 — trilha da tela 05, no mesmo desenho do wizard. */}",
+     "                <SelectTrigger aria-label=\"Categoria\" className=\"mt-1.5 h-10 bg-input/40 border-border/70\"><SelectValue /></SelectTrigger>",
+     "                <SelectTrigger aria-label=\"Status\" className=\"mt-1.5 h-10 bg-input/40 border-border/70\"><SelectValue /></SelectTrigger>",
+     "            <Label htmlFor=\"tpl-desc\" className=\"text-xs text-foreground-secondary\">Descrição</Label>",
+     "            <Input id=\"tpl-desc\" value={eDesc} onChange={(e) => setEDesc(e.target.value)} placeholder=\"Breve descrição do template (opcional)\" className=\"mt-1.5",
+     "            <p className=\"text-2xs text-muted-foreground mb-2\">Defina variáveis próprias para este template. Serão inseridas como <span className=\"font-mono tex"
+    ],
+    "still_sample": [
+     "  }>>([]);"
+    ]
+   }
+  },
+  {
+   "path": "src/components/talkx/TalkXTemplates.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 13,
+   "hunk": "PRESENT_REVERSE_APPLIES"
+  },
+  {
+   "path": "src/components/talkx/TalkXView.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 113,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 33,
+    "missing_in_main": 6,
+    "removed": 6,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "export type TalkXTopView = 'tabs' | 'wizard' | 'monitor' | 'scheduled' | 'running' | 'paused';",
+     "        setTopView(screen === 'scheduled' || screen === 'running' || screen === 'paused' ? screen : 'monitor');",
+     "    setTopView('tabs'); setEditingCampaign(null); setMonitorId(null); setScheduledCampaignId(null); setRunningCampaignId(null); setPausedCampaignId(null); setWi",
+     "  }, [openMonitor, openPaused, openScheduled, openRunning]);",
+     "  // X156: campanhas pausadas vão para a tela própria (TalkXCampaignPaused);",
+     "  // em andamento continuam em TalkXCampaignRunning."
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/talkx/TalkXWizardDelivery.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 73,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 10,
+    "missing_in_main": 10,
+    "removed": 22,
+    "removed_still_in_main": 1,
+    "missing_sample": [
+     "    const mode = (ed.isScheduled && ed.scheduledAt) ? 'schedule' : 'launch';",
+     "    const id = await ed.handleSave(mode);",
+     "    if (!id) throw new Error('O envio não foi aceito');",
+     "    onLaunched(id, mode === 'schedule' ? 'scheduled' : 'sending');",
+     "      {/* X136 — o disparo confirma pelo modal do kit (`TalkXConfirmDialog`). */}",
+     "        onConfirm={() => launch()}",
+     "        description=\"As mensagens começam a ser enviadas para a audiência selecionada.\"",
+     "          { label: 'Segmento', value: ed.audienceSource === 'segment' ? (ed.selectedSegments.length > 0 ? ed.selectedSegments.map((s) => s.name).join(', ') : '—",
+     "          ...(ed.isScheduled && ed.scheduledAt ? [{ label: 'Agendado para', value: formatLocalSchedule(ed.scheduledAt, ed.scheduleTimezone) }] : []),",
+     "        confirmLabel=\"Confirmar envio\""
+    ],
+    "still_sample": [
+     "    if (!launchAllowed) return;"
+    ]
+   }
+  },
+  {
+   "path": "src/components/talkx/__tests__/TalkXA11yNomePapel.test.tsx",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/components/talkx/__tests__/TalkXAnalytics.kpis.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 16,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 3,
+    "missing_in_main": 3,
+    "removed": 2,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "    expect(dias(range.from.toISOString(), range.to.toISOString())).toBeGreaterThan(29);",
+     "    expect(dias(range.from.toISOString(), range.to.toISOString())).toBeLessThan(31);",
+     "    expect(Math.abs(range.to.getTime() - now.getTime())).toBeLessThan(24 * 60 * 60 * 1000);"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/talkx/__tests__/TalkXCampaignScheduled.calendario.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 15,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 3,
+    "missing_in_main": 2,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "vi.mock('@/hooks/integrations/useTalkXConnectionStatus', () => ({",
+     "  useTalkXConnectionStatus: () => ({ status: 'connected', label: 'Conectada', loading: false }),"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/talkx/__tests__/TalkXOperationalTimeline.test.tsx",
+   "status": "MAIN_UNCHANGED_SINCE_BASE",
+   "patch_lines": 13,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 1,
+    "removed_still_in_main": 1,
+    "missing_sample": [
+     "      channel: () => { const ch: Record<string, unknown> = {}; ch.on = () => ch; ch.subscribe = () => ch; return ch; },"
+    ],
+    "still_sample": [
+     "      channel: () => ({ on: () => ({ subscribe: () => ({}) }) }),"
+    ]
+   }
+  },
+  {
+   "path": "src/components/talkx/__tests__/TalkXOverview.states.test.tsx",
+   "status": "MAIN_UNCHANGED_SINCE_BASE",
+   "patch_lines": 23,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 3,
+    "removed_still_in_main": 3,
+    "missing_sample": [
+     " *    controle (era o Único nó da tela acusado pela regra). Agora o gatilho tem"
+    ],
+    "still_sample": [
+     " *    controle (era o ÚNICO nó da tela acusado pela regra). Agora o gatilho tem",
+     "    // TL-115: os rascunhos ficam recolhidos por padrao — expandir o bloco antes de medir.",
+     "    fireEvent.click(screen.getByRole('button', { name: 'Rascunhos pendentes(1)' }));"
+    ]
+   }
+  },
+  {
+   "path": "src/components/talkx/__tests__/TalkXOverview.table.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 88,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 8,
+    "missing_in_main": 8,
+    "removed": 32,
+    "removed_still_in_main": 31,
+    "missing_sample": [
+     "import { QueryClient, QueryClientProvider } from '@tanstack/react-query';",
+     "  const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });",
+     "  render(<QueryClientProvider client={qc}><TalkXOverview {...props} /></QueryClientProvider>);",
+     "  it('ordenação: ordem de chegada da consulta é preservada (created_at desc)', () => {",
+     "  it('N35: todas as campanhas (incluindo rascunho) aparecem na tabela', () => {",
+     "    // Todas as 5 campanhas (incluindo o rascunho \"Alfa campanha\") são visíveis na tabela.",
+     "    expect(nomesNaTabela()).toHaveLength(5);",
+     "    expect(nomesNaTabela()).toContain('Alfa campanha');"
+    ],
+    "still_sample": [
+     "  it('ordenação: clique no cabeçalho reordena as linhas e ajusta o aria-sort', () => {",
+     "    const cabecalho = () => within(tabela()).getByRole('columnheader', { name: 'Campanha' });",
+     "    expect(cabecalho()).toHaveAttribute('aria-sort', 'none');",
+     "    fireEvent.click(within(tabela()).getByRole('button', { name: 'Campanha' }));",
+     "    expect(cabecalho()).toHaveAttribute('aria-sort', 'ascending');",
+     "    expect(nomesNaTabela()).toEqual([",
+     "      'Alfa campanha', 'Bravo campanha', 'Charlie campanha', 'Delta campanha', 'Echo campanha',",
+     "    fireEvent.click(within(tabela()).getByRole('button', { name: 'Campanha' }));",
+     "    expect(cabecalho()).toHaveAttribute('aria-sort', 'descending');",
+     "    expect(nomesNaTabela()).toEqual(["
+    ]
+   }
+  },
+  {
+   "path": "src/components/talkx/__tests__/TalkXSegments.detailPanel.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 33,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 4,
+    "missing_in_main": 0,
+    "removed": 4,
+    "removed_still_in_main": 0,
+    "missing_sample": [],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/talkx/__tests__/TalkXTemplateEditor.race.test.tsx",
+   "status": "MAIN_UNCHANGED_SINCE_BASE",
+   "patch_lines": 13,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 1,
+    "removed_still_in_main": 1,
+    "missing_sample": [
+     "const variantsToggle = () => screen.getAllByRole('button', { name: /variante/i })[0];"
+    ],
+    "still_sample": [
+     "const variantsToggle = () => screen.getAllByRole('button', { name: 'Adicionar variante' })[0];"
+    ]
+   }
+  },
+  {
+   "path": "src/components/talkx/__tests__/TalkXView.route.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 33,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 4,
+    "missing_in_main": 0,
+    "removed": 3,
+    "removed_still_in_main": 1,
+    "missing_sample": [],
+    "still_sample": [
+     "    expect(await screen.findByTestId('running')).toBeInTheDocument();"
+    ]
+   }
+  },
+  {
+   "path": "src/components/talkx/__tests__/TalkXWizardReview.lifecycle.test.tsx",
+   "status": "MAIN_UNCHANGED_SINCE_BASE",
+   "patch_lines": 13,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 1,
+    "removed_still_in_main": 1,
+    "missing_sample": [
+     "    const pendente = await within(dialogo).findByRole('button', { name: 'Confirmar envio' });"
+    ],
+    "still_sample": [
+     "    const pendente = await within(dialogo).findByRole('button', { name: /Iniciando/ });"
+    ]
+   }
+  },
+  {
+   "path": "src/components/talkx/help/TalkXHelpCenter.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 35,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 6,
+    "missing_in_main": 4,
+    "removed": 3,
+    "removed_still_in_main": 2,
+    "missing_sample": [
+     "        if (search.query) {",
+     "        } else {",
+     "  }, [focusSearch, onClose, onRouteChange, route.article, route.topic, search]);",
+     "                  Nenhum artigo encontrado para \"{search.query}\". Tente outra palavra ou fale com o suporte."
+    ],
+    "still_sample": [
+     "        onClose();",
+     "                  Nenhum artigo encontrado para “{search.query}”. Tente outra palavra ou fale com o suporte."
+    ]
+   }
+  },
+  {
+   "path": "src/components/talkx/help/__tests__/TalkXHelpCenter.test.tsx",
+   "status": "MAIN_UNCHANGED_SINCE_BASE",
+   "patch_lines": 14,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 2,
+    "missing_in_main": 2,
+    "removed": 1,
+    "removed_still_in_main": 1,
+    "missing_sample": [
+     "    const noResultMsg = await screen.findByRole('status');",
+     "    expect(noResultMsg).toHaveTextContent('assunto inexistente');"
+    ],
+    "still_sample": [
+     "    expect(await screen.findByText(/nenhum artigo encontrado para “assunto inexistente”/i)).toBeTruthy();"
+    ]
+   }
+  },
+  {
+   "path": "src/components/talkx/kit/primitives.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 15,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 2,
+    "missing_in_main": 2,
+    "removed": 2,
+    "removed_still_in_main": 2,
+    "missing_sample": [
+     "export function Th({ children, className, ...rest }: { children?: ReactNode; className?: string } & React.ThHTMLAttributes<HTMLTableCellElement>) {",
+     "  return <th {...rest} className={cn('text-left text-2xs font-semibold text-foreground-secondary px-3 py-2.5 whitespace-nowrap', className)}>{children}</th>;"
+    ],
+    "still_sample": [
+     "export function Th({ children, className }: { children?: ReactNode; className?: string }) {",
+     "  return <th className={cn('text-left text-2xs font-semibold text-foreground-secondary px-3 py-2.5 whitespace-nowrap', className)}>{children}</th>;"
+    ]
+   }
+  },
+  {
+   "path": "src/components/talkx/segments/RuleValueInput.tsx",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/components/talkx/segments/SegmentSideList.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 31,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 3,
+    "missing_in_main": 1,
+    "removed": 3,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "              tab === key ? 'bg-primary/15 text-[hsl(var(--primary-text))]' : 'text-foreground-secondary hover:bg-muted/40')}>"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/tasks/__tests__/WorkItemSheet.fuso.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 47,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 7,
+    "missing_in_main": 7,
+    "removed": 7,
+    "removed_still_in_main": 7,
+    "missing_sample": [
+     "/** Dia e hora escolhidos na tela: 2027-10-20 09:00 em São Paulo (UTC-3). */",
+     "const DIA = '2027-10-20';",
+     "const NOVE_H_LOCAL = new Date(2027, 9, 20, 9, 0, 0, 0);",
+     "const NOVE_H_ISO = '2027-10-20T12:00:00.000Z';",
+     "    const item = { ...base, due_date: '2027-10-20T11:00:00.000Z' }; // 08:00 em SP",
+     "    const escolhido = new Date(2027, 9, 20, 14, 0, 0, 0);",
+     "    const item = { ...base, due_date: '2027-10-20T11:00:00.000Z' };"
+    ],
+    "still_sample": [
+     "/** Dia e hora escolhidos na tela: 2026-10-20 09:00 em São Paulo (UTC-3). */",
+     "const DIA = '2026-10-20';",
+     "const NOVE_H_LOCAL = new Date(2026, 9, 20, 9, 0, 0, 0);",
+     "const NOVE_H_ISO = '2026-10-20T12:00:00.000Z';",
+     "    const item = { ...base, due_date: '2026-10-20T11:00:00.000Z' }; // 08:00 em SP",
+     "    const escolhido = new Date(2026, 9, 20, 14, 0, 0, 0);",
+     "    const item = { ...base, due_date: '2026-10-20T11:00:00.000Z' };"
+    ]
+   }
+  },
+  {
+   "path": "src/components/team-chat/__tests__/team-chat-notifications-mount.test.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 58,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 16,
+    "missing_in_main": 11,
+    "removed": 4,
+    "removed_still_in_main": 4,
+    "missing_sample": [
+     " * TC-007 -- prova por renderizacao: o app mantem exatamente um listener global e",
+     "vi.mock('@/hooks/auth/useAuth', () => ({ useAuth: () => ({ profile: null }) }));",
+     "vi.mock('@/hooks/system/useOfflineSendQueueDrain', () => ({",
+     "  useOfflineSendQueueDrain: vi.fn(),",
+     "vi.mock('@/components/notifications/SecurityPushNotificationsListener', () => ({",
+     "  SecurityPushNotificationsListener: () => null,",
+     "vi.mock('@/components/calls/OutboundCallDialog', () => ({ OutboundCallDialog: () => null }));",
+     "  useReducedMotion: vi.fn(() => false),",
+     "  AnimatePresence: ({ children }: { children: React.ReactNode }) => children,",
+     "vi.mock('@/components/shared/ConversationEmptyState', () => ({ ConversationEmptyState: () => null }));",
+     "describe('TC-007 -- listener de notificacoes do Team Chat e unico e global', () => {"
+    ],
+    "still_sample": [
+     " * TC-007 — prova por renderização: o app mantém exatamente um listener global e",
+     "// Overlay de gamificação: o assunto aqui é o listener do Team Chat, então o toast de",
+     "// conquista é neutralizado como os outros overlays do App (Toaster, Sonner, LiveRegion).",
+     "describe('TC-007 — listener de notificações do Team Chat é único e global', () => {"
+    ]
+   }
+  },
+  {
+   "path": "src/components/team-chat/__tests__/useTeamChatPanel.search.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 78,
+   "hunk": "PRESENT_REVERSE_APPLIES"
+  },
+  {
+   "path": "src/components/team-chat/useTeamChatPanel.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 132,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 34,
+    "missing_in_main": 14,
+    "removed": 11,
+    "removed_still_in_main": 1,
+    "missing_sample": [
+     "  const onOlderMessageEvent = useCallback((event: { type: 'update'; id: string; content: string; is_edited: boolean; updated_at: string } | { type: 'delete'; id",
+     "      return prev.map(m => m.id === event.id ? { ...m, content: event.content, is_edited: event.is_edited, updated_at: event.updated_at } : m);",
+     "  const { messages: newestMessages, isLoading, isError: messagesIsError, refetch: refetchMessagesFn } = useTeamMessages(conversation.id, onOlderMessageEvent);",
+     "    if (!searchTerm || searchTerm.length < 2) return;",
+     "        p_limit: 100,",
+     "  const searchBelowMinChars = searchQuery.trim().length > 0 && searchQuery.trim().length < 2;",
+     "  const searchError = !!(searchActive",
+     "    && serverSearchError?.term === searchTerm);",
+     "  const isSearchingMessages = searchActive && !searchBelowMinChars && !searchError && !serverSearchMatches;",
+     "  const isSearching = isSearchingMessages;",
+     "  const searchIsCapped = !!(serverSearchMatches && serverSearch && serverSearch.results.length >= 100);",
+     "    isSearchingMessages,",
+     "    messagesError: messagesIsError,",
+     "    refetchMessages: refetchMessagesFn,"
+    ],
+    "still_sample": [
+     "  const searchError = searchActive"
+    ]
+   }
+  },
+  {
+   "path": "src/components/theme/__tests__/HighContrastToggle.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 15,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 3,
+    "missing_in_main": 2,
+    "removed": 1,
+    "removed_still_in_main": 1,
+    "missing_sample": [
+     "    // Em JSDOM o Radix calcula 'data-side' sem layout real; o valor pode variar.",
+     "    // A preferência side=\"right\" está em HighContrastToggle.tsx e vale em produção."
+    ],
+    "still_sample": [
+     "    expect(await screen.findByRole('tooltip')).toHaveAttribute('data-side', 'right');"
+    ]
+   }
+  },
+  {
+   "path": "src/components/ui/__tests__/VolumeDial.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 20,
+   "hunk": "PRESENT_REVERSE_APPLIES"
+  },
+  {
+   "path": "src/components/ui/__tests__/alvos-toque-44px.test.tsx",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/components/ui/__tests__/command-palette.busca-antiga.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 12,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "// items in the search results list are rendered as <button role=\"option\"> inside the listbox"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/ui/__tests__/phone-input.test.tsx",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/components/ui/command-palette.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 95,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 23,
+    "missing_in_main": 9,
+    "removed": 6,
+    "removed_still_in_main": 1,
+    "missing_sample": [
+     "  // e as setas/Enter anunciados não funcionavam nos cinco destinados exibidos (R2-INF-034).",
+     "  const LISTBOX_ID = 'cmd-palette-listbox';",
+     "  const activeOptionId = allItems[selectedIndex] ? `cmd-opt-${allItems[selectedIndex].id}` : undefined;",
+     "            aria-controls={LISTBOX_ID}",
+     "          {query && <button type=\"button\" aria-label=\"Limpar busca\" onClick={() => handleQueryChange('')} className=\"p-1.5 hover:bvg-muted rounded-md transition",
+     "          <div id={LISTBOX_ID} role=\"listbox\" aria-label=\"Acesso rápido\">",
+     "                        <button key={`recent-${cmd.id}`} role=\"option\" id={`cmd-opt-${cmd.id}`} aria-selected={idx === selectedIndex ? 'true' : 'false'} onClick",
+     "                    <button key={cmd.id} role=\"option\" id={`cmd-opt-${cmd.id}`} aria-selected={recentCommands.length + idx === selectedIndex ? 'true' : 'false'}",
+     "                        <motion.button key={item.id} role=\"option\" id={`cmd-opt-${item.id}`} aria-selected={gi === selectedIndex ? 'true' : 'false'} initial={{ "
+    ],
+    "still_sample": [
+     "  // e as setas/Enter anunciados não funcionavam nos cinco destinos exibidos (R2-INF-034)."
+    ]
+   }
+  },
+  {
+   "path": "src/components/ui/phone-input.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 36,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 6,
+    "missing_in_main": 4,
+    "removed": 5,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "    // Fixo (10 dígitos no total): 8 após o DDD, sem '9' inicial → XXXX-XXXX.",
+     "  // Internacional: passthrough E.164 sem reformatar (Ajuste UI-07).",
+     "    // Não aplica em números internacionais que já vieram com '+'.",
+     "    if (digits.length >= 2 && !digits.startsWith('55') && !e.target.value.startsWith('+')) {"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/hooks/__tests__/useRateLimitLogs.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 93,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 14,
+    "missing_in_main": 11,
+    "removed": 16,
+    "removed_still_in_main": 4,
+    "missing_sample": [
+     "function makeChain(finalData: typeof mockLogs | null, error: Error | null = null) {",
+     "  const result = Promise.resolve({ data: finalData, error, count: finalData?.length ?? 0 });",
+     "  const chain: Record<string, unknown> = {};",
+     "  (['select', 'ilike', 'eq', 'order', 'range', 'limit'] as const).forEach(m => {",
+     "    chain[m] = vi.fn(() => chain);",
+     "  chain.abortSignal = vi.fn(() => result);",
+     "  return chain;",
+     "    mockFrom.mockReturnValue(makeChain(mockLogs));",
+     "    mockFrom.mockReturnValue(makeChain([]));",
+     "    mockFrom.mockReturnValue(makeChain(null, new Error('fail')));",
+     "    mockFrom.mockReturnValue(makeChain(updated));"
+    ],
+    "still_sample": [
+     "    mockFrom.mockReturnValue({",
+     "    mockFrom.mockReturnValue({",
+     "    mockFrom.mockReturnValue({",
+     "    await act(async () => { await vi.advanceTimersByTimeAsync(30_000); });"
+    ]
+   }
+  },
+  {
+   "path": "src/hooks/__tests__/useTeamChatNotifications.aviso-navegador.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 100,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 15,
+    "missing_in_main": 15,
+    "removed": 29,
+    "removed_still_in_main": 10,
+    "missing_sample": [
+     "  const showBrowserNotificationSpy = vi.fn();",
+     "    showBrowserNotificationSpy,",
+     "vi.mock('@/utils/notificationSounds', () => ({",
+     "  showBrowserNotification: h.showBrowserNotificationSpy,",
+     "  showNotificationSound: vi.fn(),",
+     "  it('avisa no navegador com browserNotifications habilitado', async () => {",
+     "    expect(h.showBrowserNotificationSpy).toHaveBeenCalledTimes(1);",
+     "    const [title, body, opts] = h.showBrowserNotificationSpy.mock.calls[0] as [string, string, { tag: string }];",
+     "    expect(title).toContain('Teams');",
+     "    expect(body).toBe('oi');",
+     "    expect(opts.tag).toBe('team-msg-c1');",
+     "  it('não avisa quando a mensagem é do próprio usuário', async () => {",
+     "    await h.handler!(mensagem('eu'));",
+     "    expect(h.showBrowserNotificationSpy).not.toHaveBeenCalled();",
+     "    expect(h.showBrowserNotificationSpy).not.toHaveBeenCalled();"
+    ],
+    "still_sample": [
+     "    permission: 'granted' as NotificationPermission,",
+     "    avisos,",
+     "    h.avisos.length = 0;",
+     "    h.permission = 'granted';",
+     "  it('avisa no navegador com a permissão concedida, mesmo sem assinatura de push', async () => {",
+     "    expect(h.avisos).toHaveLength(1);",
+     "    expect(h.avisos[0].title).toContain('Teams');",
+     "  it('não avisa sem permissão do navegador (guarda de permissão preservada)', async () => {",
+     "    h.permission = 'default';",
+     "    await h.handler!(mensagem('outro'));"
+    ]
+   }
+  },
+  {
+   "path": "src/hooks/analytics/useGoalsDashboard.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 73,
+   "hunk": "PRESENT_REVERSE_APPLIES"
+  },
+  {
+   "path": "src/hooks/auth/useAuth.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 20,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 2,
+    "missing_in_main": 0,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/hooks/business/useWarRoomAlerts.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 50,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 7,
+    "missing_in_main": 6,
+    "removed": 9,
+    "removed_still_in_main": 2,
+    "missing_sample": [
+     "          if (settings.browserNotifications && !isQuietHours()) {",
+     "            showBrowserNotification(",
+     "              `⚠️ ${alert.title}`,",
+     "              alert.message,",
+     "              { tag: `warroom-${alert.id}`, requireInteraction: alert.alert_type === 'critical' },",
+     "  }, [queryClient, playAlertSound, settings, isQuietHours]);"
+    ],
+    "still_sample": [
+     "              tag: `warroom-${alert.id}`,",
+     "              requireInteraction: alert.alert_type === 'critical',"
+    ]
+   }
+  },
+  {
+   "path": "src/hooks/calls/useCallRecording.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 14,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 2,
+    "missing_in_main": 2,
+    "removed": 1,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "      const ab = await resposta.arrayBuffer();",
+     "      const blob = new Blob([ab], { type: resposta.headers.get('content-type') ?? 'audio/mpeg' });"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/hooks/chat/__tests__/useFilesContainerColumns.test.tsx",
+   "status": "MAIN_UNCHANGED_SINCE_BASE",
+   "patch_lines": 22,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 2,
+    "missing_in_main": 2,
+    "removed": 2,
+    "removed_still_in_main": 2,
+    "missing_sample": [
+     "  Object.defineProperty(element, 'getBoundingClientRect', { configurable: true, writable: true, value: () => ({ width, height: 400, top: 0, left: 0, right: widt",
+     "    Object.defineProperty(element, 'getBoundingClientRect', { configurable: true, writable: true, value: () => ({ width: 1474, height: 400, top: 0, left: 0, rig"
+    ],
+    "still_sample": [
+     "  element.getBoundingClientRect = () => ({ width, height: 400, top: 0, left: 0, right: width, bottom: 400, x: 0, y: 0, toJSON: () => ({}) });",
+     "    element.getBoundingClientRect = () => ({ width: 1474, height: 400, top: 0, left: 0, right: 1474, bottom: 400, x: 0, y: 0, toJSON: () => ({}) });"
+    ]
+   }
+  },
+  {
+   "path": "src/hooks/chat/__tests__/useScheduledReports.test.tsx",
+   "status": "MAIN_UNCHANGED_SINCE_BASE",
+   "patch_lines": 13,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 1,
+    "removed_still_in_main": 1,
+    "missing_sample": [
+     "    expect(toastError).toHaveBeenCalledWith('Erro ao atualizar o relatorio');"
+    ],
+    "still_sample": [
+     "    expect(toastError).toHaveBeenCalledWith('Erro ao ativar/desativar relatório');"
+    ]
+   }
+  },
+  {
+   "path": "src/hooks/chat/__tests__/useTeamChatNotifications.canal-estavel.test.tsx",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/hooks/chat/useScheduledReports.ts",
+   "status": "MAIN_UNCHANGED_SINCE_BASE",
+   "patch_lines": 13,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 1,
+    "removed_still_in_main": 1,
+    "missing_sample": [
+     "      toast.error('Erro ao atualizar o relatorio');"
+    ],
+    "still_sample": [
+     "      toast.error('Erro ao ativar/desativar relatório');"
+    ]
+   }
+  },
+  {
+   "path": "src/hooks/chat/useTeamChatNotifications.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 233,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 31,
+    "missing_in_main": 10,
+    "removed": 75,
+    "removed_still_in_main": 54,
+    "missing_sample": [
+     "      osc.start(now + i * 0.05);",
+     " * HZ5-09: canal identificado por team-chat-notifications:${profile.id} para",
+     " * garantir unicidade por instancia; effect so recria o canal quando profile muda.",
+     " * Preferencias de som/notificacao chegam por refs para nao entrar nas deps.",
+     "  // Refs atualizados após cada render -- leitura fresca dentro do effect sem entrar nas deps",
+     "      .channel(`team-chat-notifications:${profile.id}`)",
+     "        if (notifSettingsRef.current.browserNotifications) {",
+     "          showBrowserNotification(`\\u{1F4AC} Teams: ${senderName}`, msg.content, {",
+     "            onClick: () => navigateToView('team-chat'),",
+     "  }, [profile]); // Apenas profile: troca de settings nao recria o canal (HZ5-09)"
+    ],
+    "still_sample": [
+     " * TC-007 — estado global (por aba) da conversa de Team Chat em foco.",
+     " * O listener de notificações tem de viver no nível do app e não dentro de `TeamChatView`:",
+     " * do contrário, quem está em outra tela (ex.: Contatos) não recebe alerta nenhum. Como o",
+     " * listener é ÚNICO, a conversa em foco chega por este store — a view publica o id enquanto",
+     " * está montada e o limpa ao sair (o alerta volta a tocar).",
+     " * `getSnapshot` devolve um primitivo estável, requisito do `useSyncExternalStore`.",
+     "/** Publica (no mount/troca) e limpa (no unmount) a conversa que a view está exibindo. */",
+     "/** Lê a conversa em foco. Consumido só pelo listener global. */",
+     " * Play a distinct notification sound for internal team chat.",
+     " * Uses a unique chord-like pattern to differentiate from external chat beeps."
+    ]
+   }
+  },
+  {
+   "path": "src/hooks/communication/__tests__/useAudioMemes.pasta-usuario.test.tsx",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/hooks/communication/useAudioMemes.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 18,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 5,
+    "missing_in_main": 0,
+    "removed": 1,
+    "removed_still_in_main": 0,
+    "missing_sample": [],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/hooks/contacts/__tests__/useContainerColumns.test.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 39,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 14,
+    "missing_in_main": 1,
+    "removed": 11,
+    "removed_still_in_main": 9,
+    "missing_sample": [
+     "      writable: true,"
+    ],
+    "still_sample": [
+     "        width: this.largura,",
+     "        height: 0,",
+     "        top: 0,",
+     "        left: 0,",
+     "        right: this.largura,",
+     "        bottom: 0,",
+     "        x: 0,",
+     "        y: 0,",
+     "        toJSON: () => ({}),"
+    ]
+   }
+  },
+  {
+   "path": "src/hooks/dashboard/useDashboardKpi.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 18,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 4,
+    "missing_in_main": 4,
+    "removed": 3,
+    "removed_still_in_main": 3,
+    "missing_sample": [
+     "        p_from: fromIso ?? null,",
+     "        p_until: untilIso ?? null,",
+     "        p_queue: queueId ?? null,",
+     "        p_agent: agentId ?? null,"
+    ],
+    "still_sample": [
+     "        p_since: fromIso ?? undefined,",
+     "        p_queue: queueId ?? undefined,",
+     "        p_agent: agentId ?? undefined,"
+    ]
+   }
+  },
+  {
+   "path": "src/hooks/gamification/useAgentCelebrations.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 38,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 10,
+    "missing_in_main": 5,
+    "removed": 2,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "    const mountTime = new Date().toISOString();",
+     "        const id = String(linha.id);",
+     "        const earnedAt = String(linha.earned_at ?? '');",
+     "        if (earnedAt > mountTime) {",
+     "          // Chegou na janela de corrida: celebra (e registra como conhecido internamente)."
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/hooks/inbox/__tests__/useInboxBulkActions.test.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 15,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 2,
+    "missing_in_main": 2,
+    "removed": 2,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "    expect(restores[0]).toMatchObject({ payload: { assigned_to: 'ag-1' }, filters: { id: [c1] } });",
+     "    expect(restores[1]).toMatchObject({ payload: { assigned_to: null }, filters: { id: [c2] } });"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/hooks/inbox/__tests__/useInboxFilters.type-url.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 12,
+   "hunk": "PRESENT_REVERSE_APPLIES"
+  },
+  {
+   "path": "src/hooks/inbox/useInboxBulkActions.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 71,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 11,
+    "missing_in_main": 11,
+    "removed": 23,
+    "removed_still_in_main": 1,
+    "missing_sample": [
+     "        .select('id, assigned_to')",
+     "      const previousAssignedTo = new Map<string, string | null>();",
+     "        previousAssignedTo.set(row.id, row.assigned_to);",
+     "      const targetIds = contactIds.filter((id) => previousAssignedTo.has(id));",
+     "            .update({ assigned_to: null, updated_at: new Date().toISOString() })",
+     "          const groups = new Map<string | null, string[]>();",
+     "            const prev = previousAssignedTo.get(id) ?? null;",
+     "            const ids = groups.get(prev) ?? [];",
+     "            groups.set(prev, ids);",
+     "          for (const [assignedTo, ids] of groups) {",
+     "              .update({ assigned_to: assignedTo, updated_at: new Date().toISOString() })"
+    ],
+    "still_sample": [
+     "        .select('id, conversation_status')"
+    ]
+   }
+  },
+  {
+   "path": "src/hooks/inbox/useInboxFilters.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 73,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 13,
+    "missing_in_main": 1,
+    "removed": 17,
+    "removed_still_in_main": 6,
+    "missing_sample": [
+     "      contactType: normalizeContactType(searchParams.get('type')) ?? storedPrefs?.contactType ?? null,"
+    ],
+    "still_sample": [
+     "  try {",
+     "  } catch {",
+     "    return null;",
+     "    if (value && value !== 'all') {",
+     "    } else {",
+     "  }, [applyPrefs]);"
+    ]
+   }
+  },
+  {
+   "path": "src/hooks/integrations/__tests__/useTalkXSuppression.test.ts",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "patch_lines": 381,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 5,
+    "missing_in_main": 5,
+    "removed": 260,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     " * Y05 — testes do hook `useTalkXSuppression` removidos em TL-002.",
+     " * O hook foi removido do módulo; ver `useTalkXSuppression.hook-morto.test.ts`.",
+     "import { describe } from 'vitest';",
+     "describe('useTalkXSuppression (TL-002 — removido)', () => {",
+     "  // Hook removido em TL-002."
+    ],
+    "still_sample": [],
+    "same_basename_in_main": []
+   }
+  },
+  {
+   "path": "src/hooks/integrations/useKnowledgeBase.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 29,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 5,
+    "missing_in_main": 2,
+    "removed": 1,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "    if (articlesRes.error) { setError(articlesRes.error.message); setLoading(false); return; }",
+     "    if (filesRes.error) { setError(filesRes.error.message); setLoading(false); return; }"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/hooks/integrations/useTalkXSegments.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 50,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 9,
+    "missing_in_main": 7,
+    "removed": 2,
+    "removed_still_in_main": 1,
+    "missing_sample": [
+     "  if ((r.field as string).startsWith('real_')) return null;",
+     "  const allRules = (rules?.groups ?? []).flatMap(g => g.rules);",
+     "  const realField = allRules.find(r => typeof r.field === 'string' && (r.field as string).startsWith('real_'));",
+     "  if (realField) throw new Error(`${String(realField.field)} não pode ser combinado com p_contact_ids`);",
+     "  const allRules = (rules?.groups ?? []).flatMap(g => g.rules);",
+     "  const realField = allRules.find(r => typeof r.field === 'string' && (r.field as string).startsWith('real_'));",
+     "  if (realField) throw new Error(`${String(realField.field)} não pode ser combinado com p_contact_ids`);"
+    ],
+    "still_sample": [
+     "  const parts = groups.map((g) => (g.filters.length === 1 ? g.filters[0] : `${g.match}(${g.filters.join(',')})`));"
+    ]
+   }
+  },
+  {
+   "path": "src/hooks/integrations/useTalkXSuppression.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 143,
+   "hunk": "PRESENT_REVERSE_APPLIES"
+  },
+  {
+   "path": "src/hooks/system/useDiagnosticsData.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 22,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 2,
+    "missing_in_main": 2,
+    "removed": 2,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "    const effectiveDbError = connectionsCountError ?? dbError;",
+     "      database: classifyHealth(effectiveDbError, dbLatency, 500, 2000),"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/hooks/system/useGlobalSettings.ts",
+   "status": "MAIN_UNCHANGED_SINCE_BASE",
+   "patch_lines": 21,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 2,
+    "missing_in_main": 2,
+    "removed": 1,
+    "removed_still_in_main": 1,
+    "missing_sample": [
+     "export function useGlobalSettings(options?: { enabled?: boolean }) {",
+     "    enabled: options?.enabled ?? true,"
+    ],
+    "still_sample": [
+     "export function useGlobalSettings() {"
+    ]
+   }
+  },
+  {
+   "path": "src/hooks/system/useUserSettings.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 33,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 7,
+    "missing_in_main": 2,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "            title: 'Erro ao carregar configurações',",
+     "            description: 'Não foi possível carregar suas configurações.',"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/hooks/tasks/workItemFormat.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 45,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 14,
+    "missing_in_main": 14,
+    "removed": 1,
+    "removed_still_in_main": 1,
+    "missing_sample": [
+     " * Quando o valor é uma string ISO com offset explícito (ex.: \"2026-10-11T17:00:00-03:00\"),",
+     " * extrai data e hora locais diretamente do texto — sem converter para UTC — para que",
+     " * o resultado seja idêntico em qualquer fuso do servidor/navegador.",
+     "function extractLocalFromIsoOffset(value: string): { hours: number; minutes: number; localDate: Date } | null {",
+     "  const match = /^(\\d{4})-(\\d{2})-(\\d{2})T(\\d{2}):(\\d{2}):\\d{2}[+-]\\d{2}:\\d{2}$/.exec(value);",
+     "  if (!match) return null;",
+     "  return {",
+     "    hours: Number(match[4]),",
+     "    minutes: Number(match[5]),",
+     "    localDate: new Date(Number(match[1]), Number(match[2]) - 1, Number(match[3])),",
+     "  const local = typeof value === 'string' ? extractLocalFromIsoOffset(value) : null;",
+     "  const d = local ? local.localDate : toDate(value);",
+     "  const local = typeof value === 'string' ? extractLocalFromIsoOffset(value) : null;",
+     "  if (local) return `${pad2(local.hours)}:${pad2(local.minutes)}`;"
+    ],
+    "still_sample": [
+     "  const d = toDate(value);"
+    ]
+   }
+  },
+  {
+   "path": "src/hooks/team-chat/__tests__/useTeamMessages.canal-e-reconexao.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 33,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 8,
+    "missing_in_main": 8,
+    "removed": 5,
+    "removed_still_in_main": 1,
+    "missing_sample": [
+     "        if (typeof cb === 'function') h.subs.push(cb);",
+     "    await waitFor(() => {",
+     "      const teamMsgNomes = h.nomes.filter(n => n.startsWith('team-messages-'));",
+     "      expect(teamMsgNomes.length).toBeGreaterThanOrEqual(2);",
+     "    const teamMsgNomes = h.nomes.filter(n => n.startsWith('team-messages-'));",
+     "    expect(teamMsgNomes[0].startsWith('team-messages-conv-1:')).toBe(true);",
+     "    expect(teamMsgNomes[1].startsWith('team-messages-conv-1:')).toBe(true);",
+     "    expect(teamMsgNomes[0]).not.toBe(teamMsgNomes[1]);"
+    ],
+    "still_sample": [
+     "        h.subs.push(cb);"
+    ]
+   }
+  },
+  {
+   "path": "src/hooks/team-chat/useTeamMessages.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 43,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 14,
+    "missing_in_main": 6,
+    "removed": 3,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "type TeamMessageEvent =",
+     "        if (!onEvent) return;",
+     "          const rec = payload.new as { id: string; content: string; is_edited: boolean; updated_at: string };",
+     "          onEvent({ type: 'update', id: rec.id, content: rec.content ?? '', is_edited: rec.is_edited ?? false, updated_at: rec.updated_at });",
+     "          const rec = payload.old as { id: string };",
+     "          if (rec.id) onEvent({ type: 'delete', id: rec.id });"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/integrations/supabase/types.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 13,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 1,
+    "removed_still_in_main": 1,
+    "missing_sample": [
+     "        Args: { p_agent?: string | null; p_from?: string | null; p_queue?: string | null; p_until?: string | null }"
+    ],
+    "still_sample": [
+     "        Args: { p_agent?: string; p_queue?: string; p_since?: string }"
+    ]
+   }
+  },
+  {
+   "path": "src/pages/__tests__/ChatPopup.messageBalloon.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 33,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 5,
+    "missing_in_main": 5,
+    "removed": 2,
+    "removed_still_in_main": 2,
+    "missing_sample": [
+     "import { describe, it, expect, vi, beforeAll, beforeEach, afterEach } from 'vitest';",
+     "    channel: () => { const ch: Record<string, unknown> = {}; ch.on = () => ch; ch.subscribe = () => ch; return ch; },",
+     "beforeAll(async () => {",
+     "  await import('@/components/inbox/ChatPanel');",
+     "}, 120_000);"
+    ],
+    "still_sample": [
+     "import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';",
+     "    channel: () => ({ on: () => ({ subscribe: () => ({}) }) }),"
+    ]
+   }
+  },
+  {
+   "path": "src/pages/__tests__/ChatPopup.pagination.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 23,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 4,
+    "missing_in_main": 4,
+    "removed": 1,
+    "removed_still_in_main": 1,
+    "missing_sample": [
+     "    functions: { invoke: vi.fn(async () => ({ data: null, error: null })) },",
+     "    channel: () => { const ch: Record<string, unknown> = {}; ch.on = () => ch; ch.subscribe = () => ch; return ch; },",
+     "    removeChannel: vi.fn(),",
+     "vi.mock('@/hooks/ui/use-toast', () => ({ toast: vi.fn(), useToast: () => ({ toast: vi.fn() }) }));"
+    ],
+    "still_sample": [
+     "vi.mock('@/hooks/ui/use-toast', () => ({ toast: vi.fn() }));"
+    ]
+   }
+  },
+  {
+   "path": "src/services/chat.service.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 21,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 6,
+    "missing_in_main": 6,
+    "removed": 2,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "    const t = blob.type.split(';')[0];",
+     "    let ext = 'webm', contentType = 'audio/webm';",
+     "    if (t === 'audio/ogg') { ext = 'ogg'; contentType = 'audio/ogg'; }",
+     "    else if (t === 'audio/mp4') { ext = 'm4a'; contentType = 'audio/mp4'; }",
+     "    const fileName = `${contactId}/${Date.now()}.${ext}`;",
+     "      .upload(fileName, blob, { contentType });"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/services/outbound-message.service.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 48,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 18,
+    "missing_in_main": 14,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "function readCurrentUserId(): string | null {",
+     "    if (typeof window === 'undefined' || !window.localStorage) return null;",
+     "    for (let i = 0; i < localStorage.length; i++) {",
+     "      const key = localStorage.key(i);",
+     "      if (!key || !key.startsWith('sb-') || !key.endsWith('-auth-token')) continue;",
+     "      const raw = localStorage.getItem(key);",
+     "      if (!raw) continue;",
+     "      const parsed = JSON.parse(raw) as { access_token?: unknown; user?: { id?: unknown } } | null;",
+     "      const userId = parsed?.user?.id;",
+     "      if (typeof parsed?.access_token === 'string' && typeof userId === 'string' && userId) return userId;",
+     "  const currentUserId = readCurrentUserId();",
+     "  if (message.userId && currentUserId && message.userId !== currentUserId) {",
+     "    throw new Error('Offline queue: message belongs to a different user');",
+     "    userId: readCurrentUserId() ?? undefined,"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "supabase/schema-manifest.json",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 185,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 35,
+    "missing_in_main": 35,
+    "removed": 30,
+    "removed_still_in_main": 18,
+    "missing_sample": [
+     "        \"conversation_tasks.tasks_delete_own\": \"6e0520aef419e3008ae132bc7b548bf5\",",
+     "        \"conversation_tasks.tasks_insert_own\": \"f6071451cb3a6b3bb1ead5d716fea8e3\",",
+     "        \"conversation_tasks.tasks_select_contact_visible\": \"c0d70debc42eb61e14246469d5d6cb4f\",",
+     "        \"conversation_tasks.tasks_select_own\": \"aa4bfd90e8ef827e4ae5f789133e2b91\",",
+     "        \"conversation_tasks.tasks_update_own\": \"1760af03229f9db9be9d4827cba05e2d\",",
+     "        \"talkx_blacklist.talkx_blacklist_no_delete\": \"b1c2d3e4f5a6b1c2d3e4f5a6b1c2d3e4\",",
+     "        \"talkx_blacklist.talkx_blacklist_update\": \"977d81fb30abc7c5c82f0ba3fcebf6bd\",",
+     "        \"feature_flags.feature_flags_delete_admin\": \"927ead3b924f3c355587d1d9972e5567\",",
+     "        \"feature_flags.feature_flags_insert_admin\": \"1defd1a5e9e83334cf65565530f76e67\",",
+     "        \"feature_flags.feature_flags_select_admin_supervisor\": \"2a85b0c4ab37e059d967c5af6324d34f\",",
+     "        \"feature_flags.feature_flags_update_admin\": \"a4067c7c7a6d48f39c1606d6c8d81328\",",
+     "        \"csat_surveys.\\\"Users can insert CSAT surveys\\\"\": \"d918a515e409da4f32ea1a1326415e33\",",
+     "        \"talkx_blacklist.\\\"Admins can add to blacklist\\\"\": \"6058a57ff70208c9260d3dbefadf929c\",",
+     "        \"csat_surveys.\\\"Users can view own CSAT surveys\\\"\": \"3e9ec5fddfec240d79b828d5e335a249\",",
+     "        \"csat_surveys.\\\"Service role manages CSAT surveys\\\"\": \"21916ff8f532dae461247fd74060d051\",",
+     "        \"talkx_blacklist.\\\"Only admins can view blacklist\\\"\": \"2a85b0c4ab37e059d967c5af6324d34f\",",
+     "        \"message_reactions.message_reactions_delete_policy\": \"3be6de620e038ad70868e8280137273a\",",
+     "        \"message_reactions.message_reactions_insert_policy\": \"9db6a586304b8c2a1d1f7065b07d78eb\",",
+     "        \"message_reactions.message_reactions_select_policy\": \"8f0a1125775df9b3be8bd21a389c8e4e\",",
+     "        \"message_reactions.message_reactions_update_policy\": \"8a72cbf18836bc628ef1f20d127d3d89\",",
+     "        \"passkey_credentials.\\\"Users can view own passkeys\\\"\": \"bea271f09e113b88b7c323fda93bb8da\",",
+     "        \"talkx_blacklist.\\\"Admins can remove from blacklist\\\"\": \"2653f902baca8bb125b78233bf57b013\",",
+     "        \"voice_command_logs.\\\"Users can read own voice logs\\\"\": \"3574626a8e893b60b4869ef46e5ea79a\",",
+     "        \"passkey_credentials.\\\"Users can delete own passkeys\\\"\": \"eeb41658ec4834689309b2526ed28507\",",
+     "        \"passkey_credentials.\\\"Users can update own passkeys\\\"\": \"774ed45336e781cc6c1270b97833c0e2\","
+    ],
+    "still_sample": [
+     "        \"conversation_tasks.tasks_delete_own\": \"276fe6caae209c0b4eb32a44d3bc86ed\",",
+     "        \"conversation_tasks.tasks_select_own\": \"722e71602636d140ea14cf78f4ada170\",",
+     "        \"conversation_tasks.tasks_update_own\": \"91f1cdf1f54b2b0f8b7b1a03ad5c7881\",",
+     "        \"talkx_blacklist.talkx_blacklist_update\": \"c8d4f4dd436e0a43ef739ba971e24502\",",
+     "        \"csat_surveys.\\\"Users can insert CSAT surveys\\\"\": \"720bd00051c13201cf202f6f4bb03001\",",
+     "        \"talkx_blacklist.\\\"Admins can add to blacklist\\\"\": \"2515c287f9fdae60342e6acf20c9c2c7\",",
+     "        \"csat_surveys.\\\"Users can view own CSAT surveys\\\"\": \"214248a6bd1c260f961a3c1049555a4f\",",
+     "        \"talkx_blacklist.\\\"Only admins can view blacklist\\\"\": \"f8f0f3765f5fb7b2833be7afa578805d\",",
+     "        \"passkey_credentials.\\\"Users can view own passkeys\\\"\": \"470bc2814adff3685100e3939c1f432e\",",
+     "        \"voice_command_logs.\\\"Users can read own voice logs\\\"\": \"e0fd59a860a65a9bb087eb07f47d05a8\","
+    ]
+   }
+  },
+  {
+   "path": "vitest.config.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 13,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "process.env.TZ = 'America/Sao_Paulo';"
+    ],
+    "still_sample": []
+   }
+  }
+ ],
+ "counts": {
+  "migrations": "0",
+  "workflows": "1",
+  "src": "108",
+  "edges": "0",
+  "docs_only": "no",
+  "lines_branch_has_main_lacks": "8711",
+  "lines_main_has_branch_lacks": "10001"
+ },
+ "auto": "MISTO_CONFLITO",
+ "n_files_with_gaps": 89,
+ "gap_lines_total": 1360
+}

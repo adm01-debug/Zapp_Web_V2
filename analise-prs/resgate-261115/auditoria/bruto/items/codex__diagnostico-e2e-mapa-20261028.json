@@ -1,0 +1,138 @@
+{
+ "id": "codex__diagnostico-e2e-mapa-20261028",
+ "kind": "branch",
+ "ref": "origin/codex/diagnostico-e2e-mapa-20261028",
+ "tip": "94bfe9aa1211fb410f4d322edb8d38e8d9bddde4",
+ "merge_base": "180cc8cdd339d02eadc242e183fa81202a1db849",
+ "ahead": 8,
+ "last_commit_date": "2026-10-28",
+ "merge_base_date": "2026-10-28",
+ "prs_with_same_tip": [],
+ "triagem_2804": {},
+ "closure_comment": {},
+ "files": [
+  {
+   "path": "e2e/contact-map-pin.spec.ts",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "e2e/fixtures/mapa-mocks.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 55,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 21,
+    "missing_in_main": 3,
+    "removed": 1,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "      ? { onboarding_completed: true }",
+     "      : [{ onboarding_completed: true }]));",
+     "  await page.route(/\\/rest\\/v1\\/rpc\\/app_bootstrap/, (route) => json(route, BOOT_FAKE));"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/contacts/BulkActionsBar.tsx",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/components/contacts/ContactDialogs.tsx",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/components/contacts/ContactsView.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 56,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 7,
+    "missing_in_main": 3,
+    "removed": 5,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "import { MotionConfig } from 'framer-motion';",
+     "    <MotionConfig reducedMotion=\"user\">",
+     "    </MotionConfig>"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/contacts/__tests__/ContactDialogs.fabToque.test.ts",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/components/contacts/__tests__/ContactsView.contratoFonte.test.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 36,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 19,
+    "missing_in_main": 4,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     " * - o `MotionConfig reducedMotion=\"user\"` que governa os descendentes Framer",
+     " *   Motion do módulo foi removido no lote 880 (025d0258dc) junto do cabeçalho;",
+     "  it('mantém o MotionConfig reducedMotion=\"user\" no módulo', () => {",
+     "    expect(fonte).toContain('<MotionConfig reducedMotion=\"user\">');"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/inbox/ConversationListSidebar.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 42,
+   "hunk": "PRESENT_REVERSE_APPLIES"
+  },
+  {
+   "path": "src/components/inbox/__tests__/StatusChips.test.tsx",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/components/inbox/conversation-list/StatusChips.tsx",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/components/layout/__tests__/cabecalho-grupo-crm.test.tsx",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/hooks/contacts/__tests__/ContactsView.v2Flags.test.tsx",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/hooks/team-chat/__tests__/useTeamUnreadTotal.test.tsx",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/hooks/team-chat/useTeamUnreadTotal.ts",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  }
+ ],
+ "counts": {
+  "migrations": "0",
+  "workflows": "0",
+  "src": "12",
+  "edges": "0",
+  "docs_only": "no",
+  "lines_branch_has_main_lacks": "22",
+  "lines_main_has_branch_lacks": "51"
+ },
+ "auto": "MISTO_CONFLITO",
+ "n_files_with_gaps": 3,
+ "gap_lines_total": 10
+}

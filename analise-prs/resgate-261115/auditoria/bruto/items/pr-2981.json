@@ -1,0 +1,191 @@
+{
+ "id": "pr-2981",
+ "kind": "pr",
+ "ref": "refs/remotes/pr/2981",
+ "pr": 2981,
+ "tip": "6621749eefd38ea3bdfcfb3e3aa0253d6f32d7af",
+ "merge_base": "f1d8e5f9a90bbfd5f49362b3b834d7b3b3ce41fe",
+ "ahead": 14,
+ "last_commit_date": "2026-11-12",
+ "merge_base_date": "2026-11-12",
+ "triagem_2804": null,
+ "closure_comment": {
+  "title": "docs(analise-prs): relatório e dossiês da triagem das 30 PRs abertas + comando /merge-prs",
+  "last_comment": "Contida no pacote 4, adm01-debug/Zapp_Web_V2#3063, mergeado na `main` em d084ca75 com CI completo verde (CI Gate, testes unitários 1/3–3/3, E2E, edge contracts, build, security, workflow lint). O conteúdo desta PR entrou por lá (merge `--no-ff` desta branch no pacote, sem conflito; #3036 e #2981 ent"
+ },
+ "files": [
+  {
+   "path": ".claude/commands/merge-prs.md",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "analise-prs/RELATORIO_PRS.md",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "analise-prs/baseline/main.json",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "analise-prs/dossies/pr-2553.md",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "analise-prs/dossies/pr-2555.md",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "analise-prs/dossies/pr-2556.md",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "analise-prs/dossies/pr-2811.md",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "analise-prs/dossies/pr-2813.md",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "analise-prs/dossies/pr-2818.md",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "analise-prs/dossies/pr-2835.md",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "analise-prs/dossies/pr-2838.md",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "analise-prs/dossies/pr-2846.md",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "analise-prs/dossies/pr-2856.md",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "analise-prs/dossies/pr-2859.md",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "analise-prs/dossies/pr-2869.md",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "analise-prs/dossies/pr-2879.md",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "analise-prs/dossies/pr-2880.md",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "analise-prs/dossies/pr-2881.md",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "analise-prs/dossies/pr-2883.md",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "analise-prs/dossies/pr-2894.md",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "analise-prs/dossies/pr-2919.md",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "analise-prs/dossies/pr-2929.md",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "analise-prs/dossies/pr-2932.md",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "analise-prs/dossies/pr-2943.md",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "analise-prs/dossies/pr-2944.md",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "analise-prs/dossies/pr-2946.md",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "analise-prs/dossies/pr-2968.md",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "analise-prs/dossies/pr-2969.md",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "analise-prs/dossies/pr-2970.md",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "analise-prs/dossies/pr-2971.md",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "analise-prs/dossies/pr-2972.md",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "analise-prs/dossies/pr-2973.md",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "analise-prs/progresso.json",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "analise-prs/prs.json",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  }
+ ],
+ "auto": "INCORPORADA_PROVA_PATCH",
+ "n_files_with_gaps": 0,
+ "gap_lines_total": 0
+}

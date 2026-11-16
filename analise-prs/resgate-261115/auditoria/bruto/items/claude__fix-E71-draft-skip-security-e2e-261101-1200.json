@@ -1,0 +1,50 @@
+{
+ "id": "claude__fix-E71-draft-skip-security-e2e-261101-1200",
+ "kind": "branch",
+ "ref": "origin/claude/fix-E71-draft-skip-security-e2e-261101-1200",
+ "tip": "3f388654595156660cc5512e746dca604bee9227",
+ "merge_base": "3b5f8a96db0337af7310eec1b0dc5f86bb45912c",
+ "ahead": 3,
+ "last_commit_date": "2026-11-01",
+ "merge_base_date": "2026-11-01",
+ "prs_with_same_tip": [
+  2497
+ ],
+ "triagem_2804": {
+  "2497": "OBSOLETA"
+ },
+ "closure_comment": {},
+ "files": [
+  {
+   "path": ".github/workflows/ci.yml",
+   "status": "BOTH_CHANGED",
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "patch_lines": 38,
+   "line_check": {
+    "added": 6,
+    "missing_in_main": 4,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "    # E71: pula em PRs draft para economizar minutes (security, build e e2e idem)",
+     "    # E71: pula em PRs draft para economizar minutes (unit-tests, security e e2e idem)",
+     "    # E71: pula em PRs draft para economizar minutes (unit-tests, build e e2e idem)",
+     "    # E71: pula em PRs draft para economizar minutes (unit-tests, build e security idem)"
+    ],
+    "still_sample": []
+   }
+  }
+ ],
+ "counts": {
+  "migrations": "0",
+  "workflows": "1",
+  "src": "0",
+  "edges": "0",
+  "docs_only": "no",
+  "lines_branch_has_main_lacks": "24",
+  "lines_main_has_branch_lacks": "116"
+ },
+ "auto": "TRABALHO_AUSENTE_APLICA_LIMPO",
+ "n_files_with_gaps": 1,
+ "gap_lines_total": 4
+}

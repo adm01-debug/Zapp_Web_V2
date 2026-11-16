@@ -1,0 +1,19 @@
+[
+ {
+  "commit": "6c7b21ef7",
+  "arquivo": "src/components/dashboard/GoalsConfigDialog.tsx",
+  "linhas": 1,
+  "amostra": [
+   "        .maybeSingle();"
+  ]
+ },
+ {
+  "commit": "6c7b21ef7",
+  "arquivo": "src/components/dashboard/__tests__/GoalsConfigDialog.test.tsx",
+  "linhas": 2,
+  "amostra": [
+   "  maybeSingle: () => Promise<QueryResult>;",
+   "    b.maybeSingle = () => Promise.resolve(result);"
+  ]
+ }
+]

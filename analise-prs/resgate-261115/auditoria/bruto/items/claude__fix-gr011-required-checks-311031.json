@@ -1,0 +1,50 @@
+{
+ "id": "claude__fix-gr011-required-checks-311031",
+ "kind": "branch",
+ "ref": "origin/claude/fix-gr011-required-checks-311031",
+ "tip": "ebc6956fbd60fc61b7688dd55cff5f63dd552d84",
+ "merge_base": "b94be0a2cfd530a1cf66b6cb3c58ae7824ae7cbd",
+ "ahead": 5,
+ "last_commit_date": "2026-11-01",
+ "merge_base_date": "2026-11-01",
+ "prs_with_same_tip": [
+  2421
+ ],
+ "triagem_2804": {
+  "2421": "OBSOLETA"
+ },
+ "closure_comment": {},
+ "files": [
+  {
+   "path": "CLAUDE.md",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 35,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 4,
+    "missing_in_main": 4,
+    "removed": 6,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  deleção, e os 3 required checks da seção abaixo — consolidado na tabela canônica \"Perímetro do GitHub\".",
+     "| Branch protection — required checks | **3**: `🏗️ Build` · `🔎 TypeCheck` · `✅ CI Gate (required check)` | `settings-guard` ⚠ |",
+     "**Required checks da `main`** (3; `strict` está `true` ao vivo — ver correção de 01/10 acima): `🏗️ Build`, `🔎 TypeCheck` e",
+     "`✅ CI Gate (required check)` — medidos em 2026-10-29 via API; confirmado em `scripts/ci/github-settings-baseline.json`. `🔬 CodeQL (javascript-typescript)` roda "
+    ],
+    "still_sample": []
+   }
+  }
+ ],
+ "counts": {
+  "migrations": "0",
+  "workflows": "0",
+  "src": "0",
+  "edges": "0",
+  "docs_only": "yes",
+  "lines_branch_has_main_lacks": "636",
+  "lines_main_has_branch_lacks": "1"
+ },
+ "auto": "MISTO_CONFLITO",
+ "n_files_with_gaps": 1,
+ "gap_lines_total": 4
+}

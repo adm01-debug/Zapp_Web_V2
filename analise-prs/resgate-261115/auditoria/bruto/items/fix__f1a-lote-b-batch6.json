@@ -1,0 +1,84 @@
+{
+ "id": "fix__f1a-lote-b-batch6",
+ "kind": "branch",
+ "ref": "origin/fix/f1a-lote-b-batch6",
+ "tip": "8fa1bb340603201c336444db62d03d7e209a857a",
+ "merge_base": "bac62ba98454811c3bfd117b838af926b1e795b2",
+ "ahead": 3,
+ "last_commit_date": "2026-10-23",
+ "merge_base_date": "2026-10-23",
+ "prs_with_same_tip": [
+  2083,
+  2437
+ ],
+ "triagem_2804": {
+  "2083": "JA_NA_MAIN",
+  "2437": "JA_NA_MAIN"
+ },
+ "closure_comment": {},
+ "files": [
+  {
+   "path": "src/components/nps/NPSDashboard.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 319,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 121,
+    "missing_in_main": 100,
+    "removed": 38,
+    "removed_still_in_main": 35,
+    "missing_sample": [
+     "import { useNPSSurveys, NPS_SURVEY_LIMIT } from '@/hooks/business/useNPSSurveys';",
+     "import {",
+     "  TrendingUp,",
+     "  TrendingDown,",
+     "  Minus,",
+     "  Users,",
+     "  ThumbsUp,",
+     "  ThumbsDown,",
+     "  Meh,",
+     "  BarChart3,",
+     "  AlertCircle,",
+     "  RefreshCw,",
+     "  Info,",
+     "} from 'lucide-react';",
+     "    <div className={`flex flex-col items-center justify-center rounded-xl p-6 ${bg}`}>",
+     "      <span className=\"mt-1 text-sm text-muted-foreground\">NPS Score</span>",
+     "      <Badge variant=\"outline\" className=\"mt-2\">",
+     "        {label}",
+     "function MetricCard({",
+     "  icon: Icon,",
+     "  label,",
+     "  value,",
+     "  color,",
+     "        <div className={`rounded-lg p-2 ${color}`}>",
+     "          <Icon className=\"h-5 w-5\" />"
+    ],
+    "still_sample": [
+     "    <div className={`flex flex-col items-center justify-center p-6 rounded-xl ${bg}`}>",
+     "      <span className=\"text-sm text-muted-foreground mt-1\">NPS Score</span>",
+     "      <Badge variant=\"outline\" className=\"mt-2\">{label}</Badge>",
+     "function MetricCard({ icon: Icon, label, value, color }: {",
+     "        <div className={`p-2 rounded-lg ${color}`}>",
+     "          <Icon className=\"w-5 h-5\" />",
+     "          {[1, 2, 3, 4].map(i => <Skeleton key={i} className=\"h-24\" />)}",
+     "        className=\"space-y-6 w-full min-w-0\"",
+     "            className=\"flex flex-col items-center justify-center gap-2 py-12 px-6 text-center\"",
+     "            <BarChart3 className=\"w-10 h-10 text-muted-foreground/40\" strokeWidth={1.6} />"
+    ]
+   }
+  }
+ ],
+ "counts": {
+  "migrations": "0",
+  "workflows": "0",
+  "src": "1",
+  "edges": "0",
+  "docs_only": "no",
+  "lines_branch_has_main_lacks": "113",
+  "lines_main_has_branch_lacks": "60"
+ },
+ "auto": "MISTO_CONFLITO",
+ "n_files_with_gaps": 1,
+ "gap_lines_total": 135
+}

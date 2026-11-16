@@ -1,0 +1,72 @@
+{
+ "id": "claude__fix-plano-190-etapas-261019-1200",
+ "kind": "branch",
+ "ref": "origin/claude/fix-plano-190-etapas-261019-1200",
+ "tip": "108128f371cb945fb4b99f2a99d465ae85fe1764",
+ "merge_base": "1252bb5a41123ba4d49efd84d0f91604bff6c87c",
+ "ahead": 3,
+ "last_commit_date": "2026-11-01",
+ "merge_base_date": "2026-11-01",
+ "prs_with_same_tip": [
+  2418
+ ],
+ "triagem_2804": {
+  "2418": "OBSOLETA"
+ },
+ "closure_comment": {},
+ "files": [
+  {
+   "path": "docs/plans/PLANO_CORRECOES_190_ETAPAS_2026-10-19.md",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "patch_lines": 985,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 741,
+    "missing_in_main": 741,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "# PLANO DE CORREÇÕES E MELHORIAS — ZAPP WEB V2",
+     "## 190 Etapas para Execução por Agente IA (Sonnet)",
+     "### Versão 1.0.0 — 2026-10-19",
+     "## INSTRUÇÕES AO AGENTE EXECUTOR",
+     "### Regras Absolutas (NÃO NEGOCIÁVEIS)",
+     "1. **Banco de Produção**: `tnnnlkbymytvtqngbbqh` — somente leitura SELECT. Nunca DDL direto.",
+     "2. **DDL em Produção**: SOMENTE via `.github/workflows/db-migrate.yml` (`workflow_dispatch`, `apply=false` → aprovação do Joaquim → `apply=true`).",
+     "3. **MCP para SQL**: `SUPABASE - ZAPP WEB V2 - MCP` (db_query). NÃO usar `uqysyzndkfiwfztbqvsl` nem `vpkmqeumtxhrwgawxdrl`.",
+     "4. **Escrita no GitHub**: SEMPRE via `GITHUB - MCP - FOREVER` (MCP padrão retorna 403).",
+     "5. **Branch**: criar nova branch `claude/<tipo>-<slug>-<AAMMDD-HHMM>` a partir de `main`. NUNCA commitar em branch de outro agente.",
+     "6. **Push/Merge**: NUNCA fazer push ou merge por conta própria sem aprovação do Joaquim.",
+     "7. **Edge functions deploy**: SOMENTE via `.github/workflows/deploy-functions.yml`.",
+     "8. **supabase_apply_migration está bugado**: usar `db_query` + `INSERT INTO supabase_migrations.schema_migrations` manual.",
+     "9. **E2E**: rodam contra banco LOCAL da cópia de trabalho, não produção.",
+     "10. **PARAR e reportar** quando encontrar bloqueador que exija decisão de negócio ou custo.",
+     "### Bancos Proibidos (NÃO ESCREVER)",
+     "- `uqysyzndkfiwfztbqvsl` — MCP Zapp Web Lovable antigo",
+     "- `vpkmqeumtxhrwgawxdrl` — MCP Lovable Cloud (read-only, nome parecido com o oficial)",
+     "- `pgxfvjmuuxtbowutlide` — Gestão de Clientes/CRM externo",
+     "- `doufsxqlfjyuvxuezpln` — Catálogo de Produtos externo",
+     "### Convenção de Branch",
+     "- `claude/fix-<slug>-<AAMMDD-HHMM>` — correção",
+     "- `claude/feat-<slug>-<AAMMDD-HHMM>` — nova funcionalidade",
+     "- `claude/chore-<slug>-<AAMMDD-HHMM>` — manutenção",
+     "- `claude/ci-<slug>-<AAMMDD-HHMM>` — workflows"
+    ],
+    "still_sample": [],
+    "same_basename_in_main": []
+   }
+  }
+ ],
+ "counts": {
+  "migrations": "0",
+  "workflows": "0",
+  "src": "0",
+  "edges": "0",
+  "docs_only": "yes",
+  "lines_branch_has_main_lacks": "979",
+  "lines_main_has_branch_lacks": "0"
+ },
+ "auto": "TRABALHO_AUSENTE_APLICA_LIMPO",
+ "n_files_with_gaps": 1,
+ "gap_lines_total": 741
+}

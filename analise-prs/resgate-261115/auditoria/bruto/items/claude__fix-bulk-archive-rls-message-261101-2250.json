@@ -1,0 +1,82 @@
+{
+ "id": "claude__fix-bulk-archive-rls-message-261101-2250",
+ "kind": "branch",
+ "ref": "origin/claude/fix-bulk-archive-rls-message-261101-2250",
+ "tip": "171529dd6f8267028a654cf79bccb7bf95283e98",
+ "merge_base": "1252bb5a41123ba4d49efd84d0f91604bff6c87c",
+ "ahead": 1,
+ "last_commit_date": "2026-11-01",
+ "merge_base_date": "2026-11-01",
+ "prs_with_same_tip": [
+  2534
+ ],
+ "triagem_2804": {
+  "2534": "PERDIDA"
+ },
+ "closure_comment": {},
+ "files": [
+  {
+   "path": "src/hooks/inbox/__tests__/useInboxBulkActions.test.ts",
+   "status": "BOTH_CHANGED",
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "patch_lines": 39,
+   "line_check": {
+    "added": 8,
+    "missing_in_main": 6,
+    "removed": 11,
+    "removed_still_in_main": 11,
+    "missing_sample": [
+     "  it('erro no SELECT dos originais (RLS) mostra aviso neutro e não arquiva', async () => {",
+     "    // RLS bloqueou: nenhuma escrita no banco",
+     "    // Aviso neutro (info), não erro",
+     "    expect(mocks.toast.info).toHaveBeenCalled();",
+     "    // Nenhum undo foi registrado (nada mudou)",
+     "    expect(lastUndo).toBeNull();"
+    ],
+    "still_sample": [
+     "  // BUG (documentado): o SELECT dos contatos originais está FORA do try e tem o `error`",
+     "  // ignorado. Se ele falha (RLS/rede), `originalContacts` fica nulo e o hook segue",
+     "  // arquivando: o botão \"Desfazer\" aparece, anuncia \"Arquivamento desfeito\" e não",
+     "  // restaura nada. Se o SELECT lançar, `bulkLoading` fica preso em true.",
+     "  // Ver relato: useInboxBulkActions.ts:102-105, :120-130.",
+     "  it.fails('erro no SELECT dos originais (RLS) não pode resultar num desfazer que não restaura nada', async () => {",
+     "    const antesDoDesfazer = contactUpdates().length;",
+     "    await act(async () => {",
+     "      await lastUndo?.undoAction();",
+     "    // O desfazer precisa ter restaurado alguma coisa (hoje: nada, porque não há original)."
+    ]
+   }
+  },
+  {
+   "path": "src/hooks/inbox/useInboxBulkActions.ts",
+   "status": "BOTH_CHANGED",
+   "hunk": "CONFLICT",
+   "patch_lines": 28,
+   "line_check": {
+    "added": 6,
+    "missing_in_main": 4,
+    "removed": 2,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "      if (selectError) {",
+     "        toast.info('Sem permissão para verificar o estado das conversas');",
+     "      if (targetIds.length === 0) {",
+     "        toast.info('Nenhum contato disponível para arquivar');"
+    ],
+    "still_sample": []
+   }
+  }
+ ],
+ "counts": {
+  "migrations": "0",
+  "workflows": "0",
+  "src": "2",
+  "edges": "0",
+  "docs_only": "no",
+  "lines_branch_has_main_lacks": "64",
+  "lines_main_has_branch_lacks": "321"
+ },
+ "auto": "MISTO_CONFLITO",
+ "n_files_with_gaps": 2,
+ "gap_lines_total": 21
+}

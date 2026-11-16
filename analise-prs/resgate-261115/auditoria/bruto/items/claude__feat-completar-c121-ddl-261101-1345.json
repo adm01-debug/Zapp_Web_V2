@@ -1,0 +1,113 @@
+{
+ "id": "claude__feat-completar-c121-ddl-261101-1345",
+ "kind": "branch",
+ "ref": "origin/claude/feat-completar-c121-ddl-261101-1345",
+ "tip": "edad6a6f53ca0217d0ca96698b2c5efd881010fa",
+ "merge_base": "50fc5f0e65b54503c288adb9981cfee63052101c",
+ "ahead": 3,
+ "last_commit_date": "2026-11-01",
+ "merge_base_date": "2026-11-01",
+ "prs_with_same_tip": [
+  2470
+ ],
+ "triagem_2804": {
+  "2470": "DUPLICATA_PROVAVEL"
+ },
+ "closure_comment": {},
+ "files": [
+  {
+   "path": "supabase/migrations/20261101140000_instance_pause_investigation.sql",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "patch_lines": 159,
+   "line_check": {
+    "added": 128,
+    "missing_in_main": 128,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "-- instance_pause_investigation",
+     "-- Rollback: remove a RPC de investigacao e as tres colunas de investigacao da tabela de pausas; nenhuma tabela, policy ou grant pre-existente e tocado.",
+     "-- Rollback (SQL executável, na ordem):",
+     "--   DROP FUNCTION IF EXISTS public.mark_pause_investigated(uuid, text);",
+     "--   ALTER TABLE public.instance_pauses DROP CONSTRAINT IF EXISTS instance_pauses_investigacao_completa;",
+     "--   ALTER TABLE public.instance_pauses DROP CONSTRAINT IF EXISTS instance_pauses_notas_sem_html;",
+     "--   ALTER TABLE public.instance_pauses DROP CONSTRAINT IF EXISTS instance_pauses_notas_tamanho;",
+     "--   ALTER TABLE public.instance_pauses DROP COLUMN IF EXISTS investigation_notes;",
+     "--   ALTER TABLE public.instance_pauses DROP COLUMN IF EXISTS investigated_by;",
+     "--   ALTER TABLE public.instance_pauses DROP COLUMN IF EXISTS investigated_at;",
+     "-- IP2 — investigacao de incidentes de pausa de instancia (filho do IP1, t_8215f5f9,",
+     "-- migration 20261011183812_instance_pauses.sql). ADITIVA: investigacao com ator: 3 colunas na tabela de pausas + RPC mark_pause_investigated,",
+     "--      restrita a admin/supervisor, notas <= 1000 sem HTML (validadas ANTES do efeito),",
+     "--      1 linha em audit_logs por chamada (COALESCE: 1o ator/data congela, notas nao vao).",
+     "-- Nada toca dado existente: colunas nascem NULL, funcoes sao novas.",
+     "-- ============================================================ 1. colunas de investigacao",
+     "ALTER TABLE public.instance_pauses",
+     "  ADD COLUMN IF NOT EXISTS investigated_at     timestamptz,",
+     "  ADD COLUMN IF NOT EXISTS investigated_by     uuid REFERENCES public.profiles(id) ON DELETE SET NULL,",
+     "  ADD COLUMN IF NOT EXISTS investigation_notes text;",
+     "-- a investigacao tem ator; a data e o que a torna historica. Apagar o perfil do",
+     "-- investigador (FK ON DELETE SET NULL, acima) zera o ator e a data SOBREVIVE,",
+     "-- entao o CHECK olha um lado so: ator sem data e proibido; data sem ator nao e",
+     "-- (a FK do pai pressupoe que o orfao seja aceitavel).",
+     "DO $add_instance_pauses_investigacao_completa$"
+    ],
+    "still_sample": [],
+    "same_basename_in_main": []
+   }
+  },
+  {
+   "path": "supabase/tests/instance_pause_investigation.sql",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "patch_lines": 499,
+   "line_check": {
+    "added": 448,
+    "missing_in_main": 448,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "-- instance_pause_investigation (IP2, filho do IP1): suite no banco LOCAL, papel real via",
+     "-- request.jwt.claims + set_config('role') (caminho do PostgREST); tudo desfeito no ROLLBACK final.",
+     "-- T1 investiga+audita sem copiar notas; T2 negado (3 papeis) sem efeito/auditoria;",
+     "-- T3 validacao funcao+CHECKs; T3b FK x CHECK (savepoint do plpgsql = sub-bloco BEGIN/EXCEPTION: excluir o perfil do",
+     "-- investigador preserva a investigacao, e ator sem data segue negado);",
+     "-- T4 P0002; T5 3 auditorias (1/chamada), 1o ator congela;",
+     "-- T5b supervisor; T6 RLS/ACL; T7 rollback. (Serie 24h/7d separada no cartao-filho t_e75e24e9.)",
+     "-- RODAR: zapp-db-local psql . v2-2610161333f0ad -v ON_ERROR_STOP=1 < este arquivo",
+     "BEGIN;",
+     "-- atalho de papel (1 linha por troca).",
+     "CREATE FUNCTION pg_temp.t_auth(p_sub uuid) RETURNS void LANGUAGE sql AS $$",
+     "  SELECT set_config('request.jwt.claims', json_build_object('sub', p_sub, 'role', 'authenticated')::text, true);",
+     "  SELECT set_config('role', 'authenticated', true);",
+     "DO $pause_investigation$",
+     "DECLARE",
+     "  v_admin_user uuid := '44444444-4444-4444-4444-4444444444a1';",
+     "  v_sup_user   uuid := '44444444-4444-4444-4444-4444444444a2';",
+     "  v_agent_user uuid := '44444444-4444-4444-4444-4444444444b1';",
+     "  v_tmp_user   uuid := '44444444-4444-4444-4444-4444444444c1';  -- investigador excluido em T3b",
+     "  v_admin_prof uuid;",
+     "  v_sup_prof   uuid;",
+     "  v_agent_prof uuid;",
+     "  v_tmp_prof   uuid;",
+     "  v_inst_a     text := 'inst-invest-teste-a';",
+     "  v_inst_b     text := 'inst-invest-teste-b';"
+    ],
+    "still_sample": [],
+    "same_basename_in_main": []
+   }
+  }
+ ],
+ "counts": {
+  "migrations": "1",
+  "workflows": "0",
+  "src": "0",
+  "edges": "0",
+  "docs_only": "no",
+  "lines_branch_has_main_lacks": "646",
+  "lines_main_has_branch_lacks": "0"
+ },
+ "auto": "TRABALHO_AUSENTE_APLICA_LIMPO",
+ "n_files_with_gaps": 2,
+ "gap_lines_total": 576
+}

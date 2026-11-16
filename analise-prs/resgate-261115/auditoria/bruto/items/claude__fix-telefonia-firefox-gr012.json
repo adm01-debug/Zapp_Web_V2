@@ -1,0 +1,45 @@
+{
+ "id": "claude__fix-telefonia-firefox-gr012",
+ "kind": "branch",
+ "ref": "origin/claude/fix-telefonia-firefox-gr012",
+ "tip": "0b7db6cbcfdb466b8494171ce361b548561eb344",
+ "merge_base": "3b5f8a96db0337af7310eec1b0dc5f86bb45912c",
+ "ahead": 8,
+ "last_commit_date": "2026-11-01",
+ "merge_base_date": "2026-11-01",
+ "prs_with_same_tip": [
+  2428
+ ],
+ "triagem_2804": {
+  "2428": "OBSOLETA"
+ },
+ "closure_comment": {},
+ "files": [
+  {
+   "path": "e2e/telefonia.spec.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 13,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 2,
+    "missing_in_main": 0,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [],
+    "still_sample": []
+   }
+  }
+ ],
+ "counts": {
+  "migrations": "0",
+  "workflows": "0",
+  "src": "0",
+  "edges": "0",
+  "docs_only": "no",
+  "lines_branch_has_main_lacks": "5",
+  "lines_main_has_branch_lacks": "37"
+ },
+ "auto": "INCORPORADA_PROVA_LINHAS",
+ "n_files_with_gaps": 0,
+ "gap_lines_total": 0
+}

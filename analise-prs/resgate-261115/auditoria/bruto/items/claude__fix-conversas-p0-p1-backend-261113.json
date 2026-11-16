@@ -1,0 +1,784 @@
+{
+ "id": "claude__fix-conversas-p0-p1-backend-261113",
+ "kind": "branch",
+ "ref": "origin/claude/fix-conversas-p0-p1-backend-261113",
+ "tip": "7002ba64ceaea1903cd80f149e5a5e83ca33c9aa",
+ "merge_base": "48f9754f709d7a21bd89b11c57ce07f1967fdd11",
+ "ahead": 9,
+ "last_commit_date": "2026-11-13",
+ "merge_base_date": "2026-11-13",
+ "prs_with_same_tip": [
+  3037
+ ],
+ "triagem_2804": {
+  "3037": null
+ },
+ "closure_comment": {
+  "3037": {
+   "title": "fix(conversas): p0/p1 — envio sem conexão de teste, transferência única, estados por rpc, ",
+   "last_comment": "Fechada como contida: o conteúdo desta PR entrou integralmente na adm01-debug/Zapp_Web_V2#3064 (pacote 5), mergeada em `ab657aa34` com CI verde (CI Gate, Build, TypeCheck, Unit 1-3, E2E, DB Guard). Nenhum trabalho perdido; as migrations seguem o fluxo de apply do `docs/agentes/banco.md`. |  | --- | _Gener"
+  }
+ },
+ "files": [
+  {
+   "path": "ESTADO.md",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 48,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 7,
+    "missing_in_main": 5,
+    "removed": 7,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "| `ai-transcribe-audio` | A | `src/components/inbox/AudioMessagePlayer.tsx:66` · `supabase/functions/_shared/evolution-webhook-messages.ts:1455` |",
+     "| `batch-fetch-avatars` | A | `src/hooks/chat/useNewConversation.ts:146` · `src/hooks/chat/useNewConversation.ts:154` · `src/hooks/inbox/useInboxBulkActions.ts:",
+     "| `classify-sticker` | A | `src/components/inbox/chat/MessageBubble.tsx:329` · `src/hooks/sticker-picker/useStickerPicker.ts:148` · `supabase/functions/_shared/",
+     "| `evolution-webhook` | A | `src/components/monitoring/hooks/useMonitoringActions.ts:31` · `src/components/monitoring/hooks/useMonitoringActions.ts:60` · `supab",
+     "| `message-delivery` | A | `src/lib/invokeEdge.ts:24` · `src/services/outbound-message.service.ts:480` · `supabase/config.toml:49` |"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "docs/adr/ADR-005-conversation-state-machine.md",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 23,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 7,
+    "missing_in_main": 1,
+    "removed": 1,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "> (`supabase/migrations/20261113130200_conversation_status_regras_e_so_por_rpc.sql`, que também"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "docs/audits/edge-functions-authz-coverage.md",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 16,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 2,
+    "missing_in_main": 2,
+    "removed": 2,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "| evolution-control-authz.ts | 155 | 206 | 75.2% |",
+     "| **Total** | **291** | **438** | **66.4%** |"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "docs/contexto/regras/manual/regras.md",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 12,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "| **Conversa `waiting` (Aguardando) não pode ir direto para `archived`** (decisão do dono, 2026-11-13): sem atendente, ela sumiria da fila sem ninguém atender. "
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "e2e/fixtures/e2e-talkx.ts",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "scripts/db-audit/check-e2e-fixtures.sql",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/components/inbox/ChatPanel.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 36,
+   "hunk": "PRESENT_REVERSE_APPLIES"
+  },
+  {
+   "path": "src/components/inbox/ConversationListSidebar.tsx",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/components/inbox/RealtimeCollaboration.tsx",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/components/inbox/VirtualizedRealtimeList.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 21,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 2,
+    "missing_in_main": 2,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "            {/* Decisão do dono (2026-11-13): conversa aguardando não é arquivada. */}",
+     "            {conversation.contact.conversation_status !== 'waiting' && ("
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/inbox/__tests__/ChatTransferContract.test.tsx",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/components/inbox/__tests__/ContactDetails.quickActions.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 30,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 8,
+    "missing_in_main": 0,
+    "removed": 2,
+    "removed_still_in_main": 0,
+    "missing_sample": [],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/inbox/__tests__/ConversationListSidebar.test.tsx",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/components/inbox/__tests__/VirtualizedRealtimeList.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 20,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 7,
+    "missing_in_main": 0,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/inbox/__tests__/useChatMediaSending.audio-meme-falha.test.ts",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/components/inbox/__tests__/useChatMediaSending.resolve-e-autosave.test.ts",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/components/inbox/chat/ChatPanelHeader.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 16,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 3,
+    "missing_in_main": 2,
+    "removed": 1,
+    "removed_still_in_main": 1,
+    "missing_sample": [
+     "            {/* Decisão do dono (2026-11-13): conversa aguardando não é arquivada. */}",
+     "            {conversation.contact.conversation_status !== 'waiting' && ("
+    ],
+    "still_sample": [
+     "            <DropdownMenuItem onClick={onArchive}><Archive className=\"w-4 h-4 mr-2\" />Arquivar</DropdownMenuItem>"
+    ]
+   }
+  },
+  {
+   "path": "src/components/inbox/chat/__tests__/handlers-audio-contrato-retorno-350a.test.tsx",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/components/inbox/chat/__tests__/useChatPanelHandlers.sem-falso-sucesso.test.tsx",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/components/inbox/chat/useChatPanelHandlers.ts",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/components/inbox/contact-details/ContactActionButtons.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 20,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 5,
+    "missing_in_main": 2,
+    "removed": 3,
+    "removed_still_in_main": 3,
+    "missing_sample": [
+     "            {/* Decisão do dono (2026-11-13): conversa aguardando não é arquivada. */}",
+     "            {conversation?.contact?.conversation_status !== 'waiting' && ("
+    ],
+    "still_sample": [
+     "            <DropdownMenuItem onClick={() => onQuickAction?.('archive')} className=\"gap-2 text-xs\">",
+     "              <Archive className=\"w-3.5 h-3.5 text-muted-foreground\" />Arquivar",
+     "            </DropdownMenuItem>"
+    ]
+   }
+  },
+  {
+   "path": "src/components/inbox/useChatMediaSending.ts",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/hooks/__tests__/useWhatsAppStatus.test.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 46,
+   "hunk": "PRESENT_REVERSE_APPLIES"
+  },
+  {
+   "path": "src/hooks/chat/useConversationActions.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 61,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 15,
+    "missing_in_main": 1,
+    "removed": 8,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "import { isWaitingArchiveError, WAITING_CANNOT_ARCHIVE_MESSAGE } from '@/hooks/inbox/conversationArchive';"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/hooks/chat/useNewConversation.ts",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/hooks/groups/actions.ts",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/hooks/inbox/__tests__/conversationArchive.waiting.test.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 88,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 60,
+    "missing_in_main": 0,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/hooks/inbox/__tests__/useContactQuickActions.test.tsx",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/hooks/inbox/__tests__/useInboxBulkActions.test.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 231,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 82,
+    "missing_in_main": 9,
+    "removed": 23,
+    "removed_still_in_main": 3,
+    "missing_sample": [
+     "  // 'waiting' não é arquivada (decisão do dono, 2026-11-13): o caminho de dois passos",
+     "  // do desfazer vale para 'resolved'.",
+     "  it('desfazer: original fora de open (resolved) é restaurado em dois passos — archived→open→original', async () => {",
+     "    // Passo 2: o grupo volta ao status original.",
+     "    expect(restores[1]).toMatchObject({ payload: { conversation_status: 'resolved' }, filters: { id: [c1, c2], conversation_status: 'open' } });",
+     "    // undo: [open c1] ok · [passo 1 c2,c3 → open] ok · [resolved c2,c3] FALHA",
+     "    // Sem o \"fallback\" para open: c2/c3 já estão em open depois do passo 1.",
+     "    expect(restores).toHaveLength(3);",
+     "    expect(restores[1]).toMatchObject({ payload: { conversation_status: 'resolved' }, filters: { id: [c2], conversation_status: 'open' } });"
+    ],
+    "still_sample": [
+     "    expect(restores).toHaveLength(2);",
+     "    expect(restores[0]).toMatchObject({ payload: { conversation_status: 'open' }, filters: { id: [c1] } });",
+     "        { id: c2, conversation_status: 'waiting' },"
+    ]
+   }
+  },
+  {
+   "path": "src/hooks/inbox/conversationArchive.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 150,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 73,
+    "missing_in_main": 6,
+    "removed": 18,
+    "removed_still_in_main": 5,
+    "missing_sample": [
+     " * (`conversation_waiting_cannot_be_archived`, migration 20261113130200); a tela",
+     "    args: { p_contact_ids: string[]; p_next: ConversationStatus; p_expected_current?: string },",
+     " * 20261113130200). UPDATE direto em `contacts.conversation_status` passou a ser",
+     "    confirmadas.set(id, anteriores.get(id) ?? anteriorNoBanco);",
+     " * sair de 'archived' para 'open'; para voltar a waiting/resolved são dois passos",
+     " * (archived → open → anterior), sempre só em quem AINDA está no estado esperado —"
+    ],
+    "still_sample": [
+     "  const { data, error } = await supabase",
+     "    .from('contacts')",
+     "  if (error) throw error;",
+     "      .from('contacts')",
+     "    if (error) throw error;"
+    ]
+   }
+  },
+  {
+   "path": "src/hooks/inbox/useInboxBulkActions.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 143,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 38,
+    "missing_in_main": 7,
+    "removed": 27,
+    "removed_still_in_main": 5,
+    "missing_sample": [
+     "import { canArchiveConversation, moveConversationsStatus, type ConversationStatus } from '@/hooks/inbox/conversationArchive';",
+     "      // Quantas o BANCO arquivou de fato (resultado da RPC), não quantas foram pedidas.",
+     "          const arquivadas = (await moveConversationsStatus(targetIds, 'archived')).size;",
+     "          // válido 'open' em um único passo. Para restaurar waiting/resolved,",
+     "          // fazemos dois passos: archived→open→original.",
+     "          const validFromArchived = new Set(['open']);",
+     "              const moved = await moveConversationsStatus(ids, status as ConversationStatus, from as ConversationStatus);"
+    ],
+    "still_sample": [
+     "  }, [selectedIds, clearSelection, refetch]);",
+     "            .from('contacts')",
+     "          if (error) throw error;",
+     "            const { data, error } = await supabase",
+     "              .from('contacts')"
+    ]
+   }
+  },
+  {
+   "path": "src/hooks/integrations/useWhatsAppStatus.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 34,
+   "hunk": "PRESENT_REVERSE_APPLIES"
+  },
+  {
+   "path": "src/hooks/system/useUndoableAction.ts",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/lib/inbox/__tests__/transferConversation.test.ts",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/lib/inbox/transferConversation.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 61,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 40,
+    "missing_in_main": 2,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     " *     (migration 20261113130500; 40001 se alguém assumiu no meio-tempo);",
+     " * Enquanto a 20261113130500 não estiver aplicada, a RPC não conhece"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/lib/whatsapp/__tests__/sendConnection.test.ts",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/lib/whatsapp/sendConnection.ts",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/services/outbound-message.service.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 38,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 11,
+    "missing_in_main": 3,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "import { surfaceWhatsAppDisconnected } from '@/lib/whatsapp/sendConnection';",
+     "    throw surfaceWhatsAppDisconnected(erro);",
+     "    throw surfaceWhatsAppDisconnected(erro);"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "supabase/deployment-manifest.json",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 529,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 64,
+    "missing_in_main": 62,
+    "removed": 64,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "      \"bytes\": 15482,",
+     "      \"sha256\": \"543f02ccbebe30dbc831f9210f8224d5a823bc0a6cca1b9a9033cb194e483f5e\"",
+     "      \"bytes\": 71354,",
+     "      \"sha256\": \"fadc4436a3d1180b98c39e5252dbadacfc485f67097352df725f23a26c91826e\"",
+     "      \"bytes\": 45583,",
+     "      \"sha256\": \"1504d7996242d88a87bb7f56a193fd187214e1fdbecdb965756b86169108d7e3\"",
+     "      \"bytes\": 59172,",
+     "      \"sha256\": \"fa17bd149d95b3360f49af41430730482cbdee045aafc9e67286f1955962a640\"",
+     "      \"bytes\": 90407,",
+     "      \"sha256\": \"3c95e75b3e6675e0acfa9f5c2936d8ced8549d945ee1cc468f0a54c6164b44da\"",
+     "      \"bytes\": 39269,",
+     "      \"sha256\": \"5ca33599f51f76e9bfedba676a02580ab8679826f4da250cfc817d3a9023888b\"",
+     "      \"source_sha256\": \"11aac6d5d3754b0ee7a29483dfdf0c8dc38b5d5a1d641df0243d63bba886f068\",",
+     "      \"source_sha256\": \"0041ef8025604236efa1e607ab63cb9d8b0c000cf05d11a0609a3063603e2191\",",
+     "      \"source_sha256\": \"c087966698b0fd2210264286cc664408df0247a0b365bc3bdde7594b25f0e781\",",
+     "      \"source_sha256\": \"3f1a0d7cb68a4254671703cc652b7c62453e4ecdb530d34819672ec90385434a\",",
+     "      \"source_sha256\": \"ca2d7c7a3ec2a2b787dde2df054e873246705306a22d90c180d20c5c7f099f71\",",
+     "      \"source_sha256\": \"e17f1c0358bc32b45461030c489b125f28a2e7de29e8f7d41105dc989ae42507\",",
+     "      \"source_sha256\": \"19eaf3f789b9a80e841616c396ac24080ea4c5dae5aed8ee540e2c9db473cbb6\",",
+     "      \"source_sha256\": \"cc3f88802026fc685acee5ec7b19a1b19b2911ead03aa1c07d8b0b8f2ff01ac3\",",
+     "      \"source_sha256\": \"1410c53fb0ebe37bacb1cfe0c4fe8016aa3e263f4ca0ad3727fd0c839e53b441\",",
+     "      \"source_sha256\": \"87826fd038a156e5b8b31294ab718d618e87691e3d08894ec38599f73a85e564\",",
+     "      \"source_sha256\": \"a670f4b2ce5027af9e906d880f8a9b8cf9e817860a2e2191fc93dd32e711a7b6\",",
+     "      \"source_sha256\": \"b1e2a9e67c1c7c57b6e85ef6e1970f0fe3e4cefcacbbc12f45a2fdd27b5a96ff\",",
+     "      \"source_sha256\": \"93d10461f6c3eb6f60111df18ec11a7ecc0f4b76f046966eb2977c17fc0c53c5\","
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "supabase/functions/_shared/__tests__/evolution-control-authz.test.ts",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "supabase/functions/_shared/__tests__/evolution-helpers-phone-status.test.ts",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "supabase/functions/_shared/__tests__/evolution-webhook-messages.chatbot-l1.test.ts",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "supabase/functions/_shared/evolution-control-authz.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 129,
+   "hunk": "PRESENT_REVERSE_APPLIES"
+  },
+  {
+   "path": "supabase/functions/_shared/evolution-helpers.ts",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "supabase/functions/_shared/evolution-webhook-messages.test.ts",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "supabase/functions/_shared/evolution-webhook-messages.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 96,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 31,
+    "missing_in_main": 1,
+    "removed": 4,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     " * `message-delivery`. Sem ele, a varredura de `sending` (20261113130400) não teria"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "supabase/functions/_shared/schemas.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 34,
+   "hunk": "PRESENT_REVERSE_APPLIES"
+  },
+  {
+   "path": "supabase/functions/connection-health-check/index.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 13,
+   "hunk": "PRESENT_REVERSE_APPLIES"
+  },
+  {
+   "path": "supabase/functions/evolution-api/index.test.ts",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "supabase/functions/evolution-api/index.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 57,
+   "hunk": "PRESENT_REVERSE_APPLIES"
+  },
+  {
+   "path": "supabase/functions/message-delivery/index.test.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 51,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 32,
+    "missing_in_main": 0,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "supabase/functions/message-delivery/index.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 113,
+   "hunk": "PRESENT_REVERSE_APPLIES"
+  },
+  {
+   "path": "supabase/migrations/20261113130000_envio_sem_conexao_de_teste_nem_fallback_silencioso.sql",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "supabase/migrations/20261113130100_transfer_conversation_unica_e_fila_aguardando.sql",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "supabase/migrations/20261113130200_conversation_status_regras_e_so_por_rpc.sql",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "patch_lines": 350,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 304,
+    "missing_in_main": 304,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "-- conversation_status_regras_e_so_por_rpc",
+     "-- Auditoria Conversas 2026-11-13, P1-2.",
+     "-- Rollback (SQL executável, na ordem):",
+     "--   drop function if exists public.set_conversations_status(uuid[], text, text, text);",
+     "--   drop trigger if exists trg_contacts_conversation_status_rpc_only on public.contacts;",
+     "--   drop function if exists public.guard_conversation_status_direct_update();",
+     "--   -- set_conversation_status anterior: reexecutar o CREATE OR REPLACE FUNCTION",
+     "--   -- public.set_conversation_status de 20261009055051_sec_rls_02_03_oraculo_uuid_contato.sql",
+     "--   -- (corpo vigente em produção, sem oráculo de UUID). NÃO usar o de 20261016010011",
+     "--   -- (reabre o oráculo SEC-RLS-02).",
+     "--   -- FSM e CHECK anteriores: reexecutar o CREATE OR REPLACE FUNCTION",
+     "--   -- public.enforce_conversation_status_transition() e o bloco",
+     "--   -- \"ALTER TABLE public.contacts ... chk_conversation_status_values\" de",
+     "--   -- 20260929560000_contacts_conversation_status_and_grants.sql.",
+     "-- O QUE ESTAVA ERRADO",
+     "--   1. O gatilho de FSM e o CHECK aceitavam 'pending'/'closed' (nenhuma aba mostra",
+     "--      esses estados) e transições fora da regra (resolved->pending/closed,",
+     "--      archived->pending, closed->...). Uma conversa podia \"sumir\" do Inbox.",
+     "--   2. authenticated tinha UPDATE direto em contacts.conversation_status (policy",
+     "--      \"Users can update their assigned contacts\"): o PATCH pulava a RPC",
+     "--      set_conversation_status, que é quem checa permissão e grava o encerramento.",
+     "-- O QUE MUDA",
+     "--   1. FSM = docs/contexto/regras/manual/regras.md §4.1 + ADR-005:",
+     "--        open     -> waiting | resolved | archived",
+     "--        waiting  -> open | resolved"
+    ],
+    "still_sample": [],
+    "same_basename_in_main": []
+   }
+  },
+  {
+   "path": "supabase/migrations/20261113130300_conversation_closures_closed_by_do_autor.sql",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "supabase/migrations/20261113130400_varredura_mensagens_presas_em_enviando.sql",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "patch_lines": 231,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 201,
+    "missing_in_main": 201,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "-- varredura_mensagens_presas_em_enviando",
+     "-- Auditoria Conversas 2026-11-13, P1-1.",
+     "-- Rollback (SQL executável, na ordem):",
+     "--   select cron.unschedule(jobid) from cron.job where jobname = 'outbound-sending-sweeper';",
+     "--   drop function if exists public.sweep_stuck_outbound_messages(interval, integer);",
+     "--   delete from public.global_settings where key = 'outbound_sweeper_marker_epoch';",
+     "-- O QUE ESTAVA ERRADO",
+     "--   157 mensagens em 'sending' há dias/semanas (28/09 a 01/11). A entrega só é",
+     "--   disparada pelo navegador de quem enviou (message-delivery); se a aba fecha, a",
+     "--   Edge morre ou o lease vence, nada mais olha para a linha: o relógio da bolha fica",
+     "--   eterno e o atendente não sabe se reenvia.",
+     "-- O QUE MUDA",
+     "--   public.sweep_stuck_outbound_messages(idade_minima, limite), rodada a cada minuto",
+     "--   pelo pg_cron, olha mensagens de agente em 'sending', sem recibo (external_id",
+     "--   NULL), sem resolução manual, paradas há mais de 10 min e sem lease vivo. Segue a",
+     "--   semântica da message-delivery / PD-79 — NUNCA reenvia sozinha:",
+     "--     a) conexão = fixture de teste (instance_id 'E2E_FIXTURE'): nenhum cliente real",
+     "--        foi alcançado -> 'failed' (motivo conexao_de_teste);",
+     "--     b) POST ao provedor já iniciado (delivery_post_started_at): resultado",
+     "--        AMBÍGUO -> fica como está, para o painel de resolução manual",
+     "--        (resolve_unconfirmed_message, admin/supervisor);",
+     "--     c) nunca reivindicada (delivery_attempt_count = 0): o POST não pode ter saído",
+     "--        -> 'failed' (motivo nunca_despachada); o atendente vê \"Falha no envio\" e",
+     "--        pode reenviar com segurança;",
+     "--     d) reivindicada PELA EDGE message-delivery (delivery_claimed_by ="
+    ],
+    "still_sample": [],
+    "same_basename_in_main": []
+   }
+  },
+  {
+   "path": "supabase/migrations/20261113130500_transfer_conversation_cas_sem_dono.sql",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "patch_lines": 163,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 132,
+    "missing_in_main": 132,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "-- transfer_conversation_cas_sem_dono",
+     "-- Revisão da PR #3037 (auditoria Conversas 2026-11-13). 20261113130100 já está aplicada e",
+     "-- tem sha256 fixado no ledger: NÃO é editada; esta migration evolui a função.",
+     "-- Rollback (SQL executável, na ordem):",
+     "--   drop function if exists public.transfer_conversation(uuid, uuid, uuid, text, uuid, boolean);",
+     "--   Recriar a versão de 5 argumentos com o bloco \"CREATE OR REPLACE FUNCTION ... $function$;\"",
+     "--   + revoke/grant/comment de 20261113130100_transfer_conversation_unica_e_fila_aguardando.sql.",
+     "-- O QUE ESTAVA FALTANDO",
+     "--   O compare-and-set de p_expected_agent_id só protege conversa COM dono: NULL significa",
+     "--   \"não comparar\". Conversa SEM dono (fila) podia ser assumida por alguém e, logo depois,",
+     "--   outra tela (que ainda via \"sem dono\") transferia por cima, em silêncio.",
+     "-- O QUE MUDA",
+     "--   Parâmetro novo p_expect_unassigned boolean default false: com true, aborta com 40001 se",
+     "--   a conversa já tiver dono. Não pode vir junto com p_expected_agent_id (22023).",
+     "--   Corpo IDÊNTICO ao de 20261113130100 fora isso.",
+     "--   Assinatura muda (6 argumentos): DROP da de 5 + CREATE na MESMA transação, para nunca",
+     "--   existirem duas versões (era o P0-3). Chamadas nomeadas antigas (sem o 6º) continuam",
+     "--   resolvendo para a nova (default false).",
+     "-- PRÉ-CONDIÇÃO: existe exatamente a versão de 5 argumentos (20261113130100 aplicada).",
+     "-- PÓS-CONDIÇÃO: existe exatamente UMA transfer_conversation, a de 6 argumentos.",
+     "BEGIN;",
+     "SET LOCAL lock_timeout = '5s';",
+     "SET LOCAL statement_timeout = '60s';",
+     "DO $pre$",
+     "BEGIN"
+    ],
+    "still_sample": [],
+    "same_basename_in_main": []
+   }
+  },
+  {
+   "path": "supabase/migrations/20261113130600_agendadas_conexao_do_contato_caida.sql",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "patch_lines": 256,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 222,
+    "missing_in_main": 222,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "-- agendadas_conexao_do_contato_caida",
+     "-- Revisão da PR #3037 (auditoria Conversas 2026-11-13).",
+     "-- Rollback (SQL executável, na ordem):",
+     "--   Recriar public.dispatch_scheduled_messages(integer) com o bloco",
+     "--   \"CREATE OR REPLACE FUNCTION ... TO service_role;\" de",
+     "--   20261011133612_dispatch_scheduled_messages.sql (sem alteração).",
+     "-- O QUE MUDA",
+     "--   20261113130000 fez os enqueue_* recusarem com 'contact_whatsapp_connection_disconnected'",
+     "--   quando a conexão do contato caiu (antes caíam em outra conexão). A agendada que",
+     "--   bater nisso tem de virar 'conexao_invalida' (o mesmo motivo de conexão fora do ar),",
+     "--   e não o genérico 'enqueue_failed'. Corpo IDÊNTICO ao vigente (20261011133612, única",
+     "--   definição no histórico): só a linha nova no CASE do motivo. Assinatura, ACL e o job",
+     "--   pg_cron não mudam (o job não é reagendado aqui).",
+     "-- PRÉ-CONDIÇÃO: a função existe. PÓS: o CASE reconhece o código novo.",
+     "BEGIN;",
+     "SET LOCAL lock_timeout = '5s';",
+     "SET LOCAL statement_timeout = '60s';",
+     "DO $pre$",
+     "BEGIN",
+     "  IF to_regprocedure('public.dispatch_scheduled_messages(integer)') IS NULL THEN",
+     "    RAISE EXCEPTION 'pre-condicao: dispatch_scheduled_messages(integer) ausente (aplique 20261011133612 antes)';",
+     "  END IF;",
+     "$pre$;",
+     "CREATE OR REPLACE FUNCTION public.dispatch_scheduled_messages(p_limit integer DEFAULT 50)",
+     "RETURNS TABLE ("
+    ],
+    "still_sample": [],
+    "same_basename_in_main": []
+   }
+  },
+  {
+   "path": "supabase/migrations/_foreign/seed-talkx-connection.sql",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "supabase/tests/db-audit/conversas-p0-p1-20261113.test.sh",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 418,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 376,
+    "missing_in_main": 4,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "F3=\"$MIG/20261113130200_conversation_status_regras_e_so_por_rpc.sql\"",
+     "F5=\"$MIG/20261113130400_varredura_mensagens_presas_em_enviando.sql\"",
+     "F6=\"$MIG/20261113130500_transfer_conversation_cas_sem_dono.sql\"",
+     "F7=\"$MIG/20261113130600_agendadas_conexao_do_contato_caida.sql\""
+    ],
+    "still_sample": []
+   }
+  }
+ ],
+ "counts": {
+  "migrations": "8",
+  "workflows": "0",
+  "src": "32",
+  "edges": "13",
+  "docs_only": "no",
+  "lines_branch_has_main_lacks": "1282",
+  "lines_main_has_branch_lacks": "948"
+ },
+ "auto": "MISTO_CONFLITO",
+ "n_files_with_gaps": 20,
+ "gap_lines_total": 986
+}

@@ -1,0 +1,84 @@
+{
+ "id": "fix__f1a-lote-b-batch2",
+ "kind": "branch",
+ "ref": "origin/fix/f1a-lote-b-batch2",
+ "tip": "d76fb9d57a028cecb00931522c05539c9020c4c0",
+ "merge_base": "bac62ba98454811c3bfd117b838af926b1e795b2",
+ "ahead": 3,
+ "last_commit_date": "2026-10-23",
+ "merge_base_date": "2026-10-23",
+ "prs_with_same_tip": [
+  2076,
+  2436
+ ],
+ "triagem_2804": {
+  "2076": "OBSOLETA",
+  "2436": "OBSOLETA"
+ },
+ "closure_comment": {},
+ "files": [
+  {
+   "path": "src/components/groups/__tests__/GroupsView.a11y.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 138,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 53,
+    "missing_in_main": 48,
+    "removed": 16,
+    "removed_still_in_main": 16,
+    "missing_sample": [
+     "      id: 'g1',",
+     "      group_id: '1@g.us',",
+     "      name: 'Meu Grupo',",
+     "      description: 'Desc',",
+     "      participant_count: 10,",
+     "      avatar_url: null,",
+     "      is_admin: true,",
+     "      whatsapp_connection_id: 'c1',",
+     "      created_at: '2025-01-01',",
+     "      updated_at: '2025-01-01',",
+     "        order: vi",
+     "          .fn()",
+     "          .mockResolvedValue(",
+     "      onAuthStateChange: vi",
+     "        .fn()",
+     "        .mockReturnValue({ data: { subscription: { unsubscribe: vi.fn() } } }),",
+     "    div: ({",
+     "      children,",
+     "      ...props",
+     "    }: { children?: import('react').ReactNode } & Record<string, unknown>) => (",
+     "      <div {...props}>{children}</div>",
+     "    span: ({",
+     "      children,",
+     "      ...props",
+     "    }: { children?: import('react').ReactNode } & Record<string, unknown>) => ("
+    ],
+    "still_sample": [
+     "      id: 'g1', group_id: '1@g.us', name: 'Meu Grupo', description: 'Desc',",
+     "      participant_count: 10, avatar_url: null, is_admin: true, whatsapp_connection_id: 'c1',",
+     "      created_at: '2025-01-01', updated_at: '2025-01-01',",
+     "        order: vi.fn().mockResolvedValue(",
+     "          table === 'whatsapp_groups'",
+     "            ? { data: mockData.grupos, error: null }",
+     "            : { data: mockData.conexoes, error: null }",
+     "      onAuthStateChange: vi.fn().mockReturnValue({ data: { subscription: { unsubscribe: vi.fn() } } }),",
+     "    div: ({ children, ...props }: { children?: import('react').ReactNode } & Record<string, unknown>) => <div {...props}>{children}</div>,",
+     "    span: ({ children, ...props }: { children?: import('react').ReactNode } & Record<string, unknown>) => <span {...props}>{children}</span>,"
+    ]
+   }
+  }
+ ],
+ "counts": {
+  "migrations": "0",
+  "workflows": "0",
+  "src": "1",
+  "edges": "0",
+  "docs_only": "no",
+  "lines_branch_has_main_lacks": "59",
+  "lines_main_has_branch_lacks": "19"
+ },
+ "auto": "MISTO_CONFLITO",
+ "n_files_with_gaps": 1,
+ "gap_lines_total": 64
+}

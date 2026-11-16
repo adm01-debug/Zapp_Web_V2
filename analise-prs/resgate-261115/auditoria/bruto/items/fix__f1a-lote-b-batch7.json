@@ -1,0 +1,82 @@
+{
+ "id": "fix__f1a-lote-b-batch7",
+ "kind": "branch",
+ "ref": "origin/fix/f1a-lote-b-batch7",
+ "tip": "295286eb03813dfdbce12e21f4a44c63aed0d7d7",
+ "merge_base": "bac62ba98454811c3bfd117b838af926b1e795b2",
+ "ahead": 3,
+ "last_commit_date": "2026-10-23",
+ "merge_base_date": "2026-10-23",
+ "prs_with_same_tip": [
+  2084
+ ],
+ "triagem_2804": {
+  "2084": "JA_NA_MAIN"
+ },
+ "closure_comment": {},
+ "files": [
+  {
+   "path": "src/components/leaderboard/Leaderboard.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 121,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 61,
+    "missing_in_main": 52,
+    "removed": 20,
+    "removed_still_in_main": 17,
+    "missing_sample": [
+     "        <div key={i} className=\"rounded-xl border border-border/20 bg-muted/10 p-3\">",
+     "            <Skeleton className=\"h-9 w-9 rounded-full\" />",
+     "            <Skeleton className=\"h-10 w-10 rounded-full\" />",
+     "            <div className=\"flex-1 space-y-2\">",
+     "              <Skeleton className=\"h-4 w-24\" />",
+     "              <Skeleton className=\"h-3 w-16\" />",
+     "            <div className=\"flex gap-1\">",
+     "              <Skeleton className=\"h-6 w-6 rounded-full\" />",
+     "              <Skeleton className=\"h-6 w-6 rounded-full\" />",
+     "  const { agents, isLoading, isRefreshing, error, timeRange, setTimeRange, handleRefresh } =",
+     "    useLeaderboard();",
+     "    <div className=\"relative overflow-hidden rounded-2xl border border-border/30 bg-card p-5\">",
+     "      <div className=\"mb-5 flex items-center justify-between\">",
+     "          <div className=\"flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10\">",
+     "            <Trophy className=\"h-5 w-5 text-primary\" />",
+     "          <div>",
+     "            <h3 className=\"text-base font-semibold text-foreground\">Ranking</h3>",
+     "            <p className=\"text-xs text-muted-foreground\">Top performers em tempo real</p>",
+     "            <Button",
+     "              variant=\"ghost\"",
+     "              size=\"icon\"",
+     "              onClick={handleRefresh}",
+     "              disabled={isRefreshing}",
+     "              aria-label=\"Atualizar ranking\"",
+     "              aria-pressed={isRefreshing}"
+    ],
+    "still_sample": [
+     "        <div key={i} className=\"rounded-xl p-3 border border-border/20 bg-muted/10\">",
+     "            <Skeleton className=\"w-9 h-9 rounded-full\" />",
+     "            <Skeleton className=\"w-10 h-10 rounded-full\" />",
+     "            <div className=\"flex-1 space-y-2\"><Skeleton className=\"h-4 w-24\" /><Skeleton className=\"h-3 w-16\" /></div>",
+     "            <div className=\"flex gap-1\"><Skeleton className=\"w-6 h-6 rounded-full\" /><Skeleton className=\"w-6 h-6 rounded-full\" /></div>",
+     "    <div className=\"rounded-2xl p-5 border border-border/30 bg-card relative overflow-hidden\">",
+     "      <div className=\"flex items-center justify-between mb-5\">",
+     "          <div className=\"w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center\"><Trophy className=\"w-5 h-5 text-primary\" /></div>",
+     "          <div><h3 className=\"text-base font-semibold text-foreground\">Ranking</h3><p className=\"text-xs text-muted-foreground\">Top performers em tempo real</p>",
+     "            <Button variant=\"ghost\" size=\"icon\" onClick={handleRefresh} disabled={isRefreshing} aria-label=\"Atualizar ranking\" aria-pressed={isRefreshing} class"
+    ]
+   }
+  }
+ ],
+ "counts": {
+  "migrations": "0",
+  "workflows": "0",
+  "src": "1",
+  "edges": "0",
+  "docs_only": "no",
+  "lines_branch_has_main_lacks": "61",
+  "lines_main_has_branch_lacks": "24"
+ },
+ "auto": "MISTO_CONFLITO",
+ "n_files_with_gaps": 1,
+ "gap_lines_total": 69
+}
