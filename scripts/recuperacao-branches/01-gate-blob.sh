@@ -20,8 +20,19 @@ git ls-tree -r origin/main | awk '{print $3}' | sort -u > "$OUT/main-blobs.txt"
 for br in $(git for-each-ref --format='%(refname:short)' refs/remotes/origin | grep -vE '^origin$|^origin/(HEAD|main|contexto)$'); do
   mb=$(git merge-base origin/main "$br" 2>/dev/null) || { echo -e "$br\tERRO\t-\t-\t-" >> "$OUT/resumo.tsv"; continue; }
   tip=$(git rev-parse "$br")
-  # arquivos adicionados/modificados pela branch desde o fork point
-  mapfile -t files < <(git diff --name-only --diff-filter=AMR "$mb" "$br" 2>/dev/null)
+  # Arquivos adicionados/modificados pela branch desde o ponto de bifurcacao.
+  #
+  # Caso especial: se a branch JA foi incorporada por merge, ela e ancestral da main e o
+  # ponto de bifurcacao e o proprio tip -- `git diff $mb $br` sai vazio. Se a main removeu
+  # aquele trabalho depois, ele ficaria invisivel para o gate. Nesse caso compara-se a
+  # arvore da branch direto com a da main. Achado do Codex na PR #3192; nenhuma das 222
+  # branches desta medicao cai nele (nenhuma e ancestral da main), e a guarda fica para
+  # execucao futura.
+  if [ "$tip" = "$mb" ]; then
+    mapfile -t files < <(git diff --name-only --diff-filter=AMR origin/main "$br" 2>/dev/null)
+  else
+    mapfile -t files < <(git diff --name-only --diff-filter=AMR "$mb" "$br" 2>/dev/null)
+  fi
   n=${#files[@]}
   same=0; moved=0; uniq=0
   for f in "${files[@]}"; do

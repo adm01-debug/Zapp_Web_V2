@@ -2,8 +2,11 @@ import subprocess, collections, os, re
 O = os.environ['OUT']
 R = subprocess.run(['git', 'rev-parse', '--show-toplevel'], capture_output=True, text=True).stdout.strip()
 
-# Linha feita so de estrutura: nao distingue comportamento nenhum.
-ESTRUTURAL = re.compile(r'^[\s{}()\[\];,*/+\-=<>&|?:]*$')
+# Linha feita so de estrutura: delimitador de bloco, virgula, ponto e virgula ou
+# marcacao de comentario. NAO entram aqui operadores (`+`, `-`, `=>`, `||`): quando um
+# operador ocupa uma linha propria, ele E a diferenca de comportamento -- trocar `+` por
+# `-` muda a conta. Achado do Codex na PR #3192, reproduzido antes da troca.
+ESTRUTURAL = re.compile(r'^(?:[\s{}()\[\];,]*|/\*+|\*+/|//+|\*)$')
 
 
 def run(a):
@@ -34,10 +37,8 @@ def lines(blob):
     s = set()
     for l in txt.splitlines():
         t = l.strip()
-        # Fora da comparacao: SO linha estrutural pura (chaves, parenteses, virgula,
-        # ponto e virgula, marcacao de comentario). Nao se corta por tamanho: uma linha
-        # curta pode ser a diferenca inteira de comportamento -- `true;` contra `false;`
-        # sao 5 e 6 caracteres e invertem a regra. Achado do Codex na PR #3192.
+        # Nao se corta por tamanho: uma linha curta pode ser a diferenca inteira de
+        # comportamento -- `true;` contra `false;` sao 5 e 6 caracteres e invertem a regra.
         if t and not ESTRUTURAL.match(t):
             s.add(t)
     cache[blob] = s
