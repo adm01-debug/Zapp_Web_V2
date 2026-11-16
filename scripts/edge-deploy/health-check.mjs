@@ -102,6 +102,21 @@ export async function resolveScope(scope, manifestPath, readFileImpl = readFile)
   return [scope];
 }
 
+/**
+ * Orcamento da SQL ja percent-encoded dentro da query string.
+ *
+ * A SQL viaja na URL (`?sql=...`) e a Management API responde 414 quando a URL
+ * passa de 4 KB. Medido em 16/11/2026 com as 92 funcoes do manifest: a lista de
+ * predicados por slug cruza os 4096 caracteres a partir de 17 slugs longos
+ * (URL 4183; com 16 fica em 3963). Fora do `sql` a URL custa ~345 caracteres,
+ * entao 3500 mantem o total em ~3845.
+ *
+ * O 414 dai nao e transitorio: repetir a mesma chamada estoura de novo. Por isso
+ * a correcao e nao gerar a URL grande — e nao abrir excecao para 414 na regra de
+ * falhar fechado em 4xx.
+ */
+const MAX_SQL_ENCODED = 3500;
+
 function pathnamePredicate(slug) {
   const pathname = `/functions/v1/${validateSlug(slug)}`;
   return `(log_attributes['request.pathname'] = '${pathname}' OR ` +
@@ -120,9 +135,10 @@ export function buildLogsSql(slugs, matchAll = false) {
   }
   if (!Array.isArray(slugs) || slugs.length === 0) throw new Error('Escopo de logs vazio');
   const unique = [...new Set(slugs.map(validateSlug))];
-  const scopeFilter = unique.length > 20
+  const porSlug = unique.map(pathnamePredicate).join(' OR ');
+  const scopeFilter = unique.length > 20 || encodeURIComponent(porSlug).length > MAX_SQL_ENCODED
     ? `startsWith(log_attributes['request.pathname'], '/functions/v1/')`
-    : unique.map(pathnamePredicate).join(' OR ');
+    : porSlug;
   return (
     `SELECT ` +
     `count() AS total, ` +

@@ -348,3 +348,53 @@ test('runHealthCheck aplica limiar e não espera quando waitMs é zero', async (
   assert.equal(slept, false);
   assert.deepEqual(outcome, { status: 'failed', total: 10, errors: 2, errorRate: 0.2 });
 });
+
+/**
+ * A SQL vai na query string. Com 17 slugs longos a URL passava de 4 KB e a
+ * Management API respondia 414 — que cai em `!response.ok` e derruba o
+ * health-check inteiro. Duas branches de outros agentes propunham tratar 414
+ * como transitorio, o que faria o deploy passar com `status: 'warning'` e sem
+ * medir taxa de erro nenhuma, abrindo excecao na regra de falhar fechado em 4xx
+ * (provada no teste acima). A correcao e nao gerar a URL grande.
+ */
+test('escopo grande cabe na URL: 414 da Management API nao acontece por tamanho', async () => {
+  // 17 slugs de 25 caracteres, o tamanho do maior slug real do manifest.
+  const longos = Array.from({ length: 17 }, (_, i) => `funcao-de-nome-comprido-${String.fromCharCode(97 + i)}`);
+  const sql = buildLogsSql(longos);
+
+  // Cedeu lugar ao prefixo, como ja acontece acima de 20 slugs.
+  assert.match(sql, /startsWith\(log_attributes\['request\.pathname'\], '\/functions\/v1\/'\)/);
+  assert.doesNotMatch(sql, /funcao-de-nome-comprido-a/);
+
+  // E a URL que sai de queryAnalytics fica abaixo do limite de 4 KB.
+  const calls = [];
+  await queryAnalytics({
+    projectRef: CANONICAL_PROJECT,
+    token: 'token-ok',
+    sql,
+    start: new Date('2026-11-07T12:00:00.000Z'),
+    end: new Date('2026-11-07T12:05:00.000Z'),
+    fetchImpl: async (url) => {
+      calls.push(url.toString());
+      return response(200, { result: [{ total: '1', errors: '0' }] });
+    },
+  });
+  assert.equal(calls.length, 1);
+  assert.ok(
+    calls[0].length < 4096,
+    `URL de ${calls[0].length} caracteres: a Management API responde 414 acima de 4096`,
+  );
+});
+
+test('o orcamento da URL vale tambem abaixo de 20 slugs', () => {
+  // 16 slugs curtos continuam filtrados um a um: o corte e por tamanho, nao por
+  // contagem, e nao deve tirar precisao de quem cabe.
+  const curtos = Array.from({ length: 16 }, (_, i) => `fn-${String.fromCharCode(97 + i)}`);
+  const sqlCurtos = buildLogsSql(curtos);
+  assert.match(sqlCurtos, /\/functions\/v1\/fn-a'/);
+  assert.doesNotMatch(sqlCurtos, /'\/functions\/v1\/'\)/);
+
+  // 16 slugs longos, porem, estouram o orcamento e cedem ao prefixo.
+  const longos = Array.from({ length: 16 }, (_, i) => `funcao-de-nome-bem-comprido-${String.fromCharCode(97 + i)}`);
+  assert.match(buildLogsSql(longos), /startsWith\(log_attributes\['request\.pathname'\], '\/functions\/v1\/'\)/);
+});
