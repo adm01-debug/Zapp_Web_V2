@@ -802,10 +802,13 @@ export function useTalkXSegments() {
 
   const refreshEstimates = useMutation({
     mutationFn: async (segments: TalkXSegment[]) => {
-      // Um segmento que falha (RLS, rede, regra que o PostgREST recusa) não pode
-      // cancelar o recálculo dos outros — com Promise.all a primeira rejeição
-      // abortava o botão "Atualizar" inteiro e ninguém era avisado. `allSettled`
-      // leva todos até o fim; o erro do update (que antes era ignorado) entra na conta.
+      // O `map` dispara todos os recálculos de uma vez, então o Promise.all NÃO
+      // cancelava os outros — eles rodavam até o fim. O que se perdia era a
+      // APURAÇÃO: na primeira rejeição o `onSuccess` não rodava, logo não havia
+      // `invalidate()` e os números recalculados não chegavam à tela; sem
+      // `onError`, ninguém era avisado; e o erro do próprio UPDATE era ignorado,
+      // então uma falha de RLS passava como sucesso. `allSettled` conta quem
+      // falhou, o `onSettled` sempre atualiza a lista e o aviso chega ao usuário.
       const results = await Promise.allSettled(segments.map(async (s) => {
         const estimated_count = await countAudience(s.rules);
         if (estimated_count === s.estimated_count) return;

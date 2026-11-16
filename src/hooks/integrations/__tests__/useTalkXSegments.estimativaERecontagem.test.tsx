@@ -6,9 +6,12 @@
  *    countAudience significa "toda a base" — e a tela mostrava a base inteira
  *    como se fosse o público do segmento. Condição em branco (digitação em
  *    curso) continua mantendo a contagem anterior, de propósito (X008).
- * 2. Botão "Atualizar" da biblioteca: `Promise.all` abortava no primeiro
- *    segmento que falhasse, os demais não eram recalculados, o erro do update
- *    era ignorado e ninguém era avisado.
+ * 2. Botão "Atualizar" da biblioteca: com `Promise.all` os recálculos TODOS
+ *    rodavam (o `map` dispara de uma vez), mas a apuração se perdia — na
+ *    primeira rejeição o `onSuccess` não rodava, então não havia `invalidate()`
+ *    e os números novos não chegavam à tela; sem `onError` ninguém era avisado;
+ *    e o erro do próprio UPDATE era ignorado, então falha de RLS passava como
+ *    sucesso.
  */
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { renderHook, waitFor } from '@testing-library/react';
@@ -120,14 +123,15 @@ describe('useAudienceEstimate · segmento só com condição "em breve"', () => 
   });
 });
 
-describe('refreshEstimates · um segmento que falha não cancela os outros', () => {
+describe('refreshEstimates · falha de um segmento é apurada e avisada', () => {
   it('recalcula todos, avisa quantos falharam e lê o erro do update', async () => {
     state.updateFalhaEm.add('b');
     const { result } = renderHook(() => useTalkXSegments(), { wrapper });
 
     result.current.refreshEstimates.mutate([seg('a', 1), seg('b', 2), seg('c', 3)]);
 
-    // Os três chegam ao UPDATE: com Promise.all o 'c' nunca era tentado.
+    // Os três chegam ao UPDATE (isso já valia com Promise.all: o `map` dispara
+    // todos de uma vez). O que a correção acrescenta é o aviso abaixo.
     await waitFor(() => expect(state.updates.map((u) => u.id)).toEqual(['a', 'b', 'c']));
     await waitFor(() => expect(toastSpy.error).toHaveBeenCalledWith('Recontagem incompleta: 1 de 3 segmento(s) não recalculado(s)'));
     expect(state.updates.every((u) => u.estimated_count === 777)).toBe(true);
