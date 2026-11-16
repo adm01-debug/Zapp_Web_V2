@@ -44,6 +44,17 @@ describe('unconfirmedRefetchInterval', () => {
     expect(unconfirmedRefetchInterval(q('a', 'error', 6))).toBe(60_000);
   });
 
+  it('o `pending` entre duas falhas não zera a contagem', () => {
+    // Consulta que falha desde a abertura não tem dado em cache, então cada nova busca
+    // passa por `pending` antes de terminar em erro. Se isso zerasse a contagem, o recuo
+    // ficaria preso em 1 min e nunca chegaria a 2, 4, 8 ou 10.
+    expect(unconfirmedRefetchInterval(q('a', 'error', 1))).toBe(60_000);
+    expect(unconfirmedRefetchInterval(q('a', 'pending', 1))).toBe(30_000);
+    expect(unconfirmedRefetchInterval(q('a', 'error', 2))).toBe(120_000);
+    expect(unconfirmedRefetchInterval(q('a', 'pending', 2))).toBe(30_000);
+    expect(unconfirmedRefetchInterval(q('a', 'error', 3))).toBe(240_000);
+  });
+
   it('o mesmo erro reavaliado não conta duas vezes', () => {
     expect(unconfirmedRefetchInterval(q('a', 'error', 1))).toBe(60_000);
     // O callback é reavaliado a cada render, com o MESMO erro: não pode dobrar.

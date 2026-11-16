@@ -58,7 +58,13 @@ export function unconfirmedRefetchInterval(q: {
   state: { status: string; errorUpdateCount?: number };
 }): number {
   if (q.state.status !== 'error') {
-    falhasSeguidas.delete(q.queryHash);
+    // SO o sucesso zera a contagem. O react-query poe `status: 'pending'` ao comecar uma
+    // busca enquanto `data` ainda e' `undefined`, e o callback e' reavaliado nessa
+    // transicao -- entao, numa consulta que falha desde a abertura (sem dado em cache), a
+    // sequencia e' `pending -> error -> pending -> error`. Apagar a contagem em `pending`
+    // fazia toda falha ser tratada como a primeira: o recuo nunca passava de 1 min,
+    // justamente no caso para o qual ele existe. Achado da Devin e do Codex na PR #3194.
+    if (q.state.status === 'success') falhasSeguidas.delete(q.queryHash);
     return POLL_MS;
   }
   const errosVistos = q.state.errorUpdateCount ?? 1;
