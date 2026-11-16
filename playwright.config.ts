@@ -251,20 +251,50 @@ export default defineConfig({
     {
       name: 'firefox-email-navy',
       testMatch: /email-navy-visual\.spec\.ts/,
-      // O Firefox desta spec morria com `Page crashed` / `Target crashed` no runner:
-      // 2 falhas numa execucao, 4 na seguinte, 6 na outra, sempre em testes
-      // diferentes e so neste projeto (chromium-email-navy e webkit-email-navy
-      // nunca falham). Nao e asserção: as mensagens sao crash do processo de
-      // conteudo, e os `element(s) not found` vem da aba ja morta.
-      // A spec e' pesada (app em tema escuro, 1280x900, screenshots fullPage) e o
-      // Firefox a divide em varios processos de conteudo; com 2 workers no mesmo
-      // runner de 2 nucleos, um deles e' derrubado por falta de memoria.
-      // Um unico processo de conteudo elimina o filho que morre, sem afrouxar
-      // nenhuma asserção: todo teste continua rodando e medindo o mesmo.
+      // O Firefox desta spec morre com `Page crashed` / `Target crashed` no runner,
+      // e so neste projeto (chromium-email-navy e webkit-email-navy rodam a MESMA
+      // spec e nunca falharam). Nao e asserção: os `element(s) not found` que
+      // aparecem vem da aba ja morta.
+      //
+      // ONDE ele morre, medido na execucao 43940877888 (16/11/2026): o projeto
+      // tem 31 testes, 29 passam, e os 2 que caem sao os do painel CRM —
+      // email-navy-visual.spec.ts:343 (morre no `page.evaluate` que roda o axe)
+      // e :418. Versoes anteriores deste comentario diziam "134 testes" e "sempre
+      // os testes do fim do arquivo, memoria que cresce ao longo da spec": as
+      // duas afirmacoes estavam erradas. 134 e o total do JOB de E2E, somando os
+      // 8 projetos da invocacao coletiva — nao a contagem deste projeto.
+      //
+      // A causa principal era o app: em DEV ele carregava `@axe-core/react`
+      // (4.559.240 bytes) e re-auditava a arvore React a cada render dentro da
+      // propria pagina de teste. Isso saiu da automacao na #3190
+      // (`src/main.tsx`, guarda por `navigator.webdriver`), e a execucao de la
+      // mediu o efeito: o :418 passou a passar e o flaky zerou. Sobrou o :343,
+      // que morre no `axe.run` da PROPRIA spec — 580.491 bytes sobre o dialogo
+      // a 320 px. Tirar o axe do app era necessario, nao suficiente.
+      //
+      // O que cada medida deu, em ordem:
+      //
+      // 1. Um unico processo de conteudo (#3180): de 6 falhas para 3 — ajudou e
+      //    NAO resolveu.
+      // 2. `--workers=1` so neste projeto (#3187): NAO resolveu, as duas quedas
+      //    seguiram `Page crashed`. PR fechada; a concorrencia entre workers nao
+      //    era a causa.
+      // 3. Trace sem screenshots nem snapshots de DOM (esta mudanca). O
+      //    `retain-on-failure` global (linha ~44) GRAVA o trace de TODO teste e
+      //    descarta no sucesso; com app em tema escuro e screenshots fullPage, e'
+      //    buffer acumulado dentro do processo que morre. Reduz consumo; nao e'
+      //    apresentada como a causa. O modo continua `retain-on-failure` — a
+      //    decisao E81 e' sobre QUANDO guardar o trace, e ela nao muda;
+      //    `on-first-retry` continua proibido pelo guard. O que sai e' o CONTEUDO
+      //    mais caro: o trace mantem log de acoes, rede e console, e perde a
+      //    linha do tempo visual. Troca consciente, so neste projeto.
+      //
+      // Nenhuma asserção foi afrouxada e nenhum teste foi pulado.
       use: {
         ...devices['Desktop Firefox'],
         viewport: { width: 1280, height: 900 },
         colorScheme: 'dark',
+        trace: { mode: 'retain-on-failure', screenshots: false, snapshots: false },
         launchOptions: {
           firefoxUserPrefs: {
             'dom.ipc.processCount': 1,
