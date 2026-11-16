@@ -79,11 +79,11 @@ Cada um foi perseguido até o fim, e nenhum é funcionalidade faltando:
 | job `cleanup-login-attempts-pii` | **`login-attempts-retention-90d @ 41 4 * * *`**, que faz o expurgo: `DELETE FROM public.login_attempts WHERE coalesce(last_attempt_at, updated_at, created_at) < now() - interval '90 days' AND (locked_until IS NULL OR locked_until < now())`. O objetivo de LGPD está cumprido. |
 | job `cleanup-cron-run-details-7d` | **`cron-historico-retencao-7d @ 17 3 * * *`**: `delete from cron.job_run_details where coalesce(end_time, start_time) < now() - interval '7 days'`. Mesma função, outro nome. |
 | constraint `user_roles_no_special_agent` | O rótulo `special_agent` **não existe mais em enum nenhum** do banco (conferido em `pg_enum`). Uma constraint que proíbe um valor inexistente no tipo não tem o que proibir. |
-| tabela `copilot_insight_feedback` | **`copilot_feedback`**, com `feedback_type`, `rating`, `reason`, `suggestion_id`, `suggestion_text`, `sent_text`, `edit_level`, `created_by` — o mesmo papel. Nenhum código da `main` menciona `copilot_insight_feedback`: as 8 menções são todas em documento de análise. |
+| tabela `copilot_insight_feedback` | **`copilot_feedback`**, com `feedback_type`, `rating`, `reason`, `suggestion_id`, `suggestion_text`, `sent_text`, `edit_level`, `created_by` — o mesmo papel. Nenhum código da `main` menciona `copilot_insight_feedback`: as menções são todas em documento de análise. |
 | tabela `copilot_presence` | **`agent_presence`**, com o job `expire-stale-agent-presence` cuidando do vencimento. Nenhum código da `main` menciona `copilot_presence`. |
 | função `e2e_fixture_message` | Não existe em produção, e **nenhum código da `main` a chama** — as menções são todas em documento de análise. É `SECURITY DEFINER` que insere em `messages`: recuperá-la adicionaria superfície de escrita privilegiada **sem consumidor**. Obsoleta por ausência de uso, não por descuido. |
 
-### O ínicio índice que a branch criava e que não serviria
+### O índice que a branch criava e que não serviria
 
 `20261026110300_login_attempts_ttl_lgpd.sql` criava `idx_login_attempts_updated_at`. Ele não
 existe em produção — e **não ajudaria**: o expurgo que de fato roda filtra por
@@ -104,13 +104,43 @@ precisa ser recuperada, a colisão **não bloqueia nada agora** — mas segue se
 qualquer recuperação futura de migration precisar de número novo por `reserve_migration_version`,
 nunca do número original.
 
+## As 22 branches que este veredito desobriga
+
+Do ponto de vista do **banco**, estas branches não têm mais nada pendente. O número é quantas
+migrations do A1 cada uma carrega:
+
+| Migrations | Branch (`origin/…`) |
+|---|---|
+| 6 | `claude/feat-copiloto-cv011-020-migrations-261016-1930` |
+| 4 | `claude/fix-conversas-p0-p1-backend-261113` |
+| 3 | `claude/loving-lovelace-esc3l2` |
+| 2 | `claude/feat-copilot-radar-20261108-1800` |
+| 1 | `claude/feat-message-delivery-post-iniciado-261024-1719` |
+| 1 | `claude/feat-message-delivery-post-iniciado-261101-1330` |
+| 1 | `claude/feat-multiplix-cron-instancia-pausada-261101-1410` |
+| 1 | `claude/feat-remove-special-agent-261113` |
+| 1 | `claude/feat-talkx-x058-campaign-queue-segment-261101-2300` |
+| 1 | `claude/feat-talkx-x070-suppression-reasons-261101-2230` |
+| 1 | `claude/feat-talkx-x074-analytics-rpcs-261101-2300` |
+| 1 | `claude/feat-talkx-x086-template-metrics-rpcs-261101-2300` |
+| 1 | `claude/fix-canonical-receipt-policies-261020-2005` |
+| 1 | `claude/fix-copilot-rls-supervisor-261101-1530` |
+| 1 | `claude/fix-copilot-tick-atomicity-261101-1430` |
+| 1 | `claude/fix-db-live-guard-dup-261109-1800` |
+| 1 | `claude/fix-migration-drift-20261102012200-261102-0900` |
+| 1 | `claude/fix-pd79-compat-pre-migration-261111` |
+| 1 | `claude/fix-revogar-grants-escrita-anon-261025-2115` |
+| 1 | `claude/fix-talkx-cron-startup-timeout-261025-1700` |
+| 1 | `claude/infra-c121-ddl-261101-1350` |
+| 1 | `claude_pink/cool-dijkstra-xk9ek2` |
+
 ## O que isto libera, e o que não
 
-**Libera:** as 33 migrations deixam de ser impedimento para fechar as branches que as carregam.
-O bloco A1 sai da fila.
+**Libera:** as 33 migrations deixam de ser impedimento para fechar essas 22 branches. O bloco A1
+sai da fila.
 
-**Não libera a branch inteira.** Cada uma dessas branches tem outros arquivos (código, teste,
-script) com veredito próprio a dar. Este documento julga as migrations, não as branches.
+**Não libera a branch inteira.** Cada uma dessas 22 tem outros arquivos (código, teste, script)
+com veredito próprio a dar. Este documento julga as migrations, não as branches.
 
 **NÃO VERIFICADO:** se o **corpo** de cada função em produção é linha a linha o da versão da
 branch. A prova aqui é que o objeto existe e que a `main` tem o arquivo que o define — e o
