@@ -110,6 +110,16 @@ test.describe('Talk X module', () => {
 
     const busca = page.getByPlaceholder('O que você precisa de ajuda hoje?');
     await expect(busca).toBeVisible();
+    // Sem o blur esta prova era VAZIA: a Ajuda foca a busca sozinha ao montar
+    // (TalkXHelpCenter.tsx:136-138, `if (!route.article) focusSearch()`), logo
+    // `toBeFocused()` depois do atalho passava mesmo que o Ctrl+K nao fizesse
+    // nada. Esperar o titulo garante que os efeitos de montagem rodaram — a
+    // mesma corrida do WebKit tratada no teste abaixo, onde a tecla chegava
+    // antes do listener de captura; afirmar o autofoco e depois tira-lo faz o
+    // `toBeFocused()` final provar o atalho, nao o autofoco.
+    await expect(page.getByRole('heading', { name: 'Ajuda do Talk X' })).toBeVisible();
+    await expect(busca).toBeFocused();
+    await busca.blur();
 
     await page.keyboard.press('Control+k');
     await expect(busca).toBeFocused();
