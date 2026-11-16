@@ -1,0 +1,11 @@
+[
+ {
+  "commit": "8718913bc",
+  "arquivo": "src/components/leaderboard/Leaderboard.tsx",
+  "linhas": 2,
+  "amostra": [
+   "  const { agents, isLoading, isRefreshing, timeRange, setTimeRange, handleRefresh } =",
+   "        <div className=\"py-8 text-center\">"
+  ]
+ }
+]

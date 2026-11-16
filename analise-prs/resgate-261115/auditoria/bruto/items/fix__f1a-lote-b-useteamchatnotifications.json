@@ -1,0 +1,131 @@
+{
+ "id": "fix__f1a-lote-b-useteamchatnotifications",
+ "kind": "branch",
+ "ref": "origin/fix/f1a-lote-b-useteamchatnotifications",
+ "tip": "ee3d010dbd516e7f7c02be0e0e5404cb77fefcdb",
+ "merge_base": "9d65fed626e05a9582c56badade4d2e6afaf9356",
+ "ahead": 2,
+ "last_commit_date": "2026-10-18",
+ "merge_base_date": "2026-10-18",
+ "prs_with_same_tip": [
+  2080
+ ],
+ "triagem_2804": {
+  "2080": "JA_NA_MAIN"
+ },
+ "closure_comment": {},
+ "files": [
+  {
+   "path": "src/hooks/chat/__tests__/useTeamChatNotifications.canal-estavel.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 123,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 24,
+    "missing_in_main": 24,
+    "removed": 15,
+    "removed_still_in_main": 9,
+    "missing_sample": [
+     "      h.erro ? { data: null, error: { message: h.erro } } : { data: h.membership, error: null }",
+     "// PE-75: o aviso sai pela API `Notification` direta (`showBrowserNotification`),",
+     "// não mais por `usePushNotifications` (exigia Service Worker de aplicação,",
+     "// `SERVICE_WORKER_ENABLED=false`). `h.show` grava o título/options de cada",
+     "// instância criada — mesmo papel que tinha como spy do mock antigo.",
+     "class FakeNotification {",
+     "  static permission: NotificationPermission = 'granted';",
+     "  constructor(title: string, options?: NotificationOptions) {",
+     "    h.show(title, options);",
+     "  Object.defineProperty(window, 'Notification', { configurable: true, value: FakeNotification });",
+     "    await act(async () => {",
+     "      await h.handler!(mensagem());",
+     "    expect(h.show).toHaveBeenCalledWith('💬 Teams: Ana', expect.anything());",
+     "    client.setQueryData(queryKeys.inbox('eu'), [",
+     "      conversa([{ profile_id: 'outro', is_muted: false }]),",
+     "    await act(async () => {",
+     "      await h.handler!(mensagem());",
+     "    await act(async () => {",
+     "      await h.handler!(mensagem());",
+     "    await act(async () => {",
+     "      await h.handler!(mensagem());",
+     "    await act(async () => {",
+     "      await h.handler!(mensagem());",
+     "      'permission denied'"
+    ],
+    "still_sample": [
+     "      h.erro ? { data: null, error: { message: h.erro } } : { data: h.membership, error: null },",
+     "}));",
+     "    await act(async () => { await h.handler!(mensagem()); });",
+     "    client.setQueryData(queryKeys.inbox('eu'), [conversa([{ profile_id: 'outro', is_muted: false }])]);",
+     "    await act(async () => { await h.handler!(mensagem()); });",
+     "    await act(async () => { await h.handler!(mensagem()); });",
+     "    await act(async () => { await h.handler!(mensagem()); });",
+     "    await act(async () => { await h.handler!(mensagem()); });",
+     "      'permission denied',"
+    ]
+   }
+  },
+  {
+   "path": "src/hooks/chat/useTeamChatNotifications.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 317,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 128,
+    "missing_in_main": 73,
+    "removed": 82,
+    "removed_still_in_main": 59,
+    "missing_sample": [
+     "import { useContext, useEffect, useRef, useSyncExternalStore } from 'react';",
+     "import { QueryClientContext } from '@tanstack/react-query';",
+     "import { queryKeys } from '@/hooks/team-chat/queryKeys';",
+     "export function subscribeActiveTeamChatConversation(",
+     "  listener: ActiveConversationListener",
+     "): () => void {",
+     "    () => null",
+     "        log.error('Unexpected error in useTeamChatNotifications:', err);",
+     "  // `useQueryClient()` lançaria sem `QueryClientProvider` — este listener",
+     "  // mora no nível do app (TC-007) e sempre tem um acima na produção, mas o",
+     "  // cache é só uma otimização (evita ida ao banco quando o inbox já carregou",
+     "  // a conversa); sem provider, cai para a consulta direta sem quebrar.",
+     "  const queryClient = useContext(QueryClientContext);",
+     "  // HZ5-09: o canal era recriado toda vez que o usuário mexia no volume (as",
+     "  // preferências estavam nas deps do efeito). O efeito de assinatura abaixo",
+     "  // só depende do perfil — preferências/queryClient chegam ao callback por",
+     "  // este ref, sempre com o valor do render mais recente, sem derrubar e",
+     "  // reabrir o canal a cada mudança.",
+     "  const latestRef = useRef({ notifSettings, isQuietHours, queryClient });",
+     "  latestRef.current = { notifSettings, isQuietHours, queryClient };",
+     "      .channel('team-chat-notifications' + uniqueRealtimeTopic(''))",
+     "      .on(",
+     "        'postgres_changes',",
+     "        async (payload) => {",
+     "          // Lê sempre o valor do render mais recente (ref) — a assinatura do"
+    ],
+    "still_sample": [
+     "import { useEffect, useRef, useSyncExternalStore } from 'react';",
+     "export function subscribeActiveTeamChatConversation(listener: ActiveConversationListener): () => void {",
+     "    () => null,",
+     "      } catch (err) { log.error('Unexpected error in useTeamChatNotifications:', err); }",
+     "      .on('postgres_changes', {",
+     "        event: 'INSERT',",
+     "        schema: 'public',",
+     "        table: 'team_messages',",
+     "      }, async (payload) => {",
+     "        const msg = payload.new as {"
+    ]
+   }
+  }
+ ],
+ "counts": {
+  "migrations": "0",
+  "workflows": "0",
+  "src": "2",
+  "edges": "0",
+  "docs_only": "no",
+  "lines_branch_has_main_lacks": "193",
+  "lines_main_has_branch_lacks": "128"
+ },
+ "auto": "MISTO_CONFLITO",
+ "n_files_with_gaps": 2,
+ "gap_lines_total": 165
+}

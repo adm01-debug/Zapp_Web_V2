@@ -1,0 +1,23 @@
+{
+ "id": "pr-2424",
+ "kind": "pr",
+ "ref": "refs/remotes/pr/2424",
+ "pr": 2424,
+ "tip": "feb4bb3bc10b6881df7219d30c13eb0cc3ba96b8",
+ "merge_base": "ee8f4b6eb32067d914501fad9c9285bae82e7a8c",
+ "ahead": 3,
+ "last_commit_date": "2026-10-31",
+ "merge_base_date": "2026-10-31",
+ "triagem_2804": "DECISAO_DONO",
+ "closure_comment": null,
+ "files": [
+  {
+   "path": "supabase/migrations/20261031120000_copilot_phase4_brinde_intelligence.sql",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  }
+ ],
+ "auto": "INCORPORADA_PROVA_PATCH",
+ "n_files_with_gaps": 0,
+ "gap_lines_total": 0
+}

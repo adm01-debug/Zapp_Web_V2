@@ -1,0 +1,104 @@
+{
+ "id": "claude__fix-external-db-bridge-column-injection-261108-2319",
+ "kind": "branch",
+ "ref": "origin/claude/fix-external-db-bridge-column-injection-261108-2319",
+ "tip": "bc00f402732025318854388bb1a5235e12167ee0",
+ "merge_base": "7e128bc40305aa6917aec53a822fcc9c70098771",
+ "ahead": 16,
+ "last_commit_date": "2026-11-12",
+ "merge_base_date": "2026-11-11",
+ "prs_with_same_tip": [
+  2879
+ ],
+ "triagem_2804": {
+  "2879": null
+ },
+ "closure_comment": {},
+ "files": [
+  {
+   "path": "scripts/ci/deno.lock",
+   "status": "MAIN_UNCHANGED_SINCE_BASE",
+   "patch_lines": 403,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 323,
+    "removed_still_in_main": 323,
+    "missing_sample": [
+     "{\"version\":\"5\",\"specifiers\":{\"npm:@supabase/supabase-js@2.87.1\":\"2.87.1\",\"npm:qrcode@1.5.3\":\"1.5.3\",\"npm:tslib@2.8.1\":\"2.8.1\",\"npm:zod@3.23.8\":\"3.23.8\"},\"npm\":{"
+    ],
+    "still_sample": [
+     "  \"version\": \"5\",",
+     "  \"specifiers\": {",
+     "    \"npm:@supabase/supabase-js@2.87.1\": \"2.87.1\",",
+     "    \"npm:qrcode@1.5.3\": \"1.5.3\",",
+     "    \"npm:tslib@2.8.1\": \"2.8.1\",",
+     "    \"npm:zod@3.23.8\": \"3.23.8\"",
+     "  \"npm\": {",
+     "    \"@supabase/auth-js@2.87.1\": {",
+     "      \"integrity\": \"sha512-6RDeOf5TVoaXFtEstN188ykp3pXLZaU9qoAWfx8dc50FFAAqt+kcFJ96V0IvSmcpb4mDAWcpTJ7BegmVDn/WIw==\",",
+     "      \"dependencies\": ["
+    ]
+   }
+  },
+  {
+   "path": "supabase/deployment-manifest.json",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 31,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 4,
+    "missing_in_main": 2,
+    "removed": 4,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "      \"source_sha256\": \"295f5aa25561b9979a55de807bd81321a0a9d0a26e64ffb822199a6fcf30111b\",",
+     "  \"manifest_sha256\": \"5552532d2d55b288f71944c57cdaac9cb7bff2a72a6462c5af1ecde8664229c5\""
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "supabase/functions/external-db-bridge/filters-validation.test.ts",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "supabase/functions/external-db-bridge/index.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 42,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 13,
+    "missing_in_main": 9,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "// SEC-Z018: valida que `value` é um identificador SQL seguro (nome de coluna).",
+     "// Rejeita qualquer string com espaços, pontos, parênteses ou caracteres especiais",
+     "// que permitiriam injeção via PostgREST .filter()/.order().",
+     "function validIdentifier(value: unknown): value is string {",
+     "  return typeof value === 'string' && /^[a-z_][a-z0-9_]*$/i.test(value);",
+     "// Allowlist de operadores aceitos pelo PostgREST — sem isso, um chamador",
+     "// poderia passar operadores não documentados com comportamento imprevisto.",
+     "            if (!validIdentifier(f.column) || !FILTER_OPERATORS.has(f.operator)) {",
+     "          if (!validIdentifier(ord.column)) {"
+    ],
+    "still_sample": []
+   }
+  }
+ ],
+ "counts": {
+  "migrations": "0",
+  "workflows": "0",
+  "src": "0",
+  "edges": "2",
+  "docs_only": "no",
+  "lines_branch_has_main_lacks": "156",
+  "lines_main_has_branch_lacks": "629"
+ },
+ "auto": "MISTO_CONFLITO",
+ "n_files_with_gaps": 3,
+ "gap_lines_total": 335
+}

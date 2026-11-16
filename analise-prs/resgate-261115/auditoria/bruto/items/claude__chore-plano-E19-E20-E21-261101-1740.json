@@ -1,0 +1,216 @@
+{
+ "id": "claude__chore-plano-E19-E20-E21-261101-1740",
+ "kind": "branch",
+ "ref": "origin/claude/chore-plano-E19-E20-E21-261101-1740",
+ "tip": "40f7bb3d3c010b402c05d621279ff46f4c4d36c9",
+ "merge_base": "1252bb5a41123ba4d49efd84d0f91604bff6c87c",
+ "ahead": 8,
+ "last_commit_date": "2026-11-01",
+ "merge_base_date": "2026-11-01",
+ "prs_with_same_tip": [
+  2501
+ ],
+ "triagem_2804": {
+  "2501": "OBSOLETA"
+ },
+ "closure_comment": {},
+ "files": [
+  {
+   "path": "CONTRIBUTING.md",
+   "status": "MAIN_UNCHANGED_SINCE_BASE",
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "patch_lines": 12,
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "Quando um PR tem auto-merge habilitado, o workflow `auto-update-pr-branch.yml` atualiza a branch automaticamente após qualquer push na `main`."
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "docs/audits/PLANO_GITHUB_ACTIONS_100_ETAPAS_2026-10-01.md",
+   "status": "BOTH_CHANGED",
+   "hunk": "CONFLICT",
+   "patch_lines": 967,
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 871,
+    "removed_still_in_main": 867,
+    "missing_sample": [
+     "mantida por `settings-guard` + `auto-update-pr-branch` + `CLAUDE.md"
+    ],
+    "still_sample": [
+     "mantida por `settings-guard` + `auto-update-pr-branch` + `CLAUDE.md:168-170`) foi reafirmada pelo Joaquim",
+     "em 02/10 — a opção (a) deste plano (`strict=false` permanente) fica **revogada**.",
+     "### E15 — DECIDIDA: manter a política da casa (`strict=true`)",
+     "| Opção | Situação |",
+     "|---|---|",
+     "| (a) `strict=false` permanente + settings-guard | **Revogada** em 02/10 |",
+     "| (b) `strict=true` + `allow_auto_merge` + `auto-update-pr-branch` em `push` | **É a política vigente** (reativada em 01/10) |",
+     "| (c) migrar para Organization + merge queue | não avaliada |",
+     "### Etapas superadas pela política vigente",
+     "| Etapa | Status | Evidência medida em 02/10 |"
+    ]
+   }
+  },
+  {
+   "path": "docs/reconciliation/MASTER_LEDGER.json",
+   "status": "MAIN_UNCHANGED_SINCE_BASE",
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "patch_lines": 36604,
+   "line_check": {
+    "added": 26224,
+    "missing_in_main": 26224,
+    "removed": 1,
+    "removed_still_in_main": 1,
+    "missing_sample": [
+     "  \"schema_version\": 2,",
+     "  \"generated_at\": \"2026-10-03T23:22:18.126618+00:00\",",
+     "  \"baseline_main_sha\": \"2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6\",",
+     "  \"authority\": {",
+     "    \"audit_completed_scope\": \"documentation_reconciliation\",",
+     "    \"functional_execution_authorized\": false,",
+     "    \"remote_write_scope\": \"docs/reconciliation/**\",",
+     "    \"branch\": \"docs/reconciliation-checkpoint-20261003\",",
+     "    \"draft_pr\": 1869",
+     "  \"dimensions\": [",
+     "    \"implementation\",",
+     "    \"testing\",",
+     "    \"runtime\",",
+     "    \"documentation\",",
+     "    \"acceptance\"",
+     "  \"coverage\": {",
+     "    \"tracked_files\": 4065,",
+     "    \"bytes_hashed\": 76818044,",
+     "    \"text_lines_structurally_scanned\": 677490,",
+     "    \"blob_hash_mismatches\": 0,",
+     "    \"ast_files\": 2394,",
+     "    \"ast_parse_errors\": 0,",
+     "    \"commits_catalogued\": 9643,",
+     "    \"branches_compared\": 58,",
+     "    \"exclusive_commits\": 197,"
+    ],
+    "still_sample": [
+     "{\"schema_version\":2,\"generated_at\":\"2026-10-03T23:22:18.126618+00:00\",\"baseline_main_sha\":\"2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6\",\"authority\":{\"audit_complet"
+    ]
+   }
+  },
+  {
+   "path": "docs/reconciliation/PLAN_REGISTRY.json",
+   "status": "MAIN_UNCHANGED_SINCE_BASE",
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "patch_lines": 19,
+   "line_check": {
+    "added": 2,
+    "missing_in_main": 2,
+    "removed": 2,
+    "removed_still_in_main": 2,
+    "missing_sample": [
+     "        \"DONE_VERIFIED\": 26,",
+     "        \"NOT_IMPLEMENTED\": 12,"
+    ],
+    "still_sample": [
+     "        \"DONE_VERIFIED\": 23,",
+     "        \"NOT_IMPLEMENTED\": 15,"
+    ]
+   }
+  },
+  {
+   "path": "docs/reconciliation/evidence/ARTIFACT_MANIFEST.json",
+   "status": "MAIN_UNCHANGED_SINCE_BASE",
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "patch_lines": 40,
+   "line_check": {
+    "added": 4,
+    "missing_in_main": 4,
+    "removed": 4,
+    "removed_still_in_main": 4,
+    "missing_sample": [
+     "      \"sha256\": \"5827ce4d521bf98ba75a2fdf5c7bf41739db53b4a375c230d6522cf1eb25a1d7\",",
+     "      \"sha256\": \"0e5afe9b5999cd7d6a4f1b0e87fa615a84c995171be7c9ad4515f329332b853a\",",
+     "      \"sha256\": \"5545a114e3b6cad37751d4ed5e1dfd01f02a04d0fdea292b903520e671a1beae\",",
+     "      \"sha256\": \"276362c4247c1793abd39077c83ef5203a84c50be57c812bc745e3f2f8e099b5\","
+    ],
+    "still_sample": [
+     "      \"sha256\": \"ff6ca269633e3fed398c22e4d68a8decb43a2a4943f276612805582471d0360f\",",
+     "      \"sha256\": \"94ba1874a404102d2bfc5b4bc46d9a9cd0a8c93e2c10999ef3a54801d14d54bf\",",
+     "      \"sha256\": \"6be7755959f77e3b47326071e1dac0a69240c6163feaee266fd55398bd7949ee\",",
+     "      \"sha256\": \"73a9dc031cd39db4ea5692ede73c19ea5932e303b26f2bdba252be184b967d47\","
+    ]
+   }
+  },
+  {
+   "path": "docs/reconciliation/evidence/TASK_LEDGER_FULL.json.gz",
+   "status": "MAIN_UNCHANGED_SINCE_BASE",
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "patch_lines": 88240,
+   "line_check": {
+    "added": 0,
+    "missing_in_main": 0,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "docs/reconciliation/tasks/P006.json",
+   "status": "MAIN_UNCHANGED_SINCE_BASE",
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "patch_lines": 6364,
+   "line_check": {
+    "added": 4734,
+    "missing_in_main": 4734,
+    "removed": 1,
+    "removed_still_in_main": 1,
+    "missing_sample": [
+     "  \"plan\": {",
+     "    \"plan_id\": \"docs--audits--plano_github_actions_100_etapas_2026-10-01\",",
+     "    \"path\": \"docs/audits/PLANO_GITHUB_ACTIONS_100_ETAPAS_2026-10-01.md\",",
+     "    \"title\": \"Auditoria exaustiva do GitHub Actions — plano de correção e melhorias em 100 etapas (v3)\",",
+     "    \"source_sha\": \"cbf3e445ac446e00fcc0f407796173787dcaa426\",",
+     "    \"definition_ref\": \"2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6\",",
+     "    \"source_kind\": \"GIT\",",
+     "    \"expected_tasks\": 100,",
+     "    \"observed_tasks\": 100,",
+     "    \"missing_numbers\": [],",
+     "    \"extraction_style\": \"checkbox\",",
+     "    \"authority\": \"CURRENT_REFERENCE\",",
+     "    \"evidence_refs\": [],",
+     "    \"module\": \"CI\",",
+     "    \"successors\": [],",
+     "    \"basis\": \"Referência localizada e confrontada com evidências do baseline; um plano não concede autorização de execução.\",",
+     "    \"evidence\": [],",
+     "    \"automatic_execution_authorized\": false,",
+     "    \"record_id\": \"P006\",",
+     "    \"task_file\": \"tasks/P006.json\",",
+     "    \"status_counts\": {",
+     "      \"SUPERSEDED\": 3,",
+     "      \"DONE_VERIFIED\": 26,",
+     "      \"IMPLEMENTED_AWAITING_RUNTIME_EVIDENCE\": 27,",
+     "      \"NEEDS_REVALIDATION\": 11,"
+    ],
+    "still_sample": [
+     "{\"plan\":{\"plan_id\":\"docs--audits--plano_github_actions_100_etapas_2026-10-01\",\"path\":\"docs/audits/PLANO_GITHUB_ACTIONS_100_ETAPAS_2026-10-01.md\",\"title\":\"Audito"
+    ]
+   }
+  }
+ ],
+ "counts": {
+  "migrations": "0",
+  "workflows": "0",
+  "src": "0",
+  "edges": "0",
+  "docs_only": "yes",
+  "lines_branch_has_main_lacks": "42964",
+  "lines_main_has_branch_lacks": "965"
+ },
+ "auto": "MISTO_CONFLITO",
+ "n_files_with_gaps": 6,
+ "gap_lines_total": 31841
+}

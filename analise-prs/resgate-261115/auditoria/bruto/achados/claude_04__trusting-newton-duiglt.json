@@ -1,0 +1,12 @@
+[
+ {
+  "commit": "27b171e16",
+  "arquivo": "scripts/ci/fila-merge.mjs",
+  "linhas": 3,
+  "amostra": [
+   "async function execComRetry(cmd, args, opts, maxTentativas = 3) {",
+   "      const ehTransiente = /HTTP 5\\d\\d|ECONNRESET|ETIMEDOUT|unexpected end of JSON/.test(stderr);",
+   "      await new Promise((r) => setTimeout(r, esperas[i]));"
+  ]
+ }
+]

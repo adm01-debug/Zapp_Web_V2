@@ -1,0 +1,63 @@
+{
+ "id": "claude__fix-deploy-deno-check-node-modules-261030-1200",
+ "kind": "branch",
+ "ref": "origin/claude/fix-deploy-deno-check-node-modules-261030-1200",
+ "tip": "ea3af3e1e62df2b23b88384978b608b275b243ea",
+ "merge_base": "fb57b4a5cd071bf86a384d10f143360bd18feb61",
+ "ahead": 4,
+ "last_commit_date": "2026-10-30",
+ "merge_base_date": "2026-10-30",
+ "prs_with_same_tip": [
+  2380
+ ],
+ "triagem_2804": {
+  "2380": "OBSOLETA"
+ },
+ "closure_comment": {},
+ "files": [
+  {
+   "path": ".github/workflows/deploy-functions.yml",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 13,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 1,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "        run: deno check --node-modules-dir=none supabase/functions/**/index.ts"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "scripts/ci/deno.lock",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 9,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 1,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "{\"version\":\"5\",\"redirects\":{\"https://esm.sh/@supabase/node-fetch@^2.6.14?target=denonext\":\"https://esm.sh/@supabase/node-fetch@2.6.15?target=denonext\",\"https://"
+    ],
+    "still_sample": []
+   }
+  }
+ ],
+ "counts": {
+  "migrations": "0",
+  "workflows": "1",
+  "src": "0",
+  "edges": "0",
+  "docs_only": "no",
+  "lines_branch_has_main_lacks": "18",
+  "lines_main_has_branch_lacks": "469"
+ },
+ "auto": "MISTO_CONFLITO",
+ "n_files_with_gaps": 2,
+ "gap_lines_total": 2
+}

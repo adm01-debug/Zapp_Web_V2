@@ -1,0 +1,112 @@
+{
+ "id": "claude__fix-talkx-cron-startup-timeout-261025-1700",
+ "kind": "branch",
+ "ref": "origin/claude/fix-talkx-cron-startup-timeout-261025-1700",
+ "tip": "671b5294f2cfedb1c769aec4531a4f7fdb84e102",
+ "merge_base": "2d97c44cfe7f2fa8a3ca572f8f5689118328e858",
+ "ahead": 2,
+ "last_commit_date": "2026-10-25",
+ "merge_base_date": "2026-10-24",
+ "prs_with_same_tip": [
+  2245
+ ],
+ "triagem_2804": {
+  "2245": "DUPLICATA"
+ },
+ "closure_comment": {},
+ "files": [
+  {
+   "path": "auditoria-supabase/progresso.json",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 104,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 89,
+    "missing_in_main": 89,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  \"audit_date\": \"2026-10-24\",",
+     "  \"project_id\": \"tnnnlkbymytvtqngbbqh\",",
+     "  \"repo\": \"adm01-debug/Zapp_Web_V2\",",
+     "  \"sections\": {",
+     "    \"1_inventario\": \"CONCLUÍDO — 1054 migrations, 24 crons, 499 policies, 475 funções DB, 202 tabelas públicas, 9 buckets, 10 usuários auth; edge functions: 83 ",
+     "    \"2_drift\": \"PARCIAL — 31 tabelas ausentes em types.ts (types.ts=171, produção=202; 29 identificadas + 2 com prefixo _ não mapeadas); MEDIUM-9: conversations",
+     "    \"3_seguranca\": \"CONCLUÍDO — 97-98 tabelas com grants anon de escrita (CRITICAL-1); INSERT:98, DELETE:97, UPDATE:97, TRUNCATE:98 confirmado ao vivo (re-execu",
+     "    \"4_integridade\": \"CONCLUÍDO — 34 FKs sem índice confirmado ao vivo; 60 migrations com statements NULL; 1 tabela sem PK (_zapp_fn_before, schema público — nã",
+     "    \"5_performance\": \"PARCIAL — email_threads seq_tup_read=420.341.864 confirmado ao vivo; 6 índices presentes, seq scans por queries sem filtro gmail_account_i",
+     "    \"6_crons\": \"CONCLUÍDO — 24 crons ativos confirmados ao vivo (2026-10-24T23:47Z); taxa de falha 30d: talkx-scheduler-1min 9.3% (4007/43180 RE-EXECUTADO 2026-",
+     "    \"7_funcoes_db\": \"CONCLUÍDO — 12 funções com SQL dinâmico auditadas; mcp_exec full body confirmado via pg_get_functiondef (2026-10-25): EXECUTE q com SQL lit",
+     "    \"8_edge_functions\": \"PARCIAL — 84 funções auditadas individualmente (08_edge_functions.md): R0:49, R1:35, R2+:0; 14 verify_jwt=false com mecanismos alternat",
+     "    \"9_auth_storage_realtime\": \"CONCLUÍDO — 10 usuários, 0 MFA factors (HIGH-7), providers: email+google; 9 buckets auditados ao vivo: multiplix-voice allowed_m",
+     "    \"10_logs_7d\": \"PARCIAL — cron logs 7d CONFIRMADOS via cron.job_run_details JOIN cron.job (2026-10-25T01:12:28Z): talkx-scheduler-1min ok=9941/fail=135/1.3%,",
+     "    \"11_rls\": \"CONCLUÍDO — 39 UPDATE sem WITH CHECK confirmados ao vivo; matrix A×B executada em PostgreSQL 16 NATIVO (pg_ctlcluster) com MIGRATIONS DO REPO apl",
+     "    \"12_lacunas\": \"CONCLUÍDO — backup schemas sem RLS (_bkp_261023:9, ops_backup:1); department_invites DELETE qual=true; e2e UUID aaa9b766-3b72-403d-95ad-f9cd7",
+     "  \"findings_count\": {",
+     "    \"CRITICAL\": 3,",
+     "    \"HIGH\": 7,",
+     "    \"MEDIUM\": 9,",
+     "    \"LOW\": 5,",
+     "    \"INFO\": 4,",
+     "    \"TOTAL\": 28",
+     "  \"corrections_this_session\": {",
+     "    \"section7_count\": \"463 sem SQL dinâmico (não 389 como afirmado em sessão anterior); 12 com dinâmico; total=475 — corrigido no RELATORIO (linha 616) e na tab"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "supabase/migrations/20261026200300_fix-talkx-cron-startup-timeout.sql",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "patch_lines": 247,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 214,
+    "missing_in_main": 214,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "-- Fix: pg_cron talkx-scheduler-1min — 4.007 falhas em 30d (9,3%)",
+     "-- Três causas raiz:",
+     "-- C1: cron.job_run_details sem índice em (jobid, start_time) → varredura 69 MB → timeout de statement",
+     "-- C2: talkx_engine_cron_runs sem filtro de janela → 69 MB scan em todo SELECT da UI",
+     "-- C3: WHEN OTHERS não captura query_canceled (SQLSTATE 57014) no bloco de alertas",
+     "-- Bônus: advisory lock impede sobreposição de ticks quando um tick demora > 1 min",
+     "-- C1: índice composto — elimina seq scan em job_run_details para qualquer jobid",
+     "CREATE INDEX IF NOT EXISTS idx_job_run_details_jobid_start",
+     "  ON cron.job_run_details (jobid, start_time DESC, runid DESC);",
+     "-- Retenção: deleta runs com mais de 7 dias, evita crescimento ilimitado de 69 MB",
+     "SELECT cron.schedule(",
+     "  'cleanup-cron-run-details-7d',",
+     "  '0 4 * * *',",
+     "  'DELETE FROM cron.job_run_details WHERE end_time < now() - interval ''7 days'' AND end_time IS NOT NULL'",
+     "-- C2: janela de 14 dias no SELECT dinâmico — usa o índice acima",
+     "CREATE OR REPLACE FUNCTION public.talkx_engine_cron_runs(p_limit integer DEFAULT 60)",
+     " RETURNS TABLE(runid bigint, jobid bigint, status text, return_message text, start_time timestamp with time zone, end_time timestamp with time zone)",
+     " LANGUAGE plpgsql",
+     " STABLE SECURITY DEFINER",
+     " SET search_path TO 'public', 'pg_temp'",
+     "AS $function$",
+     "DECLARE",
+     "  v_jobid bigint;",
+     "  v_limit integer;",
+     "BEGIN"
+    ],
+    "still_sample": [],
+    "same_basename_in_main": []
+   }
+  }
+ ],
+ "counts": {
+  "migrations": "1",
+  "workflows": "0",
+  "src": "0",
+  "edges": "0",
+  "docs_only": "no",
+  "lines_branch_has_main_lacks": "336",
+  "lines_main_has_branch_lacks": "480"
+ },
+ "auto": "MISTO_CONFLITO",
+ "n_files_with_gaps": 2,
+ "gap_lines_total": 303
+}

@@ -1,0 +1,51 @@
+{
+ "id": "claude__fix-db-guard-b0c-261024-1527",
+ "kind": "branch",
+ "ref": "origin/claude/fix-db-guard-b0c-261024-1527",
+ "tip": "4aab75adfeeb4b7383d2b05f514c82700e3258b6",
+ "merge_base": "1645c4aac5b3820f2dda659f0ba12144a56f7ac3",
+ "ahead": 1,
+ "last_commit_date": "2026-10-24",
+ "merge_base_date": "2026-10-24",
+ "prs_with_same_tip": [
+  2226
+ ],
+ "triagem_2804": {
+  "2226": "JA_NA_MAIN"
+ },
+ "closure_comment": {},
+ "files": [
+  {
+   "path": "supabase/migrations/20261009193246_team_receipts_reactions_conversation_id_forced.sql",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 25,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 5,
+    "missing_in_main": 5,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "--    session_replication_role=replica desabilita triggers de usuário durante o backfill para que APENAS",
+     "--    conversation_id seja alterado — sem disparar team_message_receipts_update_guard_trig, que preencheria",
+     "--    read_at em recibos legados com status='read' e read_at=NULL como efeito colateral indesejado.",
+     "SET LOCAL session_replication_role = replica;",
+     "SET LOCAL session_replication_role = DEFAULT;"
+    ],
+    "still_sample": []
+   }
+  }
+ ],
+ "counts": {
+  "migrations": "1",
+  "workflows": "0",
+  "src": "0",
+  "edges": "0",
+  "docs_only": "no",
+  "lines_branch_has_main_lacks": "7",
+  "lines_main_has_branch_lacks": "4"
+ },
+ "auto": "MISTO_CONFLITO",
+ "n_files_with_gaps": 1,
+ "gap_lines_total": 5
+}

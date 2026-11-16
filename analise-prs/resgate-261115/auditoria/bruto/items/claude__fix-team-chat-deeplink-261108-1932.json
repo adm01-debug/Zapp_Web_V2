@@ -1,0 +1,88 @@
+{
+ "id": "claude__fix-team-chat-deeplink-261108-1932",
+ "kind": "branch",
+ "ref": "origin/claude/fix-team-chat-deeplink-261108-1932",
+ "tip": "eb15216f38a5c011440f92cd15f12eb3b9201b9e",
+ "merge_base": "e942c672a71be8ba775400097a8030b01ba3f69d",
+ "ahead": 17,
+ "last_commit_date": "2026-11-13",
+ "merge_base_date": "2026-11-13",
+ "prs_with_same_tip": [
+  2818
+ ],
+ "triagem_2804": {
+  "2818": null
+ },
+ "closure_comment": {},
+ "files": [
+  {
+   "path": "src/components/team-chat/TeamChatView.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 106,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 76,
+    "missing_in_main": 3,
+    "removed": 3,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "    isLoading: conversationsLoading,",
+     "    !conversationsLoading && !!deepLinkCid && !conversations.some(c => c.id === deepLinkCid);",
+     "  const deepLinkedId = !conversationsLoading && !deepLinkAusente ? deepLinkCid : null;"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/team-chat/__tests__/TeamChatView.deeplink-react-query.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 124,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 84,
+    "missing_in_main": 4,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  TeamConversationList: ({ conversations, onSelect }: { conversations: Array<{ id: string }>; onSelect: (id: string) => void }) => (",
+     "    <div>",
+     "  return render(",
+     "    </QueryClientProvider>,"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/team-chat/__tests__/TeamChatView.deeplink.test.tsx",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/hooks/chat/__tests__/useTeamChatNotifications.nome-e-clique.test.tsx",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/hooks/chat/useTeamChatNotifications.ts",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/hooks/system/useNavigationHistory.ts",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  }
+ ],
+ "counts": {
+  "migrations": "0",
+  "workflows": "0",
+  "src": "6",
+  "edges": "0",
+  "docs_only": "no",
+  "lines_branch_has_main_lacks": "7",
+  "lines_main_has_branch_lacks": "44"
+ },
+ "auto": "MISTO_CONFLITO",
+ "n_files_with_gaps": 2,
+ "gap_lines_total": 7
+}

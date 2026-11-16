@@ -1,0 +1,71 @@
+{
+ "id": "claude__fix-deploy-functions-types-node-011101",
+ "kind": "branch",
+ "ref": "origin/claude/fix-deploy-functions-types-node-011101",
+ "tip": "e5e03afa5d3dc0b24db4d614e4fdc1cfe4912593",
+ "merge_base": "1252bb5a41123ba4d49efd84d0f91604bff6c87c",
+ "ahead": 8,
+ "last_commit_date": "2026-11-08",
+ "merge_base_date": "2026-11-01",
+ "prs_with_same_tip": [
+  2508
+ ],
+ "triagem_2804": {
+  "2508": "OBSOLETA"
+ },
+ "closure_comment": {},
+ "files": [
+  {
+   "path": ".github/ci-refresh",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "patch_lines": 7,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 0,
+    "missing_in_main": 0,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [],
+    "still_sample": [],
+    "same_basename_in_main": []
+   }
+  },
+  {
+   "path": ".github/workflows/deploy-functions.yml",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 105,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 45,
+    "missing_in_main": 1,
+    "removed": 17,
+    "removed_still_in_main": 8,
+    "missing_sample": [
+     "        uses: supabase/setup-cli@d239d1052f6f024a8d746d7e5aeddead63b9cb53 # v3.1.0"
+    ],
+    "still_sample": [
+     "            if [ \"$STATUS\" != \"200\" ]; then",
+     "            node -e \"const fs=require('fs');const d=JSON.parse(fs.readFileSync('/tmp/promogifts-preflight.json','utf8'));if(!Array.isArray(d))process.exit(1);co",
+     "            echo \"Setando endpoint e credencial server-side do catalogo nas edges\"",
+     "            if [ \"$REESCREVER\" = \"true\" ]; then",
+     "              supabase secrets set \\",
+     "                PROMOGIFTS_SUPABASE_URL=\"$PROMOGIFTS_SUPABASE_URL\" \\",
+     "                PROMOGIFTS_SUPABASE_SERVICE_ROLE_KEY=\"$PROMOGIFTS_SUPABASE_SERVICE_ROLE_KEY\" \\",
+     "                --project-ref \"$PROJECT_REF\""
+    ]
+   }
+  }
+ ],
+ "counts": {
+  "migrations": "0",
+  "workflows": "2",
+  "src": "0",
+  "edges": "0",
+  "docs_only": "no",
+  "lines_branch_has_main_lacks": "2",
+  "lines_main_has_branch_lacks": "17"
+ },
+ "auto": "MISTO_CONFLITO",
+ "n_files_with_gaps": 1,
+ "gap_lines_total": 9
+}

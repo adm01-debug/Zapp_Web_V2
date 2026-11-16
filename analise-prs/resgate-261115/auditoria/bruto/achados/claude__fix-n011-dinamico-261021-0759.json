@@ -1,0 +1,23 @@
+[
+ {
+  "commit": "0913cfeb5",
+  "arquivo": "scripts/db-audit/n011-storage-policies-dedup.test.mjs",
+  "linhas": 61,
+  "amostra": [
+   "const REMOVIDAS = [",
+   "  'Avatar images are publicly accessible',",
+   "  'Users can delete their own avatars',",
+   "const FINAL_AVATARS = [",
+   "  ['avatars', 'SELECT', 'avatars authenticated read'],",
+   "  ['avatars', 'DELETE', 'Users can delete their own avatar'],"
+  ]
+ },
+ {
+  "commit": "360ba6ccb",
+  "arquivo": "scripts/db-audit/n011-storage-policies-dedup.test.mjs",
+  "linhas": 1,
+  "amostra": [
+   "      || nomesGuardados.some((n) => txt.includes(`\"${n}\"`);"
+  ]
+ }
+]

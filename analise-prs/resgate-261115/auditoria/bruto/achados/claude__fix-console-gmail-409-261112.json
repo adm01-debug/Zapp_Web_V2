@@ -1,0 +1,20 @@
+[
+ {
+  "commit": "e557519f5",
+  "arquivo": "src/hooks/integrations/__tests__/useGmail.syncEmAndamento.test.tsx",
+  "linhas": 3,
+  "amostra": [
+   "import { useGmail, shouldRetryGmailSync, isGmailSyncAlreadyRunning } from '../useGmail';",
+   "function respondSyncWithStatus(status: number) {",
+   "    if (fn === 'gmail-sync') return { data: null, error: httpError(status, `Edge Function returned a non-2xx status code`) };"
+  ]
+ },
+ {
+  "commit": "e557519f5",
+  "arquivo": "src/hooks/integrations/useGmail.ts",
+  "linhas": 1,
+  "amostra": [
+   "  return error instanceof GmailFunctionError && error.status === 409;"
+  ]
+ }
+]

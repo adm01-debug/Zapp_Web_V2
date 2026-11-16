@@ -1,0 +1,104 @@
+{
+ "id": "claude__archived-undo-constraint-fix",
+ "kind": "branch",
+ "ref": "origin/claude/archived-undo-constraint-fix",
+ "tip": "eb98aad2446880fc5c2e9968c25466fa3fb79977",
+ "merge_base": "004e74a8c596959f45f61c8b0b64b30a70c1ff19",
+ "ahead": 1,
+ "last_commit_date": "2026-10-31",
+ "merge_base_date": "2026-10-31",
+ "prs_with_same_tip": [
+  2433
+ ],
+ "triagem_2804": {
+  "2433": "DUPLICATA"
+ },
+ "closure_comment": {},
+ "files": [
+  {
+   "path": "src/hooks/inbox/__tests__/useInboxBulkActions.test.ts",
+   "status": "BOTH_CHANGED",
+   "hunk": "CONFLICT",
+   "patch_lines": 88,
+   "line_check": {
+    "added": 31,
+    "missing_in_main": 20,
+    "removed": 9,
+    "removed_still_in_main": 8,
+    "missing_sample": [
+     "      { p_contact_id: c1, p_to_agent_id: 'ag-2', p_to_queue_id: null, p_note: null },",
+     "      { p_contact_id: c2, p_to_agent_id: 'ag-2', p_to_queue_id: null, p_note: null },",
+     "      p_to_agent_id: null,",
+     "      p_note: null,",
+     "  it('a mensagem opcional NÃO é persistida (p_note vai null, não undefined)', async () => {",
+     "      p_to_queue_id: null,",
+     "      p_note: null,",
+     "    // A nova implementação faz um UPDATE por contato via .eq(), não .in().",
+     "    expect(restores[0]).toMatchObject({ payload: { conversation_status: 'open' }, filters: { id: c1 } });",
+     "    expect(restores[1]).toMatchObject({ payload: { conversation_status: 'pending' }, filters: { id: c2 } });",
+     "  it('desfazer de contato com status inválido desde archived (waiting/resolved/closed) restaura para open', async () => {",
+     "    // A trigger enforce_conversation_status_transition só permite archived → open|pending.",
+     "    // Contatos que estavam em waiting/resolved/closed antes do arquivo devem voltar para 'open'.",
+     "        { id: c1, conversation_status: 'waiting' },",
+     "        { id: c3, conversation_status: 'closed' },",
+     "    expect(restores).toHaveLength(3);",
+     "    // Todos os três devem restaurar para 'open' (única transição válida além de 'pending').",
+     "    expect(restores[0]).toMatchObject({ payload: { conversation_status: 'open' }, filters: { id: c1 } });",
+     "    expect(restores[1]).toMatchObject({ payload: { conversation_status: 'open' }, filters: { id: c2 } });",
+     "    expect(restores[2]).toMatchObject({ payload: { conversation_status: 'open' }, filters: { id: c3 } });"
+    ],
+    "still_sample": [
+     "      { p_contact_id: c1, p_to_agent_id: 'ag-2', p_to_queue_id: undefined, p_note: undefined },",
+     "      { p_contact_id: c2, p_to_agent_id: 'ag-2', p_to_queue_id: undefined, p_note: undefined },",
+     "      p_to_agent_id: undefined,",
+     "      p_note: undefined,",
+     "  it('a mensagem opcional NÃO é persistida (p_note vai undefined)', async () => {",
+     "      p_to_queue_id: undefined,",
+     "      p_note: undefined,",
+     "    expect(restores[0]).toMatchObject({ payload: { conversation_status: 'open' }, filters: { id: [c1] } });"
+    ]
+   }
+  },
+  {
+   "path": "src/hooks/inbox/useInboxBulkActions.ts",
+   "status": "BOTH_CHANGED",
+   "hunk": "CONFLICT",
+   "patch_lines": 63,
+   "line_check": {
+    "added": 12,
+    "missing_in_main": 12,
+    "removed": 16,
+    "removed_still_in_main": 1,
+    "missing_sample": [
+     "          p_to_agent_id: type === 'agent' ? targetId : null,",
+     "          p_to_queue_id: type === 'queue' ? targetId : null,",
+     "          p_note: null,",
+     "        previousStatus.set(row.id, (row as { id: string; conversation_status: string | null }).conversation_status ?? null);",
+     "            .update({ conversation_status: 'archived', updated_at: new Date().toISOString() })",
+     "          // A trigger enforce_conversation_status_transition só permite archived → open|pending.",
+     "          // Estados que não fazem essa transição (waiting, resolved, closed) voltam para 'open'.",
+     "          const VALID_FROM_ARCHIVED = new Set(['open', 'pending']);",
+     "            const prev = previousStatus.get(id);",
+     "            const restoreStatus = prev && VALID_FROM_ARCHIVED.has(prev) ? prev : 'open';",
+     "              .update({ conversation_status: restoreStatus, updated_at: new Date().toISOString() })",
+     "              .eq('id', id);"
+    ],
+    "still_sample": [
+     "        previousStatus.set(row.id, row.conversation_status ?? null);"
+    ]
+   }
+  }
+ ],
+ "counts": {
+  "migrations": "0",
+  "workflows": "0",
+  "src": "2",
+  "edges": "0",
+  "docs_only": "no",
+  "lines_branch_has_main_lacks": "58",
+  "lines_main_has_branch_lacks": "356"
+ },
+ "auto": "MISTO_CONFLITO",
+ "n_files_with_gaps": 2,
+ "gap_lines_total": 41
+}

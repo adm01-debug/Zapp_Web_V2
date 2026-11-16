@@ -1,0 +1,338 @@
+{
+ "id": "pr-1991",
+ "kind": "pr",
+ "ref": "refs/remotes/pr/1991",
+ "pr": 1991,
+ "tip": "8836e94c850ca1e51afdd7e67e5a7ee80249710b",
+ "merge_base": "f66d73312858e5c3dbf14f4982314384e668d3de",
+ "ahead": 21,
+ "last_commit_date": "2026-10-16",
+ "merge_base_date": "2026-10-16",
+ "triagem_2804": "PERDIDA",
+ "closure_comment": null,
+ "files": [
+  {
+   "path": ".github/workflows/ci.yml",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 13,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 1,
+    "removed_still_in_main": 1,
+    "missing_sample": [
+     "    timeout-minutes: 30"
+    ],
+    "still_sample": [
+     "    timeout-minutes: 15"
+    ]
+   }
+  },
+  {
+   "path": "scripts/ci/typecheck-baseline.json",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 849,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 652,
+    "missing_in_main": 1,
+    "removed": 1,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "      \"line\": 461,"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "scripts/ci/workflow-contracts.unit.mjs",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 41,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 7,
+    "missing_in_main": 4,
+    "removed": 6,
+    "removed_still_in_main": 4,
+    "missing_sample": [
+     "  // Se não há bloco paths (ex.: sem trigger de push), a condição é trivialmente OK.",
+     "  if (trechoPaths.length > 0) {",
+     "const KEY_CACHE_BUN = /key:\\s*bun-\\$\\{\\{\\s*hashFiles\\('bun\\.lock'\\)\\s*\\}\\}/;",
+     "      const idxInstall = linhasJob.findIndex((l) => /\\bbun install\\b/.test(l) && !/^\\s*#/.test(l));"
+    ],
+    "still_sample": [
+     "  assert.ok(",
+     "    !/functions\\/\\*\\*/.test(trechoPaths),",
+     "    'functions/** voltou ao paths do guarda vivo: PR de Edge Function passa a conectar no banco de produção',",
+     "const KEY_CACHE_BUN = /key:\\s*bun-\\$\\{\\{\\s*hashFiles\\('bun\\.lock'\\)\\s*\\}\\}\\s*$/;"
+    ]
+   }
+  },
+  {
+   "path": "scripts/db-audit/consolidar-veredito.mjs",
+   "status": "MAIN_UNCHANGED_SINCE_BASE",
+   "patch_lines": 22,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 0,
+    "missing_in_main": 0,
+    "removed": 4,
+    "removed_still_in_main": 4,
+    "missing_sample": [],
+    "still_sample": [
+     "  // Guarda geral de invariantes do banco vivo (RLS, security_invoker, matview exposta,",
+     "  // search_path de SECURITY DEFINER, policy de escrita aberta, referencia pendurada).",
+     "  { id: 'live-invariants', nome: 'Verificar invariantes gerais do banco vivo', log: '/tmp/step-live-invariants.log' },",
+     "  'live-invariants',"
+    ]
+   }
+  },
+  {
+   "path": "scripts/db-audit/known-violations.json",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 41,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 29,
+    "missing_in_main": 29,
+    "removed": 1,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "    \"rpc:record_away_message:supabase/functions/_shared/evolution-webhook-messages.ts\",",
+     "    \"rpc:admin_list_cron_jobs:src/components/admin/useTarefasAgendadas.ts\",",
+     "    \"rpc:admin_toggle_cron_job:src/components/admin/useTarefasAgendadas.ts\",",
+     "    \"rpc:transfer_conversation:src/components/inbox/ChatPanel.tsx\",",
+     "    \"rpc:transfer_conversation:src/components/inbox/RealtimeCollaboration.tsx\",",
+     "    \"rpc:transfer_conversation:src/components/inbox/__tests__/ChatTransferContract.test.tsx\",",
+     "    \"rpc:talkx_help_top_topics:src/components/talkx/TalkXHelp.tsx\",",
+     "    \"rpc:talkx_campaign_recipients_page:src/components/talkx/tracking/TalkXRecipientsTable.tsx\",",
+     "    \"rpc:talk_me_list_pending_messages:src/features/talk-me/useTalkMeQueue.ts\",",
+     "    \"rpc:warroom_agent_today:src/hooks/business/useWarRoomData.ts\",",
+     "    \"rpc:warroom_queue_stats:src/hooks/business/useWarRoomData.ts\",",
+     "    \"rpc:reopen_conversation:src/hooks/chat/useConversationActions.ts\",",
+     "    \"rpc:transfer_conversation:src/hooks/chat/useConversationActions.ts\",",
+     "    \"rpc:sentiment_trend:src/hooks/dashboard/useSentimentTrend.ts\",",
+     "    \"rpc:enqueue_group_outbound_message:src/hooks/groups/actions.ts\",",
+     "    \"rpc:set_default_whatsapp_connection:src/hooks/inbox/useConnectionsManager.ts\",",
+     "    \"rpc:transfer_conversation:src/hooks/inbox/useInboxBulkActions.ts\",",
+     "    \"rpc:inbox_unread_total:src/hooks/inbox/useInboxUnreadTotal.ts\",",
+     "    \"rpc:increment_custom_emoji_use:src/hooks/integrations/useCustomEmojis.ts\",",
+     "    \"rpc:search_email_threads:src/hooks/integrations/useGmail.ts\",",
+     "    \"rpc:app_bootstrap:src/hooks/system/useAppBootstrap.ts\",",
+     "    \"from:connection_alert_preferences:src/hooks/system/useConnectionAlertPreferences.ts\",",
+     "    \"from:team_message_read_state:src/hooks/team-chat/useTeamReadState.ts\",",
+     "    \"rpc:apply_client_wallet:supabase/functions/_shared/evolution-webhook-messages.ts\",",
+     "    \"rpc:log_login_block:supabase/functions/auth-login/index.ts\","
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "scripts/db-audit/n011-storage-policies-dedup.test.mjs",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 196,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 27,
+    "missing_in_main": 26,
+    "removed": 79,
+    "removed_still_in_main": 18,
+    "missing_sample": [
+     "//   (a) a migration do fix tem o formato correto (rollback executavel, DDL limpo);",
+     "//   (b) no estado final (todas as migrations incluindo o fix): exatamente 1 policy",
+     "//       para leitura e exclusao em avatars — o dedup foi aplicado;",
+     "// Nota: a migration 20261011000019 ja executa os mesmos DROPs antes do fix",
+     "// 20261016105108 — ambas sao idempotentes. O contrato verifica o estado final",
+     "// e a qualidade do arquivo, nao a transicao antes/depois.",
+     "// Estado final: todas as migrations aplicadas (incluindo o fix).",
+     "const todos = estado(arquivosTodos);",
+     "console.log(`FATO: migrations lidas = ${arquivosTodos.length}`);",
+     "console.log(`FATO: avatars/DELETE final=[${grupo(todos, 'avatars', 'DELETE').join(', ')}]`);",
+     "console.log(`FATO: avatars/SELECT final=[${grupo(todos, 'avatars', 'SELECT').join(', ')}]`);",
+     "console.log(`FATO: total policies de storage.objects = ${todos.size}`);",
+     "// --- Estado final: avatars sem duplicatas ---",
+     "test('estado final: avatars/DELETE tem exatamente 1 policy (\"Users can delete their own avatar\")', () => {",
+     "  assert.deepEqual(grupo(todos, 'avatars', 'DELETE'), ['Users can delete their own avatar']);",
+     "test('estado final: avatars/SELECT tem exatamente 1 policy (\"Anyone can view avatars\")', () => {",
+     "  assert.deepEqual(grupo(todos, 'avatars', 'SELECT'), ['Anyone can view avatars']);",
+     "// --- Formato do arquivo de fix ---",
+     "  const REMOVIDAS = ['Avatar images are publicly accessible', 'Users can delete their own avatars'];",
+     "    if (m && m[1] && REMOVIDAS.includes(nome)) nomes.push(nome);",
+     "  assert.deepEqual(nomes.sort(), REMOVIDAS.sort());",
+     "  const REMOVIDAS = ['Avatar images are publicly accessible', 'Users can delete their own avatars'];",
+     "  assert.deepEqual(nomes.sort(), REMOVIDAS.sort());",
+     "// --- Idempotencia ---",
+     "  const reaplicado = new Map(todos);"
+    ],
+    "still_sample": [
+     "const semFix = process.env.N011_WITHOUT_FIX === '1' || !existsSync(caminhoFix);",
+     "// Texto do fix: vazio quando a migration esta ausente (rodada da BASE) — os testes",
+     "// que dependem do arquivo entao falham, que e o resultado honesto.",
+     "const assinatura = (reg) => [reg.cmd.toUpperCase(), reg.roles, reg.using, reg.withCheck].join(' | ');",
+     "const arquivosBase = arquivosTodos.filter((a) => a !== caminhoFix);",
+     "const SOZINHOS = [",
+     "  ['stickers', 'SELECT', 'Anyone can view stickers'],",
+     "  ['stickers', 'DELETE', 'Users can delete own stickers'],",
+     "  ['audio-memes', 'SELECT', 'Public read audio memes'],",
+     "  ['custom-emojis', 'SELECT', 'Public read for custom emojis'],"
+    ]
+   }
+  },
+  {
+   "path": "scripts/db-audit/realtime-publication-baseline.json",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 14,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 3,
+    "missing_in_main": 3,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "    \"public.audio_meme_favorites\",",
+     "    \"public.audio_memes\",",
+     "    \"public.audit_logs\","
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "scripts/db-audit/talkx-schedule-timezone-contract.test.mjs",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 24,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 4,
+    "missing_in_main": 3,
+    "removed": 2,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  // Regex permite imports adicionais (ex.: parseDndHours, type DndSetting)",
+     "  // sem quebrar o contrato dos 3 símbolos obrigatórios.",
+     "  assert.match(sender, /import \\{[^}]*DEFAULT_SCHEDULE_TIMEZONE[^}]*deliveryWindowStatus[^}]*parseBusinessHours[^}]*\\} from \"\\.\\.\\/\\_shared\\/talkx-window\\.ts\"/)"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/inbox/chat/ChatMessagesArea.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 43,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 10,
+    "missing_in_main": 5,
+    "removed": 2,
+    "removed_still_in_main": 1,
+    "missing_sample": [
+     "export const ChatMessagesArea = memo(forwardRef<ChatMessagesAreaRef, ChatMessagesAreaProps>((",
+     "  // P2 fix: evita que cancelScroll interrompa o proprio scroll programatico",
+     "  // (scrollToMessage). Sem esta guarda, o evento de scroll disparado pelo",
+     "  // scrollToIndex chegava ao handleScroll com nearBottom=false e cancelava",
+     "  // o proprio movimento antes de terminar."
+    ],
+    "still_sample": [
+     "export const ChatMessagesArea = memo(forwardRef<ChatMessagesAreaRef, ChatMessagesAreaProps>(({ "
+    ]
+   }
+  },
+  {
+   "path": "src/components/talkx/TalkXTemplates.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 30,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 4,
+    "missing_in_main": 3,
+    "removed": 4,
+    "removed_still_in_main": 1,
+    "missing_sample": [
+     "  // T04-039: ranking por TAXA DE RESPOSTA (melhor resposta) com a base mínima A9,",
+     "        {/* T04-039/040/042/043/044 — \"Melhor resposta\": os 3 primeiros por TAXA DE",
+     "          title=\"Melhor resposta\""
+    ],
+    "still_sample": [
+     "          title=\"Mais convertidos\""
+    ]
+   }
+  },
+  {
+   "path": "src/hooks/system/useOfflineCache.ts",
+   "status": "MAIN_UNCHANGED_SINCE_BASE",
+   "patch_lines": 30,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 2,
+    "missing_in_main": 2,
+    "removed": 3,
+    "removed_still_in_main": 3,
+    "missing_sample": [
+     "        getLogger('OfflineCache').warn('Failed to write offline cache', e);",
+     "      getLogger('OfflineCache').info(`Loaded ${cached.length} conversations from offline cache`);"
+    ],
+    "still_sample": [
+     "const log = getLogger('OfflineCache');",
+     "        log.warn('Failed to write offline cache', e);",
+     "      log.info(`Loaded ${cached.length} conversations from offline cache`);"
+    ]
+   }
+  },
+  {
+   "path": "src/hooks/tasks/workItemAggregates.ts",
+   "status": "MAIN_UNCHANGED_SINCE_BASE",
+   "patch_lines": 13,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 1,
+    "removed_still_in_main": 1,
+    "missing_sample": [
+     "  return texto.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();"
+    ],
+    "still_sample": [
+     "  return texto.normalize('NFD').replace(/[\\u0300-\\u036f]/g, '').toLowerCase();"
+    ]
+   }
+  },
+  {
+   "path": "src/lib/invokeEdge.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 22,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 2,
+    "removed_still_in_main": 2,
+    "missing_sample": [
+     "    createLogger('edge-invoke').withCorrelation(correlationId).error(`Edge ${functionName} falhou`, {"
+    ],
+    "still_sample": [
+     "const log = createLogger('edge-invoke');",
+     "    log.withCorrelation(correlationId).error(`Edge ${functionName} falhou`, {"
+    ]
+   }
+  },
+  {
+   "path": "supabase/functions/_shared/talkx-window.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 13,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 1,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "    if (!Number.isInteger(start) || !Number.isInteger(end) || currentMinutes < start || currentMinutes >= end) {"
+    ],
+    "still_sample": []
+   }
+  }
+ ],
+ "auto": "MISTO_CONFLITO",
+ "n_files_with_gaps": 14,
+ "gap_lines_total": 115
+}

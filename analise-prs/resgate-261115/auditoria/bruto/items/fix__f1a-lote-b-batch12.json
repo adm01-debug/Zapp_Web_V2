@@ -1,0 +1,82 @@
+{
+ "id": "fix__f1a-lote-b-batch12",
+ "kind": "branch",
+ "ref": "origin/fix/f1a-lote-b-batch12",
+ "tip": "ced1c1b497c839f2afecad9b54bef40c99f4dfe6",
+ "merge_base": "9d65fed626e05a9582c56badade4d2e6afaf9356",
+ "ahead": 2,
+ "last_commit_date": "2026-10-18",
+ "merge_base_date": "2026-10-18",
+ "prs_with_same_tip": [
+  2088
+ ],
+ "triagem_2804": {
+  "2088": "JA_NA_MAIN"
+ },
+ "closure_comment": {},
+ "files": [
+  {
+   "path": "src/styles/utilities.css",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 410,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 158,
+    "missing_in_main": 104,
+    "removed": 98,
+    "removed_still_in_main": 98,
+    "missing_sample": [
+     "  @apply text-3xl font-bold tracking-tight md:text-4xl;",
+     "  @apply text-4xl font-bold tracking-tighter md:text-5xl;",
+     "  @apply text-5xl font-extrabold tracking-tighter md:text-6xl;",
+     "  @apply text-xl font-semibold tracking-tight md:text-2xl;",
+     "  @apply text-base font-medium md:text-lg;",
+     ".scrollbar-thin::-webkit-scrollbar {",
+     "  width: 4px;",
+     ".scrollbar-thin::-webkit-scrollbar-track {",
+     "  background: transparent;",
+     ".scrollbar-thin::-webkit-scrollbar-thumb {",
+     "  background: hsl(var(--muted-foreground) / 0.2);",
+     "  border-radius: 2px;",
+     ".scrollbar-thin::-webkit-scrollbar-thumb:hover {",
+     "  background: hsl(var(--muted-foreground) / 0.35);",
+     ".gradient-text {",
+     "  @apply bg-clip-text text-transparent;",
+     "  background-image: var(--gradient-primary);",
+     ".gradient-text-secondary {",
+     "  @apply bg-clip-text text-transparent;",
+     "  background-image: var(--gradient-secondary);",
+     ".gradient-text-success {",
+     "  @apply bg-clip-text text-transparent;",
+     "  background-image: var(--gradient-success);",
+     ".gradient-text-gold {",
+     "  @apply bg-clip-text text-transparent;"
+    ],
+    "still_sample": [
+     "    font-family: var(--font-display);",
+     "  /* ===== SEMANTIC TYPOGRAPHY TOKENS ===== */",
+     "  .text-display {",
+     "    font-family: var(--font-display);",
+     "    @apply text-3xl md:text-4xl font-bold tracking-tight;",
+     "  .text-display-xl {",
+     "    font-family: var(--font-display);",
+     "    @apply text-4xl md:text-5xl font-bold tracking-tighter;",
+     "  .text-display-2xl {",
+     "    font-family: var(--font-display);"
+    ]
+   }
+  }
+ ],
+ "counts": {
+  "migrations": "0",
+  "workflows": "0",
+  "src": "1",
+  "edges": "0",
+  "docs_only": "no",
+  "lines_branch_has_main_lacks": "217",
+  "lines_main_has_branch_lacks": "137"
+ },
+ "auto": "MISTO_CONFLITO",
+ "n_files_with_gaps": 1,
+ "gap_lines_total": 202
+}

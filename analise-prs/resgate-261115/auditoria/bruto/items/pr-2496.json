@@ -1,0 +1,293 @@
+{
+ "id": "pr-2496",
+ "kind": "pr",
+ "ref": "refs/remotes/pr/2496",
+ "pr": 2496,
+ "tip": "ecfe394048339e70c450bacf0d9a94e2c6023786",
+ "merge_base": "d4f25e704294bc3439d7c82dba508ceae6cc768d",
+ "ahead": 29,
+ "last_commit_date": "2026-11-11",
+ "merge_base_date": "2026-11-11",
+ "triagem_2804": "DECISAO_DONO",
+ "closure_comment": null,
+ "files": [
+  {
+   "path": "ESTADO.md",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 22,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 2,
+    "missing_in_main": 2,
+    "removed": 2,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "| `ai-transcribe-audio` | A | `src/components/inbox/AudioMessagePlayer.tsx:66` · `supabase/functions/_shared/evolution-webhook-messages.ts:1420` |",
+     "| `classify-sticker` | A | `src/components/inbox/chat/MessageBubble.tsx:329` · `src/hooks/sticker-picker/useStickerPicker.ts:148` · `supabase/functions/_shared/"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "scripts/db-audit/message-delivery-phase1-behavior.test.sh",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "scripts/db-audit/message-delivery-phase1-runtime.sql",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/components/inbox/ChatPanel.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 21,
+   "hunk": "PRESENT_REVERSE_APPLIES"
+  },
+  {
+   "path": "src/components/inbox/__tests__/ChatPanel.atalhos-busca.test.tsx",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/components/inbox/__tests__/ChatPanel.drag-drop.test.tsx",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/components/inbox/__tests__/ChatPanel.scheduled-media.test.tsx",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/components/inbox/__tests__/ChatPanel.typing-presence.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 12,
+   "hunk": "PRESENT_REVERSE_APPLIES"
+  },
+  {
+   "path": "src/components/inbox/__tests__/ChatTransferContract.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 12,
+   "hunk": "PRESENT_REVERSE_APPLIES"
+  },
+  {
+   "path": "src/components/inbox/__tests__/RealtimeInboxView.pagination.test.tsx",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/components/inbox/__tests__/arquivos-ver-na-conversa.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 12,
+   "hunk": "PRESENT_REVERSE_APPLIES"
+  },
+  {
+   "path": "src/components/inbox/chat/SendErrorBanner.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 29,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 10,
+    "missing_in_main": 10,
+    "removed": 5,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     " * Só falha de TEXTO sem POST iniciado tem reenvio: `onSendMessage(content)` cria uma",
+     " * mensagem nova de texto (assinatura em `ChatPanel`: `(content: string) => ...`). Os",
+     " * outros tipos reais de `Message['type']` (`image`, `video`, `audio`, `file`, `document`,",
+     " * `location`, `interactive`, `sticker`) não têm como reenviar o binário por aqui.",
+     " * PD-79: se `delivery_post_started_at` estiver preenchido, o POST ao provedor foi",
+     " * iniciado e o resultado é ambíguo — não oferecer reenvio cego. O operador deve",
+     " * resolver via painel C110 (resolve_unconfirmed_message).",
+     "  if (!mensagem || mensagem.type !== 'text') return false;",
+     "  // @ts-expect-error -- coluna adicionada por migration 20261111160000 (tipos regenerados no próximo types-sync)",
+     "  return !mensagem.delivery_post_started_at;"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/inbox/chat/UnconfirmedMessagesPanel.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 132,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 91,
+    "missing_in_main": 2,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "export function UnconfirmedMessagesPanel({ contactId, className }: UnconfirmedMessagesPanelProps) {",
+     "  const { messages, isLoading, isError, resolve, isResolving, resolvingId } = useUnconfirmedMessages(contactId);"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/inbox/chat/__tests__/ChatPanel.entrega-conversa.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 12,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "vi.mock('@/components/inbox/chat/UnconfirmedMessagesPanel', () => ({ UnconfirmedMessagesPanel: () => null }));"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/hooks/delivery/useUnconfirmedMessages.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 94,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 70,
+    "missing_in_main": 4,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "// Abaixo desse limiar o job de reconciliação ainda pode fechar sozinho.",
+     "        .not('status', 'in', '(\"sent\",\"delivered\",\"read\")')",
+     "      // @ts-expect-error resolve_unconfirmed_message not in generated types until production migration",
+     "      const { data, error } = await supabase.rpc('resolve_unconfirmed_message', {"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/pages/__tests__/ChatPopup.pagination.test.tsx",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/pages/__tests__/ChatPopup.rolagem-mensagem-nova.test.tsx",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "supabase/deployment-manifest.json",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 100,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 16,
+    "missing_in_main": 11,
+    "removed": 13,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "      \"bytes\": 69798,",
+     "      \"sha256\": \"f4adcebddf4d5243ad03bc35ecfca45bf5a0042a7d5bbad69d326a050f251345\"",
+     "      \"bytes\": 26272,",
+     "      \"sha256\": \"787214dd32ff1edc8df8e89c0322bc66f5e1bb62a78967266bdee3667279ab67\"",
+     "      \"bytes\": 36607,",
+     "      \"sha256\": \"5ea7d2b1028d244604ffcbe296e6ae6403233b6396d6cc8fee4175ac0f89b2ca\"",
+     "      \"source_sha256\": \"9ca24f6c33ecc4434d30d6b99f7c24670114d5e8450115b1ffaaa148fdeff905\",",
+     "      \"source_sha256\": \"8c7f248028c195be31f12babe749061830e4eb2b53457effafd094f2f3706b73\",",
+     "      \"source_sha256\": \"a1ae3f885190f574efed7fb4cb4a6679feab6597e5941b01f801553996ae85d0\",",
+     "      \"source_sha256\": \"d56f2c4d59b96e40184c698d0b8752026bd98fbabd01efe2abc3e9001fc0b2d5\",",
+     "  \"manifest_sha256\": \"9f58237a0833a2efef81b00af4d1eb47d6a0f3961ca6ab3e7dce18a12622ed4d\""
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "supabase/functions/_shared/effect-reconcile.ts",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "supabase/functions/_shared/evolution-webhook-messages.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 43,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 22,
+    "missing_in_main": 1,
+    "removed": 3,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "      .is('external_id', null).gte('created_at', recentCutoff)"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "supabase/functions/_shared/evolution-webhook-msg-handlers.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 124,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 49,
+    "missing_in_main": 1,
+    "removed": 15,
+    "removed_still_in_main": 3,
+    "missing_sample": [
+     "                .eq('id', pendingMessage.id);"
+    ],
+    "still_sample": [
+     "            await supabase.from('messages')",
+     "              .update({ status: 'sent', external_id: externalId, status_updated_at: now })",
+     "          .select('id, status, sender')"
+    ]
+   }
+  },
+  {
+   "path": "supabase/functions/message-delivery/index.test.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 675,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 532,
+    "missing_in_main": 0,
+    "removed": 1,
+    "removed_still_in_main": 0,
+    "missing_sample": [],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "supabase/functions/message-delivery/index.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 510,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 288,
+    "missing_in_main": 9,
+    "removed": 35,
+    "removed_still_in_main": 6,
+    "missing_sample": [
+     "      .select('agent_id, sender, status, external_id, contact_id, whatsapp_connection_id, delivery_post_started_at')",
+     "    // PD-79: o subcaso \"POST iniciado + lease vencido\" continua resolvido pelo",
+     "    // fluxo PD-78/PD-79 (fail_outbound_unclaimed), não aqui. Não reenviamos.",
+     "    const { error: markError } = await service.rpc('mark_outbound_post_started', {",
+     "      // não existe (PGRST202 no PostgREST / 42883 no Postgres), segue o fluxo anterior",
+     "      // ao PD-79 — sem carimbo — em vez de derrubar todo envio. Qualquer outro erro",
+     "      // continua sendo infra pré-dispatch: nada saiu.",
+     "      if (markError.code === 'PGRST202' || markError.code === '42883') {",
+     "        console.error(JSON.stringify({ event: 'message_delivery_post_stamp_unavailable', code: markError.code }));"
+    ],
+    "still_sample": [
+     "      ? await resolvePrivateBucketUrl(caller, claim.media_url, undefined, supabaseUrl)",
+     "      : null;",
+     "      await failClaim(service, claim);",
+     "      await failClaim(service, claim);",
+     "      await failClaim(service, claim);",
+     "    await failClaim(service, claim);"
+    ]
+   }
+  },
+  {
+   "path": "supabase/migrations/20261111160000_outbound_post_started.sql",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  }
+ ],
+ "auto": "MISTO_CONFLITO",
+ "n_files_with_gaps": 9,
+ "gap_lines_total": 50
+}

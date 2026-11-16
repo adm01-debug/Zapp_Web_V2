@@ -1,0 +1,70 @@
+{
+ "id": "pr-3114",
+ "kind": "pr",
+ "ref": "refs/remotes/pr/3114",
+ "pr": 3114,
+ "tip": "94d60dc0dabe76d13e2b99d22995468641300e45",
+ "merge_base": "41853318cdad8f5ad5580d52df4935d14437209e",
+ "ahead": 1,
+ "last_commit_date": "2026-11-14",
+ "merge_base_date": "2026-11-14",
+ "triagem_2804": null,
+ "closure_comment": {
+  "title": "chore(db): sincronizar artefatos derivados do banco",
+  "last_comment": "Incorporada: os cinco artefatos desta PR entraram na `main` pelo pacote 7 (#3123, `b24e3150004c`), junto com a correção do `docs/DB-INVENTORY.md` que faltava para o `CI Gate` fechar verde. |  | **Prova byte-a-byte:** dos 5 arquivos desta branch, **5 estão byte-idênticos** na `main` (blob SHA igual): |  | -"
+ },
+ "files": [
+  {
+   "path": "scripts/db-audit/grants-baseline.json",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 13,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 2,
+    "missing_in_main": 1,
+    "removed": 2,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "    \"service_role_execute_count\": 410,"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "scripts/db-audit/known-violations.json",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/integrations/supabase/types.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 90,
+   "hunk": "PRESENT_REVERSE_APPLIES"
+  },
+  {
+   "path": "supabase/schema-catalog.json",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 55,
+   "hunk": "PRESENT_REVERSE_APPLIES"
+  },
+  {
+   "path": "supabase/schema-manifest.json",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 305,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 43,
+    "missing_in_main": 1,
+    "removed": 9,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "    \"generated_at\": \"2026-11-14T18:59:46Z\","
+    ],
+    "still_sample": []
+   }
+  }
+ ],
+ "auto": "MISTO_CONFLITO",
+ "n_files_with_gaps": 2,
+ "gap_lines_total": 2
+}

@@ -1,0 +1,52 @@
+{
+ "id": "claude__ci-deploy-functions-build-id-261114-0017",
+ "kind": "branch",
+ "ref": "origin/claude/ci-deploy-functions-build-id-261114-0017",
+ "tip": "801b605aab3b9007212de66294ea434e272ce250",
+ "merge_base": "f32855df69f21c7bb6b0dba89451fc886b059e58",
+ "ahead": 1,
+ "last_commit_date": "2026-11-14",
+ "merge_base_date": "2026-11-13",
+ "prs_with_same_tip": [
+  3055
+ ],
+ "triagem_2804": {
+  "3055": null
+ },
+ "closure_comment": {
+  "3055": {
+   "title": "ci(deploy-functions): publicar ZAPP_BUILD_ID nas edges apos o deploy",
+   "last_comment": "Contida no pacote 4, adm01-debug/Zapp_Web_V2#3063, mergeado na `main` em d084ca75 com CI completo verde (CI Gate, testes unitários 1/3–3/3, E2E, edge contracts, build, security, workflow lint). O conteúdo desta PR entrou por lá (merge `--no-ff` desta branch no pacote, sem conflito; #3036 e #2981 ent"
+  }
+ },
+ "files": [
+  {
+   "path": ".github/workflows/deploy-functions.yml",
+   "status": "BOTH_CHANGED",
+   "hunk": "CONFLICT",
+   "patch_lines": 24,
+   "line_check": {
+    "added": 12,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "        # Grava o SHA DEPLOYADO (em rollback e' o ancestral publicado, nao a main)."
+    ],
+    "still_sample": []
+   }
+  }
+ ],
+ "counts": {
+  "migrations": "0",
+  "workflows": "1",
+  "src": "0",
+  "edges": "0",
+  "docs_only": "no",
+  "lines_branch_has_main_lacks": "2",
+  "lines_main_has_branch_lacks": "5"
+ },
+ "auto": "MISTO_CONFLITO",
+ "n_files_with_gaps": 1,
+ "gap_lines_total": 1
+}

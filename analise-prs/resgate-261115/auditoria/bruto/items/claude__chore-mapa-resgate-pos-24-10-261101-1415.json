@@ -1,0 +1,106 @@
+{
+ "id": "claude__chore-mapa-resgate-pos-24-10-261101-1415",
+ "kind": "branch",
+ "ref": "origin/claude/chore-mapa-resgate-pos-24-10-261101-1415",
+ "tip": "7f572d1f83b034c07c0cee8e2290e1e26c1f118a",
+ "merge_base": "1252bb5a41123ba4d49efd84d0f91604bff6c87c",
+ "ahead": 4,
+ "last_commit_date": "2026-11-01",
+ "merge_base_date": "2026-11-01",
+ "prs_with_same_tip": [
+  2479
+ ],
+ "triagem_2804": {
+  "2479": "OBSOLETA"
+ },
+ "closure_comment": {},
+ "files": [
+  {
+   "path": "docs/resgate/MAPA_pos-24-10.md",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "patch_lines": 109,
+   "line_check": {
+    "added": 89,
+    "missing_in_main": 89,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "# MAPA — delta desde 24/10 (gerado 2026-11-01)",
+     "Base: `origin/main` = `532aa09bae`. Fonte anterior (somente comparacao): `~/_arquivo/resgate/resgate-zapp-2026-10-24/` (MAPA de 24/10, 4.247 branches).",
+     "## O que mudou desde 24/10",
+     "- Branches locais: **4.268** hoje (24/10: 4.247, +21). 83 nomes novos, 62 sumiram. Das 83 novas, 24 ja estao no GitHub e **59 eram so locais**.",
+     "- Tags `resgate/*` no GitHub: 2.329 -> **2.390** (+61 em 01/11: 59 branches novas, 1 commit da quarentena `c96d8009`, 1 tag de 5 arquivos nao commitados do clon",
+     "- PR de documentacao de 24/10 (#2220) foi mergeada em 24/10.",
+     "## Classificacao das 59 branches novas so-locais",
+     "| Classe | Qtd |",
+     "|---|---|",
+     "| SO LOCAL | 20 |",
+     "| PARCIAL | 5 |",
+     "| LIXO | 34 |",
+     "Criterio (heuristica, **nao verificada por teste/build**): LIXO = sem commit proprio, conteudo identico a main ou so docs/manifestos; PARCIAL = parte dos commit",
+     "## Itens com possivel conteudo util (SO LOCAL + PARCIAL)",
+     "| classe | branch | commits | arq. codigo | assunto |",
+     "|---|---|---|---|---|",
+     "| PARCIAL | `codex/consolida-conexao-padrao-tipos` | 1 | 1 | Merge remote-tracking branch 'origin/main' into codex/consolida-conexao-padrao-t |",
+     "| PARCIAL | `codex/consolida-conversa-reabertura-tipos` | 1 | 1 | Merge remote-tracking branch 'origin/main' into codex/consolida-conversa-reabert |",
+     "| PARCIAL | `codex/consolida-emoji-uso-tipos` | 1 | 1 | Merge remote-tracking branch 'origin/main' into codex/consolida-emoji-uso-tipos |",
+     "| PARCIAL | `codex/consolida-p053-ledger-20261029` | 1 | 1 | docs(reconciliation): repara integridade do ledger P053 |",
+     "| PARCIAL | `codex/fixa-docs-deploy-edge-20261029` | 1 | 1 | docs(deploy): alinha orientacoes ao fluxo edge atual |",
+     "| SO LOCAL | `claude/feat-a11y-primitivos-ui-261024-1650` | 1 | 2 | fix(ui): aria-busy no botao em carregamento e ilustracoes decorativas fora da ar |",
+     "| SO LOCAL | `claude/feat-metas-seletor-periodo-261024-1743` | 1 | 4 | feat(metas): seletor Hoje/Semana/Mês na aba Metas, título por período e skeleton |",
+     "| SO LOCAL | `claude/feat-modal-nova-tarefa-painel-261024-1336` | 5 | 2 | fix(tarefas): modal Nova tarefa reabre com o rascunho quando o INSERT falha |",
+     "| SO LOCAL | `claude/feat-talkx-segmentos-filtros-261024-1753` | 1 | 2 | feat(talkx): filtros, paginacao persistida e URL sync da biblioteca de segmentos |"
+    ],
+    "still_sample": [],
+    "same_basename_in_main": []
+   }
+  },
+  {
+   "path": "docs/resgate/progresso_pos-24-10.json",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "patch_lines": 30,
+   "line_check": {
+    "added": 18,
+    "missing_in_main": 18,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     " \"data\": \"2026-11-01\",",
+     " \"origin_main\": \"532aa09bae\",",
+     " \"branches_locais\": 4268,",
+     " \"novas_so_locais\": 59,",
+     " \"classes\": {",
+     "  \"LIXO\": 34,",
+     "  \"SO LOCAL\": 20,",
+     "  \"PARCIAL\": 5",
+     " \"validade\": {",
+     "  \"ABSORVIDO\": 10,",
+     "  \"DIVERGENTE (main mudou o mesmo trecho)\": 8,",
+     "  \"SOBRA (ausente na main)\": 7",
+     " \"tags_resgate_remoto\": 2390,",
+     " \"nao_feito\": [",
+     "  \"clusters Jaccard\",",
+     "  \"vereditos LLM\",",
+     "  \"patch-id global\",",
+     "  \"arvores sujas/quarentena (nao sobem por decisao)\""
+    ],
+    "still_sample": [],
+    "same_basename_in_main": []
+   }
+  }
+ ],
+ "counts": {
+  "migrations": "0",
+  "workflows": "0",
+  "src": "0",
+  "edges": "0",
+  "docs_only": "yes",
+  "lines_branch_has_main_lacks": "126",
+  "lines_main_has_branch_lacks": "0"
+ },
+ "auto": "TRABALHO_AUSENTE_APLICA_LIMPO",
+ "n_files_with_gaps": 2,
+ "gap_lines_total": 107
+}

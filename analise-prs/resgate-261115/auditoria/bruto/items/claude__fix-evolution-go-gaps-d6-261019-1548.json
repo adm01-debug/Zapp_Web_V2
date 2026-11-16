@@ -1,0 +1,105 @@
+{
+ "id": "claude__fix-evolution-go-gaps-d6-261019-1548",
+ "kind": "branch",
+ "ref": "origin/claude/fix-evolution-go-gaps-d6-261019-1548",
+ "tip": "5615e53d9bf6f97feeb0a79a432c4934c87e06d1",
+ "merge_base": "ee294749175799481deb9fc69e1d31fac6675f3e",
+ "ahead": 3,
+ "last_commit_date": "2026-10-19",
+ "merge_base_date": "2026-10-18",
+ "prs_with_same_tip": [
+  2113
+ ],
+ "triagem_2804": {
+  "2113": "DUPLICATA_PROVAVEL"
+ },
+ "closure_comment": {},
+ "files": [
+  {
+   "path": "src/hooks/evolution/useEvolutionInstance.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 23,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 3,
+    "removed_still_in_main": 3,
+    "missing_sample": [
+     "    restartInstance, disconnectInstance, deleteInstance,"
+    ],
+    "still_sample": [
+     "  const setPresence = useCallback((instanceName: string, presence: 'available' | 'unavailable' | 'composing' | 'recording' | 'paused') =>",
+     "    callApi('set-presence', { instanceName, presence }), [callApi]);",
+     "    restartInstance, disconnectInstance, deleteInstance, setPresence,"
+    ]
+   }
+  },
+  {
+   "path": "src/hooks/integrations/useWhatsAppStatus.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 173,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 7,
+    "missing_in_main": 6,
+    "removed": 76,
+    "removed_still_in_main": 74,
+    "missing_sample": [
+     " * Hook to fetch WhatsApp presence for a contact.",
+     " * Status messages (stories) are not supported by Evolution GO.",
+     "      return { instanceName: null };",
+     "    return { instanceName: connection?.instance_id ?? null };",
+     "      const { instanceName: resolvedInstance } = await getConnectionInfo(phone);",
+     "      await Promise.allSettled(["
+    ],
+    "still_sample": [
+     "  contactName: string | null;",
+     "const toTimestampNumber = (value?: number | string) => {",
+     "  if (typeof value === 'number') return value;",
+     "  if (typeof value === 'string') {",
+     "    const parsed = Number.parseInt(value, 10);",
+     "    return Number.isFinite(parsed) ? parsed : 0;",
+     "  return 0;",
+     "const buildPhoneNeedles = (phone: string) => {",
+     "  const digits = normalizeDigits(phone);",
+     "  if (!digits) return [];"
+    ]
+   }
+  },
+  {
+   "path": "supabase/functions/evolution-api/index.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 37,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 0,
+    "missing_in_main": 0,
+    "removed": 9,
+    "removed_still_in_main": 7,
+    "missing_sample": [],
+    "still_sample": [
+     "    if (action === 'find-status-messages') {",
+     "      if (isGoFlavor) return goHistoryNotSupported('find-status-messages', corsHeaders);",
+     "      const response = await proxy(`/chat/findMessages/${instance}`, 'POST', { where: { key: { remoteJid: 'status@broadcast' } }, page: body.page ?? 1, offset: ",
+     "      const data = await response.json();",
+     "      if (data?.error === true) return new Response(JSON.stringify(data), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });",
+     "      const records = Array.isArray(data?.messages?.records) ? data.messages.records : [];",
+     "      return new Response(JSON.stringify(records), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });"
+    ]
+   }
+  }
+ ],
+ "counts": {
+  "migrations": "0",
+  "workflows": "0",
+  "src": "2",
+  "edges": "1",
+  "docs_only": "no",
+  "lines_branch_has_main_lacks": "157",
+  "lines_main_has_branch_lacks": "641"
+ },
+ "auto": "MISTO_CONFLITO",
+ "n_files_with_gaps": 3,
+ "gap_lines_total": 91
+}

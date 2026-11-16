@@ -1,0 +1,29 @@
+[
+ {
+  "commit": "c7cb4adc5",
+  "arquivo": "supabase/functions/_shared/evolution-go-routes.ts",
+  "linhas": 4,
+  "amostra": [
+   "      : (typeof b.latitude === 'number' && typeof b.longitude === 'number'",
+   "        ? `${b.latitude}, ${b.longitude}` : name);",
+   "      number: b.number, name, address, latitude: b.latitude, longitude: b.longitude,",
+   "      ...b, title: goRequiredText(b.title), footer: b.footer || ' ',"
+  ]
+ },
+ {
+  "commit": "c7cb4adc5",
+  "arquivo": "supabase/functions/evolution-api/index.ts",
+  "linhas": 1,
+  "amostra": [
+   "      const editKey = body.key ?? (body.messageId ? { remoteJid: body.number, fromMe: true, id: body.messageId } : undefined);"
+  ]
+ },
+ {
+  "commit": "28e23f67e",
+  "arquivo": "src/hooks/analytics/useGoalNotifications.ts",
+  "linhas": 1,
+  "amostra": [
+   "      const measured = await Promise.all("
+  ]
+ }
+]

@@ -1,0 +1,611 @@
+{
+ "id": "claude__magical-pasteur-iz2pgy",
+ "kind": "branch",
+ "ref": "origin/claude/magical-pasteur-iz2pgy",
+ "tip": "48ef50d2e090a826629a9ff0899c24effa6ed883",
+ "merge_base": "a9ddd2f9a0ec6fc57085ff463db09f2ed7eb9674",
+ "ahead": 21,
+ "last_commit_date": "2026-10-23",
+ "merge_base_date": "2026-10-23",
+ "prs_with_same_tip": [
+  2199
+ ],
+ "triagem_2804": {
+  "2199": "OBSOLETA"
+ },
+ "closure_comment": {},
+ "files": [
+  {
+   "path": "PENDENCIAS.md",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 403,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 64,
+    "missing_in_main": 64,
+    "removed": 203,
+    "removed_still_in_main": 3,
+    "missing_sample": [
+     "# PENDENCIAS.md — Bloqueios que dependem do Joaquim",
+     "**Data:** 2026-10-23  ",
+     "**Branch de correção:** `claude/magical-pasteur-iz2pgy`  ",
+     "**PR:** [#2199](https://github.com/adm01-debug/Zapp_Web_V2/pull/2199)",
+     "## 1. `🎭 E2E Tests (Playwright)` — suite `e2e-logado` bloqueada por credencial inválida",
+     "**Workflow:** `.github/workflows/e2e-logado.yml`  ",
+     "**Check obrigatório:** sim (`🎭 E2E Tests (Playwright)` é required check da `main`)",
+     "### Erro",
+     "Error: POST https://tnnnlkbymytvtqngbbqh.supabase.co/auth/v1/token?grant_type=password",
+     "  → 400 Bad Request: \"Invalid login credentials\"",
+     "O passo de autenticação do Playwright usa o secret `E2E_TEST_PASSWORD` para fazer login",
+     "com o usuário de teste. O valor atualmente gravado **não corresponde** à senha real do",
+     "usuário `E2E_TEST_USER` no Supabase (projeto `tnnnlkbymytvtqngbbqh`).",
+     "**Opção A (recomendada) — atualizar o secret:**",
+     "1. Acesse o Supabase: https://supabase.com/dashboard/project/tnnnlkbymytvtqngbbqh",
+     "2. Em **Authentication → Users**, localize o e-mail do usuário de teste (definido em",
+     "   `E2E_TEST_USER`).",
+     "3. Redefina a senha desse usuário para um valor seguro que você vai lembrar.",
+     "4. No GitHub, acesse **Settings → Secrets and variables → Actions** do repo",
+     "   `adm01-debug/Zapp_Web_V2`.",
+     "5. Edite o secret `E2E_TEST_PASSWORD` com o novo valor.",
+     "6. Reexecute o workflow `🎭 E2E Tests (Playwright)` na branch ou via PR.",
+     "**Opção B — verificar o valor atual:**",
+     "Se a senha nunca mudou, o problema pode ser que o secret `E2E_TEST_PASSWORD` foi",
+     "cadastrado com um valor incorreto desde o início. Nesse caso, basta seguir o passo 4–6"
+    ],
+    "still_sample": [
+     "   ```sql",
+     "   ```sql",
+     "   ```sql"
+    ]
+   }
+  },
+  {
+   "path": "RELATORIO_CI.md",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 304,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 60,
+    "missing_in_main": 58,
+    "removed": 152,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "# Relatório CI — Correções de Workflows (PR #2199)",
+     "**Data:** 2026-10-23  ",
+     "**Branch:** `claude/magical-pasteur-iz2pgy`  ",
+     "**PR:** [#2199](https://github.com/adm01-debug/Zapp_Web_V2/pull/2199)",
+     "## Baseline (estado antes das correções)",
+     "| Check | Status anterior na `main` | Causa raiz identificada |",
+     "| `Contrato DB offline` | ❌ failure | `assert_last_definer` com ponteiro de origem desatualizado para `is_admin_or_supervisor` e `dashboard_kpi`; `awk` sem anco",
+     "| `🧪 Unit Tests` | ❌ failure | `@tanstack/react-virtual` v3 usa `scrollElement.clientHeight`; JSDOM retorna 0 sem mock → virtualizer renderizava 0 itens (FilesT",
+     "| `Replay local das migrations` | ❌ failure | `docker-shim rm)` tentava dropar roles built-in do PG17 (`pg_read_all_settings`, etc.) causando erro |",
+     "| `🔒 Security Audit` | ✅ verde | — |",
+     "| `🔍 Lint & TypeCheck` | ✅ verde | — |",
+     "| `🏗️ Build` | ✅ verde | — |",
+     "| `🎭 E2E Tests (Playwright)` | ⚠️ bloqueado | `E2E_TEST_PASSWORD` inválido — ver PENDENCIAS.md |",
+     "## Correções aplicadas nesta PR",
+     "### Commit `8524866` — Contrato DB offline: guard is_admin_or_supervisor",
+     "**Arquivo:** `scripts/db-audit/dashboard-rls-authorization.test.sh`",
+     "- `assert_last_definer 'helper is_admin_or_supervisor'`: origem atualizada de `20251215025014_fcc5bc79...` → `20261016170000_fix_security_definer_search_path.sq",
+     "### Commit `5ae75b1` — Recuperação BLOCO A restaurado",
+     "**Arquivo:** `scripts/db-audit/recuperacao-anonima-pedido-reset.test.sh`",
+     "- BLOCO A (estado real da correção) havia sido sobrescrito por sessão paralela; restaurado com o conteúdo correto.",
+     "### Commit `8524866` — docker-shim: proteção de roles built-in PG17",
+     "**Arquivo:** `scripts/db-audit/docker-shim`",
+     "- Handler `rm)`: adicionadas guards `[[ \"$role\" == pg_* ]] && continue` e `[[ \"$role\" == \"postgres\" ]] && continue` para nunca dropar roles nativos do PostgreSQ",
+     "### Commit `8524866` — Unit Tests: mock de virtualizer no JSDOM",
+     "**Arquivo:** `src/test/setup.ts`"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "scripts/db-audit/assume-return-conversation.test.sh",
+   "status": "MAIN_UNCHANGED_SINCE_BASE",
+   "patch_lines": 46,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 6,
+    "missing_in_main": 2,
+    "removed": 6,
+    "removed_still_in_main": 6,
+    "missing_sample": [
+     "#                so admin devolve; o dono nao-admin e barrado -> o contrato FALHA.",
+     "    printf '%s\\n' \"$evid\" | sed 's/\\[FAIL\\]/[OK-MUTACAO]/g; s/^/[EVIDENCIA] /'"
+    ],
+    "still_sample": [
+     "#                so admin devolveria; o dono nao-admin e barrado -> o contrato FALHA.",
+     "    printf '%s\\n' \"$evid\" | sed 's/^/[EVIDENCIA] /'",
+     "  \"$(psql_q -c \"SELECT coalesce(to_regprocedure('$SIG_A')::text,'<null>')\")\"",
+     "  \"$(psql_q -c \"SELECT coalesce(to_regprocedure('$SIG_R')::text,'<null>')\")\"",
+     "  \"$(psql_q -c \"SELECT coalesce(to_regprocedure('$SIG_A')::text,'<null>')\")\"",
+     "  \"$(psql_q -c \"SELECT coalesce(to_regprocedure('$SIG_R')::text,'<null>')\")\""
+    ]
+   }
+  },
+  {
+   "path": "scripts/db-audit/cron-secret-l5-contract.test.sh",
+   "status": "MAIN_UNCHANGED_SINCE_BASE",
+   "patch_lines": 77,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 8,
+    "missing_in_main": 7,
+    "removed": 8,
+    "removed_still_in_main": 8,
+    "missing_sample": [
+     "  printf '%s\\n' \"$mutacao_evidencia\" | sed 's/\\[FAIL\\]/[OK-MUTACAO]/g; s/^/[EVIDENCIA] /'",
+     "  printf '%s\\n' \"$d1_mut_evidencia\" | sed 's/\\[FAIL\\]/[OK-MUTACAO]/g; s/^/[EVIDENCIA] /'",
+     "  printf '%s\\n' \"$d2_mut_evidencia\" | sed 's/\\[FAIL\\]/[OK-MUTACAO]/g; s/^/[EVIDENCIA] /'",
+     "  printf '%s\\n' \"$d3_mut_evidencia\" | sed 's/\\[FAIL\\]/[OK-MUTACAO]/g; s/^/[EVIDENCIA] /'",
+     "  printf '%s\\n' \"$d4_jobid_evidencia\" | sed 's/\\[FAIL\\]/[OK-MUTACAO]/g; s/^/[EVIDENCIA] /'",
+     "  printf '%s\\n' \"$d4_active_evidencia\" | sed 's/\\[FAIL\\]/[OK-MUTACAO]/g; s/^/[EVIDENCIA] /'",
+     "  printf '%s\\n' \"$d5_mut_evidencia\" | sed 's/\\[FAIL\\]/[OK-MUTACAO]/g; s/^/[EVIDENCIA] /'"
+    ],
+    "still_sample": [
+     "  [[ \"$output\" == *\"$needle\"* ]] || { printf '%s\\n' \"$output\" >&2; fail \"$label: esperava '$needle' no erro\"; }",
+     "  printf '[EVIDENCIA] %s\\n' \"$mutacao_evidencia\"",
+     "  printf '%s\\n' \"$d1_mut_evidencia\" | sed 's/^/[EVIDENCIA] /'",
+     "  printf '%s\\n' \"$d2_mut_evidencia\" | sed 's/^/[EVIDENCIA] /'",
+     "  printf '[EVIDENCIA] %s\\n' \"$d3_mut_evidencia\"",
+     "  printf '[EVIDENCIA] %s\\n' \"$d4_jobid_evidencia\"",
+     "  printf '[EVIDENCIA] %s\\n' \"$d4_active_evidencia\"",
+     "  printf '[EVIDENCIA] %s\\n' \"$d5_mut_evidencia\""
+    ]
+   }
+  },
+  {
+   "path": "scripts/db-audit/dashboard-rls-authorization.test.sh",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 37,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 6,
+    "missing_in_main": 4,
+    "removed": 6,
+    "removed_still_in_main": 2,
+    "missing_sample": [
+     "  '20261007013217_conversation_closures_reopen_same_day.sql' \\",
+     "# Definição final de dashboard_kpi vive em 20261007013217 (última a redefinir a função).",
+     "# Padrões ancorados ao início da linha para não capturar o bloco de rollback comentado.",
+     "awk '/^CREATE OR REPLACE FUNCTION public\\.dashboard_kpi/,/^\\$function\\$;$/' \\"
+    ],
+    "still_sample": [
+     "awk '/CREATE OR REPLACE FUNCTION public.dashboard_kpi/,/\\$function\\$;/' \\",
+     "  \"$migrations_dir/20261003272707_reconcile_local_replay_with_canonical.sql\" \\"
+    ]
+   }
+  },
+  {
+   "path": "scripts/db-audit/docker-shim",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 13,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 2,
+    "missing_in_main": 2,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "      [[ \"$role\" == pg_* ]] && continue  # nunca dropar roles built-in do PostgreSQL (pg_read_all_settings, pg_create_subscription, etc.)",
+     "      [[ \"$role\" == \"postgres\" ]] && continue  # superusuário padrão não pode ser dropado"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "scripts/db-audit/recuperacao-anonima-pedido-reset.test.sh",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 35,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 4,
+    "missing_in_main": 3,
+    "removed": 2,
+    "removed_still_in_main": 2,
+    "missing_sample": [
+     "# gatilhos reais e os grants reais (anon ja tem INSERT de tabela — o que falta e a policy).",
+     "-- Gatilho ORIGINAL com defeito: cita a coluna reset_token removida em 20260827170000",
+     "-- A.3 espera que INSERT autenticado falhe com \"has no field reset_token\""
+    ],
+    "still_sample": [
+     "  [[ \"$out\" == *\"$needle\"* ]] || { printf '%s\\n' \"$out\" >&2; fail \"$l: esperava '$needle' no erro\"; }",
+     "# gatilhos reais e os grants reais (anon ja tem INSERT de TABELA — o que falta e a policy)."
+    ]
+   }
+  },
+  {
+   "path": "scripts/db-audit/talkx-campaign-recipients-page.test.sh",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 22,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 2,
+    "missing_in_main": 0,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/inbox/__tests__/SummaryResult.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 13,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 0,
+    "removed": 1,
+    "removed_still_in_main": 0,
+    "missing_sample": [],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/inbox/chat/__tests__/ChatMessagesArea.loop.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 28,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 7,
+    "missing_in_main": 7,
+    "removed": 4,
+    "removed_still_in_main": 4,
+    "missing_sample": [
+     "      const rect = target.getBoundingClientRect();",
+     "      const blockSize = rect.height > 0 ? rect.height : 600;",
+     "      const inlineSize = rect.width > 0 ? rect.width : 800;",
+     "              height: blockSize, width: inlineSize, top: 0, left: 0,",
+     "              bottom: blockSize, right: inlineSize, x: 0, y: 0, toJSON: () => ({}),",
+     "            borderBoxSize: [{ blockSize, inlineSize }],",
+     "            contentBoxSize: [{ blockSize, inlineSize }],"
+    ],
+    "still_sample": [
+     "              height: 120, width: 800, top: 0, left: 0,",
+     "              bottom: 120, right: 800, x: 0, y: 0, toJSON: () => ({}),",
+     "            borderBoxSize: [{ blockSize: 120, inlineSize: 800 }],",
+     "            contentBoxSize: [{ blockSize: 120, inlineSize: 800 }],"
+    ]
+   }
+  },
+  {
+   "path": "src/components/inbox/chat/__tests__/ChatMessagesArea.movimento-reduzido.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 28,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 7,
+    "missing_in_main": 7,
+    "removed": 4,
+    "removed_still_in_main": 4,
+    "missing_sample": [
+     "      const rect = target.getBoundingClientRect();",
+     "      const blockSize = rect.height > 0 ? rect.height : 600;",
+     "      const inlineSize = rect.width > 0 ? rect.width : 800;",
+     "              height: blockSize, width: inlineSize, top: 0, left: 0,",
+     "              bottom: blockSize, right: inlineSize, x: 0, y: 0, toJSON: () => ({}),",
+     "            borderBoxSize: [{ blockSize, inlineSize }],",
+     "            contentBoxSize: [{ blockSize, inlineSize }],"
+    ],
+    "still_sample": [
+     "              height: 120, width: 800, top: 0, left: 0,",
+     "              bottom: 120, right: 800, x: 0, y: 0, toJSON: () => ({}),",
+     "            borderBoxSize: [{ blockSize: 120, inlineSize: 800 }],",
+     "            contentBoxSize: [{ blockSize: 120, inlineSize: 800 }],"
+    ]
+   }
+  },
+  {
+   "path": "src/components/inbox/tabs/__tests__/FilesTab.fase6.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 44,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 7,
+    "missing_in_main": 7,
+    "removed": 6,
+    "removed_still_in_main": 6,
+    "missing_sample": [
+     "  it('com 959 px e preferência 8, abrir detalhes NÃO muda o effective do grid (Sheet sobreposto)', async () => {",
+     "    // waitFor aguarda o useLayoutEffect propagar a largura medida (React 18 batching)",
+     "    await waitFor(() => expect(gridClass()).toContain('grid-cols-5'));",
+     "    await waitFor(() => expect(gridClass()).toContain('grid-cols-5')); // não caiu: o Sheet não tira espaço do grid",
+     "  it('com 1474 px abre lado a lado (260 px) e o grid cai de 8 para 6', async () => {",
+     "    await waitFor(() => expect(gridClass()).toContain('grid-cols-8'));",
+     "    await waitFor(() => expect(gridClass()).toContain('grid-cols-6'));"
+    ],
+    "still_sample": [
+     "  it('com 959 px e preferência 8, abrir detalhes NÃO muda o effective do grid (Sheet sobreposto)', () => {",
+     "    expect(gridClass()).toContain('grid-cols-5');",
+     "    expect(gridClass()).toContain('grid-cols-5'); // não caiu: o Sheet não tira espaço do grid",
+     "  it('com 1474 px abre lado a lado (260 px) e o grid cai de 8 para 6', () => {",
+     "    expect(gridClass()).toContain('grid-cols-8');",
+     "    expect(gridClass()).toContain('grid-cols-6');"
+    ]
+   }
+  },
+  {
+   "path": "src/components/ui/command-palette.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 22,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 2,
+    "missing_in_main": 2,
+    "removed": 2,
+    "removed_still_in_main": 1,
+    "missing_sample": [
+     "            <div className=\"p-2\" role=\"listbox\">",
+     "                        <motion.button key={item.id} role=\"option\" aria-selected={gi === selectedIndex} initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, "
+    ],
+    "still_sample": [
+     "            <div className=\"p-2\">"
+    ]
+   }
+  },
+  {
+   "path": "src/hooks/auth/useAuth.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 22,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 4,
+    "missing_in_main": 3,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "        // Fila de envio offline pertence ao atendente que saiu — não pode drenar",
+     "        // como o próximo login na mesma máquina.",
+     "        void offlineSendQueue.clear();"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/hooks/chat/useTeamChatNotifications.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 78,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 21,
+    "missing_in_main": 16,
+    "removed": 9,
+    "removed_still_in_main": 3,
+    "missing_sample": [
+     "  const permissionRef = useRef(permission);",
+     "  const showNotificationRef = useRef(showNotification);",
+     "  // Sync refs every render so the channel handler always reads current values",
+     "  // without needing to be recreated.",
+     "  permissionRef.current = permission;",
+     "  showNotificationRef.current = showNotification;",
+     "      .channel(`team-chat-notifications:${profile.id}`)",
+     "        const currentNotifSettings = notifSettingsRef.current;",
+     "        const currentIsQuietHours = isQuietHoursRef.current;",
+     "        const currentPermission = permissionRef.current;",
+     "        const currentShowNotification = showNotificationRef.current;",
+     "        if (currentNotifSettings.soundEnabled && !currentIsQuietHours()) {",
+     "          playTeamChatSound(currentNotifSettings.soundVolume);",
+     "        if (currentPermission === 'granted' && currentNotifSettings.browserNotifications && !currentIsQuietHours()) {",
+     "          await currentShowNotification({",
+     "  }, [profile]);"
+    ],
+    "still_sample": [
+     "  useEffect(() => {",
+     "    activeIdRef.current = activeConversationId;",
+     "  }, [activeConversationId]);"
+    ]
+   }
+  },
+  {
+   "path": "src/hooks/inbox/__tests__/useInboxBulkActions.test.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 74,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 10,
+    "missing_in_main": 5,
+    "removed": 10,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "        { id: c1, conversation_status: 'attending' },",
+     "    expect(restores[0]).toMatchObject({ payload: { conversation_status: 'attending' }, filters: { id: [c1] } });",
+     "    expect(restores[1]).toMatchObject({ payload: { conversation_status: 'waiting' }, filters: { id: [c2] } });",
+     "    selectQueue.push({ data: [{ id: c1, conversation_status: 'attending' }], error: null });",
+     "    selectQueue.push({ data: [{ id: c1, conversation_status: 'attending' }], error: null });"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/hooks/inbox/useInboxFilters.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 13,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 1,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "      contactType: normalizeContactType(contactTypeFromUrl()) ?? storedPrefs?.contactType ?? null,"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/hooks/system/useDiagnosticsData.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 19,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 2,
+    "missing_in_main": 2,
+    "removed": 1,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "    // Erros de contagem são indício de banco inacessível e propagam para dbError (N-216).",
+     "    if (connectionsCountError && !dbError) dbError = connectionsCountError;"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/hooks/system/useUserSettings.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 29,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 4,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "          toast({ title: 'Erro ao carregar configurações', description: error.message, variant: 'destructive' });"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/hooks/tasks/__tests__/workItemFormat.test.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 156,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 22,
+    "missing_in_main": 17,
+    "removed": 80,
+    "removed_still_in_main": 80,
+    "missing_sample": [
+     "import { formatWorkItemDate, formatWorkItemDay, formatWorkItemField } from '../workItemFormat';",
+     "const AGORA = new Date(2026, 9, 11, 20, 0); // 11 out 2026, 20:00 local",
+     "// Helper: runs a callback with the process timezone set to `tz`, then restores.",
+     "function withTimeZone(tz: string, fn: () => void): void {",
+     "  const original = process.env.TZ;",
+     "  process.env.TZ = tz;",
+     "  try { fn(); } finally { process.env.TZ = original ?? ''; }",
+     "describe('formatWorkItemDate', () => {",
+     "  it('hoje às 08:00 em UTC-3', () => {",
+     "      expect(formatWorkItemDate('2026-10-11T08:00:00-03:00', { now: AGORA })).toBe('Hoje, 08:00');",
+     "  it('ontem às 15:30 em UTC-3', () => {",
+     "      expect(formatWorkItemDate('2026-10-10T15:30:00-03:00', { now: AGORA })).toBe('Ontem, 15:30');",
+     "  it('data futura exibe data completa', () => {",
+     "      expect(formatWorkItemDate('2026-11-01T10:00:00-03:00', { now: AGORA })).toBe('01/11/2026, 10:00');",
+     "  it('data passada distante exibe data completa', () => {",
+     "      expect(formatWorkItemDate('2026-09-01T10:00:00-03:00', { now: AGORA })).toBe('01/09/2026, 10:00');",
+     "  it('retorna null para entradas inválidas', () => {"
+    ],
+    "still_sample": [
+     " * Etapa 058 (D21) — a regra ÚNICA de datas do módulo de Tarefas.",
+     " * Todas as superfícies (Lista, Quadro, Agenda, painel, modal) passam por aqui,",
+     " * então o teste fixa o formato exato pedido pelo plano: \"Ontem, 17:00\",",
+     " * \"Hoje, 14:00\", \"Amanhã, 10:00\", \"13 out., 15:00\"; concluídas só o dia",
+     " * (\"Hoje\", \"Ontem\", \"09 out.\"); campos do painel/modal \"Hoje, 11/10\" + hora",
+     " * separada; e NUNCA o \"Seg, 09/09, 14:20\" da imagem 04.",
+     " * As datas são construídas no relógio LOCAL (`new Date(ano, mês, dia, h, min)`),",
+     " * o mesmo que o módulo promete ler — assim o caso não depende de o processo",
+     " * rodar em UTC-3 para valer.",
+     "import {"
+    ]
+   }
+  },
+  {
+   "path": "src/hooks/tasks/workItemFormat.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 13,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 1,
+    "removed_still_in_main": 1,
+    "missing_sample": [
+     "  return `${pad2(d.getDate())}/${pad2(d.getMonth() + 1)}/${d.getFullYear()}`;"
+    ],
+    "still_sample": [
+     "  return `${pad2(d.getDate())} ${MES_CURTO_PT_BR[d.getMonth()]}`;"
+    ]
+   }
+  },
+  {
+   "path": "src/test/setup.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 44,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 22,
+    "missing_in_main": 18,
+    "removed": 3,
+    "removed_still_in_main": 3,
+    "missing_sample": [
+     "Object.defineProperty(Element.prototype, 'getBoundingClientRect', {",
+     "  value: function (this: Element) {",
+     "    const styleEl = this as HTMLElement;",
+     "    const styleHeight = styleEl.style ? parseInt(styleEl.style.height, 10) : NaN;",
+     "    const h = Number.isFinite(styleHeight) && styleHeight > 0 ? styleHeight : 600;",
+     "    return { width: 800, height: h, top: 0, left: 0, right: 800, bottom: h, x: 0, y: 0, toJSON: () => ({}) };",
+     "// MOCK clientHeight / clientWidth — @tanstack/react-virtual no jsdom.",
+     "// O virtualizador usa scrollElement.clientHeight como tamanho do viewport para",
+     "// decidir quais itens renderizar. O jsdom nao implementa layout CSS: o valor e",
+     "// sempre 0, getVirtualItems() devolve [] e nenhum item aparece no DOM do teste.",
+     "// Fixar 600 x 800 e coerente com o getBoundingClientRect acima e suficiente para",
+     "// os testes de regressao de loop (ChatMessagesArea.loop) e qualquer outro que",
+     "// monte um virtualizador sem mock proprio de clientHeight.",
+     "// Testes que precisam de valor especifico definem vi.spyOn(el, 'clientHeight', ...).",
+     "Object.defineProperty(HTMLElement.prototype, 'clientHeight', {",
+     "  get() { return 600; },",
+     "Object.defineProperty(HTMLElement.prototype, 'clientWidth', {",
+     "  get() { return 800; },"
+    ],
+    "still_sample": [
+     "Object.defineProperty(HTMLElement.prototype, 'getBoundingClientRect', {",
+     "  value: function () {",
+     "    return { width: 800, height: 600, top: 0, left: 0, right: 800, bottom: 600, x: 0, y: 0, toJSON: () => ({}) };"
+    ]
+   }
+  },
+  {
+   "path": "supabase/migrations/20261010062941_talkx_campaign_recipients_page.sql",
+   "status": "MAIN_UNCHANGED_SINCE_BASE",
+   "patch_lines": 44,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 9,
+    "missing_in_main": 9,
+    "removed": 6,
+    "removed_still_in_main": 6,
+    "missing_sample": [
+     "  p_segment_id uuid DEFAULT NULL,",
+     "    AND (p_segment_id IS NULL OR r.segment_id = p_segment_id)",
+     "    AND (v_search IS NULL OR c.name ILIKE '%' || v_search || '%' OR c.phone ILIKE '%' || v_search || '%' OR r.contact_id::text ILIKE '%' || v_search || '%');",
+     "      AND (p_segment_id IS NULL OR r.segment_id = p_segment_id)",
+     "      AND (v_search IS NULL OR c.name ILIKE '%' || v_search || '%' OR c.phone ILIKE '%' || v_search || '%' OR r.contact_id::text ILIKE '%' || v_search || '%')",
+     "REVOKE ALL ON FUNCTION public.talkx_campaign_recipients_page(uuid, integer, text, text, uuid, text) FROM PUBLIC, anon;",
+     "GRANT EXECUTE ON FUNCTION public.talkx_campaign_recipients_page(uuid, integer, text, text, uuid, text) TO authenticated, service_role;",
+     "COMMENT ON FUNCTION public.talkx_campaign_recipients_page(uuid, integer, text, text, uuid, text) IS",
+     "  'Talk X (N-131): pagina de destinatarios por cursor keyset (created_at,id) com contato embutido, filtros de status/segmento, busca por nome/telefone/contact_i"
+    ],
+    "still_sample": [
+     "    AND (v_search IS NULL OR c.name ILIKE '%' || v_search || '%' OR c.phone ILIKE '%' || v_search || '%');",
+     "      AND (v_search IS NULL OR c.name ILIKE '%' || v_search || '%' OR c.phone ILIKE '%' || v_search || '%')",
+     "REVOKE ALL ON FUNCTION public.talkx_campaign_recipients_page(uuid, integer, text, text, text) FROM PUBLIC, anon;",
+     "GRANT EXECUTE ON FUNCTION public.talkx_campaign_recipients_page(uuid, integer, text, text, text) TO authenticated, service_role;",
+     "COMMENT ON FUNCTION public.talkx_campaign_recipients_page(uuid, integer, text, text, text) IS",
+     "  'Talk X (N-131): pagina de destinatarios por cursor keyset (created_at,id) com contato embutido, filtro de status, busca por nome/telefone e KPIs da campanha "
+    ]
+   }
+  }
+ ],
+ "counts": {
+  "migrations": "1",
+  "workflows": "0",
+  "src": "14",
+  "edges": "0",
+  "docs_only": "no",
+  "lines_branch_has_main_lacks": "481",
+  "lines_main_has_branch_lacks": "1709"
+ },
+ "auto": "MISTO_CONFLITO",
+ "n_files_with_gaps": 21,
+ "gap_lines_total": 365
+}

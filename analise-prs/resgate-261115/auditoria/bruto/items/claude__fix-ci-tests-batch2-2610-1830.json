@@ -1,0 +1,229 @@
+{
+ "id": "claude__fix-ci-tests-batch2-2610-1830",
+ "kind": "branch",
+ "ref": "origin/claude/fix-ci-tests-batch2-2610-1830",
+ "tip": "af0bb57e2e44bb15011064e9e5eed64d237c287a",
+ "merge_base": "2d97c44cfe7f2fa8a3ca572f8f5689118328e858",
+ "ahead": 7,
+ "last_commit_date": "2026-10-24",
+ "merge_base_date": "2026-10-24",
+ "prs_with_same_tip": [
+  2233
+ ],
+ "triagem_2804": {
+  "2233": "JA_NA_MAIN"
+ },
+ "closure_comment": {},
+ "files": [
+  {
+   "path": "ESTADO.md",
+   "status": "BOTH_CHANGED",
+   "hunk": "CONFLICT",
+   "patch_lines": 153,
+   "line_check": {
+    "added": 0,
+    "missing_in_main": 0,
+    "removed": 135,
+    "removed_still_in_main": 105,
+    "missing_sample": [],
+    "still_sample": [
+     "Mapa das Edge Functions do Zapp Web V2: **quem chama cada edge** e o que está ligado",
+     "de verdade no código da ponta do dia. Complementa `docs/architecture/edge-functions.md`",
+     "(que descreve *o que* cada edge faz); aqui a pergunta é *quem a dispara*.",
+     "## Como manter",
+     "A guarda `scripts/ci/docs-estado-registry-convention.unit.mjs` recalcula esta tabela a",
+     "partir do código e falha quando:",
+     "* aparece uma edge nova que não está aqui (ou uma linha aponta para edge que não existe);",
+     "* uma âncora citada (`arquivo:linha`) deixa de conter o nome da edge — chamador removido;",
+     "  `supabase/config.toml` (ou vice-versa).",
+     "## Totais"
+    ]
+   }
+  },
+  {
+   "path": "src/components/inbox/ai-tools/__tests__/a11y-ferramentas-ia.test.tsx",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/hooks/auth/useAuth.tsx",
+   "status": "BOTH_CHANGED",
+   "hunk": "CONFLICT",
+   "patch_lines": 213,
+   "line_check": {
+    "added": 68,
+    "missing_in_main": 15,
+    "removed": 61,
+    "removed_still_in_main": 61,
+    "missing_sample": [
+     "   * Inici/limpa a identidade vigente e invalida as buscas de perfil em voo.",
+     "          // Aviso de novo dispositivo (uma vez por sessao Auth): o e-mail tem de",
+     "          // sair no login/boot, nao so quando a vitima abre a tela de Seguranca.",
+     "        // Aviso de novo dispositivo no login (uma vez por sessao Auth).",
+     "        // SEC-FRONTEND-03: o rascunho de conversa do Inbox tambem e do usuario que",
+     "        // saiu - nenhum texto dele pode esperar o proximo login na mesma maquina.",
+     "        // SL-070: a fila de envio offline e do atendente que saiu - nenhuma mensagem",
+     "        // pendente dele pode drenar como o proximo atendente que logar na mesma maquina.",
+     "        void offlineSendQueue.clear();",
+     "      // BUG-F1 FIV: log but do not rethrow - ensure local state is always",
+     "      // limpeza do listener nunca roda - repetida aqui para que nenhum caminho",
+     "      // Supabase pode falhar e nao emitir SIGNED_OUT - a limpeza nao pode depender dele).",
+     "      // SL-070: idem para a fila de envio offline - garantia mesmo quando o Supabase",
+     "      // nao emite SIGNED_OUT.",
+     "      void offlineSendQueue.clear();"
+    ],
+    "still_sample": [
+     " import { useState, useEffect, useCallback, useRef, createContext, useContext, ReactNode } from 'react';",
+     " import { useQueryClient } from '@tanstack/react-query';",
+     " import { User, Session } from '@supabase/supabase-js';",
+     " import { AuthService, type SignInResult } from '@/services/auth.service';",
+     " import { notificarDispositivoNovo } from '@/lib/avisoDispositivo';",
+     " import { Profile } from '@/types';",
+     " export function AuthProvider({ children }: { children: ReactNode }) {",
+     "   * Inicia/limpa a identidade vigente e invalida as buscas de perfil em voo.",
+     "   const fetchProfile = useCallback(async (userId: string) => {",
+     "     if (fetchingRef.current) return;"
+    ]
+   }
+  },
+  {
+   "path": "src/hooks/business/useWarRoomAlerts.ts",
+   "status": "BOTH_CHANGED",
+   "hunk": "CONFLICT",
+   "patch_lines": 230,
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 175,
+    "removed_still_in_main": 165,
+    "missing_sample": [
+     "import { useEffect, useRef, useCallback } from 'react'"
+    ],
+    "still_sample": [
+     "import { useEffect, useRef, useCallback } from 'react';",
+     "import { useQuery, useQueryClient } from '@tanstack/react-query';",
+     "import { supabase } from '@/integrations/supabase/client';",
+     "import { useNotificationSettings } from '../system/useNotificationSettings';",
+     "interface WarRoomAlert {",
+     "  id: string;",
+     "  alert_type: string;",
+     "  title: string;",
+     "  message: string;",
+     "  source: string | null;"
+    ]
+   }
+  },
+  {
+   "path": "src/hooks/chat/useTeamChatNotifications.ts",
+   "status": "BOTH_CHANGED",
+   "hunk": "CONFLICT",
+   "patch_lines": 64,
+   "line_check": {
+    "added": 10,
+    "missing_in_main": 10,
+    "removed": 6,
+    "removed_still_in_main": 2,
+    "missing_sample": [
+     " * listener é æNICO, a conversa em foco chega por este store — a view publica o id enquanto",
+     "/** Publica (no mount/troca) e limpa (no",
+     "+unmount) a conversa que a view está exibindo. */",
+     "  // HZ5-09: sufixo unico por instancia do hook - o canal nunca e recriado por",
+     "  // mudanca de preferencias (volume, browserNotifications), somente no mount.",
+     "  const channelNameRef = useRef(`team-chat-notifications:${crypto.randomUUID()}`);",
+     "      .channel(channelNameRef.current)",
+     "        // HZ3-001: o aviso depende SÌ o da permissão do navegador já concedida — o",
+     "        // Exigir `isSubscribed` do `usePushNotifications` (fque significa \"alertas do",
+     "            title: `💷 Teams: ${senderName}`,"
+    ],
+    "still_sample": [
+     " * listener é ÚNICO, a conversa em foco chega por este store — a view publica o id enquanto",
+     "/** Publica (no mount/troca) e limpa (no unmount) a conversa que a view está exibindo. */"
+    ]
+   }
+  },
+  {
+   "path": "src/lib/__tests__/filesPeriod.adversarial.test.ts",
+   "status": "MAIN_UNCHANGED_SINCE_BASE",
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "patch_lines": 264,
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 174,
+    "removed_still_in_main": 174,
+    "missing_sample": [
+     "import { describe, expect, it } from 'vitest'"
+    ],
+    "still_sample": [
+     "import { describe, expect, it } from 'vitest';",
+     "import { buildPeriodRange, filterByPeriod, type PeriodRange } from '@/lib/filesPeriod';",
+     " * F07 — casos ADVERSARIAIS do recorte por DATA da aba Arquivos (`src/lib/filesPeriod.ts`).",
+     " * Complementa `filesPeriod.test.ts` (F01) atacando o que aquela bateria não cobre: o fuso do",
+     " * navegador contra a fatia UTC do ISO, as viradas de dia/mês/ano nos extremos, o intervalo",
+     " * invertido no extremo do milissegundo, as pontas inclusivas e a data inválida do arquivo.",
+     " * Todos os instantes são montados com o construtor LOCAL (`new Date(ano, mês, dia, ...)`), nunca",
+     " * por `new Date('yyyy-MM-dd')` — é justamente essa diferença que a casa já pagou caro em",
+     " * `localDay.ts` e que o primeiro bloco abaixo prova.",
+     "const DAY_MS = 24 * 60 * 60 * 1000;"
+    ]
+   }
+  },
+  {
+   "path": "src/lib/mediaVolumeStore.ts",
+   "status": "BOTH_CHANGED",
+   "hunk": "CONFLICT",
+   "patch_lines": 17,
+   "line_check": {
+    "added": 3,
+    "missing_in_main": 3,
+    "removed": 1,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     " * Exportada para uso em módulos puros que precisam do userId sem depender de React",
+     " * ou do AuthProvider (ex.: outbound-message.service, fila offline).",
+     "export function readAuthenticatedUserId(): string | null {"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/services/outbound-message.service.ts",
+   "status": "BOTH_CHANGED",
+   "hunk": "CONFLICT",
+   "patch_lines": 57,
+   "line_check": {
+    "added": 8,
+    "missing_in_main": 8,
+    "removed": 3,
+    "removed_still_in_main": 3,
+    "missing_sample": [
+     "import { readAuthenticatedUserId } from '@/lib/mediaVolumeStore';",
+     " * Sem chave (`key` null) ou no caminho offline não há rotação: a drenagem da",
+     "  // Garante isolamento de fila por usuário: itens de outro atendente não são entregues.",
+     "  const currentUserId = readAuthenticatedUserId();",
+     "  if (message.userId && currentUserId && message.userId !== currentUserId) return;",
+     "// mantêm este módulo — caminho quente de todo envio — sem dependência nova de",
+     "    userId: readAuthenticatedUserId() ?? undefined,",
+     "    // descartaria como idempotente sem nenhum WhatsApp sair."
+    ],
+    "still_sample": [
+     " * Sem chave (`key` nulo) ou no caminho offline não há rotação: a drenagem da",
+     "// mantém este módulo — caminho quente de todo envio — sem dependência nova de",
+     "    // descartava como idempotente sem nenhum WhatsApp sair."
+    ]
+   }
+  }
+ ],
+ "counts": {
+  "migrations": "0",
+  "workflows": "0",
+  "src": "7",
+  "edges": "0",
+  "docs_only": "no",
+  "lines_branch_has_main_lacks": "150",
+  "lines_main_has_branch_lacks": "823"
+ },
+ "auto": "MISTO_CONFLITO",
+ "n_files_with_gaps": 7,
+ "gap_lines_total": 548
+}

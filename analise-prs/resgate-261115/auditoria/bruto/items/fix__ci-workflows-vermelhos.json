@@ -1,0 +1,5496 @@
+{
+ "id": "fix__ci-workflows-vermelhos",
+ "kind": "branch",
+ "ref": "origin/fix/ci-workflows-vermelhos",
+ "tip": "0770f6b5ef6f1f0df653ffe5c9dd479955673848",
+ "merge_base": "d7af7a671ca2bd7005b75b0aa54c0f0c4672befc",
+ "ahead": 1,
+ "last_commit_date": "2026-10-21",
+ "merge_base_date": "2026-10-19",
+ "prs_with_same_tip": [
+  2151,
+  2445
+ ],
+ "triagem_2804": {
+  "2151": "OBSOLETA",
+  "2445": "OBSOLETA"
+ },
+ "closure_comment": {},
+ "files": [
+  {
+   "path": ".github/toolchain.json",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": ".github/workflows/ci.yml",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 157,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 65,
+    "missing_in_main": 31,
+    "removed": 12,
+    "removed_still_in_main": 4,
+    "missing_sample": [
+     "      - name: 🔎 Typecheck edge handlers",
+     "        run: deno check --config scripts/ci/deno.json --frozen supabase/functions/*/index.ts",
+     "      - name: 🧪 Run executable Edge handler contracts",
+     "          deno test --config scripts/ci/deno.json --frozen --allow-env --allow-read --allow-net=127.0.0.1 $(git ls-files 'supabase/functions/**/*.test.ts')",
+     "      - name: 🧩 Test CI and Edge deployment guards",
+     "          scripts/edge-deploy/*.unit.mjs",
+     "          scripts/db-audit/crm-sync-outbox-contract.test.mjs",
+     "          scripts/db-audit/types-sync-psql-buffer.test.mjs",
+     "          scripts/talkx/*.unit.mjs",
+     "      - name: 📊 Upload coverage report",
+     "        if: always() && github.event_name == 'push' && github.ref == 'refs/heads/main'",
+     "          name: coverage-report",
+     "          path: coverage/",
+     "          retention-days: 7",
+     "          key: pw-cfw-1.64.1-${{ hashFiles('bun.lock') }}-${{ runner.os }}",
+     "        run: bunx playwright@1.64.1 install-deps chromium firefox webkit",
+     "      # Projetos deslogados do ci.yml. firefox-auth e webkit-auth ficam só no",
+     "      # e2e-logado.yml (E88): o PR exercita auth.spec.ts pelo Chromium e não sobe",
+     "      # os outros dois engines. Workflows de PR não podem referenciar",
+     "      # E2E_TEST_EMAIL/E2E_TEST_PASSWORD (scripts/ci/check-pr-workflow-secrets.mjs),",
+     "      # então o login real roda em .github/workflows/e2e-logado.yml, depois do merge.",
+     "          # O job só instala bun. `node` do script pode não estar no PATH",
+     "          # (imagem sem Node, ou shebang do vitest). Sem binário, no-op sai 0.",
+     "          # Sobrevivente inesperado continua saindo 1 dentro do runner.",
+     "          if ! command -v bun >/dev/null 2>&1; then"
+    ],
+    "still_sample": [
+     "    timeout-minutes: 10",
+     "      - name: 🧩 Run Node CI scripts tests",
+     "          key: pw-cfw-${{ hashFiles('bun.lock') }}-${{ runner.os }}",
+     "        run: bun run mutation:mapa"
+    ]
+   }
+  },
+  {
+   "path": ".github/workflows/db-migrate.yml",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 15,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 4,
+    "missing_in_main": 4,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "          # W28: validate-runtime-proof.mjs concentra a validacao do proof e o",
+     "          # hash COMPOSTO (runtime + arquivo + commit). O heredoc abaixo mantem",
+     "          # a comparacao do apply (E62) com a mesma regra.",
+     "          RUNTIME_JSON=\"$RUNTIME\" node scripts/db-audit/validate-runtime-proof.mjs >/tmp/confirmation-hash.txt"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": ".github/workflows/deploy-functions.yml",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 16,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 4,
+    "missing_in_main": 3,
+    "removed": 1,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "        # Sem --config o Deno sobe pelo package.json da raiz, exige node_modules",
+     "        # e morre com \"Could not find @types/node\". O deno.json das functions",
+     "        # declara nodeModulesDir=none e o lock congelado."
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": ".github/workflows/e2e-logado.yml",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 23,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 3,
+    "missing_in_main": 3,
+    "removed": 3,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "          key: pw-cfw-1.64.1-${{ hashFiles('bun.lock') }}-${{ runner.os }}",
+     "        run: bunx playwright@1.64.1 install --with-deps chromium firefox webkit",
+     "        run: bunx playwright@1.64.1 install-deps chromium firefox webkit"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": ".github/workflows/e2e-talkx.yml",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 23,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 3,
+    "missing_in_main": 2,
+    "removed": 3,
+    "removed_still_in_main": 1,
+    "missing_sample": [
+     "          key: pw-c-1.64.1-${{ hashFiles('bun.lock') }}-${{ runner.os }}",
+     "        run: bunx playwright@1.64.1 install-deps chromium"
+    ],
+    "still_sample": [
+     "          key: pw-c-${{ hashFiles('bun.lock') }}-${{ runner.os }}"
+    ]
+   }
+  },
+  {
+   "path": ".github/workflows/notifica-falha-main.yml",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 13,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 2,
+    "missing_in_main": 2,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "#   falha: a issue de alerta nao e aberta e a falha na main passa em silencio",
+     "#   avisa: issue de falha na main"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": ".github/workflows/talkx-status-regen.yml",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 22,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 5,
+    "missing_in_main": 5,
+    "removed": 5,
+    "removed_still_in_main": 2,
+    "missing_sample": [
+     "  # Uma única chave: o parser do Actions recusa `concurrency` duplicado e o",
+     "  # run morre sem jobs (failure imediato). cancel-in-progress fica false",
+     "  # porque o gatilho é push na main — cancelar o run antigo mata o placar",
+     "  # no meio (E98).",
+     "  group: talkx-status-regen-${{ github.ref }}"
+    ],
+    "still_sample": [
+     "concurrency:",
+     "  group: talkx-status-regen"
+    ]
+   }
+  },
+  {
+   "path": ".github/workflows/vercel-env-cleanup.yml",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 46,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 17,
+    "missing_in_main": 8,
+    "removed": 4,
+    "removed_still_in_main": 2,
+    "missing_sample": [
+     "#   gatilho: dispatch manual (dry_run=1 por padrao)",
+     "#   prova: lista ou remove vars perigosas/mortas do projeto Vercel (V043-V065)",
+     "#   falha: nada e apagado no dry-run; o apply aborta sem token",
+     "#   avisa: operador que disparou",
+     "    runs-on: ubuntu-24.04",
+     "      - name: 📥 Checkout code",
+     "        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1",
+     "      - name: Setup Node"
+    ],
+    "still_sample": [
+     "    runs-on: ubuntu-latest",
+     "      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1"
+    ]
+   }
+  },
+  {
+   "path": "CLAUDE.md",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 13,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 1,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "**Correção de 2026-09-26 (auditoria exaustiva de GitHub Actions) — retificada em 21/10/2026:** são **15**"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "ESTADO.md",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 167,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 46,
+    "missing_in_main": 25,
+    "removed": 40,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "Base: `dia/2026-10-21`. 84 edges com `index.ts` em `supabase/functions/`.",
+     "| E | 20 |",
+     "| **total** | **84** |",
+     "| `ai-kb-ingest` | A | `src/hooks/integrations/useKnowledgeBase.ts:126` · `src/hooks/integrations/useKnowledgeBase.ts:197` |",
+     "| `ai-transcribe-audio` | A | `src/components/inbox/AudioMessagePlayer.tsx:66` · `supabase/functions/_shared/evolution-webhook-messages.ts:1400` |",
+     "| `ai-usage-outbox-drain` | E | — sem chamador no repositório — |",
+     "| `approve-password-reset` | A | `src/hooks/security/usePasswordResetRequests.ts:51` · `src/hooks/security/usePasswordResetRequests.ts:72` · `src/components/sec",
+     "| `auth-login` | A | `src/lib/serverLogin.ts:149` · `supabase/config.toml:39` |",
+     "| `batch-fetch-avatars` | A | `src/hooks/inbox/useInboxBulkActions.ts:245` · `src/hooks/chat/useNewConversation.ts:143` · `src/hooks/chat/useNewConversation.ts:",
+     "| `chatbot-l1` | A | `src/components/settings/ChatbotL1Config.tsx:235` · `supabase/functions/_shared/evolution-webhook-messages.ts:590` |",
+     "| `classify-audio-meme` | A | `src/hooks/communication/useAudioMemes.ts:243` · `src/components/settings/media-library/AIGenerateDialog.tsx:59` |",
+     "| `classify-sticker` | A | `src/hooks/sticker-picker/useStickerPicker.ts:148` · `src/components/inbox/chat/MessageBubble.tsx:328` · `supabase/functions/_shared/",
+     "| `connection-health-check` | A | `src/components/monitoring/hooks/useMonitoringActions.ts:18` · `src/components/diagnostics/ConnectionHealthPanel.tsx:95` · `sr",
+     "| `create-user` | A | `src/components/admin/useAdminData.ts:448` · `src/components/admin/useAdminData.ts:455` |",
+     "| `elevenlabs-scribe-token` | A | `src/hooks/communication/useVoiceAgent.ts:307` · `src/components/inbox/RealtimeTranscription.tsx:88` |",
+     "| `elevenlabs-tts` | A | `src/components/inbox/TextToAudioButton.tsx:80` · `src/components/inbox/VoiceSelector.tsx:99` |",
+     "| `evolution-api` | A | `src/hooks/groups/actions.ts:106` · `src/components/monitoring/MonitoringConnectionsList.tsx:38` · `src/components/monitoring/Monitoring",
+     "| `evolution-sync` | A | `src/components/connections/ConnectionsView.tsx:74` |",
+     "| `evolution-webhook` | A | `src/components/monitoring/hooks/useMonitoringActions.ts:31` · `src/components/monitoring/hooks/useMonitoringActions.ts:60` · `supab",
+     "| `message-delivery` | A | `src/services/outbound-message.service.ts:456` · `src/lib/invokeEdge.ts:24` · `supabase/config.toml:49` |",
+     "| `multiplix-dispatch` | A | `src/hooks/integrations/useMultiplixDispatches.ts:132` |",
+     "| `revoke-auth-sessions` | A | `src/pages/ResetPassword.tsx:168` · `src/hooks/ui/useDeviceDetection.ts:131` · `src/hooks/ui/useDeviceDetection.ts:162` · `src/ho",
+     "| `talkx-send` | A | `src/hooks/integrations/useTalkX.ts:509` · `src/hooks/integrations/useTalkX.ts:525` · `src/hooks/integrations/useTalkX.ts:534` · `src/hooks",
+     "## Órfãs (20) — GATE B",
+     "- `ai-usage-outbox-drain`"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "FEATURE_REGISTRY.md",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 55,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 10,
+    "missing_in_main": 4,
+    "removed": 7,
+    "removed_still_in_main": 1,
+    "missing_sample": [
+     "Base: `dia/2026-10-21`. 55 views (`VIEW_MAP` + `SPECIAL_VIEWS`).",
+     "| Partial | 10 |",
+     "| **total** | **55** |",
+     "| `talkx-kit` | `TalkXKitView` | `src/components/talkx/__dev__/TalkXKit.tsx` | Partial | `src/components/talkx/__dev__/TalkXKit.tsx` |"
+    ],
+    "still_sample": [
+     "| Partial | 11 |"
+    ]
+   }
+  },
+  {
+   "path": "docs/DB-INVENTORY.md",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 318,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 126,
+    "missing_in_main": 17,
+    "removed": 123,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "| Tabelas (`tables`) | 170 |",
+     "| Colunas (`columns`) | 1987 |",
+     "| Funções (`functions`) | 279 |",
+     "| Assinaturas de função (`function_signatures`) | 280 |",
+     "| Funções de gatilho (`trigger_functions`) | 72 |",
+     "| Restrições de verificação (`check_constraints`) | 168 |",
+     "| `agent_stats` | Agregado de gamificação do agente (XP, nível, enviadas, conquistas) | ativo | `src/components/dashboard/AgentPerformancePanel.tsx`, `src/compo",
+     "| `connection_alert_preferences` | Objeto do catálogo public, sem descrição manual ainda | ativo | `src/components/alerts/__tests__/EvolutionDisconnectBanner.a1",
+     "| `contact_purchases` | Histórico de compras do contato (valor, moeda e status) | ativo | `src/components/contacts/ContactPurchaseHistory.tsx`, `src/components/",
+     "| `conversation_memory` | Memória da conversa para a IA (fatos, objeções e promessas) | ativo | `src/components/inbox/contact-details/ConversationMemorySection.",
+     "| `department_invitations` | Convites de departamento (código, e-mail, papel e validade) | parcial | `scripts/db-audit/department-invite-contract-audit-vocabula",
+     "| `department_invites` | Convites de departamento por código, com validade | ativo | `src/hooks/team-chat/README.md`, `src/hooks/team-chat/__tests__/departmentI",
+     "| `gmail_oauth_states` | Objeto do catálogo public, sem descrição manual ainda | ativo | `supabase/functions/gmail-oauth/index.test.ts`, `supabase/functions/gma",
+     "| `playbooks` | Playbooks de atendimento (categoria, passos e publicação) | ativo | `src/components/admin/AdminView.tsx`, `src/components/admin/PlaybooksManager",
+     "| `search_events` | Objeto do catálogo public, sem descrição manual ainda | ativo | `src/components/inbox/__tests__/useGlobalSearchData.eventos.test.tsx`, `src/",
+     "| `talkx_conversions` | Conversões atribuídas aos links das campanhas TalkX | parcial | `scripts/db-audit/talkx-attribution.test.sh`, `scripts/db-audit/talkx-co",
+     "| `talkx_storage_purge_queue` | Objeto do catálogo public, sem descrição manual ainda | ativo | `supabase/functions/talkx-storage-purge/index.test.ts`, `supabas"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "docs/audits/PLANO_GITHUB_ACTIONS_100_ETAPAS_2026-10-01.md",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 24,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 3,
+    "missing_in_main": 2,
+    "removed": 3,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "**Inventário atual (medido, não herdado do texto de 01/10):** **15** arquivos YAML em `.github/workflows/`, mais os",
+     "| **E62** destino do `db-migrate.yml` | `[~]` **PARCIAL** | PR #1778 extraiu 12 contratos para `scripts/db-audit/run-runtime-contract.mjs`; hoje `.github/workfl"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "docs/audits/edge-functions-authz-coverage.md",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 18,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 3,
+    "missing_in_main": 3,
+    "removed": 3,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "| cron-secret-auth.ts | 48 | 51 | 94.1% |",
+     "| evolution-control-authz.ts | 102 | 153 | 66.7% |",
+     "| **Total** | **239** | **342** | **69.9%** |"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "docs/ci/README.md",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 129,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 40,
+    "missing_in_main": 16,
+    "removed": 21,
+    "removed_still_in_main": 4,
+    "missing_sample": [
+     "**15 workflows.**",
+     "| CodeQL | [`codeql.yml`](../../.github/workflows/codeql.yml) | agendado (semanal) e dispatch | analise estatica de seguranca (SAST) de src, scripts, functions ",
+     "| Notifica falha na main | [`notifica-falha-main.yml`](../../.github/workflows/notifica-falha-main.yml) | workflow_run (conclusao dos workflows principais na ma",
+     "| V043-V065 Vercel Env Cleanup | [`vercel-env-cleanup.yml`](../../.github/workflows/vercel-env-cleanup.yml) | dispatch manual (dry_run=1 por padrao) | lista ou ",
+     "- **O que prova:** quais branches sao podaveis e quais PRs estao paradas ha mais de 7 dias",
+     "- **Quando falha:** relatorio nao e publicado nem a issue e atualizada",
+     "- **O que prova:** lint, tipos, testes, build, security e E2E do codigo",
+     "- **Gatilho:** push na main e dispatch sobre main",
+     "- **O que prova:** o fluxo logado (Playwright com login real) contra producao",
+     "- **Quando falha:** artefato do Playwright e issue/relatorio; nunca roda em PR de terceiro",
+     "- **Quem é avisado:** issue de E2E e autor do push",
+     "- **Quando falha:** a issue de alerta nao e aberta e a falha na main passa em silencio",
+     "- **Quem é avisado:** issue de falha na main",
+     "- **Gatilho:** dispatch manual (dry_run=1 por padrao)",
+     "- **O que prova:** lista ou remove vars perigosas/mortas do projeto Vercel (V043-V065)",
+     "- **Quando falha:** nada e apagado no dry-run; o apply aborta sem token"
+    ],
+    "still_sample": [
+     "| Settings Guard | [`settings-guard.yml`](../../.github/workflows/settings-guard.yml) | agendado e dispatch | o perimetro do GitHub (branch protection, merge, e",
+     "- **Gatilho:** pull_request, push na main e dispatch",
+     "- **Quem é avisado:** quem disparou",
+     "- **Quem é avisado:** quem disparou"
+    ]
+   }
+  },
+  {
+   "path": "docs/talkx/ESTADOS.md",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 61,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 20,
+    "missing_in_main": 10,
+    "removed": 19,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "| `src/components/talkx/TalkXAnalytics.tsx` | `300` | `298`, `383` | `295` | — | — | — |",
+     "| `src/components/talkx/TalkXCampaignPaused.tsx` | `177` | `174` | `170` | — | — | — |",
+     "| `src/components/talkx/TalkXCampaignRunning.tsx` | — | `176`, `477`, `568`, `834` | `170`, `323`, `473`, `562`, `830` | — | — | — |",
+     "| `src/components/talkx/TalkXCampaignWizard.tsx` | — | — | — | — | `423` | — |",
+     "| `src/components/talkx/TalkXOverview.tsx` | `229`, `317` | `222`, `224` | `214` | — | — | — |",
+     "| `src/components/talkx/TalkXSegments.tsx` | `358`, `360` | `297`, `356`, `443` | `307`, `352` | — | — | — |",
+     "| `src/components/talkx/TalkXSuppression.tsx` | `616`, `618` | `614`, `694`, `856` | `610` | — | — | — |",
+     "| `src/components/talkx/TalkXTemplateEditor.tsx` | — | `482` | `478` | — | — | — |",
+     "| `src/components/talkx/TalkXView.tsx` | — | `58`, `406` | — | — | `547` | — |",
+     "| `src/components/talkx/TalkXWizardDelivery.tsx` | — | — | — | — | `75` | — |"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "docs/talkx/README.md",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 12,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "| [ESTADOS.md](./ESTADOS.md) | Matriz tela × estado, gerada por `scripts/talkx/gen-estados.mjs` |"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "e2e/auth.spec.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 13,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 1,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "    await page.getByRole('button', { name: /^entrar$/i }).click();"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "scripts/ci/check-talkx-docs.unit.mjs",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 12,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 0,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "scripts/ci/check-test-inventory.mjs",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 14,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 3,
+    "missing_in_main": 3,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  // V077: prova o ignore-build da Vercel com git sintético. Não há job de CI",
+     "  // que o execute — o script roda no build da Vercel, não num workflow.",
+     "  'scripts/vercel/ignore-build.unit.mjs',"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "scripts/ci/ci-docs-baseline.unit.mjs",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 56,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 9,
+    "missing_in_main": 9,
+    "removed": 9,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  assert.equal(arquivos.length, 15);",
+     "  assert.match(readme, /\\*\\*15 workflows\\.\\*\\*/);",
+     "  assert.deepEqual(violacoesContagemClaude(await readFile(CLAUDE, 'utf8'), 15), []);",
+     "  assert.match(chato, /\\*\\*15\\*\\* arquivos YAML em `\\.github\\/workflows\\/`/);",
+     "  assert.ok(/playwright@1\\.64\\.1/.test(lock));",
+     "  assert.ok(/playwright-core@1\\.64\\.1/.test(lock));",
+     "  assert.ok(/@playwright\\/test@1\\.64\\.1/.test(lock));",
+     "    assert.ok(wf.includes('playwright@1.64.1'));",
+     "  assert.match(e76.linha, /1\\.64\\.1/);"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "scripts/ci/edge-coverage-authz.unit.mjs",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 48,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 13,
+    "missing_in_main": 11,
+    "removed": 3,
+    "removed_still_in_main": 1,
+    "missing_sample": [
+     " * contaminaria a conta; os demais cobrem outros módulos (webhook, gmail,",
+     " * requireAuth em validation.ts, runtime).",
+     "/** A medição fresca prova o deno de verdade. Sem o binário (job Node CI Scripts",
+     " * instala 2.9.5) não dá para forjar o número: o teste é pulado, não aprovado. */",
+     "function pularSemDeno() {",
+     "  const probe = spawnSync('deno', ['--version'], { encoding: 'utf8' });",
+     "  if (probe.error || probe.status !== 0) {",
+     "    return 'deno ausente: medição fresca só roda onde o binário existe (setup-deno 2.9.5 no job Node CI Scripts)';",
+     "  return false;",
+     "test('N217: medição do zero via deno agrega >= 50% e inclui os 5 helpers', { skip: pularSemDeno() }, () => {",
+     "test('N217: docs bate com medição fresca e segunda execução é idêntica', { skip: pularSemDeno() }, () => {"
+    ],
+    "still_sample": [
+     " * contaminaria a conta; os demais cobrem outros módulos (webhook, runtime)."
+    ]
+   }
+  },
+  {
+   "path": "scripts/ci/github-settings-guard.unit.mjs",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 30,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 6,
+    "missing_in_main": 6,
+    "removed": 5,
+    "removed_still_in_main": 3,
+    "missing_sample": [
+     "import { readFileSync } from 'node:fs';",
+     "  // O baseline vigente (E94 apagou copilot/Preview/Production crus) mais os extras",
+     "  // do caso. Sem isto o stub ainda injetava a lista antiga e a divergencia nao era",
+     "  // \"so Vercel-managed\".",
+     "  const baseline = JSON.parse(readFileSync(new URL('./github-settings-baseline.json', import.meta.url), 'utf8'));",
+     "  const todos = [...baseline.environments, ...extras];"
+    ],
+    "still_sample": [
+     "  // Injeta o stub de environments com os itens do baseline + os extras recebidos.",
+     "  const todos = [",
+     "    ...extras,"
+    ]
+   }
+  },
+  {
+   "path": "scripts/ci/marcador-specs.mjs",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 40,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 4,
+    "missing_in_main": 1,
+    "removed": 11,
+    "removed_still_in_main": 7,
+    "missing_sample": [
+     " * `tituloBase` existe para o chamador do workflow sobrescrever o título genérico."
+    ],
+    "still_sample": [
+     "  const lista = normalizar(nomes);",
+     "/** Lista legivel para o corpo da issue. */",
+     " * Título da issue de acordo com a causa detectada.",
+     " * Prefixo \"[e2e-logado]\" é mantido para que o workflow de fechamento ache a issue pelo título.",
+     "export function tituloDe(nomes) {",
+     "  if (eLoginFalhou(nomes)) return '[e2e-logado] login E2E falhou';",
+     "  return '[e2e-logado] Suíte logada quebrada na main';"
+    ]
+   }
+  },
+  {
+   "path": "scripts/ci/security-workflow.unit.mjs",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "scripts/ci/workflow-contracts.unit.mjs",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 13,
+   "hunk": "PRESENT_REVERSE_APPLIES"
+  },
+  {
+   "path": "scripts/db-audit/check-migration-drift.test.mjs",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 14,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 3,
+    "missing_in_main": 3,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "    // O manifesto real (schema exato do pinned-replay) exige esta chave.",
+     "    // Nos 51 registros commitados ela repete ledger_statements_sha256.",
+     "    'sql-sha256': statementsHash(statements),"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "scripts/db-audit/consolidar-veredito.mjs",
+   "status": "MAIN_UNCHANGED_SINCE_BASE",
+   "patch_lines": 22,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 0,
+    "missing_in_main": 0,
+    "removed": 4,
+    "removed_still_in_main": 4,
+    "missing_sample": [],
+    "still_sample": [
+     "  // Guarda geral de invariantes do banco vivo (RLS, security_invoker, matview exposta,",
+     "  // search_path de SECURITY DEFINER, policy de escrita aberta, referencia pendurada).",
+     "  { id: 'live-invariants', nome: 'Verificar invariantes gerais do banco vivo', log: '/tmp/step-live-invariants.log' },",
+     "  'live-invariants',"
+    ]
+   }
+  },
+  {
+   "path": "scripts/db-audit/consolidar-veredito.test.mjs",
+   "status": "MAIN_UNCHANGED_SINCE_BASE",
+   "patch_lines": 21,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 8,
+    "missing_in_main": 8,
+    "removed": 1,
+    "removed_still_in_main": 1,
+    "missing_sample": [
+     "    execFileSync(process.execPath, [script], {",
+     "      cwd: RAIZ,",
+     "      env,",
+     "      encoding: 'utf8',",
+     "      // stderr do CLI carrega `::error::`. Sem pipe o token vaza para o log do",
+     "      // passo e o runner anota \"Fixtures de E2E em producao (E85)\" mesmo quando",
+     "      // este teste PASSA — a falha simulada nao e fixture ausente no repo.",
+     "      stdio: ['pipe', 'pipe', 'pipe'],"
+    ],
+    "still_sample": [
+     "    execFileSync(process.execPath, [script], { cwd: RAIZ, env, encoding: 'utf8' });"
+    ]
+   }
+  },
+  {
+   "path": "scripts/db-audit/n011-storage-policies-dedup.test.mjs",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 200,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 70,
+    "missing_in_main": 68,
+    "removed": 43,
+    "removed_still_in_main": 1,
+    "missing_sample": [
+     "// O que o contrato prova, no historico atual (2026-10-16 em diante):",
+     "//   (a) as duas policies redundantes de avatars (\"Avatar images are publicly",
+     "//       accessible\" e \"Users can delete their own avatars\") NAO existem no",
+     "//       estado anterior nem no final — 20261009182648 tornou o bucket privado",
+     "//       (\"avatars authenticated read\") e 20261011000019 ja tinha dropado o par;",
+     "//       20261016105108 reaplica o DROP IF EXISTS e nao pode voltar a criar o par;",
+     "//   (b) nenhuma migration POSTERIOR ao fix recria esses dois nomes;",
+     "//   (c) avatars/DELETE fica so com a policy singular do dono;",
+     "//   (d) audio-memes/DELETE tem dono E admin (20261016001136) — nao e par",
+     "//       redundante: as assinaturas diferem, e o fix nao mexe nelas;",
+     "//   (e) o arquivo do fix so tem DROP POLICY IF EXISTS dessas 2, com rollback",
+     "//       que recria exatamente esses nomes (nao e o estado vivo: o vivo ja",
+     "//       nao as tem);",
+     "//   (f) reaplicar o fix e idempotente.",
+     "// Vermelho: N011_WITHOUT_FIX=1 (ou a migration do fix ausente do disco) esvazia o",
+     "// texto do arquivo — os testes do DDL/rollback falham. O estado simulado continua",
+     "// sem o par porque migrations anteriores ja o removeram.",
+     "const REDUNDANTES = [",
+     "  'Avatar images are publicly accessible',",
+     "  'Users can delete their own avatars',",
+     "for (const cmd of ['SELECT', 'DELETE']) {",
+     "  console.log(`FATO: avatars/${cmd} antes=[${grupo(antes, 'avatars', cmd).join(', ')}]`",
+     "    + ` depois=[${grupo(depois, 'avatars', cmd).join(', ')}]`);",
+     "test('nenhuma migration posterior recria o par redundante que o fix remove', () => {",
+     "  assert.ok(versoes.includes(versaoFix), 'a migration do fix sumiu do disco');"
+    ],
+    "still_sample": [
+     "// O que o contrato prova:"
+    ]
+   }
+  },
+  {
+   "path": "scripts/db-audit/talkx-analytics-contract.test.mjs",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 19,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 6,
+    "missing_in_main": 4,
+    "removed": 2,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  // O KPI de volume continua \"Mais usados\". \"Mais convertidos\" (T04-039) só pode",
+     "  // nomear o trilho de taxa de resposta — nunca o ranking por use_count.",
+     "  assert.match(templates, /formatReplyRate\\(item\\.replyRatePct\\)/);",
+     "  assert.match(templates, /NUNCA é `use_count` sob este título/);"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "scripts/db-audit/talkx-schedule-timezone-contract.test.mjs",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 23,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 3,
+    "missing_in_main": 2,
+    "removed": 2,
+    "removed_still_in_main": 1,
+    "missing_sample": [
+     "  // própria, e nenhum dos dois elos calcula hora local à mão). A política fica",
+     "  // em _shared/, ao lado de talkx-window.ts, então o import é \"./talkx-window.ts\"."
+    ],
+    "still_sample": [
+     "  // própria, e nenhum dos dois elos calcula hora local à mão)."
+    ]
+   }
+  },
+  {
+   "path": "scripts/mutation/run-mapa.mjs",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 188,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 66,
+    "missing_in_main": 61,
+    "removed": 18,
+    "removed_still_in_main": 18,
+    "missing_sample": [
+     " * Política de `veredito().codigo` (API dos testes de classificação, R2-INF-019):",
+     " *   0 = baseline verde, rodadas conclusivas, nenhum sobrevivente fora de",
+     " *       inesperado) — a API não afirma qualidade da suíte.",
+     " * Política de saída do PROCESSO (`bun run mutation:mapa`, o que o CI observa):",
+     " *   0 = no-op ou nenhum sobrevivente inesperado. Cobre ferramenta ausente",
+     " *       (vitest ENOENT / binário que não inicia), arquivo alvo ausente, nada",
+     " *       para mutar, 0 mutantes e medição inválida. Exit 2 nesses casos deixava",
+     " *       o job não-bloqueante vermelho com log quase vazio, sem mutante vivo.",
+     " *   1 = sobrevivente NÃO declarado (lacuna de teste) — único fracasso de qualidade;",
+     " *   2 = a árvore não voltou ao original (restauração). Não é \"0 mutantes\".",
+     "import { copyFileSync, existsSync, mkdirSync, readFileSync, rmSync } from \"node:fs\";",
+     "function vitestEntrada() {",
+     "  const direto = path.join(ROOT, \"node_modules\", \"vitest\", \"vitest.mjs\");",
+     "  if (existsSync(direto)) return direto;",
+     "  return path.join(ROOT, \"node_modules\", \".bin\", \"vitest\");",
+     " * O padrão usa `process.execPath` (node ou bun, quem quer que tenha iniciado o runner)",
+     " * em vez do shim `node_modules/.bin/vitest`. Esse shim tem shebang `#!/usr/bin/env node`;",
+     " * no job que só instala bun, o kernel devolve ENOENT e o processo saía 2 com duas linhas",
+     " * de log — o \"Process completed with exit code 2\" quase vazio.",
+     "export function rodarSuite({ comando, argumentos } = {}) {",
+     "  const entrada = vitestEntrada();",
+     "  const cmd = comando ?? process.execPath;",
+     "  const args = argumentos ?? [entrada, \"run\", ...SUITE];",
+     "  if (!argumentos && !existsSync(entrada)) {",
+     "    const error = Object.assign(new Error(`spawn ${entrada} ENOENT`), { code: \"ENOENT\" });"
+    ],
+    "still_sample": [
+     " * Política de saída (a conclusão vai para o status, não só para o texto):",
+     " *   0 = baseline verde, todas as rodadas conclusivas e nenhum sobrevivente fora de",
+     " *       inesperado) — aqui o runner não afirma nada sobre a qualidade da suíte.",
+     "import { copyFileSync, mkdirSync, readFileSync, rmSync } from \"node:fs\";",
+     "function vitestBin() {",
+     "  const bin = path.join(ROOT, \"node_modules\", \".bin\", \"vitest\");",
+     "  return process.platform === \"win32\" ? `${bin}.cmd` : bin;",
+     "export function rodarSuite({ comando = vitestBin(), argumentos = [\"run\", ...SUITE] } = {}) {",
+     "  const processo = spawnSync(comando, argumentos, {",
+     "  // 0) BASELINE: sem mutação, a suíte tem de ficar verde. Sem isso não há medição —"
+    ]
+   }
+  },
+  {
+   "path": "src/__tests__/a11y/icon-buttons-baseline.json",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 60,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 0,
+    "missing_in_main": 0,
+    "removed": 25,
+    "removed_still_in_main": 0,
+    "missing_sample": [],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/admin/__tests__/GmailWebhookMonitor.falha-consulta.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 12,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  createLogger: () => ({ warn: () => {}, info: () => {}, error: () => {}, debug: () => {} }),"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/auth/__tests__/ProtectedRoute.acesso-negado.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 12,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  createLogger: () => ({ error: vi.fn(), debug: vi.fn(), info: vi.fn(), warn: vi.fn() }),"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/auth/__tests__/ProtectedRoute.mfa.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 12,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  createLogger: () => ({ error: vi.fn(), debug: vi.fn(), info: vi.fn(), warn: vi.fn() }),"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/auth/__tests__/ProtectedRoute.saida.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 12,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  createLogger: () => ({ error: vi.fn(), debug: vi.fn(), info: vi.fn(), warn: vi.fn() }),"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/calls/__tests__/IncomingCallAlert.canal.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 12,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  createLogger: () => ({ error: vi.fn(), warn: vi.fn(), debug: vi.fn(), info: vi.fn() }),"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/calls/__tests__/IncomingCallAlert.encerrada.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 12,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  createLogger: () => ({ error: vi.fn(), warn: vi.fn(), debug: vi.fn(), info: vi.fn() }),"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/calls/__tests__/IncomingCallAlert.foto.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 12,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  createLogger: () => ({ error: vi.fn(), warn: vi.fn(), debug: vi.fn(), info: vi.fn() }),"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/calls/__tests__/IncomingCallAlert.provider.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 12,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  createLogger: () => ({ error: vi.fn(), warn: vi.fn(), debug: vi.fn(), info: vi.fn() }),"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/calls/__tests__/IncomingCallAlert.ringtone.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 12,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  createLogger: () => ({ error: vi.fn(), warn: vi.fn(), debug: vi.fn(), info: vi.fn() }),"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/calls/__tests__/IncomingCallAlert.volume.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 12,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  createLogger: () => ({ error: vi.fn(), warn: vi.fn(), debug: vi.fn(), info: vi.fn() }),"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/calls/__tests__/telefoniaContraste.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 12,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  createLogger: () => ({ error: vi.fn(), warn: vi.fn(), debug: vi.fn(), info: vi.fn() }),"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/compliance/__tests__/LGPDComplianceView.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 12,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  createLogger: () => ({ error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn() }),"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/connections/__tests__/BusinessHoursIndicator.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 13,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 1,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "vi.mock('@/lib/logger', () => ({ log: { error: h.logError }, createLogger: () => ({ error: h.logError }) }));"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/connections/__tests__/useConnectionsManager.handlers.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 13,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 1,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "vi.mock('@/lib/logger', () => ({ log: h.log, createLogger: () => h.log }));"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/contacts/__tests__/ContactMapView.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 13,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 1,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "vi.mock('@/lib/logger', () => ({ log: { error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn() }, createLogger: () => ({ error: vi.fn(), warn: vi.fn(), in"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/contacts/__tests__/ContactRegionMap.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 13,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 1,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "vi.mock('@/lib/logger', () => ({ log: { error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn() }, createLogger: () => ({ error: vi.fn(), warn: vi.fn(), in"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/contacts/__tests__/ExternalDataIntegration.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 12,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  createLogger: () => ({ error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn() }),"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/dashboard/__tests__/SentimentAlertsDashboard.a11y.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 13,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 1,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "vi.mock('@/lib/logger', () => ({ log: { error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn() }, createLogger: () => ({ error: vi.fn(), warn: vi.fn(), in"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/dashboard/__tests__/useSentimentData.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 13,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 1,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "vi.mock('@/lib/logger', () => ({ log: { error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn() }, createLogger: () => ({ error: vi.fn(), warn: vi.fn(), in"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/email/__tests__/EmailChatReplyBar.rascunho.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 13,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 1,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "vi.mock('@/lib/logger', () => ({ getLogger: () => ({ error: vi.fn() }), createLogger: () => ({ error: vi.fn() }) }));"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/email/__tests__/EmailChatReplyBar.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 13,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 1,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "vi.mock('@/lib/logger', () => ({ getLogger: () => ({ error: vi.fn() }), createLogger: () => ({ error: vi.fn() }) }));"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/errors/__tests__/AppRoutes.errorBoundary.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 12,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  createLogger: () => ({ error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn() }),"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/errors/__tests__/ErrorBoundary.avisoRecuperacao.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 12,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  createLogger: () => ({ error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn() }),"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/errors/__tests__/ErrorBoundary.cenarios.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 12,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  createLogger: () => ({ error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn() }),"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/errors/__tests__/ErrorBoundary.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 12,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  createLogger: () => ({ error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn() }),"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/errors/__tests__/error-boundary-chunk-reload.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 12,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  createLogger: () => ({ error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn() }),"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/inbox/CRMAutoSync.tsx",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/components/inbox/__tests__/AIConversationAssistant.ia048.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 12,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  createLogger: () => ({ error: vi.fn(), debug: vi.fn(), info: vi.fn(), warn: vi.fn() }),"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/inbox/__tests__/AISuggestions.aria.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 12,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  createLogger: () => ({ error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn() }),"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/inbox/__tests__/AISuggestions.ia048.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 12,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  createLogger: () => ({ error: vi.fn(), debug: vi.fn(), info: vi.fn(), warn: vi.fn() }),"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/inbox/__tests__/AISuggestions.tom.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 12,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  createLogger: () => ({ error: vi.fn(), debug: vi.fn(), info: vi.fn(), warn: vi.fn() }),"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/inbox/__tests__/AudioMessagePlayer.a11y-buttons.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 13,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 1,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "vi.mock('@/lib/logger', () => ({ log: { error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn() }, createLogger: () => ({ error: vi.fn(), warn: vi.fn(), in"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/inbox/__tests__/AudioMessagePlayer.transcricao-acessivel.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 13,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 1,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "vi.mock('@/lib/logger', () => ({ log: { error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn() }, createLogger: () => ({ error: vi.fn(), warn: vi.fn(), in"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/inbox/__tests__/AudioMessagePlayer.transcricao.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 12,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  createLogger: () => ({ error: vi.fn(), info: vi.fn(), debug: vi.fn() }),"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/inbox/__tests__/CRMAutoSync.fsm.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 13,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 1,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "vi.mock('@/lib/logger', () => ({ log: { info: vi.fn(), warn: vi.fn(), error: vi.fn() }, createLogger: () => ({ info: vi.fn(), warn: vi.fn(), error: vi.fn() }) }"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/inbox/__tests__/ChatPanel.atalhos-busca.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 12,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  createLogger: () => mocks.logStub,"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/inbox/__tests__/ChatPanel.drag-drop.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 12,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  createLogger: () => ({ debug: vi.fn(), warn: vi.fn(), error: vi.fn() }),"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/inbox/__tests__/ChatPanel.scheduled-media.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 12,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  createLogger: () => ({ debug: vi.fn(), warn: vi.fn(), error: vi.fn() }),"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/inbox/__tests__/ChatPanel.typing-presence.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 12,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  createLogger: () => ({ debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() }),"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/inbox/__tests__/ChatPanelHandlers.localizacao.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 13,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 1,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "vi.mock('@/lib/logger', () => ({ log: { debug: vi.fn(), warn: vi.fn(), error: mocks.logError }, createLogger: () => ({ debug: vi.fn(), warn: vi.fn(), error: moc"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/inbox/__tests__/ChatTransferContract.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 12,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  createLogger: () => ({ debug: vi.fn(), warn: vi.fn(), error: vi.fn() }),"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/inbox/__tests__/ContactPurchasesPanel.erro-gravacao.test.tsx",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "patch_lines": 13,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 1,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "vi.mock('@/lib/logger', () => ({ log: h.log, getLogger: () => h.log, createLogger: () => h.log }));"
+    ],
+    "still_sample": [],
+    "same_basename_in_main": []
+   }
+  },
+  {
+   "path": "src/components/inbox/__tests__/ContactPurchasesPanel.total-erro-data.test.tsx",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "patch_lines": 13,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 1,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "vi.mock('@/lib/logger', () => ({ log: h.log, getLogger: () => h.log, createLogger: () => h.log }));"
+    ],
+    "still_sample": [],
+    "same_basename_in_main": []
+   }
+  },
+  {
+   "path": "src/components/inbox/__tests__/ConversationSummary.aria.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 13,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 1,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "vi.mock('@/lib/logger', () => ({ log: { error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn() }, createLogger: () => ({ error: vi.fn(), warn: vi.fn(), in"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/inbox/__tests__/ConversationSummary.ia048.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 12,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  createLogger: () => ({ error: vi.fn(), debug: vi.fn(), info: vi.fn(), warn: vi.fn() }),"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/inbox/__tests__/ConversationSummary.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 12,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  createLogger: () => ({ error: vi.fn(), debug: vi.fn(), info: vi.fn(), warn: vi.fn() }),"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/inbox/__tests__/FileUploader.n-039.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 12,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  createLogger: () => ({ debug: vi.fn(), warn: vi.fn(), error: vi.fn() }),"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/inbox/__tests__/FileUploader.r2-inb-011.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 12,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  createLogger: () => ({ debug: vi.fn(), warn: vi.fn(), error: vi.fn() }),"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/inbox/__tests__/FileUploader.retry-envio.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 12,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  createLogger: () => ({ debug: vi.fn(), warn: vi.fn(), error: vi.fn() }),"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/inbox/__tests__/FileUploader.sl202-refs.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 12,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  createLogger: () => ({ debug: vi.fn(), warn: vi.fn(), error: vi.fn() }),"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/inbox/__tests__/FileUploader.u4-u6-motivo-e-tokens.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 13,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 1,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "vi.mock('@/lib/logger', () => ({ log: { debug: vi.fn(), warn: vi.fn(), error: vi.fn() }, createLogger: () => ({ debug: vi.fn(), warn: vi.fn(), error: vi.fn() })"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/inbox/__tests__/GlobalSearch.r2-inb-018.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 13,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 0,
+    "removed": 1,
+    "removed_still_in_main": 0,
+    "missing_sample": [],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/inbox/__tests__/GlobalSearch.r2-inb-020.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 13,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 1,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "vi.mock('@/lib/logger', () => ({ log: loggerMock, getLogger: () => loggerMock, createLogger: () => loggerMock }));"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/inbox/__tests__/LocationMessage.liveUntil.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 13,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 1,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "vi.mock('@/lib/logger', () => ({ log: { error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn() }, createLogger: () => ({ error: vi.fn(), warn: vi.fn(), in"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/inbox/__tests__/LocationMessage.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 13,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 1,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "vi.mock('@/lib/logger', () => ({ log: { error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn() }, createLogger: () => ({ error: vi.fn(), warn: vi.fn(), in"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/inbox/__tests__/LocationPicker.buscaManual.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 13,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 1,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "vi.mock('@/lib/logger', () => ({ log: { error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn() }, createLogger: () => ({ error: vi.fn(), warn: vi.fn(), in"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/inbox/__tests__/MessageContextActions.aria.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 12,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  createLogger: () => ({ error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn() }),"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/inbox/__tests__/MessageContextActions.r2inb014.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 12,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  createLogger: () => ({ error: vi.fn(), debug: vi.fn(), info: vi.fn(), warn: vi.fn() }),"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/inbox/__tests__/PlaybackSpeed.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 12,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  createLogger: () => ({ error: vi.fn(), info: vi.fn(), debug: vi.fn() }),"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/inbox/__tests__/RealtimeInboxView.contato-fora-lista.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 12,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  createLogger: () => ({ debug: vi.fn(), warn: vi.fn(), error: vi.fn() }),"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/inbox/__tests__/RealtimeInboxView.emailChip.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 12,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  createLogger: () => ({ debug: vi.fn(), warn: vi.fn(), error: vi.fn() }),"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/inbox/__tests__/RealtimeInboxView.offline-cache.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 12,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  createLogger: () => ({ debug: vi.fn(), warn: vi.fn(), error: vi.fn() }),"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/inbox/__tests__/RealtimeInboxView.pagination.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 12,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  createLogger: () => ({ debug: vi.fn(), warn: vi.fn(), error: vi.fn() }),"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/inbox/__tests__/RealtimeTranscription.erro.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 12,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  createLogger: () => ({ error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn() }),"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/inbox/__tests__/TemplateEditorDialog.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 13,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 1,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "vi.mock('@/lib/logger', () => ({ log: { error: vi.fn(), info: vi.fn(), warn: vi.fn() }, createLogger: () => ({ error: vi.fn(), info: vi.fn(), warn: vi.fn() }) }"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/inbox/__tests__/VoiceSelector.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 12,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  createLogger: () => ({ error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn() }),"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/inbox/__tests__/arquivos-ver-na-conversa.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 12,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  createLogger: () => mocks.logStub,"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/inbox/__tests__/botoes-icone-nomes-a11y.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 12,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  createLogger: () => ({ error: vi.fn(), debug: vi.fn(), info: vi.fn(), warn: vi.fn() }),"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/inbox/__tests__/ferramentas-ia.anuncio-estado.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 12,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  createLogger: () => ({ error: vi.fn(), debug: vi.fn(), info: vi.fn(), warn: vi.fn() }),"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/inbox/__tests__/useChatMediaSending.resolve-e-autosave.test.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 12,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  createLogger: () => ({ debug: vi.fn(), warn: mocks.logWarn, error: mocks.logError }),"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/inbox/__tests__/useFileUploadLogic.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 12,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  createLogger: () => ({ debug: vi.fn(), warn: vi.fn(), error: vi.fn() }),"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/inbox/__tests__/useFileUploadLogic.u7.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 12,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  createLogger: () => ({ debug: vi.fn(), warn: vi.fn(), error: vi.fn() }),"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/inbox/__tests__/useGlobalSearchData.curingas.test.tsx",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/components/inbox/__tests__/useGlobalSearchData.eventos.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 13,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 1,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "vi.mock('@/lib/logger', () => ({ log: h.logger, getLogger: () => h.logger, createLogger: () => h.logger }));"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/inbox/chat/__tests__/ChatInputArea.limite-enter.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 12,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  createLogger: () => ({ error: vi.fn(), debug: vi.fn(), warn: vi.fn(), info: vi.fn() }),"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/inbox/chat/__tests__/ChatPanel.entrega-conversa.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 12,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  createLogger: () => ({ debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() }),"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/inbox/chat/__tests__/MessageBubble.chat-text-size.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 12,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  createLogger: () => ({ debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() }),"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/inbox/chat/__tests__/MessageBubble.contrasteStatus.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 12,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  createLogger: () => ({ debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() }),"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/inbox/chat/__tests__/MessageBubble.interactive-list-item.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 12,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  createLogger: () => ({ debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() }),"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/inbox/chat/__tests__/MessageBubble.interactiveResponse.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 12,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  createLogger: () => ({ debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() }),"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/inbox/chat/__tests__/MessageBubble.saveReceivedSticker.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 12,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  createLogger: () => ({ debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() }),"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/inbox/chat/__tests__/MessageBubble.tentativas.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 12,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  createLogger: () => ({ debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() }),"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/inbox/chat/__tests__/MessageBubbleUnsupported.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 12,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  createLogger: () => ({ debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() }),"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/inbox/chat/__tests__/MessageHoverToolbar.delete.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 12,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  createLogger: () => ({ debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() }),"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/inbox/chat/__tests__/MessageHoverToolbar.historico-envio.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 12,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  createLogger: () => ({ debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() }),"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/inbox/chat/__tests__/forwardChatTransport.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 12,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  createLogger: () => ({ debug: vi.fn(), error: vi.fn(), warn: vi.fn(), info: vi.fn() }),"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/inbox/chat/__tests__/handlers-audio-contrato-retorno-350a.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 13,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 1,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "vi.mock('@/lib/logger', () => ({ log: { debug: vi.fn(), warn: vi.fn(), error: vi.fn() }, createLogger: () => ({ debug: vi.fn(), warn: vi.fn(), error: vi.fn() })"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/inbox/chat/__tests__/menus-r2-inb-021.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 12,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  createLogger: () => ({ debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() }),"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/inbox/chat/__tests__/useChatPanelHandlers.assinatura-retry.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 12,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  createLogger: () => ({ error: mocks.logError, debug: vi.fn(), warn: vi.fn(), info: vi.fn() }),"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/inbox/chat/__tests__/useChatPanelHandlers.audio.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 12,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  createLogger: () => ({ debug: vi.fn(), warn: vi.fn(), error: vi.fn() }),"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/inbox/chat/__tests__/useChatPanelHandlers.edicao-rejeitada.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 13,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 1,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "vi.mock('@/lib/logger', () => ({ log: { debug: vi.fn(), warn: vi.fn(), error: vi.fn() }, createLogger: () => ({ debug: vi.fn(), warn: vi.fn(), error: vi.fn() })"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/inbox/chat/__tests__/useChatPanelHandlers.fila-serial.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 12,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  createLogger: () => ({ error: mocks.logError, debug: vi.fn(), warn: vi.fn(), info: vi.fn() }),"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/inbox/chat/__tests__/useChatPanelHandlers.r2-inb-003.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 13,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 1,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "vi.mock('@/lib/logger', () => ({ log: { debug: vi.fn(), warn: vi.fn(), error: vi.fn() }, createLogger: () => ({ debug: vi.fn(), warn: vi.fn(), error: vi.fn() })"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/inbox/chat/__tests__/useChatPanelHandlers.sem-falso-sucesso.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 13,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 1,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "vi.mock('@/lib/logger', () => ({ log: { debug: vi.fn(), warn: vi.fn(), error: vi.fn() }, createLogger: () => ({ debug: vi.fn(), warn: vi.fn(), error: vi.fn() })"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/inbox/chat/__tests__/useChatPanelHandlers.sussurro.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 12,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  createLogger: () => ({ error: vi.fn(), debug: vi.fn(), warn: vi.fn(), info: vi.fn() }),"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/inbox/collaboration/__tests__/RealtimeCollaboration.handoff.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 12,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  createLogger: () => ({ warn: (...args: unknown[]) => mocks.warn(...args), error: vi.fn(), info: vi.fn(), debug: vi.fn() }),"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/inbox/collaboration/__tests__/ViewersIndicator.presenca.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 12,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  createLogger: () => ({ warn: h.warn, info: vi.fn(), error: vi.fn(), debug: vi.fn() }),"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/inbox/contact-details/__tests__/ConversationMemorySection.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 12,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  createLogger: () => ({ error: vi.fn(), debug: vi.fn(), info: vi.fn(), warn: vi.fn() }),"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/inbox/location-picker/__tests__/LocationPicker.gpsAtrasado.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 12,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  createLogger: () => ({ error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn() }),"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/inbox/location-picker/__tests__/useLocationPicker.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 13,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 1,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "vi.mock('@/lib/logger', () => ({ log: { error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn() }, createLogger: () => ({ error: vi.fn(), warn: vi.fn(), in"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/inbox/stickers/__tests__/StickerGrid.resolucao.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 12,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  createLogger: () => ({ warn: vi.fn(), error: vi.fn(), info: vi.fn(), debug: vi.fn() }),"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/inbox/tabs/__tests__/FileDetailPanel.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 12,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  createLogger: () => ({ warn: vi.fn(), error: vi.fn(), info: vi.fn(), debug: vi.fn() }),"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/inbox/tabs/__tests__/FileThumb.assinatura-em-lote.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 12,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  createLogger: () => ({ warn: vi.fn(), error: vi.fn(), info: vi.fn(), debug: vi.fn() }),"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/inbox/tabs/__tests__/FileThumb.pdf.integration.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 12,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  createLogger: () => ({ warn: logWarn, error: vi.fn(), info: vi.fn(), debug: vi.fn() }),"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/leaderboard/__tests__/Leaderboard.erro.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 12,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  createLogger: () => ({ error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn() }),"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/notifications/__tests__/NotificationsPopover.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 12,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  createLogger: () => ({ error: vi.fn(), debug: vi.fn(), info: vi.fn(), warn: vi.fn() }),"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/onboarding/__tests__/OnboardingChecklist.a11y.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 12,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  createLogger: () => ({ error: vi.fn(), debug: vi.fn(), info: vi.fn(), warn: vi.fn() }),"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/onboarding/__tests__/OnboardingChecklist.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 12,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  createLogger: () => ({ error: vi.fn(), debug: vi.fn(), info: vi.fn(), warn: vi.fn() }),"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/queues/__tests__/AddMemberDialog.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 12,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  createLogger: () => ({ error: vi.fn(), debug: vi.fn(), info: vi.fn(), warn: vi.fn() }),"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/queues/__tests__/QueueGoalsDialog.salvarMetas.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 12,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  createLogger: () => ({ error: vi.fn(), debug: vi.fn(), info: vi.fn(), warn: vi.fn() }),"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/queues/__tests__/QueuesView.editar.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 12,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  createLogger: () => ({ error: vi.fn(), debug: vi.fn(), info: vi.fn(), warn: vi.fn() }),"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/queues/__tests__/QueuesView.metricasRpc.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 12,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  createLogger: () => ({ error: vi.fn(), debug: vi.fn(), info: vi.fn(), warn: vi.fn() }),"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/queues/__tests__/QueuesView.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 12,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  createLogger: () => ({ error: vi.fn(), debug: vi.fn(), info: vi.fn(), warn: vi.fn() }),"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/security/__tests__/RateLimitConfigPanel.a11y.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 12,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  createLogger: () => ({ error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn() }),"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/security/__tests__/SecurityOverview.a11y.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 12,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  createLogger: () => ({ error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn() }),"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/security/__tests__/SecurityOverview.hierarchy.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 12,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  createLogger: () => ({ error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn() }),"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/security/__tests__/SecurityOverview.medicao.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 12,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  createLogger: () => ({ error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn() }),"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/settings/__tests__/AutomationSettings.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 13,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 1,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "vi.mock('@/lib/logger', () => ({ log: { error: vi.fn(), info: vi.fn(), warn: vi.fn() }, createLogger: () => ({ error: vi.fn(), info: vi.fn(), warn: vi.fn() }) }"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/settings/__tests__/AvatarUpload.invalidacao.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 12,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  createLogger: () => ({ warn: vi.fn(), error: vi.fn(), info: vi.fn(), debug: vi.fn() }),"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/settings/__tests__/AvatarUpload.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 12,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  createLogger: () => ({ info: vi.fn(), warn: vi.fn(), error: vi.fn() }),"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/settings/__tests__/FollowUpSequences.a11y.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 13,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 1,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "vi.mock('@/lib/logger', () => ({ log: { error: vi.fn(), info: vi.fn(), warn: vi.fn() }, createLogger: () => ({ error: vi.fn(), info: vi.fn(), warn: vi.fn() }) }"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/settings/__tests__/GlobalSettingsSection.sem-consumidor.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 13,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 1,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "vi.mock('@/lib/logger', () => ({ log: { error: vi.fn(), info: vi.fn(), warn: vi.fn() }, createLogger: () => ({ error: vi.fn(), info: vi.fn(), warn: vi.fn() }) }"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/settings/__tests__/IntegrationKeysSection.sem-consumidor.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 13,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 1,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "vi.mock('@/lib/logger', () => ({ log: { error: vi.fn(), info: vi.fn(), warn: vi.fn() }, createLogger: () => ({ error: vi.fn(), info: vi.fn(), warn: vi.fn() }) }"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/settings/__tests__/MessagesSettings.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 12,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  createLogger: () => ({ error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn() }),"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/settings/__tests__/ScheduleSettings.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 12,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  createLogger: () => ({ error: () => {}, warn: () => {}, info: () => {}, debug: () => {} }),"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/settings/__tests__/SoundCategoryCard.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 12,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  createLogger: () => ({ warn: vi.fn(), error: vi.fn(), info: vi.fn(), debug: vi.fn() }),"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/settings/__tests__/SoundCustomizationPanel.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 12,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  createLogger: () => ({ warn: vi.fn(), error: vi.fn(), info: vi.fn(), debug: vi.fn() }),"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/settings/media-library/__tests__/useMediaLibrary.mutacoes.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 12,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  createLogger: () => ({ debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() }),"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/team-chat/__tests__/team-chat-notifications-mount.test.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 12,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  createLogger: () => ({ info: vi.fn(), error: vi.fn() }),"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/transcriptions/__tests__/TranscriptionsHistoryView.a11y.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 12,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  createLogger: () => ({ error: vi.fn(), debug: vi.fn(), info: vi.fn(), warn: vi.fn() }),"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/transcriptions/__tests__/TranscriptionsHistoryView.paginacao.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 12,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  createLogger: () => ({ error: vi.fn(), debug: vi.fn(), info: vi.fn(), warn: vi.fn() }),"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/hooks/__tests__/helpers/alertBehaviorTestKit.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 13,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 1,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  return { getLogger: () => loggerSpies, log: loggerSpies, createLogger: () => loggerSpies };"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/hooks/__tests__/slaDenominadores.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 12,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  createLogger: () => ({ error: vi.fn(), debug: vi.fn(), info: vi.fn() }),"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/hooks/__tests__/useAudioPlayer.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 12,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  createLogger: () => ({ error: vi.fn(), debug: vi.fn(), info: vi.fn(), warn: vi.fn() }),"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/hooks/__tests__/useAudioRecorder.lifecycle.test.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 12,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  createLogger: () => ({ error: vi.fn(), debug: vi.fn(), info: vi.fn(), warn: vi.fn() }),"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/hooks/__tests__/useAudioRecorder.mime.test.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 12,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  createLogger: () => ({ error: vi.fn(), debug: vi.fn(), info: vi.fn(), warn: vi.fn() }),"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/hooks/__tests__/useAudioRecorder.test.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 12,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  createLogger: () => ({ error: vi.fn(), debug: vi.fn(), info: vi.fn(), warn: vi.fn() }),"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/hooks/__tests__/useBitrixApi.test.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 12,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  createLogger: () => ({ error: vi.fn(), debug: vi.fn(), info: vi.fn(), warn: vi.fn() }),"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/hooks/__tests__/useBusinessHours.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 12,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  createLogger: () => ({ error: vi.fn(), debug: vi.fn(), info: vi.fn() }),"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/hooks/__tests__/useCSAT.rating.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 12,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  createLogger: () => ({ error: vi.fn(), debug: vi.fn(), info: vi.fn() }),"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/hooks/__tests__/useCSAT.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 12,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  createLogger: () => ({ error: vi.fn(), debug: vi.fn(), info: vi.fn() }),"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/hooks/__tests__/useCalls.contato.test.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 12,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  createLogger: () => ({ error: vi.fn(), info: vi.fn(), warn: vi.fn() }),"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/hooks/__tests__/useCalls.test.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 12,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  createLogger: () => ({ error: vi.fn(), info: vi.fn(), warn: vi.fn() }),"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/hooks/__tests__/useCalls.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 12,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  createLogger: () => ({ error: vi.fn(), debug: vi.fn(), info: vi.fn() }),"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/hooks/__tests__/useConnectionQueues.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 13,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 1,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "vi.mock('@/lib/logger', () => ({ log: { error: vi.fn(), info: vi.fn(), warn: vi.fn() }, createLogger: () => ({ error: vi.fn(), info: vi.fn(), warn: vi.fn() }) }"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/hooks/__tests__/useContactCustomFields.remove.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 13,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 1,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "vi.mock('@/lib/logger', () => ({ log: { error: vi.fn(), info: vi.fn(), warn: vi.fn() }, createLogger: () => ({ error: vi.fn(), info: vi.fn(), warn: vi.fn() }) }"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/hooks/__tests__/useContactCustomFields.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 13,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 1,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "vi.mock('@/lib/logger', () => ({ log: { error: vi.fn(), info: vi.fn(), warn: vi.fn() }, createLogger: () => ({ error: vi.fn(), info: vi.fn(), warn: vi.fn() }) }"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/hooks/__tests__/useContactNotes.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 12,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  createLogger: () => ({ error: vi.fn(), debug: vi.fn(), info: vi.fn() }),"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/hooks/__tests__/useConversationAnalyses.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 12,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  createLogger: () => ({ error: vi.fn(), debug: vi.fn(), info: vi.fn() }),"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/hooks/__tests__/useCustomShortcuts.instancias.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 12,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  createLogger: () => ({ error: vi.fn(), debug: vi.fn(), info: vi.fn(), warn: vi.fn() }),"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/hooks/__tests__/useCustomShortcuts.test.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 12,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  createLogger: () => ({ error: vi.fn(), debug: vi.fn(), info: vi.fn(), warn: vi.fn() }),"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/hooks/__tests__/useDeviceDetection.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 12,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  createLogger: () => ({ error: vi.fn(), debug: vi.fn(), info: vi.fn(), warn: vi.fn() }),"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/hooks/__tests__/useEvolutionApi.test.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 12,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  createLogger: () => ({ error: vi.fn(), debug: vi.fn(), info: vi.fn() }),"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/hooks/__tests__/useGlobalSettings.cache-compartilhado.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 13,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 1,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "vi.mock('@/lib/logger', () => ({ log: { error: vi.fn(), info: vi.fn(), warn: vi.fn() }, createLogger: () => ({ error: vi.fn(), info: vi.fn(), warn: vi.fn() }) }"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/hooks/__tests__/useGlobalSettings.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 13,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 1,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "vi.mock('@/lib/logger', () => ({ log: { error: vi.fn(), info: vi.fn(), warn: vi.fn() }, createLogger: () => ({ error: vi.fn(), info: vi.fn(), warn: vi.fn() }) }"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/hooks/__tests__/useGlobalSettings.zero-linhas.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 13,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 1,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "vi.mock('@/lib/logger', () => ({ log: { error: vi.fn(), info: vi.fn(), warn: vi.fn() }, createLogger: () => ({ error: vi.fn(), info: vi.fn(), warn: vi.fn() }) }"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/hooks/__tests__/useGoalNotifications.goal-types.test.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 12,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  createLogger: () => ({ error: vi.fn(), warn: vi.fn(), debug: vi.fn(), info: vi.fn() }),"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/hooks/__tests__/useGoalNotifications.test.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 12,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  createLogger: () => ({ error: vi.fn(), debug: vi.fn(), info: vi.fn(), warn: vi.fn() }),"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/hooks/__tests__/useIncomingCallListener.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 12,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  createLogger: () => ({ info: (...args: unknown[]) => mockLogInfo(...args) }),"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/hooks/__tests__/useMFA.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 12,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  createLogger: () => ({ error: vi.fn(), debug: vi.fn(), info: vi.fn(), warn: vi.fn() }),"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/hooks/__tests__/useMessageReactions.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 12,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  createLogger: () => ({ error: vi.fn(), debug: vi.fn(), info: vi.fn() }),"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/hooks/__tests__/useNotificationSettings.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 12,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  createLogger: () => ({ error: vi.fn(), debug: vi.fn(), info: vi.fn(), warn: vi.fn() }),"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/hooks/__tests__/useNotifications.contagem-reconciliada.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 12,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  createLogger: () => ({ error: vi.fn(), debug: vi.fn(), info: vi.fn() }),"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/hooks/__tests__/useNotifications.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 12,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  createLogger: () => ({ error: vi.fn(), debug: vi.fn(), info: vi.fn() }),"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/hooks/__tests__/useOfflineCache.test.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 16,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 4,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  createLogger: () => ({"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/hooks/__tests__/useOnboarding.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 12,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  createLogger: () => ({ error: vi.fn(), debug: vi.fn(), info: vi.fn() }),"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/hooks/__tests__/useOnboardingChecklist.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 12,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  createLogger: () => ({ error: vi.fn(), debug: vi.fn(), info: vi.fn(), warn: vi.fn() }),"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/hooks/__tests__/usePerformance.test.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 12,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  createLogger: () => ({ error: vi.fn(), debug: vi.fn(), info: vi.fn(), warn: vi.fn() }),"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/hooks/__tests__/usePerformanceOptimizations.test.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 12,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  createLogger: () => ({ error: vi.fn(), debug: vi.fn(), info: vi.fn(), warn: vi.fn() }),"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/hooks/__tests__/usePushNotifications.sem-assinatura.test.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 13,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 1,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "vi.mock('@/lib/logger', () => ({ log: h, createLogger: () => h }));"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/hooks/__tests__/usePushNotifications.test.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 12,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  createLogger: () => ({ error: vi.fn(), debug: vi.fn(), info: vi.fn(), warn: vi.fn() }),"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/hooks/__tests__/useQueueAnalytics.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 12,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  createLogger: () => ({ error: vi.fn(), debug: vi.fn(), info: vi.fn() }),"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/hooks/__tests__/useQueueGoals.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 12,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  createLogger: () => ({ error: vi.fn(), debug: vi.fn(), info: vi.fn() }),"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/hooks/__tests__/useQueues.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 12,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  createLogger: () => ({ error: vi.fn(), debug: vi.fn(), info: vi.fn(), warn: vi.fn() }),"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/hooks/__tests__/useQueuesComparison.race.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 12,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  createLogger: () => ({ error: vi.fn(), debug: vi.fn(), info: vi.fn() }),"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/hooks/__tests__/useQueuesComparison.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 12,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  createLogger: () => ({ error: vi.fn(), debug: vi.fn(), info: vi.fn() }),"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/hooks/__tests__/useQuickReplies.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 12,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  createLogger: () => ({ error: vi.fn(), debug: vi.fn(), info: vi.fn() }),"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/hooks/__tests__/useResolvedStorageUrl.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 12,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  createLogger: () => ({ warn: vi.fn() }),"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/hooks/__tests__/useResourcePrefetch.test.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 12,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  createLogger: () => ({ error: vi.fn(), debug: vi.fn(), info: vi.fn(), warn: vi.fn() }),"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/hooks/__tests__/useSLAMetrics.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 12,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  createLogger: () => ({ error: vi.fn(), debug: vi.fn(), info: vi.fn() }),"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/hooks/__tests__/useScheduledMessages.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 12,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  createLogger: () => ({ error: vi.fn(), debug: vi.fn(), info: vi.fn() }),"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/hooks/__tests__/useSearch.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 12,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  createLogger: () => ({ error: vi.fn(), debug: vi.fn(), info: vi.fn() }),"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/hooks/__tests__/useSentimentAlerts.test.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 12,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  createLogger: () => ({ error: vi.fn(), debug: vi.fn(), info: vi.fn(), warn: vi.fn() }),"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/hooks/__tests__/useServiceWorker.test.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 12,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  createLogger: () => ({ debug: vi.fn(), error: vi.fn(), info: vi.fn() }),"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/hooks/__tests__/useSupabaseRealtime.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 12,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  createLogger: () => ({ error: vi.fn(), debug: vi.fn(), info: vi.fn(), warn: vi.fn() }),"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/hooks/__tests__/useTeamChatNotifications.aviso-navegador.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 12,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  createLogger: () => ({ error: vi.fn(), warn: vi.fn(), debug: vi.fn(), info: vi.fn() }),"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/hooks/__tests__/useTeamChatNotifications.behavior.test.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 12,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  createLogger: () => ({ error: vi.fn(), warn: vi.fn(), debug: vi.fn(), info: vi.fn() }),"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/hooks/__tests__/useTeamChatNotifications.global.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 12,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  createLogger: () => ({ error: vi.fn(), warn: vi.fn(), debug: vi.fn(), info: vi.fn() }),"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/hooks/__tests__/useTextToSpeech.lifecycle.test.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 12,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  createLogger: () => ({ error: vi.fn(), debug: vi.fn(), info: vi.fn(), warn: vi.fn() }),"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/hooks/__tests__/useTextToSpeech.test.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 12,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  createLogger: () => ({ error: vi.fn(), debug: vi.fn(), info: vi.fn(), warn: vi.fn() }),"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/hooks/__tests__/useTypingPresence.assinatura.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 12,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  createLogger: () => ({ debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() }),"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/hooks/__tests__/useTypingPresence.identidade.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 12,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  createLogger: () => ({ debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() }),"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/hooks/__tests__/useTypingPresence.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 13,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 1,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "vi.mock('@/lib/logger', () => ({ log: { error: vi.fn(), info: vi.fn(), warn: vi.fn() }, createLogger: () => ({ error: vi.fn(), info: vi.fn(), warn: vi.fn() }) }"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/hooks/__tests__/useVoiceAgent.comandoSubstituido.test.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 13,
+   "hunk": "PRESENT_REVERSE_APPLIES"
+  },
+  {
+   "path": "src/hooks/__tests__/useVoiceAgent.interrupcao.test.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 12,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  createLogger: () => ({ error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn() }),"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/hooks/__tests__/useWebAuthn.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 12,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  createLogger: () => ({ error: vi.fn(), debug: vi.fn(), info: vi.fn() }),"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/hooks/__tests__/useWhatsAppStatus.test.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 12,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  createLogger: () => ({ error: vi.fn(), info: vi.fn(), warn: vi.fn(), debug: vi.fn() }),"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/hooks/admin/__tests__/useSupervisorQueue.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 12,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  createLogger: () => ({ error: h.logError, warn: vi.fn(), info: vi.fn(), debug: vi.fn() }),"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/hooks/analytics/__tests__/useGoalNotifications.idempotencia.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 12,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  createLogger: () => ({ error: vi.fn(), debug: vi.fn(), info: vi.fn(), warn: vi.fn() }),"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/hooks/analytics/__tests__/usePerformanceSnapshots.limpeza.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 12,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  createLogger: () => h.log,"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/hooks/analytics/__tests__/useQueueGoalAlerts.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 12,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  createLogger: () => ({ error: vi.fn(), debug: vi.fn(), info: vi.fn(), warn: vi.fn() }),"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/hooks/analytics/__tests__/useRealtimeDashboard.visibilidade.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 12,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  createLogger: () => ({ error: vi.fn(), debug: vi.fn(), info: vi.fn(), warn: vi.fn() }),"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/hooks/business/__tests__/useBusinessHours.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 13,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 1,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "vi.mock('@/lib/logger', () => ({ log: { error: h.logError }, createLogger: () => ({ error: h.logError }) }));"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/hooks/chat/__tests__/buscas-silenciosas-aviso.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 12,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  createLogger: () => ({ debug: vi.fn(), warn: vi.fn(), error: vi.fn() }),"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/hooks/chat/__tests__/useForwardMessage.test.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 12,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  createLogger: () => ({ error: mocks.logError, warn: vi.fn(), info: vi.fn(), debug: vi.fn() }),"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/hooks/chat/__tests__/useMessageReactions.transport-rejection.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 12,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  createLogger: () => ({ debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() }),"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/hooks/chat/__tests__/usePdfThumbnail.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 12,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  createLogger: () => ({ warn: vi.fn(), error: vi.fn(), info: vi.fn(), debug: vi.fn() }),"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/hooks/chat/__tests__/useRealtimeMessages.markAsRead.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 12,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  createLogger: () => ({ error: h.logError, debug: vi.fn(), info: vi.fn(), warn: vi.fn() }),"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/hooks/chat/__tests__/useRealtimeMessages.reconexao.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 12,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  createLogger: () => ({ error: vi.fn(), debug: vi.fn(), info: vi.fn(), warn: vi.fn() }),"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/hooks/chat/__tests__/useTeamChatDraft.colar-imagem.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 12,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  createLogger: () => ({ error: vi.fn(), warn: vi.fn(), debug: vi.fn(), info: vi.fn() }),"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/hooks/chat/__tests__/useTeamChatNotifications.canal-estavel.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 17,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 5,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  createLogger: () => ({"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/hooks/chat/__tests__/useTeamChatNotifications.nome-e-clique.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 12,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  createLogger: () => ({ error: vi.fn(), warn: vi.fn(), debug: vi.fn(), info: vi.fn() }),"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/hooks/communication/__tests__/audioExclusivo.players.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 12,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  createLogger: () => ({ error: vi.fn(), info: vi.fn(), debug: vi.fn(), warn: vi.fn() }),"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/hooks/communication/__tests__/mediaVolume.players.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 12,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  createLogger: () => ({ error: vi.fn(), info: vi.fn(), debug: vi.fn(), warn: vi.fn() }),"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/hooks/communication/__tests__/useCallEngineSink.test.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 12,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  createLogger: () => ({ error: h.logError, warn: vi.fn(), info: vi.fn(), debug: vi.fn() }),"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/hooks/communication/__tests__/useTextToSpeech.vozLocal.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 12,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  createLogger: () => ({ error: vi.fn(), debug: vi.fn(), info: vi.fn(), warn: vi.fn() }),"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/hooks/communication/__tests__/useTranscriptionNotifications.filtros.test.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 17,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 5,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  createLogger: () => ({"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/hooks/communication/__tests__/useVoiceAgent.limitesSessao.test.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 12,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  createLogger: () => ({ error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn() }),"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/hooks/communication/__tests__/useVoiceAgent.ttsAviso.test.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 12,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  createLogger: () => ({ error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn() }),"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/hooks/connections/__tests__/useConnectionsHealth.test.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 12,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  createLogger: () => ({ error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn() }),"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/hooks/crm/__tests__/useContactEnrichedData.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 12,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  createLogger: () => ({ error: vi.fn(), debug: vi.fn(), info: vi.fn(), warn: vi.fn() }),"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/hooks/crm/__tests__/useContactIntelligence.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 13,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 1,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "vi.mock('@/lib/logger', () => ({ log: { error: (...a: unknown[]) => logError(...a) }, createLogger: () => ({ error: (...a: unknown[]) => logError(...a) }) }));"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/hooks/crm/__tests__/useContactPurchases.criar.test.tsx",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "patch_lines": 13,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 1,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "vi.mock('@/lib/logger', () => ({ log: { error: mocks.logError, info: vi.fn(), warn: vi.fn() }, createLogger: () => ({ error: mocks.logError, info: vi.fn(), warn"
+    ],
+    "still_sample": [],
+    "same_basename_in_main": []
+   }
+  },
+  {
+   "path": "src/hooks/crm/__tests__/useExternalContact360Batch.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 12,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  createLogger: () => ({ error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn() }),"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/hooks/evolution/__tests__/useEvolutionApiCore.test.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 12,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  createLogger: () => ({ error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn() }),"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/hooks/evolution/__tests__/useEvolutionApiCore.withToast.test.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 12,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  createLogger: () => ({ error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn() }),"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/hooks/evolution/__tests__/useEvolutionGroups.test.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 12,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  createLogger: () => ({ error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn() }),"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/hooks/evolution/__tests__/useEvolutionMessaging.test.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 12,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  createLogger: () => ({ error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn() }),"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/hooks/groups/__tests__/actions.test.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 12,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  createLogger: () => ({ info: mocks.logInfo, error: mocks.logError, warn: vi.fn(), debug: vi.fn() }),"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/hooks/inbox/__tests__/useConnectionsManager.add-connection-error.test.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 17,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 5,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  createLogger: () => ({"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/hooks/inbox/__tests__/useConnectionsManager.desconectar.test.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 12,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  createLogger: () => ({ error: m.logError, debug: vi.fn(), info: vi.fn(), warn: vi.fn() }),"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/hooks/inbox/__tests__/useConnectionsManager.novaConexao.test.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 12,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  createLogger: () => ({ error: m.logError, debug: vi.fn(), info: vi.fn(), warn: vi.fn() }),"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/hooks/inbox/__tests__/useConnectionsManager.qrIdentity.test.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 17,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 5,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  createLogger: () => ({"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/hooks/inbox/__tests__/useConnectionsManager.select.test.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 12,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  createLogger: () => ({ debug: vi.fn(), error: vi.fn(), info: vi.fn(), warn: vi.fn() }),"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/hooks/inbox/__tests__/useConnectionsManager.setDefault.test.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 17,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 5,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  createLogger: () => ({"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/hooks/inbox/__tests__/useConnectionsManager.tra005.test.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 17,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 5,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  createLogger: () => ({"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/hooks/integrations/__tests__/useCustomEmojis.upload.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 39,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 16,
+    "missing_in_main": 10,
+    "removed": 8,
+    "removed_still_in_main": 7,
+    "missing_sample": [
+     "  mocks.tableFrom.mockImplementation(() => {",
+     "    // fetchEmojis/loadMore: .select().order().order().range() — the query is",
+     "    // thenable and every .order() returns the same chain (second .order exists).",
+     "    const resolved = Promise.resolve({ data: [emoji()], error: null });",
+     "    const query: Record<string, unknown> = {};",
+     "    query.order = () => query;",
+     "    query.range = () => resolved;",
+     "    query.limit = () => resolved;",
+     "    query.then = resolved.then.bind(resolved);",
+     "      select: () => query,"
+    ],
+    "still_sample": [
+     "  mocks.tableFrom.mockImplementation(() => ({",
+     "    insert: (payload: Record<string, unknown>) => {",
+     "      inserted.push(payload);",
+     "      return Promise.resolve({ error: null });",
+     "    update: () => ({ eq: () => Promise.resolve({ error: null }) }),",
+     "    delete: () => ({ eq: () => Promise.resolve({ error: null }) }),",
+     "  }));"
+    ]
+   }
+  },
+  {
+   "path": "src/hooks/integrations/__tests__/useEvolutionApi.payloads.test.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 12,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  createLogger: () => ({ error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn() }),"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/hooks/integrations/__tests__/usePersonalStickers.uso.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 12,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  createLogger: () => ({ debug: vi.fn(), info: vi.fn(), warn: mocks.logWarn, error: mocks.logError }),"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/hooks/integrations/__tests__/useQuarantineMedia.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 12,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  createLogger: () => ({ error: logError, warn: vi.fn(), info: vi.fn(), debug: vi.fn() }),"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/hooks/integrations/__tests__/useWhatsAppTemplates.aprovacaoLocal.test.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 12,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  createLogger: () => ({ error: vi.fn(), debug: vi.fn(), info: vi.fn() }),"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/hooks/reactions/__tests__/useBatchReactions.uma-consulta.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 12,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  createLogger: () => ({ debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() }),"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/hooks/reactions/__tests__/useReactionMutations.transport-rejection.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 12,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  createLogger: () => ({ debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() }),"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/hooks/realtime/__tests__/useSupabaseRealtime.reconexao.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 12,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  createLogger: () => ({ error: vi.fn(), debug: vi.fn(), info: vi.fn(), warn: vi.fn() }),"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/hooks/realtime/__tests__/useSupabaseRealtime.statusStore.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 12,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  createLogger: () => ({ error: vi.fn(), debug: vi.fn(), info: vi.fn(), warn: vi.fn() }),"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/hooks/sticker-picker/__tests__/useStickerPicker.recentes.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 12,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  createLogger: () => ({ error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn() }),"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/hooks/system/__tests__/configuracoes.leituraErro.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 12,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  createLogger: () => ({ error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn() }),"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/hooks/system/__tests__/useGeoBlocking.test.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 17,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 5,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  createLogger: () => ({"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/hooks/system/__tests__/useSecurityPushNotifications.test.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 17,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 5,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  createLogger: () => ({"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/hooks/system/__tests__/useSupabaseConnectivity.test.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 17,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 5,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  createLogger: () => ({"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/hooks/team-chat/__tests__/useTeamMessages.canal-e-reconexao.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 12,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  createLogger: () => ({ error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn() }),"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/hooks/team-chat/__tests__/useTeamMessages.read-state.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 12,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  createLogger: () => ({ error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn() }),"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/hooks/team-chat/__tests__/useTeamMessages.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 12,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  createLogger: () => ({ error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn() }),"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/hooks/ui/__tests__/useDeviceDetection.select.test.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 12,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  createLogger: () => ({ debug: vi.fn(), error: vi.fn(), info: vi.fn(), warn: vi.fn() }),"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/hooks/voice/__tests__/logVoiceCommand.test.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 12,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  createLogger: () => ({ error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn() }),"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/hooks/voice/__tests__/playTtsAudio.interrupcao.test.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 12,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  createLogger: () => ({ error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn() }),"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/lib/__tests__/audit.test.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 12,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  createLogger: () => ({ error: vi.fn(), debug: vi.fn(), info: vi.fn(), warn: vi.fn() }),"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/lib/__tests__/chunkReload.test.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 12,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  createLogger: () => ({ error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn() }),"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/lib/__tests__/lazyWithRetry.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 12,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  createLogger: () => ({ error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn() }),"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/lib/__tests__/loginAttempts.test.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 12,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  createLogger: () => ({ error: vi.fn(), debug: vi.fn(), info: vi.fn(), warn: vi.fn() }),"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/lib/__tests__/mapboxToken.test.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 13,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 1,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "vi.mock('@/lib/logger', () => ({ log: { error: (...args: unknown[]) => h.logError(...args) }, createLogger: () => ({ error: (...args: unknown[]) => h.logError(."
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/lib/__tests__/pdfThumbnail.test.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 12,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  createLogger: () => ({ warn: vi.fn(), error: vi.fn(), info: vi.fn(), debug: vi.fn() }),"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/lib/__tests__/realtimeTopic.canais-fixos.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 12,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  createLogger: () => ({ error: vi.fn(), debug: vi.fn(), info: vi.fn(), warn: vi.fn() }),"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/lib/__tests__/stickerImage.test.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 13,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 1,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "vi.mock('@/lib/logger', () => ({ getLogger: () => logStub, log: logStub, logger: logStub, createLogger: () => logStub }));"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/pages/__tests__/ChatPopup.messageBalloon.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 12,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  createLogger: () => ({ debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() }),"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/pages/__tests__/ChatPopup.pagination.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 12,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  createLogger: () => ({ debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() }),"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/pages/__tests__/ChatPopup.rolagem-mensagem-nova.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 12,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  createLogger: () => ({ debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() }),"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/pages/__tests__/ChatPopup.selectedMessagesError.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 12,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  createLogger: () => ({ debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() }),"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/pages/__tests__/ChatPopup.titulo.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 12,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  createLogger: () => ({ debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() }),"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/pages/__tests__/ForgotPassword.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 12,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  createLogger: () => ({ error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn() }),"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/pages/queue-details/__tests__/queueMetrics.test.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 12,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  createLogger: () => ({ error: logError, warn: vi.fn(), info: vi.fn(), debug: vi.fn() }),"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/providers/__tests__/AppProviders.autoRecuperacao.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 12,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  createLogger: () => ({ error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn() }),"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/providers/__tests__/QuarantineMonitorProvider.r2-api-066.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 12,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  createLogger: () => ({ debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() }),"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/services/__tests__/auth.service.signIn.test.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 13,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 1,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "vi.mock('@/lib/logger', () => ({ log: { warn: vi.fn(), error: vi.fn() }, createLogger: () => ({ warn: vi.fn(), error: vi.fn() }) }));"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/services/__tests__/auth.service.test.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 12,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  createLogger: () => ({ warn: vi.fn() }),"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/services/__tests__/auth.service.verifyPassword.test.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 13,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 1,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "vi.mock('@/lib/logger', () => ({ log: { warn: vi.fn(), error: vi.fn() }, createLogger: () => ({ warn: vi.fn(), error: vi.fn() }) }));"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/services/__tests__/chat.service.test.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 12,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  createLogger: () => ({ error: vi.fn() }),"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/services/__tests__/external-crm.service.test.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 12,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  createLogger: () => ({ error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn() }),"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/services/crm/__tests__/singu-adapter.test.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 12,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  createLogger: () => ({ error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn() }),"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/test/volumeControlMocks.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 12,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  createLogger: () => ({ error: vi.fn(), info: vi.fn(), debug: vi.fn(), warn: vi.fn() }),"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "supabase/functions/_shared/__tests__/evolution-control-authz.test.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 60,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 8,
+    "missing_in_main": 3,
+    "removed": 14,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  assert(SEND_ACTIONS.has(\"send-chat-presence\"));",
+     "    \"find-contacts\",",
+     "  assert(handlerActions.size > 40, `sanidade: handler deve ter >40 ações (achou ${handlerActions.size})`);"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "supabase/functions/_shared/evolution-control-authz.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 88,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 2,
+    "missing_in_main": 1,
+    "removed": 27,
+    "removed_still_in_main": 7,
+    "missing_sample": [
+     "   'find-contacts',  "
+    ],
+    "still_sample": [
+     "  'set-presence',",
+     "  'toggle-ephemeral',",
+     "  'get-catalog', 'get-collections',",
+     "  'send-template',",
+     "  'offer-call',",
+     "  'mark-unread',",
+     "  'invite-info',"
+    ]
+   }
+  },
+  {
+   "path": "supabase/functions/_shared/evolution-webhook-handlers.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 36,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 7,
+    "missing_in_main": 6,
+    "removed": 2,
+    "removed_still_in_main": 1,
+    "missing_sample": [
+     "  let isComposing = false;",
+     "        const state = isRecord(pState) ? pState : {};",
+     "        const bruto = state.lastKnownPresence ?? state.status;",
+     "        const valor = typeof bruto === 'string' ? bruto : null;",
+     "    const isComposingNow = estados.includes('composing');",
+     "    isComposing = isComposingNow;"
+    ],
+    "still_sample": [
+     "    const isComposing = estados.includes('composing');"
+    ]
+   }
+  },
+  {
+   "path": "supabase/functions/_shared/gmail-helpers.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 36,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 3,
+    "missing_in_main": 2,
+    "removed": 10,
+    "removed_still_in_main": 1,
+    "missing_sample": [
+     "export function gmailReauthErrorPayload(): { code: \"reauth_required\"; error: string } {",
+     "  return { code: \"reauth_required\", error: GMAIL_REAUTH_MESSAGE };"
+    ],
+    "still_sample": [
+     "  const response = await fetch(\"https://oauth2.googleapis.com/token\", {"
+    ]
+   }
+  },
+  {
+   "path": "supabase/functions/_shared/validation.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 12,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "export { isAllowedOrigin, FALLBACK_ORIGIN };"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "supabase/functions/auth-login/index.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 57,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 11,
+    "missing_in_main": 9,
+    "removed": 3,
+    "removed_still_in_main": 1,
+    "missing_sample": [
+     "  enforceRateLimit,",
+     "export interface LoginAdminClient extends NetworkPolicyRpcClient {",
+     "      signOut: (accessToken: string, scope: \"local\" | \"global\" | \"others\") => PromiseLike<{ error: unknown }>;",
+     "  ) => PromiseLike<{ allowed: boolean; unavailable?: boolean }>;",
+     "    const emailRl = await deps.enforceRateLimit(`auth-login-email:${email}`, EMAIL_LIMIT_MAX, EMAIL_LIMIT_WINDOW_SECONDS * 1000);",
+     "    return handleLogin(req, {",
+     "      admin: admin as unknown as LoginAdminClient,",
+     "      anon: anon as unknown as LoginAnonClient,",
+     "      enforceRateLimit,"
+    ],
+    "still_sample": [
+     "    return handleLogin(req, { admin, anon });"
+    ]
+   }
+  },
+  {
+   "path": "supabase/functions/connection-health-check/index.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 38,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 14,
+    "missing_in_main": 7,
+    "removed": 2,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "                      reason: null,",
+     "      const title = alert.kind === 'disconnected'",
+     "        ? `WhatsApp ${alert.instance_id} desconectado`",
+     "        : `Conexão ${alert.instance_id} degradada`;",
+     "      const message = alert.kind === 'disconnected'",
+     "        ? `A instância ${alert.instance_id} perdeu conexão com o WhatsApp.`",
+     "        : `A instância ${alert.instance_id}: ${REASON_LABEL[alert.reason ?? ''] ?? 'conexão degradada'}.`;"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "supabase/functions/evolution-api/index.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 166,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 0,
+    "missing_in_main": 0,
+    "removed": 86,
+    "removed_still_in_main": 35,
+    "missing_sample": [],
+    "still_sample": [
+     "import { goHistoryNotSupported } from \"../_shared/evolution-sync-actions.ts\";",
+     "    if (action === 'get-settings') return await proxy(`/settings/find/${instance}`, 'GET');",
+     "    if (action === 'get-webhook') {",
+     "      // `/webhook/find` é rota da v2. No GO a leitura da configuração corrente vem do",
+     "      // registro da instância na listagem admin (`/instance/fetchInstances`, traduzida",
+     "      // para `/instance/all`) — a mesma fonte que o webhook-diagnostic usa. Assim o",
+     "      // painel lê a config real por flavor em vez de bater numa rota inexistente no GO.",
+     "      if (!isGoFlavor) return await proxy(`/webhook/find/${instance}`, 'GET');",
+     "      try {",
+     "        const allRes = await proxy('/instance/fetchInstances', 'GET');"
+    ]
+   }
+  },
+  {
+   "path": "supabase/functions/gmail-cron-sync/index.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 57,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 17,
+    "missing_in_main": 15,
+    "removed": 3,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  history_id?: string | null;",
+     "  token_expires_at?: string | null;",
+     "  sync_status?: string | null;",
+     "  next_attempt_at?: string | null;",
+     "/** Pula conta que exige reconexão humana ou que ainda está na espera da falha transitória. */",
+     "function selectGmailAccountsDue(accounts: GmailCronAccount[]): GmailCronAccount[] {",
+     "  const now = Date.now();",
+     "  return accounts.filter((account) => {",
+     "    if (account.sync_status === \"reauth_required\") return false;",
+     "    if (account.next_attempt_at && Date.parse(account.next_attempt_at) > now) return false;",
+     "    return true;",
+     "    const dueAccounts = selectGmailAccountsDue((accounts ?? []) as GmailCronAccount[]);",
+     "          if (!account.token_expires_at) throw new Error(\"Gmail account missing token_expires_at\");",
+     "          const accessToken = await ensureValidToken(supabase, { id: account.id, token_expires_at: account.token_expires_at }, log);",
+     "            const r = await runGmailCronIncrementalSync(supabase, { id: account.id, history_id: account.history_id }, accessToken, log);"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "supabase/functions/webauthn/index.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 13,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 1,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "        const rl = await enforceRateLimit(`webauthn:auth-options:${getClientIP(req)}`, 10, 60_000);"
+    ],
+    "still_sample": []
+   }
+  }
+ ],
+ "counts": {
+  "migrations": "0",
+  "workflows": "9",
+  "src": "281",
+  "edges": "10",
+  "docs_only": "no",
+  "lines_branch_has_main_lacks": "3282",
+  "lines_main_has_branch_lacks": "5066"
+ },
+ "auto": "MISTO_CONFLITO",
+ "n_files_with_gaps": 316,
+ "gap_lines_total": 746
+}

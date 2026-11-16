@@ -1,0 +1,74 @@
+{
+ "id": "claude__fix-talkx-x006-test-limites-261101-2130",
+ "kind": "branch",
+ "ref": "origin/claude/fix-talkx-x006-test-limites-261101-2130",
+ "tip": "992c155d11d713082df5096ab4b59d964b8aa2b1",
+ "merge_base": "1252bb5a41123ba4d49efd84d0f91604bff6c87c",
+ "ahead": 1,
+ "last_commit_date": "2026-11-01",
+ "merge_base_date": "2026-11-01",
+ "prs_with_same_tip": [
+  2516
+ ],
+ "triagem_2804": {
+  "2516": "OBSOLETA"
+ },
+ "closure_comment": {},
+ "files": [
+  {
+   "path": "src/components/talkx/__tests__/TalkX.test.tsx",
+   "status": "MAIN_UNCHANGED_SINCE_BASE",
+   "patch_lines": 86,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 49,
+    "missing_in_main": 49,
+    "removed": 2,
+    "removed_still_in_main": 2,
+    "missing_sample": [
+     "import { limitsPayload } from '../tracking/talkxCampaignRules';",
+     "    // contacts=360 with avg=10",
+     "// X006 — Editar limites: digitar 10 chama updateCampaignLimits com send_interval_min=10000",
+     "describe('Talk X — Limites de Envio (X006)', () => {",
+     "  it('digitar 10 gera payload com send_interval_min=10000', () => {",
+     "    const draft = {",
+     "      speedProfile: 'moderate',",
+     "      intervalMin: 10,",
+     "      intervalMax: 20,",
+     "      windowStart: '',",
+     "      windowEnd: '',",
+     "      businessHoursOnly: false,",
+     "    const payload = limitsPayload(draft);",
+     "    expect(payload.send_interval_min).toBe(10000);",
+     "    expect(payload.send_interval_max).toBe(20000);",
+     "  it('grava piso correto: 3 s → 3000 ms', () => {",
+     "    const draft = {",
+     "      speedProfile: 'fast',",
+     "      intervalMin: 3,",
+     "      intervalMax: 8,",
+     "      windowStart: '',",
+     "      windowEnd: '',",
+     "      businessHoursOnly: false,",
+     "    const payload = limitsPayload(draft);",
+     "    expect(payload.send_interval_min).toBe(3000);"
+    ],
+    "still_sample": [
+     "    // Need to find values that give exactly 60 min",
+     "    // contacts * (avg) = 3600s → contacts=360 with avg=10"
+    ]
+   }
+  }
+ ],
+ "counts": {
+  "migrations": "0",
+  "workflows": "0",
+  "src": "1",
+  "edges": "0",
+  "docs_only": "no",
+  "lines_branch_has_main_lacks": "62",
+  "lines_main_has_branch_lacks": "2"
+ },
+ "auto": "TRABALHO_AUSENTE_APLICA_LIMPO",
+ "n_files_with_gaps": 1,
+ "gap_lines_total": 51
+}

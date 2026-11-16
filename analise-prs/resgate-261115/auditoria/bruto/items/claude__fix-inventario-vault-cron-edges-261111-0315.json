@@ -1,0 +1,146 @@
+{
+ "id": "claude__fix-inventario-vault-cron-edges-261111-0315",
+ "kind": "branch",
+ "ref": "origin/claude/fix-inventario-vault-cron-edges-261111-0315",
+ "tip": "79fa2ea51c1d3e722f78a3ba17e28d09498ad967",
+ "merge_base": "51bd8cb8759a2962193e0c6871e3719115520d68",
+ "ahead": 8,
+ "last_commit_date": "2026-11-13",
+ "merge_base_date": "2026-11-13",
+ "prs_with_same_tip": [
+  2943
+ ],
+ "triagem_2804": {
+  "2943": null
+ },
+ "closure_comment": {
+  "2943": {
+   "title": "fix(inventario): edge chamada só por cron+Vault não é mais sem_chamador",
+   "last_comment": "Fechada como contida: o conteúdo desta PR entrou integralmente na adm01-debug/Zapp_Web_V2#3064 (pacote 5), mergeada em `ab657aa34` com CI verde (CI Gate, Build, TypeCheck, Unit 1-3, E2E, DB Guard). Nenhum trabalho perdido; as migrations seguem o fluxo de apply do `docs/agentes/banco.md`. |  | --- | _Gener"
+  }
+ },
+ "files": [
+  {
+   "path": ".github/workflows/ci.yml",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 23,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 5,
+    "missing_in_main": 3,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "      # scripts/inventario/gerar-repo.unit.mjs roda o gerar-repo.mjs, que exige o ripgrep",
+     "      # (mesmo passo do inventario-estado-semanal.yml).",
+     "          scripts/inventario/gerar-repo.unit.mjs"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "TESTING_CONVENTION.md",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 13,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 1,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  `node --test scripts/ci/*.unit.mjs scripts/catalog/validate-plan.unit.mjs scripts/db-tests/run-all.unit.mjs scripts/docs/verificar-docs-realtime.unit.mjs scri"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "inventario/estado/edges.json",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 7,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 1,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "{\"gerado_em\":\"2026-11-11T13:10:30.256Z\",\"total\":92,\"sem_chamador_no_repo\":[\"cleanup-rate-limit-logs\",\"csp-report\",\"elevenlabs-agent-token\",\"external-db-bridge\","
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "scripts/inventario/gerar-repo.mjs",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 21,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 9,
+    "missing_in_main": 4,
+    "removed": 1,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  // Convenção deste repo para cron/pg_net (talkx-scheduler, talkx-storage-purge, crm-integration",
+     "  // etc.): a URL fica só no Vault (`vault.decrypted_secrets`) e o nome da edge só aparece em",
+     "  // texto solto (nome do cron job, `vault.create_secret(...)`, comentário). Sem esse fallback,",
+     "  const migrationsNomeSolto = rgFiles(q, ['supabase/migrations']);"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "scripts/inventario/gerar-repo.unit.mjs",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "patch_lines": 72,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 54,
+    "missing_in_main": 54,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "// Teste do inventário de edge functions (scripts/inventario/gerar-repo.mjs).",
+     "// Cobre especificamente a detecção de chamador via Vault/pg_cron em migrations, onde a",
+     "// URL da edge nunca aparece como texto literal `functions/v1/<nome>` — só o nome da edge",
+     "// solto (nome do secret no Vault, nome do cron job, comentário).",
+     "// Rodar: node --test scripts/inventario/gerar-repo.unit.mjs",
+     "import assert from 'node:assert/strict';",
+     "import { execFileSync } from 'node:child_process';",
+     "import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync, copyFileSync } from 'node:fs';",
+     "import { tmpdir } from 'node:os';",
+     "import { join } from 'node:path';",
+     "import test from 'node:test';",
+     "const GERADOR = new URL('./gerar-repo.mjs', import.meta.url);",
+     "function fixture() {",
+     "  const raiz = mkdtempSync(join(tmpdir(), 'inventario-repo-'));",
+     "  for (const dir of [",
+     "    'scripts/inventario',",
+     "    'supabase/functions/vault-edge',",
+     "    'supabase/functions/orphan-edge',",
+     "    'supabase/migrations',",
+     "    'src',",
+     "    'e2e',",
+     "    '.github/workflows',",
+     "    mkdirSync(join(raiz, dir), { recursive: true });",
+     "  copyFileSync(GERADOR, join(raiz, 'scripts/inventario/gerar-repo.mjs'));",
+     "  writeFileSync(join(raiz, 'supabase/config.toml'), '');"
+    ],
+    "still_sample": [],
+    "same_basename_in_main": []
+   }
+  }
+ ],
+ "counts": {
+  "migrations": "0",
+  "workflows": "1",
+  "src": "0",
+  "edges": "0",
+  "docs_only": "no",
+  "lines_branch_has_main_lacks": "77",
+  "lines_main_has_branch_lacks": "22"
+ },
+ "auto": "MISTO_CONFLITO",
+ "n_files_with_gaps": 5,
+ "gap_lines_total": 63
+}

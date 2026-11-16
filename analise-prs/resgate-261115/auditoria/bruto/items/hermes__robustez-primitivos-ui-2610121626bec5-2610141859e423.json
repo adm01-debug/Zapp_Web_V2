@@ -1,0 +1,248 @@
+{
+ "id": "hermes__robustez-primitivos-ui-2610121626bec5-2610141859e423",
+ "kind": "branch",
+ "ref": "origin/hermes/robustez-primitivos-ui-2610121626bec5-2610141859e423",
+ "tip": "8781671739e45b25bc589f845e9cc0fdff78acea",
+ "merge_base": "088a52382d3da4a2381ebd088e3e646545a11763",
+ "ahead": 2,
+ "last_commit_date": "2026-10-15",
+ "merge_base_date": "2026-10-14",
+ "prs_with_same_tip": [],
+ "triagem_2804": {},
+ "closure_comment": {},
+ "files": [
+  {
+   "path": "src/components/ui/__tests__/robustez-primitivos.test.tsx",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "patch_lines": 366,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 262,
+    "missing_in_main": 262,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     " * Robustez dos primitivos de `src/components/ui` — paridade V3 → V2 (Parte 7).",
+     " * Seis lacunas de robustez portadas da V3, cada uma com um caso próprio aqui:",
+     " * (a) `DialogContent` injeta descrição oculta quando falta `aria-describedby` e",
+     " *     NÃO injeta quando o chamador passa `aria-describedby={undefined}` de propósito;",
+     " * (b) o atalho de navegação (`SkipLink`) torna o alvo focável (`tabindex=-1`) antes de focar;",
+     " * (c) os `setTimeout` de `useAnnounce`, do indicador do `SkipLinks` e do `useOfflineStatus`",
+     " *     são limpos no desmonte (o id agendado pelo próprio componente é cancelado);",
+     " * (d) `TableHead` emite `scope=\"col\"` por padrão;",
+     " * (e) o `Sparkline` decorativo é `aria-hidden`;",
+     " * (f) `AvatarGroup` usa chave derivada do conteúdo, não do índice.",
+     " * (g) o `SkipLinks` só renderiza o link cujo alvo existe no DOM, inclusive",
+     " *     alvo montado ou removido depois da primeira pintura (no ciclo de 1,5 s),",
+     " *     sem setState em laço quando nada muda.",
+     "import { describe, it, expect, vi, afterEach } from 'vitest';",
+     "import { render, screen, fireEvent, cleanup, act } from '@testing-library/react';",
+     "import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/components/ui/dialog';",
+     "import { SkipLinks } from '@/components/ui/skip-link';",
+     "import { useAnnounce } from '@/components/ui/visually-hidden';",
+     "import { useOfflineStatus } from '@/components/ui/offline-indicator';",
+     "import { Table, TableHeader, TableRow, TableHead } from '@/components/ui/table';",
+     "import { Sparkline } from '@/components/ui/sparkline';",
+     "import { AvatarGroup } from '@/components/ui/avatar';",
+     "afterEach(() => {",
+     "  cleanup();",
+     "  vi.useRealTimers();"
+    ],
+    "still_sample": [],
+    "same_basename_in_main": []
+   }
+  },
+  {
+   "path": "src/components/ui/avatar.tsx",
+   "status": "MAIN_UNCHANGED_SINCE_BASE",
+   "patch_lines": 13,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 1,
+    "removed_still_in_main": 1,
+    "missing_sample": [
+     "          key={`${avatar.src ?? ''}-${avatar.alt ?? ''}-${avatar.fallback ?? ''}-${index}`}"
+    ],
+    "still_sample": [
+     "          key={index} "
+    ]
+   }
+  },
+  {
+   "path": "src/components/ui/dialog.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 101,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 47,
+    "missing_in_main": 41,
+    "removed": 7,
+    "removed_still_in_main": 6,
+    "missing_sample": [
+     "function temFilhoDescricao(children: React.ReactNode): boolean {",
+     "  let achou = false;",
+     "  React.Children.forEach(children, (child) => {",
+     "    if (achou || !React.isValidElement(child)) return;",
+     "    const tipo = child.type as unknown;",
+     "    if (tipo === DialogDescription || tipo === DialogPrimitive.Description) {",
+     "      achou = true;",
+     "      return;",
+     "    const filhos = (child.props as { children?: React.ReactNode } | undefined)?.children;",
+     "    if (filhos && temFilhoDescricao(filhos)) achou = true;",
+     "  return achou;",
+     ">(({ className, children, size, showCloseButton = true, ...props }, ref) => {",
+     "  // A11y: o Radix avisa no console (\"Missing `Description` or",
+     "  // `aria-describedby={undefined}` for {DialogContent}\") sempre que o conteúdo",
+     "  // não declara descrição, e o leitor de tela perde o contexto do diálogo.",
+     "  // Injetamos uma descrição oculta em pt-BR SOMENTE quando o chamador não",
+     "  // informa `aria-describedby` E não há <DialogDescription> filho: quando o",
+     "  // filho existe, o Radix resolve o id dele sozinho e sobrescrever o",
+     "  // `aria-describedby` quebraria o vínculo com a descrição real.",
+     "  // A chave é conferida no objeto de props (e não por valor)",
+     "  // porque vários diálogos da V2 passam `aria-describedby={undefined}` de",
+     "  // propósito para silenciar o aviso: nesse caso respeitamos e não injetamos nada.",
+     "  const temDescribedByProp = Object.prototype.hasOwnProperty.call(props, 'aria-describedby');",
+     "  const autoDescriptionId = React.useId();",
+     "  const temDescricaoFilha = temFilhoDescricao(children);"
+    ],
+    "still_sample": [
+     "const DialogDescription = React.forwardRef<",
+     "  React.ElementRef<typeof DialogPrimitive.Description>,",
+     "  React.ComponentPropsWithoutRef<typeof DialogPrimitive.Description>",
+     ">(({ className, ...props }, ref) => (",
+     "  <DialogPrimitive.Description ref={ref} className={cn(\"text-sm text-muted-foreground\", className)} {...props} />",
+     "DialogDescription.displayName = DialogPrimitive.Description.displayName;"
+    ]
+   }
+  },
+  {
+   "path": "src/components/ui/offline-indicator.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 54,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 18,
+    "missing_in_main": 14,
+    "removed": 4,
+    "removed_still_in_main": 2,
+    "missing_sample": [
+     "import { useState, useEffect, useCallback, useRef } from 'react';",
+     "  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);",
+     "  const isOnlineRef = useRef(isOnline);",
+     "      if (!isOnlineRef.current) {",
+     "        if (timerRef.current) clearTimeout(timerRef.current);",
+     "        timerRef.current = setTimeout(() => {",
+     "          timerRef.current = null;",
+     "      isOnlineRef.current = true;",
+     "      isOnlineRef.current = false;",
+     "  // O timer do aviso \"voltou\" só é limpo no desmonte. Limpar no cleanup do",
+     "  // efeito acima (que antes dependia de [isOnline]) cancelava o timer de 3 s",
+     "  // a cada troca de estado e travava `wasOffline` em true.",
+     "  useEffect(() => () => {",
+     "    if (timerRef.current) clearTimeout(timerRef.current);"
+    ],
+    "still_sample": [
+     "      if (!isOnline) {",
+     "  }, [isOnline]);"
+    ]
+   }
+  },
+  {
+   "path": "src/components/ui/skip-link.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 57,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 13,
+    "missing_in_main": 10,
+    "removed": 3,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "      // Alvos como <main>/<section> não são focáveis por padrão: sem o tabindex=-1",
+     "      // o `.focus()` não movia o foco e o atalho não cumpria o papel.",
+     "      if (!target.hasAttribute('tabindex')) target.setAttribute('tabindex', '-1');",
+     "  const indicatorTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);",
+     "        if (indicatorTimerRef.current) clearTimeout(indicatorTimerRef.current);",
+     "        indicatorTimerRef.current = setTimeout(() => setShowIndicator(false), 3000);",
+     "      if (indicatorTimerRef.current) clearTimeout(indicatorTimerRef.current);",
+     "      // Só troca o estado quando o conjunto muda: o intervalo de 1,5 s chama",
+     "      // `detect` sempre, mas sem alvo novo/removido o `prev` é reaproveitado",
+     "      // e não há re-render nem laço."
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/ui/sparkline.tsx",
+   "status": "MAIN_UNCHANGED_SINCE_BASE",
+   "patch_lines": 13,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 1,
+    "removed_still_in_main": 1,
+    "missing_sample": [
+     "    <svg width={width} height={height} className={className} viewBox={`0 0 ${width} ${height}`} aria-hidden=\"true\">"
+    ],
+    "still_sample": [
+     "    <svg width={width} height={height} className={className} viewBox={`0 0 ${width} ${height}`}>"
+    ]
+   }
+  },
+  {
+   "path": "src/components/ui/table.tsx",
+   "status": "MAIN_UNCHANGED_SINCE_BASE",
+   "patch_lines": 16,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 2,
+    "missing_in_main": 2,
+    "removed": 1,
+    "removed_still_in_main": 1,
+    "missing_sample": [
+     "  ({ className, scope = \"col\", ...props }, ref) => (",
+     "      scope={scope}"
+    ],
+    "still_sample": [
+     "  ({ className, ...props }, ref) => ("
+    ]
+   }
+  },
+  {
+   "path": "src/components/ui/visually-hidden.tsx",
+   "status": "MAIN_UNCHANGED_SINCE_BASE",
+   "patch_lines": 21,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 4,
+    "missing_in_main": 4,
+    "removed": 1,
+    "removed_still_in_main": 1,
+    "missing_sample": [
+     "  const timerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);",
+     "  React.useEffect(() => () => { if (timerRef.current) clearTimeout(timerRef.current); }, []);",
+     "    if (timerRef.current) clearTimeout(timerRef.current);",
+     "    timerRef.current = setTimeout(() => setAnnouncement(message), 100);"
+    ],
+    "still_sample": [
+     "    setTimeout(() => setAnnouncement(message), 100);"
+    ]
+   }
+  }
+ ],
+ "counts": {
+  "migrations": "0",
+  "workflows": "0",
+  "src": "8",
+  "edges": "0",
+  "docs_only": "no",
+  "lines_branch_has_main_lacks": "472",
+  "lines_main_has_branch_lacks": "72"
+ },
+ "auto": "MISTO_CONFLITO",
+ "n_files_with_gaps": 8,
+ "gap_lines_total": 347
+}

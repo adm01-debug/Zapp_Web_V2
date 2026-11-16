@@ -1,0 +1,66 @@
+{
+ "id": "claude__fix-types-rpc-ausentes-251025-1230",
+ "kind": "branch",
+ "ref": "origin/claude/fix-types-rpc-ausentes-251025-1230",
+ "tip": "ef39213eff9c2d7cc2cafd6f5b00de90c094a151",
+ "merge_base": "fb57b4a5cd071bf86a384d10f143360bd18feb61",
+ "ahead": 2,
+ "last_commit_date": "2026-10-30",
+ "merge_base_date": "2026-10-30",
+ "prs_with_same_tip": [
+  2250
+ ],
+ "triagem_2804": {
+  "2250": "JA_NA_MAIN"
+ },
+ "closure_comment": {},
+ "files": [
+  {
+   "path": "src/integrations/supabase/types.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 183,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 103,
+    "missing_in_main": 20,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "        Args: Record<PropertyKey, never>",
+     "          last_return_message: string | null",
+     "          last_run_at: string | null",
+     "          last_status: string | null",
+     "      app_bootstrap: {",
+     "        Args: Record<PropertyKey, never>",
+     "      inbox_unread_total: {",
+     "        Args: Record<PropertyKey, never>",
+     "      transfer_conversation:",
+     "              p_note?: string | null",
+     "              p_to_agent_id?: string | null",
+     "              p_to_queue_id?: string | null",
+     "              p_expected_agent_id?: string | null",
+     "              p_note?: string | null",
+     "              p_to_agent_id?: string | null",
+     "              p_to_queue_id?: string | null",
+     "      warroom_agent_today: {",
+     "        Args: { p_date?: string }",
+     "      warroom_queue_stats: {",
+     "        Args: Record<PropertyKey, never>"
+    ],
+    "still_sample": []
+   }
+  }
+ ],
+ "counts": {
+  "migrations": "0",
+  "workflows": "0",
+  "src": "1",
+  "edges": "0",
+  "docs_only": "no",
+  "lines_branch_has_main_lacks": "383",
+  "lines_main_has_branch_lacks": "2868"
+ },
+ "auto": "MISTO_CONFLITO",
+ "n_files_with_gaps": 1,
+ "gap_lines_total": 20
+}

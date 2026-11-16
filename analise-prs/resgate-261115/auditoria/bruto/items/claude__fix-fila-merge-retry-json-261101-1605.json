@@ -1,0 +1,158 @@
+{
+ "id": "claude__fix-fila-merge-retry-json-261101-1605",
+ "kind": "branch",
+ "ref": "origin/claude/fix-fila-merge-retry-json-261101-1605",
+ "tip": "e5abad156f2eefb31251cc701c1a2a31998e14c8",
+ "merge_base": "b94be0a2cfd530a1cf66b6cb3c58ae7824ae7cbd",
+ "ahead": 2,
+ "last_commit_date": "2026-11-01",
+ "merge_base_date": "2026-11-01",
+ "prs_with_same_tip": [
+  2492
+ ],
+ "triagem_2804": {
+  "2492": "OBSOLETA"
+ },
+ "closure_comment": {},
+ "files": [
+  {
+   "path": "PENDENCIAS.md",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 173,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 56,
+    "missing_in_main": 56,
+    "removed": 65,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "_Atualizado em 2026-10-31 por sessão `fix/ci-workflows`._",
+     "## 1. DB Live Guard — falhas em contrato vivo (investigação pendente)",
+     "**Último run com falha:** [41162077590](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41162077590)  ",
+     "**Head SHA:** vários (pós-merge de `main`)",
+     "**O que falha:**",
+     "- Step \"Consolidar veredito do contrato vivo\" — artifact `13027601857` contém evidências",
+     "- Compara o estado do banco de produção com artefatos do repositório (types.ts, schema-catalog.json,",
+     "  schema-manifest.json)",
+     "**Falhas identificadas no run 41162077590 (3 contratos reais, não deriva transitória):**",
+     "1. **migrations/ledger** — diferença entre migrations no disco (`supabase/migrations/`) e entradas no ledger do banco",
+     "2. **ACL/mcp_exec** — contrato de permissão `mcp_exec` não satisfeito",
+     "3. **configuração runtime** — `runtime-config` com divergência detectada",
+     "**Por que não foi corrigido:** DB Live Guard conecta ao banco de produção e exige análise",
+     "das evidências no artifact `db-live-evidence-{run_id}-1` para diagnosticar cada divergência.",
+     "Requer acesso ao banco de produção para comparação e possível migration corretiva. Este",
+     "workflow **não é um required check** — não bloqueia merges na `main`.",
+     "1. Disparar manualmente o DB Live Guard via `workflow_dispatch` em `.github/workflows/db-live-guard.yml`",
+     "2. Se falhar, os logs do artifact `db-live-evidence-{run_id}-1` mostrarão qual passo tem diferença real",
+     "3. Se o passo \"Verificar frescor do types.ts\" falhar: disparar `workflow_dispatch` do `types-sync.yml` **na branch `main`**",
+     "4. Se o passo \"Comparar migrations com schema_migrations\" falhar: verificar se há migration",
+     "   no disco (em `supabase/migrations/`) sem entrada no ledger",
+     "## 2. Running Copilot Code Review — limite de cota do plano (HTTP 402)",
+     "**Runs com falha confirmados (exemplos):**",
+     "- [41167331596](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41167331596) — 2026-10-31T04:08Z",
+     "- [41166869775](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41166869775) — 2026-10-31T04:02Z"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "RELATORIO_CI.md",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 193,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 109,
+    "missing_in_main": 105,
+    "removed": 4,
+    "removed_still_in_main": 2,
+    "missing_sample": [
+     "# RELATORIO_CI.md — Diagnóstico e Estado Final dos Workflows",
+     "**Data:** 2026-10-31  ",
+     "**Branch de trabalho:** `fix/ci-workflows`  ",
+     "**PR:** A abrir para `main`",
+     "## 1. Origem da sessão — rejeição anterior",
+     "A sessão anterior (branch `claude/kind-gates-87mwoe`) foi rejeitada porque:",
+     "1. O RELATORIO_CI.md apresentava o `🏗️ Build` como `success` na tabela de prova, mas o campo",
+     "   \"estado final\" registrava `Build ❌ FAILING` — contradição interna.",
+     "2. O bundle reportado (359,5 KB) excedia o budget então declarado (300 KB).",
+     "3. Os runs do branch (41165573879 / 41165575429) ficaram em `queued` e nunca foram validados.",
+     "4. Ausência de inventário completo das falhas da `main` e de baseline local.",
+     "## 2. Baseline local — início desta sessão (2026-10-31 ~04:00Z)",
+     "Medições na branch `fix/ci-workflows` = `main` SHA `1a9858b236`:",
+     "| Verificação | Resultado | Detalhe |",
+     "| `bun run build` | ✅ exit 0 | Bundle inicial: **323,0 KB gzip** — abaixo do budget de **325 KB** (SL-103D, 2026-10-26) |",
+     "| `bun run typecheck` | ✅ exit 0 | Sem erros de tipo |",
+     "| `bun run lint` | ✅ exit 0 | Sem warnings (o warning pré-existente foi resolvido em sessão anterior) |",
+     "| `bun run test` | ✅ evidência CI | Run 41162012506 — 3 shards Unit Tests: success |",
+     "### 2a. Budget de bundle",
+     "O arquivo `performance-budget.json` registra:",
+     "```json",
+     "\"initial-js\": { \"maxKB\": 325, \"description\": \"... SL-103D em 2026-10-26, teto relaxado +33 KB ...\" }",
+     "Build atual: **323,0 KB** — passa o budget de 325 KB com margem de 2 KB.  ",
+     "O build nunca esteve em 359,5 KB no estado atual da `main`; esse valor era de uma branch de feature",
+     "desatualizada na sessão anterior."
+    ],
+    "still_sample": [
+     "|---|---|",
+     "|---|---|"
+    ]
+   }
+  },
+  {
+   "path": "scripts/ci/fila-merge.mjs",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "patch_lines": 50,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 10,
+    "missing_in_main": 10,
+    "removed": 10,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "function erroTransitorio(err) {",
+     "  const msg = String(err?.stderr ?? err?.message ?? '');",
+     "  return /HTTP 50[234]|50[234] Bad Gateway|50[234] Service Unavailable|connection reset|ECONNRESET|ETIMEDOUT|timeout expired|unexpected end of JSON/i.test(msg);",
+     "async function execComRetry(cmd, args, opts, { tentativas = 4, delaysMs = [5000, 10000, 20000] } = {}) {",
+     "  for (let i = 0; i < tentativas; i++) {",
+     "    try {",
+     "      return execFileSync(cmd, args, opts);",
+     "    } catch (err) {",
+     "      if (!erroTransitorio(err) || i >= tentativas - 1) throw err;",
+     "      await new Promise((resolve) => setTimeout(resolve, delaysMs[Math.min(i, delaysMs.length - 1)]));"
+    ],
+    "still_sample": [],
+    "same_basename_in_main": []
+   }
+  },
+  {
+   "path": "src/components/inbox/chat/__tests__/ChatMessagesArea.pagination.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 45,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 13,
+    "missing_in_main": 3,
+    "removed": 6,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  // `clientHeight`/`getBoundingClientRect` do conteiner de rolagem e",
+     "  // `offsetHeight` de cada linha). A medida entra pelo prototipo.",
+     "  Object.defineProperty(Element.prototype, 'clientHeight', { configurable: true, get: () => 600 });"
+    ],
+    "still_sample": []
+   }
+  }
+ ],
+ "counts": {
+  "migrations": "0",
+  "workflows": "0",
+  "src": "1",
+  "edges": "0",
+  "docs_only": "no",
+  "lines_branch_has_main_lacks": "451",
+  "lines_main_has_branch_lacks": "801"
+ },
+ "auto": "MISTO_CONFLITO",
+ "n_files_with_gaps": 4,
+ "gap_lines_total": 176
+}

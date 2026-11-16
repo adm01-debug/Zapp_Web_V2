@@ -1,0 +1,188 @@
+{
+ "id": "claude__feat-pausa-entrega-campanhas-261101-1400",
+ "kind": "branch",
+ "ref": "origin/claude/feat-pausa-entrega-campanhas-261101-1400",
+ "tip": "c256899464262adaa99b099036dd630b76c1aa91",
+ "merge_base": "1252bb5a41123ba4d49efd84d0f91604bff6c87c",
+ "ahead": 14,
+ "last_commit_date": "2026-11-01",
+ "merge_base_date": "2026-11-01",
+ "prs_with_same_tip": [
+  2472
+ ],
+ "triagem_2804": {
+  "2472": "DUPLICATA_PROVAVEL"
+ },
+ "closure_comment": {},
+ "files": [
+  {
+   "path": "ESTADO.md",
+   "status": "BOTH_CHANGED",
+   "hunk": "CONFLICT",
+   "patch_lines": 13,
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 1,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "| `talkx-send` | A | `src/hooks/integrations/useTalkX.ts:511` · `src/hooks/integrations/useTalkX.ts:527` · `src/hooks/integrations/useTalkX.ts:536` · `src/hooks"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/multiplix/MultiplixMonitor.tsx",
+   "status": "BOTH_CHANGED",
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "patch_lines": 13,
+   "line_check": {
+    "added": 2,
+    "missing_in_main": 2,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "                  : dispatch.pause_reason === 'instance_paused'",
+     "                  ? 'Pausado automaticamente: a instância foi pausada (retome manualmente depois)'"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/talkx/tracking/talkxHealth.ts",
+   "status": "BOTH_CHANGED",
+   "hunk": "CONFLICT",
+   "patch_lines": 12,
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  instance_paused: 'a instância foi pausada',"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "supabase/functions/_shared/__tests__/talkx-resume-policy.test.ts",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "supabase/functions/_shared/instance_pause.test.ts",
+   "status": "BOTH_CHANGED",
+   "hunk": "CONFLICT",
+   "patch_lines": 32,
+   "line_check": {
+    "added": 18,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "import { assertEquals } from \"https://deno.land/std@0.168.0/testing/asserts.ts\";"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "supabase/functions/_shared/instance_pause.ts",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "supabase/functions/_shared/talkx-resume-policy.ts",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "supabase/functions/message-delivery/index.test.ts",
+   "status": "BOTH_CHANGED",
+   "hunk": "CONFLICT",
+   "patch_lines": 17,
+   "line_check": {
+    "added": 6,
+    "missing_in_main": 3,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "Deno.test('C121: a checagem de pausa roda antes do POST ao provedor', async () => {",
+     "  if (pausa < 0 || envio < 0 || pausa > envio) {",
+     "    throw new Error('isInstancePaused precisa vir antes de marcar/enviar o POST ao provedor');"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "supabase/functions/message-delivery/index.ts",
+   "status": "BOTH_CHANGED",
+   "hunk": "CONFLICT",
+   "patch_lines": 30,
+   "line_check": {
+    "added": 11,
+    "missing_in_main": 5,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "    // C121: instância pausada não envia. Nada foi ao provedor ainda (sem efeito incerto,",
+     "    // sem reconciliação): encerra como falha visível para todos os tipos. Mídia/interativa",
+     "    // exibe banner e hoje não é reenviável pela UI; o caminho durável (retry job + cap de",
+     "    // tentativas em claim_outbound_message, 20260909270000:60-77) exige migration — PR",
+     "    // separada, regra 8."
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "supabase/functions/multiplix-send/index.ts",
+   "status": "BOTH_CHANGED",
+   "hunk": "CONFLICT",
+   "patch_lines": 35,
+   "line_check": {
+    "added": 10,
+    "missing_in_main": 1,
+    "removed": 2,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "          // C121: instância pausada (operador/sistema) — o disparo pausa junto, com motivo próprio."
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "supabase/functions/talkx-scheduler/index.ts",
+   "status": "BOTH_CHANGED",
+   "hunk": "CONFLICT",
+   "patch_lines": 61,
+   "line_check": {
+    "added": 22,
+    "missing_in_main": 2,
+    "removed": 1,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "    // Fail-closed para o scheduler: RPC indisponível = instância permanece como \"pausada\",",
+     "    // impedindo a retomada sem confirmação do fim da pausa."
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "supabase/functions/talkx-send/process-recipient.ts",
+   "status": "BOTH_CHANGED",
+   "hunk": "PRESENT_REVERSE_APPLIES",
+   "patch_lines": 34
+  }
+ ],
+ "counts": {
+  "migrations": "0",
+  "workflows": "0",
+  "src": "2",
+  "edges": "9",
+  "docs_only": "no",
+  "lines_branch_has_main_lacks": "109",
+  "lines_main_has_branch_lacks": "1408"
+ },
+ "auto": "MISTO_CONFLITO",
+ "n_files_with_gaps": 8,
+ "gap_lines_total": 16
+}

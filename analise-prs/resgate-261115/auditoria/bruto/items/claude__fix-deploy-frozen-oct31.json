@@ -1,0 +1,151 @@
+{
+ "id": "claude__fix-deploy-frozen-oct31",
+ "kind": "branch",
+ "ref": "origin/claude/fix-deploy-frozen-oct31",
+ "tip": "6521a05f27a307559803f0ffa331483727362542",
+ "merge_base": "668d77329964d54b7c76af8737a5c577f9b0223d",
+ "ahead": 10,
+ "last_commit_date": "2026-10-30",
+ "merge_base_date": "2026-10-30",
+ "prs_with_same_tip": [
+  2409
+ ],
+ "triagem_2804": {
+  "2409": "OBSOLETA"
+ },
+ "closure_comment": {},
+ "files": [
+  {
+   "path": ".github/workflows/deploy-functions.yml",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 22,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 2,
+    "missing_in_main": 2,
+    "removed": 2,
+    "removed_still_in_main": 1,
+    "missing_sample": [
+     "        run: deno install --config supabase/functions/deno.json --frozen=false",
+     "      - name: \"🏥 Verificação de saúde pós-deploy (5 min)\""
+    ],
+    "still_sample": [
+     "      - name: \"\\U0001F3E5 Verificação de saúde pós-deploy (5 min)\""
+    ]
+   }
+  },
+  {
+   "path": "PENDENCIAS.md",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 111,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 40,
+    "missing_in_main": 40,
+    "removed": 16,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "_Atualizado em 2026-10-31 por sessão de correção de CI._",
+     "## 1. DB Live Guard — deriva transitória",
+     "**Runs com falha:**",
+     "- [41066127274](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41066127274) — 2026-10-30T13:47:10Z (todos os 7 passos falharam)",
+     "**Por que não foi corrigido:** O DB Live Guard compara o estado do banco de produção com os artefatos do repositório (types.ts, schema-catalog.json, deployment-",
+     "1. Aguardar o merge do PR #2409 (corrige `deploy-functions.yml` → ele volta a rodar na main)",
+     "2. Após o merge e o deploy das edge functions com sucesso, disparar manualmente o DB Live Guard via `workflow_dispatch` em `.github/workflows/db-live-guard.yml`",
+     "4. Se o passo \"Comparar migrations com schema_migrations\" falhar: verificar se há migration aplicada em produção sem estar no ledger (`SELECT max(version) FROM ",
+     "## 2. Running Copilot Code Review — falha de firewall interno do Copilot",
+     "**Workflow:** Dinâmico do GitHub Copilot — **não tem arquivo próprio no repositório**  ",
+     "**Não é required check** (não bloqueia merge da main)",
+     "**Runs confirmados com falha:**",
+     "- [41125593441](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41125593441) — 2026-10-30",
+     "- [41140197413](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41140197413) — `copilot-pull-request-reviewer`, conclusão `failure` em 2026-10-30T22:49:",
+     "- [41154128287](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41154128287) — `copilot-pull-request-reviewer`, conclusão `failure` em 2026-10-31T01:11:",
+     "2. Adicionar as URLs necessárias na lista de permissões do firewall do Copilot",
+     "3. Ou aguardar correção do próprio GitHub (pode ser indisponibilidade temporária do serviço Copilot)",
+     "## 3. deploy-functions.yml — correção em andamento (PR #2409)",
+     "**Última run com falha:** [41147095645](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41147095645)",
+     "**O que falhou:** Step \"Typecheck das edge functions (deno check)\":",
+     "error TS2307: Cannot find module '@types/node' or its corresponding type declarations",
+     "**Causa raiz:** `@types/ws@8.18.1` tem `/// <reference types=\"node\" />` que força resolução de `@types/node`. O `scripts/ci/deno.lock` tem zero entradas npm, en",
+     "**Correção aplicada em PR #2409:**",
+     "- `supabase/functions/deno.json`: adicionado `@types/node: npm:@types/node@^22` ao `imports`",
+     "- `.github/workflows/deploy-functions.yml`: `--frozen=false` no `deno install`"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "RELATORIO_CI.md",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 175,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 92,
+    "missing_in_main": 87,
+    "removed": 4,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "| `CI/CD Pipeline` | ✅ success (confirmado verde após conclusão) |",
+     "| `E2E logado` | ✅ success |",
+     "| `DB Guard (offline)` | ✅ success |",
+     "*Relatório Round 1 concluído em 2026-10-30T22:20Z — PR #2394 mergeada com todos os checks verdes.*",
+     "# Round 2 — 2026-10-31",
+     "**Branch de trabalho:** `claude/fix-deploy-frozen-oct31`  ",
+     "**PR:** [#2409](https://github.com/adm01-debug/Zapp_Web_V2/pull/2409) — aguardando CI (auto_merge: squash ativo)",
+     "## Passo 1 — Inventário (última execução na `main` após PR #2394)",
+     "Workflows verificados em 2026-10-31T01:00Z (SHA `4dc8adbf` na main):",
+     "| Workflow | Última run | Conclusão | Causa provável |",
+     "| `deploy-functions.yml` | [41147095645](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41147095645) | ❌ `failure` | `deno check` falha: `@types/node` ",
+     "| `copilot-pull-request-reviewer` | [41154128287](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41154128287) | ❌ `failure` | Firewall interno Copilot ",
+     "| `ci.yml` (CI/CD Pipeline) | última run na main | ✅ `success` | verde, não afetado |",
+     "| `db-guard.yml` | última run na main | ✅ `success` | verde |",
+     "| `e2e-logado.yml` | última run na main | ✅ `success` | verde |",
+     "| `auto-update-pr-branch.yml` | última run na main | ✅ `success` | verde (corrigido Round 1) |",
+     "| `db-live-guard.yml` | [41066127274](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41066127274) | ❌ `failure` | Deriva transitória — documentado PEND",
+     "**Workflows com falha que exigem correção de código:** apenas `deploy-functions.yml`.  ",
+     "**Workflows com falha não corrigível:** `copilot-pull-request-reviewer` (não é required check), `db-live-guard.yml` (deriva transitória — PENDENCIAS.md).",
+     "## Passo 2 — Baseline (estado da `main` `4dc8adbf` antes de qualquer mudança Round 2)",
+     "Medido localmente na main `4dc8adbf` antes da branch `claude/fix-deploy-frozen-oct31` ser criada:",
+     "| Verificação | Resultado |",
+     "| `bun run build` | ✅ exit 0 |",
+     "| `bun run lint` | ⚠️ exit 1 — 814 problemas pré-existentes (601 errors + 213 warnings; nenhum introduzido por esta sessão) |",
+     "| `bun run typecheck` | ⚠️ crash SIGABRT (OOM no container cloud remoto; `tsc` nativo passa no CI GitHub Actions com RAM suficiente — não é bug do projeto) |"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "supabase/functions/deno.json",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 16,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 6,
+    "missing_in_main": 6,
+    "removed": 1,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  \"lock\": \"../../scripts/ci/deno.lock\",",
+     "  \"nodeModulesDir\": \"auto\",",
+     "  \"imports\": {",
+     "    \"@types/node\": \"npm:@types/node@^22\"",
+     "  \"compilerOptions\": {",
+     "    \"skipLibCheck\": true"
+    ],
+    "still_sample": []
+   }
+  }
+ ],
+ "counts": {
+  "migrations": "0",
+  "workflows": "1",
+  "src": "0",
+  "edges": "1",
+  "docs_only": "no",
+  "lines_branch_has_main_lacks": "262",
+  "lines_main_has_branch_lacks": "851"
+ },
+ "auto": "MISTO_CONFLITO",
+ "n_files_with_gaps": 4,
+ "gap_lines_total": 136
+}

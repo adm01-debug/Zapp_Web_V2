@@ -1,0 +1,148 @@
+{
+ "id": "claude__fix-db-migrate-ga04-ga05-261016-0011",
+ "kind": "branch",
+ "ref": "origin/claude/fix-db-migrate-ga04-ga05-261016-0011",
+ "tip": "fe4f40c672abad3b0f43309ba21e679c6c0d83a7",
+ "merge_base": "05826d1e01224cd323bd5cc4ef0699056bf01275",
+ "ahead": 1,
+ "last_commit_date": "2026-10-17",
+ "merge_base_date": "2026-10-15",
+ "prs_with_same_tip": [
+  2036
+ ],
+ "triagem_2804": {
+  "2036": "OBSOLETA"
+ },
+ "closure_comment": {},
+ "files": [
+  {
+   "path": ".github/workflows/db-migrate.yml",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 803,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 652,
+    "missing_in_main": 7,
+    "removed": 45,
+    "removed_still_in_main": 19,
+    "missing_sample": [
+     "          echo \"::error::Este workflow só pode ser disparado a partir da main (ref: ${{ github.ref }}).\"",
+     "        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0",
+     "          TARGET_NAME=${TARGET_FILE#${TARGET_VERSION}_}",
+     "            console.error('Contrato generico: estrutura de public em '",
+     "          console.error(modHash.descreverConfirmacao({",
+     "          supabase db push --include-all --skip-vault --dry-run --yes 2>&1 | tee dry-run.out",
+     "          supabase db push --include-all"
+    ],
+    "still_sample": [
+     "defaults:",
+     "  run:",
+     "    shell: bash --noprofile --norc -euo pipefail {0}",
+     "        env:",
+     "        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0",
+     "            NEEDS_APPLY=true",
+     "            APPLY_BUNDLE=true",
+     "          if [ \"$APPLY\" = \"true\" ] && [ \"$CONFIRMATION_HASH\" != \"$CONFIRM_RUNTIME_SHA256\" ]; then",
+     "            exit 1",
+     "          supabase db push --db-url \"$SUPABASE_DB_URL\" --include-all --skip-vault --dry-run --yes 2>&1 | tee dry-run.out"
+    ]
+   }
+  },
+  {
+   "path": "scripts/ci/db-migrate-contratos.unit.mjs",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 472,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 260,
+    "missing_in_main": 21,
+    "removed": 109,
+    "removed_still_in_main": 10,
+    "missing_sample": [
+     "// GA04: console.log no heredoc inline do db-migrate.yml contamina stdout",
+     "// quando o passo e' capturado por automacao. validate-runtime-proof.mjs",
+     "// (script standalone) e run-runtime-contract.mjs ja usam process.stderr.write",
+     "// e console.error; o heredoc inline precisava das mesmas correcoes.",
+     "test('GA04: db-migrate.yml nao usa console.log para diagnosticos no heredoc inline', () => {",
+     "  assert.doesNotMatch(y, /console\\.log.*Contrato generico/,",
+     "    'aviso do contrato generico tem de ir ao stderr (console.error)');",
+     "  assert.doesNotMatch(y, /console\\.log.*descreverConfirmacao/,",
+     "    'descricao da confirmacao tem de ir ao stderr (console.error)');",
+     "test('GA04: validate-runtime-proof.mjs so usa process.stdout.write para o hash', () => {",
+     "  const src = ler('scripts/db-audit/validate-runtime-proof.mjs');",
+     "  assert.doesNotMatch(src, /console\\.log/,",
+     "    'validate-runtime-proof nao pode ter console.log: stdout tem de ser so o hash');",
+     "  assert.match(src, /process\\.stdout\\.write\\(confirmacao/,",
+     "    'o hash de confirmacao vai via process.stdout.write');",
+     "  assert.match(src, /process\\.stderr\\.write.*descreverConfirmacao/,",
+     "    'a descricao da confirmacao vai ao stderr');",
+     "test('GA04: run-runtime-contract.mjs nao tem console.log (stdout e so JSON do proof)', () => {",
+     "  const src = ler('scripts/db-audit/run-runtime-contract.mjs');",
+     "  assert.doesNotMatch(src, /console\\.log/,",
+     "    'nenhum console.log no executor: stdout tem de ser exclusivamente o JSON do proof');"
+    ],
+    "still_sample": [
+     "  assert.ok(",
+     "    encoding: 'utf8',",
+     "test('E62: o contrato da versao 20260830170000 existe e nao esta vazio', () => {",
+     "  const sql = lerContrato('20260830170000');",
+     "  assert.ok(sql.trim().length > 100, 'contrato tem de ter conteudo real');",
+     "  assert.ok(existsSync(new URL('20260830170000.sql', CONTRATOS)));",
+     "import { tmpdir } from 'node:os';",
+     "    assert.throws(",
+     "import { join } from 'node:path';",
+     "  const y = ler('.github/workflows/db-migrate.yml');"
+    ]
+   }
+  },
+  {
+   "path": "scripts/ci/verify-ledger-statements.unit.mjs",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 87,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 21,
+    "missing_in_main": 20,
+    "removed": 30,
+    "removed_still_in_main": 1,
+    "missing_sample": [
+     "// ---------------------------------------------------------------------------",
+     "// GA05: o psql pode gravar um cabecalho \"--\" no inicio de um statement",
+     "// armazenado (run 37355980323, migration 20261004195051). O flatMap sobre",
+     "// splitStatements ja normaliza os dois lados -- estes testes provam isso",
+     "// e garantem que arquivo diferente continua reprovando.",
+     "// ---------------------------------------------------------------------------",
+     "test('GA05: statement do ledger com cabecalho -- normalizado pelo splitStatements', () => {",
+     "  // Simula o caso do run 37355980323: ledger guarda um statement com",
+     "  // cabecalho de comentario \"--\" que o psql adicionou; o arquivo nao tem.",
+     "  const bruto = JSON.stringify(['-- cabecalho de psql\\nCREATE TABLE public.ga05_fixture (id int)']);",
+     "  const statementsDoArquivo = ['CREATE TABLE public.ga05_fixture (id int)'];",
+     "  const r = avaliarStatementsDoLedger({ bruto, statementsDoArquivo });",
+     "  assert.equal(r.ok, true, 'cabecalho -- no ledger tem de ser normalizado e passar');",
+     "  assert.equal(r.total, 1);",
+     "test('GA05: arquivo diferente do ledger continua reprovando mesmo com normalizacao', () => {",
+     "  const bruto = JSON.stringify(['-- cabecalho de psql\\nCREATE TABLE public.ga05_fixture (id int)']);",
+     "  const statementsDoArquivo = ['CREATE TABLE public.ga05_DIFERENTE (id int)'];",
+     "  const r = avaliarStatementsDoLedger({ bruto, statementsDoArquivo });",
+     "  assert.equal(r.ok, false, 'conteudo diferente tem de reprovar mesmo com normalizacao');",
+     "  assert.match(r.motivo, /statement 1/);"
+    ],
+    "still_sample": [
+     "  assert.equal(r.ok, false);"
+    ]
+   }
+  }
+ ],
+ "counts": {
+  "migrations": "0",
+  "workflows": "1",
+  "src": "0",
+  "edges": "0",
+  "docs_only": "no",
+  "lines_branch_has_main_lacks": "64",
+  "lines_main_has_branch_lacks": "95"
+ },
+ "auto": "MISTO_CONFLITO",
+ "n_files_with_gaps": 3,
+ "gap_lines_total": 78
+}

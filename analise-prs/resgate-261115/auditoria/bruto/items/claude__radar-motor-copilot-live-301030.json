@@ -1,0 +1,524 @@
+{
+ "id": "claude__radar-motor-copilot-live-301030",
+ "kind": "branch",
+ "ref": "origin/claude/radar-motor-copilot-live-301030",
+ "tip": "fcf880a451ce8a9a378b071596e325d8d99470fc",
+ "merge_base": "c4c7139e75aa326cc21823e816d1e7f526b67412",
+ "ahead": 6,
+ "last_commit_date": "2026-10-30",
+ "merge_base_date": "2026-10-30",
+ "prs_with_same_tip": [
+  2381
+ ],
+ "triagem_2804": {
+  "2381": "DECISAO_DONO"
+ },
+ "closure_comment": {},
+ "files": [
+  {
+   "path": "scripts/db-audit/realtime-publication-baseline.json",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 13,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 2,
+    "missing_in_main": 2,
+    "removed": 1,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "    \"public.whisper_messages\",",
+     "    \"public.copilot_insights\""
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/inbox/chat/ChatInputArea.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 31,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 7,
+    "missing_in_main": 7,
+    "removed": 1,
+    "removed_still_in_main": 1,
+    "missing_sample": [
+     "import { lazy, Suspense, useMemo, useRef } from 'react';",
+     "// Fases 4–6 do RADAR (dados do motor de IA): sob demanda, fora do initial-js.",
+     "const RadarLive = lazy(() => import('@/components/inbox/copilot/RadarLive'));",
+     "      {!logic.isMobile && !editingMessage && contactId && (",
+     "        <Suspense fallback={null}>",
+     "          <RadarLive className=\"mx-4 mt-2\" contactId={contactId} onDraftText={(text) => setNativeValue(inputRef, text)} />",
+     "        </Suspense>"
+    ],
+    "still_sample": [
+     "import { useMemo, useRef } from 'react';"
+    ]
+   }
+  },
+  {
+   "path": "src/components/inbox/copilot/BrindeMeter.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 81,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 57,
+    "missing_in_main": 0,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/inbox/copilot/DecisionMakerBadge.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 48,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 30,
+    "missing_in_main": 0,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/inbox/copilot/InsightCard.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 116,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 84,
+    "missing_in_main": 0,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/inbox/copilot/LiveSuggestions.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 238,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 180,
+    "missing_in_main": 0,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/inbox/copilot/MissingQuestions.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 64,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 45,
+    "missing_in_main": 0,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/inbox/copilot/OccasionAlert.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 51,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 32,
+    "missing_in_main": 0,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/inbox/copilot/RadarCards.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 270,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 189,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "    <span className=\"ml-auto mr-1 rounded-full bg-amber-500 px-1 text-[9px] font-bold text-white\">{alerts.length}</span>"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/inbox/copilot/RadarLive.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 67,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 48,
+    "missing_in_main": 0,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/inbox/copilot/RadarPanel.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 459,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 362,
+    "missing_in_main": 24,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     " * Pop-up encaixado no Chat Panel: arrastável, 3 modos, mobile bottom drawer,",
+     " * \"não perturbe\", acessibilidade, atalhos de teclado, indicador de pensamento.",
+     "// ─── Props ────────────────────────────────────────────────────",
+     "// ─── Mode buttons ─────────────────────────────────────────────",
+     "// ─── Timeout para \"RADAR pensando\" (CV-054) ──────────────────",
+     "  // CV-055 — aria-live anuncia novas sugestões",
+     "  const latestSuggestionText = suggestions[0]?.text ?? null;",
+     "  // ─── Drag logic (CV-051) ──────────────────────────────────",
+     "  // ─── Keyboard shortcuts (CV-056) ─────────────────────────",
+     "      // Teclas do próprio painel (não entram no registro global, que exige executor). Ctrl+Shift+R",
+     "      // e Ctrl+1..3 ficam com o navegador (recarregar / trocar de aba).",
+     "      if (e.ctrlKey && e.altKey && !e.shiftKey && (tecla === '1' || tecla === '2' || tecla === '3')) {",
+     "  }, [onToggleCollapsed, onUseSuggestion, suggestions]);",
+     "  // ─── Mobile detection ─────────────────────────────────────",
+     "  // ─── Mini mode ────────────────────────────────────────────",
+     "        {suggestions.length > 0 && (",
+     "  // ─── Mobile bottom drawer (CV-060) ───────────────────────",
+     "        {suggestions[0] ? (",
+     "        {nextStep && (",
+     "  // ─── Desktop floating panel ───────────────────────────────",
+     "        {suggestionsLoading && !timedOut && (",
+     "      {timedOut && (",
+     "      {/* aria-live region (CV-055/057) — announces new suggestions to screen readers */}",
+     "        <span>Ctrl+Alt+1/2/3: usar sugestão</span>"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/inbox/copilot/StageIndicator.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 58,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 38,
+    "missing_in_main": 0,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/inbox/copilot/StakeholdersCard.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 54,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 35,
+    "missing_in_main": 0,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/inbox/copilot/__tests__/BrindeMeter.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 98,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 60,
+    "missing_in_main": 0,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/inbox/copilot/__tests__/LiveSuggestions.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 146,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 96,
+    "missing_in_main": 0,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/inbox/copilot/__tests__/RadarLive.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 126,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 87,
+    "missing_in_main": 2,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "    limit: () => Promise.resolve({ data: [], error: null }),",
+     "  it('StageIndicator mostra o rótulo e converte 0–100 em 10 barras', () => {"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/inbox/copilot/__tests__/RadarPanel.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 186,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 127,
+    "missing_in_main": 0,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/data/copilot/brinde-questions.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 68,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 45,
+    "missing_in_main": 0,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/data/copilot/commercial-calendar.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 124,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 88,
+    "missing_in_main": 0,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/data/copilot/sale-stages.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 31,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 18,
+    "missing_in_main": 0,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/data/copilot/winning-plays.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 138,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 99,
+    "missing_in_main": 0,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/hooks/copilot/useCopilotSession.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 130,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 99,
+    "missing_in_main": 4,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     " * Lê `copilot_sessions` (uma por contato: `conversation_id = contact_id`, ver a",
+     " * migration 20261030200000) e entrega o estado no formato das telas: etapa,",
+     " * temperatura 0–100 e as letras B·R·I·N·D·E vindas das colunas `brinde_*`.",
+     "        .eq('conversation_id', contactId)"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/hooks/copilot/useLiveSuggestions.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 150,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 115,
+    "missing_in_main": 0,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/hooks/copilot/useRadarPanel.ts",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/integrations/supabase/types.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 167,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 144,
+    "missing_in_main": 3,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "          tier: number | null",
+     "          tier?: number | null",
+     "          tier?: number | null"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "supabase/functions/_shared/__tests__/copilot-tick.test.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 222,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 162,
+    "missing_in_main": 2,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "    const data = respostas[p.purpose] ?? null;",
+     "    return Promise.resolve({ ok: data !== null, data, model: `m-${p.purpose}` });"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "supabase/functions/_shared/copilot-tick.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 518,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 408,
+    "missing_in_main": 10,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "import type { SupabaseClient } from \"https://esm.sh/@supabase/supabase-js@2.87.1\";",
+     "import { parseModelOutput } from \"./ai-response-contracts.ts\";",
+     "  for (const campo of [\"intent\", \"sentiment\", \"comm_style\", \"decision_role\", \"occasion\"] as const) {",
+     "    \"  brinde: { budget, responsible, intention, quantity (inteiro), deadline (AAAA-MM-DD), delivery } — só o que a conversa disse\",",
+     "    \"  intent, sentiment, comm_style, decision_role, occasion: texto curto\",",
+     "  const p1 = parseModelOutput(CopilotTier1Schema, gen1.data);",
+     "  if (!p1.ok) throw new CopilotTickError(\"COPILOT_TIER1_CONTRACT\");",
+     "  const out1 = p1.data;",
+     "      const p2 = parseModelOutput(CopilotTier2Schema, gen2.data);",
+     "      if (p2.ok) out2 = p2.data;"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "supabase/functions/ai-jobs-worker/index.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 73,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 26,
+    "missing_in_main": 2,
+    "removed": 1,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  const [{ handleCopilotTick, CopilotTickError }, { generateWithRouting }, { readCapabilityFlag }] = await Promise.all([",
+     "          readFlag: readCapabilityFlag,"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "supabase/migrations/20261030200000_copilot_live_motor.sql",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "patch_lines": 142,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 115,
+    "missing_in_main": 115,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "-- CV-021–045: motor do Copiloto RADAR sobre o esquema de 20261030100000/110000.",
+     "-- O que liga: cada mensagem do CONTATO agenda um job `copilot.tick` na fila",
+     "-- `ai_jobs` (consumida pelo ai-jobs-worker, cron de 1 min). O handler lê as",
+     "-- mensagens novas, chama a IA em dois andares e grava o estado na sessão e os",
+     "-- insights em `copilot_insights`.",
+     "-- NASCE DESLIGADO: a capacidade `ai.capability.copilot_live` é semeada com",
+     "-- enabled = false. Sem a linha a capacidade valeria LIGADA (ai-feature-flags.ts),",
+     "-- por isso a semente é obrigatória. Ligar = UPDATE feature_flags SET enabled = true.",
+     "-- Identidade da conversa: o Zapp não tem tabela de conversas — as mensagens se",
+     "-- ligam ao contato. `copilot_sessions.conversation_id` recebe o contact_id (uma",
+     "-- sessão por contato; UNIQUE (conversation_id) já existe).",
+     "-- Rollback no fim do arquivo.",
+     "-- 1. Campos que o motor grava e a tabela ainda não tem ------------------------",
+     "ALTER TABLE public.copilot_sessions",
+     "  ADD COLUMN IF NOT EXISTS last_contact_message_at   timestamptz,",
+     "  ADD COLUMN IF NOT EXISTS last_processed_message_at timestamptz,",
+     "  ADD COLUMN IF NOT EXISTS intent                    text,",
+     "  ADD COLUMN IF NOT EXISTS sentiment                 text,",
+     "  ADD COLUMN IF NOT EXISTS comm_style                text,",
+     "  ADD COLUMN IF NOT EXISTS decision_role             text,",
+     "  ADD COLUMN IF NOT EXISTS occasion                  text,",
+     "  ADD COLUMN IF NOT EXISTS stakeholders              jsonb NOT NULL DEFAULT '[]'::jsonb,",
+     "  ADD COLUMN IF NOT EXISTS brinde_evidence           jsonb NOT NULL DEFAULT '{}'::jsonb;",
+     "ALTER TABLE public.copilot_insights",
+     "  ADD COLUMN IF NOT EXISTS tier       smallint CHECK (tier IN (1, 2)),"
+    ],
+    "still_sample": [],
+    "same_basename_in_main": []
+   }
+  }
+ ],
+ "counts": {
+  "migrations": "1",
+  "workflows": "0",
+  "src": "24",
+  "edges": "3",
+  "docs_only": "no",
+  "lines_branch_has_main_lacks": "669",
+  "lines_main_has_branch_lacks": "3009"
+ },
+ "auto": "MISTO_CONFLITO",
+ "n_files_with_gaps": 11,
+ "gap_lines_total": 173
+}

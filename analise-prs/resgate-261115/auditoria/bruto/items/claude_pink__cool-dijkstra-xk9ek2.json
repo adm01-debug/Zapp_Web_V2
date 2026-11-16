@@ -1,0 +1,2519 @@
+{
+ "id": "claude_pink__cool-dijkstra-xk9ek2",
+ "kind": "branch",
+ "ref": "origin/claude_pink/cool-dijkstra-xk9ek2",
+ "tip": "927a71bc76d77e362333c78286eb22f3b3fb1975",
+ "merge_base": "5b7954c7aa4a232af6add01a41160ae616978de6",
+ "ahead": 94,
+ "last_commit_date": "2026-11-01",
+ "merge_base_date": "2026-10-28",
+ "prs_with_same_tip": [
+  2502
+ ],
+ "triagem_2804": {
+  "2502": "OBSOLETA"
+ },
+ "closure_comment": {},
+ "files": [
+  {
+   "path": ".github/CODEOWNERS",
+   "status": "MAIN_UNCHANGED_SINCE_BASE",
+   "patch_lines": 13,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 1,
+    "removed_still_in_main": 1,
+    "missing_sample": [
+     "# Declarativo — sem revisão obrigatória (agentes usam auto-merge; ver CLAUDE.md)"
+    ],
+    "still_sample": [
+     "# Todas as mudanças requerem aprovação do admin"
+    ]
+   }
+  },
+  {
+   "path": ".github/PULL_REQUEST_TEMPLATE.md",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 24,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 3,
+    "missing_in_main": 2,
+    "removed": 3,
+    "removed_still_in_main": 2,
+    "missing_sample": [
+     "- [ ] **Migration?** → arquivo em `supabase/migrations/` + apply no banco LOCAL + registro no ledger local + catálogo atualizado; apply em produção via `db-migr",
+     "- [ ] **Edge?** → disparar `deploy-functions` APÓS o merge (a função não sobe sozinha; merge ≠ deploy)"
+    ],
+    "still_sample": [
+     "<!-- Descreva como testou as mudanças -->",
+     "- [ ] **Migration?** → arquivo versionado em `supabase/migrations/` + registro no ledger + catálogo de migrations atualizado"
+    ]
+   }
+  },
+  {
+   "path": ".github/actionlint.yaml",
+   "status": "MAIN_UNCHANGED_SINCE_BASE",
+   "patch_lines": 11,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 0,
+    "missing_in_main": 0,
+    "removed": 3,
+    "removed_still_in_main": 3,
+    "missing_sample": [],
+    "still_sample": [
+     "  \".github/workflows/branch-hygiene-audit.yml\":",
+     "    ignore:",
+     "      - 'could not parse as YAML'"
+    ]
+   }
+  },
+  {
+   "path": ".github/dependabot.yml",
+   "status": "MAIN_UNCHANGED_SINCE_BASE",
+   "patch_lines": 36,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 14,
+    "missing_in_main": 7,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "      # GA88: scorecard-action isolado — o par init/scorecard precisa da mesma versão.",
+     "      scorecard-action:",
+     "          - \"ossf/scorecard-action*\"",
+     "    # GA88: agrupar bumps do proxy em 1 PR semanal.",
+     "      deps-proxy-go:",
+     "    # GA88: agrupar imagens base do proxy em 1 PR semanal.",
+     "      deps-proxy-docker:"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": ".github/toolchain.json",
+   "status": "MAIN_UNCHANGED_SINCE_BASE",
+   "patch_lines": 12,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 0,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [],
+    "still_sample": []
+   }
+  },
+  {
+   "path": ".github/workflows/branch-hygiene-audit.yml",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 39,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 18,
+    "missing_in_main": 13,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "        # GA64: `if: !cancelled()` garante que o passo roda mesmo quando o anterior falha,",
+     "        # mas nao quando o job e' cancelado (o relatorio pode estar incompleto).",
+     "        if: ${{ !cancelled() }}",
+     "      - name: SLA de alertas de segurança",
+     "        # GA64: conta só alertas CodeQL ativos (não dispensados) para garantir que o SLA",
+     "        # de 30 dias não seja ultrapassado. Alertas Scorecard dispensados (state=dismissed)",
+     "        # não contam — evita falso positivo após o GA46 e outros dismissals legítimos.",
+     "        if: ${{ !cancelled() }}",
+     "          TOTAL=$(gh api \"repos/$REPO/code-scanning/alerts?tool_name=CodeQL&state=open&per_page=100\" \\",
+     "            --jq '[.[] | select(.dismissed_at == null)] | length' 2>/dev/null || echo 0)",
+     "          echo \"Alertas CodeQL abertos (não dispensados): $TOTAL\" | tee -a \"$GITHUB_STEP_SUMMARY\"",
+     "          if [ \"$TOTAL\" -gt 0 ]; then",
+     "            echo \"::warning::$TOTAL alerta(s) CodeQL abertos — verificar antes de 30 dias\""
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": ".github/workflows/check-talkx-pr-body.yml",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 55,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 42,
+    "missing_in_main": 5,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "#   gatilho: pull_request (opened, synchronize, edited) em PRs que tocam Talk X",
+     "#   prova: valida que o corpo da PR segue o template Talk X (etapa + slug)",
+     "#   falha: bloqueia o merge da PR com erro descritivo",
+     "#   avisa: autor da PR via check reprovado",
+     "name: \"Talk X PR body check\""
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": ".github/workflows/codeql.yml",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 43,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 8,
+    "missing_in_main": 8,
+    "removed": 6,
+    "removed_still_in_main": 3,
+    "missing_sample": [
+     "#   gatilho: agendado (diario) e dispatch",
+     "  # 16/10/2026 (decisao do Joaquim, CI minimo): saiu do PR; varredura diaria + dispatch.",
+     "    - cron: '30 9 * * *' # diario 09:30 UTC (06:30 BRT) — GA62",
+     "  # Job separado de proposito: o check do job \"analyze\" NAO e required na",
+     "  # branch protection (decisao 16/10/2026: saiu do PR; varredura diaria).",
+     "  # Continua job separado para nao renomear o check se \"analyze\" virar matrix.",
+     "  # A linguagem \"actions\" analisa os .github/workflows",
+     "    needs: analyze"
+    ],
+    "still_sample": [
+     "  # Job separado de proposito: o check do job \"analyze\" e required na branch",
+     "  # protection, e transformar aquele job numa matrix renomearia o check e",
+     "  # travaria todos os merges. A linguagem \"actions\" analisa os .github/workflows"
+    ]
+   }
+  },
+  {
+   "path": ".github/workflows/db-guard.yml",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 1520,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 257,
+    "missing_in_main": 250,
+    "removed": 9,
+    "removed_still_in_main": 8,
+    "missing_sample": [
+     "          --health-cmd \"pg_isready -U postgres\"",
+     "      # GA65 (W55): detecta PR que toca apenas docs/markdown e marca CONTRATOS_PULADOS.",
+     "      # O check \"Contrato DB offline\" precisa existir em todo PR (branch protection),",
+     "      # então não pode ser skipped a nível de job; em vez disso, todos os passos de",
+     "      # contrato têm `if: env.CONTRATOS_PULADOS != 'true'` e este passo emite o sinal.",
+     "      - name: Detectar PR apenas-docs (W55)",
+     "            // GA68: usa git diff em vez da API listFiles (que corta em 3.000 arquivos;",
+     "            // supabase/ vem por último alfabeticamente e seria omitida).",
+     "            const headSha = context.payload.pull_request.head.sha;",
+     "            await exec.exec('git', ['fetch', '--depth=1', 'origin', baseSha, headSha]);",
+     "            const { stdout } = await exec.getExecOutput(",
+     "              'git', ['diff', '--name-only', baseSha, headSha],",
+     "            const filenames = stdout.trim().split('\\n').filter(Boolean);",
+     "            if (filenames.length === 0) return;",
+     "            const apenasDocsOuMd = filenames.every(",
+     "              (f) => /^docs\\//.test(f) || /\\.md$/.test(f),",
+     "            if (apenasDocsOuMd) {",
+     "              core.exportVariable('CONTRATOS_PULADOS', 'true');",
+     "              core.notice('PR toca apenas docs/markdown \\u2014 contratos de DB pulados (W55).');",
+     "      - name: \"📄 Contratos pulados — apenas docs (W55)\"",
+     "        if: env.CONTRATOS_PULADOS == 'true'",
+     "        run: echo \"Este PR toca apenas docs/markdown; contratos de DB não são executados (W55).\"",
+     "            // GA68: usa git diff em vez da API listFiles (que corta em 3.000 arquivos;",
+     "            // supabase/ vem por último alfabeticamente e seria omitida).",
+     "            const { owner, repo } = context.repo;"
+    ],
+    "still_sample": [
+     "            const owner = context.repo.owner;",
+     "            const repo = context.repo.repo;",
+     "            const pull_number = context.payload.pull_request.number;",
+     "            const arquivos = await github.paginate(github.rest.pulls.listFiles, {",
+     "              owner, repo, pull_number, per_page: 100,",
+     "            const evidenceRaw = require('fs').readFileSync('scripts/db-audit/migration-evidence.json', 'utf8');",
+     "            const evidence = JSON.parse(evidenceRaw);",
+     "            const baseSha = context.payload.pull_request.base.sha;"
+    ]
+   }
+  },
+  {
+   "path": ".github/workflows/db-live-guard.yml",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 29,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 10,
+    "missing_in_main": 4,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "      - name: Detectar DDL fora do fluxo (GA25)",
+     "        id: ddl-fora-do-fluxo",
+     "          node scripts/db-audit/check-ddl-deployments.mjs 2>&1 | tee /tmp/step-ddl-fora-do-fluxo.log",
+     "            /tmp/step-ddl-fora-do-fluxo.log"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": ".github/workflows/db-migrate.yml",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 18,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 6,
+    "missing_in_main": 2,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "      - name: Validar pos-apply",
+     "        run: node scripts/db-audit/validate-post-apply.mjs"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": ".github/workflows/deploy-functions.yml",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 195,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 70,
+    "missing_in_main": 65,
+    "removed": 23,
+    "removed_still_in_main": 22,
+    "missing_sample": [
+     "      # GA35: __fixtures__ (duplo underscore) é a convenção do Deno/Supabase CLI,",
+     "      # diferente de fixtures/ (sem underscore) — os dois precisam ser excluídos.",
+     "      - '!supabase/functions/**/__fixtures__/**'",
+     "  # GA30: rollback usa grupo próprio para que um push automático não o cancele.",
+     "  group: ${{ inputs.rollback_to_last_success == true && 'deploy-edge-functions-rollback' || format('deploy-edge-functions-{0}', inputs.function_name || 'all') }",
+     "      # GA30: resolve o SHA do ultimo Deployment bem-sucedido do environment",
+     "      # producao-edge-functions quando rollback_to_last_success=true, pulando o",
+     "      # SHA atual (que é o que está em produção agora — precisamos de um anterior).",
+     "      # AVISO: rollback de edge com migration aplicada NÃO reverte o banco.",
+     "      # Se a migration for incompatível com o código antigo, abra um PR de revert",
+     "      # da migration ANTES de disparar o rollback.",
+     "      # O resultado fica em RESOLVED_SOURCE_REF e é usado no Checkout seguinte.",
+     "              // GA30: pular o SHA atual — rollback precisa de um commit anterior diferente.",
+     "              if (dep.sha === process.env.GITHUB_SHA) {",
+     "                process.stdout.write(`Pulando deployment do SHA atual (${dep.sha.slice(0, 8)}) — buscando anterior com SHA diferente...\\n`);",
+     "                continue;",
+     "              # GA32: env-file evita que o valor apareça no argv (visível em /proc).",
+     "              _tf=$(mktemp); chmod 600 \"$_tf\"",
+     "              printf 'CRON_SECRET=%s\\n' \"$CRON_SECRET\" > \"$_tf\"",
+     "              supabase secrets set --env-file \"$_tf\" --project-ref \"$PROJECT_REF\"",
+     "              rm -f \"$_tf\"",
+     "              if [ -z \"$FN\" ]; then",
+     "                # GA33: deploy total — 5xx no CRM só bloqueia crm-integration, não todas as funções.",
+     "                echo \"::warning::Preflight read-only do CRM falhou (HTTP $STATUS) — deploy total continua sem crm-integration.\"",
+     "                echo \"CRM_PREFLIGHT_FAILED=true\" >> \"$GITHUB_ENV\""
+    ],
+    "still_sample": [
+     "  group: deploy-edge-functions-${{ inputs.function_name || 'all' }}",
+     "      # W66: resolve o SHA do ultimo Deployment bem-sucedido do environment",
+     "      # producao-edge-functions quando rollback_to_last_success=true. O resultado",
+     "      # fica em RESOLVED_SOURCE_REF e e usado no Checkout e nos passos seguintes",
+     "      # em lugar de inputs.source_ref.",
+     "              supabase secrets set CRON_SECRET=\"$CRON_SECRET\" --project-ref \"$PROJECT_REF\"",
+     "              echo \"::error::Preflight read-only do CRM falhou (HTTP $STATUS).\"",
+     "              exit 1",
+     "            if [ \"$REESCREVER\" = \"true\" ]; then",
+     "              supabase secrets set \\"
+    ]
+   }
+  },
+  {
+   "path": ".github/workflows/settings-guard.yml",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 57,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 46,
+    "missing_in_main": 19,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "#   gatilho: schedule (a cada 6h) + push na main + workflow_dispatch",
+     "#   prova: compara branch protection, merge settings e environments com o baseline",
+     "#   falha: abre ou atualiza issue com label settings-guard descrevendo a divergencia",
+     "#   avisa: repositorio via issue",
+     "    - cron: '15 */6 * * *'",
+     "  push:",
+     "    branches: [main]",
+     "    paths:",
+     "      - 'scripts/ci/github-settings-guard.mjs'",
+     "      - 'scripts/ci/github-settings-baseline.json'",
+     "  group: settings-guard-${{ github.ref }}-${{ github.event_name == 'schedule' && github.run_id || 'dispatch' }}",
+     "  perimeter-check:",
+     "    name: \"🔒 Perimetro GitHub\"",
+     "    timeout-minutes: 10",
+     "      SETTINGS_GUARD_TOKEN: ${{ secrets.SETTINGS_GUARD_TOKEN }}",
+     "      - name: Checkout",
+     "      - name: Setup Bun",
+     "        uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0",
+     "      - name: Rodar settings-guard"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": ".github/workflows/types-sync.yml",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 419,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 172,
+    "missing_in_main": 86,
+    "removed": 61,
+    "removed_still_in_main": 33,
+    "missing_sample": [
+     "      # GA61: known-violations.json é atualizado pelo guard sem alterar DDL.",
+     "      - '!scripts/db-audit/known-violations.json'",
+     "  # GA61: schedule e workflow_dispatch recebem run_id próprio para não cancelar",
+     "  # entre si nem cancelar um push em andamento.",
+     "  group: types-sync-${{ github.ref }}-${{ github.event_name == 'schedule' && github.run_id || github.event_name == 'workflow_dispatch' && github.run_id || 'push",
+     "  # GA21: DESTINO_URL fica confinado ao job ler-banco (environment: banco-leitura).",
+     "  # O job gates-e-pr nunca recebe a credencial — verificavel por `env | grep -c DESTINO` = 0.",
+     "    name: Ler banco e gerar candidatos de sincronizacao",
+     "    timeout-minutes: 20",
+     "      awaiting_apply: ${{ steps.gate1b.outputs.awaiting_apply }}",
+     "      - name: Gate 1b — W23/GA21 — verificar se drift e' apply-pendente",
+     "        # GA21: roda aqui (job com credencial) para evitar que DESTINO_URL vaze",
+     "        # para gates-e-pr. Resultado exportado como output do job e consumido em",
+     "        # gates-e-pr sem nova chamada ao banco.",
+     "        # W23/W26: exit 3 = so apply-pendente (awaiting_apply=true suprime alerta).",
+     "          DESTINO_URL: ${{ env.DESTINO_URL }}",
+     "          PGSSLMODE: ${{ env.PGSSLMODE }}",
+     "          if [ \"$drift_exit\" -eq 3 ]; then",
+     "      - name: GA99 — limpar DESTINO_URL do GITHUB_ENV apos Gate 1b",
+     "          printf 'DESTINO_URL=\\n' >> \"$GITHUB_ENV\"",
+     "          printf 'PGSSLMODE=\\n' >> \"$GITHUB_ENV\"",
+     "    name: Gates e PR de sincronizacao",
+     "    timeout-minutes: 20",
+     "      # actions: write apenas para liberar os checks do PR que este job abre",
+     "      # (ver o passo \"Destravar os checks do PR de sincronizacao\")."
+    ],
+    "still_sample": [
+     "  group: types-sync-${{ github.ref }}-${{ github.event_name == 'schedule' && github.run_id || 'push' }}",
+     "    timeout-minutes: 30",
+     "    permissions:  # zizmor: ignore[excessive-permissions]",
+     "      contents: write",
+     "      issues: write",
+     "      pull-requests: write",
+     "      actions: write",
+     "      - name: Setup Bun",
+     "        if: steps.diff.outputs.schema_changed == 'true'",
+     "        if: steps.diff.outputs.schema_changed == 'true'"
+    ]
+   }
+  },
+  {
+   "path": "CLAUDE.md",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 31,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 5,
+    "missing_in_main": 5,
+    "removed": 4,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "## Perímetro do GitHub — estado canônico (2026-10-29)",
+     "GitHub medida em 29/10/2026 (baseline `scripts/ci/github-settings-baseline.json`, medido_em 2026-10-29).",
+     "| Branch protection — required checks | **3**: `✅ CI Gate (required check)` · `🏗️ Build` · `🔎 TypeCheck` — o ci-gate agrega todos os jobs (E70: edge-contracts, ",
+     "| Branch protection — `required_linear_history` | `true` | `settings-guard` |",
+     "| Environments | **9**: `banco-leitura` · `copilot` · `db-ledger-evidence` · `legacy-import-destrutivo` · `perimetro-leitura` · `Preview` · `producao-ddl` · `pr"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "CONTRIBUTING.md",
+   "status": "MAIN_UNCHANGED_SINCE_BASE",
+   "patch_lines": 22,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 5,
+    "missing_in_main": 5,
+    "removed": 5,
+    "removed_still_in_main": 5,
+    "missing_sample": [
+     "| `🔎 TypeCheck` | `ci.yml` |",
+     "| `🧪 Unit Tests (1/3)` | `ci.yml` |",
+     "| `🧪 Unit Tests (2/3)` | `ci.yml` |",
+     "| `🧪 Unit Tests (3/3)` | `ci.yml` |",
+     "| `🧩 Node CI Scripts` | `db-guard.yml` |"
+    ],
+    "still_sample": [
+     "| `🔍 Lint & TypeCheck` | `ci.yml` |",
+     "| `🧪 Unit Tests` | `ci.yml` |",
+     "| `🔒 Security Audit` | `ci.yml` |",
+     "| `Contrato DB offline` | `db-guard.yml` |",
+     "| `🎭 E2E Tests (Playwright)` | `ci.yml` |"
+    ]
+   }
+  },
+  {
+   "path": "docs/talkx/README.md",
+   "status": "MAIN_UNCHANGED_SINCE_BASE",
+   "patch_lines": 12,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "| [ESTADOS.md](./ESTADOS.md) | Máquina de estados das campanhas e segmentos: transições válidas, guards e side-effects |"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "e2e/fixtures/e2e-contact.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 61,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 12,
+    "missing_in_main": 11,
+    "removed": 15,
+    "removed_still_in_main": 14,
+    "missing_sample": [
+     "  // 2. Inserir mensagem fresca via RPC SECURITY DEFINER (GA11) para garantir que",
+     "  //    o contato apareça na inbox sem violar o trigger de proveniência",
+     "  //    (guard_message_provenance_fields bloqueia sender!='agent' para authenticated).",
+     "    `${SUPABASE_URL}/rest/v1/rpc/e2e_fixture_message`,",
+     "      headers: { ...headers, Prefer: 'return=representation' },",
+     "      data: { p_op: 'insert' },",
+     "      `Falha ao inserir mensagem de fixture (RPC): HTTP ${msgResponse.status()} ` +",
+     "// GA11: usa RPC SECURITY DEFINER em vez de DELETE direto (sem service role).",
+     "  await page.request.post(",
+     "    `${SUPABASE_URL}/rest/v1/rpc/e2e_fixture_message`,",
+     "      data: { p_op: 'delete' },"
+    ],
+    "still_sample": [
+     "  // 2. Inserir mensagem fresca para garantir que o contato apareça na inbox",
+     "  //    (InboxFilters exige messages.length > 0; janela de 1000 msgs pode deixar",
+     "  //    mensagens antigas de fora quando o volume diário ultrapassa esse limite).",
+     "    `${SUPABASE_URL}/rest/v1/messages`,",
+     "      headers: { ...headers, Prefer: 'return=minimal' },",
+     "      data: {",
+     "        contact_id: E2E_FIXTURE_CONTACT_ID,",
+     "        sender: 'contact',",
+     "        content: '[E2E fixture setup]',",
+     "        message_type: 'text',"
+    ]
+   }
+  },
+  {
+   "path": "e2e/quarantine.unit.mjs",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 59,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 17,
+    "missing_in_main": 16,
+    "removed": 8,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  // GA12: timeout agora e' por grupo via matrix.timeout_minutes; o job usa a expressao.",
+     "    content.includes('timeout-minutes: ${{ matrix.timeout_minutes }}'),",
+     "    'job usa timeout proprio por grupo via matrix.timeout_minutes',",
+     "test('E83: matriz tem 4 grupos (2 autenticados + 2 deslogados)', () => {",
+     "  // GA12: authenticated dividido em chromium-autenticado + cross-browser-autenticado.",
+     "  assert.equal(grupos.length, 4, `matriz tem ${grupos.length} grupos (esperado 4)`);",
+     "  assert.ok(content.includes('name: chromium-autenticado'), 'grupo chromium-autenticado existe');",
+     "  assert.ok(content.includes('name: cross-browser-autenticado'), 'grupo cross-browser-autenticado existe');",
+     "  // GA12: setup aparece em 2 grupos (autenticados rodam independentemente); deduplica antes de comparar.",
+     "  const unicos = [...new Set(nomes)];",
+     "    [...unicos].sort(),",
+     "    `uniao da matriz difere da lista original (matriz: ${unicos.length}, original: ${ORIGINAIS.length})`,",
+     "test('E83: projeto setup aparece em exatamente 2 grupos de matriz (autenticados)', () => {",
+     "  // GA12: setup roda em 2 grupos (chromium-autenticado e cross-browser-autenticado) porque cada",
+     "  // job autentica independentemente (nao ha compartilhamento de storageState entre jobs).",
+     "  assert.equal(n, 2, `setup aparece em exatamente 2 grupos de matriz (autenticados); encontrado em ${n}`);"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "infrastructure/preview-egress-proxy/go.mod",
+   "status": "MAIN_UNCHANGED_SINCE_BASE",
+   "patch_lines": 9,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 1,
+    "removed_still_in_main": 1,
+    "missing_sample": [
+     "go 1.27"
+    ],
+    "still_sample": [
+     "go 1.24.0"
+    ]
+   }
+  },
+  {
+   "path": "playwright.config.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 30,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 3,
+    "missing_in_main": 3,
+    "removed": 2,
+    "removed_still_in_main": 1,
+    "missing_sample": [
+     "      testIgnore: /auth\\.spec\\.ts|auth\\.setup\\.ts|conversation\\.spec\\.ts|messaging\\.spec\\.ts|location-picker\\.spec\\.ts|contact-address\\.spec\\.ts|contact-map-pin",
+     "      testMatch: ['**/location-picker.spec.ts', '**/contact-address.spec.ts', '**/contact-map-pin.spec.ts'],",
+     "      // panel and falsely validates only the disabled state.  Without it, a complete CRM fixture can never reach the"
+    ],
+    "still_sample": [
+     "      testMatch: [/location-picker\\.spec\\.ts/, /contact-address\\.spec\\.ts/, /contact-map-pin\\.spec\\.ts/],"
+    ]
+   }
+  },
+  {
+   "path": "scripts/ci/actions-kpi.mjs",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 57,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 27,
+    "missing_in_main": 26,
+    "removed": 1,
+    "removed_still_in_main": 1,
+    "missing_sample": [
+     "  // GA92: buscar jobs só de runs com falha — ranking de jobs lentos só importa onde houve",
+     "  // falha, e buscar todos os 1.000+ runs da janela esgota o rate limit de 1.000/h.",
+     "  const runsComFalha = (runs ?? []).filter((r) => FALHAS.has(r.conclusion));",
+     "  for (const run of runsComFalha) {",
+     "// GA54: R6 com dente — detecta branch com > 15 pushes em 24 h e avisa para usar lote.",
+     "// Em 15/10 uma branch acumulou 96 pushes em 24 h → 414 runs; o custo e' o sinal.",
+     "export function branchesQuentes(runs, { limiteEm24h = 15, agora = Date.now() } = {}) {",
+     "  const corte = agora - 24 * 60 * 60 * 1000;",
+     "  const porBranch = new Map();",
+     "  for (const run of (runs ?? [])) {",
+     "    if (run.event !== 'push') continue;",
+     "    if (!Number.isFinite(inicio) || inicio < corte) continue;",
+     "    const branch = run.head_branch ?? '';",
+     "    if (!branch) continue;",
+     "    porBranch.set(branch, (porBranch.get(branch) ?? 0) + 1);",
+     "  return [...porBranch.entries()]",
+     "    .filter(([, count]) => count > limiteEm24h)",
+     "    .map(([branch, count]) => ({ branch, count }))",
+     "    .sort((a, b) => b.count - a.count);",
+     "  // GA54: alerta de branch quente (> 15 pushes em 24 h)",
+     "  const quentes = branchesQuentes(runs);",
+     "  if (quentes.length) {",
+     "    const linhas = quentes.map((b) => `- \\`${b.branch}\\`: **${b.count}** pushes em 24 h`).join('\\n');",
+     "    const aviso = `> ⚠️ **Branch(es) com muitos pushes em 24 h** — considere agrupar em lote para reduzir o consumo de Actions.\\n\\n${linhas}`;",
+     "    console.log(aviso);"
+    ],
+    "still_sample": [
+     "  for (const run of runs ?? []) {"
+    ]
+   }
+  },
+  {
+   "path": "scripts/ci/actions-kpi.unit.mjs",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 78,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 43,
+    "missing_in_main": 40,
+    "removed": 2,
+    "removed_still_in_main": 2,
+    "missing_sample": [
+     "  branchesQuentes,",
+     "  const jobs = await coletarJobs([{ id: 1, name: 'CI', conclusion: 'failure' }], { repo: 'o/r', token: 't', pedir: pedirFake });",
+     "  const jobs = await coletarJobs([{ id: 7, name: 'CI', conclusion: 'failure' }], { repo: 'o/r', token: 't', pedir: pedirFake });",
+     "test('GA54: branchesQuentes detecta branch com > 15 pushes em 24 h', () => {",
+     "  const agora = AGORA;",
+     "  // 20 push-runs na mesma branch nas ultimas 24 h",
+     "  const runs20 = Array.from({ length: 20 }, (_, i) => ({",
+     "    event: 'push',",
+     "    head_branch: 'feat/lote',",
+     "    run_started_at: new Date(agora - i * 60000).toISOString(), // distribuidos no ultimo 1 h",
+     "    updated_at: new Date(agora - i * 60000 + 300000).toISOString(),",
+     "    conclusion: 'success',",
+     "  // branch com apenas 5 runs (abaixo do limite)",
+     "  const runs5 = Array.from({ length: 5 }, (_, i) => ({",
+     "    event: 'push',",
+     "    head_branch: 'feat/tranquila',",
+     "    run_started_at: new Date(agora - i * 60000).toISOString(),",
+     "    updated_at: new Date(agora - i * 60000 + 300000).toISOString(),",
+     "    conclusion: 'success',",
+     "  // run de pull_request nao conta",
+     "  const runPR = {",
+     "    event: 'pull_request',",
+     "    head_branch: 'feat/lote',",
+     "    run_started_at: new Date(agora - 100000).toISOString(),",
+     "    updated_at: new Date(agora - 100000 + 300000).toISOString(),"
+    ],
+    "still_sample": [
+     "  const jobs = await coletarJobs([{ id: 1, name: 'CI' }], { repo: 'o/r', token: 't', pedir: pedirFake });",
+     "  const jobs = await coletarJobs([{ id: 7, name: 'CI' }], { repo: 'o/r', token: 't', pedir: pedirFake });"
+    ]
+   }
+  },
+  {
+   "path": "scripts/ci/allowed-actions.json",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "scripts/ci/aplicar-perimetro.mjs",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "patch_lines": 308,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 215,
+    "missing_in_main": 215,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "#!/usr/bin/env node",
+     " * GA80: aplicar-perimetro.mjs — aplica o baseline de perímetro do GitHub",
+     " * (`github-settings-baseline.json`) ao repositório via API.",
+     " * Modo padrão: dry-run — lê o estado vivo, compara com o baseline e imprime a",
+     " * diferença. Sai 0 quando não há diferença, 1 quando há.",
+     " * Com --apply: aplica as diferenças via PATCH/PUT. Exige token com escopo",
+     " * `administration` (write) — ADMIN_WRITE_TOKEN ou GITHUB_TOKEN com esse escopo.",
+     " * Por que existe: `strict` regrediu 4 vezes e CodeQL entrou no baseline via API",
+     " * manual sem passagem por PR. Este script é a única forma autorizada de alterar",
+     " * o perímetro; o CLAUDE.md proíbe PATCH manual fora dele.",
+     " * Uso:",
+     " *   ADMIN_WRITE_TOKEN=ghp_... node scripts/ci/aplicar-perimetro.mjs",
+     " *   ADMIN_WRITE_TOKEN=ghp_... node scripts/ci/aplicar-perimetro.mjs --apply",
+     "import { readFileSync } from 'node:fs';",
+     "import { pathToFileURL } from 'node:url';",
+     "const REPO = process.env.GITHUB_REPOSITORY ?? 'adm01-debug/Zapp_Web_V2';",
+     "const TOKEN = (process.env.ADMIN_WRITE_TOKEN || process.env.GITHUB_TOKEN || '').trim();",
+     "const APPLY = process.argv.includes('--apply');",
+     "const [OWNER, REPO_NAME] = REPO.split('/');",
+     "if (!TOKEN) {",
+     "  console.error('ADMIN_WRITE_TOKEN ou GITHUB_TOKEN é obrigatório.');",
+     "  process.exit(1);",
+     "const baseline = JSON.parse(",
+     "  readFileSync(new URL('./github-settings-baseline.json', import.meta.url), 'utf8'),",
+     "async function gh(method, path, body) {"
+    ],
+    "still_sample": [],
+    "same_basename_in_main": []
+   }
+  },
+  {
+   "path": "scripts/ci/bump-toolchain.mjs",
+   "status": "MAIN_UNCHANGED_SINCE_BASE",
+   "patch_lines": 16,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 3,
+    "missing_in_main": 3,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "    chave: 'zizmor-version',",
+     "    repo: 'woodruffw/zizmor',",
+     "    changelog: 'https://github.com/woodruffw/zizmor/releases',"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "scripts/ci/check-edge-envs.mjs",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "patch_lines": 60,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 41,
+    "missing_in_main": 41,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "#!/usr/bin/env node",
+     "// GA31: verifica que todas as variaveis de ambiente usadas pelas edge functions",
+     "// estao declaradas no baseline. Falha com ::error:: se houver var nao declarada.",
+     "import { readFileSync, readdirSync } from 'node:fs';",
+     "import { join, extname } from 'node:path';",
+     "const AQUI = new URL('.', import.meta.url).pathname;",
+     "const RAIZ = join(AQUI, '../..');",
+     "const BASELINE_PATH = join(AQUI, 'edge-env-baseline.json');",
+     "const FUNCTIONS_DIR = join(RAIZ, 'supabase/functions');",
+     "function walkTs(dir) {",
+     "  const results = [];",
+     "  for (const entry of readdirSync(dir, { withFileTypes: true })) {",
+     "    const full = join(dir, entry.name);",
+     "    if (entry.isDirectory()) {",
+     "      results.push(...walkTs(full));",
+     "    } else if (entry.isFile() && extname(entry.name) === '.ts' && !entry.name.endsWith('.test.ts')) {",
+     "      results.push(full);",
+     "  return results;",
+     "function extractEnvVars(source) {",
+     "  const pattern = /Deno\\.env\\.get\\(['\"]([^'\"]+)['\"]\\)/g;",
+     "  const vars = new Set();",
+     "  let m;",
+     "  while ((m = pattern.exec(source)) !== null) {",
+     "    vars.add(m[1]);",
+     "  return vars;"
+    ],
+    "still_sample": [],
+    "same_basename_in_main": []
+   }
+  },
+  {
+   "path": "scripts/ci/check-notifica-falha-names.mjs",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "patch_lines": 70,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 44,
+    "missing_in_main": 44,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "#!/usr/bin/env node",
+     "// GA10: verifica que todos os workflows listados em notifica-falha-main.yml",
+     "// existem como `name:` em .github/workflows/*.yml",
+     "import { readFile, readdir } from 'node:fs/promises';",
+     "import path from 'node:path';",
+     "import { fileURLToPath } from 'node:url';",
+     "const ROOT = path.resolve(fileURLToPath(import.meta.url), '../../..');",
+     "const WORKFLOWS_DIR = path.join(ROOT, '.github/workflows');",
+     "const arquivos = (await readdir(WORKFLOWS_DIR)).filter((f) => f.endsWith('.yml'));",
+     "const conteudos = {};",
+     "for (const f of arquivos) {",
+     "  conteudos[f] = await readFile(path.join(WORKFLOWS_DIR, f), 'utf8');",
+     "const nomesReais = new Set();",
+     "for (const [, txt] of Object.entries(conteudos)) {",
+     "  const m = /^name:\\s+(.+?)\\s*$/m.exec(txt);",
+     "  if (m) nomesReais.add(m[1]);",
+     "const notifica = conteudos['notifica-falha-main.yml'];",
+     "if (!notifica) {",
+     "  process.stderr.write('::error::notifica-falha-main.yml não encontrado\\n');",
+     "  process.exit(1);",
+     "const linhas = notifica.split('\\n');",
+     "let dentroWorkflows = false;",
+     "const nomesListados = [];",
+     "for (const linha of linhas) {",
+     "  if (/^\\s{4}workflows:\\s*$/.test(linha)) {"
+    ],
+    "still_sample": [],
+    "same_basename_in_main": []
+   }
+  },
+  {
+   "path": "scripts/ci/check-talkx-docs.unit.mjs",
+   "status": "MAIN_UNCHANGED_SINCE_BASE",
+   "patch_lines": 12,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 0,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "scripts/ci/check-test-inventory.mjs",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 31,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 9,
+    "missing_in_main": 8,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "// GA73: sentido inverso — padrões em run: que não casam com nenhum arquivo no disco.",
+     "// Cobre suites renomeadas ou apagadas sem atualizar o YAML correspondente.",
+     "export function padroesYamlSemArquivo() {",
+     "  const suitesNoDisco = suitesNodeNoDisco();",
+     "  return padroes.filter((padrao) => !suitesNoDisco.some((f) => casaPadrao(f, padrao)));",
+     "  // GA73: sentido inverso — padrão em run: que não casa com nenhum arquivo no disco.",
+     "  for (const padrao of padroesYamlSemArquivo()) {",
+     "    orphans.push({ file: padrao, yaml: 'arquivo referenciado no YAML não existe no disco' });"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "scripts/ci/check-test-inventory.unit.mjs",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 37,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 15,
+    "missing_in_main": 11,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  padroesYamlSemArquivo,",
+     "test('GA73: padrão exato em run: que não existe no disco é extraído corretamente', () => {",
+     "  // run: precisa estar em linha própria (não inline com \"- run:\") para o regex capturar.",
+     "  const yaml = [",
+     "    '  j:',",
+     "    '      - name: roda suite',",
+     "    '        run: node --test scripts/ci/suite-que-nao-existe.unit.mjs',",
+     "  const padroes = padroesNodeDeWorkflow(yaml);",
+     "  assert.deepEqual(padroes, ['scripts/ci/suite-que-nao-existe.unit.mjs']);",
+     "test('GA73: a arvore atual nao tem padrao run: sem arquivo no disco', () => {",
+     "  assert.deepEqual(padroesYamlSemArquivo(), []);"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "scripts/ci/ci-docs-baseline.unit.mjs",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 40,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 6,
+    "missing_in_main": 6,
+    "removed": 8,
+    "removed_still_in_main": 4,
+    "missing_sample": [
+     "test('inventario: 17 YAML em .github/workflows e a fonte gerada em paridade', async () => {",
+     "  assert.equal(arquivos.length, 17);",
+     "  assert.match(readme, /\\*\\*17 workflows\\.\\*\\*/);",
+     "  assert.deepEqual(violacoesContagemClaude(await readFile(CLAUDE, 'utf8'), 17), []);",
+     "  assert.match(texto, /TypeCheck/);",
+     "  assert.match(texto, /Node CI Scripts/);"
+    ],
+    "still_sample": [
+     "  assert.match(texto, /Lint.*TypeCheck|Lint & TypeCheck/);",
+     "  assert.match(texto, /Security Audit/);",
+     "  assert.match(texto, /Contrato DB offline/);",
+     "  assert.match(texto, /E2E Tests/);"
+    ]
+   }
+  },
+  {
+   "path": "scripts/ci/ci-e2e-projects.unit.mjs",
+   "status": "MAIN_UNCHANGED_SINCE_BASE",
+   "patch_lines": 77,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 23,
+    "missing_in_main": 20,
+    "removed": 3,
+    "removed_still_in_main": 3,
+    "missing_sample": [
+     "const talkxYml = ler('.github/workflows/e2e-talkx.yml');",
+     "const doTalkx = projetosNoWorkflow(talkxYml);",
+     "      new RegExp(`${spec}\\\\.spec\\\\.ts`),",
+     "      /dependencies:\\s*\\[|storageState:\\s*'/,",
+     "      /dependencies:\\s*\\[|storageState:\\s*'/,",
+     "const todosWorkflows = new Set([...doCi, ...doLogado, ...doTalkx]);",
+     "test('GA47: todo project do playwright.config.ts roda em pelo menos um workflow', () => {",
+     "  for (const [nome] of projetos) {",
+     "      todosWorkflows.has(nome),",
+     "      `\"${nome}\" declarado em playwright.config.ts mas nunca invocado com --project= ` +",
+     "        'em ci.yml, e2e-logado.yml ou e2e-talkx.yml — adicionar ao workflow correto ' +",
+     "        'ou remover do config se nao tiver spec associada (GA47)',",
+     "test('GA47: chromium-talkx roda no e2e-logado.yml ao lado do firefox-talkx/webkit-talkx', () => {",
+     "    doLogado.includes('chromium-talkx'),",
+     "    'chromium-talkx tem de estar no e2e-logado.yml: cobre talkx.spec.ts no Chromium ' +",
+     "      'com retries e storageState real, consistente com firefox-talkx/webkit-talkx',",
+     "test('GA47: projetos orfaos DESLOGADOS estao no ci.yml (executados em PR)', () => {",
+     "  for (const nome of ['chromium-onboarding-dispensar', 'chromium-multiplix-responsivo', 'chromium-tarefas-linha-de-base']) {",
+     "      doCi.includes(nome),",
+     "      `\"${nome}\" e DESLOGADO e tem de estar no ci.yml para ser verificado em PRs (GA47)`,"
+    ],
+    "still_sample": [
+     "      new RegExp(`${spec}\\\\\\\\.spec\\\\\\\\.ts`),",
+     "      /dependencies:\\s*\\[|storageState:/,",
+     "      /dependencies:\\s*\\[|storageState:/,"
+    ]
+   }
+  },
+  {
+   "path": "scripts/ci/claude-md-guard.mjs",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "patch_lines": 63,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 39,
+    "missing_in_main": 39,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "#!/usr/bin/env node",
+     "// GA02: proteção anti-substituição do CLAUDE.md",
+     "// Verifica que o CLAUDE.md contém as seções obrigatórias e não encolheu >30%.",
+     "import { readFile } from 'node:fs/promises';",
+     "import path from 'node:path';",
+     "import { fileURLToPath } from 'node:url';",
+     "import { execSync } from 'node:child_process';",
+     "const ROOT = path.resolve(fileURLToPath(import.meta.url), '../../..');",
+     "const CLAUDE_MD = path.join(ROOT, 'CLAUDE.md');",
+     "const SECOES_OBRIGATORIAS = [",
+     "  'Banco de dados OFICIAL',",
+     "  'Perímetro do GitHub',",
+     "  'CI sem desperdício',",
+     "const conteudo = await readFile(CLAUDE_MD, 'utf8');",
+     "const erros = [];",
+     "for (const secao of SECOES_OBRIGATORIAS) {",
+     "  if (!conteudo.includes(secao)) {",
+     "    erros.push(`Seção obrigatória ausente: \"${secao}\"`);",
+     "const baseSha = process.env.GITHUB_BASE_SHA;",
+     "if (baseSha) {",
+     "  try {",
+     "    const conteudoBase = execSync(`git show ${baseSha}:CLAUDE.md`, {",
+     "      cwd: ROOT,",
+     "      encoding: 'utf8',",
+     "      stdio: ['pipe', 'pipe', 'pipe'],"
+    ],
+    "still_sample": [],
+    "same_basename_in_main": []
+   }
+  },
+  {
+   "path": "scripts/ci/edge-coverage-authz.unit.mjs",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 31,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 3,
+    "missing_in_main": 1,
+    "removed": 2,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "const denoDisponivel = !spawnSync('deno', ['--version']).error;"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "scripts/ci/edge-env-baseline.json",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "patch_lines": 58,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 49,
+    "missing_in_main": 49,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  \"declared\": [",
+     "    \"BITRIX_WEBHOOK_URL\",",
+     "    \"CHATBOT_L1_WEBHOOK_SECRET\",",
+     "    \"CRON_SECRET\",",
+     "    \"DENO_ENV\",",
+     "    \"ELEVENLABS_WEBHOOK_SECRET\",",
+     "    \"EVOLUTION_API_FLAVOR\",",
+     "    \"EVOLUTION_API_KEY\",",
+     "    \"EVOLUTION_API_URL\",",
+     "    \"EVOLUTION_INSTANCE_NAME\",",
+     "    \"EVOLUTION_INSTANCE_TOKEN\",",
+     "    \"EVOLUTION_VPS_SUPABASE_ANON_KEY\",",
+     "    \"EVOLUTION_VPS_SUPABASE_URL\",",
+     "    \"EVOLUTION_WEBHOOK_ENFORCE\",",
+     "    \"EVOLUTION_WEBHOOK_SECRET\",",
+     "    \"GMAIL_CAS_JWT\",",
+     "    \"GMAIL_CAS_POSTGREST_URL\",",
+     "    \"GMAIL_OIDC_AUDIENCE\",",
+     "    \"GMAIL_OIDC_EMAIL\",",
+     "    \"GMAIL_OIDC_JWKS_URL\",",
+     "    \"INTERNAL_ALERT_SECRET\",",
+     "    \"MEDIA_EGRESS_ALLOWED_HOSTS\",",
+     "    \"MEDIA_EGRESS_ALLOWED_ORIGINS\",",
+     "    \"MESSAGING_MEDIA_MAX_BYTES\",",
+     "    \"MULTIPLIX_BATCH_SIZE\","
+    ],
+    "still_sample": [],
+    "same_basename_in_main": []
+   }
+  },
+  {
+   "path": "scripts/ci/fila-merge.mjs",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "patch_lines": 137,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 50,
+    "missing_in_main": 50,
+    "removed": 11,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  const checks = baseline.branch_protection_main.required_status_checks;",
+     "  return checks.map((c) => (typeof c === 'string' ? c : c.context));",
+     "const TETO_EM_VOO_MS = 45 * 60 * 1000; // GA49: PR em dia sem check em andamento há > 45 min → bloqueada",
+     "// CANCELLED e ACTION_REQUIRED contam como pendente quando a PR está BEHIND: o",
+     "// update-branch vai disparar o check de novo. Quando a PR está em dia (não BEHIND),",
+     "// use todosChecksConcluidos() + classificar() para detectar o travamento.",
+     "// GA49: retorna true se todos os checks obrigatórios têm status=COMPLETED (nenhum em andamento).",
+     "// StatusContext não expõe status/COMPLETED — considera não-concluído (conservador).",
+     "function todosChecksConcluidos(rollup, obrigatorios) {",
+     "  return obrigatorios.every((n) => {",
+     "    const entradas = (rollup ?? []).filter((c) => (c.name ?? c.context) === n);",
+     "    if (entradas.length === 0) return false;",
+     "    const atual = entradas.reduce((a, b) => (String(b.startedAt ?? '') > String(a.startedAt ?? '') ? b : a));",
+     "    if (atual.__typename === 'StatusContext' || atual.state) return false;",
+     "    return atual.status === 'COMPLETED';",
+     "// GA49 teto: retorna true se nenhum check está em andamento e o mais recente",
+     "// completou há mais de `ms` milissegundos. Usa `completedAt` quando disponível,",
+     "// cai para `startedAt` como aproximação.",
+     "function tetoEmVooAtingido(rollup, ms, agora) {",
+     "  const lista = rollup ?? [];",
+     "  if (lista.some((c) => c.status === 'IN_PROGRESS' || c.status === 'QUEUED' || c.status === 'WAITING' || c.status === 'PENDING')) return false;",
+     "  const timestamps = lista",
+     "    .map((c) => new Date(c.completedAt ?? c.startedAt ?? 0).getTime())",
+     "    .filter((t) => t > 0);",
+     "  if (timestamps.length === 0) return false;"
+    ],
+    "still_sample": [],
+    "same_basename_in_main": []
+   }
+  },
+  {
+   "path": "scripts/ci/fila-merge.unit.mjs",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "patch_lines": 76,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 30,
+    "missing_in_main": 30,
+    "removed": 5,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "// Tempo fixo para testes com teto GA49: 10 min após os checks de startedAt '10:00'/'10:05'",
+     "const AGORA_TESTE = new Date('2026-10-15T10:10:00Z').getTime();",
+     "  assert.equal(classificar(pr(1, { mergeStateStatus: 'BLOCKED', statusCheckRollup: OBRIG.map(rodando) }), OBRIG, AGORA_TESTE), 'em-voo');",
+     "  assert.equal(classificar(pr(1, { mergeStateStatus: 'CLEAN' }), OBRIG, AGORA_TESTE), 'em-voo');",
+     "  assert.equal(classificar(pr(1, { mergeStateStatus: 'UNKNOWN' }), OBRIG, AGORA_TESTE), 'em-voo');",
+     "  assert.equal(decidir(resolvidas, OBRIG, AGORA_TESTE).acao, 'esperar');",
+     "  assert.equal(decidir([resolvidas[0]], OBRIG, AGORA_TESTE).pr, 1);",
+     "test('GA50: PR com mergeable=CONFLICTING fica fora da fila', () => {",
+     "  assert.equal(classificar(pr(1, { mergeable: 'CONFLICTING', mergeStateStatus: 'BEHIND' }), OBRIG), 'fora');",
+     "  assert.equal(classificar(pr(1, { mergeable: 'CONFLICTING', mergeStateStatus: 'BLOCKED' }), OBRIG), 'fora');",
+     "  // MERGEABLE e ausente não devem afetar",
+     "  assert.equal(classificar(pr(1, { mergeable: 'MERGEABLE' }), OBRIG), 'aguardando');",
+     "test('GA49: PR em dia com checks todos COMPLETED e CANCELLED → bloqueada (não trava a fila para sempre)', () => {",
+     "  const cancelado = (name) => ({ __typename: 'CheckRun', name, status: 'COMPLETED', conclusion: 'CANCELLED', startedAt: '2026-10-15T10:00:00Z', completedAt: '20",
+     "  const rollupCancelado = OBRIG.map(cancelado);",
+     "  // PR em dia (BLOCKED = checando) com todos COMPLETED+CANCELLED → bloqueada",
+     "  assert.equal(classificar(pr(1, { mergeStateStatus: 'BLOCKED', statusCheckRollup: rollupCancelado }), OBRIG), 'bloqueada');",
+     "  // PR BEHIND com CANCELLED ainda aguarda (update-branch vai re-trigar)",
+     "  assert.equal(classificar(pr(1, { mergeStateStatus: 'BEHIND', statusCheckRollup: rollupCancelado }), OBRIG), 'aguardando');",
+     "test('GA49 teto: PR em dia sem check em andamento há > 45 min → bloqueada', () => {",
+     "  const agora = new Date('2026-10-15T12:00:00Z').getTime();",
+     "  const velhoCompleto = (name) => ({ __typename: 'CheckRun', name, status: 'COMPLETED', conclusion: 'SUCCESS', startedAt: '2026-10-15T10:00:00Z', completedAt: '",
+     "  const rollupVelho = OBRIG.map(velhoCompleto);",
+     "  assert.equal(classificar(pr(1, { mergeStateStatus: 'BLOCKED', statusCheckRollup: rollupVelho }), OBRIG, agora), 'bloqueada');",
+     "test('GA49 teto: check IN_PROGRESS protege a PR do teto temporal', () => {"
+    ],
+    "still_sample": [],
+    "same_basename_in_main": []
+   }
+  },
+  {
+   "path": "scripts/ci/ga25-ddl-check.mjs",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "patch_lines": 70,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 51,
+    "missing_in_main": 51,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "#!/usr/bin/env node",
+     "// GA25: detecta versions no ledger sem Deployment producao-ddl correspondente (DDL fora do fluxo).",
+     "import { spawnSync } from 'node:child_process';",
+     "const cutoff = process.env.GA25_CUTOFF || '20261016000000';",
+     "const token = process.env.GH_TOKEN || process.env.GITHUB_TOKEN;",
+     "const repo = process.env.GITHUB_REPOSITORY;",
+     "const apiUrl = process.env.GITHUB_API_URL || 'https://api.github.com';",
+     "// 1. Consultar ledger para versions desde o cutoff",
+     "const psqlResult = spawnSync(",
+     "  process.execPath,",
+     "  ['scripts/db-audit/psql-safe.mjs', '-X', '-v', 'ON_ERROR_STOP=1', '-t', '-A',",
+     "   '-c', `SELECT version FROM supabase_migrations.schema_migrations WHERE version >= '${cutoff}' ORDER BY version`],",
+     "  { encoding: 'utf8' },",
+     "if (psqlResult.status !== 0) {",
+     "  process.stderr.write('GA25: falha ao consultar ledger:\\n' + (psqlResult.stderr || '') + '\\n');",
+     "  process.exit(1);",
+     "const ledgerVersions = new Set(psqlResult.stdout.trim().split('\\n').filter(Boolean));",
+     "if (ledgerVersions.size === 0) {",
+     "  console.log(`GA25: nenhuma version no ledger desde ${cutoff}; sem DDL fora do fluxo.`);",
+     "  process.exit(0);",
+     "console.log(`GA25: ${ledgerVersions.size} version(s) no ledger desde ${cutoff}.`);",
+     "// 2. Listar Deployments do environment producao-ddl",
+     "const deployedVersions = new Set();",
+     "let page = 1;",
+     "while (true) {"
+    ],
+    "still_sample": [],
+    "same_basename_in_main": []
+   }
+  },
+  {
+   "path": "scripts/ci/github-settings-baseline.json",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 102,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 79,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "PLACEHOLDER_BASELINE"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "scripts/ci/github-settings-guard.mjs",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 351,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 135,
+    "missing_in_main": 107,
+    "removed": 59,
+    "removed_still_in_main": 57,
+    "missing_sample": [
+     " * (`github-settings-baseline.json`) e reporta divergencias via issue.",
+     "import { contarComentarios, LIMITE_COMENTARIOS } from './issue-rotativa.mjs';",
+     "// GA76: mapeamento REST snake_case → GraphQL camelCase para campos de merge.",
+     "// GET /repos omite esses campos para tokens sem permissão push/admin (W04/W05).",
+     "// A query GraphQL os expõe com read scope via o objeto Repository.",
+     "const MERGE_GRAPHQL_MAP = {",
+     "  allow_squash_merge: 'squashMergeAllowed',",
+     "  allow_merge_commit: 'mergeCommitAllowed',",
+     "  allow_rebase_merge: 'rebaseMergeAllowed',",
+     "  allow_auto_merge: 'autoMergeAllowed',",
+     "  delete_branch_on_merge: 'deleteBranchOnMerge',",
+     "  squash_merge_commit_message: 'squashMergeCommitMessage',",
+     "  squash_merge_commit_title: 'squashMergeCommitTitle',",
+     "// GA76: wrapper GraphQL — usa o adminToken para leituras de campos de merge.",
+     "// gh() retorna o JSON bruto, incluindo {data, errors}; unwrap aqui.",
+     "async function ghGraphQL(query) {",
+     "  const raw = await gh('POST', '/graphql', { query }, adminToken);",
+     "  if (raw?.errors?.length) {",
+     "    throw new NaoVerificavel('graphql', 200, raw.errors.map((e) => e.message).join('; '));",
+     "  return raw?.data ?? null;",
+     "// `restauravel` mantido por compatibilidade; sempre false (GA77: restauração removida).",
+     "  // GA03: usar checks.checks (campo moderno com app_id) em vez do deprecado checks.contexts.",
+     "  const rawChecks = checksDesligados ? [] : [...(checks.checks ?? [])];",
+     "  const encontradosContexts = rawChecks.map(c => (typeof c === 'string' ? c : c.context)).sort(porCodigo);",
+     "  const encontradoAppIds = rawChecks.reduce((acc, c) => {"
+    ],
+    "still_sample": [
+     " * (`github-settings-baseline.json`) e restaura o que sabe restaurar.",
+     "// `restauravel` diz se o guard sabe desfazer a divergência sozinho.",
+     "      // Sem o bloco de checks o PATCH do sub-recurso nao tem o que atualizar.",
+     "  const contexts = checksDesligados ? [] : [...(checks.contexts ?? [])].sort(porCodigo);",
+     "  const esperados = [...esperado.required_status_checks].sort(porCodigo);",
+     "  if (contexts.join('|') !== esperados.join('|')) {",
+     "      esperado: esperados.join(', '),",
+     "      encontrado: contexts.join(', ') || '(nenhum)',",
+     "  const repo = await ghAdmin('GET', `/repos/${OWNER}/${REPO_NAME}`);",
+     "  const ausentes = [];"
+    ]
+   }
+  },
+  {
+   "path": "scripts/ci/github-settings-guard.unit.mjs",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 403,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 311,
+    "removed_still_in_main": 302,
+    "missing_sample": [
+     "PLACEHOLDER_GUARD"
+    ],
+    "still_sample": [
+     "import { describe, it } from 'node:test';",
+     "import assert from 'node:assert/strict';",
+     "import { spawnSync } from 'node:child_process';",
+     "import { dirname, join } from 'node:path';",
+     "import { fileURLToPath } from 'node:url';",
+     "import { assinaturaDe } from './github-settings-guard.mjs';",
+     "// Contratos do settings-guard. O guard é executado de VERDADE (child process) com",
+     "// um `fetch` stubbed — um teste que reimplementa a lógica no próprio arquivo",
+     "// passa a valer sobre a cópia, não sobre o guard, e foi assim que a versão",
+     "// anterior deste arquivo ficou verde enquanto o guard falhava em produção."
+    ]
+   }
+  },
+  {
+   "path": "scripts/ci/issue-rotativa.mjs",
+   "status": "MAIN_UNCHANGED_SINCE_BASE",
+   "patch_lines": 13,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 1,
+    "removed_still_in_main": 1,
+    "missing_sample": [
+     "        state_reason: 'not_planned',"
+    ],
+    "still_sample": [
+     "        state_reason: 'completed',"
+    ]
+   }
+  },
+  {
+   "path": "scripts/ci/marcador-specs.mjs",
+   "status": "MAIN_UNCHANGED_SINCE_BASE",
+   "patch_lines": 28,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 4,
+    "missing_in_main": 4,
+    "removed": 3,
+    "removed_still_in_main": 3,
+    "missing_sample": [
+     "    .filter((e) => e.isDirectory() && !e.name.startsWith('.playwright-artifacts-'))",
+     "/** Nomes validos: string, nao vazia, sem repeticao, ordenados. Tira sufixo `-retryN`. */",
+     "  return [...new Set((nomes ?? []).filter((n) => typeof n === 'string' && n.length > 0)",
+     "    .map((n) => n.replace(/-retry\\d+$/, '')))]"
+    ],
+    "still_sample": [
+     "    .filter((e) => e.isDirectory())",
+     "/** Nomes validos: string, nao vazia, sem repeticao, ordenados. */",
+     "  return [...new Set((nomes ?? []).filter((n) => typeof n === 'string' && n.length > 0))]"
+    ]
+   }
+  },
+  {
+   "path": "scripts/ci/marcador-specs.unit.mjs",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 34,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 14,
+    "missing_in_main": 14,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "test('GA42: nomesDeTestResults ignora diretorios .playwright-artifacts-*', () => {",
+     "  const raiz = mkdtempSync(join(tmpdir(), 'tr-ga42-'));",
+     "  mkdirSync(join(raiz, 'meu-spec-chromium'), { recursive: true });",
+     "  mkdirSync(join(raiz, '.playwright-artifacts-0'), { recursive: true });",
+     "  mkdirSync(join(raiz, '.playwright-artifacts-1'), { recursive: true });",
+     "  assert.deepEqual(nomesDeTestResults(raiz), ['meu-spec-chromium'], 'dirs .playwright-artifacts-* nao podem entrar na contagem');",
+     "test('GA42: normalizar remove sufixo -retryN antes do dedupe', () => {",
+     "  // sem retries: marcador identico ao da corrida com retries",
+     "  const semRetry = marcadorDe(['auth.setup.ts-login-chromium']);",
+     "  const comRetry = marcadorDe(['auth.setup.ts-login-chromium', 'auth.setup.ts-login-chromium-retry2']);",
+     "  assert.equal(semRetry, comRetry, '-retry2 e a mesma causa que sem sufixo');",
+     "  // dedupe real: dois retries do mesmo teste nao inflam o corpo",
+     "  const corpo = corpoDe(['meu-spec-chromium', 'meu-spec-chromium-retry1', 'meu-spec-chromium-retry2']);",
+     "  assert.match(corpo, /\\*\\*1\\*\\* teste\\(s\\)/, 'retries do mesmo teste contam como 1');"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "scripts/ci/parity-hardening.unit.mjs",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 43,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 11,
+    "missing_in_main": 11,
+    "removed": 7,
+    "removed_still_in_main": 4,
+    "missing_sample": [
+     "  // 5 usos (geracao, 2 drifts, 2 PRs — split de jobs GA21) + 1 negacao em on.push.paths (E18):",
+     "  // o merge do proprio PR de sync so altera esse arquivo dentro de scripts/db-audit/** e nao",
+     "  // deve redisparar o workflow.",
+     "  assert.equal((workflow.match(/scripts\\/db-audit\\/grants-baseline\\.json/g) || []).length, 6);",
+     "  // GA16: os steps de pos-apply foram extraidos para validate-post-apply.mjs;",
+     "  // a referencia ao contrato de atomicidade agora mora nesse script, nao no YAML.",
+     "  const postApply = read('../../scripts/db-audit/validate-post-apply.mjs');",
+     "    (postApply.match(/notification-delivery-atomicity-runtime\\.sql/g) || []).length >= 1,",
+     "  assert.match(postApply, /VERSION === '20260922220000'/);",
+     "  assert.match(postApply, /proof\\.service_execute_count === 2/);",
+     "  assert.match(postApply, /proof\\.authenticated_execute_count === 0/);"
+    ],
+    "still_sample": [
+     "    (workflow.match(/notification-delivery-atomicity-runtime\\.sql/g) || []).length >= 1,",
+     "  assert.match(workflow, /inputs\\.migration_version == '20260922220000'/);",
+     "  assert.match(workflow, /proof\\.service_execute_count === 2/);",
+     "  assert.match(workflow, /proof\\.authenticated_execute_count === 0/);"
+    ]
+   }
+  },
+  {
+   "path": "scripts/ci/reuso-arvore.mjs",
+   "status": "MAIN_UNCHANGED_SINCE_BASE",
+   "patch_lines": 20,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 7,
+    "missing_in_main": 7,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  // GA65 (W55): se o run da PR tinha contratos pulados (docs-only), não reusar —",
+     "  // um push pode incluir mudanças reais que a PR nunca provou.",
+     "  const SENTINEL_W55 = '📄 Contratos pulados — apenas docs (W55)';",
+     "  const temContratoPulado = lista.some(",
+     "    (j) => (j.steps ?? []).some((s) => s.name === SENTINEL_W55 && s.conclusion === 'success'),",
+     "  if (temContratoPulado) {",
+     "    return { reusar: false, motivo: `run ${ultimo.id} tinha contratos pulados (W55): roda tudo` };"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "scripts/ci/secrets-environments.unit.mjs",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 42,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 7,
+    "missing_in_main": 6,
+    "removed": 4,
+    "removed_still_in_main": 3,
+    "missing_sample": [
+     "    const envInline = /^ {4}environment:\\s*['\"']?([^'\"\\s#]+)['\"']?\\s*(?:#.*)?$/.exec(linha);",
+     "        const nome = /^ {6}name:\\s*['\"']?([^'\"\\s#]+)['\"']?/.exec(linhas[j]);",
+     "  // GA13 → GA97 (2026-10-28): job renomeado de preflight para migrate quando o",
+     "  // environment producao-ddl passou a envolver todo o job (dry-run + apply).",
+     "  // O DSN endurecido sai de needs.preflight.outputs; o environment protege o secret.",
+     "    ...Object.values(DESTINO_URL_POR_JOB).filter(Boolean),"
+    ],
+    "still_sample": [
+     "    const envInline = /^ {4}environment:\\s*['\"]?([^'\"\\s#]+)['\"]?\\s*(?:#.*)?$/.exec(linha);",
+     "        const nome = /^ {6}name:\\s*['\"]?([^'\"\\s#]+)['\"]?/.exec(linhas[j]);",
+     "    ...Object.values(DESTINO_URL_POR_JOB),"
+    ]
+   }
+  },
+  {
+   "path": "scripts/ci/security-workflow.unit.mjs",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 14,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 2,
+    "missing_in_main": 2,
+    "removed": 1,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  const workflowSemComentarios = workflow.split('\\n').filter((l) => !l.trimStart().startsWith('#')).join('\\n');",
+     "  const secretRefs = [...workflowSemComentarios.matchAll(/secrets\\.(\\w+)/gu)].map((m) => m[1]);"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "scripts/ci/verify-ledger-statements.unit.mjs",
+   "status": "MAIN_UNCHANGED_SINCE_BASE",
+   "patch_lines": 29,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 11,
+    "missing_in_main": 11,
+    "removed": 7,
+    "removed_still_in_main": 7,
+    "missing_sample": [
+     "  // GA16: passo renomeado para \"Validar pos-apply\", SQL movido para validate-post-apply.mjs",
+     "  const inicio = workflow.indexOf('- name: Validar pos-apply');",
+     "  assert.ok(inicio > 0, 'passo \"Validar pos-apply\" precisa existir no workflow');",
+     "  const proximoPasso = workflow.indexOf('\\n      - name:', inicio + 1);",
+     "  const passo = workflow.slice(inicio, proximoPasso < 0 ? undefined : proximoPasso);",
+     "  assert.match(passo, /validate-post-apply\\.mjs/);",
+     "  // O SQL agora fica em validate-post-apply.mjs",
+     "  const script = await readFile(new URL('../../scripts/db-audit/validate-post-apply.mjs', import.meta.url), 'utf8');",
+     "  assert.match(script, /AND statements IS NOT NULL/);",
+     "  assert.match(script, /AND array_length\\(statements, 1\\) > 0/);",
+     "  assert.match(script, /verify-ledger-statements\\.mjs/);"
+    ],
+    "still_sample": [
+     "  const inicio = workflow.indexOf('- name: Validar registro no ledger');",
+     "  const fim = workflow.indexOf('- name: Validar ledger completo do bundle de entrega atomica');",
+     "  assert.ok(inicio > 0 && fim > inicio, 'passo precisa existir e vir antes do proximo');",
+     "  const passo = workflow.slice(inicio, fim);",
+     "  assert.match(passo, /AND statements IS NOT NULL/);",
+     "  assert.match(passo, /AND array_length\\(statements, 1\\) > 0/);",
+     "  assert.match(passo, /verify-ledger-statements\\.mjs/);"
+    ]
+   }
+  },
+  {
+   "path": "scripts/db-audit/check-ddl-deployments.mjs",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "patch_lines": 130,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 86,
+    "missing_in_main": 86,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "#!/usr/bin/env node",
+     " * GA25: Verifica que toda version >= 20261016000000 no ledger possui um",
+     " * Deployment 'producao-ddl' registrado pelo job apply de db-migrate.yml.",
+     " * Motivacao: migrations foram aplicadas por fora em 15/10 e 26/09 (casos",
+     " * documentados). O Deployment registrado pelo job apply e a evidencia",
+     " * rastreavel de que o DDL passou pelo fluxo correto:",
+     " *   arquivo -> PR -> merge -> apply gateado -> Deployment registrado.",
+     " * Saida: exit 0 sem falhas, exit 1 com lista de versions sem Deployment.",
+     " * Uso: node scripts/db-audit/check-ddl-deployments.mjs 2>&1 | tee /tmp/step-ddl-sem-deployment.log",
+     "import { spawnSync } from 'node:child_process';",
+     "import { fileURLToPath } from 'node:url';",
+     "import path from 'node:path';",
+     "const __filename = fileURLToPath(import.meta.url);",
+     "const ROOT = path.resolve(path.dirname(__filename), '../..');",
+     "const GITHUB_TOKEN = (process.env.GITHUB_TOKEN || process.env.GH_TOKEN || '').trim();",
+     "const REPO = process.env.GITHUB_REPOSITORY ?? 'adm01-debug/Zapp_Web_V2';",
+     "const [OWNER, REPO_NAME] = REPO.split('/');",
+     "// versions sem Deployment sao reportadas apenas para entradas apos o corte de",
+     "// 16/10/2026 — data em que GA25 foi implantado. Versoes anteriores nao passaram",
+     "// pelo script de registro e nao devem gerar falso alarme.",
+     "const CORTE = '20261016000000';",
+     "if (!GITHUB_TOKEN) {",
+     "  console.error('::error::GA25: GITHUB_TOKEN ausente — necessario para consultar Deployments API.');",
+     "  process.exit(1);",
+     "// 1. Ler versions >= CORTE do ledger via psql-safe.mjs"
+    ],
+    "still_sample": [],
+    "same_basename_in_main": []
+   }
+  },
+  {
+   "path": "scripts/db-audit/check-migration-drift.mjs",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 48,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 13,
+    "missing_in_main": 11,
+    "removed": 4,
+    "removed_still_in_main": 4,
+    "missing_sample": [
+     "  const pendingErrors = [];",
+     "    pendingErrors.push('Arquivo no repo sem registro no banco (db push tentaria aplicar):');",
+     "      pendingErrors.push(divergenceLine(version, fileName, null, 'arquivo sem registro no banco'));",
+     "      pendingErrors.push(`  ${version}  ${fileName}`);",
+     "  const onlyApplyPending = pendingErrors.length > 0 && errors.length === 0 && withoutFile.length === 0;",
+     "  errors.push(...pendingErrors);",
+     "  return { errors, warnings, verifiedEvidence, pinnedWithoutHistoricalContent, onlyApplyPending };",
+     "  const classificar = process.argv.includes('--classificar');",
+     "    if (classificar && result.onlyApplyPending) {",
+     "      console.log('\\nAPPLY PENDENTE: migrations no disco sem registro no banco (aguardando lote):');",
+     "      return 3;"
+    ],
+    "still_sample": [
+     "    errors.push('Arquivo no repo sem registro no banco (db push tentaria aplicar):');",
+     "      errors.push(divergenceLine(version, fileName, null, 'arquivo sem registro no banco'));",
+     "      errors.push(`  ${version}  ${fileName}`);",
+     "  return { errors, warnings, verifiedEvidence, pinnedWithoutHistoricalContent };"
+    ]
+   }
+  },
+  {
+   "path": "scripts/db-audit/consolidar-veredito.mjs",
+   "status": "MAIN_UNCHANGED_SINCE_BASE",
+   "patch_lines": 21,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 3,
+    "missing_in_main": 3,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  // GA25: toda version nova no ledger deve ter Deployment producao-ddl correspondente.",
+     "  { id: 'ddl-fora-do-fluxo', nome: 'Detectar DDL fora do fluxo (GA25)', log: '/tmp/step-ddl-fora-do-fluxo.log' },",
+     "  'ddl-fora-do-fluxo',"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "scripts/db-audit/docker-shim",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 38,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 12,
+    "missing_in_main": 12,
+    "removed": 2,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "    # GA70: exportar o nome do banco para GITHUB_ENV para que passos posteriores",
+     "    # possam afirmar proof.database === 'postgres' sem ler o arquivo de estado.",
+     "    if [[ -n \"${GITHUB_ENV:-}\" ]]; then",
+     "      printf 'DOCKER_SHIM_DB=%s\\n' \"$db\" >> \"$GITHUB_ENV\"",
+     "    # GA66: falha explícita se o banco não for criado — sem set -e, a saída 0 do printf",
+     "    # mascarava o erro e o test-runner achava que o container tinha subido.",
+     "    _svc -d postgres -c \"CREATE DATABASE \\\"$db\\\";\" > /dev/null \\",
+     "      || { printf 'docker-shim: CREATE DATABASE \"%s\" failed\\n' \"$db\" >&2; exit 1; }",
+     "    # GA66: só carregar baseline de roles se o arquivo existe e não está vazio; arquivo",
+     "    # vazio (criado quando _svc falhou no run) causaria DROP ROLE em todos os roles.",
+     "    old=\"\"",
+     "    [[ -s \"$STATE/$cname.roles\" ]] && old=\"$(< \"$STATE/$cname.roles\")\""
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "scripts/db-audit/dry-run-plan.mjs",
+   "status": "MAIN_UNCHANGED_SINCE_BASE",
+   "patch_lines": 37,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 15,
+    "missing_in_main": 9,
+    "removed": 1,
+    "removed_still_in_main": 1,
+    "missing_sample": [
+     "const LINHA_ITEM = /^[•*-]\\s+(\\S+\\.sql)\\s*$/;",
+     "  // GA14: --apply-all <versoes-file> usa avaliarPlanoDoDryRunApplyAll (W58/W27)",
+     "  const applyAllFile = valor('--apply-all');",
+     "  if (applyAllFile) {",
+     "    if (!arquivo) {",
+     "      console.error('uso: node scripts/db-audit/dry-run-plan.mjs --arquivo <saida-do-dry-run> --apply-all <versoes-file>');",
+     "    const esperados = readFileSync(applyAllFile, 'utf8').trim().split('\\n').filter(Boolean);",
+     "    const resultado = avaliarPlanoDoDryRunApplyAll({ texto: readFileSync(arquivo, 'utf8'), esperados });",
+     "    process.exit(0);"
+    ],
+    "still_sample": [
+     "const LINHA_ITEM = /^[\\u2022*-]\\s+(\\S+\\.sql)\\s*$/;"
+    ]
+   }
+  },
+  {
+   "path": "scripts/db-audit/extrair-consulta-ledger.mjs",
+   "status": "MAIN_UNCHANGED_SINCE_BASE",
+   "patch_lines": 45,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 15,
+    "missing_in_main": 14,
+    "removed": 3,
+    "removed_still_in_main": 3,
+    "missing_sample": [
+     "export const PASSO_VALIDAR_LEDGER = '- name: Validar pos-apply';",
+     " * Extrai o SQL do passo pos-apply a partir do texto de validate-post-apply.mjs.",
+     " * GA16: o SQL saiu do heredoc do workflow e foi para o modulo JS.",
+     " * @param {string} textoScript conteudo bruto de validate-post-apply.mjs",
+     "export function extrairSqlDoPosApply(textoScript) {",
+     "  const m = /runPsql\\(\\s*\\[[^\\]]*\\],\\s*`([\\s\\S]*?)`/.exec(textoScript);",
+     "  if (!m) throw new Error('SQL do passo pos-apply nao encontrado em validate-post-apply.mjs');",
+     "  return m[1];",
+     " * A consulta SQL exata do passo \"Validar pos-apply\" (GA16: era \"Validar registro no ledger\").",
+     " * Verifica que o passo existe no workflow e le o SQL de validate-post-apply.mjs.",
+     "  if (textoWorkflow.indexOf(PASSO_VALIDAR_LEDGER) < 0) {",
+     "    throw new Error(`passo \"${PASSO_VALIDAR_LEDGER}\" nao encontrado no workflow`);",
+     "  const caminho = resolve(fileURLToPath(import.meta.url), '..', 'validate-post-apply.mjs');",
+     "  return extrairSqlDoPosApply(readFileSync(caminho, 'utf8'));"
+    ],
+    "still_sample": [
+     "export const PASSO_VALIDAR_LEDGER = '- name: Validar registro no ledger';",
+     " * A consulta SQL exata do passo \"Validar registro no ledger\".",
+     "  return extrairHeredoc(extrairBlocoRun(textoWorkflow, PASSO_VALIDAR_LEDGER), 'SQL');"
+    ]
+   }
+  },
+  {
+   "path": "scripts/db-audit/lote-pendente.mjs",
+   "status": "MAIN_UNCHANGED_SINCE_BASE",
+   "patch_lines": 43,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 9,
+    "missing_in_main": 9,
+    "removed": 7,
+    "removed_still_in_main": 7,
+    "missing_sample": [
+     " *   exit 2 — erro de carga/autenticação (nunca \"apply pendente\")",
+     " *   exit 3 — somente apply-pendente (migrations no disco sem ledger no banco)",
+     " * Cada chamador aplica sua própria política sobre exit 3:",
+     " *                    mantém exit 3 para abrir issue.",
+     " *   types-sync     → usa exit 3 para setar awaiting_apply=true e pular gates.",
+     "// GA19: override para testes unitários (nunca definido em produção)",
+     "const DRIFT_SCRIPT = process.env.DRIFT_SCRIPT_OVERRIDE || path.join(__dirname, 'check-migration-drift.mjs');",
+     "  } else if (rc === 3) {",
+     "    // --classificar retorna 3 para apply-pendente (neutro); 2 reservado para erros de carga"
+    ],
+    "still_sample": [
+     " *   exit 2 — somente apply-pendente (migrations no disco sem ledger no banco)",
+     " * Cada chamador aplica sua própria política sobre exit 2:",
+     " *                    mantém exit 2 para abrir issue.",
+     " *   types-sync     → usa exit 2 para setar awaiting_apply=true e pular gates.",
+     "const DRIFT_SCRIPT = path.join(__dirname, 'check-migration-drift.mjs');",
+     "  } else if (rc === 2) {",
+     "    // W21: --classificar retorna 2 para apply-pendente (neutro)"
+    ]
+   }
+  },
+  {
+   "path": "scripts/db-audit/lote-pendente.test.mjs",
+   "status": "MAIN_UNCHANGED_SINCE_BASE",
+   "patch_lines": 73,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 25,
+    "missing_in_main": 22,
+    "removed": 5,
+    "removed_still_in_main": 5,
+    "missing_sample": [
+     " * 3. Exit 3 do drift-script → exit 3 e summary \"apply aguardado\"",
+     "  else if (rc === 3) appendFileSync(summaryPath, '### ⏳ Lote pendente — apply aguardado\\\\n');",
+     "test('W26: exit 3 escreve summary \"apply aguardado\"', () => {",
+     "  const { exitCode } = runWithMock(3, summaryPath);",
+     "  assert.equal(exitCode, 3, 'exit 3 esperado');",
+     "/** Roda o script REAL lote-pendente.mjs com um drift-script simulado via DRIFT_SCRIPT_OVERRIDE. */",
+     "function runRealWithMock(mockExitCode, summaryPath) {",
+     "  const tmpDir = mkdtempSync(path.join(tmpdir(), 'lote-real-'));",
+     "  writeFileSync(mockScript, `process.exitCode = ${mockExitCode};\\n`);",
+     "  const env = {",
+     "    ...process.env,",
+     "    DESTINO_URL: 'postgres://fake/db',",
+     "    DRIFT_SCRIPT_OVERRIDE: mockScript,",
+     "  const res = spawnSync(process.execPath, [LOTE_SCRIPT], { env, encoding: 'utf8', cwd: REPO_ROOT });",
+     "// GA19: falha de autenticação/carga (exit 2) não deve virar exit 0 nem exit 3.",
+     "// exit 3 é reservado para \"só apply pendente\" — confundir auth failure com apply",
+     "// pendente é o bug que GA19 fecha (reproduzido em run 37355980323).",
+     "test('GA19: psql falso falhando (exit 2) → rc ∉ {0, 3} — erro de carga nao e apply-pendente', () => {",
+     "  const { exitCode } = runRealWithMock(2);",
+     "  assert.notEqual(exitCode, 0, 'exit 2 de auth nao deve virar exit 0');",
+     "  assert.notEqual(exitCode, 3, 'exit 2 de auth nao deve virar exit 3 (apply-pendente)');",
+     "  assert.equal(exitCode, 2, 'exit 2 de auth deve propagar como exit 2');"
+    ],
+    "still_sample": [
+     " * 3. Exit 2 do drift-script → exit 2 e summary \"apply aguardado\"",
+     "  else if (rc === 2) appendFileSync(summaryPath, '### ⏳ Lote pendente — apply aguardado\\\\n');",
+     "test('W26: exit 2 escreve summary \"apply aguardado\"', () => {",
+     "  const { exitCode } = runWithMock(2, summaryPath);",
+     "  assert.equal(exitCode, 2, 'exit 2 esperado');"
+    ]
+   }
+  },
+  {
+   "path": "scripts/db-audit/run-runtime-contract.mjs",
+   "status": "MAIN_UNCHANGED_SINCE_BASE",
+   "patch_lines": 15,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 3,
+    "missing_in_main": 3,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "      // GA18: prevenir traversal de caminho fora do diretorio de contratos.",
+     "      if (/(?:^|\\/)\\.\\.(?:\\/|$)/.test(arquivo)) {",
+     "        throw new Error(`contrato ${origem}: caminho do arquivo nao pode conter \"..\" (\"${arquivo}\")`);"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "scripts/db-audit/validate-post-apply.mjs",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "patch_lines": 558,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 451,
+    "missing_in_main": 451,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "import { spawnSync } from 'node:child_process';",
+     "import { readdirSync } from 'node:fs';",
+     "const VERSION = process.env.TARGET_VERSION;",
+     "const TARGET_NAME = process.env.TARGET_NAME;",
+     "if (!VERSION) {",
+     "  console.error('TARGET_VERSION nao definido.');",
+     "  process.exit(1);",
+     "function runPsql(args, sqlInput) {",
+     "  const hasInput = sqlInput != null;",
+     "  const r = spawnSync(",
+     "    'node',",
+     "    ['scripts/db-audit/psql-safe.mjs', '-X', '-v', 'ON_ERROR_STOP=1', '-At', ...args],",
+     "      encoding: 'utf-8',",
+     "      env: process.env,",
+     "      stdio: hasInput ? ['pipe', 'pipe', 'inherit'] : [process.stdin, 'pipe', 'inherit'],",
+     "      ...(hasInput ? { input: sqlInput } : {}),",
+     "  if (r.status !== 0) {",
+     "    if (r.stderr) process.stderr.write(r.stderr);",
+     "    process.exit(r.status ?? 1);",
+     "  return (r.stdout ?? '').trim();",
+     "function runPsqlFile(filename) {",
+     "  return runPsql(['-f', filename]);",
+     "function assert(cond, msg) {",
+     "  if (!cond) {",
+     "    console.error(msg ?? 'Validacao pos-apply falhou.');"
+    ],
+    "still_sample": [],
+    "same_basename_in_main": []
+   }
+  },
+  {
+   "path": "scripts/db-audit/validate-runtime-proof.mjs",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 67,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 21,
+    "missing_in_main": 20,
+    "removed": 12,
+    "removed_still_in_main": 12,
+    "missing_sample": [
+     "// Extraído de db-migrate.yml (GA16): valida o JSON de runtime emitido por",
+     "// run-runtime-contract.mjs antes de aplicar uma migration. Lê do env:",
+     "//   RUNTIME_JSON            — saída de run-runtime-contract.mjs",
+     "//   TARGET_VERSION          — versão alvo (14 dígitos)",
+     "//   NEEDS_APPLY             — 'true' se a migration ainda não está no banco",
+     "//   APPLY_BUNDLE            — 'true' para bundle atomico",
+     "//   APPLY                   — 'true' para apply real (não dry-run)",
+     "//   CONFIRM_RUNTIME_SHA256  — hash do dry-run anterior (para apply)",
+     "//   GITHUB_SHA              — commit atual",
+     "  console.error('Contrato generico: estrutura de public em '",
+     "    + '; a autorizacao do apply depende da confirmacao do runtime_sha256 do dry-run.');",
+     "const { readdirSync, appendFileSync } = await import('node:fs');",
+     "console.error(modHash.descreverConfirmacao({",
+     "}));",
+     "if (process.env.GITHUB_OUTPUT) {",
+     "  appendFileSync(process.env.GITHUB_OUTPUT, `confirm_runtime_sha256=${confirmacao}\\n`);",
+     "// GA04: hash também vai para stdout para captura em testes e pipelines locais.",
+     "// Qualquer mensagem diagnóstica fica em stderr; stdout é exclusivamente o hash.",
+     "if (process.env.APPLY === 'true' && confirmacao !== process.env.CONFIRM_RUNTIME_SHA256) {",
+     "  console.error('Confirmacao recusada: runtime, arquivo ou commit mudaram desde o dry-run; migration cancelada.');"
+    ],
+    "still_sample": [
+     "// W28 (2026-10-01): extrai a validacao de proof do heredoc inline do db-migrate.yml.",
+     "// Lê RUNTIME_JSON, TARGET_VERSION, NEEDS_APPLY do env; saída:",
+     "//   - stderr: descrição humana do hash de confirmação",
+     "//   - stdout: o hash (CONFIRMATION_HASH) para o bash comparar com CONFIRM_RUNTIME_SHA256",
+     "// Exit != 0 se o proof for inválido.",
+     "  process.stderr.write('Contrato generico: estrutura de public em '",
+     "    + '; a autorizacao do apply depende da confirmacao do runtime_sha256 do dry-run.\\n');",
+     "const { readdirSync } = await import('node:fs');",
+     "// W28: imprime a descricao no stderr (logs do workflow) e o hash no stdout para o",
+     "// bash capturar como CONFIRMATION_HASH e comparar com CONFIRM_RUNTIME_SHA256."
+    ]
+   }
+  },
+  {
+   "path": "scripts/db-audit/validate-runtime-proof.test.mjs",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "patch_lines": 124,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 93,
+    "missing_in_main": 93,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "#!/usr/bin/env node",
+     "// GA04: verifica que validate-runtime-proof.mjs emite o hash confirm_runtime_sha256",
+     "// em stdout (^[a-f0-9]{64}\\n$) e nada mais — mensagens de diagnóstico ficam em stderr.",
+     "// Também cobre run-runtime-contract.mjs: stdout é exclusivamente o JSON de prova.",
+     "import { test } from 'node:test';",
+     "import assert from 'node:assert/strict';",
+     "import { spawnSync } from 'node:child_process';",
+     "import { mkdtempSync, writeFileSync, mkdirSync, rmSync } from 'node:fs';",
+     "import { tmpdir } from 'node:os';",
+     "import { join, dirname } from 'node:path';",
+     "import { fileURLToPath } from 'node:url';",
+     "const RAIZ = join(dirname(fileURLToPath(import.meta.url)), '../..');",
+     "const VALIDAR = join(RAIZ, 'scripts/db-audit/validate-runtime-proof.mjs');",
+     "const RUNTIME_SHA256 = 'a'.repeat(64);",
+     "const GITHUB_SHA = 'b'.repeat(40);",
+     "const STRUCTURE_SHA256 = 'c'.repeat(64);",
+     "// Monta prova genérica válida (contract === 'generic')",
+     "function provaGenerica() {",
+     "  return JSON.stringify({",
+     "    server_major: 17,",
+     "    database: 'postgres',",
+     "    runtime_sha256: RUNTIME_SHA256,",
+     "    contract: 'generic',",
+     "    table_count: 5,",
+     "    function_count: 3,"
+    ],
+    "still_sample": [],
+    "same_basename_in_main": []
+   }
+  },
+  {
+   "path": "scripts/db-audit/verify-ledger-statements.test.mjs",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "patch_lines": 81,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 55,
+    "missing_in_main": 55,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "// GA05: verifica que avaliarStatementsDoLedger normaliza ambos os lados com",
+     "// flatMap(splitStatements) — o CLI pode gravar o cabeçalho \"-- <slug>\" como",
+     "// parte do primeiro statement do ledger (run 37355980323). Sem normalização,",
+     "// o cabeçalho faz o statement diferir do arquivo e o apply é recusado.",
+     "// Fixture tirada da migration real 20261004195051 (gmail_oauth_states).",
+     "import { test } from 'node:test';",
+     "import assert from 'node:assert/strict';",
+     "import { dirname, join } from 'node:path';",
+     "import { fileURLToPath } from 'node:url';",
+     "import { parseMigrationFile } from './register-migration.mjs';",
+     "import { avaliarStatementsDoLedger } from './verify-ledger-statements.mjs';",
+     "const DIR = dirname(fileURLToPath(import.meta.url));",
+     "const FIXTURE = join(DIR, '../../supabase/migrations/20261004195051_gmail_oauth_state_attempts.sql');",
+     "const { statements } = parseMigrationFile(FIXTURE);",
+     "test('GA05: ledger com cabeçalho \"-- <slug>\" no primeiro statement passa (run 37355980323)', () => {",
+     "  // Simula o que o CLI gravava: o slug do arquivo como comentário de cabeçalho",
+     "  // prefixado ao primeiro statement. Sem flatMap(splitStatements) no lado do",
+     "  // ledger isso causava \"statement 1 difere do arquivo\".",
+     "  const comCabecalho = [",
+     "    '-- gmail_oauth_state_attempts\\n' + statements[0],",
+     "    ...statements.slice(1),",
+     "  const r = avaliarStatementsDoLedger({",
+     "    bruto: JSON.stringify(comCabecalho),",
+     "    statementsDoArquivo: statements,",
+     "  assert.ok(r.ok, `esperava ok=true, got: ${JSON.stringify(r)}`);"
+    ],
+    "still_sample": [],
+    "same_basename_in_main": []
+   }
+  },
+  {
+   "path": "scripts/db-audit/verify-ledger-statements.unit.mjs",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "patch_lines": 74,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 52,
+    "missing_in_main": 52,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "// GA05: testes unitários para avaliarStatementsDoLedger",
+     "// Fixture tirada da migration real 20261004195051 (gmail_oauth_state_attempts).",
+     "// Cobertura:",
+     "//   1. ledger com cabeçalho '--' no bruto (run 37355980323) → deve passar",
+     "//   2. bruto vazio → falha (sem linha)",
+     "//   3. statements null → falha",
+     "//   4. arquivo diferente → falha (quantidade ou conteúdo diverge)",
+     "import assert from 'node:assert/strict';",
+     "import { test } from 'node:test';",
+     "import { parseMigrationFile } from './register-migration.mjs';",
+     "import { avaliarStatementsDoLedger } from './verify-ledger-statements.mjs';",
+     "const MIGRATION_PATH = new URL(",
+     "  '../../supabase/migrations/20261004195051_gmail_oauth_state_attempts.sql',",
+     "  import.meta.url,",
+     ").pathname;",
+     "const { statements } = parseMigrationFile(MIGRATION_PATH);",
+     "const jsonBom = JSON.stringify(statements);",
+     "test('GA05: ledger igual ao arquivo → ok', () => {",
+     "  const av = avaliarStatementsDoLedger({ bruto: jsonBom, statementsDoArquivo: statements });",
+     "  assert.equal(av.ok, true);",
+     "  assert.equal(av.total, statements.length);",
+     "test('GA05: bruto com cabeçalho \"-- \" do CLI antes do JSON → ok (run 37355980323)', () => {",
+     "  // psql sem -At em modo legacy podia gravar \"-- \\n<json>\" no stdout",
+     "  const brutoComHeader = `-- \\n${jsonBom}`;",
+     "  // splitStatements é chamado em flatMap no lado do ledger;"
+    ],
+    "still_sample": [],
+    "same_basename_in_main": [
+     "scripts/ci/verify-ledger-statements.unit.mjs"
+    ],
+    "missing_vs_same_basename": 51
+   }
+  },
+  {
+   "path": "scripts/db-migrate/register-deployments.mjs",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "patch_lines": 87,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 64,
+    "missing_in_main": 64,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "#!/usr/bin/env node",
+     "// GA25: registra um Deployment 'producao-ddl' por version aplicada.",
+     "// O guarda vivo (db-live-guard.yml step ddl-sem-deployment) cruza o ledger",
+     "// com esses Deployments para detectar DDL aplicado fora do fluxo.",
+     "const {",
+     "  GITHUB_TOKEN,",
+     "  GITHUB_REPOSITORY,",
+     "  GITHUB_SHA,",
+     "  TARGET_VERSION,",
+     "  APPLY_ALL_MISSING,",
+     "  MISSING_VERSIONS,",
+     "} = process.env;",
+     "const versions =",
+     "  APPLY_ALL_MISSING === 'true'",
+     "    ? (MISSING_VERSIONS || '').split(/\\s+/).filter(Boolean)",
+     "    : TARGET_VERSION",
+     "      ? [TARGET_VERSION]",
+     "      : [];",
+     "if (versions.length === 0) {",
+     "  process.stderr.write('GA25: nenhuma version para registrar Deployment.\\n');",
+     "  process.exit(0);",
+     "const [owner, repo] = GITHUB_REPOSITORY.split('/');",
+     "const apiBase = `https://api.github.com/repos/${owner}/${repo}`;",
+     "const headers = {",
+     "  Authorization: `Bearer ${GITHUB_TOKEN}`,"
+    ],
+    "still_sample": [],
+    "same_basename_in_main": []
+   }
+  },
+  {
+   "path": "scripts/edge-deploy/health-check.mjs",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 82,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 37,
+    "missing_in_main": 32,
+    "removed": 3,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "// GA29: verifica se as funcoes estao listadas na Management API antes do warmup.",
+     "// Lanca se o HTTP nao for 2xx ou se algum slug estiver ausente.",
+     "async function checkFunctionsDeployed({ projectRef, token, slugs, fetchImpl = fetch }) {",
+     "  const url = `${MGMT_BASE}/v1/projects/${projectRef}/functions`;",
+     "  const res = await fetchImpl(url, {",
+     "      'Content-Type': 'application/json',",
+     "    signal: AbortSignal.timeout(30_000),",
+     "  if (!res.ok) {",
+     "    throw new Error(`Management API retornou HTTP ${res.status} ao listar functions`);",
+     "  const fns = await res.json();",
+     "  if (!Array.isArray(fns)) {",
+     "    throw new Error('Resposta inesperada da Management API (esperado array de functions)');",
+     "  if (slugs.length === 0) return;",
+     "  const deployedSlugs = new Set(fns.map((fn) => fn.slug ?? fn.name).filter(Boolean));",
+     "  const missing = slugs.filter((s) => !deployedSlugs.has(s));",
+     "  if (missing.length > 0) {",
+     "    throw new Error(`Functions nao encontradas na Management API apos o deploy: ${missing.join(', ')}`);",
+     "    // GA29: propaga o status HTTP para distinguir 4xx (endpoint errado) de 5xx (serviço fora).",
+     "    const err = new Error(`Management API retornou HTTP ${res.status} na consulta de analytics`);",
+     "    err.httpStatus = res.status;",
+     "    throw err;",
+     "  // GA29: confirmar que as funcoes estao listadas na Management API antes de aguardar warmup.",
+     "    await checkFunctionsDeployed({ projectRef: args.projectRef, token, slugs });",
+     "    console.log(`[health-check] Functions verificadas na Management API (${slugs.length || 'todas'}).`);",
+     "  } catch (err) {"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "scripts/edge-deploy/redigir-log.mjs",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 47,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 18,
+    "missing_in_main": 18,
+    "removed": 3,
+    "removed_still_in_main": 3,
+    "missing_sample": [
+     "const CHAVE_ALVO = /(?:access|refresh)[_%-]?token/gi;",
+     "// GA38: JWT compacto (header.payload.signature), presente em logs de edge function",
+     "// quando o Supabase inclui o Authorization no trace ou o Bearer vem de variavel de ambiente.",
+     "const JWT_PATTERN = /eyJ[\\w-]+\\.[\\w-]+\\.[\\w-]+/g;",
+     "// GA38: cabeçalho Authorization: Bearer <token>",
+     "const BEARER_PATTERN = /(Authorization[:\\s]+Bearer\\s+)[\\w.-]+/gi;",
+     "  // 2. JWT compacto (GA38): eyJ...header.payload.signature",
+     "  saida = saida.replace(JWT_PATTERN, '***');",
+     "  // 3. Authorization Bearer (GA38)",
+     "  saida = saida.replace(BEARER_PATTERN, '$1***');",
+     "  // 4. a chave (access_token/refresh_token), com o que sobrou de valor a' direita.",
+     "  // 5. o nome da chave sem valor (ex.: \"campo access_token ausente\").",
+     "/** Conta tokens residuais no texto redigido (para testes e relatório). */",
+     "export function contarRestantes(texto) {",
+     "  return (",
+     "    (texto.match(JWT_PATTERN) || []).length +",
+     "    (texto.match(BEARER_PATTERN) || []).length +",
+     "    (texto.match(CHAVE_ALVO) || []).length"
+    ],
+    "still_sample": [
+     "const CHAVE_ALVO = /access[_%-]?token/gi;",
+     "  // 2. a chave, com o que sobrou de valor a' direita (`access_token=abc`, `&access_token: x`).",
+     "  // 3. o nome da chave sem valor (ex.: \"campo access_token ausente\")."
+    ]
+   }
+  },
+  {
+   "path": "scripts/edge-deploy/redigir-log.unit.mjs",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 42,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 17,
+    "missing_in_main": 17,
+    "removed": 1,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "import { redigir, contarRestantes } from './redigir-log.mjs';",
+     "test('GA38: JWT compacto e redigido (eyJ...)', () => {",
+     "  const jwt = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIn0.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c';",
+     "  const entrada = `Authorization: Bearer ${jwt}\\ndebug: token=${jwt}`;",
+     "  const saida = redigir(entrada);",
+     "  assert.equal(saida.includes('eyJ'), false, 'JWT nao pode sobrar no log redigido');",
+     "  assert.equal(contarRestantes(saida), 0, 'nenhum token residual apos redigir');",
+     "test('GA38: refresh_token e redigido como access_token', () => {",
+     "  const entrada = 'refresh_token=sbr_abc123def456 e refresh_token ausente';",
+     "  const saida = redigir(entrada, ['sbr_abc123def456']);",
+     "  assert.equal(saida.includes('refresh_token'), false, 'refresh_token nao pode sobrar');",
+     "  assert.equal(saida.includes('sbr_abc123def456'), false, 'valor nao pode sobrar');",
+     "test('GA38: contarRestantes e zero depois de redigir', () => {",
+     "  const jwt = 'eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ1c2VyIn0.abc123def456';",
+     "  const entrada = `access_token=tok123 refresh_token=ref456 Authorization: Bearer ${jwt}`;",
+     "  const saida = redigir(entrada, ['tok123', 'ref456']);",
+     "  assert.equal(contarRestantes(saida), 0);"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/inbox/__tests__/ChatPanel.typing-presence.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 37,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 14,
+    "missing_in_main": 14,
+    "removed": 1,
+    "removed_still_in_main": 1,
+    "missing_sample": [
+     "import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';",
+     "// jsdom nao implementa ResizeObserver nem Element.scrollTo;",
+     "// ChatMessagesArea (renderizada como real neste suite) precisa dos dois.",
+     "beforeAll(() => {",
+     "  class ResizeObserverStub {",
+     "    observe() {}",
+     "    unobserve() {}",
+     "    disconnect() {}",
+     "  (window as unknown as { ResizeObserver: typeof ResizeObserverStub }).ResizeObserver = ResizeObserverStub;",
+     "  (Element.prototype as unknown as { scrollTo: unknown }).scrollTo = vi.fn();",
+     "  Object.defineProperty(Element.prototype, 'clientHeight', { get: () => 600, configurable: true });",
+     "  Object.defineProperty(Element.prototype, 'getBoundingClientRect', {",
+     "    value: () => ({ x: 0, y: 0, width: 800, height: 600, top: 0, left: 0, right: 800, bottom: 600, toJSON: () => ({}) }),",
+     "    configurable: true,"
+    ],
+    "still_sample": [
+     "import { beforeEach, describe, expect, it, vi } from 'vitest';"
+    ]
+   }
+  },
+  {
+   "path": "src/components/inbox/__tests__/RealtimeInboxView.pagination.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 33,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 11,
+    "missing_in_main": 11,
+    "removed": 1,
+    "removed_still_in_main": 1,
+    "missing_sample": [
+     "import { describe, it, expect, vi, beforeAll, beforeEach } from 'vitest';",
+     "// jsdom nao implementa ResizeObserver nem Element.scrollTo;",
+     "// ChatMessagesArea (renderizada como real neste suite) precisa dos dois.",
+     "beforeAll(() => {",
+     "  class ResizeObserverStub {",
+     "    observe() {}",
+     "    unobserve() {}",
+     "    disconnect() {}",
+     "  (window as unknown as { ResizeObserver: typeof ResizeObserverStub }).ResizeObserver = ResizeObserverStub;",
+     "  (Element.prototype as unknown as { scrollTo: unknown }).scrollTo = vi.fn();",
+     "  Object.defineProperty(HTMLElement.prototype, 'clientHeight', { get: () => 600, configurable: true });"
+    ],
+    "still_sample": [
+     "import { describe, it, expect, vi, beforeEach } from 'vitest';"
+    ]
+   }
+  },
+  {
+   "path": "src/components/inbox/chat/ChatMessagesArea.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 66,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 22,
+    "missing_in_main": 20,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  // GA53: permite que scrollToBottomAfterSend e scrollToMessage forcem a rolagem",
+     "  // mesmo quando isNearBottomRef é false (o usuário pode estar no histórico ao enviar",
+     "  // ou ao navegar para uma mensagem citada). scrollToFn intercepta TODOS os scrolls",
+     "  // do virtualizer — internos (count++) e explícitos — e bloqueia os implícitos quando",
+     "  // o usuário não está acompanhando a conversa.",
+     "  const forceScrollRef = useRef(false);",
+     "  // GA53: intercepta TODOS os scrolls gerados pelo virtualizer (internos ao incrementar",
+     "  // count + explícitos via scrollToIndex). Scrolls implícitos (ex.: re-render ao chegar",
+     "  // nova mensagem) só passam quando o usuário já está no final — evita arrastar quem está",
+     "  // lendo o histórico. Scrolls explícitos (envio próprio, navegação para mensagem citada)",
+     "  // usam forceScrollRef para contornar a guarda.",
+     "  const scrollToFn = useCallback(",
+     "    (offset: number) => {",
+     "      if (!isNearBottomRef.current && !forceScrollRef.current) return;",
+     "      el.scrollTo({ top: offset });",
+     "    scrollToFn,",
+     "      forceScrollRef.current = true;",
+     "      forceScrollRef.current = false;",
+     "        forceScrollRef.current = true;",
+     "        forceScrollRef.current = false;"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/inbox/chat/__tests__/ChatMessagesArea.agrupar-envio.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 60,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 17,
+    "missing_in_main": 11,
+    "removed": 12,
+    "removed_still_in_main": 12,
+    "missing_sample": [
+     "    const h = (target as HTMLElement).getAttribute?.('role') === 'log' ? 600 : ALTURA_ITEM;",
+     "            height: h, width: 800, top: 0, left: 0,",
+     "            bottom: h, right: 800, x: 0, y: 0, toJSON: () => ({}),",
+     "          borderBoxSize: [{ blockSize: h, inlineSize: 800 }],",
+     "          contentBoxSize: [{ blockSize: h, inlineSize: 800 }],",
+     "  // @tanstack/react-virtual v3.13+ returns [] when containerSize=0 (jsdom default).",
+     "  const _origGetBCR = Element.prototype.getBoundingClientRect;",
+     "  Element.prototype.getBoundingClientRect = function (this: Element) {",
+     "    if ((this as HTMLElement).getAttribute?.('role') === 'log') {",
+     "      return { x: 0, y: 0, width: 800, height: 600, top: 0, left: 0, right: 800, bottom: 600, toJSON: () => ({}) } as DOMRect;",
+     "    return _origGetBCR.call(this);"
+    ],
+    "still_sample": [
+     "    setTimeout(() => {",
+     "      this.cb(",
+     "            target,",
+     "            contentRect: {",
+     "              height: ALTURA_ITEM, width: 800, top: 0, left: 0,",
+     "              bottom: ALTURA_ITEM, right: 800, x: 0, y: 0, toJSON: () => ({}),",
+     "            } as DOMRectReadOnly,",
+     "            borderBoxSize: [{ blockSize: ALTURA_ITEM, inlineSize: 800 }],",
+     "            contentBoxSize: [{ blockSize: ALTURA_ITEM, inlineSize: 800 }],",
+     "            devicePixelContentBoxSize: [],"
+    ]
+   }
+  },
+  {
+   "path": "src/components/inbox/chat/__tests__/ChatMessagesArea.movimento-reduzido.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 60,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 17,
+    "missing_in_main": 11,
+    "removed": 12,
+    "removed_still_in_main": 12,
+    "missing_sample": [
+     "    const h = (target as HTMLElement).getAttribute?.('role') === 'log' ? 600 : 120;",
+     "            height: h, width: 800, top: 0, left: 0,",
+     "            bottom: h, right: 800, x: 0, y: 0, toJSON: () => ({}),",
+     "          borderBoxSize: [{ blockSize: h, inlineSize: 800 }],",
+     "          contentBoxSize: [{ blockSize: h, inlineSize: 800 }],",
+     "  // @tanstack/react-virtual v3.13+ returns [] when containerSize=0 (jsdom default).",
+     "  const _origGetBCR = Element.prototype.getBoundingClientRect;",
+     "  Element.prototype.getBoundingClientRect = function (this: Element) {",
+     "    if ((this as HTMLElement).getAttribute?.('role') === 'log') {",
+     "      return { x: 0, y: 0, width: 800, height: 600, top: 0, left: 0, right: 800, bottom: 600, toJSON: () => ({}) } as DOMRect;",
+     "    return _origGetBCR.call(this);"
+    ],
+    "still_sample": [
+     "    setTimeout(() => {",
+     "      this.cb(",
+     "            target,",
+     "            contentRect: {",
+     "              height: 120, width: 800, top: 0, left: 0,",
+     "              bottom: 120, right: 800, x: 0, y: 0, toJSON: () => ({}),",
+     "            } as DOMRectReadOnly,",
+     "            borderBoxSize: [{ blockSize: 120, inlineSize: 800 }],",
+     "            contentBoxSize: [{ blockSize: 120, inlineSize: 800 }],",
+     "            devicePixelContentBoxSize: [],"
+    ]
+   }
+  },
+  {
+   "path": "src/components/inbox/chat/__tests__/ChatMessagesArea.pagination.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 13,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 2,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  // jsdom nao implementa Element.scrollTo; ChatMessagesArea.tsx chama el.scrollTo({ top: offset })"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/hooks/__tests__/useOfflineCache.test.ts",
+   "status": "MAIN_UNCHANGED_SINCE_BASE",
+   "patch_lines": 12,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  log: { debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() },"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/hooks/system/useOfflineCache.ts",
+   "status": "MAIN_UNCHANGED_SINCE_BASE",
+   "patch_lines": 14,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 2,
+    "removed_still_in_main": 2,
+    "missing_sample": [
+     "import { log } from '@/lib/logger';"
+    ],
+    "still_sample": [
+     "import { getLogger } from '@/lib/logger';",
+     "const log = getLogger('OfflineCache');"
+    ]
+   }
+  },
+  {
+   "path": "src/lib/invokeEdge.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 15,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 2,
+    "removed_still_in_main": 2,
+    "missing_sample": [
+     "import { log, generateCorrelationId } from '@/lib/logger';"
+    ],
+    "still_sample": [
+     "import { createLogger, generateCorrelationId } from '@/lib/logger';",
+     "const log = createLogger('edge-invoke');"
+    ]
+   }
+  },
+  {
+   "path": "src/lib/safeStorage.ts",
+   "status": "MAIN_UNCHANGED_SINCE_BASE",
+   "patch_lines": 15,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 2,
+    "removed_still_in_main": 2,
+    "missing_sample": [
+     "import { log } from '@/lib/logger';"
+    ],
+    "still_sample": [
+     "import { getLogger } from '@/lib/logger';",
+     "const log = getLogger('SafeStorage');"
+    ]
+   }
+  },
+  {
+   "path": "src/pages/__tests__/ChatPopup.messageBalloon.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 339,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 264,
+    "removed_still_in_main": 264,
+    "missing_sample": [
+     "PLACEHOLDER_BALLOON"
+    ],
+    "still_sample": [
+     " * R2-INB-023 (prova observável) — pelo caminho REAL",
+     " * `ChatPopup -> ChatPanel -> ChatMessagesArea -> MessageBubble`, o balão tem de",
+     " * renderizar o que o registro do popup promete:",
+     " *   - `is_deleted`  → placeholder \"Você apagou esta mensagem\" (não o balão ativo);",
+     " *   - `isEdited`    → marcador \"editada\";",
+     " *   - `link_preview`→ cartão de preview do link;",
+     " *   - `location`    → o balão de localização.",
+     " * Antes da correção o popup remontava a mensagem com um subconjunto de campos e",
+     " * todos esses ramos caíam para \"sem dado\": nada disso aparecia.",
+     " * Só o balão é REAL aqui; seus filhos pesados (mapa, player, toolbar) entram"
+    ]
+   }
+  },
+  {
+   "path": "src/pages/__tests__/ChatPopup.pagination.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 375,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 289,
+    "removed_still_in_main": 289,
+    "missing_sample": [
+     "PLACEHOLDER_PAGINATION"
+    ],
+    "still_sample": [
+     " * R2-INB-004 (etapa 3/3) — o histórico antigo tem de ser alcançável também na rota",
+     " * ChatPopup (janela destacada do chat).",
+     " * O popup já chamava `useMessages`, mas extraía apenas `messages`/`loading` e",
+     " * descartava `hasOlder`/`loadingOlder`/`loadOlderMessages` do hook — ou seja,",
+     " * mesmo com a Inbox principal corrigida, a janela do popup ficava presa nas",
+     " * últimas 1000 mensagens, sem nenhum caminho de UI para o histórico anterior.",
+     " * O teste monta o caminho REAL `ChatPopup -> ChatPanel -> ChatMessagesArea`",
+     " * (só o `useMessages` — e o `contactId` da rota — vem de fachada controlada) e",
+     " * prova, por página:",
+     " *   - a página de 1000 mensagens carregada + `hasOlder` = controle visível;"
+    ]
+   }
+  },
+  {
+   "path": "supabase/deployment-manifest.json",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 118,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 16,
+    "missing_in_main": 16,
+    "removed": 16,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "      \"bytes\": 7475,",
+     "      \"sha256\": \"3171ca7e6dba15bc607cad8b3cc7f4b97ca78b5b34076bd8d5e123c845db3624\"",
+     "      \"bytes\": 28328,",
+     "      \"sha256\": \"cd58daab313a9f2851a7ab8b26d78f06918408400d588e55a565be74219e3930\"",
+     "      \"bytes\": 29419,",
+     "      \"sha256\": \"a855f8fff5630320909d7a091d9276c7466dbaca6d0b92c1c1d274847c8ef343\"",
+     "      \"bytes\": 75768,",
+     "      \"sha256\": \"d6c6e72e431ede6e276f63a6705a04f418fb618f47c9cca4d4448b7762e13aa1\"",
+     "      \"source_sha256\": \"d705c4d930193bc59135b515a45090779835110b2fadd0adac9f420851e30324\",",
+     "      \"source_sha256\": \"394977459c3195eb4b2b0069c1d48d1ddc9330128ea84ba4e24d8062ae5b1232\",",
+     "      \"source_sha256\": \"9746c2003e2f7190fde1e606e73a43df3e9b9216a97f7c66b0fbd3b9dcec45ba\",",
+     "      \"source_sha256\": \"5ca3400f1fd4779e39af99978a452741d95afbe8576741cae2df9d3195639544\",",
+     "      \"source_sha256\": \"b7bbb077c03d5dffb541dcebeea7cf5cb5875a2c08ddbb97092c97fc5925916c\",",
+     "      \"source_sha256\": \"b92849e686721eae4ab456b70428fe7c545d2bcd87f01cf96e5eb759fd15487f\",",
+     "      \"source_sha256\": \"80e121807ea5926d6fd90be6ec6fe36ae9eebc9f918b4bd792710bc5295ca8b3\",",
+     "  \"manifest_sha256\": \"a882c6b0a242b6ed39613db6ad6a107b53cbe97a8bc2bd73919a8df4c52491ab\""
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "supabase/functions/_shared/gmail-helpers.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 17,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 3,
+    "missing_in_main": 2,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "export function gmailReauthErrorPayload(): { code: string; message: string } {",
+     "  return { code: \"reauth_required\", message: GMAIL_REAUTH_MESSAGE };"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "supabase/functions/evolution-api/index.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 1226,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 1011,
+    "removed_still_in_main": 901,
+    "missing_sample": [
+     "PLACEHOLDER_EVOLUTION"
+    ],
+    "still_sample": [
+     "import { serve } from \"https://deno.land/std@0.168.0/http/server.ts\";",
+     "import { proxyToEvolution, resolvePrivateBucketUrl } from \"../_shared/evolution-api-proxy.ts\";",
+     "import { goHistoryNotSupported } from \"../_shared/evolution-sync-actions.ts\";",
+     "// E45 (SL-050): o corpo passa por schema (ação conhecida + instância alvo).",
+     "// R2-API-015: rotas de ciclo de sessão (connect/status/disconnect) por flavor.",
+     "import {",
+     "  qrFromV2Connect,",
+     "  resolveEvolutionFlavor,",
+     "  resolveSessionApiKey,",
+     "  resolveSessionRoute,"
+    ]
+   }
+  },
+  {
+   "path": "supabase/migrations/20261016250000_e2e_fixture_message_rpc.sql",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "patch_lines": 63,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 49,
+    "missing_in_main": 49,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "-- rollback: drop function if exists public.e2e_fixture_message(text);",
+     "-- GA11 (docs/audits/PLANO_GITHUB_ACTIONS_100_ETAPAS_2026-10-15.md):",
+     "-- substitui o INSERT/DELETE direto via REST na tabela `messages` pelo E2E",
+     "-- logado por uma RPC SECURITY DEFINER — elimina `message_sender_forbidden`.",
+     "-- Causa: `guard_message_provenance_fields()` (20261006114108) bloqueia INSERT",
+     "-- com sender != 'agent' para qualquer `authenticated`; o teardown usava sender",
+     "-- 'contact', o que levantava `message_sender_forbidden` no CI.",
+     "-- SECURITY DEFINER faz o INSERT rodar como `postgres` (dono da função),",
+     "-- que está na lista de bypass do trigger (`current_user IN ('postgres','service_role')`).",
+     "-- Três exigências, nenhuma cosmética:",
+     "--   1. SECURITY DEFINER — `authenticated` não pode inserir sender='contact'.",
+     "--   2. Só o contato de fixture — contact_id fixo; evita poluir outras conversas.",
+     "--   3. Só o usuário de teste — auth.uid() verificado; sem esse guarda a função",
+     "--      seria um INSERT/DELETE genérico para qualquer `authenticated`.",
+     "create or replace function public.e2e_fixture_message(p_op text)",
+     "returns integer",
+     "language plpgsql",
+     "security definer",
+     "set search_path = pg_catalog, public",
+     "as $e2e_fixture_message$",
+     "declare",
+     "  v_contato constant uuid := '04dff4dc-c6b1-4283-ac22-bd8639804759';",
+     "  v_usuario constant uuid := 'aaa9b766-3b72-403d-95ad-f9cd7301ebca';",
+     "  v_linhas  integer;",
+     "begin"
+    ],
+    "still_sample": [],
+    "same_basename_in_main": []
+   }
+  }
+ ],
+ "counts": {
+  "migrations": "1",
+  "workflows": "14",
+  "src": "12",
+  "edges": "2",
+  "docs_only": "no",
+  "lines_branch_has_main_lacks": "5036",
+  "lines_main_has_branch_lacks": "5085"
+ },
+ "auto": "MISTO_CONFLITO",
+ "n_files_with_gaps": 81,
+ "gap_lines_total": 4417
+}

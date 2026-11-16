@@ -1,0 +1,117 @@
+{
+ "id": "claude__feat-talkx-x047-matrix-estados-261101-2030",
+ "kind": "branch",
+ "ref": "origin/claude/feat-talkx-x047-matrix-estados-261101-2030",
+ "tip": "8f619c709d72f4638087ef8b9f42631537f2711e",
+ "merge_base": "1252bb5a41123ba4d49efd84d0f91604bff6c87c",
+ "ahead": 2,
+ "last_commit_date": "2026-11-01",
+ "merge_base_date": "2026-11-01",
+ "prs_with_same_tip": [
+  2546
+ ],
+ "triagem_2804": {
+  "2546": "OBSOLETA"
+ },
+ "closure_comment": {},
+ "files": [
+  {
+   "path": "docs/reconciliation/tasks/P046.json",
+   "status": "MAIN_UNCHANGED_SINCE_BASE",
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "patch_lines": 21164,
+   "line_check": {
+    "added": 16183,
+    "missing_in_main": 16183,
+    "removed": 1,
+    "removed_still_in_main": 1,
+    "missing_sample": [
+     "  \"plan\": {",
+     "    \"plan_id\": \"docs--talkx--plano_talkx_v4_200_etapas_2026-10-01\",",
+     "    \"path\": \"docs/talkx/PLANO_TALKX_V4_200_ETAPAS_2026-10-01.md\",",
+     "    \"title\": \"Talk X · Campanhas — Plano V4: 200 etapas para o módulo ter tudo o que as 17 imagens mostram\",",
+     "    \"source_sha\": \"62a84a216c6347dd5d2788f661908ebe43b1c5e5\",",
+     "    \"definition_ref\": \"2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6\",",
+     "    \"source_kind\": \"GIT\",",
+     "    \"expected_tasks\": 200,",
+     "    \"observed_tasks\": 200,",
+     "    \"missing_numbers\": [],",
+     "    \"extraction_style\": \"table\",",
+     "    \"authority\": \"CURRENT_REFERENCE\",",
+     "    \"evidence_refs\": [],",
+     "    \"module\": \"Talk X\",",
+     "    \"successors\": [],",
+     "    \"basis\": \"Referência localizada e confrontada com evidências do baseline; um plano não concede autorização de execução.\",",
+     "    \"evidence\": [],",
+     "    \"automatic_execution_authorized\": false,",
+     "    \"record_id\": \"P046\",",
+     "    \"task_file\": \"tasks/P046.json\",",
+     "    \"status_counts\": {",
+     "      \"DONE_VERIFIED\": 2,",
+     "      \"VALIDATED_FAIL\": 1,",
+     "      \"IMPLEMENTED_AWAITING_RUNTIME_EVIDENCE\": 28,",
+     "      \"PARTIAL\": 114,"
+    ],
+    "still_sample": [
+     "{\"plan\":{\"plan_id\":\"docs--talkx--plano_talkx_v4_200_etapas_2026-10-01\",\"path\":\"docs/talkx/PLANO_TALKX_V4_200_ETAPAS_2026-10-01.md\",\"title\":\"Talk X · Campanhas —"
+    ]
+   }
+  },
+  {
+   "path": "src/components/talkx/__tests__/talkxStates.matrix.test.tsx",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "patch_lines": 347,
+   "line_check": {
+    "added": 256,
+    "missing_in_main": 256,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     " * X047 — matriz tela×estado: erro chega ao boundary, vazio não aparece.",
+     " * Uma linha por tela que usa TalkXQueryBoundary. Para cada tela:",
+     " *   - hook/prop de erro ativado → \"Não foi possível carregar …\" aparece",
+     " *   - texto de vazio NÃO aparece",
+     " *   - conteúdo NÃO aparece",
+     " * Cobertura complementar (estados de loading, retry, aria-busy) fica nos",
+     " * arquivos *.states.test.tsx por tela — este arquivo só trava a invariante",
+     " * central da matriz.",
+     "import { describe, it, expect, vi, beforeEach } from 'vitest';",
+     "import { render, screen, waitFor } from '@testing-library/react';",
+     "import React from 'react';",
+     "import { QueryClientProvider } from '@tanstack/react-query';",
+     "import { createTestQueryClient } from '@/test/mocks/queryClient';",
+     "// ---------------------------------------------------------------------------",
+     "// Mocks globais — declarados antes dos imports dos componentes",
+     "// ---------------------------------------------------------------------------",
+     "vi.mock('@/hooks/integrations/useTalkX', () => ({",
+     "  useTalkX: () => ({",
+     "    campaigns: [],",
+     "    isLoading: false,",
+     "    isError: true,",
+     "    error: new Error('X047-matrix'),",
+     "    isFetching: false,",
+     "    refetchCampaigns: vi.fn(),",
+     "    startCampaign: vi.fn(),"
+    ],
+    "still_sample": [],
+    "same_basename_in_main": [
+     "src/components/talkx/kit/__tests__/talkxStates.matrix.test.tsx"
+    ],
+    "missing_vs_same_basename": 202
+   }
+  }
+ ],
+ "counts": {
+  "migrations": "0",
+  "workflows": "0",
+  "src": "1",
+  "edges": "0",
+  "docs_only": "no",
+  "lines_branch_has_main_lacks": "21498",
+  "lines_main_has_branch_lacks": "1"
+ },
+ "auto": "TRABALHO_AUSENTE_APLICA_LIMPO",
+ "n_files_with_gaps": 2,
+ "gap_lines_total": 16440
+}

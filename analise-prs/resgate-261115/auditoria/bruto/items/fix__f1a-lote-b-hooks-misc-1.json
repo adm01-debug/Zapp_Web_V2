@@ -1,0 +1,49 @@
+{
+ "id": "fix__f1a-lote-b-hooks-misc-1",
+ "kind": "branch",
+ "ref": "origin/fix/f1a-lote-b-hooks-misc-1",
+ "tip": "ff66b4565275a4b77825706a49894ebc97aafd5c",
+ "merge_base": "9d65fed626e05a9582c56badade4d2e6afaf9356",
+ "ahead": 1,
+ "last_commit_date": "2026-10-18",
+ "merge_base_date": "2026-10-18",
+ "prs_with_same_tip": [
+  2074
+ ],
+ "triagem_2804": {
+  "2074": "JA_NA_MAIN"
+ },
+ "closure_comment": {},
+ "files": [
+  {
+   "path": "src/hooks/ui/useScreenProtection.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 16,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 5,
+    "missing_in_main": 3,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "      // O usuário pode estar de olho em outra janela quando a proteção entra:",
+     "      // role=\"alert\" + aria-live=\"assertive\" anuncia pro leitor de tela sem",
+     "      // precisar de foco no overlay."
+    ],
+    "still_sample": []
+   }
+  }
+ ],
+ "counts": {
+  "migrations": "0",
+  "workflows": "0",
+  "src": "1",
+  "edges": "0",
+  "docs_only": "no",
+  "lines_branch_has_main_lacks": "3",
+  "lines_main_has_branch_lacks": "0"
+ },
+ "auto": "MISTO_CONFLITO",
+ "n_files_with_gaps": 1,
+ "gap_lines_total": 3
+}

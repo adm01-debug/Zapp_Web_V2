@@ -1,0 +1,68 @@
+[
+ {
+  "commit": "0eb602d20",
+  "arquivo": "src/components/team-chat/TeamChatView.tsx",
+  "linhas": 6,
+  "amostra": [
+   "    if (conversationsLoading || conversations.length === 0) return;",
+   "    const params = new URLSearchParams(window.location.search);",
+   "    const cid = params.get('cid');",
+   "    if (conversations.some(c => c.id === cid)) {",
+   "      setSelectedId(cid);",
+   "  }, [conversations, conversationsLoading]);"
+  ]
+ },
+ {
+  "commit": "0985d072c",
+  "arquivo": "src/components/team-chat/TeamChatView.tsx",
+  "linhas": 5,
+  "amostra": [
+   "  const [navTick, setNavTick] = useState(0);",
+   "    const onNavigate = () => setNavTick((n) => n + 1);",
+   "    if (conversationsLoading) return;",
+   "    const cid = url.searchParams.get('cid');",
+   "  }, [conversations, conversationsLoading, navTick]);"
+  ]
+ },
+ {
+  "commit": "0985d072c",
+  "arquivo": "src/components/team-chat/__tests__/TeamChatView.deeplink.test.tsx",
+  "linhas": 3,
+  "amostra": [
+   "  useTeamConversations: () => ({ data: conversas, isLoading: false }),",
+   "  TeamChatPanel: ({ conversation }: { conversation: { id: string } }) => <div data-testid=\"painel\">{conversation.id}</div>,",
+   "vi.mock('../TeamMemberDetails', () => ({ TeamMemberDetails: () => null }));"
+  ]
+ },
+ {
+  "commit": "ca90d5c04",
+  "arquivo": "src/components/team-chat/TeamChatView.tsx",
+  "linhas": 6,
+  "amostra": [
+   "      setPickedId(null);",
+   "    if (deepLinkCid) stripCidParam();",
+   "  }, [deepLinkCid]);",
+   "  const deepLinkedId =",
+   "    !conversationsLoading && deepLinkCid && conversations.some(c => c.id === deepLinkCid) ? deepLinkCid : null;",
+   "  const selectedId = pickedId ?? deepLinkedId;"
+  ]
+ },
+ {
+  "commit": "c8c604c7e",
+  "arquivo": "src/components/team-chat/TeamChatView.tsx",
+  "linhas": 2,
+  "amostra": [
+   "  const deepLinkMissing =",
+   "  const deepLinkedId = !conversationsLoading && !deepLinkMissing ? deepLinkCid : null;"
+  ]
+ },
+ {
+  "commit": "c8c604c7e",
+  "arquivo": "src/components/team-chat/__tests__/TeamChatView.deeplink.test.tsx",
+  "linhas": 2,
+  "amostra": [
+   "  useTeamConversations: () => ({ data: conversas, isLoading: carregando }),",
+   "  it('lista carregada SEM a conversa do deep-link descarta o pedido: ela não abre sozinha quando surgir depois', () => {"
+  ]
+ }
+]

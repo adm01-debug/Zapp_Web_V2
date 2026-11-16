@@ -1,0 +1,26 @@
+{
+ "id": "pr-3085",
+ "kind": "pr",
+ "ref": "refs/remotes/pr/3085",
+ "pr": 3085,
+ "tip": "2f1867d94fe233eeef33528b5968699a28115102",
+ "merge_base": "3f5e642e6b27b443541c2b6879230a7fef606d0c",
+ "ahead": 2,
+ "last_commit_date": "2026-11-14",
+ "merge_base_date": "2026-11-14",
+ "triagem_2804": null,
+ "closure_comment": {
+  "title": "fix(db): encerrar conversa reaberta grava o encerramento antes de mudar o status",
+  "last_comment": "Conteúdo integrado na `main` pelo pacote 6 ([#3113](https://github.com/adm01-debug/Zapp_Web_V2/pull/3113), commit `41853318cd`). |  | Conferido byte a byte depois do merge: a migration desta PR está idêntica na `main`, com o timestamp original `20261114120000` preservado. Ela colidia com as migrations d"
+ },
+ "files": [
+  {
+   "path": "supabase/migrations/20261114120000_set_conversations_status_encerramento_repetido.sql",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  }
+ ],
+ "auto": "INCORPORADA_PROVA_PATCH",
+ "n_files_with_gaps": 0,
+ "gap_lines_total": 0
+}

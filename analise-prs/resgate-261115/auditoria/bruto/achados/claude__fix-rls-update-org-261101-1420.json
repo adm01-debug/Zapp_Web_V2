@@ -1,0 +1,15 @@
+[
+ {
+  "commit": "5ce184017",
+  "arquivo": "supabase/migrations/20261030155126_rls_update_with_check_explicit.sql",
+  "linhas": 54,
+  "amostra": [
+   "-- CRITICAL-2 audit closure: policies UPDATE sem organization_id",
+   "-- Resultado da investigação (2026-11-01):",
+   "--   • Schema não possui coluna organization_id em nenhuma tabela",
+   "--   • Sistema é single-tenant (10 usuários, 2 conexões WhatsApp)",
+   "--   • Nenhuma das 82 policies UPDATE permite UPDATE cross-tenant real",
+   "--   • O alerta era falso positivo: auditador assumiu multi-tenancy inexistente"
+  ]
+ }
+]

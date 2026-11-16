@@ -1,0 +1,51 @@
+{
+ "id": "claude_04__intelligent-babbage-bo2g5s",
+ "kind": "branch",
+ "ref": "origin/claude_04/intelligent-babbage-bo2g5s",
+ "tip": "1adaffb06d53952388350f7bcd032baf9d2949ab",
+ "merge_base": "c4280ef4c0f6acdcc5291ae17e40f75df96f69c3",
+ "ahead": 2,
+ "last_commit_date": "2026-11-02",
+ "merge_base_date": "2026-11-02",
+ "prs_with_same_tip": [
+  2601
+ ],
+ "triagem_2804": {
+  "2601": "JA_NA_MAIN"
+ },
+ "closure_comment": {},
+ "files": [
+  {
+   "path": "src/lib/serverLogin.ts",
+   "status": "BOTH_CHANGED",
+   "hunk": "CONFLICT",
+   "patch_lines": 22,
+   "line_check": {
+    "added": 5,
+    "missing_in_main": 5,
+    "removed": 5,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     " * 25s — a edge levou ~20 s no ambiente E2E (us-west-2 forcado); 12s cortava",
+     " * logins legitimos no CI. O resultado da expiracao entra no caminho de",
+     " * `unavailable`, entao a falha continua FECHADA (nunca cai no GoTrue direto)",
+     " * e o lockout segue sendo aplicado pela Edge.",
+     "export const AUTH_LOGIN_TIMEOUT_MS = 25_000;"
+    ],
+    "still_sample": []
+   }
+  }
+ ],
+ "counts": {
+  "migrations": "0",
+  "workflows": "0",
+  "src": "1",
+  "edges": "0",
+  "docs_only": "no",
+  "lines_branch_has_main_lacks": "26",
+  "lines_main_has_branch_lacks": "6"
+ },
+ "auto": "MISTO_CONFLITO",
+ "n_files_with_gaps": 1,
+ "gap_lines_total": 5
+}

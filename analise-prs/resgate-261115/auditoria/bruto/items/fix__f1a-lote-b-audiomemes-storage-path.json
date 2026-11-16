@@ -1,0 +1,121 @@
+{
+ "id": "fix__f1a-lote-b-audiomemes-storage-path",
+ "kind": "branch",
+ "ref": "origin/fix/f1a-lote-b-audiomemes-storage-path",
+ "tip": "7fb8f446434590f356cf74be365ea911f5a9af83",
+ "merge_base": "bac62ba98454811c3bfd117b838af926b1e795b2",
+ "ahead": 3,
+ "last_commit_date": "2026-10-23",
+ "merge_base_date": "2026-10-23",
+ "prs_with_same_tip": [
+  2066
+ ],
+ "triagem_2804": {
+  "2066": "JA_NA_MAIN"
+ },
+ "closure_comment": {},
+ "files": [
+  {
+   "path": "src/hooks/communication/__tests__/useAudioMemes.pasta-usuario.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 64,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 23,
+    "missing_in_main": 13,
+    "removed": 13,
+    "removed_still_in_main": 13,
+    "missing_sample": [
+     "const mocks = vi.hoisted(() => {",
+     "  // useAudioMemes assina `audio_memes`/`audio_meme_favorites` via Realtime",
+     "  // (dois `.on()` encadeados antes do `.subscribe()`); sem o mock encadeável,",
+     "  // montar o componente quebra com \"supabase.channel is not a function\".",
+     "  const realtimeChannel: { on: () => unknown; subscribe: () => unknown } = {",
+     "    on: () => realtimeChannel,",
+     "    subscribe: () => realtimeChannel,",
+     "  return {",
+     "    realtimeChannel,",
+     "    channel: () => mocks.realtimeChannel,",
+     "    removeChannel: () => {},",
+     "    expect(mocks.toastError).toHaveBeenCalledWith(",
+     "      'Sessão expirada: entre novamente para enviar o áudio'"
+    ],
+    "still_sample": [
+     "const mocks = vi.hoisted(() => ({",
+     "  storageFrom: vi.fn(),",
+     "  upload: vi.fn(),",
+     "  remove: vi.fn(),",
+     "  getPublicUrl: vi.fn(),",
+     "  rpc: vi.fn(),",
+     "  invoke: vi.fn(),",
+     "  tableFrom: vi.fn(),",
+     "  getUser: vi.fn(),",
+     "  toastError: vi.fn(),"
+    ]
+   }
+  },
+  {
+   "path": "src/hooks/communication/useAudioMemes.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 438,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 157,
+    "missing_in_main": 89,
+    "removed": 102,
+    "removed_still_in_main": 101,
+    "missing_sample": [
+     "  useEffect(",
+     "    () => () => {",
+     "      void discardUnconfirmedUpload(false);",
+     "    [discardUnconfirmedUpload]",
+     "    if (open)",
+     "      queueMicrotask(() => {",
+     "        if (active) fetchMemes();",
+     "    else",
+     "      queueMicrotask(() => {",
+     "      .on(",
+     "        'postgres_changes',",
+     "        { event: '*', schema: 'public', table: 'audio_meme_favorites' },",
+     "        () => {",
+     "  const handlePreview = useCallback(",
+     "    (meme: AudioMemeItem) => {",
+     "    [playingId, releasePreview, stopPreview]",
+     "      // PK-16/PK-17: a policy de INSERT do bucket `audio-memes` exige a pasta do",
+     "      // PRÓPRIO usuário (`(storage.foldername(name))[1] = auth.uid()`) — subir a",
+     "      // chave solta funciona só para admin; o atendente comum recebia 42501 e o",
+     "      // objeto ficava sem dono para o RLS. Mesmo padrão de `useCustomEmojis.ts`.",
+     "      const {",
+     "        data: { user },",
+     "      } = await supabase.auth.getUser();",
+     "      const contentType = converted.ok ? 'audio/mpeg' : file.type || 'audio/mpeg';",
+     "      if (uploadError) {"
+    ],
+    "still_sample": [
+     "  useEffect(() => () => { void discardUnconfirmedUpload(false); }, [discardUnconfirmedUpload]);",
+     "    if (open) queueMicrotask(() => { if (active) fetchMemes(); });",
+     "    else queueMicrotask(() => { void discardUnconfirmedUpload(true); });",
+     "      .on('postgres_changes', { event: '*', schema: 'public', table: 'audio_meme_favorites' }, () => {",
+     "        if (active) void fetchMemes();",
+     "  const handlePreview = useCallback((meme: AudioMemeItem) => {",
+     "    if (playingId === meme.id) {",
+     "      stopPreview();",
+     "      return;",
+     "    // R2-INB-041 — a prévia anterior sai de cena: solta o bind antes de criar a nova."
+    ]
+   }
+  }
+ ],
+ "counts": {
+  "migrations": "0",
+  "workflows": "0",
+  "src": "2",
+  "edges": "0",
+  "docs_only": "no",
+  "lines_branch_has_main_lacks": "218",
+  "lines_main_has_branch_lacks": "135"
+ },
+ "auto": "MISTO_CONFLITO",
+ "n_files_with_gaps": 2,
+ "gap_lines_total": 216
+}

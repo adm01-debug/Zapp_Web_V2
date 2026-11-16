@@ -1,0 +1,48 @@
+{
+ "id": "pr-3095",
+ "kind": "pr",
+ "ref": "refs/remotes/pr/3095",
+ "pr": 3095,
+ "tip": "52a66647c1acfd7aad532de38fe78073c3e46a41",
+ "merge_base": "6d420265e840e5766cedc8d4d038472267e04153",
+ "ahead": 2,
+ "last_commit_date": "2026-11-14",
+ "merge_base_date": "2026-11-14",
+ "triagem_2804": null,
+ "closure_comment": {
+  "title": "fix(evolution): deduplicar alerta de reconexão no War Room",
+  "last_comment": "Conteúdo integrado na `main` pelo pacote 6 ([#3113](https://github.com/adm01-debug/Zapp_Web_V2/pull/3113), commit `41853318cd`). |  | Conferido byte a byte depois do merge: o código e o teste desta PR estão idênticos na `main`; o terceiro arquivo é o `deployment-manifest.json` gerado. O `Supabase Previe"
+ },
+ "files": [
+  {
+   "path": "supabase/deployment-manifest.json",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 31,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 4,
+    "missing_in_main": 2,
+    "removed": 4,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "      \"source_sha256\": \"948571f580ee1a1937fbfbaa3aecdad622318e9a6399a83ac083d04ad687bbeb\",",
+     "  \"manifest_sha256\": \"dbc361248de6d21efed8da5d1372fde772b09a3cb6a401a1f80461a433c06d7d\""
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "supabase/functions/_shared/__tests__/evolution-webhook-reconnect-dedupe.test.ts",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "supabase/functions/_shared/evolution-webhook-handlers.ts",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  }
+ ],
+ "auto": "MISTO_CONFLITO",
+ "n_files_with_gaps": 1,
+ "gap_lines_total": 2
+}

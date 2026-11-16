@@ -1,0 +1,253 @@
+{
+ "id": "claude_04__clever-ramanujan-xllbpo",
+ "kind": "branch",
+ "ref": "origin/claude_04/clever-ramanujan-xllbpo",
+ "tip": "63865d2fd59f740e2a976b8b8c831ef92c02c3f6",
+ "merge_base": "005dc587319fe07bda23faf2c2ffe492077a18dc",
+ "ahead": 25,
+ "last_commit_date": "2026-10-27",
+ "merge_base_date": "2026-10-27",
+ "prs_with_same_tip": [
+  2277
+ ],
+ "triagem_2804": {
+  "2277": "JA_NA_MAIN"
+ },
+ "closure_comment": {},
+ "files": [
+  {
+   "path": ".github/workflows/ci.yml",
+   "status": "BOTH_CHANGED",
+   "hunk": "CONFLICT",
+   "patch_lines": 22,
+   "line_check": {
+    "added": 2,
+    "missing_in_main": 2,
+    "removed": 2,
+    "removed_still_in_main": 2,
+    "missing_sample": [
+     "      - name: 📐 Enforce initial bundle budget (performance-budget.json)",
+     "    timeout-minutes: 120"
+    ],
+    "still_sample": [
+     "      - name: 📏 Enforce initial bundle budget (performance-budget.json)",
+     "    timeout-minutes: 20"
+    ]
+   }
+  },
+  {
+   "path": ".github/workflows/db-guard.yml",
+   "status": "BOTH_CHANGED",
+   "hunk": "CONFLICT",
+   "patch_lines": 24,
+   "line_check": {
+    "added": 6,
+    "missing_in_main": 4,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "          # E47: SKIP_DOCKER_SHIM=1 — o teste cria os papeis anon/authenticated/service_role",
+     "          # (globais no cluster) e inicia container proprio, incompativel com o shim do E47.",
+     "          # E47: SKIP_DOCKER_SHIM=1 — o teste cria os papeis anon/authenticated/service_role",
+     "          # (globais no cluster) e inicia container proprio, incompativel com o shim do E47."
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "scripts/db-audit/replay-known-failures.json",
+   "status": "BOTH_CHANGED",
+   "hunk": "CONFLICT",
+   "patch_lines": 43,
+   "line_check": {
+    "added": 10,
+    "missing_in_main": 5,
+    "removed": 4,
+    "removed_still_in_main": 1,
+    "missing_sample": [
+     "  \"_atualizado_em\": \"2026-10-27\",",
+     "    \"20261026220300_classificar_rls_sem_policy.sql\": {",
+     "      \"motivo\": \"COMMENT ON TABLE public._zapp_fn_before falha no replay: tabela criada fora das migrations, existe apenas no canonico. Canonico: tabela existe ",
+     "    \"20261026230300_decidir_schemas_backup.sql\": {",
+     "      \"motivo\": \"DROP SCHEMA ops_backup falha no replay: schema criado manualmente como backup, nao existe no banco vazio. Canonico: schema existia ate ser drop"
+    ],
+    "still_sample": [
+     "      \"categoria\": \"ordem-idempotencia\","
+    ]
+   }
+  },
+  {
+   "path": "scripts/db-audit/team-receipts-reactions-conversation-id.test.sh",
+   "status": "BOTH_CHANGED",
+   "hunk": "CONFLICT",
+   "patch_lines": 19,
+   "line_check": {
+    "added": 6,
+    "missing_in_main": 5,
+    "removed": 2,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  # TC-009/B.0c: o trigger team_message_receipts_update_guard_trig (BEFORE UPDATE) dispara durante o",
+     "  # backfill e define read_at := now() para recibos com status='read', mesmo quando só conversation_id",
+     "  # muda. A migration nao desabilita esse trigger, portanto read_at IS NULL nao e garantido apos o",
+     "  # backfill. Testamos apenas que o conversation_id foi corrigido (o efeito principal do backfill).",
+     "  expect_value 'B.0c o backfill corrigiu o conversation_id do recibo legado status=read' '1' \\"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "supabase/deployment-manifest.json",
+   "status": "BOTH_CHANGED",
+   "hunk": "CONFLICT",
+   "patch_lines": 42,
+   "line_check": {
+    "added": 6,
+    "missing_in_main": 6,
+    "removed": 6,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "      \"bytes\": 7475,",
+     "      \"sha256\": \"3171ca7e6dba15bc607cad8b3cc7f4b97ca78b5b34076bd8d5e123c845db3624\"",
+     "      \"bytes\": 29419,",
+     "      \"sha256\": \"a855f8fff5630320909d7a091d9276c7466dbaca6d0b92c1c1d274847c8ef343\"",
+     "      \"source_sha256\": \"d705c4d930193bc59135b515a45090779835110b2fadd0adac9f420851e30324\",",
+     "  \"manifest_sha256\": \"42fcdc0b3046b16ee740b3ec41ec6ff675087b215442e10d2ec4693011feca8f\""
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "supabase/migrations/20261026220300_classificar_rls_sem_policy.sql",
+   "status": "BOTH_CHANGED",
+   "hunk": "CONFLICT",
+   "patch_lines": 83,
+   "line_check": {
+    "added": 56,
+    "missing_in_main": 26,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "-- Migração: classificação das 17 tabelas com RLS ativa e zero policies",
+     "-- Versão: 20261026220300",
+     "-- Motivação: GOAL \"Backend Supabase 100% operacional\" — seção 4, item das 17 tabelas",
+     "-- Resultado da auditoria (27/10/2026):",
+     "--   16 tabelas → \"intencional — só service_role acessa\"",
+     "--              (sem grant a anon/authenticated; RLS + 0 policies = deny all por design)",
+     "--    1 tabela  → \"intencional — só service_role acessa\" COM correção:",
+     "--              link_preview_cache tinha grants indevidos a anon/authenticated que contradiziam",
+     "--              o design (acesso só via edge function fetch-link-preview + cleanup-cron, ambos",
+     "--              em service_role). Grants revogados aqui.",
+     "-- Nenhuma política criada porque o acesso via anon/authenticated não é intencional em",
+     "-- nenhuma das 17 tabelas.",
+     "-- ── Tabelas de rebuild / arquivamento temporário ──────────────────────────────",
+     "COMMENT ON TABLE public._rb_message_reactions_contato_20261007001008 IS",
+     "  '[RLS-sem-policy: intencional] Tabela de rebuild de 07/10/2026. Acesso apenas por service_role durante scripts de reconciliação.';",
+     "COMMENT ON TABLE public._zapp_fn_before IS",
+     "  '[RLS-sem-policy: intencional] Snapshot das definições de funções antes de migrations críticas. Só leitura por service_role/DBA.';",
+     "COMMENT ON TABLE public._zapp_mig133_log IS",
+     "  '[RLS-sem-policy: intencional] Log interno da migration 133. Só service_role.';",
+     "-- ── Tabelas de infraestrutura de backend ─────────────────────────────────────",
+     "-- ── link_preview_cache: grants indevidos → revogar ──────────────────────────",
+     "-- Diagnóstico: anon + authenticated tinham ALL PRIVILEGES sobre esta tabela, mas",
+     "--   (a) RLS está ativa com zero policies → acesso bloqueado de fato;",
+     "--   (b) acesso real só ocorre via service_role (edge function fetch-link-preview",
+     "--       e cron cleanup-link-preview-cache)."
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "supabase/migrations/20261026230300_decidir_schemas_backup.sql",
+   "status": "BOTH_CHANGED",
+   "hunk": "CONFLICT",
+   "patch_lines": 55,
+   "line_check": {
+    "added": 37,
+    "missing_in_main": 37,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "-- Migração: decisão documentada sobre schemas de backup",
+     "-- Versão: 20261026230300",
+     "-- Motivação: GOAL \"Backend Supabase 100% operacional\" — seção 4, schemas de backup",
+     "-- Diagnóstico (27/10/2026):",
+     "--   ops_backup.contacts_avatar_fix_20260922 → 99 linhas, 80 KB, 35 dias",
+     "--     Fix de avatar aplicado em 22/09/2026 e consolidado em produção. DROP imediato.",
+     "--   _bkp_261023 → 9 tabelas, ~3,7 MB, 4 dias",
+     "--     Snapshot de segurança criado em 23/10/2026 antes de migrations críticas.",
+     "--     Contém: contacts (3730 linhas), schema_migrations (922), functions_before (356),",
+     "--     policies_before (456), user_settings, team_messages, global_settings,",
+     "--     csat_surveys, agent_stats. Manter 30 dias; DROP após 22/11/2026.",
+     "-- ── ops_backup: fix de avatar de 22/09/2026, 35 dias — DROP ──────────────────",
+     "DROP SCHEMA ops_backup CASCADE;",
+     "-- ── _bkp_261023: snapshot de 23/10/2026 — documentar prazo ──────────────────",
+     "COMMENT ON SCHEMA _bkp_261023 IS",
+     "  '[backup-temporário] Snapshot de segurança criado em 23/10/2026 antes de migrations '",
+     "  'críticas do GOAL \"Backend 100% operacional\". Contém: contacts (3730 linhas), '",
+     "  'schema_migrations (922), functions_before (356), policies_before (456). '",
+     "  'DROP programado após 22/11/2026 — conferir antes se houve necessidade de restauração.';",
+     "COMMENT ON TABLE _bkp_261023.contacts IS",
+     "  '[bkp-261023] Snapshot da tabela public.contacts em 23/10/2026 (3730 linhas).';",
+     "COMMENT ON TABLE _bkp_261023.schema_migrations IS",
+     "  '[bkp-261023] Snapshot de supabase_migrations.schema_migrations em 23/10/2026 (922 linhas).';",
+     "COMMENT ON TABLE _bkp_261023.functions_before IS",
+     "  '[bkp-261023] Snapshot das definições de funções antes de migrations críticas (356 funções).';"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "supabase/migrations/20261026240300_drop_bkp_261023.sql",
+   "status": "BOTH_CHANGED",
+   "hunk": "CONFLICT",
+   "patch_lines": 37,
+   "line_check": {
+    "added": 25,
+    "missing_in_main": 25,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "-- Migração: DROP schema _bkp_261023",
+     "-- Versão: 20261026240300",
+     "-- Reservada em: 2026-10-27 (sessão claude_04/clever-ramanujan-xllbpo)",
+     "-- ⚠️  NÃO APLICAR ANTES DE 22/11/2026",
+     "-- Contexto:",
+     "--   _bkp_261023 é snapshot de segurança criado em 23/10/2026 antes de migrations críticas",
+     "--   do GOAL \"Backend 100% operacional\". Conteúdo ao momento da reserva:",
+     "--     contacts (3730 linhas, 1192 kB) — verificar contra public.contacts ao aplicar",
+     "--     schema_migrations (922 linhas, 1568 kB)",
+     "--     functions_before (356 funções, 600 kB)",
+     "--     policies_before (456 políticas, 264 kB)",
+     "--     user_settings, team_messages, global_settings, csat_surveys, agent_stats",
+     "-- Pré-requisito para aplicar (executar manualmente ANTES do db_query):",
+     "--   SELECT count(*) FROM _bkp_261023.contacts;           -- deve bater ≥ 3730",
+     "--   SELECT count(*) FROM public.contacts WHERE deleted_at IS NULL;",
+     "--   -- Se a produção perdeu contatos desde 23/10/2026, investigar ANTES de dropar.",
+     "--   -- Confirmar que nenhum incidente de dados ocorreu entre 23/10 e a data de apply.",
+     "-- Registro no ledger (executar junto com o DROP em uma única chamada db_query):",
+     "--   INSERT INTO supabase_migrations.schema_migrations(version, name, statements)",
+     "--   VALUES ('20261026240300', 'drop_bkp_261023', ARRAY['DROP SCHEMA _bkp_261023 CASCADE'])",
+     "--   ON CONFLICT DO NOTHING RETURNING version;",
+     "-- Após o apply: confirmar que 'DROP SCHEMA _bkp_261023 CASCADE' foi aplicado com",
+     "--   SELECT schema_name FROM information_schema.schemata WHERE schema_name = '_bkp_261023';",
+     "--   -- deve retornar 0 linhas.",
+     "DROP SCHEMA _bkp_261023 CASCADE;"
+    ],
+    "still_sample": []
+   }
+  }
+ ],
+ "counts": {
+  "migrations": "3",
+  "workflows": "2",
+  "src": "0",
+  "edges": "0",
+  "docs_only": "no",
+  "lines_branch_has_main_lacks": "591",
+  "lines_main_has_branch_lacks": "990"
+ },
+ "auto": "MISTO_CONFLITO",
+ "n_files_with_gaps": 8,
+ "gap_lines_total": 113
+}

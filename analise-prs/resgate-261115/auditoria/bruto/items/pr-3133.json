@@ -1,0 +1,92 @@
+{
+ "id": "pr-3133",
+ "kind": "pr",
+ "ref": "refs/remotes/pr/3133",
+ "pr": 3133,
+ "tip": "1c7a9b4dcd5f367326cb8c26ac30414f6bc3f3c0",
+ "merge_base": "1d4702804fb0fdda7939332b92b70ac8dc3c914c",
+ "ahead": 2,
+ "last_commit_date": "2026-11-15",
+ "merge_base_date": "2026-11-15",
+ "triagem_2804": null,
+ "closure_comment": {
+  "title": "[incorporada no pacote 8, com 2 furos corrigidos] chore(guardas): 5 scripts de governança ",
+  "last_comment": "| <!-- codex-review-state:v1 {\"code_review\":{\"commit_sha\":\"1c7a9b4dcd5f367326cb8c26ac30414f6bc3f3c0\",\"has_any_findings\":true,\"has_unresolved_findings\":true,\"status\":\"completed\"},\"security_review\":{\"commit_sha\":null,\"has_any_findings\":null,\"has_unresolved_find"
+ },
+ "files": [
+  {
+   "path": "scripts/ci/list-destructive.unit.mjs",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 86,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 63,
+    "missing_in_main": 0,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "scripts/db-audit/check-deployments-ledger.mjs",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "scripts/db-audit/check-deployments-ledger.test.mjs",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "scripts/db-audit/drift-explicado.mjs",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "scripts/db-audit/drift-explicado.test.mjs",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "scripts/db-audit/gate1-pendente.mjs",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "scripts/db-audit/gate1-pendente.test.mjs",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "scripts/db-audit/list-destructive.mjs",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 116,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 83,
+    "missing_in_main": 2,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "//   ALTER ... DROP COLUMN|CONSTRAINT (coberto pelo DROP generico acima)",
+     "const RE_ALTER_DROP = /\\bDROP\\s+(COLUMN|CONSTRAINT)\\b/i;"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "scripts/edge-deploy/resolve-rollback-ref.mjs",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "scripts/edge-deploy/resolve-rollback-ref.unit.mjs",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  }
+ ],
+ "auto": "MISTO_CONFLITO",
+ "n_files_with_gaps": 1,
+ "gap_lines_total": 2
+}

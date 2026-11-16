@@ -1,0 +1,49 @@
+{
+ "id": "claude__fix-healthcheck-http414-261109-1900",
+ "kind": "branch",
+ "ref": "origin/claude/fix-healthcheck-http414-261109-1900",
+ "tip": "d088b315d46ed2a1f47a4920821f15c24456bc98",
+ "merge_base": "fe6c6b0bf83dbeeec257016e85013314d7d9ff93",
+ "ahead": 1,
+ "last_commit_date": "2026-11-09",
+ "merge_base_date": "2026-11-09",
+ "prs_with_same_tip": [
+  2907
+ ],
+ "triagem_2804": {
+  "2907": null
+ },
+ "closure_comment": {},
+ "files": [
+  {
+   "path": "scripts/edge-deploy/health-check.mjs",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 13,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 1,
+    "removed_still_in_main": 1,
+    "missing_sample": [
+     "  if (response.status >= 500 || response.status === 414) {"
+    ],
+    "still_sample": [
+     "  if (response.status >= 500) {"
+    ]
+   }
+  }
+ ],
+ "counts": {
+  "migrations": "0",
+  "workflows": "0",
+  "src": "0",
+  "edges": "0",
+  "docs_only": "no",
+  "lines_branch_has_main_lacks": "7",
+  "lines_main_has_branch_lacks": "29"
+ },
+ "auto": "TRABALHO_AUSENTE_APLICA_LIMPO",
+ "n_files_with_gaps": 1,
+ "gap_lines_total": 2
+}

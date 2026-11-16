@@ -1,0 +1,97 @@
+{
+ "id": "claude__fix-radar-shortcut-key-261108-2059",
+ "kind": "branch",
+ "ref": "origin/claude/fix-radar-shortcut-key-261108-2059",
+ "tip": "3b36017477123676805250c1b09ac8363b6a38ed",
+ "merge_base": "e6e467b96f12dfca1e12bab7847fad6ddef3c397",
+ "ahead": 2,
+ "last_commit_date": "2026-11-08",
+ "merge_base_date": "2026-11-08",
+ "prs_with_same_tip": [
+  2837
+ ],
+ "triagem_2804": {
+  "2837": null
+ },
+ "closure_comment": {},
+ "files": [
+  {
+   "path": "src/components/talkx/report/__tests__/TalkXCampaignReport.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 145,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 71,
+    "missing_in_main": 64,
+    "removed": 20,
+    "removed_still_in_main": 7,
+    "missing_sample": [
+     "  state: { recipients: [] as unknown[], report: null as unknown },",
+     "      eq: () => builder, not: () => builder, order: () => builder, limit: () => builder,",
+     "      channel: realtimeChannel, removeChannel: vi.fn(),",
+     "vi.mock('recharts', () => {",
+     "  const Box = ({ children }: { children?: React.ReactNode }) => <div>{children}</div>;",
+     "  const SvgBox = ({ children }: { children?: React.ReactNode }) => <svg>{children}</svg>;",
+     "    ComposedChart: SvgBox, AreaChart: SvgBox, Area: () => null, Line: () => null,",
+     "    XAxis: () => null, YAxis: () => null, CartesianGrid: () => null, Tooltip: () => null,",
+     "    ResponsiveContainer: Box,",
+     "import { TalkXCampaignReport } from '@/components/talkx/report/TalkXCampaignReport';",
+     "import {",
+     "  talkxReportHeatmapFromTimestamps, talkxReportSeriesFromRows,",
+     "  type TalkXReportRecipientRow,",
+     "} from '@/components/talkx/report/talkxReportData';",
+     "const TZ = 'America/Sao_Paulo';",
+     "const ROWS: TalkXReportRecipientRow[] = [",
+     "  { sent_at: '2026-10-05T12:00:00.000Z', delivered_at: '2026-10-05T12:01:00.000Z', replied_at: '2026-10-05T12:05:00.000Z' },",
+     "  { sent_at: '2026-10-06T12:00:00.000Z', delivered_at: null, replied_at: null },",
+     "  { sent_at: '2026-10-11T12:00:00.000Z', delivered_at: '2026-10-11T12:02:00.000Z', replied_at: null },",
+     "const CAMPAIGN = {",
+     "  id: 'c1', name: 'Campanha Relatório X164', message_template: 'Olá {{nome}}',",
+     "  variables_config: [], typing_delay_min: 1500, typing_delay_max: 4000,",
+     "  send_interval_min: 8000, send_interval_max: 20000, status: 'completed',",
+     "  total_recipients: 3, sent_count: 3, failed_count: 0, delivered_count: 2,",
+     "  read_count: 1, replied_count: 1, outcome_unknown_count: 0,"
+    ],
+    "still_sample": [
+     "  state: {",
+     "    recipients: [] as unknown[],",
+     "    report: null as unknown,",
+     "        return builder;",
+     "      limit: () => builder,",
+     "      channel: realtimeChannel,",
+     "      removeChannel: vi.fn(),"
+    ]
+   }
+  },
+  {
+   "path": "src/hooks/shortcuts/defaultShortcuts.ts",
+   "status": "MAIN_UNCHANGED_SINCE_BASE",
+   "patch_lines": 21,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 3,
+    "missing_in_main": 3,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  // CV-056 — painel flutuante RADAR Fase 6",
+     "  { id: 'radar-toggle', name: 'Painel RADAR', description: 'Abre ou fecha o painel RADAR de análise de vendas', defaultKey: 'a', defaultModifiers: { ctrlKey: tr",
+     "  'radar-toggle',"
+    ],
+    "still_sample": []
+   }
+  }
+ ],
+ "counts": {
+  "migrations": "0",
+  "workflows": "0",
+  "src": "2",
+  "edges": "0",
+  "docs_only": "no",
+  "lines_branch_has_main_lacks": "82",
+  "lines_main_has_branch_lacks": "172"
+ },
+ "auto": "MISTO_CONFLITO",
+ "n_files_with_gaps": 2,
+ "gap_lines_total": 74
+}

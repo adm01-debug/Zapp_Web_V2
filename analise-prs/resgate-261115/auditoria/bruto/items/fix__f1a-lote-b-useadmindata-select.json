@@ -1,0 +1,59 @@
+{
+ "id": "fix__f1a-lote-b-useadmindata-select",
+ "kind": "branch",
+ "ref": "origin/fix/f1a-lote-b-useadmindata-select",
+ "tip": "cbef3bcab423d41f9f9bdf911a905c051a38e669",
+ "merge_base": "bac62ba98454811c3bfd117b838af926b1e795b2",
+ "ahead": 3,
+ "last_commit_date": "2026-10-23",
+ "merge_base_date": "2026-10-23",
+ "prs_with_same_tip": [
+  2069
+ ],
+ "triagem_2804": {
+  "2069": "OBSOLETA"
+ },
+ "closure_comment": {},
+ "files": [
+  {
+   "path": "src/components/admin/__tests__/useAdminData.select.test.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 40,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 9,
+    "missing_in_main": 8,
+    "removed": 5,
+    "removed_still_in_main": 4,
+    "missing_sample": [
+     "      b.select = (cols: string) => {",
+     "        selects.push({ table: t, cols });",
+     "      for (const m of ['order', 'limit', 'eq', 'in', 'neq', 'range', 'gte', 'lte']) b[m] = () => b;",
+     "  beforeEach(() => {",
+     "    selects.length = 0;",
+     "    await act(async () => {",
+     "      await result.current.fetchData();",
+     "    const al = selects.filter((s) => s.table === 'audit_logs');"
+    ],
+    "still_sample": [
+     "      b.select = (cols: string) => { selects.push({ table: t, cols }); return b; };",
+     "  beforeEach(() => { selects.length = 0; });",
+     "    await act(async () => { await result.current.fetchData(); });",
+     "    const al = selects.filter(s => s.table === 'audit_logs');"
+    ]
+   }
+  }
+ ],
+ "counts": {
+  "migrations": "0",
+  "workflows": "0",
+  "src": "1",
+  "edges": "0",
+  "docs_only": "no",
+  "lines_branch_has_main_lacks": "12",
+  "lines_main_has_branch_lacks": "5"
+ },
+ "auto": "MISTO_CONFLITO",
+ "n_files_with_gaps": 1,
+ "gap_lines_total": 12
+}

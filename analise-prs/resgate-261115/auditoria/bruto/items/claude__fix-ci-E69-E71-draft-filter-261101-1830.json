@@ -1,0 +1,93 @@
+{
+ "id": "claude__fix-ci-E69-E71-draft-filter-261101-1830",
+ "kind": "branch",
+ "ref": "origin/claude/fix-ci-E69-E71-draft-filter-261101-1830",
+ "tip": "1b5eb7ca1d7ee3d7000c2d980de70f6fe99f83da",
+ "merge_base": "1252bb5a41123ba4d49efd84d0f91604bff6c87c",
+ "ahead": 6,
+ "last_commit_date": "2026-11-01",
+ "merge_base_date": "2026-11-01",
+ "prs_with_same_tip": [
+  2503
+ ],
+ "triagem_2804": {
+  "2503": "OBSOLETA"
+ },
+ "closure_comment": {},
+ "files": [
+  {
+   "path": ".github/workflows/ci.yml",
+   "status": "BOTH_CHANGED",
+   "hunk": "CONFLICT",
+   "patch_lines": 37,
+   "line_check": {
+    "added": 4,
+    "missing_in_main": 1,
+    "removed": 1,
+    "removed_still_in_main": 1,
+    "missing_sample": [
+     "    needs: [unit-tests]"
+    ],
+    "still_sample": [
+     "    needs: [typecheck, unit-tests]"
+    ]
+   }
+  },
+  {
+   "path": "docs/audits/PLANO_GITHUB_ACTIONS_100_ETAPAS_2026-10-01.md",
+   "status": "BOTH_CHANGED",
+   "hunk": "CONFLICT",
+   "patch_lines": 13,
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 1,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "**20** no total. A fonte operacional canônica é o arquivo **gerado** `docs/ci/README.md`"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "scripts/ci/workflow-contracts.unit.mjs",
+   "status": "MAIN_UNCHANGED_SINCE_BASE",
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "patch_lines": 24,
+   "line_check": {
+    "added": 9,
+    "missing_in_main": 8,
+    "removed": 4,
+    "removed_still_in_main": 4,
+    "missing_sample": [
+     "test('E69: build espera unit-tests; typecheck corre em paralelo mas ci-gate espera os dois', () => {",
+     "  const ancBuild = ancestrais(grafo, 'build');",
+     "  assert.ok(ancBuild.has('unit-tests'), 'build deixou de esperar o test');",
+     "  assert.ok(!ancBuild.has('typecheck'), 'build voltou a esperar typecheck — desfaz E69');",
+     "  // ci-gate deve continuar esperando typecheck (prova que o parallelismo nao remove a exigencia)",
+     "  const ancGate = ancestrais(grafo, 'ci-gate');",
+     "  assert.ok(ancGate.has('typecheck'), 'ci-gate deixou de esperar typecheck');",
+     "  assert.ok(ancGate.has('build'), 'ci-gate deixou de esperar build');"
+    ],
+    "still_sample": [
+     "test('E69: o build continua atrás do lint E do test', () => {",
+     "  const anc = ancestrais(grafoDeNeeds(wf['ci.yml']), 'build');",
+     "  assert.ok(anc.has('typecheck'), 'build deixou de esperar o lint');",
+     "  assert.ok(anc.has('unit-tests'), 'build deixou de esperar o test');"
+    ]
+   }
+  }
+ ],
+ "counts": {
+  "migrations": "0",
+  "workflows": "1",
+  "src": "0",
+  "edges": "0",
+  "docs_only": "no",
+  "lines_branch_has_main_lacks": "34",
+  "lines_main_has_branch_lacks": "121"
+ },
+ "auto": "MISTO_CONFLITO",
+ "n_files_with_gaps": 3,
+ "gap_lines_total": 15
+}

@@ -1,0 +1,72 @@
+{
+ "id": "claude__feat-talkx-x074-analytics-rpcs-261101-2300",
+ "kind": "branch",
+ "ref": "origin/claude/feat-talkx-x074-analytics-rpcs-261101-2300",
+ "tip": "2f1dc1a119c48dc2419af51a29d1f6f8e57d77f5",
+ "merge_base": "1252bb5a41123ba4d49efd84d0f91604bff6c87c",
+ "ahead": 1,
+ "last_commit_date": "2026-11-01",
+ "merge_base_date": "2026-11-01",
+ "prs_with_same_tip": [
+  2529
+ ],
+ "triagem_2804": {
+  "2529": "PERDIDA"
+ },
+ "closure_comment": {},
+ "files": [
+  {
+   "path": "supabase/migrations/20261101223000_talkx_x074_analytics_rpcs.sql",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "patch_lines": 205,
+   "line_check": {
+    "added": 173,
+    "missing_in_main": 173,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "-- X074 (Fase 7 · analíticas · banco): talkx_campaign_heatmap, talkx_top_segments, talkx_campaign_ranking.",
+     "-- Três RPCs read-only de SECURITY DEFINER; exigem dono da campanha ou admin/supervisor.",
+     "-- rollback:",
+     "--   DROP FUNCTION IF EXISTS public.talkx_campaign_heatmap(uuid);",
+     "--   DROP FUNCTION IF EXISTS public.talkx_top_segments(int);",
+     "--   DROP FUNCTION IF EXISTS public.talkx_campaign_ranking(int, text);",
+     "-- ─────────────────────────────────────────────────────────────────────────────",
+     "-- 1. talkx_campaign_heatmap: grade hora-do-dia × dia-da-semana (America/Sao_Paulo)",
+     "-- ─────────────────────────────────────────────────────────────────────────────",
+     "DROP FUNCTION IF EXISTS public.talkx_campaign_heatmap(uuid);",
+     "CREATE OR REPLACE FUNCTION public.talkx_campaign_heatmap(",
+     "  p_campaign_id uuid",
+     "RETURNS jsonb",
+     "LANGUAGE plpgsql",
+     "STABLE",
+     "SECURITY DEFINER",
+     "SET search_path = public",
+     "AS $$",
+     "DECLARE",
+     "  v_profile_id uuid;",
+     "  v_tz         text := 'America/Sao_Paulo';",
+     "  v_result     jsonb;",
+     "BEGIN",
+     "  v_profile_id := (SELECT id FROM public.profiles WHERE user_id = auth.uid() LIMIT 1);",
+     "  IF NOT EXISTS ("
+    ],
+    "still_sample": [],
+    "same_basename_in_main": []
+   }
+  }
+ ],
+ "counts": {
+  "migrations": "1",
+  "workflows": "0",
+  "src": "0",
+  "edges": "0",
+  "docs_only": "no",
+  "lines_branch_has_main_lacks": "199",
+  "lines_main_has_branch_lacks": "0"
+ },
+ "auto": "TRABALHO_AUSENTE_APLICA_LIMPO",
+ "n_files_with_gaps": 1,
+ "gap_lines_total": 173
+}

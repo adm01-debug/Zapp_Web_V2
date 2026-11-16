@@ -1,0 +1,185 @@
+{
+ "id": "claude__feat-remove-special-agent-261113",
+ "kind": "branch",
+ "ref": "origin/claude/feat-remove-special-agent-261113",
+ "tip": "08625ec768bac65de8801b23120eca70b85f72bc",
+ "merge_base": "cb6576b2a3a0d3f8b5b091878314cf5087fa10b1",
+ "ahead": 3,
+ "last_commit_date": "2026-11-13",
+ "merge_base_date": "2026-11-13",
+ "prs_with_same_tip": [
+  3033
+ ],
+ "triagem_2804": {
+  "3033": null
+ },
+ "closure_comment": {
+  "3033": {
+   "title": "feat(db): remover o rotulo special_agent do enum app_role",
+   "last_comment": "Fechada como contida: o conteúdo desta PR entrou integralmente na adm01-debug/Zapp_Web_V2#3064 (pacote 5), mergeada em `ab657aa34` com CI verde (CI Gate, Build, TypeCheck, Unit 1-3, E2E, DB Guard). Nenhum trabalho perdido; as migrations seguem o fluxo de apply do `docs/agentes/banco.md`. |  | --- | _Gener"
+  }
+ },
+ "files": [
+  {
+   "path": ".github/workflows/db-guard.yml",
+   "status": "BOTH_CHANGED",
+   "hunk": "CONFLICT",
+   "patch_lines": 21,
+   "line_check": {
+    "added": 10,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "      # 20261113140000: recria public.app_role sem 'special_agent' (papel extinto em 2026-11-03)."
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "docs/contexto/regras/manual/regras.md",
+   "status": "BOTH_CHANGED",
+   "hunk": "CONFLICT",
+   "patch_lines": 22,
+   "line_check": {
+    "added": 2,
+    "missing_in_main": 2,
+    "removed": 2,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "Papéis reais do sistema (enum `app_role`, `src/lib/appRole.ts:13`): **`admin` · `supervisor` · `agent`**. O rótulo `special_agent` ainda existe no enum do banco",
+     "| **special_agent** | **Papel excluído por decisão do dono (2026-11-03).** Era agent + flag `profiles.can_download`; a flag continua existindo no agente comum ("
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/admin/VisibilityGrantsManager.tsx",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/components/admin/__tests__/VisibilityGrantsManager.a11y.test.tsx",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/components/keyboard/__tests__/paleta-unica.test.tsx",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/components/layout/__tests__/idsMortosNaNavegacao.test.tsx",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/components/mobile/__tests__/MobileShellSearch.test.tsx",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/components/onboarding/__tests__/defaultTourSteps.alvos.test.tsx",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/hooks/crm/useVisibleAgents.ts",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/hooks/ui/__tests__/preferencias-storage-bloqueado.test.tsx",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/integrations/supabase/types.ts",
+   "status": "BOTH_CHANGED",
+   "hunk": "PRESENT_REVERSE_APPLIES",
+   "patch_lines": 22
+  },
+  {
+   "path": "src/pages/__tests__/SLADashboard.sidebar-navegacao.test.tsx",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/pages/__tests__/ViewRouter.autoExportRemovido.test.tsx",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "supabase/migrations/20261113140000_remove_enum_special_agent.sql",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "patch_lines": 543,
+   "line_check": {
+    "added": 467,
+    "missing_in_main": 467,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "-- 20261113140000_remove_enum_special_agent",
+     "-- Decisao do dono em 2026-11-03 (docs/contexto/regras/manual/regras.md, §2): o papel",
+     "-- `special_agent` deixa de existir. A 20261103201500 tirou o papel de toda funcao, policy e",
+     "-- CHECK, mas deixou o ROTULO no enum public.app_role como residuo deliberado (Postgres nao",
+     "-- apaga valor de enum). Esta migration fecha o residuo: recria o tipo so com",
+     "-- admin/supervisor/agent (mesma ordem; get_my_protection_policy usa ORDER BY ur.role).",
+     "-- A flag profiles.can_download continua no agente comum (nao e tocada aqui).",
+     "-- Estado medido em producao (tnnnlkbymytvtqngbbqh, 2026-11-13, so SELECT via MCP):",
+     "--   * pg_enum public.app_role = admin, supervisor, agent, special_agent.",
+     "--   * 0 linhas com special_agent em user_roles, profiles.role, contact_protection_policy,",
+     "--     multiplix_voice_grants.roles e multiplix_audiences.shared_with_roles.",
+     "--   * 7 linhas em role_permissions com role = 'special_agent' (seed morto da 20260830090000:",
+     "--     view_dashboard, view_inbox, send_messages, view_contacts, view_queues, view_agents,",
+     "--     view_settings). Ninguem tem o papel, entao nao concedem nada -> DELETE (o gatilho",
+     "--     audit_role_permissions_changes registra cada remocao em audit_logs).",
+     "--   * Dependencias do tipo (pg_depend, tipo e app_role[]):",
+     "--       colunas  user_roles.role (DEFAULT 'agent'), role_permissions.role,",
+     "--                contact_protection_policy.scope_role, multiplix_voice_grants.roles (app_role[]);",
+     "--       CHECK    user_roles_no_special_agent (perde o sentido: o valor deixa de existir);",
+     "--       funcoes  has_role(uuid,app_role) md5 dae5cfc5a8d92461a428f6702e4e65af,",
+     "--                effective_role(uuid)    md5 07814d09481f4979ebbe0e03910835ff,",
+     "--                admin_set_role(uuid,app_role) md5 a59220e0f3abcc9e06a12b15c67129f6;",
+     "--       view     whatsapp_connections_safe (security_invoker, CASE has_role(...'admin'));",
+     "--       21 policies (dependem do tipo, de has_role ou de uma das colunas) — lista no passo 3.",
+     "--     Nenhuma outra funcao, view, indice parcial ou gatilho depende do tipo."
+    ],
+    "still_sample": [],
+    "same_basename_in_main": []
+   }
+  },
+  {
+   "path": "supabase/tests/db-audit/remove-enum-special-agent.test.sh",
+   "status": "BOTH_CHANGED",
+   "hunk": "CONFLICT",
+   "patch_lines": 424,
+   "line_check": {
+    "added": 380,
+    "missing_in_main": 4,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "# 20261113140000_remove_enum_special_agent: recria public.app_role sem 'special_agent'.",
+     "F_NEW=\"$MIG_DIR/20261113140000_remove_enum_special_agent.sql\"",
+     "         \"$F_REMOVE_SA\" \"$F_NEW\"; do",
+     "FIRST_DDL=$(grep -nE '^(DO |DROP |ALTER |CREATE |DELETE )' \"$F_NEW\" | head -1 | cut -d: -f1)"
+    ],
+    "still_sample": []
+   }
+  }
+ ],
+ "counts": {
+  "migrations": "1",
+  "workflows": "1",
+  "src": "11",
+  "edges": "0",
+  "docs_only": "no",
+  "lines_branch_has_main_lacks": "568",
+  "lines_main_has_branch_lacks": "293"
+ },
+ "auto": "MISTO_CONFLITO",
+ "n_files_with_gaps": 4,
+ "gap_lines_total": 474
+}

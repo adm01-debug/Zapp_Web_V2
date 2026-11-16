@@ -1,0 +1,58 @@
+{
+ "id": "claude__fix-n017-harness-261101-2115",
+ "kind": "branch",
+ "ref": "origin/claude/fix-n017-harness-261101-2115",
+ "tip": "ea7833bcbcce98f7696170a5bcd9c60a1d0a40de",
+ "merge_base": "1252bb5a41123ba4d49efd84d0f91604bff6c87c",
+ "ahead": 1,
+ "last_commit_date": "2026-11-01",
+ "merge_base_date": "2026-11-01",
+ "prs_with_same_tip": [
+  2515
+ ],
+ "triagem_2804": {
+  "2515": "OBSOLETA"
+ },
+ "closure_comment": {},
+ "files": [
+  {
+   "path": "scripts/db-audit/multiplix-send-mutation.py",
+   "status": "MAIN_UNCHANGED_SINCE_BASE",
+   "patch_lines": 32,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 12,
+    "missing_in_main": 12,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "import pathlib",
+     "# Pre-aquece o cache de modulos Deno: sem isso o `deno test --frozen` falha em",
+     "# runner limpo porque as URLs de esm.sh nao estao no cache local, mesmo que o",
+     "# deno.lock ja contenha todos os hashes. O cache nao altera o lock (frozen no",
+     "# deno.json) — apenas baixa os modulos e os verifica contra os hashes do lock.",
+     "_cache = subprocess.run(",
+     "    [\"deno\", \"cache\", \"--config\", \"scripts/ci/deno.json\",",
+     "     \"supabase/functions/multiplix-send/index.test.ts\"],",
+     "    capture_output=True, text=True,",
+     "    cwd=str(pathlib.Path(__file__).resolve().parent.parent.parent),",
+     "if _cache.returncode != 0:",
+     "    sys.exit(\"ABORT: deno cache falhou\\n\" + (_cache.stdout + _cache.stderr)[-800:])"
+    ],
+    "still_sample": []
+   }
+  }
+ ],
+ "counts": {
+  "migrations": "0",
+  "workflows": "0",
+  "src": "0",
+  "edges": "0",
+  "docs_only": "no",
+  "lines_branch_has_main_lacks": "14",
+  "lines_main_has_branch_lacks": "0"
+ },
+ "auto": "TRABALHO_AUSENTE_APLICA_LIMPO",
+ "n_files_with_gaps": 1,
+ "gap_lines_total": 12
+}

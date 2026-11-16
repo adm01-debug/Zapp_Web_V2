@@ -1,0 +1,116 @@
+{
+ "id": "claude__fix-e2e-workers-timeout-tests-011101-1800",
+ "kind": "branch",
+ "ref": "origin/claude/fix-e2e-workers-timeout-tests-011101-1800",
+ "tip": "3153268fe4b3f26d69317d56f136d389bd85cd24",
+ "merge_base": "1252bb5a41123ba4d49efd84d0f91604bff6c87c",
+ "ahead": 8,
+ "last_commit_date": "2026-11-01",
+ "merge_base_date": "2026-11-01",
+ "prs_with_same_tip": [
+  2504
+ ],
+ "triagem_2804": {
+  "2504": "OBSOLETA"
+ },
+ "closure_comment": {},
+ "files": [
+  {
+   "path": "e2e/contact-address.spec.ts",
+   "status": "MAIN_UNCHANGED_SINCE_BASE",
+   "patch_lines": 13,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 2,
+    "missing_in_main": 2,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "    // Boot + navegação + mocks + asserções somam mais que os 30 s padrão do Playwright.",
+     "    test.setTimeout(90_000);"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "e2e/email-navy-visual.spec.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 33,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 5,
+    "missing_in_main": 5,
+    "removed": 3,
+    "removed_still_in_main": 3,
+    "missing_sample": [
+     "  // passava por dois motivos que não são \"a busca filtrou\": a lista antiga ainda na tela (com",
+     "  // Timeout explícito: animação de saída do Radix Dialog (data-[state=closed]:animate-out) é mais lenta no webkit em CI.",
+     "  await expect(page.getByRole('dialog')).toBeHidden({ timeout: 10_000 });",
+     "  // Timeout explícito: remontagem lazy do módulo Email após navegação é mais lenta em CI.",
+     "  await expect(page.locator('.email-workspace')).toHaveCount(1, { timeout: 30_000 });"
+    ],
+    "still_sample": [
+     "  // passava por dois motivos que não são \"a lista filtrou\": a lista antiga ainda na tela (com",
+     "  await expect(page.getByRole('dialog')).toBeHidden();",
+     "  await expect(page.locator('.email-workspace')).toHaveCount(1);"
+    ]
+   }
+  },
+  {
+   "path": "e2e/location-picker.spec.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 41,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 7,
+    "missing_in_main": 7,
+    "removed": 2,
+    "removed_still_in_main": 2,
+    "missing_sample": [
+     "    // Boot + navegação + picker + asserções finais somam mais que os 30 s padrão do Playwright.",
+     "    test.setTimeout(90_000);",
+     "    // Timeout explícito: CI com 4 workers tem maior contenção de CPU; 5 s padrão é curto.",
+     "    await expect(conversa).toBeVisible({ timeout: 30_000 });",
+     "    // Mesmo motivo do E71: budget total de 90 s cobre boot + fallback + asserções.",
+     "    test.setTimeout(90_000);",
+     "    await expect(conversa).toBeVisible({ timeout: 30_000 });"
+    ],
+    "still_sample": [
+     "    await expect(conversa).toBeVisible();",
+     "    await expect(conversa).toBeVisible();"
+    ]
+   }
+  },
+  {
+   "path": "playwright.config.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 20,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 4,
+    "missing_in_main": 4,
+    "removed": 5,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  // W75: 4 workers no CI para completar dentro do timeout de 20 min.",
+     "  // 1 worker CI → ~19 min para ≈129 testes (cancelado antes de completar).",
+     "  // 4 workers CI → ~9 min; bounded pool local (2) preserva o comportamento local.",
+     "  workers: process.env.CI ? 4 : 2,"
+    ],
+    "still_sample": []
+   }
+  }
+ ],
+ "counts": {
+  "migrations": "0",
+  "workflows": "0",
+  "src": "0",
+  "edges": "0",
+  "docs_only": "no",
+  "lines_branch_has_main_lacks": "44",
+  "lines_main_has_branch_lacks": "295"
+ },
+ "auto": "MISTO_CONFLITO",
+ "n_files_with_gaps": 4,
+ "gap_lines_total": 23
+}

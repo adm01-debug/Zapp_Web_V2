@@ -1,0 +1,48 @@
+{
+ "id": "pr-3093",
+ "kind": "pr",
+ "ref": "refs/remotes/pr/3093",
+ "pr": 3093,
+ "tip": "e8b42887b808040fcdee4728a215625e27015afa",
+ "merge_base": "6d420265e840e5766cedc8d4d038472267e04153",
+ "ahead": 2,
+ "last_commit_date": "2026-11-14",
+ "merge_base_date": "2026-11-14",
+ "triagem_2804": null,
+ "closure_comment": {
+  "title": "fix(copilot-live): aplica rate limit e cota de IA antes do provedor",
+  "last_comment": "Conteúdo integrado na `main` pelo pacote 6 ([#3113](https://github.com/adm01-debug/Zapp_Web_V2/pull/3113), commit `41853318cd`). |  | Conferido byte a byte depois do merge: o código e o teste desta PR estão idênticos na `main`; o terceiro arquivo é o `deployment-manifest.json` gerado. |  | Registro, porque"
+ },
+ "files": [
+  {
+   "path": "supabase/deployment-manifest.json",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 31,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 4,
+    "missing_in_main": 2,
+    "removed": 4,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "      \"source_sha256\": \"f973c477e172e4ca6f83221477f075d89c306014e8a266bd36dad6f850d26331\",",
+     "  \"manifest_sha256\": \"794914cfba6d121b067c91ad18832412611ab506a2100d4b5edd7026db236902\""
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "supabase/functions/copilot-live/index.test.ts",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "supabase/functions/copilot-live/index.ts",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  }
+ ],
+ "auto": "MISTO_CONFLITO",
+ "n_files_with_gaps": 1,
+ "gap_lines_total": 2
+}

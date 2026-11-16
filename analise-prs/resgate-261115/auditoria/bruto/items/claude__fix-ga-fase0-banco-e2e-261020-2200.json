@@ -1,0 +1,479 @@
+{
+ "id": "claude__fix-ga-fase0-banco-e2e-261020-2200",
+ "kind": "branch",
+ "ref": "origin/claude/fix-ga-fase0-banco-e2e-261020-2200",
+ "tip": "e966771219ba418e3c97ca22b79407bfaa9fdd58",
+ "merge_base": "d7af7a671ca2bd7005b75b0aa54c0f0c4672befc",
+ "ahead": 1,
+ "last_commit_date": "2026-10-20",
+ "merge_base_date": "2026-10-19",
+ "prs_with_same_tip": [
+  2124
+ ],
+ "triagem_2804": {
+  "2124": "DUPLICATA_PROVAVEL"
+ },
+ "closure_comment": {},
+ "files": [
+  {
+   "path": ".github/workflows/ci.yml",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 43,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 14,
+    "missing_in_main": 14,
+    "removed": 2,
+    "removed_still_in_main": 2,
+    "missing_sample": [
+     "  # GA58: o dispatch manual ganha o proprio grupo (run_id unico) em vez de",
+     "  # disputar/cancelar o grupo do push. Push na main compartilha o grupo por",
+     "  # ref de proposito: um grupo por SHA nunca cancelaria nada e a fila de",
+     "  # builds da main cresceria sem fim (comentario honesto em vez de SHA).",
+     "  group: ci-${{ github.event_name == 'workflow_dispatch' && github.run_id || github.event.pull_request.number || github.ref }}",
+     "      # GA02: trava anti-apagao do CLAUDE.md (wipe placeholder de 15/10).",
+     "      # Reprova o check se as secoes obrigatorias sumirem ou o arquivo",
+     "      # encolher mais de 30% vs HEAD.",
+     "      - name: 🛡️ Trava anti-apagao do CLAUDE.md (GA02)",
+     "        run: node scripts/ci/check-claude-md-integrity.mjs",
+     "      # GA56: `timeout 11m` interno — sai com erro (exit 124) antes do teto de",
+     "      # 12 min do job; sem isso o runner mata o passo como `cancelled` e o",
+     "      # agregado marcaria o check como pulado em vez de vermelho.",
+     "        run: timeout 11m bun vitest run --shard=${{ matrix.shard }}/3"
+    ],
+    "still_sample": [
+     "  group: ci-${{ github.event.pull_request.number || github.ref }}",
+     "        run: bun vitest run --shard=${{ matrix.shard }}/3"
+    ]
+   }
+  },
+  {
+   "path": ".github/workflows/e2e-logado.yml",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 101,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 32,
+    "missing_in_main": 25,
+    "removed": 5,
+    "removed_still_in_main": 1,
+    "missing_sample": [
+     "#   gatilho: fim do CI na main (workflow_run) e dispatch sobre main",
+     "  workflow_run:",
+     "    workflows: [CI/CD Pipeline]",
+     "# GA09: grupo FIXO (sem ref/sha) — nunca duas runs in_progress ao mesmo tempo.",
+     "# cancel-in-progress: false enfileira em vez de matar: se um dispatch chegar com",
+     "# a run atual rodando, so o mais novo pendente roda em seguida.",
+     "  group: e2e-logado",
+     "    # GA08: fecha o fork com branch `main` (Scorecard #40) e o passo \"Pular se",
+     "    # CI falhou\" que nao pulava nada — o if vive no JOB, nao num step.",
+     "    if: >",
+     "      github.event_name == 'workflow_dispatch' ||",
+     "      (github.event.workflow_run.conclusion == 'success' &&",
+     "      github.event.workflow_run.head_repository.full_name == github.repository)",
+     "            global_timeout_ms: 660000",
+     "            global_timeout_ms: 600000",
+     "            global_timeout_ms: 600000",
+     "          bun run test:e2e -- ${{ matrix.projects }} --workers=${{ matrix.workers }} --global-timeout=${{ matrix.global_timeout_ms }} 2>&1 | tee \"e2e-saida-${{ ",
+     "      # GA12: orcamento da suite — teste que nao rodou (timeout global ou",
+     "      # interrupcao) reprova o job em vez de passar silencioso.",
+     "      - name: ⏱️ Orçamento GA12 - nenhum teste sem rodar",
+     "        if: always()",
+     "          f=\"e2e-saida-${{ matrix.name }}.log\"",
+     "          if [ -f \"$f\" ] && grep -Eq '[1-9][0-9]* did not run' \"$f\"; then",
+     "            echo \"::error::orçamento estourado em ${{ matrix.name }}\"",
+     "          echo \"orçamento OK em ${{ matrix.name }}: nenhum teste sem rodar\""
+    ],
+    "still_sample": [
+     "    branches: [main]"
+    ]
+   }
+  },
+  {
+   "path": ".github/workflows/notifica-falha-main.yml",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 14,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 2,
+    "missing_in_main": 2,
+    "removed": 1,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "#   falha: workflow monitorado conclui failure na main",
+     "#   avisa: issue rotulada falha-main no repo"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": ".github/workflows/vercel-env-cleanup.yml",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 13,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 5,
+    "missing_in_main": 4,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "#   gatilho: dispatch manual",
+     "#   prova: lista vars do Vercel e remove as perigosas/mortas",
+     "#   falha: DRY_RUN=0 sem aprovacao ou API do Vercel fora",
+     "#   avisa: resumo no Job Summary do run"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "docs/ci/README.md",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 138,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 47,
+    "missing_in_main": 24,
+    "removed": 22,
+    "removed_still_in_main": 4,
+    "missing_sample": [
+     "**16 workflows.**",
+     "| CodeQL | [`codeql.yml`](../../.github/workflows/codeql.yml) | agendado (semanal) e dispatch | analise estatica de seguranca (SAST) de src, scripts, functions ",
+     "| E2E logado | [`e2e-logado.yml`](../../.github/workflows/e2e-logado.yml) | fim do CI na main (workflow_run) e dispatch sobre main | o fluxo logado (Playwright ",
+     "| Notifica falha na main | [`notifica-falha-main.yml`](../../.github/workflows/notifica-falha-main.yml) | workflow_run (conclusao dos workflows principais na ma",
+     "| Talk X corpo da PR | [`talkx-pr-body.yml`](../../.github/workflows/talkx-pr-body.yml) | pull_request (opened, edited, synchronize, reopened, ready_for_review)",
+     "| V043-V065 Vercel Env Cleanup | [`vercel-env-cleanup.yml`](../../.github/workflows/vercel-env-cleanup.yml) | dispatch manual | lista vars do Vercel e remove as",
+     "- **O que prova:** quais branches sao podaveis e quais PRs estao paradas ha mais de 7 dias",
+     "- **Quando falha:** relatorio nao e publicado nem a issue e atualizada",
+     "- **O que prova:** lint, tipos, testes, build, security e E2E do codigo",
+     "- **Gatilho:** fim do CI na main (workflow_run) e dispatch sobre main",
+     "- **O que prova:** o fluxo logado (Playwright com login real) contra producao",
+     "- **Quando falha:** artefato do Playwright e issue/relatorio; nunca roda em PR de terceiro",
+     "- **Quem é avisado:** issue de E2E e autor do push",
+     "- **Quando falha:** workflow monitorado conclui failure na main",
+     "- **Quem é avisado:** issue rotulada falha-main no repo",
+     "### Talk X corpo da PR (`talkx-pr-body.yml`)",
+     "- **Gatilho:** pull_request (opened, edited, synchronize, reopened, ready_for_review) e dispatch",
+     "- **O que prova:** o corpo da PR de etapa Talk X V4 cumpre a definicao de pronto (X005)",
+     "- **Quando falha:** PR de etapa `(X<NNN>)` sem as secoes exigidas fica vermelha",
+     "- **Quem é avisado:** autor da PR",
+     "- **Gatilho:** dispatch manual",
+     "- **O que prova:** lista vars do Vercel e remove as perigosas/mortas",
+     "- **Quando falha:** DRY_RUN=0 sem aprovacao ou API do Vercel fora",
+     "- **Quem é avisado:** resumo no Job Summary do run"
+    ],
+    "still_sample": [
+     "| Settings Guard | [`settings-guard.yml`](../../.github/workflows/settings-guard.yml) | agendado e dispatch | o perimetro do GitHub (branch protection, merge, e",
+     "- **Gatilho:** pull_request, push na main e dispatch",
+     "- **Quem é avisado:** quem disparou",
+     "- **Quem é avisado:** quem disparou"
+    ]
+   }
+  },
+  {
+   "path": "e2e/fixtures/e2e-contact.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 69,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 23,
+    "missing_in_main": 13,
+    "removed": 10,
+    "removed_still_in_main": 9,
+    "missing_sample": [
+     "  //    GA11: a insercao vai pela RPC `e2e_fixture_message` (SECURITY DEFINER,",
+     "  //    restrita ao usuario de teste e ao contato fixo) — o INSERT direto por",
+     "  //    REST viola o trigger `guard_message_provenance_fields` (403",
+     "  //    message_sender_forbidden desde 06/10). Fallback legado enquanto a DDL",
+     "  //    nao e aplicada (GA07).",
+     "  const fixtureRpcResponse = await page.request.post(`${SUPABASE_URL}/rest/v1/rpc/e2e_fixture_message`, {",
+     "    data: { p_op: 'insert' },",
+     "  if (!fixtureRpcResponse.ok()) {",
+     "    const msgResponse = await page.request.post(`${SUPABASE_URL}/rest/v1/messages`, {",
+     "  // GA11: limpeza pela mesma RPC (escopo travado no contato+conteudo do",
+     "  // fixture); fallback legado enquanto a DDL nao e aplicada (GA07).",
+     "  const rpcResponse = await page.request.post(`${SUPABASE_URL}/rest/v1/rpc/e2e_fixture_message`, {",
+     "    data: { p_op: 'cleanup' },"
+    ],
+    "still_sample": [
+     "  const msgResponse = await page.request.post(",
+     "    `${SUPABASE_URL}/rest/v1/messages`,",
+     "  if (!msgResponse.ok()) {",
+     "    throw new Error(",
+     "      `Falha ao inserir mensagem de fixture: HTTP ${msgResponse.status()} ` +",
+     "        (await msgResponse.text().catch(() => ''))",
+     "  await page.request.delete(",
+     "    `${SUPABASE_URL}/rest/v1/messages?contact_id=eq.${E2E_FIXTURE_CONTACT_ID}&content=eq.[E2E%20fixture%20setup]`,",
+     "    { headers }"
+    ]
+   }
+  },
+  {
+   "path": "scripts/ci/check-claude-md-integrity.mjs",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 90,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 36,
+    "missing_in_main": 28,
+    "removed": 29,
+    "removed_still_in_main": 10,
+    "missing_sample": [
+     "// GA02 (plano GitHub Actions, fase 0): trava anti-apagao do CLAUDE.md.",
+     "// Reprova se perder 'Banco de dados OFICIAL', 'Perimetro do GitHub'",
+     "// ou a disciplina de CI sem desperdicio ('um PR por lote', R6), ou se",
+     "// encolher mais de 30% numa PR (wipe tipo o commit placeholder de 15/10).",
+     "  'Banco de dados OFICIAL',",
+     "  'Perímetro do GitHub',",
+     "  'um PR por lote',",
+     "export function avaliarClaudeMd(content, headContent) {",
+     "  const c = String(content ?? '');",
+     "  const missing = REQUIRED_SECTIONS.filter((s) => !c.includes(s));",
+     "  if (missing.length > 0) return { ok: false, motivo: 'secao obrigatoria ausente: ' + missing.join(', ') };",
+     "  if (headContent) {",
+     "    const ratio = c.length / headContent.length;",
+     "    if (ratio < (1 - SHRINK_THRESHOLD)) {",
+     "      return { ok: false, motivo: 'encolheu mais de 30% vs HEAD. Possivel wipe por sessao paralela.' };",
+     "  return { ok: true };",
+     "if (import.meta.url.endsWith(process.argv[1]?.split('/').pop() ?? '')) {",
+     "    content = readFileSync('CLAUDE.md', 'utf8');",
+     "    console.error('::error::CLAUDE.md nao encontrado. Outra sessao pode ter apagado o arquivo.');",
+     "  if (process.exitCode !== 1) {",
+     "    let headContent;",
+     "      headContent = execSync('git show HEAD:CLAUDE.md', { encoding: 'utf8' });",
+     "      headContent = null;",
+     "    const veredito = avaliarClaudeMd(content, headContent);",
+     "    if (!veredito.ok) {"
+    ],
+    "still_sample": [
+     "let content;",
+     "try {",
+     "} catch {",
+     "  process.exitCode = 1;",
+     "  process.exit();",
+     "  process.exitCode = 1;",
+     "  process.exit();",
+     "try {",
+     "} catch {",
+     "    process.exit();"
+    ]
+   }
+  },
+  {
+   "path": "scripts/ci/check-claude-md-integrity.unit.mjs",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 38,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 24,
+    "missing_in_main": 22,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "// GA02: trava anti-apagao do CLAUDE.md — mutacao (arquivo com",
+     "// 'placeholder') reprova; arquivo com as 3 secoes passa.",
+     "import { readFileSync } from 'node:fs';",
+     "import { avaliarClaudeMd, REQUIRED_SECTIONS } from './check-claude-md-integrity.mjs';",
+     "test('GA02: arquivo placeholder reprova (wipe de 15/10)', () => {",
+     "  const r = avaliarClaudeMd('placeholder', 'x'.repeat(50000));",
+     "  assert.equal(r.ok, false);",
+     "  assert.match(r.motivo, /secao obrigatoria ausente/);",
+     "test('GA02: arquivo sem uma secao reprova', () => {",
+     "  const r = avaliarClaudeMd('Banco de dados OFICIAL\\nPerímetro do GitHub\\n', null);",
+     "  assert.equal(r.ok, false);",
+     "  assert.match(r.motivo, /um PR por lote/);",
+     "test('GA02: arquivo encolhido >30% vs HEAD reprova', () => {",
+     "  const base = 'Banco de dados OFICIAL\\nPerímetro do GitHub\\num PR por lote\\n' + 'x'.repeat(10000);",
+     "  const r = avaliarClaudeMd(REQUIRED_SECTIONS.join('\\n'), base);",
+     "  assert.equal(r.ok, false);",
+     "  assert.match(r.motivo, /encolheu/);",
+     "test('GA02: CLAUDE.md real passa com as 3 secoes', () => {",
+     "  const real = readFileSync('CLAUDE.md', 'utf8');",
+     "  for (const s of REQUIRED_SECTIONS) assert.ok(real.includes(s), 'falta: ' + s);",
+     "  const r = avaliarClaudeMd(real, real);",
+     "  assert.equal(r.ok, true);"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "scripts/ci/confirm-hash.unit.mjs",
+   "status": "MAIN_UNCHANGED_SINCE_BASE",
+   "patch_lines": 19,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 6,
+    "missing_in_main": 6,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "test('GA04: validate-runtime-proof imprime o hash SOZINHO no stdout (captura do bash) e a descricao no stderr', () => {",
+     "  assert.match(preflight, /process\\.stderr\\.write\\(modHash\\.descreverConfirmacao/, 'descricao vai para o stderr, nao contamina a captura');",
+     "  assert.ok(preflight.includes('process.stdout.write(confirmacao'), 'hash vai para o stdout');",
+     "  const saidasStdout = preflight.split('\\n').filter((l) => l.includes('process.stdout.write'));",
+     "  assert.equal(saidasStdout.length, 1, 'stdout carrega exatamente uma linha: o hash');",
+     "  assert.match(preflight, /process\\.stderr\\.write\\('Contrato generico/, 'log informativo do contrato generico vai para o stderr');"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "scripts/ci/e2e-logado-workflow.unit.mjs",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "patch_lines": 35,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 21,
+    "missing_in_main": 21,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "// GA08/GA09/GA12: contrato do e2e-logado.yml — fork com branch `main` nao",
+     "// executa (Scorecard #40), uma run por vez, orcamento proprio por grupo.",
+     "import test from 'node:test';",
+     "import assert from 'node:assert/strict';",
+     "import { readFile } from 'node:fs/promises';",
+     "const yml = await readFile(new URL('../../.github/workflows/e2e-logado.yml', import.meta.url), 'utf8');",
+     "test('GA08: E2E so roda por dispatch ou CI de push verde no MESMO repo', () => {",
+     "  assert.ok(yml.includes('workflows: [CI/CD Pipeline]'), 'dispara no fim do CI');",
+     "  assert.ok(yml.includes(\"github.event.workflow_run.conclusion == 'success'\"), 'exige CI verde');",
+     "  assert.ok(yml.includes(\"github.event.workflow_run.event == 'push'\"), 'exige evento push');",
+     "  assert.ok(",
+     "    yml.includes('github.event.workflow_run.head_repository.full_name == github.repository'),",
+     "    'exige mesmo repo (fecha fork com branch main)'",
+     "  assert.ok(!yml.includes('branches: [main]\\n  workflow_dispatch'), 'push direto nao dispara mais');",
+     "test('GA09: grupo de concorrencia fixo, sem ref (uma run por vez)', () => {",
+     "  assert.match(yml, /group: e2e-logado\\n/, 'grupo fixo');",
+     "  assert.ok(!yml.includes('group: e2e-logado-${{'), 'sem interpolacao de ref');",
+     "test('GA12: cada grupo tem global-timeout proprio e o orcamento reprova', () => {",
+     "  assert.equal((yml.match(/global_timeout_ms: \\d+/g) ?? []).length, 3, 'um timeout por grupo da matriz');",
+     "  assert.ok(yml.includes('--global-timeout=${{ matrix.global_timeout_ms }}'), 'timeout chega ao Playwright');",
+     "  assert.ok(yml.includes('did not run'), 'portao de orcamento existe');"
+    ],
+    "still_sample": [],
+    "same_basename_in_main": []
+   }
+  },
+  {
+   "path": "scripts/ci/fila-merge.unit.mjs",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "patch_lines": 95,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 46,
+    "missing_in_main": 46,
+    "removed": 6,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "import { classificar, decidir, estadoDoCheck, checksObrigatorios, resolverDesconhecidos, confirmarCandidato, motivoFora, TETO_TRAVADA_MS } from './fila-merge.mj",
+     "const AGORA_ISO = () => new Date().toISOString();",
+     "const ok = (name) => ({ __typename: 'CheckRun', name, status: 'COMPLETED', conclusion: 'SUCCESS', startedAt: AGORA_ISO() });",
+     "const rodando = (name) => ({ __typename: 'CheckRun', name, status: 'IN_PROGRESS', conclusion: '', startedAt: AGORA_ISO() });",
+     "const falhou = (name, startedAt = AGORA_ISO()) => ({ __typename: 'CheckRun', name, status: 'COMPLETED', conclusion: 'FAILURE', startedAt });",
+     "test('estado do check: ausente e em andamento são pendentes; cancelado trava (GA49)', () => {",
+     "  assert.equal(estadoDoCheck([{ ...ok('🧪 Unit Tests'), conclusion: 'CANCELLED' }], '🧪 Unit Tests'), 'bloqueado');",
+     "  assert.equal(estadoDoCheck([{ ...ok('🧪 Unit Tests'), conclusion: 'ACTION_REQUIRED' }], '🧪 Unit Tests'), 'bloqueado');",
+     "test('GA03: CodeQL em FAILURE bloqueia a PR (app trocado tambem bloqueia)', () => {",
+     "  const codeqlDown = (name) => ({ __typename: 'CheckRun', name, status: 'COMPLETED', conclusion: 'FAILURE', startedAt: '2026-10-15T10:00:00Z' });",
+     "  const obrigComCodeql = [...OBRIG, 'CodeQL'];",
+     "  assert.equal(classificar(pr(1, { statusCheckRollup: [ok('Contrato DB offline'), codeqlDown('CodeQL')] }), obrigComCodeql), 'bloqueada');",
+     "test('GA49: em dia com check CANCELLED vira bloqueada (nao pendente eterna)', () => {",
+     "  const cancelado = [{ ...ok('🧪 Unit Tests'), conclusion: 'CANCELLED' }, ok('Contrato DB offline')];",
+     "  assert.equal(classificar(pr(1, { mergeStateStatus: 'CLEAN', statusCheckRollup: cancelado }), OBRIG), 'bloqueada');",
+     "  const d = decidir(",
+     "    [pr(1, { mergeStateStatus: 'CLEAN', statusCheckRollup: cancelado }), pr(2)],",
+     "    OBRIG,",
+     "  assert.equal(d.acao, 'atualizar');",
+     "  assert.equal(d.pr, 2);",
+     "  assert.deepEqual(d.bloqueadas, [1]);",
+     "test('GA49: teto de 45 min — em dia e sem andamento ha mais de 45 min libera a vez', () => {",
+     "  const agora = Date.parse('2026-10-15T12:00:00Z');",
+     "  const velho = new Date(agora - TETO_TRAVADA_MS - 60_000).toISOString();",
+     "  const travado = OBRIG.map((name) => ({ __typename: 'CheckRun', name, status: 'COMPLETED', conclusion: 'SUCCESS', startedAt: velho }));"
+    ],
+    "still_sample": [],
+    "same_basename_in_main": []
+   }
+  },
+  {
+   "path": "scripts/ci/verify-ledger-statements.unit.mjs",
+   "status": "MAIN_UNCHANGED_SINCE_BASE",
+   "patch_lines": 29,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 13,
+    "missing_in_main": 10,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "test('GA05: cabecalho `--` do CLI no ledger e normalizado (run 37355980323)', () => {",
+     "  const arquivo = ['create table a ();', 'select 1;'];",
+     "  const ledgerComCabecalho = JSON.stringify([",
+     "    '-- ledger exportado pelo CLI em 2026-10-15',",
+     "    'create table a ();',",
+     "    'select 1;',",
+     "  const r = avaliarStatementsDoLedger({ bruto: ledgerComCabecalho, statementsDoArquivo: arquivo });",
+     "test('GA05: arquivo diferente continua reprovando mesmo com cabecalho', () => {",
+     "  const ledgerComCabecalho = JSON.stringify(['-- cabecalho do CLI', 'create table a ();', 'select 2;']);",
+     "  const r = avaliarStatementsDoLedger({ bruto: ledgerComCabecalho, statementsDoArquivo: ['create table a ();', 'select 1;'] });"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "supabase/migrations/20261020120000_e2e_fixture_message_rpc.sql",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "patch_lines": 69,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 55,
+    "missing_in_main": 55,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "-- rollback: drop function if exists public.e2e_fixture_message(text);",
+     "-- GA11 (plano de GitHub Actions, fase 0 — P0): fixture E2E sem violar o",
+     "-- trigger de proveniencia (`guard_message_provenance_fields`, 20261006114108).",
+     "-- A fixture inseria `messages` com `sender='contact'` por REST: o trigger",
+     "-- recusa (HTTP 403 `message_sender_forbidden`), 16–22 vezes por run, e a",
+     "-- suite logada estoura o `--global-timeout` desde 06/10 (0 sucessos em 7 dias).",
+     "-- A RPC abaixo faz a MESMA insercao com o JWT do proprio usuario de teste,",
+     "-- no mesmo padrao da `e2e_cleanup_conversation_closures` (20261009142650):",
+     "--   1. SECURITY DEFINER — roda como owner (bypassa o trigger, como",
+     "--      `postgres`/`service_role`); `authenticated` nao insere `sender=contact`.",
+     "--   2. so o contato de fixture — `contact_id` fixo do contato de teste",
+     "--      ([E2E] Contato de teste - nao apagar; e2e/fixtures/e2e-contact.ts).",
+     "--   3. so o usuario de teste — `auth.uid()` tem de ser o usuario de CI",
+     "--      (aaa9b766-3b72-403d-95ad-f9cd7301ebca). Sem esta trava a funcao seria",
+     "--      um INSERT generico em `messages` para qualquer `authenticated`.",
+     "--   4. conteudo fixo `[E2E fixture setup]` — insert e cleanup operam so",
+     "--      nessas linhas; reexecutar nao duplica nada fora do escopo.",
+     "-- `p_op='insert'` insere 1 mensagem fresca (inbox visivel); `p_op='cleanup'`",
+     "-- apaga as mensagens do fixture. DDL entra no lote (GA07); ate o apply, a",
+     "-- fixture cai de volta para o modo legado (ver e2e-contact.ts).",
+     "create or replace function public.e2e_fixture_message(p_op text default 'insert')",
+     "returns integer",
+     "language plpgsql",
+     "security definer",
+     "set search_path = pg_catalog, public"
+    ],
+    "still_sample": [],
+    "same_basename_in_main": [
+     "supabase/migrations/_superseded/20261020120000_e2e_fixture_message_rpc.sql"
+    ],
+    "missing_vs_same_basename": 0
+   }
+  }
+ ],
+ "counts": {
+  "migrations": "1",
+  "workflows": "4",
+  "src": "0",
+  "edges": "0",
+  "docs_only": "no",
+  "lines_branch_has_main_lacks": "837",
+  "lines_main_has_branch_lacks": "853"
+ },
+ "auto": "MISTO_CONFLITO",
+ "n_files_with_gaps": 13,
+ "gap_lines_total": 296
+}

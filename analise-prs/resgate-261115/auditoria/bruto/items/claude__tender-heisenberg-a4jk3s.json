@@ -1,0 +1,399 @@
+{
+ "id": "claude__tender-heisenberg-a4jk3s",
+ "kind": "branch",
+ "ref": "origin/claude/tender-heisenberg-a4jk3s",
+ "tip": "dec13f873301e59ede77d97c4905faee023c7ee6",
+ "merge_base": "5a4632c87f7e233fe62e830443f8b0eddf3e1a72",
+ "ahead": 27,
+ "last_commit_date": "2026-10-22",
+ "merge_base_date": "2026-10-22",
+ "prs_with_same_tip": [
+  1979
+ ],
+ "triagem_2804": {
+  "1979": "OBSOLETA"
+ },
+ "closure_comment": {},
+ "files": [
+  {
+   "path": ".github/workflows/ci.yml",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 13,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 1,
+    "removed_still_in_main": 1,
+    "missing_sample": [
+     "    name: 🔍 Lint & TypeCheck"
+    ],
+    "still_sample": [
+     "    name: 🔎 TypeCheck"
+    ]
+   }
+  },
+  {
+   "path": ".github/workflows/types-sync.yml",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 52,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 17,
+    "missing_in_main": 5,
+    "removed": 12,
+    "removed_still_in_main": 12,
+    "missing_sample": [
+     "              // E20: dedupe ANTES da rotacao — se a causa nao mudou e tem < 6h,",
+     "              // suprimir sem criar comentario, independente do numero de paginas.",
+     "              // (Bug original: rotacao disparava primeiro quando ultimaPagina > 20,",
+     "              // criando comentario mesmo quando deveria ser suprimido pelo dedupe.)",
+     "              // So chega aqui se o dedupe nao suprimiu (causa nova ou >6h)."
+    ],
+    "still_sample": [
+     "              const { data: comentarios } = await github.rest.issues.listComments({",
+     "                owner: context.repo.owner,",
+     "                repo: context.repo.repo,",
+     "                issue_number: existing.number,",
+     "                per_page: 1,",
+     "                page: ultimaPagina",
+     "              const ultimo = comentarios[0];",
+     "              const causaAnterior = ultimo?.body?.match(/<!-- causa:([a-z-]+) -->/)?.[1] ?? null;",
+     "              const idadeUltimoMs = ultimo ? Date.now() - new Date(ultimo.created_at).getTime() : Infinity;",
+     "              if (causaAnterior === causa && idadeUltimoMs < 6 * 60 * 60 * 1000) {"
+    ]
+   }
+  },
+  {
+   "path": "docs/audits/PLANO_WORKFLOWS_FAILURE_200_ETAPAS_2026-10-16.md",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "patch_lines": 641,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 592,
+    "missing_in_main": 592,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "# PLANO — Correções e melhorias dos workflows em FAILURE (200 etapas) — 2026-10-16",
+     "> **Escopo:** análise exaustiva de todos os runs com `conclusion=failure` do repositório",
+     "> (https://github.com/adm01-debug/Zapp_Web_V2/actions?query=is%3Afailure), causas-raiz, gaps",
+     "> estruturais e plano de correção. **Este documento é só o plano — nada daqui foi executado.**",
+     "> **Relação com planos anteriores:** complementa (não substitui) o",
+     "> `PLANO_GITHUB_ACTIONS_100_ETAPAS_2026-10-01.md`. Vários itens daquele plano foram superados pela",
+     "> decisão \"CI mínimo\" de 16/10/2026 (ver Diagnóstico D7); este plano parte do estado real pós-decisão.",
+     "> **Convenção:** etapas `F001`–`F200`. Uma etapa = um PR (ou uma ação operacional atômica).",
+     "> Branch `claude/<tipo>-f<NNN>-<slug>-<AAMMDD-HHMM>`; título do PR termina em `(F<NNN>)`.",
+     "> Etapas marcadas **[JOAQUIM]** envolvem decisão de negócio, custo, segredo ou perímetro — não",
+     "> executar por agente sem aprovação explícita.",
+     "## Parte 1 — Diagnóstico (medido em 16/10/2026, ~17:30 UTC)",
+     "### Números (runs desde 2026-10-02, API do GitHub)",
+     "| Workflow | Runs | Falhas | Taxa | Situação em 16/10 |",
+     "|---|---:|---:|---:|---|",
+     "| DB Live Guard | 222 | 193 | **87%** | vermelho crônico (drift + timeout de pooler); desde 16/10 só roda semanal |",
+     "| Branch Hygiene Audit | 71 | 69 | **97%** | arquivo inválido em branches disparava por push; versão nova (16/10) nunca rodou |",
+     "| DB Migrate (production) | 6 | 5 | 83% | fail-closed: ledger ≠ arquivo (`20261004195051`) |",
+     "| types-sync | 178 | 68 | 38% | `error running container: exit 1` (supabase CLI) + lockfile hoje |",
+     "| E2E logado | 444 | 137 | 31% | suíte logada quebrada desde 12/10 (issue #1915, 17 testes) + lockfile hoje |",
+     "| CI/CD Pipeline | 1636 | 251 | 15% | **vermelho na main agora** (lockfile) |",
+     "| Talk X placar regen | 443 | 66 | 15% | falhas concentradas em 02-03/10 (\"Abrir ou atualizar PR do placar\"); verde hoje |",
+     "| DB Guard (offline) | 1633 | 148 | 9% | shard talkx: teste \"Divergência de replay E27\" (fix 0a1b039 mergeado hoje) |",
+     "| Deploy Edge Functions | 516 | 22 | 4% | **vermelho na main agora** (manifesto stale) — issue #1977 |",
+     "| Settings Guard (deletado 16/10) | — | 49 | — | falhava por divergência `default_workflow_permissions`; workflow apagado |"
+    ],
+    "still_sample": [],
+    "same_basename_in_main": []
+   }
+  },
+  {
+   "path": "scripts/ci/ci-docs-baseline.unit.mjs",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 13,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 1,
+    "removed_still_in_main": 1,
+    "missing_sample": [
+     "const CONTAGEM_ANTIGA = [/dos\\s+17\\s+workflows/i, /17\\s+no\\s+total/i];"
+    ],
+    "still_sample": [
+     "const CONTAGEM_ANTIGA = [/dos\\s+17\\s+workflows/i, /17\\s+no\\s+total/i, /14\\s+workflows/i, /14\\s+arquivos/i];"
+    ]
+   }
+  },
+  {
+   "path": "scripts/ci/eslint-baseline.json",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 13,
+   "hunk": "PRESENT_REVERSE_APPLIES"
+  },
+  {
+   "path": "scripts/ci/typecheck-baseline.json",
+   "status": "MAIN_UNCHANGED_SINCE_BASE",
+   "patch_lines": 219,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 4,
+    "missing_in_main": 4,
+    "removed": 116,
+    "removed_still_in_main": 116,
+    "missing_sample": [
+     "      \"line\": 608,",
+     "      \"line\": 374,",
+     "      \"line\": 529,",
+     "      \"line\": 73,"
+    ],
+    "still_sample": [
+     "      \"file\": \"src/components/connections/ConnectionCard.tsx\",",
+     "      \"line\": 221,",
+     "      \"column\": 23,",
+     "      \"severity\": \"error\",",
+     "      \"code\": \"TS2304\",",
+     "      \"message\": \"Cannot find name 'handleDisconnectDialogOpenChange'.\",",
+     "      \"contextHash\": \"b47b870dc8914fa1c793b461e52b267cdfeb9c636a4a6cfbe0b6a6a98307e971\"",
+     "      \"file\": \"src/components/connections/ConnectionsView.tsx\",",
+     "      \"line\": 220,",
+     "      \"column\": 73,"
+    ]
+   }
+  },
+  {
+   "path": "scripts/ci/workflow-contracts.unit.mjs",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 22,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 2,
+    "missing_in_main": 2,
+    "removed": 2,
+    "removed_still_in_main": 2,
+    "missing_sample": [
+     "// E97 (auditoria de GitHub Actions, 2026-10-01 — SL-095): todo workflow com passo shell",
+     "test('E69: test/node-scripts não esperam o lint-and-typecheck (rodam em paralelo)', () => {"
+    ],
+    "still_sample": [
+     "// E97 (auditoria de GitHub Actions, 2026-10-01): todo workflow com passo shell",
+     "test('E69: unit-tests/node-scripts não esperam o typecheck (rodam em paralelo)', () => {"
+    ]
+   }
+  },
+  {
+   "path": "scripts/db-audit/dashboard-rls-authorization.test.sh",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 60,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 10,
+    "missing_in_main": 6,
+    "removed": 8,
+    "removed_still_in_main": 4,
+    "missing_sample": [
+     "  20261007013217_conversation_closures_reopen_same_day.sql; do",
+     "  '20261007013217_conversation_closures_reopen_same_day.sql' \\",
+     "# Definição final de dashboard_kpi vive na migration 20261007013217",
+     "# Anchored pattern evita capturar o bloco de comentário inicial que repete a assinatura.",
+     "awk '/^CREATE OR REPLACE FUNCTION public\\.dashboard_kpi/,/^\\$function\\$;/' \\",
+     "  || fail 'extracao de dashboard_kpi da migration 20261007013217 veio vazia'"
+    ],
+    "still_sample": [
+     "  [[ \"$output\" == *\"$needle\"* ]] || { printf '%s\\n' \"$output\" >&2; fail \"$label: esperava '$needle' no erro\"; }",
+     "  20261006064630_dashboard_contact_counts_restaura_trava_e33.sql; do",
+     "awk '/CREATE OR REPLACE FUNCTION public.dashboard_kpi/,/\\$function\\$;/' \\",
+     "  \"$migrations_dir/20261003272707_reconcile_local_replay_with_canonical.sql\" \\"
+    ]
+   }
+  },
+  {
+   "path": "scripts/db-audit/known-violations.json",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 27,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 2,
+    "missing_in_main": 2,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "    \"rpc:talk_me_list_pending_messages:src/features/talk-me/useTalkMeQueue.ts\",",
+     "    \"from:connection_alert_preferences:src/hooks/system/useConnectionAlertPreferences.ts\","
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/inbox/tabs/__tests__/FilesTab.fase6.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 13,
+   "hunk": "PRESENT_REVERSE_APPLIES"
+  },
+  {
+   "path": "src/hooks/inbox/__tests__/useInboxBulkActions.test.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 74,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 10,
+    "missing_in_main": 2,
+    "removed": 10,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  it('lê o conversation_status dos originais, arquiva via ação desfazível e o desfazer RESTAURA por status', async () => {",
+     "    expect(restores[1]).toMatchObject({ payload: { conversation_status: 'waiting' }, filters: { id: [c2] } });"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/hooks/inbox/__tests__/useInboxFilters.type-url.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 12,
+   "hunk": "PRESENT_REVERSE_APPLIES"
+  },
+  {
+   "path": "src/hooks/inbox/useInboxFilters.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 84,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 19,
+    "missing_in_main": 6,
+    "removed": 18,
+    "removed_still_in_main": 6,
+    "missing_sample": [
+     "    // Se a URL tem ?type= explícito (mesmo valor inválido), não cai no stored pref —",
+     "    // a intenção do deep-link prevalece e um tipo inválido vira null, não o último usado.",
+     "      const params = new URLSearchParams(prev);",
+     "        params.set('type', value);",
+     "        params.delete('type');",
+     "      return params;"
+    ],
+    "still_sample": [
+     "  try {",
+     "  } catch {",
+     "    return null;",
+     "    if (value && value !== 'all') {",
+     "    } else {",
+     "  }, [applyPrefs]);"
+    ]
+   }
+  },
+  {
+   "path": "src/hooks/system/useDiagnosticsData.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 17,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 4,
+    "missing_in_main": 4,
+    "removed": 1,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "    // Erro nesta contagem = banco inacessível: não lança (isso pularia o setHealth),",
+     "    // propaga para dbError para que classifyHealth marque 'down'.",
+     "    if (connectionsCountError && !dbError) {",
+     "      dbError = connectionsCountError;"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/hooks/system/useUserSettings.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 50,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 9,
+    "missing_in_main": 0,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/hooks/tasks/__tests__/workItemFormat.test.ts",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/hooks/tasks/workItemAggregates.ts",
+   "status": "MAIN_UNCHANGED_SINCE_BASE",
+   "patch_lines": 13,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 1,
+    "removed_still_in_main": 1,
+    "missing_sample": [
+     "  return texto.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();"
+    ],
+    "still_sample": [
+     "  return texto.normalize('NFD').replace(/[\\u0300-\\u036f]/g, '').toLowerCase();"
+    ]
+   }
+  },
+  {
+   "path": "src/hooks/team-chat/__tests__/useTeamMessages.canal-e-reconexao.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 15,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 3,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  useTeamReadState: () => ({ readStates: {} }),"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/test/setup.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 39,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 13,
+    "missing_in_main": 11,
+    "removed": 5,
+    "removed_still_in_main": 5,
+    "missing_sample": [
+     "// MOCK getBoundingClientRect / clientHeight / clientWidth — jsdom + virtualizer.",
+     "// O @tanstack/react-virtual (v3+) mede o contêiner de rolagem por clientHeight",
+     "// (via getRect → element.clientHeight), NÃO por getBoundingClientRect. O jsdom",
+     "// retorna 0 para ambos por padrão, então outerSize===0 e getVirtualItems() não",
+     "// retorna nenhum item. Mocks abaixo garantem 800×600 para toda instância de",
+     "// HTMLElement — getBoundingClientRect cobre hooks que usam essa API diretamente",
+     "// (ex.: useFilesContainerColumns); clientHeight/clientWidth cobrem o virtualizer.",
+     "Object.defineProperty(HTMLElement.prototype, 'clientHeight', {",
+     "  get() { return 600; },",
+     "Object.defineProperty(HTMLElement.prototype, 'clientWidth', {",
+     "  get() { return 800; },"
+    ],
+    "still_sample": [
+     "// MOCK getBoundingClientRect — @tanstack/react-virtual no jsdom.",
+     "// O virtualizador mede a altura do contêiner por getBoundingClientRect() antes",
+     "// de calcular quais itens são visíveis. O jsdom retorna zeros por padrão, então",
+     "// getVirtualItems() retorna [] e nenhum item é renderizado (nem data-testid).",
+     "// Retornar uma dimensão não-nula faz o virtualizador funcionar nos testes."
+    ]
+   }
+  }
+ ],
+ "counts": {
+  "migrations": "0",
+  "workflows": "2",
+  "src": "10",
+  "edges": "0",
+  "docs_only": "no",
+  "lines_branch_has_main_lacks": "5656",
+  "lines_main_has_branch_lacks": "1530"
+ },
+ "auto": "MISTO_CONFLITO",
+ "n_files_with_gaps": 14,
+ "gap_lines_total": 786
+}

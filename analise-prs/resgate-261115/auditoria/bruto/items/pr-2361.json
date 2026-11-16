@@ -1,0 +1,931 @@
+{
+ "id": "pr-2361",
+ "kind": "pr",
+ "ref": "refs/remotes/pr/2361",
+ "pr": 2361,
+ "tip": "b3530f843e8320fb6a78d300dabe962350552db9",
+ "merge_base": "d82df89a014267dc5a0ab8ca14fdb182b6e0e0df",
+ "ahead": 38,
+ "last_commit_date": "2026-10-30",
+ "merge_base_date": "2026-10-30",
+ "triagem_2804": "DECISAO_DONO",
+ "closure_comment": null,
+ "files": [
+  {
+   "path": "ESTADO.md",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 49,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 6,
+    "missing_in_main": 4,
+    "removed": 4,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "Base: `dia/2026-10-20`. 85 edges com `index.ts` em `supabase/functions/`.",
+     "| E | 21 |",
+     "| **total** | **85** |",
+     "## Órfós (21) — GATE B"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "scripts/db-audit/known-violations.json",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 14,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 2,
+    "missing_in_main": 2,
+    "removed": 1,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "    \"rpc:can_delete_contacts:src/services/contact.service.ts\",",
+     "    \"from:conversations:supabase/functions/copilot-live/index.ts\""
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "scripts/db-audit/replay-known-failures.json",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 19,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 6,
+    "missing_in_main": 4,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "    \"20261030100000_copilot_sessions.sql\": {",
+     "      \"motivo\": \"REFERENCES public.conversations(id) falha no replay pois a tabela conversations nao e criada no banco efemero (mesmo padrao de 20260927540000 e",
+     "    \"20261030110000_copilot_insights.sql\": {",
+     "      \"motivo\": \"REFERENCES public.copilot_sessions(id) falha em cascata: copilot_sessions nao foi criada no replay pois conversations nao existe no banco efeme"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/__tests__/useConversationScore.test.ts",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/__tests__/useDataMasking.test.ts",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/components/copilot/CoachingTipBanner.tsx",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/components/copilot/DeadlineCalcCard.tsx",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/components/copilot/DiscountGuardrailBanner.tsx",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/components/copilot/LeadThermometerBadge.tsx",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/components/copilot/ObjectionCard.tsx",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/components/copilot/ObjectionHandlerCard.tsx",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/components/copilot/PurchaseSignalAlert.tsx",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/components/copilot/QuoteDraftCard.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 80,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 55,
+    "missing_in_main": 2,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  const handleCopy = () => {",
+     "    navigator.clipboard.writeText(draft.textSummary).catch(() => {});"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/copilot/RadarPhase10Panel.tsx",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/components/copilot/RadarPhase8Panel.tsx",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/components/copilot/RadarPhase8to15Panel.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 198,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 146,
+    "missing_in_main": 2,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "    paymentTerms: '',",
+     "              onClick={() => onInsertText(lossRisk.recoveryAction)}"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/copilot/RadarPhase9Panel.tsx",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/components/copilot/SpeedToLeadAlert.tsx",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/components/copilot/TransparencyLabel.tsx",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/components/copilot/UpsellCard.tsx",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/components/copilot/index.ts",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/components/talkx/TalkXSegments.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 43,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 5,
+    "missing_in_main": 4,
+    "removed": 5,
+    "removed_still_in_main": 4,
+    "missing_sample": [
+     "      if (e.key === 'Escape' && !e.defaultPrevented) closePanel(); // eslint-disable-line local/no-secret-compare",
+     "      if (e.key === 'Escape' && !e.defaultPrevented) { // eslint-disable-line local/no-secret-compare",
+     "                  <div key={s.id} data-testid=\"segment-card\" role=\"button\" tabIndex={0} onKeyDown={(e) => { if ((e.key === 'Enter' || e.key === ' ') && e.target",
+     "                    <tr key={s.id} data-testid=\"segment-card\" ref={selected?.id === s.id ? selectedRowRef : null} tabIndex={0} onKeyDown={(e) => { if ((e.key =="
+    ],
+    "still_sample": [
+     "      if (e.key === 'Escape' && !e.defaultPrevented) closePanel();",
+     "      if (e.key === 'Escape' && !e.defaultPrevented) {",
+     "                  <div key={s.id} data-testid=\"segment-card\" role=\"button\" tabIndex={0} onKeyDown={(e) => { if ((e.key === 'Enter' || e.key === ' ') && e.target",
+     "                    <tr key={s.id} data-testid=\"segment-card\" ref={selected?.id === s.id ? selectedRowRef : null} tabIndex={0} onKeyDown={(e) => { if ((e.key =="
+    ]
+   }
+  },
+  {
+   "path": "src/hooks/copilot/__tests__/useConversationScore.test.ts",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/hooks/copilot/__tests__/useDataMasking.test.ts",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/hooks/copilot/__tests__/useDeadlineCalculator.test.ts",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/hooks/copilot/__tests__/useLossRiskDetector.test.ts",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/hooks/copilot/__tests__/useObjectionHandler.test.ts",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/hooks/copilot/__tests__/useQuoteDraft.test.ts",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/hooks/copilot/index.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 164,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 93,
+    "missing_in_main": 5,
+    "removed": 24,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "export { useMinQtyAlternative } from './useMinQtyAlternative';",
+     "export { useLossRiskAlert } from './useLossRiskAlert';",
+     "export { useRejectionRecovery } from './useRejectionRecovery';",
+     "export { useUpsell } from './useUpsell';",
+     "export { useKitSuggestion } from './useKitSuggestion';"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/hooks/copilot/useAiJudge.ts",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/hooks/copilot/useAudioTone.ts",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/hooks/copilot/useAudioTranscription.ts",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/hooks/copilot/useBattleCard.ts",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/hooks/copilot/useBiasChecker.ts",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/hooks/copilot/useBrandColors.ts",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/hooks/copilot/useCoachingTip.ts",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/hooks/copilot/useConversationScore.ts",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/hooks/copilot/useCopilotLearning.ts",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/hooks/copilot/useCopilotSupervisor.ts",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/hooks/copilot/useCostDashboard.ts",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/hooks/copilot/useDataMasking.ts",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/hooks/copilot/useDeadlineCalculator.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 53,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 37,
+    "missing_in_main": 3,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "import { useMemo } from 'react';",
+     "export function useDeadlineCalculator({ eventDate, productType = 'default', today = new Date() }: { eventDate: Date | null; productType?: string; today?: Date }",
+     "  return useMemo(() => {"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/hooks/copilot/useDiscountGuardrail.ts",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/hooks/copilot/useFirstResponseScript.ts",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/hooks/copilot/useFollowUpContent.ts",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/hooks/copilot/useFollowUpTiming.ts",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/hooks/copilot/useFreightEstimate.ts",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/hooks/copilot/useGuardrails.ts",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/hooks/copilot/useHonestUrgency.ts",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/hooks/copilot/useImageAnalysis.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 40,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 25,
+    "missing_in_main": 9,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     " * CV-102 — Análise de imagem (stub).",
+     "export function useImageAnalysis(): ImageAnalysisResult & { analyze: (imageUrl: string) => Promise<void> } {",
+     "  const analyze = useCallback(async (_imageUrl: string) => {",
+     "      // DELEGADO: chamar edge function copilot-live com action=analyze_image",
+     "      setDescription('');",
+     "      setExtractedText([]);",
+     "    } catch (e) {",
+     "      setError(e instanceof Error ? e.message : 'Erro na análise');",
+     "  return { description, extractedText, isLoading, error, analyze };"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/hooks/copilot/useKitSuggestion.ts",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "patch_lines": 35,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 20,
+    "missing_in_main": 20,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     " * CV-088 — Sugestão de kits temáticos.",
+     "import { useMemo } from 'react';",
+     "export interface KitSuggestion {",
+     "  kitName: string;",
+     "  items: string[];",
+     "  theme: string;",
+     "  script: string;",
+     "  estimatedMultiplier: number;",
+     "const PRODUCT_KITS: Array<{ triggers: string[]; kit: KitSuggestion }> = [",
+     "  { triggers: ['caneta', 'bloco', 'caderno'], kit: { kitName: 'Kit Escritório', items: ['Caneta metálica', 'Bloco de anotações', 'Porta-cartão'], theme: 'Produt",
+     "  { triggers: ['squeeze', 'garrafa', 'copo'], kit: { kitName: 'Kit Fitness', items: ['Squeeze', 'Toalha personalizada', 'Porta-suplemento'], theme: 'Bem-estar /",
+     "  { triggers: ['ecobag', 'sacola', 'bag'], kit: { kitName: 'Kit Sustentabilidade', items: ['Ecobag', 'Copo reutilizável', 'Canudo de bambu'], theme: 'ESG / Sust",
+     "  { triggers: ['camiseta', 'camisa', 'uniforme'], kit: { kitName: 'Kit Uniforme', items: ['Camiseta', 'Boné', 'Mochila'], theme: 'Uniformização / Eventos', scri",
+     "export function useKitSuggestion({ messages }: { messages: Array<{ content: string; sender: string }> }): KitSuggestion | null {",
+     "  return useMemo(() => {",
+     "    const allText = messages.map((m) => m.content).join(' ').toLowerCase();",
+     "    for (const { triggers, kit } of PRODUCT_KITS) {",
+     "      if (triggers.some((t) => allText.includes(t))) return kit;",
+     "    return null;",
+     "  }, [messages]);"
+    ],
+    "still_sample": [],
+    "same_basename_in_main": []
+   }
+  },
+  {
+   "path": "src/hooks/copilot/useLeadThermometer.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 37,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 23,
+    "missing_in_main": 3,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "import { useMemo } from 'react';",
+     "export function useLeadThermometer({ messages }: { messages: Array<{ content: string; sender: string }> }): LeadThermometerResult {",
+     "  return useMemo(() => {"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/hooks/copilot/useLearningMoment.ts",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/hooks/copilot/useLgpdFilter.ts",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/hooks/copilot/useLiveScoring.ts",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/hooks/copilot/useLogoAnalysis.ts",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/hooks/copilot/useLossRiskAlert.ts",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "patch_lines": 83,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 52,
+    "missing_in_main": 52,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     " * CV-079 — Alerta de risco de perda de negócio.",
+     " * Detecta sinais de que a conversa está esfriando ou que o cliente",
+     " * está se encaminhando para fechar com concorrente. Alerta o vendedor",
+     " * com urgência e sugere ação imediata.",
+     "export type LossRiskLevel = 'low' | 'medium' | 'high' | 'critical';",
+     "export interface LossRiskAlert {",
+     "  riskLevel: LossRiskLevel;",
+     "  signals: string[];",
+     "  immediateAction: string;",
+     "  script: string;",
+     "const RISK_SIGNALS: Record<LossRiskLevel, string[]> = {",
+     "  critical: [",
+     "    'fechei com outro', 'já comprei', 'não vou mais precisar', 'cancelar', 'desistir',",
+     "    'vou de outro fornecedor', 'outro me ofereceu', 'fechado com',",
+     "  high: [",
+     "    'concorrente me ligou', 'recebi outra proposta', 'outro me deu desconto',",
+     "    'vou fechar em outro lugar', 'mais barato lá', 'já tenho proposta melhor',",
+     "  medium: [",
+     "    'vou pensar mais', 'não decidi ainda', 'estou avaliando outros', 'tem mais opções',",
+     "    'preciso comparar', 'ainda não sei', 'semana que vem vejo',",
+     "  low: [],",
+     "const ACTIONS: Record<LossRiskLevel, string> = {",
+     "  critical: 'Contato de recuperação imediato: entenda o que levou à decisão.',",
+     "  high: 'Contraoferta agora: mostre o diferencial único antes que feche com concorrente.',",
+     "  medium: 'Crie urgência real: disponibilidade limitada ou prazo de cotação.',"
+    ],
+    "still_sample": [],
+    "same_basename_in_main": []
+   }
+  },
+  {
+   "path": "src/hooks/copilot/useLossRiskDetector.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 54,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 33,
+    "missing_in_main": 12,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "import { useMemo } from 'react';",
+     "const HIGH_RISK = ['vou cancelar', 'desisti', 'não vai dar', 'fechei com outro', 'já comprei em outro', 'obrigado mesmo assim'];",
+     "const MEDIUM_RISK = ['vou pensar', 'preciso ver', 'cotei em outro', 'comparando', 'não tenho certeza', 'caro demais'];",
+     "}): LossRiskResult {",
+     "  return useMemo(() => {",
+     "    if (!clientText && !daysSinceLastContact) return { level: 'low', signals: [], recoveryAction: '' };",
+     "    const lower = (clientText ?? '').toLowerCase();",
+     "    const silenceRisk = (daysSinceLastContact ?? 0) > 5;",
+     "      return { level: 'high', signals: highMatches, recoveryAction: 'Ligue agora. Pergunte o que faltou e faça uma oferta de recuperação única.' };",
+     "        signals: [...medMatches, ...(silenceRisk ? ['silêncio > 5 dias'] : [])],",
+     "    return { level: 'low', signals: lowMatches, recoveryAction: 'Agende follow-up para o prazo que o cliente mencionou.' };",
+     "  }, [clientText, daysSinceLastContact]);"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/hooks/copilot/useMediaPrivacy.ts",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/hooks/copilot/useMinQtyAlternative.ts",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "patch_lines": 38,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 22,
+    "missing_in_main": 22,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     " * CV-078 — Alternativa para quantidade mínima.",
+     " * Quando cliente não consegue atingir o mínimo, sugere composições ou alternativos.",
+     "import { useMemo } from 'react';",
+     "export interface MinQtyResult {",
+     "  triggered: boolean;",
+     "  mixSuggestion: string;",
+     "  alternatives: string[];",
+     "const MIN_QTY_TRIGGERS = ['mínimo', 'minimo', 'poucas unidades', 'só preciso de', 'quantidade pequena', 'não chego no', 'menos que'];",
+     "export function useMinQtyAlternative({ clientText }: { clientText: string }): MinQtyResult {",
+     "  return useMemo(() => {",
+     "    if (!clientText) return { triggered: false, mixSuggestion: '', alternatives: [] };",
+     "    const lower = clientText.toLowerCase();",
+     "    const triggered = MIN_QTY_TRIGGERS.some((t) => lower.includes(t));",
+     "    if (!triggered) return { triggered: false, mixSuggestion: '', alternatives: [] };",
+     "    return {",
+     "      triggered: true,",
+     "      mixSuggestion: 'Posso montar um kit com modelos diferentes para atingir o mínimo de produção — você distribui variedade e paga menos por peça.',",
+     "      alternatives: [",
+     "        'Mistura de produtos diferentes (caneta + caneca = lote mínimo)',",
+     "        'Produto com estoque pronto (sem mínimo de personalização)',",
+     "        'Participação em lote coletivo com outro cliente',",
+     "  }, [clientText]);"
+    ],
+    "still_sample": [],
+    "same_basename_in_main": []
+   }
+  },
+  {
+   "path": "src/hooks/copilot/useMinQuantityAlert.ts",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/hooks/copilot/useMinQuantityAlternative.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 61,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 36,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "      draftLine: `O mínimo de produção para esse produto é ${productMinQty} peças. Mas posso verificar se temos alguma opção com quantidade menor — qual seria o"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/hooks/copilot/useMockupTrigger.ts",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/hooks/copilot/useNegotiationGuard.ts",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/hooks/copilot/useNonAnnoyingFollowUp.ts",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/hooks/copilot/useObjectionHandler.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 98,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 67,
+    "missing_in_main": 3,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "import { useMemo } from 'react';",
+     "export function useObjectionHandler({ clientText }: { clientText: string }): ObjectionResult {",
+     "  return useMemo(() => {"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/hooks/copilot/useOccasionKits.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 77,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 54,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     " * Detecta o tipo de evento e sugere kit temático."
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/hooks/copilot/usePIIDetector.ts",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/hooks/copilot/usePdfExtraction.ts",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/hooks/copilot/usePostRejection.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 48,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 27,
+    "missing_in_main": 6,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  'já comprei em outro', 'fechei com outro', 'não vou precisar', 'desistir',",
+     "  'não tenho interesse', 'pode encerrar', 'não vai dar',",
+     "    const lower = clientMessage.toLowerCase();",
+     "      return { detected: false, closingScript: '', futureHookScript: '', followUpDays: 0 };",
+     "      closingScript: 'Que pena não ter conseguido atender dessa vez! Fico à disposição para quando precisar. Posso te enviar um portfólio para referência futura",
+     "      followUpDays: 90,"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/hooks/copilot/usePriceAnchoring.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 37,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 21,
+    "missing_in_main": 3,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "import { useMemo } from 'react';",
+     "export function usePriceAnchoring({ clientText }: { clientText: string }): PriceAnchoringResult {",
+     "  return useMemo(() => {"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/hooks/copilot/usePromptVersioning.ts",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/hooks/copilot/usePurchaseSignals.ts",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/hooks/copilot/useQuoteDraft.ts",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/hooks/copilot/useRejectionRecovery.ts",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "patch_lines": 34,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 19,
+    "missing_in_main": 19,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     " * CV-080 — Recuperação pós-rejeição.",
+     " * Após perder uma venda, sugere script para manter o relacionamento.",
+     "import { useMemo } from 'react';",
+     "export interface RejectionRecoveryResult {",
+     "  triggered: boolean;",
+     "  recoveryScript: string;",
+     "  followUpAction: string;",
+     "const REJECTION_TRIGGERS = ['fechei com outro', 'já comprei', 'vou passar dessa vez', 'não preciso mais', 'cancelar', 'desisti', 'não vai rolar'];",
+     "export function useRejectionRecovery({ clientText }: { clientText: string }): RejectionRecoveryResult {",
+     "  return useMemo(() => {",
+     "    if (!clientText) return { triggered: false, recoveryScript: '', followUpAction: '' };",
+     "    const lower = clientText.toLowerCase();",
+     "    const triggered = REJECTION_TRIGGERS.some((t) => lower.includes(t));",
+     "    if (!triggered) return { triggered: false, recoveryScript: '', followUpAction: '' };",
+     "    return {",
+     "      triggered: true,",
+     "      recoveryScript: 'Entendo! Fico feliz que você encontrou uma solução. Se precisar de algo para o próximo evento, pode contar comigo. Posso guardar seu perf",
+     "      followUpAction: 'Adicionar à lista de follow-up em 60 dias com mensagem de relacionamento.',",
+     "  }, [clientText]);"
+    ],
+    "still_sample": [],
+    "same_basename_in_main": []
+   }
+  },
+  {
+   "path": "src/hooks/copilot/useSilenceDetector.ts",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/hooks/copilot/useSpeedToLead.ts",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/hooks/copilot/useStallDetector.ts",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/hooks/copilot/useSupervisorDashboard.ts",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/hooks/copilot/useSupervisorInsights.ts",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/hooks/copilot/useTradeOffer.ts",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/hooks/copilot/useUpsell.ts",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "patch_lines": 77,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 51,
+    "missing_in_main": 51,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     " * CV-087 — Sugestão de upsell.",
+     " * Quando o cliente está próximo de fechar, sugere produtos complementares",
+     " * ou versão premium do produto escolhido. Nunca substitui — complementa.",
+     "import { useMemo } from 'react';",
+     "export interface UpsellSuggestion {",
+     "  type: 'upgrade' | 'complement' | 'bundle';",
+     "  productLabel: string;",
+     "  reason: string;",
+     "  script: string;",
+     "  /** Incremento estimado no ticket (%). */",
+     "  ticketIncreasePct: number;",
+     "const BUY_SIGNAL_TRIGGERS = [",
+     "  'quanto fica', 'fecha', 'confirmar', 'aceito', 'vamos', 'ok',",
+     "  'pode ser', 'tudo bem', 'combinado', 'fechar', 'quero',",
+     "const PRODUCT_UPSELLS: Record<string, UpsellSuggestion> = {",
+     "  caneta: {",
+     "    type: 'upgrade',",
+     "    productLabel: 'Caneta metálica',",
+     "    reason: 'Acabamento premium para o mesmo propósito.',",
+     "    script: 'Esse pedido de canetas ficaria ainda mais especial em versão metálica — custo só 30% maior mas impacto muito maior. Posso mostrar?',",
+     "    ticketIncreasePct: 30,",
+     "  camiseta: {",
+     "    type: 'complement',",
+     "    productLabel: 'Boné bordado',",
+     "    reason: 'Complementa o uniforme e aumenta a exposição de marca.',"
+    ],
+    "still_sample": [],
+    "same_basename_in_main": []
+   }
+  },
+  {
+   "path": "src/hooks/copilot/useUpsellSuggestion.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 45,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 26,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     " * CV-088 — Sugestão de upsell/cross-sell contextual."
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/hooks/copilot/useUrgencyEscalation.ts",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/hooks/copilot/useVendorAuthorization.ts",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/hooks/copilot/useVouPensarDetector.ts",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/hooks/copilot/useWhisperChannel.ts",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "supabase/deployment-manifest.json",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 52,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 13,
+    "missing_in_main": 7,
+    "removed": 4,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "    \"function_count\": 85,",
+     "    \"source_file_count\": 169,",
+     "    \"verify_jwt_true\": 71,",
+     "      \"bytes\": 7020,",
+     "      \"sha256\": \"8ecfd85212d2a94f1cf2b9f4149b9c30d08a414a17953e00ebc4b83a3816e30e\"",
+     "      \"source_sha256\": \"ad37534a035594150e9151261c1d10de0000d0de306e2b6bd13b2fb438c19c0c\",",
+     "  \"manifest_sha256\": \"85283e5f40fcd0c8a8cbb5bf45a54076bb25b8390400092772f8993f1e09bfee\""
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "supabase/functions/copilot-live/index.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 193,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 137,
+    "missing_in_main": 45,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     " * copilot-live — Edge Function stub (CV-141)",
+     " * Recebe um tick do RADAR (contexto da conversa) e devolve insights",
+     " * calculados no servidor. Hoje retorna resposta estática para que o",
+     " * front possa ser deployado sem dependência de LLM; a lógica real",
+     " * será adicionada iterativamente.",
+     "import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.87.1';",
+     "const CORS = {",
+     "  'Access-Control-Allow-Origin': '*',",
+     "    return new Response('ok', { headers: CORS });",
+     "        headers: { ...CORS, 'Content-Type': 'application/json' },",
+     "        headers: { ...CORS, 'Content-Type': 'application/json' },",
+     "        headers: { ...CORS, 'Content-Type': 'application/json' },",
+     "    // contact_id vem do payload (o front já conhece); fallback para user.id",
+     "    const contactId = payload.contact_id ?? user.id;",
+     "    // INSERT atômico: seta profile_id na primeira chamada e não pode ser",
+     "    // sobrescrito. Em conflito (23505, unique conversation_id), cai em UPDATE",
+     "    // condicional guardado por .eq('profile_id', user.id) — 0 rows = ou dono",
+     "    // diferente, ou conversa foi transferida para este usuário.",
+     "    // Elimina a janela de corrida do padrão SELECT+upsert anterior.",
+     "        profile_id: user.id,",
+     "          headers: { ...CORS, 'Content-Type': 'application/json' },",
+     "        // por profile_id — 0 rows significa que outro usuário é o dono,",
+     "        // ou a conversa foi transferida para este usuário (ver abaixo).",
+     "          .eq('profile_id', user.id)",
+     "          // Zero rows: ou o dono da sessão é outro usuário, ou a conversa foi"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "supabase/migrations/20261030100000_copilot_sessions.sql",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "supabase/migrations/20261030110000_copilot_insights.sql",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  }
+ ],
+ "auto": "MISTO_CONFLITO",
+ "n_files_with_gaps": 24,
+ "gap_lines_total": 285
+}

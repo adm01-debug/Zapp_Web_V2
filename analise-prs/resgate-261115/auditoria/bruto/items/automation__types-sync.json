@@ -1,0 +1,41 @@
+{
+ "id": "automation__types-sync",
+ "kind": "branch",
+ "ref": "origin/automation/types-sync",
+ "tip": "5565479032911c3a329bf4bf1a5b1ce4969de1b5",
+ "merge_base": "2cf0153aeacdd64f3668f538534d752effe8cc65",
+ "ahead": 1,
+ "last_commit_date": "2026-11-15",
+ "merge_base_date": "2026-11-15",
+ "prs_with_same_tip": [
+  3136
+ ],
+ "triagem_2804": {
+  "3136": null
+ },
+ "closure_comment": {},
+ "files": [
+  {
+   "path": "src/integrations/supabase/types.ts",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "supabase/schema-manifest.json",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  }
+ ],
+ "counts": {
+  "migrations": "0",
+  "workflows": "0",
+  "src": "1",
+  "edges": "0",
+  "docs_only": "no",
+  "lines_branch_has_main_lacks": "0",
+  "lines_main_has_branch_lacks": "0"
+ },
+ "auto": "INCORPORADA_PROVA_PATCH",
+ "n_files_with_gaps": 0,
+ "gap_lines_total": 0
+}

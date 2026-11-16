@@ -1,0 +1,112 @@
+{
+ "id": "claude__fix-lint-mediamigration-service-261101-1250",
+ "kind": "branch",
+ "ref": "origin/claude/fix-lint-mediamigration-service-261101-1250",
+ "tip": "8fa57120c82c254d58ad1f4267fc3673f3d3bd74",
+ "merge_base": "1252bb5a41123ba4d49efd84d0f91604bff6c87c",
+ "ahead": 9,
+ "last_commit_date": "2026-11-01",
+ "merge_base_date": "2026-11-01",
+ "prs_with_same_tip": [
+  2463
+ ],
+ "triagem_2804": {
+  "2463": "PERDIDA"
+ },
+ "closure_comment": {},
+ "files": [
+  {
+   "path": "ESTADO.md",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 13,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 0,
+    "removed": 1,
+    "removed_still_in_main": 0,
+    "missing_sample": [],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "FEATURE_REGISTRY.md",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 13,
+   "hunk": "PRESENT_REVERSE_APPLIES"
+  },
+  {
+   "path": "src/components/admin/MediaMigrationTool.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 109,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 2,
+    "missing_in_main": 0,
+    "removed": 53,
+    "removed_still_in_main": 3,
+    "missing_sample": [],
+    "still_sample": [
+     "  processed: number;",
+     "  migrated: number;",
+     "  failed: number;"
+    ]
+   }
+  },
+  {
+   "path": "src/components/admin/__tests__/MediaMigrationTool.progresso.test.tsx",
+   "status": "MAIN_UNCHANGED_SINCE_BASE",
+   "patch_lines": 46,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 13,
+    "missing_in_main": 12,
+    "removed": 11,
+    "removed_still_in_main": 11,
+    "missing_sample": [
+     "import { render, screen, fireEvent } from '@testing-library/react';",
+     "vi.mock('@/services/mediaMigration.service', () => ({",
+     "  countPendingMedia: vi.fn(() => Promise.resolve(0)),",
+     "  fetchMigrationHistory: vi.fn(() => Promise.resolve([])),",
+     "vi.mock('@/lib/invokeEdge', () => ({",
+     "  invokeEdge: vi.fn(() => new Promise(() => {})),",
+     "  it('usa progressbar indeterminado com nome acessível, sem percentual fixo', () => {",
+     "    // Abre o dialog de confirmação",
+     "    // Confirma para iniciar a migração (chama runMigration → running=true)",
+     "    fireEvent.click(screen.getByRole('button', { name: 'Iniciar migração' }));",
+     "    const barra = screen.getByRole('progressbar', { name: 'Progresso da migração de mídia' });",
+     "    expect(screen.getByText(/Migrando mídias/)).toBeInTheDocument();"
+    ],
+    "still_sample": [
+     "import { render, screen, fireEvent, within } from '@testing-library/react';",
+     "vi.mock('@/integrations/supabase/client', () => ({",
+     "  supabase: { functions: { invoke: vi.fn(() => new Promise(() => {})) } },",
+     "  it('usa progressbar indeterminado com nome acessível, sem percentual fixo', async () => {",
+     "    // A execução pede confirmação (alertdialog) antes de disparar a Edge.",
+     "    const dialogo = await screen.findByRole('alertdialog');",
+     "    fireEvent.click(within(dialogo).getByRole('button', { name: 'Iniciar migração' }));",
+     "    // Mantém role=\"progressbar\" com o nome que o N-066 exige no estado em execução...",
+     "    const barra = await screen.findByRole('progressbar', { name: 'Progresso da migração de mídia' });",
+     "    expect(screen.getByText(/Migrando mídias\\.\\.\\./)).toBeInTheDocument();"
+    ]
+   }
+  },
+  {
+   "path": "src/services/mediaMigration.service.ts",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  }
+ ],
+ "counts": {
+  "migrations": "0",
+  "workflows": "0",
+  "src": "3",
+  "edges": "0",
+  "docs_only": "no",
+  "lines_branch_has_main_lacks": "41",
+  "lines_main_has_branch_lacks": "54"
+ },
+ "auto": "MISTO_CONFLITO",
+ "n_files_with_gaps": 2,
+ "gap_lines_total": 26
+}

@@ -1,0 +1,31 @@
+{
+ "id": "pr-3051",
+ "kind": "pr",
+ "ref": "refs/remotes/pr/3051",
+ "pr": 3051,
+ "tip": "94b68c2301e887c39f85b9b061ac9c2552cc97f7",
+ "merge_base": "a97aeacf5a7a3f9323464b19827b884401faf794",
+ "ahead": 3,
+ "last_commit_date": "2026-11-13",
+ "merge_base_date": "2026-11-13",
+ "triagem_2804": null,
+ "closure_comment": {
+  "title": "fix(talkx): abas Audiências e Modelos da tela de segmentos ficam desabilitadas",
+  "last_comment": "Contida no pacote 4, adm01-debug/Zapp_Web_V2#3063, mergeado na `main` em d084ca75 com CI completo verde (CI Gate, testes unitários 1/3–3/3, E2E, edge contracts, build, security, workflow lint). O conteúdo desta PR entrou por lá (merge `--no-ff` desta branch no pacote, sem conflito; #3036 e #2981 ent"
+ },
+ "files": [
+  {
+   "path": "src/components/talkx/TalkXSegments.tsx",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/components/talkx/__tests__/TalkXSegments.route.test.tsx",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  }
+ ],
+ "auto": "INCORPORADA_PROVA_PATCH",
+ "n_files_with_gaps": 0,
+ "gap_lines_total": 0
+}

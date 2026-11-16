@@ -1,0 +1,198 @@
+{
+ "id": "claude__wizardly-ride-dimxnt",
+ "kind": "branch",
+ "ref": "origin/claude/wizardly-ride-dimxnt",
+ "tip": "35bb4cba5a67604477494428e1d03b2f7d6a3e8c",
+ "merge_base": "6423dc237eda64857903f904399de8d3a6f6893f",
+ "ahead": 1,
+ "last_commit_date": "2026-11-14",
+ "merge_base_date": "2026-11-14",
+ "prs_with_same_tip": [
+  3111
+ ],
+ "triagem_2804": {
+  "3111": null
+ },
+ "closure_comment": {
+  "3111": {
+   "title": "ci(workflows): remove auto-update e vercel-env-cleanup e pula check Talk X fora de etapa",
+   "last_comment": "Conteúdo integrado na `main` pelo pacote 6 ([#3113](https://github.com/adm01-debug/Zapp_Web_V2/pull/3113), commit `41853318cd`). Conferido byte a byte: 15 dos 16 arquivos estão idênticos na `main`; o 16º é o `docs/ci/README.md`, gerado, que o pacote regerou sobre a árvore integrada e que `render-wor"
+  }
+ },
+ "files": [
+  {
+   "path": ".github/.ci-noop",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": ".github/ci-refresh",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": ".github/workflows/auto-update-pr-branch.yml",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": ".github/workflows/check-talkx-pr-body.yml",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": ".github/workflows/vercel-env-cleanup.yml",
+   "status": "DELETED_IN_BRANCH",
+   "patch_lines": 53,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "note": "branch deletes file; main still has it"
+   }
+  },
+  {
+   "path": "PENDENCIAS.md",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 22,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 9,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "| 1 | Mergear a PR da auditoria dos workflows | Regra do `AGENTS.md`: mudança em CI/workflows fica aberta para o dono | Abrir a PR, conferir que os checks estão"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "docs/agentes/github-ci.md",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 41,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 7,
+    "missing_in_main": 2,
+    "removed": 6,
+    "removed_still_in_main": 1,
+    "missing_sample": [
+     "--check` roda no CI; não editar à mão). Hoje são **20** arquivos em `.github/workflows/`:",
+     "`settings-guard`, `talkx-status-regen`, `targeted-ledger-evidence`, `types-sync` —"
+    ],
+    "still_sample": [
+     "`settings-guard`, `talkx-status-regen`, `targeted-ledger-evidence`, `types-sync`, `vercel-env-cleanup` —"
+    ]
+   }
+  },
+  {
+   "path": "docs/agentes/mapa-repo.md",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "docs/audits/PLANO_GITHUB_ACTIONS_100_ETAPAS_2026-10-01.md",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 13,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 1,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "**Inventário vigente (medido em 2026-11-14, não herdado do texto de 01/10):** **20** arquivos YAML em `.github/workflows/`."
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "docs/ci/ARQUITETURA_SEM_DESPERDICIO.md",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "docs/ci/README.md",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 61,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 3,
+    "missing_in_main": 1,
+    "removed": 15,
+    "removed_still_in_main": 6,
+    "missing_sample": [
+     "**20 workflows.**"
+    ],
+    "still_sample": [
+     "| V043-V065 Vercel Env Cleanup | [`vercel-env-cleanup.yml`](../../.github/workflows/vercel-env-cleanup.yml) | dispatch manual com dry-run por padrão | remove va",
+     "### V043-V065 Vercel Env Cleanup (`vercel-env-cleanup.yml`)",
+     "- **Gatilho:** dispatch manual com dry-run por padrão",
+     "- **O que prova:** remove variáveis Vercel perigosas ou mortas conforme o inventário",
+     "- **Quando falha:** o script aborta antes de alterar variáveis e informa a causa",
+     "- **Quem é avisado:** operador que disparou o workflow"
+    ]
+   }
+  },
+  {
+   "path": "scripts/ci/ci-docs-baseline.unit.mjs",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 38,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 6,
+    "missing_in_main": 6,
+    "removed": 6,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "test('inventario: 20 YAML em .github/workflows e a fonte gerada em paridade', async () => {",
+     "  assert.equal(arquivos.length, 20);",
+     "  assert.match(readme, /\\*\\*20 workflows\\.\\*\\*/);",
+     "  assert.deepEqual(violacoesContagemClaude(await readFile(CLAUDE, 'utf8'), 20), []);",
+     "test('plano: inventario atual e 20 YAML com fonte gerada', async () => {",
+     "  assert.match(chato, /\\*\\*20\\*\\* arquivos YAML em `\\.github\\/workflows\\/`/);"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "scripts/ci/fila-merge.mjs",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "scripts/ci/fila-merge.unit.mjs",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "scripts/ci/vercel-env-cleanup.mjs",
+   "status": "DELETED_IN_BRANCH",
+   "patch_lines": 191,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "note": "branch deletes file; main still has it"
+   }
+  },
+  {
+   "path": "scripts/ci/vercel-env-cleanup.unit.mjs",
+   "status": "DELETED_IN_BRANCH",
+   "patch_lines": 202,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "note": "branch deletes file; main still has it"
+   }
+  }
+ ],
+ "counts": {
+  "migrations": "0",
+  "workflows": "5",
+  "src": "0",
+  "edges": "0",
+  "docs_only": "no",
+  "lines_branch_has_main_lacks": "11",
+  "lines_main_has_branch_lacks": "777"
+ },
+ "auto": "MISTO_CONFLITO",
+ "n_files_with_gaps": 8,
+ "gap_lines_total": 18
+}

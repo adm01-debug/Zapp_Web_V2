@@ -1,0 +1,135 @@
+{
+ "id": "f3__strict-false-baseline-20261018",
+ "kind": "branch",
+ "ref": "origin/f3/strict-false-baseline-20261018",
+ "tip": "3de493255896590c849b34882cc8ed4da29a6b6d",
+ "merge_base": "e322d379484859a86c5965a1207e29032ced5321",
+ "ahead": 2,
+ "last_commit_date": "2026-10-18",
+ "merge_base_date": "2026-10-18",
+ "prs_with_same_tip": [
+  2078
+ ],
+ "triagem_2804": {
+  "2078": "OBSOLETA"
+ },
+ "closure_comment": {},
+ "files": [
+  {
+   "path": "scripts/ci/fila-merge.unit.mjs",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "patch_lines": 35,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 14,
+    "missing_in_main": 14,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "import { readFileSync } from 'node:fs';",
+     "test('F3 (18/10, decisão do Joaquim): strict=false no baseline não exige esta fila serial', () => {",
+     "  // A fila serial (este arquivo) existe para o problema O(N²) de 15/10, que só acontece",
+     "  // com strict=true (cada merge deixa todas as PRs BEHIND e reinicia a CI de todas).",
+     "  // F3 decidiu strict=false (opção A) em vez de reativar a fila (opção B). Este teste é",
+     "  // o canário: se strict voltar a true sem reativar a fila, ele avisa aqui.",
+     "  const baseline = JSON.parse(",
+     "    readFileSync(new URL('./github-settings-baseline.json', import.meta.url), 'utf8'),",
+     "  assert.equal(",
+     "    baseline.branch_protection_main.strict,",
+     "    false,",
+     "    'se isto virou true, reative a fila serial (F3-B: auto-update-pr-branch.yml) antes de prosseguir',",
+     "  // checksObrigatorios() lê só required_status_checks — não depende de strict.",
+     "  assert.equal(checksObrigatorios().length, 6);"
+    ],
+    "still_sample": [],
+    "same_basename_in_main": []
+   }
+  },
+  {
+   "path": "scripts/ci/github-settings-baseline.json",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 13,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 1,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "    \"strict\": false,"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "scripts/ci/github-settings-guard.mjs",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 33,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 7,
+    "missing_in_main": 7,
+    "removed": 3,
+    "removed_still_in_main": 3,
+    "missing_sample": [
+     " *   - branch protection da main: strict=false (F3, 18/10 — decisão do Joaquim, opção A: sem fila serial), enforce_admins=true",
+     "    // Le o valor-alvo do baseline (nao hardcoda `true`): F3 (18/10) decidiu strict=false,",
+     "    // e o baseline pode mudar de novo no futuro. Hardcoded aqui faria o guard \"restaurar\"",
+     "    // para o valor ERRADO sempre que o baseline nao for strict=true.",
+     "    const alvo = baseline.branch_protection_main.strict;",
+     "      strict: alvo,",
+     "    return `\\`branch_protection_main.strict\\` restaurado para \\`${alvo}\\``;"
+    ],
+    "still_sample": [
+     " *   - branch protection da main: strict=true, enforce_admins=true",
+     "      strict: true,",
+     "    return '`branch_protection_main.strict` restaurado para `true`';"
+    ]
+   }
+  },
+  {
+   "path": "scripts/ci/github-settings-guard.unit.mjs",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 48,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 10,
+    "missing_in_main": 10,
+    "removed": 6,
+    "removed_still_in_main": 6,
+    "missing_sample": [
+     "// F3 (18/10, decisão do Joaquim): baseline passou a exigir strict=false (opção A —",
+     "// sem fila serial). PROT_OK agora reflete strict=false; a regressão que o guard",
+     "// existe para pegar é a main voltar a ter strict=true \"por fora\" (ver histórico em",
+     "// CLAUDE.md — já aconteceu 3x antes, sempre reativando o O(N²) que motivou o corte).",
+     "const PROT_OK = `send({ required_status_checks: { strict: false, contexts: ${CONTEXTS_OK} }, enforce_admins: { enabled: true }, required_linear_history: { enabl",
+     "const PROT_REGRESSAO = `send({ required_status_checks: { strict: true, contexts: ${CONTEXTS_OK} }, enforce_admins: { enabled: true }, required_linear_history: {",
+     " *   regressao  — strict=true (a regressão que o guard existe para pegar; baseline F3 de 18/10 é strict=false)",
+     "// Assinatura do caso `regressao`: strict=true lido, nada cego.",
+     "const MARCADOR_REGRESSAO = `<!-- causa:${assinaturaDe([{ campo: 'branch_protection_main.strict', encontrado: true }], [])} -->`;",
+     "  it('strict=true e detectado como divergencia (a regressao que o guard existe para pegar)', () => {"
+    ],
+    "still_sample": [
+     "const PROT_OK = `send({ required_status_checks: { strict: true, contexts: ${CONTEXTS_OK} }, enforce_admins: { enabled: true }, required_linear_history: { enable",
+     "const PROT_REGRESSAO = `send({ required_status_checks: { strict: false, contexts: ${CONTEXTS_OK} }, enforce_admins: { enabled: true }, required_linear_history: ",
+     " *   regressao  — strict=false (a regressão que o guard existe para pegar)",
+     "// Assinatura do caso `regressao`: strict=false lido, nada cego.",
+     "const MARCADOR_REGRESSAO = `<!-- causa:${assinaturaDe([{ campo: 'branch_protection_main.strict', encontrado: false }], [])} -->`;",
+     "  it('strict=false e detectado como divergencia (a regressao que o guard existe para pegar)', () => {"
+    ]
+   }
+  }
+ ],
+ "counts": {
+  "migrations": "0",
+  "workflows": "0",
+  "src": "0",
+  "edges": "0",
+  "docs_only": "no",
+  "lines_branch_has_main_lacks": "309",
+  "lines_main_has_branch_lacks": "90"
+ },
+ "auto": "MISTO_CONFLITO",
+ "n_files_with_gaps": 4,
+ "gap_lines_total": 41
+}

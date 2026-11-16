@@ -1,0 +1,85 @@
+{
+ "id": "pr-3119",
+ "kind": "pr",
+ "ref": "refs/remotes/pr/3119",
+ "pr": 3119,
+ "tip": "2027578c37887bf04cc010d57ef005648b3053e1",
+ "merge_base": "3c64a5454ab2269c2db2361adb858aedac009d2c",
+ "ahead": 3,
+ "last_commit_date": "2026-11-14",
+ "merge_base_date": "2026-11-14",
+ "triagem_2804": null,
+ "closure_comment": {
+  "title": "[incorporada no pacote 7] fix(ci): restaura o vercel-env-cleanup e retifica a contagem de ",
+  "last_comment": "Incorporada pelo pacote 7 (#3123, mergeado em `b24e3150004c`). Fechando esta. |  | **Prova byte-a-byte:** dos 9 arquivos que esta branch tocou, **6 estão byte-idênticos** na `main`. Os outros 3 — `PENDENCIAS.md`, `scripts/ci/vercel-env-cleanup.mjs` e `scripts/ci/vercel-env-cleanup.unit.mjs` — a `main` t"
+ },
+ "files": [
+  {
+   "path": ".github/workflows/vercel-env-cleanup.yml",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "PENDENCIAS.md",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 47,
+   "hunk": "PRESENT_REVERSE_APPLIES"
+  },
+  {
+   "path": "docs/agentes/github-ci.md",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "docs/audits/PLANO_GITHUB_ACTIONS_100_ETAPAS_2026-10-01.md",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "docs/ci/README.md",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "docs/prod-readiness.md",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "scripts/ci/ci-docs-baseline.unit.mjs",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "scripts/ci/vercel-env-cleanup.mjs",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 191,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 138,
+    "missing_in_main": 0,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "scripts/ci/vercel-env-cleanup.unit.mjs",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 202,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 148,
+    "missing_in_main": 0,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [],
+    "still_sample": []
+   }
+  }
+ ],
+ "auto": "INCORPORADA_PROVA_LINHAS",
+ "n_files_with_gaps": 0,
+ "gap_lines_total": 0
+}

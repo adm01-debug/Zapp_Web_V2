@@ -1,0 +1,62 @@
+{
+ "id": "pr-2430",
+ "kind": "pr",
+ "ref": "refs/remotes/pr/2430",
+ "pr": 2430,
+ "tip": "6e2e7e9d60cc2e845ccbd72765be155efb5181fd",
+ "merge_base": "e4989b16f1db147dde597ffd7b3283cfdda2a1ce",
+ "ahead": 2,
+ "last_commit_date": "2026-10-31",
+ "merge_base_date": "2026-10-31",
+ "triagem_2804": "DECISAO_DONO",
+ "closure_comment": null,
+ "files": [
+  {
+   "path": "supabase/migrations/20261023100000_talkx_campaign_recipients_page_add_segment.sql",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "patch_lines": 141,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 120,
+    "missing_in_main": 120,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "-- N-131 / N-095: adiciona parametro p_segment_id (uuid) a talkx_campaign_recipients_page.",
+     "-- Rollback:",
+     "--   REVOKE ALL ON FUNCTION public.talkx_campaign_recipients_page(uuid,integer,text,text,uuid,text) FROM PUBLIC, anon, authenticated, service_role;",
+     "--   DROP FUNCTION IF EXISTS public.talkx_campaign_recipients_page(uuid,integer,text,text,uuid,text);",
+     "--   (restaurar versao de 20261010062941 se necessario)",
+     "-- A funcao original (20261010062941) tem 5 argumentos sem p_segment_id.",
+     "-- DROP + CREATE e necessario porque o PostgreSQL rejeita CREATE OR REPLACE",
+     "-- que muda o numero de parametros.",
+     "DROP FUNCTION IF EXISTS public.talkx_campaign_recipients_page(uuid, integer, text, text, text);",
+     "CREATE OR REPLACE FUNCTION public.talkx_campaign_recipients_page(",
+     "  p_campaign_id uuid,",
+     "  p_page_size integer DEFAULT 50,",
+     "  p_cursor text DEFAULT NULL,",
+     "  p_status text DEFAULT NULL,",
+     "  p_segment_id uuid DEFAULT NULL,",
+     "  p_search text DEFAULT NULL",
+     "RETURNS jsonb",
+     "LANGUAGE plpgsql",
+     "STABLE",
+     "SECURITY DEFINER",
+     "SET search_path = public, pg_temp",
+     "AS $$",
+     "DECLARE",
+     "  v_profile_id uuid;",
+     "  v_can_view boolean;"
+    ],
+    "still_sample": [],
+    "same_basename_in_main": [
+     "supabase/migrations/_superseded/20261023100000_talkx_campaign_recipients_page_add_segment.sql"
+    ],
+    "missing_vs_same_basename": 0
+   }
+  }
+ ],
+ "auto": "TRABALHO_AUSENTE_APLICA_LIMPO",
+ "n_files_with_gaps": 1,
+ "gap_lines_total": 120
+}

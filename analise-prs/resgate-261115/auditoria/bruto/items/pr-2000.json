@@ -1,0 +1,452 @@
+{
+ "id": "pr-2000",
+ "kind": "pr",
+ "ref": "refs/remotes/pr/2000",
+ "pr": 2000,
+ "tip": "81adcfd828081b570c042dc39c8ad5bdb507e684",
+ "merge_base": "2d97c44cfe7f2fa8a3ca572f8f5689118328e858",
+ "ahead": 2,
+ "last_commit_date": "2026-10-25",
+ "merge_base_date": "2026-10-24",
+ "triagem_2804": "DECISAO_DONO",
+ "closure_comment": null,
+ "files": [
+  {
+   "path": "src/components/inbox/copilot/BrindeMeter.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 81,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 57,
+    "missing_in_main": 0,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/inbox/copilot/DecisionMakerBadge.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 48,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 30,
+    "missing_in_main": 0,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/inbox/copilot/InsightCard.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 116,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 84,
+    "missing_in_main": 0,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/inbox/copilot/MissingQuestions.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 64,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 45,
+    "missing_in_main": 0,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/inbox/copilot/OccasionAlert.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 51,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 32,
+    "missing_in_main": 0,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/inbox/copilot/StageIndicator.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 62,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 41,
+    "missing_in_main": 16,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     " * CV-034 — Indicador de etapa da venda (E1–E6) com temperatura de compra.",
+     "const STAGE_META: Record<string, { label: string; color: string }> = {",
+     "  E1: { label: 'Recepção', color: 'bg-sky-500/20 text-sky-700 dark:text-sky-300' },",
+     "  E2: { label: 'Descoberta', color: 'bg-indigo-500/20 text-indigo-700 dark:text-indigo-300' },",
+     "  E3: { label: 'Proposta', color: 'bg-violet-500/20 text-violet-700 dark:text-violet-300' },",
+     "  E4: { label: 'Negociação', color: 'bg-orange-500/20 text-orange-700 dark:text-orange-300' },",
+     "  E5: { label: 'Fechamento', color: 'bg-green-500/20 text-green-700 dark:text-green-300' },",
+     "  E6: { label: 'Pós-venda', color: 'bg-teal-500/20 text-teal-700 dark:text-teal-300' },",
+     "  const meta = STAGE_META[stage] ?? { label: stage, color: 'bg-muted text-muted-foreground' };",
+     "    temperature >= 8 ? 'bg-green-500' :",
+     "    temperature >= 5 ? 'bg-yellow-400' :",
+     "    temperature >= 2 ? 'bg-orange-400' : 'bg-slate-400';",
+     "        {stage} · {meta.label}",
+     "        aria-label={`Temperatura de compra: ${temperature}/10`}",
+     "        title={`Temperatura ${temperature}/10`}",
+     "              i < temperature ? tempColor : 'bg-muted',"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/inbox/copilot/StakeholdersCard.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 54,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 35,
+    "missing_in_main": 0,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/inbox/copilot/__tests__/BrindeMeter.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 99,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 61,
+    "missing_in_main": 7,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "import { render, screen } from '@testing-library/react';",
+     "import userEvent from '@testing-library/user-event';",
+     "    await userEvent.click(buttons[0]);",
+     "      <MissingQuestions brinde_state={fullState} stage=\"E2\" onSelectQuestion={() => {}} />,",
+     "      <MissingQuestions brinde_state={partialState} stage=\"E2\" onSelectQuestion={() => {}} />,",
+     "      <MissingQuestions brinde_state={partialState} stage=\"E2\" onSelectQuestion={handler} />,",
+     "    await userEvent.click(buttons[0]);"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/data/copilot/brinde-questions.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 65,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 43,
+    "missing_in_main": 22,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     " * Perguntas escolhidas por etapa de venda, naturais para o contexto.",
+     "export type SaleStage = 'E1' | 'E2' | 'E3' | 'E4' | 'E5' | 'E6';",
+     "  stage: SaleStage[];",
+     "  { letter: 'B', stage: ['E1','E2'], label: 'Orçamento', text: 'Qual é a faixa de investimento que vocês têm em mente para este brinde?' },",
+     "  { letter: 'B', stage: ['E3','E4'], label: 'Orçamento', text: 'Já temos uma ideia do budget aprovado para este projeto?' },",
+     "  { letter: 'B', stage: ['E5','E6'], label: 'Orçamento', text: 'O valor que apresentamos está dentro do que foi aprovado?' },",
+     "  { letter: 'R', stage: ['E1','E2'], label: 'Decisor', text: 'Quem da empresa vai acompanhar a aprovação deste pedido?' },",
+     "  { letter: 'R', stage: ['E3','E4'], label: 'Decisor', text: 'A aprovação fica com você ou precisa passar por mais alguém?' },",
+     "  { letter: 'R', stage: ['E5','E6'], label: 'Decisor', text: 'Para agilizar o fechamento, quem assina a aprovação final?' },",
+     "  { letter: 'I', stage: ['E1','E2'], label: 'Intenção', text: 'Para qual ocasião vocês estão pensando neste brinde?' },",
+     "  { letter: 'I', stage: ['E3','E4'], label: 'Intenção', text: 'A ideia é usar para um evento específico ou distribuição contínua?' },",
+     "  { letter: 'N', stage: ['E1','E2'], label: 'Quantidade', text: 'Quantas peças vocês precisam aproximadamente?' },",
+     "  { letter: 'N', stage: ['E3','E4'], label: 'Quantidade', text: 'Já tem uma quantidade definida ou ainda está em aberto?' },",
+     "  { letter: 'N', stage: ['E5','E6'], label: 'Quantidade', text: 'Confirmamos a quantidade final: continua sendo a mesma?' },",
+     "  { letter: 'D', stage: ['E1','E2'], label: 'Prazo', text: 'Quando vocês precisam receber o material?' },",
+     "  { letter: 'D', stage: ['E3','E4'], label: 'Prazo', text: 'Qual é a data-limite para a entrega?' },",
+     "  { letter: 'D', stage: ['E5','E6'], label: 'Prazo', text: 'Só confirmando: a data de entrega ainda é a mesma?' },",
+     "  { letter: 'E', stage: ['E1','E2'], label: 'Entrega', text: 'Para qual endereço será a entrega?' },",
+     "  { letter: 'E', stage: ['E3','E4'], label: 'Entrega', text: 'A entrega é em um endereço só ou em múltiplos pontos?' },",
+     "  { letter: 'E', stage: ['E5','E6'], label: 'Entrega', text: 'Confirma o endereço de entrega para fecharmos o pedido?' },",
+     "  const match = BRINDE_QUESTIONS.filter(q => q.letter === letter && q.stage.includes(stage));",
+     "  return match[0];"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/data/copilot/commercial-calendar.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 123,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 87,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  return COMMERCIAL_CALENDAR.find(e => e.key === key);"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/hooks/copilot/useCopilotSession.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 111,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 75,
+    "missing_in_main": 61,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     " * CV-032 — Hook de assinatura Realtime para copilot_sessions.",
+     " * Mantém o estado B·R·I·N·D·E, etapa, temperatura e stakeholders",
+     " * sincronizados em tempo real.",
+     "import { useEffect, useState, useRef } from 'react';",
+     "  stage: 'E1' | 'E2' | 'E3' | 'E4' | 'E5' | 'E6';",
+     "  brinde_state: {",
+     "    B: string | null; R: string | null; I: string | null;",
+     "    N: string | null; D: string | null; E: string | null;",
+     "  brinde_evidence: {",
+     "    B: string | null; R: string | null; I: string | null;",
+     "    N: string | null; D: string | null; E: string | null;",
+     "  comm_style: string[];",
+     "  stakeholders: Array<{ name: string; role: string; first_mention_msg_id?: string }>;",
+     "interface UseCopilotSessionOptions {",
+     "  contactId: string | undefined;",
+     "  whatsappConnectionId: string | undefined;",
+     "interface UseCopilotSessionResult {",
+     "export function useCopilotSession({",
+     "  contactId,",
+     "  whatsappConnectionId,",
+     "}: UseCopilotSessionOptions): UseCopilotSessionResult {",
+     "  const [session, setSession] = useState<CopilotSessionState | null>(null);",
+     "  const [loading, setLoading] = useState(false);",
+     "  const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);",
+     "    if (!contactId || !whatsappConnectionId) {"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "supabase/functions/_shared/ai-response-contracts.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 105,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 75,
+    "missing_in_main": 73,
+    "removed": 1,
+    "removed_still_in_main": 1,
+    "missing_sample": [
+     "// ─── Capacidade: copilot-live (CV-023) ───────────────────────",
+     " * Estado B·R·I·N·D·E parcial do vendedor.",
+     " * Cada campo é opcional (não extraído = ausente, nunca null por default).",
+     "export const BrindeStateSchema = z.object({",
+     "  B: z.string().nullable().optional(), // Budget/Orçamento",
+     "  R: z.string().nullable().optional(), // Responsável pelo OK",
+     "  I: z.string().nullable().optional(), // Intenção de compra",
+     "  N: z.string().nullable().optional(), // Número/quantidade",
+     "  D: z.string().nullable().optional(), // Data de necessidade",
+     "  E: z.string().nullable().optional(), // Entrega/local",
+     "/** Momento-chave detectado pelo copilot. */",
+     "export const KEY_MOMENT_TYPES = [",
+     "  \"price_request\",",
+     "  \"objection\",",
+     "  \"buy_signal\",",
+     "  \"competitor_mention\",",
+     "  \"unanswered_question\",",
+     "  \"sentiment_shift\",",
+     "  \"deadline_request\",",
+     "  \"logo_sent\",",
+     "type KeyMomentTuple = typeof KEY_MOMENT_TYPES;",
+     "const keyMomentSchema = z.enum(KEY_MOMENT_TYPES as unknown as [string, ...string[]]);",
+     "/** Risco identificado na conversa. */",
+     "export const RISK_TYPES = [\"price_gap\", \"competitor\", \"urgency\", \"authority\", \"no_decision\"] as const;",
+     "const riskSchema = z.enum(RISK_TYPES as unknown as [string, ...string[]]);"
+    ],
+    "still_sample": [
+     " *   (`resultado.error.issues[i].path.join('.')`)."
+    ]
+   }
+  },
+  {
+   "path": "supabase/functions/copilot-live/index.test.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 309,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 206,
+    "missing_in_main": 206,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "// CV-021 — testes de aceite do copilot-live worker.",
+     "// Critério de aceite (CV-021):",
+     "//   1. Flag off  → retorna \"capability_disabled\", SEM chamar provedor.",
+     "//   2. Orçamento estourado → retorna \"budget_denied\", SEM chamar provedor.",
+     "//   3. Circuito aberto → retorna \"circuit_open\", SEM chamar provedor.",
+     "// Adicionais:",
+     "//   4. Nenhuma mensagem nova → \"no_new_messages\" (CV-022).",
+     "//   5. Contrato rejeitado → \"contract_rejected\", nada gravado (CV-023).",
+     "//   6. Tier-2 ativado para momentos-chave corretos (CV-024/025).",
+     "//   7. Detecção de momentos-chave por regex (CV-025).",
+     "// Run with: deno test --allow-read supabase/functions/copilot-live/index.test.ts",
+     "import { assert, assertEquals } from \"https://deno.land/std@0.224.0/testing/asserts.ts\";",
+     "import {",
+     "  detectKeyMoments,",
+     "  shouldUseTier2,",
+     "  handleCopilotTick,",
+     "  type CopilotTickPayload,",
+     "} from \"./index.ts\";",
+     "import type { AiJob } from \"../_shared/ai-jobs.ts\";",
+     "import { CopilotLiveOutputSchema, parseModelOutput } from \"../_shared/ai-response-contracts.ts\";",
+     "// ---------------------------------------------------------------------------",
+     "// Helpers de stub.",
+     "// ---------------------------------------------------------------------------",
+     "function makeJob(overrides: Partial<AiJob> = {}): AiJob {",
+     "  return {"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "supabase/functions/copilot-live/index.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 619,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 452,
+    "missing_in_main": 444,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     " * copilot-live — motor de análise incremental do RADAR (CV-021–030).",
+     " * Consome jobs do kind `copilot_tick` enfileirados pelo trigger",
+     " * `enqueue_copilot_tick_on_contact_message` (migration CV-014/015).",
+     " * ARQUITETURA (dois andares — CV-024):",
+     " *  - Andar 1 (rápido/barato): estado incremental + detector de momento-chave.",
+     " *    Purpose `analysis` → modelo pequeno (claude-haiku ou equivalente).",
+     " *  - Andar 2 (forte/custoso): sugestão de próximo passo em momento-chave APENAS.",
+     " *    Purpose `copilot` → modelo forte; ativado só quando `isKeyMoment` = true.",
+     " * CICLO DO TICK (mesmo padrão de ai-jobs-worker — CV-021):",
+     " *   claim → heartbeat ANTES → [flag gate] → [circuito] → [orçamento] →",
+     " *   andar-1 → gravar insight → andar-2 se necessário → heartbeat DEPOIS →",
+     " *   finish (sucesso/falha com retentativa).",
+     " * ESTADO INCREMENTAL (CV-022):",
+     " *   Recebe o último `copilot_sessions` + apenas as mensagens novas (a partir",
+     " *   do cursor `last_contact_message_at`). Nunca reenvia o histórico completo.",
+     " * OBSERVABILIDADE (CV-030):",
+     " *   Log estruturado por etapa com latência, SEM conteúdo de mensagens.",
+     " * AUTENTICAÇÃO: mesmo padrão das demais cron-edges (`x-cron-secret` ou Bearer).",
+     "import { createClient, type SupabaseClient } from \"https://esm.sh/@supabase/supabase-js@2.87.1\";",
+     "import { isAuthorizedCronOrUser, unauthorizedResponse } from \"../_shared/cron-secret-auth.ts\";",
+     "import { bootEdge, type EdgeInjected } from \"../_shared/edge-boot.ts\";",
+     "import { jsonResponse, requireEnv } from \"../_shared/validation.ts\";",
+     "import {",
+     "  AiJobInfraError,",
+     "  claimAiJobs,"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "supabase/migrations/20261016194000_copilot_live_helpers.sql",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "patch_lines": 42,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 29,
+    "missing_in_main": 29,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "-- CV-026: RPC merge_brinde_state — merge atômico do delta B·R·I·N·D·E",
+     "-- Garante idempotência via state_version (otimistic locking).",
+     "-- Chamado pela edge copilot-live quando o modelo devolve brinde_delta.",
+     "CREATE OR REPLACE FUNCTION public.merge_brinde_state(",
+     "  p_session_id  uuid,",
+     "  p_delta       jsonb,",
+     "  p_version     integer",
+     "RETURNS boolean",
+     "LANGUAGE plpgsql",
+     "SECURITY DEFINER",
+     "SET search_path TO 'public', 'pg_temp'",
+     "AS $$",
+     "DECLARE",
+     "  rows_updated integer;",
+     "BEGIN",
+     "  UPDATE public.copilot_sessions",
+     "    brinde_state  = brinde_state || p_delta,",
+     "    state_version = state_version + 1,",
+     "    updated_at    = now()",
+     "  WHERE id = p_session_id",
+     "    AND state_version = p_version;",
+     "  GET DIAGNOSTICS rows_updated = ROW_COUNT;",
+     "  RETURN rows_updated > 0;",
+     "END;",
+     "-- Permissão: service_role (edge functions); authenticated NÃO (RLS cobre o front)"
+    ],
+    "still_sample": [],
+    "same_basename_in_main": []
+   }
+  },
+  {
+   "path": "supabase/migrations/20261016200000_copilot_phase4_brinde_intelligence.sql",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "patch_lines": 49,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 36,
+    "missing_in_main": 36,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "-- CV-031/037/038/039: Colunas de inteligência de venda da Fase 4 RADAR",
+     "-- Adicionadas a copilot_sessions sem DDL destrutivo.",
+     "-- CV-031: evidência de onde saiu cada letra B·R·I·N·D·E",
+     "--   { \"B\": \"msg-uuid\", \"R\": null, ... }",
+     "ALTER TABLE public.copilot_sessions",
+     "  ADD COLUMN IF NOT EXISTS brinde_evidence jsonb NOT NULL DEFAULT",
+     "    '{\"B\":null,\"R\":null,\"I\":null,\"N\":null,\"D\":null,\"E\":null}';",
+     "-- CV-037: estilo de comunicação detectado do cliente",
+     "--   formal | informal | concise | verbose | emoji | fast_responder | slow_responder",
+     "ALTER TABLE public.copilot_sessions",
+     "  ADD COLUMN IF NOT EXISTS comm_style text[] NOT NULL DEFAULT '{}';",
+     "-- CV-038: papel do interlocutor na decisão de compra",
+     "ALTER TABLE public.copilot_sessions",
+     "  ADD COLUMN IF NOT EXISTS decision_role text",
+     "    CHECK (decision_role IN ('buyer','user','approver','intermediary','unknown'));",
+     "-- CV-035/036: ocasião comercial detectada",
+     "ALTER TABLE public.copilot_sessions",
+     "  ADD COLUMN IF NOT EXISTS occasion text;",
+     "-- CV-039: mapa de interessados mencionados",
+     "--   [{ \"name\": \"...\", \"role\": \"...\", \"first_mention_msg_id\": \"...\" }]",
+     "ALTER TABLE public.copilot_sessions",
+     "  ADD COLUMN IF NOT EXISTS stakeholders jsonb NOT NULL DEFAULT '[]';",
+     "-- CV-040: RPC para gravar justificativa de insight",
+     "-- O campo justification é gravado diretamente no INSERT do copilot_insights.",
+     "-- Nenhuma coluna nova necessária: a coluna `sources` já carrega evidência estruturada."
+    ],
+    "still_sample": [],
+    "same_basename_in_main": []
+   }
+  }
+ ],
+ "auto": "MISTO_CONFLITO",
+ "n_files_with_gaps": 10,
+ "gap_lines_total": 896
+}

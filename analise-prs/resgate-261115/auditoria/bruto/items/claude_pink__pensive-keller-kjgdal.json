@@ -1,0 +1,47 @@
+{
+ "id": "claude_pink__pensive-keller-kjgdal",
+ "kind": "branch",
+ "ref": "origin/claude_pink/pensive-keller-kjgdal",
+ "tip": "e835093085ff5a21cc4f28891ae05f81443d46be",
+ "merge_base": "49af49e25081f5f03f6e84a452797e71fe39ed21",
+ "ahead": 2,
+ "last_commit_date": "2026-11-09",
+ "merge_base_date": "2026-11-09",
+ "prs_with_same_tip": [
+  2900
+ ],
+ "triagem_2804": {
+  "2900": null
+ },
+ "closure_comment": {},
+ "files": [
+  {
+   "path": "scripts/ai-context/gerar.mjs",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 13,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 1,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "        if (!expr.startsWith('[')) { const cm = new RegExp(`(?:const|let|var)\\\\s+${expr.replace(/[.$\\\\]/g, '\\\\$&')}\\\\b[^=]*=\\\\s*(\\\\[[^\\\\]]*\\\\])`).exec(src) || ["
+    ],
+    "still_sample": []
+   }
+  }
+ ],
+ "counts": {
+  "migrations": "0",
+  "workflows": "0",
+  "src": "0",
+  "edges": "0",
+  "docs_only": "no",
+  "lines_branch_has_main_lacks": "5",
+  "lines_main_has_branch_lacks": "25"
+ },
+ "auto": "MISTO_CONFLITO",
+ "n_files_with_gaps": 1,
+ "gap_lines_total": 1
+}

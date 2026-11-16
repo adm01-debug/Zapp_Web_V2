@@ -1,0 +1,144 @@
+{
+ "id": "claude__fix-ci-n008-261101-2340",
+ "kind": "branch",
+ "ref": "origin/claude/fix-ci-n008-261101-2340",
+ "tip": "c61cbe617f4d06b0f29cb41ddb8f4a1c03082327",
+ "merge_base": "1252bb5a41123ba4d49efd84d0f91604bff6c87c",
+ "ahead": 4,
+ "last_commit_date": "2026-11-01",
+ "merge_base_date": "2026-11-01",
+ "prs_with_same_tip": [
+  2542
+ ],
+ "triagem_2804": {
+  "2542": "OBSOLETA"
+ },
+ "closure_comment": {},
+ "files": [
+  {
+   "path": ".github/workflows/db-guard.yml",
+   "status": "BOTH_CHANGED",
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "patch_lines": 12,
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "          N008_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "PENDENCIAS.md",
+   "status": "BOTH_CHANGED",
+   "hunk": "CONFLICT",
+   "patch_lines": 119,
+   "line_check": {
+    "added": 73,
+    "missing_in_main": 73,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "## 4. CI/CD Pipeline — 410 falhas de teste pré-existentes",
+     "**Último run com falha:** [41328939149](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41328939149)",
+     "**Head SHA:** `b94be0a2` (2026-11-01T16:57Z)",
+     "**O que falha:** 410 testes unitários falham nos 3 shards do job `🧪 Unit Tests`. As falhas estão",
+     "em testes de integração que tentam conectar ao banco Supabase de produção em ambiente de CI",
+     "(sem `SUPABASE_URL`/`ANON_KEY` configurados nos shards, ou testes que dependem de estado do banco).",
+     "**Por que não foi corrigido:** Falhas pré-existentes na `main` antes desta sessão. Corrigir",
+     "requereria ou adaptar cada teste de integração para funcionar sem banco, ou adicionar secrets de",
+     "banco ao CI — ambas mudanças de escopo de aplicação, não de CI config. Este workflow **é** um",
+     "required check.",
+     "**O que o Joaquim precisa fazer:**",
+     "1. Verificar quantos dos 410 testes são realmente unitários vs. integração (mock vs. banco real)",
+     "2. Os testes que dependem de banco: ou mockar o cliente Supabase, ou mover para a suite E2E",
+     "3. Alternativamente: criar `SUPABASE_URL` e `SUPABASE_ANON_KEY` como secrets de CI (conta",
+     "   Supabase de testes, não de produção)",
+     "## 5. E2E logado — 4 specs falham por geolocation em CI",
+     "**Último run com falha:** [41240478106](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41240478106)",
+     "**Head SHA:** `b16152f0` (2026-10-31T20:46Z)",
+     "**O que falha:** 4 specs da suite E2E autenticada (`e2e-logado.yml`) falham porque o runner",
+     "do CI não tem permissão para usar geolocation da API do browser (erro de permissão de",
+     "geolocation/navigator). Este workflow **é** um required check.",
+     "**Por que não foi corrigido:** Os specs precisam ou de mock de geolocation, ou de remoção da",
+     "dependência de geolocation nos testes. Mudança nos arquivos de spec e/ou fixtures E2E —",
+     "fora do escopo do fix de CI config.",
+     "**O que o Joaquim precisa fazer:**"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "RELATORIO_CI.md",
+   "status": "BOTH_CHANGED",
+   "hunk": "CONFLICT",
+   "patch_lines": 69,
+   "line_check": {
+    "added": 45,
+    "missing_in_main": 42,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "## Sessão 2026-11-01 — Fix N-008 DB Guard (branch `claude/fix-ci-n008-261101-2340`)",
+     "**Data:** 2026-11-01  ",
+     "**Branch:** `claude/fix-ci-n008-261101-2340`  ",
+     "**PR:** [#2542](https://github.com/adm01-debug/Zapp_Web_V2/pull/2542)  ",
+     "**SHA HEAD:** `68c998eeffd2266c49cd01bade28697422280f9b`",
+     "### Baseline local — início da sessão",
+     "| Verificação | Resultado | Detalhe |",
+     "| `bun install --frozen-lockfile` | ✅ exit 0 | 77 pacotes instalados em 4,00s |",
+     "| `bun run build` | ✅ exit 0 | `✓ built in 14.12s` — sem erro de compilação |",
+     "| `lint-ratchet.mjs` | ✅ novas=0 | baseline=819, atual=813, removidas=6, novas=**0** |",
+     "| `tsc --noEmit` (4 GB) | ✅ exit 0 | Zero erros de tipo |",
+     "| `vitest run src/utils` | ✅ 79/79 | 7 test files, todos os 79 testes passaram |",
+     "| `vitest run` (suite completa) | ⚠️ env constraint | Runner sem conexão Supabase — testes de integração time out; 410 falhas pré-existentes documentadas em PEN",
+     "| Docker / N-008 test local | ⚠️ env constraint | Docker não disponível neste container — teste N-008 não executável localmente |",
+     "> **Nota:** Typecheck com `bun run typecheck` (usa `tsc -b --force`) falha por OOM/SIGABRT no container.",
+     "> Solução: `node --max-old-space-size=4096 node_modules/.bin/tsc --noEmit --incremental false` → exit 0.",
+     "### Fix aplicado",
+     "**Causa raiz:** Step `Provar encerramento diario de sessoes vencidas (N-008)` em `db-guard.yml`",
+     "não tinha `N008_POSTGRES_IMAGE` no bloco `env:`, causando falha de pull de imagem Docker com rate limit.",
+     "**Diff mínimo (2 linhas adicionadas em db-guard.yml, linha ~1481):**",
+     "```diff",
+     " - name: Provar encerramento diario de sessoes vencidas (N-008)",
+     "   env:",
+     "+    N008_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}",
+     "+    SKIP_DOCKER_SHIM: \"1\""
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "scripts/db-audit/user-sessions-expire.test.sh",
+   "status": "BOTH_CHANGED",
+   "hunk": "CONFLICT",
+   "patch_lines": 16,
+   "line_check": {
+    "added": 2,
+    "missing_in_main": 2,
+    "removed": 1,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "PG_IMG=\"${N008_POSTGRES_IMAGE:-postgres:17-alpine}\"",
+     "docker run --rm -d --name \"$CNAME\" -e POSTGRES_PASSWORD=postgres -e POSTGRES_DB=postgres \"$PG_IMG\" >/dev/null"
+    ],
+    "still_sample": []
+   }
+  }
+ ],
+ "counts": {
+  "migrations": "0",
+  "workflows": "1",
+  "src": "0",
+  "edges": "0",
+  "docs_only": "no",
+  "lines_branch_has_main_lacks": "508",
+  "lines_main_has_branch_lacks": "909"
+ },
+ "auto": "MISTO_CONFLITO",
+ "n_files_with_gaps": 4,
+ "gap_lines_total": 118
+}

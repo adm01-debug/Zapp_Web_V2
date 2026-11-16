@@ -1,0 +1,26 @@
+{
+ "id": "pr-3049",
+ "kind": "pr",
+ "ref": "refs/remotes/pr/3049",
+ "pr": 3049,
+ "tip": "8785dcede638abfffc2cb72aab5421c1ac90b5e7",
+ "merge_base": "f32855df69f21c7bb6b0dba89451fc886b059e58",
+ "ahead": 2,
+ "last_commit_date": "2026-11-13",
+ "merge_base_date": "2026-11-13",
+ "triagem_2804": null,
+ "closure_comment": {
+  "title": "fix(ci): escapar barra invertida ao montar RegExp em check-edge-error-exposure",
+  "last_comment": "Contida no pacote 4, adm01-debug/Zapp_Web_V2#3063, mergeado na `main` em d084ca75 com CI completo verde (CI Gate, testes unitários 1/3–3/3, E2E, edge contracts, build, security, workflow lint). O conteúdo desta PR entrou por lá (merge `--no-ff` desta branch no pacote, sem conflito; #3036 e #2981 ent"
+ },
+ "files": [
+  {
+   "path": "scripts/ci/check-edge-error-exposure.mjs",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  }
+ ],
+ "auto": "INCORPORADA_PROVA_PATCH",
+ "n_files_with_gaps": 0,
+ "gap_lines_total": 0
+}

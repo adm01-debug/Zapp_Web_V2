@@ -1,0 +1,168 @@
+{
+ "id": "claude__feat-E90-main-failure-notify-261101-1730",
+ "kind": "branch",
+ "ref": "origin/claude/feat-E90-main-failure-notify-261101-1730",
+ "tip": "0265d2c2dfb6ab5d4a9951ebc06180ecb30d396a",
+ "merge_base": "1252bb5a41123ba4d49efd84d0f91604bff6c87c",
+ "ahead": 14,
+ "last_commit_date": "2026-11-01",
+ "merge_base_date": "2026-11-01",
+ "prs_with_same_tip": [
+  2499
+ ],
+ "triagem_2804": {
+  "2499": "OBSOLETA"
+ },
+ "closure_comment": {},
+ "files": [
+  {
+   "path": ".github/workflows/main-failure-notify.yml",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "patch_lines": 131,
+   "line_check": {
+    "added": 98,
+    "missing_in_main": 98,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "# docs:",
+     "#   gatilho: workflow_run (E2E logado, DB Live Guard, Deploy Edge Functions, types-sync) em main com conclusion=failure",
+     "#   prova: dedupe de 1h -- suprime (com setFailed) se o proprio workflow teve run com sucesso no ultimo 1h",
+     "#   falha: sem secrets configurados o step falha explicitamente (secrets ausentes)",
+     "#   avisa: WhatsApp para JOAQUIM_WHATSAPP_NUMBER via Evolution GO instancia PRINCIPAL (/send/text nativo)",
+     "# E90 (plano 2026-10-01): notifica Joaquim por WhatsApp quando workflow critico",
+     "# falha na main. Chama Evolution GO /send/text (rota nativa GO) direto do Actions.",
+     "# Dedupe de 1h: suprime se este workflow ja teve run com conclusion=success no ultimo 1h.",
+     "# Runs suprimidos terminam com core.setFailed -- nao criam anchor de sucesso falso.",
+     "# Secrets necessarios (criar no repo antes de ativar; nao estao nos Edge Functions):",
+     "#   EVOLUTION_INSTANCE_TOKEN -- token da instancia PRINCIPAL da Evolution GO",
+     "#   JOAQUIM_WHATSAPP_NUMBER  -- numero no formato internacional sem + (ex: 5511999999999)",
+     "name: main-failure-notify",
+     "  workflow_run:",
+     "    workflows:",
+     "      - E2E logado",
+     "      - DB Live Guard",
+     "      - Deploy Edge Functions",
+     "      - types-sync",
+     "    types: [completed]",
+     "    branches: [main]",
+     "permissions:",
+     "  actions: read",
+     "concurrency:",
+     "  group: main-failure-notify"
+    ],
+    "still_sample": [],
+    "same_basename_in_main": []
+   }
+  },
+  {
+   "path": ".github/workflows/notifica-falha-main.yml",
+   "status": "BOTH_CHANGED",
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "patch_lines": 26,
+   "line_check": {
+    "added": 6,
+    "missing_in_main": 6,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "            const DEDUP_HORAS = 1;",
+     "              const atualizadoEm = new Date(existente.updated_at);",
+     "              const diff = Date.now() - atualizadoEm.getTime();",
+     "              if (diff < DEDUP_HORAS * 60 * 60 * 1000) {",
+     "                core.info(`Dedup: issue #${existente.number} atualizada ha ${Math.round(diff / 60000)} min — comentario suprimido`);",
+     "                return;"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "CLAUDE.md",
+   "status": "BOTH_CHANGED",
+   "hunk": "CONFLICT",
+   "patch_lines": 13,
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 1,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "**Inventário vigente (2026-10-20):** **18** arquivos em `.github/workflows/` e 3 workflows dinâmicos — 21 no total."
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "docs/audits/PLANO_GITHUB_ACTIONS_100_ETAPAS_2026-10-01.md",
+   "status": "BOTH_CHANGED",
+   "hunk": "CONFLICT",
+   "patch_lines": 16,
+   "line_check": {
+    "added": 2,
+    "missing_in_main": 2,
+    "removed": 2,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "**Inventário vigente (medido em 2026-10-20, não herdado do texto de 01/10):** **18** arquivos YAML em `.github/workflows/`, mais os",
+     "**21** no total. A fonte operacional canônica é o arquivo **gerado** `docs/ci/README.md`"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "docs/ci/README.md",
+   "status": "BOTH_CHANGED",
+   "hunk": "CONFLICT",
+   "patch_lines": 35,
+   "line_check": {
+    "added": 7,
+    "missing_in_main": 7,
+    "removed": 1,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "**18 workflows.**",
+     "| main-failure-notify | [`main-failure-notify.yml`](../../.github/workflows/main-failure-notify.yml) | workflow_run (E2E logado, DB Live Guard, Deploy Edge Func",
+     "### main-failure-notify (`main-failure-notify.yml`)",
+     "- **Gatilho:** workflow_run (E2E logado, DB Live Guard, Deploy Edge Functions, types-sync) em main com conclusion=failure",
+     "- **O que prova:** dedupe de 1h -- suprime (com setFailed) se o proprio workflow teve run com sucesso no ultimo 1h",
+     "- **Quando falha:** sem secrets configurados o step falha explicitamente (secrets ausentes)",
+     "- **Quem é avisado:** WhatsApp para JOAQUIM_WHATSAPP_NUMBER via Evolution GO instancia PRINCIPAL (/send/text nativo)"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "scripts/ci/ci-docs-baseline.unit.mjs",
+   "status": "BOTH_CHANGED",
+   "hunk": "CONFLICT",
+   "patch_lines": 34,
+   "line_check": {
+    "added": 5,
+    "missing_in_main": 5,
+    "removed": 5,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "test('inventario: 18 YAML em .github/workflows e a fonte gerada em paridade', async () => {",
+     "  assert.equal(arquivos.length, 18);",
+     "  assert.match(readme, /\\*\\*18 workflows\\.\\*\\*/);",
+     "  assert.deepEqual(violacoesContagemClaude(await readFile(CLAUDE, 'utf8'), 18), []);",
+     "  assert.match(chato, /\\*\\*18\\*\\* arquivos YAML em `\\.github\\/workflows\\/`/);"
+    ],
+    "still_sample": []
+   }
+  }
+ ],
+ "counts": {
+  "migrations": "0",
+  "workflows": "2",
+  "src": "0",
+  "edges": "0",
+  "docs_only": "no",
+  "lines_branch_has_main_lacks": "813",
+  "lines_main_has_branch_lacks": "79"
+ },
+ "auto": "MISTO_CONFLITO",
+ "n_files_with_gaps": 6,
+ "gap_lines_total": 119
+}

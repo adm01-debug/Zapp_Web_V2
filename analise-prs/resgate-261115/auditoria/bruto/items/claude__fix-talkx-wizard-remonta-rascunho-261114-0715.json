@@ -1,0 +1,119 @@
+{
+ "id": "claude__fix-talkx-wizard-remonta-rascunho-261114-0715",
+ "kind": "branch",
+ "ref": "origin/claude/fix-talkx-wizard-remonta-rascunho-261114-0715",
+ "tip": "04d30bf95bf774aedb0b8f08b83ab3d8a0d89e59",
+ "merge_base": "58f1713bae92d439f42ede735c1bdb3cbef2bebc",
+ "ahead": 3,
+ "last_commit_date": "2026-11-14",
+ "merge_base_date": "2026-11-14",
+ "prs_with_same_tip": [
+  3074
+ ],
+ "triagem_2804": {
+  "3074": null
+ },
+ "closure_comment": {
+  "3074": {
+   "title": "fix(talkx): primeiro autosave não remonta mais o editor de campanha nova (perdia o que o u",
+   "last_comment": "Fecho esta PR como duplicada. A #3073 (`4432834d69`, já na `main`) corrige o mesmo defeito no mesmo ponto: em `TalkXView.tsx:249`, o `wizardCampaign` ignora a campanha da rota quando ela é o `localDraftRouteId` criado pelo autosave, e por isso a key não muda. Ela também traz teste em `TalkXView.rout"
+  }
+ },
+ "files": [
+  {
+   "path": "docs/talkx/ESTADOS.md",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 13,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 1,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "| `src/components/talkx/TalkXView.tsx` | — | `61`, `490` | — | — | `634` | — |"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/talkx/TalkXView.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 46,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 13,
+    "missing_in_main": 11,
+    "removed": 1,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  // Rascunho criado por ESTE editor (rota wizard=new trocada pelo id no primeiro",
+     "  // autosave). O editor vivo já é dono do estado: trocar a key quando a lista de",
+     "  // campanhas traz a linha remontaria o wizard com o snapshot do autosave e",
+     "  // descartaria o que o usuário mudou depois dele (ex.: origem Segmento salvo).",
+     "  const [createdDraftRouteId, setCreatedDraftRouteId] = useState<string | null>(null);",
+     "    setCreatedDraftRouteId(null);",
+     "  const editorOwnsCreatedDraft = !!createdDraftRouteId",
+     "    && localDraftRouteId === createdDraftRouteId",
+     "    && wizardRoute?.campaignId === createdDraftRouteId;",
+     "    : editorOwnsCreatedDraft ? null : routedCampaignIsEditable ? routedCampaign : editingCampaign;",
+     "      setCreatedDraftRouteId(campaignId);"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/talkx/__tests__/TalkXView.rascunhoNaoRemonta.test.tsx",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "patch_lines": 103,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 78,
+    "missing_in_main": 78,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "import { act, cleanup, render, screen } from '@testing-library/react';",
+     "import { useEffect } from 'react';",
+     "import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';",
+     "// Defeito (E2E logado, webkit-talkx talkx.spec.ts:213 instável): o primeiro",
+     "// autosave de uma campanha nova troca a rota de wizard=new para wizard=<id>; quando",
+     "// a lista de campanhas volta com a linha, a key do wizard mudava de",
+     "// `talkx-wizard:new` para `talkx-wizard:<id>` e o editor era REMONTADO, descartando",
+     "// o que o usuário mudou depois do autosave (ex.: origem \"Segmento salvo\").",
+     "const f = vi.hoisted(() => ({",
+     "  campaigns: [] as Array<Record<string, unknown>>,",
+     "  montagens: 0,",
+     "}));",
+     "vi.mock('@/hooks/integrations/useTalkX', () => ({",
+     "  useTalkX: () => ({",
+     "    campaigns: f.campaigns,",
+     "    isLoading: false,",
+     "    isError: false,",
+     "    isLive: false,",
+     "    startCampaign: vi.fn(), pauseCampaign: vi.fn(), cancelCampaign: vi.fn(),",
+     "    deleteCampaign: { mutate: vi.fn() },",
+     "    duplicateCampaign: { mutateAsync: vi.fn() },",
+     "}));",
+     "vi.mock('@/hooks/integrations/useTalkXInsights', () => ({",
+     "  useTalkXInsights: () => ({ data: undefined, isLoading: false, isError: false, error: null }),",
+     "}));"
+    ],
+    "still_sample": [],
+    "same_basename_in_main": []
+   }
+  }
+ ],
+ "counts": {
+  "migrations": "0",
+  "workflows": "0",
+  "src": "2",
+  "edges": "0",
+  "docs_only": "no",
+  "lines_branch_has_main_lacks": "112",
+  "lines_main_has_branch_lacks": "20"
+ },
+ "auto": "MISTO_CONFLITO",
+ "n_files_with_gaps": 3,
+ "gap_lines_total": 90
+}

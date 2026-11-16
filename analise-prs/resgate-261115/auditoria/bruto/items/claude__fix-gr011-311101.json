@@ -1,0 +1,63 @@
+{
+ "id": "claude__fix-gr011-311101",
+ "kind": "branch",
+ "ref": "origin/claude/fix-gr011-311101",
+ "tip": "7589315b0d63904ec4b159659131c3208693ba3c",
+ "merge_base": "1252bb5a41123ba4d49efd84d0f91604bff6c87c",
+ "ahead": 8,
+ "last_commit_date": "2026-11-01",
+ "merge_base_date": "2026-11-01",
+ "prs_with_same_tip": [],
+ "triagem_2804": {},
+ "closure_comment": {},
+ "files": [
+  {
+   "path": ".github/ci-refresh",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "patch_lines": 7,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 0,
+    "missing_in_main": 0,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [],
+    "still_sample": [],
+    "same_basename_in_main": []
+   }
+  },
+  {
+   "path": "CLAUDE.md",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 53,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 6,
+    "missing_in_main": 6,
+    "removed": 8,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "2. **Ordem do lote na produção:** push → PR → 3 checks → merge → deploy do código (Vercel e edge",
+     "  deleção, e os 3 required checks da seção abaixo — consolidado na tabela canônica \"Perímetro do GitHub\".",
+     "  preserva os três checks contra a base mais recente sem depender de rebases manuais. A fila de",
+     "| Branch protection — required checks | **3**: `🏗️ Build` · `🔎 TypeCheck` · `✅ CI Gate (required check)` | `settings-guard` ⚠ |",
+     "**Required checks da `main`** (3; `strict` está `true` ao vivo — ver correção de 01/10 acima): `🏗️ Build`, `🔎 TypeCheck` e",
+     "`✅ CI Gate (required check)` — medidos em 2026-10-29 via API; confirmado em `scripts/ci/github-settings-baseline.json`. `🔬 CodeQL (javascript-typescript)` roda "
+    ],
+    "still_sample": []
+   }
+  }
+ ],
+ "counts": {
+  "migrations": "0",
+  "workflows": "1",
+  "src": "0",
+  "edges": "0",
+  "docs_only": "no",
+  "lines_branch_has_main_lacks": "637",
+  "lines_main_has_branch_lacks": "1"
+ },
+ "auto": "MISTO_CONFLITO",
+ "n_files_with_gaps": 1,
+ "gap_lines_total": 6
+}

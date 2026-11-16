@@ -1,0 +1,103 @@
+{
+ "id": "claude_04__dazzling-archimedes-n9k59w",
+ "kind": "branch",
+ "ref": "origin/claude_04/dazzling-archimedes-n9k59w",
+ "tip": "15d3bb73eae540190ec125de2b64d40628e87aaf",
+ "merge_base": "1252bb5a41123ba4d49efd84d0f91604bff6c87c",
+ "ahead": 2,
+ "last_commit_date": "2026-11-01",
+ "merge_base_date": "2026-11-01",
+ "prs_with_same_tip": [
+  2527
+ ],
+ "triagem_2804": {
+  "2527": "OBSOLETA"
+ },
+ "closure_comment": {},
+ "files": [
+  {
+   "path": ".github/workflows/deploy-functions.yml",
+   "status": "BOTH_CHANGED",
+   "hunk": "CONFLICT",
+   "patch_lines": 16,
+   "line_check": {
+    "added": 4,
+    "missing_in_main": 3,
+    "removed": 1,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "        # W101: --config aponta para supabase/functions/deno.json onde nodeModulesDir:\"auto\"",
+     "        # esta configurado; sem isso deno check nao encontra o node_modules criado pelo",
+     "        # deno install acima (que instala em supabase/functions/node_modules/)."
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "PENDENCIAS.md",
+   "status": "BOTH_CHANGED",
+   "hunk": "CONFLICT",
+   "patch_lines": 45,
+   "line_check": {
+    "added": 11,
+    "missing_in_main": 11,
+    "removed": 19,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "## 3. Deploy Edge Functions — fix aplicado, aguardando validação (2026-11-01)",
+     "**Causa raiz identificada e corrigida:** O passo `deno check` em `deploy-functions.yml` não",
+     "passava `--config supabase/functions/deno.json`, então o Deno procurava `node_modules/` na raiz",
+     "do repo em vez de em `supabase/functions/node_modules/` (onde `deno install --config supabase/functions/deno.json` instalou `@types/node`).",
+     "**Fix aplicado:** `deno check --config supabase/functions/deno.json supabase/functions/**/index.ts`",
+     "em `.github/workflows/deploy-functions.yml` — branch `claude_04/dazzling-archimedes-n9k59w`.",
+     "**Status:** PR #2527 aberta, aguardando CI verde e merge em `main`. Após merge, o próximo",
+     "push que alterar código implantável em `supabase/functions/` (exceto `*.test.ts`, `*.md` e",
+     "`fixtures/`) irá disparar o `deploy-functions.yml` com o fix. O comportamento esperado é que",
+     "o step `deno check` passe sem erros `Could not find \"@types/node\"`. Status atualizado para",
+     "`VALIDADO` somente após run bem-sucedido de `deploy-functions.yml` pós-merge."
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "RELATORIO_CI.md",
+   "status": "BOTH_CHANGED",
+   "hunk": "CONFLICT",
+   "patch_lines": 49,
+   "line_check": {
+    "added": 13,
+    "missing_in_main": 13,
+    "removed": 9,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "**Data:** 2026-11-01 (atualizado)  ",
+     "**Branch de trabalho:** `claude_04/dazzling-archimedes-n9k59w`  ",
+     "Esta sessão (`claude_04/dazzling-archimedes-n9k59w`) incluiu mudanças de CI além da documentação:",
+     "| `deploy-functions.yml` — adicionar `--config supabase/functions/deno.json` ao `deno check` (W101) | ✅ Aplicado |",
+     "| Diagnósticos atualizados em PENDENCIAS.md (§3 deploy-functions removido) | ✅ Aplicado |",
+     "| Diagnósticos atualizados em RELATORIO_CI.md | ✅ Aplicado |",
+     "### Causa raiz do Deploy Edge Functions",
+     "O passo \"Instalar dependencias node_modules\" (`deno install --config supabase/functions/deno.json`)",
+     "cria `supabase/functions/node_modules/` porque `nodeModulesDir:\"auto\"` está configurado em",
+     "`supabase/functions/deno.json`. O passo seguinte (`deno check supabase/functions/**/index.ts`)",
+     "não passava `--config`, então o Deno procurava `node_modules/` na raiz do repo (não encontrava",
+     "`@types/node`) e falhava com `Could not find \"@types/node\"`.",
+     "Fix: `deno check --config supabase/functions/deno.json supabase/functions/**/index.ts`"
+    ],
+    "still_sample": []
+   }
+  }
+ ],
+ "counts": {
+  "migrations": "0",
+  "workflows": "1",
+  "src": "0",
+  "edges": "0",
+  "docs_only": "no",
+  "lines_branch_has_main_lacks": "257",
+  "lines_main_has_branch_lacks": "858"
+ },
+ "auto": "MISTO_CONFLITO",
+ "n_files_with_gaps": 3,
+ "gap_lines_total": 27
+}

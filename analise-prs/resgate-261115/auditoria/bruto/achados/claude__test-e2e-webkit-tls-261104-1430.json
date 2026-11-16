@@ -1,0 +1,64 @@
+[
+ {
+  "commit": "a0b8e42de",
+  "arquivo": "scripts/ci/e2e-isolated-runtime.unit.mjs",
+  "linhas": 2,
+  "amostra": [
+   "    if (path.basename(key) === 'ca.key') writeFileSync(key, 'synthetic-unused-CA-key');",
+   "  const result = { exit, state, calls, migrationCalls, seedCalls, browserCalls, listCalls, credentialFilesSeen, containers, volumes, publicFiles, pgRe"
+  ]
+ },
+ {
+  "commit": "a0b8e42de",
+  "arquivo": "scripts/ci/e2e-isolated-tls.unit.mjs",
+  "linhas": 6,
+  "amostra": [
+   "test('emissão real: CA por execução, leaf/SAN/EKU, chave da CA removida e mounts separados', () => {",
+   "function browserFixture(fault, affected = 'chromium') {",
+   "      return { close: async () => closed.push(engine + '-context'), newPage: async () => ({",
+   "          if (engine === affected && fault === 'timeout') throw new Error('Timeout 15000ms exceeded');",
+   "          if (engine === 'webkit') throw new Error('Unacceptable TLS certificate');",
+   "  return { engines, environment, closed, launched };"
+  ]
+ },
+ {
+  "commit": "a0b8e42de",
+  "arquivo": "scripts/e2e-isolated/run.mjs",
+  "linhas": 1,
+  "amostra": [
+   "      const raw = driverRun([runtime === 'bun' ? 'bun' : 'node', 'scripts/e2e-isolated/tls-probe.mjs', runtime], 'tls-' + runtime + '-gate', 240_000, "
+  ]
+ },
+ {
+  "commit": "a0b8e42de",
+  "arquivo": "scripts/e2e-isolated/tls-probe.mjs",
+  "linhas": 4,
+  "amostra": [
+   "const fail = code => { throw new Error('[e2e-isolated/tls-' + code + ']'); };",
+   "export async function probeBrowsers({ runId, sourceSha, env, engines, environment = browserEnvironment }) {",
+   "          finally { await negative.close(); }",
+   "          if (!certificateFailure(rejection, kind, name)) fail('browser-' + name + '-' + kind + '-not-certificate-error');"
+  ]
+ },
+ {
+  "commit": "a0b8e42de",
+  "arquivo": "scripts/e2e-isolated/tls.mjs",
+  "linhas": 9,
+  "amostra": [
+   "    for (const [name, ip] of [['server', '127.0.0.1'], ['wrong_san', '127.0.0.2']]) {",
+   "      tool(command, 'openssl', ['x509', '-req', '-in', csr, '-CA', caFile, '-CAkey', caKey,",
+   "      '-keyout', path.join(privateDirectory, 'untrusted.key'), '-out', path.join(privateDirectory, 'untrusted.crt'),",
+   "      '-subj', '/CN=' + runId + '-untrusted', '-addext', 'basicConstraints=critical,CA:FALSE',",
+   "      '-addext', 'keyUsage=critical,digitalSignature,keyEncipherment', '-addext', 'extendedKeyUsage=serverAuth',",
+   "      '-addext', 'subjectAltName=IP:127.0.0.1'], privateDirectory);"
+  ]
+ },
+ {
+  "commit": "0f80b210d",
+  "arquivo": "scripts/ci/e2e-isolated-tls.unit.mjs",
+  "linhas": 1,
+  "amostra": [
+   "          if (engine === affected && negativeOverride) { const failure = negativeOverride(url); if (failure) throw failure; }"
+  ]
+ }
+]

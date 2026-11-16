@@ -1,0 +1,133 @@
+{
+ "id": "claude__fix-talkx-segmentos-regressao-261101-1944",
+ "kind": "branch",
+ "ref": "origin/claude/fix-talkx-segmentos-regressao-261101-1944",
+ "tip": "d8eb518aa1410b527f3aa036f72d635c4cc269d0",
+ "merge_base": "1252bb5a41123ba4d49efd84d0f91604bff6c87c",
+ "ahead": 1,
+ "last_commit_date": "2026-11-01",
+ "merge_base_date": "2026-11-01",
+ "prs_with_same_tip": [
+  2535
+ ],
+ "triagem_2804": {
+  "2535": "DUPLICATA_PROVAVEL"
+ },
+ "closure_comment": {},
+ "files": [
+  {
+   "path": "src/components/talkx/TalkXSegments.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 354,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 150,
+    "missing_in_main": 124,
+    "removed": 76,
+    "removed_still_in_main": 70,
+    "missing_sample": [
+     "  Archive, AlertTriangle, PowerOff, Tag, List, LayoutGrid, RefreshCw,",
+     "/** Tecla do evento (lida por função: o lint de credenciais confunde `.key` com segredo). */",
+     "const teclaDe = (e: { key: string }): string => e.key;",
+     "/** Rótulo do status (o rascunho do X115 também aparece por extenso). */",
+     "const statusLabel = (status: string): string => (status === 'active' ? 'Ativo' : status === 'inactive' ? 'Inativo' : 'Rascunho');",
+     "    // X112 — alternância lista/grade (preferência vive no hook). Defaults só para mocks mínimos.",
+     "    viewMode = 'list', setViewMode = () => {},",
+     "  // Linhas/cartões da biblioteca: o Esc do painel devolve o foco ao que o abriu",
+     "  // (linha da lista OU cartão da grade), pela id do segmento aberto.",
+     "  const rowRefs = useRef(new Map<string, HTMLElement>());",
+     "  const selectedIdRef = useRef<string | null>(null);",
+     "  useEffect(() => { selectedIdRef.current = selected?.id ?? null; }, [selected?.id]);",
+     "    const id = selectedIdRef.current;",
+     "    if (id) rowRefs.current.get(id)?.focus();",
+     "      if (teclaDe(e) === 'Escape' && !e.defaultPrevented) closePanel();",
+     "      if (teclaDe(e) === 'Escape' && !e.defaultPrevented) {",
+     "              <ViewModeToggle value={viewMode} onChange={setViewMode} />",
+     "            <div data-testid=\"segments-grid\" className=\"p-4 grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-3 gap-3\">",
+     "                <SegmentGridCard",
+     "                  key={s.id} s={s} active={selected?.id === s.id}",
+     "                  registerRef={(el) => { if (el) rowRefs.current.set(s.id, el); else rowRefs.current.delete(s.id); }}",
+     "                  onSelect={() => setSelected(s)}",
+     "                  onToggleFav={() => { void toggleFav(s); }}",
+     "                      key={s.id} data-testid=\"segment-card\"",
+     "                      ref={(el) => { if (el) rowRefs.current.set(s.id, el); else rowRefs.current.delete(s.id); }}"
+    ],
+    "still_sample": [
+     "  Archive, AlertTriangle, PowerOff, Tag, RefreshCw, LayoutList, LayoutGrid,",
+     "  // X112 — alternância lista/grade da biblioteca de segmentos.",
+     "  const [viewMode, setViewMode] = useState<'list' | 'grid'>('list');",
+     "  const selectedRowRef = useRef<HTMLTableRowElement | null>(null);",
+     "    const row = selectedRowRef.current;",
+     "    row?.focus();",
+     "              <div className=\"flex items-center gap-0.5 rounded-lg border border-border/70 bg-input/40 p-0.5\">",
+     "                <button type=\"button\" data-testid=\"segments-view-list\" aria-pressed={viewMode === 'list'} onClick={() => setViewMode('list')} aria-label=\"Visual",
+     "                <button type=\"button\" data-testid=\"segments-view-grid\" aria-pressed={viewMode === 'grid'} onClick={() => setViewMode('grid')} aria-label=\"Visual",
+     "              </div>"
+    ]
+   }
+  },
+  {
+   "path": "src/components/talkx/__tests__/TalkXSegments.detailPanel.test.tsx",
+   "status": "MAIN_UNCHANGED_SINCE_BASE",
+   "patch_lines": 219,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 100,
+    "missing_in_main": 80,
+    "removed": 11,
+    "removed_still_in_main": 11,
+    "missing_sample": [
+     " * com os chips legíveis + \"Editar\", origem por extenso, ↻ que reconta o público",
+     "const state = vi.hoisted(() => ({ segments: [] as unknown[], viewMode: 'list' as 'list' | 'grid' }));",
+     "/** Liga a contagem pendente do teste do ↻ (fora do mock para valer só dentro dele). */",
+     "const recontando = { on: false, liberar: null as (() => void) | null };",
+     "      viewMode: state.viewMode,",
+     "      setViewMode: vi.fn(),",
+     "import { fmtDateTime } from '@/components/talkx/kit/format';",
+     "    state.viewMode = 'list';",
+     "    recontando.on = false;",
+     "    recontando.liberar = null;",
+     "  it('mostra \"Detalhes do segmento\", os critérios por extenso e o \"Editar\" do construtor', async () => {",
+     "    // \"Editar\" abre o construtor com o segmento aberto.",
+     "    fireEvent.click(screen.getByRole('button', { name: 'Editar' }));",
+     "    fireEvent.click(screen.getByRole('button', { name: 'Favoritar' }));",
+     "  it('Esc com o construtor aberto via \"Editar\" fecha só o construtor e mantém o painel (linha sem foco)', async () => {",
+     "    // \"Editar\" do painel abre o construtor (tela interna do módulo, X111).",
+     "    fireEvent.click(screen.getByRole('button', { name: 'Editar' }));",
+     "    fireEvent.click(screen.getByRole('button', { name: 'Editar' }));",
+     "    fireEvent.click(screen.getByRole('button', { name: 'Recontar público deste segmento' }));",
+     "  it('mostra \"Criado em\" e a \"Amostra de contatos\" do público (RPC em modo página)', async () => {",
+     "      Promise.resolve({",
+     "        data: args?.p_mode === 'page'",
+     "          ? { mode: 'page', rows: [",
+     "            { id: 'c1', name: 'Ana Souza', nickname: null, phone: '+55 11 9****-0001', company: 'Acme Ltda', avatar_url: null, tags: null },",
+     "            { id: 'c2', name: 'Bruno Lima', nickname: null, phone: '+55 11 9****-0002', company: null, avatar_url: null, tags: null },"
+    ],
+    "still_sample": [
+     " * com os chips legíveis + \"Editar segmento\", origem por extenso, ↻ que reconta o público",
+     "const state = vi.hoisted(() => ({ segments: [] as unknown[] }));",
+     "  it('mostra \"Detalhes do segmento\", os critérios por extenso e o \"Editar segmento\" do construtor', async () => {",
+     "    // \"Editar segmento\" abre o construtor com o segmento aberto.",
+     "    fireEvent.click(screen.getByRole('button', { name: 'Editar segmento' }));",
+     "    fireEvent.click(within(linhaDoSegmento()).getByRole('button', { name: 'Favoritar' }));",
+     "  it('Esc com o construtor aberto via \"Editar segmento\" fecha só o construtor e mantém o painel (linha sem foco)', async () => {",
+     "    // \"Editar segmento\" do painel abre o construtor (tela interna do módulo, X111).",
+     "    fireEvent.click(screen.getByRole('button', { name: 'Editar segmento' }));",
+     "    fireEvent.click(screen.getByRole('button', { name: 'Editar segmento' }));"
+    ]
+   }
+  }
+ ],
+ "counts": {
+  "migrations": "0",
+  "workflows": "0",
+  "src": "2",
+  "edges": "0",
+  "docs_only": "no",
+  "lines_branch_has_main_lacks": "308",
+  "lines_main_has_branch_lacks": "109"
+ },
+ "auto": "MISTO_CONFLITO",
+ "n_files_with_gaps": 2,
+ "gap_lines_total": 285
+}

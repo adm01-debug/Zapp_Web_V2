@@ -1,0 +1,36 @@
+{
+ "id": "pr-3091",
+ "kind": "pr",
+ "ref": "refs/remotes/pr/3091",
+ "pr": 3091,
+ "tip": "af52ae90c0880b8672666928ad3e01314c4707a8",
+ "merge_base": "6d420265e840e5766cedc8d4d038472267e04153",
+ "ahead": 3,
+ "last_commit_date": "2026-11-14",
+ "merge_base_date": "2026-11-14",
+ "triagem_2804": null,
+ "closure_comment": {
+  "title": "fix(talkx): limite de envio min > max não salva mais diferente do digitado",
+  "last_comment": "Conteúdo integrado na `main` pelo pacote 6 ([#3113](https://github.com/adm01-debug/Zapp_Web_V2/pull/3113), commit `41853318cd`). |  | Conferido byte a byte depois do merge: os três arquivos desta PR estão idênticos na `main`. O `🎭 Talk X visual/launch` que reprovava aqui (check não obrigatório) passou v"
+ },
+ "files": [
+  {
+   "path": "src/components/talkx/__tests__/TalkXLimitsDialog.test.tsx",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/components/talkx/tracking/TalkXLimitsDialog.tsx",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/components/talkx/tracking/talkxCampaignRules.ts",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  }
+ ],
+ "auto": "INCORPORADA_PROVA_PATCH",
+ "n_files_with_gaps": 0,
+ "gap_lines_total": 0
+}

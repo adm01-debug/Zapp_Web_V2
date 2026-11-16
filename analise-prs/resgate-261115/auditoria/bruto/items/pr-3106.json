@@ -1,0 +1,47 @@
+{
+ "id": "pr-3106",
+ "kind": "pr",
+ "ref": "refs/remotes/pr/3106",
+ "pr": 3106,
+ "tip": "2d6df411747d5ef8f7a1ec62031a3d6d03c805fd",
+ "merge_base": "6d420265e840e5766cedc8d4d038472267e04153",
+ "ahead": 2,
+ "last_commit_date": "2026-11-14",
+ "merge_base_date": "2026-11-14",
+ "triagem_2804": null,
+ "closure_comment": {
+  "title": "fix(gmail-webhook): paginar history.list e aplicar CAS no cursor",
+  "last_comment": "Conteúdo integrado na `main` pelo pacote 6 ([#3113](https://github.com/adm01-debug/Zapp_Web_V2/pull/3113), commit `41853318cd`). Conferido byte a byte: código e teste idênticos na `main`; o terceiro arquivo é o `deployment-manifest.json` gerado. Fechando como incorporada; a branch fica de pé. |  | --- | _"
+ },
+ "files": [
+  {
+   "path": "supabase/deployment-manifest.json",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 31,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 4,
+    "missing_in_main": 1,
+    "removed": 4,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  \"manifest_sha256\": \"fa8ee547758873ac9f92e20d287a1450fd75fe8a07abd247952fac4c5136af91\""
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "supabase/functions/gmail-webhook/history-pagination-cas.test.ts",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "supabase/functions/gmail-webhook/index.ts",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  }
+ ],
+ "auto": "MISTO_CONFLITO",
+ "n_files_with_gaps": 1,
+ "gap_lines_total": 1
+}

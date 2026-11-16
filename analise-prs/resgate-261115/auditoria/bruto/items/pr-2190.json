@@ -1,0 +1,2154 @@
+{
+ "id": "pr-2190",
+ "kind": "pr",
+ "ref": "refs/remotes/pr/2190",
+ "pr": 2190,
+ "tip": "639720699025746c7353cd2a33c10583ab71528c",
+ "merge_base": "437a0013b65a8926bc95b8e2708782dd7fcac9d3",
+ "ahead": 68,
+ "last_commit_date": "2026-10-23",
+ "merge_base_date": "2026-10-23",
+ "triagem_2804": "DECISAO_DONO",
+ "closure_comment": null,
+ "files": [
+  {
+   "path": ".github/workflows/db-guard.yml",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 12,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 0,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "ESTADO.md",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 43,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 5,
+    "missing_in_main": 4,
+    "removed": 5,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "| `ai-kb-ingest` | A | `src/hooks/integrations/useKnowledgeBase.ts:133` · `src/hooks/integrations/useKnowledgeBase.ts:204` |",
+     "| `batch-fetch-avatars` | A | `src/hooks/chat/useNewConversation.ts:143` · `src/hooks/chat/useNewConversation.ts:151` · `src/hooks/inbox/useInboxBulkActions.ts:",
+     "| `create-user` | A | `src/components/admin/useAdminData.ts:197` · `src/components/admin/useAdminData.ts:336` |",
+     "| `message-delivery` | A | `src/lib/invokeEdge.ts:24` · `src/services/outbound-message.service.ts:460` · `supabase/config.toml:49` |"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "analise-prs/MISSAO.md",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "patch_lines": 148,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 106,
+    "missing_in_main": 106,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "# MISSÃO DAS PRs — adm01-debug/Zapp_Web_V2",
+     "> Salvo em: 2026-10-23. Ler ANTES de qualquer escrita no GitHub. Prevalece sobre qualquer resumo de contexto.",
+     "## Objetivo",
+     "Agir como dev sênior com autonomia total. Analisar TODAS as PRs abertas respondendo:",
+     "1. Ainda é válida?",
+     "2. Traz regressão?",
+     "3. Já está implementada no main?",
+     "4. A regra de negócio está correta?",
+     "5. Está completa?",
+     "Depois, LEVAR CADA PR AO DESFECHO: mergear prontas; completar/corrigir inacabadas e mergear; fechar obsoletas. Nenhuma PR fica parada sem motivo registrado.",
+     "## Autonomia",
+     "- Decidir sozinho tudo que antes seria \"decisão humana\": conflitos, ambiguidade de regra, qual PR de cluster sobrevive, o que resgatar, o que fechar.",
+     "- Ambiguidade de regra de negócio: hierarquia → comportamento do main em produção > migrations/constraints/policies > testes > tipos/enums > UI > docs > descriç",
+     "- Nunca parar para perguntar. Só envolver Joaquim nos BLOQUEIOS listados abaixo, acumulados no relatório final.",
+     "## Escrita Permitida no GitHub (só via MCP \"GITHUB - MCP - FOREVER\")",
+     "a) Merge de PR aprovada, pelo método padrão do repo (squash-merge).",
+     "b) PR SUCESSORA para completar ou corrigir PR inacabada:",
+     "   - branch: `claude/fix-pr<N>-<slug>-<AAMMDD-HHMM>` a partir do main atual",
+     "   - trazer commits da PR original (cherry-pick ou merge do head) + só o que falta",
+     "   - PR nova: título \"Completa #N: <o que muda>\", corpo com link original, o que faltava, o que corrigiu, o que foi verificado",
+     "   - a sucessora passa pelos mesmos critérios de merge",
+     "c) Comentar e fechar a PR original quando substituída por sucessora JÁ mergeada, é duplicada, já implementada no main ou obsoleta. Comentário cita evidência: SH",
+     "d) Apagar SOMENTE branches criadas por mim, depois do merge.",
+     "## PROIBIDO",
+     "- Escrever na branch de outra PR: push, rebase, \"update branch\", commit de sugestão. Branch alheia = somente leitura."
+    ],
+    "still_sample": [],
+    "same_basename_in_main": []
+   }
+  },
+  {
+   "path": "analise-prs/progresso.json",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 163,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 153,
+    "missing_in_main": 153,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  \"sessao\": \"2026-10-23\",",
+     "  \"main_sha_inicial\": \"5a4632c87f7e233fe62e830443f8b0eddf3e1a72\",",
+     "  \"total_prs_inicio\": 137,",
+     "  \"fechadas_esta_sessao\": [2157,2159,2160,2161,2162,2163,2164,2165,2166,2167,2168,2169,2170,2171,2172,2173,2174,2175,2176,2177,2178,2179,2180,2181,2183],",
+     "  \"mergeadas_esta_sessao\": [],",
+     "  \"prs\": {",
+     "    \"1922\": {\"veredicto\": \"BLOQUEADA\", \"motivo\": \"ci — toca .github/workflows/ (W10 ci.yml)\"},",
+     "    \"1930\": {\"veredicto\": \"PENDENTE_ANALISE\", \"motivo\": \"feat db-audit W21 — scripts/db-audit/ only, precisa checar CI\"},",
+     "    \"1975\": {\"veredicto\": \"BLOQUEADA\", \"motivo\": \"ci — toca .github/workflows/ (reativar suites node-scripts)\"},",
+     "    \"1979\": {\"veredicto\": \"PENDENTE_CI\", \"sha\": \"dec13f873301e59ede77d97c4905faee023c7ee6\", \"motivo\": \"docs only — plano workflows\"},",
+     "    \"1987\": {\"veredicto\": \"FECHAR\", \"motivo\": \"DRAFT 'checkpoint NÃO pronto para producao' — autor explicitamente marcou como não pronto\"},",
+     "    \"1991\": {\"veredicto\": \"BLOQUEADA\", \"motivo\": \"ci — toca .github/workflows/ (notifica-falha-main.yml nomes)\"},",
+     "    \"1997\": {\"veredicto\": \"BLOQUEADA\", \"motivo\": \"migration DDL — cria 5 tabelas RADAR copilot\"},",
+     "    \"1998\": {\"veredicto\": \"BLOQUEADA\", \"motivo\": \"cadeia RADAR — depende de #1997 (migrations bloqueadas)\"},",
+     "    \"2000\": {\"veredicto\": \"BLOQUEADA\", \"motivo\": \"cadeia RADAR — depende de #1997\"},",
+     "    \"2002\": {\"veredicto\": \"BLOQUEADA\", \"motivo\": \"cadeia RADAR — depende de #1997\"},",
+     "    \"2003\": {\"veredicto\": \"BLOQUEADA\", \"motivo\": \"cadeia RADAR — depende de #1997\"},",
+     "    \"2005\": {\"veredicto\": \"BLOQUEADA\", \"motivo\": \"cadeia RADAR — depende de #1997 (migrations)\"},",
+     "    \"2013\": {\"veredicto\": \"BLOQUEADA\", \"motivo\": \"cadeia RADAR — depende de #1997\"},",
+     "    \"2022\": {\"veredicto\": \"BLOQUEADA\", \"motivo\": \"cadeia RADAR — depende de #1997\"},",
+     "    \"2024\": {\"veredicto\": \"BLOQUEADA\", \"motivo\": \"cadeia RADAR — depende de #1997\"},",
+     "    \"2025\": {\"veredicto\": \"BLOQUEADA\", \"motivo\": \"cadeia RADAR — depende de #1997\"},",
+     "    \"2026\": {\"veredicto\": \"BLOQUEADA\", \"motivo\": \"cadeia RADAR — depende de #1997\"},",
+     "    \"2029\": {\"veredicto\": \"BLOQUEADA\", \"motivo\": \"cadeia RADAR — depende de #1997\"},",
+     "    \"2030\": {\"veredicto\": \"BLOQUEADA\", \"motivo\": \"cadeia RADAR — depende de #1997\"},"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "analise-prs/prs.csv",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 144,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 138,
+    "missing_in_main": 138,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "number,title,draft,author,head_sha,mergeable_state,created_at",
+     "2187,\"fix(tests): corrige falhas de testes no baseline main — mocks, lógica e código morto\",False,adm01-debug,32c5739ba9608d8c6c52a36b1c4d59aec1874cb1,,2026-10-",
+     "2186,fix(security): auditoria Supabase 2026-10-22 — department_invites ownership + login_attempts TTL LGPD,False,adm01-debug,9639f91a61635c8fac80976ea0e6151c893",
+     "2185,docs(pendencias): §8 RESOLVIDO + §9 inventário de workflows da main,False,adm01-debug,bdcf238519fdc128a3c72fb3be679701ed660001,,2026-10-22T02:10:20Z",
+     "2183,chore(ci): remove workflows alienígenas eslint.yml e static.yml,False,adm01-debug,4c8172e07f1c9c01e2676bfcafa44bd42446428c,,2026-10-22T01:21:57Z",
+     "2181,Create nextjs.yml,False,adm01-debug,193c25a3e11652c273c6fe47ab98a47c33733698,,2026-10-21T20:48:57Z",
+     "2179,Add manual workflow for greeting,False,adm01-debug,c97406b805718037e139e6539cdc2725257f6264,,2026-10-21T20:48:51Z",
+     "2178,Add GitHub Super Linter workflow,False,adm01-debug,de69811641a8d08745ed81ada69035306749f374,,2026-10-21T20:46:39Z",
+     "2177,Add GitHub Actions workflow for Python package,False,adm01-debug,ebbb1149d84fde2e4ae98f9b316da83a445e7c69,,2026-10-21T20:46:37Z",
+     "2176,Add Django CI workflow for testing on multiple Python versions,False,adm01-debug,8258afa1bc8dac27c6ae2dc53c2f42964d48fcae,,2026-10-21T20:46:36Z",
+     "2175,Add GitHub Actions workflow for Python package with Conda,False,adm01-debug,6ff158b84de24591abcd8a60079ae958cc3b8f3c,,2026-10-21T20:46:34Z",
+     "2174,Add GitHub Actions workflow for Python package publishing,False,adm01-debug,e6d3a6e5c4a61a946f3be7182c50b37ef89113a5,,2026-10-21T20:46:32Z",
+     "2173,Add GitHub Actions workflow for npm publishing,False,adm01-debug,4bbb6dc8c574d1842bf819bdd94fa4497ad1c011,,2026-10-21T20:46:30Z",
+     "2172,Add Docker Image CI workflow,False,adm01-debug,82799384d1e9c317faec26b55c20d86a0fdff938,,2026-10-21T20:46:28Z",
+     "2171,Add Docker publish workflow configuration,False,adm01-debug,31e1479d84f319f0b22a897280fd5b6014bfff75,,2026-10-21T20:46:27Z",
+     "2170,Add GitHub Actions workflow for npm package publishing,False,adm01-debug,91c0b026c57f7035b8803ec03bb01d6c807071f0,,2026-10-21T20:46:24Z",
+     "2169,Add Node.js CI workflow for testing,False,adm01-debug,7041c6420636d3f374b720376e934afea89f1998,,2026-10-21T20:46:22Z",
+     "2168,Add SLSA generic generator workflow,False,adm01-debug,3f1203ce8155d818eecff09b6fda601adcb3d912,,2026-10-21T20:46:19Z",
+     "2167,Add GitHub Actions workflow for Node.js with Webpack,False,adm01-debug,f7db833cb103dded89301641f00726faacbd9bde,,2026-10-21T20:46:16Z",
+     "2166,Add GitHub Actions workflow for Deno,False,adm01-debug,c4679415819b41548ab15bd0d8f5c1c3e47c4ca3,,2026-10-21T20:46:13Z",
+     "2165,Add PMD code scanning workflow,False,adm01-debug,421fbb4859589deb4e44fa804539642cb2cb495a,,2026-10-21T20:42:41Z",
+     "2164,Add GitHub Actions workflow for rust-clippy analysis,False,adm01-debug,69d4cbf37c9130a729959d7f620abc991447fa6f,,2026-10-21T20:42:39Z",
+     "2163,Add lintr workflow for R code analysis,False,adm01-debug,7c0100ba95363cba44d65865645bf8a6d6bf1c5f,,2026-10-21T20:42:37Z",
+     "2162,Add PHPMD workflow for PHP code analysis,False,adm01-debug,6cd723f6fd9813ad38bbdf50cde4645edd87dd0e,,2026-10-21T20:42:35Z",
+     "2161,Add puppet-lint GitHub Actions workflow,False,adm01-debug,d5b253d025518e4b500961b0219b9214112df164,,2026-10-21T20:42:31Z"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "analise-prs/prs.json",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 2064,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1781,
+    "missing_in_main": 1781,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "    \"number\": 2187,",
+     "    \"title\": \"fix(tests): corrige falhas de testes no baseline main — mocks, lógica e código morto\",",
+     "    \"state\": \"open\",",
+     "    \"draft\": false,",
+     "    \"base\": \"main\",",
+     "    \"author\": \"adm01-debug\",",
+     "    \"head_sha\": \"32c5739ba9608d8c6c52a36b1c4d59aec1874cb1\",",
+     "    \"head_branch\": \"claude/busy-cannon-40szm9\",",
+     "    \"mergeable\": null,",
+     "    \"mergeable_state\": null,",
+     "    \"created_at\": \"2026-10-22T23:16:46Z\",",
+     "    \"updated_at\": \"2026-10-23T00:06:55Z\",",
+     "    \"body_preview\": \"## Resumo\\n\\nCorrige falhas de testes que bloqueavam o merge de todas as PRs abertas (CI obrigatório com `strict=true`).\\n\\n### Correções i",
+     "    \"number\": 2186,",
+     "    \"title\": \"fix(security): auditoria Supabase 2026-10-22 — department_invites ownership + login_attempts TTL LGPD\",",
+     "    \"state\": \"open\",",
+     "    \"draft\": false,",
+     "    \"base\": \"main\",",
+     "    \"author\": \"adm01-debug\",",
+     "    \"head_sha\": \"9639f91a61635c8fac80976ea0e6151c893912ea\",",
+     "    \"head_branch\": \"claude/loving-lovelace-esc3l2\",",
+     "    \"mergeable\": null,",
+     "    \"mergeable_state\": null,",
+     "    \"created_at\": \"2026-10-22T12:46:33Z\",",
+     "    \"updated_at\": \"2026-10-22T23:26:05Z\","
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "scripts/db-audit/dashboard-rls-authorization.test.sh",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 40,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 7,
+    "missing_in_main": 5,
+    "removed": 5,
+    "removed_still_in_main": 5,
+    "missing_sample": [
+     "# search_path pg_temp adicionado em 20261010150628 + confirmado em 20261016170000.",
+     "printf 'ALTER FUNCTION public.is_admin_or_supervisor(uuid) SET search_path = public, pg_temp;\\nREVOKE EXECUTE ON FUNCTION public.is_admin_or_supervisor(uuid) FR",
+     "# Definição final de dashboard_kpi vive na migration conversation_closures_reopen_same_day",
+     "# (arquivo multi-objeto): extrai só o CREATE OR REPLACE dessa função.",
+     "  || fail 'extracao de dashboard_kpi da migration conversation_closures_reopen_same_day veio vazia'"
+    ],
+    "still_sample": [
+     "  [[ \"$output\" == *\"$needle\"* ]] || { printf '%s\\n' \"$output\" >&2; fail \"$label: esperava '$needle' no erro\"; }",
+     "# Definição intermediária de dashboard_kpi: migration de reconciliação",
+     "# (arquivo multi-objeto) — extrai só o CREATE OR REPLACE dessa função.",
+     "  \"$migrations_dir/20261003272707_reconcile_local_replay_with_canonical.sql\" \\",
+     "  || fail 'extracao de dashboard_kpi de 20261003272707 veio vazia'"
+    ]
+   }
+  },
+  {
+   "path": "scripts/db-audit/known-violations.json",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 29,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 3,
+    "missing_in_main": 3,
+    "removed": 1,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "    \"rpc:admin_list_cron_jobs:src/components/admin/AdminView.tsx\",",
+     "    \"from:talkx_test_sends:supabase/functions/talkx-send/index.ts\",",
+     "    \"rpc:set_voip_profile_credentials:src/components/admin/useAdminData.ts\""
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "scripts/db-audit/recuperacao-anonima-pedido-reset.test.sh",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 14,
+   "hunk": "PRESENT_REVERSE_APPLIES"
+  },
+  {
+   "path": "scripts/db-audit/replay-known-failures.json",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 38,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 12,
+    "missing_in_main": 4,
+    "removed": 3,
+    "removed_still_in_main": 1,
+    "missing_sample": [
+     "      \"motivo\": \"cannot change return type of existing function. Migration 20261011000003 criou talkx_campaign_window_open com RETURNS TABLE (allowed boolean, r",
+     "      \"motivo\": \"column media_path of relation team_chat_media_acl_r2_db_020_rb does not exist no replay. Schema divergente da sequencia de migrations no banco ",
+     "      \"motivo\": \"relation realtime.messages does not exist em PostgreSQL vanilla. E tabela gerenciada pelo Supabase Realtime, ausente na imagem efemera postgres",
+     "      \"motivo\": \"relation auth.sessions does not exist em PostgreSQL vanilla. E tabela gerenciada pelo Supabase Auth, ausente na imagem efemera postgres:17-alpi"
+    ],
+    "still_sample": [
+     "      \"categoria\": \"ordem-idempotencia\","
+    ]
+   }
+  },
+  {
+   "path": "scripts/db-audit/talkx-campaign-recipients-page.test.sh",
+   "status": "MAIN_UNCHANGED_SINCE_BASE",
+   "patch_lines": 44,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 7,
+    "missing_in_main": 7,
+    "removed": 4,
+    "removed_still_in_main": 4,
+    "missing_sample": [
+     "migration_file2=\"$repo_root/supabase/migrations/20261023100000_talkx_campaign_recipients_page_add_segment.sql\"",
+     "[[ -f \"$migration_file2\" ]] || fail \"migration de segmento N-095 nao existe\"",
+     "# === Aplica as migrations do repo (base 5-arg + segmento 6-arg) ===",
+     "psql_test >/dev/null < \"$migration_file\" || fail 'falha ao aplicar a migration base'",
+     "psql_test >/dev/null < \"$migration_file2\" || fail 'falha ao aplicar a migration de segmento'",
+     "fn='public.talkx_campaign_recipients_page(uuid,integer,text,text,uuid,text)'",
+     "r=$(call authenticated \"$creator_uid\" \"'$camp', 20, NULL, NULL, NULL, '000000000105'\" | last)"
+    ],
+    "still_sample": [
+     "# === Aplica a migration real do repo ===",
+     "psql_test >/dev/null < \"$migration_file\" || fail 'falha ao aplicar a migration'",
+     "fn='public.talkx_campaign_recipients_page(uuid,integer,text,text,text)'",
+     "r=$(call authenticated \"$creator_uid\" \"'$camp', 20, NULL, NULL, '000000000105'\" | last)"
+    ]
+   }
+  },
+  {
+   "path": "src/components/admin/AdminUsersTable.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 13,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 1,
+    "removed_still_in_main": 1,
+    "missing_sample": [
+     "              const accessInfo = accessLevelConfig[(user.access_level || 'basic') as keyof typeof accessLevelConfig];"
+    ],
+    "still_sample": [
+     "              const accessInfo = accessLevelConfig[user.access_level || 'basic'];"
+    ]
+   }
+  },
+  {
+   "path": "src/components/admin/AdminView.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 128,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 53,
+    "missing_in_main": 50,
+    "removed": 4,
+    "removed_still_in_main": 1,
+    "missing_sample": [
+     "  AlertTriangle, ChevronLeft, ChevronRight, Clock,",
+     "  BookOpen, Link, BarChart2, Database,",
+     "import { supabase } from '@/integrations/supabase/client';",
+     "type AdminTab = 'users' | 'audit' | 'crm' | 'cron' | 'training' | 'migration' | 'webhooks' | 'analytics';",
+     "interface CronJob {",
+     "  jobname: string;",
+     "  schedule: string;",
+     "  active: boolean;",
+     "  last_status: string | null;",
+     "  last_run_at: string | null;",
+     "  last_return_message: string | null;",
+     "function CronJobsPanel() {",
+     "  const [jobs, setJobs] = useState<CronJob[]>([]);",
+     "  const [cronLoading, setCronLoading] = useState(true);",
+     "    async function fetchJobs() {",
+     "      const { data } = await (supabase.rpc as unknown as (name: string) => Promise<{ data: unknown; error: unknown }>)('admin_list_cron_jobs');",
+     "      if (data) setJobs(data as unknown as CronJob[]);",
+     "      setCronLoading(false);",
+     "    void fetchJobs();",
+     "  }, []);",
+     "  if (cronLoading) {",
+     "    return <div className=\"flex justify-center py-12\"><RefreshCw className=\"w-8 h-8 animate-spin text-muted-foreground\" /></div>;",
+     "    <ul className=\"space-y-2\">",
+     "      {jobs.map(job => (",
+     "        <li key={job.jobname} className=\"flex items-center gap-4 p-3 rounded-lg border\">"
+    ],
+    "still_sample": [
+     "  const abas: ReadonlyArray<readonly [AdminTab, LucideIcon, string]> = ["
+    ]
+   }
+  },
+  {
+   "path": "src/components/admin/MediaMigrationTool.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 335,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 125,
+    "missing_in_main": 96,
+    "removed": 135,
+    "removed_still_in_main": 107,
+    "missing_sample": [
+     "import { useState, useEffect } from 'react';",
+     "interface AuditLogRow {",
+     "  id: string;",
+     "  user_id: string | null;",
+     "  created_at: string;",
+     "  details: { processed: number; migrated: number; failed: number; ignored: number } | null;",
+     "interface RunResult {",
+     "  const [pendingCount, setPendingCount] = useState<number | null>(null);",
+     "  const [countError, setCountError] = useState(false);",
+     "  const [runResult, setRunResult] = useState<RunResult | null>(null);",
+     "  const [runError, setRunError] = useState<{ message: string; code?: string } | null>(null);",
+     "  const [logs, setLogs] = useState<AuditLogRow[]>([]);",
+     "  const [profileNames, setProfileNames] = useState<Record<string, string>>({});",
+     "    async function fetchCount() {",
+     "      const r1 = await supabase",
+     "        .from('messages')",
+     "        .select('id', { count: 'exact', head: true })",
+     "        .like('media_url', 'https://mmg.whatsapp.net/%');",
+     "      const r2 = await supabase",
+     "        .from('messages')",
+     "        .select('id', { count: 'exact', head: true })",
+     "        .like('media_url', 'https://pps.whatsapp.net/%');",
+     "      if (r1.error || r2.error) {",
+     "        setCountError(true);",
+     "        return;"
+    ],
+    "still_sample": [
+     "import { HardDrive, Play, RefreshCw, CheckCircle, XCircle, Loader2 } from 'lucide-react';",
+     "import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';",
+     "import { Button } from '@/components/ui/button';",
+     "import { Badge } from '@/components/ui/badge';",
+     "import { Progress } from '@/components/ui/progress';",
+     "interface MigrationResult {",
+     "  success: boolean;",
+     "  details?: string[];",
+     "  message?: string;",
+     "  const [result, setResult] = useState<MigrationResult | null>(null);"
+    ]
+   }
+  },
+  {
+   "path": "src/components/admin/__tests__/AdminView.a11y.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 24,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 2,
+    "missing_in_main": 1,
+    "removed": 1,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "    handleSaveRamal: vi.fn(),"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/admin/__tests__/AdminView.avatarRevogaUrl.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 13,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 2,
+    "missing_in_main": 0,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/admin/__tests__/AdminView.estados-tabelas.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 31,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 3,
+    "missing_in_main": 2,
+    "removed": 3,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  fireEvent.click(screen.getByRole('tab', { name: /Auditoria/ }));",
+     "    fireEvent.click(screen.getByRole('tab', { name: /CRM 360/ }));"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/admin/__tests__/AdminView.limiteChats.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 13,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 2,
+    "missing_in_main": 0,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/admin/__tests__/AdminView.ramalAdmin.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 13,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 2,
+    "missing_in_main": 0,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/admin/__tests__/AdminView.section-error-boundary.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 48,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 8,
+    "missing_in_main": 2,
+    "removed": 8,
+    "removed_still_in_main": 2,
+    "missing_sample": [
+     "    handleSaveUser: vi.fn(), handleSaveRamal: vi.fn(), handleCreateUser: vi.fn(),",
+     "    for (const nome of [/Playbooks/, /Copiloto/, /Sala de Crise/]) {"
+    ],
+    "still_sample": [
+     "    handleSaveUser: vi.fn(), handleCreateUser: vi.fn(),",
+     "    for (const nome of [/Playbooks/, /Copiloto/, /Treinamento/, /Sala de Crise/]) {"
+    ]
+   }
+  },
+  {
+   "path": "src/components/admin/__tests__/AdminView.tarefas-agendadas.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 13,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 2,
+    "missing_in_main": 0,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/admin/__tests__/MediaMigrationTool.progresso.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 29,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 12,
+    "missing_in_main": 12,
+    "removed": 3,
+    "removed_still_in_main": 3,
+    "missing_sample": [
+     "vi.mock('@/integrations/supabase/client', () => {",
+     "  const q: Record<string, unknown> = {};",
+     "  q.select = () => q;",
+     "  q.like = () => Promise.resolve({ data: null, error: null, count: 0 });",
+     "  q.eq = () => q;",
+     "  q.order = () => q;",
+     "  q.limit = () => Promise.resolve({ data: [], error: null });",
+     "  q.in = () => Promise.resolve({ data: [], error: null });",
+     "  return {",
+     "    supabase: {",
+     "      from: () => q,",
+     "      functions: { invoke: vi.fn(() => new Promise(() => {})) },"
+    ],
+    "still_sample": [
+     "vi.mock('@/integrations/supabase/client', () => ({",
+     "  supabase: { functions: { invoke: vi.fn(() => new Promise(() => {})) } },",
+     "}));"
+    ]
+   }
+  },
+  {
+   "path": "src/components/admin/__tests__/MediaMigrationTool.test.tsx",
+   "status": "MAIN_UNCHANGED_SINCE_BASE",
+   "patch_lines": 128,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 14,
+    "missing_in_main": 6,
+    "removed": 25,
+    "removed_still_in_main": 25,
+    "missing_sample": [
+     "import { fireEvent, render, screen, waitFor } from '@testing-library/react';",
+     " *  3. clicar no botão dispara a Edge diretamente;",
+     "  it('clicar no botão dispara a Edge diretamente', async () => {",
+     "  it('botão fica desabilitado enquanto a migração roda', async () => {",
+     "      expect(screen.getByRole('button', { name: /Iniciar Migração/ })).toBeDisabled(),",
+     "      expect(screen.getByRole('button', { name: /Iniciar Migração/ })).not.toBeDisabled(),"
+    ],
+    "still_sample": [
+     "import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';",
+     " *  3. AlertDialog antes de disparar — sem confirmar, `invokeEdge` não é chamado;",
+     "async function abrirDialogoEConfirmar() {",
+     "  fireEvent.click(screen.getByRole('button', { name: /Iniciar Migração/ }));",
+     "  const dialog = await screen.findByRole('alertdialog');",
+     "  fireEvent.click(within(dialog).getByRole('button', { name: 'Iniciar migração' }));",
+     "  return dialog;",
+     "  it('exige confirmação no diálogo antes de disparar a Edge', async () => {",
+     "    const dialog = await screen.findByRole('alertdialog');",
+     "    expect(within(dialog).getByText('Iniciar a migração de mídia?')).toBeInTheDocument();"
+    ]
+   }
+  },
+  {
+   "path": "src/components/admin/__tests__/adminDownloadPermission.test.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 42,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 8,
+    "missing_in_main": 7,
+    "removed": 7,
+    "removed_still_in_main": 1,
+    "missing_sample": [
+     "        name: 'Novo', email: 'novo@test.com', password: 'abcdef12', role: 'agent', avatarFile: file,",
+     "    const functionsInvoke = supabase.functions.invoke as ReturnType<typeof vi.fn>;",
+     "    expect(functionsInvoke).toHaveBeenCalledTimes(1);",
+     "    expect(functionsInvoke.mock.calls[0][0]).toBe('create-user');",
+     "    const opts = functionsInvoke.mock.calls[0][1] as { body: Record<string, unknown> };",
+     "    expect(opts.body.avatar_url).toMatch(/^[0-9a-f-]{36}\\.jpg$/);",
+     "        name: 'Novo', email: 'novo@test.com', password: 'abcdef12', role: 'agent', avatarFile: file,"
+    ],
+    "still_sample": [
+     "    expect(body.avatar_url).toMatch(/^[0-9a-f-]{36}\\.jpg$/);"
+    ]
+   }
+  },
+  {
+   "path": "src/components/admin/__tests__/useAdminData.erros-auditoria.test.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 27,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 7,
+    "missing_in_main": 6,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "    functions: { invoke: vi.fn().mockResolvedValue({ data: {}, error: null }) },",
+     "vi.mock('@/lib/invokeEdge', () => ({",
+     "  invokeEdge: vi.fn(async (name: string, opts?: { body?: unknown }) => {",
+     "    await fetch(name, { method: 'POST', body: JSON.stringify(opts?.body ?? {}) });",
+     "    return {};",
+     "  readEdgeError: vi.fn().mockResolvedValue({ message: '', status: 500 }),"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/admin/__tests__/useAdminData.select.test.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 13,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 1,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "      for (const m of ['order', 'limit', 'eq', 'in', 'neq', 'range', 'gte', 'lte']) b[m] = () => b;"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/admin/__tests__/useAdminDataCreateUser.test.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 28,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 6,
+    "missing_in_main": 4,
+    "removed": 2,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "vi.mock('@/lib/invokeEdge', async () => {",
+     "  const actual = await vi.importActual<typeof import('@/lib/invokeEdge')>('@/lib/invokeEdge');",
+     "  SUPABASE_URL: 'https://proj.supabase.co',",
+     "        createSignedUrl: vi.fn().mockResolvedValue({ data: { signedUrl: 'https://signed/avatar.png' }, error: null }),"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/admin/useAdminData.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 867,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 339,
+    "missing_in_main": 237,
+    "removed": 310,
+    "removed_still_in_main": 305,
+    "missing_sample": [
+     "  is_active: boolean;",
+     "  user?: { name: string } | null;",
+     "export const accessLevelConfig = {",
+     "  basic: { label: 'Básico', description: '' },",
+     "  standard: { label: 'Padrão', description: '' },",
+     "  advanced: { label: 'Avançado', description: '' },",
+     "  full: { label: 'Completo', description: '' },",
+     "  if (msg.includes('already') || msg.includes('registered')) return { field: 'email', message: 'Este e-mail já está cadastrado.' };",
+     "  if (msg.includes('enum')) return { field: 'role', message: 'Papel de usuário inválido.' };",
+     "interface AuditParams {",
+     "type CreateUserPayload = {",
+     "  nickname?: string | null;",
+     "  signature?: string | null;",
+     "  job_title?: string | null;",
+     "  gmail_email?: string | null;",
+     "  dropbox_email?: string | null;",
+     "export function useAdminData(tab: string = 'users', auditParams?: AuditParams) {",
+     "  const [isCreatingUser, setIsCreatingUser] = useState(false);",
+     "  const [isDeletingUser, setIsDeletingUser] = useState(false);",
+     "  const deletingIdRef = useRef<string | null>(null);",
+     "  const togglingIdRef = useRef<string | null>(null);",
+     "      if (tab === 'users') {",
+     "        const { data: profileData, error: profileError } = await supabase",
+     "          .select('id, user_id, name, email, role, is_active, avatar_url, nickname, signature, job_title, department, phone, access_level, max_chats, can_downlo",
+     "          .order('name', { ascending: true });"
+    ],
+    "still_sample": [
+     "import { supabase, SUPABASE_URL } from '@/integrations/supabase/client';",
+     "  role: AppRole;",
+     "  is_active: boolean | null;",
+     "  user_id: string | null;",
+     "  user?: { name: string; email: string | null } | null;",
+     "export const roleConfig: Record<AppRole, { label: string; icon: string; color: string }> = {",
+     "  admin: { label: 'Administrador', icon: 'Crown', color: 'text-warning' },",
+     "  supervisor: { label: 'Supervisor', icon: 'UserCog', color: 'text-info' },",
+     "  agent: { label: 'Atendente', icon: 'User', color: 'text-muted-foreground' },",
+     "// Mensagens claras para os erros levantados pela RPC `admin_set_role`"
+    ]
+   }
+  },
+  {
+   "path": "src/components/agents/__tests__/AgentsView.capacidade.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 13,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 2,
+    "missing_in_main": 2,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "    channel: vi.fn().mockReturnValue({ on: vi.fn().mockReturnThis(), subscribe: vi.fn().mockReturnValue({ unsubscribe: vi.fn() }) }),",
+     "    removeChannel: vi.fn(),"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/agents/__tests__/AgentsView.conexoes.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 19,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 6,
+    "missing_in_main": 3,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  useUserRole: () => ({ isAdmin: true, isSupervisor: false }),",
+     "vi.mock('@/hooks/auth/useAuth', () => ({",
+     "  useAuth: () => ({ user: { id: 'user-1' }, profile: { id: 'user-1' } }),"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/agents/__tests__/AgentsView.pendencias.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 13,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 2,
+    "missing_in_main": 2,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "    channel: () => ({ on: () => ({ subscribe: () => ({}) }) }),",
+     "    removeChannel: vi.fn(),"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/catalog/WhatsAppTemplatesManager.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 53,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 8,
+    "missing_in_main": 7,
+    "removed": 5,
+    "removed_still_in_main": 1,
+    "missing_sample": [
+     "  const { isAdmin } = useUserRole();",
+     "        {isAdmin && <Button onClick={openNew} className=\"gap-2 bg-primary hover:bg-primary/90 w-full sm:w-auto\"><Plus className=\"w-4 h-4\" />Novo Template</Butto",
+     "              {isAdmin && <Button variant=\"outline\" className=\"mt-4\" onClick={openNew}><Plus className=\"w-4 h-4 mr-2\" />Criar primeiro template</Button>}",
+     "                            {isAdmin && <Button variant=\"ghost\" size=\"icon\" className=\"h-8 w-8\" aria-label={`Editar ${template.name}`} onClick={() => openEdit(t",
+     "                            {isAdmin && <Button variant=\"ghost\" size=\"icon\" className=\"h-8 w-8\" aria-label={`Duplicar ${template.name}`} onClick={() => handleDu",
+     "                            {isAdmin && <Button variant=\"ghost\" size=\"icon\" className=\"h-8 w-8 text-destructive\" aria-label={`Excluir ${template.name}`} onClick",
+     "                            {!isAdmin && <p className=\"text-xs text-muted-foreground self-center\">Somente administradores podem criar, editar ou excluir templat"
+    ],
+    "still_sample": [
+     "        <Button onClick={openNew} className=\"gap-2 bg-primary hover:bg-primary/90 w-full sm:w-auto\"><Plus className=\"w-4 h-4\" />Novo Template</Button>"
+    ]
+   }
+  },
+  {
+   "path": "src/components/catalog/__tests__/ExternalProductCatalog.virtualizacao.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 34,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 11,
+    "missing_in_main": 11,
+    "removed": 1,
+    "removed_still_in_main": 1,
+    "missing_sample": [
+     "import { describe, it, expect, vi, beforeAll, beforeEach } from 'vitest';",
+     "beforeAll(() => {",
+     "  vi.spyOn(Element.prototype, 'getBoundingClientRect').mockImplementation(function (this: Element) {",
+     "    const el = this as HTMLElement;",
+     "    if (el.classList?.contains('overflow-y-auto')) {",
+     "      return {",
+     "        width: 800, height: SCROLL_VIEWPORT_HEIGHT,",
+     "        top: 0, left: 0, bottom: SCROLL_VIEWPORT_HEIGHT, right: 800, x: 0, y: 0,",
+     "        toJSON: () => ({}),",
+     "      } as DOMRect;",
+     "    return { width: 0, height: 0, top: 0, left: 0, bottom: 0, right: 0, x: 0, y: 0, toJSON: () => ({}) } as DOMRect;"
+    ],
+    "still_sample": [
+     "import { describe, it, expect, vi, beforeEach } from 'vitest';"
+    ]
+   }
+  },
+  {
+   "path": "src/components/catalog/__tests__/WhatsAppTemplatesManager.confirmacaoExclusao.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 15,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 3,
+    "missing_in_main": 2,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "vi.mock('@/hooks/system/useUserRole', () => ({",
+     "  useUserRole: () => ({ isAdmin: true }),"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/connections/ConnectionsView.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 47,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 13,
+    "missing_in_main": 11,
+    "removed": 4,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  function maskPhone(raw: string): string {",
+     "    const digits = raw.replace(/\\D/g, '').slice(0, 11);",
+     "    if (!digits.length) return '';",
+     "    const area = digits.slice(0, 2);",
+     "    if (digits.length <= 2) return `+55 ${area}`;",
+     "    const rest = digits.slice(2);",
+     "    if (rest.length <= 5) return `+55 ${area} ${rest}`;",
+     "    return `+55 ${area} ${rest.slice(0, 5)}-${rest.slice(5)}`;",
+     "          <Dialog open={isAddDialogOpen} onOpenChange={(open) => { clearAddConnectionError(); setIsAddDialogOpen(open); }}>",
+     "                <div className=\"space-y-2\"><Label>Número do WhatsApp</Label><Input placeholder=\"+55 11 99999-0000\" value={newConnection.phone_number} onChange={",
+     "                  <Button variant=\"outline\" onClick={() => { clearAddConnectionError(); setIsAddDialogOpen(false); }} disabled={isCreating}>Cancelar</Button>"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/dashboard/DashboardView.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 65,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 12,
+    "missing_in_main": 10,
+    "removed": 8,
+    "removed_still_in_main": 3,
+    "missing_sample": [
+     "  const kpiPeriodDates = (() => {",
+     "    const now = new Date();",
+     "    if (!filters.period || filters.period === 'today') return {};",
+     "    if (filters.period === 'week') { const from = new Date(now); from.setDate(from.getDate() - 7); return { from, until: now }; }",
+     "    if (filters.period === 'month') { const from = new Date(now); from.setDate(from.getDate() - 30); return { from, until: now }; }",
+     "    return {};",
+     "  })();",
+     "  const { data: kpi, isPending } = useDashboardKpi({ queueId: filters.queueId, agentId: filters.agentId, ...kpiPeriodDates });",
+     "        <Tabs data-testid=\"dash-tabs\" value={tab} onValueChange={setTab}>",
+     "          <DashboardZone id=\"numeros\" title={filters.period && filters.period !== 'today' ? 'Números do período' : 'Números de hoje'}>"
+    ],
+    "still_sample": [
+     "        <Tabs value={tab} onValueChange={setTab}>",
+     "              <p className=\"text-2xs text-muted-foreground mb-1.5\" data-testid=\"dash-kpis-period-notice\">",
+     "              </p>"
+    ]
+   }
+  },
+  {
+   "path": "src/components/dashboard/WarRoomDashboard.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 235,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 81,
+    "missing_in_main": 63,
+    "removed": 104,
+    "removed_still_in_main": 97,
+    "missing_sample": [
+     "import { Bell, BellOff, Pause, Play, Maximize, Minimize, RefreshCcw } from 'lucide-react';",
+     "import { Card, CardContent } from '@/components/ui/card';",
+     "import { useWarRoomData } from './useWarRoomData';",
+     "import { SentinelAlertPanel } from './SentinelAlertPanel';",
+     "interface Agent { id: string; name: string; status: string; avatar_url?: string | null }",
+     "interface Queue { id: string; name: string; pending: number }",
+     "  agents?: Agent[];",
+     "  queues?: Queue[];",
+     "export function WarRoomDashboard({ agents: propsAgents, queues: propsQueues }: WarRoomDashboardProps = {}) {",
+     "  const { settings, updateSetting } = useNotificationSettings();",
+     "    const handleFSChange = () => setIsFullscreen(!!document.fullscreenElement);",
+     "    document.addEventListener('fullscreenchange', handleFSChange);",
+     "    return () => document.removeEventListener('fullscreenchange', handleFSChange);",
+     "  const hasCriticalAlerts = realData.alerts?.some(a => (a.severity === 'critical')) ?? false;",
+     "  if (!propsAgents && !propsQueues && realData.isLoading) {",
+     "      <div role=\"status\" aria-label=\"Carregando dados do War Room\" className=\"space-y-4 p-4\">",
+     "        <div className=\"h-8 bg-muted motion-safe:animate-pulse rounded\" />",
+     "  if (!propsAgents && !propsQueues && realData.isError) {",
+     "      <div role=\"alert\" className=\"p-4 space-y-2\">",
+     "        <p>Não foi possível carregar o War Room</p>",
+     "        {realData.error?.message && <p>{realData.error.message}</p>}",
+     "        <button onClick={() => void realData.refetch()}>Tentar de novo</button>",
+     "  const agents = propsAgents ?? realData.agents ?? [];",
+     "  const queues = propsQueues ?? realData.queues ?? [];",
+     "    <div className={`w-full space-y-4 ${isFullscreen ? 'fixed inset-0 z-50 bg-background overflow-y-auto p4' : ''}`}>"
+    ],
+    "still_sample": [
+     "import { AnimatePresence } from 'framer-motion';",
+     "import { useWarRoomAlerts } from '@/hooks/business/useWarRoomAlerts';",
+     "import { useNotificationSettings } from '@/hooks/system/useNotificationSettings';",
+     "import { useWarRoomData, useWarRoomMetrics } from '@/hooks/business/useWarRoomData';",
+     "import type { WarRoomAgent, WarRoomQueue, WarRoomAlert } from '@/hooks/business/useWarRoomData';",
+     "import {",
+     "  AlertTriangle, Clock, Users, MessageSquare, TrendingUp,",
+     "  CheckCircle, XCircle, Activity, Bell, Volume2,",
+     "  VolumeX, Maximize2, Minimize2, RefreshCw,",
+     "} from 'lucide-react';"
+    ]
+   }
+  },
+  {
+   "path": "src/components/dashboard/__tests__/GamificationSection.customizacao.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 35,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 11,
+    "missing_in_main": 5,
+    "removed": 1,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "vi.mock('framer-motion', () => ({",
+     "  AnimatePresence: ({ children }: { children: React.ReactNode }) => <>{children}</>,",
+     "  motion: { div: ({ children }: { children?: React.ReactNode }) => <>{children}</> },",
+     "  useReducedMotion: () => false,",
+     "    </QueryClientProvider>"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/dashboard/useSentimentData.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 36,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 7,
+    "missing_in_main": 7,
+    "removed": 1,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  const [isError, setIsError] = useState(false);",
+     "  const [error, setError] = useState<Error | null>(null);",
+     "    setIsError(false);",
+     "    setError(null);",
+     "      setIsError(true);",
+     "      setError(error instanceof Error ? error : new Error('Erro desconhecido'));",
+     "  return { alerts, analyses, agents, loading, isError, error, stats, dailyData, agentData, fetchData };"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/email/__tests__/EmailChatInbox.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 22,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 9,
+    "missing_in_main": 5,
+    "removed": 1,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  motion: {",
+     "    div: ({ children }: { children?: React.ReactNode }) => <>{children}</>,",
+     "    tr: ({ children }: { children?: React.ReactNode }) => <>{children}</>,",
+     "    span: ({ children }: { children?: React.ReactNode }) => <>{children}</>,",
+     "    section: ({ children }: { children?: React.ReactNode }) => <>{children}</>,"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/inbox/ai-tools/__tests__/a11y-ferramentas-ia.test.tsx",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/components/inbox/chat/__tests__/ChatMessagesArea.agrupar-envio.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 31,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 9,
+    "missing_in_main": 3,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  Object.defineProperty(HTMLElement.prototype, 'clientHeight', {",
+     "    configurable: true,",
+     "    get: function() { return 600; }"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/inbox/chat/__tests__/ChatMessagesArea.loop.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 31,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 9,
+    "missing_in_main": 3,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  Object.defineProperty(HTMLElement.prototype, 'clientHeight', {",
+     "    configurable: true,",
+     "    get: function() { return 600; }"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/inbox/chat/__tests__/ChatMessagesArea.movimento-reduzido.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 31,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 9,
+    "missing_in_main": 3,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  Object.defineProperty(HTMLElement.prototype, 'clientHeight', {",
+     "    configurable: true,",
+     "    get: function() { return 600; }"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/inbox/tabs/__tests__/FilesTab.fase6.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 62,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 10,
+    "missing_in_main": 9,
+    "removed": 8,
+    "removed_still_in_main": 6,
+    "missing_sample": [
+     "import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';",
+     "import { render, screen, fireEvent, waitFor, within, cleanup } from '@testing-library/react';",
+     "afterEach(() => {",
+     "  cleanup();",
+     "  it('com 959 px e preferência 8, abrir detalhes NÃO muda o effective do grid (Sheet sobreposto)', async () => {",
+     "    await waitFor(() => expect(gridClass()).toContain('grid-cols-5'));",
+     "  it('com 1474 px abre lado a lado (260 px) e o grid cai de 8 para 6', async () => {",
+     "    await waitFor(() => expect(gridClass()).toContain('grid-cols-8'));",
+     "    await waitFor(() => expect(gridClass()).toContain('grid-cols-6'));"
+    ],
+    "still_sample": [
+     "import { render, screen, fireEvent, waitFor, within } from '@testing-library/react';",
+     "  it('com 959 px e preferência 8, abrir detalhes NÃO muda o effective do grid (Sheet sobreposto)', () => {",
+     "    expect(gridClass()).toContain('grid-cols-5');",
+     "  it('com 1474 px abre lado a lado (260 px) e o grid cai de 8 para 6', () => {",
+     "    expect(gridClass()).toContain('grid-cols-8');",
+     "    expect(gridClass()).toContain('grid-cols-6');"
+    ]
+   }
+  },
+  {
+   "path": "src/components/settings/AvatarUpload.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 115,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 22,
+    "missing_in_main": 11,
+    "removed": 29,
+    "removed_still_in_main": 12,
+    "missing_sample": [
+     "          .update({ avatar_url: filePath })",
+     "        setAvatarUrl(`${publicUrl}?t=${Date.now()}`);",
+     "        const { data: existingFiles } = await supabase.storage.from('avatars').list(user.id);",
+     "        if (existingFiles) {",
+     "          const newFileName = `avatar.${ext}`;",
+     "          const toRemove = existingFiles",
+     "            .filter(f => f.name !== newFileName)",
+     "            .map(f => `${user.id}/${f.name}`);",
+     "          if (toRemove.length > 0) {",
+     "            const { error: removeError } = await supabase.storage.from('avatars').remove(toRemove);",
+     "            if (removeError) log.warn('Falha ao remover avatars antigos do bucket', removeError);"
+    ],
+    "still_sample": [
+     "    const previousUrl = avatarUrl ?? profile?.avatar_url ?? null;",
+     "        // Get public URL",
+     "        const { data: { publicUrl } } = supabase.storage",
+     "          .from('avatars')",
+     "          .getPublicUrl(filePath);",
+     "        const urlWithCache = `${publicUrl}?t=${Date.now()}`;",
+     "        // Update profile",
+     "          .update({ avatar_url: urlWithCache })",
+     "        setAvatarUrl(urlWithCache);",
+     "          const { error: removeError } = await supabase.storage"
+    ]
+   }
+  },
+  {
+   "path": "src/components/settings/SettingsView.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 13,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 1,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "          <AppearanceSettings settings={settings} updateSettings={updateSettings} isSaving={isSaving} onSave={saveSettings} onResetOnboarding={handleResetOnboar"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/tasks/__tests__/WorkItemSheet.fuso.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 21,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 2,
+    "missing_in_main": 2,
+    "removed": 1,
+    "removed_still_in_main": 1,
+    "missing_sample": [
+     "import { makeQueryClient, makeWrapper, resetSupabaseMock } from '@/test/mocks/tarefas';",
+     "  resetSupabaseMock();"
+    ],
+    "still_sample": [
+     "import { makeQueryClient, makeWrapper } from '@/test/mocks/tarefas';"
+    ]
+   }
+  },
+  {
+   "path": "src/components/team-chat/__tests__/team-chat-notifications-mount.test.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 18,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 7,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  AuthProvider: ({ children }: { children: React.ReactNode }) => children,"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/team-chat/useTeamChatPanel.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 136,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 36,
+    "missing_in_main": 21,
+    "removed": 10,
+    "removed_still_in_main": 1,
+    "missing_sample": [
+     "  const [searchRetryCount, setSearchRetryCount] = useState(0);",
+     "  const onTeamMessageEvent = useCallback((event: unknown) => {",
+     "    const ev = event as { type: string; id: string; content?: string; is_edited?: boolean; updated_at?: string };",
+     "    if (ev.type === 'update') {",
+     "      setOlderMessages(prev => prev.map(m => m.id === ev.id",
+     "        ? { ...m, content: ev.content ?? m.content, is_edited: ev.is_edited ?? m.is_edited, updated_at: ev.updated_at ?? m.updated_at }",
+     "    } else if (ev.type === 'delete') {",
+     "      setOlderMessages(prev => prev.filter(m => m.id !== ev.id));",
+     "  const { messages: newestMessages, isLoading, isError: messagesIsError, refetch: refetchMessages } = useTeamMessages(conversation.id, onTeamMessageEvent);",
+     "    if (!searchTerm || searchTerm.length < 3) return;",
+     "        p_limit: 100,",
+     "  }, [searchTerm, conversation.id, searchRetryCount]);",
+     "  const searchError = !!(searchActive",
+     "    && serverSearchError?.term === searchTerm);",
+     "  const isSearchingMessages = isSearching;",
+     "  const searchBelowMinChars = showSearch && searchQuery.trim().length > 0 && searchQuery.trim().length < 3;",
+     "  const searchIsCapped = !!(serverSearchMatches && serverSearch && serverSearch.results.length >= 100);",
+     "  }, [messages, searchActive, serverSearchMatches, serverSearch, searchBelowMinChars]);",
+     "    setSearchRetryCount(prev => prev + 1);",
+     "    isSearchingMessages,",
+     "    messagesError: messagesIsError,"
+    ],
+    "still_sample": [
+     "  const searchError = searchActive"
+    ]
+   }
+  },
+  {
+   "path": "src/components/ui/command-palette.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 13,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 1,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "                        <motion.button key={item.id} role=\"option\" initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: idx * 0."
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/ui/phone-input.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 13,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 0,
+    "removed": 1,
+    "removed_still_in_main": 0,
+    "missing_sample": [],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/hooks/__tests__/useRateLimitLogs.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 103,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 23,
+    "missing_in_main": 20,
+    "removed": 9,
+    "removed_still_in_main": 2,
+    "missing_sample": [
+     "import { describe, it, expect, vi, beforeAll, beforeEach, afterEach } from 'vitest';",
+     "beforeAll(() => {",
+     "  if (!AbortSignal.any) {",
+     "    (AbortSignal as unknown as { any: (signals: AbortSignal[]) => AbortSignal }).any = (signals) => {",
+     "      const controller = new AbortController();",
+     "      for (const s of signals) {",
+     "        if (s.aborted) { controller.abort(s.reason); break; }",
+     "        s.addEventListener('abort', () => controller.abort(s.reason), { once: true });",
+     "      return controller.signal;",
+     "    const q2 = {",
+     "      limit: vi.fn().mockReturnValue(queryResult(mockLogs)),",
+     "      range: vi.fn().mockReturnValue(queryResult(mockLogs)),",
+     "        order: vi.fn().mockReturnValue({ order: vi.fn().mockReturnValue(q2) }),",
+     "        order: vi.fn().mockReturnValue({ order: vi.fn().mockReturnValue({",
+     "          range: vi.fn().mockReturnValue(queryResult([])),",
+     "        }) }),",
+     "        order: vi.fn().mockReturnValue({ order: vi.fn().mockReturnValue({",
+     "          range: vi.fn().mockReturnValue(queryResult(null, new Error('fail'))),",
+     "        }) }),",
+     "    mockFrom.mockReturnValue({ select: vi.fn(() => ({ order: vi.fn(() => ({ order: vi.fn(() => ({ limit: vi.fn(() => queryResult(updated)), range: vi.fn(() => q"
+    ],
+    "still_sample": [
+     "import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';",
+     "    await act(async () => { await vi.advanceTimersByTimeAsync(30_000); });"
+    ]
+   }
+  },
+  {
+   "path": "src/hooks/__tests__/useTeamChatNotifications.aviso-navegador.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 26,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 4,
+    "missing_in_main": 4,
+    "removed": 1,
+    "removed_still_in_main": 1,
+    "missing_sample": [
+     "import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';",
+     "  afterEach(() => {",
+     "    vi.unstubAllGlobals();",
+     "    vi.stubGlobal('Notification', Object.assign(vi.fn(), { permission: 'granted' }));"
+    ],
+    "still_sample": [
+     "import { describe, it, expect, vi, beforeEach } from 'vitest';"
+    ]
+   }
+  },
+  {
+   "path": "src/hooks/__tests__/useTeamChatNotifications.behavior.test.ts",
+   "status": "MAIN_UNCHANGED_SINCE_BASE",
+   "patch_lines": 22,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 2,
+    "missing_in_main": 1,
+    "removed": 1,
+    "removed_still_in_main": 1,
+    "missing_sample": [
+     "    vi.stubGlobal('Notification', Object.assign(vi.fn(), { permission: 'default' }));"
+    ],
+    "still_sample": [
+     "vi.stubGlobal('AudioContext', FakeAudioContext);"
+    ]
+   }
+  },
+  {
+   "path": "src/hooks/__tests__/useTeamChatNotifications.global.test.tsx",
+   "status": "MAIN_UNCHANGED_SINCE_BASE",
+   "patch_lines": 12,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "    vi.stubGlobal('Notification', { permission: 'default' });"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/hooks/__tests__/useWarRoomAlerts.aviso-desktop.test.tsx",
+   "status": "MAIN_UNCHANGED_SINCE_BASE",
+   "patch_lines": 15,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 3,
+    "missing_in_main": 2,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "vi.mock('@/hooks/system/usePushNotifications', () => ({",
+     "  usePushNotifications: () => ({ isSupported: false, permission: 'granted', isActive: false, isLoading: false, showNotification: vi.fn(), requestPermission: vi."
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/hooks/analytics/useGoalsDashboard.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 78,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 20,
+    "missing_in_main": 11,
+    "removed": 18,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  const { data: resolvedCount, isLoading: loadingResolution } = useQuery({",
+     "    queryKey: ['goals-contacts-resolved', period, profile?.id],",
+     "    const contactsTotal = contactsCount ?? 0;",
+     "    const contactsResolved = resolvedCount ?? 0;",
+     "    const resolutionRate = contactsTotal > 0 ? Math.round((contactsResolved / contactsTotal) * 100) : 0;",
+     "    const hasResolutionData = contactsTotal > 0;",
+     "  }, [messagesCount, contactsCount, resolvedCount, period, customGoals]);",
+     "    const countableGoals = goals.filter(g => g.hasData !== false);",
+     "    if (countableGoals.length === 0) return 0;",
+     "    return Math.round(countableGoals.reduce((acc, g) => acc + Math.min((g.current / g.target) * 100, 100), 0) / countableGoals.length);",
+     "  const isLoading = loadingMessages || loadingContacts || loadingResolution;"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/hooks/auth/useAuth.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 21,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 3,
+    "missing_in_main": 1,
+    "removed": 1,
+    "removed_still_in_main": 1,
+    "missing_sample": [
+     "        void offlineSendQueue.clear();"
+    ],
+    "still_sample": [
+     " import { useQueryClient } from '@tanstack/react-query';"
+    ]
+   }
+  },
+  {
+   "path": "src/hooks/business/useQueueGoals.ts",
+   "status": "MAIN_UNCHANGED_SINCE_BASE",
+   "patch_lines": 13,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 1,
+    "removed_still_in_main": 1,
+    "missing_sample": [
+     " * zero) ou esconde fila estoura (zero tratado como sem medição)."
+    ],
+    "still_sample": [
+     " * zero) ou esconde fila estourada (zero tratado como sem medição)."
+    ]
+   }
+  },
+  {
+   "path": "src/hooks/business/useWarRoomAlerts.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 45,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 6,
+    "missing_in_main": 5,
+    "removed": 7,
+    "removed_still_in_main": 1,
+    "missing_sample": [
+     "  usePushNotifications(); // subscribes to push permission state — direct Notification() used below",
+     "    audioRef.current = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgip6LbUg3WX2OgGtLPE51g3lg",
+     "          // Direct browser notification (bypasses Service Worker)",
+     "          if (settings.browserNotifications && typeof Notification !== 'undefined' && Notification.permission === 'granted') {",
+     "            new Notification(`⚠️ ${alert.title}`, {"
+    ],
+    "still_sample": [
+     "    audioRef.current = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgip6LbUg3WX2OgGtLPE51g3lg"
+    ]
+   }
+  },
+  {
+   "path": "src/hooks/chat/__tests__/useFilesContainerColumns.test.tsx",
+   "status": "MAIN_UNCHANGED_SINCE_BASE",
+   "patch_lines": 22,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 2,
+    "missing_in_main": 2,
+    "removed": 2,
+    "removed_still_in_main": 2,
+    "missing_sample": [
+     "  Object.defineProperty(element, 'getBoundingClientRect', { configurable: true, value: () => ({ width, height: 400, top: 0, left: 0, right: width, bottom: 400, ",
+     "    Object.defineProperty(element, 'getBoundingClientRect', { configurable: true, value: () => ({ width: 1474, height: 400, top: 0, left: 0, right: 1474, bottom"
+    ],
+    "still_sample": [
+     "  element.getBoundingClientRect = () => ({ width, height: 400, top: 0, left: 0, right: width, bottom: 400, x: 0, y: 0, toJSON: () => ({}) });",
+     "    element.getBoundingClientRect = () => ({ width: 1474, height: 400, top: 0, left: 0, right: 1474, bottom: 400, x: 0, y: 0, toJSON: () => ({}) });"
+    ]
+   }
+  },
+  {
+   "path": "src/hooks/chat/__tests__/useTeamChatNotifications.canal-estavel.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 73,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 10,
+    "missing_in_main": 10,
+    "removed": 5,
+    "removed_still_in_main": 4,
+    "missing_sample": [
+     "  NotifCtor: vi.fn(),",
+     "  h.NotifCtor.mockReset();",
+     "  // HZ3-001: a source usa `Notification.permission` e `new Notification(...)` diretamente",
+     "  Object.defineProperty(window, 'Notification', { configurable: true, writable: true, value: Object.assign(h.NotifCtor, { permission: 'granted' }) });",
+     "  vi.unstubAllGlobals();",
+     "    expect(h.NotifCtor).toHaveBeenCalledWith('💨 Teams: Ana', expect.anything());",
+     "    expect(h.NotifCtor).not.toHaveBeenCalled();",
+     "    expect(h.NotifCtor).toHaveBeenCalled();",
+     "    expect(h.NotifCtor).not.toHaveBeenCalled();",
+     "    expect(h.NotifCtor).not.toHaveBeenCalled();"
+    ],
+    "still_sample": [
+     "    expect(h.show).not.toHaveBeenCalled();",
+     "    expect(h.show).toHaveBeenCalled();",
+     "    expect(h.show).not.toHaveBeenCalled();",
+     "    expect(h.show).not.toHaveBeenCalled();"
+    ]
+   }
+  },
+  {
+   "path": "src/hooks/chat/__tests__/useTeamChatNotifications.nome-e-clique.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 77,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 11,
+    "missing_in_main": 9,
+    "removed": 8,
+    "removed_still_in_main": 8,
+    "missing_sample": [
+     "type NotificacoFalsa = {",
+     "vi.mock('@/hooks/system/usePushNotifications', () => ({",
+     "  usePushNotifications: () => ({ showNotification: vi.fn(), isSubscribed: false, permission: 'default' }),",
+     "    // A própria instência fica registrada: `showBrowserNotification` liga o `onclick`",
+     "    (h.notificacoes as NotificacoFalsa[]).push(this);",
+     "const emitidas = () => h.notificacoes as NotificacoFalsa[];",
+     "    expect(emitidas()[0].title).toBe('💨 Teams: Ana');",
+     "    expect(emitidas()[0].title).toBe('💨 Teams: Colega');",
+     "  it('o clqiue repassado pelo service worker continua abrindo o Chat Interno', () => {"
+    ],
+    "still_sample": [
+     " * remetente vinha de `profiles` (leitura barrada pela RLS para o agente, então o",
+     "type NotificacaoFalsa = {",
+     "    // A própria instância fica registrada: `showBrowserNotification` liga o `onclick`",
+     "    (h.notificacoes as NotificacaoFalsa[]).push(this);",
+     "const emitidas = () => h.notificacoes as NotificacaoFalsa[];",
+     "    expect(emitidas()[0].title).toBe('💬 Teams: Ana');",
+     "    expect(emitidas()[0].title).toBe('💬 Teams: Colega');",
+     "  it('o clique repassado pelo service worker continua abrindo o Chat Interno', () => {"
+    ]
+   }
+  },
+  {
+   "path": "src/hooks/chat/useTeamChatNotifications.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 89,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 22,
+    "missing_in_main": 17,
+    "removed": 11,
+    "removed_still_in_main": 1,
+    "missing_sample": [
+     "  const channelIdRef = useRef<string>('');",
+     "  // Refs for values that change independently of the channel lifecycle — updating",
+     "  // them here avoids adding them as deps of the channel effect and prevents the",
+     "  // channel from being torn down and recreated every time settings change.",
+     "  const showNotificationRef = useRef(showNotification);",
+     "  const permissionRef = useRef(permission);",
+     "    showNotificationRef.current = showNotification;",
+     "    permissionRef.current = permission;",
+     "  }, [notifSettings, isQuietHours, showNotification, permission]);",
+     "    if (!channelIdRef.current) {",
+     "      channelIdRef.current = Math.random().toString(36).slice(2);",
+     "      .channel('team-chat-notifications:' + channelIdRef.current)",
+     "        if (notifSettingsRef.current.soundEnabled && !isQuietHoursRef.current()) {",
+     "          playTeamChatSound(notifSettingsRef.current.soundVolume);",
+     "        if (permissionRef.current === 'granted' && notifSettingsRef.current.browserNotifications && !isQuietHoursRef.current()) {",
+     "          await showNotificationRef.current({",
+     "  }, [profile]);"
+    ],
+    "still_sample": [
+     "              conversationId: msg.conversation_id,"
+    ]
+   }
+  },
+  {
+   "path": "src/hooks/communication/__tests__/useAudioMemes.pasta-usuario.test.tsx",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/hooks/communication/useAudioMemes.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 18,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 5,
+    "missing_in_main": 0,
+    "removed": 1,
+    "removed_still_in_main": 0,
+    "missing_sample": [],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/hooks/contacts/__tests__/useContainerColumns.test.ts",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/hooks/dashboard/__tests__/useDashboardKpi.periodo.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 15,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 2,
+    "missing_in_main": 2,
+    "removed": 2,
+    "removed_still_in_main": 2,
+    "missing_sample": [
+     "      p_queue: undefined,",
+     "      p_agent: undefined,"
+    ],
+    "still_sample": [
+     "      p_queue: null,",
+     "      p_agent: null,"
+    ]
+   }
+  },
+  {
+   "path": "src/hooks/dashboard/useDashboardKpi.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 14,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 2,
+    "missing_in_main": 0,
+    "removed": 1,
+    "removed_still_in_main": 1,
+    "missing_sample": [],
+    "still_sample": [
+     "        p_since: fromIso ?? undefined,"
+    ]
+   }
+  },
+  {
+   "path": "src/hooks/gamification/useAgentCelebrations.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 26,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 6,
+    "missing_in_main": 2,
+    "removed": 1,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "    const mountTime = new Date().toISOString();",
+     "        if (linha.earned_at && linha.earned_at > mountTime) {"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/hooks/inbox/__tests__/useInboxBulkActions.test.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 15,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 2,
+    "missing_in_main": 2,
+    "removed": 2,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "    expect(restores[0]).toMatchObject({ payload: { assigned_to: 'ag-1' }, filters: { id: [c1] } });",
+     "    expect(restores[1]).toMatchObject({ payload: { assigned_to: null }, filters: { id: [c2] } });"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/hooks/inbox/__tests__/useInboxFilters.type-url.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 12,
+   "hunk": "PRESENT_REVERSE_APPLIES"
+  },
+  {
+   "path": "src/hooks/inbox/useInboxBulkActions.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 61,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 9,
+    "missing_in_main": 8,
+    "removed": 12,
+    "removed_still_in_main": 1,
+    "missing_sample": [
+     "      // Retrato do estado ANTERIOR: o desfazer devolve o `assigned_to` original.",
+     "      // A leitura pode ser barrada pelo RLS — erro aqui aborta sem arquivar nada.",
+     "        .select('id, assigned_to')",
+     "        previousStatus.set(row.id, row.assigned_to);",
+     "          // Arquivar = desatribuir: `assigned_to` vai para null.",
+     "            .update({ assigned_to: null, updated_at: new Date().toISOString() })",
+     "          const groups = new Map<string | null, string[]>();",
+     "              .update({ assigned_to: status, updated_at: new Date().toISOString() })"
+    ],
+    "still_sample": [
+     "        .select('id, conversation_status')"
+    ]
+   }
+  },
+  {
+   "path": "src/hooks/inbox/useInboxFilters.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 76,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 15,
+    "missing_in_main": 5,
+    "removed": 18,
+    "removed_still_in_main": 7,
+    "missing_sample": [
+     "      contactType: normalizeContactType(searchParams.get('type')) ?? storedPrefs?.contactType ?? null,",
+     "    const normalized = value && value !== 'all' ? value : null;",
+     "    applyPrefs({ contactType: normalized });",
+     "      if (normalized) {",
+     "        next.set('type', normalized);"
+    ],
+    "still_sample": [
+     "  try {",
+     "  } catch {",
+     "    return null;",
+     "    applyPrefs({ contactType: value && value !== 'all' ? value : null });",
+     "    if (value && value !== 'all') {",
+     "    } else {",
+     "  }, [applyPrefs]);"
+    ]
+   }
+  },
+  {
+   "path": "src/hooks/integrations/__tests__/useTalkXSuppression.test.ts",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "patch_lines": 384,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 8,
+    "missing_in_main": 8,
+    "removed": 260,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     " * useTalkXSuppression foi removido (TL-002 / hook-morto).",
+     " * Os testes do hook foram deletados junto com o hook.",
+     " * Este arquivo existe para não deixar o diretório de testes vazio.",
+     "import { describe, it } from 'vitest';",
+     "import type { BlacklistEntry, AddBlacklistEntryInput } from '@/hooks/integrations/useTalkXSuppression';",
+     "describe('useTalkXSuppression — removido (TL-002)', () => {",
+     "  it('hook foi removido do módulo', () => {",
+     "    // Verificação feita em useTalkXSuppression.hook-morto.test.ts"
+    ],
+    "still_sample": [],
+    "same_basename_in_main": []
+   }
+  },
+  {
+   "path": "src/hooks/integrations/useKnowledgeBase.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 36,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 9,
+    "missing_in_main": 3,
+    "removed": 3,
+    "removed_still_in_main": 2,
+    "missing_sample": [
+     "    const fetchError = articlesRes.error ?? filesRes.error;",
+     "    if (fetchError) {",
+     "      setError(fetchError.message);"
+    ],
+    "still_sample": [
+     "    if (articlesRes.data) setArticles(articlesRes.data.map((a) => ({ ...a, tags: a.tags || [] })) as Article[]);",
+     "    if (filesRes.data) setFiles(filesRes.data as KBFile[]);"
+    ]
+   }
+  },
+  {
+   "path": "src/hooks/integrations/useTalkXSegments.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 22,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 2,
+    "missing_in_main": 1,
+    "removed": 2,
+    "removed_still_in_main": 1,
+    "missing_sample": [
+     "const quoted = (v: string) => `\"${v.replace(/[\\\\\"]/,  (c) => (c === '\\\\' ? '\\\\\\\\' : '\\\\\"'))}\"`;"
+    ],
+    "still_sample": [
+     "const quoted = (v: string) => `\"${v.replace(/[\\\\\"]/g, (c) => (c === '\\\\' ? '\\\\\\\\' : '\\\\\"'))}\"`;"
+    ]
+   }
+  },
+  {
+   "path": "src/hooks/integrations/useTalkXSuppression.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 103,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 0,
+    "missing_in_main": 0,
+    "removed": 75,
+    "removed_still_in_main": 6,
+    "missing_sample": [],
+    "still_sample": [
+     "    queryFn: async () => {",
+     "        .order('created_at', { ascending: false })",
+     "      if (error) throw error;",
+     "      if (error) throw error;",
+     "      if (error) throw error;",
+     "  return {"
+    ]
+   }
+  },
+  {
+   "path": "src/hooks/system/useDiagnosticsData.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 13,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 1,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "    if (connectionsCountError) dbError = dbError ?? connectionsCountError;"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/hooks/system/useUserSettings.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 29,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 4,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "          toast({ title: 'Erro', description: 'Falha ao carregar configurações.', variant: 'destructive' });"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/hooks/tasks/__tests__/workItemFormat.test.ts",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/hooks/team-chat/useTeamMessages.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 46,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 9,
+    "missing_in_main": 6,
+    "removed": 4,
+    "removed_still_in_main": 1,
+    "missing_sample": [
+     "export function useTeamMessages(conversationId: string | null, onEvent?: (event: unknown) => void) {",
+     "        if (onEvent && (payload.eventType === 'UPDATE' || payload.eventType === 'DELETE')) {",
+     "          const row = payload.new as { id?: string; content?: string; is_edited?: boolean; updated_at?: string } | undefined;",
+     "          if (row?.id) {",
+     "            onEvent({ type: payload.eventType === 'UPDATE' ? 'update' : 'delete', id: row.id, content: row.content, is_edited: row.is_edited, updated_at: row.up",
+     "  }, [conversationId, queryClient, onEvent]);"
+    ],
+    "still_sample": [
+     "  }, [conversationId, queryClient]);"
+    ]
+   }
+  },
+  {
+   "path": "src/hooks/team-chat/useTeamReadState.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 22,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 2,
+    "missing_in_main": 2,
+    "removed": 2,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "    if (!conversationId || ownMessageIds.length === 0) return;",
+     "  }, [conversationId, queryClient, ownMessageIds.length]);"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/lib/__tests__/filesPeriod.adversarial.test.ts",
+   "status": "MAIN_UNCHANGED_SINCE_BASE",
+   "patch_lines": 14,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 2,
+    "missing_in_main": 2,
+    "removed": 1,
+    "removed_still_in_main": 1,
+    "missing_sample": [
+     "const isUTC3 = new Date(2026, 2, 5, 12, 0).getTimezoneOffset() === 180;",
+     "describe.skipIf(!isUTC3)('filesPeriod (adversarial) — fuso: o corte é o dia LOCAL, não a fatia UTC do ISO', () => {"
+    ],
+    "still_sample": [
+     "describe('filesPeriod (adversarial) — fuso: o corte é o dia LOCAL, não a fatia UTC do ISO', () => {"
+    ]
+   }
+  },
+  {
+   "path": "src/lib/mediaVolumeStore.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 13,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 1,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "export function readAuthenticatedUserId(): string | null {"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/lib/offlineQueue.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 51,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 9,
+    "missing_in_main": 9,
+    "removed": 5,
+    "removed_still_in_main": 1,
+    "missing_sample": [
+     "  /** Quando informado, só mensagens deste usuário (ou sem userId) são entregues. */",
+     "  userId?: string | (() => string | null);",
+     "      const uid = typeof drainOptions.userId === 'function' ? drainOptions.userId() : drainOptions.userId;",
+     "      const ownMessages = uid ? pending.filter(m => !m.userId || m.userId === uid) : pending;",
+     "      for (const message of ownMessages) {",
+     "  options: { scope?: OnlineScope | null; onError?: OfflineQueueErrorHandler; userId?: string | (() => string | null) } = {},",
+     "    void queue.drain(deliver, { onError: options.onError, userId: options.userId });",
+     "  options: { online?: boolean; onError?: OfflineQueueErrorHandler; userId?: string | (() => string | null) } = {},",
+     "  return queue.drain(deliver, { onError: options.onError, userId: options.userId });"
+    ],
+    "still_sample": [
+     "      for (const message of pending) {"
+    ]
+   }
+  },
+  {
+   "path": "src/pages/__tests__/ChatPopup.messageBalloon.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 24,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 5,
+    "missing_in_main": 5,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  const bcrSpy = vi.spyOn(Element.prototype, 'getBoundingClientRect').mockImplementation(function (this: Element) {",
+     "    return this.getAttribute('role') === 'log'",
+     "      ? { width: 800, height: ALTURA_JANELA, top: 0, left: 0, bottom: ALTURA_JANELA, right: 800, x: 0, y: 0, toJSON: () => ({}) } as DOMRect",
+     "      : { width: 0, height: 0, top: 0, left: 0, bottom: 0, right: 0, x: 0, y: 0, toJSON: () => ({}) } as DOMRect;",
+     "      bcrSpy.mockRestore();"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/pages/__tests__/ChatPopup.pagination.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 47,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 13,
+    "missing_in_main": 12,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  const bcrSpy = vi.spyOn(Element.prototype, 'getBoundingClientRect').mockImplementation(function (this: Element) {",
+     "    return this.getAttribute('role') === 'log'",
+     "      ? { width: 800, height: ALTURA_JANELA, top: 0, left: 0, bottom: ALTURA_JANELA, right: 800, x: 0, y: 0, toJSON: () => ({}) } as DOMRect",
+     "      : { width: 0, height: 0, top: 0, left: 0, bottom: 0, right: 0, x: 0, y: 0, toJSON: () => ({}) } as DOMRect;",
+     "      bcrSpy.mockRestore();",
+     "    channel: () => ({ on: () => ({ subscribe: () => ({}) }) }),",
+     "    removeChannel: vi.fn(),",
+     "  // Neutraliza o mock global de setup.ts (clientHeight=600) para este arquivo.",
+     "  // O virtual-core usa offsetHeight (não clientHeight) para o tamanho do contêiner;",
+     "  // clientHeight=600 aciona measureElement via ResizeObserver em loop infinito.",
+     "  Object.defineProperty(HTMLElement.prototype, 'clientHeight', {",
+     "    get() { return 0; },"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/pages/__tests__/n066-a11y-combobox-progressbar.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 63,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 16,
+    "missing_in_main": 16,
+    "removed": 8,
+    "removed_still_in_main": 8,
+    "missing_sample": [
+     "const { mockInvokeEdge } = vi.hoisted(() => ({ mockInvokeEdge: vi.fn() }));",
+     "vi.mock('@/lib/invokeEdge', () => ({ invokeEdge: mockInvokeEdge }));",
+     "    from: () => {",
+     "      const q: Record<string, unknown> = {};",
+     "      q.select = (_cols?: unknown, opts?: { head?: boolean }) => {",
+     "        if ((opts as { head?: boolean } | undefined)?.head) {",
+     "          return { like: () => Promise.resolve({ count: 0, error: null }) };",
+     "        q.eq = () => q;",
+     "        q.order = () => q;",
+     "        q.limit = () => Promise.resolve({ data: [], error: null });",
+     "        q.in = () => Promise.resolve({ data: [], error: null });",
+     "        return q;",
+     "      return q;",
+     "      mockInvokeEdge.mockImplementationOnce(() => new Promise(() => {}));",
+     "      mockInvokeEdge.mockResolvedValueOnce({",
+     "      mockInvokeEdge.mockResolvedValueOnce({"
+    ],
+    "still_sample": [
+     "import { supabase } from '@/integrations/supabase/client';",
+     "    from: () => ({ select: () => ({ eq: () => ({ order: async () => ({ data: [], error: null }) }) }) }),",
+     "      const mockInvoke = vi.mocked(supabase.functions.invoke);",
+     "      mockInvoke.mockResolvedValueOnce({ data: null, error: null });",
+     "      const mockInvoke = vi.mocked(supabase.functions.invoke);",
+     "      mockInvoke.mockResolvedValueOnce({",
+     "      const mockInvoke = vi.mocked(supabase.functions.invoke);",
+     "      mockInvoke.mockResolvedValueOnce({"
+    ]
+   }
+  },
+  {
+   "path": "src/services/chat.service.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 20,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 5,
+    "missing_in_main": 5,
+    "removed": 2,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "    const mime = blob.type.split(';')[0].trim() || 'audio/webm';",
+     "    const extMap: Record<string, string> = { 'audio/ogg': '.ogg', 'audio/mp4': '.m4a' };",
+     "    const ext = extMap[mime] ?? '.webm';",
+     "    const fileName = `${contactId}/${Date.now()}${ext}`;",
+     "      .upload(fileName, blob, { contentType: mime });"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/services/outbound-message.service.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 71,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 21,
+    "missing_in_main": 20,
+    "removed": 1,
+    "removed_still_in_main": 1,
+    "missing_sample": [
+     "import { readAuthenticatedUserId } from '@/lib/mediaVolumeStore';",
+     "  const currentUserId = readAuthenticatedUserId();",
+     "  if (message.userId && currentUserId !== message.userId) return;",
+     "    userId: readAuthenticatedUserId,",
+     "  userId: readAuthenticatedUserId,",
+     "function readCurrentUserId(): string | undefined {",
+     "    if (typeof window === 'undefined' || !window.localStorage) return undefined;",
+     "    const s = window.localStorage;",
+     "    for (let i = 0; i < s.length; i += 1) {",
+     "      const key = s.key(i);",
+     "      if (!key || !/^sb-.+-auth-token$/.test(key)) continue;",
+     "      const raw = s.getItem(key);",
+     "      if (!raw) continue;",
+     "      const parsed = JSON.parse(raw) as { access_token?: unknown; user?: { id?: unknown } } | null;",
+     "      const id = parsed?.user?.id;",
+     "      if (typeof parsed?.access_token === 'string' && typeof id === 'string' && id) return id;",
+     "  } catch { /* storage blocked */ }",
+     "  return undefined;",
+     "    userId: readCurrentUserId(),",
+     "    // descartaria como idempotente sem nenhum WhatsApp sair."
+    ],
+    "still_sample": [
+     "    // descartava como idempotente sem nenhum WhatsApp sair."
+    ]
+   }
+  },
+  {
+   "path": "src/test/setup.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 21,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 8,
+    "missing_in_main": 6,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "// @tanstack/react-virtual usa scrollElement.clientHeight (não getBoundingClientRect)",
+     "// para calcular o range visível. No jsdom clientHeight é 0 por padrão → 0 itens.",
+     "Object.defineProperty(HTMLElement.prototype, 'clientHeight', {",
+     "  get() { return 600; },",
+     "Object.defineProperty(HTMLElement.prototype, 'clientWidth', {",
+     "  get() { return 800; },"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "supabase/migrations/20261023100000_talkx_campaign_recipients_page_add_segment.sql",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "patch_lines": 141,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 120,
+    "missing_in_main": 120,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "-- N-131 / N-095: adiciona parametro p_segment_id (uuid) a talkx_campaign_recipients_page.",
+     "-- Rollback:",
+     "--   REVOKE ALL ON FUNCTION public.talkx_campaign_recipients_page(uuid,integer,text,text,uuid,text) FROM PUBLIC, anon, authenticated, service_role;",
+     "--   DROP FUNCTION IF EXISTS public.talkx_campaign_recipients_page(uuid,integer,text,text,uuid,text);",
+     "--   (restaurar versao de 20261010062941 se necessario)",
+     "-- A funcao original (20261010062941) tem 5 argumentos sem p_segment_id.",
+     "-- DROP + CREATE e necessario porque o PostgreSQL rejeita CREATE OR REPLACE",
+     "-- que muda o numero de parametros.",
+     "DROP FUNCTION IF EXISTS public.talkx_campaign_recipients_page(uuid, integer, text, text, text);",
+     "CREATE OR REPLACE FUNCTION public.talkx_campaign_recipients_page(",
+     "  p_campaign_id uuid,",
+     "  p_page_size integer DEFAULT 50,",
+     "  p_cursor text DEFAULT NULL,",
+     "  p_status text DEFAULT NULL,",
+     "  p_segment_id uuid DEFAULT NULL,",
+     "  p_search text DEFAULT NULL",
+     "RETURNS jsonb",
+     "LANGUAGE plpgsql",
+     "STABLE",
+     "SECURITY DEFINER",
+     "SET search_path = public, pg_temp",
+     "AS $$",
+     "DECLARE",
+     "  v_profile_id uuid;",
+     "  v_can_view boolean;"
+    ],
+    "still_sample": [],
+    "same_basename_in_main": [
+     "supabase/migrations/_superseded/20261023100000_talkx_campaign_recipients_page_add_segment.sql"
+    ],
+    "missing_vs_same_basename": 0
+   }
+  }
+ ],
+ "auto": "MISTO_CONFLITO",
+ "n_files_with_gaps": 81,
+ "gap_lines_total": 3761
+}

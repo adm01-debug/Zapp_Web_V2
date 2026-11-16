@@ -1,0 +1,127 @@
+{
+ "id": "claude__fix-reconcilia-migrations-20261026-261101-2230",
+ "kind": "branch",
+ "ref": "origin/claude/fix-reconcilia-migrations-20261026-261101-2230",
+ "tip": "06ae04404de39b5931704e044fb33f75f39b6969",
+ "merge_base": "1252bb5a41123ba4d49efd84d0f91604bff6c87c",
+ "ahead": 1,
+ "last_commit_date": "2026-11-01",
+ "merge_base_date": "2026-11-01",
+ "prs_with_same_tip": [
+  2539
+ ],
+ "triagem_2804": {
+  "2539": "JA_NA_MAIN"
+ },
+ "closure_comment": {},
+ "files": [
+  {
+   "path": ".github/workflows/ci.yml",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 13,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 1,
+    "removed_still_in_main": 1,
+    "missing_sample": [
+     "      - name: 📐 Enforce initial bundle budget (performance-budget.json)"
+    ],
+    "still_sample": [
+     "      - name: 📏 Enforce initial bundle budget (performance-budget.json)"
+    ]
+   }
+  },
+  {
+   "path": "scripts/db-audit/replay-known-failures.json",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 32,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 10,
+    "missing_in_main": 5,
+    "removed": 1,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  \"_atualizado_em\": \"2026-11-01\",",
+     "    \"20261026220300_classificar_rls_sem_policy.sql\": {",
+     "      \"motivo\": \"COMMENT ON TABLE public._zapp_fn_before falha no replay: tabela criada fora das migrations, existe apenas no canonico. Canonico: tabela existe ",
+     "    \"20261026230300_decidir_schemas_backup.sql\": {",
+     "      \"motivo\": \"DROP SCHEMA ops_backup falha no replay: schema criado manualmente como backup, nao existe no banco vazio. Canonico: schema existia ate ser drop"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "scripts/db-audit/team-receipts-reactions-conversation-id.test.sh",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 23,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 3,
+    "missing_in_main": 1,
+    "removed": 3,
+    "removed_still_in_main": 1,
+    "missing_sample": [
+     "  \"$([[ \\\"${TEAM_CID_PRESTATE:-0}\\\" = \\\"1\\\" ]] && printf ' [rodado com TEAM_CID_PRESTATE=1: o trecho acima NAO e o esperado sem a migration]' || true)\""
+    ],
+    "still_sample": [
+     "  \"$([[ \"${TEAM_CID_PRESTATE:-0}\" = \"1\" ]] && printf ' [rodado com TEAM_CID_PRESTATE=1: o trecho acima NAO e o esperado sem a migration]' || true)\""
+    ]
+   }
+  },
+  {
+   "path": "supabase/migrations/20261026240300_drop_bkp_261023.sql",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 37,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 25,
+    "missing_in_main": 25,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "-- Migração: DROP schema _bkp_261023",
+     "-- Versão: 20261026240300",
+     "-- Reservada em: 2026-10-27 (sessão claude_04/clever-ramanujan-xllbpo)",
+     "-- ⚠️  NÃO APLICAR ANTES DE 22/11/2026",
+     "-- Contexto:",
+     "--   _bkp_261023 é snapshot de segurança criado em 23/10/2026 antes de migrations críticas",
+     "--   do GOAL \"Backend 100% operacional\". Conteúdo ao momento da reserva:",
+     "--     contacts (3730 linhas, 1192 kB) — verificar contra public.contacts ao aplicar",
+     "--     schema_migrations (922 linhas, 1568 kB)",
+     "--     functions_before (356 funções, 600 kB)",
+     "--     policies_before (456 políticas, 264 kB)",
+     "--     user_settings, team_messages, global_settings, csat_surveys, agent_stats",
+     "-- Pré-requisito para aplicar (executar manualmente ANTES do db_query):",
+     "--   SELECT count(*) FROM _bkp_261023.contacts;           -- deve bater ≥ 3730",
+     "--   SELECT count(*) FROM public.contacts WHERE deleted_at IS NULL;",
+     "--   -- Se a produção perdeu contatos desde 23/10/2026, investigar ANTES de dropar.",
+     "--   -- Confirmar que nenhum incidente de dados ocorreu entre 23/10 e a data de apply.",
+     "-- Registro no ledger (executar junto com o DROP em uma única chamada db_query):",
+     "--   INSERT INTO supabase_migrations.schema_migrations(version, name, statements)",
+     "--   VALUES ('20261026240300', 'drop_bkp_261023', ARRAY['DROP SCHEMA _bkp_261023 CASCADE'])",
+     "--   ON CONFLICT DO NOTHING RETURNING version;",
+     "-- Após o apply: confirmar que 'DROP SCHEMA _bkp_261023 CASCADE' foi aplicado com",
+     "--   SELECT schema_name FROM information_schema.schemata WHERE schema_name = '_bkp_261023';",
+     "--   -- deve retornar 0 linhas.",
+     "DROP SCHEMA _bkp_261023 CASCADE;"
+    ],
+    "still_sample": []
+   }
+  }
+ ],
+ "counts": {
+  "migrations": "1",
+  "workflows": "1",
+  "src": "0",
+  "edges": "0",
+  "docs_only": "no",
+  "lines_branch_has_main_lacks": "60",
+  "lines_main_has_branch_lacks": "125"
+ },
+ "auto": "MISTO_CONFLITO",
+ "n_files_with_gaps": 4,
+ "gap_lines_total": 34
+}

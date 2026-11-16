@@ -1,0 +1,136 @@
+{
+ "id": "claude__fix-testes-unitarios-minimo-251025-1230",
+ "kind": "branch",
+ "ref": "origin/claude/fix-testes-unitarios-minimo-251025-1230",
+ "tip": "c1952c450883b4be9c691e675064db5fc5f9a4d0",
+ "merge_base": "2d97c44cfe7f2fa8a3ca572f8f5689118328e858",
+ "ahead": 2,
+ "last_commit_date": "2026-10-25",
+ "merge_base_date": "2026-10-24",
+ "prs_with_same_tip": [
+  2249
+ ],
+ "triagem_2804": {
+  "2249": "JA_NA_MAIN"
+ },
+ "closure_comment": {},
+ "files": [
+  {
+   "path": "src/components/talkx/TalkXTemplateEditor.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 25,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 4,
+    "missing_in_main": 4,
+    "removed": 4,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "              <Label htmlFor=\"tpl-categoria\" className=\"text-xs text-foreground-secondary\">Categoria</Label>",
+     "                <SelectTrigger id=\"tpl-categoria\" className=\"mt-1.5 h-10 bg-input/40 border-border/70\"><SelectValue /></SelectTrigger>",
+     "              <Label htmlFor=\"tpl-status\" className=\"text-xs text-foreground-secondary\">Status</Label>",
+     "                <SelectTrigger id=\"tpl-status\" className=\"mt-1.5 h-10 bg-input/40 border-border/70\"><SelectValue /></SelectTrigger>"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/talkx/__tests__/TalkXA11yNomePapel.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 13,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 1,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "      channel: () => { const ch: { on: () => typeof ch; subscribe: () => object } = { on: () => ch, subscribe: () => ({}) }; return ch; },"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/theme/__tests__/HighContrastToggle.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 27,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 10,
+    "missing_in_main": 10,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "    // JSDOM não tem layout: com retângulos e viewport zerados o Radix enxerga colisão e vira o lado",
+     "    // para a esquerda. Retângulos e viewport mínimos fazem a dica caber à direita, como no navegador.",
+     "    const viewport = [",
+     "      vi.spyOn(document.documentElement, 'clientWidth', 'get').mockReturnValue(1024),",
+     "      vi.spyOn(document.documentElement, 'clientHeight', 'get').mockReturnValue(768),",
+     "    const rect = vi",
+     "      .spyOn(HTMLElement.prototype, 'getBoundingClientRect')",
+     "      .mockReturnValue({ x: 8, y: 100, left: 8, top: 100, right: 48, bottom: 140, width: 40, height: 40, toJSON: () => ({}) });",
+     "    rect.mockRestore();",
+     "    viewport.forEach((spy) => spy.mockRestore());"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/hooks/auth/useAuth.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 20,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 2,
+    "missing_in_main": 0,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/hooks/chat/useTeamChatNotifications.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 80,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 14,
+    "missing_in_main": 11,
+    "removed": 6,
+    "removed_still_in_main": 4,
+    "missing_sample": [
+     "  // HZ5-09: preferências por ref — mexer em volume/permissão não pode recriar o canal.",
+     "  const prefsRef = useRef({ notifSettings, isQuietHours, permission, showNotification });",
+     "  const profileId = profile?.id;",
+     "    prefsRef.current = { notifSettings, isQuietHours, permission, showNotification };",
+     "  }, [notifSettings, isQuietHours, permission, showNotification]);",
+     "    if (!profileId) return;",
+     "        const { notifSettings, isQuietHours, permission, showNotification } = prefsRef.current;",
+     "        if (msg.sender_id === profileId) return;",
+     "          .eq('profile_id', profileId)",
+     "          profileId: profileId,",
+     "  }, [profileId]);"
+    ],
+    "still_sample": [
+     "    if (!profile) return;",
+     "        if (msg.sender_id === profile.id) return;",
+     "          .eq('profile_id', profile.id)",
+     "          profileId: profile.id,"
+    ]
+   }
+  }
+ ],
+ "counts": {
+  "migrations": "0",
+  "workflows": "0",
+  "src": "5",
+  "edges": "0",
+  "docs_only": "no",
+  "lines_branch_has_main_lacks": "91",
+  "lines_main_has_branch_lacks": "161"
+ },
+ "auto": "MISTO_CONFLITO",
+ "n_files_with_gaps": 4,
+ "gap_lines_total": 30
+}

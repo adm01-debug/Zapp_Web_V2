@@ -1,0 +1,58 @@
+[
+ {
+  "commit": "df6800593",
+  "arquivo": "src/components/inbox/chat/ChatMessagesArea.tsx",
+  "linhas": 7,
+  "amostra": [
+   "import { motion } from '@/components/ui/motion';",
+   "  onScrollToMessage, onInteractiveButtonClick, onEditStart, highlightedMessageIds, activeHighlightId, searchQuery,",
+   "  }), [messages, virtualizer]);",
+   "  messageIdsSetRef.current = useMemo(",
+   "    () => new Set(messages.map((message) => message.id).filter(Boolean)),",
+   "          const isFirstInGroup = !prevMsg || prevMsg.sender !== message.sender || showDateSeparator;"
+  ]
+ },
+ {
+  "commit": "0a5fe71e6",
+  "arquivo": "src/hooks/chat/useNextBestAction.ts",
+  "linhas": 1,
+  "amostra": [
+   "export const nextBestActionKey = (contactId: string) => ['next-best-action', contactId] as const;"
+  ]
+ },
+ {
+  "commit": "0912c408a",
+  "arquivo": "scripts/ci/workflow-contracts.unit.mjs",
+  "linhas": 2,
+  "amostra": [
+   "test('E69: typecheck/unit-tests/node-scripts/build rodam em paralelo (sem needs)', () => {",
+   "  for (const job of ['typecheck', 'unit-tests', 'node-scripts', 'build']) {"
+  ]
+ },
+ {
+  "commit": "fcbd5321a",
+  "arquivo": "scripts/ci/workflow-contracts.unit.mjs",
+  "linhas": 1,
+  "amostra": [
+   "      .filter((b) => new RegExp(`install --with-deps[^\\\\n]*\\\\b${b}\\\\b`).test(texto))"
+  ]
+ },
+ {
+  "commit": "d81d05e02",
+  "arquivo": "scripts/db-audit/talkx-schedule-timezone-contract.test.mjs",
+  "linhas": 2,
+  "amostra": [
+   "  readFile(new URL('../../supabase/functions/talkx-send/../../../src/components/talkx/TalkXWizardDelivery.tsx', import.meta.url), 'utf8'),",
+   "  assert.match(resumePolicy, /import \\{ deliveryWindowStatus, type ScheduleGuardCampaign \\} from \"\\.\\.\\/talkx-window\\.ts\"/);"
+  ]
+ },
+ {
+  "commit": "b2a8485d2",
+  "arquivo": "scripts/db-audit/talkx-schedule-timezone-contract.test.mjs",
+  "linhas": 2,
+  "amostra": [
+   "  assert.match(sender, /import \\{[^}]*DEFAULT_SCHEDULE_TIMEZONE[^}]*deliveryWindowStatus[^}]*parseBusinessHours[^}]*\\} from \"\\.\\.\\/_shared\\/talkx-wind",
+   "  assert.match(scheduler, /import \\{ AUTO_RESUME_REASONS, connectionStatusResolver, selectResumableCampaigns \\} from \"\\.\\.\\/_shared\\/talkx-resume-poli"
+  ]
+ }
+]

@@ -1,0 +1,109 @@
+{
+ "id": "fix__reconciliar-migration-copilot-fases13-15",
+ "kind": "branch",
+ "ref": "origin/fix/reconciliar-migration-copilot-fases13-15",
+ "tip": "07ac5c6f0550bb12ffa990435d8be820bad2d251",
+ "merge_base": "1252bb5a41123ba4d49efd84d0f91604bff6c87c",
+ "ahead": 8,
+ "last_commit_date": "2026-11-01",
+ "merge_base_date": "2026-11-01",
+ "prs_with_same_tip": [
+  2491
+ ],
+ "triagem_2804": {
+  "2491": "JA_NA_MAIN"
+ },
+ "closure_comment": {},
+ "files": [
+  {
+   "path": "e2e/email-navy-visual.spec.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 24,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 12,
+    "missing_in_main": 7,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  // Webkit aplica tokens de `.dark.high-contrast` num frame posterior ao da luminância:",
+     "  // espera `--muted-foreground` resolver para o valor alto-contraste (≥75% lightness).",
+     "    probe.className = 'text-muted-foreground';",
+     "    const color = getComputedStyle(probe).color;",
+     "    const [r, g, b] = (color.match(/[\\d.]+/g) ?? []).slice(0, 3).map(Number);",
+     "    const lum = 0.2126 * linear(r) + 0.7152 * linear(g) + 0.0722 * linear(b);",
+     "    return lum > 0.5;"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "scripts/db-audit/replay-known-failures.json",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 134,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 26,
+    "missing_in_main": 26,
+    "removed": 73,
+    "removed_still_in_main": 72,
+    "missing_sample": [
+     "  \"_atualizado_em\": \"2026-11-01\",",
+     "    \"20260906000001_e31_contacts_is_lid_legacy.sql\": {\"categoria\": \"ambiente\", \"motivo\": \"Assercao de dados reais: espera 400-700 LIDs marcados. Banco vazio tem",
+     "    \"20260902000200_fix_cron_avatars_refresh_key.sql\": {\"categoria\": \"ambiente\", \"motivo\": \"Opera sobre Job 8 pre-existente do pg_cron. Imagem efemera nao tem e",
+     "    \"20261002541230_pg_cron_escalonar_jobs.sql\": {\"categoria\": \"ambiente\", \"motivo\": \"Assercao de agendamento: exige o job vacuum-contacts-daily em cron.job, cr",
+     "    \"20260916230000_talkx_e93_settings.sql\": {\"categoria\": \"arquivo-superado\", \"motivo\": \"CREATE POLICY IF NOT EXISTS nao existe no PostgreSQL. Superada por tal",
+     "    \"20260927450000_fix_indexes_checks_cleanup.sql\": {\"categoria\": \"arquivo-superado\", \"motivo\": \"NOT VAFIDD (typo de NOT VALID). O ledger atribui esta versao a",
+     "    \"20260929370000_contacts_soft_delete_and_search_filters.sql\": {\"categoria\": \"arquivo-superado\", \"motivo\": \"cannot change return type. O filtro deleted_at IS",
+     "    \"20260925170000_add_reminders_pending_to_tab_counts.sql\": {\"categoria\": \"abandono-formalizado\", \"motivo\": \"cannot change return type. reminders_pending nunc",
+     "    \"20260928140200_tab_counts_tasks_own.sql\": {\"categoria\": \"abandono-formalizado\", \"motivo\": \"Mesma funcao e mesmo motivo do anterior.\"},",
+     "    \"20260927540000_security_gamification_guards_e2e_cleanup_avg_null.sql\": {\"categoria\": \"reparada-por-versao-nova\", \"motivo\": \"Referenciava public.conversatio",
+     "    \"20260926410000_add_fk_support_indexes.sql\": {\"categoria\": \"nao-idempotente-inerte\", \"motivo\": \"relation 'idx_gmail_accounts_user_id' already exists. O indi",
+     "    \"20261001351230_f51a_multiplix_confirm_dispatch_fn.sql\": {\"categoria\": \"nao-idempotente-inerte\", \"motivo\": \"function multiplix_confirm_dispatch already exis",
+     "    \"20261031100000_copilot_fases13_15_tabelas.sql\": {\"categoria\": \"nao-idempotente-inerte\", \"motivo\": \"policy 'copilot_outcomes_insert' already exists. A migra",
+     "    \"20260910100000_restrict_talkx_blacklist_update_policy.sql\": {\"categoria\": \"ordem-idempotencia\", \"motivo\": \"policy 'talkx_blacklist_update' does not exist N",
+     "    \"20260928200000_conversation_tasks_realtime_drift.sql\": {\"categoria\": \"ordem-idempotencia\", \"motivo\": \"relation 'conversation_tasks' is already member of pu",
+     "    \"20260928210000_reconcile_conversation_tasks_realtime_publication.sql\": {\"categoria\": \"ordem-idempotencia\", \"motivo\": \"relation 'conversation_tasks' is alre",
+     "    \"20260925153000_revoke_anon_execute_notify_due_reminders.sql\": {\"categoria\": \"cascata-objeto-existe-no-canonico\", \"motivo\": \"function public.notify_due_remi",
+     "    \"20260925153100_add_idx_reminders_due_pending.sql\": {\"categoria\": \"cascata-objeto-existe-no-canonico\", \"motivo\": \"column 'notified_at' does not exist no rep",
+     "    \"20260927460000_revoke_sync_contact_status_closure_anon.sql\": {\"categoria\": \"cascata-objeto-existe-no-canonico\", \"motivo\": \"function public.sync_contact_sta",
+     "    \"20260928430000_team_chat_fix_policies_to_authenticated.sql\": {\"categoria\": \"cascata-objeto-existe-no-canonico\", \"motivo\": \"column 'conversation_id' does no",
+     "    \"20261003182707_fixture_e2e_aba_arquivos_midia.sql\": {\"categoria\": \"ambiente\", \"motivo\": \"Fixture de dados (DML): insere mensagem para o contato E2E 04dff4d",
+     "    \"20261003192707_fixture_e2e_aba_arquivos_segunda_midia.sql\": {\"categoria\": \"ambiente\", \"motivo\": \"Mesma causa da 20261003182707: segunda midia da fixture E2",
+     "    \"20261011003008_talkx_n102c_window_open.sql\": {\"categoria\": \"arquivo-superado\", \"motivo\": \"cannot change return type of existing function. A funcao ja exist",
+     "    \"20261012192938_team_chat_media_path_sender_conversation.sql\": {\"categoria\": \"cascata-objeto-existe-no-canonico\", \"motivo\": \"column 'media_path' of relation",
+     "    \"20261013210002_realtime_canais_privados.sql\": {\"categoria\": \"ambiente\", \"motivo\": \"relation 'realtime.messages' does not exist. A extensao realtime do Supa"
+    ],
+    "still_sample": [
+     "    \"20260906000001_e31_contacts_is_lid_legacy.sql\": {",
+     "      \"categoria\": \"ambiente\",",
+     "      \"motivo\": \"Assercao de dados reais: espera 400-700 LIDs marcados. Banco vazio tem 0. Nao e defeito do arquivo.\"",
+     "    \"20260902000200_fix_cron_avatars_refresh_key.sql\": {",
+     "      \"categoria\": \"ambiente\",",
+     "      \"motivo\": \"Opera sobre Job 8 pre-existente do pg_cron. Imagem efemera nao tem esse job criado pelo painel.\"",
+     "    \"20261002541230_pg_cron_escalonar_jobs.sql\": {",
+     "      \"categoria\": \"ambiente\",",
+     "      \"motivo\": \"Assercao de agendamento: exige o job vacuum-contacts-daily em cron.job, criado fora das migrations.\"",
+     "    \"20260916230000_talkx_e93_settings.sql\": {"
+    ]
+   }
+  },
+  {
+   "path": "supabase/migrations/20261030145126_copilot_fases13_15_tabelas.sql",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  }
+ ],
+ "counts": {
+  "migrations": "1",
+  "workflows": "0",
+  "src": "0",
+  "edges": "0",
+  "docs_only": "no",
+  "lines_branch_has_main_lacks": "58",
+  "lines_main_has_branch_lacks": "341"
+ },
+ "auto": "MISTO_CONFLITO",
+ "n_files_with_gaps": 2,
+ "gap_lines_total": 105
+}

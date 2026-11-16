@@ -1,0 +1,28 @@
+{
+ "id": "pr-2797",
+ "kind": "pr",
+ "ref": "refs/remotes/pr/2797",
+ "pr": 2797,
+ "tip": "a3b4cce530dbedcac69ce69bbc1d0e2a9bdc1562",
+ "merge_base": "85fb0a5bab90237d46a9100303882d06dfaa7206",
+ "ahead": 3,
+ "last_commit_date": "2026-11-08",
+ "merge_base_date": "2026-11-08",
+ "triagem_2804": "JA_NA_MAIN",
+ "closure_comment": null,
+ "files": [
+  {
+   "path": "src/hooks/admin/__tests__/useSearchInsights.test.ts",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/hooks/admin/useSearchInsights.ts",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  }
+ ],
+ "auto": "INCORPORADA_PROVA_PATCH",
+ "n_files_with_gaps": 0,
+ "gap_lines_total": 0
+}

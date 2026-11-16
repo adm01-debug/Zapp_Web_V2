@@ -1,0 +1,694 @@
+{
+ "id": "claude__test-e2e-suite-completa-261104-1428",
+ "kind": "branch",
+ "ref": "origin/claude/test-e2e-suite-completa-261104-1428",
+ "tip": "b7c538b6b705fd16cf6d289cff8ba184a1afcaf9",
+ "merge_base": "46a0257333ea2cc9fe47a8bebe5450baaaf8afc4",
+ "ahead": 9,
+ "last_commit_date": "2026-11-04",
+ "merge_base_date": "2026-11-04",
+ "prs_with_same_tip": [],
+ "triagem_2804": {},
+ "closure_comment": {},
+ "files": [
+  {
+   "path": ".github/workflows/e2e-logado-isolado.yml",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 203,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 124,
+    "missing_in_main": 11,
+    "removed": 8,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "#   gatilho: pull_request valida login; dispatch escolhe login ou full-suite em três grupos fixos",
+     "#   prova: executa login ou os 15 projetos em backend descartável, com TLS local e namespace sem saída",
+     "#   falha: lock, isolamento, TLS, plataforma, migrations, seed, testes ou limpeza inválidos bloqueiam",
+     "# o workflow legado permanece desativado até a prova nativa dos três grupos.",
+     "              case \"$scope\" in login|full-suite) ;; *) echo '::error::Escopo de execução inválido.'; exit 1 ;; esac",
+     "          ref: ${{ needs.image-metadata.outputs.sha }}",
+     "          # O controller executa workers1: as fixtures compartilham estado.",
+     "          # O orçamento inclui preparo/limpeza além do browser (45/15/15 min).",
+     "          - name: authenticated",
+     "          ref: ${{ needs.image-metadata.outputs.sha }}",
+     "          restore-keys: bun-"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "docs/ci/README.md",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 29,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 5,
+    "missing_in_main": 4,
+    "removed": 5,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "| E2E isolado - login e suíte completa | [`e2e-logado-isolado.yml`](../../.github/workflows/e2e-logado-isolado.yml) | pull_request valida login; dispatch escolh",
+     "- **Gatilho:** pull_request valida login; dispatch escolhe login ou full-suite em três grupos fixos",
+     "- **O que prova:** executa login ou os 15 projetos em backend descartável, com TLS local e namespace sem saída",
+     "- **Quando falha:** lock, isolamento, TLS, plataforma, migrations, seed, testes ou limpeza inválidos bloqueiam"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "e2e/README.md",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 342,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 116,
+    "missing_in_main": 11,
+    "removed": 147,
+    "removed_still_in_main": 3,
+    "missing_sample": [
+     "bash scripts/e2e-isolated/run.sh suite authenticated /tmp/e2e-isolated-authenticated",
+     "projetos. Cada grupo da suíte usa coleta `--list` separada, a mesma seleção na",
+     "execução e `--workers 1`, porque as fixtures existentes compartilham recursos.",
+     "Não há parâmetro livre para ignorar dependências, escolher comandos ou apontar",
+     "um backend externo. O resultado completo depende da execução nativa de cada",
+     "grupo, não das simulações locais de controle.",
+     "A interface do controller conserva a seleção explícita de 9 + 3 + 3 projetos:",
+     "| `authenticated` | `setup`, `chromium-e2e-core`, `chromium-authenticated`, `firefox-talkx`, `webkit-talkx`, `firefox-conversation`, `webkit-conversation`, `fir",
+     "O grupo `authenticated` do controller executa os seeds existentes de Arquivos,",
+     "prepara Auth/Storage reais e valida seus proprietários antes de abrir o browser:",
+     "bash scripts/e2e-isolated/run.sh suite authenticated /tmp/e2e-isolated-arquivos"
+    ],
+    "still_sample": [
+     "## Fixture de autenticação",
+     "|---|---|",
+     "```bash"
+    ]
+   }
+  },
+  {
+   "path": "e2e/busca-global-paleta.spec.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 171,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 34,
+    "missing_in_main": 1,
+    "removed": 32,
+    "removed_still_in_main": 1,
+    "missing_sample": [
+     "    await paleta.getByRole('combobox', { name: CAMPO_PALETA, exact: true }).fill('[E2E]');"
+    ],
+    "still_sample": [
+     "    await abrir();"
+    ]
+   }
+  },
+  {
+   "path": "e2e/catalog.spec.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 31,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 3,
+    "missing_in_main": 0,
+    "removed": 3,
+    "removed_still_in_main": 0,
+    "missing_sample": [],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "e2e/fixtures/mapa-mocks.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 30,
+   "hunk": "PRESENT_REVERSE_APPLIES"
+  },
+  {
+   "path": "e2e/fixtures/onboarding-isolated.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 116,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 98,
+    "missing_in_main": 13,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  use: () => Promise<void>,",
+     "  let owner: IsolatedAuthTarget | undefined;",
+     "  async function isolatedTarget(): Promise<IsolatedAuthTarget> {",
+     "    if (owner && (current.origin !== owner.origin || current.run_id !== owner.run_id ||",
+     "      current.source_sha !== owner.source_sha || current.anon_key_sha256 !== owner.anon_key_sha256)) fail('foreign-run');",
+     "  owner = await isolatedTarget();",
+     "  if (!service || service !== process.env.E2E_LOCAL_SUPABASE_SERVICE_ROLE_KEY) fail('local-service-key');",
+     "    await isolatedTarget();",
+     "    await use();",
+     "  freshOnboardingUser: [async ({ page, baseURL }, use) => {",
+     "    await withFreshOnboardingUser({ page, baseURL }, use);",
+     "  await expect(page.getByRole('main', { name: 'Conteúdo principal' }).getByRole('heading', { level: 1, name: 'Contatos' })).toBeAttached({ timeout: 20_000 });",
+     "  await expect(page.getByRole('tab', { name: /Todos/ })).toBeVisible();"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "e2e/fixtures/supabase-env.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 49,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 28,
+    "missing_in_main": 1,
+    "removed": 10,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  if (!url || !key || url !== 'https://127.0.0.1:5173' || url !== appUrl || key !== appKey) return deny();"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "e2e/fixtures/talkx-demo.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 30,
+   "hunk": "PRESENT_REVERSE_APPLIES"
+  },
+  {
+   "path": "e2e/location-picker.spec.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 65,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 34,
+    "missing_in_main": 3,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "          if (key === 'ArrowDown' || key === 'Enter') observe(`${type}:${key}`);",
+     "    console.info('E71_KEYBOARD_DIAGNOSTIC', JSON.stringify({",
+     "    }));"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "e2e/onboarding-tour.spec.ts",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "e2e/tarefas-quadro.spec.ts",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "playwright.config.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 30,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 5,
+    "missing_in_main": 1,
+    "removed": 6,
+    "removed_still_in_main": 1,
+    "missing_sample": [
+     "      testIgnore: /auth\\.spec\\.ts|auth\\.setup\\.ts|conversation\\.spec\\.ts|messaging\\.spec\\.ts|location-picker\\.spec\\.ts|contact-address\\.spec\\.ts|contact-map-pin"
+    ],
+    "still_sample": [
+     "      testMatch: /auth\\.spec\\.ts/,"
+    ]
+   }
+  },
+  {
+   "path": "scripts/ci/e2e-auth-isolation.unit.mjs",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "scripts/ci/e2e-isolated-fixtures.unit.mjs",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 137,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 110,
+    "missing_in_main": 0,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "scripts/ci/e2e-isolated-gateway.unit.mjs",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "scripts/ci/e2e-isolated-provider-readiness.unit.mjs",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 238,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 201,
+    "missing_in_main": 3,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  const rows = new Map(), objects = new Map(), events = [], writes = [], credentials = [];",
+     "    writeFile: (file, content, options) => { assert.equal(file, '/output/provider-ready.json'); assert.equal(options.mode, 0o600); writes.push(JSON.parse(conten",
+     "  return { options, events, writes, credentials, app, objects };"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "scripts/ci/e2e-isolated-providers.unit.mjs",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 176,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 140,
+    "missing_in_main": 0,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "scripts/ci/e2e-isolated-results.unit.mjs",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 173,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 141,
+    "missing_in_main": 3,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "const PLATFORM_BLOB = '96a821d6c8389d526a9a5d65554687412510a92a';",
+     "      title: 'Conversation state transitions', file: 'conversation.spec.ts', line: 43, column: 6,",
+     "      specs: [{ title: 'resolving conversation via CloseConversationDialog succeeds', file: 'conversation.spec.ts', line: 59, column: 7,"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "scripts/ci/e2e-isolated-runtime-probe.unit.mjs",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "scripts/ci/e2e-isolated-runtime.unit.mjs",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 563,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 331,
+    "missing_in_main": 17,
+    "removed": 17,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "import { OWNER_LABEL, PURPOSE_LABEL, PURPOSE, OFFICIAL_HOST, GROUPS } from '../e2e-isolated/runtime-contract.mjs';",
+     "function suiteJson({ listed = false, fault, group = 'authenticated' } = {}) {",
+     "      spec.line = 59; spec.column = 3;",
+     "  const { scope = 'login', group = 'authenticated', manifest = value => value } = typeof options === 'function' ? { manifest: options } : options;",
+     "  const fullSeed = scope === 'suite' && group === 'authenticated';",
+     "  for (const name of ['run.mjs', 'runtime-contract.mjs', 'stack.mjs', 'migrations.mjs', 'results.mjs', 'images.lock.json', 'tls.mjs', 'tls-probe.mjs', 'tls-edge",
+     "      const metadata = { Id: name + '-id', Config: { Labels: labels, User: argv.includes('--user') ? valueAfter(argv, '--user') : '' }, State: { Running: true }",
+     "        if (fault === name + '-failure') return error('private-sentinel-from-seed');",
+     "          assert.deepEqual(suiteStages, fullSeed ? ['files-volume', 'files-canonical', 'suite-seed', 'provider-verification'] : []);",
+     "  try { exit = await runLogin({ outputDirectory: output, command: fakeCommand, scope, ...(scope === 'suite' ? { group } : {}) }); }",
+     "  const result = { tlsDiagnosticLog, diagnosticCredentials, exit, state, calls, migrationCalls, seedCalls, browserCalls, listCalls, credentialFilesSeen, contain",
+     "test('suite controller: authenticated collects exactly its nine existing projects after every seed/provider check', async t => {",
+     "  assert.equal(value.state.suite.passed, GROUPS.authenticated.length);",
+     "  assert.equal(value.state.suite.total, GROUPS.authenticated.length);",
+     "  assert.deepEqual(value.suiteStages, ['files-volume', 'files-canonical', 'suite-seed', 'provider-verification']);",
+     "  assert.ok(!value.publicFiles.some(name => /files-volume|files-canonical|suite-seed\\.log|verify-providers\\.log/.test(name)), 'raw seed/provider output stays pr",
+     "  ...Object.fromEntries(GROUPS.authenticated.map(name => ['missing-project-' + name, 'suite-inventory-invalid'])),"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "scripts/ci/e2e-isolated-seed.unit.mjs",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "scripts/ci/e2e-isolated-suite.unit.mjs",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 111,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 89,
+    "missing_in_main": 5,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "import { browserEnvironment, syntheticCredentials, ORIGIN, PROVIDER_ORIGIN, CATALOG_SKU, GROUPS } from '../e2e-isolated/runtime-contract.mjs';",
+     "test('suite groups preserve the exact 9+3+3 existing project union', () => {",
+     "  assert.deepEqual(Object.keys(GROUPS), ['authenticated', 'deslogado-principal', 'deslogado-secundario']);",
+     "  assert.deepEqual(Object.values(GROUPS).map(items => items.length), [9, 3, 3]);",
+     "  assert.equal(all.filter(name => name === 'setup').length, 1);"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "scripts/ci/e2e-isolated-tls-preparation.unit.mjs",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "scripts/ci/e2e-isolated-tls.unit.mjs",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 743,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 624,
+    "missing_in_main": 5,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "import { certificateFailure, assertTlsClientContext, probeClient, probeBrowsers, probeEdge } from '../e2e-isolated/tls-probe.mjs';",
+     "assert.equal(tlsDiagnosticCases.length, 48);",
+     "  if (spec.recognized) assert.ok(outcome.value);",
+     "  ...tlsWarmupTargets.map(target => ({ ...target, name: 'generic-stays-rejected/' + target.engine + '/' + target.kind, negative: 'cancelled' })),",
+     "    if (spec.negative === 'cancelled') assert.equal(failure.cause, fixture.original);"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "scripts/ci/e2e-isolated-tour.unit.mjs",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "scripts/ci/e2e-isolated-workflow.unit.mjs",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 228,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 171,
+    "missing_in_main": 12,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "import { GROUPS } from '../e2e-isolated/runtime-contract.mjs';",
+     "for (const scope of ['', 'login', 'full-suite', 'LOGIN', 'suite', 'authenticated', ' full-suite', 'full-suite ', 'login\\n', '$(id)', '../suite']) {",
+     "      const accepted = event === 'pull_request' || ['', 'login', 'full-suite'].includes(scope);",
+     "  for (const scope of ['login', 'full-suite', 'unexpected']) {",
+     "        assert.equal(loginAllowed && suiteAllowed, false);",
+     "  assert.deepEqual(valueOf(scope, 'options', 0).split('\\n'), ['- login', '- full-suite']);",
+     "      ? '${{ steps.request.outputs.sha }}' : '${{ needs.image-metadata.outputs.sha }}');",
+     "test('matriz fixa preserva os 15 projetos e orçamentos para bootstrap, browser e cleanup', () => {",
+     "  assert.deepEqual(matrix.map(match => Number(match[3])), [75, 45, 45]);",
+     "  assert.deepEqual(Object.values(GROUPS).map(projects => projects.length), [9, 3, 3]);",
+     "for (const [id, job, controllerId] of [['bootstrap-login', login, 'bootstrap'], ['full-suite', suite, 'suite']]) {",
+     "  assert.equal(new Set(names).size, 12);"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "scripts/ci/e2e-isolated.unit.mjs",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "scripts/ci/e2e-tarefas-project.unit.mjs",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "scripts/e2e-isolated/README.md",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 88,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 34,
+    "missing_in_main": 5,
+    "removed": 13,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "## Suíte em três grupos",
+     "    bash scripts/e2e-isolated/run.sh suite authenticated /tmp/e2e-isolated-authenticated",
+     "A entrada aceita somente esses três grupos e exige saída fora do checkout, inicialmente vazia. Cada comando cria seu próprio ambiente. Os projetos conservam a u",
+     "| `authenticated` | `setup`, `chromium-e2e-core`, `chromium-authenticated`, `firefox-talkx`, `webkit-talkx`, `firefox-conversation`, `webkit-conversation`, `fir",
+     "A coleta `--list --reporter=json` é uma chamada separada da execução. Ambas usam os mesmos projetos e `--workers 1`, porque os testes existentes compartilham re"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "scripts/e2e-isolated/admission.mjs",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "scripts/e2e-isolated/gateway.mjs",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "scripts/e2e-isolated/providers.mjs",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 263,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 218,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "    media_receipts: mediaReceipts.map(receipt => ({ ...receipt })) });"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "scripts/e2e-isolated/results.mjs",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 124,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 60,
+    "missing_in_main": 6,
+    "removed": 3,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  sourceBlob: '96a821d6c8389d526a9a5d65554687412510a92a',",
+     "  reportFile: 'conversation.spec.ts', line: 59,",
+     "  for (const project of [...CONVERSATION_SKIP.projects, CONVERSATION_SKIP.chromium]) {",
+     "  return { keys: new Set(CONVERSATION_SKIP.projects.map(project => keys.get(project))), allKeys: new Set(keys.values()), chromiumKey: keys.get(CONVERSATION_SKIP",
+     "    metadata: { sourceSha: proof.sourceSha, file: CONVERSATION_SKIP.sourceFile, gitBlob: CONVERSATION_SKIP.sourceBlob } };",
+     "    if (platform && summary.counts.known_runtime_skip > 0 && !summary.cases.some(item => item.key === platform.chromiumKey && item.outcome === 'passed')) reason"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "scripts/e2e-isolated/run.mjs",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 357,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 162,
+    "missing_in_main": 13,
+    "removed": 33,
+    "removed_still_in_main": 3,
+    "missing_sample": [
+     "  OWNER_LABEL, PURPOSE_LABEL, PURPOSE, ORIGIN, GROUPS, CATALOG_SKU, assertOwnedContainer,",
+     "export async function runLogin({ outputDirectory, command = spawnSync, scope = 'login', group } = {}) {",
+     "  const fullSuite = scope === 'suite' && group === 'authenticated';",
+     "      ...projects.flatMap(name => ['--project', name]), '--workers', '1'];",
+     "    const inventoryJson = JSON.parse(driverRun([...cli, '--list', '--reporter=json'], scope === 'login' ? 'collect-login' : 'collect-suite', 120_000, { recordLo",
+     "    let inventory;",
+     "    try { inventory = readPlaywrightInventory(inventoryJson, { projects }); }",
+     "    catch (error) { if (scope === 'suite') throw new Error('suite-inventory-invalid'); throw error; }",
+     "    if (scope === 'login' && inventory.total !== 1) throw new Error('login-inventory-not-exact');",
+     "    if (scope === 'suite') writeJson(path.join(output, 'test-inventory.json'), inventory);",
+     "    const browserResult = docker(inDriver(cli), { timeout: scope === 'login' ? 600_000 : fullSuite ? 45 * 60_000 : 15 * 60_000 });",
+     "      'readiness.json', 'seed-ready.json', 'suite-seed-ready.json', 'provider-ready.json', 'test-inventory.json',",
+     "  else throw new Error('usage: run.mjs login <output-directory> | suite <group> <output-directory>');"
+    ],
+    "still_sample": [
+     "    state.login = summary.counts;",
+     "    required(browserResult, 'browser-login-failed');",
+     "    if (!summary.inventoryVerified || !summary.allPassed || summary.counts.total !== 1 || summary.counts.passed !== 1) throw new Error('login-result-not-clean')"
+    ]
+   }
+  },
+  {
+   "path": "scripts/e2e-isolated/runtime-contract.mjs",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 38,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 7,
+    "missing_in_main": 0,
+    "removed": 1,
+    "removed_still_in_main": 0,
+    "missing_sample": [],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "scripts/e2e-isolated/runtime-probe.mjs",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "scripts/e2e-isolated/runtime-skips.md",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 95,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 67,
+    "missing_in_main": 2,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "| Blob Git | `96a821d6c8389d526a9a5d65554687412510a92a` |",
+     "| Linha | `59` |"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "scripts/e2e-isolated/seed-suite.mjs",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "scripts/e2e-isolated/stack.mjs",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 47,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 12,
+    "missing_in_main": 2,
+    "removed": 3,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "        PROMOGIFTS_SUPABASE_SERVICE_ROLE_KEY: c.catalogKey },",
+     "          E2E_CATALOG_PRODUCT_SKU: CATALOG_SKU } : {}),"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "scripts/e2e-isolated/tls-edge-probe.ts",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "scripts/e2e-isolated/tls-probe.mjs",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 182,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 148,
+    "missing_in_main": 2,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "function navigationDiagnostic(page, url, runId, sourceSha) {",
+     "          if (!certificateFailure(rejection, kind, name)) fail('browser-' + name + '-' + kind + '-not-certificate-error', rejection);"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "scripts/e2e-isolated/tls.mjs",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "scripts/e2e-isolated/verify-providers.mjs",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 175,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 149,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "    if (!response.ok) fail('provider-verification-http-' + response.status);"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/inbox/location-picker/__tests__/useAddressAutocomplete.test.tsx",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/components/inbox/location-picker/useAddressAutocomplete.ts",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/config/__tests__/supabase.test.ts",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/config/supabase.ts",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "supabase/functions/detect-new-device/index.test.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 297,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 233,
+    "missing_in_main": 14,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "      id: RACE_DEVICE_ID, user_id: A, device_fingerprint: FINGERPRINT,",
+     "    let deviceReads = 0, sessionReads = 0, sessionInserts = 0, sessionCollisions = 0, alerts = 0, emails = 0;",
+     "      user_id: options.canonical === \"foreign-user\" ? OTHER_RACE_USER : A,",
+     "          // A corresponde ao sub do JWT desta fixture; não reutiliza USER_DETECT.",
+     "          assert(req.headers.get(\"authorization\") === `Bearer ${DETECT_AUTH_TOKEN}`, \"Auth precisa receber o JWT da requisição\");",
+     "          return json({ id: A, email: \"session-race@example.invalid\", aud: \"authenticated\" });",
+     "            assert(url.searchParams.get(\"user_id\") === `eq.${A}` && url.searchParams.get(\"device_fingerprint\") === `eq.${FINGERPRINT}`,",
+     "            assert(body.user_id === A && body.device_fingerprint === FINGERPRINT, \"dispositivo inserido precisa pertencer ao usuário\");",
+     "            assert(url.searchParams.get(\"user_id\") === `eq.${A}` && url.searchParams.get(\"auth_session_id\") === `eq.${S1}`,",
+     "            assert(body.user_id === A && body.auth_session_id === S1, \"inventário novo precisa do usuário e claim verificados\");",
+     "            assert(url.searchParams.get(\"user_id\") === `eq.${A}` && url.searchParams.get(\"auth_session_id\") === `eq.${S1}`,",
+     "        throw new Error(\"rota ou método inesperado no double de sessão\");",
+     "      for (const secret of [DETECT_AUTH_TOKEN, ENV_OK_DETECT.SUPABASE_ANON_KEY, ENV_OK_DETECT.SUPABASE_SERVICE_ROLE_KEY, ENV_OK_DETECT.RESEND_API_KEY]) {",
+     "        sessions, sessionReads, sessionInserts, sessionPatches, sessionCollisions, deviceCount: devices.length, alerts, emails };"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "supabase/functions/detect-new-device/index.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 42,
+   "hunk": "PRESENT_REVERSE_APPLIES"
+  }
+ ],
+ "counts": {
+  "migrations": "0",
+  "workflows": "1",
+  "src": "4",
+  "edges": "2",
+  "docs_only": "no",
+  "lines_branch_has_main_lacks": "276",
+  "lines_main_has_branch_lacks": "2434"
+ },
+ "auto": "MISTO_CONFLITO",
+ "n_files_with_gaps": 23,
+ "gap_lines_total": 144
+}

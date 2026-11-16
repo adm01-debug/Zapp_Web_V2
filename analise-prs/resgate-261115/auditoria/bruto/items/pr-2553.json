@@ -1,0 +1,38 @@
+{
+ "id": "pr-2553",
+ "kind": "pr",
+ "ref": "refs/remotes/pr/2553",
+ "pr": 2553,
+ "tip": "16e88c6145ba05b057286607371988861968d1cc",
+ "merge_base": "7c3ef80de29ca64e4e179a3067861c5a10d50bf9",
+ "ahead": 20,
+ "last_commit_date": "2026-11-13",
+ "merge_base_date": "2026-11-13",
+ "triagem_2804": "PERDIDA",
+ "closure_comment": null,
+ "files": [
+  {
+   "path": "src/components/talkx/TalkXTemplateEditor.tsx",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/components/talkx/__tests__/TalkXTemplateEditor.campos.test.tsx",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/components/talkx/kit/__tests__/TalkXDialogShell.descricao.test.tsx",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/components/talkx/kit/dialogs.tsx",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  }
+ ],
+ "auto": "INCORPORADA_PROVA_PATCH",
+ "n_files_with_gaps": 0,
+ "gap_lines_total": 0
+}

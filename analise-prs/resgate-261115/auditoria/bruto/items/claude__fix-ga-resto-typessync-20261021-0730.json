@@ -1,0 +1,272 @@
+{
+ "id": "claude__fix-ga-resto-typessync-20261021-0730",
+ "kind": "branch",
+ "ref": "origin/claude/fix-ga-resto-typessync-20261021-0730",
+ "tip": "f63da0dd8e8c2c0c5cc7db55fdc1d72119feae8b",
+ "merge_base": "d7af7a671ca2bd7005b75b0aa54c0f0c4672befc",
+ "ahead": 1,
+ "last_commit_date": "2026-10-21",
+ "merge_base_date": "2026-10-19",
+ "prs_with_same_tip": [
+  2143
+ ],
+ "triagem_2804": {
+  "2143": "OBSOLETA"
+ },
+ "closure_comment": {},
+ "files": [
+  {
+   "path": ".github/workflows/db-live-guard.yml",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 140,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 73,
+    "missing_in_main": 53,
+    "removed": 6,
+    "removed_still_in_main": 5,
+    "missing_sample": [
+     "    # GA25: o detector de DDL fora do fluxo lista Deployments do environment.",
+     "      deployments: read",
+     "      # GA24: lista as versions no disco sem registro no ledger. Passo auxiliar",
+     "      # (sem id): nao entra no veredito; se falhar, os passos abaixo tratam a",
+     "      # divergencia como real (fail-closed) em vez de neutra.",
+     "      - name: Listar versions pendentes (GA24)",
+     "          find supabase/migrations -maxdepth 1 -type f -name '*.sql' \\",
+     "            -printf '%f\\n' | cut -c1-14 | sort -u > /tmp/local-versions.txt",
+     "            -c \"SELECT version FROM supabase_migrations.schema_migrations ORDER BY version\" \\",
+     "            > /tmp/ledger-versions.txt 2> /tmp/pending-list.log || true",
+     "          comm -23 /tmp/local-versions.txt /tmp/ledger-versions.txt > /tmp/pending-versions.txt || true",
+     "          paste -sd, /tmp/pending-versions.txt > /tmp/pending-versions.csv || true",
+     "          echo \"pendentes: $(cat /tmp/pending-versions.csv)\" | tee /tmp/pending-list.log",
+     "            # GA24: divergencia explicada pelo lote pendente nao e drift — e o",
+     "            # estado \"sync pendente\" entre o apply e o merge do PR de sync.",
+     "            if node scripts/db-audit/check-catalog-fresh.mjs /tmp/fresh-catalog.json; then",
+     "              echo \"OK: catalogo em sincronia.\"",
+     "            elif [ -s /tmp/pending-versions.txt ] && node scripts/db-audit/drift-explicado.mjs --base supabase/schema-catalog.json --novo /tmp/fresh-catalog.jso",
+     "              echo \"::notice::Catalogo diverge so em objetos do lote pendente — estado sync pendente (GA24).\"",
+     "              { echo \"### ⏳ sync pendente (GA24) — catalogo\"; echo; echo \"Divergencia explicada pelas versions pendentes; apply e sync em curso.\"; } >> \"$GITHUB",
+     "              echo \"::error::Catalogo com drift real (fora do lote pendente).\"",
+     "            # GA24: mesma regra do catalogo — divergencia explicada pelo lote",
+     "            # pendente e estado \"sync pendente\", nao drift.",
+     "            if node scripts/db-audit/check-manifest-fresh.mjs /tmp/fresh-manifest.json; then",
+     "              echo \"OK: manifesto em sincronia.\""
+    ],
+    "still_sample": [
+     "            node scripts/db-audit/check-catalog-fresh.mjs /tmp/fresh-catalog.json",
+     "            node scripts/db-audit/check-manifest-fresh.mjs /tmp/fresh-manifest.json",
+     "              echo \"::error::types.ts desatualizado. Execute o types-sync para abrir o PR de sincronizacao.\"",
+     "              diff /tmp/types.repo.stripped /tmp/types.fresh.stripped | head -30 || true",
+     "              exit 1"
+    ]
+   }
+  },
+  {
+   "path": ".github/workflows/db-migrate.yml",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 66,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 46,
+    "missing_in_main": 39,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "    # GA25: o apply registra um Deployment producao-ddl com as versions",
+     "    # aplicadas; o db-live-guard acusa version no ledger sem Deployment.",
+     "      deployments: write",
+     "      # GA25: coleta as versions que este apply inseriu no ledger (interseccao",
+     "      # do que faltava no preflight com o ledger final; a concurrency do job",
+     "      # impede outro apply concorrente).",
+     "      - name: Coletar versions aplicadas no ledger (GA25)",
+     "        id: aplicadas",
+     "            > /tmp/ledger-final.txt",
+     "          comm -12 /tmp/missing-versions /tmp/ledger-final.txt > /tmp/applied-versions.txt || true",
+     "          test -s /tmp/applied-versions.txt",
+     "          cat /tmp/applied-versions.txt",
+     "      # GA25: registra o Deployment producao-ddl com as versions aplicadas —",
+     "      # o db-live-guard acusa version no ledger sem Deployment desde 16/10.",
+     "      - name: Registrar Deployment producao-ddl das versions aplicadas (GA25)",
+     "        if: success() && inputs.apply == true",
+     "        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0",
+     "          script: |",
+     "            const fs = require('fs');",
+     "            const versions = fs.readFileSync('/tmp/applied-versions.txt', 'utf8')",
+     "              .split('\\n').map((s) => s.trim()).filter(Boolean);",
+     "            if (versions.length === 0) {",
+     "              core.warning('Nenhuma version aplicada nesta execucao; Deployment nao registrado.');",
+     "              return;",
+     "            const { data: deployment } = await github.rest.repos.createDeployment({"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": ".github/workflows/types-sync.yml",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 457,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 219,
+    "missing_in_main": 119,
+    "removed": 71,
+    "removed_still_in_main": 39,
+    "missing_sample": [
+     "  # GA21: este job detem a credencial (environment banco-leitura) e so gera",
+     "  # artefatos + classifica drift e pendencia. Gates, tsc e PR vivem no job",
+     "  # gates-e-pr, sem credencial: DESTINO_URL nunca chega ao GITHUB_ENV de la.",
+     "      pendente: ${{ steps.pendencia.outputs.pendente }}",
+     "      # GA23/GA24: classifica se ha versions no disco sem registro no ledger.",
+     "      # O banco acabou de ser lido (DESTINO_URL disponivel neste job); os gates",
+     "      # e o PR vivem no gates-e-pr sem credencial e consomem a lista por artifact.",
+     "      # W26: lote-pendente.mjs continua sendo a fonte unica do veredito",
+     "      # \"apply pendente\" (exit 2); a lista abaixo detalha as versions.",
+     "      - name: Classificar pendencia de apply (GA23/GA24)",
+     "        id: pendencia",
+     "          find supabase/migrations -maxdepth 1 -type f -name '*.sql' \\",
+     "            -printf '%f\\n' | cut -c1-14 | sort -u > /tmp/local-versions.txt",
+     "          node scripts/db-audit/psql-safe.mjs -X -v ON_ERROR_STOP=1 -At \\",
+     "            -c \"SELECT version FROM supabase_migrations.schema_migrations ORDER BY version\" \\",
+     "            > /tmp/ledger-versions.txt",
+     "          comm -23 /tmp/local-versions.txt /tmp/ledger-versions.txt > /tmp/pending-versions.txt || true",
+     "          node scripts/db-audit/lote-pendente.mjs > /tmp/lote-pendente.log 2>&1",
+     "          rc=$?",
+     "          if [ \"$rc\" -eq 2 ]; then",
+     "            echo \"pendente=true\" >> \"$GITHUB_OUTPUT\"",
+     "            echo \"pendente=false\" >> \"$GITHUB_OUTPUT\"",
+     "          echo \"lote-pendente rc=$rc; pendencias:\"",
+     "          cat /tmp/pending-versions.txt || true",
+     "      # Candidatos viajam para o gates-e-pr por artifact (jobs diferentes nao"
+    ],
+    "still_sample": [
+     "    permissions:  # zizmor: ignore[excessive-permissions]",
+     "      contents: write",
+     "      issues: write",
+     "      pull-requests: write",
+     "      actions: write",
+     "      - name: Finalizar se nao houver drift",
+     "        if: steps.diff.outputs.schema_changed != 'true'",
+     "        run: echo \"Banco e artefatos commitados estao em sincronia.\"",
+     "      - name: Aplicar candidatos no worktree",
+     "          if [ \"${{ steps.diff.outputs.types_changed }}\" = true ]; then"
+    ]
+   }
+  },
+  {
+   "path": "scripts/ci/allowed-actions.json",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 12,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 0,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "scripts/ci/ga20-ga25-contratos.unit.mjs",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "patch_lines": 142,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 97,
+    "missing_in_main": 97,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "// GA20-GA25 (plano de 15/10/2026, Fase 1 — resto + types-sync): invariantes em",
+     "// YAML que nenhuma outra etapa cobre. Cada teste ancora a Verificacao do",
+     "// plano; se o YAML regredir, o `node --test scripts/ci/*.unit.mjs` do ci.yml",
+     "// fica vermelho antes do merge.",
+     "// Convenção: seção de um job = do cabeçalho `  nome:` até o próximo job",
+     "// (`^  \\S`) ou fim do arquivo.",
+     "import assert from 'node:assert/strict';",
+     "import { readFileSync } from 'node:fs';",
+     "import test from 'node:test';",
+     "const typesSync = readFileSync(",
+     "  new URL('../../.github/workflows/types-sync.yml', import.meta.url), 'utf8');",
+     "const liveGuard = readFileSync(",
+     "  new URL('../../.github/workflows/db-live-guard.yml', import.meta.url), 'utf8');",
+     "const migrate = readFileSync(",
+     "  new URL('../../.github/workflows/db-migrate.yml', import.meta.url), 'utf8');",
+     "const allowlist = JSON.parse(readFileSync(",
+     "  new URL('./allowed-actions.json', import.meta.url), 'utf8'));",
+     "function secaoJob(texto, job) {",
+     "  const linhas = texto.split('\\n');",
+     "  const inicio = linhas.findIndex((l) => l === `  ${job}:`);",
+     "  assert.notEqual(inicio, -1, `job ${job} sumiu do workflow`);",
+     "  let fim = linhas.length;",
+     "  for (let i = inicio + 1; i < linhas.length; i += 1) {",
+     "    if (/^  [A-Za-z0-9_-]+:\\s*$/.test(linhas[i])) { fim = i; break; }",
+     "  return linhas.slice(inicio, fim).join('\\n');"
+    ],
+    "still_sample": [],
+    "same_basename_in_main": []
+   }
+  },
+  {
+   "path": "scripts/db-audit/check-deployments-ledger.mjs",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "scripts/db-audit/check-deployments-ledger.test.mjs",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "scripts/db-audit/consolidar-veredito.mjs",
+   "status": "MAIN_UNCHANGED_SINCE_BASE",
+   "patch_lines": 22,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 4,
+    "missing_in_main": 4,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  // GA25: version no ledger desde 16/10/2026 sem Deployment producao-ddl e",
+     "  // DDL fora do fluxo (o apply do db-migrate registra o Deployment).",
+     "  { id: 'ddl-fora-do-fluxo', nome: 'Detector de DDL fora do fluxo (GA25)', log: '/tmp/step-ddl-fluxo.log' },",
+     "  'ddl-fora-do-fluxo',"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "scripts/db-audit/drift-explicado.mjs",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "scripts/db-audit/drift-explicado.test.mjs",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "scripts/db-audit/gate1-pendente.mjs",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "scripts/db-audit/gate1-pendente.test.mjs",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  }
+ ],
+ "counts": {
+  "migrations": "0",
+  "workflows": "3",
+  "src": "0",
+  "edges": "0",
+  "docs_only": "no",
+  "lines_branch_has_main_lacks": "459",
+  "lines_main_has_branch_lacks": "124"
+ },
+ "auto": "MISTO_CONFLITO",
+ "n_files_with_gaps": 5,
+ "gap_lines_total": 356
+}

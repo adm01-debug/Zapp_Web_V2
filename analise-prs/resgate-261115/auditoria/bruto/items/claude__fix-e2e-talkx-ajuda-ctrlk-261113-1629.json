@@ -1,0 +1,56 @@
+{
+ "id": "claude__fix-e2e-talkx-ajuda-ctrlk-261113-1629",
+ "kind": "branch",
+ "ref": "origin/claude/fix-e2e-talkx-ajuda-ctrlk-261113-1629",
+ "tip": "ea59665e24b6dc470ca9658a0f31e8c06ca7adc4",
+ "merge_base": "cb6576b2a3a0d3f8b5b091878314cf5087fa10b1",
+ "ahead": 1,
+ "last_commit_date": "2026-11-13",
+ "merge_base_date": "2026-11-13",
+ "prs_with_same_tip": [
+  3040
+ ],
+ "triagem_2804": {
+  "3040": null
+ },
+ "closure_comment": {
+  "3040": {
+   "title": "test(e2e): Ajuda do Talk X espera montar antes de testar o atalho Ctrl+K",
+   "last_comment": "Fechando sem merge. O achado do Codex procede: em `src/components/talkx/help/TalkXHelpCenter.tsx:135-137` o autofoco roda quando os documentos ainda não carregaram (o input só existe com `docs` preenchido, l.222-232) e não repete depois — a pré-condição `toBeFocused()` desta PR estouraria o tempo. |  |"
+  }
+ },
+ "files": [
+  {
+   "path": "e2e/talkx.spec.ts",
+   "status": "MAIN_UNCHANGED_SINCE_BASE",
+   "patch_lines": 18,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 7,
+    "missing_in_main": 5,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "    // Mesma corrida do WebKit do teste abaixo: a Ajuda (lazy) registra o ouvinte de",
+     "    // captura do Ctrl+K ao montar. Esperar o título e o foco automático da busca",
+     "    // garante que os efeitos de montagem rodaram; o blur faz o foco após o atalho",
+     "    // provar o comportamento, não o autofoco.",
+     "    await busca.blur();"
+    ],
+    "still_sample": []
+   }
+  }
+ ],
+ "counts": {
+  "migrations": "0",
+  "workflows": "0",
+  "src": "0",
+  "edges": "0",
+  "docs_only": "no",
+  "lines_branch_has_main_lacks": "7",
+  "lines_main_has_branch_lacks": "0"
+ },
+ "auto": "TRABALHO_AUSENTE_APLICA_LIMPO",
+ "n_files_with_gaps": 1,
+ "gap_lines_total": 5
+}

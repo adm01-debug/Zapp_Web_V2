@@ -1,0 +1,365 @@
+{
+ "id": "claude__ga-ci-batch-ga49-ga54-ga60-ga64-231023",
+ "kind": "branch",
+ "ref": "origin/claude/ga-ci-batch-ga49-ga54-ga60-ga64-231023",
+ "tip": "e1cf8004d000b66230c3c97c87ac426be0d5908d",
+ "merge_base": "351ccb2a651f0394b5e78fd660695c09b4f799cf",
+ "ahead": 2,
+ "last_commit_date": "2026-10-23",
+ "merge_base_date": "2026-10-23",
+ "prs_with_same_tip": [
+  2197
+ ],
+ "triagem_2804": {
+  "2197": "OBSOLETA"
+ },
+ "closure_comment": {},
+ "files": [
+  {
+   "path": ".github/actionlint.yaml",
+   "status": "MAIN_UNCHANGED_SINCE_BASE",
+   "patch_lines": 15,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 4,
+    "missing_in_main": 4,
+    "removed": 3,
+    "removed_still_in_main": 3,
+    "missing_sample": [
+     "  # GA60: o ignore de 'could not parse as YAML' do branch-hygiene-audit.yml",
+     "  # saiu em 2026-10-20 (o arquivo volta a parsear; validado no PR). Se o",
+     "  # actionlint voltar a reclamar de parse, e regressao real — nao recolocar",
+     "  # ignore sem corrigir o YAML."
+    ],
+    "still_sample": [
+     "  \".github/workflows/branch-hygiene-audit.yml\":",
+     "    ignore:",
+     "      - 'could not parse as YAML'"
+    ]
+   }
+  },
+  {
+   "path": ".github/workflows/branch-hygiene-audit.yml",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 16,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 5,
+    "missing_in_main": 5,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "        # GA64: publica mesmo se o relatorio falhou (menos em cancelamento) e",
+     "        # e o ULTIMO passo — em 29/10 vencem os alertas do Scorecard e o job",
+     "        # ficaria vermelho toda semana sem publicar. O SLA conta so CodeQL ou",
+     "        # alertas nao dispensados (dispensas com justificativa no YAML).",
+     "        if: ${{ !cancelled() }}"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": ".github/workflows/codeql.yml",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 24,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 5,
+    "missing_in_main": 5,
+    "removed": 1,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "    - cron: '30 9 * * *' # GA62: diario 06:30 BRT (era semanal; alertas da main atrasavam ate 7 dias)",
+     "    # GA59 (base): este job so fecha depois do analyze de JS/TS — sem o needs,",
+     "    # a analise de `actions` (~20 s) fechava o veredito antes da de JS/TS chegar.",
+     "    # (Exigir os DOIS checks na branch protection e decisao do dono: PREPARE.)",
+     "    needs: [analyze]"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": ".github/workflows/types-sync.yml",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 47,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 13,
+    "missing_in_main": 13,
+    "removed": 2,
+    "removed_still_in_main": 2,
+    "missing_sample": [
+     "      # GA61: known-violations.json tambem e artefato gerado pelo proprio sync",
+     "      # (o merge do sync redisparava o workflow a toa).",
+     "      - '!scripts/db-audit/known-violations.json'",
+     "  # GA61: dispatch e schedule tem run proprio (antes o dispatch caia no grupo",
+     "  # 'push' e era cancelado/fundido com o push da main).",
+     "  group: types-sync-${{ github.ref }}-${{ github.event_name == 'push' && 'push' || github.run_id }}",
+     "    # GA63 (#42 TokenPermissions, dispensado com justificativa): o job abre e",
+     "    # atualiza o PR de sync com o proprio GITHUB_TOKEN (contents/pull-requests/",
+     "    # issues:write) e destrava os checks do PR com actions:write (politica",
+     "    # anti-loop: PR aberto por Actions nasce com checks em action_required).",
+     "        # GA61 (R5): cancelado nao pinta resumo/veredito — always() publicava",
+     "        # summary ate de run cancelado.",
+     "        if: ${{ !cancelled() }}"
+    ],
+    "still_sample": [
+     "  group: types-sync-${{ github.ref }}-${{ github.event_name == 'schedule' && github.run_id || 'push' }}",
+     "        if: always()"
+    ]
+   }
+  },
+  {
+   "path": ".gitignore",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 9,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 0,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "eslint.config.js",
+   "status": "MAIN_UNCHANGED_SINCE_BASE",
+   "patch_lines": 19,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 7,
+    "missing_in_main": 3,
+    "removed": 1,
+    "removed_still_in_main": 1,
+    "missing_sample": [
+     "  // Zapp_fase456/, zapp-worktrees/: worktrees nomeados manuais; têm seu próprio baseline",
+     "  // e não devem ser varridos pelo lint do worktree principal.",
+     "  { ignores: [\"dist\", \".claude/worktrees/**\", \"Zapp_fase456/**\", \"zapp-worktrees/**\"] },"
+    ],
+    "still_sample": [
+     "  { ignores: [\"dist\", \".claude/worktrees/**\"] },"
+    ]
+   }
+  },
+  {
+   "path": "scripts/ci/actions-kpi.mjs",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 54,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 28,
+    "missing_in_main": 25,
+    "removed": 1,
+    "removed_still_in_main": 1,
+    "missing_sample": [
+     "// GA54 (R6 com dente): conta runs por head_branch nas ultimas 24 h; branch com",
+     "// mais de LIMITE_PUSHES_LOTE runs provavelmente recebeu > 15 pushes no dia",
+     "// (15/10: 96 pushes numa branch geraram 414 runs). Puro, para o teste provar",
+     "// com fixture (20 runs no mesmo branch disparam o alerta).",
+     "export const LIMITE_PUSHES_LOTE = 15;",
+     "export const JANELA_LOTE_HORAS = 24;",
+     "export function detectarLote(runs, { limite = LIMITE_PUSHES_LOTE, janelaHoras = JANELA_LOTE_HORAS, agora = Date.now() } = {}) {",
+     "  const corte = agora - janelaHoras * 3600 * 1000;",
+     "  const porBranch = new Map();",
+     "    const inicio = Date.parse(run.run_started_at ?? run.created_at ?? '');",
+     "    if (!Number.isFinite(inicio) || inicio < corte) continue;",
+     "    const branch = run.head_branch ?? '(sem branch)';",
+     "    porBranch.set(branch, (porBranch.get(branch) ?? 0) + 1);",
+     "  return [...porBranch.entries()]",
+     "    .filter(([, n]) => n > limite)",
+     "    .map(([branch, pushes]) => ({ branch, pushes }))",
+     "    .sort((a, b) => b.pushes - a.pushes);",
+     "export function tabelaLote(lotes) {",
+     "  if (!lotes.length) return '';",
+     "    '### Lotes de push (> 15 runs no mesmo branch em 24 h)',",
+     "    ...lotes.map((l) => `- \\`${l.branch}\\`: ${l.pushes} runs — prefira acumular num unico push (R6); o KPI comenta na PR pedindo lote.`),",
+     "// jobs + alerta de lote. Puro, para o teste provar que o ranking saem dos jobs",
+     "// reais e nao vazio.",
+     "  const lotes = detectarLote(runs, { agora });",
+     "    tabelaLote(lotes),"
+    ],
+    "still_sample": [
+     "// jobs. Puro, para o teste provar que o ranking saem dos jobs reais e nao vazio."
+    ]
+   }
+  },
+  {
+   "path": "scripts/ci/actions-kpi.unit.mjs",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 92,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 69,
+    "missing_in_main": 63,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  detectarLote,",
+     "test('GA54: fixture com 20 runs no mesmo branch em 24 h dispara o alerta de lote', () => {",
+     "  const agora = Date.parse('2026-10-03T12:00:00Z');",
+     "  const runs = Array.from({ length: 20 }, (_, i) => ({",
+     "    name: 'CI',",
+     "    conclusion: 'success',",
+     "    head_branch: 'claude/lote-grande',",
+     "    run_started_at: new Date(agora - (i + 1) * 3600 * 1000).toISOString(),",
+     "    updated_at: new Date(agora - i * 3600 * 1000).toISOString(),",
+     "  const lotes = detectarLote(runs, { agora });",
+     "  assert.equal(lotes.length, 1);",
+     "  assert.equal(lotes[0].branch, 'claude/lote-grande');",
+     "  assert.equal(lotes[0].pushes, 20);",
+     "  const md = corpoDoKpi(runs, [], { agora, janelaDias: 7 });",
+     "  assert.match(md, /Lotes de push/, 'o corpo do KPI tem de acusar o lote');",
+     "  assert.match(md, /claude\\/lote-grande/);",
+     "test('GA54: abaixo do limite (15) ou fora da janela nao ha alerta', () => {",
+     "  const agora = Date.parse('2026-10-03T12:00:00Z');",
+     "  const runs = Array.from({ length: 15 }, (_, i) => ({",
+     "    name: 'CI',",
+     "    conclusion: 'success',",
+     "    head_branch: 'claude/no-limite',",
+     "    run_started_at: new Date(agora - (i + 1) * 3600 * 1000).toISOString(),",
+     "    updated_at: new Date(agora - i * 3600 * 1000).toISOString(),",
+     "  assert.deepEqual(detectarLote(runs, { agora }), []);"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "scripts/ci/eslint-baseline.json",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 84,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 20,
+    "missing_in_main": 12,
+    "removed": 6,
+    "removed_still_in_main": 1,
+    "missing_sample": [
+     "  \"eslintConfigSha256\": \"efe6299cb84142d5526a20255fee5d1563b865787a8e62d12e4b73e022188a11\",",
+     "      \"sha256\": \"59addfbfddbd1615559e4721fd3410b9a2d83838afdc1fc7cb0e18f536d1aedf\"",
+     "      \"path\": \"src/hooks/chat/useFilesContainerColumns.ts\",",
+     "      \"sha256\": \"93745dd019cbe86a17a77d365d3859527c771deb47c432ac122dbbcf90e4ad2b\"",
+     "      \"sha256\": \"7124d883163763f80fb48de955bd04f33703046bdae86466d151360204984c86\"",
+     "      \"file\": \"src/hooks/chat/useFilesContainerColumns.ts\",",
+     "      \"message\": \"React Hook useLayoutEffect contains a call to 'setWidth'. Without a list of dependencies, this can lead to an infinite chain of updates. To fi",
+     "      \"spanHash\": \"f809da716dd5e0b8e2dd13835aad869333a029adadb27afdc27801bd71409b9b\",",
+     "      \"lineHash\": \"d4000bc37df2aee66354e6a5816cb8f6161295473edf29eeb0746935989c873b\",",
+     "      \"contextHash\": \"c3ffa0e0b0dbccc39a16df958a47793d8d3ce92b93514ccc1f12391074cc8f03\"",
+     "      \"line\": 277,",
+     "      \"endLine\": 277,"
+    ],
+    "still_sample": [
+     "  \"eslintConfigSha256\": \"9e63ecfc90d89ad9c7301e29f7e6e9dbda238aa561d33fb496af781cfff9d2c2\","
+    ]
+   }
+  },
+  {
+   "path": "scripts/ci/fila-merge.mjs",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "patch_lines": 142,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 58,
+    "missing_in_main": 58,
+    "removed": 13,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "// GA49: COMPLETED com conclusion fora de PASSOU (inclui CANCELLED e",
+     "// ACTION_REQUIRED) e' defeito travado: sem isso a PR ficava \"pendente eterna\"",
+     "// e segurava a fila. Ausente/ainda rodando continua pendente.",
+     "function estadoConclusao(conclusion) {",
+     "  if (PASSOU.has(conclusion)) return 'passou';",
+     "  if (FALHOU.has(conclusion)) return 'falhou';",
+     "  return 'bloqueado';",
+     "// GA49: teto de 45 min sem check em andamento (PR em dia mas travada).",
+     "export const TETO_TRAVADA_MS = 45 * 60 * 1000;",
+     "  return estadoConclusao(atual.conclusion);",
+     "// GA50: motivo de estar fora da fila (para o resumo listar as PRs com auto-merge",
+     "// ligado que nao entram: \"fora\" sem motivo visivel travava a fila sem explicar).",
+     "export function motivoFora(pr) {",
+     "  if (pr.isDraft) return 'draft';",
+     "  if (!pr.autoMergeRequest) return 'sem auto-merge';",
+     "  if (pr.baseRefName && pr.baseRefName !== 'main') return `base ${pr.baseRefName}`;",
+     "  // GA50: `mergeable === CONFLICTING` (REST) equivale a DIRTY (GraphQL):",
+     "  // conflito, so o autor resolve (antes, a #1930 era escolhida a cada push e devolvia 422).",
+     "  if (pr.mergeStateStatus === 'DIRTY' || pr.mergeable === 'CONFLICTING') return 'conflito';",
+     "  if (pr.mergeStateStatus === 'BEHIND' && pr.isCrossRepository) return 'fork atrasada';",
+     "  return null;",
+     "// Algum check obrigatorio com run em andamento (CheckRun nao COMPLETED ou",
+     "// StatusContext ainda nao final)?",
+     "function temCheckEmAndamento(rollup, obrigatorios) {",
+     "  for (const nome of obrigatorios) {"
+    ],
+    "still_sample": [],
+    "same_basename_in_main": []
+   }
+  },
+  {
+   "path": "scripts/db-audit/docker-shim",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 61,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 26,
+    "missing_in_main": 17,
+    "removed": 8,
+    "removed_still_in_main": 5,
+    "missing_sample": [
+     "    # GA66: CREATE falho nao pode sair 0 — o teste seguinte rodaria contra",
+     "    # banco inexistente/errado e o erro sumia no /dev/null.",
+     "    if ! _svc -d postgres -c \"CREATE DATABASE \\\"$db\\\";\" > /dev/null 2>&1; then",
+     "      printf 'docker-shim: falha ao criar o banco \"%s\" no servico compartilhado\\n' \"$db\" >&2",
+     "    # GA66: sem snapshot de roles nao ha como saber o que o teste criou —",
+     "    # derrubar tudo (comm contra lista vazia) quebra os testes seguintes.",
+     "    # Fail closed: banco derrubado, roles preservados.",
+     "    if [[ ! -s \"$STATE/$cname.roles\" ]]; then",
+     "      printf 'docker-shim: sem snapshot de roles para \"%s\"; banco derrubado, roles preservados\\n' \"$cname\" >&2",
+     "      old=\"$(< \"$STATE/$cname.roles\")\"",
+     "      cur=\"$(_svc -d postgres -tAX -c \"SELECT rolname FROM pg_roles ORDER BY rolname\" 2>/dev/null || true)\"",
+     "    rm -f \"$STATE/$cname.db\" \"$STATE/$cname.roles\"\"\")",
+     "# GA70: documenta que o nome do banco e exportado no arquivo de estado.",
+     "edit(S,",
+     "# GA70: o nome do banco e exportado em $DOCKER_SHIM_STATE_DIR/<container>.db",
+     "# (conteudo = nome sanitizado). Testes que afirmam proof.database leem esse",
+     "# arquivo como EXPECTED_DB (fallback 'postgres' fora do shim)."
+    ],
+    "still_sample": [
+     "    while IFS= read -r role; do",
+     "      [[ -z \"$role\" ]] && continue",
+     "      _svc -d postgres -c \"DROP ROLE IF EXISTS \\\"$role\\\";\" > /dev/null 2>&1 || true",
+     "    done < <(comm -23 <(printf '%s\\n' \"$cur\" | sort) <(printf '%s\\n' \"$old\" | sort))",
+     "    rm -f \"$STATE/$cname.db\" \"$STATE/$cname.roles\""
+    ]
+   }
+  },
+  {
+   "path": "src/pages/__tests__/ChatPopup.rolagem-mensagem-nova.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 12,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  generateCorrelationId: () => 'test-correlation-id',"
+    ],
+    "still_sample": []
+   }
+  }
+ ],
+ "counts": {
+  "migrations": "0",
+  "workflows": "4",
+  "src": "1",
+  "edges": "0",
+  "docs_only": "no",
+  "lines_branch_has_main_lacks": "5196",
+  "lines_main_has_branch_lacks": "772"
+ },
+ "auto": "MISTO_CONFLITO",
+ "n_files_with_gaps": 11,
+ "gap_lines_total": 219
+}

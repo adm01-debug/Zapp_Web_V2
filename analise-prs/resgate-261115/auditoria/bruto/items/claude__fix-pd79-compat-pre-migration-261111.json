@@ -1,0 +1,492 @@
+{
+ "id": "claude__fix-pd79-compat-pre-migration-261111",
+ "kind": "branch",
+ "ref": "origin/claude/fix-pd79-compat-pre-migration-261111",
+ "tip": "d4e880c764d54246e5d3543873a36e7773b7962a",
+ "merge_base": "65cf38544717f59ee7486e9b10fe07d9cbd42769",
+ "ahead": 7,
+ "last_commit_date": "2026-11-12",
+ "merge_base_date": "2026-11-12",
+ "prs_with_same_tip": [
+  2972
+ ],
+ "triagem_2804": {
+  "2972": null
+ },
+ "closure_comment": {
+  "2972": {
+   "title": "fix(message-delivery): pd-79 compatível antes da migration e resolve só mensagens em envio",
+   "last_comment": "Substituída por https://github.com/adm01-debug/Zapp_Web_V2/pull/2996, que refaz o que ainda vale desta PR sobre a `main` atual. A migration `20261111160000` já está aplicada em produção, então os fallbacks \"antes da migration\" viraram código morto. A migration desta PR (`20261111180000`, com o mesmo"
+  }
+ },
+ "files": [
+  {
+   "path": "src/components/inbox/chat/SendErrorBanner.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 34,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 10,
+    "missing_in_main": 5,
+    "removed": 10,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     " * PD-79: o banner só recebe `status === 'failed'`, que é resultado DEFINITIVO",
+     " * (recusa 4xx do provedor em fail_outbound_message, ou \"não entregue\" confirmado no",
+     " * painel C110), mesmo com `delivery_post_started_at` preenchido. O caso ambíguo",
+     " * (POST iniciado sem resposta) fica em 'sending' e é tratado no painel C110 — nunca",
+     " * chega aqui. Por isso o carimbo não bloqueia o reenvio."
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/inbox/chat/__tests__/SendErrorBanner.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 25,
+   "hunk": "PRESENT_REVERSE_APPLIES"
+  },
+  {
+   "path": "src/components/inbox/chat/__tests__/UnconfirmedMessagesPanel.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 76,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 51,
+    "missing_in_main": 2,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  useUnconfirmedMessages: () => hook.value,",
+     "  it('sem mensagens (inclusive pré-DDL, lista vazia) não renderiza nada', () => {"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/hooks/delivery/__tests__/useUnconfirmedMessages.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 121,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 88,
+    "missing_in_main": 53,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "import { renderHook, waitFor } from '@testing-library/react';",
+     "// C110: o front publica antes do db-migrate. Enquanto a migration 20261111160000",
+     "// não chega, `messages.delivery_post_started_at`/`manually_resolved_at` não existem",
+     "// e o PostgREST devolve 42703: o painel tem de ficar vazio, sem erro e sem polling.",
+     "  froms: 0,",
+     "  return {",
+     "    supabase: {",
+     "      from: () => { state.froms += 1; return makeChain(); },",
+     "import { useUnconfirmedMessages, isSchemaNotReadyError, unconfirmedRefetchInterval } from '../useUnconfirmedMessages';",
+     "  // retry padrão do app ligado (3): o caso pré-DDL não pode depender de retry:false.",
+     "  client = new QueryClient({ defaultOptions: { queries: { retry: 3, retryDelay: 1 } } });",
+     "  state.froms = 0;",
+     "  it('pré-DDL (42703): lista vazia, sem erro, sem retry e polling lento de 5 min', async () => {",
+     "    state.result = { data: null, error: { code: '42703', message: 'column messages.delivery_post_started_at does not exist' } };",
+     "    expect(result.current.isError).toBe(false);",
+     "    expect(state.froms).toBe(1);",
+     "    const query = client.getQueryCache().find({ queryKey: ['unconfirmed-messages', 'contact-1', null] });",
+     "    const interval = (query?.options as { refetchInterval?: unknown }).refetchInterval;",
+     "    expect(typeof interval === 'function' ? (interval as (q: unknown) => unknown)(query) : interval).toBe(300_000);",
+     "  it('PGRST202 também é tratado como schema ainda não pronto', () => {",
+     "    expect(isSchemaNotReadyError({ code: 'PGRST202' })).toBe(true);",
+     "    expect(isSchemaNotReadyError({ code: '42703' })).toBe(true);",
+     "    expect(isSchemaNotReadyError({ code: '42501' })).toBe(false);",
+     "    expect(isSchemaNotReadyError(null)).toBe(false);",
+     "  it('pós-DDL: só lista status=sending (failed com carimbo foi recusa definitiva) e mantém o polling de 30 s', async () => {"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/hooks/delivery/useUnconfirmedMessages.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 116,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 47,
+    "missing_in_main": 46,
+    "removed": 8,
+    "removed_still_in_main": 7,
+    "missing_sample": [
+     "/** 42703 = coluna ausente; PGRST202 = função ausente no schema cache (pré-DDL). */",
+     "export function isSchemaNotReadyError(error: unknown): boolean {",
+     "  const code = (error as { code?: unknown } | null)?.code;",
+     "  return code === '42703' || code === 'PGRST202';",
+     "interface UnconfirmedQueryResult {",
+     "  rows: UnconfirmedMessage[];",
+     "  /** false = migration 20261111160000 ainda não aplicada. */",
+     "  schemaReady: boolean;",
+     "const POLL_MS = 30_000;",
+     "const PRE_DDL_POLL_MS = 5 * 60_000;",
+     "const ERROR_BACKOFF_BASE_MS = 60_000;",
+     "const ERROR_BACKOFF_MAX_MS = 10 * 60_000;",
+     "/** Intervalo do polling a partir do estado da query (exportado para teste). */",
+     "export function unconfirmedRefetchInterval(q: {",
+     "  state: { status: string; data?: UnconfirmedQueryResult; errorUpdateCount?: number };",
+     "}): number {",
+     "  if (q.state.status === 'error') {",
+     "    const n = Math.max(1, q.state.errorUpdateCount ?? 1);",
+     "    return Math.min(ERROR_BACKOFF_BASE_MS * 2 ** (n - 1), ERROR_BACKOFF_MAX_MS);",
+     "  if (q.state.data?.schemaReady === false) return PRE_DDL_POLL_MS;",
+     "  return POLL_MS;",
+     "    queryFn: async (): Promise<UnconfirmedQueryResult> => {",
+     "      if (!conversationContactId && !conversationGroupId) return { rows: [], schemaReady: true };",
+     "        // Só 'sending' é ambígua: 'failed' com carimbo foi recusa DEFINITIVA do",
+     "        // provedor (fail_outbound_message), não pode virar \"entregue\" à mão."
+    ],
+    "still_sample": [
+     "    queryFn: async () => {",
+     "      if (!conversationContactId && !conversationGroupId) return [];",
+     "      if (error) throw error;",
+     "      return (data ?? []) as unknown as UnconfirmedMessage[];",
+     "    refetchInterval: 30_000,",
+     "      const msg = error.message.includes('message_not_resolvable')",
+     "    messages: query.data ?? [],"
+    ]
+   }
+  },
+  {
+   "path": "supabase/deployment-manifest.json",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 80,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 11,
+    "missing_in_main": 11,
+    "removed": 11,
+    "removed_still_in_main": 2,
+    "missing_sample": [
+     "      \"bytes\": 24941,",
+     "      \"sha256\": \"675d2f7da3a9c9446f52e18f2761a9e2ec39e369a5207047fda94ae58825c320\"",
+     "      \"bytes\": 27351,",
+     "      \"sha256\": \"576c839a0c531fdfeed4ef7d4625b3f92630920cc708f92ed445e978cdb4ae94\"",
+     "      \"bytes\": 38816,",
+     "      \"sha256\": \"4de523e0120cbada252f43c307801c184d1ddb77e600a3c6447bb35e40441bb7\"",
+     "      \"source_sha256\": \"a946ce0305e6d41750f2e315dd59e9913f733f5d59bf6e763a36a0dc763ffe28\",",
+     "      \"source_sha256\": \"a75608264b4d55e5eb0f256a2f65fc383681e0f71b8c8f56ce8f5bdd96f9f52e\",",
+     "      \"source_sha256\": \"1d09553ec41e39b5bbcd49b29bb7ef3876b44bd920f51d8177ceef108337d1cf\",",
+     "      \"source_sha256\": \"2783f8656d613a5bcf96e56e3d337b2f32e45bddedd33cd764f5efe67cb60a1b\",",
+     "  \"manifest_sha256\": \"35805068b38eb2a15f97a01cc74e2a8b10bc9d989f3f2c1f8e73fbc9decafc44\""
+    ],
+    "still_sample": [
+     "      \"bytes\": 24494,",
+     "      \"sha256\": \"78dbb576ceda686bea88c24e95e2344664c378dfbb3ad19a2c08a1fa5144676f\""
+    ]
+   }
+  },
+  {
+   "path": "supabase/functions/_shared/__tests__/effect-reconcile.test.ts",
+   "status": "MAIN_UNCHANGED_SINCE_BASE",
+   "patch_lines": 63,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 41,
+    "missing_in_main": 32,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "/* C110 pré-DDL: manually_resolved_at ainda não existe (20261111160000)          */",
+     "/** Client cujo UPDATE de `messages` registra os filtros `.is()` e simula o schema. */",
+     "function makeUpdateClient(columnExists: boolean) {",
+     "  const updates: Array<{ guarded: boolean }> = [];",
+     "    from(_table: string): any {",
+     "      let guarded = false;",
+     "      for (const m of [\"update\", \"eq\", \"in\"]) chain[m] = () => chain;",
+     "      chain.is = (column: string) => {",
+     "        if (column === \"manually_resolved_at\") guarded = true;",
+     "      chain.select = () => {",
+     "        updates.push({ guarded });",
+     "        if (guarded && !columnExists) {",
+     "          return Promise.resolve({ data: null, error: { code: \"42703\", message: \"column messages.manually_resolved_at does not exist\" } });",
+     "        return Promise.resolve({ data: [{ id: MESSAGE_ID }], error: null });",
+     "    rpc() { return Promise.resolve({ data: null, error: null }); },",
+     "  return { client, updates };",
+     "const APPLY_CTX: EffectReconcileContext = {",
+     "  effect: EFFECT_MESSAGE_SEND, sourceTable: \"messages\", sourceId: MESSAGE_ID,",
+     "  externalId: \"ext-1\", attemptFrom: 1, payload: {},",
+     "Deno.test(\"C110 pré-DDL: applyConfirmed em messages repete SEM o filtro manually_resolved_at (42703) e aplica\", async () => {",
+     "  const { client, updates } = makeUpdateClient(false);",
+     "  const applied = await deps.applyConfirmed(APPLY_CTX, \"ext-1\");",
+     "  assertEquals(applied, true, \"aplicou o recibo confirmado\");",
+     "  assertEquals(updates.length, 2, \"1ª tentativa com o filtro + repetição sem ele\");",
+     "  assertEquals(updates[0].guarded, true, \"1ª tentativa protege a resolução manual\");"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "supabase/functions/_shared/__tests__/send-message-manual-resolution-compat.test.ts",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "patch_lines": 95,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 66,
+    "missing_in_main": 66,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "// C110 / PD-79: `handleSendMessage` (evento send.message) lê `manually_resolved_at`",
+     "// para não sobrescrever a resolução manual do operador. Antes da migration",
+     "// 20261111160000 a coluna não existe e o PostgREST devolve 42703: sem o fallback",
+     "// as duas consultas falhavam e NENHUMA mensagem pendente era confirmada.",
+     "import { handleSendMessage } from \"../evolution-webhook-msg-handlers.ts\";",
+     "import type { EvolutionDbClient } from \"../evolution-types.ts\";",
+     "function assertEquals<T>(actual: T, expected: T, message: string): void {",
+     "  if (JSON.stringify(actual) !== JSON.stringify(expected)) {",
+     "    throw new Error(`${message} — esperado ${JSON.stringify(expected)}, recebido ${JSON.stringify(actual)}`);",
+     "type Row = Record<string, unknown>;",
+     " * Fake do PostgREST com schema configurável. `existing` responde ao dup-check",
+     " * por external_id; `pending` à busca da pendente por contato.",
+     "function makeDb(opts: { columnExists: boolean; existing?: Row | null; pending?: Row | null }) {",
+     "  const updates: Array<{ patch: unknown; filters: string[] }> = [];",
+     "  const db = {",
+     "    from(table: string) {",
+     "      const referenced: string[] = [];",
+     "      let patch: unknown = null;",
+     "      let isUpdate = false;",
+     "      let byExternalId = false;",
+     "      const chain: Record<string, (...args: unknown[]) => unknown> = {};",
+     "      const passa = () => chain;",
+     "      chain.select = (cols) => { referenced.push(String(cols)); return chain; };",
+     "      chain.eq = (col) => { if (col === \"external_id\") byExternalId = true; referenced.push(String(col)); return chain; };",
+     "      chain.is = (col) => { referenced.push(String(col)); return chain; };"
+    ],
+    "still_sample": [],
+    "same_basename_in_main": []
+   }
+  },
+  {
+   "path": "supabase/functions/_shared/effect-reconcile.ts",
+   "status": "MAIN_UNCHANGED_SINCE_BASE",
+   "patch_lines": 34,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 13,
+    "missing_in_main": 8,
+    "removed": 8,
+    "removed_still_in_main": 8,
+    "missing_sample": [
+     "    const runUpdate = async (guardManualResolution: boolean) => {",
+     "      if (guardManualResolution) q = q.is(\"manually_resolved_at\", null);",
+     "      return await q.select(\"id\");",
+     "    let { data, error } = await runUpdate(rule.sourceTable === \"messages\");",
+     "    // 42703 = manually_resolved_at ainda não existe (pré-DDL da 20261111160000):",
+     "    // sem a coluna não há resolução manual a proteger — repete sem o filtro.",
+     "    if (error && rule.sourceTable === \"messages\" && (error as { code?: string }).code === \"42703\") {",
+     "      ({ data, error } = await runUpdate(false));"
+    ],
+    "still_sample": [
+     "    let q = opts.supabase",
+     "      .from(rule.sourceTable)",
+     "      .update(patch)",
+     "      .eq(\"id\", ctx.sourceId)",
+     "      .in(\"status\", rule.uncertainStatuses);",
+     "    if (rule.sourceTable === \"messages\") {",
+     "      q = q.is(\"manually_resolved_at\", null);",
+     "    const { data, error } = await q.select(\"id\");"
+    ]
+   }
+  },
+  {
+   "path": "supabase/functions/_shared/evolution-webhook-msg-handlers.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 88,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 36,
+    "missing_in_main": 30,
+    "removed": 18,
+    "removed_still_in_main": 17,
+    "missing_sample": [
+     "    // 42703 = manually_resolved_at ainda não existe (pré-DDL da 20261111160000):",
+     "    // repete sem a coluna — sem ela não há resolução manual a proteger.",
+     "    const dupCheck = async (columns: string) => {",
+     "      let q = supabase.from('messages')",
+     "        .select(columns).eq('external_id', externalId).eq('sender', 'agent');",
+     "      if (connection?.id) q = q.eq('whatsapp_connection_id', connection.id);",
+     "      return await (q as any).order('created_at', { ascending: false }).limit(1).maybeSingle();",
+     "    let { data: existingMessage, error: dupCheckError } = await dupCheck('id, status, manually_resolved_at');",
+     "    let dupColumnExists = true;",
+     "    if (dupCheckError?.code === '42703') {",
+     "      dupColumnExists = false;",
+     "      ({ data: existingMessage, error: dupCheckError } = await dupCheck('id, status'));",
+     "    if (dupCheckError) console.warn('[handleMessages] dupCheck query error:', (dupCheckError as { code?: string }).code);",
+     "        let updateQ: any = supabase.from('messages')",
+     "        if (dupColumnExists) updateQ = updateQ.is('manually_resolved_at', null);",
+     "        await updateQ;",
+     "          const pendingLookup = async (columns: string) =>",
+     "            await (supabase.from('messages') as any)",
+     "              .select(columns).eq('contact_id', contact.id).eq('sender', 'agent')",
+     "              .eq('message_type', webhookMsgType).is('external_id', null)",
+     "          let { data: pendingMessage, error: pendingError } = await pendingLookup('id, manually_resolved_at');",
+     "          // 42703 = coluna ainda não existe (pré-DDL): repete sem manually_resolved_at.",
+     "          let pendingColumnExists = true;",
+     "          if (pendingError?.code === '42703') {",
+     "            pendingColumnExists = false;"
+    ],
+    "still_sample": [
+     "    let dupCheckQuery = supabase.from('messages')",
+     "      .select('id, status, manually_resolved_at').eq('external_id', externalId).eq('sender', 'agent');",
+     "    if (connection?.id) dupCheckQuery = dupCheckQuery.eq('whatsapp_connection_id', connection.id);",
+     "    // eslint-disable-next-line @typescript-eslint/no-explicit-any",
+     "    const { data: existingMessage, error: dupCheckError } = await (dupCheckQuery as any)",
+     "      .order('created_at', { ascending: false }).limit(1).maybeSingle();",
+     "    // Fix #9: log query error — pode indicar coluna ausente (deploy antes do DDL)",
+     "    if (dupCheckError) console.warn('[handleMessages] dupCheck query error:', (dupCheckError as { message?: string }).message);",
+     "        await supabase.from('messages')",
+     "          // eslint-disable-next-line @typescript-eslint/no-explicit-any"
+    ]
+   }
+  },
+  {
+   "path": "supabase/functions/message-delivery/index.test.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 170,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 109,
+    "missing_in_main": 38,
+    "removed": 5,
+    "removed_still_in_main": 5,
+    "missing_sample": [
+     "  is: (column?: string, value?: unknown) => Chain;",
+     "   * Colunas que NÃO existem no schema simulado (pré-DDL). Select/filtro que as",
+     "   * cite devolve 42703 como o PostgREST real (\"column ... does not exist\") e NÃO",
+     "   * consome a fila de respostas da tabela.",
+     "  missingColumns?: string[];",
+     "      const referenced: string[] = [];",
+     "      const missingError = (): RpcResult | null => {",
+     "        const missing = (cfg.missingColumns ?? []).find((col) =>",
+     "          referenced.some((ref) => ref.split(',').map((c) => c.trim()).includes(col)));",
+     "        return missing ? { data: null, error: { code: '42703', message: `column messages.${missing} does not exist` } } : null;",
+     "      const respond = async (): Promise<RpcResult> => {",
+     "        const missing = missingError();",
+     "        if (missing) {",
+     "          // Coluna inexistente: devolve a resposta à fila (não foi consumida).",
+     "          if (table === 'messages') messagesQueue.unshift(result);",
+     "          return missing;",
+     "        return result;",
+     "        select: (columns?: string) => { referenced.push(columns ?? ''); return chain; },",
+     "        eq: (column?: string) => { referenced.push(column ?? ''); return chain; },",
+     "        is: (column?: string) => { referenced.push(column ?? ''); return chain; },",
+     "        in: (column?: string) => { referenced.push(column ?? ''); return chain; },",
+     "        maybeSingle: respond,",
+     "        single: respond,",
+     "// ── Compatibilidade pré-DDL (20261111160000 ainda não aplicada em produção) ───",
+     "// A Edge publica no push da main; a migration só roda pelo db-migrate. Antes dela"
+    ],
+    "still_sample": [
+     "        select: () => chain,",
+     "        eq: () => chain,",
+     "        in: () => chain,",
+     "        maybeSingle: async () => result,",
+     "        single: async () => result,"
+    ]
+   }
+  },
+  {
+   "path": "supabase/functions/message-delivery/index.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 121,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 52,
+    "missing_in_main": 25,
+    "removed": 12,
+    "removed_still_in_main": 4,
+    "missing_sample": [
+     "/** 42703 = coluna inexistente (Postgres via PostgREST): DDL ainda não aplicado. */",
+     "export function isMissingColumnError(error: { code?: string } | null | undefined): boolean {",
+     "  return error?.code === '42703';",
+     "const UNCLAIMED_BASE_COLUMNS = 'agent_id, sender, status, external_id, contact_id, whatsapp_connection_id';",
+     "type UnclaimedRow = {",
+     "  agent_id?: string | null; sender?: string | null; status?: string | null;",
+     "  external_id?: string | null; contact_id?: string | null;",
+     " * Lê a linha do claim vazio. As colunas do PD-79 (`delivery_post_started_at`,",
+     " * `delivery_claim_expires_at` para o lease) só existem depois da migration",
+     " * 20261111160000; antes dela o SELECT devolve 42703 e o handler respondia 404",
+     " * \"Message not found\" para TODO claim vazio (inclusive o 200 idempotente). Pré-DDL",
+     " * repete sem a coluna nova: sem coluna = sem carimbo = comportamento anterior.",
+     "async function readUnclaimedMessage(",
+     "  messageId: string,",
+     "): Promise<{ data: UnclaimedRow | null; error: { code?: string } | null }> {",
+     "  const first = await service",
+     "    .select(`${UNCLAIMED_BASE_COLUMNS}, delivery_claim_expires_at, delivery_post_started_at`)",
+     "  if (!isMissingColumnError(first.error)) return first;",
+     "  return await service",
+     "    .select(`${UNCLAIMED_BASE_COLUMNS}, delivery_claim_expires_at`)",
+     "    const { data: existing, error: existingError } = await readUnclaimedMessage(service, messageId);",
+     "      // não existe no schema cache, o PostgREST devolve PGRST202 (HTTP 404) e o envio",
+     "      // segue o fluxo anterior ao PD-79 — sem carimbo — em vez de derrubar todo envio.",
+     "      // SÓ PGRST202: um 42883 viria de DENTRO de uma função existente (defeito real),",
+     "      // e esse continua sendo infra pré-dispatch como qualquer outro erro: nada saiu."
+    ],
+    "still_sample": [
+     "    const { data: existing, error: existingError } = await service",
+     "      .from('messages')",
+     "      .eq('id', messageId)",
+     "      .maybeSingle();"
+    ]
+   }
+  },
+  {
+   "path": "supabase/migrations/20261111180000_resolve_unconfirmed_somente_sending.sql",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "patch_lines": 111,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 87,
+    "missing_in_main": 87,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "-- resolve_unconfirmed_somente_sending",
+     "-- Rollback: restaura resolve_unconfirmed_message com o corpo de 20261111160000 (aceita qualquer status fora de sent/delivered/read).",
+     "-- Rollback (SQL executável):",
+     "--   create or replace function public.resolve_unconfirmed_message( p_message_id uuid, p_outcome text ) returns uuid language plpgsql security definer set searc",
+     "--   revoke all on function public.resolve_unconfirmed_message(uuid, text) from public, anon;",
+     "--   grant execute on function public.resolve_unconfirmed_message(uuid, text) to authenticated;",
+     "--   comment on function public.resolve_unconfirmed_message(uuid, text) is null;",
+     "-- C110 / PD-79: a 20261111160000 deixava o admin/supervisor \"resolver\" qualquer",
+     "-- linha com carimbo de POST fora de sent/delivered/read. Isso incluía 'failed'",
+     "-- gravado por fail_outbound_message depois de uma recusa DEFINITIVA (4xx) do",
+     "-- provedor: a mensagem recusada podia ser marcada 'sent' à mão, sem recibo.",
+     "-- Ambígua é só a linha que ficou em 'sending' com o POST carimbado e o lease",
+     "-- vencido. Esta migration restringe a RPC a status = 'sending'.",
+     "-- ORDEM: depende de 20261111160000 (colunas delivery_post_started_at e",
+     "-- manually_resolved_at). Sem elas, aborta antes de alterar qualquer coisa.",
+     "-- Nada mais muda: CREATE OR REPLACE da mesma assinatura (ACL preservada e",
+     "-- reafirmada), sem DML.",
+     "BEGIN;",
+     "SET LOCAL lock_timeout = '5s';",
+     "SET LOCAL statement_timeout = '120s';",
+     "DO $precond$",
+     "BEGIN",
+     "  IF NOT EXISTS (",
+     "       SELECT 1 FROM information_schema.columns AS col",
+     "       WHERE col.table_schema = 'public' AND col.table_name = 'messages'"
+    ],
+    "still_sample": [],
+    "same_basename_in_main": []
+   }
+  }
+ ],
+ "counts": {
+  "migrations": "1",
+  "workflows": "0",
+  "src": "5",
+  "edges": "6",
+  "docs_only": "no",
+  "lines_branch_has_main_lacks": "697",
+  "lines_main_has_branch_lacks": "502"
+ },
+ "auto": "MISTO_CONFLITO",
+ "n_files_with_gaps": 12,
+ "gap_lines_total": 446
+}

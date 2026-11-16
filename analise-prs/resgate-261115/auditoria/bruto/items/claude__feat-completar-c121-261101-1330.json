@@ -1,0 +1,570 @@
+{
+ "id": "claude__feat-completar-c121-261101-1330",
+ "kind": "branch",
+ "ref": "origin/claude/feat-completar-c121-261101-1330",
+ "tip": "4d77db544fa415138e367303efffe1dba87eadbe",
+ "merge_base": "1252bb5a41123ba4d49efd84d0f91604bff6c87c",
+ "ahead": 12,
+ "last_commit_date": "2026-11-01",
+ "merge_base_date": "2026-11-01",
+ "prs_with_same_tip": [
+  2469
+ ],
+ "triagem_2804": {
+  "2469": "DUPLICATA_PROVAVEL"
+ },
+ "closure_comment": {},
+ "files": [
+  {
+   "path": "ESTADO.md",
+   "status": "BOTH_CHANGED",
+   "hunk": "CONFLICT",
+   "patch_lines": 24,
+   "line_check": {
+    "added": 3,
+    "missing_in_main": 3,
+    "removed": 3,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "| `connection-health-check` | A | `src/components/connections/ConnectionsView.tsx:131` · `src/components/diagnostics/ConnectionHealthPanel.tsx:95` · `src/compon",
+     "| `evolution-sync` | A | `src/components/connections/ConnectionsView.tsx:106` |",
+     "| `evolution-webhook` | A | `src/components/monitoring/hooks/useMonitoringActions.ts:31` · `src/components/monitoring/hooks/useMonitoringActions.ts:60` · `supab"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "docs/DB-INVENTORY.md",
+   "status": "BOTH_CHANGED",
+   "hunk": "CONFLICT",
+   "patch_lines": 13,
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 1,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "| `instance_pauses` | Pausas programadas da instância de WhatsApp | ativo | `src/hooks/connections/useInstancePauses.ts`, `src/lib/instancePauseSeries.ts` |"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/__tests__/reduzirMovimentoInboxCrmConexoes.test.tsx",
+   "status": "MAIN_UNCHANGED_SINCE_BASE",
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "patch_lines": 12,
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "vi.mock('@/components/connections/InstancePausesPanel', () => ({ InstancePausesPanel: () => null }));"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/connections/ConnectionsView.tsx",
+   "status": "BOTH_CHANGED",
+   "hunk": "CONFLICT",
+   "patch_lines": 20,
+   "line_check": {
+    "added": 2,
+    "missing_in_main": 2,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "import { InstancePausesPanel } from './InstancePausesPanel';",
+     "      <InstancePausesPanel connections={connections} />"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/connections/InstancePausesPanel.tsx",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "patch_lines": 232,
+   "line_check": {
+    "added": 180,
+    "missing_in_main": 180,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "import { useEffect, useMemo, useState } from 'react';",
+     "import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';",
+     "import { Button } from '@/components/ui/button';",
+     "import { Badge } from '@/components/ui/badge';",
+     "import { Input } from '@/components/ui/input';",
+     "import { Label } from '@/components/ui/label';",
+     "import {",
+     "  Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription,",
+     "} from '@/components/ui/dialog';",
+     "import { Loader2, PauseCircle, PlayCircle } from 'lucide-react';",
+     "import { toast } from 'sonner';",
+     "import { useUserRole } from '@/hooks/system/useUserRole';",
+     "import { useInstancePauses, type InstancePause } from '@/hooks/connections/useInstancePauses';",
+     "import { buildPauseSeries, isPauseActive, type PauseWindow } from '@/lib/instancePauseSeries';",
+     "interface PanelConnection {",
+     "  id: string;",
+     "  name: string;",
+     "  instance_id: string | null;",
+     "const MIN_MINUTES = 5;",
+     "const MAX_MINUTES = 1440;",
+     "const HISTORY_SHOWN = 10;",
+     "const fmtDateTime = (iso: string) =>",
+     "  new Date(iso).toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo', dateStyle: 'short', timeStyle: 'short' });",
+     "function PauseSeries({ rows, now }: { rows: InstancePause[]; now: number }) {",
+     "  const [window, setWindow] = useState<PauseWindow>('24h');"
+    ],
+    "still_sample": [],
+    "same_basename_in_main": []
+   }
+  },
+  {
+   "path": "src/components/connections/__tests__/ConnectionsView.desconectar.test.tsx",
+   "status": "MAIN_UNCHANGED_SINCE_BASE",
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "patch_lines": 12,
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "vi.mock('../InstancePausesPanel', () => ({ InstancePausesPanel: () => null }));"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/connections/__tests__/ConnectionsView.erro-dialogo.test.tsx",
+   "status": "MAIN_UNCHANGED_SINCE_BASE",
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "patch_lines": 12,
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "vi.mock('../InstancePausesPanel', () => ({ InstancePausesPanel: () => null }));"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/connections/__tests__/ConnectionsView.sync-historico.test.tsx",
+   "status": "MAIN_UNCHANGED_SINCE_BASE",
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "patch_lines": 12,
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "vi.mock('../InstancePausesPanel', () => ({ InstancePausesPanel: () => null }));"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/connections/__tests__/ConnectionsView.telefone-validacao.test.tsx",
+   "status": "MAIN_UNCHANGED_SINCE_BASE",
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "patch_lines": 12,
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "vi.mock('../InstancePausesPanel', () => ({ InstancePausesPanel: () => null }));"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/connections/__tests__/ConnectionsView.trava-multiconexao.test.tsx",
+   "status": "MAIN_UNCHANGED_SINCE_BASE",
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "patch_lines": 12,
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "vi.mock('../InstancePausesPanel', () => ({ InstancePausesPanel: () => null }));"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/connections/__tests__/InstancePausesPanel.test.tsx",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "patch_lines": 81,
+   "line_check": {
+    "added": 56,
+    "missing_in_main": 56,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "import { describe, it, expect, vi, beforeEach } from 'vitest';",
+     "import { render, screen, fireEvent, waitFor } from '@testing-library/react';",
+     "import { QueryClient, QueryClientProvider } from '@tanstack/react-query';",
+     "const state = vi.hoisted(() => ({",
+     "  isSupervisor: true,",
+     "  rows: [] as unknown[],",
+     "  selectError: null as unknown,",
+     "  rpc: vi.fn(),",
+     "}));",
+     "vi.mock('@/hooks/system/useUserRole', () => ({ useUserRole: () => ({ isSupervisor: state.isSupervisor }) }));",
+     "vi.mock('@/integrations/supabase/client', () => {",
+     "  const rows = () => state.rows as Array<{ resumed_at: string | null }>;",
+     "  const q: Record<string, unknown> = {};",
+     "  q.select = () => q;",
+     "  q.is = () => Promise.resolve({ data: state.selectError ? null : rows().filter((r) => r.resumed_at === null), error: state.selectError });",
+     "  q.gte = () => q;",
+     "  q.order = () => q;",
+     "  q.range = () => Promise.resolve({ data: state.selectError ? null : state.rows, error: state.selectError });",
+     "  return { supabase: { from: () => q, rpc: (...a: unknown[]) => state.rpc(...a) } };",
+     "vi.mock('sonner', () => ({ toast: { success: vi.fn(), error: vi.fn() } }));",
+     "import { InstancePausesPanel } from '../InstancePausesPanel';",
+     "const conns = [{ id: 'c1', name: 'Vendas', instance_id: 'inst-1' }];",
+     "const renderPanel = () =>",
+     "  render(",
+     "    <QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}>"
+    ],
+    "still_sample": [],
+    "same_basename_in_main": []
+   }
+  },
+  {
+   "path": "src/hooks/connections/useInstancePauses.ts",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "patch_lines": 86,
+   "line_check": {
+    "added": 61,
+    "missing_in_main": 61,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "import { useCallback } from 'react';",
+     "import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';",
+     "import { supabase } from '@/integrations/supabase/client';",
+     "/** C121 — histórico de pausas de instância + pausar/retomar (staff; RLS e RPC já negam o resto). */",
+     "export const INSTANCE_PAUSES_KEY = ['instance-pauses'] as const;",
+     "const HISTORY_DAYS = 7;",
+     "const HISTORY_PAGE = 1000;",
+     "const HISTORY_MAX_PAGES = 10;",
+     "export interface InstancePause {",
+     "  id: string;",
+     "  instance: string;",
+     "  paused_until: string;",
+     "  reason: string;",
+     "  paused_by: string | null;",
+     "  auto: boolean;",
+     "  resumed_at: string | null;",
+     "  resumed_by: string | null;",
+     "  created_at: string;",
+     "export function useInstancePauses(enabled: boolean) {",
+     "  const queryClient = useQueryClient();",
+     "  const query = useQuery({",
+     "    queryKey: INSTANCE_PAUSES_KEY,",
+     "    enabled,",
+     "    refetchInterval: 60_000,",
+     "    queryFn: async (): Promise<InstancePause[]> => {"
+    ],
+    "still_sample": [],
+    "same_basename_in_main": [
+     "src/components/monitoring/hooks/useInstancePauses.ts"
+    ],
+    "missing_vs_same_basename": 56
+   }
+  },
+  {
+   "path": "src/lib/__tests__/instancePauseSeries.test.ts",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "patch_lines": 43,
+   "line_check": {
+    "added": 25,
+    "missing_in_main": 25,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "import { describe, it, expect } from 'vitest';",
+     "import { buildPauseSeries, isPauseActive, type PauseRow } from '../instancePauseSeries';",
+     "const NOW = Date.parse('2026-11-01T12:00:00Z');",
+     "const row = (minutesAgo: number, auto = false): PauseRow => ({",
+     "  created_at: new Date(NOW - minutesAgo * 60_000).toISOString(),",
+     "  paused_until: new Date(NOW + 3_600_000).toISOString(),",
+     "  resumed_at: null,",
+     "  auto,",
+     "describe('buildPauseSeries', () => {",
+     "  it('24h: 24 baldes por hora, separando manual e automática', () => {",
+     "    const b = buildPauseSeries([row(10), row(30, true), row(90)], '24h', NOW);",
+     "    expect(b).toHaveLength(24);",
+     "    expect(b[23]).toMatchObject({ manual: 1, auto: 1 });",
+     "    expect(b[22].manual).toBe(1);",
+     "  it('7d: 7 baldes por dia e ignora o que está fora da janela', () => {",
+     "    const b = buildPauseSeries([row(60), row(60 * 24 * 3), row(60 * 24 * 8)], '7d', NOW);",
+     "    expect(b).toHaveLength(7);",
+     "    expect(b.reduce((s, x) => s + x.manual, 0)).toBe(2);",
+     "  it('sem linhas: tudo zero', () => {",
+     "    expect(buildPauseSeries([], '24h', NOW).every((x) => x.manual + x.auto === 0)).toBe(true);",
+     "describe('isPauseActive', () => {",
+     "  it('ativa só se não retomada e dentro do prazo', () => {",
+     "    expect(isPauseActive({ paused_until: new Date(NOW + 1000).toISOString(), resumed_at: null }, NOW)).toBe(true);",
+     "    expect(isPauseActive({ paused_until: new Date(NOW - 1000).toISOString(), resumed_at: null }, NOW)).toBe(false);",
+     "    expect(isPauseActive({ paused_until: new Date(NOW + 1000).toISOString(), resumed_at: new Date(NOW).toISOString() }, NOW)).toBe(false);"
+    ],
+    "still_sample": [],
+    "same_basename_in_main": []
+   }
+  },
+  {
+   "path": "src/lib/instancePauseSeries.ts",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "patch_lines": 54,
+   "line_check": {
+    "added": 35,
+    "missing_in_main": 35,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     " * C121 / IP2-B — série temporal de pausas de instância (24h por hora, 7d por dia).",
+     " * Agregação pura sobre as linhas de `instance_pauses` (sem DDL): cada pausa conta no",
+     " * balde do instante em que começou (`created_at`), separada em manual × automática.",
+     "export type PauseWindow = '24h' | '7d';",
+     "export interface PauseRow {",
+     "  created_at: string;",
+     "  paused_until: string;",
+     "  resumed_at: string | null;",
+     "  auto: boolean;",
+     "export interface PauseBucket {",
+     "  start: number;",
+     "  manual: number;",
+     "  auto: number;",
+     "const HOUR_MS = 3_600_000;",
+     "const DAY_MS = 24 * HOUR_MS;",
+     "export function buildPauseSeries(rows: PauseRow[], window: PauseWindow, now: number): PauseBucket[] {",
+     "  const step = window === '24h' ? HOUR_MS : DAY_MS;",
+     "  const count = window === '24h' ? 24 : 7;",
+     "  // último balde termina em `now`; cada balde cobre [start, start + step)",
+     "  const first = now - count * step;",
+     "  const buckets: PauseBucket[] = Array.from({ length: count }, (_, i) => ({",
+     "    start: first + i * step,",
+     "    manual: 0,",
+     "    auto: 0,",
+     "  }));"
+    ],
+    "still_sample": [],
+    "same_basename_in_main": []
+   }
+  },
+  {
+   "path": "supabase/deployment-manifest.json",
+   "status": "BOTH_CHANGED",
+   "hunk": "CONFLICT",
+   "patch_lines": 121,
+   "line_check": {
+    "added": 20,
+    "missing_in_main": 15,
+    "removed": 11,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "    \"source_file_count\": 171,",
+     "      \"path\": \"supabase/functions/_shared/instance-pause-actions.ts\",",
+     "      \"bytes\": 595,",
+     "      \"sha256\": \"6b1b66e14ea781bdedb55cb8e7246a4a45e5de7b41854a76f7f2a26b6a4f5430\"",
+     "      \"bytes\": 78174,",
+     "      \"sha256\": \"89ad037e67ed341a0c89b58e5f566a195f6d5f29dbc0f0de534d464dbca60019\"",
+     "      \"bytes\": 65573,",
+     "      \"sha256\": \"fd1ec619cc92a82f16d8f71dc6b829cda5384e585390a8597d64f9cee400b21a\"",
+     "      \"bytes\": 34304,",
+     "      \"sha256\": \"861c345ae0a2f20b3256acec701e832e73c9791aeeabe1efcadfad4cbebddc43\"",
+     "      \"source_sha256\": \"927b8cfc0fcc639b06ca969c762a5213ca3efe2fd024311efb922bf226733a27\",",
+     "        \"supabase/functions/_shared/instance-pause-actions.ts\",",
+     "      \"source_sha256\": \"645e52943bd291a84a92494c4fbd19e6d5b2450642f05c86794d913646d25994\",",
+     "      \"source_sha256\": \"22cda0a98fa58a51407cc7db0f936103d7e5e9d87614d9b1534843b28c6b6db7\",",
+     "  \"manifest_sha256\": \"624ea58aac5b9f097617b9926c14bbaa9de3489b7e305ac376932eb243a47d03\""
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "supabase/functions/_shared/instance-pause-actions.ts",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "patch_lines": 16,
+   "line_check": {
+    "added": 7,
+    "missing_in_main": 7,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     " * C121 — ações da evolution-api que ENTREGAM conteúdo a terceiros e por isso param",
+     " * durante a pausa da instância. Ficam de fora de propósito: mark-read, archive-chat,",
+     " * send-reaction e send-chat-presence (mutações/sinais da conversa, não entregam",
+     " * mensagem). `send-status` entra mesmo sendo classificada como controle na autorização.",
+     "export const PAUSE_BLOCKED_ACTIONS: ReadonlySet<string> = new Set([",
+     "  'send-text', 'send-media', 'send-audio', 'send-sticker', 'send-location',",
+     "  'send-contact', 'send-poll', 'send-list', 'send-buttons', 'send-ptv', 'send-status',"
+    ],
+    "still_sample": [],
+    "same_basename_in_main": []
+   }
+  },
+  {
+   "path": "supabase/functions/_shared/instance_pause.ts",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "supabase/functions/_shared/talkx-resume-policy.ts",
+   "status": "BOTH_CHANGED",
+   "hunk": "CONFLICT",
+   "patch_lines": 26,
+   "line_check": {
+    "added": 6,
+    "missing_in_main": 5,
+    "removed": 2,
+    "removed_still_in_main": 1,
+    "missing_sample": [
+     "      because: pauseReason === \"business_hours\"",
+     "        ? \"horário comercial aberto\"",
+     "        : pauseReason === \"instance_paused\"",
+     "        ? \"instância pode ter voltado — talkx-send re-pausa se ainda estiver inativa\"",
+     "        : \"dentro da janela de envio\","
+    ],
+    "still_sample": [
+     "      because: pauseReason === \"business_hours\" ? \"horário comercial aberto\" : \"dentro da janela de envio\","
+    ]
+   }
+  },
+  {
+   "path": "supabase/functions/evolution-api/index.test.ts",
+   "status": "BOTH_CHANGED",
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "patch_lines": 98,
+   "line_check": {
+    "added": 68,
+    "missing_in_main": 43,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "Deno.test(\"C121/IP1: envio em instância pausada é bloqueado sem chegar ao provedor\", async () => {",
+     "      from: () => makeQuery(null),",
+     "      rpc: (fn: string) => fn === \"is_instance_paused\"",
+     "        ? Promise.resolve({ data: true, error: null })",
+     "      { callerClient: makeCallerClient({ isAdminOrSupervisor: true }), supabase },",
+     "    assertEquals(json.paused, true);",
+     "    assertEquals(json.error, true);",
+     "    assertEquals(fake.posts.length, 0, \"instância pausada não pode enviar ao provedor\");",
+     "Deno.test(\"C121/IP1: mark-read passa e send-status é bloqueado com a instância pausada\", async () => {",
+     "      from: () => makeQuery({ id: \"x\" }),",
+     "      rpc: (fn: string) => fn === \"is_instance_paused\"",
+     "        ? Promise.resolve({ data: true, error: null })",
+     "    const status = await handleEvolutionApi(",
+     "      controlRequest(\"send-status\", { instanceName: \"PRINCIPAL\", text: \"oi\" }),",
+     "      { callerClient: makeCallerClient({ isAdminOrSupervisor: true }), supabase },",
+     "    assertEquals((await status.json()).paused, true);",
+     "    const read = await handleEvolutionApi(",
+     "      controlRequest(\"mark-read\", { instanceName: \"PRINCIPAL\", key: { remoteJid: \"5511999999999@s.whatsapp.net\", fromMe: false, id: \"M1\" } }),",
+     "      { callerClient: makeCallerClient({ isAdminOrSupervisor: true }), supabase },",
+     "    assert((await read.json()).paused !== true, \"mark-read não é entrega de conteúdo\");",
+     "// C121/IP1: 429 do provedor num envio grava a pausa automática (30 min, instância",
+     "// correta) e preserva a resposta original; falha da RPC não altera a resposta.",
+     "for (const rpcFails of [false, true]) {",
+     "  Deno.test(`C121/IP1: 429 do provedor em send-text chama auto_pause_instance (RPC ${rpcFails ? \"com erro\" : \"ok\"})`, async () => {",
+     "    const provider = Deno.serve({ hostname: \"127.0.0.1\", port: 0, onListen() {} }, () =>"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "supabase/functions/evolution-api/index.ts",
+   "status": "BOTH_CHANGED",
+   "hunk": "CONFLICT",
+   "patch_lines": 58,
+   "line_check": {
+    "added": 25,
+    "missing_in_main": 24,
+    "removed": 2,
+    "removed_still_in_main": 2,
+    "missing_sample": [
+     "import { PAUSE_BLOCKED_ACTIONS } from \"../_shared/instance-pause-actions.ts\";",
+     "    // C121/IP1: instância em pausa (manual ou automática) não envia. `supabase` aqui é o",
+     "    // cliente de serviço (is_instance_paused aceita service_role). Falha de leitura NÃO",
+     "    // bloqueia o envio (fail-open): a pausa é proteção, não pré-requisito de entrega.",
+     "    if (PAUSE_BLOCKED_ACTIONS.has(action) && instance) {",
+     "      const { data: paused, error: pausedError } = await supabase.rpc('is_instance_paused', { p_instance: instance });",
+     "      if (pausedError) {",
+     "        new Logger('evolution-api').warn('is_instance_paused falhou; envio liberado', { instance, code: pausedError.code });",
+     "      } else if (paused === true) {",
+     "        return new Response(JSON.stringify({ error: true, paused: true, message: 'Instância pausada: envios suspensos até o fim da pausa ou retomada manual.' })",
+     "    const proxy = async (path: string, method = 'POST', body?: unknown) => {",
+     "      const res = await proxyToEvolution(evolutionApiUrl, evolutionApiKey, corsHeaders, path, method, body, undefined, instance || '__admin',",
+     "      // C121/IP1: 429 do provedor num envio = limite de envio; pausa a instância sozinha",
+     "      // (30 min) para não insistir. Falha ao registrar a pausa não altera a resposta.",
+     "      // O proxy devolve HTTP 200 e carrega o status do provedor no corpo ({ error, status }).",
+     "      let providerRateLimited = false;",
+     "      if (PAUSE_BLOCKED_ACTIONS.has(action) && instance) {",
+     "          const payload = await res.clone().json();",
+     "          providerRateLimited = payload?.error === true && payload?.status === 429;",
+     "        } catch { /* corpo não-JSON: não é limite de envio */ }",
+     "      if (providerRateLimited) {",
+     "        const { error: autoPauseError } = await supabase.rpc('auto_pause_instance', { p_instance: instance, p_minutes: 30, p_reason: 'limite de envio (429 do pr",
+     "        if (autoPauseError) new Logger('evolution-api').warn('auto_pause_instance falhou', { instance, code: autoPauseError.code });",
+     "      return res;"
+    ],
+    "still_sample": [
+     "    const proxy = async (path: string, method = 'POST', body?: unknown) =>",
+     "      proxyToEvolution(evolutionApiUrl, evolutionApiKey, corsHeaders, path, method, body, undefined, instance || '__admin',"
+    ]
+   }
+  },
+  {
+   "path": "supabase/functions/multiplix-send/index.ts",
+   "status": "BOTH_CHANGED",
+   "hunk": "CONFLICT",
+   "patch_lines": 35,
+   "line_check": {
+    "added": 10,
+    "missing_in_main": 1,
+    "removed": 2,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "          // C121: instância pausada (operador/sistema) — o disparo pausa junto, com motivo próprio."
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "supabase/functions/talkx-send/process-recipient.ts",
+   "status": "BOTH_CHANGED",
+   "hunk": "PRESENT_REVERSE_APPLIES",
+   "patch_lines": 34
+  }
+ ],
+ "counts": {
+  "migrations": "0",
+  "workflows": "0",
+  "src": "12",
+  "edges": "7",
+  "docs_only": "no",
+  "lines_branch_has_main_lacks": "1028",
+  "lines_main_has_branch_lacks": "2061"
+ },
+ "auto": "MISTO_CONFLITO",
+ "n_files_with_gaps": 20,
+ "gap_lines_total": 467
+}

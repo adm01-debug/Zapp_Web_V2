@@ -1,0 +1,54 @@
+{
+ "id": "codex__fix-lint-phone-settings-20261101",
+ "kind": "branch",
+ "ref": "origin/codex/fix-lint-phone-settings-20261101",
+ "tip": "b46eabe4279840549ce47ba3b42e07422e897d20",
+ "merge_base": "1252bb5a41123ba4d49efd84d0f91604bff6c87c",
+ "ahead": 4,
+ "last_commit_date": "2026-11-01",
+ "merge_base_date": "2026-11-01",
+ "prs_with_same_tip": [
+  2464
+ ],
+ "triagem_2804": {
+  "2464": "JA_NA_MAIN"
+ },
+ "closure_comment": {},
+ "files": [
+  {
+   "path": "src/components/queues/QueueAlertsDisplay.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 16,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 2,
+    "removed_still_in_main": 1,
+    "missing_sample": [
+     "                  aria-label={`Dispensar alerta da fila ${alert.queueName}: ${alertLabels[alert.type]}`}"
+    ],
+    "still_sample": [
+     "                  aria-label={`Dispensar alerta ${alertLabels[alert.type]}`}"
+    ]
+   }
+  },
+  {
+   "path": "src/hooks/inbox/__tests__/useInboxFilters.type-url.test.tsx",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  }
+ ],
+ "counts": {
+  "migrations": "0",
+  "workflows": "0",
+  "src": "2",
+  "edges": "0",
+  "docs_only": "no",
+  "lines_branch_has_main_lacks": "1",
+  "lines_main_has_branch_lacks": "1"
+ },
+ "auto": "MISTO_CONFLITO",
+ "n_files_with_gaps": 1,
+ "gap_lines_total": 2
+}

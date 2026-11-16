@@ -1,0 +1,113 @@
+{
+ "id": "claude__feat-talkx-x070-suppression-reasons-261101-2230",
+ "kind": "branch",
+ "ref": "origin/claude/feat-talkx-x070-suppression-reasons-261101-2230",
+ "tip": "cc475ea94a4b2b79376e13328fcd5a252e9c13dc",
+ "merge_base": "1252bb5a41123ba4d49efd84d0f91604bff6c87c",
+ "ahead": 2,
+ "last_commit_date": "2026-11-01",
+ "merge_base_date": "2026-11-01",
+ "prs_with_same_tip": [
+  2517
+ ],
+ "triagem_2804": {
+  "2517": "DUPLICATA_PROVAVEL"
+ },
+ "closure_comment": {},
+ "files": [
+  {
+   "path": "scripts/db-audit/talkx-suppression-reasons.test.sh",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "patch_lines": 201,
+   "line_check": {
+    "added": 160,
+    "missing_in_main": 160,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "#!/usr/bin/env bash",
+     "# X070: behavioral contract de talkx_suppression_reasons.",
+     "# Critérios de aceite do P046:",
+     "#   1. 6 linhas is_system semeadas",
+     "#   2. admin cria código personalizado",
+     "#   3. agente recebe erro RLS ao inserir",
+     "#   4. trigger bloqueia desativar motivo do sistema",
+     "#   5. FK rejeita código inexistente (23503)",
+     "#   6. talkx_suppress_contact() como service_role devolve uuid",
+     "set -Eeuo pipefail",
+     "repo_root=\"$(cd \"$(dirname \"${BASH_SOURCE[0]}\")/../..\" && pwd)\"",
+     "migration=\"$repo_root/supabase/migrations/20261101223000_talkx_suppression_reasons.sql\"",
+     "postgres_image=\"${TALKX_SUPPR_TEST_POSTGRES_IMAGE:-postgres:17-alpine}\"",
+     "container_name=\"zapp-v2-talkx-suppr-test-$$\"",
+     "cleanup() {",
+     "  if [[ \"$container_name\" =~ ^zapp-v2-talkx-suppr-test-[0-9]+$ ]]; then",
+     "    docker rm -f \"$container_name\" >/dev/null 2>&1 || true",
+     "trap cleanup EXIT INT TERM",
+     "fail() {",
+     "  printf '[FAIL] %s\\n' \"$1\" >&2",
+     "  exit 1",
+     "psql_sql() {",
+     "  docker exec \"$container_name\" psql -X -qAt -v ON_ERROR_STOP=1 -U postgres -d postgres -c \"$1\"",
+     "psql_file() {",
+     "  docker exec -i \"$container_name\" psql -X -qAt -v ON_ERROR_STOP=1 -U postgres -d postgres < \"$1\""
+    ],
+    "still_sample": [],
+    "same_basename_in_main": []
+   }
+  },
+  {
+   "path": "supabase/migrations/20261101223000_talkx_suppression_reasons.sql",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "patch_lines": 168,
+   "line_check": {
+    "added": 137,
+    "missing_in_main": 137,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "-- X070: catálogo de motivos de supressão e FK de talkx_blacklist.reason_code",
+     "-- 1. Tabela de motivos",
+     "CREATE TABLE talkx_suppression_reasons (",
+     "  code        text        PRIMARY KEY CHECK (code = lower(code) AND code ~ '^[a-z_]+$'),",
+     "  label       text        NOT NULL,",
+     "  tone        text        NOT NULL DEFAULT 'informativo' CHECK (tone IN ('informativo','alerta','crítico')),",
+     "  is_system   boolean     NOT NULL DEFAULT false,",
+     "  active      boolean     NOT NULL DEFAULT true,",
+     "  sort_order  int         NOT NULL DEFAULT 100,",
+     "  created_by  uuid        REFERENCES auth.users(id) ON DELETE SET NULL,",
+     "  created_at  timestamptz NOT NULL DEFAULT now()",
+     "-- 2. Trigger: impede alterar code e desativar motivo do sistema",
+     "CREATE OR REPLACE FUNCTION talkx_suppression_reasons_guard()",
+     "RETURNS trigger LANGUAGE plpgsql AS $$",
+     "BEGIN",
+     "  IF OLD.code IS DISTINCT FROM NEW.code THEN",
+     "    RAISE EXCEPTION 'talkx_suppression_reasons: code imutável após criação';",
+     "  END IF;",
+     "  IF OLD.is_system AND NOT NEW.active THEN",
+     "    RAISE EXCEPTION 'talkx_suppression_reasons: motivo do sistema não pode ser desativado';",
+     "  END IF;",
+     "  RETURN NEW;",
+     "END;",
+     "CREATE TRIGGER talkx_suppression_reasons_guard_trigger",
+     "  BEFORE UPDATE ON talkx_suppression_reasons"
+    ],
+    "still_sample": [],
+    "same_basename_in_main": []
+   }
+  }
+ ],
+ "counts": {
+  "migrations": "1",
+  "workflows": "0",
+  "src": "0",
+  "edges": "0",
+  "docs_only": "no",
+  "lines_branch_has_main_lacks": "357",
+  "lines_main_has_branch_lacks": "0"
+ },
+ "auto": "TRABALHO_AUSENTE_APLICA_LIMPO",
+ "n_files_with_gaps": 2,
+ "gap_lines_total": 297
+}

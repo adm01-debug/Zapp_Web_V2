@@ -1,0 +1,70 @@
+{
+ "id": "pr-3101",
+ "kind": "pr",
+ "ref": "refs/remotes/pr/3101",
+ "pr": 3101,
+ "tip": "1296303a0034d40841eca15d121f58aad0418e5e",
+ "merge_base": "6d420265e840e5766cedc8d4d038472267e04153",
+ "ahead": 2,
+ "last_commit_date": "2026-11-14",
+ "merge_base_date": "2026-11-14",
+ "triagem_2804": null,
+ "closure_comment": {
+  "title": "fix(edge): fecha o bypass de profiles.is_active em 3 edges",
+  "last_comment": "Conteúdo integrado na `main` pelo pacote 6 ([#3113](https://github.com/adm01-debug/Zapp_Web_V2/pull/3113), commit `41853318cd`). Conferido byte a byte: os 6 arquivos das três edges e seus testes estão idênticos na `main`; o sétimo é o `deployment-manifest.json` gerado. Fechando como incorporada; a b"
+ },
+ "files": [
+  {
+   "path": "supabase/deployment-manifest.json",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 67,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 10,
+    "missing_in_main": 4,
+    "removed": 10,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "      \"source_sha256\": \"95b699ce41e465e614fde571ed7f082ed5815b5450fa2d4ab526771272fe4916\",",
+     "      \"source_sha256\": \"08cd5e38c0599c82c7a2e12a7aa1eddc9fbd78a02eafd27a58e071dfe3051114\",",
+     "      \"source_sha256\": \"f8b32df90ed06740fd251d6da397312788d3bdf506e2cd3fa365bf016ab062b9\",",
+     "  \"manifest_sha256\": \"46e5205ecd71f418cd24ff47392981cabd249920cc22da7a11fefc1cf6f9dd50\""
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "supabase/functions/ai-churn-analysis/index.test.ts",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "supabase/functions/ai-churn-analysis/index.ts",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "supabase/functions/ai-classify-tickets/index.test.ts",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "supabase/functions/ai-classify-tickets/index.ts",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "supabase/functions/approve-password-reset/index.test.ts",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "supabase/functions/approve-password-reset/index.ts",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  }
+ ],
+ "auto": "MISTO_CONFLITO",
+ "n_files_with_gaps": 1,
+ "gap_lines_total": 4
+}

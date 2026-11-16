@@ -1,0 +1,278 @@
+{
+ "id": "claude__feat-talkx-x048-estados-servico-261101-2100",
+ "kind": "branch",
+ "ref": "origin/claude/feat-talkx-x048-estados-servico-261101-2100",
+ "tip": "764db93f0215ab8ccc0f7698f7ba040edeed1ee9",
+ "merge_base": "1252bb5a41123ba4d49efd84d0f91604bff6c87c",
+ "ahead": 1,
+ "last_commit_date": "2026-11-01",
+ "merge_base_date": "2026-11-01",
+ "prs_with_same_tip": [
+  2548
+ ],
+ "triagem_2804": {
+  "2548": "DUPLICATA_PROVAVEL"
+ },
+ "closure_comment": {},
+ "files": [
+  {
+   "path": "docs/reconciliation/tasks/P046.json",
+   "status": "MAIN_UNCHANGED_SINCE_BASE",
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "patch_lines": 8,
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 1,
+    "removed_still_in_main": 1,
+    "missing_sample": [
+     "{\"plan\":{\"plan_id\":\"docs--talkx--plano_talkx_v4_200_etapas_2026-10-01\",\"path\":\"docs/talkx/PLANO_TALKX_V4_200_ETAPAS_2026-10-01.md\",\"title\":\"Talk X · Campanhas —"
+    ],
+    "still_sample": [
+     "{\"plan\":{\"plan_id\":\"docs--talkx--plano_talkx_v4_200_etapas_2026-10-01\",\"path\":\"docs/talkx/PLANO_TALKX_V4_200_ETAPAS_2026-10-01.md\",\"title\":\"Talk X · Campanhas —"
+    ]
+   }
+  },
+  {
+   "path": "src/components/talkx/TalkXSegments.tsx",
+   "status": "BOTH_CHANGED",
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "patch_lines": 49,
+   "line_check": {
+    "added": 9,
+    "missing_in_main": 9,
+    "removed": 1,
+    "removed_still_in_main": 1,
+    "missing_sample": [
+     "import { TalkXQueryBoundary, TalkXCrmUnavailableState } from './kit/states';",
+     "import { ServiceStatusSheet } from './kit/ServiceStatusSheet';",
+     "import { useTalkXServiceStatus } from '@/hooks/integrations/useTalkXServiceStatus';",
+     "  const [statusSheetOpen, setStatusSheetOpen] = useState(false);",
+     "  const serviceStatus = useTalkXServiceStatus();",
+     "    {statusSheetOpen && (",
+     "      <ServiceStatusSheet status={serviceStatus} onClose={() => setStatusSheetOpen(false)} />",
+     "        {serviceStatus.crm === 'unavailable' && (",
+     "          <TalkXCrmUnavailableState onViewStatus={() => setStatusSheetOpen(true)} />"
+    ],
+    "still_sample": [
+     "import { TalkXQueryBoundary } from './kit/states';"
+    ]
+   }
+  },
+  {
+   "path": "src/components/talkx/__tests__/TalkXSegments.crmUnavailable.test.tsx",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "patch_lines": 92,
+   "line_check": {
+    "added": 60,
+    "missing_in_main": 60,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     " * X048 (TL-106) — quando crm = 'unavailable', a tela de Segmentos exibe",
+     " * TalkXCrmUnavailableState com o botão \"Ver status dos serviços\" que abre",
+     " * o ServiceStatusSheet.",
+     "import { describe, it, expect, vi } from 'vitest';",
+     "import { render, screen, waitFor, fireEvent } from '@testing-library/react';",
+     "vi.mock('@/hooks/integrations/useTalkXServiceStatus', () => ({",
+     "  useTalkXServiceStatus: () => ({ whatsapp: { connected: null }, crm: 'unavailable' }),",
+     "}));",
+     "vi.mock('@/hooks/integrations/useTalkXSegments', async (orig) => {",
+     "  const actual = await orig<typeof import('@/hooks/integrations/useTalkXSegments')>();",
+     "  return {",
+     "    ...actual,",
+     "    useTalkXSegments: () => ({",
+     "      segments: [],",
+     "      isLoading: false,",
+     "      isError: false,",
+     "      error: null,",
+     "      refetch: vi.fn(),",
+     "      createSegment: { mutate: vi.fn() },",
+     "      updateSegment: { mutateAsync: vi.fn() },",
+     "      deleteSegment: { mutate: vi.fn() },",
+     "      refreshEstimates: { mutate: vi.fn() },",
+     "      userId: 'user-1',",
+     "      selectedIds: [],",
+     "      toggleSelect: vi.fn(),"
+    ],
+    "still_sample": [],
+    "same_basename_in_main": []
+   }
+  },
+  {
+   "path": "src/components/talkx/kit/ServiceStatusSheet.tsx",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "patch_lines": 103,
+   "line_check": {
+    "added": 75,
+    "missing_in_main": 75,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     " * X048 (TL-106) — painel lateral de status dos serviços consumidos pelo Talk X.",
+     " * Abre quando o usuário clica em \"Ver status dos serviços\" em qualquer estado de",
+     " * indisponibilidade (CRM, WhatsApp).",
+     "import { Wifi, WifiOff, Database, DatabaseZap, Radio, X } from 'lucide-react';",
+     "import { cn } from '@/lib/utils';",
+     "import type { TalkXServiceStatus } from '@/hooks/integrations/useTalkXServiceStatus';",
+     "interface ServiceStatusSheetProps {",
+     "  status: TalkXServiceStatus;",
+     "  onClose: () => void;",
+     "interface StatusRowProps {",
+     "  icon: React.ElementType;",
+     "  label: string;",
+     "  sublabel?: string;",
+     "  ok: boolean | null;",
+     "function StatusRow({ icon: Icon, label, sublabel, ok }: StatusRowProps) {",
+     "  const dotClass = ok === true",
+     "    ? 'bg-green-500'",
+     "    : ok === false",
+     "      ? 'bg-red-500'",
+     "      : 'bg-yellow-500 animate-pulse';",
+     "  const statusText = ok === true ? 'Operacional' : ok === false ? 'Indisponível' : 'Verificando…';",
+     "  return (",
+     "    <div className=\"flex items-center gap-3 py-3 border-b border-border/50 last:border-0\">",
+     "      <div className=\"flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-muted\">",
+     "        <Icon className=\"h-4 w-4 text-muted-foreground\" />"
+    ],
+    "still_sample": [],
+    "same_basename_in_main": []
+   }
+  },
+  {
+   "path": "src/hooks/integrations/__tests__/useTalkXServiceStatus.test.ts",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "patch_lines": 68,
+   "line_check": {
+    "added": 36,
+    "missing_in_main": 36,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     " * X048 (TL-106) — testes do hook useTalkXServiceStatus.",
+     " * Cobre as 3 combinações do campo whatsapp.connected.",
+     "import { renderHook, waitFor } from '@testing-library/react';",
+     "import { describe, it, expect, vi, beforeEach } from 'vitest';",
+     "const mockFrom = vi.hoisted(() => vi.fn());",
+     "vi.mock('@/integrations/supabase/client', () => ({",
+     "  supabase: {",
+     "    from: mockFrom,",
+     "}));",
+     "import { useTalkXServiceStatus } from '../useTalkXServiceStatus';",
+     "function makeChain(result: { data: unknown; error: unknown }) {",
+     "  const chain = {",
+     "    select: vi.fn().mockReturnThis(),",
+     "    eq: vi.fn().mockReturnThis(),",
+     "    limit: vi.fn().mockResolvedValue(result),",
+     "  return chain;",
+     "beforeEach(() => {",
+     "  vi.clearAllMocks();",
+     "describe('useTalkXServiceStatus', () => {",
+     "  it('whatsapp.connected = true quando existe conexão ativa', async () => {",
+     "    mockFrom.mockReturnValue(makeChain({ data: [{ id: 'conn-1' }], error: null }));",
+     "    const { result } = renderHook(() => useTalkXServiceStatus());",
+     "    // Começa null enquanto a consulta não responde",
+     "    expect(result.current.whatsapp.connected).toBeNull();",
+     "    await waitFor(() => expect(result.current.whatsapp.connected).toBe(true));"
+    ],
+    "still_sample": [],
+    "same_basename_in_main": []
+   }
+  },
+  {
+   "path": "src/hooks/integrations/useTalkXServiceStatus.ts",
+   "status": "MAIN_UNCHANGED_SINCE_BASE",
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "patch_lines": 30,
+   "line_check": {
+    "added": 5,
+    "missing_in_main": 5,
+    "removed": 1,
+    "removed_still_in_main": 1,
+    "missing_sample": [
+     "export type CrmStatus = 'ok' | 'unavailable' | 'not_configured';",
+     "   * Estado do CRM 360 — stub `'ok'` até CAP-092 expor o sinal de disponibilidade.",
+     "   * Quando o sinal existir, basta trocar a constante pela consulta real.",
+     "  crm: CrmStatus;",
+     "  return { whatsapp: { connected }, crm: 'ok' };"
+    ],
+    "still_sample": [
+     "  return { whatsapp: { connected } };"
+    ]
+   }
+  },
+  {
+   "path": "src/pages/ViewRouter.tsx",
+   "status": "BOTH_CHANGED",
+   "hunk": "CONFLICT",
+   "patch_lines": 26,
+   "line_check": {
+    "added": 5,
+    "missing_in_main": 2,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "          <TalkXNoPermissionState",
+     "            onContactAdmin={onNavigateTo ? () => onNavigateTo('team-chat') : undefined}"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/pages/__tests__/ViewRouter.talkx-permission.test.tsx",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "patch_lines": 71,
+   "line_check": {
+    "added": 43,
+    "missing_in_main": 43,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     " * X048 (TL-106) — quando papel `agent` tenta ?view=talkx, o ViewRouter",
+     " * exibe TalkXNoPermissionState com o botão \"Falar com o administrador\"",
+     " * que navega para `team-chat` (em vez do RestrictedView genérico).",
+     "import { describe, it, expect, vi, beforeEach } from 'vitest';",
+     "import { render, screen, fireEvent } from '@testing-library/react';",
+     "import { QueryClient, QueryClientProvider } from '@tanstack/react-query';",
+     "let mockRoles: string[] = ['agent'];",
+     "vi.mock('@/hooks/system/useUserRole', () => ({",
+     "  useUserRole: () => ({",
+     "    roles: mockRoles,",
+     "    permissions: [],",
+     "    loading: false,",
+     "    permissionsLoading: false,",
+     "}));",
+     "// useTalkXServiceStatus não é chamado neste cenário (tela bloqueada)",
+     "vi.mock('@/hooks/integrations/useTalkXServiceStatus', () => ({",
+     "  useTalkXServiceStatus: () => ({ whatsapp: { connected: null }, crm: 'ok' }),",
+     "}));",
+     "import { ViewRouter } from '@/pages/ViewRouter';",
+     "function renderView(view: string, onNavigateTo = vi.fn()) {",
+     "  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });",
+     "  return { onNavigateTo, ...render(",
+     "    <QueryClientProvider client={client}>",
+     "      <ViewRouter currentView={view} onNavigateTo={onNavigateTo} />",
+     "    </QueryClientProvider>,"
+    ],
+    "still_sample": [],
+    "same_basename_in_main": []
+   }
+  }
+ ],
+ "counts": {
+  "migrations": "0",
+  "workflows": "0",
+  "src": "7",
+  "edges": "0",
+  "docs_only": "no",
+  "lines_branch_has_main_lacks": "347",
+  "lines_main_has_branch_lacks": "28"
+ },
+ "auto": "MISTO_CONFLITO",
+ "n_files_with_gaps": 8,
+ "gap_lines_total": 234
+}

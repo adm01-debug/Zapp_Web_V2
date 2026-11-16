@@ -1,0 +1,10 @@
+[
+ {
+  "commit": "188daf208",
+  "arquivo": "supabase/migrations/20261030200000_copilot_live_motor.sql",
+  "linhas": 1,
+  "amostra": [
+   "  ADD COLUMN IF NOT EXISTS comm_style                text[] NOT NULL DEFAULT '{}',"
+  ]
+ }
+]

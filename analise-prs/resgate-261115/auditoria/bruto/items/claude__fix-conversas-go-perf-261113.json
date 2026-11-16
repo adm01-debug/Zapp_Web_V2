@@ -1,0 +1,254 @@
+{
+ "id": "claude__fix-conversas-go-perf-261113",
+ "kind": "branch",
+ "ref": "origin/claude/fix-conversas-go-perf-261113",
+ "tip": "bb3a00877300797e400bb5744891a8e7f3fecd88",
+ "merge_base": "a49ef4ad58d62497e3a719f1a647719c8f1f490e",
+ "ahead": 5,
+ "last_commit_date": "2026-11-13",
+ "merge_base_date": "2026-11-13",
+ "prs_with_same_tip": [
+  3036
+ ],
+ "triagem_2804": {
+  "3036": null
+ },
+ "closure_comment": {
+  "3036": {
+   "title": "fix(conversas): recibos e ações na Evolution GO + desempenho de metas, próxima ação e real",
+   "last_comment": "Contida no pacote 4, adm01-debug/Zapp_Web_V2#3063, mergeado na `main` em d084ca75 com CI completo verde (CI Gate, testes unitários 1/3–3/3, E2E, edge contracts, build, security, workflow lint). O conteúdo desta PR entrou por lá (merge `--no-ff` desta branch no pacote, sem conflito; #3036 e #2981 ent"
+  }
+ },
+ "files": [
+  {
+   "path": "ESTADO.md",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 22,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 2,
+    "missing_in_main": 2,
+    "removed": 2,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "| `ai-transcribe-audio` | A | `src/components/inbox/AudioMessagePlayer.tsx:71` · `supabase/functions/_shared/evolution-webhook-messages.ts:1420` |",
+     "| `evolution-webhook` | A | `src/components/monitoring/hooks/useMonitoringActions.ts:31` · `src/components/monitoring/hooks/useMonitoringActions.ts:60` · `supab"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "docs/REALTIME-CHANNELS-INVENTORY.md",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/components/inbox/AudioMessagePlayer.tsx",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/components/inbox/__tests__/AudioMessagePlayer.transcricao.test.tsx",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/components/inbox/__tests__/arquivos-ver-na-conversa.test.tsx",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/components/inbox/chat/MessageHoverToolbar.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 49,
+   "hunk": "PRESENT_REVERSE_APPLIES"
+  },
+  {
+   "path": "src/components/inbox/chat/__tests__/MessageHoverToolbar.nao-lida.test.tsx",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/components/inbox/chat/__tests__/menus-r2-inb-021.test.tsx",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/hooks/__tests__/useGoalNotifications.goal-types.test.ts",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/hooks/__tests__/useGoalNotifications.test.ts",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/hooks/__tests__/useWhatsAppStatus.test.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 79,
+   "hunk": "PRESENT_REVERSE_APPLIES"
+  },
+  {
+   "path": "src/hooks/analytics/useGoalNotifications.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 425,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 186,
+    "missing_in_main": 1,
+    "removed": 149,
+    "removed_still_in_main": 113,
+    "missing_sample": [
+     "      const measured = await Promise.all("
+    ],
+    "still_sample": [
+     "        .from('goals_configurations')",
+     "        .select('*')",
+     "        .eq('is_active', true)",
+     "        .from('agent_stats')",
+     "        .select('*')",
+     "        .eq('profile_id', profile.id)",
+     "        .maybeSingle();",
+     "        const periods: Period[] = ['daily', 'weekly', 'monthly'];",
+     "          const targetKey = `${period}_target` as keyof GoalConfiguration;",
+     "          const target = goal[targetKey] as number;"
+    ]
+   }
+  },
+  {
+   "path": "src/hooks/chat/__tests__/useNextBestAction.test.tsx",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/hooks/chat/useNextBestAction.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 364,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 147,
+    "missing_in_main": 0,
+    "removed": 116,
+    "removed_still_in_main": 86,
+    "missing_sample": [],
+    "still_sample": [
+     "      const suggestedActions: NextAction[] = [];",
+     "      const readFailures: string[] = [];",
+     "        .from('messages')",
+     "        .select('created_at, sender')",
+     "        .eq('contact_id', contactId)",
+     "        .order('created_at', { ascending: false })",
+     "        .limit(1)",
+     "      if (lastMsg) {",
+     "        if (lastMsg.sender === 'contact' && hoursSinceLastMsg > 1) {",
+     "          suggestedActions.push({"
+    ]
+   }
+  },
+  {
+   "path": "src/hooks/chat/useRealtimeMessages.ts",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/hooks/inbox/__tests__/useInboxUnreadTotal.test.tsx",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/hooks/inbox/useInboxUnreadTotal.ts",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/hooks/integrations/useWhatsAppStatus.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 26,
+   "hunk": "PRESENT_REVERSE_APPLIES"
+  },
+  {
+   "path": "src/hooks/realtime/globalChannels.ts",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/hooks/realtime/useGlobalIncomingMessageAlerts.tsx",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/lib/__tests__/realtimeTopic.canais-fixos.test.tsx",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/services/message-unread.service.ts",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "supabase/deployment-manifest.json",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 175,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 22,
+    "missing_in_main": 15,
+    "removed": 22,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "      \"bytes\": 88727,",
+     "      \"sha256\": \"510987c317bd57185ff85f675a04d31cca3bff0769592b5fb005e283f4b83515\"",
+     "      \"source_sha256\": \"4952eb0d7ad1142956debaa1926894f46c00d41c186c665587e0734896c46452\",",
+     "      \"source_sha256\": \"3c708696d4d3d486a42dfe7fc86e6feb4cf34d4cb4e71a49be2ab1b42a4af228\",",
+     "      \"source_sha256\": \"097f05a22620c822827ce6c87db7d593104875d70dba5d3c9bbc4d68da7ebd9f\",",
+     "      \"source_sha256\": \"32df293e8d30ae2b9999f797a20f04bd855a98899206ec29eaaef4fcd308edd8\",",
+     "      \"source_sha256\": \"2342fa9049ec80495cb7f4529c1caac35cf042f4062c7eb4445ed0090a18c7b0\",",
+     "      \"source_sha256\": \"558cf0ce86bfde742d85bd3b3f4a2216dc96c0a9446196d69fd490194c3bfa30\",",
+     "      \"source_sha256\": \"7825f0e1ff21b06c7155cc900392cbd2ae3862fc8a11a767705503cc41d03969\",",
+     "      \"source_sha256\": \"53a071c30accfd6bb7a8ae0631357bbf0cd0faa280a322406d699a92db5d592d\",",
+     "      \"source_sha256\": \"7a59aa294d897ca7c0088acc493ebdaf00dd3ab60aee0d3c271f5390ddd54a45\",",
+     "      \"source_sha256\": \"0616795531fbad7856199a81801b625e43bc73c20e1352843881d6da9affa2c7\",",
+     "      \"source_sha256\": \"5f1f6318f2627dbce8a772669b529417d1355fc115c1aaef6d93e9643b970122\",",
+     "      \"source_sha256\": \"7b583858a077a14cba17fc4a8cf77717545ba170120f4fb62e29e1fc52cb1ea2\",",
+     "  \"manifest_sha256\": \"c73f262508ae2a8e7a7c5d0de3fb6d79cdcc166a2e6f39abee10dc9bc7cdb86b\""
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "supabase/functions/_shared/__tests__/evolution-go-conversas-fixes.test.ts",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "supabase/functions/_shared/evolution-go-adapter.ts",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "supabase/functions/_shared/evolution-go-routes.ts",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "supabase/functions/evolution-api/index.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 21,
+   "hunk": "PRESENT_REVERSE_APPLIES"
+  }
+ ],
+ "counts": {
+  "migrations": "0",
+  "workflows": "0",
+  "src": "20",
+  "edges": "4",
+  "docs_only": "no",
+  "lines_branch_has_main_lacks": "186",
+  "lines_main_has_branch_lacks": "498"
+ },
+ "auto": "MISTO_CONFLITO",
+ "n_files_with_gaps": 4,
+ "gap_lines_total": 217
+}

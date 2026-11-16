@@ -1,0 +1,82 @@
+{
+ "id": "fix__f1a-lote-b-batch4",
+ "kind": "branch",
+ "ref": "origin/fix/f1a-lote-b-batch4",
+ "tip": "80a6e057a2fd699e252f83bba5860f259ffcb5e1",
+ "merge_base": "bac62ba98454811c3bfd117b838af926b1e795b2",
+ "ahead": 3,
+ "last_commit_date": "2026-10-23",
+ "merge_base_date": "2026-10-23",
+ "prs_with_same_tip": [
+  2081
+ ],
+ "triagem_2804": {
+  "2081": "JA_NA_MAIN"
+ },
+ "closure_comment": {},
+ "files": [
+  {
+   "path": "src/hooks/system/useDiagnosticsData.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 195,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 91,
+    "missing_in_main": 69,
+    "removed": 23,
+    "removed_still_in_main": 21,
+    "missing_sample": [
+     "  degradedBelowMs: number",
+     "  agora: number",
+     "      .select(",
+     "        'id, instance_id, status, phone_number, created_at, updated_at, health_status, last_health_check, health_response_ms'",
+     "      supabase",
+     "        .gte('created_at', since)",
+     "        .eq('sender', 'agent'),",
+     "      supabase",
+     "        .gte('created_at', since)",
+     "        .eq('status', 'sent'),",
+     "      supabase",
+     "        .gte('created_at', since)",
+     "        .eq('status', 'delivered'),",
+     "      supabase",
+     "        .gte('created_at', since)",
+     "        .eq('status', 'read'),",
+     "      supabase",
+     "        .gte('created_at', since)",
+     "        .eq('status', 'failed'),",
+     "      supabase",
+     "        .gte('created_at', since)",
+     "        .eq('status', 'sending'),",
+     "      total,",
+     "      sent,",
+     "      delivered,"
+    ],
+    "still_sample": [
+     "  degradedBelowMs: number,",
+     "  agora: number,",
+     "      .select('id, instance_id, status, phone_number, created_at, updated_at, health_status, last_health_check, health_response_ms')",
+     "      supabase.from('messages').select('id', { count: 'exact', head: true }).gte('created_at', since).eq('sender', 'agent'),",
+     "      supabase.from('messages').select('id', { count: 'exact', head: true }).gte('created_at', since).eq('sender', 'agent').eq('status', 'sent'),",
+     "      supabase.from('messages').select('id', { count: 'exact', head: true }).gte('created_at', since).eq('sender', 'agent').eq('status', 'delivered'),",
+     "      supabase.from('messages').select('id', { count: 'exact', head: true }).gte('created_at', since).eq('sender', 'agent').eq('status', 'read'),",
+     "      supabase.from('messages').select('id', { count: 'exact', head: true }).gte('created_at', since).eq('sender', 'agent').eq('status', 'failed'),",
+     "      supabase.from('messages').select('id', { count: 'exact', head: true }).gte('created_at', since).eq('sender', 'agent').eq('status', 'sending'),",
+     "      total, sent, delivered, read, failed, pending,"
+    ]
+   }
+  }
+ ],
+ "counts": {
+  "migrations": "0",
+  "workflows": "0",
+  "src": "1",
+  "edges": "0",
+  "docs_only": "no",
+  "lines_branch_has_main_lacks": "93",
+  "lines_main_has_branch_lacks": "24"
+ },
+ "auto": "MISTO_CONFLITO",
+ "n_files_with_gaps": 1,
+ "gap_lines_total": 90
+}
