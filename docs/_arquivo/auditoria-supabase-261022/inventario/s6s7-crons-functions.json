@@ -1,0 +1,188 @@
+{
+  "generated_at": "2026-10-22",
+  "section": "S6 (Crons) + S7 (DB Functions)",
+
+  "s6_crons": {
+    "total_jobs": 16,
+    "jobs": [
+      {"jobid": 1,  "jobname": "cleanup-link-preview-cache",  "schedule": "12 3 * * *",    "active": true, "runs_30d": 30,    "fails_30d": 1,    "fail_pct": 3.3, "last_run": "2026-10-22T03:12:00Z", "cmd_preview": "SELECT public.cleanup_link_preview_cache()"},
+      {"jobid": 4,  "jobname": "gmail-incremental-sync",       "schedule": "0-55/5 * * * *","active": true, "runs_30d": 8636,  "fails_30d": 354,  "fail_pct": 4.1, "last_run": "2026-10-22T12:10:00Z", "cmd_preview": "net.http_post -> gmail-cron-sync edge function"},
+      {"jobid": 5,  "jobname": "vacuum-messages-post-expurgo", "schedule": "20 3 2 9 *",    "active": true, "runs_30d": 0,     "fails_30d": 0,    "fail_pct": null,"last_run": "2026-09-02T03:00:00Z", "cmd_preview": "VACUUM FULL ANALYZE public.messages", "note": "ALERTA: schedule one-shot de setembro, migration de remocao existe mas job ainda ativo"},
+      {"jobid": 6,  "jobname": "vacuum-contacts-daily",        "schedule": "42 3 * * *",    "active": true, "runs_30d": 30,    "fails_30d": 1,    "fail_pct": 3.3, "last_run": "2026-10-22T03:42:00Z", "cmd_preview": "VACUUM ANALYZE public.contacts"},
+      {"jobid": 9,  "jobname": "cleanup-edge-rate-limits",     "schedule": "7-52/15 * * * *","active": true,"runs_30d": 2880,  "fails_30d": 119,  "fail_pct": 4.1, "last_run": "2026-10-22T12:07:00Z", "cmd_preview": "DELETE FROM public.edge_rate_limits WHERE updated_at < now() - interval '1 hour'"},
+      {"jobid": 11, "jobname": "talkx-scheduler-1min",         "schedule": "* * * * *",     "active": true, "runs_30d": 43179, "fails_30d": 3878, "fail_pct": 9.0, "last_run": "2026-10-22T12:14:00Z", "cmd_preview": "SELECT public.trigger_talkx_engine_tick()", "note": "ALERTA: maior taxa de falhas, 9%, todas job startup timeout"},
+      {"jobid": 13, "jobname": "expire-stale-agent-presence",  "schedule": "1-59/2 * * * *","active": true, "runs_30d": 19497, "fails_30d": 779,  "fail_pct": 4.0, "last_run": "2026-10-22T12:13:00Z", "cmd_preview": "SELECT public.expire_stale_agent_presence()"},
+      {"jobid": 15, "jobname": "multiplix-send-trigger",       "schedule": "0-58/2 * * * *","active": true, "runs_30d": 17962, "fails_30d": 763,  "fail_pct": 4.2, "last_run": "2026-10-22T12:14:00Z", "cmd_preview": "SELECT public.trigger_pending_multiplix_dispatches()"},
+      {"jobid": 16, "jobname": "tasks-notify-due",             "schedule": "* * * * *",     "active": true, "runs_30d": 34042, "fails_30d": 1390, "fail_pct": 4.1, "last_run": "2026-10-22T12:14:00Z", "cmd_preview": "SELECT public.notify_due_tasks()"},
+      {"jobid": 17, "jobname": "connection-health-check",      "schedule": "2-57/5 * * * *","active": true, "runs_30d": 6251,  "fails_30d": 288,  "fail_pct": 4.6, "last_run": "2026-10-22T12:12:00Z", "cmd_preview": "net.http_post -> connection-health-check edge function"},
+      {"jobid": 18, "jobname": "avatars-refresh",              "schedule": "7 * * * *",     "active": true, "runs_30d": 521,   "fails_30d": 28,   "fail_pct": 5.4, "last_run": "2026-10-22T12:07:00Z", "cmd_preview": "net.http_post -> batch-fetch-avatars edge function"},
+      {"jobid": 20, "jobname": "ai-jobs-tick-1min",            "schedule": "1-59 * * * *",  "active": true, "runs_30d": 28151, "fails_30d": 1043, "fail_pct": 3.7, "last_run": "2026-10-22T12:14:00Z", "cmd_preview": "select public.trigger_ai_jobs_tick()"},
+      {"jobid": 21, "jobname": "searchbox-budget-alert",       "schedule": "0 12 * * *",    "active": true, "runs_30d": 20,    "fails_30d": 0,    "fail_pct": 0.0, "last_run": "2026-10-22T12:00:00Z", "cmd_preview": "SELECT public.notify_searchbox_budget() + net.http_post -> searchbox-budget-alert"},
+      {"jobid": 22, "jobname": "crm-sync-outbox",              "schedule": "1-59/2 * * * *","active": true, "runs_30d": 4079,  "fails_30d": 2,    "fail_pct": 0.0, "last_run": "2026-10-22T12:13:00Z", "cmd_preview": "select public.trigger_crm_sync_outbox()"},
+      {"jobid": 23, "jobname": "crm-sync-outbox-cleanup",      "schedule": "17 4 * * *",    "active": true, "runs_30d": 6,     "fails_30d": 0,    "fail_pct": 0.0, "last_run": "2026-10-22T04:17:00Z", "cmd_preview": "select public.run_crm_sync_outbox_cleanup()"},
+      {"jobid": 24, "jobname": "search-events-retention",      "schedule": "10 4 * * *",    "active": true, "runs_30d": 6,     "fails_30d": 0,    "fail_pct": 0.0, "last_run": "2026-10-22T04:10:00Z", "cmd_preview": "select public.purge_old_search_events()"}
+    ],
+    "recent_failures_q2": [
+      {"jobid": 20, "jobname": "ai-jobs-tick-1min",       "start_time": "2026-10-21T11:45Z", "msg": "job startup timeout"},
+      {"jobid": 22, "jobname": "crm-sync-outbox",         "start_time": "2026-10-21T11:45Z", "msg": "job startup timeout"},
+      {"jobid": 11, "jobname": "talkx-scheduler-1min",    "start_time": "2026-10-21T11:45Z", "msg": "job startup timeout"},
+      {"jobid": 16, "jobname": "tasks-notify-due",        "start_time": "2026-10-21T11:45Z", "msg": "job startup timeout"},
+      {"jobid": 13, "jobname": "expire-stale-agent-presence","start_time": "2026-10-21T11:45Z","msg":"job startup timeout"},
+      {"jobid": 4,  "jobname": "gmail-incremental-sync",  "start_time": "2026-10-21T11:45Z", "msg": "job startup timeout"},
+      {"jobid": 16, "jobname": "tasks-notify-due",        "start_time": "2026-10-18T15:54Z", "msg": "job startup timeout"},
+      {"jobid": 11, "jobname": "talkx-scheduler-1min",    "start_time": "2026-10-18T15:54Z", "msg": "job startup timeout"},
+      {"jobid": 20, "jobname": "ai-jobs-tick-1min",       "start_time": "2026-10-18T15:54Z", "msg": "job startup timeout"},
+      {"jobid": 15, "jobname": "multiplix-send-trigger",  "start_time": "2026-10-18T15:54Z", "msg": "job startup timeout"}
+    ],
+    "jobs_no_runs_30d_q3": [
+      {"jobid": 5, "jobname": "vacuum-messages-post-expurgo", "schedule": "20 3 2 9 *", "active": true}
+    ],
+    "migrations_referencing_pg_cron": 57
+  },
+
+  "s7_functions": {
+    "total_public_functions": 274,
+    "functions_with_exception_when_others_q5": [
+      "handle_conversation_closure_gamification",
+      "handle_message_gamification",
+      "mcp_exec",
+      "snapshot_talkx_campaign_audience",
+      "talkx_audience_query",
+      "trigger_pending_multiplix_dispatches",
+      "trigger_talkx_engine_tick"
+    ],
+    "functions_with_execute_dynamic_sql_q6": [
+      {"proname": "mcp_exec",                     "note": "executa SQL arbitrario passado como argumento"},
+      {"proname": "merge_contacts_atomic",         "note": "realoca referencias FK em multiplas tabelas dinamicamente"},
+      {"proname": "purge_gmail_account_data",      "note": "purge dinamico de dados de conta Gmail"},
+      {"proname": "purge_talkx_expired_data",      "note": "purge dinamico de dados TalkX expirados"},
+      {"proname": "talkx_audience_query",          "note": "constroi query de filtro de audiencia de campanha - ALTO RISCO (EXECUTE + WHEN OTHERS)"},
+      {"proname": "talkx_engine_cron_runs",        "note": "EXECUTE 'SELECT jobid FROM cron.job ...' - usa to_regclass para verificar existencia"},
+      {"proname": "trigger_pending_multiplix_dispatches", "note": "usa EXECUTE implicitamente via net.http_post URL do vault"},
+      {"proname": "trigger_talkx_engine_tick",     "note": "usa EXECUTE implicitamente via net.http_post URL do vault"}
+    ],
+    "triggers_summary": {
+      "total_triggers": 166,
+      "tables_with_most_triggers": [
+        {"table": "contacts",             "count": 14},
+        {"table": "talkx_campaigns",      "count": 8},
+        {"table": "multiplix_dispatches", "count": 5},
+        {"table": "multiplix_recipients", "count": 5},
+        {"table": "talkx_recipients",     "count": 5},
+        {"table": "conversation_closures","count": 5},
+        {"table": "messages",             "count": 8}
+      ]
+    },
+    "rpc_calls_in_code_without_db_function_q8": {
+      "note": "Funcoes chamadas via .rpc() no src/ mas ausentes no schema public do banco",
+      "missing": [
+        "admin_list_cron_jobs",
+        "admin_toggle_cron_job",
+        "app_bootstrap",
+        "dashboard_daily_series",
+        "enqueue_group_outbound_message",
+        "get_search_insights",
+        "inbox_unread_total",
+        "increment_custom_emoji_use",
+        "reopen_conversation",
+        "search_email_threads",
+        "sentiment_trend",
+        "talkx_campaign_recipients_page",
+        "talkx_segment_bulk_action",
+        "talkx_suppression_stats",
+        "talkx_template_library_stats",
+        "talkx_template_stats",
+        "warroom_agent_today",
+        "warroom_queue_stats"
+      ],
+      "possible_name_mismatch": [
+        {"rpc_call": "get_search_insights", "db_function": "search_insights"},
+        {"rpc_call": "inbox_unread_total",  "db_function": "inbox_wait_summary (similar)"}
+      ],
+      "note_admin_cron": "migration 20261011173000_admin_cron_jobs.sql existe mas admin_list_cron_jobs e admin_toggle_cron_job nao estao no banco - possivel drift ou funcoes nao aplicadas"
+    }
+  },
+
+  "findings": [
+    {
+      "id": "F-S6-001",
+      "severity": "MÉDIO",
+      "title": "vacuum-messages-post-expurgo ativo mas nunca mais executará (schedule one-shot expirado + migration de remocao nao aplicada)",
+      "evidence": "Q1: jobid=5, active=true, schedule='20 3 2 9 *' (setembro 2), runs_30d=0, last_run=2026-09-02. Q3: unico job ativo sem execucoes em 30 dias. Repo: migration 20261006202215_remover_cron_vacuum_messages_post_expurgo.sql existe mas job persiste ativo.",
+      "impact": "Job ocupa slot permanente no pool pg_cron (max_worker_processes), cria confusao no monitoramento, e evidencia que a migration de remocao nao foi aplicada ou falhou silenciosamente.",
+      "fix": "Verificar se a migration foi aplicada: SELECT array_length(statements,1) FROM supabase_migrations.schema_migrations WHERE version='20261006202215'. Se nao, aplicar ou executar SELECT cron.unschedule('vacuum-messages-post-expurgo')."
+    },
+    {
+      "id": "F-S6-002",
+      "severity": "MÉDIO",
+      "title": "talkx-scheduler-1min com taxa de falhas de 9% em 30 dias (maior de todos os jobs)",
+      "evidence": "Q1/fail_pct: jobid=11, runs_30d=43179, fails_30d=3878, fail_pct=9.0%. Q2: falhas sao todas 'job startup timeout'.",
+      "impact": "Aproximadamente 130 execucoes falhando por dia. Campanhas TalkX podem ter atrasos de ate 1 minuto nas transicoes de estado em picos de carga.",
+      "fix": "Verificar SHOW cron.max_running_jobs. Avaliar se trigger_talkx_engine_tick pode ser otimizado para execucao mais rapida ou se o intervalo pode ser aumentado para 2 min nos periodos de pico."
+    },
+    {
+      "id": "F-S6-003",
+      "severity": "MÉDIO",
+      "title": "Saturacao simultanea do pool pg_cron em eventos pontuais (todos os jobs falham no mesmo minuto)",
+      "evidence": "Q2: 2026-10-21T11:45 — 6 jobs distintos falharam simultaneamente com 'job startup timeout'. 2026-10-18T15:54 — 4 jobs. Padrão: falhas nao sao aleatorias mas em rafadas correlacionadas.",
+      "impact": "Em picos de carga, o limite de max_worker_processes e atingido e todos os jobs do minuto falham. Crono critico como tasks-notify-due e gmail-incremental-sync ficam sem executar.",
+      "fix": "SELECT current_setting('cron.max_running_jobs'). Aumentar o valor ou escalonar jobs de 1 minuto para diferentes segundos do minuto (pg_cron nao suporta sub-minuto, mas pode-se diminuir o numero de jobs no mesmo minuto)."
+    },
+    {
+      "id": "F-S7-001",
+      "severity": "MÉDIO",
+      "title": "7 funcoes publicas com EXCEPTION WHEN OTHERS podendo engolir erros silenciosamente",
+      "evidence": "Q5: handle_conversation_closure_gamification, handle_message_gamification, mcp_exec, snapshot_talkx_campaign_audience, talkx_audience_query, trigger_pending_multiplix_dispatches, trigger_talkx_engine_tick.",
+      "impact": "Funcoes criticas de cron (trigger_talkx_engine_tick, trigger_pending_multiplix_dispatches) e gamificacao (handle_message_gamification, SECURITY DEFINER) podem falhar sem rastro. Diagnoses de bugs de producao ficam prejudicados.",
+      "fix": "Substituir WHEN OTHERS por WHEN OTHERS THEN INSERT INTO public.error_log ... RAISE; ou usar structured logging antes de re-raise. No minimo, remover o catch silencioso das funcoes de cron-tick."
+    },
+    {
+      "id": "F-S7-002",
+      "severity": "MÉDIO",
+      "title": "talkx_audience_query combina SQL dinamico (EXECUTE) com EXCEPTION WHEN OTHERS — audiencia pode ser gerada incorretamente em silencio",
+      "evidence": "Q6: talkx_audience_query usa EXECUTE para construir filtros de audiencia de campanha. Q5: mesma funcao tem EXCEPTION WHEN OTHERS. Snippet mostra variavel v_phone_regex e construcao dinamica de grupos de filtro.",
+      "impact": "Falha na construcao do SQL de filtro pode resultar em audiencia vazia ou incorreta retornada sem erro para o chamador, causando campanhas com 0 ou wrong recipients sem alerta ao usuario.",
+      "fix": "Remover o WHEN OTHERS ou converter para WHEN specific_exception. Adicionar validacao explicita dos parametros de entrada antes do EXECUTE."
+    },
+    {
+      "id": "F-S7-003",
+      "severity": "MÉDIO",
+      "title": "18 chamadas .rpc() no codigo-fonte apontam para funcoes inexistentes no banco",
+      "evidence": "Q8 grep src/: admin_list_cron_jobs, admin_toggle_cron_job, app_bootstrap, dashboard_daily_series, enqueue_group_outbound_message, get_search_insights (DB tem search_insights), inbox_unread_total, increment_custom_emoji_use, reopen_conversation, search_email_threads, sentiment_trend, talkx_campaign_recipients_page, talkx_segment_bulk_action, talkx_suppression_stats, talkx_template_library_stats, talkx_template_stats, warroom_agent_today, warroom_queue_stats. Nenhuma encontrada no schema public.",
+      "impact": "Chamadas a essas RPCs retornam PGRST202 em producao. Funcionalidades afetadas: dashboard diario, inbox unread count, warroom, TalkX templates stats, admin de crons, reopen conversation, search de emails.",
+      "fix": "Para cada funcao: (a) criar a funcao se e feature planejada, (b) corrigir o nome se e renaming (ex: get_search_insights -> search_insights), ou (c) remover a chamada se e codigo morto. Prioridade: dashboard_daily_series, inbox_unread_total, reopen_conversation, warroom_agent_today/warroom_queue_stats."
+    },
+    {
+      "id": "F-S7-004",
+      "severity": "BAIXO",
+      "title": "admin_list_cron_jobs e admin_toggle_cron_job chamados no front mas ausentes no banco apesar de migration existir",
+      "evidence": "Q8: ambas as funcoes chamadas via .rpc(). Repo: migration 20261011173000_admin_cron_jobs.sql existe. Banco: nenhuma das duas encontradas em SELECT proname FROM pg_proc WHERE pronamespace=public.",
+      "impact": "Painel de administracao de crons nao funciona. Possivel drift: migration criada no repo mas nao aplicada em producao.",
+      "fix": "Verificar se a migration 20261011173000 esta registrada no ledger: SELECT version, name FROM supabase_migrations.schema_migrations WHERE version='20261011173000'. Se ausente, aplicar a migration."
+    },
+    {
+      "id": "F-S7-005",
+      "severity": "BAIXO",
+      "title": "contacts tem 14 triggers — alta densidade pode causar degradacao em operacoes em lote",
+      "evidence": "Q7: 14 triggers em contacts: on_contact_created_auto_assign, on_contact_queue_auto_assign, trg_audit_contact_address_change, trg_audit_contact_deletion_change, trg_audit_contact_purge, trg_contacts_consent_status_guard, trg_contacts_fsm_transition, trg_log_assignment_change, trg_normalize_contact_phone (INSERT+UPDATE), trg_prevent_contact_assignee_hijack, trg_prevent_contact_queue_hijack, trg_redact_crm_sync_on_contact_delete, update_contacts_updated_at.",
+      "impact": "Importacoes em lote, reassignments em massa e purges disparam ate 14 funcoes por linha. Em operacoes de centenas de contatos isso pode causar latencia significativa.",
+      "fix": "Benchmarkar operacoes em lote. Para imports, considerar SET session_replication_role = replica para desativar triggers nao essenciais durante a carga, reativando depois."
+    },
+    {
+      "id": "F-S7-006",
+      "severity": "INFO",
+      "title": "mcp_exec exposto com EXECUTE irrestrito e EXCEPTION WHEN OTHERS",
+      "evidence": "Q6: snippet de mcp_exec mostra 'q text := regexp_replace(sql, ...) ... EXECUTE q'. Q5: funcao tem EXCEPTION WHEN OTHERS. Funcao executa SQL passado como parametro com service_role.",
+      "impact": "Operacional: erros de SQL podem ser mascarados pelo WHEN OTHERS. Funcao nao e exposta a usuarios autenticados (apenas service_role), entao risco de injection externa e baixo.",
+      "fix": "Adicionar logging de erros antes do WHEN OTHERS ou limitar o catch a excecoes especificas de SQL de seguranca (42501, 42P01)."
+    },
+    {
+      "id": "F-S6-004",
+      "severity": "INFO",
+      "title": "4 jobs de cron hardcodam URL de producao (https://tnnnlkbymytvtqngbbqh.supabase.co)",
+      "evidence": "Q1 cmd_preview: jobids 4 (gmail-incremental-sync), 17 (connection-health-check), 18 (avatars-refresh), 21 (searchbox-budget-alert) contem a URL do projeto oficial no comando do cron.",
+      "impact": "Comportamento documentado em CLAUDE.md secao 0 regra 6: banco local com pg_cron ativo pode chamar edge functions de producao. Nao e bug em producao, mas e risco em ambiente local.",
+      "fix": "Documentado em CLAUDE.md — replay local requer /etc/hosts override + cron.launch_active_jobs = off. Nenhuma acao necessaria em producao."
+    }
+  ]
+}
