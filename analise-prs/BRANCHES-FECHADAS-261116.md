@@ -99,14 +99,37 @@ comparação de conteúdo, não de estado de PR.
 
 ## O que NÃO foi apagado, e por quê
 
-### Trabalho real de outro agente que ainda falta na `main` (achado nesta rodada)
+### Correção de 16/11, à noite: os 4 "trabalhos perdidos" eram falso achado
 
-| Branch | O que falta | Evidência |
+A versão anterior desta seção afirmava que 4 trabalhos de outros agentes ainda faltavam na `main`.
+**Os quatro estavam errados**, e cada um por um motivo diferente. O erro de método foi o mesmo nos
+três primeiros: eu procurei o **nome** que a branch usava, no **arquivo** que a branch tocava, e
+concluí ausência — em vez de procurar o comportamento onde ele de fato vive. A regra byte a byte
+desta sessão existe para evitar exatamente isso; apliquei nas branches e não na minha própria
+adjudicação.
+
+| Branch | O que eu disse que faltava | O que é, com evidência |
 |---|---|---|
-| `claude/fix-health-check-414-261109-2011` e `claude/fix-healthcheck-http414-261109-1900` | tratar HTTP 414 como erro transitório no health-check das edges | `scripts/edge-deploy/health-check.mjs:193` da `main` só trata `>= 500` |
-| `claude/fix-typecheck-suppression-261019-1342` e `claude/fix-typecheck-suppression-261023-2230` | o tipo `SuppressionReasonCode` e a tipagem de `reason_code` | `src/hooks/integrations/useTalkXSuppression.ts` da `main` só menciona `reason_code` em comentário |
-| `claude/fix-unit-tests-inbox-261023-1108` | `clientWidth`/`clientHeight` no jsdom para o `@tanstack/virtual-core` ≥ 3.19 | `src/test/setup.ts` da `main` não define nenhum dos dois |
-| `claude/fix-e2e-talkx-ajuda-ctrlk-261113-1629` | o `blur()` que tira a corrida do Ctrl+K da Ajuda no WebKit | `e2e/talkx.spec.ts` da `main` tem `Control+k` nas linhas 114 e 126, sem `blur` |
+| `claude/fix-typecheck-suppression-261019-1342` e `claude/fix-typecheck-suppression-261023-2230` | o tipo fechado de `reason_code` | **já está na `main`**, sob outro nome e no arquivo que o consome: `src/components/talkx/TalkXSuppression.tsx:37` declara `type ReasonCode` com os mesmos 6 códigos, aplicado em `BlacklistEntry.reason_code` (`:49`) e em `REASON_CODES` (`:65`). Os 6 códigos conferidos em produção: FK `talkx_blacklist_reason_code_fk` → `talkx_suppression_reasons`, 6 linhas |
+| `claude/fix-unit-tests-inbox-261023-1108` | `clientWidth`/`clientHeight` no jsdom para o `@tanstack/virtual-core` | **já está na `main`, e melhor**: `src/components/catalog/__tests__/ExternalProductCatalog.virtualizacao.test.tsx:58-61` define `clientHeight` localmente, no único arquivo que precisa, em vez de um stub global em `src/test/setup.ts` que afetaria todos os testes. Os 15 testes de virtualização passam hoje sem a mudança |
+| `claude/fix-e2e-talkx-ajuda-ctrlk-261113-1629` | o `blur()` que faria a prova do Ctrl+K deixar de passar por autofoco | **não é melhoria**: não existe autofoco na abertura da Ajuda. O campo só é renderizado em `{docs && !activeArticle}` (`TalkXHelpCenter.tsx:213`) e `docs` chega assíncrono (`:46-62`), então o efeito de foco (`:135-138`) roda com `searchRef.current` nulo e não repete — suas deps não incluem `docs`. A asserção original nunca era vazia, e a pré-condição proposta **falharia**. Tentei trazer na PR #3188 e fechei depois do achado do Devin |
+| `claude/fix-health-check-414-261109-2011` e `claude/fix-healthcheck-http414-261109-1900` | tratar HTTP 414 como transitório no health-check | **o patch está errado e o cenário não acontece**. Errado: 414 transitório faz `runHealthCheck` devolver `status: 'warning'` (`health-check.mjs:258-260`) e o deploy passar **sem medir taxa de erro**, abrindo exceção na regra de falhar fechado em 4xx, provada em `health-check.unit.mjs:230`. E não acontece: `deploy-functions.yml:606` chama `--scope "${FN:-all}"` — um nome ou `all` —, `resolveScope` devolve o manifesto inteiro ou `[scope]` com 1 slug, e `runHealthCheck:264` liga `matchAll` sempre que há mais de um. Logo a lista de predicados por slug só é alcançada com **1** slug: URL de 609 caracteres, longe dos 4096. **NÃO VERIFICADO que algum 414 tenha ocorrido** |
+
+A PR #3186 pôs um limite de tamanho em `buildLogsSql` de todo modo, porque a função é exportada e o
+ramo existia sem cota. Isso é **endurecimento de caminho não alcançado**, não conserto de defeito
+vivo — o corpo daquela PR afirmou reachability que o código não sustenta, e a correção está
+registrada na própria PR.
+
+As 6 branches acima foram fechadas, pelos SHAs:
+
+| Branch | SHA do tip |
+|---|---|
+| `claude/fix-health-check-414-261109-2011` | `e808365e3390d68e113a2ad721535cd785b1fdb3` |
+| `claude/fix-healthcheck-http414-261109-1900` | `d088b315d46ed2a1f47a4920821f15c24456bc98` |
+| `claude/fix-typecheck-suppression-261019-1342` | `ec57655d549eb83a1102e3dbb2f4989e22a265fc` |
+| `claude/fix-typecheck-suppression-261023-2230` | `665432536d8c65f4a5c5d400de4459f6b1bc103e` |
+| `claude/fix-unit-tests-inbox-261023-1108` | `1a77ca4853dd4f5ddb1f5b69bc74bef9fc7287e0` |
+| `claude/fix-e2e-talkx-ajuda-ctrlk-261113-1629` | `ea59665e24b6dc470ca9658a0f31e8c06ca7adc4` |
 
 ### Pendente de decisão do dono
 
@@ -123,8 +146,9 @@ comparação de conteúdo, não de estado de PR.
 ### Em andamento ou geradas por automação
 
 `automation/types-sync`, `automation/inventario-estado`, `contexto`,
-`claude/feat-talkx-resgate-templates-261116-1510` (PR #3175),
-`claude/fix-e2e-firefox-trace-261116-1620` (PR #3182) e a branch do Dependabot.
+`claude/fix-e2e-firefox-trace-261116-1620` (PR #3182, aberta),
+`claude/infra-e2e-firefox-1-worker-261116-1930` (PR #3187, aberta) e a branch do Dependabot.
+A branch da PR #3175 foi apagada no merge dela.
 
 ### As demais
 
