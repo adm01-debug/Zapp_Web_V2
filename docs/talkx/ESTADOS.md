@@ -29,7 +29,7 @@ com `VITE_TALKX_KIT=1`, lido de `src/components/talkx/kit/forcedState.ts`):
 | `src/components/talkx/TalkXMessagePreview.tsx` | — | — | — | — | — | — |
 | `src/components/talkx/TalkXOverview.tsx` | `312`, `338` | `305`, `307` | `297` | — | — | — |
 | `src/components/talkx/TalkXScheduleTimeline.tsx` | — | — | — | — | — | — |
-| `src/components/talkx/TalkXSegments.tsx` | `502`, `504` | `427`, `500`, `609` | `437`, `496` | — | — | — |
+| `src/components/talkx/TalkXSegments.tsx` | `514`, `516` | `439`, `512`, `622` | `449`, `508` | — | — | — |
 | `src/components/talkx/TalkXSettings.tsx` | — | `32` | `28` | — | — | — |
 | `src/components/talkx/TalkXSuppression.tsx` | `616`, `618` | `614`, `694`, `850` | `610` | — | — | — |
 | `src/components/talkx/TalkXTemplateEditor.tsx` | — | `519` | `515` | — | — | — |
