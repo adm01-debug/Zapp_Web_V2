@@ -1,5 +1,10 @@
 # Relatório da sessão de 15–16/11/2026 — o que foi feito, como e por quê
 
+> **Leia antes: [`HANDOFF-SESSAO-2026-11-16.md`](HANDOFF-SESSAO-2026-11-16.md).** Este relatório
+> foi escrito às 10:30 UTC de 16/11 e corrigido às 11:35 (14 afirmações derrubadas por verificação
+> adversarial). O handoff cobre o que aconteceu depois — o merge da #3162, o estado da `main`
+> (`4bc94cb75`) e os pontos em que os fatos de produção aqui já envelheceram.
+
 Documento de prestação de contas. Escrito no fechamento da sessão, antes de o contêiner ser
 descartado. Destinatário: o dono e a próxima sessão de IA.
 
@@ -87,10 +92,16 @@ Três passadas, cada uma com um agente diferente e um papel diferente:
    busca por caminho; a busca por comportamento, não).
 3. **Reexame** — terceira passada nas entradas em que a verificação derrubou o veredito.
 
-Resultado: **22 vereditos derrubados** (31 somando os contadores por lote; 9 entradas aparecem
-duas vezes porque as 92 branches `OBSOLETA` foram auditadas por duas frentes independentes —
-ver 7.1), **153 alegações refutadas**, **226 evidências confirmadas** (151 sem bloqueio, 58 de
-CI/workflow, 10 de migration em produção, 7 de decisão do dono).
+Resultado: **22 vereditos derrubados**, **153 alegações refutadas**, **226 evidências
+confirmadas** (151 sem bloqueio, 58 de CI/workflow, 10 de migration em produção, 7 de decisão do
+dono).
+
+> Sobre o 22: somando `contagem.veredito_derrubado` nos 10 lotes que têm esse campo dá **31**, e há
+> sobreposição entre frentes — as **92** branches `OBSOLETA` foram auditadas **duas vezes** (uma
+> frente de 92 e quatro de 23). O 22 desconta essa dupla contagem, mas **não é reconstituível a
+> partir dos lotes**, que não dizem quais entradas repetem. Para o número exato, recompute por
+> `bruto/triagens/` × `bruto/verificacoes/` × `bruto/vereditos-finais.json`. As 226 evidências,
+> essas sim, conferem com o `itens-confirmados.json`.
 
 Distribuição dos vereditos nas 329 entradas:
 
@@ -442,8 +453,15 @@ proteção de branch recusa.
    (`TalkXCampaignReport.test.tsx:244`) — furo que o Devin achou: o teste confere os 8 rótulos e
    que o número 7 aparece em algum lugar, mas não amarra cada valor ao seu cartão; valor trocado
    entre cartões passa sem ninguém ver.
-4. **Passar o objeto de erro para o boundary** em `TalkXAnalytics.tsx:321` e
-   `TalkXLiveMonitor.tsx:238` — 2 das 22 telas ficaram de fora do fix da #3154.
+4. **Passar o objeto de erro para o boundary** — 2 das 22 telas ficaram de fora do fix da #3154.
+   Os endereços certos (conferidos na `main` `4bc94cb75`; a versão anterior deste relatório
+   apontava `TalkXAnalytics.tsx:321`, que é o `return (`, não o ponto a corrigir):
+   - **Analytics:** `TalkXView.tsx:679` não passa `error` ao `<TalkXAnalytics>`. O objeto existe
+     (`TalkXView.tsx:86`, `error: campaignsError`) e já é repassado a `TalkXOverview` em `:644`.
+     Depois de passá-lo, repasse ao `query={{ … }}` de `TalkXAnalytics.tsx:323`.
+   - **LiveMonitor:** `TalkXLiveMonitor.tsx:238` passa `error: null` de propósito — o hook não tem
+     o que dar: `useTalkXMonitor` (`:127`) devolve só `isError`. É preciso **expor `error` no
+     hook**. Os outros três boundaries do arquivo já passam o objeto (`:156`, `:284`, `:44`).
 5. **Retomar as 58 evidências de CI/workflow** — maior bloco restante da auditoria, todas
    dependentes de decisão do dono por tocarem workflow.
 6. **Retomar o lado local** pelo critério da seção 9, publicando em `refs/salvo/*`.
@@ -662,7 +680,7 @@ Isto economiza retrabalho de comunicação:
 | Aplicar RLS de supervisor | PR #3158 → `20261115040000_copilot_rls_supervisor.sql` | esperando o dono (regra 8) |
 | Chamar a função no tick | `supabase/functions/_shared/copilot-tick.ts:514` e `:531` | **só depois** do apply acima |
 | Amarrar rótulo↔valor no "Resumo da Campanha" | `src/components/talkx/report/__tests__/TalkXCampaignReport.test.tsx:244` | achado do Devin, não corrigido |
-| Passar o objeto de erro ao boundary | `src/components/talkx/TalkXAnalytics.tsx:321` e `src/components/talkx/TalkXLiveMonitor.tsx:238` | 2 das 22 telas ficaram fora do fix da #3154 |
+| Passar o objeto de erro ao boundary | `src/components/talkx/TalkXView.tsx:679` (+ `TalkXAnalytics.tsx:323`) e o hook `useTalkXMonitor` de `src/components/talkx/TalkXLiveMonitor.tsx:127` (+ `:238`) | 2 das 22 telas ficaram fora do fix da #3154 — ver §11 item 4 para o porquê de cada endereço |
 | 58 evidências de CI/workflow | `itens-confirmados.json`, filtro `bloqueio = "ci_workflow"` | todas param no dono |
 | 9 evidências de migration em produção | mesmo arquivo, filtro `bloqueio = "migration_producao"` | 1 das 10 foi feita (#3157) |
 | 151 evidências sem bloqueio | mesmo arquivo, filtro `bloqueio = "nenhum"` | 3 famílias feitas (relatório, segmentos, states); o resto está aberto |
