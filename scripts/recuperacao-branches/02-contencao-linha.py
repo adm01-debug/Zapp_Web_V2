@@ -26,6 +26,28 @@ with open(f'{O}/unicos.tsv') as f:
         if len(p) == 3:
             rows.append(tuple(p))
 
+# merge-base por branch, para detectar linha REMOVIDA pela branch
+mb_cache = {}
+
+
+def merge_base(br):
+    if br not in mb_cache:
+        mb_cache[br] = subprocess.run(['git', 'merge-base', 'origin/main', br], cwd=R, capture_output=True, text=True).stdout.strip()
+    return mb_cache[br]
+
+
+def linhas_de(ref, path):
+    out = subprocess.run(['git', 'show', f'{ref}:{path}'], cwd=R, capture_output=True, text=True, errors='replace')
+    if out.returncode != 0:
+        return None
+    s = set()
+    for l in out.stdout.splitlines():
+        t = l.strip()
+        if t and not ESTRUTURAL.match(t):
+            s.add(t)
+    return s
+
+
 # cache de conjuntos de linhas por blob
 cache = {}
 
@@ -59,7 +81,21 @@ for br, path, blob in rows:
     bl = lines(blob)
     ml = lines(mb)
     falta = bl - ml
-    out.append((br, path, 'CONTIDO' if not falta else 'PARCIAL', len(falta), len(bl)))
+    if falta:
+        out.append((br, path, 'PARCIAL', len(falta), len(bl)))
+        continue
+    # A main contem todas as linhas da branch -- mas REMOVER linha tambem e trabalho.
+    # Linha que existia no ponto de bifurcacao, a branch tirou e a main ainda tem e'
+    # remocao nao incorporada, e sairia como CONTIDO. Achado do Codex na PR #3192;
+    # medido nesta base: 7 dos 208 pares CONTIDO, dois deles em migration.
+    base = merge_base(br)
+    lbase = linhas_de(base, path) if base else None
+    if lbase is not None:
+        removidas = (lbase - bl) & ml
+        if removidas:
+            out.append((br, path, 'PARCIAL-REMOCAO', len(removidas), len(bl)))
+            continue
+    out.append((br, path, 'CONTIDO', 0, len(bl)))
 
 with open(f'{O}/linhas.tsv', 'w') as f:
     for r in out:
