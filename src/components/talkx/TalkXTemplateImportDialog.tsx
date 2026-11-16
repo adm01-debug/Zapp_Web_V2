@@ -13,6 +13,7 @@ import {
   serializeTemplatesToCsv,
   serializeTemplatesToJson,
   downloadTemplateFile,
+  linhaBloqueada,
   TEMPLATE_FILE_MAX_BYTES,
   TEMPLATE_FILE_MAX_ROWS,
   type ParsedTemplateRow,
@@ -106,7 +107,7 @@ export function TalkXTemplateImportDialog({ existingTemplates, onImport, onClose
     setIsImporting(true);
     try {
       const payload = parsed
-        .filter((r) => r.issues.filter((i) => i.field === 'name' || i.field === 'content').length === 0)
+        .filter((r) => !linhaBloqueada(r))
         .map((r) => ({ row: r.raw, action: conflictFor(r) }));
       const res = await onImport(payload);
       setResult(res);
@@ -115,9 +116,9 @@ export function TalkXTemplateImportDialog({ existingTemplates, onImport, onClose
     }
   };
 
-  const validRows = parsed?.filter((r) => r.issues.filter((i) => i.field === 'name' || i.field === 'content').length === 0) ?? [];
+  const validRows = parsed?.filter((r) => !linhaBloqueada(r)) ?? [];
   const conflictRows = validRows.filter((r) => r.isConflict);
-  const errorRows = parsed?.filter((r) => r.issues.some((i) => i.field === 'name' || i.field === 'content')) ?? [];
+  const errorRows = parsed?.filter((r) => linhaBloqueada(r)) ?? [];
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4" onClick={(e) => e.target === e.currentTarget && onClose()}>
@@ -223,7 +224,7 @@ export function TalkXTemplateImportDialog({ existingTemplates, onImport, onClose
                   </thead>
                   <tbody>
                     {parsed.map((row) => {
-                      const hasBlocker = row.issues.some((i) => i.field === 'name' || i.field === 'content');
+                      const hasBlocker = linhaBloqueada(row);
                       return (
                         <tr key={row.index} className={cn('border-t border-border/30', hasBlocker && 'opacity-60')}>
                           <td className="px-3 py-2">

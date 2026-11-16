@@ -10,6 +10,9 @@ import {
   TEMPLATE_CONTENT_MAX,
   TEMPLATE_DESCRIPTION_MAX,
   TEMPLATE_FILE_MAX_ROWS,
+  TEMPLATE_TAGS_MAX,
+  TEMPLATE_TAG_MAX,
+  linhaBloqueada,
 } from '../talkxTemplateFile';
 
 const UTF8_BOM = '﻿';
@@ -472,5 +475,62 @@ describe('X093 · limites de conteudo e descricao batem com o banco', () => {
     const v = ' '.repeat(10) + 'a'.repeat(TEMPLATE_CONTENT_MAX - 5);
     const r = parseTemplateFile(JSON.stringify([{ name: 'T', content: v }]), 'json', NO_CONFLICTS);
     expect(r.rows[0].issues.map((i) => i.field)).toContain('content');
+  });
+});
+
+/**
+ * Achado da revisao da PR #3175 (Codex P2 e Devin): o parser nao olhava as tags
+ * e o dialogo tratava como bloqueante so `name` e `content`. Tag de 65
+ * caracteres, 51 tags, descricao de 4001 e status invalido apareciam em
+ * vermelho mas a linha ficava "Ok" e ia para a gravacao, recusada pelo banco.
+ */
+describe('X093 · limites de tags batem com o trigger do banco', () => {
+  it(`${TEMPLATE_TAGS_MAX} tags passam; ${TEMPLATE_TAGS_MAX + 1} recusa`, () => {
+    const ok = Array.from({ length: TEMPLATE_TAGS_MAX }, (_, i) => `t${i}`);
+    const r1 = parseTemplateFile(JSON.stringify([{ name: 'T', content: 'Oi', tags: serializarTags(ok) }]), 'json', NO_CONFLICTS);
+    expect(r1.rows[0].issues).toHaveLength(0);
+
+    const demais = Array.from({ length: TEMPLATE_TAGS_MAX + 1 }, (_, i) => `t${i}`);
+    const r2 = parseTemplateFile(JSON.stringify([{ name: 'T', content: 'Oi', tags: serializarTags(demais) }]), 'json', NO_CONFLICTS);
+    expect(r2.rows[0].issues.map((i) => i.field)).toContain('tags');
+  });
+
+  it(`tag de ${TEMPLATE_TAG_MAX} passa; de ${TEMPLATE_TAG_MAX + 1} recusa`, () => {
+    const r1 = parseTemplateFile(JSON.stringify([{ name: 'T', content: 'Oi', tags: 'a'.repeat(TEMPLATE_TAG_MAX) }]), 'json', NO_CONFLICTS);
+    expect(r1.rows[0].issues).toHaveLength(0);
+
+    const r2 = parseTemplateFile(JSON.stringify([{ name: 'T', content: 'Oi', tags: 'a'.repeat(TEMPLATE_TAG_MAX + 1) }]), 'json', NO_CONFLICTS);
+    expect(r2.rows[0].issues.map((i) => i.field)).toContain('tags');
+  });
+
+  it('tag longa e contada em ponto de codigo, como o length() do Postgres', () => {
+    // 64 foguetes: 64 para o banco, 128 para o `.length` do JavaScript.
+    const r = parseTemplateFile(JSON.stringify([{ name: 'T', content: 'Oi', tags: '🚀'.repeat(TEMPLATE_TAG_MAX) }]), 'json', NO_CONFLICTS);
+    expect(r.rows[0].issues).toHaveLength(0);
+  });
+});
+
+describe('X093 · o que o banco recusa bloqueia a linha', () => {
+  const bloqueia = (campos: Record<string, unknown>) => {
+    const r = parseTemplateFile(JSON.stringify([{ name: 'T', content: 'Oi', ...campos }]), 'json', NO_CONFLICTS);
+    return linhaBloqueada(r.rows[0]);
+  };
+
+  it('descricao acima do limite bloqueia', () => {
+    expect(bloqueia({ description: 'd'.repeat(TEMPLATE_DESCRIPTION_MAX + 1) })).toBe(true);
+    expect(bloqueia({ description: 'd'.repeat(TEMPLATE_DESCRIPTION_MAX) })).toBe(false);
+  });
+
+  it('status fora de draft/review/approved bloqueia', () => {
+    expect(bloqueia({ status: 'pendente' })).toBe(true);
+    expect(bloqueia({ status: 'approved' })).toBe(false);
+  });
+
+  it('tags fora do limite bloqueiam', () => {
+    expect(bloqueia({ tags: 'a'.repeat(TEMPLATE_TAG_MAX + 1) })).toBe(true);
+  });
+
+  it('linha sem problema nenhum nao bloqueia', () => {
+    expect(bloqueia({})).toBe(false);
   });
 });

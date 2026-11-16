@@ -88,3 +88,85 @@ describe('X093 · TalkXTemplateImportDialog', () => {
     expect(result.errors).toBe(0);
   });
 });
+
+/**
+ * Achado da revisao da PR #3175 (Devin e Codex): o dialogo tratava como
+ * bloqueante so `name` e `content`. Descricao acima de 4.000, status invalido e
+ * tag fora do limite apareciam em vermelho, mas a linha ficava "Ok", o botao
+ * contava ela e a gravacao falhava no banco.
+ *
+ * Estas provas sobem um arquivo de verdade pelo input e olham o que chega em
+ * `onImport` — e falham contra o codigo anterior por COMPORTAMENTO, nao por
+ * import ausente.
+ */
+describe('X093 · o que o banco recusa nao chega em onImport', () => {
+  async function subir(json: string, onImport: ReturnType<typeof vi.fn>) {
+    render(
+      <TalkXTemplateImportDialog existingTemplates={[]} onImport={onImport} onClose={vi.fn()} />,
+    );
+    const input = document.querySelector('input[type="file"]') as HTMLInputElement;
+    const file = new File([json], 'templates.json', { type: 'application/json' });
+    Object.defineProperty(input, 'files', { value: [file], configurable: true });
+    fireEvent.change(input);
+    await waitFor(() => expect(screen.getByRole('button', { name: /Importar \d+ template/i })).toBeTruthy());
+    return screen.getByRole('button', { name: /Importar \d+ template/i });
+  }
+
+  it('descricao de 4001 caracteres nao entra na importacao', async () => {
+    const onImport = makeOnImport();
+    const botao = await subir(
+      JSON.stringify([{ name: 'Oferta', content: 'Olá', description: 'd'.repeat(4001) }]),
+      onImport,
+    );
+    expect(botao.textContent).toContain('Importar 0');
+    expect((botao as HTMLButtonElement).disabled).toBe(true);
+    expect(onImport).not.toHaveBeenCalled();
+  });
+
+  it('descricao de 4000 caracteres entra normalmente', async () => {
+    const onImport = makeOnImport();
+    const botao = await subir(
+      JSON.stringify([{ name: 'Oferta', content: 'Olá', description: 'd'.repeat(4000) }]),
+      onImport,
+    );
+    expect(botao.textContent).toContain('Importar 1');
+    fireEvent.click(botao);
+    await waitFor(() => expect(onImport).toHaveBeenCalledTimes(1));
+    expect(onImport.mock.calls[0][0]).toHaveLength(1);
+  });
+
+  it('tag de 65 caracteres nao entra na importacao', async () => {
+    const onImport = makeOnImport();
+    const botao = await subir(
+      JSON.stringify([{ name: 'Oferta', content: 'Olá', tags: 'a'.repeat(65) }]),
+      onImport,
+    );
+    expect(botao.textContent).toContain('Importar 0');
+    expect(onImport).not.toHaveBeenCalled();
+  });
+
+  it('status invalido nao entra na importacao', async () => {
+    const onImport = makeOnImport();
+    const botao = await subir(
+      JSON.stringify([{ name: 'Oferta', content: 'Olá', status: 'pendente' }]),
+      onImport,
+    );
+    expect(botao.textContent).toContain('Importar 0');
+    expect(onImport).not.toHaveBeenCalled();
+  });
+
+  it('linha boa continua entrando junto com uma ruim de fora', async () => {
+    const onImport = makeOnImport();
+    const botao = await subir(
+      JSON.stringify([
+        { name: 'Boa', content: 'Olá' },
+        { name: 'Ruim', content: 'Olá', description: 'd'.repeat(4001) },
+      ]),
+      onImport,
+    );
+    expect(botao.textContent).toContain('Importar 1');
+    fireEvent.click(botao);
+    await waitFor(() => expect(onImport).toHaveBeenCalledTimes(1));
+    expect(onImport.mock.calls[0][0].map((p: { row: { name: string } }) => p.row.name)).toEqual(['Boa']);
+  });
+});
