@@ -1,6 +1,9 @@
-import subprocess, collections, os
+import subprocess, collections, os, re
 O = os.environ['OUT']
 R = subprocess.run(['git', 'rev-parse', '--show-toplevel'], capture_output=True, text=True).stdout.strip()
+
+# Linha feita so de estrutura: nao distingue comportamento nenhum.
+ESTRUTURAL = re.compile(r'^[\s{}()\[\];,*/+\-=<>&|?:]*$')
 
 
 def run(a):
@@ -31,8 +34,11 @@ def lines(blob):
     s = set()
     for l in txt.splitlines():
         t = l.strip()
-        # linha curta ou puro delimitador nao distingue nada: fora da comparacao
-        if len(t) >= 8 and t not in ('*/', '/*', '});', '};', '},', 'return;'):
+        # Fora da comparacao: SO linha estrutural pura (chaves, parenteses, virgula,
+        # ponto e virgula, marcacao de comentario). Nao se corta por tamanho: uma linha
+        # curta pode ser a diferenca inteira de comportamento -- `true;` contra `false;`
+        # sao 5 e 6 caracteres e invertem a regra. Achado do Codex na PR #3192.
+        if t and not ESTRUTURAL.match(t):
             s.add(t)
     cache[blob] = s
     if len(cache) > 6000:

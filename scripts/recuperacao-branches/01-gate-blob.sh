@@ -13,7 +13,11 @@ git ls-tree -r origin/main | awk '{print $3}' | sort -u > "$OUT/main-blobs.txt"
 : > "$OUT/resumo.tsv"
 : > "$OUT/unicos.tsv"
 
-for br in $(git for-each-ref --format='%(refname:short)' refs/remotes/origin | grep -vE '^origin/(HEAD|main|contexto)$'); do
+# `refname:short` de `refs/remotes/origin/HEAD` encurta para o nome nu `origin` em clones
+# que tenham esse alias, e `origin` escaparia de um filtro escrito so com `origin/...`:
+# a main entraria no resumo como branch extra de zero arquivo. Achado da Devin na PR #3192;
+# neste clone nao ha `origin/HEAD`, mas o filtro cobre o caso de qualquer forma.
+for br in $(git for-each-ref --format='%(refname:short)' refs/remotes/origin | grep -vE '^origin$|^origin/(HEAD|main|contexto)$'); do
   mb=$(git merge-base origin/main "$br" 2>/dev/null) || { echo -e "$br\tERRO\t-\t-\t-" >> "$OUT/resumo.tsv"; continue; }
   tip=$(git rev-parse "$br")
   # arquivos adicionados/modificados pela branch desde o fork point
