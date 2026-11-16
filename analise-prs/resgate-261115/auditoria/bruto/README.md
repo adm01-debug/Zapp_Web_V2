@@ -25,6 +25,22 @@ nem conferida.
 Na raiz: `vereditos-finais.json` (o veredito por entrada depois das três passadas) e
 `perda-intermediaria.json` (as perdas candidatas antes do corte final).
 
+Mais duas pastas, acrescentadas no fechamento da sessão para não deixar nada só no contêiner:
+
+| Pasta | Arquivos | O que guarda |
+|---|---|---|
+| `dossies-prs-antigas/` | 199 | Dossiês de PRs **anteriores** ao resgate (números 1930–2200 em diante), com veredito por PR. Conjunto distinto do `../dossies/`: 193 destes não existiam no repositório. |
+| `diarios-sessao/` | 235 | Todo o restante do material da sessão cujo conteúdo não estava no repositório — argumentos de orquestração (`args-*.json`, `argsB/argsC`), consolidações (`auto.json`, `auto2.json`, `backlog-resgate.json`, `audit.json`) e os relatórios intermediários. |
+
+**Leia `diarios-sessao/` com uma ressalva:** parte desses arquivos **não é autoral** — são
+extratos de arquivos que vivem em *outras branches* do próprio repositório, copiados para
+servir de lado esquerdo/direito de uma comparação. O nome diz qual é qual: prefixo `br-`,
+`branch-` ou `branch_` é a versão **da branch**; `main-`, `ba-` ou `base-` é a versão **da
+`main`**; `del-`/`add-` são as linhas removidas/adicionadas. Esses extratos estão aqui por
+completude da trilha, não porque corriam risco: o original continua na branch no GitHub.
+O que é mesmo autoral desta sessão são os `args-*`, `auto*`, `backlog-resgate`, `audit.json`
+e os dossiês.
+
 ## Como isto se liga ao resultado
 
 O `itens-confirmados.json` da pasta de cima é o **destilado** destes diários: cada um dos 226

@@ -1,0 +1,5 @@
+        "chatbot_flows.chatbot_flows_trigger_type_check:CHECK ((trigger_type = ANY (ARRAY['keyword'::text, 'first_message'::text, 'menu'::text, 'webhook'::text, 'schedule'::text])))",
+        "contacts.chk_conversation_status_values:CHECK (((conversation_status IS NULL) OR (conversation_status = ANY (ARRAY['open'::text, 'pending'::text, 'waiting'::text, 'resolved'::text, 'closed'::text, 'archived'::text]))))",
+        "user_roles.user_roles_no_special_agent:CHECK ((role <> 'special_agent'::app_role))",
+        "transfer_conversation(p_contact_id uuid, p_to_agent_id uuid, p_to_queue_id uuid, p_note text, p_expected_agent_id uuid)->uuid|kind=f",
+        "update_own_profile(p_display_name text, p_avatar_url text, p_phone text, p_email text, p_signature text, p_birthday text)->boolean|kind=f",

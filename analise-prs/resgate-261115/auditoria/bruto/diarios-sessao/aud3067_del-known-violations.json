@@ -1,0 +1,2 @@
+    "rpc:record_away_message:supabase/functions/_shared/evolution-webhook-messages.ts",
+    "rpc:set_conversations_status:src/hooks/inbox/conversationArchive.ts"
