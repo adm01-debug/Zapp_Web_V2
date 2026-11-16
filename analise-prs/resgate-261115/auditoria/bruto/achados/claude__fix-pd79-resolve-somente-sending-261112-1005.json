@@ -1,0 +1,66 @@
+[
+ {
+  "commit": "2c8d11932",
+  "arquivo": "src/components/inbox/chat/__tests__/UnconfirmedMessagesPanel.test.tsx",
+  "linhas": 1,
+  "amostra": [
+   "  useUnconfirmedMessages: () => hook.value,"
+  ]
+ },
+ {
+  "commit": "2c8d11932",
+  "arquivo": "src/hooks/delivery/__tests__/useUnconfirmedMessages.test.tsx",
+  "linhas": 2,
+  "amostra": [
+   "import { renderHook, waitFor } from '@testing-library/react';",
+   "  return { supabase: { from: () => makeChain(), rpc: vi.fn() } };"
+  ]
+ },
+ {
+  "commit": "2c8d11932",
+  "arquivo": "supabase/migrations/20261112130000_resolve_unconfirmed_somente_sending.sql",
+  "linhas": 70,
+  "amostra": [
+   "-- resolve_unconfirmed_somente_sending",
+   "-- Rollback: restaura resolve_unconfirmed_message com o corpo de 20261111160000 (aceita qualquer status fora de sent/delivered/read).",
+   "-- Rollback (SQL executável):",
+   "--   create or replace function public.resolve_unconfirmed_message( p_message_id uuid, p_outcome text ) returns uuid language plpgsql security definer",
+   "--   revoke all on function public.resolve_unconfirmed_message(uuid, text) from public, anon;",
+   "--   grant execute on function public.resolve_unconfirmed_message(uuid, text) to authenticated;"
+  ]
+ },
+ {
+  "commit": "6639174f5",
+  "arquivo": "src/components/inbox/ChatPanel.tsx",
+  "linhas": 4,
+  "amostra": [
+   "  /** Grupo de WhatsApp da conversa (mensagens com contact_id NULL) — repassado ao painel C110. */",
+   "  groupId?: string | null;",
+   "export function ChatPanel({ conversation, messages, onSendMessage, onSendAudio, showDetails = false, onToggleDetails, onBack, hideHeader = false, pend",
+   "        <UnconfirmedMessagesPanel contactId={conversation.contact.id} groupId={groupId} />"
+  ]
+ },
+ {
+  "commit": "6639174f5",
+  "arquivo": "src/components/inbox/chat/__tests__/ChatPanel.entrega-conversa.test.tsx",
+  "linhas": 4,
+  "amostra": [
+   "  it('C110: painel de entrega ambígua recebe o contato e, em conversa de grupo, o groupId', () => {",
+   "    expect(painelC110.props[painelC110.props.length - 1]).toMatchObject({ contactId: 'contato-1', groupId: undefined });",
+   "        <ChatPanel conversation={conversation} messages={[]} onSendMessage={vi.fn()} groupId=\"grupo-1\" />",
+   "    expect(painelC110.props[painelC110.props.length - 1]).toMatchObject({ contactId: 'contato-1', groupId: 'grupo-1' });"
+  ]
+ },
+ {
+  "commit": "6639174f5",
+  "arquivo": "supabase/migrations/20261112130000_resolve_unconfirmed_somente_sending.sql",
+  "linhas": 5,
+  "amostra": [
+   "-- vencido. Esta migration restringe a RPC a status = 'sending' e passa a recusar",
+   "-- p_outcome NULL com 22023 (antes caía no ELSE do CASE e gravava 'failed').",
+   "  -- NULL também é recusado: com NULL o NOT IN dá NULL (não dispara) e o CASE",
+   "  -- abaixo cairia no ELSE 'failed', gravando resolução sem desfecho escolhido.",
+   "  IF p_outcome IS NULL OR p_outcome NOT IN ('sent', 'not_delivered') THEN"
+  ]
+ }
+]

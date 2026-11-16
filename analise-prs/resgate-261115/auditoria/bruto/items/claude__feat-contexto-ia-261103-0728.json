@@ -1,0 +1,252 @@
+{
+ "id": "claude__feat-contexto-ia-261103-0728",
+ "kind": "branch",
+ "ref": "origin/claude/feat-contexto-ia-261103-0728",
+ "tip": "f1614500e22612ce4b632417e15d36da91336e71",
+ "merge_base": "818f76b3507d9dee508d321a5bb8e7590c10f8f7",
+ "ahead": 6,
+ "last_commit_date": "2026-11-03",
+ "merge_base_date": "2026-11-02",
+ "prs_with_same_tip": [
+  2661
+ ],
+ "triagem_2804": {
+  "2661": "JA_NA_MAIN"
+ },
+ "closure_comment": {},
+ "files": [
+  {
+   "path": ".github/workflows/contexto-ia.yml",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "patch_lines": 144,
+   "line_check": {
+    "added": 119,
+    "missing_in_main": 119,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "# docs:",
+     "#   gatilho: push em main que toque código/banco/scripts/workflows/docs (filtro de caminhos), a cada 10 min e dispatch",
+     "#   prova: branch contexto-ia = main + 1 commit com inventario/ia/* (regerado do código) e graphify-out/GRAPH_REPORT.md",
+     "#   falha: o job fica vermelho; a branch contexto-ia fica no último estado bom",
+     "#   avisa: nada (force-push na branch derivada contexto-ia)",
+     "name: Contexto para agentes de IA",
+     "# Mantém inventario/ia/ (rotas, módulos, hooks, edges, banco, testes, scripts, grafo, convenções,",
+     "# baseline, graphify) sempre igual ao código em main, para qualquer agente consultar antes de",
+     "# planejar/executar. Gerador: scripts/ai-context/gerar.mjs (zero dependências; ~10 s neste repo),",
+     "# testado por scripts/ai-context/gerar.unit.mjs (node --test) antes de cada geração.",
+     "# Onde fica: na branch derivada `contexto-ia` (= main + 1 commit), nunca em main — main tem",
+     "# checks obrigatórios + enforce_admins, então push direto do GITHUB_TOKEN seria recusado, e PR a",
+     "# cada 10 min seria spam. Vercel não faz deploy dessa branch (vercel.json git.deploymentEnabled).",
+     "# Leitura: raw.githubusercontent.com/<owner>/<repo>/contexto-ia/inventario/ia/INDEX.md,",
+     "# `git show origin/contexto-ia:inventario/ia/<arquivo>` ou MCP get_file(ref=contexto-ia).",
+     "# graphify (grafo de código por AST): roda via uvx quando disponível; só GRAPH_REPORT.md e o resumo",
+     "# inventario/ia/grafo-graphify.json vão para a branch (graph.json tem ~70 MB). O cache de AST fica",
+     "# em actions/cache, então runs seguintes só reextraem arquivos que mudaram.",
+     "# Custo: no agendamento, se HEAD de main == commit do manifest da branch, sai em ~15 s sem gerar.",
+     "  push:",
+     "    branches: [main]",
+     "    paths:",
+     "      - 'src/**'",
+     "      - 'supabase/**'",
+     "      - 'scripts/**'"
+    ],
+    "still_sample": [],
+    "same_basename_in_main": []
+   }
+  },
+  {
+   "path": ".gitignore",
+   "status": "BOTH_CHANGED",
+   "hunk": "CONFLICT",
+   "patch_lines": 11,
+   "line_check": {
+    "added": 2,
+    "missing_in_main": 2,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "# gerado por scripts/ai-context/gerar.mjs; versao oficial vive na branch contexto-ia",
+     "inventario/ia/"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "CLAUDE.md",
+   "status": "BOTH_CHANGED",
+   "hunk": "CONFLICT",
+   "patch_lines": 12,
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "| `inventario/ia/` | **contexto vivo para agentes — comece por `inventario/ia/INDEX.md`:** rotas/vistas/menu → arquivo → hooks → edges → tabelas (`rotas.json`, "
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "docs/audits/PLANO_GITHUB_ACTIONS_100_ETAPAS_2026-10-01.md",
+   "status": "BOTH_CHANGED",
+   "hunk": "CONFLICT",
+   "patch_lines": 13,
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 1,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "**Inventário vigente (medido em 2026-11-03, não herdado do texto de 01/10):** **19** arquivos YAML em `.github/workflows/`, mais os"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "docs/ci/README.md",
+   "status": "BOTH_CHANGED",
+   "hunk": "CONFLICT",
+   "patch_lines": 35,
+   "line_check": {
+    "added": 7,
+    "missing_in_main": 7,
+    "removed": 1,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "**19 workflows.**",
+     "| Contexto para agentes de IA | [`contexto-ia.yml`](../../.github/workflows/contexto-ia.yml) | push em main que toque código/banco/scripts/workflows/docs (filtr",
+     "### Contexto para agentes de IA (`contexto-ia.yml`)",
+     "- **Gatilho:** push em main que toque código/banco/scripts/workflows/docs (filtro de caminhos), a cada 10 min e dispatch",
+     "- **O que prova:** branch contexto-ia = main + 1 commit com inventario/ia/* (regerado do código) e graphify-out/GRAPH_REPORT.md",
+     "- **Quando falha:** o job fica vermelho; a branch contexto-ia fica no último estado bom",
+     "- **Quem é avisado:** nada (force-push na branch derivada contexto-ia)"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "package.json",
+   "status": "BOTH_CHANGED",
+   "hunk": "CONFLICT",
+   "patch_lines": 13,
+   "line_check": {
+    "added": 2,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "    \"contexto:ia\": \"node scripts/ai-context/gerar.mjs\","
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "scripts/ai-context/cenarios.mjs",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "scripts/ai-context/gerar.mjs",
+   "status": "BOTH_CHANGED",
+   "hunk": "CONFLICT",
+   "patch_lines": 921,
+   "line_check": {
+    "added": 807,
+    "missing_in_main": 25,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "//     \"routeFiles\": [...], \"aliases\": { \"@/\": \"src/\" }, \"typesFile\": \"...\", \"maxFileMB\": 8 }",
+     "import { execSync } from 'node:child_process';",
+     "const readText = (p) => { try { const a = path.isAbsolute(p) ? p : abs(p); if (fs.statSync(a).size > MAX_FILE_BYTES) return ''; return fs.readFileSync(a, 'utf8'",
+     "const git = (cmd) => { try { return execSync(`git ${cmd}`, { cwd: ROOT, encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'], maxBuffer: 64 * 1024 * 1024 }).tr",
+     "const stripComments = (s) => s.replace(/\\/\\*[\\s\\S]*?\\*\\//g, '').replace(/(^|[^:\\\\'\"`])\\/\\/[^\\n]*/g, '$1');",
+     "const TEST_RE = /(\\.(test|spec|e2e|contract|contracts|unit|fixture|fixtures)\\.[cm]?[jt]sx?$)|(^|\\/)(__tests__|tests?|e2e|qa|__mocks__|spec|cypress|playwright)\\/",
+     "      if (p || isIndex) rotas.push(mk({ caminho: full, componente: comp, arquivo: file, protegida: tags.some((w) => /Protected|Private|Auth|Guard|Require|Admin/",
+     "        if (!expr.startsWith('[')) { const cm = new RegExp(`(?:const|let|var)\\\\s+${expr.replace(/[.$]/g, '\\\\$&')}\\\\b[^=]*=\\\\s*(\\\\[[^\\\\]]*\\\\])`).exec(src) || [..",
+     "const migDir = ['supabase/migrations', 'migrations', 'db/migrations', 'database/migrations', 'prisma/migrations', 'drizzle', 'sql', 'db'].find((d) => exists(d) ",
+     "  const sqlFiles = migDir ? ALL.filter((f) => f.startsWith(migDir + '/') && f.endsWith('.sql')).sort() : ALL.filter((f) => f.endsWith('.sql') && !/supabase\\/tes",
+     "for (const [f, d] of FILE) for (const t of d.teste ? [] : d.tabelas) { if (!tabelasUsadas.has(t)) tabelasUsadas.set(t, { front: [], edges: [] }); (f.startsWith(",
+     "  rpcs_usadas_no_codigo: uniq([...FILE.values()].flatMap((d) => d.rpcs)).map((r) => ({ nome: r, definida: banco.funcoes.has(r), usada_em: [...FILE.values()].fil",
+     "    const callers = uniq([...FILE.entries()].filter(([f, d]) => !f.startsWith(EDGE_DIR) && d.edges.includes(name)).map(([f]) => f));",
+     "    const chamadaPorEdges = uniq([...FILE.entries()].filter(([f, d]) => f.startsWith(EDGE_DIR) && !f.startsWith(dir + '/') && !f.includes('/_shared/') && d.edge",
+     "const edgesSemPasta = uniq([...FILE.values()].flatMap((d) => d.edges)).filter((e) => !edges.some((x) => x.nome === e));",
+     "  const y = readText(f);",
+     "function gitInfoCommit() { return git('rev-parse HEAD') || null; }",
+     "  const subj = git('log -50 --format=%s').split('\\n').filter(Boolean);",
+     "  commit: git('rev-parse HEAD') || null, branch: git('rev-parse --abbrev-ref HEAD') || null, data_commit: git('log -1 --format=%cI') || null, remote: git('remot",
+     "  ultimos_commits: git('log -25 --format=%h|%cs|%s').split('\\n').filter(Boolean).map((l) => { const [h, d, ...s] = l.split('|'); return { sha: h, data: d, assun",
+     "  arquivos_mudados_7d: uniq(git('log --since=7.days --name-only --format=').split('\\n').filter(Boolean)).length,",
+     "  pastas_mais_mudadas_30d: byCount(git('log --since=30.days --name-only --format=').split('\\n').filter(Boolean).map((f) => f.split('/').slice(0, 3).join('/'))).",
+     "  arquivos_mais_mudados_90d: byCount(git('log --since=90.days --name-only --format=').split('\\n').filter((f) => f && FILESET.has(f))).slice(0, 25).map(([arquivo",
+     "  autores_30d: byCount(git('log --since=30.days --format=%an').split('\\n').filter(Boolean)).slice(0, 10).map(([a, n]) => ({ autor: a, commits: n })),",
+     "Publicado na branch \\`contexto-ia\\` (= main + 1 commit) a cada push em \\`main\\` e a cada 10 minutos pelo workflow \\`contexto-ia.yml\\`; gere local com \\`node scr"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "scripts/ai-context/gerar.unit.mjs",
+   "status": "BOTH_CHANGED",
+   "hunk": "CONFLICT",
+   "patch_lines": 256,
+   "line_check": {
+    "added": 222,
+    "missing_in_main": 0,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "scripts/ci/ci-docs-baseline.unit.mjs",
+   "status": "BOTH_CHANGED",
+   "hunk": "CONFLICT",
+   "patch_lines": 25,
+   "line_check": {
+    "added": 3,
+    "missing_in_main": 3,
+    "removed": 3,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  assert.equal(arquivos.length, 19);",
+     "  assert.match(readme, /\\*\\*19 workflows\\.\\*\\*/);",
+     "  assert.match(chato, /\\*\\*19\\*\\* arquivos YAML em `\\.github\\/workflows\\/`/);"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "vercel.json",
+   "status": "MAIN_UNCHANGED_SINCE_BASE",
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "patch_lines": 12,
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  \"git\": { \"deploymentEnabled\": { \"contexto-ia\": false } },"
+    ],
+    "still_sample": []
+   }
+  }
+ ],
+ "counts": {
+  "migrations": "0",
+  "workflows": "1",
+  "src": "0",
+  "edges": "0",
+  "docs_only": "no",
+  "lines_branch_has_main_lacks": "604",
+  "lines_main_has_branch_lacks": "351"
+ },
+ "auto": "MISTO_CONFLITO",
+ "n_files_with_gaps": 9,
+ "gap_lines_total": 160
+}

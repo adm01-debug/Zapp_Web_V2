@@ -1,0 +1,90 @@
+{
+ "id": "pr-2555",
+ "kind": "pr",
+ "ref": "refs/remotes/pr/2555",
+ "pr": 2555,
+ "tip": "15e4c01439caabf81008b4f76c4386abc369f349",
+ "merge_base": "19104e8ab6c45c12717e0fbe9e82328630793c46",
+ "ahead": 30,
+ "last_commit_date": "2026-11-13",
+ "merge_base_date": "2026-11-13",
+ "triagem_2804": "PERDIDA",
+ "closure_comment": null,
+ "files": [
+  {
+   "path": "docs/contexto/regras/manual/regras.md",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 12,
+   "hunk": "PRESENT_REVERSE_APPLIES"
+  },
+  {
+   "path": "docs/talkx/ESTADOS.md",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 15,
+   "hunk": "PRESENT_REVERSE_APPLIES"
+  },
+  {
+   "path": "docs/talkx/v4/etapas/F05-kit-estados-modais-e-navegacao.md",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/components/talkx/TalkXCampaignPaused.tsx",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/components/talkx/TalkXCampaignRunning.tsx",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/components/talkx/__tests__/TalkXCampaignPaused.test.tsx",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/components/talkx/__tests__/TalkXCampaignRunning.lifecycle.test.tsx",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/components/talkx/__tests__/TalkXLiveMonitor.lifecycle.test.tsx",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/components/talkx/__tests__/TalkXOverview.lifecycle.test.tsx",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/components/talkx/__tests__/talkxKitUsage.guard.test.ts",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/components/talkx/__tests__/useCampaignRowActions.test.tsx",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/components/talkx/__tests__/useTalkXLifecycle.test.tsx",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/components/talkx/useCampaignRowActions.tsx",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/components/talkx/useTalkXLifecycle.tsx",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  }
+ ],
+ "auto": "INCORPORADA_PROVA_PATCH",
+ "n_files_with_gaps": 0,
+ "gap_lines_total": 0
+}

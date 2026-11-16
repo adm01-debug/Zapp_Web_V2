@@ -1,0 +1,165 @@
+[
+ {
+  "commit": "da7ccf0a8",
+  "arquivo": "scripts/db-audit/message-delivery-phase1-behavior.test.sh",
+  "linhas": 2,
+  "amostra": [
+   "post_started_migration=\"$repo_root/supabase/migrations/20261101133000_outbound_post_started.sql\"",
+   "  && proof.definition_sha256 === 'f228a9d6121ca364cbebd4f8686d2ace733b3582e24964506aab8653feaddf73'"
+  ]
+ },
+ {
+  "commit": "da7ccf0a8",
+  "arquivo": "supabase/functions/message-delivery/index.test.ts",
+  "linhas": 5,
+  "amostra": [
+   "Deno.test('PD-80: recusa de número pelo provedor vira code=invalid_number, não ambíguo e sem reconciliação', async () => {",
+   "Deno.test('PD-80: instância desconectada vira code=instance_unavailable (409) sem confundir com número inválido', async () => {",
+   "Deno.test('PD-80: 401 do provedor vira code=instance_unavailable', async () => {",
+   "Deno.test('PD-80: 429 do provedor vira code=rate_limited e não reconcilia', async () => {",
+   "Deno.test('PD-80: recusa 4xx genérica do provedor não reconcilia (só 5xx/ambíguo reconcilia)', async () => {"
+  ]
+ },
+ {
+  "commit": "da7ccf0a8",
+  "arquivo": "supabase/functions/message-delivery/index.ts",
+  "linhas": 2,
+  "amostra": [
+   "      .select('agent_id, sender, status, external_id, contact_id, whatsapp_connection_id')",
+   "      undefined, fetchProvider,"
+  ]
+ },
+ {
+  "commit": "da7ccf0a8",
+  "arquivo": "supabase/migrations/20261101133000_outbound_post_started.sql",
+  "linhas": 245,
+  "amostra": [
+   "-- outbound_post_started",
+   "-- Rollback: restaura claim_outbound_message (corpo de 20261011155946, com envio para grupo) e guard_message_delivery_internal_fields (corpo de 202609",
+   "-- Rollback (SQL executável, na ordem):",
+   "--   create or replace function public.claim_outbound_message( p_message_id uuid, p_agent_id uuid, p_worker text, p_lease_seconds integer DEFAULT 90 )",
+   "--   create or replace function public.guard_message_delivery_internal_fields() returns trigger language plpgsql set search_path = public, pg_temp as ",
+   "--   drop function if exists public.mark_outbound_post_started(uuid, uuid);"
+  ]
+ },
+ {
+  "commit": "3e4bda176",
+  "arquivo": "src/hooks/delivery/useUnconfirmedMessages.ts",
+  "linhas": 9,
+  "amostra": [
+   "export function useUnconfirmedMessages(conversationContactId: string | null | undefined) {",
+   "    queryKey: ['unconfirmed-messages', conversationContactId],",
+   "      if (!conversationContactId) return [];",
+   "      const { data, error } = await supabase",
+   "        .eq('contact_id', conversationContactId)",
+   "      return (data ?? []) as UnconfirmedMessage[];"
+  ]
+ },
+ {
+  "commit": "3e4bda176",
+  "arquivo": "supabase/migrations/20261101133000_outbound_post_started.sql",
+  "linhas": 65,
+  "amostra": [
+   "--   create or replace function public.claim_outbound_message( p_message_id uuid, p_agent_id uuid, p_worker text, p_lease_seconds integer DEFAULT 90 )",
+   "-- 3. claim_outbound_message passa a RECUSAR linha com POST iniciado (haja ou",
+   "-- não lease/expiração: resultado ambíguo, nunca reenvia sozinho; a linha fica",
+   "-- em 'sending' até resolução explícita).",
+   "  -- O POST só pode começar sob lease vivo: vencido, a marca é recusada (mesmo",
+   "  -- que já exista carimbo) para a Edge NÃO disparar. Vem ANTES do retorno"
+  ]
+ },
+ {
+  "commit": "eafc4a3a1",
+  "arquivo": "src/hooks/delivery/useUnconfirmedMessages.ts",
+  "linhas": 1,
+  "amostra": [
+   "        .not('status', 'in', '(\"sent\",\"delivered\",\"read\",\"failed\")')"
+  ]
+ },
+ {
+  "commit": "eafc4a3a1",
+  "arquivo": "supabase/functions/_shared/effect-reconcile.ts",
+  "linhas": 1,
+  "amostra": [
+   "      .is(\"manually_resolved_at\", null)"
+  ]
+ },
+ {
+  "commit": "eafc4a3a1",
+  "arquivo": "supabase/migrations/20261101133000_outbound_post_started.sql",
+  "linhas": 72,
+  "amostra": [
+   "-- 5. Coluna de resolução manual durável",
+   "-- ============================================================================",
+   "-- manually_resolved_at: carimbo gravado pelo resolve_unconfirmed_message.",
+   "-- Quando preenchido, o reconciliador e o webhook ignoram atualizações de status",
+   "-- da mensagem (decisão do operador não pode ser sobrescrita por recibo tardio).",
+   "-- Sem default, sem backfill, sem tocar dados existentes."
+  ]
+ },
+ {
+  "commit": "76cc8fe61",
+  "arquivo": "supabase/functions/message-delivery/index.ts",
+  "linhas": 1,
+  "amostra": [
+   "    if (markError) throw new PreDispatchInfraError('mark_outbound_post_started_failed');"
+  ]
+ },
+ {
+  "commit": "1279eccae",
+  "arquivo": "src/hooks/delivery/useUnconfirmedMessages.ts",
+  "linhas": 1,
+  "amostra": [
+   "      const { data, error } = await supabase.rpc('resolve_unconfirmed_message' as never, {"
+  ]
+ },
+ {
+  "commit": "961cb5787",
+  "arquivo": "supabase/functions/message-delivery/index.test.ts",
+  "linhas": 5,
+  "amostra": [
+   "Deno.test('PD-80: recusa de número pelo provedor vira code=invalid_number, não ambíguo; POST iniciado reconcilia', async () => {",
+   "Deno.test('PD-80: instância desconectada vira code=instance_unavailable (409); POST iniciado reconcilia', async () => {",
+   "Deno.test('PD-80: 401 do provedor vira code=instance_unavailable; POST iniciado reconcilia', async () => {",
+   "Deno.test('PD-80: 429 do provedor vira code=rate_limited; POST iniciado reconcilia mesmo com rate limit', async () => {",
+   "Deno.test('PD-80: recusa 4xx genérica do provedor reconcilia quando POST foi iniciado', async () => {"
+  ]
+ },
+ {
+  "commit": "226634669",
+  "arquivo": "supabase/migrations/20261101133000_outbound_post_started.sql",
+  "linhas": 6,
+  "amostra": [
+   "--   drop function if exists public.resolve_unconfirmed_message(uuid, text);",
+   "--   alter table public.messages drop column if exists manually_resolved_at;",
+   "--   create or replace function public.claim_outbound_message( p_message_id uuid, p_agent_id uuid, p_worker text, p_lease_seconds integer DEFAULT 90 )",
+   "  -- SECURITY DEFINER — RLS não se aplica; verificação de papel e permissão explícita abaixo",
+   "    AND status NOT IN ('sent', 'delivered', 'read')",
+   "    AND (delivery_claim_expires_at IS NULL OR delivery_claim_expires_at <= statement_timestamp())"
+  ]
+ },
+ {
+  "commit": "4b3a0acd8",
+  "arquivo": "supabase/functions/_shared/evolution-webhook-msg-handlers.ts",
+  "linhas": 1,
+  "amostra": [
+   "      let { data: currentMessage, error: msgQueryErr } = await currentMessageQuery"
+  ]
+ },
+ {
+  "commit": "7a2f85cc0",
+  "arquivo": "supabase/functions/_shared/evolution-webhook-messages.ts",
+  "linhas": 1,
+  "amostra": [
+   "  let { data: pendingMessage, error: pendingMsgError } = await (supabase.from('messages') as any).select('id, manually_resolved_at')"
+  ]
+ },
+ {
+  "commit": "b0e4666f4",
+  "arquivo": "supabase/functions/message-delivery/index.ts",
+  "linhas": 1,
+  "amostra": [
+   "    if (existing.delivery_post_started_at) return unconfirmedReceiptFailure();"
+  ]
+ }
+]

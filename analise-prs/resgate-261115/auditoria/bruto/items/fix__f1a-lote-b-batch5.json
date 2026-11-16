@@ -1,0 +1,45 @@
+{
+ "id": "fix__f1a-lote-b-batch5",
+ "kind": "branch",
+ "ref": "origin/fix/f1a-lote-b-batch5",
+ "tip": "226ccb78e880186f2ec760647280a189c53f920c",
+ "merge_base": "bac62ba98454811c3bfd117b838af926b1e795b2",
+ "ahead": 6,
+ "last_commit_date": "2026-10-31",
+ "merge_base_date": "2026-10-23",
+ "prs_with_same_tip": [
+  2082
+ ],
+ "triagem_2804": {
+  "2082": "JA_NA_MAIN"
+ },
+ "closure_comment": {},
+ "files": [
+  {
+   "path": "src/hooks/system/useUserSettings.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 39,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 6,
+    "missing_in_main": 0,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [],
+    "still_sample": []
+   }
+  }
+ ],
+ "counts": {
+  "migrations": "0",
+  "workflows": "0",
+  "src": "1",
+  "edges": "0",
+  "docs_only": "no",
+  "lines_branch_has_main_lacks": "44",
+  "lines_main_has_branch_lacks": "69"
+ },
+ "auto": "INCORPORADA_PROVA_LINHAS",
+ "n_files_with_gaps": 0,
+ "gap_lines_total": 0
+}

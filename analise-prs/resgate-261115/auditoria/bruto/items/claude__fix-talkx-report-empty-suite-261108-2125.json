@@ -1,0 +1,47 @@
+{
+ "id": "claude__fix-talkx-report-empty-suite-261108-2125",
+ "kind": "branch",
+ "ref": "origin/claude/fix-talkx-report-empty-suite-261108-2125",
+ "tip": "97732853d043a0d49ef54309551c192595999f1c",
+ "merge_base": "9183f0f6fa4296cd07c585602bc5ea88ada5d98d",
+ "ahead": 2,
+ "last_commit_date": "2026-11-08",
+ "merge_base_date": "2026-11-08",
+ "prs_with_same_tip": [
+  2843
+ ],
+ "triagem_2804": {
+  "2843": null
+ },
+ "closure_comment": {},
+ "files": [
+  {
+   "path": "src/components/talkx/report/__tests__/TalkXCampaignReport.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 10,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "it.todo('X164 / TL-080 — implementar testes de talkxReportData e TalkXCampaignReport');"
+    ],
+    "still_sample": []
+   }
+  }
+ ],
+ "counts": {
+  "migrations": "0",
+  "workflows": "0",
+  "src": "1",
+  "edges": "0",
+  "docs_only": "no",
+  "lines_branch_has_main_lacks": "21",
+  "lines_main_has_branch_lacks": "173"
+ },
+ "auto": "MISTO_CONFLITO",
+ "n_files_with_gaps": 1,
+ "gap_lines_total": 1
+}

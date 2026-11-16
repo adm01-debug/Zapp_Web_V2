@@ -1,0 +1,92 @@
+{
+ "id": "pr-3132",
+ "kind": "pr",
+ "ref": "refs/remotes/pr/3132",
+ "pr": 3132,
+ "tip": "af8d74114866138abeb76c6f7e9dcaa9ff11d08e",
+ "merge_base": "1d4702804fb0fdda7939332b92b70ac8dc3c914c",
+ "ahead": 1,
+ "last_commit_date": "2026-11-15",
+ "merge_base_date": "2026-11-15",
+ "triagem_2804": null,
+ "closure_comment": {
+  "title": "[incorporada no pacote 8] feat(edge): pausa de instância barra os 3 caminhos de envio",
+  "last_comment": "| <!-- codex-review-state:v1 {\"code_review\":{\"commit_sha\":\"af8d74114866138abeb76c6f7e9dcaa9ff11d08e\",\"has_any_findings\":true,\"has_unresolved_findings\":true,\"status\":\"completed\"},\"security_review\":{\"commit_sha\":null,\"has_any_findings\":null,\"has_unresolved_find"
+ },
+ "files": [
+  {
+   "path": "src/components/talkx/tracking/talkxHealth.ts",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "supabase/deployment-manifest.json",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 151,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 23,
+    "missing_in_main": 1,
+    "removed": 16,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  \"manifest_sha256\": \"5a319b7b7dc395b8fc991ca8cd2181a3d36702eaa03a85cc259028b635251037\""
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "supabase/functions/_shared/__tests__/talkx-resume-policy.test.ts",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "supabase/functions/_shared/instance_pause.test.ts",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "supabase/functions/_shared/instance_pause.ts",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "supabase/functions/_shared/talkx-resume-policy.ts",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "supabase/functions/message-delivery/index.test.ts",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "supabase/functions/message-delivery/index.ts",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "supabase/functions/multiplix-send/index.test.ts",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "supabase/functions/multiplix-send/index.ts",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "supabase/functions/talkx-scheduler/index.ts",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "supabase/functions/talkx-send/process-recipient.ts",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  }
+ ],
+ "auto": "MISTO_CONFLITO",
+ "n_files_with_gaps": 1,
+ "gap_lines_total": 1
+}

@@ -1,0 +1,145 @@
+{
+ "id": "claude__feat-cores-prioridade-d12-261101-1425",
+ "kind": "branch",
+ "ref": "origin/claude/feat-cores-prioridade-d12-261101-1425",
+ "tip": "c46e71fa1c92af8723ebfebdc8be1e4dd98fea00",
+ "merge_base": "1252bb5a41123ba4d49efd84d0f91604bff6c87c",
+ "ahead": 6,
+ "last_commit_date": "2026-11-01",
+ "merge_base_date": "2026-11-01",
+ "prs_with_same_tip": [
+  2478
+ ],
+ "triagem_2804": {
+  "2478": "DUPLICATA_PROVAVEL"
+ },
+ "closure_comment": {},
+ "files": [
+  {
+   "path": "src/components/tasks/__tests__/movimentoEContraste.test.tsx",
+   "status": "BOTH_CHANGED",
+   "hunk": "CONFLICT",
+   "patch_lines": 38,
+   "line_check": {
+    "added": 16,
+    "missing_in_main": 11,
+    "removed": 2,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "    // D12 / etapa 170: Alta é o vermelho (par de texto `--destructive-text`).",
+     "    // Média é o âmbar (Média âmbar, D12) — e não o `primary` do segmento.",
+     "    const { container: medium } = render(<PriorityChip priority=\"medium\" />);",
+     "    expect(medium.firstElementChild?.className).toContain('text-[hsl(var(--warning-text))]');",
+     "    expect(medium.firstElementChild?.className).not.toMatch(/(^|\\s)text-primary(\\s|$)/);",
+     "  it('D12: a ponta da escada (Urgente, tinta /20 e borda sólida) também fecha AA', () => {",
+     "    // `PriorityPill`/`PriorityChip` usam `bg-destructive/20` em Urgente — a tinta",
+     "    // mais cheia da escada. O texto é o mesmo `--destructive-text`; aqui se mede o",
+     "    // par REAL sobre essa tinta, nos dois modos, com o medidor WCAG de cima.",
+     "        razaoNaTinta(vars['destructive-text'], vars.destructive, 0.2, vars.card),",
+     "        `${nome}: texto de Urgente sobre bg-destructive/20`,"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/tasks/__tests__/primitivosCompartilhados.test.tsx",
+   "status": "BOTH_CHANGED",
+   "hunk": "CONFLICT",
+   "patch_lines": 50,
+   "line_check": {
+    "added": 18,
+    "missing_in_main": 16,
+    "removed": 2,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "import { PriorityChip } from '@/components/tasks/shared/PriorityChip';",
+     "    // D12 / etapa 170: a pílula tem SEMPRE a cor da prioridade — Média é ÂMBAR",
+     "    // (`--warning-text`), não `primary` (o azul é do segmento do controle).",
+     "    expect(media).not.toContain('text-primary');",
+     "  it('a escada de cor é a MESMA do PriorityChip (Lista, Quadro e prévia combinam — D12)', () => {",
+     "    // A prévia do modal desenha o `WorkItemCard` real, que usa o `PriorityChip`;",
+     "    // o painel usa o `PriorityPill`. Se as duas escadas divergirem, \"Média\" volta a",
+     "    // aparecer azul numa tela e âmbar na outra — o defeito da etapa 170.",
+     "    for (const p of ['low', 'medium', 'high', 'urgent'] as Priority[]) {",
+     "      const { unmount: soltaPilula } = render(<PriorityPill priority={p} />);",
+     "      const daPilula = screen.getByTestId('priority-pill').className;",
+     "      soltaPilula();",
+     "      const { container, unmount: soltaChip } = render(<PriorityChip priority={p} />);",
+     "      const doChip = container.querySelector('span')!.className;",
+     "      soltaChip();",
+     "      expect(doChip.trim(), `escada divergente em \"${p}\"`).toBe(daPilula.trim());"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/tasks/shared/PriorityChip.tsx",
+   "status": "BOTH_CHANGED",
+   "hunk": "CONFLICT",
+   "patch_lines": 34,
+   "line_check": {
+    "added": 11,
+    "missing_in_main": 9,
+    "removed": 7,
+    "removed_still_in_main": 4,
+    "missing_sample": [
+     " * D12 (etapa 170): a pílula tem SEMPRE a cor da prioridade — Média é ÂMBAR, não",
+     " * `primary` (o azul é do segmento escolhido do controle). A escada é cinza →",
+     " * âmbar → vermelho (contorno) → vermelho (tinta e borda cheias), a mesma do",
+     " * `PriorityPill`, para a Lista, o Quadro e a prévia do modal combinarem.",
+     " * Etapa 80 (E.3): `text-warning`/`text-destructive` são cor de PREENCHIMENTO — como",
+     " * texto davam 2,1:1 (âmbar no claro) e 2,6:1 (vermelho no escuro). O par de texto",
+     " * (`--warning-text`/`--destructive-text`, em tokens.css) fecha ≥4,5:1 nos dois modos",
+     " * sem mexer em preenchimento nem borda.",
+     "  medium: 'bg-warning/15 text-[hsl(var(--warning-text))] border-warning/40',"
+    ],
+    "still_sample": [
+     "  // Etapa 80 (E.3): `text-warning`/`text-destructive` são cor de PREENCHIMENTO — como",
+     "  // texto davam 2,1:1 (âmbar no claro) e 2,6:1 (vermelho no escuro). O par de texto",
+     "  // (`--warning-text`/`--destructive-text`, em tokens.css) fecha ≥4,5:1 nos dois modos",
+     "  // sem mexer em preenchimento nem borda."
+    ]
+   }
+  },
+  {
+   "path": "src/components/tasks/shared/PriorityPill.tsx",
+   "status": "BOTH_CHANGED",
+   "hunk": "CONFLICT",
+   "patch_lines": 32,
+   "line_check": {
+    "added": 10,
+    "missing_in_main": 8,
+    "removed": 7,
+    "removed_still_in_main": 4,
+    "missing_sample": [
+     " * Um par de cor por prioridade (D12). A pílula tem SEMPRE a cor da prioridade —",
+     " * `--primary` é do SEGMENTO escolhido do controle (`PrioritySegment`), nunca da",
+     " * pílula. A escada é cinza → âmbar → vermelho (contorno) → vermelho (tinta e",
+     " * borda cheias), o mesmo desenho do `PriorityChip`.",
+     " * Os valores `medium`/`high`/`urgent` usam os tokens de TEXTO",
+     " * (`--warning-text`/`--destructive-text`): a cor crua é de PREENCHIMENTO e como",
+     " * texto ficava em ~2:1 (etapa 80 / E.3).",
+     "  medium: 'bg-warning/15 text-[hsl(var(--warning-text))] border-warning/40',"
+    ],
+    "still_sample": [
+     " * Um par de cor por prioridade (D12). Os valores `high`/`urgent` usam os tokens",
+     " * de TEXTO (`--warning-text`/`--destructive-text`): a cor crua é de",
+     " * PREENCHIMENTO e como texto ficava em ~2:1. Mesma decisão do `PriorityChip`,",
+     " * agora num primitivo sem o `compact` obrigatório."
+    ]
+   }
+  }
+ ],
+ "counts": {
+  "migrations": "0",
+  "workflows": "0",
+  "src": "4",
+  "edges": "0",
+  "docs_only": "no",
+  "lines_branch_has_main_lacks": "70",
+  "lines_main_has_branch_lacks": "22"
+ },
+ "auto": "MISTO_CONFLITO",
+ "n_files_with_gaps": 4,
+ "gap_lines_total": 52
+}

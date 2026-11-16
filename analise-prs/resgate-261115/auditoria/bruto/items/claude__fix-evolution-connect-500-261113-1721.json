@@ -1,0 +1,180 @@
+{
+ "id": "claude__fix-evolution-connect-500-261113-1721",
+ "kind": "branch",
+ "ref": "origin/claude/fix-evolution-connect-500-261113-1721",
+ "tip": "d8a2c92d8fa40fd0ea36de073a6653211faf90e8",
+ "merge_base": "cb6576b2a3a0d3f8b5b091878314cf5087fa10b1",
+ "ahead": 2,
+ "last_commit_date": "2026-11-13",
+ "merge_base_date": "2026-11-13",
+ "prs_with_same_tip": [
+  3041
+ ],
+ "triagem_2804": {
+  "3041": null
+ },
+ "closure_comment": {
+  "3041": {
+   "title": "fix(evolution): conectar WhatsApp mostra a etapa que falhou em vez de erro 500",
+   "last_comment": "Substituída por adm01-debug/Zapp_Web_V2#3045, mergeada na `main` (`098a648f6`). Ela corrige o mesmo 500 do `connect` da Evolution GO com mais escopo: `safeFetch` com timeout em todo o fluxo, auto-reparo da credencial da instância e respostas 200 com `code`/`message` em PT-BR. Esta PR foi retirada do"
+  }
+ },
+ "files": [
+  {
+   "path": "ESTADO.md",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 13,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 1,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "| `evolution-webhook` | A | `src/components/monitoring/hooks/useMonitoringActions.ts:31` · `src/components/monitoring/hooks/useMonitoringActions.ts:60` · `supab"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/hooks/evolution/__tests__/useEvolutionApiCore.test.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 58,
+   "hunk": "PRESENT_REVERSE_APPLIES"
+  },
+  {
+   "path": "src/hooks/evolution/__tests__/useEvolutionGroups.test.ts",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/hooks/evolution/useEvolutionApiCore.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 42,
+   "hunk": "PRESENT_REVERSE_APPLIES"
+  },
+  {
+   "path": "src/hooks/integrations/__tests__/useEvolutionApi.payloads.test.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 13,
+   "hunk": "PRESENT_REVERSE_APPLIES"
+  },
+  {
+   "path": "supabase/deployment-manifest.json",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 31,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 4,
+    "missing_in_main": 4,
+    "removed": 4,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "      \"bytes\": 90583,",
+     "      \"sha256\": \"77a7af70b1d400c6f88f0bd10bc4059c69297912145f144ea43096f0d75c3892\"",
+     "      \"source_sha256\": \"77189dd7f44f88e240bcf5bb5295aa0f5cb824c44c46096738e396317e594684\",",
+     "  \"manifest_sha256\": \"9ad38fe70527982cc7d69021eccdf42b1ac2cbc22fbb0f083d8c3875f94403e4\""
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "supabase/functions/evolution-api/index.test.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 102,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 78,
+    "missing_in_main": 70,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "// ─── connect (GO): falha de rede/timeout na Evolution GO ──────────────────────",
+     "// RED: um fetch() à GO que lançava (rede caída, AbortSignal.timeout) escapava do",
+     "// bloco connect e virava 500 opaco no catch geral — o operador ficava sem",
+     "// mensagem com a PRINCIPAL em sessão órfã. GREEN: 200 com {error:true, status",
+     "// 504 (timeout) / 502 (rede), message dizendo a etapa} — o mesmo contrato das",
+     "// outras saídas do connect. Caso DELETE ok + create lança: a instância já saiu",
+     "// da GO, então a mensagem é a mesma do 503 de recriação falha.",
+     "type GoStage = \"connect\" | \"qr\" | \"status\" | \"delete\" | \"create\";",
+     "function stageOf(method: string, path: string): GoStage | \"all\" | null {",
+     "  if (path === \"/instance/connect\") return \"connect\";",
+     "  if (path === \"/instance/qr\") return \"qr\";",
+     "  if (path === \"/instance/status\") return \"status\";",
+     "  if (path === \"/instance/all\") return \"all\";",
+     "  if (path.startsWith(\"/instance/delete/\") && method === \"DELETE\") return \"delete\";",
+     "  if (path === \"/instance/create\") return \"create\";",
+     "  return null;",
+     "/** Stub de fetch da GO: sessão órfã (sem QR, LoggedIn:false, registro com jid) e `throwAt` lança. */",
+     "async function connectComGoLancando(throwAt: GoStage, err: unknown, vezes = Infinity) {",
+     "  let lancou = 0;",
+     "  const originalFetch = globalThis.fetch;",
+     "  const calls: string[] = [];",
+     "  globalThis.fetch = ((input: Request | URL | string, init?: RequestInit) => {",
+     "    const url = new URL(input instanceof Request ? input.url : String(input));",
+     "    const method = (init?.method ?? (input instanceof Request ? input.method : \"GET\")).toUpperCase();",
+     "    const stage = stageOf(method, url.pathname);"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "supabase/functions/evolution-api/index.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 123,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 39,
+    "missing_in_main": 32,
+    "removed": 13,
+    "removed_still_in_main": 5,
+    "missing_sample": [
+     "/** Fetch à Evolution GO no `connect` que lançou (rede/timeout): o catch geral responde 200 {error:true}, nunca 500. */",
+     "class GoConnectFetchError extends Error {",
+     "  constructor(readonly status: number, message: string) {",
+     "    super(message);",
+     "    this.name = 'GoConnectFetchError';",
+     "      const GO_RECREATE_FAILED_MESSAGE = 'A instância do WhatsApp foi removida da Evolution GO mas não pôde ser recriada automaticamente. É necessário recriar a",
+     "      const GO_STAGE_LABEL = { connect: 'iniciar a conexão da instância', qr: 'buscar o QR Code', status: 'consultar o status da instância', delete: 'remover a ",
+     "      // Exceção de rede/timeout num fetch à GO vira o mesmo contrato das outras",
+     "      // saídas do connect (200 + error:true + etapa) em vez do 500 opaco.",
+     "      const goFetch = async (stage: keyof typeof GO_STAGE_LABEL, url: string, init: RequestInit): Promise<Response> => {",
+     "          return await fetch(url, init);",
+     "          const timedOut = err instanceof DOMException && (err.name === 'TimeoutError' || err.name === 'AbortError');",
+     "          new Logger('evolution-api').error('connect: falha de rede/timeout na Evolution GO', { stage, instance, timedOut, error: err instanceof Error ? err.mes",
+     "          // DELETE já tirou a instância da GO: o operador precisa do mesmo aviso do 503 de recriação falha.",
+     "          if (stage === 'create') throw new GoConnectFetchError(503, GO_RECREATE_FAILED_MESSAGE);",
+     "          throw new GoConnectFetchError(timedOut ? 504 : 502, `A Evolution GO ${timedOut ? 'não respondeu a tempo' : 'não pôde ser alcançada'} ao ${GO_STAGE_LAB",
+     "      const response = await goFetch('connect', `${evolutionApiUrl}${goConnectRoute.path}`, { method: goConnectRoute.method, headers: { 'apikey': resolveSession",
+     "        const qrRes = await goFetch('qr', `${evolutionApiUrl}/instance/qr`, { method: 'GET', headers: { 'apikey': instToken }, signal: AbortSignal.timeout(5000)",
+     "      const stRes = await goFetch('status', `${evolutionApiUrl}/instance/status`, { method: 'GET', headers: { 'apikey': instToken }, signal: AbortSignal.timeout",
+     "        const delRes = await goFetch('delete', `${evolutionApiUrl}/instance/delete/${safeGoId}`, { method: 'DELETE', headers: { 'apikey': evolutionApiKey }, sig",
+     "          // Falha de rede/timeout na 1ª tentativa também ganha o retry de 2s (só a 2ª vira 503).",
+     "          let createRes: Response | null = null;",
+     "            createRes = await goFetch('create', `${evolutionApiUrl}/instance/create`, {",
+     "              signal: AbortSignal.timeout(10000),",
+     "            if (!(err instanceof GoConnectFetchError)) throw err;"
+    ],
+    "still_sample": [
+     "            method: 'POST',",
+     "            headers: { 'apikey': evolutionApiKey, 'Content-Type': 'application/json' },",
+     "            body: JSON.stringify({ name: instance, token: instToken }),",
+     "            return new Response(JSON.stringify({ error: true, status: 503, message: 'A instância do WhatsApp foi removida da Evolution GO mas não pôde ser recri",
+     "          await fetch(`${evolutionApiUrl}/instance/connect`, {"
+    ]
+   }
+  }
+ ],
+ "counts": {
+  "migrations": "0",
+  "workflows": "0",
+  "src": "4",
+  "edges": "2",
+  "docs_only": "no",
+  "lines_branch_has_main_lacks": "311",
+  "lines_main_has_branch_lacks": "572"
+ },
+ "auto": "MISTO_CONFLITO",
+ "n_files_with_gaps": 4,
+ "gap_lines_total": 112
+}

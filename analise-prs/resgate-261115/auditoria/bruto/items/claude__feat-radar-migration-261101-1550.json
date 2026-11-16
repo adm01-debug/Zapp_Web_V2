@@ -1,0 +1,72 @@
+{
+ "id": "claude__feat-radar-migration-261101-1550",
+ "kind": "branch",
+ "ref": "origin/claude/feat-radar-migration-261101-1550",
+ "tip": "0789ca73448e9ee7415a1f573fc6af39a50e97b3",
+ "merge_base": "1252bb5a41123ba4d49efd84d0f91604bff6c87c",
+ "ahead": 6,
+ "last_commit_date": "2026-11-01",
+ "merge_base_date": "2026-11-01",
+ "prs_with_same_tip": [
+  2487
+ ],
+ "triagem_2804": {
+  "2487": "DECISAO_DONO"
+ },
+ "closure_comment": {},
+ "files": [
+  {
+   "path": "supabase/migrations/20261030200000_copilot_live_motor.sql",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "patch_lines": 142,
+   "line_check": {
+    "added": 115,
+    "missing_in_main": 115,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "-- CV-021–045: motor do Copiloto RADAR sobre o esquema de 20261030100000/110000.",
+     "-- O que liga: cada mensagem do CONTATO agenda um job `copilot.tick` na fila",
+     "-- `ai_jobs` (consumida pelo ai-jobs-worker, cron de 1 min). O handler lê as",
+     "-- mensagens novas, chama a IA em dois andares e grava o estado na sessão e os",
+     "-- insights em `copilot_insights`.",
+     "-- NASCE DESLIGADO: a capacidade `ai.capability.copilot_live` é semeada com",
+     "-- enabled = false. Sem a linha a capacidade valeria LIGADA (ai-feature-flags.ts),",
+     "-- por isso a semente é obrigatória. Ligar = UPDATE feature_flags SET enabled = true.",
+     "-- Identidade da conversa: o Zapp não tem tabela de conversas — as mensagens se",
+     "-- ligam ao contato. `copilot_sessions.conversation_id` recebe o contact_id (uma",
+     "-- sessão por contato; UNIQUE (conversation_id) já existe).",
+     "-- Rollback no fim do arquivo.",
+     "-- 1. Campos que o motor grava e a tabela ainda não tem ------------------------",
+     "ALTER TABLE public.copilot_sessions",
+     "  ADD COLUMN IF NOT EXISTS last_contact_message_at   timestamptz,",
+     "  ADD COLUMN IF NOT EXISTS last_processed_message_at timestamptz,",
+     "  ADD COLUMN IF NOT EXISTS intent                    text,",
+     "  ADD COLUMN IF NOT EXISTS sentiment                 text,",
+     "  ADD COLUMN IF NOT EXISTS comm_style                text,",
+     "  ADD COLUMN IF NOT EXISTS decision_role             text,",
+     "  ADD COLUMN IF NOT EXISTS occasion                  text,",
+     "  ADD COLUMN IF NOT EXISTS stakeholders              jsonb NOT NULL DEFAULT '[]'::jsonb,",
+     "  ADD COLUMN IF NOT EXISTS brinde_evidence           jsonb NOT NULL DEFAULT '{}'::jsonb;",
+     "ALTER TABLE public.copilot_insights",
+     "  ADD COLUMN IF NOT EXISTS tier       smallint CHECK (tier IN (1, 2)),"
+    ],
+    "still_sample": [],
+    "same_basename_in_main": []
+   }
+  }
+ ],
+ "counts": {
+  "migrations": "1",
+  "workflows": "0",
+  "src": "0",
+  "edges": "0",
+  "docs_only": "no",
+  "lines_branch_has_main_lacks": "136",
+  "lines_main_has_branch_lacks": "0"
+ },
+ "auto": "TRABALHO_AUSENTE_APLICA_LIMPO",
+ "n_files_with_gaps": 1,
+ "gap_lines_total": 115
+}

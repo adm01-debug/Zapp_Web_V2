@@ -1,0 +1,76 @@
+{
+ "id": "claude__test-toque44-seletores-261021-0853",
+ "kind": "branch",
+ "ref": "origin/claude/test-toque44-seletores-261021-0853",
+ "tip": "b19f9107dc711d917be3431400cfdf761f8f010a",
+ "merge_base": "bac62ba98454811c3bfd117b838af926b1e795b2",
+ "ahead": 2,
+ "last_commit_date": "2026-10-23",
+ "merge_base_date": "2026-10-23",
+ "prs_with_same_tip": [
+  2152
+ ],
+ "triagem_2804": {
+  "2152": "OBSOLETA"
+ },
+ "closure_comment": {},
+ "files": [
+  {
+   "path": "e2e/a11y-toque-44px.spec.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 40,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 6,
+    "missing_in_main": 3,
+    "removed": 5,
+    "removed_still_in_main": 2,
+    "missing_sample": [
+     "  // Acionado pelo teclado: prova que o FAB é alcançável por foco. O toque direto",
+     "  // está provado em a11y-fab-cabecalho.spec.ts (medição: o centro do FAB sempre",
+     "  // recebe o hit-test; o portal z-20 no body vence os cards)."
+    ],
+    "still_sample": [
+     "  // O FAB é `fixed z-20` e no celular os cards da lista passam por cima dele no hit-test,",
+     "  // então ele é acionado pelo teclado (o que também prova que ele é alcançável por foco)."
+    ]
+   }
+  },
+  {
+   "path": "e2e/fixtures/mapa-mocks.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 48,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 20,
+    "missing_in_main": 9,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "/** Matriz do boot (PK-20): `role_permissions` NÃO-vazia dispensa as N checagens",
+     " *  nomeadas de `useUserRole.ts` (`matrixPermissions !== null`). */",
+     "  profile: { id: '00000000-0000-4000-8000-000000000001', name: 'Visual E2E' },",
+     "  user_settings: null,",
+     "  fetched_at: '2026-09-15T12:00:00.000Z',",
+     "  // PK-20: boot em UMA chamada; matriz não-vazia tira o ProtectedRoute do",
+     "  // 'Verificando permissões...'. Depois do catch-all genérico (última vence).",
+     "  await page.route(/\\/rest\\/v1\\/rpc\\/app_bootstrap/, (route) => json(route, BOOT_FAKE));",
+     "  // Sonda no-cors: resposta opaca 200 = alcançável; sem ela cai no bloquearRedeReal."
+    ],
+    "still_sample": []
+   }
+  }
+ ],
+ "counts": {
+  "migrations": "0",
+  "workflows": "0",
+  "src": "0",
+  "edges": "0",
+  "docs_only": "no",
+  "lines_branch_has_main_lacks": "21",
+  "lines_main_has_branch_lacks": "43"
+ },
+ "auto": "MISTO_CONFLITO",
+ "n_files_with_gaps": 2,
+ "gap_lines_total": 14
+}

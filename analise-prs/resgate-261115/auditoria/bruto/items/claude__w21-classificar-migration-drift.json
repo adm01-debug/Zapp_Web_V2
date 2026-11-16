@@ -1,0 +1,126 @@
+{
+ "id": "claude__w21-classificar-migration-drift",
+ "kind": "branch",
+ "ref": "origin/claude/w21-classificar-migration-drift",
+ "tip": "1b904f6a1f9e177dd7e55533645bc9ddb3068c7f",
+ "merge_base": "1252bb5a41123ba4d49efd84d0f91604bff6c87c",
+ "ahead": 15,
+ "last_commit_date": "2026-11-01",
+ "merge_base_date": "2026-11-01",
+ "prs_with_same_tip": [
+  1930
+ ],
+ "triagem_2804": {
+  "1930": "DUPLICATA_PROVAVEL"
+ },
+ "closure_comment": {},
+ "files": [
+  {
+   "path": "scripts/db-audit/check-migration-drift.mjs",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 321,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 126,
+    "missing_in_main": 116,
+    "removed": 19,
+    "removed_still_in_main": 19,
+    "missing_sample": [
+     "// nao drift real de schema -- sem retry, cada esgotamento abria/comentava o alerta",
+     "  const duplicateVersions = [];",
+     "    if (seen.has(record.version)) {",
+     "      errors.push(`versao duplicada no ledger: ${record.version}`);",
+     "      duplicateVersions.push(record.version);",
+     "  return { records: records.sort((a, b) => a.version.localeCompare(b.version)), errors, duplicateVersions };",
+     "function compare(migrations, records, exceptionsByVersion, { duplicateVersions = [] } = {}) {",
+     "  const classifications = [];",
+     "      // W21: o name e' conteudo do ledger; sem esta linha o erro nao aparecia",
+     "      // em nenhuma classe e --classificar saia com exit 0.",
+     "      classifications.push({",
+     "        disco: byFileVersion.get(record.version)?.fileName ?? '-',",
+     "        ledger: JSON.stringify(record.name),",
+     "        classe: 'conteudo-divergente',",
+     "  // Erros de \"arquivo sem registro\" sao a classe apply-pendente, a unica que",
+     "  // --classificar trata como nao fatal. Guardamos o intervalo para separar.",
+     "  const applyPendenteStart = errors.length;",
+     "  const applyPendenteEnd = errors.length;",
+     "  // W21: classificar cada version para --classificar / --json",
+     "    classifications.push({ version, disco: fileName, ledger: '-', classe: 'apply-pendente' });",
+     "    const lname = record.name ? normalizeLedgerName(record.version, record.name) : '-';",
+     "    classifications.push({ version: record.version, disco: '-', ledger: lname, classe: 'ledger-sem-arquivo' });",
+     "  for (const version of duplicateVersions) {",
+     "    classifications.push({ version, disco: '-', ledger: '-', classe: 'version-duplicada' });",
+     "    // W21: qualquer erro novo desta version vira conteudo-divergente. Precisa"
+    ],
+    "still_sample": [
+     "// nao drift real de schema — sem retry, cada esgotamento abria/comentava o alerta",
+     "    if (seen.has(record.version)) errors.push(`versao duplicada no ledger: ${record.version}`);",
+     "  return { records: records.sort((a, b) => a.version.localeCompare(b.version)), errors };",
+     "function compare(migrations, records, exceptionsByVersion) {",
+     "        // pura, violando a regra 7 da secao 1 do CLAUDE.md. Saía exit 0 com apenas",
+     "        // console.warn — agora falha fechado (achado Agent 3 HIGH, auditoria 2026-09-27).",
+     "        // ramo de warnings abaixo — migracao legacy sem conteudo gravado e diferente",
+     "          + '(sem hash SHA-256, sem SQL canonico) e nao ha excecao no manifesto — '",
+     "  return { errors, warnings, verifiedEvidence, pinnedWithoutHistoricalContent };",
+     "  // E53: buffer status lines so divergence summary is first on stdout on drift path"
+    ]
+   }
+  },
+  {
+   "path": "scripts/db-audit/check-migration-drift.test.mjs",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 219,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 135,
+    "missing_in_main": 118,
+    "removed": 3,
+    "removed_still_in_main": 3,
+    "missing_sample": [
+     "  // scriptArgs: argumentos extras passados ao script (ex.: ['--classificar', '--json'])",
+     "  scriptArgs = [],",
+     "    return spawnSync(process.execPath, [SCRIPT, ...scriptArgs], {",
+     "  assert.match(result.stderr, new RegExp(`ledger_name=\"${extraVersion}_db_only\\.sql\"`));",
+     "    new RegExp(`ledger_name=\"  ${extraVersion}_db_only\\.sql  \"`),",
+     "// ── W21: --classificar ────────────────────────────────────────────────────────",
+     "const VERSION2 = '20260829060000';",
+     "const FILE2 = `${VERSION2}_create_second.sql`;",
+     "const SQL2 = 'CREATE TABLE public.second (id integer);\\n';",
+     "test('W21 (classificar): arquivo local sem ledger → apply-pendente, exit 2', () => {",
+     "  // FILE exists on disk, ledger has NO entry for it → apply-pendente",
+     "    ledger: [], // ledger empty → file has no record",
+     "    scriptArgs: ['--classificar'],",
+     "  assert.equal(result.status, 2, result.stderr);",
+     "  assert.match(result.stdout, /apply-pendente/);",
+     "  assert.match(result.stdout, new RegExp(VERSION));",
+     "test('W21 (classificar): ledger sem arquivo → ledger-sem-arquivo, exit 1', () => {",
+     "  // Ledger has VERSION, disk has FILE2 only (not FILE)",
+     "    files: { [FILE2]: SQL2 },",
+     "    ledger: [ledgerRecord(), ledgerRecord({ version: VERSION2, name: 'create_second', statements: [SQL2.trim()] })],",
+     "    scriptArgs: ['--classificar'],",
+     "  assert.equal(result.status, 1, result.stdout);",
+     "  assert.match(result.stdout, /ledger-sem-arquivo/);",
+     "  assert.match(result.stdout, new RegExp(VERSION));",
+     "test('W21 (classificar): conteudo divergente → conteudo-divergente, exit 1', () => {"
+    ],
+    "still_sample": [
+     "    return spawnSync(process.execPath, [SCRIPT], {",
+     "  assert.match(result.stderr, new RegExp(`ledger_name=\"${extraVersion}_db_only\\\\.sql\"`));",
+     "    new RegExp(`ledger_name=\"  ${extraVersion}_db_only\\\\.sql  \"`),"
+    ]
+   }
+  }
+ ],
+ "counts": {
+  "migrations": "0",
+  "workflows": "0",
+  "src": "0",
+  "edges": "0",
+  "docs_only": "no",
+  "lines_branch_has_main_lacks": "327",
+  "lines_main_has_branch_lacks": "284"
+ },
+ "auto": "MISTO_CONFLITO",
+ "n_files_with_gaps": 2,
+ "gap_lines_total": 256
+}

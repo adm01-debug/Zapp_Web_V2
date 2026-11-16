@@ -1,0 +1,297 @@
+{
+ "id": "fix__f1a-lote-b-main",
+ "kind": "branch",
+ "ref": "origin/fix/f1a-lote-b-main",
+ "tip": "10d843f921877efd12442c18274944bf48ac0eff",
+ "merge_base": "9d65fed626e05a9582c56badade4d2e6afaf9356",
+ "ahead": 2,
+ "last_commit_date": "2026-10-18",
+ "merge_base_date": "2026-10-18",
+ "prs_with_same_tip": [
+  2058
+ ],
+ "triagem_2804": {
+  "2058": "OBSOLETA"
+ },
+ "closure_comment": {},
+ "files": [
+  {
+   "path": "src/components/calls/__tests__/IncomingCallAlert.ringtone.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 23,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 3,
+    "missing_in_main": 3,
+    "removed": 1,
+    "removed_still_in_main": 1,
+    "missing_sample": [
+     "    div: ({ children, ...rest }: { children?: unknown }) => (",
+     "      <div {...rest}>{children as never}</div>",
+     "  createLogger: () => ({ error: vi.fn(), warn: vi.fn(), debug: vi.fn(), info: vi.fn() }),"
+    ],
+    "still_sample": [
+     "    div: ({ children, ...rest }: { children?: unknown }) => <div {...rest}>{children as never}</div>,"
+    ]
+   }
+  },
+  {
+   "path": "src/components/calls/__tests__/IncomingCallAlert.volume.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 23,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 3,
+    "missing_in_main": 3,
+    "removed": 1,
+    "removed_still_in_main": 1,
+    "missing_sample": [
+     "    div: ({ children, ...rest }: { children?: unknown }) => (",
+     "      <div {...rest}>{children as never}</div>",
+     "  createLogger: () => ({ error: vi.fn(), warn: vi.fn(), debug: vi.fn(), info: vi.fn() }),"
+    ],
+    "still_sample": [
+     "    div: ({ children, ...rest }: { children?: unknown }) => <div {...rest}>{children as never}</div>,"
+    ]
+   }
+  },
+  {
+   "path": "src/components/notifications/__tests__/NotificationsPopover.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 12,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  createLogger: () => ({ error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn() }),"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/hooks/__tests__/helpers/alertBehaviorTestKit.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 13,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 1,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  return { getLogger: () => loggerSpies, createLogger: () => loggerSpies, log: loggerSpies };"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/hooks/__tests__/useNotifications.contagem-reconciliada.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 23,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 4,
+    "missing_in_main": 3,
+    "removed": 1,
+    "removed_still_in_main": 1,
+    "missing_sample": [
+     "      onAuthStateChange: vi",
+     "        .fn()",
+     "        .mockReturnValue({ data: { subscription: { unsubscribe: vi.fn() } } }),"
+    ],
+    "still_sample": [
+     "      onAuthStateChange: vi.fn().mockReturnValue({ data: { subscription: { unsubscribe: vi.fn() } } }),"
+    ]
+   }
+  },
+  {
+   "path": "src/hooks/__tests__/useNotifications.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 60,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 20,
+    "missing_in_main": 19,
+    "removed": 4,
+    "removed_still_in_main": 4,
+    "missing_sample": [
+     "      onAuthStateChange: vi",
+     "        .fn()",
+     "        .mockReturnValue({ data: { subscription: { unsubscribe: vi.fn() } } }),",
+     "  AuthProvider: ({ children }: { children?: import('react').ReactNode }) => children,",
+     "  // `invokeEdge` (na mesma cadeia) cria o logger por `createLogger`.",
+     "    id: 'n1',",
+     "    user_id: 'u1',",
+     "    title: 'New message',",
+     "    message: 'You have a new message',",
+     "    type: 'message',",
+     "    is_read: false,",
+     "    created_at: '2024-01-01',",
+     "    id: 'n2',",
+     "    user_id: 'u1',",
+     "    title: 'SLA alert',",
+     "    message: 'SLA breached',",
+     "    type: 'sla',",
+     "    is_read: true,",
+     "    created_at: '2024-01-02',"
+    ],
+    "still_sample": [
+     "      onAuthStateChange: vi.fn().mockReturnValue({ data: { subscription: { unsubscribe: vi.fn() } } }),",
+     "  AuthProvider: ({ children }: { children?: import(\"react\").ReactNode }) => children,",
+     "  { id: 'n1', user_id: 'u1', title: 'New message', message: 'You have a new message', type: 'message', is_read: false, created_at: '2024-01-01' },",
+     "  { id: 'n2', user_id: 'u1', title: 'SLA alert', message: 'SLA breached', type: 'sla', is_read: true, created_at: '2024-01-02' },"
+    ]
+   }
+  },
+  {
+   "path": "src/hooks/__tests__/useSentimentAlerts.test.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 78,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 23,
+    "missing_in_main": 11,
+    "removed": 6,
+    "removed_still_in_main": 6,
+    "missing_sample": [
+     "  toast: {",
+     "    error: (...args: unknown[]) => mockToastError(...args),",
+     "    success: vi.fn(),",
+     "    info: vi.fn(),",
+     "  // `invokeEdge` (na mesma cadeia) cria o logger por `createLogger`.",
+     "  createLogger: () => ({ error: vi.fn(), debug: vi.fn(), info: vi.fn(), warn: vi.fn() }),",
+     "      data: { alerted: true, consecutiveLow: 3, emailSent: true },",
+     "      data: { alerted: true, consecutiveLow: 3, emailSent: false },",
+     "      analysisId: 'a-portao-de-mencao',",
+     "      data: { alerted: true, consecutiveLow: 3, emailSent: false },",
+     "      analysisId: 'a-mencao-desligada',"
+    ],
+    "still_sample": [
+     "  toast: { error: (...args: unknown[]) => mockToastError(...args), success: vi.fn(), info: vi.fn() },",
+     "    mockFunctionsInvoke.mockResolvedValue({ data: { alerted: true, consecutiveLow: 3, emailSent: true }, error: null });",
+     "    mockFunctionsInvoke.mockResolvedValue({ data: { alerted: true, consecutiveLow: 3, emailSent: false }, error: null });",
+     "      contactId: 'c1', contactName: 'João', sentimentScore: 10, analysisId: 'a-portao-de-mencao',",
+     "    mockFunctionsInvoke.mockResolvedValue({ data: { alerted: true, consecutiveLow: 3, emailSent: false }, error: null });",
+     "      contactId: 'c1', contactName: 'João', sentimentScore: 10, analysisId: 'a-mencao-desligada',"
+    ]
+   }
+  },
+  {
+   "path": "src/hooks/communication/__tests__/mediaVolume.players.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 256,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 64,
+    "missing_in_main": 62,
+    "removed": 27,
+    "removed_still_in_main": 27,
+    "missing_sample": [
+     "        createSignedUrl: vi.fn(async () => ({",
+     "          data: null,",
+     "          error: new Error('sem assinatura no teste'),",
+     "  createLogger: () => ({ error: vi.fn(), info: vi.fn(), debug: vi.fn(), warn: vi.fn() }),",
+     "      void whileHover;",
+     "      void whileTap;",
+     "      void initial;",
+     "      void animate;",
+     "      void exit;",
+     "      void transition;",
+     "      void variants;",
+     "      channel: 'whatsapp',",
+     "      canDial: false,",
+     "      canReceive: true,",
+     "      canRecord: false,",
+     "      canReject: false,",
+     "  obterElemento: (montagem: Montagem) => HTMLMediaElement",
+     "  expect(elemento.volume, 'volume restaurado depois do mudo').toBeCloseTo(",
+     "    toGain(AJUSTE_ALTERADO),",
+     "          get value() {",
+     "            return ganho.valor;",
+     "          set value(novo: number) {",
+     "            ganho.valor = novo;",
+     "      () =>",
+     "        render("
+    ],
+    "still_sample": [
+     "        createSignedUrl: vi.fn(async () => ({ data: null, error: new Error('sem assinatura no teste') })),",
+     "      void whileHover; void whileTap; void initial; void animate; void exit; void transition; void variants;",
+     "      channel: 'whatsapp', canDial: false, canReceive: true, canRecord: false, canReject: false,",
+     "  obterElemento: (montagem: Montagem) => HTMLMediaElement,",
+     "  expect(elemento.volume, 'volume restaurado depois do mudo').toBeCloseTo(toGain(AJUSTE_ALTERADO), 5);",
+     "          get value() { return ganho.valor; },",
+     "          set value(novo: number) { ganho.valor = novo; },",
+     "      () => render(",
+     "        <MediaPreviewDialog item={itemDaGaleria('video', 'entrada.mp4')} open onOpenChange={() => {}} />,",
+     "      () => midiaDoPlayer(),"
+    ]
+   }
+  },
+  {
+   "path": "src/pages/__tests__/ChatPopup.rolagem-mensagem-nova.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 177,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 73,
+    "missing_in_main": 68,
+    "removed": 23,
+    "removed_still_in_main": 23,
+    "missing_sample": [
+     "  this.scrollTop = typeof opcoes === 'number' ? opcoes : (opcoes?.top ?? 0);",
+     "        upload: vi.fn(),",
+     "        getPublicUrl: () => ({ data: { publicUrl: '' } }),",
+     "        remove: vi.fn(),",
+     "  createLogger: () => ({ debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() }),",
+     "    instanceName: '',",
+     "    initResolve: vi.fn(),",
+     "    handleSendSticker: vi.fn(),",
+     "    handleSendCustomEmoji: vi.fn(),",
+     "    handleSendAudioMeme: vi.fn(),",
+     "vi.mock('@/components/inbox/chat/ChatQuickRepliesPopover', () => ({",
+     "  ChatQuickRepliesPopover: () => null,",
+     "    inputValue: '',",
+     "    inputRef: { current: null },",
+     "    isSending: false,",
+     "    isRecordingAudio: false,",
+     "    replyToMessage: null,",
+     "    editingMessage: null,",
+     "    forwardMessage: null,",
+     "    setInputValue: vi.fn(),",
+     "    handleReplyToMessage: vi.fn(),",
+     "    handleForwardMessage: vi.fn(),",
+     "    handleCopyMessage: vi.fn(),",
+     "    handleInteractiveButtonClick: vi.fn(),",
+     "    handleEditStart: vi.fn(),"
+    ],
+    "still_sample": [
+     "  this.scrollTop = typeof opcoes === 'number' ? opcoes : opcoes?.top ?? 0;",
+     "      from: () => ({ upload: vi.fn(), getPublicUrl: () => ({ data: { publicUrl: '' } }), remove: vi.fn() }),",
+     "    instanceName: '', initResolve: vi.fn(), handleSendSticker: vi.fn(),",
+     "    handleSendCustomEmoji: vi.fn(), handleSendAudioMeme: vi.fn(),",
+     "vi.mock('@/components/inbox/chat/ChatQuickRepliesPopover', () => ({ ChatQuickRepliesPopover: () => null }));",
+     "    inputValue: '', inputRef: { current: null }, isSending: false, isRecordingAudio: false,",
+     "    replyToMessage: null, editingMessage: null, forwardMessage: null,",
+     "    setInputValue: vi.fn(), handleReplyToMessage: vi.fn(), handleForwardMessage: vi.fn(),",
+     "    handleCopyMessage: vi.fn(), handleInteractiveButtonClick: vi.fn(), handleEditStart: vi.fn(),",
+     "    handleInputChange: vi.fn(), handleKeyDown: vi.fn(), handleCancelEdit: vi.fn(),"
+    ]
+   }
+  }
+ ],
+ "counts": {
+  "migrations": "0",
+  "workflows": "0",
+  "src": "9",
+  "edges": "0",
+  "docs_only": "no",
+  "lines_branch_has_main_lacks": "239",
+  "lines_main_has_branch_lacks": "109"
+ },
+ "auto": "MISTO_CONFLITO",
+ "n_files_with_gaps": 9,
+ "gap_lines_total": 234
+}

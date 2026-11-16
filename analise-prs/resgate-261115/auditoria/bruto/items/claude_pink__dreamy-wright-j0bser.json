@@ -1,0 +1,3377 @@
+{
+ "id": "claude_pink__dreamy-wright-j0bser",
+ "kind": "branch",
+ "ref": "origin/claude_pink/dreamy-wright-j0bser",
+ "tip": "b6222cd8ed7d356cf1b52a2748000e8019afca99",
+ "merge_base": "148e9e5b6519c2d739536b849270d0cd5c20361c",
+ "ahead": 4,
+ "last_commit_date": "2026-10-28",
+ "merge_base_date": "2026-10-27",
+ "prs_with_same_tip": [
+  2284
+ ],
+ "triagem_2804": {
+  "2284": "OBSOLETA"
+ },
+ "closure_comment": {},
+ "files": [
+  {
+   "path": "analise-prs/RELATORIO_PRS.md",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 75,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 48,
+    "missing_in_main": 47,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "# Relatório de Análise — 100 PRs Abertas",
+     "Data: 2026-10-27",
+     "Branch de trabalho: claude_pink/dreamy-wright-j0bser",
+     "Main SHA (início): e1f2ee4dd9481e7d4165edbd6c6bf9e94f8fdc62",
+     "## Resumo Executivo",
+     "**Total analisado**: 100 PRs",
+     "**Mergeadas**: 0",
+     "**Bloqueio sistêmico**: dependência circular de CI — veja seção 3",
+     "## Contagem por Veredicto",
+     "| Veredicto | Qtd | Descrição |",
+     "| SKIP_DRAFT | 32 | draft=true, não mergeável |",
+     "| SKIP_BLOCKED_CI | 51 | CI failing (Contrato DB offline + novas=12) |",
+     "| SKIP_PROHIBITED | 15 | toca .github/workflows/ |",
+     "| SKIP_CONFLICT | 4 | dirty (stacked em #2248 já mergeado) |",
+     "| AGUARDA_HUMANO | 2 | fix do bloqueio sistêmico, dependência circular |",
+     "| MERGED | 0 | — |",
+     "## Bloqueio Sistêmico (Circular Dependency)",
+     "O check `Contrato DB offline` falha porque `types.ts` está sem 9 assinaturas de RPC.",
+     "O `supabase-usage-guard.mjs` reporta `novas: 12` (12 chamadas sem assinatura tipada).",
+     "O fix está nos PRs:",
+     "- **#2274** (não-draft, não-conflito): `fix: corrige workflows com falha — types.ts +9 RPCs, retry HTTP 502`",
+     "- **#2244** (não-draft, duplicata): `fix(types): adiciona 9 assinaturas de RPC ausentes — desbloqueia CI de todas as PRs`",
+     "Ambos são bloqueados pelo mesmo `Contrato DB offline` que precisam corrigir → loop.",
+     "**Ação necessária do Joaquim**:",
+     "1. Verificar manualmente o conteúdo de #2274 ou #2244"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "analise-prs/baseline/lint.txt",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "patch_lines": 21,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 12,
+    "missing_in_main": 12,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "$ eslint .",
+     "Oops! Something went wrong! :(",
+     "ESLint: 10.1.0",
+     "Error [ERR_MODULE_NOT_FOUND]: Cannot find package '@eslint/js' imported from /home/user/Zapp_Web_V2/eslint.config.js",
+     "    at Object.getPackageJSONURL (node:internal/modules/package_json_reader:314:9)",
+     "    at packageResolve (node:internal/modules/esm/resolve:767:81)",
+     "    at moduleResolve (node:internal/modules/esm/resolve:853:18)",
+     "    at defaultResolve (node:internal/modules/esm/resolve:983:11)",
+     "    at #cachedDefaultResolve (node:internal/modules/esm/loader:731:20)",
+     "    at ModuleLoader.resolve (node:internal/modules/esm/loader:708:38)",
+     "    at ModuleLoader.getModuleJobForImport (node:internal/modules/esm/loader:310:38)",
+     "    at ModuleJob._link (node:internal/modules/esm/module_job:182:49)"
+    ],
+    "still_sample": [],
+    "same_basename_in_main": [
+     "docs/_arquivo/analise-prs/baseline/lint.txt"
+    ],
+    "missing_vs_same_basename": 12
+   }
+  },
+  {
+   "path": "analise-prs/baseline/main-sha.txt",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "patch_lines": 7,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "e1f2ee4dd9481e7d4165edbd6c6bf9e94f8fdc62"
+    ],
+    "still_sample": [],
+    "same_basename_in_main": []
+   }
+  },
+  {
+   "path": "analise-prs/baseline/typecheck.txt",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "patch_lines": 25,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 19,
+    "missing_in_main": 19,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "$ tsc -b --force",
+     "error TS2688: Cannot find type definition file for 'node'.",
+     "  The file is in the program because:",
+     "    Entry point of type library 'node' specified in compilerOptions",
+     "error TS2688: Cannot find type definition file for 'vitest/globals'.",
+     "  The file is in the program because:",
+     "    Entry point of type library 'vitest/globals' specified in compilerOptions",
+     "vite.config.ts(1,30): error TS2307: Cannot find module 'vite' or its corresponding type declarations.",
+     "vite.config.ts(2,19): error TS2307: Cannot find module '@vitejs/plugin-react' or its corresponding type declarations.",
+     "vite.config.ts(3,18): error TS2591: Cannot find name 'path'. Do you need to install type definitions for node? Try `npm i --save-dev @types/node` and then add '",
+     "vite.config.ts(6,32): error TS7031: Binding element 'mode' implicitly has an 'any' type.",
+     "vite.config.ts(8,19): error TS2591: Cannot find name 'process'. Do you need to install type definitions for node? Try `npm i --save-dev @types/node` and then ad",
+     "vite.config.ts(8,56): error TS2591: Cannot find name 'process'. Do you need to install type definitions for node? Try `npm i --save-dev @types/node` and then ad",
+     "vite.config.ts(20,38): error TS2307: Cannot find module 'vite' or its corresponding type declarations.",
+     "vite.config.ts(34,39): error TS2339: Property 'dirname' does not exist on type 'ImportMeta'.",
+     "error TS2688: Cannot find type definition file for 'node'.",
+     "  The file is in the program because:",
+     "    Entry point of type library 'node' specified in compilerOptions",
+     "error: script \"typecheck\" exited with code 1"
+    ],
+    "still_sample": [],
+    "same_basename_in_main": [
+     "docs/_arquivo/analise-prs/baseline/typecheck.txt"
+    ],
+    "missing_vs_same_basename": 19
+   }
+  },
+  {
+   "path": "analise-prs/dossies/PR-2087.md",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "patch_lines": 22,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 12,
+    "missing_in_main": 12,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "# PR #2087 — fix(test): mock de supabase.rpc ausente ao buscar em GmailInboxView.paginacao",
+     "**draft**: no",
+     "**head_sha**: unknown (bulk API não retorna)",
+     "**base_sha**: unknown",
+     "**mergeable_state**: blocked",
+     "**verdict**: SKIP_BLOCKED_CI",
+     "## Análise",
+     "1. **Ainda válido?** Sim — fix de mock de RPC em teste",
+     "2. **Traz regressão?** Não",
+     "3. **Já está em main?** Não",
+     "4. **Regra de negócio correta?** Sim",
+     "**Bloqueio**: CI failing: Contrato DB offline (novas=12)"
+    ],
+    "still_sample": [],
+    "same_basename_in_main": [
+     "docs/_arquivo/analise-prs/dossies/PR-2087.md"
+    ],
+    "missing_vs_same_basename": 12
+   }
+  },
+  {
+   "path": "analise-prs/dossies/PR-2088.md",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "patch_lines": 22,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 12,
+    "missing_in_main": 12,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "# PR #2088 — fix: área segura mobile (safe-area-*) e rolagem sem barra (scrollbar-none) sem regra CSS",
+     "**draft**: no",
+     "**head_sha**: unknown (bulk API não retorna)",
+     "**base_sha**: unknown",
+     "**mergeable_state**: blocked",
+     "**verdict**: SKIP_BLOCKED_CI",
+     "## Análise",
+     "1. **Ainda válido?** Sim — fix de CSS mobile",
+     "2. **Traz regressão?** Não",
+     "3. **Já está em main?** Não",
+     "4. **Regra de negócio correta?** Sim",
+     "**Bloqueio**: CI failing: Contrato DB offline (novas=12)"
+    ],
+    "still_sample": [],
+    "same_basename_in_main": [
+     "docs/_arquivo/analise-prs/dossies/PR-2088.md"
+    ],
+    "missing_vs_same_basename": 12
+   }
+  },
+  {
+   "path": "analise-prs/dossies/PR-2089.md",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "patch_lines": 22,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 12,
+    "missing_in_main": 12,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "# PR #2089 — fix: ChatService.uploadAudio gravava sempre como .webm, ignorando o mime real do Blob",
+     "**draft**: no",
+     "**head_sha**: unknown (bulk API não retorna)",
+     "**base_sha**: unknown",
+     "**mergeable_state**: blocked",
+     "**verdict**: SKIP_BLOCKED_CI",
+     "## Análise",
+     "1. **Ainda válido?** Sim — bug de mime type em upload de áudio",
+     "2. **Traz regressão?** Não",
+     "3. **Já está em main?** Não",
+     "4. **Regra de negócio correta?** Sim — usar mime real do Blob é correto",
+     "**Bloqueio**: CI failing: Contrato DB offline (novas=12)"
+    ],
+    "still_sample": [],
+    "same_basename_in_main": [
+     "docs/_arquivo/analise-prs/dossies/PR-2089.md"
+    ],
+    "missing_vs_same_basename": 12
+   }
+  },
+  {
+   "path": "analise-prs/dossies/PR-2090.md",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "patch_lines": 22,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 12,
+    "missing_in_main": 12,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "# PR #2090 — fix: fila de envio offline não era por usuário — trocar de atendente na mesma máquina drenava o texto alheio",
+     "**draft**: no",
+     "**head_sha**: unknown (bulk API não retorna)",
+     "**base_sha**: unknown",
+     "**mergeable_state**: blocked",
+     "**verdict**: SKIP_BLOCKED_CI",
+     "## Análise",
+     "1. **Ainda válido?** Sim — bug real: fila compartilhada entre usuários",
+     "2. **Traz regressão?** Não",
+     "3. **Já está em main?** Não",
+     "4. **Regra de negócio correta?** Sim — fila deve ser por usuário",
+     "**Bloqueio**: CI failing: Contrato DB offline (novas=12)"
+    ],
+    "still_sample": [],
+    "same_basename_in_main": [
+     "docs/_arquivo/analise-prs/dossies/PR-2090.md"
+    ],
+    "missing_vs_same_basename": 12
+   }
+  },
+  {
+   "path": "analise-prs/dossies/PR-2091.md",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "patch_lines": 22,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 12,
+    "missing_in_main": 12,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "# PR #2091 — fix: timing-safe comparison em searchbox-budget-alert e whatsapp-webhook (Z011-B/C)",
+     "**draft**: no",
+     "**head_sha**: unknown (bulk API não retorna)",
+     "**base_sha**: unknown",
+     "**mergeable_state**: blocked",
+     "**verdict**: SKIP_BLOCKED_CI",
+     "## Análise",
+     "1. **Ainda válido?** Sim — fix de segurança: timing-safe comparison",
+     "2. **Traz regressão?** Não",
+     "3. **Já está em main?** Não",
+     "4. **Regra de negócio correta?** Sim — timing-safe comparison previne timing attacks",
+     "**Bloqueio**: CI failing: Contrato DB offline (novas=12)"
+    ],
+    "still_sample": [],
+    "same_basename_in_main": [
+     "docs/_arquivo/analise-prs/dossies/PR-2091.md"
+    ],
+    "missing_vs_same_basename": 12
+   }
+  },
+  {
+   "path": "analise-prs/dossies/PR-2092.md",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "patch_lines": 22,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 12,
+    "missing_in_main": 12,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "# PR #2092 — fix(ci): types-sync job summary + gmail-cron-sync raw-500 (Z029+Z015p)",
+     "**draft**: yes",
+     "**head_sha**: unknown (bulk API não retorna)",
+     "**base_sha**: unknown",
+     "**mergeable_state**: draft",
+     "**verdict**: SKIP_DRAFT",
+     "## Análise",
+     "1. **Ainda válido?** Sim — fix de CI",
+     "2. **Traz regressão?** Não",
+     "3. **Já está em main?** Não",
+     "4. **Regra de negócio correta?** Sim",
+     "**Bloqueio**: draft=true, aguarda autor marcar como pronto"
+    ],
+    "still_sample": [],
+    "same_basename_in_main": [
+     "docs/_arquivo/analise-prs/dossies/PR-2092.md"
+    ],
+    "missing_vs_same_basename": 12
+   }
+  },
+  {
+   "path": "analise-prs/dossies/PR-2093.md",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "patch_lines": 22,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 12,
+    "missing_in_main": 12,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "# PR #2093 — fix: migration-evidence expectedKeys, version collision, playwright unpin (Z022+Z023+Z024)",
+     "**draft**: yes",
+     "**head_sha**: unknown (bulk API não retorna)",
+     "**base_sha**: unknown",
+     "**mergeable_state**: draft",
+     "**verdict**: SKIP_DRAFT",
+     "## Análise",
+     "1. **Ainda válido?** Sim — fix de evidência de migration e playwright",
+     "2. **Traz regressão?** Não",
+     "3. **Já está em main?** Não",
+     "4. **Regra de negócio correta?** Sim",
+     "**Bloqueio**: draft=true, aguarda autor marcar como pronto"
+    ],
+    "still_sample": [],
+    "same_basename_in_main": [
+     "docs/_arquivo/analise-prs/dossies/PR-2093.md"
+    ],
+    "missing_vs_same_basename": 12
+   }
+  },
+  {
+   "path": "analise-prs/dossies/PR-2095.md",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "patch_lines": 22,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 12,
+    "missing_in_main": 12,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "# PR #2095 — fix(security): Z018+Z020 — external-db-proxy code-leak em 502, catch via internalErrorResponse",
+     "**draft**: no",
+     "**head_sha**: unknown (bulk API não retorna)",
+     "**base_sha**: unknown",
+     "**mergeable_state**: blocked",
+     "**verdict**: SKIP_BLOCKED_CI",
+     "## Análise",
+     "1. **Ainda válido?** Sim — fix de segurança: code-leak em 502",
+     "2. **Traz regressão?** Não",
+     "3. **Já está em main?** Não",
+     "4. **Regra de negócio correta?** Sim — internalErrorResponse previne vazamento de código",
+     "**Bloqueio**: CI failing: Contrato DB offline (novas=12)"
+    ],
+    "still_sample": [],
+    "same_basename_in_main": [
+     "docs/_arquivo/analise-prs/dossies/PR-2095.md"
+    ],
+    "missing_vs_same_basename": 12
+   }
+  },
+  {
+   "path": "analise-prs/dossies/PR-2097.md",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "patch_lines": 22,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 12,
+    "missing_in_main": 12,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "# PR #2097 — fix: corrige falhas pré-existentes nos Unit Tests (useKnowledgeBase + useTalkXSegments)",
+     "**draft**: no",
+     "**head_sha**: unknown (bulk API não retorna)",
+     "**base_sha**: unknown",
+     "**mergeable_state**: blocked",
+     "**verdict**: SKIP_BLOCKED_CI",
+     "## Análise",
+     "1. **Ainda válido?** Sim — fix de testes",
+     "2. **Traz regressão?** Não",
+     "3. **Já está em main?** Não",
+     "4. **Regra de negócio correta?** Sim",
+     "**Bloqueio**: CI failing: Contrato DB offline (novas=12)"
+    ],
+    "still_sample": [],
+    "same_basename_in_main": [
+     "docs/_arquivo/analise-prs/dossies/PR-2097.md"
+    ],
+    "missing_vs_same_basename": 12
+   }
+  },
+  {
+   "path": "analise-prs/dossies/PR-2098.md",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "patch_lines": 22,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 12,
+    "missing_in_main": 12,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "# PR #2098 — fix: corrigir falhas de CI — testes, a11y, bundle e motion (261019)",
+     "**draft**: no",
+     "**head_sha**: unknown (bulk API não retorna)",
+     "**base_sha**: unknown",
+     "**mergeable_state**: blocked",
+     "**verdict**: SKIP_BLOCKED_CI",
+     "## Análise",
+     "1. **Ainda válido?** Sim — fix de CI",
+     "2. **Traz regressão?** Não",
+     "3. **Já está em main?** Não",
+     "4. **Regra de negócio correta?** Sim",
+     "**Bloqueio**: CI failing: Contrato DB offline (novas=12)"
+    ],
+    "still_sample": [],
+    "same_basename_in_main": [
+     "docs/_arquivo/analise-prs/dossies/PR-2098.md"
+    ],
+    "missing_vs_same_basename": 12
+   }
+  },
+  {
+   "path": "analise-prs/dossies/PR-2100.md",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "patch_lines": 22,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 12,
+    "missing_in_main": 12,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "# PR #2100 — fix: GA09/GA62/GA75/GA92/GA98/GA100 — concurrency, codeql diário, endpoint, rate-limit, docs",
+     "**draft**: yes",
+     "**head_sha**: unknown (bulk API não retorna)",
+     "**base_sha**: unknown",
+     "**mergeable_state**: draft",
+     "**verdict**: SKIP_DRAFT",
+     "## Análise",
+     "1. **Ainda válido?** Sim — fix de CI",
+     "2. **Traz regressão?** Não",
+     "3. **Já está em main?** Não",
+     "4. **Regra de negócio correta?** Sim",
+     "**Bloqueio**: draft=true, aguarda autor marcar como pronto"
+    ],
+    "still_sample": [],
+    "same_basename_in_main": [
+     "docs/_arquivo/analise-prs/dossies/PR-2100.md"
+    ],
+    "missing_vs_same_basename": 12
+   }
+  },
+  {
+   "path": "analise-prs/dossies/PR-2104.md",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "patch_lines": 22,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 12,
+    "missing_in_main": 12,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "# PR #2104 — fix(ci): PGUSER postgres + GA75 endpoint + GA77 sem auto-restore + TS2322 + security-unit",
+     "**draft**: no",
+     "**head_sha**: unknown (bulk API não retorna)",
+     "**base_sha**: unknown",
+     "**mergeable_state**: prohibited",
+     "**verdict**: SKIP_PROHIBITED",
+     "## Análise",
+     "1. **Ainda válido?** Sim — fix de CI",
+     "2. **Traz regressão?** Não",
+     "3. **Já está em main?** Não",
+     "4. **Regra de negócio correta?** Sim",
+     "**Bloqueio**: Toca .github/workflows/ — proibido pelas regras de segurança"
+    ],
+    "still_sample": [],
+    "same_basename_in_main": [
+     "docs/_arquivo/analise-prs/dossies/PR-2104.md"
+    ],
+    "missing_vs_same_basename": 12
+   }
+  },
+  {
+   "path": "analise-prs/dossies/PR-2105.md",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "patch_lines": 22,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 12,
+    "missing_in_main": 12,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "# PR #2105 — docs: plano de integração de branches em 300 etapas (153 branches → só main)",
+     "**draft**: no",
+     "**head_sha**: unknown (bulk API não retorna)",
+     "**base_sha**: unknown",
+     "**mergeable_state**: blocked",
+     "**verdict**: SKIP_BLOCKED_CI",
+     "## Análise",
+     "1. **Ainda válido?** Sim — plano de integração de branches",
+     "2. **Traz regressão?** Não",
+     "3. **Já está em main?** Não",
+     "4. **Regra de negócio correta?** Sim",
+     "**Bloqueio**: CI failing: Contrato DB offline (novas=12)"
+    ],
+    "still_sample": [],
+    "same_basename_in_main": [
+     "docs/_arquivo/analise-prs/dossies/PR-2105.md"
+    ],
+    "missing_vs_same_basename": 12
+   }
+  },
+  {
+   "path": "analise-prs/dossies/PR-2107.md",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "patch_lines": 22,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 12,
+    "missing_in_main": 12,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "# PR #2107 — docs(g9): absorver planos de docs ausentes da main — E274",
+     "**draft**: no",
+     "**head_sha**: unknown (bulk API não retorna)",
+     "**base_sha**: unknown",
+     "**mergeable_state**: blocked",
+     "**verdict**: SKIP_BLOCKED_CI",
+     "## Análise",
+     "1. **Ainda válido?** Sim — documentação de planos",
+     "2. **Traz regressão?** Não",
+     "3. **Já está em main?** Não",
+     "4. **Regra de negócio correta?** Sim",
+     "**Bloqueio**: CI failing: Contrato DB offline (novas=12)"
+    ],
+    "still_sample": [],
+    "same_basename_in_main": [
+     "docs/_arquivo/analise-prs/dossies/PR-2107.md"
+    ],
+    "missing_vs_same_basename": 12
+   }
+  },
+  {
+   "path": "analise-prs/dossies/PR-2108.md",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "patch_lines": 22,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 12,
+    "missing_in_main": 12,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "# PR #2108 — fix(ci): GA20/GA21/GA22/GA23/GA27/GA38/GA39/GA55/GA72 + GA75–GA78/GA92 — auditoria GitHub Actions",
+     "**draft**: yes",
+     "**head_sha**: unknown (bulk API não retorna)",
+     "**base_sha**: unknown",
+     "**mergeable_state**: draft",
+     "**verdict**: SKIP_DRAFT",
+     "## Análise",
+     "1. **Ainda válido?** Sim — fix de CI",
+     "2. **Traz regressão?** Não",
+     "3. **Já está em main?** Não",
+     "4. **Regra de negócio correta?** Sim",
+     "**Bloqueio**: draft=true, aguarda autor marcar como pronto"
+    ],
+    "still_sample": [],
+    "same_basename_in_main": [
+     "docs/_arquivo/analise-prs/dossies/PR-2108.md"
+    ],
+    "missing_vs_same_basename": 12
+   }
+  },
+  {
+   "path": "analise-prs/dossies/PR-2109.md",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "patch_lines": 22,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 12,
+    "missing_in_main": 12,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "# PR #2109 — fix(test): mock useCustomEmojis.upload suporta duplo .order()",
+     "**draft**: no",
+     "**head_sha**: unknown (bulk API não retorna)",
+     "**base_sha**: unknown",
+     "**mergeable_state**: blocked",
+     "**verdict**: SKIP_BLOCKED_CI",
+     "## Análise",
+     "1. **Ainda válido?** Sim — fix de mock de duplo .order()",
+     "2. **Traz regressão?** Não",
+     "3. **Já está em main?** Não",
+     "4. **Regra de negócio correta?** Sim",
+     "**Bloqueio**: CI failing: Contrato DB offline (novas=12)"
+    ],
+    "still_sample": [],
+    "same_basename_in_main": [
+     "docs/_arquivo/analise-prs/dossies/PR-2109.md"
+    ],
+    "missing_vs_same_basename": 12
+   }
+  },
+  {
+   "path": "analise-prs/dossies/PR-2110.md",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "patch_lines": 22,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 12,
+    "missing_in_main": 12,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "# PR #2110 — fix(tests): add createLogger to vi.mock('@/lib/logger') em 20 testes",
+     "**draft**: no",
+     "**head_sha**: unknown (bulk API não retorna)",
+     "**base_sha**: unknown",
+     "**mergeable_state**: blocked",
+     "**verdict**: SKIP_BLOCKED_CI",
+     "## Análise",
+     "1. **Ainda válido?** Sim — fix de mock em 20 testes",
+     "2. **Traz regressão?** Não",
+     "3. **Já está em main?** Não",
+     "4. **Regra de negócio correta?** Sim",
+     "**Bloqueio**: CI failing: Contrato DB offline (novas=12)"
+    ],
+    "still_sample": [],
+    "same_basename_in_main": [
+     "docs/_arquivo/analise-prs/dossies/PR-2110.md"
+    ],
+    "missing_vs_same_basename": 12
+   }
+  },
+  {
+   "path": "analise-prs/dossies/PR-2111.md",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "patch_lines": 22,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 12,
+    "missing_in_main": 12,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "# PR #2111 — fix(types): narrowar reason_code em useTalkXSuppression para union type",
+     "**draft**: no",
+     "**head_sha**: unknown (bulk API não retorna)",
+     "**base_sha**: unknown",
+     "**mergeable_state**: blocked",
+     "**verdict**: SKIP_BLOCKED_CI",
+     "## Análise",
+     "1. **Ainda válido?** Sim — narrowing de tipo",
+     "2. **Traz regressão?** Não",
+     "3. **Já está em main?** Não",
+     "4. **Regra de negócio correta?** Sim",
+     "**Bloqueio**: CI failing: Contrato DB offline (novas=12)"
+    ],
+    "still_sample": [],
+    "same_basename_in_main": [
+     "docs/_arquivo/analise-prs/dossies/PR-2111.md"
+    ],
+    "missing_vs_same_basename": 11
+   }
+  },
+  {
+   "path": "analise-prs/dossies/PR-2112.md",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "patch_lines": 22,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 12,
+    "missing_in_main": 12,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "# PR #2112 — chore(inbox): remove órfão ConversationMemorySection + desbloqueia gates da main",
+     "**draft**: no",
+     "**head_sha**: unknown (bulk API não retorna)",
+     "**base_sha**: unknown",
+     "**mergeable_state**: blocked",
+     "**verdict**: SKIP_BLOCKED_CI",
+     "## Análise",
+     "1. **Ainda válido?** Sim — remoção de componente órfão",
+     "2. **Traz regressão?** Não — remove dead code",
+     "3. **Já está em main?** Não",
+     "4. **Regra de negócio correta?** Sim",
+     "**Bloqueio**: CI failing: Contrato DB offline (novas=12)"
+    ],
+    "still_sample": [],
+    "same_basename_in_main": [
+     "docs/_arquivo/analise-prs/dossies/PR-2112.md"
+    ],
+    "missing_vs_same_basename": 11
+   }
+  },
+  {
+   "path": "analise-prs/dossies/PR-2113.md",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "patch_lines": 22,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 12,
+    "missing_in_main": 12,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "# PR #2113 — fix(evolution-api): remover set-presence, find-chats e find-status-messages (GO_GAPS D6)",
+     "**draft**: yes",
+     "**head_sha**: unknown (bulk API não retorna)",
+     "**base_sha**: unknown",
+     "**mergeable_state**: draft",
+     "**verdict**: SKIP_DRAFT",
+     "## Análise",
+     "1. **Ainda válido?** Sim — remoção de endpoints não suportados pelo Evolution GO",
+     "2. **Traz regressão?** Não — remove código inválido",
+     "3. **Já está em main?** Não",
+     "4. **Regra de negócio correta?** Sim — Evolution GO não suporta esses endpoints",
+     "**Bloqueio**: draft=true, aguarda autor marcar como pronto"
+    ],
+    "still_sample": [],
+    "same_basename_in_main": [
+     "docs/_arquivo/analise-prs/dossies/PR-2113.md"
+    ],
+    "missing_vs_same_basename": 12
+   }
+  },
+  {
+   "path": "analise-prs/dossies/PR-2116.md",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "patch_lines": 22,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 12,
+    "missing_in_main": 12,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "# PR #2116 — feat: security headers V130-V133 — COOP, Reporting-Endpoints, report-to",
+     "**draft**: yes",
+     "**head_sha**: unknown (bulk API não retorna)",
+     "**base_sha**: unknown",
+     "**mergeable_state**: draft",
+     "**verdict**: SKIP_DRAFT",
+     "## Análise",
+     "1. **Ainda válido?** Sim — feature de security headers",
+     "2. **Traz regressão?** Não",
+     "3. **Já está em main?** Não",
+     "4. **Regra de negócio correta?** Sim — COOP e Reporting-Endpoints são boas práticas de segurança",
+     "**Bloqueio**: draft=true, aguarda autor marcar como pronto"
+    ],
+    "still_sample": [],
+    "same_basename_in_main": [
+     "docs/_arquivo/analise-prs/dossies/PR-2116.md"
+    ],
+    "missing_vs_same_basename": 12
+   }
+  },
+  {
+   "path": "analise-prs/dossies/PR-2120.md",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "patch_lines": 22,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 12,
+    "missing_in_main": 12,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "# PR #2120 — fix(inbox): fecha a semântica de tablist das 8 abas da conversa (etapa 15 do plano de 20 etapas)",
+     "**draft**: no",
+     "**head_sha**: unknown (bulk API não retorna)",
+     "**base_sha**: unknown",
+     "**mergeable_state**: blocked",
+     "**verdict**: SKIP_BLOCKED_CI",
+     "## Análise",
+     "1. **Ainda válido?** Sim — fix de acessibilidade de tablist",
+     "2. **Traz regressão?** Não",
+     "3. **Já está em main?** Não",
+     "4. **Regra de negócio correta?** Sim — tablist ARIA correto",
+     "**Bloqueio**: CI failing: Contrato DB offline (novas=12)"
+    ],
+    "still_sample": [],
+    "same_basename_in_main": [
+     "docs/_arquivo/analise-prs/dossies/PR-2120.md"
+    ],
+    "missing_vs_same_basename": 11
+   }
+  },
+  {
+   "path": "analise-prs/dossies/PR-2123.md",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "patch_lines": 22,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 12,
+    "missing_in_main": 12,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "# PR #2123 — fix(ci): restaura o parse dos contratos de workflow e corrige 8 violações",
+     "**draft**: no",
+     "**head_sha**: unknown (bulk API não retorna)",
+     "**base_sha**: unknown",
+     "**mergeable_state**: prohibited",
+     "**verdict**: SKIP_PROHIBITED",
+     "## Análise",
+     "1. **Ainda válido?** Sim — fix de CI",
+     "2. **Traz regressão?** Não",
+     "3. **Já está em main?** Não",
+     "4. **Regra de negócio correta?** Sim",
+     "**Bloqueio**: Toca .github/workflows/ — proibido pelas regras de segurança"
+    ],
+    "still_sample": [],
+    "same_basename_in_main": [
+     "docs/_arquivo/analise-prs/dossies/PR-2123.md"
+    ],
+    "missing_vs_same_basename": 11
+   }
+  },
+  {
+   "path": "analise-prs/dossies/PR-2124.md",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "patch_lines": 22,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 12,
+    "missing_in_main": 12,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "# PR #2124 — fix(ci): Fase 0 do plano GA02-GA12",
+     "**draft**: no",
+     "**head_sha**: unknown (bulk API não retorna)",
+     "**base_sha**: unknown",
+     "**mergeable_state**: prohibited",
+     "**verdict**: SKIP_PROHIBITED",
+     "## Análise",
+     "1. **Ainda válido?** Sim — fix de CI",
+     "2. **Traz regressão?** Não",
+     "3. **Já está em main?** Não",
+     "4. **Regra de negócio correta?** Sim",
+     "**Bloqueio**: Toca .github/workflows/ — proibido pelas regras de segurança"
+    ],
+    "still_sample": [],
+    "same_basename_in_main": [
+     "docs/_arquivo/analise-prs/dossies/PR-2124.md"
+    ],
+    "missing_vs_same_basename": 11
+   }
+  },
+  {
+   "path": "analise-prs/dossies/PR-2125.md",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "patch_lines": 22,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 12,
+    "missing_in_main": 12,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "# PR #2125 — fix(ci): Fase 1 do plano GA18 GA19 + GA26 prepare",
+     "**draft**: no",
+     "**head_sha**: unknown (bulk API não retorna)",
+     "**base_sha**: unknown",
+     "**mergeable_state**: prohibited",
+     "**verdict**: SKIP_PROHIBITED",
+     "## Análise",
+     "1. **Ainda válido?** Sim — fix de CI",
+     "2. **Traz regressão?** Não",
+     "3. **Já está em main?** Não",
+     "4. **Regra de negócio correta?** Sim",
+     "**Bloqueio**: Toca .github/workflows/ — proibido pelas regras de segurança"
+    ],
+    "still_sample": [],
+    "same_basename_in_main": [
+     "docs/_arquivo/analise-prs/dossies/PR-2125.md"
+    ],
+    "missing_vs_same_basename": 11
+   }
+  },
+  {
+   "path": "analise-prs/dossies/PR-2126.md",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "patch_lines": 22,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 12,
+    "missing_in_main": 12,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "# PR #2126 — fix(ci): Fases 4+5+6 do plano GA49-GA74",
+     "**draft**: no",
+     "**head_sha**: unknown (bulk API não retorna)",
+     "**base_sha**: unknown",
+     "**mergeable_state**: prohibited",
+     "**verdict**: SKIP_PROHIBITED",
+     "## Análise",
+     "1. **Ainda válido?** Sim — fix de CI",
+     "2. **Traz regressão?** Não",
+     "3. **Já está em main?** Não",
+     "4. **Regra de negócio correta?** Sim",
+     "**Bloqueio**: Toca .github/workflows/ — proibido pelas regras de segurança"
+    ],
+    "still_sample": [],
+    "same_basename_in_main": [
+     "docs/_arquivo/analise-prs/dossies/PR-2126.md"
+    ],
+    "missing_vs_same_basename": 11
+   }
+  },
+  {
+   "path": "analise-prs/dossies/PR-2128.md",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "patch_lines": 22,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 12,
+    "missing_in_main": 12,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "# PR #2128 — fix(ci): Fases 2+3 do plano GA27-GA47",
+     "**draft**: no",
+     "**head_sha**: unknown (bulk API não retorna)",
+     "**base_sha**: unknown",
+     "**mergeable_state**: prohibited",
+     "**verdict**: SKIP_PROHIBITED",
+     "## Análise",
+     "1. **Ainda válido?** Sim — fix de CI",
+     "2. **Traz regressão?** Não",
+     "3. **Já está em main?** Não",
+     "4. **Regra de negócio correta?** Sim",
+     "**Bloqueio**: Toca .github/workflows/ — proibido pelas regras de segurança"
+    ],
+    "still_sample": [],
+    "same_basename_in_main": [
+     "docs/_arquivo/analise-prs/dossies/PR-2128.md"
+    ],
+    "missing_vs_same_basename": 11
+   }
+  },
+  {
+   "path": "analise-prs/dossies/PR-2129.md",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "patch_lines": 22,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 12,
+    "missing_in_main": 12,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "# PR #2129 — fix(ci): Fases 7+8 do plano GA75-GA95",
+     "**draft**: no",
+     "**head_sha**: unknown (bulk API não retorna)",
+     "**base_sha**: unknown",
+     "**mergeable_state**: prohibited",
+     "**verdict**: SKIP_PROHIBITED",
+     "## Análise",
+     "1. **Ainda válido?** Sim — fix de CI",
+     "2. **Traz regressão?** Não",
+     "3. **Já está em main?** Não",
+     "4. **Regra de negócio correta?** Sim",
+     "**Bloqueio**: Toca .github/workflows/ — proibido pelas regras de segurança"
+    ],
+    "still_sample": [],
+    "same_basename_in_main": [
+     "docs/_arquivo/analise-prs/dossies/PR-2129.md"
+    ],
+    "missing_vs_same_basename": 11
+   }
+  },
+  {
+   "path": "analise-prs/dossies/PR-2135.md",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "patch_lines": 22,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 12,
+    "missing_in_main": 12,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "# PR #2135 — fix(contatos): restaura topo sem cabeçalho e devolve o toque ao FAB",
+     "**draft**: no",
+     "**head_sha**: unknown (bulk API não retorna)",
+     "**base_sha**: unknown",
+     "**mergeable_state**: blocked",
+     "**verdict**: SKIP_BLOCKED_CI",
+     "## Análise",
+     "1. **Ainda válido?** Sim — fix de UI de Contatos",
+     "2. **Traz regressão?** Não",
+     "3. **Já está em main?** Não",
+     "4. **Regra de negócio correta?** Sim",
+     "**Bloqueio**: CI failing: Contrato DB offline (novas=12)"
+    ],
+    "still_sample": [],
+    "same_basename_in_main": [
+     "docs/_arquivo/analise-prs/dossies/PR-2135.md"
+    ],
+    "missing_vs_same_basename": 11
+   }
+  },
+  {
+   "path": "analise-prs/dossies/PR-2137.md",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "patch_lines": 22,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 12,
+    "missing_in_main": 12,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "# PR #2137 — fix(db): recria canonicamente as policies de receipt do team chat (replay)",
+     "**draft**: no",
+     "**head_sha**: unknown (bulk API não retorna)",
+     "**base_sha**: unknown",
+     "**mergeable_state**: blocked",
+     "**verdict**: SKIP_BLOCKED_CI",
+     "## Análise",
+     "1. **Ainda válido?** Sim — fix de policies de RLS",
+     "2. **Traz regressão?** Não",
+     "3. **Já está em main?** Não",
+     "4. **Regra de negócio correta?** Sim — recriação canônica de policies é abordagem correta",
+     "**Bloqueio**: CI failing: Contrato DB offline (novas=12)"
+    ],
+    "still_sample": [],
+    "same_basename_in_main": [
+     "docs/_arquivo/analise-prs/dossies/PR-2137.md"
+    ],
+    "missing_vs_same_basename": 11
+   }
+  },
+  {
+   "path": "analise-prs/dossies/PR-2138.md",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "patch_lines": 22,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 12,
+    "missing_in_main": 12,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "# PR #2138 — fix(ci): desbloqueia a main - contratos de CI, Pin do Playwright/E2E, E88 e DB Guard offline",
+     "**draft**: yes",
+     "**head_sha**: unknown (bulk API não retorna)",
+     "**base_sha**: unknown",
+     "**mergeable_state**: draft",
+     "**verdict**: SKIP_DRAFT",
+     "## Análise",
+     "1. **Ainda válido?** Sim — fix de CI",
+     "2. **Traz regressão?** Não",
+     "3. **Já está em main?** Não",
+     "4. **Regra de negócio correta?** Sim",
+     "**Bloqueio**: draft=true, aguarda autor marcar como pronto"
+    ],
+    "still_sample": [],
+    "same_basename_in_main": [
+     "docs/_arquivo/analise-prs/dossies/PR-2138.md"
+    ],
+    "missing_vs_same_basename": 12
+   }
+  },
+  {
+   "path": "analise-prs/dossies/PR-2139.md",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "patch_lines": 22,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 12,
+    "missing_in_main": 12,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "# PR #2139 — Codex/fix failed workflows 20261020",
+     "**draft**: no",
+     "**head_sha**: unknown (bulk API não retorna)",
+     "**base_sha**: unknown",
+     "**mergeable_state**: prohibited",
+     "**verdict**: SKIP_PROHIBITED",
+     "## Análise",
+     "1. **Ainda válido?** Sim — fix de workflows",
+     "2. **Traz regressão?** Não",
+     "3. **Já está em main?** Não",
+     "4. **Regra de negócio correta?** Sim",
+     "**Bloqueio**: Toca .github/workflows/ — proibido pelas regras de segurança"
+    ],
+    "still_sample": [],
+    "same_basename_in_main": [
+     "docs/_arquivo/analise-prs/dossies/PR-2139.md"
+    ],
+    "missing_vs_same_basename": 11
+   }
+  },
+  {
+   "path": "analise-prs/dossies/PR-2141.md",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "patch_lines": 22,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 12,
+    "missing_in_main": 12,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "# PR #2141 — feat(E83): entrar por codigo - aceite desacoplado (somente arquivos novos)",
+     "**draft**: no",
+     "**head_sha**: unknown (bulk API não retorna)",
+     "**base_sha**: unknown",
+     "**mergeable_state**: blocked",
+     "**verdict**: SKIP_BLOCKED_CI",
+     "## Análise",
+     "1. **Ainda válido?** Sim — feature E83 com somente arquivos novos",
+     "2. **Traz regressão?** Não",
+     "3. **Já está em main?** Não",
+     "4. **Regra de negócio correta?** Sim",
+     "**Bloqueio**: CI failing: Contrato DB offline (novas=12)"
+    ],
+    "still_sample": [],
+    "same_basename_in_main": [
+     "docs/_arquivo/analise-prs/dossies/PR-2141.md"
+    ],
+    "missing_vs_same_basename": 11
+   }
+  },
+  {
+   "path": "analise-prs/dossies/PR-2142.md",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "patch_lines": 22,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 12,
+    "missing_in_main": 12,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "# PR #2142 — fix(ci): Resto GA13-GA17 (db-migrate 2 jobs, apply_all_missing, portao destrutivo)",
+     "**draft**: no",
+     "**head_sha**: unknown (bulk API não retorna)",
+     "**base_sha**: unknown",
+     "**mergeable_state**: prohibited",
+     "**verdict**: SKIP_PROHIBITED",
+     "## Análise",
+     "1. **Ainda válido?** Sim — fix de CI",
+     "2. **Traz regressão?** Não",
+     "3. **Já está em main?** Não",
+     "4. **Regra de negócio correta?** Sim",
+     "**Bloqueio**: Toca .github/workflows/ — proibido pelas regras de segurança"
+    ],
+    "still_sample": [],
+    "same_basename_in_main": [
+     "docs/_arquivo/analise-prs/dossies/PR-2142.md"
+    ],
+    "missing_vs_same_basename": 11
+   }
+  },
+  {
+   "path": "analise-prs/dossies/PR-2143.md",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "patch_lines": 22,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 12,
+    "missing_in_main": 12,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "# PR #2143 — fix(ci): Resto GA20-GA25 (Gate 3, DESTINO split, auto-merge grants)",
+     "**draft**: no",
+     "**head_sha**: unknown (bulk API não retorna)",
+     "**base_sha**: unknown",
+     "**mergeable_state**: prohibited",
+     "**verdict**: SKIP_PROHIBITED",
+     "## Análise",
+     "1. **Ainda válido?** Sim — fix de CI",
+     "2. **Traz regressão?** Não",
+     "3. **Já está em main?** Não",
+     "4. **Regra de negócio correta?** Sim",
+     "**Bloqueio**: Toca .github/workflows/ — proibido pelas regras de segurança"
+    ],
+    "still_sample": [],
+    "same_basename_in_main": [
+     "docs/_arquivo/analise-prs/dossies/PR-2143.md"
+    ],
+    "missing_vs_same_basename": 11
+   }
+  },
+  {
+   "path": "analise-prs/dossies/PR-2144.md",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "patch_lines": 22,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 12,
+    "missing_in_main": 12,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "# PR #2144 — fix(ci): Resto GA37 GA96-GA98 (docs deploy, regen, CODEOWNERS)",
+     "**draft**: no",
+     "**head_sha**: unknown (bulk API não retorna)",
+     "**base_sha**: unknown",
+     "**mergeable_state**: prohibited",
+     "**verdict**: SKIP_PROHIBITED",
+     "## Análise",
+     "1. **Ainda válido?** Sim — fix de CI",
+     "2. **Traz regressão?** Não",
+     "3. **Já está em main?** Não",
+     "4. **Regra de negócio correta?** Sim",
+     "**Bloqueio**: Toca .github/workflows/ — proibido pelas regras de segurança"
+    ],
+    "still_sample": [],
+    "same_basename_in_main": [
+     "docs/_arquivo/analise-prs/dossies/PR-2144.md"
+    ],
+    "missing_vs_same_basename": 11
+   }
+  },
+  {
+   "path": "analise-prs/dossies/PR-2145.md",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "patch_lines": 22,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 12,
+    "missing_in_main": 12,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "# PR #2145 — fix(ci): Resto GA86 GA99 GA100 (sonar, contracts, adocao)",
+     "**draft**: no",
+     "**head_sha**: unknown (bulk API não retorna)",
+     "**base_sha**: unknown",
+     "**mergeable_state**: prohibited",
+     "**verdict**: SKIP_PROHIBITED",
+     "## Análise",
+     "1. **Ainda válido?** Sim — fix de CI",
+     "2. **Traz regressão?** Não",
+     "3. **Já está em main?** Não",
+     "4. **Regra de negócio correta?** Sim",
+     "**Bloqueio**: Toca .github/workflows/ — proibido pelas regras de segurança"
+    ],
+    "still_sample": [],
+    "same_basename_in_main": [
+     "docs/_arquivo/analise-prs/dossies/PR-2145.md"
+    ],
+    "missing_vs_same_basename": 11
+   }
+  },
+  {
+   "path": "analise-prs/dossies/PR-2146.md",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "patch_lines": 22,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 12,
+    "missing_in_main": 12,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "# PR #2146 — feat(team-chat): TeamChatView seleciona conversa via ?cid= (receptor E90)",
+     "**draft**: no",
+     "**head_sha**: unknown (bulk API não retorna)",
+     "**base_sha**: unknown",
+     "**mergeable_state**: blocked",
+     "**verdict**: SKIP_BLOCKED_CI",
+     "## Análise",
+     "1. **Ainda válido?** Sim — feature de Team Chat",
+     "2. **Traz regressão?** Não",
+     "3. **Já está em main?** Não",
+     "4. **Regra de negócio correta?** Sim",
+     "**Bloqueio**: CI failing: Contrato DB offline (novas=12)"
+    ],
+    "still_sample": [],
+    "same_basename_in_main": [
+     "docs/_arquivo/analise-prs/dossies/PR-2146.md"
+    ],
+    "missing_vs_same_basename": 11
+   }
+  },
+  {
+   "path": "analise-prs/dossies/PR-2147.md",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "patch_lines": 22,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 12,
+    "missing_in_main": 12,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "# PR #2147 — fix(db-audit): guard n011 com teto dinamico por dominio e canonico atual",
+     "**draft**: no",
+     "**head_sha**: unknown (bulk API não retorna)",
+     "**base_sha**: unknown",
+     "**mergeable_state**: blocked",
+     "**verdict**: SKIP_BLOCKED_CI",
+     "## Análise",
+     "1. **Ainda válido?** Sim — fix de guard de DB",
+     "2. **Traz regressão?** Não",
+     "3. **Já está em main?** Não",
+     "4. **Regra de negócio correta?** Sim",
+     "**Bloqueio**: CI failing: Contrato DB offline (novas=12)"
+    ],
+    "still_sample": [],
+    "same_basename_in_main": [
+     "docs/_arquivo/analise-prs/dossies/PR-2147.md"
+    ],
+    "missing_vs_same_basename": 11
+   }
+  },
+  {
+   "path": "analise-prs/dossies/PR-2148.md",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "patch_lines": 22,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 12,
+    "missing_in_main": 12,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "# PR #2148 — test(e2e): destrava specs deslogados de Contatos com boot e health mockados",
+     "**draft**: no",
+     "**head_sha**: unknown (bulk API não retorna)",
+     "**base_sha**: unknown",
+     "**mergeable_state**: blocked",
+     "**verdict**: SKIP_BLOCKED_CI",
+     "## Análise",
+     "1. **Ainda válido?** Sim — fix de specs de E2E",
+     "2. **Traz regressão?** Não",
+     "3. **Já está em main?** Não",
+     "4. **Regra de negócio correta?** Sim",
+     "**Bloqueio**: CI failing: Contrato DB offline (novas=12)"
+    ],
+    "still_sample": [],
+    "same_basename_in_main": [
+     "docs/_arquivo/analise-prs/dossies/PR-2148.md"
+    ],
+    "missing_vs_same_basename": 11
+   }
+  },
+  {
+   "path": "analise-prs/dossies/PR-2149.md",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "patch_lines": 22,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 12,
+    "missing_in_main": 12,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "# PR #2149 — docs(reconciliation): P053 registra regressão do cabeçalho (19/20/25) e superseded (16/28)",
+     "**draft**: no",
+     "**head_sha**: unknown (bulk API não retorna)",
+     "**base_sha**: unknown",
+     "**mergeable_state**: blocked",
+     "**verdict**: SKIP_BLOCKED_CI",
+     "## Análise",
+     "1. **Ainda válido?** Sim — documentação de reconciliação",
+     "2. **Traz regressão?** Não",
+     "3. **Já está em main?** Não",
+     "4. **Regra de negócio correta?** Sim",
+     "**Bloqueio**: CI failing: Contrato DB offline (novas=12)"
+    ],
+    "still_sample": [],
+    "same_basename_in_main": [
+     "docs/_arquivo/analise-prs/dossies/PR-2149.md"
+    ],
+    "missing_vs_same_basename": 11
+   }
+  },
+  {
+   "path": "analise-prs/dossies/PR-2151.md",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "patch_lines": 22,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 12,
+    "missing_in_main": 12,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "# PR #2151 — fix(ci): destravar workflows que falhavam antes de executar",
+     "**draft**: no",
+     "**head_sha**: unknown (bulk API não retorna)",
+     "**base_sha**: unknown",
+     "**mergeable_state**: prohibited",
+     "**verdict**: SKIP_PROHIBITED",
+     "## Análise",
+     "1. **Ainda válido?** Sim — duplicata de #2155",
+     "2. **Traz regressão?** Não",
+     "3. **Já está em main?** Não",
+     "4. **Regra de negócio correta?** Sim",
+     "**Bloqueio**: Toca .github/workflows/ — proibido pelas regras de segurança"
+    ],
+    "still_sample": [],
+    "same_basename_in_main": [
+     "docs/_arquivo/analise-prs/dossies/PR-2151.md"
+    ],
+    "missing_vs_same_basename": 11
+   }
+  },
+  {
+   "path": "analise-prs/dossies/PR-2152.md",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "patch_lines": 22,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 12,
+    "missing_in_main": 12,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "# PR #2152 — test(e2e): spec de toque 44px volta ao verde com seletores do app real",
+     "**draft**: no",
+     "**head_sha**: unknown (bulk API não retorna)",
+     "**base_sha**: unknown",
+     "**mergeable_state**: blocked",
+     "**verdict**: SKIP_BLOCKED_CI",
+     "## Análise",
+     "1. **Ainda válido?** Sim — fix de spec de E2E",
+     "2. **Traz regressão?** Não",
+     "3. **Já está em main?** Não",
+     "4. **Regra de negócio correta?** Sim",
+     "**Bloqueio**: CI failing: Contrato DB offline (novas=12)"
+    ],
+    "still_sample": [],
+    "same_basename_in_main": [
+     "docs/_arquivo/analise-prs/dossies/PR-2152.md"
+    ],
+    "missing_vs_same_basename": 11
+   }
+  },
+  {
+   "path": "analise-prs/dossies/PR-2155.md",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "patch_lines": 22,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 12,
+    "missing_in_main": 12,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "# PR #2155 — fix(ci): destrava workflows que falhavam antes de executar",
+     "**draft**: no",
+     "**head_sha**: unknown (bulk API não retorna)",
+     "**base_sha**: unknown",
+     "**mergeable_state**: prohibited",
+     "**verdict**: SKIP_PROHIBITED",
+     "## Análise",
+     "1. **Ainda válido?** Sim — fix de workflows",
+     "2. **Traz regressão?** Não",
+     "3. **Já está em main?** Não",
+     "4. **Regra de negócio correta?** Sim",
+     "**Bloqueio**: Toca .github/workflows/ — proibido pelas regras de segurança"
+    ],
+    "still_sample": [],
+    "same_basename_in_main": [
+     "docs/_arquivo/analise-prs/dossies/PR-2155.md"
+    ],
+    "missing_vs_same_basename": 11
+   }
+  },
+  {
+   "path": "analise-prs/dossies/PR-2185.md",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "patch_lines": 22,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 12,
+    "missing_in_main": 12,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "# PR #2185 — docs(pendencias): §8 RESOLVIDO + §9 inventário de workflows da main",
+     "**draft**: no",
+     "**head_sha**: unknown (bulk API não retorna)",
+     "**base_sha**: unknown",
+     "**mergeable_state**: blocked",
+     "**verdict**: SKIP_BLOCKED_CI",
+     "## Análise",
+     "1. **Ainda válido?** Sim — documentação de pendências",
+     "2. **Traz regressão?** Não",
+     "3. **Já está em main?** Não",
+     "4. **Regra de negócio correta?** Sim",
+     "**Bloqueio**: CI failing: Contrato DB offline (novas=12)"
+    ],
+    "still_sample": [],
+    "same_basename_in_main": [
+     "docs/_arquivo/analise-prs/dossies/PR-2185.md"
+    ],
+    "missing_vs_same_basename": 12
+   }
+  },
+  {
+   "path": "analise-prs/dossies/PR-2186.md",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "patch_lines": 22,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 12,
+    "missing_in_main": 12,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "# PR #2186 — fix(security): auditoria Supabase 2026-10-22 — department_invites ownership + login_attempts TTL LGPD",
+     "**draft**: no",
+     "**head_sha**: unknown (bulk API não retorna)",
+     "**base_sha**: unknown",
+     "**mergeable_state**: blocked",
+     "**verdict**: SKIP_BLOCKED_CI",
+     "## Análise",
+     "1. **Ainda válido?** Sim — fix de segurança crítico",
+     "2. **Traz regressão?** Não",
+     "3. **Já está em main?** Não",
+     "4. **Regra de negócio correta?** Sim — ownership e TTL LGPD são regras de negócio corretas",
+     "**Bloqueio**: CI failing: Contrato DB offline (novas=12)"
+    ],
+    "still_sample": [],
+    "same_basename_in_main": [
+     "docs/_arquivo/analise-prs/dossies/PR-2186.md"
+    ],
+    "missing_vs_same_basename": 12
+   }
+  },
+  {
+   "path": "analise-prs/dossies/PR-2187.md",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "patch_lines": 22,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 12,
+    "missing_in_main": 12,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "# PR #2187 — fix(tests): corrige falhas de testes no baseline main — mocks, lógica e código morto",
+     "**draft**: no",
+     "**head_sha**: unknown (bulk API não retorna)",
+     "**base_sha**: unknown",
+     "**mergeable_state**: blocked",
+     "**verdict**: SKIP_BLOCKED_CI",
+     "## Análise",
+     "1. **Ainda válido?** Sim — fix de testes de baseline",
+     "2. **Traz regressão?** Não",
+     "3. **Já está em main?** Não",
+     "4. **Regra de negócio correta?** Sim",
+     "**Bloqueio**: CI failing: Contrato DB offline (novas=12)"
+    ],
+    "still_sample": [],
+    "same_basename_in_main": [
+     "docs/_arquivo/analise-prs/dossies/PR-2187.md"
+    ],
+    "missing_vs_same_basename": 12
+   }
+  },
+  {
+   "path": "analise-prs/dossies/PR-2190.md",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "patch_lines": 22,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 12,
+    "missing_in_main": 12,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "# PR #2190 — fix: corrige 9 falhas de CI que mantinham a main vermelha",
+     "**draft**: no",
+     "**head_sha**: unknown (bulk API não retorna)",
+     "**base_sha**: unknown",
+     "**mergeable_state**: blocked",
+     "**verdict**: SKIP_BLOCKED_CI",
+     "## Análise",
+     "1. **Ainda válido?** Sim — fix de CI",
+     "2. **Traz regressão?** Não",
+     "3. **Já está em main?** Não",
+     "4. **Regra de negócio correta?** Sim",
+     "**Bloqueio**: CI failing: Contrato DB offline (novas=12)"
+    ],
+    "still_sample": [],
+    "same_basename_in_main": [
+     "docs/_arquivo/analise-prs/dossies/PR-2190.md"
+    ],
+    "missing_vs_same_basename": 12
+   }
+  },
+  {
+   "path": "analise-prs/dossies/PR-2195.md",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "patch_lines": 22,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 12,
+    "missing_in_main": 12,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "# PR #2195 — fix: crash cachedConversations undefined e this-binding perdido no rpc de metas de fila",
+     "**draft**: no",
+     "**head_sha**: unknown (bulk API não retorna)",
+     "**base_sha**: unknown",
+     "**mergeable_state**: blocked",
+     "**verdict**: SKIP_BLOCKED_CI",
+     "## Análise",
+     "1. **Ainda válido?** Sim — fix de crash e binding",
+     "2. **Traz regressão?** Não",
+     "3. **Já está em main?** Não",
+     "4. **Regra de negócio correta?** Sim",
+     "**Bloqueio**: CI failing: Contrato DB offline (novas=12)"
+    ],
+    "still_sample": [],
+    "same_basename_in_main": [
+     "docs/_arquivo/analise-prs/dossies/PR-2195.md"
+    ],
+    "missing_vs_same_basename": 12
+   }
+  },
+  {
+   "path": "analise-prs/dossies/PR-2196.md",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "patch_lines": 22,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 12,
+    "missing_in_main": 12,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "# PR #2196 — feat: TalkX editor de templates e artefatos gerados (dia/2026-10-19)",
+     "**draft**: no",
+     "**head_sha**: unknown (bulk API não retorna)",
+     "**base_sha**: unknown",
+     "**mergeable_state**: blocked",
+     "**verdict**: SKIP_BLOCKED_CI",
+     "## Análise",
+     "1. **Ainda válido?** Sim — feature de editor de templates Talk X",
+     "2. **Traz regressão?** Não",
+     "3. **Já está em main?** Não",
+     "4. **Regra de negócio correta?** Sim",
+     "**Bloqueio**: CI failing: Contrato DB offline (novas=12)"
+    ],
+    "still_sample": [],
+    "same_basename_in_main": [
+     "docs/_arquivo/analise-prs/dossies/PR-2196.md"
+    ],
+    "missing_vs_same_basename": 11
+   }
+  },
+  {
+   "path": "analise-prs/dossies/PR-2197.md",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "patch_lines": 22,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 12,
+    "missing_in_main": 12,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "# PR #2197 — ci: lote GA49–GA64 — fila-merge, actions-kpi, types-sync, codeql e branch-hygiene",
+     "**draft**: no",
+     "**head_sha**: unknown (bulk API não retorna)",
+     "**base_sha**: unknown",
+     "**mergeable_state**: prohibited",
+     "**verdict**: SKIP_PROHIBITED",
+     "## Análise",
+     "1. **Ainda válido?** Sim — lote de melhorias de CI",
+     "2. **Traz regressão?** Não",
+     "3. **Já está em main?** Não",
+     "4. **Regra de negócio correta?** Sim",
+     "**Bloqueio**: Toca .github/workflows/ — proibido pelas regras de segurança"
+    ],
+    "still_sample": [],
+    "same_basename_in_main": [
+     "docs/_arquivo/analise-prs/dossies/PR-2197.md"
+    ],
+    "missing_vs_same_basename": 11
+   }
+  },
+  {
+   "path": "analise-prs/dossies/PR-2199.md",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "patch_lines": 22,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 12,
+    "missing_in_main": 12,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "# PR #2199 — fix: corrige 3 falhas de CI — unit tests virtualizer + DB Guard PG17 roles",
+     "**draft**: yes",
+     "**head_sha**: unknown (bulk API não retorna)",
+     "**base_sha**: unknown",
+     "**mergeable_state**: draft",
+     "**verdict**: SKIP_DRAFT",
+     "## Análise",
+     "1. **Ainda válido?** Sim — fix de CI",
+     "2. **Traz regressão?** Não",
+     "3. **Já está em main?** Não",
+     "4. **Regra de negócio correta?** Sim",
+     "**Bloqueio**: draft=true, aguarda autor marcar como pronto"
+    ],
+    "still_sample": [],
+    "same_basename_in_main": [
+     "docs/_arquivo/analise-prs/dossies/PR-2199.md"
+    ],
+    "missing_vs_same_basename": 12
+   }
+  },
+  {
+   "path": "analise-prs/dossies/PR-2200.md",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "patch_lines": 22,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 12,
+    "missing_in_main": 12,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "# PR #2200 — analise: dossiê branch hermes/telefonia-contrato-dados-26092615475e51",
+     "**draft**: yes",
+     "**head_sha**: unknown (bulk API não retorna)",
+     "**base_sha**: unknown",
+     "**mergeable_state**: draft",
+     "**verdict**: SKIP_DRAFT",
+     "## Análise",
+     "1. **Ainda válido?** Sim — documentação de análise de branch",
+     "2. **Traz regressão?** Não",
+     "3. **Já está em main?** Não",
+     "4. **Regra de negócio correta?** Sim",
+     "**Bloqueio**: draft=true, aguarda autor marcar como pronto"
+    ],
+    "still_sample": [],
+    "same_basename_in_main": [
+     "docs/_arquivo/analise-prs/dossies/PR-2200.md"
+    ],
+    "missing_vs_same_basename": 12
+   }
+  },
+  {
+   "path": "analise-prs/dossies/PR-2206.md",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "patch_lines": 22,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 12,
+    "missing_in_main": 12,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "# PR #2206 — fix(ci): adiciona copilot_feedback a known-violations para desbloquear Contrato DB offline",
+     "**draft**: yes",
+     "**head_sha**: unknown (bulk API não retorna)",
+     "**base_sha**: unknown",
+     "**mergeable_state**: draft",
+     "**verdict**: SKIP_DRAFT",
+     "## Análise",
+     "1. **Ainda válido?** Sim — atualização de known-violations",
+     "2. **Traz regressão?** Não",
+     "3. **Já está em main?** Não",
+     "4. **Regra de negócio correta?** Sim",
+     "**Bloqueio**: draft=true, aguarda autor marcar como pronto"
+    ],
+    "still_sample": [],
+    "same_basename_in_main": [
+     "docs/_arquivo/analise-prs/dossies/PR-2206.md"
+    ],
+    "missing_vs_same_basename": 12
+   }
+  },
+  {
+   "path": "analise-prs/dossies/PR-2208.md",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "patch_lines": 22,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 12,
+    "missing_in_main": 12,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "# PR #2208 — fix(types): named SuppressionReasonCode type export",
+     "**draft**: no",
+     "**head_sha**: unknown (bulk API não retorna)",
+     "**base_sha**: unknown",
+     "**mergeable_state**: blocked",
+     "**verdict**: SKIP_BLOCKED_CI",
+     "## Análise",
+     "1. **Ainda válido?** Sim — export de tipo nomeado",
+     "2. **Traz regressão?** Não",
+     "3. **Já está em main?** Não",
+     "4. **Regra de negócio correta?** Sim",
+     "**Bloqueio**: CI failing: Contrato DB offline (novas=12)"
+    ],
+    "still_sample": [],
+    "same_basename_in_main": [
+     "docs/_arquivo/analise-prs/dossies/PR-2208.md"
+    ],
+    "missing_vs_same_basename": 11
+   }
+  },
+  {
+   "path": "analise-prs/dossies/PR-2209.md",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "patch_lines": 22,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 12,
+    "missing_in_main": 12,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "# PR #2209 — fix(test): corrige mock de range/limit no customemojis upload test",
+     "**draft**: no",
+     "**head_sha**: unknown (bulk API não retorna)",
+     "**base_sha**: unknown",
+     "**mergeable_state**: blocked",
+     "**verdict**: SKIP_BLOCKED_CI",
+     "## Análise",
+     "1. **Ainda válido?** Sim — fix de mock em teste",
+     "2. **Traz regressão?** Não",
+     "3. **Já está em main?** Não",
+     "4. **Regra de negócio correta?** Sim",
+     "**Bloqueio**: CI failing: Contrato DB offline (novas=12)"
+    ],
+    "still_sample": [],
+    "same_basename_in_main": [
+     "docs/_arquivo/analise-prs/dossies/PR-2209.md"
+    ],
+    "missing_vs_same_basename": 11
+   }
+  },
+  {
+   "path": "analise-prs/dossies/PR-2211.md",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "patch_lines": 22,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 12,
+    "missing_in_main": 12,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "# PR #2211 — fix(ci+tests): corrige auto-update-pr-branch e falhas nos testes unitários",
+     "**draft**: yes",
+     "**head_sha**: unknown (bulk API não retorna)",
+     "**base_sha**: unknown",
+     "**mergeable_state**: draft",
+     "**verdict**: SKIP_DRAFT",
+     "## Análise",
+     "1. **Ainda válido?** Sim — fix de CI e testes",
+     "2. **Traz regressão?** Não",
+     "3. **Já está em main?** Não",
+     "4. **Regra de negócio correta?** Sim",
+     "**Bloqueio**: draft=true, aguarda autor marcar como pronto"
+    ],
+    "still_sample": [],
+    "same_basename_in_main": [
+     "docs/_arquivo/analise-prs/dossies/PR-2211.md"
+    ],
+    "missing_vs_same_basename": 11
+   }
+  },
+  {
+   "path": "analise-prs/dossies/PR-2213.md",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "patch_lines": 22,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 12,
+    "missing_in_main": 12,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "# PR #2213 — feat: RADAR Copilot Fases 8–15 — CV-071 a CV-150",
+     "**draft**: yes",
+     "**head_sha**: unknown (bulk API não retorna)",
+     "**base_sha**: unknown",
+     "**mergeable_state**: draft",
+     "**verdict**: SKIP_DRAFT",
+     "## Análise",
+     "1. **Ainda válido?** Sim — feature de RADAR Copilot",
+     "2. **Traz regressão?** Não",
+     "3. **Já está em main?** Não",
+     "4. **Regra de negócio correta?** Sim",
+     "**Bloqueio**: draft=true, aguarda autor marcar como pronto"
+    ],
+    "still_sample": [],
+    "same_basename_in_main": [
+     "docs/_arquivo/analise-prs/dossies/PR-2213.md"
+    ],
+    "missing_vs_same_basename": 11
+   }
+  },
+  {
+   "path": "analise-prs/dossies/PR-2214.md",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "patch_lines": 22,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 12,
+    "missing_in_main": 12,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "# PR #2214 — feat: DDL 7 tabelas copiloto RADAR fases 13-15 (CV-121–CV-150)",
+     "**draft**: yes",
+     "**head_sha**: unknown (bulk API não retorna)",
+     "**base_sha**: unknown",
+     "**mergeable_state**: draft",
+     "**verdict**: SKIP_DRAFT",
+     "## Análise",
+     "1. **Ainda válido?** Sim — DDL de tabelas novas (aditivo)",
+     "2. **Traz regressão?** Não",
+     "3. **Já está em main?** Não",
+     "4. **Regra de negócio correta?** Sim — tabelas novas são DDL aditivo",
+     "**Bloqueio**: draft=true, aguarda autor marcar como pronto"
+    ],
+    "still_sample": [],
+    "same_basename_in_main": [
+     "docs/_arquivo/analise-prs/dossies/PR-2214.md"
+    ],
+    "missing_vs_same_basename": 11
+   }
+  },
+  {
+   "path": "analise-prs/dossies/PR-2215.md",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "patch_lines": 22,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 12,
+    "missing_in_main": 12,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "# PR #2215 — feat: 7 edge functions copilot fases 8-10 (CV-071–CV-100)",
+     "**draft**: yes",
+     "**head_sha**: unknown (bulk API não retorna)",
+     "**base_sha**: unknown",
+     "**mergeable_state**: draft",
+     "**verdict**: SKIP_DRAFT",
+     "## Análise",
+     "1. **Ainda válido?** Sim — feature de edge functions",
+     "2. **Traz regressão?** Não",
+     "3. **Já está em main?** Não",
+     "4. **Regra de negócio correta?** Sim",
+     "**Bloqueio**: draft=true, aguarda autor marcar como pronto"
+    ],
+    "still_sample": [],
+    "same_basename_in_main": [
+     "docs/_arquivo/analise-prs/dossies/PR-2215.md"
+    ],
+    "missing_vs_same_basename": 11
+   }
+  },
+  {
+   "path": "analise-prs/dossies/PR-2216.md",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "patch_lines": 22,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 12,
+    "missing_in_main": 12,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "# PR #2216 — feat: 7 edge functions copiloto RADAR fases 8-15 (CV-071–CV-150)",
+     "**draft**: yes",
+     "**head_sha**: unknown (bulk API não retorna)",
+     "**base_sha**: unknown",
+     "**mergeable_state**: draft",
+     "**verdict**: SKIP_DRAFT",
+     "## Análise",
+     "1. **Ainda válido?** Sim — feature de edge functions RADAR",
+     "2. **Traz regressão?** Não",
+     "3. **Já está em main?** Não",
+     "4. **Regra de negócio correta?** Sim",
+     "**Bloqueio**: draft=true, aguarda autor marcar como pronto"
+    ],
+    "still_sample": [],
+    "same_basename_in_main": [
+     "docs/_arquivo/analise-prs/dossies/PR-2216.md"
+    ],
+    "missing_vs_same_basename": 11
+   }
+  },
+  {
+   "path": "analise-prs/dossies/PR-2217.md",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "patch_lines": 22,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 12,
+    "missing_in_main": 12,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "# PR #2217 — feat: edge functions AI copiloto fases 8-15 (CV-071–CV-150)",
+     "**draft**: yes",
+     "**head_sha**: unknown (bulk API não retorna)",
+     "**base_sha**: unknown",
+     "**mergeable_state**: draft",
+     "**verdict**: SKIP_DRAFT",
+     "## Análise",
+     "1. **Ainda válido?** Sim — feature de edge functions",
+     "2. **Traz regressão?** Não",
+     "3. **Já está em main?** Não",
+     "4. **Regra de negócio correta?** Sim",
+     "**Bloqueio**: draft=true, aguarda autor marcar como pronto"
+    ],
+    "still_sample": [],
+    "same_basename_in_main": [
+     "docs/_arquivo/analise-prs/dossies/PR-2217.md"
+    ],
+    "missing_vs_same_basename": 11
+   }
+  },
+  {
+   "path": "analise-prs/dossies/PR-2218.md",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "patch_lines": 22,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 12,
+    "missing_in_main": 12,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "# PR #2218 — fix: corrigir CI — RE_RECON, Playwright 1.63.0, useAuth, fila-merge, manifest",
+     "**draft**: no",
+     "**head_sha**: unknown (bulk API não retorna)",
+     "**base_sha**: unknown",
+     "**mergeable_state**: blocked",
+     "**verdict**: SKIP_BLOCKED_CI",
+     "## Análise",
+     "1. **Ainda válido?** Sim — múltiplos fixes de CI",
+     "2. **Traz regressão?** Não",
+     "3. **Já está em main?** Não",
+     "4. **Regra de negócio correta?** Sim",
+     "**Bloqueio**: CI failing: Contrato DB offline (novas=12)"
+    ],
+    "still_sample": [],
+    "same_basename_in_main": [
+     "docs/_arquivo/analise-prs/dossies/PR-2218.md"
+    ],
+    "missing_vs_same_basename": 12
+   }
+  },
+  {
+   "path": "analise-prs/dossies/PR-2219.md",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "patch_lines": 22,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 12,
+    "missing_in_main": 12,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "# PR #2219 — fix: corrige falhas de testes unitários pré-existentes em main",
+     "**draft**: yes",
+     "**head_sha**: unknown (bulk API não retorna)",
+     "**base_sha**: unknown",
+     "**mergeable_state**: draft",
+     "**verdict**: SKIP_DRAFT",
+     "## Análise",
+     "1. **Ainda válido?** Sim — fix de testes",
+     "2. **Traz regressão?** Não",
+     "3. **Já está em main?** Não",
+     "4. **Regra de negócio correta?** Sim",
+     "**Bloqueio**: draft=true, aguarda autor marcar como pronto"
+    ],
+    "still_sample": [],
+    "same_basename_in_main": [
+     "docs/_arquivo/analise-prs/dossies/PR-2219.md"
+    ],
+    "missing_vs_same_basename": 11
+   }
+  },
+  {
+   "path": "analise-prs/dossies/PR-2221.md",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "patch_lines": 22,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 12,
+    "missing_in_main": 12,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "# PR #2221 — fix: corrige falhas pré-existentes nos Unit Tests de src/",
+     "**draft**: yes",
+     "**head_sha**: unknown (bulk API não retorna)",
+     "**base_sha**: unknown",
+     "**mergeable_state**: draft",
+     "**verdict**: SKIP_DRAFT",
+     "## Análise",
+     "1. **Ainda válido?** Sim — fix de testes pré-existentes",
+     "2. **Traz regressão?** Não",
+     "3. **Já está em main?** Não",
+     "4. **Regra de negócio correta?** Sim",
+     "**Bloqueio**: draft=true, aguarda autor marcar como pronto"
+    ],
+    "still_sample": [],
+    "same_basename_in_main": [
+     "docs/_arquivo/analise-prs/dossies/PR-2221.md"
+    ],
+    "missing_vs_same_basename": 11
+   }
+  },
+  {
+   "path": "analise-prs/dossies/PR-2222.md",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "patch_lines": 22,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 12,
+    "missing_in_main": 12,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "# PR #2222 — fix(db): corrige TC-009 — aplica predecessora 20261006222024 antes da 20261009193246 no teste",
+     "**draft**: yes",
+     "**head_sha**: unknown (bulk API não retorna)",
+     "**base_sha**: unknown",
+     "**mergeable_state**: draft",
+     "**verdict**: SKIP_DRAFT",
+     "## Análise",
+     "1. **Ainda válido?** Sim — fix de ordem de migrations em teste",
+     "2. **Traz regressão?** Não",
+     "3. **Já está em main?** Não",
+     "4. **Regra de negócio correta?** Sim",
+     "**Bloqueio**: draft=true, aguarda autor marcar como pronto"
+    ],
+    "still_sample": [],
+    "same_basename_in_main": [
+     "docs/_arquivo/analise-prs/dossies/PR-2222.md"
+    ],
+    "missing_vs_same_basename": 11
+   }
+  },
+  {
+   "path": "analise-prs/dossies/PR-2225.md",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "patch_lines": 22,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 12,
+    "missing_in_main": 12,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "# PR #2225 — fix(e2e): mock do RPC app_bootstrap para corrigir travamento em ProtectedRoute",
+     "**draft**: no",
+     "**head_sha**: unknown (bulk API não retorna)",
+     "**base_sha**: unknown",
+     "**mergeable_state**: blocked",
+     "**verdict**: SKIP_BLOCKED_CI",
+     "## Análise",
+     "1. **Ainda válido?** Sim — fix de travamento em E2E",
+     "2. **Traz regressão?** Não",
+     "3. **Já está em main?** Não",
+     "4. **Regra de negócio correta?** Sim",
+     "**Bloqueio**: CI failing: Contrato DB offline (novas=12)"
+    ],
+    "still_sample": [],
+    "same_basename_in_main": [
+     "docs/_arquivo/analise-prs/dossies/PR-2225.md"
+    ],
+    "missing_vs_same_basename": 11
+   }
+  },
+  {
+   "path": "analise-prs/dossies/PR-2226.md",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "patch_lines": 22,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 12,
+    "missing_in_main": 12,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "# PR #2226 — fix(db-guard): corrige assertion B.0c no TC-009 — backfill não deve disparar trigger de update",
+     "**draft**: no",
+     "**head_sha**: unknown (bulk API não retorna)",
+     "**base_sha**: unknown",
+     "**mergeable_state**: blocked",
+     "**verdict**: SKIP_BLOCKED_CI",
+     "## Análise",
+     "1. **Ainda válido?** Sim — fix de assertion de teste de DB",
+     "2. **Traz regressão?** Não",
+     "3. **Já está em main?** Não",
+     "4. **Regra de negócio correta?** Sim — backfill não deve disparar trigger",
+     "**Bloqueio**: CI failing: Contrato DB offline (novas=12)"
+    ],
+    "still_sample": [],
+    "same_basename_in_main": [
+     "docs/_arquivo/analise-prs/dossies/PR-2226.md"
+    ],
+    "missing_vs_same_basename": 11
+   }
+  },
+  {
+   "path": "analise-prs/dossies/PR-2228.md",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "patch_lines": 22,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 12,
+    "missing_in_main": 12,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "# PR #2228 — fix(tests): corrige falha mecânica de mock em useAdminDataCreateUser.test.ts",
+     "**draft**: no",
+     "**head_sha**: unknown (bulk API não retorna)",
+     "**base_sha**: unknown",
+     "**mergeable_state**: blocked",
+     "**verdict**: SKIP_BLOCKED_CI",
+     "## Análise",
+     "1. **Ainda válido?** Sim — fix de mock em teste",
+     "2. **Traz regressão?** Não",
+     "3. **Já está em main?** Não",
+     "4. **Regra de negócio correta?** Sim",
+     "**Bloqueio**: CI failing: Contrato DB offline (novas=12)"
+    ],
+    "still_sample": [],
+    "same_basename_in_main": [
+     "docs/_arquivo/analise-prs/dossies/PR-2228.md"
+    ],
+    "missing_vs_same_basename": 11
+   }
+  },
+  {
+   "path": "analise-prs/dossies/PR-2229.md",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "patch_lines": 22,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 12,
+    "missing_in_main": 12,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "# PR #2229 — test(inbox): corrige InboxEmptyChat.cta divergente após reescrita no PR #1986",
+     "**draft**: no",
+     "**head_sha**: unknown (bulk API não retorna)",
+     "**base_sha**: unknown",
+     "**mergeable_state**: blocked",
+     "**verdict**: SKIP_BLOCKED_CI",
+     "## Análise",
+     "1. **Ainda válido?** Sim — fix de teste divergente",
+     "2. **Traz regressão?** Não",
+     "3. **Já está em main?** Não",
+     "4. **Regra de negócio correta?** Sim",
+     "**Bloqueio**: CI failing: Contrato DB offline (novas=12)"
+    ],
+    "still_sample": [],
+    "same_basename_in_main": [
+     "docs/_arquivo/analise-prs/dossies/PR-2229.md"
+    ],
+    "missing_vs_same_basename": 11
+   }
+  },
+  {
+   "path": "analise-prs/dossies/PR-2230.md",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "patch_lines": 22,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 12,
+    "missing_in_main": 12,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "# PR #2230 — chore: remove hook morto useTalkXSuppression",
+     "**draft**: no",
+     "**head_sha**: unknown (bulk API não retorna)",
+     "**base_sha**: unknown",
+     "**mergeable_state**: blocked",
+     "**verdict**: SKIP_BLOCKED_CI",
+     "## Análise",
+     "1. **Ainda válido?** Sim — remoção de código morto",
+     "2. **Traz regressão?** Não — remove dead code",
+     "3. **Já está em main?** Não",
+     "4. **Regra de negócio correta?** Sim",
+     "**Bloqueio**: CI failing: Contrato DB offline (novas=12)"
+    ],
+    "still_sample": [],
+    "same_basename_in_main": [
+     "docs/_arquivo/analise-prs/dossies/PR-2230.md"
+    ],
+    "missing_vs_same_basename": 12
+   }
+  },
+  {
+   "path": "analise-prs/dossies/PR-2232.md",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "patch_lines": 22,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 12,
+    "missing_in_main": 12,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "# PR #2232 — test(inbox): corrige seletor CSS do TtsButton — h-6.w-6 → h-8.w-8 [round2]",
+     "**draft**: no",
+     "**head_sha**: unknown (bulk API não retorna)",
+     "**base_sha**: unknown",
+     "**mergeable_state**: blocked",
+     "**verdict**: SKIP_BLOCKED_CI",
+     "## Análise",
+     "1. **Ainda válido?** Sim — fix de seletor de teste",
+     "2. **Traz regressão?** Não",
+     "3. **Já está em main?** Não",
+     "4. **Regra de negócio correta?** Sim",
+     "**Bloqueio**: CI failing: Contrato DB offline (novas=12)"
+    ],
+    "still_sample": [],
+    "same_basename_in_main": [
+     "docs/_arquivo/analise-prs/dossies/PR-2232.md"
+    ],
+    "missing_vs_same_basename": 12
+   }
+  },
+  {
+   "path": "analise-prs/dossies/PR-2233.md",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "patch_lines": 22,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 12,
+    "missing_in_main": 12,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "# PR #2233 — fix: corrige 3 falhas de Vitest (SL-070, HZ5-09, a11y TTS)",
+     "**draft**: no",
+     "**head_sha**: unknown (bulk API não retorna)",
+     "**base_sha**: unknown",
+     "**mergeable_state**: blocked",
+     "**verdict**: SKIP_BLOCKED_CI",
+     "## Análise",
+     "1. **Ainda válido?** Sim — fix de testes",
+     "2. **Traz regressão?** Não",
+     "3. **Já está em main?** Não",
+     "4. **Regra de negócio correta?** Sim",
+     "**Bloqueio**: CI failing: Contrato DB offline (novas=12)"
+    ],
+    "still_sample": [],
+    "same_basename_in_main": [
+     "docs/_arquivo/analise-prs/dossies/PR-2233.md"
+    ],
+    "missing_vs_same_basename": 11
+   }
+  },
+  {
+   "path": "analise-prs/dossies/PR-2238.md",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "patch_lines": 22,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 12,
+    "missing_in_main": 12,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "# PR #2238 — feat(message-delivery): carimbo do POST iniciado (PD-79) + codigo de erro estavel retryable/ambiguous (PD-80) [C110] [DECISAO HUMANA]",
+     "**draft**: no",
+     "**head_sha**: unknown (bulk API não retorna)",
+     "**base_sha**: unknown",
+     "**mergeable_state**: blocked",
+     "**verdict**: SKIP_BLOCKED_CI",
+     "## Análise",
+     "1. **Ainda válido?** Sim — feature com marcação [DECISAO HUMANA]",
+     "2. **Traz regressão?** Não",
+     "3. **Já está em main?** Não",
+     "4. **Regra de negócio correta?** Sim — carimbo e código de erro estável são corretos",
+     "**Bloqueio**: CI failing + marcado [DECISAO HUMANA]: requer decisão de Joaquim antes de mergear"
+    ],
+    "still_sample": [],
+    "same_basename_in_main": [
+     "docs/_arquivo/analise-prs/dossies/PR-2238.md"
+    ],
+    "missing_vs_same_basename": 11
+   }
+  },
+  {
+   "path": "analise-prs/dossies/PR-2239.md",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "patch_lines": 22,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 12,
+    "missing_in_main": 12,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "# PR #2239 — feat(metas): seletor Hoje/Semana/Mês na aba Metas, título por período e skeleton (C130)",
+     "**draft**: no",
+     "**head_sha**: unknown (bulk API não retorna)",
+     "**base_sha**: unknown",
+     "**mergeable_state**: blocked",
+     "**verdict**: SKIP_BLOCKED_CI",
+     "## Análise",
+     "1. **Ainda válido?** Sim — feature de Metas",
+     "2. **Traz regressão?** Não",
+     "3. **Já está em main?** Não",
+     "4. **Regra de negócio correta?** Sim",
+     "**Bloqueio**: CI failing: Contrato DB offline (novas=12)"
+    ],
+    "still_sample": [],
+    "same_basename_in_main": [
+     "docs/_arquivo/analise-prs/dossies/PR-2239.md"
+    ],
+    "missing_vs_same_basename": 12
+   }
+  },
+  {
+   "path": "analise-prs/dossies/PR-2240.md",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "patch_lines": 22,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 12,
+    "missing_in_main": 12,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "# PR #2240 — feat(talkx): filtros, paginação persistida e URL sync da biblioteca de segmentos [C011]",
+     "**draft**: no",
+     "**head_sha**: unknown (bulk API não retorna)",
+     "**base_sha**: unknown",
+     "**mergeable_state**: blocked",
+     "**verdict**: SKIP_BLOCKED_CI",
+     "## Análise",
+     "1. **Ainda válido?** Sim — feature de TalkX",
+     "2. **Traz regressão?** Não",
+     "3. **Já está em main?** Não",
+     "4. **Regra de negócio correta?** Sim",
+     "**Bloqueio**: CI failing: Contrato DB offline (novas=12)"
+    ],
+    "still_sample": [],
+    "same_basename_in_main": [
+     "docs/_arquivo/analise-prs/dossies/PR-2240.md"
+    ],
+    "missing_vs_same_basename": 12
+   }
+  },
+  {
+   "path": "analise-prs/dossies/PR-2241.md",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "patch_lines": 22,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 12,
+    "missing_in_main": 12,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "# PR #2241 — chore: auditoria exaustiva Supabase — 28 achados (CRITICAL×3 HIGH×7)",
+     "**draft**: yes",
+     "**head_sha**: unknown (bulk API não retorna)",
+     "**base_sha**: unknown",
+     "**mergeable_state**: draft",
+     "**verdict**: SKIP_DRAFT",
+     "## Análise",
+     "1. **Ainda válido?** Sim — auditoria de segurança relevante",
+     "2. **Traz regressão?** Não",
+     "3. **Já está em main?** Não",
+     "4. **Regra de negócio correta?** Sim",
+     "**Bloqueio**: draft=true, aguarda autor marcar como pronto"
+    ],
+    "still_sample": [],
+    "same_basename_in_main": [
+     "docs/_arquivo/analise-prs/dossies/PR-2241.md"
+    ],
+    "missing_vs_same_basename": 11
+   }
+  },
+  {
+   "path": "analise-prs/dossies/PR-2242.md",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "patch_lines": 22,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 12,
+    "missing_in_main": 12,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "# PR #2242 — chore: inventário de PRs abertas e regras de negócio para análise",
+     "**draft**: yes",
+     "**head_sha**: unknown (bulk API não retorna)",
+     "**base_sha**: unknown",
+     "**mergeable_state**: draft",
+     "**verdict**: SKIP_DRAFT",
+     "## Análise",
+     "1. **Ainda válido?** Sim — documentação de inventário",
+     "2. **Traz regressão?** Não",
+     "3. **Já está em main?** Não",
+     "4. **Regra de negócio correta?** Sim",
+     "**Bloqueio**: draft=true, aguarda autor marcar como pronto"
+    ],
+    "still_sample": [],
+    "same_basename_in_main": [
+     "docs/_arquivo/analise-prs/dossies/PR-2242.md"
+    ],
+    "missing_vs_same_basename": 11
+   }
+  },
+  {
+   "path": "analise-prs/dossies/PR-2244.md",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "patch_lines": 22,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 12,
+    "missing_in_main": 12,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "# PR #2244 — fix(types): adiciona 9 assinaturas de RPC ausentes — desbloqueia CI de todas as PRs",
+     "**draft**: no",
+     "**head_sha**: unknown (bulk API não retorna)",
+     "**base_sha**: unknown",
+     "**mergeable_state**: blocked",
+     "**verdict**: AGUARDA_HUMANO",
+     "## Análise",
+     "1. **Ainda válido?** Sim — duplicata não-draft de #2274",
+     "2. **Traz regressão?** Não",
+     "3. **Já está em main?** Não",
+     "4. **Regra de negócio correta?** Sim — mesmo objetivo de #2274",
+     "**Bloqueio**: Dependência circular: corrige o Contrato DB offline mas está bloqueado pela mesma falha. Duplicata de #2274."
+    ],
+    "still_sample": [],
+    "same_basename_in_main": [
+     "docs/_arquivo/analise-prs/dossies/PR-2244.md"
+    ],
+    "missing_vs_same_basename": 12
+   }
+  },
+  {
+   "path": "analise-prs/dossies/PR-2245.md",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "patch_lines": 22,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 12,
+    "missing_in_main": 12,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "# PR #2245 — fix(talkx): corrige 4.007 falhas/30d do cron talkx-scheduler-1min",
+     "**draft**: yes",
+     "**head_sha**: unknown (bulk API não retorna)",
+     "**base_sha**: unknown",
+     "**mergeable_state**: draft",
+     "**verdict**: SKIP_DRAFT",
+     "## Análise",
+     "1. **Ainda válido?** Sim — 4k falhas em 30d é bug crítico",
+     "2. **Traz regressão?** Não",
+     "3. **Já está em main?** Não",
+     "4. **Regra de negócio correta?** Sim",
+     "**Bloqueio**: draft=true, aguarda autor marcar como pronto"
+    ],
+    "still_sample": [],
+    "same_basename_in_main": [
+     "docs/_arquivo/analise-prs/dossies/PR-2245.md"
+    ],
+    "missing_vs_same_basename": 11
+   }
+  },
+  {
+   "path": "analise-prs/dossies/PR-2246.md",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "patch_lines": 22,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 12,
+    "missing_in_main": 12,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "# PR #2246 — fix: retry automático em fila-merge.mjs para HTTP 504 transitório",
+     "**draft**: no",
+     "**head_sha**: unknown (bulk API não retorna)",
+     "**base_sha**: unknown",
+     "**mergeable_state**: blocked",
+     "**verdict**: SKIP_BLOCKED_CI",
+     "## Análise",
+     "1. **Ainda válido?** Sim — retry de HTTP 504 é melhoria de resiliência",
+     "2. **Traz regressão?** Não",
+     "3. **Já está em main?** Não",
+     "4. **Regra de negócio correta?** Sim",
+     "**Bloqueio**: CI failing: Contrato DB offline (novas=12)"
+    ],
+    "still_sample": [],
+    "same_basename_in_main": [
+     "docs/_arquivo/analise-prs/dossies/PR-2246.md"
+    ],
+    "missing_vs_same_basename": 12
+   }
+  },
+  {
+   "path": "analise-prs/dossies/PR-2247.md",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "patch_lines": 22,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 12,
+    "missing_in_main": 12,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "# PR #2247 — chore: comando /resgate-validacao (validação exaustiva do resgate com 5 agentes)",
+     "**draft**: no",
+     "**head_sha**: unknown (bulk API não retorna)",
+     "**base_sha**: unknown",
+     "**mergeable_state**: blocked",
+     "**verdict**: SKIP_BLOCKED_CI",
+     "## Análise",
+     "1. **Ainda válido?** Sim — comando de validação",
+     "2. **Traz regressão?** Não",
+     "3. **Já está em main?** Não",
+     "4. **Regra de negócio correta?** Sim",
+     "**Bloqueio**: CI failing: Contrato DB offline (novas=12)"
+    ],
+    "still_sample": [],
+    "same_basename_in_main": [
+     "docs/_arquivo/analise-prs/dossies/PR-2247.md"
+    ],
+    "missing_vs_same_basename": 12
+   }
+  },
+  {
+   "path": "analise-prs/dossies/PR-2249.md",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "patch_lines": 22,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 12,
+    "missing_in_main": 12,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "# PR #2249 — fix: 3 falhas de testes unitários (HighContrastToggle, mock de canal Talk X, nome dos selects do editor)",
+     "**draft**: yes",
+     "**head_sha**: unknown (bulk API não retorna)",
+     "**base_sha**: unknown",
+     "**mergeable_state**: draft",
+     "**verdict**: SKIP_DRAFT",
+     "## Análise",
+     "1. **Ainda válido?** Sim — fix de testes",
+     "2. **Traz regressão?** Não",
+     "3. **Já está em main?** Não",
+     "4. **Regra de negócio correta?** Sim",
+     "**Bloqueio**: draft=true, aguarda autor marcar como pronto"
+    ],
+    "still_sample": [],
+    "same_basename_in_main": [
+     "docs/_arquivo/analise-prs/dossies/PR-2249.md"
+    ],
+    "missing_vs_same_basename": 11
+   }
+  },
+  {
+   "path": "analise-prs/dossies/PR-2250.md",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "patch_lines": 22,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 12,
+    "missing_in_main": 12,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "# PR #2250 — fix(types): adiciona 9 assinaturas de RPC ausentes em types.ts",
+     "**draft**: yes",
+     "**head_sha**: unknown (bulk API não retorna)",
+     "**base_sha**: unknown",
+     "**mergeable_state**: draft",
+     "**verdict**: SKIP_DRAFT",
+     "## Análise",
+     "1. **Ainda válido?** Sim — duplicata draft de #2274",
+     "2. **Traz regressão?** Não",
+     "3. **Já está em main?** Não",
+     "4. **Regra de negócio correta?** Sim — mesmo conteúdo de #2274",
+     "**Bloqueio**: draft=true e duplicata de #2274 (não-draft)"
+    ],
+    "still_sample": [],
+    "same_basename_in_main": [
+     "docs/_arquivo/analise-prs/dossies/PR-2250.md"
+    ],
+    "missing_vs_same_basename": 11
+   }
+  },
+  {
+   "path": "analise-prs/dossies/PR-2255.md",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "patch_lines": 22,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 12,
+    "missing_in_main": 12,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "# PR #2255 — chore: auditoria Supabase — relatório e progresso finais (2026-10-25)",
+     "**draft**: yes",
+     "**head_sha**: unknown (bulk API não retorna)",
+     "**base_sha**: unknown",
+     "**mergeable_state**: draft",
+     "**verdict**: SKIP_DRAFT",
+     "## Análise",
+     "1. **Ainda válido?** Sim — documentação de auditoria",
+     "2. **Traz regressão?** Não",
+     "3. **Já está em main?** Não",
+     "4. **Regra de negócio correta?** Sim",
+     "**Bloqueio**: draft=true, aguarda autor marcar como pronto"
+    ],
+    "still_sample": [],
+    "same_basename_in_main": [
+     "docs/_arquivo/analise-prs/dossies/PR-2255.md"
+    ],
+    "missing_vs_same_basename": 11
+   }
+  },
+  {
+   "path": "analise-prs/dossies/PR-2261.md",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "patch_lines": 22,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 12,
+    "missing_in_main": 12,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "# PR #2261 — fix: corrigir falhas de CI em 4 suítes de teste e retry de rede no fila-merge",
+     "**draft**: yes",
+     "**head_sha**: unknown (bulk API não retorna)",
+     "**base_sha**: unknown",
+     "**mergeable_state**: draft",
+     "**verdict**: SKIP_DRAFT",
+     "## Análise",
+     "1. **Ainda válido?** Sim — fix de CI",
+     "2. **Traz regressão?** Não",
+     "3. **Já está em main?** Não",
+     "4. **Regra de negócio correta?** Sim",
+     "**Bloqueio**: draft=true, aguarda autor marcar como pronto"
+    ],
+    "still_sample": [],
+    "same_basename_in_main": [
+     "docs/_arquivo/analise-prs/dossies/PR-2261.md"
+    ],
+    "missing_vs_same_basename": 11
+   }
+  },
+  {
+   "path": "analise-prs/dossies/PR-2263.md",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "patch_lines": 22,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 12,
+    "missing_in_main": 12,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "# PR #2263 — fix: salvar preferências na Aparência (SettingsView passa onSave/isSaving)",
+     "**draft**: yes",
+     "**head_sha**: unknown (bulk API não retorna)",
+     "**base_sha**: unknown",
+     "**mergeable_state**: draft",
+     "**verdict**: SKIP_DRAFT",
+     "## Análise",
+     "1. **Ainda válido?** Sim — bug de save de preferências",
+     "2. **Traz regressão?** Não",
+     "3. **Já está em main?** Não",
+     "4. **Regra de negócio correta?** Sim — props de save corretas",
+     "**Bloqueio**: draft=true, aguarda autor marcar como pronto"
+    ],
+    "still_sample": [],
+    "same_basename_in_main": [
+     "docs/_arquivo/analise-prs/dossies/PR-2263.md"
+    ],
+    "missing_vs_same_basename": 12
+   }
+  },
+  {
+   "path": "analise-prs/dossies/PR-2265.md",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "patch_lines": 22,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 12,
+    "missing_in_main": 12,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "# PR #2265 — fix: revoga grants de escrita do anon em public (CRITICAL-1)",
+     "**draft**: yes",
+     "**head_sha**: unknown (bulk API não retorna)",
+     "**base_sha**: unknown",
+     "**mergeable_state**: draft",
+     "**verdict**: SKIP_DRAFT",
+     "## Análise",
+     "1. **Ainda válido?** Sim — revogação de grants de anon é crítico de segurança",
+     "2. **Traz regressão?** Não",
+     "3. **Já está em main?** Não",
+     "4. **Regra de negócio correta?** Sim — anon não deve ter grants de escrita em public",
+     "**Bloqueio**: draft=true, aguarda autor marcar como pronto"
+    ],
+    "still_sample": [],
+    "same_basename_in_main": [
+     "docs/_arquivo/analise-prs/dossies/PR-2265.md"
+    ],
+    "missing_vs_same_basename": 11
+   }
+  },
+  {
+   "path": "analise-prs/dossies/PR-2266.md",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "patch_lines": 22,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 12,
+    "missing_in_main": 12,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "# PR #2266 — fix: paleta de comandos acessível, filtros do inbox com voltar/avançar e celebrações sem falso positivo",
+     "**draft**: no",
+     "**head_sha**: unknown (bulk API não retorna)",
+     "**base_sha**: unknown",
+     "**mergeable_state**: dirty",
+     "**verdict**: SKIP_CONFLICT",
+     "## Análise",
+     "1. **Ainda válido?** Sim — múltiplos fixes de UX",
+     "2. **Traz regressão?** Não",
+     "3. **Já está em main?** Não",
+     "4. **Regra de negócio correta?** Sim — acessibilidade e filtros corretos",
+     "**Bloqueio**: Conflito de merge: branch criada em cima de #2248 (já mergeado via squash). Branch deve ser rebaseada em main."
+    ],
+    "still_sample": [],
+    "same_basename_in_main": [
+     "docs/_arquivo/analise-prs/dossies/PR-2266.md"
+    ],
+    "missing_vs_same_basename": 11
+   }
+  },
+  {
+   "path": "analise-prs/dossies/PR-2267.md",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "patch_lines": 22,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 12,
+    "missing_in_main": 12,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "# PR #2267 — fix: fila de envio offline não entrega item sem dono e não ressuscita após logout",
+     "**draft**: no",
+     "**head_sha**: unknown (bulk API não retorna)",
+     "**base_sha**: unknown",
+     "**mergeable_state**: dirty",
+     "**verdict**: SKIP_CONFLICT",
+     "## Análise",
+     "1. **Ainda válido?** Sim — bug real de fila offline",
+     "2. **Traz regressão?** Não",
+     "3. **Já está em main?** Não",
+     "4. **Regra de negócio correta?** Sim — fila por usuário é comportamento correto",
+     "**Bloqueio**: Conflito de merge: branch criada em cima de #2248 (já mergeado via squash). Branch deve ser rebaseada em main."
+    ],
+    "still_sample": [],
+    "same_basename_in_main": [
+     "docs/_arquivo/analise-prs/dossies/PR-2267.md"
+    ],
+    "missing_vs_same_basename": 11
+   }
+  },
+  {
+   "path": "analise-prs/dossies/PR-2268.md",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "patch_lines": 22,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 12,
+    "missing_in_main": 12,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "# PR #2268 — fix: supervisor volta a gerenciar templates do WhatsApp e Base de Conhecimento não trava em erro de rede",
+     "**draft**: no",
+     "**head_sha**: unknown (bulk API não retorna)",
+     "**base_sha**: unknown",
+     "**mergeable_state**: dirty",
+     "**verdict**: SKIP_CONFLICT",
+     "## Análise",
+     "1. **Ainda válido?** Sim — fix de permissão de supervisor e resiliência de rede",
+     "2. **Traz regressão?** Não",
+     "3. **Já está em main?** Não",
+     "4. **Regra de negócio correta?** Sim — supervisor gerir templates é regra de negócio correta",
+     "**Bloqueio**: Conflito de merge: branch criada em cima de #2248 (já mergeado via squash). Branch deve ser rebaseada em main."
+    ],
+    "still_sample": [],
+    "same_basename_in_main": [
+     "docs/_arquivo/analise-prs/dossies/PR-2268.md"
+    ],
+    "missing_vs_same_basename": 11
+   }
+  },
+  {
+   "path": "analise-prs/dossies/PR-2269.md",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "patch_lines": 22,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 12,
+    "missing_in_main": 12,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "# PR #2269 — fix: Talk X segmentos sem estimativa enganosa, branch stacked em #2248",
+     "**draft**: no",
+     "**head_sha**: unknown (bulk API não retorna)",
+     "**base_sha**: unknown",
+     "**mergeable_state**: dirty",
+     "**verdict**: SKIP_CONFLICT",
+     "## Análise",
+     "1. **Ainda válido?** Sim — fix válido de UX",
+     "2. **Traz regressão?** Não",
+     "3. **Já está em main?** Não",
+     "4. **Regra de negócio correta?** Sim — remover estimativa enganosa é correto",
+     "**Bloqueio**: Conflito de merge: branch criada em cima de #2248 (já mergeado via squash). Branch deve ser rebaseada em main."
+    ],
+    "still_sample": [],
+    "same_basename_in_main": [
+     "docs/_arquivo/analise-prs/dossies/PR-2269.md"
+    ],
+    "missing_vs_same_basename": 11
+   }
+  },
+  {
+   "path": "analise-prs/dossies/PR-2270.md",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "patch_lines": 22,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 12,
+    "missing_in_main": 12,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "# PR #2270 — ⬆️ ci: Bump the codeql-action group across 1 directory with 2 updates",
+     "**draft**: no",
+     "**head_sha**: unknown (bulk API não retorna)",
+     "**base_sha**: unknown",
+     "**mergeable_state**: prohibited",
+     "**verdict**: SKIP_PROHIBITED",
+     "## Análise",
+     "1. **Ainda válido?** Sim — atualização de action de segurança",
+     "2. **Traz regressão?** Não",
+     "3. **Já está em main?** Não",
+     "4. **Regra de negócio correta?** Sim — pinning de ação de CI",
+     "**Bloqueio**: Toca .github/workflows/ — proibido pelas regras de segurança"
+    ],
+    "still_sample": [],
+    "same_basename_in_main": [
+     "docs/_arquivo/analise-prs/dossies/PR-2270.md"
+    ],
+    "missing_vs_same_basename": 12
+   }
+  },
+  {
+   "path": "analise-prs/dossies/PR-2272.md",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "patch_lines": 22,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 12,
+    "missing_in_main": 12,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "# PR #2272 — ⬆️ docker: Bump golang from f92b6ef to b8c9b82 in /infrastructure/preview-egress-proxy",
+     "**draft**: no",
+     "**head_sha**: unknown (bulk API não retorna)",
+     "**base_sha**: unknown",
+     "**mergeable_state**: blocked",
+     "**verdict**: SKIP_BLOCKED_CI",
+     "## Análise",
+     "1. **Ainda válido?** Sim — atualização de dependência",
+     "2. **Traz regressão?** Não — é bumping de imagem base",
+     "3. **Já está em main?** Não",
+     "4. **Regra de negócio correta?** Sim — dependabot update",
+     "**Bloqueio**: CI failing: Contrato DB offline (novas=12)"
+    ],
+    "still_sample": [],
+    "same_basename_in_main": [
+     "docs/_arquivo/analise-prs/dossies/PR-2272.md"
+    ],
+    "missing_vs_same_basename": 12
+   }
+  },
+  {
+   "path": "analise-prs/dossies/PR-2273.md",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "patch_lines": 22,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 12,
+    "missing_in_main": 12,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "# PR #2273 — fix: retry em HTTP 5xx no fila-merge.mjs",
+     "**draft**: no",
+     "**head_sha**: unknown (bulk API não retorna)",
+     "**base_sha**: unknown",
+     "**mergeable_state**: blocked",
+     "**verdict**: SKIP_BLOCKED_CI",
+     "## Análise",
+     "1. **Ainda válido?** Sim — retry em HTTP 5xx é melhoria de resiliência",
+     "2. **Traz regressão?** Não",
+     "3. **Já está em main?** Não",
+     "4. **Regra de negócio correta?** Sim — retry em erros transientes é boa prática",
+     "**Bloqueio**: CI failing: Contrato DB offline (novas=12)"
+    ],
+    "still_sample": [],
+    "same_basename_in_main": [
+     "docs/_arquivo/analise-prs/dossies/PR-2273.md"
+    ],
+    "missing_vs_same_basename": 12
+   }
+  },
+  {
+   "path": "analise-prs/dossies/PR-2274.md",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "patch_lines": 22,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 12,
+    "missing_in_main": 12,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "# PR #2274 — fix: corrige workflows com falha — types.ts +9 RPCs, retry HTTP 502",
+     "**draft**: no",
+     "**head_sha**: unknown (bulk API não retorna)",
+     "**base_sha**: unknown",
+     "**mergeable_state**: blocked",
+     "**verdict**: AGUARDA_HUMANO",
+     "## Análise",
+     "1. **Ainda válido?** Sim — é o fix do bloqueio sistêmico de CI",
+     "2. **Traz regressão?** Não",
+     "3. **Já está em main?** Não",
+     "4. **Regra de negócio correta?** Sim — adicionar 9 assinaturas de RPC ausentes é correto",
+     "**Bloqueio**: Dependência circular: este PR corrige o Contrato DB offline mas está bloqueado pela mesma falha. Requer intervenção humana."
+    ],
+    "still_sample": [],
+    "same_basename_in_main": [
+     "docs/_arquivo/analise-prs/dossies/PR-2274.md"
+    ],
+    "missing_vs_same_basename": 12
+   }
+  },
+  {
+   "path": "analise-prs/dossies/PR-2276.md",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "patch_lines": 22,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 12,
+    "missing_in_main": 12,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "# PR #2276 — chore: auditoria completa de 164 PRs abertas — bloqueio sistêmico documentado",
+     "**draft**: yes",
+     "**head_sha**: unknown (bulk API não retorna)",
+     "**base_sha**: unknown",
+     "**mergeable_state**: draft",
+     "**verdict**: SKIP_DRAFT",
+     "## Análise",
+     "1. **Ainda válido?** Sim — documentação de auditoria",
+     "2. **Traz regressão?** Não",
+     "3. **Já está em main?** Não",
+     "4. **Regra de negócio correta?** Sim — documentação válida",
+     "**Bloqueio**: draft=true, aguarda autor marcar como pronto"
+    ],
+    "still_sample": [],
+    "same_basename_in_main": [
+     "docs/_arquivo/analise-prs/dossies/PR-2276.md"
+    ],
+    "missing_vs_same_basename": 12
+   }
+  },
+  {
+   "path": "analise-prs/dossies/PR-2277.md",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "patch_lines": 22,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 12,
+    "missing_in_main": 12,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "# PR #2277 — chore(db): GOAL backend — classifica 17 tabelas RLS + decide backups + prepara DROP _bkp_261023",
+     "**draft**: yes",
+     "**head_sha**: unknown (bulk API não retorna)",
+     "**base_sha**: unknown",
+     "**mergeable_state**: draft",
+     "**verdict**: SKIP_DRAFT",
+     "## Análise",
+     "1. **Ainda válido?** Sim — auditoria de RLS é necessária",
+     "2. **Traz regressão?** Não",
+     "3. **Já está em main?** Não",
+     "4. **Regra de negócio correta?** Sim — classificação de RLS e backups",
+     "**Bloqueio**: draft=true, aguarda autor marcar como pronto"
+    ],
+    "still_sample": [],
+    "same_basename_in_main": [
+     "docs/_arquivo/analise-prs/dossies/PR-2277.md"
+    ],
+    "missing_vs_same_basename": 12
+   }
+  },
+  {
+   "path": "analise-prs/dossies/PR-2278.md",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "patch_lines": 22,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 12,
+    "missing_in_main": 12,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "# PR #2278 — fix(ci): atualiza guarda de vigilância dashboard_kpi para migration 20261026210000",
+     "**draft**: no",
+     "**head_sha**: unknown (bulk API não retorna)",
+     "**base_sha**: unknown",
+     "**mergeable_state**: blocked",
+     "**verdict**: SKIP_BLOCKED_CI",
+     "## Análise",
+     "1. **Ainda válido?** Sim — guard de migration precisa ser atualizado",
+     "2. **Traz regressão?** Não",
+     "3. **Já está em main?** Não",
+     "4. **Regra de negócio correta?** Sim — atualização de guard é manutenção de CI",
+     "**Bloqueio**: CI failing: Contrato DB offline (novas=12)"
+    ],
+    "still_sample": [],
+    "same_basename_in_main": [
+     "docs/_arquivo/analise-prs/dossies/PR-2278.md"
+    ],
+    "missing_vs_same_basename": 12
+   }
+  },
+  {
+   "path": "analise-prs/dossies/PR-2279.md",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "patch_lines": 22,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 12,
+    "missing_in_main": 12,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "# PR #2279 — fix(e2e): aumenta workers de 1→2 no CI para evitar timeout de 20 min",
+     "**draft**: yes",
+     "**head_sha**: unknown (bulk API não retorna)",
+     "**base_sha**: unknown",
+     "**mergeable_state**: draft",
+     "**verdict**: SKIP_DRAFT",
+     "## Análise",
+     "1. **Ainda válido?** Sim — timeout de E2E é problema real",
+     "2. **Traz regressão?** Não",
+     "3. **Já está em main?** Não",
+     "4. **Regra de negócio correta?** Sim — aumento de paralelismo é abordagem correta",
+     "**Bloqueio**: draft=true, aguarda autor marcar como pronto"
+    ],
+    "still_sample": [],
+    "same_basename_in_main": [
+     "docs/_arquivo/analise-prs/dossies/PR-2279.md"
+    ],
+    "missing_vs_same_basename": 11
+   }
+  },
+  {
+   "path": "analise-prs/prs.csv",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 107,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 101,
+    "missing_in_main": 101,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "numero,titulo,draft,head_sha,base_sha,mergeable_state,verdict",
+     "2279,\"fix(e2e): aumenta workers de 1→2 no CI para evitar timeout de 20 min\",true,unknown,unknown,draft,SKIP_DRAFT",
+     "2278,\"fix(ci): atualiza guarda de vigilância dashboard_kpi para migration 20261026210000\",false,unknown,unknown,blocked,SKIP_BLOCKED_CI",
+     "2277,\"chore(db): GOAL backend — classifica 17 tabelas RLS + decide backups + prepara DROP _bkp_261023\",true,unknown,unknown,draft,SKIP_DRAFT",
+     "2276,\"chore: auditoria completa de 164 PRs abertas — bloqueio sistêmico documentado\",true,unknown,unknown,draft,SKIP_DRAFT",
+     "2274,\"fix: corrige workflows com falha — types.ts +9 RPCs, retry HTTP 502\",false,unknown,unknown,blocked,AGUARDA_HUMANO",
+     "2273,\"fix: retry em HTTP 5xx no fila-merge.mjs\",false,unknown,unknown,blocked,SKIP_BLOCKED_CI",
+     "2272,\"⬆️ docker: Bump golang from f92b6ef to b8c9b82 in /infrastructure/preview-egress-proxy\",false,unknown,unknown,blocked,SKIP_BLOCKED_CI",
+     "2270,\"⬆️ ci: Bump the codeql-action group across 1 directory with 2 updates\",false,unknown,unknown,prohibited,SKIP_PROHIBITED",
+     "2269,\"fix: Talk X segmentos sem estimativa enganosa, branch stacked em #2248\",false,unknown,e1f2ee4d,dirty,SKIP_CONFLICT",
+     "2268,\"fix: supervisor volta a gerenciar templates do WhatsApp e Base de Conhecimento não trava em erro de rede\",false,unknown,e1f2ee4d,dirty,SKIP_CONFLICT",
+     "2267,\"fix: fila de envio offline não entrega item sem dono e não ressuscita após logout\",false,unknown,e1f2ee4d,dirty,SKIP_CONFLICT",
+     "2266,\"fix: paleta de comandos acessível, filtros do inbox com voltar/avançar e celebrações sem falso positivo\",false,unknown,e1f2ee4d,dirty,SKIP_CONFLICT",
+     "2265,\"fix: revoga grants de escrita do anon em public (CRITICAL-1)\",true,unknown,unknown,draft,SKIP_DRAFT",
+     "2263,\"fix: salvar preferências na Aparência (SettingsView passa onSave/isSaving)\",true,unknown,unknown,draft,SKIP_DRAFT",
+     "2261,\"fix: corrigir falhas de CI em 4 suítes de teste e retry de rede no fila-merge\",true,unknown,unknown,draft,SKIP_DRAFT",
+     "2255,\"chore: auditoria Supabase — relatório e progresso finais (2026-10-25)\",true,unknown,unknown,draft,SKIP_DRAFT",
+     "2250,\"fix(types): adiciona 9 assinaturas de RPC ausentes em types.ts\",true,unknown,unknown,draft,SKIP_DRAFT",
+     "2249,\"fix: 3 falhas de testes unitários (HighContrastToggle, mock de canal Talk X, nome dos selects do editor)\",true,unknown,unknown,draft,SKIP_DRAFT",
+     "2247,\"chore: comando /resgate-validacao (validação exaustiva do resgate com 5 agentes)\",false,unknown,unknown,blocked,SKIP_BLOCKED_CI",
+     "2246,\"fix: retry automático em fila-merge.mjs para HTTP 504 transitório\",false,unknown,unknown,blocked,SKIP_BLOCKED_CI",
+     "2245,\"fix(talkx): corrige 4.007 falhas/30d do cron talkx-scheduler-1min\",true,unknown,unknown,draft,SKIP_DRAFT",
+     "2244,\"fix(types): adiciona 9 assinaturas de RPC ausentes — desbloqueia CI de todas as PRs\",false,unknown,unknown,blocked,AGUARDA_HUMANO",
+     "2242,\"chore: inventário de PRs abertas e regras de negócio para análise\",true,unknown,unknown,draft,SKIP_DRAFT",
+     "2241,\"chore: auditoria exaustiva Supabase — 28 achados (CRITICAL×3 HIGH×7)\",true,unknown,unknown,draft,SKIP_DRAFT"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "analise-prs/prs.json",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 1609,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1400,
+    "missing_in_main": 1400,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "    \"number\": 2279,",
+     "    \"title\": \"fix(e2e): aumenta workers de 1\\u21922 no CI para evitar timeout de 20 min\",",
+     "    \"draft\": true,",
+     "    \"head_sha\": \"4fa16738a7f48f81a14d119fc05330f6056d6a81\",",
+     "    \"head_ref\": \"claude/fix-e2e-workers-ci-timeout-271027-0924\",",
+     "    \"base_sha\": \"6617a5d0a0590573395c1e0de94c52989b06e7c6\",",
+     "    \"user\": \"adm01-debug\",",
+     "    \"mergeable_state\": \"unknown\",",
+     "    \"created_at\": \"2026-10-27T09:26:37Z\",",
+     "    \"updated_at\": \"2026-10-27T10:05:35Z\",",
+     "    \"changed_files\": 0,",
+     "    \"additions\": 0,",
+     "    \"deletions\": 0,",
+     "    \"commits\": 0",
+     "    \"number\": 2278,",
+     "    \"title\": \"fix(ci): atualiza guarda de vig\\u00eancia dashboard_kpi para migration 20261026210000\",",
+     "    \"draft\": false,",
+     "    \"head_sha\": \"54590d5ae38c11a9be21b80d5209d98ac1c343c1\",",
+     "    \"head_ref\": \"claude/fix-contrato-db-offline-dashboard-kpi-guard-271026-0608\",",
+     "    \"base_sha\": \"0eea407b31e386f91e143ee6e17db3206a6c1701\",",
+     "    \"user\": \"adm01-debug\",",
+     "    \"mergeable_state\": \"unknown\",",
+     "    \"created_at\": \"2026-10-27T06:14:25Z\",",
+     "    \"updated_at\": \"2026-10-27T07:57:23Z\",",
+     "    \"changed_files\": 0,"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "analise-prs/regras-de-negocio.md",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 59,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 32,
+    "missing_in_main": 31,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "# Regras de Negócio — Análise de PRs",
+     "Fonte: `CLAUDE.md` (projeto `adm01-debug/Zapp_Web_V2`)",
+     "## CI — 6 checks obrigatórios para merge em `main`",
+     "1. `🔍 Lint & TypeCheck`",
+     "2. `🧪 Unit Tests`",
+     "3. `🏗️ Build`",
+     "4. `🔒 Security Audit`",
+     "5. `Contrato DB offline`",
+     "6. `🎭 E2E Tests (Playwright)`",
+     "`strict=true` na branch `main`: PR deve estar atualizada em relação à `main` antes de mergear.",
+     "**Somente squash-merge.** Merge commit e rebase estão desabilitados no repositório.",
+     "## Escrita no GitHub",
+     "**Somente via MCP `GITHUB - MCP - FOREVER`** (`mcp__GITHUB_-_MCP_-_FOREVER__*`).",
+     "O MCP padrão (`mcp__github__*`) retorna 403 em operações de escrita.",
+     "## PRs draft",
+     "PRs com `draft: true` **não podem ser mergeadas**. O autor deve marcar como pronta.",
+     "## Arquivos proibidos",
+     "**PRs que tocam `.github/workflows/`** não devem ser mergeadas por agente. Esses arquivos contêm configurações de CI/CD sensíveis que requerem revisão humana.",
+     "## Banco de dados — DDL",
+     "Apenas migrations **aditivas** podem ser mergeadas por agente:",
+     "- Permitido: `CREATE TABLE`, nova coluna nullable, nova função, novo índice",
+     "- **Proibido**: `DROP`, `RENAME`, `ALTER TYPE`, `DELETE`/`UPDATE` em massa",
+     "## Banco SINGU (read-only)",
+     "`vpkmqeumtxhrwgawxdrl` — banco externo **somente leitura**. PRs que escrevem nele não devem ser mergeadas.",
+     "## Banco oficial do projeto"
+    ],
+    "still_sample": []
+   }
+  }
+ ],
+ "counts": {
+  "migrations": "0",
+  "workflows": "0",
+  "src": "0",
+  "edges": "0",
+  "docs_only": "yes",
+  "lines_branch_has_main_lacks": "3450",
+  "lines_main_has_branch_lacks": "911"
+ },
+ "auto": "MISTO_CONFLITO",
+ "n_files_with_gaps": 107,
+ "gap_lines_total": 2811
+}

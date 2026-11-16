@@ -1,0 +1,15 @@
+[
+ {
+  "commit": "2bb863a75",
+  "arquivo": "src/components/talkx/report/__tests__/TalkXCampaignReport.test.tsx",
+  "linhas": 35,
+  "amostra": [
+   "    ComposedChart: SvgBox,",
+   "    AreaChart: SvgBox,",
+   "    Area: () => null,",
+   "    Line: () => null,",
+   "    XAxis: () => null,",
+   "    YAxis: () => null,"
+  ]
+ }
+]

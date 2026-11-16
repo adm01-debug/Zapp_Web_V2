@@ -1,0 +1,58 @@
+[
+ {
+  "commit": "c6ec0cd8d",
+  "arquivo": "scripts/catalog/validate-plan.unit.mjs",
+  "linhas": 1,
+  "amostra": [
+   "import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';"
+  ]
+ },
+ {
+  "commit": "c6ec0cd8d",
+  "arquivo": "scripts/docs/verificar-docs-realtime.unit.mjs",
+  "linhas": 1,
+  "amostra": [
+   "    assert.match(r.stdout, /\\d+ canal/);"
+  ]
+ },
+ {
+  "commit": "c6ec0cd8d",
+  "arquivo": "scripts/lib/seguranca-processo.unit.mjs",
+  "linhas": 1,
+  "amostra": [
+   "    () => resolverCaminhoPermitido(path.join(RAIZ_REPO, '..', 'fora.json'), 'entrada'),"
+  ]
+ },
+ {
+  "commit": "c6ec0cd8d",
+  "arquivo": "scripts/tarefas/seed-local-imagens.unit.mjs",
+  "linhas": 1,
+  "amostra": [
+   "  return spawnSync('bun', [SCRIPT], { cwd: RAIZ, encoding: 'utf8', env });"
+  ]
+ },
+ {
+  "commit": "f87414acb",
+  "arquivo": "scripts/inventario/gerar-repo.mjs",
+  "linhas": 4,
+  "amostra": [
+   "  let entrada = '';",
+   "    entrada = readFileSync(0, 'utf8');",
+   "    if (erro?.code !== 'EAGAIN') throw erro;",
+   "  const nomes = entrada.split(/\\s+/).filter(Boolean);"
+  ]
+ },
+ {
+  "commit": "77fb7eb40",
+  "arquivo": "src/components/talkx/report/__tests__/TalkXCampaignReport.test.tsx",
+  "linhas": 85,
+  "amostra": [
+   "vi.mock('recharts', () => {",
+   "  const Box = ({ children }: { children?: React.ReactNode }) => <div>{children}</div>;",
+   "  const SvgBox = ({ children }: { children?: React.ReactNode }) => <svg>{children}</svg>;",
+   "    ComposedChart: SvgBox,",
+   "    AreaChart: SvgBox,",
+   "    Area: () => null,"
+  ]
+ }
+]

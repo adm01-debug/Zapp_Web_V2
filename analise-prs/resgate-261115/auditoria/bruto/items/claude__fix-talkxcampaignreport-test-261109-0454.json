@@ -1,0 +1,51 @@
+{
+ "id": "claude__fix-talkxcampaignreport-test-261109-0454",
+ "kind": "branch",
+ "ref": "origin/claude/fix-talkxcampaignreport-test-261109-0454",
+ "tip": "291fe3f5ffd3626dec8c612f24b8cfb19f635ac2",
+ "merge_base": "c545e5b63643d569fca4b41c041cc0732a32697b",
+ "ahead": 1,
+ "last_commit_date": "2026-11-09",
+ "merge_base_date": "2026-11-09",
+ "prs_with_same_tip": [
+  2885
+ ],
+ "triagem_2804": {
+  "2885": null
+ },
+ "closure_comment": {},
+ "files": [
+  {
+   "path": "src/components/talkx/report/__tests__/TalkXCampaignReport.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 17,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 5,
+    "missing_in_main": 5,
+    "removed": 1,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "describe('TalkXCampaignReport — X164 / TL-080', () => {",
+     "  it('módulo de mocks está configurado', () => {",
+     "    expect(vi.isMockFunction(vi.fn())).toBe(true);",
+     "  it.todo('talkxReportData — agrupamento por dia/hora e grade 7x24');",
+     "  it.todo('TalkXCampaignReport — três gráficos + Resumo sem conversão');"
+    ],
+    "still_sample": []
+   }
+  }
+ ],
+ "counts": {
+  "migrations": "0",
+  "workflows": "0",
+  "src": "1",
+  "edges": "0",
+  "docs_only": "no",
+  "lines_branch_has_main_lacks": "25",
+  "lines_main_has_branch_lacks": "170"
+ },
+ "auto": "MISTO_CONFLITO",
+ "n_files_with_gaps": 1,
+ "gap_lines_total": 5
+}

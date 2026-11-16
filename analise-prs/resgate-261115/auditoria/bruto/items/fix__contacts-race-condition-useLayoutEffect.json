@@ -1,0 +1,76 @@
+{
+ "id": "fix__contacts-race-condition-useLayoutEffect",
+ "kind": "branch",
+ "ref": "origin/fix/contacts-race-condition-useLayoutEffect",
+ "tip": "178a79cbb2868a16c58a0c4e42669b8d75ffd3c7",
+ "merge_base": "1252bb5a41123ba4d49efd84d0f91604bff6c87c",
+ "ahead": 3,
+ "last_commit_date": "2026-11-02",
+ "merge_base_date": "2026-11-01",
+ "prs_with_same_tip": [
+  2571
+ ],
+ "triagem_2804": {
+  "2571": "JA_NA_MAIN"
+ },
+ "closure_comment": {},
+ "files": [
+  {
+   "path": "PENDENCIAS.md",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 160,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 103,
+    "missing_in_main": 102,
+    "removed": 1,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "_Atualizado em 2026-11-02T03:18Z — PR #2551 mergeado automaticamente._",
+     "## 0. GitHub Actions — runners bloqueados ✅ RESOLVIDO (2026-11-02T03:17Z)",
+     "**Estado:** Os runners se recuperaram. PR #2551 passou nos required checks (`🏗️ Build`, `🔎 TypeCheck`, `✅ CI Gate`) e foi mergeado automaticamente (squash) às 0",
+     "**Histórico:** Entre ~01:40Z e ~03:05Z os runners ficaram bloqueados (`status: \"queued\"`, `updated_at == created_at`). O problema foi de plataforma GitHub — se ",
+     "## 4. DB Migrate — 3 versões no ledger sem arquivo no disco ✅ RESOLVIDO (PR #2551)",
+     "**Versões reconciliadas (commit `6fc91a8f9` no PR #2551):**",
+     "- `20261030145126_copilot_fases13_15_tabelas.sql` — SQL exato do ledger (30 statements, tabelas copilot)",
+     "- `20261031170000_high3-fk-indexes.sql` — SQL exato do ledger corrigido (48 CREATE INDEX IF NOT EXISTS; commit `4a6a54e21`)",
+     "- `20261101213000_rls_update_with_check_explicit.sql` — SQL exato do ledger (8 ALTER POLICY WITH CHECK)",
+     "**Falha colateral documentada em `scripts/db-audit/replay-known-failures.json`:**",
+     "- `20261031100000_copilot_fases13_15_tabelas.sql` adicionado como `nao-idempotente-inerte`:",
+     "  no replay zerado, `20261030145126` cria as políticas antes desta, causando `duplicate_object`.",
+     "  Efeito no canônico: nenhum — todos os objetos existem.",
+     "**Estado:** ✅ RESOLVIDO — PR #2551 mergeado em 2026-11-02T03:17Z, SHA `587ec25f` na `main`.",
+     "## 5. Congelamento de features — PR #2545 (Joaquim, 01/11/2026)",
+     "**Estado:** PR #2545 (feature freeze) aberta com auto-merge desde 2026-11-01 23:36Z.",
+     "**Decisão do Joaquim:** só entram correções dos 9 fluxos críticos de `docs/PRONTO_PRODUCAO.md`,",
+     "CI que impede verificá-los e segurança. Features novas (TalkX V4, Copiloto, a11y) aguardam",
+     "até os fluxos críticos estiverem OK em produção.",
+     "**PRs fechadas pelo congelamento (01/11/2026 ~23:48Z):**",
+     "- PR #1930 (db-guard workflow) — branch preservada",
+     "- PR #2426 (branch-hygiene-audit) — branch preservada",
+     "- PR #2491 (migrations copilot fases 13-15) — branch preservada",
+     "- PR #2513 (email navy contrast) — branch preservada",
+     "- PR #2532 (docs GF tasks + PENDENCIAS) — branch `claude/trusting-albattani-9x3ipg` preservada"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/contacts/ContactForm.tsx",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  }
+ ],
+ "counts": {
+  "migrations": "0",
+  "workflows": "0",
+  "src": "1",
+  "edges": "0",
+  "docs_only": "no",
+  "lines_branch_has_main_lacks": "163",
+  "lines_main_has_branch_lacks": "379"
+ },
+ "auto": "MISTO_CONFLITO",
+ "n_files_with_gaps": 1,
+ "gap_lines_total": 102
+}

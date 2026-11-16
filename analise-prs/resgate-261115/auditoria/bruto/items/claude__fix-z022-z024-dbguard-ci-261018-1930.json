@@ -1,0 +1,64 @@
+{
+ "id": "claude__fix-z022-z024-dbguard-ci-261018-1930",
+ "kind": "branch",
+ "ref": "origin/claude/fix-z022-z024-dbguard-ci-261018-1930",
+ "tip": "f0b5b7cd2659132b552b912d60a91f0bb1172d4d",
+ "merge_base": "e322d379484859a86c5965a1207e29032ced5321",
+ "ahead": 1,
+ "last_commit_date": "2026-10-18",
+ "merge_base_date": "2026-10-18",
+ "prs_with_same_tip": [
+  2093
+ ],
+ "triagem_2804": {
+  "2093": "OBSOLETA"
+ },
+ "closure_comment": {},
+ "files": [
+  {
+   "path": ".github/workflows/e2e-logado.yml",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 18,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 2,
+    "missing_in_main": 2,
+    "removed": 2,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "        run: bunx playwright install --with-deps chromium firefox webkit",
+     "        run: bunx playwright install-deps chromium firefox webkit"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": ".github/workflows/e2e-talkx.yml",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 18,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 2,
+    "missing_in_main": 1,
+    "removed": 2,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "        run: bunx playwright install --with-deps chromium"
+    ],
+    "still_sample": []
+   }
+  }
+ ],
+ "counts": {
+  "migrations": "0",
+  "workflows": "2",
+  "src": "0",
+  "edges": "0",
+  "docs_only": "no",
+  "lines_branch_has_main_lacks": "233",
+  "lines_main_has_branch_lacks": "173"
+ },
+ "auto": "MISTO_CONFLITO",
+ "n_files_with_gaps": 2,
+ "gap_lines_total": 3
+}

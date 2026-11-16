@@ -1,0 +1,153 @@
+{
+ "id": "pr-213",
+ "kind": "pr",
+ "ref": "refs/remotes/pr/213",
+ "pr": 213,
+ "tip": "51dec2d9d3b165b00dbcf74c0ace6c90bbab4510",
+ "merge_base": "cd86ec9fbb044f01970a766c957e5d8cc8e37bea",
+ "ahead": 30,
+ "last_commit_date": "2026-09-04",
+ "merge_base_date": "2026-09-04",
+ "triagem_2804": "DRIFT",
+ "closure_comment": null,
+ "files": [
+  {
+   "path": ".github/workflows/ci.yml",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 14,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 2,
+    "missing_in_main": 2,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "      - name: 🎨 Layout guard (zero layout violations)",
+     "        run: node scripts/ui-audit/layout-guard.mjs"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "supabase/functions/_shared/evolution-api-proxy.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 13,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 0,
+    "removed": 1,
+    "removed_still_in_main": 0,
+    "missing_sample": [],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "supabase/functions/gmail-oauth/index.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 13,
+   "hunk": "PRESENT_REVERSE_APPLIES"
+  },
+  {
+   "path": "supabase/migrations/20260904300000_revoke_anon_trigger_function_execute.sql",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 9,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 3,
+    "missing_in_main": 2,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "-- Trigger functions are called by the DB engine, never directly by clients.",
+     "-- Granting EXECUTE on them to anon/authenticated is unnecessary surface area."
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "supabase/migrations/20260904320000_fix_critical_security_functions.sql",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 78,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 65,
+    "missing_in_main": 26,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "-- CRITICAL SECURITY FIX #1: get_identity_matrix",
+     "-- Any authenticated user could call this and get the full user matrix (all emails,",
+     "-- roles, permissions, ban status) because SECURITY DEFINER bypassed RLS and there",
+     "-- was no role guard. Now restricted to admin/supervisor only.",
+     "RETURNS TABLE(",
+     "  auth_user_id         uuid,",
+     "  email                text,",
+     "  last_sign_in_at      timestamptz,",
+     "  is_banned            boolean,",
+     "  profile_id           uuid,",
+     "  display_name         text,",
+     "  is_active            boolean,",
+     "  profile_role_cached  text,",
+     "  access_level         text,",
+     "  user_roles_list      text,",
+     "  effective_permissions text,",
+     "  created_at           timestamptz",
+     "SECURITY DEFINER",
+     "SET search_path = public",
+     "AS $$",
+     "-- CRITICAL SECURITY FIX #2: contacts_count_by_type",
+     "-- Ran as SECURITY DEFINER → bypassed RLS on contacts table → any authenticated user",
+     "-- could get global aggregate counts across ALL contacts regardless of visibility.",
+     "-- Fix: remove SECURITY DEFINER so the function runs as the caller and RLS applies.",
+     "SET search_path = public"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "supabase/migrations/20260904330000_revoke_unnecessary_anon_grants.sql",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 18,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 10,
+    "missing_in_main": 8,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "-- Revoke anon/authenticated EXECUTE on functions that have no legitimate",
+     "-- reason to be called directly by clients.",
+     "-- calculate_level(integer): pure math helper. Used only server-side in",
+     "-- triggers and edge functions. anon calling it is unused surface area.",
+     "-- normalize_contact_phone(): trigger function — called exclusively by the",
+     "-- DB engine on INSERT/UPDATE. No client should ever invoke it directly.",
+     "-- Previous migration already revoked it for messages_sla_first_response_trigger;",
+     "-- this closes the same gap for this trigger function."
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "supabase/schema-catalog.json",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 17,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 4,
+    "missing_in_main": 3,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "    \"ops_schema\": {",
+     "        \"source\": \"postgres schema ops\",",
+     "            \"hermes_change_log\""
+    ],
+    "still_sample": []
+   }
+  }
+ ],
+ "auto": "MISTO_CONFLITO",
+ "n_files_with_gaps": 5,
+ "gap_lines_total": 41
+}

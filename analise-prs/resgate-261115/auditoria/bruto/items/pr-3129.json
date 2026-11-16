@@ -1,0 +1,26 @@
+{
+ "id": "pr-3129",
+ "kind": "pr",
+ "ref": "refs/remotes/pr/3129",
+ "pr": 3129,
+ "tip": "7a19603d97b311a9ba615530fb87d595c71ac0a6",
+ "merge_base": "1d4702804fb0fdda7939332b92b70ac8dc3c914c",
+ "ahead": 3,
+ "last_commit_date": "2026-11-15",
+ "merge_base_date": "2026-11-15",
+ "triagem_2804": null,
+ "closure_comment": {
+  "title": "docs(plano): assistente pessoal de IA em 4 fases, com o diagnóstico medido",
+  "last_comment": "| <!-- codex-review-state:v1 {\"code_review\":{\"commit_sha\":\"7a19603d97b311a9ba615530fb87d595c71ac0a6\",\"has_any_findings\":true,\"has_unresolved_findings\":true,\"status\":\"completed\"},\"security_review\":{\"commit_sha\":null,\"has_any_findings\":null,\"has_unresolved_find"
+ },
+ "files": [
+  {
+   "path": "docs/plans/PLANO_ASSISTENTE_PESSOAL_IA_2026-11-15.md",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  }
+ ],
+ "auto": "INCORPORADA_PROVA_PATCH",
+ "n_files_with_gaps": 0,
+ "gap_lines_total": 0
+}

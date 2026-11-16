@@ -1,0 +1,51 @@
+{
+ "id": "claude__fix-e2e-workers-ci-timeout-271027-0924",
+ "kind": "branch",
+ "ref": "origin/claude/fix-e2e-workers-ci-timeout-271027-0924",
+ "tip": "c2055dff93ae93eaeea6c6a9625a22d1b2e1c980",
+ "merge_base": "3b5f8a96db0337af7310eec1b0dc5f86bb45912c",
+ "ahead": 13,
+ "last_commit_date": "2026-11-01",
+ "merge_base_date": "2026-11-01",
+ "prs_with_same_tip": [
+  2279
+ ],
+ "triagem_2804": {
+  "2279": "OBSOLETA"
+ },
+ "closure_comment": {},
+ "files": [
+  {
+   "path": "playwright.config.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 21,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 5,
+    "missing_in_main": 5,
+    "removed": 5,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  // GR-016/W75: CI com 4 workers (1 worker estourava o timeout de 20 min: 129 testes × ~17s;",
+     "  // 2 workers ficavam em ~19 min, sem margem). Localmente seguem 2: a fixture do Email",
+     "  // sobe um Vite inteiro e captura artefatos visuais; um pool limitado evita a fome de",
+     "  // cold start que fazia specs independentes caírem no fallback de carregamento em 5 s.",
+     "  workers: process.env.CI ? 4 : 2,"
+    ],
+    "still_sample": []
+   }
+  }
+ ],
+ "counts": {
+  "migrations": "0",
+  "workflows": "0",
+  "src": "0",
+  "edges": "0",
+  "docs_only": "no",
+  "lines_branch_has_main_lacks": "12",
+  "lines_main_has_branch_lacks": "12"
+ },
+ "auto": "MISTO_CONFLITO",
+ "n_files_with_gaps": 1,
+ "gap_lines_total": 5
+}

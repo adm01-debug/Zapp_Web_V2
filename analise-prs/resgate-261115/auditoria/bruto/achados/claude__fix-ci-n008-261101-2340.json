@@ -1,0 +1,12 @@
+[
+ {
+  "commit": "68c998eef",
+  "arquivo": "scripts/db-audit/user-sessions-expire.test.sh",
+  "linhas": 3,
+  "amostra": [
+   "for _ in $(seq 1 60); do",
+   "  docker exec \"$CNAME\" pg_isready -U postgres -d postgres >/dev/null 2>&1 && break",
+   "docker exec \"$CNAME\" pg_isready -U postgres -d postgres >/dev/null"
+  ]
+ }
+]

@@ -1,0 +1,61 @@
+{
+ "id": "claude__feat-x051-talkx-lifecycle-2611081915",
+ "kind": "branch",
+ "ref": "origin/claude/feat-x051-talkx-lifecycle-2611081915",
+ "tip": "bbdf443d4ffd5975fa8f409d52e44d8674cb7c0f",
+ "merge_base": "be8aa06a1df18d9b39945742fd2f07fb1b8790b9",
+ "ahead": 3,
+ "last_commit_date": "2026-11-09",
+ "merge_base_date": "2026-11-09",
+ "prs_with_same_tip": [
+  2812
+ ],
+ "triagem_2804": {
+  "2812": null
+ },
+ "closure_comment": {},
+ "files": [
+  {
+   "path": "src/components/talkx/TalkXCampaignRunning.tsx",
+   "status": "BOTH_CHANGED",
+   "hunk": "CONFLICT",
+   "patch_lines": 158,
+   "line_check": {
+    "added": 10,
+    "missing_in_main": 5,
+    "removed": 81,
+    "removed_still_in_main": 9,
+    "missing_sample": [
+     "import { useTalkXLifecycle, TalkXLifecycleDialog } from './useTalkXLifecycle';",
+     "  const lifecycle = useTalkXLifecycle();",
+     "      lifecycle.close();",
+     "              resuming={lifecycle.isPending && lifecycle.intent?.kind === 'resume'}",
+     "      {/* Diálogo unificado de ciclo de vida (pausa / cancelar / retomar) — X051 */}"
+    ],
+    "still_sample": [
+     "import {",
+     "    if (!campaign) return;",
+     "    try {",
+     "    if (!campaign) return;",
+     "    try {",
+     "      toast.warning('Campanha cancelada.');",
+     "      onBack();",
+     "    if (!campaign) return;",
+     "    try {"
+    ]
+   }
+  }
+ ],
+ "counts": {
+  "migrations": "0",
+  "workflows": "0",
+  "src": "1",
+  "edges": "0",
+  "docs_only": "no",
+  "lines_branch_has_main_lacks": "8",
+  "lines_main_has_branch_lacks": "64"
+ },
+ "auto": "MISTO_CONFLITO",
+ "n_files_with_gaps": 1,
+ "gap_lines_total": 14
+}

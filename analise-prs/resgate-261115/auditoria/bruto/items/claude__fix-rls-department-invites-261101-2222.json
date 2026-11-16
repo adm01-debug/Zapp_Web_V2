@@ -1,0 +1,102 @@
+{
+ "id": "claude__fix-rls-department-invites-261101-2222",
+ "kind": "branch",
+ "ref": "origin/claude/fix-rls-department-invites-261101-2222",
+ "tip": "15d1d4990307867b8cdaea515c14f68c361bdc06",
+ "merge_base": "1252bb5a41123ba4d49efd84d0f91604bff6c87c",
+ "ahead": 6,
+ "last_commit_date": "2026-11-01",
+ "merge_base_date": "2026-11-01",
+ "prs_with_same_tip": [
+  2561
+ ],
+ "triagem_2804": {
+  "2561": "JA_NA_MAIN"
+ },
+ "closure_comment": {},
+ "files": [
+  {
+   "path": "src/hooks/team-chat/README.md",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 40,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 17,
+    "missing_in_main": 15,
+    "removed": 1,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "| `useDeleteDepartmentInvite`        | `useDepartmentManagement.ts` | tabela  | `department_invitations`               |",
+     "## Permissões de convite de departamento",
+     "Decisão do dono (01/11/2026): **somente admin** cria e apaga convites de",
+     "departamento. O convite vive em `department_invitations`, a mesma tabela que o",
+     "aceite (`accept_department_invite`) lê; `department_invites` é legada e fica",
+     "fechada para escrita. Regra na migration",
+     "`20261102012200_department_invites_restringe_escrita.sql`:",
+     "- criar (`useCreateDepartmentInvite`): RPC `create_department_invite`, que só",
+     "  aceita papel `admin` em `user_roles`; o banco sorteia o código, grava o perfil",
+     "  criador e a auditoria `invite_created`. Convite de 1 uso, válido por 7 dias;",
+     "- apagar (`useDeleteDepartmentInvite`): só `admin`;",
+     "- listar: admin e supervisor.",
+     "Supervisor e agent recebem erro de permissão do banco ao tentar criar ou apagar.",
+     "A tela ainda mostra o botão de criar para quem gerencia departamento",
+     "(`canManageDepartments`); para supervisor, a criação volta `not_authorized`."
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/hooks/team-chat/__tests__/departmentInviteCode.random.test.tsx",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/hooks/team-chat/__tests__/rls-contract.test.ts",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/hooks/team-chat/__tests__/useCreateDepartmentInvite.rpc.test.tsx",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/hooks/team-chat/useDepartmentManagement.ts",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/hooks/team-chat/useRedeemDepartmentInvite.ts",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "supabase/migrations/20261102012200_department_invites_restringe_escrita.sql",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 123,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 98,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "    v_code := upper(substr(translate(encode(gen_random_bytes(16), 'base64'), '+/=', ''), 1, 8));"
+    ],
+    "still_sample": []
+   }
+  }
+ ],
+ "counts": {
+  "migrations": "1",
+  "workflows": "0",
+  "src": "6",
+  "edges": "0",
+  "docs_only": "no",
+  "lines_branch_has_main_lacks": "23",
+  "lines_main_has_branch_lacks": "3"
+ },
+ "auto": "MISTO_CONFLITO",
+ "n_files_with_gaps": 2,
+ "gap_lines_total": 16
+}

@@ -1,0 +1,59 @@
+{
+ "id": "pr-981",
+ "kind": "pr",
+ "ref": "refs/remotes/pr/981",
+ "pr": 981,
+ "tip": "656d7d7769f084133f4ee45768330f9741383aa7",
+ "merge_base": "7f28293570cb512f9630a862dcb73b290e1e22b9",
+ "ahead": 2,
+ "last_commit_date": "2026-09-27",
+ "merge_base_date": "2026-09-27",
+ "triagem_2804": "DRIFT",
+ "closure_comment": null,
+ "files": [
+  {
+   "path": "supabase/migrations/20260927300000_fix_handle_new_user_role_null_email.sql",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "patch_lines": 77,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 58,
+    "missing_in_main": 58,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "-- 20260927300000_fix_handle_new_user_role_null_email",
+     "-- NULL bypass: NEW.email pode ser NULL em signup por telefone (auth sem email).",
+     "-- split_part(NULL, '@', 2) => NULL; NULL = ANY(...) => NULL;",
+     "-- IF NOT NULL => condicao NULL => ramo \"negado\" NAO executa =>",
+     "-- usuario sem email recebia role 'agent' ignorando trusted_domains.",
+     "-- Mesmo padrao corrigido em set_call_agent_notes (20260927100000).",
+     "-- Fix: coalesce(..., false) garante que email NULL seja tratado como dominio",
+     "-- nao confiavel.",
+     "CREATE OR REPLACE FUNCTION public.handle_new_user_role()",
+     "RETURNS trigger",
+     "LANGUAGE plpgsql",
+     "SECURITY DEFINER",
+     "SET search_path TO 'public'",
+     "AS $function$",
+     "DECLARE",
+     "  v_trusted_domains text;",
+     "  v_email_domain    text;",
+     "  v_allowed         boolean := false;",
+     "BEGIN",
+     "  v_email_domain := split_part(NEW.email, '@', 2);",
+     "  v_trusted_domains := coalesce(",
+     "    nullif(current_setting('app.settings.trusted_domains', true), ''),",
+     "    'promobrindes.com.br'",
+     "  v_allowed := coalesce(v_email_domain = ANY (string_to_array(v_trusted_domains, ',')), false);",
+     "  IF NOT v_allowed THEN"
+    ],
+    "still_sample": [],
+    "same_basename_in_main": []
+   }
+  }
+ ],
+ "auto": "TRABALHO_AUSENTE_APLICA_LIMPO",
+ "n_files_with_gaps": 1,
+ "gap_lines_total": 58
+}

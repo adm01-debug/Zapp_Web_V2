@@ -1,0 +1,71 @@
+{
+ "id": "claude__feat-copiloto-ddl-261101-1330",
+ "kind": "branch",
+ "ref": "origin/claude/feat-copiloto-ddl-261101-1330",
+ "tip": "7a8bea7d4b974bec52e1dd2eda37b67fe1b2fe37",
+ "merge_base": "1252bb5a41123ba4d49efd84d0f91604bff6c87c",
+ "ahead": 11,
+ "last_commit_date": "2026-11-01",
+ "merge_base_date": "2026-11-01",
+ "prs_with_same_tip": [
+  2461
+ ],
+ "triagem_2804": {
+  "2461": "JA_NA_MAIN"
+ },
+ "closure_comment": {},
+ "files": [
+  {
+   "path": "supabase/migrations/20261030145126_copilot_fases13_15_tabelas.sql",
+   "status": "BOTH_CHANGED",
+   "hunk": "CONFLICT",
+   "patch_lines": 151,
+   "line_check": {
+    "added": 106,
+    "missing_in_main": 99,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "-- CV-121 a CV-150: 7 tabelas de suporte para as fases 13-15 do copiloto RADAR",
+     "-- Fase 13 (CV-121-130): supervisor — copilot_help_requests, copilot_learning_moments, copilot_conversation_scores",
+     "-- Fase 14 (CV-131-140): aprendizado — copilot_outcomes, copilot_objection_catalog",
+     "-- Fase 15 (CV-141-150): métricas — copilot_usage, copilot_seller_settings",
+     "-- Rollback:",
+     "--   DROP TABLE IF EXISTS public.copilot_outcomes;",
+     "--   DROP TABLE IF EXISTS public.copilot_objection_catalog;",
+     "--   DROP TABLE IF EXISTS public.copilot_usage;",
+     "--   DROP TABLE IF EXISTS public.copilot_seller_settings;",
+     "--   DROP TABLE IF EXISTS public.copilot_help_requests;",
+     "--   DROP TABLE IF EXISTS public.copilot_learning_moments;",
+     "--   DROP TABLE IF EXISTS public.copilot_conversation_scores;",
+     "-- Fase 14: resultado de venda",
+     "CREATE TABLE IF NOT EXISTS public.copilot_outcomes (",
+     "  id               UUID        PRIMARY KEY DEFAULT gen_random_uuid(),",
+     "  conversation_id  UUID        NOT NULL,",
+     "  contact_id       UUID        NOT NULL,",
+     "  seller_id        UUID        NOT NULL,",
+     "  outcome          TEXT        NOT NULL CHECK (outcome IN ('closed', 'lost')),",
+     "  deal_value       NUMERIC,",
+     "  segment          TEXT,",
+     "  created_at       TIMESTAMPTZ NOT NULL DEFAULT now()",
+     "CREATE POLICY \"copilot_outcomes_insert\"",
+     "  ON public.copilot_outcomes FOR INSERT TO authenticated WITH CHECK (true);",
+     "CREATE POLICY \"copilot_outcomes_select\""
+    ],
+    "still_sample": []
+   }
+  }
+ ],
+ "counts": {
+  "migrations": "1",
+  "workflows": "0",
+  "src": "0",
+  "edges": "0",
+  "docs_only": "no",
+  "lines_branch_has_main_lacks": "138",
+  "lines_main_has_branch_lacks": "23"
+ },
+ "auto": "MISTO_CONFLITO",
+ "n_files_with_gaps": 1,
+ "gap_lines_total": 99
+}

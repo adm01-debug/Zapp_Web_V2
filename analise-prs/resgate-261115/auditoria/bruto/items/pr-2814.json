@@ -1,0 +1,23 @@
+{
+ "id": "pr-2814",
+ "kind": "pr",
+ "ref": "refs/remotes/pr/2814",
+ "pr": 2814,
+ "tip": "cac91e7a32ae8479ae532b2fec0ada6d67af208c",
+ "merge_base": "e6e467b96f12dfca1e12bab7847fad6ddef3c397",
+ "ahead": 2,
+ "last_commit_date": "2026-11-08",
+ "merge_base_date": "2026-11-08",
+ "triagem_2804": null,
+ "closure_comment": null,
+ "files": [
+  {
+   "path": "supabase/migrations/20261108090000_fix_create_department_invite_search_path.sql",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  }
+ ],
+ "auto": "INCORPORADA_PROVA_PATCH",
+ "n_files_with_gaps": 0,
+ "gap_lines_total": 0
+}

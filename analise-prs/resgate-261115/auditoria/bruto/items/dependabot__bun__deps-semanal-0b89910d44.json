@@ -1,0 +1,254 @@
+{
+ "id": "dependabot__bun__deps-semanal-0b89910d44",
+ "kind": "branch",
+ "ref": "origin/dependabot/bun/deps-semanal-0b89910d44",
+ "tip": "9aee73074d813a193efb7ef51228a1c5a26b2d8d",
+ "merge_base": "e50daef6a4d1e8bbb3a543413bd0867f8ba9759d",
+ "ahead": 21,
+ "last_commit_date": "2026-11-14",
+ "merge_base_date": "2026-11-14",
+ "prs_with_same_tip": [
+  2894
+ ],
+ "triagem_2804": {
+  "2894": null
+ },
+ "closure_comment": {},
+ "files": [
+  {
+   "path": ".github/toolchain.json",
+   "status": "MAIN_UNCHANGED_SINCE_BASE",
+   "patch_lines": 13,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 1,
+    "removed_still_in_main": 1,
+    "missing_sample": [
+     "  \"playwright\": \"1.65.0\","
+    ],
+    "still_sample": [
+     "  \"playwright\": \"1.64.1\","
+    ]
+   }
+  },
+  {
+   "path": ".github/workflows/ci.yml",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 13,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 1,
+    "removed_still_in_main": 1,
+    "missing_sample": [
+     "        run: bunx playwright@1.65.0 install --with-deps chromium firefox webkit"
+    ],
+    "still_sample": [
+     "        run: bunx playwright@1.64.1 install --with-deps chromium firefox webkit"
+    ]
+   }
+  },
+  {
+   "path": ".github/workflows/e2e-talkx.yml",
+   "status": "MAIN_UNCHANGED_SINCE_BASE",
+   "patch_lines": 13,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 1,
+    "removed_still_in_main": 1,
+    "missing_sample": [
+     "        run: bunx playwright@1.65.0 install --with-deps chromium"
+    ],
+    "still_sample": [
+     "        run: bunx playwright@1.64.1 install --with-deps chromium"
+    ]
+   }
+  },
+  {
+   "path": "bun.lock",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 443,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 97,
+    "missing_in_main": 30,
+    "removed": 96,
+    "removed_still_in_main": 30,
+    "missing_sample": [
+     "        \"@supabase/supabase-js\": \"^2.119.0\",",
+     "        \"@tanstack/react-query\": \"^5.106.1\",",
+     "        \"i18next\": \"^26.7.2\",",
+     "        \"pdfjs-dist\": \"^6.5.438\",",
+     "        \"@playwright/test\": \"^1.65.0\",",
+     "    \"@napi-rs/canvas\": [\"@napi-rs/canvas@1.1.0\", \"\", { \"optionalDependencies\": { \"@napi-rs/canvas-android-arm64\": \"1.1.0\", \"@napi-rs/canvas-darwin-arm64\": \"1.1.",
+     "    \"@napi-rs/canvas-android-arm64\": [\"@napi-rs/canvas-android-arm64@1.1.0\", \"\", { \"os\": \"android\", \"cpu\": \"arm64\" }, \"sha512-mKrSmRyhWK4q699Q1xthbZIZi7JBvLtsRN",
+     "    \"@napi-rs/canvas-darwin-arm64\": [\"@napi-rs/canvas-darwin-arm64@1.1.0\", \"\", { \"os\": \"darwin\", \"cpu\": \"arm64\" }, \"sha512-iqwST4g0oH+x8VCpBIYh+MYokv/mVvkM+v9oJ",
+     "    \"@napi-rs/canvas-darwin-x64\": [\"@napi-rs/canvas-darwin-x64@1.1.0\", \"\", { \"os\": \"darwin\", \"cpu\": \"x64\" }, \"sha512-jkeA8eVTxDum03LTvc32YJ28F6KB1U0gYwnWMfOAUQZ",
+     "    \"@napi-rs/canvas-linux-arm-gnueabihf\": [\"@napi-rs/canvas-linux-arm-gnueabihf@1.1.0\", \"\", { \"os\": \"linux\", \"cpu\": \"arm\" }, \"sha512-Y4YkKG1ijoqkgUdTEEBNG4k+2B",
+     "    \"@napi-rs/canvas-linux-arm64-gnu\": [\"@napi-rs/canvas-linux-arm64-gnu@1.1.0\", \"\", { \"os\": \"linux\", \"cpu\": \"arm64\" }, \"sha512-dE/XthqYkiWcBVtKFlZbUXwAYfDuQGqD",
+     "    \"@napi-rs/canvas-linux-arm64-musl\": [\"@napi-rs/canvas-linux-arm64-musl@1.1.0\", \"\", { \"os\": \"linux\", \"cpu\": \"arm64\" }, \"sha512-DqZ/CMcHlhU56pPjv9AP0h3U7MFQ5L",
+     "    \"@napi-rs/canvas-linux-riscv64-gnu\": [\"@napi-rs/canvas-linux-riscv64-gnu@1.1.0\", \"\", { \"os\": \"linux\", \"cpu\": \"none\" }, \"sha512-kJ7m5n2VffxWXM5QGa5lfq8ZN4LdO",
+     "    \"@napi-rs/canvas-linux-x64-gnu\": [\"@napi-rs/canvas-linux-x64-gnu@1.1.0\", \"\", { \"os\": \"linux\", \"cpu\": \"x64\" }, \"sha512-uQ9JuJlRhQdHyttcMWOiwLkfIqkqaB0YFUVe83",
+     "    \"@napi-rs/canvas-linux-x64-musl\": [\"@napi-rs/canvas-linux-x64-musl@1.1.0\", \"\", { \"os\": \"linux\", \"cpu\": \"x64\" }, \"sha512-has4CPPAkkCac/LZ13VAw5p+MJLdaKVoyrhu",
+     "    \"@napi-rs/canvas-win32-arm64-msvc\": [\"@napi-rs/canvas-win32-arm64-msvc@1.1.0\", \"\", { \"os\": \"win32\", \"cpu\": \"arm64\" }, \"sha512-MJnktLKNijmXqdjTughHDZ9TDLZ9uU",
+     "    \"@napi-rs/canvas-win32-x64-msvc\": [\"@napi-rs/canvas-win32-x64-msvc@1.1.0\", \"\", { \"os\": \"win32\", \"cpu\": \"x64\" }, \"sha512-08575bFk7iiadxap4h+JxgGut9xDCHAGum6w",
+     "    \"@playwright/test\": [\"@playwright/test@1.65.0\", \"\", { \"dependencies\": { \"playwright\": \"1.65.0\" }, \"bin\": { \"playwright\": \"cli.js\" } }, \"sha512-iGURLGuKDLakS",
+     "    \"@supabase/supabase-js\": [\"@supabase/supabase-js@2.119.0\", \"\", { \"dependencies\": { \"@supabase/auth-js\": \"2.119.0\", \"@supabase/functions-js\": \"2.119.0\", \"@su",
+     "    \"@tanstack/query-core\": [\"@tanstack/query-core@5.106.1\", \"\", {}, \"sha512-erYv/UACddcdgjOL2ixmFdK6tO/AVBeUcTCOtX2N51yZpDQ2U7KJ+xgB/bCNfsF3uoCDTqGHEEbDiFsIO9Y",
+     "    \"@tanstack/react-query\": [\"@tanstack/react-query@5.106.1\", \"\", { \"dependencies\": { \"@tanstack/query-core\": \"5.106.1\" }, \"peerDependencies\": { \"@types/react\"",
+     "    \"i18next\": [\"i18next@26.7.2\", \"\", { \"peerDependencies\": { \"typescript\": \"^5 || ^6 || ^7\" }, \"optionalPeers\": [\"typescript\"] }, \"sha512-RsOY3BeaCDdkk52NeJSFA",
+     "    \"pdfjs-dist\": [\"pdfjs-dist@6.5.438\", \"\", { \"optionalDependencies\": { \"@napi-rs/canvas\": \"^1.0.13\" } }, \"sha512-vg8Pw1x+AFKy4AMDvhuWl5cOYV8d698UoEANoFFhc79hq",
+     "    \"playwright\": [\"playwright@1.65.0\", \"\", { \"dependencies\": { \"playwright-core\": \"1.65.0\" }, \"bin\": { \"playwright\": \"cli.js\" } }, \"sha512-F3AMWcR44qMBt4kq+6Kb",
+     "    \"playwright-core\": [\"playwright-core@1.65.0\", \"\", { \"bin\": { \"playwright-core\": \"cli.js\" } }, \"sha512-vNSKgH6YqtN7cdT/L334zo0a+YwkrpicyrHJlWWPIm/Q+Nn2SWInil"
+    ],
+    "still_sample": [
+     "        \"@supabase/supabase-js\": \"^2.117.3\",",
+     "        \"@tanstack/react-query\": \"^5.105.0\",",
+     "        \"i18next\": \"^26.5.12\",",
+     "        \"pdfjs-dist\": \"^6.4.299\",",
+     "        \"@playwright/test\": \"^1.64.0\",",
+     "    \"@napi-rs/canvas\": [\"@napi-rs/canvas@1.0.10\", \"\", { \"optionalDependencies\": { \"@napi-rs/canvas-android-arm64\": \"1.0.10\", \"@napi-rs/canvas-darwin-arm64\": \"1.",
+     "    \"@napi-rs/canvas-android-arm64\": [\"@napi-rs/canvas-android-arm64@1.0.10\", \"\", { \"os\": \"android\", \"cpu\": \"arm64\" }, \"sha512-0sDMvme+7fj6bHERUaBs5SvEyWaORc91V",
+     "    \"@napi-rs/canvas-darwin-arm64\": [\"@napi-rs/canvas-darwin-arm64@1.0.10\", \"\", { \"os\": \"darwin\", \"cpu\": \"arm64\" }, \"sha512-pdHL1TEfFMrnchRYqmPWXKN7hR4XtOYmzJqn",
+     "    \"@napi-rs/canvas-darwin-x64\": [\"@napi-rs/canvas-darwin-x64@1.0.10\", \"\", { \"os\": \"darwin\", \"cpu\": \"x64\" }, \"sha512-iuuk5plGxAcxurxv2ycF2yR20y5zvaBZ4heQdhPpg3",
+     "    \"@napi-rs/canvas-linux-arm-gnueabihf\": [\"@napi-rs/canvas-linux-arm-gnueabihf@1.0.10\", \"\", { \"os\": \"linux\", \"cpu\": \"arm\" }, \"sha512-kH7GFR5Unpm77pKSEsmkqvzeQ"
+    ]
+   }
+  },
+  {
+   "path": "docs/audits/PLANO_GITHUB_ACTIONS_100_ETAPAS_2026-10-01.md",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 13,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 1,
+    "removed_still_in_main": 1,
+    "missing_sample": [
+     "| **E76** `bunx playwright` sem pin de versão | `[~]` **AGUARDA RUNTIME** | `bun.lock` resolve `playwright@1.65.0`, `playwright-core@1.65.0` e `@playwright/test"
+    ],
+    "still_sample": [
+     "| **E76** `bunx playwright` sem pin de versão | `[~]` **AGUARDA RUNTIME** | `bun.lock` resolve `playwright@1.64.1`, `playwright-core@1.64.1` e `@playwright/test"
+    ]
+   }
+  },
+  {
+   "path": "package.json",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 85,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 15,
+    "missing_in_main": 5,
+    "removed": 15,
+    "removed_still_in_main": 5,
+    "missing_sample": [
+     "    \"@supabase/supabase-js\": \"^2.119.0\",",
+     "    \"@tanstack/react-query\": \"^5.106.1\",",
+     "    \"i18next\": \"^26.7.2\",",
+     "    \"pdfjs-dist\": \"^6.5.438\",",
+     "    \"@playwright/test\": \"^1.65.0\","
+    ],
+    "still_sample": [
+     "    \"@supabase/supabase-js\": \"^2.117.3\",",
+     "    \"@tanstack/react-query\": \"^5.105.0\",",
+     "    \"i18next\": \"^26.5.12\",",
+     "    \"pdfjs-dist\": \"^6.4.299\",",
+     "    \"@playwright/test\": \"^1.64.0\","
+    ]
+   }
+  },
+  {
+   "path": "scripts/ci/e2e-isolated-runtime.unit.mjs",
+   "status": "MAIN_UNCHANGED_SINCE_BASE",
+   "patch_lines": 13,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 1,
+    "removed_still_in_main": 1,
+    "missing_sample": [
+     "  writeFileSync(path.join(root, 'node_modules/@playwright/test/package.json'), JSON.stringify({ version: fault === 'wrong-playwright' ? '1.0.0' : '1.65.0' }));"
+    ],
+    "still_sample": [
+     "  writeFileSync(path.join(root, 'node_modules/@playwright/test/package.json'), JSON.stringify({ version: fault === 'wrong-playwright' ? '1.0.0' : '1.64.1' }));"
+    ]
+   }
+  },
+  {
+   "path": "scripts/e2e-isolated/images.lock.json",
+   "status": "MAIN_UNCHANGED_SINCE_BASE",
+   "patch_lines": 12,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 1,
+    "removed_still_in_main": 1,
+    "missing_sample": [
+     "    \"driver\": \"mcr.microsoft.com/playwright:v1.65.0-noble@sha256:9beb546099e11f52d62e505537914870e01a67e0e6b00ae41da4775324e73dbe\""
+    ],
+    "still_sample": [
+     "    \"driver\": \"mcr.microsoft.com/playwright:v1.64.1-noble@sha256:2f05f8a734509a7b3f26a912639488ee08f58a7b292d14d62271bcff9038768f\""
+    ]
+   }
+  },
+  {
+   "path": "scripts/e2e-isolated/network-proof-policy.mjs",
+   "status": "MAIN_UNCHANGED_SINCE_BASE",
+   "patch_lines": 15,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 2,
+    "missing_in_main": 2,
+    "removed": 2,
+    "removed_still_in_main": 2,
+    "missing_sample": [
+     "export const VERSION = '1.65.0';",
+     "export const DRIVER = 'mcr.microsoft.com/playwright:v1.65.0-noble@sha256:9beb546099e11f52d62e505537914870e01a67e0e6b00ae41da4775324e73dbe';"
+    ],
+    "still_sample": [
+     "export const VERSION = '1.64.1';",
+     "export const DRIVER = 'mcr.microsoft.com/playwright:v1.64.1-noble@sha256:2f05f8a734509a7b3f26a912639488ee08f58a7b292d14d62271bcff9038768f';"
+    ]
+   }
+  },
+  {
+   "path": "scripts/e2e-isolated/run.mjs",
+   "status": "MAIN_UNCHANGED_SINCE_BASE",
+   "patch_lines": 13,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 1,
+    "removed_still_in_main": 1,
+    "missing_sample": [
+     "    if (playwrightVersion !== '1.65.0') throw new Error('playwright-image-version-mismatch');"
+    ],
+    "still_sample": [
+     "    if (playwrightVersion !== '1.64.1') throw new Error('playwright-image-version-mismatch');"
+    ]
+   }
+  }
+ ],
+ "counts": {
+  "migrations": "0",
+  "workflows": "3",
+  "src": "0",
+  "edges": "0",
+  "docs_only": "no",
+  "lines_branch_has_main_lacks": "46",
+  "lines_main_has_branch_lacks": "51"
+ },
+ "auto": "MISTO_CONFLITO",
+ "n_files_with_gaps": 10,
+ "gap_lines_total": 88
+}

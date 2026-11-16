@@ -1,0 +1,53 @@
+{
+ "id": "fix__f1a-framer-motion-mock-voicechangerpicker-20261018",
+ "kind": "branch",
+ "ref": "origin/fix/f1a-framer-motion-mock-voicechangerpicker-20261018",
+ "tip": "3f8ee72f36dc12ae219d980c0bf99eec45cc651f",
+ "merge_base": "bac62ba98454811c3bfd117b838af926b1e795b2",
+ "ahead": 3,
+ "last_commit_date": "2026-10-23",
+ "merge_base_date": "2026-10-23",
+ "prs_with_same_tip": [
+  2062,
+  2434
+ ],
+ "triagem_2804": {
+  "2062": "OBSOLETA",
+  "2434": "OBSOLETA"
+ },
+ "closure_comment": {},
+ "files": [
+  {
+   "path": "src/components/inbox/__tests__/VoiceChangerPicker.aria.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 25,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 4,
+    "missing_in_main": 3,
+    "removed": 1,
+    "removed_still_in_main": 1,
+    "missing_sample": [
+     "  supabase: {",
+     "    storage: {",
+     "      from: () => ({ upload: vi.fn(), getPublicUrl: () => ({ data: { publicUrl: '' } }) }),"
+    ],
+    "still_sample": [
+     "  supabase: { storage: { from: () => ({ upload: vi.fn(), getPublicUrl: () => ({ data: { publicUrl: '' } }) }) } },"
+    ]
+   }
+  }
+ ],
+ "counts": {
+  "migrations": "0",
+  "workflows": "0",
+  "src": "1",
+  "edges": "0",
+  "docs_only": "no",
+  "lines_branch_has_main_lacks": "13",
+  "lines_main_has_branch_lacks": "13"
+ },
+ "auto": "MISTO_CONFLITO",
+ "n_files_with_gaps": 1,
+ "gap_lines_total": 4
+}

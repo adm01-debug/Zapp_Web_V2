@@ -1,0 +1,300 @@
+{
+ "id": "claude__fix-email-navy-contrast-261101-2057",
+ "kind": "branch",
+ "ref": "origin/claude/fix-email-navy-contrast-261101-2057",
+ "tip": "b1ff2f0076d18c09b68c3cad2c98f189ed39a423",
+ "merge_base": "1252bb5a41123ba4d49efd84d0f91604bff6c87c",
+ "ahead": 11,
+ "last_commit_date": "2026-11-01",
+ "merge_base_date": "2026-11-01",
+ "prs_with_same_tip": [
+  2513
+ ],
+ "triagem_2804": {
+  "2513": "JA_NA_MAIN"
+ },
+ "closure_comment": {},
+ "files": [
+  {
+   "path": "src/components/__tests__/y17Selos.contraste.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 22,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 2,
+    "missing_in_main": 2,
+    "removed": 2,
+    "removed_still_in_main": 1,
+    "missing_sample": [
+     "  const limpo = css.replace(/\\/\\*[\\s\\S]*?\\*\\//g, '').replace(/\\s*!important/g, '');",
+     "          .matchAll(/--(\\w[\\w-]+):\\s*(\\d+(?:\\.\\d+)?)\\s+(\\d+(?:\\.\\d+)?)%\\s+(\\d+(?:\\.\\d+)?)%\\s*;/g)) {"
+    ],
+    "still_sample": [
+     "  const limpo = css.replace(/\\/\\*[\\s\\S]*?\\*\\//g, '');"
+    ]
+   }
+  },
+  {
+   "path": "src/components/catalog/__tests__/CT69_contrasteBadges.test.tsx",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/components/inbox/__tests__/ContactDetails.mobile-iniciais-sentimento.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 22,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 2,
+    "missing_in_main": 2,
+    "removed": 2,
+    "removed_still_in_main": 1,
+    "missing_sample": [
+     "  const limpo = css.replace(/\\/\\*[\\s\\S]*?\\*\\//g, '').replace(/\\s*!important/g, '');",
+     "        for (const t of limpo.slice(abre + 1, j).matchAll(/--(\\w[\\w-]+):\\s*(\\d+(?:\\.\\d+)?)\\s+(\\d+(?:\\.\\d+)?)%\\s+(\\d+(?:\\.\\d+)?)%\\s*;/g)) {"
+    ],
+    "still_sample": [
+     "  const limpo = css.replace(/\\/\\*[\\s\\S]*?\\*\\//g, '');"
+    ]
+   }
+  },
+  {
+   "path": "src/components/inbox/__tests__/SLAIndicator.contrasteSelos.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 58,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 6,
+    "missing_in_main": 5,
+    "removed": 6,
+    "removed_still_in_main": 4,
+    "missing_sample": [
+     "  const limpo = css.replace(/\\/\\*[\\s\\S]*?\\*\\//g, '').replace(/\\s*!important/g, '');",
+     "            .matchAll(/--(\\w[\\w-]+):\\s*(\\d+(?:\\.\\d+)?)\\s+(\\d+(?:\\.\\d+)?)%\\s+(\\d+(?:\\.\\d+)?)%\\s*;/g),",
+     "  const literal = className.match(/(?:^|\\s)text-\\[hsl\\(var\\(--(\\w[\\w-]+)\\)\\)\\](?:\\s|$)/);",
+     "  ok: 'success', // o verde jà �� opróprio par de texto �\u0014 não existe `--success-text`",
+     "describe('N-029 �\u0014 os selos de SLA fecham AA com o par de texto do estado', () => {"
+    ],
+    "still_sample": [
+     "  const limpo = css.replace(/\\/\\*[\\s\\S]*?\\*\\//g, '');",
+     "  ok: 'success', // o verde já é o próprio par de texto — não existe `--success-text`",
+     "describe('N-029 — os selos de SLA fecham AA com o par de texto do estado', () => {",
+     "          `${selo.rotulo} — ${nome}: ${selo.texto} sobre ${selo.tinta}/${selo.alfa * 100}`,"
+    ]
+   }
+  },
+  {
+   "path": "src/components/inbox/__tests__/StatusChips.contrasteChipAtendendo.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 22,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 2,
+    "missing_in_main": 2,
+    "removed": 2,
+    "removed_still_in_main": 1,
+    "missing_sample": [
+     "  const limpo = css.replace(/\\/\\*[\\s\\S]*?\\*\\//g, '').replace(/\\s*!important/g, '');",
+     "            .matchAll(/--(\\w[\\w-]+):\\s*(\\d+(?:\\.\\d+)?)\\s+(\\d+(?:\\.\\d+)?)%\\s+(\\d+(?:\\.\\d+)?)%\\s*;/g)"
+    ],
+    "still_sample": [
+     "  const limpo = css.replace(/\\/\\*[\\s\\S]*?\\*\\//g, '');"
+    ]
+   }
+  },
+  {
+   "path": "src/components/inbox/__tests__/contrastePlayerSlider.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 13,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 1,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "        for (const t of corpo.matchAll(/--([\\w-]+):\\s*(\\d+(?:\\.\\d+)?)\\s+(\\d+(?:\\.\\d+)?)%\\s+(\\d+(?:\\.\\d+)?)%\\s*(?:!important\\s*)?;/g)) {"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/inbox/chat/__tests__/MessageBubble.contrasteStatus.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 13,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 1,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "            .matchAll(/--([\\w-]+):\\s*(\\d+(?:\\.\\d+)?)\\s+(\\d+(?:\\.\\d+)?)%\\s+(\\d+(?:\\.\\d+)?)%\\s*(?:!important\\s*)?;/g),"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/inbox/tabs/__tests__/KpiStrip.contraste.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 13,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 1,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "            .matchAll(/--([\\w-]+):\\s*(\\d+(?:\\.\\d+)?)\\s+(\\d+(?:\\.\\d+)?)%\\s+(\\d+(?:\\.\\d+)?)%\\s*(?:!important\\s*)?;/g),"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/mobile/__tests__/MobileDrawerMenu.a11y.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 13,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 1,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "            .matchAll(/--([\\w-]+):\\s*(\\d+(?:\\.\\d+)?)\\s+(\\d+(?:\\.\\d+)?)%\\s+(\\d+(?:\\.\\d+)?)%\\s*(?:!important\\s*)?;/g),"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/security/__tests__/IPListasErro.contrasteTema.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 13,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 1,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "            .matchAll(/--([\\w-]+):\\s*(\\d+(?:\\.\\d+)?)\\s+(\\d+(?:\\.\\d+)?)%\\s+(\\d+(?:\\.\\d+)?)%\\s*(?:!important\\s*)?;/g),"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/settings/__tests__/ThemeCustomizer.a11y.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 31,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 3,
+    "missing_in_main": 3,
+    "removed": 3,
+    "removed_still_in_main": 1,
+    "missing_sample": [
+     "  const limpo = css.replace(/\\/\\*[\\s\\S]*?\\*\\//g, '').replace(/\\s*!important/g, '');",
+     "            .matchAll(/--(\\w[\\w-]+):\\s*(\\d+(?:\\.\\d+)?)\\s+(\\d+(?:\\.\\d+)?)%\\s+(\\d+(?:\\.\\d+)?)%\\s*;/g),",
+     "  const viaVar = c.match(/text-\\[hsl\\(var\\(--(\\w[\\w-]+)\\)\\)\\]/);"
+    ],
+    "still_sample": [
+     "  const limpo = css.replace(/\\/\\*[\\s\\S]*?\\*\\//g, '');"
+    ]
+   }
+  },
+  {
+   "path": "src/styles/accessibility.css",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 55,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 24,
+    "missing_in_main": 17,
+    "removed": 20,
+    "removed_still_in_main": 13,
+    "missing_sample": [
+     "  /* !important necessário: applyThemePreset() grava estes tokens como inline styles no <html>",
+     "     (via style.setProperty em presets.ts), e inline styles vencem regras de classe sem !important.",
+     "     Sem ele, --muted-foreground fica com o valor do preset escuro (#3c3c3c, contraste 1,9:1",
+     "     contra fundo preto), abaixo do piso AA de 4,5:1. */",
+     "  --background: 0 0% 0% !important;",
+     "  --card: 0 0% 5% !important;",
+     "  --popover: 0 0% 5% !important;",
+     "  --primary: 258 100% 65% !important;",
+     "  --primary-foreground: 0 0% 0% !important;",
+     "  --secondary: 0 0% 80% !important;",
+     "  --muted: 0 0% 15% !important;",
+     "  --accent: 258 100% 65% !important;",
+     "  --destructive: 0 100% 60% !important;",
+     "  --border: 0 0% 100% !important;",
+     "  --input: 0 0% 15% !important;",
+     "  --ring: 258 100% 65% !important;",
+     "  --inbox-panel-bg: 0 0% 0% !important;"
+    ],
+    "still_sample": [
+     "  --background: 0 0% 0%;",
+     "  --card: 0 0% 5%;",
+     "  --popover: 0 0% 5%;",
+     "  --primary: 258 100% 65%;",
+     "  --primary-foreground: 0 0% 0%;",
+     "  --secondary: 0 0% 80%;",
+     "  --muted: 0 0% 15%;",
+     "  --accent: 258 100% 65%;",
+     "  --destructive: 0 100% 60%;",
+     "  --border: 0 0% 100%;"
+    ]
+   }
+  },
+  {
+   "path": "tests/contracts/contraste-aa-componentes.contract.test.ts",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "tests/contracts/contraste-balao-midia.contract.test.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 13,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 1,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "              .matchAll(/--(\\w[\\w-]*):\\s*(\\d+(?:\\.\\d+)?)\\s+(\\d+(?:\\.\\d+)?)%\\s+(\\d+(?:\\.\\d+)?)%\\s*(?:!important\\s*)?;/g)"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "tests/contracts/contraste-cores-categoria.contract.test.ts",
+   "status": "MAIN_UNCHANGED_SINCE_BASE",
+   "patch_lines": 13,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 1,
+    "removed_still_in_main": 1,
+    "missing_sample": [
+     "    const re = /--([a-z0-9-]+):\\s*(\\d+(?:\\.\\d+)?)\\s+(\\d+(?:\\.\\d+)?)%\\s+(\\d+(?:\\.\\d+)?)%\\s*(?:!important\\s*)?;/g;"
+    ],
+    "still_sample": [
+     "    const re = /--([a-z0-9-]+):\\s*(\\d+(?:\\.\\d+)?)\\s+(\\d+(?:\\.\\d+)?)%\\s+(\\d+(?:\\.\\d+)?)%\\s*;/g;"
+    ]
+   }
+  }
+ ],
+ "counts": {
+  "migrations": "0",
+  "workflows": "0",
+  "src": "12",
+  "edges": "0",
+  "docs_only": "no",
+  "lines_branch_has_main_lacks": "46",
+  "lines_main_has_branch_lacks": "44"
+ },
+ "auto": "MISTO_CONFLITO",
+ "n_files_with_gaps": 13,
+ "gap_lines_total": 60
+}

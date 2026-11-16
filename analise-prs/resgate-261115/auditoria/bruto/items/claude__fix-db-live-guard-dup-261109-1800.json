@@ -1,0 +1,95 @@
+{
+ "id": "claude__fix-db-live-guard-dup-261109-1800",
+ "kind": "branch",
+ "ref": "origin/claude/fix-db-live-guard-dup-261109-1800",
+ "tip": "ff8bafdfc99f683f8a7265b09d43533f0f6b8eab",
+ "merge_base": "014270223cc89fb9be81eccf2290717dde2e131e",
+ "ahead": 1,
+ "last_commit_date": "2026-11-09",
+ "merge_base_date": "2026-11-09",
+ "prs_with_same_tip": [
+  2904
+ ],
+ "triagem_2804": {
+  "2904": null
+ },
+ "closure_comment": {},
+ "files": [
+  {
+   "path": "supabase/migrations/_superseded/20261107121000_message_reactions_one_per_agent_constraint.sql",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "patch_lines": 42,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 27,
+    "missing_in_main": 27,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "SET search_path = public, pg_temp;",
+     "CREATE TABLE IF NOT EXISTS public._rb_message_reactions_one_per_agent_20261107121000 AS",
+     "SELECT * FROM public.message_reactions WHERE false;",
+     "ALTER TABLE public._rb_message_reactions_one_per_agent_20261107121000",
+     "  ENABLE ROW LEVEL SECURITY;",
+     "REVOKE ALL ON TABLE public._rb_message_reactions_one_per_agent_20261107121000 FROM PUBLIC, anon, authenticated;",
+     "INSERT INTO public._rb_message_reactions_one_per_agent_20261107121000",
+     "SELECT DISTINCT ON (message_id, user_id) *",
+     "FROM public.message_reactions",
+     "WHERE (message_id, user_id) IN (",
+     "  SELECT message_id, user_id",
+     "  FROM public.message_reactions",
+     "  GROUP BY message_id, user_id",
+     "  HAVING count(*) > 1",
+     "ORDER BY message_id, user_id, created_at DESC;",
+     "DELETE FROM public.message_reactions",
+     "WHERE id IN (",
+     "  SELECT id FROM (",
+     "    SELECT id,",
+     "           row_number() OVER (PARTITION BY message_id, user_id ORDER BY created_at DESC) AS rn",
+     "    FROM public.message_reactions",
+     "  ) ranked",
+     "  WHERE rn > 1",
+     "ALTER TABLE public.message_reactions",
+     "  DROP CONSTRAINT IF EXISTS message_reactions_one_per_agent;"
+    ],
+    "still_sample": [],
+    "same_basename_in_main": []
+   }
+  },
+  {
+   "path": "supabase/migrations/_superseded/20261107122000_contacts_phone_search_digits_column.sql",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "patch_lines": 15,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 7,
+    "missing_in_main": 7,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "SET search_path = public, pg_temp;",
+     "ALTER TABLE public.contacts",
+     "  ADD COLUMN IF NOT EXISTS phone_search_digits text",
+     "  GENERATED ALWAYS AS (regexp_replace(phone, '\\D', '', 'g')) STORED;",
+     "CREATE INDEX IF NOT EXISTS contacts_phone_search_digits_trgm_idx",
+     "  ON public.contacts",
+     "  USING gin (phone_search_digits extensions.gin_trgm_ops);"
+    ],
+    "still_sample": [],
+    "same_basename_in_main": []
+   }
+  }
+ ],
+ "counts": {
+  "migrations": "2",
+  "workflows": "0",
+  "src": "0",
+  "edges": "0",
+  "docs_only": "no",
+  "lines_branch_has_main_lacks": "45",
+  "lines_main_has_branch_lacks": "0"
+ },
+ "auto": "TRABALHO_AUSENTE_APLICA_LIMPO",
+ "n_files_with_gaps": 2,
+ "gap_lines_total": 34
+}

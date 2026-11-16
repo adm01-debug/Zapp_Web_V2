@@ -1,0 +1,71 @@
+{
+ "id": "claude__fix-high3-fk-indexes-261101-1830",
+ "kind": "branch",
+ "ref": "origin/claude/fix-high3-fk-indexes-261101-1830",
+ "tip": "65012f35e97895cf8ada6ee0108ffba212fa771a",
+ "merge_base": "1252bb5a41123ba4d49efd84d0f91604bff6c87c",
+ "ahead": 8,
+ "last_commit_date": "2026-11-01",
+ "merge_base_date": "2026-11-01",
+ "prs_with_same_tip": [
+  2505
+ ],
+ "triagem_2804": {
+  "2505": "JA_NA_MAIN"
+ },
+ "closure_comment": {},
+ "files": [
+  {
+   "path": "supabase/migrations/20261031170000_high3-fk-indexes.sql",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 154,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 100,
+    "missing_in_main": 100,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "-- HIGH-3: 48 foreign-key columns without a covering index",
+     "-- Detected live on 2026-11-01 via information_schema + pg_index.",
+     "-- Per CLAUDE.md: CREATE INDEX (not CONCURRENTLY) — gateway wraps in transaction.",
+     "-- 9 columns excluded: already covered by partial indexes (WHERE col IS NOT NULL).",
+     "CREATE INDEX IF NOT EXISTS idx_ai_model_prices_provider_id",
+     "  ON public.ai_model_prices (provider_id);",
+     "CREATE INDEX IF NOT EXISTS idx_calls_answered_by",
+     "  ON public.calls (answered_by);",
+     "CREATE INDEX IF NOT EXISTS idx_contacts_ai_projection_analysis_id",
+     "  ON public.contacts (ai_projection_analysis_id);",
+     "CREATE INDEX IF NOT EXISTS idx_conversation_events_from_queue_id",
+     "  ON public.conversation_events (from_queue_id);",
+     "CREATE INDEX IF NOT EXISTS idx_conversation_events_to_queue_id",
+     "  ON public.conversation_events (to_queue_id);",
+     "CREATE INDEX IF NOT EXISTS idx_copilot_feedback_created_by",
+     "  ON public.copilot_feedback (created_by);",
+     "CREATE INDEX IF NOT EXISTS idx_crm_contact_links_linked_by",
+     "  ON public.crm_contact_links (linked_by);",
+     "CREATE INDEX IF NOT EXISTS idx_department_invitations_used_by",
+     "  ON public.department_invitations (used_by);",
+     "CREATE INDEX IF NOT EXISTS idx_gmail_oauth_states_user_id",
+     "  ON public.gmail_oauth_states (user_id);",
+     "CREATE INDEX IF NOT EXISTS idx_instance_pauses_paused_by",
+     "  ON public.instance_pauses (paused_by);",
+     "CREATE INDEX IF NOT EXISTS idx_instance_pauses_resumed_by"
+    ],
+    "still_sample": []
+   }
+  }
+ ],
+ "counts": {
+  "migrations": "1",
+  "workflows": "0",
+  "src": "0",
+  "edges": "0",
+  "docs_only": "no",
+  "lines_branch_has_main_lacks": "148",
+  "lines_main_has_branch_lacks": "48"
+ },
+ "auto": "MISTO_CONFLITO",
+ "n_files_with_gaps": 1,
+ "gap_lines_total": 100
+}

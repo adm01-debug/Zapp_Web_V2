@@ -1,0 +1,71 @@
+{
+ "id": "pr-3097",
+ "kind": "pr",
+ "ref": "refs/remotes/pr/3097",
+ "pr": 3097,
+ "tip": "3d6e63d71356092332f4b753d200457d0f957e2e",
+ "merge_base": "6d420265e840e5766cedc8d4d038472267e04153",
+ "ahead": 2,
+ "last_commit_date": "2026-11-14",
+ "merge_base_date": "2026-11-14",
+ "triagem_2804": null,
+ "closure_comment": {
+  "title": "fix(edge): resposta 422 de validação não tinha os security headers",
+  "last_comment": "Conteúdo integrado na `main` pelo pacote 6 ([#3113](https://github.com/adm01-debug/Zapp_Web_V2/pull/3113), commit `41853318cd`). Conferido byte a byte: código e teste idênticos na `main`; o terceiro arquivo é o `deployment-manifest.json` gerado. Fechando como incorporada; a branch fica de pé. |  | --- | _"
+ },
+ "files": [
+  {
+   "path": "supabase/deployment-manifest.json",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 382,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 43,
+    "missing_in_main": 31,
+    "removed": 43,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "      \"source_sha256\": \"ffbcc19d08dbfca705811e1f92cf9a54b9d9fbd25be87cece69db271911451c8\",",
+     "      \"source_sha256\": \"ac6b3a51f1ee6ef96a984add23c01da6cba28e0b3587f93b80be6341baec1450\",",
+     "      \"source_sha256\": \"5e67c83406d5a61b3acf6a97a0c82e3f310bab5cda8d7c22d554d190abd340d4\",",
+     "      \"source_sha256\": \"abee3b6474b2eef9ba99f50a3eea22de01336171414c8a017e4cca7817e54b9f\",",
+     "      \"source_sha256\": \"821d1907ee49d43ed986727768d0a7f9f9fbb1c0698a3256ce6695bfb041b764\",",
+     "      \"source_sha256\": \"a34803ee618a204f951d005b4f364198d907e4f4e02a7a9762bbe5b301692a37\",",
+     "      \"source_sha256\": \"9c33009590fdee952107ea775dbb937c400aeb0ee09c8a0cf9690aa3c09afd15\",",
+     "      \"source_sha256\": \"c8b3ecd2d01b6ec70ee35ecf575ea91736bc1f154f0c8ccacc40238003317d2d\",",
+     "      \"source_sha256\": \"b29bbdceef62494fe4398f23e16acff3302d28dae1e326b566a7c53ead74bd79\",",
+     "      \"source_sha256\": \"df1141a99d0c2de2b5277151fe6a413048584a8e1bc871c0708049a9b0462fd3\",",
+     "      \"source_sha256\": \"320bcf47721fd95f4305d4ad90f20618b34adc302b7b48fa64a8bf8837a058b4\",",
+     "      \"source_sha256\": \"88e46519901df97ae0783447de88d019d554d62b1acafac1392bbc8817851cbd\",",
+     "      \"source_sha256\": \"374252ad99fd67c728d19eda2dbb9725b18ecc0c591288fc14f7bcfa2d767e90\",",
+     "      \"source_sha256\": \"9f6157c0ea086a54c5e421e542e97f1a1fc051eb7e20fd2ab49f76a8a22de5ad\",",
+     "      \"source_sha256\": \"61de8aa8ca6c5c7f4aaac53c43ef148677ce1be1e78000c2f1e9d687473bfd77\",",
+     "      \"source_sha256\": \"5d2d2cb22d7e28827a314a0b05c0d5f554526ddb99e15a6704af94017916ecde\",",
+     "      \"source_sha256\": \"bb993cde96262c0cb717fe4d619ac12bc09356de39ab04b0a27245e3698c590e\",",
+     "      \"source_sha256\": \"946883ad5e1f8a44f33e874221616c589d79e3652f234bfb6689230725da2d3c\",",
+     "      \"source_sha256\": \"0e23c50eb1b57951e8d47cdd81119a4b5fb1bd82eca0ba6fdea99b9c50d63bcd\",",
+     "      \"source_sha256\": \"4b132fe6aaf7d4df575d0cf057453f35d84371712bcc078e8f87fe4da361f0c8\",",
+     "      \"source_sha256\": \"4a89a71d8b2b186fd634d54b2b6096918f5639f802b398f9261a5eeaa370e7f7\",",
+     "      \"source_sha256\": \"981b898997dc0f89206fc6918435cece90ced9695671e7531c24c2282d089038\",",
+     "      \"source_sha256\": \"8d02d989328787a4af6a5654d72e6ef8f3e0d3629bc801222e3f684cb60eef53\",",
+     "      \"source_sha256\": \"13a9b3c82169001de983b6ddc5704a79ecaf9bbb675e635edd37836d4fc31f97\",",
+     "      \"source_sha256\": \"ad93565606f90e15b3240403ff7604c3926cce2d31a23d269d84c32d33a934d8\","
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "supabase/functions/_shared/__tests__/validation-error-response-security-headers.test.ts",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "supabase/functions/_shared/schemas.ts",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  }
+ ],
+ "auto": "MISTO_CONFLITO",
+ "n_files_with_gaps": 1,
+ "gap_lines_total": 31
+}

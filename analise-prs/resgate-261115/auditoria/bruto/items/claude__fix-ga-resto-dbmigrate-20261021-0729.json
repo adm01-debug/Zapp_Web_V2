@@ -1,0 +1,737 @@
+{
+ "id": "claude__fix-ga-resto-dbmigrate-20261021-0729",
+ "kind": "branch",
+ "ref": "origin/claude/fix-ga-resto-dbmigrate-20261021-0729",
+ "tip": "ed39966869956b375238f640711208916295f7fa",
+ "merge_base": "d7af7a671ca2bd7005b75b0aa54c0f0c4672befc",
+ "ahead": 1,
+ "last_commit_date": "2026-10-21",
+ "merge_base_date": "2026-10-19",
+ "prs_with_same_tip": [
+  2142
+ ],
+ "triagem_2804": {
+  "2142": "OBSOLETA"
+ },
+ "closure_comment": {},
+ "files": [
+  {
+   "path": ".github/workflows/db-migrate.yml",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 1738,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 279,
+    "missing_in_main": 180,
+    "removed": 1244,
+    "removed_still_in_main": 1240,
+    "missing_sample": [
+     "#   gatilho: dispatch na main; preflight SEM environment, apply COM environment",
+     "#   prova: dry-run obrigatorio, plano conferido, hash do lote e portao destrutivo",
+     "# ZAPP-WEB · Migration controlada do banco oficial (GA13-GA17, GA25-gancho)",
+     "# GA13: preflight SEM environment (dry-run/plano/hash) + apply COM environment.",
+     "# GA14: apply_all_missing aplica o ledger inteiro; hash do lote; TOCTOU fechada.",
+     "# GA15: ultimo passo do apply dispara types-sync + db-live-guard.",
+     "# GA16: validacoes historicas em contracts/post-apply.sh; runtime em",
+     "# assert-runtime-proof.mjs. YAML < 500 linhas.",
+     "# GA17: portao destrutivo (list-destructive.mjs) + confirm_destructive + summary.",
+     "# GA25 (outro agente): apply registra GA25-DEPLOYMENT-RECORD (gancho).",
+     "        description: 'Versao ancora, 14 digitos. No modo apply_all_missing o escopo vem do ledger e este campo e so referencia.'",
+     "      apply_all_missing:",
+     "        description: 'Marcado = aplica TODAS as versions locais ausentes do ledger, em ordem (lote). Desmarcado = so a migration_version.'",
+     "        description: 'Desmarcado = dry-run; marcado = aplicar o lote autorizado.'",
+     "        description: 'Para apply: hash de confirmacao impresso pelo dry-run anterior.'",
+     "      confirm_destructive:",
+     "        description: 'Versions com DDL/DML destrutivo confirmadas, separadas por virgula (ex: 20261001120000).'",
+     "  # GA13: preflight SEM environment — dry-run, plano, hash e portao destrutivo",
+     "  # concluem sem \"Waiting\". Nada aqui escreve no banco (so SELECT no ledger).",
+     "  preflight:",
+     "    name: Preflight sem aprovacao (dry-run, plano, hash)",
+     "    # GA13 + W63: preflight só lê (ledger + dry-run + runtime). banco-leitura",
+     "    # não tem revisor nem wait timer (baseline), então o dry-run conclui sem",
+     "    # `Waiting` (a Verificação da GA13) e o secret tem escopo declarado.",
+     "    environment: banco-leitura"
+    ],
+    "still_sample": [
+     "#   gatilho: dispatch na main, com o job gateado por environment",
+     "#   prova: dry-run obrigatorio e apply com hash estrutural da migration",
+     "# ZAPP-WEB · Migration controlada do banco oficial",
+     "# ==================================================================",
+     "# Executa somente por workflow_dispatch na main. O dry-run e obrigatorio",
+     "# antes de uma aplicacao: ele comprova o destino, exige uma migration local",
+     "# ou um bundle explicitamente autorizado e publica apenas hashes estruturais.",
+     "# Desde o PR #695 (2026-09-25), migrations sem contrato dedicado caem no",
+     "# contrato generico (scripts/db-audit/generic-migration-runtime.sql), que",
+     "# prova apenas que o schema public nao mudou entre dry-run e apply. Para"
+    ]
+   }
+  },
+  {
+   "path": "docs/runbooks/migracao-segredos-environments.md",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 24,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 3,
+    "missing_in_main": 3,
+    "removed": 2,
+    "removed_still_in_main": 2,
+    "missing_sample": [
+     "| `producao-ddl` | **revisor obrigatório** `adm01-debug` + branch policy | `protected_branches` | — | `db-migrate.yml` › `apply` (GA13) |",
+     "| `db-migrate.yml` › `preflight` | `banco-leitura` | não | GA13: só leitura (ledger + dry-run + runtime); sem revisor/wait, o dry-run conclui sem `Waiting` |",
+     "| `db-migrate.yml` › `apply` | `producao-ddl` | **sim** | o dry-run (`apply=false`) do próximo lote; ele pausa para sua aprovação |"
+    ],
+    "still_sample": [
+     "| `producao-ddl` | **revisor obrigatório** `adm01-debug` + branch policy | `protected_branches` | — | `db-migrate.yml` › `migrate` |",
+     "| `db-migrate.yml` › `migrate` | `producao-ddl` | **sim** | o dry-run (`apply=false`) do próximo lote; ele pausa para sua aprovação |"
+    ]
+   }
+  },
+  {
+   "path": "scripts/ci/assert-runtime-proof.unit.mjs",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "patch_lines": 73,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 51,
+    "missing_in_main": 51,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "// GA16: a assercao de runtime pre-push extraida para assert-runtime-proof.mjs",
+     "// mantem a semantica do YAML original (mesmo fail-closed, mesmo exit 1).",
+     "import test from 'node:test';",
+     "import assert from 'node:assert/strict';",
+     "import { spawnSync } from 'node:child_process';",
+     "const SCRIPT = new URL('../db-audit/assert-runtime-proof.mjs', import.meta.url).pathname;",
+     "const RAIZ = new URL('../../', import.meta.url).pathname;",
+     "const RUNTIME = 'a'.repeat(64);",
+     "const PROVA_083017 = {",
+     "  server_major: 17,",
+     "  database: 'postgres',",
+     "  runtime_sha256: RUNTIME,",
+     "  function_count: 1,",
+     "  security_definer: true,",
+     "  stable: true,",
+     "  search_path_fixed: true,",
+     "  filters_active: true,",
+     "const roda = (proof, envExtra = {}) =>",
+     "  spawnSync(process.execPath, [SCRIPT], {",
+     "    cwd: RAIZ,",
+     "    encoding: 'utf8',",
+     "    env: {",
+     "      ...process.env,",
+     "      RUNTIME_JSON: JSON.stringify(proof),",
+     "      TARGET_VERSION: '20260830170000',"
+    ],
+    "still_sample": [],
+    "same_basename_in_main": []
+   }
+  },
+  {
+   "path": "scripts/ci/compose-confirm-hash.unit.mjs",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "patch_lines": 87,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 61,
+    "missing_in_main": 61,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "// GA14: hash do lote (lista ordenada + sha de cada arquivo + commit).",
+     "// Qualquer diferenca — versao a mais/menos, fora de ordem, arquivo editado,",
+     "// runtime diferente — muda o hash e o apply recusa.",
+     "import test from 'node:test';",
+     "import assert from 'node:assert/strict';",
+     "import { spawnSync } from 'node:child_process';",
+     "import { comporHashLote } from '../db-audit/compose-confirm-hash.mjs';",
+     "const H = (c) => c.repeat(64);",
+     "const COMMIT = 'd7af7a671c'.padEnd(40, '0');",
+     "const LOTE = {",
+     "  versions: ['20261001120000', '20261001130000'],",
+     "  runtimeShas: [H('a'), H('b')],",
+     "  arquivoShas: [H('c'), H('d')],",
+     "  commitSha: COMMIT,",
+     "test('GA14: lote deterministico e em forma de sha256', () => {",
+     "  const h1 = comporHashLote(LOTE);",
+     "  const h2 = comporHashLote({ ...LOTE });",
+     "  assert.match(h1, /^[a-f0-9]{64}$/);",
+     "  assert.equal(h1, h2);",
+     "test('GA14: qualquer componente diferente muda o hash', () => {",
+     "  const base = comporHashLote(LOTE);",
+     "  const trocaArquivo = comporHashLote({ ...LOTE, arquivoShas: [H('c'), H('e')] });",
+     "  assert.notEqual(trocaArquivo, base, 'arquivo editado muda o hash');",
+     "  const trocaRuntime = comporHashLote({ ...LOTE, runtimeShas: [H('a'), H('f')] });",
+     "  assert.notEqual(trocaRuntime, base, 'runtime diferente muda o hash');"
+    ],
+    "still_sample": [],
+    "same_basename_in_main": []
+   }
+  },
+  {
+   "path": "scripts/ci/db-migrate-contratos.unit.mjs",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 16,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 4,
+    "missing_in_main": 4,
+    "removed": 1,
+    "removed_still_in_main": 1,
+    "missing_sample": [
+     "  // GA16: o workflow prova o lote via provar-lote.sh, que chama o executor generico.",
+     "  assert.match(y, /provar-lote\\.sh/, 'o workflow prova o lote pelo script dedicado');",
+     "  const provar = ler('scripts/db-audit/provar-lote.sh');",
+     "  assert.match(provar, /run-runtime-contract\\.mjs/, 'o script tem de chamar o executor generico');"
+    ],
+    "still_sample": [
+     "  assert.match(y, /run-runtime-contract\\.mjs/, 'o passo tem de chamar o executor generico');"
+    ]
+   }
+  },
+  {
+   "path": "scripts/ci/db-migrate-ga13-17.unit.mjs",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "patch_lines": 100,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 77,
+    "missing_in_main": 77,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "// GA13–GA17 + gancho GA25 (plano 2026-10-15): pins estruturais do db-migrate.yml.",
+     "// Cada teste cita a verificacao do plano: se o YAML regredir, o teste quebra",
+     "// antes do apply.",
+     "import test from 'node:test';",
+     "import assert from 'node:assert/strict';",
+     "import { readFileSync } from 'node:fs';",
+     "const raiz = new URL('../../', import.meta.url);",
+     "const ler = (p) => readFileSync(new URL(p, raiz), 'utf8');",
+     "const workflow = ler('.github/workflows/db-migrate.yml');",
+     "const blocoJob = (nome, fim) => {",
+     "  const ini = workflow.indexOf(`\\n  ${nome}:\\n`);",
+     "  assert.ok(ini > 0, `job ${nome} existe`);",
+     "  const corte = fim ? workflow.indexOf(`\\n  ${fim}:\\n`, ini + 1) : workflow.length;",
+     "  return workflow.slice(ini, corte === -1 ? workflow.length : corte);",
+     "test('GA13: dois jobs; dry-run (preflight) sem Waiting, apply com environment', () => {",
+     "  // Verificacao do plano: dry-run conclui sem `Waiting`. O plano diz \"sem",
+     "  // environment\"; o meio compativel com a W63 e `banco-leitura`, que nao tem",
+     "  // revisor nem wait timer (github-settings-baseline.json) — logo nao ha",
+     "  // Waiting — e declara o escopo do secret em vez de ler do nivel repo.",
+     "  const pre = blocoJob('preflight', 'apply');",
+     "  assert.match(pre, /environment:\\s*banco-leitura/, 'preflight le em banco-leitura (sem revisor/wait)');",
+     "  const apply = blocoJob('apply', null);",
+     "  assert.match(apply, /environment:\\s*producao-ddl/, 'apply exige o environment producao-ddl');",
+     "  assert.match(apply, /if:\\s*\\$\\{\\{\\s*inputs\\.apply\\s*==\\s*true\\s*\\}\\}/, 'apply so roda quando apply=true');",
+     "  const envs = [...workflow.matchAll(/^ {4}environment:(.*)$/gm)].map((m) => m[1].trim());"
+    ],
+    "still_sample": [],
+    "same_basename_in_main": []
+   }
+  },
+  {
+   "path": "scripts/ci/db-migrate-workflow.unit.mjs",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 76,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 19,
+    "missing_in_main": 19,
+    "removed": 21,
+    "removed_still_in_main": 21,
+    "missing_sample": [
+     "// E66 (auditoria de GitHub Actions, 2026-10-01) + GA13: tetos por job e origem",
+     "// dos retries de conexao.",
+     "// GA13 dividiu o workflow em dois jobs: preflight (so leitura: ledger +",
+     "// dry-run + runtime, 20 min) e apply (push + validacoes do lote, 45 min).",
+     "test('E66: teto do preflight e 20 min e do apply e 45 min (GA13)', () => {",
+     "  const ini = (nome) => workflow.indexOf(`\\n  ${nome}:\\n`);",
+     "  const pre = workflow.slice(ini('preflight'), ini('apply'));",
+     "  const apply = workflow.slice(ini('apply'));",
+     "  assert.equal(/^    timeout-minutes: (\\d+)$/m.exec(pre)?.[1], '20');",
+     "  assert.equal(/^    timeout-minutes: (\\d+)$/m.exec(apply)?.[1], '45');",
+     "  const apply = workflow.indexOf('- name: Aplicar lote autorizado');",
+     "// R2-INF-003 (reauditoria de 03/10/2026) + GA13: cada job endurece o proprio",
+     "// DSN (GITHUB_ENV nao atravessa jobs), sempre isolando o secret bruto em",
+     "// DESTINO_URL_RAW. Invariante: o secret aparece exatamente 2x (uma por job),",
+     "// sempre no passo que endurece; nenhum passo redeclara o valor endurecido.",
+     "test('R2-INF-003: o secret bruto aparece uma vez por job, so no passo que endurece o DSN', () => {",
+     "  assert.equal(ocorrencias.length, 2,",
+     "    'um job nao herda GITHUB_ENV do outro: cada job le o secret uma vez, no passo que endurece');",
+     "  const passosCli = [...workflow.matchAll(/^      - name: (Dry-run oficial do Supabase CLI|Aplicar lote autorizado)$/gm)];"
+    ],
+    "still_sample": [
+     "// E66 (auditoria de GitHub Actions, 2026-10-01): os dois valores que a etapa",
+     "// pede sao pinados aqui -- teto do job e origem dos retries de conexao.",
+     "// Por que importa: o job inteiro roda preflight + dry-run + apply + as",
+     "// validacoes de ledger/runtime do file de 1764 linhas; 25 min nao cobriam isso.",
+     "test('E66: teto do job e 45 min', () => {",
+     "  const timeout = Number(/^    timeout-minutes: (\\d+)$/m.exec(workflow)?.[1]);",
+     "  assert.equal(timeout, 45);",
+     "  const apply = workflow.indexOf('- name: Aplicar alvo unico ou bundle ordenado autorizado');",
+     "// R2-INF-003 (reauditoria de 03/10/2026): o passo \"Provar identidade, TLS e",
+     "// validar confirmacoes\" endurece o DSN (sslmode=verify-full + CA Supabase"
+    ]
+   }
+  },
+  {
+   "path": "scripts/ci/dry-run-plan.unit.mjs",
+   "status": "MAIN_UNCHANGED_SINCE_BASE",
+   "patch_lines": 48,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 24,
+    "missing_in_main": 24,
+    "removed": 1,
+    "removed_still_in_main": 1,
+    "missing_sample": [
+     "    workflow.indexOf('- name: Aplicar lote autorizado'),",
+     "  assert.match(passo, /--apply-all --esperados/, 'modo lote liga avaliarPlanoDoDryRunApplyAll (GA14)');",
+     "// GA14: o CLI --apply-all e o que o preflight invoca no modo lote.",
+     "test('GA14: CLI --apply-all aceita o conjunto exato e recusa divergencia', async () => {",
+     "  const { mkdtempSync, writeFileSync, rmSync } = await import('node:fs');",
+     "  const { spawnSync } = await import('node:child_process');",
+     "  const { tmpdir } = await import('node:os');",
+     "  const { join } = await import('node:path');",
+     "  const dir = mkdtempSync(join(tmpdir(), 'ga14-cli-'));",
+     "  try {",
+     "    const raiz = new URL('../../', import.meta.url).pathname;",
+     "    const arq = join(dir, 'dry.out');",
+     "    writeFileSync(arq, SAIDA_APPLY_ALL);",
+     "    const roda = (extra) =>",
+     "      spawnSync(process.execPath, ['scripts/db-audit/dry-run-plan.mjs', '--arquivo', arq, ...extra], {",
+     "        cwd: raiz,",
+     "        encoding: 'utf8',",
+     "    assert.equal(roda(['--apply-all', '--esperados', ESPERADOS_W58.join(',')]).status, 0);",
+     "    const faltando = roda(['--apply-all', '--esperados', '20261010100000,20261010120000,20261010130000']);",
+     "    assert.equal(faltando.status, 1);",
+     "    assert.match(faltando.stderr, /Dry-run recusado/);",
+     "    assert.equal(roda(['--apply-all', '--esperados', '']).status, 2, 'sem esperados o uso e invalido');",
+     "  } finally {",
+     "    rmSync(dir, { recursive: true, force: true });"
+    ],
+    "still_sample": [
+     "    workflow.indexOf('- name: Aplicar alvo unico ou bundle ordenado autorizado'),"
+    ]
+   }
+  },
+  {
+   "path": "scripts/ci/list-destructive.unit.mjs",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 86,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 63,
+    "missing_in_main": 0,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "scripts/ci/parity-hardening.unit.mjs",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 36,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 11,
+    "missing_in_main": 11,
+    "removed": 9,
+    "removed_still_in_main": 9,
+    "missing_sample": [
+     "  // E62: o braco do `case` virou arquivo de contrato. GA16: os contratos sairam",
+     "  // do YAML para o dispatcher scripts/db-audit/contracts/post-apply.sh. O que se",
+     "  // prende agora e a cadeia inteira: workflow -> dispatcher -> contrato de",
+     "  // runtime do alvo 20260922220000, com as contagens exatas exigidas no apply.",
+     "  assert.match(workflow, /contracts\\/post-apply\\.sh/,",
+     "    'o workflow tem de chamar o dispatcher de contratos');",
+     "  const dispatcher = read('../../scripts/db-audit/contracts/post-apply.sh');",
+     "  assert.match(dispatcher, /notification-delivery-atomicity-runtime\\.sql/,",
+     "    'o dispatcher tem de referenciar o contrato de atomicidade');",
+     "  assert.match(dispatcher, /proof\\.service_execute_count === 2/);",
+     "  assert.match(dispatcher, /proof\\.authenticated_execute_count === 0/);"
+    ],
+    "still_sample": [
+     "  // E62: o braco do `case` virou arquivo de contrato. O que se prende agora e que o",
+     "  // alvo 20260922220000 continue com o contrato de runtime disponivel e que a",
+     "  // verificacao do apply continue exigindo as contagens exatas.",
+     "  assert.ok(",
+     "    (workflow.match(/notification-delivery-atomicity-runtime\\.sql/g) || []).length >= 1,",
+     "    'o workflow tem de continuar referenciando o contrato de atomicidade',",
+     "  assert.match(workflow, /inputs\\.migration_version == '20260922220000'/);",
+     "  assert.match(workflow, /proof\\.service_execute_count === 2/);",
+     "  assert.match(workflow, /proof\\.authenticated_execute_count === 0/);"
+    ]
+   }
+  },
+  {
+   "path": "scripts/ci/proof-sha.unit.mjs",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "patch_lines": 37,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 22,
+    "missing_in_main": 22,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "// GA14: extrator de runtime_sha256 (usado pelo provar-lote.sh).",
+     "// Fail-closed: prova invalida => exit 2, nunca string vazia.",
+     "import test from 'node:test';",
+     "import assert from 'node:assert/strict';",
+     "import { spawnSync } from 'node:child_process';",
+     "const SCRIPT = ['scripts/db-audit/proof-sha.mjs'];",
+     "const RAIZ = new URL('../../', import.meta.url).pathname;",
+     "const RUNTIME = 'b'.repeat(64);",
+     "const roda = (entrada) =>",
+     "  spawnSync(process.execPath, SCRIPT, {",
+     "    cwd: RAIZ,",
+     "    encoding: 'utf8',",
+     "    input: entrada,",
+     "test('GA14: proof-sha extrai o runtime_sha256', () => {",
+     "  const r = roda(JSON.stringify({ runtime_sha256: RUNTIME, table_count: 1 }));",
+     "  assert.equal(r.status, 0);",
+     "  assert.equal(r.stdout.trim(), RUNTIME);",
+     "test('GA14: proof-sha recusa prova sem sha (exit 2)', () => {",
+     "  for (const entrada of ['nao-json', '{}', JSON.stringify({ runtime_sha256: 'curto' })]) {",
+     "    const r = roda(entrada);",
+     "    assert.equal(r.status, 2, `deveria recusar: ${entrada}`);",
+     "    assert.equal(r.stdout, '', 'nada em stdout numa recusa');"
+    ],
+    "still_sample": [],
+    "same_basename_in_main": []
+   }
+  },
+  {
+   "path": "scripts/ci/secrets-environments.unit.mjs",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 19,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 5,
+    "missing_in_main": 5,
+    "removed": 1,
+    "removed_still_in_main": 1,
+    "missing_sample": [
+     "// GA13 (plano de 15/10/2026): o job unico `migrate` virou dois - `preflight`",
+     "// (`banco-leitura`: so leitura, sem revisor nem wait, logo o dry-run conclui",
+     "// sem \"Waiting\") e `apply` (`producao-ddl`).",
+     "  'db-migrate.yml:apply': 'producao-ddl',",
+     "  'db-migrate.yml:preflight': 'banco-leitura',"
+    ],
+    "still_sample": [
+     "  'db-migrate.yml:migrate': 'producao-ddl',"
+    ]
+   }
+  },
+  {
+   "path": "scripts/ci/verify-ledger-statements.unit.mjs",
+   "status": "MAIN_UNCHANGED_SINCE_BASE",
+   "patch_lines": 13,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 1,
+    "removed_still_in_main": 1,
+    "missing_sample": [
+     "  const fim = workflow.indexOf('- name: Validar contratos historicos pos-apply');"
+    ],
+    "still_sample": [
+     "  const fim = workflow.indexOf('- name: Validar ledger completo do bundle de entrega atomica');"
+    ]
+   }
+  },
+  {
+   "path": "scripts/db-audit/assert-runtime-proof.mjs",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "patch_lines": 618,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 597,
+    "missing_in_main": 597,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "// GA16 (plano 2026-10-15): assercao de runtime pre-push extraida do",
+     "// `.github/workflows/db-migrate.yml` (etapa \"Provar estado runtime antes do push\").",
+     "// Mesma semantica, mesmo fail-closed: estado inesperado => exit 1.",
+     "// Entrada por ambiente (como o workflow fazia):",
+     "//   RUNTIME_JSON   JSON impresso por run-runtime-contract.mjs",
+     "//   TARGET_VERSION version de 14 digitos em avaliacao",
+     "//   NEEDS_APPLY    \"true\" (pre-apply) | \"false\" (pos-apply)",
+     "//   APPLY_BUNDLE   \"true\" legado (bundles removidos na GA14; manter \"false\")",
+     "// Uso: RUNTIME_JSON=\"$(...)\" TARGET_VERSION=... NEEDS_APPLY=... node scripts/db-audit/assert-runtime-proof.mjs",
+     "const proof = JSON.parse(process.env.RUNTIME_JSON);",
+     "const common = proof.server_major === 17",
+     "  && proof.database === 'postgres'",
+     "  && /^[a-f0-9]{64}$/.test(proof.runtime_sha256 || '');",
+     "let targetOk = false;",
+     "if (process.env.TARGET_VERSION === '20260830170000') {",
+     "  targetOk = proof.function_count === 1",
+     "    && proof.security_definer === true",
+     "    && proof.stable === true",
+     "    && proof.search_path_fixed === true",
+     "    && proof.filters_active === true;",
+     "} else if (process.env.TARGET_VERSION === '20260831120000') {",
+     "  const base = proof.table_count === 1",
+     "    && proof.rls_enabled === true",
+     "    && proof.policy_count === 1",
+     "    && proof.service_role_crud === true;"
+    ],
+    "still_sample": [],
+    "same_basename_in_main": []
+   }
+  },
+  {
+   "path": "scripts/db-audit/calcular-lote.sh",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "patch_lines": 91,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 75,
+    "missing_in_main": 75,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "#!/usr/bin/env bash",
+     "# GA14: calcula o conjunto ausente do ledger (escopo do lote).",
+     "# Extraido do db-migrate.yml (etapa Calcular versions ausentes do ledger).",
+     "# Entrada por ambiente: TARGET_VERSION, APPLY, APPLY_ALL_MISSING.",
+     "# Saida: needs_apply + versions no GITHUB_OUTPUT e resumo no GITHUB_STEP_SUMMARY.",
+     "# Shell: mesmo do workflow (bash --noprofile --norc -euo pipefail).",
+     "set -euo pipefail",
+     "umask 077",
+     "find supabase/migrations -maxdepth 1 -type f -name '*.sql' \\",
+     "  -printf '%f\\n' | cut -c1-14 | sort -u > /tmp/local-versions",
+     "node scripts/db-audit/psql-safe.mjs -X -v ON_ERROR_STOP=1 -At \\",
+     "  -c \"SELECT version FROM supabase_migrations.schema_migrations ORDER BY version\" \\",
+     "  > /tmp/remote-versions",
+     "comm -13 /tmp/local-versions /tmp/remote-versions > /tmp/remote-only-versions",
+     "REMOTE_ONLY_COUNT=$(wc -l < /tmp/remote-only-versions | tr -d ' ')",
+     "if [ \"$REMOTE_ONLY_COUNT\" != \"0\" ]; then",
+     "  echo \"::error::O ledger remoto possui versions sem arquivo local; db push foi bloqueado antes do CLI.\"",
+     "  echo \"remote_only_count=$REMOTE_ONLY_COUNT\"",
+     "  exit 1",
+     "comm -23 /tmp/local-versions /tmp/remote-versions > /tmp/missing-versions",
+     "MISSING_COUNT=$(wc -l < /tmp/missing-versions | tr -d ' ')",
+     "MISSING_CSV=$(paste -sd, /tmp/missing-versions)",
+     "if [ \"$APPLY_ALL_MISSING\" = \"true\" ]; then",
+     "  # GA14: o escopo e o ledger, nao listas no YAML. Cada ausente precisa",
+     "  # mapear para exatamente um arquivo local."
+    ],
+    "still_sample": [],
+    "same_basename_in_main": []
+   }
+  },
+  {
+   "path": "scripts/db-audit/compose-confirm-hash.mjs",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "patch_lines": 81,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 51,
+    "missing_in_main": 51,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "// GA14 (plano 2026-10-15): hash do LOTE para o modo apply_all_missing.",
+     "// A E64 amarrou (runtime, arquivo, commit) para UMA migration. No lote, cada",
+     "// versao tem seu runtime_sha256 e seu sha de arquivo; o hash do lote amarra a",
+     "// LISTA ORDENADA inteira + o commit do dry-run:",
+     "//   nucleo = \"v1\\n<runtime1>\\n<arquivo1>\\nv2\\n<runtime2>\\n<arquivo2>\\n...\\n\"",
+     "//   hash   = sha256(nucleo + commitSha + \"\\n\")",
+     "// Qualquer versao a mais, a menos, fora de ordem, com arquivo editado ou com",
+     "// runtime diferente (inclusive migration que entrou depois do dry-run — o caso",
+     "// da GA14) muda o hash e o apply recusa (janela TOCTOU fechada no apply job).",
+     "// Componente fora de forma e erro de programacao (lanca, como comporHashConfirmacao).",
+     "import { sha256DeTexto, comporHashConfirmacao } from './confirm-hash.mjs';",
+     "const FORMA_VERSAO = /^\\d{14}$/;",
+     "const FORMA_SHA256 = /^[a-f0-9]{64}$/;",
+     " * @param {{ versions: string[], runtimeShas: string[], arquivoShas: string[], commitSha: string }} entrada",
+     " * @returns {string} hash de confirmacao do lote",
+     "export function comporHashLote({ versions, runtimeShas, arquivoShas, commitSha }) {",
+     "  if (!Array.isArray(versions) || versions.length === 0) {",
+     "    throw new Error('lote vazio: sem versions nao ha o que confirmar');",
+     "  if (versions.length !== runtimeShas?.length || versions.length !== arquivoShas?.length) {",
+     "    throw new Error('versions, runtimeShas e arquivoShas precisam ter o mesmo tamanho');",
+     "  for (const v of versions) {",
+     "    if (!FORMA_VERSAO.test(String(v ?? ''))) throw new Error(`versao fora de forma: ${v}`);",
+     "  for (let i = 1; i < versions.length; i += 1) {",
+     "    if (versions[i] <= versions[i - 1]) {",
+     "      throw new Error(`lote fora de ordem estrita: ${versions[i - 1]} antes de ${versions[i]}`);"
+    ],
+    "still_sample": [],
+    "same_basename_in_main": []
+   }
+  },
+  {
+   "path": "scripts/db-audit/contracts/post-apply.sh",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "patch_lines": 573,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 476,
+    "missing_in_main": 476,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "#!/usr/bin/env bash",
+     "# GA16 (plano 2026-10-15): as 16 validacoes pos-apply de versions historicas,",
+     "# extraidas VERBATIM do `.github/workflows/db-migrate.yml` (etapas \"Validar ...\").",
+     "# Mesma semantica: cada funcao abaixo e o corpo `run:` original da etapa.",
+     "# O workflow chama este dispatcher com TARGET_VERSION (+ NEEDS_APPLY/APPLY);",
+     "# o `case` replica os guardas `inputs.migration_version == ...` do YAML.",
+     "# Chamador garante: `[ \"$NEEDS_APPLY\" = \"false\" ] || [ \"$APPLY\" = \"true\" ]`.",
+     "# Shell: mesmo do workflow (bash --noprofile --norc -euo pipefail).",
+     "set -euo pipefail",
+     "# Origem YAML: etapa \"Validar ledger completo do bundle de entrega atomica\"",
+     "validar_ledger_entrega_atomica() {",
+     "BUNDLE_COUNT=$(node scripts/db-audit/psql-safe.mjs -X -v ON_ERROR_STOP=1 -At <<'SQL'",
+     "  SELECT count(*)",
+     "  FROM supabase_migrations.schema_migrations",
+     "  WHERE version IN ('20260909250000', '20260909260000', '20260909270000');",
+     "test \"$BUNDLE_COUNT\" = \"3\"",
+     "echo \"OK: ledger possui todas as tres migrations do contrato atomico.\"",
+     "# Origem YAML: etapa \"Validar ledger completo do bundle de recuperacao Talk X\"",
+     "validar_ledger_recuperacao_talkx() {",
+     "BUNDLE_COUNT=$(node scripts/db-audit/psql-safe.mjs -X -v ON_ERROR_STOP=1 -At <<'SQL'",
+     "  SELECT count(*)",
+     "  FROM supabase_migrations.schema_migrations",
+     "  WHERE version IN (",
+     "    '20260911130000', '20260911140000', '20260911150000',",
+     "    '20260911160000', '20260911170000', '20260911180000',"
+    ],
+    "still_sample": [],
+    "same_basename_in_main": []
+   }
+  },
+  {
+   "path": "scripts/db-audit/dry-run-plan.mjs",
+   "status": "MAIN_UNCHANGED_SINCE_BASE",
+   "patch_lines": 32,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 9,
+    "missing_in_main": 9,
+    "removed": 2,
+    "removed_still_in_main": 2,
+    "missing_sample": [
+     "// GA14: modo lote `--apply-all --esperados v1,v2,...` (uma saida por linha do",
+     "// dry-run precisa corresponder EXATAMENTE ao conjunto esperado, em ordem).",
+     "  const applyAll = args.includes('--apply-all');",
+     "  const esperados = (valor('--esperados') ?? '').split(',').filter(Boolean);",
+     "  if (!arquivo || (applyAll ? esperados.length === 0 : !/^\\d{14}$/.test(String(esperado ?? '')))) {",
+     "    console.error('     node scripts/db-audit/dry-run-plan.mjs --arquivo <saida-do-dry-run> --apply-all --esperados <v1,v2,...>');",
+     "  const resultado = applyAll",
+     "    ? avaliarPlanoDoDryRunApplyAll({ texto: readFileSync(arquivo, 'utf8'), esperados })",
+     "    : avaliarPlanoDoDryRun({ texto: readFileSync(arquivo, 'utf8'), esperado, permitirBundle });"
+    ],
+    "still_sample": [
+     "  if (!arquivo || !/^\\d{14}$/.test(String(esperado ?? ''))) {",
+     "  const resultado = avaliarPlanoDoDryRun({ texto: readFileSync(arquivo, 'utf8'), esperado, permitirBundle });"
+    ]
+   }
+  },
+  {
+   "path": "scripts/db-audit/list-destructive.mjs",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 116,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 83,
+    "missing_in_main": 2,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "//   ALTER ... DROP COLUMN|CONSTRAINT (coberto pelo DROP generico acima)",
+     "const RE_ALTER_DROP = /\\bDROP\\s+(COLUMN|CONSTRAINT)\\b/i;"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "scripts/db-audit/proof-sha.mjs",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "patch_lines": 19,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 11,
+    "missing_in_main": 11,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "// GA14: extrai o runtime_sha256 da prova impressa por run-runtime-contract.mjs.",
+     "// Fail-closed: entrada invalida => exit 2, nunca string vazia como \"sha\".",
+     "let texto = '';",
+     "process.stdin.on('data', (c) => { texto += c; }).on('end', () => {",
+     "  try {",
+     "    const prova = JSON.parse(texto);",
+     "    if (!/^[a-f0-9]{64}$/.test(prova.runtime_sha256 ?? '')) throw new Error('sem runtime_sha256');",
+     "    console.log(prova.runtime_sha256);",
+     "  } catch (e) {",
+     "    console.error(`::error::prova de runtime invalida: ${e.message}`);",
+     "    process.exit(2);"
+    ],
+    "still_sample": [],
+    "same_basename_in_main": []
+   }
+  },
+  {
+   "path": "scripts/db-audit/provar-lote.sh",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "patch_lines": 44,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 33,
+    "missing_in_main": 33,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "#!/usr/bin/env bash",
+     "# GA14/GA16: prova o lote de migrations (runtime + hash de confirmacao).",
+     "# Para cada versao do CSV: executa o contrato de runtime generico, valida a",
+     "# assercao historica (assert-runtime-proof.mjs, fail-closed) e coleta os shas.",
+     "# Ao final imprime o hash do lote (compose-confirm-hash.mjs) em stdout.",
+     "# Qualquer falha => exit != 0 e nada e impresso como hash.",
+     "# Uso: bash scripts/db-audit/provar-lote.sh \"<v1,v2>\" \"<true|false>\" \"<commit>\"",
+     "set -euo pipefail",
+     "VERSIONS=\"${1:?provar-lote.sh: versions csv ausente}\"",
+     "NEEDS_APPLY=\"${2:?provar-lote.sh: needs_apply ausente}\"",
+     "COMMIT_SHA=\"${3:?provar-lote.sh: commit ausente}\"",
+     "RUNTIME_SHAS=\"\"",
+     "ARQUIVO_SHAS=\"\"",
+     "for v in $(printf '%s' \"$VERSIONS\" | tr ',' ' '); do",
+     "  RUNTIME=$(node scripts/db-audit/run-runtime-contract.mjs \"$v\")",
+     "  printf '%s\\n' \"$RUNTIME\"",
+     "  RUNTIME_JSON=\"$RUNTIME\" TARGET_VERSION=\"$v\" NEEDS_APPLY=\"$NEEDS_APPLY\" APPLY_BUNDLE=false \\",
+     "    node scripts/db-audit/assert-runtime-proof.mjs",
+     "  RS=$(printf '%s' \"$RUNTIME\" | node scripts/db-audit/proof-sha.mjs)",
+     "  ARQ=$(ls supabase/migrations/\"${v}\"_*.sql | head -1)",
+     "  AS=$(sha256sum \"$ARQ\" | cut -d' ' -f1)",
+     "  if [ -z \"$RUNTIME_SHAS\" ]; then",
+     "    RUNTIME_SHAS=\"$RS\"",
+     "    ARQUIVO_SHAS=\"$AS\"",
+     "  else"
+    ],
+    "still_sample": [],
+    "same_basename_in_main": []
+   }
+  }
+ ],
+ "counts": {
+  "migrations": "0",
+  "workflows": "1",
+  "src": "0",
+  "edges": "0",
+  "docs_only": "no",
+  "lines_branch_has_main_lacks": "2067",
+  "lines_main_has_branch_lacks": "1509"
+ },
+ "auto": "MISTO_CONFLITO",
+ "n_files_with_gaps": 20,
+ "gap_lines_total": 2990
+}

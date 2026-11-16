@@ -1,0 +1,21 @@
+[
+ {
+  "commit": "9672ff1f6",
+  "arquivo": "src/components/inbox/ChatPanel.tsx",
+  "linhas": 1,
+  "amostra": [
+   "      if (!cancelled) { setIdentity({ userId: user.id, name }); setResolved(true); }"
+  ]
+ },
+ {
+  "commit": "9672ff1f6",
+  "arquivo": "src/hooks/__tests__/useTypingPresence.desmonte.test.tsx",
+  "linhas": 4,
+  "amostra": [
+   "import { renderHook } from '@testing-library/react';",
+   "    removeChannel: vi.fn((channel: FakeChannel) => channel.emitStatus('CLOSED')),",
+   "    expect(mocks.channels[0].unsubscribe).toHaveBeenCalled();",
+   "    expect(mocks.channels).toHaveLength(2);"
+  ]
+ }
+]

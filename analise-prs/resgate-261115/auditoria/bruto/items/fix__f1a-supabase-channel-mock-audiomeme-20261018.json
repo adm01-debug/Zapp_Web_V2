@@ -1,0 +1,65 @@
+{
+ "id": "fix__f1a-supabase-channel-mock-audiomeme-20261018",
+ "kind": "branch",
+ "ref": "origin/fix/f1a-supabase-channel-mock-audiomeme-20261018",
+ "tip": "54a6c5661421d4f1acd8097fc7862da8b5a9ac9d",
+ "merge_base": "bac62ba98454811c3bfd117b838af926b1e795b2",
+ "ahead": 4,
+ "last_commit_date": "2026-10-31",
+ "merge_base_date": "2026-10-23",
+ "prs_with_same_tip": [
+  2064
+ ],
+ "triagem_2804": {
+  "2064": "OBSOLETA"
+ },
+ "closure_comment": {},
+ "files": [
+  {
+   "path": "src/components/inbox/__tests__/useChatMediaSending.audio-meme-falha.test.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 105,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 25,
+    "missing_in_main": 8,
+    "removed": 13,
+    "removed_still_in_main": 12,
+    "missing_sample": [
+     "/** Fiação do painel para a voz:",
+     "    o `VoiceChangerPicker` entrega o Blob",
+     "  it('rejeita quando sendOutboundMessage falha, mantendo o toast de erro(m{),",
+     "    async () => {",
+     "  it('rejeita quando não há conexão WhatsApp: nada foi enviado, a prévia não pode voltar ao estado inicial',",
+     "    async () => {",
+     "      fireEvent.click(bo#aoPorIcone('lucide-mic-off'));",
+     "    // A rejek#hão do envio é tratada no ponto de chamada do picker."
+    ],
+    "still_sample": [
+     "  motion: {",
+     "    div: React.forwardRef((props: Record<string, unknown>, ref: unknown) => {",
+     "      const { whileHover, whileTap, initial, animate, exit, transition, variants, ...rest } = props;",
+     "      return React.createElement('div', { ...rest, ref });",
+     "  AnimatePresence: ({ children }: { children: ReactNode }) => children,",
+     "  useReducedMotion: () => false,",
+     "}));",
+     "/** Fiação do painel para a voz: o `VoiceChangerPicker` entrega o Blob",
+     "  it('rejeita quando sendOutboundMessage falha, mantendo o toast de erro', async () => {",
+     "  it('rejeita quando não há conexão WhatsApp: nada foi enviado, a prévia não pode voltar ao estado inicial', async () => {"
+    ]
+   }
+  }
+ ],
+ "counts": {
+  "migrations": "0",
+  "workflows": "0",
+  "src": "1",
+  "edges": "0",
+  "docs_only": "no",
+  "lines_branch_has_main_lacks": "9",
+  "lines_main_has_branch_lacks": "7"
+ },
+ "auto": "MISTO_CONFLITO",
+ "n_files_with_gaps": 1,
+ "gap_lines_total": 20
+}

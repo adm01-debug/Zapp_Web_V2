@@ -1,0 +1,118 @@
+{
+ "id": "claude__fix-x051-remote-completion-test-261108-2057",
+ "kind": "branch",
+ "ref": "origin/claude/fix-x051-remote-completion-test-261108-2057",
+ "tip": "6081b1675dd4f60ab4483aeb048da101ced4ae62",
+ "merge_base": "9183f0f6fa4296cd07c585602bc5ea88ada5d98d",
+ "ahead": 7,
+ "last_commit_date": "2026-11-08",
+ "merge_base_date": "2026-11-08",
+ "prs_with_same_tip": [
+  2836
+ ],
+ "triagem_2804": {
+  "2836": null
+ },
+ "closure_comment": {},
+ "files": [
+  {
+   "path": "src/components/talkx/TalkXCampaignRunning.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 22,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 2,
+    "missing_in_main": 2,
+    "removed": 2,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "            <AlertDialogTitle>Pausar campanha?</AlertDialogTitle>",
+     "            <AlertDialogTitle>Cancelar campanha?</AlertDialogTitle>"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/talkx/__tests__/TalkXCampaignRunning.remote-completion.test.tsx",
+   "status": "MAIN_UNCHANGED_SINCE_BASE",
+   "patch_lines": 46,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 6,
+    "missing_in_main": 6,
+    "removed": 6,
+    "removed_still_in_main": 6,
+    "missing_sample": [
+     "    { nome: 'Pausar', gatilho: /^Pausar$/, titulo: 'Pausar campanha?' },",
+     "    { nome: 'Cancelar', gatilho: /^Cancelar campanha$/, titulo: 'Cancelar campanha?' },",
+     "    expect(screen.getByText('Pausar campanha?')).toBeTruthy();",
+     "    expect(screen.queryByText('Pausar campanha?')).toBeNull();",
+     "    expect(screen.getByText('Pausar campanha?')).toBeTruthy();",
+     "    expect(screen.getByText('Pausar campanha?')).toBeTruthy();"
+    ],
+    "still_sample": [
+     "    { nome: 'Pausar', gatilho: /^Pausar$/, titulo: 'Pausar Campanha?' },",
+     "    { nome: 'Cancelar', gatilho: /^Cancelar campanha$/, titulo: 'Cancelar Campanha?' },",
+     "    expect(screen.getByText('Pausar Campanha?')).toBeTruthy();",
+     "    expect(screen.queryByText('Pausar Campanha?')).toBeNull();",
+     "    expect(screen.getByText('Pausar Campanha?')).toBeTruthy();",
+     "    expect(screen.getByText('Pausar Campanha?')).toBeTruthy();"
+    ]
+   }
+  },
+  {
+   "path": "src/components/talkx/report/__tests__/TalkXCampaignReport.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 142,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 74,
+    "missing_in_main": 66,
+    "removed": 11,
+    "removed_still_in_main": 1,
+    "missing_sample": [
+     "vi.mock('recharts', () => {",
+     "  const Box = ({ children }: { children?: React.ReactNode }) => <div>{children}</div>;",
+     "  const SvgBox = ({ children }: { children?: React.ReactNode }) => <svg>{children}</svg>;",
+     "    ComposedChart: SvgBox, AreaChart: SvgBox, Area: () => null, Line: () => null,",
+     "    XAxis: () => null, YAxis: () => null, CartesianGrid: () => null, Tooltip: () => null,",
+     "    ResponsiveContainer: Box,",
+     "import { TalkXCampaignReport } from '@/components/talkx/report/TalkXCampaignReport';",
+     "import {",
+     "  talkxReportHeatmapFromTimestamps,",
+     "  talkxReportSeriesFromRows,",
+     "  type TalkXReportRecipientRow,",
+     "} from '@/components/talkx/report/talkxReportData';",
+     "const TZ = 'America/Sao_Paulo';",
+     "const ROWS: TalkXReportRecipientRow[] = [",
+     "  { sent_at: '2026-10-05T12:00:00.000Z', delivered_at: '2026-10-05T12:01:00.000Z', replied_at: '2026-10-05T12:05:00.000Z' },",
+     "  { sent_at: '2026-10-06T12:00:00.000Z', delivered_at: null, replied_at: null },",
+     "  { sent_at: '2026-10-11T12:00:00.000Z', delivered_at: '2026-10-11T12:02:00.000Z', replied_at: null },",
+     "const CAMPAIGN = {",
+     "  id: 'c1', name: 'Campanha Relatório X164', message_template: 'Olá {{nome}}',",
+     "  variables_config: [], typing_delay_min: 1500, typing_delay_max: 4000,",
+     "  send_interval_min: 8000, send_interval_max: 20000, status: 'completed',",
+     "  total_recipients: 3, sent_count: 3, failed_count: 0, delivered_count: 2,",
+     "  read_count: 1, replied_count: 1, outcome_unknown_count: 0,",
+     "  whatsapp_connection_id: null, created_by: null,",
+     "  started_at: '2026-10-05T12:00:00.000Z', completed_at: '2026-10-05T13:00:00.000Z',"
+    ],
+    "still_sample": [
+     "        return builder;"
+    ]
+   }
+  }
+ ],
+ "counts": {
+  "migrations": "0",
+  "workflows": "0",
+  "src": "3",
+  "edges": "0",
+  "docs_only": "no",
+  "lines_branch_has_main_lacks": "185",
+  "lines_main_has_branch_lacks": "236"
+ },
+ "auto": "MISTO_CONFLITO",
+ "n_files_with_gaps": 3,
+ "gap_lines_total": 81
+}

@@ -1,0 +1,290 @@
+{
+ "id": "claude__br-dossies-lote2-261031",
+ "kind": "branch",
+ "ref": "origin/claude/br-dossies-lote2-261031",
+ "tip": "599e60294fee02931e7472339c8f70491c433d04",
+ "merge_base": "004e74a8c596959f45f61c8b0b64b30a70c1ff19",
+ "ahead": 1,
+ "last_commit_date": "2026-10-31",
+ "merge_base_date": "2026-10-31",
+ "prs_with_same_tip": [
+  2415
+ ],
+ "triagem_2804": {
+  "2415": "OBSOLETA"
+ },
+ "closure_comment": {},
+ "files": [
+  {
+   "path": "analise/dossies/claude-fix-ci-workitem-tz-261025-1350.md",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "patch_lines": 48,
+   "line_check": {
+    "added": 26,
+    "missing_in_main": 26,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "# Dossiê: claude/fix-ci-workitem-tz-261025-1350",
+     "## Identificação",
+     "- **Branch**: `claude/fix-ci-workitem-tz-261025-1350`",
+     "- **Tip SHA**: `d411709b068dbf34ed4d6d990a68396ac2ca364b`",
+     "- **Analisado em**: 2026-10-31",
+     "- **Sessão**: `claude/trusting-albattani-9x3ipg`",
+     "## Veredito: INTEGRAR-LIMPO (confiança 0.95)",
+     "Fix de fuso horário para testes unitários: adiciona `process.env.TZ = \"America/Sao_Paulo\"`",
+     "no `vitest.config.ts`. Vários testes (workItemFormat, filesPeriod, TalkXAnalytics) assumem",
+     "este fuso mas falhavam no CI que roda em UTC.",
+     "## Evidência",
+     "### merge-tree",
+     "git merge-tree --write-tree origin/main origin/claude/fix-ci-workitem-tz-261025-1350",
+     "→ bba5205ca1b0407620c49e3ef018d801c3aa04ce  (≠ main tree f7b413078...)",
+     "exit code 0 — sem conflitos",
+     "### Delta (1 arquivo)",
+     "`vitest.config.ts`:",
+     "```diff",
+     "+// Fuso do produto: vários testes (workItemFormat, filesPeriod, TalkXAnalytics) assumem America/Sao_Paulo.",
+     "+// Sem fixar, o resultado depende do fuso da máquina (UTC no CI).",
+     "+process.env.TZ = \"America/Sao_Paulo\";",
+     "### Estado em main",
+     "`vitest.config.ts` em main **não** contém `process.env.TZ`. A mudança está ausente.",
+     "## Decisão",
+     "**PR aberto.** Fix simples e legítimo para testes que falham no CI por fuso horário."
+    ],
+    "still_sample": [],
+    "same_basename_in_main": [
+     "docs/_arquivo/analise/dossies/claude-fix-ci-workitem-tz-261025-1350.md"
+    ],
+    "missing_vs_same_basename": 0
+   }
+  },
+  {
+   "path": "analise/dossies/claude-fix-plano-190-etapas-261019-1200.md",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "patch_lines": 47,
+   "line_check": {
+    "added": 24,
+    "missing_in_main": 24,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "# Dossiê: claude/fix-plano-190-etapas-261019-1200",
+     "## Identificação",
+     "- **Branch**: `claude/fix-plano-190-etapas-261019-1200`",
+     "- **Tip SHA**: `a17c111ffb72e539af2f505d05dcfeb3cb33f837`",
+     "- **Analisado em**: 2026-10-31",
+     "- **Sessão**: `claude/trusting-albattani-9x3ipg`",
+     "## Veredito: INTEGRAR-LIMPO (confiança 0.90)",
+     "Branch docs-only com 1 commit: adiciona o documento de planejamento",
+     "`docs/plans/PLANO_CORRECOES_190_ETAPAS_2026-10-19.md` (979 linhas).",
+     "O arquivo não existe em main.",
+     "## Evidência",
+     "### merge-tree",
+     "git merge-tree --write-tree origin/main origin/claude/fix-plano-190-etapas-261019-1200",
+     "→ d45f96926eff4605f2083d7e425e9d28ffa53abe  (≠ main tree f7b413078...)",
+     "exit code 0 — sem conflitos",
+     "### Commit único",
+     "a17c111ff docs: plano de correções e melhorias 190 etapas — Zapp Web V2",
+     "### Delta",
+     "`docs/plans/PLANO_CORRECOES_190_ETAPAS_2026-10-19.md`: 979 linhas, documento novo.",
+     "Arquivo similar existe (`PLANO_VERCEL_190_ETAPAS_2026-10-18.md`) mas é diferente",
+     "(foco Vercel vs. correções gerais).",
+     "## Decisão",
+     "**PR aberto.** Documento histórico de planejamento (criado 2026-10-19). Sem risco —",
+     "docs-only, sem conflitos, sem mudança de código. Preserva o histórico de decisões."
+    ],
+    "still_sample": [],
+    "same_basename_in_main": [
+     "docs/_arquivo/analise/dossies/claude-fix-plano-190-etapas-261019-1200.md"
+    ],
+    "missing_vs_same_basename": 0
+   }
+  },
+  {
+   "path": "analise/dossies/claude-fix-types-sync-is-pinned-261029.md",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "patch_lines": 54,
+   "line_check": {
+    "added": 30,
+    "missing_in_main": 30,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "# Dossiê: claude/fix-types-sync-is-pinned-261029",
+     "## Identificação",
+     "- **Branch**: `claude/fix-types-sync-is-pinned-261029`",
+     "- **Tip SHA**: `f87dc1ab747caaf24378e25c6259b7ae4c7bf05a`",
+     "- **Analisado em**: 2026-10-31",
+     "- **Sessão**: `claude/trusting-albattani-9x3ipg`",
+     "## Veredito: COBERTA (confiança 0.93)",
+     "A branch foi criada em 2026-10-29 para contornar um erro de TypeScript no campo `is_pinned`",
+     "da tabela `contact_notes` (migration `20261026200000`). O contorno usou `const pinField: any`",
+     "com `// eslint-disable-next-line @typescript-eslint/no-explicit-any`.",
+     "## Evidência",
+     "### merge-tree",
+     "git merge-tree --write-tree origin/main origin/claude/fix-types-sync-is-pinned-261029",
+     "→ ab18c074b2ca6c914d588f08a05230c3dd00114e  (≠ main tree f7b413078...)",
+     "### Delta (1 arquivo)",
+     "`src/services/contact.service.ts`:",
+     "- Adiciona `const pinField: any` + 2 comentários `eslint-disable-next-line @typescript-eslint/no-explicit-any`",
+     "- Remove o spread inline direto `...(options?.isPinned === true ? { is_pinned: true } : {})`",
+     "- Adiciona `update(updates as any)` no método `updateContactNote`",
+     "### Estado em main",
+     "`src/integrations/supabase/types.ts` já contém `is_pinned`:",
+     "is_pinned: boolean        (linha 2266 — select)",
+     "is_pinned?: boolean       (linha 2278 — insert)",
+     "is_pinned?: boolean       (linha 2290 — update)",
+     "O workflow `types-sync` rodou e regenerou os types após a migration ser aplicada. O campo"
+    ],
+    "still_sample": [],
+    "same_basename_in_main": [
+     "docs/_arquivo/analise/dossies/claude-fix-types-sync-is-pinned-261029.md"
+    ],
+    "missing_vs_same_basename": 0
+   }
+  },
+  {
+   "path": "analise/dossies/claude-fix-unit-tests-inbox-261023-1108.md",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "patch_lines": 57,
+   "line_check": {
+    "added": 33,
+    "missing_in_main": 33,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "# Dossiê: claude/fix-unit-tests-inbox-261023-1108",
+     "## Identificação",
+     "- **Branch**: `claude/fix-unit-tests-inbox-261023-1108`",
+     "- **Tip SHA**: `7be2c50e5bca21592a568cf2159a30ac3381ac1a`",
+     "- **Analisado em**: 2026-10-31",
+     "- **Sessão**: `claude/trusting-albattani-9x3ipg`",
+     "## Veredito: INTEGRAR-LIMPO (confiança 0.95)",
+     "Dois fixes de infraestrutura de testes unitários:",
+     "1. `FilesTab.fase6.test.tsx`: corrige o spy de `getBoundingClientRect` para usar",
+     "   `HTMLElement.prototype` em vez de `Element.prototype`",
+     "2. `src/test/setup.ts`: adiciona mocks de `clientHeight` e `clientWidth` para compatibilidade",
+     "   com `@tanstack/virtual-core >=3.19` que mede o contêiner por essas propriedades (jsdom: 0)",
+     "## Evidência",
+     "### merge-tree",
+     "git merge-tree --write-tree origin/main origin/claude/fix-unit-tests-inbox-261023-1108",
+     "→ 099bd7a98117e122f8b225209ce17af53297d41c  (≠ main tree f7b413078...)",
+     "exit code 0 — sem conflitos",
+     "### Delta (2 arquivos)",
+     "`src/components/inbox/tabs/__tests__/FilesTab.fase6.test.tsx`:",
+     "```diff",
+     "-  return vi.spyOn(Element.prototype, 'getBoundingClientRect').mockReturnValue({",
+     "+  return vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockReturnValue({",
+     "`src/test/setup.ts`:",
+     "```diff",
+     "+// @tanstack/virtual-core >=3.19 mede o contêiner por clientWidth/clientHeight (jsdom: 0)."
+    ],
+    "still_sample": [],
+    "same_basename_in_main": [
+     "docs/_arquivo/analise/dossies/claude-fix-unit-tests-inbox-261023-1108.md"
+    ],
+    "missing_vs_same_basename": 0
+   }
+  },
+  {
+   "path": "analise/dossies/claude-pensive-cori-i93zgf.md",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "patch_lines": 60,
+   "line_check": {
+    "added": 36,
+    "missing_in_main": 36,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "# Dossiê: claude/pensive-cori-i93zgf",
+     "## Identificação",
+     "- **Branch**: `claude/pensive-cori-i93zgf`",
+     "- **Tip SHA**: `b4bd6fd2e4a68a0562d921ef62159a30ac3381ac1a`",
+     "- **Analisado em**: 2026-10-31",
+     "- **Sessão**: `claude/trusting-albattani-9x3ipg`",
+     "## Veredito: COBERTA (confiança 0.85)",
+     "Duas mudanças de qualidade marginal que não corrigem bugs e têm riscos:",
+     "## Evidência",
+     "### merge-tree",
+     "git merge-tree --write-tree origin/main origin/claude/pensive-cori-i93zgf",
+     "→ dacdabe13fa0af1ebef1afc66c45e0c90c0ebee8  (≠ main tree f7b413078...)",
+     "exit code 0 — sem conflitos",
+     "### Delta (2 arquivos)",
+     "**`src/hooks/chat/useNextBestAction.ts`** — line 34:",
+     "```diff",
+     "-export const nextBestActionKey = (contactId: string | null | undefined) =>",
+     "+export const nextBestActionKey = (contactId: string) =>",
+     "Tightening potencialmente incorreto: remove suporte a `null | undefined` na key do",
+     "React Query. Se qualquer chamador passar `null` enquanto o contactId não está carregado,",
+     "o TypeScript passaria a reclamar, ou pior: o hook seria chamado com `undefined` convertido",
+     "implicitamente. Main mantém a versão mais permissiva e segura.",
+     "**`src/hooks/tasks/workItemAggregates.ts`** — line 102:",
+     "```diff",
+     "-  return texto.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();"
+    ],
+    "still_sample": [],
+    "same_basename_in_main": [
+     "docs/_arquivo/analise/dossies/claude-pensive-cori-i93zgf.md"
+    ],
+    "missing_vs_same_basename": 0
+   }
+  },
+  {
+   "path": "analise/progresso.json",
+   "status": "BOTH_CHANGED",
+   "hunk": "CONFLICT",
+   "patch_lines": 103,
+   "line_check": {
+    "added": 76,
+    "missing_in_main": 61,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "      \"verificado_em\": \"2026-10-30\",",
+     "      \"verificacao_sessao\": \"claude/trusting-albattani-9x3ipg\",",
+     "      \"notas\": \"Fases 1-2 do plano de telefonia (biblioteca de domínio + contrato de dados). Conteúdo 100% em main: migration 20260926800000 em produção, src/li",
+     "      \"branch\": \"automation/types-sync\",",
+     "      \"tip_sha\": \"f5e651e01\",",
+     "      \"confianca\": 0.97,",
+     "      \"dossie\": \"analise/dossies/automation-types-sync.md\",",
+     "      \"analisado_em\": \"2026-10-31\",",
+     "      \"sessao\": \"claude/trusting-albattani-9x3ipg\",",
+     "      \"notas\": \"merge-tree produce tree = main tree (f7b413078b11e47b67f521e0a5d32ea294583c83). Fixes de db-inventory chegaram à main por outros PRs. Branch apa",
+     "      \"branch\": \"claude/fervent-noether-vvq63j\",",
+     "      \"tip_sha\": \"95295a7cb\",",
+     "      \"confianca\": 0.97,",
+     "      \"dossie\": \"analise/dossies/claude-fervent-noether-vvq63j.md\",",
+     "      \"analisado_em\": \"2026-10-31\",",
+     "      \"sessao\": \"claude/trusting-albattani-9x3ipg\",",
+     "      \"notas\": \"merge-tree produce tree = main tree (f7b413078b11e47b67f521e0a5d32ea294583c83). Correção hash pngjs chegou à main. Branch apagada.\"",
+     "      \"branch\": \"claude/fix-deploy-functions-2408\",",
+     "      \"tip_sha\": \"b643d5d43\",",
+     "      \"veredito\": \"COBERTA\",",
+     "      \"confianca\": 0.9,",
+     "      \"dossie\": \"analise/dossies/claude-fix-deploy-functions-2408.md\",",
+     "      \"analisado_em\": \"2026-10-31\",",
+     "      \"sessao\": \"claude/trusting-albattani-9x3ipg\",",
+     "      \"notas\": \"merge-tree difere da main. Delta: deno.json adiciona npm:@types/node@^22. Problema resolvido na main via #2407 (npm install no workflow). Aborda"
+    ],
+    "still_sample": []
+   }
+  }
+ ],
+ "counts": {
+  "migrations": "0",
+  "workflows": "0",
+  "src": "0",
+  "edges": "0",
+  "docs_only": "no",
+  "lines_branch_has_main_lacks": "297",
+  "lines_main_has_branch_lacks": "179"
+ },
+ "auto": "MISTO_CONFLITO",
+ "n_files_with_gaps": 6,
+ "gap_lines_total": 210
+}

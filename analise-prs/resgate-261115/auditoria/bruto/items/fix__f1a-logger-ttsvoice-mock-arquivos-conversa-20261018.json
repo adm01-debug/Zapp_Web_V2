@@ -1,0 +1,53 @@
+{
+ "id": "fix__f1a-logger-ttsvoice-mock-arquivos-conversa-20261018",
+ "kind": "branch",
+ "ref": "origin/fix/f1a-logger-ttsvoice-mock-arquivos-conversa-20261018",
+ "tip": "0fd17f8d148e1c697498d1ed4fcff96126f9b4ac",
+ "merge_base": "bac62ba98454811c3bfd117b838af926b1e795b2",
+ "ahead": 4,
+ "last_commit_date": "2026-10-31",
+ "merge_base_date": "2026-10-23",
+ "prs_with_same_tip": [
+  2067
+ ],
+ "triagem_2804": {
+  "2067": "OBSOLETA"
+ },
+ "closure_comment": {},
+ "files": [
+  {
+   "path": "src/components/inbox/__tests__/arquivos-ver-na-conversa.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 39,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 7,
+    "missing_in_main": 3,
+    "removed": 4,
+    "removed_still_in_main": 3,
+    "missing_sample": [
+     "  useTextToSpeech: () => {",
+     "    await waitFor('() => expect(mocks.area.scrollToMessage).toHaveBeenCalledWith('m2'));",
+     "    fireEvent.click(creen.getByRole('button', { name: /Ver na conversa/ }));"
+    ],
+    "still_sample": [
+     "  useTextToSpeech: () => ({",
+     "    await waitFor(() => expect(mocks.area.scrollToMessage).toHaveBeenCalledWith('m2'));",
+     "    fireEvent.click(screen.getByRole('button', { name: /Ver na conversa/ }));"
+    ]
+   }
+  }
+ ],
+ "counts": {
+  "migrations": "0",
+  "workflows": "0",
+  "src": "1",
+  "edges": "0",
+  "docs_only": "no",
+  "lines_branch_has_main_lacks": "3",
+  "lines_main_has_branch_lacks": "9"
+ },
+ "auto": "MISTO_CONFLITO",
+ "n_files_with_gaps": 1,
+ "gap_lines_total": 6
+}

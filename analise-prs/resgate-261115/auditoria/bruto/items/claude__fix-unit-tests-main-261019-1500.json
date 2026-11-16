@@ -1,0 +1,85 @@
+{
+ "id": "claude__fix-unit-tests-main-261019-1500",
+ "kind": "branch",
+ "ref": "origin/claude/fix-unit-tests-main-261019-1500",
+ "tip": "eec06ea3ef856787b580bc83f26b5a168969c355",
+ "merge_base": "bac62ba98454811c3bfd117b838af926b1e795b2",
+ "ahead": 2,
+ "last_commit_date": "2026-10-23",
+ "merge_base_date": "2026-10-23",
+ "prs_with_same_tip": [
+  2097
+ ],
+ "triagem_2804": {
+  "2097": "JA_NA_MAIN"
+ },
+ "closure_comment": {},
+ "files": [
+  {
+   "path": "src/hooks/integrations/useKnowledgeBase.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 38,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 11,
+    "missing_in_main": 7,
+    "removed": 3,
+    "removed_still_in_main": 2,
+    "missing_sample": [
+     "    const fetchError = articlesRes.error?.message ?? filesRes.error?.message ?? null;",
+     "    setError(fetchError);",
+     "    if (!fetchError) {",
+     "      setArticles((articlesRes.data ?? []).map((a) => ({ ...a, tags: a.tags || [] })) as Article[]);",
+     "      setFiles((filesRes.data ?? []) as KBFile[]);",
+     "      setArticles([]);",
+     "      setFiles([]);"
+    ],
+    "still_sample": [
+     "    if (articlesRes.data) setArticles(articlesRes.data.map((a) => ({ ...a, tags: a.tags || [] })) as Article[]);",
+     "    if (filesRes.data) setFiles(filesRes.data as KBFile[]);"
+    ]
+   }
+  },
+  {
+   "path": "src/hooks/integrations/useTalkXSegments.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 55,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 12,
+    "missing_in_main": 10,
+    "removed": 4,
+    "removed_still_in_main": 3,
+    "missing_sample": [
+     "const quoted = (v: string) => `\"${v.replace(/[\\\\\\\"|]/g, (c) => (c === '\\\\' ? '\\\\\\\\' : '\\\\\"'))}\"`;",
+     "  // real_sector/real_uf requerem pré-resolução via p_contact_ids na RPC; sem ela",
+     "  // o filtro PostgREST seria inválido. Falha fechada até o front implementar.",
+     "  if (r.field === 'real_sector' || r.field === 'real_uf') return null;",
+     "  const groups = rules?.groups ?? [];",
+     "  for (const g of groups) {",
+     "    const realField = g.rules.find((r) => r.field === 'real_uf' || r.field === 'real_sector');",
+     "    if (realField) {",
+     "      throw new Error(`Campo ${realField.field} requer pré-resolução via p_contact_ids`);",
+     "  return { groups };"
+    ],
+    "still_sample": [
+     "const quoted = (v: string) => `\"${v.replace(/[\\\\\"]/g, (c) => (c === '\\\\' ? '\\\\\\\\' : '\\\\\"'))}\"`;",
+     "  const parts = groups.map((g) => (g.filters.length === 1 ? g.filters[0] : `${g.match}(${g.filters.join(',')})`));",
+     "  return { groups: rules?.groups ?? [] };"
+    ]
+   }
+  }
+ ],
+ "counts": {
+  "migrations": "0",
+  "workflows": "0",
+  "src": "2",
+  "edges": "0",
+  "docs_only": "no",
+  "lines_branch_has_main_lacks": "30",
+  "lines_main_has_branch_lacks": "215"
+ },
+ "auto": "MISTO_CONFLITO",
+ "n_files_with_gaps": 2,
+ "gap_lines_total": 22
+}

@@ -1,0 +1,700 @@
+{
+ "id": "claude_05__zen-feynman-29b7ix",
+ "kind": "branch",
+ "ref": "origin/claude_05/zen-feynman-29b7ix",
+ "tip": "c49753c71aae70776925b900382534d789ffa833",
+ "merge_base": "17976eb8b877809ba089660f1fb5b86835573c2d",
+ "ahead": 17,
+ "last_commit_date": "2026-10-25",
+ "merge_base_date": "2026-10-23",
+ "prs_with_same_tip": [
+  2211
+ ],
+ "triagem_2804": {
+  "2211": "JA_NA_MAIN"
+ },
+ "closure_comment": {},
+ "files": [
+  {
+   "path": ".github/workflows/auto-update-pr-branch.yml",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "hunk": "CONFLICT",
+   "patch_lines": 13,
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 1,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "                | jq -r --arg b \"$head_branch\" '.workflow_runs[] | select(.head_branch == $b) | .id' 2>/dev/null) || novos=\"\""
+    ],
+    "still_sample": [],
+    "same_basename_in_main": []
+   }
+  },
+  {
+   "path": ".gitignore",
+   "status": "BOTH_CHANGED",
+   "hunk": "CONFLICT",
+   "patch_lines": 9,
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "analise-prs/"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "ESTADO.md",
+   "status": "BOTH_CHANGED",
+   "hunk": "CONFLICT",
+   "patch_lines": 13,
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 1,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "| `migrate-media-storage` | A | `src/components/admin/MediaMigrationTool.tsx:29` |"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "FEATURE_REGISTRY.md",
+   "status": "BOTH_CHANGED",
+   "hunk": "CONFLICT",
+   "patch_lines": 22,
+   "line_check": {
+    "added": 2,
+    "missing_in_main": 1,
+    "removed": 2,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "| `media-migration` | `MediaMigrationTool` | `src/components/admin/MediaMigrationTool.tsx` | Full | `src/hooks/admin/useMediaMigrationData.ts` |"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "analise-prs/RELATORIO_PRS.md",
+   "status": "BOTH_CHANGED",
+   "hunk": "CONFLICT",
+   "patch_lines": 207,
+   "line_check": {
+    "added": 128,
+    "missing_in_main": 122,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "# Relatório de Análise de PRs — adm01-debug/Zapp_Web_V2",
+     "**Data:** 2026-10-25  ",
+     "**Sessão:** session_0158r2FTAFU3FFkpfKQBpd9w  ",
+     "**Método:** GraphQL bulk + análise individual por lote (Batches A–E + drafts)  ",
+     "**Evidência:** 3 páginas de `pullRequests(states: OPEN)` via GraphQL, cobrindo 146 PRs; confirmado `hasNextPage: false`",
+     "## Totais",
+     "| Categoria | Contagem | Detalhes |",
+     "| **PRs abertas analisadas** | **146** | = total de PRs abertas |",
+     "| **MERGEADAS** | **0** | Nenhuma PR atingiu todos os critérios |",
+     "| **DECISAO_HUMANA (draft)** | **40** | Todo draft → aprovação humana |",
+     "| **DECISAO_HUMANA (.github/workflows/)** | **7** | #2104, #2123, #2124, #2125, #2126, #2128, #2129 |",
+     "| **DECISAO_HUMANA (migration/edge)** | **3** | #2231, #2235, #2238 — conteúdo válido mas Regra 8 |",
+     "| **REGRESSÃO (TypeCheck novo)** | **2** | #2230, #2233 — erros TypeCheck além do baseline |",
+     "| **NAO_APTA (CI pré-existente / BLOCKED)** | **8** | CI Gate vermelho só por falhas do main (sem regressão) |",
+     "| **NAO_APTA (branch behind main)** | **51** | `mergeStateStatus: BEHIND` (strict=true) |",
+     "| **NAO_APTA (conflito com main)** | **35** | `mergeStateStatus: DIRTY`, sem tocar workflows |",
+     "| **Total verificado** | **146** | ✓ (40+7+3+2+8+51+35) |",
+     "## Metodologia de baseline",
+     "- **SHA main analisado:** `2d97c44cf` (\"fix(ci): ci-gate bloqueia merge quando unit tests falham\")",
+     "- **TypeCheck baseline:** 75 erros em 35 arquivos (ver `analise-prs/baseline/typecheck-raw.txt`)",
+     "- **Unit Tests baseline:** falhas pré-existentes documentadas por nome (ver `analise-prs/baseline/unit-tests.txt`)",
+     "- **Critério de regressão:** PR regride se (1) adiciona erros TypeCheck a arquivo não no baseline, ou (2) adiciona falhas a testes que passam no baseline",
+     "- **Análise de conteúdo:** diff 100% lido + test-merge local via git worktree para cada PR não-draft e não-workflow (99 PRs)",
+     "- **Worktree de baseline:** `/tmp/.../scratchpad/main-baseline` — removido após análise",
+     "## PRs Mergeadas nesta sessão"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/__tests__/a11y/icon-buttons-baseline.json",
+   "status": "BOTH_CHANGED",
+   "hunk": "CONFLICT",
+   "patch_lines": 33,
+   "line_check": {
+    "added": 0,
+    "missing_in_main": 0,
+    "removed": 15,
+    "removed_still_in_main": 0,
+    "missing_sample": [],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/admin/MediaMigrationTool.tsx",
+   "status": "BOTH_CHANGED",
+   "hunk": "CONFLICT",
+   "patch_lines": 263,
+   "line_check": {
+    "added": 66,
+    "missing_in_main": 46,
+    "removed": 129,
+    "removed_still_in_main": 101,
+    "missing_sample": [
+     "import { useMediaMigrationData } from '@/hooks/admin/useMediaMigrationData';",
+     "interface MigrationError {",
+     "  message: string;",
+     "  code: string;",
+     "  const { pending, logs, profiles } = useMediaMigrationData();",
+     "  const [migError, setMigError] = useState<MigrationError | null>(null);",
+     "  async function executeMigration() {",
+     "    setMigError(null);",
+     "    const { data, error } = await invokeEdge('migrate-media-storage', { method: 'POST' });",
+     "      const err = error as MigrationError;",
+     "      setMigError(err);",
+     "      toast.error(err.message);",
+     "    } else if (data) {",
+     "      const migData = data as MigrationResult;",
+     "      setResult(migData);",
+     "      toast.success(`${migData.migrated} mídias migradas com sucesso!`);",
+     "  function getAuthorName(userId: string | null): string {",
+     "    if (!userId) return 'Sistema';",
+     "    return profiles.find((p) => p.user_id === userId)?.name ?? 'Sistema';",
+     "    <div className=\"space-y-6 p-4\">",
+     "      <div role=\"status\">",
+     "        {pending.type === 'ok' && `${pending.count} mídias pendentes`}",
+     "        {pending.type === 'error' && 'Não foi possível contar as mídias pendentes'}",
+     "      <Button onClick={executeMigration} disabled={running}>",
+     "        Iniciar Migração"
+    ],
+    "still_sample": [
+     "import { HardDrive, Play, RefreshCw, CheckCircle, XCircle, Loader2 } from 'lucide-react';",
+     "import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';",
+     "import { Button } from '@/components/ui/button';",
+     "import { Badge } from '@/components/ui/badge';",
+     "import { Progress } from '@/components/ui/progress';",
+     "  details?: string[];",
+     "  message?: string;",
+     "  const runMigration = async () => {",
+     "    try {",
+     "      setResult(migrationResult);"
+    ]
+   }
+  },
+  {
+   "path": "src/components/dashboard/DashboardView.tsx",
+   "status": "BOTH_CHANGED",
+   "hunk": "CONFLICT",
+   "patch_lines": 46,
+   "line_check": {
+    "added": 4,
+    "missing_in_main": 3,
+    "removed": 7,
+    "removed_still_in_main": 2,
+    "missing_sample": [
+     "  const { data: kpi, isPending } = useDashboardKpi({ queueId: filters.queueId, agentId: filters.agentId, from: filters.dateRange.from, until: filters.dateRange.",
+     "          filters={tab === 'overview' ? (",
+     "          <DashboardZone id=\"numeros\" title={filters.period !== 'today' ? 'Números do período' : 'Números de hoje'}>"
+    ],
+    "still_sample": [
+     "              <p className=\"text-2xs text-muted-foreground mb-1.5\" data-testid=\"dash-kpis-period-notice\">",
+     "              </p>"
+    ]
+   }
+  },
+  {
+   "path": "src/components/dashboard/ProgressiveDisclosureDashboard.tsx",
+   "status": "MAIN_UNCHANGED_SINCE_BASE",
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "patch_lines": 44,
+   "line_check": {
+    "added": 6,
+    "missing_in_main": 6,
+    "removed": 8,
+    "removed_still_in_main": 8,
+    "missing_sample": [
+     "import { useState, useMemo, useSyncExternalStore, useContext } from 'react';",
+     "import { QueryClientContext } from '@tanstack/react-query';",
+     "  const queryClient = useContext(QueryClientContext);",
+     "    (onCacheChange) => queryClient ? queryClient.getQueryCache().subscribe(onCacheChange) : () => {},",
+     "        ? queryClient.getQueryCache().getAll().reduce((maisRecente, q) => Math.max(maisRecente, q.state.dataUpdatedAt), 0)",
+     "  const handleRefresh = onRefresh ?? (() => { if (queryClient) void queryClient.refetchQueries(); });"
+    ],
+    "still_sample": [
+     "import { useState, useMemo, useSyncExternalStore } from 'react';",
+     "import { useQueryClient } from '@tanstack/react-query';",
+     "  const queryClient = useQueryClient();",
+     "    (onCacheChange) => queryClient.getQueryCache().subscribe(onCacheChange),",
+     "        .getQueryCache()",
+     "        .getAll()",
+     "        .reduce((maisRecente, q) => Math.max(maisRecente, q.state.dataUpdatedAt), 0),",
+     "  const handleRefresh = onRefresh ?? (() => { void queryClient.refetchQueries(); });"
+    ]
+   }
+  },
+  {
+   "path": "src/components/dashboard/WarRoomDashboard.tsx",
+   "status": "BOTH_CHANGED",
+   "hunk": "CONFLICT",
+   "patch_lines": 170,
+   "line_check": {
+    "added": 85,
+    "missing_in_main": 69,
+    "removed": 10,
+    "removed_still_in_main": 3,
+    "missing_sample": [
+     "  const allAlerts: WarRoomAlert[] = propsAlerts || realtimeAlerts.map(a => ({",
+     "  const [locallyDismissed, setLocallyDismissed] = useState<Set<string>>(new Set());",
+     "  const alerts = allAlerts.filter(a => !locallyDismissed.has(a.id));",
+     "    const handler = () => setIsFullscreen(!!document.fullscreenElement);",
+     "    document.addEventListener('fullscreenchange', handler);",
+     "    return () => document.removeEventListener('fullscreenchange', handler);",
+     "    if (!document.fullscreenElement) {",
+     "      void document.documentElement.requestFullscreen();",
+     "      setIsFullscreen(true);",
+     "    } else {",
+     "      void document.exitFullscreen();",
+     "      setIsFullscreen(false);",
+     "  const handleDismiss = async (alertId: string) => {",
+     "    setLocallyDismissed(prev => new Set([...prev, alertId]));",
+     "    const result = await dismissAlert(alertId);",
+     "    if (result?.error) {",
+     "      setLocallyDismissed(prev => { const next = new Set(prev); next.delete(alertId); return next; });",
+     "      toast.error('Não foi possível dispensar o alerta');",
+     "  if (realData.isLoading) {",
+     "      <div role=\"status\" aria-label=\"Carregando dados do War Room\" className=\"space-y-4 w-full min-w-0\">",
+     "        <div className=\"h-10 bg-muted/50 motion-safe:animate-pulse rounded-lg\" />",
+     "          {Array.from({ length: 6 }).map((_, i) => (",
+     "            <div key={i} className=\"h-24 bg-muted/50 motion-safe:animate-pulse rounded-lg\" />",
+     "  if (realData.isError) {",
+     "      <div role=\"alert\" className=\"space-y-3 p-4 rounded-lg bg-destructive/10 text-destructive\">"
+    ],
+    "still_sample": [
+     "  // Som do War Room obedece à preferência do painel (não a um `true` cravado).",
+     "    if (!document.fullscreenElement) { void document.documentElement.requestFullscreen(); setIsFullscreen(true); }",
+     "    else { void document.exitFullscreen(); setIsFullscreen(false); }"
+    ]
+   }
+  },
+  {
+   "path": "src/components/dashboard/overview/GamificationSection.tsx",
+   "status": "MAIN_UNCHANGED_SINCE_BASE",
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "patch_lines": 21,
+   "line_check": {
+    "added": 2,
+    "missing_in_main": 2,
+    "removed": 3,
+    "removed_still_in_main": 3,
+    "missing_sample": [
+     "import type { DashboardWidget } from '@/hooks/analytics/useDashboardWidgets';",
+     "  const configurados = visibleWidgets ?? [];"
+    ],
+    "still_sample": [
+     "import { useDashboardWidgets, DashboardWidget } from '@/hooks/analytics/useDashboardWidgets';",
+     "  const { visibleWidgets: configuradosPeloHook } = useDashboardWidgets();",
+     "  const configurados = visibleWidgets ?? configuradosPeloHook;"
+    ]
+   }
+  },
+  {
+   "path": "src/components/dashboard/useSentimentData.ts",
+   "status": "BOTH_CHANGED",
+   "hunk": "CONFLICT",
+   "patch_lines": 39,
+   "line_check": {
+    "added": 8,
+    "missing_in_main": 6,
+    "removed": 3,
+    "removed_still_in_main": 2,
+    "missing_sample": [
+     "  const [error, setError] = useState<Error | null>(null);",
+     "    setError(null);",
+     "    } catch (err) {",
+     "      log.error('Error fetching sentiment data:', err);",
+     "      setError(err instanceof Error ? err : new Error(String(err)));",
+     "  return { alerts, analyses, agents, loading, error, isError: error !== null, incomplete, stats, dailyData, agentData, fetchData };"
+    ],
+    "still_sample": [
+     "    } catch (error) {",
+     "      log.error('Error fetching sentiment data:', error);"
+    ]
+   }
+  },
+  {
+   "path": "src/components/gamification/__tests__/AchievementToast.test.tsx",
+   "status": "BOTH_CHANGED",
+   "hunk": "CONFLICT",
+   "patch_lines": 104,
+   "line_check": {
+    "added": 22,
+    "missing_in_main": 19,
+    "removed": 11,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     " * Simula uma conquista nova chegando via Realtime.",
+     " * O hook atual não assina `agent_achievements` diretamente; a conquista chega",
+     " * pelo aumento de `agent_stats.achievements_count`, que dispara re-fetch.",
+     "async function entregarConquista(c: Record<string, unknown>) {",
+     "  const statsData = h.stats.data as Record<string, unknown>;",
+     "  const atualCount = Number(statsData?.achievements_count ?? 0) + 1;",
+     "  h.conquistas = {",
+     "    data: [...(Array.isArray(h.conquistas.data) ? (h.conquistas.data as unknown[]) : []), c],",
+     "  } as Resposta;",
+     "  h.stats = { data: { ...statsData, achievements_count: atualCount }, error: null } as Resposta;",
+     "    h.handlers.get('agent_stats')?.({ new: { ...statsData, achievements_count: atualCount } });",
+     "    h.stats = { data: { id: 's1', profile_id: 'p1', xp: 100, level: 3, achievements_count: 0 }, error: null };",
+     "    await entregarConquista(conquista());",
+     "    await entregarConquista(conquista({ id: 'a1' }));",
+     "    await entregarConquista(conquista({ id: 'a1', achievement_name: 'Primeira conquista' }));",
+     "    await entregarConquista(conquista({ id: 'a2', achievement_name: 'Segunda conquista' }));",
+     "    await entregarConquista(conquista());",
+     "    await entregarConquista(conquista());",
+     "    await entregarConquista(conquista());"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/inbox/chat/ChatMessagesArea.tsx",
+   "status": "BOTH_CHANGED",
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "patch_lines": 12,
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "              data-message-id={message.id}"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/security/AuditLogDashboard.tsx",
+   "status": "BOTH_CHANGED",
+   "hunk": "CONFLICT",
+   "patch_lines": 173,
+   "line_check": {
+    "added": 62,
+    "missing_in_main": 59,
+    "removed": 25,
+    "removed_still_in_main": 4,
+    "missing_sample": [
+     "  const [profiles, setProfiles] = useState<Map<string, string>>(new Map());",
+     "  const [error, setError] = useState<string | null>(null);",
+     "  const fetchStats = useCallback(async () => {",
+     "    const since24h = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();",
+     "    const since7d = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();",
+     "    const [totalRes, todayRes, suspiciousRes, usersRes] = await Promise.all([",
+     "      supabase.from('audit_logs').select('*', { count: 'exact', head: true }),",
+     "      supabase.from('audit_logs').select('*', { count: 'exact', head: true }).gte('created_at', since24h),",
+     "      supabase.from('audit_logs').select('*', { count: 'exact', head: true }).gte('created_at', since24h).or('action.like.role_%,action.like.%delete%,action.lik",
+     "      supabase.from('audit_logs').select('user_id').gte('created_at', since7d).not('user_id', 'is', null),",
+     "    const errMsg = totalRes.error?.message ?? todayRes.error?.message ?? suspiciousRes.error?.message ?? usersRes.error?.message;",
+     "    if (errMsg) {",
+     "      setError(errMsg);",
+     "      return;",
+     "    setError(null);",
+     "    const uniqueUsers = new Set(",
+     "      ((usersRes.data ?? []) as { user_id: string }[]).map(r => r.user_id)",
+     "    ).size;",
+     "    setStats({",
+     "      total: totalRes.count ?? 0,",
+     "      today: todayRes.count ?? 0,",
+     "      suspicious: suspiciousRes.count ?? 0,",
+     "      uniqueUsers,",
+     "  }, []);",
+     "      .order('id', { ascending: false })"
+    ],
+    "still_sample": [
+     "          {truncated && (",
+     "            <p className=\"text-xs text-warning mt-1\">",
+     "              Exibindo os 200 registros mais recentes — pode haver registros mais antigos fora do recorte.",
+     "            </p>"
+    ]
+   }
+  },
+  {
+   "path": "src/components/talkx/TalkXSegments.tsx",
+   "status": "BOTH_CHANGED",
+   "hunk": "CONFLICT",
+   "patch_lines": 245,
+   "line_check": {
+    "added": 104,
+    "missing_in_main": 79,
+    "removed": 33,
+    "removed_still_in_main": 10,
+    "missing_sample": [
+     "  Archive, AlertTriangle, PowerOff, Tag, RotateCw,",
+     "import { useTalkXSegments, emptyRules, RULE_FIELDS, RULE_OPS, useAudienceEstimate, countAudience, type TalkXSegment, type TalkXSegmentLibraryStats, type TalkXSe",
+     "  const [selectedId, setSelectedId] = useState<string | null>(null);",
+     "  const selected = useMemo(() => segments.find((s) => s.id === selectedId) ?? null, [segments, selectedId]);",
+     "    setSelectedId(null);",
+     "    setSelectedId(s.id);",
+     "        setSelectedId(saved.id);",
+     "        if (selectedId === deleting.id) setSelectedId(null);",
+     "                    <tr key={s.id} tabIndex={-1} className={cn('border-b border-border/40 hover:bg-muted/20 cursor-pointer transition-colors', selectedId === s.",
+     "                              <DropdownMenuItem onClick={() => { setSelectedId(s.id); }}><Users className=\"w-4 h-4 mr-2\" />Ver detalhes</DropdownMenuItem>",
+     "          <SegmentDetailRail s={selected!} onEdit={() => openEdit(selected!)} onCampaign={() => onUseCampaign([selected!.id])} onClose={() => setSelectedId(null",
+     "function describeRule(r: { field: string; op: string; value: string }): string {",
+     "  const fieldDef = RULE_FIELDS.find((f) => f.value === r.field);",
+     "  const fieldLabel = fieldDef?.label ?? r.field;",
+     "  if (r.op === 'is_set') return `${fieldLabel} está preenchido`;",
+     "  if (r.op === 'is_empty') return `${fieldLabel} está vazio`;",
+     "  const opLabel =",
+     "    (fieldDef ? RULE_OPS[fieldDef.kind] ?? [] : []).find((o) => o.value === r.op)?.label ?? r.op;",
+     "  const valueStr = opLabel.includes('(dias)')",
+     "    ? opLabel.replace('(dias)', `${r.value} dias`)",
+     "    : `${opLabel} ${r.value}`;",
+     "  return `${fieldLabel} ${valueStr}`;",
+     "function SegmentDetailRail({",
+     "  onEdit,",
+     "  onCampaign,"
+    ],
+    "still_sample": [
+     "  const [selected, setSelected] = useState<TalkXSegment | null>(null);",
+     "    setSelected(null);",
+     "    setSelected(s);",
+     "        setSelected(saved);",
+     "        if (selected?.id === deleting.id) setSelected(null);",
+     "                              <DropdownMenuItem onClick={() => { setSelected(s); }}><Users className=\"w-4 h-4 mr-2\" />Ver detalhes</DropdownMenuItem>",
+     "      <MetaRow label=\"Último uso\" value={s.last_used_at ? fmtDateTime(s.last_used_at) : 'Nunca'} />",
+     "            </div>",
+     "        <GhostButton icon={Pencil} onClick={onEdit} className=\"w-full justify-center\">Editar segmento</GhostButton>",
+     "    </RailCard>"
+    ]
+   }
+  },
+  {
+   "path": "src/components/talkx/segments/TalkXSegmentBuilder.tsx",
+   "status": "MAIN_UNCHANGED_SINCE_BASE",
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "patch_lines": 33,
+   "line_check": {
+    "added": 13,
+    "missing_in_main": 11,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  // Esc fecha o construtor (ou abre o aviso de alterações não salvas, se sujo).",
+     "  // defaultPrevented = o Radix já tratou o Esc de um diálogo interno — não fechar.",
+     "  const requestExitRef = React.useRef<() => void>(() => {});",
+     "    const onEsc = (e: KeyboardEvent) => {",
+     "      // eslint-disable-next-line local/no-secret-compare",
+     "      if (e.key !== 'Escape' || e.defaultPrevented) return;",
+     "      requestExitRef.current();",
+     "    document.addEventListener('keydown', onEsc);",
+     "    return () => document.removeEventListener('keydown', onEsc);",
+     "  // Mantém o ref sincronizado após cada render para o Esc handler sempre capturar o `dirty` atual.",
+     "  React.useEffect(() => { requestExitRef.current = requestExit; });"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/ui/__tests__/VolumeDial.test.tsx",
+   "status": "BOTH_CHANGED",
+   "hunk": "CONFLICT",
+   "patch_lines": 42,
+   "line_check": {
+    "added": 18,
+    "missing_in_main": 16,
+    "removed": 1,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "// jsdom não faz layout; fixa o centro do dial em (0,0) para que os eventos de ponteiro",
+     "// usem coordenadas relativas à origem (topo=(0,-100), direita=(100,0), etc.).",
+     "const mockRect: DOMRect = {",
+     "  left: -48, top: -48, right: 48, bottom: 48,",
+     "  width: 96, height: 96, x: -48, y: -48,",
+     "  Object.defineProperty(Element.prototype, 'getBoundingClientRect', {",
+     "    configurable: true, writable: true,",
+     "    value: () => mockRect,",
+     "  Object.defineProperty(HTMLElement.prototype, 'getBoundingClientRect', {",
+     "    configurable: true, writable: true,",
+     "    value: () => mockRect,",
+     "afterEach(() => {",
+     "  vi.restoreAllMocks();",
+     "  // Remove o override; a próxima chamada sobe para Element.prototype nativo.",
+     "  delete (Element.prototype as unknown as Record<string, unknown>)['getBoundingClientRect'];",
+     "  delete (HTMLElement.prototype as unknown as Record<string, unknown>)['getBoundingClientRect'];"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/hooks/admin/useMediaMigrationData.ts",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "patch_lines": 86,
+   "line_check": {
+    "added": 62,
+    "missing_in_main": 62,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "import { useEffect, useState } from 'react';",
+     "import { supabase } from '@/integrations/supabase/client';",
+     "type PendingState =",
+     "  | { type: 'loading' }",
+     "  | { type: 'ok'; count: number }",
+     "  | { type: 'error' };",
+     "interface AuditLog {",
+     "  id: string;",
+     "  user_id: string | null;",
+     "  created_at: string;",
+     "  details: {",
+     "    processed: number;",
+     "    migrated: number;",
+     "    failed: number;",
+     "    ignored: number;",
+     "interface Profile {",
+     "  user_id: string;",
+     "  name: string;",
+     "export function useMediaMigrationData() {",
+     "  const [pending, setPending] = useState<PendingState>({ type: 'loading' });",
+     "  const [logs, setLogs] = useState<AuditLog[]>([]);",
+     "  const [profiles, setProfiles] = useState<Profile[]>([]);",
+     "  useEffect(() => {",
+     "    async function countPending() {",
+     "      const [mmg, pps] = await Promise.all(["
+    ],
+    "still_sample": [],
+    "same_basename_in_main": []
+   }
+  },
+  {
+   "path": "src/hooks/business/useWarRoomData.ts",
+   "status": "MAIN_UNCHANGED_SINCE_BASE",
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "patch_lines": 128,
+   "line_check": {
+    "added": 61,
+    "missing_in_main": 24,
+    "removed": 35,
+    "removed_still_in_main": 35,
+    "missing_sample": [
+     "      const activeProfiles = await supabase.from('profiles').select('id, user_id').eq('is_active', true);",
+     "      try {",
+     "        const today = await supabase.rpc('warroom_agent_today');",
+     "      } catch {",
+     "        return (activeProfiles.data ?? []).map(p => ({",
+     "          id: p.id,",
+     "          user_id: p.user_id ?? null,",
+     "          name: '',",
+     "          avatar: undefined,",
+     "          activeChats: 0,",
+     "          maxChats: 0,",
+     "          avgResponseTime: null,",
+     "          resolvedToday: 0,",
+     "          satisfaction: null,",
+     "      const baseQueues = await supabase.from('queues').select('id, name, color').eq('is_active', true);",
+     "      if (baseQueues.error) throw baseQueues.error;",
+     "      try {",
+     "      } catch {",
+     "        return ((baseQueues.data ?? []) as { id: string; name: string; color: string | null }[]).map(q => ({",
+     "          waiting: 0,",
+     "          inProgress: 0,",
+     "          slaBreaches: 0,",
+     "          slaWarnings: null,",
+     "          avgWaitTime: null,"
+    ],
+    "still_sample": [
+     "      const [today, activeProfiles] = await Promise.all([",
+     "        supabase.rpc('warroom_agent_today'),",
+     "        supabase.from('profiles').select('id, user_id').eq('is_active', true),",
+     "      if (today.error) throw today.error;",
+     "      const rows = (today.data ?? []) as unknown as WarRoomAgentRpcRow[];",
+     "      if (rows.length > WARROOM_MAX_ROWS) {",
+     "        throw new Error(`warroom_agent_today devolveu ${rows.length} linhas`);",
+     "      return rows.map((r): WarRoomAgentBase => ({",
+     "        id: r.id,",
+     "        user_id: userIdByProfile.get(r.id) ?? null,"
+    ]
+   }
+  },
+  {
+   "path": "src/hooks/chat/useFilesContainerColumns.ts",
+   "status": "BOTH_CHANGED",
+   "hunk": "PRESENT_REVERSE_APPLIES",
+   "patch_lines": 13
+  },
+  {
+   "path": "src/integrations/supabase/types.ts",
+   "status": "BOTH_CHANGED",
+   "hunk": "CONFLICT",
+   "patch_lines": 183,
+   "line_check": {
+    "added": 103,
+    "missing_in_main": 20,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "        Args: Record<PropertyKey, never>",
+     "          last_return_message: string | null",
+     "          last_run_at: string | null",
+     "          last_status: string | null",
+     "      app_bootstrap: {",
+     "        Args: Record<PropertyKey, never>",
+     "      inbox_unread_total: {",
+     "        Args: Record<PropertyKey, never>",
+     "      transfer_conversation:",
+     "              p_note?: string | null",
+     "              p_to_agent_id?: string | null",
+     "              p_to_queue_id?: string | null",
+     "              p_expected_agent_id?: string | null",
+     "              p_note?: string | null",
+     "              p_to_agent_id?: string | null",
+     "              p_to_queue_id?: string | null",
+     "      warroom_agent_today: {",
+     "        Args: { p_date?: string }",
+     "      warroom_queue_stats: {",
+     "        Args: Record<PropertyKey, never>"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/pages/__tests__/n066-a11y-combobox-progressbar.test.tsx",
+   "status": "BOTH_CHANGED",
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "patch_lines": 23,
+   "line_check": {
+    "added": 7,
+    "missing_in_main": 7,
+    "removed": 1,
+    "removed_still_in_main": 1,
+    "missing_sample": [
+     "    from: () => ({",
+     "      select: () => ({",
+     "        like: async () => ({ count: 0, error: null }),",
+     "        eq: () => ({",
+     "          order: () => ({",
+     "            limit: async () => ({ data: [], error: null }),",
+     "        in: async () => ({ data: [], error: null }),"
+    ],
+    "still_sample": [
+     "    from: () => ({ select: () => ({ eq: () => ({ order: async () => ({ data: [], error: null }) }) }) }),"
+    ]
+   }
+  }
+ ],
+ "counts": {
+  "migrations": "0",
+  "workflows": "1",
+  "src": "18",
+  "edges": "0",
+  "docs_only": "no",
+  "lines_branch_has_main_lacks": "1564",
+  "lines_main_has_branch_lacks": "3852"
+ },
+ "auto": "MISTO_CONFLITO",
+ "n_files_with_gaps": 21,
+ "gap_lines_total": 725
+}

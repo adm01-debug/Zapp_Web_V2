@@ -1,0 +1,1039 @@
+{
+ "id": "fix__ci-verde-261021",
+ "kind": "branch",
+ "ref": "origin/fix/ci-verde-261021",
+ "tip": "64934014e107190fc83f304c291a2faf35308b7b",
+ "merge_base": "9911bc007fb791a36e3a569580c69e5c37309ecb",
+ "ahead": 7,
+ "last_commit_date": "2026-10-21",
+ "merge_base_date": "2026-10-21",
+ "prs_with_same_tip": [
+  2155,
+  2444
+ ],
+ "triagem_2804": {
+  "2155": "OBSOLETA",
+  "2444": "OBSOLETA"
+ },
+ "closure_comment": {},
+ "files": [
+  {
+   "path": ".github/toolchain.json",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": ".github/workflows/ci.yml",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 157,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 73,
+    "missing_in_main": 28,
+    "removed": 8,
+    "removed_still_in_main": 1,
+    "missing_sample": [
+     "      - name: 🧩 Run ignore-build proof",
+     "  coverage:",
+     "    name: 📊 Coverage",
+     "    # A suíte roda em todo evento do CI (PR inclusive). E72 limita só o artifact:",
+     "    # o upload abaixo continua exclusivo de push na main.",
+     "    timeout-minutes: 40",
+     "      - name: 🧪 Run Vitest coverage",
+     "        run: bun run test:coverage",
+     "      # E72 (G-32): cobertura só na main, inclusive quando a suíte falha,",
+     "      # para diagnosticar. PR e dispatch não publicam artifact.",
+     "      # Sem if-no-files-found: ignore — artifact vazio não pode passar.",
+     "      - name: 📊 Upload coverage report",
+     "        if: always() && github.event_name == 'push' && github.ref == 'refs/heads/main'",
+     "          name: coverage-report",
+     "          path: coverage/",
+     "          retention-days: 7",
+     "          if-no-files-found: error",
+     "          key: pw-cfw-1.64.1-${{ hashFiles('bun.lock') }}-${{ runner.os }}",
+     "        run: bunx playwright@1.64.1 install-deps chromium firefox webkit",
+     "      # E88: auth.spec.ts no PR roda só no projeto chromium. firefox-auth e",
+     "      # webkit-auth continuam no e2e-logado.yml (depois do merge), deslogados,",
+     "      # sem E2E_TEST_EMAIL/E2E_TEST_PASSWORD.",
+     "          # Run 39595253173: histórico reescrito → `origin/${BASE_REF}...HEAD` sai 128",
+     "          # (fatal: no merge base) e o job continue-on-error pinta o check de vermelho.",
+     "          # Não falha aberto: map_changed=true rodaria a suíte em todo PR sem ancestral."
+    ],
+    "still_sample": [
+     "          key: pw-cfw-${{ hashFiles('bun.lock') }}-${{ runner.os }}"
+    ]
+   }
+  },
+  {
+   "path": ".github/workflows/e2e-logado.yml",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 23,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 3,
+    "missing_in_main": 3,
+    "removed": 3,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "          key: pw-cfw-1.64.1-${{ hashFiles('bun.lock') }}-${{ runner.os }}",
+     "        run: bunx playwright@1.64.1 install --with-deps chromium firefox webkit",
+     "        run: bunx playwright@1.64.1 install-deps chromium firefox webkit"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": ".github/workflows/e2e-talkx.yml",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 23,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 3,
+    "missing_in_main": 2,
+    "removed": 3,
+    "removed_still_in_main": 1,
+    "missing_sample": [
+     "          key: pw-c-1.64.1-${{ hashFiles('bun.lock') }}-${{ runner.os }}",
+     "        run: bunx playwright@1.64.1 install-deps chromium"
+    ],
+    "still_sample": [
+     "          key: pw-c-${{ hashFiles('bun.lock') }}-${{ runner.os }}"
+    ]
+   }
+  },
+  {
+   "path": ".github/workflows/notifica-falha-main.yml",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 13,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 2,
+    "missing_in_main": 2,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "#   falha: a issue de alerta nao e aberta e a falha da main fica sem dono",
+     "#   avisa: issue no repositorio para quem opera a main"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": ".github/workflows/talkx-status-regen.yml",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 16,
+   "hunk": "PRESENT_REVERSE_APPLIES"
+  },
+  {
+   "path": ".github/workflows/vercel-env-cleanup.yml",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 45,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 13,
+    "missing_in_main": 5,
+    "removed": 3,
+    "removed_still_in_main": 1,
+    "missing_sample": [
+     "#   gatilho: workflow_dispatch",
+     "#   prova: lista ou remove vars mortas do projeto Vercel (V043-V065)",
+     "#   falha: nenhuma var e alterada; o script sai com erro",
+     "#   avisa: quem disparou o workflow",
+     "      - name: Setup Node"
+    ],
+    "still_sample": [
+     "        run: node scripts/ci/vercel-env-cleanup.mjs"
+    ]
+   }
+  },
+  {
+   "path": "CLAUDE.md",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 21,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 2,
+    "missing_in_main": 2,
+    "removed": 8,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "**Correção de 2026-10-21:** são **15** arquivos em `.github/workflows/` (saiu `auto-update-pr-branch.yml`, `settings-guard.yml` e `supabase-sync.yml`; entrou `n",
+     "(`scripts/ci/render-workflow-docs.mjs --check`), não a lista manual. Plano completo em"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "docs/DB-INVENTORY.md",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 145,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 22,
+    "missing_in_main": 13,
+    "removed": 18,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "(campo `generated_at`: 2026-10-16; identidade do banco: schema=`public` database=`postgres`",
+     "| Tabelas (`tables`) | 171 |",
+     "| Colunas (`columns`) | 1995 |",
+     "| Funções (`functions`) | 281 |",
+     "| Assinaturas de função (`function_signatures`) | 282 |",
+     "| Funções de gatilho (`trigger_functions`) | 72 |",
+     "| Restrições de verificação (`check_constraints`) | 168 |",
+     "Status apurado sobre o catálogo commitado (`generated_at` 2026-10-16) e os",
+     "| `app_settings` | Configuração chave/valor lida pelo banco, como os domínios confiáveis | roadmap | — |",
+     "| `connection_alert_preferences` | Preferências de alerta quando uma conexão do WhatsApp cai | ativo | `src/components/alerts/__tests__/EvolutionDisconnectBanne",
+     "| `gmail_oauth_states` | Estados temporários e de uso único do OAuth do Gmail | ativo | `supabase/functions/gmail-oauth/index.test.ts`, `supabase/functions/gmai",
+     "| `search_events` | Eventos de busca da caixa, usados nos insights de pesquisa | ativo | `src/components/inbox/__tests__/useGlobalSearchData.eventos.test.tsx`, ",
+     "| `talkx_storage_purge_queue` | Fila de objetos do TalkX aguardando expurgo no storage | ativo | `supabase/functions/talkx-storage-purge/index.test.ts`, `supaba"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "docs/audits/PLANO_GITHUB_ACTIONS_100_ETAPAS_2026-10-01.md",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 24,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 3,
+    "missing_in_main": 2,
+    "removed": 3,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "**Inventário atual (medido em 2026-10-21, não herdado do texto de 01/10):** **15** arquivos YAML em `.github/workflows/`, mais os",
+     "| **E62** destino do `db-migrate.yml` | `[~]` **PARCIAL** | PR #1778 extraiu 12 contratos para `scripts/db-audit/run-runtime-contract.mjs`; hoje `.github/workfl"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "docs/ci/README.md",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 129,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 40,
+    "missing_in_main": 17,
+    "removed": 21,
+    "removed_still_in_main": 4,
+    "missing_sample": [
+     "**15 workflows.**",
+     "| CodeQL | [`codeql.yml`](../../.github/workflows/codeql.yml) | agendado (semanal) e dispatch | analise estatica de seguranca (SAST) de src, scripts, functions ",
+     "| Notifica falha na main | [`notifica-falha-main.yml`](../../.github/workflows/notifica-falha-main.yml) | workflow_run (conclusao dos workflows principais na ma",
+     "| V043-V065 Vercel Env Cleanup | [`vercel-env-cleanup.yml`](../../.github/workflows/vercel-env-cleanup.yml) | workflow_dispatch | lista ou remove vars mortas do",
+     "- **O que prova:** quais branches sao podaveis e quais PRs estao paradas ha mais de 7 dias",
+     "- **Quando falha:** relatorio nao e publicado nem a issue e atualizada",
+     "- **O que prova:** lint, tipos, testes, build, security e E2E do codigo",
+     "- **Gatilho:** push na main e dispatch sobre main",
+     "- **O que prova:** o fluxo logado (Playwright com login real) contra producao",
+     "- **Quando falha:** artefato do Playwright e issue/relatorio; nunca roda em PR de terceiro",
+     "- **Quem é avisado:** issue de E2E e autor do push",
+     "- **Quando falha:** a issue de alerta nao e aberta e a falha da main fica sem dono",
+     "- **Quem é avisado:** issue no repositorio para quem opera a main",
+     "- **Gatilho:** workflow_dispatch",
+     "- **O que prova:** lista ou remove vars mortas do projeto Vercel (V043-V065)",
+     "- **Quando falha:** nenhuma var e alterada; o script sai com erro",
+     "- **Quem é avisado:** quem disparou o workflow"
+    ],
+    "still_sample": [
+     "| Settings Guard | [`settings-guard.yml`](../../.github/workflows/settings-guard.yml) | agendado e dispatch | o perimetro do GitHub (branch protection, merge, e",
+     "- **Gatilho:** pull_request, push na main e dispatch",
+     "- **Quem é avisado:** quem disparou",
+     "- **Quem é avisado:** quem disparou"
+    ]
+   }
+  },
+  {
+   "path": "docs/talkx/README.md",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 12,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "| [ESTADOS.md](./ESTADOS.md) | Matriz tela × estado, gerada por `scripts/talkx/gen-estados.mjs` |"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "e2e/auth.spec.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 53,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 13,
+    "missing_in_main": 13,
+    "removed": 15,
+    "removed_still_in_main": 1,
+    "missing_sample": [
+     "    await expect(page.getByRole('heading', { name: 'ZAPP Web' })).toBeVisible();",
+     "    // type=\"email\" blocks \"notanemail\" before submit, so the zod message never",
+     "    // mounts. \"a@b\" passes the browser and fails loginSchema → \"Email inválido\".",
+     "    await page.getByRole('textbox', { name: /e-?mail/i }).fill('a@b');",
+     "    await page.getByRole('button', { name: /^entrar$/i }).click();",
+     "    // Playwright 1.64 não tira nome acessível do conteúdo de role=alert",
+     "    // (allowsNameFromContent). O texto existe; o name fica vazio.",
+     "    await expect(page.getByRole('alert').filter({ hasText: 'Email inválido' })).toBeVisible();",
+     "  test('login column has email, password and Entrar and no signup tab', async ({ page }) => {",
+     "    await expect(page.getByRole('textbox', { name: /e-?mail/i })).toBeVisible();",
+     "    await expect(page.locator('input[type=\"password\"]').first()).toBeVisible();",
+     "    await expect(page.getByRole('button', { name: /^entrar$/i })).toBeVisible();",
+     "    await expect(page.getByRole('tab', { name: /criar conta/i })).toHaveCount(0);"
+    ],
+    "still_sample": [
+     "    await page.goto('/');"
+    ]
+   }
+  },
+  {
+   "path": "scripts/ci/check-talkx-docs.unit.mjs",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 12,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 0,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "scripts/ci/ci-docs-baseline.unit.mjs",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 60,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 13,
+    "missing_in_main": 13,
+    "removed": 9,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  assert.equal(arquivos.length, 15);",
+     "  assert.match(readme, /\\*\\*15 workflows\\.\\*\\*/);",
+     "  assert.deepEqual(violacoesContagemClaude(await readFile(CLAUDE, 'utf8'), 15), []);",
+     "  assert.match(chato, /\\*\\*15\\*\\* arquivos YAML em `\\.github\\/workflows\\/`/);",
+     "  const toolchain = JSON.parse(await readFile(join(RAIZ, '.github/toolchain.json'), 'utf8'));",
+     "  const pw = toolchain.playwright;",
+     "  assert.match(pw, /^\\d+\\.\\d+\\.\\d+$/);",
+     "  const pin = `playwright@${pw}`;",
+     "  assert.ok(lock.includes(pin), `bun.lock deve resolver ${pin}`);",
+     "  assert.ok(lock.includes(`playwright-core@${pw}`));",
+     "  assert.ok(lock.includes(`@playwright/test@${pw}`));",
+     "    assert.ok(wf.includes(pin), `${f} deve pinar ${pin}`);",
+     "  assert.ok(e76.linha.includes(pw), `E76 deve citar ${pw}`);"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "scripts/ci/marcador-specs.mjs",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 25,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 0,
+    "removed": 5,
+    "removed_still_in_main": 5,
+    "missing_sample": [],
+    "still_sample": [
+     " * Título da issue de acordo com a causa detectada.",
+     " * Prefixo \"[e2e-logado]\" é mantido para que o workflow de fechamento ache a issue pelo título.",
+     "export function tituloDe(nomes) {",
+     "  if (eLoginFalhou(nomes)) return '[e2e-logado] login E2E falhou';",
+     "  return '[e2e-logado] Suíte logada quebrada na main';"
+    ]
+   }
+  },
+  {
+   "path": "scripts/ci/workflow-contracts.unit.mjs",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 13,
+   "hunk": "PRESENT_REVERSE_APPLIES"
+  },
+  {
+   "path": "scripts/db-audit/check-migration-drift.test.mjs",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 12,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "    'sql-sha256': statementsHash(statements),"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "scripts/db-audit/grants-baseline.json",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 43,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 8,
+    "missing_in_main": 8,
+    "removed": 7,
+    "removed_still_in_main": 1,
+    "missing_sample": [
+     "    \"anon_execute\": [],",
+     "    \"generated_at\": \"2026-10-21\",",
+     "        \"whatsapp_connections\",",
+     "        \"whatsapp_connections_agent\",",
+     "        \"whatsapp_connections_public\",",
+     "        \"whatsapp_connections_safe\",",
+     "    \"service_role_execute_count\": 285,",
+     "    \"authenticated_execute_count\": 152"
+    ],
+    "still_sample": [
+     "    \"anon_execute\": ["
+    ]
+   }
+  },
+  {
+   "path": "scripts/db-audit/known-violations.json",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 36,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 0,
+    "missing_in_main": 0,
+    "removed": 7,
+    "removed_still_in_main": 0,
+    "missing_sample": [],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "scripts/db-audit/migration-evidence.json",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 20,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 7,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "      \"justification\": \"O arquivo e um registro intencional somente com comentarios no ledger: a ausencia de policy SELECT em search_events e decisao de 2026-10"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "scripts/vercel/ignore-build.unit.mjs",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 76,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 14,
+    "missing_in_main": 13,
+    "removed": 15,
+    "removed_still_in_main": 9,
+    "missing_sample": [
+     "// V077: Testes do ignore-build.sh com git temporário.",
+     "import { mkdirSync, mkdtempSync, writeFileSync, rmSync } from 'node:fs';",
+     "const SCRIPT = new URL('./ignore-build.sh', import.meta.url).pathname;",
+     "function run(env = {}, cwd = process.cwd()) {",
+     "    execSync(`sh \"${SCRIPT}\"`, { env: fullEnv, cwd, stdio: 'pipe' });",
+     "  run({ VERCEL_ENV: 'production' }, tmpRepo),",
+     "const semGit = mkdtempSync(join(tmpdir(), 'ignore-build-nogit-'));",
+     "  run({ VERCEL_ENV: 'preview' }, semGit),",
+     "  run({ VERCEL_ENV: 'preview', VERCEL_GIT_PREVIOUS_SHA: base }, tmpRepo),",
+     "mkdirSync(join(tmpRepo, 'src'));",
+     "execSync('git add . && git commit -q -m \"src change\"', { cwd: tmpRepo, shell: true });",
+     "  run({ VERCEL_ENV: 'preview', VERCEL_GIT_PREVIOUS_SHA: base }, tmpRepo),",
+     "rmSync(semGit, { recursive: true, force: true });"
+    ],
+    "still_sample": [
+     "// V077: Testes unitários para ignore-build.sh (sem git real).",
+     "const SCRIPT = new URL('../../scripts/vercel/ignore-build.sh', import.meta.url).pathname;",
+     "  run({ VERCEL_ENV: 'production', HOME: tmpRepo }, 1),",
+     "// T2: Sem SHA base e sem git: fail-open (builda).",
+     "// T3: Base definido, apenas README (não-front) mudou → pula.",
+     "  run({ VERCEL_ENV: 'preview', VERCEL_GIT_PREVIOUS_SHA: base }, 0, tmpRepo),",
+     "// T4: Base definido, src/ mudou → builda.",
+     "execSync('git -C \"' + tmpRepo + '\" add . && git -C \"' + tmpRepo + '\" commit -q -m \"src change\"', { shell: true });",
+     "const head2 = execSync('git -C \"' + tmpRepo + '\" log --format=%H -n 1', { shell: true }).toString().trim();"
+    ]
+   }
+  },
+  {
+   "path": "src/components/inbox/ChatPanel.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 17,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 3,
+    "missing_in_main": 3,
+    "removed": 3,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "      p_to_agent_id: type === 'agent' ? targetId : undefined,",
+     "      p_to_queue_id: type === 'queue' ? targetId : undefined,",
+     "      p_note: message ?? undefined,"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/inbox/RealtimeCollaboration.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 15,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 2,
+    "missing_in_main": 2,
+    "removed": 2,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "      p_to_queue_id: undefined,",
+     "      p_note: trimmedComment || undefined,"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/inbox/__tests__/ChatTransferContract.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 31,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 4,
+    "missing_in_main": 2,
+    "removed": 2,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  createLogger: () => ({ debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() }),",
+     "  generateCorrelationId: () => 'corr-test',"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/inbox/collaboration/__tests__/RealtimeCollaboration.handoff.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 15,
+   "hunk": "PRESENT_REVERSE_APPLIES"
+  },
+  {
+   "path": "src/hooks/chat/__tests__/useConversationActions.test.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 56,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 8,
+    "missing_in_main": 1,
+    "removed": 8,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "    it('nota vazia ou só espaços vira p_note indefinido', async () => {"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/hooks/chat/useConversationActions.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 17,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 3,
+    "missing_in_main": 3,
+    "removed": 3,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "      p_to_agent_id: type === 'agent' ? targetId : undefined,",
+     "      p_to_queue_id: type === 'queue' ? targetId : undefined,",
+     "      p_note: trimmedNote || undefined,"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/hooks/inbox/__tests__/useInboxBulkActions.test.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 52,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 8,
+    "missing_in_main": 2,
+    "removed": 8,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  it('fila: manda p_to_queue_id e deixa p_to_agent_id indefinido', async () => {",
+     "  it('a mensagem opcional NÃO é persistida (p_note fica indefinido)', async () => {"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/hooks/inbox/useConnectionsManager.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 13,
+   "hunk": "PRESENT_REVERSE_APPLIES"
+  },
+  {
+   "path": "src/hooks/inbox/useInboxBulkActions.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 17,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 3,
+    "missing_in_main": 3,
+    "removed": 3,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "          p_to_agent_id: type === 'agent' ? targetId : undefined,",
+     "          p_to_queue_id: type === 'queue' ? targetId : undefined,",
+     "          p_note: undefined,"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/integrations/supabase/types.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 74,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 33,
+    "missing_in_main": 0,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "supabase/functions/_shared/evolution-webhook-handlers.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 174,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 71,
+    "missing_in_main": 59,
+    "removed": 49,
+    "removed_still_in_main": 19,
+    "missing_sample": [
+     "function presenceValues(presenceData: Record<string, unknown>): string[] {",
+     "  const raw = presenceData.presences;",
+     "  if (isRecord(raw) && Object.keys(raw).length > 0) {",
+     "    for (const pState of Object.values(raw)) {",
+     "      if (!isRecord(pState)) continue;",
+     "      const valor = pState.lastKnownPresence ?? pState.status;",
+     "      if (typeof valor === 'string' && valor) estados.push(valor.toLowerCase());",
+     "    return estados;",
+     "  const direto = presenceData.status ?? presenceData.lastKnownPresence;",
+     "  if (typeof direto === 'string' && direto) estados.push(direto.toLowerCase());",
+     "  return estados;",
+     "/** Autor de grupo identificável: JID real, não a chave sintética \"1\" nem broadcast. */",
+     "function identifiableAuthor(value: unknown): string | null {",
+     "  if (typeof value !== 'string') return null;",
+     "  const v = value.trim();",
+     "  if (!v || v === '1') return null;",
+     "  if (v.includes('@')) {",
+     "    if (v.endsWith('@broadcast') || v.endsWith('@g.us')) return null;",
+     "    return v;",
+     "  const digits = v.replace(/\\D/g, '');",
+     "  return digits.length >= 8 && digits.length <= 15 ? v : null;",
+     "function groupAuthor(presenceData: Record<string, unknown>): string | null {",
+     "  const direct = identifiableAuthor(presenceData.participant) ?? identifiableAuthor(presenceData.participantJid);",
+     "  if (direct) return direct;",
+     "  const raw = presenceData.presences;"
+    ],
+    "still_sample": [
+     "    const estados: string[] = [];",
+     "    if (presences) {",
+     "    } else {",
+     "    const isComposing = estados.includes('composing');",
+     "    const phone = normalizePhone(jid);",
+     "      const connection = await getConnectionByInstance(supabase, instance);",
+     "      if (connection) {",
+     "        const contact = await getContactByPhone(supabase, phone, connection.id);",
+     "        if (contact) {",
+     "          supabase.removeChannel(channel);"
+    ]
+   }
+  },
+  {
+   "path": "supabase/functions/_shared/gmail-helpers.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 80,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 29,
+    "missing_in_main": 24,
+    "removed": 11,
+    "removed_still_in_main": 1,
+    "missing_sample": [
+     "/** 409: o app abre a reconexão em vez de mostrar um 500 genérico de envio. */",
+     "export function gmailReauthErrorPayload(): { error: string; code: \"reauth_required\" } {",
+     "  return { error: GMAIL_REAUTH_MESSAGE, code: \"reauth_required\" };",
+     "  const update: Record<string, unknown> = { sync_status: status, last_error: lastError };",
+     "  // Espera crescente só na falha transitória. reauth_required exige reconectar —",
+     "  // o cron nem tenta de novo, então não agenda next_attempt_at.",
+     "  if (status === \"error\") {",
+     "    const n = Math.max(1, attempts);",
+     "    update.error_count = n;",
+     "    update.next_attempt_at = gmailNextAttemptAt(n);",
+     "    .update(update)",
+     "/** Contas que o cron pode tentar agora: pula reauth e a espera ainda não vencida. */",
+     "export function selectGmailAccountsDue<T extends { sync_status?: string | null; next_attempt_at?: string | null }>(",
+     "    if (account.sync_status === \"reauth_required\") return false;",
+     "    if (typeof account.next_attempt_at === \"string\" && account.next_attempt_at.length > 0) {",
+     "      const due = Date.parse(account.next_attempt_at);",
+     "      if (Number.isFinite(due) && due > nowMs) return false;",
+     "    return true;",
+     "// 1 min, 2 min, 4 min… teto de 6 h. `attempts` é o número de falhas seguidas",
+     "// DEPOIS de contar a que acabou de acontecer.",
+     "function gmailNextAttemptAt(attempts: number, nowMs = Date.now()): string {",
+     "  const exp = Math.min(Math.max(1, attempts), 9);",
+     "  const delayMs = Math.min(6 * 60 * 60 * 1000, 60_000 * 2 ** (exp - 1));",
+     "  return new Date(nowMs + delayMs).toISOString();"
+    ],
+    "still_sample": [
+     "  const response = await fetch(\"https://oauth2.googleapis.com/token\", {"
+    ]
+   }
+  },
+  {
+   "path": "supabase/functions/_shared/validation.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 12,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "export { isAllowedOrigin, FALLBACK_ORIGIN };"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "supabase/functions/auth-login/index.test.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 106,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 18,
+    "missing_in_main": 6,
+    "removed": 6,
+    "removed_still_in_main": 4,
+    "missing_sample": [
+     "  profiles: { data: { is_active: boolean | null } | null; error: unknown } | null = { data: { is_active: true }, error: null },",
+     "  const signOuts: Array<{ jwt: string; scope: string }> = [];",
+     "        signOut(jwt: string, scope: \"global\" | \"local\" | \"others\") {",
+     "/** Limiter injetável: por padrão permite. Os testes de indisponibilidade passam o próprio. */",
+     "function fakeRateLimit(result: { allowed: boolean; unavailable?: boolean } = { allowed: true }) {",
+     "    enforceRateLimit(_key: string, _max: number, _windowMs: number) {"
+    ],
+    "still_sample": [
+     "  profiles: { data: { is_active: boolean | null } | null; error: unknown } = { data: { is_active: true }, error: null },",
+     "  assertEquals(admin.calls.map((c) => c.fn), [\"resolve_network_policy\"]);",
+     "  assertEquals(admin.calls.map((c) => c.fn), [\"resolve_network_policy\"]);",
+     "  assertEquals(admin.calls.map((c) => c.fn), [\"resolve_network_policy\"]);"
+    ]
+   }
+  },
+  {
+   "path": "supabase/functions/auth-login/index.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 125,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 42,
+    "missing_in_main": 40,
+    "removed": 18,
+    "removed_still_in_main": 2,
+    "missing_sample": [
+     "  enforceRateLimit,",
+     "export interface LoginAdminClient extends NetworkPolicyRpcClient {",
+     "      signOut: (",
+     "        jwt: string,",
+     "        scope: \"global\" | \"local\" | \"others\",",
+     "      ) => PromiseLike<{ error: { message?: string } | null }>;",
+     "  // Opcional: o gate `consume_login_gate` já aplica IP+e-mail. Quando injetado",
+     "  // (produção usa `enforceRateLimit`), uma indisponibilidade do contador",
+     "  // persistente falha FECHADO antes do gate — o contador em memória zera no",
+     "  // cold start e não pode ser a única guarda por conta.",
+     "  enforceRateLimit?: (",
+     "  ) => PromiseLike<{ allowed: boolean; unavailable?: boolean }>;",
+     "const EMAIL_LIMIT_WINDOW_MS = EMAIL_LIMIT_WINDOW_SECONDS * 1000;",
+     "    // Guarda extra do contador persistente, ANTES do gate: se o RPC de rate",
+     "    // limit não respondeu, o login por e-mail não pode seguir só com o contador",
+     "    // em memória. Testes offline que não injetam o limiter ficam no gate único.",
+     "    const limit = deps.enforceRateLimit;",
+     "    if (limit) {",
+     "      const ipRl = await limit(",
+     "        `auth-login:${ip}`,",
+     "        policy.rateLimitMaxRequests,",
+     "        policy.rateLimitWindowSeconds * 1000,",
+     "      if (ipRl.unavailable) {",
+     "        log.error(\"rate limit persistente indisponivel; negando login por IP\");",
+     "        log.done(503, { reason: \"rate_limit_unavailable\" });"
+    ],
+    "still_sample": [
+     "      return errorResponse(\"Internal error\", 500, req);",
+     "    return handleLogin(req, { admin, anon });"
+    ]
+   }
+  },
+  {
+   "path": "supabase/functions/connection-health-check/index.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 51,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 18,
+    "missing_in_main": 11,
+    "removed": 2,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "                      reason: null,",
+     "    await runWithConcurrency(",
+     "      connections as ConnRow[],",
+     "      requested ? 1 : HEALTH_CHECK_CONCURRENCY,",
+     "      checkConnection,",
+     "      const title = alert.kind === 'disconnected'",
+     "        ? `WhatsApp ${alert.instance_id} desconectado`",
+     "        : `Conexão ${alert.instance_id} degradada`;",
+     "      const message = alert.kind === 'disconnected'",
+     "        ? `A instância ${alert.instance_id} perdeu conexão com o WhatsApp.`",
+     "        : `A instância ${alert.instance_id}: ${REASON_LABEL[alert.reason ?? ''] ?? 'conexão degradada'}.`;"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "supabase/functions/evolution-api/index.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 102,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 68,
+    "missing_in_main": 66,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "export type PairingFlavor = \"go\" | \"v2\";",
+     "export interface PairingRoute {",
+     "  method: \"POST\" | \"GET\";",
+     "  path: string;",
+     "  auth: \"instance\" | \"global\";",
+     "  body?: {",
+     "    phone: string;",
+     "    subscribe: string[];",
+     "    immediate: boolean;",
+     "    webhookUrl?: string;",
+     "function pairingDigits(phone: string): string {",
+     "  return phone.replace(/\\D/g, \"\");",
+     "/** Rota de pareamento por número: GO manda o phone no corpo; v2 na query. */",
+     "export function resolvePairingRoute(",
+     "  flavor: PairingFlavor,",
+     "  instance: string,",
+     "  phone: string,",
+     "  webhookUrl?: string,",
+     "): PairingRoute {",
+     "  const digits = pairingDigits(phone);",
+     "  if (flavor === \"go\") {",
+     "    const body: NonNullable<PairingRoute[\"body\"]> = {",
+     "      phone: digits,",
+     "      subscribe: [\"ALL\"],",
+     "    if (webhookUrl) body.webhookUrl = webhookUrl;"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "supabase/functions/gmail-cron-sync/index.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 65,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 16,
+    "missing_in_main": 11,
+    "removed": 6,
+    "removed_still_in_main": 1,
+    "missing_sample": [
+     "import { ensureValidToken, recordGmailAccountFailure, runGmailFullSync, sanitizeGmailErrorMessage, selectGmailAccountsDue, syncMessageIds } from \"../_shared/gma",
+     "interface GmailCronAccount {",
+     "  sync_status?: string | null;",
+     "  error_count?: number | null;",
+     "  next_attempt_at?: string | null;",
+     "    const dueAccounts = selectGmailAccountsDue((accounts ?? []) as GmailCronAccount[]);",
+     "      const batchResults = await Promise.allSettled(batch.map(async (account: GmailCronAccount) => {",
+     "            const r = await runGmailCronIncrementalSync(supabase, { id: account.id, history_id: historyId }, accessToken, log);",
+     "            // error_count conta falhas SEGUIDAS (a coluna já tem as anteriores).",
+     "            const attempts = (typeof account.error_count === \"number\" ? account.error_count : 0) + 1;",
+     "            await recordGmailAccountFailure(supabase, account.id, err, attempts);"
+    ],
+    "still_sample": [
+     "      const batchResults = await Promise.allSettled(batch.map(async (account) => {"
+    ]
+   }
+  },
+  {
+   "path": "supabase/functions/gmail-oauth/index.test.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 12,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  const auditCalls: Array<Record<string, unknown>> = [];"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "supabase/functions/revoke-auth-sessions/index.test.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 64,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 20,
+    "missing_in_main": 9,
+    "removed": 5,
+    "removed_still_in_main": 3,
+    "missing_sample": [
+     "      : input instanceof Request",
+     "      ? input.url",
+     "      : input.href;",
+     "    if (res.headers.get(\"Retry-After\") !== \"60\") {",
+     "      fail(`o 429 deve trazer Retry-After: 60, veio ${res.headers.get(\"Retry-After\")}`);",
+     "  if (res.headers.get(\"Retry-After\") !== \"60\") {",
+     "    fail(`o 429 deve trazer Retry-After: 60, veio ${res.headers.get(\"Retry-After\")}`);",
+     "  if (res.headers.get(\"Retry-After\") !== \"60\") {",
+     "    fail(`o 429 deve trazer Retry-After: 60, veio ${res.headers.get(\"Retry-After\")}`);"
+    ],
+    "still_sample": [
+     "      : input instanceof URL",
+     "      ? input.toString()",
+     "      : (input as Request).url;"
+    ]
+   }
+  },
+  {
+   "path": "supabase/functions/revoke-auth-sessions/index.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 30,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 8,
+    "missing_in_main": 8,
+    "removed": 2,
+    "removed_still_in_main": 2,
+    "missing_sample": [
+     "    if (!rl.allowed) {",
+     "      const limited = errorResponse(\"Rate limit exceeded\", 429, req);",
+     "      limited.headers.set(\"Retry-After\", \"60\");",
+     "      return limited;",
+     "    if (!userRl.allowed) {",
+     "      const limited = errorResponse(\"Rate limit exceeded\", 429, req);",
+     "      limited.headers.set(\"Retry-After\", \"60\");",
+     "      return limited;"
+    ],
+    "still_sample": [
+     "    if (!rl.allowed) return errorResponse(\"Rate limit exceeded\", 429, req);",
+     "    if (!userRl.allowed) return errorResponse(\"Rate limit exceeded\", 429, req);"
+    ]
+   }
+  },
+  {
+   "path": "supabase/functions/webauthn/index.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 13,
+   "hunk": "PRESENT_REVERSE_APPLIES"
+  },
+  {
+   "path": "supabase/schema-catalog.json",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 74,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 14,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "    \"transfer_conversation(p_contact_id uuid, p_to_agent_id uuid, p_to_queue_id uuid, p_note text, p_expected_agent_id uuid)->uuid|kind=f\","
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "supabase/schema-manifest.json",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 780,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 378,
+    "missing_in_main": 62,
+    "removed": 152,
+    "removed_still_in_main": 4,
+    "missing_sample": [
+     "        \"search_events\": \"215c2d45b491f5c815ace782ce450fdf\"",
+     "        \"v:password_reset_requests_safe\": \"a1d75e75ae761d68676b8c3e3eef1c52\",",
+     "        \"v:team_message_read_state\": \"47c93e51ae100610f6cfc0c5b817a8a4\"",
+     "        \"whisper_messages.audio_path\": \"2a2cfca688ff6a504270d0e8ae144de8\"",
+     "        \"search_events.search_events_pkey\": \"eddbab5233abc78296c20eb55cd8bbe3\"",
+     "        \"connection_alert_preferences.alert_on_disconnected\": \"b326b5062b2f0e69046810717534cb09\",",
+     "        \"search_events.id\": \"f3b72bb359a50b640590970a2ab8e514\"",
+     "        \"search_events.\\\"Users can register their own search events\\\"\": \"d2dc2ffcb90c31228931cd87ef413006\"",
+     "        \"whisper_messages.whisper_messages_valida_audio_path\": \"6eecc22f756bb607412079582a9ab2b6\"",
+     "        \"f:talkx_benchmarks()\": \"0f1856f10b8b1a85cf0a1d33f9c3fefc\",",
+     "        \"f:sanitize_reset_request()\": \"325b7a1ae14a51238c577badf1b6e1d4\",",
+     "        \"f:auto_assign_to_queue_agent()\": \"c75cce31f72d29c8d4532c4bb6d0c68b\",",
+     "        \"f:effective_role(_user_id uuid)\": \"da5323605e78c80e21e710372d4760ca\",",
+     "        \"f:handle_message_gamification()\": \"c603a337195e59a351b63e7ea79a5968\",",
+     "        \"f:skill_based_assign(p_queue_id uuid)\": \"47fccfb6ddf9f01af5ee969747a9f1be\",",
+     "        \"f:sync_profile_role_from_user_roles()\": \"d9bbb7aba16a8fedd07ba7e0935dc123\",",
+     "        \"f:team_receipts_fill_conversation_id()\": \"fda84b2de618b373f0b6112619a7a6d9\",",
+     "        \"f:accept_department_invite(p_code text)\": \"a0acd653e1493001e9713b4f3582e199\",",
+     "        \"f:count_searchbox_sessions_this_month()\": \"6d49ea28721c00b7dfecf64dd64a9a8f\",",
+     "        \"f:trigger_pending_multiplix_dispatches()\": \"23d966951a258d4d790309ed184d9883\",",
+     "        \"f:enforce_conversation_status_transition()\": \"ec98ee8f856c8ff9739626846adecf03\",",
+     "        \"f:leave_team_group(p_conversation_id uuid)\": \"25dda3b03f855112a2ca6bb6f6b4e999\",",
+     "        \"f:multiplix_bump_version_on_dispatch_edit()\": \"e2f6028825acc81625bfbf0a33a37dc2\",",
+     "        \"f:get_profile_role_for_check(p_user_id uuid)\": \"e5d368df6a5d6d913eb04f506f965f14\",",
+     "        \"f:is_within_business_hours(connection_id uuid)\": \"76b3039ce5bb7f959afa864893fccc91\","
+    ],
+    "still_sample": [
+     "        \"v:password_reset_requests_safe\": \"a1d75e75ae761d68676b8c3e3eef1c52\"",
+     "        \"f:get_department_whatsapp_mode(p_department_id uuid)\": \"8f62687591995c2a926e049d447b81f6\",",
+     "        \"f:upsert_my_call(p_id uuid, p_direction text, p_status text, p_channel text, p_peer_number text, p_peer_name text, p_contact_id uuid, p_provider_call_i",
+     "        \"f:upsert_my_call(p_id uuid, p_direction text, p_status text, p_channel text, p_peer_number text, p_peer_name text, p_contact_id uuid, p_provider_call_i"
+    ]
+   }
+  }
+ ],
+ "counts": {
+  "migrations": "0",
+  "workflows": "7",
+  "src": "10",
+  "edges": "12",
+  "docs_only": "no",
+  "lines_branch_has_main_lacks": "7556",
+  "lines_main_has_branch_lacks": "13352"
+ },
+ "auto": "MISTO_CONFLITO",
+ "n_files_with_gaps": 37,
+ "gap_lines_total": 498
+}

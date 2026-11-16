@@ -1,0 +1,17 @@
+{
+ "id": "pr-2890",
+ "kind": "pr",
+ "ref": "refs/remotes/pr/2890",
+ "pr": 2890,
+ "tip": "508c97ad42b1cd43356bf2d7287eb96c04fa959d",
+ "merge_base": "1c3535a04783d99ca372236210057a314fba8078",
+ "ahead": 2,
+ "last_commit_date": "2026-11-09",
+ "merge_base_date": "2026-11-09",
+ "triagem_2804": null,
+ "closure_comment": null,
+ "files": [],
+ "auto": "EMPTY",
+ "n_files_with_gaps": 0,
+ "gap_lines_total": 0
+}

@@ -1,0 +1,84 @@
+{
+ "id": "pr-3067",
+ "kind": "pr",
+ "ref": "refs/remotes/pr/3067",
+ "pr": 3067,
+ "tip": "f3309ef2b8392b53f0f77f36cce6ae211a082dc2",
+ "merge_base": "88f50d0d3845034cfd3e07dac23c54416db67adf",
+ "ahead": 2,
+ "last_commit_date": "2026-11-14",
+ "merge_base_date": "2026-11-14",
+ "triagem_2804": null,
+ "closure_comment": {
+  "title": "chore(db): sincronizar artefatos derivados do banco",
+  "last_comment": "Fechada como contida na adm01-debug/Zapp_Web_V2#3070, que leva estes 5 arquivos sem alteração mais as 4 contagens de `docs/DB-INVENTORY.md` que derrubavam o `db-inventory-doc.unit.mjs` aqui (run 43562420127). Se o `types-sync` voltar a achar drift depois do merge da #3070, ele reabre/atualiza esta b"
+ },
+ "files": [
+  {
+   "path": "scripts/db-audit/grants-baseline.json",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 13,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 2,
+    "missing_in_main": 2,
+    "removed": 2,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "    \"service_role_execute_count\": 408,",
+     "    \"authenticated_execute_count\": 227"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "scripts/db-audit/known-violations.json",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 14,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 2,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "    \"rpc:record_away_message:supabase/functions/_shared/evolution-webhook-messages.ts\""
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/integrations/supabase/types.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 52,
+   "hunk": "PRESENT_REVERSE_APPLIES"
+  },
+  {
+   "path": "supabase/schema-catalog.json",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 88,
+   "hunk": "PRESENT_REVERSE_APPLIES"
+  },
+  {
+   "path": "supabase/schema-manifest.json",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 2005,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 39,
+    "missing_in_main": 3,
+    "removed": 303,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "        \"f:set_conversation_status(p_contact_id uuid, p_next text, p_reason text)\": \"bb0ae8ba251b0b8daff8030d5acca8ae\",",
+     "        \"f:set_conversations_status(p_contact_ids uuid[], p_next text, p_expected_current text, p_reason text, p_restore boolean)\": \"199cf5e88101aa123b5937eb6f6",
+     "    \"generated_at\": \"2026-11-14T05:27:27Z\","
+    ],
+    "still_sample": []
+   }
+  }
+ ],
+ "auto": "MISTO_CONFLITO",
+ "n_files_with_gaps": 3,
+ "gap_lines_total": 6
+}

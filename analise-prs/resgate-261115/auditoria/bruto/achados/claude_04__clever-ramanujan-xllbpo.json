@@ -1,0 +1,60 @@
+[
+ {
+  "commit": "2e8ca238d",
+  "arquivo": "supabase/migrations/20261009193246_team_receipts_reactions_conversation_id_forced.sql",
+  "linhas": 3,
+  "amostra": [
+   "--    O trigger team_message_receipts_update_guard_trig preencheria read_at := now() para qualquer UPDATE",
+   "--    em recibo com status='read', mesmo que só conversation_id mude — o que alteraria dados fora do escopo",
+   "--    desta migration. Por isso o trigger é desabilitado durante o backfill e reabilitado logo após."
+  ]
+ },
+ {
+  "commit": "48d81a71e",
+  "arquivo": "scripts/db-audit/dashboard-rls-authorization.test.sh",
+  "linhas": 4,
+  "amostra": [
+   "# Definição 3-arg de dashboard_kpi: 20261007013217 define a função com a guarda de",
+   "# ciclo de reabertura no mesmo dia. Extrai só o CREATE OR REPLACE dessa função.",
+   "# Sobrecarga 4-arg de dashboard_kpi: 20261026210000 acrescenta nova assinatura ao lado da 3-arg.",
+   "psql_file \"$migrations_dir/20261026210000_dashboard_kpi_periodo_aditivo.sql\""
+  ]
+ },
+ {
+  "commit": "0baab887f",
+  "arquivo": "scripts/db-audit/dashboard-rls-authorization.test.sh",
+  "linhas": 17,
+  "amostra": [
+   "  20261007013217_conversation_closures_reopen_same_day.sql; do",
+   "  '20261007013217_conversation_closures_reopen_same_day.sql' \\",
+   "# Definição 3-arg de dashboard_kpi: 20261007013217 define a função com a guarda de",
+   "# ciclo de reabertura no mesmo dia. Extrai só o CREATE OR REPLACE dessa função.",
+   "  \"$(anon \"SELECT public.dashboard_kpi(now() - interval '30 days', NULL, NULL);\")\"",
+   "  \"SET ROLE authenticated; SELECT (public.dashboard_kpi(now() - interval '30 days', NULL, NULL) ->> 'resolvedToday');\""
+  ]
+ },
+ {
+  "commit": "2fefc8eaf",
+  "arquivo": "scripts/db-audit/dashboard-rls-authorization.test.sh",
+  "linhas": 4,
+  "amostra": [
+   "# Definição 4-arg de dashboard_kpi: 20261026210000 adiciona a assinatura nova",
+   "# (p_from, p_until, p_queue, p_agent) ao lado da 3-arg já aplicada acima.",
+   "# É arquivo único-propósito — aplicado diretamente com ACL inclusa.",
+   "psql_file \"$migrations_dir/20261026210000_dashboard_kpi_periodo_aditivo.sql\""
+  ]
+ },
+ {
+  "commit": "cd8f5605f",
+  "arquivo": "scripts/db-audit/dashboard-rls-authorization.test.sh",
+  "linhas": 13,
+  "amostra": [
+   "  \"$(anon \"SELECT public.dashboard_kpi(now() - interval '30 days', NULL::uuid, NULL::uuid);\")\"",
+   "  \"SET ROLE authenticated; SELECT (public.dashboard_kpi(now() - interval '30 days', NULL::uuid, NULL::uuid) ->> 'resolvedToday');\"",
+   "  \"$(agent \"SELECT (public.dashboard_kpi(now() - interval '30 days', NULL::uuid, NULL::uuid) ->> 'resolvedToday');\")\"",
+   "  \"$(agent \"SELECT public.dashboard_kpi(now() - interval '30 days', NULL::uuid, '$PERFIL_B') = public.dashboard_kpi(now() - interval '30 days', NULL::",
+   "  \"$(admin \"SELECT (public.dashboard_kpi(now() - interval '30 days', NULL::uuid, '$PERFIL_B') ->> 'resolvedToday');\")\"",
+   "  \"$(admin \"SELECT (public.dashboard_kpi(now() + interval '10 years', NULL::uuid, NULL::uuid) ->> 'resolvedToday');\")\""
+  ]
+ }
+]

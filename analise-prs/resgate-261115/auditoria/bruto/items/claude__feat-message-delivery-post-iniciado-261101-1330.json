@@ -1,0 +1,242 @@
+{
+ "id": "claude__feat-message-delivery-post-iniciado-261101-1330",
+ "kind": "branch",
+ "ref": "origin/claude/feat-message-delivery-post-iniciado-261101-1330",
+ "tip": "ec9f2e9c3f26a0094a05e49520e11e34f264ad87",
+ "merge_base": "1252bb5a41123ba4d49efd84d0f91604bff6c87c",
+ "ahead": 5,
+ "last_commit_date": "2026-11-01",
+ "merge_base_date": "2026-11-01",
+ "prs_with_same_tip": [
+  2466
+ ],
+ "triagem_2804": {
+  "2466": "DECISAO_DONO"
+ },
+ "closure_comment": {},
+ "files": [
+  {
+   "path": "scripts/db-audit/message-delivery-phase1-behavior.test.sh",
+   "status": "BOTH_CHANGED",
+   "hunk": "CONFLICT",
+   "patch_lines": 222,
+   "line_check": {
+    "added": 156,
+    "missing_in_main": 2,
+    "removed": 8,
+    "removed_still_in_main": 2,
+    "missing_sample": [
+     "post_started_migration=\"$repo_root/supabase/migrations/20261101133000_outbound_post_started.sql\"",
+     "  && proof.definition_sha256 === 'f228a9d6121ca364cbebd4f8686d2ace733b3582e24964506aab8653feaddf73'"
+    ],
+    "still_sample": [
+     "  && proof.safe_api_function_count === 6",
+     "  && proof.service_delivery_effective_count === 3"
+    ]
+   }
+  },
+  {
+   "path": "scripts/db-audit/message-delivery-phase1-runtime.sql",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/components/inbox/ChatPanel.tsx",
+   "status": "BOTH_CHANGED",
+   "hunk": "PRESENT_REVERSE_APPLIES",
+   "patch_lines": 21
+  },
+  {
+   "path": "src/components/inbox/chat/UnconfirmedMessagesPanel.tsx",
+   "status": "BOTH_CHANGED",
+   "hunk": "CONFLICT",
+   "patch_lines": 132,
+   "line_check": {
+    "added": 91,
+    "missing_in_main": 2,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "export function UnconfirmedMessagesPanel({ contactId, className }: UnconfirmedMessagesPanelProps) {",
+     "  const { messages, isLoading, isError, resolve, isResolving, resolvingId } = useUnconfirmedMessages(contactId);"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/hooks/delivery/useUnconfirmedMessages.ts",
+   "status": "BOTH_CHANGED",
+   "hunk": "CONFLICT",
+   "patch_lines": 83,
+   "line_check": {
+    "added": 61,
+    "missing_in_main": 12,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "// Abaixo desse limiar o job de reconciliação ainda pode fechar sozinho.",
+     "export function useUnconfirmedMessages(conversationContactId: string | null | undefined) {",
+     "    queryKey: ['unconfirmed-messages', conversationContactId],",
+     "      if (!conversationContactId) return [];",
+     "      const { data, error } = await supabase",
+     "        .eq('contact_id', conversationContactId)",
+     "        .not('status', 'in', '(\"sent\",\"delivered\",\"read\",\"failed\")')",
+     "      return (data ?? []) as UnconfirmedMessage[];",
+     "    enabled: !!conversationContactId,",
+     "      const { data, error } = await supabase.rpc('resolve_unconfirmed_message', {",
+     "      return data as string;",
+     "      queryClient.invalidateQueries({ queryKey: ['unconfirmed-messages', conversationContactId] });"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "supabase/deployment-manifest.json",
+   "status": "BOTH_CHANGED",
+   "hunk": "CONFLICT",
+   "patch_lines": 44,
+   "line_check": {
+    "added": 7,
+    "missing_in_main": 4,
+    "removed": 4,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "      \"bytes\": 33930,",
+     "      \"sha256\": \"1c03ad8929ce4a4bb099278fb158c4180282079568aa875b0cfd3603a072045b\"",
+     "      \"source_sha256\": \"61410a7cb3b0bbf422e4dffec7fe6b1e60c850305bee5b66ede42b9df77810a4\",",
+     "  \"manifest_sha256\": \"7b09f9a6d9e1cad5126ff66e8fbbeaf4244078de78313e8df49b20e6f594f39e\""
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "supabase/functions/_shared/effect-reconcile.ts",
+   "status": "BOTH_CHANGED",
+   "hunk": "CONFLICT",
+   "patch_lines": 13,
+   "line_check": {
+    "added": 2,
+    "missing_in_main": 2,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "      // C110: não sobrescreve resolução manual do operador",
+     "      .is(\"manually_resolved_at\", null)"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "supabase/functions/_shared/evolution-webhook-msg-handlers.ts",
+   "status": "BOTH_CHANGED",
+   "hunk": "CONFLICT",
+   "patch_lines": 24,
+   "line_check": {
+    "added": 4,
+    "missing_in_main": 0,
+    "removed": 2,
+    "removed_still_in_main": 0,
+    "missing_sample": [],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "supabase/functions/message-delivery/index.test.ts",
+   "status": "BOTH_CHANGED",
+   "hunk": "CONFLICT",
+   "patch_lines": 637,
+   "line_check": {
+    "added": 502,
+    "missing_in_main": 5,
+    "removed": 1,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "Deno.test('PD-80: recusa de número pelo provedor vira code=invalid_number, não ambíguo e sem reconciliação', async () => {",
+     "Deno.test('PD-80: instância desconectada vira code=instance_unavailable (409) sem confundir com número inválido', async () => {",
+     "Deno.test('PD-80: 401 do provedor vira code=instance_unavailable', async () => {",
+     "Deno.test('PD-80: 429 do provedor vira code=rate_limited e não reconcilia', async () => {",
+     "Deno.test('PD-80: recusa 4xx genérica do provedor não reconcilia (só 5xx/ambíguo reconcilia)', async () => {"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "supabase/functions/message-delivery/index.ts",
+   "status": "BOTH_CHANGED",
+   "hunk": "CONFLICT",
+   "patch_lines": 453,
+   "line_check": {
+    "added": 248,
+    "missing_in_main": 7,
+    "removed": 26,
+    "removed_still_in_main": 2,
+    "missing_sample": [
+     "      .select('agent_id, sender, status, external_id, contact_id, whatsapp_connection_id')",
+     "    // PD-79: o subcaso \"POST iniciado + lease vencido\" continua resolvido pelo",
+     "    // fluxo PD-78/PD-79 (fail_outbound_unclaimed), não aqui. Não reenviamos.",
+     "    const { error: markError } = await service.rpc('mark_outbound_post_started', {",
+     "    if (markError) throw new PreDispatchInfraError('mark_outbound_post_started_failed');",
+     "      undefined, fetchProvider,",
+     "      // 4xx/429: rejeição definitiva, nada a reconciliar."
+    ],
+    "still_sample": [
+     "      ? await resolvePrivateBucketUrl(caller, claim.media_url, undefined, supabaseUrl)",
+     "      : null;"
+    ]
+   }
+  },
+  {
+   "path": "supabase/migrations/20261101133000_outbound_post_started.sql",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "patch_lines": 487,
+   "line_check": {
+    "added": 430,
+    "missing_in_main": 430,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "-- outbound_post_started",
+     "-- Rollback: restaura claim_outbound_message (corpo de 20261011155946, com envio para grupo) e guard_message_delivery_internal_fields (corpo de 20260909260000) ",
+     "-- Rollback (SQL executável, na ordem):",
+     "--   create or replace function public.claim_outbound_message( p_message_id uuid, p_agent_id uuid, p_worker text, p_lease_seconds integer DEFAULT 90 ) RETURNS T",
+     "--   create or replace function public.guard_message_delivery_internal_fields() returns trigger language plpgsql set search_path = public, pg_temp as $function$",
+     "--   drop function if exists public.mark_outbound_post_started(uuid, uuid);",
+     "--   alter table public.messages drop column if exists delivery_post_started_at;",
+     "-- PD-79 (t_8c6419cf): se o provedor demora mais que o lease de 90 s, ou a Edge",
+     "-- morre depois do POST, o lease vence e um novo clique reenviava ao WhatsApp — o",
+     "-- provedor recebia a MESMA mensagem duas vezes. A correção é em três partes:",
+     "-- 1. Coluna durável public.messages.delivery_post_started_at: carimbo do",
+     "-- instante em que a Edge marcou que o POST ao provedor ia sair.",
+     "-- 2. RPC mark_outbound_post_started(message_id, claim_token) (service role):",
+     "-- a Edge a chama IMEDIATAMENTE antes do POST. Fencing por (id, token) em",
+     "-- 'sending' sem recibo; idempotente no mesmo token; recusa lease vencido.",
+     "-- 3. claim_outbound_message passa a RECUSAR linha com POST iniciado (haja ou",
+     "-- não lease/expiração: resultado ambíguo, nunca reenvia sozinho; a linha fica",
+     "-- em 'sending' até resolução explícita).",
+     "-- Sem marca, nada muda: lease vencido continua retomável.",
+     "-- A marca é protegida pelo mesmo guard_message_delivery_internal_fields (o",
+     "-- authenticated não pode forjar nem limpar o carimbo por UPDATE/INSERT direto).",
+     "-- Nada mais muda: DDL aditiva, sem DROP, sem DML.",
+     "-- ORDEM: depende de 20261011155946 (envio para grupo): se ela ainda não está",
+     "-- aplicada, esta migration aborta sem alterar nada (seção 0). Rollback em ordem",
+     "-- inversa: desfazer esta ANTES de desfazer a 20261011155946."
+    ],
+    "still_sample": [],
+    "same_basename_in_main": []
+   }
+  }
+ ],
+ "counts": {
+  "migrations": "1",
+  "workflows": "0",
+  "src": "3",
+  "edges": "4",
+  "docs_only": "no",
+  "lines_branch_has_main_lacks": "855",
+  "lines_main_has_branch_lacks": "1068"
+ },
+ "auto": "MISTO_CONFLITO",
+ "n_files_with_gaps": 8,
+ "gap_lines_total": 468
+}

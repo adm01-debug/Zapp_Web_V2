@@ -1,0 +1,48 @@
+{
+ "id": "claude__fix-claude-md-gr011-261102-0100",
+ "kind": "branch",
+ "ref": "origin/claude/fix-claude-md-gr011-261102-0100",
+ "tip": "631d210e32f54b4cae4aa08690ec1033f38b66a2",
+ "merge_base": "dfef2487a2c3b86101f23ef50d2c1d862b4fe03a",
+ "ahead": 6,
+ "last_commit_date": "2026-11-02",
+ "merge_base_date": "2026-11-02",
+ "prs_with_same_tip": [
+  2557
+ ],
+ "triagem_2804": {
+  "2557": "OBSOLETA"
+ },
+ "closure_comment": {},
+ "files": [
+  {
+   "path": "CLAUDE.md",
+   "status": "BOTH_CHANGED",
+   "hunk": "CONFLICT",
+   "patch_lines": 25,
+   "line_check": {
+    "added": 2,
+    "missing_in_main": 2,
+    "removed": 5,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "| Branch protection — required checks | **3**: `✅ CI Gate (required check)` · `🏗️ Build` · `🔎 TypeCheck` | `settings-guard` ⚠ |",
+     "**Required checks da `main`** (3; `strict` está `true` ao vivo): `✅ CI Gate (required check)`, `🏗️ Build` e `🔎 TypeCheck`. `🔬 CodeQL (javascript-typescript)` ro"
+    ],
+    "still_sample": []
+   }
+  }
+ ],
+ "counts": {
+  "migrations": "0",
+  "workflows": "0",
+  "src": "0",
+  "edges": "0",
+  "docs_only": "yes",
+  "lines_branch_has_main_lacks": "635",
+  "lines_main_has_branch_lacks": "1"
+ },
+ "auto": "MISTO_CONFLITO",
+ "n_files_with_gaps": 1,
+ "gap_lines_total": 2
+}

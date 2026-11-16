@@ -1,0 +1,111 @@
+{
+ "id": "claude__chore-auditoria-supabase-final-251025-1655",
+ "kind": "branch",
+ "ref": "origin/claude/chore-auditoria-supabase-final-251025-1655",
+ "tip": "f5d52460776273582e6751721af68a4561b052c2",
+ "merge_base": "3d0b46c7aad351add37cba3659aa4b6d160d7947",
+ "ahead": 4,
+ "last_commit_date": "2026-11-01",
+ "merge_base_date": "2026-10-30",
+ "prs_with_same_tip": [
+  2255
+ ],
+ "triagem_2804": {
+  "2255": "OBSOLETA"
+ },
+ "closure_comment": {},
+ "files": [
+  {
+   "path": "auditoria-supabase/RELATORIO_AUDITORIA_SUPABASE.md",
+   "status": "BOTH_CHANGED",
+   "hunk": "CONFLICT",
+   "patch_lines": 949,
+   "line_check": {
+    "added": 605,
+    "missing_in_main": 582,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "# Relatório de Auditoria — Supabase Zapp Web V2",
+     "**Data**: 2026-10-24 → 2026-10-25 (re-executado e corrigido)  ",
+     "**Projeto**: `tnnnlkbymytvtqngbbqh` (Supabase Cloud)  ",
+     "**Repo**: `adm01-debug/Zapp_Web_V2`  ",
+     "**Escopo**: Produção somente-leitura + análise de código  ",
+     "**Auditor**: Claude Code (sessão automatizada)  ",
+     "**Identidade confirmada**: `vault.decrypted_secrets WHERE name='talkx_scheduler_url'` → `https://tnnnlkbymytvtqngbbqh.supabase.co/functions/v1/talkx-scheduler`",
+     "## Sumário Executivo",
+     "| Severidade | Qtd | Áreas principais |",
+     "|-----------|-----|------------------|",
+     "| CRITICAL | 3 | Grants anon com escrita massiva, 39 UPDATE sem WITH CHECK, cron scheduler 9,3% falha (4.007 em 30d — talkx-scheduler-1min filtrado) |",
+     "| HIGH | 7 | 17 tabelas RLS sem policy, autovacuum ausente, email_threads 418M seq reads, índices trigram sem uso, view sem security_invoker, **0 MFA em todos o",
+     "| MEDIUM | 9 | 34–41 FKs sem índice, 60 migrations NULL, backup schema sem RLS, índices duplicados, multiplix-voice sem MIME, `mcp_exec` SQL arbitrário, rpc len",
+     "| LOW | 5 | Índices duplicados, e2e_cleanup UUID hardcoded, multiplix-voice sem MIME filter, sicoob_service_role_key naming confuso, pg_timezone_names frequente",
+     "| INFO | 4 | Buckets públicos intencionais, schema backup, 1 tabela sem PK, 6 edge functions sem JWT (autenticação alternativa verificada) |",
+     "**Total de achados**: 28 (achados detalhados no relatório) / 12 achados-chave rastreados em `progresso.json` (CRITICAL×3, HIGH×4, MEDIUM×3, LOW×2) — os 28 são s",
+     "**Inventário detalhado**: `inventario/09_integridade.md` cobre extensões (8), enums (10), sequences (4), triggers (215), pg_net/webhooks (1224 respostas 7d, 0 e",
+     "## Achados por ID",
+     "### CRITICAL-1 — Anon role com grants de escrita em 97–98 tabelas sensíveis",
+     "**Severidade**: CRITICAL  ",
+     "**Objeto**: `information_schema.role_table_grants` — role `anon`  ",
+     "**Evidência re-executada** (2026-10-24T20:53 UTC):",
+     "SELECT privilege_type, count(*) AS tabelas",
+     "FROM information_schema.role_table_grants",
+     "WHERE grantee = 'anon'"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "auditoria-supabase/progresso.json",
+   "status": "BOTH_CHANGED",
+   "hunk": "CONFLICT",
+   "patch_lines": 121,
+   "line_check": {
+    "added": 94,
+    "missing_in_main": 93,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  \"audit_date\": \"2026-10-25\",",
+     "  \"project_id\": \"tnnnlkbymytvtqngbbqh\",",
+     "  \"repo\": \"adm01-debug/Zapp_Web_V2\",",
+     "  \"session_id\": \"a706020b-37bc-56b5-b7ef-e1ef6d69d689\",",
+     "  \"last_updated\": \"2026-10-25T15:00Z\",",
+     "    \"S01_grants_anon\": {",
+     "      \"status\": \"CONCLUIDO\",",
+     "      \"ts\": \"2026-10-25T09:00Z\",",
+     "      \"resumo\": \"98 tabelas com GRANT INSERT para anon — CRITICAL-1\",",
+     "      \"finding\": \"CRITICAL-1\",",
+     "      \"proposta\": \"auditoria-supabase/propostas/01_revogar_grants_anon.sql\"",
+     "    \"S02_drift_repo_ledger\": {",
+     "      \"status\": \"CONCLUIDO\",",
+     "      \"ts\": \"2026-10-25T11:40Z\",",
+     "      \"resumo\": \"1056 arquivos no repo, 1054 no ledger. Drift: 2 migrations (20261026190300 + 20261026200300) ainda nao registradas. types.ts: 184 tabelas (Row ",
+     "      \"finding\": \"MEDIUM — 2 migrations sem ledger\"",
+     "    \"S03_rls_policies\": {",
+     "      \"status\": \"CONCLUIDO\",",
+     "      \"ts\": \"2026-10-25T09:30Z\",",
+     "      \"resumo\": \"39 UPDATE policies com with_check IS NULL — CRITICAL-2 (recontado 2026-10-25T14:00Z: with_check_null=39, with_check_true=0). 35 FKs sem indice ",
+     "      \"finding\": \"CRITICAL-2 (39 policies), HIGH-3, HIGH-4\"",
+     "    \"S04_cron_failures\": {",
+     "      \"status\": \"CONCLUIDO\",",
+     "      \"ts\": \"2026-10-25T09:00Z\",",
+     "      \"resumo\": \"talkx-scheduler-1min: 4007 falhas / 43180 runs / 9.3% (30 dias). Causa: startup timeout. CRITICAL-3.\","
+    ],
+    "still_sample": []
+   }
+  }
+ ],
+ "counts": {
+  "migrations": "0",
+  "workflows": "0",
+  "src": "0",
+  "edges": "0",
+  "docs_only": "yes",
+  "lines_branch_has_main_lacks": "836",
+  "lines_main_has_branch_lacks": "1101"
+ },
+ "auto": "MISTO_CONFLITO",
+ "n_files_with_gaps": 2,
+ "gap_lines_total": 675
+}

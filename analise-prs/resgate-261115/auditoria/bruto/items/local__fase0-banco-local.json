@@ -1,0 +1,250 @@
+{
+ "id": "local__fase0-banco-local",
+ "kind": "branch",
+ "ref": "origin/local/fase0-banco-local",
+ "tip": "1bee59c5aef4174a5b2784c3904be7b229e9f7d4",
+ "merge_base": "7a15852791828c50a9985a49659a9e13f15eaa86",
+ "ahead": 7,
+ "last_commit_date": "2026-10-04",
+ "merge_base_date": "2026-10-04",
+ "prs_with_same_tip": [],
+ "triagem_2804": {},
+ "closure_comment": {},
+ "files": [
+  {
+   "path": ".env.example",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": ".github/workflows/db-guard.yml",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 34,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 14,
+    "missing_in_main": 0,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "CLAUDE.md",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 75,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 49,
+    "missing_in_main": 49,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "## 0. Onde se trabalha: banco LOCAL; a produção só recebe o lote do dia (desde 2026-10-04)",
+     "**Agente não desenvolve nem testa contra o banco oficial.** O banco da seção 1 é a produção e a fonte",
+     "de verdade da estrutura; o trabalho do dia a dia acontece numa cópia local, uma por cópia de trabalho.",
+     "| Situação | Banco | Como |",
+     "|---|---|---|",
+     "| Desenvolver ou testar uma tarefa | **local** | um Supabase local por cópia de trabalho (worktree) |",
+     "| Migration nova durante a tarefa | **local** | arquivo em `supabase/migrations/` + aplicar no banco local da cópia |",
+     "| Portão antes de o commit entrar na branch do dia | **local** | tipos, lint, migrations, estrutura do banco local, testes |",
+     "| Migration chegando à produção | **produção, uma vez por dia** | depois do push e do merge, por `db-migrate.yml` (dry-run + aprovação humana) |",
+     "| Diagnóstico | **produção, só leitura** | consulta `SELECT`; nunca escrita |",
+     "| Migration destrutiva, segredos, rotação de chaves | **só o Joaquim** | — |",
+     "Regras que decorrem disso:",
+     "1. **Git local, push quando o Joaquim pedir.** Commits entram numa branch local do dia",
+     "   (`dia/AAAA-MM-DD`); um PR por lote. Nenhum agente faz push, abre PR ou mergeia por conta própria.",
+     "2. **Ordem do lote na produção:** push → PR → 6 checks → merge → deploy do código (Vercel e edge",
+     "   functions) → `db-migrate.yml` com `apply=false` → aprovação do Joaquim no environment",
+     "   `producao-ddl` → `apply=true`. É a mesma ordem da regra 6 da seção 1; o que muda é que acontece",
+     "   uma vez por lote, e quem dispara é a sessão do Claude Code que fez o push, nunca um agente executor.",
+     "3. **A exceção da regra 6 (DDL aditivo na produção antes do merge) deixa de valer para trabalho de",
+     "   agente.** Ela existia porque o `supabase-usage-guard` precisava do catálogo regenerado a partir do",
+     "   banco oficial; no fluxo local a estrutura nova é provada no banco local. Só o Joaquim pode",
+     "   autorizar um apply fora do lote.",
+     "4. **O app só fala com o banco local por desvio explícito:** `VITE_ZAPP_LOCAL_SUPABASE_URL` +",
+     "   `VITE_ZAPP_LOCAL_SUPABASE_ANON_KEY`, aceitos apenas fora de build de produção e apenas para",
+     "   `http://127.0.0.1` ou `http://localhost` (`src/config/supabase.ts`). Sem as duas variáveis, o"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "e2e/catalog.spec.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 17,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 3,
+    "missing_in_main": 3,
+    "removed": 2,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "// A URL do projeto vem da fonte única dos testes (aponta para o projeto oficial; o banco",
+     "// local de desenvolvimento entra pelo override explícito E2E_SUPABASE_URL_OVERRIDE).",
+     "import { SUPABASE_URL } from './fixtures/supabase-env';"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "e2e/fixtures/mapa-mocks.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 35,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 5,
+    "missing_in_main": 4,
+    "removed": 3,
+    "removed_still_in_main": 1,
+    "missing_sample": [
+     " * Origem do Supabase que o app sob teste usa. Vem da fonte única (`supabase-env.ts`): projeto",
+     " * oficial por padrão, banco local quando o override explícito está ligado.",
+     "export const SUPABASE_HOST = new URL(SUPABASE_URL).origin;",
+     "  await page.route(`${SUPABASE_HOST}/**`, (route) => {"
+    ],
+    "still_sample": [
+     "/** Host do projeto Supabase usado pelas fixtures do repo (mesmo de `e2e/fixtures/contacts-page.ts`). */"
+    ]
+   }
+  },
+  {
+   "path": "e2e/fixtures/talkx-demo.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 32,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 5,
+    "missing_in_main": 5,
+    "removed": 2,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "import { SUPABASE_URL } from './supabase-env';",
+     "// Mesma regra do supabase-js: `sb-<primeiro rótulo do host>-auth-token`. Derivada da fonte única",
+     "// para a sessão falsa valer também contra o banco local de desenvolvimento.",
+     "const AUTH_STORAGE_KEY = `sb-${new URL(SUPABASE_URL).hostname.split('.')[0]}-auth-token`;",
+     "    iss: `${new URL(SUPABASE_URL).origin}/auth/v1`,"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "scripts/db-audit/README.md",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 13,
+   "hunk": "PRESENT_REVERSE_APPLIES"
+  },
+  {
+   "path": "scripts/db-audit/check-secdef-public-execute.sql",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "scripts/db-audit/check-secdef-public-execute.test.sh",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "scripts/db-audit/replay-known-failures.json",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 19,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 6,
+    "missing_in_main": 0,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "scripts/db-audit/replay-local.sh",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 25,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 13,
+    "missing_in_main": 2,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  || { echo \"FALHA: trava de DNS nao entrou; abortando antes das migrations\" | tee -a \"$LOG\"; docker rm -f \"$NOME\" >/dev/null 2>&1; exit 1; }",
+     "  || { echo \"FALHA: nao consegui desligar o agendador; abortando antes das migrations\" | tee -a \"$LOG\"; docker rm -f \"$NOME\" >/dev/null 2>&1; exit 1; }"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "scripts/db-audit/talkx-tick-expurgo.test.sh",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/config/__tests__/supabase.test.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 72,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 46,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "      'https://localhost:54321',"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/config/supabase.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 54,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 35,
+    "missing_in_main": 2,
+    "removed": 1,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "//   2. VITE_ZAPP_LOCAL_SUPABASE_URL aponta para a propria maquina (http://127.0.0.1 ou localhost);",
+     "    if (parsed.protocol !== 'http:' || !LOCAL_HOSTS.has(parsed.hostname)) return null;"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/integrations/supabase/client.ts",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "supabase/migrations/20261003272707_reconcile_local_replay_with_canonical.sql",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "supabase/migrations/20261004172554_fecha_record_incoming_call_event.sql",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "supabase/migrations/20261004173439_talkx_tick_nao_aborta_no_expurgo.sql",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  }
+ ],
+ "counts": {
+  "migrations": "3",
+  "workflows": "1",
+  "src": "3",
+  "edges": "0",
+  "docs_only": "no",
+  "lines_branch_has_main_lacks": "615",
+  "lines_main_has_branch_lacks": "1534"
+ },
+ "auto": "MISTO_CONFLITO",
+ "n_files_with_gaps": 7,
+ "gap_lines_total": 67
+}

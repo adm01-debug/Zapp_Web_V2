@@ -1,0 +1,56 @@
+{
+ "id": "pr-3054",
+ "kind": "pr",
+ "ref": "refs/remotes/pr/3054",
+ "pr": 3054,
+ "tip": "cfc9df1ef174e17308878597f912b4498bd13dff",
+ "merge_base": "f32855df69f21c7bb6b0dba89451fc886b059e58",
+ "ahead": 4,
+ "last_commit_date": "2026-11-14",
+ "merge_base_date": "2026-11-13",
+ "triagem_2804": null,
+ "closure_comment": {
+  "title": "feat(team-chat): botão Performance abre o painel de métricas em vez de \"em breve\"",
+  "last_comment": "Contida no pacote 4, adm01-debug/Zapp_Web_V2#3063, mergeado na `main` em d084ca75 com CI completo verde (CI Gate, testes unitários 1/3–3/3, E2E, edge contracts, build, security, workflow lint). O conteúdo desta PR entrou por lá (merge `--no-ff` desta branch no pacote, sem conflito; #3036 e #2981 ent"
+ },
+ "files": [
+  {
+   "path": "src/components/team-chat/TeamChatHeader.tsx",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/components/team-chat/TeamChatPanel.tsx",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/components/team-chat/TeamPerformancePanel.tsx",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/components/team-chat/__tests__/TeamChatHeader.performance.test.tsx",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/components/team-chat/__tests__/TeamChatPanel.settings-wiring.test.tsx",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/hooks/team-chat/__tests__/useTeamPerformance.test.ts",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/hooks/team-chat/useTeamPerformance.ts",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  }
+ ],
+ "auto": "INCORPORADA_PROVA_PATCH",
+ "n_files_with_gaps": 0,
+ "gap_lines_total": 0
+}

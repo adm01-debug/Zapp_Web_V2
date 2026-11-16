@@ -1,0 +1,129 @@
+{
+ "id": "pr-123",
+ "kind": "pr",
+ "ref": "refs/remotes/pr/123",
+ "pr": 123,
+ "tip": "fb285d4314769231fe569a373e9b16184cbea830",
+ "merge_base": "b8fa9cacd36b416b7aefe2ac6f2cbad639508eec",
+ "ahead": 1,
+ "last_commit_date": "2026-09-01",
+ "merge_base_date": "2026-09-01",
+ "triagem_2804": "DRIFT",
+ "closure_comment": null,
+ "files": [
+  {
+   "path": "scripts/db-audit/migration-evidence.json",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 50,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 33,
+    "missing_in_main": 6,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "      \"ledger_statements_sha256\": \"32016f052b4a92fe8860ce7d71197d94d8d7ac55769cf986d93f5d0f55c6c2ae\",",
+     "      \"ledger_sql_sha256\": \"5a09bfb4fe910fcbea02df506fc7a7dd3b091678fc3da2e25a5bf73f9c5d8ea9\",",
+     "      \"justification\": \"O arquivo foi reconstruído via pg_get_functiondef e pg_get_triggerdef, produzindo o corpo SQL completo da função sync_thread_last_sender",
+     "      \"justification\": \"O arquivo versionado reproduz o DDL completo da tabela contact_identity_map com COMMENT ON e GRANT explícitos; o ledger histórico preser",
+     "      \"ledger_sql_sha256\": \"e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855\",",
+     "      \"justification\": \"As políticas RLS e dados iniciais da E23 (Fila Geral) foram aplicados via db_transaction sem captura de statements (stmts_count=NULL); o"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/integrations/supabase/types.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 62,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 26,
+    "missing_in_main": 0,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "supabase/schema-catalog.json",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 57,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 18,
+    "missing_in_main": 10,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "        \"dedup_baseline_20260901\",",
+     "        \"dedup_baseline_20260901.whatsapp_connection_id:uuid:nullable\",",
+     "        \"dedup_baseline_20260901.external_id:text:nullable\",",
+     "        \"dedup_baseline_20260901.sender:text:nullable\",",
+     "        \"dedup_baseline_20260901.total_copies:bigint:nullable\",",
+     "        \"dedup_baseline_20260901.canonical_id:uuid:nullable\",",
+     "        \"dedup_baseline_20260901.first_seen:timestamp with time zone:nullable\",",
+     "        \"dedup_baseline_20260901.last_seen:timestamp with time zone:nullable\",",
+     "        \"dedup_baseline_20260901.copies_with_contact:bigint:nullable\",",
+     "        \"dedup_baseline_20260901.copies_without_contact:bigint:nullable\","
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "supabase/schema-manifest.json",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 16173,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 8099,
+    "missing_in_main": 2173,
+    "removed": 8035,
+    "removed_still_in_main": 5889,
+    "missing_sample": [
+     "    \"tags\": \"215c2d45b491f5c815ace782ce450fdf\",",
+     "    \"contact_tags\": \"215c2d45b491f5c815ace782ce450fdf\",",
+     "    \"payment_links\": \"215c2d45b491f5c815ace782ce450fdf\",",
+     "    \"contact_purchases\": \"215c2d45b491f5c815ace782ce450fdf\",",
+     "    \"whatsapp_connection_queues\": \"215c2d45b491f5c815ace782ce450fdf\"",
+     "    \"e:app_role\": \"5fe9cb65299844e7f830bf9cfe2974ce\",",
+     "    \"e:service_account_type\": \"2f098808b88e890ce85d3f09753ed472\"",
+     "    \"v:whatsapp_connections_safe\": \"19152b9b2014fec4e032bc031abe072b\",",
+     "    \"tags.id\": \"9eb0988535c3822cb67934be7c6886ed\",",
+     "    \"tags.name\": \"39c66b4057962691166304f428d0a1a2\",",
+     "    \"tags.color\": \"39c66b4057962691166304f428d0a1a2\",",
+     "    \"agent_stats.xp\": \"00a1b509635e663a18c76adaae253e11\",",
+     "    \"contact_tags.id\": \"9eb0988535c3822cb67934be7c6886ed\",",
+     "    \"tags.created_at\": \"2ee64b1d53e1f8dc8df73647e8fba382\",",
+     "    \"tags.created_by\": \"56a86446063b2ee9feb224bd26659238\",",
+     "    \"tags.updated_at\": \"2ee64b1d53e1f8dc8df73647e8fba382\",",
+     "    \"payment_links.id\": \"9eb0988535c3822cb67934be7c6886ed\",",
+     "    \"tags.description\": \"2a2cfca688ff6a504270d0e8ae144de8\",",
+     "    \"contact_tags.tag_id\": \"9eb0988535c3822cb67934be7c6886ed\",",
+     "    \"csat_surveys.rating\": \"00a1b509635e663a18c76adaae253e11\",",
+     "    \"payment_links.title\": \"39c66b4057962691166304f428d0a1a2\",",
+     "    \"contact_purchases.id\": \"9eb0988535c3822cb67934be7c6886ed\",",
+     "    \"payment_links.amount\": \"2cd3ef9f45cdf364d7fe04845d393fb4\",",
+     "    \"payment_links.status\": \"2a2cfca688ff6a504270d0e8ae144de8\",",
+     "    \"csat_surveys.agent_id\": \"9eb0988535c3822cb67934be7c6886ed\","
+    ],
+    "still_sample": [
+     "    \"rls\": {",
+     "        \"calls\": \"215c2d45b491f5c815ace782ce450fdf\",",
+     "        \"queues\": \"215c2d45b491f5c815ace782ce450fdf\",",
+     "        \"contacts\": \"215c2d45b491f5c815ace782ce450fdf\",",
+     "        \"messages\": \"215c2d45b491f5c815ace782ce450fdf\",",
+     "        \"products\": \"215c2d45b491f5c815ace782ce450fdf\",",
+     "        \"profiles\": \"215c2d45b491f5c815ace782ce450fdf\",",
+     "        \"stickers\": \"215c2d45b491f5c815ace782ce450fdf\",",
+     "        \"campaigns\": \"215c2d45b491f5c815ace782ce450fdf\",",
+     "        \"playbooks\": \"215c2d45b491f5c815ace782ce450fdf\","
+    ]
+   }
+  }
+ ],
+ "auto": "MISTO_CONFLITO",
+ "n_files_with_gaps": 3,
+ "gap_lines_total": 8078
+}

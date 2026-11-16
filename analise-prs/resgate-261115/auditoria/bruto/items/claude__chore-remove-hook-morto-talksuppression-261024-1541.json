@@ -1,0 +1,54 @@
+{
+ "id": "claude__chore-remove-hook-morto-talksuppression-261024-1541",
+ "kind": "branch",
+ "ref": "origin/claude/chore-remove-hook-morto-talksuppression-261024-1541",
+ "tip": "fd9096ce1277500311bbf9f907607182c435c1fd",
+ "merge_base": "2d97c44cfe7f2fa8a3ca572f8f5689118328e858",
+ "ahead": 3,
+ "last_commit_date": "2026-10-24",
+ "merge_base_date": "2026-10-24",
+ "prs_with_same_tip": [
+  2230
+ ],
+ "triagem_2804": {
+  "2230": "JA_NA_MAIN"
+ },
+ "closure_comment": {},
+ "files": [
+  {
+   "path": "src/hooks/integrations/__tests__/useTalkXSuppression.hook-morto.test.ts",
+   "status": "DELETED_IN_BRANCH",
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "patch_lines": 162,
+   "line_check": {
+    "note": "branch deletes file; main still has it"
+   }
+  },
+  {
+   "path": "src/hooks/integrations/__tests__/useTalkXSuppression.test.ts",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/hooks/integrations/useTalkXSuppression.ts",
+   "status": "DELETED_IN_BRANCH",
+   "hunk": "CONFLICT",
+   "patch_lines": 406,
+   "line_check": {
+    "note": "branch deletes file; main still has it"
+   }
+  }
+ ],
+ "counts": {
+  "migrations": "0",
+  "workflows": "0",
+  "src": "3",
+  "edges": "0",
+  "docs_only": "no",
+  "lines_branch_has_main_lacks": "0",
+  "lines_main_has_branch_lacks": "449"
+ },
+ "auto": "MISTO_CONFLITO",
+ "n_files_with_gaps": 2,
+ "gap_lines_total": 0
+}

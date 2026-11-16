@@ -1,0 +1,181 @@
+{
+ "id": "claude__dia-2026-10-19-ct011-hmac-talkx-artefatos-231023",
+ "kind": "branch",
+ "ref": "origin/claude/dia-2026-10-19-ct011-hmac-talkx-artefatos-231023",
+ "tip": "d3bef1973c6e611a80844e4fc8ca634ac7df8343",
+ "merge_base": "bac62ba98454811c3bfd117b838af926b1e795b2",
+ "ahead": 5,
+ "last_commit_date": "2026-10-23",
+ "merge_base_date": "2026-10-23",
+ "prs_with_same_tip": [
+  2196
+ ],
+ "triagem_2804": {
+  "2196": "DUPLICATA_PROVAVEL"
+ },
+ "closure_comment": {},
+ "files": [
+  {
+   "path": "eslint.config.js",
+   "status": "MAIN_UNCHANGED_SINCE_BASE",
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "patch_lines": 19,
+   "line_check": {
+    "added": 7,
+    "missing_in_main": 3,
+    "removed": 1,
+    "removed_still_in_main": 1,
+    "missing_sample": [
+     "  // Zapp_fase456/, zapp-worktrees/: worktrees nomeados manuais; têm seu próprio baseline",
+     "  // e não devem ser varridos pelo lint do worktree principal.",
+     "  { ignores: [\"dist\", \".claude/worktrees/**\", \"Zapp_fase456/**\", \"zapp-worktrees/**\"] },"
+    ],
+    "still_sample": [
+     "  { ignores: [\"dist\", \".claude/worktrees/**\"] },"
+    ]
+   }
+  },
+  {
+   "path": "scripts/ci/eslint-baseline.json",
+   "status": "BOTH_CHANGED",
+   "hunk": "CONFLICT",
+   "patch_lines": 141,
+   "line_check": {
+    "added": 29,
+    "missing_in_main": 21,
+    "removed": 15,
+    "removed_still_in_main": 3,
+    "missing_sample": [
+     "  \"eslintConfigSha256\": \"efe6299cb84142d5526a20255fee5d1563b865787a8e62d12e4b73e022188a11\",",
+     "      \"sha256\": \"59addfbfddbd1615559e4721fd3410b9a2d83838afdc1fc7cb0e18f536d1aedf\"",
+     "      \"sha256\": \"82333330e8ac358fe1543a92fd0699ab7bb46dedbac43c433ef44ed040504394\"",
+     "      \"path\": \"src/hooks/chat/useFilesContainerColumns.ts\",",
+     "      \"sha256\": \"93745dd019cbe86a17a77d365d3859527c771deb47c432ac122dbbcf90e4ad2b\"",
+     "      \"sha256\": \"7124d883163763f80fb48de955bd04f33703046bdae86466d151360204984c86\"",
+     "      \"line\": 673,",
+     "      \"endLine\": 673,",
+     "      \"line\": 674,",
+     "      \"endLine\": 674,",
+     "      \"line\": 728,",
+     "      \"endLine\": 728,",
+     "      \"line\": 769,",
+     "      \"endLine\": 769,",
+     "      \"file\": \"src/hooks/chat/useFilesContainerColumns.ts\",",
+     "      \"message\": \"React Hook useLayoutEffect contains a call to 'setWidth'. Without a list of dependencies, this can lead to an infinite chain of updates. To fi",
+     "      \"spanHash\": \"f809da716dd5e0b8e2dd13835aad869333a029adadb27afdc27801bd71409b9b\",",
+     "      \"lineHash\": \"d4000bc37df2aee66354e6a5816cb8f6161295473edf29eeb0746935989c873b\",",
+     "      \"contextHash\": \"c3ffa0e0b0dbccc39a16df958a47793d8d3ce92b93514ccc1f12391074cc8f03\"",
+     "      \"line\": 277,",
+     "      \"endLine\": 277,"
+    ],
+    "still_sample": [
+     "  \"eslintConfigSha256\": \"9e63ecfc90d89ad9c7301e29f7e6e9dbda238aa561d33fb496af781cfff9d2c2\",",
+     "      \"line\": 669,",
+     "      \"endLine\": 669,"
+    ]
+   }
+  },
+  {
+   "path": "src/adapters/evolutionAdapter.ts",
+   "status": "BOTH_CHANGED",
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "patch_lines": 12,
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 0,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/talkx/TalkXTemplateEditor.tsx",
+   "status": "BOTH_CHANGED",
+   "hunk": "CONFLICT",
+   "patch_lines": 138,
+   "line_check": {
+    "added": 57,
+    "missing_in_main": 37,
+    "removed": 4,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "import { parseTalkXTemplateRoute, type TalkXTemplateTab } from './talkxTemplateRoute';",
+     "  /** X047 — erro da consulta de templates propagado ao editor. */",
+     "  /** X094 — sub-aba pedida no endereço: `ttab=conteudo|ab|historico`. */",
+     "  initialTtab?: TalkXTemplateTab;",
+     "  /** X094 — troca de template feita na biblioteca lateral chega ao endereço. */",
+     "export function TalkXTemplateEditor({ templates, isLoading, isError = false, error = null, onRetry, editing, onClose, onOpenMonitor, initialTtab = 'conteudo', o",
+     "  // X094 — a sub-aba do endereço abre o painel correspondente já carregado.",
+     "    // X094 — a ref sozinha não basta: o endereço da tela 05 é a fonte de verdade do",
+     "    // template aberto e precisa acompanhar a troca feita aqui na biblioteca lateral.",
+     "    onActiveTemplateChange?.(t.id);",
+     "    // X094 — se a troca veio enquanto uma sub-aba estava no endereço, a tela não",
+     "    // pode mostrar Conteúdo enquanto a URL ainda diz `ttab=ab|historico`: mantém",
+     "    // a mesma sub-aba no novo template e carrega os dados dela.",
+     "    const nextTab = parseTalkXTemplateRoute(window.location.search).route?.ttab ?? initialTtab;",
+     "    if (nextTab === 'ab') {",
+     "      setShowVariants(true);",
+     "      void loadVariants(t.id);",
+     "    else if (nextTab === 'historico') {",
+     "      setShowVersions(true);",
+     "      void fetchVersions(t.id);",
+     "  // X094 — a sub-aba pedida no endereço abre o painel correspondente já carregado:",
+     "  // `ttab=ab` traz as variantes e `ttab=historico` traz as versões do template aberto.",
+     "  // Só a sub-aba do endereço monta o painel; reabrir o mesmo template não recarrega.",
+     "    if (!templateId) return;",
+     "    if (initialTtab === 'ab') void loadVariants(templateId);"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/talkx/TalkXTemplates.tsx",
+   "status": "BOTH_CHANGED",
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "patch_lines": 22,
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 3,
+    "removed_still_in_main": 3,
+    "missing_sample": [
+     "import { type TalkXTemplateConversionState, type TalkXTemplateConversion, SUGGESTION_MIN_SENT, EMPTY_CONVERSION } from '@/hooks/integrations/useTalkXTemplatesCo"
+    ],
+    "still_sample": [
+     "import { SUGGESTION_MIN_SENT, type TalkXTemplateConversion, type TalkXTemplateConversionState } from '@/hooks/integrations/useTalkXTemplatesConversion';",
+     "/** Estado do ranking quando o consumidor do hook não o fornece (ex.: mock de teste). */",
+     "const EMPTY_CONVERSION: TalkXTemplateConversionState = { ranking: null, isLoading: false, isError: false, error: null };"
+    ]
+   }
+  },
+  {
+   "path": "src/hooks/integrations/useTalkXTemplatesConversion.ts",
+   "status": "MAIN_UNCHANGED_SINCE_BASE",
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "patch_lines": 13,
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "export const EMPTY_CONVERSION: TalkXTemplateConversionState = { ranking: null, isLoading: false, isError: false, error: null };"
+    ],
+    "still_sample": []
+   }
+  }
+ ],
+ "counts": {
+  "migrations": "0",
+  "workflows": "0",
+  "src": "4",
+  "edges": "0",
+  "docs_only": "no",
+  "lines_branch_has_main_lacks": "4794",
+  "lines_main_has_branch_lacks": "584"
+ },
+ "auto": "MISTO_CONFLITO",
+ "n_files_with_gaps": 5,
+ "gap_lines_total": 70
+}

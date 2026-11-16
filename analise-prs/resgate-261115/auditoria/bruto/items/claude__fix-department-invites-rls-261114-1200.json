@@ -1,0 +1,90 @@
+{
+ "id": "claude__fix-department-invites-rls-261114-1200",
+ "kind": "branch",
+ "ref": "origin/claude/fix-department-invites-rls-261114-1200",
+ "tip": "14a17d19d76e04e38f4177c86b3e57c2320d6c63",
+ "merge_base": "6423dc237eda64857903f904399de8d3a6f6893f",
+ "ahead": 1,
+ "last_commit_date": "2026-11-14",
+ "merge_base_date": "2026-11-14",
+ "prs_with_same_tip": [
+  3108
+ ],
+ "triagem_2804": {
+  "3108": null
+ },
+ "closure_comment": {
+  "3108": {
+   "title": "fix(departamentos): restringe SELECT de department_invites a admin",
+   "last_comment": "Conteúdo integrado na `main` pelo pacote 6 ([#3113](https://github.com/adm01-debug/Zapp_Web_V2/pull/3113), commit `41853318cd`), com **dois ajustes de integração** — nenhuma linha de lógica alterada: |  | 1. A migration foi renomeada de `20261114120000_` para **`20261114121000_department_invites_restrin"
+  }
+ },
+ "files": [
+  {
+   "path": "scripts/db-audit/department-invites-select-admin-only.test.sh",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 185,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 137,
+    "missing_in_main": 2,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "#   DEPOIS (SQL real da migration 20261114120000_department_invites_restringe_select.sql):",
+     "migration=\"$repo_root/supabase/migrations/20261114120000_department_invites_restringe_select.sql\""
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "supabase/migrations/20261114120000_department_invites_restringe_select.sql",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "patch_lines": 31,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 21,
+    "missing_in_main": 21,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "-- QA (varredura 2026-11-14): department_invites.dept_invites_select_authenticated",
+     "-- (20260927520000_add_department_rls_policies.sql:1) ficou com USING(true) para",
+     "-- authenticated: qualquer usuario autenticado le os codigos de convite de QUALQUER",
+     "-- departamento. A migration 20261102012200_department_invites_restringe_escrita.sql",
+     "-- ja trocou INSERT/DELETE desta mesma tabela para admin (decisao do dono: so admin",
+     "-- cria e apaga convites), mas deixou o SELECT esquecido em aberto.",
+     "-- Confirmado abandono de leitura pelo app: grep em src/ e supabase/functions/ nao",
+     "-- acha nenhum `.from('department_invites')`; o aceite usa a RPC",
+     "-- accept_department_invite (SECURITY DEFINER) sobre department_invitations, e a",
+     "-- criacao usa create_department_invite (SECURITY DEFINER) tambem sobre",
+     "-- department_invitations (ver comentario de 20261102012200). Mesmo assim, em vez de",
+     "-- confiar em \"ninguem le mesmo\", a policy passa a exigir admin, no mesmo padrao",
+     "-- das policies de escrita ja restritas nesta tabela.",
+     "-- Rollback:",
+     "--   DROP POLICY IF EXISTS \"dept_invites_select_admin\" ON public.department_invites;",
+     "--   CREATE POLICY dept_invites_select_authenticated ON public.department_invites",
+     "--     FOR SELECT TO authenticated USING (true);",
+     "DROP POLICY IF EXISTS \"dept_invites_select_authenticated\" ON public.department_invites;",
+     "CREATE POLICY \"dept_invites_select_admin\" ON public.department_invites",
+     "  FOR SELECT TO authenticated",
+     "  USING (public.is_admin(auth.uid()));"
+    ],
+    "still_sample": [],
+    "same_basename_in_main": []
+   }
+  }
+ ],
+ "counts": {
+  "migrations": "1",
+  "workflows": "0",
+  "src": "0",
+  "edges": "0",
+  "docs_only": "no",
+  "lines_branch_has_main_lacks": "27",
+  "lines_main_has_branch_lacks": "2"
+ },
+ "auto": "MISTO_CONFLITO",
+ "n_files_with_gaps": 2,
+ "gap_lines_total": 23
+}

@@ -1,0 +1,558 @@
+{
+ "id": "claude__fix-ga-fase23-edge-e2e-261020-2200",
+ "kind": "branch",
+ "ref": "origin/claude/fix-ga-fase23-edge-e2e-261020-2200",
+ "tip": "420aae58834fc0d4358aa6701a55da3f72307eb2",
+ "merge_base": "351ccb2a651f0394b5e78fd660695c09b4f799cf",
+ "ahead": 3,
+ "last_commit_date": "2026-10-23",
+ "merge_base_date": "2026-10-23",
+ "prs_with_same_tip": [
+  2128
+ ],
+ "triagem_2804": {
+  "2128": "OBSOLETA"
+ },
+ "closure_comment": {},
+ "files": [
+  {
+   "path": ".github/workflows/ci.yml",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 13,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 1,
+    "removed_still_in_main": 1,
+    "missing_sample": [
+     "        run: bun run test:e2e -- --project=chromium --project=chromium-theme --project=chromium-mapa --project=chromium-contacts-visual --project=chromium-a11y "
+    ],
+    "still_sample": [
+     "        run: bun run test:e2e -- --project=chromium --project=chromium-theme --project=chromium-mapa --project=chromium-contacts-visual --project=chromium-a11y "
+    ]
+   }
+  },
+  {
+   "path": ".github/workflows/deploy-functions.yml",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 311,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 115,
+    "missing_in_main": 101,
+    "removed": 59,
+    "removed_still_in_main": 56,
+    "missing_sample": [
+     "      - '!supabase/functions/**/__fixtures__/**'",
+     "        description: 'W66/GA30: resolver automaticamente o ultimo Deployment bem-sucedido ANTERIOR ao SHA atual e publicar com esse SHA (E61 sem automacao manua",
+     "          # GA30: resolvedor extraido para scripts/edge-deploy/resolve-rollback-ref.mjs",
+     "          # (fixture em resolve-rollback-ref.unit.mjs: success mais recente =",
+     "          # SHA atual -> escolhe o anterior; sem anterior -> recusa com exit 1).",
+     "          node \"$RUNNER_TEMP/edge-tooling/scripts/edge-deploy/resolve-rollback-ref.mjs\"",
+     "          # GA33: saude dos preflights externos (vira GITHUB_ENV no fim do passo).",
+     "          CRM_PREFLIGHT_OK=true; CATALOGO_PREFLIGHT_OK=true",
+     "              # GA32: valor fora do argv (aparece no ps). `printf` e builtin do",
+     "              # bash: o segredo nunca vira argumento de processo filho.",
+     "              ENVFILE=\"$(mktemp)\"; chmod 600 \"$ENVFILE\"",
+     "              printf 'CRON_SECRET=%s\\n' \"$CRON_SECRET\" > \"$ENVFILE\"",
+     "              supabase secrets set --env-file \"$ENVFILE\" --project-ref \"$PROJECT_REF\"",
+     "              rm -f \"$ENVFILE\"",
+     "            HDR_CRM=\"$(mktemp)\"; chmod 600 \"$HDR_CRM\"",
+     "            { printf 'header = \"apikey: %s\\n' \"$EXTERNAL_SUPABASE_SERVICE_ROLE_KEY\"; printf 'header = \"Authorization: Bearer %s\\n' \"$EXTERNAL_SUPABASE_SERVICE_R",
+     "              -K \"$HDR_CRM\" \\",
+     "              echo \"::warning::Preflight read-only do CRM falhou (HTTP $STATUS) -- crm-integration fora do deploy; demais funcoes seguem (GA33).\"",
+     "              CRM_PREFLIGHT_OK=false",
+     "              HDR_CRMSCHEMA=\"$(mktemp)\"; chmod 600 \"$HDR_CRMSCHEMA\"",
+     "              { printf 'header = \"apikey: %s\\n' \"$EXTERNAL_SUPABASE_SERVICE_ROLE_KEY\"; printf 'header = \"Authorization: Bearer %s\\n' \"$EXTERNAL_SUPABASE_SERVICE",
+     "                -K \"$HDR_CRMSCHEMA\" \\",
+     "                echo \"::warning::Preflight do contrato empresarial falhou para $TABELA (HTTP $STATUS) -- crm-integration fora do deploy (GA33).\"",
+     "                CRM_PREFLIGHT_OK=false",
+     "              ENVFILE=\"$(mktemp)\"; chmod 600 \"$ENVFILE\""
+    ],
+    "still_sample": [
+     "        description: 'W66: resolver automaticamente o ultimo Deployment bem-sucedido do environment e publicar com esse SHA (E61 sem automacao manual).'",
+     "          node --input-type=module <<'NODE'",
+     "          const token = process.env.GITHUB_TOKEN;",
+     "          const repo  = process.env.GITHUB_REPOSITORY;",
+     "          const env   = 'producao-edge-functions';",
+     "          const base  = 'https://api.github.com';",
+     "          const headers = {",
+     "            Authorization: `Bearer ${token}`,",
+     "            Accept: 'application/vnd.github+json',",
+     "            'X-GitHub-Api-Version': '2022-11-28',"
+    ]
+   }
+  },
+  {
+   "path": ".github/workflows/e2e-logado.yml",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 168,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 56,
+    "missing_in_main": 53,
+    "removed": 14,
+    "removed_still_in_main": 5,
+    "missing_sample": [
+     "# GA46: a dispensa do Dangerous-Workflow (Scorecard #40) fica pronta com GA08",
+     "# (job so roda em workflow_run success de push na main, sem checkout de fork).",
+     "# Ate la, o risco esta contido: checkout sempre da main, sem input externo no",
+     "# github-script. Ver docs/audits/DECISOES-JOAQUIM-FASES-2-3.md.",
+     "            projects: --project=setup --project=chromium-e2e-core --project=chromium-authenticated --project=firefox-talkx --project=webkit-talkx --project=fire",
+     "            projects: --project=chromium-mapa --project=firefox-auth --project=webkit-auth --project=firefox-email-navy --project=webkit-email-navy --project=ch",
+     "      # GA44: o error-context.md (snapshot de acessibilidade) so e resumido DEPOIS",
+     "      # do redator e apenas se ele passou -- o arquivo cru pode conter a senha",
+     "      # digitada. O resumo vai para o step summary, nunca para artifact.",
+     "      - name: Resumir error-context pos-redacao",
+     "        if: failure() && github.ref == 'refs/heads/main' && steps.redigir.outcome == 'success'",
+     "            echo '## E2E error-context (conteudo ja redigido)'",
+     "            echo ''",
+     "            ACHOU=false",
+     "            while IFS= read -r -d '' f; do",
+     "              ACHOU=true",
+     "              echo \"### $f\"",
+     "              echo ''",
+     "              echo '```'",
+     "              cat \"$f\"",
+     "              echo '```'",
+     "              echo ''",
+     "            done < <(find test-results -name 'error-context.md' -print0 2>/dev/null || true)",
+     "            if [ \"$ACHOU\" = false ]; then echo 'Nenhum error-context.md (falha fora de spec -- ver log).'; fi",
+     "          } >> \"$GITHUB_STEP_SUMMARY\""
+    ],
+    "still_sample": [
+     "            projects: --project=setup --project=chromium-e2e-core --project=chromium-authenticated --project=firefox-talkx --project=webkit-talkx --project=fire",
+     "            projects: --project=chromium-mapa --project=firefox-auth --project=webkit-auth",
+     "            const titulo = process.env.TITULO;",
+     "        if: success()",
+     "            const titulo = process.env.TITULO;"
+    ]
+   }
+  },
+  {
+   "path": "e2e/quarantine.unit.mjs",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 28,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 7,
+    "missing_in_main": 7,
+    "removed": 1,
+    "removed_still_in_main": 1,
+    "missing_sample": [
+     "  'chromium-talkx',",
+     "  'firefox-email-navy',",
+     "  'webkit-email-navy',",
+     "  'chromium-onboarding-dispensar',",
+     "  'chromium-multiplix-responsivo',",
+     "  'chromium-tarefas-linha-de-base',",
+     "test('E83: a uniao da matriz e EXATAMENTE a lista original (21 projetos)', () => {"
+    ],
+    "still_sample": [
+     "test('E83: a uniao da matriz e EXATAMENTE a lista original (15 projetos)', () => {"
+    ]
+   }
+  },
+  {
+   "path": "eslint.config.js",
+   "status": "MAIN_UNCHANGED_SINCE_BASE",
+   "patch_lines": 15,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 3,
+    "missing_in_main": 3,
+    "removed": 1,
+    "removed_still_in_main": 1,
+    "missing_sample": [
+     "  // Zapp_fase456/, zapp-worktrees/: worktrees nomeados manuais; têm seu próprio baseline",
+     "  // e não devem ser varridos pelo lint do worktree principal.",
+     "  { ignores: [\"dist\", \".claude/worktrees/**\", \"Zapp_fase456/**\", \"zapp-worktrees/**\"] },"
+    ],
+    "still_sample": [
+     "  { ignores: [\"dist\", \".claude/worktrees/**\"] },"
+    ]
+   }
+  },
+  {
+   "path": "scripts/ci/ci-e2e-projects.unit.mjs",
+   "status": "MAIN_UNCHANGED_SINCE_BASE",
+   "patch_lines": 89,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 43,
+    "missing_in_main": 36,
+    "removed": 1,
+    "removed_still_in_main": 1,
+    "missing_sample": [
+     "const talkxYml = ler('.github/workflows/e2e-talkx.yml');",
+     "const doTalkx = projetosNoWorkflow(talkxYml);",
+     "    // GA47: storageState VAZIO explicito ({ cookies: [], origins: [] }) ZERA a",
+     "    // sessao (ver playwright-config-e81.unit.mjs) -- e o oposto de depender do",
+     "    // login real. So o storageState herdado/de arquivo (e2e/.auth) e proibido no PR.",
+     "    const semSessaoZerada = bloco.replace(/storageState:\\s*\\{\\s*cookies:\\s*\\[\\],\\s*origins:\\s*\\[\\]\\s*\\}/g, '');",
+     "      semSessaoZerada,",
+     "// GA47: contrato INVERSO -- todo projeto do playwright.config.ts roda em algum",
+     "// workflow (ci.yml, e2e-logado.yml ou e2e-talkx.yml) ou esta na ALLOWLIST com",
+     "// prazo (data futura ISO). Projeto orfao e spec que nunca roda: o teste reprova.",
+     "// Hoje a allowlist esta vazia (GA47 zerou os orfaos); ela existe para o proximo",
+     "// projeto dedicado sem workflow ainda.",
+     "const ALLOWLIST_ORFAOS = {",
+     "  // exemplo: \"chromium-novo\": { prazo: \"2026-12-31\", motivo: \"issue #0000\" },",
+     "test('GA47: nenhum projeto do playwright.config.ts e orfao', () => {",
+     "  const cobertos = new Set([...doCi, ...doLogado, ...doTalkx]);",
+     "  const orfaos = [...projetos.keys()].filter((n) => !cobertos.has(n) && !(n in ALLOWLIST_ORFAOS));",
+     "  assert.deepEqual(",
+     "    orfaos,",
+     "    `projetos sem workflow (adicionar a um workflow ou a ALLOWLIST_ORFAOS com prazo): ${orfaos.join(\", \")}`,",
+     "test('GA47: allowlist de orfaos so aceita prazo futuro com motivo', () => {",
+     "  const hoje = new Date().toISOString().slice(0, 10);",
+     "  for (const [nome, item] of Object.entries(ALLOWLIST_ORFAOS)) {",
+     "      `allowlist referencia \"${nome}\", que nem existe no playwright.config.ts`,",
+     "      String(item.prazo ?? \"\"),"
+    ],
+    "still_sample": [
+     "      bloco,"
+    ]
+   }
+  },
+  {
+   "path": "scripts/ci/e2e-teardown.mjs",
+   "status": "MAIN_UNCHANGED_SINCE_BASE",
+   "patch_lines": 74,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 40,
+    "missing_in_main": 18,
+    "removed": 2,
+    "removed_still_in_main": 2,
+    "missing_sample": [
+     "/** GA39 (defensivo): revoga a sessao obtida pelo PROPRIO teardown (logout simples,",
+     " * SEM `scope=global`), para nao derrubar runs paralelos enquanto GA09 (concurrency",
+     " * com grupo fixo) nao estiver verde. Nao limpa as sessoes antigas acumuladas --",
+     " * isso e GA40, decisao do Joaquim.",
+     "export async function logoutSessaoAtual({ url, anonKey, email, password, fetchImpl = globalThis.fetch }) {",
+     "  const saida = await fetchImpl(`${base}/auth/v1/logout`, {",
+     "    headers: { apikey: anonKey, authorization: `Bearer ${token}` },",
+     "  if (!saida.ok) throw new Error(`logout recusado (HTTP ${saida.status})`);",
+     "  return { status: saida.status };",
+     "/** Devolve o codigo de saida do logout (0 = ok ou pulado; 1 = falhou, sem bloquear o CI). */",
+     "export async function principalLogout(env = process.env, fetchImpl = globalThis.fetch) {",
+     "    console.log(`logout pulado: variavel(is) ausente(s): ${faltando.join(', ')}`);",
+     "    const r = await logoutSessaoAtual({",
+     "    console.log(`logout OK (HTTP ${r.status})`);",
+     "    console.error(`::warning::logout falhou - nao bloqueia CI: ${erro.message}`);",
+     "  if (rpc === 'logout') return await principalLogout(env, fetchImpl);",
+     "    console.error('uso: e2e-teardown.mjs <rpc>|logout');",
+     "    console.error(`::warning::teardown falhou - nao bloqueia CI: ${erro.message}`);"
+    ],
+    "still_sample": [
+     "    console.error('uso: e2e-teardown.mjs <rpc>');",
+     "    console.error(`teardown falhou - nao bloqueia CI: ${erro.message}`);"
+    ]
+   }
+  },
+  {
+   "path": "scripts/ci/e2e-teardown.unit.mjs",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 53,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 29,
+    "missing_in_main": 28,
+    "removed": 1,
+    "removed_still_in_main": 1,
+    "missing_sample": [
+     "import { RPC_PADRAO, limparFixture, logoutSessaoAtual, principal, principalLogout } from './e2e-teardown.mjs';",
+     "test('GA39: logout revoga a sessao do teardown sem scope=global (nao derruba run paralelo)', async () => {",
+     "  const { chamadas, impl } = fetchFalso({});",
+     "  const r = await logoutSessaoAtual({ ...args, fetchImpl: impl });",
+     "  const saidas = chamadas.filter((c) => String(c.url).endsWith('/auth/v1/logout'));",
+     "  assert.equal(saidas.length, 1, 'um POST de logout por teardown');",
+     "  assert.doesNotMatch(String(saidas[0].url), /scope=global/, 'logout simples: so a sessao atual');",
+     "  assert.match(String(saidas[0].opcoes.headers.authorization), /^Bearer /, 'revoga o JWT obtido no login');",
+     "test('GA39: principal aceita o subcomando logout e pula sem credencial', async () => {",
+     "  const { impl } = fetchFalso({});",
+     "  assert.equal(await principal(['logout'], envBase(), impl), 0);",
+     "  assert.equal(await principal(['logout'], {}, impl), 0, 'sem credencial pula sem falhar');",
+     "// GA43: falha no teardown/logou anota ::warning:: (visivel no run) sem bloquear",
+     "// o CI (continue-on-error no YAML + exit 1 aqui). Senha nunca vai ao argv:",
+     "// viaja em env para o body JSON do fetch (sem jq/argv).",
+     "test('GA43: falha no teardown e no logout emite ::warning::', async () => {",
+     "  const erros = [];",
+     "  const consoleOriginal = console.error;",
+     "  console.error = (msg) => erros.push(String(msg));",
+     "  try {",
+     "    const { impl: implRuim } = fetchFalso({ loginStatus: 500 });",
+     "    assert.equal(await principalLogout(envBase(), implRuim), 1);",
+     "    assert.equal(await principal([RPC_PADRAO], envBase(), implRuim), 1);",
+     "  } finally {",
+     "    console.error = consoleOriginal;"
+    ],
+    "still_sample": [
+     "import { RPC_PADRAO, limparFixture, principal } from './e2e-teardown.mjs';"
+    ]
+   }
+  },
+  {
+   "path": "scripts/ci/eslint-baseline.json",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 52,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 6,
+    "missing_in_main": 5,
+    "removed": 6,
+    "removed_still_in_main": 1,
+    "missing_sample": [
+     "  \"eslintConfigSha256\": \"90fc1544b450c6b53cfd31eeb4b45929918092d0997f23e63b05928f9c4b0ddf\",",
+     "      \"sha256\": \"59addfbfddbd1615559e4721fd3410b9a2d83838afdc1fc7cb0e18f536d1aedf\"",
+     "      \"sha256\": \"7124d883163763f80fb48de955bd04f33703046bdae86466d151360204984c86\"",
+     "      \"line\": 277,",
+     "      \"endLine\": 277,"
+    ],
+    "still_sample": [
+     "  \"eslintConfigSha256\": \"9e63ecfc90d89ad9c7301e29f7e6e9dbda238aa561d33fb496af781cfff9d2c2\","
+    ]
+   }
+  },
+  {
+   "path": "scripts/ci/marcador-specs.mjs",
+   "status": "MAIN_UNCHANGED_SINCE_BASE",
+   "patch_lines": 33,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 9,
+    "missing_in_main": 8,
+    "removed": 5,
+    "removed_still_in_main": 5,
+    "missing_sample": [
+     "/** Diretorios de `test-results/`, ordenados e sem repeticao. Arquivos soltos ficam fora.",
+     " * GA42: `.playwright-artifacts-*` nao sao testes (a #1915 contou diretorios como",
+     " * testes) e o sufixo `-retryN` nao muda a causa (2 runs iguais = 1 comentario). */",
+     "    ...new Set(",
+     "      entradas",
+     "        .filter((e) => e.isDirectory() && !e.name.startsWith('.playwright-artifacts'))",
+     "        .map((e) => e.name.replace(/-retry\\d+$/, '')),",
+     "  ].sort((a, b) => (a < b ? -1 : a > b ? 1 : 0));"
+    ],
+    "still_sample": [
+     "/** Diretorios de `test-results/`, ordenados e sem repeticao. Arquivos soltos ficam fora. */",
+     "  return entradas",
+     "    .filter((e) => e.isDirectory())",
+     "    .map((e) => e.name)",
+     "    .sort((a, b) => (a < b ? -1 : a > b ? 1 : 0));"
+    ]
+   }
+  },
+  {
+   "path": "scripts/ci/redigir-relatorio.mjs",
+   "status": "MAIN_UNCHANGED_SINCE_BASE",
+   "patch_lines": 82,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 43,
+    "missing_in_main": 34,
+    "removed": 6,
+    "removed_still_in_main": 6,
+    "missing_sample": [
+     "// GA38: o JWT do usuario de teste (e2e/.auth/user.json) e os tokens das respostas de",
+     "// login circulam no trace mesmo quando e-mail/senha literais ja sumiram. Padroes",
+     "// estruturais, independentes do valor do segredo: JWT, access/refresh_token (JSON e",
+     "// query string) e cabecalho Authorization Bearer.",
+     "const PADROES_TOKEN = [",
+     "  [/eyJ[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+/g, '[redigido]'],",
+     "  [/(\"access_token\"\\s*:\\s*\")[^\"\\s]+/g, '$1[redigido]'],",
+     "  [/(\"refresh_token\"\\s*:\\s*\")[^\"\\s]+/g, '$1[redigido]'],",
+     "  [/([?&]access_token=)[^&\\s\"'<]+/g, '$1[redigido]'],",
+     "  [/([?&]refresh_token=)[^&\\s\"'<]+/g, '$1[redigido]'],",
+     "  [/((?:Authorization|authorization)[\"'\\s:]*Bearer\\s+)[A-Za-z0-9._~+/=-]+/g, '$1[redigido]'],",
+     "/** Redige padroes estruturais de token. Devolve o texto e a contagem. */",
+     "export function redigirPadroes(texto) {",
+     "  for (const [re, reposicao] of PADROES_TOKEN) {",
+     "    const achados = saida.match(re);",
+     "    if (!achados) continue;",
+     "    ocorrencias += achados.length;",
+     "    saida = saida.replace(re, reposicao);",
+     "    if (extensaoDe(e.nome.toString('utf8')) === '.zip') {",
+     "      const r = redigirZip(conteudo, segredos);",
+     "    // GA38: padroes estruturais (JWT/Bearer/token) em entradas de texto. Binario",
+     "    // que nao decodifica como UTF-8 segue so pelo caminho de bytes (forma literal).",
+     "    let atual = conteudo;",
+     "      const p = redigirPadroes(new TextDecoder('utf8', { fatal: true }).decode(conteudo));",
+     "      if (p.ocorrencias > 0) atual = Buffer.from(p.texto, 'utf8');"
+    ],
+    "still_sample": [
+     "    const r = extensaoDe(e.nome.toString('utf8')) === '.zip'",
+     "      ? redigirZip(conteudo, segredos)",
+     "      : redigirBytes(conteudo, segredos);",
+     "    if (r.ocorrencias === 0) continue;",
+     "  const b = redigirBytes(Buffer.from(r.texto, 'utf8'), segredos);",
+     "  return { texto: b.buffer.toString('utf8'), ocorrencias: ocorrencias + r.ocorrencias + b.ocorrencias };"
+    ]
+   }
+  },
+  {
+   "path": "scripts/ci/redigir-relatorio.unit.mjs",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 74,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 55,
+    "missing_in_main": 54,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  redigirPadroes,",
+     "  redigirZip,",
+     "test('GA38: JWT, Bearer e access/refresh_token sao redigidos sem conhecer o valor', () => {",
+     "  const jwt = 'eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxMjM0In0.aBcDeFgHiJkLmNoPqRsTuVwXyZ0123456789-_';",
+     "  const entrada = `token ${jwt} e Authorization: Bearer ${jwt} e {\"access_token\":\"abc123xyz\",\"refresh_token\":\"rfrsh-456\"} e url?a=1&access_token=abc123xyz`;",
+     "  const r = redigirPadroes(entrada);",
+     "  assert.equal(r.ocorrencias, 5, 'jwt x2 + bearer + access x2 (json e query) + refresh');",
+     "  assert.doesNotMatch(r.texto, /eyJ/);",
+     "  assert.doesNotMatch(r.texto, /abc123xyz/);",
+     "  assert.doesNotMatch(r.texto, /rfrsh-456/);",
+     "  assert.match(r.texto, /Bearer \\[redigido\\]/);",
+     "  // texto limpo nao muda nem conta",
+     "  const limpo = redigirPadroes('relatorio sem segredo nenhum');",
+     "  assert.equal(limpo.ocorrencias, 0);",
+     "  assert.equal(limpo.texto, 'relatorio sem segredo nenhum');",
+     "test('GA38: JWT dentro de ZIP solto e redigido e some da contagem de restantes', () => {",
+     "  const jwt = 'eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxMjM0In0.aBcDeFgHiJkLmNoPqRsTuVwXyZ0123456789-_';",
+     "  writeFileSync(join(raiz, 'data', 'trace.zip'), (function () {",
+     "    const nome = Buffer.from('trace.json');",
+     "    const dados = Buffer.from(JSON.stringify({ token: jwt }), 'utf8');",
+     "    const local = Buffer.alloc(30 + nome.length + dados.length);",
+     "    local.writeUInt32LE(0x04034b50, 0);",
+     "    local.writeUInt16LE(20, 4);",
+     "    local.writeUInt16LE(0, 8);",
+     "    local.writeUInt16LE(0, 10);"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "scripts/edge-deploy/health-check.mjs",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 160,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 68,
+    "missing_in_main": 65,
+    "removed": 36,
+    "removed_still_in_main": 3,
+    "missing_sample": [
+     "// GA29: o endpoint e o método seguem a Management API Reference (\"Get project",
+     "// logs\"): GET /v1/projects/{ref}/analytics/endpoints/logs com `sql` +",
+     "// `iso_timestamp_start/end`, SQL em dialeto ClickHouse sobre a tabela unificada",
+     "// `logs` (`source = 'edge_logs'`, status em",
+     "// `log_attributes['response.status_code']`). O POST em `logs.all` (BigQuery)",
+     "// devolvia 404 em todo deploy — e como todo erro virava warning, a saúde nunca",
+     "// falhava. Agora 4xx = ::error:: (configuração/permissão errada é defeito real);",
+     "// só 5xx/transporte/timeout continuam ::warning:: (observabilidade indisponível",
+     "// não derruba um deploy bem-sucedido).",
+     "// Slugs entram na SQL por interpolacao: a forma e travada aqui para a consulta",
+     "// nunca carregar dado arbitrario.",
+     "export function slugValido(slug) {",
+     "  return typeof slug === 'string' && /^[A-Za-z0-9][A-Za-z0-9_-]*$/.test(slug);",
+     "// Monta a SQL de análise de logs de edge (dialeto ClickHouse, tabela unificada",
+     "// `logs`). A janela de tempo vai nos parametros `iso_timestamp_*` da API, nao na",
+     "// SQL. O filtro por funcao usa a URL da invocacao",
+     "// (`https://<ref>.supabase.co/functions/v1/<slug>...`), presente nos eventos de",
+     "// requisicao do gateway.",
+     "export function buildLogsSql(slugs) {",
+     "  const validos = (slugs ?? []).filter(slugValido);",
+     "  const escopo = validos.length > 0",
+     "    ? ` AND (${validos.map((s) => `position(log_attributes['request.url'], '/functions/v1/${s}') > 0`).join(' OR ')})`",
+     "    `SELECT count() AS total, ` +",
+     "    `countIf(toInt32OrZero(log_attributes['response.status_code']) >= 500) AS errors ` +",
+     "    `FROM logs WHERE source = 'edge_logs'` +"
+    ],
+    "still_sample": [
+     "    `SELECT ` +",
+     "    headers: {",
+     "      Authorization: `Bearer ${token}`,"
+    ]
+   }
+  },
+  {
+   "path": "scripts/edge-deploy/health-check.unit.mjs",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 62,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 45,
+    "missing_in_main": 43,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "// GA29: o health check consulta o endpoint documentado (GET .../endpoints/logs,",
+     "// ClickHouse sobre `logs`/`edge_logs`) e trata 4xx como erro real.",
+     "import { buildLogsSql, queryAnalytics, slugValido } from './health-check.mjs';",
+     "const BASE = { projectRef: 'tnnnlkbymytvtqngbbqh', token: 'token', sql: 'SELECT 1', inicio: '2026-10-20T00:00:00Z', fim: '2026-10-20T00:05:00Z' };",
+     "test('GA29: SQL usa a tabela unificada logs com source edge_logs (ClickHouse)', () => {",
+     "  const sql = buildLogsSql(['crm-integration']);",
+     "  assert.match(sql, /FROM logs WHERE source = 'edge_logs'/);",
+     "  assert.match(sql, /log_attributes\\['response\\.status_code'\\]/);",
+     "  assert.match(sql, /\\/functions\\/v1\\/crm-integration/);",
+     "  assert.match(buildLogsSql([]), /source = 'edge_logs'$/);",
+     "test('GA29: slug fora do padrao nao entra na SQL (sem injecao)', () => {",
+     "  assert.equal(slugValido('crm-integration'), true);",
+     "  assert.equal(slugValido(\"x') OR ('1'='1\"), false);",
+     "  assert.match(buildLogsSql([\"x') OR ('1'='1\"]), /source = 'edge_logs'$/);",
+     "test('GA29: consulta e GET no endpoint documentado, com janela iso', async () => {",
+     "  let vista = null;",
+     "  const fetchImpl = async (url, opcoes) => {",
+     "    vista = { url, opcoes };",
+     "    return { ok: true, status: 200, json: async () => ({ result: [{ total: 10, errors: 1 }] }) };",
+     "  const row = await queryAnalytics({ ...BASE, fetchImpl });",
+     "  assert.deepEqual(row, { total: 10, errors: 1 });",
+     "  assert.equal(vista.opcoes.method, 'GET', 'metodo documentado: GET, nao POST');",
+     "  assert.match(vista.url, /\\/analytics\\/endpoints\\/logs\\?/, 'endpoint documentado, sem logs.all');",
+     "  assert.match(vista.url, /iso_timestamp_start=/);",
+     "  assert.match(vista.url, /iso_timestamp_end=/);"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "scripts/edge-deploy/resolve-rollback-ref.mjs",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "scripts/edge-deploy/resolve-rollback-ref.unit.mjs",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/hooks/chat/useFilesContainerColumns.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 12,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  // eslint-disable-next-line react-hooks/exhaustive-deps -- sem deps intencional: re-mede a cada render; setWidth e stable e React faz bailout se a largura nao"
+    ],
+    "still_sample": []
+   }
+  }
+ ],
+ "counts": {
+  "migrations": "0",
+  "workflows": "3",
+  "src": "1",
+  "edges": "0",
+  "docs_only": "no",
+  "lines_branch_has_main_lacks": "5664",
+  "lines_main_has_branch_lacks": "1808"
+ },
+ "auto": "MISTO_CONFLITO",
+ "n_files_with_gaps": 15,
+ "gap_lines_total": 540
+}

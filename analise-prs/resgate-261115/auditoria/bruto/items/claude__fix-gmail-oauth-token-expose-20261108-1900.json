@@ -1,0 +1,65 @@
+{
+ "id": "claude__fix-gmail-oauth-token-expose-20261108-1900",
+ "kind": "branch",
+ "ref": "origin/claude/fix-gmail-oauth-token-expose-20261108-1900",
+ "tip": "6c4610ef767902f64768a91167fa53e4b835de76",
+ "merge_base": "7e128bc40305aa6917aec53a822fcc9c70098771",
+ "ahead": 10,
+ "last_commit_date": "2026-11-12",
+ "merge_base_date": "2026-11-11",
+ "prs_with_same_tip": [
+  2811
+ ],
+ "triagem_2804": {
+  "2811": null
+ },
+ "closure_comment": {},
+ "files": [
+  {
+   "path": "supabase/deployment-manifest.json",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 31,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 4,
+    "missing_in_main": 2,
+    "removed": 4,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "      \"source_sha256\": \"15ff8c33689d4062c9267ac130d23151026913aa4181c1aec13241e5ce1cb6d5\",",
+     "  \"manifest_sha256\": \"85d664b04b8fdf2ccc03f4669f5d182acdfc80e579f9443fe69a4dec44f439b9\""
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "supabase/functions/gmail-oauth/index.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 15,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 3,
+    "missing_in_main": 2,
+    "removed": 1,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "        // SEC: access_token não é retornado ao cliente — apenas expires_at.",
+     "        // O token fica no banco (criptografado) e é usado server-side."
+    ],
+    "still_sample": []
+   }
+  }
+ ],
+ "counts": {
+  "migrations": "0",
+  "workflows": "0",
+  "src": "0",
+  "edges": "1",
+  "docs_only": "no",
+  "lines_branch_has_main_lacks": "139",
+  "lines_main_has_branch_lacks": "166"
+ },
+ "auto": "MISTO_CONFLITO",
+ "n_files_with_gaps": 2,
+ "gap_lines_total": 4
+}

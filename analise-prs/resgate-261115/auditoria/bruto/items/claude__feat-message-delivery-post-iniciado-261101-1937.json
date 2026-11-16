@@ -1,0 +1,306 @@
+{
+ "id": "claude__feat-message-delivery-post-iniciado-261101-1937",
+ "kind": "branch",
+ "ref": "origin/claude/feat-message-delivery-post-iniciado-261101-1937",
+ "tip": "229bb20a394bc9c460359c02d73a19a0235f6562",
+ "merge_base": "1252bb5a41123ba4d49efd84d0f91604bff6c87c",
+ "ahead": 22,
+ "last_commit_date": "2026-11-01",
+ "merge_base_date": "2026-11-01",
+ "prs_with_same_tip": [
+  2528
+ ],
+ "triagem_2804": {
+  "2528": "DECISAO_DONO"
+ },
+ "closure_comment": {},
+ "files": [
+  {
+   "path": "scripts/db-audit/message-delivery-phase1-behavior.test.sh",
+   "status": "BOTH_CHANGED",
+   "hunk": "CONFLICT",
+   "patch_lines": 224,
+   "line_check": {
+    "added": 156,
+    "missing_in_main": 1,
+    "removed": 8,
+    "removed_still_in_main": 2,
+    "missing_sample": [
+     "post_started_migration=\"$repo_root/supabase/migrations/20261101133000_outbound_post_started.sql\""
+    ],
+    "still_sample": [
+     "  && proof.safe_api_function_count === 6",
+     "  && proof.service_delivery_effective_count === 3"
+    ]
+   }
+  },
+  {
+   "path": "scripts/db-audit/message-delivery-phase1-runtime.sql",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/components/inbox/ChatPanel.tsx",
+   "status": "BOTH_CHANGED",
+   "hunk": "PRESENT_REVERSE_APPLIES",
+   "patch_lines": 21
+  },
+  {
+   "path": "src/components/inbox/chat/SendErrorBanner.tsx",
+   "status": "BOTH_CHANGED",
+   "hunk": "CONFLICT",
+   "patch_lines": 29,
+   "line_check": {
+    "added": 10,
+    "missing_in_main": 10,
+    "removed": 5,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     " * Só falha de TEXTO sem POST iniciado tem reenvio: `onSendMessage(content)` cria uma",
+     " * mensagem nova de texto (assinatura em `ChatPanel`: `(content: string) => ...`). Os",
+     " * outros tipos reais de `Message['type']` (`image`, `video`, `audio`, `file`, `document`,",
+     " * `location`, `interactive`, `sticker`) não têm como reenviar o binário por aqui.",
+     " * PD-79: se `delivery_post_started_at` estiver preenchido, o POST ao provedor foi",
+     " * iniciado e o resultado é ambíguo — não oferecer reenvio cego. O operador deve",
+     " * resolver via painel C110 (resolve_unconfirmed_message).",
+     "  if (!mensagem || mensagem.type !== 'text') return false;",
+     "  // @ts-expect-error -- coluna adicionada por migration 20261101133000 (tipos regenerados no próximo types-sync)",
+     "  return !mensagem.delivery_post_started_at;"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/inbox/chat/UnconfirmedMessagesPanel.tsx",
+   "status": "BOTH_CHANGED",
+   "hunk": "CONFLICT",
+   "patch_lines": 132,
+   "line_check": {
+    "added": 91,
+    "missing_in_main": 2,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "export function UnconfirmedMessagesPanel({ contactId, className }: UnconfirmedMessagesPanelProps) {",
+     "  const { messages, isLoading, isError, resolve, isResolving, resolvingId } = useUnconfirmedMessages(contactId);"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/hooks/delivery/useUnconfirmedMessages.ts",
+   "status": "BOTH_CHANGED",
+   "hunk": "CONFLICT",
+   "patch_lines": 94,
+   "line_check": {
+    "added": 70,
+    "missing_in_main": 4,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "// Abaixo desse limiar o job de reconciliação ainda pode fechar sozinho.",
+     "        .not('status', 'in', '(\"sent\",\"delivered\",\"read\")')",
+     "      // @ts-expect-error resolve_unconfirmed_message not in generated types until production migration",
+     "      const { data, error } = await supabase.rpc('resolve_unconfirmed_message', {"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "supabase/deployment-manifest.json",
+   "status": "BOTH_CHANGED",
+   "hunk": "CONFLICT",
+   "patch_lines": 100,
+   "line_check": {
+    "added": 16,
+    "missing_in_main": 13,
+    "removed": 13,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "      \"bytes\": 24505,",
+     "      \"sha256\": \"b08e7c28a4abf87323022ce2d37e0c531af78100e6bcdeb24086a0a076d41386\"",
+     "      \"bytes\": 69798,",
+     "      \"sha256\": \"f4adcebddf4d5243ad03bc35ecfca45bf5a0042a7d5bbad69d326a050f251345\"",
+     "      \"bytes\": 26272,",
+     "      \"sha256\": \"787214dd32ff1edc8df8e89c0322bc66f5e1bb62a78967266bdee3667279ab67\"",
+     "      \"bytes\": 35988,",
+     "      \"sha256\": \"709e79daf38378a0b67854f2467e2dce8234b1532719174ee1f022cf198cc855\"",
+     "      \"source_sha256\": \"bb43513c942c0f4559e53c867244f89e992f032022d6803115c227205b38b457\",",
+     "      \"source_sha256\": \"4e65b00de0c518aa049702c24faee6dc24a6bd0a93bbe73273e53ecfe05ad1f9\",",
+     "      \"source_sha256\": \"ec18977d48251487f0b70b06bfab677e532540641fcb8fb68154ee1dfebfa015\",",
+     "      \"source_sha256\": \"25cd6df9ade0ee304bacc2cd84f9ac346ad46327556192bb4582f29f5b33e62a\",",
+     "  \"manifest_sha256\": \"6a67e4b9527440b0ae114b06dcbf582cbe5c934918b5145ef9dbe12af14d027e\""
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "supabase/functions/_shared/effect-reconcile.ts",
+   "status": "BOTH_CHANGED",
+   "hunk": "PRESENT_REVERSE_APPLIES",
+   "patch_lines": 24
+  },
+  {
+   "path": "supabase/functions/_shared/evolution-webhook-messages.ts",
+   "status": "BOTH_CHANGED",
+   "hunk": "CONFLICT",
+   "patch_lines": 43,
+   "line_check": {
+    "added": 22,
+    "missing_in_main": 1,
+    "removed": 3,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "      .is('external_id', null).gte('created_at', recentCutoff)"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "supabase/functions/_shared/evolution-webhook-msg-handlers.ts",
+   "status": "BOTH_CHANGED",
+   "hunk": "CONFLICT",
+   "patch_lines": 124,
+   "line_check": {
+    "added": 49,
+    "missing_in_main": 1,
+    "removed": 15,
+    "removed_still_in_main": 3,
+    "missing_sample": [
+     "                .eq('id', pendingMessage.id);"
+    ],
+    "still_sample": [
+     "            await supabase.from('messages')",
+     "              .update({ status: 'sent', external_id: externalId, status_updated_at: now })",
+     "          .select('id, status, sender')"
+    ]
+   }
+  },
+  {
+   "path": "supabase/functions/message-delivery/index.test.ts",
+   "status": "BOTH_CHANGED",
+   "hunk": "CONFLICT",
+   "patch_lines": 764,
+   "line_check": {
+    "added": 609,
+    "missing_in_main": 58,
+    "removed": 1,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  assertEqual(classifyProviderFailure(503, { message: 'Connection Closed' }).code, 'instance_unavailable', '503 instancia (marca no corpo vence o status)');",
+     "// ── PD-79: carimbo durável do POST iniciado (mark_outbound_post_started) ─────",
+     "// Fail-closed: o carimbo precisa existir ANTES do POST ao provedor. Sem ele, um",
+     "// envio que cai depois do POST seria reivindicado de novo com o lease vencido e",
+     "// duplicaria a mensagem do cliente.",
+     "/** Cliente fake que registra a ORDEM entre o carimbo (RPC) e o POST (provedor). */",
+     "function makeOrderedClient(cfg: Parameters<typeof makeClient>[0]) {",
+     "  const events: string[] = [];",
+     "  const inner = makeClient(cfg);",
+     "  const client: FakeClient = {",
+     "    ...inner,",
+     "    async rpc(fn: string, args?: Row) {",
+     "      events.push(`rpc:${fn}`);",
+     "      return inner.rpc(fn, args);",
+     "  return { client, events, inner };",
+     "Deno.test('PD-79: carimbo ok -> chama mark_outbound_post_started com id+token ANTES do POST e envia', async () => {",
+     "  const { client, events } = makeOrderedClient({ claim: { data: [CLAIM], error: null } });",
+     "    events.push('provider:post');",
+     "    return jsonOf(200, { key: { id: 'wamid.provider-1' } });",
+     "  assertEqual(body.status, 'sent', 'status');",
+     "  const args = rpcArgs(client, 'mark_outbound_post_started');",
+     "  if (!args) throw new Error('mark_outbound_post_started não foi chamado');",
+     "  assertEqual(args.p_message_id, MESSAGE_ID, 'mark p_message_id');",
+     "  assertEqual(args.p_claim_token, 'token-1', 'mark p_claim_token');",
+     "  assertEqual(events.filter((e) => e === 'provider:post').length, 1, 'POST ao provedor exatamente 1x');"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "supabase/functions/message-delivery/index.ts",
+   "status": "BOTH_CHANGED",
+   "hunk": "CONFLICT",
+   "patch_lines": 504,
+   "line_check": {
+    "added": 285,
+    "missing_in_main": 11,
+    "removed": 35,
+    "removed_still_in_main": 6,
+    "missing_sample": [
+     "  // Verificar conteúdo do body ANTES dos early-returns de 429/5xx: um body com",
+     "  // invalid_number ou auth_failed em resposta a qualquer status é definitivo",
+     "  // (sem ambiguidade), e um 429 com body de instância fora do ar é instance_unavailable.",
+     "      .select('agent_id, sender, status, external_id, contact_id, whatsapp_connection_id, delivery_post_started_at')",
+     "    // PD-79: o subcaso \"POST iniciado + lease vencido\" continua resolvido pelo",
+     "    // fluxo PD-78/PD-79 (fail_outbound_unclaimed), não aqui. Não reenviamos.",
+     "    // Erro da RPC E exceção (rede/cliente) são a mesma coisa: sem carimbo, sem POST.",
+     "    let markError: unknown = null;",
+     "    } catch (markThrown) {",
+     "      markError = markThrown ?? new Error('mark_outbound_post_started_threw');",
+     "    if (markError) throw new PreDispatchInfraError('mark_outbound_post_started_failed');"
+    ],
+    "still_sample": [
+     "      ? await resolvePrivateBucketUrl(caller, claim.media_url, undefined, supabaseUrl)",
+     "      : null;",
+     "      await failClaim(service, claim);",
+     "      await failClaim(service, claim);",
+     "      await failClaim(service, claim);",
+     "    await failClaim(service, claim);"
+    ]
+   }
+  },
+  {
+   "path": "supabase/migrations/20261101133000_outbound_post_started.sql",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "patch_lines": 490,
+   "line_check": {
+    "added": 433,
+    "missing_in_main": 433,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "-- outbound_post_started",
+     "-- Rollback: restaura claim_outbound_message (corpo de 20261011155946, com envio para grupo) e guard_message_delivery_internal_fields (corpo de 20260909260000) ",
+     "-- Rollback (SQL executável, na ordem):",
+     "--   drop function if exists public.resolve_unconfirmed_message(uuid, text);",
+     "--   alter table public.messages drop column if exists manually_resolved_at;",
+     "--   create or replace function public.claim_outbound_message( p_message_id uuid, p_agent_id uuid, p_worker text, p_lease_seconds integer DEFAULT 90 ) RETURNS T",
+     "--   create or replace function public.guard_message_delivery_internal_fields() returns trigger language plpgsql set search_path = public, pg_temp as $function$",
+     "--   drop function if exists public.mark_outbound_post_started(uuid, uuid);",
+     "--   alter table public.messages drop column if exists delivery_post_started_at;",
+     "-- PD-79 (t_8c6419cf): se o provedor demora mais que o lease de 90 s, ou a Edge",
+     "-- morre depois do POST, o lease vence e um novo clique reenviava ao WhatsApp — o",
+     "-- provedor recebia a MESMA mensagem duas vezes. A correção é em três partes:",
+     "-- 1. Coluna durável public.messages.delivery_post_started_at: carimbo do",
+     "-- instante em que a Edge marcou que o POST ao provedor ia sair.",
+     "-- 2. RPC mark_outbound_post_started(message_id, claim_token) (service role):",
+     "-- a Edge a chama IMEDIATAMENTE antes do POST. Fencing por (id, token) em",
+     "-- 'sending' sem recibo; idempotente no mesmo token; recusa lease vencido.",
+     "-- 3. claim_outbound_message passa a RECUSAR linha com POST iniciado (haja ou",
+     "-- não lease/expiração: resultado ambíguo, nunca reenvia sozinho; a linha fica",
+     "-- em 'sending' até resolução explícita).",
+     "-- Sem marca, nada muda: lease vencido continua retomável.",
+     "-- A marca é protegida pelo mesmo guard_message_delivery_internal_fields (o",
+     "-- authenticated não pode forjar nem limpar o carimbo por UPDATE/INSERT direto).",
+     "-- Nada mais muda: DDL aditiva, sem DROP, sem DML.",
+     "-- ORDEM: depende de 20261011155946 (envio para grupo): se ela ainda não está"
+    ],
+    "still_sample": [],
+    "same_basename_in_main": []
+   }
+  }
+ ],
+ "counts": {
+  "migrations": "1",
+  "workflows": "0",
+  "src": "4",
+  "edges": "5",
+  "docs_only": "no",
+  "lines_branch_has_main_lacks": "920",
+  "lines_main_has_branch_lacks": "969"
+ },
+ "auto": "MISTO_CONFLITO",
+ "n_files_with_gaps": 10,
+ "gap_lines_total": 545
+}

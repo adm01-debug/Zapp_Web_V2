@@ -1,0 +1,77 @@
+{
+ "id": "fix__f1a-lote-b-admin-audit-page-size",
+ "kind": "branch",
+ "ref": "origin/fix/f1a-lote-b-admin-audit-page-size",
+ "tip": "b6faf77361235bb6d5c48933c6f9e7fb5e38acc0",
+ "merge_base": "bac62ba98454811c3bfd117b838af926b1e795b2",
+ "ahead": 4,
+ "last_commit_date": "2026-10-23",
+ "merge_base_date": "2026-10-23",
+ "prs_with_same_tip": [
+  2068
+ ],
+ "triagem_2804": {
+  "2068": "OBSOLETA"
+ },
+ "closure_comment": {},
+ "files": [
+  {
+   "path": "src/components/admin/__tests__/AdminView.avatarRevogaUrl.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 13,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 2,
+    "missing_in_main": 0,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/admin/__tests__/AdminView.limiteChats.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 13,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 2,
+    "missing_in_main": 0,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/admin/__tests__/AdminView.ramalAdmin.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 22,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 3,
+    "missing_in_main": 1,
+    "removed": 1,
+    "removed_still_in_main": 1,
+    "missing_sample": [
+     "      expect(handleSaveRamal).toHaveBeenCalledWith('prof-1', '2001', 'segredo-sip')"
+    ],
+    "still_sample": [
+     "      expect(handleSaveRamal).toHaveBeenCalledWith('prof-1', '2001', 'segredo-sip'),"
+    ]
+   }
+  }
+ ],
+ "counts": {
+  "migrations": "0",
+  "workflows": "0",
+  "src": "3",
+  "edges": "0",
+  "docs_only": "no",
+  "lines_branch_has_main_lacks": "4",
+  "lines_main_has_branch_lacks": "4"
+ },
+ "auto": "MISTO_CONFLITO",
+ "n_files_with_gaps": 1,
+ "gap_lines_total": 2
+}

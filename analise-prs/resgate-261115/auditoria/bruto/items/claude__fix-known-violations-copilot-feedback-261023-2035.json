@@ -1,0 +1,47 @@
+{
+ "id": "claude__fix-known-violations-copilot-feedback-261023-2035",
+ "kind": "branch",
+ "ref": "origin/claude/fix-known-violations-copilot-feedback-261023-2035",
+ "tip": "61f88092ffed13c1988478369418dfd10b138bdd",
+ "merge_base": "bac62ba98454811c3bfd117b838af926b1e795b2",
+ "ahead": 1,
+ "last_commit_date": "2026-10-23",
+ "merge_base_date": "2026-10-23",
+ "prs_with_same_tip": [
+  2206
+ ],
+ "triagem_2804": {
+  "2206": "OBSOLETA"
+ },
+ "closure_comment": {},
+ "files": [
+  {
+   "path": "scripts/db-audit/known-violations.json",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 45,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 26,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "    \"from:copilot_feedback:src/hooks/copilot/useCopilotFeedback.ts\""
+    ],
+    "still_sample": []
+   }
+  }
+ ],
+ "counts": {
+  "migrations": "0",
+  "workflows": "0",
+  "src": "0",
+  "edges": "0",
+  "docs_only": "no",
+  "lines_branch_has_main_lacks": "9",
+  "lines_main_has_branch_lacks": "2"
+ },
+ "auto": "MISTO_CONFLITO",
+ "n_files_with_gaps": 1,
+ "gap_lines_total": 1
+}

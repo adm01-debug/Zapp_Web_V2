@@ -1,0 +1,114 @@
+{
+ "id": "pr-2971",
+ "kind": "pr",
+ "ref": "refs/remotes/pr/2971",
+ "pr": 2971,
+ "tip": "fd56c405c2731d43d593c5218a7c835ff7da05ed",
+ "merge_base": "ee9218b888eb715f1bc6f8fe7273127bf0bbcd01",
+ "ahead": 1,
+ "last_commit_date": "2026-11-14",
+ "merge_base_date": "2026-11-13",
+ "triagem_2804": null,
+ "closure_comment": {
+  "title": "chore(db): sincronizar artefatos derivados do banco",
+  "last_comment": "Fechada como contida: o conteúdo desta PR entrou integralmente na adm01-debug/Zapp_Web_V2#3064 (pacote 5), mergeada em `ab657aa34` com CI verde (CI Gate, Build, TypeCheck, Unit 1-3, E2E, DB Guard). Nenhum trabalho perdido; as migrations seguem o fluxo de apply do `docs/agentes/banco.md`. |  | --- | _Gener"
+ },
+ "files": [
+  {
+   "path": "scripts/db-audit/grants-baseline.json",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 18,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 3,
+    "missing_in_main": 2,
+    "removed": 3,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "    \"generated_at\": \"2026-11-14\",",
+     "    \"service_role_execute_count\": 405,"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "scripts/db-audit/known-violations.json",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 15,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 3,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "    \"rpc:record_away_message:supabase/functions/_shared/evolution-webhook-messages.ts\""
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/integrations/supabase/types.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 494,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 138,
+    "missing_in_main": 0,
+    "removed": 18,
+    "removed_still_in_main": 13,
+    "missing_sample": [],
+    "still_sample": [
+     "            Args: {",
+     "              p_contact_id: string",
+     "              p_note?: string",
+     "              p_to_agent_id?: string",
+     "              p_to_queue_id?: string",
+     "            Returns: string",
+     "            Args: {",
+     "              p_contact_id: string",
+     "              p_expected_agent_id?: string",
+     "              p_note?: string"
+    ]
+   }
+  },
+  {
+   "path": "supabase/schema-catalog.json",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 243,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 51,
+    "missing_in_main": 1,
+    "removed": 8,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "    \"generated_at\": \"2026-11-14\","
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "supabase/schema-manifest.json",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 3743,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 378,
+    "missing_in_main": 2,
+    "removed": 429,
+    "removed_still_in_main": 1,
+    "missing_sample": [
+     "        \"f:transfer_conversation(p_contact_id uuid, p_to_agent_id uuid, p_to_queue_id uuid, p_note text, p_expected_agent_id uuid)\": \"302334d158663af871e9cad17f",
+     "    \"generated_at\": \"2026-11-14T03:00:04Z\","
+    ],
+    "still_sample": [
+     "        \"f:talkx_campaign_resume_precheck(p_campaign_id uuid)|postgres|EXECUTE|grantor=postgres\": \"68934a3e9455fa72420237eb05902327\","
+    ]
+   }
+  }
+ ],
+ "auto": "MISTO_CONFLITO",
+ "n_files_with_gaps": 5,
+ "gap_lines_total": 20
+}

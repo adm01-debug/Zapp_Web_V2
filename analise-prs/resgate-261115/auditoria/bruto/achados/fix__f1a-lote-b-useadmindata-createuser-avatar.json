@@ -1,0 +1,19 @@
+[
+ {
+  "commit": "13d9f193f",
+  "arquivo": "src/components/admin/__tests__/adminDownloadPermission.test.ts",
+  "linhas": 2,
+  "amostra": [
+   "        password: 'abcdef',",
+   "        password: 'abcdef',"
+  ]
+ },
+ {
+  "commit": "13d9f193f",
+  "arquivo": "src/components/admin/useAdminData.ts",
+  "linhas": 1,
+  "amostra": [
+   "      const usersWithRoles = (profiles ?? []).map((profile) => {"
+  ]
+ }
+]

@@ -1,0 +1,223 @@
+{
+ "id": "claude_05__serene-feynman-3uuurw",
+ "kind": "branch",
+ "ref": "origin/claude_05/serene-feynman-3uuurw",
+ "tip": "cc286ee0b832830c590919e7b160414250d3886a",
+ "merge_base": "dfef2487a2c3b86101f23ef50d2c1d862b4fe03a",
+ "ahead": 33,
+ "last_commit_date": "2026-11-02",
+ "merge_base_date": "2026-11-02",
+ "prs_with_same_tip": [
+  2498
+ ],
+ "triagem_2804": {
+  "2498": "JA_NA_MAIN"
+ },
+ "closure_comment": {},
+ "files": [
+  {
+   "path": "auditoria-supabase/RELATORIO_AUDITORIA_SUPABASE.md",
+   "status": "BOTH_CHANGED",
+   "hunk": "CONFLICT",
+   "patch_lines": 160,
+   "line_check": {
+    "added": 79,
+    "missing_in_main": 4,
+    "removed": 23,
+    "removed_still_in_main": 1,
+    "missing_sample": [
+     "| **ALTO** | 4 | ZW-0002 (user_roles seq_scan 99.9%), ZW-0004 (73 cron failures/24h), ZW-0007 (46 UPDATE sem WITH CHECK), ZW-0009 (talkx_engine_alerts sem timeo",
+     "| **BAIXO** | 3 | ZW-0028, ZW-0029, ZW-0030 |",
+     "| ZW-0002 user_roles seq_scan | seq_scan=4957, idx_scan=6, pct_seq=99.9% | ALTO — sem melhora |",
+     "| ZW-0004 cron failures | 94 falhas/24h, 14 jobs; PR #2245 fechado | ALTO — agravou |"
+    ],
+    "still_sample": [
+     "|---|---|---|"
+    ]
+   }
+  },
+  {
+   "path": "auditoria-supabase/achados.json",
+   "status": "BOTH_CHANGED",
+   "hunk": "CONFLICT",
+   "patch_lines": 728,
+   "line_check": {
+    "added": 619,
+    "missing_in_main": 22,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "      \"correcao-2026-11-01T21:22Z (ZW-0002: reclassificado CRITICO→ALTO — indexes user_roles_user_id_role_key e idx_user_roles_user_id EXISTEM em prod; seq_scan",
+     "    \"total_zw\": 47,",
+     "      \"ALTO\": 4,",
+     "      \"MEDIO\": 17,",
+     "      \"BAIXO\": 3,",
+     "      \"RESOLVIDO\": 11",
+     "      \"evidencia\": \"seq_scan=7.687.641 idx_scan=4.173 (99.9% seq) — 2026-11-01T18:19Z; indexes confirmados em prod: user_roles_pkey(id), user_roles_user_id_role",
+     "      \"impacto\": \"is_admin_or_supervisor() usada em todo RLS usa seq scan em 99.9% dos acessos apesar de índice existente; hipótese: tabela pequena torna seq sc",
+     "      \"evidencia\": \"policies_role_public=5 — 2026-11-01T18:19Z; grants confirmados em prod 2026-11-01T21:20Z: apenas authenticated/postgres/service_role — NÃO h",
+     "      \"evidencia\": \"cnt=60 falhas totais em 24h (2026-11-01T19:05Z, confirmado nesta sessão); fails_24h por job: tasks=14, dispatch=14, ai-jobs=14, talkx=10, cr",
+     "      \"causa_hipotese\": \"ZW-0002 (user_roles seq_scan) satura pool; crons aguardam conexão e dão timeout\",",
+     "      \"impacto\": \"Campanhas Talk X, notificações de tarefas, dispatch de mensagens agendadas e sincronização CRM falham intermitentemente\",",
+     "      \"evidencia\": \"count(UPDATE sem with_check)=42 (2026-11-01T18:19Z, confirmado nesta sessão); era 39 em 17:04Z — agravou +3; PR #2481 cobre 8 das 42\",",
+     "      \"evidencia\": \"has_timeout_guard=false confirmado via pg_proc — 2026-11-01T18:20Z; sem SET LOCAL statement_timeout na função\",",
+     "      \"evidencia\": \"count(null_statements)=65 — invariante desde 31/10 (2026-11-01T17:03Z)\",",
+     "      \"evidencia\": \"3º maior consumidor de blocos (479993 blks/call, 2026-10-30T22:50Z); ACL só service_role — correto\",",
+     "      \"evidencia\": \"EXECUTE authenticated+service_role; leem vault.decrypted_secret sem search_path fix extra (2026-10-31T04:32Z)\",",
+     "      \"impacto\": \"Credenciais de WhatsApp, Gmail, VoIP acessíveis para qualquer usuário authenticated sem checagem de departamento\",",
+     "      \"evidencia\": \"confirmado em sessão 2026-10-31T04:36Z\",",
+     "      \"evidencia\": \"pg_views sem security_invoker confirmado 2026-10-31T04:32Z\",",
+     "      \"impacto\": \"Views com SECURITY DEFINER implícito podem expor mais dados do que o caller deveria ver\",",
+     "      \"evidencia\": \"prosecdef=true em produção (2026-10-31T04:36Z)\","
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "auditoria-supabase/progresso.json",
+   "status": "BOTH_CHANGED",
+   "hunk": "CONFLICT",
+   "patch_lines": 199,
+   "line_check": {
+    "added": 146,
+    "missing_in_main": 1,
+    "removed": 2,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  \"rls_matrix_status\": \"NÃO VERIFICADO — constraint 'Postgres temporário só via scripts/db-audit/replay-local.sh' (CLAUDE.md seção 0) não satisfeita: Docker dae"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "scripts/db-audit/grants-baseline.json",
+   "status": "BOTH_CHANGED",
+   "hunk": "CONFLICT",
+   "patch_lines": 28,
+   "line_check": {
+    "added": 5,
+    "missing_in_main": 4,
+    "removed": 5,
+    "removed_still_in_main": 2,
+    "missing_sample": [
+     "    \"generated_at\": \"2026-11-01\",",
+     "    \"anon_execute\": [],",
+     "    \"authenticated_execute_count\": 223,",
+     "    \"service_role_execute_count\": 394,"
+    ],
+    "still_sample": [
+     "    \"anon_execute\": [",
+     "    \"how_to_regenerate\": \"scripts/db-audit/grants-baseline.sql (E26)\","
+    ]
+   }
+  },
+  {
+   "path": "src/components/admin/SearchInsightsView.tsx",
+   "status": "MAIN_UNCHANGED_SINCE_BASE",
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "patch_lines": 64,
+   "line_check": {
+    "added": 11,
+    "missing_in_main": 11,
+    "removed": 11,
+    "removed_still_in_main": 11,
+    "missing_sample": [
+     " * Tela de admin com os KPIs da busca global (RPC `search_insights`):",
+     " * total de buscas, taxa de clique e buscas sem resultado. Leitura apenas —",
+     " * esta tela NÃO exporta, não imprime, não copia e não baixa nada (a",
+     " * informação não sai do sistema).",
+     " * Sem PII: a RPC expõe apenas contadores agregados — o texto de cada busca",
+     " * nunca é armazenado em `search_events` (privacidade por design).",
+     "            Contadores agregados da busca global — o texto de cada busca não é armazenado por privacidade.",
+     "              Buscas sem resultado são lacunas de conteúdo: a busca aconteceu mas nada apareceu.",
+     "              O texto de cada busca não é armazenado — apenas os contadores acima estão disponíveis.",
+     "                  : 'Textos de busca não são armazenados — privacidade por design.'",
+     "              emptyMessage=\"Textos de busca não são armazenados — privacidade por design.\""
+    ],
+    "still_sample": [
+     " * Tela de admin com os KPIs da busca global (RPC `get_search_insights`):",
+     " * total de buscas, taxa de clique, buscas sem resultado, top 10 consultas e",
+     " * top 10 termos sem resultado. Leitura apenas — esta tela NÃO exporta, não",
+     " * imprime, não copia e não baixa nada (a informação não sai do sistema).",
+     " * Sem PII: os termos vêm normalizados pela RPC (`term_normalized`), nunca de",
+     " * contato, telefone ou conversa.",
+     "            O que as pessoas procuram, o que não encontram e o que clicam — apenas termos normalizados, sem dados pessoais.",
+     "              Termos sem resultado são lacunas de conteúdo: a busca aconteceu e nada apareceu — nenhum clique",
+     "              podia acontecer. Use a lista abaixo para decidir o que cadastrar ou documentar.",
+     "                  : 'Nenhum termo registrado no período.'"
+    ]
+   }
+  },
+  {
+   "path": "src/components/admin/__tests__/SearchInsightsView.test.tsx",
+   "status": "BOTH_CHANGED",
+   "hunk": "CONFLICT",
+   "patch_lines": 102,
+   "line_check": {
+    "added": 17,
+    "missing_in_main": 12,
+    "removed": 29,
+    "removed_still_in_main": 2,
+    "missing_sample": [
+     " *  - os KPIs vêm da RPC `search_insights` (janela de 30 dias por padrão) e a",
+     " *    taxa exibida é computada (searches_with_click / total_searches → 42,0%),",
+     " *  - as duas tabelas de termos aparecem vazias (search_events não persiste texto);",
+     "const PAYLOAD = [",
+     "    average_term_length: 8.3,",
+     "    searches_by_kind: {},",
+     "  it('mostra os KPIs a partir da RPC, na janela de 30 dias', async () => {",
+     "    // Mesmo com 308 buscas sem resultado, termos não são exibidos — privacidade por design.",
+     "    expect(screen.getAllByText('Textos de busca não são armazenados — privacidade por design.')).toHaveLength(2);",
+     "      data: [{ total_searches: 0, searches_without_results: 0, searches_with_click: 0, average_term_length: 0, searches_by_kind: {} }],",
+     "    expect(screen.getByText('Textos de busca não são armazenados — privacidade por design.')).toBeInTheDocument();",
+     "      data: [{ total_searches: 10, searches_without_results: 10, searches_with_click: 10, average_term_length: 5.0, searches_by_kind: {} }],"
+    ],
+    "still_sample": [
+     "const PAYLOAD = {",
+     "    expect(screen.getByText('Nenhum termo sem resultado no período.')).toBeInTheDocument();"
+    ]
+   }
+  },
+  {
+   "path": "src/hooks/admin/useSearchInsights.ts",
+   "status": "BOTH_CHANGED",
+   "hunk": "CONFLICT",
+   "patch_lines": 78,
+   "line_check": {
+    "added": 21,
+    "missing_in_main": 14,
+    "removed": 24,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     " * Faz UMA consulta à RPC `search_insights(p_days)` e normaliza a linha",
+     " * retornada para a tela.",
+     " * Sem PII: a RPC lê apenas contadores agregados de `search_events`; o texto",
+     " * da busca nunca é armazenado (privacidade por design da migration 20261016013134,",
+     " * que cria a tabela com `term_length` mas sem coluna de texto).",
+     "/** Normaliza a linha de TABLE retornada pela RPC (array de um elemento) para a tela. */",
+     "  // RPC usa RETURNS TABLE → Supabase entrega [{…}]; extraímos a única linha.",
+     "  const row = Array.isArray(raw) && raw.length > 0 ? raw[0] : raw;",
+     "  const data = (row && typeof row === 'object' ? row : {}) as Record<string, unknown>;",
+     "  const total = toCount(data.total_searches);",
+     "  const clicks = toCount(data.searches_with_click);",
+     "  const clickRate = total > 0 ? clicks / total : 0;",
+     "    noResults: toCount(data.searches_without_results),",
+     "  return parseSearchInsights(data, days);"
+    ],
+    "still_sample": []
+   }
+  }
+ ],
+ "counts": {
+  "migrations": "0",
+  "workflows": "0",
+  "src": "3",
+  "edges": "0",
+  "docs_only": "no",
+  "lines_branch_has_main_lacks": "365",
+  "lines_main_has_branch_lacks": "213"
+ },
+ "auto": "MISTO_CONFLITO",
+ "n_files_with_gaps": 7,
+ "gap_lines_total": 84
+}

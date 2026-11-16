@@ -1,0 +1,109 @@
+{
+ "id": "fix__f1a-lote-b-talkxsegments",
+ "kind": "branch",
+ "ref": "origin/fix/f1a-lote-b-talkxsegments",
+ "tip": "81e74308988ec077cc83947068d1b60a55bdea9a",
+ "merge_base": "9d65fed626e05a9582c56badade4d2e6afaf9356",
+ "ahead": 2,
+ "last_commit_date": "2026-10-18",
+ "merge_base_date": "2026-10-18",
+ "prs_with_same_tip": [
+  2072,
+  2439
+ ],
+ "triagem_2804": {
+  "2072": "JA_NA_MAIN",
+  "2439": "JA_NA_MAIN"
+ },
+ "closure_comment": {},
+ "files": [
+  {
+   "path": "src/hooks/integrations/__tests__/useTalkXSegments.rpcDesacoplada.test.ts",
+   "status": "MAIN_UNCHANGED_SINCE_BASE",
+   "patch_lines": 23,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 8,
+    "missing_in_main": 8,
+    "removed": 1,
+    "removed_still_in_main": 1,
+    "missing_sample": [
+     "        rows: [",
+     "            id: 'c-1',",
+     "            name: 'Ana',",
+     "            nickname: null,",
+     "            phone: '+5511****0000',",
+     "            company: null,",
+     "            avatar_url: null,",
+     "            tags: null,"
+    ],
+    "still_sample": [
+     "        rows: [{ id: 'c-1', name: 'Ana', nickname: null, phone: '+5511****0000', company: null, avatar_url: null, tags: null }],"
+    ]
+   }
+  },
+  {
+   "path": "src/hooks/integrations/useTalkXSegments.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 662,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 265,
+    "missing_in_main": 251,
+    "removed": 77,
+    "removed_still_in_main": 71,
+    "missing_sample": [
+     "  | 'tags'",
+     "  | 'company'",
+     "  | 'contact_type'",
+     "  | 'conversation_status'",
+     "  | 'channel_type'",
+     "  | 'consent_status'",
+     "  | 'lead_score'",
+     "  | 'risk_score'",
+     "  | 'ai_priority'",
+     "  | 'ai_sentiment'",
+     "  | 'lead_origin'",
+     "  | 'updated_at'",
+     "  | 'created_at'",
+     "  | 'email'",
+     "  | 'city'",
+     "  | 'state'",
+     "  | 'assigned_to'",
+     "  | 'group_category'",
+     "  | 'real_sector'",
+     "  | 'real_uf';",
+     "  | 'eq'",
+     "  | 'neq'",
+     "  | 'contains'",
+     "  | 'not_contains'",
+     "  | 'gt'"
+    ],
+    "still_sample": [
+     "  | 'tags' | 'company' | 'contact_type' | 'conversation_status' | 'channel_type'",
+     "  | 'consent_status' | 'lead_score' | 'risk_score' | 'ai_priority' | 'ai_sentiment'",
+     "  | 'lead_origin' | 'updated_at' | 'created_at' | 'email'",
+     "  | 'city' | 'state' | 'assigned_to' | 'group_category'",
+     "  | 'real_sector' | 'real_uf';",
+     "  | 'eq' | 'neq' | 'contains' | 'not_contains' | 'gt' | 'gte' | 'lt' | 'lte'",
+     "  | 'in_last_days' | 'not_in_last_days' | 'is_set' | 'is_empty';",
+     "export interface SegmentRule { id: string; field: RuleField; op: RuleOp; value: string }",
+     "export interface SegmentRuleGroup { id: string; match: 'and' | 'or'; rules: SegmentRule[] }",
+     "export interface SegmentRules { groups: SegmentRuleGroup[]; join?: SegmentJoin }"
+    ]
+   }
+  }
+ ],
+ "counts": {
+  "migrations": "0",
+  "workflows": "0",
+  "src": "2",
+  "edges": "0",
+  "docs_only": "no",
+  "lines_branch_has_main_lacks": "329",
+  "lines_main_has_branch_lacks": "271"
+ },
+ "auto": "MISTO_CONFLITO",
+ "n_files_with_gaps": 2,
+ "gap_lines_total": 331
+}

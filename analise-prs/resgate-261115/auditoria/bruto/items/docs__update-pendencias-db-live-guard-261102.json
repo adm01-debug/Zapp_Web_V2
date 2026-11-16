@@ -1,0 +1,71 @@
+{
+ "id": "docs__update-pendencias-db-live-guard-261102",
+ "kind": "branch",
+ "ref": "origin/docs/update-pendencias-db-live-guard-261102",
+ "tip": "ed50aa9f35331bd635aea7d762259d2cc14a73e5",
+ "merge_base": "8ba0b4361290f37171fd6ec27012a46665ca5b7e",
+ "ahead": 1,
+ "last_commit_date": "2026-11-02",
+ "merge_base_date": "2026-11-02",
+ "prs_with_same_tip": [
+  2577
+ ],
+ "triagem_2804": {
+  "2577": "OBSOLETA"
+ },
+ "closure_comment": {},
+ "files": [
+  {
+   "path": "PENDENCIAS.md",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 122,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 41,
+    "missing_in_main": 41,
+    "removed": 32,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "_Atualizado em 2026-11-02T04:06Z — run db-live-guard 41385849215 + types-sync disparado._",
+     "**Último run com falha:** [41385849215](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41385849215)  ",
+     "**Head SHA:** `8ba0b4361290f37171fd6ec27012a46665ca5b7e` (2026-11-02T03:57Z — main pós-merge PR #2551)",
+     "- Step \"Consolidar veredito do contrato vivo\" — artifact `db-live-evidence-41385849215-1` (ID 13115417258) contém evidências",
+     "**Falhas identificadas no run 41385849215 (6 passos — vs. run anterior 41162077590 com 3):**",
+     "1. **Comparar migrations com schema_migrations** — diferença entre migrations no disco e ledger do banco",
+     "2. **Verificar invariantes gerais do banco vivo** — algum invariante do banco não satisfeito",
+     "3. **Regenerar catalogo e comparar com o commitado** — schema-catalog.json desatualizado",
+     "4. **Regenerar manifesto e comparar com o commitado** — schema-manifest.json desatualizado",
+     "5. **Verificar frescor do types.ts** — types.ts desatualizado (types-sync disparado em 2026-11-02T04:05Z)",
+     "6. **Paridade tripla (migrations, edges, grants)** — paridade entre migrations, edges e grants quebrada",
+     "**Ação tomada em 2026-11-02T04:05Z:** `types-sync.yml` disparado via `workflow_dispatch` na `main` para",
+     "regenerar `types.ts` e possivelmente `schema-catalog.json` / `schema-manifest.json`.",
+     "Quando o PR do types-sync mergear, re-disparar o DB Live Guard para verificar se as falhas 3, 4 e 5 foram corrigidas.",
+     "**Por que não foi corrigido por completo:** As falhas 1, 2 e 6 exigem análise das evidências no artifact",
+     "e possivelmente correções no banco de produção. Este workflow **não é um required check** — não bloqueia merges na `main`.",
+     "1. Aguardar o PR do types-sync mergear (auto-merge habilitado)",
+     "2. Após o merge: re-disparar o DB Live Guard via `workflow_dispatch` em `.github/workflows/db-live-guard.yml`",
+     "3. Se \"Comparar migrations com schema_migrations\" ainda falhar: baixar artifact `db-live-evidence-{run_id}-1`",
+     "   e verificar quais migrations estão no disco mas não no ledger (ou vice-versa)",
+     "4. Se \"Verificar invariantes gerais do banco vivo\" falhar: verificar os logs do artifact para entender",
+     "   qual invariante (ex.: ACL/mcp_exec, runtime-config) está quebrado",
+     "5. Se \"Paridade tripla\" falhar: verificar paridade entre migrations, edges functions e grants no banco",
+     "## 3. Deploy Edge Functions — fix --frozen=false aplicado (PR #2567) — verificação pendente",
+     "**Fix aplicado:** PR #2567 (mergeada em 2026-11-02T03:52Z, SHA `8ba0b4361290f37171fd6ec27012a46665ca5b7e`)"
+    ],
+    "still_sample": []
+   }
+  }
+ ],
+ "counts": {
+  "migrations": "0",
+  "workflows": "0",
+  "src": "0",
+  "edges": "0",
+  "docs_only": "yes",
+  "lines_branch_has_main_lacks": "172",
+  "lines_main_has_branch_lacks": "377"
+ },
+ "auto": "MISTO_CONFLITO",
+ "n_files_with_gaps": 1,
+ "gap_lines_total": 41
+}

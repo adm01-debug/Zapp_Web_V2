@@ -1,0 +1,110 @@
+{
+ "id": "claude__docs-g9-absorb-261019-1300",
+ "kind": "branch",
+ "ref": "origin/claude/docs-g9-absorb-261019-1300",
+ "tip": "f1b53effaa4da01f3e4a9b8be870af00426a6275",
+ "merge_base": "bac62ba98454811c3bfd117b838af926b1e795b2",
+ "ahead": 2,
+ "last_commit_date": "2026-10-23",
+ "merge_base_date": "2026-10-23",
+ "prs_with_same_tip": [
+  2107
+ ],
+ "triagem_2804": {
+  "2107": "OBSOLETA"
+ },
+ "closure_comment": {},
+ "files": [
+  {
+   "path": "docs/plans/PLANO_CONTATOS_CABECALHO_BOTAO_VERDE_50_ETAPAS_2026-09-30.md",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "docs/plans/PLANO_CORRECOES_190_ETAPAS_2026-10-19.md",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "patch_lines": 985,
+   "line_check": {
+    "added": 741,
+    "missing_in_main": 741,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "# PLANO DE CORREÇÕES E MELHORIAS — ZAPP WEB V2",
+     "## 190 Etapas para Execução por Agente IA (Sonnet)",
+     "### Versão 1.0.0 — 2026-10-19",
+     "## INSTRUÇÕES AO AGENTE EXECUTOR",
+     "### Regras Absolutas (NÃO NEGOCIÁVEIS)",
+     "1. **Banco de Produção**: `tnnnlkbymytvtqngbbqh` — somente leitura SELECT. Nunca DDL direto.",
+     "2. **DDL em Produção**: SOMENTE via `.github/workflows/db-migrate.yml` (`workflow_dispatch`, `apply=false` → aprovação do Joaquim → `apply=true`).",
+     "3. **MCP para SQL**: `SUPABASE - ZAPP WEB V2 - MCP` (db_query). NÃO usar `uqysyzndkfiwfztbqvsl` nem `vpkmqeumtxhrwgawxdrl`.",
+     "4. **Escrita no GitHub**: SEMPRE via `GITHUB - MCP - FOREVER` (MCP padrão retorna 403).",
+     "5. **Branch**: criar nova branch `claude/<tipo>-<slug>-<AAMMDD-HHMM>` a partir de `main`. NUNCA commitar em branch de outro agente.",
+     "6. **Push/Merge**: NUNCA fazer push ou merge por conta própria sem aprovação do Joaquim.",
+     "7. **Edge functions deploy**: SOMENTE via `.github/workflows/deploy-functions.yml`.",
+     "8. **supabase_apply_migration está bugado**: usar `db_query` + `INSERT INTO supabase_migrations.schema_migrations` manual.",
+     "9. **E2E**: rodam contra banco LOCAL da cópia de trabalho, não produção.",
+     "10. **PARAR e reportar** quando encontrar bloqueador que exija decisão de negócio ou custo.",
+     "### Bancos Proibidos (NÃO ESCREVER)",
+     "- `uqysyzndkfiwfztbqvsl` — MCP Zapp Web Lovable antigo",
+     "- `vpkmqeumtxhrwgawxdrl` — MCP Lovable Cloud (read-only, nome parecido com o oficial)",
+     "- `pgxfvjmuuxtbowutlide` — Gestão de Clientes/CRM externo",
+     "- `doufsxqlfjyuvxuezpln` — Catálogo de Produtos externo",
+     "### Convenção de Branch",
+     "- `claude/fix-<slug>-<AAMMDD-HHMM>` — correção",
+     "- `claude/feat-<slug>-<AAMMDD-HHMM>` — nova funcionalidade",
+     "- `claude/chore-<slug>-<AAMMDD-HHMM>` — manutenção",
+     "- `claude/ci-<slug>-<AAMMDD-HHMM>` — workflows"
+    ],
+    "still_sample": [],
+    "same_basename_in_main": []
+   }
+  },
+  {
+   "path": "docs/plans/PLANO_ORDEM_BANNER_SUPERIOR_20_ETAPAS_2026-09-30.md",
+   "status": "BOTH_CHANGED",
+   "hunk": "CONFLICT",
+   "patch_lines": 375,
+   "line_check": {
+    "added": 291,
+    "missing_in_main": 18,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "**Status:** planejamento concluído; execução das 20 etapas pendente.",
+     "**Entrega autorizada neste momento:** criação e commit deste documento.",
+     "Todas as etapas abaixo descrevem trabalho futuro. O commit deste plano contém apenas",
+     "documentação; não aplica a nova ordem, não altera testes e não executa publicação da interface.",
+     "## Matriz de aceite para preencher durante a execução",
+     "| Critério | Evidência esperada | Estado neste documento |",
+     "| Oito abas na ordem contratada | Lista dos botões no DOM e imagem da barra | Pendente |",
+     "| Identificadores e destinos preservados | Revisão do diff e navegação nas oito abas | Pendente |",
+     "| Arquivos em segundo com contador dinâmico | Caso existente da suíte e inspeção visual | Pendente |",
+     "| Histórico em sexto; Tarefas e Notas ao final | Comparação da sequência integral | Pendente |",
+     "| Lembretes permanece fora da barra | Caso existente da suíte | Pendente |",
+     "| Seleção e estado do Chat preservados | Navegação, rascunho, rolagem e troca de contato | Pendente |",
+     "| Barra utilizável em larguras diferentes | Inspeção das larguras e rolagem previstas | Pendente |",
+     "| Foco acompanha a nova ordem | Percurso manual de teclado | Pendente |",
+     "| Temas e movimento reduzido preservados | Verificação visual dos estados previstos | Pendente |",
+     "| Verificações técnicas concluídas | Resultados dos comandos e checks do SHA final | Pendente |",
+     "resultados registrados. Neste momento, a entrega se encerra no commit deste plano; a interface",
+     "continua com a ordem anterior."
+    ],
+    "still_sample": []
+   }
+  }
+ ],
+ "counts": {
+  "migrations": "0",
+  "workflows": "0",
+  "src": "0",
+  "edges": "0",
+  "docs_only": "yes",
+  "lines_branch_has_main_lacks": "997",
+  "lines_main_has_branch_lacks": "53"
+ },
+ "auto": "MISTO_CONFLITO",
+ "n_files_with_gaps": 2,
+ "gap_lines_total": 759
+}

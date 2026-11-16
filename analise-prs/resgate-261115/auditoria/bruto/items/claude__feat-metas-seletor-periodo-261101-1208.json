@@ -1,0 +1,74 @@
+{
+ "id": "claude__feat-metas-seletor-periodo-261101-1208",
+ "kind": "branch",
+ "ref": "origin/claude/feat-metas-seletor-periodo-261101-1208",
+ "tip": "de9584f20314ff94438b8cd5f007a7f6aadf19a8",
+ "merge_base": "1252bb5a41123ba4d49efd84d0f91604bff6c87c",
+ "ahead": 7,
+ "last_commit_date": "2026-11-01",
+ "merge_base_date": "2026-11-01",
+ "prs_with_same_tip": [
+  2484
+ ],
+ "triagem_2804": {
+  "2484": "DUPLICATA_PROVAVEL"
+ },
+ "closure_comment": {},
+ "files": [
+  {
+   "path": "src/components/dashboard/GoalsDashboard.tsx",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/components/dashboard/__tests__/GoalsDashboard.test.tsx",
+   "status": "BOTH_CHANGED",
+   "hunk": "CONFLICT",
+   "patch_lines": 163,
+   "line_check": {
+    "added": 111,
+    "missing_in_main": 3,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "    counts: { messages: 2, contacts: 4, resolved: 1 },",
+     "      if (table === 'contacts') return { count: resolvedOnly ? mocks.counts.resolved : mocks.counts.contacts, error: null };",
+     "    // 2/50 (4%) + 4/10 (40%) + 25/80 (31,25%) → média arredondada 25%."
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/dashboard/goals/GoalsTable.tsx",
+   "status": "BOTH_CHANGED",
+   "hunk": "PRESENT_REVERSE_APPLIES",
+   "patch_lines": 34
+  },
+  {
+   "path": "src/hooks/analytics/useGoalsDashboard.ts",
+   "status": "BOTH_CHANGED",
+   "hunk": "CONFLICT",
+   "patch_lines": 22,
+   "line_check": {
+    "added": 2,
+    "missing_in_main": 0,
+    "removed": 2,
+    "removed_still_in_main": 0,
+    "missing_sample": [],
+    "still_sample": []
+   }
+  }
+ ],
+ "counts": {
+  "migrations": "0",
+  "workflows": "0",
+  "src": "4",
+  "edges": "0",
+  "docs_only": "no",
+  "lines_branch_has_main_lacks": "4",
+  "lines_main_has_branch_lacks": "15"
+ },
+ "auto": "MISTO_CONFLITO",
+ "n_files_with_gaps": 1,
+ "gap_lines_total": 3
+}

@@ -1,0 +1,145 @@
+{
+ "id": "fix__ci-f1b-restaura-workflows-20261018",
+ "kind": "branch",
+ "ref": "origin/fix/ci-f1b-restaura-workflows-20261018",
+ "tip": "4ce5a6e9705cf497dae51305d0045fdc8d391322",
+ "merge_base": "e322d379484859a86c5965a1207e29032ced5321",
+ "ahead": 3,
+ "last_commit_date": "2026-10-18",
+ "merge_base_date": "2026-10-18",
+ "prs_with_same_tip": [
+  2056,
+  2446
+ ],
+ "triagem_2804": {
+  "2056": "OBSOLETA",
+  "2446": "OBSOLETA"
+ },
+ "closure_comment": {},
+ "files": [
+  {
+   "path": ".github/workflows/auto-update-pr-branch.yml",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "patch_lines": 209,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 176,
+    "missing_in_main": 176,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "# docs:",
+     "#   gatilho: push na main, fim de CI/DB Guard em PR, agendado (a cada 30 min) e dispatch",
+     "#   prova: fila de merge serial — so a proxima PR com auto-merge e atualizada; as demais esperam sem gastar CI",
+     "#   falha: a fila para e as PRs com auto-merge ficam BEHIND ate o proximo evento",
+     "#   avisa: Job Summary com a fila (em voo, proxima, esperando, bloqueadas)",
+     "name: Auto Update PR Branches",
+     "# Fila de merge serial (docs/ci/ARQUITETURA_SEM_DESPERDICIO.md, regra R1). A fila",
+     "# nativa do GitHub nao existe em conta `User` (ver CLAUDE.md), e o desenho anterior",
+     "# atualizava TODAS as PRs BEHIND a cada merge: as N recomecavam a CI, so uma",
+     "# entrava e as outras voltavam a BEHIND para recomecar do zero (O(N²)). Agora:",
+     "#   - so uma PR \"em voo\" por vez; havendo uma, ninguem mais e atualizado;",
+     "#   - sem PR em voo, atualiza so a proxima por ordem de auto-merge (FIFO);",
+     "#   - PR com check obrigatorio vermelho sai da fila ate o autor corrigir.",
+     "# A decisao vive em scripts/ci/fila-merge.mjs (testado em fila-merge.unit.mjs).",
+     "# Heads criados por este workflow nascem com GITHUB_TOKEN e os checks do PR",
+     "# caem em action_required (mesma politica anti-loop que travava o types-sync).",
+     "# Sem o passo de liberacao abaixo, o PR atualizado fica esperando alguem aprovar",
+     "# na aba Actions e o auto-merge nunca dispara (25/09/2026, PRs #725 e #754).",
+     "# Gatilhos: push na main (a vez abriu), fim de CI/DB Guard (a PR em voo pode ter",
+     "# ficado vermelha e liberado a vez) e um agendamento de seguranca para o caso de",
+     "# o auto-merge ser ligado sem nenhum outro evento. O workflow_run nao executa",
+     "# codigo de PR: roda o checkout da main e so chama a API.",
+     "# DESLIGADO em 18/10/2026 (achado pela auditoria e2e, PLANO_CI_MAIN_REVISADO.md F1b): com o secret",
+     "  # SETTINGS_GUARD_TOKEN ja existindo mas a main ainda sem protecao de branch (404), ligar este cron",
+     "  # na mesma hora que o F1b mergeia deixa o fila-merge.mjs livre para atualizar e, com allow_auto_merge"
+    ],
+    "still_sample": [],
+    "same_basename_in_main": []
+   }
+  },
+  {
+   "path": ".github/workflows/notifica-falha-main.yml",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 13,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 2,
+    "missing_in_main": 2,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "#   falha: abre ou atualiza issue com label falha-main (comenta se a issue do workflow ja existir)",
+     "#   avisa: issue com label falha-main, visivel a quem acompanha o repositorio"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": ".github/workflows/settings-guard.yml",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 83,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 68,
+    "missing_in_main": 2,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "    # Verifica configurações a cada 6h (00:15, 06:15, 12:15, 18:15 UTC)",
+     "    - cron: '15 */6 * * *'"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "docs/ci/README.md",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 129,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 45,
+    "missing_in_main": 18,
+    "removed": 20,
+    "removed_still_in_main": 3,
+    "missing_sample": [
+     "**16 workflows.**",
+     "| Auto Update PR Branches | [`auto-update-pr-branch.yml`](../../.github/workflows/auto-update-pr-branch.yml) | push na main, fim de CI/DB Guard em PR, agendado ",
+     "| CodeQL | [`codeql.yml`](../../.github/workflows/codeql.yml) | agendado (semanal) e dispatch | analise estatica de seguranca (SAST) de src, scripts, functions ",
+     "| Notifica falha na main | [`notifica-falha-main.yml`](../../.github/workflows/notifica-falha-main.yml) | workflow_run (conclusao dos workflows principais na ma",
+     "### Auto Update PR Branches (`auto-update-pr-branch.yml`)",
+     "- **Gatilho:** push na main, fim de CI/DB Guard em PR, agendado (a cada 30 min) e dispatch",
+     "- **O que prova:** fila de merge serial — so a proxima PR com auto-merge e atualizada; as demais esperam sem gastar CI",
+     "- **Quando falha:** a fila para e as PRs com auto-merge ficam BEHIND ate o proximo evento",
+     "- **Quem é avisado:** Job Summary com a fila (em voo, proxima, esperando, bloqueadas)",
+     "- **O que prova:** quais branches sao podaveis e quais PRs estao paradas ha mais de 7 dias",
+     "- **Quando falha:** relatorio nao e publicado nem a issue e atualizada",
+     "- **O que prova:** lint, tipos, testes, build, security e E2E do codigo",
+     "- **Gatilho:** push na main e dispatch sobre main",
+     "- **O que prova:** o fluxo logado (Playwright com login real) contra producao",
+     "- **Quando falha:** artefato do Playwright e issue/relatorio; nunca roda em PR de terceiro",
+     "- **Quem é avisado:** issue de E2E e autor do push",
+     "- **Quando falha:** abre ou atualiza issue com label falha-main (comenta se a issue do workflow ja existir)",
+     "- **Quem é avisado:** issue com label falha-main, visivel a quem acompanha o repositorio"
+    ],
+    "still_sample": [
+     "- **Gatilho:** pull_request, push na main e dispatch",
+     "- **Quem é avisado:** quem disparou",
+     "- **Quem é avisado:** quem disparou"
+    ]
+   }
+  }
+ ],
+ "counts": {
+  "migrations": "0",
+  "workflows": "3",
+  "src": "0",
+  "edges": "0",
+  "docs_only": "no",
+  "lines_branch_has_main_lacks": "238",
+  "lines_main_has_branch_lacks": "79"
+ },
+ "auto": "MISTO_CONFLITO",
+ "n_files_with_gaps": 4,
+ "gap_lines_total": 201
+}

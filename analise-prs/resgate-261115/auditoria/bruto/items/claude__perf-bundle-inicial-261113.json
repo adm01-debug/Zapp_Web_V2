@@ -1,0 +1,131 @@
+{
+ "id": "claude__perf-bundle-inicial-261113",
+ "kind": "branch",
+ "ref": "origin/claude/perf-bundle-inicial-261113",
+ "tip": "0ba37e1edc342eadff360a1483ea277dfdcf68c4",
+ "merge_base": "e50daef6a4d1e8bbb3a543413bd0867f8ba9759d",
+ "ahead": 11,
+ "last_commit_date": "2026-11-14",
+ "merge_base_date": "2026-11-14",
+ "prs_with_same_tip": [
+  3034
+ ],
+ "triagem_2804": {
+  "3034": null
+ },
+ "closure_comment": {
+  "3034": {
+   "title": "perf(bundle): tira radix, date-fns e controles de acessibilidade do bundle inicial (323,8 ",
+   "last_comment": "Fechada como contida: o conteúdo desta PR entrou integralmente na adm01-debug/Zapp_Web_V2#3064 (pacote 5), mergeada em `ab657aa34` com CI verde (CI Gate, Build, TypeCheck, Unit 1-3, E2E, DB Guard). Nenhum trabalho perdido; as migrations seguem o fluxo de apply do `docs/agentes/banco.md`. |  | --- | _Gener"
+  }
+ },
+ "files": [
+  {
+   "path": "scripts/ci/bundle-budget.unit.mjs",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 63,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 26,
+    "missing_in_main": 11,
+    "removed": 3,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  for (const nome of [\"vendor-core\", \"vendor-data\", \"vendor-ui\", \"vendor-motion\"]) {",
+     "// Radix e date-fns SEM grupo (13/11/2026): um grupo alcancado pelo entry leva",
+     "// para o first paint todo modulo que casa com ele, mesmo os usados so em telas",
+     "// lazy. Com o Radix inteiro no vendor-ui e o date-fns inteiro no vendor-utils o",
+     "// bundle inicial media 323,8 KB gzip (teto 325); sem os dois, ~291 KB.",
+     "test(\"Radix e date-fns seguem a alcancabilidade dos importadores (nenhum grupo os captura)\", () => {",
+     "  const semGrupo = [",
+     "    \"date-fns/format.mjs\",",
+     "    \"date-fns/locale/pt-BR.mjs\",",
+     "  for (const modulo of semGrupo) {",
+     "    assert.deepEqual(capturas.map((grupo) => grupo.name), [], `${modulo} voltou a ter grupo de chunking`);"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/theme/HighContrastProvider.tsx",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/components/theme/HighContrastToggle.tsx",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/components/theme/__tests__/HighContrastTokens.test.tsx",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/components/theme/__tests__/contrasteDoSistema.test.tsx",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/components/theme/highContrastContext.ts",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/components/transitions/useTransitionPreferences.ts",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/providers/AppProviders.tsx",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "vite.config.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 48,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 20,
+    "missing_in_main": 17,
+    "removed": 9,
+    "removed_still_in_main": 1,
+    "missing_sample": [
+     "              // Utilitarios de classe usados pelo shell inteiro (cn, cva) + o shim",
+     "              // use-sync-external-store. O grupo e alcancado estaticamente pelo",
+     "              // entry, entao TODO modulo dele vira peso de first paint: por isso",
+     "              // ele so leva o que o first paint usa de qualquer jeito.",
+     "              // - Radix NAO entra (13/11/2026): com o Radix aqui, os ~30 pacotes",
+     "              //   usados em qualquer tela (select, menu, slider, accordion...)",
+     "              //   iam juntos para o first paint — 66,8 KB gzip num chunk so.",
+     "              //   Sem grupo, cada primitivo segue a alcancabilidade do seu",
+     "              //   importador (mesma logica do lucide-react acima).",
+     "              // - clsx/use-sync-external-store PRECISAM de dono aqui: sao deps do",
+     "              //   recharts; sem este grupo a recursao (includeDependenciesRecursively)",
+     "              //   do vendor-charts os reivindica e o entry passa a importar o",
+     "                test: /node_modules[\\\\/](class-variance-authority|clsx|tailwind-merge|use-sync-external-store)[\\\\/]/ },",
+     "              // date-fns NAO tem grupo (13/11/2026): o antigo vendor-utils juntava",
+     "              // TODA funcao e locale usados em qualquer tela num chunk inicial de",
+     "              // 13,4 KB gzip. Sem grupo, so o que o shell usa (format + locales",
+     "              // de formatters.ts) fica no first paint."
+    ],
+    "still_sample": [
+     "              { name: \"vendor-utils\", priority: 70, test: /node_modules[\\\\/]date-fns[\\\\/]/ },"
+    ]
+   }
+  }
+ ],
+ "counts": {
+  "migrations": "0",
+  "workflows": "0",
+  "src": "7",
+  "edges": "0",
+  "docs_only": "no",
+  "lines_branch_has_main_lacks": "30",
+  "lines_main_has_branch_lacks": "77"
+ },
+ "auto": "MISTO_CONFLITO",
+ "n_files_with_gaps": 2,
+ "gap_lines_total": 29
+}

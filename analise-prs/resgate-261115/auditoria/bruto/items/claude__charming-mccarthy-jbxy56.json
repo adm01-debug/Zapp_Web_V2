@@ -1,0 +1,1353 @@
+{
+ "id": "claude__charming-mccarthy-jbxy56",
+ "kind": "branch",
+ "ref": "origin/claude/charming-mccarthy-jbxy56",
+ "tip": "0191895b8c969937681a415582ec94b5163e4f64",
+ "merge_base": "1252bb5a41123ba4d49efd84d0f91604bff6c87c",
+ "ahead": 132,
+ "last_commit_date": "2026-11-01",
+ "merge_base_date": "2026-11-01",
+ "prs_with_same_tip": [
+  2537
+ ],
+ "triagem_2804": {
+  "2537": "JA_NA_MAIN"
+ },
+ "closure_comment": {},
+ "files": [
+  {
+   "path": ".github/codeql/codeql-config.yml",
+   "status": "MAIN_UNCHANGED_SINCE_BASE",
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "patch_lines": 11,
+   "line_check": {
+    "added": 3,
+    "missing_in_main": 3,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  - 'docs/**'",
+     "  - '**/*.md'",
+     "  - 'supabase/migrations/**'"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": ".github/workflows/deploy-functions.yml",
+   "status": "BOTH_CHANGED",
+   "hunk": "CONFLICT",
+   "patch_lines": 73,
+   "line_check": {
+    "added": 23,
+    "missing_in_main": 21,
+    "removed": 4,
+    "removed_still_in_main": 3,
+    "missing_sample": [
+     "# GA30: rollback usa grupo proprio para nao ser cancelado por um push normal",
+     "# na main que acione o grupo deploy-edge-functions-*.",
+     "  group: ${{ inputs.rollback_to_last_success && format('deploy-edge-rollback-{0}', inputs.function_name || 'all') || format('deploy-edge-functions-{0}', inputs.",
+     "          // GA30: o deploy atual acabou de ser criado com GITHUB_SHA — pular",
+     "          // qualquer Deployment com o mesmo SHA para nao \"rollback\" para si mesmo.",
+     "          const currentSha = process.env.GITHUB_SHA;",
+     "            if (dep.sha === currentSha) {",
+     "              process.stdout.write(`Pulando Deployment ${dep.id} (SHA atual: ${dep.sha})\\n`);",
+     "              continue;",
+     "              process.stdout.write(`Rollback para o ultimo Deployment bem-sucedido (SHA diferente): ${dep.sha}\\n`);",
+     "          process.stderr.write(`Nenhum Deployment com status success e SHA diferente de ${currentSha} encontrado no environment ${env}\\n`);",
+     "            STATUS=$(curl --proto '=https' --tlsv1.2 --connect-timeout 10 --max-time 30 --silent --output /tmp/promogifts-preflight.json --write-out '%{http_cod",
+     "      - name: Testes das edge functions (deno test)",
+     "        # GA27: roda os testes .test.ts de supabase/functions com o lock fixo do CI,",
+     "        # para nao publicar funcao com erro de tipo ou de comportamento.",
+     "          shopt -s globstar",
+     "          deno test \\",
+     "            --config scripts/ci/deno.json \\",
+     "            --allow-env --allow-read --allow-net=127.0.0.1 \\",
+     "            --no-check \\",
+     "            supabase/functions/**/*.test.ts"
+    ],
+    "still_sample": [
+     "  group: deploy-edge-functions-${{ inputs.function_name || 'all' }}",
+     "              process.stdout.write(`Rollback para o ultimo Deployment bem-sucedido: ${dep.sha}\\n`);",
+     "          process.stderr.write(`Nenhum Deployment com status success encontrado no environment ${env}\\n`);"
+    ]
+   }
+  },
+  {
+   "path": ".github/workflows/vercel-env-cleanup.yml",
+   "status": "BOTH_CHANGED",
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "patch_lines": 15,
+   "line_check": {
+    "added": 3,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "    shell: bash -euo pipefail {0}"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "docs/audits/PLANO_GITHUB_ACTIONS_100_ETAPAS_2026-10-01.md",
+   "status": "BOTH_CHANGED",
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "patch_lines": 126,
+   "line_check": {
+    "added": 28,
+    "missing_in_main": 28,
+    "removed": 16,
+    "removed_still_in_main": 16,
+    "missing_sample": [
+     "| **E12** | `[x]` CONCLUÍDA | PR #2537 | Cabeçalhos corrigidos em ci.yml, types-sync.yml e db-migrate.yml; contrato W62/W63 e testes verdes. |",
+     "| **E19** | `[x]` CONCLUÍDA | PR #2537 | Gate 3 redesenhado: exit 3 para apply-pendente, contrato GA19/GA20 com verificação de catálogo. |",
+     "| **E20** | `[x]` CONCLUÍDA | PR #2537 | Dedupe de falha dos gates via issue única com label db-live-guard; fluxo GA20 implementado. |",
+     "| **E21** | `[x]` CONCLUÍDA | PR #2537 | Destravar checks filtra workflow_runs por head_branch; auto-merge seguro no types-sync GA21. |",
+     "| **E67** | `[x]` CONCLUÍDA | PR #2537 | Cache do Bun em ~/.bun/install/cache com chave baseada em bun.lock presente em ci.yml. |",
+     "| **E68** | `[x]` CONCLUÍDA | PR #2537 | Cache dos browsers Playwright em ~/.cache/ms-playwright presente em ci.yml. |",
+     "| **E69** | `[x]` CONCLUÍDA | PR #2537 | Paralelização do ci.yml: test, security e e2e independentes de lint-and-typecheck. |",
+     "| **E70** | `[x]` CONCLUÍDA | PR #2537 | lint-and-typecheck dividido: Lint & TypeCheck separado de Build; 2 jobs distintos. |",
+     "| **E71** | `[x]` CONCLUÍDA | PR #2537 | Guard de draft em ci.yml e e2e-logado.yml; skip em PR draft implementado GA08/GA09. |",
+     "| **E72** | `[x]` CONCLUÍDA | PR #2537 | Artifacts: dist só em workflow_dispatch; coverage-report com retention-days=7. |",
+     "| **E75** | `[~]` PARCIAL | sem PR associado | toolchain.json proposto mas não implementado; versões de bun/deno/node ainda fixadas por arquivo. |",
+     "| **E77** | `[x]` CONCLUÍDA | PR #2537 | Dependabot package-ecosystem docker adicionado ao dependabot.yml; ecosistema coberto. |",
+     "| **E90** | `[x]` CONCLUÍDA | PR #2537 | Notificação de falha na main por WhatsApp via N8N implementada; webhook workflow_run configurado. |",
+     "| **E97** | `[x]` CONCLUÍDA | PR #1852 + PR #2537 | set -euo pipefail em todos os run: multi-linha; contrato GA05/GA27/GA29 passaram localmente. |",
+     "- [x] **E12** · C · G-42 · Corrigir os 3 cabeçalhos desatualizados (`ci.yml:5`, `types-sync.yml:82-86`,",
+     "- [x] **E19** · B · G-17 · Redesenhar o Gate 3: em vez de contar linhas de `types.ts`, comparar **objetos**",
+     "- [x] **E20** · B · G-16 · \"Registrar falha dos gates\" do `types-sync`: mesmo dedupe do guarda vivo (marcador",
+     "- [x] **E21** · B · G-25 · \"Destravar os checks\": filtrar `workflow_runs` por `head_branch ==",
+     "- [x] **E67** · B · G-15 · Cache do Bun: `actions/cache` (pinado) em `~/.bun/install/cache` com chave `bun-${{",
+     "- [x] **E68** · B · G-15 · Cache dos browsers Playwright: `~/.cache/ms-playwright` com chave",
+     "- [x] **E69** · B · G-15 · Paralelizar o `ci.yml`: `test`, `security` e `e2e` deixam de depender de",
+     "- [x] **E70** · B · G-15 · Dividir `lint-and-typecheck` em 2 jobs: `🔍 Lint & TypeCheck` (ratchets + guards de",
+     "- [x] **E71** · B · G-31 · `if: github.event.pull_request.draft == false || github.event_name != 'pull_request'` nos",
+     "- [x] **E72** · B · G-32 · Artifacts: `dist` só em `workflow_dispatch` (Vercel builda sozinho); `coverage-report` só",
+     "- [~] **E75** · C · G-20 · Fonte única de versões de toolchain: `.github/toolchain.json` (`bun`, `deno`, `node`,"
+    ],
+    "still_sample": [
+     "| **E12** | `[~]` PARCIAL | sem PR associado | Cabeçalhos de types-sync/db-migrate atualizados, mas ci.yml ainda descreve só lint/typecheck/test/build. |",
+     "| **E97** | `[~]` AGUARDA RUNTIME | PR #1852 | Modo estrito e contrato presentes e a suíte local passou; não reexecuta shellcheck/actionlint. |",
+     "- [~] **E12** · C · G-42 · Corrigir os 3 cabeçalhos desatualizados (`ci.yml:5`, `types-sync.yml:82-86`,",
+     "- [ ] **E19** · B · G-17 · Redesenhar o Gate 3: em vez de contar linhas de `types.ts`, comparar **objetos**",
+     "- [ ] **E20** · B · G-16 · \"Registrar falha dos gates\" do `types-sync`: mesmo dedupe do guarda vivo (marcador",
+     "- [ ] **E21** · B · G-25 · \"Destravar os checks\": filtrar `workflow_runs` por `head_branch ==",
+     "- [ ] **E67** · B · G-15 · Cache do Bun: `actions/cache` (pinado) em `~/.bun/install/cache` com chave `bun-${{",
+     "- [ ] **E68** · B · G-15 · Cache dos browsers Playwright: `~/.cache/ms-playwright` com chave",
+     "- [ ] **E69** · B · G-15 · Paralelizar o `ci.yml`: `test`, `security` e `e2e` deixam de depender de",
+     "- [ ] **E70** · B · G-15 · Dividir `lint-and-typecheck` em 2 jobs: `🔍 Lint & TypeCheck` (ratchets + guards de"
+    ]
+   }
+  },
+  {
+   "path": "docs/reconciliation/tasks/P006.json",
+   "status": "MAIN_UNCHANGED_SINCE_BASE",
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "patch_lines": 6360,
+   "line_check": {
+    "added": 4732,
+    "missing_in_main": 4732,
+    "removed": 1,
+    "removed_still_in_main": 1,
+    "missing_sample": [
+     "  \"plan\": {",
+     "    \"plan_id\": \"docs--audits--plano_github_actions_100_etapas_2026-10-01\",",
+     "    \"path\": \"docs/audits/PLANO_GITHUB_ACTIONS_100_ETAPAS_2026-10-01.md\",",
+     "    \"title\": \"Auditoria exaustiva do GitHub Actions — plano de correção e melhorias em 100 etapas (v3)\",",
+     "    \"source_sha\": \"cbf3e445ac446e00fcc0f407796173787dcaa426\",",
+     "    \"definition_ref\": \"2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6\",",
+     "    \"source_kind\": \"GIT\",",
+     "    \"expected_tasks\": 100,",
+     "    \"observed_tasks\": 100,",
+     "    \"missing_numbers\": [],",
+     "    \"extraction_style\": \"checkbox\",",
+     "    \"authority\": \"CURRENT_REFERENCE\",",
+     "    \"evidence_refs\": [],",
+     "    \"module\": \"CI\",",
+     "    \"successors\": [],",
+     "    \"basis\": \"Referência localizada e confrontada com evidências do baseline; um plano não concede autorização de execução.\",",
+     "    \"evidence\": [],",
+     "    \"automatic_execution_authorized\": false,",
+     "    \"record_id\": \"P006\",",
+     "    \"task_file\": \"tasks/P006.json\",",
+     "    \"status_counts\": {",
+     "      \"SUPERSEDED\": 3,",
+     "      \"DONE_VERIFIED\": 23,",
+     "      \"IMPLEMENTED_AWAITING_RUNTIME_EVIDENCE\": 27,",
+     "      \"NEEDS_REVALIDATION\": 11,"
+    ],
+    "still_sample": [
+     "{\"plan\":{\"plan_id\":\"docs--audits--plano_github_actions_100_etapas_2026-10-01\",\"path\":\"docs/audits/PLANO_GITHUB_ACTIONS_100_ETAPAS_2026-10-01.md\",\"title\":\"Audito"
+    ]
+   }
+  },
+  {
+   "path": "docs/talkx/README.md",
+   "status": "MAIN_UNCHANGED_SINCE_BASE",
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "patch_lines": 12,
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "| [ESTADOS.md](./ESTADOS.md) | Matriz tela × estado gerada por `scripts/talkx/gen-estados.mjs` (X055); verificada em CI por `--check` |"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "scripts/ci/actions-kpi.mjs",
+   "status": "BOTH_CHANGED",
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "patch_lines": 30,
+   "line_check": {
+    "added": 11,
+    "missing_in_main": 11,
+    "removed": 2,
+    "removed_still_in_main": 2,
+    "missing_sample": [
+     "// GA92: `maxRuns` limita o numero de runs para os quais fazemos GET de jobs (1 GET",
+     "// por run × 1 000+ runs ultrapassa o limite de 1 000 req/h da API). Os runs mais",
+     "// longos sao priorizados porque têm maior chance de ter os jobs mais lentos.",
+     "  { repo, token, porPagina = POR_PAGINA, maxPaginas = 100, maxRuns = 300, pedir: buscar = pedir } = {},",
+     "  const todos = runs ?? [];",
+     "  let alvo = todos;",
+     "  if (todos.length > maxRuns) {",
+     "    alvo = [...todos].sort((a, b) => duracaoMinutos(b) - duracaoMinutos(a)).slice(0, maxRuns);",
+     "    console.error(",
+     "      `::warning::GA92: coletarJobs: ${todos.length} runs na janela; buscando jobs apenas dos ${maxRuns} mais longos para nao ultrapassar o rate limit da API.`,",
+     "  for (const run of alvo) {"
+    ],
+    "still_sample": [
+     "  { repo, token, porPagina = POR_PAGINA, maxPaginas = 100, pedir: buscar = pedir } = {},",
+     "  for (const run of runs ?? []) {"
+    ]
+   }
+  },
+  {
+   "path": "scripts/ci/actions-kpi.unit.mjs",
+   "status": "BOTH_CHANGED",
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "patch_lines": 34,
+   "line_check": {
+    "added": 19,
+    "missing_in_main": 15,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "test('GA92: coletarJobs respeita maxRuns para nao ultrapassar rate limit da API', async () => {",
+     "  // 5 runs com duracoes diferentes; maxRuns=3 deve selecionar os 3 mais longos (ids 5, 4, 3).",
+     "  const runsComDuracao = [",
+     "    { id: 1, name: 'CI', run_started_at: '2026-10-03T10:00:00Z', updated_at: '2026-10-03T10:01:00Z' }, // 1 min",
+     "    { id: 2, name: 'CI', run_started_at: '2026-10-03T10:00:00Z', updated_at: '2026-10-03T10:02:00Z' }, // 2 min",
+     "    { id: 3, name: 'CI', run_started_at: '2026-10-03T10:00:00Z', updated_at: '2026-10-03T10:05:00Z' }, // 5 min",
+     "    { id: 4, name: 'CI', run_started_at: '2026-10-03T10:00:00Z', updated_at: '2026-10-03T10:10:00Z' }, // 10 min",
+     "    { id: 5, name: 'CI', run_started_at: '2026-10-03T10:00:00Z', updated_at: '2026-10-03T10:20:00Z' }, // 20 min",
+     "  await coletarJobs(runsComDuracao, { repo: 'o/r', token: 't', maxRuns: 3, pedir: pedirFake });",
+     "  assert.equal(chamadas.length, 3, 'so maxRuns runs devem gerar GET de jobs');",
+     "  const idsConsultados = chamadas.map((c) => Number(new URL(c, 'http://x').pathname.match(/\\/runs\\/(\\d+)\\//)?.[1]));",
+     "  assert.ok(idsConsultados.includes(5), 'o run mais longo (id 5) deve ter seus jobs buscados');",
+     "  assert.ok(idsConsultados.includes(4), 'o segundo mais longo (id 4) deve ter seus jobs buscados');",
+     "  assert.ok(idsConsultados.includes(3), 'o terceiro mais longo (id 3) deve ter seus jobs buscados');",
+     "  assert.ok(!idsConsultados.includes(1), 'o run mais curto (id 1) nao deve gerar GET de jobs');"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "scripts/ci/check-claude-md.unit.mjs",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "patch_lines": 81,
+   "line_check": {
+    "added": 56,
+    "missing_in_main": 56,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "// GA02: trava anti-apagão do CLAUDE.md.",
+     "// Reprova se o CLAUDE.md perder as seções críticas (fonte de verdade do",
+     "// projeto) ou encolher mais de 30 % em relação à base do PR. O guard",
+     "// protege contra o padrão observado no commit a50d52a: uma sessão que cai",
+     "// no meio da escrita + auto-merge = CLAUDE.md truncado em produção.",
+     "import { readFileSync, existsSync } from 'node:fs';",
+     "import { execSync } from 'node:child_process';",
+     "import { fileURLToPath } from 'node:url';",
+     "import { dirname, join } from 'node:path';",
+     "import { test } from 'node:test';",
+     "import assert from 'node:assert/strict';",
+     "const RAIZ = join(dirname(fileURLToPath(import.meta.url)), '../..');",
+     "const CAMINHO = join(RAIZ, 'CLAUDE.md');",
+     "// Seções cuja ausência indica truncamento acidental.",
+     "const SECOES_OBRIGATORIAS = [",
+     "  { padrao: /^## 1\\. Banco de dados OFICIAL/m, nome: '## 1. Banco de dados OFICIAL' },",
+     "  { padrao: /^## Perímetro do GitHub/m, nome: '## Perímetro do GitHub' },",
+     "  { padrao: /^## Auditoria de workflows/m, nome: '## Auditoria de workflows' },",
+     "// Tamanho mínimo absoluto (chars). O arquivo tem ~22 000 chars; 50 % disso =",
+     "// 11 000. Se cair abaixo disso, alguma truncagem grave ocorreu.",
+     "const TAMANHO_MINIMO = 11_000;",
+     "test('GA02: CLAUDE.md existe e tem tamanho mínimo', () => {",
+     "  assert.ok(",
+     "    existsSync(CAMINHO),",
+     "    'CLAUDE.md sumiu do repositório — fonte de verdade do projeto apagada',"
+    ],
+    "still_sample": [],
+    "same_basename_in_main": []
+   }
+  },
+  {
+   "path": "scripts/ci/check-talkx-docs.unit.mjs",
+   "status": "MAIN_UNCHANGED_SINCE_BASE",
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "patch_lines": 12,
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 0,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "scripts/ci/deploy-functions-workflow.unit.mjs",
+   "status": "MAIN_UNCHANGED_SINCE_BASE",
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "patch_lines": 58,
+   "line_check": {
+    "added": 32,
+    "missing_in_main": 28,
+    "removed": 1,
+    "removed_still_in_main": 1,
+    "missing_sample": [
+     "  // GA30: rollback usa grupo separado (deploy-edge-rollback-*) para nao ser cancelado",
+     "  // por um push normal. O group ainda contem inputs.function_name para granularidade.",
+     "  assert.match(block[1], /deploy-edge-functions-/, 'grupo deploy-edge-functions- deve existir');",
+     "  assert.match(block[1], /inputs\\.function_name/, 'grupo deve referenciar inputs.function_name');",
+     "// GA27: deno test roda antes do deploy — nao publicar funcao com erro de comportamento",
+     "test('GA27: deno test roda antes do Deploy e usa lock fixo do CI', () => {",
+     "  const inicioTest = workflow.indexOf('- name: Testes das edge functions (deno test)');",
+     "  const inicioDeploy = workflow.indexOf('- name: Deploy');",
+     "  assert.ok(inicioTest > 0, 'passo deno test deve existir');",
+     "  assert.ok(inicioDeploy > inicioTest, 'deno test deve vir antes do Deploy');",
+     "  const bloco = workflow.slice(inicioTest, inicioDeploy);",
+     "  assert.match(bloco, /deno test/, 'o passo deve chamar deno test');",
+     "  assert.match(bloco, /--config scripts\\/ci\\/deno\\.json/, 'deve usar o deno.json do CI com lock fixo');",
+     "  assert.match(bloco, /supabase\\/functions\\/\\*\\*\\/\\*\\.test\\.ts/, 'deve cobrir todos os arquivos .test.ts');",
+     "// GA30: rollback usa grupo de concorrencia proprio — push normal nao cancela rollback",
+     "test('GA30: rollback_to_last_success usa grupo de concorrencia separado', () => {",
+     "    /deploy-edge-rollback-/,",
+     "    'rollback deve ter prefixo de grupo diferente de deploy-edge-functions-',",
+     "    /inputs\\.rollback_to_last_success && format\\('deploy-edge-rollback-/,",
+     "    'concurrency group deve ser condicional no rollback_to_last_success',",
+     "// GA30: rollback pula o SHA atual — nao \"reverter\" para si mesmo",
+     "test('GA30: rollback pula deployment com SHA igual ao atual', () => {",
+     "  const inicioRollback = workflow.indexOf('- name: Resolver ref para rollback automatico');",
+     "  const fimRollback = workflow.indexOf('- name: Checkout code');",
+     "  assert.ok(inicioRollback > 0 && fimRollback > inicioRollback);"
+    ],
+    "still_sample": [
+     "  assert.match(block[1], /^  group: deploy-edge-functions-\\$\\{\\{ inputs\\.function_name \\|\\| 'all' \\}\\}$/m);"
+    ]
+   }
+  },
+  {
+   "path": "scripts/ci/e2e-teardown.mjs",
+   "status": "MAIN_UNCHANGED_SINCE_BASE",
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "patch_lines": 36,
+   "line_check": {
+    "added": 13,
+    "missing_in_main": 11,
+    "removed": 1,
+    "removed_still_in_main": 1,
+    "missing_sample": [
+     "  // GA39: revogar todas as sessoes do usuario de teste para nao acumular tokens",
+     "  // no banco entre runs. Falha de logout nao derruba o teardown.",
+     "  let logoutStatus = null;",
+     "    const logout = await fetchImpl(`${base}/auth/v1/logout?scope=global`, {",
+     "      headers: { apikey: anonKey, authorization: `Bearer ${token}` },",
+     "    logoutStatus = logout.status;",
+     "  } catch {",
+     "    // erro de rede no logout e nao-bloqueante",
+     "  return { rpc, status: resposta.status, logoutStatus };",
+     "    if (r.logoutStatus === null || r.logoutStatus >= 400) {",
+     "      console.log(`::warning::teardown: logout global falhou (HTTP ${r.logoutStatus ?? 'erro de rede'})`);"
+    ],
+    "still_sample": [
+     "  return { rpc, status: resposta.status };"
+    ]
+   }
+  },
+  {
+   "path": "scripts/ci/e2e-teardown.unit.mjs",
+   "status": "BOTH_CHANGED",
+   "hunk": "CONFLICT",
+   "patch_lines": 86,
+   "line_check": {
+    "added": 31,
+    "missing_in_main": 22,
+    "removed": 3,
+    "removed_still_in_main": 3,
+    "missing_sample": [
+     "function fetchFalso({ loginStatus = 200, rpcStatus = 200, logoutStatus = 204 } = {}) {",
+     "    if (url.includes('/auth/v1/logout')) {",
+     "      return { ok: ok(logoutStatus), status: logoutStatus, json: async () => ({}) };",
+     "  assert.equal(chamadas.length, 3, 'esperava exatamente login + RPC + logout');",
+     "  assert.equal(chamadas.length, 3);",
+     "// ── GA39: logout global ──────────────────────────────────────────────────────",
+     "test('GA39: logout global e chamado apos a RPC com o JWT do usuario de teste', async () => {",
+     "  const logout = chamadas[2];",
+     "  assert.match(logout.url, /\\/auth\\/v1\\/logout\\?scope=global$/);",
+     "  assert.equal(logout.opcoes.method, 'POST');",
+     "  assert.equal(logout.opcoes.headers.authorization, `Bearer ${TOKEN}`, 'logout usa o JWT do usuario de teste');",
+     "  assert.equal(logout.opcoes.headers.apikey, CHAVE_PUBLICA);",
+     "  assert.equal(r.logoutStatus, 204);",
+     "test('GA39: falha de logout nao derruba o teardown', async () => {",
+     "  const { impl } = fetchFalso({ logoutStatus: 500 });",
+     "  assert.equal(r.status, 200, 'status da RPC permanece OK');",
+     "  assert.equal(r.logoutStatus, 500, 'logoutStatus reflete o HTTP do logout');",
+     "test('GA39: erro de rede no logout nao propaga excecao', async () => {",
+     "    if (url.includes('/auth/v1/logout')) throw new Error('rede indisponivel');",
+     "      return { ok: true, status: 200, json: async () => ({ access_token: TOKEN }) };",
+     "    return { ok: true, status: 200, json: async () => 1 };",
+     "  assert.equal(r.logoutStatus, null, 'erro de rede no logout resulta em logoutStatus null');"
+    ],
+    "still_sample": [
+     "function fetchFalso({ loginStatus = 200, rpcStatus = 200 } = {}) {",
+     "  assert.equal(chamadas.length, 2, 'esperava exatamente login + RPC');",
+     "  assert.equal(chamadas.length, 2);"
+    ]
+   }
+  },
+  {
+   "path": "scripts/ci/ga04-runtime-stdout.unit.mjs",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "patch_lines": 114,
+   "line_check": {
+    "added": 69,
+    "missing_in_main": 69,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "// GA04: garante separação stdout/stderr nos scripts do db-migrate.",
+     "// validate-runtime-proof.mjs: stdout deve conter SOMENTE o hash SHA-256 de",
+     "// 64 caracteres hexadecimais + '\\n'. Qualquer mensagem informativa deve ir",
+     "// para stderr — senão o bash não consegue capturar CONFIRMATION_HASH limpo.",
+     "// run-runtime-contract.mjs: stdout deve ser SOMENTE o JSON bruto da prova",
+     "// (repassado de r.stdout). Diagnósticos devem usar console.error (stderr).",
+     "import { readFileSync } from 'node:fs';",
+     "import { fileURLToPath } from 'node:url';",
+     "import { dirname, join } from 'node:path';",
+     "import { test } from 'node:test';",
+     "import assert from 'node:assert/strict';",
+     "const RAIZ = join(dirname(fileURLToPath(import.meta.url)), '../..');",
+     "const VALIDAR = join(RAIZ, 'scripts/db-audit/validate-runtime-proof.mjs');",
+     "const EXECUTAR = join(RAIZ, 'scripts/db-audit/run-runtime-contract.mjs');",
+     "test('GA04: validate-runtime-proof — só um process.stdout.write e ele emite o hash', () => {",
+     "  const src = readFileSync(VALIDAR, 'utf8');",
+     "  // Deve haver exatamente 1 process.stdout.write — o do hash de confirmação.",
+     "  const stdoutWrites = [...src.matchAll(/process\\.stdout\\.write/g)];",
+     "  assert.equal(",
+     "    stdoutWrites.length,",
+     "    `GA04: validate-runtime-proof.mjs tem ${stdoutWrites.length} process.stdout.write (esperado 1)`,",
+     "  // O único write deve incluir a variável confirmacao seguida de '\\n'.",
+     "  assert.ok(",
+     "    /process\\.stdout\\.write\\(confirmacao\\s*\\+\\s*['\"]\\\\n['\"]\\)/.test(src),",
+     "    \"GA04: validate-runtime-proof.mjs — process.stdout.write não escreve `confirmacao + '\\\\n'`\","
+    ],
+    "still_sample": [],
+    "same_basename_in_main": []
+   }
+  },
+  {
+   "path": "scripts/ci/migration-drift-stdout.unit.mjs",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "patch_lines": 87,
+   "line_check": {
+    "added": 64,
+    "missing_in_main": 64,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     " * E53: prova que as linhas de resumo de divergência aparecem no stdout ANTES",
+     " * de qualquer saída de log no stderr, permitindo `grep '^[0-9]'` no stdout para",
+     " * triagem rápida em CI.",
+     " * Formato garantido: `AAAAAAAAAAAAAA | disco | ledger | motivo`",
+     " * (14 dígitos, espaço-pipe-espaço, três colunas)",
+     "import test from 'node:test';",
+     "import assert from 'node:assert/strict';",
+     "import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';",
+     "import { tmpdir } from 'node:os';",
+     "import { join, resolve } from 'node:path';",
+     "import { spawnSync } from 'node:child_process';",
+     "const SCRIPT = resolve('scripts/db-audit/check-migration-drift.mjs');",
+     "const NODE = process.execPath;",
+     "const DIVERGENCE_LINE_RE = /^\\d{14} \\| /u;",
+     "test('E53: DIVERGENCE_LINE_RE bate no formato version | disco | ledger | motivo', () => {",
+     "  assert.match('20260101120000 | foo.sql | (nenhum) | arquivo sem registro no banco', DIVERGENCE_LINE_RE);",
+     "  assert.match('20261231235959 | (nenhum) | bar_name.sql | registro no banco sem arquivo no repo', DIVERGENCE_LINE_RE);",
+     "  assert.doesNotMatch('  20260101120000 | indentado | nao bate', DIVERGENCE_LINE_RE);",
+     "  assert.doesNotMatch('OK: tudo certo', DIVERGENCE_LINE_RE);",
+     "  assert.doesNotMatch('FALHA: drift de migrations detectado:', DIVERGENCE_LINE_RE);",
+     "test('E53: arquivo no repo sem ledger → linha de divergência como PRIMEIRA coisa no stdout', () => {",
+     "  const dir = mkdtempSync(join(tmpdir(), 'drift-e53-'));",
+     "  try {",
+     "    const migsDir = join(dir, 'migrations');",
+     "    const evidenceFile = join(dir, 'evidence.json');"
+    ],
+    "still_sample": [],
+    "same_basename_in_main": []
+   }
+  },
+  {
+   "path": "scripts/ci/redigir-relatorio.mjs",
+   "status": "MAIN_UNCHANGED_SINCE_BASE",
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "patch_lines": 48,
+   "line_check": {
+    "added": 18,
+    "missing_in_main": 16,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "// GA38: JWTs aparecem em traces/reports do E2E sem serem passados como --segredo-env",
+     "// (cabeçalho Authorization, campo access_token, etc.). Padrão: eyJ<header>.<payload>.<sig>",
+     "export const RE_JWT = /(?<![A-Za-z0-9_-])eyJ[A-Za-z0-9_-]{4,}\\.[A-Za-z0-9_-]{4,}\\.[A-Za-z0-9_-]{4,}/gu;",
+     "  // GA38: JWT automático — não depende de --segredo-env (Authorization Bearer, access_token…)",
+     "  saida = saida.replace(/(?<![A-Za-z0-9_-])eyJ[A-Za-z0-9_-]{4,}\\.[A-Za-z0-9_-]{4,}\\.[A-Za-z0-9_-]{4,}/gu, () => {",
+     "    return '[redigido]';",
+     "  // GA38: JWT em entradas de ZIP (JSON de network, traces…). latin1 é bijeção: cada byte",
+     "  // vira exatamente um char e volta — sem perda. Bytes > 127 não casam com [A-Za-z0-9_-].",
+     "  if (saida.includes(Buffer.from('eyJ'))) {",
+     "    const texto = saida.toString('latin1');",
+     "    let n = 0;",
+     "    const redigido = texto.replace(",
+     "      /(?<![A-Za-z0-9_-])eyJ[A-Za-z0-9_-]{4,}\\.[A-Za-z0-9_-]{4,}\\.[A-Za-z0-9_-]{4,}/gu,",
+     "      () => { n += 1; return '[redigido]'; },",
+     "    if (n > 0) {",
+     "      saida = Buffer.from(redigido, 'latin1');"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "scripts/ci/redigir-relatorio.unit.mjs",
+   "status": "BOTH_CHANGED",
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "patch_lines": 65,
+   "line_check": {
+    "added": 39,
+    "missing_in_main": 38,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  RE_JWT,",
+     "// ── GA38: JWT automático (Authorization Bearer, access_token, traces de rede) ────────────────",
+     "// JWT de mentira com formato válido: header.payload.signature (todos base64url)",
+     "const JWT_FAKE =",
+     "  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9' +",
+     "  '.eyJzdWIiOiJ1c2VyLTEyMyIsImV4cCI6OTk5OTk5OTk5OX0' +",
+     "  '.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c';",
+     "test('GA38: RE_JWT casa com JWT valido e nao casa com string curta', () => {",
+     "  assert.ok(new RegExp(RE_JWT.source, RE_JWT.flags).test(JWT_FAKE), 'JWT completo deve casar');",
+     "  assert.ok(!new RegExp(RE_JWT.source, RE_JWT.flags).test('eyJhbGc.abc.def'), 'segmentos curtos nao casam');",
+     "  assert.ok(!new RegExp(RE_JWT.source, RE_JWT.flags).test('xeyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ4In0.AAAAAAAAAAAAAAAAAAAAAAA'), 'lookbehind bloqueia precedido de ba",
+     "test('GA38: JWT em texto e redigido por redigirConteudo sem --segredo-env', () => {",
+     "  const texto = `Authorization: Bearer ${JWT_FAKE}`;",
+     "  const { texto: saida, ocorrencias } = redigirConteudo(texto, []);",
+     "  assert.equal(ocorrencias, 1);",
+     "  assert.doesNotMatch(saida, /eyJ/, 'JWT nao pode sobrar no texto');",
+     "  assert.match(saida, /\\[redigido\\]/);",
+     "test('GA38: JWT em arquivo de texto e redigido; contarRestantes retorna 0 pos-reducao', () => {",
+     "  const raiz = mkdtempSync(join(tmpdir(), 'jwt-txt-'));",
+     "  writeFileSync(join(raiz, 'error-context.md'), `token: ${JWT_FAKE}\\noutro conteudo seguro`);",
+     "  redigirDiretorio(raiz, [EMAIL]); // JWT nao passado como segredo explícito",
+     "  const conteudo = readFileSync(join(raiz, 'error-context.md'), 'utf8');",
+     "  assert.doesNotMatch(conteudo, /eyJ/, 'JWT nao pode sobrar no arquivo');",
+     "  assert.equal(contarRestantes(raiz, [EMAIL]), 0, 'contarRestantes deve retornar 0 pos-reducao');",
+     "test('GA38: JWT em entrada de texto de ZIP de trace e redigido', () => {"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "scripts/ci/secrets-environments.unit.mjs",
+   "status": "BOTH_CHANGED",
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "patch_lines": 13,
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 1,
+    "removed_still_in_main": 1,
+    "missing_sample": [
+     "    ...Object.values(DESTINO_URL_POR_JOB).filter(Boolean),"
+    ],
+    "still_sample": [
+     "    ...Object.values(DESTINO_URL_POR_JOB),"
+    ]
+   }
+  },
+  {
+   "path": "scripts/ci/verify-ledger-statements.unit.mjs",
+   "status": "MAIN_UNCHANGED_SINCE_BASE",
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "patch_lines": 45,
+   "line_check": {
+    "added": 31,
+    "missing_in_main": 28,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "// GA05: o CLI do psql grava o cabecalho \"--\" como elemento de statements quando",
+     "// o apply e feito via \\copy + psql em modo --tuples-only; o ledger fica com",
+     "// [\"--\", \"create table ...\", ...]. O `flatMap(splitStatements)` filtra o \"--\"",
+     "// antes da comparacao -- sem ele o run 37355980323 reprovava com",
+     "// \"quantidade de statements difere: ledger=N+1 arquivo=N\".",
+     "test('GA05: ledger com cabecalho \"--\" do psql CLI passa apos flatMap(splitStatements)', () => {",
+     "  // Simula o comportamento do CLI: ledger tem \"--\" como primeiro elemento",
+     "  const statementsDoArquivo = ['CREATE TABLE public.t (id int)', 'SELECT 1'];",
+     "  const brutoComCabecalho = JSON.stringify(['--', ...statementsDoArquivo]);",
+     "  const r = avaliarStatementsDoLedger({ bruto: brutoComCabecalho, statementsDoArquivo });",
+     "  assert.equal(r.ok, true, 'cabecalho \"--\" deve ser ignorado pelo flatMap(splitStatements)');",
+     "  assert.equal(r.total, statementsDoArquivo.length);",
+     "test('GA05: arquivo diferente do ledger (mesmo com cabecalho \"--\") continua reprovando', () => {",
+     "  const statementsDoArquivo = ['CREATE TABLE public.t (id int)', 'SELECT 1'];",
+     "  const ledgerDiferente = ['--', 'CREATE TABLE public.t (id int)', 'SELECT 2'];",
+     "  const r = avaliarStatementsDoLedger({ bruto: JSON.stringify(ledgerDiferente), statementsDoArquivo });",
+     "test('GA05: fixture real 20261004195051 — parser do arquivo e compativel com ledger normalizado', async () => {",
+     "  const { parseMigrationFile } = await import('../db-audit/register-migration.mjs');",
+     "  const { resolve, dirname } = await import('node:path');",
+     "  const { fileURLToPath } = await import('node:url');",
+     "  const root = resolve(dirname(fileURLToPath(import.meta.url)), '../..');",
+     "  const arquivo = resolve(root, 'supabase/migrations/20261004195051_gmail_oauth_state_attempts.sql');",
+     "  assert.ok(statements.length > 0, 'migration real deve ter ao menos um statement');",
+     "  // Simula ledger com cabecalho \"--\" inserido pelo psql",
+     "  const brutoComCabecalho = JSON.stringify(['--', ...statements]);"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "scripts/db-audit/check-migration-drift.test.mjs",
+   "status": "BOTH_CHANGED",
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "patch_lines": 12,
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "    'sql-sha256': statementsHash(statements),"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "scripts/db-audit/consolidar-veredito.test.mjs",
+   "status": "MAIN_UNCHANGED_SINCE_BASE",
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "patch_lines": 22,
+   "line_check": {
+    "added": 2,
+    "missing_in_main": 2,
+    "removed": 2,
+    "removed_still_in_main": 2,
+    "missing_sample": [
+     "  assert.equal(linhasTabela.length, PASSOS.length + 1); // 12 passos + cabecalho",
+     "  assert.ok(ids.length >= 12, `achei ${ids.length} passos com log; o workflow declara mais que isso`);"
+    ],
+    "still_sample": [
+     "  assert.equal(linhasTabela.length, PASSOS.length + 1); // 11 passos + cabecalho",
+     "  assert.ok(ids.length >= 11, `achei ${ids.length} passos com log; o workflow declara mais que isso`);"
+    ]
+   }
+  },
+  {
+   "path": "scripts/db-audit/lote-pendente.mjs",
+   "status": "MAIN_UNCHANGED_SINCE_BASE",
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "patch_lines": 33,
+   "line_check": {
+    "added": 7,
+    "missing_in_main": 7,
+    "removed": 6,
+    "removed_still_in_main": 6,
+    "missing_sample": [
+     " *   exit 2 — erro de conexão/parse (falha de transporte — não é drift nem apply)",
+     " *   exit 3 — somente apply-pendente (migrations no disco sem ledger no banco)",
+     " * Cada chamador aplica sua própria política sobre exit 3:",
+     " *                    mantém exit 3 para abrir issue.",
+     " *   types-sync     → usa exit 3 para setar awaiting_apply=true e pular gates.",
+     "  } else if (rc === 3) {",
+     "    // GA19: --classificar retorna 3 para apply-pendente (exit 2 reservado para erro de conexao)"
+    ],
+    "still_sample": [
+     " *   exit 2 — somente apply-pendente (migrations no disco sem ledger no banco)",
+     " * Cada chamador aplica sua própria política sobre exit 2:",
+     " *                    mantém exit 2 para abrir issue.",
+     " *   types-sync     → usa exit 2 para setar awaiting_apply=true e pular gates.",
+     "  } else if (rc === 2) {",
+     "    // W21: --classificar retorna 2 para apply-pendente (neutro)"
+    ]
+   }
+  },
+  {
+   "path": "scripts/edge-deploy/health-check.mjs",
+   "status": "BOTH_CHANGED",
+   "hunk": "CONFLICT",
+   "patch_lines": 100,
+   "line_check": {
+    "added": 39,
+    "missing_in_main": 36,
+    "removed": 10,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "// Endpoint documentado: POST https://api.supabase.com/v1/projects/{ref}/analytics/endpoints/logs.all",
+     "// com body { sql } e Authorization: Bearer <SUPABASE_ACCESS_TOKEN> (personal access token).",
+     "// A tabela BigQuery é `edge_logs`; o campo de status HTTP é metadata[].response.status_code",
+     "// (snake_case, REPEATED — UNNEST necessário).",
+     "    ? `AND m.function_id IN (${slugs.map((s) => `'${s}'`).join(', ')})`",
+     "    `  COUNTIF(CAST(m.response.status_code AS INT64) >= 500) AS errors ` +",
+     "// Erro com código HTTP para distinguir 4xx (config) de 5xx (transiente).",
+     "class HttpError extends Error {",
+     "  constructor(status, message) {",
+     "    this.status = status;",
+     "// Lança HttpError se o HTTP não for 2xx; devolve null se a resposta não tiver linhas.",
+     "// GA29: 4xx = erro de configuração (::error::); 5xx/timeout = transiente (::warning::).",
+     "    throw new HttpError(res.status, `Management API retornou HTTP ${res.status} na consulta de analytics`);",
+     "    if (err instanceof HttpError && err.status >= 400 && err.status < 500) {",
+     "      if (err.status === 404 || err.status === 410) {",
+     "        // GA29: endpoint logs.all foi removido em 23/09/2026 (Supabase changelog #48235).",
+     "        // 404/410 = endpoint depreciado, não erro de configuração — aviso, não bloqueia o deploy.",
+     "        console.error(`::warning::Health check: endpoint analytics retornou HTTP ${err.status} (endpoint removido/depreciado). Prosseguindo.`);",
+     "      } else if (err.status === 429) {",
+     "        // 429 = rate limit temporário da API de observabilidade — aviso, não bloqueia o deploy.",
+     "        console.error(`::warning::Health check: rate limit da Management API (HTTP 429). Prosseguindo.`);",
+     "      } else {",
+     "        // 401/403 = erro de autenticação/configuração — falha dura.",
+     "        console.error(`::error::Health check falhou com HTTP ${err.status}: ${err.message}. Verifique o SUPABASE_ACCESS_TOKEN.`);",
+     "    } else {"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/__tests__/reduzirMovimentoInboxCrmConexoes.test.tsx",
+   "status": "MAIN_UNCHANGED_SINCE_BASE",
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "patch_lines": 44,
+   "line_check": {
+    "added": 5,
+    "missing_in_main": 5,
+    "removed": 16,
+    "removed_still_in_main": 16,
+    "missing_sample": [
+     "// ── Inbox: o vazio do chat não tem laços infinitos próprios ──────────────────",
+     "  it('com a preferência ligada não há laços de animação infinitos', () => {",
+     "    expect(container.firstChild).not.toBeNull();",
+     "  it('controle: sem a preferência o componente renderiza normalmente', () => {",
+     "    expect(container.firstChild).not.toBeNull();"
+    ],
+    "still_sample": [
+     "// ── Inbox: o vazio do chat tem três laços infinitos ──────────────────────────",
+     "  it('com a preferência ligada as animações nascem no estado final (nenhum laço)', () => {",
+     "    const cartao = container.querySelector('.text-center') as HTMLElement;",
+     "    expect(cartao.style.opacity).not.toBe('0');",
+     "    expect(cartao.style.transform).not.toContain('translate');",
+     "    const orbitas = container.querySelector('.w-28') as HTMLElement;",
+     "    for (const caixa of Array.from(orbitas.children) as HTMLElement[]) {",
+     "      expect(caixa.style.opacity).toBe('');",
+     "      expect(caixa.style.transform).toBe('');",
+     "  it('controle: sem a preferência a entrada e os laços continuam', async () => {"
+    ]
+   }
+  },
+  {
+   "path": "src/components/admin/__tests__/AdminView.avatarRevogaUrl.test.tsx",
+   "status": "MAIN_UNCHANGED_SINCE_BASE",
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "patch_lines": 13,
+   "line_check": {
+    "added": 2,
+    "missing_in_main": 0,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/admin/__tests__/AdminView.ramalAdmin.test.tsx",
+   "status": "MAIN_UNCHANGED_SINCE_BASE",
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "patch_lines": 13,
+   "line_check": {
+    "added": 2,
+    "missing_in_main": 0,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/admin/__tests__/AdminView.tarefas-agendadas.test.tsx",
+   "status": "MAIN_UNCHANGED_SINCE_BASE",
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "patch_lines": 13,
+   "line_check": {
+    "added": 2,
+    "missing_in_main": 0,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/agents/__tests__/AgentsView.conexoes.test.tsx",
+   "status": "MAIN_UNCHANGED_SINCE_BASE",
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "patch_lines": 15,
+   "line_check": {
+    "added": 3,
+    "missing_in_main": 2,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "vi.mock('@/hooks/auth/useAuth', () => ({",
+     "  useAuth: () => ({ user: { id: 'user-1', email: 'test@test.com' }, session: null, loading: false }),"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/catalog/CatalogRail.tsx",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/components/contacts/ContactToolbar.tsx",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/components/dashboard/AIQuickAccess.tsx",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/components/dashboard/AgentPerformancePanel.tsx",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/components/dashboard/SatisfactionMetrics.tsx",
+   "status": "BOTH_CHANGED",
+   "hunk": "CONFLICT",
+   "patch_lines": 22,
+   "line_check": {
+    "added": 2,
+    "missing_in_main": 1,
+    "removed": 2,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "      <Icon className=\"w-9 h-9 text-primary/70\" strokeWidth={1.6} />"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/dashboard/ScheduledReportsManager.tsx",
+   "status": "BOTH_CHANGED",
+   "hunk": "CONFLICT",
+   "patch_lines": 28,
+   "line_check": {
+    "added": 4,
+    "missing_in_main": 1,
+    "removed": 4,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "                    <span className={cn('text-2xs', active ? 'text-primary/80' : 'text-muted-foreground')}>{f.sub}</span>"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/dashboard/SentimentTrendChart.tsx",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/components/dashboard/goals/GoalsRail.tsx",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/components/dashboard/goals/GoalsTable.tsx",
+   "status": "BOTH_CHANGED",
+   "hunk": "PRESENT_REVERSE_APPLIES",
+   "patch_lines": 13
+  },
+  {
+   "path": "src/components/dashboard/goals/goalsStatus.ts",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/components/dashboard/overview/GreetingBanner.tsx",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/components/inbox/CRMAutoSync.tsx",
+   "status": "MAIN_UNCHANGED_SINCE_BASE",
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "patch_lines": 13,
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 1,
+    "removed_still_in_main": 1,
+    "missing_sample": [
+     "import { toast } from '@/lib/lazyToast';"
+    ],
+    "still_sample": [
+     "import { toast } from 'sonner';"
+    ]
+   }
+  },
+  {
+   "path": "src/components/inbox/chat/ChatMessagesArea.tsx",
+   "status": "BOTH_CHANGED",
+   "hunk": "CONFLICT",
+   "patch_lines": 27,
+   "line_check": {
+    "added": 2,
+    "missing_in_main": 2,
+    "removed": 3,
+    "removed_still_in_main": 2,
+    "missing_sample": [
+     "import { useVirtualizer, type ReactVirtualizer } from '@tanstack/react-virtual';",
+     "  const virtualizerRef = useRef<ReactVirtualizer<HTMLDivElement, Element> | null>(null);"
+    ],
+    "still_sample": [
+     "import { useVirtualizer } from '@tanstack/react-virtual';",
+     "  const virtualizerRef = useRef<{ cancelScroll: () => void } | null>(null);"
+    ]
+   }
+  },
+  {
+   "path": "src/components/multiplix/MultiplixMonitor.tsx",
+   "status": "BOTH_CHANGED",
+   "hunk": "CONFLICT",
+   "patch_lines": 31,
+   "line_check": {
+    "added": 3,
+    "missing_in_main": 1,
+    "removed": 3,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "              {canStart && <button type=\"button\" onClick={() => setConfirmResume(true)} className=\"h-9 px-3.5 rounded-lg border border-primary/40 bg-primary/10 "
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/settings/__tests__/AppearanceSettings.a11y.test.tsx",
+   "status": "MAIN_UNCHANGED_SINCE_BASE",
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "patch_lines": 18,
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 5,
+    "removed_still_in_main": 5,
+    "missing_sample": [
+     "  it.todo('a tela oferece o tamanho do texto do chat escolhido pelo usuário — radiogroup ainda não implementado no componente');"
+    ],
+    "still_sample": [
+     "  it('a tela oferece o tamanho do texto do chat escolhido pelo usuário', () => {",
+     "    render(<AppearanceSettings {...BASE} />);",
+     "    const grupo = screen.getByRole('radiogroup', { name: 'Tamanho do texto do chat' });",
+     "    expect(grupo).toBeInTheDocument();",
+     "    expect(screen.getAllByRole('radio')).toHaveLength(5);"
+    ]
+   }
+  },
+  {
+   "path": "src/components/settings/__tests__/AvatarUpload.invalidacao.test.tsx",
+   "status": "MAIN_UNCHANGED_SINCE_BASE",
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "patch_lines": 60,
+   "line_check": {
+    "added": 9,
+    "missing_in_main": 7,
+    "removed": 19,
+    "removed_still_in_main": 19,
+    "missing_sample": [
+     "      profile: { name: 'Ana Souza', email: 'ana@example.com', avatar_url: 'https://x/object/public/avatars/u1/avatar.png?t=1' },",
+     "  it('upload salva path com timestamp e apaga o formato antigo via URL do perfil', async () => {",
+     "    expect(mockUpload).toHaveBeenCalledWith(",
+     "      expect.stringMatching(/^u1\\/avatar-\\d+\\.webp$/),",
+     "      expect.any(File),",
+     "  it.todo('não remove nada quando a extensão continua a mesma — comportamento mudou: componente usa timestamp e sempre cria objeto novo, removendo o anterior vi",
+     "  it.todo('se a listagem falha, usa a extensão da URL do perfil como candidata — comportamento mudou: componente não lista o bucket, extrai caminho diretamente "
+    ],
+    "still_sample": [
+     "      profile: { name: 'Ana Souza', email: 'ana@example.com', avatar_url: 'https://x/avatars/u1/avatar.png?t=1' },",
+     "  it('invalida team-profiles-rpc e user-profile e apaga o formato antigo', async () => {",
+     "    const { invalidate, input } = montar();",
+     "    expect(mockUpload).toHaveBeenCalledWith('u1/avatar.webp', expect.any(File), { upsert: true });",
+     "    expect(mockRemove).toHaveBeenCalledWith(['u1/avatar.png']);",
+     "      expect(invalidate).toHaveBeenCalledWith({ queryKey: ['team-profiles-rpc'] });",
+     "      expect(invalidate).toHaveBeenCalledWith({ queryKey: ['user-profile'] });",
+     "  it('não remove nada quando a extensão continua a mesma', async () => {",
+     "    mockList.mockResolvedValue({ data: [{ name: 'avatar.jpg' }], error: null });",
+     "    const { input } = montar();"
+    ]
+   }
+  },
+  {
+   "path": "src/components/settings/__tests__/SettingsView.test.tsx",
+   "status": "MAIN_UNCHANGED_SINCE_BASE",
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "patch_lines": 16,
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 3,
+    "removed_still_in_main": 3,
+    "missing_sample": [
+     "  it.todo('não existe mais o salvar global no cabeçalho (a aba Aparência é dona do salvar) — botão ainda presente no componente, remoção pendente');"
+    ],
+    "still_sample": [
+     "  it('não existe mais o salvar global no cabeçalho (a aba Aparência é dona do salvar)', () => {",
+     "    render(<SettingsView />);",
+     "    expect(screen.queryByRole('button', { name: /Salvar Alterações/ })).not.toBeInTheDocument();"
+    ]
+   }
+  },
+  {
+   "path": "src/components/talkx/__tests__/TalkXCampaignScheduled.calendario.test.tsx",
+   "status": "MAIN_UNCHANGED_SINCE_BASE",
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "patch_lines": 15,
+   "line_check": {
+    "added": 3,
+    "missing_in_main": 2,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "vi.mock('@/hooks/integrations/useTalkXConnectionStatus', () => ({",
+     "  useTalkXConnectionStatus: () => ({ status: 'connected', label: 'Conectada', loading: false }),"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/talkx/__tests__/TalkXOverview.states.test.tsx",
+   "status": "MAIN_UNCHANGED_SINCE_BASE",
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "patch_lines": 52,
+   "line_check": {
+    "added": 16,
+    "missing_in_main": 15,
+    "removed": 3,
+    "removed_still_in_main": 3,
+    "missing_sample": [
+     "vi.mock('@/components/talkx/useTalkXLifecycle', () => ({",
+     "  useTalkXLifecycle: () => ({",
+     "    intent: null,",
+     "    isPending: false,",
+     "    error: null,",
+     "    reason: '',",
+     "    setReason: vi.fn(),",
+     "    request: vi.fn().mockReturnValue(true),",
+     "    confirm: vi.fn().mockResolvedValue(undefined),",
+     "    close: vi.fn().mockReturnValue(true),",
+     "    clearError: vi.fn(),",
+     "  TalkXLifecycleDialog: () => null,",
+     "  for (const m of Array.from(TOKENS_CSS.slice(abre + 1, fim).matchAll(/--(\\w-]+):\\s*([^;]+);/g))) {",
+     "  const literal = util.match(/^\\[hsl\\(var\\(--(\\w-]+)\\)\\)\\]$/);",
+     "    fireEvent.click(screen.getByRole('button', { name: /Rascunhos pendentes/ }));"
+    ],
+    "still_sample": [
+     "  for (const m of Array.from(TOKENS_CSS.slice(abre + 1, fim).matchAll(/--([\\w-]+):\\s*([^;]+);/g))) {",
+     "  const literal = util.match(/^\\[hsl\\(var\\(--([\\w-]+)\\)\\)\\]$/);",
+     "    fireEvent.click(screen.getByRole('button', { name: 'Rascunhos pendentes(1)' }));"
+    ]
+   }
+  },
+  {
+   "path": "src/components/talkx/__tests__/TalkXOverview.table.test.tsx",
+   "status": "MAIN_UNCHANGED_SINCE_BASE",
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "patch_lines": 24,
+   "line_check": {
+    "added": 10,
+    "missing_in_main": 8,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "vi.mock('@/components/talkx/useTalkXLifecycle', () => ({",
+     "  useTalkXLifecycle: () => ({",
+     "    intent: null, isPending: false, error: null, reason: '',",
+     "    setReason: vi.fn(), request: vi.fn().mockReturnValue(true),",
+     "    confirm: vi.fn().mockResolvedValue(undefined), close: vi.fn().mockReturnValue(true), clearError: vi.fn(),",
+     "  TalkXLifecycleDialog: () => null,",
+     "vi.mock('@/hooks/integrations/useTalkXOverviewStats', () => ({",
+     "  useTalkXOverviewStats: () => ({ data: null, isLoading: false, isError: false, error: null }),"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/talkx/__tests__/TalkXSegmentProgressTable.test.tsx",
+   "status": "BOTH_CHANGED",
+   "hunk": "CONFLICT",
+   "patch_lines": 17,
+   "line_check": {
+    "added": 2,
+    "missing_in_main": 2,
+    "removed": 2,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "    // nenhuma cor crua: hex, rgb( ou hsl( literal — mas hsl(var(--...)) é token CSS, não cor fixa",
+     "    expect(html).not.toMatch(/\\bhsla?\\((?!var\\(--)/i);"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/talkx/__tests__/TalkXSegments.route.test.tsx",
+   "status": "BOTH_CHANGED",
+   "hunk": "CONFLICT",
+   "patch_lines": 46,
+   "line_check": {
+    "added": 10,
+    "missing_in_main": 5,
+    "removed": 13,
+    "removed_still_in_main": 13,
+    "missing_sample": [
+     "  it('construtor (modo edit) mostra a trilha de navegação — abas superiores removidas no X079', async () => {",
+     "  it('modo new abre o construtor com a trilha de navegação — as abas superiores foram removidas no X079', async () => {",
+     "    // Apenas a trilha de navegação existe no builder (abas superiores removidas no X079)",
+     "    expect(screen.getByRole('navigation', { name: 'Trilha de navegação' })).toBeInTheDocument();",
+     "    expect(screen.getByRole('button', { name: 'Publicar segmento' })).toBeInTheDocument();"
+    ],
+    "still_sample": [
+     "  it('construtor traz o cabeçalho próprio da tela 03: título, subtítulo e o ↻ que refaz lista e estimativa', async () => {",
+     "    expect(screen.getByRole('heading', { level: 1, name: 'Segmentos' })).toBeInTheDocument();",
+     "    expect(screen.getByText('Crie, gerencie e utilize segmentos inteligentes para suas campanhas no Talk X.')).toBeInTheDocument();",
+     "    fireEvent.click(screen.getByRole('button', { name: 'Atualizar' }));",
+     "    expect(f.refetch).toHaveBeenCalledTimes(1);",
+     "    expect(f.refreshEstimates).toHaveBeenCalledWith([segmento]);",
+     "  it('as abas superiores trazem as cinco abas do mock, com Segmentos ativa e as demais ainda sem conteúdo', async () => {",
+     "    const abas = screen.getByRole('navigation', { name: 'Abas superiores de segmentos' });",
+     "    for (const rotulo of ['Segmentos', 'Regras Avançadas', 'Audiências', 'Modelos', 'Insights com IA']) {",
+     "      expect(within(abas).getByRole('button', { name: rotulo })).toBeInTheDocument();"
+    ]
+   }
+  },
+  {
+   "path": "src/components/talkx/__tests__/TalkXTemplatesRail.test.tsx",
+   "status": "MAIN_UNCHANGED_SINCE_BASE",
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "patch_lines": 31,
+   "line_check": {
+    "added": 3,
+    "missing_in_main": 3,
+    "removed": 3,
+    "removed_still_in_main": 3,
+    "missing_sample": [
+     "const painel = () => screen.getByText('Mais respondidos').closest('section') as HTMLElement;",
+     "  it('\"Mais respondidos\" ranqueia por taxa de resposta, não por usos', () => {",
+     "  it('o 1º de \"Mais respondidos\" usa o template de MAIOR taxa (e não o mais usado)', () => {"
+    ],
+    "still_sample": [
+     "const painel = () => screen.getByText('Mais convertidos').closest('section') as HTMLElement;",
+     "  it('\"Mais convertidos\" ranqueia por taxa de resposta, não por usos', () => {",
+     "  it('o 1º de \"Mais convertidos\" usa o template de MAIOR taxa (e não o mais usado)', () => {"
+    ]
+   }
+  },
+  {
+   "path": "src/components/talkx/kit/primitives.tsx",
+   "status": "BOTH_CHANGED",
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "patch_lines": 21,
+   "line_check": {
+    "added": 3,
+    "missing_in_main": 3,
+    "removed": 3,
+    "removed_still_in_main": 3,
+    "missing_sample": [
+     "import { Fragment, type ReactNode, type ComponentPropsWithoutRef } from 'react';",
+     "export function Th({ children, className, ...props }: ComponentPropsWithoutRef<'th'>) {",
+     "  return <th {...props} className={cn('text-left text-2xs font-semibold text-foreground-secondary px-3 py-2.5 whitespace-nowrap', className)}>{children}</th>;"
+    ],
+    "still_sample": [
+     "import { Fragment, type ReactNode } from 'react';",
+     "export function Th({ children, className }: { children?: ReactNode; className?: string }) {",
+     "  return <th className={cn('text-left text-2xs font-semibold text-foreground-secondary px-3 py-2.5 whitespace-nowrap', className)}>{children}</th>;"
+    ]
+   }
+  },
+  {
+   "path": "src/components/talkx/tracking/TalkXOperationalTimeline.tsx",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/components/talkx/tracking/TalkXSegmentProgressTable.tsx",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/components/team-chat/__tests__/TeamChatPanel.settings-wiring.test.tsx",
+   "status": "BOTH_CHANGED",
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "patch_lines": 40,
+   "line_check": {
+    "added": 4,
+    "missing_in_main": 4,
+    "removed": 4,
+    "removed_still_in_main": 4,
+    "missing_sample": [
+     "    isSearchingMessages: false,",
+     "    h.panel.isSearchingMessages = false;",
+     "    h.panel.isSearchingMessages = true;",
+     "    h.panel.isSearchingMessages = true;"
+    ],
+    "still_sample": [
+     "    isSearching: false,",
+     "    h.panel.isSearching = false;",
+     "    h.panel.isSearching = true;",
+     "    h.panel.isSearching = true;"
+    ]
+   }
+  },
+  {
+   "path": "src/hooks/__tests__/useNotifications.contagem-reconciliada.test.tsx",
+   "status": "MAIN_UNCHANGED_SINCE_BASE",
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "patch_lines": 13,
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  createLogger: vi.fn(() => ({ error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn(), withCorrelation: vi.fn(() => ({ error: vi.fn(), warn: vi.fn(), info"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/hooks/__tests__/useNotifications.test.tsx",
+   "status": "MAIN_UNCHANGED_SINCE_BASE",
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "patch_lines": 13,
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  createLogger: vi.fn(() => ({ error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn(), withCorrelation: vi.fn(() => ({ error: vi.fn(), warn: vi.fn(), info"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/hooks/system/__tests__/useDiagnosticsData.select.test.ts",
+   "status": "MAIN_UNCHANGED_SINCE_BASE",
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "patch_lines": 19,
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 6,
+    "removed_still_in_main": 6,
+    "missing_sample": [
+     "  it.todo('falha na contagem de conexões vira erro de banco (não \"0 conexões\" saudável) — useVisiblePolling engole o erro, health nunca muda para \"down\"');"
+    ],
+    "still_sample": [
+     "  it('falha na contagem de conexões vira erro de banco (não \"0 conexões\" saudável)', async () => {",
+     "    cfg.connectionsCountError = { message: 'connection refused', code: 'XX000' };",
+     "    const { result } = renderHook(() => useDiagnosticsData());",
+     "    await waitFor(() => {",
+     "      expect(result.current.health?.database).toBe('down');",
+     "    expect(result.current.health?.connectionsCount).toBe(0);"
+    ]
+   }
+  },
+  {
+   "path": "src/styles/components.css",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/styles/utilities.css",
+   "status": "MAIN_UNCHANGED_SINCE_BASE",
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "patch_lines": 27,
+   "line_check": {
+    "added": 12,
+    "missing_in_main": 8,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     ".safe-area-top {",
+     "  padding-top: env(safe-area-inset-top, 0);",
+     ".safe-area-bottom {",
+     "  padding-bottom: env(safe-area-inset-bottom, 0);",
+     "  .scrollbar-none::-webkit-scrollbar {",
+     "    display: none;",
+     "  body {",
+     "    overscroll-behavior-y: none;"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "vitest.config.ts",
+   "status": "MAIN_UNCHANGED_SINCE_BASE",
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "patch_lines": 13,
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 1,
+    "removed_still_in_main": 1,
+    "missing_sample": [
+     "      reporter: [\"text-summary\", \"lcov\", \"json-summary\"],"
+    ],
+    "still_sample": [
+     "      reporter: [\"text-summary\", \"lcov\"],"
+    ]
+   }
+  }
+ ],
+ "counts": {
+  "migrations": "0",
+  "workflows": "3",
+  "src": "37",
+  "edges": "0",
+  "docs_only": "no",
+  "lines_branch_has_main_lacks": "7326",
+  "lines_main_has_branch_lacks": "847"
+ },
+ "auto": "MISTO_CONFLITO",
+ "n_files_with_gaps": 45,
+ "gap_lines_total": 5382
+}

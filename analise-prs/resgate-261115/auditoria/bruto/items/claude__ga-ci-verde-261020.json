@@ -1,0 +1,3301 @@
+{
+ "id": "claude__ga-ci-verde-261020",
+ "kind": "branch",
+ "ref": "origin/claude/ga-ci-verde-261020",
+ "tip": "3d4cf85c6caf93fa21eca5e84f2c8857ed87bea2",
+ "merge_base": "351ccb2a651f0394b5e78fd660695c09b4f799cf",
+ "ahead": 45,
+ "last_commit_date": "2026-10-23",
+ "merge_base_date": "2026-10-23",
+ "prs_with_same_tip": [
+  2138
+ ],
+ "triagem_2804": {
+  "2138": "OBSOLETA"
+ },
+ "closure_comment": {},
+ "files": [
+  {
+   "path": ".github/workflows/ci.yml",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 40,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 16,
+    "missing_in_main": 10,
+    "removed": 1,
+    "removed_still_in_main": 1,
+    "missing_sample": [
+     "        run: bun vitest run --shard=${{ matrix.shard }}/3 --coverage",
+     "      # E72 (G-32): coverage so sobe na main (push), inclusive quando a suite",
+     "      # falha — e' justamente quando o report serve para diagnosticar. Em PR",
+     "      # ninguem consome o artifact; em dispatch o build e' o que importa.",
+     "      - name: Upload coverage report",
+     "        if: always() && github.event_name == 'push' && github.ref == 'refs/heads/main'",
+     "          name: coverage-shard-${{ matrix.shard }}",
+     "          path: coverage/",
+     "          retention-days: 7",
+     "      - name: Setup Deno"
+    ],
+    "still_sample": [
+     "        run: bun vitest run --shard=${{ matrix.shard }}/3"
+    ]
+   }
+  },
+  {
+   "path": ".github/workflows/deploy-functions.yml",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 28,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 14,
+    "missing_in_main": 12,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "      # O `deno check` resolve @types/node em node_modules/: sem as deps instaladas",
+     "      # ele aborta com 'Could not find \"@types/node\" in a node_modules folder ...",
+     "      # Did you forget to run `deno install`?' (erro medido na main).",
+     "      - name: 🧄 Setup Bun",
+     "        uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0",
+     "          bun-version: '1.4.0'",
+     "      - name: 💾 Cache de dependências Bun",
+     "        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0",
+     "          path: ~/.bun/install/cache",
+     "          key: bun-${{ hashFiles('bun.lock') }}",
+     "      - name: 📚 Install dependencies",
+     "        run: bun install --frozen-lockfile --ignore-scripts"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": ".github/workflows/vercel-env-cleanup.yml",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 12,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 3,
+    "missing_in_main": 3,
+    "removed": 1,
+    "removed_still_in_main": 1,
+    "missing_sample": [
+     "        run: |",
+     "          set -euo pipefail",
+     "          node scripts/ci/vercel-env-cleanup.mjs"
+    ],
+    "still_sample": [
+     "        run: node scripts/ci/vercel-env-cleanup.mjs"
+    ]
+   }
+  },
+  {
+   "path": "docs/talkx/ARQUITETURA.md",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 14,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 2,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "> `completed/cancelled` abrem o Monitor). `TalkXCampaignPaused.tsx` (TL-075) **passou a existir e está ligado em `TalkXView.tsx` (X156/T13: rota `?screen=paused"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "docs/talkx/README.md",
+   "status": "MAIN_UNCHANGED_SINCE_BASE",
+   "patch_lines": 12,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "| [ESTADOS.md](./ESTADOS.md) | Matriz tela × estado do sistema; gerada por `scripts/talkx/gen-estados.mjs` |"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "scripts/ci/check-talkx-docs.unit.mjs",
+   "status": "MAIN_UNCHANGED_SINCE_BASE",
+   "patch_lines": 12,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 0,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "scripts/ci/check-test-inventory.mjs",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 16,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 5,
+    "missing_in_main": 5,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  // V077: prova unitaria do `ignore-build.sh` do Vercel (sem git real; roda offline",
+     "  // com `node scripts/vercel/ignore-build.unit.mjs`). Suite orfa: nenhum bloco `run:`",
+     "  // de workflow a executa; a promocao a um passo (ou a um glob `scripts/**/*.unit.mjs`)",
+     "  // e do dono do workflow (agente nao edita workflow).",
+     "  'scripts/vercel/ignore-build.unit.mjs',"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "scripts/ci/edge-coverage-authz.unit.mjs",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 13,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 2,
+    "missing_in_main": 0,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "scripts/ci/talkx-docs-drift.unit.mjs",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 31,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 5,
+    "missing_in_main": 3,
+    "removed": 5,
+    "removed_still_in_main": 2,
+    "missing_sample": [
+     "  // banner afirma — `TalkXCampaignPaused.tsx` (TL-075) já existe E está ligado em",
+     "  // `TalkXView.tsx` (X156/T13: rota `?screen=paused`, `openPaused`); os outros dois continuam",
+     "    'ARQUITETURA.md não registra que TalkXCampaignPaused.tsx já existe e está ligado (X156/T13)',"
+    ],
+    "still_sample": [
+     "    'ARQUITETURA.md não registra que TalkXCampaignPaused.tsx já existe (mas não está ligado)',",
+     "  assert.doesNotMatch("
+    ]
+   }
+  },
+  {
+   "path": "src/components/admin/MediaMigrationTool.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 385,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 204,
+    "missing_in_main": 57,
+    "removed": 43,
+    "removed_still_in_main": 15,
+    "missing_sample": [
+     "/** Prefixos de CDN temporária do WhatsApp — o mesmo filtro que a Edge `migrate-media-storage` usa. */",
+     "const CDN_TEMP_PREFIXES = ['https://mmg.whatsapp.net/', 'https://pps.whatsapp.net/'] as const;",
+     "/** Ação que a Edge grava em `audit_logs` ao fim de cada execução. */",
+     "const MIGRATION_ACTION = 'media_migration';",
+     "/** Quantas execuções o histórico mostra. */",
+     "const HISTORY_LIMIT = 10;",
+     "interface MigrationHistoryEntry {",
+     "  id: string;",
+     "  createdAt: string;",
+     "  authorName: string | null;",
+     "function asCount(value: unknown): number {",
+     "  return typeof value === 'number' && Number.isFinite(value) ? value : 0;",
+     "/** Conta, sem trazer linhas (`head`), as mensagens que ainda apontam para a CDN temporária. */",
+     "async function countPendingMedia(): Promise<number> {",
+     "  let total = 0;",
+     "  for (const prefix of CDN_TEMP_PREFIXES) {",
+     "    const { count, error } = await supabase",
+     "      .from('messages')",
+     "      .select('id', { count: 'exact', head: true })",
+     "      .like('media_url', `${prefix}%`);",
+     "    if (error) throw error;",
+     "    total += asCount(count);",
+     "  return total;",
+     "/** Histórico real: uma linha de `audit_logs` por execução da Edge (só contagens, sem URL). */",
+     "async function fetchMigrationHistory(): Promise<MigrationHistoryEntry[]> {"
+    ],
+    "still_sample": [
+     "    try {",
+     "        success: false,",
+     "        processed: 0,",
+     "        migrated: 0,",
+     "        failed: 0,",
+     "      setRunning(false);",
+     "              <Progress value={progress} className=\"h-2\" aria-label=\"Progresso da migração\" />",
+     "        <Card>",
+     "          <CardHeader>",
+     "            <CardTitle className=\"flex items-center gap-2 text-base\">"
+    ]
+   }
+  },
+  {
+   "path": "src/components/admin/__tests__/AdminView.a11y.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 13,
+   "hunk": "PRESENT_REVERSE_APPLIES"
+  },
+  {
+   "path": "src/components/admin/__tests__/AdminView.avatarRevogaUrl.test.tsx",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/components/admin/__tests__/AdminView.limiteChats.test.tsx",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/components/admin/__tests__/AdminView.ramalAdmin.test.tsx",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/components/admin/__tests__/AdminView.section-error-boundary.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 34,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 5,
+    "missing_in_main": 0,
+    "removed": 5,
+    "removed_still_in_main": 0,
+    "missing_sample": [],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/admin/__tests__/AdminView.tarefas-agendadas.test.tsx",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/components/admin/__tests__/adminDownloadPermission.test.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 43,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 9,
+    "missing_in_main": 8,
+    "removed": 7,
+    "removed_still_in_main": 1,
+    "missing_sample": [
+     "        name: 'Novo', email: 'novo@test.com', password: 'abcdefgh', role: 'agent', avatarFile: file,",
+     "    // A Edge e chamada pela camada padrao de invoke (nao por `fetch` cru).",
+     "    const edgeInvoke = supabase.functions.invoke as unknown as ReturnType<typeof vi.fn>;",
+     "    expect(edgeInvoke).toHaveBeenCalledTimes(1);",
+     "    const [fnName, opts] = edgeInvoke.mock.calls[0] as [string, { body: Record<string, unknown> }];",
+     "    expect(fnName).toBe('create-user');",
+     "    expect(opts.body.avatar_url).toMatch(/^[0-9a-f-]{36}\\.jpg$/);",
+     "        name: 'Novo', email: 'novo@test.com', password: 'abcdefgh', role: 'agent', avatarFile: file,"
+    ],
+    "still_sample": [
+     "    expect(body.avatar_url).toMatch(/^[0-9a-f-]{36}\\.jpg$/);"
+    ]
+   }
+  },
+  {
+   "path": "src/components/admin/__tests__/useAdminData.erros-auditoria.test.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 49,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 7,
+    "missing_in_main": 7,
+    "removed": 4,
+    "removed_still_in_main": 1,
+    "missing_sample": [
+     "  const edgeInvoke = vi.fn();",
+     "  return { toastError, calls, results, makeChain, edgeInvoke };",
+     "    functions: { invoke: (...args: unknown[]) => h.edgeInvoke(...args) },",
+     "    h.edgeInvoke.mockResolvedValue({ data: null, error: null });",
+     "    // A Edge e chamada pela camada padrao de invoke (sem `fetch` cru).",
+     "    expect(h.edgeInvoke).toHaveBeenCalledTimes(1);",
+     "    expect(h.edgeInvoke.mock.calls[0][0]).toBe('create-user');"
+    ],
+    "still_sample": [
+     "    vi.stubGlobal('fetch', fetchSpy);"
+    ]
+   }
+  },
+  {
+   "path": "src/components/admin/__tests__/useAdminData.select.test.ts",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/components/admin/useAdminData.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 84,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 27,
+    "missing_in_main": 22,
+    "removed": 6,
+    "removed_still_in_main": 5,
+    "missing_sample": [
+     "import { SUPABASE_URL } from '@/integrations/supabase/client';",
+     "// Camada padrao de Edge (PE-43): `invokeEdge` de supabaseHelpers anexa o token",
+     "// da sessao atual e LANCA o erro HTTP — e o `supabase` desta camada e o mesmo",
+     "// cliente reexportado ali.",
+     "import { invokeEdge, supabase } from '@/lib/supabaseHelpers';",
+     "import { readEdgeError } from '@/lib/invokeEdge';",
+     "  // Duplicidade ANTES da checagem genérica de e-mail: \"…email address has",
+     "  // already been registered\" contém 'email' e cairia em \"e-mail inválido\",",
+     "  // escondendo o motivo real.",
+     "  if (msg.includes('already registered') || msg.includes('already been registered') || msg.includes('já está cadastrado')) {",
+     "  if (msg.includes('invalid enum value') || msg.includes('papel') || msg.includes('role')) {",
+     "      // Bucket privado: o banco guarda o CAMINHO do objeto e a tela assina sob",
+     "      // demanda. URL http de outra origem (ou de outro bucket) vira null — nunca",
+     "      // e exibida nem regravada em profiles.avatar_url.",
+     "      const comAvatarAssinado = await Promise.all(usersWithRoles.map(async (user) => {",
+     "        const path = avatarObjectPath(user.avatar_url);",
+     "        if (!path) return { ...user, avatar_url: path };",
+     "        const { data: assinada } = await supabase.storage.from(AVATAR_BUCKET)",
+     "        return { ...user, avatar_url: assinada?.signedUrl ?? path };",
+     "      setUsers(comAvatarAssinado);",
+     "        await invokeEdge('create-user', body);",
+     "        await invokeEdge('create-user', body);"
+    ],
+    "still_sample": [
+     "import { supabase, SUPABASE_URL } from '@/integrations/supabase/client';",
+     "import { invokeEdge, readEdgeError } from '@/lib/invokeEdge';",
+     "      setUsers(usersWithRoles);",
+     "        await invokeEdge('create-user', { body });",
+     "        await invokeEdge('create-user', { body });"
+    ]
+   }
+  },
+  {
+   "path": "src/components/agents/__tests__/AgentsView.capacidade.test.tsx",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/components/agents/__tests__/AgentsView.pendencias.test.tsx",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/components/calls/__tests__/IncomingCallAlert.ringtone.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 12,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  createLogger: () => ({ debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() }),"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/calls/__tests__/IncomingCallAlert.volume.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 12,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  createLogger: () => ({ debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() }),"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/catalog/WhatsAppTemplatesManager.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 57,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 11,
+    "missing_in_main": 10,
+    "removed": 5,
+    "removed_still_in_main": 1,
+    "missing_sample": [
+     "  // A escrita em `whatsapp_templates` é admin-only na RLS (o supervisor que",
+     "  // clicava em Novo/Editar/Duplicar/Excluir recebia erro no toast): os",
+     "  // controles de escrita só montam para admin; a leitura segue para o staff.",
+     "  const { isAdmin } = useUserRole();",
+     "          {!isAdmin && <p className=\"text-xs text-muted-foreground mt-1\">Somente administradores podem criar, editar ou excluir templates.</p>}",
+     "        {isAdmin && <Button onClick={openNew} className=\"gap-2 bg-primary hover:bg-primary/90 w-full sm:w-auto\"><Plus className=\"w-4 h-4\" />Novo Template</Butto",
+     "              {isAdmin && <Button variant=\"outline\" className=\"mt-4\" onClick={openNew}><Plus className=\"w-4 h-4 mr-2\" />Criar primeiro template</Button>}",
+     "                            {isAdmin && <Button variant=\"ghost\" size=\"icon\" className=\"h-8 w-8\" aria-label={`Editar ${template.name}`} onClick={() => openEdit(t",
+     "                            {isAdmin && <Button variant=\"ghost\" size=\"icon\" className=\"h-8 w-8\" aria-label={`Duplicar ${template.name}`} onClick={() => handleDu",
+     "                            {isAdmin && <Button variant=\"ghost\" size=\"icon\" className=\"h-8 w-8 text-destructive\" aria-label={`Excluir ${template.name}`} onClick"
+    ],
+    "still_sample": [
+     "        <Button onClick={openNew} className=\"gap-2 bg-primary hover:bg-primary/90 w-full sm:w-auto\"><Plus className=\"w-4 h-4\" />Novo Template</Button>"
+    ]
+   }
+  },
+  {
+   "path": "src/components/catalog/__tests__/ExternalProductCatalog.virtualizacao.test.tsx",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/components/connections/__tests__/useConnectionsManager.handlers.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 13,
+   "hunk": "PRESENT_REVERSE_APPLIES"
+  },
+  {
+   "path": "src/components/contacts/__tests__/ContactListItemGrid.test.tsx",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/components/dashboard/WarRoomDashboard.tsx",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/components/dashboard/__tests__/GamificationSection.customizacao.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 21,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 2,
+    "missing_in_main": 2,
+    "removed": 1,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "import { TestQueryWrapper } from '@/test/mocks/queryClient';",
+     "  render(<GamificationSection stats={stats} isStaff={isStaff} visibleWidgets={visibleWidgets} />, { wrapper: TestQueryWrapper });"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/dashboard/__tests__/WarRoomDashboard.estado-a11y.test.tsx",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/components/dashboard/useSentimentData.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 38,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 9,
+    "missing_in_main": 1,
+    "removed": 1,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  return { alerts, analyses, agents, loading, error: fetchError, isError: fetchError !== null, incomplete: false, stats, dailyData, agentData, fetchData };"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/gamification/MiniGameDialogs.tsx",
+   "status": "MAIN_UNCHANGED_SINCE_BASE",
+   "patch_lines": 40,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 4,
+    "missing_in_main": 4,
+    "removed": 4,
+    "removed_still_in_main": 4,
+    "missing_sample": [
+     "  onComplete: (score: number, xp: number) => void;",
+     "    onComplete(score, Math.floor(score / 2));",
+     "      else { const final = score + (index === question.correct ? 20 : 0); setShowResult(true); onComplete(final, Math.floor(final / 3)); }",
+     "    else { const final = score + (isCorrect ? (showHint ? 10 : 20) : 0); onComplete(final, Math.floor(final / 3)); }"
+    ],
+    "still_sample": [
+     "  onComplete: (score: number) => void;",
+     "    onComplete(score);",
+     "      else { setShowResult(true); onComplete(score + (index === question.correct ? 20 : 0)); }",
+     "    else { onComplete(score + (isCorrect ? (showHint ? 10 : 20) : 0)); }"
+    ]
+   }
+  },
+  {
+   "path": "src/components/gmail/__tests__/GmailInboxView.paginacao.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 14,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 3,
+    "missing_in_main": 3,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "    // A busca por termo passa pela RPC `search_email_threads` (corpo/anexo);",
+     "    // sem linhas casadas o OR de colunas continua valendo (mesmo contrato).",
+     "    vi.mocked(supabase.rpc).mockResolvedValue({ data: [], error: null });"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/groups/__tests__/GroupsView.a11y.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 14,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 3,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  // Grupos usa o movimento reduzido do sistema (MotionConfig + useReducedMotion)."
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/inbox/AdvancedMessageMenu.tsx",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/components/inbox/CRMAutoSync.tsx",
+   "status": "MAIN_UNCHANGED_SINCE_BASE",
+   "patch_lines": 45,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 7,
+    "missing_in_main": 7,
+    "removed": 9,
+    "removed_still_in_main": 9,
+    "missing_sample": [
+     "              configurado') ficava inalcançável por teclado. O wrapper NÃO repete",
+     "              `role=\"button\"`/`aria-label`: o <button> real já é o controle (com nome",
+     "              e `disabled`) — dois botões aninhados com o mesmo nome duplicavam o",
+     "              anúncio e a busca por role/nome. */}",
+     "              alcançável por teclado neste estado desabilitado. Sem `role`/`aria-label`",
+     "              aqui pelo mesmo motivo do wrapper acima. */}",
+     "          aria-label={tooltipText} title={tooltipText}"
+    ],
+    "still_sample": [
+     "              configurado') ficava inalcançável por teclado. Mesmo padrão do",
+     "              `Tile` em contact-details/ContactActionButtons.tsx. */}",
+     "            role=\"button\"",
+     "            aria-disabled=\"true\"",
+     "            aria-label=\"CRM não configurado\"",
+     "              alcançável por teclado neste estado desabilitado. */}",
+     "            role=\"button\"",
+     "            aria-disabled=\"true\"",
+     "            aria-label=\"Contato não encontrado no CRM\""
+    ]
+   }
+  },
+  {
+   "path": "src/components/inbox/ConversationSummary.tsx",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/components/inbox/InboxEmptyChat.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 201,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 100,
+    "missing_in_main": 62,
+    "removed": 28,
+    "removed_still_in_main": 22,
+    "missing_sample": [
+     "import { motion, MotionConfig, useReducedMotion } from 'framer-motion';",
+     " * Movimento (fa2): a entrada do cartão e os três pontos orbitais são",
+     " * framer-motion de verdade com gating explícito em `useReducedMotion` — o",
+     " * `reducedMotion` do framer-motion NÃO corta laços de opacidade, por isso os",
+     " * laços (pontos com `repeat: Infinity`) só são montados sem a preferência.",
+     " * Com `prefers-reduced-motion: reduce` o cartão nasce no estado final",
+     " * (`initial={false}`) e os pontos viram `div`s estáticas, sem estilo inline",
+     " * de animação. O `MotionConfig reducedMotion=\"user\"` cobre o resto.",
+     "export interface InboxEmptyChatProps {",
+     "  /** Abre o modal de nova conversa (a `RealtimeInboxView` liga ao `setShowNewConversation`). */",
+     "  /** Aguardando (mesmo número dos chips da lista — a tela vazia não recalcula). */",
+     "  /** Não lidas (mesmo número dos chips da lista, com flexão de singular). */",
+     "export function InboxEmptyChat({ onNewConversation, waitingCount, unreadCount }: InboxEmptyChatProps = {}) {",
+     "  // O hook do framer-motion congela a preferência no primeiro mount do módulo",
+     "  // (cache interno) — a leitura direta cobre stubs tardios de `matchMedia` e",
+     "  // garante o gating mesmo quando o hook ainda enxerga o valor antigo. Em",
+     "  // divergência transitória, erra para o lado de reduzir (o lado seguro).",
+     "  const reduzidoHook = useReducedMotion() ?? false;",
+     "  const reduzidoMatchMedia =",
+     "    typeof window !== 'undefined' && typeof window.matchMedia === 'function'",
+     "      ? window.matchMedia('(prefers-reduced-motion: reduce)').matches",
+     "      : false;",
+     "  const reduzido = reduzidoHook || reduzidoMatchMedia;",
+     "  const ehMac = typeof navigator !== 'undefined' && /mac/i.test(navigator.platform ?? '');",
+     "    <MotionConfig reducedMotion=\"user\">"
+    ],
+    "still_sample": [
+     "    <ConversationEmptyState",
+     "      icon={MessageSquare}",
+     "      title=\"Selecione uma conversa\"",
+     "      description=\"Escolha uma conversa na lista ao lado para visualizar e responder mensagens\"",
+     "      className=\"bg-inbox-panel overflow-hidden\"",
+     "      action={",
+     "          <div",
+     "            data-testid=\"inbox-empty-shortcuts\"",
+     "            className=\"flex flex-col items-center gap-2\"",
+     "            <span className=\"text-xs font-medium text-muted-foreground\">Atalhos do teclado</span>"
+    ]
+   }
+  },
+  {
+   "path": "src/components/inbox/MediaPreview.tsx",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/components/inbox/MessageContextActions.tsx",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/components/inbox/MessageReactions.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 204,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 60,
+    "missing_in_main": 43,
+    "removed": 18,
+    "removed_still_in_main": 10,
+    "missing_sample": [
+     " * Uma reação por autor por mensagem: tocar em outro emoji remove a antiga ANTES",
+     " * de gravar a nova, tocar no mesmo só remove. A tela é otimista (atualiza na",
+     " * hora) e volta ao estado anterior se a gravação falhar (rollback).",
+     "function useReacaoUnica(",
+     "  reactions: Array<{ id: string; user_id: string; emoji: string; user_name?: string | null }>,",
+     "  currentProfileId: string | undefined,",
+     "  addReaction: (emoji: string) => Promise<unknown>,",
+     "  removeReaction: (emoji: string) => Promise<unknown>,",
+     "  const [otimista, setOtimista] = useState<typeof reactions | null>(null);",
+     "  const visiveis = otimista ?? reactions;",
+     "  const minha = visiveis.find((r) => r.user_id === currentProfileId);",
+     "  const jaReagi = (emoji: string) =>",
+     "    visiveis.some((r) => r.user_id === currentProfileId && r.emoji === emoji);",
+     "  const reagir = async (emoji: string): Promise<boolean> => {",
+     "    if (minha && minha.emoji === emoji) {",
+     "      setOtimista(visiveis.filter((r) => r.id !== minha.id));",
+     "        return true;",
+     "        setOtimista(null);",
+     "        return false;",
+     "    const semMinha = minha ? visiveis.filter((r) => r.id !== minha.id) : visiveis;",
+     "    setOtimista([",
+     "      ...semMinha,",
+     "      { id: `otimista-${emoji}`, user_id: currentProfileId ?? '', emoji, user_name: minha?.user_name ?? '' },",
+     "      // A antiga sai ANTES da nova entrar: sem isso a mensagem fica com duas",
+     "      // reações do mesmo autor até o realtime reconciliar."
+    ],
+    "still_sample": [
+     "  const groupedReactions = reactions.reduce((acc, reaction) => {",
+     "        await removeReaction(emoji);",
+     "        await addReaction(emoji);",
+     "      setIsOpen(false);",
+     "              const userHasReacted = hasReacted(emoji);",
+     "        await removeReaction(emoji);",
+     "        await addReaction(emoji);",
+     "      setShowPicker(false);",
+     "              hasReacted(emoji) && 'bg-primary/10 ring-1 ring-primary/30'",
+     "                    hasReacted(emoji) && 'bg-primary/10 ring-1 ring-primary/30'"
+    ]
+   }
+  },
+  {
+   "path": "src/components/inbox/QuickRepliesManager.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 49,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 18,
+    "missing_in_main": 0,
+    "removed": 8,
+    "removed_still_in_main": 3,
+    "missing_sample": [],
+    "still_sample": [
+     "                <div className=\"flex items-center justify-between\">",
+     "                <p className=\"text-xs text-muted-foreground truncate\">{template.content}</p>",
+     "              </motion.button>"
+    ]
+   }
+  },
+  {
+   "path": "src/components/inbox/RealtimeInboxView.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 59,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 22,
+    "missing_in_main": 12,
+    "removed": 5,
+    "removed_still_in_main": 4,
+    "missing_sample": [
+     "import { WifiOff, RefreshCw, Loader2, MessageSquarePlus, UserX } from 'lucide-react';",
+     "            {inbox.selectedContactId && inbox.selectedContactFallbackStatus === 'loading' ? (",
+     "                <Loader2 aria-hidden=\"true\" className=\"w-6 h-6 text-primary motion-safe:animate-spin\" />",
+     "            ) : inbox.selectedContactId && (inbox.selectedContactFallbackStatus === 'not-found' || inbox.selectedContactFallbackStatus === 'error') ? (",
+     "              // Link/notificação/busca abriram um contato que não veio na lista e não",
+     "              // pôde ser carregado: mostra o motivo em vez de uma área de chat muda.",
+     "                icon={inbox.selectedContactFallbackStatus === 'not-found' ? UserX : WifiOff}",
+     "                title={inbox.selectedContactFallbackStatus === 'not-found' ? 'Conversa não encontrada' : 'Não foi possível abrir a conversa'}",
+     "                description={",
+     "                  inbox.selectedContactFallbackStatus === 'not-found'",
+     "                    ? 'O link é inválido ou você não tem acesso a este contato.'",
+     "                    : (inbox.selectedContactFallbackError ?? 'Houve uma falha ao carregar o contato.')"
+    ],
+    "still_sample": [
+     "            <InboxEmptyChat",
+     "              waitingCount={inboxFilters.chipCounts?.waiting ?? 0}",
+     "              unreadCount={inboxFilters.chipCounts?.unread ?? 0}",
+     "              onNewConversation={() => inbox.setShowNewConversation(true)}"
+    ]
+   }
+  },
+  {
+   "path": "src/components/inbox/SlashCommands.tsx",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/components/inbox/TemplatesWithVariables.tsx",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/components/inbox/VirtualizedRealtimeList.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 122,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 49,
+    "missing_in_main": 26,
+    "removed": 1,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "import { ConversationReopenDialog } from './conversation-list/ConversationReopenDialog';",
+     "  /** Reabrir/desarquivar conversa resolvida/arquivada (RPC no chamador). */",
+     "  onReopen?: (contactId: string) => void | Promise<void>;",
+     "  /** Reabrir/desarquivar conversa resolvida/arquivada (RPC no chamador). */",
+     "  onReopen?: (contactId: string) => void | Promise<void>;",
+     "  // Reabrir/desarquivar na linha: só para resolvida/arquivada, com confirmação",
+     "  // leve (ConversationReopenDialog) — mesmo desenho do ChatPanelHeader.",
+     "  const statusLinha = conversation.contact.conversation_status ?? null;",
+     "  const linhaArquivada = statusLinha === 'archived';",
+     "  const linhaResolvida = statusLinha === 'resolved';",
+     "  const podeReabrir = !!onReopen && (linhaArquivada || linhaResolvida);",
+     "  const [reopening, setReopening] = useState(false);",
+     "  const confirmarReabertura = async () => {",
+     "    if (!onReopen) return;",
+     "    setReopening(true);",
+     "      setReopenError('Não foi possível reabrir a conversa. Tente novamente.');",
+     "      setReopening(false);",
+     "            {podeReabrir && (",
+     "                    aria-label={linhaArquivada ? 'Desarquivar conversa' : 'Reabrir conversa'}",
+     "                    {linhaArquivada ? <ArchiveRestore className=\"w-3.5 h-3.5\" /> : <RotateCcw className=\"w-3.5 h-3.5\" />}",
+     "                <TooltipContent side=\"bottom\" className=\"text-xs font-medium\">{linhaArquivada ? 'Desarquivar' : 'Reabrir'}</TooltipContent>",
+     "          onOpenChange={(open) => { if (!reopening) { setReopenOpen(open); if (!open) setReopenError(null); } }}",
+     "          action={linhaArquivada ? 'unarchive' : 'reopen'}",
+     "          contactName={conversation.contact.name ?? undefined}",
+     "          isPending={reopening}"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/inbox/VoiceChangerPicker.tsx",
+   "status": "MAIN_UNCHANGED_SINCE_BASE",
+   "patch_lines": 84,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 35,
+    "missing_in_main": 27,
+    "removed": 4,
+    "removed_still_in_main": 4,
+    "missing_sample": [
+     "import { createStorageObjectId, requireUserStoragePath } from '@/lib/storage_object_upload';",
+     "  onSendAudioBlob?: (blob: Blob) => ResultadoEnvioVoz | Promise<ResultadoEnvioVoz>;",
+     "   * PK-17 — a voz transformada é dado pessoal: quando presente, o picker sobe o",
+     "   * mp3 para o bucket privado `voice-changer-tmp` na pasta do usuário",
+     "   * (`<uid>/voice_<ts>_<uuid>.mp3`, expurgo por TTL de 24 h) e entrega a URL",
+     "   * assinada do objeto (bucket privado não tem URL pública). Sem sessão não há",
+     "   * upload nem envio.",
+     "  onSendAudio?: (signedUrl: string) => ResultadoEnvioVoz | Promise<ResultadoEnvioVoz>;",
+     "export function VoiceChangerPicker({ onSendAudioBlob, onSendAudio, disabled }: VoiceChangerPickerProps) {",
+     "      // PK-17: com `onSendAudio`, a voz transformada sobe para o temporário do",
+     "      // usuário e o envio leva a URL assinada do MESMO objeto.",
+     "      if (onSendAudio) {",
+     "        const { data: { user } } = await supabase.auth.getUser();",
+     "        let caminho: string;",
+     "          caminho = requireUserStoragePath(user?.id, `voice_${Date.now()}_${createStorageObjectId()}.mp3`);",
+     "          toast.error('Sessão expirada: entre de novo para enviar a voz transformada');",
+     "        const { error: uploadError } = await supabase.storage",
+     "          .from('voice-changer-tmp')",
+     "          .upload(caminho, blob);",
+     "        if (uploadError) throw uploadError;",
+     "        const { data: assinada, error: assinaturaError } = await supabase.storage",
+     "          .from('voice-changer-tmp')",
+     "          .createSignedUrl(caminho, 3600);",
+     "        if (assinaturaError || !assinada?.signedUrl) throw assinaturaError ?? new Error('Não foi possível gerar a URL assinada');",
+     "        const resultado = await onSendAudio(assinada.signedUrl);"
+    ],
+    "still_sample": [
+     "  onSendAudioBlob: (blob: Blob) => ResultadoEnvioVoz | Promise<ResultadoEnvioVoz>;",
+     "export function VoiceChangerPicker({ onSendAudioBlob, disabled }: VoiceChangerPickerProps) {",
+     "      const resultado = await onSendAudioBlob(blob);",
+     "  }, [transformedUrl, isSending, onSendAudioBlob, cleanup]);"
+    ]
+   }
+  },
+  {
+   "path": "src/components/inbox/VoiceSelector.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 111,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 36,
+    "missing_in_main": 19,
+    "removed": 13,
+    "removed_still_in_main": 11,
+    "missing_sample": [
+     "  const abortRef = useRef<AbortController | null>(null);",
+     "    // G6: fechar o menu no meio da geração aborta o fetch — a resposta que chegar",
+     "    // depois não pode tocar por baixo da voz nova.",
+     "    abortRef.current?.abort();",
+     "    abortRef.current = null;",
+     "    setLoadingVoiceId(null);",
+     "    const controller = new AbortController();",
+     "    abortRef.current = controller;",
+     "      // G6: o texto de amostra é fixo, então o mesmo blob vale para a sessão",
+     "      // inteira — a MESMA voz tocada duas vezes paga uma só síntese.",
+     "            signal: controller.signal,",
+     "      // O menu fechou durante a geração: o áudio atrasado não toca.",
+     "      if (controller.signal.aborted) return;",
+     "      // Abortar por fechamento do menu não é erro para o usuário.",
+     "      if (controller.signal.aborted) return;",
+     "      if (abortRef.current === controller) {",
+     "        abortRef.current = null;",
+     "        setLoadingVoiceId(null);",
+     "                    aria-label={`Ouvir prévia da voz ${voice.name}`}"
+    ],
+    "still_sample": [
+     "      const response = await fetch(",
+     "        `${SUPABASE_URL}/functions/v1/elevenlabs-tts`,",
+     "          method: 'POST',",
+     "          headers: {",
+     "            'Content-Type': 'application/json',",
+     "            ...(await edgeAuthHeaders()),",
+     "          body: JSON.stringify({ ",
+     "            text: voice.sampleText || `Olá! Eu sou ${voice.name}.`,",
+     "            voiceId: voice.id",
+     "      if (!response.ok) {"
+    ]
+   }
+  },
+  {
+   "path": "src/components/inbox/WhisperMode.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 433,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 221,
+    "missing_in_main": 115,
+    "removed": 53,
+    "removed_still_in_main": 42,
+    "missing_sample": [
+     "import { Check, ChevronDown, EyeOff, Loader2, Mic, Pause, Play, RotateCcw, Send, Square, Trash2, UserRound, X } from 'lucide-react';",
+     "import { useMediaElementVolume } from '@/hooks/communication/useMediaElementVolume';",
+     "  /** Caminho no bucket `audio-messages` (`<uid>/<conversa>/<uuid>`), quando a nota é por voz. */",
+     "  audio_path: string | null;",
+     "/** Mensagem de erro do upload de áudio (o INSERT tem tradução própria). */",
+     "const ERRO_UPLOAD_AUDIO = 'Não foi possível enviar o áudio do sussurro. Tente de novo.';",
+     "  // Nota de voz: o gravador é o motor do PE-59/PE-24 (limite de 300 s e liberação de",
+     "  // microfone incluídos) e a prévia obedece ao volume único do app.",
+     "  const [audioBlob, setAudioBlob] = useState<Blob | null>(null);",
+     "  const [previaTocando, setPreviaTocando] = useState(false);",
+     "  const previaRef = useRef<HTMLAudioElement | null>(null);",
+     "  useMediaElementVolume(previaRef);",
+     "  const {",
+     "    isRecording,",
+     "    duration,",
+     "    audioUrl,",
+     "    startRecording,",
+     "    stopRecording,",
+     "    cancelRecording,",
+     "    formatDuration,",
+     "  } = useAudioRecorder({ onRecordingComplete: (blob) => setAudioBlob(blob) });",
+     "  // Selo: a fonte é o hook (contagem exata no banco dos sussurros endereçados a",
+     "  // MIM e não lidos) — a lista do painel é capada em 20 e conta o que eu enviei.",
+     "  const unreadCount = useWhisperCount(contactId);",
+     "  // Marca como lido ao abrir o painel. Só invalida a contagem quando a gravação"
+    ],
+    "still_sample": [
+     "  // Marca como lido só o sussurro destinado a MIM. A policy de UPDATE de",
+     "  // `whisper_messages` só permite mexer nas linhas endereçadas ao perfil atual:",
+     "  // sem esse filtro o banco devolve 0 linhas e o selo de quem recebe nunca zera;",
+     "  // e um supervisor não pode marcar como lidos os sussurros endereçados a outro.",
+     "    const meuPerfilId = profile?.id ?? null;",
+     "      queryClient.invalidateQueries({ queryKey: ['whispers', contactId] });",
+     "              <span className=\"text-foreground\">{w.content}</span>",
+     "                  onClick={sendWhisper}",
+     "          <div className=\"flex gap-1.5\">",
+     "            <Input"
+    ]
+   }
+  },
+  {
+   "path": "src/components/inbox/__tests__/AIConversationAssistant.ia048.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 12,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  createLogger: () => ({ debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() }),"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/inbox/__tests__/ChatPanel.atalhos-busca.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 21,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 3,
+    "missing_in_main": 2,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  createLogger: () => ({ debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() }),",
+     "  // VoiceSelector (via ChatInputToolbars) importa a constante no topo do modulo."
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/inbox/__tests__/ChatTransferContract.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 12,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  createLogger: () => ({ debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() }),"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/inbox/__tests__/ContactDetails.quickActions.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 71,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 18,
+    "missing_in_main": 13,
+    "removed": 11,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  // `set_conversation_status` (arquivar/reabrir) e `delivery_stats` (seção",
+     "  // \"Entrega de mensagens\") passam por aqui; o teste filtra pelo nome.",
+     "  const rpc = vi.fn(async () => ({ data: null, error: null }));",
+     "  return { state, eq, update, select, from, invoke, rpc, toast };",
+     "  it('\"Arquivar\" usa a semântica do archiveContact (RPC set_conversation_status); Desfazer reabre pela mesma RPC', async () => {",
+     "    // Arquivar é mudar o ESTADO pela RPC canônica (a mesma do diálogo de",
+     "    // encerrar e do chip \"Arquivadas\"): `assigned_to` (o responsável) fica intacto.",
+     "      expect(h.rpc).toHaveBeenCalledWith('set_conversation_status', {",
+     "        p_contact_id: 'c1',",
+     "        p_next: 'archived',",
+     "    // Reabre pela mesma RPC — sem reabrir nada o toast de desfazer mentiria.",
+     "      expect(h.rpc).toHaveBeenCalledWith('set_conversation_status', {",
+     "        p_contact_id: 'c1',"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/inbox/__tests__/SummaryResult.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 13,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 0,
+    "removed": 1,
+    "removed_still_in_main": 0,
+    "missing_sample": [],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/inbox/__tests__/VoiceChanger.aria.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 24,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 5,
+    "missing_in_main": 4,
+    "removed": 1,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "    // O componente lê a preferência de movimento reduzido do sistema.",
+     "    // A conversão toca a prévia sozinha (play simulado resolve): o botão nasce",
+     "    // como \"Pausar prévia\". \"Ouvir prévia\" só aparece depois de pausar.",
+     "    const botao = await screen.findByRole('button', { name: /Pausar prévia/ });"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/inbox/__tests__/VoiceChangerPicker.aria.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 13,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 2,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "    // O componente lê a preferência de movimento reduzido do sistema."
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/inbox/__tests__/ferramentas-ia.anuncio-estado.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 12,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  createLogger: () => ({ debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() }),"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/inbox/__tests__/hover-actions-a11y.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 13,
+   "hunk": "PRESENT_REVERSE_APPLIES"
+  },
+  {
+   "path": "src/components/inbox/__tests__/inboxA11yLoteReacoes.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 16,
+   "hunk": "PRESENT_REVERSE_APPLIES"
+  },
+  {
+   "path": "src/components/inbox/__tests__/useChatMediaSending.audio-meme-falha.test.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 26,
+   "hunk": "PRESENT_REVERSE_APPLIES"
+  },
+  {
+   "path": "src/components/inbox/ai-tools/__tests__/a11y-ferramentas-ia.test.tsx",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/components/inbox/chat/__tests__/ChatInputArea.limite-enter.test.tsx",
+   "status": "MAIN_UNCHANGED_SINCE_BASE",
+   "patch_lines": 12,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  createLogger: () => ({ debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() }),"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/inbox/chat/__tests__/ChatMessagesArea.agrupar-envio.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 19,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 7,
+    "missing_in_main": 7,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  // jsdom nao calcula layout: com altura zero no elemento de rolagem o",
+     "  // @tanstack/react-virtual nao devolve item nenhum (o virtual-core le",
+     "  // `clientHeight` do conteiner de rolagem e `offsetHeight` de cada linha).",
+     "  // A medida entra pelo prototipo; o ResizeObserver nao serve aqui porque",
+     "  // nesta versao o payload do observer e ignorado.",
+     "  Object.defineProperty(HTMLElement.prototype, \"clientHeight\", { configurable: true, get: () => 600 });",
+     "  Object.defineProperty(HTMLElement.prototype, \"offsetHeight\", { configurable: true, get: () => 120 });"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/inbox/chat/__tests__/ChatMessagesArea.loop.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 19,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 7,
+    "missing_in_main": 7,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  // jsdom nao calcula layout: com altura zero no elemento de rolagem o",
+     "  // @tanstack/react-virtual nao devolve item nenhum (o virtual-core le",
+     "  // `clientHeight` do conteiner de rolagem e `offsetHeight` de cada linha).",
+     "  // A medida entra pelo prototipo; o ResizeObserver nao serve aqui porque",
+     "  // nesta versao o payload do observer e ignorado.",
+     "  Object.defineProperty(HTMLElement.prototype, \"clientHeight\", { configurable: true, get: () => 600 });",
+     "  Object.defineProperty(HTMLElement.prototype, \"offsetHeight\", { configurable: true, get: () => 120 });"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/inbox/chat/__tests__/ChatMessagesArea.movimento-reduzido.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 19,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 7,
+    "missing_in_main": 7,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  // jsdom nao calcula layout: com altura zero no elemento de rolagem o",
+     "  // @tanstack/react-virtual nao devolve item nenhum (o virtual-core le",
+     "  // `clientHeight` do conteiner de rolagem e `offsetHeight` de cada linha).",
+     "  // A medida entra pelo prototipo; o ResizeObserver nao serve aqui porque",
+     "  // nesta versao o payload do observer e ignorado.",
+     "  Object.defineProperty(HTMLElement.prototype, \"clientHeight\", { configurable: true, get: () => 600 });",
+     "  Object.defineProperty(HTMLElement.prototype, \"offsetHeight\", { configurable: true, get: () => 120 });"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/inbox/chat/__tests__/ChatMessagesArea.pagination.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 19,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 7,
+    "missing_in_main": 7,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  // jsdom nao calcula layout: com altura zero no elemento de rolagem o",
+     "  // @tanstack/react-virtual nao devolve item nenhum (o virtual-core le",
+     "  // `clientHeight` do conteiner de rolagem e `offsetHeight` de cada linha).",
+     "  // A medida entra pelo prototipo; o ResizeObserver nao serve aqui porque",
+     "  // nesta versao o payload do observer e ignorado.",
+     "  Object.defineProperty(HTMLElement.prototype, \"clientHeight\", { configurable: true, get: () => 600 });",
+     "  Object.defineProperty(HTMLElement.prototype, \"offsetHeight\", { configurable: true, get: () => 120 });"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/inbox/chat/__tests__/forwardChatTransport.test.tsx",
+   "status": "MAIN_UNCHANGED_SINCE_BASE",
+   "patch_lines": 13,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 2,
+    "missing_in_main": 2,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  getLogger: () => ({ debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() }),",
+     "  createLogger: () => ({ debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() }),"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/inbox/chat/__tests__/useChatPanelHandlers.assinatura-retry.test.tsx",
+   "status": "MAIN_UNCHANGED_SINCE_BASE",
+   "patch_lines": 13,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 2,
+    "missing_in_main": 2,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  getLogger: () => ({ debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() }),",
+     "  createLogger: () => ({ debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() }),"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/inbox/chat/__tests__/useChatPanelHandlers.audio.test.tsx",
+   "status": "MAIN_UNCHANGED_SINCE_BASE",
+   "patch_lines": 13,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 2,
+    "missing_in_main": 2,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  getLogger: () => ({ debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() }),",
+     "  createLogger: () => ({ debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() }),"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/inbox/chat/__tests__/useChatPanelHandlers.fila-serial.test.tsx",
+   "status": "MAIN_UNCHANGED_SINCE_BASE",
+   "patch_lines": 13,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 2,
+    "missing_in_main": 2,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  getLogger: () => ({ debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() }),",
+     "  createLogger: () => ({ debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() }),"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/inbox/chat/__tests__/useChatPanelHandlers.sussurro.test.tsx",
+   "status": "MAIN_UNCHANGED_SINCE_BASE",
+   "patch_lines": 12,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  createLogger: () => ({ debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() }),"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/inbox/conversation-list/StatusChips.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 39,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 7,
+    "missing_in_main": 4,
+    "removed": 6,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "            aria-pressed={isActive}",
+     "                ? 'status-chip-active bg-accent border-primary ring-2 ring-primary/40 text-foreground focus-visible:ring-2 focus-visible:ring-primary/50'",
+     "            {chip.icon ? <chip.icon className=\"h-4 w-4 mr-1\" aria-hidden=\"true\" /> : null}",
+     "                'ml-1.5 h-7 min-w-7 px-2 rounded-full text-sm font-bold flex items-center justify-center',"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/inbox/quick-replies/QuickReplyCardList.tsx",
+   "status": "MAIN_UNCHANGED_SINCE_BASE",
+   "patch_lines": 62,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 27,
+    "missing_in_main": 26,
+    "removed": 1,
+    "removed_still_in_main": 1,
+    "missing_sample": [
+     "import { useState } from 'react';",
+     "  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,",
+     "  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,",
+     "} from '@/components/ui/alert-dialog';",
+     "  // Excluir resposta rápida é destrutivo: o clique na lixeira só abre a",
+     "  // confirmação; a exclusão sai no \"Excluir\" do diálogo.",
+     "  const [pendingDelete, setPendingDelete] = useState<QuickReplyTemplate | null>(null);",
+     "                        <Button variant=\"ghost\" size=\"sm\" className=\"h-8 w-8 p-0 text-destructive hover:text-destructive\" aria-label={`Excluir resposta rápida: ",
+     "      <AlertDialog open={pendingDelete !== null} onOpenChange={(next) => { if (!next) setPendingDelete(null); }}>",
+     "        <AlertDialogContent>",
+     "          <AlertDialogHeader>",
+     "            <AlertDialogTitle>Excluir resposta rápida?</AlertDialogTitle>",
+     "            <AlertDialogDescription>",
+     "              {pendingDelete ? `\"${pendingDelete.title}\" será excluída da lista. Esta ação não pode ser desfeita.` : ''}",
+     "            </AlertDialogDescription>",
+     "          </AlertDialogHeader>",
+     "          <AlertDialogFooter>",
+     "            <AlertDialogCancel>Cancelar</AlertDialogCancel>",
+     "            <AlertDialogAction",
+     "              className=\"bg-destructive hover:bg-destructive/90\"",
+     "              onClick={() => { if (pendingDelete) onDelete(pendingDelete.id); setPendingDelete(null); }}",
+     "              Excluir",
+     "            </AlertDialogAction>",
+     "          </AlertDialogFooter>",
+     "        </AlertDialogContent>"
+    ],
+    "still_sample": [
+     "                        <Button variant=\"ghost\" size=\"sm\" className=\"h-8 w-8 p-0 text-destructive hover:text-destructive\" onClick={(e) => { e.stopPropagation();"
+    ]
+   }
+  },
+  {
+   "path": "src/components/inbox/tabs/NotesTab.tsx",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/components/integrations/GoogleCalendarIntegration.tsx",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/components/integrations/__tests__/N8nIntegrationView.a11y.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 156,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 20,
+    "missing_in_main": 0,
+    "removed": 79,
+    "removed_still_in_main": 2,
+    "missing_sample": [],
+    "still_sample": [
+     "  return {",
+     "    ...actual,"
+    ]
+   }
+  },
+  {
+   "path": "src/components/knowledge/KnowledgeBaseView.tsx",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/components/leaderboard/Leaderboard.tsx",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/components/notifications/__tests__/NotificationsPopover.test.tsx",
+   "status": "MAIN_UNCHANGED_SINCE_BASE",
+   "patch_lines": 12,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  createLogger: () => ({ debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() }),"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/nps/NPSDashboard.tsx",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/components/queues/QueueCard.tsx",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/components/reports/PeriodComparison.tsx",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/components/security/AuditLogDashboard.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 267,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 65,
+    "missing_in_main": 50,
+    "removed": 99,
+    "removed_still_in_main": 38,
+    "missing_sample": [
+     "import { useState } from \"react\";",
+     "import { motion } from \"framer-motion\";",
+     "import { FileText, Search, Filter, Calendar, User, Globe, AlertTriangle, Shield, Activity } from \"lucide-react\";",
+     "import { Card, CardContent, CardHeader, CardTitle } from \"@/components/ui/card\";",
+     "import { Input } from \"@/components/ui/input\";",
+     "import { Badge } from \"@/components/ui/badge\";",
+     "import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from \"@/components/ui/select\";",
+     "import { ScrollArea } from \"@/components/ui/scroll-area\";",
+     "import { format } from \"date-fns\";",
+     "import { ptBR } from \"date-fns/locale\";",
+     "import { useAuditLogDashboard, type AuditLogRow } from \"@/hooks/security/useAuditLogDashboard\";",
+     "// Contrato compartilhado de acoes e entidades de papel.",
+     "export const ROLE_ACTION_PREFIX = \"role_\";",
+     "export const ROLE_FILTER_VALUE = \"role_events\";",
+     "// eslint-disable-next-line react-refresh/only-export-components -- contrato compartilhado exigido no proprio arquivo",
+     "// eslint-disable-next-line react-refresh/only-export-components -- contrato compartilhado exigido no proprio arquivo",
+     "  isRoleAction(action) || action.includes(\"delete\") || action.includes(\"export\") || action.includes(\"role_change\");",
+     "// eslint-disable-next-line react-refresh/only-export-components -- contrato compartilhado exigido no proprio arquivo",
+     "  contact: [\"contact\"], message: [\"message\"], campaign: [\"campaign\"],",
+     "  user: [\"user\", \"user_roles\"], settings: [\"settings\"],",
+     "  login: \"bg-success/10 text-success\",",
+     "  logout: \"bg-muted text-muted-foreground\",",
+     "  create: \"bg-info/10 text-info\",",
+     "  update: \"bg-warning/10 text-warning\",",
+     "  delete: \"bg-destructive/10 text-destructive\","
+    ],
+    "still_sample": [
+     "import { motion } from 'framer-motion';",
+     "import { FileText, Search, Filter, Calendar, User, Globe, AlertTriangle, Shield, Activity } from 'lucide-react';",
+     "import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';",
+     "import { Input } from '@/components/ui/input';",
+     "import { Badge } from '@/components/ui/badge';",
+     "import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';",
+     "import { ScrollArea } from '@/components/ui/scroll-area';",
+     "import { format } from 'date-fns';",
+     "import { ptBR } from 'date-fns/locale';",
+     "// Contrato compartilhado de ações e entidades de papel: todo evento de papel em"
+    ]
+   }
+  },
+  {
+   "path": "src/components/security/PasswordResetRequestsPanel.tsx",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/components/security/__tests__/AuditLogDashboard.corte.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 45,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 19,
+    "missing_in_main": 18,
+    "removed": 1,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "    channel: () => ({ on: () => ({ subscribe: () => ({ unsubscribe: () => {} }) }) }),",
+     "    removeChannel: () => {},",
+     "        gte: vi.fn(function () { return this; }),",
+     "        or: vi.fn(function () { return this; }),",
+     "        range: vi.fn(function () { return this; }),",
+     "        not: vi.fn(function () { return this; }),",
+     "        in: vi.fn(function () { return this; }),",
+     "        order: vi.fn(function () { return this; }),",
+     "          gte: vi.fn(function () { return this; }),",
+     "          or: vi.fn(function () { return this; }),",
+     "          range: vi.fn(function () { return this; }),",
+     "          not: vi.fn(function () { return this; }),",
+     "          in: vi.fn(function () { return this; }),",
+     "          order: vi.fn(function () { return this; }),",
+     "              gte: () => construtor,",
+     "              or: () => construtor,",
+     "              range: () => construtor,",
+     "              not: () => construtor,"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/settings/AppearanceSettings.tsx",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/components/settings/AvatarUpload.tsx",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/components/settings/IntegrationKeysSection.tsx",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/components/settings/SettingsView.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 38,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 2,
+    "missing_in_main": 1,
+    "removed": 8,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  const { settings, isLoading, updateSettings } = useUserSettings();"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/settings/__tests__/IntegrationKeysSection.sem-consumidor.test.tsx",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/components/talkx/TalkXCampaignRunning.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 146,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 69,
+    "missing_in_main": 60,
+    "removed": 4,
+    "removed_still_in_main": 3,
+    "missing_sample": [
+     "import { useTalkX, type TalkXCampaign, type TalkXAbVariantStat } from '@/hooks/integrations/useTalkX';",
+     "// ─── A/B Test Results (N-120) ──────────────────────────────────────────────",
+     "function AbTestResults({ campaign, abStats }: {",
+     "  campaign: TalkXCampaign;",
+     "  abStats?: { variants: TalkXAbVariantStat[] } | null;",
+     "  if (!campaign.ab_enabled || !abStats) return null;",
+     "  const metric = campaign.ab_metric ?? 'reply_rate';",
+     "  const minSample = campaign.ab_min_sample ?? 0;",
+     "  const winnerId = campaign.ab_winner_variant_id;",
+     "  // Taxas sobre CONTAGENS do servidor (o hook conta com `count: 'exact',",
+     "  // head: true`): a tela nunca divide pelo tamanho de um array.",
+     "  const variants = abStats.variants.map((st) => {",
+     "    const hits = metric === 'reply_rate' ? st.replies : metric === 'click_rate' ? st.clicks : st.deliveries;",
+     "    return { ...st, rate: st.total > 0 ? (hits / st.total) * 100 : 0 };",
+     "  const maxRate = variants.length > 0 ? Math.max(...variants.map((v) => v.rate)) : 0;",
+     "  const totalSample = variants.reduce((sum, v) => sum + v.total, 0);",
+     "  if (totalSample < minSample) return null;",
+     "  const metricLabel = metric === 'reply_rate' ? 'Taxa de resposta'",
+     "    : metric === 'click_rate' ? 'Taxa de clique'",
+     "    : 'Taxa de entrega';",
+     "    <div className=\"rounded-2xl border border-border/50 bg-card p-4 space-y-3\">",
+     "      <div className=\"flex items-center justify-between\">",
+     "        <h3 className=\"text-sm font-bold text-foreground\">Teste A/B</h3>",
+     "        <span className=\"text-2xs font-semibold text-foreground-secondary\">{metricLabel}</span>",
+     "      <p className=\"text-2xs text-foreground-secondary\">"
+    ],
+    "still_sample": [
+     "import { useTalkX, type TalkXCampaign } from '@/hooks/integrations/useTalkX';",
+     "function TabResults({ c, sentHistory, historyQuery, onRetryHistory }: {",
+     "              {activeTab === 'results' && <TabResults c={campaign} sentHistory={sentHistory?.buckets ?? []} historyQuery={historyQuery} onRetryHistory={handleRe"
+    ]
+   }
+  },
+  {
+   "path": "src/components/talkx/TalkXCampaignWizard.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 32,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 13,
+    "missing_in_main": 13,
+    "removed": 3,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  // X131: numeros do rail vindos do servidor; sem recorte mostra falha fechada.",
+     "  const railManual = ed.audienceSource === \"contacts\" ? ed.selectedContacts.length : 0;",
+     "  const railServerOn = (ed.audienceSource === \"segment\" && ed.segmentIds.length > 0) || (ed.audienceSource === \"contacts\" && ed.railHasRules);",
+     "  const railShowServer = railServerOn && !!ed.railSummary && !ed.railSummaryError && !(ed.audienceSource === \"contacts\" && railManual > 0);",
+     "  const railShowLocal = ed.audienceSource === \"contacts\" && !ed.railHasRules && railManual > 0;",
+     "  const railPending = railServerOn && ed.railSummaryPending && !ed.railSummary;",
+     "  const railTotal = railShowServer ? fmtInt(ed.railSummary?.total ?? 0) : railShowLocal ? fmtInt(railManual) : railPending ? \"…\" : \"—\";",
+     "  const railEleg = railShowServer ? fmtInt(ed.railSummary?.eligible ?? 0) : railPending ? \"…\" : \"—\";",
+     "  const railSupp = railShowServer ? fmtInt(ed.railSummary?.suppressed ?? 0) : railPending ? \"…\" : \"—\";",
+     "  const railSub = (n: number) => (railShowServer && (ed.railSummary?.total ?? 0) > 0 ? fmtPct(n, ed.railSummary?.total ?? 0) : undefined);",
+     "          <StatTile icon={Users} color=\"blue\" label=\"Público total (estimado)\" value={railTotal} />",
+     "          <StatTile icon={Check} color=\"green\" label=\"Elegíveis para envio\" value={railEleg} sub={railSub(ed.railSummary?.eligible ?? 0)} subTone=\"text-dash-gre",
+     "          <StatTile icon={Ban} color=\"red\" label=\"Bloqueados por supressão\" value={railSupp} sub={railSub(ed.railSummary?.suppressed ?? 0)} subTone=\"text-dash-r"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/talkx/TalkXOverview.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 318,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 98,
+    "missing_in_main": 53,
+    "removed": 98,
+    "removed_still_in_main": 25,
+    "missing_sample": [
+     "  FileText, Bookmark, MessageSquare, BarChart3, Loader2, ChevronDown,",
+     "  InsightCard, TalkXQueryBoundary, EntityCell, ProgressCell, ResultsCell, ChannelCell, DateByCell,",
+     "  type TalkXColumn, type TalkXSort,",
+     "  // TL-115: o bloco de rascunhos nasce recolhido e abre no clique do cabeçalho.",
+     "  const [rascunhosAbertos, setRascunhosAbertos] = useState(false);",
+     "  // X079 — ordenação da tabela (cliente, por Campanha) e blocos N35 recolhidos.",
+     "  // X079 — a tabela da Visão geral usa as colunas e células do kit",
+     "  // (`TalkXTable` + `EntityCell`/`ChannelCell`/`ProgressCell`/`ResultsCell`/`DateByCell`):",
+     "  // miniatura quando há mídia de imagem, logo do canal, ponto pulsante na linha",
+     "  // em envio, \"—\" no rascunho, entregues com a taxa, data relativa e ordenação",
+     "  // por Campanha. A seleção zera ao trocar qualquer filtro ou o período",
+     "  // (`selectionResetKey` inclui `channel` e o período).",
+     "    if (!sort || sort.key !== 'name') return filtered;",
+     "    return [...filtered].sort((a, b) => a.name.localeCompare(b.name, 'pt-BR') * dir);",
+     "  }, [filtered, sort]);",
+     "  const tableColumns: TalkXColumn<TalkXCampaign>[] = [",
+     "      key: 'campanha', header: 'Campanha', sortKey: 'name',",
+     "        <button type=\"button\" onClick={() => onView(c)} className=\"flex items-center gap-3 text-left min-w-0 group\">",
+     "            name={c.name}",
+     "            description={c.description || c.message_template}",
+     "            mediaUrl={c.media_url}",
+     "            mediaType={c.media_type}",
+     "            icon={objectiveIcon(c.objective)}",
+     "            color={OBJ_COLOR[c.objective ?? 'engajamento'] ?? 'blue'}",
+     "      key: 'segmento', header: 'Segmento / Público',"
+    ],
+    "still_sample": [
+     "  InsightCard, TalkXQueryBoundary,",
+     "                </div>",
+     "              </div>",
+     "              <span className=\"text-sm font-semibold text-foreground\">Insights</span>",
+     "              <span className=\"text-xs text-muted-foreground\">({insights.length})</span>",
+     "            </div>",
+     "        {/* Tabela */}",
+     "        <section className=\"rounded-2xl bg-card border border-border/70 overflow-hidden\">",
+     "          {filtered.length === 0 ? (",
+     "            <div className=\"p-4\"><TalkXFilteredEmptyState onClearFilters={clear} /></div>"
+    ]
+   }
+  },
+  {
+   "path": "src/components/talkx/TalkXSegments.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 399,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 214,
+    "missing_in_main": 163,
+    "removed": 28,
+    "removed_still_in_main": 12,
+    "missing_sample": [
+     "import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';",
+     "  Plus, Bookmark, Star, StarOff, Pencil, Trash2, Zap, BarChart3, X, MoreVertical, Users, Shield, Check, Database, Search, RefreshCw, List, LayoutGrid,",
+     "import { useTalkXSegments, emptyRules, RULE_FIELDS, RULE_OPS, useAudienceEstimate, countAudience, type TalkXSegment, type TalkXSegmentLibraryStats, type TalkXSe",
+     "import { ModuleHeader } from './talkxShared';",
+     " * Abas superiores da tela 03 (X111). Só \"Segmentos\" existe: as outras são as",
+     " * abas do desenho ainda sem conteúdo e ficam desabilitadas — um botão que não",
+     " * faz nada seria pior que um botão que diz que ainda não faz nada.",
+     "const ABAS_TELA_03: ReadonlyArray<{ label: string; ativa?: boolean }> = [",
+     "  { label: 'Segmentos', ativa: true },",
+     "  { label: 'Regras Avançadas' },",
+     "  { label: 'Audiências' },",
+     "  { label: 'Modelos' },",
+     "  { label: 'Insights com IA' },",
+     "    segments, isLoading, isError, error, refetch, createSegment, updateSegment, deleteSegment, refreshEstimates,",
+     "    // X112 — alternância lista/grade: o estado vive no hook e a tela só troca o contêiner.",
+     "    viewMode = 'list' as TalkXSegmentsViewMode, setViewMode = () => {},",
+     "  /** Linhas da tabela, para devolver o foco à linha quando o painel fecha. */",
+     "  const rowRefs = useRef<Record<string, HTMLTableRowElement | null>>({});",
+     "  // O painel lê o segmento pela id no cache: favoritar (ou editar) na tabela",
+     "  // reflete aqui sem novo clique. A cópia guardada em `selected` só vence",
+     "  // quando é mais nova que a da lista — é o que o Salvar devolve.",
+     "  const current = useMemo(() => {",
+     "    if (!selected) return null;",
+     "    const fromList = segments.find((x) => x.id === selected.id) ?? null;",
+     "    if (!fromList || fromList === selected) return selected;"
+    ],
+    "still_sample": [
+     "import { useCallback, useEffect, useMemo, useRef, useState } from 'react';",
+     "  Plus, Bookmark, Star, StarOff, Pencil, Trash2, Zap, BarChart3, X, MoreVertical, Users, Shield, Check, Database, Search,",
+     "    segments, isLoading, isError, error, refetch, createSegment, updateSegment, deleteSegment,",
+     "  // Fechar o construtor (cancelar ou publicar) devolve a tela e o endereço à biblioteca.",
+     "        {/* X111 — trilha da tela 03, no mesmo desenho do wizard: o construtor é uma tela interna do módulo. */}",
+     "        <nav aria-label=\"Trilha de navegação\" className=\"flex items-center gap-1.5 text-2xs text-muted-foreground px-0.5\">",
+     "          <span>Talk X</span>",
+     "          <span className=\"text-border\">›</span>",
+     "          <span>Campanhas</span>",
+     "          <span className=\"text-border\">›</span>"
+    ]
+   }
+  },
+  {
+   "path": "src/components/talkx/TalkXTemplateEditor.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 120,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 41,
+    "missing_in_main": 33,
+    "removed": 10,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "import React, { useState, useMemo, useRef, useEffect, useSyncExternalStore } from 'react';",
+     "import type { TalkXTemplateTab } from './talkxTemplateRoute';",
+     "  /** X094 — sub-aba que o endereço pede aberta (o pai é remontado por template). */",
+     "  initialTtab?: TalkXTemplateTab;",
+     "  /** X094 — troca feita NA biblioteca lateral: o pai espelha no endereço. */",
+     "export function TalkXTemplateEditor({ templates, isLoading, isError = false, error = null, onRetry, editing, initialTtab, onActiveTemplateChange, onClose, onOpe",
+     "    // X094 + R2-MOD-024 — quem manda na troca é o MODO:",
+     "    // - na rota (`initialTtab` vem do endereço, que preserva o `ttab` na troca),",
+     "    //   a sub-aba aberta acompanha: recarrega para o template novo;",
+     "    // - fora da rota (editor isolado) a troca zera os painéis: resposta lenta",
+     "    //   de A nunca alcança B nem reabre painel sozinha.",
+     "    const seguirSubAba = initialTtab === 'ab' || initialTtab === 'historico';",
+     "    const manterVariantes = seguirSubAba && showVariants;",
+     "    const manterHistorico = seguirSubAba && showVersions;",
+     "    // X094 — o pai espelha a troca no endereço (preserva o `ttab`). Não há",
+     "    // remonto (`mirrorEditorTemplate` não mexe no estado para não perder a",
+     "    // edição em curso): é o `loadTemplate` que recarrega a sub-aba — só no",
+     "    // modo rota (ver acima).",
+     "    onActiveTemplateChange?.(t.id);",
+     "    if (manterVariantes) { setShowVariants(true); await loadVariants(t.id); }",
+     "    else if (manterHistorico) { setShowVersions(true); await fetchVersions(t.id); }",
+     "  // X094 — link direto/F5 numa sub-aba (`ttab=ab|historico`): o painel da sub-aba",
+     "  // já nasce aberto (estado inicial acima) e busca o template do endereço na",
+     "  // montagem. Vale por montagem do editor (a chave do pai o recria por template",
+     "  // ao ABRIR pelo endereço; dentro do editor a troca é `loadTemplate`)."
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/talkx/TalkXView.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 122,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 42,
+    "missing_in_main": 16,
+    "removed": 6,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "export type TalkXTopView = 'tabs' | 'wizard' | 'monitor' | 'scheduled' | 'running' | 'paused';",
+     "  // X156/T13: campanha pausada tem tela própria (TalkXCampaignPaused), separada da",
+     "  // genérica \"Campanha em Andamento\" (TalkXCampaignRunning), que segue sendo a de 'sending'.",
+     "        setTopView(screen === 'scheduled' || screen === 'running' || screen === 'paused' ? screen : 'monitor');",
+     "    setTopView('tabs'); setEditingCampaign(null); setMonitorId(null); setScheduledCampaignId(null); setRunningCampaignId(null); setPausedCampaignId(null); setWi",
+     "  }, [openMonitor, openScheduled, openRunning, openPaused]);",
+     "  // As ações de linha decidem o destino por status antes de chamar o contêiner",
+     "  // (`useCampaignRowActions`): 'sending' e 'paused' chegam no mesmo handler. Aqui",
+     "  // 'paused' desvia para a tela própria (X156/T13) e 'sending' segue na genérica.",
+     "  // X156/T13: tela própria da campanha pausada. O nome de quem pausou vem de",
+     "  // `paused_by` (uuid) resolvido pela lista de perfis já carregada na Visão geral.",
+     "    const pausedCampaign = campaigns.find((c) => c.id === pausedCampaignId);",
+     "    const pausedById = (pausedCampaign as { paused_by?: string | null } | undefined)?.paused_by;",
+     "    const pausedByName = pausedById ? creators[pausedById] ?? null : null;",
+     "          pausedByName={pausedByName}",
+     "            // Retomada: a campanha voltou a enviar — abre a genérica \"em andamento\"."
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/talkx/TalkXWizardDelivery.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 167,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 46,
+    "missing_in_main": 33,
+    "removed": 48,
+    "removed_still_in_main": 2,
+    "missing_sample": [
+     "import { TalkXLifecycleDialog, useTalkXLifecycle } from './useTalkXLifecycle';",
+     "  // X051 — o disparo sai dos handlers próprios e passa pelo controlador ÚNICO",
+     "  // de ciclo de vida: UM diálogo do kit (`TalkXLifecycleDialog`), com o",
+     "  // executor próprio do wizard (salva o rascunho e gera o snapshot).",
+     "  // X051 — abre a confirmação SEM salvar nem disparar: quem dispara é o",
+     "  // confirmar, pelo executor próprio do wizard (`ed.handleSave`, que salva o",
+     "  // rascunho e gera o snapshot) — nunca pela `startCampaign` direta, que",
+     "  // pularia o salvamento.",
+     "  const solicitarDisparo = () => {",
+     "    const agendado = ed.isScheduled && !!ed.scheduledAt;",
+     "      target: {",
+     "        id: campaign?.id ?? 'rascunho',",
+     "        name: ed.name || 'Campanha',",
+     "        total_recipients: ed.eligibleCount,",
+     "          label: 'Segmento',",
+     "          value: ed.audienceSource === 'segment' && ed.selectedSegments.length > 0",
+     "            ? ed.selectedSegments.map((s) => s.name).join(', ')",
+     "            : 'Contatos ZAPP',",
+     "          label: 'Envio',",
+     "          value: agendado",
+     "            ? formatLocalSchedule(ed.scheduledAt as string, ed.scheduleTimezone)",
+     "            : 'Imediato',",
+     "        const modo = agendado ? 'schedule' : 'launch';",
+     "        const id = await ed.handleSave(modo);",
+     "        // Recusa do salvamento (`null`): devolve `false` e o controlador mantém"
+    ],
+    "still_sample": [
+     "    if (!launchAllowed) return;",
+     "          { label: 'Destinatários', value: `${fmtInt(ed.eligibleCount)} contatos` },"
+    ]
+   }
+  },
+  {
+   "path": "src/components/talkx/__tests__/TalkXA11yNomePapel.test.tsx",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/components/talkx/__tests__/TalkXCampaignPaused.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 102,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 11,
+    "missing_in_main": 11,
+    "removed": 10,
+    "removed_still_in_main": 10,
+    "missing_sample": [
+     "import { TestQueryWrapper } from '@/test/mocks/queryClient';",
+     "    render(view(), { wrapper: TestQueryWrapper });",
+     "    render(view({ pausedByName: 'Ana Souza' }), { wrapper: TestQueryWrapper });",
+     "    render(view(), { wrapper: TestQueryWrapper });",
+     "    render(view(), { wrapper: TestQueryWrapper });",
+     "    render(view(), { wrapper: TestQueryWrapper });",
+     "    render(view(), { wrapper: TestQueryWrapper });",
+     "    render(view(), { wrapper: TestQueryWrapper });",
+     "    const { container } = render(view(), { wrapper: TestQueryWrapper });",
+     "    const { container } = render(view(), { wrapper: TestQueryWrapper });",
+     "    render(view(), { wrapper: TestQueryWrapper });"
+    ],
+    "still_sample": [
+     "    render(view());",
+     "    render(view({ pausedByName: 'Ana Souza' }));",
+     "    render(view());",
+     "    render(view());",
+     "    render(view());",
+     "    render(view());",
+     "    render(view());",
+     "    const { container } = render(view());",
+     "    const { container } = render(view());",
+     "    render(view());"
+    ]
+   }
+  },
+  {
+   "path": "src/components/talkx/__tests__/TalkXCampaignScheduled.calendario.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 75,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 8,
+    "missing_in_main": 8,
+    "removed": 7,
+    "removed_still_in_main": 7,
+    "missing_sample": [
+     "import { TestQueryWrapper } from '@/test/mocks/queryClient';",
+     "    render(view(), { wrapper: TestQueryWrapper });",
+     "    render(view(), { wrapper: TestQueryWrapper });",
+     "    render(view(), { wrapper: TestQueryWrapper });",
+     "    render(view(), { wrapper: TestQueryWrapper });",
+     "    render(view(), { wrapper: TestQueryWrapper });",
+     "    render(view(), { wrapper: TestQueryWrapper });",
+     "    render(view(), { wrapper: TestQueryWrapper });"
+    ],
+    "still_sample": [
+     "    render(view());",
+     "    render(view());",
+     "    render(view());",
+     "    render(view());",
+     "    render(view());",
+     "    render(view());",
+     "    render(view());"
+    ]
+   }
+  },
+  {
+   "path": "src/components/talkx/__tests__/TalkXOverview.table.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 21,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 2,
+    "missing_in_main": 2,
+    "removed": 1,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "import { TestQueryWrapper } from '@/test/mocks/queryClient';",
+     "  render(<TalkXOverview {...props} />, { wrapper: TestQueryWrapper });"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/talkx/help/TalkXHelpCenter.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 27,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 7,
+    "missing_in_main": 4,
+    "removed": 1,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "        // Com texto na busca, o primeiro Esc só limpa o campo e a Ajuda segue",
+     "        // aberta (o foco volta ao campo); sem texto, fecha como antes.",
+     "        if (search.query) {",
+     "  }, [focusSearch, onClose, onRouteChange, route.article, route.topic, search.query, search.setQuery]);"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/talkx/segments/RuleValueInput.tsx",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/components/talkx/segments/SegmentSideList.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 31,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 3,
+    "missing_in_main": 1,
+    "removed": 3,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "              tab === key ? 'bg-primary/15 text-[hsl(var(--primary-text))]' : 'text-foreground-secondary hover:bg-muted/40')}>"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/talkx/tracking/TalkXRecipientsTable.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 110,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 44,
+    "missing_in_main": 44,
+    "removed": 5,
+    "removed_still_in_main": 5,
+    "missing_sample": [
+     "import React, { useCallback, useMemo, useState } from 'react';",
+     "import { fromTable, supabase } from '@/lib/supabaseHelpers';",
+     "  // RPC sem dado e sem erro (função ainda não publicada no ambiente): cai para a",
+     "  // leitura direta da tabela, no mesmo shape — a aba não some por causa disso.",
+     "  if (!data) return fetchRecipientsTable(params.campaignId);",
+     "  return data;",
+     "// Leitura direta de `talkx_recipients` (fallback da página da RPC, mesmo shape).",
+     "// Os KPIs vêm contados sobre o que a leitura trouxe.",
+     "async function fetchRecipientsTable(campaignId: string): Promise<RecipientsPage> {",
+     "  const { data, error } = await fromTable('talkx_recipients')",
+     "    .select('id, segment_id, status, sent_at, delivered_at, error_message, contacts:contact_id(name, phone)')",
+     "    .eq('campaign_id', campaignId)",
+     "    .order('sent_at', { ascending: false })",
+     "    .limit(200);",
+     "  if (error) throw error;",
+     "  const rows = ((data ?? []) as unknown) as RecipientRow[];",
+     "  const count = (status: string) => rows.filter((r) => r.status === status).length;",
+     "  return {",
+     "    rows,",
+     "    next_cursor: null,",
+     "    total: rows.length,",
+     "    kpis: {",
+     "      total: rows.length,",
+     "      sent: count('sent'),",
+     "      delivered: count('delivered'),"
+    ],
+    "still_sample": [
+     "import React, { useCallback, useState } from 'react';",
+     "import { supabase } from '@/lib/supabaseHelpers';",
+     "  return data ?? { rows: [], next_cursor: null, total: 0, kpis: EMPTY_KPIS };",
+     "            aria-label=\"Buscar destinatário por nome ou telefone\"",
+     "              {rows.map((r) => ("
+    ]
+   }
+  },
+  {
+   "path": "src/components/talkx/useCampaignEditor.ts",
+   "status": "MAIN_UNCHANGED_SINCE_BASE",
+   "patch_lines": 45,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 22,
+    "missing_in_main": 20,
+    "removed": 1,
+    "removed_still_in_main": 1,
+    "missing_sample": [
+     "  // X131: rail Resumo le o publico do SERVIDOR (talkx_resolve_audience count).",
+     "  const railRulesKey = audienceSource === \"segment\" ? JSON.stringify(segmentIds) : audienceRulesKey;",
+     "  const railHasRules = audienceSource === \"contacts\" ? effectiveAudienceRules.groups.some((g) => g.rules.length > 0) : false;",
+     "  const railSummaryEnabled = audienceSource === \"segment\" ? segmentIds.length > 0 : audienceSource === \"contacts\" && railHasRules;",
+     "  const { data: railSummary, isPending: railSummaryPending, isError: railSummaryError } = useQuery({",
+     "    queryKey: [\"talkx-wizard-rail-summary\", audienceSource, railRulesKey],",
+     "      const rpc = supabase.rpc as unknown as (n: string, a: Record<string, unknown>) => Promise<{ data: unknown; error: { message: string } | null }>;",
+     "      const { data, error } = await rpc(\"talkx_resolve_audience\", {",
+     "        p_rules: audienceSource === \"segment\" ? { groups: [] } : { groups: effectiveAudienceRules.groups },",
+     "        p_segment_ids: audienceSource === \"segment\" ? segmentIds : null,",
+     "        p_mode: \"count\",",
+     "        p_limit: null,",
+     "        p_after: null,",
+     "      const r = (data ?? {}) as { eligible?: number; suppressed?: number };",
+     "      const eligible = Number(r.eligible ?? 0);",
+     "      const suppressed = Number(r.suppressed ?? 0);",
+     "      return { eligible, suppressed, total: eligible + suppressed };",
+     "    enabled: railSummaryEnabled,",
+     "    staleTime: 15_000,",
+     "    previewMessage, estimatedTime, estimatedSeconds, audienceTotal, suppressedCount, eligibleCount, railSummary, railSummaryPending, railSummaryError, railHasRu"
+    ],
+    "still_sample": [
+     "    previewMessage, estimatedTime, estimatedSeconds, audienceTotal, suppressedCount, eligibleCount,"
+    ]
+   }
+  },
+  {
+   "path": "src/components/tasks/__tests__/WorkItemSheet.fuso.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 62,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 15,
+    "missing_in_main": 15,
+    "removed": 8,
+    "removed_still_in_main": 8,
+    "missing_sample": [
+     "    // Dia SEMPRE futuro: o QuickAdd bloqueia alarme no passado (Etapa 38) e a",
+     "    // data fixa original (2026-10-20) apodreceu — virou passado e o `onAdd`",
+     "    // nunca era chamado. O Sheet não valida passado, então só a criação precisa",
+     "    // do dia dinâmico; a paridade do instante é o que o teste prova.",
+     "    const amanha = new Date(Date.now() + 86_400_000);",
+     "    const noveH = new Date(amanha.getFullYear(), amanha.getMonth(), amanha.getDate(), 9, 0, 0, 0);",
+     "    const pad = (n: number) => String(n).padStart(2, '0');",
+     "    const dia = `${noveH.getFullYear()}-${pad(noveH.getMonth() + 1)}-${pad(noveH.getDate())}`;",
+     "    const oitoHISO = new Date(noveH.getTime() - 3_600_000).toISOString();",
+     "    // Criação (QuickAdd): alarme dia 09:00.",
+     "    fireEvent.change(screen.getByTestId('quick-add-remind-date'), { target: { value: dia } });",
+     "    expect(criado).toBe(noveH.toISOString());",
+     "    // Edição (Sheet): o mesmo 09:00 no prazo, vindo de um 08:00.",
+     "    const item = { ...base, due_date: oitoHISO };",
+     "    expect(instanteGravadoPeloBanco(patch.dueDate as string)).toBe(noveH.getTime());"
+    ],
+    "still_sample": [
+     "const DIA = '2026-10-20';",
+     "const NOVE_H_LOCAL = new Date(2026, 9, 20, 9, 0, 0, 0);",
+     "    // Criação (QuickAdd): alarme 20/10 09:00.",
+     "    fireEvent.change(screen.getByTestId('quick-add-remind-date'), { target: { value: DIA } });",
+     "    expect(criado).toBe(NOVE_H_LOCAL.toISOString());",
+     "    // Edição (Sheet): o mesmo 20/10 09:00 no prazo, vindo de um 08:00.",
+     "    const item = { ...base, due_date: '2026-10-20T11:00:00.000Z' };",
+     "    expect(instanteGravadoPeloBanco(patch.dueDate as string)).toBe(NOVE_H_LOCAL.getTime());"
+    ]
+   }
+  },
+  {
+   "path": "src/components/team-chat/TeamChatPanel.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 13,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 1,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "            <AlertCircle className=\"w-4 h-4\" aria-hidden /> {s.searchErrorMessage}"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/team-chat/__tests__/TeamChatPanel.settings-wiring.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 34,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 6,
+    "missing_in_main": 6,
+    "removed": 3,
+    "removed_still_in_main": 3,
+    "missing_sample": [
+     "    searchError: false,",
+     "    searchErrorMessage: null as string | null,",
+     "    h.panel.searchError = false;",
+     "    h.panel.searchErrorMessage = null;",
+     "    h.panel.searchError = true;",
+     "    h.panel.searchErrorMessage = 'Não foi possível buscar as mensagens. Tente novamente.';"
+    ],
+    "still_sample": [
+     "    searchError: null as string | null,",
+     "    h.panel.searchError = null;",
+     "    h.panel.searchError = 'Não foi possível buscar as mensagens. Tente novamente.';"
+    ]
+   }
+  },
+  {
+   "path": "src/components/team-chat/__tests__/team-chat-notifications-mount.test.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 12,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  createLogger: () => ({ debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() }),"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/team-chat/__tests__/useTeamChatPanel.search.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 72,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 9,
+    "missing_in_main": 1,
+    "removed": 9,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "    expect(result.current.searchErrorMessage).toMatch(/não foi possível buscar/i);"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/team-chat/useTeamChatPanel.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 210,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 67,
+    "missing_in_main": 51,
+    "removed": 11,
+    "removed_still_in_main": 3,
+    "missing_sample": [
+     "import { useTeamMessages, type TeamChatRealtimeEvent } from '@/hooks/team-chat/useTeamMessages';",
+     "// SL-016 — a busca server-side tem mínimo e teto: abaixo de 2 caracteres o",
+     "// servidor nem é consultado (a lista carregada continua na tela) e o teto da",
+     "// RPC (100) vira o \"+\" da contagem.",
+     "const SEARCH_MIN_CHARS = 2;",
+     "  // SL-016 — a falha de paginação é estado próprio (não some em silêncio nem",
+     "  // vira \"sem mais mensagens\"): a tela mantém o botão e tenta de novo.",
+     "  // SL-016 — edição/exclusão que chega pelo realtime também vale para as",
+     "  // mensagens antigas (paginadas): sem este ouvinte, o texto velho ficava na",
+     "  // tela porque a invalidação só refazia o trecho mais novo.",
+     "  const handleRealtimeEvent = useCallback((event: TeamChatRealtimeEvent) => {",
+     "    if (event.type === 'update') {",
+     "      setOlderMessages(prev => prev.map(m =>",
+     "        m.id === event.id",
+     "            ...m,",
+     "            content: event.content ?? m.content,",
+     "            is_edited: event.is_edited ?? m.is_edited,",
+     "            updated_at: event.updated_at ?? m.updated_at,",
+     "    } else if (event.type === 'delete') {",
+     "      setOlderMessages(prev => prev.filter(m => m.id !== event.id));",
+     "    isError: messagesQueryError,",
+     "    refetch: refetchNewest,",
+     "  } = useTeamMessages(conversation.id, handleRealtimeEvent);",
+     "  // SL-016 — a falha de leitura do trecho novo e o refetch são expostos: antes",
+     "  // a tela caía no \"Envie a primeira mensagem!\" como se a conversa estivesse vazia."
+    ],
+    "still_sample": [
+     "  const [serverSearch, setServerSearch] = useState<{ conversationId: string; term: string; results: TeamMessage[] } | null>(null);",
+     "  const searchActive = searchTerm.length > 0;",
+     "  const searchError = searchActive"
+    ]
+   }
+  },
+  {
+   "path": "src/components/ui/__tests__/alvos-toque-44px.test.tsx",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/components/ui/__tests__/phone-input.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 15,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 3,
+    "missing_in_main": 2,
+    "removed": 1,
+    "removed_still_in_main": 1,
+    "missing_sample": [
+     "    // E.164 fica como está: sem grupo brasileiro e sem inserir separador novo",
+     "    // (a máscara antiga devolvia \"+35 1211234567\" aqui)."
+    ],
+    "still_sample": [
+     "    expect(field().value).toBe('+35 1211234567');"
+    ]
+   }
+  },
+  {
+   "path": "src/components/ui/button.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 13,
+   "hunk": "PRESENT_REVERSE_APPLIES"
+  },
+  {
+   "path": "src/components/ui/command-palette.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 129,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 37,
+    "missing_in_main": 30,
+    "removed": 9,
+    "removed_still_in_main": 5,
+    "missing_sample": [
+     "/** Id da lista de itens: o campo (`combobox`) aponta para ela por `aria-controls`. */",
+     "const LISTBOX_ID = 'command-palette-listbox';",
+     "  // Cada item visível é uma `option` da lista: o id sai da posição em `allItems`",
+     "  // (a MESMA ordem em que a lista desenha), então o `aria-activedescendant` do",
+     "  // campo sempre aponta para um id que existe.",
+     "  const optionIdAt = (index: number) => `${LISTBOX_ID}-option-${index}`;",
+     "  const activeDescendant =",
+     "    allItems.length > 0 && selectedIndex < allItems.length ? optionIdAt(selectedIndex) : undefined;",
+     "  // O item realçado pelas setas precisa entrar na vista: a lista é rolável e a",
+     "  // navegação por teclado não move o scroll sozinha.",
+     "    if (!open || allItems.length === 0) return;",
+     "    document.getElementById(`${LISTBOX_ID}-option-${selectedIndex}`)?.scrollIntoView?.({ block: 'nearest' });",
+     "  }, [open, selectedIndex, allItems.length]);",
+     "            aria-expanded={open}",
+     "            aria-controls={LISTBOX_ID}",
+     "            aria-autocomplete=\"list\"",
+     "            aria-activedescendant={activeDescendant}",
+     "        {/* A contagem de resultados é anunciada numa região viva. */}",
+     "          {query ? `${allItems.length} ${allItems.length === 1 ? 'resultado' : 'resultados'}` : ''}",
+     "              <div id={LISTBOX_ID} role=\"listbox\" aria-label=\"Acesso rápido\">",
+     "                    <div role=\"presentation\" className=\"px-2 py-1.5\"><span className=\"text-xs font-medium text-muted-foreground flex items-center gap-1.5\"><Cloc",
+     "                        <button key={`recent-${cmd.id}`} role=\"option\" id={optionIdAt(idx)} aria-selected={idx === selectedIndex} onClick={() => executeCommand(",
+     "                <div role=\"presentation\" className=\"px-2 py-1.5\"><span className=\"text-xs font-medium text-muted-foreground flex items-center gap-1.5\"><Star cla",
+     "                    <button key={cmd.id} role=\"option\" id={optionIdAt(recentCommands.length + idx)} aria-selected={recentCommands.length + idx === selectedIndex",
+     "              {groupedCommands.length > 0 && ("
+    ],
+    "still_sample": [
+     "              <div>",
+     "                    <div className=\"px-2 py-1.5\"><span className=\"text-xs font-medium text-muted-foreground flex items-center gap-1.5\"><Clock className=\"h-3 w-3",
+     "                <div className=\"px-2 py-1.5\"><span className=\"text-xs font-medium text-muted-foreground flex items-center gap-1.5\"><Star className=\"h-3 w-3\" />A",
+     "                <div key={group.title} className=\"mb-2\">",
+     "                  <div className=\"px-2 py-1.5\"><span className=\"text-xs font-medium text-muted-foreground\">{group.title}</span></div>"
+    ]
+   }
+  },
+  {
+   "path": "src/components/ui/phone-input.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 69,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 13,
+    "missing_in_main": 12,
+    "removed": 11,
+    "removed_still_in_main": 5,
+    "missing_sample": [
+     "function formatPhone(digits: string, raw = ''): string {",
+     "    // Fixo (10 dígitos no total): 8 após o DDD → XXXX-XXXX. Mas 8 dígitos também",
+     "    // cabem no celular parcial, e apagar um dígito de \"98765-4321\" não pode",
+     "    // reflowar para \"9876-5432\": o grupo que já está na tela manda.",
+     "    const grupoDigitado = (raw.split(/\\s+/).pop() ?? '').split('-')[0].replace(/\\D/g, '').length;",
+     "    if (rest.length === 8 && grupoDigitado !== 5) {",
+     "  // Internacional (E.164) e parcial: passthrough, sem grupo brasileiro.",
+     "  const displayValue = useMemo(() => formatPhone(extractDigits(value), value), [value]);",
+     "    // Com \"+\" na frente o número é E.164 DECLARADO (+1, +351, +44): não ganha 55.",
+     "    const internacional = e.target.value.trimStart().startsWith('+');",
+     "    if (!internacional && digits.length >= 2 && !digits.startsWith('55')) {",
+     "    onChange(formatPhone(digits, e.target.value), digits);"
+    ],
+    "still_sample": [
+     "function formatPhone(digits: string): string {",
+     "  if (digits.length <= 2) return `+${digits}`;",
+     "  if (digits.length <= 4) return `+${digits.slice(0, 2)} ${digits.slice(2)}`;",
+     "  const displayValue = useMemo(() => formatPhone(extractDigits(value)), [value]);",
+     "    onChange(formatPhone(digits), digits);"
+    ]
+   }
+  },
+  {
+   "path": "src/components/ui/sonner.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 15,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 4,
+    "missing_in_main": 4,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "import { registrarToast } from '@/lib/lazyToast';",
+     "// t_fd52bf49 — este módulo lazy é quem carrega a lib: registra o `toast` real",
+     "// na fachada (que NÃO importa o sonner) para os avisos de boot saírem.",
+     "registrarToast(toast);"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/hooks/__tests__/useRateLimitLogs.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 104,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 23,
+    "missing_in_main": 20,
+    "removed": 19,
+    "removed_still_in_main": 7,
+    "missing_sample": [
+     "// O hook pagina no servidor (`range` + `count: 'exact'`) e busca a estatística",
+     "// numa segunda consulta (`.limit(100)`); o duplo aceita o encadeamento todo e",
+     "// resolve as duas consultas com o mesmo lote.",
+     "function stubQuery(data: typeof mockLogs | null, error: Error | null = null) {",
+     "  const response = { data, error, count: Array.isArray(data) ? data.length : 0 };",
+     "  const builder: Record<string, unknown> = {};",
+     "  builder.select = vi.fn(() => builder);",
+     "  builder.ilike = vi.fn(() => builder);",
+     "  builder.eq = vi.fn(() => builder);",
+     "  builder.order = vi.fn(() => builder);",
+     "  builder.range = vi.fn(() => builder);",
+     "  builder.limit = vi.fn(() => builder);",
+     "  builder.abortSignal = vi.fn(() => Promise.resolve(response));",
+     "  builder.then = (onF: (v: unknown) => unknown, onR: (e: unknown) => unknown) =>",
+     "    Promise.resolve(response).then(onF, onR);",
+     "  return builder;",
+     "    mockFrom.mockReturnValue(stubQuery(mockLogs));",
+     "    mockFrom.mockReturnValue(stubQuery([]));",
+     "    mockFrom.mockReturnValue(stubQuery(null, new Error('fail')));",
+     "    mockFrom.mockReturnValue(stubQuery(updated));"
+    ],
+    "still_sample": [
+     "function queryResult(data: typeof mockLogs | null, error: Error | null = null) {",
+     "  const result = Promise.resolve({ data, error });",
+     "  return Object.assign(result, { abortSignal: vi.fn(() => result) });",
+     "    mockFrom.mockReturnValue({",
+     "    mockFrom.mockReturnValue({",
+     "    mockFrom.mockReturnValue({",
+     "    await act(async () => { await vi.advanceTimersByTimeAsync(30_000); });"
+    ]
+   }
+  },
+  {
+   "path": "src/hooks/__tests__/useSentimentAlerts.test.ts",
+   "status": "MAIN_UNCHANGED_SINCE_BASE",
+   "patch_lines": 19,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 4,
+    "missing_in_main": 4,
+    "removed": 3,
+    "removed_still_in_main": 3,
+    "missing_sample": [
+     "  createLogger: () => ({ debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() }),",
+     "  // useSentimentAlerts abre a conversa via `openContactChat`,",
+     "  // (src/components/catalog/useSendProduct), cujo grafo importa o logger,",
+     "  // nomeado — o mock precisa do export real.,"
+    ],
+    "still_sample": [
+     "  // useSentimentAlerts abre a conversa via `openContactChat`",
+     "  // (src/components/catalog/useSendProduct), cujo grafo importa o logger",
+     "  // nomeado — o mock precisa do export real."
+    ]
+   }
+  },
+  {
+   "path": "src/hooks/analytics/useGoalsDashboard.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 96,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 28,
+    "missing_in_main": 17,
+    "removed": 20,
+    "removed_still_in_main": 2,
+    "missing_sample": [
+     "  /** false = meta percentual sem denominador no período (sai da média do progresso). */",
+     "  hasData: boolean;",
+     "  // A taxa de resolução sai dos DESFECHOS dos contatos atribuídos no período",
+     "  // (`conversation_status`), não das análises de IA: nem toda conversa é",
+     "  // analisada, então a análise subestimava o denominador e a taxa mentia.",
+     "  const { data: resolvedContactsCount, isLoading: loadingResolvedContacts } = useQuery({",
+     "        .eq('assigned_to', profile.id).eq('conversation_status', 'resolved')",
+     "    // Sem contatos atribuídos no período a taxa não tem denominador: fica 0 e",
+     "    // sai da média do progresso (`hasData` false) em vez de derrubá-lo.",
+     "        icon: MessageSquare, color: 'hsl(var(--primary))', priority: 'high', hasData: true });",
+     "        icon: Users, color: 'hsl(var(--chart-2))', priority: 'high', hasData: true });",
+     "    // Meta percentual sem denominador (`hasData` false) sai da média: entrar",
+     "    // como 0% derrubaria o progresso de metas que têm dado de verdade.",
+     "    const comDado = goals.filter((g) => g.hasData);",
+     "    if (comDado.length === 0) return 0;",
+     "    return Math.round(comDado.reduce((acc, g) => acc + Math.min((g.current / g.target) * 100, 100), 0) / comDado.length);",
+     "  const isLoading = loadingMessages || loadingContacts || loadingResolvedContacts;"
+    ],
+    "still_sample": [
+     "        icon: MessageSquare, color: 'hsl(var(--primary))', priority: 'high' });",
+     "        icon: Users, color: 'hsl(var(--chart-2))', priority: 'high' });"
+    ]
+   }
+  },
+  {
+   "path": "src/hooks/auth/useAuth.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 35,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 6,
+    "missing_in_main": 5,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "        // A fila de envio offline é do usuário que saiu: esvazia junto, senão o",
+     "        // texto parado no disco drenaria como o próximo atendente que logasse.",
+     "        void offlineSendQueue.clear();",
+     "       // A fila de envio offline é do usuário que saiu (ver SIGNED_OUT acima).",
+     "       void offlineSendQueue.clear();"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/hooks/business/useWarRoomAlerts.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 65,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 15,
+    "missing_in_main": 10,
+    "removed": 12,
+    "removed_still_in_main": 3,
+    "missing_sample": [
+     "          // Aviso do navegador pela API `Notification` direta: o caminho antigo",
+     "          // (`usePushNotifications.showNotification`) exige Service Worker de",
+     "          // aplicação e ele está desligado (`SERVICE_WORKER_ENABLED=false`), então",
+     "          // a chamada devolvia `false` em silêncio — o operador só ouvia o som.",
+     "          // O switch é o mesmo do Chat de Equipe (`browserNotifications`).",
+     "            showBrowserNotification(",
+     "              `⚠️ ${alert.title}`,",
+     "              alert.message,",
+     "  // de identidade de `playAlertSound`/`settings.browserNotifications`, e limpar o timer",
+     "  // no cleanup dele engolia a segunda batida no meio do caminho."
+    ],
+    "still_sample": [
+     "              tag: `warroom-${alert.id}`,",
+     "              requireInteraction: alert.alert_type === 'critical',",
+     "  // dele engolia a segunda batida no meio do caminho."
+    ]
+   }
+  },
+  {
+   "path": "src/hooks/chat/__tests__/buscas-silenciosas-aviso.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 14,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 3,
+    "missing_in_main": 2,
+    "removed": 1,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "    // Mesmo aviso do caminho de falha do `toggleActive` (texto canonico: assert",
+     "    // verde em useScheduledReports.test.tsx)."
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/hooks/chat/useTeamChatNotifications.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 207,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 92,
+    "missing_in_main": 79,
+    "removed": 29,
+    "removed_still_in_main": 17,
+    "missing_sample": [
+     "import { useContext, useEffect, useRef, useSyncExternalStore } from 'react';",
+     "import { QueryClientContext } from '@tanstack/react-query';",
+     "import { queryKeys } from '@/hooks/team-chat/queryKeys';",
+     "  // Cache do inbox de quem está logado: a tela já leu as conversas da equipe e a",
+     "  // associação pode ser decidida sem uma ida ao banco por mensagem. `useQueryClient`",
+     "  // estoura sem provider e este hook é montado no nível do app: o contexto é lido",
+     "  // direto e pode vir `undefined`.",
+     "  const queryClient = useContext(QueryClientContext);",
+     "  // HZ5-09: as preferências estavam nas deps do efeito e mexer no volume recriava",
+     "  // o canal. O efeito depende só do perfil; o valor VIVO vem desta ref.",
+     "  const prefsRef = useRef({ notifSettings, permission, isQuietHours, showNotification });",
+     "    prefsRef.current = { notifSettings, permission, isQuietHours, showNotification };",
+     "  }, [notifSettings, permission, isQuietHours, showNotification]);",
+     "    const meuId = profile.id;",
+     "    const clienteDeCache = queryClient;",
+     "     * Associação lida do cache do inbox.",
+     "     * `undefined` = o cache não decide (cache frio ou conversa fora da página) e a",
+     "     * consulta ao banco acontece; `null` = o cache já diz que não é membro.",
+     "    const associacaoDoCache = (",
+     "      conversationId: string,",
+     "    ): { is_muted: boolean | null } | null | undefined => {",
+     "      if (!clienteDeCache) return undefined;",
+     "      const conversas = clienteDeCache.getQueryData<",
+     "        Array<{ id: string; members?: Array<{ profile_id: string; is_muted: boolean | null }> }>",
+     "      >(queryKeys.inbox(meuId));"
+    ],
+    "still_sample": [
+     "import { useEffect, useRef, useSyncExternalStore } from 'react';",
+     "        // Check if user is a member of this conversation. limit(1) em vez de",
+     "        // single(): o listener recebe todo INSERT em team_messages sem",
+     "        // filtro por conversa, então \"não é membro\" é o caso comum, não uma",
+     "        // exceção — single() geraria 406 na maioria dos eventos.",
+     "        const { data: membershipRows, error: membershipError } = await supabase",
+     "          .from('team_conversation_members')",
+     "          .select('id, is_muted')",
+     "          .eq('conversation_id', msg.conversation_id)",
+     "          .eq('profile_id', profile.id)"
+    ]
+   }
+  },
+  {
+   "path": "src/hooks/communication/__tests__/mediaVolume.players.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 12,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  createLogger: () => ({ debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() }),"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/hooks/communication/__tests__/useAudioMemes.pasta-usuario.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 13,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 2,
+    "missing_in_main": 2,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "    channel: () => { const ch: Record<string, unknown> = {}; ch.on = () => ch; ch.subscribe = () => ch; return ch; },",
+     "    removeChannel: () => {},"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/hooks/communication/useAudioMemes.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 22,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 9,
+    "missing_in_main": 7,
+    "removed": 1,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "      // PK-16/PK-17 — o bucket `audio-memes` tem policy por pasta: a chave do",
+     "      // objeto SAI da raiz do próprio usuário (`(storage.foldername(name))[1] =",
+     "      // auth.uid()`). Sem sessão não há pasta: avisa e não sobe objeto solto.",
+     "      const { data: sessao } = await supabase.auth.getUser();",
+     "      const usuario = sessao?.user;",
+     "      if (!usuario) {",
+     "      const storagePath = `${usuario.id}/meme_${Date.now()}_${crypto.randomUUID()}.${ext}`;"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/hooks/inbox/__tests__/useInboxBulkActions.test.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 77,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 11,
+    "missing_in_main": 3,
+    "removed": 10,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  it('lê o conversation_status dos originais, arquiva via ação desfazível e o desfazer RESTAURA o status anterior', async () => {",
+     "    // O desfazer agrupa por valor anterior: um update por status distinto.",
+     "    expect(restores[1]).toMatchObject({ payload: { conversation_status: 'waiting' }, filters: { id: [c2] } });"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/hooks/inbox/__tests__/useRealtimeInbox.sendAudio.test.tsx",
+   "status": "MAIN_UNCHANGED_SINCE_BASE",
+   "patch_lines": 13,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 1,
+    "removed_still_in_main": 1,
+    "missing_sample": [
+     "  it('sem resposta pendente o reply vai nulo e o id de entrega continua', async () => {"
+    ],
+    "still_sample": [
+     "  it('sem resposta pendente o contrato antigo continua igual (nenhum argumento a mais)', async () => {"
+    ]
+   }
+  },
+  {
+   "path": "src/hooks/inbox/useConnectionsManager.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 29,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 7,
+    "missing_in_main": 5,
+    "removed": 3,
+    "removed_still_in_main": 3,
+    "missing_sample": [
+     "  // enquanto a tela fechava o diálogo como sucesso. Agora: o hook é dono de UM",
+     "  // aviso (`use-toast`, com o motivo da Evolution) e devolve `false` — a sessão",
+     "  // NÃO caiu, e o diálogo continua aberto com o motivo (ver ConnectionCard).",
+     "        title: 'Erro ao desconectar',",
+     "        description: error instanceof Error ? error.message : 'Não foi possível desconectar. Tente novamente.',"
+    ],
+    "still_sample": [
+     "  // enquanto a tela fechava o diálogo como sucesso. Agora: uma única origem de",
+     "  // aviso (o sonner da Evolution) e um retorno booleano — `false` significa que a",
+     "  // sessão NÃO caiu, e o diálogo continua aberto com o motivo."
+    ]
+   }
+  },
+  {
+   "path": "src/hooks/inbox/useInboxFilters.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 83,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 22,
+    "missing_in_main": 17,
+    "removed": 19,
+    "removed_still_in_main": 7,
+    "missing_sample": [
+     "  // PK-14: o `?type=` vive no ROTEADOR — é a query que os outros filtros",
+     "  // reescrevem (`useUrlFilters`). Um `replaceState` por fora era apagado na",
+     "  // primeira troca de status/atendente/data.",
+     "  const urlTypeParam = searchParams.get('type');",
+     "  const urlContactType = normalizeContactType(urlTypeParam);",
+     "      // O tipo do deep-link manda: `?type=` presente decide (valor desconhecido ou",
+     "      // 'all' viram \"sem filtro\"); sem o parâmetro vale o que o dono guardou.",
+     "      contactType: urlTypeParam !== null ? urlContactType : storedPrefs?.contactType ?? null,",
+     "  }, [storedPrefs, urlTypeParam, urlContactType]);",
+     "    const tipo = value && value !== 'all' ? value : null;",
+     "    applyPrefs({ contactType: tipo });",
+     "    // Grava no ROTEADOR (não em `window.location`): o `type` passa a viajar com os",
+     "    // demais filtros, então trocar status/atendente/data não o apaga.",
+     "      const params = new URLSearchParams(prev);",
+     "      if (tipo) params.set('type', tipo);",
+     "      else params.delete('type');",
+     "      return params;"
+    ],
+    "still_sample": [
+     "  try {",
+     "  } catch {",
+     "    return null;",
+     "    applyPrefs({ contactType: value && value !== 'all' ? value : null });",
+     "    if (value && value !== 'all') {",
+     "    } else {",
+     "  }, [applyPrefs]);"
+    ]
+   }
+  },
+  {
+   "path": "src/hooks/integrations/__tests__/useTalkXSuppression.test.ts",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/hooks/integrations/useKnowledgeBase.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 30,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 6,
+    "missing_in_main": 0,
+    "removed": 1,
+    "removed_still_in_main": 0,
+    "missing_sample": [],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/hooks/integrations/useTalkXSegments.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 61,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 6,
+    "missing_in_main": 3,
+    "removed": 3,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  if (r.field === 'real_sector' || r.field === 'real_uf') return null;",
+     "  { const _rf = rules?.groups?.flatMap((g) => g.rules ?? []).find((r) => r.field === 'real_sector' || r.field === 'real_uf')?.field; if (_rf) throw new Error(_r",
+     "  { const _rf2 = rules?.groups?.flatMap((g) => g.rules ?? []).find((r) => r.field === 'real_sector' || r.field === 'real_uf')?.field; if (_rf2) throw new Error("
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/hooks/integrations/useTalkXSuppression.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 133,
+   "hunk": "PRESENT_REVERSE_APPLIES"
+  },
+  {
+   "path": "src/hooks/system/useDiagnosticsData.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 16,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 4,
+    "missing_in_main": 4,
+    "removed": 1,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "    // A contagem faz parte da sonda de banco: falhar aqui é banco fora do ar ou",
+     "    // sem permissão, nunca \"0 conexões\" saudável. Antes o throw abortava a",
+     "    // sonda inteira e a tela ficava sem status nenhum.",
+     "    if (connectionsCountError) dbError = connectionsCountError;"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/hooks/system/useUserSettings.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 40,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 10,
+    "missing_in_main": 4,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  // Leitura falha não pode passar por \"configuração gravada\": sem este sinal a",
+     "  // tela mostra os padrões como se fossem os do usuário e o Salvar grava por cima.",
+     "            title: 'Não foi possível carregar as configurações',",
+     "            description: 'Os valores exibidos são os padrões. Recarregue a página para tentar de novo.',"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/hooks/team-chat/useTeamMessages.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 85,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 45,
+    "missing_in_main": 37,
+    "removed": 3,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "export type TeamChatRealtimeEvent =",
+     "  | { type: 'insert'; id: string; content: string | null; created_at: string }",
+     "  | { type: 'update'; id: string; content?: string | null; is_edited?: boolean; updated_at?: string }",
+     "function normalizarEventoRealtime(payload: {",
+     "  eventType: string;",
+     "  new?: Record<string, unknown>;",
+     "  old?: Record<string, unknown>;",
+     "}): TeamChatRealtimeEvent | null {",
+     "  if (payload.eventType === 'DELETE') {",
+     "    const id = payload.old?.['id'];",
+     "    return typeof id === 'string' ? { type: 'delete', id } : null;",
+     "  const linha = payload.new;",
+     "  const id = linha?.['id'];",
+     "  if (typeof id !== 'string') return null;",
+     "    const evento: TeamChatRealtimeEvent = { type: 'update', id };",
+     "    if (typeof linha?.['content'] === 'string' || linha?.['content'] === null) {",
+     "      evento.content = linha?.['content'] as string | null;",
+     "    if (typeof linha?.['is_edited'] === 'boolean') evento.is_edited = linha?.['is_edited'];",
+     "    if (typeof linha?.['updated_at'] === 'string') evento.updated_at = linha?.['updated_at'];",
+     "    return evento;",
+     "  if (payload.eventType === 'INSERT') {",
+     "      type: 'insert',",
+     "      content: typeof linha?.['content'] === 'string' ? (linha?.['content'] as string) : null,",
+     "      created_at: typeof linha?.['created_at'] === 'string' ? (linha?.['created_at'] as string) : '',",
+     "  return null;"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/hooks/team-chat/useTeamReadState.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 25,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 5,
+    "missing_in_main": 5,
+    "removed": 2,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "    // Sem mensagem própria na página não há recibo para acompanhar — e um canal",
+     "    // aberto à toa atrapalha quem conta os canais da conversa (o canal de",
+     "    // mensagens é o dono do tópico `team-messages-<conversa>`).",
+     "    if (!conversationId || !idsKey) return;",
+     "  }, [conversationId, idsKey, queryClient]);"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/hooks/ui/useCustomShortcuts.ts",
+   "status": "MAIN_UNCHANGED_SINCE_BASE",
+   "patch_lines": 31,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 8,
+    "missing_in_main": 8,
+    "removed": 1,
+    "removed_still_in_main": 1,
+    "missing_sample": [
+     " * A tecla escrita para o modificador Ctrl/Cmd depende da plataforma: no Mac o",
+     " * atalho é o Cmd e a convenção da tela é o glifo ⌘ (mesmo critério de",
+     " * `src/components/a11y/a11yComponents.tsx`). Sem isso a dica saía como \"Ctrl\"",
+     " * também no Mac.",
+     "function rotuloDoModificadorCtrl(): string {",
+     "  const plataforma = typeof navigator === 'undefined' ? '' : navigator.platform || '';",
+     "  return plataforma.includes('Mac') ? '⌘' : 'Ctrl';",
+     "    if (binding.modifiers.ctrlKey) parts.push(rotuloDoModificadorCtrl());"
+    ],
+    "still_sample": [
+     "    if (binding.modifiers.ctrlKey) parts.push('Ctrl');"
+    ]
+   }
+  },
+  {
+   "path": "src/hooks/ui/useGlobalKeyboardShortcuts.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 20,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 5,
+    "missing_in_main": 5,
+    "removed": 4,
+    "removed_still_in_main": 4,
+    "missing_sample": [
+     "// Os toasts dos atalhos saem pela fachada `@/lib/lazyToast`: ela NÃO referencia",
+     "// o sonner (o viewport lazy registra a lib no boot) e mantém a lib (~9 KB gzip)",
+     "// fora do modulepreload do index.html (bundle-budget, t_fd52bf49). Com a lib já",
+     "// registrada — o caso de qualquer atalho depois do boot —, a chamada é síncrona,",
+     "// como era com o import estático."
+    ],
+    "still_sample": [
+     "// Os toasts dos atalhos saem pela fachada `@/lib/lazyToast`: o `import('sonner')`",
+     "// do módulo mantém a lib (~9 KB gzip) fora do modulepreload do index.html",
+     "// (bundle-budget, t_fd52bf49) e, com a lib já carregada — o caso de qualquer",
+     "// atalho depois do boot —, a chamada é síncrona, como era com o import estático."
+    ]
+   }
+  },
+  {
+   "path": "src/integrations/supabase/types.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 21,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 8,
+    "missing_in_main": 0,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/lib/__tests__/lazyToast.test.ts",
+   "status": "MAIN_UNCHANGED_SINCE_BASE",
+   "patch_lines": 97,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 20,
+    "missing_in_main": 20,
+    "removed": 27,
+    "removed_still_in_main": 27,
+    "missing_sample": [
+     " *  1. com a lib registrada, a chamada é SÍNCRONA (os testes da telefonia e o",
+     " *  2. chamada feita ANTES do registro não se perde: sai assim que o viewport",
+     " *     lazy (`@/components/ui/sonner`) registra o `toast` real, na ordem;",
+     " *  3. sem registro nada estoura: a chamada entra na fila sem exceção.",
+     " * Cada caso recarrega o módulo (`vi.resetModules`): o registro e a fila são",
+     " * estado do módulo. A fachada NÃO importa o `sonner` (nem `import()` dinâmico:",
+     " * o helper de preload virava import estático do chunk da lib) — quem carrega a",
+     " * lib é o viewport lazy, que chama `registrarToast`.",
+     "  it('com a lib registrada, a chamada é síncrona e repassa os argumentos', async () => {",
+     "    const { toast, registrarToast } = await import('@/lib/lazyToast');",
+     "    registrarToast(duble);",
+     "  it('chamada feita antes do registro sai depois, na ordem (nada se perde)', async () => {",
+     "    const { toast, registrarToast } = await import('@/lib/lazyToast');",
+     "    registrarToast(duble);",
+     "    expect(duble.info).toHaveBeenCalledWith('segundo');",
+     "  it('sem registro nada estoura e nada é chamado', async () => {",
+     "  it('a fachada não referencia o sonner (bundle inicial)', async () => {",
+     "    const { toast, registrarToast } = await import('@/lib/lazyToast');",
+     "    expect(typeof toast.error).toBe('function');",
+     "    expect(typeof registrarToast).toBe('function');"
+    ],
+    "still_sample": [
+     " *  1. com a lib carregada, a chamada é SÍNCRONA (os testes da telefonia e o",
+     " *  2. chamada feita ANTES de a lib chegar não se perde: sai assim que o",
+     " *     `import()` resolve, na ordem;",
+     " *  3. falha ao carregar a lib vira aviso no console, nunca exceção.",
+     " * Cada caso recarrega o módulo (`vi.resetModules`) com um 'sonner' dublado cujo",
+     " * carregamento o teste controla.",
+     "  vi.doUnmock('sonner');",
+     "  it('com a lib carregada, a chamada é síncrona e repassa os argumentos', async () => {",
+     "    vi.doMock('sonner', () => ({ toast: duble }));",
+     "    const { toast } = await import('@/lib/lazyToast');"
+    ]
+   }
+  },
+  {
+   "path": "src/lib/deployment-update.ts",
+   "status": "MAIN_UNCHANGED_SINCE_BASE",
+   "patch_lines": 20,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 3,
+    "missing_in_main": 3,
+    "removed": 1,
+    "removed_still_in_main": 1,
+    "missing_sample": [
+     "import { toast } from '@/lib/lazyToast';",
+     "    // t_fd52bf49 — o aviso sai pela fachada: o sonner continua fora do bundle",
+     "    // inicial (a fachada bufferiza até a lib carregar) e o toast não se perde."
+    ],
+    "still_sample": [
+     "    const { toast } = await import('sonner');"
+    ]
+   }
+  },
+  {
+   "path": "src/lib/mediaVolumeStore.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 13,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 1,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "export function readAuthenticatedUserId(): string | null {"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/lib/offlineQueue.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 50,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 9,
+    "missing_in_main": 5,
+    "removed": 4,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  /** Quando definido, mensagens recusadas ficam na fila (não contam como enviadas). */",
+     "        // Fila por usuário: item de outro atendente fica parado (não conta",
+     "        // como enviado, não é removido e não trava os demais).",
+     "  options: { scope?: OnlineScope | null; onError?: OfflineQueueErrorHandler; shouldDeliver?: (message: OfflineQueuedMessage) => boolean } = {},",
+     "  options: { online?: boolean; onError?: OfflineQueueErrorHandler; shouldDeliver?: (message: OfflineQueuedMessage) => boolean } = {},"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/pages/__tests__/ChatPopup.messageBalloon.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 34,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 10,
+    "missing_in_main": 3,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  createLogger: () => ({ debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() }),",
+     "  // O @tanstack/react-virtual mede o conteiner de rolagem pelo `clientHeight`",
+     "  // (nao pelo `offsetHeight`); sem esta medida a lista nao devolve item nenhum."
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/pages/__tests__/ChatPopup.pagination.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 34,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 10,
+    "missing_in_main": 3,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  // O @tanstack/react-virtual mede o conteiner de rolagem pelo `clientHeight`",
+     "  // (nao pelo `offsetHeight`); sem esta medida a lista nao devolve item nenhum.",
+     "  createLogger: () => ({ debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() }),"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/pages/__tests__/ChatPopup.rolagem-mensagem-nova.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 12,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  createLogger: () => ({ debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() }),"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/services/chat.service.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 26,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 6,
+    "missing_in_main": 6,
+    "removed": 2,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "import { formatoDeUpload } from '@/lib/audio/gravacaoFormato';",
+     "    // SL-072: extensão e Content-Type saem do mime REAL do blob (Safari grava",
+     "    // mp4/m4a, Firefox ogg) — antes todo objeto era rotulado como webm.",
+     "    const { extensao, contentType } = formatoDeUpload(blob.type);",
+     "    const fileName = `${contactId}/${Date.now()}.${extensao}`;",
+     "      .upload(fileName, blob, { contentType });"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/services/outbound-message.service.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 43,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 10,
+    "missing_in_main": 10,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "import { readAuthenticatedUserId } from '@/lib/mediaVolumeStore';",
+     "    shouldDeliver: somenteDoUsuarioAtual,",
+     "  shouldDeliver: somenteDoUsuarioAtual,",
+     "// A fila offline é POR USUÁRIO no aparelho: item sem dono (legado) drena como",
+     "// antes; item com dono só sai na sessão dele — trocar de atendente na mesma",
+     "// máquina nunca envia o texto alheio.",
+     "function somenteDoUsuarioAtual(message: OfflineQueuedMessage): boolean {",
+     "  if (!message.userId) return true;",
+     "  return readAuthenticatedUserId() === message.userId;",
+     "    userId: readAuthenticatedUserId() ?? undefined,"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/styles/utilities.css",
+   "status": "MAIN_UNCHANGED_SINCE_BASE",
+   "patch_lines": 33,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 16,
+    "missing_in_main": 12,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "/* ===== SUPERFÍCIE MOBILE — ÁREA SEGURA E ROLAGEM SEM BARRA =====",
+     "   O app declara `viewport-fit=cover` e usa `safe-area-top`/`safe-area-bottom`",
+     "   nos cabeçalhos/barras/folhas fixas e `scrollbar-none` nas listas de celular.",
+     "   Sem estas regras o conteúdo ia por baixo do notch e do indicador de home. */",
+     ".safe-area-top {",
+     "  padding-top: env(safe-area-inset-top, 0);",
+     ".safe-area-bottom {",
+     "  padding-bottom: env(safe-area-inset-bottom, 0);",
+     "  .scrollbar-none::-webkit-scrollbar {",
+     "    display: none;",
+     "  body {",
+     "    overscroll-behavior-y: none;"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "supabase/functions/_shared/__tests__/evolution-control-authz.test.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 60,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 8,
+    "missing_in_main": 1,
+    "removed": 14,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "    \"find-contacts\","
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "supabase/functions/_shared/evolution-control-authz.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 94,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 8,
+    "missing_in_main": 6,
+    "removed": 37,
+    "removed_still_in_main": 9,
+    "missing_sample": [
+     "  // R2EXT-AGENDA: leitura de dado instance-wide (fora da visibilidade do",
+     "  // agente) passa a exigir admin/supervisor. Diferente de `send`, não há alvo",
+     "  // de conversa único para resolver visibilidade (find-contacts devolve a",
+     "  // instância inteira — ADR R1EXT-F3) e nenhuma tela da V2 a chama.",
+     "  'find-contacts',",
+     "  // etiquetas do provedor"
+    ],
+    "still_sample": [
+     "  'set-presence',",
+     "  'toggle-ephemeral',",
+     "  // R2EXT-AGENDA: leituras de dado instance-wide (fora da visibilidade do",
+     "  // agente) e de configuração/credencial do provedor passam a exigir",
+     "  'get-catalog', 'get-collections',",
+     "  'send-template',",
+     "  'offer-call',",
+     "  'mark-unread',",
+     "  'invite-info',"
+    ]
+   }
+  },
+  {
+   "path": "supabase/functions/evolution-api/index.test.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 13,
+   "hunk": "PRESENT_REVERSE_APPLIES"
+  },
+  {
+   "path": "supabase/functions/evolution-api/index.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 167,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 0,
+    "missing_in_main": 0,
+    "removed": 91,
+    "removed_still_in_main": 39,
+    "missing_sample": [],
+    "still_sample": [
+     "import { goHistoryNotSupported } from \"../_shared/evolution-sync-actions.ts\";",
+     "    // ─── 2. Settings ───",
+     "    if (action === 'get-settings') return await proxy(`/settings/find/${instance}`, 'GET');",
+     "    if (action === 'get-webhook') {",
+     "      // `/webhook/find` é rota da v2. No GO a leitura da configuração corrente vem do",
+     "      // registro da instância na listagem admin (`/instance/fetchInstances`, traduzida",
+     "      // para `/instance/all`) — a mesma fonte que o webhook-diagnostic usa. Assim o",
+     "      // painel lê a config real por flavor em vez de bater numa rota inexistente no GO.",
+     "      if (!isGoFlavor) return await proxy(`/webhook/find/${instance}`, 'GET');",
+     "      try {"
+    ]
+   }
+  },
+  {
+   "path": "supabase/schema-manifest.json",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 22267,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 11116,
+    "missing_in_main": 1912,
+    "removed": 11110,
+    "removed_still_in_main": 9203,
+    "missing_sample": [
+     "                \"payment_links\": \"215c2d45b491f5c815ace782ce450fdf\",",
+     "                \"contact_purchases\": \"215c2d45b491f5c815ace782ce450fdf\",",
+     "                \"whatsapp_connection_queues\": \"215c2d45b491f5c815ace782ce450fdf\"",
+     "                \"e:app_role\": \"5fe9cb65299844e7f830bf9cfe2974ce\",",
+     "                \"e:talkx_blacklist_reason\": \"36d944d731d1cbd80252dbb8cf7e3886\",",
+     "                \"v:talkx_engine_health\": \"3b610891cb4b45ca4fb1ea413a6c1300\",",
+     "                \"v:talkx_campaign_optouts\": \"a14fec179288f044b0235e00dd295d15\",",
+     "                \"v:whatsapp_connections_safe\": \"19152b9b2014fec4e032bc031abe072b\",",
+     "                \"payment_links.id\": \"9eb0988535c3822cb67934be7c6886ed\",",
+     "                \"csat_surveys.rating\": \"00a1b509635e663a18c76adaae253e11\",",
+     "                \"payment_links.title\": \"39c66b4057962691166304f428d0a1a2\",",
+     "                \"contact_purchases.id\": \"9eb0988535c3822cb67934be7c6886ed\",",
+     "                \"payment_links.amount\": \"2cd3ef9f45cdf364d7fe04845d393fb4\",",
+     "                \"payment_links.status\": \"2a2cfca688ff6a504270d0e8ae144de8\",",
+     "                \"csat_surveys.agent_id\": \"9eb0988535c3822cb67934be7c6886ed\",",
+     "                \"payment_links.deal_id\": \"56a86446063b2ee9feb224bd26659238\",",
+     "                \"payment_links.paid_at\": \"5acc3145d7627a563843e137480b1cbf\",",
+     "                \"payment_links.currency\": \"2a2cfca688ff6a504270d0e8ae144de8\",",
+     "                \"contact_purchases.title\": \"39c66b4057962691166304f428d0a1a2\",",
+     "                \"contact_purchases.amount\": \"abda55fd5081cecacfe8bea43678e6df\",",
+     "                \"contact_purchases.status\": \"2a2cfca688ff6a504270d0e8ae144de8\",",
+     "                \"payment_links.contact_id\": \"56a86446063b2ee9feb224bd26659238\",",
+     "                \"payment_links.created_at\": \"5acc3145d7627a563843e137480b1cbf\",",
+     "                \"payment_links.created_by\": \"56a86446063b2ee9feb224bd26659238\",",
+     "                \"payment_links.expires_at\": \"5acc3145d7627a563843e137480b1cbf\","
+    ],
+    "still_sample": [
+     "    \"rls\": {",
+     "        \"calls\": \"215c2d45b491f5c815ace782ce450fdf\",",
+     "        \"queues\": \"215c2d45b491f5c815ace782ce450fdf\",",
+     "        \"ai_jobs\": \"215c2d45b491f5c815ace782ce450fdf\",",
+     "        \"contacts\": \"215c2d45b491f5c815ace782ce450fdf\",",
+     "        \"messages\": \"215c2d45b491f5c815ace782ce450fdf\",",
+     "        \"products\": \"215c2d45b491f5c815ace782ce450fdf\",",
+     "        \"profiles\": \"215c2d45b491f5c815ace782ce450fdf\",",
+     "        \"stickers\": \"215c2d45b491f5c815ace782ce450fdf\",",
+     "        \"campaigns\": \"215c2d45b491f5c815ace782ce450fdf\","
+    ]
+   }
+  }
+ ],
+ "counts": {
+  "migrations": "0",
+  "workflows": "3",
+  "src": "145",
+  "edges": "4",
+  "docs_only": "no",
+  "lines_branch_has_main_lacks": "14473",
+  "lines_main_has_branch_lacks": "20372"
+ },
+ "auto": "MISTO_CONFLITO",
+ "n_files_with_gaps": 111,
+ "gap_lines_total": 13024
+}

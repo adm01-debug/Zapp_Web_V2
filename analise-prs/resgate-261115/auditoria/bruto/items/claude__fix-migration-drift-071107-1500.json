@@ -1,0 +1,150 @@
+{
+ "id": "claude__fix-migration-drift-071107-1500",
+ "kind": "branch",
+ "ref": "origin/claude/fix-migration-drift-071107-1500",
+ "tip": "ac61366fc65158140b6a1f3470d965e74e6ccce2",
+ "merge_base": "0601e3b64e4d1c867827f4a045ac984a0ecee4f5",
+ "ahead": 1,
+ "last_commit_date": "2026-11-07",
+ "merge_base_date": "2026-11-07",
+ "prs_with_same_tip": [
+  2767
+ ],
+ "triagem_2804": {
+  "2767": "JA_NA_MAIN"
+ },
+ "closure_comment": {},
+ "files": [
+  {
+   "path": "supabase/migrations/20261107120000_goal_notifications_own_insert_policy.sql",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 121,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 99,
+    "missing_in_main": 0,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "supabase/migrations/20261107121000_message_reactions_one_per_agent.sql",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 45,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 37,
+    "missing_in_main": 32,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "CREATE TABLE IF NOT EXISTS public._rb_message_reactions_one_per_agent_20261107121000 (",
+     "  id uuid PRIMARY KEY,",
+     "  message_id uuid NOT NULL,",
+     "  user_id uuid,",
+     "  contact_id uuid,",
+     "  emoji text NOT NULL,",
+     "  created_at timestamptz NOT NULL",
+     "ALTER TABLE public._rb_message_reactions_one_per_agent_20261107121000 ENABLE ROW LEVEL SECURITY;",
+     "REVOKE ALL ON TABLE public._rb_message_reactions_one_per_agent_20261107121000",
+     "  FROM PUBLIC, anon, authenticated, service_role;",
+     "WITH ranked AS (",
+     "  SELECT reaction.*,",
+     "         row_number() OVER (",
+     "           PARTITION BY reaction.message_id, reaction.user_id",
+     "           ORDER BY reaction.created_at DESC, reaction.id DESC",
+     "         ) AS position",
+     "  FROM public.message_reactions AS reaction",
+     "  WHERE reaction.user_id IS NOT NULL",
+     "  (id, message_id, user_id, contact_id, emoji, created_at)",
+     "SELECT id, message_id, user_id, contact_id, emoji, created_at",
+     "FROM ranked",
+     "WHERE position > 1",
+     "ON CONFLICT (id) DO NOTHING;",
+     "DELETE FROM public.message_reactions AS reaction",
+     "USING public._rb_message_reactions_one_per_agent_20261107121000 AS backup"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "supabase/migrations/20261107122000_contacts_phone_search_digits.sql",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 14,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 8,
+    "missing_in_main": 6,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "SET search_path = public, extensions, pg_temp;",
+     "  GENERATED ALWAYS AS (regexp_replace(coalesce(phone, ''), '[^0-9]', '', 'g')) STORED;",
+     "CREATE INDEX IF NOT EXISTS idx_contacts_phone_search_digits_trgm",
+     "  ON public.contacts USING gin (phone_search_digits extensions.gin_trgm_ops);",
+     "COMMENT ON COLUMN public.contacts.phone_search_digits IS",
+     "  'Somente dígitos de phone, gerados para busca consistente sem alterar o formato exibido.';"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "supabase/migrations/20261107123000_finalize_goal_notification_and_reaction_backup_policies.sql",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 20,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 14,
+    "missing_in_main": 0,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "supabase/migrations/20261107133000_fix_copilot_rls_open_policies.sql",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 36,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 30,
+    "missing_in_main": 15,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "CREATE POLICY copilot_help_requests_select ON copilot_help_requests FOR SELECT TO authenticated USING (seller_id = auth.uid());",
+     "CREATE POLICY copilot_help_requests_insert ON copilot_help_requests FOR INSERT TO authenticated WITH CHECK (seller_id = auth.uid());",
+     "CREATE POLICY copilot_outcomes_select ON copilot_outcomes FOR SELECT TO authenticated USING (seller_id = auth.uid());",
+     "CREATE POLICY copilot_outcomes_insert ON copilot_outcomes FOR INSERT TO authenticated WITH CHECK (seller_id = auth.uid());",
+     "CREATE POLICY copilot_seller_settings_select ON copilot_seller_settings FOR SELECT TO authenticated USING (seller_id = auth.uid());",
+     "CREATE POLICY copilot_seller_settings_insert ON copilot_seller_settings FOR INSERT TO authenticated WITH CHECK (seller_id = auth.uid());",
+     "CREATE POLICY copilot_seller_settings_update ON copilot_seller_settings FOR UPDATE TO authenticated USING (seller_id = auth.uid()) WITH CHECK (seller_id = auth.",
+     "CREATE POLICY copilot_usage_select ON copilot_usage FOR SELECT TO authenticated USING (seller_id = auth.uid());",
+     "CREATE POLICY copilot_usage_insert ON copilot_usage FOR INSERT TO authenticated WITH CHECK (seller_id = auth.uid());",
+     "CREATE POLICY copilot_conversation_scores_select ON copilot_conversation_scores FOR SELECT TO authenticated USING (scored_by = auth.uid() OR conversation_id IN ",
+     "CREATE POLICY copilot_conversation_scores_insert ON copilot_conversation_scores FOR INSERT TO authenticated WITH CHECK (scored_by = auth.uid());",
+     "CREATE POLICY copilot_conversation_scores_update ON copilot_conversation_scores FOR UPDATE TO authenticated USING (scored_by = auth.uid()) WITH CHECK (scored_by",
+     "CREATE POLICY copilot_learning_moments_select ON copilot_learning_moments FOR SELECT TO authenticated USING (tagged_by = auth.uid() OR conversation_id IN (SELEC",
+     "CREATE POLICY copilot_learning_moments_insert ON copilot_learning_moments FOR INSERT TO authenticated WITH CHECK (tagged_by = auth.uid());",
+     "CREATE POLICY copilot_objection_catalog_insert ON copilot_objection_catalog FOR INSERT TO authenticated WITH CHECK (submitted_by = auth.uid());"
+    ],
+    "still_sample": []
+   }
+  }
+ ],
+ "counts": {
+  "migrations": "5",
+  "workflows": "0",
+  "src": "0",
+  "edges": "0",
+  "docs_only": "no",
+  "lines_branch_has_main_lacks": "55",
+  "lines_main_has_branch_lacks": "131"
+ },
+ "auto": "MISTO_CONFLITO",
+ "n_files_with_gaps": 3,
+ "gap_lines_total": 53
+}

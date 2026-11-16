@@ -1,0 +1,25 @@
+[
+ {
+  "commit": "2c391825f",
+  "arquivo": "src/components/inbox/__tests__/useChatMediaSending.audio-meme-falha.test.ts",
+  "linhas": 16,
+  "amostra": [
+   "  Tooltip: ({ children }: { children: ReactNode }) =>",
+   "function FluxoVoz({",
+   "  onSendAudioBlob,",
+   "  onSendAudioBlob: (blob: Blob) => void | boolean | Promise<void | boolean>;",
+   "    public options?: unknown",
+   "    estado.createSignedUrl"
+  ]
+ },
+ {
+  "commit": "fcc63eed6",
+  "arquivo": "src/components/inbox/__tests__/useChatMediaSending.audio-meme-falha.test.ts",
+  "linhas": 3,
+  "amostra": [
+   "        canal.subscribe = (cb?: (status: string) => void) => {",
+   "          cb?.('SUBSCRIBED');",
+   "      removeChannel: () => {},"
+  ]
+ }
+]

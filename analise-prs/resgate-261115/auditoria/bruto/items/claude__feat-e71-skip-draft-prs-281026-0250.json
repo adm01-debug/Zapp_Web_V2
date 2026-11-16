@@ -1,0 +1,153 @@
+{
+ "id": "claude__feat-e71-skip-draft-prs-281026-0250",
+ "kind": "branch",
+ "ref": "origin/claude/feat-e71-skip-draft-prs-281026-0250",
+ "tip": "68bf4153b133e0325698c325780a2ca05ef9b8d6",
+ "merge_base": "5b7954c7aa4a232af6add01a41160ae616978de6",
+ "ahead": 7,
+ "last_commit_date": "2026-10-28",
+ "merge_base_date": "2026-10-28",
+ "prs_with_same_tip": [
+  2295
+ ],
+ "triagem_2804": {
+  "2295": "OBSOLETA"
+ },
+ "closure_comment": {},
+ "files": [
+  {
+   "path": ".github/workflows/ci.yml",
+   "status": "BOTH_CHANGED",
+   "hunk": "CONFLICT",
+   "patch_lines": 52,
+   "line_check": {
+    "added": 6,
+    "missing_in_main": 5,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "    if: github.event.pull_request.draft == false || github.event_name != 'pull_request'",
+     "    if: github.event.pull_request.draft == false || github.event_name != 'pull_request'",
+     "    if: github.event.pull_request.draft == false || github.event_name != 'pull_request'",
+     "    if: github.event.pull_request.draft == false || github.event_name != 'pull_request'",
+     "    if: github.event.pull_request.draft == false || github.event_name != 'pull_request'"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": ".github/workflows/codeql.yml",
+   "status": "BOTH_CHANGED",
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "patch_lines": 20,
+   "line_check": {
+    "added": 2,
+    "missing_in_main": 2,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "    if: github.event.pull_request.draft == false || github.event_name != 'pull_request'",
+     "    if: github.event.pull_request.draft == false || github.event_name != 'pull_request'"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": ".github/workflows/db-guard.yml",
+   "status": "BOTH_CHANGED",
+   "hunk": "CONFLICT",
+   "patch_lines": 12,
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "    if: github.event.pull_request.draft == false || github.event_name != 'pull_request'"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "docs/audits/PLANO_GITHUB_ACTIONS_100_ETAPAS_2026-10-01.md",
+   "status": "BOTH_CHANGED",
+   "hunk": "CONFLICT",
+   "patch_lines": 982,
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 884,
+    "removed_still_in_main": 880,
+    "missing_sample": [
+     "PLANO_CONTENT_FROM_FILE"
+    ],
+    "still_sample": [
+     "# Auditoria exaustiva do GitHub Actions — plano de correção e melhorias em 100 etapas (v3)",
+     "**Data:** 2026-10-01 (13:10 UTC) · **Repo:** `adm01-debug/Zapp_Web_V2` · **HEAD da `main` auditado:** `7d3117c`",
+     "**Escopo:** os 14 arquivos que existiam em `.github/workflows/` no baseline (a reconciliação TRA-009 registrou **16** naquele retrato), os 3 workflows dinâmicos",
+     "Copilot reviewer), os GitHub Apps que publicam checks no repo, branch protection, environments, secrets, variáveis,",
+     "cache, artifacts, Dependabot, Code Scanning, scripts que os workflows chamam (`scripts/ci/`, `scripts/db-audit/`,",
+     "`scripts/edge-deploy/`) e as duas auditorias anteriores (26/09 e 27/09).",
+     "**Método:** leitura integral dos 14 YAML (4.648 linhas), dos scripts auxiliares que eles invocam, e estado **ao vivo**",
+     "via API do GitHub (runs das últimas 37 h, falhas por workflow, branch protection, environments, secrets, cache,",
+     "artifacts, PRs abertas, issues de alerta, check-runs do HEAD). Toda afirmação abaixo tem a evidência ao lado.",
+     "**Status:** PLANO. Nada foi executado nesta sessão. Nenhum arquivo além deste foi alterado."
+    ]
+   }
+  },
+  {
+   "path": "docs/reconciliation/tasks/P006.json",
+   "status": "MAIN_UNCHANGED_SINCE_BASE",
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "patch_lines": 6362,
+   "line_check": {
+    "added": 4733,
+    "missing_in_main": 4733,
+    "removed": 1,
+    "removed_still_in_main": 1,
+    "missing_sample": [
+     "  \"plan\": {",
+     "    \"plan_id\": \"docs--audits--plano_github_actions_100_etapas_2026-10-01\",",
+     "    \"path\": \"docs/audits/PLANO_GITHUB_ACTIONS_100_ETAPAS_2026-10-01.md\",",
+     "    \"title\": \"Auditoria exaustiva do GitHub Actions — plano de correção e melhorias em 100 etapas (v3)\",",
+     "    \"source_sha\": \"cbf3e445ac446e00fcc0f407796173787dcaa426\",",
+     "    \"definition_ref\": \"2e7cf81c6c4d6ae9942e4a5d7fbc1ddb06788ab6\",",
+     "    \"source_kind\": \"GIT\",",
+     "    \"expected_tasks\": 100,",
+     "    \"observed_tasks\": 100,",
+     "    \"missing_numbers\": [],",
+     "    \"extraction_style\": \"checkbox\",",
+     "    \"authority\": \"CURRENT_REFERENCE\",",
+     "    \"evidence_refs\": [],",
+     "    \"module\": \"CI\",",
+     "    \"successors\": [],",
+     "    \"basis\": \"Referência localizada e confrontada com evidências do baseline; um plano não concede autorização de execução.\",",
+     "    \"evidence\": [],",
+     "    \"automatic_execution_authorized\": false,",
+     "    \"record_id\": \"P006\",",
+     "    \"task_file\": \"tasks/P006.json\",",
+     "    \"status_counts\": {",
+     "      \"SUPERSEDED\": 3,",
+     "      \"DONE_VERIFIED\": 23,",
+     "      \"IMPLEMENTED_AWAITING_RUNTIME_EVIDENCE\": 27,",
+     "      \"NEEDS_REVALIDATION\": 11,"
+    ],
+    "still_sample": [
+     "{\"plan\":{\"plan_id\":\"docs--audits--plano_github_actions_100_etapas_2026-10-01\",\"path\":\"docs/audits/PLANO_GITHUB_ACTIONS_100_ETAPAS_2026-10-01.md\",\"title\":\"Audito"
+    ]
+   }
+  }
+ ],
+ "counts": {
+  "migrations": "0",
+  "workflows": "3",
+  "src": "0",
+  "edges": "0",
+  "docs_only": "no",
+  "lines_branch_has_main_lacks": "6543",
+  "lines_main_has_branch_lacks": "1322"
+ },
+ "auto": "MISTO_CONFLITO",
+ "n_files_with_gaps": 5,
+ "gap_lines_total": 5623
+}

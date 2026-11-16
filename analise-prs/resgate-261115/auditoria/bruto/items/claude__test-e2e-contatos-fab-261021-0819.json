@@ -1,0 +1,97 @@
+{
+ "id": "claude__test-e2e-contatos-fab-261021-0819",
+ "kind": "branch",
+ "ref": "origin/claude/test-e2e-contatos-fab-261021-0819",
+ "tip": "22cee627caba09f04c3d5e4fb2f5357f3c9b6428",
+ "merge_base": "bac62ba98454811c3bfd117b838af926b1e795b2",
+ "ahead": 2,
+ "last_commit_date": "2026-10-23",
+ "merge_base_date": "2026-10-23",
+ "prs_with_same_tip": [
+  2148
+ ],
+ "triagem_2804": {
+  "2148": "OBSOLETA"
+ },
+ "closure_comment": {},
+ "files": [
+  {
+   "path": "e2e/a11y-fab-cabecalho.spec.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 167,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 119,
+    "missing_in_main": 18,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "const USER_ID = '00000000-0000-4000-8000-000000000001';",
+     "const PERM_MULTIPLIX = 'multiplix.dispatch.create';",
+     "async function mockBootstrap(page: Page): Promise<void> {",
+     "  const permissao = { id: 'perm-multiplix', name: PERM_MULTIPLIX, description: null, category: 'multiplix' };",
+     "  await page.route(/\\/rest\\/v1\\/rpc\\/app_bootstrap/, (route) =>",
+     "    json(route, {",
+     "      profile: { id: USER_ID, name: 'Visual E2E' },",
+     "      roles: ['admin'],",
+     "      permissions: [permissao],",
+     "      // Matriz NÃO vazia: dispensa as N checagens de user_has_permission.",
+     "      role_permissions: [{ role: 'admin', permission_id: permissao.id, permission: permissao }],",
+     "      global_settings: [], user_settings: null, departments: [],",
+     "      unread_notifications: 0, fetched_at: new Date(0).toISOString(),",
+     "  // Sonda de conectividade (no-cors): 200 aqui evita que caia no guarda.",
+     "  await page.route(/\\/auth\\/v1\\/health/, (route) => json(route, { ok: true }));",
+     "  await mockBootstrap(page);",
+     "  test('FAB abre o diálogo e recebe o toque no próprio centro', async ({ page }) => {",
+     "    await fab.click();"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "e2e/fixtures/mapa-mocks.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 51,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 23,
+    "missing_in_main": 12,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "/** Matriz do boot (PK-20): `role_permissions` NÃO-vazia dispensa as N checagens",
+     " *  nomeadas de `useUserRole.ts` (`matrixPermissions !== null`). */",
+     "  profile: { id: '00000000-0000-4000-8000-000000000001', name: 'Visual E2E' },",
+     "  user_settings: null,",
+     "  fetched_at: '2026-09-15T12:00:00.000Z',",
+     "  // PK-20 (`src/hooks/system/useAppBootstrap.ts`): boot em UMA chamada; matriz",
+     "  // não-vazia hidrata os caches via `seedAppBootstrapCaches` e tira o",
+     "  // `ProtectedRoute` do 'Verificando permissões...'. Depois do catch-all genérico",
+     "  // (última registrada vence).",
+     "  await page.route(/\\/rest\\/v1\\/rpc\\/app_bootstrap/, (route) => json(route, BOOT_FAKE));",
+     "  // Sonda `no-cors` (`useSupabaseConnectivity.ts`): resposta opaca 200 =",
+     "  // alcançável; sem ela cai no `bloquearRedeReal` e suja `redeBarrada`."
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "playwright.config.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 13,
+   "hunk": "PRESENT_REVERSE_APPLIES"
+  }
+ ],
+ "counts": {
+  "migrations": "0",
+  "workflows": "0",
+  "src": "0",
+  "edges": "0",
+  "docs_only": "no",
+  "lines_branch_has_main_lacks": "52",
+  "lines_main_has_branch_lacks": "48"
+ },
+ "auto": "MISTO_CONFLITO",
+ "n_files_with_gaps": 2,
+ "gap_lines_total": 30
+}

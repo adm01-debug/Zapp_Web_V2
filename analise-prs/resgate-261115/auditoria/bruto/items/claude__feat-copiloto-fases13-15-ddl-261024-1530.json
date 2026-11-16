@@ -1,0 +1,112 @@
+{
+ "id": "claude__feat-copiloto-fases13-15-ddl-261024-1530",
+ "kind": "branch",
+ "ref": "origin/claude/feat-copiloto-fases13-15-ddl-261024-1530",
+ "tip": "0072cc1d1c56f0fe702c429f017c4185e0430b30",
+ "merge_base": "e51662a9c391cddc7a21fcfbba2dfd581c3ad6d8",
+ "ahead": 3,
+ "last_commit_date": "2026-10-24",
+ "merge_base_date": "2026-10-24",
+ "prs_with_same_tip": [
+  2214
+ ],
+ "triagem_2804": {
+  "2214": "DUPLICATA"
+ },
+ "closure_comment": {},
+ "files": [
+  {
+   "path": "supabase/migrations/20261026180300_copilot_fases13_15_tabelas.sql",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "patch_lines": 151,
+   "line_check": {
+    "added": 106,
+    "missing_in_main": 106,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "-- CV-121 a CV-150: 7 tabelas de suporte para as fases 13-15 do copiloto RADAR",
+     "-- Fase 13 (CV-121-130): supervisor — copilot_help_requests, copilot_learning_moments, copilot_conversation_scores",
+     "-- Fase 14 (CV-131-140): aprendizado — copilot_outcomes, copilot_objection_catalog",
+     "-- Fase 15 (CV-141-150): métricas — copilot_usage, copilot_seller_settings",
+     "-- Rollback:",
+     "--   DROP TABLE IF EXISTS public.copilot_outcomes;",
+     "--   DROP TABLE IF EXISTS public.copilot_objection_catalog;",
+     "--   DROP TABLE IF EXISTS public.copilot_usage;",
+     "--   DROP TABLE IF EXISTS public.copilot_seller_settings;",
+     "--   DROP TABLE IF EXISTS public.copilot_help_requests;",
+     "--   DROP TABLE IF EXISTS public.copilot_learning_moments;",
+     "--   DROP TABLE IF EXISTS public.copilot_conversation_scores;",
+     "-- Fase 14: resultado de venda",
+     "CREATE TABLE IF NOT EXISTS public.copilot_outcomes (",
+     "  id               UUID        PRIMARY KEY DEFAULT gen_random_uuid(),",
+     "  conversation_id  UUID        NOT NULL,",
+     "  contact_id       UUID        NOT NULL,",
+     "  seller_id        UUID        NOT NULL,",
+     "  outcome          TEXT        NOT NULL CHECK (outcome IN ('closed', 'lost')),",
+     "  deal_value       NUMERIC,",
+     "  segment          TEXT,",
+     "  created_at       TIMESTAMPTZ NOT NULL DEFAULT now()",
+     "ALTER TABLE public.copilot_outcomes ENABLE ROW LEVEL SECURITY;",
+     "CREATE POLICY \"copilot_outcomes_insert\"",
+     "  ON public.copilot_outcomes FOR INSERT TO authenticated WITH CHECK (true);"
+    ],
+    "still_sample": [],
+    "same_basename_in_main": []
+   }
+  },
+  {
+   "path": "supabase/schema-catalog.json",
+   "status": "BOTH_CHANGED",
+   "hunk": "CONFLICT",
+   "patch_lines": 3061,
+   "line_check": {
+    "added": 3044,
+    "missing_in_main": 56,
+    "removed": 1,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "    \"contact_purchases\",",
+     "    \"payment_links\",",
+     "    \"contact_purchases.amount:numeric(12,2):nullable\",",
+     "    \"contact_purchases.contact_id:uuid:not-null\",",
+     "    \"contact_purchases.created_at:timestamp with time zone:not-null\",",
+     "    \"contact_purchases.created_by:uuid:nullable\",",
+     "    \"contact_purchases.currency:text:nullable\",",
+     "    \"contact_purchases.deal_id:uuid:nullable\",",
+     "    \"contact_purchases.description:text:nullable\",",
+     "    \"contact_purchases.id:uuid:not-null\",",
+     "    \"contact_purchases.purchase_type:text:nullable\",",
+     "    \"contact_purchases.purchased_at:timestamp with time zone:nullable\",",
+     "    \"contact_purchases.status:text:nullable\",",
+     "    \"contact_purchases.title:text:not-null\",",
+     "    \"contact_purchases.updated_at:timestamp with time zone:not-null\",",
+     "    \"csat_surveys.agent_id:uuid:not-null\",",
+     "    \"csat_surveys.rating:integer:not-null\",",
+     "    \"payment_links.amount:numeric(12,2):not-null\",",
+     "    \"payment_links.contact_id:uuid:nullable\",",
+     "    \"payment_links.created_at:timestamp with time zone:nullable\",",
+     "    \"payment_links.created_by:uuid:nullable\",",
+     "    \"payment_links.currency:text:nullable\",",
+     "    \"payment_links.deal_id:uuid:nullable\",",
+     "    \"payment_links.description:text:nullable\",",
+     "    \"payment_links.expires_at:timestamp with time zone:nullable\","
+    ],
+    "still_sample": []
+   }
+  }
+ ],
+ "counts": {
+  "migrations": "1",
+  "workflows": "0",
+  "src": "0",
+  "edges": "0",
+  "docs_only": "no",
+  "lines_branch_has_main_lacks": "3197",
+  "lines_main_has_branch_lacks": "3759"
+ },
+ "auto": "MISTO_CONFLITO",
+ "n_files_with_gaps": 2,
+ "gap_lines_total": 162
+}

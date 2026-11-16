@@ -1,0 +1,61 @@
+{
+ "id": "pr-3018",
+ "kind": "pr",
+ "ref": "refs/remotes/pr/3018",
+ "pr": 3018,
+ "tip": "ebe6a1e60c269562adc3bee091bcee3d7aedc337",
+ "merge_base": "cca5655b81667d40e43da5ca55a29c3e5b8b5848",
+ "ahead": 1,
+ "last_commit_date": "2026-11-12",
+ "merge_base_date": "2026-11-12",
+ "triagem_2804": null,
+ "closure_comment": {
+  "title": "Create node.js.yml",
+  "last_comment": "Fechando por ser redundante e nociva. Duas verificações independentes confirmaram. Nada se perde: | - O `ci.yml` já cobre typecheck, testes unitários e build com bun (`bun install --frozen-lockfile`). | - Este modelo usa `npm ci`, e o repo não tem `package-lock.json`, só `bun.lock`. Isso quebraria os 3"
+ },
+ "files": [
+  {
+   "path": ".github/workflows/node.js.yml",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "patch_lines": 37,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 24,
+    "missing_in_main": 24,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "# This workflow will do a clean installation of node dependencies, cache/restore them, build the source code and run tests across different versions of node",
+     "# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-nodejs",
+     "name: Node.js CI",
+     "  push:",
+     "    branches: [ \"main\" ]",
+     "  pull_request:",
+     "    branches: [ \"main\" ]",
+     "jobs:",
+     "  build:",
+     "    runs-on: ubuntu-latest",
+     "    strategy:",
+     "      matrix:",
+     "        node-version: [18.x, 20.x, 22.x]",
+     "        # See supported Node.js release schedule at https://nodejs.org/en/about/releases/",
+     "    steps:",
+     "    - uses: actions/checkout@v4",
+     "    - name: Use Node.js ${{ matrix.node-version }}",
+     "      uses: actions/setup-node@v4",
+     "      with:",
+     "        node-version: ${{ matrix.node-version }}",
+     "        cache: 'npm'",
+     "    - run: npm ci",
+     "    - run: npm run build --if-present",
+     "    - run: npm test"
+    ],
+    "still_sample": [],
+    "same_basename_in_main": []
+   }
+  }
+ ],
+ "auto": "TRABALHO_AUSENTE_APLICA_LIMPO",
+ "n_files_with_gaps": 1,
+ "gap_lines_total": 24
+}

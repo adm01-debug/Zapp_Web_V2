@@ -1,0 +1,54 @@
+{
+ "id": "pr-3088",
+ "kind": "pr",
+ "ref": "refs/remotes/pr/3088",
+ "pr": 3088,
+ "tip": "39ab99fa96015e5c1d5e80c62e7f3a923ea39df8",
+ "merge_base": "33ed0eaa9cf9e838bd3a741ed016652e52dc04b1",
+ "ahead": 5,
+ "last_commit_date": "2026-11-14",
+ "merge_base_date": "2026-11-14",
+ "triagem_2804": null,
+ "closure_comment": {
+  "title": "fix(evolution-api): connect da go respeita o teto de 40 s e nunca apaga a órfã sem prazo p",
+  "last_comment": "Conteúdo integrado na `main` pelo pacote 6 ([#3113](https://github.com/adm01-debug/Zapp_Web_V2/pull/3113), commit `41853318cd`). |  | Conferido byte a byte depois do merge: o código e o teste desta PR estão idênticos na `main`. Os dois arquivos restantes são gerados (`deployment-manifest.json`, regenera"
+ },
+ "files": [
+  {
+   "path": "ESTADO.md",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 13,
+   "hunk": "PRESENT_REVERSE_APPLIES"
+  },
+  {
+   "path": "supabase/deployment-manifest.json",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 31,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 4,
+    "missing_in_main": 2,
+    "removed": 4,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "      \"source_sha256\": \"36074444e4050d77b71305b8c52839d0dfff1805f29947d394e9849a078ca78d\",",
+     "  \"manifest_sha256\": \"1a06a2d5dbeb5f52aa5cb7366cbad1c5d0d92121254925cf9fe31119ea0c7e50\""
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "supabase/functions/evolution-api/connect-orfa-prazo.test.ts",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "supabase/functions/evolution-api/index.ts",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  }
+ ],
+ "auto": "MISTO_CONFLITO",
+ "n_files_with_gaps": 1,
+ "gap_lines_total": 2
+}

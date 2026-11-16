@@ -1,0 +1,95 @@
+{
+ "id": "claude__fix-merge-contato-telefone-secundario-261114-0000",
+ "kind": "branch",
+ "ref": "origin/claude/fix-merge-contato-telefone-secundario-261114-0000",
+ "tip": "5ed381c55361455b74b2ec0958c87bfea2ce5707",
+ "merge_base": "6423dc237eda64857903f904399de8d3a6f6893f",
+ "ahead": 1,
+ "last_commit_date": "2026-11-14",
+ "merge_base_date": "2026-11-14",
+ "prs_with_same_tip": [
+  3107
+ ],
+ "triagem_2804": {
+  "3107": null
+ },
+ "closure_comment": {
+  "3107": {
+   "title": "fix(contatos): mesclagem trava quando telefone final é o do secundário",
+   "last_comment": "Conteúdo integrado na `main` pelo pacote 6 ([#3113](https://github.com/adm01-debug/Zapp_Web_V2/pull/3113), commit `41853318cd`), com **dois ajustes de integração** — nenhuma linha de lógica alterada: |  | 1. A migration foi renomeada de `20261114120000_` para **`20261114120500_merge_contacts_phone_secun"
+  }
+ },
+ "files": [
+  {
+   "path": "scripts/db-audit/merge-contacts-phone-secundario.test.sh",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 162,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 121,
+    "missing_in_main": 3,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "# -- e que a migration 20261114120000_merge_contacts_phone_secundario_unique.sql",
+     "migration_fix=\"$repo_root/supabase/migrations/20261114120000_merge_contacts_phone_secundario_unique.sql\"",
+     "bug_output=\"$(docker exec \"$container_name\" psql -X -At -v ON_ERROR_STOP=1 -U postgres -d postgres -c \\"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "supabase/migrations/20261114120000_merge_contacts_phone_secundario_unique.sql",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "patch_lines": 175,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 150,
+    "missing_in_main": 150,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "-- merge_contacts_phone_secundario_unique",
+     "-- QA-sweep (BUG HIGH): mesclar contato trava quando o usuario escolhe manter o telefone do",
+     "-- contato SECUNDARIO como telefone final do contato mesclado.",
+     "-- DEFEITO (medido no codigo atual, nao suposto):",
+     "--   public.merge_contacts_atomic(uuid, uuid[], jsonb), na versao viva criada por",
+     "--   20261006205100_contact_notes_identity_merge_bypass.sql, aplica",
+     "--     UPDATE public.contacts SET ... phone = <p_merged_fields->>'phone'> ... WHERE id = p_primary_id",
+     "--   ANTES de",
+     "--     DELETE FROM public.contacts WHERE id = ANY(v_secondary_ids).",
+     "--   contacts tem UNIQUE (phone) NOT DEFERRABLE (constraint contacts_phone_key, confirmado em",
+     "--   produzido via pg_constraint: condeferrable=false). Quando p_merged_fields->>'phone' e o",
+     "--   telefone do contato SECUNDARIO (o dono atual desse valor), o UPDATE do primario tenta",
+     "--   gravar um phone que ainda esta em uso pelo secundario -- que so seria apagado depois --",
+     "--   e o Postgres rejeita com 23505 (unique_violation), abortando a transacao inteira. O caminho",
+     "--   em que o usuario escolhe o telefone do PRIMARIO nunca aciona isso, por isso o bug so aparece",
+     "--   nessa escolha especifica.",
+     "-- CORRECAO (reordenar, sem mudar nenhuma regra de negocio):",
+     "--   Move o UPDATE que grava os campos escolhidos (p_merged_fields) no contato primario para",
+     "--   DEPOIS do loop que reatribui as FKs e do DELETE dos secundarios. Nesse ponto os contatos",
+     "--   secundarios ja nao existem, entao o valor de phone que antes colidia fica livre. Nenhuma",
+     "--   outra linha do corpo da funcao muda: mesmos campos, mesma validacao, mesmo guard de",
+     "--   privilegio, mesmo sinal transacional app.contact_merge_identity para o guard de notas.",
+     "-- Classe: contrato (CREATE OR REPLACE de funcao).",
+     "-- Rollback: reaplicar o corpo integral de",
+     "--   20261006205100_contact_notes_identity_merge_bypass.sql (UPDATE do primario antes do loop de"
+    ],
+    "still_sample": [],
+    "same_basename_in_main": []
+   }
+  }
+ ],
+ "counts": {
+  "migrations": "1",
+  "workflows": "0",
+  "src": "0",
+  "edges": "0",
+  "docs_only": "no",
+  "lines_branch_has_main_lacks": "172",
+  "lines_main_has_branch_lacks": "10"
+ },
+ "auto": "MISTO_CONFLITO",
+ "n_files_with_gaps": 2,
+ "gap_lines_total": 153
+}

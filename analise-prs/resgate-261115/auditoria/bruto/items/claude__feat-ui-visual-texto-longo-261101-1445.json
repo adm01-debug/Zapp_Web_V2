@@ -1,0 +1,366 @@
+{
+ "id": "claude__feat-ui-visual-texto-longo-261101-1445",
+ "kind": "branch",
+ "ref": "origin/claude/feat-ui-visual-texto-longo-261101-1445",
+ "tip": "c5178c37dddaffa096fe8fa4a4228f4d8a128c64",
+ "merge_base": "1252bb5a41123ba4d49efd84d0f91604bff6c87c",
+ "ahead": 9,
+ "last_commit_date": "2026-11-01",
+ "merge_base_date": "2026-11-01",
+ "prs_with_same_tip": [
+  2480
+ ],
+ "triagem_2804": {
+  "2480": "DUPLICATA_PROVAVEL"
+ },
+ "closure_comment": {},
+ "files": [
+  {
+   "path": "e2e/__screenshots__/contacts-cards-dark-linux.png",
+   "status": "DELETED_IN_BRANCH",
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "patch_lines": 2929,
+   "line_check": {
+    "note": "branch deletes file; main still has it"
+   }
+  },
+  {
+   "path": "e2e/__screenshots__/contacts-cards-light-linux.png",
+   "status": "DELETED_IN_BRANCH",
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "patch_lines": 2923,
+   "line_check": {
+    "note": "branch deletes file; main still has it"
+   }
+  },
+  {
+   "path": "e2e/__screenshots__/contacts-list-dark-linux.png",
+   "status": "DELETED_IN_BRANCH",
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "patch_lines": 2619,
+   "line_check": {
+    "note": "branch deletes file; main still has it"
+   }
+  },
+  {
+   "path": "e2e/__screenshots__/contacts-list-light-linux.png",
+   "status": "DELETED_IN_BRANCH",
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "patch_lines": 2598,
+   "line_check": {
+    "note": "branch deletes file; main still has it"
+   }
+  },
+  {
+   "path": "e2e/__screenshots__/contacts-table-dark-linux.png",
+   "status": "DELETED_IN_BRANCH",
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "patch_lines": 2503,
+   "line_check": {
+    "note": "branch deletes file; main still has it"
+   }
+  },
+  {
+   "path": "e2e/__screenshots__/contacts-table-light-linux.png",
+   "status": "DELETED_IN_BRANCH",
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "patch_lines": 2470,
+   "line_check": {
+    "note": "branch deletes file; main still has it"
+   }
+  },
+  {
+   "path": "e2e/contacts-snapshots.spec.ts",
+   "status": "MAIN_UNCHANGED_SINCE_BASE",
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "patch_lines": 16,
+   "line_check": {
+    "added": 4,
+    "missing_in_main": 4,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     " * BASELINES AUSENTES (C297): as PNGs foram geradas com Chromium 1243 (ambiente local)",
+     " * mas o CI usa Chromium 1248 — diferença de ~2% de pixels, acima do limite de 0,2%.",
+     " * Os testes pulam automaticamente quando os arquivos não existem (ver `test.skip` abaixo).",
+     " * Para reativar: gerar as PNGs em um runner Linux com Chromium 1248 e versionar no PR."
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/ai/__tests__/ChurnPredictionDashboard.test.tsx",
+   "status": "MAIN_UNCHANGED_SINCE_BASE",
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "patch_lines": 14,
+   "line_check": {
+    "added": 2,
+    "missing_in_main": 2,
+    "removed": 1,
+    "removed_still_in_main": 1,
+    "missing_sample": [
+     "        // O texto é filho direto do Badge (sem inner span); a cor mora na raiz do Badge.",
+     "        const badge = (await screen.findByText(`${riskScore}%`)) as HTMLElement;"
+    ],
+    "still_sample": [
+     "        const badge = await screen.findByText(`${riskScore}%`);"
+    ]
+   }
+  },
+  {
+   "path": "src/components/contacts/__tests__/tipografiaPisoEscalaContatos.test.tsx",
+   "status": "MAIN_UNCHANGED_SINCE_BASE",
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "patch_lines": 29,
+   "line_check": {
+    "added": 5,
+    "missing_in_main": 5,
+    "removed": 5,
+    "removed_still_in_main": 5,
+    "missing_sample": [
+     "    // O texto é filho direto do Badge (sem inner span); a classe de tamanho fica no div.",
+     "    const badgeEstado = getByText('Ativo') as HTMLElement;",
+     "    expect(menorTextoPx((getByText('Champions') as HTMLElement).className, escala)).toBe(10);",
+     "    expect(menorTextoPx((getByText('Empresa') as HTMLElement).className, escala)).toBe(10);",
+     "    expect(menorTextoPx((getByText('Tag') as HTMLElement).className, escala)).toBe(10);"
+    ],
+    "still_sample": [
+     "    // O elemento que o React renderizou traz a classe real; o tamanho sai dela.",
+     "    const badgeEstado = getByText('Ativo');",
+     "    expect(menorTextoPx(getByText('Champions').className, escala)).toBe(10);",
+     "    expect(menorTextoPx(getByText('Empresa').className, escala)).toBe(10);",
+     "    expect(menorTextoPx(getByText('Tag').className, escala)).toBe(10);"
+    ]
+   }
+  },
+  {
+   "path": "src/components/crm360/__tests__/DataExplorerTable.a11y.test.tsx",
+   "status": "MAIN_UNCHANGED_SINCE_BASE",
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "patch_lines": 13,
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 1,
+    "removed_still_in_main": 1,
+    "missing_sample": [
+     "    const selo = (await screen.findByText(/reg\\./)) as HTMLElement;"
+    ],
+    "still_sample": [
+     "    const selo = await screen.findByText(/reg\\./);"
+    ]
+   }
+  },
+  {
+   "path": "src/components/integrations/__tests__/corCruaTokens.test.tsx",
+   "status": "MAIN_UNCHANGED_SINCE_BASE",
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "patch_lines": 22,
+   "line_check": {
+    "added": 2,
+    "missing_in_main": 2,
+    "removed": 2,
+    "removed_still_in_main": 2,
+    "missing_sample": [
+     "    const badge = screen.getByText('Desconectado') as HTMLElement;",
+     "    const badge = (await screen.findByText('Desconectado')) as HTMLElement;"
+    ],
+    "still_sample": [
+     "    const badge = screen.getByText('Desconectado');",
+     "    const badge = await screen.findByText('Desconectado');"
+    ]
+   }
+  },
+  {
+   "path": "src/components/talkx/__tests__/TalkXContactSelector.a11y.test.tsx",
+   "status": "BOTH_CHANGED",
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "patch_lines": 13,
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 1,
+    "removed_still_in_main": 1,
+    "missing_sample": [
+     "  const contador = screen.getByText('2/3') as HTMLElement;"
+    ],
+    "still_sample": [
+     "  const contador = screen.getByText('2/3');"
+    ]
+   }
+  },
+  {
+   "path": "src/components/ui/__tests__/card.test.tsx",
+   "status": "MAIN_UNCHANGED_SINCE_BASE",
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "patch_lines": 30,
+   "line_check": {
+    "added": 3,
+    "missing_in_main": 3,
+    "removed": 3,
+    "removed_still_in_main": 3,
+    "missing_sample": [
+     "    expect(titulo).toHaveClass('text-2xl', 'font-semibold', 'leading-tight', 'tracking-tight');",
+     "    expect(titulo).toHaveClass('text-2xl', 'font-semibold', 'leading-tight', 'tracking-tight');",
+     "    expect(titulo).toHaveClass('text-2xl', 'font-semibold', 'leading-tight', 'tracking-tight', 'texto-extra');"
+    ],
+    "still_sample": [
+     "    expect(titulo).toHaveClass('text-2xl', 'font-semibold', 'leading-none', 'tracking-tight');",
+     "    expect(titulo).toHaveClass('text-2xl', 'font-semibold', 'leading-none', 'tracking-tight');",
+     "    expect(titulo).toHaveClass('text-2xl', 'font-semibold', 'leading-none', 'tracking-tight', 'texto-extra');"
+    ]
+   }
+  },
+  {
+   "path": "src/components/ui/__tests__/primitivos-texto-longo-a11y.test.tsx",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "patch_lines": 122,
+   "line_check": {
+    "added": 84,
+    "missing_in_main": 84,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "import { describe, it, expect } from 'vitest';",
+     "import { render, screen } from '@testing-library/react';",
+     "import { Badge } from '@/components/ui/badge';",
+     "import { Label } from '@/components/ui/label';",
+     "import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';",
+     "import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';",
+     "// Texto de 120 caracteres, como o cartão pede. O `padEnd` garante o tamanho exato.",
+     "const TEXTO_120 = 'Relatório consolidado de atendimentos'.padEnd(120, ' de detalhe');",
+     "describe('primitivos de UI com texto longo (120 caracteres)', () => {",
+     "  it('o texto de prova tem 120 caracteres', () => {",
+     "    expect(TEXTO_120).toHaveLength(120);",
+     "  it('Badge: o div raiz retém truncate + min-w-0 e o title guarda o texto inteiro', () => {",
+     "    render(<Badge title={TEXTO_120}>{TEXTO_120}</Badge>);",
+     "    // O texto é filho direto do `div`; `truncate` e `min-w-0` ficam no próprio wrapper,",
+     "    // sem inner span (inner span quebra gap-* e clipa botões de remoção).",
+     "    const pilula = screen.getByText(TEXTO_120).closest('div');",
+     "    expect(pilula).not.toBeNull();",
+     "    expect(pilula?.className).toContain('truncate');",
+     "    expect(pilula?.className).toContain('min-w-0');",
+     "    expect(pilula).toHaveAttribute('title', TEXTO_120);",
+     "  it('Badge: rótulo curto renderiza o mesmo className (nenhuma classe depende do tamanho)', () => {",
+     "    const { container: curto } = render(<Badge>Ativo</Badge>);",
+     "    const { container: longo } = render(<Badge>{TEXTO_120}</Badge>);",
+     "    const classesCurto = curto.firstElementChild?.className;",
+     "    expect(classesCurto).toBe(longo.firstElementChild?.className);"
+    ],
+    "still_sample": [],
+    "same_basename_in_main": []
+   }
+  },
+  {
+   "path": "src/components/ui/badge.tsx",
+   "status": "BOTH_CHANGED",
+   "hunk": "CONFLICT",
+   "patch_lines": 32,
+   "line_check": {
+    "added": 9,
+    "missing_in_main": 8,
+    "removed": 3,
+    "removed_still_in_main": 2,
+    "missing_sample": [
+     "// `min-w-0` + `truncate` no próprio `div` garantem que texto longo seja cortado sem",
+     "// afetar filhos não-texto (botões de remoção, ícones); quem usa o componente passa",
+     "// `title` via `...props` para preservar o texto completo no tooltip.",
+     "const Badge = React.forwardRef<HTMLDivElement, BadgeProps>(({ className, variant, children, ...props }, ref) => {",
+     "  return (",
+     "    <div ref={ref} className={cn(badgeVariants({ variant }), className)} {...props}>",
+     "      {children}",
+     "    </div>"
+    ],
+    "still_sample": [
+     "const Badge = React.forwardRef<HTMLDivElement, BadgeProps>(({ className, variant, ...props }, ref) => {",
+     "  return <div ref={ref} className={cn(badgeVariants({ variant }), className)} {...props} />;"
+    ]
+   }
+  },
+  {
+   "path": "src/components/ui/card.tsx",
+   "status": "MAIN_UNCHANGED_SINCE_BASE",
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "patch_lines": 43,
+   "line_check": {
+    "added": 5,
+    "missing_in_main": 5,
+    "removed": 5,
+    "removed_still_in_main": 5,
+    "missing_sample": [
+     "    <div ref={ref} className={cn(\"flex flex-col min-w-0 space-y-1.5 p-6\", className)} {...props} />",
+     "  <Tag ref={ref} className={cn(\"text-2xl font-semibold leading-tight tracking-tight min-w-0 break-words\", className)} {...props} />",
+     "    <p ref={ref} className={cn(\"text-sm text-muted-foreground min-w-0 break-words\", className)} {...props} />",
+     "  ({ className, ...props }, ref) => <div ref={ref} className={cn(\"p-6 pt-0 min-w-0\", className)} {...props} />",
+     "    <div ref={ref} className={cn(\"flex items-center min-w-0 p-6 pt-0\", className)} {...props} />"
+    ],
+    "still_sample": [
+     "    <div ref={ref} className={cn(\"flex flex-col space-y-1.5 p-6\", className)} {...props} />",
+     "  <Tag ref={ref} className={cn(\"text-2xl font-semibold leading-none tracking-tight\", className)} {...props} />",
+     "    <p ref={ref} className={cn(\"text-sm text-muted-foreground\", className)} {...props} />",
+     "  ({ className, ...props }, ref) => <div ref={ref} className={cn(\"p-6 pt-0\", className)} {...props} />",
+     "    <div ref={ref} className={cn(\"flex items-center p-6 pt-0\", className)} {...props} />"
+    ]
+   }
+  },
+  {
+   "path": "src/components/ui/label.tsx",
+   "status": "MAIN_UNCHANGED_SINCE_BASE",
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "patch_lines": 16,
+   "line_check": {
+    "added": 4,
+    "missing_in_main": 4,
+    "removed": 1,
+    "removed_still_in_main": 1,
+    "missing_sample": [
+     "// `leading-snug` (e não `leading-none`): o rótulo de duas linhas não cola uma na outra.",
+     "// É o valor do tema mais próximo do token do próprio `text-sm` (1.25rem = 20px no",
+     "// `tailwind.config.ts`), então o rótulo passa a seguir a escala do sistema.",
+     "const labelVariants = cva(\"text-sm font-medium leading-snug peer-disabled:cursor-not-allowed peer-disabled:opacity-70\");"
+    ],
+    "still_sample": [
+     "const labelVariants = cva(\"text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70\");"
+    ]
+   }
+  },
+  {
+   "path": "src/components/ui/tabs.tsx",
+   "status": "MAIN_UNCHANGED_SINCE_BASE",
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "patch_lines": 31,
+   "line_check": {
+    "added": 7,
+    "missing_in_main": 7,
+    "removed": 2,
+    "removed_still_in_main": 2,
+    "missing_sample": [
+     "// O trigger tem `min-w-0` para ceder espaço ao flex pai. O inner span tem",
+     "// `truncate min-w-0` para cortar o texto com ellipsis sem afetar badges",
+     "// absolutos que o consumidor posicionar como irmãos do span (fora dele).",
+     ">(({ className, children, ...props }, ref) => (",
+     "      \"inline-flex items-center justify-center min-w-0 whitespace-nowrap rounded-sm px-3 py-1.5 text-sm font-medium ring-offset-background transition-all data-[",
+     "    <span className=\"truncate min-w-0\">{children}</span>",
+     "  </TabsPrimitive.Trigger>"
+    ],
+    "still_sample": [
+     ">(({ className, ...props }, ref) => (",
+     "      \"inline-flex items-center justify-center whitespace-nowrap rounded-sm px-3 py-1.5 text-sm font-medium ring-offset-background transition-all data-[state=ac"
+    ]
+   }
+  }
+ ],
+ "counts": {
+  "migrations": "0",
+  "workflows": "0",
+  "src": "11",
+  "edges": "0",
+  "docs_only": "no",
+  "lines_branch_has_main_lacks": "163",
+  "lines_main_has_branch_lacks": "26"
+ },
+ "auto": "MISTO_CONFLITO",
+ "n_files_with_gaps": 18,
+ "gap_lines_total": 149
+}

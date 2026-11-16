@@ -1,0 +1,62 @@
+{
+ "id": "codex__consolidacao-baseline-pr-20261101",
+ "kind": "branch",
+ "ref": "origin/codex/consolidacao-baseline-pr-20261101",
+ "tip": "0eed116b72533a0be5a7752307668d0f6cab8f5c",
+ "merge_base": "1252bb5a41123ba4d49efd84d0f91604bff6c87c",
+ "ahead": 5,
+ "last_commit_date": "2026-11-01",
+ "merge_base_date": "2026-11-01",
+ "prs_with_same_tip": [
+  2465
+ ],
+ "triagem_2804": {
+  "2465": "OBSOLETA"
+ },
+ "closure_comment": {},
+ "files": [
+  {
+   "path": "docs/consolidacao/BASELINE.md",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "patch_lines": 27,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 11,
+    "missing_in_main": 11,
+    "removed": 1,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "# Baseline da consolidação",
+     "## Medição atual — 01/11/2026",
+     "Executada em **01/11/2026, 09:40–09:51 (America/Sao_Paulo)** no SHA `df4d597dcbaa6fbdb4eb4c8ee672e39e1f2d2a05`, confirmado como `origin/main` antes e depois da ",
+     "| Verificação | Comando | Resultado atual |",
+     "|---|---|---|",
+     "| Build | `bun run build` | Passou; **0 erros**, 2 avisos de classes Tailwind ambíguas e aviso de chunks maiores que 1.200 kB. |",
+     "| Lint | `bun run lint` | **606 erros e 213 avisos**; exit code 1. O total de erros é 3 acima da medição de 28/10; a origem da diferença ainda não foi atribuída",
+     "| Typecheck | `bun run typecheck` | **3 erros TypeScript**; exit code 2: atributo JSX duplicado em `QueueAlertsDisplay.tsx:94` e duas propriedades `tags` incomp",
+     "| Testes unitários | `bun run test` | **15.683 passaram**, 0 falharam, 19 falhas esperadas e 43 `todo`; 1.856 arquivos passaram e 5 foram pulados. Exit code 0; ",
+     "Em relação à referência inicial de 28/10 abaixo: **+121 testes passando**, uma falha esperada a menos e **19 erros TypeScript a menos**; o lint tem três erros a",
+     "## Referência inicial — 28/10/2026"
+    ],
+    "still_sample": [],
+    "same_basename_in_main": [
+     "docs/_arquivo/analise-prs/baseline/BASELINE.md",
+     "docs/_arquivo/docs/consolidacao/BASELINE.md"
+    ],
+    "missing_vs_same_basename": 10
+   }
+  }
+ ],
+ "counts": {
+  "migrations": "0",
+  "workflows": "0",
+  "src": "0",
+  "edges": "0",
+  "docs_only": "yes",
+  "lines_branch_has_main_lacks": "33",
+  "lines_main_has_branch_lacks": "0"
+ },
+ "auto": "MISTO_CONFLITO",
+ "n_files_with_gaps": 1,
+ "gap_lines_total": 11
+}

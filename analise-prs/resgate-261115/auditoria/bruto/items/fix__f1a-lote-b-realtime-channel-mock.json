@@ -1,0 +1,135 @@
+{
+ "id": "fix__f1a-lote-b-realtime-channel-mock",
+ "kind": "branch",
+ "ref": "origin/fix/f1a-lote-b-realtime-channel-mock",
+ "tip": "adeae759234e936966a68601a929edfac172b84b",
+ "merge_base": "bac62ba98454811c3bfd117b838af926b1e795b2",
+ "ahead": 3,
+ "last_commit_date": "2026-10-23",
+ "merge_base_date": "2026-10-23",
+ "prs_with_same_tip": [
+  2065,
+  2438
+ ],
+ "triagem_2804": {
+  "2065": "OBSOLETA",
+  "2438": "OBSOLETA"
+ },
+ "closure_comment": {},
+ "files": [
+  {
+   "path": "src/components/agents/__tests__/AgentsView.capacidade.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 127,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 56,
+    "missing_in_main": 49,
+    "removed": 15,
+    "removed_still_in_main": 15,
+    "missing_sample": [
+     "      id: 'p1',",
+     "      user_id: 'u1',",
+     "      name: 'Alpha',",
+     "      email: 'alpha@exemplo.test',",
+     "      avatar_url: null,",
+     "      role: 'agent',",
+     "      job_title: null,",
+     "      department: null,",
+     "      phone: null,",
+     "      is_active: true,",
+     "      max_chats: 5,",
+     "      created_at: '',",
+     "      updated_at: '',",
+     "      id: 'p2',",
+     "      user_id: 'u2',",
+     "      name: 'Beta',",
+     "      email: 'beta@exemplo.test',",
+     "      avatar_url: null,",
+     "      role: 'agent',",
+     "      job_title: null,",
+     "      department: null,",
+     "      phone: null,",
+     "      is_active: true,",
+     "      max_chats: 10,",
+     "      created_at: '',"
+    ],
+    "still_sample": [
+     "      id: 'p1', user_id: 'u1', name: 'Alpha', email: 'alpha@exemplo.test', avatar_url: null,",
+     "      role: 'agent', job_title: null, department: null, phone: null, is_active: true,",
+     "      max_chats: 5, created_at: '', updated_at: '',",
+     "      id: 'p2', user_id: 'u2', name: 'Beta', email: 'beta@exemplo.test', avatar_url: null,",
+     "      role: 'agent', job_title: null, department: null, phone: null, is_active: true,",
+     "      max_chats: 10, created_at: '', updated_at: '',",
+     "    { id: 'c4', assigned_to: 'p1', conversation_status: 'open', deleted_at: '2026-01-02T00:00:00Z' }, // excluído",
+     "          (!pedeNaoExcluido || c.deleted_at === null),",
+     "      eq: (...a: unknown[]) => { filters.push(['eq', ...a]); return q; },",
+     "      not: (...a: unknown[]) => { filters.push(['not', ...a]); return q; },"
+    ]
+   }
+  },
+  {
+   "path": "src/components/agents/__tests__/AgentsView.pendencias.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 197,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 81,
+    "missing_in_main": 75,
+    "removed": 26,
+    "removed_still_in_main": 26,
+    "missing_sample": [
+     "      id: 'p1',",
+     "      user_id: 'u1',",
+     "      name: 'Ana Souza',",
+     "      email: 'ana@exemplo.test',",
+     "      avatar_url: null,",
+     "      role: 'agent',",
+     "      job_title: null,",
+     "      department: null,",
+     "      phone: null,",
+     "      is_active: true,",
+     "      max_chats: 5,",
+     "      created_at: '',",
+     "      updated_at: '',",
+     "      id: 'p2',",
+     "      user_id: 'u2',",
+     "      name: 'Bruno Lima',",
+     "      email: 'bruno@exemplo.test',",
+     "      avatar_url: null,",
+     "      role: 'agent',",
+     "      job_title: null,",
+     "      department: null,",
+     "      phone: null,",
+     "      is_active: true,",
+     "      max_chats: 5,",
+     "      created_at: '',"
+    ],
+    "still_sample": [
+     "      id: 'p1', user_id: 'u1', name: 'Ana Souza', email: 'ana@exemplo.test', avatar_url: null,",
+     "      role: 'agent', job_title: null, department: null, phone: null, is_active: true,",
+     "      max_chats: 5, created_at: '', updated_at: '',",
+     "      id: 'p2', user_id: 'u2', name: 'Bruno Lima', email: 'bruno@exemplo.test', avatar_url: null,",
+     "      role: 'agent', job_title: null, department: null, phone: null, is_active: true,",
+     "      max_chats: 5, created_at: '', updated_at: '',",
+     "      id: 'p3', user_id: 'u3', name: 'Carla Dias', email: 'carla@exemplo.test', avatar_url: null,",
+     "      role: 'agent', job_title: null, department: null, phone: null, is_active: true,",
+     "      max_chats: 5, created_at: '', updated_at: '',",
+     "    { id: 'c4', assigned_to: 'p1', conversation_status: 'waiting', deleted_at: '2026-01-02T00:00:00Z' }, // excluído"
+    ]
+   }
+  }
+ ],
+ "counts": {
+  "migrations": "0",
+  "workflows": "0",
+  "src": "2",
+  "edges": "0",
+  "docs_only": "no",
+  "lines_branch_has_main_lacks": "149",
+  "lines_main_has_branch_lacks": "43"
+ },
+ "auto": "MISTO_CONFLITO",
+ "n_files_with_gaps": 2,
+ "gap_lines_total": 165
+}

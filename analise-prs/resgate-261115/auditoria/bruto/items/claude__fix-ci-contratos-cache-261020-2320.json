@@ -1,0 +1,124 @@
+{
+ "id": "claude__fix-ci-contratos-cache-261020-2320",
+ "kind": "branch",
+ "ref": "origin/claude/fix-ci-contratos-cache-261020-2320",
+ "tip": "d90d3f78f9d026828c1e888ea6ce91f6643a3c45",
+ "merge_base": "d7af7a671ca2bd7005b75b0aa54c0f0c4672befc",
+ "ahead": 2,
+ "last_commit_date": "2026-10-20",
+ "merge_base_date": "2026-10-19",
+ "prs_with_same_tip": [
+  2123
+ ],
+ "triagem_2804": {
+  "2123": "OBSOLETA"
+ },
+ "closure_comment": {},
+ "files": [
+  {
+   "path": ".github/workflows/ci.yml",
+   "status": "BOTH_CHANGED",
+   "hunk": "CONFLICT",
+   "patch_lines": 63,
+   "line_check": {
+    "added": 21,
+    "missing_in_main": 1,
+    "removed": 2,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "        run: bunx playwright@1.64.1 install-deps chromium firefox webkit"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": ".github/workflows/e2e-logado.yml",
+   "status": "BOTH_CHANGED",
+   "hunk": "CONFLICT",
+   "patch_lines": 18,
+   "line_check": {
+    "added": 2,
+    "missing_in_main": 2,
+    "removed": 2,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "        run: bunx playwright@1.64.1 install --with-deps chromium firefox webkit",
+     "        run: bunx playwright@1.64.1 install-deps chromium firefox webkit"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": ".github/workflows/e2e-talkx.yml",
+   "status": "BOTH_CHANGED",
+   "hunk": "CONFLICT",
+   "patch_lines": 18,
+   "line_check": {
+    "added": 2,
+    "missing_in_main": 1,
+    "removed": 2,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "        run: bunx playwright@1.64.1 install-deps chromium"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": ".github/workflows/talkx-status-regen.yml",
+   "status": "BOTH_CHANGED",
+   "hunk": "PRESENT_REVERSE_APPLIES",
+   "patch_lines": 16
+  },
+  {
+   "path": ".github/workflows/vercel-env-cleanup.yml",
+   "status": "BOTH_CHANGED",
+   "hunk": "CONFLICT",
+   "patch_lines": 24,
+   "line_check": {
+    "added": 5,
+    "missing_in_main": 0,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "scripts/ci/security-workflow.unit.mjs",
+   "status": "BOTH_CHANGED",
+   "hunk": "CONFLICT",
+   "patch_lines": 15,
+   "line_check": {
+    "added": 3,
+    "missing_in_main": 3,
+    "removed": 1,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  // W102: nome de secret no GitHub é MAIÚSCULO por convenção; minúsculo aqui é",
+     "  // caminho de arquivo (ex.: o comentário que cita \"check-pr-workflow-secrets.mjs\").",
+     "  const secretRefs = [...workflow.matchAll(/secrets\\.([A-Z][A-Z0-9_]*)/gu)].map((m) => m[1]);"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "scripts/ci/workflow-contracts.unit.mjs",
+   "status": "BOTH_CHANGED",
+   "hunk": "PRESENT_REVERSE_APPLIES",
+   "patch_lines": 13
+  }
+ ],
+ "counts": {
+  "migrations": "0",
+  "workflows": "5",
+  "src": "0",
+  "edges": "0",
+  "docs_only": "no",
+  "lines_branch_has_main_lacks": "274",
+  "lines_main_has_branch_lacks": "456"
+ },
+ "auto": "MISTO_CONFLITO",
+ "n_files_with_gaps": 4,
+ "gap_lines_total": 7
+}

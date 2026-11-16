@@ -1,0 +1,72 @@
+{
+ "id": "claude__chore-cmd-auditoria-supabase-261101-1430",
+ "kind": "branch",
+ "ref": "origin/claude/chore-cmd-auditoria-supabase-261101-1430",
+ "tip": "4b780aaf465aef27c92d3d38a1a02bdb98ca60b7",
+ "merge_base": "1252bb5a41123ba4d49efd84d0f91604bff6c87c",
+ "ahead": 5,
+ "last_commit_date": "2026-11-01",
+ "merge_base_date": "2026-11-01",
+ "prs_with_same_tip": [
+  2495
+ ],
+ "triagem_2804": {
+  "2495": "OBSOLETA"
+ },
+ "closure_comment": {},
+ "files": [
+  {
+   "path": ".claude/commands/auditoria-supabase.md",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "patch_lines": 267,
+   "line_check": {
+    "added": 176,
+    "missing_in_main": 176,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "# Auditoria exaustiva + correção do Supabase — ZAPP WEB V2 — instruções para o Claude Code",
+     "Invocar com `/auditoria-supabase` (arquivo em `.claude/commands/auditoria-supabase.md`). Idioma: PT-BR em tudo.",
+     "> **Este projeto já foi auditado três vezes e nenhuma auditoria foi fechada.** Existem em `main` e em PRs abertas três relatórios com numerações diferentes do m",
+     "## 0. Parâmetros",
+     "| Chave | Valor |",
+     "|---|---|",
+     "| PROJETO | Zapp Web V2 — `project_ref` = **`tnnnlkbymytvtqngbbqh`** (Supabase Cloud, Postgres 17.6) |",
+     "| MCP | **`SUPABASE - ZAPP WEB V2 - MCP`** (customizado: `db_query` via função `mcp_exec`, service_role, 1 transação por chamada, timeout 120 s). **Não é** o MC",
+     "| REPO | `https://github.com/adm01-debug/Zapp_Web_V2` (público; `main`; squash only; `delete_branch_on_merge`; `strict=true`; 6 required checks) |",
+     "| PASTA DE TRABALHO | `auditoria-supabase/` (já existe em `main`) |",
+     "| LIMITE | 80 turnos por sessão |",
+     "| LEITURA OBRIGATÓRIA | `CLAUDE.md` (§0, §1, \"Decisões de 2026-09-26\", \"Alocação de versão\"), `AGENTS.md`, `CONTRIBUTING.md`, `scripts/db-audit/README.md`, `doc",
+     "### Bancos que NÃO são este projeto — nunca usar, nem para consulta",
+     "- `uqysyzndkfiwfztbqvsl` (MCP \"ZAPP WEB - LOVABLE\") e `vpkmqeumtxhrwgawxdrl` (MCP \"MCP - SUPABASE LOVABLE CLOUD - ZAPP WEB V2\" — nome quase idêntico). **`ping` ",
+     "- `pgxfvjmuubtbowutlide` (CRM) e `doufsxqlfjyuvxuezpln` (Catálogo/Promo Gifts): externos, consumidos por `external-db-bridge`, `promogifts-catalog`, `crm-integr",
+     "- SINGU, Zapp V3, Postgres da Evolution GO (Hostinger), VPS AtomicaBR: fora.",
+     "### O que já existe (ponto de partida obrigatório)",
+     "| Fonte | Conteúdo | Estado |",
+     "|---|---|---|",
+     "| `auditoria-supabase/` em `main` | Relatório + `progresso.json` da auditoria de 2026-10-30/31: 12 seções concluídas, 39 achados (3 CRÍTICO, 10 ALTO, 13 MÉDIO, ",
+     "| PR #2462 | versão \"final\" do mesmo relatório (5 correções técnicas; sobrepõe #2241) | aberta |",
+     "| PR #2414 | auditoria paralela de 2026-10-31: 47 achados (C-01..03, A-01..04, M-01..17), inventário JSON em 8 arquivos, propostas `FIX-S0x-*.sql` | aberta |",
+     "| PR #2186 | auditoria de 2026-10-22: 68 achados, propostas P001–P010 + 2 migrations (`department_invites` ownership, `login_attempts` TTL) | aberta |",
+     "| PRs de correção abertas | #2265 (CRITICAL-1: REVOKE escrita do `anon`, 99 tabelas), #2481 (CRITICAL-2: `WITH CHECK` em 8 policies), #2277 (17 tabelas com RLS ",
+     "| `supabase/schema-manifest.json`, `schema-catalog.json`, `deployment-manifest.json` | inventário estrutural versionado | regenerados por `types-sync`/`db-live-"
+    ],
+    "still_sample": [],
+    "same_basename_in_main": []
+   }
+  }
+ ],
+ "counts": {
+  "migrations": "0",
+  "workflows": "0",
+  "src": "0",
+  "edges": "0",
+  "docs_only": "yes",
+  "lines_branch_has_main_lacks": "261",
+  "lines_main_has_branch_lacks": "0"
+ },
+ "auto": "TRABALHO_AUSENTE_APLICA_LIMPO",
+ "n_files_with_gaps": 1,
+ "gap_lines_total": 176
+}

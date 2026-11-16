@@ -1,0 +1,208 @@
+{
+ "id": "claude__fix-db-guard-pguser-261019-1430",
+ "kind": "branch",
+ "ref": "origin/claude/fix-db-guard-pguser-261019-1430",
+ "tip": "054d4d89d34bd7f5dae78f7b3f17efdef700a152",
+ "merge_base": "ee294749175799481deb9fc69e1d31fac6675f3e",
+ "ahead": 3,
+ "last_commit_date": "2026-10-19",
+ "merge_base_date": "2026-10-18",
+ "prs_with_same_tip": [
+  2104
+ ],
+ "triagem_2804": {
+  "2104": "JA_NA_MAIN"
+ },
+ "closure_comment": {},
+ "files": [
+  {
+   "path": ".github/workflows/db-guard.yml",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 13,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 2,
+    "missing_in_main": 1,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "          PGUSER: postgres"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": ".github/workflows/settings-guard.yml",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 70,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 55,
+    "missing_in_main": 30,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "#   gatilho: agendado (a cada 6 h) e dispatch sobre main",
+     "#   prova: perimetro do GitHub (branch protection, merge, actions, environments)",
+     "#   falha: issue aberta ou comentada com a causa; sai 0 quando o unico problema",
+     "#          e falta de escopo (ponto cego), para nao acumular falso-vermelho",
+     "#   avisa: issue rotativa com label settings-guard",
+     "# ==================================================================",
+     "# ZAPP-WEB · Guarda do Perimetro do GitHub",
+     "# ==================================================================",
+     "# Compara o estado REAL do repo contra o baseline em",
+     "# scripts/ci/github-settings-baseline.json e abre/comenta issue quando",
+     "# diverge. Usa SETTINGS_GUARD_TOKEN (fine-grained PAT, administration:read)",
+     "# para ler os campos administrativos; sem ele cai de volta ao GITHUB_TOKEN",
+     "# e os campos ficam marcados como NAO VERIFICAVEL.",
+     "# ==================================================================",
+     "    # 15 */6 * * * = a cada 6 horas. Horario jitterizado (nao roda na hora cheia).",
+     "    - cron: '15 */6 * * *'",
+     "  push:",
+     "    branches: [main]",
+     "    paths:",
+     "      - 'scripts/ci/github-settings-guard.mjs'",
+     "      - 'scripts/ci/github-settings-baseline.json'",
+     "  group: settings-guard-${{ github.ref }}-${{ github.event_name == 'schedule' && github.run_id || 'dispatch' }}",
+     "  perimeter-check:",
+     "    name: \"🔒 Perimetro GitHub\"",
+     "    timeout-minutes: 10"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "CLAUDE.md",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 13,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 1,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  política vigente é `strict=true`, o `settings-guard` detecta e reporta divergência (GA77: restauração automática removida), e nenhum agente reintroduz `false`"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "scripts/ci/github-settings-guard.mjs",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 129,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 5,
+    "missing_in_main": 3,
+    "removed": 35,
+    "removed_still_in_main": 34,
+    "missing_sample": [
+     " * (`github-settings-baseline.json`) e reporta divergencias via issue.",
+     "// `restauravel` mantido por compatibilidade; sempre false (GA77: restauração removida).",
+     "      divergencias.push({ campo: `merge.${campo}`, esperado, encontrado, restauravel: false });"
+    ],
+    "still_sample": [
+     " * (`github-settings-baseline.json`) e restaura o que sabe restaurar.",
+     "// `restauravel` diz se o guard sabe desfazer a divergência sozinho.",
+     "      // Sem o bloco de checks o PATCH do sub-recurso nao tem o que atualizar.",
+     "      restauravel: !checksDesligados,",
+     "      divergencias.push({ campo: `merge.${campo}`, esperado, encontrado, restauravel: campo === 'allow_auto_merge' });",
+     "// ---------------------------------------------------------------- restauração",
+     "async function restaurar(campo) {",
+     "  if (campo === 'branch_protection_main.strict') {",
+     "    const protection = await gh('GET', `/repos/${OWNER}/${REPO_NAME}/branches/${BRANCH}/protection`);",
+     "    const contexts = protection?.required_status_checks?.contexts ?? [];"
+    ]
+   }
+  },
+  {
+   "path": "scripts/ci/github-settings-guard.unit.mjs",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 81,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 17,
+    "missing_in_main": 17,
+    "removed": 15,
+    "removed_still_in_main": 11,
+    "missing_sample": [
+     "const SELECTED_PATTERNS = \"['oven-sh/setup-bun','denoland/setup-deno','supabase/setup-cli','peter-evans/create-pull-request','gitleaks/gitleaks-action','actions",
+     "    \"  if (p.indexOf('/actions/permissions/selected-actions') !== -1) return \" + SELECTED_OK + ';',",
+     "    assert.ok(!r.out.includes('Restaurado'), `guard nao deveria tentar restaurar (GA77):\\n${r.out}`);",
+     "  it('W05: divergencia real dentro da janela e suprimida pelo dedupe (sem restauracao)', () => {",
+     "    // GA77: guard nao restaura mais. Divergencia dentro de 6 h aplica dedupe normal.",
+     "    assert.ok(!r.out.includes('Restaurado'), `guard nao deveria tentar restaurar (GA77):\\n${r.out}`);",
+     "    assert.ok(r.out.includes('Dedupe:'), `dedupe nao foi aplicado dentro da janela:\\n${r.out}`);",
+     "    assert.ok(!r.out.includes('Issue #42 atualizada'), `comentou mesmo dentro da janela:\\n${r.out}`);",
+     "  it('W05: mesma causa divergente fora da janela (> 6 h) comenta de novo', () => {",
+     "    // Apos 6 h o guard deve renovar o comentario — sem restaurar, so registrar.",
+     "    const SEIS_HORAS_MS = 6 * 60 * 60 * 1000;",
+     "      idadeMs: SEIS_HORAS_MS + 1000,",
+     "    assert.ok(!r.out.includes('Restaurado'), `guard nao deveria tentar restaurar (GA77):\\n${r.out}`);",
+     "    assert.ok(r.out.includes('Issue #42 atualizada com novo comentario'), `fora da janela e nao comentou:\\n${r.out}`);",
+     "    assert.ok(!r.out.includes('Dedupe'), `dentro da janela indevidamente:\\n${r.out}`);",
+     "    'banco-leitura', 'db-ledger-evidence', 'legacy-import-destrutivo', 'perimetro-leitura',",
+     "    'producao-ddl', 'producao-edge-functions',"
+    ],
+    "still_sample": [
+     "    assert.ok(r.out.includes('Restaurado'), `nao tentou restaurar o que sabe restaurar:\\n${r.out}`);",
+     "  it('W05: divergencia real com restauracao EFETIVA sempre comenta (mesmo com dedupe)', () => {",
+     "    assert.ok(r.out.includes('Restaurado:'), `a restauracao precisa ter acontecido:\\n${r.out}`);",
+     "    assert.ok(r.out.includes('Issue #42 atualizada com novo comentario'), `restauracao sem registro:\\n${r.out}`);",
+     "  it('W05: restauracao que FALHOU nao forca comentario — o dedupe de 6 h vale', () => {",
+     "    // Um PATCH 403 recorrente (token sem escopo) comentaria a cada 6 h se a tentativa",
+     "    // falha contasse como \"restaurei\" (Devin, PR #1920).",
+     "      idadeMs: 60_000,",
+     "      patchStatus: 403,",
+     "    assert.ok(!r.out.includes('Restaurado:'), `declarou restaurado um PATCH que falhou:\\n${r.out}`);"
+    ]
+   }
+  },
+  {
+   "path": "scripts/ci/security-workflow.unit.mjs",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 14,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 2,
+    "missing_in_main": 2,
+    "removed": 1,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  const workflowSemComentarios = workflow.split('\\n').filter((l) => !l.trimStart().startsWith('#')).join('\\n');",
+     "  const secretRefs = [...workflowSemComentarios.matchAll(/secrets\\.(\\w+)/gu)].map((m) => m[1]);"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/hooks/integrations/useTalkXSuppression.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 13,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 1,
+    "missing_in_main": 1,
+    "removed": 1,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "        reason_code: (reason_code ?? 'manual') as 'manual' | 'opt_out' | 'invalid_number' | 'lgpd' | 'no_commercial_permission' | 'bounce',"
+    ],
+    "still_sample": []
+   }
+  }
+ ],
+ "counts": {
+  "migrations": "0",
+  "workflows": "2",
+  "src": "1",
+  "edges": "0",
+  "docs_only": "no",
+  "lines_branch_has_main_lacks": "995",
+  "lines_main_has_branch_lacks": "421"
+ },
+ "auto": "MISTO_CONFLITO",
+ "n_files_with_gaps": 7,
+ "gap_lines_total": 100
+}

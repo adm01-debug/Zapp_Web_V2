@@ -1,0 +1,48 @@
+{
+ "id": "claude__fix-health-check-get-revert-261109-2249",
+ "kind": "branch",
+ "ref": "origin/claude/fix-health-check-get-revert-261109-2249",
+ "tip": "838944ba088fd3a98abf0dafafbc74495e89912b",
+ "merge_base": "18b719670da6fca8cb8d8267956cf613bbfc6740",
+ "ahead": 1,
+ "last_commit_date": "2026-11-09",
+ "merge_base_date": "2026-11-09",
+ "prs_with_same_tip": [
+  2915
+ ],
+ "triagem_2804": {
+  "2915": null
+ },
+ "closure_comment": {
+  "2915": {
+   "title": "fix(edge-deploy): reverte POST→GET e adiciona threshold >20 no buildLogsSql",
+   "last_comment": "[vc]: #kTFcX07Tv6Jptq76EBsJ+fB6FZf/3N68AtwTdJ8P2OI=:eyJpc01vbm9yZXBvIjp0cnVlLCJ0eXBlIjoiZ2l0aHViIiwicHJvamVjdHMiOlt7Im5hbWUiOiJ6YXBwX3dlYl92MiIsInByb2plY3RJZCI6InByal9KNHdiOGVneno4aUwxQ0puU09YSkR0cW5idlJwIiwibGl2ZUZlZWRiYWNrIjp7InJlc29sdmVkIjowLCJ1bnJlc29sdmVkIjowLCJ0b3RhbCI6MCwibGluayI6IiJ9LCJpbnNw"
+  }
+ },
+ "files": [
+  {
+   "path": "scripts/edge-deploy/health-check.mjs",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 67,
+   "hunk": "PRESENT_REVERSE_APPLIES"
+  },
+  {
+   "path": "scripts/edge-deploy/health-check.unit.mjs",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 45,
+   "hunk": "PRESENT_REVERSE_APPLIES"
+  }
+ ],
+ "counts": {
+  "migrations": "0",
+  "workflows": "0",
+  "src": "0",
+  "edges": "0",
+  "docs_only": "no",
+  "lines_branch_has_main_lacks": "3",
+  "lines_main_has_branch_lacks": "109"
+ },
+ "auto": "INCORPORADA_PROVA_PATCH",
+ "n_files_with_gaps": 0,
+ "gap_lines_total": 0
+}

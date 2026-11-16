@@ -1,0 +1,95 @@
+{
+ "id": "claude__feat-talkx-x053-breadcrumb-261102-1130",
+ "kind": "branch",
+ "ref": "origin/claude/feat-talkx-x053-breadcrumb-261102-1130",
+ "tip": "21be44c6214271a229d1cd91cf3bfcb6ed834217",
+ "merge_base": "1252bb5a41123ba4d49efd84d0f91604bff6c87c",
+ "ahead": 1,
+ "last_commit_date": "2026-11-01",
+ "merge_base_date": "2026-11-01",
+ "prs_with_same_tip": [
+  2558
+ ],
+ "triagem_2804": {
+  "2558": "JA_NA_MAIN"
+ },
+ "closure_comment": {},
+ "files": [
+  {
+   "path": "src/components/talkx/TalkXView.tsx",
+   "status": "BOTH_CHANGED",
+   "hunk": "CONFLICT",
+   "patch_lines": 29,
+   "line_check": {
+    "added": 3,
+    "missing_in_main": 0,
+    "removed": 7,
+    "removed_still_in_main": 1,
+    "missing_sample": [],
+    "still_sample": [
+     "          </button>"
+    ]
+   }
+  },
+  {
+   "path": "src/components/talkx/__tests__/TalkXView.route.test.tsx",
+   "status": "BOTH_CHANGED",
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "patch_lines": 30,
+   "line_check": {
+    "added": 7,
+    "missing_in_main": 7,
+    "removed": 5,
+    "removed_still_in_main": 5,
+    "missing_sample": [
+     "import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';",
+     "  it('a trilha do monitor tem \"Campanhas\" clicável que volta à lista (X053)', async () => {",
+     "    const nav = await screen.findByRole('navigation', { name: 'Trilha de navegação' });",
+     "    const campanhasBtn = within(nav).getByRole('button', { name: 'Campanhas' });",
+     "    expect(campanhasBtn).toBeInTheDocument();",
+     "    fireEvent.click(campanhasBtn);",
+     "    await waitFor(() => expect(window.location.search).not.toContain('screen=monitor'));"
+    ],
+    "still_sample": [
+     "import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';",
+     "  it('renderiza o botão Voltar à campanhas com classes válidas na tela de monitor', async () => {",
+     "    const back = await screen.findByRole('button', { name: /Voltar à campanhas/ });",
+     "    expect(back).toHaveClass('h-9');",
+     "    expect(back).toHaveClass('hover:bg-muted/50');"
+    ]
+   }
+  },
+  {
+   "path": "src/components/talkx/kit/primitives.tsx",
+   "status": "BOTH_CHANGED",
+   "hunk": "CONFLICT",
+   "patch_lines": 25,
+   "line_check": {
+    "added": 4,
+    "missing_in_main": 3,
+    "removed": 2,
+    "removed_still_in_main": 1,
+    "missing_sample": [
+     "export function ModuleBreadcrumb({ items, onItemClick, className }: { items: string[]; onItemClick?: (index: number) => void; className?: string }) {",
+     "          {i < items.length - 1 && onItemClick ? (",
+     "            <button type=\"button\" onClick={() => onItemClick(i)} className=\"truncate hover:text-foreground transition-colors\">{item}</button>"
+    ],
+    "still_sample": [
+     "          <span className={i === items.length - 1 ? 'text-foreground font-medium truncate' : 'truncate'}>{item}</span>"
+    ]
+   }
+  }
+ ],
+ "counts": {
+  "migrations": "0",
+  "workflows": "0",
+  "src": "3",
+  "edges": "0",
+  "docs_only": "no",
+  "lines_branch_has_main_lacks": "41",
+  "lines_main_has_branch_lacks": "330"
+ },
+ "auto": "MISTO_CONFLITO",
+ "n_files_with_gaps": 3,
+ "gap_lines_total": 17
+}

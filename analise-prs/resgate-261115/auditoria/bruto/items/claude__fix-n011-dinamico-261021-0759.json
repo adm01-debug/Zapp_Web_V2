@@ -1,0 +1,52 @@
+{
+ "id": "claude__fix-n011-dinamico-261021-0759",
+ "kind": "branch",
+ "ref": "origin/claude/fix-n011-dinamico-261021-0759",
+ "tip": "77de63cb91d153eb21e9909228483c5013d132e7",
+ "merge_base": "d7af7a671ca2bd7005b75b0aa54c0f0c4672befc",
+ "ahead": 3,
+ "last_commit_date": "2026-10-31",
+ "merge_base_date": "2026-10-19",
+ "prs_with_same_tip": [
+  2147
+ ],
+ "triagem_2804": {
+  "2147": "OBSOLETA"
+ },
+ "closure_comment": {},
+ "files": [
+  {
+   "path": "scripts/db-audit/n011-storage-policies-dedup.test.mjs",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 286,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 94,
+    "missing_in_main": 2,
+    "removed": 78,
+    "removed_still_in_main": 3,
+    "missing_sample": [
+     "//   (b) replay drifted: reintroduz os alvos da migration historica de origem,",
+     "//       aplica N-011 e prova que ambos somem sem alterar policies alheias;"
+    ],
+    "still_sample": [
+     "const linhasFix = lerFix().split('\\n');",
+     "  for (const st of divide(lerFix())) {",
+     "    const m = st.match(RE_DP);"
+    ]
+   }
+  }
+ ],
+ "counts": {
+  "migrations": "0",
+  "workflows": "0",
+  "src": "0",
+  "edges": "0",
+  "docs_only": "no",
+  "lines_branch_has_main_lacks": "2",
+  "lines_main_has_branch_lacks": "2"
+ },
+ "auto": "MISTO_CONFLITO",
+ "n_files_with_gaps": 1,
+ "gap_lines_total": 5
+}

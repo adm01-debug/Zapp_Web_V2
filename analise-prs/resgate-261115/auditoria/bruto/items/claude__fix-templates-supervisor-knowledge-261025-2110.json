@@ -1,0 +1,1448 @@
+{
+ "id": "claude__fix-templates-supervisor-knowledge-261025-2110",
+ "kind": "branch",
+ "ref": "origin/claude/fix-templates-supervisor-knowledge-261025-2110",
+ "tip": "101da096840b2bdaaeca4fc2138e887035c6b1d1",
+ "merge_base": "2d97c44cfe7f2fa8a3ca572f8f5689118328e858",
+ "ahead": 101,
+ "last_commit_date": "2026-10-25",
+ "merge_base_date": "2026-10-24",
+ "prs_with_same_tip": [
+  2268
+ ],
+ "triagem_2804": {
+  "2268": "JA_NA_MAIN"
+ },
+ "closure_comment": {},
+ "files": [
+  {
+   "path": "ESTADO.md",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 70,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 10,
+    "missing_in_main": 7,
+    "removed": 10,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "| `ai-kb-ingest` | A | `src/hooks/integrations/useKnowledgeBase.ts:132` · `src/hooks/integrations/useKnowledgeBase.ts:203` |",
+     "| `connection-health-check` | A | `src/components/connections/ConnectionsView.tsx:130` · `src/components/diagnostics/ConnectionHealthPanel.tsx:95` · `src/compon",
+     "| `create-user` | A | `src/components/admin/useAdminData.ts:444` · `src/components/admin/useAdminData.ts:444` |",
+     "| `evolution-sync` | A | `src/components/connections/ConnectionsView.tsx:105` |",
+     "| `message-delivery` | A | `src/lib/invokeEdge.ts:24` · `src/services/outbound-message.service.ts:471` · `supabase/config.toml:49` |",
+     "| `migrate-media-storage` | A | `src/components/admin/MediaMigrationTool.tsx:164` |",
+     "| `talkx-send` | A | `src/hooks/integrations/useTalkX.ts:511` · `src/hooks/integrations/useTalkX.ts:527` · `src/hooks/integrations/useTalkX.ts:536` · `src/hooks"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "FEATURE_REGISTRY.md",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 13,
+   "hunk": "PRESENT_REVERSE_APPLIES"
+  },
+  {
+   "path": "docs/talkx/ARQUITETURA.md",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 15,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 2,
+    "missing_in_main": 1,
+    "removed": 2,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "> `completed/cancelled` abrem o Monitor). `TalkXCampaignPaused.tsx` (TL-075) **passou a existir** e já está"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "scripts/ci/talkx-docs-drift.unit.mjs",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/__tests__/a11y/icon-buttons-baseline.json",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 32,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 0,
+    "missing_in_main": 0,
+    "removed": 15,
+    "removed_still_in_main": 0,
+    "missing_sample": [],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/admin/AdminView.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 78,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 17,
+    "missing_in_main": 0,
+    "removed": 3,
+    "removed_still_in_main": 0,
+    "missing_sample": [],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/admin/MediaMigrationTool.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 389,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 209,
+    "missing_in_main": 49,
+    "removed": 42,
+    "removed_still_in_main": 14,
+    "missing_sample": [
+     "/** Prefixos de CDN temporária do WhatsApp — o mesmo filtro que a Edge `migrate-media-storage` usa. */",
+     "const CDN_TEMP_PREFIXES = ['https://mmg.whatsapp.net/', 'https://pps.whatsapp.net/'] as const;",
+     "/** Ação que a Edge grava em `audit_logs` ao fim de cada execução. */",
+     "const MIGRATION_ACTION = 'media_migration';",
+     "/** Quantas execuções o histórico mostra. */",
+     "const HISTORY_LIMIT = 10;",
+     "interface MigrationHistoryEntry {",
+     "  id: string;",
+     "  createdAt: string;",
+     "  authorName: string | null;",
+     "function asCount(value: unknown): number {",
+     "  return typeof value === 'number' && Number.isFinite(value) ? value : 0;",
+     "/** Conta, sem trazer linhas (`head`), as mensagens que ainda apontam para a CDN temporária. */",
+     "async function countPendingMedia(): Promise<number> {",
+     "  let total = 0;",
+     "  for (const prefix of CDN_TEMP_PREFIXES) {",
+     "    const { count, error } = await supabase",
+     "      .from('messages')",
+     "      .select('id', { count: 'exact', head: true })",
+     "      .like('media_url', `${prefix}%`);",
+     "    if (error) throw error;",
+     "    total += asCount(count);",
+     "  return total;",
+     "/** Histórico real: uma linha de `audit_logs` por execução da Edge (só contagens, sem URL). */",
+     "async function fetchMigrationHistory(): Promise<MigrationHistoryEntry[]> {"
+    ],
+    "still_sample": [
+     "    try {",
+     "        success: false,",
+     "        processed: 0,",
+     "        migrated: 0,",
+     "        failed: 0,",
+     "      setRunning(false);",
+     "        <Card>",
+     "          <CardHeader>",
+     "            <CardTitle className=\"flex items-center gap-2 text-base\">",
+     "            </CardTitle>"
+    ]
+   }
+  },
+  {
+   "path": "src/components/admin/__tests__/AdminView.a11y.test.tsx",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/components/admin/__tests__/AdminView.avatarRevogaUrl.test.tsx",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/components/admin/__tests__/AdminView.estados-tabelas.test.tsx",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/components/admin/__tests__/AdminView.limiteChats.test.tsx",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/components/admin/__tests__/AdminView.ramalAdmin.test.tsx",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/components/admin/__tests__/AdminView.section-error-boundary.test.tsx",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/components/admin/__tests__/AdminView.tarefas-agendadas.test.tsx",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/components/admin/__tests__/MediaMigrationTool.progresso.test.tsx",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/components/admin/__tests__/adminDownloadPermission.test.ts",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/components/admin/__tests__/useAdminData.erros-auditoria.test.ts",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/components/admin/__tests__/useAdminData.select.test.ts",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/components/admin/__tests__/useAdminDataCreateUser.test.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 106,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 32,
+    "missing_in_main": 1,
+    "removed": 9,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "            \"Invalid enum value. Expected 'admin' | 'supervisor' | 'agent' | 'special_agent', received 'chefe'\","
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/admin/useAdminData.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 79,
+   "hunk": "PRESENT_REVERSE_APPLIES"
+  },
+  {
+   "path": "src/components/agents/__tests__/AgentsView.capacidade.test.tsx",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/components/agents/__tests__/AgentsView.conexoes.test.tsx",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/components/agents/__tests__/AgentsView.pendencias.test.tsx",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/components/calls/__tests__/RecordingPlayer.test.tsx",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/components/catalog/WhatsAppTemplatesManager.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 57,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 11,
+    "missing_in_main": 4,
+    "removed": 5,
+    "removed_still_in_main": 1,
+    "missing_sample": [
+     "  // A escrita em `whatsapp_templates` é admin-only na RLS (o supervisor que",
+     "  // clicava em Novo/Editar/Duplicar/Excluir recebia erro no toast): os",
+     "  // controles de escrita só montam para admin; a leitura segue para o staff.",
+     "        {canWrite && <Button onClick={openNew} className=\"gap-2 bg-primary hover:bg-primary/90 w-full sm:w-auto\"><Plus className=\"w-4 h-4\" />Novo Template</Butt"
+    ],
+    "still_sample": [
+     "        <Button onClick={openNew} className=\"gap-2 bg-primary hover:bg-primary/90 w-full sm:w-auto\"><Plus className=\"w-4 h-4\" />Novo Template</Button>"
+    ]
+   }
+  },
+  {
+   "path": "src/components/catalog/__tests__/CT70_reducedMotion.test.tsx",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/components/catalog/__tests__/ExternalProductCatalog.virtualizacao.test.tsx",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/components/catalog/__tests__/WhatsAppTemplatesManager.a11y.test.tsx",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/components/catalog/__tests__/WhatsAppTemplatesManager.adminGate.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 74,
+   "hunk": "PRESENT_REVERSE_APPLIES"
+  },
+  {
+   "path": "src/components/catalog/__tests__/WhatsAppTemplatesManager.confirmacaoExclusao.test.tsx",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/components/connections/ConnectionsView.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 84,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 32,
+    "missing_in_main": 0,
+    "removed": 5,
+    "removed_still_in_main": 0,
+    "missing_sample": [],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/connections/__tests__/ConnectionsView.telefone-validacao.test.tsx",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/components/connections/__tests__/useConnectionsManager.handlers.test.tsx",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/components/contacts/__tests__/ContactListItemGrid.test.tsx",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/components/dashboard/DashboardView.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 58,
+   "hunk": "PRESENT_REVERSE_APPLIES"
+  },
+  {
+   "path": "src/components/dashboard/WarRoomDashboard.tsx",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/components/dashboard/__tests__/GamificationSection.customizacao.test.tsx",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/components/dashboard/__tests__/WarRoomDashboard.estado-a11y.test.tsx",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/components/dashboard/useSentimentData.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 38,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 9,
+    "missing_in_main": 1,
+    "removed": 1,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  return { alerts, analyses, agents, loading, error: fetchError, isError: fetchError !== null, incomplete: false, stats, dailyData, agentData, fetchData };"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/email/__tests__/EmailChatInbox.buscaEstados.test.tsx",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/components/email/__tests__/EmailChatInbox.contato.test.tsx",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/components/email/__tests__/EmailChatInbox.contextoPainel.test.tsx",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/components/email/__tests__/EmailChatInbox.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 23,
+   "hunk": "PRESENT_REVERSE_APPLIES"
+  },
+  {
+   "path": "src/components/gamification/TrainingMiniGames.tsx",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/components/gamification/__tests__/AchievementToast.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 117,
+   "hunk": "PRESENT_REVERSE_APPLIES"
+  },
+  {
+   "path": "src/components/gamification/__tests__/TrainingMiniGames.creditoXp.test.tsx",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/components/gmail/__tests__/GmailInboxView.paginacao.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 13,
+   "hunk": "PRESENT_REVERSE_APPLIES"
+  },
+  {
+   "path": "src/components/groups/__tests__/GroupsView.a11y.test.tsx",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/components/inbox/AdvancedMessageMenu.tsx",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/components/inbox/ConversationSummary.tsx",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/components/inbox/InboxEmptyChat.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 156,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 78,
+    "missing_in_main": 2,
+    "removed": 25,
+    "removed_still_in_main": 17,
+    "missing_sample": [
+     "                          <kbd className=\"rounded-md border border-border bg-muted px-1.5 py-0.5 text-[11px] font-semibold text-foreground shadow-sm\">",
+     "                            <span className=\"text-[10px] text-muted-foreground\">+</span>"
+    ],
+    "still_sample": [
+     "          <div",
+     "            data-testid=\"inbox-empty-shortcuts\"",
+     "            className=\"flex flex-col items-center gap-2\"",
+     "            <span className=\"text-xs font-medium text-muted-foreground\">Atalhos do teclado</span>",
+     "            <div className=\"flex flex-wrap items-center justify-center gap-x-4 gap-y-2\">",
+     "              {atalhos.map((shortcut) => {",
+     "                return (",
+     "                  <div key={shortcut.id} className=\"flex items-center gap-1.5\">",
+     "                    {keys.map((key, index) => (",
+     "                      <span key={`${shortcut.id}-${index}`} className=\"flex items-center gap-1\">"
+    ]
+   }
+  },
+  {
+   "path": "src/components/inbox/MediaPreview.tsx",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/components/inbox/MessageContextActions.tsx",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/components/inbox/MessageReactions.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 267,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 112,
+    "missing_in_main": 0,
+    "removed": 14,
+    "removed_still_in_main": 5,
+    "missing_sample": [],
+    "still_sample": [
+     "    reactions,",
+     "        await removeReaction(emoji);",
+     "        await addReaction(emoji);",
+     "        await removeReaction(emoji);",
+     "        await addReaction(emoji);"
+    ]
+   }
+  },
+  {
+   "path": "src/components/inbox/QuickRepliesManager.tsx",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/components/inbox/RealtimeInboxView.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 52,
+   "hunk": "PRESENT_REVERSE_APPLIES"
+  },
+  {
+   "path": "src/components/inbox/SlashCommands.tsx",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/components/inbox/TemplatesWithVariables.tsx",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/components/inbox/VirtualizedRealtimeList.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 139,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 59,
+    "missing_in_main": 0,
+    "removed": 1,
+    "removed_still_in_main": 0,
+    "missing_sample": [],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/inbox/VoiceSelector.tsx",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/components/inbox/WhisperMode.tsx",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/components/inbox/__tests__/CRMAutoSync.aria.test.tsx",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/components/inbox/__tests__/ChatPanel.atalhos-busca.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 13,
+   "hunk": "PRESENT_REVERSE_APPLIES"
+  },
+  {
+   "path": "src/components/inbox/__tests__/ContactDetails.quickActions.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 58,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 13,
+    "missing_in_main": 6,
+    "removed": 11,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  const rpc = vi.fn(async (_fn: string, _args?: unknown) => ({ data: null, error: null }));",
+     "    // Também atende `set_conversation_status` (Arquivar/Desfazer), medido abaixo.",
+     "  it('\"Arquivar\" usa a semântica do archiveContact (RPC set_conversation_status); Desfazer reabre pela mesma RPC', async () => {",
+     "      expect(h.rpc).toHaveBeenCalledWith('set_conversation_status', { p_contact_id: 'c1', p_next: 'archived' }),",
+     "    // Desfazer reabre pela mesma RPC; nada é escrito direto na tabela.",
+     "      expect(h.rpc).toHaveBeenLastCalledWith('set_conversation_status', { p_contact_id: 'c1', p_next: 'open' }),"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/inbox/__tests__/MessageReactions.aria.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 13,
+   "hunk": "PRESENT_REVERSE_APPLIES"
+  },
+  {
+   "path": "src/components/inbox/__tests__/StatusChips.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 26,
+   "hunk": "PRESENT_REVERSE_APPLIES"
+  },
+  {
+   "path": "src/components/inbox/__tests__/SummaryResult.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 14,
+   "hunk": "PRESENT_REVERSE_APPLIES"
+  },
+  {
+   "path": "src/components/inbox/__tests__/VoiceChanger.aria.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 24,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 5,
+    "missing_in_main": 0,
+    "removed": 1,
+    "removed_still_in_main": 0,
+    "missing_sample": [],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/inbox/__tests__/VoiceChangerPicker.aria.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 20,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 3,
+    "missing_in_main": 0,
+    "removed": 1,
+    "removed_still_in_main": 0,
+    "missing_sample": [],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/inbox/__tests__/VoiceChangerPicker.voz-temporaria.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 86,
+   "hunk": "PRESENT_REVERSE_APPLIES"
+  },
+  {
+   "path": "src/components/inbox/__tests__/arquivos-ver-na-conversa.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 15,
+   "hunk": "PRESENT_REVERSE_APPLIES"
+  },
+  {
+   "path": "src/components/inbox/__tests__/hover-actions-a11y.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 13,
+   "hunk": "PRESENT_REVERSE_APPLIES"
+  },
+  {
+   "path": "src/components/inbox/__tests__/inboxA11yLoteReacoes.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 16,
+   "hunk": "PRESENT_REVERSE_APPLIES"
+  },
+  {
+   "path": "src/components/inbox/__tests__/useChatMediaSending.audio-meme-falha.test.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 26,
+   "hunk": "PRESENT_REVERSE_APPLIES"
+  },
+  {
+   "path": "src/components/inbox/ai-tools/__tests__/a11y-ferramentas-ia.test.tsx",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/components/inbox/chat/__tests__/ChatMessagesArea.pagination.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 19,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 7,
+    "missing_in_main": 7,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  // jsdom nao calcula layout: com altura zero no elemento de rolagem o",
+     "  // @tanstack/react-virtual nao devolve item nenhum (o virtual-core le",
+     "  // `clientHeight` do conteiner de rolagem e `offsetHeight` de cada linha).",
+     "  // A medida entra pelo prototipo; o ResizeObserver nao serve aqui porque",
+     "  // nesta versao o payload do observer e ignorado.",
+     "  Object.defineProperty(HTMLElement.prototype, \"clientHeight\", { configurable: true, get: () => 600 });",
+     "  Object.defineProperty(HTMLElement.prototype, \"offsetHeight\", { configurable: true, get: () => 120 });"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/inbox/conversation-list/StatusChips.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 39,
+   "hunk": "PRESENT_REVERSE_APPLIES"
+  },
+  {
+   "path": "src/components/inbox/tabs/NotesTab.tsx",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/components/integrations/GoogleCalendarIntegration.tsx",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/components/integrations/__tests__/N8nIntegrationView.a11y.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 156,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 20,
+    "missing_in_main": 0,
+    "removed": 79,
+    "removed_still_in_main": 2,
+    "missing_sample": [],
+    "still_sample": [
+     "  return {",
+     "    ...actual,"
+    ]
+   }
+  },
+  {
+   "path": "src/components/keyboard/__tests__/paleta-unica.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 13,
+   "hunk": "PRESENT_REVERSE_APPLIES"
+  },
+  {
+   "path": "src/components/knowledge/KnowledgeBaseView.tsx",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/components/leaderboard/Leaderboard.tsx",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/components/notifications/__tests__/PushNotificationToggle.dica.test.tsx",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/components/notifications/__tests__/ScreenProtectionToggle.dica.test.tsx",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/components/nps/NPSDashboard.tsx",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/components/queues/QueueCard.tsx",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/components/reports/PeriodComparison.tsx",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/components/security/AuditLogDashboard.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 175,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 33,
+    "missing_in_main": 1,
+    "removed": 62,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "                    <p className=\"text-[11px] text-muted-foreground/80\">{stat.hint}</p>"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/security/PasswordResetRequestsPanel.tsx",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/components/security/__tests__/AuditLogDashboard.corte.test.tsx",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/components/settings/AppearanceSettings.tsx",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/components/settings/AvatarUpload.tsx",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/components/settings/IntegrationKeysSection.tsx",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/components/settings/SettingsView.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 38,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 2,
+    "missing_in_main": 1,
+    "removed": 8,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "  const { settings, isLoading, updateSettings } = useUserSettings();"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/settings/__tests__/AvatarUpload.test.tsx",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/components/settings/__tests__/IntegrationKeysSection.sem-consumidor.test.tsx",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/components/talkx/TalkXCampaignRunning.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 13,
+   "hunk": "PRESENT_REVERSE_APPLIES"
+  },
+  {
+   "path": "src/components/talkx/TalkXCampaignWizard.tsx",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/components/talkx/TalkXMessagePreview.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 31,
+   "hunk": "PRESENT_REVERSE_APPLIES"
+  },
+  {
+   "path": "src/components/talkx/TalkXOverview.tsx",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/components/talkx/TalkXSegments.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 373,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 203,
+    "missing_in_main": 161,
+    "removed": 15,
+    "removed_still_in_main": 2,
+    "missing_sample": [
+     "  Archive, AlertTriangle, PowerOff, Tag, List, LayoutGrid, RefreshCw,",
+     "import { useTalkXSegments, emptyRules, RULE_FIELDS, RULE_OPS, useAudienceEstimate, countAudience, type TalkXSegment, type TalkXSegmentLibraryStats, type TalkXSe",
+     "/** Tecla do evento (lida por função: o lint de credenciais confunde `.key` com segredo). */",
+     "const teclaDe = (e: { key: string }): string => e.key;",
+     "/** Abas superiores da tela 03 (mock): ainda só \"Segmentos\" tem conteúdo. */",
+     "const SEGMENT_TOP_TABS = ['Segmentos', 'Regras Avançadas', 'Audiências', 'Modelos', 'Insights com IA'] as const;",
+     "    segments, isLoading, isError, error, refetch, createSegment, updateSegment, deleteSegment, refreshEstimates,",
+     "    // X112 — alternância lista/grade (preferência vive no hook). Defaults só para mocks mínimos.",
+     "    viewMode = 'list', setViewMode = () => {},",
+     "  const [selectedRow, setSelected] = useState<TalkXSegment | null>(null);",
+     "  // X116 — o painel lê o segmento pela id na lista em cache: favoritar/editar na tabela",
+     "  // reflete sem novo clique. Vale a cópia MAIS NOVA (`updated_at`): a linha que o banco devolveu",
+     "  // no Salvar (#408) não pode ser trocada por uma cópia velha da lista que ainda não recarregou.",
+     "  const selected = useMemo(() => {",
+     "    if (!selectedRow) return null;",
+     "    const fromList = segments.find((s) => s.id === selectedRow.id);",
+     "    if (!fromList) return selectedRow;",
+     "    return fromList.updated_at >= selectedRow.updated_at ? fromList : selectedRow;",
+     "  }, [selectedRow, segments]);",
+     "  const selectedIdRef = useRef<string | null>(null);",
+     "  useEffect(() => { selectedIdRef.current = selected?.id ?? null; }, [selected?.id]);",
+     "  // Linhas/cartões da biblioteca: o Esc do painel devolve o foco ao que o abriu.",
+     "  const rowRefs = useRef(new Map<string, HTMLElement>());",
+     "  const closeDetailPanel = useCallback(() => {",
+     "    const id = selectedIdRef.current;"
+    ],
+    "still_sample": [
+     "    segments, isLoading, isError, error, refetch, createSegment, updateSegment, deleteSegment,",
+     "  const [selected, setSelected] = useState<TalkXSegment | null>(null);"
+    ]
+   }
+  },
+  {
+   "path": "src/components/talkx/TalkXTemplateEditor.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 245,
+   "hunk": "PRESENT_REVERSE_APPLIES"
+  },
+  {
+   "path": "src/components/talkx/TalkXTemplates.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 13,
+   "hunk": "PRESENT_REVERSE_APPLIES"
+  },
+  {
+   "path": "src/components/talkx/TalkXView.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 117,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 36,
+    "missing_in_main": 4,
+    "removed": 6,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "export type TalkXTopView = 'tabs' | 'wizard' | 'monitor' | 'scheduled' | 'running' | 'paused';",
+     "        setTopView(screen === 'scheduled' || screen === 'running' || screen === 'paused' ? screen : 'monitor');",
+     "    setTopView('tabs'); setEditingCampaign(null); setMonitorId(null); setScheduledCampaignId(null); setRunningCampaignId(null); setPausedCampaignId(null); setWi",
+     "  }, [openMonitor, openPaused, openScheduled, openRunning]);"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/talkx/TalkXWizardDelivery.tsx",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/components/talkx/__tests__/TalkXA11yNomePapel.test.tsx",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/components/talkx/__tests__/TalkXAnalytics.kpis.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 30,
+   "hunk": "PRESENT_REVERSE_APPLIES"
+  },
+  {
+   "path": "src/components/talkx/__tests__/TalkXCampaignPaused.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 37,
+   "hunk": "PRESENT_REVERSE_APPLIES"
+  },
+  {
+   "path": "src/components/talkx/__tests__/TalkXCampaignRunning.segmentoPico.test.tsx",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/components/talkx/__tests__/TalkXCampaignScheduled.calendario.test.tsx",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/components/talkx/__tests__/TalkXOverview.lifecycle.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 14,
+   "hunk": "PRESENT_REVERSE_APPLIES"
+  },
+  {
+   "path": "src/components/talkx/__tests__/TalkXOverview.table.test.tsx",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/components/talkx/__tests__/TalkXView.revisaoVolta.test.tsx",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/components/talkx/__tests__/TalkXView.route.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 33,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 4,
+    "missing_in_main": 0,
+    "removed": 3,
+    "removed_still_in_main": 1,
+    "missing_sample": [],
+    "still_sample": [
+     "    expect(await screen.findByTestId('running')).toBeInTheDocument();"
+    ]
+   }
+  },
+  {
+   "path": "src/components/talkx/help/TalkXHelpCenter.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 35,
+   "hunk": "PRESENT_REVERSE_APPLIES"
+  },
+  {
+   "path": "src/components/talkx/links/TalkXLinksManager.tsx",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/components/talkx/segments/RuleValueInput.tsx",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/components/talkx/segments/SegmentSideList.tsx",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/components/tasks/__tests__/WorkItemSheet.fuso.test.tsx",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/components/team-chat/TeamChatPanel.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 38,
+   "hunk": "PRESENT_REVERSE_APPLIES"
+  },
+  {
+   "path": "src/components/team-chat/__tests__/team-chat-notifications-mount.test.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 27,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 9,
+    "missing_in_main": 6,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "// DeferredProviders chama useAuth e useGlobalIncomingMessageAlerts direto, e AppProviders está",
+     "// mockado como passthrough (sem AuthProvider na árvore): o assunto aqui é o listener do Team Chat.",
+     "vi.mock('@/hooks/auth/useAuth', () => ({ useAuth: () => ({ profile: { id: 'test-user-id' } }) }));",
+     "// Estado vazio compartilhado (renderizado pela TeamChatView) usa framer-motion/ícones que este",
+     "// teste não mocka por inteiro; o assunto aqui é o listener, não o visual do estado vazio.",
+     "vi.mock('@/components/shared/ConversationEmptyState', () => ({ ConversationEmptyState: () => null }));"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/team-chat/__tests__/useTeamChatPanel.search.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 78,
+   "hunk": "PRESENT_REVERSE_APPLIES"
+  },
+  {
+   "path": "src/components/team-chat/useTeamChatPanel.ts",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/components/theme/__tests__/HighContrastToggle.test.tsx",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/components/ui/__tests__/VolumeDial.test.tsx",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/components/ui/__tests__/alvos-toque-44px.test.tsx",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/components/ui/__tests__/phone-input.test.tsx",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/components/ui/button.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 13,
+   "hunk": "PRESENT_REVERSE_APPLIES"
+  },
+  {
+   "path": "src/components/ui/command-palette.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 89,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 25,
+    "missing_in_main": 0,
+    "removed": 5,
+    "removed_still_in_main": 0,
+    "missing_sample": [],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/components/ui/phone-input.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 36,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 6,
+    "missing_in_main": 4,
+    "removed": 5,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "    // Fixo (10 dígitos no total): 8 após o DDD, sem '9' inicial → XXXX-XXXX.",
+     "  // Internacional: passthrough E.164 sem reformatar (Ajuste UI-07).",
+     "    // Não aplica em números internacionais que já vieram com '+'.",
+     "    if (digits.length >= 2 && !digits.startsWith('55') && !e.target.value.startsWith('+')) {"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/hooks/__tests__/useRateLimitLogs.test.tsx",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/hooks/__tests__/useTeamChatNotifications.aviso-navegador.test.tsx",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/hooks/analytics/useGoalsDashboard.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 73,
+   "hunk": "PRESENT_REVERSE_APPLIES"
+  },
+  {
+   "path": "src/hooks/auth/useAuth.tsx",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/hooks/business/useWarRoomAlerts.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 52,
+   "hunk": "PRESENT_REVERSE_APPLIES"
+  },
+  {
+   "path": "src/hooks/calls/useCallRecording.ts",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/hooks/chat/__tests__/buscas-silenciosas-aviso.test.tsx",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/hooks/chat/__tests__/useTeamChatNotifications.canal-estavel.test.tsx",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/hooks/chat/useTeamChatNotifications.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 112,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 28,
+    "missing_in_main": 1,
+    "removed": 23,
+    "removed_still_in_main": 1,
+    "missing_sample": [
+     "            { tag: `team-msg-${msg.conversation_id}`, onClick: () => navigateToView('team-chat') },"
+    ],
+    "still_sample": [
+     "              conversationId: msg.conversation_id,"
+    ]
+   }
+  },
+  {
+   "path": "src/hooks/communication/__tests__/useAudioMemes.pasta-usuario.test.tsx",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/hooks/communication/useAudioMemes.ts",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/hooks/dashboard/__tests__/useDashboardKpi.fallback.test.tsx",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/hooks/dashboard/useDashboardKpi.ts",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/hooks/gamification/__tests__/mutations.test.tsx",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/hooks/gamification/useAgentCelebrations.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 39,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 11,
+    "missing_in_main": 2,
+    "removed": 2,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "        // `earned_at` ausente ou ilegível (NaN) nunca é \"posterior\": fica suprimido.",
+     "        if (Date.parse(String(linha.earned_at ?? '')) > marcoMontagem) {"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/hooks/inbox/__tests__/useInboxBulkActions.test.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 78,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 12,
+    "missing_in_main": 1,
+    "removed": 10,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "    expect(restores[1]).toMatchObject({ payload: { conversation_status: 'pending' }, filters: { id: [c2] } });"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/hooks/inbox/__tests__/useInboxFilters.type-url.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 12,
+   "hunk": "PRESENT_REVERSE_APPLIES"
+  },
+  {
+   "path": "src/hooks/inbox/useInboxFilters.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 73,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 13,
+    "missing_in_main": 1,
+    "removed": 17,
+    "removed_still_in_main": 6,
+    "missing_sample": [
+     "      contactType: normalizeContactType(searchParams.get('type')) ?? storedPrefs?.contactType ?? null,"
+    ],
+    "still_sample": [
+     "  try {",
+     "  } catch {",
+     "    return null;",
+     "    if (value && value !== 'all') {",
+     "    } else {",
+     "  }, [applyPrefs]);"
+    ]
+   }
+  },
+  {
+   "path": "src/hooks/integrations/__tests__/useKnowledgeBase.erro.test.tsx",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/hooks/integrations/__tests__/useTalkXSuppression.test.ts",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/hooks/integrations/useKnowledgeBase.ts",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/hooks/integrations/useTalkX.ts",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/hooks/integrations/useTalkXSegments.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 69,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 16,
+    "missing_in_main": 15,
+    "removed": 2,
+    "removed_still_in_main": 1,
+    "missing_sample": [
+     "        // \"Em breve\" (lead_score/risk_score/lead_origin): a regra é completa e bem descrita",
+     "const BRIDGE_FIELDS: readonly RuleField[] = ['real_sector', 'real_uf'];",
+     "const isBridgeField = (field: RuleField): boolean => BRIDGE_FIELDS.includes(field);",
+     " * Enquanto o front não pré-resolve a ponte Singu, uma regra real_* FALHA FECHADA:",
+     " * mandar o payload sem ela devolveria mais contatos do que a audiência pedida",
+     " * (e um grupo só com real_* viraria `groups: []`, que o motor lê como base inteira).",
+     "function assertNoBridgeFields(rules: SegmentRules | null | undefined): void {",
+     "  for (const group of rules?.groups ?? []) {",
+     "    const bridge = group.rules.find((rule) => isBridgeField(rule.field));",
+     "    if (bridge) throw new Error(`${bridge.field} requer pré-resolução via p_contact_ids antes de chamar a RPC`);",
+     "  // Campos da ponte Singu (real_sector/real_uf) chegam ao motor como contact_ids",
+     "  // pré-resolvidos (p_contact_ids): nunca viram filtro PostgREST direto.",
+     "  if (isBridgeField(r.field)) return null;",
+     "  assertNoBridgeFields(rules);",
+     "  assertNoBridgeFields(rules);"
+    ],
+    "still_sample": [
+     "        // \"Em breve\" (lead_score/risk_score): a regra é completa e bem descrita"
+    ]
+   }
+  },
+  {
+   "path": "src/hooks/integrations/useTalkXSuppression.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 143,
+   "hunk": "PRESENT_REVERSE_APPLIES"
+  },
+  {
+   "path": "src/hooks/system/useDiagnosticsData.ts",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/hooks/system/useUserSettings.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 39,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 6,
+    "missing_in_main": 0,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/hooks/team-chat/__tests__/useTeamMessages.canal-e-reconexao.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 63,
+   "hunk": "PRESENT_REVERSE_APPLIES"
+  },
+  {
+   "path": "src/hooks/team-chat/useTeamMessages.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 55,
+   "hunk": "PRESENT_REVERSE_APPLIES"
+  },
+  {
+   "path": "src/lib/authenticatedUserId.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 44,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 27,
+    "missing_in_main": 4,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     " * A varredura não presume o ref do projeto (o mesmo padrão já usado nos fixtures do",
+     " * e2e). Tolerante (E02): storage bloqueado, JSON estranho ou sessão sem `user.id`",
+     "    for (let index = 0; index < storage.length; index += 1) {",
+     "      const key = storage.key(index);"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/lib/mediaVolumeStore.ts",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/lib/offlineQueue.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 72,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 19,
+    "missing_in_main": 0,
+    "removed": 5,
+    "removed_still_in_main": 0,
+    "missing_sample": [],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/pages/__tests__/ChatPopup.messageBalloon.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 26,
+   "hunk": "PRESENT_REVERSE_APPLIES"
+  },
+  {
+   "path": "src/pages/__tests__/ChatPopup.pagination.test.tsx",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 26,
+   "hunk": "PRESENT_REVERSE_APPLIES"
+  },
+  {
+   "path": "src/pages/__tests__/ResetPassword.segundo-fator-sessoes.test.tsx",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/pages/__tests__/n066-a11y-combobox-progressbar.test.tsx",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/services/chat.service.ts",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/services/outbound-message.service.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 53,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 11,
+    "missing_in_main": 4,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     " * com dono só drena para o dono (sem sessão legível, fica parado); item sem dono é",
+     " * anterior a este campo e mantém o comportamento antigo.",
+     "  if (!message.userId) return true;",
+     "    userId: readAuthenticatedUserId() ?? undefined,"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "src/test/global-setup-tz.ts",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "src/test/setup.ts",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "supabase/migrations/20261026210000_dashboard_kpi_periodo_aditivo.sql",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  },
+  {
+   "path": "supabase/schema-manifest.json",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 117,
+   "hunk": "CONFLICT",
+   "line_check": {
+    "added": 14,
+    "missing_in_main": 3,
+    "removed": 11,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "        \"message_reactions.message_reactions_delete_policy\": \"85680aef807eb586c19bde15fbdf338c\",",
+     "        \"message_reactions.message_reactions_insert_policy\": \"0bd8d491a3f8b330cdb516a7a0ef652c\",",
+     "        \"message_reactions.message_reactions_update_policy\": \"997bc87ef85a5565725e781d7c9e332c\","
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "vitest.config.ts",
+   "status": "BOTH_CHANGED",
+   "patch_lines": 12,
+   "hunk": "PRESENT_REVERSE_APPLIES"
+  }
+ ],
+ "counts": {
+  "migrations": "1",
+  "workflows": "0",
+  "src": "166",
+  "edges": "0",
+  "docs_only": "no",
+  "lines_branch_has_main_lacks": "2926",
+  "lines_main_has_branch_lacks": "5087"
+ },
+ "auto": "MISTO_CONFLITO",
+ "n_files_with_gaps": 26,
+ "gap_lines_total": 336
+}

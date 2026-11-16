@@ -1,0 +1,52 @@
+{
+ "id": "claude__fix-revogar-grants-escrita-anon-261025-2115",
+ "kind": "branch",
+ "ref": "origin/claude/fix-revogar-grants-escrita-anon-261025-2115",
+ "tip": "eb8e6ad19907b98e87eb5e1918795c3a3a4b5ff4",
+ "merge_base": "2d97c44cfe7f2fa8a3ca572f8f5689118328e858",
+ "ahead": 1,
+ "last_commit_date": "2026-10-25",
+ "merge_base_date": "2026-10-24",
+ "prs_with_same_tip": [
+  2265
+ ],
+ "triagem_2804": {
+  "2265": "DUPLICATA_PROVAVEL"
+ },
+ "closure_comment": {},
+ "files": [
+  {
+   "path": "supabase/migrations/20261026220300_revogar_grants_escrita_anon.sql",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "patch_lines": 11,
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "line_check": {
+    "added": 5,
+    "missing_in_main": 5,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "-- CRITICAL-1 (auditoria 2026-10-25): 99 tabelas de public davam INSERT/UPDATE/DELETE/TRUNCATE ao role anon.",
+     "-- A unica escrita anonima legitima e o formulario \"Esqueci a senha\" (src/pages/ForgotPassword.tsx:56),",
+     "-- protegida pela policy \"Anon can file a password reset request\". Idempotente e aditiva em seguranca.",
+     "REVOKE INSERT, UPDATE, DELETE, TRUNCATE ON ALL TABLES IN SCHEMA public FROM anon;",
+     "GRANT INSERT ON public.password_reset_requests TO anon;"
+    ],
+    "still_sample": [],
+    "same_basename_in_main": []
+   }
+  }
+ ],
+ "counts": {
+  "migrations": "1",
+  "workflows": "0",
+  "src": "0",
+  "edges": "0",
+  "docs_only": "no",
+  "lines_branch_has_main_lacks": "5",
+  "lines_main_has_branch_lacks": "0"
+ },
+ "auto": "TRABALHO_AUSENTE_APLICA_LIMPO",
+ "n_files_with_gaps": 1,
+ "gap_lines_total": 5
+}

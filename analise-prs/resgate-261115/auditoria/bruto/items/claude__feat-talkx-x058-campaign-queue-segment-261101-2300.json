@@ -1,0 +1,72 @@
+{
+ "id": "claude__feat-talkx-x058-campaign-queue-segment-261101-2300",
+ "kind": "branch",
+ "ref": "origin/claude/feat-talkx-x058-campaign-queue-segment-261101-2300",
+ "tip": "74ac918785c18b7d1f0c33b98e631f151a39a563",
+ "merge_base": "1252bb5a41123ba4d49efd84d0f91604bff6c87c",
+ "ahead": 1,
+ "last_commit_date": "2026-11-01",
+ "merge_base_date": "2026-11-01",
+ "prs_with_same_tip": [
+  2531
+ ],
+ "triagem_2804": {
+  "2531": "PERDIDA"
+ },
+ "closure_comment": {},
+ "files": [
+  {
+   "path": "supabase/migrations/20261101243000_talkx_x058_campaign_queue_segment.sql",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "hunk": "ABSENT_APPLIES_CLEAN",
+   "patch_lines": 95,
+   "line_check": {
+    "added": 77,
+    "missing_in_main": 77,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "-- X058 (Fase 7 · analíticas · banco): talkx_campaign_queue_by_segment.",
+     "-- RPC read-only SECURITY DEFINER; exige dono da campanha ou admin/supervisor.",
+     "-- rollback:",
+     "--   DROP FUNCTION IF EXISTS public.talkx_campaign_queue_by_segment(uuid);",
+     "-- ─────────────────────────────────────────────────────────────────────────────",
+     "-- talkx_campaign_queue_by_segment: breakdown da fila por segmento",
+     "-- ─────────────────────────────────────────────────────────────────────────────",
+     "DROP FUNCTION IF EXISTS public.talkx_campaign_queue_by_segment(uuid);",
+     "CREATE OR REPLACE FUNCTION public.talkx_campaign_queue_by_segment(",
+     "  p_campaign_id uuid",
+     "RETURNS jsonb",
+     "LANGUAGE plpgsql",
+     "STABLE",
+     "SECURITY DEFINER",
+     "SET search_path = public",
+     "AS $$",
+     "DECLARE",
+     "  v_profile_id uuid;",
+     "  v_result     jsonb;",
+     "BEGIN",
+     "  v_profile_id := (SELECT id FROM public.profiles WHERE user_id = auth.uid() LIMIT 1);",
+     "  IF NOT EXISTS (",
+     "    SELECT 1 FROM public.talkx_campaigns c",
+     "    WHERE c.id = p_campaign_id",
+     "      AND (c.created_by = v_profile_id OR public.is_admin_or_supervisor(auth.uid()))"
+    ],
+    "still_sample": [],
+    "same_basename_in_main": []
+   }
+  }
+ ],
+ "counts": {
+  "migrations": "1",
+  "workflows": "0",
+  "src": "0",
+  "edges": "0",
+  "docs_only": "no",
+  "lines_branch_has_main_lacks": "89",
+  "lines_main_has_branch_lacks": "0"
+ },
+ "auto": "TRABALHO_AUSENTE_APLICA_LIMPO",
+ "n_files_with_gaps": 1,
+ "gap_lines_total": 77
+}

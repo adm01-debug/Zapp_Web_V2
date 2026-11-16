@@ -1,0 +1,116 @@
+{
+ "id": "claude__fix-ci-workflows-261030-0830",
+ "kind": "branch",
+ "ref": "origin/claude/fix-ci-workflows-261030-0830",
+ "tip": "1a8c80963dc67f201570fc7e23b5b9ae650cb830",
+ "merge_base": "004e74a8c596959f45f61c8b0b64b30a70c1ff19",
+ "ahead": 10,
+ "last_commit_date": "2026-10-31",
+ "merge_base_date": "2026-10-31",
+ "prs_with_same_tip": [
+  2372
+ ],
+ "triagem_2804": {
+  "2372": "OBSOLETA"
+ },
+ "closure_comment": {},
+ "files": [
+  {
+   "path": "docs/ci/PENDENCIAS.md",
+   "status": "BOTH_CHANGED",
+   "hunk": "CONFLICT",
+   "patch_lines": 160,
+   "line_check": {
+    "added": 102,
+    "missing_in_main": 96,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "# PENDÊNCIAS — Workflows Bloqueados por Regra 8",
+     "**Última atualização:** 2026-10-30  ",
+     "**Branch de origem:** `claude/fix-ci-workflows-261030-0830`  ",
+     "**SHA main de referência:** `3f4e16d2ae91e5dae76a3775049798460782cbf5`",
+     "Estes workflows falharam no baseline e não puderam ser corrigidos por agente porque a correção envolve alteração de workflow CI, migration em produção ou aprova",
+     "## 1. `deploy-functions` — `deno install` ausente antes do `deno check`",
+     "| Campo | Valor |",
+     "| Workflow | `Deploy Edge Functions (all)` |",
+     "| Último run com falha | [41021181372](https://github.com/adm01-debug/Zapp_Web_V2/actions/runs/41021181372) |",
+     "| SHA | `3f4e16d2ae91e5dae76a3775049798460782cbf5` |",
+     "| Job | `Deploy Edge Functions` (job 123948621262) |",
+     "| Step | 17 — `Typecheck das edge functions (deno check)` |",
+     "**Erro exato (log do step 17, 2026-10-30T07:39:29Z):**",
+     "error: Error: Could not find \"@types/node\" in a node_modules folder.",
+     "Deno expects the node_modules/ directory to be up to date.",
+     "Did you forget to run `deno install`?",
+     "    at Object.resolveTypeReferenceDirectiveReferences (ext:deno_cli_tsc/97_ts_host.js:517:26)",
+     "    at ext:deno_cli_tsc/97_ts_host.js:749:49",
+     "    at spanned (ext:deno_cli_tsc/97_ts_host.js:16:12)",
+     "    at Object.host.<computed> [as resolveTypeReferenceDirectiveReferences] (ext:deno_cli_tsc/97_ts_host.js:749:14)",
+     "    at resolveTypeReferenceDirectiveNamesWorker (ext:deno_cli_tsc/00_typescript.js:128306:20)",
+     "    at processTypeReferenceDirectives (ext:deno_cli_tsc/00_typescript.js:129685:156)",
+     "    at findSourceFileWorker (ext:deno_cli_tsc/00_typescript.js:129618:9)",
+     "**Causa raiz:**  ",
+     "`@types/ws@8.18.1` contém `/// <reference types=\"node\" />` internamente. Com `nodeModulesDir:\"auto\"` (PR #2368), o Deno 2.9.5 CONSULTA `node_modules/` durante `"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "docs/ci/RELATORIO_CI.md",
+   "status": "BOTH_CHANGED",
+   "hunk": "CONFLICT",
+   "patch_lines": 175,
+   "line_check": {
+    "added": 125,
+    "missing_in_main": 120,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "# RELATÓRIO CI — Zapp Web V2",
+     "**Data:** 2026-10-30  ",
+     "**Branch de relatório:** `claude/keen-galileo-dxai3p`  ",
+     "**Sessão:** https://claude.ai/code/session_01RfQzo7rsZ224WzBjCBKxqx",
+     "## 1. Baseline — estado antes das correções",
+     "### 1a. Baseline local",
+     "Tentativa de execução local no container cloud remoto (sessão Claude Code):",
+     "| Comando | Resultado | Motivo |",
+     "| `bun install` | ✅ success | Dependências instaladas |",
+     "| `bun run typecheck` | 💥 SIGABRT | Processo morto pelo OS — limite de memória do executor remoto atingido |",
+     "| `bun run build` | 💥 SIGABRT | Mesmo motivo — esbuild/vite consome >2 GB de RAM durante o bundle |",
+     "| `bun run lint` | ✅ success (via CI) | Não executável localmente por SIGABRT no typecheck; CI jobs obrigatórios usados como substituto |",
+     "| `bun test` / testes unitários | ✅ success (via CI) | Mesmo motivo |",
+     "**Evidência substituta:** os jobs obrigatórios da `main` (`🔍 Lint & TypeCheck`, `🏗️ Build`, `🔒 Security Audit`, `🧪 Unit Tests`) são o substituto confiável. Todo",
+     "### 1b. Inventário de workflows — último run na `main` antes desta sessão (baseline)",
+     "| Workflow | Status baseline | Causa |",
+     "| `settings-guard` | ❌ failure | 403 em `github_get_branch_protection` tratado como regressão |",
+     "| `deploy-functions` | ❌ failure | `manifest is stale` + diretório publicável vazio + `@types/node` Deno error |",
+     "| `db-live-guard` | ❌ failure | 3 migrations no ledger sem arquivo `.sql` (drift) |",
+     "| `db-migrate` | ❌ failure | Mesma causa raiz do drift |",
+     "| `🧪 Unit Tests` (ci.yml) | ❌ failure | Assertion `length === 0` quebrada pelo PR #2358 |",
+     "| `db-guard` (Replay local) | ❌ failure | ECR rate limit — não-required |",
+     "| `branch-hygiene-audit` | ❌ cancelled | Timeout sem `timeout-minutes:` adequado |",
+     "| `ci.yml` (Lint, Build, Security, E2E) | ✅ success | — |",
+     "| `types-sync` | ✅ success | — |"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "docs/ci/RELATORIO_CI_FINAL.md",
+   "status": "IDENTICAL_TO_MAIN",
+   "hunk": "PRESENT_BYTE"
+  }
+ ],
+ "counts": {
+  "migrations": "0",
+  "workflows": "0",
+  "src": "0",
+  "edges": "0",
+  "docs_only": "yes",
+  "lines_branch_has_main_lacks": "257",
+  "lines_main_has_branch_lacks": "252"
+ },
+ "auto": "MISTO_CONFLITO",
+ "n_files_with_gaps": 2,
+ "gap_lines_total": 216
+}

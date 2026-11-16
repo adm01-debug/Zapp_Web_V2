@@ -1,0 +1,184 @@
+{
+ "id": "claude_04__nice-cori-7snz6b",
+ "kind": "branch",
+ "ref": "origin/claude_04/nice-cori-7snz6b",
+ "tip": "2f74d378cb537644c7b9dcb989c0e38df08b4312",
+ "merge_base": "5ac70fd292a1b11b9ba23d37431ae92da69db580",
+ "ahead": 13,
+ "last_commit_date": "2026-10-28",
+ "merge_base_date": "2026-10-28",
+ "prs_with_same_tip": [
+  2274
+ ],
+ "triagem_2804": {
+  "2274": "JA_NA_MAIN"
+ },
+ "closure_comment": {},
+ "files": [
+  {
+   "path": "PENDENCIAS.md",
+   "status": "BOTH_CHANGED",
+   "hunk": "CONFLICT",
+   "patch_lines": 363,
+   "line_check": {
+    "added": 24,
+    "missing_in_main": 24,
+    "removed": 205,
+    "removed_still_in_main": 3,
+    "missing_sample": [
+     "# Pendências CI — Itens que dependem de ação do Joaquim",
+     "**Data:** 2026-10-26  ",
+     "**Branch:** `claude_04/nice-cori-7snz6b`",
+     "## P1 — `db-live-guard`: secret `DESTINO_URL` (workflow não pode rodar sem ele)",
+     "**Workflow:** `.github/workflows/db-live-guard.yml`  ",
+     "**Bloqueio:** secret de repo `DESTINO_URL` (connection string do banco de produção `tnnnlkbymytvtqngbbqh`).",
+     "O workflow só pode ser verificado por ti porque:",
+     "1. O secret não é visível por API (só o nome aparece, nunca o valor).",
+     "2. Não existe outro caminho seguro para validar o contrato ao vivo sem a connection string real.",
+     "**O que fazer:**  ",
+     "Após este PR mergear e o `types-sync` rodar, o `db-live-guard` diário (06:13 UTC) ou um `workflow_dispatch` manual deverá passar. Se continuar falhando, verific",
+     "**Impacto se não resolvido:** o `db-live-guard` continua falhando diariamente; não bloqueia merge de PRs (não é required check), mas gera ruído de issue diária.",
+     "## P2 — `deploy-functions.yml`: aprovação em `producao-edge-functions` após merge",
+     "**Workflow:** `.github/workflows/deploy-functions.yml`  ",
+     "**Bloqueio:** o job pausa em `Waiting` no environment `producao-edge-functions` até aprovação manual.",
+     "**O que fazer:**  ",
+     "Após este PR mergear, se houver edge functions a redeploy (este PR não altera edge functions — sem ação necessária agora).",
+     "## P3 — `types-sync` após merge: dispatch manual se não disparar automaticamente",
+     "**Workflow:** `.github/workflows/types-sync.yml`  ",
+     "**Contexto:** o `types-sync` roda por agendamento (segunda 05:49 UTC) ou por `workflow_dispatch`. Após este PR mergear, ele deverá rodar no próximo ciclo e gera",
+     "**O que fazer:**  ",
+     "Se até terça-feira nenhum PR de sincronização aparecer, disparar manualmente:  ",
+     "Actions → \"Sync Supabase Types\" → Run workflow → branch `main`.",
+     "*Última atualização: 2026-10-26. Criado por sessão `session_01P12Q8mnhJbxDoQh5dUYAgj`.*"
+    ],
+    "still_sample": [
+     "   ```sql",
+     "   ```sql",
+     "   ```sql"
+    ]
+   }
+  },
+  {
+   "path": "RELATORIO_CI.md",
+   "status": "BOTH_CHANGED",
+   "hunk": "CONFLICT",
+   "patch_lines": 296,
+   "line_check": {
+    "added": 52,
+    "missing_in_main": 49,
+    "removed": 152,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "# Relatório CI — Correções de Workflows com Falha",
+     "**Data:** 2026-10-26  ",
+     "**Branch:** `claude_04/nice-cori-7snz6b`  ",
+     "**Sessão:** https://claude.ai/code/session_01P12Q8mnhJbxDoQh5dUYAgj",
+     "## Baseline — último estado antes das correções",
+     "| Workflow | Último run em `main` | Estado |",
+     "| CI (ci.yml) | run na `main` | ✅ Verde (lint, typecheck, build, security, DB offline, E2E passando) |",
+     "| db-guard (db-guard.yml) | run na `main` | ✅ Verde |",
+     "| types-sync (types-sync.yml) | último dispatch | ❌ Falha — ratchet de tipos: `novas=12` (9 funções RPC sem assinatura em `types.ts`) |",
+     "| db-live-guard (db-live-guard.yml) | diário | ❌ Falha — 7 jobs falham por divergência entre artefatos do repo e banco de produção |",
+     "| auto-update-pr-branch | gatilhado por push | ✅ Verde (workflow de infraestrutura) |",
+     "| branch-hygiene-audit | semanal | ⚠️ Flaky — `actions-kpi.mjs` falha com HTTP 502 transitório em `fetch()` |",
+     "| fila-merge (fila-merge.mjs) | gatilhado por PR | ⚠️ Flaky — `execFileSync` ao `gh` CLI falha com HTTP 502 sem retry |",
+     "## Falhas encontradas e causa raiz",
+     "### 1. `types-sync` — `novas=12` (bloqueante)",
+     "**Causa raiz:** 9 funções RPC existem em produção (`tnnnlkbymytvtqngbbqh`) mas não têm assinatura em `src/integrations/supabase/types.ts`. O ratchet de tipos co",
+     "Funções faltando:",
+     "- `admin_list_cron_jobs`",
+     "- `admin_toggle_cron_job`",
+     "- `app_bootstrap`",
+     "- `enqueue_group_outbound_message`",
+     "- `inbox_unread_total`",
+     "- `search_email_threads`",
+     "- `transfer_conversation` (overload duplo)",
+     "- `warroom_agent_today`"
+    ],
+    "still_sample": []
+   }
+  },
+  {
+   "path": "scripts/ci/actions-kpi.mjs",
+   "status": "BOTH_CHANGED",
+   "hunk": "PRESENT_REVERSE_APPLIES",
+   "patch_lines": 31
+  },
+  {
+   "path": "scripts/ci/fila-merge.mjs",
+   "status": "NEW_FILE_ABSENT_IN_MAIN",
+   "hunk": "CONFLICT",
+   "patch_lines": 38,
+   "line_check": {
+    "added": 13,
+    "missing_in_main": 13,
+    "removed": 3,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "function erroTransitorio(err) {",
+     "  const msg = String(err?.stderr ?? err?.message ?? '');",
+     "  return /HTTP 50[234]|50[234] Bad Gateway|50[234] Service Unavailable|connection reset|ECONNRESET|ETIMEDOUT/i.test(msg);",
+     "async function execComRetry(cmd, args, opts, { tentativas = 4, delaysMs = [5000, 10000, 20000] } = {}) {",
+     "  for (let i = 0; i < tentativas; i++) {",
+     "    try {",
+     "      return execFileSync(cmd, args, opts);",
+     "    } catch (err) {",
+     "      if (!erroTransitorio(err) || i >= tentativas - 1) throw err;",
+     "      await new Promise((r) => setTimeout(r, delaysMs[Math.min(i, delaysMs.length - 1)]));",
+     "  const json = await execComRetry(resolverExecutavel('gh'), [",
+     "  const behindBy = async (head) => Number((await execComRetry(resolverExecutavel('gh'), [",
+     "  ], { encoding: 'utf8' })).trim());"
+    ],
+    "still_sample": [],
+    "same_basename_in_main": []
+   }
+  },
+  {
+   "path": "src/integrations/supabase/types.ts",
+   "status": "BOTH_CHANGED",
+   "hunk": "CONFLICT",
+   "patch_lines": 183,
+   "line_check": {
+    "added": 103,
+    "missing_in_main": 20,
+    "removed": 0,
+    "removed_still_in_main": 0,
+    "missing_sample": [
+     "        Args: Record<PropertyKey, never>",
+     "          last_return_message: string | null",
+     "          last_run_at: string | null",
+     "          last_status: string | null",
+     "      app_bootstrap: {",
+     "        Args: Record<PropertyKey, never>",
+     "      inbox_unread_total: {",
+     "        Args: Record<PropertyKey, never>",
+     "      transfer_conversation:",
+     "              p_note?: string | null",
+     "              p_to_agent_id?: string | null",
+     "              p_to_queue_id?: string | null",
+     "              p_expected_agent_id?: string | null",
+     "              p_note?: string | null",
+     "              p_to_agent_id?: string | null",
+     "              p_to_queue_id?: string | null",
+     "      warroom_agent_today: {",
+     "        Args: { p_date?: string }",
+     "      warroom_queue_stats: {",
+     "        Args: Record<PropertyKey, never>"
+    ],
+    "still_sample": []
+   }
+  }
+ ],
+ "counts": {
+  "migrations": "0",
+  "workflows": "0",
+  "src": "1",
+  "edges": "0",
+  "docs_only": "no",
+  "lines_branch_has_main_lacks": "631",
+  "lines_main_has_branch_lacks": "3731"
+ },
+ "auto": "MISTO_CONFLITO",
+ "n_files_with_gaps": 4,
+ "gap_lines_total": 109
+}
