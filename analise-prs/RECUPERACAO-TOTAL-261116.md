@@ -5,18 +5,20 @@ de que o trabalho dela já está na `main` (ou em outra branch), ou de que ficou
 parcial de outro agente não é descartado: é terminado.
 
 Enquanto o trabalho existia só dentro de uma branch, ele dependia de a branch não ser apagada.
-Com este arquivo na `main`, cada arquivo não incorporado tem caminho e branch registrados — e
-volta com um comando.
+Com este arquivo e o `analise-prs/recuperacao-261116-branches.tsv` na `main`, cada arquivo não
+incorporado tem caminho e branch registrados, e cada branch tem o SHA do tip — ela volta com um
+comando mesmo depois de apagada.
 
 `main` no momento da medição: `714e2b659db2b19a539b1651d0b0c3be25a7ffc5`
 
-Medição reproduzível por `scripts/recuperacao-branches/` (o README de lá tem a ordem, a variável
-`OUT` e o recorte de cada bloco). A cadeia foi rodada duas vezes, a segunda depois de tornar os
-scripts portáteis, e as duas saídas (`resumo.tsv`, `linhas.tsv`) saíram **idênticas**.
+Medição reproduzível por `scripts/recuperacao-branches/`; o README de lá tem a ordem, a variável
+`OUT` e o recorte de cada bloco.
 
 ## O que foi medido
 
-221 branches remotas — todas, exceto `main` e a gerada `contexto`.
+222 refs remotas — todas, exceto `main` e a gerada `contexto`. Uma delas é a branch desta própria
+PR, que entrou na medição depois de ser publicada: são **221 branches de trabalho de outros
+agentes**, mais esta.
 
 Para cada branch, os arquivos que ela **introduz** em relação ao seu ponto de bifurcação
 (`git diff --name-only --diff-filter=AMR $(git merge-base origin/main B) B`) passam por três
@@ -26,19 +28,33 @@ provas, em ordem:
    `git rev-parse origin/main:arquivo`. Trabalho incorporado.
 2. **Mesmo byte em outro caminho** — o blob da branch aparece em `git ls-tree -r origin/main`.
    Pega arquivo movido ou renomeado, que a prova 1 não pega.
-3. **Contenção por linha** — toda linha significativa (≥ 8 caracteres após trim) da versão da
-   branch aparece na versão da `main`. Se sim, a `main` é superconjunto: o trabalho está lá, em
+3. **Contenção por linha** — toda linha da versão da branch aparece na versão da `main`. Fora da
+   comparação fica só linha **estrutural pura** (chaves, parênteses, vírgula, ponto e vírgula,
+   marcação de comentário). Se nada falta, a `main` é superconjunto: o trabalho está lá, em
    arquivo que evoluiu depois.
 
 | Resultado | Pares (arquivo, branch) |
 |---|---|
 | Mesmo caminho e mesmo byte, ou mesmo blob em outro caminho | 1.084 |
-| Contido linha por linha | 209 |
+| Contido linha por linha | 208 |
 | **NOVO** — não existe na `main` em caminho nenhum | 730 (558 caminhos distintos) |
-| **PARCIAL** — a `main` tem o arquivo, falta alguma linha | 2.933 |
+| **PARCIAL** — a `main` tem o arquivo, falta alguma linha | 2.934 |
 
-Os 1.084 + 209 são o ganho desta medição em relação a olhar nome de arquivo: trabalho que **já
+Os 1.084 + 208 são o ganho desta medição em relação a olhar nome de arquivo: trabalho que **já
 está** incorporado, parte dele em caminho diferente do original.
+
+### Por que o filtro de linha mudou, e o que isso alterou
+
+A primeira versão deste gate descartava da comparação toda linha com menos de 8 caracteres. O
+Codex apontou o defeito na PR #3192 e ele foi **reproduzido** antes da troca: `true;` (5
+caracteres) contra `false;` (6) caía fora da comparação, e um arquivo com a regra **invertida**
+saía como `CONTIDO` com zero linhas ausentes. Corte por tamanho era a ideia errada — o que não
+distingue comportamento é linha estrutural.
+
+Efeito medido da correção nesta base: **exatamente 1 par** mudou de lado, `CONTIDO` 209 → 208 e
+`PARCIAL` 2.933 → 2.934. O par é `infrastructure/preview-egress-proxy/go.mod` em
+`claude_pink/cool-dijkstra-xk9ek2` — um `go.mod`, onde linha curta (`go 1.22`) é justamente o que
+importa. A fila de adjudicação não se moveu, porque `go.mod` não é código de aplicação.
 
 ## O recorte que importa
 
@@ -115,7 +131,8 @@ recuperado precisa de versão nova por `reserve_migration_version`.
 
 Isso **não** decide se o conteúdo faz falta. Em pelo menos um caso o trabalho chegou à `main`
 renumerado: `revogar_grants_escrita_anon` e `revoke_anon_write_grants_all_tables` tratam do mesmo
-assunto. A comparação é por conteúdo, item a item, e está na fila.
+assunto. A comparação é por conteúdo, item a item, e o resultado do primeiro lote está em
+`analise-prs/VEREDITOS-RECUPERACAO-261116.md`.
 
 ### Bloco A2 — código de aplicação, edge e E2E que não existe na `main`
 
@@ -159,15 +176,13 @@ assunto. A comparação é por conteúdo, item a item, e está na fila.
 | `supabase/functions/_shared/__tests__/send-message-manual-resolution-compat.test.ts` | `claude/fix-pd79-compat-pre-migration-261111` |
 | `supabase/tests/instance_pause_investigation.sql` | `claude/feat-completar-c121-ddl-261101-1345` |
 
-Dois conjuntos pedem atenção redobrada na adjudicação, porque **podem ser funcionalidade inteira**
-que nunca entrou:
+O conjunto de **carteira e conexão WhatsApp** da `claude_pink/nice-hypatia-iikl82` já foi
+adjudicado: são stubs, e recuperar seria regressão. Ver
+`analise-prs/VEREDITOS-RECUPERACAO-261116.md`.
 
-- **Carteira** — `WalletCard.tsx`, `TransactionList.tsx` e `useWallet.ts`, todos em
-  `claude_pink/nice-hypatia-iikl82`, junto com `ConnectWhatsAppDialog.tsx`, `useConnections.ts` e
-  `src/types/connections.ts`.
-- **Radar / copiloto** — `RadarPhase6Panel.tsx`, `useCopilotSession.ts`,
-  `useMultimodalAnalysis.ts` e `src/components/inbox/copilot/index.ts`, espalhados por quatro
-  branches, com as migrations de copiloto do bloco A1 do lado.
+Segue sem veredito o conjunto de **radar / copiloto** — `RadarPhase6Panel.tsx`,
+`useCopilotSession.ts`, `useMultimodalAnalysis.ts` e `src/components/inbox/copilot/index.ts`,
+espalhados por quatro branches, com as migrations de copiloto do bloco A1 do lado.
 
 ### Bloco A3 — automação que não existe na `main`
 
@@ -180,27 +195,16 @@ Workflow é item de "chame o dono" por regra: nenhum destes quatro entra sem dec
 ### Bloco B — documento de análise/auditoria (agregado)
 
 572 caminhos, dos quais 384 são dossiês em `analise-prs/dossies`. São os agentes documentando o
-próprio trabalho. Preservados por SHA de branch no `resumo.tsv`; não listados um a um aqui porque
-nenhum deles é funcionalidade do sistema.
+próprio trabalho. Preservados pelo SHA de branch no TSV versionado; não listados um a um aqui
+porque nenhum deles é funcionalidade do sistema.
 
 ### Bloco C — a `main` tem o arquivo, em versão sem todas as linhas da branch
 
-2.231 pares em código funcional:
-
-| Linhas ausentes | Pares |
-|---|---|
-| 1–2 | 761 |
-| 3–10 | 638 |
-| 11–50 | 717 |
-| acima de 50 | 115 |
-
-A fila de adjudicação começa pelos 115 acima de 50 linhas. Os maiores, para dar a escala:
-`useTalkXSegments.ts` (206 de 602 linhas, `fix/f1a-lote-b-talkxsegments`), `useAdminData.ts`
-(198 de 312, `claude/ecstatic-bardeen-twiveb`), `TalkXSegments.tsx` (183 de 573,
-`claude/fix-talkx-segmentos-estimativa-261025-2110`), `evolution-api/index.ts` (174 de 978,
-`fix/ci-verde-261021`), `copilot-live/index.ts` (173 de 263,
-`claude/feat-copilot-radar-20261108-1800`) e `useRadarPanel.ts` (134 de 137,
-`claude/fix-radar-fase6-cv056-shortcuts-261108-2335`).
+2.231 pares em código funcional. A triagem que separa trabalho não recuperado de trabalho
+superado está nos vereditos: em **1.259** desses pares a branch tem o arquivo **menor** que a
+`main`, o que coloca a `main` à frente; os outros 972, deduplicados por conteúdo, são **873
+versões distintas** em 506 arquivos. Dessas, 673 são arquivo de teste e só 11 têm mais casos que
+a `main`.
 
 ## Leitura honesta do bloco C
 
@@ -214,29 +218,33 @@ está medido:
   reescrito na `main` para apontar para o `AGENTS.md`, que hoje é onde as regras moram. As regras
   não se perderam: mudaram de arquivo.
 
-Por isso o bloco C conta só código funcional, e a fila começa acima de 50 linhas.
-
 ## Índice de restauração
 
-`$OUT/resumo.tsv` tem uma linha por branch com o SHA do tip. Qualquer branch desta medição é
-restaurável por esse SHA mesmo depois de apagada:
+`analise-prs/recuperacao-261116-branches.tsv` tem uma linha por branch desta medição, com o SHA
+do tip e as quatro contagens. É o único dado do recibo que **não** é recomputável depois de a
+branch ser apagada, e por isso está versionado em vez de ficar em diretório temporário.
 
 ```
 git fetch origin <sha>          # ou github_create_ref apontando para ele
 ```
 
-A regra operacional: **a branch só é fechada depois de o SHA dela estar escrito no recibo de
-fechamento**, junto do motivo. Foi o que o recibo de 16/11
+A regra operacional continua: **a branch só é fechada depois de o SHA dela estar escrito no
+recibo de fechamento**, junto do motivo. Foi o que o recibo de 16/11
 (`analise-prs/BRANCHES-FECHADAS-261116.md`) já fez para as 71 primeiras.
 
 ## O que ainda NÃO está decidido
 
-Este documento é o inventário, não a conclusão. Cada linha dos blocos A1, A2 e A3, e cada item da
-fila do bloco C, ainda precisa de um veredito individual: **recuperar** (a funcionalidade falta
-na `main` e o trabalho é aproveitável — então é terminado e entra por PR) ou **obsoleto** (com o
-motivo escrito e verificável). Enquanto um item não tiver veredito, a branch dele não é fechada.
+Este documento é o inventário. Os vereditos ficam em
+`analise-prs/VEREDITOS-RECUPERACAO-261116.md`, e cada linha dos blocos A1, A2 e A3, e cada item
+da fila do bloco C, precisa de um: **recuperar** (a funcionalidade falta na `main` e o trabalho é
+aproveitável — então é terminado e entra por PR) ou **obsoleto** (com motivo verificável).
+Enquanto um item não tiver veredito, a branch dele não é fechada.
 
 **NÃO VERIFICADO** neste documento: se cada arquivo do bloco A corresponde a funcionalidade que
 falta na `main`. A prova byte a byte diz que o arquivo não está lá; ela não diz se o
-comportamento dele chegou por outro caminho, com outro nome. É exatamente esse o veredito que
-falta, e ele é feito arquivo por arquivo.
+comportamento dele chegou por outro caminho, com outro nome.
+
+## Reproduzir
+
+Os dois scripts da medição estão em `scripts/recuperacao-branches/`, com a ordem e a variável
+`OUT` documentadas no README de lá.
