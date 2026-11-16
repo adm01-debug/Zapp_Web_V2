@@ -3456,6 +3456,45 @@ export type Database = {
         }
         Relationships: []
       }
+      copilot_retention_aggregates: {
+        Row: {
+          agg_date: string
+          avg_temperature: number | null
+          brinde_complete: number
+          created_at: string
+          id: string
+          insights_gen: number
+          profile_id: string
+          sessions_opened: number
+          ticks_processed: number
+          updated_at: string
+        }
+        Insert: {
+          agg_date: string
+          avg_temperature?: number | null
+          brinde_complete?: number
+          created_at?: string
+          id?: string
+          insights_gen?: number
+          profile_id: string
+          sessions_opened?: number
+          ticks_processed?: number
+          updated_at?: string
+        }
+        Update: {
+          agg_date?: string
+          avg_temperature?: number | null
+          brinde_complete?: number
+          created_at?: string
+          id?: string
+          insights_gen?: number
+          profile_id?: string
+          sessions_opened?: number
+          ticks_processed?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       copilot_seller_settings: {
         Row: {
           opted_in: boolean
@@ -12807,6 +12846,15 @@ export type Database = {
         }[]
       }
       close_stale_calls: { Args: never; Returns: number }
+      commit_copilot_tick: {
+        Args: {
+          p_insights?: Json
+          p_patch: Json
+          p_session_id: string
+          p_state_version: number
+        }
+        Returns: number
+      }
       complete_crm_sync_outbox: {
         Args: {
           p_company_id: string
@@ -14667,6 +14715,7 @@ export type Database = {
           waiting_contacts: number
         }[]
       }
+      run_copilot_retention: { Args: never; Returns: undefined }
       run_crm_sync_outbox_cleanup: {
         Args: {
           p_dead_letter_days?: number
