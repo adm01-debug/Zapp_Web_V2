@@ -221,6 +221,12 @@ export async function handleGmailWebhook(req: Request): Promise<Response> {
     // nem pelo cron, que parte do mesmo cursor. Mesma regra que o cron ja
     // aplica em runGmailCronIncrementalSync ("cursor preservado").
     let mensagensFalhadas = 0;
+    // Revisao do Devin/Codex na #3215: 404 e ausencia DEFINITIVA (a mensagem foi
+    // apagada entre o history e a leitura). Contar como falha travaria o cursor
+    // para sempre -- nem este webhook nem o cron de 1 min veriam os e-mails
+    // seguintes enquanto o history continuasse valido. 404 nao bloqueia o cursor;
+    // timeout, 429 e 5xx continuam bloqueando.
+    let mensagensAusentes = 0;
 
     // Process each new message
     for (const msgId of newMessageIds) {
@@ -230,7 +236,15 @@ export async function handleGmailWebhook(req: Request): Promise<Response> {
           signal: AbortSignal.timeout(GMAIL_TIMEOUT_MS),
         });
 
-        if (!msgResponse.ok) { mensagensFalhadas += 1; continue; }
+        if (!msgResponse.ok) {
+          if (msgResponse.status === 404) {
+            log.warn("Mensagem nao existe mais no Gmail; cursor pode avancar", { msgId });
+            mensagensAusentes += 1;
+          } else {
+            mensagensFalhadas += 1;
+          }
+          continue;
+        }
         const msg = await msgResponse.json();
 
         const headers = msg.payload.headers || [];
@@ -341,10 +355,11 @@ export async function handleGmailWebhook(req: Request): Promise<Response> {
     // deliberado (ver o comentario do reauth acima) -- o que garante a nova
     // tentativa e o cursor PARADO: a proxima notificacao do Pub/Sub e o cron
     // de 1 minuto partem do mesmo history_id e tornam a ver a mensagem.
+    const processadas = newMessageIds.size - mensagensFalhadas - mensagensAusentes;
     if (mensagensFalhadas > 0) {
-      log.warn("Mensagem nao persistida; cursor preservado para nova tentativa", { falhas: mensagensFalhadas, total: newMessageIds.size });
-      log.done(200, { processed: newMessageIds.size - mensagensFalhadas, falhas: mensagensFalhadas, cursor_preservado: true });
-      return jsonResponse({ acknowledged: true, processed: newMessageIds.size - mensagensFalhadas, falhas: mensagensFalhadas, cursor_preservado: true }, 200, req);
+      log.warn("Mensagem nao persistida; cursor preservado para nova tentativa", { falhas: mensagensFalhadas, ausentes: mensagensAusentes, total: newMessageIds.size });
+      log.done(200, { processed: processadas, falhas: mensagensFalhadas, ausentes: mensagensAusentes, cursor_preservado: true });
+      return jsonResponse({ acknowledged: true, processed: processadas, falhas: mensagensFalhadas, ausentes: mensagensAusentes, cursor_preservado: true }, 200, req);
     }
 
     // Update history_id — CAS pelo valor LIDO no início (igual a
@@ -361,8 +376,8 @@ export async function handleGmailWebhook(req: Request): Promise<Response> {
       log.info("History cursor moved by another flow; keeping newer cursor");
     }
 
-    log.done(200, { processed: newMessageIds.size });
-    return jsonResponse({ acknowledged: true, processed: newMessageIds.size }, 200, req);
+    log.done(200, { processed: processadas, ausentes: mensagensAusentes });
+    return jsonResponse({ acknowledged: true, processed: processadas, ausentes: mensagensAusentes }, 200, req);
   } catch (error) {
     log.error("Gmail Webhook error", { error: error instanceof Error ? error.message : String(error) });
     log.done(200);
