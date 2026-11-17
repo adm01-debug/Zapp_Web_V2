@@ -308,6 +308,31 @@ type TalkXAudienceRpc = (name: string, args: Record<string, unknown>) => Promise
 const AUDIENCE_RPC_PAGE_LIMIT = 1000;
 
 /**
+ * A contagem só vira número na tela depois de validada. Antes, `data` fora do
+ * formato (null, array, `eligible` ausente ou não numérico) caía em
+ * `Number(undefined ?? 0)` = 0: a tela mostrava "0 contatos" e esse zero era
+ * salvo no segmento, sem distinguir público vazio de consulta que falhou.
+ * Falha fechada, igual ao resto do motor.
+ */
+function eligibleFromRpc(value: unknown): number {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    throw new Error('Resposta inválida da consulta de audiência.');
+  }
+  const raw = value as Record<string, unknown>;
+  if (raw.mode !== undefined && raw.mode !== 'count') {
+    throw new Error('Modo inválido na resposta da consulta de audiência.');
+  }
+  // `typeof === 'number'` antes do inteiro: sem isso, `Number(null)`,
+  // `Number('')`, `Number(false)` e `Number([])` são todos 0, e um `eligible`
+  // nulo — o caso provável num jsonb — voltaria a virar público zero em
+  // silêncio, que é o defeito que esta guarda existe para fechar.
+  if (typeof raw.eligible !== 'number' || !Number.isInteger(raw.eligible) || raw.eligible < 0) {
+    throw new Error('Contagem inválida (eligible) na resposta da audiência.');
+  }
+  return raw.eligible;
+}
+
+/**
  * X017 — a contagem do público é decidida no servidor pela RPC
  * talkx_resolve_audience (X016), com o MESMO critério de elegibilidade do
  * snapshot (deleted_at/LID/telefone/visibilidade). Antes o navegador contava via
@@ -324,8 +349,7 @@ export async function countAudience(rules: SegmentRules | null | undefined, segm
     p_after: null,
   });
   if (error) throw new Error(error.message);
-  const result = data as { eligible?: number } | null;
-  return Number(result?.eligible ?? 0);
+  return eligibleFromRpc(data);
 }
 
 export interface AudienceContact { id: string; name: string; nickname: string | null; phone: string; company: string | null; avatar_url: string | null; tags: string[] | null }

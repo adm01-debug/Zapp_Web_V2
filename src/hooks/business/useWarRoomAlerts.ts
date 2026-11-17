@@ -147,8 +147,8 @@ export function useWarRoomAlerts(soundEnabled?: boolean) {
 
           // Aviso de desktop pela API `Notification` direta: o push exige Service Worker
           // de aplicação (desligado em `config/service_worker.ts`) e falhava em silêncio.
-          // Respeita o "Alertas do navegador" do painel.
-          if (settings.browserNotifications) {
+          // Respeita o "Alertas do navegador" do painel e o horário de silêncio.
+          if (settings.browserNotifications && !isQuietHours()) {
             showBrowserNotification(`⚠️ ${alert.title}`, alert.message, {
               tag: `warroom-${alert.id}`,
               requireInteraction: alert.alert_type === 'critical',
@@ -161,7 +161,7 @@ export function useWarRoomAlerts(soundEnabled?: boolean) {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [queryClient, playAlertSound, settings.browserNotifications]);
+  }, [queryClient, playAlertSound, settings.browserNotifications, isQuietHours]);
 
   // A segunda batida tem vida própria: este efeito (realtime) se refaz a cada mudança
   // de identidade de `playAlertSound`, e limpar o timer no cleanup

@@ -12,6 +12,14 @@
  *    Logo o nivel correto e h2 (h1 -> h2 -> h3, sem pular nivel).
  *  - o botao X (QueueAlertsDisplay.tsx) nao tinha nome; passa a ter
  *    "Dispensar alerta <tipo>".
+ *
+ * X048/recuperacao 17/11: o nome passou a trazer TAMBEM a fila --
+ * "Dispensar alerta da fila <fila>: <tipo>". Sem a fila, duas filas em alerta do
+ * mesmo tipo davam dois botoes de nome identico e quem usa leitor de tela nao
+ * sabia qual estava dispensando. Os dois alertas deste fixture sao da MESMA fila
+ * (q1 'Suporte'), em tipos diferentes, entao aqui a prova e que o tipo continua
+ * no nome; a distincao entre filas e provada em
+ * QueueAlertsDisplay.aria-fila.test.tsx.
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
@@ -143,7 +151,7 @@ describe('QueuesView — alertas de fila usam a contagem real de espera (R2-QUE-
     expect(screen.getAllByText('15').length).toBeGreaterThanOrEqual(2);
   });
 
-  it('mantem a ordem de cabecalhos (h1->h2->h3) e da nome ao botao de dispensar por tipo', async () => {
+  it('mantem a ordem de cabecalhos (h1->h2->h3) e da nome ao botao de dispensar por fila e tipo', async () => {
     const { container } = renderView();
 
     await waitFor(() => {
@@ -166,9 +174,11 @@ describe('QueuesView — alertas de fila usam a contagem real de espera (R2-QUE-
     expect(levels.indexOf(2)).toBeGreaterThanOrEqual(0);
     expect(levels.indexOf(3)).toBeGreaterThan(levels.indexOf(2));
 
-    // Causa 2 — nome acessivel: cada tipo de alerta da nome proprio ao botao X.
-    expect(screen.getByRole('button', { name: 'Dispensar alerta contatos aguardando' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Dispensar alerta taxa de atribuição' })).toBeInTheDocument();
+    // Causa 2 — nome acessivel: o nome traz a fila E o tipo, entao dois alertas
+    // da mesma fila continuam distinguiveis pelo tipo, e duas filas no mesmo
+    // tipo passam a ser distinguiveis pela fila.
+    expect(screen.getByRole('button', { name: 'Dispensar alerta da fila Suporte: contatos aguardando' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Dispensar alerta da fila Suporte: taxa de atribuição' })).toBeInTheDocument();
     expect(screen.getAllByRole('button', { name: /^Dispensar alerta / })).toHaveLength(2);
 
     // axe — ordem de cabecalhos sem violacao.
