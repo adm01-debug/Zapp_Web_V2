@@ -36,8 +36,12 @@ for br in $(git for-each-ref --format='%(refname:short)' refs/remotes/origin | g
     echo -e "$br\t$tip\tINCONCLUSIVA-ANCESTRAL\t-\t-\t-\t-" >> "$OUT/resumo.tsv"
     continue
   fi
-  # arquivos adicionados/modificados pela branch desde o ponto de bifurcacao
-  mapfile -t files < <(git diff --name-only --diff-filter=AMR "$mb" "$br" 2>/dev/null)
+  # Arquivos que a branch adiciona, modifica, renomeia ou cuja TROCA DE TIPO ela faz.
+  # O `T` cobre arquivo regular que virou symlink (e o contrario): sem ele a mudanca nao
+  # entra nem no filtro nem na passada de delecoes, e a branch sai zerada. Achado do Codex
+  # na PR #3192; medido nesta base: 0 pares, e a main nao tem symlink nenhum -- a guarda
+  # fica para execucao futura.
+  mapfile -t files < <(git diff --name-only --diff-filter=AMRT "$mb" "$br" 2>/dev/null)
   # Apagar arquivo TAMBEM e trabalho. Com o filtro `AMR` sozinho, uma branch cujo
   # trabalho e' remover codigo morto saia do inventario com tudo zerado, igual a uma
   # branch sem pendencia nenhuma -- e "nada a fazer" e justamente o que autoriza fechar
