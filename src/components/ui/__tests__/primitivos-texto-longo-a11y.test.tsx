@@ -63,6 +63,70 @@ describe('primitivos de UI com texto longo (120 caracteres)', () => {
     expect(innerSpan?.className).toContain('min-w-0');
   });
 
+  it('TabsTrigger: ícone e badge absoluto ficam filhos DIRETOS do trigger, fora do span que trunca', () => {
+    // Controle de regressão: as telas passam ícone + rótulo + badge como filhos
+    // diretos e contam com o `gap-*` do trigger (ContactTypeTabs.tsx:48-55,
+    // DiagnosticsView.tsx:152-159, DashboardTabs.tsx:28-42). Se o span de
+    // truncamento envolvesse todos os filhos, o gap pararia de separá-los e o
+    // `overflow:hidden` do `truncate` recortaria o badge `absolute`.
+    render(
+      <Tabs defaultValue="a">
+        <TabsList>
+          <TabsTrigger value="a" className="gap-2 relative">
+            <svg data-testid="icone" />
+            {TEXTO_120}
+            <span data-testid="badge" className="absolute -top-1 -right-1">
+              9+
+            </span>
+          </TabsTrigger>
+        </TabsList>
+        <TabsContent value="a">conteúdo</TabsContent>
+      </Tabs>,
+    );
+
+    const aba = screen.getByRole('tab');
+    const icone = screen.getByTestId('icone');
+    const badge = screen.getByTestId('badge');
+
+    // Filhos diretos do trigger: continuam itens do flex dele.
+    expect(icone.parentElement).toBe(aba);
+    expect(badge.parentElement).toBe(aba);
+
+    // O span de truncamento existe e contém SÓ o texto.
+    const spanTrunca = Array.from(aba.querySelectorAll('span')).find((s) =>
+      s.className.includes('truncate'),
+    );
+    expect(spanTrunca).toBeDefined();
+    expect(spanTrunca?.textContent).toBe(TEXTO_120);
+    expect(spanTrunca?.contains(icone)).toBe(false);
+    expect(spanTrunca?.contains(badge)).toBe(false);
+  });
+
+  it('TabsTrigger com asChild entrega role e atributos ao elemento do consumidor, sem span nosso', () => {
+    // Com `asChild` o Radix aplica role/ref/tabIndex/disabled ao filho imediato.
+    // Um span nosso roubaria esse papel do botão fornecido pela tela.
+    render(
+      <Tabs defaultValue="b">
+        <TabsList>
+          <TabsTrigger value="a" asChild disabled>
+            <button type="button" data-testid="botao">
+              A
+            </button>
+          </TabsTrigger>
+        </TabsList>
+        <TabsContent value="b">conteúdo</TabsContent>
+      </Tabs>,
+    );
+
+    const botao = screen.getByTestId('botao');
+    expect(botao.tagName).toBe('BUTTON');
+    expect(botao.getAttribute('role')).toBe('tab');
+    expect(botao).toBeDisabled();
+    // Nenhum span de truncamento foi inserido dentro do elemento do consumidor.
+    expect(botao.querySelector('span')).toBeNull();
+    expect(botao.textContent).toBe('A');
+  });
+
   it('Card: a caixa do pai encolhe (min-w-0) e o título/descrição quebram linha', () => {
     render(
       <Card data-testid="card">
