@@ -101,7 +101,7 @@ lockfile.
 É a remoção deliberada da TL-002, com veredito em
 `analise-prs/VEREDITOS-RECUPERACAO-261116.md`.
 
-### Chame o dono — 6 pares de workflow
+### Chame o dono — 7 pares de workflow
 
 Por regra, workflow de CI não entra sem decisão do dono. Nenhum destes foi recuperado nem
 descartado:
@@ -116,11 +116,24 @@ descartado:
 | `847ffd1c4` · `.github/workflows/ci.yml` | 2 de 529 |
 | `801b605aa` · `.github/workflows/deploy-functions.yml` | 1 de 641 |
 
+### Correção de 17/11 — o par que faltava adjudicar
+
+A revisão da #3196 apontou que um par do índice não recebeu veredito em nenhuma seção:
+`de9584f20` · `src/components/dashboard/goals/GoalsTable.tsx` (linha 58 do TSV). Conferido agora
+com `git diff origin/main de9584f20 -- src/components/dashboard/goals/GoalsTable.tsx`: a
+diferença é **uma classe de cor de ícone** — a `main` usa
+`text-[hsl(var(--primary-text))]` e a branch usava `text-primary-glow`. Nenhuma linha de
+comportamento. **Obsoleto:** a `main` está na forma por token, que é a convenção do repositório.
+
 ## O que isto conclui, e o que não conclui
 
-**Conclui:** as 71 branches fechadas não levaram funcionalidade embora. 57 dos 58 pares são
-obsoletos com prova nomeada, e o 58º é uma melhoria de acessibilidade de uma linha que está
-sendo recuperada.
+**Conclui:** as 71 branches fechadas não levaram funcionalidade embora — nos pares adjudicados.
+**Corrigido em 17/11:** a versão original dizia "57 dos 58 pares são obsoletos", o que contava
+como descartados os 7 workflows que esta mesma página deixa expressamente sem veredito. O
+fechamento correto dos 58 pares do índice é: **50 obsoletos** com prova nomeada (9 + 2 migrations
++ 11 de código + 18 de teste + 8 de artefato gerado + 2 já adjudicados antes), **1 melhoria de
+acessibilidade recuperada** (a de uma linha), e **7 pares de workflow sem veredito**, à espera do
+dono. 50 + 1 + 7 = 58.
 
 **Não conclui:** os 7 pares de workflow seguem sem veredito, por regra. E este documento cobre
 só as **71 branches já fechadas** — as demais branches do inventário da #3192 seguem na fila de

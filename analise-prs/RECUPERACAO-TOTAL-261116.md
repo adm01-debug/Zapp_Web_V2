@@ -74,10 +74,22 @@ incorporado". **Remover é trabalho**, e nenhuma das duas formas de remoção co
   `analise-prs/recuperacao-261116-remocoes-de-linha.tsv` — e **dois são migration**, a categoria
   de maior risco do inventário.
 
-Os dois achados são do Codex, na revisão desta PR. Outros três mecanismos corretos foram cobertos
-com impacto zero nesta base: modo de arquivo (`100644` contra `100755`), troca de tipo de arquivo
-(`T`, e a `main` não tem symlink nenhum) e branch já incorporada por merge, que passa a ser
-marcada `INCONCLUSIVA-ANCESTRAL` em vez de sair da fila em silêncio.
+Os dois achados são do Codex, na revisão desta PR. Outros três mecanismos foram cobertos com
+impacto zero nesta base: modo de arquivo (`100644` contra `100755`), branch já incorporada por
+merge — que passa a ser marcada `INCONCLUSIVA-ANCESTRAL` em vez de sair da fila em silêncio — e
+troca de tipo de arquivo (`T`).
+
+**Correção de 17/11 sobre a troca de tipo.** A revisão da #3195 mostrou que o `T` resolve só
+metade: ele faz a troca **entrar** na lista, mas a classificação seguinte decide por **conteúdo**,
+sem olhar o tipo. `01-gate-blob.sh:69-71` compara o modo num único caminho (blob igual no mesmo
+caminho); o caminho de "arquivo movido" (`:72`) aceita qualquer blob presente na `main` sem olhar
+modo; e `02-contencao-linha.py` descarta o modo ao ler a árvore (`:18-20`) e nunca o recebe, pois
+`unicos.tsv` só carrega `(branch, caminho, blob)` (`01-gate-blob.sh:73`). Reproduzido num repo
+descartável: `ponte.js` como arquivo regular contendo `target.js` na `main`, trocado por symlink
+na branch, sai **`CONTIDO`** — isto é, "já incorporado", embora a `main` ainda tenha um arquivo
+regular. Sem newline final, os blobs ficam iguais e a primeira etapa já o considera incorporado.
+**Efeito nesta base: nenhum** — 0 pares `T` encontrados e a `main` não tem symlink nenhum. A
+correção de código (levar o modo até o veredito) fica registrada e não foi aplicada.
 
 ## O recorte que importa
 
