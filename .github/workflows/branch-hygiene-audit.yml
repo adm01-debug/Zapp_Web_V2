@@ -232,12 +232,18 @@ jobs:
   publicar-kpi:
     name: Publicar kpi.json
     needs: audit
+    # SLA de code scanning vencido deixa o job `audit` vermelho, mas o kpi.json ja
+    # foi gerado e subiu como artefato antes disso: custo de CI nao deve deixar de
+    # ser publicado por causa de alerta de seguranca atrasado. Se nao houver
+    # artefato, o download falha alto, que e' o comportamento desejado.
+    if: ${{ !cancelled() }}
     # GA93: a escrita vive SO neste job, que baixa o artefato e abre a PR. Ele nao
     # executa nada de poda de branch, nem `git push` em branch alheia: a unica escrita
     # e' a branch de automacao que a propria action cria.
     permissions:
       contents: write # commit na branch `automation/kpi-actions`
       pull-requests: write # abrir/atualizar a PR do kpi.json
+      actions: write # aprovar os checks que nascem em action_required (ver ultimo passo)
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     steps:
@@ -252,7 +258,22 @@ jobs:
           name: kpi-actions-json
           path: docs/ci
 
+      - name: Regerar o README dos workflows com os numeros novos
+        # OBRIGATORIO, nao cosmetico: `ci.yml` roda
+        # `scripts/ci/render-workflow-docs.mjs --check`, que compara byte a byte o
+        # `docs/ci/README.md` commitado com o conteudo gerado — e o gerado embute
+        # `custo_semana_min` e `taxa_falha_7d` do kpi.json (render-workflow-docs.mjs:171-172).
+        # Publicar o JSON sem o README deixaria a PR semanal com a CI vermelha para
+        # sempre. O `--check` abaixo prova a consistencia ANTES de abrir a PR.
+        # O script usa apenas built-ins do node (`node:fs/promises`, `node:path`,
+        # `node:url`), entao nao precisa de `bun install`.
+        run: |
+          set -euo pipefail
+          node scripts/ci/render-workflow-docs.mjs
+          node scripts/ci/render-workflow-docs.mjs --check
+
       - name: Abrir ou atualizar PR do kpi.json
+        id: pull-request
         # Os numeros mudam toda semana, entao nao ha checagem de "mudou": a mesma branch
         # de automacao e' reaproveitada e a PR e' atualizada no lugar. Mesmo mecanismo e
         # mesmo pin de `inventario-estado-semanal.yml` e `types-sync.yml`.
@@ -268,7 +289,8 @@ jobs:
           title: 'chore: KPI do GitHub Actions (semanal)'
           body: |
             `docs/ci/kpi.json` regerado por `.github/workflows/branch-hygiene-audit.yml`
-            a partir da API de Actions do proprio repositorio (somente leitura).
+            a partir da API de Actions do proprio repositorio (somente leitura), e
+            `docs/ci/README.md` regerado a partir dele.
 
             Alimenta as colunas de custo e de taxa de falha de
             `scripts/ci/render-workflow-docs.mjs`.
@@ -278,3 +300,53 @@ jobs:
           labels: ci
           add-paths: |
             docs/ci/kpi.json
+            docs/ci/README.md
+
+      # PR aberto com GITHUB_TOKEN nao dispara workflows: os checks nascem em
+      # action_required. Mesmo destravamento de `inventario-estado-semanal.yml:113-159`
+      # e `types-sync.yml:689`, restrito ao head sha E a branch desta PR.
+      - name: Destravar os checks do PR do kpi
+        if: steps.pull-request.outputs.pull-request-number != ''
+        continue-on-error: true
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        env:
+          PR_HEAD_SHA: ${{ steps.pull-request.outputs.pull-request-head-sha }}
+        with:
+          script: |
+            const headSha = process.env.PR_HEAD_SHA;
+            if (!headSha) {
+              core.warning('create-pull-request nao devolveu o head sha; nada a destravar.');
+              return;
+            }
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+            let pendentes = [];
+            for (let tentativa = 1; tentativa <= 6; tentativa += 1) {
+              const { data } = await github.rest.actions.listWorkflowRunsForRepo({
+                owner,
+                repo,
+                head_sha: headSha,
+                head_branch: 'automation/kpi-actions',
+                status: 'action_required',
+                per_page: 20,
+              });
+              pendentes = data.workflow_runs || [];
+              if (pendentes.length > 0) break;
+              await new Promise((resolve) => setTimeout(resolve, 10000));
+            }
+            const liberados = [];
+            const recusados = [];
+            for (const run of pendentes) {
+              try {
+                await github.rest.actions.approveWorkflowRun({ owner, repo, run_id: run.id });
+                liberados.push(run.name);
+              } catch (error) {
+                recusados.push(`${run.name} (${error.status})`);
+              }
+            }
+            await core.summary.addRaw([
+              '### Checks do PR do kpi.json',
+              `- head sha: \`${headSha}\``,
+              `- liberados: ${liberados.length > 0 ? liberados.join(', ') : 'nenhum'}`,
+              ...(recusados.length > 0 ? [`- recusados: ${recusados.join(', ')} — aprovar na aba Actions`] : []),
+            ].join('\n')).write();
