@@ -49,25 +49,37 @@ export default function RadarLive({ contactId, onDraftText, className, lastConta
   }, [lastContactMessageId, session, refreshSession]);
 
   // CV-055: cada sugestao nova do motor entra no historico da conversa. Sem isto o
-  // painel so mostra a mais recente e o que a IA disse antes se perde da tela.
-  const topo = live.suggestions[0];
+  // painel so mostra a rodada atual e o que a IA disse antes se perde da tela.
+  // `isDnd` e `pushInsight` saem do objeto ANTES do effect: com `panel.x` nas
+  // dependencias o react-hooks/exhaustive-deps exige o objeto `panel` inteiro, que
+  // muda a cada render e refaria o push sem necessidade.
+  // Revisao do Devin na #3222: registra TODAS as sugestoes da rodada, nao so a
+  // primeira. Uma rodada expoe ate tres (splitInsights, em useLiveSuggestions);
+  // guardar so a primeira perdia as outras duas, que o atendente tinha visto.
+  const sugestoes = live.suggestions;
+  const { isDnd, pushInsight } = panel;
   useEffect(() => {
-    if (!topo?.text || panel.isDnd) return;
-    panel.pushInsight(topo.text, topo.id);
-  }, [topo?.text, topo?.id, panel.isDnd, panel.pushInsight]);
+    if (isDnd) return;
+    for (const sugestao of sugestoes) {
+      if (sugestao?.text) pushInsight(sugestao.text, sugestao.id);
+    }
+  }, [sugestoes, isDnd, pushInsight]);
 
   if (!session) return null;
 
-  // O historico fica AQUI e nao dentro do RadarPanel: aquele arquivo tem 18,8 KB e
-  // esta acima do que eu consigo republicar neste ambiente com conferencia de hash
-  // confiavel. Visualmente ancorado logo abaixo do painel.
-  const historico = panel.timeline.length > 1 && !panel.collapsed && !panel.isDnd
-    ? panel.timeline.slice(0, -1).slice(-4).reverse()
-    : [];
+  // "Antes nesta conversa" = o que JA saiu de cena. O que ainda esta no painel nao
+  // se repete aqui. O bloco e renderizado DENTRO do RadarPanel: no desktop o painel
+  // e `position: fixed` e arrastavel, entao como irmao no ChatInputArea o historico
+  // ficava preso a caixa de digitacao (revisao do Devin e do Codex na #3222).
+  const idsNoPainel = new Set(sugestoes.map((sugestao) => sugestao.id));
+  const historico = panel.timeline
+    .filter((insight) => !insight.messageId || !idsNoPainel.has(insight.messageId))
+    .slice(-4)
+    .reverse();
 
   return (
-    <div className={className}>
     <RadarPanel
+      className={className}
       mode={panel.mode}
       collapsed={panel.collapsed}
       collapsedCards={panel.collapsedCards}
@@ -91,24 +103,7 @@ export default function RadarLive({ contactId, onDraftText, className, lastConta
       nextStep={live.nextStep}
       alerts={live.alerts}
       conversationId={contactId}
+      historico={historico}
     />
-      {historico.length > 0 && (
-        <section
-          aria-label="Insights anteriores desta conversa"
-          className="mt-1 rounded-md border border-border/60 bg-muted/30 px-2 py-1.5"
-        >
-          <h4 className="mb-1 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
-            Antes nesta conversa
-          </h4>
-          <ol className="space-y-1">
-            {historico.map((insight) => (
-              <li key={insight.id} className="line-clamp-2 text-[11px] leading-snug text-muted-foreground">
-                {insight.text}
-              </li>
-            ))}
-          </ol>
-        </section>
-      )}
-    </div>
   );
 }

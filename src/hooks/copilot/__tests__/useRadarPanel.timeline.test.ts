@@ -75,6 +75,26 @@ describe('useRadarPanel: historico de insights (CV-055)', () => {
     expect(result.current.timeline).toEqual([]);
   });
 
+  it('A -> B sem sugestoes -> A NAO traz o historico de A de volta', () => {
+    // Revisao do Devin e do Codex na #3223: esconder a lista nao basta. Se o registro
+    // continuar pertencendo a A enquanto B nao empurra nada, voltar para A ressuscita
+    // o historico. B aqui nao recebe nenhum insight, de proposito.
+    const { result, rerender } = renderHook(
+      ({ conversa }: { conversa: string }) => useRadarPanel('user-1', conversa),
+      { initialProps: { conversa: 'conversa-A' } },
+    );
+
+    act(() => result.current.pushInsight('segredo da conversa A', 'msg-1'));
+    act(() => result.current.pushInsight('outro segredo de A', 'msg-2'));
+    expect(result.current.timeline).toHaveLength(2);
+
+    rerender({ conversa: 'conversa-B' });
+    expect(result.current.timeline).toEqual([]);
+
+    rerender({ conversa: 'conversa-A' });
+    expect(result.current.timeline).toEqual([]);
+  });
+
   it('o historico nao vaza para o localStorage (e conteudo de conversa)', () => {
     const { result } = renderHook(() => useRadarPanel('user-1', 'conversa-A'));
 

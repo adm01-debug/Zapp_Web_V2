@@ -3,7 +3,7 @@
  * Gerencia modo de exibição, collapsed, DND, posição e cards recolhíveis.
  * Persiste por vendedor em localStorage.
  */
-import { useState, useCallback, useEffect, useRef } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 
 export type RadarMode = 'mini' | 'normal' | 'focus';
 
@@ -20,6 +20,10 @@ export interface RadarInsight {
   messageId?: string;
   timestamp: number;
 }
+
+// Referencia estavel para "sem historico": devolver [] novo a cada render faria
+// qualquer dependencia de `timeline` disparar sem nada ter mudado.
+const EMPTY_TIMELINE: RadarInsight[] = [];
 
 export const RADAR_CARD_IDS = [
   'stage',
@@ -116,25 +120,43 @@ export function useRadarPanel(userId: string | undefined, conversationId?: strin
   );
 
   // Historico de insights da conversa (CV-055).
-  const [timeline, setTimeline] = useState<RadarInsight[]>([]);
-  const contador = useRef(0);
-
-  // Trocar de conversa zera o historico: insight da conversa A nao pode aparecer na B.
-  useEffect(() => {
-    setTimeline([]);
-    contador.current = 0;
-  }, [conversationId]);
+  const [registro, setRegistro] = useState<{ conversa: string | undefined; itens: RadarInsight[] }>({
+    conversa: conversationId,
+    itens: EMPTY_TIMELINE,
+  });
+  // Ajuste de estado durante a RENDERIZACAO (padrao do React para "a prop mudou e o
+  // estado derivado precisa zerar"), e nao em effect: effect com setState dispara render
+  // em cascata e e barrado pelo react-hooks/set-state-in-effect.
+  // Revisao do Devin e do Codex na #3223: ESCONDER a lista nao bastava. Com
+  // `conversa` trocando so no proximo pushInsight, ir de A para B (sem sugestoes, ou em
+  // nao-perturbe) e voltar para A fazia o historico de A reaparecer. Aqui o registro da
+  // conversa anterior e descartado de verdade, no mesmo frame da troca.
+  if (registro.conversa !== conversationId) {
+    setRegistro({ conversa: conversationId, itens: EMPTY_TIMELINE });
+  }
+  const timeline = registro.conversa === conversationId ? registro.itens : EMPTY_TIMELINE;
 
   // A deduplicacao e minha, nao vem da branch: o chamador empurra a sugestao a cada
   // render, entao sem isto o mesmo insight entraria dezenas de vezes no historico.
-  const pushInsight = useCallback((text: string, messageId?: string) => {
-    if (!text) return;
-    setTimeline((prev) => {
-      if (prev.some((i) => i.text === text && i.messageId === messageId)) return prev;
-      contador.current += 1;
-      return [...prev, { id: `insight-${contador.current}`, text, messageId, timestamp: Date.now() }];
-    });
-  }, []);
+  const pushInsight = useCallback(
+    (text: string, messageId?: string) => {
+      if (!text) return;
+      setRegistro((prev) => {
+        const itens = prev.conversa === conversationId ? prev.itens : EMPTY_TIMELINE;
+        if (itens.some((i) => i.text === text && i.messageId === messageId)) return prev;
+        // Id vem do tamanho da lista: dentro de uma conversa os itens so sao
+        // acrescentados, nunca removidos, logo o numero nunca repete. Trocar de
+        // conversa zera a lista, e os ids podem recomecar do 1 sem colidir.
+        // (Um contador em useRef nao serve: nao se pode mexer em ref na
+        // renderizacao, onde o reset de conversa acontece -- react-hooks/refs.)
+        return {
+          conversa: conversationId,
+          itens: [...itens, { id: `insight-${itens.length + 1}`, text, messageId, timestamp: Date.now() }],
+        };
+      });
+    },
+    [conversationId],
+  );
 
   const setMode = useCallback((mode: RadarMode) => update({ mode }), [update]);
   const toggleCollapsed = useCallback(() => update({ collapsed: !state.collapsed }), [update, state.collapsed]);
