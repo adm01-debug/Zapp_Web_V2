@@ -51,10 +51,65 @@ Refeita sobre a medição nova:
 | candidatos (a branch tem mais comportamento que a `main` não tem) | **131** |
 
 Os números batem com a medição anterior (531 / 404 / 127); a diferença são as branches desta
-sessão. **Os 408 do lado "a `main` evoluiu depois" foram abertos um a um** — 405 pares lidos por
-diff contra a `main` atual, com 398 obsoletos por prova nomeada e **7 recuperações reais**, que
-entraram por PR própria (#3206, #3208, #3209). O veredito está em
-`analise-prs/VEREDITOS-BLOCO-C-261117.md` e nas três PRs.
+sessão. **Os 408 do lado "a `main` evoluiu depois" estão todos adjudicados.** Primeiro por diff
+contra a `main` atual, com 398 obsoletos por prova nomeada e **7 recuperações reais**, que
+entraram por PR própria (#3206, #3208, #3209) — veredito em
+`analise-prs/VEREDITOS-BLOCO-C-261117.md`. Depois, para fechar sem depender de contagem de
+leitura, os 408 foram submetidos a um filtro automático e o resto foi lido um a um; ver a seção
+seguinte.
+
+### Como os 408 foram fechados sem depender de "quantos eu li"
+
+Dois testes automáticos foram tentados como substitutos da prova de direção, e **os dois
+falharam** — vale registrar, porque explicam por que a prova de direção continua sendo a válida:
+
+| Teste | Quantos dos 408 ele acusa | Por que não serve |
+|---|---|---|
+| a linha de comportamento não existe em **nenhum** arquivo da `main` | **379** | acusa todo arquivo que a `main` reescreveu: a reescrita descarta a formulação antiga da branch por construção |
+| a linha foi **adicionada pela própria branch** (contra o ponto de bifurcação) e não existe em nenhum arquivo da `main` | **291** | mesmo problema: a branch e a `main` mexeram na mesma região em momentos diferentes |
+
+O segundo filtro, ainda assim, é útil como **triagem**: os 117 pares que ele descarta estão
+provados limpos (toda linha que a branch escreveu está na `main`), e os 291 que sobram colapsam
+em **135 caminhos distintos** — porque o veredito mora no arquivo, não no par: a mesma versão
+antiga de `useTalkXSegments.ts` aparece em 11 branches.
+
+Desses 135, **39 já estavam nomeados** nos vereditos publicados desta série. Os **96 restantes
+foram lidos um a um** — diff da branch contra o ponto de bifurcação, depois a versão da `main`,
+com grep de símbolo e de chamadores para não repetir os falsos positivos de extração:
+
+| Veredito | Caminhos |
+|---|---|
+| **obsoleto**, com `arquivo:linha` da `main` que cumpre o papel | **96** |
+| **recuperar** | **0** |
+| **dúvida** | **0** |
+
+Em 11 dos 96 a `main` é **superset estrito**: mesmo símbolo, mesmo nome, mais casos tratados
+(`useReacaoUnica` em `MessageReactions.tsx:40-110` ainda devolve ao servidor a reação removida no
+rollback; `moveConversationsStatus` em `conversationArchive.ts:84-138` tem fallback para banco sem
+a RPC; `useConnectionOptions:6-21` ganhou `onlyConnected`).
+
+Em **9 deles o sentido é o inverso**: recuperar a branch seria **regressão**, e a cadeia de provas
+teria errado se tivesse mandado aplicar. Os casos nomeados:
+
+| Arquivo | O que a branch faria |
+|---|---|
+| `src/components/catalog/WhatsAppTemplatesManager.tsx` | esconderia os botões de **supervisores**: a branch gatilha por `isAdmin` alegando RLS admin-only, mas a RLS real é `is_admin_or_supervisor(auth.uid())` (`20260315123034_*.sql:25`, `20260317222534_*.sql:52`) e a `main` usa `isSupervisor` (`:39`) |
+| `src/components/inbox/CRMAutoSync.tsx` | perderia o `CRMSyncButton` e os estados "CRM não configurado" / "contato não encontrado" |
+| `src/components/settings/SettingsView.tsx` | perderia o **salvamento** da aparência, hoje em `:225` via `saveAppearanceSettings` |
+| `src/components/dashboard/SentimentAlertsDashboard.tsx` | perderia o aviso de leitura incompleta (`:51-55`) |
+| `src/hooks/integrations/useWhatsAppStatus.ts` | perderia o cache de indisponibilidade de stories por instância |
+| `src/components/inbox/chat/ChatMessagesArea.tsx` | perderia o `cancelScroll` com distinção de rolagem programática |
+| `src/hooks/team-chat/useTeamMessages.ts` | reintroduziria o DELETE lendo `payload.new` em vez de `payload.old` |
+| `src/components/talkx/TalkXTemplates.tsx` | reintroduziria `overwrite` criando duplicata em vez de UPDATE pelo id |
+| `src/components/dashboard/DashboardView.tsx` | mandaria janela de período aos KPIs até em "hoje" (`:115-120`) e apagaria o aviso sobre `p_until` (`:225-229`) |
+
+As três armadilhas de extração previstas apareceram de novo e foram resolvidas por símbolo, não
+por caminho: `ai-response-contracts.ts` → `copilot-tick.ts:59-79` (`CopilotTier1Schema`, superset);
+`outbound-message.service.ts` → `src/lib/authenticatedUserId.ts` + `pertenceAoUsuarioAtual`
+(`:372-404`); `useMotionSeguro` → guarda global `<MotionConfig reducedMotion="user">` em
+`src/App.tsx:83-88`, com comentário dizendo que dispensa `MotionConfig` por tela. E o painel
+B·R·I·N·D·E de `CopilotPanel.tsx`/`InsightCard.tsx` virou o RADAR, ligado em
+`ChatInputArea.tsx:37,245` → `RadarLive.tsx` → `RadarPanel.tsx:380-441`.
 
 ### Dois pares que só existiram depois do meu próprio merge
 
@@ -104,15 +159,29 @@ próprio (`check-deployments-ledger.test.mjs`).
 - o gate (blob + modo, do ponto de bifurcação) e a contenção linha a linha foram **refeitos
   inteiros** contra a `main` atual, com os 11 merges desta sessão dentro
 - o fechamento por branch é aritmético e checado: **0 das 231** tem sobra entre total e classes
+  (as 12 deleções são outro eixo e não entram nessa soma — ver a seção acima)
 - os três itens que faltavam veredito individual (2 `ServiceStatusSheet`, 1 script) foram lidos por
   diff e nomeados acima, com o arquivo:linha da `main` que cumpre o papel
-- **NÃO VERIFICADO:** os **381 documentos de análise** não foram lidos um a um. Eles não são
-  funcionalidade do sistema: são o registro que outros agentes fizeram do próprio trabalho, e boa
-  parte foi superada pelos vereditos já mergeados nesta série. Eles continuam existindo enquanto a
-  branch existir — **só se perderiam se a branch fosse apagada**, e nenhuma foi.
-- **NÃO VERIFICADO:** os 201 `CONTIDO` não foram abertos por dentro. Por definicção da classe, toda
-  linha da branch existe na `main`; o que a classe não cobre é remoção de linha, e esse ponto cego
-  foi medido à parte (`PARCIAL-REMOÇÃO`, 7 pares, #3203).
+- os **96 caminhos** que ainda não tinham veredito nominal foram lidos um a um: **96 obsoletos,
+  0 a recuperar, 0 em dúvida**, cada um com o `arquivo:linha` da `main` que cumpre o papel
+- o **ponto cego da classe `CONTIDO` foi medido**, e está vazio. A classe garante que toda linha
+  da branch existe na `main`, mas não cobre remoção; medindo contra o **ponto de bifurcação** (não
+  contra a `main`), e exigindo que a linha esteja ausente do arquivo **inteiro** da branch:
+  **0 dos 201** removeram linha de comportamento que a `main` ainda tem. As 7 remoções reais da
+  série são outros arquivos, adjudicados na #3203
+- os **381 documentos de análise** foram varridos por referência, não lidos por inteiro: citam 36
+  caminhos que a `main` não tem; 16 existem na `main` em **outro caminho**, 4 estão em branches e
+  já têm veredito, e **10 nunca existiram em commit nenhum** do repositório — eram plano, não
+  código. Desses 10, a `main` cumpre 8 por outro nome (`src/lib/offlineQueue.ts` +
+  `useOfflineSendQueueDrain`, `src/hooks/auth/useAuth.tsx`, `src/components/copilot/VoiceDictation.tsx`
+  + `useAudioTranscription`, `ConversationTabs.navegacao.test.tsx`,
+  `AdminView.avatarRevogaUrl.test.tsx`, edge `message-delivery` com as constraints
+  `message_delivery_*`) e 2 vêm das PRs fechadas #2079 e #2464, cujas branches não existem mais:
+  não há o que recuperar de git, só a descrição
+- **NÃO VERIFICADO:** o **conteúdo** dos 381 documentos. A varredura cobriu as referências a
+  arquivo, que é por onde trabalho não feito apareceria; não li os 381 textos por inteiro. Eles
+  continuam existindo enquanto a branch existir — **só se perderiam se a branch fosse apagada**,
+  e nenhuma foi.
 - **nenhuma branch foi fechada, apagada ou alterada** em nenhum momento desta sessão.
 
 ## O que falta para poder fechar branch
