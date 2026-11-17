@@ -92,7 +92,7 @@ arquivo. Apagar a branch não perde nada destas:
 | `20261101133000_outbound_post_started.sql` | `claim_outbound_message`, `mark_outbound_post_started`, `resolve_unconfirmed_message`, `guard_message_delivery_internal_fields`, `messages.delivery_post_started_at`, `messages.manually_resolved_at` |
 | `20261113130200_conversation_status_regras_e_so_por_rpc.sql` | `set_conversation_status`, `set_conversations_status`, `enforce_conversation_status_transition`, `guard_conversation_status_direct_update`, trigger `trg_contacts_conversation_status_rpc_only` |
 | `20261113130400_varredura_mensagens_presas_em_enviando.sql` | `sweep_stuck_outbound_messages` |
-| `20261113130500_transfer_conversation_cas_sem_donn.sql` | `transfer_conversation` |
+| `20261113130500_transfer_conversation_cas_sem_dono.sql` | `transfer_conversation` |
 | `20261113130600_agendadas_conexao_do_contato_caida.sql` | `dispatch_scheduled_messages` |
 | `20261113140000_remove_enum_special_agent.sql` | tipo `app_role`, `has_role`, `effective_role`, `admin_set_role` |
 | `20261026200300_fix-talkx-cron-startup-timeout.sql` | `talkx_engine_cron_runs`, `trigger_talkx_engine_tick` |
