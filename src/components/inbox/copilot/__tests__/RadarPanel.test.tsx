@@ -178,3 +178,31 @@ describe('useRadarPanel CV-052/058', () => {
     expect(result.current.collapsedCards).not.toContain('stage');
   });
 });
+describe('RadarPanel CV-055 — historico dentro do painel flutuante', () => {
+  const historico = [
+    { id: 'insight-2', text: 'cliente pediu desconto', messageId: 'msg-2', timestamp: 2 },
+    { id: 'insight-1', text: 'cliente perguntou prazo', messageId: 'msg-1', timestamp: 1 },
+  ];
+
+  it('renderiza "Antes nesta conversa" DENTRO do contêiner do painel', () => {
+    // Revisao do Devin e do Codex na #3222: como irmao no ChatInputArea o historico
+    // ficava preso a caixa de digitacao e nao acompanhava o painel arrastavel. Este
+    // teste trava o bloco dentro do elemento com role="complementary".
+    render(<RadarPanel {...baseProps} historico={historico} />);
+    const painel = screen.getByRole('complementary', { name: /RADAR Copiloto/i });
+    const secao = screen.getByRole('region', { name: /Insights anteriores desta conversa/i });
+    expect(painel.contains(secao)).toBe(true);
+    expect(secao.textContent).toContain('cliente pediu desconto');
+    expect(secao.textContent).toContain('cliente perguntou prazo');
+  });
+
+  it('em nao-perturbe o historico nao aparece', () => {
+    render(<RadarPanel {...baseProps} isDnd historico={historico} />);
+    expect(screen.queryByRole('region', { name: /Insights anteriores desta conversa/i })).toBeNull();
+  });
+
+  it('sem historico nao renderiza a secao', () => {
+    render(<RadarPanel {...baseProps} historico={[]} />);
+    expect(screen.queryByRole('region', { name: /Insights anteriores desta conversa/i })).toBeNull();
+  });
+});
