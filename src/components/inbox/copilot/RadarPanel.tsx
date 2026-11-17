@@ -472,27 +472,32 @@ export function RadarPanel({
                     return null;
                 }
               })}
+              {/* Historico DENTRO do contedor que rola (revisao do Codex na #3226): o
+                  painel e `fixed` em `top-20` e nao tem altura maxima nem rolagem
+                  propria, entao uma secao IRMA desta div, com os cartoes expandidos
+                  ocupando `calc(100vh-180px)`, caia abaixo da area visivel e nao havia
+                  como rolar ate ela. Fica so em normal/focus: o modo `mini` ja corta de
+                  proposito (`suggestions.slice(0, 1)`). */}
+              {!!historico?.length && (
+                <section
+                  aria-label="Insights anteriores desta conversa"
+                  className="border-t border-border/40 px-1 pt-1.5"
+                >
+                  <h4 className="mb-1 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+                    Antes nesta conversa
+                  </h4>
+                  <ol className="space-y-1">
+                    {historico.map((insight) => (
+                      <li key={insight.id} className="line-clamp-2 text-[11px] leading-snug text-muted-foreground">
+                        {insight.text}
+                      </li>
+                    ))}
+                  </ol>
+                </section>
+              )}
             </div>
           )}
         </>
-      )}
-
-      {!isDnd && !!historico?.length && (
-        <section
-          aria-label="Insights anteriores desta conversa"
-          className="border-t border-border/40 px-3 py-1.5"
-        >
-          <h4 className="mb-1 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
-            Antes nesta conversa
-          </h4>
-          <ol className="space-y-1">
-            {historico.map((insight) => (
-              <li key={insight.id} className="line-clamp-2 text-[11px] leading-snug text-muted-foreground">
-                {insight.text}
-              </li>
-            ))}
-          </ol>
-        </section>
       )}
 
       {/* Footer — keyboard hint (CV-056) */}

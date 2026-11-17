@@ -196,6 +196,17 @@ describe('RadarPanel CV-055 — historico dentro do painel flutuante', () => {
     expect(secao.textContent).toContain('cliente perguntou prazo');
   });
 
+  it('o historico fica DENTRO da area rolavel, nao abaixo dela', () => {
+    // Revisao do Codex na #3226: o teste acima passava mesmo com o bug, porque a secao
+    // ja estava dentro do painel -- so que como IRMA da area rolavel. O painel e `fixed`
+    // em `top-20` e nao tem altura maxima nem rolagem propria, entao com os cartoes
+    // expandidos ocupando `calc(100vh-180px)` o historico caia abaixo do visivel e nao
+    // havia como rolar ate ele. Aqui exigimos o ancestral que rola.
+    render(<RadarPanel {...baseProps} historico={historico} />);
+    const secao = screen.getByRole('region', { name: /Insights anteriores desta conversa/i });
+    expect(secao.closest('.overflow-y-auto')).not.toBeNull();
+  });
+
   it('em nao-perturbe o historico nao aparece', () => {
     render(<RadarPanel {...baseProps} isDnd historico={historico} />);
     expect(screen.queryByRole('region', { name: /Insights anteriores desta conversa/i })).toBeNull();
