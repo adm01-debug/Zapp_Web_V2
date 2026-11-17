@@ -244,6 +244,21 @@ function stopRecordingBinding() {
   endRecording();
 }
 
+/**
+ * Rótulo do modificador "Ctrl" conforme a plataforma. No Mac a tecla é `⌘` e o
+ * usuário não encontra nenhum "Ctrl" no teclado — o atalho anunciado como
+ * `Ctrl+K` simplesmente não existe para ele. Melhoria recuperada da branch
+ * `claude/ga-ci-verde-261020`.
+ *
+ * `navigator.platform` está depreciado, mas é o único sinal disponível em todos
+ * os navegadores que o app suporta; o `navigator` ausente (SSR, teste de nó) cai
+ * em `Ctrl`, que é o comportamento de antes.
+ */
+function rotuloDoModificadorCtrl(): string {
+  const plataforma = typeof navigator === 'undefined' ? '' : navigator.platform || '';
+  return plataforma.includes('Mac') ? '⌘' : 'Ctrl';
+}
+
 export function useCustomShortcuts() {
   const { shortcuts, isRecording, pendingShortcut } = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
 
@@ -269,7 +284,7 @@ export function useCustomShortcuts() {
   const formatShortcut = useCallback((shortcut: ShortcutBinding) => {
     const binding = getActiveBinding(shortcut);
     const parts: string[] = [];
-    if (binding.modifiers.ctrlKey) parts.push('Ctrl');
+    if (binding.modifiers.ctrlKey) parts.push(rotuloDoModificadorCtrl());
     if (binding.modifiers.shiftKey) parts.push('Shift');
     if (binding.modifiers.altKey) parts.push('Alt');
     parts.push(binding.key === ' ' ? 'Space' : binding.key);

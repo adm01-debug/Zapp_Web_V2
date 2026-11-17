@@ -99,7 +99,12 @@ export function QuickReplyCardList({
                         <Button variant="ghost" size="sm" className="h-8 w-8 p-0" onClick={(e) => { e.stopPropagation(); onEdit(template); }}>
                           <Edit2 className="w-4 h-4" />
                         </Button>
-                        <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-destructive hover:text-destructive" onClick={(e) => { e.stopPropagation(); onDelete(template.id); }}>
+                        <Button
+                          variant="ghost" size="sm"
+                          className="h-8 w-8 p-0 text-destructive hover:text-destructive"
+                          aria-label={`Excluir resposta rápida: ${template.title}`}
+                          onClick={(e) => { e.stopPropagation(); onDelete(template.id); }}
+                        >
                           <Trash2 className="w-4 h-4" />
                         </Button>
                       </div>
