@@ -18,8 +18,9 @@ import {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Row = Record<string, any>;
 
-function fakeSupabase(db: { session: Row | null; messages: Row[]; staleUpdate?: boolean }) {
+function fakeSupabase(db: { session: Row | null; messages: Row[]; staleUpdate?: boolean; rpcError?: string }) {
   const writes = { updates: [] as Row[], inserts: [] as Row[] };
+  const rpcCalls = [] as Row[];
   // deno-lint-ignore no-explicit-any
    
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -61,8 +62,25 @@ function fakeSupabase(db: { session: Row | null; messages: Row[]; staleUpdate?: 
       };
       return q;
     },
+    // O tick fecha sessão + insights numa única transação (`commit_copilot_tick`).
+    // O dublê reproduz o contrato da função do banco: -1 quando a trava otimista
+    // barra, e NADA registrado nesse caso. Segue alimentando
+    // `writes.updates`/`writes.inserts` com o mesmo conteúdo de antes, para as
+    // asserções continuarem olhando patch e insights, não a forma da chamada.
+    rpc(fn: string, args: Row) {
+      if (fn !== "commit_copilot_tick") throw new Error(`rpc inesperada: ${fn}`);
+      rpcCalls.push(args);
+      if (db.rpcError) return Promise.resolve({ data: null, error: { message: db.rpcError } });
+      if (db.staleUpdate || !db.session || db.session.state_version !== args.p_state_version) {
+        return Promise.resolve({ data: -1, error: null });
+      }
+      writes.updates.push(args.p_patch);
+      const ins = (args.p_insights ?? []) as Row[];
+      writes.inserts.push(...ins.map((r) => ({ table: "copilot_insights", ...r })));
+      return Promise.resolve({ data: ins.length, error: null });
+    },
   };
-  return { client, writes };
+  return { client, writes, rpcCalls };
 }
 
 const SESSION: SessionRow = {
@@ -216,4 +234,48 @@ Deno.test("momentos-chave: só mensagens do contato contam; andar 2 só nos fort
   assertEquals(detectKeyMoments(msgs), ["objection"]);
   assertEquals(shouldUseTier2(["unanswered_question", "logo_sent"]), false);
   assertEquals(shouldUseTier2(["objection"]), true);
+});
+
+Deno.test("o commit é UM só: sessão e insights vão juntos, com o state_version novo", async () => {
+  const { client, rpcCalls, writes } = fakeSupabase({ session: SESSION, messages: MSGS });
+  const g = gerador({ analysis: TIER1, copilot: TIER2 });
+  const r = await handleCopilotTick(INPUT, { supabase: client, generate: g.generate, readFlag: () => Promise.resolve(true) });
+
+  // Uma chamada, não duas escritas: é isso que impede o cursor de andar sem os
+  // insights quando a segunda falha.
+  assertEquals(rpcCalls.length, 1);
+  const c = rpcCalls[0];
+  assertEquals(c.p_session_id, "s1");
+  assertEquals(c.p_state_version, 3); // a versão ESPERADA, não a nova
+  assertEquals(c.p_patch.state_version, 4);
+  assertEquals(c.p_insights.length, 6);
+  for (const i of c.p_insights) assertEquals(i.state_version, 4);
+  // o resultado reporta a contagem que o banco confirmou
+  assertEquals(r.result.insights, 6);
+  assertEquals(writes.inserts.length, 6);
+});
+
+Deno.test("trava otimista barrou: nem patch nem insight são gravados", async () => {
+  const { client, rpcCalls, writes } = fakeSupabase({ session: SESSION, messages: MSGS, staleUpdate: true });
+  const g = gerador({ analysis: TIER1, copilot: TIER2 });
+  const r = await handleCopilotTick(INPUT, { supabase: client, generate: g.generate, readFlag: () => Promise.resolve(true) });
+
+  assertEquals(r.result.skipped, "stale_state");
+  assertEquals(rpcCalls.length, 1);
+  // Antes da transação, o patch já tinha sido gravado aqui e só o insight ficava
+  // de fora. Agora o commit é atômico: nada foi escrito.
+  assertEquals(writes.updates.length, 0);
+  assertEquals(writes.inserts.length, 0);
+});
+
+Deno.test("commit falhou: vira falha do job com código, sem avançar o cursor", async () => {
+  const { client, writes } = fakeSupabase({ session: SESSION, messages: MSGS, rpcError: "deadlock detected" });
+  const g = gerador({ analysis: TIER1, copilot: TIER2 });
+  const err = await assertRejects(
+    () => handleCopilotTick(INPUT, { supabase: client, generate: g.generate, readFlag: () => Promise.resolve(true) }),
+    CopilotTickError,
+  );
+  assertEquals(err.code, "COPILOT_WRITE_FAILED");
+  assertEquals(writes.updates.length, 0);
+  assertEquals(writes.inserts.length, 0);
 });
