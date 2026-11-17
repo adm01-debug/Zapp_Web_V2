@@ -18,7 +18,7 @@ Base: `origin/main` @ `a56d9cb7`. Uma seção por caminho: a branch representati
 ## supabase/functions/_shared/ai-response-contracts.ts
 - branch: origin/claude/feat-copilot-radar-20261108-1800
 - veredito: OBSOLETO
-- prova: o `CopilotLiveOutputSchema`/`BrindeDeltaSchema` do branch foi reimplementado (com superset de campos) em outro módulo: `supabase/functions/_shared/copilot-tick.ts:59-79` — `CopilotTier1Schema` cobre `sale_stage` (enum `SALE_STAGES` em :49), `temperature`, `brinde` (budget/responsible/intention/quantity/deadline com o mesmo regex `^\d{4}-\d{2}-\d{2}$`/delivery), `comm_style`, `decision_role` (`DECISION_ROLES` em :54), `occasion`, `stakeholders`, `key_moments`, e ainda `brinde_evidence`, `risks`, `next_action`; `CopilotTier2Schema` (:84) valida as sugestões. Consumido por `supabase/functions/ai-jobs-worker/index.ts:261`. Os demais envelopes do arquivo (`ObjectionHandlerEnvelope`, `PriceAnchorEnvelope`, …) a `main` tem em `ai-response-contracts.ts:175-255` e o branch não.
+- prova: o `CopilotLiveOutputSchema`/`BrindeDeltaSchema` do branch foi reimplementado (com superset de campos) em outro módulo: `supabase/functions/_shared/copilot-tick.ts:59-79` — `CopilotTier1Schema` cobre `sale_stage` (enum `SALE_STAGES` em :49), `temperature`, `brinde` (budget/responsible/intention/quantity/deadline com o mesmo regex de data ISO/delivery), `comm_style`, `decision_role` (`DECISION_ROLES` em :54), `occasion`, `stakeholders`, `key_moments`, e ainda `brinde_evidence`, `risks`, `next_action`; `CopilotTier2Schema` (:84) valida as sugestões. Consumido por `supabase/functions/ai-jobs-worker/index.ts:261`. Os demais envelopes do arquivo (`ObjectionHandlerEnvelope`, `PriceAnchorEnvelope`, …) a `main` tem em `ai-response-contracts.ts:175-255` e o branch não.
 - uma frase: o contrato do copiloto ao vivo está validado na `main`, em `copilot-tick.ts` — caso clássico de função extraída para outro módulo.
 
 ## src/lib/offlineQueue.ts
@@ -30,7 +30,7 @@ Base: `origin/main` @ `a56d9cb7`. Uma seção por caminho: a branch representati
 ## e2e/quarantine.unit.mjs
 - branch: origin/claude_pink/cool-dijkstra-xk9ek2
 - veredito: OBSOLETO
-- prova: a `main` reescreveu o teste num contrato bem mais estrito, importando a fonte canônica: `e2e/quarantine.unit.mjs:7-8` (`import { GROUPS, GROUP_SHARDS } from '../scripts/e2e-isolated/runtime-contract.mjs'`) e `validarMatriz` (:58+) valida 5 grupos, shards autenticados, seleção exata por grupo, timeout por grupo (75/45) e união de 15 projetos. A versão do branch ainda falava de 4 grupos e `matrix.timeout_minutes` — formato que a `main` não usa mais (`${{ matrix.timeout-minutes }}`).
+- prova: a `main` reescreveu o teste num contrato bem mais estrito, importando a fonte canônica: `e2e/quarantine.unit.mjs:7-8` (`import { GROUPS, GROUP_SHARDS } from '../scripts/e2e-isolated/runtime-contract.mjs'`) e `validarMatriz` (:58+) valida 5 grupos, shards autenticados, seleção exata por grupo, timeout por grupo (75/45) e união de 15 projetos. A versão do branch ainda falava de 4 grupos e de `timeout_minutes` com sublinhado — formato que a `main` não usa mais.
 - uma frase: versão antiga de um teste de CI que a `main` já endureceu — adotá-la enfraqueceria a verificação.
 
 ## src/hooks/gamification/useAgentCelebrations.ts
@@ -96,7 +96,7 @@ Base: `origin/main` @ `a56d9cb7`. Uma seção por caminho: a branch representati
 ## src/hooks/tasks/workItemAggregates.ts
 - branch: origin/claude/fix-codex-findings-161016-1906
 - veredito: OBSOLETO
-- prova: a `main` usa escapes Unicode em `src/hooks/tasks/workItemAggregates.ts:102` — `return texto.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();` — e o branch trocou esse escape pelos caracteres combinantes literais. Os dois casam o mesmo intervalo U+0300–U+036F, logo o comportamento é idêntico; a diferença é só de grafia do regex. (Correção de 17/11: a versão anterior desta prova dizia o inverso, atribuindo o literal à `main`. Apontado por Devin na revisão da PR #3210.)
+- prova: em `src/hooks/tasks/workItemAggregates.ts:102` a `main` escreve o intervalo do regex de `normalizarBusca` como **escape Unicode de quatro digitos** (barra invertida + u0300 ate barra invertida + u036f), e o branch trocou esse escape pelos **caracteres combinantes literais**. Os dois casam o mesmo intervalo U+0300–U+036F, logo o comportamento é idêntico; a diferença é só de grafia do regex. (Correção de 17/11: a versão anterior desta prova dizia o inverso, atribuindo o literal à `main`. Apontado por Devin na revisão da PR #3210.)
 - uma frase: a busca que ignora acento já funciona igual na `main`; a diferença é só de grafia do regex.
 
 RESUMO: 16 obsoletos, 0 recuperar, 0 duvida
