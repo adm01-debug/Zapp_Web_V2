@@ -8,6 +8,11 @@
  * Prova: depois do upload o cache é invalidado nos dois alvos e o arquivo do
  * formato antigo é removido — e nada é removido quando a extensão continua a
  * mesma (a troca sobrescreve o próprio arquivo).
+ *
+ * A remoção tinha a mesma falha e ela ficou: `handleRemove` só chamava
+ * `refreshProfile`, que refaz o perfil da sessão e não toca no cache, logo a
+ * lista de membros seguia servindo a foto apagada. O último caso prova que
+ * remover invalida os mesmos dois alvos do upload.
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, fireEvent, waitFor } from '@testing-library/react';
@@ -59,7 +64,7 @@ function montar() {
     </QueryClientProvider>,
   );
   const input = utils.container.querySelector('input[type="file"]') as HTMLInputElement;
-  return { invalidate, input };
+  return { invalidate, input, utils };
 }
 
 async function enviar(input: HTMLInputElement, nome: string) {
@@ -111,6 +116,18 @@ describe('AvatarUpload — foto nova visível no app inteiro', () => {
 
     expect(mockUpload).toHaveBeenCalledWith('u1/avatar.jpg', expect.any(File), { upsert: true });
     expect(mockRemove).not.toHaveBeenCalled();
+  });
+
+  it('remover a foto invalida team-profiles-rpc e user-profile', async () => {
+    const { invalidate, utils } = montar();
+
+    fireEvent.click(utils.getByText('Remover'));
+
+    await waitFor(() => {
+      expect(invalidate).toHaveBeenCalledWith({ queryKey: ['team-profiles-rpc'] });
+      expect(invalidate).toHaveBeenCalledWith({ queryKey: ['user-profile'] });
+    });
+    expect(mockUpload).not.toHaveBeenCalled();
   });
 
   it('se a listagem falha, usa a extensão da URL do perfil como candidata', async () => {
