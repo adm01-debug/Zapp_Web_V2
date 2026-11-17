@@ -246,9 +246,28 @@ export async function ensureValidToken(
   return tokens.access_token;
 }
 
+/**
+ * Erro de HTTP da API do Gmail com o status preservado. Sem o status, quem
+ * chama nao consegue separar ausencia DEFINITIVA (404: a mensagem foi apagada
+ * de vez) de falha recuperavel (timeout, 429, 5xx) -- e tratar as duas igual
+ * trava o cursor para sempre no primeiro e-mail apagado.
+ */
+export class GmailHttpError extends Error {
+  constructor(readonly status: number, message: string) {
+    super(message);
+    this.name = "GmailHttpError";
+  }
+}
+
+/** 404 em GET /messages/{id}: a mensagem nao existe mais e reler nunca vai recupera-la. */
+export function isGmailMessageGone(error: unknown): boolean {
+  return error instanceof GmailHttpError && error.status === 404;
+}
+
 export async function gmailFetch<T = Record<string, unknown>>(accessToken: string, path: string): Promise<T> {
   const response = await fetch(`${GMAIL_API}${path}`, { headers: { Authorization: `Bearer ${accessToken}` } });
-  if (!response.ok) throw new Error(`Gmail API error (${response.status}): ${await response.text()}`);
+  // Mensagem identica a de antes: ha log e teste que casam com este texto.
+  if (!response.ok) throw new GmailHttpError(response.status, `Gmail API error (${response.status}): ${await response.text()}`);
   return response.json() as Promise<T>;
 }
 
@@ -327,6 +346,10 @@ export async function syncMessageIds(supabase: SupabaseClient, accountId: string
   const accountEmail = gmailAccount.email_address.toLowerCase();
   const results: Array<{ id: string; threadId: string; subject: string }> = [];
   const failed: Array<{ id: string; error: string }> = [];
+  // Mensagem apagada entre o history e a leitura. NAO entra em `failed`: quem
+  // chama usa `failed > 0` para preservar o cursor, e um e-mail que nao existe
+  // mais nunca sairia dessa fila -- travaria toda a sincronizacao seguinte.
+  const ausentes: Array<{ id: string }> = [];
   const affectedLocalThreadIds = new Set<string>();
 
   for (const messageId of [...new Set(messageIds)]) {
@@ -373,6 +396,11 @@ export async function syncMessageIds(supabase: SupabaseClient, accountId: string
       results.push({ id: message.id, threadId: message.threadId, subject });
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : String(error);
+      if (isGmailMessageGone(error)) {
+        log.warn(`Mensagem ${messageId} nao existe mais no Gmail; cursor pode avancar`, { messageId });
+        ausentes.push({ id: messageId });
+        continue;
+      }
       log.error(`Error syncing message ${messageId}`, { error: errorMessage });
       failed.push({ id: messageId, error: errorMessage });
     }
@@ -383,7 +411,7 @@ export async function syncMessageIds(supabase: SupabaseClient, accountId: string
   // sync claim and its updated_at fencing token. Updating gmail_accounts here
   // would invalidate that token and could let a stale worker overwrite a newer
   // success after a partial message failure.
-  return { synced: results.length, failed: failed.length, failures: failed, messages: results };
+  return { synced: results.length, failed: failed.length, failures: failed, messages: results, ausentes: ausentes.length };
 }
 
 const GMAIL_MESSAGES_MAX_PAGES = 100;
