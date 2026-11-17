@@ -22,6 +22,11 @@ export const SkipLink = forwardRef<HTMLAnchorElement, SkipLinkProps>(function Sk
     const target = document.querySelector(href);
     if (target) {
       target.scrollIntoView({ behavior: 'smooth' });
+      // Alvos como <nav>/<section> não são focáveis por padrão: sem o tabindex=-1
+      // o `.focus()` não move o foco, e o atalho vira só um scroll — o próximo Tab
+      // continua do próprio atalho, não do conteúdo. `#main-navigation`
+      // (Sidebar.tsx:101) é exatamente esse caso hoje.
+      if (!target.hasAttribute('tabindex')) target.setAttribute('tabindex', '-1');
       (target as HTMLElement).focus?.();
     }
   };
