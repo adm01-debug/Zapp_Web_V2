@@ -206,10 +206,18 @@ próprio (`check-deployments-ledger.test.mjs`).
   6 caminhos sem classe. O erro foi de método: conferi só 16 dos 20 caminhos ausentes e contei a
   divisão a partir dessa lista parcial. Apontado por Codex na revisão desta PR; a medição refeita
   sobre os 36 inteiros dá 16 + 9 + 11.
-- **NÃO VERIFICADO:** o **conteúdo** dos 381 documentos. A varredura cobriu as referências a
-  arquivo, que é por onde trabalho não feito apareceria; não li os 381 textos por inteiro. Eles
-  continuam existindo enquanto a branch existir — **só se perderiam se a branch fosse apagada**,
-  e nenhuma foi.
+- o **conteúdo dos 381 documentos foi lido por inteiro** (510.494 bytes, 381 de 381), depois que
+  esta linha dizia o contrário. A varredura por referência a arquivo, acima, não pegava uma
+  classe: pendência ou regra de negócio descrita em prosa sem citar arquivo. Dos **87**
+  candidatos extraídos, **58 já estão na `main`** com `arquivo:linha`, **8 não são
+  funcionalidade** e **21 estão ausentes** — destes, **1** é trabalho parcial, **11** são
+  DDL/cron/env (regra 8), **6** são endurecimento de edge e **3** não se sustentaram na
+  conferência (1 + 11 + 6 + 3 = 21). O trabalho parcial é este:
+  `src/hooks/copilot/useDataMasking.ts:40` (CV-114, mascara CPF/CNPJ/e-mail/telefone/cartão/CEP),
+  `useLgpdFilter.ts:20`, `usePIIDetector.ts:41` e `src/components/copilot/TransparencyLabel.tsx:22`
+  estão prontos e testados com **zero consumidores**, enquanto doze pontos do front mandam texto
+  de conversa para a IA sem máscara. Detalhe e vereditos em
+  `analise-prs/VARREDURA-CONTEUDO-381-DOCS-261117.md`
 - **nenhuma branch foi fechada, apagada ou alterada** em nenhum momento desta sessão.
 
 ## O que falta para poder fechar branch
