@@ -10,9 +10,9 @@ Base: `origin/main` @ `a56d9cb7`. Uma seção por caminho: a branch representati
 
 ## src/components/settings/AvatarUpload.tsx
 - branch: origin/claude/fix-unit-tests-pre-existentes-261024-1700
-- veredito: OBSOLETO
-- prova: `src/components/settings/AvatarUpload.tsx:20-31` (`formatoAnterior`/`formatoDaUrl`, C-1), `:53-67` (nome estável `<id>/avatar.<ext>` + listagem da pasta antes do upload), `:92-106` (remoção do formato órfão + `invalidateQueries(['team-profiles-rpc'])` e `['user-profile']`)
-- uma frase: a `main` já tem nome estável com upsert, limpeza do arquivo órfão e invalidação de cache no upload; só o `handleRemove` da `main` usa apenas `refreshProfile()` (`:125-128`), diferença de troca, não melhoria perdida.
+- veredito: RECUPERADO (parcial) — PR #3212
+- prova: o upload da `main` é superset: `src/components/settings/AvatarUpload.tsx:20-31` (`formatoAnterior`/`formatoDaUrl`, C-1), `:53-67` (nome estável `<id>/avatar.<ext>` + listagem da pasta antes do upload), `:92-106` (remoção do formato órfão + `invalidateQueries(['team-profiles-rpc'])` e `['user-profile']`). **Mas o `handleRemove` não era**: a `main` só chamava `refreshProfile()` (`:125-128`), que em `src/hooks/auth/useAuth.tsx:207-212` refaz apenas o perfil da sessão e **não toca no cache do react-query**; a lista de membros (`src/hooks/crm/useTeamProfiles.ts:9-22`, `queryKey: ['team-profiles-rpc']`, `staleTime: 30_000`) seguia servindo a foto apagada. A branch invalidava os dois alvos ali (`:113-114` dela). Recuperado na PR #3212, com teste que falha sem o fix.
+- uma frase: único dos 96 em que havia melhoria perdida de verdade — remover a foto não avisava o resto da equipe; (Correção de 17/11: a primeira versão deste veredito chamou a diferença de "troca, não melhoria perdida". Estava errado. Apontado por Devin na revisão da PR #3210 e conferido no código.)
 
 ## src/hooks/analytics/useGoalsDashboard.ts
 - branch: origin/claude/ecstatic-bardeen-twiveb
@@ -98,4 +98,4 @@ Base: `origin/main` @ `a56d9cb7`. Uma seção por caminho: a branch representati
 - prova: `e2e/fixtures/supabase-env.ts:45-62` (`isolatedConfiguration` com validação do JWT anon), `:67-75` (precedência isolado > override > arquivo e `SUPABASE_STORAGE_KEY`); única diferença é `!Object.is(key, appKey)` no lugar de `key !== appKey` (`:54`)
 - uma frase: o modo isolado de E2E da branch está na `main` praticamente linha a linha, com a comparação de chave mais estrita.
 
-RESUMO: 16 obsoletos, 0 recuperar, 0 duvida
+RESUMO: 15 obsoletos, 1 recuperado (PR #3212), 0 duvida
