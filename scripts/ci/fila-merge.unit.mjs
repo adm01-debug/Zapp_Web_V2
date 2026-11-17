@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { classificar, decidir, estadoDoCheck, checksObrigatorios, resolverDesconhecidos, confirmarCandidato } from './fila-merge.mjs';
+import { classificar, decidir, estadoDoCheck, checksObrigatorios, resolverDesconhecidos, confirmarCandidato, listaSaturada, LIMITE_PRS } from './fila-merge.mjs';
 
 const OBRIG = ['🧪 Unit Tests', 'Contrato DB offline'];
 const ok = (name) => ({ __typename: 'CheckRun', name, status: 'COMPLETED', conclusion: 'SUCCESS', startedAt: '2026-10-15T10:00:00Z' });
@@ -39,10 +39,14 @@ test('os checks obrigatórios saem do baseline do settings-guard (fonte única)'
   assert.ok(lista.length > 0);
 });
 
-test('estado do check: ausente e em andamento são pendentes; cancelado não conta como falha', () => {
+test('estado do check: ausente e em andamento são pendentes; cancelado é encerrado, não falha', () => {
   assert.equal(estadoDoCheck([], '🧪 Unit Tests'), 'pendente');
   assert.equal(estadoDoCheck([rodando('🧪 Unit Tests')], '🧪 Unit Tests'), 'pendente');
-  assert.equal(estadoDoCheck([{ ...ok('🧪 Unit Tests'), conclusion: 'CANCELLED' }], '🧪 Unit Tests'), 'pendente');
+  // CANCELLED/ACTION_REQUIRED/STALE terminaram sem sucesso e sem culpar o código, e
+  // não voltam a rodar sozinhos: estado próprio, nem 'falhou' nem 'pendente'.
+  assert.equal(estadoDoCheck([{ ...ok('🧪 Unit Tests'), conclusion: 'CANCELLED' }], '🧪 Unit Tests'), 'encerrado');
+  assert.equal(estadoDoCheck([{ ...ok('🧪 Unit Tests'), conclusion: 'ACTION_REQUIRED' }], '🧪 Unit Tests'), 'encerrado');
+  assert.equal(estadoDoCheck([{ ...ok('🧪 Unit Tests'), conclusion: 'STALE' }], '🧪 Unit Tests'), 'encerrado');
   assert.equal(estadoDoCheck([falhou('🧪 Unit Tests')], '🧪 Unit Tests'), 'falhou');
   assert.equal(estadoDoCheck([{ ...ok('🧪 Unit Tests'), conclusion: 'SKIPPED' }], '🧪 Unit Tests'), 'passou');
 });
@@ -177,4 +181,32 @@ test('confirmarCandidato: só autoriza o próximo não recusado, com ninguém em
   assert.equal(confirmarCandidato({ acao: 'esperar', emVoo: [9], bloqueadas: [] }, 2), false);
   assert.equal(confirmarCandidato({ acao: 'atualizar', pr: 1, fila: [1], restantes: [], bloqueadas: [] }, 2), false);
   assert.equal(confirmarCandidato({ acao: 'nada', bloqueadas: [] }, 2), false);
+});
+
+test('classificar: atualizada com check obrigatório cancelado SAI da fila; BEHIND continua nela', () => {
+  const cancelado = { ...ok('Contrato DB offline'), conclusion: 'CANCELLED' };
+  const rollup = [ok('🧪 Unit Tests'), cancelado];
+  // Já atualizada: nada vai rodar de novo sozinho, então ocupar a vez travaria a fila.
+  assert.equal(classificar(pr(1, { mergeStateStatus: 'BLOCKED', statusCheckRollup: rollup }), OBRIG), 'bloqueada');
+  assert.equal(classificar(pr(1, { mergeStateStatus: 'CLEAN', statusCheckRollup: rollup }), OBRIG), 'bloqueada');
+  // BEHIND: o update-branch gera head novo e os checks rodam outra vez — segue na fila.
+  assert.equal(classificar(pr(1, { statusCheckRollup: rollup }), OBRIG), 'aguardando');
+});
+
+test('decidir: CI cancelada numa PR atualizada não segura a fila para sempre (Codex e Devin, #3231)', () => {
+  const cancelados = OBRIG.map((n) => ({ ...ok(n), conclusion: 'CANCELLED' }));
+  const prs = [pr(1, { mergeStateStatus: 'BLOCKED', statusCheckRollup: cancelados }), pr(2)];
+  const d = decidir(prs, OBRIG);
+  // Antes do fix este caso devolvia { acao: 'esperar', emVoo: [1] } em toda execução.
+  assert.equal(d.acao, 'atualizar');
+  assert.equal(d.pr, 2);
+  assert.deepEqual(d.bloqueadas, [1]);
+});
+
+test('lista saturada é recusada: decidir com página cortada quebraria FIFO e serialização', () => {
+  const cheia = Array.from({ length: LIMITE_PRS }, (_, i) => pr(i + 1));
+  assert.equal(listaSaturada(cheia), true);
+  assert.equal(listaSaturada(cheia.slice(0, LIMITE_PRS - 1)), false);
+  assert.equal(listaSaturada([]), false);
+  assert.ok(LIMITE_PRS > 100, 'o limite tem de caber a folga real do repo');
 });

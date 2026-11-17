@@ -50,10 +50,15 @@ export function checksObrigatorios() {
 
 const PASSOU = new Set(['SUCCESS', 'SKIPPED', 'NEUTRAL']);
 const FALHOU = new Set(['FAILURE', 'TIMED_OUT', 'STARTUP_FAILURE', 'ERROR']);
+// Conclusões que terminaram SEM sucesso e sem veredito sobre o código. Não voltam a
+// rodar por conta própria, então para uma PR já atualizada não são o mesmo que
+// "pendente" — ver `classificar` (Codex e Devin na PR #3231).
+const ENCERRADO = new Set(['CANCELLED', 'ACTION_REQUIRED', 'STALE']);
 
-// Estado de UM check obrigatório no head da PR: 'passou' | 'falhou' | 'pendente'.
-// CANCELLED e ACTION_REQUIRED contam como pendente: não são defeito do código, e
-// a próxima atualização roda o check de novo.
+// Estado de UM check obrigatório no head da PR:
+// 'passou' | 'falhou' | 'encerrado' | 'pendente'.
+// 'encerrado' não é falha (cancelar um run não é defeito do código), mas também não
+// termina sozinho: quem decide o que fazer com isso é `classificar`.
 export function estadoDoCheck(rollup, nome) {
   const entradas = (rollup ?? []).filter((c) => (c.name ?? c.context) === nome);
   if (entradas.length === 0) return 'pendente';
@@ -67,6 +72,7 @@ export function estadoDoCheck(rollup, nome) {
   if (atual.status !== 'COMPLETED') return 'pendente';
   if (PASSOU.has(atual.conclusion)) return 'passou';
   if (FALHOU.has(atual.conclusion)) return 'falhou';
+  if (ENCERRADO.has(atual.conclusion)) return 'encerrado';
   return 'pendente';
 }
 
@@ -80,7 +86,13 @@ export function classificar(pr, obrigatorios) {
   // origem, então o update-branch nunca funcionaria. Fork já em dia com a main
   // continua contando como em voo (abaixo): ignorá-la deixaria outra PR ser
   // atualizada junto, e essa outra ficaria velha assim que a fork entrasse.
+  // BEHIND com check encerrado segue na fila: o update-branch cria um head novo e os
+  // checks rodam outra vez.
   if (pr.mergeStateStatus === 'BEHIND') return pr.isCrossRepository ? 'fora' : 'aguardando';
+  // Atualizada com a main e com check obrigatório encerrado sem sucesso: não há mais
+  // atualização para disparar o check de novo, então contá-la como em voo travaria a
+  // fila para sempre. Sai da fila até alguém empurrar correção ou pedir rerun.
+  if (estados.includes('encerrado')) return 'bloqueada';
   // Atualizada com a main (CLEAN/BLOCKED/UNSTABLE/HAS_HOOKS/UNKNOWN): checks
   // rodando ou verde esperando o auto-merge — em ambos os casos ocupa a vez.
   return 'em-voo';
@@ -139,15 +151,30 @@ export async function resolverDesconhecidos(prs, behindBy) {
   return saida;
 }
 
+// `gh pr list --limit N` corta ANTES de qualquer filtro de elegibilidade: draft e PR sem
+// auto-merge gastam o mesmo limite. Com a lista cortada, `decidir` pode não ver a PR em
+// voo (autorizando duas atualizações juntas) nem a mais antiga (quebrando o FIFO).
+export const LIMITE_PRS = 300;
+
+export function listaSaturada(prs, limite = LIMITE_PRS) {
+  return prs.length >= limite;
+}
+
 async function decisaoAtual(repo) {
   const json = execComRetry(resolverExecutavel('gh'), [
-    'pr', 'list', '--repo', repo, '--state', 'open', '--base', 'main', '--limit', '100',
+    'pr', 'list', '--repo', repo, '--state', 'open', '--base', 'main', '--limit', String(LIMITE_PRS),
     '--json', 'number,isDraft,isCrossRepository,baseRefName,headRefOid,autoMergeRequest,mergeStateStatus,statusCheckRollup',
   ], { encoding: 'utf8' });
   const behindBy = async (head) => Number(execComRetry(resolverExecutavel('gh'), [
     'api', `repos/${repo}/compare/main...${head}`, '--jq', '.behind_by',
   ], { encoding: 'utf8' }).trim());
-  const prs = await resolverDesconhecidos(JSON.parse(json), behindBy);
+  const lista = JSON.parse(json);
+  // Fail-closed: é melhor o job falhar pedindo paginação do que serializar errado
+  // (Devin, PR #3231).
+  if (listaSaturada(lista)) {
+    throw new Error(`fila-merge: ${lista.length} PRs abertas atingem o limite de ${LIMITE_PRS}; pagine a consulta antes de decidir`);
+  }
+  const prs = await resolverDesconhecidos(lista, behindBy);
   return decidir(prs, checksObrigatorios());
 }
 
