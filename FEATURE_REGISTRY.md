@@ -23,8 +23,8 @@ ou rota vazia derrubam o teste até este arquivo ser atualizado.
 
 | Estado | Views |
 |---|---|
-| Full | 44 |
-| Partial | 12 |
+| Full | 45 |
+| Partial | 11 |
 | Suggested | 0 |
 | **total** | **56** |
 
@@ -83,7 +83,7 @@ ou rota vazia derrubam o teste até este arquivo ser atualizado.
 | `supervisao` | `SupervisaoView` | `src/components/admin/SupervisaoView.tsx` | Full | `src/hooks/system/useUserRole.ts` |
 | `sla` | `SLADashboardView` | `src/components/queues/SLADashboard.tsx` | Full | `src/hooks/sla/useSLAMetrics.ts` |
 | `talkx` | `TalkXView` | `src/components/talkx/TalkXView.tsx` | Full | `src/hooks/integrations/useTalkX.ts` |
-| `talkx-kit` | `TalkXKitView` | `src/components/talkx/__dev__/TalkXKit.tsx` | Partial | `src/components/talkx/__dev__/TalkXKit.tsx` |
+| `talkx-kit` | `TalkXKitView` | `src/components/talkx/__dev__/TalkXKit.tsx` | Full | `src/hooks/integrations/useTalkXOverviewStats.ts` |
 | `multiplix` | `MultiplixView` | `src/components/multiplix/MultiplixView.tsx` | Full | `src/components/multiplix/MultiplixView.tsx` |
 | `evolution-monitor` | `EvolutionMonitoringDashboard` | `src/components/monitoring/EvolutionMonitoringDashboard.tsx` | Partial | `src/components/monitoring/EvolutionMonitoringDashboard.tsx` |
 | `achievements` | `AchievementsSystemLazy` | `src/components/gamification/AchievementsSystem.tsx` | Full | `src/hooks/gamification/useAgentGamification.ts` |

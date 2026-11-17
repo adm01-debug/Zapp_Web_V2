@@ -184,7 +184,7 @@ export function useInboxBulkActions({ refetch, filteredConversations }: UseInbox
         .from('contacts')
         .select('id, conversation_status')
         .in('id', contactIds);
-      if (selectError) throw selectError;
+      if (selectError) { toast.error('Não foi possível verificar o estado das conversas'); return; }
 
       const previousStatus = new Map<string, string | null>();
       for (const row of originals ?? []) {
@@ -198,7 +198,7 @@ export function useInboxBulkActions({ refetch, filteredConversations }: UseInbox
       const targetIds = contactIds.filter(
         (id) => previousStatus.has(id) && previousStatus.get(id) !== 'archived',
       );
-      if (targetIds.length === 0) throw new Error('nenhum contato lido');
+      if (targetIds.length === 0) { toast.info('Nenhum contato disponível para arquivar'); return; }
 
       await executeUndoable({
         successMessage: `${targetIds.length} contato(s) arquivado(s)`,
@@ -213,30 +213,72 @@ export function useInboxBulkActions({ refetch, filteredConversations }: UseInbox
           refetch();
         },
         undoAction: async () => {
-          // Agrupa por status original para emitir um UPDATE por grupo —
-          // restauração atômica por valor: uma falha não deixa o lote parcialmente
-          // revertido.
-          // Trigger enforce_conversation_status_transition (produção): a partir de
-          // 'archived' só são válidos 'open' e 'pending'. Qualquer outro original
-          // (waiting/resolved/closed/null) voltaria erro e o desfazer falharia —
-          // cai em 'open'.
+          // Trigger enforce_conversation_status_transition: de 'archived' só são
+          // válidos 'open' e 'pending' em um único passo. Para restaurar
+          // waiting/resolved/closed, fazemos dois passos: archived→open→original.
+          //
+          // Cada UPDATE só atinge quem AINDA está no estado esperado
+          // (`conversation_status='archived'` no 1º passo, `'open'` no 2º) e devolve os
+          // ids atingidos: uma conversa reaberta por mensagem nova durante a janela do
+          // desfazer não é forçada de volta a resolved/waiting. Um grupo que falha não
+          // impede os outros; o resultado é contado por conversa.
           const validFromArchived = new Set(['open', 'pending']);
-          const byStatus = new Map<string | null, string[]>();
+          const directGroups = new Map<string, string[]>();
+          const twoStepGroups = new Map<string, string[]>();
+
           for (const id of targetIds) {
-            const raw = previousStatus.get(id) ?? null;
-            const original = raw !== null && validFromArchived.has(raw) ? raw : 'open';
-            const group = byStatus.get(original) ?? [];
-            group.push(id);
-            byStatus.set(original, group);
+            const original = previousStatus.get(id) ?? 'open';
+            const groups = validFromArchived.has(original) ? directGroups : twoStepGroups;
+            const g = groups.get(original) ?? [];
+            g.push(id);
+            groups.set(original, g);
           }
-          for (const [status, ids] of byStatus) {
-            const { error } = await supabase
+
+          const restored = new Set<string>();
+          let failed = false;
+
+          const moveTo = async (status: string, ids: string[], from: string): Promise<string[]> => {
+            const { data, error } = await supabase
               .from('contacts')
               .update({ conversation_status: status as unknown as string })
-              .in('id', ids);
-            if (error) throw error;
+              .in('id', ids)
+              .eq('conversation_status', from as unknown as string)
+              .select('id');
+            if (error) {
+              failed = true;
+              return [];
+            }
+            return ((data ?? []) as Array<{ id: string }>).map((row) => row.id);
+          };
+
+          try {
+            for (const [status, ids] of directGroups) {
+              for (const id of await moveTo(status, ids, 'archived')) restored.add(id);
+            }
+
+            if (twoStepGroups.size > 0) {
+              // Passo 1: archived → open (sempre válido), só para quem segue arquivado.
+              const opened = new Set(await moveTo('open', [...twoStepGroups.values()].flat(), 'archived'));
+              // Passo 2: open → status original, só nos ids que o passo 1 devolveu.
+              for (const [original, ids] of twoStepGroups) {
+                const reached = ids.filter((id) => opened.has(id));
+                if (reached.length === 0) continue;
+                for (const id of await moveTo(original, reached, 'open')) restored.add(id);
+              }
+            }
+          } finally {
+            refetch();
           }
-          refetch();
+
+          const total = targetIds.length;
+          if (failed) {
+            toast.warning(`${restored.size} de ${total} restaurados`);
+            throw new Error('desfazer parcial');
+          }
+          if (restored.size < total) {
+            // Sem erro: as que faltam já tinham saído do arquivo (ex.: mensagem nova).
+            toast.info(`${restored.size} de ${total} restaurados — as demais já tinham sido reabertas`);
+          }
         },
       });
     } catch {
