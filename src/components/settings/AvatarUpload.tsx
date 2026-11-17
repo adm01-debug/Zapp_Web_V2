@@ -126,6 +126,13 @@ export function AvatarUpload() {
         if (error) throw error;
         setAvatarUrl(null);
         await refreshProfile();
+
+        // C-1: remover a foto tambem tem que aparecer no app inteiro. Sem isto
+        // a lista de membros (`team-profiles-rpc`) segue servindo a foto
+        // apagada, porque `refreshProfile` so refaz o perfil da sessao e nao
+        // toca no cache do react-query -- mesma invalidacao que o upload faz.
+        await queryClient.invalidateQueries({ queryKey: ['team-profiles-rpc'] });
+        await queryClient.invalidateQueries({ queryKey: ['user-profile'] });
       },
       {
         successMessage: 'Foto removida!',
