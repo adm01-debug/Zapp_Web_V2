@@ -106,7 +106,7 @@ const KEY_MOMENT_RULES: Array<{ type: string; patterns: RegExp[] }> = [
   { type: "objection", patterns: [/muito\s+caro/i, /est[áa]\s+acima/i, /n[ãa]o\s+tenho\s+verba/i, /sem\s+budget/i] },
   { type: "buy_signal", patterns: [/vou\s+(fechar|comprar|pedir)/i, /quero\s+(fechar|confirmar|pedir)/i, /pode\s+(enviar|mandar)\s+a\s+nf/i, /fecha(mos|r)\s+neg[óo]cio/i] },
   { type: "competitor_mention", patterns: [/concorrente/i, /outra\s+empresa/i, /outro\s+fornecedor/i, /j[áa]\s+pesquisei/i] },
-  { type: "deadline_request", patterns: [/prazo\s+(de\s+)?entrega/i, /quando\s+chega/i, /preciso\s+para\s+(o\s+)?(dia|semana|m[êse]s)/i, /urgente/i] },
+  { type: "deadline_request", patterns: [/prazo\s+(de\s+)?entrega/i, /quando\s+chega/i, /preciso\s+para\s+(o\s+)?(dia|semana|m[êe]s)/i, /urgente/i] },
   { type: "logo_sent", patterns: [/\blogo(tipo|marca)?\b/i, /\barte\b/i] },
   { type: "unanswered_question", patterns: [/\?/] },
 ];
@@ -291,6 +291,14 @@ export function buildTier2Insights(
 // ---------------------------------------------------------------------------
 
 /**
+ * `\r`, `\n` e os DOIS separadores de linha do Unicode (U+2028 LINE SEPARATOR e
+ * U+2029 PARAGRAPH SEPARATOR), que também quebram linha. Montada por código de
+ * caractere de propósito: assim o arquivo-fonte não carrega o caractere cru, que
+ * é invisível e some em qualquer cópia do arquivo feita fora de um editor.
+ */
+const QUEBRA_DE_LINHA = new RegExp(`[\\r\\n${String.fromCharCode(8232, 8233)}]+`, "g");
+
+/**
  * Instrução embutida (prompt injection) pelo texto do contato.
  *
  * O transcript que vai no prompt tem formato posicional: UMA linha por turno,
@@ -314,7 +322,7 @@ export function buildTier2Insights(
 export function neutralizarMarcadoresDeTurno(texto: string): string {
   return texto
     // Um turno ocupa uma linha. Sem linha nova, não há turno novo nem seção nova.
-    .replace(/[\r\n  ]+/g, " ⏎ ")
+    .replace(QUEBRA_DE_LINHA, " ⏎ ")
     // O marcador de papel deixa de abrir turno e continua legível para o modelo.
     .replace(/\[\s*(VENDEDOR|CONTATO)\s*\]/gi, "(⟦$1⟧)")
     // `===` deixa de fechar seção.
