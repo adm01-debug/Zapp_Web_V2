@@ -1,10 +1,5 @@
-import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
-import {
-  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
-  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import {
@@ -33,12 +28,6 @@ export function QuickReplyCardList({
   templates, groupedByCategory, isLoading, activeTab, searchQuery,
   isFavorite, onSelect, onToggleFavorite, onCopy, onEdit, onDelete, onShowCreate,
 }: QuickReplyCardListProps) {
-  // A exclusao passa por confirmacao: antes, o clique no X apagava o modelo na
-  // hora, e o botao nem tinha nome acessivel -- um toque errado numa lista densa
-  // perdia a resposta pronta, sem desfazer. Melhoria recuperada da branch
-  // claude/ga-ci-verde-261020.
-  const [pendingDelete, setPendingDelete] = useState<QuickReplyTemplate | null>(null);
-
   if (isLoading) {
     return (
       <ScrollArea className="h-[400px] pr-4">
@@ -114,7 +103,7 @@ export function QuickReplyCardList({
                           variant="ghost" size="sm"
                           className="h-8 w-8 p-0 text-destructive hover:text-destructive"
                           aria-label={`Excluir resposta rápida: ${template.title}`}
-                          onClick={(e) => { e.stopPropagation(); setPendingDelete(template); }}
+                          onClick={(e) => { e.stopPropagation(); onDelete(template.id); }}
                         >
                           <Trash2 className="w-4 h-4" />
                         </Button>
@@ -127,27 +116,6 @@ export function QuickReplyCardList({
           </div>
         ))}
       </div>
-
-      <AlertDialog open={pendingDelete !== null} onOpenChange={(aberto) => { if (!aberto) setPendingDelete(null); }}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Excluir esta resposta rápida?</AlertDialogTitle>
-            <AlertDialogDescription>
-              {pendingDelete
-                ? `"${pendingDelete.title}" será removida da sua lista. Não há como desfazer.`
-                : ''}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Manter</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={() => { if (pendingDelete) onDelete(pendingDelete.id); setPendingDelete(null); }}
-            >
-              Excluir
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </ScrollArea>
   );
 }
