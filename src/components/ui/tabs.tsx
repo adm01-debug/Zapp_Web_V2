@@ -20,22 +20,45 @@ const TabsList = React.forwardRef<
 ));
 TabsList.displayName = TabsPrimitive.List.displayName;
 
-// O trigger tem `min-w-0` para ceder espaco ao flex pai. O inner span tem
-// `truncate min-w-0` para cortar o texto com ellipsis sem afetar badges
-// absolutos que o consumidor posicionar como irmaos do span (fora dele).
+// O trigger tem `min-w-0` para ceder espaco ao flex pai, e **so o texto** vai
+// dentro de um `<span className="truncate min-w-0">`.
+//
+// Por que so o texto: as telas passam icone, rotulo e badge como filhos diretos
+// e contam com o `inline-flex` + `gap-*` DO TRIGGER para alinha-los
+// (ContactTypeTabs.tsx:48-55, DiagnosticsView.tsx:152-159,
+// DashboardTabs.tsx:28-42). Envolver todos os filhos num span unico tiraria os
+// tres do flex do trigger — o `gap` pararia de separar, o SVG do icone (que o
+// Preflight do Tailwind renderiza como `display:block`) cairia numa linha
+// acima do rotulo, e o `overflow:hidden` que vem com `truncate` recortaria os
+// badges `absolute` (`-top-1 -right-1` em DiagnosticsView, `inset-0 -z-10` da
+// pilha animada em DashboardTabs). Mantendo elemento como filho direto e
+// envolvendo apenas string/numero, o ellipsis funciona e o layout nao muda.
+//
+// Com `asChild` os filhos passam intactos: nesse modo o Radix aplica role, ref,
+// tabIndex e disabled ao filho imediato, e um span nosso roubaria esse papel do
+// elemento que o consumidor forneceu.
 const TabsTrigger = React.forwardRef<
   React.ElementRef<typeof TabsPrimitive.Trigger>,
   React.ComponentPropsWithoutRef<typeof TabsPrimitive.Trigger>
->(({ className, children, ...props }, ref) => (
+>(({ className, children, asChild, ...props }, ref) => (
   <TabsPrimitive.Trigger
     ref={ref}
+    asChild={asChild}
     className={cn(
       "inline-flex items-center justify-center min-w-0 whitespace-nowrap rounded-sm px-3 py-1.5 text-sm font-medium ring-offset-background transition-all data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50",
       className,
     )}
     {...props}
   >
-    <span className="truncate min-w-0">{children}</span>
+    {asChild
+      ? children
+      : React.Children.map(children, (filho) =>
+          typeof filho === "string" || typeof filho === "number" ? (
+            <span className="truncate min-w-0">{filho}</span>
+          ) : (
+            filho
+          ),
+        )}
   </TabsPrimitive.Trigger>
 ));
 TabsTrigger.displayName = TabsPrimitive.Trigger.displayName;
