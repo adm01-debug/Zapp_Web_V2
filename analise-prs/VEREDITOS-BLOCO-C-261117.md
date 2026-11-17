@@ -45,12 +45,41 @@ A fila completa está em `analise-prs/recuperacao-261117-fila-bloco-c.tsv`.
 
 | Arquivo | O que a branch tem | Como está na `main` |
 |---|---|---|
-| `src/components/inbox/quick-replies/QuickReplyCardList.tsx` | `pendingDelete` + `AlertDialog` — **confirma antes de excluir** a resposta rápida | a `main` **exclui direto**: nenhuma menção a `AlertDialog`, `pendingDelete` ou confirmação. Um clique acidental apaga o modelo |
+| `src/components/inbox/quick-replies/QuickReplyCardList.tsx` | o botão de excluir ganha **nome acessível** (`aria-label` com o título da resposta) | a `main` tem **zero `aria-label`** nesse arquivo: o botão é só o ícone de lixeira, anunciado como "botão" |
 | `src/components/ui/visually-hidden.tsx` | `timerRef` + `clearTimeout` no desmonte | a `main` tem `setTimeout(() => setAnnouncement(message), 100)` em `:37` **sem limpeza** — o timer sobrevive ao desmonte e tenta mudar estado de componente que saiu |
 | `src/components/ui/table.tsx` | `scope = "col"` por padrão na célula de cabeçalho | a `main` **não tem `scope` nenhum** — o leitor de tela perde a associação entre célula e coluna |
 | `src/hooks/ui/useCustomShortcuts.ts` | mostra `⌘` no Mac em vez de `Ctrl` | a `main` **não detecta plataforma**: anuncia `Ctrl` para quem usa Mac |
 
-As três primeiras são **defeito na `main`**, não só ausência de melhoria. Entram por PR própria.
+As três primeiras são **defeito na `main`**, não só ausência de melhoria (botão sem nome
+acessível, timer que vaza, célula sem `scope`). Entram por PR própria (#3204).
+
+#### Correção de 17/11 — o veredito do primeiro item estava errado
+
+A versão original desta tabela dizia, na linha do `QuickReplyCardList.tsx`, que a branch trazia
+`pendingDelete` + `AlertDialog` e que a `main` "exclui direto: nenhuma menção a `AlertDialog`,
+`pendingDelete` ou confirmação". **Isso estava errado, e o erro foi de método:** o grep foi feito
+só no arquivo do componente, não em quem o usa. Continuam sendo 4 melhorias reais — o que muda é
+o conteúdo desta.
+
+A `main` **já confirma** a exclusão, um nível acima:
+
+- `src/components/inbox/QuickRepliesManager.tsx:37` — *"L13: a lixeira só pede a exclusão; quem
+  exclui é o botão do diálogo de confirmação."*
+- `:150` — `onDelete={(id) => setTemplateParaExcluir(…)}`: o cartão apenas **pede** a exclusão.
+- `:163-181` — o `AlertDialog` com "Excluir resposta rápida?", `"<título>" será excluída` e
+  "Cancelar".
+- `src/components/inbox/__tests__/QuickRepliesManager.exclusao-confirmada.test.tsx` — 3 testes
+  (L13) cobrem não-apaga-no-clique, confirmar e cancelar.
+
+Confirmar **dentro** do `QuickReplyCardList` engolia o clique e o diálogo do pai nunca abria.
+Quem pegou foi a CI da #3204, com dois testes da `main` quebrando:
+`QuickReplyCardList.test.tsx:145` (`onDelete` com 0 chamadas) e
+`QuickRepliesManager.exclusao-confirmada.test.tsx:83` (`Unable to find an accessible element with
+the role "button" and name "Cancelar"` — porque o diálogo na tela era o meu, com "Manter").
+
+Do item sobrou o que a `main` de fato não tem: o **nome acessível** do botão, que é o que entrou
+na #3204. A lição para a cadeia de provas: quando o veredito é "a `main` não faz X", o grep tem
+de cobrir **o componente e seus chamadores** — funcionalidade mora no fluxo, não no arquivo.
 
 ### Obsoletos, com prova — 12
 
