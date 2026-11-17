@@ -69,6 +69,9 @@ export async function handleElevenLabsTts(req: Request): Promise<Response> {
             use_speaker_boost: true,
           },
         }),
+        // S08-004: sintese de voz tem prazo. Sem ele o usuario espera sem
+        // resposta nem erro e a chamada paga e consumida a toa.
+        signal: AbortSignal.timeout(30_000),
       }
     );
 

@@ -6,6 +6,13 @@ import { verifyGmailOidcRequest } from "../_shared/hmac-validation.ts";
 import { extractAttachments, ensureValidToken, isGmailReauthError, recordGmailAccountFailure, resetGmailHistoryCursor } from "../_shared/gmail-helpers.ts";
 
 const GMAIL_API = "https://gmail.googleapis.com/gmail/v1/users/me";
+/**
+ * S08-003: toda chamada a Gmail API aqui tem prazo. O laco de history vai a
+ * HISTORY_MAX_PAGES paginas e o de mensagens percorre cada id novo; sem prazo,
+ * uma resposta que nunca chega pendura a entrega do Pub/Sub inteira e o worker
+ * da edge fica ocupado ate o teto da plataforma.
+ */
+const GMAIL_TIMEOUT_MS = 15_000;
 
 const PubSubSchema = z.object({
   message: z.object({
@@ -155,8 +162,11 @@ export async function handleGmailWebhook(req: Request): Promise<Response> {
       });
       if (pageToken) params.set("pageToken", pageToken);
 
+      // S08-003: prazo POR PAGINA. O laco vai a HISTORY_MAX_PAGES paginas; sem
+      // prazo uma pagina presa pendura a entrega do Pub/Sub inteira.
       const historyResponse = await fetch(`${GMAIL_API}/history?${params.toString()}`, {
         headers: { Authorization: `Bearer ${accessToken}` },
+        signal: AbortSignal.timeout(GMAIL_TIMEOUT_MS),
       });
 
       if (!historyResponse.ok) {
@@ -204,14 +214,23 @@ export async function handleGmailWebhook(req: Request): Promise<Response> {
 
     log.info(`Found ${newMessageIds.size} new messages`, { email: emailAddress });
 
+    // S08-003 (revisao da PR #3215): mensagem que nao foi persistida NAO pode
+    // deixar o cursor avancar. O prazo de 15 s criou um caminho novo para o
+    // catch por mensagem; sem esta trava, uma leitura lenta abortada era
+    // engolida, o cursor passava por cima e o e-mail nunca mais era visto --
+    // nem pelo cron, que parte do mesmo cursor. Mesma regra que o cron ja
+    // aplica em runGmailCronIncrementalSync ("cursor preservado").
+    let mensagensFalhadas = 0;
+
     // Process each new message
     for (const msgId of newMessageIds) {
       try {
         const msgResponse = await fetch(`${GMAIL_API}/messages/${msgId}?format=full`, {
           headers: { Authorization: `Bearer ${accessToken}` },
+          signal: AbortSignal.timeout(GMAIL_TIMEOUT_MS),
         });
 
-        if (!msgResponse.ok) continue;
+        if (!msgResponse.ok) { mensagensFalhadas += 1; continue; }
         const msg = await msgResponse.json();
 
         const headers = msg.payload.headers || [];
@@ -313,8 +332,19 @@ export async function handleGmailWebhook(req: Request): Promise<Response> {
             .eq("id", thread.id);
         }
       } catch (err: unknown) {
+        mensagensFalhadas += 1;
         log.error(`Error processing message ${msgId}`, { error: err instanceof Error ? err.message : String(err) });
       }
+    }
+
+    // Falhou alguma mensagem: preserva o cursor e devolve 200. O 200 e
+    // deliberado (ver o comentario do reauth acima) -- o que garante a nova
+    // tentativa e o cursor PARADO: a proxima notificacao do Pub/Sub e o cron
+    // de 1 minuto partem do mesmo history_id e tornam a ver a mensagem.
+    if (mensagensFalhadas > 0) {
+      log.warn("Mensagem nao persistida; cursor preservado para nova tentativa", { falhas: mensagensFalhadas, total: newMessageIds.size });
+      log.done(200, { processed: newMessageIds.size - mensagensFalhadas, falhas: mensagensFalhadas, cursor_preservado: true });
+      return jsonResponse({ acknowledged: true, processed: newMessageIds.size - mensagensFalhadas, falhas: mensagensFalhadas, cursor_preservado: true }, 200, req);
     }
 
     // Update history_id — CAS pelo valor LIDO no início (igual a
