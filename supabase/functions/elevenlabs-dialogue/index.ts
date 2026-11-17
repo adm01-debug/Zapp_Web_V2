@@ -92,6 +92,8 @@ export async function handleElevenLabsDialogue(req: Request): Promise<Response> 
           inputs: toDialogueInputs(script),
           language_code: languageCode,
         }),
+        // S08-004: prazo na geracao de dialogo.
+        signal: AbortSignal.timeout(20_000),
       }
     );
 

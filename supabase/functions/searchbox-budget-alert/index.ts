@@ -63,6 +63,8 @@ export async function handleSearchboxBudgetAlert(req: Request): Promise<Response
       subject: "[Zapp] Custo do autocomplete de endereco: " + sessoes + " usos no mes",
       html: corpo,
     }),
+    // S08-005: prazo no envio do alerta de custo.
+    signal: AbortSignal.timeout(10_000),
   });
 
   return new Response(
