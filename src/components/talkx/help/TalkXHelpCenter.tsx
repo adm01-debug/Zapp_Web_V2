@@ -114,6 +114,7 @@ export function TalkXHelpCenter({ route, onRouteChange, onClose }: TalkXHelpCent
         // no próprio campo; o Esc seguinte, com a busca vazia, fecha a Ajuda.
         if (searchQuery) {
           setSearchQuery('');
+          focusSearch();
           return;
         }
         onClose();

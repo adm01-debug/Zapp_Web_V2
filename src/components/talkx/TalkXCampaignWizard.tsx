@@ -315,7 +315,7 @@ function SectionCard({ icon, title, subtitle, right, children }: { icon: React.E
 function SourceCard({ icon, title, desc, active, onClick, disabled, badge }: { icon: React.ElementType; title: string; desc: string; active: boolean; onClick: () => void; disabled?: boolean; badge?: string }) {
   const Icon = icon;
   return (
-    <button type="button" onClick={onClick} disabled={disabled} className={cn('relative text-left rounded-xl border p-3.5 transition-all flex items-start gap-3', active ? 'border-primary bg-primary/10 shadow-[0_0_0_1px_hsl(var(--primary)/.5)]' : 'border-border/70 bg-input/30 hover:border-primary/40', disabled && 'opacity-50 cursor-not-allowed')}>
+    <button type="button" onClick={onClick} disabled={disabled} aria-pressed={active} className={cn('relative text-left rounded-xl border p-3.5 transition-all flex items-start gap-3', active ? 'border-primary bg-primary/10 shadow-[0_0_0_1px_hsl(var(--primary)/.5)]' : 'border-border/70 bg-input/30 hover:border-primary/40', disabled && 'opacity-50 cursor-not-allowed')}>
       <IconTile icon={Icon as never} size={40} color="blue" />
       <div className="min-w-0 flex-1">
         <p className="text-sm font-semibold text-foreground">{title}</p>
@@ -349,8 +349,8 @@ function StepAudience({ ed }: { ed: WizardState }) {
       <SectionCard icon={FileText} title="Informações da campanha">
         <div className="grid grid-cols-1 md:grid-cols-[2fr_1fr_1fr] gap-3">
           <div>
-            <Label className="text-xs text-foreground-secondary">Nome da campanha</Label>
-            <Input value={ed.name} onChange={(e) => ed.setName(e.target.value)} placeholder="Ex: Lançamento Linha Office" aria-invalid={nameTooShort || nameTooLong} className="mt-1.5 h-10 bg-input/40 border-border/70" />
+            <Label htmlFor="talkx-campaign-name" className="text-xs text-foreground-secondary">Nome da campanha</Label>
+            <Input id="talkx-campaign-name" value={ed.name} onChange={(e) => ed.setName(e.target.value)} placeholder="Ex: Lançamento Linha Office" aria-invalid={nameTooShort || nameTooLong} className="mt-1.5 h-10 bg-input/40 border-border/70" />
             {nameTooShort && (
               <p role="alert" className="mt-1.5 text-2xs text-dash-red">O nome precisa de pelo menos {CAMPAIGN_NAME_MIN_LENGTH} caracteres</p>
             )}
@@ -408,7 +408,7 @@ function StepAudience({ ed }: { ed: WizardState }) {
           </div>
         </div>
         <div className="mt-3 grid grid-cols-1 md:grid-cols-[2fr_1fr] gap-3">
-          <div><Label className="text-xs text-foreground-secondary">Descrição (opcional)</Label><Input value={ed.description} onChange={(e) => ed.setDescription(e.target.value)} placeholder="Produtos em destaque para escritórios" className="mt-1.5 h-10 bg-input/40 border-border/70" /></div>
+          <div><Label htmlFor="talkx-campaign-description" className="text-xs text-foreground-secondary">Descrição (opcional)</Label><Input id="talkx-campaign-description" value={ed.description} onChange={(e) => ed.setDescription(e.target.value)} placeholder="Produtos em destaque para escritórios" className="mt-1.5 h-10 bg-input/40 border-border/70" /></div>
           <div>
             <Label className="text-xs text-foreground-secondary">Responsável</Label>
             <Select value={ed.owner ?? ''} onValueChange={ed.setOwner}>
