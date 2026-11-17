@@ -159,6 +159,26 @@ describe('provisionarSip — trava só no SIP_NOT_CONFIGURED explícito, com pra
     expect(mockToastError).toHaveBeenCalledWith(expect.stringContaining('administrador'));
   });
 
+  it('503 sem código no corpo NÃO afirma no log que o segredo falta', async () => {
+    // Controle negativo: antes, este caminho imprimia
+    // "SIP_PASSWORD não configurado no Supabase — segredo ausente ou nome
+    // incorreto", mandando o administrador procurar um segredo que podia estar
+    // correto (um 503 de plataforma ou BOOT_ERROR sem corpo cai aqui). O toast
+    // e a trava seguem como antes — só o log passa a dizer o que se sabe.
+    mockInvoke.mockResolvedValue({ data: null, error: { context: new Response('gateway', { status: 503 }) } });
+
+    await provisionarSip();
+
+    expect(mockConsoleWarn).toHaveBeenCalledWith(
+      expect.not.stringContaining('segredo ausente ou nome incorreto')
+    );
+    expect(mockConsoleWarn).toHaveBeenCalledWith(
+      expect.stringContaining('não distingue')
+    );
+    expect(mockToastError).toHaveBeenCalledWith(expect.stringContaining('administrador'));
+    expect(localStorage.getItem(SIP_NOT_CONFIGURED_STORAGE_KEY)).toBeNull();
+  });
+
   it('`até` além do prazo (relógio corrigido / valor adulterado) é ignorado e apagado', async () => {
     localStorage.setItem(SIP_NOT_CONFIGURED_STORAGE_KEY, String(Date.now() + 10 * 24 * 3_600_000));
     mockInvoke.mockResolvedValue(ok);

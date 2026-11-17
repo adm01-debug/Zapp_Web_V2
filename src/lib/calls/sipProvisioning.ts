@@ -110,7 +110,20 @@ export async function provisionarSip(options: ProvisionarSipOptions = {}): Promi
     const isMissingSecret = error ? naoConfigurado || (ctx?.status === 503 && code === undefined) : !password;
     if (naoConfigurado) lembrarSipNaoConfigurado(Date.now());
     if (isMissingSecret) {
-      console.warn('[sipProvisioning] SIP_PASSWORD não configurado no Supabase — segredo ausente ou nome incorreto.');
+      // O toast e a trava NAO mudam: 503 sem corpo legivel segue avisando o
+      // administrador e segue sem travar (testes deste arquivo). O que muda e o
+      // LOG. Afirmar "segredo ausente ou nome incorreto" quando a resposta nao
+      // trouxe `code` declara um diagnostico que nao foi estabelecido: um 503 de
+      // plataforma ou um BOOT_ERROR sem corpo legivel manda o administrador
+      // cacar um segredo que pode estar correto. Cada um dos tres caminhos que
+      // chegam aqui agora diz no log exatamente o que se sabe.
+      console.warn(
+        naoConfigurado
+          ? '[sipProvisioning] SIP_PASSWORD não configurado no Supabase — segredo ausente ou nome incorreto.'
+          : error
+            ? '[sipProvisioning] get-sip-password devolveu 503 sem código no corpo: pode ser indisponibilidade da Edge (boot/plataforma) ou SIP_PASSWORD ausente — o 503 sozinho não distingue.'
+            : '[sipProvisioning] get-sip-password respondeu sem o campo password: função desatualizada ou SIP_PASSWORD ausente.',
+      );
       toast.error('Senha SIP não configurada. Fale com o administrador do sistema.');
     } else if (error) {
       toast.error('Erro ao conectar ao servidor SIP. Verifique sua sessão e tente novamente.');
