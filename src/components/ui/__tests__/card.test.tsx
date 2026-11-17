@@ -52,7 +52,7 @@ describe('MotionCardComponent — hover/tap em CSS', () => {
     expect(card.className).toContain('motion-safe:active:scale-[0.99]');
     // A sombra do hover precisa ANIMAR junto do transform: o `whileHover` do runtime
     // animava os dois (y/scale + boxShadow); só `transition-transform` deixaria o
-    // realçe de sombra entrar seco. A transição declarada tem de cobrir box-shadow.
+    // realce de sombra entrar seco. A transição declarada tem de cobrir box-shadow.
     expect(card.className).toContain('motion-safe:transition-[transform,box-shadow]');
     const transicao = card.className.match(/motion-safe:transition-\[[^\]]+\]/)?.[0] ?? '';
     expect(transicao).toContain('box-shadow');
