@@ -22,8 +22,15 @@
  * tinham saído como "órfãos" (#1886/#2112). Também são valores conhecidos a
  * mais, mas ficam FORA de DEFAULT_OPEN_SECTIONS: começam recolhidas e só
  * buscam dado quando o atendente abre (o Radix desmonta o conteúdo fechado).
+ *
+ * `crm360` (Visão 360 do CRM externo: empresa, decisores, histórico de
+ * interações, canais e redes) entrou em 2026-11-17, pela mesma regra de
+ * `memoria`/`atendimento`: o hook e os tipos já existiam na main
+ * (`useExternalContact360`, `types/contact360.ts`) e faltava só a tela. Valor
+ * conhecido a mais, chave de storage intacta, e FORA de DEFAULT_OPEN_SECTIONS —
+ * a consulta ao CRM externo só acontece quando o atendente abre a seção.
  */
-export const SIDEBAR_SECTIONS = ['professional', 'personal', 'singu', 'intelligence', 'delivery', 'memoria', 'atendimento'] as const;
+export const SIDEBAR_SECTIONS = ['professional', 'personal', 'singu', 'intelligence', 'delivery', 'memoria', 'atendimento', 'crm360'] as const;
 export type SidebarSectionValue = (typeof SIDEBAR_SECTIONS)[number];
 
 export const DEFAULT_OPEN_SECTIONS: SidebarSectionValue[] = ['professional', 'personal', 'singu', 'intelligence', 'delivery'];
