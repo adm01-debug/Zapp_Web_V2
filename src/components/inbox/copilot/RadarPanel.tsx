@@ -7,7 +7,7 @@ import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { X, Minimize2, Maximize2, Minus, BellOff, Bell, RefreshCw, Radar } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { SALE_STAGE_META } from '@/data/copilot/sale-stages';
-import type { RadarMode, RadarCardId } from '@/hooks/copilot/useRadarPanel';
+import type { RadarMode, RadarCardId, RadarInsight } from '@/hooks/copilot/useRadarPanel';
 import type { CopilotSessionState } from '@/hooks/copilot/useCopilotSession';
 import type { LiveSuggestion } from '@/hooks/copilot/useLiveSuggestions';
 import {
@@ -49,6 +49,13 @@ export interface RadarPanelProps {
   suggestedProducts?: string[];
 
   conversationId?: string;
+  /**
+   * CV-055 — insights que JA sairam de cena nesta conversa, do mais novo ao mais antigo.
+   * Renderizado AQUI dentro, e nao como irmao no ChatInputArea: no desktop o painel e
+   * `position: fixed` e arrastavel, entao um irmao ficava preso a caixa de digitacao e
+   * nao acompanhava o painel (revisao do Devin e do Codex na #3222).
+   */
+  historico?: RadarInsight[];
   className?: string;
 }
 
@@ -84,6 +91,7 @@ export function RadarPanel({
   alerts = [],
   suggestedProducts = [],
   conversationId,
+  historico,
   className,
 }: RadarPanelProps) {
   const [position, setPosition] = useState({ x: 0, y: 0 });
@@ -228,6 +236,23 @@ export function RadarPanel({
           <p className="mt-2 text-[11px] text-muted-foreground">
             <span className="font-semibold">Próximo passo:</span> {nextStep}
           </p>
+        )}
+        {!isDnd && !!historico?.length && (
+          <section
+            aria-label="Insights anteriores desta conversa"
+            className="border-t border-border/40 px-3 py-1.5"
+          >
+            <h4 className="mb-1 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+              Antes nesta conversa
+            </h4>
+            <ol className="space-y-1">
+              {historico.map((insight) => (
+                <li key={insight.id} className="line-clamp-2 text-[11px] leading-snug text-muted-foreground">
+                  {insight.text}
+                </li>
+              ))}
+            </ol>
+          </section>
         )}
       </div>
     );
@@ -447,6 +472,29 @@ export function RadarPanel({
                     return null;
                 }
               })}
+              {/* Historico DENTRO do contedor que rola (revisao do Codex na #3226): o
+                  painel e `fixed` em `top-20` e nao tem altura maxima nem rolagem
+                  propria, entao uma secao IRMA desta div, com os cartoes expandidos
+                  ocupando `calc(100vh-180px)`, caia abaixo da area visivel e nao havia
+                  como rolar ate ela. Fica so em normal/focus: o modo `mini` ja corta de
+                  proposito (`suggestions.slice(0, 1)`). */}
+              {!!historico?.length && (
+                <section
+                  aria-label="Insights anteriores desta conversa"
+                  className="border-t border-border/40 px-1 pt-1.5"
+                >
+                  <h4 className="mb-1 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+                    Antes nesta conversa
+                  </h4>
+                  <ol className="space-y-1">
+                    {historico.map((insight) => (
+                      <li key={insight.id} className="line-clamp-2 text-[11px] leading-snug text-muted-foreground">
+                        {insight.text}
+                      </li>
+                    ))}
+                  </ol>
+                </section>
+              )}
             </div>
           )}
         </>
