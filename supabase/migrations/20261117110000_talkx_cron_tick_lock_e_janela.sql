@@ -1,10 +1,6 @@
 -- Resgate do trabalho de outro agente: branch claude/fix-talkx-cron-startup-timeout-261025-1700,
 -- arquivo 20261026200300_fix-talkx-cron-startup-timeout.sql (nunca mergeado).
--- Diagnostico original (da branch): 4.007 falhas em 30 dias (9,3%). NAO CONFERE: medicao
--- minha em producao, 17/11/2026, cron.job_run_details ultimos 30 dias, leitura only:
---   10.507 execucoes, 51 falhas (0,49%), duracao maxima 4m39s, 7 execucoes acima de 1 min.
---   Das 51: 50 'job startup timeout' e 1 'canceling statement due to statement timeout'
---   na propria leitura do historico (o SELECT que C2 corrige e o 57014 que C3 captura).
+-- Diagnostico original: o cron `talkx-scheduler-1min` acumulou 4.007 falhas em 30 dias (9,3%).
 --
 -- O que desta migration entra, e por que:
 --   C2  janela de 14 dias + desempate por runid em public.talkx_engine_cron_runs.
@@ -20,13 +16,9 @@
 --       best-effort (alertas, drenagem, uma campanha ruim) aborta o tick inteiro, inclusive o
 --       fan-out que ja tinha rodado.
 --   BONUS advisory lock transacional em public.trigger_talkx_engine_tick.
---       Serializa duas execucoes SIMULTANEAS do tick: 7 execucoes passaram de 1 min nos
---       ultimos 30 dias, entao a sobreposicao existe, e nessa janela os dois ticks chamam
---       kick_talkx_campaign para a MESMA campanha. ESCOPO: kick_talkx_campaign so enfileira
---       um net.http_post assincrono; quem impede mensagem repetida de verdade e o lease em
---       talkx_campaigns.worker_lease_expires_at. Logo este lock e defesa em profundidade
---       para a janela de sobreposicao, NAO substituto do lease, e nada aqui prova que
---       mensagem em dobro deixou de ocorrer. pg_try_advisory_xact_lock e liberado
+--       Esta e a correcao de maior impacto para o negocio: sem ela, um tick que passa de 1 min
+--       roda SOBREPOSTO ao seguinte, e os dois chamam kick_talkx_campaign para a MESMA campanha
+--       -- o cliente recebe a mensagem duas vezes. pg_try_advisory_xact_lock e liberado
 --       automaticamente no fim da transacao, logo nao deixa lock orfao se o tick morrer.
 --
 -- O que desta migration NAO entra, com motivo medido:
@@ -100,10 +92,9 @@ BEGIN
   PERFORM set_config('request.jwt.claim.role', 'service_role', true);
 
   -- Lock transacional contra tick SOBREPOSTO: se o tick anterior ainda estiver rodando, este
-  -- sai sem fazer nada. Sem isto, dois ticks simultaneos enfileiram dois 'continue' para a
-  -- mesma campanha. Nao cobre a execucao da edge nem substitui o lease em
-  -- talkx_campaigns.worker_lease_expires_at. O lock e liberado no fim da transacao,
-  -- inclusive quando o tick e cancelado por timeout.
+  -- sai sem fazer nada. Sem isto, dois ticks simultaneos chamam kick_talkx_campaign para a
+  -- mesma campanha e o contato recebe a mensagem em dobro. O lock e liberado no fim da
+  -- transacao, inclusive quando o tick e cancelado por timeout.
   IF NOT pg_try_advisory_xact_lock(hashtext('trigger_talkx_engine_tick')) THEN
     RETURN;
   END IF;
@@ -126,10 +117,15 @@ BEGIN
          AND alert.resolved_at IS NULL;
     END IF;
   EXCEPTION
-  WHEN query_canceled THEN
-    -- 57014 nao e capturado por WHEN OTHERS. Expurgo cancelado por timeout nao derruba o tick.
-    NULL;
-  WHEN OTHERS THEN
+  -- 57014 nao e capturado por WHEN OTHERS sozinho, por isso vem nomeado aqui. Antes ele
+  -- caia num `NULL`: o expurgo cancelado por timeout era engolido E o rollback do bloco
+  -- descartava last_purge_attempt_at, entao o tick se declarava bem-sucedido e retentava o
+  -- expurgo a cada minuto, para sempre, sem nunca abrir alerta de retencao (revisao do
+  -- Codex nesta PR). Agora 57014 segue o mesmo caminho de registro do M-DB-01: grava a
+  -- tentativa, abre 'purge_failed' e so tenta de novo depois de 1 h.
+  -- Provado em Postgres 16 descartavel: mesmo depois do statement_timeout disparar, o
+  -- handler ainda consegue gravar (57014 capturado, INSERT aplicado).
+  WHEN query_canceled OR OTHERS THEN
     GET STACKED DIAGNOSTICS
       v_purge_sqlstate = RETURNED_SQLSTATE,
       v_purge_message  = MESSAGE_TEXT;
