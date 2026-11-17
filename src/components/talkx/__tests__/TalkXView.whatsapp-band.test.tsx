@@ -105,4 +105,35 @@ describe('TalkXView · Visão geral aplica o estado WhatsApp desconectado (X048)
     await screen.findByTestId('overview');
     expect(screen.queryByText(TITULO)).toBeNull();
   });
+
+  // X048 (TL-106) — a outra metade do fluxo. O botão "Ver status dos serviços"
+  // existia no kit desde antes, mas nenhuma tela passava `onViewStatus` porque
+  // não havia painel para abrir: o botão não chegava à interface. Estes dois
+  // casos provam as duas pontas na tela REAL.
+  it('"Ver status dos serviços" aparece na faixa e abre o painel', async () => {
+    render(<TalkXView />);
+    const botao = await screen.findByRole('button', { name: /Ver status dos serviços/i });
+
+    expect(screen.queryByText('Status dos serviços')).toBeNull();
+
+    await act(async () => {
+      fireEvent.click(botao);
+    });
+
+    expect(screen.getByText('Status dos serviços')).toBeInTheDocument();
+    // O painel mostra o serviço cujo sinal existe, com o estado real medido.
+    expect(screen.getByText('WhatsApp')).toBeInTheDocument();
+    expect(screen.getByText('Indisponível')).toBeInTheDocument();
+    // E não inventa sinal para os dois que o sistema não checa.
+    expect(screen.getAllByText('Não monitorado')).toHaveLength(2);
+  });
+
+  it('com conexão ativa não há faixa, então não há botão de status', async () => {
+    mockFrom.mockImplementation(() => mockQuery(COM_CONEXAO));
+    render(<TalkXView />);
+
+    await screen.findByTestId('overview');
+    expect(screen.queryByRole('button', { name: /Ver status dos serviços/i })).toBeNull();
+    expect(screen.queryByText('Status dos serviços')).toBeNull();
+  });
 });
