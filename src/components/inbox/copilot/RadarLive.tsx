@@ -48,11 +48,26 @@ export default function RadarLive({ contactId, onDraftText, className, lastConta
     if (!session) refreshSession();
   }, [lastContactMessageId, session, refreshSession]);
 
+  // CV-055: cada sugestao nova do motor entra no historico da conversa. Sem isto o
+  // painel so mostra a mais recente e o que a IA disse antes se perde da tela.
+  const topo = live.suggestions[0];
+  useEffect(() => {
+    if (!topo?.text || panel.isDnd) return;
+    panel.pushInsight(topo.text, topo.id);
+  }, [topo?.text, topo?.id, panel.isDnd, panel.pushInsight]);
+
   if (!session) return null;
 
+  // O historico fica AQUI e nao dentro do RadarPanel: aquele arquivo tem 18,8 KB e
+  // esta acima do que eu consigo republicar neste ambiente com conferencia de hash
+  // confiavel. Visualmente ancorado logo abaixo do painel.
+  const historico = panel.timeline.length > 1 && !panel.collapsed && !panel.isDnd
+    ? panel.timeline.slice(0, -1).slice(-4).reverse()
+    : [];
+
   return (
+    <div className={className}>
     <RadarPanel
-      className={className}
       mode={panel.mode}
       collapsed={panel.collapsed}
       collapsedCards={panel.collapsedCards}
@@ -77,5 +92,23 @@ export default function RadarLive({ contactId, onDraftText, className, lastConta
       alerts={live.alerts}
       conversationId={contactId}
     />
+      {historico.length > 0 && (
+        <section
+          aria-label="Insights anteriores desta conversa"
+          className="mt-1 rounded-md border border-border/60 bg-muted/30 px-2 py-1.5"
+        >
+          <h4 className="mb-1 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+            Antes nesta conversa
+          </h4>
+          <ol className="space-y-1">
+            {historico.map((insight) => (
+              <li key={insight.id} className="line-clamp-2 text-[11px] leading-snug text-muted-foreground">
+                {insight.text}
+              </li>
+            ))}
+          </ol>
+        </section>
+      )}
+    </div>
   );
 }
