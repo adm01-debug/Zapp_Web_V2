@@ -59,31 +59,45 @@ Conferido com `git ls-tree -r`: 17 arquivos.)*
 | `src/components/campaigns/__tests__/CampaignsView.test.tsx` | O diretório `src/components/campaigns/` **tem zero arquivos na `main`**: campanhas passaram a viver no módulo Talk X (`src/components/talkx/`). O teste é de um componente substituído. |
 | conjunto de carteira e conexão WhatsApp de `claude_pink/nice-hypatia-iikl82` | Já adjudicado: são stubs e recuperar seria regressão. Ver `analise-prs/VEREDITOS-RECUPERACAO-261116.md`. |
 
-## As 3 features que a `main` nunca ligou
+## As 3 lacunas que este bloco apontou — reavaliadas em 17/11
 
-Estas **faltam de verdade**. Nenhuma se resolve copiando o arquivo da branch, e cada uma é
-decisão do dono — por isso ficam registradas aqui em vez de entrarem por PR.
+**Correção de 17/11.** A versão original desta seção dizia que as três "faltam de verdade" e que
+cada uma era decisão do dono. Estava errada em dois pontos, apontados na revisão da #3199 e
+conferidos no código: a primeira não é lacuna — é remoção que o dono já decidiu — e as duas
+outras foram entregues nesta mesma sessão. Fica o estado real de cada uma.
 
-### 1. Compras do contato — não existe nem no banco
+### 1. Compras do contato — NÃO é lacuna: é remoção que o dono decidiu
 
 A branch `claude/fix-logger-vitest-mock-261017-1000` trazia três testes:
 `ContactPurchasesPanel.erro-gravacao.test.tsx`, `ContactPurchasesPanel.total-erro-data.test.tsx`
-e `useContactPurchases.criar.test.tsx` — ou seja, havia um fluxo de **registrar** compra de
-contato, com tratamento de erro de gravação.
+e `useContactPurchases.criar.test.tsx`.
 
-Medido:
+**O veredito original aqui estava errado.** Ele leu a ausência da tabela como feature nunca
+ligada e pediu DDL em produção. Na verdade o módulo foi **removido por decisão do dono em
+2026-11-03**, e os três testes da branch são estado **pré-remoção**:
 
-- `src/components/inbox/` da `main`: **nenhum** arquivo com `purchas`/`compra` no nome.
-- catálogo de produção: **nenhuma tabela** cujo nome contenha `purchase` ou `compra`.
-- o que a `main` tem com esse nome é outra coisa: `copilot/PurchaseSignalAlert.tsx` e
-  `useLiveScoring.ts`, que detectam **sinal** de intenção de compra na conversa — não guardam
-  compra nenhuma.
+- `supabase/migrations/20261103201500_remove_pagamentos_e_special_agent.sql:2-4` registra a
+  decisão: *"Decisao do dono em 2026-11-03 (...): o modulo de pagamentos/compras saiu do front na
+  #2690"*.
+- a mesma migration, `:63-64`, derruba as tabelas:
+  `DROP TABLE IF EXISTS public.contact_purchases CASCADE;` e
+  `DROP TABLE IF EXISTS public.payment_links CASCADE;` — com `:8` registrando **0 linhas** nas
+  duas antes do drop. Aplicada pela PR #2693 (commit `bd25801a2`).
+- o front saiu na PR #2690 (commit `bd4c4bd7a`), que deletou `ContactPurchasesPanel.tsx`,
+  `ContactPurchaseHistory.tsx`, `useContactPurchases.ts` e **justamente os três testes** que a
+  branch carregava.
+- nenhuma migration posterior a `20261103201500` recria as tabelas, e
+  `grep -rn -E "contact_purchases|payment_links" src/` devolve **zero linhas**.
+- a regra vigente é explícita: `docs/contexto/regras/manual/regras.md:99` (branch `contexto`) —
+  *"Pagamentos (`payment_links`, `contact_purchases`) será removido do sistema (decisão
+  2026-11-03). Nenhum agente corrige, estende ou constrói sobre esse módulo."*
 
-Recuperar os três testes sem a tabela e sem o componente deixaria teste órfão. Entregar a
-feature pede **DDL em produção** (tabela nova com RLS), além do hook e do painel: é item de
-"chame o dono" por regra, e feature nova, não recuperação.
+Portanto: **não é lacuna, não pede decisão do dono e não entra em nenhuma PR.** Os três testes da
+branch são descartados por remoção deliberada. As medições originais ("nenhum arquivo com
+`purchas`/`compra` no nome", "nenhuma tabela com `purchase` ou `compra`") continuam corretas — o
+erro foi atribuí-las a ausência de implementação em vez de remoção.
 
-### 2. Painel de status dos serviços do Talk X (X048 / TL-106) — ligado pela metade
+### 2. Painel de status dos serviços do Talk X (X048 / TL-106) — ENTREGUE nesta sessão
 
 A `main` **tem** as peças: o hook `useTalkXServiceStatus` e o estado
 `TalkXCrmUnavailableState`, que aceita uma prop `onViewStatus` e, quando ela vem, mostra o botão
@@ -99,7 +113,12 @@ ligado. O `ServiceStatusSheet.tsx` da branch é o painel que abriria; sozinho el
 nada. Entregar pede: usar o estado de indisponibilidade no fluxo real, passar `onViewStatus` e
 abrir o painel. Feature, não arquivo.
 
-### 3. Defesa contra instrução embutida no copiloto — lacuna real, no lugar errado
+**Entregue em 17/11 pela PR #3201, já mergeada.** `ServiceStatusSheet.tsx` foi escrito sobre o
+`Sheet` do projeto e `TalkXWhatsAppDisconnectedState` passou a abrir o painel por conta própria
+quando ninguém passa `onViewStatus` — então o botão deixou de ser caminho morto. `TalkXView.tsx`
+não mudou nenhum byte.
+
+### 3. Defesa contra instrução embutida no copiloto — ENTREGUE no lugar certo (PR #3202)
 
 A branch trazia `src/hooks/copilot/usePromptInjectionGuard.ts` (CV-113): 12 expressões
 regulares em PT-BR e EN (`ignore suas instruções`, `aja como`, `você é agora`, `[system]`,
@@ -118,6 +137,11 @@ sensação de cobertura onde não há.
 
 O lugar certo é `supabase/functions/_shared/copilot-tick.ts`, onde o prompt é montado — e isso é
 mudança de arquitetura de segurança, decisão do dono.
+
+**Feito em 17/11 na PR #3202**, exatamente nesse lugar: `copilot-tick.ts` passou a neutralizar,
+no conteúdo de cada turno, a quebra de linha e o marcador `[VENDEDOR]`/`[CONTATO]` que abriria um
+turno falso dentro do prompt — defesa no formato, não em lista de frases suspeitas. 7 testes Deno
+novos cobrem o caso, e o arquivo de teste original ficou byte a byte igual ao da `main`.
 
 ## O que foi verificado de verdade
 

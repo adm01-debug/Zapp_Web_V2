@@ -37,10 +37,16 @@ for br in $(git for-each-ref --format='%(refname:short)' refs/remotes/origin | g
     continue
   fi
   # Arquivos que a branch adiciona, modifica, renomeia ou cuja TROCA DE TIPO ela faz.
-  # O `T` cobre arquivo regular que virou symlink (e o contrario): sem ele a mudanca nao
-  # entra nem no filtro nem na passada de delecoes, e a branch sai zerada. Achado do Codex
-  # na PR #3192; medido nesta base: 0 pares, e a main nao tem symlink nenhum -- a guarda
-  # fica para execucao futura.
+  # O `T` faz a troca de tipo (arquivo regular <-> symlink) ENTRAR na lista: sem ele a
+  # mudanca nao entra nem no filtro nem na passada de delecoes, e a branch sai zerada.
+  # Achado do Codex na PR #3192; medido nesta base: 0 pares, e a main nao tem symlink nenhum.
+  # ATENCAO (corrigido em 17/11): o `T` cobre so a DETECCAO. A classificacao seguinte decide
+  # por CONTEUDO -- o caminho do "arquivo movido" abaixo (o `grep -qxF` em main-blobs.txt)
+  # aceita qualquer blob presente na main sem olhar modo, e o
+  # 02-contencao-linha.py nunca recebe o modo (unicos.tsv tem so branch/caminho/blob). Logo
+  # uma troca de tipo com o mesmo texto ainda sai CONTIDO. Reproduzido em repo descartavel;
+  # sem efeito nesta base. Para corrigir: indexar main-blobs.txt como `modo<TAB>sha` e levar
+  # o modo ate o veredito.
   mapfile -t files < <(git diff --name-only --diff-filter=AMRT "$mb" "$br" 2>/dev/null)
   # Apagar arquivo TAMBEM e trabalho. Com o filtro `AMR` sozinho, uma branch cujo
   # trabalho e' remover codigo morto saia do inventario com tudo zerado, igual a uma
