@@ -185,3 +185,40 @@ test('E88: todo --project= do e2e-logado.yml existe de fato no playwright.config
     );
   }
 });
+
+// `firefox-email-navy` falhava com "Page crashed" perto do fim de
+// email-navy-visual.spec.ts, em teste variavel a cada run — falta de memoria no
+// processo de conteudo. Os `workers` do playwright.config sao GLOBAIS, entao a
+// unica forma de dar 1 worker so a esse projeto e rodar ele em invocacao propria.
+// Os dois testes abaixo travam o arranjo nas duas pontas: se alguem devolver o
+// projeto ao passo coletivo, o primeiro reprova; se alguem tirar o --workers=1,
+// o segundo reprova.
+test('firefox-email-navy roda em invocacao propria, fora do passo coletivo', () => {
+  const linhas = ciYml.split('\n').filter((l) => l.includes('bun run test:e2e'));
+  const comFirefox = linhas.filter((l) => l.includes('--project=firefox-email-navy'));
+  assert.equal(
+    comFirefox.length,
+    1,
+    'firefox-email-navy tem de aparecer em exatamente uma invocacao do ci.yml',
+  );
+  const outrosProjetos = [...comFirefox[0].matchAll(/--project=([a-z0-9-]+)/g)].map((m) => m[1]);
+  assert.deepEqual(
+    outrosProjetos,
+    ['firefox-email-navy'],
+    'firefox-email-navy nao volta a dividir invocacao com outro projeto: ele precisa de ' +
+      '--workers=1, que e global e afetaria os demais',
+  );
+});
+
+test('a invocacao do firefox-email-navy limita a um worker', () => {
+  const linha = ciYml
+    .split('\n')
+    .find((l) => l.includes('bun run test:e2e') && l.includes('--project=firefox-email-navy'));
+  assert.ok(linha, 'o ci.yml tem de rodar firefox-email-navy');
+  assert.match(
+    linha,
+    /--workers=1\b/,
+    'sem --workers=1 o projeto sobe 4 Firefox no runner de 2 nucleos e volta a cair em ' +
+      '"Page crashed" por memoria',
+  );
+});
