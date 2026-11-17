@@ -171,6 +171,9 @@ export async function handleSyncCallRecords(req: Request) {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ FILTER: { ">=CALL_START_DATE": desde }, SORT: "CALL_START_DATE", ORDER: "DESC" }),
+      // S08-005: o N8N chama isto a cada 5 min; sem prazo um Bitrix lento
+      // pendura a reconciliacao e as chamadas do dia ficam sem conciliar.
+      signal: AbortSignal.timeout(15_000),
     });
 
     if (!resposta.ok) {

@@ -115,6 +115,8 @@ export async function handleElevenLabsSts(req: Request): Promise<Response> {
         method: 'POST',
         headers: { 'xi-api-key': ELEVENLABS_API_KEY },
         body: apiFormData,
+        // S08-004: prazo na conversao de voz.
+        signal: AbortSignal.timeout(30_000),
       }
     );
 

@@ -17,6 +17,9 @@ type GmailCronAccount = {
   updated_at: string;
 };
 
+/** S08-003: prazo da history API do Gmail. */
+const GMAIL_HISTORY_TIMEOUT_MS = 15_000;
+
 // R2-API-011B — avanço de cursor incremental por compare-and-swap: o UPDATE só
 // grava se o history_id da linha ainda for o lido no início da tentativa
 // (account.history_id). 0 linhas = outro fluxo já moveu o cursor → conflito:
@@ -29,7 +32,8 @@ export async function runGmailCronIncrementalSync(
   accessToken: string,
   log: Logger,
 ): Promise<{ synced: number; cursor_advanced: boolean }> {
-  const hr = await fetch(`https://gmail.googleapis.com/gmail/v1/users/me/history?startHistoryId=${account.history_id}&historyTypes=messageAdded`, { headers: { Authorization: `Bearer ${accessToken}` } });
+  // S08-003: prazo na history API; sem ele o cron de 1 min fica pendurado.
+  const hr = await fetch(`https://gmail.googleapis.com/gmail/v1/users/me/history?startHistoryId=${account.history_id}&historyTypes=messageAdded`, { headers: { Authorization: `Bearer ${accessToken}` }, signal: AbortSignal.timeout(GMAIL_HISTORY_TIMEOUT_MS) });
   if (!hr.ok) throw new Error(`History API: ${await hr.text()}`);
   const hd = await hr.json();
   const ids = new Set<string>(); for (const r of hd.history || []) for (const a of r.messagesAdded || []) ids.add(a.message.id);
