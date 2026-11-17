@@ -83,6 +83,10 @@ com grep de símbolo e de chamadores para não repetir os falsos positivos de ex
 | **recuperar** | **0** |
 | **dúvida** | **0** |
 
+Os 96 vereditos, um por caminho, estão em `analise-prs/vereditos-96-caminhos/lote-1.md` a
+`lote-6.md` (16 cada): cada seção traz a branch representativa, o veredito e a prova com
+`arquivo:linha` da `main`. Cada arquivo termina com a contagem do próprio lote, e 6 x 16 = 96.
+
 Em 11 dos 96 a `main` é **superset estrito**: mesmo símbolo, mesmo nome, mais casos tratados
 (`useReacaoUnica` em `MessageReactions.tsx:40-110` ainda devolve ao servidor a reação removida no
 rollback; `moveConversationsStatus` em `conversationArchive.ts:84-138` tem fallback para banco sem
@@ -169,15 +173,33 @@ próprio (`check-deployments-ledger.test.mjs`).
   contra a `main`), e exigindo que a linha esteja ausente do arquivo **inteiro** da branch:
   **0 dos 201** removeram linha de comportamento que a `main` ainda tem. As 7 remoções reais da
   série são outros arquivos, adjudicados na #3203
-- os **381 documentos de análise** foram varridos por referência, não lidos por inteiro: citam 36
-  caminhos que a `main` não tem; 16 existem na `main` em **outro caminho**, 4 estão em branches e
-  já têm veredito, e **10 nunca existiram em commit nenhum** do repositório — eram plano, não
-  código. Desses 10, a `main` cumpre 8 por outro nome (`src/lib/offlineQueue.ts` +
-  `useOfflineSendQueueDrain`, `src/hooks/auth/useAuth.tsx`, `src/components/copilot/VoiceDictation.tsx`
-  + `useAudioTranscription`, `ConversationTabs.navegacao.test.tsx`,
-  `AdminView.avatarRevogaUrl.test.tsx`, edge `message-delivery` com as constraints
-  `message_delivery_*`) e 2 vêm das PRs fechadas #2079 e #2464, cujas branches não existem mais:
-  não há o que recuperar de git, só a descrição
+- os **381 documentos de análise** foram varridos por referência, não lidos por inteiro. Citam
+  **36** caminhos que a `main` não tem, e os 36 fecham assim:
+
+  | | Caminhos | Situação |
+  |---|---|---|
+  | existem na `main` em **outro caminho** | **16** | renomeado/movido; conteúdo lá |
+  | estão em alguma branch, classe `NOVO` | **9** | já cobertos pelos vereditos desta série |
+  | não estão na `main` **nem em branch nenhuma** | **11** | detalhado abaixo |
+  | **total** | **36** | |
+
+  Dos 11: **10 nunca existiram em commit nenhum** do repositório — eram plano, não código — e
+  **1** (`src/hooks/team-chat/__tests__/departmentInviteCode.random.test.tsx`) existiu de fato
+  (commit `d45033e8`, PR #2570) e foi substituído quando a geração do código de convite virou a
+  RPC `create_department_invite` no servidor, o que torna um teste de aleatoriedade no cliente sem
+  objeto.
+
+  Dos 10 que nunca existiram, a `main` cumpre **8** por outro nome (`src/lib/offlineQueue.ts` +
+  `useOfflineSendQueueDrain`, `src/hooks/auth/useAuth.tsx`,
+  `src/components/copilot/VoiceDictation.tsx` + `useAudioTranscription`,
+  `ConversationTabs.navegacao.test.tsx`, `AdminView.avatarRevogaUrl.test.tsx`, edge
+  `message-delivery` com as constraints `message_delivery_*`) e **2** vêm das PRs fechadas #2079 e
+  #2464, cujas branches não existem mais: não há o que recuperar de git, só a descrição.
+
+  **Correção de 17/11:** a primeira versão deste bullet dizia "16 + 4 + 10", que soma 30 e deixava
+  6 caminhos sem classe. O erro foi de método: conferi só 16 dos 20 caminhos ausentes e contei a
+  divisão a partir dessa lista parcial. Apontado por Codex na revisão desta PR; a medição refeita
+  sobre os 36 inteiros dá 16 + 9 + 11.
 - **NÃO VERIFICADO:** o **conteúdo** dos 381 documentos. A varredura cobriu as referências a
   arquivo, que é por onde trabalho não feito apareceria; não li os 381 textos por inteiro. Eles
   continuam existindo enquanto a branch existir — **só se perderiam se a branch fosse apagada**,
