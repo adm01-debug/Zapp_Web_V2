@@ -2,7 +2,7 @@
  * X048 (TL-106) — testes do hook useTalkXServiceStatus.
  * Cobre as 3 combinações do campo whatsapp.connected.
  */
-import { renderHook, waitFor } from '@testing-library/react';
+import { renderHook, waitFor, act } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 const mockFrom = vi.hoisted(() => vi.fn());
@@ -52,13 +52,32 @@ describe('useTalkXServiceStatus', () => {
   });
 
   it('whatsapp.connected = null quando a consulta falha (não acusa "desconectado")', async () => {
-    mockFrom.mockReturnValue(makeChain({ data: null, error: { message: 'network error' } }));
+    // A resposta e' controlada de proposito. Com `makeChain` + `waitFor` o teste
+    // passava no PRIMEIRO tick, antes de a consulta falhar: o estado inicial ja'
+    // e' null, e um hook que marcasse erro como `setConnected(false)` ainda
+    // passaria — justamente a regressao que este teste existe para impedir
+    // (apontado por Devin e Codex na #3238).
+    let responder: (v: { data: unknown; error: unknown }) => void = () => {};
+    const resposta = new Promise<{ data: unknown; error: unknown }>((r) => {
+      responder = r;
+    });
+    const chain = {
+      select: vi.fn().mockReturnThis(),
+      eq: vi.fn().mockReturnThis(),
+      limit: vi.fn().mockReturnValue(resposta),
+    };
+    mockFrom.mockReturnValue(chain);
 
     const { result } = renderHook(() => useTalkXServiceStatus());
+    expect(result.current.whatsapp.connected).toBeNull();
 
-    await waitFor(() => {
-      // fica null — falha de consulta não é "desconectado"
-      expect(result.current.whatsapp.connected).toBeNull();
+    await act(async () => {
+      responder({ data: null, error: { message: 'network error' } });
+      await resposta;
     });
+
+    // Agora o erro JA' foi processado: segue null, nao false.
+    expect(chain.limit).toHaveBeenCalled();
+    expect(result.current.whatsapp.connected).toBeNull();
   });
 });
