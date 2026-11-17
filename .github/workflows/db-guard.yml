@@ -389,6 +389,28 @@ jobs:
           CRM_OUTBOX_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/crm-sync-outbox-behavior.test.sh
 
+      # Resgate de claude/chore-secdef-guard-ci-test-261107-1600 (nunca mergeada). A correcao do
+      # guard esta na main (20261107153000_fix_gamification_streak_resolutions_guard.sql:15-18 e
+      # :48-51), mas nada no CI exercitava o CORPO do guard — scripts/db-tests/01-security-grants.sql:12
+      # so confere a lista de grants. Sem esta prova, o padrao quebrado
+      # `auth.role() = 'authenticated' AND NOT` volta em silencio na proxima migration e a
+      # gamificacao do agente trava de novo.
+      - name: Provar guard canônico de gamificação (update_agent_streak / increment_agent_resolutions)
+        env:
+          SECDEF_GUARD_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/secdef-guard-check.test.sh
+
+      # Resgate de claude/feat-talkx-x070-suppression-reasons-261101-2230 (nunca mergeada). A X070
+      # existe na main (20261108100000_talkx_suppression_reasons.sql), mas o
+      # scripts/db-audit/talkx-suppression-reasons.smoke.sh:2-4 se declara conferencia pos-deploy
+      # ("nao e teste de CI") e checa catalogo, nao comportamento por papel. Nada provava que um
+      # atendente comum nao inventa motivo de supressao, nem que a FK recusa codigo inexistente
+      # (23503).
+      - name: Provar contrato por papel dos motivos de supressão do Talk X (X070)
+        env:
+          TALKX_SUPPR_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talkx-suppression-reasons.test.sh
+
       # E47: SKIP_DOCKER_SHIM=1 — o contrato runtime inclui proof.database === 'postgres'.
       # Com o shim o banco criado é shim_zapp_v2_inbox_authz_test_<PID> e
       # current_database() devolve esse nome, quebrando a asserção.
