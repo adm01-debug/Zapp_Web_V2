@@ -4,6 +4,14 @@ Varredura de **todas** as branches do repositório contra a `main` em `472810a4`
 byte/linha. Nome de branch, PR ou commit **não** foi usado como prova de incorporação em
 nenhum ponto.
 
+> **Errata do mesmo dia.** Duas correções entraram depois da primeira redação, e as duas vêm
+> do mesmo erro de método: classificar por **caminho** em vez de por **conteúdo**. (1) A seção
+> "Buracos REAIS" listava cinco itens; dois não eram buraco — a `main` preserva o arquivo em
+> `docs/_arquivo/` e em `supabase/migrations/_superseded/`, com a decisão de não aplicar
+> escrita ao lado. (2) Seis nomes de branch estavam grafados com `/` onde o remoto usa `_`
+> (`claude/pink_…` em vez de `claude_pink/…`) — quem seguisse o laudo levaria 404. Detalhe na
+> própria seção.
+
 ## Por que `ahead_by` não serve neste repo
 
 O repo usa **squash-merge**. Toda branch já mergeada continua `ahead_by > 0` para sempre,
@@ -12,7 +20,7 @@ porque seu commit original nunca entra na `main`. Medido: **das 115 branches aud
 Quem apagar branch por `ahead_by` não apaga nada; quem confiar nele para dizer
 "não incorporada" erra em 100% dos casos aqui.
 
-## Método (3 camadas, da mais barata para a mais caia)
+## Método (3 camadas, da mais barata para a mais cara)
 
 1. **Árvore x árvore.** `git ls-tree -r origin/main` local (10 816 blobs) contra
    `GET /git/trees/<branch>?recursive=1` de cada branch (nenhuma resposta truncada).
@@ -84,7 +92,7 @@ arquivo. Apagar a branch não perde nada destas:
 | `20261101133000_outbound_post_started.sql` | `claim_outbound_message`, `mark_outbound_post_started`, `resolve_unconfirmed_message`, `guard_message_delivery_internal_fields`, `messages.delivery_post_started_at`, `messages.manually_resolved_at` |
 | `20261113130200_conversation_status_regras_e_so_por_rpc.sql` | `set_conversation_status`, `set_conversations_status`, `enforce_conversation_status_transition`, `guard_conversation_status_direct_update`, trigger `trg_contacts_conversation_status_rpc_only` |
 | `20261113130400_varredura_mensagens_presas_em_enviando.sql` | `sweep_stuck_outbound_messages` |
-| `20261113130500_transfer_conversation_cas_sem_dono.sql` | `transfer_conversation` |
+| `20261113130500_transfer_conversation_cas_sem_donn.sql` | `transfer_conversation` |
 | `20261113130600_agendadas_conexao_do_contato_caida.sql` | `dispatch_scheduled_messages` |
 | `20261113140000_remove_enum_special_agent.sql` | tipo `app_role`, `has_role`, `effective_role`, `admin_set_role` |
 | `20261026200300_fix-talkx-cron-startup-timeout.sql` | `talkx_engine_cron_runs`, `trigger_talkx_engine_tick` |
@@ -102,28 +110,65 @@ arquivo. Apagar a branch não perde nada destas:
 
 ## Buracos REAIS — objeto que não existe em produção nem na `main`
 
-Este é o trabalho parcial que de fato não chegou a lugar nenhum:
+**Corrigido no mesmo dia.** A primeira versão desta seção listava cinco itens; **dois saíram**.
+O grep que a sustentava cobria só `src`, `supabase/functions`, `e2e` e `scripts`, e por isso
+não via as duas pastas em que este projeto **preserva de propósito** o que decidiu não aplicar:
+`docs/_arquivo/` e `supabase/migrations/_superseded/`. Arquivo preservado com decisão escrita
+não é trabalho perdido — é trabalho arquivado. Tratar um pelo outro é o erro que este laudo
+existe para evitar, e ele aconteceu aqui.
+
+Sobra isto, que de fato não chegou a lugar nenhum:
 
 | objeto | não existe | mora em |
 |---|---|---|
-| tabela `copilot_presence` + `copilot_has_presence` + `upsert_copilot_presence` | produção e `main` | `claude/feat-copiloto-cv011-020-migrations-261016-1930` (`20261016193400`), `claude/feat-copilot-radar-20261108-1800` (`20261108180100`) |
-| tabela `copilot_insight_feedback` + `guard_copilot_insight_feedback_retained_at` + trigger de retenção | produção e `main` | `claude/feat-copiloto-cv011-020-migrations-261016-1930` (`20261016193200`) |
-| `touch_copilot_sessions_updated_at` + trigger `trg_touch_copilot_sessions` | produção e `main` | `claude/feat-copiloto-cv011-020-migrations-261016-1930` (`20261016193000`) |
-| `e2e_fixture_message` | produção e `main` | `claude/fix-ga-fase0-banco-e2e-261020-2200` (`20261020120000`), `claude/pink_cool-dijkstra-xk9ek2` (`20261016250000`) |
+| tabela `copilot_insight_feedback` + `guard_copilot_insight_feedback_retained_at` + trigger de retenção | produção, `main`, `_arquivo/`, `_superseded/` | `claude/feat-copiloto-cv011-020-migrations-261016-1930` (`20261016193200`) |
+| `touch_copilot_sessions_updated_at` + trigger `trg_touch_copilot_sessions` | produção, `main`, `_arquivo/`, `_superseded/` | `claude/feat-copiloto-cv011-020-migrations-261016-1930` (`20261016193000`) |
 | hook `src/hooks/chat/useCopilotSession.ts` (93 ln) + `src/components/inbox/copilot/index.ts` | `main` | `claude/feat-copilot-radar-20261108-1800` |
+
+Prova de ausência dos dois primeiros: `git grep` na `main` inteira (não só em `src`) devolve
+ocorrência **apenas** em `analise-prs/` e `docs/_arquivo/analise*/` — isto é, em dossiê que
+*descreve* a branch. Nenhum arquivo `.sql` da `main`, em pasta nenhuma, cria esses objetos.
+
+### Saíram da lista: arquivo preservado na `main`, decisão documentada
+
+| item | onde a `main` guarda | o que a decisão diz |
+|---|---|---|
+| `copilot_presence` + `copilot_has_presence` + `upsert_copilot_presence` | `docs/_arquivo/copilot-presence-261108/20261108180100_copilot_presence.sql` + `README.md` ao lado | O README registra a decisão de 16/11 de **não** aplicar, com o SHA do blob (`35b6d6e7…`) e a medição que a sustenta: `tabela 0 | rpc 0 | policies 0 | indices 0 | ledger 0` |
+| `e2e_fixture_message` | `supabase/migrations/_superseded/20261020120000_e2e_fixture_message_rpc.sql` + `README.md` da pasta | Versão **mais completa** que a da branch: assinatura `e2e_fixture_message(p_op text default 'insert')` contra `(p_op text)` da branch. O arquivo da branch (`20261016250000`) é rascunho anterior da mesma função |
+
+Nos dois casos o objeto continua sem existir em produção — isso a primeira versão acertou.
+O que ela errou foi a conclusão: apagar essas branches não perderia nada, porque o arquivo
+e o motivo já estão na `main`.
+
+### O hook de nome igual **não** é o mesmo hook
+
+A `main` tem `src/hooks/copilot/useCopilotSession.ts`. É tentador concluir "então o hook da
+branch é só um arquivo movido" — e é falso. São dois hooks diferentes com o mesmo nome:
+
+| | `main` (`hooks/copilot/`) | branch (`hooks/chat/`) |
+|---|---|---|
+| chave de busca | `contact_id`, mais recente por `started_at` | `conversation_id`, `maybeSingle` |
+| estado | mapeia as letras B·R·I·N·D·E, `brinde_evidence`, `stakeholders` | devolve a linha crua de `copilot_sessions` |
+| insights | não lê | lê `copilot_insights` (10 mais recentes) |
+| ação | nenhuma | `tick` → `POST /functions/v1/copilot-live`, com invalidação de cache |
+| infra | `useState`/`useEffect` | `@tanstack/react-query` |
+
+Ou seja: a `main` tem a leitura do RADAR; a branch tem **a leitura mais a chamada do motor**.
+O que falta na `main` é o gatilho do lado do front — a edge `copilot-live` nunca é chamada por
+tela nenhuma. É o item a terminar, e é decisão de produto, não de limpeza.
 
 **O copilot está meio implantado.** `copilot_sessions`, `copilot_insights` e
 `copilot_retention_aggregates` estão vivos, com o trigger de tick; `copilot_presence` e
-`copilot_insight_feedback` não. **Não há regressão viva**: nenhum arquivo da `main` menciona
-`copilot_presence`, `copilot_insight_feedback`, `upsert_copilot_presence`,
-`copilot_has_presence`, `e2e_fixture_message` ou `touch_copilot_sessions_updated_at`
-(conferido com `git grep` na `main` em `src`, `supabase/functions`, `e2e` e `scripts`: zero
-ocorrência de cada um). Ou seja: a metade que falta não quebra nada hoje — mas é uma feature
-pela metade, e terminá-la é decisão de produto, não de limpeza.
+`copilot_insight_feedback` não. **Não há regressão viva**: nenhum arquivo executável da `main`
+(`src`, `supabase/functions`, `e2e`, `scripts`) menciona `copilot_presence`,
+`copilot_insight_feedback`, `upsert_copilot_presence`, `copilot_has_presence` ou
+`touch_copilot_sessions_updated_at` — zero ocorrência de cada um. A metade que falta não
+quebra nada hoje.
 
-`e2e_fixture_message` tem um detalhe que merece atenção: a versão `20261016250000` **aparece
-como aplicada** no ledger, e a função **não existe** no banco. Foi aplicada e depois perdida,
-ou aplicada com outro conteúdo.
+`e2e_fixture_message` tem um detalhe que merece atenção e que segue valendo: a versão
+`20261016250000` **aparece como aplicada** no ledger e a função **não existe** no banco. Foi
+aplicada e depois perdida, ou aplicada com outro conteúdo. A versão que vale é a de
+`_superseded/`, e ela também não está no banco.
 
 ## Achados de auditoria de outro agente, abandonados e ainda verdadeiros
 
@@ -161,24 +206,24 @@ relatório, inventário, arquivo gerado e migration provada obsoleta acima.
 | branch | arq. pendentes | linhas | ausentes |
 |---|---:|---:|---:|
 | `claude/fix-logger-vitest-mock-261017-1000` | 294 | 2937 | 4 |
-| `claude/pink_cool-dijkstra-xk9ek2` | 73 | 2154 | 13 |
+| `claude_pink/cool-dijkstra-xk9ek2` | 73 | 2154 | 13 |
 | `claude/fix-ga-resto-dbmigrate-20261021-0729` | 19 | 1647 | 10 |
 | `claude/ga-ci-verde-261020` | 104 | 1413 | 0 |
-| `claude/pink_nice-hypatia-iikl82` | 291 | 1341 | 9 |
+| `claude_pink/nice-hypatia-iikl82` | 291 | 1341 | 9 |
 | `claude/ecstatic-bardeen-twiveb` | 75 | 822 | 2 |
 | `claude/fix-unit-tests-pre-existentes-261024-1700` | 83 | 804 | 2 |
 | `claude/fix-ga-fase78-perimetro-custo-261020-2200` | 20 | 799 | 3 |
 | `codex/publish-followup-20261021` | 42 | 708 | 1 |
 | `claude/feat-copiloto-edges-261101-1330` | 19 | 575 | 1 |
 | `claude/feat-copilot-radar-20261108-1800` | 11 | 568 | 3 |
-| `claude/juca_practical-rubin-8xnw0u` | 18 | 549 | 1 |
+| `claude_juca/practical-rubin-8xnw0u` | 18 | 549 | 1 |
 | `fix/ci-workflows-vermelhos` | 282 | 496 | 3 |
 | `claude/charming-mccarthy-jbxy56` | 40 | 479 | 3 |
 | `claude/fix-ga-fase23-edge-e2e-261020-2200` | 14 | 435 | 0 |
 | `claude/feat-radar-fase6-261108-1933` | 6 | 389 | 1 |
 | `fix/ci-verde-261021` | 32 | 379 | 0 |
 | `claude/fix-radar-fase6-cv056-shortcuts-261108-2335` | 5 | 343 | 1 |
-| `claude/05_zen-feynman-29b7ix` | 17 | 332 | 2 |
+| `claude_05/zen-feynman-29b7ix` | 17 | 332 | 2 |
 | `claude/feat-copiloto-edge-fns-fases8-15-261024-1615` | 7 | 323 | 0 |
 | `hermes/robustez-primitivos-ui-2610121626bec5-2610141859e423` | 6 | 317 | 1 |
 | `claude/feat-copiloto-edge-fases8-10-261024-1700` | 7 | 304 | 0 |
@@ -204,14 +249,25 @@ resgates desta mesma sessão, com PR aberta — a pendência delas se fecha no m
 
 ## Branches cujo conteúdo é histórico (dossiê de PR fechada)
 
-`claude/05_awesome-ramanujan-ufxolu`, `claude/pink_dreamy-wright-j0bser` e
+`claude_05/awesome-ramanujan-ufxolu`, `claude_pink/dreamy-wright-j0bser` e
 `claude/wizardly-meitner-aejx3i` não têm **nenhuma** linha funcional fora da `main`: tudo que
 elas carregam é `analise-prs/` — dossiê por PR (#2087 a #2545) e snapshots intermediários do
 mesmo relatório que a `main` já tem na versão final. Amostra conferida: #2087, #2129 e #2519
 estão fechadas sem merge; #2545 fechada e mergeada. **Não foram apagadas** porque
 `analise-prs/prs_inventory.json` (2 176 linhas) e ~150 dossiês não existem na `main`, e a
-regra do dono é não perder trabalho sem ter certeza. O caminho sugerido é consolidar os
-dossiês ausentes na `analise-prs/` da `main` numa PR e só então apagar as três.
+regra do dono é não perder trabalho sem ter certeza.
+
+A consolidação **saiu do papel** e está em `claude/chore-dossies-resgatados-261117-1629`, e no
+caminho apareceu um achado que vale registrar como regra: dos 65 dossiês resgatados dessas três
+branches, **só 17 são caminho novo**. Os outros 48 têm caminho igual a um arquivo que a `main`
+já tem — e publicá-los por cima **perderia** conteúdo, porque as duas versões não se contêm.
+Medido em `docs/_arquivo/analise-prs/dossies/PR-2129.md`: a da `main` tem 35 linhas e carrega
+`Head SHA`, `Base SHA`, nome da branch, rótulo de status e a tabela de veredito de 4 perguntas;
+a da branch tem 123 linhas de análise de diff e **nenhum** desses campos. Nos 48 casos a versão
+da branch é mais longa (0 de 48 é menor), o que torna o engano fácil: parece upgrade e não é.
+Por isso as duas convivem — a `main` mantém `dossies/` como está e a segunda análise entra em
+`docs/_arquivo/analise-prs/dossies-analise-261116/`. As três branches só podem ser apagadas
+depois que essa PR mergear, e `analise-prs/prs_inventory.json` (2 176 linhas) continua pendente.
 
 ## O que este laudo NÃO resolve
 
