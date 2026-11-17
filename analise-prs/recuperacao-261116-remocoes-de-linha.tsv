@@ -1,0 +1,8 @@
+# linhas_removidas	arquivo	branch
+105	ESTADO.md	claude/fix-ci-tests-batch2-2610-1830
+16	supabase/migrations/20261107120000_goal_notifications_own_insert_policy.sql	claude/fix-db-live-migrations-261107-1623
+14	supabase/migrations/20261107123000_finalize_goal_notification_and_reaction_backup_policies.sql	claude/fix-db-live-migrations-261107-1623
+4	scripts/db-audit/consolidar-veredito.mjs	fix/ci-workflows-vermelhos
+4	scripts/db-audit/consolidar-veredito.mjs	claude_pink/nice-hypatia-iikl82
+4	scripts/db-audit/consolidar-veredito.mjs	claude/fix-codex-findings-161016-1906
+2	.github/actionlint.yaml	claude_pink/cool-dijkstra-xk9ek2
