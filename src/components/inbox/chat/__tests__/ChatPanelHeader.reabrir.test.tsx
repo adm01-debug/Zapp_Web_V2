@@ -22,6 +22,13 @@ const mocks = vi.hoisted(() => ({ useApplicableSLA: vi.fn() }));
 
 vi.mock('@/hooks/sla/useApplicableSLA', () => ({ useApplicableSLA: mocks.useApplicableSLA }));
 vi.mock('@/hooks/ui/use-mobile', () => ({ useIsMobile: () => false }));
+vi.mock('@/hooks/crm/useExternalContact360', () => ({
+  // Mesmo padrao de ContactHeaderSection.test.tsx:8-10: o hook real desce ate
+  // useAuth e exigiria AuthProvider. Com data null o CrmBadges nao renderiza
+  // selo nenhum, entao as assercoes deste arquivo seguem intactas.
+  useExternalContact360: () => ({ data: null }),
+}));
+
 vi.mock('@/lib/popupManager', () => ({ openChatPopup: vi.fn() }));
 vi.mock('@/components/inbox/SLAIndicator', () => ({ SLAIndicator: () => null }));
 vi.mock('@/components/inbox/VoiceSelector', () => ({ VoiceSelector: () => null }));
