@@ -7,6 +7,8 @@ import {
 import { cn } from '@/lib/utils';
 import { PrimaryButton, GhostButton } from '@/components/dashboard/overview/DashboardCard';
 import { currentTalkXForcedState } from './forcedState';
+import { ServiceStatusSheet } from './ServiceStatusSheet';
+import type { TalkXServiceStatus } from '@/hooks/integrations/useTalkXServiceStatus';
 
 /* ------------------------------------------------------------------ */
 /* Estados do sistema (prancha 17)                                    */
@@ -177,16 +179,44 @@ export function TalkXCrmUnavailableState({
   );
 }
 
-export function TalkXWhatsAppDisconnectedState({ onConnect }: { onConnect?: () => void }) {
+export function TalkXWhatsAppDisconnectedState({
+  onConnect, onViewStatus, serviceStatus,
+}: {
+  onConnect?: () => void;
+  /**
+   * X048 (TL-106) — abre o painel de status dos serviços.
+   *
+   * Por que o padrão é interno: a versão anterior exigia que CADA tela passasse
+   * um `onViewStatus`, e foi exatamente por isso que o fluxo ficou pela metade —
+   * o painel não existia, ninguém passava a prop, e o botão nunca aparecia na
+   * interface. Agora o estado abre o próprio painel por conta, e `onViewStatus`
+   * só serve para a tela SUBSTITUIR esse destino. Não há mais como o botão
+   * desaparecer por falta de ligação.
+   */
+  onViewStatus?: () => void;
+  /** Status para o painel mostrar; sem ele, o painel assume WhatsApp indisponível. */
+  serviceStatus?: TalkXServiceStatus;
+}) {
+  const [statusAberto, setStatusAberto] = useState(false);
+  const abrirStatus = onViewStatus ?? (() => setStatusAberto(true));
+
   return (
-    <StateShell
-      icon={WhatsAppLogo}
-      tone="danger"
-      title="Conexão WhatsApp desconectada"
-      description="Conecte sua conta para criar e enviar campanhas pelo Talk X."
-    >
-      {onConnect && <PrimaryButton icon={MessageSquare} onClick={onConnect}>Conectar WhatsApp</PrimaryButton>}
-    </StateShell>
+    <>
+      <StateShell
+        icon={WhatsAppLogo}
+        tone="danger"
+        title="Conexão WhatsApp desconectada"
+        description="Conecte sua conta para criar e enviar campanhas pelo Talk X."
+      >
+        {onConnect && <PrimaryButton icon={MessageSquare} onClick={onConnect}>Conectar WhatsApp</PrimaryButton>}
+        <GhostButton icon={ExternalLink} onClick={abrirStatus}>Ver status dos serviços</GhostButton>
+      </StateShell>
+      {/* Só monta o painel quando o destino é o interno: com `onViewStatus` a
+          tela decide o que abrir, e um painel oculto aqui seria código morto. */}
+      {!onViewStatus && (
+        <ServiceStatusSheet open={statusAberto} onOpenChange={setStatusAberto} status={serviceStatus} />
+      )}
+    </>
   );
 }
 
