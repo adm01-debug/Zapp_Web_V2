@@ -1,7 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { assertBlocking, conditionOf, jobOf, onlyStep, permission, shellCode, stepsOf } from './workflow-test-support.mjs';
-import { readFileSync } from 'node:fs';
+import { readFileSync, mkdtempSync, readFileSync as lerArquivo, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import {
   agregar,
   coletarJobs,
@@ -9,9 +11,12 @@ import {
   corpoDoKpi,
   duracaoMinutos,
   maisLentos,
+  montarKpi,
   paginaTemMais,
+  percentil,
   tabela,
   tabelaLentos,
+  gravarKpi,
 } from './actions-kpi.mjs';
 
 const AGORA = Date.parse('2026-10-03T12:00:00Z');
@@ -191,4 +196,45 @@ test('#365: o corpo do KPI publica o ranking real dos jobs, nao um ranking vazio
   assert.match(md, /build/, 'o job mais lento tem de aparecer — antes o ranking saia vazio');
   assert.doesNotMatch(md, /nenhum job/, 'com jobs reais o placeholder nao pode aparecer');
   assert.match(md, /\| workflow \| runs \|/);
+});
+
+test('GA93: percentil p50/p95', () => {
+  assert.equal(percentil([1, 2, 3, 4, 5, 6, 7, 8, 9, 10], 50), 6);
+  assert.equal(percentil([1, 2, 3, 4, 5, 6, 7, 8, 9, 10], 95), 10);
+  assert.equal(percentil([], 50), 0);
+});
+
+test('GA93: montarKpi por arquivo com desperdicio, precoces, p50/p95 e causas', () => {
+  const AG = Date.parse('2026-10-20T12:00:00Z');
+  const mk = (min, concl) => ({
+    name: 'CI/CD Pipeline',
+    conclusion: concl,
+    run_started_at: new Date(AG - min * 60000).toISOString(),
+    updated_at: new Date(AG).toISOString(),
+  });
+  const kpi = montarKpi(
+    [mk(10, 'success'), mk(0, 'cancelled'), mk(30, 'cancelled'), mk(5, 'failure')],
+    [],
+    { agora: AG, janelaDias: 7, mapaNomeArquivo: { 'CI/CD Pipeline': 'ci.yml' } },
+  );
+  const ci = kpi['ci.yml'];
+  assert.ok(ci, 'indexado pelo arquivo .yml (o render le por arquivo)');
+  assert.equal(ci.custo_semana_min, 45);
+  assert.equal(ci.taxa_falha_7d, 25);
+  assert.equal(ci.cancelados_precoces, 1, 'cancelado com < 1 min nem comecou');
+  assert.equal(ci.minutos_desperdicados, 30);
+  assert.deepEqual(ci.causas, { success: 1, cancelled: 2, failure: 1 });
+  assert.ok(ci.p50_min >= 0 && ci.p95_min >= ci.p50_min, 'p95 >= p50');
+});
+
+test('GA93: gravarKpi escreve JSON legivel pelo render', async () => {
+  const dir = mkdtempSync(join(tmpdir(), 'kpi-'));
+  try {
+    const caminho = join(dir, 'docs', 'ci', 'kpi.json');
+    await gravarKpi(caminho, { 'ci.yml': { custo_semana_min: 12.5, taxa_falha_7d: 0 } });
+    const lido = JSON.parse(lerArquivo(caminho, 'utf8'));
+    assert.equal(lido['ci.yml'].custo_semana_min, 12.5);
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
 });
