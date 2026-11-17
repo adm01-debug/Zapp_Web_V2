@@ -284,7 +284,7 @@ regra do dono é não perder trabalho sem ter certeza.
 A consolidação **saiu do papel** e está em `claude/chore-dossies-resgatados-261117-1629`, e no
 caminho apareceu um achado que vale registrar como regra: dos 65 dossiês resgatados dessas três
 branches, **só 17 são caminho novo**. Os outros 48 têm caminho igual a um arquivo que a `main`
-já tem — e publicá-los por cima **perderia** conteudo, porque as duas versões não se contêm.
+já tem — e publicá-los por cima **perderia** conteúdo, porque as duas versões não se contêm.
 Medido em `docs/_arquivo/analise-prs/dossies/PR-2129.md`: a da `main` tem 35 linhas e carrega
 `Head SHA`, `Base SHA`, nome da branch, rótulo de status e a tabela de veredito de 4 perguntas;
 a da branch tem 123 linhas de análise de diff e **nenhum** desses campos. Nos 48 casos a versão
@@ -299,12 +299,12 @@ depois que essa PR mergear, e `analise-prs/prs_inventory.json` (2 176 linhas) co
   O que está provado é onde cada uma está e quanto é; o julgamento "isto é melhoria a
   reaproveitar" x "isto é churn que a `main` já superou" exige ler o trecho.
 - Nenhuma das 107 pode ser apagada com base só neste laudo.
-- Branch `contexto` é gerada por automação e está fora da auditoria de propssito.
+- Branch `contexto` é gerada por automação e está fora da auditoria de propósito.
 
 ## Como refazer / continuar
 
 A varredura é reprodutível com `gh api` (leitura) + `git ls-tree` local, sem nenhuma
 escrita. Três chamadas por branch: `/compare/main...<branch>` (paginado),
-`/git/trees/<branch?>recursive=1` e, para migration ausente, `/contents/<arquivo>?ref=<branch>`.
+`/git/trees/<branch>?recursive=1` e, para migration ausente, `/contents/<arquivo>?ref=<branch>`.
 A conferência de objeto vivo é SQL de leitura no projeto oficial contra `pg_class`,
 `pg_proc`, `pg_trigger`, `pg_policy`, `pg_type` e `information_schema.columns`.
