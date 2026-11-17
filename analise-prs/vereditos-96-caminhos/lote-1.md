@@ -96,7 +96,7 @@ Base: `origin/main` @ `a56d9cb7`. Uma seção por caminho: a branch representati
 ## src/hooks/tasks/workItemAggregates.ts
 - branch: origin/claude/fix-codex-findings-161016-1906
 - veredito: OBSOLETO
-- prova: o branch apenas troca o escape `̀-ͯ` por caracteres combinantes literais no regex — mesmo comportamento. A `main` tem a forma legível em `src/hooks/tasks/workItemAggregates.ts:102`: `return texto.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();`
+- prova: a `main` usa escapes Unicode em `src/hooks/tasks/workItemAggregates.ts:102` — `return texto.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();` — e o branch trocou esse escape pelos caracteres combinantes literais. Os dois casam o mesmo intervalo U+0300–U+036F, logo o comportamento é idêntico; a diferença é só de grafia do regex. (Correção de 17/11: a versão anterior desta prova dizia o inverso, atribuindo o literal à `main`. Apontado por Devin na revisão da PR #3210.)
 - uma frase: a busca que ignora acento já funciona igual na `main`; a diferença é só de grafia do regex.
 
 RESUMO: 16 obsoletos, 0 recuperar, 0 duvida
