@@ -8,6 +8,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { HOVER_REVEAL } from './hoverActions';
 import { useToast } from '@/hooks/ui/use-toast';
 import { useAiRequestGeneration } from '@/lib/aiRequest/context';
+import { mascararParaIA } from '@/hooks/copilot/useDataMasking';
+import { TransparencyLabel } from '@/components/copilot/TransparencyLabel';
 
 /**
  * SL-063 — chips de tom da sugestão. Cada clique RE-GERA a sugestão pedindo o
@@ -101,8 +103,12 @@ export function AISuggestions({ messages, contactName, contactId, onSelectSugges
     try {
       const { data, error } = await supabase.functions.invoke('ai-suggest-reply', {
         body: {
+          // CV-114 / LGPD em transito: documento e cartao NAO saem do sistema
+          // para o provedor de IA. `mascararParaIA` mascara cpf, cnpj e cartao
+          // e deixa telefone, e-mail e CEP intactos de proposito -- a IA usa
+          // esses para contexto, e o telefone ja e o canal da conversa.
           messages: messages.slice(-10).map(m => ({
-            content: m.content,
+            content: mascararParaIA(m.content),
             sender: m.sender
           })),
           contactName,
@@ -194,6 +200,9 @@ export function AISuggestions({ messages, contactName, contactId, onSelectSugges
                 <Sparkles className="h-4 w-4 text-primary" />
                 <span className="font-medium text-sm">Copilot IA</span>
                 <Badge variant="secondary" className="text-3xs">KB</Badge>
+                {/* CV-118: o vendedor tem de ver que a sugestao e de IA e que
+                    nada sai sozinho. O selo existia sem nenhum consumidor. */}
+                <TransparencyLabel variant="badge" sourceLabel="IA" showNotAutoSent />
               </div>
               <Button
                 variant="ghost"
