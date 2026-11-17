@@ -421,8 +421,8 @@
     },
     {
       "path": "supabase/functions/ai-deadline-calculator/index.ts",
-      "bytes": 5156,
-      "sha256": "15c39a71b4b6eaf44583af3986a9e5bf1d9bfca986e5b8a29f9d27798e9b7d32"
+      "bytes": 5067,
+      "sha256": "0b61dacc251230c9da9bcb95b4d92ed6416c6b06a8b08fb53f2dbe2ed17654ee"
     },
     {
       "path": "supabase/functions/ai-enhance-message/index.ts",
@@ -441,33 +441,33 @@
     },
     {
       "path": "supabase/functions/ai-lead-temperature/index.ts",
-      "bytes": 5145,
-      "sha256": "a8ef4877f08accf5c88a37af54291adf8f0eddd0e9c1fc386ae8533824653e61"
+      "bytes": 5056,
+      "sha256": "2a7015c0a8116fb81742d79873772b6b4e0cc233bc87673e9f946b620c05a30e"
     },
     {
       "path": "supabase/functions/ai-loss-risk/index.ts",
-      "bytes": 4982,
-      "sha256": "d0e983914b3b6f8d95baf50c9c975d0333fb4ca716717cad9288f5705af95ddb"
+      "bytes": 4893,
+      "sha256": "2b0757f1edfc26322c8e9b2c9a577dfdfcf7cd37283f61332983a3bca5780969"
     },
     {
       "path": "supabase/functions/ai-multimodal-analysis/index.ts",
-      "bytes": 5267,
-      "sha256": "0bc1b349693751e9906728651f184abdf6a3eac2e504520b94a6cfce6c63b877"
+      "bytes": 5178,
+      "sha256": "0c761b68cc72b5d55b98de50b1b20d1364e5fe315aabce717979953dc07fdcdf"
     },
     {
       "path": "supabase/functions/ai-objection-handler/index.ts",
-      "bytes": 5792,
-      "sha256": "2efa6799a3e0c8516babadfac979b2b05b5036b73b3758a03a3b7732f986f0f9"
+      "bytes": 5693,
+      "sha256": "c74d7000342db84d200c92616ced77be794bc4b0553edb42e19dcdabe32674a7"
     },
     {
       "path": "supabase/functions/ai-price-anchor/index.ts",
-      "bytes": 5285,
-      "sha256": "87f78edea31aff859c5385d1cf378a7c5fcbeb41bfc4c432861eeb645b90b947"
+      "bytes": 5196,
+      "sha256": "b2507174b998f0cadd3a89de2c5344e118e4952bc50d599b891156afa8f4f07b"
     },
     {
       "path": "supabase/functions/ai-product-recommendation/index.ts",
-      "bytes": 5471,
-      "sha256": "6a1eb20655ec63dd307d8fa9fe7b0c0e17bd97181fe5d125591a8bf26fdc2c28"
+      "bytes": 5382,
+      "sha256": "043055acc92a99371094b26e5c6a8cc12dcb367435f801bc6605f8982f21d137"
     },
     {
       "path": "supabase/functions/ai-proxy/index.ts",
@@ -691,8 +691,8 @@
     },
     {
       "path": "supabase/functions/gmail-webhook/index.ts",
-      "bytes": 12679,
-      "sha256": "a0f202121028febcc9b4a9789f0298f8be2f531ba66b2cb087fcc4b0107fd43c"
+      "bytes": 12614,
+      "sha256": "29b4c9a52a90f1a1ff7b8fe8d2245c1ac55695819d506977f634c358db56ec95"
     },
     {
       "path": "supabase/functions/health/index.ts",
@@ -756,8 +756,8 @@
     },
     {
       "path": "supabase/functions/multiplix-send/index.ts",
-      "bytes": 65085,
-      "sha256": "b1ee6b5ae71fa74cbf9ce5a13fb03df769253e8835037fbe613855382bb1b998"
+      "bytes": 65812,
+      "sha256": "a9d8144f8c2f1b168d421dba1b0214a756210aa092b546993de56aacdbfa0fb4"
     },
     {
       "path": "supabase/functions/multiplix-voices/index.ts",
@@ -846,8 +846,8 @@
     },
     {
       "path": "supabase/functions/talkx-send/index.ts",
-      "bytes": 71757,
-      "sha256": "d6cf2119ff0c57f4314b0521c6323d6e73092c0ce7a5f39d3493208fcdbd9b0d"
+      "bytes": 72493,
+      "sha256": "17bffd8d9260ecc0e63e0e85372b0b8d8be7f36177e0ae72075346f8619900ba"
     },
     {
       "path": "supabase/functions/talkx-send/process-recipient.ts",
@@ -1036,7 +1036,7 @@
       "name": "ai-deadline-calculator",
       "entrypoint": "supabase/functions/ai-deadline-calculator/index.ts",
       "verify_jwt": true,
-      "source_sha256": "7aced243d8986830dd10f5ff6e913c468b59ad4c26046e5e5f619974d481c76d",
+      "source_sha256": "954cc87fab64f0fa97d0000e51f6349d4ec34a501891bc05e85b1b0a5f7e9a43",
       "source_files": [
         "supabase/functions/_shared/ai-budget.ts",
         "supabase/functions/_shared/ai-capabilities.ts",
@@ -1044,6 +1044,7 @@
         "supabase/functions/_shared/ai-feature-flags.ts",
         "supabase/functions/_shared/ai-generate.ts",
         "supabase/functions/_shared/ai-guards.ts",
+        "supabase/functions/_shared/ai-json.ts",
         "supabase/functions/_shared/ai-providers.ts",
         "supabase/functions/_shared/ai-response-contracts.ts",
         "supabase/functions/_shared/ai-routing.ts",
@@ -1136,7 +1137,7 @@
       "name": "ai-lead-temperature",
       "entrypoint": "supabase/functions/ai-lead-temperature/index.ts",
       "verify_jwt": true,
-      "source_sha256": "ea4de657d386dc4932e9cb7831e419c8cffbb3981f718856a49b4e403ff90008",
+      "source_sha256": "4eabafe562444a3202b44466c8786a8c7959b30d7c2a08a2babf0901915b267a",
       "source_files": [
         "supabase/functions/_shared/ai-budget.ts",
         "supabase/functions/_shared/ai-capabilities.ts",
@@ -1144,6 +1145,7 @@
         "supabase/functions/_shared/ai-feature-flags.ts",
         "supabase/functions/_shared/ai-generate.ts",
         "supabase/functions/_shared/ai-guards.ts",
+        "supabase/functions/_shared/ai-json.ts",
         "supabase/functions/_shared/ai-providers.ts",
         "supabase/functions/_shared/ai-response-contracts.ts",
         "supabase/functions/_shared/ai-routing.ts",
@@ -1164,7 +1166,7 @@
       "name": "ai-loss-risk",
       "entrypoint": "supabase/functions/ai-loss-risk/index.ts",
       "verify_jwt": true,
-      "source_sha256": "2a19d1a19cc5e9d4fafa91d1afbadbd15ff4c3710185fbdbeab60d797bacd650",
+      "source_sha256": "b602ac43110326815295f20176f9c801f608b2ec8a2ffde190a50e4d56b7fb60",
       "source_files": [
         "supabase/functions/_shared/ai-budget.ts",
         "supabase/functions/_shared/ai-capabilities.ts",
@@ -1172,6 +1174,7 @@
         "supabase/functions/_shared/ai-feature-flags.ts",
         "supabase/functions/_shared/ai-generate.ts",
         "supabase/functions/_shared/ai-guards.ts",
+        "supabase/functions/_shared/ai-json.ts",
         "supabase/functions/_shared/ai-providers.ts",
         "supabase/functions/_shared/ai-response-contracts.ts",
         "supabase/functions/_shared/ai-routing.ts",
@@ -1192,7 +1195,7 @@
       "name": "ai-multimodal-analysis",
       "entrypoint": "supabase/functions/ai-multimodal-analysis/index.ts",
       "verify_jwt": true,
-      "source_sha256": "ff603f083695aada94e7e8daf66d57ae1a466dde3cdf8341cbcc32c61a6b17f7",
+      "source_sha256": "f18c4ed8c90021a00eb1518b6f59e1c1a2a44165e03876c489651e3d68e8b4f2",
       "source_files": [
         "supabase/functions/_shared/ai-budget.ts",
         "supabase/functions/_shared/ai-capabilities.ts",
@@ -1200,6 +1203,7 @@
         "supabase/functions/_shared/ai-feature-flags.ts",
         "supabase/functions/_shared/ai-generate.ts",
         "supabase/functions/_shared/ai-guards.ts",
+        "supabase/functions/_shared/ai-json.ts",
         "supabase/functions/_shared/ai-providers.ts",
         "supabase/functions/_shared/ai-response-contracts.ts",
         "supabase/functions/_shared/ai-routing.ts",
@@ -1220,7 +1224,7 @@
       "name": "ai-objection-handler",
       "entrypoint": "supabase/functions/ai-objection-handler/index.ts",
       "verify_jwt": true,
-      "source_sha256": "2402cc3805ef25fed11cee3ca6894f7d6648a532420cf6b8e2793f8a47b4fa8b",
+      "source_sha256": "d44f5b466aeea1e3be08fa0bf4efd7da11cf4f20982ff6b85969d84635587979",
       "source_files": [
         "supabase/functions/_shared/ai-budget.ts",
         "supabase/functions/_shared/ai-capabilities.ts",
@@ -1228,6 +1232,7 @@
         "supabase/functions/_shared/ai-feature-flags.ts",
         "supabase/functions/_shared/ai-generate.ts",
         "supabase/functions/_shared/ai-guards.ts",
+        "supabase/functions/_shared/ai-json.ts",
         "supabase/functions/_shared/ai-providers.ts",
         "supabase/functions/_shared/ai-response-contracts.ts",
         "supabase/functions/_shared/ai-routing.ts",
@@ -1248,7 +1253,7 @@
       "name": "ai-price-anchor",
       "entrypoint": "supabase/functions/ai-price-anchor/index.ts",
       "verify_jwt": true,
-      "source_sha256": "f071d33b5e6ae6253c1761b5adcd6f443eda3337ae788967347d2350f9c404fa",
+      "source_sha256": "fa637feceec8f52bbec3c8f6c08f87fa29e122c2e9d8ed910f84d3091b18a2e5",
       "source_files": [
         "supabase/functions/_shared/ai-budget.ts",
         "supabase/functions/_shared/ai-capabilities.ts",
@@ -1256,6 +1261,7 @@
         "supabase/functions/_shared/ai-feature-flags.ts",
         "supabase/functions/_shared/ai-generate.ts",
         "supabase/functions/_shared/ai-guards.ts",
+        "supabase/functions/_shared/ai-json.ts",
         "supabase/functions/_shared/ai-providers.ts",
         "supabase/functions/_shared/ai-response-contracts.ts",
         "supabase/functions/_shared/ai-routing.ts",
@@ -1276,7 +1282,7 @@
       "name": "ai-product-recommendation",
       "entrypoint": "supabase/functions/ai-product-recommendation/index.ts",
       "verify_jwt": true,
-      "source_sha256": "f2cfbe791d847f568cb1d83b7befef2666afc0fb52da0b6c37285b907e4efab3",
+      "source_sha256": "8b2b8bf4d98cb13d90a991f1b2c5bec34ea17e0693addf4ea28764c530ccc243",
       "source_files": [
         "supabase/functions/_shared/ai-budget.ts",
         "supabase/functions/_shared/ai-capabilities.ts",
@@ -1284,6 +1290,7 @@
         "supabase/functions/_shared/ai-feature-flags.ts",
         "supabase/functions/_shared/ai-generate.ts",
         "supabase/functions/_shared/ai-guards.ts",
+        "supabase/functions/_shared/ai-json.ts",
         "supabase/functions/_shared/ai-providers.ts",
         "supabase/functions/_shared/ai-response-contracts.ts",
         "supabase/functions/_shared/ai-routing.ts",
@@ -2149,7 +2156,7 @@
       "name": "gmail-webhook",
       "entrypoint": "supabase/functions/gmail-webhook/index.ts",
       "verify_jwt": false,
-      "source_sha256": "8103a26ef1c866c6ac4259c2c6b29842ab2bfc6f71bc795188b6db017e8bb642",
+      "source_sha256": "d259b32cb5f1a7bc97ff25fd39a8389503470df51e060fa8ba406615ca21e7ee",
       "source_files": [
         "supabase/functions/_shared/cors-origins.ts",
         "supabase/functions/_shared/gmail-helpers.ts",
@@ -2307,7 +2314,7 @@
       "name": "multiplix-send",
       "entrypoint": "supabase/functions/multiplix-send/index.ts",
       "verify_jwt": true,
-      "source_sha256": "3ae4dc39b8e12f030423a1386f77f0256b46a145ff4975ab746190e151dfff09",
+      "source_sha256": "65fe80d20631bfed6ac5d5ef45e23f7a007ed0c1839f03bf0fb06369dc724b9e",
       "source_files": [
         "supabase/functions/_shared/cors-origins.ts",
         "supabase/functions/_shared/evolution-api-proxy.ts",
@@ -2615,7 +2622,7 @@
       "name": "talkx-send",
       "entrypoint": "supabase/functions/talkx-send/index.ts",
       "verify_jwt": true,
-      "source_sha256": "d56f2c4d59b96e40184c698d0b8752026bd98fbabd01efe2abc3e9001fc0b2d5",
+      "source_sha256": "80db73b80ab6970b629be5ca51b372a442f6115c8a8be9397a5069b56869e401",
       "source_files": [
         "supabase/functions/_shared/ai-jobs.ts",
         "supabase/functions/_shared/cors-origins.ts",
@@ -2782,5 +2789,5 @@
       ]
     }
   ],
-  "manifest_sha256": "d3d065dc6ec8f1a6e70e0cf4be2eb8d02730c12ff9eb2af76228ee137c7764fa"
+  "manifest_sha256": "3cc01dd987dd74c6a6a768e9e07969e4f555fcbf38b1e46156dbd05a508c1a52"
 }

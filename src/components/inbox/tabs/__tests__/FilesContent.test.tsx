@@ -71,6 +71,19 @@ describe('FilesContent (etapa 25)', () => {
       unmount();
     });
   });
+
+  it('B3: Encaminhar fica habilitado e chama o handler com o item nos três modos', () => {
+    (['grid', 'list', 'table'] as const).forEach((viewMode) => {
+      const { actions, unmount } = renderContent({ viewMode });
+      const encaminhar = screen.getAllByRole('button', { name: 'Encaminhar' })[0];
+      expect(encaminhar).toBeEnabled();
+      expect(encaminhar).not.toHaveAttribute('title', 'Disponível em breve');
+      fireEvent.click(encaminhar);
+      expect(actions.onForward).toHaveBeenCalledTimes(1);
+      expect(actions.onForward).toHaveBeenCalledWith(ITEMS[0]);
+      unmount();
+    });
+  });
 });
 
 describe('FilesContent — estados distintos (etapa 44)', () => {
