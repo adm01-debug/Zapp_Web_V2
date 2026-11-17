@@ -33,7 +33,10 @@ export function useTalkXCommandItems(onNavigate?: (view: string) => void, open?:
   const enabled = !!open;
 
   const campaignsQuery = useQuery({
-    queryKey: ['talkx-campaigns'],
+    // 'cmd-palette' isola esta query do cache compartilhado com useTalkX.ts
+    // (que usa select completo). Sem a subchave, Ctrl+K regrava o cache com
+    // select('id,name,status').limit(50) e as telas de campanha perdem campos.
+    queryKey: ['talkx-campaigns', 'cmd-palette'],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('talkx_campaigns')
@@ -48,7 +51,8 @@ export function useTalkXCommandItems(onNavigate?: (view: string) => void, open?:
   });
 
   const segmentsQuery = useQuery({
-    queryKey: ['talkx-segments'],
+    // 'cmd-palette' isola esta query do cache compartilhado com useTalkXSegments
+    queryKey: ['talkx-segments', 'cmd-palette'],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('talkx_segments')
@@ -63,7 +67,8 @@ export function useTalkXCommandItems(onNavigate?: (view: string) => void, open?:
   });
 
   const templatesQuery = useQuery({
-    queryKey: ['talkx-templates'],
+    // 'cmd-palette' isola esta query do cache compartilhado com useTalkXTemplates
+    queryKey: ['talkx-templates', 'cmd-palette'],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('talkx_templates')

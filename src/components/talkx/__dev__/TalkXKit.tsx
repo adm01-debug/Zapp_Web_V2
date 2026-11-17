@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import type { ReactNode } from 'react';
 import {
   Ban, CheckCircle2, Database, FileText, Filter, Gauge, Megaphone, Pause,
@@ -5,9 +6,10 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
-  CAMPAIGN_STATUS, KpiCard, ModuleHeader, RailAction, StatusPill, TalkXFilterBar,
+  CAMPAIGN_STATUS, KpiCard, KpiCardSkeleton, ModuleHeader, RailAction, StatusPill, TalkXFilterBar,
   TalkXTable, fmtInt, type TalkXColumn,
 } from '../talkxShared';
+import { useTalkXOverviewStats } from '@/hooks/integrations/useTalkXOverviewStats';
 import {
   TalkXCrmUnavailableState, TalkXEmptyState, TalkXErrorState, TalkXNoPermissionState,
   TalkXSkeletonRows, TalkXWhatsAppDisconnectedState,
@@ -31,11 +33,11 @@ import {
 const APP_VERSION = import.meta.env.VITE_APP_VERSION ?? 'dev';
 
 /** Linha de demonstração da galeria de tabela. */
-interface LinhaDemo { id: string; nome: string; status: string; enviados: number }
+interface LinhaDemo { id: string; nome: string; status: string; enviados: number; segment?: string }
 
 const LINHAS_DEMO: LinhaDemo[] = [
-  { id: 'demo-1', nome: 'Promoção Setembro', status: 'sending', enviados: 1280 },
-  { id: 'demo-2', nome: 'Reativação Outubro', status: 'scheduled', enviados: 0 },
+  { id: 'demo-1', nome: 'Promoção Setembro', status: 'sending', enviados: 1280, segment: 'vip' },
+  { id: 'demo-2', nome: 'Reativação Outubro', status: 'scheduled', enviados: 0, segment: 'vip' },
   { id: 'demo-3', nome: 'Pesquisa de satisfação', status: 'completed', enviados: 640 },
 ];
 
@@ -103,6 +105,26 @@ function CartaoEstado({ estado, children }: { estado: TalkXForcedState; children
 
 export function TalkXKit() {
   const forced = currentTalkXForcedState();
+
+  // X056 — filtros dinâmicos da prancha
+  const [search, setSearch] = useState('');
+  const [filterValues, setFilterValues] = useState<Record<string, string>>({});
+  const hasActive = !!search || Object.values(filterValues).some((v) => v && v !== 'all');
+
+  // X056: busca por nome (case-insensitive) + filtros de status/segmento
+  const linhasFiltradas = LINHAS_DEMO.filter((r) => {
+    if (search && !r.nome.toLowerCase().includes(search.toLowerCase())) return false;
+    const sf = filterValues.status;
+    if (sf && sf !== 'all' && r.status !== sf) return false;
+    const seg = filterValues.segment;
+    if (seg && seg !== 'all' && r.segment !== seg) return false;
+    return true;
+  });
+
+  // X057 — KPI cards reais
+  const {
+    data: stats, isLoading: statsLoading, isError: statsError, refetch: refetchStats,
+  } = useTalkXOverviewStats(null, null);
 
   return (
     <div data-testid="talkx-kit" className="min-h-full bg-background px-4 py-4 space-y-5 md:px-6">
@@ -216,8 +238,10 @@ export function TalkXKit() {
 
           <section className="space-y-3">
             <TituloSecao titulo="Barra de filtros" subtitulo="TalkXFilterBar — busca, filtros, período e atualizar" />
-            <div data-testid="talkx-kit-filtros" className="rounded-2xl border border-border/70 bg-card p-3">
+            <div data-testid="talkx-kit-filtros" className="rounded-2xl border border-border/70 bg-card p-3 space-y-2">
               <TalkXFilterBar
+                search={search}
+                onSearch={setSearch}
                 placeholder="Buscar campanhas…"
                 filters={[
                   {
@@ -235,24 +259,72 @@ export function TalkXKit() {
                     options: [{ value: 'vip', label: 'Clientes VIP' }],
                   },
                 ]}
-                values={{ status: '', segment: '' }}
+                values={filterValues}
+                onFilter={(key, val) => setFilterValues((prev) => ({ ...prev, [key]: val }))}
+                onClear={() => { setSearch(''); setFilterValues({}); }}
+                hasActive={hasActive}
               />
+              <p data-testid="talkx-kit-filtros-contador" className="text-2xs text-muted-foreground px-1">
+                {linhasFiltradas.length} de {LINHAS_DEMO.length} resultado{LINHAS_DEMO.length !== 1 ? 's' : ''}
+                {hasActive ? ' (filtrado)' : ''}
+              </p>
             </div>
           </section>
 
           <section className="space-y-3">
             <TituloSecao titulo="KPI e tabela" subtitulo="KpiCard com comparativo e TalkXTable com ordenação" />
             <div data-testid="talkx-kit-kpi" className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
-              <KpiCard icon={Rocket} color="blue" label="Campanhas ativas" value={3} visual="bars" bars={[1, 2, 1, 3, 2]} />
-              <KpiCard icon={CheckCircle2} color="green" label="Entregues" value={1920} comparison={{ previous: 1840, kind: 'relative' }} />
-              <KpiCard icon={Database} color="violet" label="Base elegível" value={8450} visual="ring" />
+              {statsLoading ? (
+                <>
+                  <KpiCardSkeleton />
+                  <KpiCardSkeleton />
+                  <KpiCardSkeleton />
+                </>
+              ) : statsError ? (
+                <div data-testid="talkx-kit-kpi-erro" className="sm:col-span-2 xl:col-span-3">
+                  <TalkXErrorState
+                    entity="métricas"
+                    message="Os indicadores não puderam ser lidos agora. Tente novamente em alguns instantes."
+                    onRetry={() => { void refetchStats(); }}
+                  />
+                </div>
+              ) : (
+                <>
+                  <KpiCard
+                    icon={Rocket} color="blue" label="Campanhas ativas"
+                    value={stats?.active ?? null}
+                    visual="bars" bars={stats?.dailySent}
+                    index={0}
+                  />
+                  <KpiCard
+                    icon={CheckCircle2} color="green" label="Enviadas"
+                    value={stats?.current.sent ?? null}
+                    comparison={stats?.previous?.sent != null ? { previous: stats.previous.sent, kind: 'relative' } : undefined}
+                    index={1}
+                  />
+                  <KpiCard
+                    icon={Database} color="violet" label="Taxa de entrega"
+                    value={stats?.current.deliveryRatePct ?? null}
+                    suffix="%"
+                    visual="ring"
+                    comparison={stats?.previous?.deliveryRatePct != null
+                      ? { previous: stats.previous.deliveryRatePct, current: stats.current.deliveryRatePct, kind: 'points', goodWhen: 'up' }
+                      : undefined}
+                    index={2}
+                  />
+                </>
+              )}
             </div>
             <div data-testid="talkx-kit-tabela" className="rounded-2xl border border-border/70 bg-card p-2">
               <TalkXTable
                 columns={COLUNAS_DEMO}
-                rows={LINHAS_DEMO}
+                rows={linhasFiltradas}
                 getId={(r) => r.id}
-                emptyState={<TalkXEmptyState preset="emptyCampaigns" />}
+                emptyState={
+                  hasActive
+                    ? <TalkXEmptyState preset="filtered" onClearFilters={() => { setSearch(''); setFilterValues({}); }} />
+                    : <TalkXEmptyState preset="emptyCampaigns" />
+                }
               />
             </div>
           </section>

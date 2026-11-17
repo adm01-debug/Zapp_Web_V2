@@ -35,12 +35,16 @@ vi.mock('@/hooks/crm/useContactNotes', () => ({
   }),
 }));
 
+vi.mock('sonner', () => ({ toast: { success: vi.fn(), error: vi.fn() } }));
+
 vi.mock('@/hooks/crm/useEmailContactContext', () => ({
   useEmailContactContext: vi.fn(),
 }));
 
 import { EmailContactPanel } from '../EmailContactPanel';
 import { useEmailContactContext } from '@/hooks/crm/useEmailContactContext';
+import { toast } from 'sonner';
+import { COPIADO, FALHA_COPIA } from '@/lib/clipboard';
 
 const contextQuery = vi.mocked(useEmailContactContext);
 
@@ -330,5 +334,24 @@ describe('EmailContactPanel', () => {
     expect(screen.getByText('Diretor')).toBeDefined();
     expect(screen.getByText('+55 11 99999-0000')).toBeDefined();
     expect(screen.queryByText('Sim')).toBeNull();
+  });
+
+  it('confirma a cópia do e-mail só quando ela acontece e avisa na falha', async () => {
+    const writeText = vi.fn().mockResolvedValueOnce(undefined).mockRejectedValueOnce(new Error('negado'));
+    Object.defineProperty(navigator, 'clipboard', { value: { writeText }, configurable: true });
+    const execCommand = vi.fn().mockReturnValue(false);
+    Object.defineProperty(document, 'execCommand', { value: execCommand, configurable: true });
+    vi.mocked(toast.success).mockClear();
+    vi.mocked(toast.error).mockClear();
+    render(<EmailContactPanel thread={BASE_THREAD} onClose={vi.fn()} />);
+    const botao = screen.getByRole('button', { name: 'Copiar e-mail alice@example.com' });
+
+    fireEvent.click(botao);
+    await waitFor(() => expect(toast.success).toHaveBeenCalledWith(COPIADO));
+    expect(writeText).toHaveBeenCalledWith('alice@example.com');
+
+    fireEvent.click(botao);
+    await waitFor(() => expect(toast.error).toHaveBeenCalledWith(FALHA_COPIA));
+    expect(toast.success).toHaveBeenCalledTimes(1);
   });
 });

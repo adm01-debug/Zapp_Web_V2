@@ -26,15 +26,25 @@ export interface SipProvisioning {
  * todo usuário — mesmo quem nunca usa telefonia. Ao receber o 503
  * `SIP_NOT_CONFIGURED`, a resposta fica lembrada por `SIP_NOT_CONFIGURED_TTL_MS`
  * neste navegador (todas as abas): nesse intervalo não há nova chamada, nem log,
- * nem toast. Depois do prazo tenta de novo (o administrador pode ter configurado).
+ * nem toast. Depois do prazo tenta de novo (o administrador pode ter configurado); um
+ * pedido explícito do usuário (`ignorarTrava`) tenta na hora.
  */
 export const SIP_NOT_CONFIGURED_STORAGE_KEY = 'zapp:sip-nao-configurado-ate';
 export const SIP_NOT_CONFIGURED_TTL_MS = 30 * 60_000;
 
+/**
+ * Lê a trava. Valor fora de `(now, now + TTL]` é descartado e apagado: um `até`
+ * absurdo (relógio adiantado ao gravar e corrigido depois, edição manual)
+ * nunca pode travar a telefonia por mais que o prazo.
+ */
 function sipSabidamenteNaoConfigurado(now: number): boolean {
   try {
-    const until = Number(globalThis.localStorage?.getItem(SIP_NOT_CONFIGURED_STORAGE_KEY));
-    return Number.isFinite(until) && until > now;
+    const raw = globalThis.localStorage?.getItem(SIP_NOT_CONFIGURED_STORAGE_KEY);
+    if (raw == null) return false;
+    const until = Number(raw);
+    if (Number.isFinite(until) && until > now && until - now <= SIP_NOT_CONFIGURED_TTL_MS) return true;
+    esquecerSipNaoConfigurado();
+    return false;
   } catch {
     return false; // storage bloqueado: segue o caminho normal
   }
@@ -48,22 +58,58 @@ function lembrarSipNaoConfigurado(now: number): void {
   }
 }
 
-export async function provisionarSip(): Promise<SipProvisioning | null> {
-  if (sipSabidamenteNaoConfigurado(Date.now())) return null;
+function esquecerSipNaoConfigurado(): void {
+  try {
+    globalThis.localStorage?.removeItem(SIP_NOT_CONFIGURED_STORAGE_KEY);
+  } catch {
+    /* storage bloqueado: nada a esquecer */
+  }
+}
+
+type ErrorContext = { status?: number; code?: unknown; clone?: () => { json?: () => Promise<unknown> } };
+
+/**
+ * `code` do corpo da resposta de erro. `FunctionsHttpError.context` é a
+ * `Response` (corpo lido de um clone) ou, em versões antigas/dublês, o corpo já
+ * parseado. Nunca lança: sem corpo JSON = sem código.
+ */
+async function codigoDoErro(ctx: ErrorContext | undefined): Promise<string | undefined> {
+  if (typeof ctx?.code === 'string') return ctx.code;
+  try {
+    const body = await ctx?.clone?.()?.json?.();
+    const code = body && typeof body === 'object' ? (body as { code?: unknown }).code : undefined;
+    return typeof code === 'string' ? code : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+export interface ProvisionarSipOptions {
+  /**
+   * Pedido EXPLÍCITO do usuário (reconectar): ignora a trava, para que a
+   * telefonia volte assim que o administrador configurar o segredo, sem esperar
+   * o prazo. O provisionamento automático da aba líder respeita a trava.
+   */
+  ignorarTrava?: boolean;
+}
+
+export async function provisionarSip(options: ProvisionarSipOptions = {}): Promise<SipProvisioning | null> {
+  if (!options.ignorarTrava && sipSabidamenteNaoConfigurado(Date.now())) return null;
   const { data, error } = await supabase.functions.invoke('get-sip-password');
   const password = data?.password;
   const { server, user, wsPort } = data ?? {};
   if (error || !password || !server || !user || !wsPort) {
-    // FunctionsHttpError.context pode ser Response (status) ou corpo já
-    // parseado (code), dependendo da versão do supabase-js.
-    const ctx = (error as { context?: { status?: number; code?: string } } | null)?.context;
-    const isMissingSecret = error ? ctx?.status === 503 || ctx?.code === 'SIP_NOT_CONFIGURED' : !password;
+    const ctx = (error as { context?: ErrorContext } | null)?.context;
+    const code = error ? await codigoDoErro(ctx) : undefined;
+    // Só o `SIP_NOT_CONFIGURED` explícito do servidor trava. Outro 503 (ex.:
+    // `BOOT_ERROR` da Edge logo após um deploy) é passageiro: travar ali
+    // deixaria a telefonia muda por 30 min sem motivo.
+    const naoConfigurado = code === 'SIP_NOT_CONFIGURED';
     // Sem erro e sem os campos = função ainda antiga (janela entre o deploy do
     // front, imediato, e o da Edge): avisa em vez de conectar com valor velho.
+    const isMissingSecret = error ? naoConfigurado || (ctx?.status === 503 && code === undefined) : !password;
+    if (naoConfigurado) lembrarSipNaoConfigurado(Date.now());
     if (isMissingSecret) {
-      // Só o 503 explícito do servidor trava: resposta sem erro e sem senha
-      // (função antiga na janela de deploy) continua tentando a cada vez.
-      if (error) lembrarSipNaoConfigurado(Date.now());
       console.warn('[sipProvisioning] SIP_PASSWORD não configurado no Supabase — segredo ausente ou nome incorreto.');
       toast.error('Senha SIP não configurada. Fale com o administrador do sistema.');
     } else if (error) {
@@ -73,5 +119,6 @@ export async function provisionarSip(): Promise<SipProvisioning | null> {
     }
     return null;
   }
+  esquecerSipNaoConfigurado();
   return { server, user, password, wsPort };
 }
