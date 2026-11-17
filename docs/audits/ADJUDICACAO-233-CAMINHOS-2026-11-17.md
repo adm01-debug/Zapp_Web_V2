@@ -80,6 +80,52 @@ Isso vale como aviso de metodo: o adjudicador do lote de hooks citou a migration
 abril; o do lote de componentes achou a de **remocao**, de novembro. Quando dois lotes discordam
 sobre o mesmo modulo, vale o estado ao vivo do banco.
 
+## Decisao sobre a edge `ai-auto-tag` (17/11)
+
+Um dos 12 vereditos derrubados foi `src/components/settings/AIAutoTagsConfig.tsx`, com o
+argumento de que "a funcao de tags de IA foi removida" seria falso, porque a edge esta viva.
+Apurado depois, o quadro completo e' este, e a conclusao e' o contrario:
+
+**O painel saiu do produto por decisao, e ha tres guardas disso:**
+
+- `src/components/settings/__tests__/SettingsView.test.tsx:171-185` — ref. `t_dd25f4b4`: "o painel
+  de classificacao automatica por marcador saiu do produto"; o teste afirma que o grupo de IA tem
+  exatamente `['Chatbot L1', 'Gestao IA']` e monta o nome da aba removida por
+  `['Tags','IA'].join(' ')` para o proprio teste nao deixar residuo textual do modulo;
+- `src/components/docs/__tests__/SystemFeaturesView.test.tsx`;
+- `tests/contracts/etiquetas-remocao-residuos.contract.test.ts` — TRA-010 / BACKLOG_VERIFICADO
+  #178, um contrato que mantem os residuos do modulo "Etiquetas" fora do produto.
+
+Ligar o painel de volta reprova 6 testes dessa suite. Nao foi feito.
+
+**A edge esta no ar e nunca foi usada.** Medido na producao oficial em 17/11:
+
+| | |
+|---|---|
+| `functions_ping('ai-auto-tag')` | `alive: true` |
+| chamadores em `src/` | 0 (so' comentarios sobre valores legados que ela gravava) |
+| jobs de `cron.job` que a chamam | 0 |
+| funcoes do banco que a chamam | 0 |
+| triggers que a chamam | 0 |
+| linhas em `ai_conversation_tags` | **0** |
+| `max(created_at)` da tabela | **nulo** — nunca houve escrita |
+
+**Decisao: a edge fica, dormente e documentada. Nao e' apagada e o painel nao volta.**
+
+Por que nao apagar: o codigo esta correto e tem teste proprio (`index.test.ts`, `auth.test.ts`) e
+contrato (`tests/contracts/ai-auto-tag-writes.contract.test.ts`); a tabela e a RLS existem; e com
+zero invocacao ela nao gasta IA. Apagar destruiria trabalho que nao custa nada hoje, e a remocao
+alcancaria `_shared/ai-feature-flags.ts`, `_shared/ai-vocabulary.ts` e dois contratos.
+
+Por que nao ressuscitar: contraria tres guardas de uma decisao do dono.
+
+**NAO VERIFICADO**: nao consigo provar zero *invocacoes* da edge, so' zero *escritas* — este MCP
+nao expoe log de invocacao. O que esta provado e' que nenhuma gravacao jamais aconteceu e que
+nenhum chamador existe no codigo, no cron ou no banco.
+
+O que sobra de custo real e' tempo de CI e de deploy, nao dinheiro de IA. Se o dono quiser zerar
+isso tambem, o caminho e' excluir a funcao do `deploy-functions.yml` — mudanca de workflow.
+
 ## O que este laudo autoriza
 
 **Autoriza fechar** uma branch cujos caminhos funcionais estao todos em `incorporado.md` ou
