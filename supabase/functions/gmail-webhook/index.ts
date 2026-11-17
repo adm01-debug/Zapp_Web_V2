@@ -6,6 +6,13 @@ import { verifyGmailOidcRequest } from "../_shared/hmac-validation.ts";
 import { extractAttachments, ensureValidToken, isGmailReauthError, recordGmailAccountFailure, resetGmailHistoryCursor } from "../_shared/gmail-helpers.ts";
 
 const GMAIL_API = "https://gmail.googleapis.com/gmail/v1/users/me";
+/**
+ * S08-003: toda chamada a Gmail API aqui tem prazo. O laco de history vai a
+ * HISTORY_MAX_PAGES paginas e o de mensagens percorre cada id novo; sem prazo,
+ * uma resposta que nunca chega pendura a entrega do Pub/Sub inteira e o worker
+ * da edge fica ocupado ate o teto da plataforma.
+ */
+const GMAIL_TIMEOUT_MS = 15_000;
 
 const PubSubSchema = z.object({
   message: z.object({
@@ -155,8 +162,11 @@ export async function handleGmailWebhook(req: Request): Promise<Response> {
       });
       if (pageToken) params.set("pageToken", pageToken);
 
+      // S08-003: prazo POR PAGINA. O laco vai a HISTORY_MAX_PAGES paginas; sem
+      // prazo uma pagina presa pendura a entrega do Pub/Sub inteira.
       const historyResponse = await fetch(`${GMAIL_API}/history?${params.toString()}`, {
         headers: { Authorization: `Bearer ${accessToken}` },
+        signal: AbortSignal.timeout(GMAIL_TIMEOUT_MS),
       });
 
       if (!historyResponse.ok) {
@@ -209,6 +219,7 @@ export async function handleGmailWebhook(req: Request): Promise<Response> {
       try {
         const msgResponse = await fetch(`${GMAIL_API}/messages/${msgId}?format=full`, {
           headers: { Authorization: `Bearer ${accessToken}` },
+          signal: AbortSignal.timeout(GMAIL_TIMEOUT_MS),
         });
 
         if (!msgResponse.ok) continue;
