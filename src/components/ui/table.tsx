@@ -42,9 +42,15 @@ const TableRow = React.forwardRef<HTMLTableRowElement, React.HTMLAttributes<HTML
 TableRow.displayName = "TableRow";
 
 const TableHead = React.forwardRef<HTMLTableCellElement, React.ThHTMLAttributes<HTMLTableCellElement>>(
-  ({ className, ...props }, ref) => (
+  // `scope="col"` por padrão: sem ele, o leitor de tela não associa a célula ao
+  // cabeçalho da coluna e lê o valor sem dizer de que coluna é. Fica como padrão
+  // e não fixo, para a célula de cabeçalho de LINHA poder passar `scope="row"`.
+  // Melhoria recuperada da branch
+  // hermes/robustez-primitivos-ui-2610121626bec5-2610141859e423.
+  ({ className, scope = "col", ...props }, ref) => (
     <th
       ref={ref}
+      scope={scope}
       className={cn(
         "h-12 px-4 text-left align-middle font-semibold text-xs uppercase tracking-wider text-muted-foreground [&:has([role=checkbox])]:pr-0",
         className,

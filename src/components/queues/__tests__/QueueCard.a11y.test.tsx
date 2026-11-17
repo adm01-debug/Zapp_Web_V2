@@ -131,7 +131,7 @@ describe('QueueCard — botões de ação com nome acessível e alvo de toque', 
 });
 
 describe('QueueAlertsDisplay — nome do botão de dispensar (já integrado)', () => {
-  it('o botão X anuncia "Dispensar alerta <tipo>"', () => {
+  it('o botão X anuncia a fila E o tipo: "Dispensar alerta da fila <fila>: <tipo>"', () => {
     const alerta = {
       type: 'waiting_contacts',
       queueId: 'q1',
@@ -146,7 +146,7 @@ describe('QueueAlertsDisplay — nome do botão de dispensar (já integrado)', (
     render(<QueueAlertsDisplay alerts={[alerta]} onDismiss={vi.fn()} />);
 
     expect(
-      screen.getByRole('button', { name: 'Dispensar alerta contatos aguardando' }),
+      screen.getByRole('button', { name: 'Dispensar alerta da fila Suporte: contatos aguardando' }),
     ).toBeInTheDocument();
   });
 });
