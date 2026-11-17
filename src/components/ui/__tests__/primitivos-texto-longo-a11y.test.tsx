@@ -102,6 +102,34 @@ describe('primitivos de UI com texto longo (120 caracteres)', () => {
     expect(spanTrunca?.contains(badge)).toBe(false);
   });
 
+  it('TabsTrigger: rótulo interpolado vira UM só span, sem gap extra dentro do texto', () => {
+    // `Todas ({n})` chega como três filhos: "Todas (", o número e ")".
+    // Um span por filho faria o `gap-2` do consumidor injetar 8px dentro do
+    // rótulo ("Todas ( 12 )") e truncaria cada pedaço em separado.
+    // (PasswordResetRequestsPanel.tsx:135, SentimentAlertsDashboard.tsx:82)
+    const quantidade = 12;
+    render(
+      <Tabs defaultValue="a">
+        <TabsList>
+          <TabsTrigger value="a" className="gap-2">
+            <svg data-testid="icone" />
+            Todas ({quantidade})
+          </TabsTrigger>
+        </TabsList>
+        <TabsContent value="a">conteúdo</TabsContent>
+      </Tabs>,
+    );
+
+    const aba = screen.getByRole('tab');
+    const spans = Array.from(aba.querySelectorAll('span')).filter((s) =>
+      s.className.includes('truncate'),
+    );
+    expect(spans).toHaveLength(1);
+    expect(spans[0].textContent).toBe('Todas (12)');
+    // O ícone segue fora do span, como item do flex do trigger.
+    expect(screen.getByTestId('icone').parentElement).toBe(aba);
+  });
+
   it('TabsTrigger com asChild entrega role e atributos ao elemento do consumidor, sem span nosso', () => {
     // Com `asChild` o Radix aplica role/ref/tabIndex/disabled ao filho imediato.
     // Um span nosso roubaria esse papel do botão fornecido pela tela.
