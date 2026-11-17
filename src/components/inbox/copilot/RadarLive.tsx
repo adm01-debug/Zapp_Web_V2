@@ -50,11 +50,15 @@ export default function RadarLive({ contactId, onDraftText, className, lastConta
 
   // CV-055: cada sugestao nova do motor entra no historico da conversa. Sem isto o
   // painel so mostra a mais recente e o que a IA disse antes se perde da tela.
+  // `isDnd` e `pushInsight` saem do objeto ANTES do effect: com `panel.x` nas
+  // dependencias o react-hooks/exhaustive-deps exige o objeto `panel` inteiro, que muda
+  // a cada render e refaria o push sem necessidade.
   const topo = live.suggestions[0];
+  const { isDnd, pushInsight } = panel;
   useEffect(() => {
-    if (!topo?.text || panel.isDnd) return;
-    panel.pushInsight(topo.text, topo.id);
-  }, [topo?.text, topo?.id, panel.isDnd, panel.pushInsight]);
+    if (!topo?.text || isDnd) return;
+    pushInsight(topo.text, topo.id);
+  }, [topo?.text, topo?.id, isDnd, pushInsight]);
 
   if (!session) return null;
 

@@ -21,6 +21,10 @@ export interface RadarInsight {
   timestamp: number;
 }
 
+// Referencia estavel para "sem historico": devolver [] novo a cada render faria
+// qualquer dependencia de `timeline` disparar sem nada ter mudado.
+const EMPTY_TIMELINE: RadarInsight[] = [];
+
 export const RADAR_CARD_IDS = [
   'stage',
   'brinde',
@@ -115,26 +119,35 @@ export function useRadarPanel(userId: string | undefined, conversationId?: strin
     [userId],
   );
 
-  // Historico de insights da conversa (CV-055).
-  const [timeline, setTimeline] = useState<RadarInsight[]>([]);
+  // Historico de insights da conversa (CV-055). A conversa dona do historico mora no
+  // proprio estado: trocar de conversa zera a lista JA na renderizacao, sem effect com
+  // setState (que dispara render em cascata e e barrado pelo react-hooks/set-state-in-effect).
+  // Insight da conversa A nao pode aparecer na B em nenhum frame.
+  const [registro, setRegistro] = useState<{ conversa: string | undefined; itens: RadarInsight[] }>({
+    conversa: conversationId,
+    itens: [],
+  });
+  const timeline = registro.conversa === conversationId ? registro.itens : EMPTY_TIMELINE;
   const contador = useRef(0);
-
-  // Trocar de conversa zera o historico: insight da conversa A nao pode aparecer na B.
-  useEffect(() => {
-    setTimeline([]);
-    contador.current = 0;
-  }, [conversationId]);
 
   // A deduplicacao e minha, nao vem da branch: o chamador empurra a sugestao a cada
   // render, entao sem isto o mesmo insight entraria dezenas de vezes no historico.
-  const pushInsight = useCallback((text: string, messageId?: string) => {
-    if (!text) return;
-    setTimeline((prev) => {
-      if (prev.some((i) => i.text === text && i.messageId === messageId)) return prev;
-      contador.current += 1;
-      return [...prev, { id: `insight-${contador.current}`, text, messageId, timestamp: Date.now() }];
-    });
-  }, []);
+  const pushInsight = useCallback(
+    (text: string, messageId?: string) => {
+      if (!text) return;
+      setRegistro((prev) => {
+        const itens = prev.conversa === conversationId ? prev.itens : [];
+        if (itens !== prev.itens) contador.current = 0;
+        if (itens.some((i) => i.text === text && i.messageId === messageId)) return prev;
+        contador.current += 1;
+        return {
+          conversa: conversationId,
+          itens: [...itens, { id: `insight-${contador.current}`, text, messageId, timestamp: Date.now() }],
+        };
+      });
+    },
+    [conversationId],
+  );
 
   const setMode = useCallback((mode: RadarMode) => update({ mode }), [update]);
   const toggleCollapsed = useCallback(() => update({ collapsed: !state.collapsed }), [update, state.collapsed]);
