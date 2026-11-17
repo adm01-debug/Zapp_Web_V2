@@ -14,14 +14,23 @@
  * daquele bloco e o COMPORTAMENTO — alvo montado ou removido depois da primeira
  * pintura — reescrito contra o mecanismo da main.
  *
- * Ficam aqui os três defeitos que a main ainda tinha:
- *  (a) `DialogContent` sem descrição acessível;
+ * Ficam aqui dois defeitos que a main ainda tinha:
  *  (b) `SkipLink` que chama focus() em alvo não focável (scroll sem foco);
- *  (c) `AvatarGroup` com key={index}.
+ *  (f) `AvatarGroup` com key={index}.
+ *
+ * O terceiro defeito do arquivo original — `DialogContent` sem descrição
+ * acessível — NÃO entrou. Decidir se o diálogo já tem descrição exige olhar
+ * depois da montagem: o Radix registra a descrição no contexto dele em OUTRO
+ * commit (ver o comentário de `container` em dialog.tsx:56-62), e inspecionar
+ * `children` não alcança descrição declarada dentro de um componente próprio
+ * (QuickReplyDialog.tsx:93-109 passa `<QuickReplyForm>` sem `children`, e é o
+ * form que renderiza a descrição). Em efeito, a decisão cai na regra de lint
+ * `react-hooks/set-state-in-effect`; derivada no render, a leitura do DOM não
+ * converge com a registração do Radix. Fica como item próprio em vez de meia
+ * correção que injeta descrição duplicada.
  */
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import { render, screen, fireEvent, cleanup, waitFor } from '@testing-library/react';
-import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/components/ui/dialog';
 import { SkipLinks } from '@/components/ui/skip-link';
 import { AvatarGroup } from '@/components/ui/avatar';
 
@@ -29,76 +38,6 @@ afterEach(() => {
   cleanup();
   document.body.innerHTML = '';
   vi.restoreAllMocks();
-});
-
-describe('(a) DialogContent — descrição acessível de fallback', () => {
-  it('diálogo SEM aria-describedby ganha a descrição oculta em pt-BR', () => {
-    render(
-      <Dialog open>
-        <DialogContent>
-          <DialogTitle>Aviso</DialogTitle>
-        </DialogContent>
-      </Dialog>,
-    );
-
-    const diálogo = screen.getByRole('dialog');
-    const id = diálogo.getAttribute('aria-describedby');
-    expect(id).toBeTruthy();
-
-    const descricao = document.getElementById(id as string);
-    expect(descricao).not.toBeNull();
-    expect(descricao).toHaveTextContent('Conteúdo da caixa de diálogo');
-    expect(descricao).toHaveClass('sr-only');
-  });
-
-  it('diálogo com aria-describedby={undefined} de propósito NAO ganha descrição injetada', () => {
-    // Varias telas da V2 passam `aria-describedby={undefined}` justamente para
-    // silenciar o aviso do Radix sem descrição — a decisao e respeitada.
-    const propsDeProposito = { 'aria-describedby': undefined };
-    render(
-      <Dialog open>
-        <DialogContent {...propsDeProposito}>
-          <DialogTitle>Sem descrição de propósito</DialogTitle>
-        </DialogContent>
-      </Dialog>,
-    );
-
-    const diálogo = screen.getByRole('dialog');
-    expect(diálogo).not.toHaveAttribute('aria-describedby');
-    expect(screen.queryByText('Conteúdo da caixa de diálogo')).toBeNull();
-  });
-
-  it('diálogo com aria-describedby do chamador preserva o valor e não duplica', () => {
-    render(
-      <Dialog open>
-        <DialogContent aria-describedby="ajuda-do-diálogo">
-          <DialogTitle>Com descrição própria</DialogTitle>
-        </DialogContent>
-      </Dialog>,
-    );
-
-    const diálogo = screen.getByRole('dialog');
-    expect(diálogo).toHaveAttribute('aria-describedby', 'ajuda-do-diálogo');
-    expect(screen.queryByText('Conteúdo da caixa de diálogo')).toBeNull();
-  });
-
-  it('diálogo com DialogDescription filho NAO recebe fallback e mantém o vínculo do Radix', () => {
-    render(
-      <Dialog open>
-        <DialogContent>
-          <DialogTitle>Com filho</DialogTitle>
-          <DialogDescription>Descrição real da tela</DialogDescription>
-        </DialogContent>
-      </Dialog>,
-    );
-
-    const diálogo = screen.getByRole('dialog');
-    const idReal = screen.getByText('Descrição real da tela').id;
-    expect(idReal).toBeTruthy();
-    // O aria-describedby aponta para a descrição real resolvida pelo Radix.
-    expect(diálogo).toHaveAttribute('aria-describedby', idReal);
-    expect(screen.queryByText('Conteúdo da caixa de diálogo')).toBeNull();
-  });
 });
 
 describe('(b) SkipLink — alvo não focável', () => {

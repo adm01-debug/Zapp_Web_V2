@@ -64,42 +64,10 @@ interface DialogContentProps
   container?: React.ComponentPropsWithoutRef<typeof DialogPrimitive.Portal>["container"];
 }
 
-// Procura um <DialogDescription> (ou o primitivo do Radix) na árvore de filhos.
-// Quando ele existe, o Radix resolve o `aria-describedby` com o id dele sozinho:
-// injetar o nosso quebraria o vínculo com a descrição real.
-function temFilhoDescricao(children: React.ReactNode): boolean {
-  let achou = false;
-  React.Children.forEach(children, (child) => {
-    if (achou || !React.isValidElement(child)) return;
-    const tipo = child.type as unknown;
-    if (tipo === DialogDescription || tipo === DialogPrimitive.Description) {
-      achou = true;
-      return;
-    }
-    const filhos = (child.props as { children?: React.ReactNode } | undefined)?.children;
-    if (filhos && temFilhoDescricao(filhos)) achou = true;
-  });
-  return achou;
-}
-
 const DialogContent = React.forwardRef<
   React.ElementRef<typeof DialogPrimitive.Content>,
   DialogContentProps
->(({ className, children, size, showCloseButton = true, container, ...props }, ref) => {
-  // A11y: sem descrição o leitor de tela anuncia o diálogo só pelo título, e o
-  // Radix ainda loga "Missing `Description` or `aria-describedby={undefined}`".
-  // Injetamos uma descrição oculta em pt-BR SOMENTE quando o chamador não
-  // informa `aria-describedby` E não há <DialogDescription> filho.
-  //
-  // O gatilho é a AUSÊNCIA DA CHAVE em props, não o valor: várias telas da V2
-  // passam `aria-describedby={undefined}` de propósito para silenciar o aviso do
-  // Radix sem descrição, e nesse caso respeitamos a decisão e não injetamos nada.
-  // O id e o `aria-describedby` ficam com o Radix: ele já liga o
-  // DialogPrimitive.Description ao diálogo pelo contexto, e passar um id nosso
-  // competiria com essa resolução.
-  const temDescribedByProp = Object.prototype.hasOwnProperty.call(props, 'aria-describedby');
-  const precisaDescricaoAutomatica = !temDescribedByProp && !temFilhoDescricao(children);
-  return (
+>(({ className, children, size, showCloseButton = true, container, ...props }, ref) => (
   <DialogPortal container={container}>
     <DialogOverlay />
     <DialogPrimitive.Content
@@ -108,11 +76,6 @@ const DialogContent = React.forwardRef<
       {...props}
     >
       {children}
-      {precisaDescricaoAutomatica && (
-        <DialogPrimitive.Description className="sr-only">
-          Conteúdo da caixa de diálogo
-        </DialogPrimitive.Description>
-      )}
       {showCloseButton && (
         <DialogPrimitive.Close className="absolute right-4 top-4 z-10 rounded-lg p-1 opacity-70 ring-offset-background transition-all hover:opacity-100 hover:bg-muted focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none alvo-toque-44">
           <X className="h-4 w-4" />
@@ -121,8 +84,7 @@ const DialogContent = React.forwardRef<
       )}
     </DialogPrimitive.Content>
   </DialogPortal>
-  );
-});
+));
 DialogContent.displayName = DialogPrimitive.Content.displayName;
 
 const DialogHeader = ({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) => (
