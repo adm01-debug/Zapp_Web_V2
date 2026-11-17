@@ -19,13 +19,13 @@ Base: `origin/main` @ `a56d9cb7`. Uma seção por caminho: a branch representati
 - branch: origin/claude/ga-ci-verde-261020
 - veredito: OBSOLETO
 - prova: `origin/main:src/components/talkx/TalkXCampaignWizard.tsx:21` (import de `useTalkXCampaignSummary`), `:744-782` (bloco X131 no `WizardRail`: `summaryEnabled`, `summary.isLoading` → `…`, `summary.isError` → `—`, `totalValue/eligibleValue/blockedValue` do servidor); teste de regressão em `origin/main:src/components/talkx/__tests__/TalkXCampaignWizard.resumo-servidor.test.tsx`.
-- uma frase: o rail de resumo da campanha já lê o público do servidor na `main`, por um hook dedicado em vez das variaveis `rail*` da branch.
+- uma frase: o rail de resumo da campanha já lê o público do servidor na `main`, por um hook dedicado em vez das variáveis `rail*` da branch.
 
 ## src/components/talkx/useCampaignEditor.ts
 - branch: origin/claude/ga-ci-verde-261020
 - veredito: OBSOLETO
-- prova: a query `talkx-wizard-rail-summary` da branch foi substituida na `main` pelo hook `useTalkXCampaignSummary` (`origin/main:src/hooks/integrations/useTalkXCampaignSummary.ts`), consumido em `origin/main:src/components/talkx/TalkXCampaignWizard.tsx:752`; o editor segue sem expor `railSummary` (`origin/main:src/components/talkx/useCampaignEditor.ts:1227`).
-- uma frase: mesma contagem de público via RPC `talkx_resolve_audience`, só que extraida para hook próprio — o estado no editor virou código duplicado.
+- prova: a query `talkx-wizard-rail-summary` da branch foi substituída na `main` pelo hook `useTalkXCampaignSummary` (`origin/main:src/hooks/integrations/useTalkXCampaignSummary.ts`), consumido em `origin/main:src/components/talkx/TalkXCampaignWizard.tsx:752`; o editor segue sem expor `railSummary` (`origin/main:src/components/talkx/useCampaignEditor.ts:1227`).
+- uma frase: mesma contagem de público via RPC `talkx_resolve_audience`, só que extraída para hook próprio — o estado no editor virou código duplicado.
 
 ## src/hooks/delivery/useUnconfirmedMessages.ts
 - branch: origin/claude/feat-message-delivery-post-iniciado-261101-1330
@@ -55,7 +55,7 @@ Base: `origin/main` @ `a56d9cb7`. Uma seção por caminho: a branch representati
 - branch: origin/codex/publish-followup-20261021
 - veredito: OBSOLETO
 - prova: `origin/main:src/components/admin/SearchInsightsView.tsx:113` (skeleton `sm:grid-cols-3` com 3 placeholders) e `:128-160` (4 cards de KPI reais) — o único resto da branch é a contagem do skeleton (4 em `xl:grid-cols-4`); tudo o mais é comentário/formatação, e a `main` ainda formata o tamanho médio com `toLocaleString('pt-BR', { maximumFractionDigits: 1 })` (`:142` e `:217`), que a branch não tem.
-- uma frase: só sobra um descompasso cosmético de skeleton durante o carregamento; o conteudo e a formatação da `main` são mais recentes.
+- uma frase: só sobra um descompasso cosmético de skeleton durante o carregamento; o conteúdo e a formatação da `main` são mais recentes.
 
 ## src/components/dashboard/ProgressiveDisclosureDashboard.tsx
 - branch: origin/claude_05/zen-feynman-29b7ix
@@ -96,7 +96,7 @@ Base: `origin/main` @ `a56d9cb7`. Uma seção por caminho: a branch representati
 ## src/hooks/analytics/useGoalNotifications.ts
 - branch: origin/claude/fix-conversas-go-perf-261113
 - veredito: OBSOLETO
-- prova: `origin/main:src/hooks/analytics/useGoalNotifications.ts:250-257` (`Promise.allSettled` + `log.error('Erros ao medir meta; as demais seguem', ...)`) — a branch ficou no `Promise.all`, em que uma contagem com erro derrubava o anúncio de todas as metas.
+- prova: `origin/main:src/hooks/analytics/useGoalNotifications.ts:250-257` (`Promise.allSettled` + `log.error('Erro ao medir meta; as demais seguem', ...)`) — a branch ficou no `Promise.all`, em que uma contagem com erro derrubava o anúncio de todas as metas.
 - uma frase: a `main` é a versão posterior e mais resistente do mesmo laço de medição de metas.
 
 RESUMO: 16 obsoletos, 0 recuperar, 0 duvida
