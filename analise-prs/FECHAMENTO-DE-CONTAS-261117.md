@@ -79,13 +79,14 @@ com grep de símbolo e de chamadores para não repetir os falsos positivos de ex
 
 | Veredito | Caminhos |
 |---|---|
-| **obsoleto**, com `arquivo:linha` da `main` que cumpre o papel | **96** |
-| **recuperar** | **0** |
+| **obsoleto**, com `arquivo:linha` da `main` que cumpre o papel | **95** |
+| **recuperar** (`AvatarUpload.handleRemove`, PR #3212) | **1** |
 | **dúvida** | **0** |
 
 Os 96 vereditos, um por caminho, estão em `analise-prs/vereditos-96-caminhos/lote-1.md` a
 `lote-6.md` (16 cada): cada seção traz a branch representativa, o veredito e a prova com
 `arquivo:linha` da `main`. Cada arquivo termina com a contagem do próprio lote, e 6 x 16 = 96.
+O `lote-6.md` fecha com 15 obsoletos + 1 recuperado; os outros cinco, com 16 obsoletos cada.
 
 Em 11 dos 96 a `main` é **superset estrito**: mesmo símbolo, mesmo nome, mais casos tratados
 (`useReacaoUnica` em `MessageReactions.tsx:40-110` ainda devolve ao servidor a reação removida no
@@ -143,7 +144,7 @@ projeto), forma e não função.
 | documento de análise | **381** | texto que agentes escreveram **sobre** o trabalho (`analise-prs/baseline/`, `dossies/`…). Não é funcionalidade do sistema |
 | nomeados em veredito | **160** | migrations (33), scripts (32), `src/` (18), testes (18), outros (11), workflows (7), documentos (41) |
 | fixtures `talkx-demo` | **15** | **obsoletos**: a `main` tem os 17 equivalentes **renomeados** — `e2e/fixtures/talkx-demo/01-campanhas-visao-geral.json` … `17-estados-sistema-modais.json`, usados por `e2e/talkx-demo.spec.ts`. A branch usava `tela-NN.json` |
-| testes desta sessão | **10** | ainda não na `main` porque estão nas PRs abertas #3197, #3204, #3208 e #3209 |
+| testes desta sessão | **10** | eram desta sessão; entraram na `main` pelas PRs #3197, #3204, #3208 e #3209, todas mergeadas (a medição é do ponto em que elas ainda estavam abertas) |
 | script órfão | **1** | adjudicado abaixo |
 
 `381 + 160 + 15 + 10 + 1 = 567`. **Zero caminhos sem conta em `src/`, migrations, edge functions e
@@ -166,8 +167,13 @@ próprio (`check-deployments-ledger.test.mjs`).
   (as 12 deleções são outro eixo e não entram nessa soma — ver a seção acima)
 - os três itens que faltavam veredito individual (2 `ServiceStatusSheet`, 1 script) foram lidos por
   diff e nomeados acima, com o arquivo:linha da `main` que cumpre o papel
-- os **96 caminhos** que ainda não tinham veredito nominal foram lidos um a um: **96 obsoletos,
-  0 a recuperar, 0 em dúvida**, cada um com o `arquivo:linha` da `main` que cumpre o papel
+- os **96 caminhos** que ainda não tinham veredito nominal foram lidos um a um: **95 obsoletos,
+  1 a recuperar, 0 em dúvida**, cada um com o `arquivo:linha` da `main` que cumpre o papel. O
+  único a recuperar é `src/components/settings/AvatarUpload.tsx`: o `handleRemove` da `main`
+  (`:125-128`) só chama `refreshProfile()`, que não invalida `team-profiles-rpc`, logo remover a
+  foto deixava a equipe vendo a foto apagada até recarregar. **Recuperado na PR #3212**, com
+  teste que falha sem o fix. (Correção de 17/11: a primeira versão desta linha dizia 96/0/0 e
+  chamava essa diferença de "troca". Apontado por Devin na revisão desta PR.)
 - o **ponto cego da classe `CONTIDO` foi medido**, e está vazio. A classe garante que toda linha
   da branch existe na `main`, mas não cobre remoção; medindo contra o **ponto de bifurcação** (não
   contra a `main`), e exigindo que a linha esteja ausente do arquivo **inteiro** da branch:
