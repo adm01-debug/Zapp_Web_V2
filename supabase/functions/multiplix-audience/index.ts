@@ -666,10 +666,32 @@ export async function handleMultiplixAudienceRequest(
         message: 'O Singu devolveu menos linhas que o solicitado; nada foi entregue pela metade',
       }, 502, req);
     }
-    const code = error instanceof Error ? error.message.split(':')[0] : 'MULTIPLIX_UNKNOWN';
-    const status = code === 'MULTIPLIX_TIMEOUT' ? 504 : 502;
-    console.error(JSON.stringify({ event: 'multiplix_audience', action, user_id: userId, code, ok: false }));
-    return errorResponse(code === 'MULTIPLIX_TIMEOUT' ? 'Singu timed out' : 'Singu request failed', status, req);
+    // A mensagem lancada carrega DOIS campos: a classe antes dos dois-pontos
+    // (MULTIPLIX_RPC | MULTIPLIX_TIMEOUT) e, depois dela, o codigo que o Singu
+    // devolveu — `fetchAudienceList` monta `MULTIPLIX_RPC:${code}` justamente
+    // para isso. `split(':')[0]` descartava o segundo campo, e `errorResponse`
+    // troca a mensagem por "Internal server error" em todo status >= 500: o
+    // motivo real da queda nao chegava nem ao log (`code: 'MULTIPLIX_RPC'`) nem
+    // ao cliente, e o 502 ficava indiagnosticavel — medido em 17/11, com
+    // list_ramos/list_ufs em 502 e o navegador recebendo so "Internal server
+    // error". A classe segue decidindo o status; o codigo do Singu passa a
+    // viajar nomeado, do mesmo jeito que MULTIPLIX_RESOLVE_TRUNCATED e
+    // multiplix_over_policy_limit ja fazem neste mesmo catch. Vai o CODIGO e
+    // nada mais: message/details/hint do PostgREST descrevem o schema do Singu
+    // e nao saem daqui.
+    const [classe, ...restoDoCodigo] = error instanceof Error
+      ? error.message.split(':')
+      : ['MULTIPLIX_UNKNOWN'];
+    const singuCode = restoDoCodigo.join(':') || null;
+    const status = classe === 'MULTIPLIX_TIMEOUT' ? 504 : 502;
+    console.error(JSON.stringify({
+      event: 'multiplix_audience', action, user_id: userId, code: classe, singu_code: singuCode, ok: false,
+    }));
+    return jsonResponse({
+      error: classe,
+      singu_code: singuCode,
+      message: classe === 'MULTIPLIX_TIMEOUT' ? 'Singu timed out' : 'Singu request failed',
+    }, status, req);
   }
 }
 
