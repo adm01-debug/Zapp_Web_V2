@@ -8,7 +8,7 @@ caminho de nenhuma branch ficou fora de alguma classe. Este documento fecha isso
 ## O fechamento
 
 Cada arquivo que uma branch toca cai em **exatamente uma** destas classes, e a soma tem de dar o
-total de arquivos da branch. Medido nas 231 branches remotas (221 de outros agentes + 10 que esta
+total de arquivos da branch. Medido nas 231 branches remotas (219 de outros agentes + 12 que esta
 sessão criou):
 
 | Classe | Arquivos | O que significa para risco de perda |
@@ -19,12 +19,25 @@ sessão criou):
 | `PARCIAL` | **2.953** | falta alguma linha → adjudicado pela cadeia de cinco provas (abaixo) |
 | `NOVO` | **738** | a `main` não tem o caminho → adjudicado por categoria (abaixo) |
 | `PARCIAL-REMOÇÃO` | **7** | a branch tirou linha que a `main` ainda tem → veredito na #3203 |
-| deleções não incorporadas | **12** | a branch apagou arquivo que a `main` mantém → bloco D, #3200 |
 | **total** | **4.997** | |
 
 `921 + 177 + 201 + 2.953 + 7 + 738 = 4.997`. E o fechamento vale **por branch**: em nenhuma das
 231 a soma das classes diverge do total de arquivos (0 sobras). A tabela por branch está em
 `analise-prs/fechamento-261117-por-branch.tsv`.
+
+### As 12 deleções são outro eixo, e não entram nesta soma
+
+Um arquivo que a branch **apagou** não é um arquivo que ela tem numa versão: ele não existe na
+árvore dela. Por isso a coluna `delecoes` do TSV fica **fora** de `arquivos`, e somá-la às seis
+classes dá 5.009, que não é o total de nada. Em quatro branches isso é visível
+(`claude/confident-bardeen-ndq0ch`, `claude/feat-ui-visual-texto-longo-261101-1445`,
+`claude/wizardly-ride-dimxnt`, `claude/chore-remove-hook-morto-talksuppression-261024-1541`) — a
+última tem `arquivos = 0` e `delecoes = 2`, porque o trabalho dela é inteiro remoção.
+
+As 12 deleções não incorporadas (a branch apagou, a `main` mantém) estão adjudicadas no bloco D,
+#3200. Apontado por Devin e por Codex na revisão desta PR: a versão anterior desta tabela trazia
+as deleções como se fossem uma sétima classe da mesma soma, o que fazia a tabela impressa somar
+5.009 contra um total declarado de 4.997.
 
 ## Os 2.953 `PARCIAL`, pela cadeia de provas
 
@@ -97,7 +110,7 @@ próprio (`check-deployments-ledger.test.mjs`).
   funcionalidade do sistema: são o registro que outros agentes fizeram do próprio trabalho, e boa
   parte foi superada pelos vereditos já mergeados nesta série. Eles continuam existindo enquanto a
   branch existir — **só se perderiam se a branch fosse apagada**, e nenhuma foi.
-- **NÃO VERIFICADO:** os 201 `CONTIDO` não foram abertos por dentro. Por definição da classe, toda
+- **NÃO VERIFICADO:** os 201 `CONTIDO` não foram abertos por dentro. Por definicção da classe, toda
   linha da branch existe na `main`; o que a classe não cobre é remoção de linha, e esse ponto cego
   foi medido à parte (`PARCIAL-REMOÇÃO`, 7 pares, #3203).
 - **nenhuma branch foi fechada, apagada ou alterada** em nenhum momento desta sessão.
