@@ -23,7 +23,7 @@ Base: `origin/main` @ `a56d9cb7`. Uma seção por caminho: a branch representati
 ## supabase/migrations/20261107133000_fix_copilot_rls_open_policies.sql
 - branch: origin/claude/fix-db-live-migrations-261107-1623
 - veredito: OBSOLETO
-- prova: comparação normalizada (sem comentários/espaços) do arquivo nas duas pontas é idêntica — as mesmas 16 policies `seller_id = auth.uid()` / `scored_by` / `tagged_by` / `submitted_by`; a main só mantém o cabeçalho explicativo (linhas 1-7).
+- prova: comparação normalizada (sem comentários/espaços) do arquivo nas duas pontas é idêntica — as mesmas 15 policies `seller_id = auth.uid()` / `scored_by` / `tagged_by` / `submitted_by`; a main só mantém o cabeçalho explicativo (linhas 1-7). (Correção de 17/11: eram 15 `CREATE POLICY`, não 16 — contagem conferida na migration. Apontado por Devin na revisão da PR #3210.)
 - uma frase: a branch só apagou comentários e juntou linhas — zero diferença de RLS aplicada.
 
 ## src/hooks/business/useWarRoomAlerts.ts
