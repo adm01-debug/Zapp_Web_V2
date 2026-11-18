@@ -180,7 +180,8 @@ foram remedidas contra a produção **hoje**:
    `statements = NULL`, o que impede replay do schema. Medido agora:
    **63 de 1 141 registros** — não mudou nada em três semanas. Confirmado pendente.
 2. **`FIX-S03-002` — RLS ligado sem nenhuma policy.** A auditoria achou 17 tabelas.
-   Medido agora: **19**. Piorou. A lista atual:
+   Medido agora: **19** — mas **a proposta não deve ser resgatada**, e a redação anterior
+   deste item ("Piorou") estava errada. Ver a errata ao fim desta seção. A lista atual:
    `_rb_message_reactions_contato_20261007001008`, `_zapp_fn_before`, `_zapp_mig133_log`,
    `agent_mini_game_xp_daily`, `ai_budget_reservations`, `ai_jobs`, `away_message_log`,
    `catalog_rate_limit_hits`, `catalog_rate_limits`, `edge_rate_limits`,
@@ -191,9 +192,32 @@ foram remedidas contra a produção **hoje**:
 
    **Não é feature quebrada**: conferido com `git grep` que nenhuma dessas tabelas é lida
    direto pelo front (`.from('<tabela>')` em `src/` = 0 em todas); só edges as tocam, e edge
-   usa `service_role`, que ignora RLS. É endurecimento e conformidade de auditoria, não
-   incidente. Quatro delas (`_rb_*`, `_zapp_*`, `*_rb`) são sobra de rollback/backup e o
-   caminho certo para elas é remoção, não policy.
+   usa `service_role`, que ignora RLS. Quatro delas (`_rb_*`, `_zapp_*`, `*_rb`) são sobra de
+   rollback/backup e o caminho certo para elas é remoção, não policy.
+
+   ### Errata — `FIX-S03-002` não está pendente: é decisão já implementada
+
+   A redação original ("Piorou", "endurecimento e conformidade de auditoria") tratava as 19
+   tabelas como lacuna aberta. Está errado, e o erro tem consequência: seguir a proposta
+   adicionaria policies a tabelas cujo isolamento **deny-all é intencional e documentado**,
+   ou seja, **enfraqueceria** a proteção em vez de reforçá-la. Apontado pelo Codex na #3233 e
+   conferido na produção oficial (`tnnnlkbymytvtqngbbqh`) em 17/11:
+
+   - `supabase/migrations/20261026220300_classificar_rls_sem_policy.sql` percorre essas
+     tabelas e grava em cada uma `COMMENT ON TABLE ... '[RLS-sem-policy: intencional] ...'`,
+     dizendo por que não há policy e quem acessa (worker, edge ou RPC `security definer`).
+   - Medido ao vivo: das 19 tabelas com RLS e zero policy, **17 carregam esse comentário**.
+     As 2 restantes são `away_message_log` e `search_events`, e nelas
+     `information_schema.role_table_grants` devolve grant **somente para `service_role`** —
+     nada para `anon` nem `authenticated`. Portanto **zero exposição** também nessas duas.
+   - Caso mais explícito: `supabase/migrations/20261013230011_voip_profile_credentials.sql`
+     define deny-all e revoga acesso direto até de `service_role`, deixando a leitura e a
+     escrita apenas pela RPC `set_voip_profile_credentials`.
+
+   **O que sobra de verdade**: dar a `away_message_log` e `search_events` o mesmo
+   `COMMENT ON TABLE ... [RLS-sem-policy: intencional]` das outras 17, para que a próxima
+   auditoria não volte a contá-las como lacuna. É DDL em produção, então fica para o dono
+   decidir pelo fluxo de `docs/agentes/banco.md` — não é correção de segurança.
 
 Essa branch **não foi apagada** justamente por causa dessas duas propostas.
 

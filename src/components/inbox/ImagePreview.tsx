@@ -20,6 +20,12 @@ import { cfImagesSrcSet } from '@/lib/cfImages';
 const FOCUSABLE_SELECTOR =
   'a[href], button:not([disabled]), textarea:not([disabled]), input:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])';
 
+// Distancia em pixels entre os dois primeiros dedos de um toque.
+function distanciaEntreDedos(touches: ArrayLike<{ clientX: number; clientY: number }>) {
+  const [t0, t1] = [touches[0], touches[1]];
+  return Math.hypot(t0.clientX - t1.clientX, t0.clientY - t1.clientY);
+}
+
 interface ImagePreviewProps {
   src: string;
   alt?: string;
@@ -30,7 +36,16 @@ export const ImagePreview = forwardRef<HTMLDivElement, ImagePreviewProps>(functi
   { src, alt = 'Image', onClose }: ImagePreviewProps,
   ref,
 ) {
-  const [isZoomed, setIsZoomed] = useState(false);
+  // Escala numerica em vez de booleano: o botao continua dando 1x/1.5x, e a pinca
+  // de dois dedos passa a poder parar em qualquer ponto entre 1x e 3x.
+  const [scale, setScale] = useState(1);
+  const isZoomed = scale > 1;
+  // Estado do gesto em curso: distancia entre os dedos quando ele comecou e a
+  // escala daquele momento. 0 em distanciaInicial = nao ha pinca em curso.
+  // A escala e calculada SEMPRE contra o inicio do gesto (absoluta), nunca
+  // multiplicando a anterior: acumular faz o zoom derivar e nao voltar ao 1x.
+  const distanciaInicial = useRef(0);
+  const escalaInicial = useRef(1);
   const { canDownload } = useDownloadPermission();
   const dialogRef = useRef<HTMLDivElement | null>(null);
 
@@ -130,7 +145,7 @@ export const ImagePreview = forwardRef<HTMLDivElement, ImagePreviewProps>(functi
             aria-label={isZoomed ? "Reduzir imagem" : "Ampliar imagem"}
             onClick={(e) => {
               e.stopPropagation();
-              setIsZoomed(!isZoomed);
+              setScale(isZoomed ? 1 : 1.5);
             }}
           >
             {isZoomed ? <ZoomOut className="w-4 h-4" /> : <ZoomIn className="w-4 h-4" />}
@@ -162,10 +177,31 @@ export const ImagePreview = forwardRef<HTMLDivElement, ImagePreviewProps>(functi
         src={src}
         alt={alt}
         onClick={(e) => e.stopPropagation()}
-        animate={{ scale: isZoomed ? 1.5 : 1 }}
+        // Pinca de dois dedos. Fica no proprio <motion.img> de proposito: criar um
+        // container novo mudaria img.parentElement, que ImagePreviewSize.test.tsx:113
+        // usa para achar o backdrop.
+        onTouchStart={(e) => {
+          if (e.touches.length !== 2) return;
+          distanciaInicial.current = distanciaEntreDedos(e.touches);
+          escalaInicial.current = scale;
+        }}
+        onTouchMove={(e) => {
+          if (e.touches.length !== 2 || distanciaInicial.current === 0) return;
+          const proporcao = distanciaEntreDedos(e.touches) / distanciaInicial.current;
+          setScale(Math.min(Math.max(escalaInicial.current * proporcao, 1), 3));
+        }}
+        onTouchEnd={() => {
+          distanciaInicial.current = 0;
+        }}
+        drag={isZoomed}
+        dragConstraints={dialogRef}
+        dragElastic={0.1}
+        animate={{ scale }}
         transition={{ type: 'spring', stiffness: 300, damping: 30 }}
         className="max-w-[58.5vw] max-h-[55.25vh] object-contain rounded-lg shadow-2xl cursor-zoom-in"
-        style={{ cursor: isZoomed ? 'zoom-out' : 'zoom-in' }}
+        // touchAction so sai de 'auto' quando ha zoom: fora disso a pagina tem de
+        // continuar rolando normalmente sob a imagem.
+        style={{ cursor: isZoomed ? 'zoom-out' : 'zoom-in', touchAction: isZoomed ? 'none' : undefined }}
       />
     </motion.div>,
     document.body,
