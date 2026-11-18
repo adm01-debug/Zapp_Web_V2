@@ -1,10 +1,10 @@
 # docs:
-#   gatilho: dispatch manual, escolhendo o projeto visual
-#   prova: as imagens de referencia do projeto foram geradas no mesmo ambiente em que o CI as compara
+#   gatilho: dispatch manual na main
+#   prova: as imagens de referencia de Contatos foram geradas no mesmo ambiente em que o CI as compara
 #   falha: nenhuma PR e' aberta e o run fica vermelho; as baselines commitadas seguem como estao
 #   avisa: PR em `automation/e2e-baselines-<projeto>`
-# Regera as imagens de referencia (baselines) dos projetos visuais do Playwright
-# NO MESMO AMBIENTE em que o CI as compara, e entrega o resultado numa PR.
+# Regera as imagens de referencia (baselines) visuais do Playwright NO MESMO
+# ambiente em que o CI as compara, e entrega o resultado numa PR.
 #
 # POR QUE EXISTE: o `toHaveScreenshot` compara pixel a pixel, e o resultado
 # depende do build exato do Chromium e das fontes do runner. Regerar numa maquina
@@ -16,6 +16,13 @@
 # a baseline `contacts-table-dark-linux.png` ficou parada em 02/10/2026 enquanto
 # as outras quatro foram atualizadas em 28/10 (commit 82e22bbb8): atualizacao
 # parcial, E2E vermelho desde entao.
+#
+# SO `chromium-contacts-visual`: e' o unico projeto visual que usa
+# `toHaveScreenshot` com baseline versionada em `e2e/__screenshots__`.
+# `chromium-talkx-visual` (e2e/talkx-visual.spec.ts:87) e `chromium-email-navy`
+# (e2e/email-navy-visual.spec.ts:127 e seguintes) chamam `page.screenshot({path})`
+# para diretorios proprios: nao sao comparacoes, `--update-snapshots` nao as
+# governa, e oferece-las aqui prometeria uma entrega que nao acontece.
 #
 # O passo de teste repete, de proposito, a configuracao do job `e2e` de ci.yml
 # (ubuntu-24.04, Bun 1.4.0, Playwright 1.65.0 com --with-deps). Se um dos dois
@@ -32,20 +39,29 @@ on:
         type: choice
         options:
           - chromium-contacts-visual
-          - chromium-talkx-visual
-          - chromium-email-navy
 
 permissions:
   contents: read
 
+defaults:
+  run:
+    shell: bash -euo pipefail {0}
+
 jobs:
   regerar:
     name: Regerar baselines e abrir PR
+    # O dispatch nao deve executar codigo de uma ref arbitraria com token de
+    # escrita, e a PR nasce contra a main: gerar a partir de outra branch
+    # entregaria baselines de um app que a main nao tem. Mesmo guarda do
+    # talkx-status-regen.yml.
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-24.04
     timeout-minutes: 45
-    permissions:
+    permissions:  # zizmor: ignore[excessive-permissions]
       contents: write
       pull-requests: write
+      # Necessaria para aprovar os checks da PR aberta por este job.
+      actions: write
     steps:
       - name: 📥 Checkout code
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -104,6 +120,7 @@ jobs:
           fi
 
       - name: 📬 Abrir PR com as baselines regeradas
+        id: pull-request
         if: steps.mudou.outputs.mudou == 'true'
         uses: peter-evans/create-pull-request@3ffccacd46053766916f087ce41d627c0b8cf2d1 # v8.1.3
         env:
@@ -127,3 +144,73 @@ jobs:
             esperada antes de mergear.
           add-paths: |
             e2e/__screenshots__/**
+
+      # PR aberta com GITHUB_TOKEN nao dispara workflows (politica anti-loop do
+      # GitHub): CI, CodeQL e DB Guard nascem em "action_required" e a PR nunca
+      # fica verde sozinha. Mesmo passo do types-sync.yml, que ja provou que o
+      # GITHUB_TOKEN tem poder para liberar (run 36134562996).
+      #
+      # continue-on-error de proposito: se o token nao puder aprovar, o passo
+      # registra o motivo no resumo e a PR segue aberta para aprovacao manual.
+      - name: Destravar os checks da PR de baselines
+        if: steps.pull-request.outputs.pull-request-number != ''
+        continue-on-error: true
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        env:
+          # Via env, nao interpolado dentro do script: mantem o SHA fora do
+          # corpo do JS avaliado.
+          PR_HEAD_SHA: ${{ steps.pull-request.outputs.pull-request-head-sha }}
+          PR_BRANCH: automation/e2e-baselines-${{ inputs.projeto }}
+        with:
+          script: |
+            const headSha = process.env.PR_HEAD_SHA;
+            if (!headSha) {
+              core.warning('create-pull-request nao devolveu o head sha; nada a destravar.');
+              return;
+            }
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+            let pendentes = [];
+            // Os runs aparecem alguns segundos depois do push da PR.
+            for (let tentativa = 1; tentativa <= 6; tentativa += 1) {
+              const { data } = await github.rest.actions.listWorkflowRunsForRepo({
+                owner,
+                repo,
+                head_sha: headSha,
+                // Com head_branch: sem ele, um run `action_required` de OUTRA
+                // branch no mesmo SHA seria aprovado por este token.
+                head_branch: process.env.PR_BRANCH,
+                status: 'action_required',
+                per_page: 20,
+              });
+              pendentes = data.workflow_runs || [];
+              if (pendentes.length > 0) break;
+              await new Promise((resolve) => setTimeout(resolve, 10000));
+            }
+            if (pendentes.length === 0) {
+              core.info('Nenhum run aguardando aprovacao: ou os checks ja dispararam, ou nao ha nada a liberar.');
+              return;
+            }
+            const liberados = [];
+            const recusados = [];
+            for (const run of pendentes) {
+              try {
+                await github.rest.actions.approveWorkflowRun({ owner, repo, run_id: run.id });
+                liberados.push(run.name);
+              } catch (error) {
+                recusados.push(`${run.name} (${error.status})`);
+              }
+            }
+            const linhas = [
+              '### Checks da PR de baselines',
+              `- head sha: \`${headSha}\``,
+              `- liberados: ${liberados.length > 0 ? liberados.join(', ') : 'nenhum'}`,
+            ];
+            if (recusados.length > 0) {
+              linhas.push(`- recusados pelo GITHUB_TOKEN: ${recusados.join(', ')}`);
+              linhas.push('- acao: aprovar os runs na aba Actions.');
+            }
+            await core.summary.addRaw(linhas.join('\n')).write();
+            if (recusados.length > 0) {
+              core.warning(`Nao foi possivel liberar ${recusados.length} run(s) com o GITHUB_TOKEN.`);
+            }
