@@ -1,0 +1,35 @@
+CREATE OR REPLACE FUNCTION public.audit_contact_address_change()
+ RETURNS trigger
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public', 'pg_temp'
+AS $function$
+BEGIN
+  -- `AFTER UPDATE OF <colunas>` já limita o disparo às colunas de endereço; este teste
+  -- garante que só registra quando o valor REALMENTE mudou.
+  IF OLD.address         IS DISTINCT FROM NEW.address
+     OR OLD.address_number IS DISTINCT FROM NEW.address_number
+     OR OLD.neighborhood   IS DISTINCT FROM NEW.neighborhood
+     OR OLD.city           IS DISTINCT FROM NEW.city
+     OR OLD.state          IS DISTINCT FROM NEW.state
+     OR OLD.postal_code    IS DISTINCT FROM NEW.postal_code
+     OR OLD.latitude       IS DISTINCT FROM NEW.latitude
+     OR OLD.longitude      IS DISTINCT FROM NEW.longitude
+  THEN
+    INSERT INTO public.audit_logs (user_id, action, entity_type, entity_id, details)
+    VALUES (
+      auth.uid(),
+      'contact_address_changed',
+      'contacts',
+      NEW.id,
+      jsonb_build_object(
+        'contact_id', NEW.id,
+        -- "cleared" = endereço e coordenada ficaram vazios no mesmo UPDATE
+        'cleared', (NEW.address IS NULL AND NEW.city IS NULL
+                    AND NEW.latitude IS NULL AND NEW.longitude IS NULL)
+      )
+    );
+  END IF;
+  RETURN NULL;
+END;
+$function$

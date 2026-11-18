@@ -1,0 +1,1 @@
+ALTER TABLE public.whatsapp_connections ADD CONSTRAINT whatsapp_connections_instance_id_key UNIQUE (instance_id)
