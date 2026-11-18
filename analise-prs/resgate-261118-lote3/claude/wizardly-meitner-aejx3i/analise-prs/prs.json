@@ -1,0 +1,1982 @@
+[
+  {
+    "numero": 1930,
+    "titulo": "feat(db-audit): adiciona --classificar e --json ao check-migration-drift",
+    "veredito": "BLOQUEADO_CI_E_BEHIND",
+    "draft": "",
+    "head_sha": "",
+    "base": "dbabef51 (não é main@2d97c44)",
+    "conflito": "",
+    "intencao": "Adiciona dois novos flags ao `scripts/db-audit/check-migration-drift.mjs`:"
+  },
+  {
+    "numero": 1975,
+    "titulo": "ci: reativa 8 suites de teste removidas do CI mínimo",
+    "veredito": "BLOQUEADO_CI_E_BEHIND",
+    "draft": "",
+    "head_sha": "",
+    "base": "5721e4f5 (não é main@2d97c44)",
+    "conflito": "",
+    "intencao": "Reativa 8 suites Node.js que foram excluídas do CI em 2026-10-16 (ALLOWLIST_NODE_META) e voltam a rodar no step \"🧩 Run Node CI scripts tests\":"
+  },
+  {
+    "numero": 1979,
+    "titulo": "docs: plano de correções dos workflows em FAILURE — 200 etapas (2026-10-16)",
+    "veredito": "BLOQUEADO_CI_E_BEHIND + DECISAO_HUMANA",
+    "draft": "",
+    "head_sha": "",
+    "base": "5a4632c8 (não é main@2d97c44)",
+    "conflito": "",
+    "intencao": "Três mudanças independentes agrupadas:"
+  },
+  {
+    "numero": 1991,
+    "titulo": "fix: corrige nomes de workflows no notificador e cancelamento de scroll programático",
+    "veredito": "BLOQUEADO_CI_E_BEHIND + DECISAO_HUMANA",
+    "draft": "",
+    "head_sha": "",
+    "base": "f66d7331 (não é main@2d97c44)",
+    "conflito": "",
+    "intencao": "Três grupos de mudanças:"
+  },
+  {
+    "numero": 1997,
+    "titulo": "feat: CV-010–020 Fase 2 RADAR copilot migrations",
+    "veredito": "DECISAO_HUMANA",
+    "draft": "Não",
+    "head_sha": "9b7213d2",
+    "base": "main@2d97c44",
+    "conflito": "NÃO",
+    "intencao": "Fase 2 do módulo RADAR/Copilot: cria 6 tabelas novas com RLS e um trigger em `messages`."
+  },
+  {
+    "numero": 1998,
+    "titulo": "feat: CV-021–030 Motor copilot-live edge function",
+    "veredito": "DECISAO_HUMANA",
+    "draft": "Não",
+    "head_sha": "d6625dd1",
+    "base": "main@2d97c44",
+    "conflito": "NÃO",
+    "intencao": "Cria a edge function `copilot-live` (motor principal do RADAR copilot)."
+  },
+  {
+    "numero": 2000,
+    "titulo": "feat: RADAR Fase 4 Inteligência B·R·I·N·D·E CV-031–040",
+    "veredito": "DECISAO_HUMANA",
+    "draft": "Não",
+    "head_sha": "81adcfd8",
+    "base": "main@2d97c44",
+    "conflito": "NÃO",
+    "intencao": "Fase 4 do RADAR: inteligência de vendas \"BRINDE\" (Budget, Readiness, Interest, Need, Decision, Engagement)."
+  },
+  {
+    "numero": 2002,
+    "titulo": "feat: RADAR CV-041–050 Sugestões ao vivo",
+    "veredito": "BLOQUEADO_CI_E_BEHIND",
+    "draft": "Não",
+    "head_sha": "9c8283f0",
+    "base": "main@2d97c44",
+    "conflito": "NÃO",
+    "intencao": "Fase 5 do RADAR: sugestões ao vivo no painel de vendas."
+  },
+  {
+    "numero": 2003,
+    "titulo": "feat: CV-051–060 RADAR painel flutuante",
+    "veredito": "BLOQUEADO_CI_E_BEHIND",
+    "draft": "Não",
+    "head_sha": "b93278e0",
+    "base": "76ddbc63 (BEHIND main@2d97c44)",
+    "conflito": "SIM",
+    "intencao": "Fase 6 do RADAR: painel flutuante do copilot na interface de conversas."
+  },
+  {
+    "numero": 2013,
+    "titulo": "feat: CV-071–080 RADAR objeções, battlecard",
+    "veredito": "BLOQUEADO_CI_E_BEHIND",
+    "draft": "Não",
+    "head_sha": "cd63d6dd",
+    "base": "8e5f4502 (BEHIND main@2d97c44)",
+    "conflito": "SIM",
+    "intencao": "Fase 8 do RADAR: módulo de objeções e battlecard de vendas."
+  },
+  {
+    "numero": 2022,
+    "titulo": "feat: RADAR copilot Phase 9 — Catalog, Budget, Timeline (CV-081–090)",
+    "veredito": "BLOQUEADO_CI_E_BEHIND + COMPLETAR",
+    "draft": "",
+    "head_sha": "",
+    "base": "`f1e9e325bcb2ab02ea6e09c9adc0ade0c2d682fd` (≠ main@2d97c44) + `mergeable_state: \"dirty\"`",
+    "conflito": "",
+    "intencao": "Implementa Fase 9 do Copiloto de Vendas — catálogo de produtos, orçamento e timeline:"
+  },
+  {
+    "numero": 2024,
+    "titulo": "feat: RADAR copilot Phase 10 — Engajamento e Velocidade de Resposta (CV-091–100)",
+    "veredito": "BLOQUEADO_CI_E_BEHIND",
+    "draft": "Não",
+    "head_sha": "",
+    "base": "f1e9e325bcb2ab02ea6e09c9adc0ade0c2d682fd (BEHIND main@2d97c44)",
+    "conflito": "SIM",
+    "intencao": "Fase 10 do Copiloto de Vendas — engajamento, velocidade de resposta e sinais de compra:"
+  },
+  {
+    "numero": 2025,
+    "titulo": "feat: RADAR copilot Phase 11 — Multimodal (CV-101–110)",
+    "veredito": "BLOQUEADO_CI_E_BEHIND",
+    "draft": "Não",
+    "head_sha": "",
+    "base": "f1e9e325bcb2ab02ea6e09c9adc0ade0c2d682fd (BEHIND main@2d97c44)",
+    "conflito": "SIM",
+    "intencao": "Fase 11 do Copiloto de Vendas — análise multimodal (áudio, imagem, PDF):"
+  },
+  {
+    "numero": 2026,
+    "titulo": "feat: RADAR copilot Phase 12 — Guardrails e LGPD (CV-111–120)",
+    "veredito": "BLOQUEADO_CI_E_BEHIND",
+    "draft": "Não",
+    "head_sha": "",
+    "base": "f1e9e325bcb2ab02ea6e09c9adc0ade0c2d682fd (BEHIND main@2d97c44)",
+    "conflito": "SIM",
+    "intencao": "Fase 12 do Copiloto de Vendas — guardrails de segurança, veracidade e conformidade LGPD:"
+  },
+  {
+    "numero": 2029,
+    "titulo": "feat: RADAR Phase 13 — Supervisor, coaching e treinamento CV-121–130",
+    "veredito": "BLOQUEADO_CI_E_BEHIND",
+    "draft": "Não",
+    "head_sha": "285fd675",
+    "base": "f66d7331 (main@2d97c44)",
+    "conflito": "SIM",
+    "intencao": "Fase 13 do RADAR: módulo de supervisão, coaching e treinamento."
+  },
+  {
+    "numero": 2030,
+    "titulo": "feat: RADAR copiloto CV-131–140 — Aprendizado contínuo Fase 14",
+    "veredito": "BLOQUEADO_CI_E_BEHIND",
+    "draft": "Não",
+    "head_sha": "5ef9d9e5",
+    "base": "main@2d97c44",
+    "conflito": "SIM",
+    "intencao": "Fase 14 do RADAR: aprendizado contínuo do copiloto."
+  },
+  {
+    "numero": 2032,
+    "titulo": "feat: RADAR Copiloto — Fase 15: Custos, Piloto e Rollout (CV-141–150)",
+    "veredito": "DRAFT_SKIP",
+    "draft": "SIM",
+    "head_sha": "",
+    "base": "",
+    "conflito": "",
+    "intencao": "feat: RADAR Copiloto — Fase 15: Custos, Piloto e Rollout (CV-141–150)"
+  },
+  {
+    "numero": 2034,
+    "titulo": "fix(ci): GA02 + GA10 — guarda CLAUDE.md no CI e contrato de nomes",
+    "veredito": "BLOQUEADO_CI_E_BEHIND",
+    "draft": "Não",
+    "head_sha": "f64a9673",
+    "base": "main@2d97c44",
+    "conflito": "SIM",
+    "intencao": "Correções de CI:"
+  },
+  {
+    "numero": 2035,
+    "titulo": "fix: mock global @/lib/logger no Vitest — desbloqueia CI",
+    "veredito": "BLOQUEADO_CI (base=main@2d97c44) — DECISAO_HUMANA (escopo enorme, 319 arquivos)",
+    "draft": "Não",
+    "head_sha": "bdfa4e6702d9e67de16267a8ed03d1dc7632eb2c",
+    "base": "f66d73312858e5c3dbf14f4982314384e668d3de (= main@2d97c44)",
+    "conflito": "SIM",
+    "intencao": "Fix crítico de CI: `src/lib/logger.ts` usa `import.meta.env.DEV` no topo do módulo — jsdom/Vitest não suporta isso, bloqueando todos os 136 arquivos de teste que importam o logger transitivamente."
+  },
+  {
+    "numero": 2036,
+    "titulo": "fix(ci): GA04/GA05 — console.error no heredoc db-migrate + fixtures GA05",
+    "veredito": "DRAFT_SKIP",
+    "draft": "SIM",
+    "head_sha": "",
+    "base": "",
+    "conflito": "",
+    "intencao": "fix(ci): GA04/GA05 — console.error no heredoc db-migrate + fixtures GA05"
+  },
+  {
+    "numero": 2037,
+    "titulo": "fix(ci): GA20+GA21 — Gate 3 recupera catálogo antigo via git show; DESTINO_URL sai do GITHUB_ENV",
+    "veredito": "DRAFT_SKIP",
+    "draft": "SIM",
+    "head_sha": "",
+    "base": "",
+    "conflito": "",
+    "intencao": "fix(ci): GA20+GA21 — Gate 3 recupera catálogo antigo via git show; DESTINO_URL sai do GITHUB_ENV"
+  },
+  {
+    "numero": 2040,
+    "titulo": "fix(e2e-logado): restaura W71 — workflow_run em vez de push na main",
+    "veredito": "BLOQUEADO_CI_E_BEHIND + DECISAO_HUMANA",
+    "draft": "Não",
+    "head_sha": "570face48da5f0483bcc24aeaad594532472a457",
+    "base": "d7af7a671ca2bd7005b75b0aa54c0f0c4672befc (BEHIND main@2d97c44)",
+    "conflito": "SIM",
+    "intencao": "Restaura W71: muda trigger de `e2e-logado.yml` de `on.push` direto na `main` para `on.workflow_run` (disparo após CI completar), adiciona schedule semanal e job-level `if` guard."
+  },
+  {
+    "numero": 2042,
+    "titulo": "ci(W94+W32): talkx-status-regen concurrency + MIGRATIONS daily lote",
+    "veredito": "BLOQUEADO_CI_E_BEHIND",
+    "draft": "Não",
+    "head_sha": "5fe12a33",
+    "base": "e322d379 (BEHIND main@2d97c44)",
+    "conflito": "SIM",
+    "intencao": "Melhorias de CI:"
+  },
+  {
+    "numero": 2044,
+    "titulo": "ci(W49+W50+W39): comentários ci.yml/codeql.yml + playwright dinâmico",
+    "veredito": "BLOQUEADO_CI_E_BEHIND + DECISAO_HUMANA",
+    "draft": "Não",
+    "head_sha": "",
+    "base": "",
+    "conflito": "SIM",
+    "intencao": "3 correções de CI/docs:"
+  },
+  {
+    "numero": 2046,
+    "titulo": "ci: skip draft PRs nos required CI jobs (W72)",
+    "veredito": "BLOQUEADO_CI_E_BEHIND + DECISAO_HUMANA",
+    "draft": "Não",
+    "head_sha": "",
+    "base": "",
+    "conflito": "SIM",
+    "intencao": "Adiciona `if: github.event.pull_request.draft != true` a 3 jobs de CI para não consumir minutos em PRs draft:"
+  },
+  {
+    "numero": 2051,
+    "titulo": "ci: Playwright 1.64.1 + OpenSSF Scorecard + dependency-review + Bun cache",
+    "veredito": "BLOQUEADO_CI_E_BEHIND + DECISAO_HUMANA",
+    "draft": "Não",
+    "head_sha": "",
+    "base": "",
+    "conflito": "SIM",
+    "intencao": "Pacote de melhorias de CI (múltiplos workflows):"
+  },
+  {
+    "numero": 2054,
+    "titulo": "fix(ci+security): Z011–Z032 — requireAuth, timingSafeEqual, node-scripts split, test.skip removidos, pg_isready flags",
+    "veredito": "DRAFT_SKIP",
+    "draft": "SIM",
+    "head_sha": "",
+    "base": "",
+    "conflito": "",
+    "intencao": "fix(ci+security): Z011–Z032 — requireAuth, timingSafeEqual, node-scripts split, test.skip removidos, pg_isready flags"
+  },
+  {
+    "numero": 2056,
+    "titulo": "ci: auto-update-pr-branch rewrite (fila-merge.mjs) + settings-guard.yml",
+    "veredito": "BLOQUEADO_CI_E_BEHIND + DECISAO_HUMANA",
+    "draft": "Não",
+    "head_sha": "",
+    "base": "",
+    "conflito": "SIM",
+    "intencao": "Reescreve workflows críticos de automação:"
+  },
+  {
+    "numero": 2057,
+    "titulo": "feat(ci): lint-ratchet --base <ref> para lint recortado por PR",
+    "veredito": "MERGEAR_SE_CI_VERDE",
+    "draft": "Não",
+    "head_sha": "",
+    "base": "main@2d97c44",
+    "conflito": "",
+    "intencao": "Adiciona `--base <ref>` ao `lint-ratchet.mjs`: permite rodar o lint somente nos arquivos que mudaram desde uma ref Git, em vez de todo o repositório. Isso habilita o CI a executar linting recortado por PR. Adiciona funções `changedLintableFiles` e `changedRemovedFiles` e cobre a feature com 7 novos testes unitários no `lint-ratchet.unit.mjs`."
+  },
+  {
+    "numero": 2058,
+    "titulo": "fix(tests/F1a): adiciona createLogger aos logger mocks",
+    "veredito": "BLOQUEADO_CI_E_BEHIND",
+    "draft": "Não",
+    "head_sha": "10d843f9",
+    "base": "9d65fed6 (BEHIND main)",
+    "conflito": "SIM",
+    "intencao": "F1a — frente 1a do plano CI. Adiciona `createLogger` aos mocks de logger em 9 arquivos de teste."
+  },
+  {
+    "numero": 2059,
+    "titulo": "fix(ConnectionCard): ReferenceError handleDisconnectDialogOpenChange",
+    "veredito": "BLOQUEADO_CI_E_BEHIND",
+    "draft": "Não",
+    "head_sha": "ab048216",
+    "base": "9d65fed6 (BEHIND main)",
+    "conflito": "SIM",
+    "intencao": "Corrige ReferenceError em produção: `handleDisconnectDialogOpenChange` não estava declarada em"
+  },
+  {
+    "numero": 2060,
+    "titulo": "fix(tests/F1a): mock de useCustomEmojis segundo .order() ausente",
+    "veredito": "BLOQUEADO_CI_E_BEHIND",
+    "draft": "Não",
+    "head_sha": "88d8e470",
+    "base": "9d65fed6 (BEHIND main)",
+    "conflito": "SIM",
+    "intencao": "Corrige mock de `useCustomEmojis` em `useCustomEmojis.upload.test.tsx`: segundo `.order()` estava"
+  },
+  {
+    "numero": 2062,
+    "titulo": "fix(test): VoiceChangerPicker.aria — adiciona useReducedMotion ao mock framer-motion",
+    "veredito": "MERGEAR_SE_CI_VERDE",
+    "draft": "Não",
+    "head_sha": "",
+    "base": "main@2d97c44",
+    "conflito": "",
+    "intencao": "Corrige teste de acessibilidade de `VoiceChangerPicker` que falhava porque o mock de `framer-motion` não incluía `useReducedMotion`. O hook é chamado pelo componente ao avaliar animações; sem o mock, o teste quebrava com erro de import/hook indefinido."
+  },
+  {
+    "numero": 2063,
+    "titulo": "fix(tests/F1a): useAuth/AuthProvider ausentes em 2 test files",
+    "veredito": "BLOQUEADO_CI_E_BEHIND",
+    "draft": "Não",
+    "head_sha": "81543b96",
+    "base": "9d65fed6 (BEHIND main)",
+    "conflito": "SIM",
+    "intencao": "Adiciona mock de `useAuth`/`AuthProvider` em 2 arquivos de teste onde estavam ausentes."
+  },
+  {
+    "numero": 2064,
+    "titulo": "fix(test): useChatMediaSending.audio-meme-falha — mock channel/getPublicUrl",
+    "veredito": "MERGEAR_SE_CI_VERDE",
+    "draft": "Não",
+    "head_sha": "",
+    "base": "main@2d97c44",
+    "conflito": "",
+    "intencao": "Corrige teste de falha de upload de áudio em `useChatMediaSending` que falhava porque o mock de Supabase não incluía: (1) `storage.from().getPublicUrl()` — necessário para o hook gerar URL pública após upload, e (2) `channel()` — necessário para subscriptions Realtime usadas pelo hook. Sem esses mocks, o teste quebrava com `TypeError: supabase.channel is not a function` e `TypeError: getPublicUrl is not a function`."
+  },
+  {
+    "numero": 2065,
+    "titulo": "fix(test): AgentsView.capacidade + pendencias — mock channel/removeChannel",
+    "veredito": "MERGEAR_SE_CI_VERDE",
+    "draft": "Não",
+    "head_sha": "",
+    "base": "main@2d97c44",
+    "conflito": "",
+    "intencao": "Corrige dois testes de `AgentsView` que falhavam porque o mock de Supabase não incluía `channel()` e `removeChannel()`. O hook `useConnectionsHealth` (usado por `AgentsView`) cria uma subscription Realtime; sem esses mocks o teste quebrava com `TypeError: supabase.channel is not a function`."
+  },
+  {
+    "numero": 2066,
+    "titulo": "fix(storage): useAudioMemes — prefixo user.id no caminho de upload (PK-16/PK-17)",
+    "veredito": "MERGEAR_SE_CI_VERDE",
+    "draft": "Não",
+    "head_sha": "",
+    "base": "main@2d97c44",
+    "conflito": "",
+    "intencao": "Duas correções:"
+  },
+  {
+    "numero": 2067,
+    "titulo": "fix(test): adiciona exports createLogger e LOCAL_VOICE_ID nos mocks de arquivos-ver-na-conversa",
+    "veredito": "BLOQUEADO_CI_E_BEHIND",
+    "draft": "Não",
+    "head_sha": "",
+    "base": "bac62ba9",
+    "conflito": "",
+    "intencao": "Corrige falha de compilação em `arquivos-ver-na-conversa.test.tsx`: adiciona os exports `createLogger` e `LOCAL_VOICE_ID` nos arquivos de mock locais do teste, que precisavam desses símbolos mas não os exportavam."
+  },
+  {
+    "numero": 2068,
+    "titulo": "fix(test): adiciona AUDIT_PAGE_SIZE e MIN_PASSWORD_LENGTH ao mock de AdminView",
+    "veredito": "BLOQUEADO_CI_E_BEHIND",
+    "draft": "Não",
+    "head_sha": "",
+    "base": "bac62ba9",
+    "conflito": "",
+    "intencao": "Corrige falha de compilação em testes do AdminView: adiciona as constantes `AUDIT_PAGE_SIZE` e `MIN_PASSWORD_LENGTH` ao mock que os testes importam, mas que não as exportava."
+  },
+  {
+    "numero": 2069,
+    "titulo": "fix(test): adiciona range/gte/lte ao mock de supabase em useAdminData.select.test.ts",
+    "veredito": "BLOQUEADO_CI_E_BEHIND",
+    "draft": "Não",
+    "head_sha": "",
+    "base": "bac62ba9",
+    "conflito": "",
+    "intencao": "Corrige falha de teste em `useAdminData.select.test.ts`: adiciona os métodos `range`, `gte`, `lte` à cadeia de mock do Supabase, que o hook utiliza mas o mock não implementava."
+  },
+  {
+    "numero": 2070,
+    "titulo": "fix(admin): corrige assinatura de avatares em fetchData('users') e migra mock para invokeEdge",
+    "veredito": "BLOQUEADO_CI_E_BEHIND",
+    "draft": "Não",
+    "head_sha": "",
+    "base": "bac62ba9",
+    "conflito": "",
+    "intencao": "Dois fix combinados:"
+  },
+  {
+    "numero": 2071,
+    "titulo": "chore: remove hook morto useTalkXSuppression (list hook) e teste associado",
+    "veredito": "BLOQUEADO_CI_E_BEHIND",
+    "draft": "Não",
+    "head_sha": "",
+    "base": "e322d379",
+    "conflito": "SIM",
+    "intencao": "Remove o hook de lista `useTalkXSuppression` (hook morto, 512 linhas) e seu arquivo de teste. Diferente da PR #2230, esta PR remove APENAS o hook de lista — TalkXSuppression.tsx importa `useTalkXSuppressionActivity`/`useTalkXSuppressionStats` que são mantidos em arquivo separado."
+  },
+  {
+    "numero": 2072,
+    "titulo": "fix(talkx): corrige 3 bugs em useTalkXSegments (rpc.bind, lead_origin, real_sector fail-closed)",
+    "veredito": "BLOQUEADO_CI_E_BEHIND",
+    "draft": "Não",
+    "head_sha": "",
+    "base": "e322d379",
+    "conflito": "SIM",
+    "intencao": "Corrige 3 bugs reais em `useTalkXSegments.ts`:"
+  },
+  {
+    "numero": 2073,
+    "titulo": "fix(knowledge): expõe erro de useKnowledgeBase ao invés de silenciar",
+    "veredito": "BLOQUEADO_CI_E_BEHIND",
+    "draft": "Não",
+    "head_sha": "",
+    "base": "bac62ba9",
+    "conflito": "",
+    "intencao": "Corrige `useKnowledgeBase`: o erro de fetch não era exposto ao componente chamador — era silenciado internamente. A PR faz o hook propagar o erro corretamente para que o UI possa exibi-lo."
+  },
+  {
+    "numero": 2074,
+    "titulo": "fix(a11y): adiciona role=\"alert\" ao overlay de useScreenProtection",
+    "veredito": "BLOQUEADO_CI_E_BEHIND",
+    "draft": "Não",
+    "head_sha": "",
+    "base": "e322d379",
+    "conflito": "SIM",
+    "intencao": "Corrige acessibilidade: o overlay do `useScreenProtection` não tinha `role=\"alert\"`, impedindo leitores de tela de anunciar a proteção ativa ao usuário."
+  },
+  {
+    "numero": 2075,
+    "titulo": "fix(warroom): notificações desktop passavam por caminho de Service Worker desabilitado",
+    "veredito": "BLOQUEADO_CI_E_BEHIND",
+    "draft": "Não",
+    "head_sha": "",
+    "base": "bac62ba9",
+    "conflito": "",
+    "intencao": "Corrige notificações desktop do War Room: o código tentava usar o caminho de Service Worker para entregar notificações, mas o SW estava desabilitado nesse contexto. As notificações eram silenciosas (nunca chegavam)."
+  },
+  {
+    "numero": 2076,
+    "titulo": "fix(test): adiciona useReducedMotion e MotionConfig ao mock de framer-motion em GroupsView.a11y.test.tsx",
+    "veredito": "BLOQUEADO_CI_E_BEHIND",
+    "draft": "Não",
+    "head_sha": "",
+    "base": "bac62ba9",
+    "conflito": "",
+    "intencao": "Corrige falha de teste em `GroupsView.a11y.test.tsx`: o mock local de `framer-motion` não exportava `useReducedMotion` nem `MotionConfig`, que o componente utiliza. O teste falhava com referência indefinida."
+  },
+  {
+    "numero": 2077,
+    "titulo": "chore(security): remove mutations.test.tsx de gamificação (RPCs de escrita intencionalmente revogados)",
+    "veredito": "BLOQUEADO_CI_E_BEHIND",
+    "draft": "Não",
+    "head_sha": "",
+    "base": "bac62ba9",
+    "conflito": "",
+    "intencao": "Remove `mutations.test.tsx` do módulo de gamificação: os RPCs de escrita (`creditMiniGameXp`, etc.) foram intencionalmente revogados por segurança. O arquivo de teste testava comportamento que não existe mais em produção, causando falsos positivos."
+  },
+  {
+    "numero": 2078,
+    "titulo": "chore(ci): altera scripts/ci/github-settings-baseline.json para strict=false",
+    "veredito": "DECISAO_HUMANA",
+    "draft": "Não",
+    "head_sha": "",
+    "base": "e322d379",
+    "conflito": "",
+    "intencao": "Altera `scripts/ci/github-settings-baseline.json` para definir `required_status_checks.strict` como `false`, revertendo a política canônica para o estado anterior."
+  },
+  {
+    "numero": 2079,
+    "titulo": "fix(test): corrige índice de canal errado em teste de useTeamMessages",
+    "veredito": "BLOQUEADO_CI_E_BEHIND",
+    "draft": "Não",
+    "head_sha": "",
+    "base": "bac62ba9",
+    "conflito": "",
+    "intencao": "Corrige falha de teste em `useTeamMessages`: o teste assumia índice de canal incorreto na estrutura retornada pelo mock, fazendo a asserção comparar com o elemento errado do array."
+  },
+  {
+    "numero": 2080,
+    "titulo": "fix(teamchat): corrige 3 bugs em useTeamChatNotifications (canal recriado, SW path, cache inbox)",
+    "veredito": "BLOQUEADO_CI_E_BEHIND",
+    "draft": "Não",
+    "head_sha": "",
+    "base": "e322d379",
+    "conflito": "SIM",
+    "intencao": "Corrige 3 bugs reais em `useTeamChatNotifications.ts`:"
+  },
+  {
+    "numero": 2081,
+    "titulo": "fix: contagem de whatsapp_connections lançava e derrubava toda a coleta de diagnóstico (N-216)",
+    "veredito": "MERGEAR_SE_CI_VERDE (requer rebase)",
+    "draft": "Não",
+    "head_sha": "80a6e057a2fd699e252f83bba5860f259ffcb5e1",
+    "base": "bac62ba9 (behind main@2d97c44)",
+    "conflito": "",
+    "intencao": "Corrige bug real de produto em `useDiagnosticsData.ts`: quando o fetch de `whatsapp_connections` falhava, o hook executava `if (connectionsCountError) throw connectionsCountError` — descartando todos os outros dados já coletados (`contactsCount`, `storageError`, `realtime`). O painel de diagnóstico ficava completamente vazio, e \"0 conexões por falha\" era indistinguível de \"0 conexões genuínas\"."
+  },
+  {
+    "numero": 2082,
+    "titulo": "fix: falha de leitura em useUserSettings ficava invisível (C-1)",
+    "veredito": "BLOQUEADO_CI_E_BEHIND",
+    "draft": "Não",
+    "head_sha": "",
+    "base": "bac62ba9",
+    "conflito": "",
+    "intencao": "Corrige `useUserSettings.ts`: erros de leitura retornavam silenciosamente sem nenhum estado de erro exposto. Implementa o padrão `isError` + toast de notificação para que erros de fetch fiquem visíveis ao usuário."
+  },
+  {
+    "numero": 2083,
+    "titulo": "fix: NPSDashboard não expunha erro de leitura nem aviso de teto",
+    "veredito": "BLOQUEADO_CI_E_BEHIND",
+    "draft": "Não",
+    "head_sha": "",
+    "base": "bac62ba9",
+    "conflito": "",
+    "intencao": "Corrige `NPSDashboard`: (1) erros de fetch não exibiam card de erro; (2) quando `isTruncated` era verdadeiro (limite de dados atingido), nenhum aviso era exibido ao usuário. Adiciona error card e aviso de truncamento."
+  },
+  {
+    "numero": 2084,
+    "titulo": "fix: Leaderboard não distinguia RPC caída de ranking vazio",
+    "veredito": "BLOQUEADO_CI_E_BEHIND",
+    "draft": "Não",
+    "head_sha": "",
+    "base": "bac62ba9",
+    "conflito": "",
+    "intencao": "Corrige `Leaderboard`: quando a RPC falhava, o componente mostrava o mesmo estado vazio que quando o ranking não tinha dados — sem distinção. Adiciona estado de erro separado com atributo `data-leaderboard-state` para testes."
+  },
+  {
+    "numero": 2085,
+    "titulo": "fix(ux): WhatsAppTemplatesManager — gate isAdmin para ações de escrita",
+    "veredito": "MERGEAR_SE_CI_VERDE",
+    "draft": "Não",
+    "head_sha": "",
+    "base": "main@2d97c44",
+    "conflito": "",
+    "intencao": "Adiciona gate de `isAdmin` em `WhatsAppTemplatesManager` para bloquear ações de escrita (Novo, Editar, Duplicar, Excluir) para usuários não-admin. As políticas RLS de `whatsapp_templates` são admin-only (`20260315123034`/`20260317222534`), mas a rota era liberada para todo staff (admin + supervisor), causando erro de RLS no toast ao tentar criar/editar/excluir."
+  },
+  {
+    "numero": 2086,
+    "titulo": "fix(a11y): QueueCard — botão remover visível em touch (N-180.6)",
+    "veredito": "MERGEAR_SE_CI_VERDE",
+    "draft": "Não",
+    "head_sha": "",
+    "base": "main@2d97c44",
+    "conflito": "",
+    "intencao": "Corrige N-180.6: o botão de remover membro de fila ficava invisível em dispositivos touch porque a lógica de visibilidade dependia de `group-hover`, que não dispara em touch. Adiciona `[@media(hover:none)]` e `[@media(pointer:coarse)]` para tornar o botão sempre visível e com target de toque adequado (44px) em dispositivos sem hover. Também adiciona `focus-visible` para acessibilidade via teclado."
+  },
+  {
+    "numero": 2087,
+    "titulo": "fix(test): GmailInboxView.paginacao — mock rpc search_email_threads + channel",
+    "veredito": "MERGEAR_SE_CI_VERDE",
+    "draft": "Não",
+    "head_sha": "",
+    "base": "main@2d97c44",
+    "conflito": "",
+    "intencao": "Corrige teste de paginação do `GmailInboxView` que falhava porque: (1) o mock de Supabase não incluía `rpc` para `search_email_threads` — a busca chama esse RPC antes do `.or()` query quando há termo de busca (PE-09); (2) o mock de `supabase.channel` no `beforeEach` não retornava o contrato correto do SDK Realtime (faltava `subscribe`)."
+  },
+  {
+    "numero": 2088,
+    "titulo": "fix(tests/F1a): safe-area/scrollbar-none CSS mock",
+    "veredito": "BLOQUEADO_CI_E_BEHIND",
+    "draft": "Não",
+    "head_sha": "ced1c1b4",
+    "base": "e322d379 (BEHIND main)",
+    "conflito": "SIM",
+    "intencao": "Corrige mock de classes CSS `safe-area-*` e `scrollbar-none` em testes que falham por"
+  },
+  {
+    "numero": 2089,
+    "titulo": "fix(audio): chat.service — resolveAudioFormat substitui webm hardcoded",
+    "veredito": "MERGEAR_SE_CI_VERDE",
+    "draft": "Não",
+    "head_sha": "",
+    "base": "main@2d97c44",
+    "conflito": "",
+    "intencao": "Corrige `uploadAudio()` em `chat.service.ts` que hardcodava `audio/webm` e extensão `.webm` para todos os uploads de áudio. Introduz `AUDIO_EXTENSION_BY_SUBTYPE` (mapa de subtipo → extensão) e `resolveAudioFormat(mimeType)` para detectar o formato real do blob e usar extensão/contentType corretos ao fazer upload no Storage."
+  },
+  {
+    "numero": 2090,
+    "titulo": "fix(auth): limpar fila offline no logout + extrair authSession.ts",
+    "veredito": "MERGEAR_SE_CI_VERDE",
+    "draft": "Não",
+    "head_sha": "",
+    "base": "main@2d97c44",
+    "conflito": "",
+    "intencao": "Três melhorias correlatas:"
+  },
+  {
+    "numero": 2091,
+    "titulo": "fix(edge/Z011-B+C): comparação timing-safe em 2 edge functions",
+    "veredito": "BLOQUEADO_CI_E_BEHIND",
+    "draft": "Não",
+    "head_sha": "626811d3",
+    "base": "e322d379 (BEHIND main)",
+    "conflito": "SIM",
+    "intencao": "**Fix de segurança real (Z011-B/C):** substitui comparação de string simples (`===`) por"
+  },
+  {
+    "numero": 2092,
+    "titulo": "fix(ci): types-sync job summary + gmail-cron-sync raw-500 (Z029+Z015p)",
+    "veredito": "DRAFT_SKIP",
+    "draft": "SIM",
+    "head_sha": "",
+    "base": "e322d379",
+    "conflito": "",
+    "intencao": "Corrige o job summary do types-sync e trata erro raw-500 no gmail-cron-sync. +29/-0 linhas em 1 arquivo (`.github/workflows/types-sync.yml`)."
+  },
+  {
+    "numero": 2093,
+    "titulo": "fix: migration-evidence expectedKeys, version collision, playwright unpin (Z022+Z023+Z024)",
+    "veredito": "DRAFT_SKIP",
+    "draft": "SIM",
+    "head_sha": "",
+    "base": "e322d379",
+    "conflito": "SIM",
+    "intencao": "Corrige migration-evidence expectedKeys, colisão de version e desafixação do playwright. +4/-4 linhas em 2 arquivos."
+  },
+  {
+    "numero": 2094,
+    "titulo": "fix(db): FASE 2 — REVOKE anon write grants todas as tabelas (Z054-Z055)",
+    "veredito": "DRAFT_SKIP",
+    "draft": "SIM",
+    "head_sha": "",
+    "base": "e322d379",
+    "conflito": "",
+    "intencao": "Revogar grants de escrita anon em todas as tabelas (FASE 2). +21/-0 linhas em 1 arquivo (`supabase/migrations/20261016250000_revoke_anon_write_grants_all_tables.sql`)."
+  },
+  {
+    "numero": 2095,
+    "titulo": "fix(edge/Z018+Z020): segurança em edge functions [ANOMALIA]",
+    "veredito": "BLOQUEADO_CI_E_BEHIND",
+    "draft": "Não",
+    "head_sha": "1b3129a8",
+    "base": "e322d379 (BEHIND main)",
+    "conflito": "SIM",
+    "intencao": "Fixes de segurança Z018 e Z020 em edge functions. **ANOMALIA:** 135 arquivos, +5602/-7 linhas"
+  },
+  {
+    "numero": 2096,
+    "titulo": "feat(vercel): plano de correções Vercel 190 etapas — execução V001-V180",
+    "veredito": "JÁ_MERGEADA",
+    "draft": "",
+    "head_sha": "",
+    "base": "e322d379",
+    "conflito": "",
+    "intencao": "Execução das etapas V001-V180 do plano de correções Vercel (190 etapas). Já incorporada à `main`."
+  },
+  {
+    "numero": 2097,
+    "titulo": "fix: corrige falhas pré-existentes nos Unit Tests (useKnowledgeBase + useTalkXSegments)",
+    "veredito": "BLOQUEADO_CI_E_BEHIND",
+    "draft": "Não",
+    "head_sha": "",
+    "base": "bac62ba9",
+    "conflito": "",
+    "intencao": "Corrige 3 falhas pré-existentes nos testes unitários: `useKnowledgeBase.ts` e `useTalkXSegments.ts`. +26/-7 linhas em 2 arquivos. Diretamente relevante para o desbloqueio do CI sistêmico (main@2d97c44 tem 136 arquivos de teste falhando)."
+  },
+  {
+    "numero": 2098,
+    "titulo": "fix: corrigir falhas de CI — testes, a11y, bundle e motion (261019)",
+    "veredito": "BLOQUEADO_CI_E_BEHIND",
+    "draft": "Não",
+    "head_sha": "",
+    "base": "ee294749 (SHA mergeado do PR #2096)",
+    "conflito": "SIM",
+    "intencao": "Corrige múltiplas falhas de CI: testes unitários, acessibilidade (a11y), reduced motion e bundle/lazy loading. +105/-304 linhas em 11 arquivos."
+  },
+  {
+    "numero": 2099,
+    "titulo": "chore(deps): Bump github/codeql-action from 4.38.3 to 4.39.0",
+    "veredito": "JÁ_MERGEADA",
+    "draft": "",
+    "head_sha": "",
+    "base": "",
+    "conflito": "",
+    "intencao": "Atualização automática do Dependabot: `github/codeql-action` de 4.38.3 para 4.39.0. +4/-4 linhas em 1 arquivo. Já incorporada à `main`."
+  },
+  {
+    "numero": 2100,
+    "titulo": "fix: GA09/GA62/GA75/GA92/GA98/GA100 — concurrency, codeql diário, endpoint, rate-limit, docs",
+    "veredito": "DRAFT_SKIP",
+    "draft": "SIM",
+    "head_sha": "",
+    "base": "ee294749",
+    "conflito": "SIM",
+    "intencao": "Correções de GitHub Actions: concurrency, codeql diário, endpoint, rate-limit e documentação. +11/-10 linhas em 7 arquivos."
+  },
+  {
+    "numero": 2101,
+    "titulo": "chore(deps): Bump actions-misc group (setup-node, upload-artifact, github-script)",
+    "veredito": "JÁ_MERGEADA",
+    "draft": "",
+    "head_sha": "",
+    "base": "",
+    "conflito": "",
+    "intencao": "Atualização automática do Dependabot: setup-node 7.0.0→7.1.0, upload-artifact 7.0.1→7.0.2, github-script 7.0.1→9.0.0. +5/-5 linhas em 4 arquivos. Já incorporada à `main`."
+  },
+  {
+    "numero": 2102,
+    "titulo": "deps: Bump the deps-semanal group with 11 updates",
+    "veredito": "JÁ_MERGEADA",
+    "draft": "",
+    "head_sha": "",
+    "base": "",
+    "conflito": "",
+    "intencao": "Atualização automática do Dependabot: bump do grupo `deps-semanal` com 11 pacotes. Estado `closed` = mergeada. Já incorporada à `main`."
+  },
+  {
+    "numero": 2103,
+    "titulo": "fix(ci): GA02/GA04/GA08/GA10/GA62/GA75/GA76/GA77 — guard GraphQL merge.*, CLAUDE.md, P0 stderr, fork-safe e2e, CodeQL diário, endpoint, remove restaurar morta",
+    "veredito": "DRAFT_SKIP",
+    "draft": "SIM",
+    "head_sha": "",
+    "base": "",
+    "conflito": "",
+    "intencao": "Correções de GitHub Actions (GA02/GA04/GA08/GA10/GA62/GA75/GA76/GA77): guard GraphQL merge.*, CLAUDE.md atualização, P0 stderr, fork-safe e2e, CodeQL diário, endpoint selected-actions e remoção de função restaurar morta."
+  },
+  {
+    "numero": 2104,
+    "titulo": "fix(ci): PGUSER postgres + GA75 endpoint + GA77 sem auto-restore + TS2322 + security-unit",
+    "veredito": "BLOQUEADO_CI_E_BEHIND",
+    "draft": "Não",
+    "head_sha": "",
+    "base": "ee294749",
+    "conflito": "SIM",
+    "intencao": "Correções de CI (+93/-65, 7 arquivos): `PGUSER: postgres` no step 12 do db-guard.yml, novo `settings-guard.yml`, endpoint GA75 corrigido para `/repos/.../actions/permissions/selected-actions`, remoção de `restaurar()` (GA77), melhorias W04-W14 e correção TS2322 em `useTalkXSuppression.ts`."
+  },
+  {
+    "numero": 2105,
+    "titulo": "docs: plano de integração de branches em 300 etapas (153 branches → só main)",
+    "veredito": "BLOQUEADO_CI_E_BEHIND",
+    "draft": "Não",
+    "head_sha": "",
+    "base": "d7af7a671",
+    "conflito": "SIM",
+    "intencao": "Documentação pura (+10267/-4613, 335 arquivos): `docs/plans/PLANO_INTEGRACAO_BRANCHES_300_ETAPAS_2026-10-19.md`. Plano de 300 etapas em 11 fases para integrar 153 branches na `main`. Contém 27 achados, 6 decisões para o Joaquim (D1-D6) e 9 procedimentos."
+  },
+  {
+    "numero": 2106,
+    "titulo": "NÃO EXISTE",
+    "veredito": "NÃO_EXISTE",
+    "draft": "",
+    "head_sha": "",
+    "base": "",
+    "conflito": "",
+    "intencao": "PR #2106 retornou 404 (`Not Found`) na API do GitHub. O número não foi atribuído — lacuna no sequencial de PRs entre #2105 e #2107."
+  },
+  {
+    "numero": 2107,
+    "titulo": "docs(g9): absorver planos de docs ausentes da main — E274",
+    "veredito": "BLOQUEADO_CI_E_BEHIND",
+    "draft": "Não",
+    "head_sha": "",
+    "base": "bac62ba9",
+    "conflito": "Não",
+    "intencao": "Documentação pura (+2036/-0, 3 arquivos): adiciona planos de docs ausentes da `main` vindos de branches G9:"
+  },
+  {
+    "numero": 2108,
+    "titulo": "fix(ci): GA20/GA21/GA22/GA23/GA27/GA38/GA39/GA55/GA72 + GA75–GA78/GA92 — auditoria GitHub Actions",
+    "veredito": "DRAFT_SKIP",
+    "draft": "SIM",
+    "head_sha": "",
+    "base": "ee294749",
+    "conflito": "SIM",
+    "intencao": "Auditoria massiva de GitHub Actions (+11994/-4300, 101 arquivos). Correções de GA20/GA21/GA22/GA23/GA27/GA38/GA39/GA55/GA72 + GA75-GA78/GA92."
+  },
+  {
+    "numero": 2109,
+    "titulo": "fix(test): mock useCustomEmojis.upload suporta duplo .order()",
+    "veredito": "BLOQUEADO_CI_E_BEHIND",
+    "draft": "Não",
+    "head_sha": "",
+    "base": "ee294749",
+    "conflito": "SIM",
+    "intencao": "Corrige mock de teste (+9/-1, 1 arquivo): `useCustomEmojis.upload.test.tsx`. O objeto mock `q` passa a auto-referenciar `order: () => q` para suportar chamadas encadeadas de `.order()`. Sem alteração em código de produção."
+  },
+  {
+    "numero": 2110,
+    "titulo": "fix(tests): add createLogger to vi.mock('@/lib/logger') em 20 testes",
+    "veredito": "BLOQUEADO_CI_E_BEHIND",
+    "draft": "Não",
+    "head_sha": "",
+    "base": "ee294749",
+    "conflito": "SIM",
+    "intencao": "Corrige causa raiz do CI sistêmico (+26/-0, 21 arquivos): adiciona `createLogger: () => ({ error: vi.fn(), debug: vi.fn(), info: vi.fn(), warn: vi.fn() })` ao `vi.mock('@/lib/logger')` nos 20 arquivos de teste que falhavam com `Error: [vitest] No \"createLogger\" export is defined on the \"@/lib/logger\" mock`."
+  },
+  {
+    "numero": 2111,
+    "titulo": "fix(types): narrowar reason_code em useTalkXSuppression para union type",
+    "veredito": "BLOQUEADO_CI_E_BEHIND",
+    "draft": "Não",
+    "head_sha": "ec57655d549eb83a1102e3dbb2f4989e22a265fc",
+    "base": "ee294749175799481deb9fc69e1d31fac6675f3e (BEHIND main@2d97c44c)",
+    "conflito": "",
+    "intencao": "PR baseado em commit anterior (ee294749). Com strict=true, precisa de rebase em main antes de mergear. E main está com CI falho, então mesmo após atualização ficaria bloqueado."
+  },
+  {
+    "numero": 2112,
+    "titulo": "chore(inbox): remove órfão ConversationMemorySection + desbloqueia gates da main",
+    "veredito": "BLOQUEADO_CI_E_BEHIND",
+    "draft": "Não",
+    "head_sha": "656ee4ccb17eb97ea8c1a8451fd26d3470cbb8d1",
+    "base": "ee294749175799481deb9fc69e1d31fac6675f3e (BEHIND main@2d97c44c)",
+    "conflito": "",
+    "intencao": "PR baseado em commit anterior (ee294749). Com strict=true, precisa de rebase em main antes de mergear. E main está com CI falho, então mesmo após atualização ficaria bloqueado."
+  },
+  {
+    "numero": 2113,
+    "titulo": "fix(evolution-api): remover set-presence, find-chats e find-status-messages (GO_GAPS D6)",
+    "veredito": "DRAFT_SKIP",
+    "draft": "SIM",
+    "head_sha": "",
+    "base": "",
+    "conflito": "",
+    "intencao": "fix(evolution-api): remover set-presence, find-chats e find-status-messages (GO_GAPS D6)"
+  },
+  {
+    "numero": 2116,
+    "titulo": "feat: security headers V130-V133 — COOP, Reporting-Endpoints, report-to (plano Vercel V130-V150)",
+    "veredito": "DRAFT_SKIP",
+    "draft": "SIM",
+    "head_sha": "",
+    "base": "",
+    "conflito": "",
+    "intencao": "feat: security headers V130-V133 — COOP, Reporting-Endpoints, report-to (plano Vercel V130-V150)"
+  },
+  {
+    "numero": 2119,
+    "titulo": "docs(inbox): registra o encerramento do plano de 20 etapas das abas da conversa",
+    "veredito": "BLOQUEADO_CI_E_BEHIND",
+    "draft": "Não",
+    "head_sha": "94eba06f51715c5db37030dfdfcdd193754fee1f",
+    "base": "bac62ba98454811c3bfd117b838af926b1e795b2 (BEHIND main@2d97c44c)",
+    "conflito": "",
+    "intencao": "PR baseado em commit anterior (bac62ba9). Com strict=true, precisa de rebase em main antes de mergear. E main está com CI falho, então mesmo após atualização ficaria bloqueado."
+  },
+  {
+    "numero": 2120,
+    "titulo": "fix(inbox): fecha a semântica de tablist das 8 abas da conversa (etapa 15 do plano de 20 etapas)",
+    "veredito": "BLOQUEADO_CI_E_BEHIND",
+    "draft": "Não",
+    "head_sha": "60511e6e0ef77a625bed5a73e7db18e131a8fc2f",
+    "base": "bac62ba98454811c3bfd117b838af926b1e795b2 (BEHIND main@2d97c44c)",
+    "conflito": "",
+    "intencao": "PR baseado em commit anterior (bac62ba9). Com strict=true, precisa de rebase em main antes de mergear. E main está com CI falho, então mesmo após atualização ficaria bloqueado."
+  },
+  {
+    "numero": 2121,
+    "titulo": "docs(contatos): incorpora o plano de 50 etapas e a auditoria com plano de correção em 60 etapas",
+    "veredito": "BLOQUEADO_CI_E_BEHIND",
+    "draft": "Não",
+    "head_sha": "77822f956e629fffbb170d39a16383231b0f7985",
+    "base": "bac62ba98454811c3bfd117b838af926b1e795b2 (BEHIND main@2d97c44c)",
+    "conflito": "",
+    "intencao": "PR baseado em commit anterior (bac62ba9). Com strict=true, precisa de rebase em main antes de mergear. E main está com CI falho, então mesmo após atualização ficaria bloqueado."
+  },
+  {
+    "numero": 2123,
+    "titulo": "fix(ci): restaura o parse dos contratos de workflow e corrige 8 violações (cache do Bun, TE05/exit-code, concurrency duplicada)",
+    "veredito": "BLOQUEADO_CI_E_BEHIND",
+    "draft": "Não",
+    "head_sha": "d90d3f78f9d026828c1e888ea6ce91f6643a3c45",
+    "base": "d7af7a671ca2bd7005b75b0aa54c0f0c4672befc (BEHIND main@2d97c44c)",
+    "conflito": "",
+    "intencao": "PR baseado em commit anterior (d7af7a67). Com strict=true, precisa de rebase em main antes de mergear. E main está com CI falho, então mesmo após atualização ficaria bloqueado."
+  },
+  {
+    "numero": 2124,
+    "titulo": "fix(ci): Fase 0 do plano GA02-GA12",
+    "veredito": "BLOQUEADO_CI_E_BEHIND",
+    "draft": "Não",
+    "head_sha": "e966771219ba418e3c97ca22b79407bfaa9fdd58",
+    "base": "d7af7a671ca2bd7005b75b0aa54c0f0c4672befc (BEHIND main@2d97c44c)",
+    "conflito": "",
+    "intencao": "PR baseado em commit anterior (d7af7a67). Com strict=true, precisa de rebase em main antes de mergear. E main está com CI falho, então mesmo após atualização ficaria bloqueado."
+  },
+  {
+    "numero": 2125,
+    "titulo": "fix(ci): Fase 1 do plano GA18 GA19 + GA26 prepare",
+    "veredito": "BLOQUEADO_CI_E_BEHIND",
+    "draft": "Não",
+    "head_sha": "19c48a20cdbd6933cca7c8587d256e342a8217db",
+    "base": "d7af7a671ca2bd7005b75b0aa54c0f0c4672befc (BEHIND main@2d97c44c)",
+    "conflito": "",
+    "intencao": "PR baseado em commit anterior (d7af7a67). Com strict=true, precisa de rebase em main antes de mergear. E main está com CI falho, então mesmo após atualização ficaria bloqueado."
+  },
+  {
+    "numero": 2126,
+    "titulo": "fix(ci): Fases 4+5+6 do plano GA49-GA74",
+    "veredito": "BLOQUEADO_CI_E_BEHIND",
+    "draft": "Não",
+    "head_sha": "403cf6b3ad6c6d27ab8bff7b994f95c3e51a35b4",
+    "base": "351ccb2a651f0394b5e78fd660695c09b4f799cf (BEHIND main@2d97c44c)",
+    "conflito": "",
+    "intencao": "PR baseado em commit anterior (351ccb2a). Com strict=true, precisa de rebase em main antes de mergear. E main está com CI falho, então mesmo após atualização ficaria bloqueado."
+  },
+  {
+    "numero": 2127,
+    "titulo": "fix(e91): log de CHANNEL_ERROR nos canais Realtime do Team Chat (hardening E91)",
+    "veredito": "BLOQUEADO_CI_E_BEHIND",
+    "draft": "Não",
+    "head_sha": "250365e44a6778b05b6e2e3499fcd7729df6355f",
+    "base": "bac62ba98454811c3bfd117b838af926b1e795b2 (BEHIND main@2d97c44c)",
+    "conflito": "",
+    "intencao": "PR baseado em commit anterior (bac62ba9). Com strict=true, precisa de rebase em main antes de mergear. E main está com CI falho, então mesmo após atualização ficaria bloqueado."
+  },
+  {
+    "numero": 2128,
+    "titulo": "fix(ci): Fases 2+3 do plano GA27-GA47",
+    "veredito": "BLOQUEADO_CI_E_BEHIND",
+    "draft": "Não",
+    "head_sha": "420aae58834fc0d4358aa6701a55da3f72307eb2",
+    "base": "351ccb2a651f0394b5e78fd660695c09b4f799cf (BEHIND main@2d97c44c)",
+    "conflito": "",
+    "intencao": "PR baseado em commit anterior (351ccb2a). Com strict=true, precisa de rebase em main antes de mergear. E main está com CI falho, então mesmo após atualização ficaria bloqueado."
+  },
+  {
+    "numero": 2129,
+    "titulo": "fix(ci): Fases 7+8 do plano GA75-GA95",
+    "veredito": "BLOQUEADO_CI_E_BEHIND",
+    "draft": "Não",
+    "head_sha": "1b2db4d1b64b221ac7e2b09a445e80150cc43775",
+    "base": "d7af7a671ca2bd7005b75b0aa54c0f0c4672befc (BEHIND main@2d97c44c)",
+    "conflito": "",
+    "intencao": "PR baseado em commit anterior (d7af7a67). Com strict=true, precisa de rebase em main antes de mergear. E main está com CI falho, então mesmo após atualização ficaria bloqueado."
+  },
+  {
+    "numero": 2135,
+    "titulo": "fix(contatos): restaura topo sem cabeçalho e devolve o toque ao FAB",
+    "veredito": "BLOQUEADO_CI_E_BEHIND",
+    "draft": "Não",
+    "head_sha": "a8476c5642238ac09b9376f3f63e00e16873a38b",
+    "base": "bac62ba98454811c3bfd117b838af926b1e795b2 (BEHIND main@2d97c44c)",
+    "conflito": "",
+    "intencao": "PR baseado em commit anterior (bac62ba9). Com strict=true, precisa de rebase em main antes de mergear. E main está com CI falho, então mesmo após atualização ficaria bloqueado."
+  },
+  {
+    "numero": 2137,
+    "titulo": "fix(db): recria canonicamente as policies de receipt do team chat (replay)",
+    "veredito": "BLOQUEADO_CI_E_BEHIND",
+    "draft": "Não",
+    "head_sha": "f632880fc2007b9a2111b5eef49f78614a1c21d3",
+    "base": "bac62ba98454811c3bfd117b838af926b1e795b2 (BEHIND main@2d97c44c)",
+    "conflito": "",
+    "intencao": "PR baseado em commit anterior (bac62ba9). Com strict=true, precisa de rebase em main antes de mergear. E main está com CI falho, então mesmo após atualização ficaria bloqueado."
+  },
+  {
+    "numero": 2138,
+    "titulo": "fix(ci): desbloqueia a main - contratos de CI, Pin do Playwright/E2E, E88 e DB Guard offline",
+    "veredito": "DRAFT_SKIP",
+    "draft": "SIM",
+    "head_sha": "",
+    "base": "",
+    "conflito": "",
+    "intencao": "fix(ci): desbloqueia a main - contratos de CI, Pin do Playwright/E2E, E88 e DB Guard offline"
+  },
+  {
+    "numero": 2139,
+    "titulo": "Codex/fix failed workflows 20261020",
+    "veredito": "BLOQUEADO_CI_E_BEHIND",
+    "draft": "Não",
+    "head_sha": "bf0ce76953011856fa1601c039a4e660f08c652d",
+    "base": "d7af7a671ca2bd7005b75b0aa54c0f0c4672befc (BEHIND main@2d97c44c)",
+    "conflito": "",
+    "intencao": "PR baseado em commit anterior (d7af7a67). Com strict=true, precisa de rebase em main antes de mergear. E main está com CI falho, então mesmo após atualização ficaria bloqueado."
+  },
+  {
+    "numero": 2141,
+    "titulo": "feat(E83): entrar por codigo - aceite desacoplado (somente arquivos novos)",
+    "veredito": "BLOQUEADO_CI_E_BEHIND",
+    "draft": "Não",
+    "head_sha": "83e2648ba2cf37d4487face9e66b6071b4be970c",
+    "base": "bac62ba98454811c3bfd117b838af926b1e795b2 (BEHIND main@2d97c44c)",
+    "conflito": "",
+    "intencao": "PR baseado em commit anterior (bac62ba9). Com strict=true, precisa de rebase em main antes de mergear. E main está com CI falho, então mesmo após atualização ficaria bloqueado."
+  },
+  {
+    "numero": 2142,
+    "titulo": "fix(ci): Resto GA13-GA17 (db-migrate 2 jobs, apply_all_missing, portao destrutivo)",
+    "veredito": "BLOQUEADO_CI_E_BEHIND",
+    "draft": "Não",
+    "head_sha": "ed39966869956b375238f640711208916295f7fa",
+    "base": "d7af7a671ca2bd7005b75b0aa54c0f0c4672befc (BEHIND main@2d97c44c)",
+    "conflito": "",
+    "intencao": "PR baseado em commit anterior (d7af7a67). Com strict=true, precisa de rebase em main antes de mergear. E main está com CI falho, então mesmo após atualização ficaria bloqueado."
+  },
+  {
+    "numero": 2143,
+    "titulo": "fix(ci): Resto GA20-GA25 (Gate 3, DESTINO split, auto-merge grants)",
+    "veredito": "BLOQUEADO_CI_E_BEHIND",
+    "draft": "Não",
+    "head_sha": "f63da0dd8e8c2c0c5cc7db55fdc1d72119feae8b",
+    "base": "d7af7a671ca2bd7005b75b0aa54c0f0c4672befc (BEHIND main@2d97c44c)",
+    "conflito": "",
+    "intencao": "PR baseado em commit anterior (d7af7a67). Com strict=true, precisa de rebase em main antes de mergear. E main está com CI falho, então mesmo após atualização ficaria bloqueado."
+  },
+  {
+    "numero": 2144,
+    "titulo": "fix(ci): Resto GA37 GA96-GA98 (docs deploy, regen, CODEOWNERS)",
+    "veredito": "BLOQUEADO_CI_E_BEHIND",
+    "draft": "Não",
+    "head_sha": "52761c075664078a4892990e4e66420062b941b5",
+    "base": "d7af7a671ca2bd7005b75b0aa54c0f0c4672befc (BEHIND main@2d97c44c)",
+    "conflito": "",
+    "intencao": "PR baseado em commit anterior (d7af7a67). Com strict=true, precisa de rebase em main antes de mergear. E main está com CI falho, então mesmo após atualização ficaria bloqueado."
+  },
+  {
+    "numero": 2145,
+    "titulo": "fix(ci): Resto GA86 GA99 GA100 (sonar, contracts, adocao)",
+    "veredito": "BLOQUEADO_CI_E_BEHIND",
+    "draft": "Não",
+    "head_sha": "dc8b634941014141d81b0874a273cff3a1029c09",
+    "base": "d7af7a671ca2bd7005b75b0aa54c0f0c4672befc (BEHIND main@2d97c44c)",
+    "conflito": "",
+    "intencao": "PR baseado em commit anterior (d7af7a67). Com strict=true, precisa de rebase em main antes de mergear. E main está com CI falho, então mesmo após atualização ficaria bloqueado."
+  },
+  {
+    "numero": 2146,
+    "titulo": "feat(team-chat): TeamChatView seleciona conversa via ?cid= (receptor E90)",
+    "veredito": "BLOQUEADO_CI_E_BEHIND",
+    "draft": "Não",
+    "head_sha": "3c05d8ef325ad08bda7389f61c2f6c323eac5c60",
+    "base": "bac62ba98454811c3bfd117b838af926b1e795b2 (BEHIND main@2d97c44c)",
+    "conflito": "",
+    "intencao": "PR baseado em commit anterior (bac62ba9). Com strict=true, precisa de rebase em main antes de mergear. E main está com CI falho, então mesmo após atualização ficaria bloqueado."
+  },
+  {
+    "numero": 2147,
+    "titulo": "fix(db-audit): guard n011 com teto dinamico por dominio e canonico atual",
+    "veredito": "BLOQUEADO_CI_E_BEHIND",
+    "draft": "Não",
+    "head_sha": "0913cfeb5e0a88f3246ce8a16e6449eea782120c",
+    "base": "d7af7a671ca2bd7005b75b0aa54c0f0c4672befc (BEHIND main@2d97c44c)",
+    "conflito": "",
+    "intencao": "PR baseado em commit anterior (d7af7a67). Com strict=true, precisa de rebase em main antes de mergear. E main está com CI falho, então mesmo após atualização ficaria bloqueado."
+  },
+  {
+    "numero": 2148,
+    "titulo": "test(e2e): destrava specs deslogados de Contatos com boot e health mockados",
+    "veredito": "BLOQUEADO_CI_E_BEHIND",
+    "draft": "Não",
+    "head_sha": "22cee627caba09f04c3d5e4fb2f5357f3c9b6428",
+    "base": "bac62ba98454811c3bfd117b838af926b1e795b2 (BEHIND main@2d97c44c)",
+    "conflito": "",
+    "intencao": "PR baseado em commit anterior (bac62ba9). Com strict=true, precisa de rebase em main antes de mergear. E main está com CI falho, então mesmo após atualização ficaria bloqueado."
+  },
+  {
+    "numero": 2149,
+    "titulo": "docs(reconciliation): P053 registra regressão do cabeçalho (19/20/25) e superseded (16/28)",
+    "veredito": "BLOQUEADO_CI_E_BEHIND",
+    "draft": "Não",
+    "head_sha": "ab71f9e2592155546eef50b6cb307b1f1ee4821e",
+    "base": "bac62ba98454811c3bfd117b838af926b1e795b2 (BEHIND main@2d97c44c)",
+    "conflito": "",
+    "intencao": "PR baseado em commit anterior (bac62ba9). Com strict=true, precisa de rebase em main antes de mergear. E main está com CI falho, então mesmo após atualização ficaria bloqueado."
+  },
+  {
+    "numero": 2151,
+    "titulo": "fix(ci): destravar workflows que falhavam antes de executar",
+    "veredito": "BLOQUEADO_CI_E_BEHIND",
+    "draft": "Não",
+    "head_sha": "0770f6b5ef6f1f0df653ffe5c9dd479955673848",
+    "base": "6e2c7289e7e073df4685c1742139913b0ce67510 (BEHIND main@2d97c44c)",
+    "conflito": "",
+    "intencao": "PR baseado em commit anterior (6e2c7289). Com strict=true, precisa de rebase em main antes de mergear. E main está com CI falho, então mesmo após atualização ficaria bloqueado."
+  },
+  {
+    "numero": 2152,
+    "titulo": "test(e2e): spec de toque 44px volta ao verde com seletores do app real",
+    "veredito": "BLOQUEADO_CI_E_BEHIND",
+    "draft": "Não",
+    "head_sha": "b19f9107dc711d917be3431400cfdf761f8f010a",
+    "base": "bac62ba98454811c3bfd117b838af926b1e795b2 (BEHIND main@2d97c44c)",
+    "conflito": "",
+    "intencao": "PR baseado em commit anterior (bac62ba9). Com strict=true, precisa de rebase em main antes de mergear. E main está com CI falho, então mesmo após atualização ficaria bloqueado."
+  },
+  {
+    "numero": 2155,
+    "titulo": "fix(ci): destrava workflows que falhavam antes de executar",
+    "veredito": "BLOQUEADO_CI_E_BEHIND",
+    "draft": "Não",
+    "head_sha": "64934014e107190fc83f304c291a2faf35308b7b",
+    "base": "1fb282e64c66ae8af16d36bbda8e199c9ce2a58c (BEHIND main@2d97c44c)",
+    "conflito": "",
+    "intencao": "PR baseado em commit anterior (1fb282e6). Com strict=true, precisa de rebase em main antes de mergear. E main está com CI falho, então mesmo após atualização ficaria bloqueado."
+  },
+  {
+    "numero": 2185,
+    "titulo": "docs(pendencias): §8 RESOLVIDO + §9 inventário de workflows",
+    "veredito": "BLOQUEADO_CI_E_BEHIND",
+    "draft": "Não",
+    "head_sha": "bdcf238519",
+    "base": "61a973da (BEHIND main)",
+    "conflito": "SIM",
+    "intencao": "Follow-up de documentação da PR #2182 (mergeada 2026-10-22). Atualiza `PENDENCIAS.md`:"
+  },
+  {
+    "numero": 2186,
+    "titulo": "fix(security): auditoria Supabase 2026-10-22 — department_invites ownership + login_attempts TTL LGPD",
+    "veredito": "DECISAO_HUMANA",
+    "draft": "Não",
+    "head_sha": "1df9e60d",
+    "base": "bac62ba9 (BEHIND main)",
+    "conflito": "SIM",
+    "intencao": "Entrega relatório de auditoria Supabase (68 achados) e aplica as 2 correções de maior prioridade:"
+  },
+  {
+    "numero": 2187,
+    "titulo": "fix(tests): corrige falhas de testes no baseline main — mocks, lógica e código morto",
+    "veredito": "BLOQUEADO_CI_E_BEHIND",
+    "draft": "Não",
+    "head_sha": "b5a90168",
+    "base": "bac62ba9 (BEHIND main)",
+    "conflito": "SIM",
+    "intencao": "12 suítes críticas corrigidas (129 passed, 2 expected fail, 1 todo) + typecheck 93→73 erros."
+  },
+  {
+    "numero": 2190,
+    "titulo": "fix: corrige 9 falhas de CI que mantinham a main vermelha",
+    "veredito": "BLOQUEADO_CI_E_BEHIND",
+    "draft": "Não",
+    "head_sha": "63972069",
+    "base": "437a0013 (BEHIND main)",
+    "conflito": "SIM",
+    "intencao": "9 correções cirúrgicas nos required checks CI:"
+  },
+  {
+    "numero": 2191,
+    "titulo": "fix(e2e): auth.setup não clica mais na aba \"Entrar\"",
+    "veredito": "BLOQUEADO_CI",
+    "draft": "Não",
+    "head_sha": "b5ec582f",
+    "base": "bac62ba9 (BEHIND main)",
+    "conflito": "NÃO",
+    "intencao": "**Bug de teste real:** `e2e/auth.setup.ts:81` clicava em `getByRole('tab', { name: /^entrar$/i })`"
+  },
+  {
+    "numero": 2195,
+    "titulo": "fix: crash cachedConversations undefined + this-binding rpc metas de fila",
+    "veredito": "BLOQUEADO_CI_E_BEHIND",
+    "draft": "Não",
+    "head_sha": "229e32a7",
+    "base": "17976eb8 (BEHIND main)",
+    "conflito": "SIM",
+    "intencao": "**Dois bugs de runtime em produção** (log de zapp-web-v2.vercel.app):"
+  },
+  {
+    "numero": 2196,
+    "titulo": "feat: TalkX editor de templates e artefatos gerados (dia/2026-10-19)",
+    "veredito": "BLOQUEADO_CI_E_BEHIND",
+    "draft": "Não",
+    "head_sha": "d3bef1973c6e611a80844e4fc8ca634ac7df8343",
+    "base": "bac62ba98454811c3bfd117b838af926b1e795b2 (BEHIND main@2d97c44c)",
+    "conflito": "",
+    "intencao": "PR baseado em commit anterior (bac62ba9). Com strict=true, precisa de rebase em main antes de mergear. E main está com CI falho, então mesmo após atualização ficaria bloqueado."
+  },
+  {
+    "numero": 2197,
+    "titulo": "ci: lote GA49–GA64 — fila-merge, actions-kpi, types-sync, codeql e branch-hygiene",
+    "veredito": "BLOQUEADO_CI_E_BEHIND",
+    "draft": "Não",
+    "head_sha": "e1cf8004d000b66230c3c97c87ac426be0d5908d",
+    "base": "351ccb2a651f0394b5e78fd660695c09b4f799cf (BEHIND main@2d97c44c)",
+    "conflito": "",
+    "intencao": "PR baseado em commit anterior (351ccb2a). Com strict=true, precisa de rebase em main antes de mergear. E main está com CI falho, então mesmo após atualização ficaria bloqueado."
+  },
+  {
+    "numero": 2199,
+    "titulo": "fix: corrige 3 falhas de CI — unit tests virtualizer + DB Guard PG17 roles",
+    "veredito": "DRAFT_SKIP",
+    "draft": "SIM",
+    "head_sha": "",
+    "base": "",
+    "conflito": "",
+    "intencao": "fix: corrige 3 falhas de CI — unit tests virtualizer + DB Guard PG17 roles"
+  },
+  {
+    "numero": 2200,
+    "titulo": "analise: dossiê branch hermes/telefonia-contrato-dados-26092615475e51",
+    "veredito": "DRAFT_SKIP",
+    "draft": "SIM",
+    "head_sha": "",
+    "base": "",
+    "conflito": "",
+    "intencao": "analise: dossiê branch hermes/telefonia-contrato-dados-26092615475e51"
+  },
+  {
+    "numero": 2206,
+    "titulo": "fix(ci): adiciona copilot_feedback a known-violations para desbloquear Contrato DB offline",
+    "veredito": "DRAFT_SKIP",
+    "draft": "SIM",
+    "head_sha": "",
+    "base": "",
+    "conflito": "",
+    "intencao": "fix(ci): adiciona copilot_feedback a known-violations para desbloquear Contrato DB offline"
+  },
+  {
+    "numero": 2208,
+    "titulo": "fix(types): named SuppressionReasonCode type export",
+    "veredito": "BLOQUEADO_CI_E_BEHIND",
+    "draft": "Não",
+    "head_sha": "665432536d8c65f4a5c5d400de4459f6b1bc103e",
+    "base": "98f57abc0924eea128c4cfd467a91953149da829 (BEHIND main@2d97c44c)",
+    "conflito": "",
+    "intencao": "PR baseado em commit anterior (98f57abc). Com strict=true, precisa de rebase em main antes de mergear. E main está com CI falho, então mesmo após atualização ficaria bloqueado."
+  },
+  {
+    "numero": 2209,
+    "titulo": "fix(test): corrige mock de range/limit no customemojis upload test",
+    "veredito": "BLOQUEADO_CI_E_BEHIND",
+    "draft": "Não",
+    "head_sha": "a6fdadb4d15cb9fec22919bf14b5c938ffba873f",
+    "base": "98f57abc0924eea128c4cfd467a91953149da829 (BEHIND main@2d97c44c)",
+    "conflito": "",
+    "intencao": "PR baseado em commit anterior (98f57abc). Com strict=true, precisa de rebase em main antes de mergear. E main está com CI falho, então mesmo após atualização ficaria bloqueado."
+  },
+  {
+    "numero": 2211,
+    "titulo": "fix(ci+tests): corrige auto-update-pr-branch e falhas nos testes unitários",
+    "veredito": "DRAFT_SKIP",
+    "draft": "SIM",
+    "head_sha": "",
+    "base": "",
+    "conflito": "",
+    "intencao": "fix(ci+tests): corrige auto-update-pr-branch e falhas nos testes unitários"
+  },
+  {
+    "numero": 2213,
+    "titulo": "feat: RADAR Copilot Fases 8–15 — CV-071 a CV-150 (objection, deadline, temperature, safety, supervisor, learning, metrics)",
+    "veredito": "DRAFT_SKIP",
+    "draft": "SIM",
+    "head_sha": "",
+    "base": "",
+    "conflito": "",
+    "intencao": "feat: RADAR Copilot Fases 8–15 — CV-071 a CV-150 (objection, deadline, temperature, safety, supervisor, learning, metrics)"
+  },
+  {
+    "numero": 2214,
+    "titulo": "feat: DDL 7 tabelas copiloto RADAR fases 13-15 (CV-121–CV-150)",
+    "veredito": "DRAFT_SKIP",
+    "draft": "SIM",
+    "head_sha": "",
+    "base": "",
+    "conflito": "",
+    "intencao": "feat: DDL 7 tabelas copiloto RADAR fases 13-15 (CV-121–CV-150)"
+  },
+  {
+    "numero": 2215,
+    "titulo": "feat: 7 edge functions copilot fases 8-10 (CV-071–CV-100)",
+    "veredito": "DRAFT_SKIP",
+    "draft": "SIM",
+    "head_sha": "",
+    "base": "",
+    "conflito": "",
+    "intencao": "feat: 7 edge functions copilot fases 8-10 (CV-071–CV-100)"
+  },
+  {
+    "numero": 2216,
+    "titulo": "feat: 7 edge functions copiloto RADAR fases 8-15 (CV-071–CV-150)",
+    "veredito": "DRAFT_SKIP",
+    "draft": "SIM",
+    "head_sha": "",
+    "base": "",
+    "conflito": "",
+    "intencao": "feat: 7 edge functions copiloto RADAR fases 8-15 (CV-071–CV-150)"
+  },
+  {
+    "numero": 2217,
+    "titulo": "feat: edge functions AI copiloto fases 8-15 (CV-071–CV-150)",
+    "veredito": "DRAFT_SKIP",
+    "draft": "SIM",
+    "head_sha": "",
+    "base": "",
+    "conflito": "",
+    "intencao": "feat: edge functions AI copiloto fases 8-15 (CV-071–CV-150)"
+  },
+  {
+    "numero": 2218,
+    "titulo": "fix(talkx+ci): X094 TalkXTemplateEditor + guards useTalkXSegments + PK-14 + fixes de testes",
+    "veredito": "MERGEAR_SE_CI_VERDE",
+    "draft": "Não",
+    "head_sha": "ff1b6c679",
+    "base": "main@2d97c44",
+    "conflito": "",
+    "intencao": "PR grande com 5 correções distintas + atualização de documentação CI:"
+  },
+  {
+    "numero": 2219,
+    "titulo": "fix: corrige falhas de testes unitários pré-existentes em main",
+    "veredito": "DRAFT_SKIP",
+    "draft": "SIM",
+    "head_sha": "",
+    "base": "",
+    "conflito": "",
+    "intencao": "fix: corrige falhas de testes unitários pré-existentes em main"
+  },
+  {
+    "numero": 2221,
+    "titulo": "fix: corrige falhas pré-existentes nos Unit Tests de src/",
+    "veredito": "DRAFT_SKIP",
+    "draft": "SIM",
+    "head_sha": "",
+    "base": "",
+    "conflito": "",
+    "intencao": "fix: corrige falhas pré-existentes nos Unit Tests de src/"
+  },
+  {
+    "numero": 2222,
+    "titulo": "fix(db): corrige TC-009 — aplica predecessora 20261006222024 antes da 20261009193246 no teste",
+    "veredito": "DRAFT_SKIP",
+    "draft": "SIM",
+    "head_sha": "",
+    "base": "",
+    "conflito": "",
+    "intencao": "fix(db): corrige TC-009 — aplica predecessora 20261006222024 antes da 20261009193246 no teste"
+  },
+  {
+    "numero": 2223,
+    "titulo": "feat(tasks): NewTaskDialog lazy load + testes de criação/descarte/coerência",
+    "veredito": "MERGEAR_SE_CI_VERDE",
+    "draft": "Não",
+    "head_sha": "",
+    "base": "main@2d97c44",
+    "conflito": "",
+    "intencao": "1. **`TasksModule.tsx`**: adiciona `lazy(() => import('./shared/NewTaskDialog'))` com `Suspense fallback={null}`, e extrai `NewTaskModal` — renderiza apenas quando `modalOpen` (de `useTasksUi`) é verdadeiro (code-splitting para reduzir bundle inicial)"
+  },
+  {
+    "numero": 2225,
+    "titulo": "fix(e2e): mock do RPC app_bootstrap para corrigir travamento em ProtectedRoute",
+    "veredito": "BLOQUEADO_CI_E_BEHIND",
+    "draft": "Não",
+    "head_sha": "33e6cd02cdad19408985dd22723d45c148fb57bf",
+    "base": "b1fe88215b4861121c912140d7968581e26e9111 (BEHIND main@2d97c44c)",
+    "conflito": "",
+    "intencao": "PR baseado em commit anterior (b1fe8821). Com strict=true, precisa de rebase em main antes de mergear. E main está com CI falho, então mesmo após atualização ficaria bloqueado."
+  },
+  {
+    "numero": 2226,
+    "titulo": "fix(db-guard): corrige assertion B.0c no TC-009 — backfill não deve disparar trigger de update",
+    "veredito": "BLOQUEADO_CI_E_BEHIND",
+    "draft": "Não",
+    "head_sha": "4aab75adfeeb4b7383d2b05f514c82700e3258b6",
+    "base": "b1fe88215b4861121c912140d7968581e26e9111 (BEHIND main@2d97c44c)",
+    "conflito": "",
+    "intencao": "PR baseado em commit anterior (b1fe8821). Com strict=true, precisa de rebase em main antes de mergear. E main está com CI falho, então mesmo após atualização ficaria bloqueado."
+  },
+  {
+    "numero": 2228,
+    "titulo": "fix(tests): corrige falha mecânica de mock em useAdminDataCreateUser.test.ts",
+    "veredito": "BLOQUEADO_CI_E_BEHIND",
+    "draft": "Não",
+    "head_sha": "af3fa1db777b150698beace933043ed75ac945bb",
+    "base": "b1fe88215b4861121c912140d7968581e26e9111 (BEHIND main@2d97c44c)",
+    "conflito": "",
+    "intencao": "PR baseado em commit anterior (b1fe8821). Com strict=true, precisa de rebase em main antes de mergear. E main está com CI falho, então mesmo após atualização ficaria bloqueado."
+  },
+  {
+    "numero": 2229,
+    "titulo": "test(inbox): corrige InboxEmptyChat.cta divergente após reescrita no PR #1986",
+    "veredito": "BLOQUEADO_CI_E_BEHIND",
+    "draft": "Não",
+    "head_sha": "272971b8355daacb576174a6bbc36ce2dcb1d302",
+    "base": "b1fe88215b4861121c912140d7968581e26e9111 (BEHIND main@2d97c44c)",
+    "conflito": "",
+    "intencao": "PR baseado em commit anterior (b1fe8821). Com strict=true, precisa de rebase em main antes de mergear. E main está com CI falho, então mesmo após atualização ficaria bloqueado."
+  },
+  {
+    "numero": 2230,
+    "titulo": "chore: remove hook morto useTalkXSuppression",
+    "veredito": "COMPLETAR ⚠️",
+    "draft": "",
+    "head_sha": "",
+    "base": "main@2d97c44",
+    "conflito": "",
+    "intencao": "**3 arquivos DELETADOS:**"
+  },
+  {
+    "numero": 2231,
+    "titulo": "feat(contacts): contact_notes is_pinned + edição inline + testes RLS",
+    "veredito": "MERGEAR_SE_CI_VERDE",
+    "draft": "Não",
+    "head_sha": "",
+    "base": "main@2d97c44",
+    "conflito": "",
+    "intencao": "1. **Migration** `20261026200000_contact_notes_pinned.sql`: `is_pinned boolean NOT NULL DEFAULT false` em `contact_notes` + índice parcial `contact_notes_pinned_idx WHERE is_pinned`"
+  },
+  {
+    "numero": 2232,
+    "titulo": "fix(test): SummaryResult — selector h-6×w-6 → h-8×w-8",
+    "veredito": "MERGEAR_SE_CI_VERDE",
+    "draft": "Não",
+    "head_sha": "",
+    "base": "main@2d97c44",
+    "conflito": "",
+    "intencao": "Corrige seletor de teste que buscava `button.h-6.w-6` para os icon buttons do `SummaryResult`; o componente passou a usar botões `h-8 w-8` e o seletor antigo não localizava os elementos, quebrando os testes que verificam visibilidade e ação dos ícones de cópia/regeneração."
+  },
+  {
+    "numero": 2233,
+    "titulo": "fix: corrige 3 falhas de Vitest (SL-070, HZ5-09, a11y TTS)",
+    "veredito": "BLOQUEADO_CI",
+    "draft": "Não",
+    "head_sha": "af0bb57e2e44bb15011064e9e5eed64d237c287a",
+    "base": "2d97c44cfe7f2fa8a3ca572f8f5689118328e858 (= main)",
+    "conflito": "",
+    "intencao": "PR baseado em main@2d97c44c. Sem conflitos de merge, mas bloqueado pelo CI sistêmico. Quando main ficar verde (após PR #2248 + migrations), este PR precisa de nova rodada de CI."
+  },
+  {
+    "numero": 2234,
+    "titulo": "feat(ui): GreetingBanner — streak chip pluralização + acessibilidade",
+    "veredito": "MERGEAR_SE_CI_VERDE",
+    "draft": "Não",
+    "head_sha": "",
+    "base": "main@2d97c44",
+    "conflito": "",
+    "intencao": "Melhora o chip de streak no `GreetingBanner`:"
+  },
+  {
+    "numero": 2235,
+    "titulo": "feat(db): migration IP2 — instance_pauses investigation columns + function",
+    "veredito": "MERGEAR_SE_CI_VERDE",
+    "draft": "Não",
+    "head_sha": "",
+    "base": "main@2d97c44",
+    "conflito": "",
+    "intencao": "IP2: adiciona capacidade de investigar pausas de instância registradas em `instance_pauses`:"
+  },
+  {
+    "numero": 2236,
+    "titulo": "feat(monitoring): MonitoringInboxSilence — aba \"Entrada muda\"",
+    "veredito": "MERGEAR_SE_CI_VERDE",
+    "draft": "Não",
+    "head_sha": "",
+    "base": "main@2d97c44",
+    "conflito": "",
+    "intencao": "Adiciona aba \"Entrada muda\" no painel de monitoramento de instâncias Evolution:"
+  },
+  {
+    "numero": 2237,
+    "titulo": "fix(a11y): aria-busy, motion-safe, aria-hidden",
+    "veredito": "MERGEAR_SE_CI_VERDE",
+    "draft": "Não",
+    "head_sha": "",
+    "base": "main@2d97c44",
+    "conflito": "",
+    "intencao": "Correções de acessibilidade em 3 áreas:"
+  },
+  {
+    "numero": 2238,
+    "titulo": "feat(message-delivery): carimbo do POST iniciado (PD-79) + codigo de erro estavel retryable/ambiguous (PD-80) [C110] [DECISAO HUMANA]",
+    "veredito": "DECISAO_HUMANA",
+    "draft": "Não",
+    "head_sha": "3d18fbf142da3db2087aad137990886d078bf374",
+    "base": "2d97c44cfe7f2fa8a3ca572f8f5689118328e858 (= main)",
+    "conflito": "",
+    "intencao": "feat(message-delivery): carimbo do POST iniciado (PD-79) e código de erro (PD-80). Inclui migration e edge function. Bloqueado pelo CI sistêmico E pelo gate de decisão humana."
+  },
+  {
+    "numero": 2239,
+    "titulo": "feat(ui): GoalsDashboard — seletor de período + skeleton de loading",
+    "veredito": "MERGEAR_SE_CI_VERDE",
+    "draft": "Não",
+    "head_sha": "",
+    "base": "main@2d97c44",
+    "conflito": "",
+    "intencao": "Três melhorias no dashboard de metas:"
+  },
+  {
+    "numero": 2240,
+    "titulo": "feat(talkx): X115 — TalkXSegments filtros persistem em URL",
+    "veredito": "MERGEAR_SE_CI_VERDE",
+    "draft": "Não",
+    "head_sha": "",
+    "base": "main@2d97c44",
+    "conflito": "",
+    "intencao": "X115: filtros da biblioteca de segmentos persistem em URL — permite compartilhar e navegar de volta para o mesmo estado:"
+  },
+  {
+    "numero": 2241,
+    "titulo": "chore: auditoria exaustiva Supabase — 28 achados (CRITICAL×3 HIGH×7)",
+    "veredito": "DRAFT_SKIP",
+    "draft": "SIM",
+    "head_sha": "",
+    "base": "",
+    "conflito": "",
+    "intencao": "chore: auditoria exaustiva Supabase — 28 achados (CRITICAL×3 HIGH×7)"
+  },
+  {
+    "numero": 2242,
+    "titulo": "chore: inventário de PRs abertas e regras de negócio para análise",
+    "veredito": "DRAFT_SKIP",
+    "draft": "SIM",
+    "head_sha": "",
+    "base": "",
+    "conflito": "",
+    "intencao": "chore: inventário de PRs abertas e regras de negócio para análise"
+  },
+  {
+    "numero": 2244,
+    "titulo": "fix(types): 9 RPCs + offline queue userId + m4a",
+    "veredito": "MERGEAR_SE_CI_VERDE",
+    "draft": "Não",
+    "head_sha": "",
+    "base": "main@2d97c44",
+    "conflito": "",
+    "intencao": "Quatro correções independentes bundled:"
+  },
+  {
+    "numero": 2245,
+    "titulo": "fix(talkx): corrige 4.007 falhas/30d do cron talkx-scheduler-1min",
+    "veredito": "DRAFT_SKIP",
+    "draft": "SIM",
+    "head_sha": "",
+    "base": "",
+    "conflito": "",
+    "intencao": "fix(talkx): corrige 4.007 falhas/30d do cron talkx-scheduler-1min"
+  },
+  {
+    "numero": 2246,
+    "titulo": "fix(ci+docs): TC-009 + ChatMessagesArea + fila-merge + PK-14 + deployment-manifest",
+    "veredito": "MERGEAR_SE_CI_VERDE",
+    "draft": "Não",
+    "head_sha": "",
+    "base": "main@2d97c44",
+    "conflito": "",
+    "intencao": "5 correções de código + documentação atualizada:"
+  },
+  {
+    "numero": 2247,
+    "titulo": "docs: resgate-validacao command",
+    "veredito": "MERGEAR_SE_CI_VERDE",
+    "draft": "Não",
+    "head_sha": "",
+    "base": "main@2d97c44",
+    "conflito": "",
+    "intencao": "Adiciona o comando `/resgate-validacao` ao Claude Code — documentação de orchestração com 5 agentes para validar o resgate do Zapp Web V2. Arquivo novo em `.claude/commands/`, sem código de produção."
+  },
+  {
+    "numero": 2248,
+    "titulo": "fix(test): destrava o CI Gate da main (136 → 1 arquivo vermelho)",
+    "veredito": "DECISAO_HUMANA",
+    "draft": "",
+    "head_sha": "7e2480f7e5f243053175b02396b77e0247f2ee9f",
+    "base": "main@2d97c44",
+    "conflito": "",
+    "intencao": "Reduz de 136 para 1 arquivo de teste vermelho no CI da main. O arquivo que resta"
+  },
+  {
+    "numero": 2249,
+    "titulo": "fix: 3 falhas de testes unitários (HighContrastToggle, mock de canal Talk X, nome dos selects do editor)",
+    "veredito": "DRAFT_SKIP",
+    "draft": "SIM",
+    "head_sha": "",
+    "base": "",
+    "conflito": "",
+    "intencao": "fix: 3 falhas de testes unitários (HighContrastToggle, mock de canal Talk X, nome dos selects do editor)"
+  },
+  {
+    "numero": 2250,
+    "titulo": "fix(types): adiciona 9 assinaturas de RPC ausentes em types.ts",
+    "veredito": "DRAFT_SKIP",
+    "draft": "SIM",
+    "head_sha": "",
+    "base": "",
+    "conflito": "",
+    "intencao": "fix(types): adiciona 9 assinaturas de RPC ausentes em types.ts"
+  },
+  {
+    "numero": 2255,
+    "titulo": "chore: auditoria Supabase — relatório e progresso finais (2026-10-25)",
+    "veredito": "DRAFT_SKIP",
+    "draft": "SIM",
+    "head_sha": "",
+    "base": "",
+    "conflito": "",
+    "intencao": "chore: auditoria Supabase — relatório e progresso finais (2026-10-25)"
+  },
+  {
+    "numero": 2261,
+    "titulo": "fix: corrigir falhas de CI em 4 suítes de teste e retry de rede no fila-merge",
+    "veredito": "DRAFT_SKIP",
+    "draft": "SIM",
+    "head_sha": "",
+    "base": "",
+    "conflito": "",
+    "intencao": "fix: corrigir falhas de CI em 4 suítes de teste e retry de rede no fila-merge"
+  },
+  {
+    "numero": 2263,
+    "titulo": "fix: salvar preferências na Aparência (SettingsView passa onSave/isSaving)",
+    "veredito": "DRAFT_SKIP",
+    "draft": "SIM",
+    "head_sha": "",
+    "base": "",
+    "conflito": "",
+    "intencao": "fix: salvar preferências na Aparência (SettingsView passa onSave/isSaving)"
+  },
+  {
+    "numero": 2265,
+    "titulo": "fix: revoga grants de escrita do anon em public (CRITICAL-1)",
+    "veredito": "DRAFT_SKIP",
+    "draft": "SIM",
+    "head_sha": "",
+    "base": "",
+    "conflito": "",
+    "intencao": "fix: revoga grants de escrita do anon em public (CRITICAL-1)"
+  },
+  {
+    "numero": 2266,
+    "titulo": "fix: paleta de comandos acessível, filtros do inbox com voltar/avançar e celebrações sem falso positivo",
+    "veredito": "BLOQUEADO_CI_E_BEHIND",
+    "draft": "Não",
+    "head_sha": "c32f113a754e5754c2d041f28423f4bab6854750",
+    "base": "7e2480f7e5f243053175b02396b77e0247f2ee9f (BEHIND main@2d97c44c)",
+    "conflito": "",
+    "intencao": "PR baseado em commit anterior (7e2480f7). Com strict=true, precisa de rebase em main antes de mergear. E main está com CI falho, então mesmo após atualização ficaria bloqueado."
+  },
+  {
+    "numero": 2267,
+    "titulo": "fix: fila de envio offline não entrega item sem dono e não ressuscita após logout",
+    "veredito": "BLOQUEADO_CI_E_BEHIND",
+    "draft": "Não",
+    "head_sha": "e84afb8249fb80af8c565d8bd3d69a426ca1d4cd",
+    "base": "7e2480f7e5f243053175b02396b77e0247f2ee9f (BEHIND main@2d97c44c)",
+    "conflito": "",
+    "intencao": "PR baseado em commit anterior (7e2480f7). Com strict=true, precisa de rebase em main antes de mergear. E main está com CI falho, então mesmo após atualização ficaria bloqueado."
+  },
+  {
+    "numero": 2268,
+    "titulo": "fix: supervisor volta a gerenciar templates do WhatsApp e Base de Conhecimento não trava em erro de rede",
+    "veredito": "BLOQUEADO_CI_E_BEHIND",
+    "draft": "Não",
+    "head_sha": "101da096840b2bdaaeca4fc2138e887035c6b1d1",
+    "base": "7e2480f7e5f243053175b02396b77e0247f2ee9f (BEHIND main@2d97c44c)",
+    "conflito": "",
+    "intencao": "PR baseado em commit anterior (7e2480f7). Com strict=true, precisa de rebase em main antes de mergear. E main está com CI falho, então mesmo após atualização ficaria bloqueado."
+  },
+  {
+    "numero": 2269,
+    "titulo": "fix: Talk X segmentos sem estimativa enganosa (real_* em breve, atualizar tolerante a falha, sem segmento fantasma)",
+    "veredito": "BLOQUEADO_CI_E_BEHIND",
+    "draft": "Não",
+    "head_sha": "ccd09bebc410b7b9bad363add64f10fd74c3b477",
+    "base": "7e2480f7e5f243053175b02396b77e0247f2ee9f (BEHIND main@2d97c44c)",
+    "conflito": "",
+    "intencao": "PR baseado em commit anterior (7e2480f7). Com strict=true, precisa de rebase em main antes de mergear. E main está com CI falho, então mesmo após atualização ficaria bloqueado."
+  },
+  {
+    "numero": 2270,
+    "titulo": "chore(ci): codeql-action SHA bump v4.39.0 → v4.39.1",
+    "veredito": "MERGEAR_SE_CI_VERDE",
+    "draft": "Não",
+    "head_sha": "",
+    "base": "main@2d97c44",
+    "conflito": "",
+    "intencao": "Dependabot: atualiza SHA do `github/codeql-action` de `6f2ac81f5cd81fe351a197ba0b00d91d03cd2aee` (v4.39.0) para `9b3254085494b55a0f7c4c2b3d2d52cc712ce370` (v4.39.1). Sem mudança de lógica."
+  },
+  {
+    "numero": 2271,
+    "titulo": "chore(deps): Dependabot bun.lock + package.json bump (15 pacotes)",
+    "veredito": "MERGEAR_SE_CI_VERDE",
+    "draft": "Não",
+    "head_sha": "",
+    "base": "main@2d97c44",
+    "conflito": "",
+    "intencao": "Dependabot: atualiza 15 dependências (patch/minor) e remove 5 pacotes wasm desnecessários:"
+  },
+  {
+    "numero": 2272,
+    "titulo": "chore(infra): preview-egress-proxy Dockerfile — golang SHA bump",
+    "veredito": "MERGEAR_SE_CI_VERDE",
+    "draft": "Não",
+    "head_sha": "",
+    "base": "main@2d97c44",
+    "conflito": "",
+    "intencao": "Dependabot: atualiza SHA da imagem base `golang` no Dockerfile do preview-egress-proxy de `f92b6ef800e499660581efdabdf25d9d817a9d124eaf900924f0504e7e27e12d` para `b8c9b82affbbb82a020bbcf998dad2ba9516944ac7e883524642a481a9505e9c`. Sem mudança de lógica."
+  },
+  {
+    "numero": 2273,
+    "titulo": "fix(test+ci): fila-merge retry + correção de mocks em 4 test files",
+    "veredito": "MERGEAR_SE_CI_VERDE — com conflito a resolver",
+    "draft": "Não",
+    "head_sha": "",
+    "base": "main@2d97c44",
+    "conflito": "",
+    "intencao": "Quatro correções distintas nesta PR:"
+  },
+  {
+    "numero": 2274,
+    "titulo": "fix: corrige workflows com falha — types.ts +9 RPCs, retry HTTP 502",
+    "veredito": "DRAFT_SKIP",
+    "draft": "SIM",
+    "head_sha": "",
+    "base": "",
+    "conflito": "",
+    "intencao": "fix: corrige workflows com falha — types.ts +9 RPCs, retry HTTP 502"
+  },
+  {
+    "numero": 2275,
+    "titulo": "fix: corrige 5 falhas de testes unitários (CI verde)",
+    "veredito": "DRAFT_SKIP",
+    "draft": "SIM",
+    "head_sha": "",
+    "base": "",
+    "conflito": "",
+    "intencao": "fix: corrige 5 falhas de testes unitários (CI verde)"
+  },
+  {
+    "numero": 2276,
+    "titulo": "chore: auditoria completa de 164 PRs abertas — bloqueio sistêmico documentado",
+    "veredito": "DRAFT_SKIP",
+    "draft": "SIM",
+    "head_sha": "",
+    "base": "",
+    "conflito": "",
+    "intencao": "chore: auditoria completa de 164 PRs abertas — bloqueio sistêmico documentado"
+  },
+  {
+    "numero": 2277,
+    "titulo": "chore(db): adiciona RLS ao módulo GOAL (backend)",
+    "veredito": "BLOQUEADO_CI",
+    "draft": "NÃO",
+    "head_sha": "",
+    "base": "main",
+    "conflito": "SIM",
+    "intencao": "chore(db): adiciona RLS ao módulo GOAL (backend)"
+  },
+  {
+    "numero": 2278,
+    "titulo": "fix(ci): corrige guard dashboard_kpi no Contrato DB offline",
+    "veredito": "BLOQUEADO_CI",
+    "draft": "NÃO",
+    "head_sha": "1297fb71d927c33797d82674e47bf492aa5fc1af",
+    "base": "main",
+    "conflito": "",
+    "intencao": "fix(ci): corrige guard dashboard_kpi no Contrato DB offline"
+  },
+  {
+    "numero": 2279,
+    "titulo": "fix(e2e): aumenta timeout para workers lentos",
+    "veredito": "DRAFT_SKIP",
+    "draft": "SIM",
+    "head_sha": "",
+    "base": "main",
+    "conflito": "",
+    "intencao": "fix(e2e): aumenta timeout para workers lentos"
+  },
+  {
+    "numero": 2284,
+    "titulo": "chore(analise-prs): dossiers dos primeiros 100 PRs",
+    "veredito": "BLOQUEADO_CI",
+    "draft": "NÃO",
+    "head_sha": "",
+    "base": "main",
+    "conflito": "SIM",
+    "intencao": "chore(analise-prs): dossiers dos primeiros 100 PRs"
+  },
+  {
+    "numero": 2286,
+    "titulo": "fix(edge-deploy): E09 — corrige detecção de timestampBumped no deploy-functions",
+    "veredito": "BLOQUEADO_CI",
+    "draft": "NÃO",
+    "head_sha": "732cbcbc2bb74f1a4153b5571d5bd85bb7267881",
+    "base": "main",
+    "conflito": "",
+    "intencao": "fix(edge-deploy): E09 — corrige detecção de timestampBumped"
+  },
+  {
+    "numero": 2295,
+    "titulo": "feat(ci): E71 — pular PRs draft no auto-update-pr-branch",
+    "veredito": "DECISAO_HUMANA",
+    "draft": "NÃO",
+    "head_sha": "",
+    "base": "main",
+    "conflito": "SIM",
+    "intencao": "feat(ci): E71 — pular PRs draft no auto-update-pr-branch"
+  },
+  {
+    "numero": 2297,
+    "titulo": "feat(e70): contratos de Edge Functions — geração automática",
+    "veredito": "DRAFT_SKIP",
+    "draft": "SIM",
+    "head_sha": "",
+    "base": "main",
+    "conflito": "",
+    "intencao": "feat(e70): contratos de Edge Functions — geração automática"
+  },
+  {
+    "numero": 2298,
+    "titulo": "feat(e75): adiciona toolchain.json para controle de versão de ferramentas",
+    "veredito": "DECISAO_HUMANA",
+    "draft": "NÃO",
+    "head_sha": "",
+    "base": "main",
+    "conflito": "SIM",
+    "intencao": "feat(e75): adiciona toolchain.json para controle de versão de ferramentas"
+  },
+  {
+    "numero": 2343,
+    "titulo": "chore: sincronizar artefatos derivados do banco",
+    "veredito": "JA_MERGEADA",
+    "draft": "NÃO",
+    "head_sha": "fe30391894743a6befdabbeb4b8218a93906bb40",
+    "base": "main",
+    "conflito": "",
+    "intencao": "chore: sincronizar artefatos derivados do banco (auto-mergeado)"
+  },
+  {
+    "numero": 2354,
+    "titulo": "fix: corrige 3 workflows com falhas de CI",
+    "veredito": "DECISAO_HUMANA",
+    "draft": "NÃO",
+    "head_sha": "",
+    "base": "main",
+    "conflito": "SIM",
+    "intencao": "fix: corrige 3 workflows com falhas de CI"
+  },
+  {
+    "numero": 2372,
+    "titulo": "chore: atualiza PENDENCIAS.md e docs/ci/ com estado atual",
+    "veredito": "BLOQUEADO_CI",
+    "draft": "NÃO",
+    "head_sha": "0e28ca24b320b70d80af51191752473b9880376b",
+    "base": "main",
+    "conflito": "",
+    "intencao": "chore: atualiza PENDENCIAS.md e docs/ci/ com estado atual"
+  },
+  {
+    "numero": 2380,
+    "titulo": "fix: deno check com --node-modules-dir=none para Edge Functions",
+    "veredito": "DECISAO_HUMANA",
+    "draft": "NÃO",
+    "head_sha": "",
+    "base": "main",
+    "conflito": "SIM",
+    "intencao": "fix: deno check com --node-modules-dir=none"
+  },
+  {
+    "numero": 2381,
+    "titulo": "feat(copilot): RADAR motor CV-021-045 — fase 2 do copilot-live",
+    "veredito": "DECISAO_HUMANA",
+    "draft": "NÃO",
+    "head_sha": "",
+    "base": "main",
+    "conflito": "SIM",
+    "intencao": "feat(copilot): RADAR motor CV-021-045"
+  },
+  {
+    "numero": 2383,
+    "titulo": "fix(db): revoga privilégios PUBLIC no schema e tabelas sensíveis",
+    "veredito": "BLOQUEADO_CI",
+    "draft": "NÃO",
+    "head_sha": "fb4a8e2bd5af4c23a29e328940fbe8c3b1dae8ff",
+    "base": "main",
+    "conflito": "",
+    "intencao": "fix(db): revoga privilégios PUBLIC no schema e tabelas sensíveis"
+  },
+  {
+    "numero": 2384,
+    "titulo": "fix(team-chat): aceita ações de auditoria emitidas pelo trigger",
+    "veredito": "BLOQUEADO_CI",
+    "draft": "NÃO",
+    "head_sha": "9509658c79e53a705db1b36d5e6e59f4f67c5a4e",
+    "base": "main",
+    "conflito": "",
+    "intencao": "fix(team-chat): aceita ações de auditoria emitidas pelo trigger"
+  },
+  {
+    "numero": 2386,
+    "titulo": "fix(team-chat): restringe inserts de membros diretos a owners",
+    "veredito": "BLOQUEADO_CI",
+    "draft": "NÃO",
+    "head_sha": "6563f05cc2003f2c1653efc25895f518512892e1",
+    "base": "main",
+    "conflito": "",
+    "intencao": "fix(team-chat): restringe inserts de membros diretos a owners"
+  },
+  {
+    "numero": 2388,
+    "titulo": "PR invertida — head=main base=feature (fix-unit-tests)",
+    "veredito": "BLOQUEADO_CI",
+    "draft": "NÃO",
+    "head_sha": "fe30391894743a6befdabbeb4b8218a93906bb40",
+    "base": "claude/fix-unit-tests-src-261024-1630",
+    "conflito": "SIM",
+    "intencao": "PR invertida — unmergeable"
+  },
+  {
+    "numero": 2389,
+    "titulo": "PR invertida — head=main base=feature (dazzling-cannon)",
+    "veredito": "BLOQUEADO_CI_E_BEHIND",
+    "draft": "NÃO",
+    "head_sha": "fe30391894743a6befdabbeb4b8218a93906bb40",
+    "base": "claude/dazzling-cannon",
+    "conflito": "",
+    "intencao": "PR invertida — behind"
+  },
+  {
+    "numero": 2396,
+    "titulo": "docs: adiciona dossiê de análise hermes/telefonia",
+    "veredito": "BLOQUEADO_CI",
+    "draft": "NÃO",
+    "head_sha": "a57b473a99905dcffb79d8394277f370c045c010",
+    "base": "main",
+    "conflito": "",
+    "intencao": "docs: adiciona dossiê de análise hermes/telefonia"
+  },
+  {
+    "numero": 2397,
+    "titulo": "Reset audit progress to new session baseline",
+    "veredito": "BLOQUEADO_CI",
+    "draft": "NÃO",
+    "head_sha": "e20c90020819e810276ed6669079b45479a302f6",
+    "base": "main",
+    "conflito": "",
+    "intencao": "Reset audit progress to new session baseline"
+  },
+  {
+    "numero": 2407,
+    "titulo": "fix(deploy-functions): W100 — instala @types/node via npm no workflow",
+    "veredito": "DECISAO_HUMANA",
+    "draft": "NÃO",
+    "head_sha": "d8426a2d5d4130bd4e46f92e41bfafd5756621a3",
+    "base": "main",
+    "conflito": "",
+    "intencao": "fix(deploy-functions): W100 — @types/node via npm"
+  },
+  {
+    "numero": 2408,
+    "titulo": "fix(ci): corrige entrada duplicada no deploy-functions",
+    "veredito": "BLOQUEADO_CI",
+    "draft": "NÃO",
+    "head_sha": "f4a6203887938a6e667e85f7c1da8295d6886105",
+    "base": "main",
+    "conflito": "SIM",
+    "intencao": "fix(ci): corrige entrada duplicada no deploy-functions"
+  },
+  {
+    "numero": 2409,
+    "titulo": "fix(ci): deno install com --frozen=false e @types/node no deploy-functions",
+    "veredito": "DECISAO_HUMANA",
+    "draft": "NÃO",
+    "head_sha": "a9ec56bf4fd5c2b0bd6492bd22bef711515bd1de",
+    "base": "main",
+    "conflito": "",
+    "intencao": "fix(ci): deno install --frozen=false + @types/node"
+  },
+  {
+    "numero": 2411,
+    "titulo": "docs(ci): adiciona RELATORIO_CI.md e atualiza PENDENCIAS.md",
+    "veredito": "BLOQUEADO_CI",
+    "draft": "NÃO",
+    "head_sha": "98334a67ebdbdd18b86eafe4a948bbc85470c52b",
+    "base": "main",
+    "conflito": "",
+    "intencao": "docs(ci): RELATORIO_CI.md e PENDENCIAS.md"
+  }
+]

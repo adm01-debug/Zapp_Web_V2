@@ -1,0 +1,97 @@
+# docs:
+#   gatilho: agendado (semanal) e dispatch
+#   prova: analise estatica de seguranca (SAST) de src, scripts, functions e dos workflows
+#   falha: alerta aparece em Security -> Code scanning
+#   avisa: aba Security
+# =================================================
+# CodeQL — analise estatica de seguranca (SAST)
+# =================================================
+# Cobre JS/TS de src/, scripts/ e supabase/functions/, e os proprios workflows.
+# Achados aparecem em Security -> Code scanning alerts.
+# G-02 da auditoria tecnica (2026-09-02).
+# =================================================
+
+name: CodeQL
+
+on:
+  # 16/10/2026 (decisao do Joaquim, CI minimo): saiu do PR; varredura semanal + dispatch.
+  workflow_dispatch:
+  schedule:
+    - cron: '30 9 * * *' # GA62: diario 06:30 BRT (era semanal; alertas da main atrasavam ate 7 dias)
+
+
+defaults:
+  run:
+    shell: bash --noprofile --norc -euo pipefail {0}
+permissions:
+  contents: read
+
+concurrency:
+  group: codeql-${{ github.event.pull_request.number || github.ref }}
+  # E20 (auditoria de GitHub Actions, 2026-09-26): estava invertido — cancelava
+  # em push (na main) e deixava rodar em PR. Igual ao ci.yml: cancela push
+  # NOVO na MESMA PR (retrabalho), nunca um commit ja mergeado na main (cada
+  # commit da main mantem seu proprio veredito de CodeQL).
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  analyze:
+    name: 🔬 CodeQL (javascript-typescript)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      security-events: write
+      actions: read
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: 🧬 Initialize CodeQL
+        uses: github/codeql-action/init@6f2ac81f5cd81fe351a197ba0b00d91d03cd2aee # v4.39.0
+        with:
+          languages: javascript-typescript
+          build-mode: none
+          # W82: ignora caminhos de teste para nao poluir alertas de codigo de producao.
+          config-file: .github/codeql/codeql-config.yml
+
+      - name: 🔬 Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@6f2ac81f5cd81fe351a197ba0b00d91d03cd2aee # v4.39.0
+        with:
+          category: '/language:javascript-typescript'
+
+  # Job separado de proposito: o check do job "analyze" e required na branch
+  # protection, e transformar aquele job numa matrix renomearia o check e
+  # travaria todos os merges. A linguagem "actions" analisa os .github/workflows
+  # em busca de injecao de expressao em run:, uso indevido de pull_request_target
+  # e permissoes excessivas — 3,5k linhas de YAML que nenhum guard do repo le.
+  analyze-actions:
+    name: 🔬 CodeQL (actions)
+    # GA59 (base): este job so fecha depois do analyze de JS/TS — sem o needs,
+    # a analise de `actions` (~20 s) fechava o veredito antes da de JS/TS chegar.
+    # (Exigir os DOIS checks na branch protection e decisao do dono: PREPARE.)
+    needs: [analyze]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      security-events: write
+      actions: read
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: 🧬 Initialize CodeQL
+        uses: github/codeql-action/init@6f2ac81f5cd81fe351a197ba0b00d91d03cd2aee # v4.39.0
+        with:
+          languages: actions
+          build-mode: none
+
+      - name: 🔬 Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@6f2ac81f5cd81fe351a197ba0b00d91d03cd2aee # v4.39.0
+        with:
+          category: '/language:actions'
