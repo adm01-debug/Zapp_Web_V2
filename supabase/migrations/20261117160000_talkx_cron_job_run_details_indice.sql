@@ -26,8 +26,34 @@
 -- execucoes do proprio agendador.
 
 -- C1: indice composto. IF NOT EXISTS para replay idempotente.
-CREATE INDEX IF NOT EXISTS idx_job_run_details_jobid_start
-  ON cron.job_run_details (jobid, start_time DESC, runid DESC);
+--
+-- POR QUE ESTA DENTRO DE UM BLOCO QUE ENGOLE insufficient_privilege: tentei
+-- aplicar em 18/11/2026 e o banco recusou com 42501, "must be owner of table
+-- job_run_details". Medido na hora:
+--
+--   select pg_get_userbyid(c.relowner) as dono, current_user,
+--          pg_has_role(current_user, c.relowner, 'MEMBER')
+--     from pg_class c join pg_namespace n on n.oid = c.relnamespace
+--    where n.nspname='cron' and c.relname='job_run_details';
+--   -> dono = supabase_admin | current_user = postgres | membro = false
+--
+-- Ou seja: NENHUM papel ao alcance deste projeto pode criar o indice — nem o
+-- MCP, nem o workflow db-migrate, que tambem conecta como `postgres`. Criar o
+-- indice depende de chamado no Supabase (supabase_admin).
+--
+-- Sem este bloco a migration falharia no apply e travaria a fila inteira de
+-- migrations, deixando drift permanente entre arquivo e ledger. Com ele, o
+-- apply passa, o ledger anda e a falta do indice fica GRITANDO no log em vez de
+-- virar silencio. Quando o Supabase conceder, basta reaplicar: o IF NOT EXISTS
+-- torna o replay inofensivo.
+DO $$
+BEGIN
+  CREATE INDEX IF NOT EXISTS idx_job_run_details_jobid_start
+    ON cron.job_run_details (jobid, start_time DESC, runid DESC);
+EXCEPTION WHEN insufficient_privilege THEN
+  RAISE WARNING 'X065/C1 PENDENTE: indice idx_job_run_details_jobid_start NAO criado. cron.job_run_details pertence a supabase_admin e o papel % nao e membro; abrir chamado no Supabase. Enquanto isso, a leitura do historico do agendador segue em varredura sequencial.', current_user;
+END;
+$$;
 
 -- C1b (RETENCAO) — DELIBERADAMENTE FORA DESTA MIGRATION.
 --
