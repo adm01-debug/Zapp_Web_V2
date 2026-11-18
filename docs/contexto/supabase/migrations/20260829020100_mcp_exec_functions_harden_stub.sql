@@ -1,0 +1,1 @@
+-- stub: mcp_exec hardening aplicado diretamente via MCP

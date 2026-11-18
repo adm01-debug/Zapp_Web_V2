@@ -1,0 +1,1 @@
+DROP INDEX IF EXISTS public.idx_talkx_template_versions_template_version

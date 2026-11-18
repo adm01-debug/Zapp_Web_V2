@@ -1,0 +1,3 @@
+ALTER PUBLICATION supabase_realtime ADD TABLE public.multiplix_dispatches
+
+ALTER PUBLICATION supabase_realtime ADD TABLE public.multiplix_recipients

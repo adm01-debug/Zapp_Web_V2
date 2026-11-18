@@ -1,0 +1,1 @@
+ALTER TABLE public.profiles ADD COLUMN can_download BOOLEAN NOT NULL DEFAULT false;
