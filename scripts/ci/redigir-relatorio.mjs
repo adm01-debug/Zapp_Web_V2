@@ -85,12 +85,19 @@ export function arquivosDeTexto(dir) {
 // o de produção. Isto é profundidade de defesa — o relatório vira artefato de um
 // repositório público, e nenhuma camada deveria depender de alguém lembrar de
 // listar cada valor.
+// IDEMPOTENCIA (achado na revisao da PR #3263, antes do merge): `contarRestantes`
+// RECONTA chamando o mesmo redator, e o CLI so publica o relatorio quando a
+// segunda passada devolve zero. Os padroes de VALOR precisam, portanto, recusar
+// o proprio marcador: sem o `(?!\[redigido\])`, `"access_token":"[redigido]"`
+// contava como token restante e NENHUM relatorio com token era publicado.
+// O padrao do JWT nao precisa (o marcador nao comeca com `eyJ`) e o do Bearer
+// tampouco (`[` nao esta na classe de caracteres aceita depois de `Bearer `).
 const PADROES_TOKEN = [
   [/eyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+/g, '[redigido]'],
-  [/("access_token"\s*:\s*")[^"\s]+/g, '$1[redigido]'],
-  [/("refresh_token"\s*:\s*")[^"\s]+/g, '$1[redigido]'],
-  [/([?&]access_token=)[^&\s"\'<]+/g, '$1[redigido]'],
-  [/([?&]refresh_token=)[^&\s"\'<]+/g, '$1[redigido]'],
+  [/("access_token"\s*:\s*")(?!\[redigido\])[^"\s]+/g, '$1[redigido]'],
+  [/("refresh_token"\s*:\s*")(?!\[redigido\])[^"\s]+/g, '$1[redigido]'],
+  [/([?&]access_token=)(?!\[redigido\])[^&\s"\'<]+/g, '$1[redigido]'],
+  [/([?&]refresh_token=)(?!\[redigido\])[^&\s"\'<]+/g, '$1[redigido]'],
   [/((?:Authorization|authorization)["\'\s:]*Bearer\s+)[A-Za-z0-9._~+/=-]+/g, '$1[redigido]'],
 ];
 
