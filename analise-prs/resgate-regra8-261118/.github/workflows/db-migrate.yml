@@ -1,0 +1,466 @@
+# docs:
+#   gatilho: dispatch na main; preflight SEM environment, apply COM environment
+#   prova: dry-run obrigatorio, plano conferido, hash do lote e portao destrutivo
+#   falha: nada e aplicado; o dry-run precisa passar antes
+#   avisa: operador que disparou e a issue de ops
+# ==================================================================
+# ZAPP-WEB · Migration controlada do banco oficial (GA13-GA17, GA25-gancho)
+# GA13: preflight SEM environment (dry-run/plano/hash) + apply COM environment.
+# GA14: apply_all_missing aplica o ledger inteiro; hash do lote; TOCTOU fechada.
+# GA15: ultimo passo do apply dispara types-sync + db-live-guard.
+# GA16: validacoes historicas em contracts/post-apply.sh; runtime em
+# assert-runtime-proof.mjs. YAML < 500 linhas.
+# GA17: portao destrutivo (list-destructive.mjs) + confirm_destructive + summary.
+# GA25 (outro agente): apply registra GA25-DEPLOYMENT-RECORD (gancho).
+# ==================================================================
+
+name: DB Migrate (production)
+
+on:
+  workflow_dispatch:
+    inputs:
+      migration_version:
+        description: 'Versao ancora, 14 digitos. No modo apply_all_missing o escopo vem do ledger e este campo e so referencia.'
+        required: true
+        type: string
+      confirm_project_ref:
+        description: 'Digite o project-ref oficial para confirmar o destino.'
+        required: true
+        type: string
+      apply_all_missing:
+        description: 'Marcado = aplica TODAS as versions locais ausentes do ledger, em ordem (lote). Desmarcado = so a migration_version.'
+        required: false
+        default: false
+        type: boolean
+      apply:
+        description: 'Desmarcado = dry-run; marcado = aplicar o lote autorizado.'
+        required: true
+        default: false
+        type: boolean
+      confirm_runtime_sha256:
+        description: 'Para apply: hash de confirmacao impresso pelo dry-run anterior.'
+        required: false
+        default: ''
+        type: string
+      confirm_destructive:
+        description: 'Versions com DDL/DML destrutivo confirmadas, separadas por virgula (ex: 20261001120000).'
+        required: false
+        default: ''
+        type: string
+
+defaults:
+  run:
+    shell: bash --noprofile --norc -euo pipefail {0}
+
+permissions:
+  contents: read
+
+concurrency:
+  group: db-migrate-production
+  cancel-in-progress: false
+
+env:
+  SUPABASE_CLI_VERSION: '2.116.0'
+  OFFICIAL_PROJECT_REF: 'tnnnlkbymytvtqngbbqh'
+
+jobs:
+  # GA13: preflight SEM environment — dry-run, plano, hash e portao destrutivo
+  # concluem sem "Waiting". Nada aqui escreve no banco (so SELECT no ledger).
+  preflight:
+    name: Preflight sem aprovacao (dry-run, plano, hash)
+    # GA13 + W63: preflight só lê (ledger + dry-run + runtime). banco-leitura
+    # não tem revisor nem wait timer (baseline), então o dry-run conclui sem
+    # `Waiting` (a Verificação da GA13) e o secret tem escopo declarado.
+    environment: banco-leitura
+    runs-on: ubuntu-24.04
+    # E66: so leitura (ledger + dry-run + runtime); 20 min bastam. O apply,
+    # que faz push + validacoes de ledger/runtime do lote, mantem 45 min.
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    outputs:
+      needs_apply: ${{ steps.preflight.outputs.needs_apply }}
+      versions: ${{ steps.preflight.outputs.versions }}
+      missing_hash: ${{ steps.runtime.outputs.missing_hash }}
+      destructive: ${{ steps.destructive.outputs.destructive }}
+    steps:
+      - name: Somente executa na main
+        if: github.ref != 'refs/heads/main'
+        run: |
+          echo "::error::Este workflow só pode ser disparado a partir da main (ref: ${{ github.ref }})."
+          exit 1
+
+      - name: Checkout confiavel da main
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+
+      - name: Provar checkout imutavel
+        run: test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+
+      - name: Setup Node
+        uses: actions/setup-node@820786786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '24'
+
+      - name: Setup Supabase CLI ${{ env.SUPABASE_CLI_VERSION }}
+        uses: supabase/setup-cli@45a513f8c64c0bc8e0e3dfe572b5c895be85f6359 # v3.0.1
+        with:
+          version: ${{ env.SUPABASE_CLI_VERSION }}
+
+      - name: Instalar cliente PostgreSQL
+        run: bash scripts/ci/install-postgresql-client.sh
+
+      - name: Provar identidade, TLS e validar confirmacoes
+        env:
+          DESTINO_URL_RAW: ${{ secrets.DESTINO_URL }}
+          TARGET_VERSION: ${{ inputs.migration_version }}
+          CONFIRM_PROJECT_REF: ${{ inputs.confirm_project_ref }}
+          CONFIRM_RUNTIME_SHA256: ${{ inputs.confirm_runtime_sha256 }}
+          CONFIRM_DESTRUCTIVE: ${{ inputs.confirm_destructive }}
+          APPLY: ${{ inputs.apply }}
+        run: |
+          if [ -z "$DESTINO_URL_RAW" ]; then
+            echo "::error::DESTINO_URL ausente."
+            exit 1
+          fi
+          if [ "$CONFIRM_PROJECT_REF" != "$OFFICIAL_PROJECT_REF" ]; then
+            echo "::error::Project-ref de confirmacao incorreto."
+            exit 1
+          fi
+          if ! printf '%s' "$TARGET_VERSION" | grep -Eq '^[0-9]{14}$'; then
+            echo "::error::migration_version precisa ter exatamente 14 digitos."
+            exit 1
+          fi
+          if [ "$APPLY" = "true" ] && ! printf '%s' "$CONFIRM_RUNTIME_SHA256" | grep -Eq '^[a-f0-9]{64}$'; then
+            echo "::error::Apply exige confirm_runtime_sha256 completo e lowercase."
+            exit 1
+          fi
+          if [ -n "$CONFIRM_DESTRUCTIVE" ] && ! printf '%s' "$CONFIRM_DESTRUCTIVE" | grep -Eq '^[0-9]{14}(,[0-9]{14})*$'; then
+            echo "::error::confirm_destructive precisa ser versions de 14 digitos separadas por virgula."
+            exit 1
+          fi
+          node --input-type=module <<'NODE'
+          import {
+            carregarIdentidadeEsperada,
+            endurecerDestinoTls,
+            validarDestino,
+            validarSupabaseCa,
+          } from './scripts/db-audit/database-identity.mjs';
+          import { appendFileSync } from 'node:fs';
+          const identidade = carregarIdentidadeEsperada('scripts/db-audit/database-identity.json');
+          const erros = validarDestino(process.env.DESTINO_URL_RAW, identidade);
+          erros.push(...validarSupabaseCa());
+          const tls = endurecerDestinoTls(process.env.DESTINO_URL_RAW);
+          erros.push(...tls.erros);
+          for (const erro of erros) console.error('ERRO: ' + erro);
+          if (erros.length) process.exit(1);
+          console.log(`::add-mask::${tls.connectionString}`);
+          appendFileSync(process.env.GITHUB_ENV, `DESTINO_URL=${tls.connectionString}\n`);
+          // R2-INF-003: o CLI do Supabase le SUPABASE_DB_URL, que nao entra na
+          // lista de PG* tratada pelo withPsqlEnvironment. O mesmo DSN
+          // endurecido (ja mascarado) sai no GITHUB_ENV tambem como SUPABASE_DB_URL.
+          appendFileSync(process.env.GITHUB_ENV, `SUPABASE_DB_URL=${tls.connectionString}\n`);
+          appendFileSync(process.env.GITHUB_ENV, 'PGSSLMODE=verify-full\n');
+          console.log('OK: endpoint oficial, TLS verify-full e CA pinada.');
+          NODE
+
+      - name: Calcular versions ausentes do ledger
+        id: preflight
+        # E66: repeticao SO de falha de conexao, e SO aqui -- este passo e somente
+        # leitura (SELECT do ledger). O apply nunca define a variavel: repetir o
+        # push seria reaplicar DDL.
+        env:
+          PSQL_CONNECT_RETRIES: '2'
+          TARGET_VERSION: ${{ inputs.migration_version }}
+          APPLY: ${{ inputs.apply }}
+          APPLY_ALL_MISSING: ${{ inputs.apply_all_missing }}
+        run: |
+          # Corpo extraido para scripts/db-audit/calcular-lote.sh (GA14/GA16).
+          bash scripts/db-audit/calcular-lote.sh
+
+      - name: Portao de migration destrutiva (GA17)
+        id: destructive
+        env:
+          VERSIONS: ${{ steps.preflight.outputs.versions }}
+          NEEDS_APPLY: ${{ steps.preflight.outputs.needs_apply }}
+          CONFIRM_DESTRUCTIVE: ${{ inputs.confirm_destructive }}
+        run: |
+          DESTRUCTIVE_VERSIONS=""
+          if [ "$NEEDS_APPLY" = "true" ]; then
+            for v in $(printf '%s' "$VERSIONS" | tr ',' ' '); do
+              ARQUIVO=$(ls supabase/migrations/"${v}"_*.sql | head -1)
+              if node scripts/db-audit/list-destructive.mjs --arquivo "$ARQUIVO" --versao "$v"; then
+                echo "limpo: $v"
+              else
+                rc=$?
+                if [ "$rc" = "1" ]; then
+                  if [ -z "$DESTRUCTIVE_VERSIONS" ]; then
+                    DESTRUCTIVE_VERSIONS="$v"
+                  else
+                    DESTRUCTIVE_VERSIONS="$DESTRUCTIVE_VERSIONS,$v"
+                  fi
+                else
+                  echo "::error::Falha ao escanear $ARQUIVO (fail-closed)."
+                  exit 2
+                fi
+              fi
+            done
+          fi
+          if [ -n "$DESTRUCTIVE_VERSIONS" ]; then
+            echo "destructive=true" >> "$GITHUB_OUTPUT"
+            {
+              echo ""
+              echo "### Portao destrutivo (GA17)"
+              echo ""
+              echo "- versions com DDL/DML destrutivo: \`$DESTRUCTIVE_VERSIONS\`"
+              echo "- confirmacao recebida: \`${CONFIRM_DESTRUCTIVE:-<vazia>}\`"
+            } >> "$GITHUB_STEP_SUMMARY"
+            node scripts/db-audit/list-destructive.mjs --confirmar "$DESTRUCTIVE_VERSIONS" --com "$CONFIRM_DESTRUCTIVE"
+          else
+            echo "destructive=false" >> "$GITHUB_OUTPUT"
+            echo "- destructive: nenhum statement destrutivo no lote" >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - name: Provar estado runtime antes do push
+        id: runtime
+        env:
+          NEEDS_APPLY: ${{ steps.preflight.outputs.needs_apply }}
+          VERSIONS: ${{ steps.preflight.outputs.versions }}
+        run: |
+          # E62 + GA16: contratos em scripts/db-audit/contracts/<versao>.sql e a
+          # assercao em assert-runtime-proof.mjs, via provar-lote.sh. Fail-closed.
+          if [ -n "$VERSIONS" ]; then
+            HASH=$(bash scripts/db-audit/provar-lote.sh "$VERSIONS" "$NEEDS_APPLY" "$GITHUB_SHA")
+            echo "missing_hash=$HASH" >> "$GITHUB_OUTPUT"
+            {
+              echo ""
+              echo "### Hash de confirmacao do lote (GA14)"
+              echo "- confirm_runtime_sha256: \`$HASH\`"
+            } >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "missing_hash=none" >> "$GITHUB_OUTPUT"
+            echo "- lote vazio: nada a aplicar" >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - name: Dry-run oficial do Supabase CLI
+        if: steps.preflight.outputs.needs_apply == 'true'
+        env:
+          TARGET_VERSION: ${{ inputs.migration_version }}
+          VERSIONS: ${{ steps.preflight.outputs.versions }}
+          APPLY_ALL_MISSING: ${{ inputs.apply_all_missing }}
+        run: |
+          set -euo pipefail
+          supabase db push --include-all --skip-vault --dry-run --yes 2>&1 | tee dry-run.out
+          if [ "$APPLY_ALL_MISSING" = "true" ]; then
+            # GA14: liga avaliarPlanoDoDryRunApplyAll — o dry-run precisa anunciar
+            # exatamente o conjunto autorizado, em ordem (um a mais ou a menos recusa).
+            node scripts/db-audit/dry-run-plan.mjs --arquivo dry-run.out --apply-all --esperados "$VERSIONS"
+          else
+            node scripts/db-audit/dry-run-plan.mjs --arquivo dry-run.out --esperado "$TARGET_VERSION"
+          fi
+
+      - name: Revalidar contratos historicos do alvo ja aplicado
+        if: steps.preflight.outputs.needs_apply == 'false' && steps.preflight.outputs.versions != ''
+        env:
+          TARGET_VERSION: ${{ steps.preflight.outputs.versions }}
+          NEEDS_APPLY: 'false'
+          APPLY: ${{ inputs.apply }}
+        run: |
+          # GA16: o dispatcher replica os guardas de versao que viviam inline no YAML.
+          TARGET_VERSION="$TARGET_VERSION" NEEDS_APPLY="$NEEDS_APPLY" APPLY="$APPLY" \
+            bash scripts/db-audit/contracts/post-apply.sh
+
+  # GA13: apply COM environment — so executa com aprovacao humana em producao-ddl.
+  apply:
+    name: Apply com aprovacao (push + validacoes + sync)
+    needs: [preflight]
+    if: ${{ inputs.apply == true }}
+    environment: producao-ddl
+    runs-on: ubuntu-24.04
+    # E66: push + validacoes de ledger/runtime do lote inteiro.
+    timeout-minutes: 45
+    permissions:
+      contents: read
+      # GA15: so este job dispara workflows (types-sync + db-live-guard).
+      actions: write
+    outputs:
+      applied_versions: ${{ steps.registro.outputs.applied_versions }}
+      missing_hash: ${{ needs.preflight.outputs.missing_hash }}
+      applied_at: ${{ steps.registro.outputs.applied_at }}
+    steps:
+      - name: Somente executa na main
+        if: github.ref != 'refs/heads/main'
+        run: |
+          echo "::error::Este workflow só pode ser disparado a partir da main (ref: ${{ github.ref }})."
+          exit 1
+
+      - name: Checkout confiavel da main
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+
+      - name: Provar checkout imutavel
+        run: test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+
+      - name: Setup Node
+        uses: actions/setup-node@820786786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '24'
+
+      - name: Setup Supabase CLI ${{ env.SUPABASE_CLI_VERSION }}
+        uses: supabase/setup-cli@45a513f8c64c0bc8e0e3dfe572b5c895be85f6359 # v3.0.1
+        with:
+          version: ${{ env.SUPABASE_CLI_VERSION }}
+
+      - name: Instalar cliente PostgreSQL
+        run: bash scripts/ci/install-postgresql-client.sh
+
+      - name: Provar identidade e TLS no job de apply
+        # GITHUB_ENV nao atravessa jobs: o apply re-endurece o DSN a partir do
+        # secret bruto isolado em DESTINO_URL_RAW (padrao R2-INF-003).
+        env:
+          DESTINO_URL_RAW: ${{ secrets.DESTINO_URL }}
+        run: |
+          if [ -z "$DESTINO_URL_RAW" ]; then
+            echo "::error::DESTINO_URL ausente."
+            exit 1
+          fi
+          node --input-type=module <<'NODE'
+          import {
+            carregarIdentidadeEsperada,
+            endurecerDestinoTls,
+            validarDestino,
+            validarSupabaseCa,
+          } from './scripts/db-audit/database-identity.mjs';
+          import { appendFileSync } from 'node:fs';
+          const identidade = carregarIdentidadeEsperada('scripts/db-audit/database-identity.json');
+          const erros = validarDestino(process.env.DESTINO_URL_RAW, identidade);
+          erros.push(...validarSupabaseCa());
+          const tls = endurecerDestinoTls(process.env.DESTINO_URL_RAW);
+          erros.push(...tls.erros);
+          for (const erro of erros) console.error('ERRO: ' + erro);
+          if (erros.length) process.exit(1);
+          console.log(`::add-mask::${tls.connectionString}`);
+          appendFileSync(process.env.GITHUB_ENV, `DESTINO_URL=${tls.connectionString}\n`);
+          appendFileSync(process.env.GITHUB_ENV, `SUPABASE_DB_URL=${tls.connectionString}\n`);
+          appendFileSync(process.env.GITHUB_ENV, 'PGSSLMODE=verify-full\n');
+          console.log('OK: endpoint oficial, TLS verify-full e CA pinada.');
+          NODE
+
+      - name: Fechar janela TOCTOU do lote
+        # GA14: migration que entrou depois do dry-run (arquivo novo ou ledger
+        # mudado) muda o conjunto ou o hash — o apply recusa.
+        env:
+          VERSIONS_PREFLIGHT: ${{ needs.preflight.outputs.versions }}
+          HASH_PREFLIGHT: ${{ needs.preflight.outputs.missing_hash }}
+          CONFIRM_RUNTIME_SHA256: ${{ inputs.confirm_runtime_sha256 }}
+          APPLY: ${{ inputs.apply }}
+        run: |
+          umask 077
+          find supabase/migrations -maxdepth 1 -type f -name '*.sql' \
+            -printf '%f\n' | cut -c1-14 | sort -u > /tmp/local-versions
+          node scripts/db-audit/psql-safe.mjs -X -v ON_ERROR_STOP=1 -At \
+            -c "SELECT version FROM supabase_migrations.schema_migrations ORDER BY version" \
+            > /tmp/remote-versions
+          comm -23 /tmp/local-versions /tmp/remote-versions > /tmp/missing-versions
+          VERSIONS_AGORA=$(paste -sd, /tmp/missing-versions)
+          if [ "$VERSIONS_AGORA" != "$VERSIONS_PREFLIGHT" ]; then
+            echo "::error::Janela TOCTOU: o conjunto ausente mudou desde o dry-run (preflight=$VERSIONS_PREFLIGHT agora=$VERSIONS_AGORA). Rode um dry-run novo."
+            exit 1
+          fi
+          # Re-prova o lote agora (mesmo script do preflight): runtime, arquivo
+          # ou commit diferentes do dry-run mudam o hash e o apply recusa.
+          RECOMPUTADO=$(bash scripts/db-audit/provar-lote.sh "$VERSIONS_AGORA" true "$GITHUB_SHA")
+          if [ "$RECOMPUTADO" != "$HASH_PREFLIGHT" ]; then
+            echo "::error::Janela TOCTOU: runtime, arquivo ou commit mudaram desde o dry-run; migration cancelada."
+            exit 1
+          fi
+          RECOMPUTADO="$RECOMPUTADO" node --input-type=module <<'NODE'
+          const confirmacao = process.env.RECOMPUTADO;
+          if (process.env.APPLY === 'true' && confirmacao !== process.env.CONFIRM_RUNTIME_SHA256) {
+            console.error('Confirmacao recusada: runtime, arquivo ou commit mudaram desde o dry-run; migration cancelada.');
+            process.exit(1);
+          }
+          console.log('OK: lote identico ao do dry-run; confirmacao confere.');
+          NODE
+
+      - name: Aplicar lote autorizado
+        run: >-
+          supabase db push --include-all
+          --skip-vault --yes
+
+      - name: Validar registro no ledger
+        env:
+          VERSIONS: ${{ needs.preflight.outputs.versions }}
+        run: |
+          for v in $(printf '%s' "$VERSIONS" | tr ',' ' '); do
+            ARQ=$(ls supabase/migrations/"${v}"_*.sql | head -1)
+            NOME=${ARQ#"${v}"_}
+            NOME=${NOME%.sql}
+            LEDGER_COUNT=$(node scripts/db-audit/psql-safe.mjs -X -v ON_ERROR_STOP=1 \
+              -v target_version="$v" -v target_name="$NOME" -At <<'SQL'
+              SELECT count(*)
+              FROM supabase_migrations.schema_migrations
+              WHERE version = :'target_version'
+                AND name = :'target_name'
+                -- E65: o registro existe, mas precisa dizer O QUE foi aplicado.
+                AND statements IS NOT NULL
+                AND array_length(statements, 1) > 0;
+          SQL
+            )
+            test "$LEDGER_COUNT" = "1"
+            echo "OK: ledger possui exatamente version=$v name=$NOME com statements."
+            # E65: e os statements gravados tem de bater com o parse do arquivo local.
+            node scripts/db-audit/verify-ledger-statements.mjs "supabase/migrations/$ARQ"
+          done
+
+      - name: Validar contratos historicos pos-apply
+        env:
+          VERSIONS: ${{ needs.preflight.outputs.versions }}
+        run: |
+          # GA16: dispatcher unico; o `case` interno replica os guardas de versao.
+          for v in $(printf '%s' "$VERSIONS" | tr ',' ' '); do
+            TARGET_VERSION="$v" NEEDS_APPLY=true APPLY=true \
+              bash scripts/db-audit/contracts/post-apply.sh
+          done
+
+      - name: Provar paridade integral apos aplicacao
+        run: node scripts/db-audit/check-migration-drift.mjs
+
+      - name: Registrar Deployment para o detector (gancho GA25)
+        id: registro
+        # GA14 antes de GA25: o detector de DDL fora do fluxo (outro agente)
+        # precisa de um Deployment registrado por este apply. O registro e o
+        # bloco GA25-DEPLOYMENT-RECORD no summary + estes outputs do job.
+        env:
+          VERSIONS: ${{ needs.preflight.outputs.versions }}
+          HASH: ${{ needs.preflight.outputs.missing_hash }}
+        run: |
+          APLICADAS="$VERSIONS"
+          AGORA=$(date -u +%FT%TZ)
+          echo "applied_versions=$APLICADAS" >> "$GITHUB_OUTPUT"
+          echo "applied_at=$AGORA" >> "$GITHUB_OUTPUT"
+          {
+            echo ""
+            echo "### GA25-DEPLOYMENT-RECORD"
+            echo ""
+            echo "- run_id: \`$GITHUB_RUN_ID\`"
+            echo "- sha: \`$GITHUB_SHA\`"
+            echo "- applied_versions: \`$APLICADAS\`"
+            echo "- missing_hash: \`$HASH\`"
+            echo "- applied_at: \`$AGORA\`"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Disparar types-sync e guarda vivo (GA15)
+        # GA15 (W33): ultimo passo do apply, so com sucesso: abre a PR de sync e
+        # acorda o guarda vivo no mesmo dia.
+        if: success()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh workflow run types-sync.yml --ref main
+          gh workflow run db-live-guard.yml --ref main
+          echo "OK: types-sync + db-live-guard disparados."
