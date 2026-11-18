@@ -522,7 +522,7 @@ function TabResults({ c, sentHistory, historyQuery, onRetryHistory }: {
   // X065 — resultado por variante. Com o A/B desligado (o padrao) a consulta
   // nem roda, e o painel nao aparece.
   const abLigado = Boolean(c.ab_enabled);
-  const ab = useTalkXAbStats(c.id, abLigado);
+  const ab = useTalkXAbStats(c.id, abLigado, c.status === 'sending');
   const deliveryRate = c.sent_count > 0 ? Math.round((c.delivered_count / c.sent_count) * 1000) / 10 : null;
   const outcomeUnknown = c.outcome_unknown_count ?? 0;
   const totalProcessed = c.sent_count + c.failed_count + outcomeUnknown;
@@ -607,6 +607,8 @@ function TabResults({ c, sentHistory, historyQuery, onRetryHistory }: {
         winnerVariantId={c.ab_winner_variant_id}
         variants={ab.variants}
         isLoading={ab.isLoading}
+        isError={ab.isError}
+        onRetry={() => { void ab.refetch(); }}
       />
     </div>
   );
