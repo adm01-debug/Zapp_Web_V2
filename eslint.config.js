@@ -10,7 +10,14 @@ export default tseslint.config(
   // criados/destruídos em paralelo por agentes em background; sem este ignore o lint do
   // pre-push varre esses diretórios e quebra com ENOENT quando um worktree é desmontado
   // no meio do scan (achado 2026-09-26, sessão de auditoria de 5 agentes).
-  { ignores: ["dist", ".claude/worktrees/**"] },
+  {
+    // `analise-prs/` e arquivo morto: copias byte-exatas de trabalho de outros
+    // agentes, gravadas pelo OID do blob original para que nenhuma branch feche
+    // com perda. Nao e codigo em manutencao e nao entra em build, typecheck nem
+    // suite -- lintar essas copias so gera divida que ninguem pode corrigir sem
+    // alterar os bytes preservados.
+    ignores: ["dist", ".claude/worktrees/**", "analise-prs/**"],
+  },
   {
     extends: [js.configs.recommended, ...tseslint.configs.recommended],
     files: ["**/*.{ts,tsx}"],
