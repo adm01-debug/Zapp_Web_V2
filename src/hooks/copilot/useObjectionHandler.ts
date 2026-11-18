@@ -36,7 +36,7 @@ export interface AiObjectionResult extends ObjectionResult {
 }
 
 const OBJECTION_TRIGGERS: Record<ObjeçãoType, string[]> = {
-  preco: ['caro', 'preço alto', 'muito caro', 'sai mais barato', 'orçamento', 'apertado', 'tá salgado'],
+  preco: ['caro', 'preço alto', 'muito caro', 'barato', 'sai mais barato', 'orçamento', 'apertado', 'tá salgado'],
   prazo: ['prazo', 'demora', 'urgente', 'quando fica', 'tempo', 'preciso antes'],
   quantidade_minima: ['mínimo', 'minimo', 'poucas', 'menos unidades', 'só preciso', 'quantidade pequena'],
   concorrente: ['outro fornecedor', 'cotei', 'comparei', 'outra empresa'],

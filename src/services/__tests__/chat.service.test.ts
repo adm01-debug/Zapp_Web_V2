@@ -70,6 +70,32 @@ describe('ChatService.uploadAudio', () => {
     );
   });
 
+  it('aceita os formatos do mapa canônico (wav, mp3, aac), não só os quatro de antes', async () => {
+    const wav = new Blob(['audio'], { type: 'audio/wav' });
+    await ChatService.uploadAudio('contact-1', wav);
+    expect(storageMocks.upload).toHaveBeenLastCalledWith(
+      'contact-1/1234567890.wav',
+      wav,
+      { contentType: 'audio/wav' }
+    );
+
+    const mp3 = new Blob(['audio'], { type: 'audio/mp3' });
+    await ChatService.uploadAudio('contact-1', mp3);
+    expect(storageMocks.upload).toHaveBeenLastCalledWith(
+      'contact-1/1234567890.mp3',
+      mp3,
+      { contentType: 'audio/mpeg' }
+    );
+
+    const aac = new Blob(['audio'], { type: 'AUDIO/AAC' });
+    await ChatService.uploadAudio('contact-1', aac);
+    expect(storageMocks.upload).toHaveBeenLastCalledWith(
+      'contact-1/1234567890.aac',
+      aac,
+      { contentType: 'audio/aac' }
+    );
+  });
+
   it('falls back to webm when the blob has no audio type', async () => {
     const untagged = new Blob(['audio']);
     await ChatService.uploadAudio('contact-1', untagged);

@@ -40,6 +40,7 @@ describe('CommandPalette — campo e lista anunciados (combobox/listbox)', () =>
 
     expect(input).toHaveAttribute('aria-label', 'Buscar comandos');
     expect(input).toHaveAttribute('aria-expanded', 'true');
+    expect(input).toHaveAttribute('aria-autocomplete', 'list');
 
     const listbox = screen.getByRole('listbox', { name: 'Acesso rápido' });
     expect(input).toHaveAttribute('aria-controls', listbox.id);
