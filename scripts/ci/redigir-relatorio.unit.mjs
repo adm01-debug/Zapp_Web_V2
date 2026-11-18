@@ -20,6 +20,8 @@ import {
   redigirConteudo,
   redigirDiretorio,
   TAMANHO_MINIMO,
+  redigirPadroes,
+  redigirTextoComZipEmbutido,
 } from './redigir-relatorio.mjs';
 
 const EMAIL = 'usuario.de.teste@example.com';
@@ -250,4 +252,55 @@ test('E82: lista de segredos ignora curto, vazio e repetido', () => {
   const r = redigirConteudo('a SegredoForte123 b SegredoForte123', ['SegredoForte123', 'SegredoForte123', 'ab', '']);
   assert.equal(r.ocorrencias, 2, 'o repetido nao conta duas vezes');
   assert.equal(r.texto, 'a [redigido] b [redigido]');
+});
+
+// GA38 — resgatado de claude/fix-ga-fase23-edge-e2e-261020-2200 (nunca mergeada).
+// O trace do Playwright carrega o TOKEN da sessao mesmo com e-mail e senha
+// redigidos: o valor do token nao esta em secret nenhum, entao so a redacao por
+// PADRAO o alcanca. O relatorio vira artefato de um repositorio publico.
+test('GA38: JWT, Bearer e access/refresh_token sao redigidos sem conhecer o valor', () => {
+  const jwt = 'eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxMjM0In0.aBcDeFgHiJkLmNoPqRsTuVwXyZ0123456789-_';
+  const entrada = `token ${jwt} e Authorization: Bearer ${jwt} e {"access_token":"abc123xyz","refresh_token":"rfrsh-456"} e url?a=1&access_token=abc123xyz`;
+  const r = redigirPadroes(entrada);
+  assert.equal(r.ocorrencias, 5, 'jwt x2 + bearer + access x2 (json e query) + refresh');
+  assert.doesNotMatch(r.texto, /eyJ/);
+  assert.doesNotMatch(r.texto, /abc123xyz/);
+  assert.doesNotMatch(r.texto, /rfrsh-456/);
+  assert.match(r.texto, /Bearer \[redigido\]/);
+  const limpo = redigirPadroes('relatorio sem segredo nenhum');
+  assert.equal(limpo.ocorrencias, 0);
+  assert.equal(limpo.texto, 'relatorio sem segredo nenhum');
+});
+
+test('GA38: o token sai do HTML do relatorio mesmo sem estar na lista de segredos', () => {
+  const jwt = 'eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiI5OSJ9.QQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQ';
+  const html = `<pre>login ok; Authorization: Bearer ${jwt}</pre>`;
+  const r = redigirTextoComZipEmbutido(html, ['senha-do-teste']);
+  assert.doesNotMatch(r.texto, /eyJ/, 'o JWT tem de sumir');
+  assert.ok(r.ocorrencias >= 1);
+});
+
+// Idempotencia — achada na revisao da PR #3263, antes do merge. `contarRestantes`
+// reconta pelo mesmo redator e o CLI so publica com zero restantes; padrao que
+// casa com o proprio marcador reprovaria TODO relatorio que tivesse token.
+test('GA38: a segunda passada conta zero — o relatorio redigido passa na verificacao final', () => {
+  const entrada = '{"access_token":"abc123","refresh_token":"r1"} ?access_token=q1&refresh_token=q2 Authorization: Bearer aaa.bbb eyJa.bbb.ccc';
+  const primeira = redigirPadroes(entrada);
+  assert.equal(primeira.ocorrencias, 6);
+  const segunda = redigirPadroes(primeira.texto);
+  assert.equal(segunda.ocorrencias, 0, 'o marcador [redigido] nao pode contar como token restante');
+  assert.equal(segunda.texto, primeira.texto, 'a segunda passada nao muda o texto');
+});
+
+test('GA38: o CLI aprova um relatorio que tinha token (contarRestantes = 0)', () => {
+  const raiz = arvore();
+  writeFileSync(join(raiz, 'index.html'), `<pre>{"access_token":"${'v'.repeat(40)}"} Authorization: Bearer ${'t'.repeat(40)}</pre>`);
+  const script = fileURLToPath(new URL('./redigir-relatorio.mjs', import.meta.url));
+  const r = spawnSync(process.execPath, [script, raiz, '--segredo-env=SEGREDO_X'], {
+    env: { ...process.env, SEGREDO_X: 'valor-que-nao-aparece' }, encoding: 'utf8',
+  });
+  assert.equal(r.status, 0, `CLI devia aprovar o relatorio redigido; saida: ${r.stdout}${r.stderr}`);
+  const final = readFileSync(join(raiz, 'index.html'), 'utf8');
+  assert.doesNotMatch(final, /vvvv/, 'o access_token tem de sumir');
+  assert.doesNotMatch(final, /tttt/, 'o Bearer tem de sumir');
 });
