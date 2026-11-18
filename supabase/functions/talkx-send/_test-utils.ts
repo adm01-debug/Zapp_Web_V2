@@ -308,6 +308,8 @@ export interface ContinueRecipientRow {
   contact_nickname: string;
   contact_phone: string;
   contact_company: string;
+  /** X065: a RPC passou a devolver a variante atribuida no snapshot. */
+  variant_id?: string | null;
 }
 
 /** N destinatários elegíveis, com telefone único (o provedor falso os registra). */
@@ -323,6 +325,7 @@ export function makeContinueRecipients(count: number, opts: { retryAfter?: (inde
     contact_nickname: `C${i}`,
     contact_phone: `55119${String(i).padStart(7, "0")}`,
     contact_company: `Empresa ${i}`,
+    variant_id: null,
   }));
 }
 
