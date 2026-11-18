@@ -31,6 +31,12 @@ const ADDRESS_LISTBOX_ID = 'location-picker-address-listbox';
 
 export function LocationPicker({ open, onOpenChange, onSend }: LocationPickerProps) {
   const [activeTab, setActiveTab] = useState<'map' | 'current'>('current');
+  // O botão continuava clicável durante o `await onSend(...)`. Dois ou três cliques
+  // disparavam envios concorrentes da MESMA mensagem; a trava de idempotência da
+  // edge `message-delivery` devolvia 409 ("O envio desta mensagem já está em
+  // andamento") para o segundo e o terceiro, e o operador via erro vermelho num
+  // envio que de fato deu certo. Aqui a reentrância morre na origem.
+  const [isSending, setIsSending] = useState(false);
   // E63: o cartão de confirmação entra com `motion` (opacidade + deslocamento vertical). Para quem
   // pediu menos movimento no sistema, a entrada não acontece — o hook do framer-motion lê o
   // `prefers-reduced-motion` e com ele o `initial` vira `false` (o cartão já nasce no estado final).
@@ -145,6 +151,10 @@ export function LocationPicker({ open, onOpenChange, onSend }: LocationPickerPro
     // E50: `selectedLocation` e `selectedOrigin` são setados/limpos juntos pelo hook — a origem
     // é o que o evento `location_sent` carrega ('suggest' | 'forward' | 'click' | 'gps').
     if (!selectedLocation || !selectedOrigin) { toast({ title: 'Selecione uma localização', description: 'Clique no mapa ou use sua localização atual.', variant: 'destructive' }); return; }
+    // Guarda de reentrância: o `disabled` do botão não basta porque o clique pode
+    // chegar antes do re-render (e o Enter do teclado não passa por ele).
+    if (isSending) return;
+    setIsSending(true);
     try {
       await onSend({
         latitude: selectedLocation.lat, longitude: selectedLocation.lng, name: selectedLocation.name, address: selectedLocation.address,
@@ -156,10 +166,12 @@ export function LocationPicker({ open, onOpenChange, onSend }: LocationPickerPro
     } catch {
       // The handler owns the user-facing error; preserve the selected point so
       // the operator can retry after fixing connectivity or choosing static.
+    } finally {
+      setIsSending(false);
     }
   };
 
-  const handleClose = () => { reset(); autocomplete.clear(); setAddressListOpen(false); setActiveTab('current'); onOpenChange(false); };
+  const handleClose = () => { reset(); autocomplete.clear(); setAddressListOpen(false); setActiveTab('current'); setIsSending(false); onOpenChange(false); };
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
@@ -318,7 +330,7 @@ export function LocationPicker({ open, onOpenChange, onSend }: LocationPickerPro
 
         <DialogFooter className="p-4 border-t border-border bg-muted/30 gap-2 sm:gap-0">
           <Button variant="outline" onClick={handleClose}>Cancelar</Button>
-          <Button onClick={handleSend} disabled={!selectedLocation} className="gap-2"><Send className="w-4 h-4" />Enviar Localização</Button>
+          <Button onClick={handleSend} disabled={!selectedLocation || isSending} aria-busy={isSending} className="gap-2"><Send className="w-4 h-4" />{isSending ? 'Enviando...' : 'Enviar Localização'}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
