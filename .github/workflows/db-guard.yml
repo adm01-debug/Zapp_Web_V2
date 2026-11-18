@@ -1000,6 +1000,10 @@ jobs:
         env:
           TALKX_AB_WEIGHTS_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talkx-ab-weights.test.sh
+      - name: Provar o teste A/B de campanha do Talk X (X065)
+        env:
+          TALKX_AB_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talkx-ab.test.sh
       - name: Saude de segmento (N-116)
         env:
           TALKX_SEGMENT_HEALTH_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
