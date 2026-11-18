@@ -293,16 +293,16 @@ test('fixture: celula cortada em "…" e cabecalho "## " duplicado sao rejeitado
   assert.deepEqual(violacoesCabecalhoDuplicado(RECON_COMPLETA), []);
 });
 
-test('inventario: 21 YAML em .github/workflows e a fonte gerada em paridade', async () => {
+test('inventario: 22 YAML em .github/workflows e a fonte gerada em paridade', async () => {
   const arquivos = (await readdir(DIR_WF)).filter((f) => /\.ya?ml$/.test(f));
-  assert.equal(arquivos.length, 21);
+  assert.equal(arquivos.length, 22);
   const readme = await readFile(README_CI, 'utf8');
-  assert.match(readme, /\*\*21 workflows\.\*\*/);
+  assert.match(readme, /\*\*22 workflows\.\*\*/);
   for (const f of arquivos) assert.ok(readme.includes(f));
 });
 
 test('docs/agentes/github-ci.md: contagem atual e fonte canonica (sem 14/17)', async () => {
-  assert.deepEqual(violacoesContagemClaude(await readFile(CLAUDE, 'utf8'), 21), []);
+  assert.deepEqual(violacoesContagemClaude(await readFile(CLAUDE, 'utf8'), 22), []);
 });
 
 test('docs/agentes/github-ci.md: politica unica de strict, coerente com o baseline', async () => {
