@@ -1,0 +1,32 @@
+{
+  "meta": {
+    "auditoria_em": "2026-10-30",
+    "projeto_supabase": "tnnnlkbymytvtqngbbqh",
+    "nota_scan_counts": "TODOS os idx_scan = 0 indicam reset recente de pg_stat. Contagens de scan devem ser reavaliadas apos acumulacao de estatisticas (tipicamente 24-48h)."
+  },
+  "db_stats": {
+    "db_size": "433 MB",
+    "connections_total": 35,
+    "connections_active": 2,
+    "cache_hit_pct": 99.64
+  },
+  "slow_queries": [
+    {"query": "get_last_message_dates (via PostgREST RPC)", "calls": 42, "mean_ms": 1265.75},
+    {"query": "inbox_unread_total (via PostgREST RPC)", "calls": 101, "mean_ms": 457.55},
+    {"query": "mcp_exec wrapper (via PostgREST RPC)", "calls": 44, "mean_ms": 436.59},
+    {"query": "trigger_talkx_engine_tick (via pg_cron)", "calls": 40, "mean_ms": 299.82}
+  ],
+  "table_bloat": [
+    {"table": "whatsapp_connections", "dead_pct": 100},
+    {"table": "gmail_accounts", "dead_pct": 100},
+    {"table": "connection_health_logs", "dead_pct": 96.4},
+    {"table": "user_devices", "dead_pct": 81.8},
+    {"table": "agent_presence", "dead_pct": 78.6}
+  ],
+  "duplicate_indexes": [
+    {"idx1": "idx_dept_invites_code", "idx2": "department_invites_code_key", "acao": "DROP INDEX idx_dept_invites_code"},
+    {"idx1": "auth.custom_oauth_providers_identifier_idx", "idx2": "auth.custom_oauth_providers_identifier_key"}
+  ],
+  "cron_job_run_details_size": "78 MB",
+  "pg_stat_statements": "nao disponivel"
+}

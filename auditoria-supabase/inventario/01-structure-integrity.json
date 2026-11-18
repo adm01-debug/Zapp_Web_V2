@@ -1,0 +1,72 @@
+{
+  "generated_at": "2026-10-30T21:30:15Z",
+  "project": "tnnnlkbymytvtqngbbqh",
+  "overview": {
+    "db_size": "433 MB",
+    "version": "17.6",
+    "auth_users": 10,
+    "buckets": ["audio-memes","team-chat-files","voice-changer-tmp","avatars","custom-emojis","whatsapp-media","audio-messages","multiplix-voice","stickers"]
+  },
+  "schemas": [
+    {"schema": "_bkp_261023", "tables": 9},
+    {"schema": "auth", "tables": 27},
+    {"schema": "cron", "tables": 2},
+    {"schema": "extensions", "tables": 0},
+    {"schema": "graphql", "tables": 0},
+    {"schema": "graphql_public", "tables": 0},
+    {"schema": "net", "tables": 2},
+    {"schema": "ops", "tables": 1},
+    {"schema": "public", "tables": 204},
+    {"schema": "realtime", "tables": 10},
+    {"schema": "storage", "tables": 8},
+    {"schema": "supabase_migrations", "tables": 2},
+    {"schema": "vault", "tables": 1}
+  ],
+  "tables_count": 204,
+  "tables_all_rls": true,
+  "note": "Full table list in progresso.json and RELATORIO_AUDITORIA_SUPABASE.md. Raw list omitted here for brevity — see 01-structure-integrity full version in local commit 5640a93.",
+  "extensions": [
+    {"schema": "pg_catalog", "extname": "pg_cron", "extversion": "1.6.4"},
+    {"schema": "extensions", "extname": "pg_net", "extversion": "0.20.4"},
+    {"schema": "extensions", "extname": "pg_stat_statements", "extversion": "1.11"},
+    {"schema": "extensions", "extname": "pg_trgm", "extversion": "1.6"},
+    {"schema": "extensions", "extname": "pgcrypto", "extversion": "1.3"},
+    {"schema": "pg_catalog", "extname": "plpgsql", "extversion": "1.0"},
+    {"schema": "vault", "extname": "supabase_vault", "extversion": "0.3.1"},
+    {"schema": "extensions", "extname": "uuid-ossp", "extversion": "1.1"}
+  ],
+  "enums": [
+    {"enum": "ai_provider_type", "values": ["lovable_ai","openai_compatible","google_gemini","custom_webhook","custom_agent"]},
+    {"enum": "app_role", "values": ["admin","supervisor","agent","special_agent"]},
+    {"enum": "channel_type", "values": ["whatsapp","instagram","telegram","messenger","webchat","email"]},
+    {"enum": "multiplix_block_type", "values": ["text","voice_ai","audio_recorded","file"]},
+    {"enum": "multiplix_dispatch_status", "values": ["draft","scheduled","sending","paused","completed","completed_with_failures","failed","cancelled"]},
+    {"enum": "multiplix_eligibility", "values": ["eligible","no_destination","suppressed","out_of_scope","media_pending","connection_unavailable","requires_template"]},
+    {"enum": "multiplix_item_status", "values": ["pending","sending","sent","delivered","read","failed","failed_transient","skipped","cancelled","outcome_unknown"]},
+    {"enum": "multiplix_recipient_status", "values": ["pending","sending","sent","delivered","read","failed","skipped","cancelled","outcome_unknown"]},
+    {"enum": "service_account_type", "values": ["google_sheets","google_docs","google_calendar","google_drive","dropbox"]},
+    {"enum": "talkx_blacklist_reason", "values": ["opt_out","invalid_number","manual","lgpd","no_commercial_permission","bounce"]}
+  ],
+  "sequences": [
+    {"name": "catalog_rate_limit_hits_id_seq", "last_value": 888, "pct_used": 0.0},
+    {"name": "contact_deletion_audit_id_seq", "last_value": 800, "pct_used": 0.0},
+    {"name": "security_acl_alerts_id_seq", "last_value": 831, "pct_used": 0.0},
+    {"name": "talkx_help_views_id_seq", "last_value": null, "pct_used": 0.0}
+  ],
+  "health": {
+    "ok": true,
+    "version": "PostgreSQL 17.6",
+    "cache_hit_pct": 99.64
+  },
+  "integrity": {
+    "tables_without_pk": [{"tablename": "_zapp_fn_before"}],
+    "fks_without_index_count": 30,
+    "duplicate_indexes": [
+      {"idx1": "idx_dept_invites_code", "idx2": "department_invites_code_key", "size": "16 kB"},
+      {"idx1": "auth.custom_oauth_providers_identifier_idx", "idx2": "auth.custom_oauth_providers_identifier_key", "size": "16 kB"}
+    ],
+    "fks_on_delete_no_action_count": 50
+  },
+  "triggers_count": 120,
+  "views_count": 13
+}

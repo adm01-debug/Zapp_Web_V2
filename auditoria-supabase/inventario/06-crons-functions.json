@@ -1,0 +1,164 @@
+{
+  "audited_at": "2026-10-30T21:40:00Z",
+  "project": "tnnnlkbymytvtqngbbqh",
+  "cron_jobs": [
+    {"jobid": 1, "jobname": "cleanup-link-preview-cache", "schedule": "12 3 * * *", "active": true, "username": "postgres", "command": "SELECT public.cleanup_link_preview_cache()"},
+    {"jobid": 4, "jobname": "gmail-incremental-sync", "schedule": "0-55/5 * * * *", "active": true, "username": "postgres", "command": "SELECT net.http_post(url:='https://tnnnlkbymytvtqngbbqh.supabase.co/functions/v1/gmail-cron-sync', body:='{}'::jsonb, headers:=jsonb_build_object('Content-Type','application/json','apikey',[MASKED],'x-cron-secret',[MASKED]), timeout_milliseconds:=30000)"},
+    {"jobid": 6, "jobname": "vacuum-contacts-daily", "schedule": "42 3 * * *", "active": true, "username": "postgres", "command": "VACUUM ANALYZE public.contacts;"},
+    {"jobid": 9, "jobname": "cleanup-edge-rate-limits", "schedule": "7-52/15 * * * *", "active": true, "username": "postgres", "command": "DELETE FROM public.edge_rate_limits WHERE updated_at < now() - interval '1 hour'"},
+    {"jobid": 11, "jobname": "talkx-scheduler-1min", "schedule": "* * * * *", "active": true, "username": "postgres", "command": "SELECT public.trigger_talkx_engine_tick()"},
+    {"jobid": 13, "jobname": "expire-stale-agent-presence", "schedule": "1-59/2 * * * *", "active": true, "username": "postgres", "command": "SELECT public.expire_stale_agent_presence();"},
+    {"jobid": 15, "jobname": "multiplix-send-trigger", "schedule": "0-58/2 * * * *", "active": true, "username": "postgres", "command": "SELECT public.trigger_pending_multiplix_dispatches()"},
+    {"jobid": 16, "jobname": "tasks-notify-due", "schedule": "* * * * *", "active": true, "username": "postgres", "command": "SELECT public.notify_due_tasks()"},
+    {"jobid": 17, "jobname": "connection-health-check", "schedule": "2-57/5 * * * *", "active": true, "username": "postgres", "command": "SELECT net.http_post(url:='https://tnnnlkbymytvtqngbbqh.supabase.co/functions/v1/connection-health-check', headers:=jsonb_build_object('Content-Type','application/json','x-cron-secret',[MASKED]), body:='{}'::jsonb, timeout_milliseconds:=30000)"},
+    {"jobid": 18, "jobname": "avatars-refresh", "schedule": "7 * * * *", "active": true, "username": "postgres", "command": "SELECT net.http_post(url:='https://tnnnlkbymytvtqngbbqh.supabase.co/functions/v1/batch-fetch-avatars', headers:=jsonb_build_object('Content-Type','application/json','x-cron-secret',[MASKED]), body:='{}'::jsonb, timeout_milliseconds:=150000)"},
+    {"jobid": 20, "jobname": "ai-jobs-tick-1min", "schedule": "1-59 * * * *", "active": true, "username": "postgres", "command": "select public.trigger_ai_jobs_tick()"},
+    {"jobid": 21, "jobname": "searchbox-budget-alert", "schedule": "0 12 * * *", "active": true, "username": "postgres", "command": "SELECT public.searchbox_budget_alert_tick();"},
+    {"jobid": 22, "jobname": "crm-sync-outbox", "schedule": "1-59/2 * * * *", "active": true, "username": "postgres", "command": "select public.trigger_crm_sync_outbox()"},
+    {"jobid": 23, "jobname": "crm-sync-outbox-cleanup", "schedule": "17 4 * * *", "active": true, "username": "postgres", "command": "select public.run_crm_sync_outbox_cleanup()"},
+    {"jobid": 24, "jobname": "search-events-retention", "schedule": "10 4 * * *", "active": true, "username": "postgres", "command": "select public.purge_old_search_events()"},
+    {"jobid": 25, "jobname": "reconnection-logs-retention-30d", "schedule": "30 4 * * *", "active": true, "username": "postgres", "command": "delete from public.reconnection_logs where created_at < now() - interval '30 days'"},
+    {"jobid": 26, "jobname": "expire-orphan-user-sessions", "schedule": "23 3 * * *", "active": true, "username": "postgres", "command": "SELECT public.expire_orphan_user_sessions();"},
+    {"jobid": 27, "jobname": "security-acl-score", "schedule": "23 * * * *", "active": true, "username": "postgres", "command": "SELECT public.score_security_acl()"},
+    {"jobid": 28, "jobname": "close-stale-calls", "schedule": "*/5 * * * *", "active": true, "username": "postgres", "command": "select public.close_stale_calls()"},
+    {"jobid": 29, "jobname": "csat-reply-capture-tick", "schedule": "*/2 * * * *", "active": true, "username": "postgres", "command": "select public.fn_capture_csat_replies()"},
+    {"jobid": 30, "jobname": "purge-qr-attempts", "schedule": "25 3 * * *", "active": true, "username": "postgres", "command": "select public.purge_qr_attempts()"},
+    {"jobid": 31, "jobname": "voice-changer-tmp-purge", "schedule": "17 * * * *", "active": true, "username": "postgres", "command": "select public.purge_voice_changer_tmp(24, 200);"},
+    {"jobid": 33, "jobname": "user-sessions-expire-diario", "schedule": "17 3 * * *", "active": true, "username": "postgres", "command": "select public.expire_user_sessions()"},
+    {"jobid": 34, "jobname": "dispatch-scheduled-messages", "schedule": "* * * * *", "active": true, "username": "postgres", "command": "SELECT public.dispatch_scheduled_messages()"}
+  ],
+  "cron_failures": {
+    "note": "All 100 sampled failures in 30d have status='failed' and msg='job startup timeout'. Root cause: pg_cron worker pool saturation (cron.max_running_jobs=32 with 24 active crons, several running every minute).",
+    "distinct_jobs_affected": ["multiplix-send-trigger","csat-reply-capture-tick","gmail-incremental-sync","ai-jobs-tick-1min","tasks-notify-due","dispatch-scheduled-messages","talkx-scheduler-1min","close-stale-calls","crm-sync-outbox","expire-stale-agent-presence","connection-health-check","cleanup-edge-rate-limits"],
+    "sample": [
+      {"jobname": "talkx-scheduler-1min", "status": "failed", "start_time": "2026-10-30T20:51:00Z", "msg": "job startup timeout"},
+      {"jobname": "dispatch-scheduled-messages", "status": "failed", "start_time": "2026-10-30T20:51:00Z", "msg": "job startup timeout"}
+    ]
+  },
+  "cron_summary": [
+    {"jobname": "ai-jobs-tick-1min", "schedule": "1-59 * * * *", "active": true, "last_success": "2026-10-30T21:33:00Z", "last_failure": "2026-10-30T20:51:15Z", "fail_count_30d": 1716, "success_count_30d": 38304, "failure_rate_pct": 4.29},
+    {"jobname": "avatars-refresh", "schedule": "7 * * * *", "active": true, "last_success": "2026-10-30T21:07:00Z", "last_failure": "2026-10-30T20:07:32Z", "fail_count_30d": 40, "success_count_30d": 680, "failure_rate_pct": 5.56},
+    {"jobname": "cleanup-edge-rate-limits", "schedule": "7-52/15 * * * *", "active": true, "last_success": "2026-10-30T21:22:00Z", "last_failure": "2026-10-30T20:37:11Z", "fail_count_30d": 151, "success_count_30d": 2727, "failure_rate_pct": 5.25},
+    {"jobname": "cleanup-link-preview-cache", "schedule": "12 3 * * *", "active": true, "last_success": "2026-10-30T03:12:06Z", "last_failure": "2026-10-16T03:12:10Z", "fail_count_30d": 1, "success_count_30d": 29, "failure_rate_pct": 3.33},
+    {"jobname": "close-stale-calls", "schedule": "*/5 * * * *", "active": true, "last_success": "2026-10-30T21:30:00Z", "last_failure": "2026-10-30T20:51:16Z", "fail_count_30d": 150, "success_count_30d": 1966, "failure_rate_pct": 7.09},
+    {"jobname": "connection-health-check", "schedule": "2-57/5 * * * *", "active": true, "last_success": "2026-10-30T21:32:01Z", "last_failure": "2026-10-30T20:48:46Z", "fail_count_30d": 436, "success_count_30d": 8199, "failure_rate_pct": 5.05},
+    {"jobname": "crm-sync-outbox", "schedule": "1-59/2 * * * *", "active": true, "last_success": "2026-10-30T21:33:00Z", "last_failure": "2026-10-30T20:49:18Z", "fail_count_30d": 355, "success_count_30d": 9759, "failure_rate_pct": 3.51},
+    {"jobname": "crm-sync-outbox-cleanup", "schedule": "17 4 * * *", "active": true, "last_success": "2026-10-30T04:17:00Z", "last_failure": null, "fail_count_30d": 0, "success_count_30d": 14, "failure_rate_pct": 0.0},
+    {"jobname": "csat-reply-capture-tick", "schedule": "*/2 * * * *", "active": true, "last_success": "2026-10-30T21:32:01Z", "last_failure": "2026-10-30T20:50:13Z", "fail_count_30d": 339, "success_count_30d": 4949, "failure_rate_pct": 6.41},
+    {"jobname": "dispatch-scheduled-messages", "schedule": "* * * * *", "active": true, "last_success": "2026-10-30T21:33:00Z", "last_failure": "2026-10-30T20:51:16Z", "fail_count_30d": 686, "success_count_30d": 9822, "failure_rate_pct": 6.53},
+    {"jobname": "expire-orphan-user-sessions", "schedule": "23 3 * * *", "active": true, "last_success": "2026-10-30T03:23:00Z", "last_failure": null, "fail_count_30d": 0, "success_count_30d": 7, "failure_rate_pct": 0.0},
+    {"jobname": "expire-stale-agent-presence", "schedule": "1-59/2 * * * *", "active": true, "last_success": "2026-10-30T21:33:00Z", "last_failure": "2026-10-30T20:49:18Z", "fail_count_30d": 1022, "success_count_30d": 20569, "failure_rate_pct": 4.73},
+    {"jobname": "gmail-incremental-sync", "schedule": "0-55/5 * * * *", "active": true, "last_success": "2026-10-30T21:30:00Z", "last_failure": "2026-10-30T20:51:15Z", "fail_count_30d": 453, "success_count_30d": 8183, "failure_rate_pct": 5.24},
+    {"jobname": "multiplix-send-trigger", "schedule": "0-58/2 * * * *", "active": true, "last_success": "2026-10-30T21:32:01Z", "last_failure": "2026-10-30T20:51:16Z", "fail_count_30d": 994, "success_count_30d": 20596, "failure_rate_pct": 4.60},
+    {"jobname": "purge-qr-attempts", "schedule": "25 3 * * *", "active": true, "last_success": "2026-10-30T03:25:00Z", "last_failure": null, "fail_count_30d": 0, "success_count_30d": 7, "failure_rate_pct": 0.0},
+    {"jobname": "reconnection-logs-retention-30d", "schedule": "30 4 * * *", "active": true, "last_success": "2026-10-30T04:30:02Z", "last_failure": null, "fail_count_30d": 0, "success_count_30d": 7, "failure_rate_pct": 0.0},
+    {"jobname": "search-events-retention", "schedule": "10 4 * * *", "active": true, "last_success": "2026-10-30T04:10:00Z", "last_failure": null, "fail_count_30d": 0, "success_count_30d": 14, "failure_rate_pct": 0.0},
+    {"jobname": "searchbox-budget-alert", "schedule": "0 12 * * *", "active": true, "last_success": "2026-10-30T12:00:00Z", "last_failure": null, "fail_count_30d": 0, "success_count_30d": 28, "failure_rate_pct": 0.0},
+    {"jobname": "security-acl-score", "schedule": "23 * * * *", "active": true, "last_success": "2026-10-30T21:23:00Z", "last_failure": "2026-10-30T20:23:11Z", "fail_count_30d": 11, "success_count_30d": 166, "failure_rate_pct": 6.21},
+    {"jobname": "talkx-scheduler-1min", "schedule": "* * * * *", "active": true, "last_success": "2026-10-30T21:33:00Z", "last_failure": "2026-10-30T20:51:15Z", "fail_count_30d": 4342, "success_count_30d": 38837, "failure_rate_pct": 10.06},
+    {"jobname": "tasks-notify-due", "schedule": "* * * * *", "active": true, "last_success": "2026-10-30T21:33:00Z", "last_failure": "2026-10-30T20:51:16Z", "fail_count_30d": 1986, "success_count_30d": 41193, "failure_rate_pct": 4.60},
+    {"jobname": "user-sessions-expire-diario", "schedule": "17 3 * * *", "active": true, "last_success": "2026-10-30T03:17:00Z", "last_failure": null, "fail_count_30d": 0, "success_count_30d": 7, "failure_rate_pct": 0.0},
+    {"jobname": "vacuum-contacts-daily", "schedule": "42 3 * * *", "active": true, "last_success": "2026-10-30T03:42:01Z", "last_failure": "2026-10-03T03:42:58Z", "fail_count_30d": 1, "success_count_30d": 29, "failure_rate_pct": 3.33},
+    {"jobname": "voice-changer-tmp-purge", "schedule": "17 * * * *", "active": true, "last_success": "2026-10-30T21:17:00Z", "last_failure": "2026-10-30T20:17:10Z", "fail_count_30d": 15, "success_count_30d": 162, "failure_rate_pct": 8.47}
+  ],
+  "overlapping_crons": [
+    {"job1": "tasks-notify-due", "job2": "dispatch-scheduled-messages", "schedule": "* * * * *"},
+    {"job1": "talkx-scheduler-1min", "job2": "dispatch-scheduled-messages", "schedule": "* * * * *"},
+    {"job1": "talkx-scheduler-1min", "job2": "tasks-notify-due", "schedule": "* * * * *"},
+    {"job1": "expire-stale-agent-presence", "job2": "crm-sync-outbox", "schedule": "1-59/2 * * * *"}
+  ],
+  "vault_secret_names": [
+    {"id": "02312d73-b5a8-41cb-a843-f151a31bdef4", "name": "ai_jobs_cron_secret", "created_at": "2026-10-02T09:55:46Z", "updated_at": "2026-10-02T09:55:46Z"},
+    {"id": "de0f7650-9ad8-4281-aeff-2c4a24ebd650", "name": "avatars_refresh_cron_secret", "created_at": "2026-09-30T19:08:33Z", "updated_at": "2026-09-30T19:08:33Z"},
+    {"id": "54dad91f-597a-48fc-81ed-ff4bdee4a753", "name": "connection_health_check_cron_secret", "created_at": "2026-09-30T19:08:33Z", "updated_at": "2026-09-30T19:08:33Z"},
+    {"id": "2429a7cd-70c1-41a4-aa88-a4a5c6278a2c", "name": "gmail_cron_secret", "created_at": "2026-08-29T14:37:04Z", "updated_at": "2026-09-28T20:26:37Z"},
+    {"id": "4e3ac08e-8a4d-4286-a78d-18f7049d3334", "name": "gmail_encryption_key", "created_at": "2026-08-27T20:35:44Z", "updated_at": "2026-08-27T20:35:44Z"},
+    {"id": "66a7e045-ee56-44cb-b6a5-569594207de0", "name": "multiplix_cron_secret", "created_at": "2026-09-27T13:15:36Z", "updated_at": "2026-09-27T13:15:36Z"},
+    {"id": "4605e3a6-6cff-4873-acad-114dc4605c37", "name": "multiplix_send_url", "created_at": "2026-09-29T14:51:37Z", "updated_at": "2026-09-29T14:51:37Z"},
+    {"id": "82c334a0-4a33-4b76-aaaf-143f5ba5a21a", "name": "sicoob_service_role_key", "created_at": "2026-08-27T19:34:11Z", "updated_at": "2026-08-27T19:34:11Z"},
+    {"id": "b7f98619-d636-418e-bc77-4e9946829f49", "name": "talkx_anon_key", "created_at": "2026-09-08T21:18:16Z", "updated_at": "2026-09-08T21:18:16Z"},
+    {"id": "8326bca9-e4ac-4df9-bb09-f0ee274ab650", "name": "talkx_cron_secret", "created_at": "2026-10-02T02:14:00Z", "updated_at": "2026-10-02T02:14:00Z"},
+    {"id": "007e7c35-9f86-4d48-a0b5-b07bd3638ba4", "name": "talkx_scheduler_url", "created_at": "2026-09-08T21:16:47Z", "updated_at": "2026-09-08T21:16:47Z"},
+    {"id": "e9a45a7c-3d5f-4fef-bcd6-e143df672010", "name": "talkx_send_url", "created_at": "2026-10-02T04:02:22Z", "updated_at": "2026-10-02T04:02:22Z"},
+    {"id": "8ab58af9-d688-4567-bc69-c41d297e0953", "name": "zapp_anon_key", "created_at": "2026-09-01T17:58:46Z", "updated_at": "2026-09-01T17:58:46Z"}
+  ],
+  "pg_net_recent": {
+    "note": "20 most recent responses all HTTP 200, no timeouts. URL path column not exposed in net._http_response schema.",
+    "sample": [
+      {"status_code": 200, "timed_out": false, "content_type": "application/json", "created": "2026-10-30T21:35:02Z"},
+      {"status_code": 200, "timed_out": false, "content_type": "application/json", "created": "2026-10-30T21:35:02Z"}
+    ]
+  },
+  "cron_config": {
+    "cron.database_name": "postgres",
+    "cron.enable_superuser_jobs": "on",
+    "cron.host": "localhost",
+    "cron.launch_active_jobs": "on",
+    "cron.log_min_messages": "warning",
+    "cron.log_run": "on",
+    "cron.log_statement": "on",
+    "cron.max_running_jobs": "32",
+    "cron.timezone": "GMT",
+    "cron.use_background_workers": "off"
+  },
+  "db_functions": {
+    "total": 478,
+    "security_definer": 399,
+    "security_definer_without_search_path": 0,
+    "languages": {"plpgsql": 400, "sql": 78},
+    "volatility": {"volatile": 339, "stable": 129, "immutable": 10},
+    "crons_calling_external_systems": [
+      {"jobname": "gmail-incremental-sync", "target": "functions/v1/gmail-cron-sync", "auth": "vault(zapp_anon_key)+vault(gmail_cron_secret)"},
+      {"jobname": "connection-health-check", "target": "functions/v1/connection-health-check", "auth": "vault(connection_health_check_cron_secret)"},
+      {"jobname": "avatars-refresh", "target": "functions/v1/batch-fetch-avatars", "auth": "vault(avatars_refresh_cron_secret)"},
+      {"jobname": "ai-jobs-tick-1min", "via_function": "trigger_ai_jobs_tick", "target": "functions/v1/ai-jobs-worker", "auth": "vault(zapp_anon_key)+vault(ai_jobs_cron_secret)"},
+      {"jobname": "multiplix-send-trigger", "via_function": "trigger_pending_multiplix_dispatches", "target": "vault(multiplix_send_url)", "auth": "vault(zapp_anon_key)+vault(multiplix_cron_secret)"},
+      {"jobname": "talkx-scheduler-1min", "via_function": "trigger_talkx_engine_tick", "target": "vault(talkx_scheduler_url)+derived(talkx-storage-purge)", "auth": "vault(talkx_anon_key)+get_talkx_cron_secret()"},
+      {"jobname": "crm-sync-outbox", "via_function": "trigger_crm_sync_outbox", "target": "vault(crm_sync_outbox_url)", "auth": "vault(crm_sync_outbox_cron_secret)"}
+    ],
+    "notable_functions": [
+      {
+        "name": "notify_due_tasks",
+        "issue": "race_condition_risk",
+        "detail": "Loop over tasks WHERE notified_at IS NULL without FOR UPDATE SKIP LOCKED. Concurrent executions can read the same task and insert duplicate notifications."
+      },
+      {
+        "name": "trigger_pending_multiplix_dispatches",
+        "issue": "swallowed_exception",
+        "detail": "Two EXCEPTION WHEN OTHERS THEN NULL blocks: one for dispatch state transitions (intended: 'Um dispatch invalido nao pode travar o tick'), one for resume-from-pause. Per-item errors are not logged to any table."
+      },
+      {
+        "name": "trigger_talkx_engine_tick",
+        "issue": "swallowed_exception",
+        "detail": "Multiple EXCEPTION WHEN OTHERS THEN NULL blocks for per-campaign operations (complete_drained, kick_campaign, talkx-storage-purge). Intentional by design per inline comments. Purge failures escalate to talkx_alerts table (well handled)."
+      },
+      {
+        "name": "trigger_talkx_engine_tick",
+        "issue": "fragile_url_derivation",
+        "detail": "URL for talkx-storage-purge derived from talkx_scheduler_url via regexp_replace(.../talkx-scheduler -> .../talkx-storage-purge). If the vault URL format changes, storage purge silently stops without error."
+      },
+      {
+        "name": "dispatch_scheduled_messages",
+        "issue": "none",
+        "detail": "Properly uses FOR UPDATE SKIP LOCKED. Exception handler maps known error codes to stable strings. Good pattern."
+      },
+      {
+        "name": "searchbox_budget_alert_tick",
+        "issue": "none",
+        "detail": "INSERT ON CONFLICT DO NOTHING for idempotent monthly claim. Calls net.http_post directly. Uses vault for cron secret."
+      }
+    ]
+  },
+  "triggers": {
+    "total_count": 218,
+    "tables_with_triggers": ["agent_stats","ai_providers","auto_close_config","automations","away_messages","business_hours","calls","campaigns","channel_connections","chatbot_flows","connection_alert_preferences","contact_custom_fields","contact_notes","contact_purchases","contacts","conversation_closures","conversation_events","conversation_memory","conversation_sla","conversation_tasks","copilot_sessions","department_audit_logs","department_invitations","email_messages","email_signatures","email_threads","feature_flags","geo_blocking_settings","global_settings","gmail_accounts","goals_configurations","knowledge_base_articles","link_preview_cache","message_pins","message_reactions","message_templates","messages","multiplix_audiences","multiplix_blocks","multiplix_delivery_items","multiplix_dispatches","multiplix_events","multiplix_recipients","number_reputation","password_reset_requests","payment_links","playbooks","products","profiles","queue_goals","queue_members","queues","rate_limit_configs","role_permissions","sales_deals","sales_pipeline_stages","saved_filters","scheduled_messages","scheduled_report_configs","scheduled_reports","sla_alert_preferences","sla_configurations","sla_rules","talkx_campaigns","talkx_recipients","talkx_segment_versions","talkx_segments","talkx_template_variants","talkx_template_versions","talkx_templates","team_conversations","team_message_reactions","team_message_receipts","team_messages","user_devices","user_roles"]
+  },
+  "realtime_publications": [
+    {"pubname": "supabase_realtime", "puballtables": false, "pubinsert": true, "pubupdate": true, "pubdelete": true},
+    {"pubname": "supabase_realtime_messages_publication", "puballtables": false, "pubinsert": true, "pubupdate": true, "pubdelete": true}
+  ],
+  "realtime_tables": {
+    "supabase_realtime": ["agent_achievements","agent_presence","agent_stats","audio_meme_favorites","audio_memes","calls","contacts","conversation_sla","conversation_tasks","copilot_insights","email_messages","email_threads","message_reactions","messages","multiplix_dispatches","multiplix_recipients","notifications","payment_links","queue_goals","queue_members","queues","sales_deals","talkx_blacklist","talkx_campaign_events","talkx_campaign_segments","talkx_campaigns","talkx_recipients","talkx_segments","talkx_templates","team_conversation_members","team_conversations","team_message_reactions","team_message_receipts","team_messages","warroom_alerts","whatsapp_connections","whisper_messages"],
+    "supabase_realtime_messages_publication": ["realtime.messages_2026_10_27","realtime.messages_2026_10_28","realtime.messages_2026_10_29","realtime.messages_2026_10_30","realtime.messages_2026_10_31","realtime.messages_2026_11_01","realtime.messages_2026_11_02"]
+  }
+}

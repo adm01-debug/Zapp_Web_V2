@@ -1,0 +1,20 @@
+{
+  "generated_at": "2026-10-30T00:00:00Z",
+  "project": "tnnnlkbymytvtqngbbqh",
+  "buckets": [
+    {"id": "audio-memes", "public": true, "allowed_mime_types": ["audio/*"], "rls_policies_count": 5},
+    {"id": "avatars", "public": false, "allowed_mime_types": ["image/jpeg","image/png","image/webp","image/gif"], "rls_policies_count": 4},
+    {"id": "audio-messages", "public": false, "allowed_mime_types": ["audio/ogg","audio/mpeg","audio/wav","audio/aac","audio/ogg;codecs=opus"], "rls_policies_count": 5},
+    {"id": "custom-emojis", "public": true, "allowed_mime_types": ["image/png","image/webp","image/gif","image/jpeg","image/svg+xml"], "rls_policies_count": 3, "note": "SVG habilitado - risco de SVG malicioso se renderizado inline"},
+    {"id": "multiplix-voice", "public": false, "allowed_mime_types": null, "rls_policies_count": 0, "note": "ATENCAO: sem politicas RLS e sem restricao de MIME type"},
+    {"id": "stickers", "public": true, "allowed_mime_types": ["image/webp","image/png","image/gif"], "rls_policies_count": 4},
+    {"id": "team-chat-files", "public": false, "rls_policies_count": 3},
+    {"id": "voice-changer-tmp", "public": false, "allowed_mime_types": ["audio/mpeg","audio/mp4","audio/ogg","audio/wav","audio/webm","audio/aac"], "rls_policies_count": 4},
+    {"id": "whatsapp-media", "public": false, "rls_policies_count": 4}
+  ],
+  "user_stats": {"total": 10, "email_confirmed": 10, "active_30d": 6},
+  "mfa_stats": {"users_with_mfa": 0, "note": "NENHUM usuario com MFA ativado"},
+  "identity_providers": [{"provider": "email", "cnt": 8}, {"provider": "google", "cnt": 1}],
+  "storage_policies": {"total_count": 34, "buckets_without_policies": ["multiplix-voice"]},
+  "tables_without_retention_count": 188
+}
