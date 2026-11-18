@@ -1,0 +1,51 @@
+{
+  "repo_migrations_count": 1064,
+  "db_migrations_count": 1064,
+  "db_only_versions": [],
+  "repo_only_versions": [],
+  "null_statements_versions": [
+    "20261006234158","20261011010000","20261011010001","20261011010002","20261011010003",
+    "20261011010100","20261011094027","20261012032331","20261012115237","20261012115900",
+    "20261012134000","20261012192938","20261012213900","20261012225242","20261012233536",
+    "20261012235745","20261013002117","20261013012531","20261013014629","20261013044344",
+    "20261013044440","20261013044500","20261013085500","20261013140359","20261013210000",
+    "20261013210002","20261013210003","20261013213816","20261013230000","20261013230004",
+    "20261013230005","20261013230007","20261013230008","20261013230009","20261013230011",
+    "20261013235904","20261013235908","20261014014129","20261014023912","20261014023945",
+    "20261014133908","20261014160000","20261015172527","20261015175433","20261015184221",
+    "20261015190000","20261015195448","20261015210000","20261015210626","20261015211127",
+    "20261015211601","20261015213324","20261015215658","20261015221428","20261015221500",
+    "20261015223614","20261015224516","20261015225226","20261016120000","20261016130000",
+    "20261016250000","20261026160000","20261026190300","20261026200000","20261026210000"
+  ],
+  "null_statements_count": 63,
+  "table_comparison": {
+    "in_db_not_in_types": [
+      "agent_mini_game_xp_daily","ai_usage_outbox","app_settings","contact_block_audit",
+      "contact_protection_policy","copilot_insights","copilot_sessions","email_signatures",
+      "instance_pauses","message_attempts","message_favorites","message_pins","message_reports",
+      "outbox_events","qr_attempts","reconnection_logs","searchbox_budget_alert_cron",
+      "searchbox_budget_alert_emails","security_acl_alerts","sla_alert_events",
+      "sla_alert_preferences","talkx_contact_attributes","talkx_data_jobs","talkx_help_views",
+      "talkx_segment_fields","talkx_segment_library_history","talkx_segment_versions",
+      "talkx_test_sends","team_chat_media_acl_r2_db_020_rb","voip_profile_credentials"
+    ],
+    "in_types_not_in_db": []
+  },
+  "orphan_rpcs": ["get_search_insights", "log_search_event"],
+  "hardcoded_secrets_found": true,
+  "hardcoded_secrets_details": [
+    {
+      "file": "src/integrations/supabase/client.ts",
+      "line": 17,
+      "type": "anon_jwt",
+      "note": "Anon key hardcoded (not via env var). Role=anon so public by design, but should be VITE_SUPABASE_ANON_KEY env var instead."
+    },
+    {
+      "file": "src/hooks/__tests__/realtimeSharedTopic.test.tsx",
+      "line": 18,
+      "type": "dummy_jwt_test",
+      "note": "Dummy local JWT for unit tests only (no real project ref)."
+    }
+  ]
+}
