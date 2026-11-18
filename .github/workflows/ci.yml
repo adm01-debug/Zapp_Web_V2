@@ -165,6 +165,7 @@ jobs:
         run: >-
           node --test scripts/ci/*.unit.mjs
           scripts/catalog/validate-plan.unit.mjs
+          scripts/db/gen-db-inventory.unit.mjs
           scripts/db-tests/run-all.unit.mjs
           scripts/docs/verificar-docs-realtime.unit.mjs
           scripts/eslint/no-secret-compare.unit.mjs

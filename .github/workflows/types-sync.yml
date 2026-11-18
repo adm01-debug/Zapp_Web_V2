@@ -414,6 +414,16 @@ jobs:
           if [ "${{ needs.ler-banco.outputs.manifest_changed }}" = true ]; then cp /tmp/manifest.new.json supabase/schema-manifest.json; fi
           if [ "${{ needs.ler-banco.outputs.grants_changed }}" = true ]; then cp /tmp/grants.new.json scripts/db-audit/grants-baseline.json; fi
 
+      - name: Regerar as contagens de docs/DB-INVENTORY.md a partir do catalogo
+        # A guarda scripts/ci/db-inventory-doc.unit.mjs compara o documento com o
+        # catalogo. Sem este passo, todo objeto novo no banco quebrava a guarda e
+        # CONGELAVA esta PR ate alguem editar o markdown a mao (#3256 e de novo em
+        # 18/11/2026, com as colunas e RPCs do X065). O gerador toca so a tabela de
+        # contagens; o inventario de tabelas, com status e consumidores, segue
+        # sendo curadoria humana.
+        if: needs.ler-banco.outputs.catalog_changed == 'true'
+        run: node scripts/db/gen-db-inventory.mjs
+
       - name: Setup Bun
         if: needs.ler-banco.outputs.schema_changed == 'true'
         uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
