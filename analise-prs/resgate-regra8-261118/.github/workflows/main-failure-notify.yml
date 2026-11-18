@@ -1,0 +1,125 @@
+# docs:
+#   gatilho: workflow_run (E2E logado, DB Live Guard, Deploy Edge Functions, types-sync) em main com conclusion=failure
+#   prova: dedupe de 1h -- suprime (com setFailed) se o proprio workflow teve run com sucesso no ultimo 1h
+#   falha: sem secrets configurados o step falha explicitamente (secrets ausentes)
+#   avisa: WhatsApp para JOAQUIM_WHATSAPP_NUMBER via Evolution GO instancia PRINCIPAL (/send/text nativo)
+# E90 (plano 2026-10-01): notifica Joaquim por WhatsApp quando workflow critico
+# falha na main. Chama Evolution GO /send/text (rota nativa GO) direto do Actions.
+#
+# Dedupe de 1h: suprime se este workflow ja teve run com conclusion=success no ultimo 1h.
+# Runs suprimidos terminam com core.setFailed -- nao criam anchor de sucesso falso.
+#
+# Secrets necessarios (criar no repo antes de ativar; nao estao nos Edge Functions):
+#   EVOLUTION_INSTANCE_TOKEN -- token da instancia PRINCIPAL da Evolution GO
+#   JOAQUIM_WHATSAPP_NUMBER  -- numero no formato internacional sem + (ex: 5511999999999)
+
+name: main-failure-notify
+
+on:
+  workflow_run:
+    workflows:
+      - E2E logado
+      - DB Live Guard
+      - Deploy Edge Functions
+      - types-sync
+    types: [completed]
+    branches: [main]
+
+permissions:
+  actions: read
+
+concurrency:
+  group: main-failure-notify
+  cancel-in-progress: false
+
+defaults:
+  run:
+    shell: bash --noprofile --norc -euo pipefail {0}
+
+jobs:
+  notify:
+    name: Notificar falha na main via WhatsApp
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    if: github.event.workflow_run.conclusion == 'failure'
+    steps:
+      - name: Dedupe 1h e enviar notificacao
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        env:
+          EVOLUTION_INSTANCE_TOKEN: ${{ secrets.EVOLUTION_INSTANCE_TOKEN }}
+          JOAQUIM_WHATSAPP_NUMBER: ${{ secrets.JOAQUIM_WHATSAPP_NUMBER }}
+        with:
+          script: |
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+            const run = context.payload.workflow_run;
+
+            // Dedupe: busca runs deste proprio workflow concluidos com sucesso no ultimo 1h.
+            // Se achou, e porque a notificacao ja foi enviada.
+            // Suprime com setFailed para nao criar anchor de sucesso falso (loop infinito).
+            const umHoraAtras = new Date(Date.now() - 3600 * 1000).toISOString();
+            const { data: myRuns } = await github.rest.actions.listWorkflowRuns({
+              owner, repo,
+              workflow_id: 'main-failure-notify.yml',
+              status: 'success',
+              created: '>' + umHoraAtras,
+              per_page: 100,
+            });
+            const jaNotificou = myRuns.workflow_runs.some((r) => r.id !== context.runId);
+            if (jaNotificou) {
+              core.setFailed('Dedupe: notificacao ja enviada no ultimo 1h -- suprimindo.');
+              return;
+            }
+
+            const token = process.env.EVOLUTION_INSTANCE_TOKEN;
+            const numero = process.env.JOAQUIM_WHATSAPP_NUMBER;
+            if (!token || !numero) {
+              core.setFailed(
+                'Secrets EVOLUTION_INSTANCE_TOKEN e/ou JOAQUIM_WHATSAPP_NUMBER nao configurados.'
+              );
+              return;
+            }
+
+            const sha7 = run.head_sha.slice(0, 7);
+            const horario = new Date(run.updated_at).toLocaleString(
+              'pt-BR', { timeZone: 'America/Sao_Paulo' }
+            );
+            const texto = [
+              '🔴 *Zapp Web V2 — falha na main*',
+              '',
+              `Workflow: *${run.name}*`,
+              `Commit: \`${sha7}\` em \`${run.head_branch}\``,
+              `Horario: ${horario}`,
+              `Logs: ${run.html_url}`,
+            ].join('\n');
+
+            const resp = await fetch(
+              'https://evolution-go-rxj2.srv1481814.hstgr.cloud/send/text',
+              {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                  apikey: token,
+                },
+                body: JSON.stringify({ number: numero, text: texto }),
+              }
+            );
+
+            if (!resp.ok) {
+              const body = await resp.text().catch(() => '');
+              core.setFailed(`Evolution GO respondeu ${resp.status}: ${body.slice(0, 300)}`);
+              return;
+            }
+            const data = await resp.json().catch(() => null);
+            // Rejeitar respostas 2xx com erro logico no corpo (ex: numero invalido)
+            if (data?.error || data?.status === 'error') {
+              core.setFailed(`Evolution GO retornou erro no corpo (2xx): ${JSON.stringify(data).slice(0, 300)}`);
+              return;
+            }
+            // Evolution GO retorna o ID da mensagem em data.key.id, data.id ou data.Info.ID
+            const msgId = data?.key?.id ?? data?.id ?? data?.Info?.ID ?? null;
+            if (!msgId) {
+              core.setFailed(`Evolution GO retornou 2xx mas sem ID de mensagem: ${JSON.stringify(data).slice(0, 300)}`);
+              return;
+            }
+            core.info(`Mensagem enviada para ${numero} (id: ${msgId}) -- Evolution GO ${resp.status}`);
