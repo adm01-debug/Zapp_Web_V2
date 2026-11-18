@@ -1,0 +1,6 @@
+FATAL ERROR: Ineffective mark-compacts near heap limit Allocation failed - JavaScript heap out of memory
+(OOM/SIGABRT — falha pré-existente no container, sem RAM suficiente para tsc --noEmit)
+EXIT=SIGABRT
+
+Nota: NÃO é erro de código TypeScript — é limitação de memória do container de CI.
+Regressão se mede pela diferença: só conta erro novo não presente neste baseline.

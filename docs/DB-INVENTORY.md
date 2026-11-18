@@ -40,11 +40,11 @@ confere que todo caminho listado é consumidor de verdade; ela não obriga a lis
 
 | Objeto | Quantidade |
 |---|---|
-| Tabelas (`tables`) | 212 |
+| Tabelas (`tables`) | 213 |
 | Views (`views`) | 13 |
-| Colunas (`columns`) | 2365 |
-| Funções (`functions`) | 396 |
-| Assinaturas de função (`function_signatures`) | 398 |
+| Colunas (`columns`) | 2375 |
+| Funções (`functions`) | 400 |
+| Assinaturas de função (`function_signatures`) | 402 |
 | Funções de gatilho (`trigger_functions`) | 103 |
 | Restrições de verificação (`check_constraints`) | 249 |
 
@@ -113,6 +113,7 @@ RLS em `supabase/schema-manifest.json`; este documento não os repete.
 | `copilot_learning_moments` | Momentos de aprendizado identificados pelo copilot | parcial | `scripts/db-audit/check-live-invariants.sql`, `scripts/db-audit/migration-evidence.json` |
 | `copilot_objection_catalog` | Catálogo de objeções para treinamento do copilot | parcial | `scripts/db-audit/check-live-invariants.sql`, `scripts/db-audit/migration-evidence.json` |
 | `copilot_outcomes` | Resultados e desfechos registrados pelo copilot | parcial | `scripts/db-audit/check-live-invariants.sql`, `scripts/db-audit/migration-evidence.json`, `scripts/db-audit/replay-known-failures.json` |
+| `copilot_retention_aggregates` | Agregados diários de uso do copiloto RADAR por perfil (sessões abertas, ticks, insights, brinde completo e temperatura média) | roadmap | — |
 | `copilot_seller_settings` | Configurações do copilot por vendedor | parcial | `scripts/db-audit/check-live-invariants.sql`, `scripts/db-audit/migration-evidence.json` |
 | `copilot_sessions` | Sessões ativas do copilot por agente e conversa | ativo | `src/hooks/copilot/useSupervisorInsights.ts`, `supabase/functions/copilot-live/index.ts` |
 | `copilot_usage` | Log de uso do copilot por conversa e agente | parcial | `scripts/db-audit/check-live-invariants.sql`, `scripts/db-audit/migration-evidence.json` |
