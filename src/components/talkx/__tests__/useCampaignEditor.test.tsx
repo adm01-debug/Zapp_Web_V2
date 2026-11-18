@@ -247,6 +247,57 @@ describe('useCampaignEditor — draft integrity', () => {
     expect(result.current.canProceed[1]).toBe(false);
   });
 
+  // X065 — antes disto o editor nunca enviava os campos `ab_*`: a campanha
+  // nascia com `ab_enabled` falso e o teste A/B, que ja existia no banco e
+  // tinha painel de resultado, era inalcancavel pelo app.
+  it('salva a campanha com o teste A/B desligado por padrão', async () => {
+    const { result } = renderHook(() => useCampaignEditor(null, vi.fn()));
+    act(() => { result.current.setName('Campanha sem A/B'); result.current.toggleContact('contact-1'); });
+
+    await act(async () => { await result.current.handleSave('draft'); });
+
+    expect(f.create).toHaveBeenCalledWith(expect.objectContaining({
+      ab_enabled: false,
+      ab_metric: 'reply_rate',
+      ab_min_sample: 50,
+    }));
+  });
+
+  it('ligar o teste A/B chega ao payload com métrica e amostra mínima', async () => {
+    const { result } = renderHook(() => useCampaignEditor(null, vi.fn()));
+    act(() => {
+      result.current.setName('Campanha com A/B');
+      result.current.toggleContact('contact-1');
+      result.current.setAbEnabled(true);
+      result.current.setAbMetric('click_rate');
+      result.current.setAbMinSample(120);
+    });
+
+    await act(async () => { await result.current.handleSave('draft'); });
+
+    expect(f.create).toHaveBeenCalledWith(expect.objectContaining({
+      ab_enabled: true,
+      ab_metric: 'click_rate',
+      ab_min_sample: 120,
+    }));
+  });
+
+  // A coluna tem CHECK (ab_min_sample >= 1 AND <= 1000000): o editor fecha o
+  // valor na mesma faixa em vez de deixar o banco recusar o save.
+  it('amostra mínima inválida é fechada na faixa que o banco aceita', async () => {
+    const { result } = renderHook(() => useCampaignEditor(null, vi.fn()));
+    act(() => {
+      result.current.setName('Campanha A/B');
+      result.current.toggleContact('contact-1');
+      result.current.setAbEnabled(true);
+      result.current.setAbMinSample(0);
+    });
+
+    await act(async () => { await result.current.handleSave('draft'); });
+
+    expect(f.create).toHaveBeenCalledWith(expect.objectContaining({ ab_min_sample: 1 }));
+  });
+
   it('creates one draft and asks the server for the audience snapshot on later saves (X017)', async () => {
     const { result } = renderHook(() => useCampaignEditor(null, vi.fn()));
     act(() => { result.current.setName('Campanha de teste'); result.current.toggleContact('contact-1'); });

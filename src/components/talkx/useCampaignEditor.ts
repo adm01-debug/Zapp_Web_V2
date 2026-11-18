@@ -7,6 +7,7 @@ import { useTalkXTemplates } from '@/hooks/integrations/useTalkXTemplates';
 import { fromTable } from '@/lib/supabaseHelpers';
 import { fetchAllRows } from '@/lib/fetchAllRows';
 import { useAuth } from '@/hooks/auth/useAuth';
+import type { TalkXAbMetric } from '@/hooks/integrations/useTalkXAbStats';
 import { SPEED_PROFILES, estimateSeconds, fmtDurationShort } from './talkxShared';
 
 /**
@@ -527,6 +528,12 @@ export function useCampaignEditor(campaign: TalkXCampaign | null, onClose: () =>
   const [sendWindowEnd, setSendWindowEnd] = useState(campaign?.send_window_end?.slice(0, 5) || '18:00');
   const [businessHoursOnly, setBusinessHoursOnly] = useState(!!campaign?.business_hours_only);
   const [respectSuppression, setRespectSuppression] = useState(campaign?.respect_suppression ?? true);
+  // X065 — teste A/B. As colunas existem desde 20261118190000 e o painel de
+  // resultado ja le `ab_*`, mas nenhum fluxo da UI ligava a flag: a campanha
+  // nascia com `ab_enabled` falso e o teste era inalcancavel pelo app.
+  const [abEnabled, setAbEnabled] = useState(campaign?.ab_enabled ?? false);
+  const [abMetric, setAbMetric] = useState<TalkXAbMetric>((campaign?.ab_metric as TalkXAbMetric) ?? 'reply_rate');
+  const [abMinSample, setAbMinSample] = useState<number>(campaign?.ab_min_sample ?? 50);
   const [confirmConsent, setConfirmConsent] = useState(!!campaign?.confirm_consent);
   const [confirmContent, setConfirmContent] = useState(false);
   const [confirmSuppression, setConfirmSuppression] = useState(false);
@@ -972,10 +979,15 @@ export function useCampaignEditor(campaign: TalkXCampaign | null, onClose: () =>
     send_window_end: sendWindowEnabled ? `${sendWindowEnd}:00` : null,
     business_hours_only: businessHoursOnly,
     respect_suppression: respectSuppression,
+    // X065: so grava variante/metrica quando o teste esta ligado; desligado, a
+    // campanha volta ao padrao e o painel some.
+    ab_enabled: abEnabled,
+    ab_metric: abMetric,
+    ab_min_sample: Math.min(Math.max(Math.round(abMinSample) || 1, 1), 1000000),
     confirm_consent: confirmConsent,
     // V23: o passo atual do wizard é persistido para reabrir o rascunho no mesmo passo.
     draft_step: step,
-  }), [name, description, objective, messageTemplate, audienceSource, audienceRules, contactSearch, selectedContacts, segmentIds, templateId, templateVersionId, typingDelay, sendInterval, speedProfile, connectionId, owner, hasMedia, mediaUrl, mediaType, isScheduled, scheduledAt, scheduleTimezone, sendWindowEnabled, sendWindowStart, sendWindowEnd, businessHoursOnly, respectSuppression, confirmConsent, step]);
+  }), [name, description, objective, messageTemplate, audienceSource, audienceRules, contactSearch, selectedContacts, segmentIds, templateId, templateVersionId, typingDelay, sendInterval, speedProfile, connectionId, owner, hasMedia, mediaUrl, mediaType, isScheduled, scheduledAt, scheduleTimezone, sendWindowEnabled, sendWindowStart, sendWindowEnd, businessHoursOnly, respectSuppression, confirmConsent, abEnabled, abMetric, abMinSample, step]);
 
   // E68/E73: snapshot dos campos que o autosave acompanha. Fica declarado antes
   // de `persistSave` porque um save confirmado passa a ser o novo baseline.
@@ -984,6 +996,7 @@ export function useCampaignEditor(campaign: TalkXCampaign | null, onClose: () =>
     audienceSource, segmentIds, templateId, connectionId, owner, speedProfile,
     typingDelay, sendInterval, sendWindowEnabled, sendWindowStart, sendWindowEnd, businessHoursOnly,
     isScheduled, scheduledAt, scheduleTimezone, respectSuppression, selectedContacts,
+    abEnabled, abMetric, abMinSample, // X065: ligar o A/B conta como alteracao pendente.
     audienceRules, contactSearch,
     templateVersionId, // V26: versão do template aplicado (current_version_id; pode ser nula).
     step, // V23: o passo do wizard entra no autosave — sair no passo 2 e reabrir volta ao passo 2.
@@ -1222,6 +1235,7 @@ export function useCampaignEditor(campaign: TalkXCampaign | null, onClose: () =>
     hasMedia, isScheduled, scheduledAt, setScheduledAt,
     sendWindowEnabled, setSendWindowEnabled, sendWindowStart, setSendWindowStart, sendWindowEnd, setSendWindowEnd,
     businessHoursOnly, setBusinessHoursOnly, respectSuppression, setRespectSuppression,
+    abEnabled, setAbEnabled, abMetric, setAbMetric, abMinSample, setAbMinSample,
     confirmConsent, setConfirmConsent, confirmContent, setConfirmContent, confirmSuppression, setConfirmSuppression,
     connections, contacts, companies, filteredContacts,
     previewMessage, estimatedTime, estimatedSeconds, audienceTotal, suppressedCount, eligibleCount,
