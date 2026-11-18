@@ -23,6 +23,8 @@ import { ConversationReopenDialog } from '../conversation-list/ConversationReope
 import { VisionIcon } from '../ai-tools/VisionIcon';
 import { openChatPopup } from '@/lib/popupManager';
 import { PinnedConversationsStack, PinnedChatItem } from './PinnedConversationsStack';
+import { CrmBadges } from './CrmBadges';
+import { useExternalContact360 } from '@/hooks/crm/useExternalContact360';
 import { canArchiveConversation } from '@/hooks/inbox/conversationArchive';
 
 interface ChatMessage { id: string; content: string; sender: string; timestamp: string; }
@@ -85,6 +87,16 @@ function ChatPanelHeaderBase({
     agentId: conversation.assignedTo?.id ?? null,
   });
   const firstResponseMinutes = applicableSla?.firstResponseMinutes ?? DEFAULT_FIRST_RESPONSE_MINUTES;
+  // Selos de CRM do cabecalho. O hook nao consulta nada quando a integracao de
+  // CRM esta desligada (ele passa `enabled: crmEnabled`), e `data` vem null, o
+  // que faz o CrmBadges nao renderizar selo algum.
+  //
+  // Por que o hook aqui, e nao no ChatPanel passando por prop: medi as duas. Com
+  // a busca no ChatPanel, 7 arquivos de teste dele passam a exigir AuthProvider
+  // e QueryClientProvider (42 testes). Aqui, sao 3 arquivos que montam o
+  // cabecalho direto e precisam de uma linha de mock — o mesmo padrao que
+  // ContactHeaderSection.test.tsx:8-10 ja usa na main.
+  const { data: crm360 } = useExternalContact360(conversation.contact.id);
   const typeConfig = conversation.contact.contact_type ? CONTACT_TYPE_CONFIG[conversation.contact.contact_type] : null;
   const isHighPriority = conversation.priority === 'high';
   const showPinnedStack = !showDetails && !isMobile
@@ -172,6 +184,13 @@ function ChatPanelHeaderBase({
               </>
             )}
             {isHighPriority && <Badge variant="outline" className="h-5 px-2 rounded-full text-2xs font-semibold bg-destructive/15 text-destructive border-destructive/40">Alta prioridade</Badge>}
+            {crm360?.found && (
+              <CrmBadges
+                crmCompany={crm360.company}
+                crmCustomer={crm360.customer}
+                crmRfm={crm360.rfm}
+              />
+            )}
             <SLAIndicator
               firstMessageAt={conversation.createdAt}
               firstResponseAt={conversation.firstResponseAt ?? null}
