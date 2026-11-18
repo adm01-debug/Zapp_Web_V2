@@ -121,6 +121,63 @@ export function corpoDoKpi(runs, jobs, { janelaDias = 7, agora = Date.now(), tit
   ].join('\n');
 }
 
+// GA93: percentil de duracoes (p50/p95 por workflow, em minutos).
+export function percentil(valores, p) {
+  const xs = [...(valores ?? [])].filter(Number.isFinite).sort((a, b) => a - b);
+  if (!xs.length) return 0;
+  const pos = Math.min(xs.length - 1, Math.floor((p / 100) * xs.length));
+  return Math.round(xs[pos] * 10) / 10;
+}
+
+// GA93: monta o kpi.json por arquivo de workflow (chave = nome do .yml, que e o
+// que o render-workflow-docs le). `mapaNomeArquivo` traduz `run.name` (nome
+// amigavel do workflow) para o arquivo .yml — construido lendo o `name:` de cada
+// YAML. Campos por arquivo: custo_semana_min, taxa_falha_7d (lidos pelo render),
+// cancelados_precoces (cancelado com < 1 min, nem comecou), minutos_desperdicados
+// (soma dos cancelados), p50_min/p95_min e causas (contagem por conclusion).
+export function montarKpi(runs, jobs, { janelaDias = 7, agora = Date.now(), mapaNomeArquivo = {} } = {}) {
+  const naJanela = runsNaJanela(runs, { janelaDias, agora });
+  const porArquivo = new Map();
+  const paraArquivo = (nome) => mapaNomeArquivo[nome] ?? nome;
+  for (const run of naJanela) {
+    const arq = paraArquivo(run.name || run.workflow_id || '(sem nome)');
+    if (!porArquivo.has(arq)) {
+      porArquivo.set(arq, { runs: [], conclusoes: {}, canceladosPrecoces: 0, minutosDesperdicados: 0 });
+    }
+    const e = porArquivo.get(arq);
+    e.runs.push(run);
+    const c = run.conclusion ?? 'desconhecida';
+    e.conclusoes[c] = (e.conclusoes[c] ?? 0) + 1;
+    const min = duracaoMinutos(run);
+    if (CANCELADOS.has(run.conclusion)) {
+      e.minutosDesperdicados = Math.round((e.minutosDesperdicados + min) * 10) / 10;
+      if (min < 1) e.canceladosPrecoces += 1;
+    }
+  }
+  const saidas = {};
+  for (const [arq, e] of porArquivo) {
+    const duracoes = e.runs.map(duracaoMinutos);
+    const falhas = e.runs.filter((r) => FALHAS.has(r.conclusion)).length;
+    saidas[arq] = {
+      custo_semana_min: Math.round(duracoes.reduce((a, b) => a + b, 0) * 10) / 10,
+      taxa_falha_7d: e.runs.length ? Math.round((falhas / e.runs.length) * 1000) / 10 : 0,
+      cancelados_precoces: e.canceladosPrecoces,
+      minutos_desperdicados: e.minutosDesperdicados,
+      p50_min: percentil(duracoes, 50),
+      p95_min: percentil(duracoes, 95),
+      causas: e.conclusoes,
+    };
+  }
+  return saidas;
+}
+
+export async function gravarKpi(caminho, kpi) {
+  const { writeFileSync, mkdirSync } = await import('node:fs');
+  const { dirname } = await import('node:path');
+  mkdirSync(dirname(caminho), { recursive: true });
+  writeFileSync(caminho, `${JSON.stringify(kpi, null, 2)}\n`);
+}
+
 // ---------------------------------------------------------------- CLI
 const API = process.env.GITHUB_API_URL || 'https://api.github.com';
 const CABECALHOS = (token) => ({
@@ -229,6 +286,26 @@ async function principal() {
   const runs = await coletarRuns({ repo, token, janelaDias: janela });
   // Limita a 50 runs mais recentes para evitar timeout (1 req HTTP por run).
   const jobs = await coletarJobs(runsNaJanela(runs, { janelaDias: janela }).slice(0, 50), { repo, token });
+  // GA93: mapa nome-amigavel -> arquivo .yml. O render-workflow-docs indexa o
+  // kpi.json por arquivo, nao pelo `name:` do workflow.
+  const mapaNomeArquivo = {};
+  try {
+    const { readdirSync, readFileSync } = await import('node:fs');
+    const { join, dirname: dir } = await import('node:path');
+    const { fileURLToPath } = await import('node:url');
+    const dirWf = join(dir(fileURLToPath(import.meta.url)), '..', '..', '.github', 'workflows');
+    for (const arq of readdirSync(dirWf).filter((f) => f.endsWith('.yml'))) {
+      const m = /^name:\s*(.+?)\s*$/m.exec(readFileSync(join(dirWf, arq), 'utf8'));
+      if (m) mapaNomeArquivo[m[1]] = arq;
+    }
+  } catch {
+    // fora do repo (teste): as chaves ficam com o nome amigavel.
+  }
+  if (process.env.KPI_JSON_PATH) {
+    const kpi = montarKpi(runs, jobs, { janelaDias: janela, mapaNomeArquivo });
+    await gravarKpi(process.env.KPI_JSON_PATH, kpi);
+    console.log(`kpi.json gravado em ${process.env.KPI_JSON_PATH}`);
+  }
   const corpo = corpoDoKpi(runs, jobs, { janelaDias: janela });
   console.log(corpo);
   if (process.env.GITHUB_STEP_SUMMARY) appendFileSync(process.env.GITHUB_STEP_SUMMARY, corpo + '\n');
