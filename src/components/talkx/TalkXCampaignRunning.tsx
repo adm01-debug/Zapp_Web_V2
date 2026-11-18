@@ -26,6 +26,8 @@ import { recentMinuteSeries, averageRatePerMinute, estimateMinutesToFinish, type
 import { TalkXCampaignActionsCard } from './tracking/TalkXCampaignActionsCard';
 import { TalkXLimitsDialog } from './tracking/TalkXLimitsDialog';
 import { TalkXRecipientsTable } from './tracking/TalkXRecipientsTable';
+import { TalkXAbTestResults } from './tracking/TalkXAbTestResults';
+import { useTalkXAbStats, type TalkXAbMetric } from '@/hooks/integrations/useTalkXAbStats';
 import {
   EMPTY_LIMITS_DRAFT, formatSendDays, limitsDraftFromCampaign,
   type TalkXCampaignWithRules, type TalkXLimitsDraft, type TalkXLimitsPayload,
@@ -517,6 +519,10 @@ function TabResults({ c, sentHistory, historyQuery, onRetryHistory }: {
   historyQuery: TalkXQueryLike;
   onRetryHistory: () => void;
 }) {
+  // X065 — resultado por variante. Com o A/B desligado (o padrao) a consulta
+  // nem roda, e o painel nao aparece.
+  const abLigado = Boolean(c.ab_enabled);
+  const ab = useTalkXAbStats(c.id, abLigado);
   const deliveryRate = c.sent_count > 0 ? Math.round((c.delivered_count / c.sent_count) * 1000) / 10 : null;
   const outcomeUnknown = c.outcome_unknown_count ?? 0;
   const totalProcessed = c.sent_count + c.failed_count + outcomeUnknown;
@@ -592,6 +598,16 @@ function TabResults({ c, sentHistory, historyQuery, onRetryHistory }: {
           </div>
         </TalkXQueryBoundary>
       )}
+
+      {/* X065 — resultado do teste A/B por variante */}
+      <TalkXAbTestResults
+        abEnabled={c.ab_enabled}
+        metric={(c.ab_metric ?? 'reply_rate') as TalkXAbMetric}
+        minSample={c.ab_min_sample ?? 50}
+        winnerVariantId={c.ab_winner_variant_id}
+        variants={ab.variants}
+        isLoading={ab.isLoading}
+      />
     </div>
   );
 }
