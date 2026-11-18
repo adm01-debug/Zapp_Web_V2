@@ -11,8 +11,9 @@
 import type { ComponentProps, ReactNode } from 'react';
 import { useEffect } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { WhisperMode } from '../WhisperMode';
+import { getSnapshot, setMuted, setVolume, toGain } from '@/lib/mediaVolumeStore';
 
 const UID_GRAVADOR = '44444444-4444-4444-8444-444444444444';
 const CONTATO = '22222222-2222-4222-8222-222222222222';
@@ -220,6 +221,33 @@ describe('WhisperMode — nota de sussurro por voz', () => {
 
     await waitFor(() => expect(h.createSignedUrlMock).toHaveBeenCalledWith(AUDIO_DE_TERCEIRO, 3600));
     expect(h.storageFromMock).toHaveBeenCalledWith('audio-messages');
+  });
+
+  // A prévia é uma superfície de mídia como as outras (ver mediaVolume.players):
+  // antes ela tocava no volume do sistema, ignorando o controle único do app.
+  it('(1b) a prévia da nota gravada obedece ao controle único de volume do app', async () => {
+    h.rec.audioUrl = 'blob:previa';
+    h.rec.entregar = true;
+    h.rec.blob = new Blob(['audio'], { type: 'audio/webm' });
+    setMuted(false);
+    setVolume(80);
+
+    render(<WhisperMode contactId={CONTATO} targetAgentId={AGENTE} />);
+    abrirSussurro();
+
+    const previa = (await screen.findByLabelText('Prévia da nota de sussurro por voz')) as HTMLAudioElement;
+    expect(previa.volume).toBeCloseTo(toGain(80), 5);
+
+    act(() => setVolume(30));
+    expect(previa.volume).toBeCloseTo(toGain(30), 5);
+
+    act(() => setMuted(true));
+    expect(previa.muted).toBe(true);
+    expect(getSnapshot().volume).toBe(30);
+
+    act(() => setMuted(false));
+    expect(previa.muted).toBe(false);
+    expect(previa.volume).toBeCloseTo(toGain(30), 5);
   });
 
   it('(2) enviar o áudio sobe para <uid>/<conversa>/<uuid> no bucket e grava a linha com content vazio', async () => {

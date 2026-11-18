@@ -1,5 +1,6 @@
 import { supabase } from '@/integrations/supabase/client';
 import type { Message } from '@/types/chat';
+import { formatoDeUpload } from '@/lib/audio/gravacaoFormato';
 
 export type { Message };
 
@@ -60,18 +61,13 @@ export class ChatService {
   static async uploadAudio(contactId: string, blob: Blob) {
     // O navegador grava no formato que suporta (Chrome/Firefox: webm/ogg; Safari: mp4).
     // Nome e contentType seguem o tipo REAL do blob — rotular tudo como webm esconde o
-    // formato de quem lê o objeto. Sem tipo de áudio no blob, o padrão continua webm.
-    const mimeType = blob.type.split(';')[0].trim() || 'audio/webm';
-    const extByMime: Record<string, string> = {
-      'audio/webm': 'webm',
-      'audio/ogg': 'ogg',
-      'audio/mp4': 'm4a',
-      'audio/mpeg': 'mp3',
-    };
-    const fileName = `${contactId}/${Date.now()}.${extByMime[mimeType] ?? 'webm'}`;
+    // formato de quem lê o objeto. O mapa canônico vive em `gravacaoFormato` (cobre
+    // wav/mp3/aac/m4a além dos quatro de antes); sem mime reconhecido, o padrão é webm.
+    const { contentType, extensao } = formatoDeUpload(blob.type);
+    const fileName = `${contactId}/${Date.now()}.${extensao}`;
     const { error: uploadError } = await supabase.storage
       .from('audio-messages')
-      .upload(fileName, blob, { contentType: mimeType });
+      .upload(fileName, blob, { contentType });
 
     if (uploadError) throw uploadError;
 

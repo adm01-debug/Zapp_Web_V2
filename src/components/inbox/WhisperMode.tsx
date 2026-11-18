@@ -17,6 +17,7 @@ import { zappMotion, zappTransition, zappPopoverVariants } from '@/lib/motion';
 import { log } from '@/lib/logger';
 import { notificarSussurroEnviado, useWhisperCount, whisperCountKey } from '@/hooks/chat/useWhisperCount';
 import { useAudioRecorder } from '@/hooks/communication/useAudioRecorder';
+import { useMediaElementVolume } from '@/hooks/communication/useMediaElementVolume';
 import { createStorageObjectId, removeStoredObjectBestEffort } from '@/lib/storage_object_upload';
 import { toast } from 'sonner';
 import { WhisperAudioPlayer } from './WhisperAudioPlayer';
@@ -291,6 +292,10 @@ export function WhisperMode({ contactId, targetAgentId, className }: WhisperMode
   // Dono do bucket: a pasta do objeto é o auth.uid() de quem grava.
   const gravadorUid = user?.id ?? null;
   const recorder = useAudioRecorder({ onRecordingComplete: (blob) => setNotaGravada(blob) });
+  // a prévia da nota obedece ao controle único de volume do app (mesmo contrato
+  // das outras superfícies de mídia — ver mediaVolume.players).
+  const previaNotaRef = useRef<HTMLAudioElement>(null);
+  useMediaElementVolume(previaNotaRef);
 
   const isMountedRef = useRef(true);
   const enviadoTimerRef = useRef<number | null>(null);
@@ -629,7 +634,7 @@ export function WhisperMode({ contactId, targetAgentId, className }: WhisperMode
             ) : notaGravada ? (
               <>
                 {recorder.audioUrl && (
-                  <audio src={recorder.audioUrl} controls preload="metadata" aria-label="Prévia da nota de sussurro por voz" className="h-9 min-w-0 flex-1" />
+                  <audio ref={previaNotaRef} src={recorder.audioUrl} controls preload="metadata" aria-label="Prévia da nota de sussurro por voz" className="h-9 min-w-0 flex-1" />
                 )}
                 <Button type="button" size="icon" variant="ghost" className="h-10 w-10" onClick={descartarNota} disabled={enviandoNota} aria-label="Descartar nota de sussurro por voz">
                   <Trash2 className="h-4 w-4" aria-hidden="true" />

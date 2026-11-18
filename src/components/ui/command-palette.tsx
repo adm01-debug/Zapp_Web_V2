@@ -245,6 +245,7 @@ export function CommandPalette({
             role="combobox"
             aria-label="Buscar comandos"
             aria-expanded="true"
+            aria-autocomplete="list"
             aria-controls={listboxId}
             aria-activedescendant={activeOptionId}
             value={query} onChange={(e) => handleQueryChange(e.target.value)} placeholder={placeholder}

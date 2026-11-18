@@ -173,6 +173,41 @@ describe('WhatsAppStatusSection', () => {
     expect(evolution.getMediaBase64).toHaveBeenCalledTimes(1);
   });
 
+  it('mostra o erro de mídia do status quando o carregamento falha', async () => {
+    evolution.getMediaBase64.mockRejectedValue(new Error('falha ao baixar'));
+    setStatus([imageStory('img-1', 'Legenda do status')]);
+    render(<WhatsAppStatusSection phone="5511999999999" />);
+
+    fireEvent.click(screen.getByTestId('whatsapp-status-thumb'));
+
+    const erro = await screen.findByTestId('story-media-error');
+    expect(erro).toHaveTextContent('Não foi possível carregar a mídia deste status.');
+    expect(erro).toHaveAttribute('role', 'status');
+    expect(screen.queryByTestId('story-image')).not.toBeInTheDocument();
+    // com erro, a legenda do status não aparece ao lado da mensagem de falha.
+    expect(screen.queryByText('Legenda do status')).not.toBeInTheDocument();
+  });
+
+  it('não mantém a mídia do status anterior ao trocar de status', async () => {
+    evolution.getMediaBase64
+      .mockResolvedValueOnce({ base64: 'PRIMEIRA', mimetype: 'image/jpeg' })
+      .mockImplementationOnce(() => new Promise(() => {}));
+    setStatus([imageStory('img-1'), imageStory('img-2')]);
+    render(<WhatsAppStatusSection phone="5511999999999" />);
+
+    fireEvent.click(screen.getAllByTestId('whatsapp-status-thumb')[0]);
+    expect(await screen.findByTestId('story-image')).toHaveAttribute(
+      'src',
+      'data:image/jpeg;base64,PRIMEIRA',
+    );
+
+    fireEvent.keyDown(screen.getByTestId('story-viewer'), { key: 'ArrowRight' });
+
+    // o segundo status ainda está buscando: mostra o loading, nunca a mídia do anterior.
+    expect(await screen.findByTestId('story-media-loading')).toBeInTheDocument();
+    expect(screen.queryByTestId('story-image')).not.toBeInTheDocument();
+  });
+
   it('navega com as setas do teclado', () => {
     setStatus([textStory('a', 'primeiro'), textStory('b', 'segundo')]);
     render(<WhatsAppStatusSection phone="5511999999999" />);
