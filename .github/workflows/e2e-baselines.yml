@@ -1,0 +1,129 @@
+# docs:
+#   gatilho: dispatch manual, escolhendo o projeto visual
+#   prova: as imagens de referencia do projeto foram geradas no mesmo ambiente em que o CI as compara
+#   falha: nenhuma PR e' aberta e o run fica vermelho; as baselines commitadas seguem como estao
+#   avisa: PR em `automation/e2e-baselines-<projeto>`
+# Regera as imagens de referencia (baselines) dos projetos visuais do Playwright
+# NO MESMO AMBIENTE em que o CI as compara, e entrega o resultado numa PR.
+#
+# POR QUE EXISTE: o `toHaveScreenshot` compara pixel a pixel, e o resultado
+# depende do build exato do Chromium e das fontes do runner. Regerar numa maquina
+# de desenvolvimento produz imagens que o CI reprova — medido em 18/11/2026: com
+# Chromium 1243 local contra 1254 do CI, TODAS as seis baselines de Contatos
+# divergiam em ~10 mil pixels, inclusive as quatro que passam no CI.
+#
+# Sem este workflow, a unica saida era regerar na mao e torcer, e foi assim que
+# a baseline `contacts-table-dark-linux.png` ficou parada em 02/10/2026 enquanto
+# as outras quatro foram atualizadas em 28/10 (commit 82e22bbb8): atualizacao
+# parcial, E2E vermelho desde entao.
+#
+# O passo de teste repete, de proposito, a configuracao do job `e2e` de ci.yml
+# (ubuntu-24.04, Bun 1.4.0, Playwright 1.65.0 com --with-deps). Se um dos dois
+# mudar sem o outro, as imagens voltam a divergir.
+name: e2e-baselines
+
+on:
+  workflow_dispatch:
+    inputs:
+      projeto:
+        description: 'Projeto do Playwright cujas baselines serao regeradas'
+        required: true
+        default: 'chromium-contacts-visual'
+        type: choice
+        options:
+          - chromium-contacts-visual
+          - chromium-talkx-visual
+          - chromium-email-navy
+
+permissions:
+  contents: read
+
+jobs:
+  regerar:
+    name: Regerar baselines e abrir PR
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: 🧄 Setup Bun
+        uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
+        with:
+          bun-version: '1.4.0'
+
+      - name: 💾 Cache de dependências Bun
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.bun/install/cache
+          key: bun-${{ hashFiles('bun.lock') }}
+          restore-keys: bun-
+
+      - name: 📚 Install dependencies
+        run: bun install --frozen-lockfile --ignore-scripts
+
+      # Mesma chave do job `e2e` de ci.yml: aproveita o cache quente dele.
+      - name: 💾 Cache dos browsers Playwright
+        id: pw-cache
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.cache/ms-playwright
+          key: pw-cfw-${{ hashFiles('bun.lock') }}-${{ runner.os }}
+
+      - name: 🎭 Install Playwright (Chromium, Firefox, WebKit)
+        if: steps.pw-cache.outputs.cache-hit != 'true'
+        run: bunx playwright@1.65.0 install --with-deps chromium firefox webkit
+
+      - name: 🔧 Dependências de sistema do Playwright (cache quente)
+        if: steps.pw-cache.outputs.cache-hit == 'true'
+        run: bunx playwright install-deps chromium firefox webkit
+
+      # `--update-snapshots=changed` reescreve SO as imagens que divergirem: as
+      # que ja batem ficam byte a byte iguais e nao entram no diff da PR. Uma
+      # baseline que mude sem motivo aparece na PR e e' justamente o sinal de
+      # revisao que se quer.
+      - name: 🖼️ Regerar baselines do projeto
+        run: bun run test:e2e -- --project=${{ inputs.projeto }} --update-snapshots=changed --trace off
+        env:
+          CI: true
+
+      - name: 🔎 Conferir se alguma imagem mudou
+        id: mudou
+        run: |
+          if [ -n "$(git status --porcelain -- e2e/__screenshots__)" ]; then
+            echo "mudou=true" >> "$GITHUB_OUTPUT"
+            git status --porcelain -- e2e/__screenshots__
+          else
+            echo "mudou=false" >> "$GITHUB_OUTPUT"
+            echo "Nenhuma baseline divergiu: as imagens commitadas ja refletem este ambiente."
+          fi
+
+      - name: 📬 Abrir PR com as baselines regeradas
+        if: steps.mudou.outputs.mudou == 'true'
+        uses: peter-evans/create-pull-request@3ffccacd46053766916f087ce41d627c0b8cf2d1 # v8.1.3
+        env:
+          HUSKY: '0'  # Evita que o hook pre-push do Husky bloqueie o push interno da action
+        with:
+          token: ${{ github.token }}
+          base: main
+          branch: automation/e2e-baselines-${{ inputs.projeto }}
+          delete-branch: true
+          commit-message: 'test(e2e): regerar baselines visuais de ${{ inputs.projeto }}'
+          title: 'test(e2e): regerar baselines visuais de ${{ inputs.projeto }}'
+          body: |
+            Imagens de referencia regeradas no ambiente do CI (`ubuntu-24.04`,
+            Playwright 1.65.0), que e' o mesmo em que o job `🎭 E2E Tests` as compara.
+
+            - main de origem: `${{ github.sha }}`
+            - projeto: `${{ inputs.projeto }}`
+
+            Cada imagem no diff mudou de verdade: `--update-snapshots=changed`
+            nao reescreve as que ja batem. Confira se a mudanca visual era
+            esperada antes de mergear.
+          add-paths: |
+            e2e/__screenshots__/**
