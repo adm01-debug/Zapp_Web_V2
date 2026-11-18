@@ -4,7 +4,7 @@
 > `--check` e falha se este arquivo divergir do bloco `# docs:` de cada workflow.
 > Para mudar o que está aqui, mude o bloco no YAML.
 
-**21 workflows.**
+**22 workflows.**
 
 | Workflow | Arquivo | Gatilho | O que prova | Quando falha | Quem é avisado | Custo/sem (min) | Falha (7 d) |
 |---|---|---|---|---|---|---|---|
@@ -24,6 +24,7 @@
 | Front release targets (V2/V3) | [`front-release-targets.yml`](../../.github/workflows/front-release-targets.yml) | push na main; schedule de hora em hora (minuto 17); dispatch | V2 no alias Vercel corresponde ao SHA da main e V3 no domínio publica uma release V3 íntegra | a trilha divergente fica vermelha e a automação de falhas abre uma issue | equipe de operação, por meio do check separado e da issue de falha na main | — | — |
 | Inventário do estado real (semanal) | [`inventario-estado-semanal.yml`](../../.github/workflows/inventario-estado-semanal.yml) | agendado (seg 10:23 UTC) e dispatch | inventario/estado (banco, rotas, edges) regerado do banco oficial e do codigo | o job fica vermelho e o inventario nao e atualizado | PR automation/inventario-estado com o inventario novo | — | — |
 | Notifica falha na main | [`notifica-falha-main.yml`](../../.github/workflows/notifica-falha-main.yml) | workflow_run (conclusao dos workflows principais na main) | abre issue quando qualquer workflow critico falha na main | a falha do workflow original fica sem issue de acompanhamento | equipe de operacao, por meio da issue criada no repositorio | — | — |
+| OpenSSF Scorecard | [`scorecard.yml`](../../.github/workflows/scorecard.yml) | agendado (segunda 07:17 UTC) e dispatch | OpenSSF Scorecard mede praticas de segurança do repositório | SARIF publicado em Code Scanning; score visível em Security | aba Security → Code scanning alerts | — | — |
 | Settings Guard | [`settings-guard.yml`](../../.github/workflows/settings-guard.yml) | agendado e dispatch | o perimetro do GitHub (branch protection, merge, environments) contra o baseline versionado | issue aberta; sem escopo suficiente o guarda reporta ponto cego em vez de falhar em silencio | issue de settings | — | — |
 | Talk X V4 placar regen (push + semanal) | [`talkx-status-regen.yml`](../../.github/workflows/talkx-status-regen.yml) | push na main; schedule semanal (seg 07:45 UTC); dispatch | o placar do Talk X regenerado a partir dos dados atuais | o job fica vermelho e o placar nao e atualizado | autor do push | — | — |
 | Targeted Ledger Evidence | [`targeted-ledger-evidence.yml`](../../.github/workflows/targeted-ledger-evidence.yml) | dispatch | a evidencia do ledger de migrations para uma version especifica | o job aborta sem publicar evidencia | operador que disparou | — | — |
@@ -143,6 +144,13 @@
 - **O que prova:** abre issue quando qualquer workflow critico falha na main
 - **Quando falha:** a falha do workflow original fica sem issue de acompanhamento
 - **Quem é avisado:** equipe de operacao, por meio da issue criada no repositorio
+
+### OpenSSF Scorecard (`scorecard.yml`)
+
+- **Gatilho:** agendado (segunda 07:17 UTC) e dispatch
+- **O que prova:** OpenSSF Scorecard mede praticas de segurança do repositório
+- **Quando falha:** SARIF publicado em Code Scanning; score visível em Security
+- **Quem é avisado:** aba Security → Code scanning alerts
 
 ### Settings Guard (`settings-guard.yml`)
 
