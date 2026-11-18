@@ -42,11 +42,11 @@ confere que todo caminho listado é consumidor de verdade; ela não obriga a lis
 |---|---|
 | Tabelas (`tables`) | 213 |
 | Views (`views`) | 13 |
-| Colunas (`columns`) | 2375 |
-| Funções (`functions`) | 400 |
-| Assinaturas de função (`function_signatures`) | 402 |
+| Colunas (`columns`) | 2381 |
+| Funções (`functions`) | 402 |
+| Assinaturas de função (`function_signatures`) | 404 |
 | Funções de gatilho (`trigger_functions`) | 103 |
-| Restrições de verificação (`check_constraints`) | 249 |
+| Restrições de verificação (`check_constraints`) | 251 |
 
 As tabelas estão inventariadas uma a uma na seção seguinte. Views, funções, colunas e restrições
 têm o inventário completo no catálogo (`supabase/schema-catalog.json`) e o manifesto com hash de

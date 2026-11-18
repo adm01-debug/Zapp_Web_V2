@@ -8897,6 +8897,12 @@ export type Database = {
       }
       talkx_campaigns: {
         Row: {
+          ab_enabled: boolean
+          ab_metric: string
+          ab_min_sample: number
+          ab_winner_decided_at: string | null
+          ab_winner_decided_by: string | null
+          ab_winner_variant_id: string | null
           audience_filters: Json
           audience_snapshot_at: string | null
           audience_source: string
@@ -8971,6 +8977,12 @@ export type Database = {
           worker_lease_expires_at: string | null
         }
         Insert: {
+          ab_enabled?: boolean
+          ab_metric?: string
+          ab_min_sample?: number
+          ab_winner_decided_at?: string | null
+          ab_winner_decided_by?: string | null
+          ab_winner_variant_id?: string | null
           audience_filters?: Json
           audience_snapshot_at?: string | null
           audience_source?: string
@@ -9045,6 +9057,12 @@ export type Database = {
           worker_lease_expires_at?: string | null
         }
         Update: {
+          ab_enabled?: boolean
+          ab_metric?: string
+          ab_min_sample?: number
+          ab_winner_decided_at?: string | null
+          ab_winner_decided_by?: string | null
+          ab_winner_variant_id?: string | null
           audience_filters?: Json
           audience_snapshot_at?: string | null
           audience_source?: string
@@ -9119,6 +9137,27 @@ export type Database = {
           worker_lease_expires_at?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "talkx_campaigns_ab_winner_decided_by_fkey"
+            columns: ["ab_winner_decided_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "talkx_campaigns_ab_winner_decided_by_fkey"
+            columns: ["ab_winner_decided_by"]
+            isOneToOne: false
+            referencedRelation: "profiles_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "talkx_campaigns_ab_winner_variant_id_fkey"
+            columns: ["ab_winner_variant_id"]
+            isOneToOne: false
+            referencedRelation: "talkx_template_variants"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "talkx_campaigns_cancelled_by_fkey"
             columns: ["cancelled_by"]
@@ -13103,6 +13142,10 @@ export type Database = {
           id: string
         }[]
       }
+      decide_talkx_ab_winner: {
+        Args: { p_campaign_id: string; p_variant_id?: string }
+        Returns: Json
+      }
       decrypt_gmail_token: { Args: { p_encrypted: string }; Returns: string }
       delete_contact: { Args: { p_id: string }; Returns: string }
       delete_contacts: { Args: { p_ids: string[] }; Returns: number }
@@ -13141,6 +13184,12 @@ export type Database = {
       duplicate_talkx_campaign: {
         Args: { p_campaign_id: string }
         Returns: {
+          ab_enabled: boolean
+          ab_metric: string
+          ab_min_sample: number
+          ab_winner_decided_at: string | null
+          ab_winner_decided_by: string | null
+          ab_winner_variant_id: string | null
           audience_filters: Json
           audience_snapshot_at: string | null
           audience_source: string
@@ -15181,6 +15230,23 @@ export type Database = {
           status: string
           total: number
           total_segments: number
+        }[]
+      }
+      talkx_campaign_variant_stats: {
+        Args: { p_campaign_id: string }
+        Returns: {
+          click_rate: number
+          clicks: number
+          deliveries: number
+          delivery_rate: number
+          label: string
+          reads: number
+          replies: number
+          reply_rate: number
+          sent: number
+          total: number
+          variant_id: string
+          weight: number
         }[]
       }
       talkx_campaign_window_open: {
