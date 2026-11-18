@@ -1,15 +1,20 @@
 /**
- * useConversationMemory — memória viva da conversa (somente leitura).
+ * useConversationMemory — memória viva da conversa (leitura).
  *
  * Lê `conversation_memory` do contato. É a MESMA fonte e a MESMA cadeia de
  * consulta que `useNextBestAction` já usa (select → eq → maybeSingle); sem
- * Realtime (o painel relê ao montar) e sem escrita — a tela é só de leitura.
+ * Realtime (o painel relê ao montar).
+ *
+ * A escrita mora em `useSalvarConversationMemory`. Daqui sai o `rowId` que ela
+ * usa para decidir entre `insert` e `update` — e ele só é devolvido quando o
+ * `contact_id` da linha lida é o contato pedido, para uma resposta atrasada de
+ * outro contato nunca virar alvo de UPDATE.
  *
  * `status` distingue "não há memória" (empty) de "não foi possível ler"
  * (error): sem essa distinção, uma falha de RLS/rede apareceria para o
  * atendente como se o contato não tivesse memória nenhuma.
  */
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { log } from '@/lib/logger';
 
@@ -80,15 +85,23 @@ export function hasMemoryContent(memory: ConversationMemoryData): boolean {
 export function useConversationMemory(contactId: string) {
   const [memory, setMemory] = useState<ConversationMemoryData | null>(null);
   const [status, setStatus] = useState<ConversationMemoryStatus>('loading');
+  const [rowId, setRowId] = useState<string | null>(null);
+  const [tentativa, setTentativa] = useState(0);
+
+  /** Reconsulta o banco — usado pelo "Tentar novamente" e depois de salvar. */
+  const recarregar = useCallback(() => setTentativa((n) => n + 1), []);
 
   useEffect(() => {
     if (!contactId) return;
     let cancelled = false;
 
     const load = async () => {
+      // Dentro do `load` de proposito: `setState` direto no corpo do efeito cai
+      // na regra react-hooks/set-state-in-effect.
+      setStatus('loading');
       const { data, error } = await supabase
         .from('conversation_memory')
-        .select('facts, objections_handled, promises_made, pending_items, commercial_summary, cumulative_summary, updated_at')
+        .select('id, contact_id, facts, objections_handled, promises_made, pending_items, commercial_summary, cumulative_summary, updated_at')
         .eq('contact_id', contactId)
         .maybeSingle();
 
@@ -97,18 +110,25 @@ export function useConversationMemory(contactId: string) {
       if (error) {
         log.error('Error fetching conversation memory:', error);
         setMemory(null);
+        setRowId(null);
         setStatus('error');
         return;
       }
 
+      const linha = (data ?? null) as { id?: unknown; contact_id?: unknown } | null;
+      // Só é "nossa linha" se o contato dela é o contato pedido.
+      const idProprio =
+        typeof linha?.id === 'string' && linha?.contact_id === contactId ? linha.id : null;
+
       const parsed = parseConversationMemory(data);
+      setRowId(idProprio);
       setMemory(parsed);
       setStatus(parsed && hasMemoryContent(parsed) ? 'ok' : 'empty');
     };
 
     void load();
     return () => { cancelled = true; };
-  }, [contactId]);
+  }, [contactId, tentativa]);
 
-  return { memory, status, loading: status === 'loading' };
+  return { memory, status, loading: status === 'loading', rowId, recarregar };
 }
