@@ -56,33 +56,69 @@ export function walk(dir, acc = []) {
   return acc;
 }
 
+// `.rpc` guardado numa variavel: `const rpc = supabase.rpc.bind(supabase) as ...`
+// (ou `= supabase.rpc;`). A chamada que vem depois e `rpc('nome', {...})` -- sem
+// `.rpc(` literal nenhum. Sem esta deteccao o guard nao ve o alvo: foi assim que
+// `talkx_template_library_stats` e `talkx_template_stats` chegaram a producao sem
+// existir no banco (404 no POST /rest/v1/rpc/..., telas 04 e 05 do Talk X em erro)
+// com o guard dizendo "novas: 0".
+// Limite conhecido: a declaracao tem de caber numa linha (o padrao nao atravessa
+// `;` nem quebra de linha) e o alias nao pode vir de cliente que nao e o principal.
+const RPC_ALIAS_RE = /\b(?:const|let|var)\s+([A-Za-z_$][\w$]*)\s*(?::[^=\n]+)?=\s*[^;\n]*\.rpc\b/g;
+
+export function aliasesDeRpc(src) {
+  const aliases = new Set();
+  let m;
+  RPC_ALIAS_RE.lastIndex = 0;
+  while ((m = RPC_ALIAS_RE.exec(src))) {
+    // Alias de cliente que nao e o principal nao conta como alvo do catalogo
+    // public -- mesma regra do NON_MAIN aplicada ao `.rpc()` literal.
+    if (NON_MAIN.test(m[0].replace(/\.rpc\b.*$/, ''))) continue;
+    aliases.add(m[1]);
+  }
+  return aliases;
+}
+
+/** Alvos `.from()`/`.rpc()` de UM arquivo. Exportado para o teste do padrao. */
+export function detectarAlvos(src, file = '<memoria>') {
+  const found = [];
+  const vistos = new Set();
+  const detectores = [
+    ['from', /\.from\(\s*['"`]([a-zA-Z0-9_-]+)['"`]/g],
+    ['rpc', /\.rpc\(\s*['"`]([a-zA-Z0-9_]+)['"`]/g],
+  ];
+  for (const alias of aliasesDeRpc(src)) {
+    detectores.push(['rpc', new RegExp(String.raw`\b${alias}\(\s*['"\`]([a-zA-Z0-9_]+)['"\`]`, 'g')]);
+  }
+  for (const [kind, re] of detectores) {
+    let m;
+    while ((m = re.exec(src))) {
+      const before = src.slice(Math.max(0, m.index - 150), m.index);
+      if (NON_MAIN.test(before)) continue;
+      // `supabase.schema('ops').from('x')` aponta para outro schema: o schema
+      // faz parte da identidade do alvo. Sem ele o guard compara 'x' com o
+      // catalogo public e acusa alvo inexistente (ou deixa passar um alvo de
+      // outro schema que nao existe). Sem `.schema(...)`, o padrao e public.
+      const schemaMatch = before.match(SCHEMA_RE);
+      const line = src.slice(0, m.index).split('\n').length;
+      const schema = (schemaMatch ? schemaMatch[1] : 'public').toLowerCase();
+      // `supabase.rpc('x')` casa com o detector literal E com o do alias quando
+      // o alias se chama `rpc`: sem dedupe o mesmo alvo contaria duas vezes.
+      const chave = `${kind}|${schema}|${m[1]}|${line}`;
+      if (vistos.has(chave)) continue;
+      vistos.add(chave);
+      found.push({ kind, schema, name: m[1], file, line });
+    }
+  }
+  return found;
+}
+
 export function scan() {
   const found = [];
   for (const dir of SCAN_DIRS) {
     for (const file of walk(dir)) {
       const src = fs.readFileSync(file, 'utf8');
-      for (const [kind, re] of [
-        ['from', /\.from\(\s*['"`]([a-zA-Z0-9_-]+)['"`]/g],
-        ['rpc', /\.rpc\(\s*['"`]([a-zA-Z0-9_]+)['"`]/g],
-      ]) {
-        let m;
-        while ((m = re.exec(src))) {
-          const before = src.slice(Math.max(0, m.index - 150), m.index);
-          if (NON_MAIN.test(before)) continue;
-          // `supabase.schema('ops').from('x')` aponta para outro schema: o schema
-          // faz parte da identidade do alvo. Sem ele o guard compara 'x' com o
-          // catalogo public e acusa alvo inexistente (ou deixa passar um alvo de
-          // outro schema que nao existe). Sem `.schema(...)`, o padrao e public.
-          const schemaMatch = before.match(SCHEMA_RE);
-          found.push({
-            kind,
-            schema: (schemaMatch ? schemaMatch[1] : 'public').toLowerCase(),
-            name: m[1],
-            file: file.split(path.sep).join('/'),
-            line: src.slice(0, m.index).split('\n').length,
-          });
-        }
-      }
+      found.push(...detectarAlvos(src, file.split(path.sep).join('/')));
     }
   }
   return found;
