@@ -499,7 +499,28 @@ jobs:
       # algum. Sem esta linha os PRs passavam com E2E VERDE sem rodar spec alguma do
       # mapa (#463 / E75).
       - name: 🧪 Run Playwright E2E (PR sem autenticação)
-        run: bun run test:e2e -- --project=chromium --project=chromium-theme --project=chromium-mapa --project=chromium-contacts-visual --project=chromium-a11y --project=chromium-email-navy --project=firefox-email-navy --project=webkit-email-navy
+        run: bun run test:e2e -- --project=chromium --project=chromium-theme --project=chromium-mapa --project=chromium-contacts-visual --project=chromium-a11y --project=chromium-email-navy --project=webkit-email-navy
+        env:
+          CI: true
+
+      # `firefox-email-navy` sai do passo acima e roda sozinho, com UM worker.
+      #
+      # Ele vinha falhando com "Page crashed" perto do fim de
+      # email-navy-visual.spec.ts (134 testes), e sempre em teste variavel — a
+      # marca de falta de memoria no processo de conteudo, nao de um teste ruim.
+      # Os `workers` do playwright.config sao globais (4 no CI), entao o projeto
+      # subia 4 Firefox ao mesmo tempo no runner de 2 nucleos; `--workers=1`
+      # derruba o pico para um quarto. Duas reducoes anteriores de consumo
+      # (processo de conteudo unico, PR #3180; trace sem screenshot nem snapshot,
+      # PR #3182) levaram as falhas de 6 para 3 e depois para 1, o que sustenta a
+      # mesma causa.
+      #
+      # Passo separado em vez de job separado: o guard scripts/ci/ci-artifacts.unit.mjs
+      # trava este workflow em 2 uploads de artefato, e um job novo exigiria
+      # cache de browser e upload proprios. No mesmo job, o report de falha ja
+      # cobre os dois passos.
+      - name: 🧪 Run Playwright E2E (visual do Firefox, 1 worker)
+        run: bun run test:e2e -- --project=firefox-email-navy --workers=1
         env:
           CI: true
 
