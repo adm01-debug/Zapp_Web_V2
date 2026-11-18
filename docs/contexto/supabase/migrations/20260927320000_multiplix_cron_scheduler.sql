@@ -1,0 +1,15 @@
+DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM vault.secrets WHERE name = 'multiplix_cron_secret') THEN PERFORM vault.create_secret(md5(random()::text) || md5(random()::text), 'multiplix_cron_secret'); END IF; END; $$
+
+CREATE OR REPLACE FUNCTION public.get_multiplix_cron_secret() RETURNS text LANGUAGE sql SECURITY DEFINER SET search_path = public AS $$ SELECT decrypted_secret FROM vault.decrypted_secrets WHERE name = 'multiplix_cron_secret' LIMIT 1 $$
+
+REVOKE ALL ON FUNCTION public.get_multiplix_cron_secret() FROM PUBLIC, anon, authenticated
+
+GRANT EXECUTE ON FUNCTION public.get_multiplix_cron_secret() TO service_role
+
+CREATE OR REPLACE FUNCTION public.trigger_pending_multiplix_dispatches() RETURNS void LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$ DECLARE v_dispatch_id uuid; v_anon_key text; v_cron_secret text; BEGIN SELECT decrypted_secret INTO v_anon_key FROM vault.decrypted_secrets WHERE name = 'zapp_anon_key' LIMIT 1; SELECT decrypted_secret INTO v_cron_secret FROM vault.decrypted_secrets WHERE name = 'multiplix_cron_secret' LIMIT 1; FOR v_dispatch_id IN SELECT id FROM public.multiplix_dispatches WHERE status = 'sending' ORDER BY updated_at LIMIT 10 LOOP PERFORM net.http_post(url := 'https://tnnnlkbymytvtqngbbqh.supabase.co/functions/v1/multiplix-send', body := jsonb_build_object('dispatchId', v_dispatch_id::text, 'action', 'start'), headers := jsonb_build_object('Content-Type', 'application/json', 'apikey', v_anon_key, 'Authorization', 'Bearer ' || v_anon_key, 'x-cron-secret', v_cron_secret), timeout_milliseconds := 30000); END LOOP; END; $$
+
+REVOKE ALL ON FUNCTION public.trigger_pending_multiplix_dispatches() FROM PUBLIC, anon, authenticated
+
+GRANT EXECUTE ON FUNCTION public.trigger_pending_multiplix_dispatches() TO service_role
+
+SELECT cron.schedule('multiplix-send-trigger', '*/2 * * * *', 'SELECT public.trigger_pending_multiplix_dispatches()')

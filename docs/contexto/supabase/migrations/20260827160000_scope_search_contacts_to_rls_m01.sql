@@ -1,0 +1,1 @@
+-- M-01: alinha search_contacts a contacts_select_policy (RLS). Predicado adicionado ao WHERE: is_admin_or_supervisor(auth.uid()) OR c.assigned_to = get_profile_id_for_user(auth.uid()) OR c.assigned_to IS NULL. No-op com dados atuais (54 contatos nao-atribuidos); passa a escopar quando houver atribuicao. Ver docs/audits/EXECUCAO_MELHORIAS_2026-08-27.md (M-01).
