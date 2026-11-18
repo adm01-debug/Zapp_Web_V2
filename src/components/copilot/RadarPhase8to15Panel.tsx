@@ -14,6 +14,7 @@ import { useLeadThermometer } from '@/hooks/copilot/useLeadThermometer';
 import { usePurchaseSignals } from '@/hooks/copilot/usePurchaseSignals';
 import { useCoachingTip } from '@/hooks/copilot/useCoachingTip';
 import { useGuardrails } from '@/hooks/copilot/useGuardrails';
+import { useProductRecommendation } from '@/hooks/copilot/useProductRecommendation';
 
 import { ObjectionHandlerCard } from './ObjectionHandlerCard';
 import { DiscountGuardrailBanner } from './DiscountGuardrailBanner';
@@ -23,8 +24,9 @@ import { UpsellCard } from './UpsellCard';
 import { LeadThermometerBadge } from './LeadThermometerBadge';
 import { PurchaseSignalAlert } from './PurchaseSignalAlert';
 import { CoachingTipBanner } from './CoachingTipBanner';
+import { ProductRecommendationCard } from './ProductRecommendationCard';
 
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import { ShieldAlert } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -76,8 +78,26 @@ export function RadarPhase8to15Panel({
   const purchaseSignals = usePurchaseSignals({ clientText: lastClientMessage });
   const coachingTips = useCoachingTip({ draftText });
   const guardrailViolations = useGuardrails({ draftText });
+  // CV-105 — recomendação por IA. Fica sob demanda de propósito: cada clique é
+  // uma chamada de edge paga, então o card só pede o payload quando o atendente
+  // aperta. O gatilho é a última mensagem do cliente, a mesma fonte do resto
+  // deste painel.
+  const produto = useProductRecommendation();
+  const pedirRecomendacao = useCallback(() => {
+    if (!lastClientMessage) return;
+    void produto.recommend({
+      messages: [{ content: lastClientMessage, sender: 'contact' }],
+      context: clientName || undefined,
+    });
+  }, [clientName, lastClientMessage, produto]);
 
+  // CV-105 e o termometro so dependem de haver mensagem do cliente. Antes, o
+  // portao abaixo escondia o painel inteiro quando nenhum card de REGRA tinha
+  // disparado — e o bloco do termometro, escrito para aparecer com qualquer
+  // mensagem do cliente, nunca chegava a tela. Com a recomendacao sob demanda,
+  // esconder o painel tambem deixaria o atendente sem como pedi-la.
   const hasContent =
+    Boolean(lastClientMessage) ||
     (objection.detected && !objectionDismissed) ||
     (discountGuard.detected && !guardrailDismissed) ||
     lossRisk.level !== 'low' ||
@@ -100,6 +120,19 @@ export function RadarPhase8to15Panel({
       {/* Sinais de compra */}
       {purchaseSignals.length > 0 && (
         <PurchaseSignalAlert signals={purchaseSignals} />
+      )}
+
+      {/* CV-105 — recomendação de produto por IA (sob demanda) */}
+      {lastClientMessage && (
+        <ProductRecommendationCard
+          recommendations={produto.recommendations}
+          topPick={produto.topPick}
+          upsellOpportunity={produto.upsellOpportunity}
+          isLoading={produto.isLoading}
+          error={produto.error}
+          onRecommend={pedirRecomendacao}
+          onUseSuggestion={onInsertText}
+        />
       )}
 
       {/* Guardrail de desconto */}

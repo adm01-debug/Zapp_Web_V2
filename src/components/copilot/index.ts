@@ -46,6 +46,7 @@ export { QuoteDraftCard } from './QuoteDraftCard';
 
 // CV-088 — upsell
 export { UpsellCard } from './UpsellCard';
+export { ProductRecommendationCard } from './ProductRecommendationCard';
 
 // CV-091 — termômetro de lead
 export { LeadThermometerBadge } from './LeadThermometerBadge';

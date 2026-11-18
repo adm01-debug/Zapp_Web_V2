@@ -58,6 +58,9 @@ export type { AudioTranscriptionResult } from './useAudioTranscription';
 export { useImageAnalysis } from './useImageAnalysis';
 export type { ImageAnalysisResult } from './useImageAnalysis';
 
+export { useProductRecommendation } from './useProductRecommendation';
+export type { ProductRecommendationItem, ProductRecommendationResult } from './useProductRecommendation';
+
 export { usePdfExtraction } from './usePdfExtraction';
 export type { PdfExtractionResult } from './usePdfExtraction';
 
