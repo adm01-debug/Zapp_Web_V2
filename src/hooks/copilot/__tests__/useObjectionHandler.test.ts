@@ -48,6 +48,16 @@ describe('useObjectionHandler', () => {
     expect(result.current.type).toBe('concorrente');
   });
 
+  // "barato" solto (sem "sai mais barato") é objeção de preço: sem o gatilho, o
+  // vendedor não recebia roteiro nenhum em "quero algo mais barato".
+  it('detecta objeção de preço com "barato" solto', () => {
+    const { result } = renderHook(() =>
+      useObjectionHandler({ clientText: 'Quero algo mais barato.' }),
+    );
+    expect(result.current.detected).toBe(true);
+    expect(result.current.type).toBe('preco');
+  });
+
   it('detecta "vou pensar" como objeção genérica', () => {
     const { result } = renderHook(() =>
       useObjectionHandler({ clientText: 'Vou pensar e te retorno.' }),
