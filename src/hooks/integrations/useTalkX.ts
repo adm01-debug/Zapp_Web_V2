@@ -56,6 +56,14 @@ export interface TalkXCampaign {
   // V26 — versão do template (talkx_template_versions.id) que originou a
   // mensagem. Opcional até o types-sync canônico após a migration da coluna.
   template_version_id?: string | null;
+  // X065 — teste A/B da campanha (migration 20261118190000). Opcionais ate o
+  // types-sync canonico rodar sobre o banco com a migration aplicada.
+  ab_enabled?: boolean | null;
+  ab_metric?: 'reply_rate' | 'click_rate' | 'delivery_rate' | null;
+  ab_min_sample?: number | null;
+  ab_winner_variant_id?: string | null;
+  ab_winner_decided_at?: string | null;
+  ab_winner_decided_by?: string | null;
   send_window_start?: string | null;
   send_window_end?: string | null;
   business_hours_only?: boolean;
