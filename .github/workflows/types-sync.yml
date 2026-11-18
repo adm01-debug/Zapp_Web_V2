@@ -681,6 +681,7 @@ jobs:
             supabase/schema-manifest.json
             scripts/db-audit/grants-baseline.json
             scripts/db-audit/known-violations.json
+            docs/DB-INVENTORY.md
 
       - name: Exigir PR criado ou atualizado
         if: >-
