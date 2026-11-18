@@ -4,12 +4,13 @@ import { buildEditContactShape } from './contact-details/editContactShape';
 import { Conversation } from '@/types/chat';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { PanelRightClose, Brain, Send } from 'lucide-react';
+import { PanelRightClose, Brain, Send, Building2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ContactHeaderSection } from './contact-details/ContactHeaderSection';
 import { ContactSidebarSections } from './contact-details/sidebar/ContactSidebarSections';
 import { SidebarSection } from './contact-details/sidebar/SidebarSection';
 import { ContactIntelligencePanel } from './contact-details/ContactIntelligencePanel';
+import { ExternalContact360Panel } from './contact-details/ExternalContact360Panel';
 import { ContactDeliveryPanel } from './contact-details/ContactDeliveryPanel';
 import { ConversationMemorySection } from './contact-details/ConversationMemorySection';
 import { AtendimentoSection } from './contact-details/AtendimentoSection';
@@ -137,9 +138,20 @@ export function ContactDetails({ conversation, onClose }: ContactDetailsProps) {
             >
               <ContactDeliveryPanel contactId={contact.id} />
             </SidebarSection>
+            {/* Resgate: a visao 360 do CRM externo (empresa, decisores, historico
+                de interacoes, canais) tinha hook e tipos na main desde sempre, mas
+                nenhuma tela. Recolhida por padrao, igual as vizinhas: o
+                useExternalContact360 so consulta quando a secao abre. */}
+            <SidebarSection
+              index={5} value="crm360" tone="purple"
+              icon={<Building2 />} title="Visão 360 do CRM"
+              subtitle="Empresa, decisores, histórico de interações e canais"
+            >
+              <ExternalContact360Panel contactId={contact.id} />
+            </SidebarSection>
             {/* Restaurados (2026-11-12): começam recolhidos e só buscam dado ao abrir. */}
-            <ConversationMemorySection contactId={contact.id} index={5} />
-            <AtendimentoSection contactId={contact.id} phone={contact.phone} name={contact.name} index={6} />
+            <ConversationMemorySection contactId={contact.id} index={6} />
+            <AtendimentoSection contactId={contact.id} phone={contact.phone} name={contact.name} index={7} />
           </Accordion>
         </div>
       </div>
