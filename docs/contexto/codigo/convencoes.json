@@ -66,11 +66,11 @@
  "commits": {
   "convencao": "livre",
   "exemplos": [
+   "feat(evolution-api): adiciona ação 'pairing-code' para parear aparelho por código (#3290)",
    "ci(security): dependency review barra CVE novo high/critical nos PRs (#3288)",
    "chore(contexto): atualiza snapshots X065 (persist_talkx_recipient_message_snapshot e set_talkx_campaign_ab) (#3289)",
    "docs(mapa): incorporar acervo de refs do remoto + veredito da auditoria (#3287)",
-   "chore(docs): consolidar relatório de liquidação com estado final (PEND=0)",
-   "docs: publicar snapshots SQL documentais do contexto X065 (#3284)"
+   "chore(docs): consolidar relatório de liquidação com estado final (PEND=0)"
   ]
  },
  "pr_template": ".github/PULL_REQUEST_TEMPLATE.md",

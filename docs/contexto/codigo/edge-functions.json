@@ -1707,7 +1707,7 @@
    "nome": "evolution-api",
    "entrada": "supabase/functions/evolution-api/index.ts",
    "arquivos": 1,
-   "linhas": 1569,
+   "linhas": 1610,
    "verify_jwt": true,
    "metodos": [],
    "tabelas": [

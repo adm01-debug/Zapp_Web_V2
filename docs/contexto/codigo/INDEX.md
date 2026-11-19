@@ -1,7 +1,7 @@
 # Contexto do projeto para agentes de IA
 
 GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.
-Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR dela) a cada push em `main` e a cada 10 minutos pelo workflow `contexto.yml`; índice único das três fontes em `docs/contexto/00-INDEX.md`. Gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `966a524f0f3a5cda00d7993042bb7491f1abcf3c` (2026-11-19T16:04:57-03:00).
+Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR dela) a cada push em `main` e a cada 10 minutos pelo workflow `contexto.yml`; índice único das três fontes em `docs/contexto/00-INDEX.md`. Gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `b267f6b2efb567f1ae7bdb44ee121c0645d76f0c` (2026-11-19T18:10:59-03:00).
 
 ## Como usar (leia antes de planejar ou executar qualquer tarefa)
 1. **Tela/rota/menu** → `rotas.json` (url/vista/menu → arquivo → hooks → tabelas → edges; `rotas_http_backend` para APIs) e `modulos.json` (módulo inteiro + dependências entre módulos).
@@ -36,7 +36,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 |---|---|
 | arquivos_total | 14621 |
 | arquivos_codigo | 5840 |
-| linhas_codigo | 1130179 |
+| linhas_codigo | 1130257 |
 | rotas | 18 |
 | rotas_http_backend | 11 |
 | vistas_por_id | 55 |
@@ -394,14 +394,14 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - possiveis_segredos_no_codigo: 6 — ex.: analise-prs/resgate-261118-lote3/claude_pink/cool-dijkstra-xk9ek2/scripts/ci/edge-coverage-authz.unit.mjs:397, analise-prs/resgate-261118-lote3/claude_pink/cool-dijkstra-xk9ek2/scripts/edge-deploy/redigir-log.unit.mjs:38, scripts/ai-context/cenarios.mjs:102
 
 ## Grafo de código (graphify)
-- 92986 nós · 164566 arestas · 8173 comunidades · grafo do commit `966a524f`
-- comunidades maiores: Communities (5953 total, 1987 thin omitted) (3946), TalkXSuppression.tsx (1293), react (907), vitest (835), sonner (735), utils.ts (653), cn (583), useAuth (531), @tanstack/react-query (531), ref_node_assert (516), ref_https (450), ref_node_fs (443)
+- 92990 nós · 164578 arestas · 8196 comunidades · grafo do commit `b267f6b2`
+- comunidades maiores: Communities (5953 total, 1987 thin omitted) (3947), cn (1329), lucide-react (1327), react (1272), vitest (1005), TalkXSuppression.tsx (967), DashboardView.tsx (752), ref_node_assert (719), src/hooks/integrations/useTalkXSegments.ts (617), validation.ts (571), ExternalProductManagement.tsx (554), ref_https (496)
 - símbolos mais chamados: cn() (src/lib/utils.ts), useAuth() (src/hooks/auth/useAuth.tsx), jsonResponse() (supabase/functions/_shared/validation.ts), errorResponse() (supabase/functions/_shared/validation.ts), handleCors() (supabase/functions/_shared/validation.ts), fail() (scripts/e2e-isolated/network-proof-policy.mjs), Logger (supabase/functions/_shared/validation.ts), requireEnv() (supabase/functions/_shared/validation.ts), fmtInt() (src/components/talkx/kit/format.ts), fromTable() (src/lib/supabaseHelpers.ts), useUserRole() (src/hooks/system/useUserRole.ts), validationErrorResponse() (supabase/functions/_shared/schemas.ts)
 - consulta local: `graphify query "<pergunta>"`, `graphify path "<A>" "<B>"`, `graphify explain "<X>"`
 
 ## Hotspots (arquivos mais alterados, 90 dias)
-- supabase/deployment-manifest.json (29)
-- ESTADO.md (15)
+- supabase/deployment-manifest.json (30)
+- ESTADO.md (16)
 - docs/talkx/ESTADOS.md (15)
 - scripts/db-audit/grants-baseline.json (13)
 - src/integrations/supabase/types.ts (12)
@@ -412,9 +412,9 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - docs/DB-INVENTORY.md (10)
 - .github/workflows/ci.yml (9)
 - docs/agentes/github-ci.md (8)
+- supabase/functions/evolution-api/index.ts (8)
 - docs/ci/README.md (7)
 - scripts/ci/ci-docs-baseline.unit.mjs (7)
-- supabase/functions/evolution-api/index.ts (7)
 
 ## Workflows
 - `branch-hygiene-audit.yml` — Branch Hygiene Audit (schedule, workflow_dispatch; cron 56 7 * * 1)
@@ -522,6 +522,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - CHANGELOG topo: [Unreleased]
 
 ## Últimos commits
+- 2026-11-19 `b267f6b2` feat(evolution-api): adiciona ação 'pairing-code' para parear aparelho por código (#3290)
 - 2026-11-19 `966a524f` ci(security): dependency review barra CVE novo high/critical nos PRs (#3288)
 - 2026-11-19 `55b35739` chore(contexto): atualiza snapshots X065 (persist_talkx_recipient_message_snapshot e set_talkx_campaign_ab) (#3289)
 - 2026-11-19 `76b0c7eb` docs(mapa): incorporar acervo de refs do remoto + veredito da auditoria (#3287)
@@ -536,7 +537,6 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - 2026-11-18 `b85934ad` docs(banco): indice de cron.job_run_details virou obsoleto, sem chamado a abrir (#3277)
 - 2026-11-19 `755c0a6b` chore(db): sincronizar artefatos derivados do banco (#3276)
 - 2026-11-18 `38c2ae41` feat(talkx): teste A/B deixa de ser inalcançável pela interface (#3272)
-- 2026-11-18 `231b0e58` feat(talkx): decidir a vencedora do A/B pela tela de execução (#3274)
 
 ## Arquivos deste diretório
 - `docs/contexto/codigo/rotas.json`

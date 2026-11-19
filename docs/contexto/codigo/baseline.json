@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "966a524f0f3a5cda00d7993042bb7491f1abcf3c",
+  "commit": "b267f6b2efb567f1ae7bdb44ee121c0645d76f0c",
   "branch": "main",
-  "data_commit": "2026-11-19T16:04:57-03:00",
+  "data_commit": "2026-11-19T18:10:59-03:00",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "b267f6b2",
+    "data": "2026-11-19",
+    "assunto": "feat(evolution-api): adiciona ação 'pairing-code' para parear aparelho por código (#3290)"
+   },
    {
     "sha": "966a524f",
     "data": "2026-11-19",
@@ -126,14 +131,9 @@
     "sha": "4366aa60",
     "data": "2026-11-18",
     "assunto": "DB-INVENTORY ganha gerador, e o types-sync para de congelar a cada objeto novo (#3266)"
-   },
-   {
-    "sha": "f058a63e",
-    "data": "2026-11-18",
-    "assunto": "Registra a auditoria de liquidação de branches, PEND=0 (#3264)"
    }
   ],
-  "arquivos_mudados_7d": 6742,
+  "arquivos_mudados_7d": 6740,
   "pastas_mais_mudadas_30d": [
    {
     "pasta": "docs/contexto/supabase",
@@ -169,7 +169,7 @@
    },
    {
     "pasta": "supabase/functions/_shared",
-    "mudancas": 226
+    "mudancas": 228
    },
    {
     "pasta": "analise-prs/resgate-261118-lote3/fix",
@@ -199,11 +199,11 @@
   "arquivos_mais_mudados_90d": [
    {
     "arquivo": "supabase/deployment-manifest.json",
-    "mudancas": 29
+    "mudancas": 30
    },
    {
     "arquivo": "ESTADO.md",
-    "mudancas": 15
+    "mudancas": 16
    },
    {
     "arquivo": "docs/talkx/ESTADOS.md",
@@ -246,15 +246,15 @@
     "mudancas": 8
    },
    {
+    "arquivo": "supabase/functions/evolution-api/index.ts",
+    "mudancas": 8
+   },
+   {
     "arquivo": "docs/ci/README.md",
     "mudancas": 7
    },
    {
     "arquivo": "scripts/ci/ci-docs-baseline.unit.mjs",
-    "mudancas": 7
-   },
-   {
-    "arquivo": "supabase/functions/evolution-api/index.ts",
     "mudancas": 7
    },
    {
@@ -294,7 +294,7 @@
     "mudancas": 5
    },
    {
-    "arquivo": "docs/contexto/regras/manual/regras.md",
+    "arquivo": "docs/audits/edge-functions-authz-coverage.md",
     "mudancas": 5
    }
   ],
@@ -316,7 +316,7 @@
  "contagens": {
   "arquivos_total": 14621,
   "arquivos_codigo": 5840,
-  "linhas_codigo": 1130179,
+  "linhas_codigo": 1130257,
   "rotas": 18,
   "rotas_http_backend": 11,
   "vistas_por_id": 55,
@@ -804,7 +804,7 @@
   },
   "supabase/functions": {
    "arquivos": 424,
-   "linhas": 127253
+   "linhas": 127331
   },
   "tailwind.config.ts": {
    "arquivos": 1,
@@ -842,7 +842,7 @@
   },
   {
    "arquivo": "supabase/functions/evolution-api/index.ts",
-   "linhas": 1569
+   "linhas": 1610
   },
   {
    "arquivo": "scripts/ci/ci-local.mjs",
