@@ -32,8 +32,15 @@ BEGIN
            WHEN recipient.message_snapshot_at IS NULL THEN p_media_type
            ELSE recipient.media_type_snapshot
          END,
-         variant_id = COALESCE(recipient.variant_id, p_variant_id),
-         variant_id_snapshot = COALESCE(recipient.variant_id_snapshot, recipient.variant_id, p_variant_id),
+         -- X065: no primeiro snapshot vale a decisao do worker, NULL incluso.
+         variant_id = CASE
+           WHEN recipient.message_snapshot_at IS NULL THEN p_variant_id
+           ELSE recipient.variant_id
+         END,
+         variant_id_snapshot = CASE
+           WHEN recipient.message_snapshot_at IS NULL THEN p_variant_id
+           ELSE COALESCE(recipient.variant_id_snapshot, recipient.variant_id)
+         END,
          message_snapshot_at = COALESCE(recipient.message_snapshot_at, statement_timestamp()),
          updated_at = statement_timestamp()
    WHERE recipient.id = p_recipient_id
