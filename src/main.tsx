@@ -84,7 +84,26 @@ ReactDOM.createRoot(rootElement).render(
 // `a11y-tarefas-dashboard.spec.ts:16`, `monitoring.spec.ts:28` e
 // `email-navy-visual.spec.ts:154`. Esta auditoria do app so escreve aviso no
 // console; nao afirma nada.
-if (import.meta.env.DEV && !navigator.webdriver) {
+// `navigator.webdriver` sozinho NAO resolveu o `Page crashed`: depois de o adicionar
+// (#3190, 16/11), o crash parou de sortear vitima e passou a cair SEMPRE em
+// `email-navy-visual.spec.ts:343`, nas duas tentativas, em 8 de 8 tentativas de 4 jobs
+// de CI (134120598224, 134152512413, 135270304713, 135270180565) -- e so no Firefox.
+//
+// MEDIDO: `navigator.webdriver` e `true` no Chromium do Playwright, o que explica
+// `chromium-email-navy` e `webkit-email-navy` nunca caírem.
+// NAO VERIFICADO: o valor dele no Firefox do Playwright. Nao ha binario de Firefox neste
+// ambiente e o download e barrado pelo proxy de egress. O que se sabe do codigo e que o
+// Playwright nao seta esse campo em JS (`grep -rn webdriver node_modules/playwright-core/lib/`
+// devolve um unico comentario) e que o Firefox dele sobe sob Juggler, sem Marionette.
+//
+// Independente do mecanismo, depender de adivinhar o browser e frágil. `VITE_A11Y_AUDIT_CONTINUO`
+// e explicita e vale nos tres engines: o proprio `playwright.config.ts` a define no dev
+// server que o E2E sobe.
+if (
+  import.meta.env.DEV
+  && import.meta.env.VITE_A11Y_AUDIT_CONTINUO !== 'off'
+  && !navigator.webdriver
+) {
   window.setTimeout(() => {
     import('@axe-core/react').then((axe) => {
       axe.default(React, ReactDOM, 1000, undefined, undefined, (results) => {

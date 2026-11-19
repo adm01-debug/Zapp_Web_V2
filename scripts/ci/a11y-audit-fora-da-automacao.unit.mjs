@@ -14,13 +14,16 @@ import { readFileSync } from 'node:fs';
 // auditoria continua existindo em DEV para o desenvolvedor, e nao entra sob
 // automacao.
 const main = readFileSync(new URL('../../src/main.tsx', import.meta.url), 'utf8');
+const playwright = readFileSync(new URL('../../playwright.config.ts', import.meta.url), 'utf8');
 
 test('a auditoria continua do axe nao roda sob automacao', () => {
-  const guarda = /if \(import\.meta\.env\.DEV && !navigator\.webdriver\) \{/.exec(main);
+  const guarda = /if \(\s*import\.meta\.env\.DEV\s*&&\s*import\.meta\.env\.VITE_A11Y_AUDIT_CONTINUO !== 'off'\s*&&\s*!navigator\.webdriver\s*\)\s*\{/.exec(main);
   assert.ok(
     guarda,
-    'src/main.tsx tem de condicionar a auditoria do axe a `import.meta.env.DEV && !navigator.webdriver`: ' +
-      'sem o segundo termo o E2E volta a carregar 4,3 MB de axe por teste e o Firefox cai em Page crashed',
+    'src/main.tsx tem de condicionar a auditoria do axe aos TRES termos: ' +
+      "`import.meta.env.DEV && import.meta.env.VITE_A11Y_AUDIT_CONTINUO !== 'off' && !navigator.webdriver`. " +
+      'Sem a flag, o E2E volta a carregar 4,3 MB de axe por teste no Firefox (onde `navigator.webdriver` ' +
+      'nao e confiavel) e o processo de conteudo cai em Page crashed',
   );
   const depois = main.slice(guarda.index);
   assert.match(
@@ -36,5 +39,23 @@ test('o bloco do axe nao tem outra entrada sem a guarda', () => {
     importacoes.length,
     1,
     'ha mais de uma importacao de @axe-core/react em src/main.tsx: cada uma precisaria da mesma guarda',
+  );
+});
+
+// A guarda do app so vale se alguem DEFINIR a flag sob E2E. Sem esta assercao, o
+// arquivo voltaria a ser o que era: conferencia de string no fonte, que passa verde
+// mesmo quando a mudanca nao tem efeito nenhum em execucao -- foi assim que a #3190
+// foi declarada resolvida enquanto o Firefox continuava caindo.
+test('o webServer do Playwright define VITE_A11Y_AUDIT_CONTINUO=off', () => {
+  assert.match(
+    playwright,
+    /command: `[^`]*VITE_A11Y_AUDIT_CONTINUO=off[^`]*bun run dev/,
+    'playwright.config.ts tem de passar VITE_A11Y_AUDIT_CONTINUO=off no `command` do webServer: ' +
+      'o Vite le VITE_* do ambiente do processo que ele sobe',
+  );
+  assert.match(
+    playwright,
+    /VITE_A11Y_AUDIT_CONTINUO: 'off',/,
+    "playwright.config.ts tem de declarar VITE_A11Y_AUDIT_CONTINUO: 'off' no bloco `env` do webServer",
   );
 });

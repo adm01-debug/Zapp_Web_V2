@@ -382,7 +382,7 @@ export default defineConfig({
       // test-server-only; production still requires the build env and the
       // feature flag.  Without it, a complete CRM fixture can never reach the
       // panel and falsely validates only the disabled state.
-      command: `VITE_CRM_INTEGRATION_ENABLED=true bun run dev -- --host 127.0.0.1 --port ${porta} --strictPort`,
+      command: `VITE_A11Y_AUDIT_CONTINUO=off VITE_CRM_INTEGRATION_ENABLED=true bun run dev -- --host 127.0.0.1 --port ${porta} --strictPort`,
       url,
       env: {
         ...process.env,
@@ -390,6 +390,12 @@ export default defineConfig({
         // conter o caminho da integração para que specs possam exercitá-lo
         // com rotas locais determinísticas.
         VITE_CRM_INTEGRATION_ENABLED: process.env.VITE_CRM_INTEGRATION_ENABLED ?? 'true',
+        // A auditoria continua do @axe-core/react do APP nao entra sob E2E. Ela
+        // reaudita a arvore React a cada ciclo de render, no mesmo processo de
+        // conteudo e no mesmo `window.axe` em que as specs rodam o axe delas.
+        // Nenhuma cobertura se perde: quem AFIRMA acessibilidade sao as specs,
+        // cada uma injetando o proprio axe.
+        VITE_A11Y_AUDIT_CONTINUO: 'off',
       },
       // Fora do CI o desenvolvedor costuma ja' ter o dev server no ar: reusar
       // a propria porta e' o comportamento util. O que nao pode acontecer e'
