@@ -3017,7 +3017,7 @@
         "warroom_agent_today",
         "warroom_queue_stats"
     ],
-    "generated_at": "2026-11-18",
+    "generated_at": "2026-11-19",
     "format_version": 2,
     "check_constraints": [
         "agent_mini_game_xp_daily.agent_mini_game_xp_daily_game_id_check:CHECK ((game_id = ANY (ARRAY['speed-typing'::text, 'quiz'::text, 'response-match'::text, 'emoji-decode'::text])))",
@@ -3743,7 +3743,7 @@
         "talkx_match_optout(p_text text)->text|kind=f",
         "talkx_monitor_panel(p_campaign_id uuid, p_window_minutes integer, p_bucket text, p_day date, p_segment_id uuid)->jsonb|kind=f",
         "talkx_multiplix_connection_sent_count(p_connection_id uuid, p_since timestamp with time zone)->integer|kind=f",
-        "talkx_next_recipients(p_campaign_id uuid, p_limit integer)->TABLE(recipient_id uuid, contact_id uuid, status text, attempt_count integer, retry_after timestamp with time zone, personalized_message text, contact_name text, contact_nickname text, contact_phone text, contact_company text)|kind=f",
+        "talkx_next_recipients(p_campaign_id uuid, p_limit integer)->TABLE(recipient_id uuid, contact_id uuid, status text, attempt_count integer, retry_after timestamp with time zone, personalized_message text, variant_id uuid, contact_name text, contact_nickname text, contact_phone text, contact_company text)|kind=f",
         "talkx_normalize_optout_text(p_text text)->text|kind=f",
         "talkx_overview_stats(p_from timestamp with time zone, p_to timestamp with time zone, p_audience_source text, p_department_id uuid, p_channel text, p_timezone text)->jsonb|kind=f",
         "talkx_recipient_is_suppressed(p_contact_id uuid, p_phone text)->boolean|kind=f",

@@ -15322,6 +15322,7 @@ export type Database = {
           recipient_id: string
           retry_after: string
           status: string
+          variant_id: string
         }[]
       }
       talkx_normalize_optout_text: { Args: { p_text: string }; Returns: string }
