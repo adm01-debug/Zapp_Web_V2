@@ -1,0 +1,1 @@
+-- trigger to update contacts.conversation_status = resolved on closure insert

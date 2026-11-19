@@ -1,0 +1,1 @@
+CREATE OR REPLACE FUNCTION public.clear_login_attempts(p_email text) RETURNS void LANGUAGE plpgsql SECURITY DEFINER SET search_path TO public AS body_dollar BEGIN IF NOT (coalesce(auth.role(), session_user) IN (service_role, postgres, supabase_admin)) AND NOT (auth.role() = authenticated AND auth.jwt()->>email = p_email) THEN RAISE EXCEPTION Unauthorized; END IF; END; body_dollar

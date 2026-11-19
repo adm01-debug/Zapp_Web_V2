@@ -1,0 +1,6 @@
+CREATE OR REPLACE FUNCTION public.audit_role_changes()
+ RETURNS trigger
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public', 'pg_temp'
+AS $function$ DECLARE v_actor jsonb; BEGIN v_actor := jsonb_build_object('actor_kind', CASE WHEN auth.uid() IS NOT NULL THEN 'jwt' ELSE 'service_role_or_direct_sql' END, 'actor_db_role', current_user, 'actor_app_name', NULLIF(current_setting('application_name', true), ''), 'actor_addr', COALESCE(host(inet_client_addr()), 'local')); IF TG_OP = 'INSERT' THEN INSERT INTO public.audit_logs(user_id, action, entity_type, entity_id, details) VALUES (auth.uid(), 'role_granted', 'user_roles', NEW.id, jsonb_build_object('user_id', NEW.user_id, 'role', NEW.role, 'granted_by', auth.uid()) || v_actor); ELSIF TG_OP = 'DELETE' THEN INSERT INTO public.audit_logs(user_id, action, entity_type, entity_id, details) VALUES (auth.uid(), 'role_revoked', 'user_roles', OLD.id, jsonb_build_object('user_id', OLD.user_id, 'role', OLD.role, 'revoked_by', auth.uid()) || v_actor); ELSIF TG_OP = 'UPDATE' THEN INSERT INTO public.audit_logs(user_id, action, entity_type, entity_id, details) VALUES (auth.uid(), 'role_changed', 'user_roles', NEW.id, jsonb_build_object('user_id', NEW.user_id, 'old_role', OLD.role, 'new_role', NEW.role, 'changed_by', auth.uid()) || v_actor); END IF; RETURN NULL; END; $function$

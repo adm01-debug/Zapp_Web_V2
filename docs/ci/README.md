@@ -4,7 +4,7 @@
 > `--check` e falha se este arquivo divergir do bloco `# docs:` de cada workflow.
 > Para mudar o que está aqui, mude o bloco no YAML.
 
-**22 workflows.**
+**23 workflows.**
 
 | Workflow | Arquivo | Gatilho | O que prova | Quando falha | Quem é avisado | Custo/sem (min) | Falha (7 d) |
 |---|---|---|---|---|---|---|---|
@@ -18,6 +18,7 @@
 | DB Live Guard | [`db-live-guard.yml`](../../.github/workflows/db-live-guard.yml) | agendado (semanal, segunda) e dispatch sobre main | o contrato do banco de PRODUCAO (drift, paridade, runtime config) | issue aberta ou comentada com a causa; o guarda vivo nao passa em silencio | issue de guardas vivos | — | — |
 | DB Migrate (production) | [`db-migrate.yml`](../../.github/workflows/db-migrate.yml) | dispatch na main, com o job gateado por environment | dry-run obrigatorio e apply com hash estrutural da migration | nada e aplicado; o dry-run precisa passar antes | operador que disparou e a issue de ops | — | — |
 | Deploy Edge Functions | [`deploy-functions.yml`](../../.github/workflows/deploy-functions.yml) | push na main (supabase/functions/**, config.toml) e dispatch manual | as Edge Functions publicadas batem com o repo | o deploy aborta antes de publicar | operador que disparou | — | — |
+| e2e-baselines | [`e2e-baselines.yml`](../../.github/workflows/e2e-baselines.yml) | dispatch manual na main | as imagens de referencia de Contatos foram geradas no mesmo ambiente em que o CI as compara | nenhuma PR e' aberta e o run fica vermelho; as baselines commitadas seguem como estao | PR em `automation/e2e-baselines-<projeto>` | — | — |
 | E2E isolado - login e suíte completa | [`e2e-logado-isolado.yml`](../../.github/workflows/e2e-logado-isolado.yml) | pull_request valida login; dispatch escolhe login, full-suite, network-proof ou network-proof-contexts | login e 15 projetos; network-proof mede conectividade nativa; network-proof-contexts compara Library e Test reais em loopback com TLS e canário | isolamento, TLS, testes, protocolo ou limpeza inválidos bloqueiam; somente network-proof exige dummy previamente carregada | autor e revisor via check; relatórios fechados; contextos distingue coleta, API, online natural e Test; nenhum corte libera a suíte autenticada | — | — |
 | E2E logado | [`e2e-logado.yml`](../../.github/workflows/e2e-logado.yml) | workflow_run (CI/CD Pipeline concluiu com sucesso na main) e dispatch sobre main | os mesmos 15 projetos Playwright em cinco grupos, com três shards autenticados, Supabase descartável e TLS local | preparo, testes e limpeza bloqueiam; publica só diagnóstico redigido e preserva o alerta da suíte | mesma issue de E2E; cada execução aprovada reconcilia o alerta existente | — | — |
 | E2E Talk X (visual/launch + Auth smoke) | [`e2e-talkx.yml`](../../.github/workflows/e2e-talkx.yml) | pull_request e dispatch | o fluxo do Talk X no navegador | PR fica vermelho com o artefato do Playwright | autor do PR | — | — |
@@ -102,6 +103,13 @@
 - **O que prova:** as Edge Functions publicadas batem com o repo
 - **Quando falha:** o deploy aborta antes de publicar
 - **Quem é avisado:** operador que disparou
+
+### e2e-baselines (`e2e-baselines.yml`)
+
+- **Gatilho:** dispatch manual na main
+- **O que prova:** as imagens de referencia de Contatos foram geradas no mesmo ambiente em que o CI as compara
+- **Quando falha:** nenhuma PR e' aberta e o run fica vermelho; as baselines commitadas seguem como estao
+- **Quem é avisado:** PR em `automation/e2e-baselines-<projeto>`
 
 ### E2E isolado - login e suíte completa (`e2e-logado-isolado.yml`)
 
