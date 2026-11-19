@@ -59,3 +59,40 @@ test('o webServer do Playwright define VITE_A11Y_AUDIT_CONTINUO=off', () => {
     "playwright.config.ts tem de declarar VITE_A11Y_AUDIT_CONTINUO: 'off' no bloco `env` do webServer",
   );
 });
+
+// As assercoes acima conferem TEXTO. Esta confere o CANO: que uma variavel de
+// PROCESSO com prefixo `VITE_` realmente chega ao `import.meta.env` que o app
+// le. Sem isto, o arquivo inteiro voltaria a ser o que era -- conferencia de
+// string que passa verde mesmo quando a mudanca nao tem efeito em execucao.
+//
+// Importa: no DEV SERVER o Vite NAO substitui `import.meta.env.VITE_*` por
+// literal (medido: o `/src/main.tsx` servido sai identico com e sem a flag, com
+// a busca em objeto preservada). Quem resolve o valor e o `loadEnv` do proprio
+// Vite, em tempo de execucao. Entao e o `loadEnv` que tem de ser interrogado.
+test('a flag de processo chega ao import.meta.env que o app le', async () => {
+  const { loadEnv } = await import('vite');
+  const raiz = new URL('../../', import.meta.url).pathname;
+  const anterior = process.env.VITE_A11Y_AUDIT_CONTINUO;
+
+  try {
+    process.env.VITE_A11Y_AUDIT_CONTINUO = 'off';
+    const comFlag = loadEnv('development', raiz, 'VITE_');
+    assert.equal(
+      comFlag.VITE_A11Y_AUDIT_CONTINUO,
+      'off',
+      'o Vite tem de expor VITE_A11Y_AUDIT_CONTINUO do ambiente do processo; sem isto o ' +
+        '`command` do webServer nao desliga nada e o axe do app volta para dentro do E2E',
+    );
+    // A guarda do app, avaliada com esse valor: tem de ser FALSA.
+    assert.equal(comFlag.VITE_A11Y_AUDIT_CONTINUO !== 'off', false);
+
+    delete process.env.VITE_A11Y_AUDIT_CONTINUO;
+    const semFlag = loadEnv('development', raiz, 'VITE_');
+    assert.equal(semFlag.VITE_A11Y_AUDIT_CONTINUO, undefined);
+    // Sem a flag a guarda e VERDADEIRA -- e o estado em que o Firefox caia.
+    assert.equal(semFlag.VITE_A11Y_AUDIT_CONTINUO !== 'off', true);
+  } finally {
+    if (anterior === undefined) delete process.env.VITE_A11Y_AUDIT_CONTINUO;
+    else process.env.VITE_A11Y_AUDIT_CONTINUO = anterior;
+  }
+});
