@@ -4,7 +4,7 @@
 > `--check` e falha se este arquivo divergir do bloco `# docs:` de cada workflow.
 > Para mudar o que está aqui, mude o bloco no YAML.
 
-**23 workflows.**
+**24 workflows.**
 
 | Workflow | Arquivo | Gatilho | O que prova | Quando falha | Quem é avisado | Custo/sem (min) | Falha (7 d) |
 |---|---|---|---|---|---|---|---|
@@ -17,6 +17,7 @@
 | DB Guard (offline) | [`db-guard.yml`](../../.github/workflows/db-guard.yml) | pull_request, push na main, merge_group e dispatch | guardas OFFLINE do banco (nunca recebe DESTINO_URL, roda codigo de PR) | PR fica vermelho; nenhum codigo de PR alcanca o banco de producao | autor do PR e revisor | — | — |
 | DB Live Guard | [`db-live-guard.yml`](../../.github/workflows/db-live-guard.yml) | agendado (semanal, segunda) e dispatch sobre main | o contrato do banco de PRODUCAO (drift, paridade, runtime config) | issue aberta ou comentada com a causa; o guarda vivo nao passa em silencio | issue de guardas vivos | — | — |
 | DB Migrate (production) | [`db-migrate.yml`](../../.github/workflows/db-migrate.yml) | dispatch na main, com o job gateado por environment | dry-run obrigatorio e apply com hash estrutural da migration | nada e aplicado; o dry-run precisa passar antes | operador que disparou e a issue de ops | — | — |
+| Dependency Review | [`dependency-review.yml`](../../.github/workflows/dependency-review.yml) | pull_request em main (qualquer autor não dependabot e não-fork) | dependency review compara apenas as dependências introduzidas pelo PR contra a base do main | check fica vermelho se o PR adicionar dependência com CVE de severidade alta ou crítica | autor e revisores pelo check do GitHub | — | — |
 | Deploy Edge Functions | [`deploy-functions.yml`](../../.github/workflows/deploy-functions.yml) | push na main (supabase/functions/**, config.toml) e dispatch manual | as Edge Functions publicadas batem com o repo | o deploy aborta antes de publicar | operador que disparou | — | — |
 | e2e-baselines | [`e2e-baselines.yml`](../../.github/workflows/e2e-baselines.yml) | dispatch manual na main | as imagens de referencia de Contatos foram geradas no mesmo ambiente em que o CI as compara | nenhuma PR e' aberta e o run fica vermelho; as baselines commitadas seguem como estao | PR em `automation/e2e-baselines-<projeto>` | — | — |
 | E2E isolado - login e suíte completa | [`e2e-logado-isolado.yml`](../../.github/workflows/e2e-logado-isolado.yml) | pull_request valida login; dispatch escolhe login, full-suite, network-proof ou network-proof-contexts | login e 15 projetos; network-proof mede conectividade nativa; network-proof-contexts compara Library e Test reais em loopback com TLS e canário | isolamento, TLS, testes, protocolo ou limpeza inválidos bloqueiam; somente network-proof exige dummy previamente carregada | autor e revisor via check; relatórios fechados; contextos distingue coleta, API, online natural e Test; nenhum corte libera a suíte autenticada | — | — |
@@ -96,6 +97,13 @@
 - **O que prova:** dry-run obrigatorio e apply com hash estrutural da migration
 - **Quando falha:** nada e aplicado; o dry-run precisa passar antes
 - **Quem é avisado:** operador que disparou e a issue de ops
+
+### Dependency Review (`dependency-review.yml`)
+
+- **Gatilho:** pull_request em main (qualquer autor não dependabot e não-fork)
+- **O que prova:** dependency review compara apenas as dependências introduzidas pelo PR contra a base do main
+- **Quando falha:** check fica vermelho se o PR adicionar dependência com CVE de severidade alta ou crítica
+- **Quem é avisado:** autor e revisores pelo check do GitHub
 
 ### Deploy Edge Functions (`deploy-functions.yml`)
 
@@ -207,4 +215,5 @@
 | [`contexto.yml`](../../.github/workflows/contexto.yml) | **metricas** | métricas/manifests do banco aguardam 60 min desde a coleta publicada; commits de código não reiniciam o prazo; data ausente/inválida/futura e mudanças de saúde/estado do índice publicam sem espera |
 | [`contexto.yml`](../../.github/workflows/contexto.yml) | **banco-pulado** | sem o secret SUPABASE_DB_URL o job do banco sai verde com aviso e a pasta supabase/ fica como estava |
 | [`crm-sync-worker.yml`](../../.github/workflows/crm-sync-worker.yml) | **schedule comentado** | decisao pendente do dono (W93); religar exige vars.CRM_SYNC_WORKER_ENABLED=true e o roteiro em docs/runbooks/CRM_INTEGRATION_ROLLOUT.md |
+| [`dependency-review.yml`](../../.github/workflows/dependency-review.yml) | **${{ github.actor }}** | o job é pulado para dependabot e forks porque o token restrito não resolve a comparação |
 | [`types-sync.yml`](../../.github/workflows/types-sync.yml) | **TYPES_SYNC_PR_TOKEN ausente** | esperado -- o workflow usa GITHUB_TOKEN; o passo "Destravar os checks" aprova os runs com actions:write; um PAT funciona mas nao e necessario |
