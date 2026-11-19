@@ -17,7 +17,7 @@ interface Props {
 
 export function DepartmentInvitesView({ departmentId, currentUserName, isAdmin }: Props) {
   const [copiedId, setCopiedId] = useState<string | null>(null);
-  const { data: invites = [], isLoading } = useDepartmentInvites(departmentId);
+  const { data: invites = [], isLoading, isError } = useDepartmentInvites(departmentId);
   const createMutation = useCreateDepartmentInvite(departmentId);
   const deleteMutation = useDeleteDepartmentInvite(departmentId);
 
@@ -29,6 +29,19 @@ export function DepartmentInvitesView({ departmentId, currentUserName, isAdmin }
 
   if (isLoading) {
     return <div className="p-6 text-center text-sm text-muted-foreground">Carregando...</div>;
+  }
+
+  // Falha de leitura NAO pode se disfarcar de "Nenhum convite ativo": com a
+  // consulta quebrada o hook devolve `[]` e o estado vazio abaixo dizia que nao
+  // ha convite pendente. O admin geraria um codigo novo por cima de convites que
+  // existem, ou concluiria que ninguem tem convite aberto. Mesmo formato do
+  // vizinho `TeamPerformancePanel.tsx:22`.
+  if (isError) {
+    return (
+      <div role="alert" className="p-4 text-sm text-destructive">
+        Não foi possível carregar os convites.
+      </div>
+    );
   }
 
   return (
