@@ -1,0 +1,13 @@
+{
+  "carried": [],
+  "entrada": "README.md",
+  "erros": [
+    {
+      "error": "role sem USAGE em auth / SELECT em auth.users: agregados de auth indisponíveis nesta coleta",
+      "section": "db_stats.auth"
+    }
+  ],
+  "gerado_em": "2026-11-18T22:12:54Z",
+  "gerador": "scripts/supabase_snapshot/snapshot.py",
+  "produtor": "supabase-snapshot"
+}

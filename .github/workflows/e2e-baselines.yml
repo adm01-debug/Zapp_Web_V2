@@ -1,0 +1,216 @@
+# docs:
+#   gatilho: dispatch manual na main
+#   prova: as imagens de referencia de Contatos foram geradas no mesmo ambiente em que o CI as compara
+#   falha: nenhuma PR e' aberta e o run fica vermelho; as baselines commitadas seguem como estao
+#   avisa: PR em `automation/e2e-baselines-<projeto>`
+# Regera as imagens de referencia (baselines) visuais do Playwright NO MESMO
+# ambiente em que o CI as compara, e entrega o resultado numa PR.
+#
+# POR QUE EXISTE: o `toHaveScreenshot` compara pixel a pixel, e o resultado
+# depende do build exato do Chromium e das fontes do runner. Regerar numa maquina
+# de desenvolvimento produz imagens que o CI reprova — medido em 18/11/2026: com
+# Chromium 1243 local contra 1254 do CI, TODAS as seis baselines de Contatos
+# divergiam em ~10 mil pixels, inclusive as quatro que passam no CI.
+#
+# Sem este workflow, a unica saida era regerar na mao e torcer, e foi assim que
+# a baseline `contacts-table-dark-linux.png` ficou parada em 02/10/2026 enquanto
+# as outras quatro foram atualizadas em 28/10 (commit 82e22bbb8): atualizacao
+# parcial, E2E vermelho desde entao.
+#
+# SO `chromium-contacts-visual`: e' o unico projeto visual que usa
+# `toHaveScreenshot` com baseline versionada em `e2e/__screenshots__`.
+# `chromium-talkx-visual` (e2e/talkx-visual.spec.ts:87) e `chromium-email-navy`
+# (e2e/email-navy-visual.spec.ts:127 e seguintes) chamam `page.screenshot({path})`
+# para diretorios proprios: nao sao comparacoes, `--update-snapshots` nao as
+# governa, e oferece-las aqui prometeria uma entrega que nao acontece.
+#
+# O passo de teste repete, de proposito, a configuracao do job `e2e` de ci.yml
+# (ubuntu-24.04, Bun 1.4.0, Playwright 1.65.0 com --with-deps). Se um dos dois
+# mudar sem o outro, as imagens voltam a divergir.
+name: e2e-baselines
+
+on:
+  workflow_dispatch:
+    inputs:
+      projeto:
+        description: 'Projeto do Playwright cujas baselines serao regeradas'
+        required: true
+        default: 'chromium-contacts-visual'
+        type: choice
+        options:
+          - chromium-contacts-visual
+
+permissions:
+  contents: read
+
+defaults:
+  run:
+    shell: bash -euo pipefail {0}
+
+jobs:
+  regerar:
+    name: Regerar baselines e abrir PR
+    # O dispatch nao deve executar codigo de uma ref arbitraria com token de
+    # escrita, e a PR nasce contra a main: gerar a partir de outra branch
+    # entregaria baselines de um app que a main nao tem. Mesmo guarda do
+    # talkx-status-regen.yml.
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    permissions:  # zizmor: ignore[excessive-permissions]
+      contents: write
+      pull-requests: write
+      # Necessaria para aprovar os checks da PR aberta por este job.
+      actions: write
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: 🧄 Setup Bun
+        uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
+        with:
+          bun-version: '1.4.0'
+
+      - name: 💾 Cache de dependências Bun
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.bun/install/cache
+          key: bun-${{ hashFiles('bun.lock') }}
+          restore-keys: bun-
+
+      - name: 📚 Install dependencies
+        run: bun install --frozen-lockfile --ignore-scripts
+
+      # Mesma chave do job `e2e` de ci.yml: aproveita o cache quente dele.
+      - name: 💾 Cache dos browsers Playwright
+        id: pw-cache
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.cache/ms-playwright
+          key: pw-cfw-${{ hashFiles('bun.lock') }}-${{ runner.os }}
+
+      - name: 🎭 Install Playwright (Chromium, Firefox, WebKit)
+        if: steps.pw-cache.outputs.cache-hit != 'true'
+        run: bunx playwright@1.65.0 install --with-deps chromium firefox webkit
+
+      - name: 🔧 Dependências de sistema do Playwright (cache quente)
+        if: steps.pw-cache.outputs.cache-hit == 'true'
+        run: bunx playwright install-deps chromium firefox webkit
+
+      # `--update-snapshots=changed` reescreve SO as imagens que divergirem: as
+      # que ja batem ficam byte a byte iguais e nao entram no diff da PR. Uma
+      # baseline que mude sem motivo aparece na PR e e' justamente o sinal de
+      # revisao que se quer.
+      - name: 🖼️ Regerar baselines do projeto
+        run: bun run test:e2e -- --project=${{ inputs.projeto }} --update-snapshots=changed --trace off
+        env:
+          CI: true
+
+      - name: 🔎 Conferir se alguma imagem mudou
+        id: mudou
+        run: |
+          if [ -n "$(git status --porcelain -- e2e/__screenshots__)" ]; then
+            echo "mudou=true" >> "$GITHUB_OUTPUT"
+            git status --porcelain -- e2e/__screenshots__
+          else
+            echo "mudou=false" >> "$GITHUB_OUTPUT"
+            echo "Nenhuma baseline divergiu: as imagens commitadas ja refletem este ambiente."
+          fi
+
+      - name: 📬 Abrir PR com as baselines regeradas
+        id: pull-request
+        if: steps.mudou.outputs.mudou == 'true'
+        uses: peter-evans/create-pull-request@3ffccacd46053766916f087ce41d627c0b8cf2d1 # v8.1.3
+        env:
+          HUSKY: '0'  # Evita que o hook pre-push do Husky bloqueie o push interno da action
+        with:
+          token: ${{ github.token }}
+          base: main
+          branch: automation/e2e-baselines-${{ inputs.projeto }}
+          delete-branch: true
+          commit-message: 'test(e2e): regerar baselines visuais de ${{ inputs.projeto }}'
+          title: 'test(e2e): regerar baselines visuais de ${{ inputs.projeto }}'
+          body: |
+            Imagens de referencia regeradas no ambiente do CI (`ubuntu-24.04`,
+            Playwright 1.65.0), que e' o mesmo em que o job `🎭 E2E Tests` as compara.
+
+            - main de origem: `${{ github.sha }}`
+            - projeto: `${{ inputs.projeto }}`
+
+            Cada imagem no diff mudou de verdade: `--update-snapshots=changed`
+            nao reescreve as que ja batem. Confira se a mudanca visual era
+            esperada antes de mergear.
+          add-paths: |
+            e2e/__screenshots__/**
+
+      # PR aberta com GITHUB_TOKEN nao dispara workflows (politica anti-loop do
+      # GitHub): CI, CodeQL e DB Guard nascem em "action_required" e a PR nunca
+      # fica verde sozinha. Mesmo passo do types-sync.yml, que ja provou que o
+      # GITHUB_TOKEN tem poder para liberar (run 36134562996).
+      #
+      # continue-on-error de proposito: se o token nao puder aprovar, o passo
+      # registra o motivo no resumo e a PR segue aberta para aprovacao manual.
+      - name: Destravar os checks da PR de baselines
+        if: steps.pull-request.outputs.pull-request-number != ''
+        continue-on-error: true
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        env:
+          # Via env, nao interpolado dentro do script: mantem o SHA fora do
+          # corpo do JS avaliado.
+          PR_HEAD_SHA: ${{ steps.pull-request.outputs.pull-request-head-sha }}
+          PR_BRANCH: automation/e2e-baselines-${{ inputs.projeto }}
+        with:
+          script: |
+            const headSha = process.env.PR_HEAD_SHA;
+            if (!headSha) {
+              core.warning('create-pull-request nao devolveu o head sha; nada a destravar.');
+              return;
+            }
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+            let pendentes = [];
+            // Os runs aparecem alguns segundos depois do push da PR.
+            for (let tentativa = 1; tentativa <= 6; tentativa += 1) {
+              const { data } = await github.rest.actions.listWorkflowRunsForRepo({
+                owner,
+                repo,
+                head_sha: headSha,
+                // Com head_branch: sem ele, um run `action_required` de OUTRA
+                // branch no mesmo SHA seria aprovado por este token.
+                head_branch: process.env.PR_BRANCH,
+                status: 'action_required',
+                per_page: 20,
+              });
+              pendentes = data.workflow_runs || [];
+              if (pendentes.length > 0) break;
+              await new Promise((resolve) => setTimeout(resolve, 10000));
+            }
+            if (pendentes.length === 0) {
+              core.info('Nenhum run aguardando aprovacao: ou os checks ja dispararam, ou nao ha nada a liberar.');
+              return;
+            }
+            const liberados = [];
+            const recusados = [];
+            for (const run of pendentes) {
+              try {
+                await github.rest.actions.approveWorkflowRun({ owner, repo, run_id: run.id });
+                liberados.push(run.name);
+              } catch (error) {
+                recusados.push(`${run.name} (${error.status})`);
+              }
+            }
+            const linhas = [
+              '### Checks da PR de baselines',
+              `- head sha: \`${headSha}\``,
+              `- liberados: ${liberados.length > 0 ? liberados.join(', ') : 'nenhum'}`,
+            ];
+            if (recusados.length > 0) {
+              linhas.push(`- recusados pelo GITHUB_TOKEN: ${recusados.join(', ')}`);
+              linhas.push('- acao: aprovar os runs na aba Actions.');
+            }
+            await core.summary.addRaw(linhas.join('\n')).write();
+            if (recusados.length > 0) {
+              core.warning(`Nao foi possivel liberar ${recusados.length} run(s) com o GITHUB_TOKEN.`);
+            }

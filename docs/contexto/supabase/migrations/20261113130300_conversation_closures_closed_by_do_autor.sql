@@ -1,0 +1,1 @@
+-- file-sha256: 96c5ee31c4a4f0a93a7e51c6a6c057db04e487973fa72d7792a83123f586c408 (fonte: arquivo 20261113130300_conversation_closures_closed_by_do_autor.sql, aplicada via MCP em 2026-11-13 com OK do dono)

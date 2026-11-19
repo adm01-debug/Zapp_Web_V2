@@ -1249,6 +1249,10 @@ export async function handleTalkxSend(
             status: row.status as string,
             attempt_count: (row.attempt_count as number | null) ?? 0,
             personalized_message: (row.personalized_message as string | null) ?? null,
+            // X065/BUG: sem este campo o worker re-sorteia a variante por
+            // `recipient.id` (process-recipient.ts:382) e contabiliza a resposta
+            // na variante errada. A 20261118210000 fez a RPC devolve-lo.
+            variant_id: (row.variant_id as string | null) ?? null,
             contacts: {
               name: (row.contact_name as string | null) ?? null,
               nickname: (row.contact_nickname as string | null) ?? null,
