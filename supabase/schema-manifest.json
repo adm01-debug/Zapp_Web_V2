@@ -5473,7 +5473,7 @@
         "f:user_has_permission(_user_id uuid, _permission_name text)": "ae39524ac659a2db31ad2fa85e64252b",
         "f:ai_rate_limit_purge(p_older_than timestamp with time zone)": "9db7b59fa624d98aa8a160650bfeefba",
         "f:complete_multiplix_dispatch_if_drained(p_dispatch_id uuid)": "2ac30901d06e26751769445799c78b0d",
-        "f:talkx_next_recipients(p_campaign_id uuid, p_limit integer)": "45ee2e6244b13005a1c3e5a6a5d3e2e3",
+        "f:talkx_next_recipients(p_campaign_id uuid, p_limit integer)": "461cc3f198fe37cd8e1725eb7d5e1a3f",
         "f:is_contact_visible_to_user(_contact_id uuid, _user_id uuid)": "4b9b86928f541cf51405b6232952496f",
         "f:purge_gmail_account_data(p_account_id uuid, p_confirm text)": "bd4f1f2564c220cea32255f790302d7a",
         "f:talkx_assign_variant(p_contact_id uuid, p_template_id uuid)": "e3ae5fe631074e2d82f74dd89e8553fe",
@@ -5638,7 +5638,7 @@
         "f:talkx_resolve_speed_pace(p_speed_profile text, p_send_interval_min integer, p_send_interval_max integer, p_typing_delay_min integer, p_typing_delay_max integer)": "3f13e489494b131a97f6a01f3f4d01c7",
         "f:persist_sentiment_alert(p_analysis_id uuid, p_contact_id uuid, p_recipient_user_id uuid, p_notification_title text, p_notification_message text, p_details jsonb)": "234bd26e491b5f273fa7ad14d0d0d671",
         "f:talkx_overview_stats(p_from timestamp with time zone, p_to timestamp with time zone, p_audience_source text, p_department_id uuid, p_channel text, p_timezone text)": "ba79f9fb7618c9196108cd33585d74b1",
-        "f:persist_talkx_recipient_message_snapshot(p_recipient_id uuid, p_claim_token uuid, p_personalized_message text, p_media_url text, p_media_type text, p_variant_id uuid)": "cce446e7f67165c7921ac9ec9c4c9d8d",
+        "f:persist_talkx_recipient_message_snapshot(p_recipient_id uuid, p_claim_token uuid, p_personalized_message text, p_media_url text, p_media_type text, p_variant_id uuid)": "629ca8a0ddeaf406c17fde6e3e5ece6e",
         "f:record_incoming_call_event(p_contact_id uuid, p_whatsapp_connection_id uuid, p_status text, p_is_video boolean, p_provider_event_id text, p_should_notify boolean, p_direction text)": "0219e731199a19f06f89ca34aa279d84",
         "f:talkx_upsert_link(p_campaign_id uuid, p_label text, p_target_url text, p_link_id uuid, p_utm_source text, p_utm_medium text, p_utm_campaign text, p_utm_content text, p_utm_term text)": "8c8750f778611842df3f170701a074db",
         "f:multiplix_confirm_dispatch(p_dispatch_id uuid, p_actor_id uuid, p_allow_manage_all boolean, p_expected_version integer, p_scheduled_at timestamp with time zone, p_correlation_id uuid)": "84f3bea0c7d8adfcff69342c1e6647e0",
@@ -6518,7 +6518,7 @@
         "e:public.multiplix_dispatch_status|postgres|USAGE|grantor=postgres": "68934a3e9455fa72420237eb05902327",
         "e:public.multiplix_recipient_status|postgres|USAGE|grantor=postgres": "68934a3e9455fa72420237eb05902327"
     },
-    "generated_at": "2026-11-18T22:00:24Z",
+    "generated_at": "2026-11-19T00:59:18Z",
     "column_grants": {
         "r:public.departments.id|authenticated|INSERT|grantor=postgres": "68934a3e9455fa72420237eb05902327",
         "r:public.departments.id|authenticated|SELECT|grantor=postgres": "68934a3e9455fa72420237eb05902327",
