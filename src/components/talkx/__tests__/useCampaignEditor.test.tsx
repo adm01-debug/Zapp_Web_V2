@@ -10,6 +10,7 @@ type CapturedQuery = {
 
 const f = vi.hoisted(() => ({
   create: vi.fn(), update: vi.fn(), saveDraft: vi.fn(), replace: vi.fn(), snapshot: vi.fn(), start: vi.fn(), log: vi.fn(),
+  gravarAb: vi.fn(async (input: { expectedRevision: number }) => ({ revision: input.expectedRevision + 1 })),
   resolveAudience: vi.fn(async (_rules: unknown, _limit?: number) => [] as unknown[]),
   countAudience: vi.fn(async (_rules: unknown) => 0),
   supabaseFrom: vi.fn(),
@@ -97,6 +98,14 @@ vi.mock('@/hooks/integrations/useTalkXTemplates', () => ({
   }),
 }));
 vi.mock('@/hooks/integrations/useTalkXEvents', () => ({ useTalkXEventLogger: () => f.log }));
+
+// X065: a configuracao do A/B NAO vai no payload do rascunho — a RPC
+// `save_talkx_campaign_draft` nao conhece as colunas e descartaria em silencio.
+// O editor chama `set_talkx_campaign_ab`, e e isso que estes testes provam.
+vi.mock('@/hooks/integrations/useTalkXAbStats', async (importOriginal) => ({
+  ...(await importOriginal<Record<string, unknown>>()),
+  gravarTalkXCampaignAb: f.gravarAb,
+}));
 vi.mock('@/integrations/supabase/client', () => ({ supabase: { from: f.supabaseFrom } }));
 vi.mock('@/lib/supabaseHelpers', () => ({ fromTable: vi.fn() }));
 vi.mock('@/hooks/system/useCRMIntegrationEnabled', () => ({ useCRMIntegrationEnabled: () => false }));
@@ -247,23 +256,23 @@ describe('useCampaignEditor — draft integrity', () => {
     expect(result.current.canProceed[1]).toBe(false);
   });
 
-  // X065 — antes disto o editor nunca enviava os campos `ab_*`: a campanha
-  // nascia com `ab_enabled` falso e o teste A/B, que ja existia no banco e
-  // tinha painel de resultado, era inalcancavel pelo app.
-  it('salva a campanha com o teste A/B desligado por padrão', async () => {
+  // X065 — antes disto nenhum fluxo da UI ligava o teste A/B: a campanha nascia
+  // com `ab_enabled` falso e o painel de resultado devolvia null. E os campos
+  // NAO podem ir no payload do rascunho: `save_talkx_campaign_draft` nao conhece
+  // essas colunas e os descartaria em silencio (medido no banco ao vivo).
+  it('não manda os campos A/B no payload do rascunho', async () => {
     const { result } = renderHook(() => useCampaignEditor(null, vi.fn()));
-    act(() => { result.current.setName('Campanha sem A/B'); result.current.toggleContact('contact-1'); });
+    act(() => { result.current.setName('Campanha'); result.current.toggleContact('contact-1'); });
 
     await act(async () => { await result.current.handleSave('draft'); });
 
-    expect(f.create).toHaveBeenCalledWith(expect.objectContaining({
-      ab_enabled: false,
-      ab_metric: 'reply_rate',
-      ab_min_sample: 50,
-    }));
+    const payload = f.create.mock.calls[0]?.[0] ?? {};
+    expect(payload).not.toHaveProperty('ab_enabled');
+    expect(payload).not.toHaveProperty('ab_metric');
+    expect(payload).not.toHaveProperty('ab_min_sample');
   });
 
-  it('ligar o teste A/B chega ao payload com métrica e amostra mínima', async () => {
+  it('grava a configuração A/B pela RPC própria, com a revisão do rascunho', async () => {
     const { result } = renderHook(() => useCampaignEditor(null, vi.fn()));
     act(() => {
       result.current.setName('Campanha com A/B');
@@ -275,15 +284,17 @@ describe('useCampaignEditor — draft integrity', () => {
 
     await act(async () => { await result.current.handleSave('draft'); });
 
-    expect(f.create).toHaveBeenCalledWith(expect.objectContaining({
-      ab_enabled: true,
-      ab_metric: 'click_rate',
-      ab_min_sample: 120,
-    }));
+    expect(f.gravarAb).toHaveBeenCalledWith({
+      campaignId: 'draft-1',
+      expectedRevision: 1,
+      abEnabled: true,
+      abMetric: 'click_rate',
+      abMinSample: 120,
+    });
   });
 
-  // A coluna tem CHECK (ab_min_sample >= 1 AND <= 1000000): o editor fecha o
-  // valor na mesma faixa em vez de deixar o banco recusar o save.
+  // A coluna tem CHECK (ab_min_sample >= 1 AND <= 1000000): o editor fecha na
+  // faixa antes de o banco recusar o save.
   it('amostra mínima inválida é fechada na faixa que o banco aceita', async () => {
     const { result } = renderHook(() => useCampaignEditor(null, vi.fn()));
     act(() => {
@@ -295,7 +306,23 @@ describe('useCampaignEditor — draft integrity', () => {
 
     await act(async () => { await result.current.handleSave('draft'); });
 
-    expect(f.create).toHaveBeenCalledWith(expect.objectContaining({ ab_min_sample: 1 }));
+    expect(f.gravarAb).toHaveBeenCalledWith(expect.objectContaining({ abMinSample: 1 }));
+  });
+
+  // O snapshot da audiencia le `ab_enabled` para atribuir a variante por
+  // destinatario: gravar depois dele atribuiria com a flag velha.
+  it('a configuração A/B é gravada ANTES do snapshot da audiência', async () => {
+    const ordem: string[] = [];
+    f.gravarAb.mockImplementationOnce(async (input: { expectedRevision: number }) => {
+      ordem.push('ab'); return { revision: input.expectedRevision + 1 };
+    });
+    f.snapshot.mockImplementationOnce(async () => { ordem.push('snapshot'); return { suppressed: 0 }; });
+
+    const { result } = renderHook(() => useCampaignEditor(null, vi.fn()));
+    act(() => { result.current.setName('Campanha'); result.current.toggleContact('contact-1'); result.current.setAbEnabled(true); });
+    await act(async () => { await result.current.handleSave('draft'); });
+
+    expect(ordem).toEqual(['ab', 'snapshot']);
   });
 
   it('creates one draft and asks the server for the audience snapshot on later saves (X017)', async () => {

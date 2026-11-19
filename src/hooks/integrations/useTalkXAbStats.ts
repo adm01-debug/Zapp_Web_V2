@@ -75,3 +75,31 @@ export function useTalkXAbStats(campaignId: string | null | undefined, enabled: 
     refetch: query.refetch,
   };
 }
+
+/**
+ * X065 — grava a configuracao do teste A/B da campanha.
+ *
+ * Caminho proprio porque `save_talkx_campaign_draft` NAO conhece as colunas
+ * `ab_*`: medido no banco ao vivo, ela extrai campo a campo e tem lista
+ * explicita de colunas, entao mandar os tres no payload fazia a RPC descarta-los
+ * em silencio — a tela dizia "salvo" e nada persistia.
+ */
+export async function gravarTalkXCampaignAb(input: {
+  campaignId: string;
+  expectedRevision: number;
+  abEnabled: boolean;
+  abMetric: TalkXAbMetric;
+  abMinSample: number;
+}): Promise<{ revision: number }> {
+  const rpc = supabase.rpc.bind(supabase) as unknown as PendingDatabaseRpc;
+  const { data, error } = await rpc('set_talkx_campaign_ab', {
+    p_campaign_id: input.campaignId,
+    p_expected_revision: input.expectedRevision,
+    p_ab_enabled: input.abEnabled,
+    p_ab_metric: input.abMetric,
+    p_ab_min_sample: input.abMinSample,
+  });
+  if (error) throw error;
+  const linha = (Array.isArray(data) ? data[0] : data) as { revision?: number } | null;
+  return { revision: Number(linha?.revision ?? input.expectedRevision + 1) };
+}
