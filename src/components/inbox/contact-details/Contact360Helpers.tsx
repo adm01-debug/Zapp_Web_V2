@@ -17,6 +17,7 @@ import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { toast } from 'sonner';
 import { calendarDayKey, parseDayKey } from '@/lib/localDay';
+import { isSafeHttpUrl, isSafeExternalHref } from '@/lib/urlSafety';
 import type {
   Contact360RFM, Contact360Customer, Contact360Company,
   Contact360Contact, Contact360Interaction, Contact360Stakeholder,
@@ -113,7 +114,10 @@ export function CompanyCard({ company }: { company: Contact360Company }) {
   return (
     <div className="space-y-2 bg-gradient-to-br from-primary/5 via-transparent to-primary/3 rounded-xl p-3 border border-primary/10">
       <div className="flex items-start gap-3">
-        {company.logo_url ? (
+        {/* SEC-FRONTEND-02: `logo_url` vem do CRM externo. Sem guard, um
+            `javascript:`/`data:` ia cru para o `src`. Esquema invalido cai no
+            avatar generico abaixo, sem quebrar o cartao. */}
+        {isSafeHttpUrl(company.logo_url) ? (
           <img src={company.logo_url} alt={displayName || ''} className="w-10 h-10 rounded-lg object-contain bg-background border border-border/30"  loading="lazy" decoding="async"/>
         ) : (
           <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center"><Building className="w-5 h-5 text-primary" /></div>
@@ -132,7 +136,11 @@ export function CompanyCard({ company }: { company: Contact360Company }) {
         {company.capital_social != null && company.capital_social > 0 && <div className="flex items-center gap-1.5 text-muted-foreground bg-muted/20 rounded-md p-1.5"><DollarSign className="w-3 h-3 shrink-0" /><span className="truncate">{formatCurrency(company.capital_social)}</span></div>}
         {company.data_fundacao && <div className="flex items-center gap-1.5 text-muted-foreground bg-muted/20 rounded-md p-1.5"><Calendar className="w-3 h-3 shrink-0" /><span className="truncate">{calendarDayLabel(company.data_fundacao)}</span></div>}
         {company.inscricao_estadual && <div className="flex items-center gap-1.5 text-muted-foreground bg-muted/20 rounded-md p-1.5 col-span-2"><Shield className="w-3 h-3 shrink-0" /><span className="truncate">IE: {company.inscricao_estadual}</span></div>}
-        {company.website && (
+        {/* SEC-FRONTEND-02: `website` vem do CRM externo. Com esquema inseguro
+            a secao inteira sai — nem link, nem o valor cru como texto. Mostrar
+            `javascript:alert(...)` para o atendente nao informa nada e mantem a
+            carga util no DOM, que e exatamente o que o guard existe para evitar. */}
+        {isSafeExternalHref(company.website) && (
           <a href={company.website} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 text-primary hover:underline col-span-2 bg-primary/5 rounded-md p-1.5">
             <Globe className="w-3 h-3 shrink-0" /><span className="truncate">{company.website.replace(/https?:\/\/(www\.)?/, '')}</span><ExternalLink className="w-3 h-3 shrink-0 ml-auto" />
           </a>
@@ -242,9 +250,18 @@ export function SocialLinks({ social }: { social: { plataforma: string; url: str
   return (
     <div className="flex flex-wrap gap-1.5">
       {social.map((s, i) => (
-        <a key={i} href={s.url || '#'} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-xs bg-muted/20 hover:bg-muted/40 rounded-md px-2 py-1 transition-colors" title={`${s.plataforma}: ${s.handle || ''}`}>
-          {icons[s.plataforma] || <Globe className="w-3.5 h-3.5" />}<span className="truncate max-w-[100px]">{s.handle || s.plataforma}</span>
-        </a>
+        isSafeExternalHref(s.url) ? (
+          <a key={i} href={s.url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-xs bg-muted/20 hover:bg-muted/40 rounded-md px-2 py-1 transition-colors" title={`${s.plataforma}: ${s.handle || ''}`}>
+            {icons[s.plataforma] || <Globe className="w-3.5 h-3.5" />}<span className="truncate max-w-[100px]">{s.handle || s.plataforma}</span>
+          </a>
+        ) : (
+          /* SEC-FRONTEND-02: sem esquema seguro a rede continua IDENTIFICADA,
+             so nao e clicavel. O `href={s.url || '#'}` anterior ainda mandava o
+             valor cru para o DOM quando `s.url` existia. */
+          <span key={i} className="inline-flex items-center gap-1 text-xs bg-muted/20 rounded-md px-2 py-1 text-muted-foreground" title={`${s.plataforma}: ${s.handle || ''}`}>
+            {icons[s.plataforma] || <Globe className="w-3.5 h-3.5" />}<span className="truncate max-w-[100px]">{s.handle || s.plataforma}</span>
+          </span>
+        )
       ))}
     </div>
   );
