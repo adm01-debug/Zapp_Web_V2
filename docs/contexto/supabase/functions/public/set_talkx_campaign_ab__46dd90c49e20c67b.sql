@@ -1,5 +1,3 @@
--- pg_get_functiondef snapshot of public.set_talkx_campaign_ab(uuid, bigint, boolean, text, integer)
-
 CREATE OR REPLACE FUNCTION public.set_talkx_campaign_ab(p_campaign_id uuid, p_expected_revision bigint, p_ab_enabled boolean, p_ab_metric text DEFAULT 'reply_rate'::text, p_ab_min_sample integer DEFAULT 50)
  RETURNS TABLE(campaign_id uuid, revision bigint, ab_enabled boolean, ab_metric text, ab_min_sample integer)
  LANGUAGE plpgsql
