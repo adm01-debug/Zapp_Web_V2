@@ -61,3 +61,39 @@ sem custo de API). Os hooks `PreToolUse` em `.claude/settings.json` chamam `grap
 nada onde o graphify não estiver instalado. Em sessão de nuvem, `.claude/hooks/session-start.sh` instala o
 graphify e gera o grafo em segundo plano (~3 min; log em `graphify-out/.session-start.log`; pula se o grafo
 já é do commit atual).
+
+## Acervo de refs — já auditado, não repita a varredura
+
+O remoto guarda trabalho de agente fora de `refs/heads/*`. `git branch -r` e a API
+de branches **não mostram** nada disto:
+
+| namespace | refs | o que é |
+|---|---|---|
+| `refs/tags/resgate/*` | 2400 | branches arquivadas antes de serem fechadas |
+| `refs/importado/*` | 500 | bundles importados (worktrees, checkpoints do Cline) |
+| `refs/tags/edge-deploy/*` | 330 | marcos de deploy de edge |
+| `refs/autosave/*` | 191 | pontas de branches `claude/*` e stashes |
+| `refs/tags/arquivo/*` | 154 | arquivo morto |
+
+**Auditado em 19/11/2026, por conteúdo e por uso.** Método, para quem precisar refazer:
+ancestralidade **não serve** (com squash a ponta nunca é ancestral da `main`); o teste é
+blob OID contra `git ls-tree -r origin/main`, e depois cruzar com uso real.
+
+Resultado: 2400/2400 tags varridas → 98.323 caminhos ausentes → 27.233 únicos → 898 de
+produto → **42 com blob idêntico na `main`, 856 sem**. Dos 856, **nenhum** é referenciado
+pelo sistema vivo (`scripts/db-audit/supabase-usage-guard.mjs` valida todo `.from()` e
+`.rpc()` do código e passa com `novas: 0`). O que existe lá é, por ordem de volume:
+decomposição de arquivos que a `main` não adotou, testes com deriva de API, e DDL de
+features que nunca embarcaram.
+
+**133 objetos de banco** criados por 107 migrations órfãs não existem em produção —
+e **nenhum é referenciado pela `main`**. Não são perda: são DDL de feature abandonada.
+Conferido objeto a objeto contra `pg_class`/`pg_proc`.
+
+**Duas tabelas de andaime**, em produção, com **0 linhas, 0 escritores e 0 leitores**:
+`crisis_room_alerts` e `sla_alert_events`. Ou a feature se constrói, ou o esquema sai —
+é decisão do dono, e está em "chame o dono" por ser DDL destrutivo.
+
+O que a varredura rendeu de concreto saiu de `refs/autosave/*`, não das tags: três
+defeitos vivos em produção, corrigidos nas PRs #3281 (URL do CRM externo virando
+`href`/`src` sem guard), #3282 e #3283 (falha de leitura se disfarçando de estado vazio).
