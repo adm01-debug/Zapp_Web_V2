@@ -353,7 +353,34 @@ export async function processRecipient(
       ? recipient.personalized_message
       : null;
     let variant: { id: string; content: string; media_url: string | null; media_type: string | null; weight?: number } | null = null;
-    if (existingVid) {
+
+    // X020 — PRECEDÊNCIA A/B: se o texto próprio da campanha difere do conteúdo
+    // do template, vale o texto da campanha e NENHUMA variante é usada.
+    //
+    // A checagem vem ANTES de olhar `existingVid`, e não só no ramo do sorteio.
+    // `snapshot_talkx_campaign_audience` atribui variante sempre que o A/B está
+    // ligado e o template tem variantes (20261118190000, v_ab) — sem comparar
+    // textos. Enquanto `variant_id` não chegava até aqui a precedência era
+    // respeitada por acidente: `existingVid` era sempre nulo. Fazer a coluna
+    // chegar (nesta mesma PR) abriria um caminho que ignora a X020 e enviaria o
+    // texto da variante a quem editou a mensagem da campanha.
+    let campaignOverridesTemplate = false;
+    if (campaign.template_id) {
+      const { data: templateRow, error: templateError } = await supabase
+        .from('talkx_templates').select('content').eq('id', campaign.template_id).maybeSingle();
+      if (templateError) throw new Error(`talkx_template_lookup_failed: ${templateError.message}`);
+      const templateContent = (templateRow as { content?: unknown } | null)?.content;
+      const campaignTemplateText = typeof campaign.message_template === "string" ? campaign.message_template : "";
+      campaignOverridesTemplate = campaignTemplateText.trim().length > 0
+        && campaignTemplateText !== templateContent;
+    }
+
+    if (campaignOverridesTemplate) {
+      // Texto próprio vence: segue sem variante, e o `p_variant_id` abaixo vai
+      // nulo — contabilizar a variante atribuída seria creditar à variante uma
+      // mensagem que ela não enviou.
+      variant = null;
+    } else if (existingVid) {
       const { data: vData, error: vErr } = await supabase
         .from('talkx_template_variants').select('id,content,media_url,media_type,weight')
         .eq('id', existingVid).single();
@@ -368,19 +395,7 @@ export async function processRecipient(
         variant = vData;
       }
     } else if (campaign.template_id) {
-      // X020 — PRECEDÊNCIA A/B: se o texto próprio da campanha difere do
-      // conteúdo do template, vale o texto da campanha e NENHUMA variante é
-      // sorteada. Só com o texto igual (ou vazio) a variante decide.
-      const { data: templateRow, error: templateError } = await supabase
-        .from('talkx_templates').select('content').eq('id', campaign.template_id).maybeSingle();
-      if (templateError) throw new Error(`talkx_template_lookup_failed: ${templateError.message}`);
-      const templateContent = (templateRow as { content?: unknown } | null)?.content;
-      const campaignTemplateText = typeof campaign.message_template === "string" ? campaign.message_template : "";
-      const campaignOverridesTemplate = campaignTemplateText.trim().length > 0
-        && campaignTemplateText !== templateContent;
-      if (!campaignOverridesTemplate) {
-        variant = await pickVariant(supabase, campaign.template_id as string, recipient.id as string);
-      }
+      variant = await pickVariant(supabase, campaign.template_id as string, recipient.id as string);
     }
 
     const contentToSend = legacyPersonalizedMessage ?? variant?.content ?? campaign.message_template;
@@ -444,7 +459,7 @@ export async function processRecipient(
       p_personalized_message: calculatedMessage,
       p_media_url: candidateMediaUrl,
       p_media_type: candidateMediaType,
-      p_variant_id: variant?.id ?? existingVid,
+      p_variant_id: campaignOverridesTemplate ? null : (variant?.id ?? existingVid),
     });
     if (snapshotError) throw new Error(`talkx_message_snapshot_failed: ${snapshotError.message}`);
     const snapshot = Array.isArray(snapshotRows) ? snapshotRows[0] as Record<string, unknown> | undefined : undefined;

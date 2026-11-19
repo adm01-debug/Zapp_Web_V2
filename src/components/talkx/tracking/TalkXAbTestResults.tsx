@@ -6,9 +6,12 @@
  * vêm CALCULADAS do servidor (`talkx_campaign_variant_stats`), então a tela não
  * divide por tamanho de array nem reimplementa a regra.
  *
- * Fica sem comparação até a amostra somada atingir `ab_min_sample` — antes disso
- * o número engana mais do que informa, e é a mesma barreira que a decisão
- * automática usa no banco.
+ * Fica sem comparação até a MENOR amostra entre as variantes atingir
+ * `ab_min_sample`, e com menos de duas variantes não há o que comparar. Usava a
+ * soma, o que divergia do banco: `decide_talkx_ab_winner` calcula `min(s.total)`
+ * e recusa com `insufficient_data`. Com mínima 50 e A=99/B=1 a tela mostrava a
+ * comparação e a decisão automática reprovava — tela e banco discordando no
+ * fluxo normal de envio desigual.
  *
  * Um invólucro só, três conteúdos: o orçamento de bytes do build
  * (performance-budget.json, total-assets) não paga três cópias das classes.
@@ -28,6 +31,9 @@ export interface TalkXAbTestResultsProps {
   winnerVariantId: string | null | undefined;
   variants: TalkXAbVariantStat[];
   isLoading?: boolean;
+  /** Falha da RPC. Sem isto, lista vazia por erro virava "Amostra: 0". */
+  isError?: boolean;
+  onRetry?: () => void;
   className?: string;
 }
 
@@ -40,15 +46,21 @@ export function TalkXAbTestResults({
   winnerVariantId,
   variants,
   isLoading = false,
+  isError = false,
+  onRetry,
   className,
 }: TalkXAbTestResultsProps) {
   if (!abEnabled) return null;
 
   const rotuloMetrica = TALKX_AB_METRIC_LABEL[metric];
   const linhas = variants.map((v) => ({ ...v, rate: talkXAbRate(v, metric) }));
-  const amostra = linhas.reduce((soma, v) => soma + Number(v.total ?? 0), 0);
+  const totais = linhas.map((v) => Number(v.total ?? 0));
+  // `decide_talkx_ab_winner` exige a mínima em CADA variante (min(s.total)):
+  // a tela libera a comparação pela mesma regra, nunca pela soma.
+  const menorAmostra = totais.length > 0 ? Math.min(...totais) : 0;
+  const somaAmostra = totais.reduce((soma, t) => soma + t, 0);
   const maiorTaxa = linhas.length > 0 ? Math.max(...linhas.map((v) => v.rate)) : 0;
-  const comparar = !isLoading && amostra >= minSample;
+  const comparar = !isLoading && !isError && linhas.length >= 2 && menorAmostra >= minSample;
 
   return (
     <div
@@ -62,15 +74,34 @@ export function TalkXAbTestResults({
 
       {isLoading && <p className={NOTA} role="status">Carregando o resultado por variante…</p>}
 
-      {!isLoading && !comparar && (
+      {!isLoading && isError && (
+        <div className="space-y-2" role="alert">
+          <p className={NOTA}>Não foi possível carregar o resultado por variante.</p>
+          {onRetry && (
+            <button
+              type="button"
+              onClick={onRetry}
+              className="rounded-lg border border-border/60 px-2 py-1 text-2xs font-semibold text-foreground hover:bg-muted/50"
+            >
+              Tentar novamente
+            </button>
+          )}
+        </div>
+      )}
+
+      {!isLoading && !isError && !comparar && (
         <p className={NOTA}>
-          Amostra: {amostra} de {minSample} destinatários. O resultado aparece quando houver base para comparar.
+          {linhas.length < 2
+            ? 'Só há uma variante com dados: sem par, não há comparação.'
+            : `Menor amostra: ${menorAmostra} de ${minSample} destinatários por variante. O resultado aparece quando a menor atingir a mínima.`}
         </p>
       )}
 
       {comparar && (
         <>
-          <p className={NOTA}>Amostra: {amostra} destinatários · mínima {minSample}</p>
+          <p className={NOTA}>
+            Menor amostra: {menorAmostra} · total {somaAmostra} destinatários · mínima {minSample} por variante
+          </p>
           <div className="space-y-2">
             {linhas.map((v, i) => {
               // Em produção o id é UUID: rótulo legível (o do catálogo, ou A/B/C

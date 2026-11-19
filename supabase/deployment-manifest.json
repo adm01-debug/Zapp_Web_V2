@@ -866,13 +866,13 @@
     },
     {
       "path": "supabase/functions/talkx-send/index.ts",
-      "bytes": 72493,
-      "sha256": "17bffd8d9260ecc0e63e0e85372b0b8d8be7f36177e0ae72075346f8619900ba"
+      "bytes": 72791,
+      "sha256": "c70e9dbf60ed105a112cfc9895da94a9e7a1f02fa70bad151c55a9c559579cac"
     },
     {
       "path": "supabase/functions/talkx-send/process-recipient.ts",
-      "bytes": 35835,
-      "sha256": "0d271615292cfb6c07d1e8a97483430a65ad065419d954687f1931ee5642363c"
+      "bytes": 36655,
+      "sha256": "a5181192377af11b5ad9b6d09db39b6ac7207cb81903291269c390d972f13a2f"
     },
     {
       "path": "supabase/functions/talkx-storage-purge/index.ts",
@@ -2654,7 +2654,7 @@
       "name": "talkx-send",
       "entrypoint": "supabase/functions/talkx-send/index.ts",
       "verify_jwt": true,
-      "source_sha256": "d61dd8fb0aba8291864802218ab78e8ce2b0256e7a318659fe27019a0ed0844e",
+      "source_sha256": "7951b09cd55c101573559163edb8f89c2155d9380ca933a0efd5803e9c9fce57",
       "source_files": [
         "supabase/functions/_shared/ai-jobs.ts",
         "supabase/functions/_shared/cors-origins.ts",
@@ -2823,5 +2823,5 @@
       ]
     }
   ],
-  "manifest_sha256": "7a2df26844521d062b775ee8331d6394552d9c77ae261d6a0ab17318a12980a3"
+  "manifest_sha256": "80512df799c699a96b161ea39daf4fc4e560b0859058c11e879be89aeb0e9e50"
 }

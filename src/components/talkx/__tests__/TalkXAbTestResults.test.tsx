@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import { TalkXAbTestResults } from '../tracking/TalkXAbTestResults';
 import type { TalkXAbVariantStat } from '@/hooks/integrations/useTalkXAbStats';
@@ -41,7 +41,7 @@ describe('X065 — TalkXAbTestResults', () => {
         variants={[variante({ total: 40 }), variante({ variant_id: 'b', label: 'B', total: 30 })]}
       />,
     );
-    expect(screen.getByTestId('talkx-ab-results')).toHaveTextContent('Amostra: 70 de 200');
+    expect(screen.getByTestId('talkx-ab-results')).toHaveTextContent('Menor amostra: 30 de 200');
     expect(screen.queryByText('Vencedora')).not.toBeInTheDocument();
   });
 
@@ -64,8 +64,45 @@ describe('X065 — TalkXAbTestResults', () => {
     expect(screen.getByText('18.5%')).toBeInTheDocument();
     expect(screen.getByText('31.2%')).toBeInTheDocument();
     expect(screen.getByText('Vencedora')).toBeInTheDocument();
-    expect(screen.getByTestId('talkx-ab-results')).toHaveTextContent('Amostra: 300 destinatários · mínima 50');
+    expect(screen.getByTestId('talkx-ab-results')).toHaveTextContent(
+      'Menor amostra: 150 · total 300 destinatários · mínima 50 por variante',
+    );
     expect(screen.getByText('Taxa de resposta')).toBeInTheDocument();
+  });
+
+  // Reprova com a regra antiga (soma 100 >= 50): a divergencia que a revisao
+  // da PR #3262 apontou entre a tela e `decide_talkx_ab_winner`, que calcula
+  // `min(s.total)` e recusa com `insufficient_data`.
+  it('distribuição desigual não libera a comparação que o banco recusaria', () => {
+    render(
+      <TalkXAbTestResults
+        {...base}
+        minSample={50}
+        variants={[
+          variante({ variant_id: 'va', label: 'A', total: 99, reply_rate: 22 }),
+          variante({ variant_id: 'vb', label: 'B', total: 1, reply_rate: 100 }),
+        ]}
+      />,
+    );
+    expect(screen.getByTestId('talkx-ab-results')).toHaveTextContent('Menor amostra: 1 de 50');
+    expect(screen.queryByText('22.0%')).not.toBeInTheDocument();
+  });
+
+  it('uma variante só não vira comparação de um lado', () => {
+    render(<TalkXAbTestResults {...base} minSample={10} variants={[variante({ total: 500 })]} />);
+    expect(screen.getByTestId('talkx-ab-results')).toHaveTextContent('Só há uma variante com dados');
+    expect(screen.queryByText('40.0%')).not.toBeInTheDocument();
+  });
+
+  // Antes, falha da RPC chegava como lista vazia e a tela dizia "Amostra: 0" —
+  // afirmava zero destinatário onde o estado real era desconhecido.
+  it('falha da RPC aparece como erro com nova tentativa, não como amostra zero', () => {
+    const tentar = vi.fn();
+    render(<TalkXAbTestResults {...base} isError onRetry={tentar} variants={[]} />);
+    expect(screen.getByRole('alert')).toHaveTextContent('Não foi possível carregar o resultado por variante');
+    expect(screen.getByTestId('talkx-ab-results')).not.toHaveTextContent('de 50 destinatários');
+    screen.getByRole('button', { name: 'Tentar novamente' }).click();
+    expect(tentar).toHaveBeenCalledTimes(1);
   });
 
   it('a métrica da campanha troca a taxa lida, sem a tela recalcular nada', () => {
@@ -98,8 +135,18 @@ describe('X065 — TalkXAbTestResults', () => {
     expect(screen.getByText('Variante B')).toHaveAttribute('title', 'vb');
   });
 
+  // Duas variantes porque a comparacao agora exige par (uma barra sozinha nao e
+  // resultado de A/B). A assercao continua sendo o nome acessivel da barra.
   it('cada barra tem nome acessível com a taxa e a base', () => {
-    render(<TalkXAbTestResults {...base} variants={[variante({ variant_id: 'va', label: 'A', total: 150, reply_rate: 22.4 })]} />);
+    render(
+      <TalkXAbTestResults
+        {...base}
+        variants={[
+          variante({ variant_id: 'va', label: 'A', total: 150, reply_rate: 22.4 }),
+          variante({ variant_id: 'vb', label: 'B', total: 150, reply_rate: 11.1 }),
+        ]}
+      />,
+    );
     expect(
       screen.getByRole('img', { name: /A: 22\.4% em taxa de resposta, sobre 150 destinatários/i }),
     ).toBeInTheDocument();

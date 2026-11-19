@@ -54,11 +54,22 @@ export function talkXAbRate(stat: TalkXAbVariantStat, metric: TalkXAbMetric): nu
  * Lê a estatística por variante. Sem campanha, ou com o A/B desligado, a
  * consulta não roda — não existe resultado a mostrar e a chamada seria gasto
  * à toa.
+ *
+ * `emAndamento` liga a atualização periódica: entregas e respostas que chegam
+ * durante o envio mudam as linhas que a RPC agrega, e sem isto o painel ficava
+ * congelado na primeira leitura por toda a sessão (as outras consultas desta
+ * mesma tela já têm intervalo próprio). Parada a campanha, o número não muda
+ * mais e o intervalo sai — nada de consulta à toa.
  */
-export function useTalkXAbStats(campaignId: string | null | undefined, enabled: boolean) {
+export function useTalkXAbStats(
+  campaignId: string | null | undefined,
+  enabled: boolean,
+  emAndamento = false,
+) {
   const query = useQuery({
     queryKey: ['talkx-ab-stats', campaignId],
     enabled: Boolean(campaignId) && enabled,
+    refetchInterval: enabled && emAndamento ? 15_000 : false,
     queryFn: async () => {
       const rpc = supabase.rpc.bind(supabase) as unknown as PendingDatabaseRpc;
       const { data, error } = await rpc('talkx_campaign_variant_stats', { p_campaign_id: campaignId });

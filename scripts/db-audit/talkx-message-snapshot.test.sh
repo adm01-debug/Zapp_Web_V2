@@ -3,6 +3,11 @@ set -euo pipefail
 
 repo_root=$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)
 migration="$repo_root/supabase/migrations/20260912120000_snapshot_talkx_recipient_messages.sql"
+# X065: a 20261118220000 SUBSTITUI a funcao acima — no primeiro snapshot a
+# decisao do worker sobre a variante passa a valer, NULL incluso. Sem carregar
+# as duas em ordem, este teste assertaria o comportamento antigo (COALESCE), que
+# e justamente o defeito corrigido.
+migration_variante="$repo_root/supabase/migrations/20261118220000_talkx_snapshot_variante_primeiro_vale.sql"
 postgres_image="${TALKX_MESSAGE_SNAPSHOT_TEST_POSTGRES_IMAGE:-postgres:17-alpine}"
 container_name="talkx-message-snapshot-test-$$"
 test_password="talkx_message_snapshot_test_only"
@@ -59,10 +64,14 @@ CREATE TABLE public.talkx_recipients (
 );
 INSERT INTO public.talkx_recipients (id, status, delivery_claim_token, variant_id) VALUES
   ('50000000-0000-0000-0000-000000000001', 'sending', '70000000-0000-0000-0000-000000000001', '80000000-0000-0000-0000-000000000001'),
-  ('50000000-0000-0000-0000-000000000002', 'sending', '70000000-0000-0000-0000-000000000002', NULL);
+  ('50000000-0000-0000-0000-000000000002', 'sending', '70000000-0000-0000-0000-000000000002', NULL),
+  -- X065: variante ja atribuida pelo snapshot da audiencia; o worker vai mandar
+  -- NULL porque o texto proprio da campanha vence a variante (regra X020).
+  ('50000000-0000-0000-0000-000000000003', 'sending', '70000000-0000-0000-0000-000000000003', '80000000-0000-0000-0000-000000000003');
 SQL
 
 psql_test < "$migration" >/dev/null
+psql_test < "$migration_variante" >/dev/null
 service_session="SET ROLE service_role; SET request.jwt.claim.role='service_role';"
 user_session="SET ROLE authenticated; SET request.jwt.claim.role='authenticated';"
 
@@ -81,4 +90,20 @@ invalid_media="$(psql_test -v VERBOSITY=verbose -c "$service_session SELECT * FR
 invalid_claim="$(psql_test -v VERBOSITY=verbose -c "$service_session SELECT * FROM public.persist_talkx_recipient_message_snapshot('50000000-0000-0000-0000-000000000002', '70000000-0000-0000-0000-000000000099', 'Mensagem');" 2>&1 || true)"
 [[ "$invalid_claim" == *talkx_delivery_claim_conflict* ]] || fail 'snapshot aceitou lease de outro worker'
 
-printf 'PASS: Talk X snapshots immutable per-recipient content, media and A/B attribution behind a service lease\n'
+# X065 — texto proprio da campanha vence a variante (X020): o worker manda
+# p_variant_id NULL e a atribuicao tem de ser LIMPA. Antes da 20261118220000 a
+# funcao fazia COALESCE(recipient.variant_id, p_variant_id), entao o NULL era
+# ignorado, a linha seguia dizendo "variante A" e talkx_campaign_variant_stats
+# creditava a ela entrega e resposta de uma mensagem que ela NAO enviou.
+psql_test -Atqc "$service_session SELECT personalized_message FROM public.persist_talkx_recipient_message_snapshot('50000000-0000-0000-0000-000000000003', '70000000-0000-0000-0000-000000000003', 'Oferta de novembro');" >/dev/null
+variante_limpa="$(psql_test -Atqc "SELECT coalesce(variant_id::text, 'NULO') || ':' || coalesce(variant_id_snapshot::text, 'NULO') FROM public.talkx_recipients WHERE id = '50000000-0000-0000-0000-000000000003';")"
+[[ "$variante_limpa" == 'NULO:NULO' ]] || fail "texto proprio venceu mas a variante continuou atribuida: $variante_limpa"
+
+# E a imutabilidade do snapshot segue valendo: a retentativa nao reescreve o
+# texto nem ressuscita a variante.
+retry_sem_variante="$(psql_test -Atqc "$service_session SELECT personalized_message FROM public.persist_talkx_recipient_message_snapshot('50000000-0000-0000-0000-000000000003', '70000000-0000-0000-0000-000000000003', 'texto diferente na retentativa');")"
+[[ "$retry_sem_variante" == 'Oferta de novembro' ]] || fail "retry reescreveu o snapshot sem variante: $retry_sem_variante"
+variante_apos_retry="$(psql_test -Atqc "SELECT coalesce(variant_id::text, 'NULO') FROM public.talkx_recipients WHERE id = '50000000-0000-0000-0000-000000000003';")"
+[[ "$variante_apos_retry" == 'NULO' ]] || fail "retry ressuscitou a variante limpa: $variante_apos_retry"
+
+printf 'PASS: Talk X snapshots immutable per-recipient content, media and A/B attribution behind a service lease, and clears the assignment when the campaign text wins (X020)\n'
