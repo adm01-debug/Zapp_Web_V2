@@ -1,7 +1,7 @@
 # Contexto do projeto para agentes de IA
 
 GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.
-Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR dela) a cada push em `main` e a cada 10 minutos pelo workflow `contexto.yml`; índice único das três fontes em `docs/contexto/00-INDEX.md`. Gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `55b357398fb590de78370da722fc659f754be507` (2026-11-19T18:11:59Z).
+Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR dela) a cada push em `main` e a cada 10 minutos pelo workflow `contexto.yml`; índice único das três fontes em `docs/contexto/00-INDEX.md`. Gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `966a524f0f3a5cda00d7993042bb7491f1abcf3c` (2026-11-19T16:04:57-03:00).
 
 ## Como usar (leia antes de planejar ou executar qualquer tarefa)
 1. **Tela/rota/menu** → `rotas.json` (url/vista/menu → arquivo → hooks → tabelas → edges; `rotas_http_backend` para APIs) e `modulos.json` (módulo inteiro + dependências entre módulos).
@@ -14,7 +14,7 @@ Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR
 Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua tarefa; não carregue tudo.
 
 ## Stack
-- linguagens: TypeScript (5037), SQL (3061), Markdown (2988), JSON (1968), JavaScript (682), Shell (264), Python (125), YAML (111)
+- linguagens: TypeScript (5037), SQL (3061), Markdown (2988), JSON (1968), JavaScript (682), Shell (264), Python (125), YAML (112)
 - linguagem_principal: TypeScript
 - framework: React
 - backend_http: n/d
@@ -34,7 +34,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 ## Números
 | item | qtd |
 |---|---|
-| arquivos_total | 14620 |
+| arquivos_total | 14621 |
 | arquivos_codigo | 5840 |
 | linhas_codigo | 1130179 |
 | rotas | 18 |
@@ -49,7 +49,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 | migrations | 1148 |
 | cron_jobs | 28 |
 | testes | 3201 |
-| workflows | 23 |
+| workflows | 24 |
 | scripts | 451 |
 | docs_md | 2988 |
 
@@ -394,8 +394,8 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - possiveis_segredos_no_codigo: 6 — ex.: analise-prs/resgate-261118-lote3/claude_pink/cool-dijkstra-xk9ek2/scripts/ci/edge-coverage-authz.unit.mjs:397, analise-prs/resgate-261118-lote3/claude_pink/cool-dijkstra-xk9ek2/scripts/edge-deploy/redigir-log.unit.mjs:38, scripts/ai-context/cenarios.mjs:102
 
 ## Grafo de código (graphify)
-- 92985 nós · 164565 arestas · 8119 comunidades · grafo do commit `55b35739`
-- comunidades maiores: Communities (5953 total, 1987 thin omitted) (3945), TalkXSuppression.tsx (1563), lucide-react (921), vitest (788), ref_node_fs (774), react (725), cn (602), @tanstack/react-query (551), CallSessionProvider.tsx (541), schemas.ts (473), utils.ts (450), useAuth (447)
+- 92986 nós · 164566 arestas · 8173 comunidades · grafo do commit `966a524f`
+- comunidades maiores: Communities (5953 total, 1987 thin omitted) (3946), TalkXSuppression.tsx (1293), react (907), vitest (835), sonner (735), utils.ts (653), cn (583), useAuth (531), @tanstack/react-query (531), ref_node_assert (516), ref_https (450), ref_node_fs (443)
 - símbolos mais chamados: cn() (src/lib/utils.ts), useAuth() (src/hooks/auth/useAuth.tsx), jsonResponse() (supabase/functions/_shared/validation.ts), errorResponse() (supabase/functions/_shared/validation.ts), handleCors() (supabase/functions/_shared/validation.ts), fail() (scripts/e2e-isolated/network-proof-policy.mjs), Logger (supabase/functions/_shared/validation.ts), requireEnv() (supabase/functions/_shared/validation.ts), fmtInt() (src/components/talkx/kit/format.ts), fromTable() (src/lib/supabaseHelpers.ts), useUserRole() (src/hooks/system/useUserRole.ts), validationErrorResponse() (supabase/functions/_shared/schemas.ts)
 - consulta local: `graphify query "<pergunta>"`, `graphify path "<A>" "<B>"`, `graphify explain "<X>"`
 
@@ -408,13 +408,13 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - supabase/schema-manifest.json (12)
 - PENDENCIAS.md (11)
 - supabase/schema-catalog.json (11)
-- .github/workflows/ci.yml (10)
 - .github/workflows/db-guard.yml (10)
 - docs/DB-INVENTORY.md (10)
-- docs/agentes/github-ci.md (7)
+- .github/workflows/ci.yml (9)
+- docs/agentes/github-ci.md (8)
+- docs/ci/README.md (7)
+- scripts/ci/ci-docs-baseline.unit.mjs (7)
 - supabase/functions/evolution-api/index.ts (7)
-- RELATORIO_CI.md (6)
-- TESTING_CONVENTION.md (6)
 
 ## Workflows
 - `branch-hygiene-audit.yml` — Branch Hygiene Audit (schedule, workflow_dispatch; cron 56 7 * * 1)
@@ -426,6 +426,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - `db-guard.yml` — DB Guard (offline) (merge_group, pull_request, push, workflow_dispatch)
 - `db-live-guard.yml` — DB Live Guard (schedule, workflow_dispatch; cron 13 6 * * 1)
 - `db-migrate.yml` — DB Migrate (production) (workflow_dispatch)
+- `dependency-review.yml` — Dependency Review (pull_request)
 - `deploy-functions.yml` — Deploy Edge Functions (push, workflow_dispatch)
 - `e2e-baselines.yml` — e2e-baselines (workflow_dispatch)
 - `e2e-logado-isolado.yml` — E2E isolado - login e suíte completa (pull_request, workflow_dispatch)
@@ -521,6 +522,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - CHANGELOG topo: [Unreleased]
 
 ## Últimos commits
+- 2026-11-19 `966a524f` ci(security): dependency review barra CVE novo high/critical nos PRs (#3288)
 - 2026-11-19 `55b35739` chore(contexto): atualiza snapshots X065 (persist_talkx_recipient_message_snapshot e set_talkx_campaign_ab) (#3289)
 - 2026-11-19 `76b0c7eb` docs(mapa): incorporar acervo de refs do remoto + veredito da auditoria (#3287)
 - 2026-11-19 `055cf6e2` chore(docs): consolidar relatório de liquidação com estado final (PEND=0)
@@ -535,7 +537,6 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - 2026-11-19 `755c0a6b` chore(db): sincronizar artefatos derivados do banco (#3276)
 - 2026-11-18 `38c2ae41` feat(talkx): teste A/B deixa de ser inalcançável pela interface (#3272)
 - 2026-11-18 `231b0e58` feat(talkx): decidir a vencedora do A/B pela tela de execução (#3274)
-- 2026-11-19 `0f3378f8` chore(db): sincronizar artefatos derivados do banco (#3275)
 
 ## Arquivos deste diretório
 - `docs/contexto/codigo/rotas.json`

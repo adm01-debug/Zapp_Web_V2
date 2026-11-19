@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "55b357398fb590de78370da722fc659f754be507",
+  "commit": "966a524f0f3a5cda00d7993042bb7491f1abcf3c",
   "branch": "main",
-  "data_commit": "2026-11-19T18:11:59Z",
+  "data_commit": "2026-11-19T16:04:57-03:00",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "966a524f",
+    "data": "2026-11-19",
+    "assunto": "ci(security): dependency review barra CVE novo high/critical nos PRs (#3288)"
+   },
    {
     "sha": "55b35739",
     "data": "2026-11-19",
@@ -126,14 +131,9 @@
     "sha": "f058a63e",
     "data": "2026-11-18",
     "assunto": "Registra a auditoria de liquidação de branches, PEND=0 (#3264)"
-   },
-   {
-    "sha": "33359709",
-    "data": "2026-11-18",
-    "assunto": "Teste A/B de campanha: termina o X065, que estava parado na metade (#3262)"
    }
   ],
-  "arquivos_mudados_7d": 6741,
+  "arquivos_mudados_7d": 6742,
   "pastas_mais_mudadas_30d": [
    {
     "pasta": "docs/contexto/supabase",
@@ -230,10 +230,6 @@
     "mudancas": 11
    },
    {
-    "arquivo": ".github/workflows/ci.yml",
-    "mudancas": 10
-   },
-   {
     "arquivo": ".github/workflows/db-guard.yml",
     "mudancas": 10
    },
@@ -242,7 +238,19 @@
     "mudancas": 10
    },
    {
+    "arquivo": ".github/workflows/ci.yml",
+    "mudancas": 9
+   },
+   {
     "arquivo": "docs/agentes/github-ci.md",
+    "mudancas": 8
+   },
+   {
+    "arquivo": "docs/ci/README.md",
+    "mudancas": 7
+   },
+   {
+    "arquivo": "scripts/ci/ci-docs-baseline.unit.mjs",
     "mudancas": 7
    },
    {
@@ -255,14 +263,6 @@
    },
    {
     "arquivo": "TESTING_CONVENTION.md",
-    "mudancas": 6
-   },
-   {
-    "arquivo": "docs/ci/README.md",
-    "mudancas": 6
-   },
-   {
-    "arquivo": "scripts/ci/ci-docs-baseline.unit.mjs",
     "mudancas": 6
    },
    {
@@ -301,7 +301,7 @@
   "autores_30d": [
    {
     "autor": "adm01-debug",
-    "commits": 292
+    "commits": 293
    },
    {
     "autor": "github-actions[bot]",
@@ -309,12 +309,12 @@
    },
    {
     "autor": "dependabot[bot]",
-    "commits": 2
+    "commits": 1
    }
   ]
  },
  "contagens": {
-  "arquivos_total": 14620,
+  "arquivos_total": 14621,
   "arquivos_codigo": 5840,
   "linhas_codigo": 1130179,
   "rotas": 18,
@@ -329,7 +329,7 @@
   "migrations": 1148,
   "cron_jobs": 28,
   "testes": 3201,
-  "workflows": 23,
+  "workflows": 24,
   "scripts": 451,
   "docs_md": 2988
  },

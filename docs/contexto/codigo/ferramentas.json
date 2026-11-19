@@ -10,7 +10,7 @@
    "JavaScript (682)",
    "Shell (264)",
    "Python (125)",
-   "YAML (111)"
+   "YAML (112)"
   ],
   "linguagem_principal": "TypeScript",
   "framework": "React",
@@ -663,6 +663,30 @@
     "actions/checkout",
     "actions/setup-node",
     "supabase/setup-cli"
+   ]
+  },
+  {
+   "arquivo": ".github/workflows/dependency-review.yml",
+   "nome": "Dependency Review",
+   "gatilhos": [
+    "pull_request"
+   ],
+   "crons": [],
+   "branches": [
+    "main"
+   ],
+   "jobs": [
+    "dependency-review"
+   ],
+   "permissoes": [
+    "contents: read"
+   ],
+   "scripts_usados": [],
+   "npm_scripts": [],
+   "secrets": [],
+   "actions": [
+    "actions/checkout",
+    "actions/dependency-review-action"
    ]
   },
   {

@@ -1,15 +1,15 @@
 {
  "meta": {
-  "sha": "55b357398fb590de78370da722fc659f754be507",
+  "sha": "966a524f0f3a5cda00d7993042bb7491f1abcf3c",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-19 18:16 UTC",
-  "files_total": 14476,
+  "generated_at": "2026-11-19 19:06 UTC",
+  "files_total": 14477,
   "code_files": 8875,
   "code_lines": 1407506
  },
  "version": "1.3.2",
- "facts_hash": "98336c428d91dfd3",
+ "facts_hash": "339e012469260ef9",
  "stack": {
   "frameworks": [
    "React + Vite",
@@ -223,6 +223,13 @@
     "name": "DB Migrate (production)",
     "triggers": [
      "workflow_dispatch"
+    ]
+   },
+   {
+    "file": ".github/workflows/dependency-review.yml",
+    "name": "Dependency Review",
+    "triggers": [
+     "pull_request"
     ]
    },
    {
@@ -478986,10 +478993,22 @@
   }
  },
  "git": {
-  "sha": "55b357398fb590de78370da722fc659f754be507",
+  "sha": "966a524f0f3a5cda00d7993042bb7491f1abcf3c",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "966a524",
+    "date": "2026-11-19",
+    "author": "adm01-debug",
+    "subject": "ci(security): dependency review barra CVE novo high/critical nos PRs (#3288)",
+    "files": [
+     ".github/workflows/dependency-review.yml",
+     "docs/agentes/github-ci.md",
+     "docs/ci/README.md",
+     "scripts/ci/ci-docs-baseline.unit.mjs"
+    ]
+   },
    {
     "sha": "55b3573",
     "date": "2026-11-19",
@@ -481246,29 +481265,23 @@
      "docs/ci/README.md",
      "scripts/ci/ci-docs-baseline.unit.mjs"
     ]
-   },
-   {
-    "sha": "6a23f0f",
-    "date": "2026-11-18",
-    "author": "adm01-debug",
-    "subject": "Liga a recomendação de produto por IA, que estava paga e desligada (#3260)",
-    "files": [
-     "src/components/copilot/ProductRecommendationCard.tsx",
-     "src/components/copilot/RadarPhase8to15Panel.tsx",
-     "src/components/copilot/__tests__/ProductRecommendationCard.test.tsx",
-     "src/components/copilot/__tests__/RadarPhase8to15Panel.cv105.test.tsx",
-     "src/components/copilot/index.ts",
-     "src/hooks/copilot/index.ts"
-    ]
    }
   ],
   "hot_files": [
+   [
+    "docs/agentes/github-ci.md",
+    4
+   ],
    [
     "src/hooks/integrations/useTalkXAbStats.ts",
     4
    ],
    [
-    "docs/agentes/github-ci.md",
+    "docs/ci/README.md",
+    3
+   ],
+   [
+    "scripts/ci/ci-docs-baseline.unit.mjs",
     3
    ],
    [
@@ -481320,14 +481333,6 @@
     2
    ],
    [
-    "docs/ci/README.md",
-    2
-   ],
-   [
-    "scripts/ci/ci-docs-baseline.unit.mjs",
-    2
-   ],
-   [
     "performance-budget.json",
     2
    ],
@@ -481340,7 +481345,7 @@
     2
    ],
    [
-    "docs/agentes/mapa-repo.md",
+    ".github/workflows/dependency-review.yml",
     1
    ]
   ]
