@@ -2,11 +2,21 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "055cf6e27fe1e3ebc3b333ce53bb4421ca201566",
+  "commit": "55b357398fb590de78370da722fc659f754be507",
   "branch": "main",
-  "data_commit": "2026-11-19T07:47:46-03:00",
+  "data_commit": "2026-11-19T18:11:59Z",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "55b35739",
+    "data": "2026-11-19",
+    "assunto": "chore(contexto): atualiza snapshots X065 (persist_talkx_recipient_message_snapshot e set_talkx_campaign_ab) (#3289)"
+   },
+   {
+    "sha": "76b0c7eb",
+    "data": "2026-11-19",
+    "assunto": "docs(mapa): incorporar acervo de refs do remoto + veredito da auditoria (#3287)"
+   },
    {
     "sha": "055cf6e2",
     "data": "2026-11-19",
@@ -121,23 +131,13 @@
     "sha": "33359709",
     "data": "2026-11-18",
     "assunto": "Teste A/B de campanha: termina o X065, que estava parado na metade (#3262)"
-   },
-   {
-    "sha": "0116fcc0",
-    "data": "2026-11-18",
-    "assunto": "Migration do índice do agendador substituída por uma que tolera falta de permissão (#3265)"
-   },
-   {
-    "sha": "8724c09b",
-    "data": "2026-11-18",
-    "assunto": "Redator do relatório volta a apagar token por padrão, não só por valor (#3263)"
    }
   ],
-  "arquivos_mudados_7d": 6744,
+  "arquivos_mudados_7d": 6741,
   "pastas_mais_mudadas_30d": [
    {
     "pasta": "docs/contexto/supabase",
-    "mudancas": 1913
+    "mudancas": 1915
    },
    {
     "pasta": "analise-prs/resgate-261115/auditoria",
@@ -250,10 +250,6 @@
     "mudancas": 7
    },
    {
-    "arquivo": ".github/workflows/types-sync.yml",
-    "mudancas": 6
-   },
-   {
     "arquivo": "RELATORIO_CI.md",
     "mudancas": 6
    },
@@ -294,6 +290,10 @@
     "mudancas": 6
    },
    {
+    "arquivo": ".github/workflows/types-sync.yml",
+    "mudancas": 5
+   },
+   {
     "arquivo": "docs/contexto/regras/manual/regras.md",
     "mudancas": 5
    }
@@ -301,7 +301,7 @@
   "autores_30d": [
    {
     "autor": "adm01-debug",
-    "commits": 291
+    "commits": 292
    },
    {
     "autor": "github-actions[bot]",
@@ -309,7 +309,7 @@
    },
    {
     "autor": "dependabot[bot]",
-    "commits": 3
+    "commits": 2
    }
   ]
  },

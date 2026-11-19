@@ -66,11 +66,11 @@
  "commits": {
   "convencao": "livre",
   "exemplos": [
+   "chore(contexto): atualiza snapshots X065 (persist_talkx_recipient_message_snapshot e set_talkx_campaign_ab) (#3289)",
+   "docs(mapa): incorporar acervo de refs do remoto + veredito da auditoria (#3287)",
    "chore(docs): consolidar relatório de liquidação com estado final (PEND=0)",
    "docs: publicar snapshots SQL documentais do contexto X065 (#3284)",
-   "fix(team-chat): erro ao ler config de WhatsApp deixa de virar formulario \"Nenhum\" (#3283)",
-   "fix(team-chat): falha ao ler convites deixa de se disfarcar de \"nenhum convite\" (#3282)",
-   "fix(seguranca): URL do CRM externo deixa de virar href/src sem guard (#3281)"
+   "fix(team-chat): erro ao ler config de WhatsApp deixa de virar formulario \"Nenhum\" (#3283)"
   ]
  },
  "pr_template": ".github/PULL_REQUEST_TEMPLATE.md",

@@ -1,7 +1,7 @@
 # Contexto do projeto para agentes de IA
 
 GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.
-Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR dela) a cada push em `main` e a cada 10 minutos pelo workflow `contexto.yml`; índice único das três fontes em `docs/contexto/00-INDEX.md`. Gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `055cf6e27fe1e3ebc3b333ce53bb4421ca201566` (2026-11-19T07:47:46-03:00).
+Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR dela) a cada push em `main` e a cada 10 minutos pelo workflow `contexto.yml`; índice único das três fontes em `docs/contexto/00-INDEX.md`. Gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `55b357398fb590de78370da722fc659f754be507` (2026-11-19T18:11:59Z).
 
 ## Como usar (leia antes de planejar ou executar qualquer tarefa)
 1. **Tela/rota/menu** → `rotas.json` (url/vista/menu → arquivo → hooks → tabelas → edges; `rotas_http_backend` para APIs) e `modulos.json` (módulo inteiro + dependências entre módulos).
@@ -394,8 +394,8 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - possiveis_segredos_no_codigo: 6 — ex.: analise-prs/resgate-261118-lote3/claude_pink/cool-dijkstra-xk9ek2/scripts/ci/edge-coverage-authz.unit.mjs:397, analise-prs/resgate-261118-lote3/claude_pink/cool-dijkstra-xk9ek2/scripts/edge-deploy/redigir-log.unit.mjs:38, scripts/ai-context/cenarios.mjs:102
 
 ## Grafo de código (graphify)
-- 92984 nós · 164564 arestas · 8139 comunidades · grafo do commit `055cf6e2`
-- comunidades maiores: Communities (5953 total, 1987 thin omitted) (3945), src/components/ui/badge.tsx (1257), TalkXSuppression.tsx (1112), react (1094), vitest (910), client.ts (828), cn (753), ref_node_fs (729), validation.ts (619), ExternalProductManagement.tsx (577), @tanstack/react-query (567), DashboardView.tsx (534)
+- 92985 nós · 164565 arestas · 8119 comunidades · grafo do commit `55b35739`
+- comunidades maiores: Communities (5953 total, 1987 thin omitted) (3945), TalkXSuppression.tsx (1563), lucide-react (921), vitest (788), ref_node_fs (774), react (725), cn (602), @tanstack/react-query (551), CallSessionProvider.tsx (541), schemas.ts (473), utils.ts (450), useAuth (447)
 - símbolos mais chamados: cn() (src/lib/utils.ts), useAuth() (src/hooks/auth/useAuth.tsx), jsonResponse() (supabase/functions/_shared/validation.ts), errorResponse() (supabase/functions/_shared/validation.ts), handleCors() (supabase/functions/_shared/validation.ts), fail() (scripts/e2e-isolated/network-proof-policy.mjs), Logger (supabase/functions/_shared/validation.ts), requireEnv() (supabase/functions/_shared/validation.ts), fmtInt() (src/components/talkx/kit/format.ts), fromTable() (src/lib/supabaseHelpers.ts), useUserRole() (src/hooks/system/useUserRole.ts), validationErrorResponse() (supabase/functions/_shared/schemas.ts)
 - consulta local: `graphify query "<pergunta>"`, `graphify path "<A>" "<B>"`, `graphify explain "<X>"`
 
@@ -413,8 +413,8 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - docs/DB-INVENTORY.md (10)
 - docs/agentes/github-ci.md (7)
 - supabase/functions/evolution-api/index.ts (7)
-- .github/workflows/types-sync.yml (6)
 - RELATORIO_CI.md (6)
+- TESTING_CONVENTION.md (6)
 
 ## Workflows
 - `branch-hygiene-audit.yml` — Branch Hygiene Audit (schedule, workflow_dispatch; cron 56 7 * * 1)
@@ -521,6 +521,8 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - CHANGELOG topo: [Unreleased]
 
 ## Últimos commits
+- 2026-11-19 `55b35739` chore(contexto): atualiza snapshots X065 (persist_talkx_recipient_message_snapshot e set_talkx_campaign_ab) (#3289)
+- 2026-11-19 `76b0c7eb` docs(mapa): incorporar acervo de refs do remoto + veredito da auditoria (#3287)
 - 2026-11-19 `055cf6e2` chore(docs): consolidar relatório de liquidação com estado final (PEND=0)
 - 2026-11-19 `0d1ebd5b` docs: publicar snapshots SQL documentais do contexto X065 (#3284)
 - 2026-11-19 `49640b0a` fix(team-chat): erro ao ler config de WhatsApp deixa de virar formulario "Nenhum" (#3283)
@@ -534,8 +536,6 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - 2026-11-18 `38c2ae41` feat(talkx): teste A/B deixa de ser inalcançável pela interface (#3272)
 - 2026-11-18 `231b0e58` feat(talkx): decidir a vencedora do A/B pela tela de execução (#3274)
 - 2026-11-19 `0f3378f8` chore(db): sincronizar artefatos derivados do banco (#3275)
-- 2026-11-18 `9d4cff9d` fix(talkx): variante do A/B deixa de ser re-sorteada no envio (#3271)
-- 2026-11-18 `15e25fff` test(e2e): regerar a baseline de Contatos tabela/dark no ambiente do CI (#3273)
 
 ## Arquivos deste diretório
 - `docs/contexto/codigo/rotas.json`

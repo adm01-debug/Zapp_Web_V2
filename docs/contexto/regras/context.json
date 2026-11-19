@@ -1,15 +1,15 @@
 {
  "meta": {
-  "sha": "055cf6e27fe1e3ebc3b333ce53bb4421ca201566",
+  "sha": "55b357398fb590de78370da722fc659f754be507",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-19 11:13 UTC",
+  "generated_at": "2026-11-19 18:16 UTC",
   "files_total": 14476,
   "code_files": 8875,
-  "code_lines": 1407501
+  "code_lines": 1407506
  },
  "version": "1.3.2",
- "facts_hash": "61f125160da93fea",
+ "facts_hash": "98336c428d91dfd3",
  "stack": {
   "frameworks": [
    "React + Vite",
@@ -76480,7 +76480,7 @@
   {
    "module": "docs",
    "files": 1861,
-   "lines": 122287,
+   "lines": 122292,
    "tables": [
     "department_invites",
     "departments",
@@ -338858,7 +338858,7 @@
   },
   "docs/contexto/supabase/functions/public/persist_talkx_recipient_message_snapshot__ed449af90cfdbaee.sql": {
    "path": "docs/contexto/supabase/functions/public/persist_talkx_recipient_message_snapshot__ed449af90cfdbaee.sql",
-   "lines": 55,
+   "lines": 62,
    "uses_service_role": true
   },
   "docs/contexto/supabase/functions/public/phone_variants__3250813184c64a68.sql": {
@@ -339325,7 +339325,7 @@
   },
   "docs/contexto/supabase/functions/public/set_talkx_campaign_ab__46dd90c49e20c67b.sql": {
    "path": "docs/contexto/supabase/functions/public/set_talkx_campaign_ab__46dd90c49e20c67b.sql",
-   "lines": 69
+   "lines": 67
   },
   "docs/contexto/supabase/functions/public/set_talkx_recipient_status_changed_at__12ae32cb1ec02d01.sql": {
    "path": "docs/contexto/supabase/functions/public/set_talkx_recipient_status_changed_at__12ae32cb1ec02d01.sql",
@@ -478986,10 +478986,29 @@
   }
  },
  "git": {
-  "sha": "055cf6e27fe1e3ebc3b333ce53bb4421ca201566",
+  "sha": "55b357398fb590de78370da722fc659f754be507",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "55b3573",
+    "date": "2026-11-19",
+    "author": "adm01-debug",
+    "subject": "chore(contexto): atualiza snapshots X065 (persist_talkx_recipient_message_snapshot e set_talkx_campaign_ab) (#3289)",
+    "files": [
+     "docs/contexto/supabase/functions/public/persist_talkx_recipient_message_snapshot__ed449af90cfdbaee.sql",
+     "docs/contexto/supabase/functions/public/set_talkx_campaign_ab__46dd90c49e20c67b.sql"
+    ]
+   },
+   {
+    "sha": "76b0c7e",
+    "date": "2026-11-19",
+    "author": "adm01-debug",
+    "subject": "docs(mapa): incorporar acervo de refs do remoto + veredito da auditoria (#3287)",
+    "files": [
+     "docs/agentes/mapa-repo.md"
+    ]
+   },
    {
     "sha": "055cf6e",
     "date": "2026-11-19",
@@ -481241,51 +481260,9 @@
      "src/components/copilot/index.ts",
      "src/hooks/copilot/index.ts"
     ]
-   },
-   {
-    "sha": "77d0316",
-    "date": "2026-11-18",
-    "author": "adm01-debug",
-    "subject": "Aproveita 5 melhorias que estavam presas em branches nunca mergeadas (#3258)",
-    "files": [
-     "src/components/inbox/WhisperMode.tsx",
-     "src/components/inbox/__tests__/WhisperMode.voz.test.tsx",
-     "src/components/inbox/contact-details/__tests__/WhatsAppStatusSection.test.tsx",
-     "src/components/ui/__tests__/command-palette.a11y.test.tsx",
-     "src/components/ui/command-palette.tsx",
-     "src/hooks/copilot/__tests__/useObjectionHandler.test.ts",
-     "src/hooks/copilot/useObjectionHandler.ts",
-     "src/services/__tests__/chat.service.test.ts",
-     "src/services/chat.service.ts"
-    ]
-   },
-   {
-    "sha": "8486d56",
-    "date": "2026-11-18",
-    "author": "adm01-debug",
-    "subject": "Destrava o sync de tipos, parado desde que o inventário virou guarda sem gerador (#3256)",
-    "files": [
-     "docs/DB-INVENTORY.md",
-     "scripts/db-audit/grants-baseline.json",
-     "src/integrations/supabase/types.ts",
-     "supabase/schema-catalog.json",
-     "supabase/schema-manifest.json"
-    ]
    }
   ],
   "hot_files": [
-   [
-    "src/integrations/supabase/types.ts",
-    4
-   ],
-   [
-    "supabase/schema-catalog.json",
-    4
-   ],
-   [
-    "supabase/schema-manifest.json",
-    4
-   ],
    [
     "src/hooks/integrations/useTalkXAbStats.ts",
     4
@@ -481295,11 +481272,15 @@
     3
    ],
    [
-    "docs/DB-INVENTORY.md",
+    "src/integrations/supabase/types.ts",
     3
    ],
    [
-    "scripts/db-audit/grants-baseline.json",
+    "supabase/schema-catalog.json",
+    3
+   ],
+   [
+    "supabase/schema-manifest.json",
     3
    ],
    [
@@ -481319,7 +481300,23 @@
     3
    ],
    [
+    "docs/contexto/supabase/functions/public/persist_talkx_recipient_message_snapshot__ed449af90cfdbaee.sql",
+    2
+   ],
+   [
+    "docs/contexto/supabase/functions/public/set_talkx_campaign_ab__46dd90c49e20c67b.sql",
+    2
+   ],
+   [
     "\"docs/auditoria-liquida\\303\\247\\303\\243o-branches.md\"",
+    2
+   ],
+   [
+    "docs/DB-INVENTORY.md",
+    2
+   ],
+   [
+    "scripts/db-audit/grants-baseline.json",
     2
    ],
    [
@@ -481343,15 +481340,7 @@
     2
    ],
    [
-    "docs/contexto/supabase/functions/public/set_talkx_campaign_ab__46dd90c49e20c67b.sql",
-    1
-   ],
-   [
-    "docs/contexto/supabase/migrations/20261118210000_talkx_next_recipients_variant_id.sql",
-    1
-   ],
-   [
-    "docs/contexto/supabase/migrations/20261118220000_talkx_snapshot_variante_primeiro_vale.sql",
+    "docs/agentes/mapa-repo.md",
     1
    ]
   ]
