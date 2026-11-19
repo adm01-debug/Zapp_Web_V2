@@ -26,7 +26,7 @@ export function DepartmentWhatsAppView({ departmentId, currentUserName, isAdmin 
   const [evolutionApiKey, setEvolutionApiKey] = useState('');
   const [officialToken, setOfficialToken] = useState('');
 
-  const { data: credentials } = useDepartmentWhatsAppCredentials(departmentId);
+  const { data: credentials, isError } = useDepartmentWhatsAppCredentials(departmentId);
   const saveMutation = useSaveDepartmentWhatsApp(departmentId);
 
   useEffect(() => {
@@ -48,6 +48,21 @@ export function DepartmentWhatsAppView({ departmentId, currentUserName, isAdmin 
       actorName: currentUserName,
     });
   };
+
+  // Falha de leitura NAO pode virar formulario no padrao "Nenhum". Sem o
+  // `isError`, uma consulta quebrada deixava `credentials` indefinido, o
+  // `useEffect` nao rodava e a tela mostrava o modo `none` com os campos
+  // vazios -- indistinguivel de um departamento sem WhatsApp configurado. O
+  // admin podia SALVAR esse padrao por cima das credenciais reais, perdendo a
+  // configuracao do departamento. Mesmo formato do vizinho
+  // `TeamPerformancePanel.tsx:22`.
+  if (isError) {
+    return (
+      <div role="alert" className="p-4 text-sm text-destructive">
+        Não foi possível carregar a configuração de WhatsApp deste departamento.
+      </div>
+    );
+  }
 
   return (
     <div className="p-4 space-y-5">
