@@ -14996,6 +14996,22 @@ export type Database = {
         Args: { p_connection_id: string; p_token: string }
         Returns: string
       }
+      set_talkx_campaign_ab: {
+        Args: {
+          p_ab_enabled: boolean
+          p_ab_metric?: string
+          p_ab_min_sample?: number
+          p_campaign_id: string
+          p_expected_revision: number
+        }
+        Returns: {
+          ab_enabled: boolean
+          ab_metric: string
+          ab_min_sample: number
+          campaign_id: string
+          revision: number
+        }[]
+      }
       set_team_member_pref: {
         Args: { p_conversation_id: string; p_is_muted?: boolean }
         Returns: undefined
