@@ -325,6 +325,35 @@ describe('useCampaignEditor — draft integrity', () => {
     expect(ordem).toEqual(['ab', 'snapshot']);
   });
 
+  // X065/BUG: `set_talkx_campaign_ab` entrou DEPOIS da criacao e ANTES do ponto
+  // em que o editor guardava o id. Falhando ela, o id da campanha recem-criada
+  // se perdia e a retentativa repetia o caminho de CRIACAO com a mesma chave.
+  // `save_talkx_campaign_draft` compara 29 campos do payload no replay
+  // (`draft_step` entre eles): qualquer edicao no meio estouraria
+  // `talkx_draft_creation_key_payload_conflict` e o editor travaria para sempre
+  // numa campanha que ja existia no servidor.
+  it('a campanha criada nao se perde quando a gravacao do A/B falha', async () => {
+    f.gravarAb.mockRejectedValueOnce(new Error('talkx_campaign_role_required'));
+    const { result } = renderHook(() => useCampaignEditor(null, vi.fn()));
+    act(() => {
+      result.current.setName('Campanha com A/B');
+      result.current.toggleContact('contact-1');
+      result.current.setAbEnabled(true);
+    });
+
+    await expect(result.current.handleSave('draft')).rejects.toThrow('talkx_campaign_role_required');
+    expect(f.create).toHaveBeenCalledTimes(1);
+
+    // Segundo save: tem de ATUALIZAR a campanha criada, nunca criar de novo.
+    await act(async () => { await result.current.handleSave('draft'); });
+
+    expect(f.create).toHaveBeenCalledTimes(1);
+    expect(f.saveDraft).toHaveBeenLastCalledWith(expect.objectContaining({
+      campaignId: 'draft-1',
+      creationKey: null,
+    }));
+  });
+
   it('creates one draft and asks the server for the audience snapshot on later saves (X017)', async () => {
     const { result } = renderHook(() => useCampaignEditor(null, vi.fn()));
     act(() => { result.current.setName('Campanha de teste'); result.current.toggleContact('contact-1'); });

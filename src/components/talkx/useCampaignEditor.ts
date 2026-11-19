@@ -1037,6 +1037,22 @@ export function useCampaignEditor(campaign: TalkXCampaign | null, onClose: () =>
       const id = savedDraft.campaignId;
       draftRevisionRef.current = savedDraft.revision;
       setDraftRevision(savedDraft.revision);
+      if (!persistedCampaignId) {
+        // X025: os eventos 'created'/'updated' passaram a ser gravados pelo
+        // trigger do servidor (X024). O cliente não escreve mais eventos de
+        // ciclo de vida — só a trilha de operador (note/checklist).
+        //
+        // X065: registrar o id AQUI, e nao depois dos passos seguintes. A
+        // campanha ja existe no servidor; se `set_talkx_campaign_ab` ou o
+        // snapshot falharem antes disso, o editor ficava sem o id e a proxima
+        // tentativa repetia o caminho de CRIACAO com a mesma chave. Como
+        // `save_talkx_campaign_draft` compara 29 campos do payload no replay
+        // (`draft_step` entre eles, que muda so de clicar "Continuar"), a
+        // retentativa estourava `talkx_draft_creation_key_payload_conflict` e o
+        // editor travava para sempre numa campanha que ja tinha sido criada.
+        draftCampaignIdRef.current = id;
+        setDraftCampaignId(id);
+      }
       // X065: `save_talkx_campaign_draft` nao conhece as colunas `ab_*` (medido
       // no banco: a RPC extrai campo a campo e tem lista explicita). Mandar no
       // payload fazia os tres serem descartados em silencio. Caminho proprio,
@@ -1070,13 +1086,6 @@ export function useCampaignEditor(campaign: TalkXCampaign | null, onClose: () =>
       autosaveInitialRef.current = autosaveFields;
       setPersistedAutosaveSnapshot(autosaveFields);
       pendingChangesRef.current = autosaveFields !== autosaveFieldsRef.current;
-      if (!persistedCampaignId) {
-        // X025: os eventos 'created'/'updated' passaram a ser gravados pelo
-        // trigger do servidor (X024). O cliente não escreve mais eventos de
-        // ciclo de vida — só a trilha de operador (note/checklist).
-        draftCampaignIdRef.current = id;
-        setDraftCampaignId(id);
-      }
 
       // X017: os destinatários são gerados NO SERVIDOR a partir do rascunho
       // recém-salvo (origem, segmento, audience_filters e seleção manual). Uma
