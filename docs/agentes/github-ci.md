@@ -64,8 +64,24 @@ Fatos do perímetro que já custaram retrabalho:
   **and** approve pull requests": desligado, o `types-sync` não consegue abrir PR.
 - **`TYPES_SYNC_PR_TOKEN` não é necessário — não crie.** O PR do `types-sync` nasce com `GITHUB_TOKEN`
   e o próprio workflow aprova os runs em `action_required`.
-- **App "Supabase for GitHub": desligado** (branching automático e deploy). Ele apontava para o banco
-  oficial e gerava custo por PR. Se um dia reativar preview, use um projeto Supabase separado.
+- **App "Supabase for GitHub": LIGADO** — esta linha dizia "desligado" e estava errada. Medido em
+  19/11/2026: o check `Supabase Preview` aparece e falha em **toda** PR recente (#3262, #3265, #3271,
+  #3272, #3274, #3275, #3276), inclusive nas que não tocam `supabase/` — a #3274 só mexeu em `docs/` e
+  `src/`. Ele cria preview branch no projeto **`vppjpunmtxoitwdbpnvn`**, que não é o banco oficial
+  (isso, ao menos, segue a recomendação antiga de usar projeto separado).
+  A falha é sempre a mesma: `ERROR: Job 8 does not exist or you don't own it (SQLSTATE XX000)`. O
+  preview nasce vazio e reaplica a história inteira; a `20260902000200_fix_cron_avatars_refresh_key.sql:6`
+  chama `cron.alter_job(job_id := 8, ...)` com o jobid **literal**, e o job 8 foi criado à mão no painel,
+  nunca por migration (`scripts/db-audit/replay-known-failures.json:11` já registra essa mesma migration
+  como falha conhecida de replay, pelo mesmo motivo). Não há patch no repositório que resolva: a
+  migration está no ledger e é história imutável (regra 7 de `banco.md`, e o guard "Rejeitar edicao de
+  migration ja existente" reprova `modified`), e migration nova não ajuda porque o replay morre antes
+  de chegar nela.
+  **Não é required check, não bloqueia merge e não toca o banco oficial** — mas pinta toda PR de
+  vermelho, o que treina agente e dono a ignorar CI vermelha. Desligar é `PENDENCIAS.md` item 4 e só o
+  dono faz: em github.com/settings/installations, remover este repositório da instalação do Supabase,
+  ou desligar o GitHub integration no painel do projeto. A sessão do agente é limitada ao repositório
+  (`user/installations` responde 403), então não há como fazer daqui.
 - `secret_scanning_non_provider_patterns` não liga (exige plano pago): vazamento de `DESTINO_URL` não
   dispara alerta neste repo público.
 
