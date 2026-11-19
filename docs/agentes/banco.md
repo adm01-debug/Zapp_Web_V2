@@ -64,6 +64,14 @@ Resumo das regras no `AGENTS.md`; aqui está o detalhe. Errar o banco já causou
    fora do ledger), mas nenhuma execução verde com `apply=true` foi observada desde a correção — confira
    o último run antes de contar com ele. Ele conecta como `postgres`, que não é superuser: `REVOKE` de
    grant do `supabase_admin` e `CREATE INDEX` em `cron.*` só pelo SQL Editor.
+   **`idx_job_run_details_jobid_start` virou obsoleto — não abra chamado no Supabase.** A
+   `20261118200000` deixa um `RAISE WARNING` dizendo que o índice depende de `supabase_admin`, e o
+   comentário dela afirma que o ganho "só vem com o chamado". Medido no banco oficial em 19/11/2026:
+   a causa raiz (C1, varredura sequencial) foi fechada pelo lock + janela da `20261117110000`, não
+   pelo índice. Falhas de `talkx-scheduler-1min` por dia: 16/11 = 47 de 1.398 (3,36%); de 17/11 em
+   diante = **0 de 3.020**. A tabela está estável em ~84 mil linhas e 81 MB por causa da retenção de
+   7 dias (job `cron-historico-retencao-7d`, jobid 35). O `WARNING` no log daquele apply é histórico,
+   não pendência.
 2. **Versão sem colisão:** antes de criar arquivo ou aplicar DDL, no mesmo turno: `SELECT max(version)`
    no ledger, `ls supabase/migrations | tail` e busca de PRs abertas tocando `supabase/migrations/`.
    Para reservar de forma atômica: `SELECT supabase_migrations.reserve_migration_version('<sessao>', '<motivo>')`
