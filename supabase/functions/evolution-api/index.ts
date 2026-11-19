@@ -33,8 +33,12 @@ import { isInstancePaused } from "../_shared/instance_pause.ts";
 import { EvolutionApiRequestSchema, GROUP_JID_PATTERN, INSTANCE_NAME_PATTERN, WHATSAPP_NUMBER_OR_JID_PATTERN, evolutionApiRequiresInstance, parseBody, resolveEvolutionInstanceName, validationErrorResponse } from "../_shared/schemas.ts";
 // R2-API-015: rotas de ciclo de sessão (connect/status/disconnect) por flavor.
 import {
+  formatPairingCode,
+  pairingCodeFromResponse,
+  pairingValidity,
   qrFromV2Connect,
   resolveEvolutionFlavor,
+  resolvePairingRoute,
   resolveSessionApiKey,
   resolveSessionRoute,
   sessionStateFromV2,
@@ -297,7 +301,7 @@ export async function handleEvolutionApi(req: Request, _injected?: EvolutionApiD
     // durante a mesma janela de risco).
     // sync-instance-token entra junto: é o passo de reparo do mesmo fluxo de
     // reconexão (e o connect o executa por dentro no auto-reparo).
-    const MAINTENANCE_GATED_ACTIONS = new Set(['connect', 'restart-instance', 'disconnect', 'create-instance', 'create-connection', 'sync-instance-token']);
+    const MAINTENANCE_GATED_ACTIONS = new Set(['connect', 'restart-instance', 'disconnect', 'create-instance', 'create-connection', 'sync-instance-token', 'pairing-code']);
     if (MAINTENANCE_GATED_ACTIONS.has(action)) {
       const { data: maint } = await supabase.from('global_settings').select('value').eq('key', 'whatsapp_maintenance_until').maybeSingle();
       const until = maint?.value ? new Date(maint.value) : null;
@@ -676,6 +680,43 @@ export async function handleEvolutionApi(req: Request, _injected?: EvolutionApiD
     }
 
     if (action === 'list-instances') return await sanitizeInstanceResponse(await proxy(`/instance/fetchInstances${body.instanceName ? `?instanceName=${body.instanceName}` : ''}`, 'GET'));
+
+    if (action === 'pairing-code') {
+      const number = typeof body.number === 'string' && /^[+()\d\s-]+$/.test(body.number) ? body.number.replace(/\D/g, '') : '';
+      const reply = (value: unknown) => new Response(JSON.stringify(value), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      if (!/^[1-9]\d{7,14}$/.test(number)) return reply({ error: true, status: 422, message: 'Informe um número válido com DDI para parear.' });
+      const flavor = resolveEvolutionFlavor(Deno.env.get('EVOLUTION_API_FLAVOR'));
+      const route = resolvePairingRoute(flavor, instance, number, `${supabaseUrl}/functions/v1/evolution-webhook`);
+      const key = route.auth === 'instance' ? await resolveInstanceToken(supabase, instance) : evolutionApiKey;
+      if (!key) return reply({ error: true, status: 503, message: 'Credencial própria da instância não encontrada.' });
+      const requestProvider = async (path: string, method: string, payload?: unknown) => {
+        const response = await fetch(`${evolutionApiUrl}${path}`, {
+          method, headers: { apikey: key, 'Content-Type': 'application/json' },
+          ...(payload === undefined ? {} : { body: JSON.stringify(payload) }),
+          signal: AbortSignal.timeout(8000),
+        });
+        if (!response.ok) throw new Error('O provedor recusou o pareamento.');
+        return await response.json();
+      };
+      try {
+        let data = await requestProvider(route.path, route.method, route.body);
+        let code = pairingCodeFromResponse(flavor, data);
+        for (let attempt = 0; flavor === 'go' && !code && attempt < 3; attempt++) {
+          if (attempt > 0) await new Promise(resolve => setTimeout(resolve, 250));
+          data = await requestProvider('/instance/qr', 'GET');
+          code = pairingCodeFromResponse(flavor, data);
+        }
+        if (!code) return reply({ error: true, status: 409, message: 'O provedor ainda não retornou código de pareamento. Tente novamente.' });
+        const { error } = await supabase.from('whatsapp_connections')
+          .update({ status: 'qr_pending', instance_id: instance }).eq('instance_id', instance);
+        if (error) return reply({ error: true, status: 500, message: 'Não foi possível registrar o pareamento.' });
+        const formatted = formatPairingCode(code);
+        return reply({ status: 'qr_pending', pairingCode: formatted, code: formatted,
+          ...(typeof data?.count === 'number' ? { count: data.count } : {}), ...pairingValidity(data) });
+      } catch {
+        return reply({ error: true, status: 502, message: 'Não foi possível obter o código de pareamento do provedor.' });
+      }
+    }
 
     if (action === 'connect') {
       // R2-API-015: o ciclo de sessão escolhe rota, método e credencial pelo
