@@ -1,0 +1,1 @@
+DROP INDEX IF EXISTS public.idx_email_threads_gmail_account_id

@@ -1,0 +1,1 @@
+-- file-sha256: 338fed290f8ef910f62efd4843fc3ee158f55828fb55f262dd21980535debe3c (fonte: arquivo 20261113130000_envio_sem_conexao_de_teste_nem_fallback_silencioso.sql, aplicada via MCP em 2026-11-13 com OK do dono)

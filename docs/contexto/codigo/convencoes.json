@@ -1,0 +1,94 @@
+{
+ "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
+ "format_version": 2,
+ "onde_ficam": {
+  "telas": [
+   "src/components (54)",
+   "src/pages (18)"
+  ],
+  "componentes": [
+   "src/components (890)",
+   "analise-prs/resgate-261118-lote3 (129)",
+   "src/pages (26)"
+  ],
+  "hooks": [
+   "src/hooks (422)",
+   "analise-prs/resgate-261118-lote3 (92)",
+   "src/components (74)"
+  ],
+  "servicos_logica": [
+   "src/lib (153)",
+   "src/services (20)",
+   "src/utils (8)"
+  ],
+  "testes": [
+   "co-localizado (__tests__) (2357)",
+   "outro (348)",
+   "co-localizado (*.test) (232)"
+  ],
+  "edge_functions": "supabase/functions",
+  "migrations": "supabase/migrations",
+  "scripts": [
+   "scripts/db-audit (303)",
+   "scripts/ci (44)",
+   "scripts/e2e-isolated (41)"
+  ],
+  "docs": [
+   "docs (33)",
+   "(raiz) (12)",
+   ".github (1)"
+  ]
+ },
+ "nomenclatura": {
+  "componentes": "PascalCase (89%)",
+  "hooks": "use + PascalCase",
+  "servicos": "camelCase (73%)",
+  "edge_functions": "kebab-case (96%)",
+  "tabelas": "snake_case (91%)"
+ },
+ "barrels_index": 85,
+ "extensao_componentes": [
+  ".tsx (1054)"
+ ],
+ "alias_imports": {
+  "analise-prs/resgate-261115/auditoria/bruto/diarios-sessao/": {
+   "https://esm.sh/zod@3.23.8": "analise-prs/resgate-261115/auditoria/bruto/diarios-sessao/wt-copedges/node_modules/zod3",
+   "npm:zod@3.23.8": "analise-prs/resgate-261115/auditoria/bruto/diarios-sessao/wt-copedges/node_modules/zod3",
+   "https://esm.sh/@supabase/supabase-js@2.87.1": "analise-prs/resgate-261115/auditoria/bruto/diarios-sessao/wt-copedges/node_modules/supabase-edge",
+   "npm:@supabase/supabase-js@2.87.1": "analise-prs/resgate-261115/auditoria/bruto/diarios-sessao/wt-copedges/node_modules/supabase-edge",
+   "__baseUrl__": "analise-prs/resgate-261115/auditoria/bruto/diarios-sessao/wt-copedges"
+  },
+  "(raiz)": {
+   "@/": "src/",
+   "~/": "src/"
+  }
+ },
+ "commits": {
+  "convencao": "livre",
+  "exemplos": [
+   "chore(docs): consolidar relatório de liquidação com estado final (PEND=0)",
+   "docs: publicar snapshots SQL documentais do contexto X065 (#3284)",
+   "fix(team-chat): erro ao ler config de WhatsApp deixa de virar formulario \"Nenhum\" (#3283)",
+   "fix(team-chat): falha ao ler convites deixa de se disfarcar de \"nenhum convite\" (#3282)",
+   "fix(seguranca): URL do CRM externo deixa de virar href/src sem guard (#3281)"
+  ]
+ },
+ "pr_template": ".github/PULL_REQUEST_TEMPLATE.md",
+ "codeowners": ".github/CODEOWNERS",
+ "contributing": "CONTRIBUTING.md",
+ "instrucoes_agentes": [
+  "AGENTS.md",
+  "CLAUDE.md"
+ ],
+ "typescript": {
+  "strict": false,
+  "noImplicitAny": true,
+  "tsconfigs": [
+   "tsconfig.app.json",
+   "tsconfig.e2e.json",
+   "tsconfig.json",
+   "tsconfig.node.json",
+   "tsconfig.strict.json"
+  ]
+ }
+}

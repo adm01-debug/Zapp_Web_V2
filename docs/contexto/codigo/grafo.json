@@ -1,0 +1,678 @@
+{
+ "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
+ "format_version": 2,
+ "nos": 2730,
+ "arestas": 9328,
+ "hubs": [
+  {
+   "arquivo": "src/lib/utils.ts",
+   "importado_por": 558
+  },
+  {
+   "arquivo": "src/integrations/supabase/client.ts",
+   "importado_por": 510
+  },
+  {
+   "arquivo": "src/components/ui/button.tsx",
+   "importado_por": 457
+  },
+  {
+   "arquivo": "src/lib/logger.ts",
+   "importado_por": 263
+  },
+  {
+   "arquivo": "src/components/ui/badge.tsx",
+   "importado_por": 260
+  },
+  {
+   "arquivo": "src/components/ui/tooltip.tsx",
+   "importado_por": 231
+  },
+  {
+   "arquivo": "src/components/ui/card.tsx",
+   "importado_por": 215
+  },
+  {
+   "arquivo": "src/components/ui/input.tsx",
+   "importado_por": 200
+  },
+  {
+   "arquivo": "src/types/chat.ts",
+   "importado_por": 174
+  },
+  {
+   "arquivo": "src/components/ui/select.tsx",
+   "importado_por": 139
+  },
+  {
+   "arquivo": "src/hooks/auth/useAuth.tsx",
+   "importado_por": 139
+  },
+  {
+   "arquivo": "supabase/functions/_shared/validation.ts",
+   "importado_por": 129
+  },
+  {
+   "arquivo": "src/components/ui/label.tsx",
+   "importado_por": 128
+  },
+  {
+   "arquivo": "src/components/ui/dialog.tsx",
+   "importado_por": 123
+  },
+  {
+   "arquivo": "src/components/ui/skeleton.tsx",
+   "importado_por": 88
+  },
+  {
+   "arquivo": "src/hooks/ui/use-toast.ts",
+   "importado_por": 86
+  },
+  {
+   "arquivo": "src/components/ui/scroll-area.tsx",
+   "importado_por": 80
+  },
+  {
+   "arquivo": "src/components/ui/avatar.tsx",
+   "importado_por": 73
+  },
+  {
+   "arquivo": "src/components/ui/alert-dialog.tsx",
+   "importado_por": 68
+  },
+  {
+   "arquivo": "src/hooks/tasks/workItem.types.ts",
+   "importado_por": 67
+  },
+  {
+   "arquivo": "src/hooks/integrations/useTalkX.ts",
+   "importado_por": 65
+  },
+  {
+   "arquivo": "src/components/ui/switch.tsx",
+   "importado_por": 62
+  },
+  {
+   "arquivo": "src/hooks/integrations/useTalkXSegments.ts",
+   "importado_por": 61
+  },
+  {
+   "arquivo": "src/lib/localDay.ts",
+   "importado_por": 59
+  },
+  {
+   "arquivo": "src/components/ui/textarea.tsx",
+   "importado_por": 58
+  },
+  {
+   "arquivo": "src/hooks/chat/useRealtimeMessages.ts",
+   "importado_por": 58
+  },
+  {
+   "arquivo": "supabase/functions/_shared/schemas.ts",
+   "importado_por": 56
+  },
+  {
+   "arquivo": "src/components/dashboard/overview/DashboardCard.tsx",
+   "importado_por": 55
+  },
+  {
+   "arquivo": "src/components/talkx/talkxShared.ts",
+   "importado_por": 55
+  },
+  {
+   "arquivo": "src/hooks/chat/useContactMedia.ts",
+   "importado_por": 55
+  },
+  {
+   "arquivo": "src/components/ui/popover.tsx",
+   "importado_por": 54
+  },
+  {
+   "arquivo": "src/components/ui/dropdown-menu.tsx",
+   "importado_por": 52
+  },
+  {
+   "arquivo": "src/hooks/system/useUserRole.ts",
+   "importado_por": 52
+  },
+  {
+   "arquivo": "src/hooks/integrations/useExternalCatalog.ts",
+   "importado_por": 50
+  },
+  {
+   "arquivo": "src/components/ui/tabs.tsx",
+   "importado_por": 47
+  },
+  {
+   "arquivo": "src/hooks/integrations/useGmail.ts",
+   "importado_por": 47
+  },
+  {
+   "arquivo": "src/lib/supabaseHelpers.ts",
+   "importado_por": 46
+  },
+  {
+   "arquivo": "src/hooks/system/useNavigationHistory.ts",
+   "importado_por": 44
+  },
+  {
+   "arquivo": "src/lib/invokeEdge.ts",
+   "importado_por": 42
+  },
+  {
+   "arquivo": "src/integrations/supabase/types.ts",
+   "importado_por": 39
+  }
+ ],
+ "ciclos": {
+  "total": 12,
+  "maiores": [
+   {
+    "tamanho": 8,
+    "arquivos": [
+     "src/hooks/auth/useAuth.tsx",
+     "src/hooks/chat/useRealtimeMessages.ts",
+     "src/hooks/realtime/realtimeUtils.ts",
+     "src/hooks/realtime/useMessageUpdateBatcher.ts",
+     "src/hooks/realtime/useRealtimeNotifications.ts",
+     "src/hooks/system/useNotificationSettings.ts",
+     "src/hooks/system/useOfflineCache.ts",
+     "src/services/realtime.service.ts"
+    ]
+   },
+   {
+    "tamanho": 6,
+    "arquivos": [
+     "src/components/inbox/InboxFilters.tsx",
+     "src/components/inbox/InboxSavedFiltersMenu.tsx",
+     "src/components/inbox/TicketTabs.tsx",
+     "src/components/inbox/conversation-list/StatusChips.tsx",
+     "src/hooks/inbox/chipCounts.ts",
+     "src/hooks/inbox/useInboxFilterPresets.ts"
+    ]
+   },
+   {
+    "tamanho": 6,
+    "arquivos": [
+     "supabase/functions/multiplix-dispatch/actions/audience.ts",
+     "supabase/functions/multiplix-dispatch/actions/blocks.ts",
+     "supabase/functions/multiplix-dispatch/actions/inspect.ts",
+     "supabase/functions/multiplix-dispatch/actions/lifecycle.ts",
+     "supabase/functions/multiplix-dispatch/actions/listing.ts",
+     "supabase/functions/multiplix-dispatch/index.ts"
+    ]
+   },
+   {
+    "tamanho": 3,
+    "arquivos": [
+     "src/components/notifications/ReminderNotification.tsx",
+     "src/hooks/system/useNotifications.ts",
+     "src/hooks/tasks/useWorkItemNotifications.ts"
+    ]
+   },
+   {
+    "tamanho": 3,
+    "arquivos": [
+     "src/components/onboarding/OnboardingTour.tsx",
+     "src/components/onboarding/TourOverlay.tsx",
+     "src/components/onboarding/defaultTourSteps.ts"
+    ]
+   },
+   {
+    "tamanho": 2,
+    "arquivos": [
+     "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/talkx/TalkXCampaignWizard.tsx",
+     "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/talkx/TalkXWizardDelivery.tsx"
+    ]
+   },
+   {
+    "tamanho": 2,
+    "arquivos": [
+     "src/components/catalog/useSendProduct.ts",
+     "src/hooks/integrations/useCatalogContactSearch.ts"
+    ]
+   },
+   {
+    "tamanho": 2,
+    "arquivos": [
+     "src/components/crm360/crm360TabsConfig.ts",
+     "src/components/crm360/crm360TabsData.ts"
+    ]
+   },
+   {
+    "tamanho": 2,
+    "arquivos": [
+     "src/components/talkx/TalkXCampaignWizard.tsx",
+     "src/components/talkx/TalkXWizardDelivery.tsx"
+    ]
+   },
+   {
+    "tamanho": 2,
+    "arquivos": [
+     "src/hooks/integrations/useQuarantineMedia.ts",
+     "src/lib/quarantineStore.ts"
+    ]
+   },
+   {
+    "tamanho": 2,
+    "arquivos": [
+     "src/hooks/shortcuts/defaultShortcuts.ts",
+     "src/hooks/ui/useCustomShortcuts.ts"
+    ]
+   },
+   {
+    "tamanho": 2,
+    "arquivos": [
+     "supabase/functions/_shared/request-policy.ts",
+     "supabase/functions/_shared/validation.ts"
+    ]
+   }
+  ]
+ },
+ "orfaos": [
+  "analise-prs/resgate-261115/auditoria/ferramentas/auditar-pr.js",
+  "analise-prs/resgate-261115/auditoria/ferramentas/auditar-veredito.js",
+  "analise-prs/resgate-261115/auditoria/ferramentas/casar-worktree.py",
+  "analise-prs/resgate-261115/auditoria/ferramentas/consolidar.py",
+  "analise-prs/resgate-261115/auditoria/ferramentas/hunk-check.py",
+  "analise-prs/resgate-261115/auditoria/ferramentas/intermediario.py",
+  "analise-prs/resgate-261115/auditoria/ferramentas/line-check.py",
+  "analise-prs/resgate-261115/auditoria/ferramentas/serve-shim.ts",
+  "analise-prs/resgate-261118-lote2/scripts/ci/check-edge-envs.mjs",
+  "analise-prs/resgate-261118-lote2/scripts/ci/check-notifica-falha-names.mjs",
+  "analise-prs/resgate-261118-lote2/scripts/ci/claude-md-guard.mjs",
+  "analise-prs/resgate-261118-lote2/scripts/db-audit/compose-confirm-hash.mjs",
+  "analise-prs/resgate-261118-lote2/scripts/db-audit/proof-sha.mjs",
+  "analise-prs/resgate-261118-lote2/scripts/db-audit/validate-post-apply.mjs",
+  "analise-prs/resgate-261118-lote2/src/components/copilot/RadarPhase6Panel.tsx",
+  "analise-prs/resgate-261118-lote2/src/hooks/useMotionSeguro.ts",
+  "analise-prs/resgate-261118-lote3/claude/busy-cannon-40szm9/scripts/team-chat-db-validate.mjs",
+  "analise-prs/resgate-261118-lote3/claude/busy-cannon-40szm9/scripts/vercel/verify-production.mjs",
+  "analise-prs/resgate-261118-lote3/claude/busy-cannon-40szm9/src/components/contacts/ContactPurchaseHistory.tsx",
+  "analise-prs/resgate-261118-lote3/claude/busy-cannon-40szm9/src/components/inbox/ContactPurchasesPanel.tsx",
+  "analise-prs/resgate-261118-lote3/claude/busy-cannon-40szm9/src/components/talkx/kit/dialogs.tsx",
+  "analise-prs/resgate-261118-lote3/claude/busy-cannon-40szm9/src/components/ui/dialog.tsx",
+  "analise-prs/resgate-261118-lote3/claude/busy-cannon-40szm9/src/components/ui/sheet.tsx",
+  "analise-prs/resgate-261118-lote3/claude/busy-cannon-40szm9/src/hooks/crm/useContactPurchases.ts",
+  "analise-prs/resgate-261118-lote3/claude/feat-copiloto-edge-fases8-10-261024-1700/supabase/functions/ai-deadline-calculator/index.ts",
+  "analise-prs/resgate-261118-lote3/claude/feat-copiloto-edge-fases8-10-261024-1700/supabase/functions/ai-lead-temperature/index.ts",
+  "analise-prs/resgate-261118-lote3/claude/feat-copiloto-edge-fases8-10-261024-1700/supabase/functions/ai-loss-risk/index.ts",
+  "analise-prs/resgate-261118-lote3/claude/feat-copiloto-edge-fases8-10-261024-1700/supabase/functions/ai-multimodal-analysis/index.ts",
+  "analise-prs/resgate-261118-lote3/claude/feat-copiloto-edge-fases8-10-261024-1700/supabase/functions/ai-objection-handler/index.ts",
+  "analise-prs/resgate-261118-lote3/claude/feat-copiloto-edge-fases8-10-261024-1700/supabase/functions/ai-price-anchor/index.ts",
+  "analise-prs/resgate-261118-lote3/claude/feat-copiloto-edge-fases8-10-261024-1700/supabase/functions/ai-product-recommendation/index.ts",
+  "analise-prs/resgate-261118-lote3/claude/feat-copiloto-edge-fns-fases8-15-261024-1615/supabase/functions/ai-deadline-calculator/index.ts",
+  "analise-prs/resgate-261118-lote3/claude/feat-copiloto-edge-fns-fases8-15-261024-1615/supabase/functions/ai-lead-temperature/index.ts",
+  "analise-prs/resgate-261118-lote3/claude/feat-copiloto-edge-fns-fases8-15-261024-1615/supabase/functions/ai-loss-risk/index.ts",
+  "analise-prs/resgate-261118-lote3/claude/feat-copiloto-edge-fns-fases8-15-261024-1615/supabase/functions/ai-multimodal-analysis/index.ts",
+  "analise-prs/resgate-261118-lote3/claude/feat-copiloto-edge-fns-fases8-15-261024-1615/supabase/functions/ai-objection-handler/index.ts",
+  "analise-prs/resgate-261118-lote3/claude/feat-copiloto-edge-fns-fases8-15-261024-1615/supabase/functions/ai-price-anchor/index.ts",
+  "analise-prs/resgate-261118-lote3/claude/feat-copiloto-edge-fns-fases8-15-261024-1615/supabase/functions/ai-product-recommendation/index.ts",
+  "analise-prs/resgate-261118-lote3/claude/feat-copiloto-edges-261101-1330/src/hooks/copilot/index.ts",
+  "analise-prs/resgate-261118-lote3/claude/feat-copiloto-edges-261101-1330/src/hooks/inbox/useInboxBulkActions.ts",
+  "analise-prs/resgate-261118-lote3/claude/feat-copiloto-edges-261101-1330/supabase/functions/ai-deadline-calculator/index.ts",
+  "analise-prs/resgate-261118-lote3/claude/feat-copiloto-edges-261101-1330/supabase/functions/ai-lead-temperature/index.ts",
+  "analise-prs/resgate-261118-lote3/claude/feat-copiloto-edges-261101-1330/supabase/functions/ai-loss-risk/index.ts",
+  "analise-prs/resgate-261118-lote3/claude/feat-copiloto-edges-261101-1330/supabase/functions/ai-objection-handler/index.ts",
+  "analise-prs/resgate-261118-lote3/claude/feat-copiloto-edges-261101-1330/supabase/functions/ai-price-anchor/index.ts",
+  "analise-prs/resgate-261118-lote3/claude/feat-copiloto-edges-261101-1330/supabase/functions/ai-product-recommendation/index.ts",
+  "analise-prs/resgate-261118-lote3/claude/feat-copiloto-edges-fases8-10-261024-1545/supabase/functions/ai-deadline-calculator/index.ts",
+  "analise-prs/resgate-261118-lote3/claude/feat-copiloto-edges-fases8-10-261024-1545/supabase/functions/ai-lead-temperature/index.ts",
+  "analise-prs/resgate-261118-lote3/claude/feat-copiloto-edges-fases8-10-261024-1545/supabase/functions/ai-loss-risk/index.ts",
+  "analise-prs/resgate-261118-lote3/claude/feat-copiloto-edges-fases8-10-261024-1545/supabase/functions/ai-multimodal-analysis/index.ts",
+  "analise-prs/resgate-261118-lote3/claude/feat-copiloto-edges-fases8-10-261024-1545/supabase/functions/ai-objection-handler/index.ts",
+  "analise-prs/resgate-261118-lote3/claude/feat-copiloto-edges-fases8-10-261024-1545/supabase/functions/ai-price-anchor/index.ts",
+  "analise-prs/resgate-261118-lote3/claude/feat-copiloto-edges-fases8-10-261024-1545/supabase/functions/ai-product-recommendation/index.ts",
+  "analise-prs/resgate-261118-lote3/claude/feat-copiloto-hooks-261101-1500/src/hooks/copilot/useDeadlineCalculator.ts",
+  "analise-prs/resgate-261118-lote3/claude/feat-copiloto-hooks-261101-1500/src/hooks/copilot/useImageAnalysis.ts",
+  "analise-prs/resgate-261118-lote3/claude/feat-copiloto-hooks-261101-1500/src/hooks/copilot/useLeadThermometer.ts",
+  "analise-prs/resgate-261118-lote3/claude/feat-copiloto-hooks-261101-1500/src/hooks/copilot/useLossRiskDetector.ts",
+  "analise-prs/resgate-261118-lote3/claude/feat-copiloto-hooks-261101-1500/src/hooks/copilot/useObjectionHandler.ts",
+  "analise-prs/resgate-261118-lote3/claude/feat-copiloto-hooks-261101-1500/src/hooks/copilot/usePriceAnchoring.ts",
+  "analise-prs/resgate-261118-lote3/claude/feat-copiloto-hooks-261101-1500/src/hooks/copilot/useProductRecommendation.ts",
+  "analise-prs/resgate-261118-lote3/claude/feat-e75-toolchain-env-281028-0600/scripts/ci/check-workflow-pins.mjs",
+  "analise-prs/resgate-261118-lote3/claude/feat-evolution-rotas-pendentes-261112/src/hooks/connections/useConnectionOptions.ts",
+  "analise-prs/resgate-261118-lote3/claude/feat-message-delivery-post-iniciado-261101-1937/src/components/inbox/chat/SendErrorBanner.tsx",
+  "analise-prs/resgate-261118-lote3/claude/feat-message-delivery-post-iniciado-261101-1937/src/components/inbox/chat/UnconfirmedMessagesPanel.tsx",
+  "analise-prs/resgate-261118-lote3/claude/feat-message-delivery-post-iniciado-261101-1937/src/hooks/delivery/useUnconfirmedMessages.ts",
+  "analise-prs/resgate-261118-lote3/claude/feat-message-delivery-post-iniciado-261101-1937/supabase/functions/message-delivery/index.ts",
+  "analise-prs/resgate-261118-lote3/claude/feat-pausa-entrega-campanhas-261101-1400/src/components/multiplix/MultiplixMonitor.tsx",
+  "analise-prs/resgate-261118-lote3/claude/feat-pausa-entrega-campanhas-261101-1400/src/components/talkx/tracking/talkxHealth.ts",
+  "analise-prs/resgate-261118-lote3/claude/feat-radar-motor-telas-261101-1330/src/components/inbox/chat/ChatInputArea.tsx",
+  "analise-prs/resgate-261118-lote3/claude/feat-radar-motor-telas-261101-1330/src/components/inbox/copilot/RadarCards.tsx",
+  "analise-prs/resgate-261118-lote3/claude/feat-radar-motor-telas-261101-1330/src/components/inbox/copilot/RadarLive.tsx",
+  "analise-prs/resgate-261118-lote3/claude/feat-radar-motor-telas-261101-1330/src/hooks/copilot/useCopilotSession.ts",
+  "analise-prs/resgate-261118-lote3/claude/feat-talkx-x048-estados-servico-261101-2100/src/components/talkx/kit/ServiceStatusSheet.tsx",
+  "analise-prs/resgate-261118-lote3/claude/feat-talkx-x054-cmdk-261108-0100/scripts/vercel/verify-production.mjs",
+  "analise-prs/resgate-261118-lote3/claude/feat-talkx-x054-cmdk-261108-0100/src/components/keyboard/CommandPaletteHost.tsx",
+  "analise-prs/resgate-261118-lote3/claude/feat-talkx-x054-cmdk-261108-0100/src/components/talkx/TalkXView.tsx",
+  "analise-prs/resgate-261118-lote3/claude/feat-ui-visual-texto-longo-261101-1445/src/components/ui/badge.tsx",
+  "analise-prs/resgate-261118-lote3/claude/feat-ui-visual-texto-longo-261101-1445/src/components/ui/tabs.tsx",
+  "analise-prs/resgate-261118-lote3/claude/fix-codex-findings-161016-1906/src/components/inbox/chat/ChatMessagesArea.tsx",
+  "analise-prs/resgate-261118-lote3/claude/fix-codex-findings-161016-1906/src/components/talkx/TalkXTemplates.tsx",
+  "analise-prs/resgate-261118-lote3/claude/fix-codex-findings-161016-1906/src/hooks/system/useOfflineCache.ts",
+  "analise-prs/resgate-261118-lote3/claude/fix-codex-findings-161016-1906/src/hooks/tasks/workItemAggregates.ts",
+  "analise-prs/resgate-261118-lote3/claude/fix-codex-findings-161016-1906/src/lib/invokeEdge.ts",
+  "analise-prs/resgate-261118-lote3/claude/fix-console-status-msgs-261112/src/hooks/connections/useConnectionOptions.ts",
+  "analise-prs/resgate-261118-lote3/claude/fix-db-guard-pguser-261019-1430/scripts/ci/github-settings-guard.mjs",
+  "analise-prs/resgate-261118-lote3/claude/fix-db-guard-pguser-261019-1430/src/hooks/integrations/useTalkXSuppression.ts",
+  "analise-prs/resgate-261118-lote3/claude/fix-db-live-migrations-261107-1623/scripts/vercel/verify-production.mjs",
+  "analise-prs/resgate-261118-lote3/claude/fix-evolution-instance-bypass-261112/src/hooks/connections/useConnectionOptions.ts",
+  "analise-prs/resgate-261118-lote3/claude/fix-evolution-integra-cadeia-261113-1052/src/hooks/connections/useConnectionOptions.ts",
+  "analise-prs/resgate-261118-lote3/claude/fix-ga-fase1-lote-banco-261020-2200/scripts/db-audit/check-migration-drift.mjs",
+  "analise-prs/resgate-261118-lote3/claude/fix-ga-fase23-edge-e2e-261020-2200/scripts/ci/e2e-teardown.mjs",
+  "analise-prs/resgate-261118-lote3/claude/fix-ga-fase23-edge-e2e-261020-2200/scripts/ci/marcador-specs.mjs",
+  "analise-prs/resgate-261118-lote3/claude/fix-ga-fase23-edge-e2e-261020-2200/scripts/ci/redigir-relatorio.mjs",
+  "analise-prs/resgate-261118-lote3/claude/fix-ga-fase23-edge-e2e-261020-2200/scripts/edge-deploy/health-check.mjs",
+  "analise-prs/resgate-261118-lote3/claude/fix-ga-fase78-perimetro-custo-261020-2200/scripts/ci/actions-kpi.mjs",
+  "analise-prs/resgate-261118-lote3/claude/fix-ga-fase78-perimetro-custo-261020-2200/scripts/ci/bump-toolchain.mjs",
+  "analise-prs/resgate-261118-lote3/claude/fix-ga-fase78-perimetro-custo-261020-2200/scripts/ci/github-settings-guard.mjs",
+  "analise-prs/resgate-261118-lote3/claude/fix-ga-resto-docs-regen-20261021-0726/scripts/ci/render-workflow-docs.mjs",
+  "analise-prs/resgate-261118-lote3/claude/fix-ga-resto-sonar-contracts-20261021-0726/scripts/ci/bump-toolchain.mjs",
+  "analise-prs/resgate-261118-lote3/claude/fix-ga-resto-sonar-contracts-20261021-0726/scripts/ci/check-test-inventory.mjs",
+  "analise-prs/resgate-261118-lote3/claude/fix-ga-resto-sonar-contracts-20261021-0726/scripts/ci/github-settings-guard.mjs",
+  "analise-prs/resgate-261118-lote3/claude/fix-ga-resto-sonar-contracts-20261021-0726/scripts/db-audit/check-remocoes-destrutivas.mjs",
+  "analise-prs/resgate-261118-lote3/claude/fix-ga-resto-sonar-contracts-20261021-0726/scripts/db-audit/consolidar-veredito.mjs",
+  "analise-prs/resgate-261118-lote3/claude/fix-ga-resto-sonar-contracts-20261021-0726/scripts/db-audit/run-runtime-contract.mjs",
+  "analise-prs/resgate-261118-lote3/claude/fix-ga-resto-sonar-contracts-20261021-0726/scripts/edge-deploy/health-check.mjs",
+  "analise-prs/resgate-261118-lote3/claude/fix-ga-resto-sonar-contracts-20261021-0726/scripts/talkx/v4-status.mjs",
+  "analise-prs/resgate-261118-lote3/claude/fix-ga-resto-typessync-20261021-0730/scripts/db-audit/consolidar-veredito.mjs",
+  "analise-prs/resgate-261118-lote3/claude/fix-radar-fase6-cv056-shortcuts-261108-2335/src/components/copilot/index.ts",
+  "analise-prs/resgate-261118-lote3/claude/fix-radar-fase6-cv056-shortcuts-261108-2335/src/components/inbox/ChatPanel.tsx",
+  "analise-prs/resgate-261118-lote3/claude/fix-radar-fase6-cv056-shortcuts-261108-2335/src/hooks/copilot/useRadarPanel.ts",
+  "analise-prs/resgate-261118-lote3/claude/fix-talkx-segmentos-regressao-261101-1944/src/components/talkx/TalkXSegments.tsx",
+  "analise-prs/resgate-261118-lote3/claude/fix-unit-tests-src-261024-1630/src/components/admin/AdminView.tsx",
+  "analise-prs/resgate-261118-lote3/claude/fix-unit-tests-src-261024-1630/src/components/admin/MediaMigrationTool.tsx",
+  "analise-prs/resgate-261118-lote3/claude/fix-unit-tests-src-261024-1630/src/components/talkx/TalkXOverview.tsx",
+  "analise-prs/resgate-261118-lote3/claude/fix-unit-tests-src-261024-1630/src/components/talkx/TalkXTemplateEditor.tsx",
+  "analise-prs/resgate-261118-lote3/claude/fix-unit-tests-src-261024-1630/src/hooks/auth/useAuth.tsx",
+  "analise-prs/resgate-261118-lote3/claude/fix-unit-tests-src-261024-1630/src/hooks/business/useWarRoomAlerts.ts",
+  "analise-prs/resgate-261118-lote3/claude/fix-unit-tests-src-261024-1630/src/hooks/chat/useTeamChatNotifications.ts",
+  "analise-prs/resgate-261118-lote3/claude/fix-unit-tests-src-261024-1630/src/hooks/gamification/useAgentCelebrations.ts",
+  "analise-prs/resgate-261118-lote3/claude/fix-unit-tests-src-261024-1630/src/hooks/inbox/useInboxFilters.ts",
+  "analise-prs/resgate-261118-lote3/claude/fix-unit-tests-src-261024-1630/src/hooks/integrations/useKnowledgeBase.ts",
+  "analise-prs/resgate-261118-lote3/claude/fix-unit-tests-src-261024-1630/src/hooks/integrations/useTalkXSegments.ts",
+  "analise-prs/resgate-261118-lote3/claude/fix-unit-tests-src-261024-1630/src/services/chat.service.ts",
+  "analise-prs/resgate-261118-lote3/claude/ga-ci-batch-ga49-ga54-ga60-ga64-231023/scripts/ci/actions-kpi.mjs",
+  "analise-prs/resgate-261118-lote3/claude/ga-ci-batch-ga49-ga54-ga60-ga64-231023/scripts/ci/fila-merge.mjs",
+  "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/scripts/ci/check-test-inventory.mjs",
+  "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/admin/MediaMigrationTool.tsx",
+  "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/admin/useAdminData.ts",
+  "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/catalog/WhatsAppTemplatesManager.tsx",
+  "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/dashboard/useSentimentData.ts",
+  "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/gamification/MiniGameDialogs.tsx",
+  "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/inbox/CRMAutoSync.tsx",
+  "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/inbox/MessageReactions.tsx",
+  "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/inbox/RealtimeInboxView.tsx",
+  "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/inbox/VirtualizedRealtimeList.tsx",
+  "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/inbox/VoiceChangerPicker.tsx",
+  "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/inbox/VoiceSelector.tsx",
+  "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/inbox/WhisperMode.tsx",
+  "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/inbox/conversation-list/StatusChips.tsx",
+  "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/inbox/quick-replies/QuickReplyCardList.tsx",
+  "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/security/AuditLogDashboard.tsx",
+  "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/settings/SettingsView.tsx",
+  "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/talkx/TalkXTemplateEditor.tsx",
+  "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/talkx/TalkXView.tsx",
+  "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/team-chat/TeamChatPanel.tsx",
+  "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/ui/command-palette.tsx",
+  "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/ui/phone-input.tsx",
+  "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/hooks/analytics/useGoalsDashboard.ts",
+  "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/hooks/auth/useAuth.tsx",
+  "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/hooks/chat/useTeamChatNotifications.ts",
+  "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/hooks/communication/useAudioMemes.ts",
+  "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/hooks/inbox/useConnectionsManager.ts",
+  "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/hooks/inbox/useInboxFilters.ts",
+  "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/hooks/integrations/useTalkXSegments.ts",
+  "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/hooks/system/useDiagnosticsData.ts",
+  "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/hooks/team-chat/useTeamMessages.ts",
+  "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/lib/offlineQueue.ts",
+  "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/services/chat.service.ts",
+  "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/services/outbound-message.service.ts",
+  "analise-prs/resgate-261118-lote3/claude/kind-gates-87mwoe/src/components/knowledge/KnowledgeBaseView.tsx",
+  "analise-prs/resgate-261118-lote3/claude/kind-gates-87mwoe/src/hooks/business/useWarRoomData.ts",
+  "analise-prs/resgate-261118-lote3/claude/kind-gates-87mwoe/src/hooks/inbox/useInboxBulkActions.ts",
+  "analise-prs/resgate-261118-lote3/claude/kind-gates-87mwoe/src/hooks/inbox/useInboxFilters.ts",
+  "analise-prs/resgate-261118-lote3/claude/kind-gates-87mwoe/src/hooks/integrations/useKnowledgeBase.ts",
+  "analise-prs/resgate-261118-lote3/claude/kind-gates-87mwoe/src/hooks/integrations/useTalkXSegments.ts",
+  "analise-prs/resgate-261118-lote3/claude/kind-gates-87mwoe/src/hooks/system/useDiagnosticsData.ts",
+  "analise-prs/resgate-261118-lote3/claude/magical-pasteur-iz2pgy/src/components/ui/command-palette.tsx",
+  "analise-prs/resgate-261118-lote3/claude/magical-pasteur-iz2pgy/src/hooks/auth/useAuth.tsx",
+  "analise-prs/resgate-261118-lote3/claude/magical-pasteur-iz2pgy/src/hooks/chat/useTeamChatNotifications.ts",
+  "analise-prs/resgate-261118-lote3/claude/magical-pasteur-iz2pgy/src/hooks/inbox/useInboxFilters.ts",
+  "analise-prs/resgate-261118-lote3/claude/magical-pasteur-iz2pgy/src/hooks/system/useDiagnosticsData.ts",
+  "analise-prs/resgate-261118-lote3/claude/magical-pasteur-iz2pgy/src/hooks/system/useUserSettings.ts",
+  "analise-prs/resgate-261118-lote3/claude/magical-pasteur-iz2pgy/src/hooks/tasks/workItemFormat.ts",
+  "analise-prs/resgate-261118-lote3/claude/radar-motor-copilot-live-301030/src/components/inbox/chat/ChatInputArea.tsx",
+  "analise-prs/resgate-261118-lote3/claude/radar-motor-copilot-live-301030/src/components/inbox/copilot/RadarLive.tsx",
+  "analise-prs/resgate-261118-lote3/claude/radar-motor-copilot-live-301030/src/hooks/copilot/useCopilotSession.ts",
+  "analise-prs/resgate-261118-lote3/claude/radar-motor-copilot-live-301030/supabase/functions/ai-jobs-worker/index.ts",
+  "analise-prs/resgate-261118-lote3/claude/test-e2e-suite-completa-261104-1428/scripts/e2e-isolated/run.mjs",
+  "analise-prs/resgate-261118-lote3/claude/test-e2e-suite-completa-261104-1428/scripts/e2e-isolated/tls-probe.mjs",
+  "analise-prs/resgate-261118-lote3/claude/test-e2e-suite-completa-261104-1428/scripts/e2e-isolated/verify-providers.mjs",
+  "analise-prs/resgate-261118-lote3/claude/test-e2e-tls-diagnostico-261104-1340/scripts/e2e-isolated/run.mjs",
+  "analise-prs/resgate-261118-lote3/claude/test-e2e-tls-diagnostico-261104-1340/scripts/e2e-isolated/tls-probe.mjs",
+  "analise-prs/resgate-261118-lote3/claude/test-e2e-webkit-tls-261104-1430/scripts/e2e-isolated/run.mjs",
+  "analise-prs/resgate-261118-lote3/claude/test-e2e-webkit-tls-261104-1430/scripts/e2e-isolated/tls-probe.mjs",
+  "analise-prs/resgate-261118-lote3/claude_04/trusting-newton-duiglt/scripts/ci/fila-merge.mjs",
+  "analise-prs/resgate-261118-lote3/claude_04/trusting-newton-duiglt/src/services/chat.service.ts",
+  "analise-prs/resgate-261118-lote3/claude_05/festive-carson-ub43wu/src/components/ui/command-palette.tsx",
+  "analise-prs/resgate-261118-lote3/claude_05/festive-carson-ub43wu/src/hooks/auth/useAuth.tsx",
+  "analise-prs/resgate-261118-lote3/claude_05/festive-carson-ub43wu/src/hooks/chat/useTeamChatNotifications.ts",
+  "analise-prs/resgate-261118-lote3/claude_05/festive-carson-ub43wu/src/hooks/inbox/useInboxFilters.ts",
+  "analise-prs/resgate-261118-lote3/claude_05/festive-carson-ub43wu/src/hooks/integrations/useKnowledgeBase.ts",
+  "analise-prs/resgate-261118-lote3/claude_05/festive-carson-ub43wu/src/hooks/system/useDiagnosticsData.ts",
+  "analise-prs/resgate-261118-lote3/claude_05/serene-feynman-3uuurw/src/components/admin/SearchInsightsView.tsx",
+  "analise-prs/resgate-261118-lote3/claude_05/serene-feynman-3uuurw/src/hooks/admin/useSearchInsights.ts",
+  "analise-prs/resgate-261118-lote3/claude_pink/cool-dijkstra-xk9ek2/scripts/ci/actions-kpi.mjs",
+  "analise-prs/resgate-261118-lote3/claude_pink/cool-dijkstra-xk9ek2/scripts/ci/bump-toolchain.mjs",
+  "analise-prs/resgate-261118-lote3/claude_pink/cool-dijkstra-xk9ek2/scripts/ci/fila-merge.mjs",
+  "analise-prs/resgate-261118-lote3/claude_pink/cool-dijkstra-xk9ek2/scripts/ci/github-settings-guard.mjs",
+  "analise-prs/resgate-261118-lote3/claude_pink/cool-dijkstra-xk9ek2/scripts/ci/marcador-specs.mjs",
+  "analise-prs/resgate-261118-lote3/claude_pink/cool-dijkstra-xk9ek2/scripts/ci/reuso-arvore.mjs",
+  "analise-prs/resgate-261118-lote3/claude_pink/cool-dijkstra-xk9ek2/scripts/db-audit/check-migration-drift.mjs",
+  "analise-prs/resgate-261118-lote3/claude_pink/cool-dijkstra-xk9ek2/scripts/db-audit/consolidar-veredito.mjs",
+  "analise-prs/resgate-261118-lote3/claude_pink/cool-dijkstra-xk9ek2/scripts/db-audit/dry-run-plan.mjs",
+  "analise-prs/resgate-261118-lote3/claude_pink/cool-dijkstra-xk9ek2/scripts/db-audit/extrair-consulta-ledger.mjs",
+  "analise-prs/resgate-261118-lote3/claude_pink/cool-dijkstra-xk9ek2/scripts/db-audit/lote-pendente.mjs",
+  "analise-prs/resgate-261118-lote3/claude_pink/cool-dijkstra-xk9ek2/scripts/db-audit/run-runtime-contract.mjs",
+  "analise-prs/resgate-261118-lote3/claude_pink/cool-dijkstra-xk9ek2/scripts/db-audit/validate-runtime-proof.mjs",
+  "analise-prs/resgate-261118-lote3/claude_pink/cool-dijkstra-xk9ek2/scripts/edge-deploy/health-check.mjs",
+  "analise-prs/resgate-261118-lote3/claude_pink/cool-dijkstra-xk9ek2/scripts/edge-deploy/redigir-log.mjs",
+  "analise-prs/resgate-261118-lote3/claude_pink/cool-dijkstra-xk9ek2/src/components/inbox/chat/ChatMessagesArea.tsx",
+  "analise-prs/resgate-261118-lote3/codex/fix-failed-workflows-20261020/src/components/admin/AdminView.tsx",
+  "analise-prs/resgate-261118-lote3/codex/fix-failed-workflows-20261020/src/components/shared/ConversationEmptyState.tsx",
+  "analise-prs/resgate-261118-lote3/codex/publish-followup-20261021/src/components/admin/SearchInsightsView.tsx",
+  "analise-prs/resgate-261118-lote3/codex/publish-followup-20261021/src/components/connections/ConnectionCard.tsx",
+  "analise-prs/resgate-261118-lote3/codex/publish-followup-20261021/src/components/talkx/TalkXCampaignWizard.tsx",
+  "analise-prs/resgate-261118-lote3/codex/publish-followup-20261021/src/hooks/admin/useSearchInsights.ts",
+  "analise-prs/resgate-261118-lote3/codex/publish-followup-20261021/src/hooks/integrations/useTalkXSegments.ts",
+  "analise-prs/resgate-261118-lote3/codex/publish-followup-20261021/supabase/functions/connection-health-check/index.ts",
+  "analise-prs/resgate-261118-lote3/fix/ci-verde-261021/src/components/inbox/ChatPanel.tsx",
+  "analise-prs/resgate-261118-lote3/fix/ci-verde-261021/src/components/inbox/RealtimeCollaboration.tsx",
+  "analise-prs/resgate-261118-lote3/fix/ci-verde-261021/src/hooks/chat/useConversationActions.ts",
+  "analise-prs/resgate-261118-lote3/fix/ci-verde-261021/src/hooks/inbox/useInboxBulkActions.ts",
+  "analise-prs/resgate-261118-lote3/fix/ci-verde-261021/supabase/functions/auth-login/index.ts",
+  "analise-prs/resgate-261118-lote3/fix/ci-verde-261021/supabase/functions/connection-health-check/index.ts",
+  "analise-prs/resgate-261118-lote3/fix/ci-verde-261021/supabase/functions/evolution-api/index.ts",
+  "analise-prs/resgate-261118-lote3/fix/ci-verde-261021/supabase/functions/gmail-cron-sync/index.ts",
+  "analise-prs/resgate-261118-lote3/fix/ci-workflows-vermelhos/scripts/ci/check-test-inventory.mjs",
+  "analise-prs/resgate-261118-lote3/fix/ci-workflows-vermelhos/scripts/mutation/run-mapa.mjs",
+  "analise-prs/resgate-261118-lote3/fix/ci-workflows-vermelhos/supabase/functions/auth-login/index.ts",
+  "analise-prs/resgate-261118-lote3/fix/ci-workflows-vermelhos/supabase/functions/connection-health-check/index.ts",
+  "analise-prs/resgate-261118-lote3/fix/ci-workflows-vermelhos/supabase/functions/gmail-cron-sync/index.ts",
+  "analise-prs/resgate-261118-lote3/fix/ci-workflows-vermelhos/supabase/functions/webauthn/index.ts",
+  "analise-prs/resgate-261118-lote3/hermes/robustez-primitivos-ui-2610121626bec5-2610141859e423/src/components/BulkActionsBar.tsx",
+  "analise-prs/resgate-261118-lote3/hermes/robustez-primitivos-ui-2610121626bec5-2610141859e423/src/components/campaigns/CampaignsView.tsx",
+  "analise-prs/resgate-261118-lote3/hermes/robustez-primitivos-ui-2610121626bec5-2610141859e423/src/components/connections/IntegrationsPanel.tsx",
+  "analise-prs/resgate-261118-lote3/hermes/robustez-primitivos-ui-2610121626bec5-2610141859e423/src/components/dashboard/MetricComparison.tsx",
+  "analise-prs/resgate-261118-lote3/hermes/robustez-primitivos-ui-2610121626bec5-2610141859e423/src/components/dashboard/MiniSparkline.tsx",
+  "analise-prs/resgate-261118-lote3/hermes/robustez-primitivos-ui-2610121626bec5-2610141859e423/src/components/dashboard/TrendIndicator.tsx",
+  "analise-prs/resgate-261118-lote3/hermes/robustez-primitivos-ui-2610121626bec5-2610141859e423/src/components/gamification/GamificationProvider.tsx",
+  "analise-prs/resgate-261118-lote3/hermes/robustez-primitivos-ui-2610121626bec5-2610141859e423/src/components/inbox/ContactPurchasesPanel.tsx",
+  "analise-prs/resgate-261118-lote3/hermes/robustez-primitivos-ui-2610121626bec5-2610141859e423/src/components/inbox/MessageContextMenu.tsx",
+  "analise-prs/resgate-261118-lote3/hermes/robustez-primitivos-ui-2610121626bec5-2610141859e423/src/components/inbox/SwipeableListItem.tsx",
+  "analise-prs/resgate-261118-lote3/hermes/robustez-primitivos-ui-2610121626bec5-2610141859e423/src/components/inbox/chat/ChatHeader.tsx",
+  "analise-prs/resgate-261118-lote3/hermes/robustez-primitivos-ui-2610121626bec5-2610141859e423/src/components/mobile/InAppNotificationProvider.tsx",
+  "analise-prs/resgate-261118-lote3/hermes/robustez-primitivos-ui-2610121626bec5-2610141859e423/src/components/mobile/index.ts",
+  "analise-prs/resgate-261118-lote3/hermes/robustez-primitivos-ui-2610121626bec5-2610141859e423/src/components/multiplix/MultiplixComposerDialog.tsx",
+  "analise-prs/resgate-261118-lote3/hermes/robustez-primitivos-ui-2610121626bec5-2610141859e423/src/components/reports/AutoExportManager.tsx",
+  "analise-prs/resgate-261118-lote3/hermes/robustez-primitivos-ui-2610121626bec5-2610141859e423/src/components/settings/AIAutoTagsConfig.tsx",
+  "analise-prs/resgate-261118-lote3/hermes/robustez-primitivos-ui-2610121626bec5-2610141859e423/src/components/talkx/talkxTabRoute.ts",
+  "analise-prs/resgate-261118-lote3/hermes/robustez-primitivos-ui-2610121626bec5-2610141859e423/src/components/ui/dialog.tsx",
+  "analise-prs/resgate-261118-lote3/hermes/robustez-primitivos-ui-2610121626bec5-2610141859e423/src/components/ui/hover-card.tsx",
+  "analise-prs/resgate-261118-lote3/hermes/robustez-primitivos-ui-2610121626bec5-2610141859e423/src/components/ui/menubar.tsx",
+  "analise-prs/resgate-261118-lote3/hermes/robustez-primitivos-ui-2610121626bec5-2610141859e423/src/components/ui/offline-indicator.tsx",
+  "analise-prs/resgate-261118-lote3/hermes/robustez-primitivos-ui-2610121626bec5-2610141859e423/src/components/ui/pagination.tsx",
+  "analise-prs/resgate-261118-lote3/hermes/robustez-primitivos-ui-2610121626bec5-2610141859e423/src/components/ui/resizable.tsx",
+  "analise-prs/resgate-261118-lote3/hermes/robustez-primitivos-ui-2610121626bec5-2610141859e423/src/components/ui/sidebar.tsx",
+  "analise-prs/resgate-261118-lote3/hermes/robustez-primitivos-ui-2610121626bec5-2610141859e423/src/components/ui/skip-link.tsx",
+  "analise-prs/resgate-261118-lote3/hermes/robustez-primitivos-ui-2610121626bec5-2610141859e423/src/hooks/communication/useCampaigns.ts",
+  "analise-prs/resgate-261118-lote3/hermes/robustez-primitivos-ui-2610121626bec5-2610141859e423/src/hooks/crm/useContactAssignment.ts",
+  "analise-prs/resgate-261118-lote3/hermes/robustez-primitivos-ui-2610121626bec5-2610141859e423/src/hooks/crm/useContactPurchases.ts",
+  "analise-prs/resgate-261118-lote3/hermes/robustez-primitivos-ui-2610121626bec5-2610141859e423/src/hooks/evolution/useEvolutionIntegrations.ts",
+  "analise-prs/resgate-261118-lote3/hermes/robustez-primitivos-ui-2610121626bec5-2610141859e423/src/hooks/gamification/mutations.ts",
+  "analise-prs/resgate-261118-lote3/hermes/robustez-primitivos-ui-2610121626bec5-2610141859e423/src/hooks/inbox/useBulkActions.ts",
+  "analise-prs/resgate-261118-lote3/hermes/robustez-primitivos-ui-2610121626bec5-2610141859e423/src/hooks/inbox/useInboxFilterTags.ts",
+  "analise-prs/resgate-261118-lote3/hermes/robustez-primitivos-ui-2610121626bec5-2610141859e423/src/hooks/system/useVersions.ts",
+  "analise-prs/resgate-261118-lote3/hermes/telefonia-fase8-motion-a11y-responsivo-2610031530007c/scripts/team-chat-db-validate.mjs",
+  "analise-prs/resgate-261118-lote3/hermes/telefonia-fase8-motion-a11y-responsivo-2610031530007c/src/components/calls/IncomingCallAlert.tsx",
+  "analise-prs/resgate-261118-lote3/hermes/telefonia-fase8-motion-a11y-responsivo-2610031530007c/src/components/calls/Keypad.tsx",
+  "analise-prs/resgate-261118-lote3/hermes/telefonia-fase8-motion-a11y-responsivo-2610031530007c/src/components/calls/VoIPPanel.tsx",
+  "analise-prs/resgate-261118-lote3/hermes/telefonia-fase8-motion-a11y-responsivo-2610031530007c/src/components/campaigns/CampaignsView.tsx",
+  "analise-prs/resgate-261118-lote3/hermes/telefonia-fase8-motion-a11y-responsivo-2610031530007c/src/components/connections/IntegrationsPanel.tsx",
+  "analise-prs/resgate-261118-lote3/hermes/telefonia-fase8-motion-a11y-responsivo-2610031530007c/src/components/dashboard/RealtimeMetricsPanel.tsx",
+  "analise-prs/resgate-261118-lote3/hermes/telefonia-fase8-motion-a11y-responsivo-2610031530007c/src/components/inbox/contact-details/ContactAccordionSections.tsx",
+  "analise-prs/resgate-261118-lote3/hermes/telefonia-fase8-motion-a11y-responsivo-2610031530007c/src/components/inbox/contact-details/contactDetailSections.ts",
+  "analise-prs/resgate-261118-lote3/hermes/telefonia-fase8-motion-a11y-responsivo-2610031530007c/src/components/multiplix/MultiplixComposerDialog.tsx",
+  "analise-prs/resgate-261118-lote3/hermes/telefonia-fase8-motion-a11y-responsivo-2610031530007c/src/components/settings/AIAutoTagsConfig.tsx",
+  "analise-prs/resgate-261118-lote3/hermes/telefonia-fase8-motion-a11y-responsivo-2610031530007c/src/hooks/communication/useCallHistory.ts",
+  "analise-prs/resgate-261118-lote3/hermes/telefonia-fase8-motion-a11y-responsivo-2610031530007c/src/hooks/inbox/useBulkActions.ts",
+  "analise-prs/resgate-261118-lote3/hermes/telefonia-fase8-motion-a11y-responsivo-2610031530007c/src/hooks/inbox/useInboxFilterTags.ts",
+  "analise-prs/resgate-261118-lote3/hermes/telefonia-fase8-motion-a11y-responsivo-2610031530007c/src/hooks/team-chat/useTeamUnreadCount.ts",
+  "analise-prs/resgate-261118-lote3/hermes/telefonia-fase8-motion-a11y-responsivo-2610031530007c/src/pages/viewRouteProps.ts",
+  "analise-prs/resgate-261118-lote3/hermes/telefonia-fase8-motion-a11y-responsivo-2610031530007c/supabase/functions/ai-auto-tag/auth_test.ts",
+  "analise-prs/resgate-261118-lote3/local/fase0-banco-local/src/config/supabase.ts",
+  "analise-prs/resgate-261118-lote3/resolve-2381-from-main/src/components/inbox/chat/ChatInputArea.tsx",
+  "analise-prs/resgate-261118-lote3/resolve-2381-from-main/src/components/inbox/copilot/RadarLive.tsx",
+  "analise-prs/resgate-261118-lote3/resolve-2381-from-main/src/hooks/copilot/useCopilotSession.ts",
+  "analise-prs/resgate-261118-lote3/resolve-2381-from-main/supabase/functions/ai-jobs-worker/index.ts",
+  "analise-prs/resgate-regra8-261118/scripts/ci/ga25-ddl-check.mjs",
+  "analise-prs/resgate-regra8-261118/scripts/db-audit/check-ddl-deployments.mjs",
+  "analise-prs/resgate-regra8-261118/scripts/db-audit/dry-run-plan.mjs",
+  "analise-prs/resgate-regra8-261118/scripts/db-migrate/register-deployments.mjs",
+  "analise-prs/resgate-regra8-261118/src/hooks/copilot/useMultimodalAnalysis.ts",
+  "analise-prs/resgate-regra8-261118/supabase/functions/ai-multimodal-analysis/index.ts",
+  "analise-prs/variantes-261118/claude__fix-ga-fase78-perimetro-custo-261020-2200/scripts/ci/aplicar-perimetro.mjs",
+  "analise-prs/variantes-261118/claude_pink__cool-dijkstra-xk9ek2/scripts/ci/aplicar-perimetro.mjs",
+  "docs/_arquivo/inventario/build_prs.py",
+  "docs/_arquivo/inventario/classify.py",
+  "docs/_arquivo/inventario/gen_report.py",
+  "docs/design/ZAPP_DARKBLUE_PREMIUM_MOTION.ts",
+  "docs/design/contatos-redesign-2026-10-12/design-comportamento.js"
+ ],
+ "modulos_mais_acoplados": [
+  {
+   "modulo": "lib",
+   "depende_de": 12,
+   "importado_por": 103
+  },
+  {
+   "modulo": "components/ui",
+   "depende_de": 7,
+   "importado_por": 68
+  },
+  {
+   "modulo": "integrations/supabase",
+   "depende_de": 1,
+   "importado_por": 66
+  },
+  {
+   "modulo": "pages",
+   "depende_de": 64,
+   "importado_por": 3
+  },
+  {
+   "modulo": "components/inbox",
+   "depende_de": 46,
+   "importado_por": 14
+  },
+  {
+   "modulo": "hooks/system",
+   "depende_de": 13,
+   "importado_por": 42
+  },
+  {
+   "modulo": "hooks/integrations",
+   "depende_de": 22,
+   "importado_por": 26
+  },
+  {
+   "modulo": "hooks/ui",
+   "depende_de": 10,
+   "importado_por": 33
+  },
+  {
+   "modulo": "hooks/chat",
+   "depende_de": 23,
+   "importado_por": 17
+  },
+  {
+   "modulo": "components/layout",
+   "depende_de": 18,
+   "importado_por": 19
+  },
+  {
+   "modulo": "hooks/auth",
+   "depende_de": 6,
+   "importado_por": 29
+  },
+  {
+   "modulo": "services",
+   "depende_de": 8,
+   "importado_por": 27
+  },
+  {
+   "modulo": "components/dashboard",
+   "depende_de": 18,
+   "importado_por": 12
+  },
+  {
+   "modulo": "hooks/crm",
+   "depende_de": 10,
+   "importado_por": 19
+  },
+  {
+   "modulo": "components/settings",
+   "depende_de": 21,
+   "importado_por": 6
+  },
+  {
+   "modulo": "hooks/inbox",
+   "depende_de": 19,
+   "importado_por": 6
+  },
+  {
+   "modulo": "hooks/realtime",
+   "depende_de": 10,
+   "importado_por": 15
+  },
+  {
+   "modulo": "components/catalog",
+   "depende_de": 12,
+   "importado_por": 12
+  },
+  {
+   "modulo": "hooks/communication",
+   "depende_de": 12,
+   "importado_por": 12
+  },
+  {
+   "modulo": "components/contacts",
+   "depende_de": 17,
+   "importado_por": 4
+  }
+ ],
+ "arestas_em": "docs/contexto/codigo/grafo-arestas.json"
+}

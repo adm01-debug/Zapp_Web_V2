@@ -1,0 +1,6 @@
+SET LOCAL lock_timeout = '3s'
+
+REVOKE MAINTAIN ON ALL TABLES IN SCHEMA public FROM anon, authenticated
+
+ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA public
+  REVOKE MAINTAIN ON TABLES FROM anon, authenticated
