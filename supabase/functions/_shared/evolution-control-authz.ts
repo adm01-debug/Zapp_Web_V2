@@ -49,6 +49,9 @@ export const CONTROL_ACTIONS: ReadonlySet<string> = new Set([
   'create-instance',
   'create-connection',
   'connect',
+  // pairing-code: gera o código de pareamento do aparelho na Evolution API
+  // (sem QR) — mesma classe de connect, exige admin/supervisor.
+  'pairing-code',
   // reparo da credencial da instância: busca o token atual na GO (chave
   // global, /instance/all) e grava no Vault — nunca devolve o token.
   'sync-instance-token',
