@@ -1,3 +1,10 @@
+# docs:
+#   gatilho: pull_request em main (qualquer autor não dependabot e não-fork)
+#   prova: dependency review compara apenas as dependências introduzidas pelo PR contra a base do main
+#   falha: check fica vermelho se o PR adicionar dependência com CVE de severidade alta ou crítica
+#   avisa: autor e revisores pelo check do GitHub
+# nao-e-bug:
+#   - ${{ github.actor }}: o job é pulado para dependabot e forks porque o token restrito não resolve a comparação
 name: Dependency Review
 
 # Barra, no próprio PR, dependência NOVA com vulnerabilidade de severidade alta ou crítica.
