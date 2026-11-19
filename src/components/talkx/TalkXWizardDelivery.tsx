@@ -1,7 +1,7 @@
 import React from 'react';
 import {
   CalendarDays, Clock, Gauge, ShieldCheck, Users, MessageSquare, Target, Bookmark, Ban, FileText,
-  Sliders, Smartphone, ShieldAlert, Check, Rocket, Pencil, AlertTriangle,
+  Sliders, Smartphone, ShieldAlert, Check, Rocket, Pencil, AlertTriangle, FlaskConical,
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -132,6 +132,59 @@ export function TalkXWizardDelivery({ ed }: { ed: WizardState }) {
           </div>
         </div>
       </Section>
+
+      {/* X065 — entrada do teste A/B. As colunas e o painel de resultado já
+          existiam; sem este controle `ab_enabled` nascia falso e o teste era
+          inalcançável pelo app. Só aparece com template escolhido: a variante
+          vem do template, não da mensagem livre. */}
+      {ed.templateId && (
+        <Section icon={FlaskConical} color="violet" title="Teste A/B" subtitle="Divide o público entre as variantes do template e compara o resultado.">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5">
+            <label className="flex items-start gap-3 rounded-xl border border-border/60 bg-input/20 p-3 cursor-pointer">
+              <Checkbox
+                checked={ed.abEnabled}
+                onCheckedChange={(v) => ed.setAbEnabled(!!v)}
+                className="mt-0.5"
+                aria-label="Ativar teste A/B nesta campanha"
+              />
+              <div>
+                <p className="text-[13px] font-medium text-foreground">Ativar teste A/B</p>
+                <p className="text-2xs text-foreground-secondary">Cada contato recebe sempre a mesma variante; o resultado por variante aparece na aba Resultados durante o envio.</p>
+              </div>
+            </label>
+            {ed.abEnabled && (
+              <div className="rounded-xl border border-border/60 bg-input/20 p-3 space-y-2.5">
+                <div className="space-y-1">
+                  <label htmlFor="ab-metric" className="text-2xs font-semibold text-foreground-secondary">Métrica que decide a vencedora</label>
+                  <select
+                    id="ab-metric"
+                    value={ed.abMetric}
+                    onChange={(e) => ed.setAbMetric(e.target.value as typeof ed.abMetric)}
+                    className="w-full rounded-lg border border-border/60 bg-background px-2 py-1.5 text-[13px] text-foreground"
+                  >
+                    <option value="reply_rate">Taxa de resposta</option>
+                    <option value="click_rate">Taxa de clique</option>
+                    <option value="delivery_rate">Taxa de entrega</option>
+                  </select>
+                </div>
+                <div className="space-y-1">
+                  <label htmlFor="ab-min-sample" className="text-2xs font-semibold text-foreground-secondary">Amostra mínima por variante</label>
+                  <Input
+                    id="ab-min-sample"
+                    type="number"
+                    min={1}
+                    max={1000000}
+                    value={ed.abMinSample}
+                    onChange={(e) => ed.setAbMinSample(Number(e.target.value))}
+                    className="h-8 text-[13px]"
+                  />
+                  <p className="text-2xs text-foreground-secondary">A comparação só aparece quando CADA variante atingir este número.</p>
+                </div>
+              </div>
+            )}
+          </div>
+        </Section>
+      )}
 
       <Section icon={ShieldCheck} color="amber" title="Confirmação e supressão" subtitle="Evita o envio para contatos que não devem receber.">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5">

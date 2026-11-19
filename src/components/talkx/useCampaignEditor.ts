@@ -7,6 +7,7 @@ import { useTalkXTemplates } from '@/hooks/integrations/useTalkXTemplates';
 import { fromTable } from '@/lib/supabaseHelpers';
 import { fetchAllRows } from '@/lib/fetchAllRows';
 import { useAuth } from '@/hooks/auth/useAuth';
+import { gravarTalkXCampaignAb, type TalkXAbMetric } from '@/hooks/integrations/useTalkXAbStats';
 import { SPEED_PROFILES, estimateSeconds, fmtDurationShort } from './talkxShared';
 
 /**
@@ -527,6 +528,20 @@ export function useCampaignEditor(campaign: TalkXCampaign | null, onClose: () =>
   const [sendWindowEnd, setSendWindowEnd] = useState(campaign?.send_window_end?.slice(0, 5) || '18:00');
   const [businessHoursOnly, setBusinessHoursOnly] = useState(!!campaign?.business_hours_only);
   const [respectSuppression, setRespectSuppression] = useState(campaign?.respect_suppression ?? true);
+  // X065 — teste A/B. As colunas existem desde 20261118190000 e o painel de
+  // resultado ja le `ab_*`, mas nenhum fluxo da UI ligava a flag: a campanha
+  // nascia com `ab_enabled` falso e o teste era inalcancavel pelo app.
+  const [abEnabled, setAbEnabled] = useState(campaign?.ab_enabled ?? false);
+  const [abMetric, setAbMetric] = useState<TalkXAbMetric>((campaign?.ab_metric as TalkXAbMetric) ?? 'reply_rate');
+  const [abMinSample, setAbMinSample] = useState<number>(campaign?.ab_min_sample ?? 50);
+  // O que o banco ja tem. Serve para NAO chamar a RPC quando nada mudou: ela
+  // incrementa `revision`, e revisao nova a cada save quebraria o contrato
+  // otimista que o snapshot e o autosave usam.
+  const abPersistidoRef = useRef({
+    enabled: campaign?.ab_enabled ?? false,
+    metric: (campaign?.ab_metric as TalkXAbMetric) ?? 'reply_rate',
+    minSample: campaign?.ab_min_sample ?? 50,
+  });
   const [confirmConsent, setConfirmConsent] = useState(!!campaign?.confirm_consent);
   const [confirmContent, setConfirmContent] = useState(false);
   const [confirmSuppression, setConfirmSuppression] = useState(false);
@@ -984,6 +999,7 @@ export function useCampaignEditor(campaign: TalkXCampaign | null, onClose: () =>
     audienceSource, segmentIds, templateId, connectionId, owner, speedProfile,
     typingDelay, sendInterval, sendWindowEnabled, sendWindowStart, sendWindowEnd, businessHoursOnly,
     isScheduled, scheduledAt, scheduleTimezone, respectSuppression, selectedContacts,
+    abEnabled, abMetric, abMinSample, // X065: ligar o A/B conta como alteracao pendente.
     audienceRules, contactSearch,
     templateVersionId, // V26: versão do template aplicado (current_version_id; pode ser nula).
     step, // V23: o passo do wizard entra no autosave — sair no passo 2 e reabrir volta ao passo 2.
@@ -1021,18 +1037,55 @@ export function useCampaignEditor(campaign: TalkXCampaign | null, onClose: () =>
       const id = savedDraft.campaignId;
       draftRevisionRef.current = savedDraft.revision;
       setDraftRevision(savedDraft.revision);
+      if (!persistedCampaignId) {
+        // X025: os eventos 'created'/'updated' passaram a ser gravados pelo
+        // trigger do servidor (X024). O cliente não escreve mais eventos de
+        // ciclo de vida — só a trilha de operador (note/checklist).
+        //
+        // X065: registrar o id AQUI, e nao depois dos passos seguintes. A
+        // campanha ja existe no servidor; se `set_talkx_campaign_ab` ou o
+        // snapshot falharem antes disso, o editor ficava sem o id e a proxima
+        // tentativa repetia o caminho de CRIACAO com a mesma chave. Como
+        // `save_talkx_campaign_draft` compara 29 campos do payload no replay
+        // (`draft_step` entre eles, que muda so de clicar "Continuar"), a
+        // retentativa estourava `talkx_draft_creation_key_payload_conflict` e o
+        // editor travava para sempre numa campanha que ja tinha sido criada.
+        draftCampaignIdRef.current = id;
+        setDraftCampaignId(id);
+      }
+      // X065: `save_talkx_campaign_draft` nao conhece as colunas `ab_*` (medido
+      // no banco: a RPC extrai campo a campo e tem lista explicita). Mandar no
+      // payload fazia os tres serem descartados em silencio. Caminho proprio,
+      // ANTES do snapshot — e o snapshot que le `ab_enabled` para atribuir a
+      // variante por destinatario.
+      //
+      // So chama quando algo mudou: a RPC incrementa `revision`, e fazer isso em
+      // todo save quebraria a concorrencia otimista do snapshot e do autosave.
+      const abDesejado = {
+        enabled: abEnabled,
+        metric: abMetric,
+        minSample: Math.min(Math.max(Math.round(abMinSample) || 1, 1), 1000000),
+      };
+      const abMudou = abDesejado.enabled !== abPersistidoRef.current.enabled
+        || abDesejado.metric !== abPersistidoRef.current.metric
+        || abDesejado.minSample !== abPersistidoRef.current.minSample;
+      if (abMudou) {
+        const abSalvo = await gravarTalkXCampaignAb({
+          campaignId: id,
+          expectedRevision: draftRevisionRef.current,
+          abEnabled: abDesejado.enabled,
+          abMetric: abDesejado.metric,
+          abMinSample: abDesejado.minSample,
+        });
+        abPersistidoRef.current = abDesejado;
+        draftRevisionRef.current = abSalvo.revision;
+        setDraftRevision(abSalvo.revision);
+      }
       // E73: o rascunho deste snapshot já está no servidor — ele passa a ser o
       // baseline do autosave. Só continua pendente o que mudou durante o save.
       autosaveInitialRef.current = autosaveFields;
       setPersistedAutosaveSnapshot(autosaveFields);
       pendingChangesRef.current = autosaveFields !== autosaveFieldsRef.current;
-      if (!persistedCampaignId) {
-        // X025: os eventos 'created'/'updated' passaram a ser gravados pelo
-        // trigger do servidor (X024). O cliente não escreve mais eventos de
-        // ciclo de vida — só a trilha de operador (note/checklist).
-        draftCampaignIdRef.current = id;
-        setDraftCampaignId(id);
-      }
 
       // X017: os destinatários são gerados NO SERVIDOR a partir do rascunho
       // recém-salvo (origem, segmento, audience_filters e seleção manual). Uma
@@ -1066,7 +1119,7 @@ export function useCampaignEditor(campaign: TalkXCampaign | null, onClose: () =>
     } finally {
       setSaving(false);
     }
-  }, [recipientSnapshotReady, canProceed, buildPayload, autosaveFields, campaign?.id, campaign?.status, draftCreationKey, saveDraftCampaign, updateCampaign, audienceSource, selectedSegments, snapshotDraftAudience, startCampaign]);
+  }, [abEnabled, abMetric, abMinSample, recipientSnapshotReady, canProceed, buildPayload, autosaveFields, campaign?.id, campaign?.status, draftCreationKey, saveDraftCampaign, updateCampaign, audienceSource, selectedSegments, snapshotDraftAudience, startCampaign]);
 
   // Serializa autosave, salvar manual e lançamento. Uma falha não bloqueia a
   // próxima operação, mas nenhuma mutação posterior começa antes do término da
@@ -1222,6 +1275,7 @@ export function useCampaignEditor(campaign: TalkXCampaign | null, onClose: () =>
     hasMedia, isScheduled, scheduledAt, setScheduledAt,
     sendWindowEnabled, setSendWindowEnabled, sendWindowStart, setSendWindowStart, sendWindowEnd, setSendWindowEnd,
     businessHoursOnly, setBusinessHoursOnly, respectSuppression, setRespectSuppression,
+    abEnabled, setAbEnabled, abMetric, setAbMetric, abMinSample, setAbMinSample,
     confirmConsent, setConfirmConsent, confirmContent, setConfirmContent, confirmSuppression, setConfirmSuppression,
     connections, contacts, companies, filteredContacts,
     previewMessage, estimatedTime, estimatedSeconds, audienceTotal, suppressedCount, eligibleCount,
