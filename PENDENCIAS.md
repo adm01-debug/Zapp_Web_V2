@@ -238,9 +238,16 @@ script e o teste foram restaurados, e o X24 foi retificado.
 
 ## 4. App "Supabase for GitHub" ligado, criando preview em projeto errado
 
-O `AGENTS.md` registra esse app como **desligado**, mas ele está rodando: o check `Supabase Preview` falhou em
-PRs apontando para os projetos `sxnyqzdhqizhpunbnzkq` e `egyafebcwprbcwfybheo` — **nenhum dos dois é o banco
-oficial** `tnnnlkbymytvtqngbbqh`. Ele pinta PRs de vermelho sem relação com o código e gera custo por PR.
+O `AGENTS.md` registra esse app como **desligado**, mas ele está rodando. **Atualizado em 19/11/2026:** o
+projeto do preview agora é **`vppjpunmtxoitwdbpnvn`** (antes `sxnyqzdhqizhpunbnzkq` e
+`egyafebcwprbcwfybheo`) — nenhum deles é o banco oficial `tnnnlkbymytvtqngbbqh`. Ele pinta PRs de vermelho
+sem relação com o código e gera custo por PR: falhou em #3262, #3265, #3271, #3272, #3274, #3275 e #3276,
+inclusive na #3274, que só mexeu em `docs/` e `src/`.
+
+A falha é sempre `ERROR: Job 8 does not exist or you don't own it (SQLSTATE XX000)`: o preview nasce vazio e
+reaplica a história inteira, e a `20260902000200_fix_cron_avatars_refresh_key.sql:6` chama
+`cron.alter_job(job_id := 8, ...)` com o jobid literal de um job criado à mão no painel. **Não há correção
+possível dentro do repositório** — a migration está no ledger e é história imutável.
 
 **O que fazer:** em github.com/settings/installations, na instalação do Supabase, remover este repositório; ou
 no painel da Supabase, desligar o GitHub integration do projeto. Só você tem acesso.
