@@ -27,7 +27,10 @@ import { TalkXCampaignActionsCard } from './tracking/TalkXCampaignActionsCard';
 import { TalkXLimitsDialog } from './tracking/TalkXLimitsDialog';
 import { TalkXRecipientsTable } from './tracking/TalkXRecipientsTable';
 import { TalkXAbTestResults } from './tracking/TalkXAbTestResults';
-import { useTalkXAbStats, type TalkXAbMetric } from '@/hooks/integrations/useTalkXAbStats';
+import {
+  useTalkXAbStats, useDecidirTalkXAbWinner, TALKX_AB_MOTIVO_LABEL,
+  type TalkXAbMetric,
+} from '@/hooks/integrations/useTalkXAbStats';
 import {
   EMPTY_LIMITS_DRAFT, formatSendDays, limitsDraftFromCampaign,
   type TalkXCampaignWithRules, type TalkXLimitsDraft, type TalkXLimitsPayload,
@@ -523,6 +526,24 @@ function TabResults({ c, sentHistory, historyQuery, onRetryHistory }: {
   // nem roda, e o painel nao aparece.
   const abLigado = Boolean(c.ab_enabled);
   const ab = useTalkXAbStats(c.id, abLigado, c.status === 'sending');
+  // X065 — decisão da vencedora. `decide_talkx_ab_winner` não lança por falta
+  // de amostra: devolve `insufficient_data` com o motivo, e a tela diz por quê
+  // em vez de mostrar erro.
+  const decidirAb = useDecidirTalkXAbWinner(c.id);
+  const [motivoAb, setMotivoAb] = useState<string | null>(null);
+  const decidirVencedora = useCallback((variantId?: string | null) => {
+    setMotivoAb(null);
+    decidirAb.mutate(variantId, {
+      onSuccess: (resultado) => {
+        if (resultado?.status === 'decided') return;
+        const motivo = resultado?.status === 'insufficient_data' ? resultado.reason : '';
+        setMotivoAb(TALKX_AB_MOTIVO_LABEL[motivo] ?? 'Ainda não há base para decidir a vencedora.');
+      },
+      onError: (erro: unknown) => {
+        setMotivoAb(erro instanceof Error ? erro.message : 'Não foi possível decidir a vencedora.');
+      },
+    });
+  }, [decidirAb]);
   const deliveryRate = c.sent_count > 0 ? Math.round((c.delivered_count / c.sent_count) * 1000) / 10 : null;
   const outcomeUnknown = c.outcome_unknown_count ?? 0;
   const totalProcessed = c.sent_count + c.failed_count + outcomeUnknown;
@@ -609,6 +630,9 @@ function TabResults({ c, sentHistory, historyQuery, onRetryHistory }: {
         isLoading={ab.isLoading}
         isError={ab.isError}
         onRetry={() => { void ab.refetch(); }}
+        onDecidir={decidirVencedora}
+        decidindo={decidirAb.isPending}
+        motivoNaoDecidiu={motivoAb}
       />
     </div>
   );

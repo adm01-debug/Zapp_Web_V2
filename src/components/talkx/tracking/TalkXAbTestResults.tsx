@@ -34,6 +34,11 @@ export interface TalkXAbTestResultsProps {
   /** Falha da RPC. Sem isto, lista vazia por erro virava "Amostra: 0". */
   isError?: boolean;
   onRetry?: () => void;
+  /** X065: decide a vencedora. Ausente = tela só de leitura (sem a ação). */
+  onDecidir?: (variantId?: string | null) => void;
+  decidindo?: boolean;
+  /** Motivo devolvido por `decide_talkx_ab_winner` quando recusou decidir. */
+  motivoNaoDecidiu?: string | null;
   className?: string;
 }
 
@@ -48,6 +53,9 @@ export function TalkXAbTestResults({
   isLoading = false,
   isError = false,
   onRetry,
+  onDecidir,
+  decidindo = false,
+  motivoNaoDecidiu = null,
   className,
 }: TalkXAbTestResultsProps) {
   if (!abEnabled) return null;
@@ -102,6 +110,26 @@ export function TalkXAbTestResults({
           <p className={NOTA}>
             Menor amostra: {menorAmostra} · total {somaAmostra} destinatários · mínima {minSample} por variante
           </p>
+          {onDecidir && !winnerVariantId && (
+            <div className="flex flex-wrap items-center gap-2">
+              <button
+                type="button"
+                onClick={() => onDecidir(null)}
+                disabled={decidindo}
+                className="rounded-lg bg-primary px-2.5 py-1 text-2xs font-semibold text-primary-foreground disabled:opacity-60"
+              >
+                {decidindo ? 'Decidindo…' : 'Decidir vencedora'}
+              </button>
+              <span className={NOTA}>
+                A decisão automática só aceita diferença acima do ruído (2 erros-padrão).
+              </span>
+            </div>
+          )}
+
+          {motivoNaoDecidiu && (
+            <p className={cn(NOTA, 'font-medium')} role="status">{motivoNaoDecidiu}</p>
+          )}
+
           <div className="space-y-2">
             {linhas.map((v, i) => {
               // Em produção o id é UUID: rótulo legível (o do catálogo, ou A/B/C
@@ -126,6 +154,17 @@ export function TalkXAbTestResults({
                   </div>
                   <span className="w-12 text-right text-2xs font-bold text-foreground">{v.rate.toFixed(1)}%</span>
                   {venceu && <span className="shrink-0 text-2xs font-bold text-success">Vencedora</span>}
+                  {onDecidir && !winnerVariantId && (
+                    <button
+                      type="button"
+                      onClick={() => onDecidir(v.variant_id)}
+                      disabled={decidindo}
+                      className="shrink-0 rounded-md border border-border/60 px-1.5 py-0.5 text-2xs text-foreground-secondary hover:bg-muted/50 disabled:opacity-60"
+                      title={`Escolher ${rotulo} como vencedora`}
+                    >
+                      Escolher
+                    </button>
+                  )}
                 </div>
               );
             })}

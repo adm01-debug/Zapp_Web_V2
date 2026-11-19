@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 
 // A função é introduzida pela migration da etapa X065. O types-sync gera a
@@ -113,4 +113,52 @@ export async function gravarTalkXCampaignAb(input: {
   if (error) throw error;
   const linha = (Array.isArray(data) ? data[0] : data) as { revision?: number } | null;
   return { revision: Number(linha?.revision ?? input.expectedRevision + 1) };
+}
+
+/**
+ * X065 — resultado de `decide_talkx_ab_winner`.
+ *
+ * A RPC nunca lanca por falta de amostra: devolve `insufficient_data` com o
+ * motivo, para a tela dizer POR QUE nao decidiu em vez de mostrar erro.
+ *   - `min_sample`: alguma variante abaixo de `ab_min_sample`;
+ *   - `less_than_two_variants`: sem par para comparar;
+ *   - `difference_within_noise`: diferenca dentro de 2 erros-padrao.
+ */
+export type TalkXAbDecisao =
+  | { status: 'decided'; mode: 'manual' | 'automatic'; winner_variant_id?: string }
+  | { status: 'insufficient_data'; reason: string };
+
+export const TALKX_AB_MOTIVO_LABEL: Record<string, string> = {
+  min_sample: 'Ainda falta amostra em alguma variante.',
+  less_than_two_variants: 'É preciso pelo menos duas variantes com dados.',
+  difference_within_noise: 'A diferença entre as variantes ainda está dentro do ruído.',
+};
+
+/**
+ * Decide a vencedora do teste A/B.
+ *
+ * Sem `variantId` a decisão é automática (o banco aplica a regra dos 2
+ * erros-padrão); com `variantId` é manual, escolhida pelo operador.
+ */
+export function useDecidirTalkXAbWinner(campaignId: string | null | undefined) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (variantId?: string | null): Promise<TalkXAbDecisao> => {
+      if (!campaignId) throw new Error('campanha ausente');
+      const rpc = supabase.rpc.bind(supabase) as unknown as PendingDatabaseRpc;
+      const { data, error } = await rpc('decide_talkx_ab_winner', {
+        p_campaign_id: campaignId,
+        p_variant_id: variantId ?? null,
+      });
+      if (error) throw error;
+      return data as TalkXAbDecisao;
+    },
+    onSuccess: (resultado) => {
+      // Só recarrega quando houve decisão: `insufficient_data` não muda linha
+      // nenhuma e a consulta extra seria gasto à toa.
+      if (resultado?.status !== 'decided') return;
+      queryClient.invalidateQueries({ queryKey: ['talkx-ab-stats', campaignId] });
+      queryClient.invalidateQueries({ queryKey: ['talkx-campaigns'] });
+    },
+  });
 }

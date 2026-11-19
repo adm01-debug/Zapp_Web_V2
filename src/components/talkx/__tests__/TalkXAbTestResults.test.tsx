@@ -105,6 +105,63 @@ describe('X065 — TalkXAbTestResults', () => {
     expect(tentar).toHaveBeenCalledTimes(1);
   });
 
+  // X065 — a acao de decidir a vencedora. Sem ela, `decide_talkx_ab_winner`
+  // nao tinha NENHUM chamador em src/: a RPC existia e era inalcancavel.
+  it('com amostra suficiente oferece decidir automática e escolha manual', () => {
+    const decidir = vi.fn();
+    render(
+      <TalkXAbTestResults
+        {...base}
+        onDecidir={decidir}
+        variants={[
+          variante({ variant_id: 'va', label: 'A', total: 150, reply_rate: 18.5 }),
+          variante({ variant_id: 'vb', label: 'B', total: 150, reply_rate: 31.2 }),
+        ]}
+      />,
+    );
+    screen.getByRole('button', { name: 'Decidir vencedora' }).click();
+    expect(decidir).toHaveBeenCalledWith(null);
+    // Escolha manual: uma por variante, levando o id.
+    const manuais = screen.getAllByRole('button', { name: 'Escolher' });
+    expect(manuais).toHaveLength(2);
+    manuais[1].click();
+    expect(decidir).toHaveBeenLastCalledWith('vb');
+  });
+
+  it('com vencedora já definida a decisão não é oferecida de novo', () => {
+    render(
+      <TalkXAbTestResults
+        {...base}
+        onDecidir={vi.fn()}
+        winnerVariantId="vb"
+        variants={[
+          variante({ variant_id: 'va', label: 'A', total: 150 }),
+          variante({ variant_id: 'vb', label: 'B', total: 150 }),
+        ]}
+      />,
+    );
+    expect(screen.queryByRole('button', { name: 'Decidir vencedora' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Escolher' })).not.toBeInTheDocument();
+    expect(screen.getByText('Vencedora')).toBeInTheDocument();
+  });
+
+  // `insufficient_data` nao e erro: a tela diz POR QUE nao decidiu.
+  it('motivo da recusa aparece como estado, não como falha', () => {
+    render(
+      <TalkXAbTestResults
+        {...base}
+        onDecidir={vi.fn()}
+        motivoNaoDecidiu="A diferença entre as variantes ainda está dentro do ruído."
+        variants={[
+          variante({ variant_id: 'va', label: 'A', total: 150 }),
+          variante({ variant_id: 'vb', label: 'B', total: 150 }),
+        ]}
+      />,
+    );
+    expect(screen.getByRole('status')).toHaveTextContent('dentro do ruído');
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+  });
+
   it('a métrica da campanha troca a taxa lida, sem a tela recalcular nada', () => {
     render(
       <TalkXAbTestResults
