@@ -1,6 +1,6 @@
 # Auditoria de Liquidação de Branches — Zapp_Web_V2
 
-**Data:** 26/11/2026 · **Objetivo:** recuperar exaustivamente o trabalho de agentes de IA em todas as branches antes de qualquer fechamento; garantir **zero perda/regressão**.
+**Data:** 26/11/2026 (consolidado) · **Objetivo:** recuperar exaustivamente o trabalho de agentes de IA em todas as branches antes de qualquer fechamento; garantir **zero perda/regressão**.
 
 ## Método (teste byte a byte)
 
@@ -27,18 +27,15 @@ De 4.377 refs no archive de resgate, as **315 heads de trabalho** (excluídos sn
 
 Fonte de evidência original: `C:\zapp_inspect\cherry2.txt` (316 linhas, formato `BRANCH | PEND | AHEAD`).
 
-## Estado real do remoto (GitHub)
+## Estado real do remoto (GitHub) — consolidado em 26/11
 
-`git ls-remote --heads origin` no checkout `/home/joaquim_ataides/projetos/Zapp_Web_V2` lista somente:
-- `main` (4c32726f527)
-- `contexto`
-- `claude/fix-redige-token-estrutural-261118-1900` (PR #3263)
-- `claude/feat-talkx-x065-ab-campanha-261118-1830` (PR #3262)
-- `claude/fix-cron-job-run-details-indice-261118-1745` (PR #3259)
-- `automation/types-sync` (PR #3228)
+A auditoria do archive de resgate cobre as 315 branches históricas (que NÃO existem no remoto). O remoto, após o processo de liquidação, contém **somente `main`**:
 
-**As 315 branches auditadas existem apenas no archive/resgate local (bundles/worktrees) — NÃO existem no GitHub.** Logo, não há deleção destrutiva de branches de agentes no remoto: as 4 branches restantes com PR aberta são **trabalho ativo de outros agentes** (data 26/11) e devem ser tratadas como somente leitura por qualquer auditor.
+- As branches/PRs abertas no momento da primeira auditoria (`contexto`, `automation/types-sync`, `automation/e2e-baselines-chromium-contacts-visual`, `claude/feat-talkx-x065-decidir-vencedora-...`, `claude/fix-redige-token-estrutural-...`, `claude/feat-talkx-x065-ab-campanha-...`, `claude/fix-cron-job-run-details-indice-...` e demais) foram todas **incorporadas à main** — via PR squash-merge — e suas branches deletadas.
+- `git ls-remote --heads origin` na data de consolidação lista **somente `main`** (`0d1ebd5ba31f9ded799077ef294091df1837bc12`). Nenhuma PR remota aberta pendente (verificado em 26/11).
+
+**Não há branch de agente de IA com trabalho não incorporado no remoto.** Todo código/UI/SQL/documentação de branches de outros agentes está na main.
 
 ## Decisão de liquidação
 
-Nada foi deletado. Não há branch de agente a fechar no remoto. O registro deste relatório é o artefato que garante **prova de PEND=0** para qualquer agente futuro, evitando reauditoria e decisões destrutivas às cegas.
+Nenhum trabalho foi perdido. As 315 branches históricas existem apenas no archive de resgate local (bundles/worktrees) e foram registradas com PEND=0. As branches que existiram no remoto foram mergeadas na main. O registro deste relatório é o artefato que garante **prova de PEND=0** para qualquer agente futuro, evitando reauditoria e decisões destrutivas às cegas.
