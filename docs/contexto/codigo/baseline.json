@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "2e705429ce3b7d3e9799e7b1a701e7958d23a9fa",
+  "commit": "bf81b135067424811fc98ea862366cdd25d184b0",
   "branch": "main",
-  "data_commit": "2026-11-20T16:04:42-03:00",
+  "data_commit": "2026-11-20T17:24:14-03:00",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "bf81b135",
+    "data": "2026-11-20",
+    "assunto": "docs(goal): backlog verificado byte a byte (Fase 1) - 1090 pendências (#3293)"
+   },
    {
     "sha": "2e705429",
     "data": "2026-11-20",
@@ -126,14 +131,9 @@
     "sha": "7d2e76d8",
     "data": "2026-11-18",
     "assunto": "chore(db): sincronizar artefatos derivados do banco (#3228)"
-   },
-   {
-    "sha": "35d70197",
-    "data": "2026-11-18",
-    "assunto": "O types-sync passa a commitar o DB-INVENTORY que ele regenera (#3267)"
    }
   ],
-  "arquivos_mudados_7d": 6577,
+  "arquivos_mudados_7d": 7657,
   "pastas_mais_mudadas_30d": [
    {
     "pasta": "docs/contexto/supabase",
@@ -314,7 +314,7 @@
   ]
  },
  "contagens": {
-  "arquivos_total": 14623,
+  "arquivos_total": 15714,
   "arquivos_codigo": 5840,
   "linhas_codigo": 1130257,
   "rotas": 18,
@@ -331,7 +331,7 @@
   "testes": 3201,
   "workflows": 24,
   "scripts": 451,
-  "docs_md": 2990
+  "docs_md": 4081
  },
  "por_pasta": {
   "analise-prs/resgate-261115": {
