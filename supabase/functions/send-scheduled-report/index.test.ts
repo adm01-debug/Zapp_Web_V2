@@ -509,6 +509,19 @@ async function withTrustedDomainsEnv<T>(value: string | null, fn: () => Promise<
   }
 }
 
+/** Garante que CRON_SECRET fica ausente durante o teste (isola de testes de outras Edges que setam o env) e restaura o valor anterior. */
+async function withCronSecretEnv<T>(value: string | null, fn: () => Promise<T>): Promise<T> {
+  const previous = Deno.env.get("CRON_SECRET");
+  if (value === null) Deno.env.delete("CRON_SECRET");
+  else Deno.env.set("CRON_SECRET", value);
+  try {
+    return await fn();
+  } finally {
+    if (previous === undefined) Deno.env.delete("CRON_SECRET");
+    else Deno.env.set("CRON_SECRET", previous);
+  }
+}
+
 Deno.test("pd23: domínio externo → nada é enviado, ciclo não avança e a resposta não expõe o endereço", async () => {
   const EXTERNO = "externo@gmail.com";
   const mock = serviceMock({ report: reportWith([EXTERNO]) });
@@ -779,7 +792,9 @@ Deno.test("dash083: cron sem header faz 401 e nunca consulta o vault (sem regres
 
 Deno.test("dash083: vault consultado só com header de cron presente e sem CRON_SECRET no env", async () => {
   const mock = serviceMock({ configError: { message: "not found" } });
-  const res = await handleScheduledReport(cronConfigPost(), { supabase: mock.supabase });
-  assert(res.status === 404, "auth ok (via vault) deve alcançar o lookup e achar a config ausente");
-  assert(mock.rpcCalls.includes("get_scheduled_report_cron_secret"), "com header e sem env o vault deve ser consultado");
+  await withCronSecretEnv(null, async () => {
+    const res = await handleScheduledReport(cronConfigPost(), { supabase: mock.supabase });
+    assert(res.status === 404, "auth ok (via vault) deve alcançar o lookup e achar a config ausente");
+    assert(mock.rpcCalls.includes("get_scheduled_report_cron_secret"), "com header e sem env o vault deve ser consultado");
+  });
 });
