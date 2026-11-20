@@ -2,6 +2,10 @@
 
 Diff semântico gerado a cada coleta em que algo mudou.
 
+## 2026-11-20 02:18 UTC
+
+- **realtime** adicionado (1): `supabase_realtime_messages_publication:realtime.messages_2026_11_23`
+
 ## 2026-11-19 11:13 UTC
 
 - **functions** adicionado (1): `public.set_talkx_campaign_ab(p_campaign_id uuid, p_expected_revision bigint, p_ab_enabled boolean, p_ab_metric text, p_ab_min_sample integer)`
