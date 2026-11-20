@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "b267f6b2efb567f1ae7bdb44ee121c0645d76f0c",
+  "commit": "2e705429ce3b7d3e9799e7b1a701e7958d23a9fa",
   "branch": "main",
-  "data_commit": "2026-11-19T18:10:59-03:00",
+  "data_commit": "2026-11-20T16:04:42-03:00",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "2e705429",
+    "data": "2026-11-20",
+    "assunto": "docs(fase0): linha de base e regras de negocio da Fase 0 do GOAL (#3292)"
+   },
    {
     "sha": "b267f6b2",
     "data": "2026-11-19",
@@ -126,14 +131,9 @@
     "sha": "35d70197",
     "data": "2026-11-18",
     "assunto": "O types-sync passa a commitar o DB-INVENTORY que ele regenera (#3267)"
-   },
-   {
-    "sha": "4366aa60",
-    "data": "2026-11-18",
-    "assunto": "DB-INVENTORY ganha gerador, e o types-sync para de congelar a cada objeto novo (#3266)"
    }
   ],
-  "arquivos_mudados_7d": 6740,
+  "arquivos_mudados_7d": 6577,
   "pastas_mais_mudadas_30d": [
    {
     "pasta": "docs/contexto/supabase",
@@ -211,14 +211,10 @@
    },
    {
     "arquivo": "scripts/db-audit/grants-baseline.json",
-    "mudancas": 13
-   },
-   {
-    "arquivo": "src/integrations/supabase/types.ts",
     "mudancas": 12
    },
    {
-    "arquivo": "supabase/schema-manifest.json",
+    "arquivo": "src/integrations/supabase/types.ts",
     "mudancas": 12
    },
    {
@@ -226,7 +222,7 @@
     "mudancas": 11
    },
    {
-    "arquivo": "supabase/schema-catalog.json",
+    "arquivo": "supabase/schema-manifest.json",
     "mudancas": 11
    },
    {
@@ -234,11 +230,15 @@
     "mudancas": 10
    },
    {
-    "arquivo": "docs/DB-INVENTORY.md",
+    "arquivo": "supabase/schema-catalog.json",
     "mudancas": 10
    },
    {
     "arquivo": ".github/workflows/ci.yml",
+    "mudancas": 9
+   },
+   {
+    "arquivo": "docs/DB-INVENTORY.md",
     "mudancas": 9
    },
    {
@@ -314,7 +314,7 @@
   ]
  },
  "contagens": {
-  "arquivos_total": 14621,
+  "arquivos_total": 14623,
   "arquivos_codigo": 5840,
   "linhas_codigo": 1130257,
   "rotas": 18,
@@ -331,7 +331,7 @@
   "testes": 3201,
   "workflows": 24,
   "scripts": 451,
-  "docs_md": 2988
+  "docs_md": 2990
  },
  "por_pasta": {
   "analise-prs/resgate-261115": {

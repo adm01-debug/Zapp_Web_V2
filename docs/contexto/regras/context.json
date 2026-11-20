@@ -1,10 +1,10 @@
 {
  "meta": {
-  "sha": "b267f6b2efb567f1ae7bdb44ee121c0645d76f0c",
+  "sha": "2e705429ce3b7d3e9799e7b1a701e7958d23a9fa",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-19 21:12 UTC",
-  "files_total": 14477,
+  "generated_at": "2026-11-20 19:11 UTC",
+  "files_total": 14479,
   "code_files": 8875,
   "code_lines": 1407584
  },
@@ -479032,10 +479032,20 @@
   }
  },
  "git": {
-  "sha": "b267f6b2efb567f1ae7bdb44ee121c0645d76f0c",
+  "sha": "2e705429ce3b7d3e9799e7b1a701e7958d23a9fa",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "2e70542",
+    "date": "2026-11-20",
+    "author": "adm01-debug",
+    "subject": "docs(fase0): linha de base e regras de negocio da Fase 0 do GOAL (#3292)",
+    "files": [
+     "docs/pendencias/_linha-de-base.md",
+     "docs/pendencias/_regras-de-negocio.md"
+    ]
+   },
    {
     "sha": "b267f6b",
     "date": "2026-11-19",
@@ -481295,16 +481305,6 @@
     "files": [
      "scripts/ci/redigir-relatorio.mjs",
      "scripts/ci/redigir-relatorio.unit.mjs"
-    ]
-   },
-   {
-    "sha": "e6404cc",
-    "date": "2026-11-18",
-    "author": "adm01-debug",
-    "subject": "Índice que falta em cron.job_run_details, sem duplicar a retenção (#3259)",
-    "files": [
-     "supabase/migrations/20261117160000_talkx_cron_job_run_details_indice.sql",
-     "supabase/migrations/20261117160000_talkx_cron_job_run_details_indice_e_retencao.sql"
     ]
    }
   ],

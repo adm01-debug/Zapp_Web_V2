@@ -64,13 +64,13 @@
   }
  },
  "commits": {
-  "convencao": "livre",
+  "convencao": "conventional commits (observado)",
   "exemplos": [
+   "docs(fase0): linha de base e regras de negocio da Fase 0 do GOAL (#3292)",
    "feat(evolution-api): adiciona ação 'pairing-code' para parear aparelho por código (#3290)",
    "ci(security): dependency review barra CVE novo high/critical nos PRs (#3288)",
    "chore(contexto): atualiza snapshots X065 (persist_talkx_recipient_message_snapshot e set_talkx_campaign_ab) (#3289)",
-   "docs(mapa): incorporar acervo de refs do remoto + veredito da auditoria (#3287)",
-   "chore(docs): consolidar relatório de liquidação com estado final (PEND=0)"
+   "docs(mapa): incorporar acervo de refs do remoto + veredito da auditoria (#3287)"
   ]
  },
  "pr_template": ".github/PULL_REQUEST_TEMPLATE.md",

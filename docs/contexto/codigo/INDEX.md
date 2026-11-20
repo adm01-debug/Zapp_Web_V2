@@ -1,7 +1,7 @@
 # Contexto do projeto para agentes de IA
 
 GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.
-Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR dela) a cada push em `main` e a cada 10 minutos pelo workflow `contexto.yml`; índice único das três fontes em `docs/contexto/00-INDEX.md`. Gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `b267f6b2efb567f1ae7bdb44ee121c0645d76f0c` (2026-11-19T18:10:59-03:00).
+Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR dela) a cada push em `main` e a cada 10 minutos pelo workflow `contexto.yml`; índice único das três fontes em `docs/contexto/00-INDEX.md`. Gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `2e705429ce3b7d3e9799e7b1a701e7958d23a9fa` (2026-11-20T16:04:42-03:00).
 
 ## Como usar (leia antes de planejar ou executar qualquer tarefa)
 1. **Tela/rota/menu** → `rotas.json` (url/vista/menu → arquivo → hooks → tabelas → edges; `rotas_http_backend` para APIs) e `modulos.json` (módulo inteiro + dependências entre módulos).
@@ -14,7 +14,7 @@ Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR
 Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua tarefa; não carregue tudo.
 
 ## Stack
-- linguagens: TypeScript (5037), SQL (3061), Markdown (2988), JSON (1968), JavaScript (682), Shell (264), Python (125), YAML (112)
+- linguagens: TypeScript (5037), SQL (3061), Markdown (2990), JSON (1968), JavaScript (682), Shell (264), Python (125), YAML (112)
 - linguagem_principal: TypeScript
 - framework: React
 - backend_http: n/d
@@ -34,7 +34,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 ## Números
 | item | qtd |
 |---|---|
-| arquivos_total | 14621 |
+| arquivos_total | 14623 |
 | arquivos_codigo | 5840 |
 | linhas_codigo | 1130257 |
 | rotas | 18 |
@@ -51,7 +51,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 | testes | 3201 |
 | workflows | 24 |
 | scripts | 451 |
-| docs_md | 2988 |
+| docs_md | 2990 |
 
 ## Onde ficam as coisas
 - telas: src/components (54), src/pages (18)
@@ -394,8 +394,8 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - possiveis_segredos_no_codigo: 6 — ex.: analise-prs/resgate-261118-lote3/claude_pink/cool-dijkstra-xk9ek2/scripts/ci/edge-coverage-authz.unit.mjs:397, analise-prs/resgate-261118-lote3/claude_pink/cool-dijkstra-xk9ek2/scripts/edge-deploy/redigir-log.unit.mjs:38, scripts/ai-context/cenarios.mjs:102
 
 ## Grafo de código (graphify)
-- 92990 nós · 164578 arestas · 8196 comunidades · grafo do commit `b267f6b2`
-- comunidades maiores: Communities (5953 total, 1987 thin omitted) (3947), cn (1329), lucide-react (1327), react (1272), vitest (1005), TalkXSuppression.tsx (967), DashboardView.tsx (752), ref_node_assert (719), src/hooks/integrations/useTalkXSegments.ts (617), validation.ts (571), ExternalProductManagement.tsx (554), ref_https (496)
+- 93009 nós · 164597 arestas · 8162 comunidades · grafo do commit `2e705429`
+- comunidades maiores: Communities (5953 total, 1987 thin omitted) (3946), cn (1434), src/components/ui/badge.tsx (1338), react (1199), TalkXSuppression.tsx (1180), vitest (992), ref_node_fs (720), validation.ts (672), DashboardView.tsx (581), WorkItemSheet.tsx (497), ref_https (488), ExternalProductManagement.tsx (435)
 - símbolos mais chamados: cn() (src/lib/utils.ts), useAuth() (src/hooks/auth/useAuth.tsx), jsonResponse() (supabase/functions/_shared/validation.ts), errorResponse() (supabase/functions/_shared/validation.ts), handleCors() (supabase/functions/_shared/validation.ts), fail() (scripts/e2e-isolated/network-proof-policy.mjs), Logger (supabase/functions/_shared/validation.ts), requireEnv() (supabase/functions/_shared/validation.ts), fmtInt() (src/components/talkx/kit/format.ts), fromTable() (src/lib/supabaseHelpers.ts), useUserRole() (src/hooks/system/useUserRole.ts), validationErrorResponse() (supabase/functions/_shared/schemas.ts)
 - consulta local: `graphify query "<pergunta>"`, `graphify path "<A>" "<B>"`, `graphify explain "<X>"`
 
@@ -403,14 +403,14 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - supabase/deployment-manifest.json (30)
 - ESTADO.md (16)
 - docs/talkx/ESTADOS.md (15)
-- scripts/db-audit/grants-baseline.json (13)
+- scripts/db-audit/grants-baseline.json (12)
 - src/integrations/supabase/types.ts (12)
-- supabase/schema-manifest.json (12)
 - PENDENCIAS.md (11)
-- supabase/schema-catalog.json (11)
+- supabase/schema-manifest.json (11)
 - .github/workflows/db-guard.yml (10)
-- docs/DB-INVENTORY.md (10)
+- supabase/schema-catalog.json (10)
 - .github/workflows/ci.yml (9)
+- docs/DB-INVENTORY.md (9)
 - docs/agentes/github-ci.md (8)
 - supabase/functions/evolution-api/index.ts (8)
 - docs/ci/README.md (7)
@@ -518,10 +518,11 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - `docs/contracts.md` — Contratos das Edge Functions (51 linhas)
 - `docs/crm-external-grants.md` — GRANTs Externos — CRM pgxfvjmuubtbowutlide (111 linhas)
 - `docs/prod-readiness.md` — Prontidão de produção — Zapp Web V2 (main @ `ab657aa34`) (1858 linhas)
-- subpastas de docs/: docs/_arquivo (593), docs/contexto (261), docs/audits (183), docs/reconciliation (134), docs/design (64), docs/plans (59), docs/talkx (52), docs/ia (19), docs/adr (17), docs/catalogo (15), docs/runbooks (14), docs/multiplix (12), docs/mapa (10), docs/copiloto (9), docs/ci (8), docs/decisions (8), docs/handoffs (8), docs/agentes (6), docs/migration (6), docs/tipografia (6), docs/evidencias (4), docs/telefonia (3), docs/architecture (2), docs/security (2), docs/team-chat (2), docs/crm-integration (1), docs/dashboard (1), docs/design-system (1), docs/edge-functions-recovered (1), docs/hermes (1), docs/ops (1)
+- subpastas de docs/: docs/_arquivo (593), docs/contexto (261), docs/audits (183), docs/reconciliation (134), docs/design (64), docs/plans (59), docs/talkx (52), docs/ia (19), docs/adr (17), docs/catalogo (15), docs/runbooks (14), docs/multiplix (12), docs/mapa (10), docs/copiloto (9), docs/ci (8), docs/decisions (8), docs/handoffs (8), docs/agentes (6), docs/migration (6), docs/tipografia (6), docs/evidencias (4), docs/telefonia (3), docs/architecture (2), docs/pendencias (2), docs/security (2), docs/team-chat (2), docs/crm-integration (1), docs/dashboard (1), docs/design-system (1), docs/edge-functions-recovered (1), docs/hermes (1), docs/ops (1)
 - CHANGELOG topo: [Unreleased]
 
 ## Últimos commits
+- 2026-11-20 `2e705429` docs(fase0): linha de base e regras de negocio da Fase 0 do GOAL (#3292)
 - 2026-11-19 `b267f6b2` feat(evolution-api): adiciona ação 'pairing-code' para parear aparelho por código (#3290)
 - 2026-11-19 `966a524f` ci(security): dependency review barra CVE novo high/critical nos PRs (#3288)
 - 2026-11-19 `55b35739` chore(contexto): atualiza snapshots X065 (persist_talkx_recipient_message_snapshot e set_talkx_campaign_ab) (#3289)
@@ -536,7 +537,6 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - 2026-11-19 `4e4102b5` docs(ci): o app Supabase for GitHub esta LIGADO, nao desligado (#3278)
 - 2026-11-18 `b85934ad` docs(banco): indice de cron.job_run_details virou obsoleto, sem chamado a abrir (#3277)
 - 2026-11-19 `755c0a6b` chore(db): sincronizar artefatos derivados do banco (#3276)
-- 2026-11-18 `38c2ae41` feat(talkx): teste A/B deixa de ser inalcançável pela interface (#3272)
 
 ## Arquivos deste diretório
 - `docs/contexto/codigo/rotas.json`
