@@ -1,0 +1,40 @@
+# E02 — Banner "WhatsApp indisponível" e bloqueio honesto no compositor
+
+- **Estado**: PARCIAL
+- **Prioridade**: P1
+- **Anexo**: 05 · **Seção**: 3.7 Multi-conexão Evolution GO (50)
+
+## Descrição e origem
+
+Banner "WhatsApp indisponível" e bloqueio honesto no compositor.
+
+> Origem: `docs/audits/funcionalidades-pendentes-2026-10-11/05-tarefas-catalogo-mapa-go.md` (3.7 Multi-conexão Evolution GO (50)).
+
+## Estado real conferido
+
+- **Estado reportado pela auditoria** (12/10/2026): PARCIAL.
+- **Planejado**: Banner + trava de envio com motivo
+- **Existe hoje** (evidência da auditoria): EvolutionDisconnectBanner existe (src/components/alerts/EvolutionDisconnectBanner.tsx; src/pages/Index.tsx:132); o compositor não bloqueia nem cita whatsapp_maintenance_until (só a edge lê: evolution-api/index.ts:183-196)
+- **Falta**: Trava no composer com motivo
+- **Verificação byte-a-byte**: conferência no código e no banco a fazer na Fase 2, antes de tocar no item (protocolo anti-regressão §7).
+
+## Camadas afetadas
+
+functions, integrações, UI
+
+## Regras de negócio aplicáveis
+
+Ver `docs/pendencias/_regras-de-negocio.md` (consolidado na Fase 0). Conferir no item específico na Fase 2.
+
+## Raio de impacto
+
+O agente escreve e a mensagem não sai sem explicação
+
+## Dependências
+
+Nenhuma registrada.
+
+## Critério de aceite
+
+- Banner + trava de envio com motivo
+- Integração de ponta a ponta (banco → functions → UI → permissões), sem regressão e sem perder dado (protocolo §5).
