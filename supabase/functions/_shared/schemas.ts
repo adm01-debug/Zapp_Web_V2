@@ -406,7 +406,10 @@ export const DetectNewDeviceSchema = z.object({
 
 // ─── Scheduled Report ────────────────────────────────────────
 export const ScheduledReportSchema = z.object({
-  reportId: z.string().uuid("reportId must be a valid UUID"),
+  reportId: z.string().uuid("reportId must be a valid UUID").optional(),
+  configId: z.string().uuid("configId must be a valid UUID").optional(),
+}).refine((body) => (body.configId !== undefined) !== (body.reportId !== undefined), {
+  message: "Informe exatamente um campo: configId (dashboard) ou reportId (legado)",
 });
 
 // ─── Gmail Send ──────────────────────────────────────────────

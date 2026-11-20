@@ -8,7 +8,7 @@
  *  - recipients como texto livre separado por vírgula (não chips)
  */
 import { useState } from 'react';
-import { FileText, Plus, Trash2, RefreshCw, Calendar, LayoutTemplate, Lightbulb, BarChart3, Users, Heart, MessageSquare, X, Search, ArrowUpDown, ChevronRight, Clock, Sparkles } from 'lucide-react';
+import { FileText, Plus, Trash2, RefreshCw, Calendar, LayoutTemplate, Lightbulb, BarChart3, Users, Heart, MessageSquare, X, Search, ArrowUpDown, ChevronRight, Clock, Sparkles, Loader2 } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -54,7 +54,7 @@ const FREQ_TILES = [
 ];
 
 export function ScheduledReportsManager() {
-  const { configs, isLoading, createConfig, toggleActive, deleteConfig } = useScheduledReportConfigs();
+  const { configs, isLoading, createConfig, toggleActive, sendNow, deleteConfig } = useScheduledReportConfigs();
   const [showCreate, setShowCreate] = useState(false);
   const [formName, setFormName] = useState('');
   const [formType, setFormType] = useState('performance');
@@ -164,6 +164,16 @@ export function ScheduledReportsManager() {
                       </div>
                     </div>
                     <Switch aria-label={`Ativar relatório ${cfg.name}`} checked={cfg.is_active} onCheckedChange={() => toggleActive.mutate({ id: cfg.id, isActive: cfg.is_active })} />
+                                        <Button
+                                          variant="outline"
+                                          size="icon-sm"
+                                          onClick={() => sendNow.mutate(cfg.id)}
+                                          disabled={sendNow.isPending}
+                                          aria-label={`Enviar agora ${cfg.name}`}
+                                          title="Enviar agora"
+                                        >
+                                          {sendNow.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
+                                        </Button>
                     <AlertDialog>
                       <AlertDialogTrigger asChild>
                         <button title="Excluir" aria-label={`Excluir relatório ${cfg.name}`} className="w-9 h-9 rounded-lg border border-border/60 hover:bg-destructive/10 hover:border-destructive/40 flex items-center justify-center shrink-0">

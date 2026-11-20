@@ -68,6 +68,13 @@ verify_jwt = false
 [functions.searchbox-budget-alert]
 verify_jwt = false
 
+# DASH-083: quem chama e o pg_cron (net.http_post) com x-cron-secret, alem do
+# front por JWT de usuario (botao "Enviar agora"). A funcao confere o cron secret
+# e o papel admin/supervisor por conta propria, entao o gate do gateway fica
+# desligado de proposito.
+[functions.send-scheduled-report]
+verify_jwt = false
+
 # T72: quem chama e o N8N, com a service_role no Authorization. A funcao confere o token
 # por conta propria, entao o gate de JWT do gateway fica desligado aqui de proposito.
 [functions.sync-call-records]

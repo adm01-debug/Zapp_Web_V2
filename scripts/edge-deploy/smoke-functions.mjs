@@ -19,6 +19,9 @@ const INTERNAL_AUTH_FUNCTIONS = new Set([
   'batch-fetch-avatars',
   // verify_jwt=false para o pg_cron; sem o segredo do Vault tem de continuar 401.
   'ai-usage-outbox-drain',
+  // DASH-083: verify_jwt=false para o pg_cron relatorios agendados; a edge
+  // exige x-cron-secret (Vault) OU Bearer admin/supervisor.
+  'send-scheduled-report',
 ]);
 const DISABLED_FUNCTIONS = new Map([['public-api', 410]]);
 

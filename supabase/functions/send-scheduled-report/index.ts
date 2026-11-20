@@ -67,6 +67,37 @@ const DEFAULT_TRUSTED_EMAIL_DOMAINS = "promobrindes.com.br";
 /** Limite de destinatários por relatório: acima disso nada é enviado. */
 const MAX_RECIPIENTS_PER_REPORT = 20;
 
+/**
+ * DASH-083 — as configs do dashboard (scheduled_report_configs) usam tipos
+ * próprios; a Edge só conhece os tipos do relatório legado (scheduled_reports).
+ * Mapa de equivalência: cada tipo da UI vira o tipo que esta Edge já sabe
+ * montar. `full` = resumo executivo; `satisfaction` e `conversations` caem na
+ * mesma análise de conversas do legado.
+ */
+const CONFIG_TO_REPORT_TYPE: Record<string, string> = {
+  performance: "agent_performance",
+  agents: "agent_performance",
+  sla: "sla_compliance",
+  conversations: "conversation_analytics",
+  satisfaction: "conversation_analytics",
+  full: "dashboard_summary",
+  // Default do DDL (scheduled_report_configs.report_type) para configs antigas
+  // sem tipo explícito na criação.
+  dashboard: "dashboard_summary",
+};
+
+/** Linha de scheduled_report_configs (fonte da UI do dashboard). */
+export interface ScheduledReportConfigRow {
+  id: string;
+  name: string;
+  report_type: string;
+  frequency: string;
+  recipients: string[];
+  is_active: boolean;
+  last_sent_at: string | null;
+  next_send_at: string | null;
+}
+
 /** Normaliza a lista de domínios: vírgula, trim, minúsculas, `@` inicial fora. */
 export function resolveTrustedDomains(raw: string | null | undefined): string[] {
   const source = (raw ?? "").trim();
@@ -103,13 +134,35 @@ export async function handleScheduledReport(
   const log = new Logger("send-scheduled-report");
 
   try {
-    // ── Autorização (ANTES de cliente service-role e ANTES de parsear o corpo) ──
-    const cronSecret = deps.cronSecret !== undefined
-      ? deps.cronSecret
-      : (Deno.env.get("CRON_SECRET") ?? "");
+    // ── Cliente service-role: criado ANTES do gate SÓ para a leitura do cron
+    // secret do Vault (não faz lookup nem efeito — os testes de rejeição contam
+    // `fromCalls.length === 0`). A autorização decide o que esse cliente poderá
+    // acessar logo abaixo.
+    const supabase = deps.supabase ?? createClient(
+      requireEnv("SUPABASE_URL"),
+      requireEnv("SUPABASE_SERVICE_ROLE_KEY"),
+    );
+
+    // ── Autorização (ANTES de parsear o corpo e antes de qualquer from()) ──
     const cronHeader = req.headers.get("x-cron-secret");
+    let cronSecret: string | undefined;
+    if (typeof deps.cronSecret !== "undefined") {
+      // Override de teste: valor exato (vazio = fail-closed), sem rede nem Vault.
+      cronSecret = deps.cronSecret;
+    } else {
+      cronSecret = Deno.env.get("CRON_SECRET");
+      if (!cronSecret && cronHeader) {
+        // Última fonte: segredo dedicado do Vault (padrão multiplix-send /
+        // connection-health-check). Só consultado quando há header a conferir.
+        // Fail-closed: sem RPC, não autoriza.
+        const { data, error } = typeof supabase?.rpc === "function"
+          ? await supabase.rpc("get_scheduled_report_cron_secret")
+          : { data: null, error: new Error("rpc unavailable") };
+        cronSecret = error ? "" : typeof data === "string" ? data : "";
+      }
+    }
     // Fail-closed: sem segredo interno não vazio, o header não autoriza nada.
-    const isCron = Boolean(cronSecret && cronHeader && timingSafeEqual(cronHeader, cronSecret));
+    const isCron = Boolean(cronHeader && cronSecret && timingSafeEqual(cronHeader, cronSecret));
 
     if (!isCron) {
       const authHeader = req.headers.get("Authorization") || "";
@@ -141,22 +194,23 @@ export async function handleScheduledReport(
       }
     }
 
-    // ── Autorizado: cria cliente service-role e processa o relatório ──
-    const supabase = deps.supabase ?? createClient(
-      requireEnv("SUPABASE_URL"),
-      requireEnv("SUPABASE_SERVICE_ROLE_KEY"),
-    );
     const resendApiKey = Deno.env.get("RESEND_API_KEY");
 
     const parsed = parseBody(ScheduledReportSchema, await req.json());
     if (!parsed.success) return validationErrorResponse(parsed, req);
 
-    const { reportId } = parsed.data;
+    const { configId, reportId } = parsed.data;
+
+    // DASH-083: a UI do dashboard grava em scheduled_report_configs; a tabela
+    // legada scheduled_reports segue suportada (reportId) sem regressão.
+    const usingConfig = configId !== undefined;
+    const lookupTable = usingConfig ? "scheduled_report_configs" : "scheduled_reports";
+    const recordId = usingConfig ? configId : reportId;
 
     const { data: report, error: reportError } = await supabase
-      .from("scheduled_reports")
+      .from(lookupTable)
       .select("*")
-      .eq("id", reportId)
+      .eq("id", recordId)
       .single();
 
     if (reportError || !report) {
@@ -164,11 +218,19 @@ export async function handleScheduledReport(
     }
 
     let reportData: Record<string, unknown> = {};
+    let matchedReportType = false;
     const now = new Date();
     const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
 
-    switch (report.report_type) {
+    // Configs do dashboard usam tipos próprios; resolve para o tipo que esta
+    // Edge monta. Desconhecido → nada é enviado (falha fechada, 404).
+    const reportType = usingConfig
+      ? (CONFIG_TO_REPORT_TYPE[String(report.report_type ?? "")] ?? "")
+      : String(report.report_type ?? "");
+
+    switch (reportType) {
       case "dashboard_summary": {
+        matchedReportType = true;
         const { data: messages } = await supabase.from("messages").select("id, sender, created_at, is_read").gte("created_at", weekAgo.toISOString());
         const { data: contacts } = await supabase.from("contacts").select("id").gte("created_at", weekAgo.toISOString());
         reportData = {
@@ -182,6 +244,7 @@ export async function handleScheduledReport(
         break;
       }
       case "agent_performance": {
+        matchedReportType = true;
         const { data: agents } = await supabase.from("agent_stats").select("*, profiles(name, email)").order("xp", { ascending: false });
         reportData = {
           title: "Performance de Agentes",
@@ -196,6 +259,7 @@ export async function handleScheduledReport(
         break;
       }
       case "conversation_analytics": {
+        matchedReportType = true;
         const { data: analyses } = await supabase.from("conversation_analyses").select("*").gte("created_at", weekAgo.toISOString());
         reportData = {
           title: "Análise de Conversas",
@@ -207,6 +271,7 @@ export async function handleScheduledReport(
         break;
       }
       case "sla_compliance": {
+        matchedReportType = true;
         const { data: sla } = await supabase.from("conversation_sla").select("*").gte("created_at", weekAgo.toISOString());
         // Mesma regra de elegibilidade do SLA de 1ª resposta do painel
         // (src/hooks/sla/slaFirstResponse.ts): AVALIADA = conversa com desfecho
@@ -229,6 +294,13 @@ export async function handleScheduledReport(
       }
     }
 
+    // DASH-083: config com report_type desconhecido (ou legado sem match) →
+    // falha fechada; nunca monta e-mail vazio como "sucesso", nem avança ciclo.
+    if (!matchedReportType) {
+      log.error("Tipo de relatório não suportado", { refId: recordId, reportType });
+      return errorResponse("Unsupported report type", 404, req);
+    }
+
     const emailHtml = buildReportEmail(reportData);
 
     // R2-API-023 (P2): falha total não confirma o ciclo; parcial confirma o
@@ -245,7 +317,7 @@ export async function handleScheduledReport(
     // Limite por relatório: acima dele NADA é enviado (falha fechada).
     if (declaredRecipients.length > MAX_RECIPIENTS_PER_REPORT) {
       log.error("Relatório acima do limite de destinatários", {
-        reportId,
+        refId: recordId,
         total: declaredRecipients.length,
         limit: MAX_RECIPIENTS_PER_REPORT,
       });
@@ -266,7 +338,7 @@ export async function handleScheduledReport(
     const rejected = declaredRecipients.length - recipients.length;
     if (rejected > 0) {
       log.error("Destinatários recusados por domínio não confiável", {
-        reportId,
+        refId: recordId,
         rejected,
         total: declaredRecipients.length,
       });
@@ -293,7 +365,7 @@ export async function handleScheduledReport(
     const missingApiKey = recipients.length > 0 && !resendApiKey;
 
     if (missingApiKey) {
-      log.error("Resend not configured: report not sent", { reportId, recipients: recipients.length });
+      log.error("Resend not configured: report not sent", { refId: recordId, recipients: recipients.length });
     } else {
       for (const recipient of recipients) {
         const emailResponse = await fetch("https://api.resend.com/emails", {
@@ -334,11 +406,13 @@ export async function handleScheduledReport(
       }, httpStatus, req);
     }
 
-    const nextSendAt = calculateNextSend(report.frequency);
+    // DASH-083: custom é sob demanda (botão "Enviar agora") — nunca avança o
+    // `next_send_at`; o cron volta a elegê-lo por `next_send_at IS NULL`.
+    const nextSendAt = report.frequency === "custom" ? null : calculateNextSend(report.frequency);
     const { data: updatedRows, error: scheduleError } = await supabase
-      .from("scheduled_reports")
+      .from(lookupTable)
       .update({ last_sent_at: now.toISOString(), next_send_at: nextSendAt })
-      .eq("id", reportId)
+      .eq("id", recordId)
       .select("id");
 
     // R2-API-023: sem o UPDATE confirmado — erro OU zero linhas afetadas, que o
@@ -428,6 +502,7 @@ function calculateNextSend(frequency: string): string {
   switch (frequency) {
     case "daily": next.setDate(next.getDate() + 1); next.setHours(8, 0, 0, 0); break;
     case "weekly": next.setDate(next.getDate() + ((1 + 7 - next.getDay()) % 7 || 7)); next.setHours(8, 0, 0, 0); break;
+    case "biweekly": next.setDate(next.getDate() + 14); next.setHours(8, 0, 0, 0); break;
     case "monthly": next.setMonth(next.getMonth() + 1, 1); next.setHours(8, 0, 0, 0); break;
   }
   return next.toISOString();
