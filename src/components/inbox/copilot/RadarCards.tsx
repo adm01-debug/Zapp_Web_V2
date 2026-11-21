@@ -9,6 +9,8 @@ import { SALE_STAGE_META, isSaleStage } from '@/data/copilot/sale-stages';
 import type { RadarCardId } from '@/hooks/copilot/useRadarPanel';
 import type { CopilotSessionState } from '@/hooks/copilot/useCopilotSession';
 import type { LiveSuggestion } from '@/hooks/copilot/useLiveSuggestions';
+import { DecisionMakerBadge } from './DecisionMakerBadge';
+import { StakeholdersCard } from './StakeholdersCard';
 
 // ─── Card base ────────────────────────────────────────────────
 interface CardProps {
@@ -244,19 +246,18 @@ interface DecisionMakerCardProps {
 export function DecisionMakerCard({ decisionRole, stakeholders, collapsed, onToggle }: DecisionMakerCardProps) {
   return (
     <CardBase id="decision_maker" title="Quem decide" icon={<User className="h-3.5 w-3.5" />} collapsed={collapsed} onToggle={onToggle}>
-      {!decisionRole && (!stakeholders || stakeholders.length === 0) ? (
+      {(!decisionRole || decisionRole === 'unknown') && (!stakeholders || stakeholders.length === 0) ? (
         <p className="pt-1 text-[10px] text-muted-foreground italic">Não identificado ainda.</p>
       ) : (
-        <div className="pt-1 space-y-1">
+        <div className="pt-1 space-y-1.5">
           {decisionRole && (
-            <p className="text-[11px]">Papel: <span className="font-semibold">{decisionRole}</span></p>
+            <DecisionMakerBadge role={decisionRole} />
           )}
-          {stakeholders?.map((s: { name: string; role?: string }, i: number) => (
-            <div key={i} className="rounded bg-muted/40 px-2 py-1 text-[11px]">
-              <span className="font-medium">{s.name}</span>
-              {s.role && <span className="text-muted-foreground"> · {s.role}</span>}
-            </div>
-          ))}
+          {stakeholders && stakeholders.length > 0 && (
+            <StakeholdersCard
+              stakeholders={stakeholders.map((s) => ({ name: s.name, role: s.role }))}
+            />
+          )}
         </div>
       )}
     </CardBase>

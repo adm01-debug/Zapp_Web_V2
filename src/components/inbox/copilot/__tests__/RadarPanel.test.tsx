@@ -13,6 +13,7 @@ import { RadarPanel } from '../RadarPanel';
 import { renderHook } from '@testing-library/react';
 import { useRadarPanel } from '@/hooks/copilot/useRadarPanel';
 import type { RadarPanelProps } from '../RadarPanel';
+import type { CopilotSessionState } from '@/hooks/copilot/useCopilotSession';
 
 const baseProps: RadarPanelProps = {
   mode: 'normal',
@@ -215,5 +216,39 @@ describe('RadarPanel CV-055 — historico dentro do painel flutuante', () => {
   it('sem historico nao renderiza a secao', () => {
     render(<RadarPanel {...baseProps} historico={[]} />);
     expect(screen.queryByRole('region', { name: /Insights anteriores desta conversa/i })).toBeNull();
+  });
+});
+
+describe('Resgate CV orfaos no Radar (DecisionMakerBadge, StakeholdersCard, OccasionAlert)', () => {
+  const session: CopilotSessionState = {
+    id: 's1',
+    stage: 'qualificando',
+    temperature: 73,
+    brindeMeter: 0,
+    brinde_state: { B: 'ok', R: null, I: null, N: null, D: null, E: null },
+    brinde_evidence: { B: null, R: null, I: null, N: null, D: null, E: null },
+    state_version: 1,
+    decision_role: 'intermediary',
+    occasion: 'natal',
+    comm_style: null,
+    intent: null,
+    sentiment: null,
+    stakeholders: [{ name: 'Ana', role: 'RH' }],
+    last_tick_at: null,
+  };
+
+  it('mini-mode renderiza OccasionAlert com a ocasião da sessão', () => {
+    render(<RadarPanel {...baseProps} mode="mini" session={session} />);
+    // Dado do motor CV-035/036; exige calendário comercial com 'fim de ano'
+    // (getOccasionEvent). O componente só renderiza quando o evento existe.
+    expect(screen.getAllByText(/Natal/i).length).toBeGreaterThan(0);
+  });
+
+  it('DecisionMakerCard mostra badge do papel e stakeholders', () => {
+    render(<RadarPanel {...baseProps} session={session} />);
+    // X: decision_maker esta no cardOrder default; badge renderiza label (ex.: Intermediário)
+    // e StakeholdersCard o nome 'Ana'.
+    expect(screen.queryByText(/Intermediário/i)).toBeTruthy();
+    expect(screen.queryByText('Ana')).toBeTruthy();
   });
 });
