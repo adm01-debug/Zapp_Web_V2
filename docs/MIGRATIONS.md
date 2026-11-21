@@ -527,6 +527,16 @@ o lote uma vez por dia, na seguinte ordem:
 > `supabase/migrations/` e a version correspondente ainda não está no ledger do banco. Se a
 > version já está no ledger mas o objeto diverge, é drift real.
 
+### Aplicada no lote de 21/11/2026 — `20261120080000_scheduled_report_cron`
+
+A `20261120080000_scheduled_report_cron.sql` (DASH-083) entrou na main em `01737c9ec`
+(20/11/2026) e **está no ledger do banco de produção** desde antes do guard das 14:54Z do dia
+21/11. Os três runs `db-live-guard.yml` de 21/11 (14:54, 15:11 e 15:45Z) classificaram o lote
+como **"sem pendencias ou drift"** no passo "Comparar migrations" — o que só ocorre quando a
+version existe em `supabase_migrations.schema_migrations`.
+
+Evidência detalhada (deploy, dry-run oficial e estado do cron): `docs/evidencias/plano-volume-50/e49-dash083-relatorios-agendados.md`.
+
 ---
 
 ## 7. Auditoria de arquivos que nao aplicam (replay local, 03/10/2026)
