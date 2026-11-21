@@ -13630,7 +13630,7 @@
    "modulo": "integrations/supabase",
    "arquivos": 3,
    "testes": 1,
-   "linhas": 15941,
+   "linhas": 15943,
    "itens_menu": [],
    "telas": [],
    "rotas_http": [],

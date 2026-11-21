@@ -1,15 +1,15 @@
 {
  "meta": {
-  "sha": "ee85340ba37786bb7e511b8bef0a815edf4fd838",
+  "sha": "b3de24d38a9064dbc4e50b566e3281953246f645",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-21 14:13 UTC",
+  "generated_at": "2026-11-21 15:11 UTC",
   "files_total": 15571,
   "code_files": 8876,
-  "code_lines": 1408011
+  "code_lines": 1408013
  },
  "version": "1.3.2",
- "facts_hash": "479d8f9df81dfcd2",
+ "facts_hash": "b1ade5a9962f2697",
  "stack": {
   "frameworks": [
    "React + Vite",
@@ -77847,7 +77847,7 @@
   {
    "module": "src/integrations",
    "files": 4,
-   "lines": 15953,
+   "lines": 15955,
    "tables": [],
    "exports": [
     "client.ts: SUPABASE_ANON_KEY, GOOGLE_OAUTH_ENABLED, supabase, SupabaseClient",
@@ -435896,7 +435896,7 @@
   },
   "src/integrations/supabase/types.ts": {
    "path": "src/integrations/supabase/types.ts",
-   "lines": 15880,
+   "lines": 15882,
    "exports": [
     "type Json",
     "type Database",
@@ -479255,10 +479255,32 @@
   }
  },
  "git": {
-  "sha": "ee85340ba37786bb7e511b8bef0a815edf4fd838",
+  "sha": "b3de24d38a9064dbc4e50b566e3281953246f645",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "b3de24d3",
+    "date": "2026-11-21",
+    "author": "github-actions[bot]",
+    "subject": "chore(db): sincronizar artefatos derivados do banco (#3299)",
+    "files": [
+     "docs/DB-INVENTORY.md",
+     "scripts/db-audit/grants-baseline.json",
+     "src/integrations/supabase/types.ts",
+     "supabase/schema-catalog.json",
+     "supabase/schema-manifest.json"
+    ]
+   },
+   {
+    "sha": "219555ea",
+    "date": "2026-11-21",
+    "author": "adm01-debug",
+    "subject": "fix(db-audit): reconcilia drift da 20261111181000 e remove excecoes obsoletas (#3297)",
+    "files": [
+     "scripts/db-audit/migration-evidence.json"
+    ]
+   },
    {
     "sha": "ee85340b",
     "date": "2026-11-21",
@@ -482595,50 +482617,35 @@
      "supabase/schema-catalog.json",
      "supabase/schema-manifest.json"
     ]
-   },
-   {
-    "sha": "35d70197",
-    "date": "2026-11-18",
-    "author": "adm01-debug",
-    "subject": "O types-sync passa a commitar o DB-INVENTORY que ele regenera (#3267)",
-    "files": [
-     ".github/workflows/types-sync.yml"
-    ]
-   },
-   {
-    "sha": "4366aa60",
-    "date": "2026-11-18",
-    "author": "adm01-debug",
-    "subject": "DB-INVENTORY ganha gerador, e o types-sync para de congelar a cada objeto novo (#3266)",
-    "files": [
-     ".github/workflows/ci.yml",
-     ".github/workflows/types-sync.yml",
-     "TESTING_CONVENTION.md",
-     "scripts/db/README.md",
-     "scripts/db/gen-db-inventory.mjs",
-     "scripts/db/gen-db-inventory.unit.mjs"
-    ]
    }
   ],
   "hot_files": [
+   [
+    "src/integrations/supabase/types.ts",
+    4
+   ],
+   [
+    "supabase/schema-catalog.json",
+    4
+   ],
+   [
+    "supabase/schema-manifest.json",
+    4
+   ],
+   [
+    "docs/DB-INVENTORY.md",
+    3
+   ],
+   [
+    "scripts/db-audit/grants-baseline.json",
+    3
+   ],
    [
     "supabase/deployment-manifest.json",
     3
    ],
    [
     "docs/agentes/github-ci.md",
-    3
-   ],
-   [
-    "src/integrations/supabase/types.ts",
-    3
-   ],
-   [
-    "supabase/schema-catalog.json",
-    3
-   ],
-   [
-    "supabase/schema-manifest.json",
     3
    ],
    [
@@ -482666,14 +482673,6 @@
     2
    ],
    [
-    "docs/DB-INVENTORY.md",
-    2
-   ],
-   [
-    "scripts/db-audit/grants-baseline.json",
-    2
-   ],
-   [
     "docs/talkx/ESTADOS.md",
     2
    ],
@@ -482690,8 +482689,8 @@
     2
    ],
    [
-    ".github/workflows/types-sync.yml",
-    2
+    "scripts/db-audit/migration-evidence.json",
+    1
    ],
    [
     ".gitattributes",

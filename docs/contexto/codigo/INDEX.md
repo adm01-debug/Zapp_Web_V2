@@ -1,7 +1,7 @@
 # Contexto do projeto para agentes de IA
 
 GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.
-Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR dela) a cada push em `main` e a cada 10 minutos pelo workflow `contexto.yml`; índice único das três fontes em `docs/contexto/00-INDEX.md`. Gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `ee85340ba37786bb7e511b8bef0a815edf4fd838` (2026-11-21T10:59:36-03:00).
+Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR dela) a cada push em `main` e a cada 10 minutos pelo workflow `contexto.yml`; índice único das três fontes em `docs/contexto/00-INDEX.md`. Gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `b3de24d38a9064dbc4e50b566e3281953246f645` (2026-11-21T15:05:04Z).
 
 ## Como usar (leia antes de planejar ou executar qualquer tarefa)
 1. **Tela/rota/menu** → `rotas.json` (url/vista/menu → arquivo → hooks → tabelas → edges; `rotas_http_backend` para APIs) e `modulos.json` (módulo inteiro + dependências entre módulos).
@@ -36,7 +36,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 |---|---|
 | arquivos_total | 15715 |
 | arquivos_codigo | 5840 |
-| linhas_codigo | 1130600 |
+| linhas_codigo | 1130602 |
 | rotas | 18 |
 | rotas_http_backend | 11 |
 | vistas_por_id | 55 |
@@ -395,7 +395,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - possiveis_segredos_no_codigo: 6 — ex.: analise-prs/resgate-261118-lote3/claude_pink/cool-dijkstra-xk9ek2/scripts/ci/edge-coverage-authz.unit.mjs:397, analise-prs/resgate-261118-lote3/claude_pink/cool-dijkstra-xk9ek2/scripts/edge-deploy/redigir-log.unit.mjs:38, scripts/ai-context/cenarios.mjs:102
 
 ## Grafo de código (graphify)
-- 102832 nós · 174420 arestas · 9228 comunidades · grafo do commit `ee85340b`
+- 102832 nós · 174420 arestas · 9228 comunidades · grafo do commit `b3de24d3`
 - comunidades maiores: Communities (5953 total, 1987 thin omitted) (3946), react (1728), lucide-react (1247), vitest (1032), ref_node_fs (1022), cn (734), DashboardView.tsx (698), useMyWorkItems.ts (541), validation.ts (537), date-fns (468), ref_https (468), Conversation (462)
 - símbolos mais chamados: cn() (src/lib/utils.ts), useAuth() (src/hooks/auth/useAuth.tsx), jsonResponse() (supabase/functions/_shared/validation.ts), errorResponse() (supabase/functions/_shared/validation.ts), handleCors() (supabase/functions/_shared/validation.ts), fail() (scripts/e2e-isolated/network-proof-policy.mjs), Logger (supabase/functions/_shared/validation.ts), requireEnv() (supabase/functions/_shared/validation.ts), fmtInt() (src/components/talkx/kit/format.ts), fromTable() (src/lib/supabaseHelpers.ts), useUserRole() (src/hooks/system/useUserRole.ts), validationErrorResponse() (supabase/functions/_shared/schemas.ts)
 - consulta local: `graphify query "<pergunta>"`, `graphify path "<A>" "<B>"`, `graphify explain "<X>"`
@@ -404,14 +404,14 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - supabase/deployment-manifest.json (31)
 - ESTADO.md (17)
 - docs/talkx/ESTADOS.md (15)
+- scripts/db-audit/grants-baseline.json (12)
+- src/integrations/supabase/types.ts (12)
 - PENDENCIAS.md (11)
-- scripts/db-audit/grants-baseline.json (11)
-- src/integrations/supabase/types.ts (11)
+- supabase/schema-manifest.json (11)
 - .github/workflows/db-guard.yml (10)
-- supabase/schema-manifest.json (10)
+- docs/DB-INVENTORY.md (10)
+- supabase/schema-catalog.json (10)
 - .github/workflows/ci.yml (9)
-- docs/DB-INVENTORY.md (9)
-- supabase/schema-catalog.json (9)
 - docs/agentes/github-ci.md (8)
 - supabase/functions/evolution-api/index.ts (8)
 - docs/ci/README.md (7)
@@ -523,6 +523,8 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - CHANGELOG topo: [Unreleased]
 
 ## Últimos commits
+- 2026-11-21 `b3de24d3` chore(db): sincronizar artefatos derivados do banco (#3299)
+- 2026-11-21 `219555ea` fix(db-audit): reconcilia drift da 20261111181000 e remove excecoes obsoletas (#3297)
 - 2026-11-21 `ee85340b` fix(docs): forca eol=lf nos inventarios e docs (falso-negativo local nos testes de convencao) (#3298)
 - 2026-11-21 `f4a2a776` fix(crm-integration): restaura CRON_SECRET apos testes que o setam (#3296)
 - 2026-11-21 `01737c9e` feat: unifica relatorios agendados do dashboard na edge por configId com cron
@@ -536,8 +538,6 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - 2026-11-19 `0d1ebd5b` docs: publicar snapshots SQL documentais do contexto X065 (#3284)
 - 2026-11-19 `49640b0a` fix(team-chat): erro ao ler config de WhatsApp deixa de virar formulario "Nenhum" (#3283)
 - 2026-11-19 `a38fc63d` fix(team-chat): falha ao ler convites deixa de se disfarcar de "nenhum convite" (#3282)
-- 2026-11-19 `a5fd198a` fix(seguranca): URL do CRM externo deixa de virar href/src sem guard (#3281)
-- 2026-11-19 `56442637` chore(e2e): nao carregar o axe do app sob E2E, e guard com dente (#3279)
 
 ## Arquivos deste diretório
 - `docs/contexto/codigo/rotas.json`

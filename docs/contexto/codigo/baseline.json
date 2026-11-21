@@ -2,11 +2,21 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "ee85340ba37786bb7e511b8bef0a815edf4fd838",
+  "commit": "b3de24d38a9064dbc4e50b566e3281953246f645",
   "branch": "main",
-  "data_commit": "2026-11-21T10:59:36-03:00",
+  "data_commit": "2026-11-21T15:05:04Z",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "b3de24d3",
+    "data": "2026-11-21",
+    "assunto": "chore(db): sincronizar artefatos derivados do banco (#3299)"
+   },
+   {
+    "sha": "219555ea",
+    "data": "2026-11-21",
+    "assunto": "fix(db-audit): reconcilia drift da 20261111181000 e remove excecoes obsoletas (#3297)"
+   },
    {
     "sha": "ee85340b",
     "data": "2026-11-21",
@@ -121,19 +131,9 @@
     "sha": "9d4cff9d",
     "data": "2026-11-18",
     "assunto": "fix(talkx): variante do A/B deixa de ser re-sorteada no envio (#3271)"
-   },
-   {
-    "sha": "15e25fff",
-    "data": "2026-11-18",
-    "assunto": "test(e2e): regerar a baseline de Contatos tabela/dark no ambiente do CI (#3273)"
-   },
-   {
-    "sha": "b6351534",
-    "data": "2026-11-18",
-    "assunto": "docs: publicar conhecimento completo em docs/contexto na main (#3270)"
    }
   ],
-  "arquivos_mudados_7d": 7450,
+  "arquivos_mudados_7d": 7444,
   "pastas_mais_mudadas_30d": [
    {
     "pasta": "docs/contexto/supabase",
@@ -210,15 +210,19 @@
     "mudancas": 15
    },
    {
+    "arquivo": "scripts/db-audit/grants-baseline.json",
+    "mudancas": 12
+   },
+   {
+    "arquivo": "src/integrations/supabase/types.ts",
+    "mudancas": 12
+   },
+   {
     "arquivo": "PENDENCIAS.md",
     "mudancas": 11
    },
    {
-    "arquivo": "scripts/db-audit/grants-baseline.json",
-    "mudancas": 11
-   },
-   {
-    "arquivo": "src/integrations/supabase/types.ts",
+    "arquivo": "supabase/schema-manifest.json",
     "mudancas": 11
    },
    {
@@ -226,19 +230,15 @@
     "mudancas": 10
    },
    {
-    "arquivo": "supabase/schema-manifest.json",
+    "arquivo": "docs/DB-INVENTORY.md",
+    "mudancas": 10
+   },
+   {
+    "arquivo": "supabase/schema-catalog.json",
     "mudancas": 10
    },
    {
     "arquivo": ".github/workflows/ci.yml",
-    "mudancas": 9
-   },
-   {
-    "arquivo": "docs/DB-INVENTORY.md",
-    "mudancas": 9
-   },
-   {
-    "arquivo": "supabase/schema-catalog.json",
     "mudancas": 9
    },
    {
@@ -301,11 +301,11 @@
   "autores_30d": [
    {
     "autor": "adm01-debug",
-    "commits": 294
+    "commits": 293
    },
    {
     "autor": "github-actions[bot]",
-    "commits": 5
+    "commits": 6
    },
    {
     "autor": "dependabot[bot]",
@@ -316,7 +316,7 @@
  "contagens": {
   "arquivos_total": 15715,
   "arquivos_codigo": 5840,
-  "linhas_codigo": 1130600,
+  "linhas_codigo": 1130602,
   "rotas": 18,
   "rotas_http_backend": 11,
   "vistas_por_id": 55,
@@ -756,7 +756,7 @@
   },
   "src/integrations": {
    "arquivos": 4,
-   "linhas": 15953
+   "linhas": 15955
   },
   "src/lib": {
    "arquivos": 295,
@@ -830,7 +830,7 @@
  "maiores_arquivos": [
   {
    "arquivo": "src/integrations/supabase/types.ts",
-   "linhas": 15880
+   "linhas": 15882
   },
   {
    "arquivo": "scripts/regras_negocio/generate.py",
