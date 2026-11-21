@@ -20,6 +20,7 @@ import {
   Star, Search, Radar, GraduationCap, FileText, Info, Loader2,
 } from 'lucide-react';
 import { ConversationReopenDialog } from '../conversation-list/ConversationReopenDialog';
+import { SpeedSelector } from '../SpeedSelector';
 import { VisionIcon } from '../ai-tools/VisionIcon';
 import { openChatPopup } from '@/lib/popupManager';
 import { PinnedConversationsStack, PinnedChatItem } from './PinnedConversationsStack';
@@ -72,6 +73,7 @@ function ChatPanelHeaderBase({
   conversation, isContactTyping, showAIAssistant, showDetails, showSummaryPanel,
   onToggleAIAssistant, onToggleDetails, onOpenSearch, onOpenTransfer, onOpenSchedule,
   onBack, onGenerateSummary, isSummaryLoading, onCloseConversation, onArchive, onReopenConversation, activeTool, onSetActiveTool,
+  speed, onSpeedChange,
   isFavorite, onToggleFavorite, pinnedConversations, onSelectPinned,
 }: ChatPanelHeaderProps) {
   const [reopenOpen, setReopenOpen] = useState(false);
@@ -201,6 +203,7 @@ function ChatPanelHeaderBase({
       </div>
 
       <div className={cn('flex items-center gap-2', showPinnedStack && 'lg:flex-1 lg:justify-center lg:px-4')}>
+        <SpeedSelector speed={speed} onSpeedChange={onSpeedChange} className="hidden md:inline-flex" />
         <DropdownMenu>
           <Tooltip><TooltipTrigger asChild>
             <DropdownMenuTrigger asChild>

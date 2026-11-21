@@ -19,6 +19,7 @@ import {
   ProductsCard,
   DecisionMakerCard,
 } from './RadarCards';
+import { OccasionAlert } from './OccasionAlert';
 
 // ─── Props ────────────────────────────────────────────────
 export interface RadarPanelProps {
@@ -391,6 +392,9 @@ export function RadarPanel({
                     ))}
                   </div>
                 </div>
+              )}
+              {session?.occasion && (
+                <OccasionAlert occasion={session.occasion} className="mt-1" />
               )}
             </div>
           )}

@@ -6,7 +6,7 @@ import { Users } from 'lucide-react';
 
 interface Stakeholder {
   name: string;
-  role: string;
+  role?: string;
   first_mention_msg_id?: string;
 }
 
