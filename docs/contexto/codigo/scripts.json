@@ -4171,7 +4171,7 @@
   {
    "arquivo": "scripts/e2e-isolated/pull-image.mjs",
    "descricao": "* Retry only the registry failure observed in the native Docker pull. */",
-   "linhas": 82,
+   "linhas": 84,
    "env": [],
    "npm_scripts": [],
    "workflows": [],

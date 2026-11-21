@@ -66,11 +66,11 @@
  "commits": {
   "convencao": "conventional commits (observado)",
   "exemplos": [
+   "fix(e2e): reconhece rate limit nao autenticado do Docker Hub no retry de pull (#3302)",
    "fix(e2e): inclui migration do cron de relatórios agendados no guard vault (#3301)",
    "fix(db-audit): contrato de ACL do webhook_failures aceita SELECT do zapp_agente_leitura (#3300)",
    "chore(db): sincronizar artefatos derivados do banco (#3299)",
-   "fix(db-audit): reconcilia drift da 20261111181000 e remove excecoes obsoletas (#3297)",
-   "fix(docs): forca eol=lf nos inventarios e docs (falso-negativo local nos testes de convencao) (#3298)"
+   "fix(db-audit): reconcilia drift da 20261111181000 e remove excecoes obsoletas (#3297)"
   ]
  },
  "pr_template": ".github/PULL_REQUEST_TEMPLATE.md",

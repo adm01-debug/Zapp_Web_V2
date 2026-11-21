@@ -1,15 +1,15 @@
 {
  "meta": {
-  "sha": "79c7a8bd80039337469067b7696c7ac50e78d52b",
+  "sha": "9f3e9175f6e79dbfc505008f412d99bfdf2379c8",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-21 17:11 UTC",
+  "generated_at": "2026-11-21 18:16 UTC",
   "files_total": 15571,
   "code_files": 8876,
-  "code_lines": 1408038
+  "code_lines": 1408059
  },
  "version": "1.3.2",
- "facts_hash": "1eb6e1da79b2e4b4",
+ "facts_hash": "796274f44e946442",
  "stack": {
   "frameworks": [
    "React + Vite",
@@ -76874,7 +76874,7 @@
   {
    "module": "scripts",
    "files": 500,
-   "lines": 102039,
+   "lines": 102060,
    "tables": [
     "a",
     "alem_do_limite",
@@ -351647,7 +351647,14 @@
   },
   "scripts/ci/e2e-isolated-pull-image.unit.mjs": {
    "path": "scripts/ci/e2e-isolated-pull-image.unit.mjs",
-   "lines": 288,
+   "lines": 307,
+   "rule_comments": [
+    "www.docker.com/increase-rate-limit\\n' };",
+    "www.docker.com/increase-rate-limit' }, true],",
+    "www.docker.com/increase-rate-limit' }, false],",
+    "only the Docker Hub rate-limit terminal differs and must still classify as retry.",
+    "www.docker.com/increase-rate-limit';"
+   ],
    "temporal": [
     "test('a real signal pending during spawnSync is handled before retrying', { timeout: 5000 }, async () => {",
     "test('the real retry timer aborts promptly without a second Docker command', { timeout: 5000 }, async () => {"
@@ -357060,7 +357067,7 @@
   },
   "scripts/e2e-isolated/pull-image.mjs": {
    "path": "scripts/e2e-isolated/pull-image.mjs",
-   "lines": 82,
+   "lines": 84,
    "exports": [
     "const PULL_BUDGET_MS",
     "function isPullRateLimited",
@@ -357092,6 +357099,9 @@
      "name": "TERMINAL",
      "value": "'toomanyrequests: Rate exceeded'"
     }
+   ],
+   "rule_comments": [
+    "www.docker.com/increase-rate-limit';"
    ]
   },
   "scripts/e2e-isolated/qr-contract.mjs": {
@@ -479259,10 +479269,20 @@
   }
  },
  "git": {
-  "sha": "79c7a8bd80039337469067b7696c7ac50e78d52b",
+  "sha": "9f3e9175f6e79dbfc505008f412d99bfdf2379c8",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "9f3e9175",
+    "date": "2026-11-21",
+    "author": "adm01-debug",
+    "subject": "fix(e2e): reconhece rate limit nao autenticado do Docker Hub no retry de pull (#3302)",
+    "files": [
+     "scripts/ci/e2e-isolated-pull-image.unit.mjs",
+     "scripts/e2e-isolated/pull-image.mjs"
+    ]
+   },
    {
     "sha": "79c7a8bd",
     "date": "2026-11-21",
@@ -482607,18 +482627,6 @@
      "docs/contexto/supabase/views.md",
      "docs/contexto/supabase/webhooks.md"
     ]
-   },
-   {
-    "sha": "8747e4be",
-    "date": "2026-11-18",
-    "author": "adm01-debug",
-    "subject": "ci(e2e): workflow para regerar baselines visuais no ambiente do CI (#3268)",
-    "files": [
-     ".github/workflows/e2e-baselines.yml",
-     "docs/agentes/github-ci.md",
-     "docs/ci/README.md",
-     "scripts/ci/ci-docs-baseline.unit.mjs"
-    ]
    }
   ],
   "hot_files": [
@@ -482639,10 +482647,6 @@
     3
    ],
    [
-    "docs/agentes/github-ci.md",
-    3
-   ],
-   [
     "src/hooks/integrations/useTalkXAbStats.ts",
     3
    ],
@@ -482659,11 +482663,7 @@
     2
    ],
    [
-    "docs/ci/README.md",
-    2
-   ],
-   [
-    "scripts/ci/ci-docs-baseline.unit.mjs",
+    "docs/agentes/github-ci.md",
     2
    ],
    [
@@ -482689,6 +482689,14 @@
    [
     "src/components/talkx/tracking/TalkXAbTestResults.tsx",
     2
+   ],
+   [
+    "scripts/ci/e2e-isolated-pull-image.unit.mjs",
+    1
+   ],
+   [
+    "scripts/e2e-isolated/pull-image.mjs",
+    1
    ],
    [
     "scripts/ci/e2e-isolated-migrations.unit.mjs",

@@ -2225,6 +2225,10 @@
     "arquivos": 2
    },
    {
+    "host": "www.docker.com",
+    "arquivos": 2
+   },
+   {
     "host": "www.googleapis.com",
     "arquivos": 2
    },

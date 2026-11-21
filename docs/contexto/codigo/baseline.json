@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "79c7a8bd80039337469067b7696c7ac50e78d52b",
+  "commit": "9f3e9175f6e79dbfc505008f412d99bfdf2379c8",
   "branch": "main",
-  "data_commit": "2026-11-21T13:43:11-03:00",
+  "data_commit": "2026-11-21T15:07:01-03:00",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "9f3e9175",
+    "data": "2026-11-21",
+    "assunto": "fix(e2e): reconhece rate limit nao autenticado do Docker Hub no retry de pull (#3302)"
+   },
    {
     "sha": "79c7a8bd",
     "data": "2026-11-21",
@@ -126,14 +131,9 @@
     "sha": "38c2ae41",
     "data": "2026-11-18",
     "assunto": "feat(talkx): teste A/B deixa de ser inalcançável pela interface (#3272)"
-   },
-   {
-    "sha": "231b0e58",
-    "data": "2026-11-18",
-    "assunto": "feat(talkx): decidir a vencedora do A/B pela tela de execução (#3274)"
    }
   ],
-  "arquivos_mudados_7d": 7447,
+  "arquivos_mudados_7d": 7448,
   "pastas_mais_mudadas_30d": [
    {
     "pasta": "docs/contexto/supabase",
@@ -199,7 +199,7 @@
   "arquivos_mais_mudados_90d": [
    {
     "arquivo": "supabase/deployment-manifest.json",
-    "mudancas": 31
+    "mudancas": 30
    },
    {
     "arquivo": "ESTADO.md",
@@ -316,7 +316,7 @@
  "contagens": {
   "arquivos_total": 15715,
   "arquivos_codigo": 5840,
-  "linhas_codigo": 1130619,
+  "linhas_codigo": 1130640,
   "rotas": 18,
   "rotas_http_backend": 11,
   "vistas_por_id": 55,
@@ -628,7 +628,7 @@
   },
   "scripts/ci": {
    "arquivos": 231,
-   "linhas": 50340
+   "linhas": 50359
   },
   "scripts/db": {
    "arquivos": 2,
@@ -648,7 +648,7 @@
   },
   "scripts/e2e-isolated": {
    "arquivos": 40,
-   "linhas": 6444
+   "linhas": 6446
   },
   "scripts/edge-deploy": {
    "arquivos": 32,
