@@ -8,7 +8,8 @@ import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
 import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { assertBlocking, conditionOf, jobOf, onlyStep, permission, shellCode, stepsOf } from './workflow-test-support.mjs';
 import {
   executar,
@@ -159,7 +160,7 @@ test('arquivo de protegidas ausente (API falhou): nenhum comando gerado', () => 
   assert.doesNotMatch(r.saida, /git push origin --delete/);
 });
 
-const SCRIPT = new URL('./branch-podaveis.mjs', import.meta.url).pathname;
+const SCRIPT = join(dirname(fileURLToPath(import.meta.url)), 'branch-podaveis.mjs');
 
 test('CLI: sempre exit 0; aviso ::warning:: quando não gera comando', () => {
   const r = spawnSync(process.execPath, [SCRIPT, '--equivalentes', '/nao/existe'], { encoding: 'utf8' });
