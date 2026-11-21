@@ -422,15 +422,16 @@ Deno.test('service credential cannot drive the sidebar contact lookup', async ()
 });
 
 Deno.test('cron credential is scoped to worker and health actions', async () => {
-  Deno.env.set('SUPABASE_SERVICE_ROLE_KEY', 'test-service-key');
-  Deno.env.set('SUPABASE_URL', 'https://tnnnlkbymytvtqngbbqh.supabase.co');
-  Deno.env.set('CRON_SECRET', 'test-cron-secret');
-  const response = await handleCRMIntegrationRequest(new Request('https://edge.invalid', {
-    method: 'POST',
-    headers: { 'content-type': 'application/json', 'x-cron-secret': 'test-cron-secret' },
-    body: JSON.stringify({ action: 'rpc', rpc: 'get_contact_360_by_phone', params: { p_phone: '5511999990000' } }),
-  }));
-  assertStatus(response.status, 403);
+  await withCronSecretEnv('test-cron-secret', async () => {
+    Deno.env.set('SUPABASE_SERVICE_ROLE_KEY', 'test-service-key');
+    Deno.env.set('SUPABASE_URL', 'https://tnnnlkbymytvtqngbbqh.supabase.co');
+    const response = await handleCRMIntegrationRequest(new Request('https://edge.invalid', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', 'x-cron-secret': 'test-cron-secret' },
+      body: JSON.stringify({ action: 'rpc', rpc: 'get_contact_360_by_phone', params: { p_phone: '5511999990000' } }),
+    }));
+    assertStatus(response.status, 403);
+  });
 });
 
 Deno.test('service credential cannot drive the scoped Email company context', async () => {
@@ -533,6 +534,19 @@ async function withLinkEnv(fn: () => Promise<void>) {
       else Deno.env.set(key, value);
     }
     if (cronSecret !== undefined) Deno.env.set('CRON_SECRET', cronSecret);
+  }
+}
+
+/** Garante que CRON_SECRET fica com o valor dado durante o teste e restaura o anterior (isola testes que setam o env sem restaurar). */
+async function withCronSecretEnv<T>(value: string | null, fn: () => Promise<T>): Promise<T> {
+  const previous = Deno.env.get('CRON_SECRET');
+  if (value === null) Deno.env.delete('CRON_SECRET');
+  else Deno.env.set('CRON_SECRET', value);
+  try {
+    return await fn();
+  } finally {
+    if (previous === undefined) Deno.env.delete('CRON_SECRET');
+    else Deno.env.set('CRON_SECRET', previous);
   }
 }
 
@@ -775,15 +789,16 @@ Deno.test('sugestões de cargo: lê contacts.cargo (não salespeople.role) e dev
 });
 
 Deno.test('sugestões de cargo: credencial de cron não pode ler as sugestões', async () => {
-  Deno.env.set('SUPABASE_SERVICE_ROLE_KEY', 'test-service-key');
-  Deno.env.set('SUPABASE_URL', 'https://sb-testref.supabase.co');
-  Deno.env.set('CRON_SECRET', 'test-cron-secret');
-  const response = await handleCRMIntegrationRequest(new Request('https://edge.invalid', {
-    method: 'POST',
-    headers: { 'content-type': 'application/json', 'x-cron-secret': 'test-cron-secret' },
-    body: JSON.stringify({ action: 'roleNames' }),
-  }));
-  assertStatus(response.status, 403);
+  await withCronSecretEnv('test-cron-secret', async () => {
+    Deno.env.set('SUPABASE_SERVICE_ROLE_KEY', 'test-service-key');
+    Deno.env.set('SUPABASE_URL', 'https://sb-testref.supabase.co');
+    const response = await handleCRMIntegrationRequest(new Request('https://edge.invalid', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', 'x-cron-secret': 'test-cron-secret' },
+      body: JSON.stringify({ action: 'roleNames' }),
+    }));
+    assertStatus(response.status, 403);
+  });
 });
 
 Deno.test('sugestões: credencial de serviço não pode ler as sugestões', async () => {
