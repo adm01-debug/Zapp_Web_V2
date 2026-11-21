@@ -21,11 +21,11 @@ partir do código e falha quando:
 
 | Grupo | Edges |
 |---|---|
-| A | 54 |
+| A | 62 |
 | B | 1 |
 | C | 4 |
 | D | 6 |
-| E | 27 |
+| E | 19 |
 | **total** | **92** |
 
 ## Tabela
@@ -37,16 +37,16 @@ partir do código e falha quando:
 | `ai-classify-tickets` | A | `src/components/ai/AutoTicketClassifier.tsx:146` |
 | `ai-conversation-analysis` | A | `src/components/inbox/AIConversationAssistant.tsx:107` |
 | `ai-conversation-summary` | A | `src/components/inbox/ConversationSummary.tsx:91` |
-| `ai-deadline-calculator` | E | — sem chamador no repositório — |
+| `ai-deadline-calculator` | A | `src/hooks/copilot/useDeadlineCalculator.ts:86` |
 | `ai-enhance-message` | A | `src/components/inbox/chat/AIEnhanceButton.tsx:62` · `src/components/inbox/chat/AIRewriteButton.tsx:50` |
 | `ai-jobs-worker` | C | `supabase/migrations/20261002371230_ia045_ia046_ai_jobs_durabilidade_e_estados.sql:533` |
 | `ai-kb-ingest` | A | `src/hooks/integrations/useKnowledgeBase.ts:137` · `src/hooks/integrations/useKnowledgeBase.ts:208` |
-| `ai-lead-temperature` | E | — sem chamador no repositório — |
-| `ai-loss-risk` | E | — sem chamador no repositório — |
-| `ai-multimodal-analysis` | E | — sem chamador no repositório — |
-| `ai-objection-handler` | E | — sem chamador no repositório — |
-| `ai-price-anchor` | E | — sem chamador no repositório — |
-| `ai-product-recommendation` | E | — sem chamador no repositório — |
+| `ai-lead-temperature` | A | `src/hooks/copilot/useLeadThermometer.ts:65` |
+| `ai-loss-risk` | A | `src/hooks/copilot/useLossRiskDetector.ts:98` |
+| `ai-multimodal-analysis` | A | `src/hooks/copilot/useImageAnalysis.ts:47` |
+| `ai-objection-handler` | A | `src/hooks/copilot/useObjectionHandler.ts:126` |
+| `ai-price-anchor` | A | `src/hooks/copilot/usePriceAnchoring.ts:60` |
+| `ai-product-recommendation` | A | `src/hooks/copilot/useProductRecommendation.ts:57` |
 | `ai-proxy` | A | `src/components/admin/SupervisorCopilot.tsx:89` · `src/components/settings/ai-providers/useAIProviders.ts:121` · `src/hooks/inbox/useObjectionDetector.ts:90` · `src/hooks/inbox/useObjectionDetector.ts:164` · `src/hooks/ui/useUniversityHelp.ts:130` · `supabase/functions/talkx-ai/index.ts:589` |
 | `ai-suggest-reply` | A | `src/components/inbox/AISuggestions.tsx:104` |
 | `ai-transcribe-audio` | A | `src/components/inbox/AudioMessagePlayer.tsx:71` · `supabase/functions/_shared/evolution-webhook-messages.ts:1457` |
@@ -91,7 +91,7 @@ partir do código e falha quando:
 | `gmail-send` | E | — sem chamador no repositório — |
 | `gmail-sync` | E | — sem chamador no repositório — |
 | `gmail-webhook` | A | `src/components/admin/GmailWebhookMonitor.tsx:230` · `supabase/config.toml:14` |
-| `health` | E | — sem chamador no repositório — |
+| `health` | A | `src/components/admin/AdminCRMDashboard.tsx:48` |
 | `invite-user` | A | `src/components/agents/InviteAgentDialog.tsx:48` · `supabase/config.toml:96` |
 | `message-delivery` | A | `src/lib/invokeEdge.ts:24` · `src/services/outbound-message.service.ts:479` · `supabase/config.toml:49` |
 | `metrics` | E | — sem chamador no repositório — |
@@ -125,7 +125,7 @@ partir do código e falha quando:
 | `webhook-diagnostic` | A | `src/components/monitoring/hooks/useMonitoringActions.ts:79` |
 | `whatsapp-webhook` | D | `supabase/config.toml:11` |
 
-## Órfós (27) — GATE B
+## Órfós (19) — GATE B
 
 Edge que existe em `supabase/functions/`, mas nenhum ponto do repositório a dispara: não há
 `invoke`/`/functions/v1` em `src/`, nem chamada de outra edge, nem agendador ext de
@@ -135,13 +135,6 @@ As auditorias de migração de 2026-08 já apontavam parte destes nomes; a guard
 mantém a lista honesta.
 
 - `ai-auto-tag`
-- `ai-deadline-calculator`
-- `ai-lead-temperature`
-- `ai-loss-risk`
-- `ai-multimodal-analysis`
-- `ai-objection-handler`
-- `ai-price-anchor`
-- `ai-product-recommendation`
 - `auto-close-conversations`
 - `cleanup-rate-limit-logs`
 - `copilot-live`
@@ -149,7 +142,6 @@ mantém a lista honesta.
 - `external-db-bridge`
 - `gmail-send`
 - `gmail-sync`
-- `health`
 - `metrics`
 - `multiplix-voices`
 - `recover-corrupted-audios`
