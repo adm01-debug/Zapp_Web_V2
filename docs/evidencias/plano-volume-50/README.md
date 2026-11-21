@@ -12,6 +12,7 @@ caminhos.
 | `mut-plano-volume.py` | script do sweep de mutação usado no plano |
 | `mutacao-9-de-9.txt` | resultado do sweep de mutação (9 de 9 mutações mortas) |
 | `0001-fechamento-decisoes-e-producao.patch` | patch histórico das decisões de fechamento |
+| `e49-dash083-relatorios-agendados.md` | DASH-083 — relatórios agendados: deploy da migration `20261120080000_scheduled_report_cron` com verificação em produção |
 
 ## Redação
 
