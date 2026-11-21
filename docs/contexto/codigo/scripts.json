@@ -104,7 +104,7 @@
   {
    "arquivo": "scripts/ci/branch-podaveis.mjs",
    "descricao": "W98 — comando pronto de poda de branches (usado pelo branch-hygiene-audit.yml). O plano oferecia duas saídas: apagar sozinho ou só gerar o comando. Apagar é",
-   "linhas": 193,
+   "linhas": 195,
    "env": [],
    "npm_scripts": [],
    "workflows": [

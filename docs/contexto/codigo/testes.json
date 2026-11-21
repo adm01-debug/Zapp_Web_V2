@@ -4292,12 +4292,12 @@
   {
    "arquivo": "scripts/ci/branch-podaveis.unit.mjs",
    "tipo": "unit",
-   "linhas": 181,
+   "linhas": 189,
    "testa": [
     "scripts/ci/branch-podaveis.mjs",
     "scripts/ci/workflow-test-support.mjs"
    ],
-   "casos": 16
+   "casos": 17
   },
   {
    "arquivo": "scripts/ci/bundle-budget.unit.mjs",

@@ -1188,7 +1188,7 @@
   {
    "arquivo": "CONTRIBUTING.md",
    "titulo": "Guia de Contribuição — Zapp Web V2",
-   "linhas": 112
+   "linhas": 119
   },
   {
    "arquivo": "ESTADO.md",
@@ -1313,7 +1313,7 @@
   {
    "arquivo": "docs/MIGRATIONS.md",
    "titulo": "Migrations — procedimento e armadilhas",
-   "linhas": 605
+   "linhas": 613
   },
   {
    "arquivo": "docs/POP-ATENDIMENTO-BASICO.md",

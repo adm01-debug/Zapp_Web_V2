@@ -1,7 +1,7 @@
 # Contexto do projeto para agentes de IA
 
 GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.
-Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR dela) a cada push em `main` e a cada 10 minutos pelo workflow `contexto.yml`; índice único das três fontes em `docs/contexto/00-INDEX.md`. Gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `03350f4456922e5ae91cdfe5562ed950e0d0fa8c` (2026-11-21T15:38:19-03:00).
+Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR dela) a cada push em `main` e a cada 10 minutos pelo workflow `contexto.yml`; índice único das três fontes em `docs/contexto/00-INDEX.md`. Gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `be88b1e6f4ff36ef68d4fa203c3cdab1326ed381` (2026-11-21T16:53:51-03:00).
 
 ## Como usar (leia antes de planejar ou executar qualquer tarefa)
 1. **Tela/rota/menu** → `rotas.json` (url/vista/menu → arquivo → hooks → tabelas → edges; `rotas_http_backend` para APIs) e `modulos.json` (módulo inteiro + dependências entre módulos).
@@ -36,7 +36,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 |---|---|
 | arquivos_total | 15716 |
 | arquivos_codigo | 5840 |
-| linhas_codigo | 1130640 |
+| linhas_codigo | 1130650 |
 | rotas | 18 |
 | rotas_http_backend | 11 |
 | vistas_por_id | 55 |
@@ -395,8 +395,8 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - possiveis_segredos_no_codigo: 6 — ex.: analise-prs/resgate-261118-lote3/claude_pink/cool-dijkstra-xk9ek2/scripts/ci/edge-coverage-authz.unit.mjs:397, analise-prs/resgate-261118-lote3/claude_pink/cool-dijkstra-xk9ek2/scripts/edge-deploy/redigir-log.unit.mjs:38, scripts/ai-context/cenarios.mjs:102
 
 ## Grafo de código (graphify)
-- 102840 nós · 174428 arestas · 9220 comunidades · grafo do commit `03350f44`
-- comunidades maiores: Communities (5953 total, 1987 thin omitted) (3945), TalkXSuppression.tsx (1505), lucide-react (1448), react (1389), client.ts (980), vitest (832), ref_node_assert (641), @tanstack/react-query (587), DashboardView.tsx (576), validation.ts (538), ExternalProductManagement.tsx (502), ref_https (500)
+- 102843 nós · 174432 arestas · 9010 comunidades · grafo do commit `be88b1e6`
+- comunidades maiores: Communities (5953 total, 1987 thin omitted) (3947), vitest (1273), lucide-react (1121), react (775), chat.ts (773), ref_node_fs (705), useUserRole (669), validation.ts (599), cn (591), EmailContactPanel.tsx (552), select.tsx (481), schemas.ts (454)
 - símbolos mais chamados: cn() (src/lib/utils.ts), useAuth() (src/hooks/auth/useAuth.tsx), jsonResponse() (supabase/functions/_shared/validation.ts), errorResponse() (supabase/functions/_shared/validation.ts), handleCors() (supabase/functions/_shared/validation.ts), fail() (scripts/e2e-isolated/network-proof-policy.mjs), Logger (supabase/functions/_shared/validation.ts), requireEnv() (supabase/functions/_shared/validation.ts), fmtInt() (src/components/talkx/kit/format.ts), fromTable() (src/lib/supabaseHelpers.ts), useUserRole() (src/hooks/system/useUserRole.ts), validationErrorResponse() (supabase/functions/_shared/schemas.ts)
 - consulta local: `graphify query "<pergunta>"`, `graphify path "<A>" "<B>"`, `graphify explain "<X>"`
 
@@ -477,7 +477,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - `AGENTS.md` — AGENTS.md — Zapp Web V2 (108 linhas)
 - `CHANGELOG.md` — Changelog (90 linhas)
 - `CLAUDE.md` (2 linhas)
-- `CONTRIBUTING.md` — Guia de Contribuição — Zapp Web V2 (112 linhas)
+- `CONTRIBUTING.md` — Guia de Contribuição — Zapp Web V2 (119 linhas)
 - `ESTADO.md` — ESTADO.md — o que está ligado e quem chama (163 linhas)
 - `FEATURE_REGISTRY.md` — FEATURE_REGISTRY.md — registro das views do V2 (89 linhas)
 - `HANDOFF_NEXT_SESSION.md` — HANDOFF — Próxima sessão (Claude Code) (177 linhas)
@@ -502,7 +502,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - `docs/INCIDENT-RUNBOOK.md` — 🚨 ZAPP-WEB — Runbook de Incidentes (349 linhas)
 - `docs/JORNADA_MENSAGEM_WHATSAPP.md` — Jornada da mensagem de WhatsApp — Zapp Web V2 (92 linhas)
 - `docs/LGPD-RETENTION-POLICY.md` — 🛡️ ZAPP-WEB — Política de Retenção de Dados (LGPD) (398 linhas)
-- `docs/MIGRATIONS.md` — Migrations — procedimento e armadilhas (605 linhas)
+- `docs/MIGRATIONS.md` — Migrations — procedimento e armadilhas (613 linhas)
 - `docs/POP-ATENDIMENTO-BASICO.md` — 📝 POP — Procedimento Operacional Padrão (256 linhas)
 - `docs/PROJECT_TEMPLATE.md` — 🏗️ Template de Projeto Base - WhatsApp CRM (875 linhas)
 - `docs/PROMPT_LOVABLE_CRM360_INTEGRATION.md` — PROMPT PARA LOVABLE — Integração completa CRM 360° no zapp-web (222 linhas)
@@ -523,6 +523,8 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - CHANGELOG topo: [Unreleased]
 
 ## Últimos commits
+- 2026-11-21 `be88b1e6` fix(ci): usa fileURLToPath no caminho do script W98 (teste 15) (#3305)
+- 2026-11-21 `bfe8a3aa` chore(contexto): protege branch contexto da poda + indice migration->PR (#3304)
 - 2026-11-21 `03350f44` docs: evidencia de deploy DASH-083 (cron relatorios agendados) (#3303)
 - 2026-11-21 `9f3e9175` fix(e2e): reconhece rate limit nao autenticado do Docker Hub no retry de pull (#3302)
 - 2026-11-21 `79c7a8bd` fix(e2e): inclui migration do cron de relatórios agendados no guard vault (#3301)
@@ -536,8 +538,6 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - 2026-11-20 `2e705429` docs(fase0): linha de base e regras de negocio da Fase 0 do GOAL (#3292)
 - 2026-11-19 `b267f6b2` feat(evolution-api): adiciona ação 'pairing-code' para parear aparelho por código (#3290)
 - 2026-11-19 `966a524f` ci(security): dependency review barra CVE novo high/critical nos PRs (#3288)
-- 2026-11-19 `55b35739` chore(contexto): atualiza snapshots X065 (persist_talkx_recipient_message_snapshot e set_talkx_campaign_ab) (#3289)
-- 2026-11-19 `76b0c7eb` docs(mapa): incorporar acervo de refs do remoto + veredito da auditoria (#3287)
 
 ## Arquivos deste diretório
 - `docs/contexto/codigo/rotas.json`

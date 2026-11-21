@@ -1,15 +1,15 @@
 {
  "meta": {
-  "sha": "03350f4456922e5ae91cdfe5562ed950e0d0fa8c",
+  "sha": "be88b1e6f4ff36ef68d4fa203c3cdab1326ed381",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-21 19:11 UTC",
+  "generated_at": "2026-11-21 20:13 UTC",
   "files_total": 15572,
   "code_files": 8876,
-  "code_lines": 1408059
+  "code_lines": 1408069
  },
  "version": "1.3.2",
- "facts_hash": "796274f44e946442",
+ "facts_hash": "738fc6690dfabad1",
  "stack": {
   "frameworks": [
    "React + Vite",
@@ -76874,7 +76874,7 @@
   {
    "module": "scripts",
    "files": 500,
-   "lines": 102060,
+   "lines": 102070,
    "tables": [
     "a",
     "alem_do_limite",
@@ -350026,7 +350026,7 @@
   },
   "scripts/ci/branch-podaveis.mjs": {
    "path": "scripts/ci/branch-podaveis.mjs",
-   "lines": 193,
+   "lines": 195,
    "exports": [
     "const DIAS_MINIMOS",
     "const SEMPRE_FORA",
@@ -350065,7 +350065,7 @@
   },
   "scripts/ci/branch-podaveis.unit.mjs": {
    "path": "scripts/ci/branch-podaveis.unit.mjs",
-   "lines": 181,
+   "lines": 189,
    "rule_comments": [
     "relatório. Os testes cobrem a regra (elegível, com PR, recente, main, protegida),"
    ],
@@ -479269,10 +479269,31 @@
   }
  },
  "git": {
-  "sha": "03350f4456922e5ae91cdfe5562ed950e0d0fa8c",
+  "sha": "be88b1e6f4ff36ef68d4fa203c3cdab1326ed381",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "be88b1e6",
+    "date": "2026-11-21",
+    "author": "adm01-debug",
+    "subject": "fix(ci): usa fileURLToPath no caminho do script W98 (teste 15) (#3305)",
+    "files": [
+     "scripts/ci/branch-podaveis.unit.mjs"
+    ]
+   },
+   {
+    "sha": "bfe8a3aa",
+    "date": "2026-11-21",
+    "author": "adm01-debug",
+    "subject": "chore(contexto): protege branch contexto da poda + indice migration->PR (#3304)",
+    "files": [
+     "CONTRIBUTING.md",
+     "docs/MIGRATIONS.md",
+     "scripts/ci/branch-podaveis.mjs",
+     "scripts/ci/branch-podaveis.unit.mjs"
+    ]
+   },
    {
     "sha": "03350f44",
     "date": "2026-11-21",
@@ -480667,36 +480688,6 @@
      "supabase/schema-catalog.json",
      "supabase/schema-manifest.json"
     ]
-   },
-   {
-    "sha": "9d4cff9d",
-    "date": "2026-11-18",
-    "author": "adm01-debug",
-    "subject": "fix(talkx): variante do A/B deixa de ser re-sorteada no envio (#3271)",
-    "files": [
-     "docs/talkx/ESTADOS.md",
-     "scripts/db-audit/talkx-message-snapshot.test.sh",
-     "src/components/talkx/TalkXCampaignRunning.tsx",
-     "src/components/talkx/__tests__/TalkXAbTestResults.test.tsx",
-     "src/components/talkx/tracking/TalkXAbTestResults.tsx",
-     "src/hooks/integrations/useTalkXAbStats.ts",
-     "supabase/deployment-manifest.json",
-     "supabase/functions/talkx-send/_test-utils.ts",
-     "supabase/functions/talkx-send/index.ts",
-     "supabase/functions/talkx-send/process-recipient.ts",
-     "supabase/functions/talkx-send/x065-precedencia-texto-proprio.test.ts",
-     "supabase/migrations/20261118210000_talkx_next_recipients_variant_id.sql",
-     "supabase/migrations/20261118220000_talkx_snapshot_variante_primeiro_vale.sql"
-    ]
-   },
-   {
-    "sha": "15e25fff",
-    "date": "2026-11-18",
-    "author": "github-actions[bot]",
-    "subject": "test(e2e): regerar a baseline de Contatos tabela/dark no ambiente do CI (#3273)",
-    "files": [
-     "e2e/__screenshots__/contacts-table-dark-linux.png"
-    ]
    }
   ],
   "hot_files": [
@@ -480713,12 +480704,12 @@
     3
    ],
    [
-    "supabase/deployment-manifest.json",
-    3
+    "scripts/ci/branch-podaveis.unit.mjs",
+    2
    ],
    [
-    "src/hooks/integrations/useTalkXAbStats.ts",
-    3
+    "docs/MIGRATIONS.md",
+    2
    ],
    [
     "docs/DB-INVENTORY.md",
@@ -480733,6 +480724,10 @@
     2
    ],
    [
+    "supabase/deployment-manifest.json",
+    2
+   ],
+   [
     "docs/agentes/github-ci.md",
     2
    ],
@@ -480741,23 +480736,15 @@
     2
    ],
    [
-    "docs/talkx/ESTADOS.md",
+    "src/hooks/integrations/useTalkXAbStats.ts",
     2
    ],
    [
-    "src/components/talkx/TalkXCampaignRunning.tsx",
-    2
+    "CONTRIBUTING.md",
+    1
    ],
    [
-    "src/components/talkx/__tests__/TalkXAbTestResults.test.tsx",
-    2
-   ],
-   [
-    "src/components/talkx/tracking/TalkXAbTestResults.tsx",
-    2
-   ],
-   [
-    "docs/MIGRATIONS.md",
+    "scripts/ci/branch-podaveis.mjs",
     1
    ],
    [
@@ -480778,6 +480765,10 @@
    ],
    [
     "scripts/ci/e2e-isolated-migrations.unit.mjs",
+    1
+   ],
+   [
+    "scripts/e2e-isolated/migrations.mjs",
     1
    ]
   ]
