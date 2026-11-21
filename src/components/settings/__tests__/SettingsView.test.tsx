@@ -5,6 +5,8 @@ import { render, screen, fireEvent } from '@testing-library/react';
 const roleState = { isAdmin: false, isSupervisor: false };
 vi.mock('@/hooks/system/useUserRole', () => ({ useUserRole: () => roleState }));
 
+vi.mock('@/hooks/auth/useAuth', () => ({ useAuth: () => ({ user: { id: 'user-teste' } }) }));
+
 vi.mock('@/hooks/system/useUserSettings', () => ({
   useUserSettings: () => ({
     settings: {},
@@ -59,6 +61,7 @@ vi.mock('@/components/settings/ScheduleSettings', () => ({ ScheduleSettings: () 
 vi.mock('@/components/settings/MessagesSettings', () => ({ MessagesSettings: () => <div data-testid="stub-messages" /> }));
 vi.mock('@/components/settings/AutomationSettings', () => ({ AutomationSettings: () => <div data-testid="stub-automation" /> }));
 vi.mock('@/components/settings/AppearanceSettings', () => ({ AppearanceSettings: () => <div data-testid="stub-appearance" /> }));
+vi.mock('@/components/settings/AssistantProfileSettings', () => ({ AssistantProfileSettings: () => <div data-testid="stub-assistant-profile" /> }));
 
 import { SettingsView } from '../SettingsView';
 
@@ -141,7 +144,7 @@ describe('SettingsView — agrupamento em dois niveis', () => {
   // qualquer grupo, o teste abaixo nao a encontra ao percorrer os grupos.
   const TODAS_ABAS_STAFF = [
     'Horário', 'Mensagens', 'Automação', 'Roteamento', 'Follow-up',
-    'Chatbot L1', 'Gestão IA',
+    'Chatbot L1', 'Gestão IA', 'Assistente',
     'CSAT', 'NPS',
     'Global', 'Mídia',
     'Notificações', 'Aparência', 'Atalhos', 'Sons',
@@ -179,7 +182,7 @@ describe('SettingsView — agrupamento em dois niveis', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Inteligência artificial' }));
 
     const abas = screen.getAllByRole('tab').map((el) => el.textContent ?? '');
-    expect(abas).toEqual(['Chatbot L1', 'Gestão IA']);
+    expect(abas).toEqual(['Chatbot L1', 'Gestão IA', 'Assistente']);
     expect(abas).not.toContain(abaRemovida);
     expect(abas.some((t) => /tag|etiqueta/i.test(t))).toBe(false);
   });
@@ -204,7 +207,7 @@ describe('SettingsView — agrupamento em dois niveis', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Inteligência artificial' }));
     expect(screen.getAllByRole('tab').map((el) => el.textContent)).toEqual([
-      'Chatbot L1', 'Gestão IA',
+      'Chatbot L1', 'Gestão IA', 'Assistente',
     ]);
 
     fireEvent.click(screen.getByRole('button', { name: 'Qualidade' }));
