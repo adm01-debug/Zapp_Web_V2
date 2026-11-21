@@ -66274,8 +66274,13 @@
       {
         "args": "p_campaign_id uuid",
         "callers": {
-          "code": [],
-          "code_total_files": 0,
+          "code": [
+            {
+              "file": "src/hooks/integrations/useTalkXSegmentProgress.ts",
+              "hits": 1
+            }
+          ],
+          "code_total_files": 1,
           "cron": [],
           "db": [],
           "triggers": [],

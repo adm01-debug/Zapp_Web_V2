@@ -2,6 +2,10 @@
 
 Diff semântico gerado a cada coleta em que algo mudou.
 
+## 2026-11-21 21:10 UTC
+
+- **functions** alterado (1): `public.talkx_campaign_segment_progress(p_campaign_id uuid)`
+
 ## 2026-11-21 12:17 UTC
 
 - **functions** adicionado (2): `public.get_scheduled_report_cron_secret()`, `public.trigger_due_scheduled_report_configs()`
