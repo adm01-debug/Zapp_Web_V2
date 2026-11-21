@@ -50,7 +50,7 @@ partir do código e falha quando:
 | `ai-proxy` | A | `src/components/admin/SupervisorCopilot.tsx:89` · `src/components/settings/ai-providers/useAIProviders.ts:121` · `src/hooks/inbox/useObjectionDetector.ts:90` · `src/hooks/inbox/useObjectionDetector.ts:164` · `src/hooks/ui/useUniversityHelp.ts:130` · `supabase/functions/talkx-ai/index.ts:589` |
 | `ai-suggest-reply` | A | `src/components/inbox/AISuggestions.tsx:104` |
 | `ai-transcribe-audio` | A | `src/components/inbox/AudioMessagePlayer.tsx:71` · `supabase/functions/_shared/evolution-webhook-messages.ts:1457` |
-| `ai-usage-outbox-drain` | C | `supabase/migrations/20261103223000_ai_usage_outbox_drain_cron.sql:64` · `supabase/config.toml:96` |
+| `ai-usage-outbox-drain` | C | `supabase/migrations/20261103223000_ai_usage_outbox_drain_cron.sql:64` · `supabase/config.toml:103` |
 | `approve-password-reset` | A | `src/components/security/PasswordResetRequestsPanel.tsx:32` · `src/components/security/PasswordResetRequestsPanel.tsx:51` · `src/hooks/security/usePasswordResetRequests.ts:51` · `src/hooks/security/usePasswordResetRequests.ts:72` |
 | `auth-login` | A | `src/lib/serverLogin.ts:129` · `supabase/config.toml:39` |
 | `auto-close-conversations` | E | — sem chamador no repositório — |
@@ -83,7 +83,7 @@ partir do código e falha quando:
 | `external-db-bridge` | E | — sem chamador no repositório — |
 | `external-db-proxy` | A | `src/lib/externalProxy.ts:33` |
 | `fetch-link-preview` | B | `supabase/functions/_shared/evolution-webhook-messages.ts:276` |
-| `get-call-recording` | A | `src/hooks/calls/useCallRecording.ts:35` · `supabase/config.toml:77` |
+| `get-call-recording` | A | `src/hooks/calls/useCallRecording.ts:35` · `supabase/config.toml:84` |
 | `get-mapbox-token` | A | `src/lib/mapboxToken.ts:87` |
 | `get-sip-password` | A | `src/lib/calls/sipProvisioning.ts:98` |
 | `gmail-cron-sync` | C | `supabase/migrations/20260829110000_gmail_incremental_sync_cron.sql:18` · `supabase/config.toml:17` |
@@ -92,7 +92,7 @@ partir do código e falha quando:
 | `gmail-sync` | E | — sem chamador no repositório — |
 | `gmail-webhook` | A | `src/components/admin/GmailWebhookMonitor.tsx:230` · `supabase/config.toml:14` |
 | `health` | E | — sem chamador no repositório — |
-| `invite-user` | A | `src/components/agents/InviteAgentDialog.tsx:48` · `supabase/config.toml:89` |
+| `invite-user` | A | `src/components/agents/InviteAgentDialog.tsx:48` · `supabase/config.toml:96` |
 | `message-delivery` | A | `src/lib/invokeEdge.ts:24` · `src/services/outbound-message.service.ts:479` · `supabase/config.toml:49` |
 | `metrics` | E | — sem chamador no repositório — |
 | `migrate-media-storage` | A | `src/components/admin/MediaMigrationTool.tsx:97` |
@@ -111,8 +111,8 @@ partir do código e falha quando:
 | `send-scheduled-report` | A | `src/hooks/chat/useScheduledReports.ts:151` |
 | `sentiment-alert` | A | `src/hooks/inbox/useSentimentAlerts.ts:39` |
 | `status` | E | — sem chamador no repositório — |
-| `sync-call-records` | D | `supabase/config.toml:73` |
-| `talkx-ai` | D | `supabase/config.toml:83` |
+| `sync-call-records` | D | `supabase/config.toml:80` |
+| `talkx-ai` | D | `supabase/config.toml:90` |
 | `talkx-link` | A | `src/hooks/integrations/useTalkXLinks.ts:56` · `supabase/functions/talkx-send/index.ts:128` · `supabase/config.toml:65` |
 | `talkx-report` | E | — sem chamador no repositório — |
 | `talkx-scheduler` | E | — sem chamador no repositório — |
