@@ -83,6 +83,14 @@ serve(async (req) => {
     // profileId é usado SOMENTE para comparar com contacts.assigned_to.
     const profileId = profileRow.id as string;
 
+    // Fase 1 do assistente: identidade. Leitura opcional — se não houver
+    // perfil, o motor usa os defaults.
+    const { data: assistantProfile } = await supabase
+      .from('assistant_profiles')
+      .select('atividade, foco, ajuda, tom')
+      .eq('user_id', userId)
+      .maybeSingle();
+
     const payload: TickPayload = await req.json();
 
     if (!payload.conversation_id) {
@@ -206,6 +214,7 @@ serve(async (req) => {
       draftText: payload.draft_text,
       saleStage: payload.sale_stage,
       userId,
+      profile: assistantProfile,
     });
 
     if (session?.id) {
@@ -247,12 +256,21 @@ async function generateLiveSuggestion(opts: {
   draftText?: string;
   saleStage?: string;
   userId: string;
+  profile?: { atividade?: string; foco?: string; ajuda?: string; tom?: string } | null;
 }): Promise<{ content: string; modelVersion: string }> {
   const stageLabel = opts.saleStage ? (STAGE_LABELS[opts.saleStage] ?? opts.saleStage) : 'indefinido';
 
+  // Fase 1: instruções da identidade, sempre com fallback aos defaults.
+  const atuacao = opts.profile?.atividade ?? 'atendimento';
+  const foco = opts.profile?.foco?.trim() || 'avançar a conversa em direção ao pedido';
+  const tom = opts.profile?.tom ?? 'consultivo';
+
   const system = `Você é o Copiloto RADAR, assistente de vendas de brindes corporativos B2B.
+Atuação do vendedor que você assiste: ${atuacao}.
+Foco principal dele: ${foco}.
+Tom preferido de comunicação: ${tom}.
 Analise o contexto da conversa e dê UMA sugestão objetiva para o vendedor avançar no estágio de ${stageLabel}.
-A sugestão deve ser direta (máx. 120 caracteres), acionável e específica para o momento da conversa.
+A sugestão deve ser direta (máx. 120 caracteres), acionável, específica para o momento da conversa e ajustada ao foco e ao tom declarados.
 Responda APENAS com o texto da sugestão, sem prefixos, aspas ou explicação.`;
 
   const userContent = [

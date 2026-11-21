@@ -119,6 +119,8 @@ interface Rotas {
   capacidadeDesligada?: boolean;
   /** Contagem de ai_usage_logs nas últimas 24h já no limite da cota diária (500). */
   cotaDiariaExcedida?: boolean;
+  /** assistant_profiles do usuário (Fase 1). Ausente = sem perfil (usa defaults). */
+  assistant?: Record<string, unknown> | null;
 }
 
 function json(body: unknown, status = 200, headers: Record<string, string> = {}): Response {
@@ -203,6 +205,20 @@ async function cenario<T>(rotas: Rotas, fn: (calls: Chamada[]) => Promise<T>): P
       );
     }
     if (url.includes("/rest/v1/ai_providers")) return Promise.resolve(json([PROVEDOR_PADRAO]));
+    if (url.includes("/rest/v1/assistant_profiles")) {
+      // Fase 1: sem linha (padrão) retorna PGRST116/406 — .maybeSingle() vira
+      // data=null e o motor usa os defaults; com linha, entrega o perfil.
+      return Promise.resolve(
+        rotas.assistant
+          ? json(rotas.assistant)
+          : json({
+            code: "PGRST116",
+            details: "Results contain 0 rows, application/vnd.pgrst.object+json requires 1 row",
+            hint: null,
+            message: "JSON object requested, multiple (or no) rows returned",
+          }, 406),
+      );
+    }
     if (url.startsWith(PROVEDOR)) {
       return Promise.resolve((rotas.provedor ?? (() => new Response("sem stub de provedor", { status: 599 })))());
     }
@@ -242,6 +258,8 @@ const chamadasAoProvedor = (calls: Chamada[]) => calls.filter((c) => c.url.start
 const houveTransferencia = (calls: Chamada[]) =>
   calls.some((c) => c.metodo === "PATCH" && (c.corpo as Record<string, unknown> | null)?.profile_id === USER_ID);
 const consultouContato = (calls: Chamada[]) => calls.some((c) => c.url.includes("/rest/v1/contacts"));
+const corpoParaOProvedor = (calls: Chamada[]) =>
+  (chamadasAoProvedor(calls)[0]?.corpo as { messages?: Array<{ role: string; content: unknown }> } | undefined)?.messages;
 
 Deno.test("copilot-live: preflight OPTIONS responde CORS sem rede", async () => {
   await cenario({}, async (calls) => {
@@ -383,5 +401,40 @@ Deno.test("copilot-live: capacidade ai.capability.copilot_live desligada devolve
     assertEquals(chamadasAoProvedor(calls).length, 0);
     assertEquals(escritas(calls, "copilot_sessions").length, 0);
     assertEquals(escritas(calls, "copilot_insights").length, 0);
+  });
+});
+
+// Fase 1 — Identidade (entrega verificável): usuários com atuações e focos
+// diferentes recebem system prompts diferentes. Sem linha em assistant_profiles
+// o motor usa os defaults declarados na migration.
+
+Deno.test("copilot-live: Fase 1 — sem perfil usa os defaults de identidade no system prompt", async () => {
+  await cenario({
+    provedor: () =>
+      json({ model: "modelo-teste", choices: [{ message: { content: "Sugestão default." } }], usage: {} }),
+  }, async (calls) => {
+    const res = await chamar(pedido(TICK));
+    assertEquals(res.status, 200);
+    const system = corpoParaOProvedor(calls)?.find((m) => m.role === "system")?.content as string;
+    assertEquals(typeof system, "string");
+    assertEquals(system.includes("Atuação do vendedor que você assiste: atendimento."), true);
+    assertEquals(system.includes("Foco principal dele: avançar a conversa em direção ao pedido."), true);
+    assertEquals(system.includes("Tom preferido de comunicação: consultivo.\n"), true);
+  });
+});
+
+Deno.test("copilot-live: Fase 1 — perfil de atuação/foco/tom próprios muda o system prompt", async () => {
+  await cenario({
+    assistant: { atividade: "venda", foco: "fechar pedidos de brindes até sexta", ajuda: "sempre", tom: "direto" },
+    provedor: () =>
+      json({ model: "modelo-teste", choices: [{ message: { content: "Sugestão para vendas." } }], usage: {} }),
+  }, async (calls) => {
+    const res = await chamar(pedido(TICK));
+    assertEquals(res.status, 200);
+    const system = corpoParaOProvedor(calls)?.find((m) => m.role === "system")?.content as string;
+    assertEquals(typeof system, "string");
+    assertEquals(system.includes("Atuação do vendedor que você assiste: venda."), true);
+    assertEquals(system.includes("Foco principal dele: fechar pedidos de brindes até sexta."), true);
+    assertEquals(system.includes("Tom preferido de comunicação: direto.\n"), true);
   });
 });

@@ -8,10 +8,11 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   Clock, MessageSquare, Bell, Palette, RefreshCw,
   Keyboard, Volume2, ArrowRight, Package, Globe, TrendingUp, Settings,
-  MessageSquareHeart, Bot, Brain, Users,
+  MessageSquareHeart, Bot, Brain, Users, UserRound,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { AIProvidersManager } from '@/components/settings/AIProvidersManager';
+import { AssistantProfileSettings } from '@/components/settings/AssistantProfileSettings';
 import { CSATAutoConfig } from '@/components/settings/CSATAutoConfig';
 import { ChatbotL1Config } from '@/components/settings/ChatbotL1Config';
 import { LanguageSelector } from '@/components/settings/LanguageSelector';
@@ -46,6 +47,7 @@ const TABS_META: Record<string, { label: string; icon: LucideIcon; staffOnly: bo
   followup: { label: 'Follow-up', icon: ArrowRight, staffOnly: true },
   'chatbot-l1': { label: 'Chatbot L1', icon: Bot, staffOnly: true },
   'ai-providers': { label: 'Gestão IA', icon: Brain, staffOnly: true },
+  'assistant-profile': { label: 'Assistente', icon: UserRound, staffOnly: false },
   csat: { label: 'CSAT', icon: MessageSquareHeart, staffOnly: true },
   nps: { label: 'NPS', icon: TrendingUp, staffOnly: true },
   notifications: { label: 'Notificações', icon: Bell, staffOnly: false },
@@ -64,7 +66,7 @@ const TABS_META: Record<string, { label: string; icon: LucideIcon; staffOnly: bo
 // de midia. A ordem das abas dentro do grupo preserva a ordem original da barra.
 const TAB_GROUPS: { id: string; label: string; icon: LucideIcon; tabs: string[] }[] = [
   { id: 'atendimento', label: 'Atendimento', icon: MessageSquare, tabs: ['schedule', 'messages', 'automation', 'routing', 'followup'] },
-  { id: 'ia', label: 'Inteligência artificial', icon: Bot, tabs: ['chatbot-l1', 'ai-providers'] },
+  { id: 'ia', label: 'Inteligência artificial', icon: Bot, tabs: ['chatbot-l1', 'ai-providers', 'assistant-profile'] },
   { id: 'qualidade', label: 'Qualidade', icon: MessageSquareHeart, tabs: ['csat', 'nps'] },
   { id: 'aparencia', label: 'Aparência', icon: Palette, tabs: ['notifications', 'appearance', 'shortcuts', 'sounds'] },
   { id: 'sistema', label: 'Sistema', icon: Settings, tabs: ['global', 'media'] },
@@ -290,6 +292,10 @@ export function SettingsView() {
             <AIProvidersManager />
           </TabsContent>
         )}
+
+        <TabsContent value="assistant-profile">
+          <AssistantProfileSettings />
+        </TabsContent>
       </Tabs>
       )}
     </PageTemplate>
