@@ -9,13 +9,17 @@ import { assertPinnedImages } from '../e2e-isolated/run.mjs';
 
 const IMAGE = 'public.ecr.aws/supabase/postgrest:v14.5@sha256:b574528fe109c8343c1247155734d03df8c34b462f342dca0ccc20244fc36ef9';
 const RATE = { status: 1, stdout: '', stderr: 'toomanyrequests: Rate exceeded\n' };
+const RATE_UNAUTHENTICATED = { status: 1, stdout: '', stderr: 'toomanyrequests: You have reached your unauthenticated pull rate limit. Sign in for a higher limit: https://www.docker.com/increase-rate-limit\n' };
 const OK = { status: 0, stdout: 'downloaded\n', stderr: '' };
 const isPullRateLimited = result => classifyPullRateLimit(result, IMAGE);
 
 for (const [name, result, expected] of [
   ['observed registry error', RATE, true],
+  ['unauthenticated pull rate limit', RATE_UNAUTHENTICATED, true],
   ['daemon prefix', { ...RATE, stderr: 'Error response from daemon: toomanyrequests: Rate exceeded' }, true],
+  ['daemon prefix unauthenticated', { ...RATE_UNAUTHENTICATED, stderr: 'Error response from daemon: toomanyrequests: You have reached your unauthenticated pull rate limit. Sign in for a higher limit: https://www.docker.com/increase-rate-limit' }, true],
   ['stdout channel', { ...RATE, stdout: RATE.stderr, stderr: '' }, true],
+  ['stdout channel unauthenticated', { ...RATE_UNAUTHENTICATED, stdout: RATE_UNAUTHENTICATED.stderr, stderr: '' }, true],
   ['bound header and CRLF', { ...RATE, stderr: 'v14.5: Pulling from supabase/postgrest\r\ntoomanyrequests: Rate exceeded  \r\n' }, true],
   ['unrecognized Docker retry output', { ...RATE, stdout: 'layer: Retrying in 1 second\n' }, false],
   ['successful process', { ...RATE, status: 0 }, false],
@@ -38,6 +42,8 @@ for (const [name, result, expected] of [
   ['unrelated 429', { ...RATE, stderr: 'downloading layer 429' }, false],
   ['nonterminal diagnostic', { ...RATE, stderr: RATE.stderr + 'unknown failure' }, false],
   ['unknown detail', { ...RATE, stderr: 'toomanyrequests: another registry policy' }, false],
+  ['unauthenticated variant embedded in sentence', { ...RATE, stderr: 'pull failed: toomanyrequests: You have reached your unauthenticated pull rate limit. Sign in for a higher limit: https://www.docker.com/increase-rate-limit' }, false],
+  ['unauthenticated variant with extra line', { ...RATE, stderr: RATE_UNAUTHENTICATED.stderr + 'unknown failure' }, false],
 ]) test('pull rate-limit classification: ' + name, () => assert.equal(isPullRateLimited(result), expected));
 
 for (const failure of ['unauthorized: authentication required', 'denied: permission', 'manifest unknown',
@@ -71,6 +77,11 @@ for (const failure of ['context deadline exceeded', 'i/o timeout', 'Client.Timeo
 // Complete two-line public logs from artifacts 13767668449 and 13766269407;
 // both native jobs returned this same diagnostic before application bootstrap.
 const GOLDEN = 'public.ecr.aws/supabase/postgrest@sha256:b574528fe109c8343c1247155734d03df8c34b462f342dca0ccc20244fc36ef9: Pulling from supabase/postgrest\ntoomanyrequests: Rate exceeded';
+// Authenticated suite, job 2-of-3, run 44927109673 (pull-auth.log):
+// docker pull failed after hours with the daemon-prefixed unauthenticated variant.
+// Header kept aligned with the pinned test image (same header shape as GOLDEN);
+// only the Docker Hub rate-limit terminal differs and must still classify as retry.
+const GOLDEN_UNAUTHENTICATED = 'public.ecr.aws/supabase/postgrest@sha256:b574528fe109c8343c1247155734d03df8c34b462f342dca0ccc20244fc36ef9: Pulling from supabase/postgrest\ntoomanyrequests: You have reached your unauthenticated pull rate limit. Sign in for a higher limit: https://www.docker.com/increase-rate-limit';
 for (const artifact of [13767668449, 13766269407]) {
   const [header, terminal] = GOLDEN.split('\n');
   for (const [channel, result] of [
@@ -80,6 +91,14 @@ for (const artifact of [13767668449, 13766269407]) {
     ['reversed', { status: 1, stdout: terminal, stderr: header }],
     ['CRLF', { status: 1, stderr: GOLDEN.replaceAll('\n', '\r\n') }],
   ]) test('native pull golden: ' + artifact + '/' + channel, () => assert.equal(isPullRateLimited(result), true));
+}
+{
+  const [header, terminal] = GOLDEN_UNAUTHENTICATED.split('\n');
+  for (const [channel, result] of [
+    ['stderr', { status: 1, stderr: GOLDEN_UNAUTHENTICATED }],
+    ['daemon', { status: 1, stderr: GOLDEN_UNAUTHENTICATED.replace('\n', '\nError response from daemon: ') }],
+    ['split', { status: 1, stdout: header, stderr: terminal }],
+  ]) test('native pull golden unauthenticated rate limit: ' + channel, () => assert.equal(isPullRateLimited(result), true));
 }
 for (const state of ['Pulling fs layer', 'Waiting', 'Downloading', 'Extracting', 'Verifying Checksum',
   'Download complete', 'Pull complete', 'Already exists']) for (const length of [12, 64]) {
