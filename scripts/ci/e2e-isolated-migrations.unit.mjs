@@ -123,3 +123,17 @@ for (const template of ["select 'TOKEN';", '-- TOKEN\nselect 1;', '/* TOKEN */\n
     assert.throws(() => prepareMigration('20260101000000_fixture.sql', source), /historical-jwt-needs-local-transform/);
   });
 }
+
+// DASH-083: a migration do cron de relatorios agendados usa vault.create_secret;
+// qualquer alteracao de bytes exige nova revisao no REVIEWED_VAULT.
+const SCHEDULED_REPORT_CRON = '20261120080000_scheduled_report_cron.sql';
+const scheduledReportSource = readFileSync(new URL('../../supabase/migrations/' + SCHEDULED_REPORT_CRON, import.meta.url), 'utf8');
+test('cron de relatorios agendados revisado (blob fixo no REVIEWED_VAULT)', () => {
+  const result = prepareMigration(SCHEDULED_REPORT_CRON, scheduledReportSource);
+  assert.equal(result.evidence.original_git_blob, '9300a16ab7b394de8872c9da1c015ad499e096e5');
+  assert.equal(result.evidence.original_sha256, result.evidence.applied_sha256);
+  assert.deepEqual(result.evidence.transformations, []);
+});
+test('cron de relatorios agendados: mudanca de bytes exige nova revisao', () => {
+  assert.throws(() => prepareMigration(SCHEDULED_REPORT_CRON, scheduledReportSource + '\n-- changed\n'), /unreviewed-vault-configuration/);
+});

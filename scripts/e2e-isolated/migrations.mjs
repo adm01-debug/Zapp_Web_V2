@@ -15,6 +15,9 @@ const REVIEWED_VAULT = {
   '20261001311230_talkx_campaign_worker_lease.sql': '8187b1b62ae04c8401bff2d326307c806dc855f0',
   '20261002371230_ia045_ia046_ai_jobs_durabilidade_e_estados.sql': '44b2fba209ae7990d43bff1f3a50635a1b85a8c2',
   '20261103223000_ai_usage_outbox_drain_cron.sql': 'f5a151d98b1c27f1f7f9e2943ba994502892ecb6',
+  // DASH-083: cron de relatorios agendados cria secret dedicado para a edge
+  // send-scheduled-report (mesmo padrao de 20260927320000/20260930240000).
+  '20261120080000_scheduled_report_cron.sql': '9300a16ab7b394de8872c9da1c015ad499e096e5',
 };
 const LOCAL_URL_CONFIGURATION = new Set([
   '20261001391230_talkx_engine_tick.sql',
