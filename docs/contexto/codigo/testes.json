@@ -5,18 +5,18 @@
   "vitest",
   "playwright"
  ],
- "total": 3201,
+ "total": 3202,
  "por_tipo": {
   "contrato": 130,
   "e2e": 89,
   "pytest": 3,
   "qa": 9,
-  "unit": 2879
+  "unit": 2880
  },
  "onde_ficam": [
   {
    "padrao": "co-localizado (__tests__)",
-   "arquivos": 2357
+   "arquivos": 2358
   },
   {
    "padrao": "outro",
@@ -17186,13 +17186,13 @@
   {
    "arquivo": "src/components/talkx/report/__tests__/TalkXCampaignReport.test.tsx",
    "tipo": "unit",
-   "linhas": 293,
+   "linhas": 316,
    "testa": [
     "src/components/talkx/report/TalkXCampaignReport.tsx",
     "src/components/talkx/report/talkxReportData.ts",
     "src/hooks/integrations/useTalkX.ts"
    ],
-   "casos": 19
+   "casos": 20
   },
   {
    "arquivo": "src/components/talkx/report/__tests__/TalkXReportFunnel.test.tsx",
@@ -22476,6 +22476,15 @@
     "src/hooks/integrations/useTalkXResumeChecklist.ts"
    ],
    "casos": 6
+  },
+  {
+   "arquivo": "src/hooks/integrations/__tests__/useTalkXSegmentProgress.test.ts",
+   "tipo": "unit",
+   "linhas": 57,
+   "testa": [
+    "src/hooks/integrations/useTalkXSegmentProgress.ts"
+   ],
+   "casos": 3
   },
   {
    "arquivo": "src/hooks/integrations/__tests__/useTalkXSegments.acoesEmMassa.test.tsx",
@@ -30138,6 +30147,7 @@
   "src/hooks/integrations/useTalkXMonitor.ts": 1,
   "src/hooks/integrations/useTalkXOverviewStats.ts": 1,
   "src/hooks/integrations/useTalkXResumeChecklist.ts": 2,
+  "src/hooks/integrations/useTalkXSegmentProgress.ts": 1,
   "src/hooks/integrations/useTalkXSegments.ts": 37,
   "src/hooks/integrations/useTalkXServerResumePrecheck.ts": 1,
   "src/hooks/integrations/useTalkXServiceStatus.ts": 2,

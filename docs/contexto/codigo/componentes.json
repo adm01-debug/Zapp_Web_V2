@@ -2,7 +2,7 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "total": 1054,
- "orfaos": 144,
+ "orfaos": 142,
  "nomes_duplicados": {
   "AIAutoTagsConfig": [
    "analise-prs/resgate-261118-lote3/hermes/robustez-primitivos-ui-2610121626bec5-2610141859e423/src/components/settings/AIAutoTagsConfig.tsx",
@@ -14303,10 +14303,11 @@
     "TalkXCampaignReportProps"
    ],
    "export_default": null,
-   "linhas": 368,
+   "linhas": 388,
    "dominio": "components/talkx",
    "hooks_locais": [
-    "useDownloadPermission"
+    "useDownloadPermission",
+    "useTalkXSegmentProgress"
    ],
    "tabelas": [],
    "edges": [],
@@ -14963,8 +14964,8 @@
    ],
    "tabelas": [],
    "edges": [],
-   "usado_por": 0,
-   "orfao": true
+   "usado_por": 1,
+   "orfao": false
   },
   {
    "arquivo": "src/components/talkx/tracking/TalkXRecipientRowActions.tsx",
@@ -15027,8 +15028,8 @@
    "hooks_locais": [],
    "tabelas": [],
    "edges": [],
-   "usado_por": 0,
-   "orfao": true
+   "usado_por": 1,
+   "orfao": false
   },
   {
    "arquivo": "src/components/talkx/tracking/TalkXSentSummaryChart.tsx",

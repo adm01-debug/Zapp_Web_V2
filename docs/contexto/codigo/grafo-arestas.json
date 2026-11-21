@@ -8409,7 +8409,10 @@
    "src/components/talkx/report/talkxReportCharts.ts",
    "src/components/talkx/report/talkxReportData.ts",
    "src/components/talkx/talkxShared.ts",
+   "src/components/talkx/tracking/TalkXOperationalTimeline.tsx",
+   "src/components/talkx/tracking/TalkXSegmentProgressTable.tsx",
    "src/hooks/integrations/useTalkX.ts",
+   "src/hooks/integrations/useTalkXSegmentProgress.ts",
    "src/hooks/system/useDownloadPermission.ts",
    "src/lib/downloadFile.ts",
    "src/lib/supabaseHelpers.ts",
@@ -10968,6 +10971,10 @@
    "src/integrations/supabase/client.ts"
   ],
   "src/hooks/integrations/useTalkXResumeChecklist.ts": [
+   "src/lib/supabaseHelpers.ts"
+  ],
+  "src/hooks/integrations/useTalkXSegmentProgress.ts": [
+   "src/components/talkx/tracking/talkxSegmentProgress.ts",
    "src/lib/supabaseHelpers.ts"
   ],
   "src/hooks/integrations/useTalkXSegments.ts": [

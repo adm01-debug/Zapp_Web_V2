@@ -1,7 +1,7 @@
 {
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
- "total": 599,
+ "total": 600,
  "hooks": [
   {
    "arquivo": "analise-prs/resgate-261118-lote2/src/hooks/useMotionSeguro.ts",
@@ -11518,6 +11518,29 @@
     "src/components/talkx/tracking/TalkXResumeChecklist.tsx"
    ],
    "coberto_por_testes": 2
+  },
+  {
+   "arquivo": "src/hooks/integrations/useTalkXSegmentProgress.ts",
+   "hooks_exportados": [
+    "useTalkXSegmentProgress"
+   ],
+   "linhas": 59,
+   "dominio": "hooks/integrations",
+   "tabelas": [],
+   "rpcs": [
+    "talkx_campaign_segment_progress"
+   ],
+   "edges": [],
+   "hooks_internos": [
+    "useMemo",
+    "useQuery"
+   ],
+   "canais_realtime": [],
+   "usado_por": 1,
+   "usado_por_arquivos": [
+    "src/components/talkx/report/TalkXCampaignReport.tsx"
+   ],
+   "coberto_por_testes": 1
   },
   {
    "arquivo": "src/hooks/integrations/useTalkXSegments.ts",

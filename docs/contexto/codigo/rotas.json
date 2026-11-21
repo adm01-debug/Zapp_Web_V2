@@ -444,6 +444,7 @@
     "useTalkXAbStats",
     "useTalkXAnalytics",
     "useTalkXCampaignSummary",
+    "useTalkXCampaignTimeline",
     "useTalkXCommandItems",
     "useTalkXConfirm",
     "useTalkXConnectionStatus",
@@ -461,6 +462,7 @@
     "useTalkXMonitor",
     "useTalkXOverviewStats",
     "useTalkXResumeChecklist",
+    "useTalkXSegmentProgress",
     "useTalkXSegments",
     "useTalkXServerResumePrecheck",
     "useTalkXServiceStatus",
@@ -908,6 +910,7 @@
     "useTalkXAbStats",
     "useTalkXAnalytics",
     "useTalkXCampaignSummary",
+    "useTalkXCampaignTimeline",
     "useTalkXCommandItems",
     "useTalkXConfirm",
     "useTalkXConnectionStatus",
@@ -924,6 +927,7 @@
     "useTalkXMonitor",
     "useTalkXOverviewStats",
     "useTalkXResumeChecklist",
+    "useTalkXSegmentProgress",
     "useTalkXSegments",
     "useTalkXServerResumePrecheck",
     "useTalkXServiceStatus",
@@ -1185,6 +1189,7 @@
     "talkx_campaign_recipients_page",
     "talkx_campaign_report",
     "talkx_campaign_resume_precheck",
+    "talkx_campaign_segment_progress",
     "talkx_delete_link",
     "talkx_engine_window_open",
     "talkx_overview_stats",
@@ -1332,7 +1337,7 @@
     "toolbar",
     "user"
    ],
-   "arquivos_puxados": 1511
+   "arquivos_puxados": 1517
   },
   {
    "protegida": false,
@@ -7165,6 +7170,7 @@
     "useGlobalKeyboardShortcuts",
     "useIdleCallback",
     "useImperativeHandle",
+    "useInfiniteQuery",
     "useLayoutEffect",
     "useLocation",
     "useMemo",
@@ -7197,6 +7203,7 @@
     "useTalkXAbStats",
     "useTalkXAnalytics",
     "useTalkXCampaignSummary",
+    "useTalkXCampaignTimeline",
     "useTalkXCommandItems",
     "useTalkXConfirm",
     "useTalkXConnectionStatus",
@@ -7214,6 +7221,7 @@
     "useTalkXMonitor",
     "useTalkXOverviewStats",
     "useTalkXResumeChecklist",
+    "useTalkXSegmentProgress",
     "useTalkXSegments",
     "useTalkXServerResumePrecheck",
     "useTalkXServiceStatus",
@@ -7275,6 +7283,7 @@
     "useTalkXAbStats",
     "useTalkXAnalytics",
     "useTalkXCampaignSummary",
+    "useTalkXCampaignTimeline",
     "useTalkXCommandItems",
     "useTalkXConfirm",
     "useTalkXConnectionStatus",
@@ -7291,6 +7300,7 @@
     "useTalkXMonitor",
     "useTalkXOverviewStats",
     "useTalkXResumeChecklist",
+    "useTalkXSegmentProgress",
     "useTalkXSegments",
     "useTalkXServerResumePrecheck",
     "useTalkXServiceStatus",
@@ -7354,6 +7364,7 @@
     "talkx_campaign_recipients_page",
     "talkx_campaign_report",
     "talkx_campaign_resume_precheck",
+    "talkx_campaign_segment_progress",
     "talkx_delete_link",
     "talkx_engine_window_open",
     "talkx_overview_stats",
@@ -7402,7 +7413,7 @@
     "tab",
     "tablist"
    ],
-   "arquivos_puxados": 253
+   "arquivos_puxados": 260
   },
   {
    "id": "talkx-kit",

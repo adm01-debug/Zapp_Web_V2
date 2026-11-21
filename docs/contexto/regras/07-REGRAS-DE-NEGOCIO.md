@@ -1,6 +1,6 @@
 # 07 · REGRAS DE NEGÓCIO
 
-> Gerado automaticamente por AI Context Sync v1.3.2 · commit `be88b1e6f4` · branch `main` · 2026-11-21 20:13 UTC
+> Gerado automaticamente por AI Context Sync v1.3.2 · commit `7f2b4e62c6` · branch `main` · 2026-11-21 20:44 UTC
 > Não edite à mão — regras humanas vão em `manual/`.
 
 ## A. Regras escritas por humanos (`manual/` — prioridade máxima, nunca sobrescrito)
@@ -4963,7 +4963,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | unsupported-filter-column | `analise-prs/resgate-261118-lote3/claude/test-e2e-suite-completa-261104-1428/scripts/e2e-isolated/providers.mjs` |
 | unsupported-order | `analise-prs/resgate-261118-lote3/claude/test-e2e-suite-completa-261104-1428/scripts/e2e-isolated/providers.mjs` |
 | unsupported-range | `analise-prs/resgate-261118-lote3/claude/test-e2e-suite-completa-261104-1428/scripts/e2e-isolated/providers.mjs` |
-| … +2516 linhas — lista completa em `context.json` | |
+| … +2517 linhas — lista completa em `context.json` | |
 
 ## J. Controle de acesso no código (checagens de perfil/permissão)
 
@@ -5054,7 +5054,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `owner` | `supabase/migrations/20260927270018_team_chat_e28_fix_find_or_create_race.sql` |
 | `anon` | `supabase/migrations/20260927340000_fix_add_agent_xp_negative_and_guard.sql` |
 
-## K. Testes como especificação (26093 testes em 2720 arquivos — nomes completos em `context.json`)
+## K. Testes como especificação (26098 testes em 2721 arquivos — nomes completos em `context.json`)
 
 | Arquivo | Testes | Exemplos do que o sistema DEVE fazer |
 |---|---|---|
@@ -5229,6 +5229,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `e2e/navegacao-modulos.spec.ts` | 24 | Navegação por todos os módulos (desktop) · abre as 42 entradas mapeadas, o modo Quadro de Tarefas e a busca global sem erro de console nem requisição falha · Navegação por todos os módulos (celular 390x844) · abre as 42 entradas mapeadas pelo menu móvel, o modo Quadro de Tarefas e a busca do cabeçalho sem erro de console nem requisição falha … |
 | `src/components/inbox/__tests__/ConversationTabs.test.tsx` | 24 | etapa 75 — ConversationTabs (8 abas da fusão) · renderiza as 8 abas e nenhuma aba removida · badge de Tarefas mostra tasksOpen · não renderiza badge quando o contador é zero … |
 | `src/components/inbox/chat/__tests__/ChatSearchBar.test.tsx` | 24 | ChatSearchBar · renders nothing when closed · renders input and filters when open · finds messages by text content … |
+| `src/components/talkx/report/__tests__/TalkXCampaignReport.test.tsx` | 24 | talkxReportData · talkxReportSeriesFromRows · retorna array vazio para entrada vazia · agrupa 2 envios do mesmo dia em um único balde … |
 | `src/hooks/__tests__/useBitrixApi.test.ts` | 24 | useBitrixApi · initializes with loading false · initializes with error null · exposes listLeads function … |
 | `src/hooks/evolution/__tests__/useEvolutionMessaging.test.ts` | 24 | mapeamento ação -> payload da edge function · $name envia $action com o corpo do roteador · envia a mensagem pelo caminho da edge function, nunca direto para a Evolution · expõe exatamente as funções do contrato (nada a mais, nada a menos) … |
 | `src/hooks/system/__tests__/useSecurityPushNotifications.test.ts` | 24 | useSecurityPushNotifications — envio do alerta · com push disponível envia notificação com IP, urgência e vibração longa · severidade baixa não exige interação e usa vibração curta · descrição ausente cai no texto padrão … |
@@ -5246,7 +5247,6 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `src/components/inbox/contact-details/__tests__/ContactActionButtons.test.tsx` | 23 | ContactActionButtons · abre o dropdown de  · abre o dropdown de  · desabilita o botão de e-mail quando o contato não tem e-mail … |
 | `src/components/inbox/location-picker/__tests__/SuggestionList.test.tsx` | 23 | SuggestionList — pausa de 429 (A3-04) · oferece  · espera acabada não mostra  · E57: a contagem de sugestões é anunciada em região viva (getByRole( … |
 | `src/components/inbox/tabs/__tests__/AudioPlayButton.test.tsx` | 23 | AudioPlayButton (A02/D03/D04) · D03: montar não assina nem cria áudio; a URL sai no PRIMEIRO clique e o som toca · D04: mostra o tempo restante e a barra fina enquanto toca; ao terminar volta ao play · D03: erro de URL expirada renova UMA vez e volta a tocar, sem mensagem de falha … |
-| `src/components/talkx/report/__tests__/TalkXCampaignReport.test.tsx` | 23 | talkxReportData · talkxReportSeriesFromRows · retorna array vazio para entrada vazia · agrupa 2 envios do mesmo dia em um único balde … |
 | `src/hooks/__tests__/useDashboardWidgets.test.ts` | 23 | useDashboardWidgets · initializes with default widgets · all widgets have required fields · visibleWidgets only contains visible widgets … |
 | `src/hooks/__tests__/useSLACalculation.test.ts` | 23 | calculateStatus · returns ok when completed on time · returns breached when completed late · returns ok with plenty of time remaining … |
 | `src/hooks/calls/__tests__/useCallChannels.test.ts` | 23 | capacidadesPorCanal — VoIP · registrado e sem problema de microfone: disca, recebe e recusa · reconectando: não disca nem recebe, motivo  · conectando cai na mesma família de reconexão … |
@@ -5358,7 +5358,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `src/hooks/chat/__tests__/useAutomationSuggestions.test.tsx` | 18 | useAutomationSuggestions · não vai à Edge quando a última mensagem é do agente (lastInboundMessageId nulo) · chama a Edge com o contact_id e expõe as sugestões do contrato, com a fonte carimbada · espera o debounce antes de chamar (mensagem que ainda está chegando não gasta IA) … |
 | `src/hooks/chat/journey/__tests__/useJourneyActors.test.tsx` | 18 | useJourneyActors — regras de quem agiu (S063) · usuário com perfil: nome e foto do perfil, em UMA consulta em lote · perfil ausente:  · erro/RLS negado não lança: o ator cai no  … |
 | `src/hooks/communication/__tests__/useTranscriptionNotifications.filtros.test.ts` | 18 | sinalDeConclusao — não depende de payload.old · sem sinal de recência, evento com old só de id não é conclusão · carimbo antigo não passa; carimbo de agora passa · fronteira da janela (~30 s): 45 s já é antigo; 5 s ainda é recente … |
-| … +2420 linhas — lista completa em `context.json` | | |
+| … +2421 linhas — lista completa em `context.json` | | |
 
 ## L. Eventos de webhook tratados (contratos com sistemas externos)
 

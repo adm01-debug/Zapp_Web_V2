@@ -1,8 +1,8 @@
 {
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
- "nos": 2730,
- "arestas": 9328,
+ "nos": 2731,
+ "arestas": 9333,
  "hubs": [
   {
    "arquivo": "src/lib/utils.ts",
@@ -150,7 +150,7 @@
   },
   {
    "arquivo": "src/lib/supabaseHelpers.ts",
-   "importado_por": 46
+   "importado_por": 47
   },
   {
    "arquivo": "src/hooks/system/useNavigationHistory.ts",

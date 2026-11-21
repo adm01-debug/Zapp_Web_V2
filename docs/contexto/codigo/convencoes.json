@@ -12,7 +12,7 @@
    "src/pages (26)"
   ],
   "hooks": [
-   "src/hooks (422)",
+   "src/hooks (423)",
    "analise-prs/resgate-261118-lote3 (92)",
    "src/components (74)"
   ],
@@ -22,7 +22,7 @@
    "src/utils (8)"
   ],
   "testes": [
-   "co-localizado (__tests__) (2357)",
+   "co-localizado (__tests__) (2358)",
    "outro (348)",
    "co-localizado (*.test) (232)"
   ],
@@ -66,11 +66,11 @@
  "commits": {
   "convencao": "conventional commits (observado)",
   "exemplos": [
+   "feat(talkx): monta cards órfãos X149/X144 (Fila por Segmento + Linha do Tempo Operacional) no report de campanha (#3306)",
    "fix(ci): usa fileURLToPath no caminho do script W98 (teste 15) (#3305)",
    "chore(contexto): protege branch contexto da poda + indice migration->PR (#3304)",
    "docs: evidencia de deploy DASH-083 (cron relatorios agendados) (#3303)",
-   "fix(e2e): reconhece rate limit nao autenticado do Docker Hub no retry de pull (#3302)",
-   "fix(e2e): inclui migration do cron de relatórios agendados no guard vault (#3301)"
+   "fix(e2e): reconhece rate limit nao autenticado do Docker Hub no retry de pull (#3302)"
   ]
  },
  "pr_template": ".github/PULL_REQUEST_TEMPLATE.md",

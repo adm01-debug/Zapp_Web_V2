@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "be88b1e6f4ff36ef68d4fa203c3cdab1326ed381",
+  "commit": "7f2b4e62c6b217f25d8c5b5a48013f030160a24b",
   "branch": "main",
-  "data_commit": "2026-11-21T16:53:51-03:00",
+  "data_commit": "2026-11-21T17:42:15-03:00",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "7f2b4e62",
+    "data": "2026-11-21",
+    "assunto": "feat(talkx): monta cards órfãos X149/X144 (Fila por Segmento + Linha do Tempo Operacional) no report de campanha (#3306)"
+   },
    {
     "sha": "be88b1e6",
     "data": "2026-11-21",
@@ -126,14 +131,9 @@
     "sha": "d0e86ced",
     "data": "2026-11-19",
     "assunto": "test(talkx): travar a entrada do teste A/B no assistente (#3280)"
-   },
-   {
-    "sha": "4e4102b5",
-    "data": "2026-11-19",
-    "assunto": "docs(ci): o app Supabase for GitHub esta LIGADO, nao desligado (#3278)"
    }
   ],
-  "arquivos_mudados_7d": 7373,
+  "arquivos_mudados_7d": 7376,
   "pastas_mais_mudadas_30d": [
    {
     "pasta": "docs/contexto/supabase",
@@ -161,7 +161,7 @@
    },
    {
     "pasta": "src/components/talkx",
-    "mudancas": 358
+    "mudancas": 360
    },
    {
     "pasta": "analise-prs/resgate-261115/dossies",
@@ -181,7 +181,7 @@
    },
    {
     "pasta": "src/hooks/integrations",
-    "mudancas": 144
+    "mudancas": 146
    },
    {
     "pasta": "src/components/dashboard",
@@ -314,21 +314,21 @@
   ]
  },
  "contagens": {
-  "arquivos_total": 15716,
-  "arquivos_codigo": 5840,
-  "linhas_codigo": 1130650,
+  "arquivos_total": 15718,
+  "arquivos_codigo": 5842,
+  "linhas_codigo": 1130809,
   "rotas": 18,
   "rotas_http_backend": 11,
   "vistas_por_id": 55,
   "itens_menu": 61,
   "modulos": 147,
   "componentes": 1054,
-  "hooks": 599,
+  "hooks": 600,
   "edge_functions": 92,
   "tabelas": 221,
   "migrations": 1149,
   "cron_jobs": 29,
-  "testes": 3201,
+  "testes": 3202,
   "workflows": 24,
   "scripts": 451,
   "docs_md": 4082
@@ -728,7 +728,7 @@
   },
   "src/components": {
    "arquivos": 2288,
-   "linhas": 389232
+   "linhas": 389275
   },
   "src/config": {
    "arquivos": 3,
@@ -747,8 +747,8 @@
    "linhas": 3293
   },
   "src/hooks": {
-   "arquivos": 1020,
-   "linhas": 166145
+   "arquivos": 1022,
+   "linhas": 166261
   },
   "src/i18n": {
    "arquivos": 2,
@@ -1508,8 +1508,6 @@
    "src/components/talkx/TalkXHelp.tsx",
    "src/components/talkx/TalkXInteractiveEditor.tsx",
    "src/components/talkx/TalkXMediaDropzone.tsx",
-   "src/components/talkx/tracking/TalkXOperationalTimeline.tsx",
-   "src/components/talkx/tracking/TalkXSegmentProgressTable.tsx",
    "src/components/tasks/list/taskRowCells.tsx",
    "src/components/tasks/shared/TaskCheckbox.tsx",
    "src/components/team-chat/EnterDepartmentByCode.tsx",
