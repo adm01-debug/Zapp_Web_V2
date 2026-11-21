@@ -33,7 +33,9 @@ import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 
 export const DIAS_MINIMOS = 7;
-export const SEMPRE_FORA = new Set(['main', 'HEAD']);
+// `contexto` é a branch gerada pelo workflow contexto.yml (snapshots para agentes
+// de IA): nunca pode ser sugerida para poda, mesmo patch-equivalente e antiga.
+export const SEMPRE_FORA = new Set(['main', 'HEAD', 'contexto']);
 
 // Subconjunto dos nomes que o git aceita, sem nada que o shell interprete.
 const NOME_SEGURO = /^[A-Za-z0-9][A-Za-z0-9._/-]*$/;

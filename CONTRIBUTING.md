@@ -36,6 +36,13 @@ bun run dev
 3. Um PR por lote; o agente abre o PR mas **nunca** mergeia por conta própria.
 4. Migrations novas ficam em `supabase/migrations/` e são registradas no ledger local antes do push.
 
+### Branch `contexto` (snapshot automático)
+
+A branch `contexto` é gerada pelo workflow `contexto.yml` (a cada push na `main` e em cron de
+10 min): contém snapshots ao vivo de código, regras e banco em `docs/contexto/` para agentes de
+IA. Ela **nunca** deve ser alterada à mão, usada como base de PR, nem podada — a regra de poda
+(`scripts/ci/branch-podaveis.mjs`) a mantém de fora do comando de exclusão.
+
 ## Comandos principais
 
 ```bash
