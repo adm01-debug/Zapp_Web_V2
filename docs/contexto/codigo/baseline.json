@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "9f3e9175f6e79dbfc505008f412d99bfdf2379c8",
+  "commit": "03350f4456922e5ae91cdfe5562ed950e0d0fa8c",
   "branch": "main",
-  "data_commit": "2026-11-21T15:07:01-03:00",
+  "data_commit": "2026-11-21T15:38:19-03:00",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "03350f44",
+    "data": "2026-11-21",
+    "assunto": "docs: evidencia de deploy DASH-083 (cron relatorios agendados) (#3303)"
+   },
    {
     "sha": "9f3e9175",
     "data": "2026-11-21",
@@ -126,14 +131,9 @@
     "sha": "755c0a6b",
     "data": "2026-11-19",
     "assunto": "chore(db): sincronizar artefatos derivados do banco (#3276)"
-   },
-   {
-    "sha": "38c2ae41",
-    "data": "2026-11-18",
-    "assunto": "feat(talkx): teste A/B deixa de ser inalcançável pela interface (#3272)"
    }
   ],
-  "arquivos_mudados_7d": 7448,
+  "arquivos_mudados_7d": 7370,
   "pastas_mais_mudadas_30d": [
    {
     "pasta": "docs/contexto/supabase",
@@ -145,7 +145,7 @@
    },
    {
     "pasta": "src/components/inbox",
-    "mudancas": 721
+    "mudancas": 720
    },
    {
     "pasta": "docs/reconciliation/reaudit",
@@ -314,7 +314,7 @@
   ]
  },
  "contagens": {
-  "arquivos_total": 15715,
+  "arquivos_total": 15716,
   "arquivos_codigo": 5840,
   "linhas_codigo": 1130640,
   "rotas": 18,
@@ -331,7 +331,7 @@
   "testes": 3201,
   "workflows": 24,
   "scripts": 451,
-  "docs_md": 4081
+  "docs_md": 4082
  },
  "por_pasta": {
   "analise-prs/resgate-261115": {
