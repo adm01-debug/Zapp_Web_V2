@@ -5,6 +5,7 @@ import { avisarCopia, copiarTexto } from '@/lib/clipboard';
 import { type ToneKey, getTonePrompt } from '@/components/inbox/ai-tools/ToneSelector';
 import { usePeriodFilter } from '@/components/inbox/ai-tools/PeriodFilterSelector';
 import { buildPeriodKey, useAiRequestGeneration } from '@/lib/aiRequest/context';
+import { mascararParaIA } from '@/hooks/copilot/useDataMasking';
 
 interface Objection {
   objection: string;
@@ -109,7 +110,7 @@ Responda APENAS em JSON válido com este formato:
 [{"objection":"texto da objeção","counterArgument":"sugestão de resposta","confidence":0.85}]
 Se não houver objeções, retorne []`,
             },
-            { role: 'user', content: `Mensagens do cliente:\n${clientMessages.join('\n')}` },
+            { role: 'user', content: `Mensagens do cliente:\n${mascararParaIA(clientMessages.join('\n'))}` },
           ],
           model: 'google/gemini-3-flash-preview',
           // IA-051 — o id do clique (IA-048) para o log de consumo do `ai-proxy`.

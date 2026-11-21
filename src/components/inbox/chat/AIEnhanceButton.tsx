@@ -14,6 +14,7 @@ import { Sparkles, Loader2, Undo2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/ui/use-toast';
+import { mascararParaIA } from '@/hooks/copilot/useDataMasking';
 
 interface ToneOption {
   id: string;
@@ -60,7 +61,7 @@ export function AIEnhanceButton({ inputValue, onInputChange, contactName }: AIEn
 
     try {
       const { data, error } = await supabase.functions.invoke('ai-enhance-message', {
-        body: { message: textoDoClique, tone, contactName },
+        body: { message: mascararParaIA(textoDoClique), tone, contactName },
       });
 
       if (error) throw error;
