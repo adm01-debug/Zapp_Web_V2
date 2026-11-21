@@ -93,6 +93,7 @@ psql_sql '
   CREATE ROLE anon NOLOGIN;
   CREATE ROLE authenticated NOLOGIN;
   CREATE ROLE service_role NOLOGIN BYPASSRLS;
+  CREATE ROLE zapp_agente_leitura NOLOGIN;
   ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON TABLES TO anon, authenticated, service_role;
 ' >/dev/null
 
@@ -107,6 +108,10 @@ printf '[PASS] migration original insegura foi bloqueada\n'
 
 reset_fixture
 assert_passes 'baseline endurecido'
+
+reset_fixture
+psql_sql 'GRANT SELECT ON public.webhook_failures TO zapp_agente_leitura' >/dev/null
+assert_passes 'grant SELECT para zapp_agente_leitura e permitido (auditoria)'
 
 psql_sql 'DROP TABLE IF EXISTS public.webhook_failures CASCADE;' >/dev/null
 psql_file "$original_migration" >/dev/null
@@ -135,6 +140,10 @@ assert_fails 'service_role recebeu TRUNCATE' \
   'GRANT TRUNCATE ON public.webhook_failures TO service_role'
 assert_fails 'service_role recebeu GRANT OPTION' \
   'GRANT SELECT ON public.webhook_failures TO service_role WITH GRANT OPTION'
+assert_fails 'zapp_agente_leitura recebeu SELECT com GRANT OPTION' \
+  'GRANT SELECT ON public.webhook_failures TO zapp_agente_leitura WITH GRANT OPTION'
+assert_fails 'zapp_agente_leitura recebeu UPDATE' \
+  'GRANT UPDATE ON public.webhook_failures TO zapp_agente_leitura'
 assert_fails 'tabela ausente' \
   'DROP TABLE public.webhook_failures'
 

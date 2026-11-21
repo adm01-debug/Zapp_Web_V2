@@ -1,4 +1,10 @@
 -- Guard fail-closed da dead-letter queue de webhooks.
+--
+-- Regra de ACL: somente postgres e service_role podem acessar a tabela.
+-- Excecao unica e intencional: zapp_agente_leitura (role de leitura/auditoria
+-- criado fora do git, documentado em docs/prod-readiness.md 2e-iv) recebe
+-- somente SELECT nao-grantable para monitorar a fila de falhas. Qualquer outro
+-- grantee, privilegio alem de SELECT ou GRANT OPTION segue sendo violacao.
 
 \set ON_ERROR_STOP on
 \pset tuples_only on
@@ -38,9 +44,11 @@ explicit_acl AS (
 unexpected_acl AS (
   SELECT *
   FROM explicit_acl
-  WHERE grantee NOT IN ('postgres', 'service_role')
+  WHERE grantee NOT IN ('postgres', 'service_role', 'zapp_agente_leitura')
      OR (grantee = 'service_role' AND privilege_type NOT IN ('SELECT', 'INSERT', 'UPDATE', 'DELETE'))
      OR (grantee = 'service_role' AND is_grantable)
+     OR (grantee = 'zapp_agente_leitura' AND privilege_type <> 'SELECT')
+     OR (grantee = 'zapp_agente_leitura' AND is_grantable)
 ),
 column_acl AS (
   SELECT
@@ -130,7 +138,7 @@ SELECT acl_segura, resumo FROM result \gset
 
 \echo :resumo
 \if :acl_segura
-  \echo 'OK: webhook_failures restrita a postgres e service_role.'
+  \echo 'OK: webhook_failures restrita a postgres, service_role e zapp_agente_leitura (SELECT).'
 \else
   \echo 'FALHA: contrato de ACL de webhook_failures foi violado.'
   DO $webhook_failures_acl_guard$
