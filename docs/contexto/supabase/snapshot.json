@@ -55466,6 +55466,41 @@
         "volatility": "stable"
       },
       {
+        "args": "",
+        "callers": {
+          "code": [
+            {
+              "file": "supabase/functions/send-scheduled-report/index.ts",
+              "hits": 1
+            }
+          ],
+          "code_total_files": 1,
+          "cron": [],
+          "db": [],
+          "triggers": [],
+          "views": []
+        },
+        "comment": null,
+        "config": [
+          "search_path=public"
+        ],
+        "definition": null,
+        "definition_sha": "ca40184666b487e1",
+        "execute_api_roles": "service_role",
+        "execute_public": false,
+        "is_trigger_fn": false,
+        "kind": "function",
+        "language": "sql",
+        "leakproof": false,
+        "name": "get_scheduled_report_cron_secret",
+        "owner": "postgres",
+        "returns": "text",
+        "schema": "public",
+        "security_definer": true,
+        "strict": false,
+        "volatility": "volatile"
+      },
+      {
         "args": "p_since timestamp with time zone, p_connection_id uuid",
         "callers": {
           "code": [],
@@ -68720,6 +68755,41 @@
         "name": "trigger_crm_sync_outbox",
         "owner": "postgres",
         "returns": "integer",
+        "schema": "public",
+        "security_definer": true,
+        "strict": false,
+        "volatility": "volatile"
+      },
+      {
+        "args": "",
+        "callers": {
+          "code": [
+            {
+              "file": "supabase/migrations/20261120080000_scheduled_report_cron.sql",
+              "hits": 1
+            }
+          ],
+          "code_total_files": 1,
+          "cron": [],
+          "db": [],
+          "triggers": [],
+          "views": []
+        },
+        "comment": null,
+        "config": [
+          "search_path=public"
+        ],
+        "definition": null,
+        "definition_sha": "59ca635f51f50b46",
+        "execute_api_roles": "service_role",
+        "execute_public": false,
+        "is_trigger_fn": false,
+        "kind": "function",
+        "language": "plpgsql",
+        "leakproof": false,
+        "name": "trigger_due_scheduled_report_configs",
+        "owner": "postgres",
+        "returns": "void",
         "schema": "public",
         "security_definer": true,
         "strict": false,
@@ -90972,6 +91042,12 @@
         "statements": 3,
         "statements_sha": "bc9ffbcc1e787aef",
         "version": "20261119010000"
+      },
+      {
+        "name": "scheduled_report_cron",
+        "statements": 8,
+        "statements_sha": "26a40aa1d29fdfae",
+        "version": "20261120080000"
       }
     ],
     "policies": [
@@ -103725,6 +103801,11 @@
         "created_at": "2026-09-29T14:51:37.775897+00:00",
         "description": "",
         "name": "multiplix_send_url"
+      },
+      {
+        "created_at": "2026-11-21T12:11:43.422551+00:00",
+        "description": "Credencial de maquina do cron de relatorios agendados (pg_cron -> send-scheduled-report). Gerada in-db 2026-11-20. NUNCA logar.",
+        "name": "scheduled_report_cron_secret"
       },
       {
         "created_at": "2026-08-27T19:34:11.065065+00:00",

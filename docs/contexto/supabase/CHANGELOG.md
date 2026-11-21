@@ -2,6 +2,12 @@
 
 Diff semântico gerado a cada coleta em que algo mudou.
 
+## 2026-11-21 12:17 UTC
+
+- **functions** adicionado (2): `public.get_scheduled_report_cron_secret()`, `public.trigger_due_scheduled_report_configs()`
+- **migrations** adicionado (1): `20261120080000_scheduled_report_cron`
+- **vault secrets (nomes)** adicionado (1): `scheduled_report_cron_secret`
+
 ## 2026-11-21 04:14 UTC
 
 - **realtime** adicionado (1): `supabase_realtime_messages_publication:realtime.messages_2026_11_24`
