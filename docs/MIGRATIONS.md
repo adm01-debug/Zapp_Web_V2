@@ -537,6 +537,14 @@ version existe em `supabase_migrations.schema_migrations`.
 
 Evidência detalhada (deploy, dry-run oficial e estado do cron): `docs/evidencias/plano-volume-50/e49-dash083-relatorios-agendados.md`.
 
+### Indice: migration -> PR de deploy
+
+Cada migration de producao deve poder ser rastreada ate a PR que a levou para a main e, quando houver, a evidencia de deploy. Atualize esta lista sempre que uma migration for aplicada em producao (formato: `arquivo` -> `PR na main` -> `PR de evidencia/deploy, se houver`):
+
+| Migration (arquivo) | PR na main | PR de evidencia/deploy |
+| --- | --- | --- |
+| `20261120080000_scheduled_report_cron` (DASH-083) | #3294 | #3303 |
+
 ---
 
 ## 7. Auditoria de arquivos que nao aplicam (replay local, 03/10/2026)

@@ -63,6 +63,13 @@ test('main nunca entra, mesmo antiga e sem PR', () => {
   assert.doesNotMatch(relatorio(r), /--delete main/);
 });
 
+test('contexto (branch gerada pelo workflow) nunca entra, mesmo antiga e sem PR', () => {
+  const r = classificar([eq('contexto', 400)]);
+  assert.deepEqual(r.elegiveis, []);
+  assert.deepEqual(r.fora.principal, ['contexto']);
+  assert.doesNotMatch(relatorio(r), /--delete contexto/);
+});
+
 test('branch protegida nunca entra', () => {
   const r = classificar([eq('release/estavel', 90)], { protegidas: ['release/estavel'] });
   assert.deepEqual(r.elegiveis, []);
