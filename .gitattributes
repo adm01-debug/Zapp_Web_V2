@@ -4,3 +4,11 @@ graphify-out/graph.json merge=graphify
 supabase/functions/** text eol=lf
 supabase/config.toml text eol=lf
 supabase/deployment-manifest.json text eol=lf
+
+# Inventários da raiz e docs: sempre LF. Sem o atributo, o checkout Windows (autocrlf)
+# grava CRLF no disco e quebra os parsers dos testes de convenção, que usam split('\n')
+# + regex sem flag m (o \r residual impede o match da linha de tabela).
+ESTADO.md text eol=lf
+FEATURE_REGISTRY.md text eol=lf
+TESTING_CONVENTION.md text eol=lf
+docs/**/*.md text eol=lf
