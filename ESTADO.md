@@ -35,10 +35,10 @@ partir do código e falha quando:
 | `ai-auto-tag` | E | — sem chamador no repositório — |
 | `ai-churn-analysis` | A | `src/components/ai/ChurnPredictionDashboard.tsx:126` |
 | `ai-classify-tickets` | A | `src/components/ai/AutoTicketClassifier.tsx:146` |
-| `ai-conversation-analysis` | A | `src/components/inbox/AIConversationAssistant.tsx:107` |
-| `ai-conversation-summary` | A | `src/components/inbox/ConversationSummary.tsx:91` |
+| `ai-conversation-analysis` | A | `src/components/inbox/AIConversationAssistant.tsx:108` |
+| `ai-conversation-summary` | A | `src/components/inbox/ConversationSummary.tsx:92` |
 | `ai-deadline-calculator` | E | — sem chamador no repositório — |
-| `ai-enhance-message` | A | `src/components/inbox/chat/AIEnhanceButton.tsx:62` · `src/components/inbox/chat/AIRewriteButton.tsx:50` |
+| `ai-enhance-message` | A | `src/components/inbox/chat/AIEnhanceButton.tsx:63` · `src/components/inbox/chat/AIRewriteButton.tsx:51` |
 | `ai-jobs-worker` | C | `supabase/migrations/20261002371230_ia045_ia046_ai_jobs_durabilidade_e_estados.sql:533` |
 | `ai-kb-ingest` | A | `src/hooks/integrations/useKnowledgeBase.ts:137` · `src/hooks/integrations/useKnowledgeBase.ts:208` |
 | `ai-lead-temperature` | E | — sem chamador no repositório — |
@@ -47,7 +47,7 @@ partir do código e falha quando:
 | `ai-objection-handler` | E | — sem chamador no repositório — |
 | `ai-price-anchor` | E | — sem chamador no repositório — |
 | `ai-product-recommendation` | E | — sem chamador no repositório — |
-| `ai-proxy` | A | `src/components/admin/SupervisorCopilot.tsx:89` · `src/components/settings/ai-providers/useAIProviders.ts:121` · `src/hooks/inbox/useObjectionDetector.ts:90` · `src/hooks/inbox/useObjectionDetector.ts:164` · `src/hooks/ui/useUniversityHelp.ts:130` · `supabase/functions/talkx-ai/index.ts:589` |
+| `ai-proxy` | A | `src/components/admin/SupervisorCopilot.tsx:89` · `src/components/settings/ai-providers/useAIProviders.ts:121` · `src/hooks/inbox/useObjectionDetector.ts:91` · `src/hooks/inbox/useObjectionDetector.ts:165` · `src/hooks/ui/useUniversityHelp.ts:130` · `supabase/functions/talkx-ai/index.ts:589` |
 | `ai-suggest-reply` | A | `src/components/inbox/AISuggestions.tsx:104` |
 | `ai-transcribe-audio` | A | `src/components/inbox/AudioMessagePlayer.tsx:71` · `supabase/functions/_shared/evolution-webhook-messages.ts:1457` |
 | `ai-usage-outbox-drain` | C | `supabase/migrations/20261103223000_ai_usage_outbox_drain_cron.sql:64` · `supabase/config.toml:103` |
