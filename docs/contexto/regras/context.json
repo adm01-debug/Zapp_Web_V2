@@ -1,9 +1,9 @@
 {
  "meta": {
-  "sha": "f4a2a77645756e98bda906be21a33fbadf1396dd",
+  "sha": "ee85340ba37786bb7e511b8bef0a815edf4fd838",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-21 12:37 UTC",
+  "generated_at": "2026-11-21 14:13 UTC",
   "files_total": 15571,
   "code_files": 8876,
   "code_lines": 1408011
@@ -479255,10 +479255,19 @@
   }
  },
  "git": {
-  "sha": "f4a2a77645756e98bda906be21a33fbadf1396dd",
+  "sha": "ee85340ba37786bb7e511b8bef0a815edf4fd838",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "ee85340b",
+    "date": "2026-11-21",
+    "author": "adm01-debug",
+    "subject": "fix(docs): forca eol=lf nos inventarios e docs (falso-negativo local nos testes de convencao) (#3298)",
+    "files": [
+     ".gitattributes"
+    ]
+   },
    {
     "sha": "f4a2a776",
     "date": "2026-11-21",
@@ -482609,15 +482618,6 @@
      "scripts/db/gen-db-inventory.mjs",
      "scripts/db/gen-db-inventory.unit.mjs"
     ]
-   },
-   {
-    "sha": "f058a63e",
-    "date": "2026-11-18",
-    "author": "adm01-debug",
-    "subject": "Registra a auditoria de liquidação de branches, PEND=0 (#3264)",
-    "files": [
-     "\"docs/auditoria-liquida\\303\\247\\303\\243o-branches.md\""
-    ]
    }
   ],
   "hot_files": [
@@ -482666,10 +482666,6 @@
     2
    ],
    [
-    "\"docs/auditoria-liquida\\303\\247\\303\\243o-branches.md\"",
-    2
-   ],
-   [
     "docs/DB-INVENTORY.md",
     2
    ],
@@ -482696,6 +482692,10 @@
    [
     ".github/workflows/types-sync.yml",
     2
+   ],
+   [
+    ".gitattributes",
+    1
    ],
    [
     "supabase/functions/crm-integration/index.test.ts",

@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "f4a2a77645756e98bda906be21a33fbadf1396dd",
+  "commit": "ee85340ba37786bb7e511b8bef0a815edf4fd838",
   "branch": "main",
-  "data_commit": "2026-11-21T09:35:44-03:00",
+  "data_commit": "2026-11-21T10:59:36-03:00",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "ee85340b",
+    "data": "2026-11-21",
+    "assunto": "fix(docs): forca eol=lf nos inventarios e docs (falso-negativo local nos testes de convencao) (#3298)"
+   },
    {
     "sha": "f4a2a776",
     "data": "2026-11-21",
@@ -126,14 +131,9 @@
     "sha": "b6351534",
     "data": "2026-11-18",
     "assunto": "docs: publicar conhecimento completo em docs/contexto na main (#3270)"
-   },
-   {
-    "sha": "8747e4be",
-    "data": "2026-11-18",
-    "assunto": "ci(e2e): workflow para regerar baselines visuais no ambiente do CI (#3268)"
    }
   ],
-  "arquivos_mudados_7d": 7456,
+  "arquivos_mudados_7d": 7450,
   "pastas_mais_mudadas_30d": [
    {
     "pasta": "docs/contexto/supabase",
@@ -266,10 +266,6 @@
     "mudancas": 6
    },
    {
-    "arquivo": "scripts/edge-deploy/health-check.mjs",
-    "mudancas": 6
-   },
-   {
     "arquivo": "scripts/edge-deploy/health-check.unit.mjs",
     "mudancas": 6
    },
@@ -295,6 +291,10 @@
    },
    {
     "arquivo": "docs/audits/edge-functions-authz-coverage.md",
+    "mudancas": 5
+   },
+   {
+    "arquivo": "docs/contexto/regras/manual/regras.md",
     "mudancas": 5
    }
   ],
