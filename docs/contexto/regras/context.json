@@ -1,15 +1,15 @@
 {
  "meta": {
-  "sha": "b3de24d38a9064dbc4e50b566e3281953246f645",
+  "sha": "8d2d330c76ea40fb39eeafa1000682fb639a178f",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-21 15:11 UTC",
+  "generated_at": "2026-11-21 16:13 UTC",
   "files_total": 15571,
   "code_files": 8876,
-  "code_lines": 1408013
+  "code_lines": 1408021
  },
  "version": "1.3.2",
- "facts_hash": "b1ade5a9962f2697",
+ "facts_hash": "8c5c0bb51d788672",
  "stack": {
   "frameworks": [
    "React + Vite",
@@ -76874,7 +76874,7 @@
   {
    "module": "scripts",
    "files": 500,
-   "lines": 102014,
+   "lines": 102022,
    "tables": [
     "a",
     "alem_do_limite",
@@ -354703,7 +354703,7 @@
   },
   "scripts/db-audit/check-webhook-failures-acl.sql": {
    "path": "scripts/db-audit/check-webhook-failures-acl.sql",
-   "lines": 142,
+   "lines": 150,
    "uses_service_role": true
   },
   "scripts/db-audit/compose-confirm-hash.mjs": {
@@ -479255,10 +479255,20 @@
   }
  },
  "git": {
-  "sha": "b3de24d38a9064dbc4e50b566e3281953246f645",
+  "sha": "8d2d330c76ea40fb39eeafa1000682fb639a178f",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "8d2d330c",
+    "date": "2026-11-21",
+    "author": "adm01-debug",
+    "subject": "fix(db-audit): contrato de ACL do webhook_failures aceita SELECT do zapp_agente_leitura (#3300)",
+    "files": [
+     "scripts/db-audit/check-webhook-failures-acl.sql",
+     "scripts/db-audit/check-webhook-failures-acl.test.sh"
+    ]
+   },
    {
     "sha": "b3de24d3",
     "date": "2026-11-21",
@@ -482604,40 +482614,19 @@
     "files": [
      "performance-budget.json"
     ]
-   },
-   {
-    "sha": "7d2e76d8",
-    "date": "2026-11-18",
-    "author": "github-actions[bot]",
-    "subject": "chore(db): sincronizar artefatos derivados do banco (#3228)",
-    "files": [
-     "docs/DB-INVENTORY.md",
-     "scripts/db-audit/grants-baseline.json",
-     "src/integrations/supabase/types.ts",
-     "supabase/schema-catalog.json",
-     "supabase/schema-manifest.json"
-    ]
    }
   ],
   "hot_files": [
    [
     "src/integrations/supabase/types.ts",
-    4
-   ],
-   [
-    "supabase/schema-catalog.json",
-    4
-   ],
-   [
-    "supabase/schema-manifest.json",
-    4
-   ],
-   [
-    "docs/DB-INVENTORY.md",
     3
    ],
    [
-    "scripts/db-audit/grants-baseline.json",
+    "supabase/schema-catalog.json",
+    3
+   ],
+   [
+    "supabase/schema-manifest.json",
     3
    ],
    [
@@ -482651,6 +482640,14 @@
    [
     "src/hooks/integrations/useTalkXAbStats.ts",
     3
+   ],
+   [
+    "docs/DB-INVENTORY.md",
+    2
+   ],
+   [
+    "scripts/db-audit/grants-baseline.json",
+    2
    ],
    [
     "ESTADO.md",
@@ -482689,15 +482686,15 @@
     2
    ],
    [
+    "scripts/db-audit/check-webhook-failures-acl.sql",
+    1
+   ],
+   [
+    "scripts/db-audit/check-webhook-failures-acl.test.sh",
+    1
+   ],
+   [
     "scripts/db-audit/migration-evidence.json",
-    1
-   ],
-   [
-    ".gitattributes",
-    1
-   ],
-   [
-    "supabase/functions/crm-integration/index.test.ts",
     1
    ]
   ]

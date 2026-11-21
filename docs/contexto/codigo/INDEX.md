@@ -1,7 +1,7 @@
 # Contexto do projeto para agentes de IA
 
 GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.
-Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR dela) a cada push em `main` e a cada 10 minutos pelo workflow `contexto.yml`; índice único das três fontes em `docs/contexto/00-INDEX.md`. Gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `b3de24d38a9064dbc4e50b566e3281953246f645` (2026-11-21T15:05:04Z).
+Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR dela) a cada push em `main` e a cada 10 minutos pelo workflow `contexto.yml`; índice único das três fontes em `docs/contexto/00-INDEX.md`. Gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `8d2d330c76ea40fb39eeafa1000682fb639a178f` (2026-11-21T12:44:58-03:00).
 
 ## Como usar (leia antes de planejar ou executar qualquer tarefa)
 1. **Tela/rota/menu** → `rotas.json` (url/vista/menu → arquivo → hooks → tabelas → edges; `rotas_http_backend` para APIs) e `modulos.json` (módulo inteiro + dependências entre módulos).
@@ -395,7 +395,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - possiveis_segredos_no_codigo: 6 — ex.: analise-prs/resgate-261118-lote3/claude_pink/cool-dijkstra-xk9ek2/scripts/ci/edge-coverage-authz.unit.mjs:397, analise-prs/resgate-261118-lote3/claude_pink/cool-dijkstra-xk9ek2/scripts/edge-deploy/redigir-log.unit.mjs:38, scripts/ai-context/cenarios.mjs:102
 
 ## Grafo de código (graphify)
-- 102832 nós · 174420 arestas · 9228 comunidades · grafo do commit `b3de24d3`
+- 102832 nós · 174420 arestas · 9228 comunidades · grafo do commit `8d2d330c`
 - comunidades maiores: Communities (5953 total, 1987 thin omitted) (3946), react (1728), lucide-react (1247), vitest (1032), ref_node_fs (1022), cn (734), DashboardView.tsx (698), useMyWorkItems.ts (541), validation.ts (537), date-fns (468), ref_https (468), Conversation (462)
 - símbolos mais chamados: cn() (src/lib/utils.ts), useAuth() (src/hooks/auth/useAuth.tsx), jsonResponse() (supabase/functions/_shared/validation.ts), errorResponse() (supabase/functions/_shared/validation.ts), handleCors() (supabase/functions/_shared/validation.ts), fail() (scripts/e2e-isolated/network-proof-policy.mjs), Logger (supabase/functions/_shared/validation.ts), requireEnv() (supabase/functions/_shared/validation.ts), fmtInt() (src/components/talkx/kit/format.ts), fromTable() (src/lib/supabaseHelpers.ts), useUserRole() (src/hooks/system/useUserRole.ts), validationErrorResponse() (supabase/functions/_shared/schemas.ts)
 - consulta local: `graphify query "<pergunta>"`, `graphify path "<A>" "<B>"`, `graphify explain "<X>"`
@@ -523,6 +523,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - CHANGELOG topo: [Unreleased]
 
 ## Últimos commits
+- 2026-11-21 `8d2d330c` fix(db-audit): contrato de ACL do webhook_failures aceita SELECT do zapp_agente_leitura (#3300)
 - 2026-11-21 `b3de24d3` chore(db): sincronizar artefatos derivados do banco (#3299)
 - 2026-11-21 `219555ea` fix(db-audit): reconcilia drift da 20261111181000 e remove excecoes obsoletas (#3297)
 - 2026-11-21 `ee85340b` fix(docs): forca eol=lf nos inventarios e docs (falso-negativo local nos testes de convencao) (#3298)
@@ -537,7 +538,6 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - 2026-11-19 `055cf6e2` chore(docs): consolidar relatório de liquidação com estado final (PEND=0)
 - 2026-11-19 `0d1ebd5b` docs: publicar snapshots SQL documentais do contexto X065 (#3284)
 - 2026-11-19 `49640b0a` fix(team-chat): erro ao ler config de WhatsApp deixa de virar formulario "Nenhum" (#3283)
-- 2026-11-19 `a38fc63d` fix(team-chat): falha ao ler convites deixa de se disfarcar de "nenhum convite" (#3282)
 
 ## Arquivos deste diretório
 - `docs/contexto/codigo/rotas.json`

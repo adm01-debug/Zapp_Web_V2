@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "b3de24d38a9064dbc4e50b566e3281953246f645",
+  "commit": "8d2d330c76ea40fb39eeafa1000682fb639a178f",
   "branch": "main",
-  "data_commit": "2026-11-21T15:05:04Z",
+  "data_commit": "2026-11-21T12:44:58-03:00",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "8d2d330c",
+    "data": "2026-11-21",
+    "assunto": "fix(db-audit): contrato de ACL do webhook_failures aceita SELECT do zapp_agente_leitura (#3300)"
+   },
    {
     "sha": "b3de24d3",
     "data": "2026-11-21",
@@ -126,14 +131,9 @@
     "sha": "0f3378f8",
     "data": "2026-11-19",
     "assunto": "chore(db): sincronizar artefatos derivados do banco (#3275)"
-   },
-   {
-    "sha": "9d4cff9d",
-    "data": "2026-11-18",
-    "assunto": "fix(talkx): variante do A/B deixa de ser re-sorteada no envio (#3271)"
    }
   ],
-  "arquivos_mudados_7d": 7444,
+  "arquivos_mudados_7d": 7446,
   "pastas_mais_mudadas_30d": [
    {
     "pasta": "docs/contexto/supabase",
@@ -266,10 +266,6 @@
     "mudancas": 6
    },
    {
-    "arquivo": "scripts/edge-deploy/health-check.unit.mjs",
-    "mudancas": 6
-   },
-   {
     "arquivo": "src/components/talkx/TalkXCampaignRunning.tsx",
     "mudancas": 6
    },
@@ -295,6 +291,10 @@
    },
    {
     "arquivo": "docs/contexto/regras/manual/regras.md",
+    "mudancas": 5
+   },
+   {
+    "arquivo": "docs/prod-readiness.md",
     "mudancas": 5
    }
   ],

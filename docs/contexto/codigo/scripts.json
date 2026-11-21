@@ -940,7 +940,7 @@
   {
    "arquivo": "scripts/db-audit/check-webhook-failures-acl.sql",
    "descricao": null,
-   "linhas": 142,
+   "linhas": 150,
    "env": [],
    "npm_scripts": [],
    "workflows": [],
@@ -949,7 +949,7 @@
   {
    "arquivo": "scripts/db-audit/check-webhook-failures-acl.test.sh",
    "descricao": null,
-   "linhas": 142,
+   "linhas": 151,
    "env": [],
    "npm_scripts": [],
    "workflows": [
