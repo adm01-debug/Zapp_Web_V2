@@ -1,7 +1,7 @@
 # Contexto do projeto para agentes de IA
 
 GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.
-Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR dela) a cada push em `main` e a cada 10 minutos pelo workflow `contexto.yml`; índice único das três fontes em `docs/contexto/00-INDEX.md`. Gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `8d2d330c76ea40fb39eeafa1000682fb639a178f` (2026-11-21T12:44:58-03:00).
+Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR dela) a cada push em `main` e a cada 10 minutos pelo workflow `contexto.yml`; índice único das três fontes em `docs/contexto/00-INDEX.md`. Gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `79c7a8bd80039337469067b7696c7ac50e78d52b` (2026-11-21T13:43:11-03:00).
 
 ## Como usar (leia antes de planejar ou executar qualquer tarefa)
 1. **Tela/rota/menu** → `rotas.json` (url/vista/menu → arquivo → hooks → tabelas → edges; `rotas_http_backend` para APIs) e `modulos.json` (módulo inteiro + dependências entre módulos).
@@ -36,7 +36,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 |---|---|
 | arquivos_total | 15715 |
 | arquivos_codigo | 5840 |
-| linhas_codigo | 1130602 |
+| linhas_codigo | 1130619 |
 | rotas | 18 |
 | rotas_http_backend | 11 |
 | vistas_por_id | 55 |
@@ -395,8 +395,8 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - possiveis_segredos_no_codigo: 6 — ex.: analise-prs/resgate-261118-lote3/claude_pink/cool-dijkstra-xk9ek2/scripts/ci/edge-coverage-authz.unit.mjs:397, analise-prs/resgate-261118-lote3/claude_pink/cool-dijkstra-xk9ek2/scripts/edge-deploy/redigir-log.unit.mjs:38, scripts/ai-context/cenarios.mjs:102
 
 ## Grafo de código (graphify)
-- 102832 nós · 174420 arestas · 9228 comunidades · grafo do commit `8d2d330c`
-- comunidades maiores: Communities (5953 total, 1987 thin omitted) (3946), react (1728), lucide-react (1247), vitest (1032), ref_node_fs (1022), cn (734), DashboardView.tsx (698), useMyWorkItems.ts (541), validation.ts (537), date-fns (468), ref_https (468), Conversation (462)
+- 102833 nós · 174421 arestas · 9252 comunidades · grafo do commit `79c7a8bd`
+- comunidades maiores: Communities (5953 total, 1987 thin omitted) (3947), react (1623), lucide-react (1460), tooltip.tsx (1194), TalkXSuppression.tsx (1182), cn (1006), validation.ts (628), ref_node_assert (519), ExternalProductManagement.tsx (492), ref_https (453), ref_node_fs (436), vitest (428)
 - símbolos mais chamados: cn() (src/lib/utils.ts), useAuth() (src/hooks/auth/useAuth.tsx), jsonResponse() (supabase/functions/_shared/validation.ts), errorResponse() (supabase/functions/_shared/validation.ts), handleCors() (supabase/functions/_shared/validation.ts), fail() (scripts/e2e-isolated/network-proof-policy.mjs), Logger (supabase/functions/_shared/validation.ts), requireEnv() (supabase/functions/_shared/validation.ts), fmtInt() (src/components/talkx/kit/format.ts), fromTable() (src/lib/supabaseHelpers.ts), useUserRole() (src/hooks/system/useUserRole.ts), validationErrorResponse() (supabase/functions/_shared/schemas.ts)
 - consulta local: `graphify query "<pergunta>"`, `graphify path "<A>" "<B>"`, `graphify explain "<X>"`
 
@@ -523,6 +523,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - CHANGELOG topo: [Unreleased]
 
 ## Últimos commits
+- 2026-11-21 `79c7a8bd` fix(e2e): inclui migration do cron de relatórios agendados no guard vault (#3301)
 - 2026-11-21 `8d2d330c` fix(db-audit): contrato de ACL do webhook_failures aceita SELECT do zapp_agente_leitura (#3300)
 - 2026-11-21 `b3de24d3` chore(db): sincronizar artefatos derivados do banco (#3299)
 - 2026-11-21 `219555ea` fix(db-audit): reconcilia drift da 20261111181000 e remove excecoes obsoletas (#3297)
@@ -537,7 +538,6 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - 2026-11-19 `76b0c7eb` docs(mapa): incorporar acervo de refs do remoto + veredito da auditoria (#3287)
 - 2026-11-19 `055cf6e2` chore(docs): consolidar relatório de liquidação com estado final (PEND=0)
 - 2026-11-19 `0d1ebd5b` docs: publicar snapshots SQL documentais do contexto X065 (#3284)
-- 2026-11-19 `49640b0a` fix(team-chat): erro ao ler config de WhatsApp deixa de virar formulario "Nenhum" (#3283)
 
 ## Arquivos deste diretório
 - `docs/contexto/codigo/rotas.json`

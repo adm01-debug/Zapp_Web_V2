@@ -4024,7 +4024,7 @@
   {
    "arquivo": "scripts/e2e-isolated/migrations.mjs",
    "descricao": "Only the active migration chain was inspected. These hashes bind the review of Vault calls to exact source bytes; future changes must be reviewed again.",
-   "linhas": 81,
+   "linhas": 84,
    "env": [],
    "npm_scripts": [],
    "workflows": [],

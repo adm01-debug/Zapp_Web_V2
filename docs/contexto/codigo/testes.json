@@ -4825,12 +4825,12 @@
   {
    "arquivo": "scripts/ci/e2e-isolated-migrations.unit.mjs",
    "tipo": "unit",
-   "linhas": 126,
+   "linhas": 140,
    "testa": [
     "scripts/e2e-isolated/migrations.mjs",
     "scripts/e2e-isolated/runtime-contract.mjs"
    ],
-   "casos": 11
+   "casos": 13
   },
   {
    "arquivo": "scripts/ci/e2e-isolated-network-contexts.unit.mjs",

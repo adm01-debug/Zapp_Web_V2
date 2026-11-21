@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "8d2d330c76ea40fb39eeafa1000682fb639a178f",
+  "commit": "79c7a8bd80039337469067b7696c7ac50e78d52b",
   "branch": "main",
-  "data_commit": "2026-11-21T12:44:58-03:00",
+  "data_commit": "2026-11-21T13:43:11-03:00",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "79c7a8bd",
+    "data": "2026-11-21",
+    "assunto": "fix(e2e): inclui migration do cron de relatórios agendados no guard vault (#3301)"
+   },
    {
     "sha": "8d2d330c",
     "data": "2026-11-21",
@@ -126,14 +131,9 @@
     "sha": "231b0e58",
     "data": "2026-11-18",
     "assunto": "feat(talkx): decidir a vencedora do A/B pela tela de execução (#3274)"
-   },
-   {
-    "sha": "0f3378f8",
-    "data": "2026-11-19",
-    "assunto": "chore(db): sincronizar artefatos derivados do banco (#3275)"
    }
   ],
-  "arquivos_mudados_7d": 7446,
+  "arquivos_mudados_7d": 7447,
   "pastas_mais_mudadas_30d": [
    {
     "pasta": "docs/contexto/supabase",
@@ -316,7 +316,7 @@
  "contagens": {
   "arquivos_total": 15715,
   "arquivos_codigo": 5840,
-  "linhas_codigo": 1130602,
+  "linhas_codigo": 1130619,
   "rotas": 18,
   "rotas_http_backend": 11,
   "vistas_por_id": 55,
@@ -628,7 +628,7 @@
   },
   "scripts/ci": {
    "arquivos": 231,
-   "linhas": 50326
+   "linhas": 50340
   },
   "scripts/db": {
    "arquivos": 2,
@@ -648,7 +648,7 @@
   },
   "scripts/e2e-isolated": {
    "arquivos": 40,
-   "linhas": 6441
+   "linhas": 6444
   },
   "scripts/edge-deploy": {
    "arquivos": 32,
