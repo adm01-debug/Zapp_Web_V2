@@ -1,15 +1,15 @@
 {
  "meta": {
-  "sha": "7f2b4e62c6b217f25d8c5b5a48013f030160a24b",
+  "sha": "85feab2a4228fbe0eda82a58c692ad37bfb8d629",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-21 20:44 UTC",
+  "generated_at": "2026-11-21 21:22 UTC",
   "files_total": 15574,
   "code_files": 8878,
-  "code_lines": 1408228
+  "code_lines": 1408271
  },
  "version": "1.3.2",
- "facts_hash": "0f6f67b1ffcff881",
+ "facts_hash": "5972c258e2b0c09f",
  "stack": {
   "frameworks": [
    "React + Vite",
@@ -77212,7 +77212,7 @@
   {
    "module": "src/components",
    "files": 2288,
-   "lines": 389275,
+   "lines": 389318,
    "tables": [
     "agent_skills",
     "agent_visibility_grants",
@@ -193457,6 +193457,18 @@
    {
     "file": "src/components/inbox/copilot/__tests__/RadarPanel.test.tsx",
     "name": "sem historico nao renderiza a secao"
+   },
+   {
+    "file": "src/components/inbox/copilot/__tests__/RadarPanel.test.tsx",
+    "name": "Resgate CV orfaos no Radar (DecisionMakerBadge, StakeholdersCard, OccasionAlert)"
+   },
+   {
+    "file": "src/components/inbox/copilot/__tests__/RadarPanel.test.tsx",
+    "name": "mini-mode renderiza OccasionAlert com a ocasião da sessão"
+   },
+   {
+    "file": "src/components/inbox/copilot/__tests__/RadarPanel.test.tsx",
+    "name": "DecisionMakerCard mostra badge do papel e stakeholders"
    },
    {
     "file": "src/components/inbox/location-picker/__tests__/LocationPicker.gpsAtrasado.test.tsx",
@@ -378976,7 +378988,7 @@
   },
   "src/components/inbox/chat/ChatPanelHeader.tsx": {
    "path": "src/components/inbox/chat/ChatPanelHeader.tsx",
-   "lines": 285,
+   "lines": 288,
    "exports": [
     "const ChatPanelHeader"
    ],
@@ -380115,7 +380127,7 @@
   },
   "src/components/inbox/chat/__tests__/ChatPanelHeader.crm.test.tsx": {
    "path": "src/components/inbox/chat/__tests__/ChatPanelHeader.crm.test.tsx",
-   "lines": 113,
+   "lines": 114,
    "is_test": true,
    "tests": [
     "ChatPanelHeader: selos do CRM",
@@ -382743,7 +382755,7 @@
   },
   "src/components/inbox/copilot/RadarCards.tsx": {
    "path": "src/components/inbox/copilot/RadarCards.tsx",
-   "lines": 264,
+   "lines": 265,
    "exports": [
     "function StageCard",
     "function BrindeCard",
@@ -382765,7 +382777,7 @@
   },
   "src/components/inbox/copilot/RadarPanel.tsx": {
    "path": "src/components/inbox/copilot/RadarPanel.tsx",
-   "lines": 511,
+   "lines": 515,
    "exports": [
     "interface RadarPanelProps",
     "function RadarPanel"
@@ -382883,7 +382895,7 @@
   },
   "src/components/inbox/copilot/__tests__/RadarPanel.test.tsx": {
    "path": "src/components/inbox/copilot/__tests__/RadarPanel.test.tsx",
-   "lines": 220,
+   "lines": 254,
    "is_test": true,
    "doc": "CV-051–060 — Testes do RadarPanel e useRadarPanel. CV-051: floating panel render. CV-052: three display modes. CV-053: collapsible cards. CV-054: thinking indicator + timeout message. CV-056: keyboard shortcuts. CV-058: DND mode.",
    "tests": [
@@ -382918,7 +382930,10 @@
     "renderiza ",
     "o historico fica DENTRO da area rolavel, nao abaixo dela",
     "em nao-perturbe o historico nao aparece",
-    "sem historico nao renderiza a secao"
+    "sem historico nao renderiza a secao",
+    "Resgate CV orfaos no Radar (DecisionMakerBadge, StakeholdersCard, OccasionAlert)",
+    "mini-mode renderiza OccasionAlert com a ocasião da sessão",
+    "DecisionMakerCard mostra badge do papel e stakeholders"
    ]
   },
   "src/components/inbox/interactive-builder/ButtonTypeHelpers.tsx": {
@@ -479344,10 +479359,24 @@
   }
  },
  "git": {
-  "sha": "7f2b4e62c6b217f25d8c5b5a48013f030160a24b",
+  "sha": "85feab2a4228fbe0eda82a58c692ad37bfb8d629",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "85feab2a",
+    "date": "2026-11-21",
+    "author": "adm01-debug",
+    "subject": "feat(talkx): monta orfaos RADAR (decision maker/stakeholders/ocasiao) e SpeedSelector no header (#3307)",
+    "files": [
+     "src/components/inbox/chat/ChatPanelHeader.tsx",
+     "src/components/inbox/chat/__tests__/ChatPanelHeader.crm.test.tsx",
+     "src/components/inbox/copilot/RadarCards.tsx",
+     "src/components/inbox/copilot/RadarPanel.tsx",
+     "src/components/inbox/copilot/StakeholdersCard.tsx",
+     "src/components/inbox/copilot/__tests__/RadarPanel.test.tsx"
+    ]
+   },
    {
     "sha": "7f2b4e62",
     "date": "2026-11-21",
@@ -480751,19 +480780,6 @@
      "src/hooks/integrations/useTalkXAbStats.ts",
      "supabase/migrations/20261119010000_talkx_set_campaign_ab.sql"
     ]
-   },
-   {
-    "sha": "231b0e58",
-    "date": "2026-11-18",
-    "author": "adm01-debug",
-    "subject": "feat(talkx): decidir a vencedora do A/B pela tela de execução (#3274)",
-    "files": [
-     "docs/talkx/ESTADOS.md",
-     "src/components/talkx/TalkXCampaignRunning.tsx",
-     "src/components/talkx/__tests__/TalkXAbTestResults.test.tsx",
-     "src/components/talkx/tracking/TalkXAbTestResults.tsx",
-     "src/hooks/integrations/useTalkXAbStats.ts"
-    ]
    }
   ],
   "hot_files": [
@@ -480812,8 +480828,28 @@
     2
    ],
    [
-    "src/hooks/integrations/useTalkXAbStats.ts",
-    2
+    "src/components/inbox/chat/ChatPanelHeader.tsx",
+    1
+   ],
+   [
+    "src/components/inbox/chat/__tests__/ChatPanelHeader.crm.test.tsx",
+    1
+   ],
+   [
+    "src/components/inbox/copilot/RadarCards.tsx",
+    1
+   ],
+   [
+    "src/components/inbox/copilot/RadarPanel.tsx",
+    1
+   ],
+   [
+    "src/components/inbox/copilot/StakeholdersCard.tsx",
+    1
+   ],
+   [
+    "src/components/inbox/copilot/__tests__/RadarPanel.test.tsx",
+    1
    ],
    [
     "src/components/talkx/report/TalkXCampaignReport.tsx",
@@ -480825,26 +480861,6 @@
    ],
    [
     "src/hooks/integrations/__tests__/useTalkXSegmentProgress.test.ts",
-    1
-   ],
-   [
-    "src/hooks/integrations/useTalkXSegmentProgress.ts",
-    1
-   ],
-   [
-    "CONTRIBUTING.md",
-    1
-   ],
-   [
-    "scripts/ci/branch-podaveis.mjs",
-    1
-   ],
-   [
-    "docs/evidencias/plano-volume-50/README.md",
-    1
-   ],
-   [
-    "docs/evidencias/plano-volume-50/e49-dash083-relatorios-agendados.md",
     1
    ]
   ]

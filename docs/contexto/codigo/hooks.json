@@ -7534,7 +7534,7 @@
     "src/components/inbox/copilot/RadarPanel.tsx",
     "src/components/inbox/tabs/AiTab.tsx"
    ],
-   "coberto_por_testes": 3
+   "coberto_por_testes": 4
   },
   {
    "arquivo": "src/hooks/copilot/useCopilotSupervisor.ts",

@@ -1305,6 +1305,7 @@
     "gridcell",
     "group",
     "img",
+    "intermediary",
     "leader",
     "link",
     "list",
@@ -1335,9 +1336,10 @@
     "tabpanel",
     "timer",
     "toolbar",
+    "unknown",
     "user"
    ],
-   "arquivos_puxados": 1517
+   "arquivos_puxados": 1522
   },
   {
    "protegida": false,
@@ -2187,6 +2189,7 @@
     "gridcell",
     "group",
     "img",
+    "intermediary",
     "listbox",
     "log",
     "menu",
@@ -2208,9 +2211,10 @@
     "tablist",
     "timer",
     "toolbar",
+    "unknown",
     "user"
    ],
-   "arquivos_puxados": 427
+   "arquivos_puxados": 432
   },
   {
    "protegida": false,
@@ -5440,6 +5444,7 @@
     "gridcell",
     "group",
     "img",
+    "intermediary",
     "listbox",
     "log",
     "menu",
@@ -5463,9 +5468,10 @@
     "tabpanel",
     "timer",
     "toolbar",
+    "unknown",
     "user"
    ],
-   "arquivos_puxados": 650
+   "arquivos_puxados": 655
   },
   {
    "id": "integrations",
@@ -6230,6 +6236,7 @@
     "gridcell",
     "group",
     "img",
+    "intermediary",
     "listbox",
     "log",
     "menu",
@@ -6251,9 +6258,10 @@
     "tablist",
     "timer",
     "toolbar",
+    "unknown",
     "user"
    ],
-   "arquivos_puxados": 461
+   "arquivos_puxados": 466
   },
   {
    "id": "omnichannel",

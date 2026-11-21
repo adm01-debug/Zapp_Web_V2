@@ -11928,7 +11928,7 @@
   {
    "arquivo": "src/components/inbox/chat/__tests__/ChatPanelHeader.crm.test.tsx",
    "tipo": "unit",
-   "linhas": 113,
+   "linhas": 114,
    "testa": [
     "src/components/inbox/chat/ChatPanelHeader.tsx",
     "src/components/ui/tooltip.tsx",
@@ -12835,12 +12835,13 @@
   {
    "arquivo": "src/components/inbox/copilot/__tests__/RadarPanel.test.tsx",
    "tipo": "unit",
-   "linhas": 220,
+   "linhas": 254,
    "testa": [
     "src/components/inbox/copilot/RadarPanel.tsx",
+    "src/hooks/copilot/useCopilotSession.ts",
     "src/hooks/copilot/useRadarPanel.ts"
    ],
-   "casos": 25
+   "casos": 27
   },
   {
    "arquivo": "src/components/inbox/location-picker/__tests__/LocationPicker.gpsAtrasado.test.tsx",
@@ -30032,7 +30033,7 @@
   "src/hooks/copilot/useAttachmentSuggestion.ts": 1,
   "src/hooks/copilot/useConversationScore.ts": 2,
   "src/hooks/copilot/useCopilotFeedback.ts": 1,
-  "src/hooks/copilot/useCopilotSession.ts": 3,
+  "src/hooks/copilot/useCopilotSession.ts": 4,
   "src/hooks/copilot/useDataMasking.ts": 3,
   "src/hooks/copilot/useDeadlineCalculator.ts": 1,
   "src/hooks/copilot/useGhostText.ts": 1,

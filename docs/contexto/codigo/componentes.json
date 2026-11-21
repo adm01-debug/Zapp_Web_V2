@@ -2,7 +2,7 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "total": 1054,
- "orfaos": 142,
+ "orfaos": 138,
  "nomes_duplicados": {
   "AIAutoTagsConfig": [
    "analise-prs/resgate-261118-lote3/hermes/robustez-primitivos-ui-2610121626bec5-2610141859e423/src/components/settings/AIAutoTagsConfig.tsx",
@@ -8012,7 +8012,7 @@
     "ChatPanelHeader"
    ],
    "export_default": null,
-   "linhas": 285,
+   "linhas": 288,
    "dominio": "components/inbox",
    "hooks_locais": [
     "useApplicableSLA",
@@ -9336,8 +9336,8 @@
    "hooks_locais": [],
    "tabelas": [],
    "edges": [],
-   "usado_por": 0,
-   "orfao": true
+   "usado_por": 1,
+   "orfao": false
   },
   {
    "arquivo": "src/components/inbox/copilot/InsightCard.tsx",
@@ -9393,8 +9393,8 @@
    "hooks_locais": [],
    "tabelas": [],
    "edges": [],
-   "usado_por": 0,
-   "orfao": true
+   "usado_por": 1,
+   "orfao": false
   },
   {
    "arquivo": "src/components/inbox/copilot/RadarCards.tsx",
@@ -9408,7 +9408,7 @@
     "SuggestionsCard"
    ],
    "export_default": null,
-   "linhas": 264,
+   "linhas": 265,
    "dominio": "components/inbox",
    "hooks_locais": [],
    "tabelas": [],
@@ -9443,7 +9443,7 @@
     "RadarPanelProps"
    ],
    "export_default": null,
-   "linhas": 511,
+   "linhas": 515,
    "dominio": "components/inbox",
    "hooks_locais": [],
    "tabelas": [],
@@ -9476,8 +9476,8 @@
    "hooks_locais": [],
    "tabelas": [],
    "edges": [],
-   "usado_por": 0,
-   "orfao": true
+   "usado_por": 1,
+   "orfao": false
   },
   {
    "arquivo": "src/components/inbox/CRMAutoSync.tsx",
@@ -10233,8 +10233,8 @@
    "hooks_locais": [],
    "tabelas": [],
    "edges": [],
-   "usado_por": 0,
-   "orfao": true
+   "usado_por": 1,
+   "orfao": false
   },
   {
    "arquivo": "src/components/inbox/StickerPicker.tsx",

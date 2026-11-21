@@ -1,6 +1,6 @@
 # 07 · REGRAS DE NEGÓCIO
 
-> Gerado automaticamente por AI Context Sync v1.3.2 · commit `7f2b4e62c6` · branch `main` · 2026-11-21 20:44 UTC
+> Gerado automaticamente por AI Context Sync v1.3.2 · commit `85feab2a42` · branch `main` · 2026-11-21 21:22 UTC
 > Não edite à mão — regras humanas vão em `manual/`.
 
 ## A. Regras escritas por humanos (`manual/` — prioridade máxima, nunca sobrescrito)
@@ -5054,7 +5054,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `owner` | `supabase/migrations/20260927270018_team_chat_e28_fix_find_or_create_race.sql` |
 | `anon` | `supabase/migrations/20260927340000_fix_add_agent_xp_negative_and_guard.sql` |
 
-## K. Testes como especificação (26098 testes em 2721 arquivos — nomes completos em `context.json`)
+## K. Testes como especificação (26101 testes em 2721 arquivos — nomes completos em `context.json`)
 
 | Arquivo | Testes | Exemplos do que o sistema DEVE fazer |
 |---|---|---|
@@ -5140,6 +5140,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `src/lib/__tests__/slaTimeline.test.ts` | 36 | slaStatusForDuration · sem duração não há situação · sem prazo válido não há situação · dentro do prazo com folga é  … |
 | `src/components/email/__tests__/EmailChatThread.test.tsx` | 35 | EmailChatThread · preserva a leitura antiga, avisa sobre nova mensagem e desce sob comando · não usa rolagem animada quando movimento reduzido está ativo · lifecycle: setSelectedThreadId … |
 | `src/components/inbox/__tests__/linkPreviewUtils.test.ts` | 35 | isImageUrl · aceita as extensões de imagem conhecidas · ignora maiúsculas/minúsculas · aceita quando a extensão vem antes de query string … |
+| `src/components/inbox/copilot/__tests__/RadarPanel.test.tsx` | 35 | RadarPanel CV-051 · renderiza o painel com aria-label  · renderiza versão recolhida com botão de expandir · chama onToggleCollapsed ao clicar em recolher … |
 | `src/components/tasks/__tests__/primitivosCompartilhados.test.tsx` | 35 | TaskCheckbox — um checkbox circular para o módulo inteiro · é CIRCULAR (D16) e alterna pelo clique · guardado: aria-checked=true, nome  · desabilitado não dispara e sai do tab … |
 | `src/lib/__tests__/chartColors.test.ts` | 35 | chartColors · CHART_COLORS · has primary colors · has semantic colors … |
 | `supabase/functions/send-scheduled-report/index.test.ts` | 35 | auth: sem identidade → 401 e zero lookup/Resend/service-role · auth: x-cron-secret errado → 401 sem efeito · auth: CRON_SECRET vazio → x-cron-secret não autoriza (fail closed) · auth: Bearer inválido → 401 sem efeito … |
@@ -5159,7 +5160,6 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `src/lib/calls/__tests__/session.test.ts` | 33 | session — estado inicial · devolve um objeto novo, ocioso e sem sessão · session — transições válidas (Apêndice C) · ${caso.de} + ${caso.evento.type} → ${caso.para} … |
 | `supabase/functions/multiplix-audience/index.test.ts` | 33 | F08: só destinatário classificado como eligible entra no disparo · F08: linha sem company_id não vira destinatário · F08: sem classificação explícita o destinatário entra como eligible · F08: campos que não existem no contrato não passam para a RPC … |
 | `analise-prs/resgate-261118-lote3/fix/ci-workflows-vermelhos/src/lib/__tests__/pdfThumbnail.test.ts` | 32 | renderPdfThumbnail — pdfjs-dist só sob demanda · não carrega pdfjs-dist no import do módulo e só o carrega na primeira miniatura · não tem import estático de pdfjs-dist no arquivo-fonte (o contrato M03 varre o resto) · aponta o worker para o asset resolvido com ?url e manda os BYTES baixados ao getDocument … |
-| `src/components/inbox/copilot/__tests__/RadarPanel.test.tsx` | 32 | RadarPanel CV-051 · renderiza o painel com aria-label  · renderiza versão recolhida com botão de expandir · chama onToggleCollapsed ao clicar em recolher … |
 | `src/components/onboarding/__tests__/OnboardingTour.test.tsx` | 32 | TourProvider · provides default inactive state · starts tour with steps · navigates forward through steps … |
 | `src/hooks/__tests__/useResourcePrefetch.test.ts` | 32 | usePrefetch · exposes prefetch function · exposes schedulePrefetch function · exposes cancelPrefetch function … |
 | `src/hooks/integrations/__tests__/useGmail.test.ts` | 32 | useGmail · accounts query · retorna lista via callGmailFunction · fallback para supabase.rpc quando callGmailFunction lança … |

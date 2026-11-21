@@ -5265,6 +5265,7 @@
   "src/components/inbox/chat/ChatPanelHeader.tsx": [
    "src/components/contacts/contactTypeConfig.tsx",
    "src/components/inbox/SLAIndicator.tsx",
+   "src/components/inbox/SpeedSelector.tsx",
    "src/components/inbox/TypingIndicator.tsx",
    "src/components/inbox/ai-tools/VisionIcon.tsx",
    "src/components/inbox/chat/ContactPresenceIndicator.tsx",
@@ -5859,6 +5860,8 @@
    "src/lib/logger.ts"
   ],
   "src/components/inbox/copilot/RadarCards.tsx": [
+   "src/components/inbox/copilot/DecisionMakerBadge.tsx",
+   "src/components/inbox/copilot/StakeholdersCard.tsx",
    "src/data/copilot/sale-stages.ts",
    "src/hooks/copilot/useCopilotSession.ts",
    "src/hooks/copilot/useLiveSuggestions.ts",
@@ -5873,6 +5876,7 @@
    "src/hooks/copilot/useRadarPanel.ts"
   ],
   "src/components/inbox/copilot/RadarPanel.tsx": [
+   "src/components/inbox/copilot/OccasionAlert.tsx",
    "src/components/inbox/copilot/RadarCards.tsx",
    "src/data/copilot/sale-stages.ts",
    "src/hooks/copilot/useCopilotSession.ts",

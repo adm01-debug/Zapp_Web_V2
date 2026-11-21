@@ -2774,7 +2774,7 @@
    "modulo": "components/inbox",
    "arquivos": 265,
    "testes": 342,
-   "linhas": 46087,
+   "linhas": 46095,
    "itens_menu": [
     "Chat"
    ],
@@ -4358,6 +4358,7 @@
     "gridcell",
     "group",
     "img",
+    "intermediary",
     "leader",
     "link",
     "list",
@@ -4388,6 +4389,7 @@
     "tabpanel",
     "timer",
     "toolbar",
+    "unknown",
     "user"
    ],
    "diretos": {
@@ -5381,6 +5383,7 @@
     "gridcell",
     "group",
     "img",
+    "intermediary",
     "listbox",
     "log",
     "menu",
@@ -5402,6 +5405,7 @@
     "tablist",
     "timer",
     "toolbar",
+    "unknown",
     "user"
    ],
    "diretos": {
@@ -6179,6 +6183,7 @@
     "gridcell",
     "group",
     "img",
+    "intermediary",
     "link",
     "list",
     "listbox",
@@ -6206,6 +6211,7 @@
     "tabpanel",
     "timer",
     "toolbar",
+    "unknown",
     "user"
    ],
    "diretos": {
@@ -12883,6 +12889,7 @@
     "gridcell",
     "group",
     "img",
+    "intermediary",
     "leader",
     "link",
     "list",
@@ -12913,6 +12920,7 @@
     "tabpanel",
     "timer",
     "toolbar",
+    "unknown",
     "user"
    ],
    "diretos": {
@@ -15199,6 +15207,7 @@
     "gridcell",
     "group",
     "img",
+    "intermediary",
     "leader",
     "link",
     "list",
@@ -15229,6 +15238,7 @@
     "tabpanel",
     "timer",
     "toolbar",
+    "unknown",
     "user"
    ],
    "diretos": {
@@ -16485,6 +16495,7 @@
     "gridcell",
     "group",
     "img",
+    "intermediary",
     "leader",
     "link",
     "list",
@@ -16515,6 +16526,7 @@
     "tabpanel",
     "timer",
     "toolbar",
+    "unknown",
     "user"
    ],
    "diretos": {

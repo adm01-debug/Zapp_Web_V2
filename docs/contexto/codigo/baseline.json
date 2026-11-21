@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "7f2b4e62c6b217f25d8c5b5a48013f030160a24b",
+  "commit": "85feab2a4228fbe0eda82a58c692ad37bfb8d629",
   "branch": "main",
-  "data_commit": "2026-11-21T17:42:15-03:00",
+  "data_commit": "2026-11-21T18:19:58-03:00",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "85feab2a",
+    "data": "2026-11-21",
+    "assunto": "feat(talkx): monta orfaos RADAR (decision maker/stakeholders/ocasiao) e SpeedSelector no header (#3307)"
+   },
    {
     "sha": "7f2b4e62",
     "data": "2026-11-21",
@@ -126,14 +131,9 @@
     "sha": "56442637",
     "data": "2026-11-19",
     "assunto": "chore(e2e): nao carregar o axe do app sob E2E, e guard com dente (#3279)"
-   },
-   {
-    "sha": "d0e86ced",
-    "data": "2026-11-19",
-    "assunto": "test(talkx): travar a entrada do teste A/B no assistente (#3280)"
    }
   ],
-  "arquivos_mudados_7d": 7376,
+  "arquivos_mudados_7d": 7378,
   "pastas_mais_mudadas_30d": [
    {
     "pasta": "docs/contexto/supabase",
@@ -145,7 +145,7 @@
    },
    {
     "pasta": "src/components/inbox",
-    "mudancas": 720
+    "mudancas": 726
    },
    {
     "pasta": "docs/reconciliation/reaudit",
@@ -161,7 +161,7 @@
    },
    {
     "pasta": "src/components/talkx",
-    "mudancas": 360
+    "mudancas": 359
    },
    {
     "pasta": "analise-prs/resgate-261115/dossies",
@@ -316,7 +316,7 @@
  "contagens": {
   "arquivos_total": 15718,
   "arquivos_codigo": 5842,
-  "linhas_codigo": 1130809,
+  "linhas_codigo": 1130852,
   "rotas": 18,
   "rotas_http_backend": 11,
   "vistas_por_id": 55,
@@ -728,7 +728,7 @@
   },
   "src/components": {
    "arquivos": 2288,
-   "linhas": 389275
+   "linhas": 389318
   },
   "src/config": {
    "arquivos": 3,
@@ -1484,18 +1484,14 @@
    "src/components/inbox/BusinessHoursBadge.tsx",
    "src/components/inbox/chat/ChatHeaderToolbar.tsx",
    "src/components/inbox/copilot/BrindeMeter.tsx",
-   "src/components/inbox/copilot/DecisionMakerBadge.tsx",
    "src/components/inbox/copilot/InsightCard.tsx",
    "src/components/inbox/copilot/MissingQuestions.tsx",
-   "src/components/inbox/copilot/OccasionAlert.tsx",
    "src/components/inbox/copilot/StageIndicator.tsx",
-   "src/components/inbox/copilot/StakeholdersCard.tsx",
    "src/components/inbox/KeyboardShortcutsHelp.tsx",
    "src/components/inbox/LinkPreview.tsx",
    "src/components/inbox/MessageContextActions.tsx",
    "src/components/inbox/MessagePreview.tsx",
    "src/components/inbox/SentimentIndicator.tsx",
-   "src/components/inbox/SpeedSelector.tsx",
    "src/components/inbox/tabs/journey/JourneyFilters.tsx",
    "src/components/inbox/tabs/journey/JourneyStatsHero.tsx",
    "src/components/inbox/tabs/journey/JourneyTimeline.tsx",
