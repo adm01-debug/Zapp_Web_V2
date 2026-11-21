@@ -13,6 +13,7 @@ vi.mock('@/hooks/dashboard/useScheduledReportConfigs', () => ({
     isLoading: false,
     createConfig: { mutate: vi.fn(), isPending: false },
     toggleActive: { mutate: vi.fn() },
+    sendNow: { mutate: vi.fn(), isPending: false },
     deleteConfig: { mutate: vi.fn() },
   }),
 }));

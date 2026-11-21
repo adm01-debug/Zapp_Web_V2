@@ -53,12 +53,15 @@ function authClientMock(opts: {
 function serviceMock(opts: {
   report?: unknown;
   reportError?: unknown;
+  config?: unknown;
+  configError?: unknown;
   updateError?: unknown;
   updateRows?: unknown[];
   slaRows?: unknown[];
 } = {}) {
   const fromCalls: string[] = [];
   const updates: Array<{ table: string; payload: Record<string, unknown> }> = [];
+  const rpcCalls: string[] = [];
   let currentTable = "";
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const qb: any = {
@@ -68,7 +71,22 @@ function serviceMock(opts: {
     gte: () => (opts.slaRows === undefined ? qb : Promise.resolve({ data: opts.slaRows, error: null })),
     eq: () => qb,
     order: () => qb,
-    single: () => Promise.resolve({ data: opts.report ?? null, error: opts.reportError ?? null }),
+    // Queries "livres" (messages/contacts/agent_stats/…) são awaited pelo
+    // handler; o supabase-js real devolve uma promessa encadeável. Mock
+    // thenable → lista vazia sem bloquear o encadeamento.
+    then: (resolve: (v: unknown) => void) => resolve({ data: [], error: null }),
+    // DASH-083: o lookup roteia pela tabela — scheduled_report_configs
+    // (dashboard) ou scheduled_reports (legado); qualquer outra tabela não
+    // resolve em `.single()`.
+    single: () => {
+      if (currentTable === "scheduled_report_configs") {
+        return Promise.resolve({ data: opts.config ?? null, error: opts.configError ?? null });
+      }
+      if (currentTable === "scheduled_reports") {
+        return Promise.resolve({ data: opts.report ?? null, error: opts.reportError ?? null });
+      }
+      return Promise.resolve({ data: null, error: { message: "unexpected single()" } });
+    },
     update: (payload: Record<string, unknown>) => {
       updates.push({ table: currentTable, payload });
       // O PostgREST devolve `data` com as linhas afetadas (array vazio = nada foi
@@ -94,8 +112,10 @@ function serviceMock(opts: {
       fromCalls.push(table);
       return qb;
     },
+    // Vault do cron (DASH-083): devolve o segredo quando a Edge consulta a RPC.
+    rpc: (name: string) => { rpcCalls.push(name); return Promise.resolve({ data: "segredo", error: null }); },
   };
-  return { supabase, fromCalls, updates };
+  return { supabase, fromCalls, updates, rpcCalls };
 }
 
 Deno.test("auth: sem identidade → 401 e zero lookup/Resend/service-role", async () => {
@@ -263,6 +283,11 @@ function reportWith(recipients: string[]) {
 
 function cronPost() {
   return makePost({ headers: CRON_HEADERS, body: { reportId: crypto.randomUUID() } });
+}
+
+// DASH-083: o cron do dashboard dispara por `configId` (scheduled_report_configs).
+function cronConfigPost() {
+  return makePost({ headers: CRON_HEADERS, body: { configId: crypto.randomUUID() } });
 }
 
 Deno.test("envio: provedor recusa TODOS os destinatários → não marca enviado nem responde sucesso", async () => {
@@ -484,6 +509,19 @@ async function withTrustedDomainsEnv<T>(value: string | null, fn: () => Promise<
   }
 }
 
+/** Garante que CRON_SECRET fica ausente durante o teste (isola de testes de outras Edges que setam o env) e restaura o valor anterior. */
+async function withCronSecretEnv<T>(value: string | null, fn: () => Promise<T>): Promise<T> {
+  const previous = Deno.env.get("CRON_SECRET");
+  if (value === null) Deno.env.delete("CRON_SECRET");
+  else Deno.env.set("CRON_SECRET", value);
+  try {
+    return await fn();
+  } finally {
+    if (previous === undefined) Deno.env.delete("CRON_SECRET");
+    else Deno.env.set("CRON_SECRET", previous);
+  }
+}
+
 Deno.test("pd23: domínio externo → nada é enviado, ciclo não avança e a resposta não expõe o endereço", async () => {
   const EXTERNO = "externo@gmail.com";
   const mock = serviceMock({ report: reportWith([EXTERNO]) });
@@ -599,4 +637,164 @@ Deno.test("pd23: aceita caixa alta, recusa subdomínio, dois @ e sem parte local
   assert(isTrustedRecipient("a@sub.promobrindes.com.br", dominios) === false, "subdomínio não é o mesmo domínio");
   assert(isTrustedRecipient("a@gmail.com", dominios) === false, "domínio externo deve recusar");
   assert(isTrustedRecipient(42, dominios) === false, "valor não-string deve recusar");
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// DASH-083 (P0) — o dashboard grava em `scheduled_report_configs`, mas a Edge
+// só lia a tabela legada `scheduled_reports`, e nenhum cron agendava o envio.
+// Aceite: `configId` resolve na tabela nova e mapeia o tipo do widget para o
+// tipo da Edge (performance→agent_performance, full→dashboard_summary, …);
+// tipo desconhecido → falha fechada 404 (nunca e-mail vazio como sucesso);
+// `custom` não avança `next_send_at` (fica null p/ o cron re-elegê-lo);
+// `biweekly` avança +14 dias; sem id / com ambos 422 via schema; legado
+// `reportId` segue idêntico ao comportamento anterior (sem regressão).
+// ─────────────────────────────────────────────────────────────────────────────
+
+function configWith(overrides: Partial<Record<string, unknown>> = {}) {
+  return {
+    id: crypto.randomUUID(),
+    name: "Relatório de teste",
+    report_type: "performance",
+    frequency: "weekly",
+    recipients: ["a@promobrindes.com.br"],
+    is_active: true,
+    next_send_at: null,
+    ...overrides,
+  };
+}
+
+Deno.test("dash083: body sem configId nem reportId → 422 (exatamente um obrigatório)", async () => {
+  const mock = serviceMock();
+  const res = await handleScheduledReport(
+    makePost({ headers: CRON_HEADERS, body: {} }),
+    { supabase: mock.supabase, cronSecret: "segredo" },
+  );
+  assert(res.status === 422, `esperado 422, recebido ${res.status}`);
+  assert(mock.fromCalls.length === 0, "nenhum lookup deve acontecer com corpo inválido");
+});
+
+Deno.test("dash083: configId com reportId juntos → 422 (exatamente um)", async () => {
+  const mock = serviceMock();
+  const res = await handleScheduledReport(
+    makePost({ headers: CRON_HEADERS, body: { configId: crypto.randomUUID(), reportId: crypto.randomUUID() } }),
+    { supabase: mock.supabase, cronSecret: "segredo" },
+  );
+  assert(res.status === 422, `esperado 422, recebido ${res.status}`);
+});
+
+Deno.test("dash083: configId inexistente → 404 e nada é enviado nem agendado", async () => {
+  const mock = serviceMock({ configError: { message: "not found" } });
+  const resend = withResendStub([200]);
+  try {
+    const res = await handleScheduledReport(cronConfigPost(), { supabase: mock.supabase, cronSecret: "segredo" });
+    assert(res.status === 404, `esperado 404, recebido ${res.status}`);
+    assert(resend.calls.length === 0, "nada deve ser enviado sem config");
+    assert(mock.updates.length === 0, "ciclo não pode avançar sem config");
+  } finally {
+    resend.restore();
+  }
+});
+
+Deno.test("dash083: config performance → lê na tabela nova e mapeia para agent_performance", async () => {
+  const mock = serviceMock({ config: configWith({ report_type: "performance", frequency: "daily" }) });
+  const resend = withResendStub([200]);
+  try {
+    await withResendKey("chave-de-teste", async () => {
+      const res = await handleScheduledReport(cronConfigPost(), { supabase: mock.supabase, cronSecret: "segredo" });
+      const body = await res.json();
+      assert(res.status === 200, `esperado 200, recebido ${res.status}: ${JSON.stringify(body)}`);
+      assert(mock.fromCalls[0] === "scheduled_report_configs", `lookup deve ser na tabela de configs: ${JSON.stringify(mock.fromCalls)}`);
+      assert(body.reportData && body.reportData.title === "Performance de Agentes",
+        `reportData deve vir do mapeamento: ${JSON.stringify(body.reportData)}`);
+    });
+  } finally {
+    resend.restore();
+  }
+});
+
+Deno.test("dash083: config full → dashboard_summary e avança next_send_at (daily +1d)", async () => {
+  const mock = serviceMock({ config: configWith({ report_type: "full", frequency: "daily" }) });
+  const resend = withResendStub([200]);
+  try {
+    await withResendKey("chave-de-teste", async () => {
+      const res = await handleScheduledReport(cronConfigPost(), { supabase: mock.supabase, cronSecret: "segredo" });
+      const body = await res.json();
+      assert(res.status === 200, `esperado 200, recebido ${res.status}: ${JSON.stringify(body)}`);
+      assert(body.reportData && body.reportData.title === "Resumo do Dashboard",
+        `reportData inesperado: ${JSON.stringify(body.reportData)}`);
+      assert(mock.updates.length === 1, "ciclo deve avançar");
+      assert(mock.updates[0].table === "scheduled_report_configs", `UPDATE deve ser na tabela de configs: ${mock.updates[0].table}`);
+      assert(typeof mock.updates[0].payload.next_send_at === "string", `next_send_at deve avançar: ${JSON.stringify(mock.updates[0].payload)}`);
+    });
+  } finally {
+    resend.restore();
+  }
+});
+
+Deno.test("dash083: config biweekly avança +14 dias (08:00)", async () => {
+  const mock = serviceMock({ config: configWith({ report_type: "full", frequency: "biweekly" }) });
+  const resend = withResendStub([200]);
+  try {
+    await withResendKey("chave-de-teste", async () => {
+      const res = await handleScheduledReport(cronConfigPost(), { supabase: mock.supabase, cronSecret: "segredo" });
+      assert(res.status === 200, `esperado 200, recebido ${res.status}`);
+      assert(mock.updates.length === 1, "ciclo deve avançar em biweekly");
+      const next = mock.updates[0].payload.next_send_at as string;
+      const diffDays = (new Date(next).getTime() - Date.now()) / (24 * 60 * 60 * 1000);
+      // "agora + 14d" com hora fixada em 08:00 → entre 13,5 e 14,5 dias corridos
+      // (depende da hora atual em relação às 08:00).
+      assert(diffDays >= 13.4 && diffDays <= 14.6, `biweekly deve avançar ~14 dias, veio ${diffDays}`);
+      assert(new Date(next).getHours() === 8, `biweekly deve cair às 08:00, veio ${new Date(next).getHours()}`);
+    });
+  } finally {
+    resend.restore();
+  }
+});
+
+Deno.test("dash083: config custom → envia e deixa next_send_at null (nunca avança)", async () => {
+  const mock = serviceMock({ config: configWith({ report_type: "full", frequency: "custom" }) });
+  const resend = withResendStub([200]);
+  try {
+    await withResendKey("chave-de-teste", async () => {
+      const res = await handleScheduledReport(cronConfigPost(), { supabase: mock.supabase, cronSecret: "segredo" });
+      assert(res.status === 200, `esperado 200, recebido ${res.status}`);
+      assert(mock.updates.length === 1, "transação deve gravar o last_sent_at de custom");
+      assert(mock.updates[0].payload.last_sent_at && typeof mock.updates[0].payload.last_sent_at === "string",
+        "custom deve registrar last_sent_at");
+      assert(mock.updates[0].payload.next_send_at === null,
+        `custom nunca avança next_send_at: ${JSON.stringify(mock.updates[0].payload.next_send_at)}`);
+    });
+  } finally {
+    resend.restore();
+  }
+});
+
+Deno.test("dash083: config com report_type desconhecido → 404 sem envio nem avanço", async () => {
+  const mock = serviceMock({ config: configWith({ report_type: "algum-tipo-novo" }) });
+  const resend = withResendStub([200]);
+  try {
+    const res = await handleScheduledReport(cronConfigPost(), { supabase: mock.supabase, cronSecret: "segredo" });
+    assert(res.status === 404, `esperado 404 (falha fechada), recebido ${res.status}`);
+    assert(resend.calls.length === 0, "nada deve ser enviado com tipo desconhecido");
+    assert(mock.updates.length === 0, "o ciclo não pode avançar com tipo desconhecido");
+  } finally {
+    resend.restore();
+  }
+});
+
+Deno.test("dash083: cron sem header faz 401 e nunca consulta o vault (sem regressão)", async () => {
+  const mock = serviceMock();
+  const res = await handleScheduledReport(makePost(), { supabase: mock.supabase, cronSecret: "segredo" });
+  assert(res.status === 401, `esperado 401, recebido ${res.status}`);
+  assert(mock.rpcCalls.length === 0, "sem x-cron-secret não há consulta ao vault");
+  assert(mock.fromCalls.length === 0, "sem autorização não há lookup");
+});
+
+Deno.test("dash083: vault consultado só com header de cron presente e sem CRON_SECRET no env", async () => {
+  const mock = serviceMock({ configError: { message: "not found" } });
+  await withCronSecretEnv(null, async () => {
+    const res = await handleScheduledReport(cronConfigPost(), { supabase: mock.supabase });
+    assert(res.status === 404, "auth ok (via vault) deve alcançar o lookup e achar a config ausente");
+    assert(mock.rpcCalls.includes("get_scheduled_report_cron_secret"), "com header e sem env o vault deve ser consultado");
+  });
 });
