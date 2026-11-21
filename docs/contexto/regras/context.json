@@ -1,15 +1,15 @@
 {
  "meta": {
-  "sha": "01737c9ec58223104414db9d7465214da326bef3",
+  "sha": "f4a2a77645756e98bda906be21a33fbadf1396dd",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-21 11:56 UTC",
+  "generated_at": "2026-11-21 12:37 UTC",
   "files_total": 15571,
   "code_files": 8876,
-  "code_lines": 1407996
+  "code_lines": 1408011
  },
  "version": "1.3.2",
- "facts_hash": "f51d92c705eab248",
+ "facts_hash": "479d8f9df81dfcd2",
  "stack": {
   "frameworks": [
    "React + Vite",
@@ -78604,7 +78604,7 @@
   {
    "module": "supabase/functions",
    "files": 424,
-   "lines": 127607,
+   "lines": 127622,
    "tables": [
     "agent_stats",
     "ai_conversation_tags",
@@ -459877,7 +459877,7 @@
   },
   "supabase/functions/crm-integration/index.test.ts": {
    "path": "supabase/functions/crm-integration/index.test.ts",
-   "lines": 840,
+   "lines": 855,
    "is_test": true,
    "env": [
     "CRON_SECRET"
@@ -479255,10 +479255,19 @@
   }
  },
  "git": {
-  "sha": "01737c9ec58223104414db9d7465214da326bef3",
+  "sha": "f4a2a77645756e98bda906be21a33fbadf1396dd",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "f4a2a776",
+    "date": "2026-11-21",
+    "author": "adm01-debug",
+    "subject": "fix(crm-integration): restaura CRON_SECRET apos testes que o setam (#3296)",
+    "files": [
+     "supabase/functions/crm-integration/index.test.ts"
+    ]
+   },
    {
     "sha": "01737c9e",
     "date": "2026-11-21",
@@ -482609,36 +482618,9 @@
     "files": [
      "\"docs/auditoria-liquida\\303\\247\\303\\243o-branches.md\""
     ]
-   },
-   {
-    "sha": "33359709",
-    "date": "2026-11-18",
-    "author": "adm01-debug",
-    "subject": "Teste A/B de campanha: termina o X065, que estava parado na metade (#3262)",
-    "files": [
-     ".github/workflows/db-guard.yml",
-     "ESTADO.md",
-     "docs/talkx/ESTADOS.md",
-     "performance-budget.json",
-     "scripts/db-audit/talkx-ab.test.sh",
-     "src/components/talkx/TalkXCampaignRunning.tsx",
-     "src/components/talkx/__tests__/TalkXAbTestResults.test.tsx",
-     "src/components/talkx/tracking/TalkXAbTestResults.tsx",
-     "src/hooks/integrations/useTalkX.ts",
-     "src/hooks/integrations/useTalkXAbStats.ts",
-     "supabase/migrations/20261118190000_talkx_x065_ab_campanha.sql"
-    ]
    }
   ],
   "hot_files": [
-   [
-    "src/hooks/integrations/useTalkXAbStats.ts",
-    4
-   ],
-   [
-    "ESTADO.md",
-    3
-   ],
    [
     "supabase/deployment-manifest.json",
     3
@@ -482660,20 +482642,12 @@
     3
    ],
    [
-    "docs/talkx/ESTADOS.md",
+    "src/hooks/integrations/useTalkXAbStats.ts",
     3
    ],
    [
-    "src/components/talkx/TalkXCampaignRunning.tsx",
-    3
-   ],
-   [
-    "src/components/talkx/__tests__/TalkXAbTestResults.test.tsx",
-    3
-   ],
-   [
-    "src/components/talkx/tracking/TalkXAbTestResults.tsx",
-    3
+    "ESTADO.md",
+    2
    ],
    [
     "docs/ci/README.md",
@@ -482704,12 +482678,28 @@
     2
    ],
    [
-    "performance-budget.json",
+    "docs/talkx/ESTADOS.md",
+    2
+   ],
+   [
+    "src/components/talkx/TalkXCampaignRunning.tsx",
+    2
+   ],
+   [
+    "src/components/talkx/__tests__/TalkXAbTestResults.test.tsx",
+    2
+   ],
+   [
+    "src/components/talkx/tracking/TalkXAbTestResults.tsx",
     2
    ],
    [
     ".github/workflows/types-sync.yml",
     2
+   ],
+   [
+    "supabase/functions/crm-integration/index.test.ts",
+    1
    ]
   ]
  }

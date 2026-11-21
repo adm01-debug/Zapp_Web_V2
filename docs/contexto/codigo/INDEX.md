@@ -1,7 +1,7 @@
 # Contexto do projeto para agentes de IA
 
 GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.
-Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR dela) a cada push em `main` e a cada 10 minutos pelo workflow `contexto.yml`; índice único das três fontes em `docs/contexto/00-INDEX.md`. Gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `01737c9ec58223104414db9d7465214da326bef3` (2026-11-21T08:55:08-03:00).
+Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR dela) a cada push em `main` e a cada 10 minutos pelo workflow `contexto.yml`; índice único das três fontes em `docs/contexto/00-INDEX.md`. Gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `f4a2a77645756e98bda906be21a33fbadf1396dd` (2026-11-21T09:35:44-03:00).
 
 ## Como usar (leia antes de planejar ou executar qualquer tarefa)
 1. **Tela/rota/menu** → `rotas.json` (url/vista/menu → arquivo → hooks → tabelas → edges; `rotas_http_backend` para APIs) e `modulos.json` (módulo inteiro + dependências entre módulos).
@@ -36,7 +36,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 |---|---|
 | arquivos_total | 15715 |
 | arquivos_codigo | 5840 |
-| linhas_codigo | 1130585 |
+| linhas_codigo | 1130600 |
 | rotas | 18 |
 | rotas_http_backend | 11 |
 | vistas_por_id | 55 |
@@ -395,8 +395,8 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - possiveis_segredos_no_codigo: 6 — ex.: analise-prs/resgate-261118-lote3/claude_pink/cool-dijkstra-xk9ek2/scripts/ci/edge-coverage-authz.unit.mjs:397, analise-prs/resgate-261118-lote3/claude_pink/cool-dijkstra-xk9ek2/scripts/edge-deploy/redigir-log.unit.mjs:38, scripts/ai-context/cenarios.mjs:102
 
 ## Grafo de código (graphify)
-- 102831 nós · 174419 arestas · 9287 comunidades · grafo do commit `01737c9e`
-- comunidades maiores: Communities (5953 total, 1987 thin omitted) (3947), react (1536), lucide-react (1392), utils.ts (1167), TalkXSuppression.tsx (1154), vitest (912), ref_node_fs (844), cn (679), DashboardView.tsx (555), validation.ts (490), framer-motion (472), ExternalProductManagement.tsx (471)
+- 102832 nós · 174420 arestas · 9228 comunidades · grafo do commit `f4a2a776`
+- comunidades maiores: Communities (5953 total, 1987 thin omitted) (3946), react (1728), lucide-react (1247), vitest (1032), ref_node_fs (1022), cn (734), DashboardView.tsx (698), useMyWorkItems.ts (541), validation.ts (537), date-fns (468), ref_https (468), Conversation (462)
 - símbolos mais chamados: cn() (src/lib/utils.ts), useAuth() (src/hooks/auth/useAuth.tsx), jsonResponse() (supabase/functions/_shared/validation.ts), errorResponse() (supabase/functions/_shared/validation.ts), handleCors() (supabase/functions/_shared/validation.ts), fail() (scripts/e2e-isolated/network-proof-policy.mjs), Logger (supabase/functions/_shared/validation.ts), requireEnv() (supabase/functions/_shared/validation.ts), fmtInt() (src/components/talkx/kit/format.ts), fromTable() (src/lib/supabaseHelpers.ts), useUserRole() (src/hooks/system/useUserRole.ts), validationErrorResponse() (supabase/functions/_shared/schemas.ts)
 - consulta local: `graphify query "<pergunta>"`, `graphify path "<A>" "<B>"`, `graphify explain "<X>"`
 
@@ -523,6 +523,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - CHANGELOG topo: [Unreleased]
 
 ## Últimos commits
+- 2026-11-21 `f4a2a776` fix(crm-integration): restaura CRON_SECRET apos testes que o setam (#3296)
 - 2026-11-21 `01737c9e` feat: unifica relatorios agendados do dashboard na edge por configId com cron
 - 2026-11-20 `bf81b135` docs(goal): backlog verificado byte a byte (Fase 1) - 1090 pendências (#3293)
 - 2026-11-20 `2e705429` docs(fase0): linha de base e regras de negocio da Fase 0 do GOAL (#3292)
@@ -537,7 +538,6 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - 2026-11-19 `a5fd198a` fix(seguranca): URL do CRM externo deixa de virar href/src sem guard (#3281)
 - 2026-11-19 `56442637` chore(e2e): nao carregar o axe do app sob E2E, e guard com dente (#3279)
 - 2026-11-19 `d0e86ced` test(talkx): travar a entrada do teste A/B no assistente (#3280)
-- 2026-11-19 `4e4102b5` docs(ci): o app Supabase for GitHub esta LIGADO, nao desligado (#3278)
 
 ## Arquivos deste diretório
 - `docs/contexto/codigo/rotas.json`

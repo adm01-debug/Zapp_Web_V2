@@ -27145,7 +27145,7 @@
   {
    "arquivo": "supabase/functions/crm-integration/index.test.ts",
    "tipo": "unit",
-   "linhas": 840,
+   "linhas": 855,
    "testa": [
     "supabase/functions/crm-integration/index.ts"
    ],

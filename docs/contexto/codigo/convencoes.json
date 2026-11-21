@@ -66,11 +66,11 @@
  "commits": {
   "convencao": "conventional commits (observado)",
   "exemplos": [
+   "fix(crm-integration): restaura CRON_SECRET apos testes que o setam (#3296)",
    "feat: unifica relatorios agendados do dashboard na edge por configId com cron",
    "docs(goal): backlog verificado byte a byte (Fase 1) - 1090 pendências (#3293)",
    "docs(fase0): linha de base e regras de negocio da Fase 0 do GOAL (#3292)",
-   "feat(evolution-api): adiciona ação 'pairing-code' para parear aparelho por código (#3290)",
-   "ci(security): dependency review barra CVE novo high/critical nos PRs (#3288)"
+   "feat(evolution-api): adiciona ação 'pairing-code' para parear aparelho por código (#3290)"
   ]
  },
  "pr_template": ".github/PULL_REQUEST_TEMPLATE.md",

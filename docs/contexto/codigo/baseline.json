@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "01737c9ec58223104414db9d7465214da326bef3",
+  "commit": "f4a2a77645756e98bda906be21a33fbadf1396dd",
   "branch": "main",
-  "data_commit": "2026-11-21T08:55:08-03:00",
+  "data_commit": "2026-11-21T09:35:44-03:00",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "f4a2a776",
+    "data": "2026-11-21",
+    "assunto": "fix(crm-integration): restaura CRON_SECRET apos testes que o setam (#3296)"
+   },
    {
     "sha": "01737c9e",
     "data": "2026-11-21",
@@ -126,11 +131,6 @@
     "sha": "8747e4be",
     "data": "2026-11-18",
     "assunto": "ci(e2e): workflow para regerar baselines visuais no ambiente do CI (#3268)"
-   },
-   {
-    "sha": "b24f12cf",
-    "data": "2026-11-18",
-    "assunto": "chore(perf): fechar a decisão do teto de assets com medição limpa (#3269)"
    }
   ],
   "arquivos_mudados_7d": 7456,
@@ -301,11 +301,11 @@
   "autores_30d": [
    {
     "autor": "adm01-debug",
-    "commits": 293
+    "commits": 294
    },
    {
     "autor": "github-actions[bot]",
-    "commits": 6
+    "commits": 5
    },
    {
     "autor": "dependabot[bot]",
@@ -316,7 +316,7 @@
  "contagens": {
   "arquivos_total": 15715,
   "arquivos_codigo": 5840,
-  "linhas_codigo": 1130585,
+  "linhas_codigo": 1130600,
   "rotas": 18,
   "rotas_http_backend": 11,
   "vistas_por_id": 55,
@@ -804,7 +804,7 @@
   },
   "supabase/functions": {
    "arquivos": 424,
-   "linhas": 127607
+   "linhas": 127622
   },
   "tailwind.config.ts": {
    "arquivos": 1,
