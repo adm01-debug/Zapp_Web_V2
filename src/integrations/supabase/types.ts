@@ -13798,6 +13798,7 @@ export type Database = {
           role: string
         }[]
       }
+      get_scheduled_report_cron_secret: { Args: never; Returns: string }
       get_send_metrics: {
         Args: { p_connection_id?: string; p_since?: string }
         Returns: Json
@@ -15536,6 +15537,7 @@ export type Database = {
       }
       trigger_ai_jobs_tick: { Args: never; Returns: undefined }
       trigger_crm_sync_outbox: { Args: never; Returns: number }
+      trigger_due_scheduled_report_configs: { Args: never; Returns: undefined }
       trigger_pending_multiplix_dispatches: { Args: never; Returns: undefined }
       trigger_talkx_engine_tick: { Args: never; Returns: undefined }
       unpin_message: { Args: { p_message_id: string }; Returns: boolean }
