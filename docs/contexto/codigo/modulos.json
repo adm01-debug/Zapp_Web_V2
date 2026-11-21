@@ -1947,7 +1947,7 @@
    "modulo": "components/dashboard",
    "arquivos": 73,
    "testes": 50,
-   "linhas": 9843,
+   "linhas": 9853,
    "itens_menu": [
     "Dashboard",
     "Sentimento",
@@ -2033,7 +2033,8 @@
    ],
    "edges": [
     "auth-login",
-    "detect-new-device"
+    "detect-new-device",
+    "send-scheduled-report"
    ],
    "tabelas": [
     "agent_achievements",
@@ -4071,6 +4072,7 @@
     "multiplix-send",
     "promogifts-catalog",
     "revoke-auth-sessions",
+    "send-scheduled-report",
     "sentiment-alert",
     "talkx-link",
     "talkx-send",
@@ -5955,6 +5957,7 @@
     "invite-user",
     "promogifts-catalog",
     "revoke-auth-sessions",
+    "send-scheduled-report",
     "sentiment-alert",
     "voice-changer",
     "webauthn"
@@ -10214,7 +10217,7 @@
    "modulo": "hooks/dashboard",
    "arquivos": 10,
    "testes": 10,
-   "linhas": 944,
+   "linhas": 981,
    "itens_menu": [],
    "telas": [],
    "rotas_http": [],
@@ -10260,7 +10263,8 @@
    ],
    "edges": [
     "auth-login",
-    "detect-new-device"
+    "detect-new-device",
+    "send-scheduled-report"
    ],
    "tabelas": [
     "contacts",
@@ -10291,7 +10295,9 @@
    "flags": [],
    "papeis": [],
    "diretos": {
-    "edges": [],
+    "edges": [
+     "send-scheduled-report"
+    ],
     "tabelas": [
      "contacts",
      "conversation_events",
@@ -12576,6 +12582,7 @@
     "multiplix-send",
     "promogifts-catalog",
     "revoke-auth-sessions",
+    "send-scheduled-report",
     "sentiment-alert",
     "talkx-link",
     "talkx-send",
@@ -14891,6 +14898,7 @@
     "multiplix-send",
     "promogifts-catalog",
     "revoke-auth-sessions",
+    "send-scheduled-report",
     "sentiment-alert",
     "talkx-link",
     "talkx-send",
@@ -16170,6 +16178,7 @@
     "multiplix-send",
     "promogifts-catalog",
     "revoke-auth-sessions",
+    "send-scheduled-report",
     "sentiment-alert",
     "talkx-link",
     "talkx-send",

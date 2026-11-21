@@ -1,6 +1,6 @@
 # 11 · GLOSSÁRIO, DADOS DE REFERÊNCIA E LACUNAS
 
-> Gerado automaticamente por AI Context Sync v1.3.2 · commit `bf81b13506` · branch `main` · 2026-11-20 21:12 UTC
+> Gerado automaticamente por AI Context Sync v1.3.2 · commit `01737c9ec5` · branch `main` · 2026-11-21 11:56 UTC
 > Não edite à mão — regras humanas vão em `manual/`.
 
 ## Glossário do domínio (entidades do sistema)
@@ -564,6 +564,7 @@
 | dinâmico | 1 chamada(s) `.from(variável)` — tabela só conhecida em runtime | `supabase/functions/multiplix-dispatch/actions/lifecycle.ts` |
 | dinâmico | 1 chamada(s) `.from(variável)` — tabela só conhecida em runtime | `supabase/functions/multiplix-send/index.test.ts` |
 | dinâmico | 1 chamada(s) `.from(variável)` — tabela só conhecida em runtime | `supabase/functions/multiplix-voices/index.ts` |
+| dinâmico | 2 chamada(s) `.from(variável)` — tabela só conhecida em runtime | `supabase/functions/send-scheduled-report/index.ts` |
 | dinâmico | 6 chamada(s) `.from(variável)` — tabela só conhecida em runtime | `supabase/functions/talkx-ai/index.ts` |
 | dinâmico | 1 chamada(s) `.from(variável)` — tabela só conhecida em runtime | `supabase/functions/talkx-send/process-recipient.ts` |
 | dinâmico | 5 chamada(s) `.from(variável)` — tabela só conhecida em runtime | `supabase/functions/talkx-storage-purge/index.ts` |

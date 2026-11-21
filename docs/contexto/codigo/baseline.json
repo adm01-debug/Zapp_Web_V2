@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "bf81b135067424811fc98ea862366cdd25d184b0",
+  "commit": "01737c9ec58223104414db9d7465214da326bef3",
   "branch": "main",
-  "data_commit": "2026-11-20T17:24:14-03:00",
+  "data_commit": "2026-11-21T08:55:08-03:00",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "01737c9e",
+    "data": "2026-11-21",
+    "assunto": "feat: unifica relatorios agendados do dashboard na edge por configId com cron"
+   },
    {
     "sha": "bf81b135",
     "data": "2026-11-20",
@@ -126,14 +131,9 @@
     "sha": "b24f12cf",
     "data": "2026-11-18",
     "assunto": "chore(perf): fechar a decisão do teto de assets com medição limpa (#3269)"
-   },
-   {
-    "sha": "7d2e76d8",
-    "data": "2026-11-18",
-    "assunto": "chore(db): sincronizar artefatos derivados do banco (#3228)"
    }
   ],
-  "arquivos_mudados_7d": 7657,
+  "arquivos_mudados_7d": 7456,
   "pastas_mais_mudadas_30d": [
    {
     "pasta": "docs/contexto/supabase",
@@ -169,7 +169,7 @@
    },
    {
     "pasta": "supabase/functions/_shared",
-    "mudancas": 228
+    "mudancas": 229
    },
    {
     "pasta": "analise-prs/resgate-261118-lote3/fix",
@@ -185,7 +185,7 @@
    },
    {
     "pasta": "src/components/dashboard",
-    "mudancas": 139
+    "mudancas": 142
    },
    {
     "pasta": "src/components/ui",
@@ -199,30 +199,26 @@
   "arquivos_mais_mudados_90d": [
    {
     "arquivo": "supabase/deployment-manifest.json",
-    "mudancas": 30
+    "mudancas": 31
    },
    {
     "arquivo": "ESTADO.md",
-    "mudancas": 16
+    "mudancas": 17
    },
    {
     "arquivo": "docs/talkx/ESTADOS.md",
     "mudancas": 15
    },
    {
-    "arquivo": "scripts/db-audit/grants-baseline.json",
-    "mudancas": 12
-   },
-   {
-    "arquivo": "src/integrations/supabase/types.ts",
-    "mudancas": 12
-   },
-   {
     "arquivo": "PENDENCIAS.md",
     "mudancas": 11
    },
    {
-    "arquivo": "supabase/schema-manifest.json",
+    "arquivo": "scripts/db-audit/grants-baseline.json",
+    "mudancas": 11
+   },
+   {
+    "arquivo": "src/integrations/supabase/types.ts",
     "mudancas": 11
    },
    {
@@ -230,7 +226,7 @@
     "mudancas": 10
    },
    {
-    "arquivo": "supabase/schema-catalog.json",
+    "arquivo": "supabase/schema-manifest.json",
     "mudancas": 10
    },
    {
@@ -239,6 +235,10 @@
    },
    {
     "arquivo": "docs/DB-INVENTORY.md",
+    "mudancas": 9
+   },
+   {
+    "arquivo": "supabase/schema-catalog.json",
     "mudancas": 9
    },
    {
@@ -266,10 +266,6 @@
     "mudancas": 6
    },
    {
-    "arquivo": "scripts/db-audit/known-violations.json",
-    "mudancas": 6
-   },
-   {
     "arquivo": "scripts/edge-deploy/health-check.mjs",
     "mudancas": 6
    },
@@ -279,6 +275,10 @@
    },
    {
     "arquivo": "src/components/talkx/TalkXCampaignRunning.tsx",
+    "mudancas": 6
+   },
+   {
+    "arquivo": "supabase/functions/_shared/schemas.ts",
     "mudancas": 6
    },
    {
@@ -314,9 +314,9 @@
   ]
  },
  "contagens": {
-  "arquivos_total": 15714,
+  "arquivos_total": 15715,
   "arquivos_codigo": 5840,
-  "linhas_codigo": 1130257,
+  "linhas_codigo": 1130585,
   "rotas": 18,
   "rotas_http_backend": 11,
   "vistas_por_id": 55,
@@ -326,8 +326,8 @@
   "hooks": 599,
   "edge_functions": 92,
   "tabelas": 221,
-  "migrations": 1148,
-  "cron_jobs": 28,
+  "migrations": 1149,
+  "cron_jobs": 29,
   "testes": 3201,
   "workflows": 24,
   "scripts": 451,
@@ -652,7 +652,7 @@
   },
   "scripts/edge-deploy": {
    "arquivos": 32,
-   "linhas": 4915
+   "linhas": 4918
   },
   "scripts/eslint": {
    "arquivos": 2,
@@ -728,7 +728,7 @@
   },
   "src/components": {
    "arquivos": 2288,
-   "linhas": 389220
+   "linhas": 389232
   },
   "src/config": {
    "arquivos": 3,
@@ -748,7 +748,7 @@
   },
   "src/hooks": {
    "arquivos": 1020,
-   "linhas": 166108
+   "linhas": 166145
   },
   "src/i18n": {
    "arquivos": 2,
@@ -804,7 +804,7 @@
   },
   "supabase/functions": {
    "arquivos": 424,
-   "linhas": 127331
+   "linhas": 127607
   },
   "tailwind.config.ts": {
    "arquivos": 1,
@@ -935,7 +935,7 @@
   "ts_ignore": 0,
   "eslint_disable": 1,
   "todos": 59,
-  "arquivos_acima_500_linhas": 163
+  "arquivos_acima_500_linhas": 164
  },
  "todos": [
   {

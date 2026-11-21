@@ -5,7 +5,7 @@
   "linguagens": [
    "TypeScript (5037)",
    "Markdown (4081)",
-   "SQL (3061)",
+   "SQL (3062)",
    "JSON (1968)",
    "JavaScript (682)",
    "Shell (264)",
@@ -2839,6 +2839,7 @@
    "gmail-webhook",
    "public-api",
    "searchbox-budget-alert",
+   "send-scheduled-report",
    "sync-call-records",
    "talkx-link",
    "whatsapp-webhook"

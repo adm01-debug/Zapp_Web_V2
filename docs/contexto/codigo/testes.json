@@ -9428,7 +9428,7 @@
   {
    "arquivo": "src/components/dashboard/__tests__/ScheduledReportsManager.a11y.test.tsx",
    "tipo": "unit",
-   "linhas": 47,
+   "linhas": 48,
    "testa": [
     "src/components/dashboard/ScheduledReportsManager.tsx"
    ],
@@ -9437,7 +9437,7 @@
   {
    "arquivo": "src/components/dashboard/__tests__/ScheduledReportsManager.test.tsx",
    "tipo": "unit",
-   "linhas": 108,
+   "linhas": 109,
    "testa": [
     "src/components/dashboard/ScheduledReportsManager.tsx"
    ],
@@ -27748,11 +27748,11 @@
   {
    "arquivo": "supabase/functions/send-scheduled-report/index.test.ts",
    "tipo": "unit",
-   "linhas": 603,
+   "linhas": 801,
    "testa": [
     "supabase/functions/send-scheduled-report/index.ts"
    ],
-   "casos": 25
+   "casos": 35
   },
   {
    "arquivo": "supabase/functions/sentiment-alert/index.test.ts",

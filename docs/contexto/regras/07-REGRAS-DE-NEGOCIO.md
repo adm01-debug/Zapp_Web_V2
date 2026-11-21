@@ -1,6 +1,6 @@
 # 07 · REGRAS DE NEGÓCIO
 
-> Gerado automaticamente por AI Context Sync v1.3.2 · commit `bf81b13506` · branch `main` · 2026-11-20 21:12 UTC
+> Gerado automaticamente por AI Context Sync v1.3.2 · commit `01737c9ec5` · branch `main` · 2026-11-21 11:56 UTC
 > Não edite à mão — regras humanas vão em `manual/`.
 
 ## A. Regras escritas por humanos (`manual/` — prioridade máxima, nunca sobrescrito)
@@ -3174,6 +3174,10 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
   ```
   queryClient.invalidateQueries({ queryKey: contactNotesKey(contactId, user?.id) }); queryClient.invalidateQueries({ queryKey: conversationTabCountsKey(contactId) });
   ```
+- **calculateNextSendAt(frequency: string)** — `src/hooks/dashboard/useScheduledReportConfigs.ts`
+  ```
+  const next = new Date(); switch (frequency) { case 'daily': next.setDate(next.getDate() + 1); next.setHours(8, 0, 0, 0); break; case 'weekly': next.setDate(next.getDate() + ((1 + 7 - next.getDay()) % 7 || 7)); next.setHours(8, 0, 0, 0); break; case 'biweekly': next.setDate(next.getDate() + 14); next.setHours(8, 0, 0, 0); break; case 'monthly': next.setMonth(next.getMonth() + 1, 1); next.setHours(8, 0, 0, 0); break; // custom é sob demanda (botão "Enviar agora") — nunca agenda. default: return nu …
+  ```
 - **avgScore(row: SentimentTrendRow)** — `src/hooks/dashboard/useSentimentTrend.ts`
   ```
   const media = toNumberOrNull(row.media); if (media !== null) return media / 50 - 1; return toNumberOrNull(row.indice) ?? 0;
@@ -3632,7 +3636,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
   ```
 - **calculateNextSend(frequency: string)** — `supabase/functions/send-scheduled-report/index.ts`
   ```
-  const next = new Date(); switch (frequency) { case "daily": next.setDate(next.getDate() + 1); next.setHours(8, 0, 0, 0); break; case "weekly": next.setDate(next.getDate() + ((1 + 7 - next.getDay()) % 7 || 7)); next.setHours(8, 0, 0, 0); break; case "monthly": next.setMonth(next.getMonth() + 1, 1); next.setHours(8, 0, 0, 0); break; } return next.toISOString();
+  const next = new Date(); switch (frequency) { case "daily": next.setDate(next.getDate() + 1); next.setHours(8, 0, 0, 0); break; case "weekly": next.setDate(next.getDate() + ((1 + 7 - next.getDay()) % 7 || 7)); next.setHours(8, 0, 0, 0); break; case "biweekly": next.setDate(next.getDate() + 14); next.setHours(8, 0, 0, 0); break; case "monthly": next.setMonth(next.getMonth() + 1, 1); next.setHours(8, 0, 0, 0); break; } return next.toISOString();
   ```
 - **validarEntrada(kind: TalkxAiKind, input: unknown)** — `supabase/functions/talkx-ai/index.ts`
   ```
@@ -5050,7 +5054,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `owner` | `supabase/migrations/20260927270018_team_chat_e28_fix_find_or_create_race.sql` |
 | `anon` | `supabase/migrations/20260927340000_fix_add_agent_xp_negative_and_guard.sql` |
 
-## K. Testes como especificação (26083 testes em 2720 arquivos — nomes completos em `context.json`)
+## K. Testes como especificação (26093 testes em 2720 arquivos — nomes completos em `context.json`)
 
 | Arquivo | Testes | Exemplos do que o sistema DEVE fazer |
 |---|---|---|
@@ -5138,6 +5142,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `src/components/inbox/__tests__/linkPreviewUtils.test.ts` | 35 | isImageUrl · aceita as extensões de imagem conhecidas · ignora maiúsculas/minúsculas · aceita quando a extensão vem antes de query string … |
 | `src/components/tasks/__tests__/primitivosCompartilhados.test.tsx` | 35 | TaskCheckbox — um checkbox circular para o módulo inteiro · é CIRCULAR (D16) e alterna pelo clique · guardado: aria-checked=true, nome  · desabilitado não dispara e sai do tab … |
 | `src/lib/__tests__/chartColors.test.ts` | 35 | chartColors · CHART_COLORS · has primary colors · has semantic colors … |
+| `supabase/functions/send-scheduled-report/index.test.ts` | 35 | auth: sem identidade → 401 e zero lookup/Resend/service-role · auth: x-cron-secret errado → 401 sem efeito · auth: CRON_SECRET vazio → x-cron-secret não autoriza (fail closed) · auth: Bearer inválido → 401 sem efeito … |
 | `tests/contracts/ai-image-input.contract.test.ts` | 35 | toInlineImage — caminho autenticado do Storage · baixa o objeto %s com service role e monta a data URL byte a byte · normaliza o mime com parâmetros do content-type · codifica cada segmento do caminho sem quebrar a URL do objeto … |
 | `src/components/inbox/contact-details/__tests__/EditContactDialog.test.tsx` | 34 | EditContactDialog · renders dialog title · pre-fills contact name · pre-fills contact phone … |
 | `src/features/talk-me/__tests__/useTalkMeQueue.test.tsx` | 34 | useTalkMeQueue · não consulta as RPCs enquanto a feature flag está desabilitada · carrega apenas a fila autorizada, normaliza os dados e remove o contato após o aceite · bloqueia duplo clique local enquanto o primeiro aceite aguarda o servidor … |
@@ -5220,7 +5225,6 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `src/hooks/chat/__tests__/useFilesViewState.test.tsx` | 25 | useFilesViewState — preferencias (localStorage) · storage ausente: comeca no default decidido em D3 (grid, 4 colunas) · storage invalido: JSON quebrado, versao desconhecida e valores fora do dominio caem no default · sanitiza campo a campo: viewMode valido com columns invalido mantem o viewMode … |
 | `src/lib/calls/__tests__/persistence.test.ts` | 25 | upsertMyCall — mapa p_* da RPC · grava a chamada tocando com os nomes exatos dos parâmetros · grava o fim com status/motivo/duração e OMITE o que não tem valor · upsertMyCall — retry idempotente … |
 | `supabase/functions/multiplix-dispatch/actions/__tests__/inspect.test.ts` | 25 | F48 preview: cada bloco reproduz EXATAMENTE o payload do worker para o destinatario · F48 preview: conteudo com placeholders é identico ao worker para outro destinatario · F48 preview: sem blocos, cai no template do dispatch — o MESMO payload do worker atual · F48 preview: destinatario de outro dono/inexistente responde 404 nomeado … |
-| `supabase/functions/send-scheduled-report/index.test.ts` | 25 | auth: sem identidade → 401 e zero lookup/Resend/service-role · auth: x-cron-secret errado → 401 sem efeito · auth: CRON_SECRET vazio → x-cron-secret não autoriza (fail closed) · auth: Bearer inválido → 401 sem efeito … |
 | `analise-prs/resgate-261118-lote3/hermes/robustez-primitivos-ui-2610121626bec5-2610141859e423/src/lib/__tests__/phoneNormalization.test.ts` | 24 | Phone Normalization · Standard JIDs · strips @s.whatsapp.net suffix · strips @g.us suffix for groups … |
 | `e2e/navegacao-modulos.spec.ts` | 24 | Navegação por todos os módulos (desktop) · abre as 42 entradas mapeadas, o modo Quadro de Tarefas e a busca global sem erro de console nem requisição falha · Navegação por todos os módulos (celular 390x844) · abre as 42 entradas mapeadas pelo menu móvel, o modo Quadro de Tarefas e a busca do cabeçalho sem erro de console nem requisição falha … |
 | `src/components/inbox/__tests__/ConversationTabs.test.tsx` | 24 | etapa 75 — ConversationTabs (8 abas da fusão) · renderiza as 8 abas e nenhuma aba removida · badge de Tarefas mostra tasksOpen · não renderiza badge quando o contador é zero … |
@@ -5476,6 +5480,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `invoke(` | `src/hooks/communication/useAudioMemes.ts` |
 | `invoke(` | `src/hooks/communication/useVoiceAgent.ts` |
 | `invoke(` | `src/hooks/connections/useConnectionsHealth.ts` |
+| `invoke(` | `src/hooks/dashboard/useScheduledReportConfigs.ts` |
 | `invoke(` | `src/hooks/evolution/useEvolutionApiCore.ts` |
 | `invoke(` | `src/hooks/gmail/gmailApi.ts` |
 | `invoke(` | `src/hooks/groups/actions.ts` |
@@ -5890,4 +5895,4 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | * R2-AUTH-005 (item 239): a resposta de uma busca de perfil nao pode repor | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/hooks/auth/useAuth.tsx` |
 | Identidade diferente: o perfil anterior nao pode continuar na tela e so a | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/hooks/auth/useAuth.tsx` |
 | Supabase pode falhar e não emitir SIGNED_OUT — a limpeza não pode depender dele). | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/hooks/auth/useAuth.tsx` |
-| … +2495 linhas — lista completa em `context.json` | |
+| … +2496 linhas — lista completa em `context.json` | |

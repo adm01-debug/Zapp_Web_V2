@@ -1242,6 +1242,7 @@
     "multiplix-send",
     "promogifts-catalog",
     "revoke-auth-sessions",
+    "send-scheduled-report",
     "sentiment-alert",
     "talkx-link",
     "talkx-send",
@@ -4361,7 +4362,8 @@
    ],
    "edges": [
     "auth-login",
-    "detect-new-device"
+    "detect-new-device",
+    "send-scheduled-report"
    ],
    "canais_realtime": [
     "agent-presence-changes",

@@ -1,15 +1,15 @@
 {
  "meta": {
-  "sha": "bf81b135067424811fc98ea862366cdd25d184b0",
+  "sha": "01737c9ec58223104414db9d7465214da326bef3",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-20 21:12 UTC",
-  "files_total": 15570,
-  "code_files": 8875,
-  "code_lines": 1407584
+  "generated_at": "2026-11-21 11:56 UTC",
+  "files_total": 15571,
+  "code_files": 8876,
+  "code_lines": 1407996
  },
  "version": "1.3.2",
- "facts_hash": "cbd94dae663d7e67",
+ "facts_hash": "f51d92c705eab248",
  "stack": {
   "frameworks": [
    "React + Vite",
@@ -344,7 +344,7 @@
   ],
   "package_manager": "bun",
   "languages": {
-   ".sql": 3061,
+   ".sql": 3062,
    ".tsx": 2805,
    ".ts": 2228,
    ".mjs": 652,
@@ -370,6 +370,7 @@
     "csp-report",
     "talkx-link",
     "searchbox-budget-alert",
+    "send-scheduled-report",
     "sync-call-records",
     "ai-usage-outbox-drain"
    ],
@@ -35078,6 +35079,34 @@
      "talkx_recipients"
     ]
    },
+   "get_scheduled_report_cron_secret": {
+    "args": "",
+    "returns": "text",
+    "lang": "sql",
+    "src": "supabase/migrations/20261120080000_scheduled_report_cron.sql",
+    "security_definer": true,
+    "search_path": true,
+    "body": "SELECT decrypted_secret FROM vault.decrypted_secrets WHERE name = 'scheduled_report_cron_secret' LIMIT 1",
+    "raises": [],
+    "tables": [
+     "vault"
+    ]
+   },
+   "trigger_due_scheduled_report_configs": {
+    "args": "",
+    "returns": "void",
+    "lang": "plpgsql",
+    "src": "supabase/migrations/20261120080000_scheduled_report_cron.sql",
+    "security_definer": true,
+    "search_path": true,
+    "body": "DECLARE v_config_id uuid; v_cron_secret text; BEGIN SELECT decrypted_secret INTO v_cron_secret FROM vault.decrypted_secrets WHERE name = 'scheduled_report_cron_secret' LIMIT 1; FOR v_config_id IN SELECT id FROM public.scheduled_report_configs WHERE is_active AND frequency IN ('daily', 'weekly', 'biweekly', 'monthly') AND (next_send_at IS NULL OR next_send_at <= now()) ORDER BY created_at LIMIT 20 LOOP PERFORM net.http_post( url := 'https://tnnnlkbymytvtqngbbqh.supabase.co/functions/v1/send-scheduled-report', body := jsonb_build_object('configId', v_config_id::text), headers := jsonb_build_object( 'Content-Type', 'application/json', 'x-cron-secret', v_cron_secret ), timeout_milliseconds := 30 …",
+    "raises": [],
+    "tables": [
+     "scheduled_report_configs",
+     "v_cron_secret",
+     "vault"
+    ]
+   },
    "uid": {
     "args": "",
     "returns": "uuid",
@@ -45730,6 +45759,12 @@
     "schedule": "10 4 * * *",
     "body": "select public.purge_old_search_events()",
     "src": "supabase/migrations/20261016013134_search_events.sql"
+   },
+   {
+    "job": "send-scheduled-report-trigger",
+    "schedule": "*/2 * * * *",
+    "body": "SELECT public.trigger_due_scheduled_report_configs()",
+    "src": "supabase/migrations/20261120080000_scheduled_report_cron.sql"
    }
   ],
   "views": {
@@ -48119,6 +48154,7 @@
    "supabase/migrations/20261118210000_talkx_next_recipients_variant_id.sql",
    "supabase/migrations/20261118220000_talkx_snapshot_variante_primeiro_vale.sql",
    "supabase/migrations/20261119010000_talkx_set_campaign_ab.sql",
+   "supabase/migrations/20261120080000_scheduled_report_cron.sql",
    "supabase/tests/admin_inbox_silence.sql",
    "supabase/tests/admin_unlock_login_autorizacao.sql",
    "supabase/tests/agent_workload.sql",
@@ -63134,6 +63170,38 @@
     "src": "supabase/migrations/20261119010000_talkx_set_campaign_ab.sql"
    },
    {
+    "kind": "revoke",
+    "privs": "all",
+    "object": "get_scheduled_report_cron_secret",
+    "objkind": "function",
+    "roles": "PUBLIC, anon, authenticated",
+    "src": "supabase/migrations/20261120080000_scheduled_report_cron.sql"
+   },
+   {
+    "kind": "grant",
+    "privs": "execute",
+    "object": "get_scheduled_report_cron_secret",
+    "objkind": "function",
+    "roles": "service_role",
+    "src": "supabase/migrations/20261120080000_scheduled_report_cron.sql"
+   },
+   {
+    "kind": "revoke",
+    "privs": "all",
+    "object": "trigger_due_scheduled_report_configs",
+    "objkind": "function",
+    "roles": "PUBLIC, anon, authenticated",
+    "src": "supabase/migrations/20261120080000_scheduled_report_cron.sql"
+   },
+   {
+    "kind": "grant",
+    "privs": "execute",
+    "object": "trigger_due_scheduled_report_configs",
+    "objkind": "function",
+    "roles": "service_role",
+    "src": "supabase/migrations/20261120080000_scheduled_report_cron.sql"
+   },
+   {
     "kind": "grant",
     "privs": "select",
     "object": "profiles",
@@ -72113,15 +72181,14 @@
     "methods": [
      "POST?"
     ],
-    "auth": "service_role (ignora RLS) + valida JWT do usuário",
+    "auth": "PÚBLICA (verify_jwt=false em config.toml)",
     "tables": [
      "agent_stats",
      "contacts",
      "conversation_analyses",
      "conversation_sla",
      "messages",
-     "profiles",
-     "scheduled_reports"
+     "profiles"
     ],
     "env": [
      "CRON_SECRET",
@@ -76807,7 +76874,7 @@
   {
    "module": "scripts",
    "files": 500,
-   "lines": 102011,
+   "lines": 102014,
    "tables": [
     "a",
     "alem_do_limite",
@@ -77141,7 +77208,7 @@
   {
    "module": "src/components",
    "files": 2288,
-   "lines": 389220,
+   "lines": 389232,
    "tables": [
     "agent_skills",
     "agent_visibility_grants",
@@ -77489,7 +77556,7 @@
   {
    "module": "src/hooks",
    "files": 1020,
-   "lines": 166108,
+   "lines": 166145,
    "tables": [
     "agent_achievements",
     "agent_stats",
@@ -78537,7 +78604,7 @@
   {
    "module": "supabase/functions",
    "files": 424,
-   "lines": 127331,
+   "lines": 127607,
    "tables": [
     "agent_stats",
     "ai_conversation_tags",
@@ -78606,7 +78673,6 @@
     "queues",
     "rate_limit_logs",
     "reconnection_logs",
-    "scheduled_reports",
     "searchbox_usage_daily",
     "security_alerts",
     "stickers",
@@ -78773,8 +78839,8 @@
   },
   {
    "module": "supabase/migrations",
-   "files": 1148,
-   "lines": 115019,
+   "files": 1149,
+   "lines": 115103,
    "tables": [
     "audit_logs",
     "department_invites",
@@ -81160,12 +81226,10 @@
    },
    "scheduled_reports": {
     "select": [
-     "src/hooks/chat/useScheduledReports.ts",
-     "supabase/functions/send-scheduled-report/index.ts"
+     "src/hooks/chat/useScheduledReports.ts"
     ],
     "update": [
-     "src/hooks/chat/useScheduledReports.ts",
-     "supabase/functions/send-scheduled-report/index.ts"
+     "src/hooks/chat/useScheduledReports.ts"
     ],
     "insert": [
      "src/hooks/chat/useScheduledReports.ts"
@@ -83158,6 +83222,7 @@
     "supabase/functions/crm-integration/index.ts",
     "supabase/functions/gmail-cron-sync/index.ts",
     "supabase/functions/searchbox-budget-alert/index.ts",
+    "supabase/functions/send-scheduled-report/index.test.ts",
     "supabase/functions/send-scheduled-report/index.ts"
    ],
    "DATABASE_IDENTITY_PATH": [
@@ -84746,6 +84811,9 @@
     "src/components/admin/GmailWebhookMonitor.tsx",
     "src/hooks/integrations/useGmail.ts"
    ],
+   "get_scheduled_report_cron_secret": [
+    "supabase/functions/send-scheduled-report/index.ts"
+   ],
    "get_search_insights": [
     "docs/_arquivo/auditoria-supabase-261022/propostas/P002-get-search-insights-wrapper.sql"
    ],
@@ -85520,7 +85588,8 @@
     "scripts/ai-context/gerar.unit.mjs"
    ],
    "send-scheduled-report": [
-    "src/hooks/chat/useScheduledReports.ts"
+    "src/hooks/chat/useScheduledReports.ts",
+    "src/hooks/dashboard/useScheduledReportConfigs.ts"
    ],
    "sentiment-alert": [
     "src/hooks/inbox/useSentimentAlerts.ts"
@@ -85965,6 +86034,10 @@
    {
     "file": "supabase/functions/multiplix-voices/index.ts",
     "count": 1
+   },
+   {
+    "file": "supabase/functions/send-scheduled-report/index.ts",
+    "count": 2
    },
    {
     "file": "supabase/functions/talkx-ai/index.ts",
@@ -107997,6 +108070,10 @@
    {
     "file": "src/hooks/dashboard/useScheduledReportConfigs.ts",
     "text": "(regra do lint `no-restricted-imports`)."
+   },
+   {
+    "file": "src/hooks/dashboard/useScheduledReportConfigs.ts",
+    "text": "Memo do próximo envio: espelha a regra da edge (send-scheduled-report) para"
    },
    {
     "file": "src/hooks/dashboard/useSentimentTrend.ts",
@@ -150813,6 +150890,12 @@
     "body": "queryClient.invalidateQueries({ queryKey: contactNotesKey(contactId, user?.id) }); queryClient.invalidateQueries({ queryKey: conversationTabCountsKey(contactId) });"
    },
    {
+    "file": "src/hooks/dashboard/useScheduledReportConfigs.ts",
+    "name": "calculateNextSendAt",
+    "params": "frequency: string",
+    "body": "const next = new Date(); switch (frequency) { case 'daily': next.setDate(next.getDate() + 1); next.setHours(8, 0, 0, 0); break; case 'weekly': next.setDate(next.getDate() + ((1 + 7 - next.getDay()) % 7 || 7)); next.setHours(8, 0, 0, 0); break; case 'biweekly': next.setDate(next.getDate() + 14); next.setHours(8, 0, 0, 0); break; case 'monthly': next.setMonth(next.getMonth() + 1, 1); next.setHours(8, 0, 0, 0); break; // custom é sob demanda (botão \"Enviar agora\") — nunca agenda. default: return nu …"
+   },
+   {
     "file": "src/hooks/dashboard/useSentimentTrend.ts",
     "name": "avgScore",
     "params": "row: SentimentTrendRow",
@@ -151500,7 +151583,7 @@
     "file": "supabase/functions/send-scheduled-report/index.ts",
     "name": "calculateNextSend",
     "params": "frequency: string",
-    "body": "const next = new Date(); switch (frequency) { case \"daily\": next.setDate(next.getDate() + 1); next.setHours(8, 0, 0, 0); break; case \"weekly\": next.setDate(next.getDate() + ((1 + 7 - next.getDay()) % 7 || 7)); next.setHours(8, 0, 0, 0); break; case \"monthly\": next.setMonth(next.getMonth() + 1, 1); next.setHours(8, 0, 0, 0); break; } return next.toISOString();"
+    "body": "const next = new Date(); switch (frequency) { case \"daily\": next.setDate(next.getDate() + 1); next.setHours(8, 0, 0, 0); break; case \"weekly\": next.setDate(next.getDate() + ((1 + 7 - next.getDay()) % 7 || 7)); next.setHours(8, 0, 0, 0); break; case \"biweekly\": next.setDate(next.getDate() + 14); next.setHours(8, 0, 0, 0); break; case \"monthly\": next.setMonth(next.getMonth() + 1, 1); next.setHours(8, 0, 0, 0); break; } return next.toISOString();"
    },
    {
     "file": "supabase/functions/talkx-ai/index.ts",
@@ -252947,6 +253030,46 @@
     "name": "pd23: aceita caixa alta, recusa subdomínio, dois @ e sem parte local"
    },
    {
+    "file": "supabase/functions/send-scheduled-report/index.test.ts",
+    "name": "dash083: body sem configId nem reportId → 422 (exatamente um obrigatório)"
+   },
+   {
+    "file": "supabase/functions/send-scheduled-report/index.test.ts",
+    "name": "dash083: configId com reportId juntos → 422 (exatamente um)"
+   },
+   {
+    "file": "supabase/functions/send-scheduled-report/index.test.ts",
+    "name": "dash083: configId inexistente → 404 e nada é enviado nem agendado"
+   },
+   {
+    "file": "supabase/functions/send-scheduled-report/index.test.ts",
+    "name": "dash083: config performance → lê na tabela nova e mapeia para agent_performance"
+   },
+   {
+    "file": "supabase/functions/send-scheduled-report/index.test.ts",
+    "name": "dash083: config full → dashboard_summary e avança next_send_at (daily +1d)"
+   },
+   {
+    "file": "supabase/functions/send-scheduled-report/index.test.ts",
+    "name": "dash083: config biweekly avança +14 dias (08:00)"
+   },
+   {
+    "file": "supabase/functions/send-scheduled-report/index.test.ts",
+    "name": "dash083: config custom → envia e deixa next_send_at null (nunca avança)"
+   },
+   {
+    "file": "supabase/functions/send-scheduled-report/index.test.ts",
+    "name": "dash083: config com report_type desconhecido → 404 sem envio nem avanço"
+   },
+   {
+    "file": "supabase/functions/send-scheduled-report/index.test.ts",
+    "name": "dash083: cron sem header faz 401 e nunca consulta o vault (sem regressão)"
+   },
+   {
+    "file": "supabase/functions/send-scheduled-report/index.test.ts",
+    "name": "dash083: vault consultado só com header de cron presente e sem CRON_SECRET no env"
+   },
+   {
     "file": "supabase/functions/sentiment-alert/index.test.ts",
     "name": "sentiment alert rejects non-POST methods before reading secrets"
    },
@@ -259120,6 +259243,10 @@
    },
    {
     "file": "src/hooks/connections/useConnectionsHealth.ts",
+    "call": "invoke("
+   },
+   {
+    "file": "src/hooks/dashboard/useScheduledReportConfigs.ts",
     "call": "invoke("
    },
    {
@@ -275876,6 +276003,34 @@
      "talkx_recipients"
     ]
    },
+   "get_scheduled_report_cron_secret": {
+    "args": "",
+    "returns": "text",
+    "lang": "sql",
+    "src": "supabase/migrations/20261120080000_scheduled_report_cron.sql",
+    "security_definer": true,
+    "search_path": true,
+    "body": "SELECT decrypted_secret FROM vault.decrypted_secrets WHERE name = 'scheduled_report_cron_secret' LIMIT 1",
+    "raises": [],
+    "tables": [
+     "vault"
+    ]
+   },
+   "trigger_due_scheduled_report_configs": {
+    "args": "",
+    "returns": "void",
+    "lang": "plpgsql",
+    "src": "supabase/migrations/20261120080000_scheduled_report_cron.sql",
+    "security_definer": true,
+    "search_path": true,
+    "body": "DECLARE v_config_id uuid; v_cron_secret text; BEGIN SELECT decrypted_secret INTO v_cron_secret FROM vault.decrypted_secrets WHERE name = 'scheduled_report_cron_secret' LIMIT 1; FOR v_config_id IN SELECT id FROM public.scheduled_report_configs WHERE is_active AND frequency IN ('daily', 'weekly', 'biweekly', 'monthly') AND (next_send_at IS NULL OR next_send_at <= now()) ORDER BY created_at LIMIT 20 LOOP PERFORM net.http_post( url := 'https://tnnnlkbymytvtqngbbqh.supabase.co/functions/v1/send-scheduled-report', body := jsonb_build_object('configId', v_config_id::text), headers := jsonb_build_object( 'Content-Type', 'application/json', 'x-cron-secret', v_cron_secret ), timeout_milliseconds := 30 …",
+    "raises": [],
+    "tables": [
+     "scheduled_report_configs",
+     "v_cron_secret",
+     "vault"
+    ]
+   },
    "uid": {
     "args": "",
     "returns": "uuid",
@@ -291089,6 +291244,7 @@
    "supabase/migrations/20261118210000_talkx_next_recipients_variant_id.sql",
    "supabase/migrations/20261118220000_talkx_snapshot_variante_primeiro_vale.sql",
    "supabase/migrations/20261119010000_talkx_set_campaign_ab.sql",
+   "supabase/migrations/20261120080000_scheduled_report_cron.sql",
    "supabase/tests/admin_inbox_silence.sql",
    "supabase/tests/admin_unlock_login_autorizacao.sql",
    "supabase/tests/agent_workload.sql",
@@ -291323,6 +291479,7 @@
    "get_own_lockout_status",
    "get_profile_id_for_user",
    "get_profile_role_for_check",
+   "get_scheduled_report_cron_secret",
    "get_send_metrics",
    "get_talkx_cron_secret",
    "get_talkx_send_url",
@@ -291582,6 +291739,7 @@
    "trg_user_sessions_auth_session_guard",
    "trigger_ai_jobs_tick",
    "trigger_crm_sync_outbox",
+   "trigger_due_scheduled_report_configs",
    "trigger_pending_multiplix_dispatches",
    "trigger_talkx_engine_tick",
    "unpin_message",
@@ -291616,6 +291774,7 @@
    "csp-report",
    "talkx-link",
    "searchbox-budget-alert",
+   "send-scheduled-report",
    "sync-call-records",
    "ai-usage-outbox-drain"
   ],
@@ -306318,6 +306477,38 @@
     "src": "supabase/migrations/20261119010000_talkx_set_campaign_ab.sql"
    },
    {
+    "kind": "revoke",
+    "privs": "all",
+    "object": "get_scheduled_report_cron_secret",
+    "objkind": "function",
+    "roles": "PUBLIC, anon, authenticated",
+    "src": "supabase/migrations/20261120080000_scheduled_report_cron.sql"
+   },
+   {
+    "kind": "grant",
+    "privs": "execute",
+    "object": "get_scheduled_report_cron_secret",
+    "objkind": "function",
+    "roles": "service_role",
+    "src": "supabase/migrations/20261120080000_scheduled_report_cron.sql"
+   },
+   {
+    "kind": "revoke",
+    "privs": "all",
+    "object": "trigger_due_scheduled_report_configs",
+    "objkind": "function",
+    "roles": "PUBLIC, anon, authenticated",
+    "src": "supabase/migrations/20261120080000_scheduled_report_cron.sql"
+   },
+   {
+    "kind": "grant",
+    "privs": "execute",
+    "object": "trigger_due_scheduled_report_configs",
+    "objkind": "function",
+    "roles": "service_role",
+    "src": "supabase/migrations/20261120080000_scheduled_report_cron.sql"
+   },
+   {
     "kind": "grant",
     "privs": "select",
     "object": "profiles",
@@ -309747,6 +309938,13 @@
     "msg": "1 chamada(s) `.from(variável)` — tabela só conhecida em runtime",
     "where": [
      "supabase/functions/multiplix-voices/index.ts"
+    ]
+   },
+   {
+    "kind": "dinâmico",
+    "msg": "2 chamada(s) `.from(variável)` — tabela só conhecida em runtime",
+    "where": [
+     "supabase/functions/send-scheduled-report/index.ts"
     ]
    },
    {
@@ -357905,7 +358103,7 @@
   },
   "scripts/edge-deploy/smoke-functions.mjs": {
    "path": "scripts/edge-deploy/smoke-functions.mjs",
-   "lines": 212,
+   "lines": 215,
    "exports": [
     "function smokeFunction",
     "function runSmokeSuite"
@@ -369951,7 +370149,7 @@
   },
   "src/components/dashboard/ScheduledReportsManager.tsx": {
    "path": "src/components/dashboard/ScheduledReportsManager.tsx",
-   "lines": 287,
+   "lines": 297,
    "exports": [
     "function ScheduledReportsManager"
    ],
@@ -370672,7 +370870,7 @@
   },
   "src/components/dashboard/__tests__/ScheduledReportsManager.a11y.test.tsx": {
    "path": "src/components/dashboard/__tests__/ScheduledReportsManager.a11y.test.tsx",
-   "lines": 47,
+   "lines": 48,
    "is_test": true,
    "tests": [
     "a11y: ScheduledReportsManager (nome nos seletores e no interruptor)",
@@ -370682,7 +370880,7 @@
   },
   "src/components/dashboard/__tests__/ScheduledReportsManager.test.tsx": {
    "path": "src/components/dashboard/__tests__/ScheduledReportsManager.test.tsx",
-   "lines": 108,
+   "lines": 109,
    "is_test": true,
    "tests": [
     "ScheduledReportsManager — frequência ",
@@ -420332,7 +420530,7 @@
   },
   "src/hooks/dashboard/useScheduledReportConfigs.ts": {
    "path": "src/hooks/dashboard/useScheduledReportConfigs.ts",
-   "lines": 63,
+   "lines": 100,
    "exports": [
     "interface ScheduledReportForm",
     "function useScheduledReportConfigs"
@@ -420360,11 +420558,25 @@
      "id"
     ]
    },
+   "invokes": [
+    "send-scheduled-report"
+   ],
    "rule_comments": [
-    "(regra do lint `no-restricted-imports`)."
+    "(regra do lint `no-restricted-imports`).",
+    "Memo do próximo envio: espelha a regra da edge (send-scheduled-report) para"
    ],
    "hooks": [
     "useScheduledReportConfigs"
+   ],
+   "calc_fns": [
+    {
+     "name": "calculateNextSendAt",
+     "params": "frequency: string",
+     "body": "const next = new Date(); switch (frequency) { case 'daily': next.setDate(next.getDate() + 1); next.setHours(8, 0, 0, 0); break; case 'weekly': next.setDate(next.getDate() + ((1 + 7 - next.getDay()) % 7 || 7)); next.setHours(8, 0, 0, 0); break; case 'biweekly': next.setDate(next.getDate() + 14); next.setHours(8, 0, 0, 0); break; case 'monthly': next.setMonth(next.getMonth() + 1, 1); next.setHours(8, 0, 0, 0); break; // custom é sob demanda (botão \"Enviar agora\") — nunca agenda. default: return nu …"
+    }
+   ],
+   "side_effects": [
+    "invoke("
    ]
   },
   "src/hooks/dashboard/useSentimentTrend.ts": {
@@ -452985,7 +453197,7 @@
   },
   "supabase/functions/_shared/schemas.ts": {
    "path": "supabase/functions/_shared/schemas.ts",
-   "lines": 947,
+   "lines": 950,
    "exports": [
     "const UUIDSchema",
     "const EmailSchema",
@@ -466548,9 +466760,10 @@
   },
   "supabase/functions/send-scheduled-report/index.test.ts": {
    "path": "supabase/functions/send-scheduled-report/index.test.ts",
-   "lines": 603,
+   "lines": 801,
    "is_test": true,
    "env": [
+    "CRON_SECRET",
     "RESEND_API_KEY",
     "TRUSTED_EMAIL_DOMAINS"
    ],
@@ -466573,6 +466786,9 @@
     "dereço), nada sai para o recusado e, se houver recusa, o ciclo segue a regra"
    ],
    "doc": "R2-API-022 (P1) — gate de autorização do send-scheduled-report. Aceite: 401 sem identidade; 403 para usuário comum; cron inválido/ausente rejeitado; admin/supervisor e cron válido admitidos; zero lookup de relatório / Resend / efeito service-role após rejeição; usuário comum não recebe reportData.",
+   "temporal": [
+    "const diffDays = (new Date(next).getTime() - Date.now()) / (24 * 60 * 60 * 1000);"
+   ],
    "tests": [
     "auth: sem identidade → 401 e zero lookup/Resend/service-role",
     "auth: x-cron-secret errado → 401 sem efeito",
@@ -466598,23 +466814,30 @@
     "pd23: acima do limite de destinatários → nada é enviado e o ciclo não avança",
     "pd23: env TRUSTED_EMAIL_DOMAINS troca a lista confiável",
     "pd23: default é o domínio da empresa; vazio cai no default e a normalização trata vírgula/caixa",
-    "pd23: aceita caixa alta, recusa subdomínio, dois @ e sem parte local"
+    "pd23: aceita caixa alta, recusa subdomínio, dois @ e sem parte local",
+    "dash083: body sem configId nem reportId → 422 (exatamente um obrigatório)",
+    "dash083: configId com reportId juntos → 422 (exatamente um)",
+    "dash083: configId inexistente → 404 e nada é enviado nem agendado",
+    "dash083: config performance → lê na tabela nova e mapeia para agent_performance",
+    "dash083: config full → dashboard_summary e avança next_send_at (daily +1d)",
+    "dash083: config biweekly avança +14 dias (08:00)",
+    "dash083: config custom → envia e deixa next_send_at null (nunca avança)",
+    "dash083: config com report_type desconhecido → 404 sem envio nem avanço",
+    "dash083: cron sem header faz 401 e nunca consulta o vault (sem regressão)",
+    "dash083: vault consultado só com header de cron presente e sem CRON_SECRET no env"
    ]
   },
   "supabase/functions/send-scheduled-report/index.ts": {
    "path": "supabase/functions/send-scheduled-report/index.ts",
-   "lines": 471,
+   "lines": 546,
    "exports": [
     "interface ScheduledReportDeps",
+    "interface ScheduledReportConfigRow",
     "function resolveTrustedDomains",
     "function isTrustedRecipient",
     "function handleScheduledReport"
    ],
    "tables": [
-    {
-     "table": "scheduled_reports",
-     "op": "select"
-    },
     {
      "table": "messages",
      "op": "select"
@@ -466634,16 +466857,9 @@
     {
      "table": "conversation_sla",
      "op": "select"
-    },
-    {
-     "table": "scheduled_reports",
-     "op": "select,update"
     }
    ],
    "table_cols": {
-    "scheduled_reports": [
-     "id"
-    ],
     "messages": [
      "created_at",
      "id",
@@ -466661,7 +466877,9 @@
      "created_at"
     ]
    },
+   "dyn_from": 2,
    "rpc": [
+    "get_scheduled_report_cron_secret",
     "is_admin_or_supervisor"
    ],
    "external_urls": [
@@ -466720,7 +466938,7 @@
     {
      "name": "calculateNextSend",
      "params": "frequency: string",
-     "body": "const next = new Date(); switch (frequency) { case \"daily\": next.setDate(next.getDate() + 1); next.setHours(8, 0, 0, 0); break; case \"weekly\": next.setDate(next.getDate() + ((1 + 7 - next.getDay()) % 7 || 7)); next.setHours(8, 0, 0, 0); break; case \"monthly\": next.setMonth(next.getMonth() + 1, 1); next.setHours(8, 0, 0, 0); break; } return next.toISOString();"
+     "body": "const next = new Date(); switch (frequency) { case \"daily\": next.setDate(next.getDate() + 1); next.setHours(8, 0, 0, 0); break; case \"weekly\": next.setDate(next.getDate() + ((1 + 7 - next.getDay()) % 7 || 7)); next.setHours(8, 0, 0, 0); break; case \"biweekly\": next.setDate(next.getDate() + 14); next.setHours(8, 0, 0, 0); break; case \"monthly\": next.setMonth(next.getMonth() + 1, 1); next.setHours(8, 0, 0, 0); break; } return next.toISOString();"
     }
    ],
    "temporal": [
@@ -475126,6 +475344,11 @@
    "lines": 116,
    "uses_service_role": true
   },
+  "supabase/migrations/20261120080000_scheduled_report_cron.sql": {
+   "path": "supabase/migrations/20261120080000_scheduled_report_cron.sql",
+   "lines": 84,
+   "uses_service_role": true
+  },
   "supabase/tests/admin_inbox_silence.sql": {
    "path": "supabase/tests/admin_inbox_silence.sql",
    "lines": 310,
@@ -479032,10 +479255,30 @@
   }
  },
  "git": {
-  "sha": "bf81b135067424811fc98ea862366cdd25d184b0",
+  "sha": "01737c9ec58223104414db9d7465214da326bef3",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "01737c9e",
+    "date": "2026-11-21",
+    "author": "adm01-debug",
+    "subject": "feat: unifica relatorios agendados do dashboard na edge por configId com cron",
+    "files": [
+     "ESTADO.md",
+     "scripts/edge-deploy/smoke-functions.mjs",
+     "src/components/dashboard/ScheduledReportsManager.tsx",
+     "src/components/dashboard/__tests__/ScheduledReportsManager.a11y.test.tsx",
+     "src/components/dashboard/__tests__/ScheduledReportsManager.test.tsx",
+     "src/hooks/dashboard/useScheduledReportConfigs.ts",
+     "supabase/config.toml",
+     "supabase/deployment-manifest.json",
+     "supabase/functions/_shared/schemas.ts",
+     "supabase/functions/send-scheduled-report/index.test.ts",
+     "supabase/functions/send-scheduled-report/index.ts",
+     "supabase/migrations/20261120080000_scheduled_report_cron.sql"
+    ]
+   },
    {
     "sha": "bf81b135",
     "date": "2026-11-20",
@@ -482385,22 +482628,20 @@
      "src/hooks/integrations/useTalkXAbStats.ts",
      "supabase/migrations/20261118190000_talkx_x065_ab_campanha.sql"
     ]
-   },
-   {
-    "sha": "0116fcc0",
-    "date": "2026-11-18",
-    "author": "adm01-debug",
-    "subject": "Migration do índice do agendador substituída por uma que tolera falta de permissão (#3265)",
-    "files": [
-     "supabase/migrations/20261117160000_talkx_cron_job_run_details_indice.sql",
-     "supabase/migrations/20261118200000_talkx_cron_indice_falha_suave.sql"
-    ]
    }
   ],
   "hot_files": [
    [
     "src/hooks/integrations/useTalkXAbStats.ts",
     4
+   ],
+   [
+    "ESTADO.md",
+    3
+   ],
+   [
+    "supabase/deployment-manifest.json",
+    3
    ],
    [
     "docs/agentes/github-ci.md",
@@ -482433,14 +482674,6 @@
    [
     "src/components/talkx/tracking/TalkXAbTestResults.tsx",
     3
-   ],
-   [
-    "ESTADO.md",
-    2
-   ],
-   [
-    "supabase/deployment-manifest.json",
-    2
    ],
    [
     "docs/ci/README.md",

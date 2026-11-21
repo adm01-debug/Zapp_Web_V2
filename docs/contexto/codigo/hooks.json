@@ -9444,13 +9444,15 @@
    "hooks_exportados": [
     "useScheduledReportConfigs"
    ],
-   "linhas": 63,
+   "linhas": 100,
    "dominio": "hooks/dashboard",
    "tabelas": [
     "scheduled_report_configs"
    ],
    "rpcs": [],
-   "edges": [],
+   "edges": [
+    "send-scheduled-report"
+   ],
    "hooks_internos": [
     "useMutation",
     "useQuery",

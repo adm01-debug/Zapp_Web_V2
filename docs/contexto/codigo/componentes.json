@@ -6715,7 +6715,7 @@
     "ScheduledReportsManager"
    ],
    "export_default": null,
-   "linhas": 287,
+   "linhas": 297,
    "dominio": "components/dashboard",
    "hooks_locais": [
     "useScheduledReportConfigs"

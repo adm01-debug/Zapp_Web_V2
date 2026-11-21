@@ -16,6 +16,7 @@
   "gmail-webhook",
   "public-api",
   "searchbox-budget-alert",
+  "send-scheduled-report",
   "sync-call-records",
   "talkx-link",
   "whatsapp-webhook"
@@ -2786,18 +2787,18 @@
    "nome": "send-scheduled-report",
    "entrada": "supabase/functions/send-scheduled-report/index.ts",
    "arquivos": 1,
-   "linhas": 471,
-   "verify_jwt": true,
+   "linhas": 546,
+   "verify_jwt": false,
    "metodos": [],
    "tabelas": [
     "agent_stats",
     "contacts",
     "conversation_analyses",
     "conversation_sla",
-    "messages",
-    "scheduled_reports"
+    "messages"
    ],
    "rpcs": [
+    "get_scheduled_report_cron_secret",
     "is_admin_or_supervisor"
    ],
    "env": [
@@ -2819,10 +2820,11 @@
     "validation.ts"
    ],
    "chamada_pelo_front": [
-    "src/hooks/chat/useScheduledReports.ts"
+    "src/hooks/chat/useScheduledReports.ts",
+    "src/hooks/dashboard/useScheduledReportConfigs.ts"
    ],
    "chamada_por_edges": [],
-   "chamada_por_sql_ou_cron": false,
+   "chamada_por_sql_ou_cron": true,
    "orfa": false,
    "testes": 1
   },

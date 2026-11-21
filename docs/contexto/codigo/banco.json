@@ -8,7 +8,7 @@
   "supabase/migrations",
   "typeorm"
  ],
- "migrations": 1148,
+ "migrations": 1149,
  "seeds": [
   "docs/contexto/supabase/functions/public/seed_default_goals_for_profile__12ae32cb1ec02d01.sql",
   "e2e/fixtures/seed-talk-me.sql",
@@ -298,6 +298,7 @@
   "get_own_lockout_status",
   "get_profile_id_for_user",
   "get_profile_role_for_check",
+  "get_scheduled_report_cron_secret",
   "get_send_metrics",
   "get_talkx_cron_secret",
   "get_talkx_send_url",
@@ -613,6 +614,7 @@
   "trg_user_sessions_auth_session_guard",
   "trigger_ai_jobs_tick",
   "trigger_crm_sync_outbox",
+  "trigger_due_scheduled_report_configs",
   "trigger_pending_multiplix_dispatches",
   "trigger_talkx_engine_tick",
   "unpin_message",
@@ -1916,6 +1918,11 @@
    "nome": "security-acl-score",
    "agenda": "23 * * * *",
    "migration": "20261013230008_security_acl_alerts_monitor.sql"
+  },
+  {
+   "nome": "send-scheduled-report-trigger",
+   "agenda": "*/2 * * * *",
+   "migration": "20261120080000_scheduled_report_cron.sql"
   },
   {
    "nome": "talkx-scheduler-1min",
@@ -22564,9 +22571,7 @@
     "so_no_types": []
    },
    "usada_no_front": 1,
-   "usada_em_edges": [
-    "send-scheduled-report"
-   ],
+   "usada_em_edges": [],
    "triggers": [
     "update_scheduled_reports_updated_at"
    ],
@@ -32339,6 +32344,11 @@
    "nome": "get_own_gmail_accounts",
    "definida": true,
    "usada_em": 2
+  },
+  {
+   "nome": "get_scheduled_report_cron_secret",
+   "definida": true,
+   "usada_em": 1
   },
   {
    "nome": "get_talkx_cron_secret",

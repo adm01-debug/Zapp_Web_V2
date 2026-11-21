@@ -66,11 +66,11 @@
  "commits": {
   "convencao": "conventional commits (observado)",
   "exemplos": [
+   "feat: unifica relatorios agendados do dashboard na edge por configId com cron",
    "docs(goal): backlog verificado byte a byte (Fase 1) - 1090 pendências (#3293)",
    "docs(fase0): linha de base e regras de negocio da Fase 0 do GOAL (#3292)",
    "feat(evolution-api): adiciona ação 'pairing-code' para parear aparelho por código (#3290)",
-   "ci(security): dependency review barra CVE novo high/critical nos PRs (#3288)",
-   "chore(contexto): atualiza snapshots X065 (persist_talkx_recipient_message_snapshot e set_talkx_campaign_ab) (#3289)"
+   "ci(security): dependency review barra CVE novo high/critical nos PRs (#3288)"
   ]
  },
  "pr_template": ".github/PULL_REQUEST_TEMPLATE.md",

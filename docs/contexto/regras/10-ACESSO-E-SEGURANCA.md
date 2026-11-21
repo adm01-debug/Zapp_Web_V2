@@ -1,6 +1,6 @@
 # 10 · ACESSO E SEGURANÇA — quem pode o quê
 
-> Gerado automaticamente por AI Context Sync v1.3.2 · commit `bf81b13506` · branch `main` · 2026-11-20 21:12 UTC
+> Gerado automaticamente por AI Context Sync v1.3.2 · commit `01737c9ec5` · branch `main` · 2026-11-21 11:56 UTC
 > Não edite à mão — regras humanas vão em `manual/`.
 
 ## Perfis / roles identificados
@@ -245,7 +245,7 @@
 
 > `—` com RLS ligado = ninguém além de service_role. `sem RLS` = qualquer chave anon lê/escreve tudo.
 
-## Onde o RLS é IGNORADO (service_role) — 1235 arquivo(s)
+## Onde o RLS é IGNORADO (service_role) — 1236 arquivo(s)
 
 - `analise-prs/resgate-261118-lote2/scripts/db-audit/validate-post-apply.mjs`
 - `analise-prs/resgate-261118-lote2/supabase/migrations/20261016193300_copilot_tick_trigger.sql`
@@ -397,7 +397,7 @@
 - `docs/contexto/supabase/functions/public/reassign_absent_agents__7f027ae089526f54.sql`
 - `docs/contexto/supabase/functions/public/reassign_overloaded_agents__12ae32cb1ec02d01.sql`
 - `docs/contexto/supabase/functions/public/record_away_message__d077d0b24f34a751.sql`
-- … +1085 (lista completa em `context.json`)
+- … +1086 (lista completa em `context.json`)
 
 ## Funções SQL `SECURITY DEFINER` (rodam com privilégio do dono, ignoram RLS)
 
@@ -541,6 +541,7 @@
 - `get_own_lockout_status`
 - `get_profile_id_for_user`
 - `get_profile_role_for_check`
+- `get_scheduled_report_cron_secret`
 - `get_send_metrics`
 - `get_talkx_cron_secret`
 - `get_talkx_send_url`
@@ -800,6 +801,7 @@
 - `trg_user_sessions_auth_session_guard`
 - `trigger_ai_jobs_tick`
 - `trigger_crm_sync_outbox`
+- `trigger_due_scheduled_report_configs`
 - `trigger_pending_multiplix_dispatches`
 - `trigger_talkx_engine_tick`
 - `unpin_message`
@@ -835,6 +837,7 @@
 - `csp-report`
 - `talkx-link`
 - `searchbox-budget-alert`
+- `send-scheduled-report`
 - `sync-call-records`
 - `ai-usage-outbox-drain`
 
@@ -893,7 +896,7 @@ Middleware matcher (Next.js): nenhum
 | grant | authenticated, service_role | select, insert, update, delete | `contact_notes`, `contact_protection_policy` |
 | grant | postgres | execute | `set_conversation_status`, `set_conversation_status`, `set_conversation_status`, `set_conversation_status`, `set_conversation_status`, `set_conversation_status` |
 | grant | service_role | all | `audio_meme_favorites`, `link_preview_cache`, `link_preview_cache_metrics`, `audio_meme_favorites`, `link_preview_cache`, `link_preview_cache_metrics`, `talkx_links`, `talkx_link_clicks`, `talkx_conversions`, `talkx_settings`, `multiplix_delivery_items`, `ai_budget_reservations`, `ai_jobs`, `talkx_test_send_claims`, `talkx_optout_keywords` … +18 |
-| grant | service_role | execute | `mark_outbound_post_started`, `claim_outbound_message`, `run_copilot_retention`, `cleanup_link_preview_cache`, `get_identity_matrix`, `set_conversation_status`, `purge_talkx_expired_data`, `retry_talkx_recipient`, `get_team_profiles`, `talkx_next_recipients`, `cleanup_link_preview_cache`, `encrypt_gmail_token`, `decrypt_gmail_token`, `get_gmail_tokens`, `store_gmail_tokens` … +235 |
+| grant | service_role | execute | `mark_outbound_post_started`, `claim_outbound_message`, `run_copilot_retention`, `cleanup_link_preview_cache`, `get_identity_matrix`, `set_conversation_status`, `purge_talkx_expired_data`, `retry_talkx_recipient`, `get_team_profiles`, `talkx_next_recipients`, `cleanup_link_preview_cache`, `encrypt_gmail_token`, `decrypt_gmail_token`, `get_gmail_tokens`, `store_gmail_tokens` … +237 |
 | grant | service_role | select | `gmail_accounts_safe`, `gmail_accounts_safe`, `password_reset_requests_safe`, `profiles_public`, `gmail_accounts_safe`, `gmail_accounts_safe`, `password_reset_requests_safe`, `profiles_public`, `searchbox_budget_alert_cron`, `sla_alert_events` |
 | grant | service_role | select, insert | `contact_deletion_audit`, `audit_logs`, `contact_block_audit` |
 | grant | service_role | select, insert, update | `multiplix_events`, `searchbox_budget_alert_emails`, `talkx_segment_library_history`, `talkx_contact_attributes`, `public` |
@@ -906,7 +909,7 @@ Middleware matcher (Next.js): nenhum
 | revoke | PUBLIC | execute | `dashboard_kpi`, `dashboard_contact_counts`, `dashboard_hourly_volume`, `set_conversation_status`, `record_failed_login`, `messages_sla_first_response_trigger`, `calculate_level`, `normalize_contact_phone`, `dashboard_kpi`, `dashboard_contact_counts`, `dashboard_hourly_volume`, `grant_agent_achievement`, `grant_agent_achievement`, `add_agent_xp`, `update_agent_streak` … +31 |
 | revoke | PUBLIC, anon | all | `resolve_unconfirmed_message`, `talkx_campaign_recipients_page`, `mark_first_response`, `mark_first_response`, `mark_first_response`, `count_searchbox_sessions_this_month`, `merge_contacts_atomic`, `mark_first_response`, `mark_first_response`, `mark_first_response`, `get_crm_sync_health`, `get_crm_sync_health`, `merge_contacts_atomic`, `get_profile_id_for_user`, `get_visible_agent_ids` … +133 |
 | revoke | PUBLIC, anon | execute | `get_department_whatsapp_credentials`, `get_identity_matrix`, `get_own_lockout_status`, `effective_role`, `is_admin`, `is_ip_blocked`, `is_ip_whitelisted`, `is_country_allowed`, `is_country_blocked`, `audit_role_permissions_changes`, `sync_profile_role_from_user_roles`, `sync_thread_last_sender`, `update_device_last_seen`, `update_global_settings_updated_at`, `update_updated_at_column` … +87 |
-| revoke | PUBLIC, anon, authenticated | all | `enqueue_copilot_tick_on_contact_message`, `mark_outbound_post_started`, `claim_outbound_message`, `register_first_response_internal`, `register_first_response_internal`, `notify_due_reminders`, `guard_message_provenance_fields`, `backfill_reminders_to_conversation_tasks`, `purge_talkx_expired_data`, `guard_contact_note_identity`, `retry_talkx_recipient`, `grant_agent_achievement_internal`, `talkx_next_recipients`, `encrypt_gmail_token`, `decrypt_gmail_token` … +231 |
+| revoke | PUBLIC, anon, authenticated | all | `enqueue_copilot_tick_on_contact_message`, `mark_outbound_post_started`, `claim_outbound_message`, `register_first_response_internal`, `register_first_response_internal`, `notify_due_reminders`, `guard_message_provenance_fields`, `backfill_reminders_to_conversation_tasks`, `purge_talkx_expired_data`, `guard_contact_note_identity`, `retry_talkx_recipient`, `grant_agent_achievement_internal`, `talkx_next_recipients`, `encrypt_gmail_token`, `decrypt_gmail_token` … +233 |
 | revoke | PUBLIC, anon, authenticated | all privileges | `webhook_failures` |
 | revoke | PUBLIC, anon, authenticated | execute | `multiplix_audiences_validate_shared_roles`, `consume_rate_limit`, `phone_variants`, `ingest_inbound_message`, `reschedule_talkx_recipient`, `transition_talkx_campaign`, `expire_stale_agent_presence`, `handle_message_gamification`, `handle_conversation_closure_gamification`, `get_department_whatsapp_credentials`, `get_department_whatsapp_api_key`, `record_incoming_call_event`, `sanitize_reset_request`, `team_receipts_fill_conversation_id`, `team_reactions_force_conversation_id` … +25 |
 | revoke | PUBLIC, anon, authenticated | truncate, references, trigger | `public` |
