@@ -11,6 +11,9 @@ import { buildTalkXCampaignCsvBlob } from '@/lib/talkxCsv';
 import { buildTalkXCampaignPdfBlob } from '@/lib/talkxReportPdf';
 import { IconTile, MetaRow, RailCard, TalkXQueryBoundary, TalkXSkeletonRows, fmtDurationShort, fmtInt, type TalkXQueryLike } from '../talkxShared';
 import { TalkXReportFunnel } from './TalkXReportFunnel';
+import { TalkXSegmentProgressTable } from '@/components/talkx/tracking/TalkXSegmentProgressTable';
+import { TalkXOperationalTimeline } from '@/components/talkx/tracking/TalkXOperationalTimeline';
+import { useTalkXSegmentProgress } from '@/hooks/integrations/useTalkXSegmentProgress';
 import { TalkXReportHeatmap } from './TalkXReportHeatmap';
 import { TalkXReportPerformance } from './TalkXReportPerformance';
 import {
@@ -131,6 +134,13 @@ export function TalkXCampaignReport({ campaign, creators, onBack, onViewMonitor 
   const selectedSegment = useMemo(
     () => (segmentId === null ? null : segmentRows.find((s) => (s.segment_id ?? NO_SEGMENT_ID) === segmentId) ?? null),
     [segmentRows, segmentId],
+  );
+  // X144 — progresso por público (RPC X142). O card "Fila por Segmento" (X149)
+  // é montado pelo TalkXSegmentProgressTable; a consulta mora aqui no hook.
+  const segmentProgress = useTalkXSegmentProgress(campaign.id);
+  const segmentProgressNames = useMemo<Record<string, string>>(
+    () => Object.fromEntries(funnelSegments.map((fs) => [fs.id, fs.name])),
+    [funnelSegments],
   );
 
   const reportQuery = useQuery({
@@ -344,6 +354,16 @@ export function TalkXCampaignReport({ campaign, creators, onBack, onViewMonitor 
           />
 
           <TalkXReportFunnel steps={funnelSteps} segments={funnelSegments} segmentId={segmentId} onSegmentChange={setSegmentId} />
+          <TalkXSegmentProgressTable
+            rows={segmentProgress.data}
+            segmentNames={segmentProgressNames}
+            isLoading={segmentProgress.isLoading}
+            isError={segmentProgress.isError}
+            onRetry={() => { void segmentProgress.refetch(); }}
+            onSelectSegment={setSegmentId}
+          />
+
+          <TalkXOperationalTimeline campaignId={campaign.id} />
 
           <TalkXReportHeatmap matrix={heatmap} metric={heatmapMetric} onMetricChange={handleMetric} />
 

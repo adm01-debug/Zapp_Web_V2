@@ -10,6 +10,7 @@ const { state } = vi.hoisted(() => ({
   state: {
     recipients: [] as unknown[],
     report: null as unknown,
+    segments: [] as unknown[],
   },
 }));
 const { pdfBuilder, toastError } = vi.hoisted(() => ({
@@ -45,7 +46,12 @@ vi.mock('@/lib/supabaseHelpers', () => {
     fromTable,
     supabase: {
       from: fromTable,
-      rpc: () => Promise.resolve({ data: state.report, error: null }),
+      rpc: (name: string) => {
+        if (name === 'talkx_campaign_segment_progress') {
+          return Promise.resolve({ data: state.segments, error: null });
+        }
+        return Promise.resolve({ data: state.report, error: null });
+      },
       channel: realtimeChannel,
       removeChannel: vi.fn(),
     },
@@ -180,6 +186,7 @@ describe('TalkXCampaignReport', () => {
   beforeEach(() => {
     state.recipients = [];
     state.report = null;
+    state.segments = [];
   });
 
   function renderReport(campanha: TalkXCampaign = campaign, creators?: Record<string, string>) {
@@ -288,5 +295,21 @@ describe('TalkXCampaignReport', () => {
     fireEvent.click(await screen.findByRole('button', { name: 'PDF' }));
     await waitFor(() => expect(toastError).toHaveBeenCalledWith('Não foi possível gerar o PDF. Tente novamente.'));
     expect(screen.getByRole('button', { name: 'PDF' })).toBeEnabled();
+  });
+
+  it('monta os cards órfãos resgatados (Fila por Segmento e Linha do Tempo Operacional)', async () => {
+    state.segments = [
+      { segment_id: 's1', position: 1, total: 2, sent: 2, delivered: 2, failed: 0, remaining: 0, percent: 100, status: 'done', total_segments: 1, pending_segments: 0 },
+    ];
+    state.report = {
+      kpis: {
+        total_recipients: 2, sent_count: 2, delivered_count: 2,
+        read_count: 1, failed_count: 0, outcome_unknown_count: 0,
+        delivery_rate_pct: 100, duration_secs: 60,
+      },
+    };
+    renderReport();
+    expect(await screen.findByText('Fila por Segmento')).toBeInTheDocument();
+    expect(screen.getByText('Linha do Tempo Operacional')).toBeInTheDocument();
   });
 });
