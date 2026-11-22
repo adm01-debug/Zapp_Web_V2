@@ -192,7 +192,9 @@ Registro das edges mortas (levantamento: zero chamadores em `src/` via `function
 | `ai-product-recommendation` | ligada — capacidade `recomendar_produto` | `CAPABILITY_FUNCTION` |
 | `ai-deadline-calculator` | ligada — capacidade `calcular_prazo` | `CAPABILITY_FUNCTION` |
 | `ai-objection-handler` | ligada — capacidade `tratar_objecao` | `CAPABILITY_FUNCTION` |
-| `ai-auto-tag`, `ai-enhance-message`, `ai-kb-ingest`, `sentiment-alert`, `ai-conversation-analysis`, `ai-multimodal-analysis`, `automation-suggest-reply`, `ai-price-anchor`, `ai-loss-risk` | **pendentes** — nenhuma foi ligada nesta PR e nenhuma foi removida; entram na PR de inventário/limpeza, com decisão por edge | a definir |
+| `ai-loss-risk` | ligada — capacidade `risco_perda` (recebe `daysSinceLastContact` do histórico e devolve `recoveryAction`) | `CAPABILITY_FUNCTION` |
+| `ai-price-anchor` | ligada — capacidade `ancoragem_preco` (devolve `anchorScript`) | `CAPABILITY_FUNCTION` |
+| `ai-auto-tag`, `ai-enhance-message`, `ai-kb-ingest`, `sentiment-alert`, `ai-conversation-analysis`, `ai-multimodal-analysis`, `automation-suggest-reply` | **pendentes** — nenhuma foi ligada nesta PR e nenhuma foi removida; entram na PR de inventário/limpeza, com decisão por edge. `automation-suggest-reply`, `sentiment-alert` e `ai-kb-ingest` não têm chave em `ai-feature-flags.ts`, então só entram depois de ganhar capacidade própria | a definir |
 
 Cada capacidade de modelo continua atrás da MESMA chave `ai.capability.*` da edge chamada
 (`capabilityFlagKeyForFunction`), então desligar a capacidade desliga as duas pontas de uma vez — sem
