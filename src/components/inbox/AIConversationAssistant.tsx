@@ -27,6 +27,7 @@ import { AnalysisTabs } from './ai-tools/AnalysisTabs';
 import { type AnalysisData, type AnalysisMessage, type AiEnvelope, aiEnvelopeErrorMessage, readAiErrorEnvelope, sentimentConfig } from './ai-tools/analysisConfigs';
 import { normalizeScore } from '@/lib/ai-values';
 import { buildPeriodKey, useAiRequestGeneration } from '@/lib/aiRequest/context';
+import { mascararParaIA } from '@/hooks/copilot/useDataMasking';
 
 interface AIConversationAssistantProps {
   messages: AnalysisMessage[];
@@ -109,7 +110,7 @@ export function AIConversationAssistant({ messages, contactId, contactName, isOp
               messages: filteredMessages.map((message) => ({
                 id: message.id,
                 sender: message.sender,
-                content: message.content,
+                content: mascararParaIA(message.content),
                 type: message.type || 'text',
                 created_at: message.created_at,
               })),

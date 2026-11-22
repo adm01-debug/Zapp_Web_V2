@@ -9,6 +9,7 @@ import { Sparkles, Briefcase, MessageCircle, Target, Heart, Scissors, BookOpen, 
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { mascararParaIA } from '@/hooks/copilot/useDataMasking';
 
 const tones = [
   { id: 'professional', label: 'Profissional', icon: Briefcase, description: 'Formal e corporativo' },
@@ -48,7 +49,7 @@ export function AIRewriteButton({ inputValue, onRewrite, contactName }: AIRewrit
 
     try {
       const { data, error } = await supabase.functions.invoke('ai-enhance-message', {
-        body: { message: textoDoClique, tone, contactName },
+        body: { message: mascararParaIA(textoDoClique), tone, contactName },
       });
 
       if (error) throw error;

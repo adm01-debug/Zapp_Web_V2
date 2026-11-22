@@ -10,6 +10,7 @@ import { toast } from 'sonner';
 import { useSummaryTts } from './summary/useSummaryTts';
 import { SummaryResult } from './summary/SummaryResult';
 import { buildPeriodKey, useAiRequestGeneration } from '@/lib/aiRequest/context';
+import { mascararParaIA } from '@/hooks/copilot/useDataMasking';
 
 interface Message { id: string; sender: 'agent' | 'contact'; content: string; created_at: string; }
 interface SummaryData { summary: string; status: 'resolvido' | 'pendente' | 'aguardando_cliente' | 'aguardando_atendente'; keyPoints: string[]; nextSteps?: string[]; sentiment: 'positivo' | 'neutro' | 'negativo'; }
@@ -89,7 +90,7 @@ export function ConversationSummary({ messages, contactName, contactId, initialS
     setIsLoading(true);
     try {
       const { data, error } = await supabase.functions.invoke('ai-conversation-summary', {
-        body: { messages: filteredMessages.map(m => ({ sender: m.sender, content: m.content, created_at: m.created_at })), contactName, contactId, requestId: request.requestId },
+        body: { messages: filteredMessages.map(m => ({ sender: m.sender, content: mascararParaIA(m.content), created_at: m.created_at })), contactName, contactId, requestId: request.requestId },
       });
 
       // IA-048 — a resposta só vale se contato/período ainda forem os do clique.
