@@ -23,7 +23,11 @@ export type AssistantCapability =
   | 'calcular_prazo'
   | 'tratar_objecao'
   | 'risco_perda'
-  | 'ancoragem_preco';
+  | 'ancoragem_preco'
+  | 'melhorar_mensagem'
+  | 'etiquetar_conversa'
+  | 'analisar_conversa'
+  | 'analisar_imagem';
 
 export const ASSISTANT_CAPABILITIES: readonly AssistantCapability[] = [
   'agenda',
@@ -35,6 +39,10 @@ export const ASSISTANT_CAPABILITIES: readonly AssistantCapability[] = [
   'tratar_objecao',
   'risco_perda',
   'ancoragem_preco',
+  'melhorar_mensagem',
+  'etiquetar_conversa',
+  'analisar_conversa',
+  'analisar_imagem',
 ];
 
 /**
@@ -51,6 +59,10 @@ export const CAPABILITY_LABELS: Record<AssistantCapability, string> = {
   tratar_objecao: 'tratamento de objeção',
   risco_perda: 'risco de perda da venda',
   ancoragem_preco: 'ancoragem de preço',
+  melhorar_mensagem: 'reescrita da mensagem',
+  etiquetar_conversa: 'etiquetas da conversa',
+  analisar_conversa: 'análise da conversa',
+  analisar_imagem: 'leitura da imagem',
 };
 
 /** Fonte de um pedaço da resposta: o que foi usado e de onde veio. */
@@ -92,6 +104,14 @@ export interface IntentSignals {
   lossRisk: boolean;
   /** Discussão de preço/valor por unidade (pede defesa do preço). */
   priceAnchor: boolean;
+  /** Pede para reescrever/melhorar o texto que vai enviar (tom, clareza). */
+  enhance: boolean;
+  /** Pede etiquetas/categorias para a conversa. */
+  tag: boolean;
+  /** Pede análise do comportamento/andamento da conversa. */
+  analyze: boolean;
+  /** Pede leitura de imagem (print, foto de produto, orçamento). */
+  image: boolean;
 }
 
 /** Normaliza para comparação: minúsculas, sem acento, espaços colapsados. */
@@ -119,6 +139,10 @@ const AGENDA = ['agenda', 'compromisso', 'lembrete', 'marcado', 'agendado', 'me 
 const OBJECTION = ['objec', 'esta caro', 'ta caro', 'desconto', 'vou pensar', 'nao quer', 'recusou', 'contra-argument', 'contornar'];
 const LOSS_RISK = ['risco de perder', 'vou perder', 'vai desistir', 'desistiu', 'fechou com outro', 'comprou em outro', 'esfriou', 'sumiu', 'parou de responder', 'sem resposta ha dias', 'esquec', 'quase perdendo'];
 const PRICE_ANCHOR = ['ancor', 'defender o preco', 'justificar o preco', 'esta no prec', 'por unidade', 'valor unitario', 'baixar o preco', 'preco justo', 'negociar o preco'];
+const ENHANCE = ['melhorar a mensagem', 'melhorar essa mensagem', 'reescrever', 'reescreve', 'deixar mais claro', 'mais persuasiv', 'mais formal', 'mais empatic', 'corrigir o texto', 'melhorar o texto'];
+const TAG = ['etiqueta', 'tag ', 'tags', 'classificar a conversa', 'categorizar', 'marcar a conversa'];
+const ANALYZE = ['analis', 'analisar a conversa', 'o que esta acontecendo na conversa', 'comportamento do cliente', 'padrao da conversa'];
+const IMAGE = ['imagem', 'print', 'foto', 'screenshot', 'leitura da imagem', 'o que tem na imagem', 'orcamento anexado'];
 
 /** Lê o pedido em linguagem natural e devolve os sinais que o roteador usa. */
 export function readIntent(query: string): IntentSignals {
@@ -135,6 +159,10 @@ export function readIntent(query: string): IntentSignals {
     objection: hasAny(normalized, OBJECTION),
     lossRisk: hasAny(normalized, LOSS_RISK),
     priceAnchor: hasAny(normalized, PRICE_ANCHOR),
+    enhance: hasAny(normalized, ENHANCE),
+    tag: hasAny(normalized, TAG),
+    analyze: hasAny(normalized, ANALYZE),
+    image: hasAny(normalized, IMAGE),
   };
 }
 
@@ -169,6 +197,10 @@ export function routeCapabilities(
   if (signals.objection) picked.add('tratar_objecao');
   if (signals.lossRisk) picked.add('risco_perda');
   if (signals.priceAnchor) picked.add('ancoragem_preco');
+  if (signals.enhance) picked.add('melhorar_mensagem');
+  if (signals.tag) picked.add('etiquetar_conversa');
+  if (signals.analyze) picked.add('analisar_conversa');
+  if (signals.image) picked.add('analisar_imagem');
 
   if (picked.size === 0) {
     // Sem sinal explícito, o perfil decide o que abrir primeiro (Fase 4). Sem
@@ -200,6 +232,10 @@ export const MODEL_CAPABILITIES: readonly AssistantCapability[] = [
   'tratar_objecao',
   'risco_perda',
   'ancoragem_preco',
+  'melhorar_mensagem',
+  'etiquetar_conversa',
+  'analisar_conversa',
+  'analisar_imagem',
 ];
 
 /** Capacidade → nome da edge que a executa. */
@@ -212,6 +248,10 @@ export const CAPABILITY_FUNCTION: Record<Exclude<AssistantCapability, 'agenda'>,
   tratar_objecao: 'ai-objection-handler',
   risco_perda: 'ai-loss-risk',
   ancoragem_preco: 'ai-price-anchor',
+  melhorar_mensagem: 'ai-enhance-message',
+  etiquetar_conversa: 'ai-auto-tag',
+  analisar_conversa: 'ai-conversation-analysis',
+  analisar_imagem: 'ai-multimodal-analysis',
 };
 
 /**

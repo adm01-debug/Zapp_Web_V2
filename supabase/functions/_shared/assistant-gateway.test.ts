@@ -69,12 +69,16 @@ Deno.test("toda capacidade tem rótulo e edge de execução (exceto agenda)", ()
   }
 });
 
-Deno.test("as 8 edges ligadas pela porta única são as do plano (6 da Fase 3 + 2 de retenção)", () => {
+Deno.test("as 12 edges ligadas pela porta única são as do plano (6 da Fase 3 + 6 de decisão por edge)", () => {
   assertEquals(Object.values(CAPABILITY_FUNCTION).sort(), [
+    "ai-auto-tag",
+    "ai-conversation-analysis",
     "ai-conversation-summary",
     "ai-deadline-calculator",
+    "ai-enhance-message",
     "ai-lead-temperature",
     "ai-loss-risk",
+    "ai-multimodal-analysis",
     "ai-objection-handler",
     "ai-price-anchor",
     "ai-product-recommendation",
@@ -92,4 +96,20 @@ Deno.test("discussão de preço por unidade aciona a ancoragem de preço", () =>
 
 Deno.test("risco de perda e temperatura convivem no mesmo pedido", () => {
   assertEquals(route("qual a temperatura do lead? vai desistir?"), ["temperatura_lead", "risco_perda"]);
+});
+
+Deno.test("pedido de reescrita aciona a melhoria da mensagem", () => {
+  assertEquals(route("quero melhorar a mensagem, deixar mais persuasiva"), ["melhorar_mensagem"]);
+});
+
+Deno.test("pedido de etiquetas aciona a classificação da conversa", () => {
+  assertEquals(route("me dá tags para essa conversa"), ["etiquetar_conversa"]);
+});
+
+Deno.test("pedido de análise da conversa aciona a análise", () => {
+  assertEquals(route("analisar a conversa e me dizer o comportamento do cliente"), ["analisar_conversa"]);
+});
+
+Deno.test("pedido sobre imagem aciona a leitura da imagem", () => {
+  assertEquals(route("o que tem na imagem que o cliente mandou?"), ["analisar_imagem"]);
 });

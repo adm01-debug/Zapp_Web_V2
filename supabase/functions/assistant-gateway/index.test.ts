@@ -84,6 +84,10 @@ function deps(overrides: Partial<GatewayDeps> = {}) {
         "ai-objection-handler": { answer: "ancore no prazo, não no desconto" },
         "ai-loss-risk": { level: "high", riskScore: 78, recoveryAction: "ligue hoje e ofereça amostra" },
         "ai-price-anchor": { strategy: "cost_per_use", anchorScript: "sai R$ 2,40 por caneca, menos que o café do escritório" },
+        "ai-enhance-message": { enhanced: "Oi Maria, tudo bem? Consigo fechar sua caneca em 12 dias úteis." },
+        "ai-auto-tag": { tags: [{ name: "orcamento", confidence: 0.9 }, { name: "prazo", confidence: 0.7 }] },
+        "ai-conversation-analysis": { summary: "cliente negocia prazo e volume" },
+        "ai-multimodal-analysis": { description: "print de um orçamento com 500 unidades" },
       }[fn] ?? {};
       return { status: 200, body: corpo };
     },
@@ -417,4 +421,54 @@ Deno.test("retenção: sem mensagens a capacidade é recusada antes de gastar mo
   const body = await res.json() as { errors: string[] };
   assertEquals(chamadas.length, 0);
   assertEquals(body.errors.some((e) => e.includes("sem mensagens")), true);
+});
+
+Deno.test("decisão por edge: reescrita recebe a última mensagem do vendedor, não o histórico", async () => {
+  const { deps: d, chamadas } = deps();
+  const res = await handleAssistantGateway(pedido("quero melhorar a mensagem, deixar mais persuasiva"), d);
+  const body = await res.json() as { capabilities: string[]; answer: string };
+  assertEquals(body.capabilities, ["melhorar_mensagem"]);
+  assertEquals(chamadas.map((c) => c.fn), ["ai-enhance-message"]);
+  // `AiEnhanceMessageSchema` exige `message` (string) e é isso que a edge lê.
+  assertEquals(typeof chamadas[0].body.message, "string");
+  assertEquals((chamadas[0].body.message as string).includes("Consigo sim"), true);
+  assertEquals(chamadas[0].body.messages, undefined);
+  assertEquals(body.answer.includes("12 dias úteis"), true);
+});
+
+Deno.test("decisão por edge: etiquetas aparecem pelo nome na resposta", async () => {
+  const { deps: d, chamadas } = deps();
+  const res = await handleAssistantGateway(pedido("me dá tags para essa conversa"), d);
+  const body = await res.json() as { capabilities: string[]; answer: string };
+  assertEquals(chamadas.map((c) => c.fn), ["ai-auto-tag"]);
+  assertEquals(body.answer.includes("orcamento"), true);
+  assertEquals(body.answer.includes("prazo"), true);
+});
+
+Deno.test("decisão por edge: análise da conversa só roda com 5 mensagens", async () => {
+  const { deps: d, chamadas } = deps({
+    readContext: async () => contextoCompleto({ messages: contextoCompleto().messages.slice(0, 3) }),
+  });
+  const res = await handleAssistantGateway(pedido("analisar a conversa"), d);
+  const body = await res.json() as { errors: string[] };
+  assertEquals(chamadas.length, 0);
+  assertEquals(body.errors.some((e) => e.includes("histórico insuficiente para analisar")), true);
+});
+
+Deno.test("decisão por edge: leitura de imagem exige imagem anexada e envia a URL", async () => {
+  const { deps: d, chamadas } = deps();
+  const semImagem = await handleAssistantGateway(pedido("o que tem na imagem?"), d);
+  const corpoSem = await semImagem.json() as { errors: string[] };
+  assertEquals(chamadas.length, 0);
+  assertEquals(corpoSem.errors.some((e) => e.includes("nenhuma imagem anexada")), true);
+
+  const comImagem = await handleAssistantGateway(
+    pedido("o que tem na imagem?", CONTACT_ID, { imageUrl: "https://cdn.local/orcamento.png" }),
+    d,
+  );
+  const corpoCom = await comImagem.json() as { capabilities: string[]; answer: string };
+  assertEquals(corpoCom.capabilities, ["analisar_imagem"]);
+  assertEquals(chamadas.map((c) => c.fn), ["ai-multimodal-analysis"]);
+  assertEquals(chamadas[0].body.imageUrl, "https://cdn.local/orcamento.png");
+  assertEquals(corpoCom.answer.includes("500 unidades"), true);
 });
