@@ -1,15 +1,15 @@
 {
  "meta": {
-  "sha": "b35911db610a6a3fc0e6335b40e4dfdcb05000e6",
+  "sha": "9f6df25bc2f82252fdfe8e08dd10f56da1ef71fb",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-22 12:06 UTC",
-  "files_total": 15580,
-  "code_files": 8884,
-  "code_lines": 1409396
+  "generated_at": "2026-11-22 12:54 UTC",
+  "files_total": 15590,
+  "code_files": 8894,
+  "code_lines": 1410433
  },
  "version": "1.3.2",
- "facts_hash": "24c94ca7cbb1eadf",
+ "facts_hash": "8431aad023beb0e6",
  "stack": {
   "frameworks": [
    "React + Vite",
@@ -345,8 +345,8 @@
   "package_manager": "bun",
   "languages": {
    ".sql": 3063,
-   ".tsx": 2809,
-   ".ts": 2231,
+   ".tsx": 2812,
+   ".ts": 2238,
    ".mjs": 652,
    ".py": 125,
    ".cjs": 19,
@@ -71039,6 +71039,7 @@
      "ai_usage_logs",
      "assistant_profiles",
      "contacts",
+     "conversation_tasks",
      "copilot_insights",
      "copilot_sessions",
      "feature_flags",
@@ -73409,7 +73410,7 @@
     "file": ".github/workflows/types-sync.yml"
    }
   ],
-  "components_count": 2587,
+  "components_count": 2591,
   "hooks": [
    {
     "name": "useMotionSeguro",
@@ -74306,6 +74307,18 @@
    {
     "name": "useAssistantProfile",
     "file": "src/hooks/assistant/useAssistantProfile.ts"
+   },
+   {
+    "name": "useContactAgenda",
+    "file": "src/hooks/assistant/useContactAgenda.ts"
+   },
+   {
+    "name": "useDailyBrief",
+    "file": "src/hooks/assistant/useDailyBrief.ts"
+   },
+   {
+    "name": "useReminderOffer",
+    "file": "src/hooks/assistant/useReminderOffer.ts"
    },
    {
     "name": "useAuth",
@@ -77305,8 +77318,8 @@
   },
   {
    "module": "src/components",
-   "files": 2292,
-   "lines": 390190,
+   "files": 2296,
+   "lines": 390637,
    "tables": [
     "agent_skills",
     "agent_visibility_grants",
@@ -77653,8 +77666,8 @@
   },
   {
    "module": "src/hooks",
-   "files": 1023,
-   "lines": 166366,
+   "files": 1026,
+   "lines": 166629,
    "tables": [
     "agent_achievements",
     "agent_stats",
@@ -77779,6 +77792,9 @@
     "useRecentSentimentAlerts.ts: AlertSentiment, RecentSentimentAlert, DepartmentNegativeShare, useRecentSentimentAlerts",
     "useSentimentTrend.ts: SentimentTrendDay, SentimentTrendWindow, SentimentTrendResult, useSentimentTrend",
     "useAssistantProfile.ts: Atividade, AjudaPreferida, TomPreferido, AssistantProfile, DEFAULT_ASSISTANT_PROFILE, useAssistantProfile",
+    "useContactAgenda.ts: AgendaItem, CreateReminderInput, useContactAgenda",
+    "useDailyBrief.ts: useDailyBrief",
+    "useReminderOffer.ts: ReminderOffer, useReminderOffer",
     "useAuth.tsx: useAuth",
     "useAuthForm.ts: LockStatus, MAX_LOGIN_ATTEMPTS, tentativasRestantesAteBloqueio, useAuthForm",
     "useMFA.ts: mapMfaError, useMFA, MFA_TOTP_QUERY_KEY, useMfaFactors, useHasVerifiedTotp",
@@ -77794,10 +77810,7 @@
     "useNPSSurveys.ts: NPSSurvey, NPS_SURVEY_LIMIT, useNPSSurveys",
     "useQueueAnalytics.ts: useQueueAnalytics",
     "useQueueGoals.ts: QueueGoal, QueueAlert, QueueGoalMetricsRow, QueueGoalMetricDefinition, QUEUE_GOAL_METRICS, QUEUE_GOAL_BANDS",
-    "useQueues.ts: QueueMember, QueueWithMembers, useQueues",
-    "useQueuesComparison.ts: useQueuesComparison",
-    "useWarRoomAlerts.ts: slaIncidentKey, useWarRoomAlerts",
-    "useWarRoomData.ts: WarRoomAgent, WarRoomQueue, WarRoomAlert, WarRoomDataOptions, WARROOM_MAX_ROWS, useWarRoomData"
+    "useQueues.ts: QueueMember, QueueWithMembers, useQueues"
    ],
    "docs": [
     "realtimeSharedTopic.test.tsx: Regressao do bump supabase-js 2.116 (#460): desde a realtime-js 2.101, `.on()` em canal ja inscrito lanca erro e `supabase.channel(nome)` reaproveita o canal de mesmo nome. Hooks com topico fixo montados em dois componentes ao mesmo tempo (TalkXView > TalkXCampaignScheduled, QueuesView > QueueGoalsD …",
@@ -77972,10 +77985,13 @@
   },
   {
    "module": "src/lib",
-   "files": 295,
-   "lines": 40008,
+   "files": 298,
+   "lines": 40289,
    "tables": [
     "contacts",
+    "conversation_tasks",
+    "messages",
+    "sales_deals",
     "security_alerts"
    ],
    "exports": [
@@ -78703,7 +78719,7 @@
   {
    "module": "supabase/functions",
    "files": 424,
-   "lines": 127695,
+   "lines": 127741,
    "tables": [
     "agent_stats",
     "ai_conversation_tags",
@@ -80056,12 +80072,16 @@
    },
    "conversation_tasks": {
     "select": [
+     "src/hooks/assistant/useContactAgenda.ts",
      "src/hooks/chat/useConversationHistoryTimeline.ts",
      "src/hooks/chat/useNextBestAction.ts",
      "src/hooks/tasks/useMyWorkItems.ts",
+     "src/lib/assistant/dailyBrief.ts",
+     "supabase/functions/copilot-live/index.ts",
      "supabase/functions/voice-copilot-action/index.ts"
     ],
     "insert": [
+     "src/hooks/assistant/useContactAgenda.ts",
      "src/hooks/tasks/useMyWorkItems.ts"
     ],
     "update": [
@@ -80710,6 +80730,7 @@
      "src/hooks/reactions/useReactionMutations.ts",
      "src/hooks/system/useDiagnosticsData.ts",
      "src/hooks/system/useSystemHealthSignals.ts",
+     "src/lib/assistant/dailyBrief.ts",
      "src/services/chat.service.ts",
      "src/services/contact.service.ts",
      "src/services/mediaMigration.service.ts",
@@ -81276,7 +81297,8 @@
    "sales_deals": {
     "select": [
      "src/hooks/chat/useConversationHistoryTimeline.ts",
-     "src/hooks/crm/useContactCrm360.ts"
+     "src/hooks/crm/useContactCrm360.ts",
+     "src/lib/assistant/dailyBrief.ts"
     ],
     "update": [
      "src/hooks/crm/useContactCrm360.ts"
@@ -82844,6 +82866,7 @@
     "role"
    ],
    "sales_deals": [
+    "assigned_to",
     "contact_id",
     "created_at",
     "expected_close_date",
@@ -97363,6 +97386,10 @@
     "msg": "\n            data-testid="
    },
    {
+    "file": "src/components/inbox/tabs/AssistantAgendaCard.tsx",
+    "msg": " className="
+   },
+   {
     "file": "src/components/inbox/tabs/AudioPlayButton.tsx",
     "msg": "Não foi possível tocar"
    },
@@ -98281,6 +98308,10 @@
    {
     "file": "src/hooks/analytics/useSentimentTrend.ts",
     "msg": "Período de sentimento inválido"
+   },
+   {
+    "file": "src/hooks/assistant/useContactAgenda.ts",
+    "msg": "sem perfil"
    },
    {
     "file": "src/hooks/auth/useAuth.tsx",
@@ -107547,6 +107578,14 @@
     "text": "(limite exclusivo). O período anterior termina onde este começa."
    },
    {
+    "file": "src/hooks/assistant/useContactAgenda.ts",
+    "text": "* Apenas itens futuros e abertos interessam para \"compromisso com o contato\". */"
+   },
+   {
+    "file": "src/hooks/assistant/useContactAgenda.ts",
+    "text": "Ausência de dado não pode ser lida como \"não há compromisso\": a UI mostra o"
+   },
+   {
     "file": "src/hooks/auth/useAuth.tsx",
     "text": "* Falha ao esvaziar a fila não pode quebrar o logout: só registra. */"
    },
@@ -110143,6 +110182,10 @@
     "text": "* Uma mensagem de sucesso é exatamente o que NÃO pode ser dito sobre `partial`"
    },
    {
+    "file": "src/lib/assistant/detectReminderIntent.ts",
+    "text": "* Quando o lembrete deve tocar (ISO, fuso local do navegador). */"
+   },
+   {
     "file": "src/lib/audio/gravacaoFormato.ts",
     "text": "permissão negada, microfone ausente e formato não suportado (G9) — antes"
    },
@@ -112089,6 +112132,10 @@
    {
     "file": "supabase/functions/copilot-live/index.ts",
     "text": "profileId é usado SOMENTE para comparar com contacts.assigned_to."
+   },
+   {
+    "file": "supabase/functions/copilot-live/index.ts",
+    "text": "derruba a sugestão: sem agenda o prompt apenas não traz esse bloco."
    },
    {
     "file": "supabase/functions/copilot-live/index.ts",
@@ -126703,6 +126750,16 @@
     "file": "src/lib/web-vitals.ts",
     "name": "TTI_QUIET_MS",
     "value": "5000"
+   },
+   {
+    "file": "src/lib/assistant/dailyBrief.ts",
+    "name": "STALLED_AFTER_MS",
+    "value": "2"
+   },
+   {
+    "file": "src/lib/assistant/detectReminderIntent.ts",
+    "name": "DEFAULT_HOUR",
+    "value": "9"
    },
    {
     "file": "src/lib/audio/pttLimits.ts",
@@ -142629,6 +142686,24 @@
     "kind": "compara"
    },
    {
+    "file": "src/hooks/assistant/useContactAgenda.ts",
+    "field": "status",
+    "value": "todo",
+    "kind": "escreve"
+   },
+   {
+    "file": "src/hooks/assistant/useContactAgenda.ts",
+    "field": "status",
+    "value": "done",
+    "kind": "compara"
+   },
+   {
+    "file": "src/hooks/assistant/useContactAgenda.ts",
+    "field": "status",
+    "value": "cancelled",
+    "kind": "compara"
+   },
+   {
     "file": "src/hooks/auth/useAuthForm.ts",
     "field": "type",
     "value": "magiclink",
@@ -145531,6 +145606,12 @@
     "field": "type",
     "value": "select",
     "kind": "escreve"
+   },
+   {
+    "file": "src/lib/assistant/dailyBrief.ts",
+    "field": "status",
+    "value": "open",
+    "kind": "filtra"
    },
    {
     "file": "src/lib/calls/WhatsAppCallAdapter.ts",
@@ -152985,6 +153066,10 @@
    {
     "file": "src/lib/mapboxCostGuard.ts",
     "line": "const POLL_INTERVAL_MS = 5 * 60 * 1000;"
+   },
+   {
+    "file": "src/lib/assistant/dailyBrief.ts",
+    "line": "const STALLED_AFTER_MS = 2 * 60 * 60 * 1000;"
    },
    {
     "file": "src/lib/journey/mappers.ts",
@@ -181275,6 +181360,18 @@
     "name": "trend negativo não usa sinal de +"
    },
    {
+    "file": "src/components/dashboard/__tests__/DailyBriefStrip.test.ts",
+    "name": "fetchDailyBrief — Resumo do dia (Fase 2)"
+   },
+   {
+    "file": "src/components/dashboard/__tests__/DailyBriefStrip.test.ts",
+    "name": "devolve as três contagens quando as leituras passam"
+   },
+   {
+    "file": "src/components/dashboard/__tests__/DailyBriefStrip.test.ts",
+    "name": "leitura falha vira "
+   },
+   {
     "file": "src/components/dashboard/__tests__/DailyGoalsCard.test.tsx",
     "name": "DailyGoalsCard"
    },
@@ -194537,6 +194634,30 @@
    {
     "file": "src/components/inbox/tabs/__tests__/AiTab.test.tsx",
     "name": "mostra os cards restaurados "
+   },
+   {
+    "file": "src/components/inbox/tabs/__tests__/AssistantAgendaCard.test.tsx",
+    "name": "AssistantAgendaCard — Fase 2 (memória/agenda)"
+   },
+   {
+    "file": "src/components/inbox/tabs/__tests__/AssistantAgendaCard.test.tsx",
+    "name": "caminho 1: mensagem com data gera a oferta de lembrete"
+   },
+   {
+    "file": "src/components/inbox/tabs/__tests__/AssistantAgendaCard.test.tsx",
+    "name": "caminho 2: aceitar a oferta grava a linha com contato, dono e data resolvida"
+   },
+   {
+    "file": "src/components/inbox/tabs/__tests__/AssistantAgendaCard.test.tsx",
+    "name": "dispensar a oferta não grava nada"
+   },
+   {
+    "file": "src/components/inbox/tabs/__tests__/AssistantAgendaCard.test.tsx",
+    "name": "mostra os compromissos futuros já marcados com o contato (leitura da agenda)"
+   },
+   {
+    "file": "src/components/inbox/tabs/__tests__/AssistantAgendaCard.test.tsx",
+    "name": "falha de leitura aparece como erro explícito, não como agenda vazia"
    },
    {
     "file": "src/components/inbox/tabs/__tests__/AudioPlayButton.test.tsx",
@@ -240035,6 +240156,42 @@
     "name": "snapshot não incrementa a geração (reescrita não supera a análise vigente)"
    },
    {
+    "file": "src/lib/assistant/__tests__/detectReminderIntent.test.ts",
+    "name": "detectReminderIntent"
+   },
+   {
+    "file": "src/lib/assistant/__tests__/detectReminderIntent.test.ts",
+    "name": "reconhece "
+   },
+   {
+    "file": "src/lib/assistant/__tests__/detectReminderIntent.test.ts",
+    "name": "quinta dita numa quinta cai na semana seguinte (7 dias, não hoje)"
+   },
+   {
+    "file": "src/lib/assistant/__tests__/detectReminderIntent.test.ts",
+    "name": "casa dia da semana com acento e "
+   },
+   {
+    "file": "src/lib/assistant/__tests__/detectReminderIntent.test.ts",
+    "name": "usa o horário explícito quando o cliente informa"
+   },
+   {
+    "file": "src/lib/assistant/__tests__/detectReminderIntent.test.ts",
+    "name": "reconhece data numérica dd/mm"
+   },
+   {
+    "file": "src/lib/assistant/__tests__/detectReminderIntent.test.ts",
+    "name": "data sem ano que já passou vira o ano seguinte"
+   },
+   {
+    "file": "src/lib/assistant/__tests__/detectReminderIntent.test.ts",
+    "name": "verbo de contato sem data oferece amanhã 9h"
+   },
+   {
+    "file": "src/lib/assistant/__tests__/detectReminderIntent.test.ts",
+    "name": "devolve null quando não há data nem pedido de contato"
+   },
+   {
     "file": "src/lib/audio/__tests__/gravacaoFormato.test.ts",
     "name": "escolherMimeGravacao"
    },
@@ -249981,6 +250138,10 @@
    {
     "file": "supabase/functions/copilot-live/index.test.ts",
     "name": "copilot-live: Fase 1 — sem perfil usa os defaults de identidade no system prompt"
+   },
+   {
+    "file": "supabase/functions/copilot-live/index.test.ts",
+    "name": "copilot-live: Fase 2 — compromisso já marcado com o contato entra no prompt"
    },
    {
     "file": "supabase/functions/copilot-live/index.test.ts",
@@ -282671,6 +282832,10 @@
     "limit": "400"
    },
    {
+    "file": "src/hooks/assistant/useContactAgenda.ts",
+    "limit": "10"
+   },
+   {
     "file": "src/hooks/business/useAbandonmentRate.ts",
     "limit": "1000"
    },
@@ -282941,6 +283106,10 @@
    {
     "file": "supabase/functions/connection-health-check/index.ts",
     "limit": "1"
+   },
+   {
+    "file": "supabase/functions/copilot-live/index.ts",
+    "limit": "5"
    },
    {
     "file": "supabase/functions/create-user/index.ts",
@@ -285225,6 +285394,7 @@
       "compara:src/components/tasks/list/taskRowCells.tsx",
       "compara:src/components/tasks/shared/WorkItemCard.tsx",
       "compara:src/components/tasks/shared/sheet/rodape.ts",
+      "compara:src/hooks/assistant/useContactAgenda.ts",
       "compara:src/hooks/tasks/workItemAggregates.ts",
       "compara:src/lib/calls/callStatus.ts",
       "compara:supabase/functions/_shared/ai-usage.ts",
@@ -285724,6 +285894,7 @@
       "compara:src/components/tasks/list/taskRowCells.tsx",
       "compara:src/components/tasks/shared/WorkItemCard.tsx",
       "compara:src/components/tasks/shared/sheet/rodape.ts",
+      "compara:src/hooks/assistant/useContactAgenda.ts",
       "compara:src/hooks/integrations/useTalkXSegmentProgress.ts",
       "compara:src/hooks/tasks/useMyWorkItems.ts",
       "compara:src/hooks/tasks/workItemAggregates.ts",
@@ -286112,7 +286283,8 @@
       "escreve:src/adapters/inboxAdapter.ts",
       "escreve:src/hooks/gmail/gmailTypes.ts",
       "escreve:src/pages/ChatPopup.tsx",
-      "escreve:src/types/chat.ts"
+      "escreve:src/types/chat.ts",
+      "filtra:src/lib/assistant/dailyBrief.ts"
      ],
      "resolved": [
       "compara:analise-prs/resgate-261118-lote3/hermes/robustez-primitivos-ui-2610121626bec5-2610141859e423/src/components/inbox/chat/ChatHeader.tsx",
@@ -286312,6 +286484,7 @@
      "todo": [
       "escreve:src/components/inbox/chat/useChatPanelHandlers.ts",
       "escreve:src/components/inbox/tabs/TasksTab.tsx",
+      "escreve:src/hooks/assistant/useContactAgenda.ts",
       "escreve:src/hooks/tasks/workItem.types.ts"
      ],
      "not_found": [
@@ -370270,6 +370443,14 @@
     "staleTime: 5 * 60 * 1000,"
    ]
   },
+  "src/components/dashboard/DailyBriefStrip.tsx": {
+   "path": "src/components/dashboard/DailyBriefStrip.tsx",
+   "lines": 82,
+   "exports": [
+    "function DailyBriefStrip"
+   ],
+   "doc": "Fase 2 do assistente pessoal — \"Resumo do dia\". Ao entrar no sistema a pessoa vê o que tem para hoje, em uma faixa: 1. compromissos de hoje (lembretes marcados para hoje); 2. conversas paradas (cliente mandou a última mensagem e ninguém respondeu); 3. propostas sem resposta (negócios abertos aguarda …"
+  },
   "src/components/dashboard/DashboardFilters.tsx": {
    "path": "src/components/dashboard/DashboardFilters.tsx",
    "lines": 295,
@@ -370294,7 +370475,7 @@
   },
   "src/components/dashboard/DashboardView.tsx": {
    "path": "src/components/dashboard/DashboardView.tsx",
-   "lines": 370,
+   "lines": 374,
    "exports": [
     "function DashboardView"
    ],
@@ -370934,6 +371115,16 @@
     "sem avaliações, não renderiza estrelas nem barras (nada inventado)",
     "com avaliações, mostra nota média e distribuição por estrela",
     "trend negativo não usa sinal de +"
+   ]
+  },
+  "src/components/dashboard/__tests__/DailyBriefStrip.test.ts": {
+   "path": "src/components/dashboard/__tests__/DailyBriefStrip.test.ts",
+   "lines": 53,
+   "is_test": true,
+   "tests": [
+    "fetchDailyBrief — Resumo do dia (Fase 2)",
+    "devolve as três contagens quando as leituras passam",
+    "leitura falha vira "
    ]
   },
   "src/components/dashboard/__tests__/DailyGoalsCard.test.tsx": {
@@ -384486,12 +384677,22 @@
   },
   "src/components/inbox/tabs/AiTab.tsx": {
    "path": "src/components/inbox/tabs/AiTab.tsx",
-   "lines": 244,
+   "lines": 251,
    "exports": [
     "function AiTab"
    ],
    "errors": [
     "\n            data-testid="
+   ]
+  },
+  "src/components/inbox/tabs/AssistantAgendaCard.tsx": {
+   "path": "src/components/inbox/tabs/AssistantAgendaCard.tsx",
+   "lines": 130,
+   "exports": [
+    "function AssistantAgendaCard"
+   ],
+   "errors": [
+    " className="
    ]
   },
   "src/components/inbox/tabs/AudioPlayButton.tsx": {
@@ -385021,7 +385222,7 @@
   },
   "src/components/inbox/tabs/__tests__/AiTab.erroAnalise.test.tsx": {
    "path": "src/components/inbox/tabs/__tests__/AiTab.erroAnalise.test.tsx",
-   "lines": 99,
+   "lines": 102,
    "is_test": true,
    "tests": [
     "AiTab — falha ao carregar a análise",
@@ -385031,7 +385232,7 @@
   },
   "src/components/inbox/tabs/__tests__/AiTab.test.tsx": {
    "path": "src/components/inbox/tabs/__tests__/AiTab.test.tsx",
-   "lines": 122,
+   "lines": 125,
    "is_test": true,
    "tests": [
     "AiTab",
@@ -385041,6 +385242,28 @@
     "sem sentimento registrado mostra ",
     "produtos vazios mostra o empty state honesto",
     "mostra os cards restaurados "
+   ]
+  },
+  "src/components/inbox/tabs/__tests__/AssistantAgendaCard.test.tsx": {
+   "path": "src/components/inbox/tabs/__tests__/AssistantAgendaCard.test.tsx",
+   "lines": 165,
+   "is_test": true,
+   "errors": [
+    ");\n    expect(screen.queryByTestId("
+   ],
+   "params": [
+    {
+     "name": "MENSAGEM",
+     "value": "'me liga na quinta às 14h'"
+    }
+   ],
+   "tests": [
+    "AssistantAgendaCard — Fase 2 (memória/agenda)",
+    "caminho 1: mensagem com data gera a oferta de lembrete",
+    "caminho 2: aceitar a oferta grava a linha com contato, dono e data resolvida",
+    "dispensar a oferta não grava nada",
+    "mostra os compromissos futuros já marcados com o contato (leitura da agenda)",
+    "falha de leitura aparece como erro explícito, não como agenda vazia"
    ]
   },
   "src/components/inbox/tabs/__tests__/AudioPlayButton.test.tsx": {
@@ -412213,6 +412436,87 @@
    ],
    "hooks": [
     "useAssistantProfile"
+   ]
+  },
+  "src/hooks/assistant/useContactAgenda.ts": {
+   "path": "src/hooks/assistant/useContactAgenda.ts",
+   "lines": 143,
+   "exports": [
+    "type AgendaItem",
+    "interface CreateReminderInput",
+    "function useContactAgenda"
+   ],
+   "tables": [
+    {
+     "table": "conversation_tasks",
+     "op": "select"
+    },
+    {
+     "table": "conversation_tasks",
+     "op": "insert,select"
+    }
+   ],
+   "table_cols": {
+    "conversation_tasks": [
+     "contact_id",
+     "id",
+     "remind_at",
+     "status",
+     "title"
+    ]
+   },
+   "errors": [
+    "sem perfil"
+   ],
+   "status_values": [
+    {
+     "field": "status",
+     "value": "todo",
+     "kind": "escreve"
+    },
+    {
+     "field": "status",
+     "value": "done",
+     "kind": "compara"
+    },
+    {
+     "field": "status",
+     "value": "cancelled",
+     "kind": "compara"
+    }
+   ],
+   "rule_comments": [
+    "* Apenas itens futuros e abertos interessam para \"compromisso com o contato\". */",
+    "Ausência de dado não pode ser lida como \"não há compromisso\": a UI mostra o"
+   ],
+   "hooks": [
+    "useContactAgenda"
+   ],
+   "pagination": [
+    "10"
+   ]
+  },
+  "src/hooks/assistant/useDailyBrief.ts": {
+   "path": "src/hooks/assistant/useDailyBrief.ts",
+   "lines": 24,
+   "exports": [
+    "function useDailyBrief"
+   ],
+   "doc": "Fase 2 — \"Resumo do dia\" (leitura única por sessão, cache curto). A leitura crua vive em `@/lib/assistant/dailyBrief` para ser testável sem React.",
+   "hooks": [
+    "useDailyBrief"
+   ]
+  },
+  "src/hooks/assistant/useReminderOffer.ts": {
+   "path": "src/hooks/assistant/useReminderOffer.ts",
+   "lines": 96,
+   "exports": [
+    "interface ReminderOffer",
+    "function useReminderOffer"
+   ],
+   "doc": "Fase 2 — ponte entre a mensagem do cliente e a agenda. O cliente escreve \"me liga na quinta\"; `detectReminderIntent` (puro) diz que existe uma data e qual é. Este hook transforma isso na OFERTA que a UI mostra (\"Criar lembrete para quinta, 27/11?\") e, quando o usuário aceita, grava o lembrete com um …",
+   "hooks": [
+    "useReminderOffer"
    ]
   },
   "src/hooks/auth/index.ts": {
@@ -441740,6 +442044,97 @@
     "snapshot não incrementa a geração (reescrita não supera a análise vigente)"
    ]
   },
+  "src/lib/assistant/dailyBrief.ts": {
+   "path": "src/lib/assistant/dailyBrief.ts",
+   "lines": 60,
+   "exports": [
+    "interface DailyBrief",
+    "function fetchDailyBrief"
+   ],
+   "tables": [
+    {
+     "table": "conversation_tasks",
+     "op": "select"
+    },
+    {
+     "table": "messages",
+     "op": "select"
+    },
+    {
+     "table": "sales_deals",
+     "op": "select"
+    }
+   ],
+   "table_cols": {
+    "conversation_tasks": [
+     "created_by",
+     "id",
+     "remind_at",
+     "status"
+    ],
+    "messages": [
+     "created_at",
+     "id",
+     "sender"
+    ],
+    "sales_deals": [
+     "assigned_to",
+     "id",
+     "status"
+    ]
+   },
+   "params": [
+    {
+     "name": "STALLED_AFTER_MS",
+     "value": "2"
+    }
+   ],
+   "status_values": [
+    {
+     "field": "status",
+     "value": "open",
+     "kind": "filtra"
+    }
+   ],
+   "doc": "Fase 2 do assistente pessoal — leituras do \"Resumo do dia\". Puro (sem React) para ser testável: três contagens em paralelo sobre tabelas já existentes. Uma leitura que falha NÃO vira \"zero\": sai na lista `failures` e a UI mostra \"não verificado\" — mesmo critério de `useNextBestAction`, porque ausênc …",
+   "temporal": [
+    "const STALLED_AFTER_MS = 2 * 60 * 60 * 1000;"
+   ]
+  },
+  "src/lib/assistant/detectReminderIntent.ts": {
+   "path": "src/lib/assistant/detectReminderIntent.ts",
+   "lines": 143,
+   "exports": [
+    "type ReminderIntent",
+    "function detectReminderIntent"
+   ],
+   "params": [
+    {
+     "name": "DEFAULT_HOUR",
+     "value": "9"
+    }
+   ],
+   "rule_comments": [
+    "* Quando o lembrete deve tocar (ISO, fuso local do navegador). */"
+   ],
+   "doc": "Fase 2 do plano do assistente pessoal: quando o cliente diz \"me liga na quinta\", o assistente OFERECE criar o lembrete. Detectar a data é determinístico (não depende do modelo), então vive aqui — puro e testável — em vez de sair do prompt da IA. A IA pode sugerir o texto; a data quem resolve é esta …"
+  },
+  "src/lib/assistant/__tests__/detectReminderIntent.test.ts": {
+   "path": "src/lib/assistant/__tests__/detectReminderIntent.test.ts",
+   "lines": 78,
+   "is_test": true,
+   "tests": [
+    "detectReminderIntent",
+    "reconhece ",
+    "quinta dita numa quinta cai na semana seguinte (7 dias, não hoje)",
+    "casa dia da semana com acento e ",
+    "usa o horário explícito quando o cliente informa",
+    "reconhece data numérica dd/mm",
+    "data sem ano que já passou vira o ano seguinte",
+    "verbo de contato sem data oferece amanhã 9h",
+    "devolve null quando não há data nem pedido de contato"
+   ]
+  },
   "src/lib/audio/gravacaoFormato.ts": {
    "path": "src/lib/audio/gravacaoFormato.ts",
    "lines": 103,
@@ -460226,7 +460621,7 @@
   },
   "supabase/functions/copilot-live/index.test.ts": {
    "path": "supabase/functions/copilot-live/index.test.ts",
-   "lines": 441,
+   "lines": 460,
    "is_test": true,
    "params": [
     {
@@ -460263,13 +460658,14 @@
     "copilot-live: cota diária de IA excedida devolve 429 sem chamar o provedor nem gravar sessão",
     "copilot-live: capacidade ai.capability.copilot_live desligada devolve erro sem chamar o provedor",
     "copilot-live: Fase 1 — sem perfil usa os defaults de identidade no system prompt",
+    "copilot-live: Fase 2 — compromisso já marcado com o contato entra no prompt",
     "copilot-live: Fase 1 — perfil de atuação/foco/tom próprios muda o system prompt"
    ],
    "uses_service_role": true
   },
   "supabase/functions/copilot-live/index.ts": {
    "path": "supabase/functions/copilot-live/index.ts",
-   "lines": 321,
+   "lines": 348,
    "tables": [
     {
      "table": "profiles",
@@ -460277,6 +460673,10 @@
     },
     {
      "table": "assistant_profiles",
+     "op": "select"
+    },
+    {
+     "table": "conversation_tasks",
      "op": "select"
     },
     {
@@ -460320,6 +460720,12 @@
      "tom",
      "user_id"
     ],
+    "conversation_tasks": [
+     "contact_id",
+     "remind_at",
+     "status",
+     "title"
+    ],
     "copilot_sessions": [
      "contact_id",
      "conversation_id",
@@ -460349,6 +460755,7 @@
     "CV-141: mesma guarda de IA (kill switch de capacidade, rate limit por",
     "Resolver o profiles.id do chamador apenas para comparar com assigned_to.",
     "profileId é usado SOMENTE para comparar com contacts.assigned_to.",
+    "derruba a sugestão: sem agenda o prompt apenas não traz esse bloco.",
     "apenas como última instância — garante NOT NULL sem depender de tabela",
     "Conflito: atualiza apenas campos não-proprietários, ownership guardado"
    ],
@@ -460359,6 +460766,9 @@
      "params": "opts: { lastClientMessage?: string; draftText?: string; saleStage?: string; userId: string; profile?: { atividade?: stri",
      "body": "content: string; modelVersion: string"
     }
+   ],
+   "pagination": [
+    "5"
    ],
    "uses_service_role": true
   },
@@ -479879,10 +480289,35 @@
   }
  },
  "git": {
-  "sha": "b35911db610a6a3fc0e6335b40e4dfdcb05000e6",
+  "sha": "9f6df25bc2f82252fdfe8e08dd10f56da1ef71fb",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "9f6df25b",
+    "date": "2026-11-22",
+    "author": "adm01-debug",
+    "subject": "feat: fase 2 do assistente pessoal (memoria e agenda do contato) (#3316)",
+    "files": [
+     "src/components/dashboard/DailyBriefStrip.tsx",
+     "src/components/dashboard/DashboardView.tsx",
+     "src/components/dashboard/__tests__/DailyBriefStrip.test.ts",
+     "src/components/inbox/tabs/AiTab.tsx",
+     "src/components/inbox/tabs/AssistantAgendaCard.tsx",
+     "src/components/inbox/tabs/__tests__/AiTab.erroAnalise.test.tsx",
+     "src/components/inbox/tabs/__tests__/AiTab.test.tsx",
+     "src/components/inbox/tabs/__tests__/AssistantAgendaCard.test.tsx",
+     "src/hooks/assistant/useContactAgenda.ts",
+     "src/hooks/assistant/useDailyBrief.ts",
+     "src/hooks/assistant/useReminderOffer.ts",
+     "src/lib/assistant/__tests__/detectReminderIntent.test.ts",
+     "src/lib/assistant/dailyBrief.ts",
+     "src/lib/assistant/detectReminderIntent.ts",
+     "supabase/deployment-manifest.json",
+     "supabase/functions/copilot-live/index.test.ts",
+     "supabase/functions/copilot-live/index.ts"
+    ]
+   },
    {
     "sha": "b35911db",
     "date": "2026-11-22",
@@ -481300,25 +481735,24 @@
      "scripts/ci/a11y-audit-fora-da-automacao.unit.mjs",
      "src/main.tsx"
     ]
-   },
-   {
-    "sha": "d0e86ced",
-    "date": "2026-11-19",
-    "author": "adm01-debug",
-    "subject": "test(talkx): travar a entrada do teste A/B no assistente (#3280)",
-    "files": [
-     "src/components/talkx/__tests__/TalkXWizardDelivery.ab.test.tsx"
-    ]
    }
   ],
   "hot_files": [
    [
     "supabase/deployment-manifest.json",
-    3
+    4
    ],
    [
     "ESTADO.md",
     3
+   ],
+   [
+    "supabase/functions/copilot-live/index.test.ts",
+    2
+   ],
+   [
+    "supabase/functions/copilot-live/index.ts",
+    2
    ],
    [
     "src/integrations/supabase/types.ts",
@@ -481341,55 +481775,47 @@
     2
    ],
    [
-    "src/components/settings/AssistantProfileSettings.tsx",
+    "src/components/dashboard/DailyBriefStrip.tsx",
     1
    ],
    [
-    "src/components/settings/SettingsView.tsx",
+    "src/components/dashboard/DashboardView.tsx",
     1
    ],
    [
-    "src/components/settings/__tests__/SettingsView.test.tsx",
+    "src/components/dashboard/__tests__/DailyBriefStrip.test.ts",
     1
    ],
    [
-    "src/hooks/assistant/useAssistantProfile.ts",
+    "src/components/inbox/tabs/AiTab.tsx",
     1
    ],
    [
-    "supabase/functions/copilot-live/index.test.ts",
+    "src/components/inbox/tabs/AssistantAgendaCard.tsx",
     1
    ],
    [
-    "supabase/functions/copilot-live/index.ts",
+    "src/components/inbox/tabs/__tests__/AiTab.erroAnalise.test.tsx",
     1
    ],
    [
-    "supabase/migrations/20261121190000_assistant_profiles.sql",
+    "src/components/inbox/tabs/__tests__/AiTab.test.tsx",
     1
    ],
    [
-    "docs/talkx/ESTADOS.md",
+    "src/components/inbox/tabs/__tests__/AssistantAgendaCard.test.tsx",
     1
    ],
    [
-    "src/components/talkx/TalkXLiveMonitor.tsx",
+    "src/hooks/assistant/useContactAgenda.ts",
     1
    ],
    [
-    "src/components/talkx/TalkXView.tsx",
+    "src/hooks/assistant/useDailyBrief.ts",
     1
    ],
    [
-    "src/components/talkx/__tests__/TalkXMonitorHeader.test.tsx",
-    1
-   ],
-   [
-    "src/components/talkx/__tests__/TalkXView.monitor.test.tsx",
-    1
-   ],
-   [
-    "src/components/talkx/tracking/TalkXMonitorHeader.tsx",
+    "src/hooks/assistant/useReminderOffer.ts",
     1
    ]
   ]

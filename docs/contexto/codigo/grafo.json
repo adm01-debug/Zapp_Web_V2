@@ -1,8 +1,8 @@
 {
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
- "nos": 2734,
- "arestas": 9357,
+ "nos": 2741,
+ "arestas": 9373,
  "hubs": [
   {
    "arquivo": "src/lib/utils.ts",
@@ -10,15 +10,15 @@
   },
   {
    "arquivo": "src/integrations/supabase/client.ts",
-   "importado_por": 511
+   "importado_por": 513
   },
   {
    "arquivo": "src/components/ui/button.tsx",
-   "importado_por": 458
+   "importado_por": 459
   },
   {
    "arquivo": "src/lib/logger.ts",
-   "importado_por": 264
+   "importado_por": 265
   },
   {
    "arquivo": "src/components/ui/badge.tsx",
@@ -34,19 +34,19 @@
   },
   {
    "arquivo": "src/components/ui/input.tsx",
-   "importado_por": 201
+   "importado_por": 202
   },
   {
    "arquivo": "src/types/chat.ts",
    "importado_por": 174
   },
   {
-   "arquivo": "src/components/ui/select.tsx",
-   "importado_por": 141
+   "arquivo": "src/hooks/auth/useAuth.tsx",
+   "importado_por": 142
   },
   {
-   "arquivo": "src/hooks/auth/useAuth.tsx",
-   "importado_por": 140
+   "arquivo": "src/components/ui/select.tsx",
+   "importado_por": 141
   },
   {
    "arquivo": "src/components/ui/label.tsx",
@@ -586,7 +586,7 @@
   {
    "modulo": "integrations/supabase",
    "depende_de": 1,
-   "importado_por": 67
+   "importado_por": 68
   },
   {
    "modulo": "pages",
@@ -595,7 +595,7 @@
   },
   {
    "modulo": "components/inbox",
-   "depende_de": 46,
+   "depende_de": 47,
    "importado_por": 14
   },
   {
@@ -635,7 +635,7 @@
   },
   {
    "modulo": "components/dashboard",
-   "depende_de": 18,
+   "depende_de": 19,
    "importado_por": 12
   },
   {

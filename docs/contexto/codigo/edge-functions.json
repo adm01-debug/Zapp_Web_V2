@@ -1262,7 +1262,7 @@
    "nome": "copilot-live",
    "entrada": "supabase/functions/copilot-live/index.ts",
    "arquivos": 1,
-   "linhas": 321,
+   "linhas": 348,
    "verify_jwt": true,
    "metodos": [
     "OPTIONS"
@@ -1270,6 +1270,7 @@
    "tabelas": [
     "assistant_profiles",
     "contacts",
+    "conversation_tasks",
     "copilot_insights",
     "copilot_sessions",
     "profiles"

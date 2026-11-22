@@ -112,6 +112,7 @@
     "useConnectionsHealth",
     "useConnectionsManager",
     "useContactActivity",
+    "useContactAgenda",
     "useContactCrm360",
     "useContactCustomFields",
     "useContactDeliveryStats",
@@ -155,6 +156,7 @@
     "useCurrentModule",
     "useCustomEmojis",
     "useCustomShortcuts",
+    "useDailyBrief",
     "useDailyMetricsKpis",
     "useDashboardData",
     "useDashboardKpi",
@@ -392,6 +394,7 @@
     "useReducedMotion",
     "useReducer",
     "useRef",
+    "useReminderOffer",
     "useRemoveConversationMember",
     "useRemoveDepartmentMember",
     "useRenameConversation",
@@ -618,6 +621,7 @@
     "useConnectionQueues",
     "useConnectionsHealth",
     "useConnectionsManager",
+    "useContactAgenda",
     "useContactCrm360",
     "useContactCustomFields",
     "useContactDeliveryStats",
@@ -659,6 +663,7 @@
     "useCurrentModule",
     "useCustomEmojis",
     "useCustomShortcuts",
+    "useDailyBrief",
     "useDailyMetricsKpis",
     "useDashboardData",
     "useDashboardKpi",
@@ -864,6 +869,7 @@
     "useRecentSentimentAlerts",
     "useRecommendedProducts",
     "useReducedMotion",
+    "useReminderOffer",
     "useRemoveConversationMember",
     "useRemoveDepartmentMember",
     "useRenameConversation",
@@ -1342,7 +1348,7 @@
     "unknown",
     "user"
    ],
-   "arquivos_puxados": 1525
+   "arquivos_puxados": 1532
   },
   {
    "protegida": false,
@@ -4211,6 +4217,7 @@
     "useCelebration",
     "useChart",
     "useContext",
+    "useDailyBrief",
     "useDailyMetricsKpis",
     "useDashboardData",
     "useDashboardKpi",
@@ -4289,6 +4296,7 @@
     "useCRMAdminAccess",
     "useCSAT",
     "useCelebration",
+    "useDailyBrief",
     "useDailyMetricsKpis",
     "useDashboardData",
     "useDashboardKpi",
@@ -4345,6 +4353,7 @@
     "conversation_analyses",
     "conversation_events",
     "conversation_sla",
+    "conversation_tasks",
     "csat_surveys",
     "goals_configurations",
     "messages",
@@ -4352,6 +4361,7 @@
     "profiles",
     "queue_members",
     "queues",
+    "sales_deals",
     "scheduled_report_configs",
     "sla_configurations",
     "sla_rules",
@@ -4395,7 +4405,7 @@
     "status",
     "supervisor"
    ],
-   "arquivos_puxados": 200
+   "arquivos_puxados": 203
   },
   {
    "id": "diagnostics",
@@ -4920,6 +4930,7 @@
     "useCoachingTip",
     "useConnectionHealthBanner",
     "useConnectionOptions",
+    "useContactAgenda",
     "useContactCrm360",
     "useContactDeliveryStats",
     "useContactEnrichedData",
@@ -5073,6 +5084,7 @@
     "useReducedMotion",
     "useReducer",
     "useRef",
+    "useReminderOffer",
     "useResolvedStorageUrl",
     "useSLACalculation",
     "useSalvarConversationMemory",
@@ -5150,6 +5162,7 @@
     "useCoachingTip",
     "useConnectionHealthBanner",
     "useConnectionOptions",
+    "useContactAgenda",
     "useContactCrm360",
     "useContactDeliveryStats",
     "useContactEnrichedData",
@@ -5279,6 +5292,7 @@
     "useRealtimeStatus",
     "useRecommendedProducts",
     "useReducedMotion",
+    "useReminderOffer",
     "useResolvedStorageUrl",
     "useSLACalculation",
     "useSalvarConversationMemory",
@@ -5474,7 +5488,7 @@
     "unknown",
     "user"
    ],
-   "arquivos_puxados": 655
+   "arquivos_puxados": 659
   },
   {
    "id": "integrations",

@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "b35911db610a6a3fc0e6335b40e4dfdcb05000e6",
+  "commit": "9f6df25bc2f82252fdfe8e08dd10f56da1ef71fb",
   "branch": "main",
-  "data_commit": "2026-11-22T09:04:45-03:00",
+  "data_commit": "2026-11-22T09:51:30-03:00",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "9f6df25b",
+    "data": "2026-11-22",
+    "assunto": "feat: fase 2 do assistente pessoal (memoria e agenda do contato) (#3316)"
+   },
    {
     "sha": "b35911db",
     "data": "2026-11-22",
@@ -126,14 +131,9 @@
     "sha": "055cf6e2",
     "data": "2026-11-19",
     "assunto": "chore(docs): consolidar relatório de liquidação com estado final (PEND=0)"
-   },
-   {
-    "sha": "0d1ebd5b",
-    "data": "2026-11-19",
-    "assunto": "docs: publicar snapshots SQL documentais do contexto X065 (#3284)"
    }
   ],
-  "arquivos_mudados_7d": 7338,
+  "arquivos_mudados_7d": 7352,
   "pastas_mais_mudadas_30d": [
    {
     "pasta": "docs/contexto/supabase",
@@ -145,7 +145,7 @@
    },
    {
     "pasta": "src/components/inbox",
-    "mudancas": 730
+    "mudancas": 735
    },
    {
     "pasta": "docs/reconciliation/reaudit",
@@ -185,7 +185,7 @@
    },
    {
     "pasta": "src/components/dashboard",
-    "mudancas": 142
+    "mudancas": 145
    },
    {
     "pasta": "src/components/ui",
@@ -199,7 +199,7 @@
   "arquivos_mais_mudados_90d": [
    {
     "arquivo": "supabase/deployment-manifest.json",
-    "mudancas": 31
+    "mudancas": 32
    },
    {
     "arquivo": "ESTADO.md",
@@ -314,21 +314,21 @@
   ]
  },
  "contagens": {
-  "arquivos_total": 15724,
-  "arquivos_codigo": 5847,
-  "linhas_codigo": 1131932,
+  "arquivos_total": 15734,
+  "arquivos_codigo": 5857,
+  "linhas_codigo": 1132969,
   "rotas": 18,
   "rotas_http_backend": 11,
   "vistas_por_id": 55,
   "itens_menu": 61,
-  "modulos": 148,
-  "componentes": 1056,
-  "hooks": 601,
+  "modulos": 149,
+  "componentes": 1058,
+  "hooks": 604,
   "edge_functions": 92,
   "tabelas": 222,
   "migrations": 1150,
   "cron_jobs": 29,
-  "testes": 3204,
+  "testes": 3207,
   "workflows": 24,
   "scripts": 451,
   "docs_md": 4082
@@ -727,8 +727,8 @@
    "linhas": 638
   },
   "src/components": {
-   "arquivos": 2292,
-   "linhas": 390190
+   "arquivos": 2296,
+   "linhas": 390637
   },
   "src/config": {
    "arquivos": 3,
@@ -747,8 +747,8 @@
    "linhas": 3293
   },
   "src/hooks": {
-   "arquivos": 1023,
-   "linhas": 166366
+   "arquivos": 1026,
+   "linhas": 166629
   },
   "src/i18n": {
    "arquivos": 2,
@@ -759,8 +759,8 @@
    "linhas": 15985
   },
   "src/lib": {
-   "arquivos": 295,
-   "linhas": 40008
+   "arquivos": 298,
+   "linhas": 40289
   },
   "src/main.tsx": {
    "arquivos": 1,
@@ -804,7 +804,7 @@
   },
   "supabase/functions": {
    "arquivos": 424,
-   "linhas": 127695
+   "linhas": 127741
   },
   "tailwind.config.ts": {
    "arquivos": 1,

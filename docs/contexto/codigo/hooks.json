@@ -1,7 +1,7 @@
 {
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
- "total": 601,
+ "total": 604,
  "hooks": [
   {
    "arquivo": "analise-prs/resgate-261118-lote2/src/hooks/useMotionSeguro.ts",
@@ -4735,6 +4735,76 @@
    "coberto_por_testes": 0
   },
   {
+   "arquivo": "src/hooks/assistant/useContactAgenda.ts",
+   "hooks_exportados": [
+    "useContactAgenda"
+   ],
+   "linhas": 143,
+   "dominio": "hooks/assistant",
+   "tabelas": [
+    "conversation_tasks"
+   ],
+   "rpcs": [],
+   "edges": [],
+   "hooks_internos": [
+    "useAuth",
+    "useCallback",
+    "useMutation",
+    "useQuery",
+    "useQueryClient"
+   ],
+   "canais_realtime": [],
+   "usado_por": 1,
+   "usado_por_arquivos": [
+    "src/hooks/assistant/useReminderOffer.ts"
+   ],
+   "coberto_por_testes": 0
+  },
+  {
+   "arquivo": "src/hooks/assistant/useDailyBrief.ts",
+   "hooks_exportados": [
+    "useDailyBrief"
+   ],
+   "linhas": 24,
+   "dominio": "hooks/assistant",
+   "tabelas": [],
+   "rpcs": [],
+   "edges": [],
+   "hooks_internos": [
+    "useAuth",
+    "useQuery"
+   ],
+   "canais_realtime": [],
+   "usado_por": 1,
+   "usado_por_arquivos": [
+    "src/components/dashboard/DailyBriefStrip.tsx"
+   ],
+   "coberto_por_testes": 0
+  },
+  {
+   "arquivo": "src/hooks/assistant/useReminderOffer.ts",
+   "hooks_exportados": [
+    "useReminderOffer"
+   ],
+   "linhas": 96,
+   "dominio": "hooks/assistant",
+   "tabelas": [],
+   "rpcs": [],
+   "edges": [],
+   "hooks_internos": [
+    "useCallback",
+    "useContactAgenda",
+    "useMemo",
+    "useState"
+   ],
+   "canais_realtime": [],
+   "usado_por": 1,
+   "usado_por_arquivos": [
+    "src/components/inbox/tabs/AssistantAgendaCard.tsx"
+   ],
+   "coberto_por_testes": 0
+  },
+  {
    "arquivo": "src/hooks/auth/useAuth.tsx",
    "hooks_exportados": [
     "useAuth"
@@ -4753,7 +4823,7 @@
     "useState"
    ],
    "canais_realtime": [],
-   "usado_por": 132,
+   "usado_por": 134,
    "usado_por_arquivos": [
     "analise-prs/resgate-261118-lote3/claude/feat-radar-motor-telas-261101-1330/src/components/inbox/copilot/RadarLive.tsx",
     "analise-prs/resgate-261118-lote3/claude/fix-unit-tests-src-261024-1630/src/hooks/chat/useTeamChatNotifications.ts",
@@ -13867,7 +13937,7 @@
    "canais_realtime": [
     "work-items:${profileId}:${secureRandomFloat().toString(36).slice(2)}"
    ],
-   "usado_por": 16,
+   "usado_por": 17,
    "usado_por_arquivos": [
     "src/components/inbox/chat/useChatPanelHandlers.ts",
     "src/components/inbox/tabs/Crm360Tab.tsx",
@@ -13881,6 +13951,7 @@
     "src/components/tasks/shared/NewTaskDialog.tsx",
     "src/components/tasks/shared/QuickAdd.tsx",
     "src/components/tasks/shared/WorkItemSheet.tsx",
+    "src/hooks/assistant/useContactAgenda.ts",
     "src/hooks/tasks/useMyTasks.ts",
     "src/hooks/tasks/useWorkItemDraft.ts",
     "src/hooks/tasks/useWorkItemNotifications.ts",

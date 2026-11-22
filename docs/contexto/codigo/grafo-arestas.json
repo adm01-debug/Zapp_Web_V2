@@ -3607,6 +3607,9 @@
    "src/integrations/supabase/client.ts",
    "src/lib/utils.ts"
   ],
+  "src/components/dashboard/DailyBriefStrip.tsx": [
+   "src/hooks/assistant/useDailyBrief.ts"
+  ],
   "src/components/dashboard/DashboardFilters.tsx": [
    "src/components/dashboard/dashboardFilterDefaults.ts",
    "src/components/ui/calendar.tsx",
@@ -3632,6 +3635,7 @@
    "src/components/dashboard/ActivityHeatmap.tsx",
    "src/components/dashboard/AgentPerformancePanel.tsx",
    "src/components/dashboard/ConversationHeatmap.tsx",
+   "src/components/dashboard/DailyBriefStrip.tsx",
    "src/components/dashboard/DashboardFilters.tsx",
    "src/components/dashboard/DemandPrediction.tsx",
    "src/components/dashboard/GoalsDashboard.tsx",
@@ -6037,6 +6041,7 @@
    "src/components/inbox/contact-details/AIInsightsWidget.tsx",
    "src/components/inbox/copilot/CopilotPanel.tsx",
    "src/components/inbox/copilot/LiveSuggestions.tsx",
+   "src/components/inbox/tabs/AssistantAgendaCard.tsx",
    "src/components/inbox/tabs/SectionCard.tsx",
    "src/components/ui/empty-state.tsx",
    "src/hooks/chat/useLatestAnalysis.ts",
@@ -6049,6 +6054,12 @@
    "src/lib/formatters.ts",
    "src/lib/utils.ts",
    "src/types/chat.ts"
+  ],
+  "src/components/inbox/tabs/AssistantAgendaCard.tsx": [
+   "src/components/inbox/tabs/SectionCard.tsx",
+   "src/components/ui/button.tsx",
+   "src/components/ui/input.tsx",
+   "src/hooks/assistant/useReminderOffer.ts"
   ],
   "src/components/inbox/tabs/AudioPlayButton.tsx": [
    "src/components/inbox/tabs/fileActionButton.ts",
@@ -9744,6 +9755,20 @@
    "src/integrations/supabase/client.ts",
    "src/lib/logger.ts"
   ],
+  "src/hooks/assistant/useContactAgenda.ts": [
+   "src/hooks/auth/useAuth.tsx",
+   "src/hooks/tasks/useMyWorkItems.ts",
+   "src/integrations/supabase/client.ts",
+   "src/lib/logger.ts"
+  ],
+  "src/hooks/assistant/useDailyBrief.ts": [
+   "src/hooks/auth/useAuth.tsx",
+   "src/lib/assistant/dailyBrief.ts"
+  ],
+  "src/hooks/assistant/useReminderOffer.ts": [
+   "src/hooks/assistant/useContactAgenda.ts",
+   "src/lib/assistant/detectReminderIntent.ts"
+  ],
   "src/hooks/auth/index.ts": [
    "src/hooks/auth/useAuth.tsx",
    "src/hooks/auth/useAuthForm.ts",
@@ -11731,6 +11756,9 @@
   ],
   "src/lib/appRole.ts": [
    "src/services/role.service.ts"
+  ],
+  "src/lib/assistant/dailyBrief.ts": [
+   "src/integrations/supabase/client.ts"
   ],
   "src/lib/audit.ts": [
    "src/integrations/supabase/client.ts",

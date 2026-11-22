@@ -1,6 +1,6 @@
 # 07 · REGRAS DE NEGÓCIO
 
-> Gerado automaticamente por AI Context Sync v1.3.2 · commit `b35911db61` · branch `main` · 2026-11-22 12:06 UTC
+> Gerado automaticamente por AI Context Sync v1.3.2 · commit `9f6df25bc2` · branch `main` · 2026-11-22 12:54 UTC
 > Não edite à mão — regras humanas vão em `manual/`.
 
 ## A. Regras escritas por humanos (`manual/` — prioridade máxima, nunca sobrescrito)
@@ -4171,7 +4171,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `MAX_INBOX_SILENCE_MINUTES` | `1440` | `analise-prs/resgate-261118-lote3/codex/publish-followup-20261021/supabase/functions/connection-health-check/index.ts` |
 | `TITULO` | `'[settings-guard] perimeter regression detected'` | `analise-prs/resgate-261118-lote3/f3/strict-false-baseline-20261018/scripts/ci/github-settings-guard.unit.mjs` |
 | `CONTEXTS_OK` | `"['` | `analise-prs/resgate-261118-lote3/f3/strict-false-baseline-20261018/scripts/ci/github-settings-guard.unit.mjs` |
-| … +1048 linhas — lista completa em `context.json` | | |
+| … +1050 linhas — lista completa em `context.json` | | |
 
 ### H.2 Prazos, expirações e janelas de tempo
 
@@ -4463,6 +4463,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `const DRAFT_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000;` | `src/lib/emailDraftSession.ts` |
 | `setTimeout(() => resolve(load()), 1000 * attempt)` | `src/lib/lazyWithRetry.ts` |
 | `const POLL_INTERVAL_MS = 5 * 60 * 1000;` | `src/lib/mapboxCostGuard.ts` |
+| `const STALLED_AFTER_MS = 2 * 60 * 60 * 1000;` | `src/lib/assistant/dailyBrief.ts` |
 | `export const MESSAGE_GROUP_WINDOW_MS = 10 * 60 * 1000;` | `src/lib/journey/mappers.ts` |
 | `const DIA_MS = 24 * 60 * 60 * 1000;` | `src/lib/journey/periodRange.ts` |
 | `const threshold = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();` | `src/pages/AdminTelemetriaPage.tsx` |
@@ -4476,8 +4477,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `export const PENDING_ACTION_TTL_MS = 2 * 60 * 1000;` | `src/services/outbound-message.service.ts` |
 | `if (!options?.requireInteraction) { setTimeout(() => notification.close(), 5000); }` | `src/utils/notificationSounds.ts` |
 | `const since = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();` | `supabase/functions/_shared/ai-guards.ts` |
-| `const TOKEN_CACHE_TTL_MS = 5 * 60 * 1000;` | `supabase/functions/_shared/evolution-instance-token.ts` |
-| … +195 linhas — lista completa em `context.json` | |
+| … +196 linhas — lista completa em `context.json` | |
 
 ### H.3 Limites de paginação
 
@@ -4572,6 +4572,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | 5000 | `src/hooks/analytics/useRealtimeDashboard.ts` |
 | 400 | `src/hooks/analytics/useRecentSentimentAlerts.ts` |
 | 400 | `src/hooks/analytics/useSentimentTrend.ts` |
+| 10 | `src/hooks/assistant/useContactAgenda.ts` |
 | 1000 | `src/hooks/business/useAbandonmentRate.ts` |
 | 1 | `src/hooks/business/useWarRoomAlerts.ts` |
 | 50 | `src/hooks/business/useWarRoomAlerts.ts` |
@@ -4640,6 +4641,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | 15 | `supabase/functions/chatbot-l1/index.ts` |
 | 5 | `supabase/functions/chatbot-l1/index.ts` |
 | 1 | `supabase/functions/connection-health-check/index.ts` |
+| 5 | `supabase/functions/copilot-live/index.ts` |
 | 1 | `supabase/functions/create-user/index.ts` |
 | 1 | `supabase/functions/crm-integration/index.ts` |
 | 100 | `supabase/functions/crm-integration/index.ts` |
@@ -4963,7 +4965,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | unsupported-filter-column | `analise-prs/resgate-261118-lote3/claude/test-e2e-suite-completa-261104-1428/scripts/e2e-isolated/providers.mjs` |
 | unsupported-order | `analise-prs/resgate-261118-lote3/claude/test-e2e-suite-completa-261104-1428/scripts/e2e-isolated/providers.mjs` |
 | unsupported-range | `analise-prs/resgate-261118-lote3/claude/test-e2e-suite-completa-261104-1428/scripts/e2e-isolated/providers.mjs` |
-| … +2518 linhas — lista completa em `context.json` | |
+| … +2520 linhas — lista completa em `context.json` | |
 
 ## J. Controle de acesso no código (checagens de perfil/permissão)
 
@@ -5054,7 +5056,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `owner` | `supabase/migrations/20260927270018_team_chat_e28_fix_find_or_create_race.sql` |
 | `anon` | `supabase/migrations/20260927340000_fix_add_agent_xp_negative_and_guard.sql` |
 
-## K. Testes como especificação (26119 testes em 2723 arquivos — nomes completos em `context.json`)
+## K. Testes como especificação (26138 testes em 2726 arquivos — nomes completos em `context.json`)
 
 | Arquivo | Testes | Exemplos do que o sistema DEVE fazer |
 |---|---|---|
@@ -5358,7 +5360,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `src/hooks/chat/__tests__/useAutomationSuggestions.test.tsx` | 18 | useAutomationSuggestions · não vai à Edge quando a última mensagem é do agente (lastInboundMessageId nulo) · chama a Edge com o contact_id e expõe as sugestões do contrato, com a fonte carimbada · espera o debounce antes de chamar (mensagem que ainda está chegando não gasta IA) … |
 | `src/hooks/chat/journey/__tests__/useJourneyActors.test.tsx` | 18 | useJourneyActors — regras de quem agiu (S063) · usuário com perfil: nome e foto do perfil, em UMA consulta em lote · perfil ausente:  · erro/RLS negado não lança: o ator cai no  … |
 | `src/hooks/communication/__tests__/useTranscriptionNotifications.filtros.test.ts` | 18 | sinalDeConclusao — não depende de payload.old · sem sinal de recência, evento com old só de id não é conclusão · carimbo antigo não passa; carimbo de agora passa · fronteira da janela (~30 s): 45 s já é antigo; 5 s ainda é recente … |
-| … +2423 linhas — lista completa em `context.json` | | |
+| … +2426 linhas — lista completa em `context.json` | | |
 
 ## L. Eventos de webhook tratados (contratos com sistemas externos)
 
@@ -5895,4 +5897,4 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | * R2-AUTH-005 (item 239): a resposta de uma busca de perfil nao pode repor | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/hooks/auth/useAuth.tsx` |
 | Identidade diferente: o perfil anterior nao pode continuar na tela e so a | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/hooks/auth/useAuth.tsx` |
 | Supabase pode falhar e não emitir SIGNED_OUT — a limpeza não pode depender dele). | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/hooks/auth/useAuth.tsx` |
-| … +2499 linhas — lista completa em `context.json` | |
+| … +2503 linhas — lista completa em `context.json` | |

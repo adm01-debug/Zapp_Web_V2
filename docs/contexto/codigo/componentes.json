@@ -1,7 +1,7 @@
 {
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
- "total": 1056,
+ "total": 1058,
  "orfaos": 138,
  "nomes_duplicados": {
   "AIAutoTagsConfig": [
@@ -6051,6 +6051,22 @@
    "orfao": false
   },
   {
+   "arquivo": "src/components/dashboard/DailyBriefStrip.tsx",
+   "exports": [
+    "DailyBriefStrip"
+   ],
+   "export_default": null,
+   "linhas": 82,
+   "dominio": "components/dashboard",
+   "hooks_locais": [
+    "useDailyBrief"
+   ],
+   "tabelas": [],
+   "edges": [],
+   "usado_por": 1,
+   "orfao": false
+  },
+  {
    "arquivo": "src/components/dashboard/DashboardFilters.tsx",
    "exports": [
     "DashboardFilters"
@@ -6102,7 +6118,7 @@
     "DashboardView"
    ],
    "export_default": null,
-   "linhas": 370,
+   "linhas": 374,
    "dominio": "components/dashboard",
    "hooks_locais": [
     "useDashboardData",
@@ -10362,7 +10378,7 @@
     "AiTab"
    ],
    "export_default": null,
-   "linhas": 244,
+   "linhas": 251,
    "dominio": "components/inbox",
    "hooks_locais": [
     "useContactLeadScore",
@@ -10371,6 +10387,22 @@
     "useLiveSuggestions",
     "useNextBestAction",
     "useRecommendedProducts"
+   ],
+   "tabelas": [],
+   "edges": [],
+   "usado_por": 1,
+   "orfao": false
+  },
+  {
+   "arquivo": "src/components/inbox/tabs/AssistantAgendaCard.tsx",
+   "exports": [
+    "AssistantAgendaCard"
+   ],
+   "export_default": null,
+   "linhas": 130,
+   "dominio": "components/inbox",
+   "hooks_locais": [
+    "useReminderOffer"
    ],
    "tabelas": [],
    "edges": [],
@@ -10868,7 +10900,7 @@
    "hooks_locais": [],
    "tabelas": [],
    "edges": [],
-   "usado_por": 5,
+   "usado_por": 6,
    "orfao": false
   },
   {
@@ -16410,7 +16442,7 @@
    "hooks_locais": [],
    "tabelas": [],
    "edges": [],
-   "usado_por": 454,
+   "usado_por": 455,
    "orfao": false
   },
   {
@@ -16861,7 +16893,7 @@
    "hooks_locais": [],
    "tabelas": [],
    "edges": [],
-   "usado_por": 201,
+   "usado_por": 202,
    "orfao": false
   },
   {
@@ -17827,7 +17859,7 @@
    ],
    "tabelas": [],
    "edges": [],
-   "usado_por": 132,
+   "usado_por": 134,
    "orfao": false
   },
   {

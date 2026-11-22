@@ -1,14 +1,14 @@
 {
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
- "total": 212,
+ "total": 214,
  "por_camada": {
   "adapters": 2,
   "config": 2,
   "contexts": 2,
   "data": 5,
   "integrations": 3,
-  "lib": 153,
+  "lib": 155,
   "providers": 1,
   "python": 15,
   "segments": 1,
@@ -870,7 +870,7 @@
    "zod_schemas": 0,
    "flags": [],
    "papeis": [],
-   "usado_por": 461,
+   "usado_por": 463,
    "usado_por_modulos": [
     "components/admin",
     "components/agents",
@@ -932,6 +932,7 @@
     "hooks/ui",
     "hooks/voice",
     "lib",
+    "lib/assistant",
     "lib/calls",
     "lib/inbox",
     "pages",
@@ -1170,6 +1171,58 @@
    "usado_por": 1,
    "usado_por_modulos": [
     "components/admin"
+   ],
+   "coberto_por_testes": 1,
+   "orfao": false
+  },
+  {
+   "arquivo": "src/lib/assistant/dailyBrief.ts",
+   "camada": "lib",
+   "exports": [
+    "DailyBrief",
+    "fetchDailyBrief"
+   ],
+   "export_default": null,
+   "linhas": 60,
+   "tabelas": [
+    "conversation_tasks",
+    "messages",
+    "sales_deals"
+   ],
+   "rpcs": [],
+   "edges": [],
+   "env": [],
+   "externos": [],
+   "zod_schemas": 0,
+   "flags": [],
+   "papeis": [],
+   "usado_por": 1,
+   "usado_por_modulos": [
+    "hooks/assistant"
+   ],
+   "coberto_por_testes": 1,
+   "orfao": false
+  },
+  {
+   "arquivo": "src/lib/assistant/detectReminderIntent.ts",
+   "camada": "lib",
+   "exports": [
+    "ReminderIntent",
+    "detectReminderIntent"
+   ],
+   "export_default": null,
+   "linhas": 143,
+   "tabelas": [],
+   "rpcs": [],
+   "edges": [],
+   "env": [],
+   "externos": [],
+   "zod_schemas": 0,
+   "flags": [],
+   "papeis": [],
+   "usado_por": 1,
+   "usado_por_modulos": [
+    "hooks/assistant"
    ],
    "coberto_por_testes": 1,
    "orfao": false
@@ -3716,7 +3769,7 @@
    "zod_schemas": 0,
    "flags": [],
    "papeis": [],
-   "usado_por": 246,
+   "usado_por": 247,
    "usado_por_modulos": [
     "components",
     "components/admin",

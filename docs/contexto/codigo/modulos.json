@@ -1945,9 +1945,9 @@
   },
   {
    "modulo": "components/dashboard",
-   "arquivos": 73,
-   "testes": 50,
-   "linhas": 9853,
+   "arquivos": 74,
+   "testes": 51,
+   "linhas": 9939,
    "itens_menu": [
     "Dashboard",
     "Sentimento",
@@ -1959,7 +1959,7 @@
     "warroom"
    ],
    "rotas_http": [],
-   "componentes": 61,
+   "componentes": 62,
    "hooks_locais": [
     "useAIFeatureNavigation",
     "useAIInsights",
@@ -1976,6 +1976,7 @@
     "useCRMAdminAccess",
     "useCSAT",
     "useCelebration",
+    "useDailyBrief",
     "useDailyMetricsKpis",
     "useDashboardData",
     "useDashboardKpi",
@@ -2045,6 +2046,7 @@
     "conversation_analyses",
     "conversation_events",
     "conversation_sla",
+    "conversation_tasks",
     "csat_surveys",
     "goals_configurations",
     "messages",
@@ -2052,6 +2054,7 @@
     "profiles",
     "queue_members",
     "queues",
+    "sales_deals",
     "scheduled_report_configs",
     "sla_configurations",
     "sla_rules",
@@ -2138,6 +2141,7 @@
     "components/settings",
     "components/ui",
     "hooks/analytics",
+    "hooks/assistant",
     "hooks/auth",
     "hooks/business",
     "hooks/crm",
@@ -2772,9 +2776,9 @@
   },
   {
    "modulo": "components/inbox",
-   "arquivos": 265,
-   "testes": 342,
-   "linhas": 46099,
+   "arquivos": 266,
+   "testes": 343,
+   "linhas": 46236,
    "itens_menu": [
     "Chat"
    ],
@@ -2782,7 +2786,7 @@
     "inbox"
    ],
    "rotas_http": [],
-   "componentes": 223,
+   "componentes": 224,
    "hooks_locais": [
     "useAddressAutocomplete",
     "useAdvanceDealStage",
@@ -2818,6 +2822,7 @@
     "useCoachingTip",
     "useConnectionHealthBanner",
     "useConnectionOptions",
+    "useContactAgenda",
     "useContactCrm360",
     "useContactDeliveryStats",
     "useContactEnrichedData",
@@ -2949,6 +2954,7 @@
     "useRealtimeStatus",
     "useRecommendedProducts",
     "useReducedMotion",
+    "useReminderOffer",
     "useResolvedStorageUrl",
     "useSLACalculation",
     "useSalvarConversationMemory",
@@ -3241,6 +3247,7 @@
     "contexts",
     "data/copilot",
     "features/talk-me",
+    "hooks/assistant",
     "hooks/auth",
     "hooks/business",
     "hooks/chat",
@@ -3669,6 +3676,7 @@
     "useConnectionQueues",
     "useConnectionsHealth",
     "useConnectionsManager",
+    "useContactAgenda",
     "useContactCrm360",
     "useContactCustomFields",
     "useContactDeliveryStats",
@@ -3710,6 +3718,7 @@
     "useCurrentModule",
     "useCustomEmojis",
     "useCustomShortcuts",
+    "useDailyBrief",
     "useDailyMetricsKpis",
     "useDashboardData",
     "useDashboardKpi",
@@ -3907,6 +3916,7 @@
     "useRecentSentimentAlerts",
     "useRecommendedProducts",
     "useReducedMotion",
+    "useReminderOffer",
     "useRemoveConversationMember",
     "useRemoveDepartmentMember",
     "useRenameConversation",
@@ -5650,6 +5660,7 @@
     "useConnectionQueues",
     "useConnectionsHealth",
     "useConnectionsManager",
+    "useContactAgenda",
     "useContactCrm360",
     "useContactDeliveryStats",
     "useContactEnrichedData",
@@ -5688,6 +5699,7 @@
     "useCreateTeamConversation",
     "useCustomEmojis",
     "useCustomShortcuts",
+    "useDailyBrief",
     "useDailyMetricsKpis",
     "useDashboardData",
     "useDashboardKpi",
@@ -5851,6 +5863,7 @@
     "useRecentSentimentAlerts",
     "useRecommendedProducts",
     "useReducedMotion",
+    "useReminderOffer",
     "useRemoveConversationMember",
     "useRemoveDepartmentMember",
     "useRenameConversation",
@@ -8751,9 +8764,9 @@
   },
   {
    "modulo": "hooks/assistant",
-   "arquivos": 1,
+   "arquivos": 4,
    "testes": 0,
-   "linhas": 104,
+   "linhas": 367,
    "itens_menu": [],
    "telas": [],
    "rotas_http": [],
@@ -8761,7 +8774,12 @@
    "hooks_locais": [
     "useAssistantProfile",
     "useAuth",
+    "useContactAgenda",
+    "useDailyBrief",
     "useMessageUpdateBatcher",
+    "useMyWorkItems",
+    "useMyWorkItemsBadge",
+    "useMyWorkItemsBadgeInfo",
     "useNotificationSettings",
     "useOfflineCache",
     "usePublishIncomingAlertIdentity",
@@ -8769,11 +8787,15 @@
     "useRealtimeNotifications",
     "useRealtimeReconnectingNotice",
     "useRealtimeStatus",
+    "useReminderOffer",
     "useTeamAlertsPreference",
     "useToast"
    ],
    "hooks_definidos": [
-    "useAssistantProfile"
+    "useAssistantProfile",
+    "useContactAgenda",
+    "useDailyBrief",
+    "useReminderOffer"
    ],
    "edges": [
     "auth-login",
@@ -8782,8 +8804,10 @@
    "tabelas": [
     "assistant_profiles",
     "contacts",
+    "conversation_tasks",
     "messages",
     "profiles",
+    "sales_deals",
     "user_settings"
    ],
    "rpcs": [
@@ -8793,7 +8817,8 @@
    ],
    "buckets": [],
    "canais_realtime": [
-    "chat-reactions:${messageId}"
+    "chat-reactions:${messageId}",
+    "work-items:${profileId}:${secureRandomFloat().toString(36).slice(2)}"
    ],
    "env": [
     "DEV"
@@ -8803,19 +8828,26 @@
    "diretos": {
     "edges": [],
     "tabelas": [
-     "assistant_profiles"
+     "assistant_profiles",
+     "conversation_tasks"
     ],
     "rpcs": []
    },
    "importado_por_outros_modulos": [
+    "components/dashboard",
+    "components/inbox",
     "components/settings"
    ],
    "depende_de_modulos": [
     "hooks/auth",
+    "hooks/tasks",
     "integrations/supabase",
-    "lib"
+    "lib",
+    "lib/assistant"
    ],
-   "pacotes_externos": []
+   "pacotes_externos": [
+    "@tanstack/react-query"
+   ]
   },
   {
    "modulo": "hooks/auth",
@@ -12197,6 +12229,7 @@
     "useConnectionQueues",
     "useConnectionsHealth",
     "useConnectionsManager",
+    "useContactAgenda",
     "useContactCrm360",
     "useContactCustomFields",
     "useContactDeliveryStats",
@@ -12239,6 +12272,7 @@
     "useCurrentModule",
     "useCustomEmojis",
     "useCustomShortcuts",
+    "useDailyBrief",
     "useDailyMetricsKpis",
     "useDashboardData",
     "useDashboardKpi",
@@ -12450,6 +12484,7 @@
     "useRecentSentimentAlerts",
     "useRecommendedProducts",
     "useReducedMotion",
+    "useReminderOffer",
     "useRemoveConversationMember",
     "useRemoveDepartmentMember",
     "useRenameConversation",
@@ -13217,6 +13252,7 @@
     "components/layout",
     "components/notifications",
     "components/tasks",
+    "hooks/assistant",
     "hooks/chat"
    ],
    "depende_de_modulos": [
@@ -13815,6 +13851,7 @@
     "hooks/ui",
     "hooks/voice",
     "lib",
+    "lib/assistant",
     "lib/calls",
     "lib/inbox",
     "pages",
@@ -14161,6 +14198,46 @@
     "hooks/ui"
    ],
    "depende_de_modulos": [],
+   "pacotes_externos": []
+  },
+  {
+   "modulo": "lib/assistant",
+   "arquivos": 2,
+   "testes": 1,
+   "linhas": 203,
+   "itens_menu": [],
+   "telas": [],
+   "rotas_http": [],
+   "componentes": 0,
+   "hooks_locais": [],
+   "hooks_definidos": [],
+   "edges": [],
+   "tabelas": [
+    "conversation_tasks",
+    "messages",
+    "sales_deals"
+   ],
+   "rpcs": [],
+   "buckets": [],
+   "canais_realtime": [],
+   "env": [],
+   "flags": [],
+   "papeis": [],
+   "diretos": {
+    "edges": [],
+    "tabelas": [
+     "conversation_tasks",
+     "messages",
+     "sales_deals"
+    ],
+    "rpcs": []
+   },
+   "importado_por_outros_modulos": [
+    "hooks/assistant"
+   ],
+   "depende_de_modulos": [
+    "integrations/supabase"
+   ],
    "pacotes_externos": []
   },
   {
@@ -14582,6 +14659,7 @@
     "useConnectionQueues",
     "useConnectionsHealth",
     "useConnectionsManager",
+    "useContactAgenda",
     "useContactCrm360",
     "useContactCustomFields",
     "useContactDeliveryStats",
@@ -14623,6 +14701,7 @@
     "useCurrentModule",
     "useCustomEmojis",
     "useCustomShortcuts",
+    "useDailyBrief",
     "useDailyMetricsKpis",
     "useDashboardData",
     "useDashboardKpi",
@@ -14831,6 +14910,7 @@
     "useRecentSentimentAlerts",
     "useRecommendedProducts",
     "useReducedMotion",
+    "useReminderOffer",
     "useRemoveConversationMember",
     "useRemoveDepartmentMember",
     "useRenameConversation",
@@ -15865,6 +15945,7 @@
     "useConnectionQueues",
     "useConnectionsHealth",
     "useConnectionsManager",
+    "useContactAgenda",
     "useContactCrm360",
     "useContactCustomFields",
     "useContactDeliveryStats",
@@ -15906,6 +15987,7 @@
     "useCurrentModule",
     "useCustomEmojis",
     "useCustomShortcuts",
+    "useDailyBrief",
     "useDailyMetricsKpis",
     "useDashboardData",
     "useDashboardKpi",
@@ -16116,6 +16198,7 @@
     "useRecentSentimentAlerts",
     "useRecommendedProducts",
     "useReducedMotion",
+    "useReminderOffer",
     "useRemoveConversationMember",
     "useRemoveDepartmentMember",
     "useRenameConversation",
