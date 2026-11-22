@@ -321,6 +321,17 @@ export function ContactsView() {
           onClose={() => setDetailContact(null)}
           onOpenChat={openContactChat}
           onEdit={openEditDialog}
+          /* ZD-078 — navegação anterior/próximo dentro do recorte filtrado que
+             o operador está vendo (nunca na base inteira). */
+          resultadoAtual={filteredContacts}
+          onNavigate={(id) => {
+            const alvo = filteredContacts.find((item) => item.id === id);
+            if (alvo) setDetailContact(alvo);
+          }}
+          /* ZD-075 — a ficha só afirma "Origem dos dados: Singu CRM" quando a
+             integração está realmente ligada. */
+          singuOrigem={crmIntegrationEnabled}
+          onBuscarCRM={crmIntegrationEnabled ? () => setIsCRMSearchOpen(true) : undefined}
         />
       )}
 
