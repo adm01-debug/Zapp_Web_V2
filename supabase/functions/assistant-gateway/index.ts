@@ -30,6 +30,19 @@ import {
   type ContextSource,
 } from "../_shared/assistant-gateway.ts";
 
+/**
+ * Edges que esta porta única dispara. O dispatch é pelo mapa `CAPABILITY_FUNCTION`
+ * (`CAPABILITY_FUNCTION[cap]`), então a URL sai do template em tempo de execução;
+ * os endpoints ficam listados aqui para o inventário do `ESTADO.md` conseguir
+ * provar o chamador sem executar a função:
+ *   /functions/v1/ai-conversation-summary
+ *   /functions/v1/ai-suggest-reply
+ *   /functions/v1/ai-lead-temperature
+ *   /functions/v1/ai-product-recommendation
+ *   /functions/v1/ai-deadline-calculator
+ *   /functions/v1/ai-objection-handler
+ */
+
 /** Quantas mensagens do histórico entram no contexto compartilhado. */
 const HISTORY_LIMIT = 20;
 /** Janela máxima aceita pelo schema das edges chamadas (`messages` máx. 50). */
