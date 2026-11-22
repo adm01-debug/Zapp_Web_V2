@@ -81,22 +81,33 @@ export function ContactMapView({ contacts, onContactClick, totalCount }: Contact
 
   const isEmpty = contacts.length === 0;
 
+  // ZD-092 — casca `.zc-alt-view` e estado vazio `.zc-empty` do design: o mapa
+  // real (DDD + endereço confirmado) continua, mas dentro do cartão de 22px e
+  // com a lista de regiões em chips `.zc-city-list`.
   return (
-    <div className="space-y-4">
+    <div className="min-h-[430px] rounded-[12px] border border-[hsl(var(--contacts-line))] bg-[hsl(var(--contacts-panel))] p-[22px] max-[659px]:p-4">
       <header className="flex flex-wrap items-center gap-x-2 gap-y-1">
-        <MapPin className="w-5 h-5 text-primary" aria-hidden="true" />
-        <h2 className="font-display text-lg font-bold text-foreground">Mapa</h2>
-        <p className="text-caption">Distribuição dos contatos por região (DDD e endereço confirmado).</p>
+        <MapPin className="h-[18px] w-[18px] text-[hsl(var(--contacts-blue))]" aria-hidden="true" />
+        <h3 className="m-0 font-display text-[22px] font-medium leading-[1.2] tracking-[-.3px] text-[hsl(var(--contacts-ink))] max-[899px]:text-[19px]">
+          Mapa
+        </h3>
       </header>
+      <p className="mb-[23px] mt-[7px] text-xs text-[hsl(var(--contacts-quiet))]">
+        Distribuição dos contatos por região (DDD e endereço confirmado).
+      </p>
 
       {isEmpty ? (
         <div
           data-testid="contact-mapa-empty"
-          className="flex flex-col items-center justify-center gap-1 rounded-xl border border-dashed border-border/60 bg-card/40 py-12 px-6 text-center"
+          className="flex min-h-[445px] flex-col items-center justify-center gap-[10px] rounded-[12px] border border-[hsl(var(--contacts-soft-line))] bg-[hsl(var(--contacts-raised))] px-5 py-[35px] text-center text-xs text-[hsl(var(--contacts-muted))] max-[559px]:min-h-[500px]"
         >
-          <MapPin className="w-6 h-6 text-muted-foreground" aria-hidden="true" />
-          <p className="text-sm font-semibold text-foreground">Sem coordenadas</p>
-          <p className="text-caption max-w-xs">Nenhum contato mapeado nesta página para distribuir por região.</p>
+          <MapPin className="h-8 w-8 text-[hsl(var(--contacts-quiet))]" aria-hidden="true" />
+          <p className="m-0 font-display text-[23px] font-medium text-[hsl(var(--contacts-ink))]">
+            Sem coordenadas
+          </p>
+          <p className="m-0 max-w-[480px] text-xs">
+            Nenhum contato mapeado nesta página para distribuir por região.
+          </p>
         </div>
       ) : (
       <>
@@ -216,6 +227,19 @@ export function ContactMapView({ contacts, onContactClick, totalCount }: Contact
           );
         })}
       </div>
+
+      {/* ZD-092 — chips `.zc-city-list` do design: leitura rápida das regiões
+          carregadas, sem substituir os cartões (que seguem clicáveis). */}
+      <ul className="mt-5 flex flex-wrap justify-center gap-2" aria-label="Regiões carregadas">
+        {regions.map(([region, members]) => (
+          <li
+            key={region}
+            className="rounded-[7px] border border-[hsl(var(--contacts-line))] bg-[hsl(var(--contacts-raised))] px-[11px] py-[7px] text-[11px] text-[hsl(var(--contacts-muted))]"
+          >
+            {region} · {members.length}
+          </li>
+        ))}
+      </ul>
       </>
       )}
     </div>

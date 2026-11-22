@@ -87,3 +87,21 @@ ou rota vazia derrubam o teste até este arquivo ser atualizado.
 | `multiplix` | `MultiplixView` | `src/components/multiplix/MultiplixView.tsx` | Full | `src/components/multiplix/MultiplixView.tsx` |
 | `evolution-monitor` | `EvolutionMonitoringDashboard` | `src/components/monitoring/EvolutionMonitoringDashboard.tsx` | Partial | `src/components/monitoring/EvolutionMonitoringDashboard.tsx` |
 | `achievements` | `AchievementsSystemLazy` | `src/components/gamification/AchievementsSystem.tsx` | Full | `src/hooks/gamification/useAgentGamification.ts` |
+## Redesign de Contatos (2026-10-12) — o que mudou na view `contacts`
+
+A view `contacts` continua **Full** (mesmo componente, mesma busca de dados). O que
+mudou foi a camada de apresentação, implementada nas Fases 0–L do plano
+`PLANO_CONTATOS_DESIGN_130_ETAPAS.md`:
+
+| Área | Antes | Depois |
+|---|---|---|
+| Galeria | card de 230 px, sem retrato protagonista | card do design (532–609 px), retrato em faixa própria por largura |
+| Ficha do contato | painel lateral simples | ficha com abas (visão geral, conversas, negócios, arquivos) |
+| Filtros | linha de chips | barra do design + filtros salvos (`FilterPresets`) |
+| Estados | vazio genérico | vazio, sem resultado e erro, cada um com ação primária |
+| Alternância de vistas | botões soltos | `ContactViewSwitcher` com cards, lista, tabela e mapa |
+| Acessibilidade | — | alvos de 44 px no ponteiro grosso, contraste AA nos dois temas, `aria-live` na contagem |
+
+Evidências: `docs/audits/CONTATOS_REDESIGN_BASELINE_2026-10-12.md` (medição antes/depois),
+`docs/audits/contatos-redesign-baseline-depois/` (capturas), `src/components/contacts/__tests__/ContactViewsM.contrato.test.tsx`
+(contrato de qualidade) e `scripts/qa/contraste-contatos.mjs` (AA).
