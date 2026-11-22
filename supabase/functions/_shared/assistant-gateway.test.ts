@@ -69,13 +69,27 @@ Deno.test("toda capacidade tem rótulo e edge de execução (exceto agenda)", ()
   }
 });
 
-Deno.test("as edges ligadas pela porta única são exatamente as 6 do plano", () => {
+Deno.test("as 8 edges ligadas pela porta única são as do plano (6 da Fase 3 + 2 de retenção)", () => {
   assertEquals(Object.values(CAPABILITY_FUNCTION).sort(), [
     "ai-conversation-summary",
     "ai-deadline-calculator",
     "ai-lead-temperature",
+    "ai-loss-risk",
     "ai-objection-handler",
+    "ai-price-anchor",
     "ai-product-recommendation",
     "ai-suggest-reply",
   ]);
+});
+
+Deno.test("sinal de perda da venda aciona o risco de perda", () => {
+  assertEquals(route("o cliente sumiu e acho que vou perder essa venda"), ["risco_perda"]);
+});
+
+Deno.test("discussão de preço por unidade aciona a ancoragem de preço", () => {
+  assertEquals(route("como defendo o preço por unidade?"), ["ancoragem_preco"]);
+});
+
+Deno.test("risco de perda e temperatura convivem no mesmo pedido", () => {
+  assertEquals(route("qual a temperatura do lead? vai desistir?"), ["temperatura_lead", "risco_perda"]);
 });

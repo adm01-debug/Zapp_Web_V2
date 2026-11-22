@@ -82,6 +82,8 @@ function deps(overrides: Partial<GatewayDeps> = {}) {
         "ai-product-recommendation": { recommendation: "caneca cerâmica premium" },
         "ai-deadline-calculator": { deadlineText: "produção leva 12 dias úteis" },
         "ai-objection-handler": { answer: "ancore no prazo, não no desconto" },
+        "ai-loss-risk": { level: "high", riskScore: 78, recoveryAction: "ligue hoje e ofereça amostra" },
+        "ai-price-anchor": { strategy: "cost_per_use", anchorScript: "sai R$ 2,40 por caneca, menos que o café do escritório" },
       }[fn] ?? {};
       return { status: 200, body: corpo };
     },
@@ -373,4 +375,46 @@ Deno.test("Fase 4: sem perfil a rota vaga continua no mínimo útil", async () =
   const res = await handleAssistantGateway(pedido("oi, tudo bem?"), d);
   const body = await res.json() as { capabilities: string[] };
   assertEquals(body.capabilities, ["agenda", "resumo_conversa"]);
+});
+
+Deno.test("retenção: pedido de risco de perda chama ai-loss-risk e devolve a ação", async () => {
+  const { deps: d, chamadas } = deps();
+  const res = await handleAssistantGateway(pedido("o cliente sumiu, vou perder a venda?"), d);
+  assertEquals(res.status, 200);
+  const body = await res.json() as { capabilities: string[]; answer: string };
+  assertEquals(body.capabilities, ["risco_perda"]);
+  assertEquals(chamadas.map((c) => c.fn), ["ai-loss-risk"]);
+  assertEquals(body.answer.includes("ligue hoje e ofereça amostra"), true);
+});
+
+Deno.test("retenção: a IA recebe os dias sem contato calculados do histórico", async () => {
+  const { deps: d, chamadas } = deps();
+  // Última mensagem em 20/11; o envio de `daysSinceLastContact` é o dado que o
+  // modelo não infere do texto e que o motor RADAR já tem.
+  const res = await handleAssistantGateway(pedido("o cliente parou de responder, vou perder?"), d);
+  const body = await res.json() as { capabilities: string[] };
+  assertEquals(body.capabilities.includes("risco_perda"), true);
+  const chamadaRisco = chamadas.find((c) => c.fn === "ai-loss-risk");
+  const dias = chamadaRisco?.body.daysSinceLastContact;
+  assertEquals(typeof dias, "number");
+  assertEquals((dias as number) >= 0, true);
+});
+
+Deno.test("retenção: pedido de defesa de preço chama ai-price-anchor", async () => {
+  const { deps: d, chamadas } = deps();
+  const res = await handleAssistantGateway(pedido("como defendo o preço por unidade?"), d);
+  const body = await res.json() as { capabilities: string[]; answer: string };
+  assertEquals(body.capabilities, ["ancoragem_preco"]);
+  assertEquals(chamadas.map((c) => c.fn), ["ai-price-anchor"]);
+  assertEquals(body.answer.includes("por caneca"), true);
+});
+
+Deno.test("retenção: sem mensagens a capacidade é recusada antes de gastar modelo", async () => {
+  const { deps: d, chamadas } = deps({
+    readContext: async () => contextoCompleto({ messages: [] }),
+  });
+  const res = await handleAssistantGateway(pedido("vou perder essa venda?"), d);
+  const body = await res.json() as { errors: string[] };
+  assertEquals(chamadas.length, 0);
+  assertEquals(body.errors.some((e) => e.includes("sem mensagens")), true);
 });

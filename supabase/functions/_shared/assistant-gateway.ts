@@ -21,7 +21,9 @@ export type AssistantCapability =
   | 'temperatura_lead'
   | 'recomendar_produto'
   | 'calcular_prazo'
-  | 'tratar_objecao';
+  | 'tratar_objecao'
+  | 'risco_perda'
+  | 'ancoragem_preco';
 
 export const ASSISTANT_CAPABILITIES: readonly AssistantCapability[] = [
   'agenda',
@@ -31,6 +33,8 @@ export const ASSISTANT_CAPABILITIES: readonly AssistantCapability[] = [
   'recomendar_produto',
   'calcular_prazo',
   'tratar_objecao',
+  'risco_perda',
+  'ancoragem_preco',
 ];
 
 /**
@@ -45,6 +49,8 @@ export const CAPABILITY_LABELS: Record<AssistantCapability, string> = {
   recomendar_produto: 'recomendação de produto',
   calcular_prazo: 'cálculo de prazo',
   tratar_objecao: 'tratamento de objeção',
+  risco_perda: 'risco de perda da venda',
+  ancoragem_preco: 'ancoragem de preço',
 };
 
 /** Fonte de um pedaço da resposta: o que foi usado e de onde veio. */
@@ -82,6 +88,10 @@ export interface IntentSignals {
   agenda: boolean;
   /** Cliente levantou objeção (preço, desconto, "vou pensar"). */
   objection: boolean;
+  /** Sinal de perda da venda (desistiu, fechou com outro, silêncio longo). */
+  lossRisk: boolean;
+  /** Discussão de preço/valor por unidade (pede defesa do preço). */
+  priceAnchor: boolean;
 }
 
 /** Normaliza para comparação: minúsculas, sem acento, espaços colapsados. */
@@ -107,6 +117,8 @@ const PRODUCT = ['produto', 'brinde', 'sugere produto', 'recomenda', 'o que ofer
 const DEADLINE = ['prazo', 'quando entrega', 'quando chega', 'data de entrega', 'entrega', 'dias uteis', 'calcul'];
 const AGENDA = ['agenda', 'compromisso', 'lembrete', 'marcado', 'agendado', 'me liga', 'retornar'];
 const OBJECTION = ['objec', 'esta caro', 'ta caro', 'desconto', 'vou pensar', 'nao quer', 'recusou', 'contra-argument', 'contornar'];
+const LOSS_RISK = ['risco de perder', 'vou perder', 'vai desistir', 'desistiu', 'fechou com outro', 'comprou em outro', 'esfriou', 'sumiu', 'parou de responder', 'sem resposta ha dias', 'esquec', 'quase perdendo'];
+const PRICE_ANCHOR = ['ancor', 'defender o preco', 'justificar o preco', 'esta no prec', 'por unidade', 'valor unitario', 'baixar o preco', 'preco justo', 'negociar o preco'];
 
 /** Lê o pedido em linguagem natural e devolve os sinais que o roteador usa. */
 export function readIntent(query: string): IntentSignals {
@@ -121,6 +133,8 @@ export function readIntent(query: string): IntentSignals {
     deadline: hasAny(normalized, DEADLINE),
     agenda: hasAny(normalized, AGENDA),
     objection: hasAny(normalized, OBJECTION),
+    lossRisk: hasAny(normalized, LOSS_RISK),
+    priceAnchor: hasAny(normalized, PRICE_ANCHOR),
   };
 }
 
@@ -153,6 +167,8 @@ export function routeCapabilities(
   if (signals.deadline) picked.add('calcular_prazo');
   if (signals.agenda) picked.add('agenda');
   if (signals.objection) picked.add('tratar_objecao');
+  if (signals.lossRisk) picked.add('risco_perda');
+  if (signals.priceAnchor) picked.add('ancoragem_preco');
 
   if (picked.size === 0) {
     // Sem sinal explícito, o perfil decide o que abrir primeiro (Fase 4). Sem
@@ -182,6 +198,8 @@ export const MODEL_CAPABILITIES: readonly AssistantCapability[] = [
   'recomendar_produto',
   'calcular_prazo',
   'tratar_objecao',
+  'risco_perda',
+  'ancoragem_preco',
 ];
 
 /** Capacidade → nome da edge que a executa. */
@@ -192,6 +210,8 @@ export const CAPABILITY_FUNCTION: Record<Exclude<AssistantCapability, 'agenda'>,
   recomendar_produto: 'ai-product-recommendation',
   calcular_prazo: 'ai-deadline-calculator',
   tratar_objecao: 'ai-objection-handler',
+  risco_perda: 'ai-loss-risk',
+  ancoragem_preco: 'ai-price-anchor',
 };
 
 /**

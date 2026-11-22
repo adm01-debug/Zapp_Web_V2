@@ -241,11 +241,20 @@ export function capabilityPayload(capability: AssistantCapability, ctx: SharedCo
     created_at: m.created_at ?? undefined,
   }));
   const context = contextBlock(ctx).slice(0, 500);
-  return {
+  const base: Record<string, unknown> = {
     messages,
     context,
     requestId: undefined,
   };
+  // `ai-loss-risk` aceita a contagem de dias sem contato como sinal próprio: é o
+  // dado que o motor RADAR já tem e que o modelo não conseguiria inferir com
+  // precisão a partir do texto. Vazio quando a conversa não tem histórico.
+  if (capability === 'risco_perda') {
+    const ultima = ctx.messages[ctx.messages.length - 1]?.created_at;
+    const dias = ultima ? Math.floor((Date.now() - new Date(ultima).getTime()) / 86_400_000) : undefined;
+    base.daysSinceLastContact = typeof dias === 'number' && dias >= 0 ? dias : undefined;
+  }
+  return base;
 }
 
 /**
@@ -300,7 +309,7 @@ export function composeAnswer(pieces: GatewayPiece[], ctx: SharedContext): strin
       );
       continue;
     }
-    const t = trecho(p.data, ["summary", "resumo", "recommendedAction", "nextBestOffer", "suggestion", "suggestions", "answer", "text", "deadlineText", "deadline", "temperature"]);
+    const t = trecho(p.data, ["summary", "resumo", "recommendedAction", "nextBestOffer", "suggestion", "suggestions", "answer", "text", "deadlineText", "deadline", "temperature", "recoveryAction", "anchorScript"]);
     if (t) partes.push(`${p.label}: ${t}`);
   }
   if (partes.length === 0) {
@@ -320,6 +329,12 @@ export function capabilityBlockedReason(capability: AssistantCapability, ctx: Sh
     return `histórico insuficiente para resumir (${ctx.messages.length} de 5 mensagens)`;
   }
   if (MODEL_CAPABILITIES.includes(capability) && ctx.messages.length === 0) {
+    return "sem mensagens na conversa para esta capacidade";
+  }
+  // `ai-loss-risk` e `ai-price-anchor` aceitam conversa vazia no schema, mas o
+  // contrato do plano é não gastar modelo com uma conversa sem nenhuma mensagem:
+  // os dois leem sinais da conversa, e sem ela o resultado seria inventado.
+  if ((capability === "risco_perda" || capability === "ancoragem_preco") && ctx.messages.length === 0) {
     return "sem mensagens na conversa para esta capacidade";
   }
   return null;
