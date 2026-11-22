@@ -741,9 +741,11 @@ Deno.test("dash083: config biweekly avança +14 dias (08:00)", async () => {
       assert(mock.updates.length === 1, "ciclo deve avançar em biweekly");
       const next = mock.updates[0].payload.next_send_at as string;
       const diffDays = (new Date(next).getTime() - Date.now()) / (24 * 60 * 60 * 1000);
-      // "agora + 14d" com hora fixada em 08:00 → entre 13,5 e 14,5 dias corridos
-      // (depende da hora atual em relação às 08:00).
-      assert(diffDays >= 13.4 && diffDays <= 14.6, `biweekly deve avançar ~14 dias, veio ${diffDays}`);
+      // "agora + 14d" com hora fixada em 08:00 → envelope físico [13,333, 14,333]:
+      // o mínimo é às 23:59 UTC (14 + 8/24 − 23,983/24) e o máximo logo após
+      // 00:00 UTC (14 + 8/24 − 0/24). O limite antigo (>= 13.4) falhava
+      // deterministicamente para runs entre ~22h24 e 00h00 UTC.
+      assert(diffDays >= 13.3 && diffDays <= 14.6, `biweekly deve avançar ~14 dias, veio ${diffDays}`);
       assert(new Date(next).getHours() === 8, `biweekly deve cair às 08:00, veio ${new Date(next).getHours()}`);
     });
   } finally {
