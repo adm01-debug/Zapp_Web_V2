@@ -1,6 +1,6 @@
 # 07 · REGRAS DE NEGÓCIO
 
-> Gerado automaticamente por AI Context Sync v1.3.2 · commit `1f71f25dbe` · branch `main` · 2026-11-22 16:47 UTC
+> Gerado automaticamente por AI Context Sync v1.3.2 · commit `7a351f77ce` · branch `main` · 2026-11-22 17:10 UTC
 > Não edite à mão — regras humanas vão em `manual/`.
 
 ## A. Regras escritas por humanos (`manual/` — prioridade máxima, nunca sobrescrito)
@@ -5058,7 +5058,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `owner` | `supabase/migrations/20260927270018_team_chat_e28_fix_find_or_create_race.sql` |
 | `anon` | `supabase/migrations/20260927340000_fix_add_agent_xp_negative_and_guard.sql` |
 
-## K. Testes como especificação (26200 testes em 2731 arquivos — nomes completos em `context.json`)
+## K. Testes como especificação (26208 testes em 2731 arquivos — nomes completos em `context.json`)
 
 | Arquivo | Testes | Exemplos do que o sistema DEVE fazer |
 |---|---|---|
@@ -5194,6 +5194,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `src/hooks/__tests__/useChatSearch.test.ts` | 29 | useChatSearch · returns empty results initially · searches text content after debounce · excludes deleted messages … |
 | `src/hooks/chat/__tests__/useConversationActions.test.ts` | 29 | useConversationActions · archiveContact · arquiva pela RPC set_conversations_status (a mesma do /archive e do lote) e NÃO mexe no responsável · anuncia o novo estado no evento que atualiza chip/lista sem esperar refetch … |
 | `src/services/__tests__/contact-bulk.service.test.ts` | 29 | emptyOutcome / pendingIds · emptyOutcome devolve listas NOVAS a cada chamada (mutar uma não afeta a outra) · pendingIds junta recusados e falhos, na ordem (recusados primeiro) · applyContactFieldUpdate … |
+| `supabase/functions/assistant-gateway/index.test.ts` | 29 | 401 quando o JWT não autentica · 400 quando não há pedido · 503 da guarda de IA é repassado sem chamar capacidade · panorama devolve resposta com >=3 fontes e a origem de cada pedaço … |
 | `src/components/contacts/__tests__/ExternalDataIntegration.test.tsx` | 28 | useExternalEmpresas · usa a ação estreita  · não cai mais no RPC admin-only nem no select genérico · sem  … |
 | `src/components/gmail/__tests__/GmailInboxView.test.tsx` | 28 | GmailInboxView · exibe estado  · renderiza a lista de threads do inbox quando há conta ativa · pasta inicial (Inbox) consulta o rótulo INBOX e não filtra em memória … |
 | `src/components/layout/__tests__/Sidebar.test.tsx` | 28 | Sidebar — nav primária e grupos compartilham uma única área de rolagem · Multiplix continua entre Contatos e Catálogo, e todos os três estão dentro do mesmo container com scroll · staff SEM a permissão nomeada não vê Multiplix na nav primária (papel não basta — F25) · agente COM a permissão nomeada vê Multiplix na nav primária (F25) … |
@@ -5228,7 +5229,6 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `src/hooks/chat/__tests__/useContactMedia.test.tsx` | 25 | useContactMedia — paginacao por keyset (etapa 41) · pede 60+1 por pagina e para no fim quando a pagina vem incompleta · pagina cheia (61 linhas) tem proxima pagina e o cursor (created_at, id) entra no 2o .or() · aceite etapa 41: 201 itens em 4 paginas de 60 e o 201o aparece no fim … |
 | `src/hooks/chat/__tests__/useFilesViewState.test.tsx` | 25 | useFilesViewState — preferencias (localStorage) · storage ausente: comeca no default decidido em D3 (grid, 4 colunas) · storage invalido: JSON quebrado, versao desconhecida e valores fora do dominio caem no default · sanitiza campo a campo: viewMode valido com columns invalido mantem o viewMode … |
 | `src/lib/calls/__tests__/persistence.test.ts` | 25 | upsertMyCall — mapa p_* da RPC · grava a chamada tocando com os nomes exatos dos parâmetros · grava o fim com status/motivo/duração e OMITE o que não tem valor · upsertMyCall — retry idempotente … |
-| `supabase/functions/assistant-gateway/index.test.ts` | 25 | 401 quando o JWT não autentica · 400 quando não há pedido · 503 da guarda de IA é repassado sem chamar capacidade · panorama devolve resposta com >=3 fontes e a origem de cada pedaço … |
 | `supabase/functions/multiplix-dispatch/actions/__tests__/inspect.test.ts` | 25 | F48 preview: cada bloco reproduz EXATAMENTE o payload do worker para o destinatario · F48 preview: conteudo com placeholders é identico ao worker para outro destinatario · F48 preview: sem blocos, cai no template do dispatch — o MESMO payload do worker atual · F48 preview: destinatario de outro dono/inexistente responde 404 nomeado … |
 | `analise-prs/resgate-261118-lote3/hermes/robustez-primitivos-ui-2610121626bec5-2610141859e423/src/lib/__tests__/phoneNormalization.test.ts` | 24 | Phone Normalization · Standard JIDs · strips @s.whatsapp.net suffix · strips @g.us suffix for groups … |
 | `e2e/navegacao-modulos.spec.ts` | 24 | Navegação por todos os módulos (desktop) · abre as 42 entradas mapeadas, o modo Quadro de Tarefas e a busca global sem erro de console nem requisição falha · Navegação por todos os módulos (celular 390x844) · abre as 42 entradas mapeadas pelo menu móvel, o modo Quadro de Tarefas e a busca do cabeçalho sem erro de console nem requisição falha … |
@@ -5546,8 +5546,12 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `enqueue(` | `supabase/functions/_shared/ai-providers.ts` |
 | `enqueue(` | `supabase/functions/_shared/ai-usage.ts` |
 | `.add('agenda'` | `supabase/functions/_shared/assistant-gateway.ts` |
+| `.add('analisar_conversa'` | `supabase/functions/_shared/assistant-gateway.ts` |
+| `.add('analisar_imagem'` | `supabase/functions/_shared/assistant-gateway.ts` |
 | `.add('ancoragem_preco'` | `supabase/functions/_shared/assistant-gateway.ts` |
 | `.add('calcular_prazo'` | `supabase/functions/_shared/assistant-gateway.ts` |
+| `.add('etiquetar_conversa'` | `supabase/functions/_shared/assistant-gateway.ts` |
+| `.add('melhorar_mensagem'` | `supabase/functions/_shared/assistant-gateway.ts` |
 | `.add('recomendar_produto'` | `supabase/functions/_shared/assistant-gateway.ts` |
 | `.add('resumo_conversa'` | `supabase/functions/_shared/assistant-gateway.ts` |
 | `.add('risco_perda'` | `supabase/functions/_shared/assistant-gateway.ts` |

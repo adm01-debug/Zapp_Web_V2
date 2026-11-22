@@ -1,7 +1,7 @@
 # Contexto do projeto para agentes de IA
 
 GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.
-Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR dela) a cada push em `main` e a cada 10 minutos pelo workflow `contexto.yml`; índice único das três fontes em `docs/contexto/00-INDEX.md`. Gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `1f71f25dbe8ffe4a981179bc7ad19639ab4e2533` (2026-11-22T13:46:20-03:00).
+Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR dela) a cada push em `main` e a cada 10 minutos pelo workflow `contexto.yml`; índice único das três fontes em `docs/contexto/00-INDEX.md`. Gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `7a351f77ce7917e60311efdbc4eab4f2d5bd5adf` (2026-11-22T14:09:04-03:00).
 
 ## Como usar (leia antes de planejar ou executar qualquer tarefa)
 1. **Tela/rota/menu** → `rotas.json` (url/vista/menu → arquivo → hooks → tabelas → edges; `rotas_http_backend` para APIs) e `modulos.json` (módulo inteiro + dependências entre módulos).
@@ -36,7 +36,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 |---|---|
 | arquivos_total | 15746 |
 | arquivos_codigo | 5868 |
-| linhas_codigo | 1134891 |
+| linhas_codigo | 1135063 |
 | rotas | 18 |
 | rotas_http_backend | 11 |
 | vistas_por_id | 55 |
@@ -397,14 +397,14 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - possiveis_segredos_no_codigo: 6 — ex.: analise-prs/resgate-261118-lote3/claude_pink/cool-dijkstra-xk9ek2/scripts/ci/edge-coverage-authz.unit.mjs:397, analise-prs/resgate-261118-lote3/claude_pink/cool-dijkstra-xk9ek2/scripts/edge-deploy/redigir-log.unit.mjs:38, scripts/ai-context/cenarios.mjs:102
 
 ## Grafo de código (graphify)
-- 103031 nós · 174925 arestas · 9027 comunidades · grafo do commit `1f71f25d`
-- comunidades maiores: Communities (5953 total, 1987 thin omitted) (3947), vitest (1502), TalkXSuppression.tsx (1289), lucide-react (1230), react (926), @tanstack/react-query (852), ExternalProductManagement.tsx (708), useAuth (682), cn (676), chat.ts (648), ref_node_fs (625), validation.ts (540)
+- 103036 nós · 174931 arestas · 9297 comunidades · grafo do commit `7a351f77`
+- comunidades maiores: Communities (5953 total, 1987 thin omitted) (3947), TalkXSuppression.tsx (1755), react (1628), @tanstack/react-query (1163), lucide-react (1111), vitest (968), card.tsx (960), ref_node_fs (729), DashboardView.tsx (616), ExternalProductManagement.tsx (551), validation.ts (450), ref_https (426)
 - símbolos mais chamados: cn() (src/lib/utils.ts), useAuth() (src/hooks/auth/useAuth.tsx), jsonResponse() (supabase/functions/_shared/validation.ts), errorResponse() (supabase/functions/_shared/validation.ts), handleCors() (supabase/functions/_shared/validation.ts), fail() (scripts/e2e-isolated/network-proof-policy.mjs), Logger (supabase/functions/_shared/validation.ts), requireEnv() (supabase/functions/_shared/validation.ts), fmtInt() (src/components/talkx/kit/format.ts), fromTable() (src/lib/supabaseHelpers.ts), useUserRole() (src/hooks/system/useUserRole.ts), validationErrorResponse() (supabase/functions/_shared/schemas.ts)
 - consulta local: `graphify query "<pergunta>"`, `graphify path "<A>" "<B>"`, `graphify explain "<X>"`
 
 ## Hotspots (arquivos mais alterados, 90 dias)
 - supabase/deployment-manifest.json (35)
-- ESTADO.md (19)
+- ESTADO.md (20)
 - docs/talkx/ESTADOS.md (16)
 - src/integrations/supabase/types.ts (14)
 - scripts/db-audit/grants-baseline.json (12)
@@ -480,7 +480,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - `CHANGELOG.md` — Changelog (90 linhas)
 - `CLAUDE.md` (2 linhas)
 - `CONTRIBUTING.md` — Guia de Contribuição — Zapp Web V2 (119 linhas)
-- `ESTADO.md` — ESTADO.md — o que está ligado e quem chama (160 linhas)
+- `ESTADO.md` — ESTADO.md — o que está ligado e quem chama (156 linhas)
 - `FEATURE_REGISTRY.md` — FEATURE_REGISTRY.md — registro das views do V2 (89 linhas)
 - `HANDOFF_NEXT_SESSION.md` — HANDOFF — Próxima sessão (Claude Code) (177 linhas)
 - `PENDENCIAS.md` — PENDÊNCIAS CI — 2026-11-12 (453 linhas)
@@ -525,6 +525,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - CHANGELOG topo: [Unreleased]
 
 ## Últimos commits
+- 2026-11-22 `7a351f77` feat(assistente): decide por edge as 7 edges restantes da porta unica (#3321)
 - 2026-11-22 `1f71f25d` feat(assistente): liga risco de perda e ancoragem de preco na porta unica (#3320)
 - 2026-11-22 `bcf4dcc8` chore(db): sincronizar artefatos derivados do banco (#3315)
 - 2026-11-22 `2fc081de` feat(assistente): treino por perfil com playbook e catalogo de objecoes (#3319)
@@ -539,7 +540,6 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - 2026-11-21 `7f2b4e62` feat(talkx): monta cards órfãos X149/X144 (Fila por Segmento + Linha do Tempo Operacional) no report de campanha (#3306)
 - 2026-11-21 `be88b1e6` fix(ci): usa fileURLToPath no caminho do script W98 (teste 15) (#3305)
 - 2026-11-21 `bfe8a3aa` chore(contexto): protege branch contexto da poda + indice migration->PR (#3304)
-- 2026-11-21 `03350f44` docs: evidencia de deploy DASH-083 (cron relatorios agendados) (#3303)
 
 ## Arquivos deste diretório
 - `docs/contexto/codigo/rotas.json`

@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "1f71f25dbe8ffe4a981179bc7ad19639ab4e2533",
+  "commit": "7a351f77ce7917e60311efdbc4eab4f2d5bd5adf",
   "branch": "main",
-  "data_commit": "2026-11-22T13:46:20-03:00",
+  "data_commit": "2026-11-22T14:09:04-03:00",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "7a351f77",
+    "data": "2026-11-22",
+    "assunto": "feat(assistente): decide por edge as 7 edges restantes da porta unica (#3321)"
+   },
    {
     "sha": "1f71f25d",
     "data": "2026-11-22",
@@ -126,11 +131,6 @@
     "sha": "bf81b135",
     "data": "2026-11-20",
     "assunto": "docs(goal): backlog verificado byte a byte (Fase 1) - 1090 pendências (#3293)"
-   },
-   {
-    "sha": "2e705429",
-    "data": "2026-11-20",
-    "assunto": "docs(fase0): linha de base e regras de negocio da Fase 0 do GOAL (#3292)"
    }
   ],
   "arquivos_mudados_7d": 7027,
@@ -169,7 +169,7 @@
    },
    {
     "pasta": "supabase/functions/_shared",
-    "mudancas": 236
+    "mudancas": 238
    },
    {
     "pasta": "analise-prs/resgate-261118-lote3/fix",
@@ -203,7 +203,7 @@
    },
    {
     "arquivo": "ESTADO.md",
-    "mudancas": 19
+    "mudancas": 20
    },
    {
     "arquivo": "docs/talkx/ESTADOS.md",
@@ -316,7 +316,7 @@
  "contagens": {
   "arquivos_total": 15746,
   "arquivos_codigo": 5868,
-  "linhas_codigo": 1134891,
+  "linhas_codigo": 1135063,
   "rotas": 18,
   "rotas_http_backend": 11,
   "vistas_por_id": 55,
@@ -804,7 +804,7 @@
   },
   "supabase/functions": {
    "arquivos": 430,
-   "linhas": 129249
+   "linhas": 129421
   },
   "tailwind.config.ts": {
    "arquivos": 1,

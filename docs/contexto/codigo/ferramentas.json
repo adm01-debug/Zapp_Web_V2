@@ -1193,7 +1193,7 @@
   {
    "arquivo": "ESTADO.md",
    "titulo": "ESTADO.md — o que está ligado e quem chama",
-   "linhas": 160
+   "linhas": 156
   },
   {
    "arquivo": "FEATURE_REGISTRY.md",
@@ -2350,6 +2350,10 @@
    },
    {
     "host": "cdn.externo.example",
+    "arquivos": 1
+   },
+   {
+    "host": "cdn.local",
     "arquivos": 1
    },
    {

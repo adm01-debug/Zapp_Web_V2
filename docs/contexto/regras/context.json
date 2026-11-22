@@ -1,15 +1,15 @@
 {
  "meta": {
-  "sha": "1f71f25dbe8ffe4a981179bc7ad19639ab4e2533",
+  "sha": "7a351f77ce7917e60311efdbc4eab4f2d5bd5adf",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-22 16:47 UTC",
+  "generated_at": "2026-11-22 17:10 UTC",
   "files_total": 15602,
   "code_files": 8905,
-  "code_lines": 1412355
+  "code_lines": 1412527
  },
  "version": "1.3.2",
- "facts_hash": "8a5ec60d25125faa",
+ "facts_hash": "b4e5f7e7f5fe5aa9",
  "stack": {
   "frameworks": [
    "React + Vite",
@@ -78752,7 +78752,7 @@
   {
    "module": "supabase/functions",
    "files": 430,
-   "lines": 129249,
+   "lines": 129421,
    "tables": [
     "agent_stats",
     "ai_conversation_tags",
@@ -90232,7 +90232,7 @@
    {
     "file": "supabase/functions/_shared/assistant-gateway.ts",
     "name": "AssistantCapability",
-    "values": "agenda | resumo_conversa | sugerir_resposta | temperatura_lead | recomendar_produto | calcular_prazo | tratar_objecao | risco_perda | ancoragem_preco"
+    "values": "agenda | resumo_conversa | sugerir_resposta | temperatura_lead | recomendar_produto | calcular_prazo | tratar_objecao | risco_perda | ancoragem_preco | melhorar_mensagem | etiquetar_conversa | analisar_conversa | analisar_imagem"
    },
    {
     "file": "supabase/functions/_shared/assistant-playbook.ts",
@@ -245888,7 +245888,7 @@
    },
    {
     "file": "supabase/functions/_shared/assistant-gateway.test.ts",
-    "name": "as 8 edges ligadas pela porta única são as do plano (6 da Fase 3 + 2 de retenção)"
+    "name": "as 12 edges ligadas pela porta única são as do plano (6 da Fase 3 + 6 de decisão por edge)"
    },
    {
     "file": "supabase/functions/_shared/assistant-gateway.test.ts",
@@ -245901,6 +245901,22 @@
    {
     "file": "supabase/functions/_shared/assistant-gateway.test.ts",
     "name": "risco de perda e temperatura convivem no mesmo pedido"
+   },
+   {
+    "file": "supabase/functions/_shared/assistant-gateway.test.ts",
+    "name": "pedido de reescrita aciona a melhoria da mensagem"
+   },
+   {
+    "file": "supabase/functions/_shared/assistant-gateway.test.ts",
+    "name": "pedido de etiquetas aciona a classificação da conversa"
+   },
+   {
+    "file": "supabase/functions/_shared/assistant-gateway.test.ts",
+    "name": "pedido de análise da conversa aciona a análise"
+   },
+   {
+    "file": "supabase/functions/_shared/assistant-gateway.test.ts",
+    "name": "pedido sobre imagem aciona a leitura da imagem"
    },
    {
     "file": "supabase/functions/_shared/assistant-playbook.test.ts",
@@ -249849,6 +249865,22 @@
    {
     "file": "supabase/functions/assistant-gateway/index.test.ts",
     "name": "retenção: sem mensagens a capacidade é recusada antes de gastar modelo"
+   },
+   {
+    "file": "supabase/functions/assistant-gateway/index.test.ts",
+    "name": "decisão por edge: reescrita recebe a última mensagem do vendedor, não o histórico"
+   },
+   {
+    "file": "supabase/functions/assistant-gateway/index.test.ts",
+    "name": "decisão por edge: etiquetas aparecem pelo nome na resposta"
+   },
+   {
+    "file": "supabase/functions/assistant-gateway/index.test.ts",
+    "name": "decisão por edge: análise da conversa só roda com 5 mensagens"
+   },
+   {
+    "file": "supabase/functions/assistant-gateway/index.test.ts",
+    "name": "decisão por edge: leitura de imagem exige imagem anexada e envia a URL"
    },
    {
     "file": "supabase/functions/auth-login/index.test.ts",
@@ -260420,11 +260452,27 @@
    },
    {
     "file": "supabase/functions/_shared/assistant-gateway.ts",
+    "call": ".add('analisar_conversa'"
+   },
+   {
+    "file": "supabase/functions/_shared/assistant-gateway.ts",
+    "call": ".add('analisar_imagem'"
+   },
+   {
+    "file": "supabase/functions/_shared/assistant-gateway.ts",
     "call": ".add('ancoragem_preco'"
    },
    {
     "file": "supabase/functions/_shared/assistant-gateway.ts",
     "call": ".add('calcular_prazo'"
+   },
+   {
+    "file": "supabase/functions/_shared/assistant-gateway.ts",
+    "call": ".add('etiquetar_conversa'"
+   },
+   {
+    "file": "supabase/functions/_shared/assistant-gateway.ts",
+    "call": ".add('melhorar_mensagem'"
    },
    {
     "file": "supabase/functions/_shared/assistant-gateway.ts",
@@ -451882,7 +451930,7 @@
   },
   "supabase/functions/_shared/assistant-gateway.test.ts": {
    "path": "supabase/functions/_shared/assistant-gateway.test.ts",
-   "lines": 95,
+   "lines": 115,
    "is_test": true,
    "tests": [
     "normaliza acento, caixa e espaço",
@@ -451895,15 +451943,19 @@
     "texto sem sinal cai no mínimo útil (agenda + resumo)",
     "ordem é sempre a canônica, independente da ordem das regras",
     "toda capacidade tem rótulo e edge de execução (exceto agenda)",
-    "as 8 edges ligadas pela porta única são as do plano (6 da Fase 3 + 2 de retenção)",
+    "as 12 edges ligadas pela porta única são as do plano (6 da Fase 3 + 6 de decisão por edge)",
     "sinal de perda da venda aciona o risco de perda",
     "discussão de preço por unidade aciona a ancoragem de preço",
-    "risco de perda e temperatura convivem no mesmo pedido"
+    "risco de perda e temperatura convivem no mesmo pedido",
+    "pedido de reescrita aciona a melhoria da mensagem",
+    "pedido de etiquetas aciona a classificação da conversa",
+    "pedido de análise da conversa aciona a análise",
+    "pedido sobre imagem aciona a leitura da imagem"
    ]
   },
   "supabase/functions/_shared/assistant-gateway.ts": {
    "path": "supabase/functions/_shared/assistant-gateway.ts",
-   "lines": 223,
+   "lines": 263,
    "exports": [
     "type AssistantCapability",
     "const ASSISTANT_CAPABILITIES",
@@ -451919,7 +451971,7 @@
    "enums": [
     {
      "name": "AssistantCapability",
-     "values": "agenda | resumo_conversa | sugerir_resposta | temperatura_lead | recomendar_produto | calcular_prazo | tratar_objecao | risco_perda | ancoragem_preco"
+     "values": "agenda | resumo_conversa | sugerir_resposta | temperatura_lead | recomendar_produto | calcular_prazo | tratar_objecao | risco_perda | ancoragem_preco | melhorar_mensagem | etiquetar_conversa | analisar_conversa | analisar_imagem"
     }
    ],
    "rule_comments": [
@@ -451930,8 +451982,12 @@
    ],
    "side_effects": [
     ".add('agenda'",
+    ".add('analisar_conversa'",
+    ".add('analisar_imagem'",
     ".add('ancoragem_preco'",
     ".add('calcular_prazo'",
+    ".add('etiquetar_conversa'",
+    ".add('melhorar_mensagem'",
     ".add('recomendar_produto'",
     ".add('resumo_conversa'",
     ".add('risco_perda'",
@@ -459735,7 +459791,7 @@
   },
   "supabase/functions/assistant-gateway/index.test.ts": {
    "path": "supabase/functions/assistant-gateway/index.test.ts",
-   "lines": 420,
+   "lines": 474,
    "is_test": true,
    "errors": [
     "Unauthorized"
@@ -459771,12 +459827,16 @@
     "retenção: pedido de risco de perda chama ai-loss-risk e devolve a ação",
     "retenção: a IA recebe os dias sem contato calculados do histórico",
     "retenção: pedido de defesa de preço chama ai-price-anchor",
-    "retenção: sem mensagens a capacidade é recusada antes de gastar modelo"
+    "retenção: sem mensagens a capacidade é recusada antes de gastar modelo",
+    "decisão por edge: reescrita recebe a última mensagem do vendedor, não o histórico",
+    "decisão por edge: etiquetas aparecem pelo nome na resposta",
+    "decisão por edge: análise da conversa só roda com 5 mensagens",
+    "decisão por edge: leitura de imagem exige imagem anexada e envia a URL"
    ]
   },
   "supabase/functions/assistant-gateway/index.ts": {
    "path": "supabase/functions/assistant-gateway/index.ts",
-   "lines": 505,
+   "lines": 563,
    "exports": [
     "interface ConversationMessage",
     "interface SharedContext",
@@ -481124,10 +481184,25 @@
   }
  },
  "git": {
-  "sha": "1f71f25dbe8ffe4a981179bc7ad19639ab4e2533",
+  "sha": "7a351f77ce7917e60311efdbc4eab4f2d5bd5adf",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "7a351f77",
+    "date": "2026-11-22",
+    "author": "adm01-debug",
+    "subject": "feat(assistente): decide por edge as 7 edges restantes da porta unica (#3321)",
+    "files": [
+     "ESTADO.md",
+     "docs/plans/PLANO_ASSISTENTE_PESSOAL_IA_2026-11-15.md",
+     "supabase/deployment-manifest.json",
+     "supabase/functions/_shared/assistant-gateway.test.ts",
+     "supabase/functions/_shared/assistant-gateway.ts",
+     "supabase/functions/assistant-gateway/index.test.ts",
+     "supabase/functions/assistant-gateway/index.ts"
+    ]
+   },
    {
     "sha": "1f71f25d",
     "date": "2026-11-22",
@@ -482583,40 +482658,35 @@
     "files": [
      "docs/agentes/mapa-repo.md"
     ]
-   },
-   {
-    "sha": "055cf6e2",
-    "date": "2026-11-19",
-    "author": "adm01-debug",
-    "subject": "chore(docs): consolidar relatório de liquidação com estado final (PEND=0)",
-    "files": [
-     "\"docs/auditoria-liquida\\303\\247\\303\\243o-branches.md\""
-    ]
    }
   ],
   "hot_files": [
    [
     "supabase/deployment-manifest.json",
-    7
+    8
    ],
    [
     "ESTADO.md",
-    5
+    6
    ],
    [
     "docs/plans/PLANO_ASSISTENTE_PESSOAL_IA_2026-11-15.md",
-    3
+    4
    ],
    [
     "supabase/functions/_shared/assistant-gateway.ts",
-    3
+    4
    ],
    [
     "supabase/functions/assistant-gateway/index.test.ts",
-    3
+    4
    ],
    [
     "supabase/functions/assistant-gateway/index.ts",
+    4
+   ],
+   [
+    "supabase/functions/_shared/assistant-gateway.test.ts",
     3
    ],
    [
@@ -482630,10 +482700,6 @@
    [
     "supabase/functions/copilot-live/index.ts",
     3
-   ],
-   [
-    "supabase/functions/_shared/assistant-gateway.test.ts",
-    2
    ],
    [
     "docs/DB-INVENTORY.md",

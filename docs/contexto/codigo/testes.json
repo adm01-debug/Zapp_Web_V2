@@ -26772,11 +26772,11 @@
   {
    "arquivo": "supabase/functions/_shared/assistant-gateway.test.ts",
    "tipo": "unit",
-   "linhas": 95,
+   "linhas": 115,
    "testa": [
     "supabase/functions/_shared/assistant-gateway.ts"
    ],
-   "casos": 14
+   "casos": 18
   },
   {
    "arquivo": "supabase/functions/_shared/assistant-playbook.test.ts",
@@ -27120,11 +27120,11 @@
   {
    "arquivo": "supabase/functions/assistant-gateway/index.test.ts",
    "tipo": "unit",
-   "linhas": 420,
+   "linhas": 474,
    "testa": [
     "supabase/functions/assistant-gateway/index.ts"
    ],
-   "casos": 25
+   "casos": 29
   },
   {
    "arquivo": "supabase/functions/auth-login/index.test.ts",
