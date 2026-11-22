@@ -275,15 +275,29 @@ r="$(psql_q "$como_admin SELECT public.decide_talkx_ab_winner($campanha)")"
 pass '(f) amostra abaixo do minimo: insufficient_data e nada gravado'
 
 # ─── (g) diferenca dentro do ruido ──────────────────────────────────────────
+# A semeadura e PROPORCIONAL ao tamanho de cada variante: o snapshot sorteia o
+# tamanho por hash, entao LIMIT fixo gerava taxas distantes e o teste reprovava
+# o mesmo commit (24,3% x 16,1% medidos). 20% x 18% mantem a diferenca em ~2 p.p.,
+# sempre abaixo dos 2 erros-padrao da diferenca para qualquer amostra >= 50.
 psql_test >/dev/null <<SQL
 UPDATE public.talkx_campaigns SET ab_min_sample = 50 WHERE id = $campanha;
 UPDATE public.talkx_recipients SET replied_at = NULL WHERE campaign_id = $campanha;
 UPDATE public.talkx_recipients SET replied_at = now()
- WHERE id IN (SELECT id FROM public.talkx_recipients WHERE campaign_id = $campanha
-               AND variant_id = 'bbbbbbbb-0000-0000-0000-00000000000a' ORDER BY id LIMIT 36);
+ WHERE id IN (SELECT id FROM public.talkx_recipients
+               WHERE campaign_id = $campanha
+                 AND variant_id = 'bbbbbbbb-0000-0000-0000-00000000000a'
+               ORDER BY id
+               LIMIT (SELECT round(count(*) * 0.20) FROM public.talkx_recipients
+                       WHERE campaign_id = $campanha
+                         AND variant_id = 'bbbbbbbb-0000-0000-0000-00000000000a'));
 UPDATE public.talkx_recipients SET replied_at = now()
- WHERE id IN (SELECT id FROM public.talkx_recipients WHERE campaign_id = $campanha
-               AND variant_id = 'bbbbbbbb-0000-0000-0000-00000000000b' ORDER BY id LIMIT 43);
+ WHERE id IN (SELECT id FROM public.talkx_recipients
+               WHERE campaign_id = $campanha
+                 AND variant_id = 'bbbbbbbb-0000-0000-0000-00000000000b'
+               ORDER BY id
+               LIMIT (SELECT round(count(*) * 0.18) FROM public.talkx_recipients
+                       WHERE campaign_id = $campanha
+                         AND variant_id = 'bbbbbbbb-0000-0000-0000-00000000000b'));
 SQL
 r="$(psql_q "$como_admin SELECT public.decide_talkx_ab_winner($campanha)")"
 [[ "$r" == *'"reason": "difference_within_noise"'* && "$r" == *'required_difference'* ]] \
