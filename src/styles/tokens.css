@@ -390,6 +390,18 @@
     --rosa: 335 85% 48%;
     --rosa-foreground: 0 0% 100%;
     --rosa-text: 335 75% 36%;
+
+    /* ===== DESIGN TOKENS ? Light & Dark mode CSS variables ===== */
+    --contacts-page: 0 0% 97%;
+    --contacts-panel: 0 0% 100%;
+    --contacts-raised: 0 0% 100%;
+    --contacts-line: 0 0% 88%;
+    --contacts-soft-line: 0 0% 93%;
+    --contacts-ink: 240 8% 12%;
+    --contacts-muted: 240 4% 40%;
+    --contacts-quiet: 240 4% 58%;
+    --contacts-blue: 221 83% 53%;
+    --contacts-blue-soft: 221 83% 94%;
 }
 
 /* ===== DARK MODE - Corporate Blue ===== */

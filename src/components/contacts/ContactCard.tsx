@@ -1,5 +1,4 @@
 import React from 'react';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -9,16 +8,17 @@ import {
 import { Checkbox } from '@/components/ui/checkbox';
 import {
   MessageSquare, Pencil, Trash2, MoreVertical, Phone, Mail, Clock, Briefcase,
+  MapPin, ArrowUpRight, Building2,
 } from 'lucide-react';
-import { format } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
-import { getAvatarColor, getInitials } from '@/lib/avatar-colors';
 import { usePointerCoarse } from '@/components/tasks/shared/pointerMedia';
 import { CONTACT_TYPE_CONFIG } from './contactTypeConfig';
 import { HighlightText } from './HighlightText';
 import { canDeleteContact } from './contactPermissions';
 import { calculateContactHealth, type ContactHealth, type ContactHealthInput } from '@/lib/contactHealth';
+import { ContactPortrait } from './ContactPortrait';
+import { ContactTypeBadge } from './ContactTypeBadge';
+import { toContactDisplay } from './contactDisplay';
 import type { ContactItemProps } from './types';
 
 /**
@@ -98,41 +98,34 @@ export function ContactHealthIndicator({
 export function ContactCard({
   contact, isSelected, onToggleSelect, onOpenDetails, onOpenChat, onEdit, onDelete, index, companyName, searchQuery,
 }: ContactItemProps) {
+  const display = toContactDisplay(contact, { companyName });
   const typeConfig = CONTACT_TYPE_CONFIG[contact.contact_type || 'cliente'] || CONTACT_TYPE_CONFIG.cliente;
-  const avatarColors = getAvatarColor(contact.name);
-  const displayName = `${contact.name}${contact.surname ? ' ' + contact.surname : ''}`.trim();
-  const company = companyName || contact.company;
-  // Em telas sem `:hover` real (toque) o `group-hover` nunca dispara e o checkbox
-  // ficaria eternamente invisivel. No ponteiro grosso ele nasce visivel; no desktop
-  // segue revelado no hover e no foco de teclado (`focus-within`).
   const ponteiroGrosso = usePointerCoarse();
 
-  // Sem telefone nem e-mail o bloco do meio nasce vazio: sem altura mínima fixa
-  // o card encolhe e não sobra vão (o rodapé mt-auto só empurra quando há folga).
-  const hasContactInfo = !!(contact.phone || contact.email);
-
-  // "Último contato em" quando há mensagem real; fallback para data de cadastro
-  const footerLabel = contact.last_message_at
-    ? `Último contato em ${format(new Date(contact.last_message_at), 'dd MMM yyyy', { locale: ptBR })}`
-    : `Cadastrado em ${format(new Date(contact.created_at), 'dd MMM yyyy', { locale: ptBR })}`;
+  // "�?ltimo contato em" quando há mensagem real; fallback para data de cadastro
+  const footerLabel = display.ultimoContato ?? '';
 
   return (
     <div
       data-testid="contact-card"
       className={cn(
-        "card-lift card-glow group relative flex flex-col rounded-[14px] bg-card p-4 cursor-pointer",
-        "transition-[transform,border-color,box-shadow] duration-150",
-        hasContactInfo ? "min-h-[164px]" : "min-h-[120px]",
+        "group relative flex flex-col overflow-hidden rounded-[13px] border cursor-pointer",
+        "transition-[transform,border-color,box-shadow] duration-200",
+        "hover:-translate-y-[3px]",
         isSelected
-          ? "ring-1 ring-primary border-primary/60 bg-primary/5"
-          : "border-border/70"
+          ? "border-[hsl(var(--contacts-blue))] shadow-[0_0_0_1px_hsl(var(--contacts-blue)/0.35)]"
+          : "border-[hsl(var(--contacts-line))] hover:border-[hsl(221_20%_48%)]"
       )}
+      style={{
+        background: 'linear-gradient(148deg, hsl(var(--contacts-panel)) 0%, hsl(var(--contacts-panel)) 65%, hsl(var(--contacts-page)))',
+        boxShadow: 'inset 0 1px 0 hsl(0 0% 100% / 0.02), 0 5px 15px hsl(0 0% 0% / 0.08)',
+      }}
       onClick={() => onOpenDetails(contact.id)}
     >
       {/* Selection checkbox — revelado no hover (desktop) e sempre visivel no toque */}
       <div
         className={cn(
-          "absolute top-3 left-3 z-10 transition-opacity duration-150 focus-within:opacity-100",
+          "absolute top-3 right-3 z-10 transition-opacity duration-150 focus-within:opacity-100",
           isSelected || ponteiroGrosso ? "opacity-100" : "opacity-0 group-hover:opacity-100"
         )}
         onClick={(e) => e.stopPropagation()}
@@ -145,14 +138,10 @@ export function ContactCard({
         />
       </div>
 
-      {/* Menu "⋮": só o que é exclusivo dele (Excluir). "Conversar" e "Editar"
-          ficam num único lugar — o rodapé abaixo — para não haver 4 alvos de
-          clique pras mesmas 2 ações. Sem permissão de exclusão o menu não tem
-          item nenhum, então o botão nem aparece (o gate continua sendo o
-          `contact.can_delete` confirmado pelo banco). */}
+      {/* Menu "�?�": só o que é exclusivo dele (Excluir). */}
       {canDeleteContact(contact) && (
         <div
-          className="absolute top-3 right-3 z-10"
+          className="absolute top-3 right-12 z-10"
           onClick={(e) => e.stopPropagation()}
         >
           <DropdownMenu>
@@ -170,119 +159,104 @@ export function ContactCard({
         </div>
       )}
 
-      {/* Avatar + Name row */}
-      <div className="flex items-start gap-3">
-        <Avatar data-testid="contact-avatar" className="w-16 h-16 shrink-0 ring-2 ring-border/70">
-          <AvatarImage src={contact.avatar_url || undefined} alt={contact.name || 'Avatar'} />
-          <AvatarFallback className={cn('font-bold text-lg', avatarColors.bg, avatarColors.text)}>
-            {getInitials(contact.name)}
-          </AvatarFallback>
-        </Avatar>
-
-        <div className="min-w-0 flex-1 pt-0.5">
-          <HighlightText
-            text={displayName}
-            highlight={searchQuery}
-            className="text-sm font-semibold text-foreground leading-tight block truncate pr-8"
-          />
-          <div className="flex items-center gap-1.5 mt-1.5 flex-wrap">
-            <Badge
-              variant="outline"
-              className={cn("h-6 px-2.5 rounded-full text-xs font-medium gap-1.5 shrink-0", typeConfig.badgeClass)}
-            >
-              {typeConfig.iconNode}
-              {typeConfig.label}
-            </Badge>
-            {contact.nickname && (
-              <span className="text-xs text-muted-foreground truncate">({contact.nickname})</span>
-            )}
-            {/* Tags — mesmo padrão do ContactListItem: até 2 + contador do resto */}
-            {contact.tags && contact.tags.length > 0 && (
-              <>
-                {contact.tags.slice(0, 2).map(tag => (
-                  <Badge key={tag} variant="secondary" className="text-3xs h-5 px-1.5">
-                    {tag}
-                  </Badge>
-                ))}
-                {contact.tags.length > 2 && (
-                  <Badge variant="secondary" className="text-3xs h-5 px-1.5">
-                    +{contact.tags.length - 2}
-                  </Badge>
-                )}
-              </>
-            )}
-          </div>
-          {company && (
-            <p className="text-sm text-muted-foreground truncate mt-1">{company}</p>
-          )}
-          {contact.job_title && (
-            <p className="flex items-center gap-1 text-xs text-muted-foreground truncate mt-1">
-              <Briefcase className="w-3 h-3 shrink-0" />
-              {contact.job_title}
-            </p>
-          )}
-        </div>
-      </div>
-
-      {/* Contact info — space-y-1.5 per Navy plan spec */}
-      <div className="mt-3 space-y-1.5">
-        {contact.phone && (
-          <div className="flex items-center gap-2 text-sm" onClick={(e) => e.stopPropagation()}>
-            <Phone className="w-[15px] h-[15px] shrink-0 text-muted-foreground" />
-            <a
-              href={`https://wa.me/${contact.phone.replace(/\D/g, '')}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-foreground/80 truncate hover:text-primary transition-colors"
-            >
-              {contact.phone}
-            </a>
-          </div>
-        )}
-        {contact.email && (
-          <div className="flex items-center gap-2 text-sm" onClick={(e) => e.stopPropagation()}>
-            <Mail className="w-[15px] h-[15px] shrink-0 text-muted-foreground" />
-            <a
-              href={`mailto:${contact.email}`}
-              className="truncate text-muted-foreground hover:text-primary transition-colors"
-            >
-              {contact.email}
-            </a>
-          </div>
-        )}
-      </div>
-
-      {/* Completude do cadastro — logo abaixo dos dados de contato, discreta. */}
-      <ContactHealthIndicator input={contact} className="mt-3" />
-
-      {/* Footer — pt-2 fecha o gap final */}
-      <div className="mt-auto pt-2 flex items-center justify-between">
-        <div className="flex items-center gap-1.5 text-xs text-muted-foreground/80 min-w-0">
-          <Clock className="w-[14px] h-[14px] shrink-0" />
-          <span className="truncate">{footerLabel}</span>
-        </div>
-        <div
-          className="flex items-center gap-1.5 shrink-0"
-          onClick={(e) => e.stopPropagation()}
+      {/* Retrato grande (design) — foto ou iniciais */}
+      <div className="relative isolate">
+        <button
+          type="button"
+          className="block w-full relative overflow-hidden rounded-t-[12px] bg-[hsl(var(--contacts-raised))] text-left h-[338px] sm:h-[311px] lg:h-[285px] xl:h-[296px] 2xl:h-[308px]"
+          onClick={(e) => { e.stopPropagation(); onOpenDetails(contact.id); }}
+          aria-label={`Abrir ${display.nomeCompleto ?? contact.name}`}
         >
-          <Button
-            variant="outline"
-            size="icon"
-            className="w-9 h-9 rounded-[10px] border border-border bg-card hover:bg-muted hover:border-primary/50"
-            onClick={() => onOpenChat(contact.id)}
-            title="Conversar"
+          <ContactPortrait contact={contact} className="h-full w-full" />
+          <span className="pointer-events-none absolute inset-0" style={{ background: 'linear-gradient(180deg, hsl(0 0% 0% / 0.08) 0%, transparent 40%, transparent 66%, hsl(0 0% 0% / 0.85) 100%)' }} />
+
+          <span className="absolute top-3 left-3 z-10">
+            <ContactTypeBadge type={contact.contact_type} />
+          </span>
+
+          <span className="absolute left-[15px] bottom-4 z-10 flex items-center gap-1.5 text-[11px] text-white/95 max-w-[calc(100%-69px)]">
+            <MapPin className="w-[13px] h-[13px]" />
+            {display.regiao ?? display.uf ?? 'Localização não informada'}
+          </span>
+
+          <span className="absolute right-[13px] bottom-3 z-10 grid place-items-center w-[34px] h-[34px] rounded-[9px] text-white pointer-events-none"
+            style={{ background: 'linear-gradient(145deg, hsl(var(--contacts-blue)), hsl(221 83% 35%))', border: '1px solid hsl(221 83% 70% / 0.4)', boxShadow: '0 3px 13px hsl(0 0% 0% / 0.4)' }}
           >
-            <MessageSquare className="w-4 h-4" />
-          </Button>
-          <Button
-            variant="outline"
-            size="icon"
-            className="w-9 h-9 rounded-[10px] border border-border bg-card hover:bg-muted hover:border-primary/50"
-            onClick={() => onEdit(contact)}
-            title="Editar"
-          >
-            <Pencil className="w-4 h-4" />
-          </Button>
+            <ArrowUpRight className="w-[17px] h-[17px]" />
+          </span>
+        </button>
+      </div>
+
+      {/* Corpo do card */}
+      <div className="flex flex-col flex-1 p-4 pt-4">
+        <HighlightText
+          text={display.nomeCompleto ?? contact.name}
+          highlight={searchQuery}
+          className="font-display text-[24px] font-medium leading-[1.16] tracking-[-0.55px] text-foreground block truncate mb-2"
+        />
+        {display.empresa && (
+          <p className="flex items-center gap-1.5 text-xs text-[hsl(var(--contacts-ink))] mb-2">
+            <Building2 className="w-[13px] h-[13px] text-[hsl(var(--contacts-quiet))]" />
+            {display.empresa}
+          </p>
+        )}
+        {display.cargo && (
+          <p className="text-xs leading-[1.7] text-[hsl(var(--contacts-muted))] min-h-[41px] m-0">
+            {display.cargo}
+          </p>
+        )}
+        {/* Tags — mesmo padrão do ContactListItem: até 2 + contador do resto */}
+        {contact.tags && contact.tags.length > 0 && (
+          <div className="flex flex-wrap gap-1.5 mt-2">
+            {contact.tags.slice(0, 2).map(tag => (
+              <Badge key={tag} variant="secondary" className="text-3xs h-5 px-1.5">{tag}</Badge>
+            ))}
+            {contact.tags.length > 2 && (
+              <Badge variant="secondary" className="text-3xs h-5 px-1.5">+{contact.tags.length - 2}</Badge>
+            )}
+          </div>
+        )}
+
+        {/* Linhas de contato */}
+        <div className="grid gap-2 mt-3 pt-3 border-t border-[hsl(var(--contacts-soft-line))]">
+          {display.telefone && (
+            <div className="flex items-center gap-2 text-xs text-[hsl(var(--contacts-ink))] min-w-0" onClick={(e) => e.stopPropagation()}>
+              <Phone className="w-[13px] h-[13px] shrink-0 text-[hsl(var(--contacts-quiet))]" />
+              <a href={`https://wa.me/${contact.phone.replace(/\D/g, '')}`} target="_blank" rel="noopener noreferrer"
+                className="truncate hover:text-primary transition-colors">
+                {display.telefone}
+              </a>
+            </div>
+          )}
+          {display.email && (
+            <div className="flex items-center gap-2 text-xs text-[hsl(var(--contacts-ink))] min-w-0" onClick={(e) => e.stopPropagation()}>
+              <Mail className="w-[13px] h-[13px] shrink-0 text-[hsl(var(--contacts-quiet))]" />
+              <a href={`mailto:${display.email}`} className="truncate text-muted-foreground hover:text-primary transition-colors">
+                {display.email}
+              </a>
+            </div>
+          )}
+        </div>
+
+        {/* Completude do cadastro — discreta. */}
+        <ContactHealthIndicator input={contact} className="mt-3" />
+
+        {/* Rodapé */}
+        <div className="mt-auto flex items-center justify-between gap-2 mt-4 pt-3 border-t border-[hsl(var(--contacts-soft-line))]">
+          <div className="flex items-center gap-1.5 text-[11px] text-[hsl(var(--contacts-quiet))] min-w-0">
+            <Clock className="w-[14px] h-[14px] shrink-0" />
+            <span className="truncate">{footerLabel}</span>
+          </div>
+          <div className="flex items-center gap-1.5 shrink-0" onClick={(e) => e.stopPropagation()}>
+            <Button variant="outline" size="icon" className="w-9 h-9 rounded-[9px] border border-border bg-card hover:bg-muted hover:border-primary/50"
+              onClick={() => onOpenChat(contact.id)} title="Conversar">
+              <MessageSquare className="w-4 h-4" />
+            </Button>
+            <Button variant="outline" size="icon" className="w-9 h-9 rounded-[9px] border border-border bg-card hover:bg-muted hover:border-primary/50"
+              onClick={() => onEdit(contact)} title="Editar">
+              <Pencil className="w-4 h-4" />
+            </Button>
+          </div>
         </div>
       </div>
     </div>

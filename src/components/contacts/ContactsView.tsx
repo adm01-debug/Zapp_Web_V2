@@ -7,6 +7,7 @@ import { useContactsV2Flags, contactsV2AreasLigadas } from '@/hooks/contacts/use
 import { useCRMIntegrationEnabled } from '@/hooks/system/useCRMIntegrationEnabled';
 import { useUserRole } from '@/hooks/system/useUserRole';
 import { BulkActionsBar } from '@/components/contacts/BulkActionsBar';
+import { ContactPageHeader } from './ContactPageHeader';
 import { ContactStatsCards } from './ContactStatsCards';
 import { ContactTypeTabs } from './ContactTypeTabs';
 import { ContactMergeDialog } from './ContactMergeDialog';
@@ -132,9 +133,13 @@ export function ContactsView() {
         className="bottom-[calc(228px+env(safe-area-inset-bottom,0px))] md:bottom-[168px] md:right-8"
       />
 
-      {/* Identificação semântica: o cabeçalho visual foi removido (contrato do
-          plano de 50 etapas) e o documento continua anunciando Contatos. */}
-      <h1 className="sr-only">Contatos</h1>
+      {/* ZD-012/ZD-016 - cabeçalho do redesign: tile, título, subtítulo, selo de
+          origem e ações. Substitui o `h1` sr-only por um cabeçalho visual. */}
+      <ContactPageHeader
+        onAddContact={() => setIsAddDialogOpen(true)}
+        onOpenCRM={() => setIsCRMSearchOpen(true)}
+        crmIntegrationEnabled={crmIntegrationEnabled}
+      />
 
       {/* ContactDialogs vive fora de qualquer condição de lista vazia/carregamento:
           uma única instância preserva os quatro diálogos e o gatilho verde flutuante. */}
