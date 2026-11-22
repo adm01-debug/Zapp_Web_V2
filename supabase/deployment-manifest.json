@@ -7,9 +7,9 @@
     "sha256": "e281325190a78e3b5972633a9a4b5ff8c332abfba4d7a4066c8d7e3fd89c7a18"
   },
   "summary": {
-    "function_count": 92,
-    "source_file_count": 180,
-    "verify_jwt_true": 76,
+    "function_count": 93,
+    "source_file_count": 182,
+    "verify_jwt_true": 77,
     "verify_jwt_false": 16
   },
   "orphan_allowlist": ["sicoob-bridge", "sicoob-bridge-reply"],
@@ -113,6 +113,11 @@
       "path": "supabase/functions/_shared/ai-vocabulary.ts",
       "bytes": 7045,
       "sha256": "47877aa9e72f9d61ea847b15770bf8bc8783f1be01e0cb06f49cb78582d644ca"
+    },
+    {
+      "path": "supabase/functions/_shared/assistant-gateway.ts",
+      "bytes": 7723,
+      "sha256": "2ffddf289d014e8d97f44f0a26400c6f4cea84cd4c9cd2c4530baa43fbb3aa2e"
     },
     {
       "path": "supabase/functions/_shared/contracts.ts",
@@ -513,6 +518,11 @@
       "path": "supabase/functions/approve-password-reset/index.ts",
       "bytes": 11767,
       "sha256": "3b87d1de5f7c12912e48103059fbacdac2bc14a97fc99388e2b10f68cdccce33"
+    },
+    {
+      "path": "supabase/functions/assistant-gateway/index.ts",
+      "bytes": 18216,
+      "sha256": "d2e2b3672a1c656c17d657bbad010ac5dd205833e287a766f8b00592b65e6b82"
     },
     {
       "path": "supabase/functions/auth-login/index.ts",
@@ -1438,6 +1448,23 @@
         "supabase/functions/_shared/schemas.ts",
         "supabase/functions/_shared/validation.ts",
         "supabase/functions/approve-password-reset/index.ts"
+      ]
+    },
+    {
+      "name": "assistant-gateway",
+      "entrypoint": "supabase/functions/assistant-gateway/index.ts",
+      "verify_jwt": true,
+      "source_sha256": "6bb783565d9b345da72c70df2f44898abc4f7520b229ef0ca7ea3836eef60f8d",
+      "source_files": [
+        "supabase/functions/_shared/ai-feature-flags.ts",
+        "supabase/functions/_shared/ai-guards.ts",
+        "supabase/functions/_shared/assistant-gateway.ts",
+        "supabase/functions/_shared/cors-origins.ts",
+        "supabase/functions/_shared/hmac-validation.ts",
+        "supabase/functions/_shared/rate-limit-log.ts",
+        "supabase/functions/_shared/request-policy.ts",
+        "supabase/functions/_shared/validation.ts",
+        "supabase/functions/assistant-gateway/index.ts"
       ]
     },
     {
@@ -2823,5 +2850,5 @@
       ]
     }
   ],
-  "manifest_sha256": "1eca3157e5a9afdc9345c84d5872ef1ed903cd5ba0ddda0e7442ca3a6c4ca33e"
+  "manifest_sha256": "3be6f072307096e18a533ff6676e8ab42a26f755b52a14a4d7c8ba27b3a82305"
 }

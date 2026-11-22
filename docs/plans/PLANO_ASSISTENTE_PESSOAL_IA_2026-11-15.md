@@ -175,6 +175,29 @@ O que entra:
 **Entrega verificável:** uma única chamada em linguagem natural ("como estou com o cliente X?") devolve
 resposta usando pelo menos três fontes diferentes, e o teste prova de onde cada pedaço veio.
 
+**Status: implementado** (PR da Fase 3, branch `claude/feat-fase3-porta-unica-*`).
+
+Ponto único: edge `assistant-gateway` (`supabase/functions/assistant-gateway/index.ts`). O roteamento é
+determinístico e vive isolado em `supabase/functions/_shared/assistant-gateway.ts` — a mesma frase escolhe
+sempre as mesmas capacidades, mesmo com o provedor de IA fora.
+
+Registro das edges mortas (levantamento: zero chamadores em `src/` via `functions/v1/<edge>` ou
+`invoke('<edge>')`):
+
+| Edge | Decisão | Onde |
+| --- | --- | --- |
+| `ai-conversation-summary` | ligada — capacidade `resumo_conversa` | `CAPABILITY_FUNCTION` |
+| `ai-suggest-reply` | ligada — capacidade `sugerir_resposta` | `CAPABILITY_FUNCTION` |
+| `ai-lead-temperature` | ligada — capacidade `temperatura_lead` | `CAPABILITY_FUNCTION` |
+| `ai-product-recommendation` | ligada — capacidade `recomendar_produto` | `CAPABILITY_FUNCTION` |
+| `ai-deadline-calculator` | ligada — capacidade `calcular_prazo` | `CAPABILITY_FUNCTION` |
+| `ai-objection-handler` | ligada — capacidade `tratar_objecao` | `CAPABILITY_FUNCTION` |
+| `ai-auto-tag`, `ai-enhance-message`, `ai-kb-ingest`, `sentiment-alert`, `ai-conversation-analysis`, `ai-multimodal-analysis`, `automation-suggest-reply`, `ai-price-anchor`, `ai-loss-risk` | **pendentes** — nenhuma foi ligada nesta PR e nenhuma foi removida; entram na PR de inventário/limpeza, com decisão por edge | a definir |
+
+Cada capacidade de modelo continua atrás da MESMA chave `ai.capability.*` da edge chamada
+(`capabilityFlagKeyForFunction`), então desligar a capacidade desliga as duas pontas de uma vez — sem
+deploy e sem dois registros divergentes.
+
 ### Fase 4 — Treino por perfil
 
 Com identidade (1), memória (2) e porta única (3) de pé, o treino é o que transforma "uma IA" em

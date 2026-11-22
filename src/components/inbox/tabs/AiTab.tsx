@@ -12,6 +12,7 @@ import { useRecommendedProducts } from '@/hooks/chat/useRecommendedProducts';
 import { useContactLeadScore } from '@/hooks/crm/useContactCrm360';
 import { SectionCard } from './SectionCard';
 import { AssistantAgendaCard } from './AssistantAgendaCard';
+import { AssistantAskCard } from './AssistantAskCard';
 import { AISuggestions } from '../AISuggestions';
 import { ConversationSummary } from '../ConversationSummary';
 import { ObjectionDetector } from '../ObjectionDetector';
@@ -125,6 +126,8 @@ export function AiTab({ conversation, messages, onUseSuggestion }: AiTabProps) {
           }}
         />
       </SectionCard>
+
+      <AssistantAskCard contactId={contactId} contactName={contactName} />
 
       <AssistantAgendaCard
         contactId={contactId}
