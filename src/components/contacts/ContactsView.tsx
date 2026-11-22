@@ -7,7 +7,7 @@ import { useContactsV2Flags, contactsV2AreasLigadas } from '@/hooks/contacts/use
 import { useCRMIntegrationEnabled } from '@/hooks/system/useCRMIntegrationEnabled';
 import { useUserRole } from '@/hooks/system/useUserRole';
 import { BulkActionsBar } from '@/components/contacts/BulkActionsBar';
-import { ContactPageHeader } from './ContactPageHeader';
+import { ContactsTitleBar } from './ContactsTitleBar';
 import { ContactStatsCards } from './ContactStatsCards';
 import { ContactTypeTabs } from './ContactTypeTabs';
 import { ContactMergeDialog } from './ContactMergeDialog';
@@ -128,14 +128,18 @@ export function ContactsView() {
 
   return (
     <div className="relative bg-background w-full min-w-0" data-contacts-v2={areasV2Ligadas.join(' ')}>
+      {/* Título acessível: único h1 da tela, fora do fluxo visual. O título do
+          redesign (ContactsTitleBar) é aria-hidden para não duplicar o anúncio. */}
+      <h1 className="sr-only">Contatos</h1>
       <ScrollToTopButton
         scrollRef={layoutScrollRef}
         className="bottom-[calc(228px+env(safe-area-inset-bottom,0px))] md:bottom-[168px] md:right-8"
       />
 
-      {/* ZD-012/ZD-016 - cabeçalho do redesign: tile, título, subtítulo, selo de
-          origem e ações. Substitui o `h1` sr-only por um cabeçalho visual. */}
-      <ContactPageHeader
+      {/* ZD-012/ZD-016 - barra de título do redesign: tile, título, subtítulo, selo
+          de origem e ações. O título visual é aria-hidden; o `h1` "Contatos"
+          continua único e `sr-only` (contrato de acessibilidade do módulo). */}
+      <ContactsTitleBar
         onAddContact={() => setIsAddDialogOpen(true)}
         onOpenCRM={() => setIsCRMSearchOpen(true)}
         crmIntegrationEnabled={crmIntegrationEnabled}

@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
@@ -99,7 +98,8 @@ export function ContactToolbar({
 
   return (
     <div className="space-y-3">
-      <div className="flex items-center gap-3 flex-wrap 2xl:flex-nowrap">
+      {/* `zc-tools` do design: uma linha que quebra, gap 8px, margem inferior 12px. */}
+      <div className="flex items-center gap-2 flex-wrap mb-3 max-[899px]:gap-[7px]">
         {contactsV2.toolbar ? (
           <ContactSearchV2Field value={searchInput} onChange={onSearchChange} />
         ) : (
@@ -113,8 +113,11 @@ export function ContactToolbar({
         )}
 
         <Select value={sortBy} onValueChange={setSortBy}>
-          <SelectTrigger aria-label="Ordenar por" className="w-[150px] h-11 rounded-xl bg-input border-border text-sm font-medium gap-2 shrink-0">
-            <ArrowUpDown className="w-[18px] h-[18px]" />
+          <SelectTrigger
+            aria-label="Ordenar por"
+            className="w-[150px] h-10 min-h-10 rounded-[9px] border-border bg-input text-[11px] font-medium gap-[7px] shrink-0 [&>svg]:w-[15px] [&>svg]:h-[15px] max-[659px]:flex-1 max-[659px]:justify-start max-[659px]:w-auto"
+          >
+            <ArrowUpDown className="w-[15px] h-[15px]" />
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -127,33 +130,46 @@ export function ContactToolbar({
         <Button
           onClick={() => setShowFilters(!showFilters)}
           className={cn(
-            "h-11 px-4 rounded-xl text-sm font-medium gap-2 shrink-0",
-            showFilters ? "bg-primary text-primary-foreground hover:bg-primary/90 border border-primary" : "bg-input border border-border text-foreground hover:bg-muted"
+            'h-10 min-h-10 px-[11px] rounded-[9px] text-[11px] font-medium gap-[7px] shrink-0 border shadow-[inset_0_1px_0_hsl(0_0%_100%/0.04)]',
+            showFilters
+              ? 'border-[hsl(var(--primary)/0.65)] bg-[hsl(var(--primary)/0.18)] text-foreground hover:bg-[hsl(var(--primary)/0.24)]'
+              : 'border-border bg-input text-foreground hover:bg-muted hover:border-muted-foreground/40',
           )}
           aria-expanded={showFilters}
           aria-controls="contact-filters-panel"
         >
-          <Filter className="w-[18px] h-[18px]" />
+          <Filter className="w-[15px] h-[15px]" />
           Filtros
           {activeFiltersCount > 0 && (
-            <Badge variant="secondary" className="ml-1 bg-background/20 text-3xs h-4 px-1">{activeFiltersCount}</Badge>
+            <span
+              data-testid="filters-count"
+              className="grid place-items-center min-w-[19px] min-h-[19px] px-[5px] rounded-[5px] bg-primary text-primary-foreground text-[11px] font-medium"
+            >
+              {activeFiltersCount}
+            </span>
           )}
         </Button>
 
         {activeFiltersCount > 0 && (
-          <Button variant="ghost" onClick={clearFilters} className="h-11 text-sm shrink-0" aria-label="Limpar todos os filtros">
-            <X className="w-4 h-4 mr-1" />Limpar
+          <Button
+            variant="ghost"
+            onClick={clearFilters}
+            className="h-10 min-h-10 px-2 rounded-[9px] text-[11px] shrink-0 gap-1"
+            aria-label="Limpar todos os filtros"
+          >
+            <X className="w-3.5 h-3.5" />Limpar
           </Button>
         )}
 
-        <div className="flex items-center gap-2 h-11 px-3 rounded-xl bg-input border border-border shrink-0">
+        {/* `zc-switch-label`: chave + rótulo, altura 40px, raio 9px, texto 11px. */}
+        <div className="flex items-center gap-2 h-10 min-h-10 px-[11px] rounded-[9px] bg-input border border-border shrink-0 max-[659px]:flex-1 max-[659px]:justify-center">
           <Switch
             id="contact-show-legacy"
             checked={showLegacy}
             onCheckedChange={setShowLegacy}
             data-testid="contact-show-legacy"
           />
-          <Label htmlFor="contact-show-legacy" className="text-sm font-medium cursor-pointer">
+          <Label htmlFor="contact-show-legacy" className="text-[11px] font-medium cursor-pointer whitespace-nowrap">
             Mostrar legados
           </Label>
         </div>
@@ -165,21 +181,21 @@ export function ContactToolbar({
 
         {selectedIds.length >= 1 && (
           <>
-            <Button variant="outline" className="h-11 rounded-xl text-sm gap-2 shrink-0" onClick={onBulkTag}>
-              <Tag className="w-[18px] h-[18px]" />
+            <Button variant="outline" className="h-10 min-h-10 px-[11px] rounded-[9px] text-[11px] gap-[7px] shrink-0" onClick={onBulkTag}>
+              <Tag className="w-[15px] h-[15px]" />
               Tags ({selectedIds.length})
             </Button>
             {selectedIds.length >= 2 && (
               <>
-                <Button variant="outline" className="h-11 rounded-xl text-sm gap-2 shrink-0" onClick={onCompare}>
-                  <GitCompareArrows className="w-[18px] h-[18px]" />
+                <Button variant="outline" className="h-10 min-h-10 px-[11px] rounded-[9px] text-[11px] gap-[7px] shrink-0" onClick={onCompare}>
+                  <GitCompareArrows className="w-[15px] h-[15px]" />
                   Comparar
                 </Button>
                 {/* Mesclar faz DELETE físico dos secundários e exige admin/supervisor
                     no banco (RPC `merge_contacts_atomic`, 42501): só é oferecido a quem pode. */}
                 {canMerge && (
-                  <Button variant="outline" className="h-11 rounded-xl text-sm gap-2 shrink-0 border-primary/30 text-primary" onClick={onMerge}>
-                    <Merge className="w-[18px] h-[18px]" />
+                  <Button variant="outline" className="h-10 min-h-10 px-[11px] rounded-[9px] text-[11px] gap-[7px] shrink-0 border-primary/30 text-primary" onClick={onMerge}>
+                    <Merge className="w-[15px] h-[15px]" />
                     Mesclar
                   </Button>
                 )}
@@ -192,9 +208,9 @@ export function ContactToolbar({
           {crmIntegrationEnabled && (
             <Button
               onClick={onOpenCRM}
-              className="h-11 px-4 rounded-xl bg-primary/20 border border-primary/50 text-[hsl(var(--primary-text))] hover:bg-primary/30 font-semibold text-sm gap-2 shrink-0"
+              className="h-10 min-h-10 px-[11px] rounded-[9px] bg-primary/20 border border-primary/50 text-[hsl(var(--primary-text))] hover:bg-primary/30 font-semibold text-[11px] gap-[7px] shrink-0"
             >
-              <Sparkles className="w-[18px] h-[18px]" />CRM 360°
+              <Sparkles className="w-[15px] h-[15px]" />CRM 360°
             </Button>
           )}
           <ContactViewSwitcher
@@ -289,8 +305,8 @@ function ContactSearchV2Field({
     focused && termo.length > 0 && (loading || results.length > 0 || notFound || Boolean(error));
 
   return (
-    <div ref={containerRef} className="relative flex-1 min-w-[240px]">
-      <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-[18px] h-[18px] text-muted-foreground z-10" />
+    <div ref={containerRef} className="relative flex-1 min-w-[235px] max-[659px]:min-w-full max-[659px]:basis-full">
+      <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground z-10" />
       <Input
         value={value}
         onChange={(e) => onChange(e.target.value)}
@@ -304,8 +320,8 @@ function ContactSearchV2Field({
         aria-controls="contact-search-v2-resultados"
         autoComplete="off"
         className={cn(
-          'h-11 pl-11 rounded-xl bg-input border-border text-sm transition-all',
-          value ? 'pr-10' : 'pr-4',
+          'h-10 rounded-[9px] bg-input border-border text-xs transition-all',
+          value ? 'pl-[34px] pr-9' : 'pl-[34px] pr-3',
         )}
       />
       {value && (

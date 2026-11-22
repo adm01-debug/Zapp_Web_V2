@@ -2,7 +2,6 @@ import { useState, useCallback, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Bookmark, Plus, X, Filter, Check } from 'lucide-react';
@@ -97,15 +96,15 @@ export function FilterPresets({ onApplyPreset, currentFilters }: FilterPresetsPr
   return (
     <Popover>
       <PopoverTrigger asChild>
-        <Button variant="outline" className="h-11 px-4 rounded-xl bg-input border border-border text-sm font-medium gap-2">
-          <Bookmark className="w-[18px] h-[18px]" />
-          Filtros Salvos
+        <Button variant="outline" className="h-10 min-h-10 px-[11px] rounded-[9px] bg-input border border-border text-[11px] font-medium gap-[7px] shrink-0">
+          <Bookmark className="w-[15px] h-[15px]" />
+          <span className="hidden sm:inline">Filtros Salvos</span>
           {presets.length > 0 && (
-            <Badge variant="secondary" className="h-4 px-1.5 text-3xs">{presets.length}</Badge>
+            <span className="grid place-items-center min-w-[19px] min-h-[19px] px-[5px] rounded-[5px] bg-muted text-muted-foreground text-[11px] font-medium">{presets.length}</span>
           )}
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-64 p-3" align="start">
+      <PopoverContent className="w-64 p-3 rounded-[11px]" align="start">
         <div className="space-y-3">
           <p className="text-xs font-semibold text-foreground">Filtros Salvos</p>
 

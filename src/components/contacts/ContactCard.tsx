@@ -102,18 +102,21 @@ export function ContactCard({
   const typeConfig = CONTACT_TYPE_CONFIG[contact.contact_type || 'cliente'] || CONTACT_TYPE_CONFIG.cliente;
   const ponteiroGrosso = usePointerCoarse();
 
-  // "�?ltimo contato em" quando há mensagem real; fallback para data de cadastro
+  // "Último contato em" quando há mensagem real; fallback para data de cadastro
   const footerLabel = display.ultimoContato ?? '';
+  const temCanal = Boolean(display.telefone || display.email);
 
   return (
     <div
       data-testid="contact-card"
       className={cn(
-        "group relative flex flex-col overflow-hidden rounded-[13px] border cursor-pointer",
+        "group relative flex flex-col overflow-hidden rounded-[13px] border cursor-pointer card-lift card-glow",
         "transition-[transform,border-color,box-shadow] duration-200",
         "hover:-translate-y-[3px]",
+        "min-h-[120px]",
+        temCanal && "min-h-[164px]",
         isSelected
-          ? "border-[hsl(var(--contacts-blue))] shadow-[0_0_0_1px_hsl(var(--contacts-blue)/0.35)]"
+          ? "ring-1 ring-primary bg-primary/5 border-primary/60"
           : "border-[hsl(var(--contacts-line))] hover:border-[hsl(221_20%_48%)]"
       )}
       style={{
@@ -138,7 +141,7 @@ export function ContactCard({
         />
       </div>
 
-      {/* Menu "�?�": só o que é exclusivo dele (Excluir). */}
+      {/* Menu "⋮": só o que é exclusivo dele (Excluir). */}
       {canDeleteContact(contact) && (
         <div
           className="absolute top-3 right-12 z-10"
