@@ -370,17 +370,25 @@ precisar cadastrar o app autenticador no próximo acesso. É decisão de negóci
 Responda "MFA a", "MFA b" ou "MFA c" e eu implemento ponta a ponta (tela de cadastro, verificação no
 login, recuperação).
 
-## 9. Custo de IA inauditável — a tabela de preços está vazia
+## 9. Custo de IA — resolvido, com o histórico recalculado
 
-**Prova:** `select count(1) from ai_model_prices` → **0 linhas**.
+**O que era:** `ai_model_prices` com **0 linhas**, então nenhuma chamada tinha preço e o custo aparecia
+como zero por falta de dado.
 
-**O que isso significa pro negócio:** o sistema registra cada chamada de IA em `ai_usage_logs`, mas sem
-preço por modelo ele não sabe transformar isso em dinheiro. Você não tem como ver quanto a IA custou no
-mês, nem receber alerta de estouro.
+**O que foi feito, e o defeito maior que apareceu no caminho:** a tabela guardava **um preço único por
+token**, mas o fornecedor cobra a **saída de 4x a 14x mais caro que a entrada**. Semear um preço só seria
+trocar "zero" por um número errado com cara de medido — no uso real da base o erro ia de **−89%** a
+**+374%**. A correção foi estrutural: a tarifa passou a ter preço de **entrada** e de **saída** separados,
+o relatório cobra cada ponta pelo preço dela, e os preços foram conferidos no próprio fornecedor
+(DeepSeek e OpenRouter) em 22/11/2026.
 
-**Isso é trabalho meu, não seu** — já está na minha fila: preencher a tabela com os preços públicos
-vigentes por modelo e ligar o cálculo. Fica aqui registrado só para você saber que o número de custo que
-aparecer antes disso é zero por falta de dado, não por não ter gasto.
+**Prova:** a mesma consulta do painel, no banco de produção, passou de **8.523 chamadas sem tarifa** para
+**0** — custo medido de **US$ 2,68** sobre 8.523 chamadas entre 28/08 e 22/11/2026.
+
+**O que continua fora do número, e por quê:** 1.214 chamadas de **voz/áudio** (transcrição e síntese) não
+medem token nenhum e o log também não guarda a grandeza que o fornecedor cobra (segundos de áudio,
+caracteres). Não falta preço ali — falta **coleta**. O painel mostra isso numa linha separada, para não
+sugerir cadastrar um preço de token que nunca seria usado.
 
 ## 10. Esclarecimento — os 173 jobs de IA "falhados" NÃO são problema
 

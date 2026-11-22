@@ -182,6 +182,10 @@ export function AIUsageDashboard() {
           {custoTexto.interno && <> • interno {custoTexto.interno}</>}
           {custoTexto.reconciliado && <> • reconciliado {custoTexto.reconciliado}</>}
           {custoTexto.semTarifa > 0 && <> • {custoTexto.semTarifa.toLocaleString()} chamadas sem tarifa aplicável</>}
+          {/* Falta de preço e falta de coleta sao problemas distintos: dizer
+              "sem tarifa" para transcrever audio mandaria cadastrar um preco
+              de token que nunca seria usado. */}
+          {custoTexto.semUnidade > 0 && <> • {custoTexto.semUnidade.toLocaleString()} chamadas sem grandeza medida no log (voz/áudio)</>}
         </p>
       )}
     </div>

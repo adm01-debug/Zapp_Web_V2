@@ -29,9 +29,10 @@
 // Run with: deno test --allow-env --allow-net --allow-read \
 //   supabase/functions/_shared/ai-usage.test.ts
 
-import { assert, assertEquals } from "https://deno.land/std@0.224.0/testing/asserts.ts";
+import { assert, assertEquals, assertNotEquals } from "https://deno.land/std@0.224.0/testing/asserts.ts";
 import {
   calcularCusto,
+  calcularCustoPorPonta,
   chaveDeLog,
   classificarStatusDoErroDeLog,
   contaParaQuota,
@@ -847,6 +848,91 @@ Deno.test("IA-054 reconciliação vazia não inventa número", () => {
 
 // ---------------------------------------------------------------------------
 // (i) IA-055 — tarifa versionada por vigência
+// ---------------------------------------------------------------------------
+// IA-055 §2 — preço de ENTRADA e de SAÍDA.
+//
+// O fornecedor cobra a saída de 4x a 14x mais caro que a entrada. Enquanto a
+// tabela tinha um preço único por token, o custo do mês errava por um fator
+// grande e o erro aparecia como número medido. Estes testes fixam as três
+// regras: (1) cada ponta pelo seu preço; (2) sem as duas tarifas cai no preço
+// único, declarando o caminho; (3) sem nenhuma das duas, nulo com motivo.
+const TARIFA_DUAS_PONTAS: TarifaDeModelo[] = [
+  { model: "deepseek-flash", unit: "input_token", currency: "USD", unitPrice: 0.0000003, validFrom: "2026-08-01T00:00:00Z", validTo: null },
+  { model: "deepseek-flash", unit: "output_token", currency: "USD", unitPrice: 0.0000012, validFrom: "2026-08-01T00:00:00Z", validTo: null },
+];
+
+Deno.test("IA-055 §2 entrada e saída são cobradas pelo preço de cada ponta", () => {
+  const r = calcularCustoPorPonta(TARIFA_DUAS_PONTAS, {
+    model: "deepseek-flash",
+    em: "2026-11-01T12:00:00Z",
+    tokensIn: 1_000_000,
+    tokensOut: 1_000_000,
+  });
+  // 1M de entrada a $0.30/M + 1M de saída a $1.20/M
+  assertEquals(r.custo, 1.5);
+  assertEquals(r.granularidade, "entrada_saida");
+  assertEquals(r.moeda, "USD");
+  assertEquals(r.motivo, "calculado");
+});
+
+Deno.test("IA-055 §2 só a saída já custa mais que o preço único da entrada", () => {
+  // 1M de entrada + 1M de saída a preço único de entrada subestimaria 5x:
+  // o teste existe para o caminho "usar um preço só" nunca voltar calado.
+  const unico: TarifaDeModelo[] = [
+    { model: "deepseek-flash", unit: "token", currency: "USD", unitPrice: 0.0000003, validFrom: "2026-08-01T00:00:00Z", validTo: null },
+  ];
+  const porPonta = calcularCustoPorPonta(TARIFA_DUAS_PONTAS, {
+    model: "deepseek-flash", em: "2026-11-01T12:00:00Z", tokensIn: 1_000_000, tokensOut: 1_000_000,
+  });
+  const precoUnico = calcularCustoPorPonta(unico, {
+    model: "deepseek-flash", em: "2026-11-01T12:00:00Z", tokensIn: 1_000_000, tokensOut: 1_000_000,
+  });
+  assertEquals(precoUnico.custo, 0.6);
+  assertEquals(precoUnico.granularidade, "preco_unico");
+  assertNotEquals(porPonta.custo, precoUnico.custo);
+});
+
+Deno.test("IA-055 §2 sem as duas pontas cai no preço único sobre a soma", () => {
+  const soEntrada: TarifaDeModelo[] = [
+    { model: "gpt-x", unit: "input_token", currency: "USD", unitPrice: 0.000001, validFrom: "2026-08-01T00:00:00Z", validTo: null },
+    { model: "gpt-x", unit: "token", currency: "USD", unitPrice: 0.000002, validFrom: "2026-08-01T00:00:00Z", validTo: null },
+  ];
+  const r = calcularCustoPorPonta(soEntrada, {
+    model: "gpt-x", em: "2026-11-01T12:00:00Z", tokensIn: 1000, tokensOut: 500,
+  });
+  assertEquals(r.granularidade, "preco_unico");
+  assertEquals(r.custo, 0.003); // 1500 * 0.000002
+});
+
+Deno.test("IA-055 §2 sem tarifa nenhuma é nulo com motivo, nunca zero", () => {
+  const r = calcularCustoPorPonta([], {
+    model: "modelo-desconhecido", em: "2026-11-01T12:00:00Z", tokensIn: 1000, tokensOut: 1000,
+  });
+  assertEquals(r.custo, null);
+  assertEquals(r.motivo, "sem_tarifa_vigente");
+  assertEquals(r.granularidade, null);
+});
+
+Deno.test("IA-055 §2 moedas divergentes entre entrada e saída não são somadas", () => {
+  const misto: TarifaDeModelo[] = [
+    { model: "gpt-x", unit: "input_token", currency: "USD", unitPrice: 0.000001, validFrom: "2026-08-01T00:00:00Z", validTo: null },
+    { model: "gpt-x", unit: "output_token", currency: "BRL", unitPrice: 0.000005, validFrom: "2026-08-01T00:00:00Z", validTo: null },
+  ];
+  const r = calcularCustoPorPonta(misto, {
+    model: "gpt-x", em: "2026-11-01T12:00:00Z", tokensIn: 1000, tokensOut: 1000,
+  });
+  assertEquals(r.custo, null);
+  assertEquals(r.motivo, "moedas_divergentes");
+});
+
+Deno.test("IA-055 §2 chamada sem token algum é zero MEDIDO, não 'sem preço'", () => {
+  const r = calcularCustoPorPonta(TARIFA_DUAS_PONTAS, {
+    model: "deepseek-flash", em: "2026-11-01T12:00:00Z", tokensIn: 0, tokensOut: 0,
+  });
+  assertEquals(r.custo, 0);
+  assertEquals(r.motivo, "zero_medido");
+});
+
 // ---------------------------------------------------------------------------
 // Aceite da etapa: "Um relatório histórico usa a tarifa aplicável e diferencia
 // estimativa interna de custo reconciliado." Os dois erros que estes testes
