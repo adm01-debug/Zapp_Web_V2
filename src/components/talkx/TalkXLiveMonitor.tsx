@@ -4,6 +4,7 @@ import {
   SkipForward, Activity, RefreshCw, Zap, Inbox,
 } from 'lucide-react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { endOfDay, parseISO, startOfDay } from 'date-fns';
 // eslint-disable-next-line no-restricted-imports
 import { supabase } from '@/integrations/supabase/client';
 import { useTalkXMonitor } from '@/hooks/integrations/useTalkXMonitor';
@@ -27,11 +28,27 @@ import { TalkXQueryBoundary, TalkXEmptyState, TalkXSkeletonRows } from './kit/st
 import { TalkXHealthCard } from './tracking/TalkXHealthCard';
 import { campaignPauseReason, talkxLastSentAt, talkxRatePerMinute, talkxStallWindowMs } from './tracking/talkxHealth';
 import { TalkXRecipientRowActions } from './tracking/TalkXRecipientRowActions';
-interface Props { campaignId: string; onBack?: () => void; onOpenHelp?: () => void }
+interface Props {
+  campaignId: string;
+  onBack?: () => void;
+  onOpenHelp?: () => void;
+  /** X145 — filtros do cabeçalho da aba Monitor (tracking/TalkXMonitorHeader.tsx).
+   *  `statusFilter`/`onStatusFilterChange` são o MESMO estado do select do card de
+   *  destinatários: recortam a lista, nunca os KPIs nem o gráfico.
+   *  `day` é o dia local (yyyy-MM-dd) escolhido no filtro de dia. */
+  statusFilter?: string;
+  onStatusFilterChange?: (value: string) => void;
+  segmentId?: string;
+  day?: string;
+  /** Muda de valor a cada clique em "Atualizar": refaz as leituras desta tela. */
+  refreshToken?: number;
+}
 type MonitorTab = 'overview' | 'recipients' | 'timeline';
 const REFETCH = 4000;
 
-export function TalkXLiveMonitor({ campaignId, onBack, onOpenHelp }: Props) {
+export function TalkXLiveMonitor({
+  campaignId, onBack, onOpenHelp, statusFilter: statusFilterProp, onStatusFilterChange, segmentId, day, refreshToken,
+}: Props) {
   const qc = useQueryClient();
   const lifecycle = useTalkXLifecycle();
   // X144/TL-153d: a tela lê o estado do canal único para decidir o ritmo das consultas:
@@ -44,7 +61,11 @@ export function TalkXLiveMonitor({ campaignId, onBack, onOpenHelp }: Props) {
     events, isLoading: eventsLoading, isError: eventsError, error: eventsErrorObj, refetch: refetchEvents,
   } = useTalkXEvents(campaignId);
   const [tab, setTab] = useState<MonitorTab>('overview');
-  const [statusFilter, setStatusFilter] = useState('all');
+  // X145: quando o cabeçalho da aba Monitor manda o filtro, ele é a fonte; sem ele o
+  // select do card de destinatários continua sendo o dono do estado.
+  const [localStatusFilter, setLocalStatusFilter] = useState('all');
+  const statusFilter = statusFilterProp ?? localStatusFilter;
+  const setStatusFilter = onStatusFilterChange ?? setLocalStatusFilter;
   const [elapsedSec, setElapsedSec] = useState(0);
   // X148/TL-157: "Ver o que fazer" do card de saúde abre a Ajuda do módulo. A
   // Ajuda é uma TELA com rota própria na URL (TL-174, `TalkXHelpCenter`), não
@@ -79,12 +100,20 @@ export function TalkXLiveMonitor({ campaignId, onBack, onOpenHelp }: Props) {
     error: recipientsErrorObj,
     refetch: refetchRecipients,
   } = useQuery({
-    queryKey: ['talkx-recipients-monitor', campaignId, statusFilter],
+    queryKey: ['talkx-recipients-monitor', campaignId, statusFilter, segmentId ?? 'all', day ?? 'all'],
     queryFn: async () => {
       let q = supabase.from('talkx_recipients')
         .select('*, contacts:contact_id(name, nickname, phone, company, avatar_url)')
         .eq('campaign_id', campaignId).order('updated_at', { ascending: false }).limit(200);
       if (statusFilter !== 'all') q = q.eq('status', statusFilter);
+      if (segmentId && segmentId !== 'all') q = q.eq('segment_id', segmentId);
+      if (day) {
+        // X145: o recorte do dia não pode esconder quem ainda está na fila (sem `sent_at`):
+        // a campanha em andamento mostra o que saiu no dia + o que ainda espera.
+        const from = startOfDay(parseISO(day)).toISOString();
+        const to = endOfDay(parseISO(day)).toISOString();
+        q = q.or('sent_at.is.null,and(sent_at.gte.' + from + ',sent_at.lte.' + to + ')');
+      }
       const { data, error } = await q;
       if (error) throw error;
       return (data ?? []) as unknown as TalkXRecipient[];
@@ -123,8 +152,10 @@ export function TalkXLiveMonitor({ campaignId, onBack, onOpenHelp }: Props) {
   // o X051 já mantém nesta função.
   const remaining = campaign ? Math.max(0, campaign.total_recipients - processed) : 0;
 
-  // Real rate data from hook (E02) — replaced Math.random with actual DB data
-  const { rateByMinute: chartData, isLoading: rateLoading, isError: rateError, refetch: refetchRate } = useTalkXMonitor(campaignId, statusFilter, liveChannel.live ? false : (liveChannel.panelPollMs ?? undefined));
+  // Real rate data from hook (E02) — replaced Math.random with actual DB data.
+  // X145: o filtro de status do cabeçalho/dos destinatários recorta a LISTA, nunca o
+  // gráfico nem os KPIs — por isso o ritmo é lido sem o status.
+  const { rateByMinute: chartData, isLoading: rateLoading, isError: rateError, refetch: refetchRate } = useTalkXMonitor(campaignId, 'all', liveChannel.live ? false : (liveChannel.panelPollMs ?? undefined));
 
   // X148 — "Saúde da Campanha": o último envio e a taxa por minuto saem dos envios da
   // campanha INTEIRA. A consulta acima recebe o filtro de status da aba de destinatários;
@@ -144,6 +175,15 @@ export function TalkXLiveMonitor({ campaignId, onBack, onOpenHelp }: Props) {
 
   // N-097: pré-checagem de retomada no servidor, só com a campanha pausada (antes do return antecipado).
   const { precheck: serverPrecheck } = useTalkXServerResumePrecheck(campaign ?? null);
+
+  // X145: o botão "Atualizar" do cabeçalho refaz as leituras desta tela.
+  useEffect(() => {
+    if (!refreshToken) return;
+    void refetchCampaign();
+    void refetchRecipients();
+    void refetchRate();
+    void refetchEvents();
+  }, [refreshToken, refetchCampaign, refetchRecipients, refetchRate, refetchEvents]);
 
   // X047: o boundary decide na ordem carregando -> erro -> vazio -> conteudo. O erro tem
   // precedência sobre o vazio: consulta que falhou mostra "Não foi possível carregar" e o

@@ -1,8 +1,9 @@
 import { toast } from 'sonner';
 import React, { useEffect, useState, useMemo, useCallback, useRef, Suspense } from 'react';
+import { format } from 'date-fns';
 import {
   Zap, Plus, FileText, ShieldBan, BarChart3,
-  LayoutDashboard, HelpCircle, Search,
+  LayoutDashboard, HelpCircle, Search, Activity,
 } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
@@ -13,7 +14,7 @@ import { useTalkXSegments } from '@/hooks/integrations/useTalkXSegments';
 import { useTalkXTemplates } from '@/hooks/integrations/useTalkXTemplates';
 import { useTalkXServiceStatus } from '@/hooks/integrations/useTalkXServiceStatus';
 import { navigateToView } from '@/hooks/system/useNavigationHistory';
-import { ModuleHeader, ModuleBreadcrumb, IconTile, TalkXSkeletonRows, TalkXWhatsAppDisconnectedState } from './talkxShared';
+import { ModuleHeader, ModuleBreadcrumb, IconTile, TalkXEmptyState, TalkXQueryBoundary, TalkXSkeletonRows, TalkXWhatsAppDisconnectedState } from './talkxShared';
 import { ActiveCampaignIndicator } from './kit/ActiveCampaignIndicator';
 import { PrimaryButton } from '@/components/dashboard/overview/DashboardCard';
 import { parseTalkXHelpRoute, pushTalkXHelpRoute, type TalkXHelpRoute } from './help/talkxHelpRoute';
@@ -44,6 +45,7 @@ import { lazyWithRetry } from '@/lib/lazyWithRetry';
 const TalkXHelpCenter = lazyWithRetry(() => import('./help/TalkXHelpCenter').then((m) => ({ default: m.TalkXHelpCenter })));
 const TalkXCampaignWizard = lazyWithRetry(() => import('./TalkXCampaignWizard').then((m) => ({ default: m.TalkXCampaignWizard })));
 const TalkXLiveMonitor = lazyWithRetry(() => import('./TalkXLiveMonitor').then((m) => ({ default: m.TalkXLiveMonitor })));
+import { TalkXMonitorHeader } from './tracking/TalkXMonitorHeader';
 const TalkXSegments = lazyWithRetry(() => import('./TalkXSegments').then((m) => ({ default: m.TalkXSegments })));
 const TalkXTemplates = lazyWithRetry(() => import('./TalkXTemplates').then((m) => ({ default: m.TalkXTemplates })));
 const TalkXSuppression = lazyWithRetry(() => import('./TalkXSuppression').then((m) => ({ default: m.TalkXSuppression })));
@@ -128,6 +130,12 @@ export default function TalkXView() {
   // yet. It is safe to keep the current editor alive, but a reload must still
   // resolve the ID from the canonical query before opening it.
   const [localDraftRouteId, setLocalDraftRouteId] = useState<string | null>(null);
+  // X145/TL-154 — estado do filtro e da releitura da tela Monitor (o cabeçalho
+  // tracking/TalkXMonitorHeader.tsx é só apresentação; os valores vivem aqui).
+  const [monitorDay, setMonitorDay] = useState(() => format(new Date(), 'yyyy-MM-dd'));
+  const [monitorSegment, setMonitorSegment] = useState('all');
+  const [monitorStatus, setMonitorStatus] = useState('all');
+  const [monitorRefreshToken, setMonitorRefreshToken] = useState(0);
 
   const writeWizardRoute = useCallback((route: TalkXWizardRoute | null, replace = false) => {
     if (replace) replaceTalkXWizardRoute(route);
@@ -305,6 +313,9 @@ export default function TalkXView() {
   }, []);
 
   const openMonitor = useCallback((c: TalkXCampaign) => { setMonitorId(c.id); setTopView('monitor'); writeScreenRoute(c.id, 'monitor'); }, [writeScreenRoute]);
+  // X145/TL-154: trocar a campanha no seletor do Monitor reescreve a rota (mesmo
+  // requisito do routing por status: ?campaign=&screen=monitor aponta para UMA campanha).
+  const selectMonitorCampaign = useCallback((id: string) => { setMonitorId(id); writeScreenRoute(id, 'monitor'); }, [writeScreenRoute]);
   const openScheduled = useCallback((c: TalkXCampaign) => { setScheduledCampaignId(c.id); setTopView('scheduled'); writeScreenRoute(c.id, 'scheduled'); }, [writeScreenRoute]);
   const openRunning = useCallback((c: TalkXCampaign) => { setRunningCampaignId(c.id); setTopView('running'); writeScreenRoute(c.id, 'running'); }, [writeScreenRoute]);
   const openPaused = useCallback((c: TalkXCampaign) => { setPausedCampaignId(c.id); setTopView('paused'); writeScreenRoute(c.id, 'paused'); }, [writeScreenRoute]);
@@ -348,6 +359,21 @@ export default function TalkXView() {
     }
     return m;
   }, [teamProfiles]);
+
+  // X145/TL-154 — o que a tela Monitor mostra: a campanha aberta (do `monitorId` da
+  // rota ?campaign=&screen=monitor), as candidatas do seletor (só sending/paused) e
+  // a segmentação da campanha (o vínculo conhecido pela tela é `segment_id`;
+  // sem ele o filtro de segmentação não é oferecido).
+  const monitorCampaign = useMemo(() => campaigns.find((candidate) => candidate.id === monitorId) ?? null, [campaigns, monitorId]);
+  const monitorActiveCampaigns = useMemo(
+    () => campaigns.filter((c) => c.status === 'sending' || c.status === 'paused'),
+    [campaigns],
+  );
+  const monitorSegments = useMemo(() => {
+    const segmentId = monitorCampaign?.segment_id;
+    if (!segmentId) return [];
+    return [{ value: segmentId, label: segments.find((s) => s.id === segmentId)?.name ?? 'Segmento da campanha' }];
+  }, [monitorCampaign?.segment_id, segments]);
 
   // X026: duplicar agora cria o rascunho no banco (RPC duplicate_talkx_campaign) e
   // abre o editor sobre a linha devolvida — não é mais um objeto só de cliente.
@@ -527,7 +553,8 @@ export default function TalkXView() {
   }
 
   if (topView === 'monitor' && monitorId) {
-    const monitorCampaign = campaigns.find((candidate) => candidate.id === monitorId);
+    // X145/TL-154: carregando -> erro -> vazio -> conteúdo. Sem o boundary, uma leitura
+    // de campanhas que falhou aparecia como "nenhuma campanha em andamento".
     return (
       <div className="min-h-full w-full min-w-0 bg-background">
         {/* X053: trilha clicável — o item "Campanhas" (índice 1) navega de volta à lista. */}
@@ -536,7 +563,47 @@ export default function TalkXView() {
         </div>
         <Suspense fallback={<TalkXScreenFallback />}>
           <SectionErrorBoundary sectionName="Monitor ao vivo">
-            <TalkXLiveMonitor campaignId={monitorId} onBack={backToList} />
+            <TalkXQueryBoundary
+              query={{ isLoading, isError, error: campaignsError }}
+              entity="campanhas"
+              onRetry={() => { void refetchCampaigns(); }}
+              skeleton={<TalkXSkeletonRows rows={4} />}
+              isEmpty={!monitorCampaign}
+              empty={(
+                <TalkXEmptyState
+                  title="Nenhuma campanha em andamento"
+                  description="Assim que uma campanha começar a enviar, o acompanhamento em tempo real aparece aqui."
+                  actionLabel="Nova campanha"
+                  onAction={() => openNew()}
+                />
+              )}
+            >
+              {monitorCampaign && (
+                <div className="space-y-4 min-w-0">
+                  <TalkXMonitorHeader
+                    campaign={monitorCampaign}
+                    activeCampaigns={monitorActiveCampaigns}
+                    onSelectCampaign={selectMonitorCampaign}
+                    segments={monitorSegments}
+                    segment={monitorSegment}
+                    onSegmentChange={setMonitorSegment}
+                    status={monitorStatus}
+                    onStatusChange={setMonitorStatus}
+                    day={monitorDay}
+                    onDayChange={setMonitorDay}
+                    onRefresh={() => setMonitorRefreshToken((token) => token + 1)}
+                  />
+                  <TalkXLiveMonitor
+                    campaignId={monitorId}
+                    statusFilter={monitorStatus}
+                    onStatusFilterChange={setMonitorStatus}
+                    segmentId={monitorSegment}
+                    day={monitorDay}
+                    refreshToken={monitorRefreshToken}
+                  />
+                </div>
+              )}
+            </TalkXQueryBoundary>
           </SectionErrorBoundary>
         </Suspense>
       </div>

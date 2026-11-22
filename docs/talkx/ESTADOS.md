@@ -23,7 +23,7 @@ com `VITE_TALKX_KIT=1`, lido de `src/components/talkx/kit/forcedState.ts`):
 | `src/components/talkx/TalkXContactSelector.tsx` | — | — | — | — | — | — |
 | `src/components/talkx/TalkXHelp.tsx` | — | — | — | — | — | — |
 | `src/components/talkx/TalkXInteractiveEditor.tsx` | — | — | — | — | — | — |
-| `src/components/talkx/TalkXLiveMonitor.tsx` | `161`, `289` | `159`, `241`, `287`, `320` | `155`, `237`, `283`, `316` | — | — | — |
+| `src/components/talkx/TalkXLiveMonitor.tsx` | `201`, `329` | `199`, `281`, `327`, `360` | `195`, `277`, `323`, `356` | — | — | — |
 | `src/components/talkx/TalkXMediaDropzone.tsx` | — | — | — | — | — | — |
 | `src/components/talkx/TalkXMessageEditor.tsx` | — | — | — | — | — | — |
 | `src/components/talkx/TalkXMessagePreview.tsx` | — | — | — | — | — | — |
@@ -35,14 +35,14 @@ com `VITE_TALKX_KIT=1`, lido de `src/components/talkx/kit/forcedState.ts`):
 | `src/components/talkx/TalkXTemplateEditor.tsx` | — | `519` | `515` | — | — | — |
 | `src/components/talkx/TalkXTemplateImportDialog.tsx` | — | — | — | — | — | — |
 | `src/components/talkx/TalkXTemplates.tsx` | `422`, `426`, `433` | `374`, `420`, `462`, `496` | `416` | — | — | — |
-| `src/components/talkx/TalkXView.tsx` | — | `61`, `491` | — | — | `639` | — |
+| `src/components/talkx/TalkXView.tsx` | `573` | `63`, `517`, `570` | `566` | — | `706` | — |
 | `src/components/talkx/TalkXWizardDelivery.tsx` | — | — | — | — | `65` | — |
 
 ## Resumo
 
-- **Vazio**: 8 de 23 telas
+- **Vazio**: 9 de 23 telas
 - **Carregando (esqueleto)**: 12 de 23 telas
-- **Erro de consulta**: 11 de 23 telas
+- **Erro de consulta**: 12 de 23 telas
 - **CRM 360 indisponível**: 0 de 23 telas
 - **WhatsApp desconectado**: 3 de 23 telas
 - **Sem permissão**: 0 de 23 telas
