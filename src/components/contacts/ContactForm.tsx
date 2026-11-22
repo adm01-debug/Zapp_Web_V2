@@ -208,7 +208,7 @@ export const ContactForm = React.memo(function ContactForm({ values, onChange, o
 
   return (
     <TooltipProvider>
-      <div className="space-y-4 pt-4" role="form" aria-label="Formulário de contato"
+      <div className="space-y-4" role="form" aria-label="Formulário de contato"
         onKeyDown={(e) => { if (e.key === 'Enter' && e.ctrlKey) v.handleSubmit(); }}>
 
         {/* Name + Surname */}
@@ -340,7 +340,7 @@ export const ContactForm = React.memo(function ContactForm({ values, onChange, o
         </div>
 
         {/* Endereço */}
-        <div className="space-y-3 pt-2 border-t border-border/30">
+        <div className="space-y-3 border-t border-[hsl(var(--contacts-soft-line))] pt-4">
           <p className="text-xs font-medium text-muted-foreground flex items-center gap-1.5">
             <MapPin className="w-3.5 h-3.5" /> Endereço <span className="text-muted-foreground">(opcional)</span>
           </p>
@@ -460,11 +460,11 @@ export const ContactForm = React.memo(function ContactForm({ values, onChange, o
           )}
         </div>
 
-        <p className="text-xs text-muted-foreground flex items-center gap-1"><span className="text-destructive">*</span> Campos obrigatórios</p>
+        <p className="flex items-center gap-1 text-xs text-[hsl(var(--contacts-quiet))]"><span className="text-destructive">*</span> Campos obrigatórios</p>
 
         {/* Actions */}
-        <div className="flex items-center justify-between pt-4 border-t border-border/30">
-          <p className="text-xs text-muted-foreground hidden sm:block">Ctrl+Enter para salvar</p>
+        <div className="flex items-center justify-between border-t border-[hsl(var(--contacts-soft-line))] pt-4">
+          <p className="hidden text-xs text-[hsl(var(--contacts-quiet))] sm:block">Ctrl+Enter para salvar</p>
           <div className="flex gap-2 ml-auto">
             <Button variant="outline" onClick={onCancel} disabled={isSubmitting}>Cancelar</Button>
             <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
