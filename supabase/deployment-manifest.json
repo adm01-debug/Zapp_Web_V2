@@ -8,7 +8,7 @@
   },
   "summary": {
     "function_count": 93,
-    "source_file_count": 182,
+    "source_file_count": 183,
     "verify_jwt_true": 77,
     "verify_jwt_false": 16
   },
@@ -116,8 +116,13 @@
     },
     {
       "path": "supabase/functions/_shared/assistant-gateway.ts",
-      "bytes": 7723,
-      "sha256": "2ffddf289d014e8d97f44f0a26400c6f4cea84cd4c9cd2c4530baa43fbb3aa2e"
+      "bytes": 8127,
+      "sha256": "a67b1c214054a66c91ff80f7197861132b9a6e03c4cb905b0b807ecc7fbd85e3"
+    },
+    {
+      "path": "supabase/functions/_shared/assistant-playbook.ts",
+      "bytes": 6590,
+      "sha256": "4d9a7ce006290bb44d7cd6aad985ac753b83798f7be245fe6a03de642262666b"
     },
     {
       "path": "supabase/functions/_shared/contracts.ts",
@@ -481,8 +486,8 @@
     },
     {
       "path": "supabase/functions/ai-objection-handler/index.ts",
-      "bytes": 5693,
-      "sha256": "c74d7000342db84d200c92616ced77be794bc4b0553edb42e19dcdabe32674a7"
+      "bytes": 5869,
+      "sha256": "303c53895abca48ac8b199038a3640d299fa038e955d7d747e7dd86deca0d227"
     },
     {
       "path": "supabase/functions/ai-price-anchor/index.ts",
@@ -521,8 +526,8 @@
     },
     {
       "path": "supabase/functions/assistant-gateway/index.ts",
-      "bytes": 18216,
-      "sha256": "d2e2b3672a1c656c17d657bbad010ac5dd205833e287a766f8b00592b65e6b82"
+      "bytes": 19062,
+      "sha256": "eecb48eaee4b1e95867c8d8c96861e8562e0b6c4edc97c2468db45d8c6f56e77"
     },
     {
       "path": "supabase/functions/auth-login/index.ts",
@@ -581,8 +586,8 @@
     },
     {
       "path": "supabase/functions/copilot-live/index.ts",
-      "bytes": 13898,
-      "sha256": "1a0434bcb8fd4eb9a2bc84c758a5e4dae5ce1e6ba6a279f19fa3d61bb06c9cd7"
+      "bytes": 14208,
+      "sha256": "572b8f6cd168980999a6feb6f6f3c5f98cf61b3e96e1b0955ed4ca32eff0cc8b"
     },
     {
       "path": "supabase/functions/create-user/index.ts",
@@ -1257,7 +1262,7 @@
       "name": "ai-objection-handler",
       "entrypoint": "supabase/functions/ai-objection-handler/index.ts",
       "verify_jwt": true,
-      "source_sha256": "ae2d39911e6396d2614b4b0a3f9539fbff830e079a9998877617c5a5a9599ec7",
+      "source_sha256": "cf3a6779b0ba84742141f8c944a8fc0cd0d1226e3885b27ff23a0c2cb0c62319",
       "source_files": [
         "supabase/functions/_shared/ai-budget.ts",
         "supabase/functions/_shared/ai-capabilities.ts",
@@ -1454,11 +1459,12 @@
       "name": "assistant-gateway",
       "entrypoint": "supabase/functions/assistant-gateway/index.ts",
       "verify_jwt": true,
-      "source_sha256": "6bb783565d9b345da72c70df2f44898abc4f7520b229ef0ca7ea3836eef60f8d",
+      "source_sha256": "3e94bb1702023df33bf555b25a112438f7b114da53f5231c78a51ac47f21cc0b",
       "source_files": [
         "supabase/functions/_shared/ai-feature-flags.ts",
         "supabase/functions/_shared/ai-guards.ts",
         "supabase/functions/_shared/assistant-gateway.ts",
+        "supabase/functions/_shared/assistant-playbook.ts",
         "supabase/functions/_shared/cors-origins.ts",
         "supabase/functions/_shared/hmac-validation.ts",
         "supabase/functions/_shared/rate-limit-log.ts",
@@ -1711,7 +1717,7 @@
       "name": "copilot-live",
       "entrypoint": "supabase/functions/copilot-live/index.ts",
       "verify_jwt": true,
-      "source_sha256": "338d81d364a8a36196e6b13f90ea7f64580e77d309b96e5c71d472a80b354048",
+      "source_sha256": "79ad44f54789ccb6659a72c60271d237636a8b98297f78de9aaa1c5b7dc286ed",
       "source_files": [
         "supabase/functions/_shared/ai-budget.ts",
         "supabase/functions/_shared/ai-capabilities.ts",
@@ -1722,6 +1728,7 @@
         "supabase/functions/_shared/ai-providers.ts",
         "supabase/functions/_shared/ai-routing.ts",
         "supabase/functions/_shared/ai-usage.ts",
+        "supabase/functions/_shared/assistant-playbook.ts",
         "supabase/functions/_shared/cors-origins.ts",
         "supabase/functions/_shared/hmac-validation.ts",
         "supabase/functions/_shared/rate-limit-log.ts",
@@ -2850,5 +2857,5 @@
       ]
     }
   ],
-  "manifest_sha256": "3be6f072307096e18a533ff6676e8ab42a26f755b52a14a4d7c8ba27b3a82305"
+  "manifest_sha256": "f5cf77c3f209e980668a0278ab94e72d05e5a3c43d2b6ed2f6724b9f52a3d019"
 }

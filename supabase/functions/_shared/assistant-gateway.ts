@@ -134,7 +134,11 @@ export function readIntent(query: string): IntentSignals {
  *  - nenhum sinal reconhecido → `agenda` + `resumo_conversa` (o mínimo útil sem
  *    inventar intenção); nunca uma resposta vazia.
  */
-export function routeCapabilities(signals: IntentSignals): AssistantCapability[] {
+export function routeCapabilities(
+  signals: IntentSignals,
+  /** Treino do perfil (Fase 4): capacidades prioritárias quando o pedido é vago. */
+  prioritarias: readonly AssistantCapability[] = [],
+): AssistantCapability[] {
   const picked = new Set<AssistantCapability>();
 
   if (signals.status) {
@@ -151,8 +155,14 @@ export function routeCapabilities(signals: IntentSignals): AssistantCapability[]
   if (signals.objection) picked.add('tratar_objecao');
 
   if (picked.size === 0) {
-    picked.add('agenda');
-    picked.add('resumo_conversa');
+    // Sem sinal explícito, o perfil decide o que abrir primeiro (Fase 4). Sem
+    // perfil, o mínimo útil: agenda (leitura barata) + resumo.
+    if (prioritarias.length > 0) {
+      for (const cap of prioritarias) picked.add(cap);
+    } else {
+      picked.add('agenda');
+      picked.add('resumo_conversa');
+    }
   }
 
   // Ordem estável = ordem canônica, para o teste e a UI não dependerem da ordem

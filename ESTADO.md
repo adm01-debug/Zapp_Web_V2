@@ -37,19 +37,19 @@ partir do código e falha quando:
 | `ai-churn-analysis` | A | `src/components/ai/ChurnPredictionDashboard.tsx:126` |
 | `ai-classify-tickets` | A | `src/components/ai/AutoTicketClassifier.tsx:146` |
 | `ai-conversation-analysis` | A | `src/components/inbox/AIConversationAssistant.tsx:108` |
-| `ai-conversation-summary` | A | `src/components/inbox/ConversationSummary.tsx:92` · `supabase/functions/assistant-gateway/index.ts:38` |
-| `ai-deadline-calculator` | B | `supabase/functions/assistant-gateway/index.ts:42` |
+| `ai-conversation-summary` | A | `src/components/inbox/ConversationSummary.tsx:92` · `supabase/functions/assistant-gateway/index.ts:39` |
+| `ai-deadline-calculator` | B | `supabase/functions/assistant-gateway/index.ts:43` |
 | `ai-enhance-message` | A | `src/components/inbox/chat/AIEnhanceButton.tsx:63` · `src/components/inbox/chat/AIRewriteButton.tsx:51` |
 | `ai-jobs-worker` | C | `supabase/migrations/20261002371230_ia045_ia046_ai_jobs_durabilidade_e_estados.sql:533` |
 | `ai-kb-ingest` | A | `src/hooks/integrations/useKnowledgeBase.ts:137` · `src/hooks/integrations/useKnowledgeBase.ts:208` |
-| `ai-lead-temperature` | B | `supabase/functions/assistant-gateway/index.ts:40` |
+| `ai-lead-temperature` | B | `supabase/functions/assistant-gateway/index.ts:41` |
 | `ai-loss-risk` | E | — sem chamador no repositório — |
 | `ai-multimodal-analysis` | E | — sem chamador no repositório — |
-| `ai-objection-handler` | B | `supabase/functions/assistant-gateway/index.ts:43` |
+| `ai-objection-handler` | B | `supabase/functions/assistant-gateway/index.ts:44` |
 | `ai-price-anchor` | E | — sem chamador no repositório — |
-| `ai-product-recommendation` | B | `supabase/functions/assistant-gateway/index.ts:41` |
+| `ai-product-recommendation` | B | `supabase/functions/assistant-gateway/index.ts:42` |
 | `ai-proxy` | A | `src/components/admin/SupervisorCopilot.tsx:89` · `src/components/settings/ai-providers/useAIProviders.ts:121` · `src/hooks/inbox/useObjectionDetector.ts:91` · `src/hooks/inbox/useObjectionDetector.ts:165` · `src/hooks/ui/useUniversityHelp.ts:130` · `supabase/functions/talkx-ai/index.ts:589` |
-| `ai-suggest-reply` | A | `src/components/inbox/AISuggestions.tsx:104` · `supabase/functions/assistant-gateway/index.ts:39` |
+| `ai-suggest-reply` | A | `src/components/inbox/AISuggestions.tsx:104` · `supabase/functions/assistant-gateway/index.ts:40` |
 | `ai-transcribe-audio` | A | `src/components/inbox/AudioMessagePlayer.tsx:71` · `supabase/functions/_shared/evolution-webhook-messages.ts:1457` |
 | `ai-usage-outbox-drain` | C | `supabase/migrations/20261103223000_ai_usage_outbox_drain_cron.sql:64` · `supabase/config.toml:103` |
 | `approve-password-reset` | A | `src/components/security/PasswordResetRequestsPanel.tsx:32` · `src/components/security/PasswordResetRequestsPanel.tsx:51` · `src/hooks/security/usePasswordResetRequests.ts:51` · `src/hooks/security/usePasswordResetRequests.ts:72` |
