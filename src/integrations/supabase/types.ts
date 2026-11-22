@@ -788,6 +788,36 @@ export type Database = {
         }
         Relationships: []
       }
+      assistant_profiles: {
+        Row: {
+          ajuda: string
+          atividade: string
+          created_at: string
+          foco: string
+          tom: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          ajuda?: string
+          atividade?: string
+          created_at?: string
+          foco?: string
+          tom?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          ajuda?: string
+          atividade?: string
+          created_at?: string
+          foco?: string
+          tom?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       audio_meme_favorites: {
         Row: {
           created_at: string
@@ -3492,36 +3522,6 @@ export type Database = {
           sessions_opened?: number
           ticks_processed?: number
           updated_at?: string
-        }
-        Relationships: []
-      }
-      assistant_profiles: {
-        Row: {
-          atividade: string
-          ajuda: string
-          created_at: string
-          foco: string
-          tom: string
-          updated_at: string
-          user_id: string
-        }
-        Insert: {
-          atividade?: string
-          ajuda?: string
-          created_at?: string
-          foco?: string
-          tom?: string
-          updated_at?: string
-          user_id: string
-        }
-        Update: {
-          atividade?: string
-          ajuda?: string
-          created_at?: string
-          foco?: string
-          tom?: string
-          updated_at?: string
-          user_id?: string
         }
         Relationships: []
       }
