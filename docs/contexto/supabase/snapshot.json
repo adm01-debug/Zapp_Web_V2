@@ -33943,7 +33943,7 @@
           "unit"
         ],
         "deferrable": false,
-        "definition": "CHECK (unit = ANY (ARRAY['token'::text, 'character'::text, 'second'::text, 'request'::text]))",
+        "definition": "CHECK (unit = ANY (ARRAY['token'::text, 'input_token'::text, 'output_token'::text, 'character'::text, 'second'::text, 'request'::text]))",
         "name": "ai_model_prices_unit_check",
         "on_delete": null,
         "on_update": null,
@@ -49183,12 +49183,12 @@
           "triggers": [],
           "views": []
         },
-        "comment": "IA-055 + item 265: custo do periodo pela tarifa vigente no instante de cada registro. Fim da janela nulo = aberta ate agora (nunca zera o relatorio). Separa interno de reconciliado, conta (nunca zera) o que ficou sem tarifa e nao converte moeda.",
+        "comment": "IA-055 §2: custo do periodo por tarifa vigente no instante de cada registro, cobrando ENTRADA e SAIDA pelo preco correspondente e caindo no preco unico quando o modelo nao tem as duas. Fim nulo = janela aberta. Separa interno de reconciliado, conta (nunca zera) o que ficou sem tarifa e nao converte moeda.",
         "config": [
           "search_path=public"
         ],
         "definition": null,
-        "definition_sha": "59c7aa002d996881",
+        "definition_sha": "3b2cfbf7d6cf6541",
         "execute_api_roles": "authenticated, service_role",
         "execute_public": false,
         "is_trigger_fn": false,

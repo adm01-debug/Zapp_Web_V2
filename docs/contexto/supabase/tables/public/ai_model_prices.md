@@ -40,7 +40,7 @@
 | ai_model_prices_price_check | CHECK | `CHECK (unit_price >= 0::numeric)` |  |  | sim |
 | ai_model_prices_provider_id_fkey | FOREIGN KEY | `FOREIGN KEY (provider_id) REFERENCES ai_providers(id) ON DELETE SET NULL` | SET NULL | NO ACTION | sim |
 | ai_model_prices_source_check | CHECK | `CHECK (source = ANY (ARRAY['internal'::text, 'provider_statement'::text]))` |  |  | sim |
-| ai_model_prices_unit_check | CHECK | `CHECK (unit = ANY (ARRAY['token'::text, 'character'::text, 'second'::text, 'request'::text]))` |  |  | sim |
+| ai_model_prices_unit_check | CHECK | `CHECK (unit = ANY (ARRAY['token'::text, 'input_token'::text, 'output_token'::text, 'character'::text, 'second'::text, 'request'::text]))` |  |  | sim |
 | ai_model_prices_vigencia_check | CHECK | `CHECK (valid_to IS NULL OR valid_to > valid_from)` |  |  | sim |
 
 

@@ -2562,7 +2562,7 @@
   {
    "arquivo": "scripts/db-audit/talkx-ab.test.sh",
    "descricao": "X065 Talk X: teste A/B de campanha — colunas, atribuicao no snapshot, estatistica por variante e decisao da vencedora.",
-   "linhas": 329,
+   "linhas": 343,
    "env": [],
    "npm_scripts": [],
    "workflows": [

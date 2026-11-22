@@ -2,6 +2,11 @@
 
 Diff semântico gerado a cada coleta em que algo mudou.
 
+## 2026-11-22 19:11 UTC
+
+- **constraints** alterado (1): `public.ai_model_prices.ai_model_prices_unit_check`
+- **functions** alterado (1): `public.ai_usage_cost_summary(p_since timestamp with time zone, p_until timestamp with time zone, p_top_functions integer)`
+
 ## 2026-11-22 12:17 UTC
 
 - **colunas** adicionado (7): `public.assistant_profiles.ajuda`, `public.assistant_profiles.atividade`, `public.assistant_profiles.created_at`, `public.assistant_profiles.foco`, `public.assistant_profiles.tom`, `public.assistant_profiles.updated_at`, `public.assistant_profiles.user_id`

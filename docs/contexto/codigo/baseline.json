@@ -2,11 +2,21 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "7a351f77ce7917e60311efdbc4eab4f2d5bd5adf",
+  "commit": "ba0b927e3ceaa4cd92b4c9301d13314b16afe3c7",
   "branch": "main",
-  "data_commit": "2026-11-22T14:09:04-03:00",
+  "data_commit": "2026-11-22T16:09:08-03:00",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "ba0b927e",
+    "data": "2026-11-22",
+    "assunto": "chore(docs): atualiza o estado real do plano do assistente pessoal (#3324)"
+   },
+   {
+    "sha": "434daf97",
+    "data": "2026-11-22",
+    "assunto": "fix(ci): torna proporcional a semeadura do caso g do teste A/B do Talk X (#3323)"
+   },
    {
     "sha": "7a351f77",
     "data": "2026-11-22",
@@ -121,19 +131,9 @@
     "sha": "f4a2a776",
     "data": "2026-11-21",
     "assunto": "fix(crm-integration): restaura CRON_SECRET apos testes que o setam (#3296)"
-   },
-   {
-    "sha": "01737c9e",
-    "data": "2026-11-21",
-    "assunto": "feat: unifica relatorios agendados do dashboard na edge por configId com cron"
-   },
-   {
-    "sha": "bf81b135",
-    "data": "2026-11-20",
-    "assunto": "docs(goal): backlog verificado byte a byte (Fase 1) - 1090 pendências (#3293)"
    }
   ],
-  "arquivos_mudados_7d": 7027,
+  "arquivos_mudados_7d": 6992,
   "pastas_mais_mudadas_30d": [
    {
     "pasta": "docs/contexto/supabase",
@@ -207,7 +207,7 @@
    },
    {
     "arquivo": "docs/talkx/ESTADOS.md",
-    "mudancas": 16
+    "mudancas": 15
    },
    {
     "arquivo": "src/integrations/supabase/types.ts",
@@ -266,6 +266,10 @@
     "mudancas": 6
    },
    {
+    "arquivo": "docs/plans/PLANO_ASSISTENTE_PESSOAL_IA_2026-11-15.md",
+    "mudancas": 6
+   },
+   {
     "arquivo": "src/components/talkx/TalkXCampaignRunning.tsx",
     "mudancas": 6
    },
@@ -292,24 +296,16 @@
    {
     "arquivo": ".github/workflows/types-sync.yml",
     "mudancas": 5
-   },
-   {
-    "arquivo": "docs/audits/edge-functions-authz-coverage.md",
-    "mudancas": 5
    }
   ],
   "autores_30d": [
    {
     "autor": "adm01-debug",
-    "commits": 292
+    "commits": 293
    },
    {
     "autor": "github-actions[bot]",
     "commits": 7
-   },
-   {
-    "autor": "dependabot[bot]",
-    "commits": 1
    }
   ]
  },

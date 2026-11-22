@@ -1,7 +1,7 @@
 # Contexto do projeto para agentes de IA
 
 GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.
-Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR dela) a cada push em `main` e a cada 10 minutos pelo workflow `contexto.yml`; índice único das três fontes em `docs/contexto/00-INDEX.md`. Gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `7a351f77ce7917e60311efdbc4eab4f2d5bd5adf` (2026-11-22T14:09:04-03:00).
+Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR dela) a cada push em `main` e a cada 10 minutos pelo workflow `contexto.yml`; índice único das três fontes em `docs/contexto/00-INDEX.md`. Gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `ba0b927e3ceaa4cd92b4c9301d13314b16afe3c7` (2026-11-22T16:09:08-03:00).
 
 ## Como usar (leia antes de planejar ou executar qualquer tarefa)
 1. **Tela/rota/menu** → `rotas.json` (url/vista/menu → arquivo → hooks → tabelas → edges; `rotas_http_backend` para APIs) e `modulos.json` (módulo inteiro + dependências entre módulos).
@@ -397,7 +397,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - possiveis_segredos_no_codigo: 6 — ex.: analise-prs/resgate-261118-lote3/claude_pink/cool-dijkstra-xk9ek2/scripts/ci/edge-coverage-authz.unit.mjs:397, analise-prs/resgate-261118-lote3/claude_pink/cool-dijkstra-xk9ek2/scripts/edge-deploy/redigir-log.unit.mjs:38, scripts/ai-context/cenarios.mjs:102
 
 ## Grafo de código (graphify)
-- 103036 nós · 174931 arestas · 9297 comunidades · grafo do commit `7a351f77`
+- 103036 nós · 174931 arestas · 9297 comunidades · grafo do commit `ba0b927e`
 - comunidades maiores: Communities (5953 total, 1987 thin omitted) (3947), TalkXSuppression.tsx (1755), react (1628), @tanstack/react-query (1163), lucide-react (1111), vitest (968), card.tsx (960), ref_node_fs (729), DashboardView.tsx (616), ExternalProductManagement.tsx (551), validation.ts (450), ref_https (426)
 - símbolos mais chamados: cn() (src/lib/utils.ts), useAuth() (src/hooks/auth/useAuth.tsx), jsonResponse() (supabase/functions/_shared/validation.ts), errorResponse() (supabase/functions/_shared/validation.ts), handleCors() (supabase/functions/_shared/validation.ts), fail() (scripts/e2e-isolated/network-proof-policy.mjs), Logger (supabase/functions/_shared/validation.ts), requireEnv() (supabase/functions/_shared/validation.ts), fmtInt() (src/components/talkx/kit/format.ts), fromTable() (src/lib/supabaseHelpers.ts), useUserRole() (src/hooks/system/useUserRole.ts), validationErrorResponse() (supabase/functions/_shared/schemas.ts)
 - consulta local: `graphify query "<pergunta>"`, `graphify path "<A>" "<B>"`, `graphify explain "<X>"`
@@ -405,7 +405,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 ## Hotspots (arquivos mais alterados, 90 dias)
 - supabase/deployment-manifest.json (35)
 - ESTADO.md (20)
-- docs/talkx/ESTADOS.md (16)
+- docs/talkx/ESTADOS.md (15)
 - src/integrations/supabase/types.ts (14)
 - scripts/db-audit/grants-baseline.json (12)
 - supabase/schema-manifest.json (12)
@@ -525,6 +525,8 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - CHANGELOG topo: [Unreleased]
 
 ## Últimos commits
+- 2026-11-22 `ba0b927e` chore(docs): atualiza o estado real do plano do assistente pessoal (#3324)
+- 2026-11-22 `434daf97` fix(ci): torna proporcional a semeadura do caso g do teste A/B do Talk X (#3323)
 - 2026-11-22 `7a351f77` feat(assistente): decide por edge as 7 edges restantes da porta unica (#3321)
 - 2026-11-22 `1f71f25d` feat(assistente): liga risco de perda e ancoragem de preco na porta unica (#3320)
 - 2026-11-22 `bcf4dcc8` chore(db): sincronizar artefatos derivados do banco (#3315)
@@ -538,8 +540,6 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - 2026-11-21 `1669013e` feat(lgpd): mascara dados sensiveis antes de enviar texto a IA em 5 pontos (#3308)
 - 2026-11-21 `85feab2a` feat(talkx): monta orfaos RADAR (decision maker/stakeholders/ocasiao) e SpeedSelector no header (#3307)
 - 2026-11-21 `7f2b4e62` feat(talkx): monta cards órfãos X149/X144 (Fila por Segmento + Linha do Tempo Operacional) no report de campanha (#3306)
-- 2026-11-21 `be88b1e6` fix(ci): usa fileURLToPath no caminho do script W98 (teste 15) (#3305)
-- 2026-11-21 `bfe8a3aa` chore(contexto): protege branch contexto da poda + indice migration->PR (#3304)
 
 ## Arquivos deste diretório
 - `docs/contexto/codigo/rotas.json`

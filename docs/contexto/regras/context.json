@@ -1,9 +1,9 @@
 {
  "meta": {
-  "sha": "7a351f77ce7917e60311efdbc4eab4f2d5bd5adf",
+  "sha": "ba0b927e3ceaa4cd92b4c9301d13314b16afe3c7",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-22 17:10 UTC",
+  "generated_at": "2026-11-22 19:12 UTC",
   "files_total": 15602,
   "code_files": 8905,
   "code_lines": 1412527
@@ -481184,10 +481184,28 @@
   }
  },
  "git": {
-  "sha": "7a351f77ce7917e60311efdbc4eab4f2d5bd5adf",
+  "sha": "ba0b927e3ceaa4cd92b4c9301d13314b16afe3c7",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "ba0b927e",
+    "date": "2026-11-22",
+    "author": "adm01-debug",
+    "subject": "chore(docs): atualiza o estado real do plano do assistente pessoal (#3324)",
+    "files": [
+     "docs/plans/PLANO_ASSISTENTE_PESSOAL_IA_2026-11-15.md"
+    ]
+   },
+   {
+    "sha": "434daf97",
+    "date": "2026-11-22",
+    "author": "adm01-debug",
+    "subject": "fix(ci): torna proporcional a semeadura do caso g do teste A/B do Talk X (#3323)",
+    "files": [
+     "scripts/db-audit/talkx-ab.test.sh"
+    ]
+   },
    {
     "sha": "7a351f77",
     "date": "2026-11-22",
@@ -482639,25 +482657,6 @@
      "docs/ci/README.md",
      "scripts/ci/ci-docs-baseline.unit.mjs"
     ]
-   },
-   {
-    "sha": "55b35739",
-    "date": "2026-11-19",
-    "author": "adm01-debug",
-    "subject": "chore(contexto): atualiza snapshots X065 (persist_talkx_recipient_message_snapshot e set_talkx_campaign_ab) (#3289)",
-    "files": [
-     "docs/contexto/supabase/functions/public/persist_talkx_recipient_message_snapshot__ed449af90cfdbaee.sql",
-     "docs/contexto/supabase/functions/public/set_talkx_campaign_ab__46dd90c49e20c67b.sql"
-    ]
-   },
-   {
-    "sha": "76b0c7eb",
-    "date": "2026-11-19",
-    "author": "adm01-debug",
-    "subject": "docs(mapa): incorporar acervo de refs do remoto + veredito da auditoria (#3287)",
-    "files": [
-     "docs/agentes/mapa-repo.md"
-    ]
    }
   ],
   "hot_files": [
@@ -482671,7 +482670,7 @@
    ],
    [
     "docs/plans/PLANO_ASSISTENTE_PESSOAL_IA_2026-11-15.md",
-    4
+    5
    ],
    [
     "supabase/functions/_shared/assistant-gateway.ts",
@@ -482730,15 +482729,15 @@
     2
    ],
    [
+    "scripts/db-audit/talkx-ab.test.sh",
+    1
+   ],
+   [
     "supabase/functions/_shared/assistant-playbook.test.ts",
     1
    ],
    [
     "supabase/functions/_shared/assistant-playbook.ts",
-    1
-   ],
-   [
-    "supabase/functions/ai-objection-handler/index.ts",
     1
    ]
   ]
