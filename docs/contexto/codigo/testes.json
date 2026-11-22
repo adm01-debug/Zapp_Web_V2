@@ -5,18 +5,18 @@
   "vitest",
   "playwright"
  ],
- "total": 3202,
+ "total": 3204,
  "por_tipo": {
   "contrato": 130,
   "e2e": 89,
   "pytest": 3,
   "qa": 9,
-  "unit": 2880
+  "unit": 2882
  },
  "onde_ficam": [
   {
    "padrao": "co-localizado (__tests__)",
-   "arquivos": 2358
+   "arquivos": 2360
   },
   {
    "padrao": "outro",
@@ -16138,6 +16138,15 @@
    "casos": 3
   },
   {
+   "arquivo": "src/components/talkx/__tests__/TalkXMonitorHeader.test.tsx",
+   "tipo": "unit",
+   "linhas": 137,
+   "testa": [
+    "src/components/talkx/tracking/TalkXMonitorHeader.tsx"
+   ],
+   "casos": 7
+  },
+  {
    "arquivo": "src/components/talkx/__tests__/TalkXMultiSegmentos.test.tsx",
    "tipo": "unit",
    "linhas": 258,
@@ -16823,6 +16832,15 @@
     "src/components/talkx/TalkXView.tsx"
    ],
    "casos": 3
+  },
+  {
+   "arquivo": "src/components/talkx/__tests__/TalkXView.monitor.test.tsx",
+   "tipo": "unit",
+   "linhas": 267,
+   "testa": [
+    "src/components/talkx/TalkXView.tsx"
+   ],
+   "casos": 7
   },
   {
    "arquivo": "src/components/talkx/__tests__/TalkXView.rascunhoNaoRemonta.test.tsx",
@@ -29731,7 +29749,7 @@
   "src/components/talkx/TalkXTemplateEditor.tsx": 9,
   "src/components/talkx/TalkXTemplateImportDialog.tsx": 1,
   "src/components/talkx/TalkXTemplates.tsx": 12,
-  "src/components/talkx/TalkXView.tsx": 12,
+  "src/components/talkx/TalkXView.tsx": 13,
   "src/components/talkx/TalkXWizardDelivery.tsx": 9,
   "src/components/talkx/__dev__/TalkXKit.tsx": 1,
   "src/components/talkx/analytics/AnalyticsFunnel.tsx": 1,
@@ -29788,6 +29806,7 @@
   "src/components/talkx/tracking/TalkXKeyMetricsCard.tsx": 1,
   "src/components/talkx/tracking/TalkXLimitsDialog.tsx": 1,
   "src/components/talkx/tracking/TalkXLiveKpiRow.tsx": 1,
+  "src/components/talkx/tracking/TalkXMonitorHeader.tsx": 1,
   "src/components/talkx/tracking/TalkXOperationalTimeline.tsx": 1,
   "src/components/talkx/tracking/TalkXRecipientRowActions.tsx": 1,
   "src/components/talkx/tracking/TalkXRecipientsTable.tsx": 1,

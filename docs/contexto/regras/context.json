@@ -1,15 +1,15 @@
 {
  "meta": {
-  "sha": "436a10e2b2caa2dad26b62390d9a40fb41860dc4",
+  "sha": "5ce080f9bff936afc4cef8da99e00a4034c91525",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-22 00:54 UTC",
-  "files_total": 15574,
-  "code_files": 8878,
-  "code_lines": 1408278
+  "generated_at": "2026-11-22 03:18 UTC",
+  "files_total": 15577,
+  "code_files": 8881,
+  "code_lines": 1408964
  },
  "version": "1.3.2",
- "facts_hash": "0a4d29830adceb35",
+ "facts_hash": "afb2edbc21c8a9b0",
  "stack": {
   "frameworks": [
    "React + Vite",
@@ -345,7 +345,7 @@
   "package_manager": "bun",
   "languages": {
    ".sql": 3062,
-   ".tsx": 2805,
+   ".tsx": 2808,
    ".ts": 2230,
    ".mjs": 652,
    ".py": 125,
@@ -73319,7 +73319,7 @@
     "file": ".github/workflows/types-sync.yml"
    }
   ],
-  "components_count": 2583,
+  "components_count": 2586,
   "hooks": [
    {
     "name": "useMotionSeguro",
@@ -77211,8 +77211,8 @@
   },
   {
    "module": "src/components",
-   "files": 2288,
-   "lines": 389322,
+   "files": 2291,
+   "lines": 390008,
    "tables": [
     "agent_skills",
     "agent_visibility_grants",
@@ -106452,6 +106452,10 @@
    },
    {
     "file": "src/components/talkx/TalkXLiveMonitor.tsx",
+    "text": "X145: o recorte do dia não pode esconder quem ainda está na fila (sem `sent_at`):"
+   },
+   {
+    "file": "src/components/talkx/TalkXLiveMonitor.tsx",
     "text": "(mesmo motivo pelo qual o gráfico de ritmo também não deve receber esse filtro)."
    },
    {
@@ -106821,6 +106825,14 @@
    {
     "file": "src/components/talkx/tracking/TalkXLiveKpiRow.tsx",
     "text": "Linha neutra (taxa, porcentagem da base, \"de N contatos\") não pode virar verde por acaso."
+   },
+   {
+    "file": "src/components/talkx/tracking/TalkXMonitorHeader.tsx",
+    "text": "- o título e o subtítulo não citam o canal: a regra permanente de 08/10/2026"
+   },
+   {
+    "file": "src/components/talkx/tracking/TalkXMonitorHeader.tsx",
+    "text": "`tecla`, não `key`: a regra local/no-secret-compare confunde `.key` (filtro) com credencial."
    },
    {
     "file": "src/components/talkx/tracking/TalkXRecipientRowActions.tsx",
@@ -124586,6 +124598,11 @@
     "value": "7"
    },
    {
+    "file": "src/components/talkx/tracking/TalkXMonitorHeader.tsx",
+    "name": "MAX_DAY_OPTIONS",
+    "value": "31"
+   },
+   {
     "file": "src/components/talkx/tracking/TalkXRecipientsTable.tsx",
     "name": "PAGE_SIZE",
     "value": "50"
@@ -140485,6 +140502,18 @@
    {
     "file": "src/components/talkx/TalkXView.tsx",
     "field": "status",
+    "value": "sending",
+    "kind": "compara"
+   },
+   {
+    "file": "src/components/talkx/TalkXView.tsx",
+    "field": "status",
+    "value": "paused",
+    "kind": "compara"
+   },
+   {
+    "file": "src/components/talkx/TalkXView.tsx",
+    "field": "status",
     "value": "scheduled",
     "kind": "compara"
    },
@@ -141110,6 +141139,30 @@
     "file": "src/components/talkx/tracking/TalkXCampaignActionsCard.tsx",
     "field": "status",
     "value": "paused",
+    "kind": "compara"
+   },
+   {
+    "file": "src/components/talkx/tracking/TalkXMonitorHeader.tsx",
+    "field": "status",
+    "value": "paused",
+    "kind": "compara"
+   },
+   {
+    "file": "src/components/talkx/tracking/TalkXMonitorHeader.tsx",
+    "field": "status",
+    "value": "sending",
+    "kind": "compara"
+   },
+   {
+    "file": "src/components/talkx/tracking/TalkXMonitorHeader.tsx",
+    "field": "status",
+    "value": "paused",
+    "kind": "compara"
+   },
+   {
+    "file": "src/components/talkx/tracking/TalkXMonitorHeader.tsx",
+    "field": "status",
+    "value": "all",
     "kind": "compara"
    },
    {
@@ -204527,6 +204580,38 @@
     "name": "variant="
    },
    {
+    "file": "src/components/talkx/__tests__/TalkXMonitorHeader.test.tsx",
+    "name": "TalkXMonitorHeader (X145)"
+   },
+   {
+    "file": "src/components/talkx/__tests__/TalkXMonitorHeader.test.tsx",
+    "name": "(1) mostra a trilha, o título do mock e o subtítulo sem citar o canal"
+   },
+   {
+    "file": "src/components/talkx/__tests__/TalkXMonitorHeader.test.tsx",
+    "name": "(2) o filtro de dia abre em "
+   },
+   {
+    "file": "src/components/talkx/__tests__/TalkXMonitorHeader.test.tsx",
+    "name": "(3) o filtro de segmentação lista as segmentações da campanha e devolve o id"
+   },
+   {
+    "file": "src/components/talkx/__tests__/TalkXMonitorHeader.test.tsx",
+    "name": "(4) sem segmentação na campanha o filtro não aparece (não há controle sem consumidor)"
+   },
+   {
+    "file": "src/components/talkx/__tests__/TalkXMonitorHeader.test.tsx",
+    "name": "(5) o filtro de status oferece os mesmos status do card de destinatários"
+   },
+   {
+    "file": "src/components/talkx/__tests__/TalkXMonitorHeader.test.tsx",
+    "name": "(6) o botão atualizar aciona a releitura da tela"
+   },
+   {
+    "file": "src/components/talkx/__tests__/TalkXMonitorHeader.test.tsx",
+    "name": "(7) o chip seletor mostra "
+   },
+   {
     "file": "src/components/talkx/__tests__/TalkXMultiSegmentos.test.tsx",
     "name": "Talk X multi-segmentos — união, payload e lista (N-113)"
    },
@@ -206409,6 +206494,38 @@
    {
     "file": "src/components/talkx/__tests__/TalkXView.carregamento.test.tsx",
     "name": "busca a tela — e só então a mostra — quando a aba é aberta pela barra"
+   },
+   {
+    "file": "src/components/talkx/__tests__/TalkXView.monitor.test.tsx",
+    "name": "TalkXView — tela Monitor (X145)"
+   },
+   {
+    "file": "src/components/talkx/__tests__/TalkXView.monitor.test.tsx",
+    "name": "(1) ?campaign=&screen=monitor abre a campanha roteada no Monitor"
+   },
+   {
+    "file": "src/components/talkx/__tests__/TalkXView.monitor.test.tsx",
+    "name": "(2) sem campanha em envio, a rota da pausada acompanha a pausada"
+   },
+   {
+    "file": "src/components/talkx/__tests__/TalkXView.monitor.test.tsx",
+    "name": "(3) campanha inexistente na rota mostra o estado vazio do kit com "
+   },
+   {
+    "file": "src/components/talkx/__tests__/TalkXView.monitor.test.tsx",
+    "name": "(4) o filtro de status do cabeçalho recorta a lista de destinatários e não o ritmo"
+   },
+   {
+    "file": "src/components/talkx/__tests__/TalkXView.monitor.test.tsx",
+    "name": "(5) o filtro de segmentação recorta a leitura pelo segmento da campanha"
+   },
+   {
+    "file": "src/components/talkx/__tests__/TalkXView.monitor.test.tsx",
+    "name": "(6) o filtro de dia recorta a janela do dia escolhido (sem esconder quem está na fila)"
+   },
+   {
+    "file": "src/components/talkx/__tests__/TalkXView.monitor.test.tsx",
+    "name": "(7) leitura de campanhas com erro mostra o erro do kit, nunca o vazio, e "
    },
    {
     "file": "src/components/talkx/__tests__/TalkXView.rascunhoNaoRemonta.test.tsx",
@@ -285086,6 +285203,7 @@
       "compara:src/components/talkx/TalkXView.tsx",
       "compara:src/components/talkx/talkxRoute.ts",
       "compara:src/components/talkx/tracking/TalkXCampaignActionsCard.tsx",
+      "compara:src/components/talkx/tracking/TalkXMonitorHeader.tsx",
       "compara:src/components/talkx/tracking/talkxHealth.ts",
       "compara:src/components/talkx/useCampaignRowActions.tsx",
       "compara:src/hooks/integrations/useTalkXAnalytics.ts",
@@ -285257,6 +285375,7 @@
       "compara:src/components/talkx/kit/ActiveCampaignIndicator.tsx",
       "compara:src/components/talkx/talkxRoute.ts",
       "compara:src/components/talkx/tracking/TalkXCampaignActionsCard.tsx",
+      "compara:src/components/talkx/tracking/TalkXMonitorHeader.tsx",
       "compara:src/components/talkx/tracking/talkxHealth.ts",
       "compara:src/components/talkx/useCampaignRowActions.tsx",
       "compara:src/hooks/integrations/useTalkXResumeChecklist.ts",
@@ -285487,6 +285606,7 @@
       "compara:analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/talkx/segments/SegmentSideList.tsx",
       "compara:src/components/talkx/TalkXOverview.tsx",
       "compara:src/components/talkx/segments/SegmentSideList.tsx",
+      "compara:src/components/talkx/tracking/TalkXMonitorHeader.tsx",
       "escreve:src/hooks/integrations/useTalkXSegments.ts"
      ],
      "SUBSCRIBED": [
@@ -394810,7 +394930,7 @@
   },
   "src/components/talkx/TalkXLiveMonitor.tsx": {
    "path": "src/components/talkx/TalkXLiveMonitor.tsx",
-   "lines": 346,
+   "lines": 386,
    "exports": [
     "function TalkXLiveMonitor"
    ],
@@ -394864,6 +394984,7 @@
     }
    ],
    "rule_comments": [
+    "X145: o recorte do dia não pode esconder quem ainda está na fila (sem `sent_at`):",
     "(mesmo motivo pelo qual o gráfico de ritmo também não deve receber esse filtro)."
    ],
    "pagination": [
@@ -395274,7 +395395,7 @@
   },
   "src/components/talkx/TalkXView.tsx": {
    "path": "src/components/talkx/TalkXView.tsx",
-   "lines": 692,
+   "lines": 759,
    "exports": [
     "type TalkXTopView",
     "function TalkXView"
@@ -395328,6 +395449,16 @@
     {
      "field": "status",
      "value": "scheduled",
+     "kind": "compara"
+    },
+    {
+     "field": "status",
+     "value": "sending",
+     "kind": "compara"
+    },
+    {
+     "field": "status",
+     "value": "paused",
      "kind": "compara"
     },
     {
@@ -397221,6 +397352,27 @@
     "variant="
    ]
   },
+  "src/components/talkx/__tests__/TalkXMonitorHeader.test.tsx": {
+   "path": "src/components/talkx/__tests__/TalkXMonitorHeader.test.tsx",
+   "lines": 137,
+   "is_test": true,
+   "temporal": [
+    "const completed: MonitorCampaign = { id: 'c-done', name: 'Campanha concluída', status: 'completed', started_at: subDays(new Date(), 9).toISOString() };",
+    "const paused: MonitorCampaign = { id: 'c-paused', name: 'Campanha pausada', status: 'paused', started_at: subDays(new Date(), 5).toISOString() };",
+    "const startedAt = subDays(new Date(), 2).toISOString();",
+    "expect(props.onDayChange).toHaveBeenCalledWith(isoDay(subDays(new Date(), 1)));"
+   ],
+   "tests": [
+    "TalkXMonitorHeader (X145)",
+    "(1) mostra a trilha, o título do mock e o subtítulo sem citar o canal",
+    "(2) o filtro de dia abre em ",
+    "(3) o filtro de segmentação lista as segmentações da campanha e devolve o id",
+    "(4) sem segmentação na campanha o filtro não aparece (não há controle sem consumidor)",
+    "(5) o filtro de status oferece os mesmos status do card de destinatários",
+    "(6) o botão atualizar aciona a releitura da tela",
+    "(7) o chip seletor mostra "
+   ]
+  },
   "src/components/talkx/__tests__/TalkXMultiSegmentos.test.tsx": {
    "path": "src/components/talkx/__tests__/TalkXMultiSegmentos.test.tsx",
    "lines": 258,
@@ -398358,6 +398510,32 @@
     "importar o TalkXView não busca a tela de nenhuma aba",
     "abrir o módulo na Visão geral não busca as telas das outras abas",
     "busca a tela — e só então a mostra — quando a aba é aberta pela barra"
+   ]
+  },
+  "src/components/talkx/__tests__/TalkXView.monitor.test.tsx": {
+   "path": "src/components/talkx/__tests__/TalkXView.monitor.test.tsx",
+   "lines": 267,
+   "is_test": true,
+   "rule_comments": [
+    "O construtor é \"thenable\": o código encadeia `.eq` depois do `.limit` e só então aguarda."
+   ],
+   "temporal": [
+    "const janelaDeOntem = startOfDay(subDays(new Date(), 1)).toISOString();",
+    "const paused = { ...baseCampaign, id: 'c-paused', name: 'Campanha pausada', status: 'paused', started_at: subDays(new Date(), 5).toISOString() };",
+    "const sending = { ...baseCampaign, id: 'c-sending', name: 'Campanha em andamento', status: 'sending', segment_id: 'seg-vip', started_at: subDays(new Date(), 2). …",
+    "expect(janelaDeHoje()).toContain(`${format(subDays(new Date(), 1), 'yyyy-MM-dd')}`);",
+    "outcome_unknown_count: 0, started_at: subDays(new Date(), 1).toISOString(), completed_at: null,",
+    "whatsapp_connection_id: null, created_at: subDays(new Date(), 2).toISOString(),"
+   ],
+   "tests": [
+    "TalkXView — tela Monitor (X145)",
+    "(1) ?campaign=&screen=monitor abre a campanha roteada no Monitor",
+    "(2) sem campanha em envio, a rota da pausada acompanha a pausada",
+    "(3) campanha inexistente na rota mostra o estado vazio do kit com ",
+    "(4) o filtro de status do cabeçalho recorta a lista de destinatários e não o ritmo",
+    "(5) o filtro de segmentação recorta a leitura pelo segmento da campanha",
+    "(6) o filtro de dia recorta a janela do dia escolhido (sem esconder quem está na fila)",
+    "(7) leitura de campanhas com erro mostra o erro do kit, nunca o vazio, e "
    ]
   },
   "src/components/talkx/__tests__/TalkXView.rascunhoNaoRemonta.test.tsx": {
@@ -400814,6 +400992,48 @@
     "Linha neutra (taxa, porcentagem da base, \"de N contatos\") não pode virar verde por acaso."
    ],
    "doc": "X146 · Talk X — faixa de KPIs ao vivo das telas 11 (Monitor) e 12 (Em andamento). O componente é APRESENTACIONAL: não faz consulta nenhuma. Toda a faixa vem do objeto `panel` — o mesmo payload que o painel `useTalkXMonitorPanel` (X144) entrega. É o que garante que a tela e o painel contem a mesma hi …"
+  },
+  "src/components/talkx/tracking/TalkXMonitorHeader.tsx": {
+   "path": "src/components/talkx/tracking/TalkXMonitorHeader.tsx",
+   "lines": 175,
+   "exports": [
+    "interface MonitorCampaign",
+    "interface MonitorSegmentOption",
+    "interface TalkXMonitorHeaderProps",
+    "function TalkXMonitorHeader"
+   ],
+   "params": [
+    {
+     "name": "MAX_DAY_OPTIONS",
+     "value": "31"
+    }
+   ],
+   "status_values": [
+    {
+     "field": "status",
+     "value": "paused",
+     "kind": "compara"
+    },
+    {
+     "field": "status",
+     "value": "sending",
+     "kind": "compara"
+    },
+    {
+     "field": "status",
+     "value": "paused",
+     "kind": "compara"
+    },
+    {
+     "field": "status",
+     "value": "all",
+     "kind": "compara"
+    }
+   ],
+   "rule_comments": [
+    "- o título e o subtítulo não citam o canal: a regra permanente de 08/10/2026",
+    "`tecla`, não `key`: a regra local/no-secret-compare confunde `.key` (filtro) com credencial."
+   ]
   },
   "src/components/talkx/tracking/TalkXOperationalTimeline.tsx": {
    "path": "src/components/talkx/tracking/TalkXOperationalTimeline.tsx",
@@ -479361,10 +479581,24 @@
   }
  },
  "git": {
-  "sha": "436a10e2b2caa2dad26b62390d9a40fb41860dc4",
+  "sha": "5ce080f9bff936afc4cef8da99e00a4034c91525",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "5ce080f9",
+    "date": "2026-11-22",
+    "author": "adm01-debug",
+    "subject": "feat(talkx): resgata cabeçalho da aba Monitor (X145/TL-154) de commit de 10/10 não incorporado (#3312)",
+    "files": [
+     "docs/talkx/ESTADOS.md",
+     "src/components/talkx/TalkXLiveMonitor.tsx",
+     "src/components/talkx/TalkXView.tsx",
+     "src/components/talkx/__tests__/TalkXMonitorHeader.test.tsx",
+     "src/components/talkx/__tests__/TalkXView.monitor.test.tsx",
+     "src/components/talkx/tracking/TalkXMonitorHeader.tsx"
+    ]
+   },
    {
     "sha": "436a10e2",
     "date": "2026-11-21",
@@ -480770,15 +481004,6 @@
      "PENDENCIAS.md",
      "docs/agentes/github-ci.md"
     ]
-   },
-   {
-    "sha": "b85934ad",
-    "date": "2026-11-18",
-    "author": "adm01-debug",
-    "subject": "docs(banco): indice de cron.job_run_details virou obsoleto, sem chamado a abrir (#3277)",
-    "files": [
-     "docs/agentes/banco.md"
-    ]
    }
   ],
   "hot_files": [
@@ -480811,6 +481036,30 @@
     2
    ],
    [
+    "docs/talkx/ESTADOS.md",
+    1
+   ],
+   [
+    "src/components/talkx/TalkXLiveMonitor.tsx",
+    1
+   ],
+   [
+    "src/components/talkx/TalkXView.tsx",
+    1
+   ],
+   [
+    "src/components/talkx/__tests__/TalkXMonitorHeader.test.tsx",
+    1
+   ],
+   [
+    "src/components/talkx/__tests__/TalkXView.monitor.test.tsx",
+    1
+   ],
+   [
+    "src/components/talkx/tracking/TalkXMonitorHeader.tsx",
+    1
+   ],
+   [
     "src/components/inbox/AIConversationAssistant.tsx",
     1
    ],
@@ -480836,30 +481085,6 @@
    ],
    [
     "src/components/inbox/chat/__tests__/ChatPanelHeader.crm.test.tsx",
-    1
-   ],
-   [
-    "src/components/inbox/copilot/RadarCards.tsx",
-    1
-   ],
-   [
-    "src/components/inbox/copilot/RadarPanel.tsx",
-    1
-   ],
-   [
-    "src/components/inbox/copilot/StakeholdersCard.tsx",
-    1
-   ],
-   [
-    "src/components/inbox/copilot/__tests__/RadarPanel.test.tsx",
-    1
-   ],
-   [
-    "src/components/talkx/report/TalkXCampaignReport.tsx",
-    1
-   ],
-   [
-    "src/components/talkx/report/__tests__/TalkXCampaignReport.test.tsx",
     1
    ]
   ]

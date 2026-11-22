@@ -1,8 +1,8 @@
 {
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
- "nos": 2731,
- "arestas": 9342,
+ "nos": 2732,
+ "arestas": 9345,
  "hubs": [
   {
    "arquivo": "src/lib/utils.ts",
@@ -42,7 +42,7 @@
   },
   {
    "arquivo": "src/components/ui/select.tsx",
-   "importado_por": 139
+   "importado_por": 140
   },
   {
    "arquivo": "src/hooks/auth/useAuth.tsx",
@@ -109,15 +109,15 @@
    "importado_por": 58
   },
   {
+   "arquivo": "src/components/talkx/talkxShared.ts",
+   "importado_por": 56
+  },
+  {
    "arquivo": "supabase/functions/_shared/schemas.ts",
    "importado_por": 56
   },
   {
    "arquivo": "src/components/dashboard/overview/DashboardCard.tsx",
-   "importado_por": 55
-  },
-  {
-   "arquivo": "src/components/talkx/talkxShared.ts",
    "importado_por": 55
   },
   {

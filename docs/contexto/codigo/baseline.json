@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "436a10e2b2caa2dad26b62390d9a40fb41860dc4",
+  "commit": "5ce080f9bff936afc4cef8da99e00a4034c91525",
   "branch": "main",
-  "data_commit": "2026-11-21T21:52:35-03:00",
+  "data_commit": "2026-11-22T00:16:57-03:00",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "5ce080f9",
+    "data": "2026-11-22",
+    "assunto": "feat(talkx): resgata cabeçalho da aba Monitor (X145/TL-154) de commit de 10/10 não incorporado (#3312)"
+   },
    {
     "sha": "436a10e2",
     "data": "2026-11-21",
@@ -126,14 +131,9 @@
     "sha": "49640b0a",
     "data": "2026-11-19",
     "assunto": "fix(team-chat): erro ao ler config de WhatsApp deixa de virar formulario \"Nenhum\" (#3283)"
-   },
-   {
-    "sha": "a38fc63d",
-    "data": "2026-11-19",
-    "assunto": "fix(team-chat): falha ao ler convites deixa de se disfarcar de \"nenhum convite\" (#3282)"
    }
   ],
-  "arquivos_mudados_7d": 7374,
+  "arquivos_mudados_7d": 7370,
   "pastas_mais_mudadas_30d": [
    {
     "pasta": "docs/contexto/supabase",
@@ -161,7 +161,7 @@
    },
    {
     "pasta": "src/components/talkx",
-    "mudancas": 359
+    "mudancas": 364
    },
    {
     "pasta": "analise-prs/resgate-261115/dossies",
@@ -207,7 +207,7 @@
    },
    {
     "arquivo": "docs/talkx/ESTADOS.md",
-    "mudancas": 15
+    "mudancas": 16
    },
    {
     "arquivo": "scripts/db-audit/grants-baseline.json",
@@ -270,6 +270,10 @@
     "mudancas": 6
    },
    {
+    "arquivo": "src/components/talkx/TalkXView.tsx",
+    "mudancas": 6
+   },
+   {
     "arquivo": "supabase/functions/_shared/schemas.ts",
     "mudancas": 6
    },
@@ -292,10 +296,6 @@
    {
     "arquivo": "docs/contexto/regras/manual/regras.md",
     "mudancas": 5
-   },
-   {
-    "arquivo": "docs/prod-readiness.md",
-    "mudancas": 5
    }
   ],
   "autores_30d": [
@@ -314,21 +314,21 @@
   ]
  },
  "contagens": {
-  "arquivos_total": 15718,
-  "arquivos_codigo": 5842,
-  "linhas_codigo": 1130859,
+  "arquivos_total": 15721,
+  "arquivos_codigo": 5845,
+  "linhas_codigo": 1131545,
   "rotas": 18,
   "rotas_http_backend": 11,
   "vistas_por_id": 55,
   "itens_menu": 61,
   "modulos": 147,
-  "componentes": 1054,
+  "componentes": 1055,
   "hooks": 600,
   "edge_functions": 92,
   "tabelas": 221,
   "migrations": 1149,
   "cron_jobs": 29,
-  "testes": 3202,
+  "testes": 3204,
   "workflows": 24,
   "scripts": 451,
   "docs_md": 4082
@@ -727,8 +727,8 @@
    "linhas": 638
   },
   "src/components": {
-   "arquivos": 2288,
-   "linhas": 389322
+   "arquivos": 2291,
+   "linhas": 390008
   },
   "src/config": {
    "arquivos": 3,

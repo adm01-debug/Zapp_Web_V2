@@ -1,7 +1,7 @@
 # Contexto do projeto para agentes de IA
 
 GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.
-Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR dela) a cada push em `main` e a cada 10 minutos pelo workflow `contexto.yml`; índice único das três fontes em `docs/contexto/00-INDEX.md`. Gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `436a10e2b2caa2dad26b62390d9a40fb41860dc4` (2026-11-21T21:52:35-03:00).
+Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR dela) a cada push em `main` e a cada 10 minutos pelo workflow `contexto.yml`; índice único das três fontes em `docs/contexto/00-INDEX.md`. Gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `5ce080f9bff936afc4cef8da99e00a4034c91525` (2026-11-22T00:16:57-03:00).
 
 ## Como usar (leia antes de planejar ou executar qualquer tarefa)
 1. **Tela/rota/menu** → `rotas.json` (url/vista/menu → arquivo → hooks → tabelas → edges; `rotas_http_backend` para APIs) e `modulos.json` (módulo inteiro + dependências entre módulos).
@@ -14,7 +14,7 @@ Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR
 Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua tarefa; não carregue tudo.
 
 ## Stack
-- linguagens: TypeScript (5039), Markdown (4082), SQL (3062), JSON (1968), JavaScript (682), Shell (264), Python (125), YAML (112)
+- linguagens: TypeScript (5042), Markdown (4082), SQL (3062), JSON (1968), JavaScript (682), Shell (264), Python (125), YAML (112)
 - linguagem_principal: TypeScript
 - framework: React
 - backend_http: n/d
@@ -34,31 +34,31 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 ## Números
 | item | qtd |
 |---|---|
-| arquivos_total | 15718 |
-| arquivos_codigo | 5842 |
-| linhas_codigo | 1130859 |
+| arquivos_total | 15721 |
+| arquivos_codigo | 5845 |
+| linhas_codigo | 1131545 |
 | rotas | 18 |
 | rotas_http_backend | 11 |
 | vistas_por_id | 55 |
 | itens_menu | 61 |
 | modulos | 147 |
-| componentes | 1054 |
+| componentes | 1055 |
 | hooks | 600 |
 | edge_functions | 92 |
 | tabelas | 221 |
 | migrations | 1149 |
 | cron_jobs | 29 |
-| testes | 3202 |
+| testes | 3204 |
 | workflows | 24 |
 | scripts | 451 |
 | docs_md | 4082 |
 
 ## Onde ficam as coisas
 - telas: src/components (54), src/pages (18)
-- componentes: src/components (890), analise-prs/resgate-261118-lote3 (129), src/pages (26)
+- componentes: src/components (891), analise-prs/resgate-261118-lote3 (129), src/pages (26)
 - hooks: src/hooks (423), analise-prs/resgate-261118-lote3 (92), src/components (74)
 - servicos_logica: src/lib (153), src/services (20), src/utils (8)
-- testes: co-localizado (__tests__) (2358), outro (348), co-localizado (*.test) (232)
+- testes: co-localizado (__tests__) (2360), outro (348), co-localizado (*.test) (232)
 - edge_functions: supabase/functions
 - migrations: supabase/migrations
 - scripts: scripts/db-audit (303), scripts/ci (44), scripts/e2e-isolated (41)
@@ -108,7 +108,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 | components/schedule | 1 | 1 | 1 | 17 | 2 | 7 |
 | components/security | 2 | 2 | 23 | 29 | 6 | 16 |
 | components/settings | 2 | 2 | 44 | 46 | 8 | 29 |
-| components/talkx | 1 | 2 | 104 | 77 | 7 | 24 |
+| components/talkx | 1 | 2 | 105 | 77 | 7 | 24 |
 | components/tasks | 1 | 1 | 51 | 27 | 2 | 11 |
 | components/team-chat | 1 | 1 | 27 | 67 | 9 | 15 |
 | components/theme | 0 | 0 | 5 | 2 | 0 | 0 |
@@ -395,15 +395,15 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - possiveis_segredos_no_codigo: 6 — ex.: analise-prs/resgate-261118-lote3/claude_pink/cool-dijkstra-xk9ek2/scripts/ci/edge-coverage-authz.unit.mjs:397, analise-prs/resgate-261118-lote3/claude_pink/cool-dijkstra-xk9ek2/scripts/edge-deploy/redigir-log.unit.mjs:38, scripts/ai-context/cenarios.mjs:102
 
 ## Grafo de código (graphify)
-- 102849 nós · 174488 arestas · 9255 comunidades · grafo do commit `436a10e2`
-- comunidades maiores: Communities (5953 total, 1987 thin omitted) (3946), react (1323), lucide-react (1163), vitest (888), utils.ts (799), chat.ts (735), TalkXSuppression.tsx (678), cn (676), ref_node_fs (654), DashboardView.tsx (648), validation.ts (573), ref_https (439)
+- 102885 nós · 174565 arestas · 9119 comunidades · grafo do commit `5ce080f9`
+- comunidades maiores: Communities (5953 total, 1987 thin omitted) (3945), TalkXSuppression.tsx (1622), lucide-react (1219), vitest (1198), cn (1044), ref_node_fs (847), react (791), @tanstack/react-query (701), client.ts (605), logger.ts (589), src/components/team-chat/useTeamChatPanel.ts (582), validation.ts (575)
 - símbolos mais chamados: cn() (src/lib/utils.ts), useAuth() (src/hooks/auth/useAuth.tsx), jsonResponse() (supabase/functions/_shared/validation.ts), errorResponse() (supabase/functions/_shared/validation.ts), handleCors() (supabase/functions/_shared/validation.ts), fail() (scripts/e2e-isolated/network-proof-policy.mjs), Logger (supabase/functions/_shared/validation.ts), requireEnv() (supabase/functions/_shared/validation.ts), fmtInt() (src/components/talkx/kit/format.ts), fromTable() (src/lib/supabaseHelpers.ts), useUserRole() (src/hooks/system/useUserRole.ts), validationErrorResponse() (supabase/functions/_shared/schemas.ts)
 - consulta local: `graphify query "<pergunta>"`, `graphify path "<A>" "<B>"`, `graphify explain "<X>"`
 
 ## Hotspots (arquivos mais alterados, 90 dias)
 - supabase/deployment-manifest.json (30)
 - ESTADO.md (18)
-- docs/talkx/ESTADOS.md (15)
+- docs/talkx/ESTADOS.md (16)
 - scripts/db-audit/grants-baseline.json (12)
 - src/integrations/supabase/types.ts (12)
 - PENDENCIAS.md (11)
@@ -523,6 +523,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - CHANGELOG topo: [Unreleased]
 
 ## Últimos commits
+- 2026-11-22 `5ce080f9` feat(talkx): resgata cabeçalho da aba Monitor (X145/TL-154) de commit de 10/10 não incorporado (#3312)
 - 2026-11-21 `436a10e2` fix(ci): corrige flake deterministico do teste biweekly (envelope 13.333..14.333) (#3311)
 - 2026-11-21 `1669013e` feat(lgpd): mascara dados sensiveis antes de enviar texto a IA em 5 pontos (#3308)
 - 2026-11-21 `85feab2a` feat(talkx): monta orfaos RADAR (decision maker/stakeholders/ocasiao) e SpeedSelector no header (#3307)
@@ -537,7 +538,6 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - 2026-11-21 `219555ea` fix(db-audit): reconcilia drift da 20261111181000 e remove excecoes obsoletas (#3297)
 - 2026-11-21 `ee85340b` fix(docs): forca eol=lf nos inventarios e docs (falso-negativo local nos testes de convencao) (#3298)
 - 2026-11-21 `f4a2a776` fix(crm-integration): restaura CRON_SECRET apos testes que o setam (#3296)
-- 2026-11-21 `01737c9e` feat: unifica relatorios agendados do dashboard na edge por configId com cron
 
 ## Arquivos deste diretório
 - `docs/contexto/codigo/rotas.json`

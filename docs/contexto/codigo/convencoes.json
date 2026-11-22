@@ -7,7 +7,7 @@
    "src/pages (18)"
   ],
   "componentes": [
-   "src/components (890)",
+   "src/components (891)",
    "analise-prs/resgate-261118-lote3 (129)",
    "src/pages (26)"
   ],
@@ -22,7 +22,7 @@
    "src/utils (8)"
   ],
   "testes": [
-   "co-localizado (__tests__) (2358)",
+   "co-localizado (__tests__) (2360)",
    "outro (348)",
    "co-localizado (*.test) (232)"
   ],
@@ -48,7 +48,7 @@
  },
  "barrels_index": 85,
  "extensao_componentes": [
-  ".tsx (1054)"
+  ".tsx (1055)"
  ],
  "alias_imports": {
   "analise-prs/resgate-261115/auditoria/bruto/diarios-sessao/": {
@@ -66,11 +66,11 @@
  "commits": {
   "convencao": "conventional commits (observado)",
   "exemplos": [
+   "feat(talkx): resgata cabeçalho da aba Monitor (X145/TL-154) de commit de 10/10 não incorporado (#3312)",
    "fix(ci): corrige flake deterministico do teste biweekly (envelope 13.333..14.333) (#3311)",
    "feat(lgpd): mascara dados sensiveis antes de enviar texto a IA em 5 pontos (#3308)",
    "feat(talkx): monta orfaos RADAR (decision maker/stakeholders/ocasiao) e SpeedSelector no header (#3307)",
-   "feat(talkx): monta cards órfãos X149/X144 (Fila por Segmento + Linha do Tempo Operacional) no report de campanha (#3306)",
-   "fix(ci): usa fileURLToPath no caminho do script W98 (teste 15) (#3305)"
+   "feat(talkx): monta cards órfãos X149/X144 (Fila por Segmento + Linha do Tempo Operacional) no report de campanha (#3306)"
   ]
  },
  "pr_template": ".github/PULL_REQUEST_TEMPLATE.md",

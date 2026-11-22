@@ -8254,6 +8254,7 @@
    "src/components/talkx/report/TalkXCampaignReport.tsx",
    "src/components/talkx/talkxRoute.ts",
    "src/components/talkx/talkxShared.ts",
+   "src/components/talkx/tracking/TalkXMonitorHeader.tsx",
    "src/components/talkx/useCampaignEditor.ts",
    "src/components/ui/dropdown-menu.tsx",
    "src/components/ui/section-error-boundary.tsx",
@@ -8552,6 +8553,10 @@
   "src/components/talkx/tracking/TalkXLiveKpiRow.tsx": [
    "src/components/dashboard/overview/DashboardKpiCard.tsx",
    "src/components/talkx/talkxShared.ts"
+  ],
+  "src/components/talkx/tracking/TalkXMonitorHeader.tsx": [
+   "src/components/talkx/talkxShared.ts",
+   "src/components/ui/select.tsx"
   ],
   "src/components/talkx/tracking/TalkXOperationalTimeline.tsx": [
    "src/components/talkx/kit/states.tsx",

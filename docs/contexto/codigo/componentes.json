@@ -1,7 +1,7 @@
 {
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
- "total": 1054,
+ "total": 1055,
  "orfaos": 138,
  "nomes_duplicados": {
   "AIAutoTagsConfig": [
@@ -14602,7 +14602,7 @@
     "TalkXLiveMonitor"
    ],
    "export_default": null,
-   "linhas": 346,
+   "linhas": 386,
    "dominio": "components/talkx",
    "hooks_locais": [
     "useTalkXConnectionStatus",
@@ -14826,7 +14826,7 @@
     "TalkXView"
    ],
    "export_default": "TalkXView",
-   "linhas": 692,
+   "linhas": 759,
    "dominio": "components/talkx",
    "hooks_locais": [
     "useGlobalKeyboard",
@@ -14949,6 +14949,23 @@
    "tabelas": [],
    "edges": [],
    "usado_por": 2,
+   "orfao": false
+  },
+  {
+   "arquivo": "src/components/talkx/tracking/TalkXMonitorHeader.tsx",
+   "exports": [
+    "MonitorCampaign",
+    "MonitorSegmentOption",
+    "TalkXMonitorHeader",
+    "TalkXMonitorHeaderProps"
+   ],
+   "export_default": null,
+   "linhas": 175,
+   "dominio": "components/talkx",
+   "hooks_locais": [],
+   "tabelas": [],
+   "edges": [],
+   "usado_por": 1,
    "orfao": false
   },
   {
@@ -17171,7 +17188,7 @@
    "hooks_locais": [],
    "tabelas": [],
    "edges": [],
-   "usado_por": 138,
+   "usado_por": 139,
    "orfao": false
   },
   {
