@@ -1,15 +1,15 @@
 {
  "meta": {
-  "sha": "1669013eabf0b95dd04f69c74a37e06727adb63f",
+  "sha": "436a10e2b2caa2dad26b62390d9a40fb41860dc4",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-22 00:07 UTC",
+  "generated_at": "2026-11-22 00:54 UTC",
   "files_total": 15574,
   "code_files": 8878,
-  "code_lines": 1408276
+  "code_lines": 1408278
  },
  "version": "1.3.2",
- "facts_hash": "8f59870f50611a5f",
+ "facts_hash": "0a4d29830adceb35",
  "stack": {
   "frameworks": [
    "React + Vite",
@@ -78608,7 +78608,7 @@
   {
    "module": "supabase/functions",
    "files": 424,
-   "lines": 127622,
+   "lines": 127624,
    "tables": [
     "agent_stats",
     "ai_conversation_tags",
@@ -466864,7 +466864,7 @@
   },
   "supabase/functions/send-scheduled-report/index.test.ts": {
    "path": "supabase/functions/send-scheduled-report/index.test.ts",
-   "lines": 801,
+   "lines": 803,
    "is_test": true,
    "env": [
     "CRON_SECRET",
@@ -466887,7 +466887,9 @@
    "rule_comments": [
     "R2-API-023 (P2) — falha de envio NÃO pode marcar o relatório como enviado.",
     "R2-SLA-001 / #458 — o relatório agendado de SLA usa a MESMA regra de",
-    "dereço), nada sai para o recusado e, se houver recusa, o ciclo segue a regra"
+    "dereço), nada sai para o recusado e, se houver recusa, o ciclo segue a regra",
+    "o mínimo é às 23:59 UTC (14 + 8/24 − 23,983/24) e o máximo logo após",
+    "00:00 UTC (14 + 8/24 − 0/24). O limite antigo (>= 13.4) falhava"
    ],
    "doc": "R2-API-022 (P1) — gate de autorização do send-scheduled-report. Aceite: 401 sem identidade; 403 para usuário comum; cron inválido/ausente rejeitado; admin/supervisor e cron válido admitidos; zero lookup de relatório / Resend / efeito service-role após rejeição; usuário comum não recebe reportData.",
    "temporal": [
@@ -479359,10 +479361,19 @@
   }
  },
  "git": {
-  "sha": "1669013eabf0b95dd04f69c74a37e06727adb63f",
+  "sha": "436a10e2b2caa2dad26b62390d9a40fb41860dc4",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "436a10e2",
+    "date": "2026-11-21",
+    "author": "adm01-debug",
+    "subject": "fix(ci): corrige flake deterministico do teste biweekly (envelope 13.333..14.333) (#3311)",
+    "files": [
+     "supabase/functions/send-scheduled-report/index.test.ts"
+    ]
+   },
    {
     "sha": "1669013e",
     "date": "2026-11-21",
@@ -480768,19 +480779,6 @@
     "files": [
      "docs/agentes/banco.md"
     ]
-   },
-   {
-    "sha": "755c0a6b",
-    "date": "2026-11-19",
-    "author": "github-actions[bot]",
-    "subject": "chore(db): sincronizar artefatos derivados do banco (#3276)",
-    "files": [
-     "docs/DB-INVENTORY.md",
-     "scripts/db-audit/grants-baseline.json",
-     "src/integrations/supabase/types.ts",
-     "supabase/schema-catalog.json",
-     "supabase/schema-manifest.json"
-    ]
    }
   ],
   "hot_files": [
@@ -480789,31 +480787,15 @@
     3
    ],
    [
+    "supabase/functions/send-scheduled-report/index.test.ts",
+    2
+   ],
+   [
     "scripts/ci/branch-podaveis.unit.mjs",
     2
    ],
    [
     "docs/MIGRATIONS.md",
-    2
-   ],
-   [
-    "docs/DB-INVENTORY.md",
-    2
-   ],
-   [
-    "scripts/db-audit/grants-baseline.json",
-    2
-   ],
-   [
-    "src/integrations/supabase/types.ts",
-    2
-   ],
-   [
-    "supabase/schema-catalog.json",
-    2
-   ],
-   [
-    "supabase/schema-manifest.json",
     2
    ],
    [
@@ -480862,6 +480844,22 @@
    ],
    [
     "src/components/inbox/copilot/RadarPanel.tsx",
+    1
+   ],
+   [
+    "src/components/inbox/copilot/StakeholdersCard.tsx",
+    1
+   ],
+   [
+    "src/components/inbox/copilot/__tests__/RadarPanel.test.tsx",
+    1
+   ],
+   [
+    "src/components/talkx/report/TalkXCampaignReport.tsx",
+    1
+   ],
+   [
+    "src/components/talkx/report/__tests__/TalkXCampaignReport.test.tsx",
     1
    ]
   ]

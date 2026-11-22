@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "1669013eabf0b95dd04f69c74a37e06727adb63f",
+  "commit": "436a10e2b2caa2dad26b62390d9a40fb41860dc4",
   "branch": "main",
-  "data_commit": "2026-11-21T21:06:08-03:00",
+  "data_commit": "2026-11-21T21:52:35-03:00",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "436a10e2",
+    "data": "2026-11-21",
+    "assunto": "fix(ci): corrige flake deterministico do teste biweekly (envelope 13.333..14.333) (#3311)"
+   },
    {
     "sha": "1669013e",
     "data": "2026-11-21",
@@ -126,11 +131,6 @@
     "sha": "a38fc63d",
     "data": "2026-11-19",
     "assunto": "fix(team-chat): falha ao ler convites deixa de se disfarcar de \"nenhum convite\" (#3282)"
-   },
-   {
-    "sha": "a5fd198a",
-    "data": "2026-11-19",
-    "assunto": "fix(seguranca): URL do CRM externo deixa de virar href/src sem guard (#3281)"
    }
   ],
   "arquivos_mudados_7d": 7374,
@@ -316,7 +316,7 @@
  "contagens": {
   "arquivos_total": 15718,
   "arquivos_codigo": 5842,
-  "linhas_codigo": 1130857,
+  "linhas_codigo": 1130859,
   "rotas": 18,
   "rotas_http_backend": 11,
   "vistas_por_id": 55,
@@ -804,7 +804,7 @@
   },
   "supabase/functions": {
    "arquivos": 424,
-   "linhas": 127622
+   "linhas": 127624
   },
   "tailwind.config.ts": {
    "arquivos": 1,

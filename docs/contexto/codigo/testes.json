@@ -27758,7 +27758,7 @@
   {
    "arquivo": "supabase/functions/send-scheduled-report/index.test.ts",
    "tipo": "unit",
-   "linhas": 801,
+   "linhas": 803,
    "testa": [
     "supabase/functions/send-scheduled-report/index.ts"
    ],
