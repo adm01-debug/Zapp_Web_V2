@@ -1,6 +1,6 @@
 # Plano — Assistente pessoal de IA do Zapp Web V2
 
-**Data:** 2026-11-15 · **Estado:** Fase 0 em PR, fases 1 a 4 aguardando execução
+**Data:** 2026-11-15 · **Estado:** Fases 0 a 4 implementadas e mergeadas na `main` (Fase 0 em `#3127`; Fases 1-4 em `#3310`, `#3316`, `#3317`, `#3319`, `#3320`, `#3321`)
 **Medições:** todas feitas no banco oficial de produção `tnnnlkbymytvtqngbbqh`, em modo leitura.
 
 ---
