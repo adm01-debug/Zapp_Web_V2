@@ -1,10 +1,10 @@
 {
  "meta": {
-  "sha": "f1080b156a4f5ef0281cb46ac18b4dadf02d36ab",
+  "sha": "4454ed4b694302444f215fc7420eee7fdfc4cf05",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-22 13:51 UTC",
-  "files_total": 15599,
+  "generated_at": "2026-11-22 14:13 UTC",
+  "files_total": 15600,
   "code_files": 8903,
   "code_lines": 1411909
  },
@@ -480855,10 +480855,19 @@
   }
  },
  "git": {
-  "sha": "f1080b156a4f5ef0281cb46ac18b4dadf02d36ab",
+  "sha": "4454ed4b694302444f215fc7420eee7fdfc4cf05",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "4454ed4b",
+    "date": "2026-11-22",
+    "author": "adm01-debug",
+    "subject": "docs(integracoes): plano do gateway de mensagens WhatsApp + SMS (SMSDev) (#3318)",
+    "files": [
+     "docs/integracoes/PLANO_GATEWAY_MENSAGENS_SMS_102_ETAPAS.md"
+    ]
+   },
    {
     "sha": "f1080b15",
     "date": "2026-11-22",
@@ -482301,16 +482310,6 @@
      "src/components/team-chat/department-management/DepartmentInvitesView.tsx",
      "src/components/team-chat/department-management/__tests__/DepartmentInvitesView.erro-vs-vazio.test.tsx"
     ]
-   },
-   {
-    "sha": "a5fd198a",
-    "date": "2026-11-19",
-    "author": "adm01-debug",
-    "subject": "fix(seguranca): URL do CRM externo deixa de virar href/src sem guard (#3281)",
-    "files": [
-     "src/components/inbox/contact-details/Contact360Helpers.tsx",
-     "src/components/inbox/contact-details/__tests__/Contact360Helpers.href-seguro.test.tsx"
-    ]
    }
   ],
   "hot_files": [
@@ -482355,6 +482354,10 @@
     2
    ],
    [
+    "docs/integracoes/PLANO_GATEWAY_MENSAGENS_SMS_102_ETAPAS.md",
+    1
+   ],
+   [
     "docs/plans/PLANO_ASSISTENTE_PESSOAL_IA_2026-11-15.md",
     1
    ],
@@ -482388,10 +482391,6 @@
    ],
    [
     "supabase/functions/assistant-gateway/index.test.ts",
-    1
-   ],
-   [
-    "supabase/functions/assistant-gateway/index.ts",
     1
    ]
   ]

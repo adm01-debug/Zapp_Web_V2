@@ -66,11 +66,11 @@
  "commits": {
   "convencao": "conventional commits (observado)",
   "exemplos": [
+   "docs(integracoes): plano do gateway de mensagens WhatsApp + SMS (SMSDev) (#3318)",
    "feat(assistente): porta unica liga 6 edges mortas com contexto compartilhado (#3317)",
    "feat: fase 2 do assistente pessoal (memoria e agenda do contato) (#3316)",
    "feat(assistente): Fase 1 — identidade do assistente pessoal (perfil + motor RADAR) (#3310)",
-   "feat(talkx): resgata cabeçalho da aba Monitor (X145/TL-154) de commit de 10/10 não incorporado (#3312)",
-   "fix(ci): corrige flake deterministico do teste biweekly (envelope 13.333..14.333) (#3311)"
+   "feat(talkx): resgata cabeçalho da aba Monitor (X145/TL-154) de commit de 10/10 não incorporado (#3312)"
   ]
  },
  "pr_template": ".github/PULL_REQUEST_TEMPLATE.md",

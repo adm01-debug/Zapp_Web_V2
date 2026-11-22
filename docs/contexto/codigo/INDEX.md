@@ -1,7 +1,7 @@
 # Contexto do projeto para agentes de IA
 
 GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.
-Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR dela) a cada push em `main` e a cada 10 minutos pelo workflow `contexto.yml`; índice único das três fontes em `docs/contexto/00-INDEX.md`. Gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `f1080b156a4f5ef0281cb46ac18b4dadf02d36ab` (2026-11-22T10:49:42-03:00).
+Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR dela) a cada push em `main` e a cada 10 minutos pelo workflow `contexto.yml`; índice único das três fontes em `docs/contexto/00-INDEX.md`. Gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `4454ed4b694302444f215fc7420eee7fdfc4cf05` (2026-11-22T14:02:27Z).
 
 ## Como usar (leia antes de planejar ou executar qualquer tarefa)
 1. **Tela/rota/menu** → `rotas.json` (url/vista/menu → arquivo → hooks → tabelas → edges; `rotas_http_backend` para APIs) e `modulos.json` (módulo inteiro + dependências entre módulos).
@@ -14,7 +14,7 @@ Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR
 Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua tarefa; não carregue tudo.
 
 ## Stack
-- linguagens: TypeScript (5063), Markdown (4082), SQL (3063), JSON (1968), JavaScript (682), Shell (264), Python (125), YAML (112)
+- linguagens: TypeScript (5063), Markdown (4083), SQL (3063), JSON (1968), JavaScript (682), Shell (264), Python (125), YAML (112)
 - linguagem_principal: TypeScript
 - framework: React
 - backend_http: n/d
@@ -34,7 +34,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 ## Números
 | item | qtd |
 |---|---|
-| arquivos_total | 15743 |
+| arquivos_total | 15744 |
 | arquivos_codigo | 5866 |
 | linhas_codigo | 1134445 |
 | rotas | 18 |
@@ -51,7 +51,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 | testes | 3211 |
 | workflows | 24 |
 | scripts | 451 |
-| docs_md | 4082 |
+| docs_md | 4083 |
 
 ## Onde ficam as coisas
 - telas: src/components (54), src/pages (18)
@@ -397,8 +397,8 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - possiveis_segredos_no_codigo: 6 — ex.: analise-prs/resgate-261118-lote3/claude_pink/cool-dijkstra-xk9ek2/scripts/ci/edge-coverage-authz.unit.mjs:397, analise-prs/resgate-261118-lote3/claude_pink/cool-dijkstra-xk9ek2/scripts/edge-deploy/redigir-log.unit.mjs:38, scripts/ai-context/cenarios.mjs:102
 
 ## Grafo de código (graphify)
-- 103005 nós · 174878 arestas · 9135 comunidades · grafo do commit `f1080b15`
-- comunidades maiores: Communities (5953 total, 1987 thin omitted) (3947), vitest (1466), react (1364), TalkXSuppression.tsx (1193), cn (1047), lucide-react (872), ref_node_fs (824), Conversation (723), button.tsx (719), validation.ts (664), chat.ts (641), useMyWorkItems.ts (592)
+- 103021 nós · 174899 arestas · 9143 comunidades · grafo do commit `4454ed4b`
+- comunidades maiores: Communities (5953 total, 1987 thin omitted) (3947), vitest (1478), lucide-react (1251), cn (1202), ref_node_fs (894), TalkXSuppression.tsx (803), ExternalProductManagement.tsx (797), @tanstack/react-query (740), src/hooks/integrations/useTalkXSegments.ts (717), AiTab.tsx (662), validation.ts (639), chat.ts (594)
 - símbolos mais chamados: cn() (src/lib/utils.ts), useAuth() (src/hooks/auth/useAuth.tsx), jsonResponse() (supabase/functions/_shared/validation.ts), errorResponse() (supabase/functions/_shared/validation.ts), handleCors() (supabase/functions/_shared/validation.ts), fail() (scripts/e2e-isolated/network-proof-policy.mjs), Logger (supabase/functions/_shared/validation.ts), requireEnv() (supabase/functions/_shared/validation.ts), fmtInt() (src/components/talkx/kit/format.ts), fromTable() (src/lib/supabaseHelpers.ts), useUserRole() (src/hooks/system/useUserRole.ts), validationErrorResponse() (supabase/functions/_shared/schemas.ts)
 - consulta local: `graphify query "<pergunta>"`, `graphify path "<A>" "<B>"`, `graphify explain "<X>"`
 
@@ -521,10 +521,11 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - `docs/contracts.md` — Contratos das Edge Functions (51 linhas)
 - `docs/crm-external-grants.md` — GRANTs Externos — CRM pgxfvjmuubtbowutlide (111 linhas)
 - `docs/prod-readiness.md` — Prontidão de produção — Zapp Web V2 (main @ `ab657aa34`) (1858 linhas)
-- subpastas de docs/: docs/pendencias (1093), docs/_arquivo (593), docs/contexto (261), docs/audits (183), docs/reconciliation (134), docs/design (64), docs/plans (59), docs/talkx (52), docs/ia (19), docs/adr (17), docs/catalogo (15), docs/runbooks (14), docs/multiplix (12), docs/mapa (10), docs/copiloto (9), docs/ci (8), docs/decisions (8), docs/handoffs (8), docs/agentes (6), docs/migration (6), docs/tipografia (6), docs/evidencias (5), docs/telefonia (3), docs/architecture (2), docs/security (2), docs/team-chat (2), docs/crm-integration (1), docs/dashboard (1), docs/design-system (1), docs/edge-functions-recovered (1), docs/hermes (1), docs/ops (1)
+- subpastas de docs/: docs/pendencias (1093), docs/_arquivo (593), docs/contexto (261), docs/audits (183), docs/reconciliation (134), docs/design (64), docs/plans (59), docs/talkx (52), docs/ia (19), docs/adr (17), docs/catalogo (15), docs/runbooks (14), docs/multiplix (12), docs/mapa (10), docs/copiloto (9), docs/ci (8), docs/decisions (8), docs/handoffs (8), docs/agentes (6), docs/migration (6), docs/tipografia (6), docs/evidencias (5), docs/telefonia (3), docs/architecture (2), docs/security (2), docs/team-chat (2), docs/crm-integration (1), docs/dashboard (1), docs/design-system (1), docs/edge-functions-recovered (1), docs/hermes (1), docs/integracoes (1), docs/ops (1)
 - CHANGELOG topo: [Unreleased]
 
 ## Últimos commits
+- 2026-11-22 `4454ed4b` docs(integracoes): plano do gateway de mensagens WhatsApp + SMS (SMSDev) (#3318)
 - 2026-11-22 `f1080b15` feat(assistente): porta unica liga 6 edges mortas com contexto compartilhado (#3317)
 - 2026-11-22 `9f6df25b` feat: fase 2 do assistente pessoal (memoria e agenda do contato) (#3316)
 - 2026-11-22 `b35911db` feat(assistente): Fase 1 — identidade do assistente pessoal (perfil + motor RADAR) (#3310)
@@ -539,7 +540,6 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - 2026-11-21 `9f3e9175` fix(e2e): reconhece rate limit nao autenticado do Docker Hub no retry de pull (#3302)
 - 2026-11-21 `79c7a8bd` fix(e2e): inclui migration do cron de relatórios agendados no guard vault (#3301)
 - 2026-11-21 `8d2d330c` fix(db-audit): contrato de ACL do webhook_failures aceita SELECT do zapp_agente_leitura (#3300)
-- 2026-11-21 `b3de24d3` chore(db): sincronizar artefatos derivados do banco (#3299)
 
 ## Arquivos deste diretório
 - `docs/contexto/codigo/rotas.json`

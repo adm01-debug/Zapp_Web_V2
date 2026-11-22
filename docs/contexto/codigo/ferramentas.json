@@ -4,7 +4,7 @@
  "stack": {
   "linguagens": [
    "TypeScript (5063)",
-   "Markdown (4082)",
+   "Markdown (4083)",
    "SQL (3063)",
    "JSON (1968)",
    "JavaScript (682)",
@@ -1519,6 +1519,10 @@
   },
   {
    "pasta": "docs/hermes",
+   "arquivos_md": 1
+  },
+  {
+   "pasta": "docs/integracoes",
    "arquivos_md": 1
   },
   {
