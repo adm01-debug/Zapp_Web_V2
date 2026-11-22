@@ -178,6 +178,7 @@ export function ContactExploreRail({
             aria-label={`${rotuloPausa} carrossel`}
             className={cn(
               'flex min-h-[30px] items-center gap-[6px] rounded-[7px] border border-[hsl(var(--contacts-line))]',
+              '[@media(pointer:coarse)]:min-h-[42px]',
               'bg-[hsl(var(--contacts-raised))] px-[9px] py-[7px] text-2xs text-[hsl(var(--contacts-muted))]',
               'transition-colors hover:text-[hsl(var(--contacts-ink))] disabled:pointer-events-none disabled:opacity-40',
               'max-[659px]:p-[7px]',
@@ -199,6 +200,7 @@ export function ContactExploreRail({
               'grid h-[30px] w-[30px] place-items-center rounded-[7px] border border-[hsl(var(--contacts-line))]',
               'bg-[hsl(var(--contacts-raised))] text-[hsl(var(--contacts-muted))]',
               'transition-colors hover:text-[hsl(var(--contacts-ink))] disabled:pointer-events-none disabled:opacity-40',
+              '[@media(pointer:coarse)]:h-[42px] [@media(pointer:coarse)]:w-[42px]',
             )}
           >
             <ChevronLeft className="h-4 w-4" />
@@ -212,6 +214,7 @@ export function ContactExploreRail({
               'grid h-[30px] w-[30px] place-items-center rounded-[7px] border border-[hsl(var(--contacts-line))]',
               'bg-[hsl(var(--contacts-raised))] text-[hsl(var(--contacts-muted))]',
               'transition-colors hover:text-[hsl(var(--contacts-ink))] disabled:pointer-events-none disabled:opacity-40',
+              '[@media(pointer:coarse)]:h-[42px] [@media(pointer:coarse)]:w-[42px]',
             )}
           >
             <ChevronRight className="h-4 w-4" />

@@ -20,10 +20,13 @@ export function ContactPortrait({
   contact,
   className,
   initialsClassName = 'text-[75px] tracking-[-3px]',
+  priority = false,
 }: {
   contact: Contact;
   className?: string;
   initialsClassName?: string;
+  /** ZD-101 — só a primeira linha carrega a foto junto do HTML; o resto entra lazy. */
+  priority?: boolean;
 }) {
   const display = toContactDisplay(contact);
   const initials = getInitials(display.nomeCompleto ?? contact.name);
@@ -40,7 +43,9 @@ export function ContactPortrait({
           src={contact.avatar_url}
           alt={display.nomeCompleto ?? contact.name}
           draggable={false}
-          loading="lazy"
+          loading={priority ? 'eager' : 'lazy'}
+          fetchPriority={priority ? 'high' : 'auto'}
+          decoding="async"
           className="h-full w-full object-cover object-[50%_31%] transition-transform duration-[550ms] ease-[cubic-bezier(.2,.8,.2,1)] group-hover/photo:scale-[1.035] motion-reduce:transform-none motion-reduce:transition-none"
         />
       ) : (

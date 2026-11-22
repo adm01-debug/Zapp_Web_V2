@@ -177,7 +177,9 @@ export function ContactCard({
           onClick={(e) => { e.stopPropagation(); onOpenDetails(contact.id); }}
           aria-label={`Abrir ${display.nomeCompleto ?? contact.name}`}
         >
-          <ContactPortrait contact={contact} className="h-full w-full" />
+          {/* ZD-101 — orçamento de fotos: só a primeira linha (índice < 3) vem
+              com o HTML; as demais entram em lazy. */}
+          <ContactPortrait contact={contact} className="h-full w-full" priority={index < 3} />
           <span className="pointer-events-none absolute inset-0" style={{ background: 'linear-gradient(180deg, hsl(0 0% 0% / 0.08) 0%, transparent 40%, transparent 66%, hsl(0 0% 0% / 0.85) 100%)' }} />
 
           <span className="pointer-events-none absolute top-3 left-3 z-[2] max-[559px]:top-[14px] max-[559px]:left-[14px]">

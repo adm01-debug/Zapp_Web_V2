@@ -273,6 +273,13 @@ export function ContactsView() {
       </div>
 
       <div className="space-y-3 mt-3 pb-[calc(160px+env(safe-area-inset-bottom,0px))]">
+      {/* ZD-099 — anúncio do resultado para leitores de tela; o resumo visual
+          já existe em ContactResultsSummary, mas não é anunciado. */}
+      <p className="sr-only" role="status" aria-live="polite" data-contacts-live="">
+        {loading
+          ? 'Carregando contatos'
+          : `${filteredContacts.length} ${filteredContacts.length === 1 ? 'contato' : 'contatos'} na tela, de ${totalCount} no total`}
+      </p>
       {!loading && (
         <ContactResultsSummary
           totalCount={totalCount}

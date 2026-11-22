@@ -401,11 +401,11 @@
     --rosa-text: 335 75% 36%;
 
     /* ===== DESIGN TOKENS — Light & Dark mode CSS variables ===== */
-    --contacts-page: 0 0% 97%;
+    --contacts-page: 240 9% 96%;
     --contacts-panel: 0 0% 100%;
-    --contacts-raised: 0 0% 100%;
-    --contacts-line: 0 0% 88%;
-    --contacts-soft-line: 0 0% 93%;
+    --contacts-raised: 240 9% 97%;
+    --contacts-line: 240 6% 86%;
+    --contacts-soft-line: 240 6% 91%;
     --contacts-ink: 240 8% 12%;
     --contacts-muted: 240 4% 40%;
     --contacts-quiet: 240 4% 58%;
