@@ -116,8 +116,8 @@
     },
     {
       "path": "supabase/functions/_shared/assistant-gateway.ts",
-      "bytes": 8127,
-      "sha256": "a67b1c214054a66c91ff80f7197861132b9a6e03c4cb905b0b807ecc7fbd85e3"
+      "bytes": 9190,
+      "sha256": "7170e17a1666fa07ae7dec646d345a240370f395c80e681b93446619c0eed45a"
     },
     {
       "path": "supabase/functions/_shared/assistant-playbook.ts",
@@ -526,8 +526,8 @@
     },
     {
       "path": "supabase/functions/assistant-gateway/index.ts",
-      "bytes": 19062,
-      "sha256": "eecb48eaee4b1e95867c8d8c96861e8562e0b6c4edc97c2468db45d8c6f56e77"
+      "bytes": 20104,
+      "sha256": "b88ed4717460a59189136e7b7c3ec1d6bb36e06af4e1802f27bf3bb41f93842c"
     },
     {
       "path": "supabase/functions/auth-login/index.ts",
@@ -1459,7 +1459,7 @@
       "name": "assistant-gateway",
       "entrypoint": "supabase/functions/assistant-gateway/index.ts",
       "verify_jwt": true,
-      "source_sha256": "3e94bb1702023df33bf555b25a112438f7b114da53f5231c78a51ac47f21cc0b",
+      "source_sha256": "c5b4f72e165d2a6173e2174942f86b1a758b0698cf1c0a5802c822851fdb3b01",
       "source_files": [
         "supabase/functions/_shared/ai-feature-flags.ts",
         "supabase/functions/_shared/ai-guards.ts",
@@ -2857,5 +2857,5 @@
       ]
     }
   ],
-  "manifest_sha256": "f5cf77c3f209e980668a0278ab94e72d05e5a3c43d2b6ed2f6724b9f52a3d019"
+  "manifest_sha256": "76eddb5a702711bed70f74dc865142086b6225f7aed069886ff39925b3f446dc"
 }
