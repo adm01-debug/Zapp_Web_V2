@@ -40,13 +40,13 @@ confere que todo caminho listado é consumidor de verdade; ela não obriga a lis
 
 | Objeto | Quantidade |
 |---|---|
-| Tabelas (`tables`) | 213 |
+| Tabelas (`tables`) | 214 |
 | Views (`views`) | 13 |
-| Colunas (`columns`) | 2381 |
+| Colunas (`columns`) | 2388 |
 | Funções (`functions`) | 405 |
 | Assinaturas de função (`function_signatures`) | 407 |
 | Funções de gatilho (`trigger_functions`) | 103 |
-| Restrições de verificação (`check_constraints`) | 251 |
+| Restrições de verificação (`check_constraints`) | 254 |
 
 As tabelas estão inventariadas uma a uma na seção seguinte. Views, funções, colunas e restrições
 têm o inventário completo no catálogo (`supabase/schema-catalog.json`) e o manifesto com hash de
@@ -66,6 +66,7 @@ RLS em `supabase/schema-manifest.json`; este documento não os repete.
 | `agent_stats` | Agregado de gamificação do agente (XP, nível, enviadas, conquistas) | ativo | `src/components/dashboard/AgentPerformancePanel.tsx`, `src/components/gamification/AchievementsSystem.tsx`, `src/components/gamification/AchievementsStats.tsx` … |
 | `agent_visibility_grants` | Concessões de visibilidade de um agente sobre outro | ativo | `src/components/admin/VisibilityGrantsManager.tsx`, `src/components/admin/__tests__/VisibilityGrantsManager.a11y.test.tsx`, `scripts/db-audit/crm-sync-outbox-behavior.test.sh` … |
 | `ai_budget_reservations` | Reserva de tokens/orçamento por execução de função de IA | parcial | `scripts/qa/prova-orcamento-rate-limit.sh` |
+| `assistant_profiles` | Perfil do assistente pessoal por usuario (atuacao, tom, autonomia e motor RADAR) | ativo | `src/hooks/assistant/useAssistantProfile.ts` |
 | `ai_conversation_tags` | Tags sugeridas pela IA em conversa/contato, com confiança e origem | ativo | `src/components/docs/__tests__/SystemFeaturesView.test.tsx`, `src/hooks/crm/__tests__/useContactEnrichedData.test.tsx`, `src/services/contact.service.ts` … |
 | `ai_jobs` | Fila de jobs de IA (payload, idempotência, tentativas e estado) | ativo | `src/lib/aiJobs/status.ts`, `supabase/functions/_shared/__tests__/effect-reconcile.test.ts`, `supabase/functions/_shared/ai-jobs.ts` … |
 | `ai_model_prices` | Preço por fornecedor/modelo e unidade de cobrança de IA | ativo | `supabase/functions/_shared/ai-usage.ts`, `supabase/functions/talkx-ai/index.test.ts`, `supabase/functions/talkx-ai/index.ts` … |

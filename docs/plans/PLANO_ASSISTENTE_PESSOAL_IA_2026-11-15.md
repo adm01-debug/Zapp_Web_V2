@@ -1,6 +1,6 @@
 # Plano — Assistente pessoal de IA do Zapp Web V2
 
-**Data:** 2026-11-15 · **Estado:** Fase 0 em PR, fases 1 a 4 aguardando execução
+**Data:** 2026-11-15 · **Estado:** Fases 0 a 4 implementadas e mergeadas na `main` (Fase 0 em `#3127`; Fases 1-4 em `#3310`, `#3316`, `#3317`, `#3319`, `#3320`, `#3321`)
 **Medições:** todas feitas no banco oficial de produção `tnnnlkbymytvtqngbbqh`, em modo leitura.
 
 ---
@@ -175,6 +175,35 @@ O que entra:
 **Entrega verificável:** uma única chamada em linguagem natural ("como estou com o cliente X?") devolve
 resposta usando pelo menos três fontes diferentes, e o teste prova de onde cada pedaço veio.
 
+**Status: implementado** (PR da Fase 3, branch `claude/feat-fase3-porta-unica-*`).
+
+Ponto único: edge `assistant-gateway` (`supabase/functions/assistant-gateway/index.ts`). O roteamento é
+determinístico e vive isolado em `supabase/functions/_shared/assistant-gateway.ts` — a mesma frase escolhe
+sempre as mesmas capacidades, mesmo com o provedor de IA fora.
+
+Registro das edges mortas (levantamento: zero chamadores em `src/` via `functions/v1/<edge>` ou
+`invoke('<edge>')`):
+
+| Edge | Decisão | Onde |
+| --- | --- | --- |
+| `ai-conversation-summary` | ligada — capacidade `resumo_conversa` | `CAPABILITY_FUNCTION` |
+| `ai-suggest-reply` | ligada — capacidade `sugerir_resposta` | `CAPABILITY_FUNCTION` |
+| `ai-lead-temperature` | ligada — capacidade `temperatura_lead` | `CAPABILITY_FUNCTION` |
+| `ai-product-recommendation` | ligada — capacidade `recomendar_produto` | `CAPABILITY_FUNCTION` |
+| `ai-deadline-calculator` | ligada — capacidade `calcular_prazo` | `CAPABILITY_FUNCTION` |
+| `ai-objection-handler` | ligada — capacidade `tratar_objecao` | `CAPABILITY_FUNCTION` |
+| `ai-loss-risk` | ligada — capacidade `risco_perda` (recebe `daysSinceLastContact` do histórico e devolve `recoveryAction`) | `CAPABILITY_FUNCTION` |
+| `ai-price-anchor` | ligada — capacidade `ancoragem_preco` (devolve `anchorScript`) | `CAPABILITY_FUNCTION` |
+| `ai-enhance-message` | ligada — capacidade `melhorar_mensagem` (recebe a última mensagem do vendedor em `message`, porque o schema da edge não aceita histórico) | `CAPABILITY_FUNCTION` |
+| `ai-auto-tag` | ligada — capacidade `etiquetar_conversa` (exige 2 mensagens; os nomes das tags entram na resposta) | `CAPABILITY_FUNCTION` |
+| `ai-conversation-analysis` | ligada — capacidade `analisar_conversa` (exige as 5 mensagens do schema) | `CAPABILITY_FUNCTION` |
+| `ai-multimodal-analysis` | ligada — capacidade `analisar_imagem` (só roda quando o pedido traz `imageUrl`) | `CAPABILITY_FUNCTION` |
+| `ai-kb-ingest`, `sentiment-alert`, `automation-suggest-reply` | **não entram na porta única** — `ai-kb-ingest` e `sentiment-alert` não são capacidades conversacionais (ingestão de documento e alerta disparado por score), e `automation-suggest-reply` alimenta um painel de automações; nenhuma das três tem chave em `ai-feature-flags.ts`, então ligá-las exigiria capacidade nova (decisão de arquitetura, não de inventário) | — |
+
+Cada capacidade de modelo continua atrás da MESMA chave `ai.capability.*` da edge chamada
+(`capabilityFlagKeyForFunction`), então desligar a capacidade desliga as duas pontas de uma vez — sem
+deploy e sem dois registros divergentes.
+
 ### Fase 4 — Treino por perfil
 
 Com identidade (1), memória (2) e porta única (3) de pé, o treino é o que transforma "uma IA" em
@@ -187,6 +216,28 @@ Com identidade (1), memória (2) e porta única (3) de pé, o treino é o que tr
 
 Cada perfil ganha seu conjunto de instruções e seu conjunto de testes. O catálogo de objeções
 (`copilot_objection_catalog`, hoje com 0 linhas) é semeado aqui.
+
+**Status: implementado** (PR da Fase 4, branch `claude/feat-fase4-treino-por-perfil-*`).
+
+| Atuação | Instruções | Capacidades prioritárias | Objeções no treino |
+| --- | --- | --- | --- |
+| `venda` | ação comercial concreta; não abrir com desconto; sinal de compra conduz ao fechamento | temperatura do lead, objeção, produto, agenda | preco, prazo, concorrente, chefe, quantidade_minima |
+| `compra` | comparar opções e apontar risco; prometido ≠ entregue | prazo, produto, resumo, agenda | prazo, preco, qualidade |
+| `atendimento` | resposta curta e pronta; assunto fora de alcance vira encaminhamento | sugestão de resposta, resumo, agenda | — |
+| `supervisao` | padrão do time e onde agir, não frase para o cliente | temperatura do lead, resumo, agenda | — |
+
+O treino é um módulo puro (`supabase/functions/_shared/assistant-playbook.ts`), sem rede nem banco.
+Consumo hoje:
+1. `assistant-gateway` — o bloco do perfil entra no contexto enviado a cada edge de capacidade e, em
+   pedido sem sinal explícito ("oi, tudo bem?"), as capacidades prioritárias da atuação decidem a rota.
+2. `copilot-live` — o mesmo bloco entra no system prompt da sugestão em tempo real.
+3. `ai-objection-handler` — instruído a preferir o tratamento já catalogado do perfil ao genérico.
+
+**Sobre `copilot_objection_catalog`:** não é semeada, e o motivo é de schema — `conversation_id` e
+`submitted_by` são `NOT NULL`, então a tabela representa objeção de UMA conversa, não um catálogo
+global; semear exigiria DDL (regra 8). O catálogo de referência do treino vive versionado no código e
+coberto por teste (`assistant-playbook.test.ts`, que trava os tipos nos que a edge realmente classifica).
+A tabela segue sendo o histórico real de objeções por conversa.
 
 ---
 

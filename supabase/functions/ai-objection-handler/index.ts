@@ -73,7 +73,9 @@ Analise o texto do cliente e responda APENAS em JSON:
 
 isSmokescreen = true quando há sinal de compra junto à objeção (ex: "gostei mas tá caro").
 confidence = 0 quando não há objeção.
-${context ? `Contexto adicional: ${context}` : ''}`;
+${context ? `Contexto adicional: ${context}` : ''}
+
+Quando o contexto trouxer "Objeções conhecidas e tratamento que já funcionou", prefira esse tratamento ao genérico — é o que já deu certo com este perfil de usuário.`;
 
     const conversationHistory = Array.isArray(messages)
       ? messages.slice(-10).map((m) => ({

@@ -10,6 +10,7 @@ import { createClient } from 'npm:@supabase/supabase-js@2.87.1';
 import { allowedOriginFor } from '../_shared/cors-origins.ts';
 import { generateWithRouting } from '../_shared/ai-generate.ts';
 import { enforceAiGuards } from '../_shared/ai-guards.ts';
+import { playbookFor, playbookPromptBlock } from '../_shared/assistant-playbook.ts';
 
 function cors(req: Request) {
   return {
@@ -291,10 +292,15 @@ async function generateLiveSuggestion(opts: {
         .join('; ')}. Mencione o compromisso existente quando for relevante, em vez de sugerir marcar outro.`
     : '';
 
+  // Fase 4: o treino da atuação (instruções e objeções do perfil) entra no
+  // prompt do mesmo jeito que entra na porta única — uma fonte só.
+  const treino = playbookPromptBlock(playbookFor(atuacao));
+
   const system = `Você é o Copiloto RADAR, assistente de vendas de brindes corporativos B2B.
 Atuação do vendedor que você assiste: ${atuacao}.
 Foco principal dele: ${foco}.
 Tom preferido de comunicação: ${tom}.
+${treino}
 Analise o contexto da conversa e dê UMA sugestão objetiva para o vendedor avançar no estágio de ${stageLabel}.
 A sugestão deve ser direta (máx. 120 caracteres), acionável, específica para o momento da conversa e ajustada ao foco e ao tom declarados.
 ${agendaBlock}

@@ -7,9 +7,9 @@
     "sha256": "e281325190a78e3b5972633a9a4b5ff8c332abfba4d7a4066c8d7e3fd89c7a18"
   },
   "summary": {
-    "function_count": 92,
-    "source_file_count": 180,
-    "verify_jwt_true": 76,
+    "function_count": 93,
+    "source_file_count": 183,
+    "verify_jwt_true": 77,
     "verify_jwt_false": 16
   },
   "orphan_allowlist": ["sicoob-bridge", "sicoob-bridge-reply"],
@@ -113,6 +113,16 @@
       "path": "supabase/functions/_shared/ai-vocabulary.ts",
       "bytes": 7045,
       "sha256": "47877aa9e72f9d61ea847b15770bf8bc8783f1be01e0cb06f49cb78582d644ca"
+    },
+    {
+      "path": "supabase/functions/_shared/assistant-gateway.ts",
+      "bytes": 11098,
+      "sha256": "34e21064cf20a172b857d735e75c6220a9bf8d751bfde0471f97b749a4ecf3c7"
+    },
+    {
+      "path": "supabase/functions/_shared/assistant-playbook.ts",
+      "bytes": 6590,
+      "sha256": "4d9a7ce006290bb44d7cd6aad985ac753b83798f7be245fe6a03de642262666b"
     },
     {
       "path": "supabase/functions/_shared/contracts.ts",
@@ -476,8 +486,8 @@
     },
     {
       "path": "supabase/functions/ai-objection-handler/index.ts",
-      "bytes": 5693,
-      "sha256": "c74d7000342db84d200c92616ced77be794bc4b0553edb42e19dcdabe32674a7"
+      "bytes": 5869,
+      "sha256": "303c53895abca48ac8b199038a3640d299fa038e955d7d747e7dd86deca0d227"
     },
     {
       "path": "supabase/functions/ai-price-anchor/index.ts",
@@ -513,6 +523,11 @@
       "path": "supabase/functions/approve-password-reset/index.ts",
       "bytes": 11767,
       "sha256": "3b87d1de5f7c12912e48103059fbacdac2bc14a97fc99388e2b10f68cdccce33"
+    },
+    {
+      "path": "supabase/functions/assistant-gateway/index.ts",
+      "bytes": 23215,
+      "sha256": "041c7a7e2ee0ff93fdda3daa2541b75ebe3a1f38f81abdd4369c6e66cc2352ee"
     },
     {
       "path": "supabase/functions/auth-login/index.ts",
@@ -571,8 +586,8 @@
     },
     {
       "path": "supabase/functions/copilot-live/index.ts",
-      "bytes": 13898,
-      "sha256": "1a0434bcb8fd4eb9a2bc84c758a5e4dae5ce1e6ba6a279f19fa3d61bb06c9cd7"
+      "bytes": 14208,
+      "sha256": "572b8f6cd168980999a6feb6f6f3c5f98cf61b3e96e1b0955ed4ca32eff0cc8b"
     },
     {
       "path": "supabase/functions/create-user/index.ts",
@@ -1247,7 +1262,7 @@
       "name": "ai-objection-handler",
       "entrypoint": "supabase/functions/ai-objection-handler/index.ts",
       "verify_jwt": true,
-      "source_sha256": "ae2d39911e6396d2614b4b0a3f9539fbff830e079a9998877617c5a5a9599ec7",
+      "source_sha256": "cf3a6779b0ba84742141f8c944a8fc0cd0d1226e3885b27ff23a0c2cb0c62319",
       "source_files": [
         "supabase/functions/_shared/ai-budget.ts",
         "supabase/functions/_shared/ai-capabilities.ts",
@@ -1438,6 +1453,24 @@
         "supabase/functions/_shared/schemas.ts",
         "supabase/functions/_shared/validation.ts",
         "supabase/functions/approve-password-reset/index.ts"
+      ]
+    },
+    {
+      "name": "assistant-gateway",
+      "entrypoint": "supabase/functions/assistant-gateway/index.ts",
+      "verify_jwt": true,
+      "source_sha256": "036bc878b2443b281ad6415f5e71253ea352d295fb248b05414bfee5eccf348a",
+      "source_files": [
+        "supabase/functions/_shared/ai-feature-flags.ts",
+        "supabase/functions/_shared/ai-guards.ts",
+        "supabase/functions/_shared/assistant-gateway.ts",
+        "supabase/functions/_shared/assistant-playbook.ts",
+        "supabase/functions/_shared/cors-origins.ts",
+        "supabase/functions/_shared/hmac-validation.ts",
+        "supabase/functions/_shared/rate-limit-log.ts",
+        "supabase/functions/_shared/request-policy.ts",
+        "supabase/functions/_shared/validation.ts",
+        "supabase/functions/assistant-gateway/index.ts"
       ]
     },
     {
@@ -1684,7 +1717,7 @@
       "name": "copilot-live",
       "entrypoint": "supabase/functions/copilot-live/index.ts",
       "verify_jwt": true,
-      "source_sha256": "338d81d364a8a36196e6b13f90ea7f64580e77d309b96e5c71d472a80b354048",
+      "source_sha256": "79ad44f54789ccb6659a72c60271d237636a8b98297f78de9aaa1c5b7dc286ed",
       "source_files": [
         "supabase/functions/_shared/ai-budget.ts",
         "supabase/functions/_shared/ai-capabilities.ts",
@@ -1695,6 +1728,7 @@
         "supabase/functions/_shared/ai-providers.ts",
         "supabase/functions/_shared/ai-routing.ts",
         "supabase/functions/_shared/ai-usage.ts",
+        "supabase/functions/_shared/assistant-playbook.ts",
         "supabase/functions/_shared/cors-origins.ts",
         "supabase/functions/_shared/hmac-validation.ts",
         "supabase/functions/_shared/rate-limit-log.ts",
@@ -2823,5 +2857,5 @@
       ]
     }
   ],
-  "manifest_sha256": "1eca3157e5a9afdc9345c84d5872ef1ed903cd5ba0ddda0e7442ca3a6c4ca33e"
+  "manifest_sha256": "b94c90a4a6b28f0799223d9d8e9f31797926557cc105ba67771beccc48ba5069"
 }
