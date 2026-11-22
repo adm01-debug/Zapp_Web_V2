@@ -290,6 +290,9 @@ export function ContactsView() {
           loading={loading}
           viewCaption={VIEW_CAPTION[viewMode] ?? 'Cards de contatos'}
           activeFilterChips={filterChips}
+          /* ZD-086/ZD-087 — comparar e limpar a seleção sem sair da tela. */
+          onCompare={() => setIsCompareOpen(true)}
+          onClearSelection={() => setSelectedIds([])}
         />
       )}
 

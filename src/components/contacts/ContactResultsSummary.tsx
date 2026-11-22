@@ -19,13 +19,17 @@ interface ContactResultsSummaryProps {
   /** ZD-043/ZD-044 — rótulo da visão atual ("Cards de contatos", "Lista", …) e chips dos filtros ativos. */
   viewCaption?: string;
   activeFilterChips?: { key: string; label: string; onRemove: () => void }[];
+  /** ZD-086 — abrir a comparação (só oferecido com 2+ selecionados). */
+  onCompare?: () => void;
+  /** ZD-087 — limpar a seleção sem sair da tela. */
+  onClearSelection?: () => void;
 }
 
 export function ContactResultsSummary({
   totalCount, filteredCount, selectedCount, activeFiltersCount,
   search, onSelectAll, allSelected,
   page, pageSize, loadMore, loadPrevious, hasMore, loading,
-  viewCaption, activeFilterChips = [],
+  viewCaption, activeFilterChips = [], onCompare, onClearSelection,
 }: ContactResultsSummaryProps) {
   if (filteredCount === 0) return null;
 
@@ -37,8 +41,10 @@ export function ContactResultsSummary({
 
   return (
     <div className="space-y-2">
-      <div className="min-h-[23px] flex flex-wrap items-center justify-between gap-x-3 gap-y-1 text-[11px] text-muted-foreground">
-        <div className="flex items-center gap-[13px] flex-wrap min-w-0">
+      {/* `.zc-selection-row` do design: seleção + contagem à esquerda, ferramentas
+          dos selecionados à direita, 13px acima e 16px abaixo. */}
+      <div className="min-h-[23px] mb-[16px] mt-[13px] flex flex-wrap items-center justify-between gap-x-3 gap-y-1 text-[11px] text-[hsl(var(--contacts-quiet))]">
+        <div className="flex min-w-0 flex-wrap items-center gap-x-[13px] gap-y-[6px]">
           <div
             role="button"
             tabIndex={0}
@@ -53,11 +59,7 @@ export function ContactResultsSummary({
               aria-hidden="true"
               tabIndex={-1}
             />
-            <span className="font-medium text-foreground">
-              {selectedCount > 0
-                ? `${selectedCount} selecionado${selectedCount !== 1 ? 's' : ''}`
-                : 'Selecionar todos'}
-            </span>
+            <span className="font-medium text-foreground">Selecionar todos</span>
           </div>
           <span className="pl-3 border-l border-[hsl(var(--contacts-line))]" data-testid="contacts-showing" aria-live="polite">
             Exibindo <strong className="font-medium text-foreground">{primeiro}–{ultimo}</strong> de{' '}
@@ -76,7 +78,33 @@ export function ContactResultsSummary({
           )}
         </div>
 
-        <span className="text-[11px] text-[hsl(var(--contacts-quiet))] max-[659px]:hidden">{viewCaption}</span>
+        <div className="flex flex-wrap items-center justify-end gap-[6px]">
+          <span className="text-[11px] text-[hsl(var(--contacts-quiet))] max-[659px]:hidden">{viewCaption}</span>
+          {selectedCount > 0 && (
+            <>
+              <span className="tabular-nums text-[hsl(var(--contacts-muted))]" data-testid="contacts-selected-count">
+                {selectedCount} selecionado{selectedCount !== 1 ? 's' : ''}
+              </span>
+              {selectedCount >= 2 && onCompare && (
+                <button
+                  type="button"
+                  onClick={onCompare}
+                  className="h-[26px] rounded-[7px] border border-[hsl(var(--contacts-line))] bg-[hsl(var(--contacts-raised))] px-[9px] text-[11px] text-[hsl(var(--contacts-muted))] transition-colors hover:text-[hsl(var(--contacts-ink))]"
+                >
+                  Comparar
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={onClearSelection}
+                aria-label="Limpar seleção"
+                className="grid h-[26px] w-[26px] place-items-center rounded-[7px] border border-[hsl(var(--contacts-line))] bg-[hsl(var(--contacts-raised))] text-[hsl(var(--contacts-muted))] transition-colors hover:text-[hsl(var(--contacts-ink))]"
+              >
+                <X className="h-3 w-3" aria-hidden="true" />
+              </button>
+            </>
+          )}
+        </div>
       </div>
 
       {activeFilterChips.length > 0 && (
