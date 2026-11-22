@@ -1,7 +1,8 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Card, CardContent } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
+import { useContainerColumns, type ColumnsPreference } from '@/hooks/contacts/useContainerColumns';
 import { ContactEmptyState } from './ContactEmptyState';
 import { ContactCard } from './ContactCard';
 import { ContactListItem } from './ContactListItem';
@@ -14,10 +15,22 @@ import { ContactsSkeleton } from './ContactsSkeleton';
 import type { ContactViewMode } from './ContactViewSwitcher';
 
 const GRID_COLUMNS_CLASS: Record<number, string> = {
+  1: 'grid-cols-1',
+  2: 'grid-cols-1 sm:grid-cols-2',
   3: 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3',
   4: 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4',
   5: 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5',
   6: 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-6',
+};
+
+/** Grade explícita quando a largura do contêiner já foi medida (regra do design). */
+const COLUNAS_GRID: Record<number, string> = {
+  1: 'grid-cols-1',
+  2: 'grid-cols-2',
+  3: 'grid-cols-3',
+  4: 'grid-cols-4',
+  5: 'grid-cols-5',
+  6: 'grid-cols-6',
 };
 
 import type { Contact } from './types';
@@ -59,6 +72,16 @@ export function ContactContentArea({
     return () => cancelAnimationFrame(id);
   }, []);
 
+  // Quantos cards por linha: medido pela largura real do contêiner (o design faz
+  // igual). Antes da primeira medida — ou num ambiente sem layout mensurável —
+  // vale o mapa responsivo por classes, que garante 1 coluna no celular.
+  const gradeRef = useRef<HTMLDivElement | null>(null);
+  const { columns: colunasDoContainer, width: larguraDoContainer } = useContainerColumns(
+    gradeRef,
+    (gridColumns >= 2 && gridColumns <= 6 ? gridColumns : 4) as ColumnsPreference,
+  );
+  const colunasMedidas = larguraDoContainer !== null && larguraDoContainer > 0;
+
   let content: React.ReactNode;
 
   if (loading) {
@@ -76,7 +99,15 @@ export function ContactContentArea({
     );
   } else if (viewMode === 'grid') {
     content = (
-      <div className={cn("grid gap-3", GRID_COLUMNS_CLASS[gridColumns] || GRID_COLUMNS_CLASS[4])}>
+      <div
+        ref={gradeRef}
+        className={cn(
+          "grid gap-4 max-[899px]:gap-[14px] max-[559px]:gap-[13px]",
+          // Com largura medida, a contagem vem do contêiner; sem medida (SSR,
+          // jsdom sem layout) o mapa por classes é o fallback responsivo.
+          colunasMedidas ? COLUNAS_GRID[colunasDoContainer] : GRID_COLUMNS_CLASS[gridColumns] || GRID_COLUMNS_CLASS[4],
+        )}
+      >
         {contacts.map((contact, index) => (
           <motion.div
             key={contact.id}

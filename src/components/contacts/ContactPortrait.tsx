@@ -10,12 +10,27 @@ import type { Contact } from './types';
  * "salvar imagem" e, na ausência de foto, iniciais sobre fundo neutro (nunca um
  * background público do contato). A cor do fallback usa os tokens `--contacts-*`
  * (claro/escuro) — zero cor literal.
+ *
+ * Design (`.zc-portrait` / `.zc-fallback`): a foto entra em `object-position 50% 31%`
+ * e ganha `scale(1.035)` quando o botão do retrato é hover; o fallback é o
+ * monograma grande (75px, `letter-spacing:-3px`) sobre um gradiente radial.
+ * O zoom depende de `group/photo` no botão que envolve este componente.
  */
-export function ContactPortrait({ contact, className }: { contact: Contact; className?: string }) {
+export function ContactPortrait({
+  contact,
+  className,
+  initialsClassName = 'text-[75px] tracking-[-3px]',
+}: {
+  contact: Contact;
+  className?: string;
+  initialsClassName?: string;
+}) {
   const display = toContactDisplay(contact);
   const initials = getInitials(display.nomeCompleto ?? contact.name);
   const isDark = typeof document !== 'undefined' && document.documentElement.classList.contains('dark');
-  const fallbackBg = isDark ? 'hsl(var(--contacts-raised))' : 'hsl(220 20% 92%)';
+  const fallbackBg = isDark
+    ? 'radial-gradient(ellipse at 30% 20%, hsl(230 5% 29%) 0%, hsl(var(--contacts-line)) 48%, hsl(var(--contacts-page)) 100%)'
+    : 'radial-gradient(ellipse at 30% 20%, hsl(220 18% 88%) 0%, hsl(var(--contacts-raised)) 48%, hsl(var(--contacts-page)) 100%)';
   const fallbackFg = isDark ? 'hsl(var(--contacts-ink))' : 'hsl(var(--contacts-quiet))';
 
   return (
@@ -26,12 +41,12 @@ export function ContactPortrait({ contact, className }: { contact: Contact; clas
           alt={display.nomeCompleto ?? contact.name}
           draggable={false}
           loading="lazy"
-          className="h-full w-full object-cover object-[50%_31%]"
+          className="h-full w-full object-cover object-[50%_31%] transition-transform duration-[550ms] ease-[cubic-bezier(.2,.8,.2,1)] group-hover/photo:scale-[1.035] motion-reduce:transform-none motion-reduce:transition-none"
         />
       ) : (
         <div
-          className="flex h-full w-full items-center justify-center font-display"
-          style={{ color: fallbackFg, fontSize: 'clamp(2rem, 8cqw, 3rem)' }}
+          className={cn('grid h-full w-full place-items-center font-display font-medium', initialsClassName)}
+          style={{ color: fallbackFg }}
         >
           {initials}
         </div>

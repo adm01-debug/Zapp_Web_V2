@@ -7,12 +7,11 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
-  MessageSquare, Pencil, Trash2, MoreVertical, Phone, Mail, Clock, Briefcase,
+  MessageSquare, Pencil, Trash2, MoreVertical, Phone, Mail,
   MapPin, ArrowUpRight, Building2,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { usePointerCoarse } from '@/components/tasks/shared/pointerMedia';
-import { CONTACT_TYPE_CONFIG } from './contactTypeConfig';
 import { HighlightText } from './HighlightText';
 import { canDeleteContact } from './contactPermissions';
 import { calculateContactHealth, type ContactHealth, type ContactHealthInput } from '@/lib/contactHealth';
@@ -99,36 +98,36 @@ export function ContactCard({
   contact, isSelected, onToggleSelect, onOpenDetails, onOpenChat, onEdit, onDelete, index, companyName, searchQuery,
 }: ContactItemProps) {
   const display = toContactDisplay(contact, { companyName });
-  const typeConfig = CONTACT_TYPE_CONFIG[contact.contact_type || 'cliente'] || CONTACT_TYPE_CONFIG.cliente;
   const ponteiroGrosso = usePointerCoarse();
 
-  // "Último contato em" quando há mensagem real; fallback para data de cadastro
-  const footerLabel = display.ultimoContato ?? '';
+  // "Última interação" quando há mensagem real; sem nenhuma data → 'Não registrada'
+  const ultimaInteracao = display.ultimoContato ?? 'Não registrada';
   const temCanal = Boolean(display.telefone || display.email);
 
   return (
     <div
       data-testid="contact-card"
       className={cn(
-        "group relative flex flex-col overflow-hidden rounded-[13px] border cursor-pointer card-lift card-glow",
-        "transition-[transform,border-color,box-shadow] duration-200",
-        "hover:-translate-y-[3px]",
+        "contact-card group relative flex min-w-0 flex-col overflow-hidden rounded-[13px] cursor-pointer card-lift card-glow",
         "min-h-[120px]",
         temCanal && "min-h-[164px]",
         isSelected
-          ? "ring-1 ring-primary bg-primary/5 border-primary/60"
-          : "border-[hsl(var(--contacts-line))] hover:border-[hsl(221_20%_48%)]"
+          ? "contact-card-selected ring-1 ring-primary bg-primary/5 border-primary/60"
+          : "hover:border-[hsl(221_20%_48%)]"
       )}
       style={{
         background: 'linear-gradient(148deg, hsl(var(--contacts-panel)) 0%, hsl(var(--contacts-panel)) 65%, hsl(var(--contacts-page)))',
-        boxShadow: 'inset 0 1px 0 hsl(0 0% 100% / 0.02), 0 5px 15px hsl(0 0% 0% / 0.08)',
       }}
       onClick={() => onOpenDetails(contact.id)}
     >
-      {/* Selection checkbox — revelado no hover (desktop) e sempre visivel no toque */}
+      {/* Selection — caixa do design (`.zc-card-selection`): 25px, 28px no mobile
+          estreito e 38px no ponteiro grosso. Continua oculta no ponteiro fino até
+          hover/foco de teclado (contrato de controlesToque.test.tsx). */}
       <div
         className={cn(
-          "absolute top-3 right-3 z-10 transition-opacity duration-150 focus-within:opacity-100",
+          "absolute top-3 right-3 z-[3] grid h-[25px] w-[25px] place-items-center rounded-[7px] border border-[hsl(0_0%_100%/0.23)] bg-[hsl(240_10%_8%/0.76)] shadow-[0_2px_8px_hsl(0_0%_0%/0.25)] transition-opacity duration-150 focus-within:opacity-100",
+          "max-[559px]:top-[14px] max-[559px]:right-[14px] max-[559px]:h-7 max-[559px]:w-7 max-[559px]:rounded-[8px]",
+          ponteiroGrosso && "h-[38px] w-[38px] rounded-[10px]",
           isSelected || ponteiroGrosso ? "opacity-100" : "opacity-0 group-hover:opacity-100"
         )}
         onClick={(e) => e.stopPropagation()}
@@ -137,19 +136,24 @@ export function ContactCard({
           checked={isSelected}
           onCheckedChange={(checked) => onToggleSelect(contact.id, !!checked)}
           aria-label={isSelected ? `Desmarcar ${contact.name}` : `Selecionar ${contact.name}`}
-          className="bg-background/90"
+          className={cn(
+            "border-[hsl(0_0%_100%/0.6)] bg-transparent shadow-none",
+            ponteiroGrosso
+              ? "h-[18px] w-[18px] [&_svg]:h-[14px] [&_svg]:w-[14px]"
+              : "h-[13px] w-[13px] [&_svg]:hidden max-[559px]:h-[14px] max-[559px]:w-[14px]",
+          )}
         />
       </div>
 
       {/* Menu "⋮": só o que é exclusivo dele (Excluir). */}
       {canDeleteContact(contact) && (
         <div
-          className="absolute top-3 right-12 z-10"
+          className="absolute top-3 right-11 z-[3] max-[559px]:right-[46px]"
           onClick={(e) => e.stopPropagation()}
         >
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="w-8 h-8 hover:bg-muted" aria-label={`Ações do contato ${contact.name}`}>
+              <Button variant="ghost" size="icon" className="w-8 h-8 text-[hsl(228_20%_92%)] hover:bg-[hsl(0_0%_100%/0.14)]" aria-label={`Ações do contato ${contact.name}`}>
                 <MoreVertical className="w-4 h-4" />
               </Button>
             </DropdownMenuTrigger>
@@ -166,23 +170,23 @@ export function ContactCard({
       <div className="relative isolate">
         <button
           type="button"
-          className="block w-full relative overflow-hidden rounded-t-[12px] bg-[hsl(var(--contacts-raised))] text-left h-[338px] sm:h-[311px] lg:h-[285px] xl:h-[296px] 2xl:h-[308px]"
+          className="group/photo block w-full relative overflow-hidden rounded-t-[12px] bg-[hsl(var(--contacts-raised))] text-left h-[338px] sm:h-[311px] lg:h-[285px] xl:h-[296px] 2xl:h-[308px]"
           onClick={(e) => { e.stopPropagation(); onOpenDetails(contact.id); }}
           aria-label={`Abrir ${display.nomeCompleto ?? contact.name}`}
         >
           <ContactPortrait contact={contact} className="h-full w-full" />
           <span className="pointer-events-none absolute inset-0" style={{ background: 'linear-gradient(180deg, hsl(0 0% 0% / 0.08) 0%, transparent 40%, transparent 66%, hsl(0 0% 0% / 0.85) 100%)' }} />
 
-          <span className="absolute top-3 left-3 z-10">
-            <ContactTypeBadge type={contact.contact_type} />
+          <span className="pointer-events-none absolute top-3 left-3 z-[2] max-[559px]:top-[14px] max-[559px]:left-[14px]">
+            <ContactTypeBadge type={contact.contact_type} size="overlay" />
           </span>
 
-          <span className="absolute left-[15px] bottom-4 z-10 flex items-center gap-1.5 text-[11px] text-white/95 max-w-[calc(100%-69px)]">
-            <MapPin className="w-[13px] h-[13px]" />
-            {display.regiao ?? display.uf ?? 'Localização não informada'}
+          <span className="absolute left-[15px] bottom-4 z-[2] flex max-w-[calc(100%-69px)] items-center gap-1.5 text-[11px] text-[hsl(228_20%_96%)] max-[559px]:left-[17px] max-[559px]:bottom-[19px]">
+            <MapPin className="w-[13px] h-[13px] shrink-0" />
+            <span className="min-w-0 truncate">{display.regiao ?? display.uf ?? 'Localização não informada'}</span>
           </span>
 
-          <span className="absolute right-[13px] bottom-3 z-10 grid place-items-center w-[34px] h-[34px] rounded-[9px] text-white pointer-events-none"
+          <span className="pointer-events-none absolute right-[13px] bottom-3 z-[2] grid place-items-center w-[34px] h-[34px] rounded-[9px] text-white max-[559px]:right-[15px] max-[559px]:bottom-[14px] max-[559px]:w-[37px] max-[559px]:h-[37px]"
             style={{ background: 'linear-gradient(145deg, hsl(var(--contacts-blue)), hsl(221 83% 35%))', border: '1px solid hsl(221 83% 70% / 0.4)', boxShadow: '0 3px 13px hsl(0 0% 0% / 0.4)' }}
           >
             <ArrowUpRight className="w-[17px] h-[17px]" />
@@ -190,21 +194,21 @@ export function ContactCard({
         </button>
       </div>
 
-      {/* Corpo do card */}
-      <div className="flex flex-col flex-1 p-4 pt-4">
+      {/* Corpo do card — paddings por faixa, como no design */}
+      <div className="flex flex-col flex-1 p-4 max-[1399px]:p-[15px_14px_13px] max-[899px]:p-[17px_17px_14px] max-[559px]:p-[18px_19px_16px] 2xl:p-[17px_18px_15px]">
         <HighlightText
           text={display.nomeCompleto ?? contact.name}
           highlight={searchQuery}
-          className="font-display text-[24px] font-medium leading-[1.16] tracking-[-0.55px] text-foreground block truncate mb-2"
+          className="font-display text-[24px] font-medium leading-[1.16] tracking-[-0.55px] text-foreground block [overflow-wrap:anywhere] mb-[7px] max-[559px]:text-[27px] 2xl:text-[25px]"
         />
         {display.empresa && (
-          <p className="flex items-center gap-1.5 text-xs text-[hsl(var(--contacts-ink))] mb-2">
-            <Building2 className="w-[13px] h-[13px] text-[hsl(var(--contacts-quiet))]" />
-            {display.empresa}
+          <p className="flex items-center gap-[6px] text-xs leading-[1.35] text-[hsl(var(--contacts-ink))] m-0 mb-[7px] max-[559px]:mb-2 max-[559px]:text-[13px] 2xl:text-[13px]">
+            <Building2 className="w-[13px] h-[13px] shrink-0 text-[hsl(var(--contacts-quiet))]" />
+            <span className="min-w-0 truncate">{display.empresa}</span>
           </p>
         )}
         {display.cargo && (
-          <p className="text-xs leading-[1.7] text-[hsl(var(--contacts-muted))] min-h-[41px] m-0">
+          <p className="text-xs leading-[1.7] text-[hsl(var(--contacts-muted))] min-h-[41px] m-0 max-[559px]:min-h-0">
             {display.cargo}
           </p>
         )}
@@ -221,9 +225,9 @@ export function ContactCard({
         )}
 
         {/* Linhas de contato */}
-        <div className="grid gap-2 mt-3 pt-3 border-t border-[hsl(var(--contacts-soft-line))]">
+        <div className="grid gap-[9px] mt-3 pt-[13px] border-t border-[hsl(var(--contacts-soft-line))] max-[559px]:gap-[11px] max-[559px]:mt-[14px] max-[559px]:pt-[15px]">
           {display.telefone && (
-            <div className="flex items-center gap-2 text-xs text-[hsl(var(--contacts-ink))] min-w-0" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center gap-2 text-xs text-[hsl(var(--contacts-ink))] min-w-0 max-[559px]:text-[13px] 2xl:text-[13px]" onClick={(e) => e.stopPropagation()}>
               <Phone className="w-[13px] h-[13px] shrink-0 text-[hsl(var(--contacts-quiet))]" />
               <a href={`https://wa.me/${contact.phone.replace(/\D/g, '')}`} target="_blank" rel="noopener noreferrer"
                 className="truncate hover:text-primary transition-colors">
@@ -232,7 +236,7 @@ export function ContactCard({
             </div>
           )}
           {display.email && (
-            <div className="flex items-center gap-2 text-xs text-[hsl(var(--contacts-ink))] min-w-0" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center gap-2 text-xs text-[hsl(var(--contacts-ink))] min-w-0 max-[559px]:text-[13px] 2xl:text-[13px]" onClick={(e) => e.stopPropagation()}>
               <Mail className="w-[13px] h-[13px] shrink-0 text-[hsl(var(--contacts-quiet))]" />
               <a href={`mailto:${display.email}`} className="truncate text-muted-foreground hover:text-primary transition-colors">
                 {display.email}
@@ -244,22 +248,23 @@ export function ContactCard({
         {/* Completude do cadastro — discreta. */}
         <ContactHealthIndicator input={contact} className="mt-3" />
 
-        {/* Rodapé */}
-        <div className="mt-auto flex items-center justify-between gap-2 mt-4 pt-3 border-t border-[hsl(var(--contacts-soft-line))]">
-          <div className="flex items-center gap-1.5 text-[11px] text-[hsl(var(--contacts-quiet))] min-w-0">
-            <Clock className="w-[14px] h-[14px] shrink-0" />
-            <span className="truncate">{footerLabel}</span>
-          </div>
-          <div className="flex items-center gap-1.5 shrink-0" onClick={(e) => e.stopPropagation()}>
-            <Button variant="outline" size="icon" className="w-9 h-9 rounded-[9px] border border-border bg-card hover:bg-muted hover:border-primary/50"
-              onClick={() => onOpenChat(contact.id)} title="Conversar">
-              <MessageSquare className="w-4 h-4" />
-            </Button>
-            <Button variant="outline" size="icon" className="w-9 h-9 rounded-[9px] border border-border bg-card hover:bg-muted hover:border-primary/50"
-              onClick={() => onEdit(contact)} title="Editar">
-              <Pencil className="w-4 h-4" />
-            </Button>
-          </div>
+        {/* "Última interação" — a linha `.zc-last` do design */}
+        <div className="flex items-center justify-between gap-[10px] border-t border-[hsl(var(--contacts-soft-line))] text-[11px] text-[hsl(var(--contacts-quiet))] mt-auto pt-[11px] mt-[17px] max-[559px]:mt-[18px] max-[559px]:pt-[13px]">
+          <span className="min-w-0 truncate">Última interação</span>
+          <strong className="whitespace-nowrap text-[11px] font-normal text-[hsl(var(--contacts-ink))]">{ultimaInteracao}</strong>
+        </div>
+
+        {/* Ações rápidas — o design não as tem no card; o sistema sim (contrato
+            de ContactPolimento.test.tsx: um botão "Conversar" e um "Editar"). */}
+        <div className="mt-2.5 flex shrink-0 items-center justify-end gap-1.5" onClick={(e) => e.stopPropagation()}>
+          <Button variant="outline" size="icon" className="w-9 h-9 rounded-[9px] border border-border bg-card hover:bg-muted hover:border-primary/50"
+            onClick={() => onOpenChat(contact.id)} title="Conversar">
+            <MessageSquare className="w-4 h-4" />
+          </Button>
+          <Button variant="outline" size="icon" className="w-9 h-9 rounded-[9px] border border-border bg-card hover:bg-muted hover:border-primary/50"
+            onClick={() => onEdit(contact)} title="Editar">
+            <Pencil className="w-4 h-4" />
+          </Button>
         </div>
       </div>
     </div>
