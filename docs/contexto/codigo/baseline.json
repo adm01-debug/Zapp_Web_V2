@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "2fc081def1d4dceb64c9a1d6fa4e0be63b575438",
+  "commit": "bcf4dcc8a5c3d1c45da0f1d1973132f7e2be49c3",
   "branch": "main",
-  "data_commit": "2026-11-22T11:56:09-03:00",
+  "data_commit": "2026-11-22T15:31:38Z",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "bcf4dcc8",
+    "data": "2026-11-22",
+    "assunto": "chore(db): sincronizar artefatos derivados do banco (#3315)"
+   },
    {
     "sha": "2fc081de",
     "data": "2026-11-22",
@@ -126,11 +131,6 @@
     "sha": "b267f6b2",
     "data": "2026-11-19",
     "assunto": "feat(evolution-api): adiciona ação 'pairing-code' para parear aparelho por código (#3290)"
-   },
-   {
-    "sha": "966a524f",
-    "data": "2026-11-19",
-    "assunto": "ci(security): dependency review barra CVE novo high/critical nos PRs (#3288)"
    }
   ],
   "arquivos_mudados_7d": 7029,
@@ -211,10 +211,14 @@
    },
    {
     "arquivo": "src/integrations/supabase/types.ts",
-    "mudancas": 13
+    "mudancas": 14
    },
    {
     "arquivo": "scripts/db-audit/grants-baseline.json",
+    "mudancas": 12
+   },
+   {
+    "arquivo": "supabase/schema-manifest.json",
     "mudancas": 12
    },
    {
@@ -222,19 +226,15 @@
     "mudancas": 11
    },
    {
-    "arquivo": "supabase/schema-manifest.json",
+    "arquivo": "docs/DB-INVENTORY.md",
+    "mudancas": 11
+   },
+   {
+    "arquivo": "supabase/schema-catalog.json",
     "mudancas": 11
    },
    {
     "arquivo": ".github/workflows/db-guard.yml",
-    "mudancas": 10
-   },
-   {
-    "arquivo": "docs/DB-INVENTORY.md",
-    "mudancas": 10
-   },
-   {
-    "arquivo": "supabase/schema-catalog.json",
     "mudancas": 10
    },
    {
@@ -301,11 +301,11 @@
   "autores_30d": [
    {
     "autor": "adm01-debug",
-    "commits": 293
+    "commits": 292
    },
    {
     "autor": "github-actions[bot]",
-    "commits": 6
+    "commits": 7
    },
    {
     "autor": "dependabot[bot]",
