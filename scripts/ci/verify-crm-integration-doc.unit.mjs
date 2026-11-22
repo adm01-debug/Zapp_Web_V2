@@ -28,6 +28,11 @@ function findUsages() {
   const arquivos = new Set();
 
   for (const linha of linhas) {
+    // `grep -n` devolve `caminho:linha:conteudo`. So conta uso de verdade:
+    // um comentario que apenas cita o nome do hook (`* ... \`useCRM...\``)
+    // nao consome a flag e nao deve exigir linha na tabela do documento.
+    const conteudo = linha.slice(linha.indexOf(':', linha.indexOf(':') + 1) + 1).trimStart();
+    if (conteudo.startsWith('*') || conteudo.startsWith('//') || conteudo.startsWith('/*')) continue;
     // Ignora o proprio hook, seu teste, o index de re-export e arquivos de teste
     if (linha.includes('useCRMIntegrationEnabled.ts:') && !linha.includes('__tests__')) continue;
     if (linha.includes('useCRMIntegrationEnabled.test.tsx')) continue;

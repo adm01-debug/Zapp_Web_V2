@@ -43,6 +43,7 @@ export function ContactPortrait({
           src={contact.avatar_url}
           alt={display.nomeCompleto ?? contact.name}
           draggable={false}
+          onContextMenu={(event) => event.preventDefault()}
           loading={priority ? 'eager' : 'lazy'}
           fetchPriority={priority ? 'high' : 'auto'}
           decoding="async"
