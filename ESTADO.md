@@ -113,7 +113,7 @@ partir do código e falha quando:
 | `sentiment-alert` | A | `src/hooks/inbox/useSentimentAlerts.ts:39` |
 | `status` | E | — sem chamador no repositório — |
 | `sync-call-records` | D | `supabase/config.toml:80` |
-| `talkx-ai` | D | `supabase/config.toml:90` |
+| `talkx-ai` | A | `src/hooks/talkx/useTalkxAi.ts:90` |
 | `talkx-link` | A | `src/hooks/integrations/useTalkXLinks.ts:56` · `supabase/functions/talkx-send/index.ts:128` · `supabase/config.toml:65` |
 | `talkx-report` | E | — sem chamador no repositório — |
 | `talkx-scheduler` | E | — sem chamador no repositório — |
