@@ -3,7 +3,7 @@
  "format_version": 2,
  "stack": {
   "linguagens": [
-   "TypeScript (5054)",
+   "TypeScript (5063)",
    "Markdown (4082)",
    "SQL (3063)",
    "JSON (1968)",
@@ -1193,7 +1193,7 @@
   {
    "arquivo": "ESTADO.md",
    "titulo": "ESTADO.md — o que está ligado e quem chama",
-   "linhas": 163
+   "linhas": 160
   },
   {
    "arquivo": "FEATURE_REGISTRY.md",
@@ -1957,6 +1957,10 @@
     "arquivos": 5
    },
    {
+    "host": "edge.local",
+    "arquivos": 4
+   },
+   {
     "host": "external.invalid",
     "arquivos": 4
    },
@@ -2006,10 +2010,6 @@
    },
    {
     "host": "chat.whatsapp.com",
-    "arquivos": 3
-   },
-   {
-    "host": "edge.local",
     "arquivos": 3
    },
    {

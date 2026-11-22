@@ -1,7 +1,7 @@
 {
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
- "total": 1058,
+ "total": 1059,
  "orfaos": 138,
  "nomes_duplicados": {
   "AIAutoTagsConfig": [
@@ -10378,7 +10378,7 @@
     "AiTab"
    ],
    "export_default": null,
-   "linhas": 251,
+   "linhas": 254,
    "dominio": "components/inbox",
    "hooks_locais": [
     "useContactLeadScore",
@@ -10403,6 +10403,22 @@
    "dominio": "components/inbox",
    "hooks_locais": [
     "useReminderOffer"
+   ],
+   "tabelas": [],
+   "edges": [],
+   "usado_por": 1,
+   "orfao": false
+  },
+  {
+   "arquivo": "src/components/inbox/tabs/AssistantAskCard.tsx",
+   "exports": [
+    "AssistantAskCard"
+   ],
+   "export_default": null,
+   "linhas": 110,
+   "dominio": "components/inbox",
+   "hooks_locais": [
+    "useAssistantGateway"
    ],
    "tabelas": [],
    "edges": [],
@@ -10900,7 +10916,7 @@
    "hooks_locais": [],
    "tabelas": [],
    "edges": [],
-   "usado_por": 6,
+   "usado_por": 7,
    "orfao": false
   },
   {
@@ -16442,7 +16458,7 @@
    "hooks_locais": [],
    "tabelas": [],
    "edges": [],
-   "usado_por": 455,
+   "usado_por": 456,
    "orfao": false
   },
   {
@@ -16893,7 +16909,7 @@
    "hooks_locais": [],
    "tabelas": [],
    "edges": [],
-   "usado_por": 202,
+   "usado_por": 203,
    "orfao": false
   },
   {

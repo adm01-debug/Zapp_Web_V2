@@ -1,6 +1,6 @@
 # 07 · REGRAS DE NEGÓCIO
 
-> Gerado automaticamente por AI Context Sync v1.3.2 · commit `9f6df25bc2` · branch `main` · 2026-11-22 12:54 UTC
+> Gerado automaticamente por AI Context Sync v1.3.2 · commit `f1080b156a` · branch `main` · 2026-11-22 13:51 UTC
 > Não edite à mão — regras humanas vão em `manual/`.
 
 ## A. Regras escritas por humanos (`manual/` — prioridade máxima, nunca sobrescrito)
@@ -1927,7 +1927,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | TALKX_CAMPAIGN_SEARCH_COLUMNS | 'name', 'description', 'message_template' | `src/hooks/integrations/useTalkXCampaignList.ts` |
 | TalkXEventType | created \| updated \| scheduled \| started \| paused \| resumed \| cancelled \| completed \| note | `src/hooks/integrations/useTalkXEvents.ts` |
 | TalkXClientEventType | note \| checklist \| segments_reviewed | `src/hooks/integrations/useTalkXEvents.ts` |
-| … +218 linhas — lista completa em `context.json` | | |
+| … +219 linhas — lista completa em `context.json` | | |
 
 ## F. Validações de entrada
 
@@ -4171,7 +4171,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `MAX_INBOX_SILENCE_MINUTES` | `1440` | `analise-prs/resgate-261118-lote3/codex/publish-followup-20261021/supabase/functions/connection-health-check/index.ts` |
 | `TITULO` | `'[settings-guard] perimeter regression detected'` | `analise-prs/resgate-261118-lote3/f3/strict-false-baseline-20261018/scripts/ci/github-settings-guard.unit.mjs` |
 | `CONTEXTS_OK` | `"['` | `analise-prs/resgate-261118-lote3/f3/strict-false-baseline-20261018/scripts/ci/github-settings-guard.unit.mjs` |
-| … +1050 linhas — lista completa em `context.json` | | |
+| … +1052 linhas — lista completa em `context.json` | | |
 
 ### H.2 Prazos, expirações e janelas de tempo
 
@@ -4636,6 +4636,8 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | 5 | `supabase/functions/ai-auto-tag/index.ts` |
 | 1 | `supabase/functions/ai-churn-analysis/churn-risk.ts` |
 | 5 | `supabase/functions/ai-suggest-reply/index.ts` |
+| 1 | `supabase/functions/assistant-gateway/index.ts` |
+| 5 | `supabase/functions/assistant-gateway/index.ts` |
 | 500 | `supabase/functions/batch-fetch-avatars/index.ts` |
 | 1 | `supabase/functions/chatbot-l1/index.ts` |
 | 15 | `supabase/functions/chatbot-l1/index.ts` |
@@ -4965,7 +4967,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | unsupported-filter-column | `analise-prs/resgate-261118-lote3/claude/test-e2e-suite-completa-261104-1428/scripts/e2e-isolated/providers.mjs` |
 | unsupported-order | `analise-prs/resgate-261118-lote3/claude/test-e2e-suite-completa-261104-1428/scripts/e2e-isolated/providers.mjs` |
 | unsupported-range | `analise-prs/resgate-261118-lote3/claude/test-e2e-suite-completa-261104-1428/scripts/e2e-isolated/providers.mjs` |
-| … +2520 linhas — lista completa em `context.json` | |
+| … +2523 linhas — lista completa em `context.json` | |
 
 ## J. Controle de acesso no código (checagens de perfil/permissão)
 
@@ -5056,7 +5058,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `owner` | `supabase/migrations/20260927270018_team_chat_e28_fix_find_or_create_race.sql` |
 | `anon` | `supabase/migrations/20260927340000_fix_add_agent_xp_negative_and_guard.sql` |
 
-## K. Testes como especificação (26138 testes em 2726 arquivos — nomes completos em `context.json`)
+## K. Testes como especificação (26178 testes em 2730 arquivos — nomes completos em `context.json`)
 
 | Arquivo | Testes | Exemplos do que o sistema DEVE fazer |
 |---|---|---|
@@ -5360,7 +5362,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `src/hooks/chat/__tests__/useAutomationSuggestions.test.tsx` | 18 | useAutomationSuggestions · não vai à Edge quando a última mensagem é do agente (lastInboundMessageId nulo) · chama a Edge com o contact_id e expõe as sugestões do contrato, com a fonte carimbada · espera o debounce antes de chamar (mensagem que ainda está chegando não gasta IA) … |
 | `src/hooks/chat/journey/__tests__/useJourneyActors.test.tsx` | 18 | useJourneyActors — regras de quem agiu (S063) · usuário com perfil: nome e foto do perfil, em UMA consulta em lote · perfil ausente:  · erro/RLS negado não lança: o ator cai no  … |
 | `src/hooks/communication/__tests__/useTranscriptionNotifications.filtros.test.ts` | 18 | sinalDeConclusao — não depende de payload.old · sem sinal de recência, evento com old só de id não é conclusão · carimbo antigo não passa; carimbo de agora passa · fronteira da janela (~30 s): 45 s já é antigo; 5 s ainda é recente … |
-| … +2426 linhas — lista completa em `context.json` | | |
+| … +2430 linhas — lista completa em `context.json` | | |
 
 ## L. Eventos de webhook tratados (contratos com sistemas externos)
 
@@ -5543,6 +5545,13 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `enqueue(` | `src/services/outbound-message.service.ts` |
 | `enqueue(` | `supabase/functions/_shared/ai-providers.ts` |
 | `enqueue(` | `supabase/functions/_shared/ai-usage.ts` |
+| `.add('agenda'` | `supabase/functions/_shared/assistant-gateway.ts` |
+| `.add('calcular_prazo'` | `supabase/functions/_shared/assistant-gateway.ts` |
+| `.add('recomendar_produto'` | `supabase/functions/_shared/assistant-gateway.ts` |
+| `.add('resumo_conversa'` | `supabase/functions/_shared/assistant-gateway.ts` |
+| `.add('sugerir_resposta'` | `supabase/functions/_shared/assistant-gateway.ts` |
+| `.add('temperatura_lead'` | `supabase/functions/_shared/assistant-gateway.ts` |
+| `.add('tratar_objecao'` | `supabase/functions/_shared/assistant-gateway.ts` |
 | `sendWhatsAppAudio` | `supabase/functions/_shared/evolution-go-routes.ts` |
 | `sendWhatsAppAudio` | `supabase/functions/_shared/evolution-send.ts` |
 | `notify` | `supabase/functions/_shared/evolution-webhook-handlers.ts` |
@@ -5897,4 +5906,4 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | * R2-AUTH-005 (item 239): a resposta de uma busca de perfil nao pode repor | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/hooks/auth/useAuth.tsx` |
 | Identidade diferente: o perfil anterior nao pode continuar na tela e so a | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/hooks/auth/useAuth.tsx` |
 | Supabase pode falhar e não emitir SIGNED_OUT — a limpeza não pode depender dele). | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/hooks/auth/useAuth.tsx` |
-| … +2503 linhas — lista completa em `context.json` | |
+| … +2513 linhas — lista completa em `context.json` | |

@@ -1,15 +1,15 @@
 {
  "meta": {
-  "sha": "9f6df25bc2f82252fdfe8e08dd10f56da1ef71fb",
+  "sha": "f1080b156a4f5ef0281cb46ac18b4dadf02d36ab",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-22 12:54 UTC",
-  "files_total": 15590,
-  "code_files": 8894,
-  "code_lines": 1410433
+  "generated_at": "2026-11-22 13:51 UTC",
+  "files_total": 15599,
+  "code_files": 8903,
+  "code_lines": 1411909
  },
  "version": "1.3.2",
- "facts_hash": "8431aad023beb0e6",
+ "facts_hash": "14b427d813de4ee6",
  "stack": {
   "frameworks": [
    "React + Vite",
@@ -345,8 +345,8 @@
   "package_manager": "bun",
   "languages": {
    ".sql": 3063,
-   ".tsx": 2812,
-   ".ts": 2238,
+   ".tsx": 2814,
+   ".ts": 2245,
    ".mjs": 652,
    ".py": 125,
    ".cjs": 19,
@@ -70751,6 +70751,35 @@
     "idempotency": false
    },
    {
+    "name": "assistant-gateway",
+    "file": "supabase/functions/assistant-gateway/index.ts",
+    "methods": [
+     "POST?"
+    ],
+    "auth": "service_role (ignora RLS) + valida JWT do usuário",
+    "tables": [
+     "ai_usage_logs",
+     "assistant_profiles",
+     "contacts",
+     "conversation_tasks",
+     "feature_flags",
+     "messages",
+     "profiles",
+     "sales_deals"
+    ],
+    "env": [
+     "SUPABASE_ANON_KEY",
+     "SUPABASE_URL"
+    ],
+    "external": [],
+    "invokes": [],
+    "doc": "",
+    "errors": [],
+    "side_effects": [],
+    "webhook_events": [],
+    "idempotency": false
+   },
+   {
     "name": "auth-login",
     "file": "supabase/functions/auth-login/index.ts",
     "methods": [
@@ -73410,7 +73439,7 @@
     "file": ".github/workflows/types-sync.yml"
    }
   ],
-  "components_count": 2591,
+  "components_count": 2593,
   "hooks": [
    {
     "name": "useMotionSeguro",
@@ -74303,6 +74332,10 @@
    {
     "name": "useSentimentTrend",
     "file": "src/hooks/analytics/useSentimentTrend.ts"
+   },
+   {
+    "name": "useAssistantGateway",
+    "file": "src/hooks/assistant/useAssistantGateway.ts"
    },
    {
     "name": "useAssistantProfile",
@@ -77318,8 +77351,8 @@
   },
   {
    "module": "src/components",
-   "files": 2296,
-   "lines": 390637,
+   "files": 2298,
+   "lines": 390870,
    "tables": [
     "agent_skills",
     "agent_visibility_grants",
@@ -77666,8 +77699,8 @@
   },
   {
    "module": "src/hooks",
-   "files": 1026,
-   "lines": 166629,
+   "files": 1027,
+   "lines": 166649,
    "tables": [
     "agent_achievements",
     "agent_stats",
@@ -77791,6 +77824,7 @@
     "useRecentAnalyses.ts: RecentAnalysis, useRecentAnalyses, InsightPeriod, AIInsights, useAIInsights",
     "useRecentSentimentAlerts.ts: AlertSentiment, RecentSentimentAlert, DepartmentNegativeShare, useRecentSentimentAlerts",
     "useSentimentTrend.ts: SentimentTrendDay, SentimentTrendWindow, SentimentTrendResult, useSentimentTrend",
+    "useAssistantGateway.ts: useAssistantGateway",
     "useAssistantProfile.ts: Atividade, AjudaPreferida, TomPreferido, AssistantProfile, DEFAULT_ASSISTANT_PROFILE, useAssistantProfile",
     "useContactAgenda.ts: AgendaItem, CreateReminderInput, useContactAgenda",
     "useDailyBrief.ts: useDailyBrief",
@@ -77809,8 +77843,7 @@
     "useDemandPrediction.ts: PredictionPoint, DemandInsights, useDemandPrediction",
     "useNPSSurveys.ts: NPSSurvey, NPS_SURVEY_LIMIT, useNPSSurveys",
     "useQueueAnalytics.ts: useQueueAnalytics",
-    "useQueueGoals.ts: QueueGoal, QueueAlert, QueueGoalMetricsRow, QueueGoalMetricDefinition, QUEUE_GOAL_METRICS, QUEUE_GOAL_BANDS",
-    "useQueues.ts: QueueMember, QueueWithMembers, useQueues"
+    "useQueueGoals.ts: QueueGoal, QueueAlert, QueueGoalMetricsRow, QueueGoalMetricDefinition, QUEUE_GOAL_METRICS, QUEUE_GOAL_BANDS"
    ],
    "docs": [
     "realtimeSharedTopic.test.tsx: Regressao do bump supabase-js 2.116 (#460): desde a realtime-js 2.101, `.on()` em canal ja inscrito lanca erro e `supabase.channel(nome)` reaproveita o canal de mesmo nome. Hooks com topico fixo montados em dois componentes ao mesmo tempo (TalkXView > TalkXCampaignScheduled, QueuesView > QueueGoalsD …",
@@ -77985,8 +78018,8 @@
   },
   {
    "module": "src/lib",
-   "files": 298,
-   "lines": 40289,
+   "files": 300,
+   "lines": 40450,
    "tables": [
     "contacts",
     "conversation_tasks",
@@ -78718,8 +78751,8 @@
   },
   {
    "module": "supabase/functions",
-   "files": 424,
-   "lines": 127741,
+   "files": 428,
+   "lines": 128803,
    "tables": [
     "agent_stats",
     "ai_conversation_tags",
@@ -78789,6 +78822,7 @@
     "queues",
     "rate_limit_logs",
     "reconnection_logs",
+    "sales_deals",
     "searchbox_usage_daily",
     "security_alerts",
     "stickers",
@@ -78835,6 +78869,7 @@
     "ai-usage.ts: extractTokenUsage, normalizeCorrelationId, normalizeAttempt, normalizeModality, AI_REQUEST_ID_HEADER, extractAiRequestId",
     "ai-values.ts: ValueIssue, ScoreScale, NormalizedNumber, NormalizeScoreOptions, normalizeScore, AggregateResult",
     "ai-vocabulary.ts: SENTIMENT_VALUES, Sentiment, URGENCY_VALUES, Urgency, OPERATIONAL_PRIORITY_VALUES, OperationalPriority",
+    "assistant-gateway.ts: AssistantCapability, ASSISTANT_CAPABILITIES, CAPABILITY_LABELS, ContextSource, IntentSignals, normalizeQuery",
     "contract-kit.ts: VersionedSchemas, SchemaInput, ParseOk, ParseFail, ParseResult, contractHeaders",
     "contracts.ts: ContractVersion, V1_SUNSET, getContractVersion, deprecationHeaders, parseVersioned",
     "copilot-tick.ts: COPILOT_TICK_KIND, COPILOT_FUNCTION_NAME, COPILOT_CAPABILITY_KEY, MAX_NEW_MESSAGES, MAX_CONTEXT_MESSAGES, CopilotTickError",
@@ -78853,8 +78888,7 @@
     "evolution-helpers.ts: WebhookPayload, isRecord, normalizeEventName, toEventRecords, maskJidForLog, normalizePhone",
     "evolution-instance-token.ts: InstanceTokenClient, resetInstanceTokenCache, instanceNameFromV2Path, resolveInstanceToken",
     "evolution-media.ts: isValidMediaBytes, persistMediaToStorage, persistBase64Media, persistMediaViaApi, ParsedMessage, parseMessageContent",
-    "evolution-send.ts: evoFetch, extractMessageId, extractBase64Media, extractAvatarUrl, extractConnectionState",
-    "evolution-session-routes.ts: EvolutionFlavor, SessionAction, SessionAuth, SessionRoute, resolvePairingRoute, formatPairingCode"
+    "evolution-send.ts: evoFetch, extractMessageId, extractBase64Media, extractAvatarUrl, extractConnectionState"
    ],
    "docs": [
     "ai-circuit.test.ts: IA-050 — circuit breaker por provedor de IA no despacho central. Defeito provado na auditoria (IA-CIRCUIT-001): `generateWithRouting` retentava e devolvia erro explícito, mas NUNCA suspendia um provedor que só falha — cada request novo voltava a bater no provedor caído (fetch real + espera + custo). …",
@@ -78896,6 +78930,8 @@
     "supabase/functions/_shared/ai-usage.ts",
     "supabase/functions/_shared/ai-values.ts",
     "supabase/functions/_shared/ai-vocabulary.ts",
+    "supabase/functions/_shared/assistant-gateway.test.ts",
+    "supabase/functions/_shared/assistant-gateway.ts",
     "supabase/functions/_shared/contract-kit.ts",
     "supabase/functions/_shared/contracts.ts",
     "supabase/functions/_shared/copilot-tick.ts",
@@ -78948,9 +78984,7 @@
     "supabase/functions/_shared/talkx-tracking-token.ts",
     "supabase/functions/_shared/talkx-window.ts",
     "supabase/functions/_shared/validation.cors.test.ts",
-    "supabase/functions/_shared/validation.degraded.test.ts",
-    "supabase/functions/_shared/validation.logger.test.ts",
-    "supabase/functions/_shared/validation.ts"
+    "supabase/functions/_shared/validation.degraded.test.ts"
    ]
   },
   {
@@ -79388,6 +79422,7 @@
    "assistant_profiles": {
     "select": [
      "src/hooks/assistant/useAssistantProfile.ts",
+     "supabase/functions/assistant-gateway/index.ts",
      "supabase/functions/copilot-live/index.ts"
     ],
     "upsert": [
@@ -79906,6 +79941,7 @@
      "supabase/functions/ai-auto-tag/index.ts",
      "supabase/functions/ai-churn-analysis/index.ts",
      "supabase/functions/ai-suggest-reply/index.ts",
+     "supabase/functions/assistant-gateway/index.ts",
      "supabase/functions/auto-close-conversations/index.ts",
      "supabase/functions/batch-fetch-avatars/index.ts",
      "supabase/functions/bitrix-api/index.ts",
@@ -80077,6 +80113,7 @@
      "src/hooks/chat/useNextBestAction.ts",
      "src/hooks/tasks/useMyWorkItems.ts",
      "src/lib/assistant/dailyBrief.ts",
+     "supabase/functions/assistant-gateway/index.ts",
      "supabase/functions/copilot-live/index.ts",
      "supabase/functions/voice-copilot-action/index.ts"
     ],
@@ -80746,6 +80783,7 @@
      "supabase/functions/ai-auto-tag/index.ts",
      "supabase/functions/ai-churn-analysis/churn-risk.ts",
      "supabase/functions/ai-transcribe-audio/index.ts",
+     "supabase/functions/assistant-gateway/index.ts",
      "supabase/functions/automation-suggest-reply/index.ts",
      "supabase/functions/chatbot-l1/index.ts",
      "supabase/functions/connection-health-check/index.ts",
@@ -81298,7 +81336,8 @@
     "select": [
      "src/hooks/chat/useConversationHistoryTimeline.ts",
      "src/hooks/crm/useContactCrm360.ts",
-     "src/lib/assistant/dailyBrief.ts"
+     "src/lib/assistant/dailyBrief.ts",
+     "supabase/functions/assistant-gateway/index.ts"
     ],
     "update": [
      "src/hooks/crm/useContactCrm360.ts"
@@ -84291,6 +84330,7 @@
     "supabase/functions/_shared/ai-audio-authz.ts",
     "supabase/functions/_shared/observability.ts",
     "supabase/functions/_shared/validation.ts",
+    "supabase/functions/assistant-gateway/index.ts",
     "supabase/functions/bitrix-api/index.ts",
     "supabase/functions/cleanup-rate-limit-logs/index.ts",
     "supabase/functions/evolution-api/index.ts",
@@ -84396,6 +84436,7 @@
     "supabase/functions/ai-suggest-reply/index.test.ts",
     "supabase/functions/ai-transcribe-audio/index.ts",
     "supabase/functions/ai-usage-outbox-drain/index.ts",
+    "supabase/functions/assistant-gateway/index.ts",
     "supabase/functions/bitrix-api/index.ts",
     "supabase/functions/copilot-live/index.ts",
     "supabase/functions/evolution-api/index.ts",
@@ -90187,6 +90228,11 @@
     "file": "supabase/functions/_shared/ai-vocabulary.ts",
     "name": "OPERATIONAL_PRIORITY_VALUES",
     "values": "'low', 'medium', 'high', 'urgent'"
+   },
+   {
+    "file": "supabase/functions/_shared/assistant-gateway.ts",
+    "name": "AssistantCapability",
+    "values": "agenda | resumo_conversa | sugerir_resposta | temperatura_lead | recomendar_produto | calcular_prazo | tratar_objecao"
    },
    {
     "file": "supabase/functions/_shared/copilot-tick.ts",
@@ -99882,6 +99928,18 @@
     "msg": "O navegador não oferece uma fonte segura para identificar a requisição de IA."
    },
    {
+    "file": "src/lib/assistant/askGateway.ts",
+    "msg": "Escreva o que você quer saber."
+   },
+   {
+    "file": "src/lib/assistant/askGateway.ts",
+    "msg": "O assistente está temporariamente desligado."
+   },
+   {
+    "file": "src/lib/assistant/askGateway.ts",
+    "msg": "Sua sessão expirou. Entre novamente para falar com o assistente."
+   },
+   {
     "file": "src/lib/calls/sipProvisioning.ts",
     "msg": "Erro ao conectar ao servidor SIP. Verifique sua sessão e tente novamente."
    },
@@ -106146,6 +106204,10 @@
     "text": "enquanto o endereço deste ponto carrega não pode vencer o ponto que o operador marcou."
    },
    {
+    "file": "src/components/inbox/tabs/AssistantAskCard.tsx",
+    "text": "responde cruzando perfil, agenda, conversa e negócio. Cada pedaço vem com a"
+   },
+   {
     "file": "src/components/inbox/tabs/AudioPlayButton.tsx",
     "text": "Item sem nome fica com o rótulo genérico de antes; nome longo é truncado no mesmo limite"
    },
@@ -110182,6 +110244,10 @@
     "text": "* Uma mensagem de sucesso é exatamente o que NÃO pode ser dito sobre `partial`"
    },
    {
+    "file": "src/lib/assistant/askGateway.ts",
+    "text": "* `answer` ausente não pode virar tela em branco: usa o motivo do erro. */"
+   },
+   {
     "file": "src/lib/assistant/detectReminderIntent.ts",
     "text": "* Quando o lembrete deve tocar (ISO, fuso local do navegador). */"
    },
@@ -111086,6 +111152,18 @@
     "text": "3. `known` diz apenas se o token CRU foi reconhecido como valor do domínio;"
    },
    {
+    "file": "supabase/functions/_shared/assistant-gateway.ts",
+    "text": "* Pede conta de data/prazo de entrega. */"
+   },
+   {
+    "file": "supabase/functions/_shared/assistant-gateway.ts",
+    "text": "* Cliente levantou objeção (preço, desconto, \"vou pensar\"). */"
+   },
+   {
+    "file": "supabase/functions/_shared/assistant-gateway.ts",
+    "text": "- nenhum sinal reconhecido → `agenda` + `resumo_conversa` (o mínimo útil sem"
+   },
+   {
     "file": "supabase/functions/_shared/contract-kit.ts",
     "text": "* contract-kit — porta ÚNICA de validação de contrato das Edge Functions."
    },
@@ -111944,6 +112022,26 @@
    {
     "file": "supabase/functions/approve-password-reset/index.ts",
     "text": "supervisor NÃO pode fazer isso por esta via — era `is_admin_or_supervisor`."
+   },
+   {
+    "file": "supabase/functions/assistant-gateway/index.ts",
+    "text": "- negócio aberto (`sales_deals`)."
+   },
+   {
+    "file": "supabase/functions/assistant-gateway/index.ts",
+    "text": "/functions/v1/ai-deadline-calculator"
+   },
+   {
+    "file": "supabase/functions/assistant-gateway/index.ts",
+    "text": "* Capacidade ligada? Ausente = ligada (mesma regra de `ai-feature-flags`). */"
+   },
+   {
+    "file": "supabase/functions/assistant-gateway/index.ts",
+    "text": "exige no mínimo 5 mensagens (`AiConversationSummarySchema`). Sem histórico"
+   },
+   {
+    "file": "supabase/functions/assistant-gateway/index.ts",
+    "text": "Mesma regra de `enforceAiCapability`: leitura falhou ou valor não booleano"
    },
    {
     "file": "supabase/functions/auth-login/index.ts",
@@ -127805,6 +127903,16 @@
     "file": "supabase/functions/approve-password-reset/index.ts",
     "name": "CANONICAL_APP_ORIGIN",
     "value": "\"https://zapp-web-v2.vercel.app\""
+   },
+   {
+    "file": "supabase/functions/assistant-gateway/index.ts",
+    "name": "HISTORY_LIMIT",
+    "value": "20"
+   },
+   {
+    "file": "supabase/functions/assistant-gateway/index.ts",
+    "name": "MODEL_MESSAGES_LIMIT",
+    "value": "20"
    },
    {
     "file": "supabase/functions/auth-login/index.ts",
@@ -148611,6 +148719,12 @@
     "file": "supabase/functions/approve-password-reset/index.ts",
     "field": "status",
     "value": "pending",
+    "kind": "filtra"
+   },
+   {
+    "file": "supabase/functions/assistant-gateway/index.ts",
+    "field": "status",
+    "value": "open",
     "kind": "filtra"
    },
    {
@@ -194660,6 +194774,26 @@
     "name": "falha de leitura aparece como erro explícito, não como agenda vazia"
    },
    {
+    "file": "src/components/inbox/tabs/__tests__/AssistantAskCard.test.tsx",
+    "name": "AssistantAskCard (porta única)"
+   },
+   {
+    "file": "src/components/inbox/tabs/__tests__/AssistantAskCard.test.tsx",
+    "name": "envia o pedido com o contato e mostra a resposta com a origem de cada fonte"
+   },
+   {
+    "file": "src/components/inbox/tabs/__tests__/AssistantAskCard.test.tsx",
+    "name": "mostra a mensagem de erro da edge quando a chamada falha"
+   },
+   {
+    "file": "src/components/inbox/tabs/__tests__/AssistantAskCard.test.tsx",
+    "name": "sugestão preenche o campo e dispara a pergunta sem digitação"
+   },
+   {
+    "file": "src/components/inbox/tabs/__tests__/AssistantAskCard.test.tsx",
+    "name": "avisa quando a resposta veio parcial"
+   },
+   {
     "file": "src/components/inbox/tabs/__tests__/AudioPlayButton.test.tsx",
     "name": "AudioPlayButton (A02/D03/D04)"
    },
@@ -240156,6 +240290,38 @@
     "name": "snapshot não incrementa a geração (reescrita não supera a análise vigente)"
    },
    {
+    "file": "src/lib/assistant/__tests__/askGateway.test.ts",
+    "name": "askGateway"
+   },
+   {
+    "file": "src/lib/assistant/__tests__/askGateway.test.ts",
+    "name": "normaliza a resposta com fontes e proveniência"
+   },
+   {
+    "file": "src/lib/assistant/__tests__/askGateway.test.ts",
+    "name": "fonte com erro preserva o motivo (não vira vazio)"
+   },
+   {
+    "file": "src/lib/assistant/__tests__/askGateway.test.ts",
+    "name": "401 vira mensagem de sessão expirada"
+   },
+   {
+    "file": "src/lib/assistant/__tests__/askGateway.test.ts",
+    "name": "503 vira aviso de assistente desligado"
+   },
+   {
+    "file": "src/lib/assistant/__tests__/askGateway.test.ts",
+    "name": "erro do servidor usa a mensagem devolvida"
+   },
+   {
+    "file": "src/lib/assistant/__tests__/askGateway.test.ts",
+    "name": "resposta sem answer cai no motivo do erro, não em branco"
+   },
+   {
+    "file": "src/lib/assistant/__tests__/askGateway.test.ts",
+    "name": "recusa pergunta vazia sem chamar a edge"
+   },
+   {
     "file": "src/lib/assistant/__tests__/detectReminderIntent.test.ts",
     "name": "detectReminderIntent"
    },
@@ -245620,6 +245786,50 @@
     "name": "IA-TIMEOUT-001 PATCH de tentativas confirmado registra a tentativa e não inventa falha"
    },
    {
+    "file": "supabase/functions/_shared/assistant-gateway.test.ts",
+    "name": "normaliza acento, caixa e espaço"
+   },
+   {
+    "file": "supabase/functions/_shared/assistant-gateway.test.ts",
+    "name": "panorama do cliente aciona agenda + resumo + temperatura"
+   },
+   {
+    "file": "supabase/functions/_shared/assistant-gateway.test.ts",
+    "name": "panorama aceita variações sem acento e "
+   },
+   {
+    "file": "supabase/functions/_shared/assistant-gateway.test.ts",
+    "name": "pedido só de agenda não aciona modelo"
+   },
+   {
+    "file": "supabase/functions/_shared/assistant-gateway.test.ts",
+    "name": "pedido de resposta não aciona agenda nem temperatura"
+   },
+   {
+    "file": "supabase/functions/_shared/assistant-gateway.test.ts",
+    "name": "objeção de preço aciona o tratador de objeção"
+   },
+   {
+    "file": "supabase/functions/_shared/assistant-gateway.test.ts",
+    "name": "prazo e produto podem vir juntos"
+   },
+   {
+    "file": "supabase/functions/_shared/assistant-gateway.test.ts",
+    "name": "texto sem sinal cai no mínimo útil (agenda + resumo)"
+   },
+   {
+    "file": "supabase/functions/_shared/assistant-gateway.test.ts",
+    "name": "ordem é sempre a canônica, independente da ordem das regras"
+   },
+   {
+    "file": "supabase/functions/_shared/assistant-gateway.test.ts",
+    "name": "toda capacidade tem rótulo e edge de execução (exceto agenda)"
+   },
+   {
+    "file": "supabase/functions/_shared/assistant-gateway.test.ts",
+    "name": "as edges ligadas pela porta única são exatamente as 6 do plano"
+   },
+   {
     "file": "supabase/functions/_shared/evolution-webhook-messages.test.ts",
     "name": "AWAY: client_message_id determinístico por (contato, dia), válido e sem colisão"
    },
@@ -249434,6 +249644,70 @@
    {
     "file": "supabase/functions/approve-password-reset/index.test.ts",
     "name": "rejeição concorrente: UPDATE afeta 0 linhas -> 409 e nada auditado"
+   },
+   {
+    "file": "supabase/functions/assistant-gateway/index.test.ts",
+    "name": "401 quando o JWT não autentica"
+   },
+   {
+    "file": "supabase/functions/assistant-gateway/index.test.ts",
+    "name": "400 quando não há pedido"
+   },
+   {
+    "file": "supabase/functions/assistant-gateway/index.test.ts",
+    "name": "503 da guarda de IA é repassado sem chamar capacidade"
+   },
+   {
+    "file": "supabase/functions/assistant-gateway/index.test.ts",
+    "name": "panorama devolve resposta com >=3 fontes e a origem de cada pedaço"
+   },
+   {
+    "file": "supabase/functions/assistant-gateway/index.test.ts",
+    "name": "pedido só de agenda responde sem chamar nenhuma edge de modelo"
+   },
+   {
+    "file": "supabase/functions/assistant-gateway/index.test.ts",
+    "name": "todas as capacidades recebem o MESMO contexto compartilhado"
+   },
+   {
+    "file": "supabase/functions/assistant-gateway/index.test.ts",
+    "name": "histórico curto recusa o resumo ANTES de chamar (schema exige 5)"
+   },
+   {
+    "file": "supabase/functions/assistant-gateway/index.test.ts",
+    "name": "capacidade desligada aparece como erro e não vira chamada"
+   },
+   {
+    "file": "supabase/functions/assistant-gateway/index.test.ts",
+    "name": "falha de uma capacidade não derruba a resposta das outras"
+   },
+   {
+    "file": "supabase/functions/assistant-gateway/index.test.ts",
+    "name": "fonte que falha é reportada como erro, não como vazio"
+   },
+   {
+    "file": "supabase/functions/assistant-gateway/index.test.ts",
+    "name": "pedido sem contato explica a ausência em cada fonte"
+   },
+   {
+    "file": "supabase/functions/assistant-gateway/index.test.ts",
+    "name": "mesma frase, mesmo roteamento (determinístico entre chamadas)"
+   },
+   {
+    "file": "supabase/functions/assistant-gateway/index.test.ts",
+    "name": "contextBlock avisa quando não há perfil, em vez de fingir personalização"
+   },
+   {
+    "file": "supabase/functions/assistant-gateway/index.test.ts",
+    "name": "composeAnswer sem nenhum pedaço diz que tudo falhou"
+   },
+   {
+    "file": "supabase/functions/assistant-gateway/index.test.ts",
+    "name": "capabilityBlockedReason barra modelo sem mensagens"
+   },
+   {
+    "file": "supabase/functions/assistant-gateway/index.test.ts",
+    "name": "loadSharedContext não é chamado quando readContext é injetado"
    },
    {
     "file": "supabase/functions/auth-login/index.test.ts",
@@ -259990,6 +260264,34 @@
    {
     "file": "supabase/functions/_shared/ai-usage.ts",
     "call": "enqueue("
+   },
+   {
+    "file": "supabase/functions/_shared/assistant-gateway.ts",
+    "call": ".add('agenda'"
+   },
+   {
+    "file": "supabase/functions/_shared/assistant-gateway.ts",
+    "call": ".add('calcular_prazo'"
+   },
+   {
+    "file": "supabase/functions/_shared/assistant-gateway.ts",
+    "call": ".add('recomendar_produto'"
+   },
+   {
+    "file": "supabase/functions/_shared/assistant-gateway.ts",
+    "call": ".add('resumo_conversa'"
+   },
+   {
+    "file": "supabase/functions/_shared/assistant-gateway.ts",
+    "call": ".add('sugerir_resposta'"
+   },
+   {
+    "file": "supabase/functions/_shared/assistant-gateway.ts",
+    "call": ".add('temperatura_lead'"
+   },
+   {
+    "file": "supabase/functions/_shared/assistant-gateway.ts",
+    "call": ".add('tratar_objecao'"
    },
    {
     "file": "supabase/functions/_shared/evolution-go-routes.ts",
@@ -283088,6 +283390,14 @@
     "limit": "5"
    },
    {
+    "file": "supabase/functions/assistant-gateway/index.ts",
+    "limit": "1"
+   },
+   {
+    "file": "supabase/functions/assistant-gateway/index.ts",
+    "limit": "5"
+   },
+   {
     "file": "supabase/functions/batch-fetch-avatars/index.ts",
     "limit": "500"
    },
@@ -286284,7 +286594,8 @@
       "escreve:src/hooks/gmail/gmailTypes.ts",
       "escreve:src/pages/ChatPopup.tsx",
       "escreve:src/types/chat.ts",
-      "filtra:src/lib/assistant/dailyBrief.ts"
+      "filtra:src/lib/assistant/dailyBrief.ts",
+      "filtra:supabase/functions/assistant-gateway/index.ts"
      ],
      "resolved": [
       "compara:analise-prs/resgate-261118-lote3/hermes/robustez-primitivos-ui-2610121626bec5-2610141859e423/src/components/inbox/chat/ChatHeader.tsx",
@@ -384677,7 +384988,7 @@
   },
   "src/components/inbox/tabs/AiTab.tsx": {
    "path": "src/components/inbox/tabs/AiTab.tsx",
-   "lines": 251,
+   "lines": 254,
    "exports": [
     "function AiTab"
    ],
@@ -384693,6 +385004,16 @@
    ],
    "errors": [
     " className="
+   ]
+  },
+  "src/components/inbox/tabs/AssistantAskCard.tsx": {
+   "path": "src/components/inbox/tabs/AssistantAskCard.tsx",
+   "lines": 110,
+   "exports": [
+    "function AssistantAskCard"
+   ],
+   "rule_comments": [
+    "responde cruzando perfil, agenda, conversa e negócio. Cada pedaço vem com a"
    ]
   },
   "src/components/inbox/tabs/AudioPlayButton.tsx": {
@@ -385264,6 +385585,18 @@
     "dispensar a oferta não grava nada",
     "mostra os compromissos futuros já marcados com o contato (leitura da agenda)",
     "falha de leitura aparece como erro explícito, não como agenda vazia"
+   ]
+  },
+  "src/components/inbox/tabs/__tests__/AssistantAskCard.test.tsx": {
+   "path": "src/components/inbox/tabs/__tests__/AssistantAskCard.test.tsx",
+   "lines": 120,
+   "is_test": true,
+   "tests": [
+    "AssistantAskCard (porta única)",
+    "envia o pedido com o contato e mostra a resposta com a origem de cada fonte",
+    "mostra a mensagem de erro da edge quando a chamada falha",
+    "sugestão preenche o campo e dispara a pergunta sem digitação",
+    "avisa quando a resposta veio parcial"
    ]
   },
   "src/components/inbox/tabs/__tests__/AudioPlayButton.test.tsx": {
@@ -412388,6 +412721,17 @@
    ],
    "pagination": [
     "400"
+   ]
+  },
+  "src/hooks/assistant/useAssistantGateway.ts": {
+   "path": "src/hooks/assistant/useAssistantGateway.ts",
+   "lines": 20,
+   "exports": [
+    "function useAssistantGateway"
+   ],
+   "doc": "Fase 3 — hook da porta única. `useMutation` porque a pergunta é ação explícita do vendedor (não polling); nada é gravado no banco.",
+   "hooks": [
+    "useAssistantGateway"
    ]
   },
   "src/hooks/assistant/useAssistantProfile.ts": {
@@ -442044,6 +442388,26 @@
     "snapshot não incrementa a geração (reescrita não supera a análise vigente)"
    ]
   },
+  "src/lib/assistant/askGateway.ts": {
+   "path": "src/lib/assistant/askGateway.ts",
+   "lines": 92,
+   "exports": [
+    "interface GatewaySource",
+    "interface GatewayAnswer",
+    "interface AskGatewayArgs",
+    "const SOURCE_LABELS",
+    "function askGateway"
+   ],
+   "errors": [
+    "Escreva o que você quer saber.",
+    "O assistente está temporariamente desligado.",
+    "Sua sessão expirou. Entre novamente para falar com o assistente."
+   ],
+   "rule_comments": [
+    "* `answer` ausente não pode virar tela em branco: usa o motivo do erro. */"
+   ],
+   "doc": "Fase 3 — cliente da PORTA ÚNICA (`assistant-gateway`). Só a requisição e a normalização da resposta; quem renderiza é o card. A edge devolve `{ answer, pieces, capabilities, sources, errors }`, e a UI mostra `sources` para o vendedor saber de onde veio cada pedaço — o texto do modelo não é a prova, …"
+  },
   "src/lib/assistant/dailyBrief.ts": {
    "path": "src/lib/assistant/dailyBrief.ts",
    "lines": 60,
@@ -442118,6 +442482,21 @@
     "* Quando o lembrete deve tocar (ISO, fuso local do navegador). */"
    ],
    "doc": "Fase 2 do plano do assistente pessoal: quando o cliente diz \"me liga na quinta\", o assistente OFERECE criar o lembrete. Detectar a data é determinístico (não depende do modelo), então vive aqui — puro e testável — em vez de sair do prompt da IA. A IA pode sugerir o texto; a data quem resolve é esta …"
+  },
+  "src/lib/assistant/__tests__/askGateway.test.ts": {
+   "path": "src/lib/assistant/__tests__/askGateway.test.ts",
+   "lines": 69,
+   "is_test": true,
+   "tests": [
+    "askGateway",
+    "normaliza a resposta com fontes e proveniência",
+    "fonte com erro preserva o motivo (não vira vazio)",
+    "401 vira mensagem de sessão expirada",
+    "503 vira aviso de assistente desligado",
+    "erro do servidor usa a mensagem devolvida",
+    "resposta sem answer cai no motivo do erro, não em branco",
+    "recusa pergunta vazia sem chamar a edge"
+   ]
   },
   "src/lib/assistant/__tests__/detectReminderIntent.test.ts": {
    "path": "src/lib/assistant/__tests__/detectReminderIntent.test.ts",
@@ -451326,6 +451705,60 @@
     "3. `known` diz apenas se o token CRU foi reconhecido como valor do domínio;"
    ]
   },
+  "supabase/functions/_shared/assistant-gateway.test.ts": {
+   "path": "supabase/functions/_shared/assistant-gateway.test.ts",
+   "lines": 81,
+   "is_test": true,
+   "tests": [
+    "normaliza acento, caixa e espaço",
+    "panorama do cliente aciona agenda + resumo + temperatura",
+    "panorama aceita variações sem acento e ",
+    "pedido só de agenda não aciona modelo",
+    "pedido de resposta não aciona agenda nem temperatura",
+    "objeção de preço aciona o tratador de objeção",
+    "prazo e produto podem vir juntos",
+    "texto sem sinal cai no mínimo útil (agenda + resumo)",
+    "ordem é sempre a canônica, independente da ordem das regras",
+    "toda capacidade tem rótulo e edge de execução (exceto agenda)",
+    "as edges ligadas pela porta única são exatamente as 6 do plano"
+   ]
+  },
+  "supabase/functions/_shared/assistant-gateway.ts": {
+   "path": "supabase/functions/_shared/assistant-gateway.ts",
+   "lines": 193,
+   "exports": [
+    "type AssistantCapability",
+    "const ASSISTANT_CAPABILITIES",
+    "const CAPABILITY_LABELS",
+    "interface ContextSource",
+    "interface IntentSignals",
+    "function normalizeQuery",
+    "function readIntent",
+    "function routeCapabilities",
+    "const MODEL_CAPABILITIES",
+    "const CAPABILITY_FUNCTION"
+   ],
+   "enums": [
+    {
+     "name": "AssistantCapability",
+     "values": "agenda | resumo_conversa | sugerir_resposta | temperatura_lead | recomendar_produto | calcular_prazo | tratar_objecao"
+    }
+   ],
+   "rule_comments": [
+    "* Pede conta de data/prazo de entrega. */",
+    "* Cliente levantou objeção (preço, desconto, \"vou pensar\"). */",
+    "- nenhum sinal reconhecido → `agenda` + `resumo_conversa` (o mínimo útil sem"
+   ],
+   "side_effects": [
+    ".add('agenda'",
+    ".add('calcular_prazo'",
+    ".add('recomendar_produto'",
+    ".add('resumo_conversa'",
+    ".add('sugerir_resposta'",
+    ".add('temperatura_lead'",
+    ".add('tratar_objecao'"
+   ]
+  },
   "supabase/functions/_shared/contract-kit.ts": {
    "path": "supabase/functions/_shared/contract-kit.ts",
    "lines": 124,
@@ -459043,6 +459476,139 @@
     "supervisor NÃO pode fazer isso por esta via — era `is_admin_or_supervisor`."
    ],
    "uses_service_role": true
+  },
+  "supabase/functions/assistant-gateway/index.test.ts": {
+   "path": "supabase/functions/assistant-gateway/index.test.ts",
+   "lines": 311,
+   "is_test": true,
+   "errors": [
+    "Unauthorized"
+   ],
+   "rule_comments": [
+    "* Contexto padrão: perfil + 6 mensagens + agenda + negócio aberto = 4 fontes. */",
+    "resumo + temperatura + prazo",
+    "* Trava de contrato: o stub do `supabase-js` não pode ser chamado sem env real. */"
+   ],
+   "tests": [
+    "401 quando o JWT não autentica",
+    "400 quando não há pedido",
+    "503 da guarda de IA é repassado sem chamar capacidade",
+    "panorama devolve resposta com >=3 fontes e a origem de cada pedaço",
+    "pedido só de agenda responde sem chamar nenhuma edge de modelo",
+    "todas as capacidades recebem o MESMO contexto compartilhado",
+    "histórico curto recusa o resumo ANTES de chamar (schema exige 5)",
+    "capacidade desligada aparece como erro e não vira chamada",
+    "falha de uma capacidade não derruba a resposta das outras",
+    "fonte que falha é reportada como erro, não como vazio",
+    "pedido sem contato explica a ausência em cada fonte",
+    "mesma frase, mesmo roteamento (determinístico entre chamadas)",
+    "contextBlock avisa quando não há perfil, em vez de fingir personalização",
+    "composeAnswer sem nenhum pedaço diz que tudo falhou",
+    "capabilityBlockedReason barra modelo sem mensagens",
+    "loadSharedContext não é chamado quando readContext é injetado"
+   ]
+  },
+  "supabase/functions/assistant-gateway/index.ts": {
+   "path": "supabase/functions/assistant-gateway/index.ts",
+   "lines": 477,
+   "exports": [
+    "interface ConversationMessage",
+    "interface SharedContext",
+    "interface GatewayDeps",
+    "function loadSharedContext",
+    "function contextBlock",
+    "function capabilityPayload",
+    "interface GatewayPiece",
+    "interface GatewayAnswer",
+    "function composeAnswer",
+    "function capabilityBlockedReason",
+    "function handleAssistantGateway"
+   ],
+   "tables": [
+    {
+     "table": "assistant_profiles",
+     "op": "select"
+    },
+    {
+     "table": "contacts",
+     "op": "select"
+    },
+    {
+     "table": "conversation_tasks",
+     "op": "select"
+    },
+    {
+     "table": "messages",
+     "op": "select"
+    },
+    {
+     "table": "sales_deals",
+     "op": "select"
+    }
+   ],
+   "table_cols": {
+    "assistant_profiles": [
+     "ajuda",
+     "atividade",
+     "foco",
+     "tom",
+     "user_id"
+    ],
+    "contacts": [
+     "id",
+     "name"
+    ],
+    "conversation_tasks": [
+     "contact_id",
+     "remind_at",
+     "status",
+     "title"
+    ],
+    "messages": [
+     "contact_id",
+     "content",
+     "created_at",
+     "sender"
+    ],
+    "sales_deals": [
+     "contact_id",
+     "id",
+     "status",
+     "value"
+    ]
+   },
+   "env": [
+    "SUPABASE_ANON_KEY",
+    "SUPABASE_URL"
+   ],
+   "params": [
+    {
+     "name": "HISTORY_LIMIT",
+     "value": "20"
+    },
+    {
+     "name": "MODEL_MESSAGES_LIMIT",
+     "value": "20"
+    }
+   ],
+   "status_values": [
+    {
+     "field": "status",
+     "value": "open",
+     "kind": "filtra"
+    }
+   ],
+   "rule_comments": [
+    "- negócio aberto (`sales_deals`).",
+    "/functions/v1/ai-deadline-calculator",
+    "* Capacidade ligada? Ausente = ligada (mesma regra de `ai-feature-flags`). */",
+    "exige no mínimo 5 mensagens (`AiConversationSummarySchema`). Sem histórico",
+    "Mesma regra de `enforceAiCapability`: leitura falhou ou valor não booleano"
+   ],
+   "pagination": [
+    "1",
+    "5"
+   ]
   },
   "supabase/functions/auth-login/index.test.ts": {
    "path": "supabase/functions/auth-login/index.test.ts",
@@ -480289,10 +480855,31 @@
   }
  },
  "git": {
-  "sha": "9f6df25bc2f82252fdfe8e08dd10f56da1ef71fb",
+  "sha": "f1080b156a4f5ef0281cb46ac18b4dadf02d36ab",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "f1080b15",
+    "date": "2026-11-22",
+    "author": "adm01-debug",
+    "subject": "feat(assistente): porta unica liga 6 edges mortas com contexto compartilhado (#3317)",
+    "files": [
+     "ESTADO.md",
+     "docs/plans/PLANO_ASSISTENTE_PESSOAL_IA_2026-11-15.md",
+     "src/components/inbox/tabs/AiTab.tsx",
+     "src/components/inbox/tabs/AssistantAskCard.tsx",
+     "src/components/inbox/tabs/__tests__/AssistantAskCard.test.tsx",
+     "src/hooks/assistant/useAssistantGateway.ts",
+     "src/lib/assistant/__tests__/askGateway.test.ts",
+     "src/lib/assistant/askGateway.ts",
+     "supabase/deployment-manifest.json",
+     "supabase/functions/_shared/assistant-gateway.test.ts",
+     "supabase/functions/_shared/assistant-gateway.ts",
+     "supabase/functions/assistant-gateway/index.test.ts",
+     "supabase/functions/assistant-gateway/index.ts"
+    ]
+   },
    {
     "sha": "9f6df25b",
     "date": "2026-11-22",
@@ -481724,27 +482311,20 @@
      "src/components/inbox/contact-details/Contact360Helpers.tsx",
      "src/components/inbox/contact-details/__tests__/Contact360Helpers.href-seguro.test.tsx"
     ]
-   },
-   {
-    "sha": "56442637",
-    "date": "2026-11-19",
-    "author": "adm01-debug",
-    "subject": "chore(e2e): nao carregar o axe do app sob E2E, e guard com dente (#3279)",
-    "files": [
-     "playwright.config.ts",
-     "scripts/ci/a11y-audit-fora-da-automacao.unit.mjs",
-     "src/main.tsx"
-    ]
    }
   ],
   "hot_files": [
    [
     "supabase/deployment-manifest.json",
-    4
+    5
    ],
    [
     "ESTADO.md",
-    3
+    4
+   ],
+   [
+    "src/components/inbox/tabs/AiTab.tsx",
+    2
    ],
    [
     "supabase/functions/copilot-live/index.test.ts",
@@ -481775,47 +482355,43 @@
     2
    ],
    [
-    "src/components/dashboard/DailyBriefStrip.tsx",
+    "docs/plans/PLANO_ASSISTENTE_PESSOAL_IA_2026-11-15.md",
     1
    ],
    [
-    "src/components/dashboard/DashboardView.tsx",
+    "src/components/inbox/tabs/AssistantAskCard.tsx",
     1
    ],
    [
-    "src/components/dashboard/__tests__/DailyBriefStrip.test.ts",
+    "src/components/inbox/tabs/__tests__/AssistantAskCard.test.tsx",
     1
    ],
    [
-    "src/components/inbox/tabs/AiTab.tsx",
+    "src/hooks/assistant/useAssistantGateway.ts",
     1
    ],
    [
-    "src/components/inbox/tabs/AssistantAgendaCard.tsx",
+    "src/lib/assistant/__tests__/askGateway.test.ts",
     1
    ],
    [
-    "src/components/inbox/tabs/__tests__/AiTab.erroAnalise.test.tsx",
+    "src/lib/assistant/askGateway.ts",
     1
    ],
    [
-    "src/components/inbox/tabs/__tests__/AiTab.test.tsx",
+    "supabase/functions/_shared/assistant-gateway.test.ts",
     1
    ],
    [
-    "src/components/inbox/tabs/__tests__/AssistantAgendaCard.test.tsx",
+    "supabase/functions/_shared/assistant-gateway.ts",
     1
    ],
    [
-    "src/hooks/assistant/useContactAgenda.ts",
+    "supabase/functions/assistant-gateway/index.test.ts",
     1
    ],
    [
-    "src/hooks/assistant/useDailyBrief.ts",
-    1
-   ],
-   [
-    "src/hooks/assistant/useReminderOffer.ts",
+    "supabase/functions/assistant-gateway/index.ts",
     1
    ]
   ]

@@ -7,24 +7,24 @@
    "src/pages (18)"
   ],
   "componentes": [
-   "src/components (894)",
+   "src/components (895)",
    "analise-prs/resgate-261118-lote3 (129)",
    "src/pages (26)"
   ],
   "hooks": [
-   "src/hooks (427)",
+   "src/hooks (428)",
    "analise-prs/resgate-261118-lote3 (92)",
    "src/components (74)"
   ],
   "servicos_logica": [
-   "src/lib (155)",
+   "src/lib (156)",
    "src/services (20)",
    "src/utils (8)"
   ],
   "testes": [
-   "co-localizado (__tests__) (2363)",
+   "co-localizado (__tests__) (2365)",
    "outro (348)",
-   "co-localizado (*.test) (232)"
+   "co-localizado (*.test) (234)"
   ],
   "edge_functions": "supabase/functions",
   "migrations": "supabase/migrations",
@@ -46,9 +46,9 @@
   "edge_functions": "kebab-case (96%)",
   "tabelas": "snake_case (91%)"
  },
- "barrels_index": 85,
+ "barrels_index": 86,
  "extensao_componentes": [
-  ".tsx (1058)"
+  ".tsx (1059)"
  ],
  "alias_imports": {
   "analise-prs/resgate-261115/auditoria/bruto/diarios-sessao/": {
@@ -66,11 +66,11 @@
  "commits": {
   "convencao": "conventional commits (observado)",
   "exemplos": [
+   "feat(assistente): porta unica liga 6 edges mortas com contexto compartilhado (#3317)",
    "feat: fase 2 do assistente pessoal (memoria e agenda do contato) (#3316)",
    "feat(assistente): Fase 1 — identidade do assistente pessoal (perfil + motor RADAR) (#3310)",
    "feat(talkx): resgata cabeçalho da aba Monitor (X145/TL-154) de commit de 10/10 não incorporado (#3312)",
-   "fix(ci): corrige flake deterministico do teste biweekly (envelope 13.333..14.333) (#3311)",
-   "feat(lgpd): mascara dados sensiveis antes de enviar texto a IA em 5 pontos (#3308)"
+   "fix(ci): corrige flake deterministico do teste biweekly (envelope 13.333..14.333) (#3311)"
   ]
  },
  "pr_template": ".github/PULL_REQUEST_TEMPLATE.md",

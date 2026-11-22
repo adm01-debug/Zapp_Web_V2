@@ -58,6 +58,7 @@
     "useAppBootstrap",
     "useApplicableSLA",
     "useAriaAnnouncer",
+    "useAssistantGateway",
     "useAssistantProfile",
     "useAttachmentSuggestion",
     "useAudienceEstimate",
@@ -571,6 +572,7 @@
     "useAppBootstrap",
     "useApplicableSLA",
     "useAriaAnnouncer",
+    "useAssistantGateway",
     "useAssistantProfile",
     "useAttachmentSuggestion",
     "useAudienceEstimate",
@@ -1224,6 +1226,7 @@
     "ai-suggest-reply",
     "ai-transcribe-audio",
     "approve-password-reset",
+    "assistant-gateway",
     "auth-login",
     "batch-fetch-avatars",
     "bitrix-api",
@@ -1348,7 +1351,7 @@
     "unknown",
     "user"
    ],
-   "arquivos_puxados": 1532
+   "arquivos_puxados": 1535
   },
   {
    "protegida": false,
@@ -4909,6 +4912,7 @@
     "useAnimationFrame",
     "useAppBootstrap",
     "useApplicableSLA",
+    "useAssistantGateway",
     "useAttachmentSuggestion",
     "useAudioMemes",
     "useAudioPlayer",
@@ -5143,6 +5147,7 @@
     "useAnimationFrame",
     "useAppBootstrap",
     "useApplicableSLA",
+    "useAssistantGateway",
     "useAttachmentSuggestion",
     "useAudioMemes",
     "useAudioPlayer",
@@ -5417,6 +5422,7 @@
     "ai-proxy",
     "ai-suggest-reply",
     "ai-transcribe-audio",
+    "assistant-gateway",
     "auth-login",
     "batch-fetch-avatars",
     "classify-audio-meme",
@@ -5488,7 +5494,7 @@
     "unknown",
     "user"
    ],
-   "arquivos_puxados": 659
+   "arquivos_puxados": 662
   },
   {
    "id": "integrations",

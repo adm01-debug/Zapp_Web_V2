@@ -2,7 +2,7 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "pasta": "supabase/functions",
- "total": 92,
+ "total": 93,
  "verify_jwt_false": [
   "ai-usage-outbox-drain",
   "auth-login",
@@ -135,6 +135,8 @@
   "supabase/functions/_shared/ai-usage.ts",
   "supabase/functions/_shared/ai-values.ts",
   "supabase/functions/_shared/ai-vocabulary.ts",
+  "supabase/functions/_shared/assistant-gateway.test.ts",
+  "supabase/functions/_shared/assistant-gateway.ts",
   "supabase/functions/_shared/contract-kit.ts",
   "supabase/functions/_shared/contracts.ts",
   "supabase/functions/_shared/copilot-tick.ts",
@@ -858,6 +860,42 @@
    "chamada_por_sql_ou_cron": false,
    "orfa": false,
    "testes": 1
+  },
+  {
+   "nome": "assistant-gateway",
+   "entrada": "supabase/functions/assistant-gateway/index.ts",
+   "arquivos": 1,
+   "linhas": 477,
+   "verify_jwt": true,
+   "metodos": [],
+   "tabelas": [
+    "assistant_profiles",
+    "contacts",
+    "conversation_tasks",
+    "messages",
+    "sales_deals"
+   ],
+   "rpcs": [],
+   "env": [
+    "SUPABASE_ANON_KEY",
+    "SUPABASE_URL"
+   ],
+   "buckets": [],
+   "chama_edges": [],
+   "hosts_externos": [],
+   "usa_shared": [
+    "ai-feature-flags.ts",
+    "ai-guards.ts",
+    "assistant-gateway.ts",
+    "validation.ts"
+   ],
+   "chamada_pelo_front": [
+    "src/lib/assistant/askGateway.ts"
+   ],
+   "chamada_por_edges": [],
+   "chamada_por_sql_ou_cron": false,
+   "orfa": false,
+   "testes": 2
   },
   {
    "nome": "auth-login",

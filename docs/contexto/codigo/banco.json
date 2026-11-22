@@ -3983,6 +3983,7 @@
    },
    "usada_no_front": 1,
    "usada_em_edges": [
+    "assistant-gateway",
     "copilot-live"
    ],
    "triggers": [],
@@ -8436,6 +8437,7 @@
     "ai-auto-tag",
     "ai-churn-analysis",
     "ai-suggest-reply",
+    "assistant-gateway",
     "auto-close-conversations",
     "batch-fetch-avatars",
     "bitrix-api",
@@ -9729,6 +9731,7 @@
    },
    "usada_no_front": 6,
    "usada_em_edges": [
+    "assistant-gateway",
     "copilot-live",
     "voice-copilot-action"
    ],
@@ -16509,6 +16512,7 @@
     "ai-auto-tag",
     "ai-churn-analysis",
     "ai-transcribe-audio",
+    "assistant-gateway",
     "auto-close-conversations",
     "automation-suggest-reply",
     "chatbot-l1",
@@ -21966,7 +21970,9 @@
     "so_no_types": []
    },
    "usada_no_front": 3,
-   "usada_em_edges": [],
+   "usada_em_edges": [
+    "assistant-gateway"
+   ],
    "triggers": [
     "update_sales_deals_updated_at"
    ],

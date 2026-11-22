@@ -6042,6 +6042,7 @@
    "src/components/inbox/copilot/CopilotPanel.tsx",
    "src/components/inbox/copilot/LiveSuggestions.tsx",
    "src/components/inbox/tabs/AssistantAgendaCard.tsx",
+   "src/components/inbox/tabs/AssistantAskCard.tsx",
    "src/components/inbox/tabs/SectionCard.tsx",
    "src/components/ui/empty-state.tsx",
    "src/hooks/chat/useLatestAnalysis.ts",
@@ -6060,6 +6061,13 @@
    "src/components/ui/button.tsx",
    "src/components/ui/input.tsx",
    "src/hooks/assistant/useReminderOffer.ts"
+  ],
+  "src/components/inbox/tabs/AssistantAskCard.tsx": [
+   "src/components/inbox/tabs/SectionCard.tsx",
+   "src/components/ui/button.tsx",
+   "src/components/ui/input.tsx",
+   "src/hooks/assistant/useAssistantGateway.ts",
+   "src/lib/assistant/askGateway.ts"
   ],
   "src/components/inbox/tabs/AudioPlayButton.tsx": [
    "src/components/inbox/tabs/fileActionButton.ts",
@@ -9750,6 +9758,9 @@
    "src/lib/localDay.ts",
    "src/lib/sentiment-classes.ts"
   ],
+  "src/hooks/assistant/useAssistantGateway.ts": [
+   "src/lib/assistant/askGateway.ts"
+  ],
   "src/hooks/assistant/useAssistantProfile.ts": [
    "src/hooks/auth/useAuth.tsx",
    "src/integrations/supabase/client.ts",
@@ -11757,6 +11768,10 @@
   "src/lib/appRole.ts": [
    "src/services/role.service.ts"
   ],
+  "src/lib/assistant/askGateway.ts": [
+   "src/integrations/supabase/client.ts",
+   "src/lib/edgeAuthHeaders.ts"
+  ],
   "src/lib/assistant/dailyBrief.ts": [
    "src/integrations/supabase/client.ts"
   ],
@@ -12900,6 +12915,12 @@
   "supabase/functions/approve-password-reset/index.ts": [
    "supabase/functions/_shared/cors-origins.ts",
    "supabase/functions/_shared/schemas.ts",
+   "supabase/functions/_shared/validation.ts"
+  ],
+  "supabase/functions/assistant-gateway/index.ts": [
+   "supabase/functions/_shared/ai-feature-flags.ts",
+   "supabase/functions/_shared/ai-guards.ts",
+   "supabase/functions/_shared/assistant-gateway.ts",
    "supabase/functions/_shared/validation.ts"
   ],
   "supabase/functions/auth-login/index.ts": [

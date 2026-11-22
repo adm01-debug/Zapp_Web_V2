@@ -2776,9 +2776,9 @@
   },
   {
    "modulo": "components/inbox",
-   "arquivos": 266,
-   "testes": 343,
-   "linhas": 46236,
+   "arquivos": 267,
+   "testes": 344,
+   "linhas": 46349,
    "itens_menu": [
     "Chat"
    ],
@@ -2786,7 +2786,7 @@
     "inbox"
    ],
    "rotas_http": [],
-   "componentes": 224,
+   "componentes": 225,
    "hooks_locais": [
     "useAddressAutocomplete",
     "useAdvanceDealStage",
@@ -2802,6 +2802,7 @@
     "useAnimationFrame",
     "useAppBootstrap",
     "useApplicableSLA",
+    "useAssistantGateway",
     "useAttachmentSuggestion",
     "useAudioMemes",
     "useAudioPlayer",
@@ -3018,6 +3019,7 @@
     "ai-proxy",
     "ai-suggest-reply",
     "ai-transcribe-audio",
+    "assistant-gateway",
     "auth-login",
     "batch-fetch-avatars",
     "classify-audio-meme",
@@ -3272,6 +3274,7 @@
     "integrations/supabase",
     "lib",
     "lib/aiRequest",
+    "lib/assistant",
     "lib/calls",
     "lib/inbox",
     "lib/journey",
@@ -3626,6 +3629,7 @@
     "useAppBootstrap",
     "useApplicableSLA",
     "useAriaAnnouncer",
+    "useAssistantGateway",
     "useAssistantProfile",
     "useAttachmentSuggestion",
     "useAudienceEstimate",
@@ -4054,6 +4058,7 @@
     "ai-suggest-reply",
     "ai-transcribe-audio",
     "approve-password-reset",
+    "assistant-gateway",
     "auth-login",
     "batch-fetch-avatars",
     "bitrix-api",
@@ -5627,6 +5632,7 @@
     "useAnnouncer",
     "useAppBootstrap",
     "useApplicableSLA",
+    "useAssistantGateway",
     "useAssistantProfile",
     "useAttachmentSuggestion",
     "useAudioMemes",
@@ -5957,6 +5963,7 @@
     "ai-suggest-reply",
     "ai-transcribe-audio",
     "approve-password-reset",
+    "assistant-gateway",
     "auth-login",
     "batch-fetch-avatars",
     "chatbot-l1",
@@ -8764,14 +8771,15 @@
   },
   {
    "modulo": "hooks/assistant",
-   "arquivos": 4,
+   "arquivos": 5,
    "testes": 0,
-   "linhas": 367,
+   "linhas": 387,
    "itens_menu": [],
    "telas": [],
    "rotas_http": [],
    "componentes": 0,
    "hooks_locais": [
+    "useAssistantGateway",
     "useAssistantProfile",
     "useAuth",
     "useContactAgenda",
@@ -8792,12 +8800,14 @@
     "useToast"
    ],
    "hooks_definidos": [
+    "useAssistantGateway",
     "useAssistantProfile",
     "useContactAgenda",
     "useDailyBrief",
     "useReminderOffer"
    ],
    "edges": [
+    "assistant-gateway",
     "auth-login",
     "detect-new-device"
    ],
@@ -12178,6 +12188,7 @@
     "useAppBootstrap",
     "useApplicableSLA",
     "useAriaAnnouncer",
+    "useAssistantGateway",
     "useAssistantProfile",
     "useAttachmentSuggestion",
     "useAudienceEstimate",
@@ -12683,6 +12694,7 @@
     "ai-suggest-reply",
     "ai-transcribe-audio",
     "approve-password-reset",
+    "assistant-gateway",
     "auth-login",
     "batch-fetch-avatars",
     "bitrix-api",
@@ -14064,6 +14076,7 @@
     "hooks/team-chat",
     "hooks/ui",
     "hooks/voice",
+    "lib/assistant",
     "lib/calls",
     "lib/journey",
     "lib/talkme",
@@ -14202,16 +14215,18 @@
   },
   {
    "modulo": "lib/assistant",
-   "arquivos": 2,
-   "testes": 1,
-   "linhas": 203,
+   "arquivos": 3,
+   "testes": 2,
+   "linhas": 295,
    "itens_menu": [],
    "telas": [],
    "rotas_http": [],
    "componentes": 0,
    "hooks_locais": [],
    "hooks_definidos": [],
-   "edges": [],
+   "edges": [
+    "assistant-gateway"
+   ],
    "tabelas": [
     "conversation_tasks",
     "messages",
@@ -14224,7 +14239,9 @@
    "flags": [],
    "papeis": [],
    "diretos": {
-    "edges": [],
+    "edges": [
+     "assistant-gateway"
+    ],
     "tabelas": [
      "conversation_tasks",
      "messages",
@@ -14233,10 +14250,12 @@
     "rpcs": []
    },
    "importado_por_outros_modulos": [
+    "components/inbox",
     "hooks/assistant"
    ],
    "depende_de_modulos": [
-    "integrations/supabase"
+    "integrations/supabase",
+    "lib"
    ],
    "pacotes_externos": []
   },
@@ -14608,6 +14627,7 @@
     "useAppBootstrap",
     "useApplicableSLA",
     "useAriaAnnouncer",
+    "useAssistantGateway",
     "useAssistantProfile",
     "useAttachmentSuggestion",
     "useAudienceEstimate",
@@ -15053,6 +15073,7 @@
     "ai-suggest-reply",
     "ai-transcribe-audio",
     "approve-password-reset",
+    "assistant-gateway",
     "auth-login",
     "batch-fetch-avatars",
     "bitrix-api",
@@ -15894,6 +15915,7 @@
     "useAppBootstrap",
     "useApplicableSLA",
     "useAriaAnnouncer",
+    "useAssistantGateway",
     "useAssistantProfile",
     "useAttachmentSuggestion",
     "useAudienceEstimate",
@@ -16343,6 +16365,7 @@
     "ai-suggest-reply",
     "ai-transcribe-audio",
     "approve-password-reset",
+    "assistant-gateway",
     "auth-login",
     "batch-fetch-avatars",
     "bitrix-api",

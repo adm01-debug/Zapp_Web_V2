@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "9f6df25bc2f82252fdfe8e08dd10f56da1ef71fb",
+  "commit": "f1080b156a4f5ef0281cb46ac18b4dadf02d36ab",
   "branch": "main",
-  "data_commit": "2026-11-22T09:51:30-03:00",
+  "data_commit": "2026-11-22T10:49:42-03:00",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "f1080b15",
+    "data": "2026-11-22",
+    "assunto": "feat(assistente): porta unica liga 6 edges mortas com contexto compartilhado (#3317)"
+   },
    {
     "sha": "9f6df25b",
     "data": "2026-11-22",
@@ -126,14 +131,9 @@
     "sha": "76b0c7eb",
     "data": "2026-11-19",
     "assunto": "docs(mapa): incorporar acervo de refs do remoto + veredito da auditoria (#3287)"
-   },
-   {
-    "sha": "055cf6e2",
-    "data": "2026-11-19",
-    "assunto": "chore(docs): consolidar relatório de liquidação com estado final (PEND=0)"
    }
   ],
-  "arquivos_mudados_7d": 7352,
+  "arquivos_mudados_7d": 7362,
   "pastas_mais_mudadas_30d": [
    {
     "pasta": "docs/contexto/supabase",
@@ -145,7 +145,7 @@
    },
    {
     "pasta": "src/components/inbox",
-    "mudancas": 735
+    "mudancas": 737
    },
    {
     "pasta": "docs/reconciliation/reaudit",
@@ -169,7 +169,7 @@
    },
    {
     "pasta": "supabase/functions/_shared",
-    "mudancas": 229
+    "mudancas": 231
    },
    {
     "pasta": "analise-prs/resgate-261118-lote3/fix",
@@ -199,11 +199,11 @@
   "arquivos_mais_mudados_90d": [
    {
     "arquivo": "supabase/deployment-manifest.json",
-    "mudancas": 32
+    "mudancas": 33
    },
    {
     "arquivo": "ESTADO.md",
-    "mudancas": 18
+    "mudancas": 19
    },
    {
     "arquivo": "docs/talkx/ESTADOS.md",
@@ -314,21 +314,21 @@
   ]
  },
  "contagens": {
-  "arquivos_total": 15734,
-  "arquivos_codigo": 5857,
-  "linhas_codigo": 1132969,
+  "arquivos_total": 15743,
+  "arquivos_codigo": 5866,
+  "linhas_codigo": 1134445,
   "rotas": 18,
   "rotas_http_backend": 11,
   "vistas_por_id": 55,
   "itens_menu": 61,
   "modulos": 149,
-  "componentes": 1058,
-  "hooks": 604,
-  "edge_functions": 92,
+  "componentes": 1059,
+  "hooks": 605,
+  "edge_functions": 93,
   "tabelas": 222,
   "migrations": 1150,
   "cron_jobs": 29,
-  "testes": 3207,
+  "testes": 3211,
   "workflows": 24,
   "scripts": 451,
   "docs_md": 4082
@@ -727,8 +727,8 @@
    "linhas": 638
   },
   "src/components": {
-   "arquivos": 2296,
-   "linhas": 390637
+   "arquivos": 2298,
+   "linhas": 390870
   },
   "src/config": {
    "arquivos": 3,
@@ -747,8 +747,8 @@
    "linhas": 3293
   },
   "src/hooks": {
-   "arquivos": 1026,
-   "linhas": 166629
+   "arquivos": 1027,
+   "linhas": 166649
   },
   "src/i18n": {
    "arquivos": 2,
@@ -759,8 +759,8 @@
    "linhas": 15985
   },
   "src/lib": {
-   "arquivos": 298,
-   "linhas": 40289
+   "arquivos": 300,
+   "linhas": 40450
   },
   "src/main.tsx": {
    "arquivos": 1,
@@ -803,8 +803,8 @@
    "linhas": 1708
   },
   "supabase/functions": {
-   "arquivos": 424,
-   "linhas": 127741
+   "arquivos": 428,
+   "linhas": 128803
   },
   "tailwind.config.ts": {
    "arquivos": 1,

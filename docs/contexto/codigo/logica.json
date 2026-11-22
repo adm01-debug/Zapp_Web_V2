@@ -1,14 +1,14 @@
 {
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
- "total": 214,
+ "total": 215,
  "por_camada": {
   "adapters": 2,
   "config": 2,
   "contexts": 2,
   "data": 5,
   "integrations": 3,
-  "lib": 155,
+  "lib": 156,
   "providers": 1,
   "python": 15,
   "segments": 1,
@@ -870,7 +870,7 @@
    "zod_schemas": 0,
    "flags": [],
    "papeis": [],
-   "usado_por": 463,
+   "usado_por": 464,
    "usado_por_modulos": [
     "components/admin",
     "components/agents",
@@ -1173,6 +1173,36 @@
     "components/admin"
    ],
    "coberto_por_testes": 1,
+   "orfao": false
+  },
+  {
+   "arquivo": "src/lib/assistant/askGateway.ts",
+   "camada": "lib",
+   "exports": [
+    "AskGatewayArgs",
+    "GatewayAnswer",
+    "GatewaySource",
+    "SOURCE_LABELS",
+    "askGateway"
+   ],
+   "export_default": null,
+   "linhas": 92,
+   "tabelas": [],
+   "rpcs": [],
+   "edges": [
+    "assistant-gateway"
+   ],
+   "env": [],
+   "externos": [],
+   "zod_schemas": 0,
+   "flags": [],
+   "papeis": [],
+   "usado_por": 2,
+   "usado_por_modulos": [
+    "components/inbox",
+    "hooks/assistant"
+   ],
+   "coberto_por_testes": 2,
    "orfao": false
   },
   {
@@ -2573,11 +2603,12 @@
    "zod_schemas": 0,
    "flags": [],
    "papeis": [],
-   "usado_por": 6,
+   "usado_por": 7,
    "usado_por_modulos": [
     "components/inbox",
     "hooks/communication",
-    "hooks/voice"
+    "hooks/voice",
+    "lib/assistant"
    ],
    "coberto_por_testes": 2,
    "orfao": false
