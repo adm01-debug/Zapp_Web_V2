@@ -151,7 +151,11 @@ export function ContactCard({
       {/* Menu "⋮": só o que é exclusivo dele (Excluir). */}
       {canDeleteContact(contact) && (
         <div
-          className="absolute top-3 right-11 z-[3] max-[559px]:right-[46px]"
+          /* ZD-100 — no ponteiro grosso a caixa de seleção cresce para 38px e
+             encostava no "⋮": 44px de área de toque do checkbox caíam neste botão. */
+          className={cn(
+            "absolute top-3 right-11 z-[3] max-[559px]:right-[56px]",
+          )}
           onClick={(e) => e.stopPropagation()}
         >
           <DropdownMenu>

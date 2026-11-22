@@ -408,7 +408,7 @@
     --contacts-soft-line: 240 6% 91%;
     --contacts-ink: 240 8% 12%;
     --contacts-muted: 240 4% 40%;
-    --contacts-quiet: 240 4% 58%;
+    --contacts-quiet: 240 4% 42%;
     --contacts-blue: 221 83% 53%;
     --contacts-blue-soft: 221 83% 94%;
     /* Gradiente do card (MAPA-TOKENS: `--contacts-card-gradient`). No claro desce
@@ -606,7 +606,7 @@
     --contacts-soft-line: 240 5% 14%;
     --contacts-ink: 220 22% 97%;
     --contacts-muted: 222 9% 70%;
-    --contacts-quiet: 220 7% 45%;
+    --contacts-quiet: 220 7% 58%;
     --contacts-blue: 221 83% 53%;
     --contacts-blue-soft: 221 45% 22%;
     --contacts-card-gradient: linear-gradient(148deg, hsl(240 4% 12%), hsl(240 6% 8%));

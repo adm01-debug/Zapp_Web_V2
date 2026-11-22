@@ -96,7 +96,9 @@ export function FilterPresets({ onApplyPreset, currentFilters }: FilterPresetsPr
   return (
     <Popover>
       <PopoverTrigger asChild>
-        <Button variant="outline" className="h-10 min-h-10 px-[11px] rounded-[9px] bg-input border border-border text-[11px] font-medium gap-[7px] shrink-0">
+        {/* ZD-099 — no celular o rótulo some e sobrava um botão sem nome acessível;
+            `aria-label` mantém o gatilho identificável nos dois tamanhos. */}
+        <Button variant="outline" aria-label="Filtros Salvos" className="h-10 min-h-10 px-[11px] rounded-[9px] bg-input border border-border text-[11px] font-medium gap-[7px] shrink-0">
           <Bookmark className="w-[15px] h-[15px]" />
           <span className="hidden sm:inline">Filtros Salvos</span>
           {presets.length > 0 && (
