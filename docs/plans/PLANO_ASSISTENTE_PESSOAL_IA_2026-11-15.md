@@ -194,7 +194,11 @@ Registro das edges mortas (levantamento: zero chamadores em `src/` via `function
 | `ai-objection-handler` | ligada — capacidade `tratar_objecao` | `CAPABILITY_FUNCTION` |
 | `ai-loss-risk` | ligada — capacidade `risco_perda` (recebe `daysSinceLastContact` do histórico e devolve `recoveryAction`) | `CAPABILITY_FUNCTION` |
 | `ai-price-anchor` | ligada — capacidade `ancoragem_preco` (devolve `anchorScript`) | `CAPABILITY_FUNCTION` |
-| `ai-auto-tag`, `ai-enhance-message`, `ai-kb-ingest`, `sentiment-alert`, `ai-conversation-analysis`, `ai-multimodal-analysis`, `automation-suggest-reply` | **pendentes** — nenhuma foi ligada nesta PR e nenhuma foi removida; entram na PR de inventário/limpeza, com decisão por edge. `automation-suggest-reply`, `sentiment-alert` e `ai-kb-ingest` não têm chave em `ai-feature-flags.ts`, então só entram depois de ganhar capacidade própria | a definir |
+| `ai-enhance-message` | ligada — capacidade `melhorar_mensagem` (recebe a última mensagem do vendedor em `message`, porque o schema da edge não aceita histórico) | `CAPABILITY_FUNCTION` |
+| `ai-auto-tag` | ligada — capacidade `etiquetar_conversa` (exige 2 mensagens; os nomes das tags entram na resposta) | `CAPABILITY_FUNCTION` |
+| `ai-conversation-analysis` | ligada — capacidade `analisar_conversa` (exige as 5 mensagens do schema) | `CAPABILITY_FUNCTION` |
+| `ai-multimodal-analysis` | ligada — capacidade `analisar_imagem` (só roda quando o pedido traz `imageUrl`) | `CAPABILITY_FUNCTION` |
+| `ai-kb-ingest`, `sentiment-alert`, `automation-suggest-reply` | **não entram na porta única** — `ai-kb-ingest` e `sentiment-alert` não são capacidades conversacionais (ingestão de documento e alerta disparado por score), e `automation-suggest-reply` alimenta um painel de automações; nenhuma das três tem chave em `ai-feature-flags.ts`, então ligá-las exigiria capacidade nova (decisão de arquitetura, não de inventário) | — |
 
 Cada capacidade de modelo continua atrás da MESMA chave `ai.capability.*` da edge chamada
 (`capabilityFlagKeyForFunction`), então desligar a capacidade desliga as duas pontas de uma vez — sem

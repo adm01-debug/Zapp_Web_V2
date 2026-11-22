@@ -22,31 +22,31 @@ partir do código e falha quando:
 | Grupo | Edges |
 |---|---|
 | A | 55 |
-| B | 5 |
+| B | 9 |
 | C | 4 |
 | D | 6 |
-| E | 23 |
+| E | 19 |
 | **total** | **93** |
 
 ## Tabela
 
 | Edge | Grupo | Âncora do chamador (arquivo:linha) |
 |---|---|---|
-| `ai-auto-tag` | E | — sem chamador no repositório — |
+| `ai-auto-tag` | B | `supabase/functions/assistant-gateway/index.ts:48` |
 | `assistant-gateway` | A | `src/lib/assistant/askGateway.ts:34` |
 | `ai-churn-analysis` | A | `src/components/ai/ChurnPredictionDashboard.tsx:126` |
 | `ai-classify-tickets` | A | `src/components/ai/AutoTicketClassifier.tsx:146` |
-| `ai-conversation-analysis` | A | `src/components/inbox/AIConversationAssistant.tsx:108` |
+| `ai-conversation-analysis` | A | `src/components/inbox/AIConversationAssistant.tsx:108` · `supabase/functions/assistant-gateway/index.ts:49` |
 | `ai-conversation-summary` | A | `src/components/inbox/ConversationSummary.tsx:92` · `supabase/functions/assistant-gateway/index.ts:39` |
 | `ai-deadline-calculator` | B | `supabase/functions/assistant-gateway/index.ts:43` |
-| `ai-enhance-message` | A | `src/components/inbox/chat/AIEnhanceButton.tsx:63` · `src/components/inbox/chat/AIRewriteButton.tsx:51` |
+| `ai-enhance-message` | A | `src/components/inbox/chat/AIEnhanceButton.tsx:63` · `src/components/inbox/chat/AIRewriteButton.tsx:51` · `supabase/functions/assistant-gateway/index.ts:47` |
 | `ai-jobs-worker` | C | `supabase/migrations/20261002371230_ia045_ia046_ai_jobs_durabilidade_e_estados.sql:533` |
 | `ai-kb-ingest` | A | `src/hooks/integrations/useKnowledgeBase.ts:137` · `src/hooks/integrations/useKnowledgeBase.ts:208` |
 | `ai-lead-temperature` | B | `supabase/functions/assistant-gateway/index.ts:41` |
-| `ai-loss-risk` | E | — sem chamador no repositório — |
-| `ai-multimodal-analysis` | E | — sem chamador no repositório — |
+| `ai-loss-risk` | B | `supabase/functions/assistant-gateway/index.ts:45` |
+| `ai-multimodal-analysis` | B | `supabase/functions/assistant-gateway/index.ts:50` |
 | `ai-objection-handler` | B | `supabase/functions/assistant-gateway/index.ts:44` |
-| `ai-price-anchor` | E | — sem chamador no repositório — |
+| `ai-price-anchor` | B | `supabase/functions/assistant-gateway/index.ts:46` |
 | `ai-product-recommendation` | B | `supabase/functions/assistant-gateway/index.ts:42` |
 | `ai-proxy` | A | `src/components/admin/SupervisorCopilot.tsx:89` · `src/components/settings/ai-providers/useAIProviders.ts:121` · `src/hooks/inbox/useObjectionDetector.ts:91` · `src/hooks/inbox/useObjectionDetector.ts:165` · `src/hooks/ui/useUniversityHelp.ts:130` · `supabase/functions/talkx-ai/index.ts:589` |
 | `ai-suggest-reply` | A | `src/components/inbox/AISuggestions.tsx:104` · `supabase/functions/assistant-gateway/index.ts:40` |
@@ -135,10 +135,6 @@ Edge que existe em `supabase/functions/`, mas nenhum ponto do repositório a dis
 As auditorias de migração de 2026-08 já apontavam parte destes nomes; a guarda agora
 mantém a lista honesta.
 
-- `ai-auto-tag`
-- `ai-loss-risk`
-- `ai-multimodal-analysis`
-- `ai-price-anchor`
 - `auto-close-conversations`
 - `cleanup-rate-limit-logs`
 - `copilot-live`

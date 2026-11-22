@@ -42,6 +42,12 @@ import {
  *   /functions/v1/ai-product-recommendation
  *   /functions/v1/ai-deadline-calculator
  *   /functions/v1/ai-objection-handler
+ *   /functions/v1/ai-loss-risk
+ *   /functions/v1/ai-price-anchor
+ *   /functions/v1/ai-enhance-message
+ *   /functions/v1/ai-auto-tag
+ *   /functions/v1/ai-conversation-analysis
+ *   /functions/v1/ai-multimodal-analysis
  */
 
 /** Quantas mensagens do histórico entram no contexto compartilhado. */
@@ -62,6 +68,8 @@ export interface SharedContext {
   agenda: Array<{ title: string; remind_at: string | null }>;
   messages: ConversationMessage[];
   deal: { id: string; status: string; value: number | null } | null;
+  /** URL de imagem anexada ao pedido — só `ai-multimodal-analysis` consome. */
+  imageUrl?: string | null;
   sources: ContextSource[];
 }
 
@@ -90,6 +98,13 @@ function readContactId(body: unknown): string | null {
   if (!body || typeof body !== "object") return null;
   const contactId = (body as { contactId?: unknown }).contactId;
   return typeof contactId === "string" && contactId.length > 0 ? contactId : null;
+}
+
+/** Imagem anexada ao pedido (só `ai-multimodal-analysis` usa). */
+function readImageUrl(body: unknown): string | null {
+  if (!body || typeof body !== "object") return null;
+  const imageUrl = (body as { imageUrl?: unknown }).imageUrl;
+  return typeof imageUrl === "string" && imageUrl.length > 0 ? imageUrl : null;
 }
 
 /**
@@ -254,6 +269,24 @@ export function capabilityPayload(capability: AssistantCapability, ctx: SharedCo
     const dias = ultima ? Math.floor((Date.now() - new Date(ultima).getTime()) / 86_400_000) : undefined;
     base.daysSinceLastContact = typeof dias === 'number' && dias >= 0 ? dias : undefined;
   }
+  // `ai-enhance-message` não lê histórico: recebe UM texto e o tom. Usamos a
+  // última mensagem do vendedor no fio — é o texto que ele escreveu e quer
+  // melhorar; sem ela, a última mensagem da conversa.
+  if (capability === 'melhorar_mensagem') {
+    const ultimaDoVendedor = [...ctx.messages].reverse().find((m) => m.sender !== 'contact');
+    return {
+      message: (ultimaDoVendedor ?? ctx.messages[ctx.messages.length - 1])?.content ?? '',
+      tone: 'professional',
+      contactName: ctx.contactName ?? undefined,
+      requestId: undefined,
+    };
+  }
+  // `ai-multimodal-analysis` exige `imageUrl` no schema — a porta única não
+  // recebe imagem no pedido de texto, então a capacidade só roda quando uma URL
+  // foi anexada ao pedido (`imageUrl` no corpo).
+  if (capability === 'analisar_imagem') {
+    return { imageUrl: ctx.imageUrl ?? '', context, requestId: undefined };
+  }
   return base;
 }
 
@@ -309,8 +342,15 @@ export function composeAnswer(pieces: GatewayPiece[], ctx: SharedContext): strin
       );
       continue;
     }
-    const t = trecho(p.data, ["summary", "resumo", "recommendedAction", "nextBestOffer", "suggestion", "suggestions", "answer", "text", "deadlineText", "deadline", "temperature", "recoveryAction", "anchorScript"]);
+    const t = trecho(p.data, ["summary", "resumo", "recommendedAction", "nextBestOffer", "suggestion", "suggestions", "answer", "text", "enhanced", "description", "deadlineText", "deadline", "temperature", "recoveryAction", "anchorScript"]);
     if (t) partes.push(`${p.label}: ${t}`);
+    // `ai-auto-tag` devolve `tags: [{ name }]` — o texto final lista os nomes em
+    // vez de cair no formato genérico de objeto.
+    if (!t && p.capability === "etiquetar_conversa") {
+      const tags = (p.data as { tags?: Array<{ name?: string }> } | null)?.tags ?? [];
+      const nomes = tags.map((x) => x.name).filter((n): n is string => typeof n === "string" && n.length > 0);
+      if (nomes.length > 0) partes.push(`${p.label}: ${nomes.join(", ")}`);
+    }
   }
   if (partes.length === 0) {
     return "Não foi possível montar uma resposta: todas as fontes falharam.";
@@ -337,6 +377,20 @@ export function capabilityBlockedReason(capability: AssistantCapability, ctx: Sh
   if ((capability === "risco_perda" || capability === "ancoragem_preco") && ctx.messages.length === 0) {
     return "sem mensagens na conversa para esta capacidade";
   }
+  // `ai-multimodal-analysis` exige `imageUrl` (schema): sem imagem anexada não há
+  // o que ler — recusar aqui evita um 400 da edge que o usuário não entenderia.
+  if (capability === "analisar_imagem" && !ctx.imageUrl) {
+    return "nenhuma imagem anexada ao pedido";
+  }
+  // `ai-conversation-analysis` exige 5 mensagens no schema. `ai-auto-tag` aceita
+  // lista vazia e então etiqueta às cegas — abaixo de 2 mensagens não há conversa
+  // para classificar.
+  if (capability === "analisar_conversa" && ctx.messages.length < 5) {
+    return `histórico insuficiente para analisar (${ctx.messages.length} de 5 mensagens)`;
+  }
+  if (capability === "etiquetar_conversa" && ctx.messages.length < 2) {
+    return `histórico insuficiente para etiquetar (${ctx.messages.length} de 2 mensagens)`;
+  }
   return null;
 }
 
@@ -362,6 +416,7 @@ export async function handleAssistantGateway(req: Request, deps: GatewayDeps = {
       return errorResponse("Informe o pedido em 'query'.", 400, req);
     }
     const contactId = readContactId(body);
+    const imageUrl = readImageUrl(body);
 
     const signals = readIntent(query);
 
@@ -371,9 +426,12 @@ export async function handleAssistantGateway(req: Request, deps: GatewayDeps = {
       return errorResponse("Porta única sem canal para as capacidades (configuração).", 500, req);
     }
 
-    const ctx = deps.readContext
+    const ctxLido = deps.readContext
       ? await deps.readContext(userId, contactId)
       : { contactId, contactName: null, profile: null, agenda: [], messages: [], deal: null, sources: [] } as SharedContext;
+    // A imagem anexada ao pedido entra no contexto compartilhado: a leitura vem
+    // do corpo, não da conversa.
+    const ctx: SharedContext = imageUrl ? { ...ctxLido, imageUrl } : ctxLido;
 
     // A rota depende do perfil: pedido vago abre o que o treino da atuação marca
     // como prioritário (Fase 4). Por isso ela vem DEPOIS da leitura de contexto.
