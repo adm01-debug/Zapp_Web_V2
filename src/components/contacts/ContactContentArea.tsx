@@ -149,6 +149,7 @@ export function ContactContentArea({
         {contacts.map((contact, index) => (
           <motion.div
             key={contact.id}
+            className="h-full"
             initial={isFirstMount ? { opacity: 0, y: 4 } : false}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.15, delay: Math.min(index, 12) * 0.02 }}

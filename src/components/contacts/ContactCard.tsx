@@ -43,10 +43,14 @@ const HEALTH_TONE: Record<ContactHealth['level'], { text: string; bar: string }>
 export function ContactHealthIndicator({
   input,
   size = 'sm',
+  layout = 'stacked',
   className,
 }: {
   input: ContactHealthInput | null | undefined;
   size?: 'sm' | 'md';
+  /** `inline` — uma linha só, para o cartão (o design não prevê o indicador; ele
+   *  fica na mesma linha das tags para não acrescentar altura ao card). */
+  layout?: 'stacked' | 'inline';
   className?: string;
 }) {
   const health = calculateContactHealth(input);
@@ -58,16 +62,17 @@ export function ContactHealthIndicator({
       : faltas.length === 0
         ? 'Cadastro completo'
         : `Faltam: ${faltas.join(', ')}`;
+  const inline = layout === 'inline';
 
   return (
     <div
       data-testid="contact-health"
       data-level={health.level}
       title={size === 'sm' ? `Completude do cadastro: ${health.score}% — ${descricao}` : undefined}
-      className={cn('flex flex-col gap-1', className)}
+      className={cn(inline ? 'flex items-center gap-1.5' : 'flex flex-col gap-1', className)}
     >
       <div className="flex items-center gap-1.5">
-        <span className="text-3xs text-muted-foreground">Completude</span>
+        {!inline && <span className="text-3xs text-muted-foreground">Completude</span>}
         <span className={cn('text-xs font-semibold tabular-nums', tone.text)} data-testid="contact-health-score">
           {health.score}%
         </span>
@@ -81,7 +86,10 @@ export function ContactHealthIndicator({
         aria-valuemax={100}
         aria-valuenow={health.score}
         aria-label={`Completude do cadastro: ${health.score} de 100 — ${health.label}`}
-        className="h-1 w-full max-w-[120px] rounded-full bg-muted overflow-hidden"
+        className={cn(
+          'h-1 w-full rounded-full bg-muted overflow-hidden',
+          inline ? 'max-w-[38px] shrink-0' : 'max-w-[120px]',
+        )}
       >
         <div className={cn('h-full rounded-full', tone.bar)} style={{ width: `${health.score}%` }} />
       </div>
@@ -111,7 +119,7 @@ export function ContactCard({
       tabIndex={0}
       onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onOpenDetails(contact.id); } }}
       className={cn(
-        "contact-card group relative flex min-w-0 flex-col overflow-hidden rounded-[13px] cursor-pointer card-lift card-glow",
+        "contact-card group relative flex h-full min-w-0 flex-col overflow-hidden rounded-[13px] cursor-pointer card-lift card-glow",
         "min-h-[120px]",
         temCanal && "min-h-[164px]",
         isSelected
@@ -154,7 +162,8 @@ export function ContactCard({
           /* ZD-100 — no ponteiro grosso a caixa de seleção cresce para 38px e
              encostava no "⋮": 44px de área de toque do checkbox caíam neste botão. */
           className={cn(
-            "absolute top-3 right-11 z-[3] max-[559px]:right-[56px]",
+            "absolute top-3 z-[3]",
+            ponteiroGrosso ? "right-[56px]" : "right-11 max-[559px]:right-[56px]",
           )}
           onClick={(e) => e.stopPropagation()}
         >
@@ -177,7 +186,7 @@ export function ContactCard({
       <div className="relative isolate">
         <button
           type="button"
-          className="group/photo block w-full relative overflow-hidden rounded-t-[12px] bg-[hsl(var(--contacts-raised))] text-left h-[338px] sm:h-[311px] lg:h-[285px] xl:h-[296px] 2xl:h-[308px]"
+          className="group/photo block w-full relative overflow-hidden rounded-t-[12px] bg-[hsl(var(--contacts-raised))] text-left max-[559px]:h-[338px] min-[560px]:h-[311px] min-[900px]:h-[285px] min-[1400px]:h-[296px] min-[1600px]:h-[308px]"
           onClick={(e) => { e.stopPropagation(); onOpenDetails(contact.id); }}
           aria-label={`Abrir ${display.nomeCompleto ?? contact.name}`}
         >
@@ -221,17 +230,21 @@ export function ContactCard({
             {display.cargo}
           </p>
         )}
-        {/* Tags — mesmo padrão do ContactListItem: até 2 + contador do resto */}
-        {contact.tags && contact.tags.length > 0 && (
-          <div className="flex flex-wrap gap-1.5 mt-2">
-            {contact.tags.slice(0, 2).map(tag => (
-              <Badge key={tag} variant="secondary" className="text-3xs h-5 px-1.5">{tag}</Badge>
-            ))}
-            {contact.tags.length > 2 && (
-              <Badge variant="secondary" className="text-3xs h-5 px-1.5">+{contact.tags.length - 2}</Badge>
-            )}
-          </div>
-        )}
+        {/* Tags + completude na MESMA linha — o design não tem nem uma coisa nem
+            outra; agrupadas, elas não somam altura ao card. */}
+        <div className="flex flex-wrap items-center gap-1.5 mt-2">
+          {contact.tags && contact.tags.length > 0 && (
+            <>
+              {contact.tags.slice(0, 2).map(tag => (
+                <Badge key={tag} variant="secondary" className="text-3xs h-5 px-1.5">{tag}</Badge>
+              ))}
+              {contact.tags.length > 2 && (
+                <Badge variant="secondary" className="text-3xs h-5 px-1.5">+{contact.tags.length - 2}</Badge>
+              )}
+            </>
+          )}
+          <ContactHealthIndicator input={contact} layout="inline" className="ml-auto" />
+        </div>
 
         {/* Linhas de contato */}
         <div className="grid gap-[9px] mt-3 pt-[13px] border-t border-[hsl(var(--contacts-soft-line))] max-[559px]:gap-[11px] max-[559px]:mt-[14px] max-[559px]:pt-[15px]">
@@ -254,26 +267,26 @@ export function ContactCard({
           )}
         </div>
 
-        {/* Completude do cadastro — discreta. */}
-        <ContactHealthIndicator input={contact} className="mt-3" />
-
-        {/* "Última interação" — a linha `.zc-last` do design */}
-        <div className="flex items-center justify-between gap-[10px] border-t border-[hsl(var(--contacts-soft-line))] text-[11px] text-[hsl(var(--contacts-quiet))] mt-auto pt-[11px] mt-[17px] max-[559px]:mt-[18px] max-[559px]:pt-[13px]">
+        {/* "Última interação" — a linha `.zc-last` do design. `mt-auto` empurra
+            para o rodapé, então cards da mesma linha ficam com altura igual. */}
+        <div className="flex items-center justify-between gap-[10px] border-t border-[hsl(var(--contacts-soft-line))] text-[11px] text-[hsl(var(--contacts-quiet))] mt-auto pt-[11px] max-[559px]:pt-[13px]">
           <span className="min-w-0 truncate">Última interação</span>
-          <strong className="whitespace-nowrap text-[11px] font-normal text-[hsl(var(--contacts-ink))]">{ultimaInteracao}</strong>
-        </div>
+          <div className="flex items-center gap-1.5 shrink-0" onClick={(e) => e.stopPropagation()}>
+            <strong className="whitespace-nowrap text-[11px] font-normal text-[hsl(var(--contacts-ink))]">{ultimaInteracao}</strong>
 
-        {/* Ações rápidas — o design não as tem no card; o sistema sim (contrato
-            de ContactPolimento.test.tsx: um botão "Conversar" e um "Editar"). */}
-        <div className="mt-2.5 flex shrink-0 items-center justify-end gap-1.5" onClick={(e) => e.stopPropagation()}>
-          <Button variant="outline" size="icon" className="w-9 h-9 rounded-[9px] border border-border bg-card hover:bg-muted hover:border-primary/50"
-            onClick={() => onOpenChat(contact.id)} title="Conversar">
-            <MessageSquare className="w-4 h-4" />
-          </Button>
-          <Button variant="outline" size="icon" className="w-9 h-9 rounded-[9px] border border-border bg-card hover:bg-muted hover:border-primary/50"
-            onClick={() => onEdit(contact)} title="Editar">
-            <Pencil className="w-4 h-4" />
-          </Button>
+            {/* Ações rápidas — o design não as tem no card; o sistema sim
+                (contrato de ContactPolimento.test.tsx: um "Conversar" e um
+                "Editar" no rodapé). Ficam na linha da última interação para não
+                acrescentar ~48px de altura ao card. */}
+            <Button variant="outline" size="icon" className="w-9 h-9 rounded-[9px] border border-border bg-card hover:bg-muted hover:border-primary/50"
+              onClick={() => onOpenChat(contact.id)} title="Conversar">
+              <MessageSquare className="w-4 h-4" />
+            </Button>
+            <Button variant="outline" size="icon" className="w-9 h-9 rounded-[9px] border border-border bg-card hover:bg-muted hover:border-primary/50"
+              onClick={() => onEdit(contact)} title="Editar">
+              <Pencil className="w-4 h-4" />
+            </Button>
+          </div>
         </div>
       </div>
     </div>
