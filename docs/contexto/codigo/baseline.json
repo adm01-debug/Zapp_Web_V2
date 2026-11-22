@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "ba0b927e3ceaa4cd92b4c9301d13314b16afe3c7",
+  "commit": "d19cc8d00f911e560cf6102b257534f87b2d4743",
   "branch": "main",
-  "data_commit": "2026-11-22T16:09:08-03:00",
+  "data_commit": "2026-11-22T22:49:17Z",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "d19cc8d0",
+    "data": "2026-11-22",
+    "assunto": "feat: redesign do modulo Contatos conforme previa aprovada (plano 130 etapas, fases 0-M) (#3325)"
+   },
    {
     "sha": "ba0b927e",
     "data": "2026-11-22",
@@ -126,14 +131,9 @@
     "sha": "ee85340b",
     "data": "2026-11-21",
     "assunto": "fix(docs): forca eol=lf nos inventarios e docs (falso-negativo local nos testes de convencao) (#3298)"
-   },
-   {
-    "sha": "f4a2a776",
-    "data": "2026-11-21",
-    "assunto": "fix(crm-integration): restaura CRON_SECRET apos testes que o setam (#3296)"
    }
   ],
-  "arquivos_mudados_7d": 6992,
+  "arquivos_mudados_7d": 7050,
   "pastas_mais_mudadas_30d": [
    {
     "pasta": "docs/contexto/supabase",
@@ -184,16 +184,16 @@
     "mudancas": 146
    },
    {
+    "pasta": "src/components/contacts",
+    "mudancas": 145
+   },
+   {
     "pasta": "src/components/dashboard",
     "mudancas": 145
    },
    {
     "pasta": "src/components/ui",
     "mudancas": 129
-   },
-   {
-    "pasta": "analise-prs/resgate-261118-lote3/hermes",
-    "mudancas": 116
    }
   ],
   "arquivos_mais_mudados_90d": [
@@ -310,21 +310,21 @@
   ]
  },
  "contagens": {
-  "arquivos_total": 15746,
-  "arquivos_codigo": 5868,
-  "linhas_codigo": 1135063,
+  "arquivos_total": 15770,
+  "arquivos_codigo": 5884,
+  "linhas_codigo": 1137670,
   "rotas": 18,
   "rotas_http_backend": 11,
   "vistas_por_id": 55,
   "itens_menu": 61,
   "modulos": 149,
-  "componentes": 1059,
-  "hooks": 605,
+  "componentes": 1063,
+  "hooks": 606,
   "edge_functions": 93,
   "tabelas": 222,
   "migrations": 1150,
   "cron_jobs": 29,
-  "testes": 3212,
+  "testes": 3223,
   "workflows": 24,
   "scripts": 451,
   "docs_md": 4083
@@ -624,7 +624,7 @@
   },
   "scripts/ci": {
    "arquivos": 231,
-   "linhas": 50369
+   "linhas": 50374
   },
   "scripts/db": {
    "arquivos": 2,
@@ -675,8 +675,8 @@
    "linhas": 537
   },
   "scripts/qa": {
-   "arquivos": 9,
-   "linhas": 1809
+   "arquivos": 10,
+   "linhas": 1827
   },
   "scripts/recuperacao-branches": {
    "arquivos": 1,
@@ -723,8 +723,8 @@
    "linhas": 638
   },
   "src/components": {
-   "arquivos": 2298,
-   "linhas": 390870
+   "arquivos": 2312,
+   "linhas": 393405
   },
   "src/config": {
    "arquivos": 3,
@@ -743,8 +743,8 @@
    "linhas": 3293
   },
   "src/hooks": {
-   "arquivos": 1027,
-   "linhas": 166649
+   "arquivos": 1028,
+   "linhas": 166698
   },
   "src/i18n": {
    "arquivos": 2,
@@ -931,7 +931,7 @@
   "ts_ignore": 0,
   "eslint_disable": 1,
   "todos": 59,
-  "arquivos_acima_500_linhas": 165
+  "arquivos_acima_500_linhas": 166
  },
  "todos": [
   {

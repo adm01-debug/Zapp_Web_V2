@@ -3,7 +3,7 @@
  "format_version": 2,
  "stack": {
   "linguagens": [
-   "TypeScript (5065)",
+   "TypeScript (5081)",
    "Markdown (4083)",
    "SQL (3063)",
    "JSON (1968)",
@@ -1198,7 +1198,7 @@
   {
    "arquivo": "FEATURE_REGISTRY.md",
    "titulo": "FEATURE_REGISTRY.md — registro das views do V2",
-   "linhas": 89
+   "linhas": 108
   },
   {
    "arquivo": "HANDOFF_NEXT_SESSION.md",
@@ -1805,12 +1805,12 @@
     "arquivos": 15
    },
    {
-    "host": "gmail.googleapis.com",
+    "host": "exemplo.test",
     "arquivos": 14
    },
    {
-    "host": "exemplo.test",
-    "arquivos": 13
+    "host": "gmail.googleapis.com",
+    "arquivos": 14
    },
    {
     "host": "supabase-test.example",
@@ -2342,6 +2342,10 @@
    },
    {
     "host": "cdn.example",
+    "arquivos": 1
+   },
+   {
+    "host": "cdn.example.test",
     "arquivos": 1
    },
    {
@@ -2894,7 +2898,7 @@
    },
    {
     "papel": "status",
-    "ocorrencias": 127
+    "ocorrencias": 128
    },
    {
     "papel": "admin",
@@ -2938,11 +2942,11 @@
    },
    {
     "papel": "tab",
-    "ocorrencias": 19
+    "ocorrencias": 20
    },
    {
     "papel": "tablist",
-    "ocorrencias": 18
+    "ocorrencias": 19
    },
    {
     "papel": "listbox",
@@ -2997,6 +3001,10 @@
     "ocorrencias": 8
    },
    {
+    "papel": "menu",
+    "ocorrencias": 8
+   },
+   {
     "papel": "note",
     "ocorrencias": 8
    },
@@ -3005,15 +3013,11 @@
     "ocorrencias": 7
    },
    {
-    "papel": "menu",
+    "papel": "tabpanel",
     "ocorrencias": 7
    },
    {
     "papel": "complementary",
-    "ocorrencias": 6
-   },
-   {
-    "papel": "tabpanel",
     "ocorrencias": 6
    },
    {
@@ -3085,6 +3089,10 @@
     "ocorrencias": 2
    },
    {
+    "papel": "form",
+    "ocorrencias": 2
+   },
+   {
     "papel": "fornecedor",
     "ocorrencias": 2
    },
@@ -3142,10 +3150,6 @@
    },
    {
     "papel": "customer",
-    "ocorrencias": 1
-   },
-   {
-    "papel": "form",
     "ocorrencias": 1
    },
    {

@@ -1446,7 +1446,7 @@
    "zod_schemas": 0,
    "flags": [],
    "papeis": [],
-   "usado_por": 24,
+   "usado_por": 21,
    "usado_por_modulos": [
     "components/agents",
     "components/calls",
@@ -5017,8 +5017,9 @@
    "zod_schemas": 0,
    "flags": [],
    "papeis": [],
-   "usado_por": 2,
+   "usado_por": 3,
    "usado_por_modulos": [
+    "components/contacts",
     "components/inbox"
    ],
    "coberto_por_testes": 1,
@@ -5500,7 +5501,7 @@
    "zod_schemas": 0,
    "flags": [],
    "papeis": [],
-   "usado_por": 556,
+   "usado_por": 559,
    "usado_por_modulos": [
     "components",
     "components/a11y",

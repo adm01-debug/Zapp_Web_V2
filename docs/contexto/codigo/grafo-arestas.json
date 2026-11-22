@@ -3044,17 +3044,17 @@
    "src/lib/postgrestFilters.ts"
   ],
   "src/components/contacts/ContactCard.tsx": [
+   "src/components/contacts/ContactPortrait.tsx",
+   "src/components/contacts/ContactTypeBadge.tsx",
    "src/components/contacts/HighlightText.tsx",
+   "src/components/contacts/contactDisplay.ts",
    "src/components/contacts/contactPermissions.ts",
-   "src/components/contacts/contactTypeConfig.tsx",
    "src/components/contacts/types.ts",
    "src/components/tasks/shared/pointerMedia.ts",
-   "src/components/ui/avatar.tsx",
    "src/components/ui/badge.tsx",
    "src/components/ui/button.tsx",
    "src/components/ui/checkbox.tsx",
    "src/components/ui/dropdown-menu.tsx",
-   "src/lib/avatar-colors.ts",
    "src/lib/contactHealth.ts",
    "src/lib/utils.ts"
   ],
@@ -3079,7 +3079,7 @@
    "src/components/contacts/ContactsSkeleton.tsx",
    "src/components/contacts/ContactsTable.tsx",
    "src/components/contacts/types.ts",
-   "src/components/ui/card.tsx",
+   "src/hooks/contacts/useContainerColumns.ts",
    "src/hooks/crm/useExternalContact360Batch.ts",
    "src/lib/utils.ts"
   ],
@@ -3089,18 +3089,22 @@
    "src/components/contacts/ContactCard.tsx",
    "src/components/contacts/ContactEngagementScore.tsx",
    "src/components/contacts/ContactNotes.tsx",
-   "src/components/contacts/contactTypeConfig.tsx",
-   "src/components/ui/avatar.tsx",
+   "src/components/contacts/ContactPortrait.tsx",
+   "src/components/contacts/ContactTypeBadge.tsx",
+   "src/components/contacts/contactDisplay.ts",
+   "src/components/contacts/types.ts",
+   "src/components/inbox/contact-details/sidebar/SidebarEmpty.tsx",
+   "src/components/inbox/contact-details/sidebar/SinguProfileTile.tsx",
    "src/components/ui/badge.tsx",
    "src/components/ui/button.tsx",
-   "src/components/ui/scroll-area.tsx",
-   "src/components/ui/separator.tsx",
    "src/components/ui/skeleton.tsx",
+   "src/hooks/crm/useContactSidebar.ts",
    "src/hooks/integrations/useCatalogSendHistory.ts",
-   "src/lib/avatar-colors.ts",
    "src/lib/calls/phone.ts",
+   "src/lib/singuLabels.ts",
    "src/lib/utils.ts",
-   "src/services/contact.service.ts"
+   "src/services/contact.service.ts",
+   "src/types/contactSidebar.ts"
   ],
   "src/components/contacts/ContactDialogs.tsx": [
    "src/components/contacts/ContactForm.tsx",
@@ -3115,6 +3119,13 @@
   ],
   "src/components/contacts/ContactEngagementScore.tsx": [
    "src/components/ui/tooltip.tsx",
+   "src/lib/utils.ts"
+  ],
+  "src/components/contacts/ContactExploreRail.tsx": [
+   "src/components/contacts/ContactPortrait.tsx",
+   "src/components/contacts/contactDisplay.ts",
+   "src/components/contacts/contactsMotion.ts",
+   "src/components/contacts/types.ts",
    "src/lib/utils.ts"
   ],
   "src/components/contacts/ContactForm.tsx": [
@@ -3141,31 +3152,28 @@
    "src/lib/utils.ts"
   ],
   "src/components/contacts/ContactKanbanView.tsx": [
+   "src/components/contacts/ContactPortrait.tsx",
    "src/components/contacts/contactTypeOrder.ts",
-   "src/components/ui/avatar.tsx",
-   "src/components/ui/badge.tsx",
-   "src/components/ui/card.tsx",
+   "src/components/contacts/types.ts",
    "src/components/ui/scroll-area.tsx",
    "src/hooks/crm/contactsAggregates.ts",
    "src/integrations/supabase/client.ts",
-   "src/lib/avatar-colors.ts",
    "src/lib/utils.ts"
   ],
   "src/components/contacts/ContactKpiCard.tsx": [
    "src/lib/utils.ts"
   ],
   "src/components/contacts/ContactListItem.tsx": [
+   "src/components/contacts/ContactPortrait.tsx",
    "src/components/contacts/HighlightText.tsx",
+   "src/components/contacts/contactDisplay.ts",
    "src/components/contacts/contactPermissions.ts",
-   "src/components/contacts/contactTypeConfig.tsx",
    "src/components/contacts/types.ts",
    "src/components/tasks/shared/pointerMedia.ts",
-   "src/components/ui/avatar.tsx",
    "src/components/ui/badge.tsx",
    "src/components/ui/button.tsx",
    "src/components/ui/checkbox.tsx",
    "src/components/ui/dropdown-menu.tsx",
-   "src/lib/avatar-colors.ts",
    "src/lib/utils.ts"
   ],
   "src/components/contacts/ContactMapView.tsx": [
@@ -3198,6 +3206,12 @@
    "src/lib/avatar-colors.ts",
    "src/lib/utils.ts"
   ],
+  "src/components/contacts/ContactPortrait.tsx": [
+   "src/components/contacts/contactDisplay.ts",
+   "src/components/contacts/types.ts",
+   "src/lib/avatar-colors.ts",
+   "src/lib/utils.ts"
+  ],
   "src/components/contacts/ContactRegionMap.tsx": [
    "src/components/contacts/contactRegionGeo.ts",
    "src/components/ui/button.tsx",
@@ -3206,7 +3220,6 @@
    "src/lib/plural.ts"
   ],
   "src/components/contacts/ContactResultsSummary.tsx": [
-   "src/components/ui/badge.tsx",
    "src/components/ui/button.tsx",
    "src/components/ui/checkbox.tsx"
   ],
@@ -3224,7 +3237,6 @@
    "src/components/contacts/ContactSearchWithSuggestions.tsx",
    "src/components/contacts/ContactViewSwitcher.tsx",
    "src/components/contacts/FilterPresets.tsx",
-   "src/components/ui/badge.tsx",
    "src/components/ui/button.tsx",
    "src/components/ui/input.tsx",
    "src/components/ui/label.tsx",
@@ -3232,6 +3244,12 @@
    "src/components/ui/switch.tsx",
    "src/hooks/contacts/useContactSearchV2.ts",
    "src/hooks/contacts/useContactsV2Flags.ts",
+   "src/lib/utils.ts"
+  ],
+  "src/components/contacts/ContactTypeBadge.tsx": [
+   "src/components/contacts/contactTypeConfig.tsx",
+   "src/components/contacts/types.ts",
+   "src/lib/avatar-colors.ts",
    "src/lib/utils.ts"
   ],
   "src/components/contacts/ContactTypeTabs.tsx": [
@@ -3252,19 +3270,22 @@
   ],
   "src/components/contacts/ContactsTable.tsx": [
    "src/components/contacts/CompanyLogo.tsx",
+   "src/components/contacts/ContactPortrait.tsx",
+   "src/components/contacts/ContactTypeBadge.tsx",
    "src/components/contacts/HighlightText.tsx",
+   "src/components/contacts/contactDisplay.ts",
    "src/components/contacts/contactPermissions.ts",
-   "src/components/contacts/contactTypeConfig.tsx",
    "src/components/contacts/types.ts",
    "src/components/tasks/shared/pointerMedia.ts",
-   "src/components/ui/avatar.tsx",
-   "src/components/ui/badge.tsx",
    "src/components/ui/button.tsx",
    "src/components/ui/checkbox.tsx",
    "src/components/ui/dropdown-menu.tsx",
    "src/hooks/crm/useExternalContact360Batch.ts",
-   "src/lib/avatar-colors.ts",
    "src/lib/utils.ts"
+  ],
+  "src/components/contacts/ContactsTitleBar.tsx": [
+   "src/components/ui/button.tsx",
+   "src/hooks/contacts/useContactSource.ts"
   ],
   "src/components/contacts/ContactsView.tsx": [
    "src/components/contacts/BulkActionsBar.tsx",
@@ -3274,11 +3295,13 @@
    "src/components/contacts/ContactContentArea.tsx",
    "src/components/contacts/ContactDetailPanel.tsx",
    "src/components/contacts/ContactDialogs.tsx",
+   "src/components/contacts/ContactExploreRail.tsx",
    "src/components/contacts/ContactMergeDialog.tsx",
    "src/components/contacts/ContactResultsSummary.tsx",
    "src/components/contacts/ContactStatsCards.tsx",
    "src/components/contacts/ContactToolbar.tsx",
    "src/components/contacts/ContactTypeTabs.tsx",
+   "src/components/contacts/ContactsTitleBar.tsx",
    "src/components/contacts/contactPermissions.ts",
    "src/components/contacts/resolveMergeContacts.ts",
    "src/components/contacts/useContactsViewState.ts",
@@ -3286,13 +3309,13 @@
    "src/contexts/LayoutScrollContext.tsx",
    "src/hooks/contacts/useContactsV2Flags.ts",
    "src/hooks/crm/useCRMAdminAccess.ts",
+   "src/hooks/crm/useContactsSearch.ts",
    "src/hooks/crm/useExternalContact360Batch.ts",
    "src/hooks/system/useCRMIntegrationEnabled.ts",
    "src/hooks/system/useUserRole.ts"
   ],
   "src/components/contacts/FilterPresets.tsx": [
    "src/components/contacts/contactTypeOrder.ts",
-   "src/components/ui/badge.tsx",
    "src/components/ui/button.tsx",
    "src/components/ui/input.tsx",
    "src/components/ui/popover.tsx",
@@ -10318,6 +10341,9 @@
   ],
   "src/hooks/contacts/useContactSearchV2.ts": [
    "src/services/contact.service.ts"
+  ],
+  "src/hooks/contacts/useContactSource.ts": [
+   "src/hooks/system/useCRMIntegrationEnabled.ts"
   ],
   "src/hooks/contacts/useContactsV2Flags.ts": [
    "src/hooks/system/useFeatureFlag.ts"

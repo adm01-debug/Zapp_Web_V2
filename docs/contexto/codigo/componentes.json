@@ -1,7 +1,7 @@
 {
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
- "total": 1059,
+ "total": 1063,
  "orfaos": 138,
  "nomes_duplicados": {
   "AIAutoTagsConfig": [
@@ -5004,7 +5004,7 @@
     "ContactAnalyticsDashboard"
    ],
    "export_default": null,
-   "linhas": 221,
+   "linhas": 223,
    "dominio": "components/contacts",
    "hooks_locais": [],
    "tabelas": [],
@@ -5033,7 +5033,7 @@
     "ContactHealthIndicator"
    ],
    "export_default": null,
-   "linhas": 291,
+   "linhas": 294,
    "dominio": "components/contacts",
    "hooks_locais": [
     "usePointerCoarse"
@@ -5049,7 +5049,7 @@
     "ContactCompareDialog"
    ],
    "export_default": null,
-   "linhas": 189,
+   "linhas": 194,
    "dominio": "components/contacts",
    "hooks_locais": [],
    "tabelas": [],
@@ -5063,9 +5063,11 @@
     "ContactContentArea"
    ],
    "export_default": null,
-   "linhas": 160,
+   "linhas": 231,
    "dominio": "components/contacts",
-   "hooks_locais": [],
+   "hooks_locais": [
+    "useContainerColumns"
+   ],
    "tabelas": [],
    "edges": [],
    "usado_por": 1,
@@ -5095,10 +5097,11 @@
     "ContactDetailPanel"
    ],
    "export_default": null,
-   "linhas": 445,
+   "linhas": 913,
    "dominio": "components/contacts",
    "hooks_locais": [
-    "useCatalogSendHistory"
+    "useCatalogSendHistory",
+    "useContactSidebar"
    ],
    "tabelas": [],
    "edges": [],
@@ -5111,7 +5114,7 @@
     "ContactDialogs"
    ],
    "export_default": null,
-   "linhas": 196,
+   "linhas": 216,
    "dominio": "components/contacts",
    "hooks_locais": [],
    "tabelas": [],
@@ -5125,7 +5128,7 @@
     "ContactEmptyState"
    ],
    "export_default": null,
-   "linhas": 120,
+   "linhas": 151,
    "dominio": "components/contacts",
    "hooks_locais": [],
    "tabelas": [],
@@ -5142,6 +5145,22 @@
    "linhas": 137,
    "dominio": "components/contacts",
    "hooks_locais": [],
+   "tabelas": [],
+   "edges": [],
+   "usado_por": 1,
+   "orfao": false
+  },
+  {
+   "arquivo": "src/components/contacts/ContactExploreRail.tsx",
+   "exports": [
+    "ContactExploreRail"
+   ],
+   "export_default": null,
+   "linhas": 283,
+   "dominio": "components/contacts",
+   "hooks_locais": [
+    "useContactsMotion"
+   ],
    "tabelas": [],
    "edges": [],
    "usado_por": 1,
@@ -5173,7 +5192,7 @@
     "ContactGroupedList"
    ],
    "export_default": null,
-   "linhas": 123,
+   "linhas": 124,
    "dominio": "components/contacts",
    "hooks_locais": [],
    "tabelas": [],
@@ -5187,7 +5206,7 @@
     "ContactKanbanView"
    ],
    "export_default": null,
-   "linhas": 297,
+   "linhas": 274,
    "dominio": "components/contacts",
    "hooks_locais": [],
    "tabelas": [
@@ -5203,7 +5222,7 @@
     "ContactKpiCard"
    ],
    "export_default": null,
-   "linhas": 162,
+   "linhas": 172,
    "dominio": "components/contacts",
    "hooks_locais": [
     "useReducedMotion"
@@ -5219,7 +5238,7 @@
     "ContactListItem"
    ],
    "export_default": null,
-   "linhas": 199,
+   "linhas": 231,
    "dominio": "components/contacts",
    "hooks_locais": [
     "usePointerCoarse"
@@ -5235,7 +5254,7 @@
     "ContactMapView"
    ],
    "export_default": null,
-   "linhas": 224,
+   "linhas": 248,
    "dominio": "components/contacts",
    "hooks_locais": [],
    "tabelas": [],
@@ -5249,7 +5268,7 @@
     "ContactMergeDialog"
    ],
    "export_default": null,
-   "linhas": 204,
+   "linhas": 217,
    "dominio": "components/contacts",
    "hooks_locais": [],
    "tabelas": [],
@@ -5278,6 +5297,20 @@
    "orfao": false
   },
   {
+   "arquivo": "src/components/contacts/ContactPortrait.tsx",
+   "exports": [
+    "ContactPortrait"
+   ],
+   "export_default": null,
+   "linhas": 63,
+   "dominio": "components/contacts",
+   "hooks_locais": [],
+   "tabelas": [],
+   "edges": [],
+   "usado_por": 6,
+   "orfao": false
+  },
+  {
    "arquivo": "src/components/contacts/ContactRegionMap.tsx",
    "exports": [
     "ContactRegionMap",
@@ -5299,7 +5332,7 @@
     "ContactResultsSummary"
    ],
    "export_default": null,
-   "linhas": 106,
+   "linhas": 159,
    "dominio": "components/contacts",
    "hooks_locais": [],
    "tabelas": [],
@@ -5313,7 +5346,7 @@
     "ContactSearchWithSuggestions"
    ],
    "export_default": null,
-   "linhas": 195,
+   "linhas": 196,
    "dominio": "components/contacts",
    "hooks_locais": [],
    "tabelas": [],
@@ -5327,7 +5360,7 @@
     "ContactsSkeleton"
    ],
    "export_default": null,
-   "linhas": 134,
+   "linhas": 131,
    "dominio": "components/contacts",
    "hooks_locais": [],
    "tabelas": [],
@@ -5341,7 +5374,7 @@
     "ContactsTable"
    ],
    "export_default": null,
-   "linhas": 264,
+   "linhas": 358,
    "dominio": "components/contacts",
    "hooks_locais": [
     "usePointerCoarse"
@@ -5368,12 +5401,28 @@
    "orfao": false
   },
   {
+   "arquivo": "src/components/contacts/ContactsTitleBar.tsx",
+   "exports": [
+    "ContactsTitleBar"
+   ],
+   "export_default": null,
+   "linhas": 75,
+   "dominio": "components/contacts",
+   "hooks_locais": [
+    "useContactSource"
+   ],
+   "tabelas": [],
+   "edges": [],
+   "usado_por": 1,
+   "orfao": false
+  },
+  {
    "arquivo": "src/components/contacts/ContactsView.tsx",
    "exports": [
     "ContactsView"
    ],
    "export_default": null,
-   "linhas": 282,
+   "linhas": 382,
    "dominio": "components/contacts",
    "hooks_locais": [
     "useCRMAdminAccess",
@@ -5396,7 +5445,7 @@
     "ContactToolbar"
    ],
    "export_default": null,
-   "linhas": 392,
+   "linhas": 408,
    "dominio": "components/contacts",
    "hooks_locais": [
     "useContactSearchV2",
@@ -5405,6 +5454,20 @@
    "tabelas": [],
    "edges": [],
    "usado_por": 1,
+   "orfao": false
+  },
+  {
+   "arquivo": "src/components/contacts/ContactTypeBadge.tsx",
+   "exports": [
+    "ContactTypeBadge"
+   ],
+   "export_default": null,
+   "linhas": 71,
+   "dominio": "components/contacts",
+   "hooks_locais": [],
+   "tabelas": [],
+   "edges": [],
+   "usado_por": 3,
    "orfao": false
   },
   {
@@ -5419,7 +5482,7 @@
    "hooks_locais": [],
    "tabelas": [],
    "edges": [],
-   "usado_por": 13,
+   "usado_por": 10,
    "orfao": false
   },
   {
@@ -5428,7 +5491,7 @@
     "ContactTypeTabs"
    ],
    "export_default": null,
-   "linhas": 81,
+   "linhas": 84,
    "dominio": "components/contacts",
    "hooks_locais": [
     "useReducedMotion"
@@ -5445,7 +5508,7 @@
     "ContactViewSwitcher"
    ],
    "export_default": null,
-   "linhas": 161,
+   "linhas": 169,
    "dominio": "components/contacts",
    "hooks_locais": [
     "useReducedMotion"
@@ -5490,7 +5553,7 @@
     "FilterPresets"
    ],
    "export_default": null,
-   "linhas": 182,
+   "linhas": 183,
    "dominio": "components/contacts",
    "hooks_locais": [],
    "tabelas": [],
@@ -9043,7 +9106,7 @@
    "hooks_locais": [],
    "tabelas": [],
    "edges": [],
-   "usado_por": 4,
+   "usado_por": 5,
    "orfao": false
   },
   {
@@ -9118,7 +9181,7 @@
    "hooks_locais": [],
    "tabelas": [],
    "edges": [],
-   "usado_por": 1,
+   "usado_por": 2,
    "orfao": false
   },
   {
@@ -16406,7 +16469,7 @@
    "hooks_locais": [],
    "tabelas": [],
    "edges": [],
-   "usado_por": 71,
+   "usado_por": 66,
    "orfao": false
   },
   {
@@ -16421,7 +16484,7 @@
    "hooks_locais": [],
    "tabelas": [],
    "edges": [],
-   "usado_por": 257,
+   "usado_por": 252,
    "orfao": false
   },
   {
@@ -16458,7 +16521,7 @@
    "hooks_locais": [],
    "tabelas": [],
    "edges": [],
-   "usado_por": 456,
+   "usado_por": 457,
    "orfao": false
   },
   {
@@ -16493,7 +16556,7 @@
    "hooks_locais": [],
    "tabelas": [],
    "edges": [],
-   "usado_por": 214,
+   "usado_por": 212,
    "orfao": false
   },
   {
@@ -17201,7 +17264,7 @@
    "hooks_locais": [],
    "tabelas": [],
    "edges": [],
-   "usado_por": 80,
+   "usado_por": 79,
    "orfao": false
   },
   {
@@ -17266,7 +17329,7 @@
    "hooks_locais": [],
    "tabelas": [],
    "edges": [],
-   "usado_por": 16,
+   "usado_por": 15,
    "orfao": false
   },
   {

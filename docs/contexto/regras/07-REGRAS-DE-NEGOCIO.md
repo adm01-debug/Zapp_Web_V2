@@ -1,6 +1,6 @@
 # 07 · REGRAS DE NEGÓCIO
 
-> Gerado automaticamente por AI Context Sync v1.3.2 · commit `ba0b927e3c` · branch `main` · 2026-11-22 19:12 UTC
+> Gerado automaticamente por AI Context Sync v1.3.2 · commit `d19cc8d00f` · branch `main` · 2026-11-22 22:50 UTC
 > Não edite à mão — regras humanas vão em `manual/`.
 
 ## A. Regras escritas por humanos (`manual/` — prioridade máxima, nunca sobrescrito)
@@ -1449,7 +1449,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `type` | `email_change` | compara | `src/pages/VerifyEmail.tsx` |
 | `type` | `emoji` | compara | `src/components/team-chat/teamChatParts.tsx` |
 | `type` | `empathetic` | compara | `src/components/inbox/AISuggestions.tsx` |
-| `type` | `error` | compara, escreve | `src/hooks/ui/useLoadingState.ts` |
+| `type` | `error` | compara, escreve | `src/components/contacts/ContactEmptyState.tsx`<br>`src/hooks/ui/useLoadingState.ts` |
 | `type` | `escalate` | escreve | `src/hooks/chat/useNextBestAction.ts` |
 | `type` | `event` | escreve | `src/lib/web-vitals.ts` |
 | `type` | `explicit` | compara, escreve | `src/components/copilot/RadarPhase10Panel.tsx`<br>`src/hooks/copilot/usePurchaseSignals.ts` |
@@ -1561,7 +1561,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `type` | `silent` | escreve | `src/hooks/copilot/useStallDetector.ts` |
 | `type` | `skip` | compara, escreve | `analise-prs/resgate-261118-lote3/claude/test-e2e-suite-completa-261104-1428/scripts/ci/e2e-isolated-results.unit.mjs`<br>`analise-prs/resgate-261118-lote3/claude/test-e2e-suite-completa-261104-1428/scripts/ci/e2e-isolated-runtime.unit.mjs`<br>`analise-prs/resgate-261118-lote3/claude/test-e2e-suite-completa-261104-1428/scripts/e2e-isolated/results.mjs` |
 | `type` | `sort` | compara, escreve | `src/components/catalog/ExternalProductManagement.tsx` |
-| `type` | `spring` | escreve | `analise-prs/resgate-261118-lote3/claude/feat-message-delivery-post-iniciado-261101-1937/src/components/inbox/chat/SendErrorBanner.tsx`<br>`analise-prs/resgate-261118-lote3/claude/feat-message-delivery-post-iniciado-261101-1937/src/components/inbox/chat/UnconfirmedMessagesPanel.tsx`<br>`analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/inbox/VoiceChangerPicker.tsx`<br>`analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/inbox/WhisperMode.tsx`<br>`analise-prs/resgate-261118-lote3/hermes/robustez-primitivos-ui-2610121626bec5-2610141859e423/src/components/BulkActionsBar.tsx`<br>… +63 |
+| `type` | `spring` | escreve | `analise-prs/resgate-261118-lote3/claude/feat-message-delivery-post-iniciado-261101-1937/src/components/inbox/chat/SendErrorBanner.tsx`<br>`analise-prs/resgate-261118-lote3/claude/feat-message-delivery-post-iniciado-261101-1937/src/components/inbox/chat/UnconfirmedMessagesPanel.tsx`<br>`analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/inbox/VoiceChangerPicker.tsx`<br>`analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/inbox/WhisperMode.tsx`<br>`analise-prs/resgate-261118-lote3/hermes/robustez-primitivos-ui-2610121626bec5-2610141859e423/src/components/BulkActionsBar.tsx`<br>… +62 |
 | `type` | `star` | compara | `src/components/effects/Confetti.tsx` |
 | `type` | `start` | compara, escreve | `src/components/chatbot/ChatbotFlowEditor.tsx`<br>`src/hooks/integrations/useChatbotFlows.ts` |
 | `type` | `stat` | compara | `src/components/ui/micro-interactions/skeletons.tsx` |
@@ -1591,6 +1591,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `type` | `transcription` | compara, escreve | `src/components/inbox/search/GlobalSearchResults.tsx`<br>`src/components/inbox/useGlobalSearchData.ts` |
 | `type` | `transfer` | compara | `src/components/chatbot/ChatbotFlowEditor.tsx`<br>`src/components/chatbot/ChatbotNodeDialogs.tsx`<br>`src/components/chatbot/chatbotNodeConfig.ts` |
 | `type` | `unanswered_question` | escreve | `analise-prs/resgate-261118-lote3/claude/feat-radar-motor-telas-261101-1330/supabase/functions/_shared/copilot-tick.ts`<br>`analise-prs/resgate-261118-lote3/claude/radar-motor-copilot-live-301030/supabase/functions/_shared/copilot-tick.ts`<br>`analise-prs/resgate-261118-lote3/resolve-2381-from-main/supabase/functions/_shared/copilot-tick.ts`<br>`supabase/functions/_shared/copilot-tick.ts` |
+| `type` | `unavailable` | compara | `src/components/contacts/ContactEmptyState.tsx` |
 | `type` | `undo` | compara, escreve | `src/components/talkx/segments/TalkXSegmentBuilder.tsx`<br>`src/components/talkx/segments/segmentBuilderReducer.ts` |
 | `type` | `unsupported` | compara | `src/components/inbox/chat/MessageBubble.tsx`<br>`src/components/inbox/chat/MessageBubbleUnsupported.tsx`<br>`src/types/chat.ts` |
 | `type` | `update` | compara, escreve | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/team-chat/useTeamChatPanel.ts`<br>`analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/hooks/team-chat/useTeamMessages.ts`<br>`src/hooks/team-chat/useTeamMessages.ts` |
@@ -1620,8 +1621,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `status` | `COMPLETED` | compara, escreve | `analise-prs/resgate-261118-lote3/claude/ga-ci-batch-ga49-ga54-ga60-ga64-231023/scripts/ci/fila-merge.mjs`<br>`analise-prs/resgate-261118-lote3/claude_04/trusting-newton-duiglt/scripts/ci/fila-merge.mjs`<br>`analise-prs/resgate-261118-lote3/claude_pink/cool-dijkstra-xk9ek2/scripts/ci/fila-merge.mjs`<br>`analise-prs/resgate-261118-lote3/claude_pink/cool-dijkstra-xk9ek2/scripts/ci/fila-merge.unit.mjs`<br>`analise-prs/resgate-261118-lote3/f3/strict-false-baseline-20261018/scripts/ci/fila-merge.unit.mjs` |
 | `status` | `DONE_VERIFIED` | compara, escreve | `analise-prs/resgate-261118-lote3/claude/fix-ga-resto-sonar-contracts-20261021-0726/scripts/talkx/v4-status.unit.mjs` |
 | `status` | `IMPLEMENTED_AWAITING_RUNTIME_EVIDENCE` | escreve | `analise-prs/resgate-261118-lote3/claude/feat-E90-main-failure-notify-261101-1730/scripts/ci/ci-docs-baseline.unit.mjs`<br>`analise-prs/resgate-261118-lote3/claude/wizardly-ride-dimxnt/scripts/ci/ci-docs-baseline.unit.mjs`<br>`analise-prs/resgate-261118-lote3/claude_pink/cool-dijkstra-xk9ek2/scripts/ci/ci-docs-baseline.unit.mjs`<br>`analise-prs/resgate-261118-lote3/codex/fix-failed-workflows-20261020/scripts/ci/ci-docs-baseline.unit.mjs`<br>`analise-prs/resgate-261118-lote3/codex/publish-followup-20261021/scripts/ci/ci-docs-baseline.unit.mjs`<br>… +2 |
-| `status` | `IN_PROGRESS` | compara, escreve | `analise-prs/resgate-261118-lote3/claude_pink/cool-dijkstra-xk9ek2/scripts/ci/fila-merge.mjs`<br>`analise-prs/resgate-261118-lote3/claude_pink/cool-dijkstra-xk9ek2/scripts/ci/fila-merge.unit.mjs`<br>`analise-prs/resgate-261118-lote3/f3/strict-false-baseline-20261018/scripts/ci/fila-merge.unit.mjs` |
-| … +302 linhas — lista completa em `context.json` | | | |
+| … +303 linhas — lista completa em `context.json` | | | |
 
 ### E.4 Enums e listas de valores
 
@@ -3708,11 +3708,11 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `transition={{ delay: hour.day_of_week * 0.05 }}` | `src/components/connections/BusinessHoursDialog.tsx` |
 | `transition={{ delay: index * 0.04 }}` | `src/components/contacts/ContactActivityTimeline.tsx` |
 | `transition={{ delay: i * 0.03, duration: 0.4 }}` | `src/components/contacts/ContactAnalyticsDashboard.tsx` |
-| `transition={{ delay: i * 0.05 + 0.2, duration: 0.5 }}` | `src/components/contacts/ContactAnalyticsDashboard.tsx` |
-| `transition={{ delay: i * 0.05 }}` | `src/components/contacts/ContactAnalyticsDashboard.tsx` |
+| `transition={{ delay: i * 0.04 + 0.2, duration: 0.5 }}` | `src/components/contacts/ContactAnalyticsDashboard.tsx` |
+| `transition={{ delay: i * 0.04 }}` | `src/components/contacts/ContactAnalyticsDashboard.tsx` |
 | `transition={{ duration: 0.15, delay: Math.min(index, 12) * 0.02 }}` | `src/components/contacts/ContactContentArea.tsx` |
+| `deslocamento += delta * 0.021;` | `src/components/contacts/ContactExploreRail.tsx` |
 | `transition={{ delay: gi * 0.03 }}` | `src/components/contacts/ContactGroupedList.tsx` |
-| `transition={{ delay: colIndex * 0.08 }}` | `src/components/contacts/ContactKanbanView.tsx` |
 | `transition={{ delay: i * 0.04 + 0.2, duration: 0.5 }}` | `src/components/contacts/ContactMapView.tsx` |
 | `transition={{ delay: i * 0.04 }}` | `src/components/contacts/ContactMapView.tsx` |
 | `transition={{ delay: i * 0.03 }}` | `src/components/contacts/ContactNotes.tsx` |
@@ -5058,7 +5058,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `owner` | `supabase/migrations/20260927270018_team_chat_e28_fix_find_or_create_race.sql` |
 | `anon` | `supabase/migrations/20260927340000_fix_add_agent_xp_negative_and_guard.sql` |
 
-## K. Testes como especificação (26208 testes em 2731 arquivos — nomes completos em `context.json`)
+## K. Testes como especificação (26291 testes em 2741 arquivos — nomes completos em `context.json`)
 
 | Arquivo | Testes | Exemplos do que o sistema DEVE fazer |
 |---|---|---|
@@ -5362,7 +5362,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `src/hooks/__tests__/useWarRoomAlerts.test.tsx` | 18 | useWarRoomAlerts · fetches unread alerts · exposes dismissAlert function · accepts soundEnabled parameter … |
 | `src/hooks/chat/__tests__/useAutomationSuggestions.test.tsx` | 18 | useAutomationSuggestions · não vai à Edge quando a última mensagem é do agente (lastInboundMessageId nulo) · chama a Edge com o contact_id e expõe as sugestões do contrato, com a fonte carimbada · espera o debounce antes de chamar (mensagem que ainda está chegando não gasta IA) … |
 | `src/hooks/chat/journey/__tests__/useJourneyActors.test.tsx` | 18 | useJourneyActors — regras de quem agiu (S063) · usuário com perfil: nome e foto do perfil, em UMA consulta em lote · perfil ausente:  · erro/RLS negado não lança: o ator cai no  … |
-| … +2431 linhas — lista completa em `context.json` | | |
+| … +2441 linhas — lista completa em `context.json` | | |
 
 ## L. Eventos de webhook tratados (contratos com sistemas externos)
 
@@ -5912,4 +5912,4 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | * R2-AUTH-005 (item 239): a resposta de uma busca de perfil nao pode repor | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/hooks/auth/useAuth.tsx` |
 | Identidade diferente: o perfil anterior nao pode continuar na tela e so a | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/hooks/auth/useAuth.tsx` |
 | Supabase pode falhar e não emitir SIGNED_OUT — a limpeza não pode depender dele). | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/hooks/auth/useAuth.tsx` |
-| … +2515 linhas — lista completa em `context.json` | |
+| … +2518 linhas — lista completa em `context.json` | |

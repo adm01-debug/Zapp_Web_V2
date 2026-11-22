@@ -1,15 +1,15 @@
 {
  "meta": {
-  "sha": "ba0b927e3ceaa4cd92b4c9301d13314b16afe3c7",
+  "sha": "d19cc8d00f911e560cf6102b257534f87b2d4743",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-22 19:12 UTC",
-  "files_total": 15602,
-  "code_files": 8905,
-  "code_lines": 1412527
+  "generated_at": "2026-11-22 22:50 UTC",
+  "files_total": 15618,
+  "code_files": 8920,
+  "code_lines": 1415116
  },
  "version": "1.3.2",
- "facts_hash": "b4e5f7e7f5fe5aa9",
+ "facts_hash": "d91de8fe2f02c0c7",
  "stack": {
   "frameworks": [
    "React + Vite",
@@ -345,8 +345,8 @@
   "package_manager": "bun",
   "languages": {
    ".sql": 3063,
-   ".tsx": 2814,
-   ".ts": 2247,
+   ".tsx": 2828,
+   ".ts": 2248,
    ".mjs": 652,
    ".py": 125,
    ".cjs": 19,
@@ -73439,7 +73439,7 @@
     "file": ".github/workflows/types-sync.yml"
    }
   ],
-  "components_count": 2593,
+  "components_count": 2607,
   "hooks": [
    {
     "name": "useMotionSeguro",
@@ -74732,6 +74732,10 @@
    {
     "name": "useContactSearchV2",
     "file": "src/hooks/contacts/useContactSearchV2.ts"
+   },
+   {
+    "name": "useContactSource",
+    "file": "src/hooks/contacts/useContactSource.ts"
    },
    {
     "name": "useContactsV2Flags",
@@ -77018,7 +77022,7 @@
   {
    "module": "scripts",
    "files": 500,
-   "lines": 102070,
+   "lines": 102075,
    "tables": [
     "a",
     "alem_do_limite",
@@ -77351,8 +77355,8 @@
   },
   {
    "module": "src/components",
-   "files": 2298,
-   "lines": 390870,
+   "files": 2312,
+   "lines": 393405,
    "tables": [
     "agent_skills",
     "agent_visibility_grants",
@@ -77489,6 +77493,7 @@
     "@radix-ui/react-toggle"
    ],
    "imports_modules": [
+    "scripts",
     "src/App",
     "src/adapters",
     "src/config",
@@ -77699,8 +77704,8 @@
   },
   {
    "module": "src/hooks",
-   "files": 1027,
-   "lines": 166649,
+   "files": 1028,
+   "lines": 166698,
    "tables": [
     "agent_achievements",
     "agent_stats",
@@ -105501,12 +105506,20 @@
     "text": "axe acusa TODO o texto dele com a regra `region` (fora de `<main>`)."
    },
    {
+    "file": "src/components/contacts/ContactAnalyticsDashboard.tsx",
+    "text": "horizontal (rótulo · trilho · contagem) com no máximo 680px de largura."
+   },
+   {
     "file": "src/components/contacts/ContactCompareDialog.tsx",
     "text": "* Comparar é uma leitura lado a lado: no máximo 3 contatos (a CT-089 aplica o"
    },
    {
     "file": "src/components/contacts/ContactCompareDialog.tsx",
     "text": "mesmo limite na seleção do módulo). Menos de 2 não é comparação."
+   },
+   {
+    "file": "src/components/contacts/ContactContentArea.tsx",
+    "text": "* Grade explícita quando a largura do contêiner já foi medida (regra do design). */"
    },
    {
     "file": "src/components/contacts/ContactDetailPanel.tsx",
@@ -105534,7 +105547,7 @@
    },
    {
     "file": "src/components/contacts/ContactListItem.tsx",
-    "text": "Item só aparece quando o usuário pode excluir ESTE contato (a permissão vem"
+    "text": "Item so aparece quando o usuario pode excluir ESTE contato (a permissao"
    },
    {
     "file": "src/components/contacts/ContactToolbar.tsx",
@@ -108303,6 +108316,10 @@
    {
     "file": "src/hooks/crm/useContactsKpi.ts",
     "text": "* Limite de linhas por resposta do PostgREST (`max_rows`). */"
+   },
+   {
+    "file": "src/hooks/crm/useContactsSearch.ts",
+    "text": "* ZD-043 — quantidade de itens por página por visão, na regra do design:"
    },
    {
     "file": "src/hooks/crm/useContactsSearch.ts",
@@ -125455,7 +125472,7 @@
    {
     "file": "src/hooks/contacts/useContainerColumns.ts",
     "name": "COLUMNS_MAX",
-    "value": "4"
+    "value": "6"
    },
    {
     "file": "src/hooks/contacts/useContainerColumns.ts",
@@ -136568,9 +136585,27 @@
    },
    {
     "file": "src/components/contacts/ContactDetailPanel.tsx",
-    "field": "type",
-    "value": "spring",
-    "kind": "escreve"
+    "field": "status",
+    "value": "loading",
+    "kind": "compara"
+   },
+   {
+    "file": "src/components/contacts/ContactDetailPanel.tsx",
+    "field": "status",
+    "value": "disabled",
+    "kind": "compara"
+   },
+   {
+    "file": "src/components/contacts/ContactDetailPanel.tsx",
+    "field": "status",
+    "value": "error",
+    "kind": "compara"
+   },
+   {
+    "file": "src/components/contacts/ContactDetailPanel.tsx",
+    "field": "status",
+    "value": "not_found",
+    "kind": "compara"
    },
    {
     "file": "src/components/contacts/ContactDialogs.tsx",
@@ -136587,19 +136622,7 @@
    {
     "file": "src/components/contacts/ContactEmptyState.tsx",
     "field": "type",
-    "value": "no-contacts",
-    "kind": "compara"
-   },
-   {
-    "file": "src/components/contacts/ContactEmptyState.tsx",
-    "field": "type",
-    "value": "no-results",
-    "kind": "compara"
-   },
-   {
-    "file": "src/components/contacts/ContactEmptyState.tsx",
-    "field": "type",
-    "value": "filtered-empty",
+    "value": "error",
     "kind": "compara"
    },
    {
@@ -136618,6 +136641,48 @@
     "file": "src/components/contacts/ContactEmptyState.tsx",
     "field": "type",
     "value": "filtered-empty",
+    "kind": "compara"
+   },
+   {
+    "file": "src/components/contacts/ContactEmptyState.tsx",
+    "field": "type",
+    "value": "unavailable",
+    "kind": "compara"
+   },
+   {
+    "file": "src/components/contacts/ContactEmptyState.tsx",
+    "field": "type",
+    "value": "error",
+    "kind": "compara"
+   },
+   {
+    "file": "src/components/contacts/ContactEmptyState.tsx",
+    "field": "type",
+    "value": "no-contacts",
+    "kind": "compara"
+   },
+   {
+    "file": "src/components/contacts/ContactEmptyState.tsx",
+    "field": "type",
+    "value": "no-results",
+    "kind": "compara"
+   },
+   {
+    "file": "src/components/contacts/ContactEmptyState.tsx",
+    "field": "type",
+    "value": "filtered-empty",
+    "kind": "compara"
+   },
+   {
+    "file": "src/components/contacts/ContactEmptyState.tsx",
+    "field": "type",
+    "value": "unavailable",
+    "kind": "compara"
+   },
+   {
+    "file": "src/components/contacts/ContactEmptyState.tsx",
+    "field": "type",
+    "value": "error",
     "kind": "compara"
    },
    {
@@ -154298,23 +154363,23 @@
    },
    {
     "file": "src/components/contacts/ContactAnalyticsDashboard.tsx",
-    "line": "transition={{ delay: i * 0.05 + 0.2, duration: 0.5 }}"
+    "line": "transition={{ delay: i * 0.04 + 0.2, duration: 0.5 }}"
    },
    {
     "file": "src/components/contacts/ContactAnalyticsDashboard.tsx",
-    "line": "transition={{ delay: i * 0.05 }}"
+    "line": "transition={{ delay: i * 0.04 }}"
    },
    {
     "file": "src/components/contacts/ContactContentArea.tsx",
     "line": "transition={{ duration: 0.15, delay: Math.min(index, 12) * 0.02 }}"
    },
    {
-    "file": "src/components/contacts/ContactGroupedList.tsx",
-    "line": "transition={{ delay: gi * 0.03 }}"
+    "file": "src/components/contacts/ContactExploreRail.tsx",
+    "line": "deslocamento += delta * 0.021;"
    },
    {
-    "file": "src/components/contacts/ContactKanbanView.tsx",
-    "line": "transition={{ delay: colIndex * 0.08 }}"
+    "file": "src/components/contacts/ContactGroupedList.tsx",
+    "line": "transition={{ delay: gi * 0.03 }}"
    },
    {
     "file": "src/components/contacts/ContactMapView.tsx",
@@ -179783,6 +179848,62 @@
     "name": "o botão de fechar tem nome acessível e fecha ao clique"
    },
    {
+    "file": "src/components/contacts/__tests__/ContactDetailPanel.redesign.test.tsx",
+    "name": "ficha do contato — casca e navegação (ZD-071/ZD-078)"
+   },
+   {
+    "file": "src/components/contacts/__tests__/ContactDetailPanel.redesign.test.tsx",
+    "name": "sem recorte de resultado não mostra anterior/próximo"
+   },
+   {
+    "file": "src/components/contacts/__tests__/ContactDetailPanel.redesign.test.tsx",
+    "name": "recorte com um contato só também não mostra anterior/próximo"
+   },
+   {
+    "file": "src/components/contacts/__tests__/ContactDetailPanel.redesign.test.tsx",
+    "name": "recorte com vários contatos circula nos dois sentidos"
+   },
+   {
+    "file": "src/components/contacts/__tests__/ContactDetailPanel.redesign.test.tsx",
+    "name": "último do recorte volta para o primeiro (circular)"
+   },
+   {
+    "file": "src/components/contacts/__tests__/ContactDetailPanel.redesign.test.tsx",
+    "name": "clique no overlay fecha a ficha"
+   },
+   {
+    "file": "src/components/contacts/__tests__/ContactDetailPanel.redesign.test.tsx",
+    "name": "ficha do contato — abas (ZD-073)"
+   },
+   {
+    "file": "src/components/contacts/__tests__/ContactDetailPanel.redesign.test.tsx",
+    "name": "expõe as quatro abas com ARIA completo e "
+   },
+   {
+    "file": "src/components/contacts/__tests__/ContactDetailPanel.redesign.test.tsx",
+    "name": "clicar em "
+   },
+   {
+    "file": "src/components/contacts/__tests__/ContactDetailPanel.redesign.test.tsx",
+    "name": "clicar em "
+   },
+   {
+    "file": "src/components/contacts/__tests__/ContactDetailPanel.redesign.test.tsx",
+    "name": "setas do teclado ciclam as abas e movem o foco"
+   },
+   {
+    "file": "src/components/contacts/__tests__/ContactDetailPanel.redesign.test.tsx",
+    "name": "ficha do contato — visão geral (ZD-074)"
+   },
+   {
+    "file": "src/components/contacts/__tests__/ContactDetailPanel.redesign.test.tsx",
+    "name": "mostra só o que existe: nada de "
+   },
+   {
+    "file": "src/components/contacts/__tests__/ContactDetailPanel.redesign.test.tsx",
+    "name": "não renderiza grupo de redes sociais quando não há link"
+   },
+   {
     "file": "src/components/contacts/__tests__/ContactDialogs.fabToque.test.ts",
     "name": "ContactDialogs — botão flutuante recebe toque na caixa inteira"
    },
@@ -179797,6 +179918,22 @@
    {
     "file": "src/components/contacts/__tests__/ContactDialogs.fabToque.test.ts",
     "name": "continua portal no document.body, fora do scroller que recortaria o fixed"
+   },
+   {
+    "file": "src/components/contacts/__tests__/ContactDialogsK.redesign.test.tsx",
+    "name": "Fase K — diálogos do redesign"
+   },
+   {
+    "file": "src/components/contacts/__tests__/ContactDialogsK.redesign.test.tsx",
+    "name": "cadastro abre com contexto, título do design e o formulário completo"
+   },
+   {
+    "file": "src/components/contacts/__tests__/ContactDialogsK.redesign.test.tsx",
+    "name": "edição usa o mesmo molde e mantém o rótulo "
+   },
+   {
+    "file": "src/components/contacts/__tests__/ContactDialogsK.redesign.test.tsx",
+    "name": "exclusão nomeia o contato e exige confirmação explícita"
    },
    {
     "file": "src/components/contacts/__tests__/ContactEmptyState.typography.test.tsx",
@@ -179877,6 +180014,38 @@
    {
     "file": "src/components/contacts/__tests__/ContactEngagementScore.test.tsx",
     "name": "score=69 é warm (justo abaixo do limiar hot)"
+   },
+   {
+    "file": "src/components/contacts/__tests__/ContactExploreRail.test.tsx",
+    "name": "ContactExploreRail (ZD-081..085)"
+   },
+   {
+    "file": "src/components/contacts/__tests__/ContactExploreRail.test.tsx",
+    "name": "anuncia o carrossel e lista um mini-card por contato"
+   },
+   {
+    "file": "src/components/contacts/__tests__/ContactExploreRail.test.tsx",
+    "name": "abre a ficha do contato clicado"
+   },
+   {
+    "file": "src/components/contacts/__tests__/ContactExploreRail.test.tsx",
+    "name": "mostra vazio explícito quando o recorte não tem contato"
+   },
+   {
+    "file": "src/components/contacts/__tests__/ContactExploreRail.test.tsx",
+    "name": "desabilita os controles quando não há o que rolar"
+   },
+   {
+    "file": "src/components/contacts/__tests__/ContactExploreRail.test.tsx",
+    "name": "o botão de pausa alterna o rótulo entre Pausar e Reproduzir"
+   },
+   {
+    "file": "src/components/contacts/__tests__/ContactExploreRail.test.tsx",
+    "name": "as setas reciclam a ordem visual do trilho e pausam o auto-avanço"
+   },
+   {
+    "file": "src/components/contacts/__tests__/ContactExploreRail.test.tsx",
+    "name": "mostra a empresa do contato e um marcador quando ela falta"
    },
    {
     "file": "src/components/contacts/__tests__/ContactFormEndereco.integration.test.tsx",
@@ -180104,7 +180273,11 @@
    },
    {
     "file": "src/components/contacts/__tests__/ContactListItemGrid.test.tsx",
-    "name": "as trilhas do template não usam pixels (só auto/fr) e o nº de colunas bate com as células visíveis"
+    "name": "o root tem retrato + corpo em trilhas sem pixels"
+   },
+   {
+    "file": "src/components/contacts/__tests__/ContactListItemGrid.test.tsx",
+    "name": "o corpo usa trilhas proporcionais e nenhuma largura vinda do conteúdo"
    },
    {
     "file": "src/components/contacts/__tests__/ContactListItemGrid.test.tsx",
@@ -180355,6 +180528,26 @@
     "name": "ContactGroupedList usa o mesmo space-y-2 do ContactContentArea"
    },
    {
+    "file": "src/components/contacts/__tests__/ContactPortrait.protecao.test.tsx",
+    "name": "ContactPortrait â€” proteÃ§Ã£o de tela"
+   },
+   {
+    "file": "src/components/contacts/__tests__/ContactPortrait.protecao.test.tsx",
+    "name": "nÃ£o permite arrastar a foto"
+   },
+   {
+    "file": "src/components/contacts/__tests__/ContactPortrait.protecao.test.tsx",
+    "name": "bloqueia o menu de contexto da foto (sem "
+   },
+   {
+    "file": "src/components/contacts/__tests__/ContactPortrait.protecao.test.tsx",
+    "name": "sem foto mostra iniciais e nÃ£o renderiza <img>"
+   },
+   {
+    "file": "src/components/contacts/__tests__/ContactPortrait.protecao.test.tsx",
+    "name": "só a primeira linha usa carregamento imediato (ZD-101)"
+   },
+   {
     "file": "src/components/contacts/__tests__/ContactRegionMap.test.tsx",
     "name": "ContactRegionMap"
    },
@@ -180405,6 +180598,22 @@
    {
     "file": "src/components/contacts/__tests__/ContactRegionMap.test.tsx",
     "name": "com região plotável o aviso de vazio não aparece"
+   },
+   {
+    "file": "src/components/contacts/__tests__/ContactResultsSummary.selection.test.tsx",
+    "name": "ContactResultsSummary — seleção, comparar e limpar (ZD-086/ZD-087)"
+   },
+   {
+    "file": "src/components/contacts/__tests__/ContactResultsSummary.selection.test.tsx",
+    "name": "sem seleção não mostra contador, comparar nem limpar"
+   },
+   {
+    "file": "src/components/contacts/__tests__/ContactResultsSummary.selection.test.tsx",
+    "name": "com 1 selecionado mostra o contador e "
+   },
+   {
+    "file": "src/components/contacts/__tests__/ContactResultsSummary.selection.test.tsx",
+    "name": "com 2+ selecionados oferece "
    },
    {
     "file": "src/components/contacts/__tests__/ContactSelectionConsistency.test.tsx",
@@ -180460,7 +180669,7 @@
    },
    {
     "file": "src/components/contacts/__tests__/ContactStatsCards.test.tsx",
-    "name": "trava a geometria Navy do KPI (card 108px, tile 60px, valor text-kpi-value)"
+    "name": "trava a geometria do redesign no KPI (card 86px, placa 42×43px, valor Outfit 29px)"
    },
    {
     "file": "src/components/contacts/__tests__/ContactStatsCards.test.tsx",
@@ -180529,6 +180738,194 @@
    {
     "file": "src/components/contacts/__tests__/ContactTypeTabs.test.tsx",
     "name": "formata contagens com separador pt-BR"
+   },
+   {
+    "file": "src/components/contacts/__tests__/ContactViewsJ.redesign.test.tsx",
+    "name": "Fase J — casca das visões extras"
+   },
+   {
+    "file": "src/components/contacts/__tests__/ContactViewsJ.redesign.test.tsx",
+    "name": "Pipeline usa a casca do design com título, legenda e contagem por etapa"
+   },
+   {
+    "file": "src/components/contacts/__tests__/ContactViewsJ.redesign.test.tsx",
+    "name": "Pipeline vazio mantém o cartão de estado vazio e nenhuma lane"
+   },
+   {
+    "file": "src/components/contacts/__tests__/ContactViewsJ.redesign.test.tsx",
+    "name": "Mapa usa a casca do design e lista as regiões em chips quando há contatos"
+   },
+   {
+    "file": "src/components/contacts/__tests__/ContactViewsJ.redesign.test.tsx",
+    "name": "Mapa vazio usa o cartão "
+   },
+   {
+    "file": "src/components/contacts/__tests__/ContactViewsJ.redesign.test.tsx",
+    "name": "Fase J — analytics em barras do design"
+   },
+   {
+    "file": "src/components/contacts/__tests__/ContactViewsJ.redesign.test.tsx",
+    "name": "usa a casca do design e publica o título com a legenda de escopo"
+   },
+   {
+    "file": "src/components/contacts/__tests__/ContactViewsJ.redesign.test.tsx",
+    "name": "ordena as barras por contagem e mostra o número no fim da linha"
+   },
+   {
+    "file": "src/components/contacts/__tests__/ContactViewsJ.redesign.test.tsx",
+    "name": "barra proporcional usa o token azul do módulo, não cor fixa"
+   },
+   {
+    "file": "src/components/contacts/__tests__/ContactViewsKeyboard.test.tsx",
+    "name": "Contatos · teclado nas três visões (ZD-068)"
+   },
+   {
+    "file": "src/components/contacts/__tests__/ContactViewsKeyboard.test.tsx",
+    "name": "lista: cada linha é focável e as setas movem o foco entre elas"
+   },
+   {
+    "file": "src/components/contacts/__tests__/ContactViewsKeyboard.test.tsx",
+    "name": "lista: Enter abre a ficha do contato focado"
+   },
+   {
+    "file": "src/components/contacts/__tests__/ContactViewsKeyboard.test.tsx",
+    "name": "grade: as setas também navegam entre os cards"
+   },
+   {
+    "file": "src/components/contacts/__tests__/ContactViewsKeyboard.test.tsx",
+    "name": "tabela: cada linha é focável e as setas andam na ordem das linhas"
+   },
+   {
+    "file": "src/components/contacts/__tests__/ContactViewsKeyboard.test.tsx",
+    "name": "seta não rouba o teclado de controles internos (checkbox da linha)"
+   },
+   {
+    "file": "src/components/contacts/__tests__/ContactViewsL.qualidade.test.tsx",
+    "name": "Fase L (ZD-097..101) — tema claro, contraste, movimento e desempenho"
+   },
+   {
+    "file": "src/components/contacts/__tests__/ContactViewsL.qualidade.test.tsx",
+    "name": "ZD-097: os tokens do tema claro seguem a escala do design"
+   },
+   {
+    "file": "src/components/contacts/__tests__/ContactViewsL.qualidade.test.tsx",
+    "name": "ZD-101: a primeira linha do carrossel carrega a foto sem lazy"
+   },
+   {
+    "file": "src/components/contacts/__tests__/ContactViewsL.qualidade.test.tsx",
+    "name": "ZD-101: fora da primeira linha a foto continua lazy"
+   },
+   {
+    "file": "src/components/contacts/__tests__/ContactViewsL.qualidade.test.tsx",
+    "name": "ZD-100: o carrossel amplia os alvos de toque no ponteiro grosso"
+   },
+   {
+    "file": "src/components/contacts/__tests__/ContactViewsL.qualidade.test.tsx",
+    "name": "ZD-099: a view anuncia o resultado em região viva"
+   },
+   {
+    "file": "src/components/contacts/__tests__/ContactViewsM.contrato.test.tsx",
+    "name": "ZD-098/ZD-097 — contraste AA dos tokens de Contatos"
+   },
+   {
+    "file": "src/components/contacts/__tests__/ContactViewsM.contrato.test.tsx",
+    "name": "todo par de texto do modulo passa 4.5:1 no claro e no escuro"
+   },
+   {
+    "file": "src/components/contacts/__tests__/ContactViewsM.contrato.test.tsx",
+    "name": "--contacts-quiet nao volta ao valor que reprovava no card escuro"
+   },
+   {
+    "file": "src/components/contacts/__tests__/ContactViewsM.contrato.test.tsx",
+    "name": "ZD-098 — piso da escala tipografica"
+   },
+   {
+    "file": "src/components/contacts/__tests__/ContactViewsM.contrato.test.tsx",
+    "name": "nenhum componente do modulo usa tamanho abaixo de 10px"
+   },
+   {
+    "file": "src/components/contacts/__tests__/ContactViewsM.contrato.test.tsx",
+    "name": "ZD-099 — rotulos acessiveis dos controles obrigatorios"
+   },
+   {
+    "file": "src/components/contacts/__tests__/ContactViewsM.contrato.test.tsx",
+    "name": "o card expoe checkbox e menu de acoes com nome acessivel"
+   },
+   {
+    "file": "src/components/contacts/__tests__/ContactViewsM.contrato.test.tsx",
+    "name": "a lista e a tabela mantem o nome do contato no controle de detalhes"
+   },
+   {
+    "file": "src/components/contacts/__tests__/ContactViewsM.contrato.test.tsx",
+    "name": "o gatilho de Filtros Salvos nao depende do texto visivel no celular"
+   },
+   {
+    "file": "src/components/contacts/__tests__/ContactViewsM.contrato.test.tsx",
+    "name": "a contagem da tela e anunciada em regiao viva"
+   },
+   {
+    "file": "src/components/contacts/__tests__/ContactViewsM.contrato.test.tsx",
+    "name": "ZD-100 — area de toque no ponteiro grosso"
+   },
+   {
+    "file": "src/components/contacts/__tests__/ContactViewsM.contrato.test.tsx",
+    "name": "a utilidade de 44px existe e so age no ponteiro grosso"
+   },
+   {
+    "file": "src/components/contacts/__tests__/ContactViewsM.contrato.test.tsx",
+    "name": "o menu do card fica longe o bastante da area de toque do checkbox"
+   },
+   {
+    "file": "src/components/contacts/__tests__/ContactViewsM.contrato.test.tsx",
+    "name": "o checkbox usa a utilidade de area de toque"
+   },
+   {
+    "file": "src/components/contacts/__tests__/ContactViewsM.contrato.test.tsx",
+    "name": "ZD-101 — orcamento de fotos do card"
+   },
+   {
+    "file": "src/components/contacts/__tests__/ContactViewsM.contrato.test.tsx",
+    "name": "so as tres primeiras posicoes carregam a foto com prioridade"
+   },
+   {
+    "file": "src/components/contacts/__tests__/ContactViewsM.contrato.test.tsx",
+    "name": "o retrato respeita o modo de carregamento pedido"
+   },
+   {
+    "file": "src/components/contacts/__tests__/ContactsTableDesign.test.tsx",
+    "name": "ContactsTable · visual e comportamento do design (ZD-063..066)"
+   },
+   {
+    "file": "src/components/contacts/__tests__/ContactsTableDesign.test.tsx",
+    "name": "envolve a tabela num contêiner rolável com a moldura de 10px do design"
+   },
+   {
+    "file": "src/components/contacts/__tests__/ContactsTableDesign.test.tsx",
+    "name": "o cabeçalho ordenável usa botão de verdade e publica aria-sort"
+   },
+   {
+    "file": "src/components/contacts/__tests__/ContactsTableDesign.test.tsx",
+    "name": "as setas de ordenação têm 11px e o cabeçalho usa o respiro 13x11 do design"
+   },
+   {
+    "file": "src/components/contacts/__tests__/ContactsTableDesign.test.tsx",
+    "name": "células usam o respiro de 14x11 e o texto de 11px da tabela"
+   },
+   {
+    "file": "src/components/contacts/__tests__/ContactsTableDesign.test.tsx",
+    "name": "etiquetas viram chips do design, sem truncar em duas"
+   },
+   {
+    "file": "src/components/contacts/__tests__/ContactsTableDesign.test.tsx",
+    "name": "a coluna Ações expõe Conversar, menu e abrir ficha em icones de 30px"
+   },
+   {
+    "file": "src/components/contacts/__tests__/ContactsTableDesign.test.tsx",
+    "name": "ZD-064 · o painel de colunas esconde Cargo mas mantém Contato"
+   },
+   {
+    "file": "src/components/contacts/__tests__/ContactsTableDesign.test.tsx",
+    "name": "ZD-064 · o painel de colunas volta a mostrar a coluna desligada"
    },
    {
     "file": "src/components/contacts/__tests__/ContactsView.contratoFonte.test.ts",
@@ -225180,7 +225577,7 @@
    },
    {
     "file": "src/hooks/contacts/__tests__/useContainerColumns.test.ts",
-    "name": "mantém 2..4 e traz valores fora da faixa para o limite"
+    "name": "mantém 2..6 e traz valores fora da faixa para o limite"
    },
    {
     "file": "src/hooks/contacts/__tests__/useContainerColumns.test.ts",
@@ -284502,7 +284899,6 @@
       "escreve:analise-prs/resgate-261118-lote3/hermes/robustez-primitivos-ui-2610121626bec5-2610141859e423/src/components/mobile/SwipeGestures.tsx",
       "escreve:analise-prs/resgate-261118-lote3/hermes/telefonia-fase8-motion-a11y-responsivo-2610031530007c/src/components/calls/IncomingCallAlert.tsx",
       "escreve:src/components/calls/IncomingCallAlert.tsx",
-      "escreve:src/components/contacts/ContactDetailPanel.tsx",
       "escreve:src/components/contacts/ContactDialogs.tsx",
       "escreve:src/components/contacts/ContactTypeTabs.tsx",
       "escreve:src/components/contacts/ContactViewSwitcher.tsx",
@@ -285062,10 +285458,18 @@
       "compara:src/components/contacts/ContactEmptyState.tsx",
       "escreve:src/components/contacts/ContactEmptyState.tsx"
      ],
+     "error": [
+      "compara:src/components/contacts/ContactEmptyState.tsx",
+      "compara:src/hooks/ui/useLoadingState.ts",
+      "escreve:src/hooks/ui/useLoadingState.ts"
+     ],
      "no-results": [
       "compara:src/components/contacts/ContactEmptyState.tsx"
      ],
      "filtered-empty": [
+      "compara:src/components/contacts/ContactEmptyState.tsx"
+     ],
+     "unavailable": [
       "compara:src/components/contacts/ContactEmptyState.tsx"
      ],
      "company": [
@@ -285699,10 +286103,6 @@
       "compara:src/hooks/ui/useLoadingState.ts",
       "escreve:src/hooks/ui/useLoadingState.ts"
      ],
-     "error": [
-      "compara:src/hooks/ui/useLoadingState.ts",
-      "escreve:src/hooks/ui/useLoadingState.ts"
-     ],
      "RELEASE": [
       "compara:src/lib/calls/tabLeaderStore.ts",
       "compara:src/lib/crossTabDrainLock.ts",
@@ -286165,6 +286565,7 @@
       "compara:analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/hooks/inbox/useConnectionsManager.ts",
       "compara:src/components/admin/MediaMigrationTool.tsx",
       "compara:src/components/connections/ConnectionsView.tsx",
+      "compara:src/components/contacts/ContactDetailPanel.tsx",
       "compara:src/components/email/EmailChatInbox.tsx",
       "compara:src/components/email/EmailContactPanel.tsx",
       "compara:src/components/inbox/contact-details/sidebar/PersonalSection.tsx",
@@ -286195,6 +286596,7 @@
       "compara:src/components/admin/GmailWebhookMonitor.tsx",
       "compara:src/components/admin/MediaMigrationTool.tsx",
       "compara:src/components/connections/ConnectionsView.tsx",
+      "compara:src/components/contacts/ContactDetailPanel.tsx",
       "compara:src/components/inbox/AIConversationAssistant.tsx",
       "compara:src/components/inbox/ConversationSummary.tsx",
       "compara:src/components/inbox/FileUploader.tsx",
@@ -286941,6 +287343,21 @@
      "running": [
       "compara:src/components/chatbot/ChatbotExecutionsDashboard.tsx"
      ],
+     "disabled": [
+      "compara:src/components/contacts/ContactDetailPanel.tsx",
+      "compara:src/components/email/EmailContactPanel.tsx",
+      "compara:src/components/inbox/contact-details/sidebar/ContactSidebarSections.tsx",
+      "compara:src/components/inbox/contact-details/sidebar/PersonalSection.tsx",
+      "compara:src/components/inbox/contact-details/sidebar/SinguProfileSection.tsx",
+      "compara:src/components/security/SecuritySettingsPanel.tsx"
+     ],
+     "not_found": [
+      "compara:src/components/contacts/ContactDetailPanel.tsx",
+      "compara:src/components/inbox/contact-details/sidebar/PersonalSection.tsx",
+      "compara:src/components/inbox/contact-details/sidebar/ProfessionalSection.tsx",
+      "compara:src/components/inbox/contact-details/sidebar/SinguProfileSection.tsx",
+      "escreve:src/components/inbox/contact-details/sidebar/professionalFallback.ts"
+     ],
      "ativo": [
       "escreve:src/components/crm360/CompanyFormDialog.tsx"
      ],
@@ -286962,13 +287379,6 @@
      ],
      "found": [
       "compara:src/components/email/EmailChatInbox.tsx"
-     ],
-     "disabled": [
-      "compara:src/components/email/EmailContactPanel.tsx",
-      "compara:src/components/inbox/contact-details/sidebar/ContactSidebarSections.tsx",
-      "compara:src/components/inbox/contact-details/sidebar/PersonalSection.tsx",
-      "compara:src/components/inbox/contact-details/sidebar/SinguProfileSection.tsx",
-      "compara:src/components/security/SecuritySettingsPanel.tsx"
      ],
      "permission_denied": [
       "compara:src/components/email/EmailContactPanel.tsx"
@@ -287002,12 +287412,6 @@
       "escreve:src/components/inbox/tabs/TasksTab.tsx",
       "escreve:src/hooks/assistant/useContactAgenda.ts",
       "escreve:src/hooks/tasks/workItem.types.ts"
-     ],
-     "not_found": [
-      "compara:src/components/inbox/contact-details/sidebar/PersonalSection.tsx",
-      "compara:src/components/inbox/contact-details/sidebar/ProfessionalSection.tsx",
-      "compara:src/components/inbox/contact-details/sidebar/SinguProfileSection.tsx",
-      "escreve:src/components/inbox/contact-details/sidebar/professionalFallback.ts"
      ],
      "typing": [
       "compara:src/components/inbox/location-picker/SuggestionList.tsx",
@@ -354964,9 +355368,13 @@
   },
   "scripts/ci/verify-crm-integration-doc.unit.mjs": {
    "path": "scripts/ci/verify-crm-integration-doc.unit.mjs",
-   "lines": 74,
+   "lines": 79,
    "errors": [
     "grep falhou: "
+   ],
+   "rule_comments": [
+    "um comentario que apenas cita o nome do hook (`* ... \\`useCRM...\\``)",
+    "nao consome a flag e nao deve exigir linha na tabela do documento."
    ],
    "doc": "Como rodar: node --test scripts/ci/verify-crm-integration-doc.unit.mjs Suite coberta pelo glob `scripts/ci/*.unit.mjs` do workflow de CI."
   },
@@ -368635,14 +369043,17 @@
   },
   "src/components/contacts/ContactAnalyticsDashboard.tsx": {
    "path": "src/components/contacts/ContactAnalyticsDashboard.tsx",
-   "lines": 221,
+   "lines": 223,
    "exports": [
     "function ContactAnalyticsDashboard"
    ],
+   "rule_comments": [
+    "horizontal (rótulo · trilho · contagem) com no máximo 680px de largura."
+   ],
    "percents": [
     "transition={{ delay: i * 0.03, duration: 0.4 }}",
-    "transition={{ delay: i * 0.05 + 0.2, duration: 0.5 }}",
-    "transition={{ delay: i * 0.05 }}"
+    "transition={{ delay: i * 0.04 + 0.2, duration: 0.5 }}",
+    "transition={{ delay: i * 0.04 }}"
    ]
   },
   "src/components/contacts/ContactBulkTagDialog.tsx": {
@@ -368686,7 +369097,7 @@
   },
   "src/components/contacts/ContactCard.tsx": {
    "path": "src/components/contacts/ContactCard.tsx",
-   "lines": 291,
+   "lines": 294,
    "exports": [
     "function ContactHealthIndicator",
     "function ContactCard"
@@ -368694,7 +369105,7 @@
   },
   "src/components/contacts/ContactCompareDialog.tsx": {
    "path": "src/components/contacts/ContactCompareDialog.tsx",
-   "lines": 189,
+   "lines": 194,
    "exports": [
     "function ContactCompareDialog"
    ],
@@ -368711,9 +369122,12 @@
   },
   "src/components/contacts/ContactContentArea.tsx": {
    "path": "src/components/contacts/ContactContentArea.tsx",
-   "lines": 160,
+   "lines": 231,
    "exports": [
     "function ContactContentArea"
+   ],
+   "rule_comments": [
+    "* Grade explícita quando a largura do contêiner já foi medida (regra do design). */"
    ],
    "percents": [
     "transition={{ duration: 0.15, delay: Math.min(index, 12) * 0.02 }}"
@@ -368721,7 +369135,7 @@
   },
   "src/components/contacts/ContactDetailPanel.tsx": {
    "path": "src/components/contacts/ContactDetailPanel.tsx",
-   "lines": 445,
+   "lines": 913,
    "exports": [
     "interface ContactActivity",
     "function ContactCatalogSendHistory",
@@ -368729,9 +369143,24 @@
    ],
    "status_values": [
     {
-     "field": "type",
-     "value": "spring",
-     "kind": "escreve"
+     "field": "status",
+     "value": "loading",
+     "kind": "compara"
+    },
+    {
+     "field": "status",
+     "value": "disabled",
+     "kind": "compara"
+    },
+    {
+     "field": "status",
+     "value": "error",
+     "kind": "compara"
+    },
+    {
+     "field": "status",
+     "value": "not_found",
+     "kind": "compara"
     }
    ],
    "rule_comments": [
@@ -368740,7 +369169,7 @@
   },
   "src/components/contacts/ContactDialogs.tsx": {
    "path": "src/components/contacts/ContactDialogs.tsx",
-   "lines": 196,
+   "lines": 216,
    "exports": [
     "function ContactDialogs"
    ],
@@ -368754,7 +369183,7 @@
   },
   "src/components/contacts/ContactEmptyState.tsx": {
    "path": "src/components/contacts/ContactEmptyState.tsx",
-   "lines": 120,
+   "lines": 151,
    "exports": [
     "function ContactEmptyState"
    ],
@@ -368766,17 +369195,7 @@
     },
     {
      "field": "type",
-     "value": "no-contacts",
-     "kind": "compara"
-    },
-    {
-     "field": "type",
-     "value": "no-results",
-     "kind": "compara"
-    },
-    {
-     "field": "type",
-     "value": "filtered-empty",
+     "value": "error",
      "kind": "compara"
     },
     {
@@ -368792,6 +369211,41 @@
     {
      "field": "type",
      "value": "filtered-empty",
+     "kind": "compara"
+    },
+    {
+     "field": "type",
+     "value": "unavailable",
+     "kind": "compara"
+    },
+    {
+     "field": "type",
+     "value": "error",
+     "kind": "compara"
+    },
+    {
+     "field": "type",
+     "value": "no-contacts",
+     "kind": "compara"
+    },
+    {
+     "field": "type",
+     "value": "no-results",
+     "kind": "compara"
+    },
+    {
+     "field": "type",
+     "value": "filtered-empty",
+     "kind": "compara"
+    },
+    {
+     "field": "type",
+     "value": "unavailable",
+     "kind": "compara"
+    },
+    {
+     "field": "type",
+     "value": "error",
      "kind": "compara"
     }
    ]
@@ -368812,6 +369266,16 @@
    "temporal": [
     "const accountAgeDays = Math.max(1, (now - created) / (1000 * 60 * 60 * 24));",
     "const daysSinceLastMsg = lastMsg ? (now - lastMsg) / (1000 * 60 * 60 * 24) : 999;"
+   ]
+  },
+  "src/components/contacts/ContactExploreRail.tsx": {
+   "path": "src/components/contacts/ContactExploreRail.tsx",
+   "lines": 283,
+   "exports": [
+    "function ContactExploreRail"
+   ],
+   "percents": [
+    "deslocamento += delta * 0.021;"
    ]
   },
   "src/components/contacts/ContactForm.tsx": {
@@ -368860,7 +369324,7 @@
   },
   "src/components/contacts/ContactGroupedList.tsx": {
    "path": "src/components/contacts/ContactGroupedList.tsx",
-   "lines": 123,
+   "lines": 124,
    "exports": [
     "function ContactGroupedList"
    ],
@@ -368870,7 +369334,7 @@
   },
   "src/components/contacts/ContactKanbanView.tsx": {
    "path": "src/components/contacts/ContactKanbanView.tsx",
-   "lines": 297,
+   "lines": 274,
    "exports": [
     "function ContactKanbanView"
    ],
@@ -368890,31 +369354,28 @@
    ],
    "rule_comments": [
     "snapshot da prop foi capturado antes dele e nao pode sobrescreve-lo — senao"
-   ],
-   "percents": [
-    "transition={{ delay: colIndex * 0.08 }}"
    ]
   },
   "src/components/contacts/ContactKpiCard.tsx": {
    "path": "src/components/contacts/ContactKpiCard.tsx",
-   "lines": 162,
+   "lines": 172,
    "exports": [
     "function ContactKpiCard"
    ]
   },
   "src/components/contacts/ContactListItem.tsx": {
    "path": "src/components/contacts/ContactListItem.tsx",
-   "lines": 199,
+   "lines": 231,
    "exports": [
     "function ContactListItem"
    ],
    "rule_comments": [
-    "Item só aparece quando o usuário pode excluir ESTE contato (a permissão vem"
+    "Item so aparece quando o usuario pode excluir ESTE contato (a permissao"
    ]
   },
   "src/components/contacts/ContactMapView.tsx": {
    "path": "src/components/contacts/ContactMapView.tsx",
-   "lines": 224,
+   "lines": 248,
    "exports": [
     "function ContactMapView"
    ],
@@ -368925,7 +369386,7 @@
   },
   "src/components/contacts/ContactMergeDialog.tsx": {
    "path": "src/components/contacts/ContactMergeDialog.tsx",
-   "lines": 204,
+   "lines": 217,
    "exports": [
     "function ContactMergeDialog"
    ],
@@ -368975,6 +369436,13 @@
     "transition={{ delay: i * 0.03 }}"
    ]
   },
+  "src/components/contacts/ContactPortrait.tsx": {
+   "path": "src/components/contacts/ContactPortrait.tsx",
+   "lines": 63,
+   "exports": [
+    "function ContactPortrait"
+   ]
+  },
   "src/components/contacts/ContactRegionMap.tsx": {
    "path": "src/components/contacts/ContactRegionMap.tsx",
    "lines": 252,
@@ -368986,14 +369454,14 @@
   },
   "src/components/contacts/ContactResultsSummary.tsx": {
    "path": "src/components/contacts/ContactResultsSummary.tsx",
-   "lines": 106,
+   "lines": 159,
    "exports": [
     "function ContactResultsSummary"
    ]
   },
   "src/components/contacts/ContactSearchWithSuggestions.tsx": {
    "path": "src/components/contacts/ContactSearchWithSuggestions.tsx",
-   "lines": 195,
+   "lines": 196,
    "exports": [
     "function ContactSearchWithSuggestions"
    ],
@@ -369035,7 +369503,7 @@
   },
   "src/components/contacts/ContactToolbar.tsx": {
    "path": "src/components/contacts/ContactToolbar.tsx",
-   "lines": 392,
+   "lines": 408,
    "exports": [
     "function ContactToolbar"
    ],
@@ -369043,9 +369511,19 @@
     "`total_count` vem do servidor sobre o filtro inteiro (antes do LIMIT), não"
    ]
   },
+  "src/components/contacts/ContactTypeBadge.tsx": {
+   "path": "src/components/contacts/ContactTypeBadge.tsx",
+   "lines": 71,
+   "exports": [
+    "function ContactTypeBadge",
+    "function getTypeDotColor",
+    "function getTypeInitials"
+   ],
+   "doc": "eslint-disable react-refresh/only-export-components"
+  },
   "src/components/contacts/ContactTypeTabs.tsx": {
    "path": "src/components/contacts/ContactTypeTabs.tsx",
-   "lines": 81,
+   "lines": 84,
    "exports": [
     "function ContactTypeTabs"
    ],
@@ -369059,7 +369537,7 @@
   },
   "src/components/contacts/ContactViewSwitcher.tsx": {
    "path": "src/components/contacts/ContactViewSwitcher.tsx",
-   "lines": 161,
+   "lines": 169,
    "exports": [
     "type ContactViewMode",
     "function ContactViewSwitcher"
@@ -369080,14 +369558,14 @@
   },
   "src/components/contacts/ContactsSkeleton.tsx": {
    "path": "src/components/contacts/ContactsSkeleton.tsx",
-   "lines": 134,
+   "lines": 131,
    "exports": [
     "function ContactsSkeleton"
    ]
   },
   "src/components/contacts/ContactsTable.tsx": {
    "path": "src/components/contacts/ContactsTable.tsx",
-   "lines": 264,
+   "lines": 358,
    "exports": [
     "function ContactsTable"
    ],
@@ -369095,9 +369573,16 @@
     "transition={{ delay: index * 0.015 }}"
    ]
   },
+  "src/components/contacts/ContactsTitleBar.tsx": {
+   "path": "src/components/contacts/ContactsTitleBar.tsx",
+   "lines": 75,
+   "exports": [
+    "function ContactsTitleBar"
+   ]
+  },
   "src/components/contacts/ContactsView.tsx": {
    "path": "src/components/contacts/ContactsView.tsx",
-   "lines": 282,
+   "lines": 382,
    "exports": [
     "function ContactsView"
    ],
@@ -369109,7 +369594,7 @@
   },
   "src/components/contacts/FilterPresets.tsx": {
    "path": "src/components/contacts/FilterPresets.tsx",
-   "lines": 182,
+   "lines": 183,
    "exports": [
     "interface FilterPreset",
     "function FilterPresets"
@@ -369629,6 +370114,28 @@
     "o botão de fechar tem nome acessível e fecha ao clique"
    ]
   },
+  "src/components/contacts/__tests__/ContactDetailPanel.redesign.test.tsx": {
+   "path": "src/components/contacts/__tests__/ContactDetailPanel.redesign.test.tsx",
+   "lines": 179,
+   "is_test": true,
+   "doc": "ZD-071..080 — ficha do contato do redesign (Fase G). Contratos verificados aqui, todos medidos no design (`docs/design/contatos-redesign-2026-10-12/comportamento`): - casca: header com breadcrumb, navegação anterior/próximo só quando há recorte com mais de um contato, e o rótulo de fechar que o app …",
+   "tests": [
+    "ficha do contato — casca e navegação (ZD-071/ZD-078)",
+    "sem recorte de resultado não mostra anterior/próximo",
+    "recorte com um contato só também não mostra anterior/próximo",
+    "recorte com vários contatos circula nos dois sentidos",
+    "último do recorte volta para o primeiro (circular)",
+    "clique no overlay fecha a ficha",
+    "ficha do contato — abas (ZD-073)",
+    "expõe as quatro abas com ARIA completo e ",
+    "clicar em ",
+    "clicar em ",
+    "setas do teclado ciclam as abas e movem o foco",
+    "ficha do contato — visão geral (ZD-074)",
+    "mostra só o que existe: nada de ",
+    "não renderiza grupo de redes sociais quando não há link"
+   ]
+  },
   "src/components/contacts/__tests__/ContactDialogs.fabToque.test.ts": {
    "path": "src/components/contacts/__tests__/ContactDialogs.fabToque.test.ts",
    "lines": 60,
@@ -369638,6 +370145,21 @@
     "cobre a caixa toda com ::after (cantos clicáveis)",
     "não sobe acima do backdrop do menu móvel (z-30)",
     "continua portal no document.body, fora do scroller que recortaria o fixed"
+   ]
+  },
+  "src/components/contacts/__tests__/ContactDialogsK.redesign.test.tsx": {
+   "path": "src/components/contacts/__tests__/ContactDialogsK.redesign.test.tsx",
+   "lines": 93,
+   "is_test": true,
+   "rule_comments": [
+    "componente (validação, endereço, CEP) — aqui se prova só a casca e o gate",
+    "de exclusão, sem tocar nas regras de negócio."
+   ],
+   "tests": [
+    "Fase K — diálogos do redesign",
+    "cadastro abre com contexto, título do design e o formulário completo",
+    "edição usa o mesmo molde e mantém o rótulo ",
+    "exclusão nomeia o contato e exige confirmação explícita"
    ]
   },
   "src/components/contacts/__tests__/ContactEmptyState.typography.test.tsx": {
@@ -369675,6 +370197,21 @@
     "sem mensagem (null lastMessageAt) → recencyScore=0",
     "score=70 exato é hot (limiar mínimo)",
     "score=69 é warm (justo abaixo do limiar hot)"
+   ]
+  },
+  "src/components/contacts/__tests__/ContactExploreRail.test.tsx": {
+   "path": "src/components/contacts/__tests__/ContactExploreRail.test.tsx",
+   "lines": 101,
+   "is_test": true,
+   "tests": [
+    "ContactExploreRail (ZD-081..085)",
+    "anuncia o carrossel e lista um mini-card por contato",
+    "abre a ficha do contato clicado",
+    "mostra vazio explícito quando o recorte não tem contato",
+    "desabilita os controles quando não há o que rolar",
+    "o botão de pausa alterna o rótulo entre Pausar e Reproduzir",
+    "as setas reciclam a ordem visual do trilho e pausam o auto-avanço",
+    "mostra a empresa do contato e um marcador quando ela falta"
    ]
   },
   "src/components/contacts/__tests__/ContactFormEndereco.integration.test.tsx": {
@@ -369746,7 +370283,7 @@
   },
   "src/components/contacts/__tests__/ContactGroupedList.typography.test.tsx": {
    "path": "src/components/contacts/__tests__/ContactGroupedList.typography.test.tsx",
-   "lines": 70,
+   "lines": 68,
    "is_test": true,
    "tests": [
     "ContactGroupedList — cabeçalho de grupo distinto do item",
@@ -369795,15 +370332,17 @@
   },
   "src/components/contacts/__tests__/ContactListItemGrid.test.tsx": {
    "path": "src/components/contacts/__tests__/ContactListItemGrid.test.tsx",
-   "lines": 123,
+   "lines": 159,
    "is_test": true,
    "errors": [
-    "contact-list-item não renderizado"
+    "contact-list-item não renderizado",
+    "contact-list-item-body não renderizado"
    ],
    "tests": [
     "ContactListItem · alinhamento por grid (não por min-w arbitrário)",
     "usa CSS grid e não usa nenhum min-w-[Npx] arbitrário nas trilhas",
-    "as trilhas do template não usam pixels (só auto/fr) e o nº de colunas bate com as células visíveis",
+    "o root tem retrato + corpo em trilhas sem pixels",
+    "o corpo usa trilhas proporcionais e nenhuma largura vinda do conteúdo",
     "duas linhas compartilham exatamente o mesmo template (é isso que alinha as colunas)"
    ]
   },
@@ -369943,6 +370482,18 @@
     "ContactGroupedList usa o mesmo space-y-2 do ContactContentArea"
    ]
   },
+  "src/components/contacts/__tests__/ContactPortrait.protecao.test.tsx": {
+   "path": "src/components/contacts/__tests__/ContactPortrait.protecao.test.tsx",
+   "lines": 61,
+   "is_test": true,
+   "tests": [
+    "ContactPortrait â€” proteÃ§Ã£o de tela",
+    "nÃ£o permite arrastar a foto",
+    "bloqueia o menu de contexto da foto (sem ",
+    "sem foto mostra iniciais e nÃ£o renderiza <img>",
+    "só a primeira linha usa carregamento imediato (ZD-101)"
+   ]
+  },
   "src/components/contacts/__tests__/ContactRegionMap.test.tsx": {
    "path": "src/components/contacts/__tests__/ContactRegionMap.test.tsx",
    "lines": 209,
@@ -369964,6 +370515,17 @@
    ],
    "side_effects": [
     "invoke("
+   ]
+  },
+  "src/components/contacts/__tests__/ContactResultsSummary.selection.test.tsx": {
+   "path": "src/components/contacts/__tests__/ContactResultsSummary.selection.test.tsx",
+   "lines": 51,
+   "is_test": true,
+   "tests": [
+    "ContactResultsSummary — seleção, comparar e limpar (ZD-086/ZD-087)",
+    "sem seleção não mostra contador, comparar nem limpar",
+    "com 1 selecionado mostra o contador e ",
+    "com 2+ selecionados oferece "
    ]
   },
   "src/components/contacts/__tests__/ContactSelectionConsistency.test.tsx": {
@@ -369998,7 +370560,7 @@
     "delta negativo mostra sem sinal de +",
     "delta zero mostra ",
     "KPI Empresas não tem delta calculado (null) e não renderiza sparkline quando a série é zerada",
-    "trava a geometria Navy do KPI (card 108px, tile 60px, valor text-kpi-value)",
+    "trava a geometria do redesign no KPI (card 86px, placa 42×43px, valor Outfit 29px)",
     "repassa o toggle "
    ]
   },
@@ -370037,6 +370599,92 @@
     "renderiza ",
     "badge aparece em ",
     "formata contagens com separador pt-BR"
+   ]
+  },
+  "src/components/contacts/__tests__/ContactViewsJ.redesign.test.tsx": {
+   "path": "src/components/contacts/__tests__/ContactViewsJ.redesign.test.tsx",
+   "lines": 112,
+   "is_test": true,
+   "tests": [
+    "Fase J — casca das visões extras",
+    "Pipeline usa a casca do design com título, legenda e contagem por etapa",
+    "Pipeline vazio mantém o cartão de estado vazio e nenhuma lane",
+    "Mapa usa a casca do design e lista as regiões em chips quando há contatos",
+    "Mapa vazio usa o cartão ",
+    "Fase J — analytics em barras do design",
+    "usa a casca do design e publica o título com a legenda de escopo",
+    "ordena as barras por contagem e mostra o número no fim da linha",
+    "barra proporcional usa o token azul do módulo, não cor fixa"
+   ]
+  },
+  "src/components/contacts/__tests__/ContactViewsKeyboard.test.tsx": {
+   "path": "src/components/contacts/__tests__/ContactViewsKeyboard.test.tsx",
+   "lines": 129,
+   "is_test": true,
+   "tests": [
+    "Contatos · teclado nas três visões (ZD-068)",
+    "lista: cada linha é focável e as setas movem o foco entre elas",
+    "lista: Enter abre a ficha do contato focado",
+    "grade: as setas também navegam entre os cards",
+    "tabela: cada linha é focável e as setas andam na ordem das linhas",
+    "seta não rouba o teclado de controles internos (checkbox da linha)"
+   ]
+  },
+  "src/components/contacts/__tests__/ContactViewsL.qualidade.test.tsx": {
+   "path": "src/components/contacts/__tests__/ContactViewsL.qualidade.test.tsx",
+   "lines": 62,
+   "is_test": true,
+   "tests": [
+    "Fase L (ZD-097..101) — tema claro, contraste, movimento e desempenho",
+    "ZD-097: os tokens do tema claro seguem a escala do design",
+    "ZD-101: a primeira linha do carrossel carrega a foto sem lazy",
+    "ZD-101: fora da primeira linha a foto continua lazy",
+    "ZD-100: o carrossel amplia os alvos de toque no ponteiro grosso",
+    "ZD-099: a view anuncia o resultado em região viva"
+   ]
+  },
+  "src/components/contacts/__tests__/ContactViewsM.contrato.test.tsx": {
+   "path": "src/components/contacts/__tests__/ContactViewsM.contrato.test.tsx",
+   "lines": 162,
+   "is_test": true,
+   "errors": [
+    "bloco ${seletor} ausente",
+    "bloco ${seletor} sem fechamento"
+   ],
+   "tests": [
+    "ZD-098/ZD-097 — contraste AA dos tokens de Contatos",
+    "todo par de texto do modulo passa 4.5:1 no claro e no escuro",
+    "--contacts-quiet nao volta ao valor que reprovava no card escuro",
+    "ZD-098 — piso da escala tipografica",
+    "nenhum componente do modulo usa tamanho abaixo de 10px",
+    "ZD-099 — rotulos acessiveis dos controles obrigatorios",
+    "o card expoe checkbox e menu de acoes com nome acessivel",
+    "a lista e a tabela mantem o nome do contato no controle de detalhes",
+    "o gatilho de Filtros Salvos nao depende do texto visivel no celular",
+    "a contagem da tela e anunciada em regiao viva",
+    "ZD-100 — area de toque no ponteiro grosso",
+    "a utilidade de 44px existe e so age no ponteiro grosso",
+    "o menu do card fica longe o bastante da area de toque do checkbox",
+    "o checkbox usa a utilidade de area de toque",
+    "ZD-101 — orcamento de fotos do card",
+    "so as tres primeiras posicoes carregam a foto com prioridade",
+    "o retrato respeita o modo de carregamento pedido"
+   ]
+  },
+  "src/components/contacts/__tests__/ContactsTableDesign.test.tsx": {
+   "path": "src/components/contacts/__tests__/ContactsTableDesign.test.tsx",
+   "lines": 129,
+   "is_test": true,
+   "tests": [
+    "ContactsTable · visual e comportamento do design (ZD-063..066)",
+    "envolve a tabela num contêiner rolável com a moldura de 10px do design",
+    "o cabeçalho ordenável usa botão de verdade e publica aria-sort",
+    "as setas de ordenação têm 11px e o cabeçalho usa o respiro 13x11 do design",
+    "células usam o respiro de 14x11 e o texto de 11px da tabela",
+    "etiquetas viram chips do design, sem truncar em duas",
+    "a coluna Ações expõe Conversar, menu e abrir ficha em icones de 30px",
+    "ZD-064 · o painel de colunas esconde Cargo mas mantém Contato",
+    "ZD-064 · o painel de colunas volta a mostrar a coluna desligada"
    ]
   },
   "src/components/contacts/__tests__/ContactsView.contratoFonte.test.ts": {
@@ -418864,6 +419512,17 @@
     "useContactSearchV2"
    ]
   },
+  "src/hooks/contacts/useContactSource.ts": {
+   "path": "src/hooks/contacts/useContactSource.ts",
+   "lines": 25,
+   "exports": [
+    "interface ContactSourceInfo",
+    "function useContactSource"
+   ],
+   "hooks": [
+    "useContactSource"
+   ]
+  },
   "src/hooks/contacts/useContactsV2Flags.ts": {
    "path": "src/hooks/contacts/useContactsV2Flags.ts",
    "lines": 85,
@@ -418915,7 +419574,7 @@
     },
     {
      "name": "COLUMNS_MAX",
-     "value": "4"
+     "value": "6"
     },
     {
      "name": "COLUMNS_PREFERENCE_DEFAULT",
@@ -419006,7 +419665,7 @@
   },
   "src/hooks/contacts/__tests__/useContainerColumns.test.ts": {
    "path": "src/hooks/contacts/__tests__/useContainerColumns.test.ts",
-   "lines": 226,
+   "lines": 228,
    "is_test": true,
    "rule_comments": [
     "sem layout de navegador. Os 4 limites da regra do design (1200, 900, 560 e"
@@ -419018,7 +419677,7 @@
     "largura >= 560 devolve 2 (sem preferência que valha aqui)",
     "abaixo de 560 devolve 1, inclusive sem medida",
     "clampColumnsPreference",
-    "mantém 2..4 e traz valores fora da faixa para o limite",
+    "mantém 2..6 e traz valores fora da faixa para o limite",
     "useContainerColumns — medida pelo contêiner",
     "mede o contêiner e devolve {columns, width}",
     "acompanha o redimensionamento do contêiner (barra lateral abrindo/fechando)",
@@ -421276,8 +421935,9 @@
   },
   "src/hooks/crm/useContactsSearch.ts": {
    "path": "src/hooks/crm/useContactsSearch.ts",
-   "lines": 259,
+   "lines": 281,
    "exports": [
+    "function resolvePageSize",
     "function useContactsSearch"
    ],
    "params": [
@@ -421287,6 +421947,7 @@
     }
    ],
    "rule_comments": [
+    "* ZD-043 — quantidade de itens por página por visão, na regra do design:",
     "─── Permissão de exclusão por linha (RPC can_delete_contacts) ───────────"
    ],
    "hooks": [
@@ -481184,10 +481845,84 @@
   }
  },
  "git": {
-  "sha": "ba0b927e3ceaa4cd92b4c9301d13314b16afe3c7",
+  "sha": "d19cc8d00f911e560cf6102b257534f87b2d4743",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "d19cc8d0",
+    "date": "2026-11-22",
+    "author": "adm01-debug",
+    "subject": "feat: redesign do modulo Contatos conforme previa aprovada (plano 130 etapas, fases 0-M) (#3325)",
+    "files": [
+     "FEATURE_REGISTRY.md",
+     "docs/audits/CONTATOS_REDESIGN_BASELINE_2026-10-12.md",
+     "docs/audits/contatos-redesign-baseline-depois/contatos-1280-dark.png",
+     "docs/audits/contatos-redesign-baseline-depois/contatos-1280-light.png",
+     "docs/audits/contatos-redesign-baseline-depois/contatos-1672-dark.png",
+     "docs/audits/contatos-redesign-baseline-depois/contatos-1672-light.png",
+     "docs/audits/contatos-redesign-baseline-depois/contatos-390-dark.png",
+     "docs/audits/contatos-redesign-baseline-depois/contatos-390-light.png",
+     "docs/audits/contatos-redesign-baseline-depois/contatos-768-dark.png",
+     "docs/audits/contatos-redesign-baseline-depois/contatos-768-light.png",
+     "docs/crm-integration/FLAG_CHANGES.md",
+     "e2e/__screenshots__/contacts-cards-dark-linux.png",
+     "e2e/__screenshots__/contacts-cards-light-linux.png",
+     "e2e/__screenshots__/contacts-list-dark-linux.png",
+     "e2e/__screenshots__/contacts-list-light-linux.png",
+     "e2e/__screenshots__/contacts-table-dark-linux.png",
+     "e2e/__screenshots__/contacts-table-light-linux.png",
+     "scripts/ci/verify-crm-integration-doc.unit.mjs",
+     "scripts/qa/contraste-contatos.d.mts",
+     "src/components/contacts/ContactAnalyticsDashboard.tsx",
+     "src/components/contacts/ContactCard.tsx",
+     "src/components/contacts/ContactCompareDialog.tsx",
+     "src/components/contacts/ContactContentArea.tsx",
+     "src/components/contacts/ContactDetailPanel.tsx",
+     "src/components/contacts/ContactDialogs.tsx",
+     "src/components/contacts/ContactEmptyState.tsx",
+     "src/components/contacts/ContactExploreRail.tsx",
+     "src/components/contacts/ContactForm.tsx",
+     "src/components/contacts/ContactGroupedList.tsx",
+     "src/components/contacts/ContactKanbanView.tsx",
+     "src/components/contacts/ContactKpiCard.tsx",
+     "src/components/contacts/ContactListItem.tsx",
+     "src/components/contacts/ContactMapView.tsx",
+     "src/components/contacts/ContactMergeDialog.tsx",
+     "src/components/contacts/ContactPortrait.tsx",
+     "src/components/contacts/ContactResultsSummary.tsx",
+     "src/components/contacts/ContactSearchWithSuggestions.tsx",
+     "src/components/contacts/ContactStatsCards.tsx",
+     "src/components/contacts/ContactToolbar.tsx",
+     "src/components/contacts/ContactTypeBadge.tsx",
+     "src/components/contacts/ContactTypeTabs.tsx",
+     "src/components/contacts/ContactViewSwitcher.tsx",
+     "src/components/contacts/ContactsSkeleton.tsx",
+     "src/components/contacts/ContactsTable.tsx",
+     "src/components/contacts/ContactsTitleBar.tsx",
+     "src/components/contacts/ContactsView.tsx",
+     "src/components/contacts/FilterPresets.tsx",
+     "src/components/contacts/__tests__/ContactDetailPanel.redesign.test.tsx",
+     "src/components/contacts/__tests__/ContactDialogsK.redesign.test.tsx",
+     "src/components/contacts/__tests__/ContactExploreRail.test.tsx",
+     "src/components/contacts/__tests__/ContactGroupedList.typography.test.tsx",
+     "src/components/contacts/__tests__/ContactListItemGrid.test.tsx",
+     "src/components/contacts/__tests__/ContactPortrait.protecao.test.tsx",
+     "src/components/contacts/__tests__/ContactResultsSummary.selection.test.tsx",
+     "src/components/contacts/__tests__/ContactStatsCards.test.tsx",
+     "src/components/contacts/__tests__/ContactViewsJ.redesign.test.tsx",
+     "src/components/contacts/__tests__/ContactViewsKeyboard.test.tsx",
+     "src/components/contacts/__tests__/ContactViewsL.qualidade.test.tsx",
+     "src/components/contacts/__tests__/ContactViewsM.contrato.test.tsx",
+     "src/components/contacts/__tests__/ContactsTableDesign.test.tsx",
+     "src/hooks/contacts/__tests__/useContainerColumns.test.ts",
+     "src/hooks/contacts/useContactSource.ts",
+     "src/hooks/contacts/useContainerColumns.ts",
+     "src/hooks/crm/useContactsSearch.ts",
+     "src/styles/tokens.css",
+     "src/styles/utilities.css"
+    ]
+   },
    {
     "sha": "ba0b927e",
     "date": "2026-11-22",
@@ -482645,18 +483380,6 @@
      "supabase/functions/_shared/evolution-session-routes.ts",
      "supabase/functions/evolution-api/index.ts"
     ]
-   },
-   {
-    "sha": "966a524f",
-    "date": "2026-11-19",
-    "author": "adm01-debug",
-    "subject": "ci(security): dependency review barra CVE novo high/critical nos PRs (#3288)",
-    "files": [
-     ".github/workflows/dependency-review.yml",
-     "docs/agentes/github-ci.md",
-     "docs/ci/README.md",
-     "scripts/ci/ci-docs-baseline.unit.mjs"
-    ]
    }
   ],
   "hot_files": [
@@ -482729,15 +483452,15 @@
     2
    ],
    [
-    "scripts/db-audit/talkx-ab.test.sh",
+    "FEATURE_REGISTRY.md",
     1
    ],
    [
-    "supabase/functions/_shared/assistant-playbook.test.ts",
+    "docs/audits/CONTATOS_REDESIGN_BASELINE_2026-10-12.md",
     1
    ],
    [
-    "supabase/functions/_shared/assistant-playbook.ts",
+    "docs/audits/contatos-redesign-baseline-depois/contatos-1280-dark.png",
     1
    ]
   ]

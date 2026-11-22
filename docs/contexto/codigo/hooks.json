@@ -1,7 +1,7 @@
 {
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
- "total": 605,
+ "total": 606,
  "hooks": [
   {
    "arquivo": "analise-prs/resgate-261118-lote2/src/hooks/useMotionSeguro.ts",
@@ -2537,8 +2537,10 @@
     "useReducedMotion"
    ],
    "canais_realtime": [],
-   "usado_por": 0,
-   "usado_por_arquivos": [],
+   "usado_por": 1,
+   "usado_por_arquivos": [
+    "src/components/contacts/ContactExploreRail.tsx"
+   ],
    "coberto_por_testes": 1
   },
   {
@@ -2615,7 +2617,7 @@
     "src/components/contacts/ContactDialogs.tsx",
     "src/components/contacts/useContactsViewState.ts"
    ],
-   "coberto_por_testes": 1
+   "coberto_por_testes": 2
   },
   {
    "arquivo": "src/components/contacts/useContactsViewState.ts",
@@ -7271,6 +7273,26 @@
    "coberto_por_testes": 2
   },
   {
+   "arquivo": "src/hooks/contacts/useContactSource.ts",
+   "hooks_exportados": [
+    "useContactSource"
+   ],
+   "linhas": 25,
+   "dominio": "hooks/contacts",
+   "tabelas": [],
+   "rpcs": [],
+   "edges": [],
+   "hooks_internos": [
+    "useCRMIntegrationEnabled"
+   ],
+   "canais_realtime": [],
+   "usado_por": 1,
+   "usado_por_arquivos": [
+    "src/components/contacts/ContactsTitleBar.tsx"
+   ],
+   "coberto_por_testes": 0
+  },
+  {
    "arquivo": "src/hooks/contacts/useContactsV2Flags.ts",
    "hooks_exportados": [
     "useContactsV2Flags"
@@ -7306,8 +7328,10 @@
     "useLayoutEffect"
    ],
    "canais_realtime": [],
-   "usado_por": 0,
-   "usado_por_arquivos": [],
+   "usado_por": 1,
+   "usado_por_arquivos": [
+    "src/components/contacts/ContactContentArea.tsx"
+   ],
    "coberto_por_testes": 2
   },
   {
@@ -9070,8 +9094,9 @@
     "useCRMIntegrationEnabled"
    ],
    "canais_realtime": [],
-   "usado_por": 1,
+   "usado_por": 2,
    "usado_por_arquivos": [
+    "src/components/contacts/ContactDetailPanel.tsx",
     "src/components/inbox/contact-details/sidebar/ContactSidebarSections.tsx"
    ],
    "coberto_por_testes": 1
@@ -9103,7 +9128,7 @@
    "hooks_exportados": [
     "useContactsSearch"
    ],
-   "linhas": 259,
+   "linhas": 281,
    "dominio": "hooks/crm",
    "tabelas": [],
    "rpcs": [],
@@ -9116,8 +9141,9 @@
     "useState"
    ],
    "canais_realtime": [],
-   "usado_por": 3,
+   "usado_por": 4,
    "usado_por_arquivos": [
+    "src/components/contacts/ContactsView.tsx",
     "src/components/contacts/useContactsCRUD.ts",
     "src/components/tasks/shared/ContactCombobox.tsx",
     "src/hooks/crm/index.ts"
@@ -12870,7 +12896,7 @@
     "useFeatureFlag"
    ],
    "canais_realtime": [],
-   "usado_por": 22,
+   "usado_por": 23,
    "usado_por_arquivos": [
     "analise-prs/resgate-261118-lote3/hermes/robustez-primitivos-ui-2610121626bec5-2610141859e423/src/components/inbox/chat/ChatHeader.tsx",
     "analise-prs/resgate-261118-lote3/hermes/telefonia-fase8-motion-a11y-responsivo-2610031530007c/src/components/inbox/contact-details/ContactAccordionSections.tsx",
@@ -12883,6 +12909,7 @@
     "src/components/inbox/search/GlobalSearchFilters.tsx",
     "src/components/inbox/useGlobalSearchData.ts",
     "src/components/talkx/TalkXContactSelector.tsx",
+    "src/hooks/contacts/useContactSource.ts",
     "src/hooks/crm/useAdvancedContactSearch.ts",
     "src/hooks/crm/useContactIntelligence.ts",
     "src/hooks/crm/useContactSidebar.ts",
