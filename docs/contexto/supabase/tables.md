@@ -33,6 +33,7 @@ Um arquivo por tabela em `tables/<schema>/<tabela>.md` (colunas, constraints, í
 | [public.ai_usage_outbox](tables/public/ai_usage_outbox.md) | table | sim | 1 | 6 | não |  |
 | [public.allowed_countries](tables/public/allowed_countries.md) | table | sim | 3 | 5 | não |  |
 | [public.app_settings](tables/public/app_settings.md) | table | sim | 1 | 3 | não |  |
+| [public.assistant_profiles](tables/public/assistant_profiles.md) | table | sim | 3 | 7 | não |  |
 | [public.audio_meme_favorites](tables/public/audio_meme_favorites.md) | table | sim | 1 | 4 | sim |  |
 | [public.audio_memes](tables/public/audio_memes.md) | table | sim | 4 | 9 | sim |  |
 | [public.audit_logs](tables/public/audit_logs.md) | table | sim | 4 | 10 | não | Trilha de auditoria: login, mudancas de role/permissao, client_error do front (errorReporter) e acoes sensiveis. Leitura restrita a admin. |

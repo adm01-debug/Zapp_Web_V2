@@ -17,6 +17,7 @@
 | public.ai_usage_logs | profile_id | public.profiles | id | SET NULL | NO ACTION |
 | public.ai_usage_logs | user_id | auth.users | id | SET NULL | NO ACTION |
 | public.allowed_countries | added_by | auth.users | id | NO ACTION | NO ACTION |
+| public.assistant_profiles | user_id | auth.users | id | CASCADE | NO ACTION |
 | public.audio_meme_favorites | meme_id | public.audio_memes | id | CASCADE | NO ACTION |
 | public.audio_meme_favorites | user_id | auth.users | id | CASCADE | NO ACTION |
 | public.audio_memes | uploaded_by | auth.users | id | SET NULL | NO ACTION |

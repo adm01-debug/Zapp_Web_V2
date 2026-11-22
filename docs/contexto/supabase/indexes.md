@@ -59,6 +59,7 @@ Uso e tamanho em `stats.md`.
 | public.allowed_countries | allowed_countries_pkey | btree | id | sim | sim |  |
 | public.allowed_countries | idx_allowed_countries_added_by | btree | added_by | não | sim |  |
 | public.app_settings | app_settings_pkey | btree | key | sim | sim |  |
+| public.assistant_profiles | assistant_profiles_pkey | btree | user_id | sim | sim |  |
 | public.audio_meme_favorites | audio_meme_favorites_pkey | btree | id | sim | sim |  |
 | public.audio_meme_favorites | audio_meme_favorites_user_id_meme_id_key | btree | user_id, meme_id | sim | sim |  |
 | public.audio_meme_favorites | idx_audio_meme_favorites_meme | btree | meme_id | não | sim |  |

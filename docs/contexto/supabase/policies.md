@@ -37,6 +37,9 @@ Visão consolidada (inclui `storage.objects` e `realtime.messages`); detalhes po
 | public.allowed_countries | Admins can insert allowed countries | INSERT | PERMISSIVE | authenticated |  | `is_admin(auth.uid())` |
 | public.allowed_countries | Admins can view allowed countries | SELECT | PERMISSIVE | authenticated | `is_admin_or_supervisor(auth.uid())` |  |
 | public.app_settings | app_settings_admin_all | ALL | PERMISSIVE | authenticated | `(EXISTS ( SELECT 1    FROM user_roles ur   WHERE ((ur.user_id = ( SELECT auth.uid() AS uid)) AND (ur.role = 'admin'::app_role))))` |  |
+| public.assistant_profiles | assistant_profiles_insert | INSERT | PERMISSIVE | authenticated |  | `(user_id = auth.uid())` |
+| public.assistant_profiles | assistant_profiles_select | SELECT | PERMISSIVE | authenticated | `(user_id = auth.uid())` |  |
+| public.assistant_profiles | assistant_profiles_update | UPDATE | PERMISSIVE | authenticated | `(user_id = auth.uid())` | `(user_id = auth.uid())` |
 | public.audio_meme_favorites | Users manage own meme favorites | ALL | PERMISSIVE | authenticated | `(user_id = auth.uid())` | `(user_id = auth.uid())` |
 | public.audio_memes | Authenticated users can insert audio memes | INSERT | PERMISSIVE | authenticated |  | `(uploaded_by = auth.uid())` |
 | public.audio_memes | Authenticated users can read audio memes | SELECT | PERMISSIVE | authenticated | `true` |  |

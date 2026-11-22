@@ -1153,3 +1153,4 @@ SQL em `migrations/<versao>_<nome>.sql`. Mudanças feitas pelo Dashboard/SQL Edi
 | 20261118220000 | [talkx_snapshot_variante_primeiro_vale](migrations/20261118220000_talkx_snapshot_variante_primeiro_vale.sql) | 1 |
 | 20261119010000 | [talkx_set_campaign_ab](migrations/20261119010000_talkx_set_campaign_ab.sql) | 3 |
 | 20261120080000 | [scheduled_report_cron](migrations/20261120080000_scheduled_report_cron.sql) | 8 |
+| 20261121190000 | [assistant_profiles](migrations/20261121190000_assistant_profiles.sql) | 9 |

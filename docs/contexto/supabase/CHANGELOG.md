@@ -2,6 +2,16 @@
 
 Diff semântico gerado a cada coleta em que algo mudou.
 
+## 2026-11-22 12:17 UTC
+
+- **colunas** adicionado (7): `public.assistant_profiles.ajuda`, `public.assistant_profiles.atividade`, `public.assistant_profiles.created_at`, `public.assistant_profiles.foco`, `public.assistant_profiles.tom`, `public.assistant_profiles.updated_at`, `public.assistant_profiles.user_id`
+- **constraints** adicionado (5): `public.assistant_profiles.assistant_profiles_ajuda_check`, `public.assistant_profiles.assistant_profiles_atividade_check`, `public.assistant_profiles.assistant_profiles_pkey`, `public.assistant_profiles.assistant_profiles_tom_check`, `public.assistant_profiles.assistant_profiles_user_id_fkey`
+- **indexes** adicionado (1): `public.assistant_profiles_pkey`
+- **lints** adicionado (3): `policy_auth_fn_not_wrapped:public.assistant_profiles.assistant_profiles_insert`, `policy_auth_fn_not_wrapped:public.assistant_profiles.assistant_profiles_select`, `policy_auth_fn_not_wrapped:public.assistant_profiles.assistant_profiles_update`
+- **migrations** adicionado (1): `20261121190000_assistant_profiles`
+- **policies (RLS)** adicionado (3): `public.assistant_profiles.assistant_profiles_insert`, `public.assistant_profiles.assistant_profiles_select`, `public.assistant_profiles.assistant_profiles_update`
+- **tabelas** adicionado (1): `public.assistant_profiles`
+
 ## 2026-11-22 03:16 UTC
 
 - **realtime** adicionado (1): `supabase_realtime_messages_publication:realtime.messages_2026_11_25`
