@@ -1,15 +1,15 @@
 {
  "meta": {
-  "sha": "bcf4dcc8a5c3d1c45da0f1d1973132f7e2be49c3",
+  "sha": "1f71f25dbe8ffe4a981179bc7ad19639ab4e2533",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-22 16:14 UTC",
+  "generated_at": "2026-11-22 16:47 UTC",
   "files_total": 15602,
   "code_files": 8905,
-  "code_lines": 1412262
+  "code_lines": 1412355
  },
  "version": "1.3.2",
- "facts_hash": "98410ccf805bbfdc",
+ "facts_hash": "8a5ec60d25125faa",
  "stack": {
   "frameworks": [
    "React + Vite",
@@ -78752,7 +78752,7 @@
   {
    "module": "supabase/functions",
    "files": 430,
-   "lines": 129156,
+   "lines": 129249,
    "tables": [
     "agent_stats",
     "ai_conversation_tags",
@@ -90232,7 +90232,7 @@
    {
     "file": "supabase/functions/_shared/assistant-gateway.ts",
     "name": "AssistantCapability",
-    "values": "agenda | resumo_conversa | sugerir_resposta | temperatura_lead | recomendar_produto | calcular_prazo | tratar_objecao"
+    "values": "agenda | resumo_conversa | sugerir_resposta | temperatura_lead | recomendar_produto | calcular_prazo | tratar_objecao | risco_perda | ancoragem_preco"
    },
    {
     "file": "supabase/functions/_shared/assistant-playbook.ts",
@@ -245888,7 +245888,19 @@
    },
    {
     "file": "supabase/functions/_shared/assistant-gateway.test.ts",
-    "name": "as edges ligadas pela porta única são exatamente as 6 do plano"
+    "name": "as 8 edges ligadas pela porta única são as do plano (6 da Fase 3 + 2 de retenção)"
+   },
+   {
+    "file": "supabase/functions/_shared/assistant-gateway.test.ts",
+    "name": "sinal de perda da venda aciona o risco de perda"
+   },
+   {
+    "file": "supabase/functions/_shared/assistant-gateway.test.ts",
+    "name": "discussão de preço por unidade aciona a ancoragem de preço"
+   },
+   {
+    "file": "supabase/functions/_shared/assistant-gateway.test.ts",
+    "name": "risco de perda e temperatura convivem no mesmo pedido"
    },
    {
     "file": "supabase/functions/_shared/assistant-playbook.test.ts",
@@ -249821,6 +249833,22 @@
    {
     "file": "supabase/functions/assistant-gateway/index.test.ts",
     "name": "Fase 4: sem perfil a rota vaga continua no mínimo útil"
+   },
+   {
+    "file": "supabase/functions/assistant-gateway/index.test.ts",
+    "name": "retenção: pedido de risco de perda chama ai-loss-risk e devolve a ação"
+   },
+   {
+    "file": "supabase/functions/assistant-gateway/index.test.ts",
+    "name": "retenção: a IA recebe os dias sem contato calculados do histórico"
+   },
+   {
+    "file": "supabase/functions/assistant-gateway/index.test.ts",
+    "name": "retenção: pedido de defesa de preço chama ai-price-anchor"
+   },
+   {
+    "file": "supabase/functions/assistant-gateway/index.test.ts",
+    "name": "retenção: sem mensagens a capacidade é recusada antes de gastar modelo"
    },
    {
     "file": "supabase/functions/auth-login/index.test.ts",
@@ -260392,6 +260420,10 @@
    },
    {
     "file": "supabase/functions/_shared/assistant-gateway.ts",
+    "call": ".add('ancoragem_preco'"
+   },
+   {
+    "file": "supabase/functions/_shared/assistant-gateway.ts",
     "call": ".add('calcular_prazo'"
    },
    {
@@ -260401,6 +260433,10 @@
    {
     "file": "supabase/functions/_shared/assistant-gateway.ts",
     "call": ".add('resumo_conversa'"
+   },
+   {
+    "file": "supabase/functions/_shared/assistant-gateway.ts",
+    "call": ".add('risco_perda'"
    },
    {
     "file": "supabase/functions/_shared/assistant-gateway.ts",
@@ -451846,7 +451882,7 @@
   },
   "supabase/functions/_shared/assistant-gateway.test.ts": {
    "path": "supabase/functions/_shared/assistant-gateway.test.ts",
-   "lines": 81,
+   "lines": 95,
    "is_test": true,
    "tests": [
     "normaliza acento, caixa e espaço",
@@ -451859,12 +451895,15 @@
     "texto sem sinal cai no mínimo útil (agenda + resumo)",
     "ordem é sempre a canônica, independente da ordem das regras",
     "toda capacidade tem rótulo e edge de execução (exceto agenda)",
-    "as edges ligadas pela porta única são exatamente as 6 do plano"
+    "as 8 edges ligadas pela porta única são as do plano (6 da Fase 3 + 2 de retenção)",
+    "sinal de perda da venda aciona o risco de perda",
+    "discussão de preço por unidade aciona a ancoragem de preço",
+    "risco de perda e temperatura convivem no mesmo pedido"
    ]
   },
   "supabase/functions/_shared/assistant-gateway.ts": {
    "path": "supabase/functions/_shared/assistant-gateway.ts",
-   "lines": 203,
+   "lines": 223,
    "exports": [
     "type AssistantCapability",
     "const ASSISTANT_CAPABILITIES",
@@ -451880,7 +451919,7 @@
    "enums": [
     {
      "name": "AssistantCapability",
-     "values": "agenda | resumo_conversa | sugerir_resposta | temperatura_lead | recomendar_produto | calcular_prazo | tratar_objecao"
+     "values": "agenda | resumo_conversa | sugerir_resposta | temperatura_lead | recomendar_produto | calcular_prazo | tratar_objecao | risco_perda | ancoragem_preco"
     }
    ],
    "rule_comments": [
@@ -451891,9 +451930,11 @@
    ],
    "side_effects": [
     ".add('agenda'",
+    ".add('ancoragem_preco'",
     ".add('calcular_prazo'",
     ".add('recomendar_produto'",
     ".add('resumo_conversa'",
+    ".add('risco_perda'",
     ".add('sugerir_resposta'",
     ".add('temperatura_lead'",
     ".add('tratar_objecao'"
@@ -459694,7 +459735,7 @@
   },
   "supabase/functions/assistant-gateway/index.test.ts": {
    "path": "supabase/functions/assistant-gateway/index.test.ts",
-   "lines": 376,
+   "lines": 420,
    "is_test": true,
    "errors": [
     "Unauthorized"
@@ -459726,12 +459767,16 @@
     "Fase 4: perfis diferentes produzem contexto diferente para a mesma pergunta",
     "Fase 4: pedido vago usa as capacidades prioritárias da atuação",
     "Fase 4: pedido com sinal explícito ignora a prioridade do perfil",
-    "Fase 4: sem perfil a rota vaga continua no mínimo útil"
+    "Fase 4: sem perfil a rota vaga continua no mínimo útil",
+    "retenção: pedido de risco de perda chama ai-loss-risk e devolve a ação",
+    "retenção: a IA recebe os dias sem contato calculados do histórico",
+    "retenção: pedido de defesa de preço chama ai-price-anchor",
+    "retenção: sem mensagens a capacidade é recusada antes de gastar modelo"
    ]
   },
   "supabase/functions/assistant-gateway/index.ts": {
    "path": "supabase/functions/assistant-gateway/index.ts",
-   "lines": 490,
+   "lines": 505,
    "exports": [
     "interface ConversationMessage",
     "interface SharedContext",
@@ -481079,10 +481124,24 @@
   }
  },
  "git": {
-  "sha": "bcf4dcc8a5c3d1c45da0f1d1973132f7e2be49c3",
+  "sha": "1f71f25dbe8ffe4a981179bc7ad19639ab4e2533",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "1f71f25d",
+    "date": "2026-11-22",
+    "author": "adm01-debug",
+    "subject": "feat(assistente): liga risco de perda e ancoragem de preco na porta unica (#3320)",
+    "files": [
+     "docs/plans/PLANO_ASSISTENTE_PESSOAL_IA_2026-11-15.md",
+     "supabase/deployment-manifest.json",
+     "supabase/functions/_shared/assistant-gateway.test.ts",
+     "supabase/functions/_shared/assistant-gateway.ts",
+     "supabase/functions/assistant-gateway/index.test.ts",
+     "supabase/functions/assistant-gateway/index.ts"
+    ]
+   },
    {
     "sha": "bcf4dcc8",
     "date": "2026-11-22",
@@ -482533,28 +482592,32 @@
     "files": [
      "\"docs/auditoria-liquida\\303\\247\\303\\243o-branches.md\""
     ]
-   },
-   {
-    "sha": "0d1ebd5b",
-    "date": "2026-11-19",
-    "author": "adm01-debug",
-    "subject": "docs: publicar snapshots SQL documentais do contexto X065 (#3284)",
-    "files": [
-     "docs/contexto/supabase/functions/public/set_talkx_campaign_ab__46dd90c49e20c67b.sql",
-     "docs/contexto/supabase/migrations/20261118210000_talkx_next_recipients_variant_id.sql",
-     "docs/contexto/supabase/migrations/20261118220000_talkx_snapshot_variante_primeiro_vale.sql",
-     "docs/contexto/supabase/migrations/20261119010000_talkx_set_campaign_ab.sql"
-    ]
    }
   ],
   "hot_files": [
    [
     "supabase/deployment-manifest.json",
-    6
+    7
    ],
    [
     "ESTADO.md",
     5
+   ],
+   [
+    "docs/plans/PLANO_ASSISTENTE_PESSOAL_IA_2026-11-15.md",
+    3
+   ],
+   [
+    "supabase/functions/_shared/assistant-gateway.ts",
+    3
+   ],
+   [
+    "supabase/functions/assistant-gateway/index.test.ts",
+    3
+   ],
+   [
+    "supabase/functions/assistant-gateway/index.ts",
+    3
    ],
    [
     "src/integrations/supabase/types.ts",
@@ -482569,6 +482632,10 @@
     3
    ],
    [
+    "supabase/functions/_shared/assistant-gateway.test.ts",
+    2
+   ],
+   [
     "docs/DB-INVENTORY.md",
     2
    ],
@@ -482578,22 +482645,6 @@
    ],
    [
     "supabase/schema-manifest.json",
-    2
-   ],
-   [
-    "docs/plans/PLANO_ASSISTENTE_PESSOAL_IA_2026-11-15.md",
-    2
-   ],
-   [
-    "supabase/functions/_shared/assistant-gateway.ts",
-    2
-   ],
-   [
-    "supabase/functions/assistant-gateway/index.test.ts",
-    2
-   ],
-   [
-    "supabase/functions/assistant-gateway/index.ts",
     2
    ],
    [
@@ -482610,10 +482661,6 @@
    ],
    [
     "docs/MIGRATIONS.md",
-    2
-   ],
-   [
-    "docs/contexto/supabase/functions/public/set_talkx_campaign_ab__46dd90c49e20c67b.sql",
     2
    ],
    [

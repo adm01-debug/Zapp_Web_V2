@@ -867,7 +867,7 @@
    "nome": "assistant-gateway",
    "entrada": "supabase/functions/assistant-gateway/index.ts",
    "arquivos": 1,
-   "linhas": 490,
+   "linhas": 505,
    "verify_jwt": true,
    "metodos": [],
    "tabelas": [

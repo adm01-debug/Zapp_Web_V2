@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "bcf4dcc8a5c3d1c45da0f1d1973132f7e2be49c3",
+  "commit": "1f71f25dbe8ffe4a981179bc7ad19639ab4e2533",
   "branch": "main",
-  "data_commit": "2026-11-22T15:31:38Z",
+  "data_commit": "2026-11-22T13:46:20-03:00",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "1f71f25d",
+    "data": "2026-11-22",
+    "assunto": "feat(assistente): liga risco de perda e ancoragem de preco na porta unica (#3320)"
+   },
    {
     "sha": "bcf4dcc8",
     "data": "2026-11-22",
@@ -126,14 +131,9 @@
     "sha": "2e705429",
     "data": "2026-11-20",
     "assunto": "docs(fase0): linha de base e regras de negocio da Fase 0 do GOAL (#3292)"
-   },
-   {
-    "sha": "b267f6b2",
-    "data": "2026-11-19",
-    "assunto": "feat(evolution-api): adiciona ação 'pairing-code' para parear aparelho por código (#3290)"
    }
   ],
-  "arquivos_mudados_7d": 7029,
+  "arquivos_mudados_7d": 7027,
   "pastas_mais_mudadas_30d": [
    {
     "pasta": "docs/contexto/supabase",
@@ -169,7 +169,7 @@
    },
    {
     "pasta": "supabase/functions/_shared",
-    "mudancas": 234
+    "mudancas": 236
    },
    {
     "pasta": "analise-prs/resgate-261118-lote3/fix",
@@ -199,7 +199,7 @@
   "arquivos_mais_mudados_90d": [
    {
     "arquivo": "supabase/deployment-manifest.json",
-    "mudancas": 34
+    "mudancas": 35
    },
    {
     "arquivo": "ESTADO.md",
@@ -316,7 +316,7 @@
  "contagens": {
   "arquivos_total": 15746,
   "arquivos_codigo": 5868,
-  "linhas_codigo": 1134798,
+  "linhas_codigo": 1134891,
   "rotas": 18,
   "rotas_http_backend": 11,
   "vistas_por_id": 55,
@@ -804,7 +804,7 @@
   },
   "supabase/functions": {
    "arquivos": 430,
-   "linhas": 129156
+   "linhas": 129249
   },
   "tailwind.config.ts": {
    "arquivos": 1,
@@ -935,7 +935,7 @@
   "ts_ignore": 0,
   "eslint_disable": 1,
   "todos": 59,
-  "arquivos_acima_500_linhas": 164
+  "arquivos_acima_500_linhas": 165
  },
  "todos": [
   {

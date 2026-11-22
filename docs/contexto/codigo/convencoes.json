@@ -66,11 +66,11 @@
  "commits": {
   "convencao": "conventional commits (observado)",
   "exemplos": [
+   "feat(assistente): liga risco de perda e ancoragem de preco na porta unica (#3320)",
    "chore(db): sincronizar artefatos derivados do banco (#3315)",
    "feat(assistente): treino por perfil com playbook e catalogo de objecoes (#3319)",
    "docs(integracoes): plano do gateway de mensagens WhatsApp + SMS (SMSDev) (#3318)",
-   "feat(assistente): porta unica liga 6 edges mortas com contexto compartilhado (#3317)",
-   "feat: fase 2 do assistente pessoal (memoria e agenda do contato) (#3316)"
+   "feat(assistente): porta unica liga 6 edges mortas com contexto compartilhado (#3317)"
   ]
  },
  "pr_template": ".github/PULL_REQUEST_TEMPLATE.md",

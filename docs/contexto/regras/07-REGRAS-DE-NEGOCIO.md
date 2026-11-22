@@ -1,6 +1,6 @@
 # 07 · REGRAS DE NEGÓCIO
 
-> Gerado automaticamente por AI Context Sync v1.3.2 · commit `bcf4dcc8a5` · branch `main` · 2026-11-22 16:14 UTC
+> Gerado automaticamente por AI Context Sync v1.3.2 · commit `1f71f25dbe` · branch `main` · 2026-11-22 16:47 UTC
 > Não edite à mão — regras humanas vão em `manual/`.
 
 ## A. Regras escritas por humanos (`manual/` — prioridade máxima, nunca sobrescrito)
@@ -5058,7 +5058,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `owner` | `supabase/migrations/20260927270018_team_chat_e28_fix_find_or_create_race.sql` |
 | `anon` | `supabase/migrations/20260927340000_fix_add_agent_xp_negative_and_guard.sql` |
 
-## K. Testes como especificação (26193 testes em 2731 arquivos — nomes completos em `context.json`)
+## K. Testes como especificação (26200 testes em 2731 arquivos — nomes completos em `context.json`)
 
 | Arquivo | Testes | Exemplos do que o sistema DEVE fazer |
 |---|---|---|
@@ -5228,6 +5228,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `src/hooks/chat/__tests__/useContactMedia.test.tsx` | 25 | useContactMedia — paginacao por keyset (etapa 41) · pede 60+1 por pagina e para no fim quando a pagina vem incompleta · pagina cheia (61 linhas) tem proxima pagina e o cursor (created_at, id) entra no 2o .or() · aceite etapa 41: 201 itens em 4 paginas de 60 e o 201o aparece no fim … |
 | `src/hooks/chat/__tests__/useFilesViewState.test.tsx` | 25 | useFilesViewState — preferencias (localStorage) · storage ausente: comeca no default decidido em D3 (grid, 4 colunas) · storage invalido: JSON quebrado, versao desconhecida e valores fora do dominio caem no default · sanitiza campo a campo: viewMode valido com columns invalido mantem o viewMode … |
 | `src/lib/calls/__tests__/persistence.test.ts` | 25 | upsertMyCall — mapa p_* da RPC · grava a chamada tocando com os nomes exatos dos parâmetros · grava o fim com status/motivo/duração e OMITE o que não tem valor · upsertMyCall — retry idempotente … |
+| `supabase/functions/assistant-gateway/index.test.ts` | 25 | 401 quando o JWT não autentica · 400 quando não há pedido · 503 da guarda de IA é repassado sem chamar capacidade · panorama devolve resposta com >=3 fontes e a origem de cada pedaço … |
 | `supabase/functions/multiplix-dispatch/actions/__tests__/inspect.test.ts` | 25 | F48 preview: cada bloco reproduz EXATAMENTE o payload do worker para o destinatario · F48 preview: conteudo com placeholders é identico ao worker para outro destinatario · F48 preview: sem blocos, cai no template do dispatch — o MESMO payload do worker atual · F48 preview: destinatario de outro dono/inexistente responde 404 nomeado … |
 | `analise-prs/resgate-261118-lote3/hermes/robustez-primitivos-ui-2610121626bec5-2610141859e423/src/lib/__tests__/phoneNormalization.test.ts` | 24 | Phone Normalization · Standard JIDs · strips @s.whatsapp.net suffix · strips @g.us suffix for groups … |
 | `e2e/navegacao-modulos.spec.ts` | 24 | Navegação por todos os módulos (desktop) · abre as 42 entradas mapeadas, o modo Quadro de Tarefas e a busca global sem erro de console nem requisição falha · Navegação por todos os módulos (celular 390x844) · abre as 42 entradas mapeadas pelo menu móvel, o modo Quadro de Tarefas e a busca do cabeçalho sem erro de console nem requisição falha … |
@@ -5293,7 +5294,6 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `src/hooks/system/__tests__/useSupabaseConnectivity.test.ts` | 21 | connectivityProbeUrl — chave pública na query (sem 401 no console) · anexa a anon key como ?apikey= (codificada) e tira barras finais da base · sem chave, cai na URL nua (comportamento antigo) · useSupabaseConnectivity — sonda leve, sem a Edge  … |
 | `src/lib/__tests__/rlsConversationAccess.test.ts` | 21 | RLS real: contacts (schema resolvido das migrations) · o conjunto de policies bate com o manifest do schema real · SELECT delega ao predicado canonico can_edit_contact (dono, fila ou admin) · INSERT exige admin/supervisor OU auto-atribuicao (assigned_to = proprio perfil) … |
 | `supabase/functions/_shared/__tests__/webhook-auth-gates.test.ts` | 21 | whatsapp-webhook: POST sem assinatura -> 401 antes de qualquer efeito (sem SUPABASE_URL configurada) · whatsapp-webhook: assinatura HMAC inválida -> 401 · whatsapp-webhook: replay — assinatura válida de OUTRO corpo -> 401 · whatsapp-webhook: sem WHATSAPP_APP_SECRET configurado -> 401 (falha fechada, mesmo com header bem formado) … |
-| `supabase/functions/assistant-gateway/index.test.ts` | 21 | 401 quando o JWT não autentica · 400 quando não há pedido · 503 da guarda de IA é repassado sem chamar capacidade · panorama devolve resposta com >=3 fontes e a origem de cada pedaço … |
 | `supabase/functions/detect-new-device/index.test.ts` | 21 | extractAuthSessionId extrai session_id do claim JWT · extractAuthSessionId devolve null sem claim ou com token malformado · extractAuthSessionId ignora session_id fora do claim (só o token conta) · decideSessionUpsert atualiza linha existente da mesma sessão Auth … |
 | `analise-prs/resgate-261118-lote3/claude/feat-copiloto-edge-fases8-10-261024-1700/src/hooks/integrations/__tests__/useTalkXSuppression.test.ts` | 20 | useTalkXSuppression — listagem · lista as 500 entradas mais recentes da supressao · expoe lista vazia quando o banco responde null · marca isError quando a listagem falha (RLS/rede) … |
 | `analise-prs/resgate-261118-lote3/fix/ci-workflows-vermelhos/src/hooks/admin/__tests__/useSupervisorQueue.test.tsx` | 20 | useSupervisorQueue — leitura e priorização · lê conversas abertas com os filtros certos, resolve nomes e ordena P1→P4 · conversas resolvidas/fechadas/deletadas não entram na fila · corta em 200 mantendo as MAIS ANTIGAS e sinaliza  … |
@@ -5546,9 +5546,11 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `enqueue(` | `supabase/functions/_shared/ai-providers.ts` |
 | `enqueue(` | `supabase/functions/_shared/ai-usage.ts` |
 | `.add('agenda'` | `supabase/functions/_shared/assistant-gateway.ts` |
+| `.add('ancoragem_preco'` | `supabase/functions/_shared/assistant-gateway.ts` |
 | `.add('calcular_prazo'` | `supabase/functions/_shared/assistant-gateway.ts` |
 | `.add('recomendar_produto'` | `supabase/functions/_shared/assistant-gateway.ts` |
 | `.add('resumo_conversa'` | `supabase/functions/_shared/assistant-gateway.ts` |
+| `.add('risco_perda'` | `supabase/functions/_shared/assistant-gateway.ts` |
 | `.add('sugerir_resposta'` | `supabase/functions/_shared/assistant-gateway.ts` |
 | `.add('temperatura_lead'` | `supabase/functions/_shared/assistant-gateway.ts` |
 | `.add('tratar_objecao'` | `supabase/functions/_shared/assistant-gateway.ts` |

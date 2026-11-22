@@ -1,7 +1,7 @@
 # Contexto do projeto para agentes de IA
 
 GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.
-Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR dela) a cada push em `main` e a cada 10 minutos pelo workflow `contexto.yml`; índice único das três fontes em `docs/contexto/00-INDEX.md`. Gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `bcf4dcc8a5c3d1c45da0f1d1973132f7e2be49c3` (2026-11-22T15:31:38Z).
+Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR dela) a cada push em `main` e a cada 10 minutos pelo workflow `contexto.yml`; índice único das três fontes em `docs/contexto/00-INDEX.md`. Gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `1f71f25dbe8ffe4a981179bc7ad19639ab4e2533` (2026-11-22T13:46:20-03:00).
 
 ## Como usar (leia antes de planejar ou executar qualquer tarefa)
 1. **Tela/rota/menu** → `rotas.json` (url/vista/menu → arquivo → hooks → tabelas → edges; `rotas_http_backend` para APIs) e `modulos.json` (módulo inteiro + dependências entre módulos).
@@ -36,7 +36,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 |---|---|
 | arquivos_total | 15746 |
 | arquivos_codigo | 5868 |
-| linhas_codigo | 1134798 |
+| linhas_codigo | 1134891 |
 | rotas | 18 |
 | rotas_http_backend | 11 |
 | vistas_por_id | 55 |
@@ -397,13 +397,13 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - possiveis_segredos_no_codigo: 6 — ex.: analise-prs/resgate-261118-lote3/claude_pink/cool-dijkstra-xk9ek2/scripts/ci/edge-coverage-authz.unit.mjs:397, analise-prs/resgate-261118-lote3/claude_pink/cool-dijkstra-xk9ek2/scripts/edge-deploy/redigir-log.unit.mjs:38, scripts/ai-context/cenarios.mjs:102
 
 ## Grafo de código (graphify)
-- 103029 nós · 174923 arestas · 9243 comunidades · grafo do commit `bcf4dcc8`
-- comunidades maiores: Communities (5953 total, 1987 thin omitted) (3946), lucide-react (1618), react (1339), TalkXSuppression.tsx (1320), tooltip.tsx (1152), react-router-dom (666), cn (651), ref_node_fs (645), WidgetConfigSheet.tsx (511), ExternalProductManagement.tsx (461), ref_https (433), errorResponse (408)
+- 103031 nós · 174925 arestas · 9027 comunidades · grafo do commit `1f71f25d`
+- comunidades maiores: Communities (5953 total, 1987 thin omitted) (3947), vitest (1502), TalkXSuppression.tsx (1289), lucide-react (1230), react (926), @tanstack/react-query (852), ExternalProductManagement.tsx (708), useAuth (682), cn (676), chat.ts (648), ref_node_fs (625), validation.ts (540)
 - símbolos mais chamados: cn() (src/lib/utils.ts), useAuth() (src/hooks/auth/useAuth.tsx), jsonResponse() (supabase/functions/_shared/validation.ts), errorResponse() (supabase/functions/_shared/validation.ts), handleCors() (supabase/functions/_shared/validation.ts), fail() (scripts/e2e-isolated/network-proof-policy.mjs), Logger (supabase/functions/_shared/validation.ts), requireEnv() (supabase/functions/_shared/validation.ts), fmtInt() (src/components/talkx/kit/format.ts), fromTable() (src/lib/supabaseHelpers.ts), useUserRole() (src/hooks/system/useUserRole.ts), validationErrorResponse() (supabase/functions/_shared/schemas.ts)
 - consulta local: `graphify query "<pergunta>"`, `graphify path "<A>" "<B>"`, `graphify explain "<X>"`
 
 ## Hotspots (arquivos mais alterados, 90 dias)
-- supabase/deployment-manifest.json (34)
+- supabase/deployment-manifest.json (35)
 - ESTADO.md (19)
 - docs/talkx/ESTADOS.md (16)
 - src/integrations/supabase/types.ts (14)
@@ -525,6 +525,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - CHANGELOG topo: [Unreleased]
 
 ## Últimos commits
+- 2026-11-22 `1f71f25d` feat(assistente): liga risco de perda e ancoragem de preco na porta unica (#3320)
 - 2026-11-22 `bcf4dcc8` chore(db): sincronizar artefatos derivados do banco (#3315)
 - 2026-11-22 `2fc081de` feat(assistente): treino por perfil com playbook e catalogo de objecoes (#3319)
 - 2026-11-22 `4454ed4b` docs(integracoes): plano do gateway de mensagens WhatsApp + SMS (SMSDev) (#3318)
@@ -539,7 +540,6 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - 2026-11-21 `be88b1e6` fix(ci): usa fileURLToPath no caminho do script W98 (teste 15) (#3305)
 - 2026-11-21 `bfe8a3aa` chore(contexto): protege branch contexto da poda + indice migration->PR (#3304)
 - 2026-11-21 `03350f44` docs: evidencia de deploy DASH-083 (cron relatorios agendados) (#3303)
-- 2026-11-21 `9f3e9175` fix(e2e): reconhece rate limit nao autenticado do Docker Hub no retry de pull (#3302)
 
 ## Arquivos deste diretório
 - `docs/contexto/codigo/rotas.json`
