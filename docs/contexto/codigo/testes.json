@@ -5,13 +5,13 @@
   "vitest",
   "playwright"
  ],
- "total": 3211,
+ "total": 3212,
  "por_tipo": {
   "contrato": 130,
   "e2e": 89,
   "pytest": 3,
   "qa": 9,
-  "unit": 2889
+  "unit": 2890
  },
  "onde_ficam": [
   {
@@ -24,7 +24,7 @@
   },
   {
    "padrao": "co-localizado (*.test)",
-   "arquivos": 234
+   "arquivos": 235
   },
   {
    "padrao": "tests/",
@@ -26779,6 +26779,16 @@
    "casos": 11
   },
   {
+   "arquivo": "supabase/functions/_shared/assistant-playbook.test.ts",
+   "tipo": "unit",
+   "linhas": 75,
+   "testa": [
+    "supabase/functions/_shared/assistant-gateway.ts",
+    "supabase/functions/_shared/assistant-playbook.ts"
+   ],
+   "casos": 8
+  },
+  {
    "arquivo": "supabase/functions/_shared/evolution-webhook-messages.test.ts",
    "tipo": "unit",
    "linhas": 537,
@@ -27110,11 +27120,11 @@
   {
    "arquivo": "supabase/functions/assistant-gateway/index.test.ts",
    "tipo": "unit",
-   "linhas": 311,
+   "linhas": 376,
    "testa": [
     "supabase/functions/assistant-gateway/index.ts"
    ],
-   "casos": 16
+   "casos": 21
   },
   {
    "arquivo": "supabase/functions/auth-login/index.test.ts",
@@ -27219,11 +27229,11 @@
   {
    "arquivo": "supabase/functions/copilot-live/index.test.ts",
    "tipo": "unit",
-   "linhas": 460,
+   "linhas": 495,
    "testa": [
     "supabase/functions/copilot-live/index.ts"
    ],
-   "casos": 14
+   "casos": 16
   },
   {
    "arquivo": "supabase/functions/create-user/index.test.ts",
@@ -30601,7 +30611,8 @@
   "supabase/functions/_shared/ai-usage.ts": 6,
   "supabase/functions/_shared/ai-values.ts": 1,
   "supabase/functions/_shared/ai-vocabulary.ts": 7,
-  "supabase/functions/_shared/assistant-gateway.ts": 1,
+  "supabase/functions/_shared/assistant-gateway.ts": 2,
+  "supabase/functions/_shared/assistant-playbook.ts": 1,
   "supabase/functions/_shared/contract-kit.ts": 1,
   "supabase/functions/_shared/contracts.ts": 1,
   "supabase/functions/_shared/copilot-tick.ts": 2,

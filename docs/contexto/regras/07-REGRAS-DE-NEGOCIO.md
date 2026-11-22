@@ -1,6 +1,6 @@
 # 07 · REGRAS DE NEGÓCIO
 
-> Gerado automaticamente por AI Context Sync v1.3.2 · commit `4454ed4b69` · branch `main` · 2026-11-22 14:13 UTC
+> Gerado automaticamente por AI Context Sync v1.3.2 · commit `2fc081def1` · branch `main` · 2026-11-22 14:57 UTC
 > Não edite à mão — regras humanas vão em `manual/`.
 
 ## A. Regras escritas por humanos (`manual/` — prioridade máxima, nunca sobrescrito)
@@ -1621,7 +1621,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `status` | `DONE_VERIFIED` | compara, escreve | `analise-prs/resgate-261118-lote3/claude/fix-ga-resto-sonar-contracts-20261021-0726/scripts/talkx/v4-status.unit.mjs` |
 | `status` | `IMPLEMENTED_AWAITING_RUNTIME_EVIDENCE` | escreve | `analise-prs/resgate-261118-lote3/claude/feat-E90-main-failure-notify-261101-1730/scripts/ci/ci-docs-baseline.unit.mjs`<br>`analise-prs/resgate-261118-lote3/claude/wizardly-ride-dimxnt/scripts/ci/ci-docs-baseline.unit.mjs`<br>`analise-prs/resgate-261118-lote3/claude_pink/cool-dijkstra-xk9ek2/scripts/ci/ci-docs-baseline.unit.mjs`<br>`analise-prs/resgate-261118-lote3/codex/fix-failed-workflows-20261020/scripts/ci/ci-docs-baseline.unit.mjs`<br>`analise-prs/resgate-261118-lote3/codex/publish-followup-20261021/scripts/ci/ci-docs-baseline.unit.mjs`<br>… +2 |
 | `status` | `IN_PROGRESS` | compara, escreve | `analise-prs/resgate-261118-lote3/claude_pink/cool-dijkstra-xk9ek2/scripts/ci/fila-merge.mjs`<br>`analise-prs/resgate-261118-lote3/claude_pink/cool-dijkstra-xk9ek2/scripts/ci/fila-merge.unit.mjs`<br>`analise-prs/resgate-261118-lote3/f3/strict-false-baseline-20261018/scripts/ci/fila-merge.unit.mjs` |
-| … +296 linhas — lista completa em `context.json` | | | |
+| … +302 linhas — lista completa em `context.json` | | | |
 
 ### E.4 Enums e listas de valores
 
@@ -1927,7 +1927,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | TALKX_CAMPAIGN_SEARCH_COLUMNS | 'name', 'description', 'message_template' | `src/hooks/integrations/useTalkXCampaignList.ts` |
 | TalkXEventType | created \| updated \| scheduled \| started \| paused \| resumed \| cancelled \| completed \| note | `src/hooks/integrations/useTalkXEvents.ts` |
 | TalkXClientEventType | note \| checklist \| segments_reviewed | `src/hooks/integrations/useTalkXEvents.ts` |
-| … +219 linhas — lista completa em `context.json` | | |
+| … +220 linhas — lista completa em `context.json` | | |
 
 ## F. Validações de entrada
 
@@ -5058,7 +5058,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `owner` | `supabase/migrations/20260927270018_team_chat_e28_fix_find_or_create_race.sql` |
 | `anon` | `supabase/migrations/20260927340000_fix_add_agent_xp_negative_and_guard.sql` |
 
-## K. Testes como especificação (26178 testes em 2730 arquivos — nomes completos em `context.json`)
+## K. Testes como especificação (26193 testes em 2731 arquivos — nomes completos em `context.json`)
 
 | Arquivo | Testes | Exemplos do que o sistema DEVE fazer |
 |---|---|---|
@@ -5293,6 +5293,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `src/hooks/system/__tests__/useSupabaseConnectivity.test.ts` | 21 | connectivityProbeUrl — chave pública na query (sem 401 no console) · anexa a anon key como ?apikey= (codificada) e tira barras finais da base · sem chave, cai na URL nua (comportamento antigo) · useSupabaseConnectivity — sonda leve, sem a Edge  … |
 | `src/lib/__tests__/rlsConversationAccess.test.ts` | 21 | RLS real: contacts (schema resolvido das migrations) · o conjunto de policies bate com o manifest do schema real · SELECT delega ao predicado canonico can_edit_contact (dono, fila ou admin) · INSERT exige admin/supervisor OU auto-atribuicao (assigned_to = proprio perfil) … |
 | `supabase/functions/_shared/__tests__/webhook-auth-gates.test.ts` | 21 | whatsapp-webhook: POST sem assinatura -> 401 antes de qualquer efeito (sem SUPABASE_URL configurada) · whatsapp-webhook: assinatura HMAC inválida -> 401 · whatsapp-webhook: replay — assinatura válida de OUTRO corpo -> 401 · whatsapp-webhook: sem WHATSAPP_APP_SECRET configurado -> 401 (falha fechada, mesmo com header bem formado) … |
+| `supabase/functions/assistant-gateway/index.test.ts` | 21 | 401 quando o JWT não autentica · 400 quando não há pedido · 503 da guarda de IA é repassado sem chamar capacidade · panorama devolve resposta com >=3 fontes e a origem de cada pedaço … |
 | `supabase/functions/detect-new-device/index.test.ts` | 21 | extractAuthSessionId extrai session_id do claim JWT · extractAuthSessionId devolve null sem claim ou com token malformado · extractAuthSessionId ignora session_id fora do claim (só o token conta) · decideSessionUpsert atualiza linha existente da mesma sessão Auth … |
 | `analise-prs/resgate-261118-lote3/claude/feat-copiloto-edge-fases8-10-261024-1700/src/hooks/integrations/__tests__/useTalkXSuppression.test.ts` | 20 | useTalkXSuppression — listagem · lista as 500 entradas mais recentes da supressao · expoe lista vazia quando o banco responde null · marca isError quando a listagem falha (RLS/rede) … |
 | `analise-prs/resgate-261118-lote3/fix/ci-workflows-vermelhos/src/hooks/admin/__tests__/useSupervisorQueue.test.tsx` | 20 | useSupervisorQueue — leitura e priorização · lê conversas abertas com os filtros certos, resolve nomes e ordena P1→P4 · conversas resolvidas/fechadas/deletadas não entram na fila · corta em 200 mantendo as MAIS ANTIGAS e sinaliza  … |
@@ -5361,8 +5362,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `src/hooks/__tests__/useWarRoomAlerts.test.tsx` | 18 | useWarRoomAlerts · fetches unread alerts · exposes dismissAlert function · accepts soundEnabled parameter … |
 | `src/hooks/chat/__tests__/useAutomationSuggestions.test.tsx` | 18 | useAutomationSuggestions · não vai à Edge quando a última mensagem é do agente (lastInboundMessageId nulo) · chama a Edge com o contact_id e expõe as sugestões do contrato, com a fonte carimbada · espera o debounce antes de chamar (mensagem que ainda está chegando não gasta IA) … |
 | `src/hooks/chat/journey/__tests__/useJourneyActors.test.tsx` | 18 | useJourneyActors — regras de quem agiu (S063) · usuário com perfil: nome e foto do perfil, em UMA consulta em lote · perfil ausente:  · erro/RLS negado não lança: o ator cai no  … |
-| `src/hooks/communication/__tests__/useTranscriptionNotifications.filtros.test.ts` | 18 | sinalDeConclusao — não depende de payload.old · sem sinal de recência, evento com old só de id não é conclusão · carimbo antigo não passa; carimbo de agora passa · fronteira da janela (~30 s): 45 s já é antigo; 5 s ainda é recente … |
-| … +2430 linhas — lista completa em `context.json` | | |
+| … +2431 linhas — lista completa em `context.json` | | |
 
 ## L. Eventos de webhook tratados (contratos com sistemas externos)
 
@@ -5906,4 +5906,4 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | * R2-AUTH-005 (item 239): a resposta de uma busca de perfil nao pode repor | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/hooks/auth/useAuth.tsx` |
 | Identidade diferente: o perfil anterior nao pode continuar na tela e so a | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/hooks/auth/useAuth.tsx` |
 | Supabase pode falhar e não emitir SIGNED_OUT — a limpeza não pode depender dele). | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/hooks/auth/useAuth.tsx` |
-| … +2513 linhas — lista completa em `context.json` | |
+| … +2515 linhas — lista completa em `context.json` | |

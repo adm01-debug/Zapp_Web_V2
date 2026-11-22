@@ -1,15 +1,15 @@
 {
  "meta": {
-  "sha": "4454ed4b694302444f215fc7420eee7fdfc4cf05",
+  "sha": "2fc081def1d4dceb64c9a1d6fa4e0be63b575438",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-22 14:13 UTC",
-  "files_total": 15600,
-  "code_files": 8903,
-  "code_lines": 1411909
+  "generated_at": "2026-11-22 14:57 UTC",
+  "files_total": 15602,
+  "code_files": 8905,
+  "code_lines": 1412262
  },
  "version": "1.3.2",
- "facts_hash": "14b427d813de4ee6",
+ "facts_hash": "98410ccf805bbfdc",
  "stack": {
   "frameworks": [
    "React + Vite",
@@ -346,7 +346,7 @@
   "languages": {
    ".sql": 3063,
    ".tsx": 2814,
-   ".ts": 2245,
+   ".ts": 2247,
    ".mjs": 652,
    ".py": 125,
    ".cjs": 19,
@@ -78751,8 +78751,8 @@
   },
   {
    "module": "supabase/functions",
-   "files": 428,
-   "lines": 128803,
+   "files": 430,
+   "lines": 129156,
    "tables": [
     "agent_stats",
     "ai_conversation_tags",
@@ -78870,6 +78870,7 @@
     "ai-values.ts: ValueIssue, ScoreScale, NormalizedNumber, NormalizeScoreOptions, normalizeScore, AggregateResult",
     "ai-vocabulary.ts: SENTIMENT_VALUES, Sentiment, URGENCY_VALUES, Urgency, OPERATIONAL_PRIORITY_VALUES, OperationalPriority",
     "assistant-gateway.ts: AssistantCapability, ASSISTANT_CAPABILITIES, CAPABILITY_LABELS, ContextSource, IntentSignals, normalizeQuery",
+    "assistant-playbook.ts: AssistantAtuacao, ASSISTANT_ATUACOES, AssistantPlaybook, playbookFor, playbookPromptBlock",
     "contract-kit.ts: VersionedSchemas, SchemaInput, ParseOk, ParseFail, ParseResult, contractHeaders",
     "contracts.ts: ContractVersion, V1_SUNSET, getContractVersion, deprecationHeaders, parseVersioned",
     "copilot-tick.ts: COPILOT_TICK_KIND, COPILOT_FUNCTION_NAME, COPILOT_CAPABILITY_KEY, MAX_NEW_MESSAGES, MAX_CONTEXT_MESSAGES, CopilotTickError",
@@ -78887,8 +78888,7 @@
     "evolution-go-token-sync.ts: SafeFetchResult, safeFetch, readJsonSafe, goErrorText, GoTokenLookupFailure, GoTokenLookup",
     "evolution-helpers.ts: WebhookPayload, isRecord, normalizeEventName, toEventRecords, maskJidForLog, normalizePhone",
     "evolution-instance-token.ts: InstanceTokenClient, resetInstanceTokenCache, instanceNameFromV2Path, resolveInstanceToken",
-    "evolution-media.ts: isValidMediaBytes, persistMediaToStorage, persistBase64Media, persistMediaViaApi, ParsedMessage, parseMessageContent",
-    "evolution-send.ts: evoFetch, extractMessageId, extractBase64Media, extractAvatarUrl, extractConnectionState"
+    "evolution-media.ts: isValidMediaBytes, persistMediaToStorage, persistBase64Media, persistMediaViaApi, ParsedMessage, parseMessageContent"
    ],
    "docs": [
     "ai-circuit.test.ts: IA-050 — circuit breaker por provedor de IA no despacho central. Defeito provado na auditoria (IA-CIRCUIT-001): `generateWithRouting` retentava e devolvia erro explícito, mas NUNCA suspendia um provedor que só falha — cada request novo voltava a bater no provedor caído (fetch real + espera + custo). …",
@@ -78932,6 +78932,8 @@
     "supabase/functions/_shared/ai-vocabulary.ts",
     "supabase/functions/_shared/assistant-gateway.test.ts",
     "supabase/functions/_shared/assistant-gateway.ts",
+    "supabase/functions/_shared/assistant-playbook.test.ts",
+    "supabase/functions/_shared/assistant-playbook.ts",
     "supabase/functions/_shared/contract-kit.ts",
     "supabase/functions/_shared/contracts.ts",
     "supabase/functions/_shared/copilot-tick.ts",
@@ -78982,9 +78984,7 @@
     "supabase/functions/_shared/talkx-reply.ts",
     "supabase/functions/_shared/talkx-resume-policy.ts",
     "supabase/functions/_shared/talkx-tracking-token.ts",
-    "supabase/functions/_shared/talkx-window.ts",
-    "supabase/functions/_shared/validation.cors.test.ts",
-    "supabase/functions/_shared/validation.degraded.test.ts"
+    "supabase/functions/_shared/talkx-window.ts"
    ]
   },
   {
@@ -90233,6 +90233,11 @@
     "file": "supabase/functions/_shared/assistant-gateway.ts",
     "name": "AssistantCapability",
     "values": "agenda | resumo_conversa | sugerir_resposta | temperatura_lead | recomendar_produto | calcular_prazo | tratar_objecao"
+   },
+   {
+    "file": "supabase/functions/_shared/assistant-playbook.ts",
+    "name": "AssistantAtuacao",
+    "values": "venda | compra | atendimento | supervisao"
    },
    {
     "file": "supabase/functions/_shared/copilot-tick.ts",
@@ -111164,6 +111169,10 @@
     "text": "- nenhum sinal reconhecido → `agenda` + `resumo_conversa` (o mínimo útil sem"
    },
    {
+    "file": "supabase/functions/_shared/assistant-gateway.ts",
+    "text": "perfil, o mínimo útil: agenda (leitura barata) + resumo."
+   },
+   {
     "file": "supabase/functions/_shared/contract-kit.ts",
     "text": "* contract-kit — porta ÚNICA de validação de contrato das Edge Functions."
    },
@@ -112038,6 +112047,10 @@
    {
     "file": "supabase/functions/assistant-gateway/index.ts",
     "text": "exige no mínimo 5 mensagens (`AiConversationSummarySchema`). Sem histórico"
+   },
+   {
+    "file": "supabase/functions/assistant-gateway/index.ts",
+    "text": "Sem perfil configurado não há treino: a rota vaga volta ao mínimo útil"
    },
    {
     "file": "supabase/functions/assistant-gateway/index.ts",
@@ -147418,6 +147431,54 @@
     "field": "status",
     "value": "fallback",
     "kind": "compara"
+   },
+   {
+    "file": "supabase/functions/_shared/assistant-playbook.ts",
+    "field": "tipo",
+    "value": "preco",
+    "kind": "escreve"
+   },
+   {
+    "file": "supabase/functions/_shared/assistant-playbook.ts",
+    "field": "tipo",
+    "value": "prazo",
+    "kind": "escreve"
+   },
+   {
+    "file": "supabase/functions/_shared/assistant-playbook.ts",
+    "field": "tipo",
+    "value": "concorrente",
+    "kind": "escreve"
+   },
+   {
+    "file": "supabase/functions/_shared/assistant-playbook.ts",
+    "field": "tipo",
+    "value": "chefe",
+    "kind": "escreve"
+   },
+   {
+    "file": "supabase/functions/_shared/assistant-playbook.ts",
+    "field": "tipo",
+    "value": "quantidade_minima",
+    "kind": "escreve"
+   },
+   {
+    "file": "supabase/functions/_shared/assistant-playbook.ts",
+    "field": "tipo",
+    "value": "prazo",
+    "kind": "escreve"
+   },
+   {
+    "file": "supabase/functions/_shared/assistant-playbook.ts",
+    "field": "tipo",
+    "value": "preco",
+    "kind": "escreve"
+   },
+   {
+    "file": "supabase/functions/_shared/assistant-playbook.ts",
+    "field": "tipo",
+    "value": "qualidade",
+    "kind": "escreve"
    },
    {
     "file": "supabase/functions/_shared/copilot-tick.ts",
@@ -245830,6 +245891,38 @@
     "name": "as edges ligadas pela porta única são exatamente as 6 do plano"
    },
    {
+    "file": "supabase/functions/_shared/assistant-playbook.test.ts",
+    "name": "playbook: toda atuação do CHECK do banco tem playbook próprio"
+   },
+   {
+    "file": "supabase/functions/_shared/assistant-playbook.test.ts",
+    "name": "playbook: perfil ausente ou inválido cai no default atendimento"
+   },
+   {
+    "file": "supabase/functions/_shared/assistant-playbook.test.ts",
+    "name": "playbook: venda e compra recebem treinos diferentes (Fase 4)"
+   },
+   {
+    "file": "supabase/functions/_shared/assistant-playbook.test.ts",
+    "name": "playbook: supervisao pede padrão do time, não resposta para o cliente"
+   },
+   {
+    "file": "supabase/functions/_shared/assistant-playbook.test.ts",
+    "name": "playbook: capacidade prioritária é sempre uma capacidade real da porta única"
+   },
+   {
+    "file": "supabase/functions/_shared/assistant-playbook.test.ts",
+    "name": "playbook: bloco de prompt é determinístico"
+   },
+   {
+    "file": "supabase/functions/_shared/assistant-playbook.test.ts",
+    "name": "playbook: catálogo de objeções do perfil usa só tipos do handler real"
+   },
+   {
+    "file": "supabase/functions/_shared/assistant-playbook.test.ts",
+    "name": "playbook: catálogo de objeções entra no bloco de prompt"
+   },
+   {
     "file": "supabase/functions/_shared/evolution-webhook-messages.test.ts",
     "name": "AWAY: client_message_id determinístico por (contato, dia), válido e sem colisão"
    },
@@ -249710,6 +249803,26 @@
     "name": "loadSharedContext não é chamado quando readContext é injetado"
    },
    {
+    "file": "supabase/functions/assistant-gateway/index.test.ts",
+    "name": "Fase 4: o treino da atuação entra no bloco de contexto enviado às edges"
+   },
+   {
+    "file": "supabase/functions/assistant-gateway/index.test.ts",
+    "name": "Fase 4: perfis diferentes produzem contexto diferente para a mesma pergunta"
+   },
+   {
+    "file": "supabase/functions/assistant-gateway/index.test.ts",
+    "name": "Fase 4: pedido vago usa as capacidades prioritárias da atuação"
+   },
+   {
+    "file": "supabase/functions/assistant-gateway/index.test.ts",
+    "name": "Fase 4: pedido com sinal explícito ignora a prioridade do perfil"
+   },
+   {
+    "file": "supabase/functions/assistant-gateway/index.test.ts",
+    "name": "Fase 4: sem perfil a rota vaga continua no mínimo útil"
+   },
+   {
     "file": "supabase/functions/auth-login/index.test.ts",
     "name": "negação por IP (403) responde ANTES de body/credenciais/efeitos"
    },
@@ -250420,6 +250533,14 @@
    {
     "file": "supabase/functions/copilot-live/index.test.ts",
     "name": "copilot-live: Fase 1 — perfil de atuação/foco/tom próprios muda o system prompt"
+   },
+   {
+    "file": "supabase/functions/copilot-live/index.test.ts",
+    "name": "copilot-live: Fase 4 — treino do perfil entra no system prompt"
+   },
+   {
+    "file": "supabase/functions/copilot-live/index.test.ts",
+    "name": "copilot-live: Fase 4 — atuações diferentes recebem treinos diferentes"
    },
    {
     "file": "supabase/functions/create-user/index.test.ts",
@@ -287515,6 +287636,24 @@
      ],
      "all": [
       "compara:src/hooks/inbox/chipCounts.ts"
+     ],
+     "preco": [
+      "escreve:supabase/functions/_shared/assistant-playbook.ts"
+     ],
+     "prazo": [
+      "escreve:supabase/functions/_shared/assistant-playbook.ts"
+     ],
+     "concorrente": [
+      "escreve:supabase/functions/_shared/assistant-playbook.ts"
+     ],
+     "chefe": [
+      "escreve:supabase/functions/_shared/assistant-playbook.ts"
+     ],
+     "quantidade_minima": [
+      "escreve:supabase/functions/_shared/assistant-playbook.ts"
+     ],
+     "qualidade": [
+      "escreve:supabase/functions/_shared/assistant-playbook.ts"
      ]
     },
     "embedding_status": {
@@ -451725,7 +451864,7 @@
   },
   "supabase/functions/_shared/assistant-gateway.ts": {
    "path": "supabase/functions/_shared/assistant-gateway.ts",
-   "lines": 193,
+   "lines": 203,
    "exports": [
     "type AssistantCapability",
     "const ASSISTANT_CAPABILITIES",
@@ -451747,7 +451886,8 @@
    "rule_comments": [
     "* Pede conta de data/prazo de entrega. */",
     "* Cliente levantou objeção (preço, desconto, \"vou pensar\"). */",
-    "- nenhum sinal reconhecido → `agenda` + `resumo_conversa` (o mínimo útil sem"
+    "- nenhum sinal reconhecido → `agenda` + `resumo_conversa` (o mínimo útil sem",
+    "perfil, o mínimo útil: agenda (leitura barata) + resumo."
    ],
    "side_effects": [
     ".add('agenda'",
@@ -451758,6 +451898,81 @@
     ".add('temperatura_lead'",
     ".add('tratar_objecao'"
    ]
+  },
+  "supabase/functions/_shared/assistant-playbook.test.ts": {
+   "path": "supabase/functions/_shared/assistant-playbook.test.ts",
+   "lines": 75,
+   "is_test": true,
+   "tests": [
+    "playbook: toda atuação do CHECK do banco tem playbook próprio",
+    "playbook: perfil ausente ou inválido cai no default atendimento",
+    "playbook: venda e compra recebem treinos diferentes (Fase 4)",
+    "playbook: supervisao pede padrão do time, não resposta para o cliente",
+    "playbook: capacidade prioritária é sempre uma capacidade real da porta única",
+    "playbook: bloco de prompt é determinístico",
+    "playbook: catálogo de objeções do perfil usa só tipos do handler real",
+    "playbook: catálogo de objeções entra no bloco de prompt"
+   ]
+  },
+  "supabase/functions/_shared/assistant-playbook.ts": {
+   "path": "supabase/functions/_shared/assistant-playbook.ts",
+   "lines": 147,
+   "exports": [
+    "type AssistantAtuacao",
+    "const ASSISTANT_ATUACOES",
+    "interface AssistantPlaybook",
+    "function playbookFor",
+    "function playbookPromptBlock"
+   ],
+   "enums": [
+    {
+     "name": "AssistantAtuacao",
+     "values": "venda | compra | atendimento | supervisao"
+    }
+   ],
+   "status_values": [
+    {
+     "field": "tipo",
+     "value": "preco",
+     "kind": "escreve"
+    },
+    {
+     "field": "tipo",
+     "value": "prazo",
+     "kind": "escreve"
+    },
+    {
+     "field": "tipo",
+     "value": "concorrente",
+     "kind": "escreve"
+    },
+    {
+     "field": "tipo",
+     "value": "chefe",
+     "kind": "escreve"
+    },
+    {
+     "field": "tipo",
+     "value": "quantidade_minima",
+     "kind": "escreve"
+    },
+    {
+     "field": "tipo",
+     "value": "prazo",
+     "kind": "escreve"
+    },
+    {
+     "field": "tipo",
+     "value": "preco",
+     "kind": "escreve"
+    },
+    {
+     "field": "tipo",
+     "value": "qualidade",
+     "kind": "escreve"
+    }
+   ],
+   "doc": "Fase 4 do assistente pessoal: treino por perfil. O perfil já existia na Fase 1 (`assistant_profiles.atividade`) e chegava ao motor só como rótulo. Aqui cada atuação ganha o seu conjunto de instruções, os seus objetivos e as capacidades que devem ser acionadas primeiro quando o pedido é vago (\"como e …"
   },
   "supabase/functions/_shared/contract-kit.ts": {
    "path": "supabase/functions/_shared/contract-kit.ts",
@@ -458784,7 +458999,7 @@
   },
   "supabase/functions/ai-objection-handler/index.ts": {
    "path": "supabase/functions/ai-objection-handler/index.ts",
-   "lines": 142,
+   "lines": 144,
    "exports": [
     "interface AiObjectionHandlerDeps",
     "function handleAiObjectionHandler"
@@ -459479,7 +459694,7 @@
   },
   "supabase/functions/assistant-gateway/index.test.ts": {
    "path": "supabase/functions/assistant-gateway/index.test.ts",
-   "lines": 311,
+   "lines": 376,
    "is_test": true,
    "errors": [
     "Unauthorized"
@@ -459487,7 +459702,8 @@
    "rule_comments": [
     "* Contexto padrão: perfil + 6 mensagens + agenda + negócio aberto = 4 fontes. */",
     "resumo + temperatura + prazo",
-    "* Trava de contrato: o stub do `supabase-js` não pode ser chamado sem env real. */"
+    "* Trava de contrato: o stub do `supabase-js` não pode ser chamado sem env real. */",
+    "`atendimento` prioriza sugestão de resposta — não é o mínimo genérico."
    ],
    "tests": [
     "401 quando o JWT não autentica",
@@ -459505,12 +459721,17 @@
     "contextBlock avisa quando não há perfil, em vez de fingir personalização",
     "composeAnswer sem nenhum pedaço diz que tudo falhou",
     "capabilityBlockedReason barra modelo sem mensagens",
-    "loadSharedContext não é chamado quando readContext é injetado"
+    "loadSharedContext não é chamado quando readContext é injetado",
+    "Fase 4: o treino da atuação entra no bloco de contexto enviado às edges",
+    "Fase 4: perfis diferentes produzem contexto diferente para a mesma pergunta",
+    "Fase 4: pedido vago usa as capacidades prioritárias da atuação",
+    "Fase 4: pedido com sinal explícito ignora a prioridade do perfil",
+    "Fase 4: sem perfil a rota vaga continua no mínimo útil"
    ]
   },
   "supabase/functions/assistant-gateway/index.ts": {
    "path": "supabase/functions/assistant-gateway/index.ts",
-   "lines": 477,
+   "lines": 490,
    "exports": [
     "interface ConversationMessage",
     "interface SharedContext",
@@ -459603,6 +459824,7 @@
     "/functions/v1/ai-deadline-calculator",
     "* Capacidade ligada? Ausente = ligada (mesma regra de `ai-feature-flags`). */",
     "exige no mínimo 5 mensagens (`AiConversationSummarySchema`). Sem histórico",
+    "Sem perfil configurado não há treino: a rota vaga volta ao mínimo útil",
     "Mesma regra de `enforceAiCapability`: leitura falhou ou valor não booleano"
    ],
    "pagination": [
@@ -461187,7 +461409,7 @@
   },
   "supabase/functions/copilot-live/index.test.ts": {
    "path": "supabase/functions/copilot-live/index.test.ts",
-   "lines": 460,
+   "lines": 495,
    "is_test": true,
    "params": [
     {
@@ -461225,13 +461447,15 @@
     "copilot-live: capacidade ai.capability.copilot_live desligada devolve erro sem chamar o provedor",
     "copilot-live: Fase 1 — sem perfil usa os defaults de identidade no system prompt",
     "copilot-live: Fase 2 — compromisso já marcado com o contato entra no prompt",
-    "copilot-live: Fase 1 — perfil de atuação/foco/tom próprios muda o system prompt"
+    "copilot-live: Fase 1 — perfil de atuação/foco/tom próprios muda o system prompt",
+    "copilot-live: Fase 4 — treino do perfil entra no system prompt",
+    "copilot-live: Fase 4 — atuações diferentes recebem treinos diferentes"
    ],
    "uses_service_role": true
   },
   "supabase/functions/copilot-live/index.ts": {
    "path": "supabase/functions/copilot-live/index.ts",
-   "lines": 348,
+   "lines": 354,
    "tables": [
     {
      "table": "profiles",
@@ -480855,10 +481079,29 @@
   }
  },
  "git": {
-  "sha": "4454ed4b694302444f215fc7420eee7fdfc4cf05",
+  "sha": "2fc081def1d4dceb64c9a1d6fa4e0be63b575438",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "2fc081de",
+    "date": "2026-11-22",
+    "author": "adm01-debug",
+    "subject": "feat(assistente): treino por perfil com playbook e catalogo de objecoes (#3319)",
+    "files": [
+     "ESTADO.md",
+     "docs/plans/PLANO_ASSISTENTE_PESSOAL_IA_2026-11-15.md",
+     "supabase/deployment-manifest.json",
+     "supabase/functions/_shared/assistant-gateway.ts",
+     "supabase/functions/_shared/assistant-playbook.test.ts",
+     "supabase/functions/_shared/assistant-playbook.ts",
+     "supabase/functions/ai-objection-handler/index.ts",
+     "supabase/functions/assistant-gateway/index.test.ts",
+     "supabase/functions/assistant-gateway/index.ts",
+     "supabase/functions/copilot-live/index.test.ts",
+     "supabase/functions/copilot-live/index.ts"
+    ]
+   },
    {
     "sha": "4454ed4b",
     "date": "2026-11-22",
@@ -482300,37 +482543,43 @@
      "src/components/team-chat/department-management/DepartmentWhatsAppView.tsx",
      "src/components/team-chat/department-management/__tests__/DepartmentWhatsAppView.erro-vs-nenhum.test.tsx"
     ]
-   },
-   {
-    "sha": "a38fc63d",
-    "date": "2026-11-19",
-    "author": "adm01-debug",
-    "subject": "fix(team-chat): falha ao ler convites deixa de se disfarcar de \"nenhum convite\" (#3282)",
-    "files": [
-     "src/components/team-chat/department-management/DepartmentInvitesView.tsx",
-     "src/components/team-chat/department-management/__tests__/DepartmentInvitesView.erro-vs-vazio.test.tsx"
-    ]
    }
   ],
   "hot_files": [
    [
     "supabase/deployment-manifest.json",
-    5
+    6
    ],
    [
     "ESTADO.md",
-    4
-   ],
-   [
-    "src/components/inbox/tabs/AiTab.tsx",
-    2
+    5
    ],
    [
     "supabase/functions/copilot-live/index.test.ts",
-    2
+    3
    ],
    [
     "supabase/functions/copilot-live/index.ts",
+    3
+   ],
+   [
+    "docs/plans/PLANO_ASSISTENTE_PESSOAL_IA_2026-11-15.md",
+    2
+   ],
+   [
+    "supabase/functions/_shared/assistant-gateway.ts",
+    2
+   ],
+   [
+    "supabase/functions/assistant-gateway/index.test.ts",
+    2
+   ],
+   [
+    "supabase/functions/assistant-gateway/index.ts",
+    2
+   ],
+   [
+    "src/components/inbox/tabs/AiTab.tsx",
     2
    ],
    [
@@ -482354,11 +482603,19 @@
     2
    ],
    [
-    "docs/integracoes/PLANO_GATEWAY_MENSAGENS_SMS_102_ETAPAS.md",
+    "supabase/functions/_shared/assistant-playbook.test.ts",
     1
    ],
    [
-    "docs/plans/PLANO_ASSISTENTE_PESSOAL_IA_2026-11-15.md",
+    "supabase/functions/_shared/assistant-playbook.ts",
+    1
+   ],
+   [
+    "supabase/functions/ai-objection-handler/index.ts",
+    1
+   ],
+   [
+    "docs/integracoes/PLANO_GATEWAY_MENSAGENS_SMS_102_ETAPAS.md",
     1
    ],
    [
@@ -482367,30 +482624,6 @@
    ],
    [
     "src/components/inbox/tabs/__tests__/AssistantAskCard.test.tsx",
-    1
-   ],
-   [
-    "src/hooks/assistant/useAssistantGateway.ts",
-    1
-   ],
-   [
-    "src/lib/assistant/__tests__/askGateway.test.ts",
-    1
-   ],
-   [
-    "src/lib/assistant/askGateway.ts",
-    1
-   ],
-   [
-    "supabase/functions/_shared/assistant-gateway.test.ts",
-    1
-   ],
-   [
-    "supabase/functions/_shared/assistant-gateway.ts",
-    1
-   ],
-   [
-    "supabase/functions/assistant-gateway/index.test.ts",
     1
    ]
   ]

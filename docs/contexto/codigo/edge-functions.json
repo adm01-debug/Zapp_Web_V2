@@ -137,6 +137,8 @@
   "supabase/functions/_shared/ai-vocabulary.ts",
   "supabase/functions/_shared/assistant-gateway.test.ts",
   "supabase/functions/_shared/assistant-gateway.ts",
+  "supabase/functions/_shared/assistant-playbook.test.ts",
+  "supabase/functions/_shared/assistant-playbook.ts",
   "supabase/functions/_shared/contract-kit.ts",
   "supabase/functions/_shared/contracts.ts",
   "supabase/functions/_shared/copilot-tick.ts",
@@ -605,7 +607,7 @@
    "nome": "ai-objection-handler",
    "entrada": "supabase/functions/ai-objection-handler/index.ts",
    "arquivos": 1,
-   "linhas": 142,
+   "linhas": 144,
    "verify_jwt": true,
    "metodos": [],
    "tabelas": [],
@@ -865,7 +867,7 @@
    "nome": "assistant-gateway",
    "entrada": "supabase/functions/assistant-gateway/index.ts",
    "arquivos": 1,
-   "linhas": 477,
+   "linhas": 490,
    "verify_jwt": true,
    "metodos": [],
    "tabelas": [
@@ -887,6 +889,7 @@
     "ai-feature-flags.ts",
     "ai-guards.ts",
     "assistant-gateway.ts",
+    "assistant-playbook.ts",
     "validation.ts"
    ],
    "chamada_pelo_front": [
@@ -1300,7 +1303,7 @@
    "nome": "copilot-live",
    "entrada": "supabase/functions/copilot-live/index.ts",
    "arquivos": 1,
-   "linhas": 348,
+   "linhas": 354,
    "verify_jwt": true,
    "metodos": [
     "OPTIONS"
@@ -1324,6 +1327,7 @@
    "usa_shared": [
     "ai-generate.ts",
     "ai-guards.ts",
+    "assistant-playbook.ts",
     "cors-origins.ts"
    ],
    "chamada_pelo_front": [],

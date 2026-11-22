@@ -12921,6 +12921,7 @@
    "supabase/functions/_shared/ai-feature-flags.ts",
    "supabase/functions/_shared/ai-guards.ts",
    "supabase/functions/_shared/assistant-gateway.ts",
+   "supabase/functions/_shared/assistant-playbook.ts",
    "supabase/functions/_shared/validation.ts"
   ],
   "supabase/functions/auth-login/index.ts": [
@@ -12998,6 +12999,7 @@
   "supabase/functions/copilot-live/index.ts": [
    "supabase/functions/_shared/ai-generate.ts",
    "supabase/functions/_shared/ai-guards.ts",
+   "supabase/functions/_shared/assistant-playbook.ts",
    "supabase/functions/_shared/cors-origins.ts"
   ],
   "supabase/functions/create-user/index.ts": [

@@ -1,6 +1,6 @@
 # 11 · GLOSSÁRIO, DADOS DE REFERÊNCIA E LACUNAS
 
-> Gerado automaticamente por AI Context Sync v1.3.2 · commit `4454ed4b69` · branch `main` · 2026-11-22 14:13 UTC
+> Gerado automaticamente por AI Context Sync v1.3.2 · commit `2fc081def1` · branch `main` · 2026-11-22 14:57 UTC
 > Não edite à mão — regras humanas vão em `manual/`.
 
 ## Glossário do domínio (entidades do sistema)
@@ -307,7 +307,7 @@
 | `LIBRARY_STATS_QUERY_KEY` (TS) | 'talkx-segment-library-stats', SEGMENT_TIMEZONE |  | `analise-prs/resgate-261118-lote3/codex/publish-followup-20261021/src/hooks/integrations/useTalkXSegments.ts` |
 | `HealthLevel` (TS) | healthy \| degraded \| disconnected |  | `analise-prs/resgate-261118-lote3/codex/publish-followup-20261021/supabase/functions/connection-health-check/index.ts` |
 | `GmailHistoryResetOutcome` (TS) | reset \| conflict |  | `analise-prs/resgate-261118-lote3/fix/ci-verde-261021/supabase/functions/_shared/gmail-helpers.ts` |
-| … +446 linhas — lista completa em `context.json` | | | |
+| … +447 linhas — lista completa em `context.json` | | | |
 
 ## Dados de referência (seed — planos, categorias, perfis fixos)
 

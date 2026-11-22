@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "4454ed4b694302444f215fc7420eee7fdfc4cf05",
+  "commit": "2fc081def1d4dceb64c9a1d6fa4e0be63b575438",
   "branch": "main",
-  "data_commit": "2026-11-22T14:02:27Z",
+  "data_commit": "2026-11-22T11:56:09-03:00",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "2fc081de",
+    "data": "2026-11-22",
+    "assunto": "feat(assistente): treino por perfil com playbook e catalogo de objecoes (#3319)"
+   },
    {
     "sha": "4454ed4b",
     "data": "2026-11-22",
@@ -126,14 +131,9 @@
     "sha": "966a524f",
     "data": "2026-11-19",
     "assunto": "ci(security): dependency review barra CVE novo high/critical nos PRs (#3288)"
-   },
-   {
-    "sha": "55b35739",
-    "data": "2026-11-19",
-    "assunto": "chore(contexto): atualiza snapshots X065 (persist_talkx_recipient_message_snapshot e set_talkx_campaign_ab) (#3289)"
    }
   ],
-  "arquivos_mudados_7d": 7361,
+  "arquivos_mudados_7d": 7029,
   "pastas_mais_mudadas_30d": [
    {
     "pasta": "docs/contexto/supabase",
@@ -169,7 +169,7 @@
    },
    {
     "pasta": "supabase/functions/_shared",
-    "mudancas": 231
+    "mudancas": 234
    },
    {
     "pasta": "analise-prs/resgate-261118-lote3/fix",
@@ -199,7 +199,7 @@
   "arquivos_mais_mudados_90d": [
    {
     "arquivo": "supabase/deployment-manifest.json",
-    "mudancas": 33
+    "mudancas": 34
    },
    {
     "arquivo": "ESTADO.md",
@@ -278,6 +278,10 @@
     "mudancas": 6
    },
    {
+    "arquivo": "supabase/functions/copilot-live/index.ts",
+    "mudancas": 6
+   },
+   {
     "arquivo": "supabase/functions/message-delivery/index.test.ts",
     "mudancas": 6
    },
@@ -291,10 +295,6 @@
    },
    {
     "arquivo": "docs/audits/edge-functions-authz-coverage.md",
-    "mudancas": 5
-   },
-   {
-    "arquivo": "docs/contexto/regras/manual/regras.md",
     "mudancas": 5
    }
   ],
@@ -314,9 +314,9 @@
   ]
  },
  "contagens": {
-  "arquivos_total": 15744,
-  "arquivos_codigo": 5866,
-  "linhas_codigo": 1134445,
+  "arquivos_total": 15746,
+  "arquivos_codigo": 5868,
+  "linhas_codigo": 1134798,
   "rotas": 18,
   "rotas_http_backend": 11,
   "vistas_por_id": 55,
@@ -328,7 +328,7 @@
   "tabelas": 222,
   "migrations": 1150,
   "cron_jobs": 29,
-  "testes": 3211,
+  "testes": 3212,
   "workflows": 24,
   "scripts": 451,
   "docs_md": 4083
@@ -803,8 +803,8 @@
    "linhas": 1708
   },
   "supabase/functions": {
-   "arquivos": 428,
-   "linhas": 128803
+   "arquivos": 430,
+   "linhas": 129156
   },
   "tailwind.config.ts": {
    "arquivos": 1,
