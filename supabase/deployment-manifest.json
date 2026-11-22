@@ -521,8 +521,8 @@
     },
     {
       "path": "supabase/functions/assistant-gateway/index.ts",
-      "bytes": 17675,
-      "sha256": "7cdb4e0bcd9ca1812ea4bac96b09933e7c0f529dd6bac84a610dda257577aa91"
+      "bytes": 17664,
+      "sha256": "004841a92964b24e4b65070eb4ae8b8b8f7b0439b675ef18e59d034c8fad7281"
     },
     {
       "path": "supabase/functions/auth-login/index.ts",
@@ -1454,7 +1454,7 @@
       "name": "assistant-gateway",
       "entrypoint": "supabase/functions/assistant-gateway/index.ts",
       "verify_jwt": true,
-      "source_sha256": "7c0087b07a58b1b4357623dbdcb173294b9ac81ae091d686867e93195304d196",
+      "source_sha256": "73f30462ba8c9aad31d842822209ad60b9c2ddb450016039d3a8445799f58ed6",
       "source_files": [
         "supabase/functions/_shared/ai-feature-flags.ts",
         "supabase/functions/_shared/ai-guards.ts",
@@ -2850,5 +2850,5 @@
       ]
     }
   ],
-  "manifest_sha256": "8ef4c407195b8e65754f8be38e461b24fedea20bf94a8629da5e67e878a9cb1e"
+  "manifest_sha256": "d91f01ab730c8c74962814a0b95ef583968487cdbcaebb9c5326e8884b4974ce"
 }

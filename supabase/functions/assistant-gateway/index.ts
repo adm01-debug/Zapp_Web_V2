@@ -16,7 +16,7 @@
  *  - capacidade que falha aparece em `errors[]` e o resto da resposta continua;
  *  - nada é gravado: a porta única lê e responde (escrever é da Fase 2).
  */
-import { createClient, type SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.45.4";
+import { createClient, type SupabaseClient } from "npm:@supabase/supabase-js@2.87.1";
 import { errorResponse, handleCors, jsonResponse, Logger, requireAuth } from "../_shared/validation.ts";
 import { enforceAiGuards } from "../_shared/ai-guards.ts";
 import { capabilityFlagKeyForFunction, readCapabilityFlag } from "../_shared/ai-feature-flags.ts";
