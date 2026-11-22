@@ -7702,7 +7702,7 @@
     "AIConversationAssistant"
    ],
    "export_default": null,
-   "linhas": 363,
+   "linhas": 364,
    "dominio": "components/inbox",
    "hooks_locais": [
     "useAiRequestGeneration",
@@ -7857,7 +7857,7 @@
     "AIEnhanceButton"
    ],
    "export_default": null,
-   "linhas": 200,
+   "linhas": 201,
    "dominio": "components/inbox",
    "hooks_locais": [],
    "tabelas": [],
@@ -7873,7 +7873,7 @@
     "AIRewriteButton"
    ],
    "export_default": null,
-   "linhas": 149,
+   "linhas": 150,
    "dominio": "components/inbox",
    "hooks_locais": [],
    "tabelas": [],
@@ -9278,7 +9278,7 @@
     "ConversationSummary"
    ],
    "export_default": null,
-   "linhas": 180,
+   "linhas": 181,
    "dominio": "components/inbox",
    "hooks_locais": [
     "useAiRequestGeneration",

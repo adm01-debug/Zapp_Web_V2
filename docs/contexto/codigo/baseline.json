@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "85feab2a4228fbe0eda82a58c692ad37bfb8d629",
+  "commit": "1669013eabf0b95dd04f69c74a37e06727adb63f",
   "branch": "main",
-  "data_commit": "2026-11-21T18:19:58-03:00",
+  "data_commit": "2026-11-21T21:06:08-03:00",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "1669013e",
+    "data": "2026-11-21",
+    "assunto": "feat(lgpd): mascara dados sensiveis antes de enviar texto a IA em 5 pontos (#3308)"
+   },
    {
     "sha": "85feab2a",
     "data": "2026-11-21",
@@ -126,14 +131,9 @@
     "sha": "a5fd198a",
     "data": "2026-11-19",
     "assunto": "fix(seguranca): URL do CRM externo deixa de virar href/src sem guard (#3281)"
-   },
-   {
-    "sha": "56442637",
-    "data": "2026-11-19",
-    "assunto": "chore(e2e): nao carregar o axe do app sob E2E, e guard com dente (#3279)"
    }
   ],
-  "arquivos_mudados_7d": 7378,
+  "arquivos_mudados_7d": 7374,
   "pastas_mais_mudadas_30d": [
    {
     "pasta": "docs/contexto/supabase",
@@ -145,7 +145,7 @@
    },
    {
     "pasta": "src/components/inbox",
-    "mudancas": 726
+    "mudancas": 730
    },
    {
     "pasta": "docs/reconciliation/reaudit",
@@ -203,7 +203,7 @@
    },
    {
     "arquivo": "ESTADO.md",
-    "mudancas": 17
+    "mudancas": 18
    },
    {
     "arquivo": "docs/talkx/ESTADOS.md",
@@ -316,7 +316,7 @@
  "contagens": {
   "arquivos_total": 15718,
   "arquivos_codigo": 5842,
-  "linhas_codigo": 1130852,
+  "linhas_codigo": 1130857,
   "rotas": 18,
   "rotas_http_backend": 11,
   "vistas_por_id": 55,
@@ -728,7 +728,7 @@
   },
   "src/components": {
    "arquivos": 2288,
-   "linhas": 389318
+   "linhas": 389322
   },
   "src/config": {
    "arquivos": 3,
@@ -748,7 +748,7 @@
   },
   "src/hooks": {
    "arquivos": 1022,
-   "linhas": 166261
+   "linhas": 166262
   },
   "src/i18n": {
    "arquivos": 2,

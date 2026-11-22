@@ -2,7 +2,7 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "nos": 2731,
- "arestas": 9337,
+ "arestas": 9342,
  "hubs": [
   {
    "arquivo": "src/lib/utils.ts",
@@ -650,7 +650,7 @@
   },
   {
    "modulo": "hooks/inbox",
-   "depende_de": 19,
+   "depende_de": 20,
    "importado_por": 6
   },
   {

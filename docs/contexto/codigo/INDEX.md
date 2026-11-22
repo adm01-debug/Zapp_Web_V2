@@ -1,7 +1,7 @@
 # Contexto do projeto para agentes de IA
 
 GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.
-Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR dela) a cada push em `main` e a cada 10 minutos pelo workflow `contexto.yml`; índice único das três fontes em `docs/contexto/00-INDEX.md`. Gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `85feab2a4228fbe0eda82a58c692ad37bfb8d629` (2026-11-21T18:19:58-03:00).
+Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR dela) a cada push em `main` e a cada 10 minutos pelo workflow `contexto.yml`; índice único das três fontes em `docs/contexto/00-INDEX.md`. Gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `1669013eabf0b95dd04f69c74a37e06727adb63f` (2026-11-21T21:06:08-03:00).
 
 ## Como usar (leia antes de planejar ou executar qualquer tarefa)
 1. **Tela/rota/menu** → `rotas.json` (url/vista/menu → arquivo → hooks → tabelas → edges; `rotas_http_backend` para APIs) e `modulos.json` (módulo inteiro + dependências entre módulos).
@@ -36,7 +36,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 |---|---|
 | arquivos_total | 15718 |
 | arquivos_codigo | 5842 |
-| linhas_codigo | 1130852 |
+| linhas_codigo | 1130857 |
 | rotas | 18 |
 | rotas_http_backend | 11 |
 | vistas_por_id | 55 |
@@ -110,7 +110,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 | components/settings | 2 | 2 | 44 | 46 | 8 | 29 |
 | components/talkx | 1 | 2 | 104 | 77 | 7 | 24 |
 | components/tasks | 1 | 1 | 51 | 27 | 2 | 11 |
-| components/team-chat | 1 | 1 | 27 | 66 | 9 | 15 |
+| components/team-chat | 1 | 1 | 27 | 67 | 9 | 15 |
 | components/theme | 0 | 0 | 5 | 2 | 0 | 0 |
 | components/transcriptions | 1 | 1 | 2 | 4 | 0 | 1 |
 | components/transitions | 0 | 0 | 6 | 2 | 0 | 0 |
@@ -130,7 +130,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 | hooks/evolution | 0 | 0 | 5 | 4 | 0 | 0 |
 | hooks/gamification | 0 | 0 | 6 | 13 | 2 | 6 |
 | hooks/gmail | 0 | 0 | 5 | 2 | 0 | 2 |
-| hooks/inbox | 0 | 0 | 20 | 68 | 7 | 26 |
+| hooks/inbox | 0 | 0 | 20 | 69 | 7 | 26 |
 | hooks/integrations | 0 | 0 | 61 | 108 | 14 | 31 |
 | hooks/performance | 0 | 0 | 5 | 9 | 0 | 0 |
 | hooks/realtime | 0 | 0 | 12 | 17 | 2 | 5 |
@@ -395,14 +395,14 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - possiveis_segredos_no_codigo: 6 — ex.: analise-prs/resgate-261118-lote3/claude_pink/cool-dijkstra-xk9ek2/scripts/ci/edge-coverage-authz.unit.mjs:397, analise-prs/resgate-261118-lote3/claude_pink/cool-dijkstra-xk9ek2/scripts/edge-deploy/redigir-log.unit.mjs:38, scripts/ai-context/cenarios.mjs:102
 
 ## Grafo de código (graphify)
-- 102849 nós · 174473 arestas · 9251 comunidades · grafo do commit `85feab2a`
-- comunidades maiores: Communities (5953 total, 1987 thin omitted) (3946), react (1140), src/components/ui/badge.tsx (979), lucide-react (978), vitest (879), TalkXSuppression.tsx (772), cn (745), ref_node_fs (654), avatar.tsx (578), validation.ts (573), DashboardView.tsx (542), useCRMIntegrationEnabled (467)
+- 102849 nós · 174488 arestas · 9255 comunidades · grafo do commit `1669013e`
+- comunidades maiores: Communities (5953 total, 1987 thin omitted) (3946), react (1323), lucide-react (1163), vitest (888), utils.ts (799), chat.ts (735), TalkXSuppression.tsx (678), cn (676), ref_node_fs (654), DashboardView.tsx (648), validation.ts (573), ref_https (439)
 - símbolos mais chamados: cn() (src/lib/utils.ts), useAuth() (src/hooks/auth/useAuth.tsx), jsonResponse() (supabase/functions/_shared/validation.ts), errorResponse() (supabase/functions/_shared/validation.ts), handleCors() (supabase/functions/_shared/validation.ts), fail() (scripts/e2e-isolated/network-proof-policy.mjs), Logger (supabase/functions/_shared/validation.ts), requireEnv() (supabase/functions/_shared/validation.ts), fmtInt() (src/components/talkx/kit/format.ts), fromTable() (src/lib/supabaseHelpers.ts), useUserRole() (src/hooks/system/useUserRole.ts), validationErrorResponse() (supabase/functions/_shared/schemas.ts)
 - consulta local: `graphify query "<pergunta>"`, `graphify path "<A>" "<B>"`, `graphify explain "<X>"`
 
 ## Hotspots (arquivos mais alterados, 90 dias)
 - supabase/deployment-manifest.json (30)
-- ESTADO.md (17)
+- ESTADO.md (18)
 - docs/talkx/ESTADOS.md (15)
 - scripts/db-audit/grants-baseline.json (12)
 - src/integrations/supabase/types.ts (12)
@@ -523,6 +523,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - CHANGELOG topo: [Unreleased]
 
 ## Últimos commits
+- 2026-11-21 `1669013e` feat(lgpd): mascara dados sensiveis antes de enviar texto a IA em 5 pontos (#3308)
 - 2026-11-21 `85feab2a` feat(talkx): monta orfaos RADAR (decision maker/stakeholders/ocasiao) e SpeedSelector no header (#3307)
 - 2026-11-21 `7f2b4e62` feat(talkx): monta cards órfãos X149/X144 (Fila por Segmento + Linha do Tempo Operacional) no report de campanha (#3306)
 - 2026-11-21 `be88b1e6` fix(ci): usa fileURLToPath no caminho do script W98 (teste 15) (#3305)
@@ -537,7 +538,6 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - 2026-11-21 `f4a2a776` fix(crm-integration): restaura CRON_SECRET apos testes que o setam (#3296)
 - 2026-11-21 `01737c9e` feat: unifica relatorios agendados do dashboard na edge por configId com cron
 - 2026-11-20 `bf81b135` docs(goal): backlog verificado byte a byte (Fase 1) - 1090 pendências (#3293)
-- 2026-11-20 `2e705429` docs(fase0): linha de base e regras de negocio da Fase 0 do GOAL (#3292)
 
 ## Arquivos deste diretório
 - `docs/contexto/codigo/rotas.json`

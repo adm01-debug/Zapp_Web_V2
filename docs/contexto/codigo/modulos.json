@@ -2774,7 +2774,7 @@
    "modulo": "components/inbox",
    "arquivos": 265,
    "testes": 342,
-   "linhas": 46095,
+   "linhas": 46099,
    "itens_menu": [
     "Chat"
    ],
@@ -7465,6 +7465,7 @@
     "useCreateDepartmentInvite",
     "useCreateTeamConversation",
     "useCustomEmojis",
+    "useDataMasking",
     "useDebounce",
     "useDeleteConversation",
     "useDeleteDepartmentInvite",
@@ -10006,7 +10007,8 @@
    },
    "importado_por_outros_modulos": [
     "components/copilot",
-    "components/inbox"
+    "components/inbox",
+    "hooks/inbox"
    ],
    "depende_de_modulos": [
     "data/copilot",
@@ -10693,7 +10695,7 @@
    "modulo": "hooks/inbox",
    "arquivos": 20,
    "testes": 36,
-   "linhas": 3710,
+   "linhas": 3711,
    "itens_menu": [],
    "telas": [],
    "rotas_http": [],
@@ -10723,6 +10725,7 @@
     "useContactStats",
     "useConversationPanelInvalidation",
     "useConversationTabCounts",
+    "useDataMasking",
     "useDebouncedValue",
     "useDocumentBadge",
     "useEvolutionApi",
@@ -10904,6 +10907,7 @@
     "hooks/auth",
     "hooks/chat",
     "hooks/communication",
+    "hooks/copilot",
     "hooks/integrations",
     "hooks/realtime",
     "hooks/system",

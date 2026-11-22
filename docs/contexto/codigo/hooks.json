@@ -7590,10 +7590,15 @@
     "useMemo"
    ],
    "canais_realtime": [],
-   "usado_por": 2,
+   "usado_por": 7,
    "usado_por_arquivos": [
+    "src/components/inbox/AIConversationAssistant.tsx",
     "src/components/inbox/AISuggestions.tsx",
-    "src/hooks/copilot/index.ts"
+    "src/components/inbox/ConversationSummary.tsx",
+    "src/components/inbox/chat/AIEnhanceButton.tsx",
+    "src/components/inbox/chat/AIRewriteButton.tsx",
+    "src/hooks/copilot/index.ts",
+    "src/hooks/inbox/useObjectionDetector.ts"
    ],
    "coberto_por_testes": 3
   },
@@ -10169,7 +10174,7 @@
    "hooks_exportados": [
     "useObjectionDetector"
    ],
-   "linhas": 221,
+   "linhas": 222,
    "dominio": "hooks/inbox",
    "tabelas": [],
    "rpcs": [],

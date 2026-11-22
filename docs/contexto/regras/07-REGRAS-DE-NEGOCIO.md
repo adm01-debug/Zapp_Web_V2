@@ -1,6 +1,6 @@
 # 07 · REGRAS DE NEGÓCIO
 
-> Gerado automaticamente por AI Context Sync v1.3.2 · commit `85feab2a42` · branch `main` · 2026-11-21 21:22 UTC
+> Gerado automaticamente por AI Context Sync v1.3.2 · commit `1669013eab` · branch `main` · 2026-11-22 00:07 UTC
 > Não edite à mão — regras humanas vão em `manual/`.
 
 ## A. Regras escritas por humanos (`manual/` — prioridade máxima, nunca sobrescrito)
@@ -2900,7 +2900,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
   ```
 - **generateSummary()** — `src/components/inbox/ConversationSummary.tsx`
   ```
-  if (!canGenerateSummary) { toast.error('O período selecionado precisa ter pelo menos 10 mensagens.'); return; } const request = beginRequest(); setIsLoading(true); try { const { data, error } = await supabase.functions.invoke('ai-conversation-summary', { body: { messages: filteredMessages.map(m => ({ sender: m.sender, content: m.content, created_at: m.created_at })), contactName, contactId, requestId: request.requestId }, }); // IA-048 — a resposta só vale se contato/período ainda forem os do cl …
+  if (!canGenerateSummary) { toast.error('O período selecionado precisa ter pelo menos 10 mensagens.'); return; } const request = beginRequest(); setIsLoading(true); try { const { data, error } = await supabase.functions.invoke('ai-conversation-summary', { body: { messages: filteredMessages.map(m => ({ sender: m.sender, content: mascararParaIA(m.content), created_at: m.created_at })), contactName, contactId, requestId: request.requestId }, }); // IA-048 — a resposta só vale se contato/período aind …
   ```
 - **formatCurrency(v: number | null)** — `src/components/inbox/chat/CrmBadges.tsx`
   ```

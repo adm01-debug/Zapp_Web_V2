@@ -4362,6 +4362,7 @@
    "src/components/inbox/ai-tools/useAnalysisTts.ts",
    "src/components/ui/button.tsx",
    "src/hooks/chat/useConversationAnalyses.ts",
+   "src/hooks/copilot/useDataMasking.ts",
    "src/hooks/inbox/useSentimentAlerts.ts",
    "src/integrations/supabase/client.ts",
    "src/lib/ai-values.ts",
@@ -4564,6 +4565,7 @@
    "src/components/inbox/summary/useSummaryTts.ts",
    "src/components/ui/badge.tsx",
    "src/components/ui/button.tsx",
+   "src/hooks/copilot/useDataMasking.ts",
    "src/integrations/supabase/client.ts",
    "src/lib/aiRequest/context.ts",
    "src/lib/logger.ts"
@@ -5141,6 +5143,7 @@
    "src/components/ui/motion.tsx",
    "src/components/ui/popover.tsx",
    "src/components/ui/tooltip.tsx",
+   "src/hooks/copilot/useDataMasking.ts",
    "src/hooks/ui/use-toast.ts",
    "src/integrations/supabase/client.ts",
    "src/lib/logger.ts",
@@ -5150,6 +5153,7 @@
    "src/components/ui/button.tsx",
    "src/components/ui/popover.tsx",
    "src/components/ui/tooltip.tsx",
+   "src/hooks/copilot/useDataMasking.ts",
    "src/integrations/supabase/client.ts",
    "src/lib/logger.ts",
    "src/lib/utils.ts"
@@ -10703,6 +10707,7 @@
   "src/hooks/inbox/useObjectionDetector.ts": [
    "src/components/inbox/ai-tools/PeriodFilterSelector.tsx",
    "src/components/inbox/ai-tools/ToneSelector.tsx",
+   "src/hooks/copilot/useDataMasking.ts",
    "src/integrations/supabase/client.ts",
    "src/lib/aiRequest/context.ts",
    "src/lib/clipboard.ts"
