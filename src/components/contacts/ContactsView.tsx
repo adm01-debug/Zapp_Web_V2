@@ -17,6 +17,7 @@ import { ContactDialogs } from './ContactDialogs';
 import { ContactToolbar } from './ContactToolbar';
 import { ContactDetailPanel } from './ContactDetailPanel';
 import { ContactContentArea } from './ContactContentArea';
+import { ContactExploreRail } from './ContactExploreRail';
 import { ContactResultsSummary } from './ContactResultsSummary';
 import { ContactCRMDialog } from './ContactCRMDialog';
 import { useContactsViewState } from './useContactsViewState';
@@ -312,6 +313,16 @@ export function ContactsView() {
         onClearFilters={activeFiltersCount > 0 ? clearFilters : undefined}
         getCRMData={getCRMData}
         totalCount={totalCount}
+      />
+
+      {/* ZD-081..084 — carrossel "Explore seus contatos": navegação rápida
+          pelos contatos do recorte atual, abrindo a ficha ao clicar. */}
+      <ContactExploreRail
+        contatos={filteredContacts}
+        onAbrirContato={(id) => {
+          const alvo = filteredContacts.find((item) => item.id === id);
+          if (alvo) setDetailContact(alvo);
+        }}
       />
       </div>
 
