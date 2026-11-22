@@ -3495,6 +3495,36 @@ export type Database = {
         }
         Relationships: []
       }
+      assistant_profiles: {
+        Row: {
+          atividade: string
+          ajuda: string
+          created_at: string
+          foco: string
+          tom: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          atividade?: string
+          ajuda?: string
+          created_at?: string
+          foco?: string
+          tom?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          atividade?: string
+          ajuda?: string
+          created_at?: string
+          foco?: string
+          tom?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       copilot_seller_settings: {
         Row: {
           opted_in: boolean
