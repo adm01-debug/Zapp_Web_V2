@@ -46,6 +46,7 @@ import { GamificationSection } from './overview/GamificationSection';
 import { WidgetConfigSheet } from './WidgetConfigSheet';
 import { useDashboardWidgets } from '@/hooks/analytics/useDashboardWidgets';
 import { useUserRole } from '@/hooks/system/useUserRole';
+import { DailyBriefStrip } from './DailyBriefStrip';
 import { SectionErrorBoundary } from '@/components/ui/section-error-boundary';
 
 const OVERVIEW_TAB = 'overview';
@@ -198,6 +199,9 @@ export function DashboardView() {
               <GreetingBanner personal={!isStaff} />
             </SectionErrorBoundary>
           </div>
+          <SectionErrorBoundary sectionName="Resumo do dia">
+            <DailyBriefStrip />
+          </SectionErrorBoundary>
           {/* Personalização da Visão Geral: monta o WidgetConfigSheet (antes
               existia o componente, mas nada o abria). Fica no topo da aba,
               disponível para staff e agente — o layout persiste por navegador. */}
