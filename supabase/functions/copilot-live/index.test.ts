@@ -457,3 +457,39 @@ Deno.test("copilot-live: Fase 1 — perfil de atuação/foco/tom próprios muda 
     assertEquals(system.includes("Tom preferido de comunicação: direto.\n"), true);
   });
 });
+
+Deno.test("copilot-live: Fase 4 — treino do perfil entra no system prompt", async () => {
+  await cenario({
+    assistant: { atividade: "venda", foco: "fechar pedidos grandes", ajuda: "sempre", tom: "direto" },
+    provedor: () =>
+      json({ model: "modelo-teste", choices: [{ message: { content: "Sugestão de venda." } }], usage: {} }),
+  }, async (calls) => {
+    const res = await chamar(pedido(TICK));
+    assertEquals(res.status, 200);
+    const system = corpoParaOProvedor(calls)?.find((m) => m.role === "system")?.content as string;
+    assertEquals(system.includes("Treino do perfil (venda)"), true);
+    assertEquals(system.includes("Objeções conhecidas"), true);
+  });
+});
+
+Deno.test("copilot-live: Fase 4 — atuações diferentes recebem treinos diferentes", async () => {
+  const sistemPara = async (atividade: string) => {
+    let system = "";
+    await cenario({
+      assistant: { atividade, foco: "", ajuda: "relevante", tom: "consultivo" },
+      provedor: () =>
+        json({ model: "modelo-teste", choices: [{ message: { content: "ok" } }], usage: {} }),
+    }, async (calls) => {
+      const res = await chamar(pedido(TICK));
+      await res.body?.cancel();
+      system = corpoParaOProvedor(calls)?.find((m) => m.role === "system")?.content as string;
+    });
+    return system;
+  };
+
+  const venda = await sistemPara("venda");
+  const supervisao = await sistemPara("supervisao");
+  assertEquals(venda === supervisao, false);
+  assertEquals(venda.includes("Treino do perfil (venda)"), true);
+  assertEquals(supervisao.includes("Treino do perfil (supervisao)"), true);
+});

@@ -20,6 +20,7 @@ import { createClient, type SupabaseClient } from "npm:@supabase/supabase-js@2.8
 import { errorResponse, handleCors, jsonResponse, Logger, requireAuth } from "../_shared/validation.ts";
 import { enforceAiGuards } from "../_shared/ai-guards.ts";
 import { capabilityFlagKeyForFunction, readCapabilityFlag } from "../_shared/ai-feature-flags.ts";
+import { playbookFor, playbookPromptBlock, type AssistantAtuacao } from "../_shared/assistant-playbook.ts";
 import {
   CAPABILITY_FUNCTION,
   CAPABILITY_LABELS,
@@ -217,6 +218,10 @@ export function contextBlock(ctx: SharedContext): string {
     // Sem perfil a resposta continua, mas sem fingir personalização.
     linhas.push("Perfil do vendedor: não configurado (resposta sem personalização).");
   }
+  // Fase 4: o treino da atuação entra no mesmo bloco que já vai para as edges
+  // de capacidade — sem canal novo e sem duplicar o prompt em cada uma.
+  const treino = playbookPromptBlock(playbookFor(ctx.profile?.atividade as AssistantAtuacao | null));
+  if (treino) linhas.push(treino);
   if (ctx.agenda.length > 0) {
     linhas.push(
       `Compromissos futuros com este contato: ${ctx.agenda
@@ -344,8 +349,6 @@ export async function handleAssistantGateway(req: Request, deps: GatewayDeps = {
     const contactId = readContactId(body);
 
     const signals = readIntent(query);
-    const capabilities = routeCapabilities(signals);
-    log.info("assistant-gateway roteou", { capabilities, contactId });
 
     const jwt = (req.headers.get("Authorization") ?? "").replace(/^Bearer\s+/i, "");
     const callCapability = deps.callCapability;
@@ -356,6 +359,16 @@ export async function handleAssistantGateway(req: Request, deps: GatewayDeps = {
     const ctx = deps.readContext
       ? await deps.readContext(userId, contactId)
       : { contactId, contactName: null, profile: null, agenda: [], messages: [], deal: null, sources: [] } as SharedContext;
+
+    // A rota depende do perfil: pedido vago abre o que o treino da atuação marca
+    // como prioritário (Fase 4). Por isso ela vem DEPOIS da leitura de contexto.
+    const capabilities = routeCapabilities(
+      signals,
+      // Sem perfil configurado não há treino: a rota vaga volta ao mínimo útil
+      // em vez de assumir a atuação default como se fosse escolha da pessoa.
+      ctx.profile ? playbookFor(ctx.profile.atividade).prioritarias as AssistantCapability[] : [],
+    );
+    log.info("assistant-gateway roteou", { capabilities, contactId });
 
     const enabled = deps.capabilityEnabled ?? (async () => true);
     const errors: string[] = [];

@@ -211,6 +211,28 @@ Com identidade (1), memória (2) e porta única (3) de pé, o treino é o que tr
 Cada perfil ganha seu conjunto de instruções e seu conjunto de testes. O catálogo de objeções
 (`copilot_objection_catalog`, hoje com 0 linhas) é semeado aqui.
 
+**Status: implementado** (PR da Fase 4, branch `claude/feat-fase4-treino-por-perfil-*`).
+
+| Atuação | Instruções | Capacidades prioritárias | Objeções no treino |
+| --- | --- | --- | --- |
+| `venda` | ação comercial concreta; não abrir com desconto; sinal de compra conduz ao fechamento | temperatura do lead, objeção, produto, agenda | preco, prazo, concorrente, chefe, quantidade_minima |
+| `compra` | comparar opções e apontar risco; prometido ≠ entregue | prazo, produto, resumo, agenda | prazo, preco, qualidade |
+| `atendimento` | resposta curta e pronta; assunto fora de alcance vira encaminhamento | sugestão de resposta, resumo, agenda | — |
+| `supervisao` | padrão do time e onde agir, não frase para o cliente | temperatura do lead, resumo, agenda | — |
+
+O treino é um módulo puro (`supabase/functions/_shared/assistant-playbook.ts`), sem rede nem banco.
+Consumo hoje:
+1. `assistant-gateway` — o bloco do perfil entra no contexto enviado a cada edge de capacidade e, em
+   pedido sem sinal explícito ("oi, tudo bem?"), as capacidades prioritárias da atuação decidem a rota.
+2. `copilot-live` — o mesmo bloco entra no system prompt da sugestão em tempo real.
+3. `ai-objection-handler` — instruído a preferir o tratamento já catalogado do perfil ao genérico.
+
+**Sobre `copilot_objection_catalog`:** não é semeada, e o motivo é de schema — `conversation_id` e
+`submitted_by` são `NOT NULL`, então a tabela representa objeção de UMA conversa, não um catálogo
+global; semear exigiria DDL (regra 8). O catálogo de referência do treino vive versionado no código e
+coberto por teste (`assistant-playbook.test.ts`, que trava os tipos nos que a edge realmente classifica).
+A tabela segue sendo o histórico real de objeções por conversa.
+
 ---
 
 ## 6. O que depende de você

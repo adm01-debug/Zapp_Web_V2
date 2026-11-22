@@ -309,3 +309,68 @@ Deno.test("loadSharedContext não é chamado quando readContext é injetado", as
   // e é uma função, sem chamá-lo (não há PostgREST no teste).
   assertEquals(typeof loadSharedContext, "function");
 });
+// Fase 4 — treino por perfil. O que muda por atuação entra no prompt do contexto
+// e na escolha de capacidades quando o pedido é vago; nada muda quando o pedido
+// traz sinal explícito.
+
+Deno.test("Fase 4: o treino da atuação entra no bloco de contexto enviado às edges", async () => {
+  const { deps: d, chamadas } = deps({
+    readContext: async () => contextoCompleto({
+      profile: { atividade: "venda", foco: "fechar até sexta", ajuda: "relevante", tom: "direto" },
+    }),
+  });
+  const res = await handleAssistantGateway(pedido("resuma a conversa"), d);
+  assertEquals(res.status, 200);
+
+  const ctx = String(chamadas[0].body.context);
+  assertEquals(ctx.includes("Treino do perfil (venda)"), true);
+  assertEquals(ctx.includes("nunca comece baixando o valor"), true);
+});
+
+Deno.test("Fase 4: perfis diferentes produzem contexto diferente para a mesma pergunta", async () => {
+  const perguntar = async (atividade: string) => {
+    const { deps: d, chamadas } = deps({
+      readContext: async () => contextoCompleto({
+        profile: { atividade, foco: "", ajuda: "relevante", tom: "consultivo" },
+      }),
+    });
+    await handleAssistantGateway(pedido("resuma a conversa"), d);
+    return String(chamadas[0].body.context);
+  };
+
+  const venda = await perguntar("venda");
+  const compra = await perguntar("compra");
+  assertEquals(venda === compra, false);
+  assertEquals(compra.includes("Treino do perfil (compra)"), true);
+});
+
+Deno.test("Fase 4: pedido vago usa as capacidades prioritárias da atuação", async () => {
+  const { deps: d } = deps({
+    readContext: async () => contextoCompleto({
+      profile: { atividade: "atendimento", foco: "", ajuda: "relevante", tom: "consultivo" },
+    }),
+  });
+  const res = await handleAssistantGateway(pedido("oi, tudo bem?"), d);
+  assertEquals(res.status, 200);
+  const body = await res.json() as { capabilities: string[] };
+  // `atendimento` prioriza sugestão de resposta — não é o mínimo genérico.
+  assertEquals(body.capabilities, ["agenda", "resumo_conversa", "sugerir_resposta"]);
+});
+
+Deno.test("Fase 4: pedido com sinal explícito ignora a prioridade do perfil", async () => {
+  const { deps: d } = deps({
+    readContext: async () => contextoCompleto({
+      profile: { atividade: "supervisao", foco: "", ajuda: "relevante", tom: "formal" },
+    }),
+  });
+  const res = await handleAssistantGateway(pedido("qual o prazo de entrega?"), d);
+  const body = await res.json() as { capabilities: string[] };
+  assertEquals(body.capabilities, ["calcular_prazo"]);
+});
+
+Deno.test("Fase 4: sem perfil a rota vaga continua no mínimo útil", async () => {
+  const { deps: d } = deps({ readContext: async () => contextoCompleto({ profile: null }) });
+  const res = await handleAssistantGateway(pedido("oi, tudo bem?"), d);
+  const body = await res.json() as { capabilities: string[] };
+  assertEquals(body.capabilities, ["agenda", "resumo_conversa"]);
+});
