@@ -34,7 +34,7 @@ export interface AssistantPlaybook {
   /**
    * Catálogo base de objeções do perfil, usado como referência de tratamento.
    *
-   * `copilot_objection_catalog` guarda objeção POR CONVERSA (`conversation_id` e
+   * O histórico de objeções do banco é POR CONVERSA (`conversation_id` e
    * `submitted_by` são NOT NULL), então não serve de catálogo global — semear
    * ali exigiria DDL. O catálogo que o treino precisa vive aqui, versionado no
    * código e coberto por teste; a tabela segue sendo o histórico real.

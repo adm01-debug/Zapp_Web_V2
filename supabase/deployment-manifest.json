@@ -121,8 +121,8 @@
     },
     {
       "path": "supabase/functions/_shared/assistant-playbook.ts",
-      "bytes": 6596,
-      "sha256": "56b89ffa09535d084fbd711fe8762600566f2afed3090439060f8d8a537f51f9"
+      "bytes": 6590,
+      "sha256": "4d9a7ce006290bb44d7cd6aad985ac753b83798f7be245fe6a03de642262666b"
     },
     {
       "path": "supabase/functions/_shared/contracts.ts",
@@ -1459,7 +1459,7 @@
       "name": "assistant-gateway",
       "entrypoint": "supabase/functions/assistant-gateway/index.ts",
       "verify_jwt": true,
-      "source_sha256": "e3fe9670212f3ac6beaeaa742baf320d82a5f640ae34c080c26ed3626e648429",
+      "source_sha256": "3e94bb1702023df33bf555b25a112438f7b114da53f5231c78a51ac47f21cc0b",
       "source_files": [
         "supabase/functions/_shared/ai-feature-flags.ts",
         "supabase/functions/_shared/ai-guards.ts",
@@ -1717,7 +1717,7 @@
       "name": "copilot-live",
       "entrypoint": "supabase/functions/copilot-live/index.ts",
       "verify_jwt": true,
-      "source_sha256": "ea98845c0822f5c8b4c5687f6bd8b78b46bda1342fd4322df24bbf52aa83cbee",
+      "source_sha256": "79ad44f54789ccb6659a72c60271d237636a8b98297f78de9aaa1c5b7dc286ed",
       "source_files": [
         "supabase/functions/_shared/ai-budget.ts",
         "supabase/functions/_shared/ai-capabilities.ts",
@@ -2857,5 +2857,5 @@
       ]
     }
   ],
-  "manifest_sha256": "aed8c05c5db6b415aad1abbedaa16eebaabdbd0f614e74c7876ae449e9d29197"
+  "manifest_sha256": "f5cf77c3f209e980668a0278ab94e72d05e5a3c43d2b6ed2f6724b9f52a3d019"
 }
