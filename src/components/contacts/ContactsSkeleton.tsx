@@ -66,7 +66,7 @@ export function ContactsSkeleton({ viewMode, gridColumns }: ContactsSkeletonProp
 
   if (viewMode === 'grid') {
     return (
-      <div className={cn("grid gap-3", GRID_COLUMNS_CLASS[gridColumns] || GRID_COLUMNS_CLASS[4])}>
+      <div className={cn("grid gap-4 max-[899px]:gap-[14px] max-[559px]:gap-[13px]", GRID_COLUMNS_CLASS[gridColumns] || GRID_COLUMNS_CLASS[4])}>
         {Array.from({ length: 8 }).map((_, i) => (
           <div
             key={i}
@@ -99,7 +99,6 @@ export function ContactsSkeleton({ viewMode, gridColumns }: ContactsSkeletonProp
         {Array.from({ length: 8 }).map((_, i) => (
           <motion.div key={i} initial={{ opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.04 }}
             className="flex items-center gap-[13px] p-[9px] max-[559px]:gap-[10px] rounded-[10px] border border-[hsl(var(--contacts-line))] bg-[hsl(var(--contacts-raised))]">
-            <div className="w-4 h-4 rounded bg-muted animate-pulse shrink-0" />
             <div className="w-[82px] max-[559px]:w-[73px] shrink-0 h-[102px] max-[559px]:h-[119px] rounded-[7px] bg-muted animate-pulse" />
             <div className="flex-1 space-y-2">
               <div className="h-5 w-32 rounded bg-muted animate-pulse" />

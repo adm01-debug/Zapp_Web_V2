@@ -1,7 +1,5 @@
 import { useState, useMemo } from 'react';
 import { motion } from 'framer-motion';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
@@ -9,23 +7,34 @@ import {
   DropdownMenuSeparator, DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import {
-  MessageSquare, Edit, Trash2, MoreVertical, Phone, Mail,
-  Briefcase, Calendar, Tag, ArrowUp, ArrowDown, ArrowUpDown,
+  MessageSquare, Edit, Trash2, MoreVertical, ArrowUpRight, Tag,
+  ArrowUp, ArrowDown, ArrowUpDown, Columns3,
 } from 'lucide-react';
-import { format } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
-import { getAvatarColor, getInitials } from '@/lib/avatar-colors';
 import { usePointerCoarse } from '@/components/tasks/shared/pointerMedia';
-import { CONTACT_TYPE_CONFIG } from './contactTypeConfig';
+import { ContactTypeBadge } from './ContactTypeBadge';
 import { CompanyLogo } from './CompanyLogo';
+import { ContactPortrait } from './ContactPortrait';
 import { HighlightText } from './HighlightText';
+import { toContactDisplay } from './contactDisplay';
 import type { Contact } from './types';
 import { canDeleteContact } from './contactPermissions';
 import type { CRMBatchResult } from '@/hooks/crm/useExternalContact360Batch';
 
 type SortField = 'name' | 'type' | 'phone' | 'email' | 'company' | 'job_title' | 'created_at';
 type SortDir = 'asc' | 'desc';
+
+/** ZD-064 — colunas que o usuário pode esconder (o nome fica sempre). */
+type ColumnKey = 'type' | 'phone' | 'email' | 'company' | 'job_title' | 'tags';
+
+const COLUNAS: Array<{ key: ColumnKey; label: string }> = [
+  { key: 'type', label: 'Tipo' },
+  { key: 'phone', label: 'Telefone' },
+  { key: 'email', label: 'Email' },
+  { key: 'company', label: 'Empresa' },
+  { key: 'job_title', label: 'Cargo' },
+  { key: 'tags', label: 'Etiquetas' },
+];
 
 interface ContactsTableProps {
   contacts: Contact[];
@@ -39,6 +48,10 @@ interface ContactsTableProps {
   searchQuery?: string;
 }
 
+/**
+ * ZD-065 — ordenação única e explícita: cada `th` sortável envolve um `<button>`
+ * real (alcançável por teclado) com a seta do design e `aria-sort` correto no `th`.
+ */
 function SortableHeader({ label, field, sortField, sortDir, onSort }: {
   label: string; field: SortField; sortField: SortField | null; sortDir: SortDir;
   onSort: (field: SortField) => void;
@@ -46,26 +59,35 @@ function SortableHeader({ label, field, sortField, sortDir, onSort }: {
   const isActive = sortField === field;
   return (
     <th
-      className="text-left p-3 text-xs font-semibold tracking-normal text-muted-foreground cursor-pointer select-none hover:text-foreground transition-colors group"
-      onClick={() => onSort(field)}
+      aria-sort={isActive ? (sortDir === 'asc' ? 'ascending' : 'descending') : 'none'}
+      className="whitespace-nowrap border-b border-[hsl(var(--contacts-line))] bg-[hsl(var(--contacts-raised))] p-[13px_11px] text-left font-medium text-[hsl(var(--contacts-muted))]"
     >
-      <div className="flex items-center gap-1">
+      <button
+        type="button"
+        onClick={() => onSort(field)}
+        className="flex items-center gap-1.5 text-[11px] font-medium text-inherit transition-colors hover:text-[hsl(var(--contacts-ink))]"
+      >
         {label}
         {isActive ? (
-          sortDir === 'asc' ? <ArrowUp className="w-3 h-3 text-primary" /> : <ArrowDown className="w-3 h-3 text-primary" />
+          sortDir === 'asc'
+            ? <ArrowUp className="h-[11px] w-[11px] text-primary" />
+            : <ArrowDown className="h-[11px] w-[11px] text-primary" />
         ) : (
-          <ArrowUpDown className="w-3 h-3 opacity-0 group-hover:opacity-40 transition-opacity" />
+          <ArrowUpDown className="h-[11px] w-[11px] opacity-40" />
         )}
-      </div>
+      </button>
     </th>
   );
 }
 
+/** ZD-063 — tabela no visual `.zc-table` do design. */
 export function ContactsTable({
   contacts, selectedIds, onSelectIds, onOpenDetails, onOpenChat, onEdit, onDelete, getCRMData, searchQuery,
 }: ContactsTableProps) {
   const [sortField, setSortField] = useState<SortField | null>(null);
   const [sortDir, setSortDir] = useState<SortDir>('asc');
+  const [hiddenCols, setHiddenCols] = useState<Set<ColumnKey>>(new Set());
+  const [painelColunas, setPainelColunas] = useState(false);
   // Sem `:hover` real (toque) o `group-hover` nao dispara e a coluna de acoes ficaria
   // inacessivel. No ponteiro grosso ela nasce visivel; no desktop segue no hover e no
   // foco de teclado (`focus-within`).
@@ -78,6 +100,17 @@ export function ContactsTable({
       setSortField(field);
       setSortDir('asc');
     }
+  };
+
+  const ver = (key: ColumnKey) => !hiddenCols.has(key);
+
+  const toggleColuna = (key: ColumnKey) => {
+    setHiddenCols((prev) => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      return next;
+    });
   };
 
   const sortedContacts = useMemo(() => {
@@ -99,165 +132,227 @@ export function ContactsTable({
   }, [contacts, sortField, sortDir]);
 
   return (
-    <div className="overflow-x-auto rounded-[14px] border border-border/70">
-      <table className="w-full" role="grid" aria-label="Lista de contatos">
-        <thead>
-          <tr className="border-b border-border/60 bg-muted/40">
-            <th className="p-3 w-10">
+    <div>
+      {/* ZD-064 — escolha de colunas. Painel inline (não um menu) para não disputar
+          `aria-haspopup="menu"` com o menu de ações de cada linha. */}
+      <div className="mb-2 flex items-center justify-end gap-2">
+        <Button
+          variant="ghost"
+          size="sm"
+          className="h-8 gap-1.5 text-[11px] text-[hsl(var(--contacts-muted))]"
+          aria-expanded={painelColunas}
+          onClick={() => setPainelColunas((v) => !v)}
+        >
+          <Columns3 className="h-3.5 w-3.5" />
+          Colunas
+        </Button>
+      </div>
+      {painelColunas && (
+        <div className="mb-2 flex flex-wrap items-center gap-3 rounded-[10px] border border-[hsl(var(--contacts-line))] bg-[hsl(var(--contacts-raised))] p-3">
+          {COLUNAS.map(({ key, label }) => (
+            <label key={key} className="flex items-center gap-1.5 text-[11px] text-[hsl(var(--contacts-ink))]">
               <Checkbox
-                checked={selectedIds.length === contacts.length && contacts.length > 0}
-                onCheckedChange={(checked) => onSelectIds(checked ? contacts.map(c => c.id) : [])}
-                aria-label="Selecionar todos"
+                checked={ver(key)}
+                onCheckedChange={() => toggleColuna(key)}
+                aria-label={`Mostrar coluna ${label}`}
               />
-            </th>
-            <SortableHeader label="Contato" field="name" sortField={sortField} sortDir={sortDir} onSort={handleSort} />
-            <SortableHeader label="Tipo" field="type" sortField={sortField} sortDir={sortDir} onSort={handleSort} />
-            <SortableHeader label="Telefone" field="phone" sortField={sortField} sortDir={sortDir} onSort={handleSort} />
-            <SortableHeader label="Email" field="email" sortField={sortField} sortDir={sortDir} onSort={handleSort} />
-            <SortableHeader label="Empresa" field="company" sortField={sortField} sortDir={sortDir} onSort={handleSort} />
-            <SortableHeader label="Cargo" field="job_title" sortField={sortField} sortDir={sortDir} onSort={handleSort} />
-            <th className="text-left p-3 text-xs font-semibold tracking-normal text-muted-foreground">Etiquetas</th>
-            <th className="text-right p-3 text-xs font-semibold tracking-normal text-muted-foreground">Ações</th>
-          </tr>
-        </thead>
-        <tbody data-testid="contacts-table-body">
-          {sortedContacts.map((contact, index) => {
-            const typeConfig = CONTACT_TYPE_CONFIG[contact.contact_type || 'cliente'] || CONTACT_TYPE_CONFIG.cliente;
-            const avatarColors = getAvatarColor(contact.name);
-            const crmData = getCRMData?.(contact.phone);
-            return (
-              <motion.tr
-                key={contact.id}
-                initial={{ opacity: 0, y: 6 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.015 }}
-                className={cn(
-                  "h-14 border-b border-border/60 last:border-0 hover:bg-muted/30 transition-all duration-150 cursor-pointer group",
-                  selectedIds.includes(contact.id) && "ring-1 ring-primary border-primary/60 bg-primary/5"
-                )}
-                onClick={() => onOpenDetails(contact.id)}
+              {label}
+            </label>
+          ))}
+        </div>
+      )}
+
+      <div className="overflow-x-auto rounded-[10px] border border-[hsl(var(--contacts-line))] bg-[hsl(var(--contacts-panel))]">
+        <table className="w-full border-collapse text-[11px]" role="grid" aria-label="Lista de contatos">
+          <thead>
+            <tr>
+              <th
+                aria-label="Seleção"
+                className="w-10 border-b border-[hsl(var(--contacts-line))] bg-[hsl(var(--contacts-raised))] p-[13px_11px]"
               >
-                <td className="p-3" onClick={(e) => e.stopPropagation()}>
-                  <Checkbox
-                    checked={selectedIds.includes(contact.id)}
-                    onCheckedChange={(checked) =>
-                      onSelectIds(checked ? [...selectedIds, contact.id] : selectedIds.filter(id => id !== contact.id))
-                    }
-                    aria-label={selectedIds.includes(contact.id) ? `Desmarcar ${contact.name}` : `Selecionar ${contact.name}`}
-                  />
-                </td>
-                <td className="p-3">
-                  <div className="flex items-center gap-3">
-                    <div className="relative">
-                      <Avatar className="w-9 h-9">
-                        <AvatarImage src={contact.avatar_url || undefined} alt={contact.name || 'Avatar'} />
-                        <AvatarFallback className={cn('font-semibold text-xs', avatarColors.bg, avatarColors.text)}>
-                          {getInitials(contact.name)}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div className={cn(
-                        "absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-background",
-                        typeConfig.dotBg
-                      )} />
-                    </div>
-                    <div className="min-w-0">
-                      <HighlightText text={`${contact.name} ${contact.surname || ''}`.trim()} highlight={searchQuery} className="font-semibold text-sm block truncate" />
-                      {contact.nickname && <span className="text-2xs text-muted-foreground">({contact.nickname})</span>}
-                    </div>
-                  </div>
-                </td>
-                <td className="p-3">
-                  <Badge
-                    variant="outline"
-                    className={cn("h-6 px-2.5 rounded-full text-xs font-medium gap-1.5", typeConfig.badgeClass)}
-                  >
-                    {typeConfig.iconNode}
-                    {typeConfig.label}
-                  </Badge>
-                </td>
-                <td className="p-3">
-                  <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                    <Phone className="w-3.5 h-3.5 shrink-0" />
-                    <span className="font-mono text-2xs">{contact.phone}</span>
-                  </div>
-                </td>
-                <td className="p-3">
-                  {contact.email ? (
-                    <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                      <Mail className="w-3.5 h-3.5 shrink-0" />
-                      <span className="truncate max-w-[160px] text-2xs">{contact.email}</span>
-                    </div>
-                  ) : <span className="text-muted-foreground/30">—</span>}
-                </td>
-                <td className="p-3">
-                  {contact.company ? (
-                    <div className="flex items-center gap-1.5 text-xs font-medium">
-                      <CompanyLogo
-                        logoUrl={crmData?.logo_url}
-                        companyName={crmData?.company_name}
-                        fallbackCompanyName={contact.company}
-                        size="xs"
+                <Checkbox
+                  checked={selectedIds.length === contacts.length && contacts.length > 0}
+                  onCheckedChange={(checked) => onSelectIds(checked ? contacts.map(c => c.id) : [])}
+                  aria-label="Selecionar todos"
+                />
+              </th>
+              <SortableHeader label="Contato" field="name" sortField={sortField} sortDir={sortDir} onSort={handleSort} />
+              {ver('type') && <SortableHeader label="Tipo" field="type" sortField={sortField} sortDir={sortDir} onSort={handleSort} />}
+              {ver('phone') && <SortableHeader label="Telefone" field="phone" sortField={sortField} sortDir={sortDir} onSort={handleSort} />}
+              {ver('email') && <SortableHeader label="Email" field="email" sortField={sortField} sortDir={sortDir} onSort={handleSort} />}
+              {ver('company') && <SortableHeader label="Empresa" field="company" sortField={sortField} sortDir={sortDir} onSort={handleSort} />}
+              {ver('job_title') && <SortableHeader label="Cargo" field="job_title" sortField={sortField} sortDir={sortDir} onSort={handleSort} />}
+              {ver('tags') && (
+                <th className="whitespace-nowrap border-b border-[hsl(var(--contacts-line))] bg-[hsl(var(--contacts-raised))] p-[13px_11px] text-left text-[11px] font-medium text-[hsl(var(--contacts-muted))]">
+                  Etiquetas
+                </th>
+              )}
+              <th className="whitespace-nowrap border-b border-[hsl(var(--contacts-line))] bg-[hsl(var(--contacts-raised))] p-[13px_11px] text-right text-[11px] font-medium text-[hsl(var(--contacts-muted))]">
+                Ações
+              </th>
+            </tr>
+          </thead>
+          <tbody data-testid="contacts-table-body">
+            {sortedContacts.map((contact, index) => {
+              const display = toContactDisplay(contact, { companyName: getCRMData?.(contact.phone)?.company_name });
+              const crmData = getCRMData?.(contact.phone);
+              const isSelected = selectedIds.includes(contact.id);
+              return (
+                <motion.tr
+                  key={contact.id}
+                  initial={{ opacity: 0, y: 6 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: index * 0.015 }}
+                  data-contact-nav="item"
+                  tabIndex={0}
+                  onKeyDown={(e) => { if (e.key === 'Enter' && e.target === e.currentTarget) { e.preventDefault(); onOpenDetails(contact.id); } }}
+                  className={cn(
+                    "group cursor-pointer transition-colors hover:bg-[hsl(var(--contacts-raised))]",
+                    isSelected && "ring-1 ring-primary border-primary/60 bg-primary/5"
+                  )}
+                  onClick={() => onOpenDetails(contact.id)}
+                >
+                  <td className="border-b border-[hsl(var(--contacts-soft-line))] p-[14px_11px] last:border-0">
+                    <Checkbox
+                      checked={isSelected}
+                      onCheckedChange={(checked) =>
+                        onSelectIds(checked ? [...selectedIds, contact.id] : selectedIds.filter(id => id !== contact.id))
+                      }
+                      aria-label={isSelected ? `Desmarcar ${contact.name}` : `Selecionar ${contact.name}`}
+                      onClick={(e) => e.stopPropagation()}
+                    />
+                  </td>
+                  <td className="border-b border-[hsl(var(--contacts-soft-line))] p-[14px_11px]">
+                    <div className="flex min-w-[165px] items-center gap-[9px] text-xs text-[hsl(var(--contacts-ink))]">
+                      <ContactPortrait
+                        contact={contact}
+                        className="h-[39px] w-[35px] shrink-0 rounded-[6px]"
+                        initialsClassName="text-[15px] tracking-normal"
                       />
-                      <span className="truncate max-w-[140px]">{crmData?.company_name || contact.company}</span>
-                    </div>
-                  ) : <span className="text-muted-foreground/30">—</span>}
-                </td>
-                <td className="p-3">
-                  {contact.job_title ? (
-                    <div className="flex items-center gap-1.5 text-2xs text-muted-foreground">
-                      <Briefcase className="w-3 h-3 shrink-0" />
-                      <span className="truncate max-w-[140px]">{contact.job_title}</span>
-                    </div>
-                  ) : <span className="text-muted-foreground/30">—</span>}
-                </td>
-                <td className="p-3">
-                  <div className="flex flex-wrap gap-1">
-                    {contact.tags?.slice(0, 2).map(tag => (
-                      <Badge key={tag} variant="secondary" className="text-3xs h-5 px-1.5">{tag}</Badge>
-                    ))}
-                    {(contact.tags?.length || 0) > 2 && (
-                      <Badge variant="secondary" className="text-3xs h-5 px-1.5">+{(contact.tags?.length || 0) - 2}</Badge>
-                    )}
-                  </div>
-                </td>
-                <td className="p-3 text-right">
-                  <div
-                    className={cn(
-                      "flex items-center justify-end gap-1 transition-opacity focus-within:opacity-100",
-                      ponteiroGrosso ? "opacity-100" : "opacity-0 group-hover:opacity-100"
-                    )}
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    <Button variant="ghost" size="icon" className="w-7 h-7 hover:bg-primary/10 hover:text-primary" onClick={() => onOpenChat(contact.id)} title="Conversar">
-                      <MessageSquare className="w-3.5 h-3.5" />
-                    </Button>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon" className="w-7 h-7" aria-label={`Ações do contato ${contact.name}`}>
-                          <MoreVertical className="w-3.5 h-3.5" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={() => onEdit(contact)}><Edit className="w-4 h-4 mr-2" />Editar</DropdownMenuItem>
-                        <DropdownMenuItem><Tag className="w-4 h-4 mr-2" />Gerenciar etiquetas</DropdownMenuItem>
-                        {/* Mesmo gate da lista e do card: o item só aparece quando o banco
-                            diz que este contato pode ser excluído (`contact.can_delete`).
-                            A visão Tabela era o único ponto de exclusão sem gate. */}
-                        {canDeleteContact(contact) && (
-                          <>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem className="text-destructive" onClick={() => onDelete(contact)}><Trash2 className="w-4 h-4 mr-2" />Excluir</DropdownMenuItem>
-                          </>
+                      <span className="min-w-0">
+                        <HighlightText
+                          text={display.nomeCompleto ?? contact.name}
+                          highlight={searchQuery}
+                          className="block truncate font-medium"
+                        />
+                        {display.apelido && (
+                          <span className="block truncate text-[11px] text-[hsl(var(--contacts-quiet))]">({display.apelido})</span>
                         )}
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </div>
-                </td>
-              </motion.tr>
-            );
-          })}
-        </tbody>
-      </table>
+                      </span>
+                    </div>
+                  </td>
+                  {ver('type') && (
+                    <td className="border-b border-[hsl(var(--contacts-soft-line))] p-[14px_11px]">
+                      <ContactTypeBadge type={contact.contact_type} size="sm" />
+                    </td>
+                  )}
+                  {ver('phone') && (
+                    <td className="whitespace-nowrap border-b border-[hsl(var(--contacts-soft-line))] p-[14px_11px] text-[hsl(var(--contacts-muted))]">
+                      {display.telefone ?? <span className="text-[hsl(var(--contacts-quiet))]">—</span>}
+                    </td>
+                  )}
+                  {ver('email') && (
+                    <td className="border-b border-[hsl(var(--contacts-soft-line))] p-[14px_11px] text-[hsl(var(--contacts-muted))]">
+                      {display.email
+                        ? <span className="block max-w-[190px] truncate">{display.email}</span>
+                        : <span className="text-[hsl(var(--contacts-quiet))]">—</span>}
+                    </td>
+                  )}
+                  {ver('company') && (
+                    <td className="border-b border-[hsl(var(--contacts-soft-line))] p-[14px_11px] text-[hsl(var(--contacts-muted))]">
+                      {display.empresa ? (
+                        <div className="flex items-center gap-1.5">
+                          <CompanyLogo
+                            logoUrl={crmData?.logo_url}
+                            companyName={crmData?.company_name}
+                            fallbackCompanyName={contact.company}
+                            size="xs"
+                          />
+                          <span className="block max-w-[150px] truncate">{display.empresa}</span>
+                        </div>
+                      ) : <span className="text-[hsl(var(--contacts-quiet))]">—</span>}
+                    </td>
+                  )}
+                  {ver('job_title') && (
+                    <td className="border-b border-[hsl(var(--contacts-soft-line))] p-[14px_11px] text-[hsl(var(--contacts-muted))]">
+                      {display.cargo
+                        ? <span className="block max-w-[150px] truncate">{display.cargo}</span>
+                        : <span className="text-[hsl(var(--contacts-quiet))]">—</span>}
+                    </td>
+                  )}
+                  {ver('tags') && (
+                    <td className="border-b border-[hsl(var(--contacts-soft-line))] p-[14px_11px]">
+                      <div className="flex flex-wrap gap-1">
+                        {contact.tags?.map(tag => (
+                          <span
+                            key={tag}
+                            className="inline-block whitespace-nowrap rounded-[5px] border border-[hsl(var(--contacts-line))] bg-[hsl(var(--contacts-raised))] px-[5px] py-[3px] text-[11px] text-[hsl(var(--contacts-ink))]"
+                          >
+                            {tag}
+                          </span>
+                        ))}
+                      </div>
+                    </td>
+                  )}
+                  <td className="border-b border-[hsl(var(--contacts-soft-line))] p-[14px_11px] text-right">
+                    <div
+                      className={cn(
+                        "flex items-center justify-end gap-1 transition-opacity focus-within:opacity-100",
+                        ponteiroGrosso ? "opacity-100" : "opacity-0 group-hover:opacity-100"
+                      )}
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        className="h-[30px] w-[30px] rounded-[7px] border border-[hsl(var(--contacts-line))] bg-[hsl(var(--contacts-raised))] text-[hsl(var(--contacts-ink))] hover:border-primary/60 hover:bg-[hsl(var(--contacts-page))]"
+                        onClick={() => onOpenChat(contact.id)}
+                        title="Conversar"
+                      >
+                        <MessageSquare className="h-3.5 w-3.5" />
+                      </Button>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button
+                            variant="outline"
+                            size="icon"
+                            className="h-[30px] w-[30px] rounded-[7px] border border-[hsl(var(--contacts-line))] bg-[hsl(var(--contacts-raised))] text-[hsl(var(--contacts-ink))] hover:border-primary/60 hover:bg-[hsl(var(--contacts-page))]"
+                            aria-label={`Ações do contato ${contact.name}`}
+                          >
+                            <MoreVertical className="h-3.5 w-3.5" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem onClick={() => onEdit(contact)}><Edit className="mr-2 h-4 w-4" />Editar</DropdownMenuItem>
+                          <DropdownMenuItem><Tag className="mr-2 h-4 w-4" />Gerenciar etiquetas</DropdownMenuItem>
+                          {/* Mesmo gate da lista e do card: o item só aparece quando o banco
+                              diz que este contato pode ser excluído (`contact.can_delete`). */}
+                          {canDeleteContact(contact) && (
+                            <>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem className="text-destructive" onClick={() => onDelete(contact)}><Trash2 className="mr-2 h-4 w-4" />Excluir</DropdownMenuItem>
+                            </>
+                          )}
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-[30px] w-[30px] rounded-[7px] text-[hsl(var(--contacts-muted))] hover:text-primary"
+                        onClick={() => onOpenDetails(contact.id)}
+                        aria-label={`Abrir ficha de ${contact.name}`}
+                        title="Abrir ficha"
+                      >
+                        <ArrowUpRight className="h-[14px] w-[14px]" />
+                      </Button>
+                    </div>
+                  </td>
+                </motion.tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }

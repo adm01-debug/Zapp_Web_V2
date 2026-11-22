@@ -107,6 +107,9 @@ export function ContactCard({
   return (
     <div
       data-testid="contact-card"
+      data-contact-nav="item"
+      tabIndex={0}
+      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onOpenDetails(contact.id); } }}
       className={cn(
         "contact-card group relative flex min-w-0 flex-col overflow-hidden rounded-[13px] cursor-pointer card-lift card-glow",
         "min-h-[120px]",
