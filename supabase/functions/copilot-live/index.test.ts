@@ -121,6 +121,8 @@ interface Rotas {
   cotaDiariaExcedida?: boolean;
   /** assistant_profiles do usuário (Fase 1). Ausente = sem perfil (usa defaults). */
   assistant?: Record<string, unknown> | null;
+  /** Compromissos futuros do contato (Fase 2). Ausente = nenhum. */
+  agenda?: Array<{ title: string; remind_at: string | null }>;
 }
 
 function json(body: unknown, status = 200, headers: Record<string, string> = {}): Response {
@@ -219,6 +221,7 @@ async function cenario<T>(rotas: Rotas, fn: (calls: Chamada[]) => Promise<T>): P
           }, 406),
       );
     }
+    if (url.includes("/rest/v1/conversation_tasks")) return Promise.resolve(json(rotas.agenda ?? []));
     if (url.startsWith(PROVEDOR)) {
       return Promise.resolve((rotas.provedor ?? (() => new Response("sem stub de provedor", { status: 599 })))());
     }
@@ -420,6 +423,22 @@ Deno.test("copilot-live: Fase 1 — sem perfil usa os defaults de identidade no 
     assertEquals(system.includes("Atuação do vendedor que você assiste: atendimento."), true);
     assertEquals(system.includes("Foco principal dele: avançar a conversa em direção ao pedido."), true);
     assertEquals(system.includes("Tom preferido de comunicação: consultivo.\n"), true);
+  });
+});
+
+Deno.test("copilot-live: Fase 2 — compromisso já marcado com o contato entra no prompt", async () => {
+  await cenario({
+    agenda: [{ title: "Ligar para Ana", remind_at: "2030-01-03T12:00:00.000Z" }],
+    provedor: () =>
+      json({ model: "modelo-teste", choices: [{ message: { content: "Retome o combinado de quinta." } }], usage: {} }),
+  }, async (calls) => {
+    const res = await chamar(pedido(TICK));
+    await res.body?.cancel();
+    assertEquals(res.status, 200);
+    assertEquals(calls.some((c) => c.url.includes("/rest/v1/conversation_tasks")), true);
+    const system = corpoParaOProvedor(calls)?.find((m) => m.role === "system")?.content as string;
+    assertEquals(system.includes("Ligar para Ana"), true);
+    assertEquals(system.includes("Mencione o compromisso existente"), true);
   });
 });
 

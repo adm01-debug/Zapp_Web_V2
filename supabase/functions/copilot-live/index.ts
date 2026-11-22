@@ -100,6 +100,22 @@ serve(async (req) => {
       });
     }
 
+    // Fase 2 do assistente pessoal — MEMÓRIA/AGENDA: lemos os compromissos
+    // futuros deste contato para o motor mencionar o que já está marcado
+    // ("você já tem um compromisso com ele amanhã"). Falha de leitura não
+    // derruba a sugestão: sem agenda o prompt apenas não traz esse bloco.
+    const { data: agendaRows } = await supabase
+      .from('conversation_tasks')
+      .select('title, remind_at')
+      .eq('contact_id', payload.contact_id ?? '')
+      .not('remind_at', 'is', null)
+      .gte('remind_at', new Date().toISOString())
+      .not('status', 'in', '(done,cancelled)')
+      .order('remind_at', { ascending: true })
+      .limit(5);
+
+    const agenda = (agendaRows ?? []) as Array<{ title: string; remind_at: string | null }>;
+
     // contact_id vem do payload (o front já conhece); fallback para userId
     // apenas como última instância — garante NOT NULL sem depender de tabela
     // auxiliar que pode não existir em todos os deploys.
@@ -215,6 +231,7 @@ serve(async (req) => {
       saleStage: payload.sale_stage,
       userId,
       profile: assistantProfile,
+      agenda,
     });
 
     if (session?.id) {
@@ -257,6 +274,7 @@ async function generateLiveSuggestion(opts: {
   saleStage?: string;
   userId: string;
   profile?: { atividade?: string; foco?: string; ajuda?: string; tom?: string } | null;
+  agenda?: Array<{ title: string; remind_at: string | null }>;
 }): Promise<{ content: string; modelVersion: string }> {
   const stageLabel = opts.saleStage ? (STAGE_LABELS[opts.saleStage] ?? opts.saleStage) : 'indefinido';
 
@@ -265,12 +283,21 @@ async function generateLiveSuggestion(opts: {
   const foco = opts.profile?.foco?.trim() || 'avançar a conversa em direção ao pedido';
   const tom = opts.profile?.tom ?? 'consultivo';
 
+  // Fase 2: compromisso JÁ marcado com este contato entra no prompt para o
+  // motor mencioná-lo em vez de sugerir marcar de novo.
+  const agendaBlock = (opts.agenda ?? []).length > 0
+    ? `Já existe(m) ${opts.agenda!.length} compromisso(s) marcado(s) com este contato: ${opts.agenda!
+        .map((a) => `${a.title}${a.remind_at ? ` (${new Date(a.remind_at).toLocaleString('pt-BR')})` : ''}`)
+        .join('; ')}. Mencione o compromisso existente quando for relevante, em vez de sugerir marcar outro.`
+    : '';
+
   const system = `Você é o Copiloto RADAR, assistente de vendas de brindes corporativos B2B.
 Atuação do vendedor que você assiste: ${atuacao}.
 Foco principal dele: ${foco}.
 Tom preferido de comunicação: ${tom}.
 Analise o contexto da conversa e dê UMA sugestão objetiva para o vendedor avançar no estágio de ${stageLabel}.
 A sugestão deve ser direta (máx. 120 caracteres), acionável, específica para o momento da conversa e ajustada ao foco e ao tom declarados.
+${agendaBlock}
 Responda APENAS com o texto da sugestão, sem prefixos, aspas ou explicação.`;
 
   const userContent = [

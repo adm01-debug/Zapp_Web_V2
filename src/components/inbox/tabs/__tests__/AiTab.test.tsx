@@ -26,6 +26,9 @@ vi.mock('../../AISuggestions', () => ({
     <button onClick={() => onSelectSuggestion('sugestão de teste')}>mock-ai-suggestions</button>
   ),
 }));
+vi.mock('../AssistantAgendaCard', () => ({
+  AssistantAgendaCard: () => <div>mock-assistant-agenda</div>,
+}));
 vi.mock('../../ConversationSummary', () => ({ ConversationSummary: () => <div>mock-summary</div> }));
 vi.mock('../../ObjectionDetector', () => ({ ObjectionDetector: () => <div>mock-objections</div> }));
 vi.mock('../../contact-details/AIInsightsWidget', () => ({

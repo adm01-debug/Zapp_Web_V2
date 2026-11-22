@@ -11,6 +11,7 @@ import { useNextBestAction } from '@/hooks/chat/useNextBestAction';
 import { useRecommendedProducts } from '@/hooks/chat/useRecommendedProducts';
 import { useContactLeadScore } from '@/hooks/crm/useContactCrm360';
 import { SectionCard } from './SectionCard';
+import { AssistantAgendaCard } from './AssistantAgendaCard';
 import { AISuggestions } from '../AISuggestions';
 import { ConversationSummary } from '../ConversationSummary';
 import { ObjectionDetector } from '../ObjectionDetector';
@@ -124,6 +125,12 @@ export function AiTab({ conversation, messages, onUseSuggestion }: AiTabProps) {
           }}
         />
       </SectionCard>
+
+      <AssistantAgendaCard
+        contactId={contactId}
+        contactName={contactName}
+        lastContactMessage={lastContactMessages[lastContactMessages.length - 1] ?? null}
+      />
 
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
         {/* Restaurados em 2026-11-12 (saíram como órfãos na #1886). */}

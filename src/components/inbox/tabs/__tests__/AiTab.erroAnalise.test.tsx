@@ -28,6 +28,9 @@ vi.mock('@/integrations/supabase/client', () => ({
 vi.mock('../../AISuggestions', () => ({
   AISuggestions: () => <div>mock-ai-suggestions</div>,
 }));
+vi.mock('../AssistantAgendaCard', () => ({
+  AssistantAgendaCard: () => <div>mock-assistant-agenda</div>,
+}));
 vi.mock('../../ConversationSummary', () => ({ ConversationSummary: () => <div>mock-summary</div> }));
 vi.mock('../../ObjectionDetector', () => ({ ObjectionDetector: () => <div>mock-objections</div> }));
 vi.mock('../../contact-details/AIInsightsWidget', () => ({
