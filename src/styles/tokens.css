@@ -333,6 +333,15 @@
     --kpi-tile-purple-fg: 258 90% 72%;
     --kpi-tile-yellow: 38 92% 50% / 0.13;
     --kpi-tile-yellow-fg: 38 92% 62%;
+    /* Placa do ícone do indicador — gradiente `zc-stat-icon` do redesign de Contatos
+       (MAPA-TOKENS: placa 42×43px, raio 11px). Duas paradas por tile, no matiz do
+       token do tile; `--contacts-stat-plate-*` para tema claro e `.dark` sobrescreve. */
+    --contacts-stat-plate-blue-from: 221 45% 22%;
+    --contacts-stat-plate-blue-to: 221 50% 16%;
+    --contacts-stat-plate-green-from: 152 44% 16%;
+    --contacts-stat-plate-green-to: 152 45% 12%;
+    --contacts-stat-plate-purple-from: 262 31% 21%;
+    --contacts-stat-plate-purple-to: 262 32% 14%;
 
     /* Dashboard — Navy Operational (medido de docs/design/dashboard-reference.png) */
     /* TL-175B — texto secundário do tema CLARO. O valor medido do painel navy
@@ -391,7 +400,7 @@
     --rosa-foreground: 0 0% 100%;
     --rosa-text: 335 75% 36%;
 
-    /* ===== DESIGN TOKENS ? Light & Dark mode CSS variables ===== */
+    /* ===== DESIGN TOKENS — Light & Dark mode CSS variables ===== */
     --contacts-page: 0 0% 97%;
     --contacts-panel: 0 0% 100%;
     --contacts-raised: 0 0% 100%;
@@ -402,6 +411,12 @@
     --contacts-quiet: 240 4% 58%;
     --contacts-blue: 221 83% 53%;
     --contacts-blue-soft: 221 83% 94%;
+    /* Gradiente do card (MAPA-TOKENS: `--contacts-card-gradient`). No claro desce
+       de branco para o cinza da página; o `.dark` troca para o charcoal do design. */
+    --contacts-card-gradient: linear-gradient(148deg, hsl(0 0% 100%), hsl(0 0% 97%));
+    --contacts-radius-stat: 11px;
+    --contacts-radius-card: 13px;
+    --contacts-radius-dialog: 17px;
 }
 
 /* ===== DARK MODE - Corporate Blue ===== */
@@ -579,4 +594,28 @@
     --rosa: 335 80% 74%;
     --rosa-foreground: 335 60% 12%;
     --rosa-text: 335 75% 76%;
+
+    /* ===== CONTATOS (tema escuro) — ver a seção no :root =====
+       O design de referência é escuro: painel #19191b, linha #2b2c30, tinta #f5f6f9.
+       Medido no design e convertido para HSL (MAPA-TOKENS.md). O claro do :root
+       mantém os mesmos papéis para o toggle de tema. */
+    --contacts-page: 240 7% 5%;
+    --contacts-panel: 240 4% 10%;
+    --contacts-raised: 240 4% 13%;
+    --contacts-line: 240 5% 18%;
+    --contacts-soft-line: 240 5% 14%;
+    --contacts-ink: 220 22% 97%;
+    --contacts-muted: 222 9% 70%;
+    --contacts-quiet: 220 7% 45%;
+    --contacts-blue: 221 83% 53%;
+    --contacts-blue-soft: 221 45% 22%;
+    --contacts-card-gradient: linear-gradient(148deg, hsl(240 4% 12%), hsl(240 6% 8%));
+    /* Placas do ícone do indicador: gradiente 150deg do design (#213454→#15243e blue,
+       #173c29→#10291b green, #2f2446→#20182f purple). */
+    --contacts-stat-plate-blue-from: 221 45% 22%;
+    --contacts-stat-plate-blue-to: 221 50% 16%;
+    --contacts-stat-plate-green-from: 152 44% 16%;
+    --contacts-stat-plate-green-to: 152 45% 12%;
+    --contacts-stat-plate-purple-from: 262 31% 21%;
+    --contacts-stat-plate-purple-to: 262 32% 14%;
 }

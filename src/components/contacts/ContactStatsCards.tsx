@@ -39,17 +39,17 @@ export function ContactStatsCards({ totalAll, fornecedoresAll, includeLegacy = f
   // está pronto: três esqueletos, não quatro.
   if (isLoading || !kpi) {
     return (
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 gap-2 mb-4 min-[560px]:gap-[9px] min-[900px]:grid-cols-4 min-[900px]:gap-[11px] max-[559px]:mb-3">
         {totalCard}
         {Array.from({ length: 3 }, (_, i) => (
-          <div key={i} className="h-[108px] rounded-[14px] border border-border/70 bg-card animate-shimmer" />
+          <div key={i} className="h-[86px] rounded-[11px] border border-border/70 bg-card animate-shimmer" />
         ))}
       </div>
     );
   }
 
   return (
-    <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+    <div className="grid grid-cols-2 gap-2 mb-4 min-[560px]:gap-[9px] min-[900px]:grid-cols-4 min-[900px]:gap-[11px] max-[559px]:mb-3">
       {totalCard}
       <ContactKpiCard
         label="Novos (30 dias)"

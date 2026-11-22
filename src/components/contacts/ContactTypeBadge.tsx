@@ -5,7 +5,7 @@ import { getInitials } from '@/lib/avatar-colors';
 import type { Contact } from './types';
 
 /**
- * RD-008 —? selo de tipo de contato (ponto + rótulo), reutilizável.
+ * RD-008 — selo de tipo de contato (ponto + rótulo), reutilizável.
  *
  * O ponto usa o token de cor do tipo (Cliente=--primary, Fornecedor=--violeta,
  * Transportadora=--warning, Colaborador=--success, Prestador=--warning,

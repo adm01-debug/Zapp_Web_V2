@@ -4,12 +4,12 @@ import { toContactDisplay } from './contactDisplay';
 import type { Contact } from './types';
 
 /**
- * RD-006 —? retrato do contato (foto ou iniciais).
+ * RD-006 — retrato do contato (foto ou iniciais).
  *
  * Regras de proteção de tela (dado pessoal): `draggable={false}`, sem menu
  * "salvar imagem" e, na ausência de foto, iniciais sobre fundo neutro (nunca um
  * background público do contato). A cor do fallback usa os tokens `--contacts-*`
- * (claro/escuro) —? zero cor literal.
+ * (claro/escuro) — zero cor literal.
  */
 export function ContactPortrait({ contact, className }: { contact: Contact; className?: string }) {
   const display = toContactDisplay(contact);
