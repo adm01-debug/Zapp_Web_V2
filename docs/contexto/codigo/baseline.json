@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "5ce080f9bff936afc4cef8da99e00a4034c91525",
+  "commit": "b35911db610a6a3fc0e6335b40e4dfdcb05000e6",
   "branch": "main",
-  "data_commit": "2026-11-22T00:16:57-03:00",
+  "data_commit": "2026-11-22T09:04:45-03:00",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "b35911db",
+    "data": "2026-11-22",
+    "assunto": "feat(assistente): Fase 1 — identidade do assistente pessoal (perfil + motor RADAR) (#3310)"
+   },
    {
     "sha": "5ce080f9",
     "data": "2026-11-22",
@@ -126,14 +131,9 @@
     "sha": "0d1ebd5b",
     "data": "2026-11-19",
     "assunto": "docs: publicar snapshots SQL documentais do contexto X065 (#3284)"
-   },
-   {
-    "sha": "49640b0a",
-    "data": "2026-11-19",
-    "assunto": "fix(team-chat): erro ao ler config de WhatsApp deixa de virar formulario \"Nenhum\" (#3283)"
    }
   ],
-  "arquivos_mudados_7d": 7370,
+  "arquivos_mudados_7d": 7338,
   "pastas_mais_mudadas_30d": [
    {
     "pasta": "docs/contexto/supabase",
@@ -189,7 +189,7 @@
    },
    {
     "pasta": "src/components/ui",
-    "mudancas": 130
+    "mudancas": 129
    },
    {
     "pasta": "analise-prs/resgate-261118-lote3/hermes",
@@ -199,7 +199,7 @@
   "arquivos_mais_mudados_90d": [
    {
     "arquivo": "supabase/deployment-manifest.json",
-    "mudancas": 30
+    "mudancas": 31
    },
    {
     "arquivo": "ESTADO.md",
@@ -210,11 +210,11 @@
     "mudancas": 16
    },
    {
-    "arquivo": "scripts/db-audit/grants-baseline.json",
-    "mudancas": 12
+    "arquivo": "src/integrations/supabase/types.ts",
+    "mudancas": 13
    },
    {
-    "arquivo": "src/integrations/supabase/types.ts",
+    "arquivo": "scripts/db-audit/grants-baseline.json",
     "mudancas": 12
    },
    {
@@ -314,19 +314,19 @@
   ]
  },
  "contagens": {
-  "arquivos_total": 15721,
-  "arquivos_codigo": 5845,
-  "linhas_codigo": 1131545,
+  "arquivos_total": 15724,
+  "arquivos_codigo": 5847,
+  "linhas_codigo": 1131932,
   "rotas": 18,
   "rotas_http_backend": 11,
   "vistas_por_id": 55,
   "itens_menu": 61,
-  "modulos": 147,
-  "componentes": 1055,
-  "hooks": 600,
+  "modulos": 148,
+  "componentes": 1056,
+  "hooks": 601,
   "edge_functions": 92,
-  "tabelas": 221,
-  "migrations": 1149,
+  "tabelas": 222,
+  "migrations": 1150,
   "cron_jobs": 29,
   "testes": 3204,
   "workflows": 24,
@@ -727,8 +727,8 @@
    "linhas": 638
   },
   "src/components": {
-   "arquivos": 2291,
-   "linhas": 390008
+   "arquivos": 2292,
+   "linhas": 390190
   },
   "src/config": {
    "arquivos": 3,
@@ -747,8 +747,8 @@
    "linhas": 3293
   },
   "src/hooks": {
-   "arquivos": 1022,
-   "linhas": 166262
+   "arquivos": 1023,
+   "linhas": 166366
   },
   "src/i18n": {
    "arquivos": 2,
@@ -756,7 +756,7 @@
   },
   "src/integrations": {
    "arquivos": 4,
-   "linhas": 15955
+   "linhas": 15985
   },
   "src/lib": {
    "arquivos": 295,
@@ -804,7 +804,7 @@
   },
   "supabase/functions": {
    "arquivos": 424,
-   "linhas": 127624
+   "linhas": 127695
   },
   "tailwind.config.ts": {
    "arquivos": 1,
@@ -830,7 +830,7 @@
  "maiores_arquivos": [
   {
    "arquivo": "src/integrations/supabase/types.ts",
-   "linhas": 15882
+   "linhas": 15912
   },
   {
    "arquivo": "scripts/regras_negocio/generate.py",

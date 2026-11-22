@@ -1,6 +1,6 @@
 # 11 · GLOSSÁRIO, DADOS DE REFERÊNCIA E LACUNAS
 
-> Gerado automaticamente por AI Context Sync v1.3.2 · commit `5ce080f9bf` · branch `main` · 2026-11-22 03:18 UTC
+> Gerado automaticamente por AI Context Sync v1.3.2 · commit `b35911db61` · branch `main` · 2026-11-22 12:06 UTC
 > Não edite à mão — regras humanas vão em `manual/`.
 
 ## Glossário do domínio (entidades do sistema)
@@ -26,6 +26,7 @@
 | `ai_usage_outbox` | _(sem COMMENT ON TABLE — significado não documentado)_ | 6 colunas | migration |
 | `allowed_countries` | _(sem COMMENT ON TABLE — significado não documentado)_ | 5 colunas | migration |
 | `app_settings` | _(sem COMMENT ON TABLE — significado não documentado)_ | 3 colunas | migration |
+| `assistant_profiles` | _(sem COMMENT ON TABLE — significado não documentado)_ | 7 colunas | migration |
 | `audio_meme_favorites` | _(sem COMMENT ON TABLE — significado não documentado)_ | 4 colunas | migration |
 | `audio_memes` | _(sem COMMENT ON TABLE — significado não documentado)_ | 9 colunas | migration |
 | `audit_logs` | Trilha de auditoria: login, mudancas de role/permissao, client_error do front (errorReporter) e acoes sensiveis. Leitura restrita a admin. | 10 colunas | migration |
@@ -306,8 +307,7 @@
 | `LIBRARY_STATS_QUERY_KEY` (TS) | 'talkx-segment-library-stats', SEGMENT_TIMEZONE |  | `analise-prs/resgate-261118-lote3/codex/publish-followup-20261021/src/hooks/integrations/useTalkXSegments.ts` |
 | `HealthLevel` (TS) | healthy \| degraded \| disconnected |  | `analise-prs/resgate-261118-lote3/codex/publish-followup-20261021/supabase/functions/connection-health-check/index.ts` |
 | `GmailHistoryResetOutcome` (TS) | reset \| conflict |  | `analise-prs/resgate-261118-lote3/fix/ci-verde-261021/supabase/functions/_shared/gmail-helpers.ts` |
-| `GmailAccountFailure` (TS) | reauth_required \| error |  | `analise-prs/resgate-261118-lote3/fix/ci-verde-261021/supabase/functions/_shared/gmail-helpers.ts` |
-| … +441 linhas — lista completa em `context.json` | | | |
+| … +445 linhas — lista completa em `context.json` | | | |
 
 ## Dados de referência (seed — planos, categorias, perfis fixos)
 
@@ -623,7 +623,7 @@
 - `message_attempts.provider_status` é uma coluna de status sem enum/CHECK — os valores válidos e as transições permitidas não estão no banco.
 - `copilot_objection_catalog.status` é uma coluna de status sem enum/CHECK — os valores válidos e as transições permitidas não estão no banco.
 - `_zapp_mig133_log.status` é uma coluna de status sem enum/CHECK — os valores válidos e as transições permitidas não estão no banco.
-- 164/226 tabelas sem `COMMENT ON TABLE` — o significado de negócio não está no schema: `copilot_presence`, `copilot_sessions`, `copilot_insights`, `copilot_insight_feedback`, `client_wallet_rules`, `calls`, `whatsapp_groups`, `message_templates`, `agent_stats`, `agent_achievements`, `queue_members`, `queue_goals` …
+- 165/227 tabelas sem `COMMENT ON TABLE` — o significado de negócio não está no schema: `copilot_presence`, `copilot_sessions`, `copilot_insights`, `copilot_insight_feedback`, `client_wallet_rules`, `calls`, `whatsapp_groups`, `message_templates`, `agent_stats`, `agent_achievements`, `queue_members`, `queue_goals` …
 - Há tabelas usadas no código sem migration no repo — o schema real pode ter sido alterado pelo painel.
 
 ## Regras manuais presentes

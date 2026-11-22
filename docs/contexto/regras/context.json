@@ -1,15 +1,15 @@
 {
  "meta": {
-  "sha": "5ce080f9bff936afc4cef8da99e00a4034c91525",
+  "sha": "b35911db610a6a3fc0e6335b40e4dfdcb05000e6",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-22 03:18 UTC",
-  "files_total": 15577,
-  "code_files": 8881,
-  "code_lines": 1408964
+  "generated_at": "2026-11-22 12:06 UTC",
+  "files_total": 15580,
+  "code_files": 8884,
+  "code_lines": 1409396
  },
  "version": "1.3.2",
- "facts_hash": "afb2edbc21c8a9b0",
+ "facts_hash": "24c94ca7cbb1eadf",
  "stack": {
   "frameworks": [
    "React + Vite",
@@ -344,9 +344,9 @@
   ],
   "package_manager": "bun",
   "languages": {
-   ".sql": 3062,
-   ".tsx": 2808,
-   ".ts": 2230,
+   ".sql": 3063,
+   ".tsx": 2809,
+   ".ts": 2231,
    ".mjs": 652,
    ".py": 125,
    ".cjs": 19,
@@ -18108,6 +18108,63 @@
     "comment": "Registro de envio da mensagem de ausência por contato+conexão (janela de 24 h consultada por should_send_away_message). Só service_role, via RPC.",
     "origin": "migration"
    },
+   "assistant_profiles": {
+    "columns": [
+     {
+      "name": "user_id",
+      "type": "UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE",
+      "fk": "users.id ON DELETE CASCADE",
+      "generated": "",
+      "src": "supabase/migrations/20261121190000_assistant_profiles.sql"
+     },
+     {
+      "name": "atividade",
+      "type": "TEXT NOT NULL DEFAULT 'atendimento' CHECK (atividade IN ('venda', 'compra', 'atendimento', 'supervisao'))",
+      "fk": "",
+      "generated": "",
+      "src": "supabase/migrations/20261121190000_assistant_profiles.sql"
+     },
+     {
+      "name": "foco",
+      "type": "TEXT NOT NULL DEFAULT ''",
+      "fk": "",
+      "generated": "",
+      "src": "supabase/migrations/20261121190000_assistant_profiles.sql"
+     },
+     {
+      "name": "ajuda",
+      "type": "TEXT NOT NULL DEFAULT 'relevante' CHECK (ajuda IN ('sempre', 'relevante', 'sob_demanda'))",
+      "fk": "",
+      "generated": "",
+      "src": "supabase/migrations/20261121190000_assistant_profiles.sql"
+     },
+     {
+      "name": "tom",
+      "type": "TEXT NOT NULL DEFAULT 'consultivo' CHECK (tom IN ('direto', 'consultivo', 'formal'))",
+      "fk": "",
+      "generated": "",
+      "src": "supabase/migrations/20261121190000_assistant_profiles.sql"
+     },
+     {
+      "name": "created_at",
+      "type": "TIMESTAMPTZ NOT NULL DEFAULT now()",
+      "fk": "",
+      "generated": "",
+      "src": "supabase/migrations/20261121190000_assistant_profiles.sql"
+     },
+     {
+      "name": "updated_at",
+      "type": "TIMESTAMPTZ NOT NULL DEFAULT now()",
+      "fk": "",
+      "generated": "",
+      "src": "supabase/migrations/20261121190000_assistant_profiles.sql"
+     }
+    ],
+    "constraints": [],
+    "src": "supabase/migrations/20261121190000_assistant_profiles.sql",
+    "comment": "",
+    "origin": "migration"
+   },
    "auth.users": {
     "columns": [
      {
@@ -24502,6 +24559,36 @@
     "using": "true",
     "check": "true",
     "src": "supabase/migrations/20261115050000_copilot_retention_aggregates.sql"
+   },
+   {
+    "name": "assistant_profiles_select",
+    "table": "assistant_profiles",
+    "cmd": "SELECT",
+    "roles": "authenticated",
+    "mode": "permissive",
+    "using": "user_id = auth.uid()",
+    "check": "",
+    "src": "supabase/migrations/20261121190000_assistant_profiles.sql"
+   },
+   {
+    "name": "assistant_profiles_insert",
+    "table": "assistant_profiles",
+    "cmd": "INSERT",
+    "roles": "authenticated",
+    "mode": "permissive",
+    "using": "",
+    "check": "user_id = auth.uid()",
+    "src": "supabase/migrations/20261121190000_assistant_profiles.sql"
+   },
+   {
+    "name": "assistant_profiles_update",
+    "table": "assistant_profiles",
+    "cmd": "UPDATE",
+    "roles": "authenticated",
+    "mode": "permissive",
+    "using": "user_id = auth.uid()",
+    "check": "user_id = auth.uid()",
+    "src": "supabase/migrations/20261121190000_assistant_profiles.sql"
    },
    {
     "name": "Users can update own notifications",
@@ -48155,6 +48242,7 @@
    "supabase/migrations/20261118220000_talkx_snapshot_variante_primeiro_vale.sql",
    "supabase/migrations/20261119010000_talkx_set_campaign_ab.sql",
    "supabase/migrations/20261120080000_scheduled_report_cron.sql",
+   "supabase/migrations/20261121190000_assistant_profiles.sql",
    "supabase/tests/admin_inbox_silence.sql",
    "supabase/tests/admin_unlock_login_autorizacao.sql",
    "supabase/tests/agent_workload.sql",
@@ -48469,6 +48557,7 @@
    "_rb_message_reactions_one_per_agent_20261107121000": "enabled",
    "talkx_suppression_reasons": "enabled",
    "away_message_log": "enabled",
+   "assistant_profiles": "enabled",
    "zz_prova_sem_rls": "enabled",
    "zz_prova_policy": "enabled"
   },
@@ -70948,6 +71037,7 @@
     "tables": [
      "ai_providers",
      "ai_usage_logs",
+     "assistant_profiles",
      "contacts",
      "copilot_insights",
      "copilot_sessions",
@@ -73319,7 +73409,7 @@
     "file": ".github/workflows/types-sync.yml"
    }
   ],
-  "components_count": 2586,
+  "components_count": 2587,
   "hooks": [
    {
     "name": "useMotionSeguro",
@@ -74212,6 +74302,10 @@
    {
     "name": "useSentimentTrend",
     "file": "src/hooks/analytics/useSentimentTrend.ts"
+   },
+   {
+    "name": "useAssistantProfile",
+    "file": "src/hooks/assistant/useAssistantProfile.ts"
    },
    {
     "name": "useAuth",
@@ -77211,8 +77305,8 @@
   },
   {
    "module": "src/components",
-   "files": 2291,
-   "lines": 390008,
+   "files": 2292,
+   "lines": 390190,
    "tables": [
     "agent_skills",
     "agent_visibility_grants",
@@ -77559,14 +77653,15 @@
   },
   {
    "module": "src/hooks",
-   "files": 1022,
-   "lines": 166262,
+   "files": 1023,
+   "lines": 166366,
    "tables": [
     "agent_achievements",
     "agent_stats",
     "ai_providers",
     "ai_usage_logs",
     "allowed_countries",
+    "assistant_profiles",
     "audio_memes",
     "audit_logs",
     "auto_close_config",
@@ -77683,6 +77778,7 @@
     "useRecentAnalyses.ts: RecentAnalysis, useRecentAnalyses, InsightPeriod, AIInsights, useAIInsights",
     "useRecentSentimentAlerts.ts: AlertSentiment, RecentSentimentAlert, DepartmentNegativeShare, useRecentSentimentAlerts",
     "useSentimentTrend.ts: SentimentTrendDay, SentimentTrendWindow, SentimentTrendResult, useSentimentTrend",
+    "useAssistantProfile.ts: Atividade, AjudaPreferida, TomPreferido, AssistantProfile, DEFAULT_ASSISTANT_PROFILE, useAssistantProfile",
     "useAuth.tsx: useAuth",
     "useAuthForm.ts: LockStatus, MAX_LOGIN_ATTEMPTS, tentativasRestantesAteBloqueio, useAuthForm",
     "useMFA.ts: mapMfaError, useMFA, MFA_TOTP_QUERY_KEY, useMfaFactors, useHasVerifiedTotp",
@@ -77701,8 +77797,7 @@
     "useQueues.ts: QueueMember, QueueWithMembers, useQueues",
     "useQueuesComparison.ts: useQueuesComparison",
     "useWarRoomAlerts.ts: slaIncidentKey, useWarRoomAlerts",
-    "useWarRoomData.ts: WarRoomAgent, WarRoomQueue, WarRoomAlert, WarRoomDataOptions, WARROOM_MAX_ROWS, useWarRoomData",
-    "useAcoesDoAlerta.ts: ResultadoDaAcao, useAcoesDoAlerta"
+    "useWarRoomData.ts: WarRoomAgent, WarRoomQueue, WarRoomAlert, WarRoomDataOptions, WARROOM_MAX_ROWS, useWarRoomData"
    ],
    "docs": [
     "realtimeSharedTopic.test.tsx: Regressao do bump supabase-js 2.116 (#460): desde a realtime-js 2.101, `.on()` em canal ja inscrito lanca erro e `supabase.channel(nome)` reaproveita o canal de mesmo nome. Hooks com topico fixo montados em dois componentes ao mesmo tempo (TalkXView > TalkXCampaignScheduled, QueuesView > QueueGoalsD …",
@@ -77851,7 +77946,7 @@
   {
    "module": "src/integrations",
    "files": 4,
-   "lines": 15955,
+   "lines": 15985,
    "tables": [],
    "exports": [
     "client.ts: SUPABASE_ANON_KEY, GOOGLE_OAUTH_ENABLED, supabase, SupabaseClient",
@@ -78608,13 +78703,14 @@
   {
    "module": "supabase/functions",
    "files": 424,
-   "lines": 127624,
+   "lines": 127695,
    "tables": [
     "agent_stats",
     "ai_conversation_tags",
     "ai_jobs",
     "ai_providers",
     "ai_usage_logs",
+    "assistant_profiles",
     "audit_logs",
     "auto_close_config",
     "blocked_ips",
@@ -78843,8 +78939,8 @@
   },
   {
    "module": "supabase/migrations",
-   "files": 1149,
-   "lines": 115103,
+   "files": 1150,
+   "lines": 115148,
    "tables": [
     "audit_logs",
     "department_invites",
@@ -79271,6 +79367,15 @@
     ],
     "insert": [
      "src/hooks/system/useGeoBlocking.ts"
+    ]
+   },
+   "assistant_profiles": {
+    "select": [
+     "src/hooks/assistant/useAssistantProfile.ts",
+     "supabase/functions/copilot-live/index.ts"
+    ],
+    "upsert": [
+     "src/hooks/assistant/useAssistantProfile.ts"
     ]
    },
    "audio_memes": {
@@ -82014,6 +82119,13 @@
     "function_name",
     "id",
     "status",
+    "user_id"
+   ],
+   "assistant_profiles": [
+    "ajuda",
+    "atividade",
+    "foco",
+    "tom",
     "user_id"
    ],
    "audio_memes": [
@@ -86140,7 +86252,8 @@
     "message_pins",
     "message_reports",
     "sla_alert_preferences",
-    "connection_alert_preferences"
+    "connection_alert_preferences",
+    "assistant_profiles"
    ],
    "profiles": [
     "client_wallet_rules",
@@ -88766,6 +88879,21 @@
     "file": "src/hooks/analytics/useRecentAnalyses.ts",
     "name": "InsightPeriod",
     "values": "24h | 7d | 30d"
+   },
+   {
+    "file": "src/hooks/assistant/useAssistantProfile.ts",
+    "name": "Atividade",
+    "values": "venda | compra | atendimento | supervisao"
+   },
+   {
+    "file": "src/hooks/assistant/useAssistantProfile.ts",
+    "name": "AjudaPreferida",
+    "values": "sempre | relevante | sob_demanda"
+   },
+   {
+    "file": "src/hooks/assistant/useAssistantProfile.ts",
+    "name": "TomPreferido",
+    "values": "direto | consultivo | formal"
    },
    {
     "file": "src/hooks/auth/useMFA.ts",
@@ -97540,6 +97668,10 @@
    },
    {
     "file": "src/components/settings/AppearanceSettings.tsx",
+    "msg": " data-testid="
+   },
+   {
+    "file": "src/components/settings/AssistantProfileSettings.tsx",
     "msg": " data-testid="
    },
    {
@@ -121308,6 +121440,41 @@
    {
     "table": "away_message_log",
     "column": "sent_at",
+    "rule": "default now()"
+   },
+   {
+    "table": "assistant_profiles",
+    "column": "user_id",
+    "rule": "PK; FK → users.id ON DELETE CASCADE"
+   },
+   {
+    "table": "assistant_profiles",
+    "column": "atividade",
+    "rule": "default 'atendimento'; CHECK atividade IN ('venda', 'compra', 'atendimento', 'supervisao')"
+   },
+   {
+    "table": "assistant_profiles",
+    "column": "foco",
+    "rule": "default ''"
+   },
+   {
+    "table": "assistant_profiles",
+    "column": "ajuda",
+    "rule": "default 'relevante'; CHECK ajuda IN ('sempre', 'relevante', 'sob_demanda')"
+   },
+   {
+    "table": "assistant_profiles",
+    "column": "tom",
+    "rule": "default 'consultivo'; CHECK tom IN ('direto', 'consultivo', 'formal')"
+   },
+   {
+    "table": "assistant_profiles",
+    "column": "created_at",
+    "rule": "default now()"
+   },
+   {
+    "table": "assistant_profiles",
+    "column": "updated_at",
     "rule": "default now()"
    },
    {
@@ -151580,7 +151747,7 @@
    {
     "file": "supabase/functions/copilot-live/index.ts",
     "name": "generateLiveSuggestion",
-    "params": "opts: { lastClientMessage?: string; draftText?: string; saleStage?: string; userId: string; }",
+    "params": "opts: { lastClientMessage?: string; draftText?: string; saleStage?: string; userId: string; profile?: { atividade?: stri",
     "body": "content: string; modelVersion: string"
    },
    {
@@ -249812,6 +249979,14 @@
     "name": "copilot-live: capacidade ai.capability.copilot_live desligada devolve erro sem chamar o provedor"
    },
    {
+    "file": "supabase/functions/copilot-live/index.test.ts",
+    "name": "copilot-live: Fase 1 — sem perfil usa os defaults de identidade no system prompt"
+   },
+   {
+    "file": "supabase/functions/copilot-live/index.test.ts",
+    "name": "copilot-live: Fase 1 — perfil de atuação/foco/tom próprios muda o system prompt"
+   },
+   {
     "file": "supabase/functions/create-user/index.test.ts",
     "name": "R2-AUTH-016 (a): falha no upsert de user_roles -> erro + deleteUser"
    },
@@ -265592,6 +265767,36 @@
     "using": "true",
     "check": "true",
     "src": "supabase/migrations/20261115050000_copilot_retention_aggregates.sql"
+   },
+   {
+    "name": "assistant_profiles_select",
+    "table": "assistant_profiles",
+    "cmd": "SELECT",
+    "roles": "authenticated",
+    "mode": "permissive",
+    "using": "user_id = auth.uid()",
+    "check": "",
+    "src": "supabase/migrations/20261121190000_assistant_profiles.sql"
+   },
+   {
+    "name": "assistant_profiles_insert",
+    "table": "assistant_profiles",
+    "cmd": "INSERT",
+    "roles": "authenticated",
+    "mode": "permissive",
+    "using": "",
+    "check": "user_id = auth.uid()",
+    "src": "supabase/migrations/20261121190000_assistant_profiles.sql"
+   },
+   {
+    "name": "assistant_profiles_update",
+    "table": "assistant_profiles",
+    "cmd": "UPDATE",
+    "roles": "authenticated",
+    "mode": "permissive",
+    "using": "user_id = auth.uid()",
+    "check": "user_id = auth.uid()",
+    "src": "supabase/migrations/20261121190000_assistant_profiles.sql"
    },
    {
     "name": "Users can update own notifications",
@@ -287416,6 +287621,19 @@
      "authenticated: EXISTS ( SELECT 1 FROM public.user_roles ur WHERE ur.user_id = (SELECT auth.uid() AS uid) AND ur.role = 'admin'::public.app_r"
     ]
    },
+   "assistant_profiles": {
+    "rls": "enabled",
+    "SELECT": [
+     "authenticated: user_id = auth.uid()"
+    ],
+    "INSERT": [
+     "authenticated: user_id = auth.uid()"
+    ],
+    "UPDATE": [
+     "authenticated: user_id = auth.uid()"
+    ],
+    "DELETE": []
+   },
    "audio_meme_favorites": {
     "rls": "enabled",
     "SELECT": [
@@ -308103,6 +308321,10 @@
     "updated_at"
    ],
    "away_message_log": [],
+   "assistant_profiles": [
+    "created_at",
+    "updated_at"
+   ],
    "auth.users": [],
    "storage.buckets": [],
    "storage.objects": [],
@@ -310234,7 +310456,7 @@
    "`message_attempts.provider_status` é uma coluna de status sem enum/CHECK — os valores válidos e as transições permitidas não estão no banco.",
    "`copilot_objection_catalog.status` é uma coluna de status sem enum/CHECK — os valores válidos e as transições permitidas não estão no banco.",
    "`_zapp_mig133_log.status` é uma coluna de status sem enum/CHECK — os valores válidos e as transições permitidas não estão no banco.",
-   "164/226 tabelas sem `COMMENT ON TABLE` — o significado de negócio não está no schema: `copilot_presence`, `copilot_sessions`, `copilot_insights`, `copilot_insight_feedback`, `client_wallet_rules`, `calls`, `whatsapp_groups`, `message_templates`, `agent_stats`, `agent_achievements`, `queue_members`, `queue_goals` …",
+   "165/227 tabelas sem `COMMENT ON TABLE` — o significado de negócio não está no schema: `copilot_presence`, `copilot_sessions`, `copilot_insights`, `copilot_insight_feedback`, `client_wallet_rules`, `calls`, `whatsapp_groups`, `message_templates`, `agent_stats`, `agent_achievements`, `queue_members`, `queue_goals` …",
    "Há tabelas usadas no código sem migration no repo — o schema real pode ter sido alterado pelo painel."
   ]
  },
@@ -392420,6 +392642,16 @@
     " data-testid="
    ]
   },
+  "src/components/settings/AssistantProfileSettings.tsx": {
+   "path": "src/components/settings/AssistantProfileSettings.tsx",
+   "lines": 173,
+   "exports": [
+    "function AssistantProfileSettings"
+   ],
+   "errors": [
+    " data-testid="
+   ]
+  },
   "src/components/settings/AutoCloseSettings.tsx": {
    "path": "src/components/settings/AutoCloseSettings.tsx",
    "lines": 102,
@@ -392756,7 +392988,7 @@
   },
   "src/components/settings/SettingsView.tsx": {
    "path": "src/components/settings/SettingsView.tsx",
-   "lines": 298,
+   "lines": 304,
    "exports": [
     "function SettingsView"
    ]
@@ -393360,7 +393592,7 @@
   },
   "src/components/settings/__tests__/SettingsView.test.tsx": {
    "path": "src/components/settings/__tests__/SettingsView.test.tsx",
-   "lines": 217,
+   "lines": 220,
    "is_test": true,
    "tests": [
     "SettingsView — guard das abas staff-only (RBAC)",
@@ -411933,6 +412165,54 @@
    ],
    "pagination": [
     "400"
+   ]
+  },
+  "src/hooks/assistant/useAssistantProfile.ts": {
+   "path": "src/hooks/assistant/useAssistantProfile.ts",
+   "lines": 104,
+   "exports": [
+    "type Atividade",
+    "type AjudaPreferida",
+    "type TomPreferido",
+    "interface AssistantProfile",
+    "const DEFAULT_ASSISTANT_PROFILE",
+    "function useAssistantProfile"
+   ],
+   "tables": [
+    {
+     "table": "assistant_profiles",
+     "op": "select"
+    },
+    {
+     "table": "assistant_profiles",
+     "op": "upsert"
+    }
+   ],
+   "table_cols": {
+    "assistant_profiles": [
+     "ajuda",
+     "atividade",
+     "foco",
+     "tom",
+     "user_id"
+    ]
+   },
+   "enums": [
+    {
+     "name": "Atividade",
+     "values": "venda | compra | atendimento | supervisao"
+    },
+    {
+     "name": "AjudaPreferida",
+     "values": "sempre | relevante | sob_demanda"
+    },
+    {
+     "name": "TomPreferido",
+     "values": "direto | consultivo | formal"
+    }
+   ],
+   "hooks": [
+    "useAssistantProfile"
    ]
   },
   "src/hooks/auth/index.ts": {
@@ -436220,7 +436500,7 @@
   },
   "src/integrations/supabase/types.ts": {
    "path": "src/integrations/supabase/types.ts",
-   "lines": 15882,
+   "lines": 15912,
    "exports": [
     "type Json",
     "type Database",
@@ -459946,7 +460226,7 @@
   },
   "supabase/functions/copilot-live/index.test.ts": {
    "path": "supabase/functions/copilot-live/index.test.ts",
-   "lines": 388,
+   "lines": 441,
    "is_test": true,
    "params": [
     {
@@ -459963,7 +460243,8 @@
     }
    ],
    "role_checks": [
-    "false"
+    "false",
+    "system"
    ],
    "rule_comments": [
     "* Contagem de ai_usage_logs nas últimas 24h já no limite da cota diária (500). */",
@@ -459980,16 +460261,22 @@
     "copilot-live: sessão de outro dono com contato diferente devolve 403 sem gerar insight",
     "copilot-live: sessão de outro dono com o mesmo contato, mas contato de outro responsável, devolve 403",
     "copilot-live: cota diária de IA excedida devolve 429 sem chamar o provedor nem gravar sessão",
-    "copilot-live: capacidade ai.capability.copilot_live desligada devolve erro sem chamar o provedor"
+    "copilot-live: capacidade ai.capability.copilot_live desligada devolve erro sem chamar o provedor",
+    "copilot-live: Fase 1 — sem perfil usa os defaults de identidade no system prompt",
+    "copilot-live: Fase 1 — perfil de atuação/foco/tom próprios muda o system prompt"
    ],
    "uses_service_role": true
   },
   "supabase/functions/copilot-live/index.ts": {
    "path": "supabase/functions/copilot-live/index.ts",
-   "lines": 303,
+   "lines": 321,
    "tables": [
     {
      "table": "profiles",
+     "op": "select"
+    },
+    {
+     "table": "assistant_profiles",
      "op": "select"
     },
     {
@@ -460024,6 +460311,13 @@
    "table_cols": {
     "profiles": [
      "id",
+     "user_id"
+    ],
+    "assistant_profiles": [
+     "ajuda",
+     "atividade",
+     "foco",
+     "tom",
      "user_id"
     ],
     "copilot_sessions": [
@@ -460062,7 +460356,7 @@
    "calc_fns": [
     {
      "name": "generateLiveSuggestion",
-     "params": "opts: { lastClientMessage?: string; draftText?: string; saleStage?: string; userId: string; }",
+     "params": "opts: { lastClientMessage?: string; draftText?: string; saleStage?: string; userId: string; profile?: { atividade?: stri",
      "body": "content: string; modelVersion: string"
     }
    ],
@@ -475675,6 +475969,10 @@
    "lines": 84,
    "uses_service_role": true
   },
+  "supabase/migrations/20261121190000_assistant_profiles.sql": {
+   "path": "supabase/migrations/20261121190000_assistant_profiles.sql",
+   "lines": 45
+  },
   "supabase/tests/admin_inbox_silence.sql": {
    "path": "supabase/tests/admin_inbox_silence.sql",
    "lines": 310,
@@ -479581,10 +479879,27 @@
   }
  },
  "git": {
-  "sha": "5ce080f9bff936afc4cef8da99e00a4034c91525",
+  "sha": "b35911db610a6a3fc0e6335b40e4dfdcb05000e6",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "b35911db",
+    "date": "2026-11-22",
+    "author": "adm01-debug",
+    "subject": "feat(assistente): Fase 1 — identidade do assistente pessoal (perfil + motor RADAR) (#3310)",
+    "files": [
+     "src/components/settings/AssistantProfileSettings.tsx",
+     "src/components/settings/SettingsView.tsx",
+     "src/components/settings/__tests__/SettingsView.test.tsx",
+     "src/hooks/assistant/useAssistantProfile.ts",
+     "src/integrations/supabase/types.ts",
+     "supabase/deployment-manifest.json",
+     "supabase/functions/copilot-live/index.test.ts",
+     "supabase/functions/copilot-live/index.ts",
+     "supabase/migrations/20261121190000_assistant_profiles.sql"
+    ]
+   },
    {
     "sha": "5ce080f9",
     "date": "2026-11-22",
@@ -480994,22 +481309,20 @@
     "files": [
      "src/components/talkx/__tests__/TalkXWizardDelivery.ab.test.tsx"
     ]
-   },
-   {
-    "sha": "4e4102b5",
-    "date": "2026-11-19",
-    "author": "adm01-debug",
-    "subject": "docs(ci): o app Supabase for GitHub esta LIGADO, nao desligado (#3278)",
-    "files": [
-     "PENDENCIAS.md",
-     "docs/agentes/github-ci.md"
-    ]
    }
   ],
   "hot_files": [
    [
+    "supabase/deployment-manifest.json",
+    3
+   ],
+   [
     "ESTADO.md",
     3
+   ],
+   [
+    "src/integrations/supabase/types.ts",
+    2
    ],
    [
     "supabase/functions/send-scheduled-report/index.test.ts",
@@ -481024,16 +481337,36 @@
     2
    ],
    [
-    "supabase/deployment-manifest.json",
-    2
-   ],
-   [
-    "docs/agentes/github-ci.md",
-    2
-   ],
-   [
     "docs/contexto/supabase/functions/public/set_talkx_campaign_ab__46dd90c49e20c67b.sql",
     2
+   ],
+   [
+    "src/components/settings/AssistantProfileSettings.tsx",
+    1
+   ],
+   [
+    "src/components/settings/SettingsView.tsx",
+    1
+   ],
+   [
+    "src/components/settings/__tests__/SettingsView.test.tsx",
+    1
+   ],
+   [
+    "src/hooks/assistant/useAssistantProfile.ts",
+    1
+   ],
+   [
+    "supabase/functions/copilot-live/index.test.ts",
+    1
+   ],
+   [
+    "supabase/functions/copilot-live/index.ts",
+    1
+   ],
+   [
+    "supabase/migrations/20261121190000_assistant_profiles.sql",
+    1
    ],
    [
     "docs/talkx/ESTADOS.md",
@@ -481057,34 +481390,6 @@
    ],
    [
     "src/components/talkx/tracking/TalkXMonitorHeader.tsx",
-    1
-   ],
-   [
-    "src/components/inbox/AIConversationAssistant.tsx",
-    1
-   ],
-   [
-    "src/components/inbox/ConversationSummary.tsx",
-    1
-   ],
-   [
-    "src/components/inbox/chat/AIEnhanceButton.tsx",
-    1
-   ],
-   [
-    "src/components/inbox/chat/AIRewriteButton.tsx",
-    1
-   ],
-   [
-    "src/hooks/inbox/useObjectionDetector.ts",
-    1
-   ],
-   [
-    "src/components/inbox/chat/ChatPanelHeader.tsx",
-    1
-   ],
-   [
-    "src/components/inbox/chat/__tests__/ChatPanelHeader.crm.test.tsx",
     1
    ]
   ]

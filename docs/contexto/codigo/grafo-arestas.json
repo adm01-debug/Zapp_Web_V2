@@ -7577,6 +7577,16 @@
    "src/hooks/ui/useDensity.ts",
    "src/i18n/index.ts"
   ],
+  "src/components/settings/AssistantProfileSettings.tsx": [
+   "src/components/ui/button.tsx",
+   "src/components/ui/card.tsx",
+   "src/components/ui/input.tsx",
+   "src/components/ui/label.tsx",
+   "src/components/ui/motion.tsx",
+   "src/components/ui/select.tsx",
+   "src/hooks/assistant/useAssistantProfile.ts",
+   "src/hooks/ui/use-toast.ts"
+  ],
   "src/components/settings/AutoCloseSettings.tsx": [
    "src/components/ui/button.tsx",
    "src/components/ui/card.tsx",
@@ -7762,6 +7772,7 @@
    "src/components/nps/NPSDashboard.tsx",
    "src/components/settings/AIProvidersManager.tsx",
    "src/components/settings/AppearanceSettings.tsx",
+   "src/components/settings/AssistantProfileSettings.tsx",
    "src/components/settings/AutomationSettings.tsx",
    "src/components/settings/CSATAutoConfig.tsx",
    "src/components/settings/ChatbotL1Config.tsx",
@@ -9727,6 +9738,11 @@
    "src/lib/fetchAllRows.ts",
    "src/lib/localDay.ts",
    "src/lib/sentiment-classes.ts"
+  ],
+  "src/hooks/assistant/useAssistantProfile.ts": [
+   "src/hooks/auth/useAuth.tsx",
+   "src/integrations/supabase/client.ts",
+   "src/lib/logger.ts"
   ],
   "src/hooks/auth/index.ts": [
    "src/hooks/auth/useAuth.tsx",

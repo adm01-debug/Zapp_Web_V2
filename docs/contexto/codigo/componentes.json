@@ -1,7 +1,7 @@
 {
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
- "total": 1055,
+ "total": 1056,
  "orfaos": 138,
  "nomes_duplicados": {
   "AIAutoTagsConfig": [
@@ -13399,6 +13399,22 @@
    "orfao": false
   },
   {
+   "arquivo": "src/components/settings/AssistantProfileSettings.tsx",
+   "exports": [
+    "AssistantProfileSettings"
+   ],
+   "export_default": null,
+   "linhas": 173,
+   "dominio": "components/settings",
+   "hooks_locais": [
+    "useAssistantProfile"
+   ],
+   "tabelas": [],
+   "edges": [],
+   "usado_por": 1,
+   "orfao": false
+  },
+  {
    "arquivo": "src/components/settings/AutoCloseSettings.tsx",
    "exports": [
     "AutoCloseSettings"
@@ -13697,7 +13713,7 @@
     "SettingsView"
    ],
    "export_default": null,
-   "linhas": 298,
+   "linhas": 304,
    "dominio": "components/settings",
    "hooks_locais": [
     "useOnboarding",
@@ -16394,7 +16410,7 @@
    "hooks_locais": [],
    "tabelas": [],
    "edges": [],
-   "usado_por": 453,
+   "usado_por": 454,
    "orfao": false
   },
   {
@@ -16429,7 +16445,7 @@
    "hooks_locais": [],
    "tabelas": [],
    "edges": [],
-   "usado_por": 213,
+   "usado_por": 214,
    "orfao": false
   },
   {
@@ -16845,7 +16861,7 @@
    "hooks_locais": [],
    "tabelas": [],
    "edges": [],
-   "usado_por": 200,
+   "usado_por": 201,
    "orfao": false
   },
   {
@@ -16859,7 +16875,7 @@
    "hooks_locais": [],
    "tabelas": [],
    "edges": [],
-   "usado_por": 127,
+   "usado_por": 128,
    "orfao": false
   },
   {
@@ -17188,7 +17204,7 @@
    "hooks_locais": [],
    "tabelas": [],
    "edges": [],
-   "usado_por": 139,
+   "usado_por": 140,
    "orfao": false
   },
   {
@@ -17811,7 +17827,7 @@
    ],
    "tabelas": [],
    "edges": [],
-   "usado_por": 131,
+   "usado_por": 132,
    "orfao": false
   },
   {

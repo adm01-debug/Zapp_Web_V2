@@ -15306,7 +15306,7 @@
   {
    "arquivo": "src/components/settings/__tests__/SettingsView.test.tsx",
    "tipo": "unit",
-   "linhas": 217,
+   "linhas": 220,
    "testa": [
     "src/components/settings/SettingsView.tsx"
    ],
@@ -27155,11 +27155,11 @@
   {
    "arquivo": "supabase/functions/copilot-live/index.test.ts",
    "tipo": "unit",
-   "linhas": 388,
+   "linhas": 441,
    "testa": [
     "supabase/functions/copilot-live/index.ts"
    ],
-   "casos": 11
+   "casos": 13
   },
   {
    "arquivo": "supabase/functions/create-user/index.test.ts",
@@ -30804,6 +30804,7 @@
    "src/components/voice/usePhaseColors.ts",
    "src/hooks/agents/useAgentPendingCounts.ts",
    "src/hooks/analytics/useActiveAIProvider.ts",
+   "src/hooks/assistant/useAssistantProfile.ts",
    "src/hooks/auth/useSecureProfile.ts",
    "src/hooks/business/useDemandPrediction.ts",
    "src/hooks/calls/useFotoDoContato.ts",

@@ -1262,12 +1262,13 @@
    "nome": "copilot-live",
    "entrada": "supabase/functions/copilot-live/index.ts",
    "arquivos": 1,
-   "linhas": 303,
+   "linhas": 321,
    "verify_jwt": true,
    "metodos": [
     "OPTIONS"
    ],
    "tabelas": [
+    "assistant_profiles",
     "contacts",
     "copilot_insights",
     "copilot_sessions",

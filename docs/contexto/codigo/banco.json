@@ -8,7 +8,7 @@
   "supabase/migrations",
   "typeorm"
  ],
- "migrations": 1149,
+ "migrations": 1150,
  "seeds": [
   "docs/contexto/supabase/functions/public/seed_default_goals_for_profile__12ae32cb1ec02d01.sql",
   "e2e/fixtures/seed-talk-me.sql",
@@ -3889,6 +3889,105 @@
    "triggers": [],
    "sem_rls": false,
    "nao_usada": true
+  },
+  "assistant_profiles": {
+   "colunas": {
+    "ajuda": {
+     "tipo": "text",
+     "nn": true,
+     "pk": false,
+     "default": "'relevante'",
+     "ref": null
+    },
+    "atividade": {
+     "tipo": "text",
+     "nn": true,
+     "pk": false,
+     "default": "'atendimento'",
+     "ref": null
+    },
+    "created_at": {
+     "tipo": "timestamptz",
+     "nn": true,
+     "pk": false,
+     "default": "now()",
+     "ref": null
+    },
+    "foco": {
+     "tipo": "text",
+     "nn": true,
+     "pk": false,
+     "default": "''",
+     "ref": null
+    },
+    "tom": {
+     "tipo": "text",
+     "nn": true,
+     "pk": false,
+     "default": "'consultivo'",
+     "ref": null
+    },
+    "updated_at": {
+     "tipo": "timestamptz",
+     "nn": true,
+     "pk": false,
+     "default": "now()",
+     "ref": null
+    },
+    "user_id": {
+     "tipo": "uuid",
+     "nn": false,
+     "pk": true,
+     "default": null,
+     "ref": "auth"
+    }
+   },
+   "rls": true,
+   "policies": [
+    {
+     "nome": "assistant_profiles_insert",
+     "comando": "insert",
+     "para": "authenticated",
+     "tipo": "permissive"
+    },
+    {
+     "nome": "assistant_profiles_select",
+     "comando": "select",
+     "para": "authenticated",
+     "tipo": "permissive"
+    },
+    {
+     "nome": "assistant_profiles_update",
+     "comando": "update",
+     "para": "authenticated",
+     "tipo": "permissive"
+    }
+   ],
+   "indices": [],
+   "fks": [
+    "user_id->auth"
+   ],
+   "criada_em": "20261121190000_assistant_profiles.sql",
+   "colunas_types": {
+    "ajuda": "string",
+    "atividade": "string",
+    "created_at": "string",
+    "foco": "string",
+    "tom": "string",
+    "updated_at": "string",
+    "user_id": "string"
+   },
+   "drift": {
+    "so_na_migration": [],
+    "so_no_types": []
+   },
+   "usada_no_front": 1,
+   "usada_em_edges": [
+    "copilot-live"
+   ],
+   "triggers": [],
+   "sem_rls": false,
+   "nao_usada": false
   },
   "audio_meme_favorites": {
    "colunas": {

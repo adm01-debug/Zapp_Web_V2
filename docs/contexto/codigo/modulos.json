@@ -3619,6 +3619,7 @@
     "useAppBootstrap",
     "useApplicableSLA",
     "useAriaAnnouncer",
+    "useAssistantProfile",
     "useAttachmentSuggestion",
     "useAudienceEstimate",
     "useAudioMemes",
@@ -4091,6 +4092,7 @@
     "ai_providers",
     "ai_usage_logs",
     "allowed_countries",
+    "assistant_profiles",
     "audio_memes",
     "audit_logs",
     "auto_close_config",
@@ -5615,6 +5617,7 @@
     "useAnnouncer",
     "useAppBootstrap",
     "useApplicableSLA",
+    "useAssistantProfile",
     "useAttachmentSuggestion",
     "useAudioMemes",
     "useAudioPlayer",
@@ -5977,6 +5980,7 @@
     "ai_providers",
     "ai_usage_logs",
     "allowed_countries",
+    "assistant_profiles",
     "audio_memes",
     "audit_logs",
     "auto_close_config",
@@ -6741,9 +6745,9 @@
   },
   {
    "modulo": "components/settings",
-   "arquivos": 44,
+   "arquivos": 45,
    "testes": 46,
-   "linhas": 7756,
+   "linhas": 7935,
    "itens_menu": [
     "Configurações",
     "Skins"
@@ -6753,11 +6757,12 @@
     "themes"
    ],
    "rotas_http": [],
-   "componentes": 35,
+   "componentes": 36,
    "hooks_locais": [
     "useAIProviders",
     "useActionFeedback",
     "useAppBootstrap",
+    "useAssistantProfile",
     "useAuth",
     "useAutoCloseConversations",
     "useBusinessHours",
@@ -6823,6 +6828,7 @@
     "agent_skills",
     "ai_providers",
     "ai_usage_logs",
+    "assistant_profiles",
     "audio_memes",
     "auto_close_config",
     "avatars",
@@ -6937,6 +6943,7 @@
     "components/theme",
     "components/ui",
     "components/voice",
+    "hooks/assistant",
     "hooks/auth",
     "hooks/business",
     "hooks/crm",
@@ -8743,6 +8750,74 @@
    ]
   },
   {
+   "modulo": "hooks/assistant",
+   "arquivos": 1,
+   "testes": 0,
+   "linhas": 104,
+   "itens_menu": [],
+   "telas": [],
+   "rotas_http": [],
+   "componentes": 0,
+   "hooks_locais": [
+    "useAssistantProfile",
+    "useAuth",
+    "useMessageUpdateBatcher",
+    "useNotificationSettings",
+    "useOfflineCache",
+    "usePublishIncomingAlertIdentity",
+    "useRealtimeMessages",
+    "useRealtimeNotifications",
+    "useRealtimeReconnectingNotice",
+    "useRealtimeStatus",
+    "useTeamAlertsPreference",
+    "useToast"
+   ],
+   "hooks_definidos": [
+    "useAssistantProfile"
+   ],
+   "edges": [
+    "auth-login",
+    "detect-new-device"
+   ],
+   "tabelas": [
+    "assistant_profiles",
+    "contacts",
+    "messages",
+    "profiles",
+    "user_settings"
+   ],
+   "rpcs": [
+    "enqueue_outbound_message",
+    "enqueue_rich_outbound_message",
+    "get_inbox_contact_summaries"
+   ],
+   "buckets": [],
+   "canais_realtime": [
+    "chat-reactions:${messageId}"
+   ],
+   "env": [
+    "DEV"
+   ],
+   "flags": [],
+   "papeis": [],
+   "diretos": {
+    "edges": [],
+    "tabelas": [
+     "assistant_profiles"
+    ],
+    "rpcs": []
+   },
+   "importado_por_outros_modulos": [
+    "components/settings"
+   ],
+   "depende_de_modulos": [
+    "hooks/auth",
+    "integrations/supabase",
+    "lib"
+   ],
+   "pacotes_externos": []
+  },
+  {
    "modulo": "hooks/auth",
    "arquivos": 7,
    "testes": 9,
@@ -8836,6 +8911,7 @@
     "components/talkx",
     "components/team-chat",
     "hooks/analytics",
+    "hooks/assistant",
     "hooks/calls",
     "hooks/chat",
     "hooks/communication",
@@ -12070,6 +12146,7 @@
     "useAppBootstrap",
     "useApplicableSLA",
     "useAriaAnnouncer",
+    "useAssistantProfile",
     "useAttachmentSuggestion",
     "useAudienceEstimate",
     "useAudioMemes",
@@ -12621,6 +12698,7 @@
     "ai_providers",
     "ai_usage_logs",
     "allowed_countries",
+    "assistant_profiles",
     "audio_memes",
     "audit_logs",
     "auto_close_config",
@@ -13654,7 +13732,7 @@
    "modulo": "integrations/supabase",
    "arquivos": 3,
    "testes": 1,
-   "linhas": 15943,
+   "linhas": 15973,
    "itens_menu": [],
    "telas": [],
    "rotas_http": [],
@@ -13707,6 +13785,7 @@
     "hooks/admin",
     "hooks/agents",
     "hooks/analytics",
+    "hooks/assistant",
     "hooks/auth",
     "hooks/business",
     "hooks/calls",
@@ -13917,6 +13996,7 @@
     "hooks/admin",
     "hooks/agents",
     "hooks/analytics",
+    "hooks/assistant",
     "hooks/auth",
     "hooks/business",
     "hooks/calls",
@@ -14451,6 +14531,7 @@
     "useAppBootstrap",
     "useApplicableSLA",
     "useAriaAnnouncer",
+    "useAssistantProfile",
     "useAttachmentSuggestion",
     "useAudienceEstimate",
     "useAudioMemes",
@@ -14941,6 +15022,7 @@
     "ai_providers",
     "ai_usage_logs",
     "allowed_countries",
+    "assistant_profiles",
     "audio_memes",
     "audit_logs",
     "auto_close_config",
@@ -15732,6 +15814,7 @@
     "useAppBootstrap",
     "useApplicableSLA",
     "useAriaAnnouncer",
+    "useAssistantProfile",
     "useAttachmentSuggestion",
     "useAudienceEstimate",
     "useAudioMemes",
@@ -16227,6 +16310,7 @@
     "ai_providers",
     "ai_usage_logs",
     "allowed_countries",
+    "assistant_profiles",
     "audio_memes",
     "audit_logs",
     "auto_close_config",

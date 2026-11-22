@@ -58,6 +58,7 @@
     "useAppBootstrap",
     "useApplicableSLA",
     "useAriaAnnouncer",
+    "useAssistantProfile",
     "useAttachmentSuggestion",
     "useAudienceEstimate",
     "useAudioMemes",
@@ -567,6 +568,7 @@
     "useAppBootstrap",
     "useApplicableSLA",
     "useAriaAnnouncer",
+    "useAssistantProfile",
     "useAttachmentSuggestion",
     "useAudienceEstimate",
     "useAudioMemes",
@@ -1000,6 +1002,7 @@
     "ai_providers",
     "ai_usage_logs",
     "allowed_countries",
+    "assistant_profiles",
     "audio_memes",
     "audit_logs",
     "auto_close_config",
@@ -1339,7 +1342,7 @@
     "unknown",
     "user"
    ],
-   "arquivos_puxados": 1523
+   "arquivos_puxados": 1525
   },
   {
    "protegida": false,
@@ -6812,6 +6815,7 @@
     "useAIProviders",
     "useActionFeedback",
     "useAppBootstrap",
+    "useAssistantProfile",
     "useAuth",
     "useAutoCloseConversations",
     "useBusinessHours",
@@ -6868,6 +6872,7 @@
     "useAIProviders",
     "useActionFeedback",
     "useAppBootstrap",
+    "useAssistantProfile",
     "useAuth",
     "useAutoCloseConversations",
     "useBusinessHours",
@@ -6911,6 +6916,7 @@
     "agent_skills",
     "ai_providers",
     "ai_usage_logs",
+    "assistant_profiles",
     "audio_memes",
     "auto_close_config",
     "avatars",
@@ -6976,7 +6982,7 @@
     "tablist",
     "user"
    ],
-   "arquivos_puxados": 161
+   "arquivos_puxados": 163
   },
   {
    "id": "sla",

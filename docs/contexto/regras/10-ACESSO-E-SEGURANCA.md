@@ -1,6 +1,6 @@
 # 10 · ACESSO E SEGURANÇA — quem pode o quê
 
-> Gerado automaticamente por AI Context Sync v1.3.2 · commit `5ce080f9bf` · branch `main` · 2026-11-22 03:18 UTC
+> Gerado automaticamente por AI Context Sync v1.3.2 · commit `b35911db61` · branch `main` · 2026-11-22 12:06 UTC
 > Não edite à mão — regras humanas vão em `manual/`.
 
 ## Perfis / roles identificados
@@ -35,6 +35,7 @@
 | `ai_usage_outbox` | enabled | service_role: true | service_role: true | service_role: true | service_role: true |
 | `allowed_countries` | enabled | authenticated: public.is_admin_or_supervisor(auth.uid()) | authenticated: is_admin(auth.uid()) | — | authenticated: is_admin(auth.uid()) |
 | `app_settings` | enabled | authenticated: EXISTS ( SELECT 1 FROM public.user_roles ur WHERE ur.user_id = (SELECT auth.uid() AS uid) AND ur.role = 'admin'::public.app_r | authenticated: EXISTS ( SELECT 1 FROM public.user_roles ur WHERE ur.user_id = (SELECT auth.uid() AS uid) AND ur.role = 'admin'::public.app_r | authenticated: EXISTS ( SELECT 1 FROM public.user_roles ur WHERE ur.user_id = (SELECT auth.uid() AS uid) AND ur.role = 'admin'::public.app_r | authenticated: EXISTS ( SELECT 1 FROM public.user_roles ur WHERE ur.user_id = (SELECT auth.uid() AS uid) AND ur.role = 'admin'::public.app_r |
+| `assistant_profiles` | enabled | authenticated: user_id = auth.uid() | authenticated: user_id = auth.uid() | authenticated: user_id = auth.uid() | — |
 | `audio_meme_favorites` | enabled | authenticated: user_id = auth.uid() | authenticated: user_id = auth.uid() | authenticated: user_id = auth.uid() | authenticated: user_id = auth.uid() |
 | `audio_memes` | enabled | authenticated: true | authenticated: uploaded_by = auth.uid() | authenticated: (uploaded_by = auth.uid()) OR is_admin_or_supervisor(auth.uid()) | authenticated: uploaded_by = auth.uid() OR public.is_admin_or_supervisor(auth.uid()) |
 | `audit_logs` | enabled | authenticated: (SELECT public.has_role((SELECT auth.uid()), 'admin'::public.app_role)) | authenticated: false<br>authenticated: false | authenticated: false | authenticated: false |
@@ -1208,6 +1209,7 @@ Middleware matcher (Next.js): nenhum
 | `copilot_help_requests` | `created_at` |
 | `copilot_learning_moments` | `created_at` |
 | `copilot_conversation_scores` | `updated_at` |
+| `assistant_profiles` | `created_at`, `updated_at` |
 | `_rb_message_reactions_one_per_agent_20261107121000` | `created_at` |
 | `instance_pauses` | `created_at` |
 | `outbox_events` | `created_at` |

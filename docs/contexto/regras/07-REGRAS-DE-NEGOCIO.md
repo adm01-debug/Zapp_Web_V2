@@ -1,6 +1,6 @@
 # 07 · REGRAS DE NEGÓCIO
 
-> Gerado automaticamente por AI Context Sync v1.3.2 · commit `5ce080f9bf` · branch `main` · 2026-11-22 03:18 UTC
+> Gerado automaticamente por AI Context Sync v1.3.2 · commit `b35911db61` · branch `main` · 2026-11-22 12:06 UTC
 > Não edite à mão — regras humanas vão em `manual/`.
 
 ## A. Regras escritas por humanos (`manual/` — prioridade máxima, nunca sobrescrito)
@@ -423,7 +423,7 @@ Demais dúvidas: nenhuma (entrevista concluída em 2026-11-03). Novas dúvidas: 
 | `email_attachments` | service_role inserts email attachments | INSERT | service_role | permissive |  | `true` |
 | `permissions` | Admins can manage permissions | ALL | authenticated | permissive | `is_admin(auth.uid())` | `is_admin(auth.uid())` |
 | `role_permissions` | Admins can manage role permissions | ALL | authenticated | permissive | `is_admin(auth.uid())` | `is_admin(auth.uid())` |
-| … +283 linhas — lista completa em `context.json` | | | | | | |
+| … +286 linhas — lista completa em `context.json` | | | | | | |
 
 ## C. Restrições de dados (obrigatório / único / default / CHECK / FK / calculada)
 
@@ -729,7 +729,7 @@ Demais dúvidas: nenhuma (entrevista concluída em 2026-11-03). Novas dúvidas: 
 | `role_permissions` | `permission_id` | obrigatório |
 | `role_permissions` | `role` | obrigatório |
 | `user_devices` | `id` | PK; default gen_random_uuid() |
-| … +1391 linhas — lista completa em `context.json` | | |
+| … +1398 linhas — lista completa em `context.json` | | |
 
 ## D. Automações no banco (triggers e funções — regras que rodam sozinhas)
 
@@ -1833,6 +1833,9 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | TimeFilter | 1h \| 6h \| 24h \| 7d \| 30d | `src/hooks/analytics/useAIUsageDashboard.ts` |
 | WidgetSize | small \| medium \| large \| full | `src/hooks/analytics/useDashboardWidgets.ts` |
 | InsightPeriod | 24h \| 7d \| 30d | `src/hooks/analytics/useRecentAnalyses.ts` |
+| Atividade | venda \| compra \| atendimento \| supervisao | `src/hooks/assistant/useAssistantProfile.ts` |
+| AjudaPreferida | sempre \| relevante \| sob_demanda | `src/hooks/assistant/useAssistantProfile.ts` |
+| TomPreferido | direto \| consultivo \| formal | `src/hooks/assistant/useAssistantProfile.ts` |
 | MFA_TOTP_QUERY_KEY | 'mfa-verified-totp' | `src/hooks/auth/useMFA.ts` |
 | ReauthMotivo | senha_incorreta \| conta_bloqueada \| indisponivel \| rede \| codigo_necessario \| codigo_incorreto | `src/hooks/auth/useReauthentication.ts` |
 | QUEUE_GOAL_BANDS | 50, 75, 100 | `src/hooks/business/useQueueGoals.ts` |
@@ -1924,10 +1927,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | TALKX_CAMPAIGN_SEARCH_COLUMNS | 'name', 'description', 'message_template' | `src/hooks/integrations/useTalkXCampaignList.ts` |
 | TalkXEventType | created \| updated \| scheduled \| started \| paused \| resumed \| cancelled \| completed \| note | `src/hooks/integrations/useTalkXEvents.ts` |
 | TalkXClientEventType | note \| checklist \| segments_reviewed | `src/hooks/integrations/useTalkXEvents.ts` |
-| TalkXInsightAction | new-campaign \| templates \| campaigns | `src/hooks/integrations/useTalkXInsights.ts` |
-| TalkXLiveStatus | connecting \| live \| degraded \| offline | `src/hooks/integrations/useTalkXLiveChannel.ts` |
-| TalkXResumeChecklistItemKey | segments \| templates \| limits \| schedule \| autoresponse | `src/hooks/integrations/useTalkXResumeChecklist.ts` |
-| … +215 linhas — lista completa em `context.json` | | |
+| … +218 linhas — lista completa em `context.json` | | |
 
 ## F. Validações de entrada
 
@@ -3586,7 +3586,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
   ```
   const context = ctx ?? {}; const destination = typeof recipient?.destination === "string" ? recipient.destination.trim() : ""; // 1) Sem destino (ou marcado inválido): nada mais é avaliável. if (destination === "") { return { class: "no_destination", reason: "missing_destination" }; } if (context.destinationValid === false) { return { class: "no_destination", reason: "invalid_destination" }; } // 2) Opt-out (talkx_blacklist) — bloqueio duro, domina o transitório. if (isBlacklisted(destination, c …
   ```
-- **generateLiveSuggestion(opts: { lastClientMessage?: string; draftText?: string; saleStage?: string; userId: string; })** — `supabase/functions/copilot-live/index.ts`
+- **generateLiveSuggestion(opts: { lastClientMessage?: string; draftText?: string; saleStage?: string; userId: string; profile?: { atividade?: stri)** — `supabase/functions/copilot-live/index.ts`
   ```
   content: string; modelVersion: string
   ```
@@ -4963,7 +4963,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | unsupported-filter-column | `analise-prs/resgate-261118-lote3/claude/test-e2e-suite-completa-261104-1428/scripts/e2e-isolated/providers.mjs` |
 | unsupported-order | `analise-prs/resgate-261118-lote3/claude/test-e2e-suite-completa-261104-1428/scripts/e2e-isolated/providers.mjs` |
 | unsupported-range | `analise-prs/resgate-261118-lote3/claude/test-e2e-suite-completa-261104-1428/scripts/e2e-isolated/providers.mjs` |
-| … +2517 linhas — lista completa em `context.json` | |
+| … +2518 linhas — lista completa em `context.json` | |
 
 ## J. Controle de acesso no código (checagens de perfil/permissão)
 
@@ -5054,7 +5054,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `owner` | `supabase/migrations/20260927270018_team_chat_e28_fix_find_or_create_race.sql` |
 | `anon` | `supabase/migrations/20260927340000_fix_add_agent_xp_negative_and_guard.sql` |
 
-## K. Testes como especificação (26117 testes em 2723 arquivos — nomes completos em `context.json`)
+## K. Testes como especificação (26119 testes em 2723 arquivos — nomes completos em `context.json`)
 
 | Arquivo | Testes | Exemplos do que o sistema DEVE fazer |
 |---|---|---|

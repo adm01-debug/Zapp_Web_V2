@@ -870,7 +870,7 @@
    "zod_schemas": 0,
    "flags": [],
    "papeis": [],
-   "usado_por": 460,
+   "usado_por": 461,
    "usado_por_modulos": [
     "components/admin",
     "components/agents",
@@ -902,6 +902,7 @@
     "hooks/admin",
     "hooks/agents",
     "hooks/analytics",
+    "hooks/assistant",
     "hooks/auth",
     "hooks/business",
     "hooks/calls",
@@ -980,7 +981,7 @@
     "TablesUpdate"
    ],
    "export_default": null,
-   "linhas": 15882,
+   "linhas": 15912,
    "tabelas": [],
    "rpcs": [],
    "edges": [],
@@ -3715,7 +3716,7 @@
    "zod_schemas": 0,
    "flags": [],
    "papeis": [],
-   "usado_por": 245,
+   "usado_por": 246,
    "usado_por_modulos": [
     "components",
     "components/admin",
@@ -3743,6 +3744,7 @@
     "features/talk-me",
     "hooks/admin",
     "hooks/analytics",
+    "hooks/assistant",
     "hooks/auth",
     "hooks/business",
     "hooks/calls",

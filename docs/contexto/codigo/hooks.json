@@ -1,7 +1,7 @@
 {
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
- "total": 600,
+ "total": 601,
  "hooks": [
   {
    "arquivo": "analise-prs/resgate-261118-lote2/src/hooks/useMotionSeguro.ts",
@@ -4710,6 +4710,31 @@
    "coberto_por_testes": 1
   },
   {
+   "arquivo": "src/hooks/assistant/useAssistantProfile.ts",
+   "hooks_exportados": [
+    "useAssistantProfile"
+   ],
+   "linhas": 104,
+   "dominio": "hooks/assistant",
+   "tabelas": [
+    "assistant_profiles"
+   ],
+   "rpcs": [],
+   "edges": [],
+   "hooks_internos": [
+    "useAuth",
+    "useCallback",
+    "useEffect",
+    "useState"
+   ],
+   "canais_realtime": [],
+   "usado_por": 1,
+   "usado_por_arquivos": [
+    "src/components/settings/AssistantProfileSettings.tsx"
+   ],
+   "coberto_por_testes": 0
+  },
+  {
    "arquivo": "src/hooks/auth/useAuth.tsx",
    "hooks_exportados": [
     "useAuth"
@@ -4728,7 +4753,7 @@
     "useState"
    ],
    "canais_realtime": [],
-   "usado_por": 131,
+   "usado_por": 132,
    "usado_por_arquivos": [
     "analise-prs/resgate-261118-lote3/claude/feat-radar-motor-telas-261101-1330/src/components/inbox/copilot/RadarLive.tsx",
     "analise-prs/resgate-261118-lote3/claude/fix-unit-tests-src-261024-1630/src/hooks/chat/useTeamChatNotifications.ts",
@@ -14439,7 +14464,7 @@
     "useSyncExternalStore"
    ],
    "canais_realtime": [],
-   "usado_por": 73,
+   "usado_por": 74,
    "usado_por_arquivos": [
     "analise-prs/resgate-261118-lote3/claude/feat-message-delivery-post-iniciado-261101-1937/src/hooks/delivery/useUnconfirmedMessages.ts",
     "analise-prs/resgate-261118-lote3/claude/feat-radar-motor-telas-261101-1330/src/components/inbox/chat/ChatInputArea.tsx",
