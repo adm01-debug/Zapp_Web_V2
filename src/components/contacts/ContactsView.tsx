@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 import { useExternalContact360Batch } from '@/hooks/crm/useExternalContact360Batch';
 import { useCRMAdminAccess } from '@/hooks/crm/useCRMAdminAccess';
 import { ScrollToTopButton } from '@/components/ui/scroll-to-top';
@@ -20,8 +20,29 @@ import { ContactContentArea } from './ContactContentArea';
 import { ContactResultsSummary } from './ContactResultsSummary';
 import { ContactCRMDialog } from './ContactCRMDialog';
 import { useContactsViewState } from './useContactsViewState';
+import { resolvePageSize } from '@/hooks/crm/useContactsSearch';
 import { canChangeSelectedContactsType, canDeleteSelectedContacts, canMergeContacts } from './contactPermissions';
 import { useResolvedMergeContacts } from './resolveMergeContacts';
+
+/** Rótulo da visão corrente no resumo de resultados (design: "Cards de contatos", "Lista", …). */
+const VIEW_CAPTION: Record<string, string> = {
+  grid: 'Cards de contatos',
+  list: 'Lista de contatos',
+  table: 'Tabela de contatos',
+  kanban: 'Pipeline',
+  map: 'Mapa',
+  analytics: 'Analytics',
+};
+
+/** Rótulo do período no chip do filtro (mesmos valores de `ContactAdvancedFilters`). */
+const DATE_RANGE_LABEL: Record<string, string> = {
+  today: 'Hoje',
+  week: 'Última semana',
+  month: 'Último mês',
+  quarter: 'Últimos 3 meses',
+  year: 'Último ano',
+};
+
 export function ContactsView() {
   const crmIntegrationEnabled = useCRMIntegrationEnabled();
 
@@ -60,7 +81,7 @@ export function ContactsView() {
     filterJobTitle, setFilterJobTitle, filterTag, setFilterTag,
     filterDateRange, setFilterDateRange, sortBy, setSortBy,
     showLegacy, setShowLegacy,
-    activeFiltersCount, clearFilters, page, setPage, pageSize,
+    activeFiltersCount, clearFilters, page, setPage, pageSize, setPageSize,
     loadMore, loadPrevious, refetch,
     profile, scrollContainerRef,
     isSubmitting, deleteTarget, setDeleteTarget,
@@ -77,11 +98,47 @@ export function ContactsView() {
     invalidateContactAggregates,
   } = crud;
 
+  /**
+   * ZD-043 — tamanho da página por visão/colunas, como no design: grade mostra
+   * uma linha, tabela 8, lista 4 e as visões alternativas não paginam. A tela
+   * avisa o hook sempre que a visão ou a contagem de colunas muda.
+   */
+  useEffect(() => {
+    setPageSize?.(resolvePageSize(viewMode, gridColumns));
+  }, [viewMode, gridColumns, setPageSize]);
+
   const { isSupervisor } = useUserRole();
   const crmContacts = useMemo(() => filteredContacts.map(c => ({ id: c.id, phone: c.phone })), [filteredContacts]);
   const { lookup } = useExternalContact360Batch(crmContacts);
   const getCRMData = (phone: string) => lookup(phone) ?? null;
   const layoutScrollRef = useLayoutScroll();
+
+  /**
+   * ZD-044 — chips dos filtros ativos, cada um removível no seu próprio
+   * controle. A lista é derivada do MESMO estado que alimenta a busca, então
+   * remover um chip limpa exatamente o filtro que ele representa.
+   */
+  const filterChips = useMemo(() => {
+    const chips: { key: string; label: string; onRemove: () => void }[] = [];
+    if (activeTab !== 'all') {
+      chips.push({ key: 'tipo', label: `Tipo: ${activeTab}`, onRemove: () => setActiveTab('all') });
+    }
+    if (filterCompany) {
+      chips.push({ key: 'empresa', label: `Empresa: ${filterCompany}`, onRemove: () => setFilterCompany('') });
+    }
+    if (filterJobTitle) {
+      chips.push({ key: 'cargo', label: `Cargo: ${filterJobTitle}`, onRemove: () => setFilterJobTitle('') });
+    }
+    if (filterTag) {
+      chips.push({ key: 'etiqueta', label: `Etiqueta: ${filterTag}`, onRemove: () => setFilterTag('') });
+    }
+    if (filterDateRange && filterDateRange !== 'all') {
+      const rotulo = DATE_RANGE_LABEL[filterDateRange] ?? filterDateRange;
+      chips.push({ key: 'periodo', label: `Período: ${rotulo}`, onRemove: () => setFilterDateRange('all') });
+    }
+    return chips;
+  }, [activeTab, filterCompany, filterJobTitle, filterTag, filterDateRange,
+      setActiveTab, setFilterCompany, setFilterJobTitle, setFilterTag, setFilterDateRange]);
 
   /**
    * `can_delete` chega do banco por contato (RPC `can_delete_contacts`). A seleção
@@ -230,6 +287,8 @@ export function ContactsView() {
           loadPrevious={loadPrevious}
           hasMore={hasMore}
           loading={loading}
+          viewCaption={VIEW_CAPTION[viewMode] ?? 'Cards de contatos'}
+          activeFilterChips={filterChips}
         />
       )}
 

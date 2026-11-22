@@ -65,16 +65,14 @@ export function ContactContentArea({
     content = <ContactsSkeleton viewMode={viewMode} gridColumns={gridColumns} />;
   } else if (contacts.length === 0) {
     content = (
-      <Card><CardContent className="p-0">
-        <ContactEmptyState
-          type={search ? 'no-results' : activeFiltersCount > 0 ? 'filtered-empty' : 'no-contacts'}
-          searchQuery={search}
-          activeFilters={activeFiltersCount}
-          onAddContact={onAddContact}
-          onClearSearch={search ? onClearSearch : undefined}
-          onClearFilters={activeFiltersCount > 0 ? onClearFilters : undefined}
-        />
-      </CardContent></Card>
+      <ContactEmptyState
+        type={search ? 'no-results' : activeFiltersCount > 0 ? 'filtered-empty' : 'no-contacts'}
+        searchQuery={search}
+        activeFilters={activeFiltersCount}
+        onAddContact={onAddContact}
+        onClearSearch={search ? onClearSearch : undefined}
+        onClearFilters={activeFiltersCount > 0 ? onClearFilters : undefined}
+      />
     );
   } else if (viewMode === 'grid') {
     content = (

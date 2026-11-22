@@ -68,27 +68,24 @@ export function ContactsSkeleton({ viewMode, gridColumns }: ContactsSkeletonProp
     return (
       <div className={cn("grid gap-3", GRID_COLUMNS_CLASS[gridColumns] || GRID_COLUMNS_CLASS[4])}>
         {Array.from({ length: 8 }).map((_, i) => (
-          <div key={i} className="flex flex-col min-h-[164px] rounded-[14px] border border-border/70 bg-card p-4">
-            <div className="flex items-start gap-3">
-              <div className="w-16 h-16 rounded-full bg-muted animate-shimmer shrink-0" />
-              <div className="flex-1 space-y-2 pt-0.5">
-                <div className="h-4 w-28 rounded bg-muted animate-shimmer" />
-                <div className="h-5 w-20 rounded-full bg-muted animate-shimmer" />
-                <div className="h-3 w-24 rounded bg-muted/70 animate-shimmer" />
-              </div>
+          <div
+            key={i}
+            className="flex flex-col overflow-hidden min-h-[120px] rounded-[13px] border border-[hsl(var(--contacts-line))] bg-[hsl(var(--contacts-raised))]"
+          >
+            {/* Retrato: alturas espelham o card do design (base 286px). */}
+            <div className="w-full h-[286px] max-[1600px]:h-[296px] max-[1399px]:h-[285px] max-[899px]:h-[311px] max-[559px]:h-[338px] bg-muted animate-shimmer" />
+            <div className="px-4 pt-[14px] pb-[14px] max-[559px]:px-[19px] max-[559px]:pt-[18px] space-y-[7px]">
+              <div className="h-6 w-32 rounded bg-muted animate-shimmer" />
+              <div className="h-3 w-24 rounded bg-muted/70 animate-shimmer" />
+              <div className="h-3 w-36 rounded bg-muted/60 animate-shimmer" />
             </div>
-            {/* space-y-1 matches ContactCard (was 1.5) */}
-            <div className="mt-3 space-y-1">
+            <div className="mt-auto px-4 pb-[14px] max-[559px]:px-[19px] max-[559px]:pb-[16px] space-y-[9px] border-t border-[hsl(var(--contacts-line))] pt-[13px]">
               <div className="h-3 w-32 rounded bg-muted/60 animate-shimmer" />
               <div className="h-3 w-40 rounded bg-muted/60 animate-shimmer" />
             </div>
-            {/* pt-2 matches ContactCard (was pt-3) */}
-            <div className="mt-auto pt-2 flex items-center justify-between">
+            <div className="px-4 pb-[14px] max-[559px]:px-[19px] max-[559px]:pb-[16px] pt-[11px] border-t border-[hsl(var(--contacts-line))] flex items-center justify-between">
               <div className="h-3 w-24 rounded bg-muted/50 animate-shimmer" />
-              <div className="flex items-center gap-1.5">
-                <div className="w-9 h-9 rounded-[10px] bg-muted animate-shimmer" />
-                <div className="w-9 h-9 rounded-[10px] bg-muted animate-shimmer" />
-              </div>
+              <div className="h-3 w-16 rounded bg-muted/50 animate-shimmer" />
             </div>
           </div>
         ))}
@@ -98,15 +95,16 @@ export function ContactsSkeleton({ viewMode, gridColumns }: ContactsSkeletonProp
 
   if (viewMode === 'list') {
     return (
-      <div className="space-y-2">
+      <div className="space-y-[9px]">
         {Array.from({ length: 8 }).map((_, i) => (
           <motion.div key={i} initial={{ opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.04 }}
-            className="flex items-center gap-4 px-4 py-3 rounded-xl border border-border/30">
-            <div className="w-4 h-4 rounded bg-muted animate-pulse" />
-            <div className="w-11 h-11 rounded-full bg-muted animate-pulse" />
+            className="flex items-center gap-[13px] p-[9px] max-[559px]:gap-[10px] rounded-[10px] border border-[hsl(var(--contacts-line))] bg-[hsl(var(--contacts-raised))]">
+            <div className="w-4 h-4 rounded bg-muted animate-pulse shrink-0" />
+            <div className="w-[82px] max-[559px]:w-[73px] shrink-0 h-[102px] max-[559px]:h-[119px] rounded-[7px] bg-muted animate-pulse" />
             <div className="flex-1 space-y-2">
-              <div className="h-4 w-32 rounded bg-muted animate-pulse" />
+              <div className="h-5 w-32 rounded bg-muted animate-pulse" />
               <div className="h-3 w-24 rounded bg-muted/50 animate-pulse" />
+              <div className="h-3 w-40 rounded bg-muted/40 animate-pulse" />
             </div>
           </motion.div>
         ))}
