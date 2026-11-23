@@ -147,6 +147,8 @@ export interface CustosDoPeriodo {
   sem_tarifa: {
     modelo_sem_tarifa: number;
     sem_quantidade_medida: number;
+    /** Chamadas cuja grandeza o log nao registra (voz/audio): falta COLETA, nao preco. */
+    unidade_nao_medida?: number;
     motivo_unidade_nao_medida: string;
   } | null;
   por_funcao: Array<{ funcao: string; chamadas: number; chamadas_com_tarifa: number; custo_medido: number | null }> | null;
@@ -328,6 +330,10 @@ export function useAIUsageDashboard() {
       interno: dinheiro(custos.custo_interno),
       reconciliado: dinheiro(custos.custo_reconciliado),
       semTarifa,
+      // Separado de `semTarifa` de proposito: aqui nao falta preco, falta a
+      // coleta da grandeza (segundos de audio, caracteres de TTS).
+      semUnidade: custos.sem_tarifa?.unidade_nao_medida ?? 0,
+      motivoSemUnidade: custos.sem_tarifa?.motivo_unidade_nao_medida ?? null,
       variasMoedas: (custos.moedas?.length ?? 0) > 1 ? (custos.moedas ?? []).join(' + ') : null,
     };
   }, [custos]);
