@@ -1250,8 +1250,21 @@ export async function registrarAcaoCalculada(acao: {
 // `source` viaja junto da tarifa escolhida para o relatório poder dizer se o
 // número é ESTIMATIVA INTERNA ou CUSTO RECONCILIADO com o extrato do provedor.
 
-/** Grandezas que se cobram, uma a uma (não se converte entre elas). */
-export type UnidadeCobravel = "token" | "character" | "second" | "request";
+/**
+ * Grandezas que se cobram, uma a uma (não se converte entre elas).
+ *
+ * `input_token` e `output_token` existem porque o fornecedor cobra preços
+ * DIFERENTES por token de entrada e de saída (a saída sai de 4x a 14x mais
+ * caro). `token` sobrevive como preço único: é o caminho dos modelos cujo
+ * fornecedor não expõe as duas pontas e o das linhas antigas.
+ */
+export type UnidadeCobravel =
+  | "token"
+  | "input_token"
+  | "output_token"
+  | "character"
+  | "second"
+  | "request";
 
 /** Uma linha de tarifa, como vem da tabela `ai_model_prices`. */
 export interface TarifaDeModelo {
@@ -1326,6 +1339,49 @@ export interface CustoCalculado {
   tarifa: TarifaDeModelo | null;
   fonte: string | null;
   motivo: string;
+}
+
+/**
+ * Custo de uma chamada que tem tokens de entrada e de saída.
+ *
+ * Cobra cada ponta pelo preço dela e cai no preço único (`token`) só quando o
+ * modelo não tem as duas tarifas — nesse caso `granularidade` diz qual caminho
+ * foi usado, para o relatório nunca apresentar estimativa como medição.
+ *
+ * Sem nenhuma das duas: `custo: null` com motivo, jamais zero.
+ */
+export function calcularCustoPorPonta(
+  tarifas: TarifaDeModelo[],
+  consulta: { model: string; em: string | Date; tokensIn: number; tokensOut: number },
+): CustoCalculado & { granularidade: "entrada_saida" | "preco_unico" | null } {
+  const porPonta = (unidade: "input_token" | "output_token", quantidade: number) =>
+    calcularCusto(tarifas, { model: consulta.model, unit: unidade, em: consulta.em, quantidade });
+
+  const entrada = porPonta("input_token", consulta.tokensIn);
+  const saida = porPonta("output_token", consulta.tokensOut);
+
+  if (entrada.custo !== null && saida.custo !== null) {
+    if (entrada.moeda !== saida.moeda) {
+      // Somar moedas diferentes é a única coisa pior que não somar.
+      return { custo: null, moeda: null, tarifa: null, fonte: null, motivo: "moedas_divergentes", granularidade: null };
+    }
+    return {
+      custo: Number((entrada.custo + saida.custo).toFixed(8)),
+      moeda: entrada.moeda,
+      tarifa: entrada.tarifa,
+      fonte: entrada.fonte,
+      motivo: consulta.tokensIn + consulta.tokensOut === 0 ? "zero_medido" : "calculado",
+      granularidade: "entrada_saida",
+    };
+  }
+
+  const unico = calcularCusto(tarifas, {
+    model: consulta.model,
+    unit: "token",
+    em: consulta.em,
+    quantidade: consulta.tokensIn + consulta.tokensOut,
+  });
+  return { ...unico, granularidade: unico.custo === null ? null : "preco_unico" };
 }
 
 /**

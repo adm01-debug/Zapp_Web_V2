@@ -22,6 +22,10 @@ import {
 } from "../_shared/schemas.ts";
 import { parseApprovedStorageUrl } from "../_shared/ssrf.ts";
 import { logAiUsageDetached } from "../_shared/ai-usage.ts";
+import {
+  transcreverViaOpenRouter,
+  OPENROUTER_STT_MODEL_PADRAO,
+} from "./openrouter-stt.ts";
 import { detectMediaKind } from "../_shared/messaging/media.ts";
 import {
   createClient,
@@ -404,6 +408,118 @@ export function resolveTranscriptionAudioFormat(
  * `fetch` ao provedor) pode ser injetado. Em produção nada é passado e o handler
  * usa as implementações reais — por isso o teste chama o handler REAL.
  */
+interface FallbackOpenRouterArgs {
+  req: Request;
+  log: Logger;
+  apiKey: string;
+  audioBytes: Uint8Array;
+  mimeType: string;
+  languageCode: string | null;
+  messageId: string | null;
+  userId: string | null;
+  persistState: (write: TranscriptionWrite) => Promise<boolean>;
+  /** Por que o provedor principal não atendeu (`ausente` ou `elevenlabs_http_401`). */
+  motivoEntrada: string;
+  sttTimeoutMs?: number;
+  fetch?: typeof fetch;
+}
+
+/**
+ * Transcrição pelo OpenRouter quando o provedor principal não pode atender.
+ *
+ * Só é chamado em dois casos — credencial do ElevenLabs AUSENTE ou RECUSADA
+ * (401/403). Recusa de áudio (400) e rate limit (429) NÃO caem aqui: repetir em
+ * outro provedor duplicaria o custo sem resolver a causa.
+ *
+ * Diferente do ElevenLabs, esta rota devolve `usage` com tokens reais: a linha do
+ * ledger mede o que foi gasto em vez de declarar `usage_unknown`.
+ */
+async function responderComOpenRouter(args: FallbackOpenRouterArgs): Promise<Response> {
+  const { req, log } = args;
+  const modelo = Deno.env.get("OPENROUTER_STT_MODEL")?.trim() || OPENROUTER_STT_MODEL_PADRAO;
+  const sinal = AbortSignal.timeout(args.sttTimeoutMs ?? STT_TIMEOUT_MS);
+  const inicio = Date.now();
+
+  const resultado = await transcreverViaOpenRouter({
+    audio: args.audioBytes,
+    mimeType: args.mimeType,
+    idioma: args.languageCode,
+    apiKey: args.apiKey,
+    modelo,
+    fetchImpl: args.fetch,
+    signal: sinal,
+  });
+  const duracao = Date.now() - inicio;
+
+  if (resultado.ok) {
+    // `Number.isFinite` no lugar de comparar com `null`: a régua de lint trata
+    // `algoToken !== null` como comparação de credencial (falso positivo).
+    const tokensMedidos = Number.isFinite(resultado.tokensIn) && Number.isFinite(resultado.tokensOut);
+    await logAiUsageDetached({
+      functionName: "ai-transcribe-audio",
+      userId: args.userId,
+      model: resultado.modelo,
+      inputTokens: resultado.tokensIn ?? undefined,
+      outputTokens: resultado.tokensOut ?? undefined,
+      durationMs: duracao,
+      status: "success",
+      usageUnknown: !tokensMedidos,
+      metadata: {
+        provider: "openrouter",
+        endpoint: "/api/v1/chat/completions",
+        billing_unit: "token",
+        fallback_from: args.motivoEntrada,
+        input_bytes: args.audioBytes.byteLength,
+      },
+    });
+    await args.persistState({ transcription: resultado.texto, status: "completed" });
+    log.done(200, { transcriptionLength: resultado.texto.length, provider: "openrouter" });
+    return jsonResponse(
+      {
+        transcription: resultado.texto,
+        messageId: args.messageId,
+        words: [],
+        audio_events: [],
+        speakers: [],
+      },
+      200,
+      req,
+    );
+  }
+
+  await logAiUsageDetached({
+    functionName: "ai-transcribe-audio",
+    userId: args.userId,
+    model: modelo,
+    durationMs: duracao,
+    status: "error",
+    errorMessage: `openrouter_${resultado.motivo}_${resultado.httpStatus ?? "sem_http"}`,
+    usageUnknown: true,
+    metadata: {
+      provider: "openrouter",
+      endpoint: "/api/v1/chat/completions",
+      billing_unit: "token",
+      fallback_from: args.motivoEntrada,
+      http_status: resultado.httpStatus,
+      input_bytes: args.audioBytes.byteLength,
+    },
+  });
+  await args.persistState({ status: "failed" });
+  log.error("OpenRouter STT falhou", {
+    motivo: resultado.motivo,
+    httpStatus: resultado.httpStatus,
+    detalhe: resultado.detalhe,
+  });
+  return jsonResponse(
+    {
+      error:
+        "Não foi possível transcrever o áudio: nenhum provedor de transcrição aceitou a chamada.",
+    },
+    502,
+    req,
+  );
+}
+
 export interface TranscribeAudioDeps {
   /** Resolve a identidade do chamador (default: `requireAiIdentityOrService`). */
   authorize?: (req: Request) => Promise<AiIdentity | Response>;
@@ -574,7 +690,10 @@ export async function handleTranscribeAudio(
     log.info("Starting transcription", { messageId, languageCode });
     const readEnv = deps.env ?? requireEnv;
     const ELEVENLABS_API_KEY = readEnv("ELEVENLABS_API_KEY");
-    if (!ELEVENLABS_API_KEY) {
+    // Fallback OpenRouter: a chave existe no projeto mas o provedor principal
+    // pode estar sem credencial válida (é o caso de produção desde 14/11).
+    const OPENROUTER_API_KEY = readEnv("OPENROUTER_API_KEY");
+    if (!ELEVENLABS_API_KEY && !OPENROUTER_API_KEY) {
       return errorResponse("Transcription provider is unavailable", 500, req);
     }
 
@@ -616,6 +735,37 @@ export async function handleTranscribeAudio(
       originalType: contentType,
       typeSource: source,
     });
+
+    // Fallback: o áudio já está em memória, então trocar de provedor não custa
+    // outro download. Usado quando a chave principal falta ou é recusada.
+    const transcreverPeloFallback = (motivo: string) =>
+      responderComOpenRouter({
+        req,
+        log,
+        apiKey: OPENROUTER_API_KEY as string,
+        audioBytes: new Uint8Array(audioBuffer),
+        mimeType,
+        languageCode: languageCode ?? null,
+        messageId: messageId ?? null,
+        userId: identity.userId ?? null,
+        persistState,
+        motivoEntrada: motivo,
+        sttTimeoutMs: deps.sttTimeoutMs,
+        fetch: deps.fetch,
+      });
+
+    if (!ELEVENLABS_API_KEY) {
+      if (!OPENROUTER_API_KEY) {
+        return errorResponse("Transcription provider is unavailable", 500, req);
+      }
+      log.warn("Sem chave do provedor principal; transcrevendo pelo OpenRouter", {
+        messageId,
+      });
+      // Mesmo estado observável do caminho principal: o cliente vê `processing`
+      // em vez de um silêncio até a resposta.
+      await persistState({ status: "processing" });
+      return await transcreverPeloFallback("elevenlabs_ausente");
+    }
 
     const formData = new FormData();
     formData.append("file", audioBlob, fileName);
@@ -689,7 +839,16 @@ export async function handleTranscribeAudio(
         await persistState({ status: "failed" });
         return errorResponse("Rate limit exceeded.", 429, req);
       }
-      if (response.status === 401) {
+      if (response.status === 401 || response.status === 403) {
+        // Credencial recusada: repetir no mesmo provedor não adianta e a chave
+        // continua inválida até alguém trocá-la. O fallback é o único caminho.
+        if (OPENROUTER_API_KEY) {
+          log.warn("ElevenLabs recusou a credencial; transcrevendo pelo OpenRouter", {
+            status: response.status,
+            messageId,
+          });
+          return await transcreverPeloFallback(`elevenlabs_http_${response.status}`);
+        }
         await persistState({ status: "failed" });
         return errorResponse("Invalid ElevenLabs API key.", 401, req);
       }
