@@ -211,8 +211,12 @@ test.describe('alvos de toque 44px — celular (ponteiro grosso)', () => {
     // (não pela classe `.alvo-toque-44`, que sumiu para não reexibir botão `hidden`). ──
     const acoes = page.getByRole('button', { name: 'Ações do contato Ana Teste' });
     const a = await caixa(acoes, 'ações do contato');
-    expect(a.width, `largura das ações: ${a.width}px`).toBeGreaterThanOrEqual(44);
-    expect(a.height, `altura das ações: ${a.height}px`).toBeGreaterThanOrEqual(44);
+    // O Chromium devolve `boundingBox()` fracionário: um alvo de 44px sai como 43,9999695px
+    // em layout escalado. A tolerância absorve só o ruído sub-pixel; alvo realmente menor
+    // (ex.: 43px) continua reprovando.
+    const TOLERANCIA_SUB_PIXEL = 0.5;
+    expect(a.width, `largura das ações: ${a.width}px`).toBeGreaterThanOrEqual(44 - TOLERANCIA_SUB_PIXEL);
+    expect(a.height, `altura das ações: ${a.height}px`).toBeGreaterThanOrEqual(44 - TOLERANCIA_SUB_PIXEL);
     const minH = await acoes.evaluate((el) => getComputedStyle(el).minHeight);
     expect(minH, `min-height computado das ações: ${minH}`).toBe('44px');
 
