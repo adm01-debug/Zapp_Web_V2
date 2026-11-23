@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "c4ce2b5a845b25ca14a1f25ab42044e884b14a52",
+  "commit": "9f13ab556031089de08618bea56927bfbda10461",
   "branch": "main",
-  "data_commit": "2026-11-23T21:02:46Z",
+  "data_commit": "2026-11-23T19:49:34-03:00",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "9f13ab55",
+    "data": "2026-11-23",
+    "assunto": "⬆️ ci: bump the codeql-action group across 1 directory with 3 updates (#3334)"
+   },
    {
     "sha": "c4ce2b5a",
     "data": "2026-11-23",
@@ -126,14 +131,9 @@
     "sha": "436a10e2",
     "data": "2026-11-21",
     "assunto": "fix(ci): corrige flake deterministico do teste biweekly (envelope 13.333..14.333) (#3311)"
-   },
-   {
-    "sha": "1669013e",
-    "data": "2026-11-21",
-    "assunto": "feat(lgpd): mascara dados sensiveis antes de enviar texto a IA em 5 pontos (#3308)"
    }
   ],
-  "arquivos_mudados_7d": 5296,
+  "arquivos_mudados_7d": 5295,
   "pastas_mais_mudadas_30d": [
    {
     "pasta": "docs/contexto/supabase",
@@ -301,11 +301,15 @@
   "autores_30d": [
    {
     "autor": "adm01-debug",
-    "commits": 292
+    "commits": 291
    },
    {
     "autor": "github-actions[bot]",
     "commits": 8
+   },
+   {
+    "autor": "dependabot[bot]",
+    "commits": 1
    }
   ]
  },

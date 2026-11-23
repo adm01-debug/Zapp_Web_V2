@@ -66,11 +66,11 @@
  "commits": {
   "convencao": "conventional commits (observado)",
   "exemplos": [
+   "⬆️ ci: bump the codeql-action group across 1 directory with 3 updates (#3334)",
    "chore(db): sincroniza talkx_ai_requests e corrige o inventario (#3342)",
    "feat(talkx): liga os dois kinds sem tela da IA (insight_text e segment_suggestion) (#3339)",
    "fix: tolera ruido sub-pixel na medicao de 44px do card (#3341)",
-   "feat(talkx): cria a trilha de IA e os tetos que a talkx-ai ja exige (#3327)",
-   "fix(ia): cobra entrada e saída pelo preço real e destrava o custo de IA (#3326)"
+   "feat(talkx): cria a trilha de IA e os tetos que a talkx-ai ja exige (#3327)"
   ]
  },
  "pr_template": ".github/PULL_REQUEST_TEMPLATE.md",

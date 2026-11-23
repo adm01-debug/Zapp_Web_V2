@@ -1,9 +1,9 @@
 {
  "meta": {
-  "sha": "c4ce2b5a845b25ca14a1f25ab42044e884b14a52",
+  "sha": "9f13ab556031089de08618bea56927bfbda10461",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-23 21:04 UTC",
+  "generated_at": "2026-11-23 22:51 UTC",
   "files_total": 15627,
   "code_files": 8928,
   "code_lines": 1416963
@@ -482705,10 +482705,20 @@
   }
  },
  "git": {
-  "sha": "c4ce2b5a845b25ca14a1f25ab42044e884b14a52",
+  "sha": "9f13ab556031089de08618bea56927bfbda10461",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "9f13ab55",
+    "date": "2026-11-23",
+    "author": "dependabot[bot]",
+    "subject": "⬆️ ci: bump the codeql-action group across 1 directory with 3 updates (#3334)",
+    "files": [
+     ".github/workflows/codeql.yml",
+     ".github/workflows/scorecard.yml"
+    ]
+   },
    {
     "sha": "c4ce2b5a",
     "date": "2026-11-23",
@@ -483146,17 +483156,6 @@
      "scripts/ci/branch-podaveis.mjs",
      "scripts/ci/branch-podaveis.unit.mjs"
     ]
-   },
-   {
-    "sha": "03350f44",
-    "date": "2026-11-21",
-    "author": "adm01-debug",
-    "subject": "docs: evidencia de deploy DASH-083 (cron relatorios agendados) (#3303)",
-    "files": [
-     "docs/MIGRATIONS.md",
-     "docs/evidencias/plano-volume-50/README.md",
-     "docs/evidencias/plano-volume-50/e49-dash083-relatorios-agendados.md"
-    ]
    }
   ],
   "hot_files": [
@@ -483233,11 +483232,11 @@
     2
    ],
    [
-    "docs/MIGRATIONS.md",
-    2
+    ".github/workflows/codeql.yml",
+    1
    ],
    [
-    "src/components/talkx/TalkXAnalytics.tsx",
+    ".github/workflows/scorecard.yml",
     1
    ]
   ]
