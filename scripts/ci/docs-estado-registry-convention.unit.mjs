@@ -59,13 +59,31 @@ const edgesReais = fs.readdirSync(dirFuncoes, { withFileTypes: true })
 
 // `invoke(` = chamada direta do supabase-js; `invokeEdge(` = wrapper central do front
 // (src/lib/invokeEdge.ts) que injeta o id de correlacao — mesmo chamador de front, grupo A.
-const invoca = (n) => new RegExp(`invoke(?:Edge)?\\(\\s*['"\`]${n}['"\`]`);
+// A forma com generic (`invokeEdge<X>('edge')`, inclusive multi-linha) e coberta por
+// `linhasDaInvocacao`, porque a busca por linha nao enxerga o nome depois do `>`.
 const rota = (n) => new RegExp(`/functions/v1/${n}(?![\\w-])`);
 const CRON = /cron\.schedule|net\.http_post|pg_cron|supabase_functions\.http_request|http_request_queue/i;
 
 const srcTs = andar(path.join(raiz, 'src'), (n) => /\.(ts|tsx)$/.test(n)).filter((p) => !ehTeste(p));
 const funcoesTs = andar(dirFuncoes, (n) => /\.ts$/.test(n)).filter((p) => !ehTeste(p));
 const migracoes = andar(path.join(raiz, 'supabase/migrations'), (n) => n.endsWith('.sql'));
+
+// `invokeEdge<Resultado>(` e o generic quebrado em várias linhas são a forma
+// normal do wrapper no front (src/lib/invokeEdge.ts). A busca por linha não
+// enxerga o nome da edge quando ela está DEPOIS do `>` do generic, e publicar
+// grupo B nesse caso esconde um chamador de front real (o grupo A vence B).
+const RE_INVOCACAO = /\binvoke(?:Edge)?\s*(?:<[\s\S]{0,400}?>)?\s*\(\s*(['"`])([\w.-]+)\1/g;
+
+/** Linhas (1-based) de `arquivo` que invocam `nome`, inclusive com generic multi-linha. */
+function linhasDaInvocacao(arquivo, nome) {
+  const texto = fs.readFileSync(arquivo, 'utf8');
+  const achadas = [];
+  for (const m of texto.matchAll(RE_INVOCACAO)) {
+    if (m[2] !== nome) continue;
+    achadas.push(texto.slice(0, m.index + m[0].indexOf(m[2])).split('\n').length);
+  }
+  return achadas;
+}
 
 const linhasConfigSupabase = linhasDe(path.join(raiz, 'supabase/config.toml'));
 const funcoesExternasConfig = new Map();
@@ -81,16 +99,18 @@ function chamadores(nome) {
   const deCron = [];
   const deConfig = [];
   for (const p of srcTs) {
+    for (const linha of linhasDaInvocacao(p, nome)) doFront.push(`${relativo(p)}:${linha}`);
     const ls = linhasDe(p);
     for (let i = 0; i < ls.length; i++) {
-      if (invoca(nome).test(ls[i]) || rota(nome).test(ls[i])) doFront.push(`${relativo(p)}:${i + 1}`);
+      if (rota(nome).test(ls[i])) doFront.push(`${relativo(p)}:${i + 1}`);
     }
   }
   for (const p of funcoesTs) {
     if (relativo(p).startsWith(`supabase/functions/${nome}/`)) continue;
+    for (const linha of linhasDaInvocacao(p, nome)) deOutraEdge.push(`${relativo(p)}:${linha}`);
     const ls = linhasDe(p);
     for (let i = 0; i < ls.length; i++) {
-      if (invoca(nome).test(ls[i]) || rota(nome).test(ls[i])) deOutraEdge.push(`${relativo(p)}:${i + 1}`);
+      if (rota(nome).test(ls[i])) deOutraEdge.push(`${relativo(p)}:${i + 1}`);
     }
   }
   for (const p of migracoes) {
