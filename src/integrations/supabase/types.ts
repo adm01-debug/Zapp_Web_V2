@@ -8623,6 +8623,54 @@ export type Database = {
           },
         ]
       }
+      talkx_ai_requests: {
+        Row: {
+          cost_usd: number | null
+          created_at: string
+          created_by: string
+          entity_id: string | null
+          entity_type: string | null
+          id: string
+          input_hash: string
+          kind: string
+          model: string | null
+          output: Json | null
+          status: string
+          tokens_in: number
+          tokens_out: number
+        }
+        Insert: {
+          cost_usd?: number | null
+          created_at?: string
+          created_by: string
+          entity_id?: string | null
+          entity_type?: string | null
+          id?: string
+          input_hash: string
+          kind: string
+          model?: string | null
+          output?: Json | null
+          status: string
+          tokens_in?: number
+          tokens_out?: number
+        }
+        Update: {
+          cost_usd?: number | null
+          created_at?: string
+          created_by?: string
+          entity_id?: string | null
+          entity_type?: string | null
+          id?: string
+          input_hash?: string
+          kind?: string
+          model?: string | null
+          output?: Json | null
+          status?: string
+          tokens_in?: number
+          tokens_out?: number
+        }
+        Relationships: []
+      }
       talkx_alerts: {
         Row: {
           campaign_id: string | null

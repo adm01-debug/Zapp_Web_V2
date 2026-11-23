@@ -40,13 +40,13 @@ confere que todo caminho listado é consumidor de verdade; ela não obriga a lis
 
 | Objeto | Quantidade |
 |---|---|
-| Tabelas (`tables`) | 214 |
+| Tabelas (`tables`) | 215 |
 | Views (`views`) | 13 |
-| Colunas (`columns`) | 2388 |
+| Colunas (`columns`) | 2401 |
 | Funções (`functions`) | 405 |
 | Assinaturas de função (`function_signatures`) | 407 |
 | Funções de gatilho (`trigger_functions`) | 103 |
-| Restrições de verificação (`check_constraints`) | 254 |
+| Restrições de verificação (`check_constraints`) | 259 |
 
 As tabelas estão inventariadas uma a uma na seção seguinte. Views, funções, colunas e restrições
 têm o inventário completo no catálogo (`supabase/schema-catalog.json`) e o manifesto com hash de
@@ -219,6 +219,7 @@ RLS em `supabase/schema-manifest.json`; este documento não os repete.
 | `sla_configurations` | Configurações de SLA (tempo de primeira resposta e de resolução) | ativo | `src/hooks/__tests__/helpers/alertBehaviorTestKit.ts`, `src/hooks/sla/__tests__/useSLAConfigurations.test.tsx`, `src/hooks/sla/useApplicableSLA.ts` … |
 | `sla_rules` | Regras de SLA por prioridade, fila ou contato | ativo | `src/hooks/__tests__/helpers/alertBehaviorTestKit.ts`, `src/hooks/sla/__tests__/useApplicableSLA.test.tsx`, `src/hooks/sla/__tests__/useContactSlaTimeline.test.tsx` … |
 | `stickers` | Figurinhas do chat, por categoria e autor | ativo | `src/components/inbox/StickerPicker.tsx`, `src/components/inbox/__tests__/StickerPicker.catalogo.test.tsx`, `src/components/inbox/chat/MessageBubble.tsx` … |
+| `talkx_ai_requests` | Trilha de chamadas de IA do TalkX (tipo, entidade, tokens, custo e status) | ativo | `supabase/functions/talkx-ai/index.ts`, `supabase/functions/talkx-ai/index.test.ts`, `scripts/db-audit/talkx-ai-requests-trail.test.mjs` |
 | `talkx_alerts` | Alertas do motor TalkX (tipo, campanha e payload) | parcial | `scripts/db-audit/talkx-alerts-outcome-unknown-lote.test.sh`, `scripts/db-audit/talkx-engine-health.test.sh`, `scripts/db-audit/talkx-expurgo-escopo-ai-jobs.test.sh` … |
 | `talkx_blacklist` | Lista de supressão do TalkX (contato, motivo e origem) | ativo | `src/components/talkx/TalkXSuppression.tsx`, `src/components/talkx/__tests__/TalkXSuppression.actions.test.tsx`, `src/components/talkx/__tests__/TalkXSuppression.atividade.test.tsx` … |
 | `talkx_campaign_events` | Eventos de campanha TalkX (tipo, mensagem e ator) | ativo | `src/components/talkx/TalkXSuppression.tsx`, `src/components/talkx/__tests__/TalkXCampaignRunning.checklist.test.tsx`, `src/components/talkx/__tests__/TalkXResumeChecklist.test.tsx` … |
