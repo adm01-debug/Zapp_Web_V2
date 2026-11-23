@@ -1,9 +1,9 @@
 {
  "meta": {
-  "sha": "7fe8d2453353061dc6b2b12e524eabfae94b9d9b",
+  "sha": "54826dbf2d45ecb8363d32f565efcbd7256601d3",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-23 13:16 UTC",
+  "generated_at": "2026-11-23 14:25 UTC",
   "files_total": 15618,
   "code_files": 8920,
   "code_lines": 1415127
@@ -481845,10 +481845,19 @@
   }
  },
  "git": {
-  "sha": "7fe8d2453353061dc6b2b12e524eabfae94b9d9b",
+  "sha": "54826dbf2d45ecb8363d32f565efcbd7256601d3",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "54826dbf",
+    "date": "2026-11-23",
+    "author": "adm01-debug",
+    "subject": "fix(test): ampliar janela de serie de 15 para 30 min - corrige flake de meia-noite (#3332)",
+    "files": [
+     "scripts/db-audit/talkx-monitor-panel.test.sh"
+    ]
+   },
    {
     "sha": "7fe8d245",
     "date": "2026-11-23",
@@ -482265,32 +482274,12 @@
     "files": [
      "supabase/functions/crm-integration/index.test.ts"
     ]
-   },
-   {
-    "sha": "01737c9e",
-    "date": "2026-11-21",
-    "author": "adm01-debug",
-    "subject": "feat: unifica relatorios agendados do dashboard na edge por configId com cron",
-    "files": [
-     "ESTADO.md",
-     "scripts/edge-deploy/smoke-functions.mjs",
-     "src/components/dashboard/ScheduledReportsManager.tsx",
-     "src/components/dashboard/__tests__/ScheduledReportsManager.a11y.test.tsx",
-     "src/components/dashboard/__tests__/ScheduledReportsManager.test.tsx",
-     "src/hooks/dashboard/useScheduledReportConfigs.ts",
-     "supabase/config.toml",
-     "supabase/deployment-manifest.json",
-     "supabase/functions/_shared/schemas.ts",
-     "supabase/functions/send-scheduled-report/index.test.ts",
-     "supabase/functions/send-scheduled-report/index.ts",
-     "supabase/migrations/20261120080000_scheduled_report_cron.sql"
-    ]
    }
   ],
   "hot_files": [
    [
     "supabase/deployment-manifest.json",
-    7
+    6
    ],
    [
     "docs/plans/PLANO_ASSISTENTE_PESSOAL_IA_2026-11-15.md",
@@ -482298,7 +482287,7 @@
    ],
    [
     "ESTADO.md",
-    5
+    4
    ],
    [
     "supabase/functions/_shared/assistant-gateway.ts",
@@ -482345,16 +482334,16 @@
     2
    ],
    [
-    "supabase/functions/send-scheduled-report/index.test.ts",
-    2
-   ],
-   [
     "scripts/ci/branch-podaveis.unit.mjs",
     2
    ],
    [
     "docs/MIGRATIONS.md",
     2
+   ],
+   [
+    "scripts/db-audit/talkx-monitor-panel.test.sh",
+    1
    ],
    [
     "scripts/lib/seguranca-processo.mjs",
