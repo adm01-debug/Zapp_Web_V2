@@ -27,6 +27,7 @@ import { TalkXMessageEditor, type TalkXMessageEditorHandle } from './TalkXMessag
 import { TalkXLinksManager } from './links/TalkXLinksManager';
 import { buildTalkxLinkPlaceholder, useTalkXLinks } from '@/hooks/integrations/useTalkXLinks';
 import { useCRMAdminAccess } from '@/hooks/crm/useCRMAdminAccess';
+import { useTalkxAi } from '@/hooks/talkx/useTalkxAi';
 import { IconTile, ModuleBreadcrumb, WhatsAppBubble, OBJECTIVES, VARIABLE_KEYS, fmtInt, fmtPct, fmtAgo, personalizePreview, RailCard, MetaRow, fmtDateTime, TalkXWhatsAppDisconnectedState } from './talkxShared';
 import { InitialsAvatar } from '@/components/dashboard/overview/DashboardCard';
 import { useContactCustomFields } from '@/hooks/crm/useContactCustomFields';
@@ -551,6 +552,49 @@ function StepMessage({ ed }: { ed: WizardState }) {
     () => [...VARIABLE_KEYS, ...links.map((link) => buildTalkxLinkPlaceholder(link.label))],
     [links],
   );
+  // X076/IA-161 — variação por IA: reescreve a mensagem preservando as variáveis.
+  // A edge `talkx-ai` recusa ANTES da chamada paga quando a IA está desligada ou o
+  // teto estourou; a recusa vira aviso na tela, nunca uma mensagem vazia.
+  const iaVariacao = useTalkxAi();
+  const [avisoIa, setAvisoIa] = React.useState<string | null>(null);
+  const gerarVariacao = () => {
+    setAvisoIa(null);
+    const texto = ed.messageTemplate.trim();
+    if (texto === '') {
+      setAvisoIa('Escreva a mensagem antes de pedir uma variação para a IA.');
+      return;
+    }
+    const variaveisNaMensagem = texto.match(/\{\{[^{}]+\}\}/g) ?? [];
+    iaVariacao.mutate(
+      {
+        kind: 'message_variation',
+        input: { texto },
+        entity_type: 'talkx_campaign',
+        ...(ed.draftCampaignId ? { entity_id: ed.draftCampaignId } : {}),
+      },
+      {
+        onSuccess: (resposta) => {
+          const saida = resposta.output;
+          if (typeof saida !== 'string') {
+            setAvisoIa('A IA devolveu uma resposta inesperada. A mensagem não foi alterada.');
+            return;
+          }
+          const faltando = variaveisNaMensagem.filter((v) => !saida.includes(v));
+          if (faltando.length > 0) {
+            setAvisoIa(`A IA removeu ${faltando.join(', ')}. A mensagem não foi alterada.`);
+            return;
+          }
+          ed.setMessageTemplate(saida);
+          toast.success(resposta.cached ? 'Variação reaproveitada do cache de 24 h.' : 'Variação gerada pela IA.');
+        },
+        onError: (erro: unknown) => {
+          const mensagem = erro instanceof Error ? erro.message : 'A IA recusou o pedido.';
+          setAvisoIa(mensagem);
+          toast.error(mensagem);
+        },
+      },
+    );
+  };
   return (
     <>
       <SectionCard icon={MessageSquare} title="Mensagem" subtitle="Escreva sua mensagem e personalize com variáveis."
@@ -594,8 +638,20 @@ function StepMessage({ ed }: { ed: WizardState }) {
             limit={MESSAGE_LIMIT}
             knownVariables={knownVariables}
             footer={(
-              <div className="flex items-center px-3 py-2 border-t border-border/50 text-2xs text-muted-foreground">
+              <div className="flex items-center justify-between gap-2 px-3 py-2 border-t border-border/50 text-2xs text-muted-foreground">
                 <span className="flex items-center gap-2"><Wand2 className="w-3.5 h-3.5" /> Variáveis são substituídas por contato no envio</span>
+                {canEditLinks && (
+                  <button
+                    type="button"
+                    onClick={gerarVariacao}
+                    disabled={iaVariacao.isPending || ed.messageTemplate.trim() === ''}
+                    title="Reescreve a mensagem preservando as variáveis"
+                    className="h-7 px-2.5 rounded-md text-2xs font-medium border border-primary/30 bg-primary/10 text-[hsl(var(--primary-text))] hover:bg-primary/20 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5 shrink-0"
+                  >
+                    {iaVariacao.isPending ? <RefreshCw className="w-3 h-3 animate-spin" /> : <Sparkles className="w-3 h-3" />}
+                    {iaVariacao.isPending ? 'Gerando…' : 'Variação por IA'}
+                  </button>
+                )}
               </div>
             )}
           />
@@ -642,6 +698,14 @@ function StepMessage({ ed }: { ed: WizardState }) {
           </div>
         )}
       </SectionCard>
+
+      {avisoIa && (
+        <div role="status" className="rounded-xl border border-dash-amber/30 bg-dash-amber/10 px-3 py-2 flex items-start gap-2">
+          <Sparkles className="w-4 h-4 text-dash-amber shrink-0 mt-0.5" />
+          <p className="text-xs text-foreground-secondary flex-1">{avisoIa}</p>
+          <button type="button" onClick={() => setAvisoIa(null)} aria-label="Fechar aviso da IA" className="text-muted-foreground hover:text-foreground"><X className="w-3.5 h-3.5" /></button>
+        </div>
+      )}
 
       {/* X118 — links rastreáveis: cria o link medido e insere {{link:rotulo}} no cursor */}
       <TalkXLinksManager

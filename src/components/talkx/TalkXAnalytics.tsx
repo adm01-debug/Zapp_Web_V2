@@ -681,6 +681,7 @@ export function TalkXAnalytics({ campaigns, isLoading, isError }: Props) {
                 priority={insight.priority}
                 applyLabel={insight.applyLabel}
                 onApply={insight.action ? () => runInsightAction(insight.action) : undefined}
+                explicacao={insight}
               />
             ))}
           </div>

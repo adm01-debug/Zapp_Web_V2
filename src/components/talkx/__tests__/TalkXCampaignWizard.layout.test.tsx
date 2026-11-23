@@ -91,6 +91,11 @@ vi.mock('@/hooks/integrations/useTalkXCampaignSummary', () => ({
 // `importOriginal` mantém os helpers puros do módulo (`buildTalkxLinkPlaceholder`),
 // que o wizard usa para montar as variáveis conhecidas do editor.
 vi.mock('@/hooks/crm/useCRMAdminAccess', () => ({ useCRMAdminAccess: () => false }));
+// X076/IA-161 — StepMessage agora chama useTalkxAi (useMutation); dublamos aqui
+// porque este teste não exerce a funcionalidade de IA, só a navegação pelo stepper.
+vi.mock('@/hooks/talkx/useTalkxAi', () => ({
+  useTalkxAi: () => ({ mutate: vi.fn(), isPending: false }),
+}));
 vi.mock('@/hooks/integrations/useTalkXLinks', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@/hooks/integrations/useTalkXLinks')>();
   return {

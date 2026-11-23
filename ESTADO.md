@@ -21,8 +21,8 @@ partir do código e falha quando:
 
 | Grupo | Edges |
 |---|---|
-| A | 55 |
-| B | 9 |
+| A | 62 |
+| B | 2 |
 | C | 4 |
 | D | 6 |
 | E | 19 |
@@ -38,17 +38,17 @@ partir do código e falha quando:
 | `ai-classify-tickets` | A | `src/components/ai/AutoTicketClassifier.tsx:146` |
 | `ai-conversation-analysis` | A | `src/components/inbox/AIConversationAssistant.tsx:108` · `supabase/functions/assistant-gateway/index.ts:49` |
 | `ai-conversation-summary` | A | `src/components/inbox/ConversationSummary.tsx:92` · `supabase/functions/assistant-gateway/index.ts:39` |
-| `ai-deadline-calculator` | B | `supabase/functions/assistant-gateway/index.ts:43` |
+| `ai-deadline-calculator` | A | `src/hooks/copilot/useDeadlineCalculator.ts:86` |
 | `ai-enhance-message` | A | `src/components/inbox/chat/AIEnhanceButton.tsx:63` · `src/components/inbox/chat/AIRewriteButton.tsx:51` · `supabase/functions/assistant-gateway/index.ts:47` |
 | `ai-jobs-worker` | C | `supabase/migrations/20261002371230_ia045_ia046_ai_jobs_durabilidade_e_estados.sql:533` |
 | `ai-kb-ingest` | A | `src/hooks/integrations/useKnowledgeBase.ts:137` · `src/hooks/integrations/useKnowledgeBase.ts:208` |
-| `ai-lead-temperature` | B | `supabase/functions/assistant-gateway/index.ts:41` |
-| `ai-loss-risk` | B | `supabase/functions/assistant-gateway/index.ts:45` |
-| `ai-multimodal-analysis` | B | `supabase/functions/assistant-gateway/index.ts:50` |
-| `ai-objection-handler` | B | `supabase/functions/assistant-gateway/index.ts:44` |
-| `ai-price-anchor` | B | `supabase/functions/assistant-gateway/index.ts:46` |
-| `ai-product-recommendation` | B | `supabase/functions/assistant-gateway/index.ts:42` |
-| `ai-proxy` | A | `src/components/admin/SupervisorCopilot.tsx:89` · `src/components/settings/ai-providers/useAIProviders.ts:121` · `src/hooks/inbox/useObjectionDetector.ts:91` · `src/hooks/inbox/useObjectionDetector.ts:165` · `src/hooks/ui/useUniversityHelp.ts:130` · `supabase/functions/talkx-ai/index.ts:589` |
+| `ai-lead-temperature` | A | `src/hooks/copilot/useLeadThermometer.ts:65` |
+| `ai-loss-risk` | A | `src/hooks/copilot/useLossRiskDetector.ts:98` |
+| `ai-multimodal-analysis` | A | `src/hooks/copilot/useImageAnalysis.ts:47` |
+| `ai-objection-handler` | A | `src/hooks/copilot/useObjectionHandler.ts:126` |
+| `ai-price-anchor` | A | `src/hooks/copilot/usePriceAnchoring.ts:60` |
+| `ai-product-recommendation` | A | `src/hooks/copilot/useProductRecommendation.ts:57` |
+| `ai-proxy` | A | `src/components/admin/SupervisorCopilot.tsx:89` · `src/components/settings/ai-providers/useAIProviders.ts:121` · `src/hooks/inbox/useObjectionDetector.ts:91` · `src/hooks/inbox/useObjectionDetector.ts:165` · `src/hooks/ui/useUniversityHelp.ts:130` · `supabase/functions/talkx-ai/index.ts:596` |
 | `ai-suggest-reply` | A | `src/components/inbox/AISuggestions.tsx:104` · `supabase/functions/assistant-gateway/index.ts:40` |
 | `ai-transcribe-audio` | A | `src/components/inbox/AudioMessagePlayer.tsx:71` · `supabase/functions/_shared/evolution-webhook-messages.ts:1457` |
 | `ai-usage-outbox-drain` | C | `supabase/migrations/20261103223000_ai_usage_outbox_drain_cron.sql:64` · `supabase/config.toml:103` |
@@ -113,7 +113,7 @@ partir do código e falha quando:
 | `sentiment-alert` | A | `src/hooks/inbox/useSentimentAlerts.ts:39` |
 | `status` | E | — sem chamador no repositório — |
 | `sync-call-records` | D | `supabase/config.toml:80` |
-| `talkx-ai` | D | `supabase/config.toml:90` |
+| `talkx-ai` | A | `src/hooks/talkx/useTalkxAi.ts:90` |
 | `talkx-link` | A | `src/hooks/integrations/useTalkXLinks.ts:56` · `supabase/functions/talkx-send/index.ts:128` · `supabase/config.toml:65` |
 | `talkx-report` | E | — sem chamador no repositório — |
 | `talkx-scheduler` | E | — sem chamador no repositório — |
