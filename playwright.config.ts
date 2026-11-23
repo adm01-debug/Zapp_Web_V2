@@ -261,6 +261,9 @@ export default defineConfig({
       // runner de 2 nucleos, um deles e' derrubado por falta de memoria.
       // Um unico processo de conteudo elimina o filho que morre, sem afrouxar
       // nenhuma asserção: todo teste continua rodando e medindo o mesmo.
+      // Restou 1 falha por execucao; o runner headless nao tem GPU, entao a
+      // rasterizacao por software tira o WebRender/DMABUF do caminho em vez de
+      // apostar que o processo de conteudo aguenta o pico.
       use: {
         ...devices['Desktop Firefox'],
         viewport: { width: 1280, height: 900 },
@@ -270,6 +273,9 @@ export default defineConfig({
             'dom.ipc.processCount': 1,
             'browser.tabs.remote.autostart': false,
             'fission.autostart': false,
+            'gfx.webrender.software': true,
+            'gfx.webrender.all': false,
+            'layers.acceleration.disabled': true,
           },
         },
       },
