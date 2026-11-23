@@ -1,7 +1,7 @@
 # Contexto do projeto para agentes de IA
 
 GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.
-Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR dela) a cada push em `main` e a cada 10 minutos pelo workflow `contexto.yml`; índice único das três fontes em `docs/contexto/00-INDEX.md`. Gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `5ba09eae58eb5282b822cda94646eedbaf067371` (2026-11-23T17:28:46-03:00).
+Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR dela) a cada push em `main` e a cada 10 minutos pelo workflow `contexto.yml`; índice único das três fontes em `docs/contexto/00-INDEX.md`. Gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `c4ce2b5a845b25ca14a1f25ab42044e884b14a52` (2026-11-23T21:02:46Z).
 
 ## Como usar (leia antes de planejar ou executar qualquer tarefa)
 1. **Tela/rota/menu** → `rotas.json` (url/vista/menu → arquivo → hooks → tabelas → edges; `rotas_http_backend` para APIs) e `modulos.json` (módulo inteiro + dependências entre módulos).
@@ -36,7 +36,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 |---|---|
 | arquivos_total | 15779 |
 | arquivos_codigo | 5890 |
-| linhas_codigo | 1139074 |
+| linhas_codigo | 1139122 |
 | rotas | 18 |
 | rotas_http_backend | 11 |
 | vistas_por_id | 55 |
@@ -397,7 +397,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - possiveis_segredos_no_codigo: 6 — ex.: analise-prs/resgate-261118-lote3/claude_pink/cool-dijkstra-xk9ek2/scripts/ci/edge-coverage-authz.unit.mjs:397, analise-prs/resgate-261118-lote3/claude_pink/cool-dijkstra-xk9ek2/scripts/edge-deploy/redigir-log.unit.mjs:38, scripts/ai-context/cenarios.mjs:102
 
 ## Grafo de código (graphify)
-- 103182 nós · 175271 arestas · 9197 comunidades · grafo do commit `5ba09eae`
+- 103182 nós · 175271 arestas · 9197 comunidades · grafo do commit `c4ce2b5a`
 - comunidades maiores: Communities (5953 total, 1987 thin omitted) (3946), TalkXSuppression.tsx (1376), react (1334), utils.ts (1027), vitest (873), cn (817), ref_node_fs (751), ExternalProductManagement.tsx (557), validation.ts (536), @tanstack/react-query (503), getLogger (476), DashboardView.tsx (474)
 - símbolos mais chamados: cn() (src/lib/utils.ts), useAuth() (src/hooks/auth/useAuth.tsx), jsonResponse() (supabase/functions/_shared/validation.ts), errorResponse() (supabase/functions/_shared/validation.ts), handleCors() (supabase/functions/_shared/validation.ts), fail() (scripts/e2e-isolated/network-proof-policy.mjs), Logger (supabase/functions/_shared/validation.ts), requireEnv() (supabase/functions/_shared/validation.ts), fmtInt() (src/components/talkx/kit/format.ts), fromTable() (src/lib/supabaseHelpers.ts), useUserRole() (src/hooks/system/useUserRole.ts), validationErrorResponse() (supabase/functions/_shared/schemas.ts)
 - consulta local: `graphify query "<pergunta>"`, `graphify path "<A>" "<B>"`, `graphify explain "<X>"`
@@ -406,13 +406,13 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - supabase/deployment-manifest.json (36)
 - ESTADO.md (23)
 - docs/talkx/ESTADOS.md (16)
-- src/integrations/supabase/types.ts (14)
-- supabase/schema-manifest.json (13)
+- src/integrations/supabase/types.ts (15)
+- supabase/schema-manifest.json (14)
+- supabase/schema-catalog.json (13)
 - .github/workflows/db-guard.yml (12)
 - PENDENCIAS.md (12)
+- docs/DB-INVENTORY.md (12)
 - scripts/db-audit/grants-baseline.json (12)
-- supabase/schema-catalog.json (12)
-- docs/DB-INVENTORY.md (11)
 - .github/workflows/ci.yml (8)
 - docs/agentes/github-ci.md (8)
 - supabase/functions/evolution-api/index.ts (8)
@@ -493,7 +493,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - `docs/COMPLETE_SYSTEM_FEATURES.md` — 📋 Levantamento Completo de Funcionalidades do Sistema (1061 linhas)
 - `docs/CONEXOES_WHATSAPP_RUNBOOK.md` — Runbook — Conexões de WhatsApp (V2) (235 linhas)
 - `docs/CRM360_TECHNICAL_DOCS.md` — ZAPP-WEB × CRM 360° — Documentação Técnica (109 linhas)
-- `docs/DB-INVENTORY.md` — Inventário de objetos do banco — `public` (293 linhas)
+- `docs/DB-INVENTORY.md` — Inventário de objetos do banco — `public` (294 linhas)
 - `docs/DB-SECURITY.md` — Seguranca do banco — notas operacionais (279 linhas)
 - `docs/DEPLOYMENT.md` — 🚀 Guia de Deploy - ZAPP-WEB (349 linhas)
 - `docs/DISTRIBUTION-FALLBACKS.md` — Distribuição de Atendimentos — Tabela-Verdade de Fallbacks (314 linhas)
@@ -525,6 +525,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - CHANGELOG topo: [Unreleased]
 
 ## Últimos commits
+- 2026-11-23 `c4ce2b5a` chore(db): sincroniza talkx_ai_requests e corrige o inventario (#3342)
 - 2026-11-23 `5ba09eae` feat(talkx): liga os dois kinds sem tela da IA (insight_text e segment_suggestion) (#3339)
 - 2026-11-23 `2fca6d0d` fix: tolera ruido sub-pixel na medicao de 44px do card (#3341)
 - 2026-11-23 `340cc4ce` feat(talkx): cria a trilha de IA e os tetos que a talkx-ai ja exige (#3327)
@@ -539,7 +540,6 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - 2026-11-22 `ba0b927e` chore(docs): atualiza o estado real do plano do assistente pessoal (#3324)
 - 2026-11-22 `434daf97` fix(ci): torna proporcional a semeadura do caso g do teste A/B do Talk X (#3323)
 - 2026-11-22 `7a351f77` feat(assistente): decide por edge as 7 edges restantes da porta unica (#3321)
-- 2026-11-22 `1f71f25d` feat(assistente): liga risco de perda e ancoragem de preco na porta unica (#3320)
 
 ## Arquivos deste diretório
 - `docs/contexto/codigo/rotas.json`

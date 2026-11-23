@@ -66,11 +66,11 @@
  "commits": {
   "convencao": "conventional commits (observado)",
   "exemplos": [
+   "chore(db): sincroniza talkx_ai_requests e corrige o inventario (#3342)",
    "feat(talkx): liga os dois kinds sem tela da IA (insight_text e segment_suggestion) (#3339)",
    "fix: tolera ruido sub-pixel na medicao de 44px do card (#3341)",
    "feat(talkx): cria a trilha de IA e os tetos que a talkx-ai ja exige (#3327)",
-   "fix(ia): cobra entrada e saída pelo preço real e destrava o custo de IA (#3326)",
-   "fix(ci): guard do ESTADO.md enxerga invokeEdge com generic e publica grupo real das 7 edges (#3322)"
+   "fix(ia): cobra entrada e saída pelo preço real e destrava o custo de IA (#3326)"
   ]
  },
  "pr_template": ".github/PULL_REQUEST_TEMPLATE.md",

@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "5ba09eae58eb5282b822cda94646eedbaf067371",
+  "commit": "c4ce2b5a845b25ca14a1f25ab42044e884b14a52",
   "branch": "main",
-  "data_commit": "2026-11-23T17:28:46-03:00",
+  "data_commit": "2026-11-23T21:02:46Z",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "c4ce2b5a",
+    "data": "2026-11-23",
+    "assunto": "chore(db): sincroniza talkx_ai_requests e corrige o inventario (#3342)"
+   },
    {
     "sha": "5ba09eae",
     "data": "2026-11-23",
@@ -126,11 +131,6 @@
     "sha": "1669013e",
     "data": "2026-11-21",
     "assunto": "feat(lgpd): mascara dados sensiveis antes de enviar texto a IA em 5 pontos (#3308)"
-   },
-   {
-    "sha": "85feab2a",
-    "data": "2026-11-21",
-    "assunto": "feat(talkx): monta orfaos RADAR (decision maker/stakeholders/ocasiao) e SpeedSelector no header (#3307)"
    }
   ],
   "arquivos_mudados_7d": 5296,
@@ -211,10 +211,14 @@
    },
    {
     "arquivo": "src/integrations/supabase/types.ts",
-    "mudancas": 14
+    "mudancas": 15
    },
    {
     "arquivo": "supabase/schema-manifest.json",
+    "mudancas": 14
+   },
+   {
+    "arquivo": "supabase/schema-catalog.json",
     "mudancas": 13
    },
    {
@@ -226,16 +230,12 @@
     "mudancas": 12
    },
    {
+    "arquivo": "docs/DB-INVENTORY.md",
+    "mudancas": 12
+   },
+   {
     "arquivo": "scripts/db-audit/grants-baseline.json",
     "mudancas": 12
-   },
-   {
-    "arquivo": "supabase/schema-catalog.json",
-    "mudancas": 12
-   },
-   {
-    "arquivo": "docs/DB-INVENTORY.md",
-    "mudancas": 11
    },
    {
     "arquivo": ".github/workflows/ci.yml",
@@ -312,7 +312,7 @@
  "contagens": {
   "arquivos_total": 15779,
   "arquivos_codigo": 5890,
-  "linhas_codigo": 1139074,
+  "linhas_codigo": 1139122,
   "rotas": 18,
   "rotas_http_backend": 11,
   "vistas_por_id": 55,
@@ -752,7 +752,7 @@
   },
   "src/integrations": {
    "arquivos": 4,
-   "linhas": 15985
+   "linhas": 16033
   },
   "src/lib": {
    "arquivos": 300,
@@ -826,7 +826,7 @@
  "maiores_arquivos": [
   {
    "arquivo": "src/integrations/supabase/types.ts",
-   "linhas": 15912
+   "linhas": 15960
   },
   {
    "arquivo": "scripts/regras_negocio/generate.py",
