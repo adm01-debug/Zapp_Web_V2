@@ -235,8 +235,10 @@ expect() { # <rotulo> <obtido> <esperado>
 }
 
 # --- (1) serie de 15 min: 15 pontos, soma 12, entrega no minuto do delivered_at ----
-res="$(panel "$owner" a "15, 'minute'")"
-expect 'serie: numero de pontos' "$(psql_q "SELECT jsonb_array_length('$res'::jsonb->'series')")" 15
+# Janela 30 min evita flake quando container Docker demora >7 min (CI a meia-noite):
+# m(7) ficaria fora de uma janela de 15 min contados no momento da chamada ao painel.
+res="$(panel "$owner" a "30, 'minute'")"
+expect 'serie: numero de pontos' "$(psql_q "SELECT jsonb_array_length('$res'::jsonb->'series')")" 30
 expect 'serie: soma de enviadas' "$(psql_q "SELECT sum((e->>'sent')::int) FROM jsonb_array_elements('$res'::jsonb->'series') e")" 12
 case_done series_total
 pass '(1) serie de 15 min tem 15 pontos e soma 12 enviadas'
@@ -309,7 +311,7 @@ resh="$(panel "$owner" a "180, 'hour'")"
 expect 'hora: pontos' "$(psql_q "SELECT jsonb_array_length('$resh'::jsonb->'series')")" 3
 expect 'hora: soma' "$(psql_q "SELECT sum((e->>'sent')::int) FROM jsonb_array_elements('$resh'::jsonb->'series') e")" 12
 case_done hour_bucket
-ress="$(panel "$owner" a "15, 'minute', NULL, '60000000-0000-0000-0000-000000000001'")"
+ress="$(panel "$owner" a "30, 'minute', NULL, '60000000-0000-0000-0000-000000000001'")"
 expect 'segmento: enviadas' "$(psql_q "SELECT '$ress'::jsonb->'kpis'->>'sent'")" '4'
 expect 'segmento: soma da serie' "$(psql_q "SELECT sum((e->>'sent')::int) FROM jsonb_array_elements('$ress'::jsonb->'series') e")" '4'
 case_done segment_filter
