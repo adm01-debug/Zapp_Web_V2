@@ -3028,7 +3028,7 @@
         "warroom_agent_today",
         "warroom_queue_stats"
     ],
-    "generated_at": "2026-11-22",
+    "generated_at": "2026-11-23",
     "format_version": 2,
     "check_constraints": [
         "agent_mini_game_xp_daily.agent_mini_game_xp_daily_game_id_check:CHECK ((game_id = ANY (ARRAY['speed-typing'::text, 'quiz'::text, 'response-match'::text, 'emoji-decode'::text])))",
@@ -3048,7 +3048,7 @@
         "ai_model_prices.ai_model_prices_currency_check:CHECK ((char_length(currency) = 3))",
         "ai_model_prices.ai_model_prices_price_check:CHECK ((unit_price >= (0)::numeric))",
         "ai_model_prices.ai_model_prices_source_check:CHECK ((source = ANY (ARRAY['internal'::text, 'provider_statement'::text])))",
-        "ai_model_prices.ai_model_prices_unit_check:CHECK ((unit = ANY (ARRAY['token'::text, 'character'::text, 'second'::text, 'request'::text])))",
+        "ai_model_prices.ai_model_prices_unit_check:CHECK ((unit = ANY (ARRAY['token'::text, 'input_token'::text, 'output_token'::text, 'character'::text, 'second'::text, 'request'::text])))",
         "ai_model_prices.ai_model_prices_vigencia_check:CHECK (((valid_to IS NULL) OR (valid_to > valid_from)))",
         "assistant_profiles.assistant_profiles_ajuda_check:CHECK ((ajuda = ANY (ARRAY['sempre'::text, 'relevante'::text, 'sob_demanda'::text])))",
         "assistant_profiles.assistant_profiles_atividade_check:CHECK ((atividade = ANY (ARRAY['venda'::text, 'compra'::text, 'atendimento'::text, 'supervisao'::text])))",
