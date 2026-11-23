@@ -1,6 +1,6 @@
 # 07 · REGRAS DE NEGÓCIO
 
-> Gerado automaticamente por AI Context Sync v1.3.2 · commit `9f13ab5560` · branch `main` · 2026-11-23 22:51 UTC
+> Gerado automaticamente por AI Context Sync v1.3.2 · commit `684cc2c229` · branch `main` · 2026-11-23 23:11 UTC
 > Não edite à mão — regras humanas vão em `manual/`.
 
 ## A. Regras escritas por humanos (`manual/` — prioridade máxima, nunca sobrescrito)
@@ -1479,7 +1479,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `type` | `implicit` | escreve | `src/hooks/copilot/usePurchaseSignals.ts` |
 | `type` | `incoming_call` | compara, escreve | `src/hooks/communication/useIncomingCallListener.ts`<br>`supabase/functions/_shared/notification-events.ts` |
 | `type` | `info` | escreve | `src/hooks/system/useNotifications.ts` |
-| `type` | `input_audio` | escreve | `supabase/functions/_shared/ai-audio-input.ts`<br>`supabase/functions/classify-audio-meme/index.ts` |
+| `type` | `input_audio` | escreve | `supabase/functions/_shared/ai-audio-input.ts`<br>`supabase/functions/ai-transcribe-audio/openrouter-stt.ts`<br>`supabase/functions/classify-audio-meme/index.ts` |
 | `type` | `insert` | escreve | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/hooks/team-chat/useTeamMessages.ts` |
 | `type` | `integer` | escreve | `analise-prs/resgate-261115/auditoria/ferramentas/auditar-pr.js`<br>`analise-prs/resgate-261115/auditoria/ferramentas/auditar-veredito.js` |
 | `type` | `interactive` | compara | `src/components/inbox/ForwardMessageDialog.tsx`<br>`src/components/inbox/chat/MessageBubble.tsx` |
@@ -1584,7 +1584,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `type` | `task` | escreve | `src/lib/journey/mappers.ts` |
 | `type` | `team_chat` | compara, escreve | `analise-prs/resgate-261118-lote3/claude/fix-unit-tests-src-261024-1630/src/hooks/chat/useTeamChatNotifications.ts`<br>`analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/hooks/chat/useTeamChatNotifications.ts`<br>`analise-prs/resgate-261118-lote3/claude/magical-pasteur-iz2pgy/src/hooks/chat/useTeamChatNotifications.ts`<br>`analise-prs/resgate-261118-lote3/claude_05/festive-carson-ub43wu/src/hooks/chat/useTeamChatNotifications.ts`<br>`src/hooks/chat/useTeamChatNotifications.ts` |
 | `type` | `template` | escreve | `src/hooks/integrations/useTalkXInsights.ts` |
-| `type` | `text` | compara, escreve | `analise-prs/resgate-261118-lote3/claude/feat-message-delivery-post-iniciado-261101-1937/src/components/inbox/chat/SendErrorBanner.tsx`<br>`analise-prs/resgate-261118-lote3/hermes/robustez-primitivos-ui-2610121626bec5-2610141859e423/src/components/inbox/MessageContextMenu.tsx`<br>`analise-prs/resgate-regra8-261118/supabase/functions/ai-multimodal-analysis/index.ts`<br>`src/components/catalog/sendTemplatePayload.ts`<br>`src/components/inbox/AdvancedMessageMenu.tsx`<br>… +17 |
+| `type` | `text` | compara, escreve | `analise-prs/resgate-261118-lote3/claude/feat-message-delivery-post-iniciado-261101-1937/src/components/inbox/chat/SendErrorBanner.tsx`<br>`analise-prs/resgate-261118-lote3/hermes/robustez-primitivos-ui-2610121626bec5-2610141859e423/src/components/inbox/MessageContextMenu.tsx`<br>`analise-prs/resgate-regra8-261118/supabase/functions/ai-multimodal-analysis/index.ts`<br>`src/components/catalog/sendTemplatePayload.ts`<br>`src/components/inbox/AdvancedMessageMenu.tsx`<br>… +18 |
 | `type` | `time_inactive` | escreve | `src/components/automations/automationConstants.ts` |
 | `type` | `timing` | escreve | `src/hooks/integrations/useTalkXInsights.ts` |
 | `type` | `toggleAlarm` | compara, escreve | `src/hooks/tasks/useTasksFilters.ts` |
@@ -3878,6 +3878,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `else if (avgMonthly > 0 && recentMessageCount < avgMonthly * 0.5) riskScore += 20;` | `supabase/functions/ai-churn-analysis/churn-risk.ts` |
 | `else if (avgMonthly > 0 && recentMessageCount < avgMonthly * 0.7) riskScore += 10;` | `supabase/functions/ai-churn-analysis/churn-risk.ts` |
 | `if (avgMonthly > 0 && recentMessageCount < avgMonthly * 0.3) riskScore += 30;` | `supabase/functions/ai-churn-analysis/churn-risk.ts` |
+| `* recusada — 1.414 chamadas no mês, 100% HTTP 401, zero transcrições desde` | `supabase/functions/ai-transcribe-audio/openrouter-stt.ts` |
 | `// só Content-Type) — strictMode=true rejeitaria 100% do tráfego GO.` | `supabase/functions/evolution-webhook/index.ts` |
 | `// FTS real (search_vector, 100% preenchido — trigger BEFORE INSERT` | `supabase/functions/promogifts-catalog/index.ts` |
 | `// null) derrubava 100% dos destinatários com unknown_placeholder. Busca` | `supabase/functions/talkx-send/index.ts` |
@@ -5075,7 +5076,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `owner` | `supabase/migrations/20260927270018_team_chat_e28_fix_find_or_create_race.sql` |
 | `anon` | `supabase/migrations/20260927340000_fix_add_agent_xp_negative_and_guard.sql` |
 
-## K. Testes como especificação (26343 testes em 2745 arquivos — nomes completos em `context.json`)
+## K. Testes como especificação (26367 testes em 2746 arquivos — nomes completos em `context.json`)
 
 | Arquivo | Testes | Exemplos do que o sistema DEVE fazer |
 |---|---|---|
@@ -5246,6 +5247,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `src/hooks/chat/__tests__/useContactMedia.test.tsx` | 25 | useContactMedia — paginacao por keyset (etapa 41) · pede 60+1 por pagina e para no fim quando a pagina vem incompleta · pagina cheia (61 linhas) tem proxima pagina e o cursor (created_at, id) entra no 2o .or() · aceite etapa 41: 201 itens em 4 paginas de 60 e o 201o aparece no fim … |
 | `src/hooks/chat/__tests__/useFilesViewState.test.tsx` | 25 | useFilesViewState — preferencias (localStorage) · storage ausente: comeca no default decidido em D3 (grid, 4 colunas) · storage invalido: JSON quebrado, versao desconhecida e valores fora do dominio caem no default · sanitiza campo a campo: viewMode valido com columns invalido mantem o viewMode … |
 | `src/lib/calls/__tests__/persistence.test.ts` | 25 | upsertMyCall — mapa p_* da RPC · grava a chamada tocando com os nomes exatos dos parâmetros · grava o fim com status/motivo/duração e OMITE o que não tem valor · upsertMyCall — retry idempotente … |
+| `supabase/functions/ai-transcribe-audio/index.test.ts` | 25 | SL-195a: magic bytes vencem metadado divergente — OGG servido como audio/mpeg vai como audio/ogg · SL-195a: magic bytes vencem metadado divergente — MPEG servido como audio/ogg vai como audio/mpeg · SL-195a: assinatura não reconhecida mantém o fallback do metadado declarado (não regride) · SL-195a: resolveTranscriptionAudioFormat marca a fonte da decisão … |
 | `supabase/functions/multiplix-dispatch/actions/__tests__/inspect.test.ts` | 25 | F48 preview: cada bloco reproduz EXATAMENTE o payload do worker para o destinatario · F48 preview: conteudo com placeholders é identico ao worker para outro destinatario · F48 preview: sem blocos, cai no template do dispatch — o MESMO payload do worker atual · F48 preview: destinatario de outro dono/inexistente responde 404 nomeado … |
 | `analise-prs/resgate-261118-lote3/hermes/robustez-primitivos-ui-2610121626bec5-2610141859e423/src/lib/__tests__/phoneNormalization.test.ts` | 24 | Phone Normalization · Standard JIDs · strips @s.whatsapp.net suffix · strips @g.us suffix for groups … |
 | `e2e/navegacao-modulos.spec.ts` | 24 | Navegação por todos os módulos (desktop) · abre as 42 entradas mapeadas, o modo Quadro de Tarefas e a busca global sem erro de console nem requisição falha · Navegação por todos os módulos (celular 390x844) · abre as 42 entradas mapeadas pelo menu móvel, o modo Quadro de Tarefas e a busca do cabeçalho sem erro de console nem requisição falha … |
@@ -5378,8 +5380,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `src/hooks/__tests__/useChatKeyboardNavigation.test.ts` | 18 | useChatKeyboardNavigation · initializes with no selected message · initializes with isNavigating false · exposes exitNavigationMode function … |
 | `src/hooks/__tests__/useIncomingCallListener.test.tsx` | 18 | useIncomingCallListener · subscribes to notifications scoped to the authenticated user · shows one ringing call from notification metadata and deduplicates replay · propagates the real call id from notification metadata (not the notification row id) … |
 | `src/hooks/__tests__/useWarRoomAlerts.test.tsx` | 18 | useWarRoomAlerts · fetches unread alerts · exposes dismissAlert function · accepts soundEnabled parameter … |
-| `src/hooks/chat/__tests__/useAutomationSuggestions.test.tsx` | 18 | useAutomationSuggestions · não vai à Edge quando a última mensagem é do agente (lastInboundMessageId nulo) · chama a Edge com o contact_id e expõe as sugestões do contrato, com a fonte carimbada · espera o debounce antes de chamar (mensagem que ainda está chegando não gasta IA) … |
-| … +2445 linhas — lista completa em `context.json` | | |
+| … +2446 linhas — lista completa em `context.json` | | |
 
 ## L. Eventos de webhook tratados (contratos com sistemas externos)
 
@@ -5929,4 +5930,4 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | * R2-AUTH-005 (item 239): a resposta de uma busca de perfil nao pode repor | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/hooks/auth/useAuth.tsx` |
 | Identidade diferente: o perfil anterior nao pode continuar na tela e so a | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/hooks/auth/useAuth.tsx` |
 | Supabase pode falhar e não emitir SIGNED_OUT — a limpeza não pode depender dele). | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/hooks/auth/useAuth.tsx` |
-| … +2526 linhas — lista completa em `context.json` | |
+| … +2528 linhas — lista completa em `context.json` | |

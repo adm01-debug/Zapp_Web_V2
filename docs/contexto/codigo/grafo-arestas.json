@@ -12944,7 +12944,8 @@
    "supabase/functions/_shared/messaging/media.ts",
    "supabase/functions/_shared/schemas.ts",
    "supabase/functions/_shared/ssrf.ts",
-   "supabase/functions/_shared/validation.ts"
+   "supabase/functions/_shared/validation.ts",
+   "supabase/functions/ai-transcribe-audio/openrouter-stt.ts"
   ],
   "supabase/functions/ai-usage-outbox-drain/index.ts": [
    "supabase/functions/_shared/ai-usage.ts",

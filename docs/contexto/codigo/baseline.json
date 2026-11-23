@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "9f13ab556031089de08618bea56927bfbda10461",
+  "commit": "684cc2c229d129f0fd3a330fed92f32e5b0e7aaf",
   "branch": "main",
-  "data_commit": "2026-11-23T19:49:34-03:00",
+  "data_commit": "2026-11-23T20:09:42-03:00",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "684cc2c2",
+    "data": "2026-11-23",
+    "assunto": "fix(transcricao): fallback de STT pelo OpenRouter e fim do 401 silencioso na voz (#3343)"
+   },
    {
     "sha": "9f13ab55",
     "data": "2026-11-23",
@@ -126,14 +131,9 @@
     "sha": "5ce080f9",
     "data": "2026-11-22",
     "assunto": "feat(talkx): resgata cabeçalho da aba Monitor (X145/TL-154) de commit de 10/10 não incorporado (#3312)"
-   },
-   {
-    "sha": "436a10e2",
-    "data": "2026-11-21",
-    "assunto": "fix(ci): corrige flake deterministico do teste biweekly (envelope 13.333..14.333) (#3311)"
    }
   ],
-  "arquivos_mudados_7d": 5295,
+  "arquivos_mudados_7d": 5298,
   "pastas_mais_mudadas_30d": [
    {
     "pasta": "docs/contexto/supabase",
@@ -145,7 +145,7 @@
    },
    {
     "pasta": "src/components/inbox",
-    "mudancas": 737
+    "mudancas": 734
    },
    {
     "pasta": "docs/reconciliation/reaudit",
@@ -169,7 +169,7 @@
    },
    {
     "pasta": "supabase/functions/_shared",
-    "mudancas": 240
+    "mudancas": 238
    },
    {
     "pasta": "analise-prs/resgate-261118-lote3/fix",
@@ -203,7 +203,7 @@
    },
    {
     "arquivo": "ESTADO.md",
-    "mudancas": 23
+    "mudancas": 22
    },
    {
     "arquivo": "docs/talkx/ESTADOS.md",
@@ -274,14 +274,6 @@
     "mudancas": 6
    },
    {
-    "arquivo": "supabase/functions/_shared/schemas.ts",
-    "mudancas": 6
-   },
-   {
-    "arquivo": "supabase/functions/copilot-live/index.ts",
-    "mudancas": 6
-   },
-   {
     "arquivo": "supabase/functions/message-delivery/index.test.ts",
     "mudancas": 6
    },
@@ -295,6 +287,14 @@
    },
    {
     "arquivo": "docs/audits/edge-functions-authz-coverage.md",
+    "mudancas": 5
+   },
+   {
+    "arquivo": "docs/contexto/regras/manual/regras.md",
+    "mudancas": 5
+   },
+   {
+    "arquivo": "docs/prod-readiness.md",
     "mudancas": 5
    }
   ],
@@ -314,9 +314,9 @@
   ]
  },
  "contagens": {
-  "arquivos_total": 15779,
-  "arquivos_codigo": 5890,
-  "linhas_codigo": 1139122,
+  "arquivos_total": 15781,
+  "arquivos_codigo": 5892,
+  "linhas_codigo": 1140014,
   "rotas": 18,
   "rotas_http_backend": 11,
   "vistas_por_id": 55,
@@ -328,7 +328,7 @@
   "tabelas": 223,
   "migrations": 1152,
   "cron_jobs": 29,
-  "testes": 3227,
+  "testes": 3228,
   "workflows": 24,
   "scripts": 452,
   "docs_md": 4083
@@ -803,8 +803,8 @@
    "linhas": 1708
   },
   "supabase/functions": {
-   "arquivos": 430,
-   "linhas": 129570
+   "arquivos": 432,
+   "linhas": 130462
   },
   "tailwind.config.ts": {
    "arquivos": 1,

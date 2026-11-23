@@ -3,7 +3,7 @@
  "format_version": 2,
  "stack": {
   "linguagens": [
-   "TypeScript (5086)",
+   "TypeScript (5088)",
    "Markdown (4083)",
    "SQL (3065)",
    "JSON (1968)",
@@ -1597,6 +1597,7 @@
    "MESSAGING_MEDIA_MAX_BYTES",
    "MULTIPLIX_BATCH_SIZE",
    "MULTIPLIX_SCOPE_HMAC_SECRET",
+   "OPENROUTER_STT_MODEL",
    "PREVIEW_EGRESS_PROXY_URL",
    "PREVIEW_EGRESS_SHARED_SECRET",
    "PROMOGIFTS_SUPABASE_SERVICE_ROLE_KEY",
@@ -1982,6 +1983,10 @@
     "arquivos": 4
    },
    {
+    "host": "openrouter.ai",
+    "arquivos": 4
+   },
+   {
     "host": "pgxfvjmuubtbowutlide.supabase.co",
     "arquivos": 4
    },
@@ -2047,10 +2052,6 @@
    },
    {
     "host": "offline.invalid",
-    "arquivos": 3
-   },
-   {
-    "host": "openrouter.ai",
     "arquivos": 3
    },
    {
@@ -2911,7 +2912,7 @@
    },
    {
     "papel": "user",
-    "ocorrencias": 60
+    "ocorrencias": 61
    },
    {
     "papel": "supervisor",

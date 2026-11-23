@@ -1,15 +1,15 @@
 {
  "meta": {
-  "sha": "9f13ab556031089de08618bea56927bfbda10461",
+  "sha": "684cc2c229d129f0fd3a330fed92f32e5b0e7aaf",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-23 22:51 UTC",
-  "files_total": 15627,
-  "code_files": 8928,
-  "code_lines": 1416963
+  "generated_at": "2026-11-23 23:11 UTC",
+  "files_total": 15629,
+  "code_files": 8930,
+  "code_lines": 1417855
  },
  "version": "1.3.2",
- "facts_hash": "e89218ec76050474",
+ "facts_hash": "8bfd2eec900c7ba1",
  "stack": {
   "frameworks": [
    "React + Vite",
@@ -346,7 +346,7 @@
   "languages": {
    ".sql": 3065,
    ".tsx": 2829,
-   ".ts": 2252,
+   ".ts": 2254,
    ".mjs": 653,
    ".py": 125,
    ".cjs": 19,
@@ -70875,6 +70875,7 @@
      "profiles"
     ],
     "env": [
+     "OPENROUTER_STT_MODEL",
      "SUPABASE_SERVICE_ROLE_KEY",
      "SUPABASE_URL"
     ],
@@ -78940,8 +78941,8 @@
   },
   {
    "module": "supabase/functions",
-   "files": 430,
-   "lines": 129570,
+   "files": 432,
+   "lines": 130462,
    "tables": [
     "agent_stats",
     "ai_conversation_tags",
@@ -84176,6 +84177,9 @@
    ],
    "NO_PROXY": [
     "scripts/ci/edge-http-harness.unit.mjs"
+   ],
+   "OPENROUTER_STT_MODEL": [
+    "supabase/functions/ai-transcribe-audio/index.ts"
    ],
    "OUT": [
     "scripts/recuperacao-branches/02-contencao-linha.py"
@@ -112242,6 +112246,14 @@
    {
     "file": "supabase/functions/ai-transcribe-audio/index.ts",
     "text": "precisa do mundo externo (auth, rate limit, env, download do objeto e o"
+   },
+   {
+    "file": "supabase/functions/ai-transcribe-audio/index.ts",
+    "text": "* Transcrição pelo OpenRouter quando o provedor principal não pode atender."
+   },
+   {
+    "file": "supabase/functions/ai-transcribe-audio/index.ts",
+    "text": "(401/403). Recusa de áudio (400) e rate limit (429) NÃO caem aqui: repetir em"
    },
    {
     "file": "supabase/functions/ai-transcribe-audio/index.ts",
@@ -149058,6 +149070,36 @@
    {
     "file": "supabase/functions/ai-transcribe-audio/index.ts",
     "field": "status",
+    "value": "success",
+    "kind": "escreve"
+   },
+   {
+    "file": "supabase/functions/ai-transcribe-audio/index.ts",
+    "field": "status",
+    "value": "completed",
+    "kind": "escreve"
+   },
+   {
+    "file": "supabase/functions/ai-transcribe-audio/index.ts",
+    "field": "status",
+    "value": "error",
+    "kind": "escreve"
+   },
+   {
+    "file": "supabase/functions/ai-transcribe-audio/index.ts",
+    "field": "status",
+    "value": "failed",
+    "kind": "escreve"
+   },
+   {
+    "file": "supabase/functions/ai-transcribe-audio/index.ts",
+    "field": "status",
+    "value": "processing",
+    "kind": "escreve"
+   },
+   {
+    "file": "supabase/functions/ai-transcribe-audio/index.ts",
+    "field": "status",
     "value": "processing",
     "kind": "escreve"
    },
@@ -149114,6 +149156,24 @@
     "field": "transcription_status",
     "value": "string",
     "kind": "compara"
+   },
+   {
+    "file": "supabase/functions/ai-transcribe-audio/openrouter-stt.ts",
+    "field": "role",
+    "value": "user",
+    "kind": "escreve"
+   },
+   {
+    "file": "supabase/functions/ai-transcribe-audio/openrouter-stt.ts",
+    "field": "type",
+    "value": "text",
+    "kind": "escreve"
+   },
+   {
+    "file": "supabase/functions/ai-transcribe-audio/openrouter-stt.ts",
+    "field": "type",
+    "value": "input_audio",
+    "kind": "escreve"
    },
    {
     "file": "supabase/functions/approve-password-reset/index.ts",
@@ -155306,6 +155366,10 @@
    {
     "file": "supabase/functions/ai-churn-analysis/churn-risk.ts",
     "line": "if (avgMonthly > 0 && recentMessageCount < avgMonthly * 0.3) riskScore += 30;"
+   },
+   {
+    "file": "supabase/functions/ai-transcribe-audio/openrouter-stt.ts",
+    "line": "* recusada — 1.414 chamadas no mês, 100% HTTP 401, zero transcrições desde"
    },
    {
     "file": "supabase/functions/evolution-webhook/index.ts",
@@ -250618,6 +250682,102 @@
     "name": "Refazer t_eeac9ac7: decideAudioSizeRefusal — decisão de tamanho por metadado"
    },
    {
+    "file": "supabase/functions/ai-transcribe-audio/index.test.ts",
+    "name": "Fallback: sem ELEVENLABS_API_KEY a edge transcreve pelo OpenRouter em vez de devolver 500"
+   },
+   {
+    "file": "supabase/functions/ai-transcribe-audio/index.test.ts",
+    "name": "Fallback: 401 do provedor principal cai no OpenRouter (é o defeito de produção)"
+   },
+   {
+    "file": "supabase/functions/ai-transcribe-audio/index.test.ts",
+    "name": "Fallback: 403 do provedor principal também cai no OpenRouter"
+   },
+   {
+    "file": "supabase/functions/ai-transcribe-audio/index.test.ts",
+    "name": "Fallback: 400 do provedor principal (áudio inválido) NÃO cai no OpenRouter"
+   },
+   {
+    "file": "supabase/functions/ai-transcribe-audio/index.test.ts",
+    "name": "Fallback: 429 do provedor principal NÃO cai no OpenRouter"
+   },
+   {
+    "file": "supabase/functions/ai-transcribe-audio/index.test.ts",
+    "name": "Fallback: sem NENHUMA credencial o pedido falha cedo, antes de baixar o áudio"
+   },
+   {
+    "file": "supabase/functions/ai-transcribe-audio/index.test.ts",
+    "name": "Fallback: 500 do OpenRouter devolve 502 sem vazar o corpo do provedor"
+   },
+   {
+    "file": "supabase/functions/ai-transcribe-audio/openrouter-stt.test.ts",
+    "name": "formato: containers que a edge reconhece viram a extensão do input_audio"
+   },
+   {
+    "file": "supabase/functions/ai-transcribe-audio/openrouter-stt.test.ts",
+    "name": "formato: mime de outro tipo ou desconhecido não vira extensão inventada"
+   },
+   {
+    "file": "supabase/functions/ai-transcribe-audio/openrouter-stt.test.ts",
+    "name": "formato: parâmetro do content-type (codecs) não atrapalha e o case não importa"
+   },
+   {
+    "file": "supabase/functions/ai-transcribe-audio/openrouter-stt.test.ts",
+    "name": "base64: buffer maior que o bloco interno é convertido byte a byte"
+   },
+   {
+    "file": "supabase/functions/ai-transcribe-audio/openrouter-stt.test.ts",
+    "name": "base64: buffer vazio devolve string vazia (sem áudio, sem exceção)"
+   },
+   {
+    "file": "supabase/functions/ai-transcribe-audio/openrouter-stt.test.ts",
+    "name": "corpo: o áudio vai como input_audio com formato e o texto como instrução"
+   },
+   {
+    "file": "supabase/functions/ai-transcribe-audio/openrouter-stt.test.ts",
+    "name": "prompt: instrui transcrição literal em pt-BR e proíbe comentário/tradução"
+   },
+   {
+    "file": "supabase/functions/ai-transcribe-audio/openrouter-stt.test.ts",
+    "name": "resposta: content string com usage é lido com os tokens reais"
+   },
+   {
+    "file": "supabase/functions/ai-transcribe-audio/openrouter-stt.test.ts",
+    "name": "resposta: content em blocos é concatenado na ordem"
+   },
+   {
+    "file": "supabase/functions/ai-transcribe-audio/openrouter-stt.test.ts",
+    "name": "resposta: sem usage os tokens são null (não medido), nunca zero"
+   },
+   {
+    "file": "supabase/functions/ai-transcribe-audio/openrouter-stt.test.ts",
+    "name": "resposta: usage com valor negativo ou não numérico não vira número inventado"
+   },
+   {
+    "file": "supabase/functions/ai-transcribe-audio/openrouter-stt.test.ts",
+    "name": "resposta: payload sem choices ou vazio não é interpretado"
+   },
+   {
+    "file": "supabase/functions/ai-transcribe-audio/openrouter-stt.test.ts",
+    "name": "transcrever: mime desconhecido é recusado ANTES de tocar o provedor"
+   },
+   {
+    "file": "supabase/functions/ai-transcribe-audio/openrouter-stt.test.ts",
+    "name": "transcrever: envia o áudio autenticado ao endpoint e devolve o texto medido"
+   },
+   {
+    "file": "supabase/functions/ai-transcribe-audio/openrouter-stt.test.ts",
+    "name": "transcrever: HTTP de erro preserva o status e o trecho do corpo"
+   },
+   {
+    "file": "supabase/functions/ai-transcribe-audio/openrouter-stt.test.ts",
+    "name": "transcrever: queda de rede vira motivo "
+   },
+   {
+    "file": "supabase/functions/ai-transcribe-audio/openrouter-stt.test.ts",
+    "name": "transcrever: JSON inválido ou resposta sem choices não é confundido com transcrição"
+   },
+   {
     "file": "supabase/functions/ai-usage-outbox-drain/index.test.ts",
     "name": "(a) sem x-cron-secret ⇒ 401 e o reprocessamento NÃO roda"
    },
@@ -285537,6 +285697,7 @@
       "escreve:src/components/inbox/interactive-builder/useInteractiveMessage.ts",
       "escreve:src/types/chat.ts",
       "escreve:supabase/functions/ai-multimodal-analysis/index.ts",
+      "escreve:supabase/functions/ai-transcribe-audio/openrouter-stt.ts",
       "escreve:supabase/functions/classify-audio-meme/index.ts",
       "escreve:supabase/functions/classify-emoji/index.ts",
       "escreve:supabase/functions/classify-sticker/index.ts",
@@ -286772,6 +286933,7 @@
      ],
      "input_audio": [
       "escreve:supabase/functions/_shared/ai-audio-input.ts",
+      "escreve:supabase/functions/ai-transcribe-audio/openrouter-stt.ts",
       "escreve:supabase/functions/classify-audio-meme/index.ts"
      ],
      "function": [
@@ -288222,6 +288384,7 @@
       "escreve:supabase/functions/ai-product-recommendation/index.ts",
       "escreve:supabase/functions/ai-proxy/index.ts",
       "escreve:supabase/functions/ai-suggest-reply/index.ts",
+      "escreve:supabase/functions/ai-transcribe-audio/openrouter-stt.ts",
       "escreve:supabase/functions/automation-suggest-reply/index.ts",
       "escreve:supabase/functions/chatbot-l1/index.ts",
       "escreve:supabase/functions/classify-audio-meme/index.ts",
@@ -460939,11 +461102,15 @@
   },
   "supabase/functions/ai-transcribe-audio/index.test.ts": {
    "path": "supabase/functions/ai-transcribe-audio/index.test.ts",
-   "lines": 691,
+   "lines": 919,
    "is_test": true,
    "errors": [
     "${msg}: esperava ${JSON.stringify(expected)}, veio ${JSON.stringify(actual)}",
-    "segredo-interno-do-banco"
+    "forbidden",
+    "invalid api key",
+    "segredo-interno-do-banco",
+    "too many requests",
+    "unsupported"
    ],
    "rule_comments": [
     "(magic bytes) deve vencer.",
@@ -460967,13 +461134,20 @@
     "G4: fetch pendurado ao STT estoura o timeout e devolve 504 em pt-BR (e registra o consumo da tentativa)",
     "G4: 500 de exceção devolve texto fixo em pt-BR, sem vazar o detalhe interno",
     "Refazer t_eeac9ac7: erro de download com status 504 chega ao cliente como 504 em pt-BR",
-    "Refazer t_eeac9ac7: decideAudioSizeRefusal — decisão de tamanho por metadado"
+    "Refazer t_eeac9ac7: decideAudioSizeRefusal — decisão de tamanho por metadado",
+    "Fallback: sem ELEVENLABS_API_KEY a edge transcreve pelo OpenRouter em vez de devolver 500",
+    "Fallback: 401 do provedor principal cai no OpenRouter (é o defeito de produção)",
+    "Fallback: 403 do provedor principal também cai no OpenRouter",
+    "Fallback: 400 do provedor principal (áudio inválido) NÃO cai no OpenRouter",
+    "Fallback: 429 do provedor principal NÃO cai no OpenRouter",
+    "Fallback: sem NENHUMA credencial o pedido falha cedo, antes de baixar o áudio",
+    "Fallback: 500 do OpenRouter devolve 502 sem vazar o corpo do provedor"
    ],
    "uses_service_role": true
   },
   "supabase/functions/ai-transcribe-audio/index.ts": {
    "path": "supabase/functions/ai-transcribe-audio/index.ts",
-   "lines": 752,
+   "lines": 911,
    "exports": [
     "const DOWNLOAD_TIMEOUT_MS",
     "const STT_TIMEOUT_MS",
@@ -461008,6 +461182,7 @@
     ]
    },
    "env": [
+    "OPENROUTER_STT_MODEL",
     "SUPABASE_SERVICE_ROLE_KEY",
     "SUPABASE_URL"
    ],
@@ -461046,6 +461221,31 @@
     {
      "field": "status",
      "value": "success",
+     "kind": "escreve"
+    },
+    {
+     "field": "status",
+     "value": "success",
+     "kind": "escreve"
+    },
+    {
+     "field": "status",
+     "value": "completed",
+     "kind": "escreve"
+    },
+    {
+     "field": "status",
+     "value": "error",
+     "kind": "escreve"
+    },
+    {
+     "field": "status",
+     "value": "failed",
+     "kind": "escreve"
+    },
+    {
+     "field": "status",
+     "value": "processing",
      "kind": "escreve"
     },
     {
@@ -461103,10 +461303,79 @@
     "Service-role storage reads must never be reachable through an arbitrary URL.",
     "leitura + realtime). Sem env configurada não há cliente e o handler apenas não",
     "precisa do mundo externo (auth, rate limit, env, download do objeto e o",
+    "* Transcrição pelo OpenRouter quando o provedor principal não pode atender.",
+    "(401/403). Recusa de áudio (400) e rate limit (429) NÃO caem aqui: repetir em",
     "* Rate limit local por IP (default: `checkRateLimit`). */",
     "o segredo pelo tempo de resposta e não tinha limite nenhum."
    ],
    "uses_service_role": true
+  },
+  "supabase/functions/ai-transcribe-audio/openrouter-stt.test.ts": {
+   "path": "supabase/functions/ai-transcribe-audio/openrouter-stt.test.ts",
+   "lines": 290,
+   "is_test": true,
+   "errors": [
+    "${msg}: esperava ${JSON.stringify(expected)}, veio ${JSON.stringify(actual)}",
+    "model does not support audio"
+   ],
+   "tests": [
+    "formato: containers que a edge reconhece viram a extensão do input_audio",
+    "formato: mime de outro tipo ou desconhecido não vira extensão inventada",
+    "formato: parâmetro do content-type (codecs) não atrapalha e o case não importa",
+    "base64: buffer maior que o bloco interno é convertido byte a byte",
+    "base64: buffer vazio devolve string vazia (sem áudio, sem exceção)",
+    "corpo: o áudio vai como input_audio com formato e o texto como instrução",
+    "prompt: instrui transcrição literal em pt-BR e proíbe comentário/tradução",
+    "resposta: content string com usage é lido com os tokens reais",
+    "resposta: content em blocos é concatenado na ordem",
+    "resposta: sem usage os tokens são null (não medido), nunca zero",
+    "resposta: usage com valor negativo ou não numérico não vira número inventado",
+    "resposta: payload sem choices ou vazio não é interpretado",
+    "transcrever: mime desconhecido é recusado ANTES de tocar o provedor",
+    "transcrever: envia o áudio autenticado ao endpoint e devolve o texto medido",
+    "transcrever: HTTP de erro preserva o status e o trecho do corpo",
+    "transcrever: queda de rede vira motivo ",
+    "transcrever: JSON inválido ou resposta sem choices não é confundido com transcrição"
+   ]
+  },
+  "supabase/functions/ai-transcribe-audio/openrouter-stt.ts": {
+   "path": "supabase/functions/ai-transcribe-audio/openrouter-stt.ts",
+   "lines": 215,
+   "exports": [
+    "const OPENROUTER_STT_ENDPOINT",
+    "const OPENROUTER_STT_MODEL_PADRAO",
+    "function formatoDeAudioParaOpenRouter",
+    "function audioParaBase64",
+    "function montarPromptTranscricao",
+    "interface CorpoOpenRouterArgs",
+    "function montarCorpoOpenRouter",
+    "interface RespostaInterpretada",
+    "function interpretarRespostaOpenRouter",
+    "type TranscreverOpenRouterResultado",
+    "interface TranscreverOpenRouterArgs",
+    "function transcreverViaOpenRouter"
+   ],
+   "status_values": [
+    {
+     "field": "role",
+     "value": "user",
+     "kind": "escreve"
+    },
+    {
+     "field": "type",
+     "value": "text",
+     "kind": "escreve"
+    },
+    {
+     "field": "type",
+     "value": "input_audio",
+     "kind": "escreve"
+    }
+   ],
+   "doc": "Fallback de STT pelo OpenRouter. Motivo (2026-11-23): a credencial `ELEVENLABS_API_KEY` em produção está recusada — 1.414 chamadas no mês, 100% HTTP 401, zero transcrições desde 14/11. A rota `/v1/speech-to-text` cobra por segundo e não devolve a quantidade faturada; já o OpenRouter aceita o áudio c …",
+   "percents": [
+    "* recusada — 1.414 chamadas no mês, 100% HTTP 401, zero transcrições desde"
+   ]
   },
   "supabase/functions/ai-usage-outbox-drain/index.test.ts": {
    "path": "supabase/functions/ai-usage-outbox-drain/index.test.ts",
@@ -482705,10 +482974,23 @@
   }
  },
  "git": {
-  "sha": "9f13ab556031089de08618bea56927bfbda10461",
+  "sha": "684cc2c229d129f0fd3a330fed92f32e5b0e7aaf",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "684cc2c2",
+    "date": "2026-11-23",
+    "author": "adm01-debug",
+    "subject": "fix(transcricao): fallback de STT pelo OpenRouter e fim do 401 silencioso na voz (#3343)",
+    "files": [
+     "supabase/deployment-manifest.json",
+     "supabase/functions/ai-transcribe-audio/index.test.ts",
+     "supabase/functions/ai-transcribe-audio/index.ts",
+     "supabase/functions/ai-transcribe-audio/openrouter-stt.test.ts",
+     "supabase/functions/ai-transcribe-audio/openrouter-stt.ts"
+    ]
+   },
    {
     "sha": "9f13ab55",
     "date": "2026-11-23",
@@ -483144,27 +483426,15 @@
     "files": [
      "scripts/ci/branch-podaveis.unit.mjs"
     ]
-   },
-   {
-    "sha": "bfe8a3aa",
-    "date": "2026-11-21",
-    "author": "adm01-debug",
-    "subject": "chore(contexto): protege branch contexto da poda + indice migration->PR (#3304)",
-    "files": [
-     "CONTRIBUTING.md",
-     "docs/MIGRATIONS.md",
-     "scripts/ci/branch-podaveis.mjs",
-     "scripts/ci/branch-podaveis.unit.mjs"
-    ]
    }
   ],
   "hot_files": [
    [
-    "ESTADO.md",
-    7
+    "supabase/deployment-manifest.json",
+    8
    ],
    [
-    "supabase/deployment-manifest.json",
+    "ESTADO.md",
     7
    ],
    [
@@ -483228,15 +483498,15 @@
     2
    ],
    [
-    "scripts/ci/branch-podaveis.unit.mjs",
-    2
-   ],
-   [
-    ".github/workflows/codeql.yml",
+    "supabase/functions/ai-transcribe-audio/index.test.ts",
     1
    ],
    [
-    ".github/workflows/scorecard.yml",
+    "supabase/functions/ai-transcribe-audio/index.ts",
+    1
+   ],
+   [
+    "supabase/functions/ai-transcribe-audio/openrouter-stt.test.ts",
     1
    ]
   ]

@@ -5,13 +5,13 @@
   "vitest",
   "playwright"
  ],
- "total": 3227,
+ "total": 3228,
  "por_tipo": {
   "contrato": 130,
   "e2e": 89,
   "pytest": 3,
   "qa": 10,
-  "unit": 2904
+  "unit": 2905
  },
  "onde_ficam": [
   {
@@ -24,7 +24,7 @@
   },
   {
    "padrao": "co-localizado (*.test)",
-   "arquivos": 236
+   "arquivos": 237
   },
   {
    "padrao": "tests/",
@@ -27239,11 +27239,20 @@
   {
    "arquivo": "supabase/functions/ai-transcribe-audio/index.test.ts",
    "tipo": "unit",
-   "linhas": 691,
+   "linhas": 919,
    "testa": [
     "supabase/functions/ai-transcribe-audio/index.ts"
    ],
-   "casos": 18
+   "casos": 25
+  },
+  {
+   "arquivo": "supabase/functions/ai-transcribe-audio/openrouter-stt.test.ts",
+   "tipo": "unit",
+   "linhas": 290,
+   "testa": [
+    "supabase/functions/ai-transcribe-audio/openrouter-stt.ts"
+   ],
+   "casos": 17
   },
   {
    "arquivo": "supabase/functions/ai-usage-outbox-drain/index.test.ts",
@@ -30843,6 +30852,7 @@
   "supabase/functions/ai-proxy/index.ts": 1,
   "supabase/functions/ai-suggest-reply/index.ts": 1,
   "supabase/functions/ai-transcribe-audio/index.ts": 1,
+  "supabase/functions/ai-transcribe-audio/openrouter-stt.ts": 1,
   "supabase/functions/ai-usage-outbox-drain/index.ts": 1,
   "supabase/functions/approve-password-reset/index.ts": 1,
   "supabase/functions/assistant-gateway/index.ts": 1,
