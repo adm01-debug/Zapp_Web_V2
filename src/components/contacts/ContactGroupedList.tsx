@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronDown, Building, Users } from 'lucide-react';
+import { ChevronDown, Building2, Users } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { ContactListItem } from './ContactListItem';
@@ -19,6 +19,12 @@ interface ContactGroupedListProps {
   searchQuery?: string;
 }
 
+/**
+ * ZD-062 — lista agrupada por empresa no visual do design
+ * (`.zc-group-heading`): cabeçalho de seção com ícone pequeno e título em caixa alta,
+ * e os cards SOLTOS embaixo — sem a caixa com borda que envolvia o grupo antes.
+ * O botão de colapso é do sistema (o design não tem) e continua sendo o cabeçalho.
+ */
 export function ContactGroupedList({
   contacts, selectedIds, onToggleSelect, onOpenDetails, onOpenChat, onEdit, onDelete, getCRMData, searchQuery,
 }: ContactGroupedListProps) {
@@ -49,7 +55,7 @@ export function ContactGroupedList({
   };
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-1">
       {groups.map(([company, members], gi) => {
         const isCollapsed = collapsed.has(company);
         return (
@@ -58,33 +64,29 @@ export function ContactGroupedList({
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: gi * 0.03 }}
-            className="rounded-xl border border-border/40 overflow-hidden bg-card"
           >
-            {/* Group Header */}
             <button
               onClick={() => toggleGroup(company)}
-              className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-muted/50 transition-colors"
+              className="mt-[13px] mb-[2px] flex w-full items-center gap-2 text-left"
+              aria-expanded={!isCollapsed}
             >
-              <div className="w-7 h-7 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
-                {company === 'Sem empresa' ? (
-                  <Users className="w-3.5 h-3.5 text-muted-foreground" />
-                ) : (
-                  <Building className="w-3.5 h-3.5 text-primary" />
-                )}
-              </div>
-              <span className="text-xs font-semibold text-foreground uppercase tracking-wider flex-1 text-left truncate">
+              {company === 'Sem empresa' ? (
+                <Users className="h-[15px] w-[15px] shrink-0 text-[hsl(var(--contacts-quiet))]" />
+              ) : (
+                <Building2 className="h-[15px] w-[15px] shrink-0 text-[hsl(var(--contacts-blue))]" />
+              )}
+              <span className="flex-1 truncate text-xs font-medium uppercase tracking-wider text-[hsl(var(--contacts-ink))]">
                 {company}
               </span>
-              <Badge variant="secondary" className="text-3xs h-5 px-2 font-medium">
+              <Badge variant="secondary" className="h-5 px-2 text-3xs font-medium">
                 {members.length}
               </Badge>
               <ChevronDown className={cn(
-                'w-4 h-4 text-muted-foreground transition-transform duration-200',
+                'h-4 w-4 shrink-0 text-[hsl(var(--contacts-quiet))] transition-transform duration-200',
                 isCollapsed && '-rotate-90'
               )} />
             </button>
 
-            {/* Group Content */}
             <AnimatePresence initial={false}>
               {!isCollapsed && (
                 <motion.div
@@ -94,7 +96,7 @@ export function ContactGroupedList({
                   transition={{ duration: 0.2 }}
                   className="overflow-hidden"
                 >
-                  <div className="border-t border-border/20 space-y-2 p-1">
+                  <div className="space-y-2 pt-1">
                     {members.map((contact, index) => (
                       <ContactListItem
                         key={contact.id}

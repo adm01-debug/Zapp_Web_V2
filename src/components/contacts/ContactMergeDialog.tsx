@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
-import { Merge, AlertTriangle, CheckCircle2, Loader2 } from 'lucide-react';
+import { Merge, AlertTriangle, CheckCircle2, Loader2, ContactRound } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { mergeContactsAtomic } from '@/services/contact-merge.service';
@@ -71,7 +71,10 @@ export function ContactMergeDialog({ open, onOpenChange, contacts, onMergeComple
   const signature = contacts.map((c) => c.id).join('|');
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent aria-describedby={undefined} className="max-w-lg">
+      <DialogContent
+        aria-describedby={undefined}
+        className="max-h-[85vh] w-full max-w-[620px] overflow-y-auto border border-[hsl(var(--contacts-line))] bg-[hsl(var(--contacts-panel))] rounded-[17px] max-[659px]:rounded-[13px]"
+      >
         {open && (
           <MergeDialogBody
             key={signature}
@@ -131,17 +134,27 @@ function MergeDialogBody({ contacts, onOpenChange, onMergeComplete }: MergeDialo
 
   return (
     <>
-      <DialogHeader>
-        <DialogTitle className="flex items-center gap-2"><Merge className="w-5 h-5 text-primary" />Mesclar Contatos</DialogTitle>
-        <DialogDescription>Escolha o contato principal e qual valor manter para cada campo.</DialogDescription>
+      {/* Cabeçalho no padrão da casca de diálogo do design (`.zc-dialog-header`). */}
+      <DialogHeader className="space-y-0 border-b border-[hsl(var(--contacts-line))] bg-[hsl(var(--contacts-raised))] px-5 py-[15px] text-left">
+        <p className="m-0 flex items-center gap-2 text-xs text-[hsl(var(--contacts-muted))]">
+          <ContactRound className="h-4 w-4 text-[hsl(var(--contacts-blue))]" aria-hidden="true" />
+          Contatos / Mesclagem
+        </p>
+        <DialogTitle className="mt-[10px] flex items-center gap-2 font-display text-[22px] font-medium leading-[1.15] tracking-[-.3px] text-[hsl(var(--contacts-ink))]">
+          <Merge className="h-[18px] w-[18px] text-[hsl(var(--contacts-muted))]" aria-hidden="true" />
+          Mesclar contatos
+        </DialogTitle>
+        <DialogDescription className="mt-[5px] text-2xs text-[hsl(var(--contacts-quiet))]">
+          Escolha o contato principal e qual valor manter para cada campo.
+        </DialogDescription>
       </DialogHeader>
 
-      <div className="flex items-center gap-2 p-3 rounded-lg bg-destructive/10 border border-destructive/20">
+      <div className="mx-5 mt-4 flex items-center gap-2 rounded-[10px] border border-destructive/25 bg-destructive/10 p-3">
         <AlertTriangle className="w-4 h-4 text-destructive shrink-0" />
         <p className="text-xs text-destructive">Mensagens serão movidas para o contato principal. Ação irreversível.</p>
       </div>
 
-      <div className="space-y-2">
+      <div className="mx-5 mt-4 space-y-2">
         <p className="text-xs font-medium text-muted-foreground">Contato principal (recebe as mensagens)</p>
         <RadioGroup value={primaryId} onValueChange={handlePrimaryChange} className="flex flex-col gap-1">
           {contacts.map((c) => (
@@ -155,7 +168,7 @@ function MergeDialogBody({ contacts, onOpenChange, onMergeComplete }: MergeDialo
         </RadioGroup>
       </div>
 
-      <div className="space-y-3 max-h-[400px] overflow-y-auto">
+      <div className="mx-5 mt-4 max-h-[360px] space-y-3 overflow-y-auto">
         {visibleFields.map((field) => {
           const values = contacts
             .map((c, i) => ({ index: i, value: valueOf(c, field.key) }))
@@ -179,7 +192,7 @@ function MergeDialogBody({ contacts, onOpenChange, onMergeComplete }: MergeDialo
         })}
       </div>
 
-      <div className="rounded-lg border bg-muted/30 p-3 space-y-1">
+      <div className="mx-5 my-4 space-y-1 rounded-[10px] border border-[hsl(var(--contacts-line))] bg-[hsl(var(--contacts-soft-line))] p-3">
         <p className="text-xs font-medium text-muted-foreground">Prévia do resultado</p>
         <ul className="space-y-0.5">
           {visibleFields.map(field => (
@@ -191,7 +204,7 @@ function MergeDialogBody({ contacts, onOpenChange, onMergeComplete }: MergeDialo
         </ul>
       </div>
 
-      <DialogFooter>
+      <DialogFooter className="border-t border-[hsl(var(--contacts-line))] px-5 py-[13px]">
         <Button variant="outline" onClick={() => onOpenChange(false)}>Cancelar</Button>
         <Button onClick={handleMerge} disabled={merging} className="gap-2">
           {merging ? <Loader2 className="w-4 h-4 motion-safe:animate-spin" /> : <CheckCircle2 className="w-4 h-4" />}

@@ -8,7 +8,7 @@ import { useEffect, useLayoutEffect, useState, type RefObject } from 'react';
  * contêiner (`ResizeObserver`, uma medição por evento — sem rAF em laço) e
  * traduz a largura em colunas pela regra do design aprovado:
  *
- *   largura >= 1200 -> a preferência do usuário (2, 3 ou 4)
+ *   largura >= 1200 -> a preferência do usuário (2 a 6)
  *   largura >=  900 -> no máximo 3
  *   largura >=  560 -> 2
  *   abaixo disso    -> 1
@@ -26,12 +26,12 @@ export const COLUMNS_STORAGE_KEY = 'contacts.v2.columns';
 /** Limiares de largura do contêiner, em px (regra do design). */
 export const COLUMNS_BREAKPOINTS = { narrow: 560, medium: 900, wide: 1200 } as const;
 
-/** Colunas que o operador escolhe na tela larga. */
-export type ColumnsPreference = 2 | 3 | 4;
+/** Colunas que o operador escolhe na tela larga (as opções da barra de visões). */
+export type ColumnsPreference = 2 | 3 | 4 | 5 | 6;
 
 /** Menor e maior número de colunas liberados (abaixo de 560 px é 1). */
 export const COLUMNS_MIN = 1;
-export const COLUMNS_MAX = 4;
+export const COLUMNS_MAX = 6;
 
 /** Preferência usada quando o valor recebido não é um número. */
 export const COLUMNS_PREFERENCE_DEFAULT = 2;
@@ -64,8 +64,8 @@ export function readStoredColumnsPreference(): ColumnsPreference | null {
     const bruto = window.localStorage.getItem(COLUMNS_STORAGE_KEY);
     if (bruto === null) return null;
     const valor = Number(bruto);
-    if (valor !== 2 && valor !== 3 && valor !== 4) return null;
-    return valor;
+    if (!Number.isInteger(valor) || valor < 2 || valor > COLUMNS_MAX) return null;
+    return valor as ColumnsPreference;
   } catch {
     return null;
   }
