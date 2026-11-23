@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "c1bfe6e263c536c1145650301167aad0b339e3d5",
+  "commit": "23b816269dc0ae0c7f400076e50b1f236e44f64c",
   "branch": "main",
-  "data_commit": "2026-11-23T14:37:56Z",
+  "data_commit": "2026-11-23T15:29:03Z",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "23b81626",
+    "data": "2026-11-23",
+    "assunto": "fix(ci): guard do ESTADO.md enxerga invokeEdge com generic e publica grupo real das 7 edges (#3322)"
+   },
    {
     "sha": "c1bfe6e2",
     "data": "2026-11-23",
@@ -126,11 +131,6 @@
     "sha": "03350f44",
     "data": "2026-11-21",
     "assunto": "docs: evidencia de deploy DASH-083 (cron relatorios agendados) (#3303)"
-   },
-   {
-    "sha": "9f3e9175",
-    "data": "2026-11-21",
-    "assunto": "fix(e2e): reconhece rate limit nao autenticado do Docker Hub no retry de pull (#3302)"
    }
   ],
   "arquivos_mudados_7d": 5384,
@@ -203,7 +203,7 @@
    },
    {
     "arquivo": "ESTADO.md",
-    "mudancas": 20
+    "mudancas": 21
    },
    {
     "arquivo": "docs/talkx/ESTADOS.md",
@@ -312,7 +312,7 @@
  "contagens": {
   "arquivos_total": 15770,
   "arquivos_codigo": 5884,
-  "linhas_codigo": 1137681,
+  "linhas_codigo": 1137701,
   "rotas": 18,
   "rotas_http_backend": 11,
   "vistas_por_id": 55,
@@ -624,7 +624,7 @@
   },
   "scripts/ci": {
    "arquivos": 231,
-   "linhas": 50374
+   "linhas": 50394
   },
   "scripts/db": {
    "arquivos": 2,

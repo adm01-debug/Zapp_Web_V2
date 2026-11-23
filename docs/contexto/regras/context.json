@@ -1,15 +1,15 @@
 {
  "meta": {
-  "sha": "c1bfe6e263c536c1145650301167aad0b339e3d5",
+  "sha": "23b816269dc0ae0c7f400076e50b1f236e44f64c",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-23 15:23 UTC",
+  "generated_at": "2026-11-23 16:15 UTC",
   "files_total": 15618,
   "code_files": 8920,
-  "code_lines": 1415127
+  "code_lines": 1415147
  },
  "version": "1.3.2",
- "facts_hash": "437a6930ec5c77ab",
+ "facts_hash": "9842b210c6d81249",
  "stack": {
   "frameworks": [
    "React + Vite",
@@ -77022,7 +77022,7 @@
   {
    "module": "scripts",
    "files": 500,
-   "lines": 102079,
+   "lines": 102099,
    "tables": [
     "a",
     "alem_do_limite",
@@ -352698,7 +352698,7 @@
   },
   "scripts/ci/docs-estado-registry-convention.unit.mjs": {
    "path": "scripts/ci/docs-estado-registry-convention.unit.mjs",
-   "lines": 422,
+   "lines": 442,
    "params": [
     {
      "name": "LACUNA_ORFA",
@@ -481845,10 +481845,20 @@
   }
  },
  "git": {
-  "sha": "c1bfe6e263c536c1145650301167aad0b339e3d5",
+  "sha": "23b816269dc0ae0c7f400076e50b1f236e44f64c",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "23b81626",
+    "date": "2026-11-23",
+    "author": "adm01-debug",
+    "subject": "fix(ci): guard do ESTADO.md enxerga invokeEdge com generic e publica grupo real das 7 edges (#3322)",
+    "files": [
+     "ESTADO.md",
+     "scripts/ci/docs-estado-registry-convention.unit.mjs"
+    ]
+   },
    {
     "sha": "c1bfe6e2",
     "date": "2026-11-23",
@@ -482265,15 +482275,6 @@
     "files": [
      "scripts/db-audit/migration-evidence.json"
     ]
-   },
-   {
-    "sha": "ee85340b",
-    "date": "2026-11-21",
-    "author": "adm01-debug",
-    "subject": "fix(docs): forca eol=lf nos inventarios e docs (falso-negativo local nos testes de convencao) (#3298)",
-    "files": [
-     ".gitattributes"
-    ]
    }
   ],
   "hot_files": [
@@ -482282,12 +482283,12 @@
     6
    ],
    [
-    "docs/plans/PLANO_ASSISTENTE_PESSOAL_IA_2026-11-15.md",
+    "ESTADO.md",
     5
    ],
    [
-    "ESTADO.md",
-    4
+    "docs/plans/PLANO_ASSISTENTE_PESSOAL_IA_2026-11-15.md",
+    5
    ],
    [
     "supabase/functions/_shared/assistant-gateway.ts",
@@ -482342,6 +482343,10 @@
     2
    ],
    [
+    "scripts/ci/docs-estado-registry-convention.unit.mjs",
+    1
+   ],
+   [
     "scripts/ci/eslint-baseline.json",
     1
    ],
@@ -482351,10 +482356,6 @@
    ],
    [
     "scripts/lib/seguranca-processo.mjs",
-    1
-   ],
-   [
-    "src/components/talkx/__tests__/TalkXCampaignWizard.layout.test.tsx",
     1
    ]
   ]
