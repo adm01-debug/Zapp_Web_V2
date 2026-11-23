@@ -1,5 +1,4 @@
 import React from 'react';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -9,189 +8,223 @@ import {
 } from '@/components/ui/dropdown-menu';
 import {
   MessageSquare, Edit, Trash2, MoreVertical, Phone, Mail,
-  Building2, Briefcase,
+  Building2, ArrowUpRight,
 } from 'lucide-react';
-import { format } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
-import { getAvatarColor, getInitials } from '@/lib/avatar-colors';
 import { usePointerCoarse } from '@/components/tasks/shared/pointerMedia';
-import { CONTACT_TYPE_CONFIG } from './contactTypeConfig';
 import { HighlightText } from './HighlightText';
+import { ContactPortrait } from './ContactPortrait';
+import { toContactDisplay } from './contactDisplay';
 import { canDeleteContact } from './contactPermissions';
 import type { ContactItemProps } from './types';
 
+/**
+ * ZD-061 — linha horizontal da lista, no visual de
+ * `docs/design/contatos-redesign-2026-10-12` (`.zc-list .zc-contact`): retrato à
+ * esquerda e corpo em 4 colunas (nome+empresa, cargo, canais, última interação).
+ *
+ * O alinhamento entre linhas continua vindo de um `grid` no root com trilhas
+ * determinísticas (`auto` + `minmax(0,1fr)`) — nada de largura vinda do conteúdo de
+ * cada linha (contrato de ContactListItemGrid.test.tsx). Selo de tipo e localização
+ * não aparecem nesta visão: o design os esconde com `display:none` na lista.
+ */
 export function ContactListItem({
-  contact, isSelected, onToggleSelect, onOpenDetails, onOpenChat, onEdit, onDelete, index, companyName, searchQuery,
+  contact, isSelected, onToggleSelect, onOpenDetails, onOpenChat, onEdit, onDelete, companyName, searchQuery,
 }: ContactItemProps) {
-  const typeConfig = CONTACT_TYPE_CONFIG[contact.contact_type || 'cliente'] || CONTACT_TYPE_CONFIG.cliente;
-  const avatarColors = getAvatarColor(contact.name);
-  // Sem `:hover` real (toque) o `group-hover` nao dispara e a barra de acoes ficaria
-  // inacessivel. No ponteiro grosso ela nasce visivel; no desktop segue no hover e no
-  // foco de teclado (`focus-within`).
+  const display = toContactDisplay(contact, { companyName });
+  // Sem `:hover` real (toque) o `group-hover` nao dispara e as acoes ficariam
+  // inacessiveis. No ponteiro grosso elas nascem visiveis; no desktop seguem no hover e
+  // no foco de teclado (`focus-within`).
   const ponteiroGrosso = usePointerCoarse();
+  const ultimaInteracao = display.ultimoContato ?? 'Não registrada';
 
   return (
     <div
       data-testid="contact-list-item"
+      data-contact-nav="item"
+      tabIndex={0}
+      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onOpenDetails(contact.id); } }}
       className={cn(
-        // Grid com template definido por breakpoint: cada largura tem o mesmo número de
-        // trilhas para TODAS as linhas, então as colunas ficam alinhadas (fr/auto resolvem
-        // igual em linhas de mesma largura). Antes era flexbox com `min-w-[130px]` etc., o
-        // que desalinhava entre linhas porque a largura vinha do conteúdo de cada uma.
-        "group grid items-center gap-3 h-16 px-4 rounded-xl border border-border/70 bg-card card-lift card-glow",
-        "grid-cols-[auto_auto_minmax(0,1fr)_auto]",                                          // < md: checkbox, avatar, nome, ações
-        "md:grid-cols-[auto_auto_minmax(0,1fr)_auto_auto]",                                  // md: + data
-        "lg:grid-cols-[auto_auto_minmax(0,2fr)_minmax(0,1fr)_minmax(0,1fr)_auto_auto]",       // lg: + telefone, tags
-        "xl:grid-cols-[auto_auto_minmax(0,2fr)_minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)_auto_auto]", // xl: + email
-        "cursor-pointer",
+        "group relative grid grid-cols-[auto_minmax(0,1fr)] items-center gap-[13px] p-[9px] rounded-[10px]",
+        "border border-border/70 bg-card card-lift card-glow cursor-pointer",
+        "max-[559px]:gap-[10px]",
         isSelected && "ring-1 ring-primary border-primary/60 bg-primary/5"
       )}
       onClick={() => onOpenDetails(contact.id)}
     >
-      {/* Checkbox */}
-      <div onClick={(e) => e.stopPropagation()}>
-        <Checkbox
-          checked={isSelected}
-          onCheckedChange={(checked) => onToggleSelect(contact.id, !!checked)}
-          aria-label={isSelected ? `Desmarcar ${contact.name}` : `Selecionar ${contact.name}`}
-        />
-      </div>
-
-      {/* Avatar */}
-      <div className="relative shrink-0">
-        <Avatar className="w-10 h-10 ring-2 ring-border/70">
-          <AvatarImage src={contact.avatar_url || undefined} alt={contact.name || 'Avatar'} />
-          <AvatarFallback className={cn('font-semibold text-xs', avatarColors.bg, avatarColors.text)}>
-            {getInitials(contact.name)}
-          </AvatarFallback>
-        </Avatar>
-        <div className={cn(
-          "absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-background",
-          typeConfig.dotBg
-        )} />
-      </div>
-
-      {/* Name & type */}
-      <div className="min-w-0">
-        <div className="flex items-center gap-2">
-          <HighlightText
-            text={`${contact.name} ${contact.surname || ''}`.trim()}
-            highlight={searchQuery}
-            className="font-semibold text-sm text-foreground truncate block"
+      {/* Retrato (`.zc-list .zc-photo-wrap` / `.zc-photo-button`): 82x102, e 73x119 no
+          celular. A seta do design (`.zc-photo-open`) fica no canto inferior direito e
+          cede lugar aos botoes de acao quando eles aparecem no hover/foco. */}
+      <div className="relative isolate w-[82px] shrink-0 max-[559px]:w-[73px]">
+        <button
+          type="button"
+          className="group/photo relative block h-[102px] w-full overflow-hidden rounded-[7px] bg-[hsl(var(--contacts-raised))] text-left max-[559px]:h-[119px]"
+          onClick={(e) => { e.stopPropagation(); onOpenDetails(contact.id); }}
+          aria-label={`Abrir ${display.nomeCompleto ?? contact.name}`}
+        >
+          <ContactPortrait
+            contact={contact}
+            className="h-full w-full"
+            initialsClassName="text-[26px] tracking-[-1px]"
           />
-          <Badge
-            variant="outline"
-            className={cn("h-6 px-2.5 rounded-full text-xs font-medium gap-1.5 shrink-0", typeConfig.badgeClass)}
+          <span
+            className="pointer-events-none absolute inset-0"
+            style={{ background: 'linear-gradient(180deg, hsl(0 0% 0% / 0.06) 0%, transparent 42%, transparent 62%, hsl(0 0% 0% / 0.55) 100%)' }}
+          />
+          <span
+            className="pointer-events-none absolute right-[5px] bottom-[5px] z-[2] grid h-[23px] w-[23px] place-items-center rounded-[6px] text-white"
+            style={{
+              background: 'linear-gradient(145deg, hsl(var(--contacts-blue)), hsl(221 83% 35%))',
+              border: '1px solid hsl(221 83% 70% / 0.4)',
+            }}
           >
-            {typeConfig.iconNode}
-            {typeConfig.label}
-          </Badge>
+            <ArrowUpRight className="h-3 w-3" />
+          </span>
+        </button>
+
+        {/* Acoes rapidas — o design nao as tem na lista; o sistema sim (contrato de
+            controlesToque.test.tsx). */}
+        <div
+          className={cn(
+            "absolute right-[5px] bottom-[5px] z-[3] flex items-center gap-1 transition-opacity focus-within:opacity-100",
+            ponteiroGrosso ? "opacity-100" : "opacity-0 group-hover:opacity-100"
+          )}
+          onClick={(e) => e.stopPropagation()}
+        >
+          <Button
+            variant="outline"
+            size="icon"
+            className="h-[23px] w-[23px] rounded-[6px] border border-[hsl(0_0%_100%/0.18)] bg-[hsl(240_5%_13%/0.9)] text-[hsl(228_20%_92%)] hover:border-primary/60 hover:bg-[hsl(240_5%_13%)]"
+            onClick={() => onOpenChat(contact.id)}
+            title="Conversar"
+          >
+            <MessageSquare className="h-3 w-3" />
+          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="outline"
+                size="icon"
+                className="h-[23px] w-[23px] rounded-[6px] border border-[hsl(0_0%_100%/0.18)] bg-[hsl(240_5%_13%/0.9)] text-[hsl(228_20%_92%)] hover:border-primary/60 hover:bg-[hsl(240_5%_13%)]"
+                aria-label={`Ações do contato ${contact.name}`}
+              >
+                <MoreVertical className="h-3 w-3" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-40">
+              <DropdownMenuItem onClick={() => onEdit(contact)}>
+                <Edit className="mr-2 h-3.5 w-3.5" />Editar
+              </DropdownMenuItem>
+              {/* Item so aparece quando o usuario pode excluir ESTE contato (a permissao
+                  vem do banco em `contact.can_delete`). */}
+              {canDeleteContact(contact) && (
+                <>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem className="text-destructive" onClick={() => onDelete(contact)}>
+                    <Trash2 className="mr-2 h-3.5 w-3.5" />Excluir
+                  </DropdownMenuItem>
+                </>
+              )}
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
-        {(contact.company || companyName || contact.job_title) && (
-          <div className="flex items-center gap-2 mt-0.5">
-            {(contact.company || companyName) && (
-              <span className="flex items-center gap-1 text-xs text-muted-foreground">
-                <Building2 className="w-3 h-3 shrink-0" />
-                <span className="truncate max-w-[120px]">{companyName || contact.company}</span>
-              </span>
+      </div>
+
+      {/* Corpo (`.zc-list .zc-contact-body`): 4 colunas no desktop, 3 no medio (a
+          "ultima interacao" sai), 2 no tablet (nome cima, canais ao lado) e 1 no
+          celular (cargo e ultima interacao saem). */}
+      <div data-testid="contact-list-item-body" className="grid min-w-0 grid-cols-[1.1fr_1fr_1.4fr_120px] items-center gap-[18px] py-1 pr-[10px] max-[1199px]:grid-cols-[1.1fr_1fr_1.2fr] max-[1199px]:gap-[14px] max-[899px]:grid-cols-[1fr_1fr] max-[899px]:gap-[8px_15px] max-[559px]:grid-cols-1 max-[559px]:gap-[9px] max-[559px]:pr-1">
+        {/* 1. Nome + empresa (+ etiquetas, que o sistema tem e o design nao) */}
+        <div className="min-w-0">
+          <HighlightText
+            text={display.nomeCompleto ?? contact.name}
+            highlight={searchQuery}
+            className="mb-[7px] block font-display text-[20px] font-medium leading-[1.2] tracking-[-0.4px] text-foreground [overflow-wrap:anywhere] max-[559px]:text-[21px]"
+          />
+          {display.empresa && (
+            <p className="m-0 flex items-center gap-1.5 text-[11px] leading-[1.35] text-[hsl(var(--contacts-ink))]">
+              <Building2 className="h-[13px] w-[13px] shrink-0 text-[hsl(var(--contacts-quiet))]" />
+              <span className="min-w-0 truncate">{display.empresa}</span>
+            </p>
+          )}
+          {contact.tags && contact.tags.length > 0 && (
+            <div className="mt-1.5 flex flex-wrap gap-1">
+              {contact.tags.slice(0, 2).map((tag) => (
+                <Badge key={tag} variant="secondary" className="h-[18px] px-1.5 text-3xs">{tag}</Badge>
+              ))}
+              {contact.tags.length > 2 && (
+                <Badge variant="secondary" className="h-[18px] px-1.5 text-3xs">+{contact.tags.length - 2}</Badge>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* 2. Cargo (`.zc-job`) */}
+        <p className="m-0 min-h-0 text-[11px] leading-[1.7] text-[hsl(var(--contacts-muted))] max-[899px]:col-start-1 max-[899px]:row-start-2 max-[559px]:hidden">
+          {display.cargo ?? ''}
+        </p>
+
+        {/* 3. Canais (`.zc-contact-lines` sem borda e sem padding na lista) */}
+        <div className="grid min-w-0 gap-1 max-[899px]:col-start-2 max-[899px]:row-span-2 max-[899px]:row-start-1 max-[559px]:col-start-1 max-[559px]:row-span-1 max-[559px]:row-start-auto max-[559px]:gap-1.5">
+          {display.telefone && (
+            <div className="flex min-w-0 items-center gap-2 text-xs text-[hsl(var(--contacts-ink))] max-[559px]:text-[11px]" onClick={(e) => e.stopPropagation()}>
+              <Phone className="h-[13px] w-[13px] shrink-0 text-[hsl(var(--contacts-quiet))]" />
+              <a
+                href={`https://wa.me/${contact.phone.replace(/\D/g, '')}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="truncate transition-colors hover:text-primary"
+                title={display.telefone}
+              >
+                {display.telefone}
+              </a>
+            </div>
+          )}
+          {display.email && (
+            <div className="flex min-w-0 items-center gap-2 text-xs text-[hsl(var(--contacts-ink))] max-[559px]:text-[11px]" onClick={(e) => e.stopPropagation()}>
+              <Mail className="h-[13px] w-[13px] shrink-0 text-[hsl(var(--contacts-quiet))]" />
+              <a
+                href={`mailto:${display.email}`}
+                className="truncate text-[hsl(var(--contacts-muted))] transition-colors hover:text-primary"
+                title={display.email}
+              >
+                {display.email}
+              </a>
+            </div>
+          )}
+        </div>
+
+        {/* 4. Ultima interacao (`.zc-last`) — sai no medio e no celular, como no design */}
+        <div className="grid min-w-0 gap-[5px] text-[11px] text-[hsl(var(--contacts-quiet))] max-[1199px]:hidden">
+          <span className="truncate">Última interação</span>
+          <strong className="truncate text-[11px] font-normal text-[hsl(var(--contacts-ink))]" title={ultimaInteracao}>
+            {ultimaInteracao}
+          </strong>
+        </div>
+
+        {/* Selecao (`.zc-list .zc-card-selection`): 21x21 no canto superior direito da
+            LINHA — por isso vive dentro do corpo sem ancestral posicionado, ancorando no
+            root (`relative`). Continua oculta no ponteiro fino ate hover/foco. */}
+        <div
+          className={cn(
+            "absolute top-[5px] right-[5px] z-[3] grid h-[21px] w-[21px] place-items-center rounded-[5px] border border-[hsl(0_0%_100%/0.23)] bg-[hsl(240_10%_8%/0.76)] shadow-[0_2px_8px_hsl(0_0%_0%/0.25)] transition-opacity focus-within:opacity-100",
+            ponteiroGrosso && "h-[38px] w-[38px] rounded-[9px]",
+            isSelected || ponteiroGrosso ? "opacity-100" : "opacity-0 group-hover:opacity-100"
+          )}
+          onClick={(e) => e.stopPropagation()}
+        >
+          <Checkbox
+            checked={isSelected}
+            onCheckedChange={(checked) => onToggleSelect(contact.id, !!checked)}
+            aria-label={isSelected ? `Desmarcar ${contact.name}` : `Selecionar ${contact.name}`}
+            className={cn(
+              "border-[hsl(0_0%_100%/0.6)] bg-transparent shadow-none",
+              ponteiroGrosso
+                ? "h-[18px] w-[18px] [&_svg]:h-[14px] [&_svg]:w-[14px]"
+                : "h-[11px] w-[11px] [&_svg]:hidden"
             )}
-            {contact.job_title && (
-              <span className="flex items-center gap-1 text-xs text-muted-foreground">
-                <Briefcase className="w-3 h-3 shrink-0" />
-                {contact.job_title}
-              </span>
-            )}
-          </div>
-        )}
-      </div>
-
-      {/* Phone — a célula existe sempre (mesmo sem telefone) para manter a trilha do grid
-          alinhada com as outras linhas; o conteúdo é que aparece só quando há telefone. */}
-      <div className="hidden lg:flex items-center gap-1.5 text-xs text-muted-foreground min-w-0" onClick={(e) => e.stopPropagation()}>
-        {contact.phone && (
-          <>
-            <Phone className="w-3 h-3 shrink-0" />
-            <a
-              href={`https://wa.me/${contact.phone.replace(/\D/g, '')}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="font-mono text-2xs hover:text-primary transition-colors truncate"
-            >
-              {contact.phone}
-            </a>
-          </>
-        )}
-      </div>
-
-      {/* Email */}
-      <div className="hidden xl:flex items-center gap-1.5 text-xs text-muted-foreground min-w-0" onClick={(e) => e.stopPropagation()}>
-        {contact.email && (
-          <>
-            <Mail className="w-3 h-3 shrink-0" />
-            <a
-              href={`mailto:${contact.email}`}
-              className="truncate text-2xs hover:text-primary transition-colors"
-            >
-              {contact.email}
-            </a>
-          </>
-        )}
-      </div>
-
-      {/* Tags */}
-      <div className="hidden lg:flex items-center gap-1 min-w-0">
-        {contact.tags?.slice(0, 2).map(tag => (
-          <Badge key={tag} variant="secondary" className="text-3xs h-4 px-1.5">
-            {tag}
-          </Badge>
-        ))}
-        {(contact.tags?.length || 0) > 2 && (
-          <Badge variant="secondary" className="text-3xs h-4 px-1.5">
-            +{(contact.tags?.length || 0) - 2}
-          </Badge>
-        )}
-      </div>
-
-      {/* Date */}
-      <span className="hidden md:block text-2xs text-muted-foreground shrink-0">
-        {format(new Date(contact.created_at), "dd/MM/yy", { locale: ptBR })}
-      </span>
-
-      {/* Actions — revelada no hover (desktop) e sempre visivel no toque */}
-      <div
-        className={cn(
-          "flex items-center gap-0.5 transition-opacity shrink-0 focus-within:opacity-100",
-          ponteiroGrosso ? "opacity-100" : "opacity-0 group-hover:opacity-100"
-        )}
-        onClick={(e) => e.stopPropagation()}
-      >
-        <Button variant="outline" size="icon" className="w-9 h-9 rounded-[10px] border border-border bg-card hover:bg-muted hover:border-primary/50" onClick={() => onOpenChat(contact.id)} title="Conversar">
-          <MessageSquare className="w-4 h-4" />
-        </Button>
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="outline" size="icon" className="w-9 h-9 rounded-[10px] border border-border bg-card hover:bg-muted hover:border-primary/50" aria-label={`Ações do contato ${contact.name}`}>
-              <MoreVertical className="w-4 h-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-40">
-            <DropdownMenuItem onClick={() => onEdit(contact)}>
-              <Edit className="w-3.5 h-3.5 mr-2" />Editar
-            </DropdownMenuItem>
-            {/* Item só aparece quando o usuário pode excluir ESTE contato (a permissão vem
-                do banco em `contact.can_delete`). Antes aparecia sempre e o erro só surgia
-                no clique -- débito do #1187. */}
-            {canDeleteContact(contact) && (
-              <>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem className="text-destructive" onClick={() => onDelete(contact)}>
-                  <Trash2 className="w-3.5 h-3.5 mr-2" />Excluir
-                </DropdownMenuItem>
-              </>
-            )}
-          </DropdownMenuContent>
-        </DropdownMenu>
+          />
+        </div>
       </div>
     </div>
   );

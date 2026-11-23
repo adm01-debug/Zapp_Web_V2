@@ -7,9 +7,13 @@ import { baseContact, noop } from './contactDeleteFixtures';
 /**
  * O `ContactListItem` imita colunas de tabela. A técnica antiga (flexbox + `min-w-[130px]`
  * etc.) desalinhava entre linhas porque a largura de cada coluna vinha do conteúdo de
- * cada linha. O alinhamento agora vem de um `grid` com `grid-template-columns` definido:
+ * cada linha. O alinhamento agora vem de `grid` com `grid-template-columns` determinístico:
  * todas as linhas usam o MESMO template, em trilhas `auto`/`fr` (que resolvem igual para
  * linhas de mesma largura). Este teste prova os 3 critérios do cartão.
+ *
+ * O design da lista (`docs/design/contatos-redesign-2026-10-12`, `.zc-list .zc-contact`)
+ * tem retrato fixo à esquerda e o corpo em colunas: o root é `auto + minmax(0,1fr)` e o
+ * corpo é que carrega as trilhas de conteúdo.
  */
 
 const RANK: Record<string, number> = { sm: 1, md: 2, lg: 3, xl: 4 };
@@ -60,6 +64,19 @@ function root(): Element {
   return el;
 }
 
+function body(): Element {
+  const el = document.querySelector('[data-testid="contact-list-item-body"]');
+  if (!el) throw new Error('contact-list-item-body não renderizado');
+  return el;
+}
+
+/** Filhos que ocupam trilha: os posicionados (`absolute`, seleção) não contam. */
+function celulas(el: Element, rank: number): Element[] {
+  return Array.from(el.children).filter(
+    (c) => !(c.getAttribute('class') || '').split(/\s+/).includes('absolute') && visibleAt(c, rank),
+  );
+}
+
 describe('ContactListItem · alinhamento por grid (não por min-w arbitrário)', () => {
   it('usa CSS grid e não usa nenhum min-w-[Npx] arbitrário nas trilhas', () => {
     const { container } = render(<ContactListItem {...itemProps(baseContact())} />);
@@ -72,9 +89,22 @@ describe('ContactListItem · alinhamento por grid (não por min-w arbitrário)',
     expect(container.innerHTML).not.toMatch(/[\s"]min-w-\[\d+px\]/);
   });
 
-  it('as trilhas do template não usam pixels (só auto/fr) e o nº de colunas bate com as células visíveis', () => {
+  it('o root tem retrato + corpo em trilhas sem pixels', () => {
     render(<ContactListItem {...itemProps(baseContact())} />);
     const el = root();
+
+    for (const rank of [0, 2, 3, 4]) {
+      const template = activeTemplate(el, rank);
+      expect(template, `sem grid-cols no root (rank ${rank})`).not.toBeNull();
+      const tracks = template!.split('_');
+      expect(tracks).toEqual(['auto', 'minmax(0,1fr)']);
+      expect(celulas(el, rank)).toHaveLength(tracks.length);
+    }
+  });
+
+  it('o corpo usa trilhas proporcionais e nenhuma largura vinda do conteúdo', () => {
+    render(<ContactListItem {...itemProps(baseContact())} />);
+    const el = body();
 
     // 768px = md (rank 2); 1280px = xl (rank 4) — as duas larguras do critério de pronto.
     const cases: Array<{ rank: number; window: string }> = [
@@ -86,17 +116,19 @@ describe('ContactListItem · alinhamento por grid (não por min-w arbitrário)',
 
     for (const { rank, window } of cases) {
       const template = activeTemplate(el, rank);
-      expect(template, `sem grid-cols para ${window}`).not.toBeNull();
+      expect(template, `sem grid-cols no corpo para ${window}`).not.toBeNull();
 
       const tracks = template!.split('_');
-      // trilha determinística (auto ou minmax fr) — nunca largura fixa em px
       for (const track of tracks) {
-        expect(track, `trilha com px em ${window}`).not.toMatch(/px/);
-        expect(track, `trilha inesperada em ${window}: ${track}`).toMatch(/^(auto|minmax\(0,[\d.]+fr\))$/);
+        // `fr` proporcional, `auto` derivado do conteúdo da COLUNA (igual em todas as
+        // linhas) ou uma largura fixa da coluna (o design usa 120px na última). O que não
+        // pode existir é `min-w-[Npx]` por célula, que é o que desalinhava antes.
+        expect(track, `trilha inesperada em ${window}: ${track}`).toMatch(/^(\d+(\.\d+)?fr|auto|\d+px)$/);
       }
 
-      const visible = Array.from(el.children).filter((c) => visibleAt(c, rank)).length;
-      expect(tracks.length, `nº de trilhas x células visíveis em ${window}`).toBe(visible);
+      const cells = celulas(el, rank).length;
+      // A seleção é `absolute` (não ocupa trilha); o resto ocupa.
+      expect(tracks.length, `nº de trilhas x células em ${window}`).toBe(cells);
     }
   });
 
@@ -108,15 +140,20 @@ describe('ContactListItem · alinhamento por grid (não por min-w arbitrário)',
       </>,
     );
     const rows = Array.from(document.querySelectorAll('[data-testid="contact-list-item"]'));
+    const bodies = Array.from(document.querySelectorAll('[data-testid="contact-list-item-body"]'));
     expect(rows).toHaveLength(2);
+    expect(bodies).toHaveLength(2);
 
-    const templates = rows.map((r) =>
-      (r.getAttribute('class') || '')
+    const templateOf = (el: Element) =>
+      (el.getAttribute('class') || '')
         .split(/\s+/)
         .filter((c) => /grid-cols-\[/.test(c))
-        .sort(),
-    );
-    expect(templates[0]).toEqual(templates[1]);
-    expect(templates[0].length).toBeGreaterThan(0);
+        .sort();
+
+    for (const el of [rows, bodies]) {
+      const templates = el.map(templateOf);
+      expect(templates[0]).toEqual(templates[1]);
+      expect(templates[0].length).toBeGreaterThan(0);
+    }
   });
 });

@@ -33,15 +33,19 @@ const SECONDARY_MODES = [
 const GRID_COLUMN_OPTIONS = [3, 4, 5, 6];
 
 function SegmentPill({ reduceMotion }: { reduceMotion: boolean }) {
-  if (reduceMotion) return <span className="absolute inset-0 rounded-[10px] bg-primary -z-10" />;
+  const className = 'absolute inset-0 rounded-[7px] bg-[linear-gradient(140deg,hsl(var(--primary)),hsl(var(--primary)/0.85))] shadow-[0_2px_7px_hsl(0_0%_0%/0.2)] -z-10';
+  if (reduceMotion) return <span className={className} />;
   return (
     <motion.span
       layoutId="contacts-view-pill"
-      className="absolute inset-0 rounded-[10px] bg-primary -z-10"
+      className={className}
       transition={{ type: 'spring', stiffness: 400, damping: 32 }}
     />
   );
 }
+
+/** Botão do `zc-view-switch`: raio 7px, texto 11px, ícone 15px. */
+const SWITCH_BUTTON_CLASS = 'relative isolate h-[34px] px-[11px] rounded-[7px] text-[11px] font-medium flex items-center gap-[7px] transition-colors whitespace-nowrap focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background max-[559px]:flex-1 max-[559px]:justify-center max-[559px]:px-2';
 
 export function ContactViewSwitcher({
   viewMode, onViewModeChange, gridColumns, onGridColumnsChange,
@@ -51,10 +55,10 @@ export function ContactViewSwitcher({
   const isSecondaryActive = SECONDARY_MODES.some(m => m.value === viewMode);
 
   return (
-    <div className="flex items-center gap-2" data-testid="view-switcher">
-      {/* Segmented view mode toggles */}
+    <div className="flex items-center gap-2 max-[559px]:flex-1" data-testid="view-switcher">
+      {/* Segmentado de visões — `zc-view-switch`: trilho raio 9px, p3px, fundo escuro. */}
       <LayoutGroup id="contacts-view">
-        <div data-testid="view-switcher" className="h-11 rounded-xl border border-border bg-card p-1 flex items-center gap-1">
+        <div data-testid="view-switcher" className="h-10 min-h-10 rounded-[9px] border border-border bg-card p-[3px] flex items-center gap-[3px] max-[559px]:flex-1 max-[559px]:justify-between">
           {PRIMARY_MODES.map(({ value, label, icon: Icon }) => {
             const active = viewMode === value;
             return (
@@ -62,36 +66,40 @@ export function ContactViewSwitcher({
                 key={value}
                 onClick={() => onViewModeChange(value)}
                 title={label}
+                aria-pressed={active}
+                aria-label={`${label} de contatos`}
                 className={cn(
-                  'relative isolate h-9 px-4 rounded-[10px] text-sm font-medium flex items-center gap-2 transition-colors',
+                  SWITCH_BUTTON_CLASS,
                   active ? 'text-primary-foreground' : 'text-muted-foreground hover:text-foreground hover:bg-muted/60'
                 )}
               >
                 {active && <SegmentPill reduceMotion={reduceMotion} />}
-                <Icon className="w-[18px] h-[18px]" />
+                <Icon className="w-[15px] h-[15px]" />
                 <span className="hidden md:inline">{label}</span>
               </button>
             );
           })}
 
-          {/* More views dropdown */}
+          {/* Mais visualizações */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <button
                 className={cn(
-                  'relative isolate h-9 px-4 rounded-[10px] text-sm font-medium flex items-center gap-2 transition-colors',
+                  SWITCH_BUTTON_CLASS,
                   isSecondaryActive ? 'text-primary-foreground' : 'text-muted-foreground hover:text-foreground hover:bg-muted/60'
                 )}
                 title="Mais visualizações"
+                aria-pressed={isSecondaryActive}
+                aria-label="Mais visualizações de contatos"
               >
                 {isSecondaryActive && <SegmentPill reduceMotion={reduceMotion} />}
                 {isSecondaryActive
                   ? (() => {
                       const active = SECONDARY_MODES.find(m => m.value === viewMode)!;
                       const Icon = active.icon;
-                      return <><Icon className="w-[18px] h-[18px]" /><span className="hidden md:inline">{active.label}</span></>;
+                      return <><Icon className="w-[15px] h-[15px]" /><span className="hidden md:inline">{active.label}</span></>;
                     })()
-                  : <><span className="hidden md:inline">Mais</span><ChevronDown className="w-4 h-4" /></>
+                  : <><span className="hidden md:inline">Mais</span><ChevronDown className="w-3.5 h-3.5" /></>
                 }
               </button>
             </DropdownMenuTrigger>
@@ -113,11 +121,11 @@ export function ContactViewSwitcher({
         </div>
       </LayoutGroup>
 
-      {/* Colunas + Agrupamento */}
+      {/* Colunas + Agrupamento — `zc-control` de 40px. */}
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button variant="outline" aria-label="Colunas" className="h-11 px-4 rounded-xl bg-input border-border text-sm font-medium gap-2">
-            <Settings2 className="w-[18px] h-[18px]" />
+          <Button variant="outline" aria-label="Colunas" className="h-10 min-h-10 px-[11px] rounded-[9px] bg-input border-border text-[11px] font-medium gap-[7px]">
+            <Settings2 className="w-[15px] h-[15px]" />
             <span className="hidden sm:inline">Colunas</span>
           </Button>
         </DropdownMenuTrigger>

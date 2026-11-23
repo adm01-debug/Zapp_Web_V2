@@ -10,6 +10,19 @@ import {
 
 const PAGE_SIZE = 50;
 
+/**
+ * ZD-043 — quantidade de itens por página por visão, na regra do design:
+ * grade = 1 linha (colunas efetivas), tabela = 8, lista = 4 e as visões
+ * alternativas (pipeline/mapa/analytics) não paginam. Mantido aqui para o
+ * `useContactsSearch` receber um número já resolvido pela tela.
+ */
+export function resolvePageSize(viewMode: string, columns: number): number {
+  if (viewMode === 'pipeline' || viewMode === 'kanban' || viewMode === 'map' || viewMode === 'analytics') return 500;
+  if (viewMode === 'table') return 8;
+  if (viewMode === 'list') return 4;
+  return Math.min(50, Math.max(1, Math.floor(columns) || 1));
+}
+
 function parseSortOption(sortBy: string): { field: string; direction: string } {
   switch (sortBy) {
     case 'name_desc': return { field: 'name', direction: 'desc' };
@@ -31,6 +44,7 @@ export function useContactsSearch() {
   const [sortBy, setSortBy] = useState('name_asc');
   const [page, setPage] = useState(0);
   const [showLegacy, setShowLegacyState] = useState(readShowLegacyPreference);
+  const [pageSize, setPageSizeState] = useState(PAGE_SIZE);
   const debounceRef = useRef<NodeJS.Timeout | undefined>(undefined);
 
   const handleSearchChange = useCallback((value: string) => {
@@ -52,6 +66,12 @@ export function useContactsSearch() {
   const handleTagChange = useCallback((v: string) => { setFilterTag(v); setPage(0); }, []);
   const handleDateRangeChange = useCallback((v: string) => { setFilterDateRange(v); setPage(0); }, []);
   const handleSortChange = useCallback((v: string) => { setSortBy(v); setPage(0); }, []);
+  /** ZD-043 — a tela informa a visão/colunas; troca de página volta ao início. */
+  const setPageSize = useCallback((next: number) => {
+    const valor = Number.isFinite(next) && next > 0 ? Math.floor(next) : PAGE_SIZE;
+    setPageSizeState(prev => (prev === valor ? prev : valor));
+    setPage(0);
+  }, []);
   const handleShowLegacyChange = useCallback((v: boolean) => {
     writeShowLegacyPreference(v);
     setShowLegacyState(v);
@@ -93,6 +113,7 @@ export function useContactsSearch() {
     sortField,
     sortDirection,
     page,
+    pageSize,
     showLegacy,
   ];
 
@@ -108,8 +129,8 @@ export function useContactsSearch() {
         date_from: dateFrom,
         sort_field: sortField,
         sort_direction: sortDirection,
-        page_size: PAGE_SIZE,
-        page_offset: page * PAGE_SIZE,
+        page_size: pageSize,
+        page_offset: page * pageSize,
         include_legacy: showLegacy,
       });
       if (error) throw error;
@@ -122,7 +143,7 @@ export function useContactsSearch() {
 
   const contacts = useMemo(() => data ?? [], [data]);
   const totalCount = contacts.length > 0 ? Number(contacts[0].total_count) : 0;
-  const hasMore = (page + 1) * PAGE_SIZE < totalCount;
+  const hasMore = (page + 1) * pageSize < totalCount;
 
   const { data: typeCounts } = useQuery({
     queryKey: ['contacts-type-counts', showLegacy],
@@ -250,7 +271,8 @@ export function useContactsSearch() {
     clearFilters,
     page,
     setPage,
-    pageSize: PAGE_SIZE,
+    pageSize,
+    setPageSize,
     loadMore: () => setPage(p => p + 1),
     loadPrevious: () => setPage(p => Math.max(0, p - 1)),
     refetch,
