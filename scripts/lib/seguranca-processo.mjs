@@ -41,15 +41,19 @@ export const RAIZES_PERMITIDAS = [RAIZ_REPO, path.resolve(os.tmpdir()), path.res
  * binario silenciosamente.
  */
 export function resolverExecutavel(comando) {
+  const isWindows = process.platform === 'win32';
+  const extensoes = isWindows ? ['.exe', '.cmd', '.bat', ''] : [''];
   const diretorios = process.env.PATH === undefined ? [] : process.env.PATH.split(path.delimiter);
   for (const diretorio of diretorios) {
-    const candidato = path.resolve(diretorio || '.', comando);
-    try {
-      if (!fs.statSync(candidato).isFile()) continue;
-      fs.accessSync(candidato, fs.constants.X_OK);
-      return candidato;
-    } catch {
-      // Nao esta neste diretorio: segue a busca, igual ao shell.
+    for (const ext of extensoes) {
+      const candidato = path.resolve(diretorio || '.', comando + ext);
+      try {
+        if (!fs.statSync(candidato).isFile()) continue;
+        if (!isWindows) fs.accessSync(candidato, fs.constants.X_OK);
+        return candidato;
+      } catch {
+        // Nao esta neste diretorio: segue a busca, igual ao shell.
+      }
     }
   }
   throw new Error('comando nao encontrado no PATH: ' + comando);
