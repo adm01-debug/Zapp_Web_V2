@@ -8,7 +8,7 @@
   },
   "summary": {
     "function_count": 93,
-    "source_file_count": 183,
+    "source_file_count": 184,
     "verify_jwt_true": 77,
     "verify_jwt_false": 16
   },
@@ -511,8 +511,13 @@
     },
     {
       "path": "supabase/functions/ai-transcribe-audio/index.ts",
-      "bytes": 29408,
-      "sha256": "ead6ded77bd4f1e5afa7d3d0c4da2e4698196aa04350cab379c711250ae6ff91"
+      "bytes": 35048,
+      "sha256": "2990d3de61ef8bc3005e0398bc61a516b39c69d1e2069e09a315a57663534f6a"
+    },
+    {
+      "path": "supabase/functions/ai-transcribe-audio/openrouter-stt.ts",
+      "bytes": 7020,
+      "sha256": "cbed2e4d436e4b10406a8dfb1a4e7483aca4f9195d23a3ab14d7156ba8469d14"
     },
     {
       "path": "supabase/functions/ai-usage-outbox-drain/index.ts",
@@ -1400,7 +1405,7 @@
       "name": "ai-transcribe-audio",
       "entrypoint": "supabase/functions/ai-transcribe-audio/index.ts",
       "verify_jwt": true,
-      "source_sha256": "5d4df7aa67f9093a23cd93359c77a0bb278b3a9492c4ca65a56b9be0326b08b4",
+      "source_sha256": "9f6778b4a089079fe963b3b812f129b7b8dbabab84365364f60d81bc2570318a",
       "source_files": [
         "supabase/functions/_shared/ai-audio-authz.ts",
         "supabase/functions/_shared/ai-auth.ts",
@@ -1418,7 +1423,8 @@
         "supabase/functions/_shared/schemas.ts",
         "supabase/functions/_shared/ssrf.ts",
         "supabase/functions/_shared/validation.ts",
-        "supabase/functions/ai-transcribe-audio/index.ts"
+        "supabase/functions/ai-transcribe-audio/index.ts",
+        "supabase/functions/ai-transcribe-audio/openrouter-stt.ts"
       ]
     },
     {
@@ -2857,5 +2863,5 @@
       ]
     }
   ],
-  "manifest_sha256": "0a06c479459d8f89dcb4486c95e198ca13ca27ce188ead5197a3e6d0d7facade"
+  "manifest_sha256": "ae441fbb02b563e95a0c6137e490e22896709ea0b4d6a016350ad1f97d50e1fc"
 }
