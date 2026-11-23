@@ -1,7 +1,7 @@
 # Contexto do projeto para agentes de IA
 
 GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.
-Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR dela) a cada push em `main` e a cada 10 minutos pelo workflow `contexto.yml`; índice único das três fontes em `docs/contexto/00-INDEX.md`. Gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `54826dbf2d45ecb8363d32f565efcbd7256601d3` (2026-11-23T13:59:04Z).
+Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR dela) a cada push em `main` e a cada 10 minutos pelo workflow `contexto.yml`; índice único das três fontes em `docs/contexto/00-INDEX.md`. Gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `c1bfe6e263c536c1145650301167aad0b339e3d5` (2026-11-23T14:37:56Z).
 
 ## Como usar (leia antes de planejar ou executar qualquer tarefa)
 1. **Tela/rota/menu** → `rotas.json` (url/vista/menu → arquivo → hooks → tabelas → edges; `rotas_http_backend` para APIs) e `modulos.json` (módulo inteiro + dependências entre módulos).
@@ -397,7 +397,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - possiveis_segredos_no_codigo: 6 — ex.: analise-prs/resgate-261118-lote3/claude_pink/cool-dijkstra-xk9ek2/scripts/ci/edge-coverage-authz.unit.mjs:397, analise-prs/resgate-261118-lote3/claude_pink/cool-dijkstra-xk9ek2/scripts/edge-deploy/redigir-log.unit.mjs:38, scripts/ai-context/cenarios.mjs:102
 
 ## Grafo de código (graphify)
-- 103113 nós · 175121 arestas · 9264 comunidades · grafo do commit `54826dbf`
+- 103113 nós · 175121 arestas · 9264 comunidades · grafo do commit `c1bfe6e2`
 - comunidades maiores: Communities (5953 total, 1987 thin omitted) (3947), TalkXSuppression.tsx (1471), react (1419), lucide-react (1403), cn (1138), tooltip.tsx (805), ref_node_fs (695), validation.ts (636), DashboardView.tsx (562), ref_https (492), @testing-library/react (369), framer-motion (360)
 - símbolos mais chamados: cn() (src/lib/utils.ts), useAuth() (src/hooks/auth/useAuth.tsx), jsonResponse() (supabase/functions/_shared/validation.ts), errorResponse() (supabase/functions/_shared/validation.ts), handleCors() (supabase/functions/_shared/validation.ts), fail() (scripts/e2e-isolated/network-proof-policy.mjs), Logger (supabase/functions/_shared/validation.ts), requireEnv() (supabase/functions/_shared/validation.ts), fmtInt() (src/components/talkx/kit/format.ts), fromTable() (src/lib/supabaseHelpers.ts), useUserRole() (src/hooks/system/useUserRole.ts), validationErrorResponse() (supabase/functions/_shared/schemas.ts)
 - consulta local: `graphify query "<pergunta>"`, `graphify path "<A>" "<B>"`, `graphify explain "<X>"`
@@ -413,7 +413,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - PENDENCIAS.md (11)
 - docs/DB-INVENTORY.md (11)
 - .github/workflows/db-guard.yml (10)
-- .github/workflows/ci.yml (9)
+- .github/workflows/ci.yml (8)
 - docs/agentes/github-ci.md (8)
 - supabase/functions/evolution-api/index.ts (8)
 - docs/ci/README.md (7)
@@ -525,6 +525,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - CHANGELOG topo: [Unreleased]
 
 ## Últimos commits
+- 2026-11-23 `c1bfe6e2` chore(lint): baseline 540 issues pre-existentes - desbloqueia pre-push/pre-commit (#3333)
 - 2026-11-23 `54826dbf` fix(test): ampliar janela de serie de 15 para 30 min - corrige flake de meia-noite (#3332)
 - 2026-11-23 `7fe8d245` fix: suportar executáveis .exe/.cmd/.bat no Windows em resolverExecutavel (#3331)
 - 2026-11-23 `798617f6` fix(test): mock useTalkxAi no layout test do TalkXCampaignWizard (#3330)
@@ -539,7 +540,6 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - 2026-11-22 `4454ed4b` docs(integracoes): plano do gateway de mensagens WhatsApp + SMS (SMSDev) (#3318)
 - 2026-11-22 `f1080b15` feat(assistente): porta unica liga 6 edges mortas com contexto compartilhado (#3317)
 - 2026-11-22 `9f6df25b` feat: fase 2 do assistente pessoal (memoria e agenda do contato) (#3316)
-- 2026-11-22 `b35911db` feat(assistente): Fase 1 — identidade do assistente pessoal (perfil + motor RADAR) (#3310)
 
 ## Arquivos deste diretório
 - `docs/contexto/codigo/rotas.json`

@@ -1,9 +1,9 @@
 {
  "meta": {
-  "sha": "54826dbf2d45ecb8363d32f565efcbd7256601d3",
+  "sha": "c1bfe6e263c536c1145650301167aad0b339e3d5",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-23 14:25 UTC",
+  "generated_at": "2026-11-23 15:23 UTC",
   "files_total": 15618,
   "code_files": 8920,
   "code_lines": 1415127
@@ -481845,10 +481845,19 @@
   }
  },
  "git": {
-  "sha": "54826dbf2d45ecb8363d32f565efcbd7256601d3",
+  "sha": "c1bfe6e263c536c1145650301167aad0b339e3d5",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "c1bfe6e2",
+    "date": "2026-11-23",
+    "author": "adm01-debug",
+    "subject": "chore(lint): baseline 540 issues pre-existentes - desbloqueia pre-push/pre-commit (#3333)",
+    "files": [
+     "scripts/ci/eslint-baseline.json"
+    ]
+   },
    {
     "sha": "54826dbf",
     "date": "2026-11-23",
@@ -482265,15 +482274,6 @@
     "files": [
      ".gitattributes"
     ]
-   },
-   {
-    "sha": "f4a2a776",
-    "date": "2026-11-21",
-    "author": "adm01-debug",
-    "subject": "fix(crm-integration): restaura CRON_SECRET apos testes que o setam (#3296)",
-    "files": [
-     "supabase/functions/crm-integration/index.test.ts"
-    ]
    }
   ],
   "hot_files": [
@@ -482342,6 +482342,10 @@
     2
    ],
    [
+    "scripts/ci/eslint-baseline.json",
+    1
+   ],
+   [
     "scripts/db-audit/talkx-monitor-panel.test.sh",
     1
    ],
@@ -482351,10 +482355,6 @@
    ],
    [
     "src/components/talkx/__tests__/TalkXCampaignWizard.layout.test.tsx",
-    1
-   ],
-   [
-    "FEATURE_REGISTRY.md",
     1
    ]
   ]

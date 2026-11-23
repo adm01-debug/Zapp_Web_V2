@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "54826dbf2d45ecb8363d32f565efcbd7256601d3",
+  "commit": "c1bfe6e263c536c1145650301167aad0b339e3d5",
   "branch": "main",
-  "data_commit": "2026-11-23T13:59:04Z",
+  "data_commit": "2026-11-23T14:37:56Z",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "c1bfe6e2",
+    "data": "2026-11-23",
+    "assunto": "chore(lint): baseline 540 issues pre-existentes - desbloqueia pre-push/pre-commit (#3333)"
+   },
    {
     "sha": "54826dbf",
     "data": "2026-11-23",
@@ -126,14 +131,9 @@
     "sha": "9f3e9175",
     "data": "2026-11-21",
     "assunto": "fix(e2e): reconhece rate limit nao autenticado do Docker Hub no retry de pull (#3302)"
-   },
-   {
-    "sha": "79c7a8bd",
-    "data": "2026-11-21",
-    "assunto": "fix(e2e): inclui migration do cron de relatórios agendados no guard vault (#3301)"
    }
   ],
-  "arquivos_mudados_7d": 5389,
+  "arquivos_mudados_7d": 5384,
   "pastas_mais_mudadas_30d": [
    {
     "pasta": "docs/contexto/supabase",
@@ -239,7 +239,7 @@
    },
    {
     "arquivo": ".github/workflows/ci.yml",
-    "mudancas": 9
+    "mudancas": 8
    },
    {
     "arquivo": "docs/agentes/github-ci.md",
