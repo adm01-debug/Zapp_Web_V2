@@ -5629,7 +5629,7 @@
         "f:set_department_whatsapp_config(p_department_id uuid, p_whatsapp_mode text, p_api_key text, p_instance_id text)": "fb92fcd6ef96e5bc7ef620cb1a39edd6",
         "f:save_talkx_campaign_draft(p_campaign_id uuid, p_expected_revision bigint, p_creation_key uuid, p_payload jsonb)": "af8bf074c912434bbbc2b34b257821c7",
         "f:talkx_monitor_panel(p_campaign_id uuid, p_window_minutes integer, p_bucket text, p_day date, p_segment_id uuid)": "d0e70f8ebb035b3192299ede34ca9ce0",
-        "f:ai_usage_cost_summary(p_since timestamp with time zone, p_until timestamp with time zone, p_top_functions integer)": "ba914daa9fda8064c0737a28f7cf9a6e",
+        "f:ai_usage_cost_summary(p_since timestamp with time zone, p_until timestamp with time zone, p_top_functions integer)": "7658395c131f42320388adfd6ff42d2b",
         "f:persist_multiplix_recipient_message_snapshot(p_recipient_id uuid, p_claim_token uuid, p_personalized_message text)": "1c3b2067de54d0e553388fa782bf57cc",
         "f:save_talkx_template_variants(p_template_id uuid, p_expected_updated_at timestamp with time zone, p_variants jsonb)": "944983b1e44997703390a1ee27f7dfe8",
         "f:complete_crm_sync_outbox(p_id uuid, p_lease_token uuid, p_interaction_id text, p_contact_id text, p_company_id text)": "d064dcdadf5fa67c7394c99876611c34",
@@ -5911,7 +5911,7 @@
         "relation:agent_achievements.agent_achievements_pkey": "320872fb04c41e267f0bee9cce9b650e",
         "relation:agent_presence.agent_presence_status_check": "5bbc7372d04bbd4e99d6e918da7ddd09",
         "relation:agent_presence.agent_presence_user_id_fkey": "4af2b7d0505479545440d0e702eeb00e",
-        "relation:ai_model_prices.ai_model_prices_unit_check": "36cd0d7014539ab81ca6177d31b3e44a",
+        "relation:ai_model_prices.ai_model_prices_unit_check": "332d18d4f8bc97c3ea51aebb2211c6af",
         "relation:assistant_profiles.assistant_profiles_pkey": "72dcf172891ca3b9442ebbcebba356d9",
         "relation:chatbot_executions.chatbot_executions_pkey": "320872fb04c41e267f0bee9cce9b650e",
         "relation:contact_notes.contact_notes_author_id_fkey": "a95ad0e46e31172dfc514dec0f87f088",
@@ -6544,7 +6544,7 @@
         "e:public.multiplix_dispatch_status|postgres|USAGE|grantor=postgres": "68934a3e9455fa72420237eb05902327",
         "e:public.multiplix_recipient_status|postgres|USAGE|grantor=postgres": "68934a3e9455fa72420237eb05902327"
     },
-    "generated_at": "2026-11-22T12:06:08Z",
+    "generated_at": "2026-11-23T05:52:44Z",
     "column_grants": {
         "r:public.departments.id|authenticated|INSERT|grantor=postgres": "68934a3e9455fa72420237eb05902327",
         "r:public.departments.id|authenticated|SELECT|grantor=postgres": "68934a3e9455fa72420237eb05902327",

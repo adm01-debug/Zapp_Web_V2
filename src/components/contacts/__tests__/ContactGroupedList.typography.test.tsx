@@ -21,10 +21,9 @@ function contato(over: Partial<Contact> & Pick<Contact, 'id' | 'name'>): Contact
 
 /**
  * Hierarquia tipográfica: o título do GRUPO (nome da empresa) precisa se
- * distinguir do nome de CADA contato que ele organiza. Hoje o cabeçalho usa o
- * MESMO `text-sm font-semibold` do item (ContactListItem.tsx:68) e não há
- * destaque. O padrão do módulo para cabeçalho de seção é `text-xs` + caixa alta
- * com `tracking-wider` (ContactDetailPanel.tsx:344/365).
+ * distinguir do nome de CADA contato que ele organiza. O padrão do módulo para
+ * cabeçalho de seção é `text-xs` + caixa alta com `tracking-wider`; o nome do
+ * contato é o título do card (20px no design `.zc-list .zc-contact-name`).
  *
  * jsdom não calcula estilo (nem `getComputedStyle` traz o CSS do app), então a
  * prova trava o tratamento TIPOGRÁFICO aplicado pelo componente REAL: é a
@@ -48,7 +47,7 @@ describe('ContactGroupedList — cabeçalho de grupo distinto do item', () => {
       />,
     );
 
-    // O cabeçalho de seção é o botão do grupo; o item do contato fica dentro dele.
+    // O cabeçalho de seção é o botão do grupo; o item do contato fica logo abaixo.
     const cabecalho = screen.getByRole('button', { name: /Acme/ });
     const tituloGrupo = within(cabecalho).getByText('Acme');
     const nomeContato = screen.getByText('Ana Souza');
@@ -59,8 +58,8 @@ describe('ContactGroupedList — cabeçalho de grupo distinto do item', () => {
     expect(tituloGrupo.className).toContain('uppercase');
     expect(tituloGrupo.className).toContain('tracking-wider');
 
-    // Nome do contato permanece no tamanho de corpo (text-sm).
-    expect(nomeContato.className).toContain('text-sm');
+    // Nome do contato é o título do card (20px no design), nunca o tamanho de seção.
+    expect(nomeContato.className).toContain('text-[20px]');
     expect(nomeContato.className).not.toContain('text-xs');
 
     // Não compartilham o mesmo tratamento: prova que o cabeçalho se distingue do item.

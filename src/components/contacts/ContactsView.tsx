@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 import { useExternalContact360Batch } from '@/hooks/crm/useExternalContact360Batch';
 import { useCRMAdminAccess } from '@/hooks/crm/useCRMAdminAccess';
 import { ScrollToTopButton } from '@/components/ui/scroll-to-top';
@@ -7,6 +7,7 @@ import { useContactsV2Flags, contactsV2AreasLigadas } from '@/hooks/contacts/use
 import { useCRMIntegrationEnabled } from '@/hooks/system/useCRMIntegrationEnabled';
 import { useUserRole } from '@/hooks/system/useUserRole';
 import { BulkActionsBar } from '@/components/contacts/BulkActionsBar';
+import { ContactsTitleBar } from './ContactsTitleBar';
 import { ContactStatsCards } from './ContactStatsCards';
 import { ContactTypeTabs } from './ContactTypeTabs';
 import { ContactMergeDialog } from './ContactMergeDialog';
@@ -16,11 +17,33 @@ import { ContactDialogs } from './ContactDialogs';
 import { ContactToolbar } from './ContactToolbar';
 import { ContactDetailPanel } from './ContactDetailPanel';
 import { ContactContentArea } from './ContactContentArea';
+import { ContactExploreRail } from './ContactExploreRail';
 import { ContactResultsSummary } from './ContactResultsSummary';
 import { ContactCRMDialog } from './ContactCRMDialog';
 import { useContactsViewState } from './useContactsViewState';
+import { resolvePageSize } from '@/hooks/crm/useContactsSearch';
 import { canChangeSelectedContactsType, canDeleteSelectedContacts, canMergeContacts } from './contactPermissions';
 import { useResolvedMergeContacts } from './resolveMergeContacts';
+
+/** Rótulo da visão corrente no resumo de resultados (design: "Cards de contatos", "Lista", …). */
+const VIEW_CAPTION: Record<string, string> = {
+  grid: 'Cards de contatos',
+  list: 'Lista de contatos',
+  table: 'Tabela de contatos',
+  kanban: 'Pipeline',
+  map: 'Mapa',
+  analytics: 'Analytics',
+};
+
+/** Rótulo do período no chip do filtro (mesmos valores de `ContactAdvancedFilters`). */
+const DATE_RANGE_LABEL: Record<string, string> = {
+  today: 'Hoje',
+  week: 'Última semana',
+  month: 'Último mês',
+  quarter: 'Últimos 3 meses',
+  year: 'Último ano',
+};
+
 export function ContactsView() {
   const crmIntegrationEnabled = useCRMIntegrationEnabled();
 
@@ -59,7 +82,7 @@ export function ContactsView() {
     filterJobTitle, setFilterJobTitle, filterTag, setFilterTag,
     filterDateRange, setFilterDateRange, sortBy, setSortBy,
     showLegacy, setShowLegacy,
-    activeFiltersCount, clearFilters, page, setPage, pageSize,
+    activeFiltersCount, clearFilters, page, setPage, pageSize, setPageSize,
     loadMore, loadPrevious, refetch,
     profile, scrollContainerRef,
     isSubmitting, deleteTarget, setDeleteTarget,
@@ -76,11 +99,47 @@ export function ContactsView() {
     invalidateContactAggregates,
   } = crud;
 
+  /**
+   * ZD-043 — tamanho da página por visão/colunas, como no design: grade mostra
+   * uma linha, tabela 8, lista 4 e as visões alternativas não paginam. A tela
+   * avisa o hook sempre que a visão ou a contagem de colunas muda.
+   */
+  useEffect(() => {
+    setPageSize?.(resolvePageSize(viewMode, gridColumns));
+  }, [viewMode, gridColumns, setPageSize]);
+
   const { isSupervisor } = useUserRole();
   const crmContacts = useMemo(() => filteredContacts.map(c => ({ id: c.id, phone: c.phone })), [filteredContacts]);
   const { lookup } = useExternalContact360Batch(crmContacts);
   const getCRMData = (phone: string) => lookup(phone) ?? null;
   const layoutScrollRef = useLayoutScroll();
+
+  /**
+   * ZD-044 — chips dos filtros ativos, cada um removível no seu próprio
+   * controle. A lista é derivada do MESMO estado que alimenta a busca, então
+   * remover um chip limpa exatamente o filtro que ele representa.
+   */
+  const filterChips = useMemo(() => {
+    const chips: { key: string; label: string; onRemove: () => void }[] = [];
+    if (activeTab !== 'all') {
+      chips.push({ key: 'tipo', label: `Tipo: ${activeTab}`, onRemove: () => setActiveTab('all') });
+    }
+    if (filterCompany) {
+      chips.push({ key: 'empresa', label: `Empresa: ${filterCompany}`, onRemove: () => setFilterCompany('') });
+    }
+    if (filterJobTitle) {
+      chips.push({ key: 'cargo', label: `Cargo: ${filterJobTitle}`, onRemove: () => setFilterJobTitle('') });
+    }
+    if (filterTag) {
+      chips.push({ key: 'etiqueta', label: `Etiqueta: ${filterTag}`, onRemove: () => setFilterTag('') });
+    }
+    if (filterDateRange && filterDateRange !== 'all') {
+      const rotulo = DATE_RANGE_LABEL[filterDateRange] ?? filterDateRange;
+      chips.push({ key: 'periodo', label: `Período: ${rotulo}`, onRemove: () => setFilterDateRange('all') });
+    }
+    return chips;
+  }, [activeTab, filterCompany, filterJobTitle, filterTag, filterDateRange,
+      setActiveTab, setFilterCompany, setFilterJobTitle, setFilterTag, setFilterDateRange]);
 
   /**
    * `can_delete` chega do banco por contato (RPC `can_delete_contacts`). A seleção
@@ -127,14 +186,22 @@ export function ContactsView() {
 
   return (
     <div className="relative bg-background w-full min-w-0" data-contacts-v2={areasV2Ligadas.join(' ')}>
+      {/* Título acessível: único h1 da tela, fora do fluxo visual. O título do
+          redesign (ContactsTitleBar) é aria-hidden para não duplicar o anúncio. */}
+      <h1 className="sr-only">Contatos</h1>
       <ScrollToTopButton
         scrollRef={layoutScrollRef}
         className="bottom-[calc(228px+env(safe-area-inset-bottom,0px))] md:bottom-[168px] md:right-8"
       />
 
-      {/* Identificação semântica: o cabeçalho visual foi removido (contrato do
-          plano de 50 etapas) e o documento continua anunciando Contatos. */}
-      <h1 className="sr-only">Contatos</h1>
+      {/* ZD-012/ZD-016 - barra de título do redesign: tile, título, subtítulo, selo
+          de origem e ações. O título visual é aria-hidden; o `h1` "Contatos"
+          continua único e `sr-only` (contrato de acessibilidade do módulo). */}
+      <ContactsTitleBar
+        onAddContact={() => setIsAddDialogOpen(true)}
+        onOpenCRM={() => setIsCRMSearchOpen(true)}
+        crmIntegrationEnabled={crmIntegrationEnabled}
+      />
 
       {/* ContactDialogs vive fora de qualquer condição de lista vazia/carregamento:
           uma única instância preserva os quatro diálogos e o gatilho verde flutuante. */}
@@ -206,6 +273,13 @@ export function ContactsView() {
       </div>
 
       <div className="space-y-3 mt-3 pb-[calc(160px+env(safe-area-inset-bottom,0px))]">
+      {/* ZD-099 — anúncio do resultado para leitores de tela; o resumo visual
+          já existe em ContactResultsSummary, mas não é anunciado. */}
+      <p className="sr-only" role="status" aria-live="polite" data-contacts-live="">
+        {loading
+          ? 'Carregando contatos'
+          : `${filteredContacts.length} ${filteredContacts.length === 1 ? 'contato' : 'contatos'} na tela, de ${totalCount} no total`}
+      </p>
       {!loading && (
         <ContactResultsSummary
           totalCount={totalCount}
@@ -221,6 +295,11 @@ export function ContactsView() {
           loadPrevious={loadPrevious}
           hasMore={hasMore}
           loading={loading}
+          viewCaption={VIEW_CAPTION[viewMode] ?? 'Cards de contatos'}
+          activeFilterChips={filterChips}
+          /* ZD-086/ZD-087 — comparar e limpar a seleção sem sair da tela. */
+          onCompare={() => setIsCompareOpen(true)}
+          onClearSelection={() => setSelectedIds([])}
         />
       )}
 
@@ -245,6 +324,16 @@ export function ContactsView() {
         getCRMData={getCRMData}
         totalCount={totalCount}
       />
+
+      {/* ZD-081..084 — carrossel "Explore seus contatos": navegação rápida
+          pelos contatos do recorte atual, abrindo a ficha ao clicar. */}
+      <ContactExploreRail
+        contatos={filteredContacts}
+        onAbrirContato={(id) => {
+          const alvo = filteredContacts.find((item) => item.id === id);
+          if (alvo) setDetailContact(alvo);
+        }}
+      />
       </div>
 
       {detailContact && (
@@ -253,6 +342,17 @@ export function ContactsView() {
           onClose={() => setDetailContact(null)}
           onOpenChat={openContactChat}
           onEdit={openEditDialog}
+          /* ZD-078 — navegação anterior/próximo dentro do recorte filtrado que
+             o operador está vendo (nunca na base inteira). */
+          resultadoAtual={filteredContacts}
+          onNavigate={(id) => {
+            const alvo = filteredContacts.find((item) => item.id === id);
+            if (alvo) setDetailContact(alvo);
+          }}
+          /* ZD-075 — a ficha só afirma "Origem dos dados: Singu CRM" quando a
+             integração está realmente ligada. */
+          singuOrigem={crmIntegrationEnabled}
+          onBuscarCRM={crmIntegrationEnabled ? () => setIsCRMSearchOpen(true) : undefined}
         />
       )}
 

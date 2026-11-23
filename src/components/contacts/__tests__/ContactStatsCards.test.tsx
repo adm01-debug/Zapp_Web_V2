@@ -111,12 +111,12 @@ describe('ContactStatsCards', () => {
     expect(empresasCard.textContent).not.toContain('sem alteração');
   });
 
-  it('trava a geometria Navy do KPI (card 108px, tile 60px, valor text-kpi-value)', () => {
+  it('trava a geometria do redesign no KPI (card 86px, placa 42×43px, valor Outfit 29px)', () => {
     mockUseContactsKpi.mockReturnValue({ data: baseKpi(), isLoading: false });
     render(<ContactStatsCards totalAll={1516} fornecedoresAll={7} />);
-    for (const card of screen.getAllByTestId('kpi-card')) expect(card).toHaveClass('h-[108px]');
-    for (const tile of screen.getAllByTestId('kpi-tile')) expect(tile).toHaveClass('w-[60px]', 'h-[60px]');
-    for (const value of screen.getAllByTestId('kpi-value')) expect(value).toHaveClass('text-kpi-value');
+    for (const card of screen.getAllByTestId('kpi-card')) expect(card).toHaveClass('min-h-[86px]', 'rounded-[11px]');
+    for (const tile of screen.getAllByTestId('kpi-tile')) expect(tile).toHaveClass('w-[42px]', 'h-[43px]', 'rounded-[11px]');
+    for (const value of screen.getAllByTestId('kpi-value')) expect(value).toHaveClass('font-display', 'text-[29px]');
   });
 
   it('repassa o toggle "Mostrar legados" para o KPI (mesmo critério da lista e das abas)', () => {

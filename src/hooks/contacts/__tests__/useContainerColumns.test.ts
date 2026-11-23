@@ -127,10 +127,12 @@ describe('resolveContainerColumns — regra do design nos 4 limites', () => {
 });
 
 describe('clampColumnsPreference', () => {
-  it('mantém 2..4 e traz valores fora da faixa para o limite', () => {
+  it('mantém 2..6 e traz valores fora da faixa para o limite', () => {
     expect(clampColumnsPreference(3)).toBe(3);
     expect(clampColumnsPreference(1)).toBe(1);
-    expect(clampColumnsPreference(9)).toBe(4);
+    expect(clampColumnsPreference(5)).toBe(5);
+    expect(clampColumnsPreference(6)).toBe(6);
+    expect(clampColumnsPreference(9)).toBe(6);
     expect(clampColumnsPreference(Number.NaN)).toBe(2);
   });
 });

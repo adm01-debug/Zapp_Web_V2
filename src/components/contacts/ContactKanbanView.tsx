@@ -1,22 +1,20 @@
 import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   MessageSquare,
   GripVertical,
   KanbanSquare,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { getAvatarColor, getInitials } from '@/lib/avatar-colors';
 import { supabase } from '@/integrations/supabase/client';
 import { useQueryClient } from '@tanstack/react-query';
 import { invalidateContactsAggregates } from '@/hooks/crm/contactsAggregates';
 import { toast } from 'sonner';
 import { ORDERED_CONTACT_TYPE_CONFIGS } from './contactTypeOrder';
+import { ContactPortrait } from './ContactPortrait';
+import type { Contact } from './types';
 
 interface KanbanContact {
   id: string;
@@ -163,132 +161,112 @@ export function ContactKanbanView({ contacts, onContactClick }: ContactKanbanVie
 
   const isEmpty = localContacts.length === 0;
 
+  // ZD-090 — mesma casca das outras visões extras do design: `.zc-alt-view`
+  // (cartão de 22px com título Outfit 22px e legenda) e `.zc-pipeline` em três
+  // colunas que caem para duas e uma nos breakpoints. O arrastar-e-soltar e o
+  // ScrollArea de cada lane continuam os mesmos.
   return (
     <DragDropContext onDragEnd={handleDragEnd}>
-      <div className="space-y-3">
+      <div
+        data-testid="contact-kanban-view"
+        className="min-h-[430px] rounded-[12px] border border-[hsl(var(--contacts-line))] bg-[hsl(var(--contacts-panel))] p-[22px] max-[659px]:p-4"
+      >
         <header className="flex flex-wrap items-center gap-x-2 gap-y-1">
-          <KanbanSquare className="w-5 h-5 text-primary" aria-hidden="true" />
-          <h2 className="font-display text-lg font-bold text-foreground">Pipeline</h2>
-          <p className="text-caption">Contatos agrupados por tipo; arraste o card para mudar a etapa comercial.</p>
+          <KanbanSquare className="h-[18px] w-[18px] text-[hsl(var(--contacts-blue))]" aria-hidden="true" />
+          <h3 className="m-0 font-display text-[22px] font-medium leading-[1.2] tracking-[-.3px] text-[hsl(var(--contacts-ink))] max-[899px]:text-[19px]">
+            Pipeline
+          </h3>
         </header>
+        <p className="mb-[23px] mt-[7px] text-xs text-[hsl(var(--contacts-quiet))]">
+          Contatos agrupados por tipo; arraste o card para mudar a etapa comercial.
+        </p>
 
         {isEmpty ? (
           <div
             data-testid="contact-kanban-empty"
-            className="flex flex-col items-center justify-center gap-1 rounded-xl border border-dashed border-border/60 bg-card/40 py-12 px-6 text-center"
+            className="flex min-h-[300px] flex-col items-center justify-center gap-[10px] rounded-[12px] border border-[hsl(var(--contacts-line))] bg-[hsl(var(--contacts-raised))] px-5 py-[35px] text-center text-xs text-[hsl(var(--contacts-muted))]"
           >
-            <KanbanSquare className="w-6 h-6 text-muted-foreground" aria-hidden="true" />
-            <p className="text-sm font-semibold text-foreground">Sem etapa comercial</p>
-            <p className="text-caption max-w-xs">Nenhum contato para distribuir nas etapas nesta página.</p>
+            <KanbanSquare className="h-6 w-6 text-[hsl(var(--contacts-quiet))]" aria-hidden="true" />
+            <p className="m-0 font-display text-base font-medium text-[hsl(var(--contacts-ink))]">
+              Sem etapa comercial
+            </p>
+            <p className="m-0 max-w-xs text-xs">Nenhum contato para distribuir nas etapas nesta página.</p>
           </div>
         ) : (
-        <div className="flex gap-4 overflow-x-auto pb-4 min-h-[500px]">
-        {columns.map((column, colIndex) => {
-          const Icon = column.icon;
-          return (
-            <motion.div
-              key={column.type}
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: colIndex * 0.08 }}
-              className="flex-shrink-0 w-[280px]"
-            >
-              <Card className="border-border/40 h-full">
-                <CardHeader className="pb-3 pt-4 px-4">
-                  <CardTitle className="text-sm font-semibold flex items-center justify-between">
-                    <div className="flex items-center gap-2">
+          <div className="grid grid-cols-3 items-start gap-[13px] max-[899px]:grid-cols-2 max-[659px]:grid-cols-1">
+            {columns.map((column) => {
+              const Icon = column.icon;
+              return (
+                <section
+                  key={column.type}
+                  className="rounded-[10px] border border-[hsl(var(--contacts-line))] bg-[hsl(var(--contacts-raised))] p-3"
+                >
+                  <h4 className="m-0 mb-[14px] flex items-center gap-[7px] text-xs font-medium text-[hsl(var(--contacts-ink))]">
+                    <Icon className="h-[13px] w-[13px]" style={{ color: column.color }} aria-hidden="true" />
+                    <span className="min-w-0 truncate">{column.label}</span>
+                    <span className="ml-auto shrink-0 tabular-nums text-2xs text-[hsl(var(--contacts-quiet))]">
+                      · {column.contacts.length}
+                    </span>
+                  </h4>
+                  <Droppable droppableId={column.type}>
+                    {(provided, snapshot) => (
                       <div
-                        className="w-7 h-7 rounded-lg flex items-center justify-center"
-                        style={{ backgroundColor: `color-mix(in srgb, ${column.color} 12%, transparent)` }}
+                        ref={provided.innerRef}
+                        {...provided.droppableProps}
+                        className={cn(
+                          'min-h-[100px] rounded-[8px] transition-colors',
+                          snapshot.isDraggingOver && 'bg-[hsl(var(--contacts-blue)/0.08)]',
+                        )}
                       >
-                        <Icon className="w-3.5 h-3.5" style={{ color: column.color }} />
-                      </div>
-                      {column.label}
-                    </div>
-                    <Badge variant="secondary" className="text-3xs h-5">
-                      {column.contacts.length}
-                    </Badge>
-                  </CardTitle>
-                  <div className="h-0.5 rounded-full mt-2" style={{ backgroundColor: column.color, opacity: 0.4 }} />
-                </CardHeader>
-                <Droppable droppableId={column.type}>
-                  {(provided, snapshot) => (
-                    <CardContent
-                      ref={provided.innerRef}
-                      {...provided.droppableProps}
-                      className={cn(
-                        "px-3 pb-3 min-h-[100px] transition-colors duration-200 rounded-b-lg",
-                        snapshot.isDraggingOver && "bg-primary/5"
-                      )}
-                    >
-                      <ScrollArea className="max-h-[60vh]">
-                        <div className="space-y-2">
-                          {column.contacts.map((contact, i) => {
-                            const colors = getAvatarColor(contact.name);
-                            return (
+                        <ScrollArea className="max-h-[60vh]">
+                          <div className="space-y-2">
+                            {column.contacts.map((contact, i) => (
                               <Draggable key={contact.id} draggableId={contact.id} index={i}>
                                 {(dragProvided, dragSnapshot) => (
                                   <div
                                     ref={dragProvided.innerRef}
                                     {...dragProvided.draggableProps}
                                     className={cn(
-                                      "w-full text-left p-3 rounded-lg border border-border/30",
-                                      "bg-card hover:bg-muted/40 hover:border-primary/20",
-                                      "transition-all duration-150 cursor-pointer group",
-                                      dragSnapshot.isDragging && "shadow-lg ring-2 ring-primary/30 rotate-1"
+                                      'group mb-2 flex w-full cursor-pointer items-center gap-[10px] rounded-[8px] border text-left text-xs',
+                                      'border-[hsl(var(--contacts-line))] bg-[hsl(var(--contacts-panel))] p-[9px]',
+                                      'text-[hsl(var(--contacts-ink))] transition-colors hover:border-[hsl(221_83%_53%/0.45)]',
+                                      dragSnapshot.isDragging && 'rotate-1 shadow-lg',
                                     )}
                                     onClick={() => !dragSnapshot.isDragging && onContactClick(contact.id)}
                                   >
-                                    <div className="flex items-center gap-2.5">
-                                      <div
-                                        {...dragProvided.dragHandleProps}
-                                        className="opacity-0 group-hover:opacity-50 hover:!opacity-100 transition-opacity cursor-grab active:cursor-grabbing"
-                                      >
-                                        <GripVertical className="w-3.5 h-3.5 text-muted-foreground" />
-                                      </div>
-                                      <Avatar className="w-8 h-8">
-                                        <AvatarImage src={contact.avatar_url || undefined} alt={contact.name || 'Avatar'} />
-                                        <AvatarFallback className={cn(colors.bg, colors.text, 'text-3xs font-bold')}>
-                                          {getInitials(contact.name)}
-                                        </AvatarFallback>
-                                      </Avatar>
-                                      <div className="min-w-0 flex-1">
-                                        <p className="text-xs font-semibold truncate text-foreground">
-                                          {contact.name} {contact.surname || ''}
-                                        </p>
-                                        {contact.company && (
-                                          <p className="text-caption truncate">
-                                            {contact.company}
-                                          </p>
-                                        )}
-                                      </div>
-                                      <MessageSquare className="w-3.5 h-3.5 text-muted-foreground/40 opacity-0 group-hover:opacity-100 transition-opacity" />
+                                    <div
+                                      {...dragProvided.dragHandleProps}
+                                      className="shrink-0 cursor-grab text-[hsl(var(--contacts-quiet))] opacity-0 transition-opacity group-hover:opacity-70 active:cursor-grabbing"
+                                    >
+                                      <GripVertical className="h-[13px] w-[13px]" aria-hidden="true" />
                                     </div>
-                                    {contact.tags && contact.tags.length > 0 && (
-                                      <div className="flex flex-wrap gap-1 mt-2 ml-6">
-                                        {contact.tags.slice(0, 2).map(tag => (
-                                          <Badge key={tag} variant="secondary" className="text-3xs h-4 px-1">
-                                            {tag}
-                                          </Badge>
-                                        ))}
-                                      </div>
-                                    )}
+                                    <ContactPortrait contact={contact as unknown as Contact} className="h-[41px] w-[35px] shrink-0 rounded-[5px]" />
+                                    <span className="grid min-w-0 flex-1 gap-[2px]">
+                                      <span className="truncate font-medium">
+                                        {contact.name} {contact.surname || ''}
+                                      </span>
+                                      <small className="truncate text-2xs text-[hsl(var(--contacts-muted))]">
+                                        {contact.company || 'Empresa não informada'}
+                                      </small>
+                                    </span>
+                                    <MessageSquare
+                                      className="h-[13px] w-[13px] shrink-0 text-[hsl(var(--contacts-quiet))] opacity-0 transition-opacity group-hover:opacity-100"
+                                      aria-hidden="true"
+                                    />
                                   </div>
                                 )}
                               </Draggable>
-                            );
-                          })}
-                          {provided.placeholder}
-                        </div>
-                      </ScrollArea>
-                    </CardContent>
-                  )}
-                </Droppable>
-              </Card>
-            </motion.div>
-          );
-        })}
-        </div>
+                            ))}
+                            {provided.placeholder}
+                          </div>
+                        </ScrollArea>
+                      </div>
+                    )}
+                  </Droppable>
+                </section>
+              );
+            })}
+          </div>
         )}
       </div>
     </DragDropContext>

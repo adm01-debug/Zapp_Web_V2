@@ -76,144 +76,147 @@ export function ContactAnalyticsDashboard({ contacts, className }: ContactAnalyt
 
   const maxDaily = Math.max(...analytics.dailyGrowth.map(d => d.count), 1);
 
+  // ZD-093 — casca `.zc-alt-view` e barras `.zc-analytics` do design: leitura
+  // horizontal (rótulo · trilho · contagem) com no máximo 680px de largura.
+  // Os contratos seguem: `contact-analytics-header` com "N nesta página",
+  // `<p role="note">` avisando o escopo da página e `contact-analytics-empty`.
   return (
-    <div className={cn("space-y-4", className)}>
-      <div data-testid="contact-analytics-header" className="flex items-center gap-2 mb-1">
-        <BarChart3 className="w-5 h-5 text-primary" />
-        <h2 className="font-display text-lg font-bold text-foreground">Analytics de Contatos</h2>
-        <Badge variant="secondary" className="text-xs">{contacts.length} nesta página</Badge>
+    <div
+      className={cn(
+        'min-h-[430px] rounded-[12px] border border-[hsl(var(--contacts-line))] bg-[hsl(var(--contacts-panel))] p-[22px] max-[659px]:p-4',
+        className,
+      )}
+    >
+      <div data-testid="contact-analytics-header" className="flex flex-wrap items-center gap-2">
+        <BarChart3 className="h-[18px] w-[18px] text-[hsl(var(--contacts-blue))]" aria-hidden="true" />
+        <h3 className="m-0 font-display text-[22px] font-medium leading-[1.2] tracking-[-.3px] text-[hsl(var(--contacts-ink))] max-[899px]:text-[19px]">
+          Analytics de Contatos
+        </h3>
+        <Badge variant="secondary" className="ml-auto text-2xs">{contacts.length} nesta página</Badge>
       </div>
-      <p role="note" className="text-2xs text-muted-foreground mb-2">
+      <p role="note" className="mb-[23px] mt-[7px] text-xs text-[hsl(var(--contacts-quiet))]">
         Contagem e agregados (tipos, empresas, tags e novos) consideram somente os contatos da página atual.
       </p>
 
       {contacts.length === 0 ? (
         <div
           data-testid="contact-analytics-empty"
-          className="flex flex-col items-center justify-center gap-1 rounded-xl border border-dashed border-border/60 bg-card/40 py-12 px-6 text-center"
+          className="flex min-h-[445px] flex-col items-center justify-center gap-[10px] rounded-[12px] border border-[hsl(var(--contacts-soft-line))] bg-[hsl(var(--contacts-raised))] px-5 py-[35px] text-center text-xs text-[hsl(var(--contacts-muted))] max-[559px]:min-h-[500px]"
         >
-          <BarChart3 className="w-6 h-6 text-muted-foreground" aria-hidden="true" />
-          <p className="text-sm font-semibold text-foreground">Sem dados</p>
-          <p className="text-caption max-w-xs">Nenhum contato nesta página para resumir em gráficos.</p>
+          <BarChart3 className="h-8 w-8 text-[hsl(var(--contacts-quiet))]" aria-hidden="true" />
+          <p className="m-0 font-display text-[23px] font-medium text-[hsl(var(--contacts-ink))]">Sem dados</p>
+          <p className="m-0 max-w-[480px] text-xs">Nenhum contato nesta página para resumir em gráficos.</p>
         </div>
       ) : (
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {/* Type Distribution */}
-        <Card className="border-border/40">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm flex items-center gap-2">
-              <Users className="w-4 h-4 text-primary" />
-              Distribuição por Tipo
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-2.5">
-            {analytics.typeDistribution.map((item, i) => (
+      <>
+      <div className="mt-6 grid max-w-[680px] gap-4" aria-labelledby="analytics-tipos">
+        <h4
+          id="analytics-tipos"
+          className="m-0 flex items-center gap-[7px] text-xs font-medium text-[hsl(var(--contacts-ink))]"
+        >
+          <Users className="h-[13px] w-[13px] text-[hsl(var(--contacts-blue))]" aria-hidden="true" />
+          Distribuição por Tipo
+        </h4>
+        {analytics.typeDistribution.map((item, i) => (
+          <motion.div
+            key={item.type}
+            initial={{ opacity: 0, x: -8 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: i * 0.04 }}
+            className="grid grid-cols-[160px_1fr_35px] items-center gap-[15px] text-xs text-[hsl(var(--contacts-muted))] max-[559px]:grid-cols-[100px_1fr_24px] max-[559px]:gap-[10px] max-[559px]:text-[11px]"
+          >
+            <span className="flex min-w-0 items-center gap-[6px]">
+              <span aria-hidden="true">{item.config.iconNode}</span>
+              <span className="truncate text-[hsl(var(--contacts-ink))]">{item.config.label}</span>
+            </span>
+            <span className="h-[9px] overflow-hidden rounded-[8px] bg-[hsl(var(--contacts-raised))]">
+              <motion.span
+                initial={{ width: 0 }}
+                animate={{ width: `${item.percentage}%` }}
+                transition={{ delay: i * 0.04 + 0.2, duration: 0.5 }}
+                className="block h-full rounded-[8px] bg-[hsl(var(--contacts-blue))]"
+                title={`${item.count} de ${contacts.length} (${item.percentage}%)`}
+              />
+            </span>
+            <strong className="text-right font-medium tabular-nums text-[hsl(var(--contacts-ink))]">
+              {item.count}
+            </strong>
+          </motion.div>
+        ))}
+      </div>
+
+      <div className="mt-7 grid max-w-[680px] gap-4">
+        <section className="rounded-[10px] border border-[hsl(var(--contacts-line))] bg-[hsl(var(--contacts-raised))] p-3">
+          <h4 className="m-0 mb-[14px] flex items-center gap-[7px] text-xs font-medium text-[hsl(var(--contacts-ink))]">
+            <TrendingUp className="h-[13px] w-[13px] text-[hsl(var(--contacts-blue))]" aria-hidden="true" />
+            Novos Contatos (14 dias)
+            <Badge variant="secondary" className="ml-auto text-2xs">+{analytics.newThisWeek} semana</Badge>
+          </h4>
+          <div className="flex h-[100px] items-end gap-[3px]">
+            {analytics.dailyGrowth.map((day, i) => (
               <motion.div
-                key={item.type}
-                initial={{ opacity: 0, x: -10 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: i * 0.05 }}
+                key={day.date}
+                initial={{ height: 0 }}
+                animate={{ height: `${Math.max((day.count / maxDaily) * 100, 4)}%` }}
+                transition={{ delay: i * 0.03, duration: 0.4 }}
+                className="group relative flex-1 cursor-default rounded-t bg-[hsl(var(--contacts-blue)/0.5)] transition-colors hover:bg-[hsl(var(--contacts-blue)/0.7)]"
+                title={`${day.date}: ${day.count} contatos`}
               >
-                <div className="flex items-center justify-between text-xs mb-1">
-                  <div className="flex items-center gap-1.5">
-                    <span>{item.config.iconNode}</span>
-                    <span className="font-medium">{item.config.label}</span>
-                  </div>
-                  <span className="text-muted-foreground">{item.count} ({item.percentage}%)</span>
-                </div>
-                <div className="h-1.5 rounded-full bg-muted/30 overflow-hidden">
-                  <motion.div
-                    initial={{ width: 0 }}
-                    animate={{ width: `${item.percentage}%` }}
-                    transition={{ delay: i * 0.05 + 0.2, duration: 0.5 }}
-                    className="h-full rounded-full bg-primary/60"
-                  />
-                </div>
+                <span className="absolute -top-5 left-1/2 z-10 -translate-x-1/2 whitespace-nowrap rounded border border-[hsl(var(--contacts-line))] bg-[hsl(var(--contacts-panel))] px-1 py-0.5 font-mono text-2xs text-[hsl(var(--contacts-ink))] opacity-0 transition-opacity group-hover:opacity-100">
+                  {day.count}
+                </span>
               </motion.div>
             ))}
-          </CardContent>
-        </Card>
+          </div>
+          <div className="mt-[6px] flex justify-between text-2xs text-[hsl(var(--contacts-quiet))]">
+            <span>{analytics.dailyGrowth[0]?.date}</span>
+            <span>{analytics.dailyGrowth[analytics.dailyGrowth.length - 1]?.date}</span>
+          </div>
+        </section>
 
-        {/* Daily Growth Chart */}
-        <Card className="border-border/40">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm flex items-center gap-2">
-              <TrendingUp className="w-4 h-4 text-primary" />
-              Novos Contatos (14 dias)
-              <Badge variant="default" className="ml-auto text-3xs">+{analytics.newThisWeek} semana</Badge>
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-end gap-[3px] h-[100px]">
-              {analytics.dailyGrowth.map((day, i) => (
+        <section className="rounded-[10px] border border-[hsl(var(--contacts-line))] bg-[hsl(var(--contacts-raised))] p-3">
+          <h4 className="m-0 mb-[14px] flex items-center gap-[7px] text-xs font-medium text-[hsl(var(--contacts-ink))]">
+            <Building className="h-[13px] w-[13px] text-[hsl(var(--contacts-blue))]" aria-hidden="true" />
+            Top Empresas
+          </h4>
+          {analytics.topCompanies.length === 0 ? (
+            <p className="m-0 py-2 text-center text-xs text-[hsl(var(--contacts-quiet))]">Sem dados</p>
+          ) : (
+            <div className="grid gap-2">
+              {analytics.topCompanies.map(([company, count], i) => (
                 <motion.div
-                  key={day.date}
-                  initial={{ height: 0 }}
-                  animate={{ height: `${Math.max((day.count / maxDaily) * 100, 4)}%` }}
-                  transition={{ delay: i * 0.03, duration: 0.4 }}
-                  className="flex-1 rounded-t bg-primary/50 hover:bg-primary/70 transition-colors relative group cursor-default"
-                  title={`${day.date}: ${day.count} contatos`}
+                  key={company}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: i * 0.04 }}
+                  className="flex items-center justify-between text-xs text-[hsl(var(--contacts-muted))]"
                 >
-                  <div className="absolute -top-5 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity text-2xs font-mono text-foreground bg-popover border border-border rounded px-1 py-0.5 whitespace-nowrap z-10 pointer-events-none">
-                    {day.count}
-                  </div>
+                  <span className="mr-2 truncate text-[hsl(var(--contacts-ink))]">{company}</span>
+                  <Badge variant="secondary" className="shrink-0 text-2xs">{count}</Badge>
                 </motion.div>
               ))}
             </div>
-            <div className="flex justify-between mt-1.5">
-              <span className="text-2xs text-muted-foreground">{analytics.dailyGrowth[0]?.date}</span>
-              <span className="text-2xs text-muted-foreground">{analytics.dailyGrowth[analytics.dailyGrowth.length - 1]?.date}</span>
-            </div>
-          </CardContent>
-        </Card>
+          )}
 
-        {/* Top Companies & Tags */}
-        <Card className="border-border/40">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm flex items-center gap-2">
-              <Building className="w-4 h-4 text-primary" />
-              Top Empresas
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {analytics.topCompanies.length === 0 ? (
-              <p className="text-xs text-muted-foreground/50 text-center py-2">Sem dados</p>
-            ) : (
-              <div className="space-y-2">
-                {analytics.topCompanies.map(([company, count], i) => (
-                  <motion.div
-                    key={company}
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ delay: i * 0.05 }}
-                    className="flex items-center justify-between text-xs"
-                  >
-                    <span className="font-medium truncate mr-2">{company}</span>
-                    <Badge variant="secondary" className="text-3xs shrink-0">{count}</Badge>
-                  </motion.div>
+          {analytics.topTags.length > 0 && (
+            <>
+              <div className="mt-4 flex items-center gap-[6px] text-2xs font-medium uppercase tracking-wider text-[hsl(var(--contacts-quiet))]">
+                <Tag className="h-3 w-3" aria-hidden="true" />
+                Tags populares
+              </div>
+              <div className="mt-2 flex flex-wrap gap-[5px]">
+                {analytics.topTags.map(([tag, count]) => (
+                  <Badge key={tag} variant="outline" className="gap-1 text-2xs">
+                    {tag}
+                    <span className="text-[hsl(var(--contacts-quiet))]">{count}</span>
+                  </Badge>
                 ))}
               </div>
-            )}
-
-            {analytics.topTags.length > 0 && (
-              <>
-                <div className="flex items-center gap-1.5 text-3xs font-semibold text-muted-foreground uppercase tracking-wider">
-                  <Tag className="w-3 h-3" />
-                  Tags populares
-                </div>
-                <div className="flex flex-wrap gap-1">
-                  {analytics.topTags.map(([tag, count]) => (
-                    <Badge key={tag} variant="outline" className="text-3xs gap-1">
-                      {tag}
-                      <span className="text-muted-foreground">{count}</span>
-                    </Badge>
-                  ))}
-                </div>
-              </>
-            )}
-          </CardContent>
-        </Card>
+            </>
+          )}
+        </section>
       </div>
+      </>
       )}
     </div>
   );

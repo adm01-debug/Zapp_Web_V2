@@ -12,7 +12,7 @@ import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { CheckCircle2, Copy, Plus, Trash2 } from 'lucide-react';
+import { CheckCircle2, Copy, ContactRound, Plus, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import type { Contact } from './useContactsCRUD';
 
@@ -96,9 +96,18 @@ export function ContactDialogs({
           </Tooltip>,
           document.body,
         )}
-        <DialogContent aria-describedby={undefined} className="max-w-lg">
+        <DialogContent
+          aria-describedby={undefined}
+          className="max-h-[90vh] max-w-[620px] overflow-y-auto rounded-[17px] border-[hsl(var(--contacts-line))] bg-[hsl(var(--contacts-panel))]"
+        >
           <DialogHeader>
-            <DialogTitle>Adicionar Contato</DialogTitle>
+            <span className="flex items-center gap-[8px] text-xs text-[hsl(var(--contacts-muted))]">
+              <ContactRound className="h-4 w-4 text-[hsl(var(--contacts-blue))]" aria-hidden="true" />
+              Contatos / Cadastro
+            </span>
+            <DialogTitle className="mt-[9px] font-display text-[26px] font-medium leading-[1.15] tracking-[-.4px] text-[hsl(var(--contacts-ink))]">
+              Adicionar Contato
+            </DialogTitle>
           </DialogHeader>
           <ContactForm
             values={newContact}
@@ -113,9 +122,18 @@ export function ContactDialogs({
 
       {/* Edit Dialog */}
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent aria-describedby={undefined} className="max-w-lg">
+        <DialogContent
+          aria-describedby={undefined}
+          className="max-h-[90vh] max-w-[620px] overflow-y-auto rounded-[17px] border-[hsl(var(--contacts-line))] bg-[hsl(var(--contacts-panel))]"
+        >
           <DialogHeader>
-            <DialogTitle>Editar Contato</DialogTitle>
+            <span className="flex items-center gap-[8px] text-xs text-[hsl(var(--contacts-muted))]">
+              <ContactRound className="h-4 w-4 text-[hsl(var(--contacts-blue))]" aria-hidden="true" />
+              Contatos / Edição
+            </span>
+            <DialogTitle className="mt-[9px] font-display text-[26px] font-medium leading-[1.15] tracking-[-.4px] text-[hsl(var(--contacts-ink))]">
+              Editar Contato
+            </DialogTitle>
           </DialogHeader>
           {editingContact && (
             <ContactForm
@@ -172,9 +190,11 @@ export function ContactDialogs({
 
       {/* Delete Dialog */}
       <AlertDialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>
-        <AlertDialogContent>
+        <AlertDialogContent className="rounded-[17px] border-[hsl(var(--contacts-line))] bg-[hsl(var(--contacts-panel))]">
           <AlertDialogHeader>
-            <AlertDialogTitle>Excluir contato</AlertDialogTitle>
+            <AlertDialogTitle className="font-display text-[24px] font-medium tracking-[-.3px] text-[hsl(var(--contacts-ink))]">
+              Excluir contato
+            </AlertDialogTitle>
             <AlertDialogDescription>
               Tem certeza que deseja excluir <strong>{deleteTarget?.name}</strong>? Esta ação não pode ser desfeita.
             </AlertDialogDescription>

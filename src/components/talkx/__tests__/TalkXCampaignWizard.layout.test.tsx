@@ -109,6 +109,13 @@ vi.mock('@/hooks/integrations/useTalkXLinks', async (importOriginal) => {
   };
 });
 
+// X076 — variacao de mensagem por IA: o wizard chama useTalkxAi() no passo
+// Mensagem; sem este mock o render do StepMessage lanca erro quando o hook
+// nao existe em main (factory resolve sem arquivo fisico no Vitest).
+vi.mock('@/hooks/talkx/useTalkxAi', () => ({
+  useTalkxAi: () => ({ mutate: vi.fn(), isPending: false, isError: false, data: undefined }),
+}));
+
 import { TalkXCampaignWizard } from '@/components/talkx/TalkXCampaignWizard';
 import type { TalkXCampaign } from '@/hooks/integrations/useTalkX';
 

@@ -5,11 +5,17 @@ import { cn } from '@/lib/utils';
 
 type Tile = 'blue' | 'green' | 'purple' | 'yellow';
 
-const TILE_CLASSES: Record<Tile, { bg: string; fg: string }> = {
-  blue:   { bg: 'bg-kpi-blue',   fg: 'text-kpi-blue-fg'   },
-  green:  { bg: 'bg-kpi-green',  fg: 'text-kpi-green-fg'  },
-  purple: { bg: 'bg-kpi-purple', fg: 'text-kpi-purple-fg' },
-  yellow: { bg: 'bg-kpi-yellow', fg: 'text-kpi-yellow-fg' },
+/**
+ * Placa do ícone no formato do design (`zc-stat-icon`): 42×43px, raio 11px,
+ * gradiente 150deg. As duas paradas vêm de token (`--contacts-stat-plate-*`),
+ * nunca de hex solto — a função só escolhe qual tile usar. O amarelo (sem placa
+ * própria no design de 4 indicadores) reaproveita o par do violeta.
+ */
+const TILE_CLASSES: Record<Tile, { plateFrom: string; plateTo: string; fg: string }> = {
+  blue:   { plateFrom: 'var(--contacts-stat-plate-blue-from)',   plateTo: 'var(--contacts-stat-plate-blue-to)',   fg: 'text-kpi-blue-fg'   },
+  green:  { plateFrom: 'var(--contacts-stat-plate-green-from)',  plateTo: 'var(--contacts-stat-plate-green-to)',  fg: 'text-kpi-green-fg'  },
+  purple: { plateFrom: 'var(--contacts-stat-plate-purple-from)', plateTo: 'var(--contacts-stat-plate-purple-to)', fg: 'text-kpi-purple-fg' },
+  yellow: { plateFrom: 'var(--contacts-stat-plate-purple-from)', plateTo: 'var(--contacts-stat-plate-purple-to)', fg: 'text-kpi-yellow-fg' },
 };
 
 interface ContactKpiCardProps {
@@ -123,23 +129,27 @@ function Sparkline({ series, chart, className }: { series: number[]; chart: 'lin
 }
 
 export function ContactKpiCard({ label, value, deltaPct, tile, icon: Icon, series, chart, animateValue = true }: ContactKpiCardProps) {
-  const { bg, fg } = TILE_CLASSES[tile];
+  const { plateFrom, plateTo, fg } = TILE_CLASSES[tile];
   const noData = deltaPct === null;
   const flat = deltaPct === 0;
 
   return (
     <div
       data-testid="kpi-card"
-      className="h-[108px] rounded-[14px] border border-border/70 card-glow py-4 px-4 flex items-center gap-4"
+      className="min-h-[86px] rounded-[11px] border border-border/70 bg-card py-[15px] px-4 flex items-center gap-3 min-w-0 max-[1199px]:py-[13px] max-[1199px]:px-3 max-[1199px]:gap-[9px] max-[899px]:py-3 max-[899px]:px-[15px] max-[559px]:py-3 max-[559px]:px-2.5 max-[359px]:flex-col max-[359px]:items-start max-[359px]:gap-2"
     >
-      <div data-testid="kpi-tile" className={cn('w-[60px] h-[60px] rounded-xl hidden sm:flex items-center justify-center shrink-0', bg)}>
-        <Icon className={cn('w-[26px] h-[26px]', fg)} />
+      <div
+        data-testid="kpi-tile"
+        className="w-[42px] h-[43px] rounded-[11px] hidden sm:flex items-center justify-center shrink-0 border border-border/60 max-[1199px]:w-9 max-[1199px]:h-[38px] max-[1199px]:rounded-[9px] max-[559px]:w-8 max-[559px]:h-[34px] max-[559px]:rounded-lg"
+        style={{ background: `linear-gradient(150deg, hsl(${plateFrom}), hsl(${plateTo}))` }}
+      >
+        <Icon className={cn('w-[22px] h-[22px] max-[1199px]:w-5 max-[1199px]:h-5 max-[559px]:w-[18px] max-[559px]:h-[18px]', fg)} />
       </div>
 
       <div className="min-w-0 flex-1">
-        <p className="text-sm font-medium text-muted-foreground truncate leading-tight">{label}</p>
-        <div className="flex items-baseline gap-2 mt-0.5 flex-wrap">
-          <p data-testid="kpi-value" className="text-kpi-value font-bold tabular-nums leading-none text-foreground">
+        <p className="text-[11px] font-medium text-muted-foreground truncate leading-tight mb-0.5 max-[559px]:whitespace-normal max-[559px]:leading-[1.4]">{label}</p>
+        <div className="flex items-baseline gap-2 flex-wrap">
+          <p data-testid="kpi-value" className="font-display text-[29px] font-medium tracking-[-0.5px] tabular-nums leading-[1.05] text-foreground max-[1199px]:text-[28px] max-[559px]:text-[26px]">
             <CountUp value={value} enabled={animateValue} />
           </p>
           {!noData && !flat && (

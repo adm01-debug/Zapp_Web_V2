@@ -42,5 +42,6 @@ Cada entrada lista a tela, o efeito e o risco quando a chave está ativa.
 
 | Arquivo | Papel |
 |---------|-------|
+| Origem dos dados do contato | `src/hooks/contacts/useContactSource.ts` | Liga a busca da origem do contato (Singu CRM vs. base) na ficha de Contatos; desligada, a ficha mostra o vazio honesto e nao consulta | Se o CRM falhar, a origem aparece como indisponivel mas a ficha nao quebra |
 | `src/hooks/system/useCRMIntegrationEnabled.ts` | Hook central: combina a flag de runtime `crm.integration` com a verificação de configuração externa (`isExternalConfigured`). Fail-closed: retorna `false` se qualquer uma das duas condições falhar. |
 | `src/hooks/system/index.ts` (linha 43) | Re-exporta o hook para o resto do sistema. |
