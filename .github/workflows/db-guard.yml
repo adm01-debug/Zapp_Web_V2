@@ -479,6 +479,16 @@ jobs:
           AI_USAGE_COST_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/ai-usage-cost-window-open.test.sh
 
+      # IA-055 §2: o custo cobrava `unit_price * total_tokens` — um preço único
+      # para entrada e saída quando o fornecedor cobra a saída de 4x a 14x mais
+      # caro. O erro aparecia como número medido (deepseek-flash: −89% ou +53%
+      # conforme o preço escolhido). Aqui o SQL roda de verdade: preço por ponta,
+      # fallback declarado para o preço único e modelo sem tarifa nunca zerado.
+      - name: Simular preço de entrada e saída no custo de IA (IA-055 §2)
+        env:
+          AI_USAGE_PRICE_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/ai-usage-price-input-output.test.sh
+
       # DASH-ACCEPTANCE-001: as suítes supabase/tests/*.sql rodam como
       # service_role (BYPASSRLS) — nunca provam enforcement. Aqui as RPCs do
       # Dashboard rodam sob roles reais anon/authenticated (sem BYPASSRLS) com

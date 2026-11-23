@@ -48,7 +48,7 @@ partir do código e falha quando:
 | `ai-objection-handler` | A | `src/hooks/copilot/useObjectionHandler.ts:126` |
 | `ai-price-anchor` | A | `src/hooks/copilot/usePriceAnchoring.ts:60` |
 | `ai-product-recommendation` | A | `src/hooks/copilot/useProductRecommendation.ts:57` |
-| `ai-proxy` | A | `src/components/admin/SupervisorCopilot.tsx:89` · `src/components/settings/ai-providers/useAIProviders.ts:121` · `src/hooks/inbox/useObjectionDetector.ts:91` · `src/hooks/inbox/useObjectionDetector.ts:165` · `src/hooks/ui/useUniversityHelp.ts:130` · `supabase/functions/talkx-ai/index.ts:589` |
+| `ai-proxy` | A | `src/components/admin/SupervisorCopilot.tsx:89` · `src/components/settings/ai-providers/useAIProviders.ts:121` · `src/hooks/inbox/useObjectionDetector.ts:91` · `src/hooks/inbox/useObjectionDetector.ts:165` · `src/hooks/ui/useUniversityHelp.ts:130` · `supabase/functions/talkx-ai/index.ts:596` |
 | `ai-suggest-reply` | A | `src/components/inbox/AISuggestions.tsx:104` · `supabase/functions/assistant-gateway/index.ts:40` |
 | `ai-transcribe-audio` | A | `src/components/inbox/AudioMessagePlayer.tsx:71` · `supabase/functions/_shared/evolution-webhook-messages.ts:1457` |
 | `ai-usage-outbox-drain` | C | `supabase/migrations/20261103223000_ai_usage_outbox_drain_cron.sql:64` · `supabase/config.toml:103` |
