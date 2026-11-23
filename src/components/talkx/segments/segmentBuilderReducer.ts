@@ -64,7 +64,8 @@ export type SegmentBuilderAction =
    * (sem `key` no pai). A troca repõe o rascunho por esta ação, chamada num
    * `useEffect [initial]` do construtor: baseline nova, histórico zerado.
    */
-  | { type: 'reset'; content: SegmentBuilderContent };
+  | { type: 'reset'; content: SegmentBuilderContent }
+  | { type: 'suggestRules'; rules: SegmentRules };
 
 function newId(): string {
   return crypto.randomUUID();
@@ -254,6 +255,21 @@ export function segmentBuilderReducer(state: SegmentBuilderState, action: Segmen
       if (!next) return state;
       const past = pushPast(state.past, builderContent(state));
       return { ...state, ...next, past, future: state.future.slice(0, -1), lastEditKey: null, lastEditAt: 0 };
+    }
+    case 'suggestRules': {
+      // Sem grupo valido a acao e ignorada: um segmento com zero grupos nao
+      // pode ser salvo e a tela ja impede chegar aqui, mas o reducer e a
+      // segunda trava (mesmo padrao de `removeGroup`).
+      if (action.rules.groups.length === 0) return state;
+      return {
+        ...state,
+        rules: action.rules,
+        activeGroupId: action.rules.groups[0]?.id ?? null,
+        past: pushPast(state.past, builderContent(state)),
+        future: [],
+        lastEditKey: null,
+        lastEditAt: 0,
+      };
     }
     case 'reset': {
       return createBuilderState(action.content);
