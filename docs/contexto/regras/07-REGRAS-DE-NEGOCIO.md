@@ -1,6 +1,6 @@
 # 07 · REGRAS DE NEGÓCIO
 
-> Gerado automaticamente por AI Context Sync v1.3.2 · commit `2fca6d0ddc` · branch `main` · 2026-11-23 20:13 UTC
+> Gerado automaticamente por AI Context Sync v1.3.2 · commit `5ba09eae58` · branch `main` · 2026-11-23 20:30 UTC
 > Não edite à mão — regras humanas vão em `manual/`.
 
 ## A. Regras escritas por humanos (`manual/` — prioridade máxima, nunca sobrescrito)
@@ -1573,6 +1573,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `type` | `style` | compara | `src/hooks/performance/useDataOptimization.ts` |
 | `type` | `success` | compara, escreve | `src/components/ui/micro-interactions/feedback.tsx`<br>`src/hooks/ui/useLoadingState.ts` |
 | `type` | `successful_close` | escreve | `src/hooks/copilot/useLearningMoment.ts` |
+| `type` | `suggestRules` | compara, escreve | `src/components/talkx/segments/TalkXSegmentBuilder.tsx`<br>`src/components/talkx/segments/segmentBuilderReducer.ts` |
 | `type` | `suggestion` | escreve | `src/components/inbox/copilot/InsightCard.tsx` |
 | `type` | `supplier` | compara, escreve | `src/components/catalog/ExternalProductManagement.tsx` |
 | `type` | `support` | escreve | `src/components/admin/TrainingMode.tsx` |
@@ -1621,8 +1622,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `status` | `CLOSED` | compara | `src/hooks/realtime/useSupabaseRealtime.ts` |
 | `status` | `COMPLETED` | compara, escreve | `analise-prs/resgate-261118-lote3/claude/ga-ci-batch-ga49-ga54-ga60-ga64-231023/scripts/ci/fila-merge.mjs`<br>`analise-prs/resgate-261118-lote3/claude_04/trusting-newton-duiglt/scripts/ci/fila-merge.mjs`<br>`analise-prs/resgate-261118-lote3/claude_pink/cool-dijkstra-xk9ek2/scripts/ci/fila-merge.mjs`<br>`analise-prs/resgate-261118-lote3/claude_pink/cool-dijkstra-xk9ek2/scripts/ci/fila-merge.unit.mjs`<br>`analise-prs/resgate-261118-lote3/f3/strict-false-baseline-20261018/scripts/ci/fila-merge.unit.mjs` |
 | `status` | `DONE_VERIFIED` | compara, escreve | `analise-prs/resgate-261118-lote3/claude/fix-ga-resto-sonar-contracts-20261021-0726/scripts/talkx/v4-status.unit.mjs` |
-| `status` | `IMPLEMENTED_AWAITING_RUNTIME_EVIDENCE` | escreve | `analise-prs/resgate-261118-lote3/claude/feat-E90-main-failure-notify-261101-1730/scripts/ci/ci-docs-baseline.unit.mjs`<br>`analise-prs/resgate-261118-lote3/claude/wizardly-ride-dimxnt/scripts/ci/ci-docs-baseline.unit.mjs`<br>`analise-prs/resgate-261118-lote3/claude_pink/cool-dijkstra-xk9ek2/scripts/ci/ci-docs-baseline.unit.mjs`<br>`analise-prs/resgate-261118-lote3/codex/fix-failed-workflows-20261020/scripts/ci/ci-docs-baseline.unit.mjs`<br>`analise-prs/resgate-261118-lote3/codex/publish-followup-20261021/scripts/ci/ci-docs-baseline.unit.mjs`<br>… +2 |
-| … +303 linhas — lista completa em `context.json` | | | |
+| … +304 linhas — lista completa em `context.json` | | | |
 
 ### E.4 Enums e listas de valores
 
@@ -3283,6 +3283,14 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
   ```
   const totalRequests = data.reduce((sum, log) => sum + log.request_count, 0); const blockedRequests = data.filter(log => log.blocked).length; const uniqueIPs = new Set(data.map(log => log.ip_address)).size; const endpointCounts: Record<string, number> = {}; data.forEach(log => { endpointCounts[log.endpoint] = (endpointCounts[log.endpoint] || 0) + log.request_count; }); const topEndpoints = Object.entries(endpointCounts) .map(([endpoint, count]) => ({ endpoint, count })) .sort((a, b) => b.count - …
   ```
+- **campoValido(valor: unknown)** — `src/hooks/talkx/talkxAiSuggestions.ts`
+  ```
+  return typeof valor === 'string' && RULE_FIELDS.some((f) => f.value === valor);
+  ```
+- **operadorValido(field: RuleField, op: unknown)** — `src/hooks/talkx/talkxAiSuggestions.ts`
+  ```
+  if (typeof op !== 'string') return false; const permitidos = RULE_OPS[tipoDoCampo(field)] ?? []; return permitidos.some((o) => o.value === op);
+  ```
 - **generateClientTaskId()** — `src/hooks/tasks/useMyWorkItems.ts`
   ```
   const c = (globalThis as { crypto?: { randomUUID?: () => string } }).crypto; return typeof c?.randomUUID === 'function' ? c.randomUUID() : null;
@@ -4180,7 +4188,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `MAX_INBOX_SILENCE_MINUTES` | `1440` | `analise-prs/resgate-261118-lote3/codex/publish-followup-20261021/supabase/functions/connection-health-check/index.ts` |
 | `TITULO` | `'[settings-guard] perimeter regression detected'` | `analise-prs/resgate-261118-lote3/f3/strict-false-baseline-20261018/scripts/ci/github-settings-guard.unit.mjs` |
 | `CONTEXTS_OK` | `"['` | `analise-prs/resgate-261118-lote3/f3/strict-false-baseline-20261018/scripts/ci/github-settings-guard.unit.mjs` |
-| … +1052 linhas — lista completa em `context.json` | | |
+| … +1055 linhas — lista completa em `context.json` | | |
 
 ### H.2 Prazos, expirações e janelas de tempo
 
@@ -5067,7 +5075,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `owner` | `supabase/migrations/20260927270018_team_chat_e28_fix_find_or_create_race.sql` |
 | `anon` | `supabase/migrations/20260927340000_fix_add_agent_xp_negative_and_guard.sql` |
 
-## K. Testes como especificação (26319 testes em 2743 arquivos — nomes completos em `context.json`)
+## K. Testes como especificação (26343 testes em 2745 arquivos — nomes completos em `context.json`)
 
 | Arquivo | Testes | Exemplos do que o sistema DEVE fazer |
 |---|---|---|
@@ -5346,6 +5354,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `src/hooks/integrations/__tests__/useMultiplixDispatches.multiplix-audience.test.ts` | 19 | buildMultiplixAudienceSelectPayload — a intenção vai inteira e nada é expandido · omite o que não foi informado e não inventa chave nenhuma · público salvo viaja por referência (audience_id), nunca pelos membros · manual e exclude viram company_ids/contact_ids completos … |
 | `src/hooks/sla/__tests__/useContactSlaTimeline.test.tsx` | 19 | useContactSlaTimeline — marcos reais · monta os marcos das linhas gravadas, do mais recente para o mais antigo · aplica o prazo da hierarquia do contato (2min), não o padrão do sistema · lê só o contato pedido e só os eventos de transferência do TR1 … |
 | `src/hooks/sla/__tests__/useSLAConfigurations.test.tsx` | 19 | useSLAConfigurations — leitura · carrega as configurações ordenando por prioridade crescente · leitura que volta nula sem erro deixa a lista vazia · erro de RLS na leitura deixa a lista vazia sem travar a tela … |
+| `src/hooks/talkx/__tests__/talkxAiSuggestions.test.ts` | 19 | sugestaoParaRegras · A: saida fora do formato nao vira regra · A: campo que nao existe no catalogo e descartado, nao aplicado · A: operador invalido para o tipo do campo e recusado (uuid nao aceita contem) … |
 | `src/hooks/ui/__tests__/useVolumeRocker.test.tsx` | 19 | useVolumeRocker — painel, matriz de opções e fechamento · com enabled=false não muta, não ajusta, não abre e ignora a roda · com wheelEnabled=false a roda não ajusta nada (e a página pode rolar), mas as setas continuam · a roda ajusta ±step (com o painel aberto) e impede a rolagem da página junto … |
 | `src/lib/__tests__/chunkReload.test.ts` | 19 | chunkReload — reconhecimento · reconhece as mensagens de chunk sem diferenciar maiusculas · reconhece erro nomeado ChunkLoadError sem mensagem conhecida · nao confunde erro comum com falha de chunk … |
 | `src/lib/__tests__/filesPeriod.test.ts` | 19 | filesPeriod — buildPeriodRange · all (Qualquer data) e last_interaction não filtram · Hoje vai da meia-noite ao fim do dia LOCAL · Últimos 7 dias começa no início do 7º dia anterior e termina no fim de hoje … |
@@ -5370,8 +5379,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `src/hooks/__tests__/useIncomingCallListener.test.tsx` | 18 | useIncomingCallListener · subscribes to notifications scoped to the authenticated user · shows one ringing call from notification metadata and deduplicates replay · propagates the real call id from notification metadata (not the notification row id) … |
 | `src/hooks/__tests__/useWarRoomAlerts.test.tsx` | 18 | useWarRoomAlerts · fetches unread alerts · exposes dismissAlert function · accepts soundEnabled parameter … |
 | `src/hooks/chat/__tests__/useAutomationSuggestions.test.tsx` | 18 | useAutomationSuggestions · não vai à Edge quando a última mensagem é do agente (lastInboundMessageId nulo) · chama a Edge com o contact_id e expõe as sugestões do contrato, com a fonte carimbada · espera o debounce antes de chamar (mensagem que ainda está chegando não gasta IA) … |
-| `src/hooks/chat/journey/__tests__/useJourneyActors.test.tsx` | 18 | useJourneyActors — regras de quem agiu (S063) · usuário com perfil: nome e foto do perfil, em UMA consulta em lote · perfil ausente:  · erro/RLS negado não lança: o ator cai no  … |
-| … +2443 linhas — lista completa em `context.json` | | |
+| … +2445 linhas — lista completa em `context.json` | | |
 
 ## L. Eventos de webhook tratados (contratos com sistemas externos)
 
@@ -5921,4 +5929,4 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | * R2-AUTH-005 (item 239): a resposta de uma busca de perfil nao pode repor | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/hooks/auth/useAuth.tsx` |
 | Identidade diferente: o perfil anterior nao pode continuar na tela e so a | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/hooks/auth/useAuth.tsx` |
 | Supabase pode falhar e não emitir SIGNED_OUT — a limpeza não pode depender dele). | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/hooks/auth/useAuth.tsx` |
-| … +2520 linhas — lista completa em `context.json` | |
+| … +2526 linhas — lista completa em `context.json` | |

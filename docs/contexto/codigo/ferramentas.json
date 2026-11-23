@@ -3,7 +3,7 @@
  "format_version": 2,
  "stack": {
   "linguagens": [
-   "TypeScript (5083)",
+   "TypeScript (5086)",
    "Markdown (4083)",
    "SQL (3065)",
    "JSON (1968)",
@@ -2899,7 +2899,7 @@
    },
    {
     "papel": "status",
-    "ocorrencias": 128
+    "ocorrencias": 130
    },
    {
     "papel": "admin",

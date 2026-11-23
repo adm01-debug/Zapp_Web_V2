@@ -1057,6 +1057,7 @@
    "componentes": 17,
    "hooks_locais": [
     "useAppBootstrap",
+    "useAudienceEstimate",
     "useAuth",
     "useCatalogFavorites",
     "useCatalogRecentSends",
@@ -1085,9 +1086,12 @@
     "useRealtimeReconnectingNotice",
     "useRealtimeStatus",
     "useReducedMotion",
+    "useSegmentLibraryStats",
     "useSendToContact",
     "useTalkXMediaUrl",
+    "useTalkXSegments",
     "useTalkXServiceStatus",
+    "useTalkxAi",
     "useTeamAlertsPreference",
     "useToast",
     "useUserRole",
@@ -1515,6 +1519,7 @@
     "useAddressAutocomplete",
     "useAdvancedContactSearch",
     "useAppBootstrap",
+    "useAudienceEstimate",
     "useAuth",
     "useCRMAdminAccess",
     "useCRMIntegrationEnabled",
@@ -1562,9 +1567,12 @@
     "useRealtimeStatus",
     "useReducedMotion",
     "useResolvedMergeContacts",
+    "useSegmentLibraryStats",
     "useSendToContact",
     "useTalkXMediaUrl",
+    "useTalkXSegments",
     "useTalkXServiceStatus",
+    "useTalkxAi",
     "useTeamAlertsPreference",
     "useToast",
     "useUserRole"
@@ -2810,6 +2818,7 @@
     "useApplicableSLA",
     "useAssistantGateway",
     "useAttachmentSuggestion",
+    "useAudienceEstimate",
     "useAudioMemes",
     "useAudioPlayer",
     "useAudioRecorder",
@@ -2967,6 +2976,7 @@
     "useSalvarConversationMemory",
     "useScheduledMessages",
     "useSearchHistory",
+    "useSegmentLibraryStats",
     "useSendToContact",
     "useSentimentAlerts",
     "useSmartTemplates",
@@ -2977,7 +2987,9 @@
     "useSyncToCRM",
     "useTalkMeQueue",
     "useTalkXMediaUrl",
+    "useTalkXSegments",
     "useTalkXServiceStatus",
+    "useTalkxAi",
     "useTasksUi",
     "useTasksUiOptional",
     "useTeamAlertsPreference",
@@ -3444,6 +3456,7 @@
     "useTalkXSegments",
     "useTalkXServiceStatus",
     "useTalkXTemplates",
+    "useTalkxAi",
     "useTeamAlertsPreference",
     "useToast",
     "useUserRole",
@@ -4869,11 +4882,14 @@
    "rotas_http": [],
    "componentes": 2,
    "hooks_locais": [
+    "useAudienceEstimate",
+    "useAuth",
     "useCatalogRecentSends",
     "useConfirmMultiplixDispatch",
     "useContactSearch",
     "useCreateMultiplixDispatch",
     "useDebouncedCallback",
+    "useMessageUpdateBatcher",
     "useMultiplixAudienceApply",
     "useMultiplixAudienceSave",
     "useMultiplixAudienceSelect",
@@ -4889,13 +4905,27 @@
     "useMultiplixSearch",
     "useMultiplixUfs",
     "useNavigationHistory",
+    "useNotificationSettings",
+    "useOfflineCache",
+    "usePublishIncomingAlertIdentity",
+    "useRealtimeMessages",
+    "useRealtimeNotifications",
+    "useRealtimeReconnectingNotice",
+    "useRealtimeStatus",
     "useReducedMotion",
+    "useSegmentLibraryStats",
     "useSendToContact",
     "useTalkXMediaUrl",
-    "useTalkXServiceStatus"
+    "useTalkXSegments",
+    "useTalkXServiceStatus",
+    "useTalkxAi",
+    "useTeamAlertsPreference",
+    "useToast"
    ],
    "hooks_definidos": [],
    "edges": [
+    "auth-login",
+    "detect-new-device",
     "multiplix-audience",
     "multiplix-dispatch",
     "multiplix-send"
@@ -4903,14 +4933,19 @@
    "tabelas": [
     "catalog_send_events",
     "contacts",
+    "messages",
+    "profiles",
+    "user_settings",
     "whatsapp_connections"
    ],
    "rpcs": [
     "enqueue_outbound_message",
-    "enqueue_rich_outbound_message"
+    "enqueue_rich_outbound_message",
+    "get_inbox_contact_summaries"
    ],
    "buckets": [],
    "canais_realtime": [
+    "chat-reactions:${messageId}",
     "multiplix-mon-${dispatchId}"
    ],
    "env": [
@@ -5146,6 +5181,7 @@
     "useAppBootstrap",
     "useApplicableSLA",
     "useAttachmentSuggestion",
+    "useAudienceEstimate",
     "useAudioMemes",
     "useAudioPlayer",
     "useAudioRecorder",
@@ -5247,6 +5283,7 @@
     "useSLACalculation",
     "useScheduledMessages",
     "useSearchHistory",
+    "useSegmentLibraryStats",
     "useSendToContact",
     "useSentimentAlerts",
     "useSmartTemplates",
@@ -5256,7 +5293,9 @@
     "useSupabaseRealtime",
     "useSyncToCRM",
     "useTalkXMediaUrl",
+    "useTalkXSegments",
     "useTalkXServiceStatus",
+    "useTalkxAi",
     "useTeamAlertsPreference",
     "useTextToSpeech",
     "useTheme",
@@ -5645,6 +5684,7 @@
     "useAssistantGateway",
     "useAssistantProfile",
     "useAttachmentSuggestion",
+    "useAudienceEstimate",
     "useAudioMemes",
     "useAudioPlayer",
     "useAudioRecorder",
@@ -5902,6 +5942,7 @@
     "useScheduledReportConfigs",
     "useSearchHistory",
     "useSecurityPushNotifications",
+    "useSegmentLibraryStats",
     "useSendTeamMessage",
     "useSendToContact",
     "useSentimentAlerts",
@@ -5916,7 +5957,9 @@
     "useSystemHealthSignals",
     "useTalkMeQueue",
     "useTalkXMediaUrl",
+    "useTalkXSegments",
     "useTalkXServiceStatus",
+    "useTalkxAi",
     "useTarefasAgendadas",
     "useTasksUi",
     "useTasksUiOptional",
@@ -7090,8 +7133,8 @@
   {
    "modulo": "components/talkx",
    "arquivos": 105,
-   "testes": 169,
-   "linhas": 26067,
+   "testes": 170,
+   "linhas": 26235,
    "itens_menu": [
     "Campanhas"
    ],
@@ -11180,6 +11223,7 @@
     "useTalkXTemplateLibraryStats",
     "useTalkXTemplateStats",
     "useTalkXTemplates",
+    "useTalkxAi",
     "useTeamAlertsPreference",
     "useToast",
     "useUserRole",
@@ -11454,6 +11498,7 @@
     "hooks/evolution",
     "hooks/inbox",
     "hooks/reactions",
+    "hooks/talkx",
     "lib",
     "pages",
     "providers"
@@ -13172,24 +13217,52 @@
   },
   {
    "modulo": "hooks/talkx",
-   "arquivos": 2,
-   "testes": 2,
-   "linhas": 151,
+   "arquivos": 3,
+   "testes": 3,
+   "linhas": 339,
    "itens_menu": [],
    "telas": [],
    "rotas_http": [],
    "componentes": 0,
    "hooks_locais": [
-    "useTalkxAi"
+    "useAudienceEstimate",
+    "useAuth",
+    "useMessageUpdateBatcher",
+    "useNotificationSettings",
+    "useOfflineCache",
+    "usePublishIncomingAlertIdentity",
+    "useRealtimeMessages",
+    "useRealtimeNotifications",
+    "useRealtimeReconnectingNotice",
+    "useRealtimeStatus",
+    "useSegmentLibraryStats",
+    "useTalkXSegments",
+    "useTalkxAi",
+    "useTeamAlertsPreference",
+    "useToast"
    ],
    "hooks_definidos": [
     "useTalkxAi"
    ],
-   "edges": [],
-   "tabelas": [],
-   "rpcs": [],
+   "edges": [
+    "auth-login",
+    "detect-new-device"
+   ],
+   "tabelas": [
+    "contacts",
+    "messages",
+    "profiles",
+    "user_settings"
+   ],
+   "rpcs": [
+    "enqueue_outbound_message",
+    "enqueue_rich_outbound_message",
+    "get_inbox_contact_summaries"
+   ],
    "buckets": [],
-   "canais_realtime": [],
+   "canais_realtime": [
+    "chat-reactions:${messageId}"
+   ],
    "env": [
     "DEV"
    ],
@@ -13205,6 +13278,7 @@
     "hooks/integrations"
    ],
    "depende_de_modulos": [
+    "hooks/integrations",
     "lib"
    ],
    "pacotes_externos": [

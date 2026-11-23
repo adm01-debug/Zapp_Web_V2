@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "2fca6d0ddc29f9f233b578f4ce4cb55b0dbaf51b",
+  "commit": "5ba09eae58eb5282b822cda94646eedbaf067371",
   "branch": "main",
-  "data_commit": "2026-11-23T17:09:45-03:00",
+  "data_commit": "2026-11-23T17:28:46-03:00",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "5ba09eae",
+    "data": "2026-11-23",
+    "assunto": "feat(talkx): liga os dois kinds sem tela da IA (insight_text e segment_suggestion) (#3339)"
+   },
    {
     "sha": "2fca6d0d",
     "data": "2026-11-23",
@@ -126,14 +131,9 @@
     "sha": "85feab2a",
     "data": "2026-11-21",
     "assunto": "feat(talkx): monta orfaos RADAR (decision maker/stakeholders/ocasiao) e SpeedSelector no header (#3307)"
-   },
-   {
-    "sha": "7f2b4e62",
-    "data": "2026-11-21",
-    "assunto": "feat(talkx): monta cards órfãos X149/X144 (Fila por Segmento + Linha do Tempo Operacional) no report de campanha (#3306)"
    }
   ],
-  "arquivos_mudados_7d": 5289,
+  "arquivos_mudados_7d": 5296,
   "pastas_mais_mudadas_30d": [
    {
     "pasta": "docs/contexto/supabase",
@@ -161,7 +161,7 @@
    },
    {
     "pasta": "src/components/talkx",
-    "mudancas": 364
+    "mudancas": 369
    },
    {
     "pasta": "analise-prs/resgate-261115/dossies",
@@ -310,9 +310,9 @@
   ]
  },
  "contagens": {
-  "arquivos_total": 15776,
-  "arquivos_codigo": 5887,
-  "linhas_codigo": 1138453,
+  "arquivos_total": 15779,
+  "arquivos_codigo": 5890,
+  "linhas_codigo": 1139074,
   "rotas": 18,
   "rotas_http_backend": 11,
   "vistas_por_id": 55,
@@ -324,7 +324,7 @@
   "tabelas": 223,
   "migrations": 1152,
   "cron_jobs": 29,
-  "testes": 3225,
+  "testes": 3227,
   "workflows": 24,
   "scripts": 452,
   "docs_md": 4083
@@ -723,8 +723,8 @@
    "linhas": 638
   },
   "src/components": {
-   "arquivos": 2312,
-   "linhas": 393485
+   "arquivos": 2313,
+   "linhas": 393764
   },
   "src/config": {
    "arquivos": 3,
@@ -743,8 +743,8 @@
    "linhas": 3293
   },
   "src/hooks": {
-   "arquivos": 1030,
-   "linhas": 166943
+   "arquivos": 1032,
+   "linhas": 167285
   },
   "src/i18n": {
    "arquivos": 2,

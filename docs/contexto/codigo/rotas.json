@@ -1359,7 +1359,7 @@
     "unknown",
     "user"
    ],
-   "arquivos_puxados": 1545
+   "arquivos_puxados": 1546
   },
   {
    "protegida": false,
@@ -1815,6 +1815,7 @@
     "useAppBootstrap",
     "useApplicableSLA",
     "useAttachmentSuggestion",
+    "useAudienceEstimate",
     "useAudioMemes",
     "useAudioPlayer",
     "useAudioRecorder",
@@ -1934,6 +1935,7 @@
     "useScheduledMessages",
     "useScribe",
     "useSearchHistory",
+    "useSegmentLibraryStats",
     "useSendToContact",
     "useSentimentAlerts",
     "useSmartTemplates",
@@ -1946,7 +1948,9 @@
     "useSyncExternalStore",
     "useSyncToCRM",
     "useTalkXMediaUrl",
+    "useTalkXSegments",
     "useTalkXServiceStatus",
+    "useTalkxAi",
     "useTeamAlertsPreference",
     "useTextToSpeech",
     "useTheme",
@@ -1976,6 +1980,7 @@
     "useAppBootstrap",
     "useApplicableSLA",
     "useAttachmentSuggestion",
+    "useAudienceEstimate",
     "useAudioMemes",
     "useAudioPlayer",
     "useAudioRecorder",
@@ -2071,6 +2076,7 @@
     "useSLACalculation",
     "useScheduledMessages",
     "useSearchHistory",
+    "useSegmentLibraryStats",
     "useSendToContact",
     "useSentimentAlerts",
     "useSmartTemplates",
@@ -2080,7 +2086,9 @@
     "useSupabaseRealtime",
     "useSyncToCRM",
     "useTalkXMediaUrl",
+    "useTalkXSegments",
     "useTalkXServiceStatus",
+    "useTalkxAi",
     "useTeamAlertsPreference",
     "useTextToSpeech",
     "useTheme",
@@ -2234,7 +2242,7 @@
     "unknown",
     "user"
    ],
-   "arquivos_puxados": 432
+   "arquivos_puxados": 437
   },
   {
    "protegida": false,
@@ -3593,6 +3601,7 @@
    "arquivo": "src/components/catalog/ExternalProductManagement.tsx",
    "registrada_em": "src/pages/ViewRouter.tsx",
    "hooks": [
+    "useAudienceEstimate",
     "useAuth",
     "useCallback",
     "useCatalogBootstrapQuery",
@@ -3612,6 +3621,7 @@
     "useMemo",
     "useMessageUpdateBatcher",
     "useMonthlyBars",
+    "useMutation",
     "useNavigationHistory",
     "useNotificationLeader",
     "useNotificationSettings",
@@ -3627,15 +3637,19 @@
     "useReducedMotion",
     "useReducer",
     "useRef",
+    "useSegmentLibraryStats",
     "useSendToContact",
     "useState",
     "useSyncExternalStore",
     "useTalkXMediaUrl",
+    "useTalkXSegments",
     "useTalkXServiceStatus",
+    "useTalkxAi",
     "useTeamAlertsPreference",
     "useToast"
    ],
    "hooks_locais": [
+    "useAudienceEstimate",
     "useAuth",
     "useCatalogFavorites",
     "useCatalogRecentSends",
@@ -3658,9 +3672,12 @@
     "useRealtimeReconnectingNotice",
     "useRealtimeStatus",
     "useReducedMotion",
+    "useSegmentLibraryStats",
     "useSendToContact",
     "useTalkXMediaUrl",
+    "useTalkXSegments",
     "useTalkXServiceStatus",
+    "useTalkxAi",
     "useTeamAlertsPreference",
     "useToast"
    ],
@@ -3700,7 +3717,7 @@
     "radiogroup",
     "status"
    ],
-   "arquivos_puxados": 125
+   "arquivos_puxados": 135
   },
   {
    "id": "chatbot",
@@ -3905,6 +3922,7 @@
     "useAddressAutocomplete",
     "useAdvancedContactSearch",
     "useAppBootstrap",
+    "useAudienceEstimate",
     "useAuth",
     "useCRMAdminAccess",
     "useCRMIntegrationEnabled",
@@ -3967,11 +3985,14 @@
     "useReducer",
     "useRef",
     "useResolvedMergeContacts",
+    "useSegmentLibraryStats",
     "useSendToContact",
     "useState",
     "useSyncExternalStore",
     "useTalkXMediaUrl",
+    "useTalkXSegments",
     "useTalkXServiceStatus",
+    "useTalkxAi",
     "useTeamAlertsPreference",
     "useToast",
     "useTransform",
@@ -3983,6 +4004,7 @@
     "useAddressAutocomplete",
     "useAdvancedContactSearch",
     "useAppBootstrap",
+    "useAudienceEstimate",
     "useAuth",
     "useCRMAdminAccess",
     "useCRMIntegrationEnabled",
@@ -4030,9 +4052,12 @@
     "useRealtimeStatus",
     "useReducedMotion",
     "useResolvedMergeContacts",
+    "useSegmentLibraryStats",
     "useSendToContact",
     "useTalkXMediaUrl",
+    "useTalkXSegments",
     "useTalkXServiceStatus",
+    "useTalkxAi",
     "useTeamAlertsPreference",
     "useToast",
     "useUserRole"
@@ -4115,7 +4140,7 @@
     "tablist",
     "tabpanel"
    ],
-   "arquivos_puxados": 234
+   "arquivos_puxados": 241
   },
   {
    "id": "crm360",
@@ -4933,6 +4958,7 @@
     "useApplicableSLA",
     "useAssistantGateway",
     "useAttachmentSuggestion",
+    "useAudienceEstimate",
     "useAudioMemes",
     "useAudioPlayer",
     "useAudioRecorder",
@@ -5115,6 +5141,7 @@
     "useScribe",
     "useSearchHistory",
     "useSearchParams",
+    "useSegmentLibraryStats",
     "useSendToContact",
     "useSentimentAlerts",
     "useSmartTemplates",
@@ -5128,7 +5155,9 @@
     "useSyncToCRM",
     "useTalkMeQueue",
     "useTalkXMediaUrl",
+    "useTalkXSegments",
     "useTalkXServiceStatus",
+    "useTalkxAi",
     "useTasksUi",
     "useTasksUiOptional",
     "useTeamAlertsPreference",
@@ -5168,6 +5197,7 @@
     "useApplicableSLA",
     "useAssistantGateway",
     "useAttachmentSuggestion",
+    "useAudienceEstimate",
     "useAudioMemes",
     "useAudioPlayer",
     "useAudioRecorder",
@@ -5322,6 +5352,7 @@
     "useSalvarConversationMemory",
     "useScheduledMessages",
     "useSearchHistory",
+    "useSegmentLibraryStats",
     "useSendToContact",
     "useSentimentAlerts",
     "useSmartTemplates",
@@ -5332,7 +5363,9 @@
     "useSyncToCRM",
     "useTalkMeQueue",
     "useTalkXMediaUrl",
+    "useTalkXSegments",
     "useTalkXServiceStatus",
+    "useTalkxAi",
     "useTasksUi",
     "useTasksUiOptional",
     "useTeamAlertsPreference",
@@ -5513,7 +5546,7 @@
     "unknown",
     "user"
    ],
-   "arquivos_puxados": 662
+   "arquivos_puxados": 667
   },
   {
    "id": "integrations",
@@ -5720,15 +5753,19 @@
    "arquivo": "src/components/multiplix/MultiplixView.tsx",
    "registrada_em": "src/pages/ViewRouter.tsx",
    "hooks": [
+    "useAudienceEstimate",
+    "useAuth",
     "useCallback",
     "useCatalogRecentSends",
     "useConfirmMultiplixDispatch",
     "useContactSearch",
+    "useContext",
     "useCreateMultiplixDispatch",
     "useDebouncedCallback",
     "useEffect",
     "useLayoutEffect",
     "useMemo",
+    "useMessageUpdateBatcher",
     "useMultiplixAudienceApply",
     "useMultiplixAudienceSave",
     "useMultiplixAudienceSelect",
@@ -5745,22 +5782,39 @@
     "useMultiplixUfs",
     "useMutation",
     "useNavigationHistory",
+    "useNotificationLeader",
+    "useNotificationSettings",
+    "useOfflineCache",
+    "usePublishIncomingAlertIdentity",
     "useQuery",
     "useQueryClient",
+    "useRealtimeMessages",
+    "useRealtimeNotifications",
+    "useRealtimeReconnectingNotice",
+    "useRealtimeStatus",
     "useReducedMotion",
     "useRef",
+    "useSegmentLibraryStats",
     "useSendToContact",
     "useState",
+    "useSyncExternalStore",
     "useTalkXMediaUrl",
+    "useTalkXSegments",
     "useTalkXServiceStatus",
+    "useTalkxAi",
+    "useTeamAlertsPreference",
+    "useToast",
     "useVirtualizer"
    ],
    "hooks_locais": [
+    "useAudienceEstimate",
+    "useAuth",
     "useCatalogRecentSends",
     "useConfirmMultiplixDispatch",
     "useContactSearch",
     "useCreateMultiplixDispatch",
     "useDebouncedCallback",
+    "useMessageUpdateBatcher",
     "useMultiplixAudienceApply",
     "useMultiplixAudienceSave",
     "useMultiplixAudienceSelect",
@@ -5776,26 +5830,45 @@
     "useMultiplixSearch",
     "useMultiplixUfs",
     "useNavigationHistory",
+    "useNotificationSettings",
+    "useOfflineCache",
+    "usePublishIncomingAlertIdentity",
+    "useRealtimeMessages",
+    "useRealtimeNotifications",
+    "useRealtimeReconnectingNotice",
+    "useRealtimeStatus",
     "useReducedMotion",
+    "useSegmentLibraryStats",
     "useSendToContact",
     "useTalkXMediaUrl",
-    "useTalkXServiceStatus"
+    "useTalkXSegments",
+    "useTalkXServiceStatus",
+    "useTalkxAi",
+    "useTeamAlertsPreference",
+    "useToast"
    ],
    "tabelas": [
     "catalog_send_events",
     "contacts",
+    "messages",
+    "profiles",
+    "user_settings",
     "whatsapp_connections"
    ],
    "rpcs": [
     "enqueue_outbound_message",
-    "enqueue_rich_outbound_message"
+    "enqueue_rich_outbound_message",
+    "get_inbox_contact_summaries"
    ],
    "edges": [
+    "auth-login",
+    "detect-new-device",
     "multiplix-audience",
     "multiplix-dispatch",
     "multiplix-send"
    ],
    "canais_realtime": [
+    "chat-reactions:${messageId}",
     "multiplix-mon-${dispatchId}"
    ],
    "flags": [],
@@ -5811,7 +5884,7 @@
     "region",
     "status"
    ],
-   "arquivos_puxados": 69
+   "arquivos_puxados": 111
   },
   {
    "id": "nps",
@@ -5862,6 +5935,7 @@
     "useAppBootstrap",
     "useApplicableSLA",
     "useAttachmentSuggestion",
+    "useAudienceEstimate",
     "useAudioMemes",
     "useAudioPlayer",
     "useAudioRecorder",
@@ -5988,6 +6062,7 @@
     "useScheduledMessages",
     "useScribe",
     "useSearchHistory",
+    "useSegmentLibraryStats",
     "useSendToContact",
     "useSentimentAlerts",
     "useSmartTemplates",
@@ -6000,7 +6075,9 @@
     "useSyncExternalStore",
     "useSyncToCRM",
     "useTalkXMediaUrl",
+    "useTalkXSegments",
     "useTalkXServiceStatus",
+    "useTalkxAi",
     "useTeamAlertsPreference",
     "useTextToSpeech",
     "useTheme",
@@ -6030,6 +6107,7 @@
     "useAppBootstrap",
     "useApplicableSLA",
     "useAttachmentSuggestion",
+    "useAudienceEstimate",
     "useAudioMemes",
     "useAudioPlayer",
     "useAudioRecorder",
@@ -6131,6 +6209,7 @@
     "useSLACalculation",
     "useScheduledMessages",
     "useSearchHistory",
+    "useSegmentLibraryStats",
     "useSendToContact",
     "useSentimentAlerts",
     "useSmartTemplates",
@@ -6140,7 +6219,9 @@
     "useSupabaseRealtime",
     "useSyncToCRM",
     "useTalkXMediaUrl",
+    "useTalkXSegments",
     "useTalkXServiceStatus",
+    "useTalkxAi",
     "useTeamAlertsPreference",
     "useTextToSpeech",
     "useTheme",
@@ -6303,7 +6384,7 @@
     "unknown",
     "user"
    ],
-   "arquivos_puxados": 466
+   "arquivos_puxados": 471
   },
   {
    "id": "omnichannel",
@@ -7468,7 +7549,7 @@
     "tab",
     "tablist"
    ],
-   "arquivos_puxados": 262
+   "arquivos_puxados": 263
   },
   {
    "id": "talkx-kit",
@@ -7476,30 +7557,78 @@
    "arquivo": "src/components/talkx/__dev__/TalkXKit.tsx",
    "registrada_em": "src/pages/ViewRouter.tsx",
    "hooks": [
+    "useAudienceEstimate",
+    "useAuth",
+    "useCallback",
+    "useContext",
     "useEffect",
     "useMemo",
+    "useMessageUpdateBatcher",
+    "useMutation",
+    "useNotificationLeader",
+    "useNotificationSettings",
+    "useOfflineCache",
+    "usePublishIncomingAlertIdentity",
     "useQuery",
+    "useQueryClient",
+    "useRealtimeMessages",
+    "useRealtimeNotifications",
+    "useRealtimeReconnectingNotice",
+    "useRealtimeStatus",
     "useReducedMotion",
     "useRef",
+    "useSegmentLibraryStats",
     "useState",
+    "useSyncExternalStore",
     "useTalkXMediaUrl",
     "useTalkXOverviewStats",
-    "useTalkXServiceStatus"
+    "useTalkXSegments",
+    "useTalkXServiceStatus",
+    "useTalkxAi",
+    "useTeamAlertsPreference",
+    "useToast"
    ],
    "hooks_locais": [
+    "useAudienceEstimate",
+    "useAuth",
+    "useMessageUpdateBatcher",
+    "useNotificationSettings",
+    "useOfflineCache",
+    "usePublishIncomingAlertIdentity",
+    "useRealtimeMessages",
+    "useRealtimeNotifications",
+    "useRealtimeReconnectingNotice",
+    "useRealtimeStatus",
     "useReducedMotion",
+    "useSegmentLibraryStats",
     "useTalkXMediaUrl",
     "useTalkXOverviewStats",
-    "useTalkXServiceStatus"
+    "useTalkXSegments",
+    "useTalkXServiceStatus",
+    "useTalkxAi",
+    "useTeamAlertsPreference",
+    "useToast"
    ],
    "tabelas": [
+    "contacts",
+    "messages",
+    "profiles",
+    "user_settings",
     "whatsapp_connections"
    ],
    "rpcs": [
+    "enqueue_outbound_message",
+    "enqueue_rich_outbound_message",
+    "get_inbox_contact_summaries",
     "talkx_overview_stats"
    ],
-   "edges": [],
-   "canais_realtime": [],
+   "edges": [
+    "auth-login",
+    "detect-new-device"
+   ],
+   "canais_realtime": [
+    "chat-reactions:${messageId}"
+   ],
    "flags": [],
    "papeis": [
     "alert",
@@ -7511,7 +7640,7 @@
     "menuitem",
     "status"
    ],
-   "arquivos_puxados": 33
+   "arquivos_puxados": 84
   },
   {
    "id": "tasks",

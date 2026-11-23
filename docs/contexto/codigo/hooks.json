@@ -11705,7 +11705,7 @@
     "useQueryClient"
    ],
    "canais_realtime": [],
-   "usado_por": 24,
+   "usado_por": 25,
    "usado_por_arquivos": [
     "analise-prs/resgate-261118-lote3/claude/feat-talkx-x054-cmdk-261108-0100/src/components/talkx/TalkXView.tsx",
     "analise-prs/resgate-261118-lote3/claude/fix-talkx-segmentos-regressao-261101-1944/src/components/talkx/TalkXSegments.tsx",
@@ -11730,9 +11730,10 @@
     "src/components/talkx/segments/segmentBuilderReducer.ts",
     "src/components/talkx/segments/segmentValidation.ts",
     "src/components/talkx/useCampaignEditor.ts",
-    "src/hooks/integrations/useTalkXCampaignSummary.ts"
+    "src/hooks/integrations/useTalkXCampaignSummary.ts",
+    "src/hooks/talkx/talkxAiSuggestions.ts"
    ],
-   "coberto_por_testes": 37
+   "coberto_por_testes": 38
   },
   {
    "arquivo": "src/hooks/integrations/useTalkXServerResumePrecheck.ts",
@@ -13952,9 +13953,11 @@
     "useMutation"
    ],
    "canais_realtime": [],
-   "usado_por": 1,
+   "usado_por": 3,
    "usado_por_arquivos": [
-    "src/components/talkx/TalkXCampaignWizard.tsx"
+    "src/components/talkx/TalkXCampaignWizard.tsx",
+    "src/components/talkx/kit/insight.tsx",
+    "src/components/talkx/segments/TalkXSegmentBuilder.tsx"
    ],
    "coberto_por_testes": 1
   },

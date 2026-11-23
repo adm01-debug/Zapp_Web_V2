@@ -14255,9 +14255,11 @@
     "InsightType"
    ],
    "export_default": null,
-   "linhas": 70,
+   "linhas": 138,
    "dominio": "components/talkx",
-   "hooks_locais": [],
+   "hooks_locais": [
+    "useTalkxAi"
+   ],
    "tabelas": [],
    "edges": [],
    "usado_por": 1,
@@ -14539,10 +14541,11 @@
     "TalkXSegmentBuilderProps"
    ],
    "export_default": null,
-   "linhas": 326,
+   "linhas": 409,
    "dominio": "components/talkx",
    "hooks_locais": [
-    "useAudienceEstimate"
+    "useAudienceEstimate",
+    "useTalkxAi"
    ],
    "tabelas": [],
    "edges": [],
@@ -14569,7 +14572,7 @@
     "TalkXAnalytics"
    ],
    "export_default": null,
-   "linhas": 728,
+   "linhas": 729,
    "dominio": "components/talkx",
    "hooks_locais": [
     "useActiveDepartments",

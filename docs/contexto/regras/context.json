@@ -1,15 +1,15 @@
 {
  "meta": {
-  "sha": "2fca6d0ddc29f9f233b578f4ce4cb55b0dbaf51b",
+  "sha": "5ba09eae58eb5282b822cda94646eedbaf067371",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-23 20:13 UTC",
-  "files_total": 15624,
-  "code_files": 8925,
-  "code_lines": 1416294
+  "generated_at": "2026-11-23 20:30 UTC",
+  "files_total": 15627,
+  "code_files": 8928,
+  "code_lines": 1416915
  },
  "version": "1.3.2",
- "facts_hash": "b7af50148e7942ee",
+ "facts_hash": "dec777592957d344",
  "stack": {
   "frameworks": [
    "React + Vite",
@@ -345,8 +345,8 @@
   "package_manager": "bun",
   "languages": {
    ".sql": 3065,
-   ".tsx": 2828,
-   ".ts": 2250,
+   ".tsx": 2829,
+   ".ts": 2252,
    ".mjs": 653,
    ".py": 125,
    ".cjs": 19,
@@ -73619,7 +73619,7 @@
     "file": ".github/workflows/types-sync.yml"
    }
   ],
-  "components_count": 2607,
+  "components_count": 2608,
   "hooks": [
    {
     "name": "useMotionSeguro",
@@ -77539,8 +77539,8 @@
   },
   {
    "module": "src/components",
-   "files": 2312,
-   "lines": 393485,
+   "files": 2313,
+   "lines": 393764,
    "tables": [
     "agent_skills",
     "agent_visibility_grants",
@@ -77888,8 +77888,8 @@
   },
   {
    "module": "src/hooks",
-   "files": 1030,
-   "lines": 166943,
+   "files": 1032,
+   "lines": 167285,
    "tables": [
     "agent_achievements",
     "agent_stats",
@@ -107144,6 +107144,10 @@
     "text": "* Ambiente mínimo lido pela trava (permite provar o modo produção no teste). */"
    },
    {
+    "file": "src/components/talkx/kit/insight.tsx",
+    "text": "Recusa da edge (IA desligada, teto do mes, limite diario) vem com o"
+   },
+   {
     "file": "src/components/talkx/kit/personalize.ts",
     "text": "* Módulo PURO (sem React nem imports) que replica, para a prévia, a MESMA regra"
    },
@@ -107214,6 +107218,10 @@
    {
     "file": "src/components/talkx/segments/TalkXSegmentBuilder.tsx",
     "text": "duplicar grupo e validação de nome/descrição."
+   },
+   {
+    "file": "src/components/talkx/segments/TalkXSegmentBuilder.tsx",
+    "text": "Recusa da edge (IA desligada, teto do mes, limite diario): o texto"
    },
    {
     "file": "src/components/talkx/segments/segmentBuilderReducer.ts",
@@ -109542,6 +109550,22 @@
    {
     "file": "src/hooks/system/useUserSettings.ts",
     "text": "Business hours"
+   },
+   {
+    "file": "src/hooks/talkx/talkxAiSuggestions.ts",
+    "text": "* Regra de ouro: a IA NUNCA aplica nada. Ela devolve uma sugestao; quem"
+   },
+   {
+    "file": "src/hooks/talkx/talkxAiSuggestions.ts",
+    "text": "tipo do campo ou valor vazio e REJEITADA por inteiro: meia regra aplicada e"
+   },
+   {
+    "file": "src/hooks/talkx/talkxAiSuggestions.ts",
+    "text": "* Resumo textual de uma regra para mandar como `input.regra` do `insight_text`."
+   },
+   {
+    "file": "src/hooks/talkx/talkxAiSuggestions.ts",
+    "text": "* Texto do pedido livre do construtor -> validacao antes de gastar a chamada. */"
    },
    {
     "file": "src/hooks/talkx/useTalkxAi.ts",
@@ -126562,6 +126586,21 @@
     "value": "1000"
    },
    {
+    "file": "src/hooks/talkx/talkxAiSuggestions.ts",
+    "name": "SUGESTAO_MAX_GRUPOS",
+    "value": "5"
+   },
+   {
+    "file": "src/hooks/talkx/talkxAiSuggestions.ts",
+    "name": "SUGESTAO_MAX_CONDICOES",
+    "value": "20"
+   },
+   {
+    "file": "src/hooks/talkx/talkxAiSuggestions.ts",
+    "name": "SUGESTAO_MAX_PEDIDO",
+    "value": "8"
+   },
+   {
     "file": "src/hooks/tasks/useMyWorkItems.ts",
     "name": "DONE_WINDOW_DAYS",
     "value": "30"
@@ -141489,6 +141528,12 @@
    {
     "file": "src/components/talkx/segments/TalkXSegmentBuilder.tsx",
     "field": "type",
+    "value": "suggestRules",
+    "kind": "escreve"
+   },
+   {
+    "file": "src/components/talkx/segments/TalkXSegmentBuilder.tsx",
+    "field": "type",
     "value": "addRule",
     "kind": "escreve"
    },
@@ -141687,6 +141732,12 @@
    {
     "file": "src/components/talkx/segments/segmentBuilderReducer.ts",
     "field": "type",
+    "value": "suggestRules",
+    "kind": "escreve"
+   },
+   {
+    "file": "src/components/talkx/segments/segmentBuilderReducer.ts",
+    "field": "type",
     "value": "load",
     "kind": "compara"
    },
@@ -141772,6 +141823,12 @@
     "file": "src/components/talkx/segments/segmentBuilderReducer.ts",
     "field": "type",
     "value": "redo",
+    "kind": "compara"
+   },
+   {
+    "file": "src/components/talkx/segments/segmentBuilderReducer.ts",
+    "field": "type",
+    "value": "suggestRules",
     "kind": "compara"
    },
    {
@@ -151861,6 +151918,18 @@
     "name": "calculateStats",
     "params": "data: RateLimitLog[]",
     "body": "const totalRequests = data.reduce((sum, log) => sum + log.request_count, 0); const blockedRequests = data.filter(log => log.blocked).length; const uniqueIPs = new Set(data.map(log => log.ip_address)).size; const endpointCounts: Record<string, number> = {}; data.forEach(log => { endpointCounts[log.endpoint] = (endpointCounts[log.endpoint] || 0) + log.request_count; }); const topEndpoints = Object.entries(endpointCounts) .map(([endpoint, count]) => ({ endpoint, count })) .sort((a, b) => b.count - …"
+   },
+   {
+    "file": "src/hooks/talkx/talkxAiSuggestions.ts",
+    "name": "campoValido",
+    "params": "valor: unknown",
+    "body": "return typeof valor === 'string' && RULE_FIELDS.some((f) => f.value === valor);"
+   },
+   {
+    "file": "src/hooks/talkx/talkxAiSuggestions.ts",
+    "name": "operadorValido",
+    "params": "field: RuleField, op: unknown",
+    "body": "if (typeof op !== 'string') return false; const permitidos = RULE_OPS[tipoDoCampo(field)] ?? []; return permitidos.some((o) => o.value === op);"
    },
    {
     "file": "src/hooks/tasks/useMyWorkItems.ts",
@@ -210249,6 +210318,26 @@
     "name": "erro do servidor não vira lista vazia: mostra o estado de erro e o motivo real"
    },
    {
+    "file": "src/components/talkx/segments/__tests__/TalkXSegmentBuilder.ia.test.tsx",
+    "name": "TalkXSegmentBuilder · Sugerir com IA"
+   },
+   {
+    "file": "src/components/talkx/segments/__tests__/TalkXSegmentBuilder.ia.test.tsx",
+    "name": "A: pedido vazio é recusado no cliente e não gasta chamada paga"
+   },
+   {
+    "file": "src/components/talkx/segments/__tests__/TalkXSegmentBuilder.ia.test.tsx",
+    "name": "B: sugestão válida vira condição real no construtor e entra no histórico"
+   },
+   {
+    "file": "src/components/talkx/segments/__tests__/TalkXSegmentBuilder.ia.test.tsx",
+    "name": "C: sugestão com campo inexistente não aplica nada e explica o motivo"
+   },
+   {
+    "file": "src/components/talkx/segments/__tests__/TalkXSegmentBuilder.ia.test.tsx",
+    "name": "D: recusa da edge (IA desligada) aparece na tela com o motivo do servidor"
+   },
+   {
     "file": "src/components/tasks/__tests__/NewTaskDialog.coerencia.test.tsx",
     "name": "NewTaskDialog — coerência prazo × lembrete (etapa 163)"
    },
@@ -233643,6 +233732,82 @@
    {
     "file": "src/hooks/talkx/__tests__/paginacao.test.ts",
     "name": "propaga o erro do servidor em vez de devolver lista curta em silêncio"
+   },
+   {
+    "file": "src/hooks/talkx/__tests__/talkxAiSuggestions.test.ts",
+    "name": "sugestaoParaRegras"
+   },
+   {
+    "file": "src/hooks/talkx/__tests__/talkxAiSuggestions.test.ts",
+    "name": "A: saida fora do formato nao vira regra"
+   },
+   {
+    "file": "src/hooks/talkx/__tests__/talkxAiSuggestions.test.ts",
+    "name": "A: campo que nao existe no catalogo e descartado, nao aplicado"
+   },
+   {
+    "file": "src/hooks/talkx/__tests__/talkxAiSuggestions.test.ts",
+    "name": "A: operador invalido para o tipo do campo e recusado (uuid nao aceita contem)"
+   },
+   {
+    "file": "src/hooks/talkx/__tests__/talkxAiSuggestions.test.ts",
+    "name": "A: condicao sem valor nao entra (filtro que parece existir e nao recorta)"
+   },
+   {
+    "file": "src/hooks/talkx/__tests__/talkxAiSuggestions.test.ts",
+    "name": "A: mais grupos que o teto e recusado inteiro, nunca truncado"
+   },
+   {
+    "file": "src/hooks/talkx/__tests__/talkxAiSuggestions.test.ts",
+    "name": "A: mais condicoes que o teto e recusado inteiro"
+   },
+   {
+    "file": "src/hooks/talkx/__tests__/talkxAiSuggestions.test.ts",
+    "name": "B: sugestao valida vira SegmentRules com ids novos e join ou"
+   },
+   {
+    "file": "src/hooks/talkx/__tests__/talkxAiSuggestions.test.ts",
+    "name": "B: value numerico vira texto, que e o que o banco guarda"
+   },
+   {
+    "file": "src/hooks/talkx/__tests__/talkxAiSuggestions.test.ts",
+    "name": "B: operador sem valor (is_empty) passa sem exigir valor"
+   },
+   {
+    "file": "src/hooks/talkx/__tests__/talkxAiSuggestions.test.ts",
+    "name": "B: aceita "
+   },
+   {
+    "file": "src/hooks/talkx/__tests__/talkxAiSuggestions.test.ts",
+    "name": "C: mistura de valida e invalida mantem a valida e lista o descarte"
+   },
+   {
+    "file": "src/hooks/talkx/__tests__/talkxAiSuggestions.test.ts",
+    "name": "regraParaExplicar"
+   },
+   {
+    "file": "src/hooks/talkx/__tests__/talkxAiSuggestions.test.ts",
+    "name": "B: monta a entrada calculada do insight_text sem dado pessoal"
+   },
+   {
+    "file": "src/hooks/talkx/__tests__/talkxAiSuggestions.test.ts",
+    "name": "B: sem meta nao inclui a chave dados"
+   },
+   {
+    "file": "src/hooks/talkx/__tests__/talkxAiSuggestions.test.ts",
+    "name": "pedidoDeSegmentoValido"
+   },
+   {
+    "file": "src/hooks/talkx/__tests__/talkxAiSuggestions.test.ts",
+    "name": "A: pedido vazio e recusado antes da chamada paga"
+   },
+   {
+    "file": "src/hooks/talkx/__tests__/talkxAiSuggestions.test.ts",
+    "name": "A: pedido acima do teto da edge e recusado no cliente"
+   },
+   {
+    "file": "src/hooks/talkx/__tests__/talkxAiSuggestions.test.ts",
+    "name": "B: pedido normal passa"
    },
    {
     "file": "src/hooks/talkx/__tests__/useTalkxAi.test.ts",
@@ -286183,6 +286348,11 @@
       "compara:src/components/settings/media-library/useMediaLibrary.ts"
      ],
      "reset": [
+      "compara:src/components/talkx/segments/segmentBuilderReducer.ts",
+      "escreve:src/components/talkx/segments/TalkXSegmentBuilder.tsx",
+      "escreve:src/components/talkx/segments/segmentBuilderReducer.ts"
+     ],
+     "suggestRules": [
       "compara:src/components/talkx/segments/segmentBuilderReducer.ts",
       "escreve:src/components/talkx/segments/TalkXSegmentBuilder.tsx",
       "escreve:src/components/talkx/segments/segmentBuilderReducer.ts"
@@ -396740,7 +396910,7 @@
   },
   "src/components/talkx/TalkXAnalytics.tsx": {
    "path": "src/components/talkx/TalkXAnalytics.tsx",
-   "lines": 728,
+   "lines": 729,
    "exports": [
     "function TalkXAnalytics"
    ],
@@ -401964,7 +402134,7 @@
   },
   "src/components/talkx/kit/insight.tsx": {
    "path": "src/components/talkx/kit/insight.tsx",
-   "lines": 70,
+   "lines": 138,
    "exports": [
     "type InsightType",
     "type InsightPriority",
@@ -401979,6 +402149,9 @@
      "name": "InsightPriority",
      "values": "high | medium | low"
     }
+   ],
+   "rule_comments": [
+    "Recusa da edge (IA desligada, teto do mes, limite diario) vem com o"
    ]
   },
   "src/components/talkx/kit/kpi.tsx": {
@@ -402651,7 +402824,7 @@
   },
   "src/components/talkx/segments/TalkXSegmentBuilder.tsx": {
    "path": "src/components/talkx/segments/TalkXSegmentBuilder.tsx",
-   "lines": 326,
+   "lines": 409,
    "exports": [
     "interface TalkXSegmentBuilderProps",
     "function TalkXSegmentBuilder"
@@ -402663,6 +402836,11 @@
     {
      "field": "type",
      "value": "reset",
+     "kind": "escreve"
+    },
+    {
+     "field": "type",
+     "value": "suggestRules",
      "kind": "escreve"
     },
     {
@@ -402752,12 +402930,13 @@
     }
    ],
    "rule_comments": [
-    "duplicar grupo e validação de nome/descrição."
+    "duplicar grupo e validação de nome/descrição.",
+    "Recusa da edge (IA desligada, teto do mes, limite diario): o texto"
    ]
   },
   "src/components/talkx/segments/segmentBuilderReducer.ts": {
    "path": "src/components/talkx/segments/segmentBuilderReducer.ts",
-   "lines": 265,
+   "lines": 281,
    "exports": [
     "const HISTORY_LIMIT",
     "const COALESCE_MS",
@@ -402864,6 +403043,11 @@
     },
     {
      "field": "type",
+     "value": "suggestRules",
+     "kind": "escreve"
+    },
+    {
+     "field": "type",
      "value": "load",
      "kind": "compara"
     },
@@ -402935,6 +403119,11 @@
     {
      "field": "type",
      "value": "redo",
+     "kind": "compara"
+    },
+    {
+     "field": "type",
+     "value": "suggestRules",
      "kind": "compara"
     },
     {
@@ -403037,6 +403226,21 @@
     "na gaveta (abaixo de 1280px) o mesmo conteúdo aparece no painel lateral",
     "sem nenhum segmento mostra o estado vazio com a ação de criar",
     "erro do servidor não vira lista vazia: mostra o estado de erro e o motivo real"
+   ]
+  },
+  "src/components/talkx/segments/__tests__/TalkXSegmentBuilder.ia.test.tsx": {
+   "path": "src/components/talkx/segments/__tests__/TalkXSegmentBuilder.ia.test.tsx",
+   "lines": 111,
+   "is_test": true,
+   "rule_comments": [
+    "que importa para o negocio:"
+   ],
+   "tests": [
+    "TalkXSegmentBuilder · Sugerir com IA",
+    "A: pedido vazio é recusado no cliente e não gasta chamada paga",
+    "B: sugestão válida vira condição real no construtor e entra no histórico",
+    "C: sugestão com campo inexistente não aplica nada e explica o motivo",
+    "D: recusa da edge (IA desligada) aparece na tela com o motivo do servidor"
    ]
   },
   "src/components/talkx/suppression/ProtectionGauge.tsx": {
@@ -434768,6 +434972,52 @@
     }
    ]
   },
+  "src/hooks/talkx/talkxAiSuggestions.ts": {
+   "path": "src/hooks/talkx/talkxAiSuggestions.ts",
+   "lines": 188,
+   "exports": [
+    "const SUGESTAO_MAX_GRUPOS",
+    "const SUGESTAO_MAX_CONDICOES",
+    "const SUGESTAO_MAX_PEDIDO",
+    "interface SugestaoDeSegmento",
+    "type ResultadoSugestao",
+    "function sugestaoParaRegras",
+    "function regraParaExplicar",
+    "function pedidoDeSegmentoValido"
+   ],
+   "params": [
+    {
+     "name": "SUGESTAO_MAX_GRUPOS",
+     "value": "5"
+    },
+    {
+     "name": "SUGESTAO_MAX_CONDICOES",
+     "value": "20"
+    },
+    {
+     "name": "SUGESTAO_MAX_PEDIDO",
+     "value": "8"
+    }
+   ],
+   "rule_comments": [
+    "* Regra de ouro: a IA NUNCA aplica nada. Ela devolve uma sugestao; quem",
+    "tipo do campo ou valor vazio e REJEITADA por inteiro: meia regra aplicada e",
+    "* Resumo textual de uma regra para mandar como `input.regra` do `insight_text`.",
+    "* Texto do pedido livre do construtor -> validacao antes de gastar a chamada. */"
+   ],
+   "calc_fns": [
+    {
+     "name": "campoValido",
+     "params": "valor: unknown",
+     "body": "return typeof valor === 'string' && RULE_FIELDS.some((f) => f.value === valor);"
+    },
+    {
+     "name": "operadorValido",
+     "params": "field: RuleField, op: unknown",
+     "body": "if (typeof op !== 'string') return false; const permitidos = RULE_OPS[tipoDoCampo(field)] ?? []; return permitidos.some((o) => o.value === op);"
+    }
+   ]
+  },
   "src/hooks/talkx/useTalkxAi.ts": {
    "path": "src/hooks/talkx/useTalkxAi.ts",
    "lines": 114,
@@ -434822,6 +435072,35 @@
     "traz 1500 linhas em 2 fatias (1000 + 500), sem repetir nem perder linha",
     "para na fatia vazia quando o total é múltiplo exato do tamanho da página",
     "propaga o erro do servidor em vez de devolver lista curta em silêncio"
+   ]
+  },
+  "src/hooks/talkx/__tests__/talkxAiSuggestions.test.ts": {
+   "path": "src/hooks/talkx/__tests__/talkxAiSuggestions.test.ts",
+   "lines": 154,
+   "is_test": true,
+   "rule_comments": [
+    "regra e pior que nao aplicar nada, porque o segmento passa a filtrar errado"
+   ],
+   "tests": [
+    "sugestaoParaRegras",
+    "A: saida fora do formato nao vira regra",
+    "A: campo que nao existe no catalogo e descartado, nao aplicado",
+    "A: operador invalido para o tipo do campo e recusado (uuid nao aceita contem)",
+    "A: condicao sem valor nao entra (filtro que parece existir e nao recorta)",
+    "A: mais grupos que o teto e recusado inteiro, nunca truncado",
+    "A: mais condicoes que o teto e recusado inteiro",
+    "B: sugestao valida vira SegmentRules com ids novos e join ou",
+    "B: value numerico vira texto, que e o que o banco guarda",
+    "B: operador sem valor (is_empty) passa sem exigir valor",
+    "B: aceita ",
+    "C: mistura de valida e invalida mantem a valida e lista o descarte",
+    "regraParaExplicar",
+    "B: monta a entrada calculada do insight_text sem dado pessoal",
+    "B: sem meta nao inclui a chave dados",
+    "pedidoDeSegmentoValido",
+    "A: pedido vazio e recusado antes da chamada paga",
+    "A: pedido acima do teto da edge e recusado no cliente",
+    "B: pedido normal passa"
    ]
   },
   "src/hooks/talkx/__tests__/useTalkxAi.test.ts": {
@@ -482426,10 +482705,25 @@
   }
  },
  "git": {
-  "sha": "2fca6d0ddc29f9f233b578f4ce4cb55b0dbaf51b",
+  "sha": "5ba09eae58eb5282b822cda94646eedbaf067371",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "5ba09eae",
+    "date": "2026-11-23",
+    "author": "adm01-debug",
+    "subject": "feat(talkx): liga os dois kinds sem tela da IA (insight_text e segment_suggestion) (#3339)",
+    "files": [
+     "src/components/talkx/TalkXAnalytics.tsx",
+     "src/components/talkx/kit/insight.tsx",
+     "src/components/talkx/segments/TalkXSegmentBuilder.tsx",
+     "src/components/talkx/segments/__tests__/TalkXSegmentBuilder.ia.test.tsx",
+     "src/components/talkx/segments/segmentBuilderReducer.ts",
+     "src/hooks/talkx/__tests__/talkxAiSuggestions.test.ts",
+     "src/hooks/talkx/talkxAiSuggestions.ts"
+    ]
+   },
    {
     "sha": "2fca6d0d",
     "date": "2026-11-23",
@@ -482861,16 +483155,6 @@
      "scripts/ci/e2e-isolated-pull-image.unit.mjs",
      "scripts/e2e-isolated/pull-image.mjs"
     ]
-   },
-   {
-    "sha": "79c7a8bd",
-    "date": "2026-11-21",
-    "author": "adm01-debug",
-    "subject": "fix(e2e): inclui migration do cron de relatórios agendados no guard vault (#3301)",
-    "files": [
-     "scripts/ci/e2e-isolated-migrations.unit.mjs",
-     "scripts/e2e-isolated/migrations.mjs"
-    ]
    }
   ],
   "hot_files": [
@@ -482947,11 +483231,11 @@
     2
    ],
    [
-    "e2e/a11y-toque-44px.spec.ts",
+    "src/components/talkx/TalkXAnalytics.tsx",
     1
    ],
    [
-    "docs/pendencias/infra-de-ia-talkx-ai-x076.md",
+    "src/components/talkx/kit/insight.tsx",
     1
    ]
   ]

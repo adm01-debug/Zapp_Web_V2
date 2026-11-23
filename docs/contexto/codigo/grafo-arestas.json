@@ -8418,6 +8418,10 @@
   "src/components/talkx/kit/format.ts": [
    "src/components/talkx/kit/placeholders.ts"
   ],
+  "src/components/talkx/kit/insight.tsx": [
+   "src/hooks/talkx/talkxAiSuggestions.ts",
+   "src/hooks/talkx/useTalkxAi.ts"
+  ],
   "src/components/talkx/kit/kpi.tsx": [
    "src/components/talkx/kit/constants.ts",
    "src/components/talkx/kit/primitives.tsx",
@@ -8538,6 +8542,8 @@
    "src/components/ui/dropdown-menu.tsx",
    "src/components/ui/input.tsx",
    "src/hooks/integrations/useTalkXSegments.ts",
+   "src/hooks/talkx/talkxAiSuggestions.ts",
+   "src/hooks/talkx/useTalkxAi.ts",
    "src/lib/utils.ts"
   ],
   "src/components/talkx/segments/segmentBuilderReducer.ts": [
@@ -11496,6 +11502,9 @@
    "src/i18n/index.ts",
    "src/integrations/supabase/client.ts",
    "src/lib/logger.ts"
+  ],
+  "src/hooks/talkx/talkxAiSuggestions.ts": [
+   "src/hooks/integrations/useTalkXSegments.ts"
   ],
   "src/hooks/talkx/useTalkxAi.ts": [
    "src/lib/invokeEdge.ts"

@@ -1,8 +1,8 @@
 {
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
- "nos": 2753,
- "arestas": 9406,
+ "nos": 2754,
+ "arestas": 9411,
  "hubs": [
   {
    "arquivo": "src/lib/utils.ts",
@@ -89,12 +89,12 @@
    "importado_por": 65
   },
   {
-   "arquivo": "src/components/ui/switch.tsx",
-   "importado_por": 62
+   "arquivo": "src/hooks/integrations/useTalkXSegments.ts",
+   "importado_por": 63
   },
   {
-   "arquivo": "src/hooks/integrations/useTalkXSegments.ts",
-   "importado_por": 61
+   "arquivo": "src/components/ui/switch.tsx",
+   "importado_por": 62
   },
   {
    "arquivo": "src/lib/localDay.ts",
@@ -606,7 +606,7 @@
   {
    "modulo": "hooks/integrations",
    "depende_de": 22,
-   "importado_por": 26
+   "importado_por": 27
   },
   {
    "modulo": "hooks/ui",
