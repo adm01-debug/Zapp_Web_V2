@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "798617f61e77abde73a7722cc5f77919669c6e16",
+  "commit": "7fe8d2453353061dc6b2b12e524eabfae94b9d9b",
   "branch": "main",
-  "data_commit": "2026-11-23T08:33:49-03:00",
+  "data_commit": "2026-11-23T12:42:20Z",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "7fe8d245",
+    "data": "2026-11-23",
+    "assunto": "fix: suportar executáveis .exe/.cmd/.bat no Windows em resolverExecutavel (#3331)"
+   },
    {
     "sha": "798617f6",
     "data": "2026-11-23",
@@ -126,14 +131,9 @@
     "sha": "8d2d330c",
     "data": "2026-11-21",
     "assunto": "fix(db-audit): contrato de ACL do webhook_failures aceita SELECT do zapp_agente_leitura (#3300)"
-   },
-   {
-    "sha": "b3de24d3",
-    "data": "2026-11-21",
-    "assunto": "chore(db): sincronizar artefatos derivados do banco (#3299)"
    }
   ],
-  "arquivos_mudados_7d": 5403,
+  "arquivos_mudados_7d": 5404,
   "pastas_mais_mudadas_30d": [
    {
     "pasta": "docs/contexto/supabase",
@@ -312,7 +312,7 @@
  "contagens": {
   "arquivos_total": 15770,
   "arquivos_codigo": 5884,
-  "linhas_codigo": 1137677,
+  "linhas_codigo": 1137681,
   "rotas": 18,
   "rotas_http_backend": 11,
   "vistas_por_id": 55,
@@ -664,7 +664,7 @@
   },
   "scripts/lib": {
    "arquivos": 2,
-   "linhas": 418
+   "linhas": 422
   },
   "scripts/maintenance": {
    "arquivos": 4,

@@ -4644,7 +4644,7 @@
   {
    "arquivo": "scripts/lib/seguranca-processo.mjs",
    "descricao": "* Utilidades compartilhadas pelos scripts de auditoria/CI.",
-   "linhas": 118,
+   "linhas": 122,
    "env": [
     "PATH"
    ],
