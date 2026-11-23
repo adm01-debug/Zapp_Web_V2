@@ -1,7 +1,7 @@
 # Contexto do projeto para agentes de IA
 
 GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.
-Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR dela) a cada push em `main` e a cada 10 minutos pelo workflow `contexto.yml`; índice único das três fontes em `docs/contexto/00-INDEX.md`. Gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `340cc4ce3b6cde58afffd4b9bcaad3fa58bbd8db` (2026-11-23T16:38:35-03:00).
+Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR dela) a cada push em `main` e a cada 10 minutos pelo workflow `contexto.yml`; índice único das três fontes em `docs/contexto/00-INDEX.md`. Gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `2fca6d0ddc29f9f233b578f4ce4cb55b0dbaf51b` (2026-11-23T17:09:45-03:00).
 
 ## Como usar (leia antes de planejar ou executar qualquer tarefa)
 1. **Tela/rota/menu** → `rotas.json` (url/vista/menu → arquivo → hooks → tabelas → edges; `rotas_http_backend` para APIs) e `modulos.json` (módulo inteiro + dependências entre módulos).
@@ -36,7 +36,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 |---|---|
 | arquivos_total | 15776 |
 | arquivos_codigo | 5887 |
-| linhas_codigo | 1138449 |
+| linhas_codigo | 1138453 |
 | rotas | 18 |
 | rotas_http_backend | 11 |
 | vistas_por_id | 55 |
@@ -397,7 +397,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - possiveis_segredos_no_codigo: 6 — ex.: analise-prs/resgate-261118-lote3/claude_pink/cool-dijkstra-xk9ek2/scripts/ci/edge-coverage-authz.unit.mjs:397, analise-prs/resgate-261118-lote3/claude_pink/cool-dijkstra-xk9ek2/scripts/edge-deploy/redigir-log.unit.mjs:38, scripts/ai-context/cenarios.mjs:102
 
 ## Grafo de código (graphify)
-- 103159 nós · 175207 arestas · 9273 comunidades · grafo do commit `340cc4ce`
+- 103159 nós · 175207 arestas · 9273 comunidades · grafo do commit `2fca6d0d`
 - comunidades maiores: Communities (5953 total, 1987 thin omitted) (3947), cn (1326), @tanstack/react-query (1215), framer-motion (1090), react (904), vitest (894), TalkXSuppression.tsx (837), ref_node_assert (735), validation.ts (620), ref_node_fs (560), DashboardView.tsx (536), select.tsx (489)
 - símbolos mais chamados: cn() (src/lib/utils.ts), useAuth() (src/hooks/auth/useAuth.tsx), jsonResponse() (supabase/functions/_shared/validation.ts), errorResponse() (supabase/functions/_shared/validation.ts), handleCors() (supabase/functions/_shared/validation.ts), fail() (scripts/e2e-isolated/network-proof-policy.mjs), Logger (supabase/functions/_shared/validation.ts), requireEnv() (supabase/functions/_shared/validation.ts), fmtInt() (src/components/talkx/kit/format.ts), fromTable() (src/lib/supabaseHelpers.ts), useUserRole() (src/hooks/system/useUserRole.ts), validationErrorResponse() (supabase/functions/_shared/schemas.ts)
 - consulta local: `graphify query "<pergunta>"`, `graphify path "<A>" "<B>"`, `graphify explain "<X>"`
@@ -525,6 +525,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - CHANGELOG topo: [Unreleased]
 
 ## Últimos commits
+- 2026-11-23 `2fca6d0d` fix: tolera ruido sub-pixel na medicao de 44px do card (#3341)
 - 2026-11-23 `340cc4ce` feat(talkx): cria a trilha de IA e os tetos que a talkx-ai ja exige (#3327)
 - 2026-11-23 `b32c9845` fix(ia): cobra entrada e saída pelo preço real e destrava o custo de IA (#3326)
 - 2026-11-23 `23b81626` fix(ci): guard do ESTADO.md enxerga invokeEdge com generic e publica grupo real das 7 edges (#3322)
@@ -539,7 +540,6 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - 2026-11-22 `7a351f77` feat(assistente): decide por edge as 7 edges restantes da porta unica (#3321)
 - 2026-11-22 `1f71f25d` feat(assistente): liga risco de perda e ancoragem de preco na porta unica (#3320)
 - 2026-11-22 `bcf4dcc8` chore(db): sincronizar artefatos derivados do banco (#3315)
-- 2026-11-22 `2fc081de` feat(assistente): treino por perfil com playbook e catalogo de objecoes (#3319)
 
 ## Arquivos deste diretório
 - `docs/contexto/codigo/rotas.json`

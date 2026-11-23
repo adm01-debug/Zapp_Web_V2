@@ -397,6 +397,7 @@ Visão consolidada (inclui `storage.objects` e `realtime.messages`); detalhes po
 | public.stickers | Sticker delete with ownership | DELETE | PERMISSIVE | authenticated | `((uploaded_by = (auth.uid())::text) OR is_admin_or_supervisor(auth.uid()))` |  |
 | public.stickers | Sticker insert with ownership | INSERT | PERMISSIVE | authenticated |  | `((uploaded_by = (auth.uid())::text) OR is_admin_or_supervisor(auth.uid()))` |
 | public.stickers | Sticker update with ownership | UPDATE | PERMISSIVE | authenticated | `((uploaded_by = (auth.uid())::text) OR is_admin_or_supervisor(auth.uid()))` | `((uploaded_by = (auth.uid())::text) OR is_admin_or_supervisor(auth.uid()))` |
+| public.talkx_ai_requests | talkx_ai_requests_admin_read | SELECT | PERMISSIVE | authenticated | `COALESCE(is_admin_or_supervisor(auth.uid()), false)` |  |
 | public.talkx_alerts | talkx_alerts_select | SELECT | PERMISSIVE | authenticated | `is_admin_or_supervisor(auth.uid())` |  |
 | public.talkx_blacklist | Admins can add to blacklist | INSERT | PERMISSIVE | authenticated |  | `is_admin_or_supervisor(auth.uid())` |
 | public.talkx_blacklist | Only admins can view blacklist | SELECT | PERMISSIVE | authenticated | `is_admin_or_supervisor(auth.uid())` |  |

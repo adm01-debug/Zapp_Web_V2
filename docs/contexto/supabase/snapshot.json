@@ -24507,6 +24507,175 @@
         "nullable": false,
         "position": 1,
         "schema": "public",
+        "table": "talkx_ai_requests",
+        "type": "uuid"
+      },
+      {
+        "comment": null,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "is_enum": false,
+        "name": "kind",
+        "nullable": false,
+        "position": 2,
+        "schema": "public",
+        "table": "talkx_ai_requests",
+        "type": "text"
+      },
+      {
+        "comment": null,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "is_enum": false,
+        "name": "entity_type",
+        "nullable": true,
+        "position": 3,
+        "schema": "public",
+        "table": "talkx_ai_requests",
+        "type": "text"
+      },
+      {
+        "comment": null,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "is_enum": false,
+        "name": "entity_id",
+        "nullable": true,
+        "position": 4,
+        "schema": "public",
+        "table": "talkx_ai_requests",
+        "type": "text"
+      },
+      {
+        "comment": "SHA-256 do kind + entrada canonica. Mesmo hash dentro de 24 h devolve o output do cache sem pagar de novo.",
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "is_enum": false,
+        "name": "input_hash",
+        "nullable": false,
+        "position": 5,
+        "schema": "public",
+        "table": "talkx_ai_requests",
+        "type": "text"
+      },
+      {
+        "comment": null,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "is_enum": false,
+        "name": "output",
+        "nullable": true,
+        "position": 6,
+        "schema": "public",
+        "table": "talkx_ai_requests",
+        "type": "jsonb"
+      },
+      {
+        "comment": null,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "is_enum": false,
+        "name": "model",
+        "nullable": true,
+        "position": 7,
+        "schema": "public",
+        "table": "talkx_ai_requests",
+        "type": "text"
+      },
+      {
+        "comment": null,
+        "default": "0",
+        "generated": null,
+        "identity": null,
+        "is_enum": false,
+        "name": "tokens_in",
+        "nullable": false,
+        "position": 8,
+        "schema": "public",
+        "table": "talkx_ai_requests",
+        "type": "integer"
+      },
+      {
+        "comment": null,
+        "default": "0",
+        "generated": null,
+        "identity": null,
+        "is_enum": false,
+        "name": "tokens_out",
+        "nullable": false,
+        "position": 9,
+        "schema": "public",
+        "table": "talkx_ai_requests",
+        "type": "integer"
+      },
+      {
+        "comment": "Custo medido pela tarifa vigente (ai_model_prices). NULO quando o modelo nao tem tarifa — nao somar como zero.",
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "is_enum": false,
+        "name": "cost_usd",
+        "nullable": true,
+        "position": 10,
+        "schema": "public",
+        "table": "talkx_ai_requests",
+        "type": "numeric(18,8)"
+      },
+      {
+        "comment": null,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "is_enum": false,
+        "name": "status",
+        "nullable": false,
+        "position": 11,
+        "schema": "public",
+        "table": "talkx_ai_requests",
+        "type": "text"
+      },
+      {
+        "comment": null,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "is_enum": false,
+        "name": "created_by",
+        "nullable": false,
+        "position": 12,
+        "schema": "public",
+        "table": "talkx_ai_requests",
+        "type": "uuid"
+      },
+      {
+        "comment": null,
+        "default": "now()",
+        "generated": null,
+        "identity": null,
+        "is_enum": false,
+        "name": "created_at",
+        "nullable": false,
+        "position": 13,
+        "schema": "public",
+        "table": "talkx_ai_requests",
+        "type": "timestamp with time zone"
+      },
+      {
+        "comment": null,
+        "default": "gen_random_uuid()",
+        "generated": null,
+        "identity": null,
+        "is_enum": false,
+        "name": "id",
+        "nullable": false,
+        "position": 1,
+        "schema": "public",
         "table": "talkx_alerts",
         "type": "uuid"
       },
@@ -43706,6 +43875,127 @@
       },
       {
         "columns": [
+          "cost_usd"
+        ],
+        "deferrable": false,
+        "definition": "CHECK (cost_usd IS NULL OR cost_usd >= 0::numeric)",
+        "name": "talkx_ai_requests_cost_usd_check",
+        "on_delete": null,
+        "on_update": null,
+        "ref_columns": [],
+        "ref_schema": null,
+        "ref_table": null,
+        "schema": "public",
+        "table": "talkx_ai_requests",
+        "type": "CHECK",
+        "validated": true
+      },
+      {
+        "columns": [
+          "created_by"
+        ],
+        "deferrable": false,
+        "definition": "FOREIGN KEY (created_by) REFERENCES auth.users(id) ON DELETE CASCADE",
+        "name": "talkx_ai_requests_created_by_fkey",
+        "on_delete": "CASCADE",
+        "on_update": "NO ACTION",
+        "ref_columns": [
+          "id"
+        ],
+        "ref_schema": "auth",
+        "ref_table": "users",
+        "schema": "public",
+        "table": "talkx_ai_requests",
+        "type": "FOREIGN KEY",
+        "validated": true
+      },
+      {
+        "columns": [
+          "kind"
+        ],
+        "deferrable": false,
+        "definition": "CHECK (kind = ANY (ARRAY['insight_text'::text, 'message_variation'::text, 'segment_suggestion'::text]))",
+        "name": "talkx_ai_requests_kind_check",
+        "on_delete": null,
+        "on_update": null,
+        "ref_columns": [],
+        "ref_schema": null,
+        "ref_table": null,
+        "schema": "public",
+        "table": "talkx_ai_requests",
+        "type": "CHECK",
+        "validated": true
+      },
+      {
+        "columns": [
+          "id"
+        ],
+        "deferrable": false,
+        "definition": "PRIMARY KEY (id)",
+        "name": "talkx_ai_requests_pkey",
+        "on_delete": null,
+        "on_update": null,
+        "ref_columns": [],
+        "ref_schema": null,
+        "ref_table": null,
+        "schema": "public",
+        "table": "talkx_ai_requests",
+        "type": "PRIMARY KEY",
+        "validated": true
+      },
+      {
+        "columns": [
+          "status"
+        ],
+        "deferrable": false,
+        "definition": "CHECK (status = ANY (ARRAY['ok'::text, 'error'::text]))",
+        "name": "talkx_ai_requests_status_check",
+        "on_delete": null,
+        "on_update": null,
+        "ref_columns": [],
+        "ref_schema": null,
+        "ref_table": null,
+        "schema": "public",
+        "table": "talkx_ai_requests",
+        "type": "CHECK",
+        "validated": true
+      },
+      {
+        "columns": [
+          "tokens_in"
+        ],
+        "deferrable": false,
+        "definition": "CHECK (tokens_in >= 0)",
+        "name": "talkx_ai_requests_tokens_in_check",
+        "on_delete": null,
+        "on_update": null,
+        "ref_columns": [],
+        "ref_schema": null,
+        "ref_table": null,
+        "schema": "public",
+        "table": "talkx_ai_requests",
+        "type": "CHECK",
+        "validated": true
+      },
+      {
+        "columns": [
+          "tokens_out"
+        ],
+        "deferrable": false,
+        "definition": "CHECK (tokens_out >= 0)",
+        "name": "talkx_ai_requests_tokens_out_check",
+        "on_delete": null,
+        "on_update": null,
+        "ref_columns": [],
+        "ref_schema": null,
+        "ref_table": null,
+        "schema": "public",
+        "table": "talkx_ai_requests",
+        "type": "CHECK",
+        "validated": true
+      },
+      {
+        "columns": [
           "campaign_id"
         ],
         "deferrable": false,
@@ -57905,7 +58195,7 @@
               "hits": 2
             }
           ],
-          "code_total_files": 409,
+          "code_total_files": 411,
           "cron": [],
           "db": [
             "public.add_agent_xp",
@@ -78639,6 +78929,64 @@
       },
       {
         "columns": [
+          "input_hash",
+          "created_at"
+        ],
+        "definition": "CREATE INDEX talkx_ai_requests_cache_idx ON public.talkx_ai_requests USING btree (input_hash, created_at DESC)",
+        "is_primary": false,
+        "is_unique": false,
+        "is_valid": true,
+        "method": "btree",
+        "name": "talkx_ai_requests_cache_idx",
+        "predicate": null,
+        "schema": "public",
+        "table": "talkx_ai_requests"
+      },
+      {
+        "columns": [
+          "created_at"
+        ],
+        "definition": "CREATE INDEX talkx_ai_requests_mes_idx ON public.talkx_ai_requests USING btree (created_at)",
+        "is_primary": false,
+        "is_unique": false,
+        "is_valid": true,
+        "method": "btree",
+        "name": "talkx_ai_requests_mes_idx",
+        "predicate": null,
+        "schema": "public",
+        "table": "talkx_ai_requests"
+      },
+      {
+        "columns": [
+          "id"
+        ],
+        "definition": "CREATE UNIQUE INDEX talkx_ai_requests_pkey ON public.talkx_ai_requests USING btree (id)",
+        "is_primary": true,
+        "is_unique": true,
+        "is_valid": true,
+        "method": "btree",
+        "name": "talkx_ai_requests_pkey",
+        "predicate": null,
+        "schema": "public",
+        "table": "talkx_ai_requests"
+      },
+      {
+        "columns": [
+          "created_by",
+          "created_at"
+        ],
+        "definition": "CREATE INDEX talkx_ai_requests_usuario_dia_idx ON public.talkx_ai_requests USING btree (created_by, created_at DESC)",
+        "is_primary": false,
+        "is_unique": false,
+        "is_valid": true,
+        "method": "btree",
+        "name": "talkx_ai_requests_usuario_dia_idx",
+        "predicate": null,
+        "schema": "public",
+        "table": "talkx_ai_requests"
+      },
+      {
+        "columns": [
           "campaign_id",
           "opened_at"
         ],
@@ -83628,6 +83976,12 @@
         "code": "policy_auth_fn_not_wrapped",
         "detail": "Policy chama auth.uid()/jwt() sem `(select ...)`: é reavaliada por linha; envolva em subselect.",
         "object": "public.stickers.Sticker update with ownership",
+        "severity": "BAIXA"
+      },
+      {
+        "code": "policy_auth_fn_not_wrapped",
+        "detail": "Policy chama auth.uid()/jwt() sem `(select ...)`: é reavaliada por linha; envolva em subselect.",
+        "object": "public.talkx_ai_requests.talkx_ai_requests_admin_read",
         "severity": "BAIXA"
       },
       {
@@ -91269,6 +91623,12 @@
         "statements": 9,
         "statements_sha": "be134a4dde32c9e3",
         "version": "20261121190000"
+      },
+      {
+        "name": "ia055_precos_entrada_e_saida",
+        "statements": 8,
+        "statements_sha": "f460b8d22434aceb",
+        "version": "20261122190000"
       }
     ],
     "policies": [
@@ -95976,6 +96336,18 @@
         "table": "stickers",
         "using": "((uploaded_by = (auth.uid())::text) OR is_admin_or_supervisor(auth.uid()))",
         "with_check": "((uploaded_by = (auth.uid())::text) OR is_admin_or_supervisor(auth.uid()))"
+      },
+      {
+        "cmd": "SELECT",
+        "name": "talkx_ai_requests_admin_read",
+        "permissive": "PERMISSIVE",
+        "roles": [
+          "authenticated"
+        ],
+        "schema": "public",
+        "table": "talkx_ai_requests",
+        "using": "COALESCE(is_admin_or_supervisor(auth.uid()), false)",
+        "with_check": null
       },
       {
         "cmd": "SELECT",
@@ -101193,6 +101565,21 @@
         "is_partition": false,
         "kind": "table",
         "name": "stickers",
+        "owner": "postgres",
+        "parent": null,
+        "partition_bound": null,
+        "partition_key": null,
+        "replica_identity": "default",
+        "rls_enabled": true,
+        "rls_forced": false,
+        "schema": "public"
+      },
+      {
+        "comment": "X076 — trilha de toda chamada de IA do Talk X: teto mensal, limite diario e cache de 24 h. cost_usd NULO = sem tarifa em ai_model_prices, nunca zero.",
+        "from_extension": false,
+        "is_partition": false,
+        "kind": "table",
+        "name": "talkx_ai_requests",
         "owner": "postgres",
         "parent": null,
         "partition_bound": null,

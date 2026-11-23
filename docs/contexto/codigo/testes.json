@@ -3665,7 +3665,7 @@
   {
    "arquivo": "e2e/a11y-toque-44px.spec.ts",
    "tipo": "e2e",
-   "linhas": 288,
+   "linhas": 292,
    "testa": [],
    "casos": 3
   },

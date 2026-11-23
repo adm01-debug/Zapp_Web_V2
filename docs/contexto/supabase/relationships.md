@@ -212,6 +212,7 @@
 | public.sla_rules | contact_id | public.contacts | id | CASCADE | NO ACTION |
 | public.sla_rules | queue_id | public.queues | id | CASCADE | NO ACTION |
 | public.stickers | owner_id | public.profiles | id | CASCADE | NO ACTION |
+| public.talkx_ai_requests | created_by | auth.users | id | CASCADE | NO ACTION |
 | public.talkx_alerts | campaign_id | public.talkx_campaigns | id | CASCADE | NO ACTION |
 | public.talkx_blacklist | blocked_by | public.profiles | id | SET NULL | NO ACTION |
 | public.talkx_blacklist | campaign_id | public.talkx_campaigns | id | SET NULL | NO ACTION |

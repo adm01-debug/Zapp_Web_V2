@@ -583,6 +583,10 @@ Uso e tamanho em `stats.md`.
 | public.sla_rules | sla_rules_pkey | btree | id | sim | sim |  |
 | public.stickers | idx_stickers_owner_id | btree | owner_id | não | sim | `(owner_id IS NOT NULL)` |
 | public.stickers | stickers_pkey | btree | id | sim | sim |  |
+| public.talkx_ai_requests | talkx_ai_requests_cache_idx | btree | input_hash, created_at | não | sim |  |
+| public.talkx_ai_requests | talkx_ai_requests_mes_idx | btree | created_at | não | sim |  |
+| public.talkx_ai_requests | talkx_ai_requests_pkey | btree | id | sim | sim |  |
+| public.talkx_ai_requests | talkx_ai_requests_usuario_dia_idx | btree | created_by, created_at | não | sim |  |
 | public.talkx_alerts | talkx_alerts_campaign_idx | btree | campaign_id, opened_at | não | sim |  |
 | public.talkx_alerts | talkx_alerts_open_dedup | btree | kind | sim | sim | `(resolved_at IS NULL)` |
 | public.talkx_alerts | talkx_alerts_pkey | btree | id | sim | sim |  |

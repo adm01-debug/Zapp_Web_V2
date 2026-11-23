@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "340cc4ce3b6cde58afffd4b9bcaad3fa58bbd8db",
+  "commit": "2fca6d0ddc29f9f233b578f4ce4cb55b0dbaf51b",
   "branch": "main",
-  "data_commit": "2026-11-23T16:38:35-03:00",
+  "data_commit": "2026-11-23T17:09:45-03:00",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "2fca6d0d",
+    "data": "2026-11-23",
+    "assunto": "fix: tolera ruido sub-pixel na medicao de 44px do card (#3341)"
+   },
    {
     "sha": "340cc4ce",
     "data": "2026-11-23",
@@ -126,11 +131,6 @@
     "sha": "7f2b4e62",
     "data": "2026-11-21",
     "assunto": "feat(talkx): monta cards órfãos X149/X144 (Fila por Segmento + Linha do Tempo Operacional) no report de campanha (#3306)"
-   },
-   {
-    "sha": "be88b1e6",
-    "data": "2026-11-21",
-    "assunto": "fix(ci): usa fileURLToPath no caminho do script W98 (teste 15) (#3305)"
    }
   ],
   "arquivos_mudados_7d": 5289,
@@ -312,7 +312,7 @@
  "contagens": {
   "arquivos_total": 15776,
   "arquivos_codigo": 5887,
-  "linhas_codigo": 1138449,
+  "linhas_codigo": 1138453,
   "rotas": 18,
   "rotas_http_backend": 11,
   "vistas_por_id": 55,
@@ -388,7 +388,7 @@
   },
   "e2e/a11y-toque-44px.spec.ts": {
    "arquivos": 1,
-   "linhas": 288
+   "linhas": 292
   },
   "e2e/auth-diagnostics.ts": {
    "arquivos": 1,

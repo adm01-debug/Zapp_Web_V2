@@ -178,6 +178,7 @@ Um arquivo por tabela em `tables/<schema>/<tabela>.md` (colunas, constraints, í
 | [public.sla_configurations](tables/public/sla_configurations.md) | table | sim | 2 | 9 | não | Configuracoes de SLA (minutos para primeira resposta e resolucao, prioridade, default). |
 | [public.sla_rules](tables/public/sla_rules.md) | table | sim | 4 | 15 | não |  |
 | [public.stickers](tables/public/stickers.md) | table | sim | 4 | 10 | não |  |
+| [public.talkx_ai_requests](tables/public/talkx_ai_requests.md) | table | sim | 1 | 13 | não | X076 — trilha de toda chamada de IA do Talk X: teto mensal, limite diario e cache de 24 h. cost_usd NULO = sem tarifa em ai_model_prices, nunca zero. |
 | [public.talkx_alerts](tables/public/talkx_alerts.md) | table | sim | 1 | 6 | não | X033: alertas do motor Talk X. Um alerta aberto por (tipo, campanha); fechado sozinho quando o sinal deixa de disparar (resolved_at). Escrito por talkx_engine_alerts (service_role), lido por admin/supervisor. |
 | [public.talkx_blacklist](tables/public/talkx_blacklist.md) | table | sim | 4 | 15 | sim |  |
 | [public.talkx_campaign_events](tables/public/talkx_campaign_events.md) | table | sim | 2 | 8 | sim |  |

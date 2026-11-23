@@ -2,6 +2,17 @@
 
 Diff semântico gerado a cada coleta em que algo mudou.
 
+## 2026-11-23 20:14 UTC
+
+- **colunas** adicionado (13): `public.talkx_ai_requests.cost_usd`, `public.talkx_ai_requests.created_at`, `public.talkx_ai_requests.created_by`, `public.talkx_ai_requests.entity_id`, `public.talkx_ai_requests.entity_type`, `public.talkx_ai_requests.id`, `public.talkx_ai_requests.input_hash`, `public.talkx_ai_requests.kind`, `public.talkx_ai_requests.model`, `public.talkx_ai_requests.output`, `public.talkx_ai_requests.status`, `public.talkx_ai_requests.tokens_in`, `public.talkx_ai_requests.tokens_out`
+- **constraints** adicionado (7): `public.talkx_ai_requests.talkx_ai_requests_cost_usd_check`, `public.talkx_ai_requests.talkx_ai_requests_created_by_fkey`, `public.talkx_ai_requests.talkx_ai_requests_kind_check`, `public.talkx_ai_requests.talkx_ai_requests_pkey`, `public.talkx_ai_requests.talkx_ai_requests_status_check`, `public.talkx_ai_requests.talkx_ai_requests_tokens_in_check`, `public.talkx_ai_requests.talkx_ai_requests_tokens_out_check`
+- **functions** alterado (1): `public.is_admin_or_supervisor(_user_id uuid)`
+- **indexes** adicionado (4): `public.talkx_ai_requests_cache_idx`, `public.talkx_ai_requests_mes_idx`, `public.talkx_ai_requests_pkey`, `public.talkx_ai_requests_usuario_dia_idx`
+- **lints** adicionado (1): `policy_auth_fn_not_wrapped:public.talkx_ai_requests.talkx_ai_requests_admin_read`
+- **migrations** adicionado (1): `20261122190000_ia055_precos_entrada_e_saida`
+- **policies (RLS)** adicionado (1): `public.talkx_ai_requests.talkx_ai_requests_admin_read`
+- **tabelas** adicionado (1): `public.talkx_ai_requests`
+
 ## 2026-11-23 06:31 UTC
 
 - **realtime** adicionado (1): `supabase_realtime_messages_publication:realtime.messages_2026_11_26`

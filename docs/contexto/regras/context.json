@@ -1,15 +1,15 @@
 {
  "meta": {
-  "sha": "340cc4ce3b6cde58afffd4b9bcaad3fa58bbd8db",
+  "sha": "2fca6d0ddc29f9f233b578f4ce4cb55b0dbaf51b",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-23 19:40 UTC",
+  "generated_at": "2026-11-23 20:13 UTC",
   "files_total": 15624,
   "code_files": 8925,
-  "code_lines": 1416290
+  "code_lines": 1416294
  },
  "version": "1.3.2",
- "facts_hash": "67ed5a3cbdd14d9b",
+ "facts_hash": "b7af50148e7942ee",
  "stack": {
   "frameworks": [
    "React + Vite",
@@ -77051,7 +77051,7 @@
   {
    "module": "e2e",
    "files": 79,
-   "lines": 18719,
+   "lines": 18723,
    "tables": [],
    "exports": [
     "auth-diagnostics.ts: AuthTargetError, AuthTarget, classifyAuthTarget, usesExternalHttpsServer, assertAuthenticatedTarget, AuthObservation",
@@ -349197,8 +349197,14 @@
   },
   "e2e/a11y-toque-44px.spec.ts": {
    "path": "e2e/a11y-toque-44px.spec.ts",
-   "lines": 288,
+   "lines": 292,
    "is_test": true,
+   "params": [
+    {
+     "name": "TOLERANCIA_SUB_PIXEL",
+     "value": "0.5"
+    }
+   ],
    "rule_comments": [
     "dois alvos continuam compactos e o clique continua fechando/abrindo — ou seja a regra",
     "`afterEach`). Nada de credencial ou dado de produção (regra R1).",
@@ -482420,10 +482426,19 @@
   }
  },
  "git": {
-  "sha": "340cc4ce3b6cde58afffd4b9bcaad3fa58bbd8db",
+  "sha": "2fca6d0ddc29f9f233b578f4ce4cb55b0dbaf51b",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "2fca6d0d",
+    "date": "2026-11-23",
+    "author": "adm01-debug",
+    "subject": "fix: tolera ruido sub-pixel na medicao de 44px do card (#3341)",
+    "files": [
+     "e2e/a11y-toque-44px.spec.ts"
+    ]
+   },
    {
     "sha": "340cc4ce",
     "date": "2026-11-23",
@@ -482856,16 +482871,6 @@
      "scripts/ci/e2e-isolated-migrations.unit.mjs",
      "scripts/e2e-isolated/migrations.mjs"
     ]
-   },
-   {
-    "sha": "8d2d330c",
-    "date": "2026-11-21",
-    "author": "adm01-debug",
-    "subject": "fix(db-audit): contrato de ACL do webhook_failures aceita SELECT do zapp_agente_leitura (#3300)",
-    "files": [
-     "scripts/db-audit/check-webhook-failures-acl.sql",
-     "scripts/db-audit/check-webhook-failures-acl.test.sh"
-    ]
    }
   ],
   "hot_files": [
@@ -482942,11 +482947,11 @@
     2
    ],
    [
-    "docs/pendencias/infra-de-ia-talkx-ai-x076.md",
+    "e2e/a11y-toque-44px.spec.ts",
     1
    ],
    [
-    "docs/pendencias/rascunho-de-campanha-por-ia-ia161.md",
+    "docs/pendencias/infra-de-ia-talkx-ai-x076.md",
     1
    ]
   ]
