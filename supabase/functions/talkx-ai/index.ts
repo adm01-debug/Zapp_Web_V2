@@ -29,7 +29,7 @@
  */
 import { createClient, type SupabaseClient } from "npm:@supabase/supabase-js@2.87.1";
 import { handleCors, internalErrorResponse, jsonResponse, Logger } from "../_shared/validation.ts";
-import { calcularCusto, type TarifaDeModelo, type UnidadeCobravel } from "../_shared/ai-usage.ts";
+import { calcularCustoPorPonta, type TarifaDeModelo, type UnidadeCobravel } from "../_shared/ai-usage.ts";
 
 export const KINDS = ["insight_text", "message_variation", "segment_suggestion"] as const;
 export type TalkxAiKind = (typeof KINDS)[number];
@@ -307,10 +307,10 @@ async function buscarNoCache(supabase: SupabaseClient, inputHash: string, agora:
 /**
  * Custo da linha pela tarifa VIGENTE (`ai_model_prices`, IA-055).
  *
- * Reusa `calcularCusto` em vez de repetir uma regra de preço: vigência, moeda e
- * "sem tarifa ⇒ nulo, nunca zero" já estão resolvidos lá. A tabela cobra por
- * (modelo, unidade) — não separa entrada de saída —, então a quantidade é a
- * soma dos tokens.
+ * Reusa o motor em vez de repetir uma regra de preço: vigência, moeda e
+ * "sem tarifa ⇒ nulo, nunca zero" já estão resolvidos lá. Entrada e saída são
+ * cobradas pelo preço de cada ponta (`input_token`/`output_token`); sem as duas
+ * tarifas, cai no preço único sobre a soma — o motor diz qual caminho usou.
  */
 async function custoDoUso(
   supabase: SupabaseClient,
@@ -326,7 +326,7 @@ async function custoDoUso(
     .from(TABELA_TARIFAS)
     .select("model, unit, currency, unit_price, valid_from, valid_to, source")
     .eq("model", modelo)
-    .eq("unit", "token");
+    .in("unit", ["token", "input_token", "output_token"]);
   if (error) {
     // A chamada paga JÁ aconteceu quando esta leitura roda: lançar aqui daria
     // 500 sem trilha e o gasto sumiria do mês. O contrato é o mesmo de "sem
@@ -338,7 +338,14 @@ async function custoDoUso(
     return null;
   }
 
-  const unidades: readonly string[] = ["token", "character", "second", "request"];
+  const unidades: readonly string[] = [
+    "token",
+    "input_token",
+    "output_token",
+    "character",
+    "second",
+    "request",
+  ];
   const tarifas: TarifaDeModelo[] = [];
   for (const linha of (data ?? []) as Array<Record<string, unknown>>) {
     const unidade = String(linha.unit ?? "");
@@ -354,11 +361,11 @@ async function custoDoUso(
     });
   }
 
-  const resultado = calcularCusto(tarifas, {
+  const resultado = calcularCustoPorPonta(tarifas, {
     model: modelo,
-    unit: "token",
     em: agora,
-    quantidade: tokensIn + tokensOut,
+    tokensIn,
+    tokensOut,
   });
   if (resultado.custo === null) {
     log.warn("sem tarifa vigente — a linha fica sem custo (nunca zero inventado)", {
