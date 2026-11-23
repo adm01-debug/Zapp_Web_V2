@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "d19cc8d00f911e560cf6102b257534f87b2d4743",
+  "commit": "2fad0042324fbf4b21b18ad84ab9b1502f899935",
   "branch": "main",
-  "data_commit": "2026-11-22T22:49:17Z",
+  "data_commit": "2026-11-23T06:02:20Z",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "2fad0042",
+    "data": "2026-11-23",
+    "assunto": "chore(db): sincronizar artefatos derivados do banco (#3329)"
+   },
    {
     "sha": "d19cc8d0",
     "data": "2026-11-22",
@@ -126,14 +131,9 @@
     "sha": "219555ea",
     "data": "2026-11-21",
     "assunto": "fix(db-audit): reconcilia drift da 20261111181000 e remove excecoes obsoletas (#3297)"
-   },
-   {
-    "sha": "ee85340b",
-    "data": "2026-11-21",
-    "assunto": "fix(docs): forca eol=lf nos inventarios e docs (falso-negativo local nos testes de convencao) (#3298)"
    }
   ],
-  "arquivos_mudados_7d": 7050,
+  "arquivos_mudados_7d": 7025,
   "pastas_mais_mudadas_30d": [
    {
     "pasta": "docs/contexto/supabase",
@@ -214,11 +214,15 @@
     "mudancas": 14
    },
    {
+    "arquivo": "supabase/schema-manifest.json",
+    "mudancas": 13
+   },
+   {
     "arquivo": "scripts/db-audit/grants-baseline.json",
     "mudancas": 12
    },
    {
-    "arquivo": "supabase/schema-manifest.json",
+    "arquivo": "supabase/schema-catalog.json",
     "mudancas": 12
    },
    {
@@ -227,10 +231,6 @@
    },
    {
     "arquivo": "docs/DB-INVENTORY.md",
-    "mudancas": 11
-   },
-   {
-    "arquivo": "supabase/schema-catalog.json",
     "mudancas": 11
    },
    {
@@ -301,11 +301,11 @@
   "autores_30d": [
    {
     "autor": "adm01-debug",
-    "commits": 293
+    "commits": 292
    },
    {
     "autor": "github-actions[bot]",
-    "commits": 7
+    "commits": 8
    }
   ]
  },

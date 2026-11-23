@@ -1,9 +1,9 @@
 {
  "meta": {
-  "sha": "d19cc8d00f911e560cf6102b257534f87b2d4743",
+  "sha": "2fad0042324fbf4b21b18ad84ab9b1502f899935",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-22 22:50 UTC",
+  "generated_at": "2026-11-23 06:31 UTC",
   "files_total": 15618,
   "code_files": 8920,
   "code_lines": 1415116
@@ -481845,10 +481845,20 @@
   }
  },
  "git": {
-  "sha": "d19cc8d00f911e560cf6102b257534f87b2d4743",
+  "sha": "2fad0042324fbf4b21b18ad84ab9b1502f899935",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "2fad0042",
+    "date": "2026-11-23",
+    "author": "github-actions[bot]",
+    "subject": "chore(db): sincronizar artefatos derivados do banco (#3329)",
+    "files": [
+     "supabase/schema-catalog.json",
+     "supabase/schema-manifest.json"
+    ]
+   },
    {
     "sha": "d19cc8d0",
     "date": "2026-11-22",
@@ -483366,33 +483376,19 @@
      "docs/pendencias/_linha-de-base.md",
      "docs/pendencias/_regras-de-negocio.md"
     ]
-   },
-   {
-    "sha": "b267f6b2",
-    "date": "2026-11-19",
-    "author": "adm01-debug",
-    "subject": "feat(evolution-api): adiciona ação 'pairing-code' para parear aparelho por código (#3290)",
-    "files": [
-     "ESTADO.md",
-     "docs/audits/edge-functions-authz-coverage.md",
-     "supabase/deployment-manifest.json",
-     "supabase/functions/_shared/evolution-control-authz.ts",
-     "supabase/functions/_shared/evolution-session-routes.ts",
-     "supabase/functions/evolution-api/index.ts"
-    ]
    }
   ],
   "hot_files": [
    [
     "supabase/deployment-manifest.json",
-    8
-   ],
-   [
-    "ESTADO.md",
-    6
+    7
    ],
    [
     "docs/plans/PLANO_ASSISTENTE_PESSOAL_IA_2026-11-15.md",
+    5
+   ],
+   [
+    "ESTADO.md",
     5
    ],
    [
@@ -483406,6 +483402,14 @@
    [
     "supabase/functions/assistant-gateway/index.ts",
     4
+   ],
+   [
+    "supabase/schema-catalog.json",
+    3
+   ],
+   [
+    "supabase/schema-manifest.json",
+    3
    ],
    [
     "supabase/functions/_shared/assistant-gateway.test.ts",
@@ -483425,14 +483429,6 @@
    ],
    [
     "docs/DB-INVENTORY.md",
-    2
-   ],
-   [
-    "supabase/schema-catalog.json",
-    2
-   ],
-   [
-    "supabase/schema-manifest.json",
     2
    ],
    [
