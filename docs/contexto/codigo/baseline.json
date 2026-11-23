@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "b32c9845f2beac826eece309cef1b7ac85fae12a",
+  "commit": "340cc4ce3b6cde58afffd4b9bcaad3fa58bbd8db",
   "branch": "main",
-  "data_commit": "2026-11-23T16:20:40-03:00",
+  "data_commit": "2026-11-23T16:38:35-03:00",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "340cc4ce",
+    "data": "2026-11-23",
+    "assunto": "feat(talkx): cria a trilha de IA e os tetos que a talkx-ai ja exige (#3327)"
+   },
    {
     "sha": "b32c9845",
     "data": "2026-11-23",
@@ -126,14 +131,9 @@
     "sha": "be88b1e6",
     "data": "2026-11-21",
     "assunto": "fix(ci): usa fileURLToPath no caminho do script W98 (teste 15) (#3305)"
-   },
-   {
-    "sha": "bfe8a3aa",
-    "data": "2026-11-21",
-    "assunto": "chore(contexto): protege branch contexto da poda + indice migration->PR (#3304)"
    }
   ],
-  "arquivos_mudados_7d": 5287,
+  "arquivos_mudados_7d": 5289,
   "pastas_mais_mudadas_30d": [
    {
     "pasta": "docs/contexto/supabase",
@@ -161,7 +161,7 @@
    },
    {
     "pasta": "src/components/talkx",
-    "mudancas": 362
+    "mudancas": 364
    },
    {
     "pasta": "analise-prs/resgate-261115/dossies",
@@ -203,11 +203,11 @@
    },
    {
     "arquivo": "ESTADO.md",
-    "mudancas": 22
+    "mudancas": 23
    },
    {
     "arquivo": "docs/talkx/ESTADOS.md",
-    "mudancas": 15
+    "mudancas": 16
    },
    {
     "arquivo": "src/integrations/supabase/types.ts",
@@ -216,6 +216,10 @@
    {
     "arquivo": "supabase/schema-manifest.json",
     "mudancas": 13
+   },
+   {
+    "arquivo": ".github/workflows/db-guard.yml",
+    "mudancas": 12
    },
    {
     "arquivo": "PENDENCIAS.md",
@@ -228,10 +232,6 @@
    {
     "arquivo": "supabase/schema-catalog.json",
     "mudancas": 12
-   },
-   {
-    "arquivo": ".github/workflows/db-guard.yml",
-    "mudancas": 11
    },
    {
     "arquivo": "docs/DB-INVENTORY.md",
@@ -310,21 +310,21 @@
   ]
  },
  "contagens": {
-  "arquivos_total": 15772,
-  "arquivos_codigo": 5884,
-  "linhas_codigo": 1137860,
+  "arquivos_total": 15776,
+  "arquivos_codigo": 5887,
+  "linhas_codigo": 1138449,
   "rotas": 18,
   "rotas_http_backend": 11,
   "vistas_por_id": 55,
   "itens_menu": 61,
   "modulos": 149,
   "componentes": 1063,
-  "hooks": 606,
+  "hooks": 607,
   "edge_functions": 93,
-  "tabelas": 222,
-  "migrations": 1151,
+  "tabelas": 223,
+  "migrations": 1152,
   "cron_jobs": 29,
-  "testes": 3223,
+  "testes": 3225,
   "workflows": 24,
   "scripts": 452,
   "docs_md": 4083
@@ -631,8 +631,8 @@
    "linhas": 142
   },
   "scripts/db-audit": {
-   "arquivos": 94,
-   "linhas": 17522
+   "arquivos": 95,
+   "linhas": 17803
   },
   "scripts/db-tests": {
    "arquivos": 3,
@@ -724,7 +724,7 @@
   },
   "src/components": {
    "arquivos": 2312,
-   "linhas": 393416
+   "linhas": 393485
   },
   "src/config": {
    "arquivos": 3,
@@ -743,8 +743,8 @@
    "linhas": 3293
   },
   "src/hooks": {
-   "arquivos": 1028,
-   "linhas": 166704
+   "arquivos": 1030,
+   "linhas": 166943
   },
   "src/i18n": {
    "arquivos": 2,

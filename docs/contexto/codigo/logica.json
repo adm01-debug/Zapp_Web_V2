@@ -3387,7 +3387,7 @@
    "zod_schemas": 0,
    "flags": [],
    "papeis": [],
-   "usado_por": 39,
+   "usado_por": 40,
    "usado_por_modulos": [
     "components/admin",
     "components/inbox",
@@ -3395,9 +3395,10 @@
     "hooks/copilot",
     "hooks/integrations",
     "hooks/security",
+    "hooks/talkx",
     "services"
    ],
-   "coberto_por_testes": 3,
+   "coberto_por_testes": 4,
    "orfao": false
   },
   {

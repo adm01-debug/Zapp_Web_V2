@@ -1,6 +1,6 @@
 # 11 · GLOSSÁRIO, DADOS DE REFERÊNCIA E LACUNAS
 
-> Gerado automaticamente por AI Context Sync v1.3.2 · commit `b32c9845f2` · branch `main` · 2026-11-23 19:22 UTC
+> Gerado automaticamente por AI Context Sync v1.3.2 · commit `340cc4ce3b` · branch `main` · 2026-11-23 19:40 UTC
 > Não edite à mão — regras humanas vão em `manual/`.
 
 ## Glossário do domínio (entidades do sistema)
@@ -182,6 +182,7 @@
 | `storage.objects` | _(sem COMMENT ON TABLE — significado não documentado)_ | 2 colunas | migration |
 | `supabase_migrations.version_reservations` | _(sem COMMENT ON TABLE — significado não documentado)_ | 4 colunas | migration |
 | `tags` | Etiquetas aplicaveis a contatos (contact_tags). | 1 colunas | migration |
+| `talkx_ai_requests` | X076 — trilha de toda chamada de IA do Talk X: teto mensal, limite diario e cache de 24 h. cost_usd NULO = sem tarifa em ai_model_prices, nunca zero. | 13 colunas | migration |
 | `talkx_alerts` | X033: alertas do motor Talk X. Um alerta aberto por (tipo, campanha); fechado sozinho quando o sinal deixa de disparar (resolved_at). Escrito por talkx_engine_alerts (service_role), lido por admin/supervisor. | 6 colunas | migration |
 | `talkx_blacklist` | _(sem COMMENT ON TABLE — significado não documentado)_ | 15 colunas | migration |
 | `talkx_campaign_events` | _(sem COMMENT ON TABLE — significado não documentado)_ | 8 colunas | migration |
@@ -306,8 +307,7 @@
 | `TalkXSegmentsViewMode` (TS) | list \| grid |  | `analise-prs/resgate-261118-lote3/codex/publish-followup-20261021/src/hooks/integrations/useTalkXSegments.ts` |
 | `LIBRARY_STATS_QUERY_KEY` (TS) | 'talkx-segment-library-stats', SEGMENT_TIMEZONE |  | `analise-prs/resgate-261118-lote3/codex/publish-followup-20261021/src/hooks/integrations/useTalkXSegments.ts` |
 | `HealthLevel` (TS) | healthy \| degraded \| disconnected |  | `analise-prs/resgate-261118-lote3/codex/publish-followup-20261021/supabase/functions/connection-health-check/index.ts` |
-| `GmailHistoryResetOutcome` (TS) | reset \| conflict |  | `analise-prs/resgate-261118-lote3/fix/ci-verde-261021/supabase/functions/_shared/gmail-helpers.ts` |
-| … +447 linhas — lista completa em `context.json` | | | |
+| … +449 linhas — lista completa em `context.json` | | | |
 
 ## Dados de referência (seed — planos, categorias, perfis fixos)
 
@@ -623,7 +623,7 @@
 - `message_attempts.provider_status` é uma coluna de status sem enum/CHECK — os valores válidos e as transições permitidas não estão no banco.
 - `copilot_objection_catalog.status` é uma coluna de status sem enum/CHECK — os valores válidos e as transições permitidas não estão no banco.
 - `_zapp_mig133_log.status` é uma coluna de status sem enum/CHECK — os valores válidos e as transições permitidas não estão no banco.
-- 165/227 tabelas sem `COMMENT ON TABLE` — o significado de negócio não está no schema: `copilot_presence`, `copilot_sessions`, `copilot_insights`, `copilot_insight_feedback`, `client_wallet_rules`, `calls`, `whatsapp_groups`, `message_templates`, `agent_stats`, `agent_achievements`, `queue_members`, `queue_goals` …
+- 165/228 tabelas sem `COMMENT ON TABLE` — o significado de negócio não está no schema: `copilot_presence`, `copilot_sessions`, `copilot_insights`, `copilot_insight_feedback`, `client_wallet_rules`, `calls`, `whatsapp_groups`, `message_templates`, `agent_stats`, `agent_achievements`, `queue_members`, `queue_goals` …
 - Há tabelas usadas no código sem migration no repo — o schema real pode ter sido alterado pelo painel.
 
 ## Regras manuais presentes

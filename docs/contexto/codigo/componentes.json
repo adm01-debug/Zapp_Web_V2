@@ -14660,7 +14660,7 @@
     "WizardState"
    ],
    "export_default": null,
-   "linhas": 807,
+   "linhas": 871,
    "dominio": "components/talkx",
    "hooks_locais": [
     "useAudienceEstimate",
@@ -14668,7 +14668,8 @@
     "useCampaignEditor",
     "useContactCustomFields",
     "useTalkXCampaignSummary",
-    "useTalkXLinks"
+    "useTalkXLinks",
+    "useTalkxAi"
    ],
    "tabelas": [],
    "edges": [],

@@ -1,6 +1,6 @@
 # 10 · ACESSO E SEGURANÇA — quem pode o quê
 
-> Gerado automaticamente por AI Context Sync v1.3.2 · commit `b32c9845f2` · branch `main` · 2026-11-23 19:22 UTC
+> Gerado automaticamente por AI Context Sync v1.3.2 · commit `340cc4ce3b` · branch `main` · 2026-11-23 19:40 UTC
 > Não edite à mão — regras humanas vão em `manual/`.
 
 ## Perfis / roles identificados
@@ -191,6 +191,7 @@
 | `storage.objects` | não encontrado | authenticated: (bucket_id = 'stickers'::text)<br>authenticated: (bucket_id = 'audio-memes'::text)<br>authenticated: (bucket_id = 'custom-emojis'::text)<br>authenticated: bucket_id = 'avatars'<br>authenticated: bucket_id = 'whatsapp-media' AND ( is_admin_or_supervisor(auth.uid()) OR (storage.foldername(name))[1] IN ( SELECT c.id::text<br>authenticated: bucket_id = 'audio-messages' AND ( is_admin_or_supervisor(auth.uid()) OR (storage.foldername(name))[1] IN ( SELECT c.id::text<br>authenticated: objects.bucket_id = 'team-chat-files' AND ( public.is_admin_or_supervisor(auth.uid()) OR (storage.foldername(objects.name))[1<br>authenticated: bucket_id = 'voice-changer-tmp' and ( public.is_admin_or_supervisor(auth.uid()) or (storage.foldername(name))[1] = (auth.uid(<br>authenticated: bucket_id = 'audio-messages' and exists ( select 1 from public.whisper_messages as w where w.audio_path = storage.objects.nam<br>authenticated: objects.bucket_id = ANY (ARRAY['whatsapp-media'::text, 'audio-messages'::text]) AND EXISTS ( SELECT 1 FROM public.messages m  | authenticated: ((bucket_id = 'custom-emojis'::text) AND (is_admin_or_supervisor(auth.uid()) OR ((storage.foldername(name))[1] = (auth.uid())<br>authenticated: ((bucket_id = 'stickers'::text) AND (is_admin_or_supervisor(auth.uid()) OR ((storage.foldername(name))[1] = (auth.uid())::tex<br>authenticated: ((bucket_id = 'audio-messages'::text) AND (is_admin_or_supervisor(auth.uid()) OR ((storage.foldername(name))[1] IN ( SELECT (<br>authenticated: ((bucket_id = 'whatsapp-media'::text) AND (is_admin_or_supervisor(auth.uid()) OR ((storage.foldername(name))[1] IN ( SELECT (<br>authenticated: bucket_id = 'team-chat-files' AND (storage.foldername(name))[1] = (public.current_profile_id())::text<br>authenticated: bucket_id = 'avatars' AND ((storage.foldername(name))[1] = auth.uid()::text OR public.is_admin(auth.uid()))<br>authenticated: bucket_id = 'audio-memes' and ( public.is_admin_or_supervisor(auth.uid()) or (storage.foldername(name))[1] = (auth.uid())::te<br>authenticated: bucket_id = 'voice-changer-tmp' and ( public.is_admin_or_supervisor(auth.uid()) or (storage.foldername(name))[1] = (auth.uid( | authenticated: ((bucket_id = 'audio-messages'::text) AND (is_admin_or_supervisor(auth.uid()) OR ((storage.foldername(name))[1] IN ( SELECT (<br>authenticated: ((bucket_id = 'custom-emojis'::text) AND (is_admin_or_supervisor(auth.uid()) OR ((storage.foldername(name))[1] = (auth.uid())<br>authenticated: ((bucket_id = 'stickers'::text) AND (is_admin_or_supervisor(auth.uid()) OR ((storage.foldername(name))[1] = (auth.uid())::tex<br>authenticated: bucket_id = 'avatars' AND ((storage.foldername(name))[1] = auth.uid()::text OR public.is_admin(auth.uid()))<br>authenticated: bucket_id = 'audio-memes' and ( public.is_admin_or_supervisor(auth.uid()) or (storage.foldername(name))[1] = (auth.uid())::te<br>authenticated: bucket_id = 'voice-changer-tmp' and ( public.is_admin_or_supervisor(auth.uid()) or (storage.foldername(name))[1] = (auth.uid( | authenticated: ((bucket_id = 'team-chat-files'::text) AND is_admin_or_supervisor(auth.uid()))<br>authenticated: ((bucket_id = 'audio-messages'::text) AND ((storage.foldername(name))[1] = (auth.uid())::text))<br>authenticated: ((bucket_id = 'custom-emojis'::text) AND ((storage.foldername(name))[1] = (auth.uid())::text))<br>authenticated: ((bucket_id = 'stickers'::text) AND ((storage.foldername(name))[1] = (auth.uid())::text))<br>authenticated: ((bucket_id = 'avatars'::text) AND ((storage.foldername(name))[1] = (auth.uid())::text))<br>authenticated: ((bucket_id = 'whatsapp-media'::text) AND (is_admin_or_supervisor(auth.uid()) OR ((storage.foldername(name))[1] IN ( SELECT (<br>authenticated: bucket_id = 'audio-memes' and ( public.is_admin_or_supervisor(auth.uid()) or (storage.foldername(name))[1] = (auth.uid())::te<br>authenticated: bucket_id = 'voice-changer-tmp' and ( public.is_admin_or_supervisor(auth.uid()) or (storage.foldername(name))[1] = (auth.uid(<br>authenticated: bucket_id = 'audio-memes' AND public.is_admin_or_supervisor((SELECT auth.uid()))<br>authenticated: bucket_id = 'team-chat-files' AND (storage.foldername(name))[1] = (public.current_profile_id())::text |
 | `supabase_migrations.version_reservations` | não encontrado | sem RLS | sem RLS | sem RLS | sem RLS |
 | `tags` | enabled | authenticated: true<br>authenticated: public.is_admin_or_supervisor(auth.uid()) | authenticated: public.is_admin_or_supervisor(auth.uid())<br>authenticated: created_by IS NULL OR created_by IN (SELECT id FROM profiles WHERE user_id = auth.uid()) OR public.is_admin_or_supervisor(aut | authenticated: public.is_admin_or_supervisor(auth.uid()) | authenticated: public.is_admin_or_supervisor(auth.uid()) |
+| `talkx_ai_requests` | enabled | authenticated: COALESCE(public.is_admin_or_supervisor(auth.uid()), false) | — | — | — |
 | `talkx_alerts` | enabled | authenticated: public.is_admin_or_supervisor(auth.uid()) | — | — | — |
 | `talkx_blacklist` | enabled | authenticated: public.is_admin_or_supervisor(auth.uid()) | authenticated: public.is_admin_or_supervisor(auth.uid()) | authenticated: public.is_admin_or_supervisor(auth.uid()) | authenticated: false |
 | `talkx_campaign_events` | enabled | authenticated: EXISTS (SELECT 1 FROM public.talkx_campaigns tc WHERE tc.id = talkx_campaign_events.campaign_id AND (tc.created_by = (SELECT  | authenticated: event_type IN ('note', 'checklist', 'segments_reviewed') AND ( EXISTS (SELECT 1 FROM public.talkx_campaigns tc WHERE tc.id =  | — | — |
@@ -246,7 +247,7 @@
 
 > `—` com RLS ligado = ninguém além de service_role. `sem RLS` = qualquer chave anon lê/escreve tudo.
 
-## Onde o RLS é IGNORADO (service_role) — 1237 arquivo(s)
+## Onde o RLS é IGNORADO (service_role) — 1238 arquivo(s)
 
 - `analise-prs/resgate-261118-lote2/scripts/db-audit/validate-post-apply.mjs`
 - `analise-prs/resgate-261118-lote2/supabase/migrations/20261016193300_copilot_tick_trigger.sql`
@@ -398,7 +399,7 @@
 - `docs/contexto/supabase/functions/public/reassign_absent_agents__7f027ae089526f54.sql`
 - `docs/contexto/supabase/functions/public/reassign_overloaded_agents__12ae32cb1ec02d01.sql`
 - `docs/contexto/supabase/functions/public/record_away_message__d077d0b24f34a751.sql`
-- … +1087 (lista completa em `context.json`)
+- … +1088 (lista completa em `context.json`)
 
 ## Funções SQL `SECURITY DEFINER` (rodam com privilégio do dono, ignoram RLS)
 
@@ -882,7 +883,7 @@ Middleware matcher (Next.js): nenhum
 | grant | authenticated | insert | `search_events` |
 | grant | authenticated | insert, select | `t3_errs` |
 | grant | authenticated | insert, update, delete | `feature_flags` |
-| grant | authenticated | select | `profiles_public`, `password_reset_requests_safe`, `password_reset_requests_safe`, `profiles_public`, `whatsapp_connections_public`, `whatsapp_connections_public`, `login_attempts_safe`, `gmail_accounts_safe`, `password_reset_requests_safe`, `whatsapp_connections_agent`, `channel_connections_safe`, `gmail_accounts_safe`, `password_reset_requests_safe`, `gmail_accounts_safe`, `gmail_accounts_safe` … +67 |
+| grant | authenticated | select | `profiles_public`, `password_reset_requests_safe`, `password_reset_requests_safe`, `profiles_public`, `whatsapp_connections_public`, `whatsapp_connections_public`, `login_attempts_safe`, `gmail_accounts_safe`, `password_reset_requests_safe`, `whatsapp_connections_agent`, `channel_connections_safe`, `gmail_accounts_safe`, `password_reset_requests_safe`, `gmail_accounts_safe`, `gmail_accounts_safe` … +68 |
 | grant | authenticated | select, insert | `catalog_send_events`, `talkx_help_views`, `audit_logs` |
 | grant | authenticated | select, insert, delete | `message_favorites` |
 | grant | authenticated | select, insert, update | `sla_alert_preferences`, `connection_alert_preferences`, `notifications`, `messages` |
@@ -919,7 +920,7 @@ Middleware matcher (Next.js): nenhum
 | revoke | PUBLIC, anon, authenticated, service_role | execute | `audit_contact_deletion_change`, `audit_contact_address_change`, `audit_role_changes`, `audit_role_permissions_changes`, `department_audit_logs_fill_profile_name`, `record_talkx_campaign_lifecycle_event`, `set_talkx_recipient_status_changed_at`, `conversation_task_rearm_on_remind_change`, `audit_contact_block_change`, `sanitize_reset_request`, `rate_limit_reset_requests` |
 | revoke | PUBLIC, anon, service_role | all | `enqueue_outbound_message`, `enqueue_rich_outbound_message`, `replace_talkx_draft_recipients`, `save_talkx_campaign_draft`, `enqueue_outbound_message`, `enqueue_outbound_message`, `enqueue_rich_outbound_message`, `enqueue_outbound_message`, `log_unauthorized_inbox_scope`, `enqueue_group_outbound_message`, `admin_list_cron_jobs`, `admin_toggle_cron_job`, `set_contact_blocked`, `crisis_room_snapshot`, `talkx_block_recipient` … +3 |
 | revoke | PUBLIC, authenticated | execute | `run_copilot_retention` |
-| revoke | anon | all | `link_preview_cache`, `feature_flags`, `search_my_calls`, `my_calls_kpi`, `upsert_my_call`, `set_call_agent_notes`, `team_conversations`, `team_conversation_members`, `team_messages`, `team_message_reactions`, `team_message_receipts`, `departments`, `department_invitations`, `department_invites`, `department_audit_logs` … +31 |
+| revoke | anon | all | `link_preview_cache`, `feature_flags`, `search_my_calls`, `my_calls_kpi`, `upsert_my_call`, `set_call_agent_notes`, `team_conversations`, `team_conversation_members`, `team_messages`, `team_message_reactions`, `team_message_receipts`, `departments`, `department_invitations`, `department_invites`, `department_audit_logs` … +32 |
 | revoke | anon | all privileges | `contact_notes` |
 | revoke | anon | delete | `passkey_credentials` |
 | revoke | anon | execute | `record_failed_login`, `is_account_locked`, `is_account_locked`, `record_failed_login`, `dashboard_kpi`, `dashboard_contact_counts`, `dashboard_hourly_volume`, `dashboard_leaderboard`, `sync_contact_status_on_closure`, `is_account_locked`, `is_account_locked`, `record_failed_login`, `talkx_benchmarks`, `talkx_benchmarks`, `set_conversation_status` … +53 |
@@ -1210,6 +1211,7 @@ Middleware matcher (Next.js): nenhum
 | `copilot_learning_moments` | `created_at` |
 | `copilot_conversation_scores` | `updated_at` |
 | `assistant_profiles` | `created_at`, `updated_at` |
+| `talkx_ai_requests` | `created_at`, `created_by` |
 | `_rb_message_reactions_one_per_agent_20261107121000` | `created_at` |
 | `instance_pauses` | `created_at` |
 | `outbox_events` | `created_at` |
@@ -1262,3 +1264,4 @@ Middleware matcher (Next.js): nenhum
 | `talkx_template_versions` | `custom_variables` | `text[]` |
 | `talkx_contact_attributes` | `total_spent` | `number` |
 | `talkx_segment_library_history` | `total_segments` | `integer` |
+| `talkx_ai_requests` | `cost_usd` | `numeric(18,` |

@@ -1,7 +1,7 @@
 {
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
- "total": 606,
+ "total": 607,
  "hooks": [
   {
    "arquivo": "analise-prs/resgate-261118-lote2/src/hooks/useMotionSeguro.ts",
@@ -13937,6 +13937,26 @@
     "src/hooks/system/index.ts"
    ],
    "coberto_por_testes": 3
+  },
+  {
+   "arquivo": "src/hooks/talkx/useTalkxAi.ts",
+   "hooks_exportados": [
+    "useTalkxAi"
+   ],
+   "linhas": 114,
+   "dominio": "hooks/talkx",
+   "tabelas": [],
+   "rpcs": [],
+   "edges": [],
+   "hooks_internos": [
+    "useMutation"
+   ],
+   "canais_realtime": [],
+   "usado_por": 1,
+   "usado_por_arquivos": [
+    "src/components/talkx/TalkXCampaignWizard.tsx"
+   ],
+   "coberto_por_testes": 1
   },
   {
    "arquivo": "src/hooks/tasks/useMyTasks.ts",

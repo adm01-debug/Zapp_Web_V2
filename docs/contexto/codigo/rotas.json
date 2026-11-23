@@ -481,6 +481,7 @@
     "useTalkXTemplateLibraryStats",
     "useTalkXTemplateStats",
     "useTalkXTemplates",
+    "useTalkxAi",
     "useTarefasAgendadas",
     "useTasksFilters",
     "useTasksUi",
@@ -954,6 +955,7 @@
     "useTalkXTemplateLibraryStats",
     "useTalkXTemplateStats",
     "useTalkXTemplates",
+    "useTalkxAi",
     "useTarefasAgendadas",
     "useTasksFilters",
     "useTasksUi",
@@ -1357,7 +1359,7 @@
     "unknown",
     "user"
    ],
-   "arquivos_puxados": 1544
+   "arquivos_puxados": 1545
   },
   {
    "protegida": false,
@@ -7283,6 +7285,7 @@
     "useTalkXTemplateLibraryStats",
     "useTalkXTemplateStats",
     "useTalkXTemplates",
+    "useTalkxAi",
     "useTeamAlertsPreference",
     "useTeamProfiles",
     "useToast",
@@ -7362,6 +7365,7 @@
     "useTalkXTemplateLibraryStats",
     "useTalkXTemplateStats",
     "useTalkXTemplates",
+    "useTalkxAi",
     "useTeamAlertsPreference",
     "useTeamProfiles",
     "useToast",
@@ -7464,7 +7468,7 @@
     "tab",
     "tablist"
    ],
-   "arquivos_puxados": 261
+   "arquivos_puxados": 262
   },
   {
    "id": "talkx-kit",

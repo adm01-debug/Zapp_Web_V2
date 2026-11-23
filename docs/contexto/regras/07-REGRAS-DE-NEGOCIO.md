@@ -1,6 +1,6 @@
 # 07 · REGRAS DE NEGÓCIO
 
-> Gerado automaticamente por AI Context Sync v1.3.2 · commit `b32c9845f2` · branch `main` · 2026-11-23 19:22 UTC
+> Gerado automaticamente por AI Context Sync v1.3.2 · commit `340cc4ce3b` · branch `main` · 2026-11-23 19:40 UTC
 > Não edite à mão — regras humanas vão em `manual/`.
 
 ## A. Regras escritas por humanos (`manual/` — prioridade máxima, nunca sobrescrito)
@@ -423,7 +423,7 @@ Demais dúvidas: nenhuma (entrevista concluída em 2026-11-03). Novas dúvidas: 
 | `email_attachments` | service_role inserts email attachments | INSERT | service_role | permissive |  | `true` |
 | `permissions` | Admins can manage permissions | ALL | authenticated | permissive | `is_admin(auth.uid())` | `is_admin(auth.uid())` |
 | `role_permissions` | Admins can manage role permissions | ALL | authenticated | permissive | `is_admin(auth.uid())` | `is_admin(auth.uid())` |
-| … +286 linhas — lista completa em `context.json` | | | | | | |
+| … +287 linhas — lista completa em `context.json` | | | | | | |
 
 ## C. Restrições de dados (obrigatório / único / default / CHECK / FK / calculada)
 
@@ -729,7 +729,7 @@ Demais dúvidas: nenhuma (entrevista concluída em 2026-11-03). Novas dúvidas: 
 | `role_permissions` | `permission_id` | obrigatório |
 | `role_permissions` | `role` | obrigatório |
 | `user_devices` | `id` | PK; default gen_random_uuid() |
-| … +1398 linhas — lista completa em `context.json` | | |
+| … +1407 linhas — lista completa em `context.json` | | |
 
 ## D. Automações no banco (triggers e funções — regras que rodam sozinhas)
 
@@ -1280,6 +1280,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `message_reports` | `status` | `dismissed`, `open`, `resolved` | `open` |
 | `qr_attempts` | `status` | `connected`, `error`, `expired`, `pending` |  |
 | `copilot_objection_catalog` | `status` | **livre (sem enum/CHECK)** | `pending_review` |
+| `talkx_ai_requests` | `status` | `error`, `ok` |  |
 | `_zapp_mig133_log` | `status` | **livre (sem enum/CHECK)** |  |
 
 ### E.2 Mapas de transição declarados no código
@@ -1927,7 +1928,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | TALKX_CAMPAIGN_SEARCH_COLUMNS | 'name', 'description', 'message_template' | `src/hooks/integrations/useTalkXCampaignList.ts` |
 | TalkXEventType | created \| updated \| scheduled \| started \| paused \| resumed \| cancelled \| completed \| note | `src/hooks/integrations/useTalkXEvents.ts` |
 | TalkXClientEventType | note \| checklist \| segments_reviewed | `src/hooks/integrations/useTalkXEvents.ts` |
-| … +220 linhas — lista completa em `context.json` | | |
+| … +221 linhas — lista completa em `context.json` | | |
 
 ## F. Validações de entrada
 
@@ -3025,6 +3026,10 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 - **applyRadius(px: number)** — `src/components/settings/theme/presets.ts`
   ```
   const safe = clampRadius(px); document.documentElement.style.setProperty('--radius', `${safe / 16}rem`);
+  ```
+- **gerarVariacao()** — `src/components/talkx/TalkXCampaignWizard.tsx`
+  ```
+  setAvisoIa(null); const texto = ed.messageTemplate.trim(); if (texto === '') { setAvisoIa('Escreva a mensagem antes de pedir uma variação para a IA.'); return; } const variaveisNaMensagem = texto.match(/\{\{[^{}]+\}\}/g) ?? []; iaVariacao.mutate( { kind: 'message_variation', input: { texto }, entity_type: 'talkx_campaign', ...(ed.draftCampaignId ? { entity_id: ed.draftCampaignId } : {}), }, { onSuccess: (resposta) => { const saida = resposta.output; if (typeof saida !== 'string') { setAvisoIa('A …
   ```
 - **applyLink(url: string)** — `src/components/talkx/TalkXMediaDropzone.tsx`
   ```
@@ -5062,7 +5067,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `owner` | `supabase/migrations/20260927270018_team_chat_e28_fix_find_or_create_race.sql` |
 | `anon` | `supabase/migrations/20260927340000_fix_add_agent_xp_negative_and_guard.sql` |
 
-## K. Testes como especificação (26297 testes em 2741 arquivos — nomes completos em `context.json`)
+## K. Testes como especificação (26319 testes em 2743 arquivos — nomes completos em `context.json`)
 
 | Arquivo | Testes | Exemplos do que o sistema DEVE fazer |
 |---|---|---|
@@ -5366,7 +5371,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `src/hooks/__tests__/useWarRoomAlerts.test.tsx` | 18 | useWarRoomAlerts · fetches unread alerts · exposes dismissAlert function · accepts soundEnabled parameter … |
 | `src/hooks/chat/__tests__/useAutomationSuggestions.test.tsx` | 18 | useAutomationSuggestions · não vai à Edge quando a última mensagem é do agente (lastInboundMessageId nulo) · chama a Edge com o contact_id e expõe as sugestões do contrato, com a fonte carimbada · espera o debounce antes de chamar (mensagem que ainda está chegando não gasta IA) … |
 | `src/hooks/chat/journey/__tests__/useJourneyActors.test.tsx` | 18 | useJourneyActors — regras de quem agiu (S063) · usuário com perfil: nome e foto do perfil, em UMA consulta em lote · perfil ausente:  · erro/RLS negado não lança: o ator cai no  … |
-| … +2441 linhas — lista completa em `context.json` | | |
+| … +2443 linhas — lista completa em `context.json` | | |
 
 ## L. Eventos de webhook tratados (contratos com sistemas externos)
 
@@ -5916,4 +5921,4 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | * R2-AUTH-005 (item 239): a resposta de uma busca de perfil nao pode repor | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/hooks/auth/useAuth.tsx` |
 | Identidade diferente: o perfil anterior nao pode continuar na tela e so a | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/hooks/auth/useAuth.tsx` |
 | Supabase pode falhar e não emitir SIGNED_OUT — a limpeza não pode depender dele). | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/hooks/auth/useAuth.tsx` |
-| … +2518 linhas — lista completa em `context.json` | |
+| … +2520 linhas — lista completa em `context.json` | |

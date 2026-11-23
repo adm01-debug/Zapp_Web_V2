@@ -1,8 +1,8 @@
 {
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
- "nos": 2752,
- "arestas": 9404,
+ "nos": 2753,
+ "arestas": 9406,
  "hubs": [
   {
    "arquivo": "src/lib/utils.ts",
@@ -158,7 +158,7 @@
   },
   {
    "arquivo": "src/lib/invokeEdge.ts",
-   "importado_por": 42
+   "importado_por": 44
   },
   {
    "arquivo": "src/integrations/supabase/types.ts",
@@ -576,7 +576,7 @@
   {
    "modulo": "lib",
    "depende_de": 12,
-   "importado_por": 105
+   "importado_por": 106
   },
   {
    "modulo": "components/ui",

@@ -4004,6 +4004,7 @@
     "useTalkXTemplateLibraryStats",
     "useTalkXTemplateStats",
     "useTalkXTemplates",
+    "useTalkxAi",
     "useTarefasAgendadas",
     "useTasksFilters",
     "useTasksUi",
@@ -7090,7 +7091,7 @@
    "modulo": "components/talkx",
    "arquivos": 105,
    "testes": 169,
-   "linhas": 26003,
+   "linhas": 26067,
    "itens_menu": [
     "Campanhas"
    ],
@@ -7173,6 +7174,7 @@
     "useTalkXTemplateLibraryStats",
     "useTalkXTemplateStats",
     "useTalkXTemplates",
+    "useTalkxAi",
     "useTeamAlertsPreference",
     "useTeamProfiles",
     "useToast",
@@ -12596,6 +12598,7 @@
     "useTalkXTemplateLibraryStats",
     "useTalkXTemplateStats",
     "useTalkXTemplates",
+    "useTalkxAi",
     "useTarefasAgendadas",
     "useTasksFilters",
     "useTasksUi",
@@ -13169,21 +13172,27 @@
   },
   {
    "modulo": "hooks/talkx",
-   "arquivos": 1,
-   "testes": 1,
-   "linhas": 37,
+   "arquivos": 2,
+   "testes": 2,
+   "linhas": 151,
    "itens_menu": [],
    "telas": [],
    "rotas_http": [],
    "componentes": 0,
-   "hooks_locais": [],
-   "hooks_definidos": [],
+   "hooks_locais": [
+    "useTalkxAi"
+   ],
+   "hooks_definidos": [
+    "useTalkxAi"
+   ],
    "edges": [],
    "tabelas": [],
    "rpcs": [],
    "buckets": [],
    "canais_realtime": [],
-   "env": [],
+   "env": [
+    "DEV"
+   ],
    "flags": [],
    "papeis": [],
    "diretos": {
@@ -13195,8 +13204,12 @@
     "components/talkx",
     "hooks/integrations"
    ],
-   "depende_de_modulos": [],
-   "pacotes_externos": []
+   "depende_de_modulos": [
+    "lib"
+   ],
+   "pacotes_externos": [
+    "@tanstack/react-query"
+   ]
   },
   {
    "modulo": "hooks/tasks",
@@ -14092,6 +14105,7 @@
     "hooks/sticker-picker",
     "hooks/storage",
     "hooks/system",
+    "hooks/talkx",
     "hooks/tasks",
     "hooks/team-chat",
     "hooks/ui",
@@ -15030,6 +15044,7 @@
     "useTalkXTemplateLibraryStats",
     "useTalkXTemplateStats",
     "useTalkXTemplates",
+    "useTalkxAi",
     "useTarefasAgendadas",
     "useTasksFilters",
     "useTasksUi",
@@ -16324,6 +16339,7 @@
     "useTalkXTemplateLibraryStats",
     "useTalkXTemplateStats",
     "useTalkXTemplates",
+    "useTalkxAi",
     "useTarefasAgendadas",
     "useTasksFilters",
     "useTasksUi",

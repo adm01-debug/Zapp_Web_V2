@@ -5,18 +5,18 @@
   "vitest",
   "playwright"
  ],
- "total": 3223,
+ "total": 3225,
  "por_tipo": {
   "contrato": 130,
   "e2e": 89,
   "pytest": 3,
   "qa": 10,
-  "unit": 2900
+  "unit": 2902
  },
  "onde_ficam": [
   {
    "padrao": "co-localizado (__tests__)",
-   "arquivos": 2375
+   "arquivos": 2376
   },
   {
    "padrao": "outro",
@@ -24,7 +24,7 @@
   },
   {
    "padrao": "co-localizado (*.test)",
-   "arquivos": 235
+   "arquivos": 236
   },
   {
    "padrao": "tests/",
@@ -6039,6 +6039,15 @@
     "scripts/db-audit/supabase-usage-guard.mjs"
    ],
    "casos": 6
+  },
+  {
+   "arquivo": "scripts/db-audit/talkx-ai-requests-trail.test.mjs",
+   "tipo": "unit",
+   "linhas": 281,
+   "testa": [
+    "scripts/lib/seguranca-processo.mjs"
+   ],
+   "casos": 13
   },
   {
    "arquivo": "scripts/db-audit/talkx-analytics-contract.test.mjs",
@@ -16085,7 +16094,7 @@
   {
    "arquivo": "src/components/talkx/__tests__/TalkXCampaignWizard.layout.test.tsx",
    "tipo": "unit",
-   "linhas": 287,
+   "linhas": 292,
    "testa": [
     "src/components/talkx/TalkXCampaignWizard.tsx",
     "src/hooks/integrations/useTalkX.ts",
@@ -23227,6 +23236,16 @@
    "casos": 3
   },
   {
+   "arquivo": "src/hooks/talkx/__tests__/useTalkxAi.test.ts",
+   "tipo": "unit",
+   "linhas": 125,
+   "testa": [
+    "src/hooks/talkx/useTalkxAi.ts",
+    "src/lib/invokeEdge.ts"
+   ],
+   "casos": 9
+  },
+  {
    "arquivo": "src/hooks/tasks/__tests__/useMyWorkItems.idempotencia.test.tsx",
    "tipo": "unit",
    "linhas": 107,
@@ -29317,7 +29336,7 @@
   "scripts/inventario/gerar-banco.mjs": 1,
   "scripts/inventario/gerar-rotas.mjs": 1,
   "scripts/inventario/mudou-conteudo.mjs": 1,
-  "scripts/lib/seguranca-processo.mjs": 4,
+  "scripts/lib/seguranca-processo.mjs": 5,
   "scripts/maintenance/lib.mjs": 1,
   "scripts/maintenance/run.mjs": 1,
   "scripts/mutation/run-mapa.mjs": 1,
@@ -30435,6 +30454,7 @@
   "src/hooks/system/useUserRole.ts": 5,
   "src/hooks/system/useUserSettings.ts": 3,
   "src/hooks/talkx/paginacao.ts": 1,
+  "src/hooks/talkx/useTalkxAi.ts": 1,
   "src/hooks/tasks/useMyWorkItems.ts": 6,
   "src/hooks/tasks/useTasksFilters.ts": 2,
   "src/hooks/tasks/useWorkItemDraft.ts": 1,
@@ -30579,7 +30599,7 @@
   "src/lib/inbox/transferConversation.ts": 1,
   "src/lib/inboxDraftSession.ts": 4,
   "src/lib/instancePauseSeries.ts": 1,
-  "src/lib/invokeEdge.ts": 3,
+  "src/lib/invokeEdge.ts": 4,
   "src/lib/ipValidation.ts": 1,
   "src/lib/journey/health.ts": 1,
   "src/lib/journey/mappers.ts": 1,

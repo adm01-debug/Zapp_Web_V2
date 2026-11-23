@@ -3,11 +3,11 @@
  "format_version": 2,
  "stack": {
   "linguagens": [
-   "TypeScript (5081)",
+   "TypeScript (5083)",
    "Markdown (4083)",
-   "SQL (3064)",
+   "SQL (3065)",
    "JSON (1968)",
-   "JavaScript (682)",
+   "JavaScript (683)",
    "Shell (265)",
    "Python (125)",
    "YAML (112)"

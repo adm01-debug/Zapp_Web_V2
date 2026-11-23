@@ -12,7 +12,7 @@
    "src/pages (26)"
   ],
   "hooks": [
-   "src/hooks (429)",
+   "src/hooks (430)",
    "analise-prs/resgate-261118-lote3 (92)",
    "src/components (74)"
   ],
@@ -22,9 +22,9 @@
    "src/utils (8)"
   ],
   "testes": [
-   "co-localizado (__tests__) (2375)",
+   "co-localizado (__tests__) (2376)",
    "outro (349)",
-   "co-localizado (*.test) (235)"
+   "co-localizado (*.test) (236)"
   ],
   "edge_functions": "supabase/functions",
   "migrations": "supabase/migrations",
@@ -66,11 +66,11 @@
  "commits": {
   "convencao": "conventional commits (observado)",
   "exemplos": [
+   "feat(talkx): cria a trilha de IA e os tetos que a talkx-ai ja exige (#3327)",
    "fix(ia): cobra entrada e saída pelo preço real e destrava o custo de IA (#3326)",
    "fix(ci): guard do ESTADO.md enxerga invokeEdge com generic e publica grupo real das 7 edges (#3322)",
    "chore(lint): baseline 540 issues pre-existentes - desbloqueia pre-push/pre-commit (#3333)",
-   "fix(test): ampliar janela de serie de 15 para 30 min - corrige flake de meia-noite (#3332)",
-   "fix: suportar executáveis .exe/.cmd/.bat no Windows em resolverExecutavel (#3331)"
+   "fix(test): ampliar janela de serie de 15 para 30 min - corrige flake de meia-noite (#3332)"
   ]
  },
  "pr_template": ".github/PULL_REQUEST_TEMPLATE.md",
