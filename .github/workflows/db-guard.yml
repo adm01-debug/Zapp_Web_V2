@@ -235,6 +235,14 @@ jobs:
           POSTGREST_TEST_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh node --test scripts/db-audit/talkx-engine-window-contract.test.mjs
 
+      # X076/IA-161: a edge `talkx-ai` ja grava em `talkx_ai_requests` e le os
+      # dois tetos em `talkx_settings`; sem esta migration ela recusa toda chamada
+      # com `ai_disabled`. Mesmo isolamento do contrato acima.
+      - name: Provar trilha de IA do Talk X em PostgreSQL descartavel
+        env:
+          TALKX_AI_TRAIL_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh node --test scripts/db-audit/talkx-ai-requests-trail.test.mjs
+
       # E47: instala o docker-shim no PATH antes do primeiro step que usa docker.
       # A partir daqui, `docker` aponta para o shim que roteia run/exec/rm para
       # o serviço postgres compartilhado. SKIP_DOCKER_SHIM=1 no step do PostgREST
