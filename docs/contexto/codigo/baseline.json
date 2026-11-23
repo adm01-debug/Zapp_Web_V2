@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "684cc2c229d129f0fd3a330fed92f32e5b0e7aaf",
+  "commit": "f48c1ce7486f1219e73d3f81174355159fc0e4a7",
   "branch": "main",
-  "data_commit": "2026-11-23T20:09:42-03:00",
+  "data_commit": "2026-11-23T20:33:57-03:00",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "f48c1ce7",
+    "data": "2026-11-23",
+    "assunto": "⬆️ ci: bump ossf/scorecard-action from 2.5.0 to 2.6.0 (#3336)"
+   },
    {
     "sha": "684cc2c2",
     "data": "2026-11-23",
@@ -126,14 +131,9 @@
     "sha": "b35911db",
     "data": "2026-11-22",
     "assunto": "feat(assistente): Fase 1 — identidade do assistente pessoal (perfil + motor RADAR) (#3310)"
-   },
-   {
-    "sha": "5ce080f9",
-    "data": "2026-11-22",
-    "assunto": "feat(talkx): resgata cabeçalho da aba Monitor (X145/TL-154) de commit de 10/10 não incorporado (#3312)"
    }
   ],
-  "arquivos_mudados_7d": 5298,
+  "arquivos_mudados_7d": 5292,
   "pastas_mais_mudadas_30d": [
    {
     "pasta": "docs/contexto/supabase",
@@ -301,7 +301,7 @@
   "autores_30d": [
    {
     "autor": "adm01-debug",
-    "commits": 291
+    "commits": 290
    },
    {
     "autor": "github-actions[bot]",
@@ -309,7 +309,7 @@
    },
    {
     "autor": "dependabot[bot]",
-    "commits": 1
+    "commits": 2
    }
   ]
  },

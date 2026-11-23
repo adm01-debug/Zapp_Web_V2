@@ -1,9 +1,9 @@
 {
  "meta": {
-  "sha": "684cc2c229d129f0fd3a330fed92f32e5b0e7aaf",
+  "sha": "f48c1ce7486f1219e73d3f81174355159fc0e4a7",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-23 23:11 UTC",
+  "generated_at": "2026-11-23 23:35 UTC",
   "files_total": 15629,
   "code_files": 8930,
   "code_lines": 1417855
@@ -482974,10 +482974,19 @@
   }
  },
  "git": {
-  "sha": "684cc2c229d129f0fd3a330fed92f32e5b0e7aaf",
+  "sha": "f48c1ce7486f1219e73d3f81174355159fc0e4a7",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "f48c1ce7",
+    "date": "2026-11-23",
+    "author": "dependabot[bot]",
+    "subject": "⬆️ ci: bump ossf/scorecard-action from 2.5.0 to 2.6.0 (#3336)",
+    "files": [
+     ".github/workflows/scorecard.yml"
+    ]
+   },
    {
     "sha": "684cc2c2",
     "date": "2026-11-23",
@@ -483417,15 +483426,6 @@
      "src/hooks/integrations/__tests__/useTalkXSegmentProgress.test.ts",
      "src/hooks/integrations/useTalkXSegmentProgress.ts"
     ]
-   },
-   {
-    "sha": "be88b1e6",
-    "date": "2026-11-21",
-    "author": "adm01-debug",
-    "subject": "fix(ci): usa fileURLToPath no caminho do script W98 (teste 15) (#3305)",
-    "files": [
-     "scripts/ci/branch-podaveis.unit.mjs"
-    ]
    }
   ],
   "hot_files": [
@@ -483478,6 +483478,10 @@
     3
    ],
    [
+    ".github/workflows/scorecard.yml",
+    2
+   ],
+   [
     "docs/DB-INVENTORY.md",
     2
    ],
@@ -483503,10 +483507,6 @@
    ],
    [
     "supabase/functions/ai-transcribe-audio/index.ts",
-    1
-   ],
-   [
-    "supabase/functions/ai-transcribe-audio/openrouter-stt.test.ts",
     1
    ]
   ]
