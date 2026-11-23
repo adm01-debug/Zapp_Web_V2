@@ -1,6 +1,6 @@
 # 07 · REGRAS DE NEGÓCIO
 
-> Gerado automaticamente por AI Context Sync v1.3.2 · commit `23b816269d` · branch `main` · 2026-11-23 16:15 UTC
+> Gerado automaticamente por AI Context Sync v1.3.2 · commit `b32c9845f2` · branch `main` · 2026-11-23 19:22 UTC
 > Não edite à mão — regras humanas vão em `manual/`.
 
 ## A. Regras escritas por humanos (`manual/` — prioridade máxima, nunca sobrescrito)
@@ -3486,6 +3486,10 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
   ```
   desarmar(); try { await leitor.cancel(motivo); } catch { /* já encerrado */ }
   ```
+- **calcularCustoPorPonta(tarifas: TarifaDeModelo[], consulta: { model: string; em: string | Date; tokensIn: number; tokensOut: number },)** — `supabase/functions/_shared/ai-usage.ts`
+  ```
+  granularidade: "entrada_saida" | "preco_unico" | null
+  ```
 - **calcularCusto(tarifas: TarifaDeModelo[], consulta: { model: string; unit: UnidadeCobravel; em: string | Date; quantidade: number },)** — `supabase/functions/_shared/ai-usage.ts`
   ```
   if (!Number.isFinite(consulta.quantidade) || consulta.quantidade < 0) { return { custo: null, moeda: null, tarifa: null, fonte: null, motivo: "quantidade_invalida" }; } const tarifa = tarifaAplicavel(tarifas, consulta); if (tarifa === null) { return { custo: null, moeda: null, tarifa: null, fonte: null, motivo: "sem_tarifa_vigente" }; } if (!Number.isFinite(tarifa.unitPrice) || tarifa.unitPrice < 0) { return { custo: null, moeda: null, tarifa: null, fonte: null, motivo: "tarifa_invalida" }; } // …
@@ -5058,7 +5062,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `owner` | `supabase/migrations/20260927270018_team_chat_e28_fix_find_or_create_race.sql` |
 | `anon` | `supabase/migrations/20260927340000_fix_add_agent_xp_negative_and_guard.sql` |
 
-## K. Testes como especificação (26291 testes em 2741 arquivos — nomes completos em `context.json`)
+## K. Testes como especificação (26297 testes em 2741 arquivos — nomes completos em `context.json`)
 
 | Arquivo | Testes | Exemplos do que o sistema DEVE fazer |
 |---|---|---|
@@ -5086,10 +5090,10 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `src/lib/journey/__tests__/mappers.test.ts` | 66 | mapMessages · agrupa mensagens seguidas do MESMO autor em até 10 min · na virada de 10 min: exatamente 10 min agrupa, 10 min + 1 ms não agrupa · autores diferentes não entram na mesma rajada … |
 | `src/lib/journey/__tests__/periodRange.test.ts` | 64 | resolveRange — atalhos (D04) · any devolve intervalo aberto e não marca inválido · today cobre o dia inteiro do relógio do aparelho · ${preset} começa em (hoje − ${dias - 1}) 00:00 e vai até o fim de hoje … |
 | `src/components/inbox/location-picker/__tests__/useAddressAutocomplete.test.tsx` | 62 | useAddressAutocomplete · proximidade depende das coordenadas, não da identidade do objeto · %s: centro equivalente conserva destaque e seleção sem repetir a busca · novo objeto com coordenadas zero não aborta nem substitui a consulta em voo … |
+| `supabase/functions/_shared/ai-usage.test.ts` | 59 | logAiUsageDetached: com EdgeRuntime.waitUntil, entrega a promessa ao runtime sem bloquear · registrarConsumoDeDiagnostico: export do ai-proxy preserva o consumo provider_test · logAiUsageDetached: sem EdgeRuntime.waitUntil, AGUARDA a promessa até o insert concluir · ai-proxy: os logs de consumo usam  … |
 | `src/lib/calls/adapters/__tests__/CallEngine.test.ts` | 55 | SipCallAdapter.setMuted (T18) · muteia a track de áudio e devolve o estado LIDO (não o pedido) · desmuta a track e devolve o estado lido · sem mídia devolve null, para o chamador decidir pela intenção … |
 | `src/components/settings/theme/__tests__/presets.test.ts` | 54 | §1 catálogo · tem 19 presets com ids únicos · corporate é o primeiro · ordem é clássicas (10) seguidas de GX (9) … |
 | `supabase/functions/message-delivery/index.test.ts` | 54 | message delivery rejects methods other than POST before reading secrets · message delivery rejects unauthenticated callers before reading the body · message delivery builds an Evolution poll only from a valid persisted payload · message delivery rejects a malformed persisted contact payload … |
-| `supabase/functions/_shared/ai-usage.test.ts` | 53 | logAiUsageDetached: com EdgeRuntime.waitUntil, entrega a promessa ao runtime sem bloquear · registrarConsumoDeDiagnostico: export do ai-proxy preserva o consumo provider_test · logAiUsageDetached: sem EdgeRuntime.waitUntil, AGUARDA a promessa até o insert concluir · ai-proxy: os logs de consumo usam  … |
 | `src/components/tasks/__tests__/TasksModule.test.tsx` | 50 | TasksModule — etapa 57 (QuickAdd da Agenda) · na Agenda existe um único QuickAdd, já apontando para o dia selecionado · TasksModule — etapa 45 (barra de filtros) · traz o toggle de concluídas na linha de captura e deixa a barra sem duplicar … |
 | `src/lib/journey/__tests__/stats.test.ts` | 50 | computeJourneyStats — totais por categoria (S074) · conta cada categoria separada e a soma em  · linha com data inválida não entra na conta nem produz NaN · entrada vazia devolve zeros sem estourar … |
 | `src/components/ai/__tests__/AutoTicketClassifier.test.tsx` | 49 | AutoTicketClassifier · Rendering · renders title · renders auto-classify switch … |

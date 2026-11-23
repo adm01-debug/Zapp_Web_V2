@@ -5,10 +5,10 @@
   "linguagens": [
    "TypeScript (5081)",
    "Markdown (4083)",
-   "SQL (3063)",
+   "SQL (3064)",
    "JSON (1968)",
    "JavaScript (682)",
-   "Shell (264)",
+   "Shell (265)",
    "Python (125)",
    "YAML (112)"
   ],
@@ -375,6 +375,7 @@
     "scripts/db-audit/ai-block03-vocabulary-contract.test.sh",
     "scripts/db-audit/ai-read-policies-queue-scope.test.sh",
     "scripts/db-audit/ai-usage-cost-window-open.test.sh",
+    "scripts/db-audit/ai-usage-price-input-output.test.sh",
     "scripts/db-audit/anon-privileges-contact-messages.test.sh",
     "scripts/db-audit/assume-return-conversation.test.sh",
     "scripts/db-audit/auto-reconnect-logs.test.sh",
@@ -1208,7 +1209,7 @@
   {
    "arquivo": "PENDENCIAS.md",
    "titulo": "PENDÊNCIAS CI — 2026-11-12",
-   "linhas": 453
+   "linhas": 461
   },
   {
    "arquivo": "README.md",

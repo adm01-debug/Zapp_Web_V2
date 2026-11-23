@@ -4362,7 +4362,7 @@
    "hooks_exportados": [
     "useAIUsageDashboard"
    ],
-   "linhas": 357,
+   "linhas": 363,
    "dominio": "hooks/analytics",
    "tabelas": [
     "ai_usage_logs",

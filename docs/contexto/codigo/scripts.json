@@ -1,7 +1,7 @@
 {
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
- "total": 451,
+ "total": 452,
  "scripts": [
   {
    "arquivo": "scripts/ai-context/cenarios.mjs",
@@ -585,6 +585,17 @@
    "arquivo": "scripts/db-audit/ai-usage-cost-window-open.test.sh",
    "descricao": "Item 265 (R2-AUTH-041, P2) — a consulta de CUSTO do painel de IA recebia `p_until` nulo (janela aberta ate agora) e comparava `l.created_at < NULL`:",
    "linhas": 158,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [
+    "db-guard.yml"
+   ],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/ai-usage-price-input-output.test.sh",
+   "descricao": "IA-055 §2 — o relatorio de custo de IA cobrava `unit_price * total_tokens`: um preco UNICO para tokens de entrada e de saida, quando o fornecedor cobra",
+   "linhas": 197,
    "env": [],
    "npm_scripts": [],
    "workflows": [

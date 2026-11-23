@@ -26872,11 +26872,11 @@
   {
    "arquivo": "supabase/functions/_shared/ai-usage.test.ts",
    "tipo": "unit",
-   "linhas": 1628,
+   "linhas": 1714,
    "testa": [
     "supabase/functions/_shared/ai-usage.ts"
    ],
-   "casos": 53
+   "casos": 59
   },
   {
    "arquivo": "supabase/functions/_shared/assistant-gateway.test.ts",

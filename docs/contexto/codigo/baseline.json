@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "23b816269dc0ae0c7f400076e50b1f236e44f64c",
+  "commit": "b32c9845f2beac826eece309cef1b7ac85fae12a",
   "branch": "main",
-  "data_commit": "2026-11-23T15:29:03Z",
+  "data_commit": "2026-11-23T16:20:40-03:00",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "b32c9845",
+    "data": "2026-11-23",
+    "assunto": "fix(ia): cobra entrada e saída pelo preço real e destrava o custo de IA (#3326)"
+   },
    {
     "sha": "23b81626",
     "data": "2026-11-23",
@@ -126,14 +131,9 @@
     "sha": "bfe8a3aa",
     "data": "2026-11-21",
     "assunto": "chore(contexto): protege branch contexto da poda + indice migration->PR (#3304)"
-   },
-   {
-    "sha": "03350f44",
-    "data": "2026-11-21",
-    "assunto": "docs: evidencia de deploy DASH-083 (cron relatorios agendados) (#3303)"
    }
   ],
-  "arquivos_mudados_7d": 5384,
+  "arquivos_mudados_7d": 5287,
   "pastas_mais_mudadas_30d": [
    {
     "pasta": "docs/contexto/supabase",
@@ -161,7 +161,7 @@
    },
    {
     "pasta": "src/components/talkx",
-    "mudancas": 364
+    "mudancas": 362
    },
    {
     "pasta": "analise-prs/resgate-261115/dossies",
@@ -169,7 +169,7 @@
    },
    {
     "pasta": "supabase/functions/_shared",
-    "mudancas": 238
+    "mudancas": 240
    },
    {
     "pasta": "analise-prs/resgate-261118-lote3/fix",
@@ -199,11 +199,11 @@
   "arquivos_mais_mudados_90d": [
    {
     "arquivo": "supabase/deployment-manifest.json",
-    "mudancas": 35
+    "mudancas": 36
    },
    {
     "arquivo": "ESTADO.md",
-    "mudancas": 21
+    "mudancas": 22
    },
    {
     "arquivo": "docs/talkx/ESTADOS.md",
@@ -218,6 +218,10 @@
     "mudancas": 13
    },
    {
+    "arquivo": "PENDENCIAS.md",
+    "mudancas": 12
+   },
+   {
     "arquivo": "scripts/db-audit/grants-baseline.json",
     "mudancas": 12
    },
@@ -226,16 +230,12 @@
     "mudancas": 12
    },
    {
-    "arquivo": "PENDENCIAS.md",
+    "arquivo": ".github/workflows/db-guard.yml",
     "mudancas": 11
    },
    {
     "arquivo": "docs/DB-INVENTORY.md",
     "mudancas": 11
-   },
-   {
-    "arquivo": ".github/workflows/db-guard.yml",
-    "mudancas": 10
    },
    {
     "arquivo": ".github/workflows/ci.yml",
@@ -270,10 +270,6 @@
     "mudancas": 6
    },
    {
-    "arquivo": "src/components/talkx/TalkXCampaignRunning.tsx",
-    "mudancas": 6
-   },
-   {
     "arquivo": "src/components/talkx/TalkXView.tsx",
     "mudancas": 6
    },
@@ -296,6 +292,10 @@
    {
     "arquivo": ".github/workflows/types-sync.yml",
     "mudancas": 5
+   },
+   {
+    "arquivo": "docs/audits/edge-functions-authz-coverage.md",
+    "mudancas": 5
    }
   ],
   "autores_30d": [
@@ -310,9 +310,9 @@
   ]
  },
  "contagens": {
-  "arquivos_total": 15770,
+  "arquivos_total": 15772,
   "arquivos_codigo": 5884,
-  "linhas_codigo": 1137701,
+  "linhas_codigo": 1137860,
   "rotas": 18,
   "rotas_http_backend": 11,
   "vistas_por_id": 55,
@@ -322,11 +322,11 @@
   "hooks": 606,
   "edge_functions": 93,
   "tabelas": 222,
-  "migrations": 1150,
+  "migrations": 1151,
   "cron_jobs": 29,
   "testes": 3223,
   "workflows": 24,
-  "scripts": 451,
+  "scripts": 452,
   "docs_md": 4083
  },
  "por_pasta": {
@@ -724,7 +724,7 @@
   },
   "src/components": {
    "arquivos": 2312,
-   "linhas": 393412
+   "linhas": 393416
   },
   "src/config": {
    "arquivos": 3,
@@ -744,7 +744,7 @@
   },
   "src/hooks": {
    "arquivos": 1028,
-   "linhas": 166698
+   "linhas": 166704
   },
   "src/i18n": {
    "arquivos": 2,
@@ -800,7 +800,7 @@
   },
   "supabase/functions": {
    "arquivos": 430,
-   "linhas": 129421
+   "linhas": 129570
   },
   "tailwind.config.ts": {
    "arquivos": 1,
@@ -858,7 +858,7 @@
   },
   {
    "arquivo": "supabase/functions/_shared/ai-usage.ts",
-   "linhas": 1364
+   "linhas": 1420
   },
   {
    "arquivo": "analise-prs/resgate-261118-lote3/fix/ci-verde-261021/supabase/functions/evolution-api/index.ts",
@@ -1224,7 +1224,7 @@
   },
   {
    "arquivo": "supabase/functions/talkx-ai/index.ts",
-   "linha": 496,
+   "linha": 503,
    "tipo": "TODO",
    "texto": "caminho: se falhar, a"
   },

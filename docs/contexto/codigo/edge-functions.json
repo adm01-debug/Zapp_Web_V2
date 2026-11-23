@@ -2970,7 +2970,7 @@
    "nome": "talkx-ai",
    "entrada": "supabase/functions/talkx-ai/index.ts",
    "arquivos": 1,
-   "linhas": 599,
+   "linhas": 606,
    "verify_jwt": true,
    "metodos": [
     "POST"

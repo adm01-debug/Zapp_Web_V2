@@ -1,6 +1,6 @@
 # 10 · ACESSO E SEGURANÇA — quem pode o quê
 
-> Gerado automaticamente por AI Context Sync v1.3.2 · commit `23b816269d` · branch `main` · 2026-11-23 16:15 UTC
+> Gerado automaticamente por AI Context Sync v1.3.2 · commit `b32c9845f2` · branch `main` · 2026-11-23 19:22 UTC
 > Não edite à mão — regras humanas vão em `manual/`.
 
 ## Perfis / roles identificados
@@ -246,7 +246,7 @@
 
 > `—` com RLS ligado = ninguém além de service_role. `sem RLS` = qualquer chave anon lê/escreve tudo.
 
-## Onde o RLS é IGNORADO (service_role) — 1236 arquivo(s)
+## Onde o RLS é IGNORADO (service_role) — 1237 arquivo(s)
 
 - `analise-prs/resgate-261118-lote2/scripts/db-audit/validate-post-apply.mjs`
 - `analise-prs/resgate-261118-lote2/supabase/migrations/20261016193300_copilot_tick_trigger.sql`
@@ -398,7 +398,7 @@
 - `docs/contexto/supabase/functions/public/reassign_absent_agents__7f027ae089526f54.sql`
 - `docs/contexto/supabase/functions/public/reassign_overloaded_agents__12ae32cb1ec02d01.sql`
 - `docs/contexto/supabase/functions/public/record_away_message__d077d0b24f34a751.sql`
-- … +1086 (lista completa em `context.json`)
+- … +1087 (lista completa em `context.json`)
 
 ## Funções SQL `SECURITY DEFINER` (rodam com privilégio do dono, ignoram RLS)
 
@@ -882,7 +882,7 @@ Middleware matcher (Next.js): nenhum
 | grant | authenticated | insert | `search_events` |
 | grant | authenticated | insert, select | `t3_errs` |
 | grant | authenticated | insert, update, delete | `feature_flags` |
-| grant | authenticated | select | `profiles_public`, `password_reset_requests_safe`, `password_reset_requests_safe`, `profiles_public`, `whatsapp_connections_public`, `whatsapp_connections_public`, `login_attempts_safe`, `gmail_accounts_safe`, `password_reset_requests_safe`, `whatsapp_connections_agent`, `channel_connections_safe`, `gmail_accounts_safe`, `password_reset_requests_safe`, `gmail_accounts_safe`, `gmail_accounts_safe` … +66 |
+| grant | authenticated | select | `profiles_public`, `password_reset_requests_safe`, `password_reset_requests_safe`, `profiles_public`, `whatsapp_connections_public`, `whatsapp_connections_public`, `login_attempts_safe`, `gmail_accounts_safe`, `password_reset_requests_safe`, `whatsapp_connections_agent`, `channel_connections_safe`, `gmail_accounts_safe`, `password_reset_requests_safe`, `gmail_accounts_safe`, `gmail_accounts_safe` … +67 |
 | grant | authenticated | select, insert | `catalog_send_events`, `talkx_help_views`, `audit_logs` |
 | grant | authenticated | select, insert, delete | `message_favorites` |
 | grant | authenticated | select, insert, update | `sla_alert_preferences`, `connection_alert_preferences`, `notifications`, `messages` |
@@ -891,7 +891,7 @@ Middleware matcher (Next.js): nenhum
 | grant | authenticated, anon, service_role | execute | `pg_temp.assert_permitido`, `pg_temp.assert_negado`, `is_contact_visible_to_user`, `get_visible_agent_ids`, `get_profile_id_for_user`, `is_admin_or_supervisor` |
 | grant | authenticated, anon, service_role | insert | `prova_hz503_asserts` |
 | grant | authenticated, anon, service_role | select, insert, update, delete | `password_reset_requests`, `conversation_analyses` |
-| grant | authenticated, service_role | execute | `talkx_campaign_recipients_page`, `get_department_whatsapp_credentials`, `dashboard_leaderboard`, `search_contacts`, `ai_usage_cost_summary`, `merge_contacts_atomic`, `get_department_whatsapp_credentials`, `get_crm_sync_health`, `get_crm_sync_health`, `merge_contacts_atomic`, `get_profile_id_for_user`, `get_visible_agent_ids`, `is_contact_visible_to_user`, `close_conversation_atomic`, `is_valid_talkx_schedule_timezone` … +128 |
+| grant | authenticated, service_role | execute | `talkx_campaign_recipients_page`, `get_department_whatsapp_credentials`, `dashboard_leaderboard`, `search_contacts`, `ai_usage_cost_summary`, `merge_contacts_atomic`, `get_department_whatsapp_credentials`, `get_crm_sync_health`, `get_crm_sync_health`, `merge_contacts_atomic`, `get_profile_id_for_user`, `get_visible_agent_ids`, `is_contact_visible_to_user`, `close_conversation_atomic`, `is_valid_talkx_schedule_timezone` … +129 |
 | grant | authenticated, service_role | select | `talkx_campaign_optouts`, `talkx_engine_health`, `talkx_engine_health`, `talkx_ddd_regions`, `security_acl_alerts`, `talkx_campaign_optouts`, `profiles`, `user_roles`, `t88_ids`, `profiles`, `profiles` |
 | grant | authenticated, service_role | select, insert, update | `messages` |
 | grant | authenticated, service_role | select, insert, update, delete | `contact_notes`, `contact_protection_policy` |
@@ -957,7 +957,7 @@ Middleware matcher (Next.js): nenhum
 | revoke | authenticated, service_role | truncate, references, trigger, maintain | `contact_notes` |
 | revoke | authenticated, service_role | update, delete, truncate | `audit_logs`, `department_audit_logs` |
 | revoke | public | all | `e2e_fixture_message`, `cleanup_link_preview_cache`, `cleanup_link_preview_cache`, `search_my_calls`, `my_calls_kpi`, `upsert_my_call`, `set_call_agent_notes`, `persist_conversation_analysis`, `replace_ai_conversation_tags`, `enqueue_crm_sync_from_closure`, `persist_conversation_analysis`, `ai_usage_outbox`, `outbox_events`, `e2e_cleanup_conversation_closures`, `talkx_benchmarks` … +7 |
-| revoke | public, anon | all | `ai_usage_cost_summary`, `catalog_rate_limit_hit`, `ai_usage_summary`, `ai_usage_cost_summary`, `catalog_rate_limit_hit`, `transfer_conversation`, `ai_usage_cost_summary`, `catalog_rate_limit_hit`, `talkx_resolve_audience`, `can_access_realtime_topic`, `reopen_conversation`, `set_voip_profile_credentials`, `agent_workload`, `transfer_conversation`, `search_insights` … +4 |
+| revoke | public, anon | all | `ai_usage_cost_summary`, `catalog_rate_limit_hit`, `ai_usage_summary`, `ai_usage_cost_summary`, `catalog_rate_limit_hit`, `transfer_conversation`, `ai_usage_cost_summary`, `catalog_rate_limit_hit`, `talkx_resolve_audience`, `can_access_realtime_topic`, `reopen_conversation`, `set_voip_profile_credentials`, `agent_workload`, `transfer_conversation`, `search_insights` … +5 |
 | revoke | public, anon, authenticated | all | `log_search_event`, `talkx_suppress_contact`, `talkx_suppress_contact`, `ai_rate_limit_hit`, `ai_rate_limit_purge`, `ai_budget_reservations`, `ai_budget_reserve`, `ai_budget_settle`, `ai_budget_release`, `ai_budget_reconcile`, `ai_jobs`, `get_ai_jobs_cron_secret`, `enqueue_ai_job`, `claim_ai_jobs`, `heartbeat_ai_job` … +35 |
 | revoke | public, anon, authenticated | execute | `talkx_segment_versions_trim`, `talkx_segment_block_in_use`, `whisper_messages_valida_audio_path`, `whisper_messages_valida_audio_path` |
 | revoke | public, anon, authenticated, service_role | all | `set_default_whatsapp_connection`, `voip_profile_credentials` |

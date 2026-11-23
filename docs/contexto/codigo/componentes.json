@@ -3212,7 +3212,7 @@
     "AIUsageDashboard"
    ],
    "export_default": null,
-   "linhas": 190,
+   "linhas": 194,
    "dominio": "components/admin",
    "hooks_locais": [
     "useAIUsageDashboard"

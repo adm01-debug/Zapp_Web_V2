@@ -1,15 +1,15 @@
 {
  "meta": {
-  "sha": "23b816269dc0ae0c7f400076e50b1f236e44f64c",
+  "sha": "b32c9845f2beac826eece309cef1b7ac85fae12a",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-23 16:15 UTC",
-  "files_total": 15618,
-  "code_files": 8920,
-  "code_lines": 1415147
+  "generated_at": "2026-11-23 19:22 UTC",
+  "files_total": 15620,
+  "code_files": 8921,
+  "code_lines": 1415603
  },
  "version": "1.3.2",
- "facts_hash": "9842b210c6d81249",
+ "facts_hash": "58f1486bff696a7b",
  "stack": {
   "frameworks": [
    "React + Vite",
@@ -344,7 +344,7 @@
   ],
   "package_manager": "bun",
   "languages": {
-   ".sql": 3063,
+   ".sql": 3064,
    ".tsx": 2828,
    ".ts": 2248,
    ".mjs": 652,
@@ -14973,11 +14973,11 @@
      }
     ],
     "constraints": [
-     "constraint ai_model_prices_unit_check check (unit in ('token', 'character', 'second', 'request'))",
      "constraint ai_model_prices_source_check check (source in ('internal', 'provider_statement'))",
      "constraint ai_model_prices_price_check check (unit_price >= 0)",
      "constraint ai_model_prices_currency_check check (char_length(currency) = 3)",
-     "constraint ai_model_prices_vigencia_check check (valid_to is null or valid_to > valid_from)"
+     "constraint ai_model_prices_vigencia_check check (valid_to is null or valid_to > valid_from)",
+     "constraint ai_model_prices_unit_check check (unit in ('token', 'input_token', 'output_token', 'character', 'second', 'request'))"
     ],
     "src": "supabase/migrations/20261003082707_ia055_tarifas_versionadas.sql",
     "comment": "IA-055: tarifas versionadas por modelo/unidade. valid_from inclusivo, valid_to exclusivo (NULL = vigente). source separa tarifa interna de tarifa reconciliada com o extrato do provedor.",
@@ -28453,15 +28453,16 @@
     "args": "p_since timestamptz, p_until timestamptz, p_top_functions integer default 10",
     "returns": "jsonb",
     "lang": "sql",
-    "src": "supabase/migrations/20261006200459_ia_usage_cost_janela_aberta.sql",
+    "src": "supabase/migrations/20261122190000_ia055_precos_entrada_e_saida.sql",
     "security_definer": false,
     "search_path": true,
-    "body": "with parametros as ( select p_since as inicio, coalesce(p_until, now()) as fim ), janela as ( select l.id, l.function_name, l.model, l.created_at, l.total_tokens from public.ai_usage_logs l, parametros p where l.created_at >= p.inicio and l.created_at < p.fim ), com_tarifa as ( select j.id, j.function_name, j.model, j.created_at, j.total_tokens, t.unit_price, t.currency, t.source from janela j left join lateral ( select p.unit_price, p.currency, p.source from public.ai_model_prices p where p.model = j.model and p.unit = 'token' and p.valid_from <= j.created_at and (p.valid_to is null or j.created_at < p.valid_to) order by p.valid_from desc, (p.source = 'provider_statement') desc, p.created_a …",
+    "body": "with parametros as ( select p_since as inicio, coalesce(p_until, now()) as fim ), janela as ( select l.id, l.function_name, l.model, l.created_at, l.total_tokens, l.input_tokens, l.output_tokens from public.ai_usage_logs l, parametros p where l.created_at >= p.inicio and l.created_at < p.fim ), com_tarifa as ( select j.id, j.function_name, j.model, j.created_at, j.total_tokens, j.input_tokens, j.output_tokens, te.unit_price as preco_entrada, ts.unit_price as preco_saida, tu.unit_price as preco_unico, te.currency as moeda_entrada, ts.currency as moeda_saida, tu.currency as moeda_unico, te.source as fonte_entrada, ts.source as fonte_saida, tu.source as fonte_unico from janela j left join later …",
     "raises": [],
     "tables": [
      "ai_model_prices",
      "ai_usage_logs",
      "com_tarifa",
+     "custeado",
      "janela",
      "lateral",
      "medido",
@@ -48243,6 +48244,7 @@
    "supabase/migrations/20261119010000_talkx_set_campaign_ab.sql",
    "supabase/migrations/20261120080000_scheduled_report_cron.sql",
    "supabase/migrations/20261121190000_assistant_profiles.sql",
+   "supabase/migrations/20261122190000_ia055_precos_entrada_e_saida.sql",
    "supabase/tests/admin_inbox_silence.sql",
    "supabase/tests/admin_unlock_login_autorizacao.sql",
    "supabase/tests/agent_workload.sql",
@@ -63291,6 +63293,30 @@
     "src": "supabase/migrations/20261120080000_scheduled_report_cron.sql"
    },
    {
+    "kind": "revoke",
+    "privs": "all",
+    "object": "ai_usage_cost_summary",
+    "objkind": "function",
+    "roles": "public, anon",
+    "src": "supabase/migrations/20261122190000_ia055_precos_entrada_e_saida.sql"
+   },
+   {
+    "kind": "grant",
+    "privs": "execute",
+    "object": "ai_usage_cost_summary",
+    "objkind": "function",
+    "roles": "authenticated, service_role",
+    "src": "supabase/migrations/20261122190000_ia055_precos_entrada_e_saida.sql"
+   },
+   {
+    "kind": "grant",
+    "privs": "select",
+    "object": "ai_model_prices",
+    "objkind": "table",
+    "roles": "authenticated",
+    "src": "supabase/migrations/20261122190000_ia055_precos_entrada_e_saida.sql"
+   },
+   {
     "kind": "grant",
     "privs": "select",
     "object": "profiles",
@@ -77356,7 +77382,7 @@
   {
    "module": "src/components",
    "files": 2312,
-   "lines": 393412,
+   "lines": 393416,
    "tables": [
     "agent_skills",
     "agent_visibility_grants",
@@ -77705,7 +77731,7 @@
   {
    "module": "src/hooks",
    "files": 1028,
-   "lines": 166698,
+   "lines": 166704,
    "tables": [
     "agent_achievements",
     "agent_stats",
@@ -78757,7 +78783,7 @@
   {
    "module": "supabase/functions",
    "files": 430,
-   "lines": 129421,
+   "lines": 129570,
    "tables": [
     "agent_stats",
     "ai_conversation_tags",
@@ -78994,8 +79020,8 @@
   },
   {
    "module": "supabase/migrations",
-   "files": 1150,
-   "lines": 115148,
+   "files": 1151,
+   "lines": 115445,
    "tables": [
     "audit_logs",
     "department_invites",
@@ -90207,7 +90233,7 @@
    {
     "file": "supabase/functions/_shared/ai-usage.ts",
     "name": "UnidadeCobravel",
-    "values": "token | character | second | request"
+    "values": "token | input_token | output_token | character | second | request"
    },
    {
     "file": "supabase/functions/_shared/ai-values.ts",
@@ -113087,7 +113113,7 @@
    },
    {
     "file": "supabase/functions/talkx-ai/index.ts",
-    "text": "* Reusa `calcularCusto` em vez de repetir uma regra de preço: vigência, moeda e"
+    "text": "* Reusa o motor em vez de repetir uma regra de preço: vigência, moeda e"
    },
    {
     "file": "supabase/functions/talkx-ai/index.ts",
@@ -119925,11 +119951,6 @@
    {
     "table": "ai_model_prices",
     "column": "(tabela)",
-    "rule": "constraint ai_model_prices_unit_check check (unit in ('token', 'character', 'second', 'request'))"
-   },
-   {
-    "table": "ai_model_prices",
-    "column": "(tabela)",
     "rule": "constraint ai_model_prices_source_check check (source in ('internal', 'provider_statement'))"
    },
    {
@@ -119946,6 +119967,11 @@
     "table": "ai_model_prices",
     "column": "(tabela)",
     "rule": "constraint ai_model_prices_vigencia_check check (valid_to is null or valid_to > valid_from)"
+   },
+   {
+    "table": "ai_model_prices",
+    "column": "(tabela)",
+    "rule": "constraint ai_model_prices_unit_check check (unit in ('token', 'input_token', 'output_token', 'character', 'second', 'request'))"
    },
    {
     "table": "catalog_rate_limit_hits",
@@ -151914,6 +151940,12 @@
     "name": "cancel",
     "params": "motivo",
     "body": "desarmar(); try { await leitor.cancel(motivo); } catch { /* já encerrado */ }"
+   },
+   {
+    "file": "supabase/functions/_shared/ai-usage.ts",
+    "name": "calcularCustoPorPonta",
+    "params": "tarifas: TarifaDeModelo[], consulta: { model: string; em: string | Date; tokensIn: number; tokensOut: number },",
+    "body": "granularidade: \"entrada_saida\" | \"preco_unico\" | null"
    },
    {
     "file": "supabase/functions/_shared/ai-usage.ts",
@@ -246153,6 +246185,30 @@
    },
    {
     "file": "supabase/functions/_shared/ai-usage.test.ts",
+    "name": "IA-055 §2 entrada e saída são cobradas pelo preço de cada ponta"
+   },
+   {
+    "file": "supabase/functions/_shared/ai-usage.test.ts",
+    "name": "IA-055 §2 só a saída já custa mais que o preço único da entrada"
+   },
+   {
+    "file": "supabase/functions/_shared/ai-usage.test.ts",
+    "name": "IA-055 §2 sem as duas pontas cai no preço único sobre a soma"
+   },
+   {
+    "file": "supabase/functions/_shared/ai-usage.test.ts",
+    "name": "IA-055 §2 sem tarifa nenhuma é nulo com motivo, nunca zero"
+   },
+   {
+    "file": "supabase/functions/_shared/ai-usage.test.ts",
+    "name": "IA-055 §2 moedas divergentes entre entrada e saída não são somadas"
+   },
+   {
+    "file": "supabase/functions/_shared/ai-usage.test.ts",
+    "name": "IA-055 §2 chamada sem token algum é zero MEDIDO, não "
+   },
+   {
+    "file": "supabase/functions/_shared/ai-usage.test.ts",
     "name": "IA-055 reajuste de preço NÃO reescreve o relatório do passado"
    },
    {
@@ -270726,15 +270782,16 @@
     "args": "p_since timestamptz, p_until timestamptz, p_top_functions integer default 10",
     "returns": "jsonb",
     "lang": "sql",
-    "src": "supabase/migrations/20261006200459_ia_usage_cost_janela_aberta.sql",
+    "src": "supabase/migrations/20261122190000_ia055_precos_entrada_e_saida.sql",
     "security_definer": false,
     "search_path": true,
-    "body": "with parametros as ( select p_since as inicio, coalesce(p_until, now()) as fim ), janela as ( select l.id, l.function_name, l.model, l.created_at, l.total_tokens from public.ai_usage_logs l, parametros p where l.created_at >= p.inicio and l.created_at < p.fim ), com_tarifa as ( select j.id, j.function_name, j.model, j.created_at, j.total_tokens, t.unit_price, t.currency, t.source from janela j left join lateral ( select p.unit_price, p.currency, p.source from public.ai_model_prices p where p.model = j.model and p.unit = 'token' and p.valid_from <= j.created_at and (p.valid_to is null or j.created_at < p.valid_to) order by p.valid_from desc, (p.source = 'provider_statement') desc, p.created_a …",
+    "body": "with parametros as ( select p_since as inicio, coalesce(p_until, now()) as fim ), janela as ( select l.id, l.function_name, l.model, l.created_at, l.total_tokens, l.input_tokens, l.output_tokens from public.ai_usage_logs l, parametros p where l.created_at >= p.inicio and l.created_at < p.fim ), com_tarifa as ( select j.id, j.function_name, j.model, j.created_at, j.total_tokens, j.input_tokens, j.output_tokens, te.unit_price as preco_entrada, ts.unit_price as preco_saida, tu.unit_price as preco_unico, te.currency as moeda_entrada, ts.currency as moeda_saida, tu.currency as moeda_unico, te.source as fonte_entrada, ts.source as fonte_saida, tu.source as fonte_unico from janela j left join later …",
     "raises": [],
     "tables": [
      "ai_model_prices",
      "ai_usage_logs",
      "com_tarifa",
+     "custeado",
      "janela",
      "lateral",
      "medido",
@@ -292744,6 +292801,7 @@
    "supabase/migrations/20261118220000_talkx_snapshot_variante_primeiro_vale.sql",
    "supabase/migrations/20261119010000_talkx_set_campaign_ab.sql",
    "supabase/migrations/20261120080000_scheduled_report_cron.sql",
+   "supabase/migrations/20261122190000_ia055_precos_entrada_e_saida.sql",
    "supabase/tests/admin_inbox_silence.sql",
    "supabase/tests/admin_unlock_login_autorizacao.sql",
    "supabase/tests/agent_workload.sql",
@@ -308006,6 +308064,30 @@
     "objkind": "function",
     "roles": "service_role",
     "src": "supabase/migrations/20261120080000_scheduled_report_cron.sql"
+   },
+   {
+    "kind": "revoke",
+    "privs": "all",
+    "object": "ai_usage_cost_summary",
+    "objkind": "function",
+    "roles": "public, anon",
+    "src": "supabase/migrations/20261122190000_ia055_precos_entrada_e_saida.sql"
+   },
+   {
+    "kind": "grant",
+    "privs": "execute",
+    "object": "ai_usage_cost_summary",
+    "objkind": "function",
+    "roles": "authenticated, service_role",
+    "src": "supabase/migrations/20261122190000_ia055_precos_entrada_e_saida.sql"
+   },
+   {
+    "kind": "grant",
+    "privs": "select",
+    "object": "ai_model_prices",
+    "objkind": "table",
+    "roles": "authenticated",
+    "src": "supabase/migrations/20261122190000_ia055_precos_entrada_e_saida.sql"
    },
    {
     "kind": "grant",
@@ -361723,7 +361805,7 @@
   },
   "src/components/admin/AIUsageDashboard.tsx": {
    "path": "src/components/admin/AIUsageDashboard.tsx",
-   "lines": 190,
+   "lines": 194,
    "exports": [
     "function AIUsageDashboard"
    ],
@@ -412508,7 +412590,7 @@
   },
   "src/hooks/analytics/useAIUsageDashboard.ts": {
    "path": "src/hooks/analytics/useAIUsageDashboard.ts",
-   "lines": 357,
+   "lines": 363,
    "exports": [
     "type TimeFilter",
     "interface UsageLog",
@@ -452270,7 +452352,7 @@
   },
   "supabase/functions/_shared/ai-usage.test.ts": {
    "path": "supabase/functions/_shared/ai-usage.test.ts",
-   "lines": 1628,
+   "lines": 1714,
    "is_test": true,
    "env": [
     "SUPABASE_SERVICE_ROLE_KEY",
@@ -452331,6 +452413,12 @@
     "IA-054 linha sem identidade de ação conta tentativa, nunca ação",
     "IA-054 identidade da ação: o clique manda, o job é o plano B",
     "IA-054 reconciliação vazia não inventa número",
+    "IA-055 §2 entrada e saída são cobradas pelo preço de cada ponta",
+    "IA-055 §2 só a saída já custa mais que o preço único da entrada",
+    "IA-055 §2 sem as duas pontas cai no preço único sobre a soma",
+    "IA-055 §2 sem tarifa nenhuma é nulo com motivo, nunca zero",
+    "IA-055 §2 moedas divergentes entre entrada e saída não são somadas",
+    "IA-055 §2 chamada sem token algum é zero MEDIDO, não ",
     "IA-055 reajuste de preço NÃO reescreve o relatório do passado",
     "IA-055 fronteira da vigência: início inclusivo, fim exclusivo",
     "IA-055 sem tarifa vigente o custo é NULL, nunca zero",
@@ -452362,7 +452450,7 @@
   },
   "supabase/functions/_shared/ai-usage.ts": {
    "path": "supabase/functions/_shared/ai-usage.ts",
-   "lines": 1364,
+   "lines": 1420,
    "exports": [
     "function extractTokenUsage",
     "function normalizeCorrelationId",
@@ -452395,6 +452483,7 @@
     "interface TarifaDeModelo",
     "function tarifaAplicavel",
     "interface CustoCalculado",
+    "function calcularCustoPorPonta",
     "function calcularCusto"
    ],
    "tables": [
@@ -452424,7 +452513,7 @@
    "enums": [
     {
      "name": "UnidadeCobravel",
-     "values": "token | character | second | request"
+     "values": "token | input_token | output_token | character | second | request"
     }
    ],
    "params": [
@@ -452498,6 +452587,11 @@
    ],
    "doc": "Shared AI Usage Logger for Edge Functions. Logs token consumption per user to ai_usage_logs table.",
    "calc_fns": [
+    {
+     "name": "calcularCustoPorPonta",
+     "params": "tarifas: TarifaDeModelo[], consulta: { model: string; em: string | Date; tokensIn: number; tokensOut: number },",
+     "body": "granularidade: \"entrada_saida\" | \"preco_unico\" | null"
+    },
     {
      "name": "calcularCusto",
      "params": "tarifas: TarifaDeModelo[], consulta: { model: string; unit: UnidadeCobravel; em: string | Date; quantidade: number },",
@@ -469769,7 +469863,7 @@
   },
   "supabase/functions/talkx-ai/index.ts": {
    "path": "supabase/functions/talkx-ai/index.ts",
-   "lines": 599,
+   "lines": 606,
    "exports": [
     "const KINDS",
     "type TalkxAiKind",
@@ -469882,7 +469976,7 @@
     "1. RECUSA ANTES DA REDE: flag desligada, teto do mês atingido ou limite",
     "* Página da soma do mês (o PostgREST devolve no máximo 1.000 linhas por resposta). */",
     "* Pagina de propósito: o PostgREST devolve no máximo 1.000 linhas por resposta,",
-    "* Reusa `calcularCusto` em vez de repetir uma regra de preço: vigência, moeda e",
+    "* Reusa o motor em vez de repetir uma regra de preço: vigência, moeda e",
     "inválida — senão o gasto ficaria fora do teto do mês e do limite diário."
    ],
    "calc_fns": [
@@ -477939,6 +478033,11 @@
    "path": "supabase/migrations/20261121190000_assistant_profiles.sql",
    "lines": 45
   },
+  "supabase/migrations/20261122190000_ia055_precos_entrada_e_saida.sql": {
+   "path": "supabase/migrations/20261122190000_ia055_precos_entrada_e_saida.sql",
+   "lines": 297,
+   "uses_service_role": true
+  },
   "supabase/tests/admin_inbox_silence.sql": {
    "path": "supabase/tests/admin_inbox_silence.sql",
    "lines": 310,
@@ -481845,10 +481944,29 @@
   }
  },
  "git": {
-  "sha": "23b816269dc0ae0c7f400076e50b1f236e44f64c",
+  "sha": "b32c9845f2beac826eece309cef1b7ac85fae12a",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "b32c9845",
+    "date": "2026-11-23",
+    "author": "adm01-debug",
+    "subject": "fix(ia): cobra entrada e saída pelo preço real e destrava o custo de IA (#3326)",
+    "files": [
+     ".github/workflows/db-guard.yml",
+     "ESTADO.md",
+     "PENDENCIAS.md",
+     "scripts/db-audit/ai-usage-price-input-output.test.sh",
+     "src/components/admin/AIUsageDashboard.tsx",
+     "src/hooks/analytics/useAIUsageDashboard.ts",
+     "supabase/deployment-manifest.json",
+     "supabase/functions/_shared/ai-usage.test.ts",
+     "supabase/functions/_shared/ai-usage.ts",
+     "supabase/functions/talkx-ai/index.ts",
+     "supabase/migrations/20261122190000_ia055_precos_entrada_e_saida.sql"
+    ]
+   },
    {
     "sha": "23b81626",
     "date": "2026-11-23",
@@ -482266,25 +482384,16 @@
      "supabase/schema-catalog.json",
      "supabase/schema-manifest.json"
     ]
-   },
-   {
-    "sha": "219555ea",
-    "date": "2026-11-21",
-    "author": "adm01-debug",
-    "subject": "fix(db-audit): reconcilia drift da 20261111181000 e remove excecoes obsoletas (#3297)",
-    "files": [
-     "scripts/db-audit/migration-evidence.json"
-    ]
    }
   ],
   "hot_files": [
    [
     "supabase/deployment-manifest.json",
-    6
+    7
    ],
    [
     "ESTADO.md",
-    5
+    6
    ],
    [
     "docs/plans/PLANO_ASSISTENTE_PESSOAL_IA_2026-11-15.md",
@@ -482343,19 +482452,19 @@
     2
    ],
    [
-    "scripts/ci/docs-estado-registry-convention.unit.mjs",
+    ".github/workflows/db-guard.yml",
     1
    ],
    [
-    "scripts/ci/eslint-baseline.json",
+    "PENDENCIAS.md",
     1
    ],
    [
-    "scripts/db-audit/talkx-monitor-panel.test.sh",
+    "scripts/db-audit/ai-usage-price-input-output.test.sh",
     1
    ],
    [
-    "scripts/lib/seguranca-processo.mjs",
+    "src/components/admin/AIUsageDashboard.tsx",
     1
    ]
   ]
