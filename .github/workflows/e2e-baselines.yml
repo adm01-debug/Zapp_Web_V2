@@ -25,7 +25,7 @@
 # governa, e oferece-las aqui prometeria uma entrega que nao acontece.
 #
 # O passo de teste repete, de proposito, a configuracao do job `e2e` de ci.yml
-# (ubuntu-24.04, Bun 1.4.0, Playwright 1.65.0 com --with-deps). Se um dos dois
+# (ubuntu-24.04, Bun 1.4.0, Playwright 1.65.1 com --with-deps). Se um dos dois
 # mudar sem o outro, as imagens voltam a divergir.
 name: e2e-baselines
 
@@ -134,7 +134,7 @@ jobs:
           title: 'test(e2e): regerar baselines visuais de ${{ inputs.projeto }}'
           body: |
             Imagens de referencia regeradas no ambiente do CI (`ubuntu-24.04`,
-            Playwright 1.65.0), que e' o mesmo em que o job `🎭 E2E Tests` as compara.
+            Playwright 1.65.1), que e' o mesmo em que o job `🎭 E2E Tests` as compara.
 
             - main de origem: `${{ github.sha }}`
             - projeto: `${{ inputs.projeto }}`

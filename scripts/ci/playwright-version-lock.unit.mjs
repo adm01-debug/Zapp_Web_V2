@@ -101,3 +101,20 @@ test('N-022: lock com playwright e @playwright/test divergentes falha', () => {
   const texto = '"playwright": ["playwright@1.63.0"],\n"@playwright/test": ["@playwright/test@1.62.0"]';
   assert.throws(() => versaoPlaywrightDoLock(texto), /divergem/);
 });
+
+
+// O pin do driver fora dos workflows tambem segue o lock. O modulo de politica da
+// prova de rede roda DENTRO dos containers: se VERSION/DRIVER ficarem para tras,
+// `network-proof.mjs` falha em runtime (`driver-version`) num job de dispatch,
+// longe do PR que bumpou o Playwright. Foi este o defeito que escapou no bump.
+test('N-022: VERSION/DRIVER de network-proof-policy seguem o lock e o digest pinado', async () => {
+  const lock = versaoPlaywrightDoLock(await readFile(BUN_LOCK, 'utf8'));
+  const politica = await readFile(new URL('scripts/e2e-isolated/network-proof-policy.mjs', RAIZ), 'utf8');
+  const versao = /export const VERSION = '([^']+)'/u.exec(politica)?.[1];
+  const driver = /export const DRIVER = '([^']+)'/u.exec(politica)?.[1];
+  assert.ok(versao, 'network-proof-policy.mjs nao declara VERSION com literal');
+  assert.ok(driver, 'network-proof-policy.mjs nao declara DRIVER com literal');
+  const imagens = JSON.parse(await readFile(new URL('scripts/e2e-isolated/images.lock.json', RAIZ), 'utf8'));
+  assert.equal(versao, lock, `network-proof-policy.mjs VERSION=${versao} (bun.lock: ${lock})`);
+  assert.equal(driver, imagens.images.driver, 'network-proof-policy.mjs DRIVER divergente de images.lock.json');
+});
