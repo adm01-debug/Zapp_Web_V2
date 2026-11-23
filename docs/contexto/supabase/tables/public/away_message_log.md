@@ -39,6 +39,7 @@
 |---|---|---|---|---|---|---|
 | away_message_log_pkey | btree | id | sim | sim |  | `CREATE UNIQUE INDEX away_message_log_pkey ON public.away_message_log USING btree (id)` |
 | idx_away_message_log_contato_conexao_sent_at | btree | contact_id, whatsapp_connection_id, sent_at | não | sim |  | `CREATE INDEX idx_away_message_log_contato_conexao_sent_at ON public.away_message_log USING btree (contact_id, whatsapp_connection_id, sent_at DESC)` |
+| idx_away_message_log_whatsapp_connection_id | btree | whatsapp_connection_id | não | sim |  | `CREATE INDEX idx_away_message_log_whatsapp_connection_id ON public.away_message_log USING btree (whatsapp_connection_id)` |
 
 
 ## Policies (RLS)

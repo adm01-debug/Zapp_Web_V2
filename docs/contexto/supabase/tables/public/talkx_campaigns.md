@@ -152,6 +152,8 @@
 
 | nome | método | colunas | único | válido | predicado | definição |
 |---|---|---|---|---|---|---|
+| idx_talkx_campaigns_ab_winner_decided_by | btree | ab_winner_decided_by | não | sim |  | `CREATE INDEX idx_talkx_campaigns_ab_winner_decided_by ON public.talkx_campaigns USING btree (ab_winner_decided_by)` |
+| idx_talkx_campaigns_ab_winner_variant_id | btree | ab_winner_variant_id | não | sim |  | `CREATE INDEX idx_talkx_campaigns_ab_winner_variant_id ON public.talkx_campaigns USING btree (ab_winner_variant_id)` |
 | idx_talkx_campaigns_cancelled_by | btree | cancelled_by | não | sim |  | `CREATE INDEX idx_talkx_campaigns_cancelled_by ON public.talkx_campaigns USING btree (cancelled_by)` |
 | idx_talkx_campaigns_consent_confirmed_by | btree | consent_confirmed_by | não | sim |  | `CREATE INDEX idx_talkx_campaigns_consent_confirmed_by ON public.talkx_campaigns USING btree (consent_confirmed_by)` |
 | idx_talkx_campaigns_created_by | btree | created_by | não | sim |  | `CREATE INDEX idx_talkx_campaigns_created_by ON public.talkx_campaigns USING btree (created_by)` |

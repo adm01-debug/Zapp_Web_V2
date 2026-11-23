@@ -45,6 +45,7 @@
 
 | nome | método | colunas | único | válido | predicado | definição |
 |---|---|---|---|---|---|---|
+| idx_message_reports_reporter_id | btree | reporter_id | não | sim |  | `CREATE INDEX idx_message_reports_reporter_id ON public.message_reports USING btree (reporter_id)` |
 | idx_message_reports_resolved_by | btree | resolved_by | não | sim |  | `CREATE INDEX idx_message_reports_resolved_by ON public.message_reports USING btree (resolved_by)` |
 | message_reports_message_id_reporter_id_key | btree | message_id, reporter_id | sim | sim |  | `CREATE UNIQUE INDEX message_reports_message_id_reporter_id_key ON public.message_reports USING btree (message_id, reporter_id)` |
 | message_reports_pkey | btree | id | sim | sim |  | `CREATE UNIQUE INDEX message_reports_pkey ON public.message_reports USING btree (id)` |

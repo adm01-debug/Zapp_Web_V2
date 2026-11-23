@@ -71756,6 +71756,20 @@
       },
       {
         "columns": [
+          "whatsapp_connection_id"
+        ],
+        "definition": "CREATE INDEX idx_away_message_log_whatsapp_connection_id ON public.away_message_log USING btree (whatsapp_connection_id)",
+        "is_primary": false,
+        "is_unique": false,
+        "is_valid": true,
+        "method": "btree",
+        "name": "idx_away_message_log_whatsapp_connection_id",
+        "predicate": null,
+        "schema": "public",
+        "table": "away_message_log"
+      },
+      {
+        "columns": [
           "id"
         ],
         "definition": "CREATE UNIQUE INDEX away_messages_pkey ON public.away_messages USING btree (id)",
@@ -75958,6 +75972,20 @@
       },
       {
         "columns": [
+          "message_id"
+        ],
+        "definition": "CREATE INDEX idx_message_favorites_message_id ON public.message_favorites USING btree (message_id)",
+        "is_primary": false,
+        "is_unique": false,
+        "is_valid": true,
+        "method": "btree",
+        "name": "idx_message_favorites_message_id",
+        "predicate": null,
+        "schema": "public",
+        "table": "message_favorites"
+      },
+      {
+        "columns": [
           "user_id",
           "message_id"
         ],
@@ -75970,6 +75998,20 @@
         "predicate": null,
         "schema": "public",
         "table": "message_favorites"
+      },
+      {
+        "columns": [
+          "message_id"
+        ],
+        "definition": "CREATE INDEX idx_message_pins_message_id ON public.message_pins USING btree (message_id)",
+        "is_primary": false,
+        "is_unique": false,
+        "is_valid": true,
+        "method": "btree",
+        "name": "idx_message_pins_message_id",
+        "predicate": null,
+        "schema": "public",
+        "table": "message_pins"
       },
       {
         "columns": [
@@ -76116,6 +76158,20 @@
         "predicate": null,
         "schema": "public",
         "table": "message_reactions"
+      },
+      {
+        "columns": [
+          "reporter_id"
+        ],
+        "definition": "CREATE INDEX idx_message_reports_reporter_id ON public.message_reports USING btree (reporter_id)",
+        "is_primary": false,
+        "is_unique": false,
+        "is_valid": true,
+        "method": "btree",
+        "name": "idx_message_reports_reporter_id",
+        "predicate": null,
+        "schema": "public",
+        "table": "message_reports"
       },
       {
         "columns": [
@@ -79255,6 +79311,20 @@
       },
       {
         "columns": [
+          "segment_id"
+        ],
+        "definition": "CREATE INDEX idx_talkx_campaign_segments_segment_id ON public.talkx_campaign_segments USING btree (segment_id)",
+        "is_primary": false,
+        "is_unique": false,
+        "is_valid": true,
+        "method": "btree",
+        "name": "idx_talkx_campaign_segments_segment_id",
+        "predicate": null,
+        "schema": "public",
+        "table": "talkx_campaign_segments"
+      },
+      {
+        "columns": [
           "campaign_id",
           "position"
         ],
@@ -79282,6 +79352,34 @@
         "predicate": null,
         "schema": "public",
         "table": "talkx_campaign_segments"
+      },
+      {
+        "columns": [
+          "ab_winner_decided_by"
+        ],
+        "definition": "CREATE INDEX idx_talkx_campaigns_ab_winner_decided_by ON public.talkx_campaigns USING btree (ab_winner_decided_by)",
+        "is_primary": false,
+        "is_unique": false,
+        "is_valid": true,
+        "method": "btree",
+        "name": "idx_talkx_campaigns_ab_winner_decided_by",
+        "predicate": null,
+        "schema": "public",
+        "table": "talkx_campaigns"
+      },
+      {
+        "columns": [
+          "ab_winner_variant_id"
+        ],
+        "definition": "CREATE INDEX idx_talkx_campaigns_ab_winner_variant_id ON public.talkx_campaigns USING btree (ab_winner_variant_id)",
+        "is_primary": false,
+        "is_unique": false,
+        "is_valid": true,
+        "method": "btree",
+        "name": "idx_talkx_campaigns_ab_winner_variant_id",
+        "predicate": null,
+        "schema": "public",
+        "table": "talkx_campaigns"
       },
       {
         "columns": [
@@ -80946,6 +81044,20 @@
       },
       {
         "columns": [
+          "profile_id"
+        ],
+        "definition": "CREATE INDEX idx_team_message_receipts_profile_id ON public.team_message_receipts USING btree (profile_id)",
+        "is_primary": false,
+        "is_unique": false,
+        "is_valid": true,
+        "method": "btree",
+        "name": "idx_team_message_receipts_profile_id",
+        "predicate": null,
+        "schema": "public",
+        "table": "team_message_receipts"
+      },
+      {
+        "columns": [
           "message_id"
         ],
         "definition": "CREATE INDEX idx_team_message_receipts_unread ON public.team_message_receipts USING btree (message_id) WHERE (status <> 'read'::text)",
@@ -81997,54 +82109,6 @@
         "detail": "RLS ligado sem policies: inacessível via API (só service_role).",
         "object": "public.voip_profile_credentials",
         "severity": "MÉDIA"
-      },
-      {
-        "code": "fk_without_index",
-        "detail": "FK sem índice nas colunas ['whatsapp_connection_id']: joins e DELETE/UPDATE na tabela pai ficam lentos.",
-        "object": "public.away_message_log.away_message_log_whatsapp_connection_id_fkey",
-        "severity": "BAIXA"
-      },
-      {
-        "code": "fk_without_index",
-        "detail": "FK sem índice nas colunas ['message_id']: joins e DELETE/UPDATE na tabela pai ficam lentos.",
-        "object": "public.message_favorites.message_favorites_message_id_fkey",
-        "severity": "BAIXA"
-      },
-      {
-        "code": "fk_without_index",
-        "detail": "FK sem índice nas colunas ['message_id']: joins e DELETE/UPDATE na tabela pai ficam lentos.",
-        "object": "public.message_pins.message_pins_message_id_fkey",
-        "severity": "BAIXA"
-      },
-      {
-        "code": "fk_without_index",
-        "detail": "FK sem índice nas colunas ['reporter_id']: joins e DELETE/UPDATE na tabela pai ficam lentos.",
-        "object": "public.message_reports.message_reports_reporter_id_fkey",
-        "severity": "BAIXA"
-      },
-      {
-        "code": "fk_without_index",
-        "detail": "FK sem índice nas colunas ['segment_id']: joins e DELETE/UPDATE na tabela pai ficam lentos.",
-        "object": "public.talkx_campaign_segments.talkx_campaign_segments_segment_id_fkey",
-        "severity": "BAIXA"
-      },
-      {
-        "code": "fk_without_index",
-        "detail": "FK sem índice nas colunas ['ab_winner_decided_by']: joins e DELETE/UPDATE na tabela pai ficam lentos.",
-        "object": "public.talkx_campaigns.talkx_campaigns_ab_winner_decided_by_fkey",
-        "severity": "BAIXA"
-      },
-      {
-        "code": "fk_without_index",
-        "detail": "FK sem índice nas colunas ['ab_winner_variant_id']: joins e DELETE/UPDATE na tabela pai ficam lentos.",
-        "object": "public.talkx_campaigns.talkx_campaigns_ab_winner_variant_id_fkey",
-        "severity": "BAIXA"
-      },
-      {
-        "code": "fk_without_index",
-        "detail": "FK sem índice nas colunas ['profile_id']: joins e DELETE/UPDATE na tabela pai ficam lentos.",
-        "object": "public.team_message_receipts.team_message_receipts_profile_id_fkey",
-        "severity": "BAIXA"
       },
       {
         "code": "policy_auth_fn_not_wrapped",
@@ -98975,7 +99039,7 @@
         "partition_bound": null,
         "partition_key": null,
         "replica_identity": "default",
-        "rls_enabled": false,
+        "rls_enabled": true,
         "rls_forced": false,
         "schema": "_bkp_261023"
       },
@@ -98990,7 +99054,7 @@
         "partition_bound": null,
         "partition_key": null,
         "replica_identity": "default",
-        "rls_enabled": false,
+        "rls_enabled": true,
         "rls_forced": false,
         "schema": "_bkp_261023"
       },
@@ -99005,7 +99069,7 @@
         "partition_bound": null,
         "partition_key": null,
         "replica_identity": "default",
-        "rls_enabled": false,
+        "rls_enabled": true,
         "rls_forced": false,
         "schema": "_bkp_261023"
       },
@@ -99020,7 +99084,7 @@
         "partition_bound": null,
         "partition_key": null,
         "replica_identity": "default",
-        "rls_enabled": false,
+        "rls_enabled": true,
         "rls_forced": false,
         "schema": "_bkp_261023"
       },
@@ -99035,7 +99099,7 @@
         "partition_bound": null,
         "partition_key": null,
         "replica_identity": "default",
-        "rls_enabled": false,
+        "rls_enabled": true,
         "rls_forced": false,
         "schema": "_bkp_261023"
       },
@@ -99050,7 +99114,7 @@
         "partition_bound": null,
         "partition_key": null,
         "replica_identity": "default",
-        "rls_enabled": false,
+        "rls_enabled": true,
         "rls_forced": false,
         "schema": "_bkp_261023"
       },
@@ -99065,7 +99129,7 @@
         "partition_bound": null,
         "partition_key": null,
         "replica_identity": "default",
-        "rls_enabled": false,
+        "rls_enabled": true,
         "rls_forced": false,
         "schema": "_bkp_261023"
       },
@@ -99080,7 +99144,7 @@
         "partition_bound": null,
         "partition_key": null,
         "replica_identity": "default",
-        "rls_enabled": false,
+        "rls_enabled": true,
         "rls_forced": false,
         "schema": "_bkp_261023"
       },
@@ -99095,7 +99159,7 @@
         "partition_bound": null,
         "partition_key": null,
         "replica_identity": "default",
-        "rls_enabled": false,
+        "rls_enabled": true,
         "rls_forced": false,
         "schema": "_bkp_261023"
       },

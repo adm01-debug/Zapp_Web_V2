@@ -78,6 +78,7 @@ Uso e tamanho em `stats.md`.
 | public.automations | idx_automations_created_by | btree | created_by | não | sim |  |
 | public.away_message_log | away_message_log_pkey | btree | id | sim | sim |  |
 | public.away_message_log | idx_away_message_log_contato_conexao_sent_at | btree | contact_id, whatsapp_connection_id, sent_at | não | sim |  |
+| public.away_message_log | idx_away_message_log_whatsapp_connection_id | btree | whatsapp_connection_id | não | sim |  |
 | public.away_messages | away_messages_pkey | btree | id | sim | sim |  |
 | public.away_messages | away_messages_whatsapp_connection_id_key | btree | whatsapp_connection_id | sim | sim |  |
 | public.blocked_countries | blocked_countries_country_code_key | btree | country_code | sim | sim |  |
@@ -374,7 +375,9 @@ Uso e tamanho em `stats.md`.
 | public.message_attempts | message_attempts_message_created_idx | btree | message_id, created_at | não | sim |  |
 | public.message_attempts | message_attempts_pkey | btree | id | sim | sim |  |
 | public.message_attempts | message_attempts_unique | btree | message_id, attempt_no, outcome | sim | sim |  |
+| public.message_favorites | idx_message_favorites_message_id | btree | message_id | não | sim |  |
 | public.message_favorites | message_favorites_pkey | btree | user_id, message_id | sim | sim |  |
+| public.message_pins | idx_message_pins_message_id | btree | message_id | não | sim |  |
 | public.message_pins | idx_message_pins_pinned_by | btree | pinned_by | não | sim |  |
 | public.message_pins | message_pins_contact_id_message_id_key | btree | contact_id, message_id | sim | sim |  |
 | public.message_pins | message_pins_pkey | btree | id | sim | sim |  |
@@ -385,6 +388,7 @@ Uso e tamanho em `stats.md`.
 | public.message_reactions | message_reactions_message_id_user_id_emoji_key | btree | message_id, user_id, emoji | sim | sim |  |
 | public.message_reactions | message_reactions_one_per_agent | btree | message_id, user_id | sim | sim |  |
 | public.message_reactions | message_reactions_pkey | btree | id | sim | sim |  |
+| public.message_reports | idx_message_reports_reporter_id | btree | reporter_id | não | sim |  |
 | public.message_reports | idx_message_reports_resolved_by | btree | resolved_by | não | sim |  |
 | public.message_reports | message_reports_message_id_reporter_id_key | btree | message_id, reporter_id | sim | sim |  |
 | public.message_reports | message_reports_pkey | btree | id | sim | sim |  |
@@ -606,8 +610,11 @@ Uso e tamanho em `stats.md`.
 | public.talkx_campaign_events | idx_talkx_campaign_events_campaign_created | btree | campaign_id, created_at | não | sim |  |
 | public.talkx_campaign_events | idx_talkx_campaign_events_campaign_id | btree | campaign_id | não | sim |  |
 | public.talkx_campaign_events | talkx_campaign_events_pkey | btree | id | sim | sim |  |
+| public.talkx_campaign_segments | idx_talkx_campaign_segments_segment_id | btree | segment_id | não | sim |  |
 | public.talkx_campaign_segments | talkx_campaign_segments_campaign_position_key | btree | campaign_id, position | sim | sim |  |
 | public.talkx_campaign_segments | talkx_campaign_segments_pkey | btree | campaign_id, segment_id | sim | sim |  |
+| public.talkx_campaigns | idx_talkx_campaigns_ab_winner_decided_by | btree | ab_winner_decided_by | não | sim |  |
+| public.talkx_campaigns | idx_talkx_campaigns_ab_winner_variant_id | btree | ab_winner_variant_id | não | sim |  |
 | public.talkx_campaigns | idx_talkx_campaigns_cancelled_by | btree | cancelled_by | não | sim |  |
 | public.talkx_campaigns | idx_talkx_campaigns_consent_confirmed_by | btree | consent_confirmed_by | não | sim |  |
 | public.talkx_campaigns | idx_talkx_campaigns_created_by | btree | created_by | não | sim |  |
@@ -725,6 +732,7 @@ Uso e tamanho em `stats.md`.
 | public.team_message_reactions | team_message_reactions_unique | btree | message_id, profile_id, emoji | sim | sim |  |
 | public.team_message_receipts | idx_team_message_receipts_conversation_id | btree | conversation_id | não | sim | `(conversation_id IS NOT NULL)` |
 | public.team_message_receipts | idx_team_message_receipts_message_id | btree | message_id | não | sim |  |
+| public.team_message_receipts | idx_team_message_receipts_profile_id | btree | profile_id | não | sim |  |
 | public.team_message_receipts | idx_team_message_receipts_unread | btree | message_id | não | sim | `(status <> 'read'::text)` |
 | public.team_message_receipts | team_message_receipts_message_profile_unique | btree | message_id, profile_id | sim | sim |  |
 | public.team_message_receipts | team_message_receipts_pkey | btree | id | sim | sim |  |

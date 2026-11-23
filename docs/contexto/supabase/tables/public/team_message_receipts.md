@@ -48,6 +48,7 @@
 |---|---|---|---|---|---|---|
 | idx_team_message_receipts_conversation_id | btree | conversation_id | não | sim | `(conversation_id IS NOT NULL)` | `CREATE INDEX idx_team_message_receipts_conversation_id ON public.team_message_receipts USING btree (conversation_id) WHERE (conversation_id IS NOT NULL)` |
 | idx_team_message_receipts_message_id | btree | message_id | não | sim |  | `CREATE INDEX idx_team_message_receipts_message_id ON public.team_message_receipts USING btree (message_id)` |
+| idx_team_message_receipts_profile_id | btree | profile_id | não | sim |  | `CREATE INDEX idx_team_message_receipts_profile_id ON public.team_message_receipts USING btree (profile_id)` |
 | idx_team_message_receipts_unread | btree | message_id | não | sim | `(status <> 'read'::text)` | `CREATE INDEX idx_team_message_receipts_unread ON public.team_message_receipts USING btree (message_id) WHERE (status <> 'read'::text)` |
 | team_message_receipts_message_profile_unique | btree | message_id, profile_id | sim | sim |  | `CREATE UNIQUE INDEX team_message_receipts_message_profile_unique ON public.team_message_receipts USING btree (message_id, profile_id)` |
 | team_message_receipts_pkey | btree | id | sim | sim |  | `CREATE UNIQUE INDEX team_message_receipts_pkey ON public.team_message_receipts USING btree (id)` |

@@ -2,6 +2,12 @@
 
 Diff semântico gerado a cada coleta em que algo mudou.
 
+## 2026-11-23 23:18 UTC
+
+- **indexes** adicionado (8): `public.idx_away_message_log_whatsapp_connection_id`, `public.idx_message_favorites_message_id`, `public.idx_message_pins_message_id`, `public.idx_message_reports_reporter_id`, `public.idx_talkx_campaign_segments_segment_id`, `public.idx_talkx_campaigns_ab_winner_decided_by`, `public.idx_talkx_campaigns_ab_winner_variant_id`, `public.idx_team_message_receipts_profile_id`
+- **lints** removido (8): `fk_without_index:public.away_message_log.away_message_log_whatsapp_connection_id_fkey`, `fk_without_index:public.message_favorites.message_favorites_message_id_fkey`, `fk_without_index:public.message_pins.message_pins_message_id_fkey`, `fk_without_index:public.message_reports.message_reports_reporter_id_fkey`, `fk_without_index:public.talkx_campaign_segments.talkx_campaign_segments_segment_id_fkey`, `fk_without_index:public.talkx_campaigns.talkx_campaigns_ab_winner_decided_by_fkey`, `fk_without_index:public.talkx_campaigns.talkx_campaigns_ab_winner_variant_id_fkey`, `fk_without_index:public.team_message_receipts.team_message_receipts_profile_id_fkey`
+- **tabelas** alterado (9): `_bkp_261023.agent_stats`, `_bkp_261023.contacts`, `_bkp_261023.csat_surveys`, `_bkp_261023.functions_before`, `_bkp_261023.global_settings`, `_bkp_261023.policies_before`, `_bkp_261023.schema_migrations`, `_bkp_261023.team_messages`, `_bkp_261023.user_settings`
+
 ## 2026-11-23 20:14 UTC
 
 - **colunas** adicionado (13): `public.talkx_ai_requests.cost_usd`, `public.talkx_ai_requests.created_at`, `public.talkx_ai_requests.created_by`, `public.talkx_ai_requests.entity_id`, `public.talkx_ai_requests.entity_type`, `public.talkx_ai_requests.id`, `public.talkx_ai_requests.input_hash`, `public.talkx_ai_requests.kind`, `public.talkx_ai_requests.model`, `public.talkx_ai_requests.output`, `public.talkx_ai_requests.status`, `public.talkx_ai_requests.tokens_in`, `public.talkx_ai_requests.tokens_out`

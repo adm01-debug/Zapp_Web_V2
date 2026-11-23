@@ -4,15 +4,15 @@ Um arquivo por tabela em `tables/<schema>/<tabela>.md` (colunas, constraints, í
 
 | tabela | tipo | RLS | policies | colunas | realtime | comentário |
 |---|---|---|---|---|---|---|
-| [_bkp_261023.agent_stats](tables/bkp_261023/agent_stats.md) | table | não | 0 | 14 | não | [bkp-261023] Snapshot de public.agent_stats em 23/10/2026 (10 linhas). |
-| [_bkp_261023.contacts](tables/bkp_261023/contacts.md) | table | não | 0 | 41 | não | [bkp-261023] Snapshot da tabela public.contacts em 23/10/2026 (3730 linhas). |
-| [_bkp_261023.csat_surveys](tables/bkp_261023/csat_surveys.md) | table | não | 0 | 7 | não | [bkp-261023] Snapshot de public.csat_surveys em 23/10/2026 (0 linhas). |
-| [_bkp_261023.functions_before](tables/bkp_261023/functions_before.md) | table | não | 0 | 2 | não | [bkp-261023] Snapshot das definições de funções antes de migrations críticas (356 funções). |
-| [_bkp_261023.global_settings](tables/bkp_261023/global_settings.md) | table | não | 0 | 7 | não | [bkp-261023] Snapshot de public.global_settings em 23/10/2026 (6 linhas). |
-| [_bkp_261023.policies_before](tables/bkp_261023/policies_before.md) | table | não | 0 | 8 | não | [bkp-261023] Snapshot das RLS policies antes de migrations críticas (456 policies). |
-| [_bkp_261023.schema_migrations](tables/bkp_261023/schema_migrations.md) | table | não | 0 | 3 | não | [bkp-261023] Snapshot de supabase_migrations.schema_migrations em 23/10/2026 (922 linhas). |
-| [_bkp_261023.team_messages](tables/bkp_261023/team_messages.md) | table | não | 0 | 15 | não | [bkp-261023] Snapshot de public.team_messages em 23/10/2026 (2 linhas). |
-| [_bkp_261023.user_settings](tables/bkp_261023/user_settings.md) | table | não | 0 | 38 | não | [bkp-261023] Snapshot de public.user_settings em 23/10/2026 (4 linhas). |
+| [_bkp_261023.agent_stats](tables/bkp_261023/agent_stats.md) | table | sim | 0 | 14 | não | [bkp-261023] Snapshot de public.agent_stats em 23/10/2026 (10 linhas). |
+| [_bkp_261023.contacts](tables/bkp_261023/contacts.md) | table | sim | 0 | 41 | não | [bkp-261023] Snapshot da tabela public.contacts em 23/10/2026 (3730 linhas). |
+| [_bkp_261023.csat_surveys](tables/bkp_261023/csat_surveys.md) | table | sim | 0 | 7 | não | [bkp-261023] Snapshot de public.csat_surveys em 23/10/2026 (0 linhas). |
+| [_bkp_261023.functions_before](tables/bkp_261023/functions_before.md) | table | sim | 0 | 2 | não | [bkp-261023] Snapshot das definições de funções antes de migrations críticas (356 funções). |
+| [_bkp_261023.global_settings](tables/bkp_261023/global_settings.md) | table | sim | 0 | 7 | não | [bkp-261023] Snapshot de public.global_settings em 23/10/2026 (6 linhas). |
+| [_bkp_261023.policies_before](tables/bkp_261023/policies_before.md) | table | sim | 0 | 8 | não | [bkp-261023] Snapshot das RLS policies antes de migrations críticas (456 policies). |
+| [_bkp_261023.schema_migrations](tables/bkp_261023/schema_migrations.md) | table | sim | 0 | 3 | não | [bkp-261023] Snapshot de supabase_migrations.schema_migrations em 23/10/2026 (922 linhas). |
+| [_bkp_261023.team_messages](tables/bkp_261023/team_messages.md) | table | sim | 0 | 15 | não | [bkp-261023] Snapshot de public.team_messages em 23/10/2026 (2 linhas). |
+| [_bkp_261023.user_settings](tables/bkp_261023/user_settings.md) | table | sim | 0 | 38 | não | [bkp-261023] Snapshot de public.user_settings em 23/10/2026 (4 linhas). |
 | [ops.hermes_change_log](tables/ops/hermes_change_log.md) | table | sim | 1 | 25 | não |  |
 | [public._rb_message_reactions_contato_20261007001008](tables/public/rb_message_reactions_contato_20261007001008.md) | table | sim | 0 | 2 | não | [RLS-sem-policy: intencional] Tabela de rebuild de 07/10/2026. Acesso apenas por service_role durante scripts de reconciliação. |
 | [public._rb_message_reactions_one_per_agent_20261107121000](tables/public/rb_message_reactions_one_per_agent_20261107121000.md) | table | sim | 1 | 6 | não | Rollback privado das duplicatas de reação removidas ao instalar a unicidade por agente/mensagem. |

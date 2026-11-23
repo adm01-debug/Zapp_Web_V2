@@ -38,6 +38,7 @@
 
 | nome | método | colunas | único | válido | predicado | definição |
 |---|---|---|---|---|---|---|
+| idx_message_pins_message_id | btree | message_id | não | sim |  | `CREATE INDEX idx_message_pins_message_id ON public.message_pins USING btree (message_id)` |
 | idx_message_pins_pinned_by | btree | pinned_by | não | sim |  | `CREATE INDEX idx_message_pins_pinned_by ON public.message_pins USING btree (pinned_by)` |
 | message_pins_contact_id_message_id_key | btree | contact_id, message_id | sim | sim |  | `CREATE UNIQUE INDEX message_pins_contact_id_message_id_key ON public.message_pins USING btree (contact_id, message_id)` |
 | message_pins_pkey | btree | id | sim | sim |  | `CREATE UNIQUE INDEX message_pins_pkey ON public.message_pins USING btree (id)` |

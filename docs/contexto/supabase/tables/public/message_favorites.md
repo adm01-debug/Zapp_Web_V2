@@ -34,6 +34,7 @@
 
 | nome | método | colunas | único | válido | predicado | definição |
 |---|---|---|---|---|---|---|
+| idx_message_favorites_message_id | btree | message_id | não | sim |  | `CREATE INDEX idx_message_favorites_message_id ON public.message_favorites USING btree (message_id)` |
 | message_favorites_pkey | btree | user_id, message_id | sim | sim |  | `CREATE UNIQUE INDEX message_favorites_pkey ON public.message_favorites USING btree (user_id, message_id)` |
 
 

@@ -43,6 +43,7 @@
 
 | nome | método | colunas | único | válido | predicado | definição |
 |---|---|---|---|---|---|---|
+| idx_talkx_campaign_segments_segment_id | btree | segment_id | não | sim |  | `CREATE INDEX idx_talkx_campaign_segments_segment_id ON public.talkx_campaign_segments USING btree (segment_id)` |
 | talkx_campaign_segments_campaign_position_key | btree | campaign_id, position | sim | sim |  | `CREATE UNIQUE INDEX talkx_campaign_segments_campaign_position_key ON public.talkx_campaign_segments USING btree (campaign_id, "position")` |
 | talkx_campaign_segments_pkey | btree | campaign_id, segment_id | sim | sim |  | `CREATE UNIQUE INDEX talkx_campaign_segments_pkey ON public.talkx_campaign_segments USING btree (campaign_id, segment_id)` |
 
