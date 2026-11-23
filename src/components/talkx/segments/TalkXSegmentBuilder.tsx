@@ -1,6 +1,6 @@
 import React from 'react';
 import {
-  ArrowLeft, BarChart3, Bookmark, Check, ChevronDown, ChevronUp, Copy, MoreVertical, Plus, RefreshCw, Redo2, Trash2, Undo2,
+  ArrowLeft, BarChart3, Bookmark, Check, ChevronDown, ChevronUp, Copy, MoreVertical, Plus, RefreshCw, Redo2, Sparkles, Trash2, Undo2, X,
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
@@ -19,6 +19,8 @@ import {
   type SegmentBuilderContent,
 } from './segmentBuilderReducer';
 import { SEGMENT_DESCRIPTION_MAX, descriptionCounter, validateSegment } from './segmentValidation';
+import { useTalkxAi } from '@/hooks/talkx/useTalkxAi';
+import { pedidoDeSegmentoValido, sugestaoParaRegras } from '@/hooks/talkx/talkxAiSuggestions';
 
 /**
  * X099 — o construtor de segmentos vira componente próprio (antes era a função
@@ -59,6 +61,16 @@ export function TalkXSegmentBuilder({
   const [draggingField, setDraggingField] = React.useState<string | null>(null);
   const [showErrors, setShowErrors] = React.useState(false);
   const [confirmExit, setConfirmExit] = React.useState(false);
+  /**
+   * X076/IA-161: "Sugerir com IA". A IA nao aplica nada sozinha - ela devolve
+   * condicoes, o cliente valida contra o catalogo e so entao o usuario ve o
+   * resultado no construtor (com desfazer). Pedido vazio e recusado no cliente
+   * para nao gastar chamada paga.
+   */
+  const [iaAberta, setIaAberta] = React.useState(false);
+  const [iaPedido, setIaPedido] = React.useState('');
+  const [iaAviso, setIaAviso] = React.useState<{ tom: 'erro' | 'ok'; texto: string } | null>(null);
+  const iaSugestao = useTalkxAi();
   // TL-134: ação pendente (troca de segmento/novo) aguardando o diálogo de saída.
   const [pendingProceed, setPendingProceed] = React.useState<(() => void) | null>(null);
   /**
@@ -77,6 +89,34 @@ export function TalkXSegmentBuilder({
   const dirty = isDirty(state);
   const canUndo = state.past.length > 0;
   const canRedo = state.future.length > 0;
+
+  const sugerirComIa = () => {
+    const invalido = pedidoDeSegmentoValido(iaPedido);
+    if (invalido) { setIaAviso({ tom: 'erro', texto: invalido }); return; }
+    setIaAviso(null);
+    iaSugestao.mutate(
+      { kind: 'segment_suggestion', input: { pedido: iaPedido.trim() } },
+      {
+        onSuccess: (resposta) => {
+          const resultado = sugestaoParaRegras(resposta.output);
+          if (!resultado.ok) { setIaAviso({ tom: 'erro', texto: resultado.motivo }); return; }
+          dispatch({ type: 'suggestRules', rules: resultado.sugestao.rules });
+          const descartadas = resultado.sugestao.descartadas.length;
+          setIaAviso({
+            tom: 'ok',
+            texto: `${resultado.sugestao.condicoes} condição(ões) aplicada(s).`
+              + (descartadas > 0 ? ` ${descartadas} sugestão(ões) recusada(s) por não existirem no produto: ${resultado.sugestao.descartadas.join('; ')}.` : '')
+              + ' Use Desfazer para voltar ao que estava.',
+          });
+          setIaPedido('');
+          setIaAberta(false);
+        },
+        // Recusa da edge (IA desligada, teto do mes, limite diario): o texto
+        // vem do codigo que o servidor devolveu, sem inventar no cliente.
+        onError: (erro) => setIaAviso({ tom: 'erro', texto: (erro as Error).message }),
+      },
+    );
+  };
 
   // Atalhos do plano: Ctrl/⌘+Z desfaz, Ctrl/⌘+Shift+Z refaz. O construtor é a
   // fonte única da edição (o valor em tela vem do estado), então o atalho é
@@ -165,11 +205,54 @@ export function TalkXSegmentBuilder({
           <div className="flex items-center justify-between mb-4">
             <div><p className="text-[15px] font-bold text-foreground">Regras do segmento</p><p className="text-xs text-foreground-secondary">Defina os filtros e condições para o seu segmento</p></div>
             <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => { setIaAberta((v) => !v); setIaAviso(null); }}
+                disabled={iaSugestao.isPending}
+                aria-expanded={iaAberta}
+                aria-controls="talkx-ia-segmento"
+                className="h-8 px-3 rounded-lg border border-primary/40 bg-primary/10 text-xs font-medium text-primary hover:bg-primary/15 disabled:opacity-50 flex items-center gap-1.5"
+              >
+                <Sparkles className="w-3.5 h-3.5" />Sugerir com IA
+              </button>
               <button type="button" onClick={() => dispatch({ type: 'undo' })} disabled={!canUndo} aria-label="Desfazer" title="Desfazer (Ctrl+Z)" className={iconButton}><Undo2 className="w-3.5 h-3.5" /></button>
               <button type="button" onClick={() => dispatch({ type: 'redo' })} disabled={!canRedo} aria-label="Refazer" title="Refazer (Ctrl+Shift+Z)" className={iconButton}><Redo2 className="w-3.5 h-3.5" /></button>
               <button type="button" onClick={() => dispatch({ type: 'clear' })} className="h-8 px-3 rounded-lg border border-border/70 bg-input/40 text-xs font-medium text-foreground-secondary hover:bg-muted/50 flex items-center gap-1.5"><RefreshCw className="w-3.5 h-3.5" />Limpar tudo</button>
             </div>
           </div>
+          {iaAberta && (
+            <div id="talkx-ia-segmento" className="mb-4 rounded-xl border border-primary/30 bg-primary/5 p-3 space-y-2">
+              <label htmlFor="talkx-ia-pedido" className="block text-xs font-medium text-foreground-secondary">
+                Descreva em palavras o público que você quer montar. A IA devolve condições e você confere antes de salvar.
+              </label>
+              <div className="flex flex-col sm:flex-row gap-2">
+                <Input
+                  id="talkx-ia-pedido"
+                  value={iaPedido}
+                  onChange={(e) => setIaPedido(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === 'Enter' && !iaSugestao.isPending) { e.preventDefault(); sugerirComIa(); } }}
+                  placeholder="Ex.: clientes de São Paulo, com etiqueta vip, sem compra há 30 dias"
+                  maxLength={2000}
+                  disabled={iaSugestao.isPending}
+                  className="flex-1"
+                />
+                <div className="flex items-center gap-2 shrink-0">
+                  <PrimaryButton icon={iaSugestao.isPending ? RefreshCw : Sparkles} onClick={sugerirComIa} disabled={iaSugestao.isPending}>
+                    {iaSugestao.isPending ? 'Montando…' : 'Sugerir'}
+                  </PrimaryButton>
+                  <GhostButton onClick={() => { setIaAberta(false); setIaAviso(null); }}>Fechar</GhostButton>
+                </div>
+              </div>
+              <p className="text-2xs text-muted-foreground">
+                A sugestão substitui as condições atuais, mas entra no histórico: Desfazer (Ctrl+Z) volta ao que estava.
+              </p>
+            </div>
+          )}
+          {iaAviso && (
+            <p role="status" className={cn('mb-4 text-xs', iaAviso.tom === 'erro' ? 'text-dash-red' : 'text-dash-green')}>
+              {iaAviso.texto}
+            </p>
+          )}
           <div className="space-y-4">
             {rules.groups.map((g, gi) => (
               <React.Fragment key={g.id}>
