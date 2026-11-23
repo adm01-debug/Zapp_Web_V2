@@ -1,15 +1,15 @@
 {
  "meta": {
-  "sha": "2fad0042324fbf4b21b18ad84ab9b1502f899935",
+  "sha": "798617f61e77abde73a7722cc5f77919669c6e16",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-23 06:31 UTC",
+  "generated_at": "2026-11-23 12:17 UTC",
   "files_total": 15618,
   "code_files": 8920,
-  "code_lines": 1415116
+  "code_lines": 1415123
  },
  "version": "1.3.2",
- "facts_hash": "d91de8fe2f02c0c7",
+ "facts_hash": "ebf966a85d9ba824",
  "stack": {
   "frameworks": [
    "React + Vite",
@@ -77356,7 +77356,7 @@
   {
    "module": "src/components",
    "files": 2312,
-   "lines": 393405,
+   "lines": 393412,
    "tables": [
     "agent_skills",
     "agent_visibility_grants",
@@ -398648,7 +398648,7 @@
   },
   "src/components/talkx/__tests__/TalkXCampaignWizard.layout.test.tsx": {
    "path": "src/components/talkx/__tests__/TalkXCampaignWizard.layout.test.tsx",
-   "lines": 280,
+   "lines": 287,
    "is_test": true,
    "rule_comments": [
     "rastreáveis: ele lê a permissão (`useCRMAdminAccess`, que exige `AuthProvider`)",
@@ -481845,10 +481845,19 @@
   }
  },
  "git": {
-  "sha": "2fad0042324fbf4b21b18ad84ab9b1502f899935",
+  "sha": "798617f61e77abde73a7722cc5f77919669c6e16",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "798617f6",
+    "date": "2026-11-23",
+    "author": "adm01-debug",
+    "subject": "fix(test): mock useTalkxAi no layout test do TalkXCampaignWizard (#3330)",
+    "files": [
+     "src/components/talkx/__tests__/TalkXCampaignWizard.layout.test.tsx"
+    ]
+   },
    {
     "sha": "2fad0042",
     "date": "2026-11-23",
@@ -483366,16 +483375,6 @@
      "docs/pendencias/zero-issues-de-alerta-e05.md",
      "docs/pendencias/zod-no-corpo-do-evolution-api-sl050.md"
     ]
-   },
-   {
-    "sha": "2e705429",
-    "date": "2026-11-20",
-    "author": "adm01-debug",
-    "subject": "docs(fase0): linha de base e regras de negocio da Fase 0 do GOAL (#3292)",
-    "files": [
-     "docs/pendencias/_linha-de-base.md",
-     "docs/pendencias/_regras-de-negocio.md"
-    ]
    }
   ],
   "hot_files": [
@@ -483448,15 +483447,15 @@
     2
    ],
    [
+    "src/components/talkx/__tests__/TalkXCampaignWizard.layout.test.tsx",
+    1
+   ],
+   [
     "FEATURE_REGISTRY.md",
     1
    ],
    [
     "docs/audits/CONTATOS_REDESIGN_BASELINE_2026-10-12.md",
-    1
-   ],
-   [
-    "docs/audits/contatos-redesign-baseline-depois/contatos-1280-dark.png",
     1
    ]
   ]

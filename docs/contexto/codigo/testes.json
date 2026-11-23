@@ -16085,7 +16085,7 @@
   {
    "arquivo": "src/components/talkx/__tests__/TalkXCampaignWizard.layout.test.tsx",
    "tipo": "unit",
-   "linhas": 280,
+   "linhas": 287,
    "testa": [
     "src/components/talkx/TalkXCampaignWizard.tsx",
     "src/hooks/integrations/useTalkX.ts",

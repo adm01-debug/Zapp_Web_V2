@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "2fad0042324fbf4b21b18ad84ab9b1502f899935",
+  "commit": "798617f61e77abde73a7722cc5f77919669c6e16",
   "branch": "main",
-  "data_commit": "2026-11-23T06:02:20Z",
+  "data_commit": "2026-11-23T08:33:49-03:00",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "798617f6",
+    "data": "2026-11-23",
+    "assunto": "fix(test): mock useTalkxAi no layout test do TalkXCampaignWizard (#3330)"
+   },
    {
     "sha": "2fad0042",
     "data": "2026-11-23",
@@ -126,14 +131,9 @@
     "sha": "b3de24d3",
     "data": "2026-11-21",
     "assunto": "chore(db): sincronizar artefatos derivados do banco (#3299)"
-   },
-   {
-    "sha": "219555ea",
-    "data": "2026-11-21",
-    "assunto": "fix(db-audit): reconcilia drift da 20261111181000 e remove excecoes obsoletas (#3297)"
    }
   ],
-  "arquivos_mudados_7d": 7025,
+  "arquivos_mudados_7d": 5403,
   "pastas_mais_mudadas_30d": [
    {
     "pasta": "docs/contexto/supabase",
@@ -161,7 +161,7 @@
    },
    {
     "pasta": "src/components/talkx",
-    "mudancas": 363
+    "mudancas": 364
    },
    {
     "pasta": "analise-prs/resgate-261115/dossies",
@@ -312,7 +312,7 @@
  "contagens": {
   "arquivos_total": 15770,
   "arquivos_codigo": 5884,
-  "linhas_codigo": 1137670,
+  "linhas_codigo": 1137677,
   "rotas": 18,
   "rotas_http_backend": 11,
   "vistas_por_id": 55,
@@ -724,7 +724,7 @@
   },
   "src/components": {
    "arquivos": 2312,
-   "linhas": 393405
+   "linhas": 393412
   },
   "src/config": {
    "arquivos": 3,
