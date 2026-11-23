@@ -1,9 +1,9 @@
 {
  "meta": {
-  "sha": "f48c1ce7486f1219e73d3f81174355159fc0e4a7",
+  "sha": "4c1d031f209e351bcc92e35e229c9d5e391e196d",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-23 23:35 UTC",
+  "generated_at": "2026-11-23 23:46 UTC",
   "files_total": 15629,
   "code_files": 8930,
   "code_lines": 1417855
@@ -482974,10 +482974,19 @@
   }
  },
  "git": {
-  "sha": "f48c1ce7486f1219e73d3f81174355159fc0e4a7",
+  "sha": "4c1d031f209e351bcc92e35e229c9d5e391e196d",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "4c1d031f",
+    "date": "2026-11-23",
+    "author": "dependabot[bot]",
+    "subject": "⬆️ ci: bump actions/dependency-review-action from 5.0.0 to 5.0.1 in the actions-misc group across 1 directory (#3335)",
+    "files": [
+     ".github/workflows/dependency-review.yml"
+    ]
+   },
    {
     "sha": "f48c1ce7",
     "date": "2026-11-23",
@@ -483414,18 +483423,6 @@
      "src/components/inbox/copilot/StakeholdersCard.tsx",
      "src/components/inbox/copilot/__tests__/RadarPanel.test.tsx"
     ]
-   },
-   {
-    "sha": "7f2b4e62",
-    "date": "2026-11-21",
-    "author": "adm01-debug",
-    "subject": "feat(talkx): monta cards órfãos X149/X144 (Fila por Segmento + Linha do Tempo Operacional) no report de campanha (#3306)",
-    "files": [
-     "src/components/talkx/report/TalkXCampaignReport.tsx",
-     "src/components/talkx/report/__tests__/TalkXCampaignReport.test.tsx",
-     "src/hooks/integrations/__tests__/useTalkXSegmentProgress.test.ts",
-     "src/hooks/integrations/useTalkXSegmentProgress.ts"
-    ]
    }
   ],
   "hot_files": [
@@ -483502,11 +483499,11 @@
     2
    ],
    [
-    "supabase/functions/ai-transcribe-audio/index.test.ts",
+    ".github/workflows/dependency-review.yml",
     1
    ],
    [
-    "supabase/functions/ai-transcribe-audio/index.ts",
+    "supabase/functions/ai-transcribe-audio/index.test.ts",
     1
    ]
   ]

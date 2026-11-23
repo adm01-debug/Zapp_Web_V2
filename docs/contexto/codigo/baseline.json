@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "f48c1ce7486f1219e73d3f81174355159fc0e4a7",
+  "commit": "4c1d031f209e351bcc92e35e229c9d5e391e196d",
   "branch": "main",
-  "data_commit": "2026-11-23T20:33:57-03:00",
+  "data_commit": "2026-11-23T20:45:08-03:00",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "4c1d031f",
+    "data": "2026-11-23",
+    "assunto": "⬆️ ci: bump actions/dependency-review-action from 5.0.0 to 5.0.1 in the actions-misc group across 1 directory (#3335)"
+   },
    {
     "sha": "f48c1ce7",
     "data": "2026-11-23",
@@ -126,14 +131,9 @@
     "sha": "9f6df25b",
     "data": "2026-11-22",
     "assunto": "feat: fase 2 do assistente pessoal (memoria e agenda do contato) (#3316)"
-   },
-   {
-    "sha": "b35911db",
-    "data": "2026-11-22",
-    "assunto": "feat(assistente): Fase 1 — identidade do assistente pessoal (perfil + motor RADAR) (#3310)"
    }
   ],
-  "arquivos_mudados_7d": 5292,
+  "arquivos_mudados_7d": 5290,
   "pastas_mais_mudadas_30d": [
    {
     "pasta": "docs/contexto/supabase",
@@ -301,7 +301,7 @@
   "autores_30d": [
    {
     "autor": "adm01-debug",
-    "commits": 290
+    "commits": 289
    },
    {
     "autor": "github-actions[bot]",
@@ -309,7 +309,7 @@
    },
    {
     "autor": "dependabot[bot]",
-    "commits": 2
+    "commits": 3
    }
   ]
  },

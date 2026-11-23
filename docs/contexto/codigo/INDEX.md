@@ -1,7 +1,7 @@
 # Contexto do projeto para agentes de IA
 
 GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.
-Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR dela) a cada push em `main` e a cada 10 minutos pelo workflow `contexto.yml`; índice único das três fontes em `docs/contexto/00-INDEX.md`. Gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `f48c1ce7486f1219e73d3f81174355159fc0e4a7` (2026-11-23T20:33:57-03:00).
+Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR dela) a cada push em `main` e a cada 10 minutos pelo workflow `contexto.yml`; índice único das três fontes em `docs/contexto/00-INDEX.md`. Gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `4c1d031f209e351bcc92e35e229c9d5e391e196d` (2026-11-23T20:45:08-03:00).
 
 ## Como usar (leia antes de planejar ou executar qualquer tarefa)
 1. **Tela/rota/menu** → `rotas.json` (url/vista/menu → arquivo → hooks → tabelas → edges; `rotas_http_backend` para APIs) e `modulos.json` (módulo inteiro + dependências entre módulos).
@@ -397,7 +397,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - possiveis_segredos_no_codigo: 6 — ex.: analise-prs/resgate-261118-lote3/claude_pink/cool-dijkstra-xk9ek2/scripts/ci/edge-coverage-authz.unit.mjs:397, analise-prs/resgate-261118-lote3/claude_pink/cool-dijkstra-xk9ek2/scripts/edge-deploy/redigir-log.unit.mjs:38, scripts/ai-context/cenarios.mjs:102
 
 ## Grafo de código (graphify)
-- 103206 nós · 175316 arestas · 9291 comunidades · grafo do commit `f48c1ce7`
+- 103206 nós · 175316 arestas · 9291 comunidades · grafo do commit `4c1d031f`
 - comunidades maiores: Communities (5953 total, 1987 thin omitted) (3949), react (1534), lucide-react (1481), TalkXSuppression.tsx (1217), utils.ts (1212), cn (918), validation.ts (687), ExternalProductManagement.tsx (639), ref_node_fs (595), vitest (529), WorkItemSheet.tsx (501), @testing-library/react (456)
 - símbolos mais chamados: cn() (src/lib/utils.ts), useAuth() (src/hooks/auth/useAuth.tsx), jsonResponse() (supabase/functions/_shared/validation.ts), errorResponse() (supabase/functions/_shared/validation.ts), handleCors() (supabase/functions/_shared/validation.ts), fail() (scripts/e2e-isolated/network-proof-policy.mjs), Logger (supabase/functions/_shared/validation.ts), requireEnv() (supabase/functions/_shared/validation.ts), fmtInt() (src/components/talkx/kit/format.ts), fromTable() (src/lib/supabaseHelpers.ts), useUserRole() (src/hooks/system/useUserRole.ts), validationErrorResponse() (supabase/functions/_shared/schemas.ts)
 - consulta local: `graphify query "<pergunta>"`, `graphify path "<A>" "<B>"`, `graphify explain "<X>"`
@@ -525,6 +525,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - CHANGELOG topo: [Unreleased]
 
 ## Últimos commits
+- 2026-11-23 `4c1d031f` ⬆️ ci: bump actions/dependency-review-action from 5.0.0 to 5.0.1 in the actions-misc group across 1 directory (#3335)
 - 2026-11-23 `f48c1ce7` ⬆️ ci: bump ossf/scorecard-action from 2.5.0 to 2.6.0 (#3336)
 - 2026-11-23 `684cc2c2` fix(transcricao): fallback de STT pelo OpenRouter e fim do 401 silencioso na voz (#3343)
 - 2026-11-23 `9f13ab55` ⬆️ ci: bump the codeql-action group across 1 directory with 3 updates (#3334)
@@ -539,7 +540,6 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - 2026-11-23 `7fe8d245` fix: suportar executáveis .exe/.cmd/.bat no Windows em resolverExecutavel (#3331)
 - 2026-11-23 `798617f6` fix(test): mock useTalkxAi no layout test do TalkXCampaignWizard (#3330)
 - 2026-11-23 `2fad0042` chore(db): sincronizar artefatos derivados do banco (#3329)
-- 2026-11-22 `d19cc8d0` feat: redesign do modulo Contatos conforme previa aprovada (plano 130 etapas, fases 0-M) (#3325)
 
 ## Arquivos deste diretório
 - `docs/contexto/codigo/rotas.json`
