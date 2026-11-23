@@ -688,3 +688,231 @@ Deno.test("Refazer t_eeac9ac7: decideAudioSizeRefusal — decisão de tamanho po
     "a recusa por metadado sai com 413",
   );
 });
+
+// ─── Fallback OpenRouter: credencial principal ausente ou recusada ───────────
+// Produção (14/11→23/11): `ELEVENLABS_API_KEY` recusada — 205 chamadas no dia,
+// 100% HTTP 401, zero transcrições. O fallback usa o mesmo `deps.fetch`, então o
+// teste precisa saber QUAL provedor respondeu: o roteamento é por URL.
+interface Roteado {
+  elevenlabs: number;
+  openrouter: number;
+  corpos: { messages?: { content?: { input_audio?: { data?: string; format?: string } }[] }[] }[];
+}
+
+function fetchRoteado(
+  capturado: Roteado,
+  principal: () => Response,
+  fallback: () => Response,
+): typeof fetch {
+  return ((input: RequestInfo | URL, init?: RequestInit) => {
+    const url = String(input);
+    if (url.includes("elevenlabs.io")) {
+      capturado.elevenlabs++;
+      return Promise.resolve(principal());
+    }
+    capturado.openrouter++;
+    if (init?.body) capturado.corpos.push(JSON.parse(String(init.body)));
+    return Promise.resolve(fallback());
+  }) as typeof fetch;
+}
+
+function envComOpenrouter(semPrincipal = false) {
+  return (key: string) => {
+    if (key === "OPENROUTER_API_KEY") return "or-key-de-teste";
+    if (key === "ELEVENLABS_API_KEY") return semPrincipal ? undefined : "xi-key-recusada";
+    return undefined;
+  };
+}
+
+const OPENROUTER_OK = () =>
+  Response.json({
+    choices: [{ message: { content: "bom dia, tudo bem?" } }],
+    usage: { prompt_tokens: 820, completion_tokens: 7 },
+  });
+
+Deno.test(
+  "Fallback: sem ELEVENLABS_API_KEY a edge transcreve pelo OpenRouter em vez de devolver 500",
+  async () => {
+    const capturado: Roteado = { elevenlabs: 0, openrouter: 0, corpos: [] };
+    const capture: StoreCapture = { writes: [], loads: [] };
+    const deps = baseDeps({
+      ...stubStore(capture),
+      env: envComOpenrouter(true),
+      downloadAudio: () =>
+        Promise.resolve({ buffer: OGG_HEADER.buffer as ArrayBuffer, contentType: "audio/ogg" }),
+      fetch: fetchRoteado(
+        capturado,
+        () => new Response("nao deveria ser chamado", { status: 500 }),
+        OPENROUTER_OK,
+      ),
+    });
+
+    const res = await handleTranscribeAudio(makeRequest(), deps);
+
+    assertEquals(res.status, 200, "o fallback conclui com 200");
+    const body = await res.json() as { transcription?: string };
+    assertEquals(body.transcription, "bom dia, tudo bem?", "o texto vem do fallback");
+    assertEquals(capturado.elevenlabs, 0, "sem chave do principal, ele nem é chamado");
+    assertEquals(capturado.openrouter, 1, "o fallback é chamado uma vez");
+    assertEquals(
+      capturado.corpos[0].messages?.[0]?.content?.[1]?.input_audio?.format,
+      "ogg",
+      "o formato segue os MAGIC BYTES (OggS), não o metadado",
+    );
+    const statuses = capture.writes.map((w) => w.write.status);
+    assertEquals(statuses[0], "processing", "o cliente vê processing durante o fallback");
+    assertEquals(statuses[1], "completed", "e completed com o texto do fallback");
+    assertEquals(
+      capture.writes[1].write.transcription,
+      "bom dia, tudo bem?",
+      "o texto do fallback é o que fica gravado na mensagem",
+    );
+  },
+);
+
+Deno.test(
+  "Fallback: 401 do provedor principal cai no OpenRouter (é o defeito de produção)",
+  async () => {
+    const capturado: Roteado = { elevenlabs: 0, openrouter: 0, corpos: [] };
+    const capture: StoreCapture = { writes: [], loads: [] };
+    const deps = baseDeps({
+      ...stubStore(capture),
+      env: envComOpenrouter(),
+      downloadAudio: () =>
+        Promise.resolve({ buffer: OGG_HEADER.buffer as ArrayBuffer, contentType: "audio/ogg" }),
+      fetch: fetchRoteado(
+        capturado,
+        () => new Response(JSON.stringify({ detail: "invalid api key" }), { status: 401 }),
+        OPENROUTER_OK,
+      ),
+    });
+
+    const res = await handleTranscribeAudio(makeRequest(), deps);
+
+    assertEquals(res.status, 200, "credencial recusada deixa de virar erro para o usuário");
+    const body = await res.json() as { transcription?: string };
+    assertEquals(body.transcription, "bom dia, tudo bem?", "o áudio é transcrito pelo fallback");
+    assertEquals(capturado.elevenlabs, 1, "o principal é tentado primeiro");
+    assertEquals(capturado.openrouter, 1, "e então o fallback");
+    const statuses = capture.writes.map((w) => w.write.status);
+    assertEquals(statuses[statuses.length - 1], "completed", "termina em completed, não failed");
+    assert(!statuses.includes("failed"), "a recusa do principal não deixa a mensagem em failed");
+  },
+);
+
+Deno.test("Fallback: 403 do provedor principal também cai no OpenRouter", async () => {
+  const capturado: Roteado = { elevenlabs: 0, openrouter: 0, corpos: [] };
+  const deps = baseDeps({
+    env: envComOpenrouter(),
+    downloadAudio: () =>
+      Promise.resolve({ buffer: OGG_HEADER.buffer as ArrayBuffer, contentType: "audio/ogg" }),
+    fetch: fetchRoteado(
+      capturado,
+      () => new Response("forbidden", { status: 403 }),
+      OPENROUTER_OK,
+    ),
+  });
+
+  const res = await handleTranscribeAudio(makeRequest(), deps);
+
+  assertEquals(res.status, 200, "403 é recusa de credencial: cai no fallback");
+  assertEquals(capturado.openrouter, 1, "o fallback foi usado");
+});
+
+Deno.test(
+  "Fallback: 400 do provedor principal (áudio inválido) NÃO cai no OpenRouter",
+  async () => {
+    const capturado: Roteado = { elevenlabs: 0, openrouter: 0, corpos: [] };
+    const deps = baseDeps({
+      env: envComOpenrouter(),
+      downloadAudio: () =>
+        Promise.resolve({ buffer: OGG_HEADER.buffer as ArrayBuffer, contentType: "audio/ogg" }),
+      fetch: fetchRoteado(
+        capturado,
+        () => new Response("unsupported", { status: 400 }),
+        OPENROUTER_OK,
+      ),
+    });
+
+    const res = await handleTranscribeAudio(makeRequest(), deps);
+
+    assertEquals(res.status, 200, "400 continua 200 com fallback declarado");
+    const body = await res.json() as { fallback?: boolean; error?: string; transcription?: string };
+    assertEquals(body.error, "INVALID_AUDIO", "o motivo é o áudio, não a credencial");
+    assertEquals(body.fallback, true, "o cliente sabe que não houve transcrição");
+    assertEquals(body.transcription, "", "sem texto inventado");
+    assertEquals(capturado.openrouter, 0, "recusa de áudio não paga OUTRO provedor");
+  },
+);
+
+Deno.test("Fallback: 429 do provedor principal NÃO cai no OpenRouter", async () => {
+  const capturado: Roteado = { elevenlabs: 0, openrouter: 0, corpos: [] };
+  const capture: StoreCapture = { writes: [], loads: [] };
+  const deps = baseDeps({
+    ...stubStore(capture),
+    env: envComOpenrouter(),
+    downloadAudio: () =>
+      Promise.resolve({ buffer: OGG_HEADER.buffer as ArrayBuffer, contentType: "audio/ogg" }),
+    fetch: fetchRoteado(
+      capturado,
+      () => new Response("too many requests", { status: 429 }),
+      OPENROUTER_OK,
+    ),
+  });
+
+  const res = await handleTranscribeAudio(makeRequest(), deps);
+
+  assertEquals(res.status, 429, "rate limit continua 429 para o cliente");
+  assertEquals(capturado.openrouter, 0, "trocar de provedor não resolve rate limit");
+  assertEquals(
+    capture.writes[capture.writes.length - 1].write.status,
+    "failed",
+    "a mensagem fica em failed, não presa em processing",
+  );
+});
+
+Deno.test(
+  "Fallback: sem NENHUMA credencial o pedido falha cedo, antes de baixar o áudio",
+  async () => {
+    let baixou = false;
+    const deps = baseDeps({
+      env: () => undefined,
+      downloadAudio: () => {
+        baixou = true;
+        return Promise.resolve({
+          buffer: OGG_HEADER.buffer as ArrayBuffer,
+          contentType: "audio/ogg",
+        });
+      },
+    });
+
+    const res = await handleTranscribeAudio(makeRequest(), deps);
+
+    assertEquals(res.status, 500, "sem provedor nenhum, 500");
+    assertEquals(baixou, false, "não gasta download para depois recusar");
+  },
+);
+
+Deno.test(
+  "Fallback: 500 do OpenRouter devolve 502 sem vazar o corpo do provedor",
+  async () => {
+    const capturado: Roteado = { elevenlabs: 0, openrouter: 0, corpos: [] };
+    const deps = baseDeps({
+      env: envComOpenrouter(true),
+      downloadAudio: () =>
+        Promise.resolve({ buffer: OGG_HEADER.buffer as ArrayBuffer, contentType: "audio/ogg" }),
+      fetch: fetchRoteado(
+        capturado,
+        () => new Response("nao usado", { status: 500 }),
+        () => new Response("upstream: rate_limit_exceeded detalhe-interno", { status: 500 }),
+      ),
+    });
+
+    const res = await handleTranscribeAudio(makeRequest(), deps);
+
+    assertEquals(res.status, 502, "falha do fallback é 502 (upstream), não 500 genérico");
+    const texto = JSON.stringify(await res.json());
+    assert(!texto.includes("detalhe-interno"), "o detalhe do provedor não pode vazar");
+    assert(texto.includes("transcri"), "a mensagem é em pt-BR e explica a transcrição");
+  },
+);
