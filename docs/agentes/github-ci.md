@@ -28,7 +28,7 @@ o baseline e divergência é regressão.
 
 | Campo | Estado canônico | Verificado por |
 |---|---|---|
-| Branch protection — required checks | **3**: `✅ CI Gate (required check)` · `🏗️ Build` · `🔎 TypeCheck` | `settings-guard` ⚠ |
+| Branch protection — required checks | **4**: `✅ CI Gate (required check)` · `🏗️ Build` · `🔎 TypeCheck` · `Replay local das migrations` | `settings-guard` ⚠ |
 | Branch protection — `strict` | **`true`** (política vigente; `false` foi **revogado**) | `settings-guard` ⚠ |
 | Branch protection — `enforce_admins` | `true` | `settings-guard` ⚠ |
 | Branch protection — histórico linear | `true` | `settings-guard` ⚠ |

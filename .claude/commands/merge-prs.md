@@ -5,7 +5,7 @@ Salvar no repo `adm01-debug/Zapp_Web_V2` em `.claude/commands/merge-prs.md`. Idi
 ## 0. Parâmetros
 | Chave | Valor |
 |---|---|
-| REPO | `adm01-debug/Zapp_Web_V2` (público; `main`; squash only, histórico linear; `strict=true`; `enforce_admins=true`; required = `🏗️ Build`, `🔎 TypeCheck`, `✅ CI Gate (required check)`) |
+| REPO | `adm01-debug/Zapp_Web_V2` (público; `main`; squash only, histórico linear; `strict=true`; `enforce_admins=true`; required = `🏗️ Build`, `🔎 TypeCheck`, `✅ CI Gate (required check)`, `Replay local das migrations`) |
 | SUPABASE | produção `tnnnlkbymytvtqngbbqh` via MCP `SUPABASE - ZAPP WEB V2 - MCP` — **somente leitura** (`ping` tem de responder `https://tnnnlkbymytvtqngbbqh.supabase.co`). Proibidos: `uqysyzndkfiwfztbqvsl`, `vpkmqeumtxhrwgawxdrl` (MCPs Lovable), `pgxfvjmuubtbowutlide`, `doufsxqlfjyuvxuezpln`, SINGU, Zapp V3. `auth_list_users`/`auth_get_user` proibidos (PII). |
 | DEPLOY NO MERGE | `deploy-functions.yml` (edges, sem aprovação humana); `db-migrate.yml` (DDL — só com aprovação do Joaquim em `producao-ddl`); `types-sync.yml`; `front-release-targets.yml` (front V2/V3) |
 | RETRATO 2026-11-11 | 30 PRs abertas, nenhuma draft, todas com base `main`: 26 `claude/*`, 2 `claude_05/*`, 1 `automation/*` (`github-actions[bot]`), 1 Dependabot. `auto-update-pr-branch.yml` **desligado manualmente** em 11/11 → BEHIND é por sua conta. Reexecute no início. |
