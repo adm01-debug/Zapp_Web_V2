@@ -1,15 +1,15 @@
 {
  "meta": {
-  "sha": "36701c066057a73257f10896eef9fca8b11fa303",
+  "sha": "feee9f79fc1365595ca4104e134e9b776aeb7657",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-24 13:53 UTC",
+  "generated_at": "2026-11-24 14:16 UTC",
   "files_total": 15629,
   "code_files": 8930,
-  "code_lines": 1418021
+  "code_lines": 1418032
  },
  "version": "1.3.2",
- "facts_hash": "e3d595f25bbc33a1",
+ "facts_hash": "7e69a978d6a82722",
  "stack": {
   "frameworks": [
    "React + Vite",
@@ -77541,7 +77541,7 @@
   {
    "module": "src/components",
    "files": 2313,
-   "lines": 393764,
+   "lines": 393775,
    "tables": [
     "agent_skills",
     "agent_visibility_grants",
@@ -405461,7 +405461,7 @@
   },
   "src/components/tasks/shared/QuickAdd.tsx": {
    "path": "src/components/tasks/shared/QuickAdd.tsx",
-   "lines": 402,
+   "lines": 413,
    "exports": [
     "const QuickAdd"
    ],
@@ -482988,10 +482988,19 @@
   }
  },
  "git": {
-  "sha": "36701c066057a73257f10896eef9fca8b11fa303",
+  "sha": "feee9f79fc1365595ca4104e134e9b776aeb7657",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "feee9f79",
+    "date": "2026-11-24",
+    "author": "adm01-debug",
+    "subject": "fix(tarefas): restaura o foco da captura apos o commit, sem corrida (#3359)",
+    "files": [
+     "src/components/tasks/shared/QuickAdd.tsx"
+    ]
+   },
    {
     "sha": "36701c06",
     "date": "2026-11-24",
@@ -483306,16 +483315,6 @@
     "files": [
      "src/components/talkx/__tests__/TalkXCampaignWizard.layout.test.tsx"
     ]
-   },
-   {
-    "sha": "2fad0042",
-    "date": "2026-11-23",
-    "author": "github-actions[bot]",
-    "subject": "chore(db): sincronizar artefatos derivados do banco (#3329)",
-    "files": [
-     "supabase/schema-catalog.json",
-     "supabase/schema-manifest.json"
-    ]
    }
   ],
   "hot_files": [
@@ -483325,10 +483324,6 @@
    ],
    [
     ".github/workflows/ci.yml",
-    3
-   ],
-   [
-    "supabase/schema-manifest.json",
     3
    ],
    [
@@ -483345,6 +483340,10 @@
    ],
    [
     "scripts/e2e-isolated/pull-image.mjs",
+    2
+   ],
+   [
+    "supabase/schema-manifest.json",
     2
    ],
    [
@@ -483368,16 +483367,16 @@
     2
    ],
    [
-    "supabase/schema-catalog.json",
-    2
-   ],
-   [
     ".github/workflows/db-guard.yml",
     2
    ],
    [
     "src/components/talkx/__tests__/TalkXCampaignWizard.layout.test.tsx",
     2
+   ],
+   [
+    "src/components/tasks/shared/QuickAdd.tsx",
+    1
    ],
    [
     "scripts/ci/e2e-isolated-images.unit.mjs",

@@ -15652,7 +15652,7 @@
     "QuickAdd"
    ],
    "export_default": null,
-   "linhas": 402,
+   "linhas": 413,
    "dominio": "components/tasks",
    "hooks_locais": [
     "useTasksUiOptional"

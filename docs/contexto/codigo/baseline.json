@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "36701c066057a73257f10896eef9fca8b11fa303",
+  "commit": "feee9f79fc1365595ca4104e134e9b776aeb7657",
   "branch": "main",
-  "data_commit": "2026-11-24T10:51:45-03:00",
+  "data_commit": "2026-11-24T11:13:37-03:00",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "feee9f79",
+    "data": "2026-11-24",
+    "assunto": "fix(tarefas): restaura o foco da captura apos o commit, sem corrida (#3359)"
+   },
    {
     "sha": "36701c06",
     "data": "2026-11-24",
@@ -126,14 +131,9 @@
     "sha": "b32c9845",
     "data": "2026-11-23",
     "assunto": "fix(ia): cobra entrada e saída pelo preço real e destrava o custo de IA (#3326)"
-   },
-   {
-    "sha": "23b81626",
-    "data": "2026-11-23",
-    "assunto": "fix(ci): guard do ESTADO.md enxerga invokeEdge com generic e publica grupo real das 7 edges (#3322)"
    }
   ],
-  "arquivos_mudados_7d": 5242,
+  "arquivos_mudados_7d": 5243,
   "pastas_mais_mudadas_30d": [
    {
     "pasta": "docs/contexto/supabase",
@@ -316,7 +316,7 @@
  "contagens": {
   "arquivos_total": 15781,
   "arquivos_codigo": 5892,
-  "linhas_codigo": 1140180,
+  "linhas_codigo": 1140191,
   "rotas": 18,
   "rotas_http_backend": 11,
   "vistas_por_id": 55,
@@ -728,7 +728,7 @@
   },
   "src/components": {
    "arquivos": 2313,
-   "linhas": 393764
+   "linhas": 393775
   },
   "src/config": {
    "arquivos": 3,
