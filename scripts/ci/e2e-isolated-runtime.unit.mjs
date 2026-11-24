@@ -253,7 +253,11 @@ async function controllerFixture(t, fault, options = {}, tlsDiagnostic) {
   for (const folder of ['scripts/e2e-isolated', 'scripts/ci', 'scripts/db-audit', 'supabase/migrations', 'node_modules/@playwright/test']) mkdirSync(path.join(root, folder), { recursive: true });
   for (const name of ['run.mjs', 'runtime-contract.mjs', 'stack.mjs', 'migrations.mjs', 'results.mjs', 'collection.mjs', 'images.lock.json', 'tls.mjs', 'tls-probe.mjs', 'tls-edge-probe.ts', 'provider-diagnostics.mjs', 'routine-ownership.mjs', 'qr-contract.mjs', 'compilation-network.mjs', 'pull-image.mjs']) cpSync(path.join(MODULES, name), path.join(root, 'scripts/e2e-isolated', name));
   cpSync(path.join(ROOT, 'scripts/ci/redigir-relatorio.mjs'), path.join(root, 'scripts/ci/redigir-relatorio.mjs'));
-  writeFileSync(path.join(root, 'node_modules/@playwright/test/package.json'), JSON.stringify({ version: fault === 'wrong-playwright' ? '1.0.0' : '1.65.0' }));
+  // A versao instalada precisa casar com a tag do driver em images.lock.json, senao
+  // o contrato acusa `playwright-image-version-mismatch` no caminho feliz. Derivar do
+  // lock evita editar este arquivo a cada bump do Playwright.
+  const versaoDriver = lock().images.driver.match(/playwright:v([0-9][^-]*)-/)?.[1];
+  writeFileSync(path.join(root, 'node_modules/@playwright/test/package.json'), JSON.stringify({ version: fault === 'wrong-playwright' ? '1.0.0' : versaoDriver }));
   writeFileSync(path.join(temporary, 'bun'), 'unused simulated binary');
   writeFileSync(path.join(root, 'supabase/config.toml'), '[functions.auth-login]\nverify_jwt = ' + (fault === 'jwt-policy' ? 'true' : 'false') + '\n');
   if (scope === 'suite') {
