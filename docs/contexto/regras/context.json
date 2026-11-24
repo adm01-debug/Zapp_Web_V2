@@ -1,9 +1,9 @@
 {
  "meta": {
-  "sha": "7dff0402a335ae0333c3b244726cd2ca3f20297f",
+  "sha": "972831d7527f3b525216445df80d48d96a956bda",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-24 03:17 UTC",
+  "generated_at": "2026-11-24 04:17 UTC",
   "files_total": 15629,
   "code_files": 8930,
   "code_lines": 1417899
@@ -482984,10 +482984,19 @@
   }
  },
  "git": {
-  "sha": "7dff0402a335ae0333c3b244726cd2ca3f20297f",
+  "sha": "972831d7527f3b525216445df80d48d96a956bda",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "972831d7",
+    "date": "2026-11-24",
+    "author": "adm01-debug",
+    "subject": "fix(e2e): casa o titulo real do dialog de mesclagem (#3350)",
+    "files": [
+     "e2e/contacts-selection.spec.ts"
+    ]
+   },
    {
     "sha": "7dff0402",
     "date": "2026-11-23",
@@ -483387,52 +483396,19 @@
     "files": [
      "docs/integracoes/PLANO_GATEWAY_MENSAGENS_SMS_102_ETAPAS.md"
     ]
-   },
-   {
-    "sha": "f1080b15",
-    "date": "2026-11-22",
-    "author": "adm01-debug",
-    "subject": "feat(assistente): porta unica liga 6 edges mortas com contexto compartilhado (#3317)",
-    "files": [
-     "ESTADO.md",
-     "docs/plans/PLANO_ASSISTENTE_PESSOAL_IA_2026-11-15.md",
-     "src/components/inbox/tabs/AiTab.tsx",
-     "src/components/inbox/tabs/AssistantAskCard.tsx",
-     "src/components/inbox/tabs/__tests__/AssistantAskCard.test.tsx",
-     "src/hooks/assistant/useAssistantGateway.ts",
-     "src/lib/assistant/__tests__/askGateway.test.ts",
-     "src/lib/assistant/askGateway.ts",
-     "supabase/deployment-manifest.json",
-     "supabase/functions/_shared/assistant-gateway.test.ts",
-     "supabase/functions/_shared/assistant-gateway.ts",
-     "supabase/functions/assistant-gateway/index.test.ts",
-     "supabase/functions/assistant-gateway/index.ts"
-    ]
    }
   ],
   "hot_files": [
    [
     "supabase/deployment-manifest.json",
-    6
-   ],
-   [
-    "ESTADO.md",
-    6
-   ],
-   [
-    "docs/plans/PLANO_ASSISTENTE_PESSOAL_IA_2026-11-15.md",
     5
    ],
    [
-    "supabase/functions/_shared/assistant-gateway.ts",
-    4
+    "ESTADO.md",
+    5
    ],
    [
-    "supabase/functions/assistant-gateway/index.test.ts",
-    4
-   ],
-   [
-    "supabase/functions/assistant-gateway/index.ts",
+    "docs/plans/PLANO_ASSISTENTE_PESSOAL_IA_2026-11-15.md",
     4
    ],
    [
@@ -483444,8 +483420,20 @@
     3
    ],
    [
-    "supabase/functions/_shared/assistant-gateway.test.ts",
+    "supabase/functions/_shared/assistant-gateway.ts",
     3
+   ],
+   [
+    "supabase/functions/assistant-gateway/index.test.ts",
+    3
+   ],
+   [
+    "supabase/functions/assistant-gateway/index.ts",
+    3
+   ],
+   [
+    "e2e/contacts-selection.spec.ts",
+    2
    ],
    [
     "docs/pendencias/infra-de-ia-talkx-ai-x076.md",
@@ -483476,15 +483464,15 @@
     2
    ],
    [
+    "supabase/functions/_shared/assistant-gateway.test.ts",
+    2
+   ],
+   [
     "e2e/email-navy-visual.spec.ts",
     1
    ],
    [
     "e2e/contact-form-email-duplicate.spec.ts",
-    1
-   ],
-   [
-    "e2e/contacts-selection.spec.ts",
     1
    ],
    [

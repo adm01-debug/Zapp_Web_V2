@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "7dff0402a335ae0333c3b244726cd2ca3f20297f",
+  "commit": "972831d7527f3b525216445df80d48d96a956bda",
   "branch": "main",
-  "data_commit": "2026-11-23T23:47:52-03:00",
+  "data_commit": "2026-11-24T01:15:00-03:00",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "972831d7",
+    "data": "2026-11-24",
+    "assunto": "fix(e2e): casa o titulo real do dialog de mesclagem (#3350)"
+   },
    {
     "sha": "7dff0402",
     "data": "2026-11-23",
@@ -126,14 +131,9 @@
     "sha": "434daf97",
     "data": "2026-11-22",
     "assunto": "fix(ci): torna proporcional a semeadura do caso g do teste A/B do Talk X (#3323)"
-   },
-   {
-    "sha": "7a351f77",
-    "data": "2026-11-22",
-    "assunto": "feat(assistente): decide por edge as 7 edges restantes da porta unica (#3321)"
    }
   ],
-  "arquivos_mudados_7d": 5290,
+  "arquivos_mudados_7d": 5288,
   "pastas_mais_mudadas_30d": [
    {
     "pasta": "docs/contexto/supabase",

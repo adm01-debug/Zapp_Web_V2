@@ -1,7 +1,7 @@
 # Contexto do projeto para agentes de IA
 
 GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.
-Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR dela) a cada push em `main` e a cada 10 minutos pelo workflow `contexto.yml`; índice único das três fontes em `docs/contexto/00-INDEX.md`. Gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `7dff0402a335ae0333c3b244726cd2ca3f20297f` (2026-11-23T23:47:52-03:00).
+Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR dela) a cada push em `main` e a cada 10 minutos pelo workflow `contexto.yml`; índice único das três fontes em `docs/contexto/00-INDEX.md`. Gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `972831d7527f3b525216445df80d48d96a956bda` (2026-11-24T01:15:00-03:00).
 
 ## Como usar (leia antes de planejar ou executar qualquer tarefa)
 1. **Tela/rota/menu** → `rotas.json` (url/vista/menu → arquivo → hooks → tabelas → edges; `rotas_http_backend` para APIs) e `modulos.json` (módulo inteiro + dependências entre módulos).
@@ -397,7 +397,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - possiveis_segredos_no_codigo: 6 — ex.: analise-prs/resgate-261118-lote3/claude_pink/cool-dijkstra-xk9ek2/scripts/ci/edge-coverage-authz.unit.mjs:397, analise-prs/resgate-261118-lote3/claude_pink/cool-dijkstra-xk9ek2/scripts/edge-deploy/redigir-log.unit.mjs:38, scripts/ai-context/cenarios.mjs:102
 
 ## Grafo de código (graphify)
-- 103206 nós · 175318 arestas · 9291 comunidades · grafo do commit `7dff0402`
+- 103206 nós · 175318 arestas · 9291 comunidades · grafo do commit `972831d7`
 - comunidades maiores: Communities (5953 total, 1987 thin omitted) (3949), react (1534), lucide-react (1481), TalkXSuppression.tsx (1217), utils.ts (1212), cn (918), validation.ts (687), ExternalProductManagement.tsx (639), ref_node_fs (595), vitest (529), WorkItemSheet.tsx (501), @testing-library/react (456)
 - símbolos mais chamados: cn() (src/lib/utils.ts), useAuth() (src/hooks/auth/useAuth.tsx), jsonResponse() (supabase/functions/_shared/validation.ts), errorResponse() (supabase/functions/_shared/validation.ts), handleCors() (supabase/functions/_shared/validation.ts), fail() (scripts/e2e-isolated/network-proof-policy.mjs), Logger (supabase/functions/_shared/validation.ts), requireEnv() (supabase/functions/_shared/validation.ts), fmtInt() (src/components/talkx/kit/format.ts), fromTable() (src/lib/supabaseHelpers.ts), useUserRole() (src/hooks/system/useUserRole.ts), validationErrorResponse() (supabase/functions/_shared/schemas.ts)
 - consulta local: `graphify query "<pergunta>"`, `graphify path "<A>" "<B>"`, `graphify explain "<X>"`
@@ -525,6 +525,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - CHANGELOG topo: [Unreleased]
 
 ## Últimos commits
+- 2026-11-24 `972831d7` fix(e2e): casa o titulo real do dialog de mesclagem (#3350)
 - 2026-11-23 `7dff0402` chore(docs): fecha X076 e corrige estado real da IA-161 (#3346)
 - 2026-11-23 `e5d1a17d` fix(e2e): destrava o Firefox tirando o axe do painel CRM em 320px (#3348)
 - 2026-11-23 `442bcfb1` fix(e2e): desambigua locators de Contatos após o redesign do módulo (#3347)
@@ -539,7 +540,6 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - 2026-11-23 `5ba09eae` feat(talkx): liga os dois kinds sem tela da IA (insight_text e segment_suggestion) (#3339)
 - 2026-11-23 `2fca6d0d` fix: tolera ruido sub-pixel na medicao de 44px do card (#3341)
 - 2026-11-23 `340cc4ce` feat(talkx): cria a trilha de IA e os tetos que a talkx-ai ja exige (#3327)
-- 2026-11-23 `b32c9845` fix(ia): cobra entrada e saída pelo preço real e destrava o custo de IA (#3326)
 
 ## Arquivos deste diretório
 - `docs/contexto/codigo/rotas.json`
