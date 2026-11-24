@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
+import { readFileSync } from 'node:fs';
 import { resolveImages, validReference } from '../e2e-isolated/resolve-images.mjs';
 
 const DIGEST = 'a'.repeat(64);
@@ -102,3 +103,30 @@ for (const [operation, malformed] of [['pull', false], ['image', false], ['image
     });
   });
 }
+
+// O pull roda sem credencial de registry: Docker Hub anonimo e o ECR publico
+// aplicam cota por IP compartilhada entre runners e devolvem toomanyrequests
+// (run 45326622310, shard authenticated-2-of-3). Toda imagem pinada tem de vir
+// de um registro autenticavel com o mesmo digest.
+const LOCK_FILE = JSON.parse(readFileSync(new URL('../e2e-isolated/images.lock.json', import.meta.url), 'utf8'));
+// O primeiro segmento com ponto identifica um registry explicito (ghcr.io, mcr...).
+const namesExplicitRegistry = reference => /^[^/:]+\.[^/:]*[:\d]*\//.test(reference);
+const usesAnonymousQuotaRegistry = reference => /^public\.ecr\.aws\//.test(reference) || !namesExplicitRegistry(reference);
+test('imagens pinadas nao dependem de registry com cota anonima por IP', () => {
+  const offenders = Object.entries(LOCK_FILE.images)
+    .filter(([, reference]) => usesAnonymousQuotaRegistry(reference))
+    .map(([role, reference]) => role + '=' + reference);
+  assert.deepEqual(offenders, [], 'mova para o mirror ghcr.io do mesmo digest: ' + offenders.join(', '));
+});
+test('registry sem autenticacao e reconhecido pelo guarda', () => {
+  for (const reference of ['supabase/gotrue:v2@sha256:' + DIGEST,
+    'storage-api:v1.81.0@sha256:' + DIGEST,
+    'public.ecr.aws/supabase/postgrest:v14.5@sha256:' + DIGEST]) {
+    assert.equal(usesAnonymousQuotaRegistry(reference), true, reference);
+  }
+  for (const reference of ['ghcr.io/supabase/gotrue:v2.197.0@sha256:' + DIGEST,
+    'mcr.microsoft.com/playwright:v1.65.1-noble@sha256:' + DIGEST,
+    'registry.example.com:5000/team/app:v1@sha256:' + DIGEST]) {
+    assert.equal(usesAnonymousQuotaRegistry(reference), false, reference);
+  }
+});
