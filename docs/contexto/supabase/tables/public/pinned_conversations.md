@@ -1,5 +1,26 @@
 # public.pinned_conversations
 
+> Descrição funcional não estava registrada no catálogo; o conteúdo abaixo documenta a estrutura observável, sem inferir regras de negócio não declaradas.
+
+[CATALOGUE SEMÂNTICO DO PROJETO]
+Objeto: public.pinned_conversations (tabela). RLS habilitada: t; RLS forçada: f.
+Colunas (ordem, tipo e nulabilidade):
+1 id uuid NOT NULL [DEFAULT/EXPRESSION DEFINED]
+2 contact_id uuid NOT NULL
+3 pinned_by uuid NOT NULL
+4 "position" integer NOT NULL [DEFAULT/EXPRESSION DEFINED]
+5 created_at timestamp with time zone NOT NULL [DEFAULT/EXPRESSION DEFINED]
+Constraints:
+pinned_conversations_contact_id_fkey: FOREIGN KEY (contact_id) REFERENCES contacts(id) ON DELETE CASCADE
+pinned_conversations_pinned_by_fkey: FOREIGN KEY (pinned_by) REFERENCES profiles(id) ON DELETE CASCADE
+pinned_conversations_pkey: PRIMARY KEY (id)
+pinned_conversations_contact_id_pinned_by_key: UNIQUE (contact_id, pinned_by)
+Políticas RLS (nome, operação, papéis e modo; as expressões permanecem no catálogo):
+"Users can create own pins" [command=INSERT; roles=authenticated; PERMISSIVE]
+"Users can delete own pins" [command=DELETE; roles=authenticated; PERMISSIVE]
+"Users can update own pins" [command=UPDATE; roles=authenticated; PERMISSIVE]
+"Users can view own pins" [command=SELECT; roles=authenticated; PERMISSIVE]
+
 | propriedade | valor |
 |---|---|
 | tipo | table |

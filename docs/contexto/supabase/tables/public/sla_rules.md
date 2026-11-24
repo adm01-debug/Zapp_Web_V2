@@ -1,5 +1,36 @@
 # public.sla_rules
 
+> Descrição funcional não estava registrada no catálogo; o conteúdo abaixo documenta a estrutura observável, sem inferir regras de negócio não declaradas.
+
+[CATALOGUE SEMÂNTICO DO PROJETO]
+Objeto: public.sla_rules (tabela). RLS habilitada: t; RLS forçada: f.
+Colunas (ordem, tipo e nulabilidade):
+1 id uuid NOT NULL [DEFAULT/EXPRESSION DEFINED]
+2 name text NOT NULL
+3 first_response_minutes integer NOT NULL [DEFAULT/EXPRESSION DEFINED]
+4 resolution_minutes integer NOT NULL [DEFAULT/EXPRESSION DEFINED]
+5 priority integer NOT NULL [DEFAULT/EXPRESSION DEFINED]
+6 contact_id uuid NULLABLE
+7 company text NULLABLE
+8 job_title text NULLABLE
+9 contact_type text NULLABLE
+10 queue_id uuid NULLABLE
+11 agent_id uuid NULLABLE
+12 is_active boolean NOT NULL [DEFAULT/EXPRESSION DEFINED]
+13 created_at timestamp with time zone NOT NULL [DEFAULT/EXPRESSION DEFINED]
+14 updated_at timestamp with time zone NOT NULL [DEFAULT/EXPRESSION DEFINED]
+15 metadata jsonb NULLABLE [DEFAULT/EXPRESSION DEFINED]
+Constraints:
+sla_rules_agent_id_fkey: FOREIGN KEY (agent_id) REFERENCES profiles(id) ON DELETE CASCADE
+sla_rules_contact_id_fkey: FOREIGN KEY (contact_id) REFERENCES contacts(id) ON DELETE CASCADE
+sla_rules_queue_id_fkey: FOREIGN KEY (queue_id) REFERENCES queues(id) ON DELETE CASCADE
+sla_rules_pkey: PRIMARY KEY (id)
+Políticas RLS (nome, operação, papéis e modo; as expressões permanecem no catálogo):
+"Admins and supervisors can delete SLA rules" [command=DELETE; roles=authenticated; PERMISSIVE]
+"Admins and supervisors can insert SLA rules" [command=INSERT; roles=authenticated; PERMISSIVE]
+"Admins and supervisors can update SLA rules" [command=UPDATE; roles=authenticated; PERMISSIVE]
+"SLA rules visible to admins only" [command=SELECT; roles=authenticated; PERMISSIVE]
+
 | propriedade | valor |
 |---|---|
 | tipo | table |

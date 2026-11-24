@@ -2,6 +2,19 @@
 
 > [RLS-sem-policy: intencional] Log interno da migration 133. Só service_role.
 
+[CATALOGUE SEMÂNTICO DO PROJETO]
+Objeto: public._zapp_mig133_log (tabela). RLS habilitada: t; RLS forçada: f.
+Colunas (ordem, tipo e nulabilidade):
+1 version text NOT NULL
+2 status text NOT NULL
+3 detail text NULLABLE
+4 n_statements integer NULLABLE
+5 applied_at timestamp with time zone NOT NULL [DEFAULT/EXPRESSION DEFINED]
+Constraints:
+_zapp_mig133_log_pkey: PRIMARY KEY (version)
+Políticas RLS (nome, operação, papéis e modo; as expressões permanecem no catálogo):
+(RLS habilitada sem política; verificar se o acesso restrito é intencional)
+
 | propriedade | valor |
 |---|---|
 | tipo | table |

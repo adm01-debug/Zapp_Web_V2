@@ -1,5 +1,31 @@
 # public.channel_connections
 
+> Descrição funcional não estava registrada no catálogo; o conteúdo abaixo documenta a estrutura observável, sem inferir regras de negócio não declaradas.
+
+[CATALOGUE SEMÂNTICO DO PROJETO]
+Objeto: public.channel_connections (tabela). RLS habilitada: t; RLS forçada: f.
+Colunas (ordem, tipo e nulabilidade):
+1 id uuid NOT NULL [DEFAULT/EXPRESSION DEFINED]
+2 channel_type channel_type NOT NULL
+3 name text NOT NULL
+4 status text NOT NULL [DEFAULT/EXPRESSION DEFINED]
+5 config jsonb NULLABLE [DEFAULT/EXPRESSION DEFINED]
+6 credentials jsonb NULLABLE [DEFAULT/EXPRESSION DEFINED]
+7 webhook_url text NULLABLE
+8 is_active boolean NULLABLE [DEFAULT/EXPRESSION DEFINED]
+9 created_by uuid NULLABLE
+10 created_at timestamp with time zone NOT NULL [DEFAULT/EXPRESSION DEFINED]
+11 updated_at timestamp with time zone NOT NULL [DEFAULT/EXPRESSION DEFINED]
+12 whatsapp_connection_id uuid NULLABLE
+13 external_account_id text NULLABLE
+14 external_page_id text NULLABLE
+Constraints:
+channel_connections_created_by_fkey: FOREIGN KEY (created_by) REFERENCES profiles(id)
+channel_connections_whatsapp_connection_id_fkey: FOREIGN KEY (whatsapp_connection_id) REFERENCES whatsapp_connections(id)
+channel_connections_pkey: PRIMARY KEY (id)
+Políticas RLS (nome, operação, papéis e modo; as expressões permanecem no catálogo):
+"Admins full access to channels" [command=ALL; roles=authenticated; PERMISSIVE]
+
 | propriedade | valor |
 |---|---|
 | tipo | table |

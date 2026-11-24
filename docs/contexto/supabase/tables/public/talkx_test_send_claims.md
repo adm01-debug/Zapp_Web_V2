@@ -2,6 +2,20 @@
 
 > [RLS-sem-policy: intencional] Claims para envios de teste do TalkX. Só service_role via talkx-send.
 
+[CATALOGUE SEMÂNTICO DO PROJETO]
+Objeto: public.talkx_test_send_claims (tabela). RLS habilitada: t; RLS forçada: f.
+Colunas (ordem, tipo e nulabilidade):
+1 id uuid NOT NULL [DEFAULT/EXPRESSION DEFINED]
+2 request_key text NOT NULL
+3 provider_message_id text NULLABLE
+4 created_at timestamp with time zone NOT NULL [DEFAULT/EXPRESSION DEFINED]
+5 sent_at timestamp with time zone NULLABLE
+Constraints:
+talkx_test_send_claims_pkey: PRIMARY KEY (id)
+talkx_test_send_claims_request_key_key: UNIQUE (request_key)
+Políticas RLS (nome, operação, papéis e modo; as expressões permanecem no catálogo):
+(RLS habilitada sem política; verificar se o acesso restrito é intencional)
+
 | propriedade | valor |
 |---|---|
 | tipo | table |

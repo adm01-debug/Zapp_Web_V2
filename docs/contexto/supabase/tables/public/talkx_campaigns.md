@@ -1,5 +1,125 @@
 # public.talkx_campaigns
 
+> Descrição funcional não estava registrada no catálogo; o conteúdo abaixo documenta a estrutura observável, sem inferir regras de negócio não declaradas.
+
+[CATALOGUE SEMÂNTICO DO PROJETO]
+Objeto: public.talkx_campaigns (tabela). RLS habilitada: t; RLS forçada: f.
+Colunas (ordem, tipo e nulabilidade):
+1 id uuid NOT NULL [DEFAULT/EXPRESSION DEFINED]
+2 name text NOT NULL
+3 message_template text NOT NULL
+4 variables_config jsonb NOT NULL [DEFAULT/EXPRESSION DEFINED]
+5 typing_delay_min integer NOT NULL [DEFAULT/EXPRESSION DEFINED]
+6 typing_delay_max integer NOT NULL [DEFAULT/EXPRESSION DEFINED]
+7 send_interval_min integer NOT NULL [DEFAULT/EXPRESSION DEFINED]
+8 send_interval_max integer NOT NULL [DEFAULT/EXPRESSION DEFINED]
+9 status text NOT NULL [DEFAULT/EXPRESSION DEFINED]
+10 total_recipients integer NOT NULL [DEFAULT/EXPRESSION DEFINED]
+11 sent_count integer NOT NULL [DEFAULT/EXPRESSION DEFINED]
+12 failed_count integer NOT NULL [DEFAULT/EXPRESSION DEFINED]
+13 delivered_count integer NOT NULL [DEFAULT/EXPRESSION DEFINED]
+14 whatsapp_connection_id uuid NULLABLE
+15 created_by uuid NULLABLE
+16 started_at timestamp with time zone NULLABLE
+17 completed_at timestamp with time zone NULLABLE
+18 created_at timestamp with time zone NOT NULL [DEFAULT/EXPRESSION DEFINED]
+19 updated_at timestamp with time zone NOT NULL [DEFAULT/EXPRESSION DEFINED]
+20 media_url text NULLABLE
+21 media_type text NULLABLE
+22 scheduled_at timestamp with time zone NULLABLE
+23 description text NULLABLE
+24 objective text NOT NULL [DEFAULT/EXPRESSION DEFINED]
+25 audience_source text NOT NULL [DEFAULT/EXPRESSION DEFINED]
+26 audience_filters jsonb NOT NULL [DEFAULT/EXPRESSION DEFINED]
+27 segment_id uuid NULLABLE
+28 template_id uuid NULLABLE
+29 send_window_start time without time zone NULLABLE
+30 send_window_end time without time zone NULLABLE
+31 business_hours_only boolean NOT NULL [DEFAULT/EXPRESSION DEFINED]
+32 speed_profile text NOT NULL [DEFAULT/EXPRESSION DEFINED]
+33 paused_at timestamp with time zone NULLABLE
+34 outcome_unknown_count integer NOT NULL [DEFAULT/EXPRESSION DEFINED]
+35 schedule_timezone text NOT NULL [DEFAULT/EXPRESSION DEFINED] — IANA timezone selected by the operator; controls display, send window and business-hours evaluation.
+36 draft_creation_key uuid NULLABLE — Client-generated UUID scoped to created_by; recovers a lost create response without duplicate drafts.
+37 revision bigint NOT NULL [DEFAULT/EXPRESSION DEFINED] — Monotonic optimistic-concurrency revision for Talk X draft configuration.
+38 replied_count integer NOT NULL [DEFAULT/EXPRESSION DEFINED]
+39 pause_reason text NULLABLE
+40 respect_suppression boolean NOT NULL [DEFAULT/EXPRESSION DEFINED] — Se a campanha respeita a supressão de opt-out; false exige admin/supervisor.
+41 confirm_consent boolean NOT NULL [DEFAULT/EXPRESSION DEFINED] — Flag de confirmação de consentimento exibida no passo de revisão.
+42 launched_by uuid NULLABLE — Perfil que lançou a campanha (registrado na primeira transição start).
+43 launched_at timestamp with time zone NULLABLE — Momento do primeiro lançamento (registrado na primeira transição start).
+44 draft_step smallint NULLABLE [DEFAULT/EXPRESSION DEFINED] — Passo do wizard (1..4) em que o rascunho foi deixado; padrão 1. NULL = rascunho antigo (V23).
+45 owner uuid NULLABLE — Perfil responsável pela campanha (V25). Único responsável desde a unificação owner × responsible_id (20261002451230). Distinto de created_by, que identifica o rascunho.
+46 responsible_id uuid NULLABLE — obsoleta: usar owner (decisão 02/10)
+47 template_version_id uuid NULLABLE — Versao do template (talkx_template_versions.id) que originou a mensagem da campanha (V26).
+48 worker_id text NULLABLE — Worker que detém a trava da campanha (X010). Gerido só pela RPC de lease (claim/release).
+49 worker_lease_expires_at timestamp with time zone NULLABLE — Vencimento do lease do worker (X010). Lease vencido ou nulo libera a campanha para outro worker.
+50 audience_snapshot_at timestamp with time zone NULLABLE — Talk X (X017): instante em que snapshot_talkx_campaign_audience regravou talkx_recipients/total_recipients a partir do rascunho.
+51 max_per_minute smallint NULLABLE
+52 investment numeric(12,2) NULLABLE — Investimento total em moeda (BRL); informado pela equipe, fora dos contadores de envio.
+53 paused_by uuid NULLABLE — Perfil que pausou a campanha (X024).
+54 cancelled_by uuid NULLABLE — Perfil que cancelou a campanha (X024).
+55 cancelled_at timestamp with time zone NULLABLE — Momento do cancelamento (X024).
+56 skipped_count integer NOT NULL [DEFAULT/EXPRESSION DEFINED] — Destinatários pulados pelo motor (lista negra/opt-out) — gerido pelo worker/RPC, nunca pelo cliente (X026).
+57 read_count integer NOT NULL [DEFAULT/EXPRESSION DEFINED] — Destinatários que leram a mensagem (READ) — gerido pelo worker/RPC, nunca pelo cliente (X027).
+58 consent_confirmed_by uuid NULLABLE — X032: perfil do operador que confirmou a base legal/consentimento no lancamento da campanha.
+59 consent_confirmed_at timestamp with time zone NULLABLE — X032: instante da confirmacao de consentimento; sem ele, agendar e iniciar sao recusados.
+60 legal_basis text NULLABLE — X032: base legal da campanha — consent | legitimate_interest | contract (NULL = nao informada).
+61 recurrence_frequency text NULLABLE — Talk X: NULL = nao repete; daily | weekly. "Personalizado" ainda nao existe.
+62 recurrence_weekdays smallint[] NULLABLE — Talk X: dias da semana da recorrencia semanal (0 = domingo ... 6 = sabado, como extract(dow)). Obrigatorio em weekly, NULL em daily.
+63 recurrence_end_at timestamp with time zone NULLABLE — Talk X: instante limite da serie; ocorrencia que cairia depois dele nao e criada. NULL = sem data de termino.
+64 recurrence_series_id uuid NULLABLE — Talk X: serie da ocorrencia (id da primeira campanha). NULL na primeira. Gravado so por schedule_next_talkx_recurrence.
+65 recurrence_next_campaign_id uuid NULLABLE — Talk X: ocorrencia seguinte ja criada a partir desta. Garante uma unica sucessora por ocorrencia.
+66 recurrence_closed_at timestamp with time zone NULLABLE — Talk X: instante em que a serie foi encerrada a partir desta ocorrencia (sem sucessora).
+67 recurrence_closed_reason text NULLABLE — Talk X: series_ended | audience_exhausted | owner_inactive.
+68 launch_confirmations jsonb NULLABLE
+69 launch_confirmed_by uuid NULLABLE
+70 launch_confirmed_at timestamp with time zone NULLABLE
+71 send_weekdays smallint[] NULLABLE
+72 respect_dnd boolean NOT NULL [DEFAULT/EXPRESSION DEFINED]
+73 ab_enabled boolean NOT NULL [DEFAULT/EXPRESSION DEFINED] — X065 — quando true, o snapshot de audiencia grava a variante de cada destinatario.
+74 ab_metric text NOT NULL [DEFAULT/EXPRESSION DEFINED] — X065 — metrica que decide a vencedora: reply_rate, click_rate ou delivery_rate.
+75 ab_min_sample integer NOT NULL [DEFAULT/EXPRESSION DEFINED] — X065 — amostra minima POR VARIANTE para a decisao automatica aceitar um vencedor.
+76 ab_winner_variant_id uuid NULLABLE
+77 ab_winner_decided_at timestamp with time zone NULLABLE
+78 ab_winner_decided_by uuid NULLABLE
+Constraints:
+talkx_campaigns_ab_metric_check: CHECK (ab_metric = ANY (ARRAY['reply_rate'::text, 'click_rate'::text, 'delivery_rate'::text]))
+talkx_campaigns_ab_min_sample_check: CHECK (ab_min_sample >= 1 AND ab_min_sample <= 1000000)
+talkx_campaigns_audience_source_check: CHECK (audience_source = ANY (ARRAY['contacts'::text, 'segment'::text, 'crm360'::text]))
+talkx_campaigns_draft_step_range: CHECK (draft_step IS NULL OR draft_step >= 1 AND draft_step <= 4)
+talkx_campaigns_legal_basis_check: CHECK (legal_basis IS NULL OR (legal_basis = ANY (ARRAY['consent'::text, 'legitimate_interest'::text, 'contract'::text])))
+talkx_campaigns_max_per_minute_check: CHECK (max_per_minute IS NULL OR max_per_minute >= 1 AND max_per_minute <= 60)
+talkx_campaigns_recurrence_shape_check: CHECK (recurrence_frequency IS NULL AND recurrence_weekdays IS NULL OR recurrence_frequency = 'daily'::text AND recurrence_weekdays IS NULL OR recurrence_frequency = 'weekly'::text AND recurrence_weekdays IS NOT NULL AND cardinality(recurrence_weekdays) >= 1 AND cardinality(recurrence_weekdays) <= 7 AND recurrence_weekdays <@ ARRAY[0::smallint, 1::smallint, 2::smallint, 3::smallint, 4::smallint, 5::smallint, 6::smallint])
+talkx_campaigns_revision_positive: CHECK (revision > 0)
+talkx_campaigns_schedule_timezone_valid: CHECK (is_valid_talkx_schedule_timezone(schedule_timezone))
+talkx_campaigns_send_interval_max_check: CHECK (send_interval_max <= 86400000)
+talkx_campaigns_send_window_valid: CHECK (send_window_start IS NULL AND send_window_end IS NULL OR send_window_start IS NOT NULL AND send_window_end IS NOT NULL AND send_window_start < send_window_end)
+talkx_campaigns_speed_profile_check: CHECK (speed_profile = ANY (ARRAY['slow'::text, 'moderate'::text, 'fast'::text]))
+talkx_campaigns_status_check: CHECK (status = ANY (ARRAY['draft'::text, 'scheduled'::text, 'sending'::text, 'paused'::text, 'completed'::text, 'cancelled'::text]))
+talkx_campaigns_ab_winner_decided_by_fkey: FOREIGN KEY (ab_winner_decided_by) REFERENCES profiles(id) ON DELETE SET NULL
+talkx_campaigns_ab_winner_variant_id_fkey: FOREIGN KEY (ab_winner_variant_id) REFERENCES talkx_template_variants(id) ON DELETE SET NULL
+talkx_campaigns_cancelled_by_fkey: FOREIGN KEY (cancelled_by) REFERENCES profiles(id) ON DELETE SET NULL
+talkx_campaigns_consent_confirmed_by_fkey: FOREIGN KEY (consent_confirmed_by) REFERENCES profiles(id) ON DELETE SET NULL
+talkx_campaigns_created_by_fkey: FOREIGN KEY (created_by) REFERENCES profiles(id)
+talkx_campaigns_launch_confirmed_by_fkey: FOREIGN KEY (launch_confirmed_by) REFERENCES profiles(id)
+talkx_campaigns_launched_by_fkey: FOREIGN KEY (launched_by) REFERENCES profiles(id)
+talkx_campaigns_owner_fkey: FOREIGN KEY (owner) REFERENCES profiles(id) ON DELETE SET NULL
+talkx_campaigns_paused_by_fkey: FOREIGN KEY (paused_by) REFERENCES profiles(id) ON DELETE SET NULL
+talkx_campaigns_recurrence_next_campaign_id_fkey: FOREIGN KEY (recurrence_next_campaign_id) REFERENCES talkx_campaigns(id) ON DELETE SET NULL
+talkx_campaigns_responsible_id_fkey: FOREIGN KEY (responsible_id) REFERENCES profiles(id) ON DELETE SET NULL
+talkx_campaigns_segment_id_fkey: FOREIGN KEY (segment_id) REFERENCES talkx_segments(id) ON DELETE SET NULL
+talkx_campaigns_template_id_fkey: FOREIGN KEY (template_id) REFERENCES talkx_templates(id) ON DELETE SET NULL
+talkx_campaigns_template_version_id_fkey: FOREIGN KEY (template_version_id) REFERENCES talkx_template_versions(id) ON DELETE SET NULL
+talkx_campaigns_whatsapp_connection_id_fkey: FOREIGN KEY (whatsapp_connection_id) REFERENCES whatsapp_connections(id)
+talkx_campaigns_pkey: PRIMARY KEY (id)
+Políticas RLS (nome, operação, papéis e modo; as expressões permanecem no catálogo):
+"Admins can view all campaigns" [command=SELECT; roles=authenticated; PERMISSIVE]
+"Users can create campaigns" [command=INSERT; roles=authenticated; PERMISSIVE]
+"Users can delete own draft campaigns" [command=DELETE; roles=authenticated; PERMISSIVE]
+"Users can update own campaigns" [command=UPDATE; roles=authenticated; PERMISSIVE]
+"Users can view own campaigns" [command=SELECT; roles=authenticated; PERMISSIVE]
+
 | propriedade | valor |
 |---|---|
 | tipo | table |

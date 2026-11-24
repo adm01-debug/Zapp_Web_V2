@@ -2,6 +2,39 @@
 
 > Threads do Gmail sincronizadas por conta (gmail_accounts), com contato associado, atribuicao e remetente da ultima mensagem.
 
+[CATALOGUE SEMÂNTICO DO PROJETO]
+Objeto: public.email_threads (tabela). RLS habilitada: t; RLS forçada: f.
+Colunas (ordem, tipo e nulabilidade):
+1 id uuid NOT NULL [DEFAULT/EXPRESSION DEFINED]
+2 gmail_account_id uuid NOT NULL
+3 gmail_thread_id text NOT NULL
+4 contact_id uuid NULLABLE
+5 subject text NOT NULL [DEFAULT/EXPRESSION DEFINED]
+6 snippet text NOT NULL [DEFAULT/EXPRESSION DEFINED]
+7 label_ids text[] NOT NULL [DEFAULT/EXPRESSION DEFINED]
+8 message_count integer NOT NULL [DEFAULT/EXPRESSION DEFINED]
+9 is_unread boolean NOT NULL [DEFAULT/EXPRESSION DEFINED]
+10 is_starred boolean NOT NULL [DEFAULT/EXPRESSION DEFINED]
+11 is_important boolean NOT NULL [DEFAULT/EXPRESSION DEFINED]
+12 last_message_at timestamp with time zone NOT NULL [DEFAULT/EXPRESSION DEFINED]
+13 assigned_to uuid NULLABLE
+14 status text NOT NULL [DEFAULT/EXPRESSION DEFINED]
+15 priority text NOT NULL [DEFAULT/EXPRESSION DEFINED]
+16 tags text[] NOT NULL [DEFAULT/EXPRESSION DEFINED]
+17 created_at timestamp with time zone NOT NULL [DEFAULT/EXPRESSION DEFINED]
+18 updated_at timestamp with time zone NOT NULL [DEFAULT/EXPRESSION DEFINED]
+19 last_from_name text NULLABLE
+20 last_from_address text NULLABLE
+Constraints:
+email_threads_contact_id_fkey: FOREIGN KEY (contact_id) REFERENCES contacts(id) ON DELETE SET NULL
+email_threads_gmail_account_id_fkey: FOREIGN KEY (gmail_account_id) REFERENCES gmail_accounts(id) ON DELETE CASCADE
+email_threads_pkey: PRIMARY KEY (id)
+email_threads_gmail_account_id_gmail_thread_id_key: UNIQUE (gmail_account_id, gmail_thread_id)
+Políticas RLS (nome, operação, papéis e modo; as expressões permanecem no catálogo):
+"Users can delete threads of own accounts" [command=DELETE; roles=authenticated; PERMISSIVE]
+"Users can update threads of own accounts" [command=UPDATE; roles=authenticated; PERMISSIVE]
+"Users can view threads of own accounts" [command=SELECT; roles=authenticated; PERMISSIVE]
+
 | propriedade | valor |
 |---|---|
 | tipo | table |

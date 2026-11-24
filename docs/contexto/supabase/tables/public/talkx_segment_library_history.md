@@ -2,6 +2,26 @@
 
 > Talk X (X103): retrato da biblioteca de segmentos por dia (chave counted_on). No mes corrente o dia e o de hoje; nos meses fechados e o ultimo dia do mes. Grava os MESMOS numeros dos KPIs (estoque total/crm360, uso real, entregues e conversoes). Leitura para admin/supervisor; escrita so pela rotina talkx_refresh_segment_library_history.
 
+[CATALOGUE SEMÂNTICO DO PROJETO]
+Objeto: public.talkx_segment_library_history (tabela). RLS habilitada: t; RLS forçada: f.
+Colunas (ordem, tipo e nulabilidade):
+1 counted_on date NOT NULL
+2 total_segments integer NOT NULL [DEFAULT/EXPRESSION DEFINED]
+3 active_segments integer NOT NULL [DEFAULT/EXPRESSION DEFINED] — Talk X (X103): segmentos USADOS no mes — citados por campanha que INICIOU envio (started_at nao nulo). Rascunho nao conta.
+4 crm360_segments integer NOT NULL [DEFAULT/EXPRESSION DEFINED]
+5 deliveries integer NOT NULL [DEFAULT/EXPRESSION DEFINED]
+6 conversions integer NOT NULL [DEFAULT/EXPRESSION DEFINED]
+7 captured_at timestamp with time zone NOT NULL [DEFAULT/EXPRESSION DEFINED]
+Constraints:
+talkx_segment_library_history_active_segments_check: CHECK (active_segments >= 0)
+talkx_segment_library_history_conversions_check: CHECK (conversions >= 0)
+talkx_segment_library_history_crm360_segments_check: CHECK (crm360_segments >= 0)
+talkx_segment_library_history_deliveries_check: CHECK (deliveries >= 0)
+talkx_segment_library_history_total_segments_check: CHECK (total_segments >= 0)
+talkx_segment_library_history_pkey: PRIMARY KEY (counted_on)
+Políticas RLS (nome, operação, papéis e modo; as expressões permanecem no catálogo):
+talkx_segment_library_history_select [command=SELECT; roles=authenticated; PERMISSIVE]
+
 | propriedade | valor |
 |---|---|
 | tipo | table |

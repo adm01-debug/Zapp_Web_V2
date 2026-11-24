@@ -2,6 +2,16 @@
 
 > [bkp-261023] Snapshot das definições de funções antes de migrations críticas (356 funções).
 
+[CATALOGUE SEMÂNTICO DO PROJETO]
+Objeto: _bkp_261023.functions_before (tabela). RLS habilitada: t; RLS forçada: f.
+Colunas (ordem, tipo e nulabilidade):
+1 sig text NULLABLE
+2 def text NULLABLE
+Constraints:
+(nenhuma PK/UNIQUE/FK/CHECK/EXCLUDE registrada)
+Políticas RLS (nome, operação, papéis e modo; as expressões permanecem no catálogo):
+(RLS habilitada sem política; verificar se o acesso restrito é intencional)
+
 | propriedade | valor |
 |---|---|
 | tipo | table |

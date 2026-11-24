@@ -1,5 +1,30 @@
 # public.whatsapp_flows
 
+> Descrição funcional não estava registrada no catálogo; o conteúdo abaixo documenta a estrutura observável, sem inferir regras de negócio não declaradas.
+
+[CATALOGUE SEMÂNTICO DO PROJETO]
+Objeto: public.whatsapp_flows (tabela). RLS habilitada: t; RLS forçada: f.
+Colunas (ordem, tipo e nulabilidade):
+1 id uuid NOT NULL [DEFAULT/EXPRESSION DEFINED]
+2 name text NOT NULL
+3 description text NULLABLE
+4 flow_json jsonb NOT NULL [DEFAULT/EXPRESSION DEFINED]
+5 screens jsonb NOT NULL [DEFAULT/EXPRESSION DEFINED]
+6 status text NULLABLE [DEFAULT/EXPRESSION DEFINED]
+7 whatsapp_flow_id text NULLABLE
+8 whatsapp_connection_id uuid NULLABLE
+9 created_by uuid NULLABLE
+10 published_at timestamp with time zone NULLABLE
+11 created_at timestamp with time zone NULLABLE [DEFAULT/EXPRESSION DEFINED]
+12 updated_at timestamp with time zone NULLABLE [DEFAULT/EXPRESSION DEFINED]
+Constraints:
+whatsapp_flows_created_by_fkey: FOREIGN KEY (created_by) REFERENCES profiles(id) ON DELETE SET NULL
+whatsapp_flows_whatsapp_connection_id_fkey: FOREIGN KEY (whatsapp_connection_id) REFERENCES whatsapp_connections(id) ON DELETE SET NULL
+whatsapp_flows_pkey: PRIMARY KEY (id)
+Políticas RLS (nome, operação, papéis e modo; as expressões permanecem no catálogo):
+"Admins can manage whatsapp flows" [command=ALL; roles=authenticated; PERMISSIVE]
+"Authenticated can view whatsapp flows" [command=SELECT; roles=authenticated; PERMISSIVE]
+
 | propriedade | valor |
 |---|---|
 | tipo | table |

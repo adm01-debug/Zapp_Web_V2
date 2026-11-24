@@ -2,6 +2,77 @@
 
 > Registro operacional de contato/conversa por canal. A atribuição é expressa por assigned_to e queue_id; conversation_status descreve o ciclo da conversa; deleted_at IS NULL identifica registros ativos. phone_search_digits é uma chave gerada para busca normalizada, sem alterar o telefone exibido. Uma pessoa pode ter identidades ou conversas em canais distintos.
 
+[CATALOGUE SEMÂNTICO DO PROJETO]
+Objeto: public.contacts (tabela). RLS habilitada: t; RLS forçada: f.
+Colunas (ordem, tipo e nulabilidade):
+1 id uuid NOT NULL [DEFAULT/EXPRESSION DEFINED]
+2 name text NOT NULL
+3 phone text NOT NULL
+4 email text NULLABLE
+5 avatar_url text NULLABLE
+6 assigned_to uuid NULLABLE
+7 whatsapp_connection_id uuid NULLABLE
+8 tags text[] NULLABLE [DEFAULT/EXPRESSION DEFINED]
+9 notes text NULLABLE
+10 created_at timestamp with time zone NOT NULL [DEFAULT/EXPRESSION DEFINED]
+11 updated_at timestamp with time zone NOT NULL [DEFAULT/EXPRESSION DEFINED]
+12 nickname text NULLABLE
+13 surname text NULLABLE
+14 job_title text NULLABLE
+15 company text NULLABLE
+16 queue_id uuid NULLABLE
+17 contact_type text NULLABLE [DEFAULT/EXPRESSION DEFINED] — Type of contact: cliente, fornecedor, colaborador, prestador_servico
+18 ai_priority text NULLABLE
+19 ai_sentiment text NULLABLE
+20 channel_type text NULLABLE [DEFAULT/EXPRESSION DEFINED]
+21 channel_connection_id uuid NULLABLE
+22 group_category text NULLABLE
+23 lead_score integer NULLABLE [DEFAULT/EXPRESSION DEFINED]
+24 risk_score integer NULLABLE [DEFAULT/EXPRESSION DEFINED]
+25 lead_origin text NULLABLE
+26 consent_status text NULLABLE [DEFAULT/EXPRESSION DEFINED]
+27 avatar_fetch_attempted_at timestamp with time zone NULLABLE
+28 conversation_status text NOT NULL [DEFAULT/EXPRESSION DEFINED]
+29 conversation_status_changed_at timestamp with time zone NULLABLE [DEFAULT/EXPRESSION DEFINED]
+30 is_lid_legacy boolean NOT NULL [DEFAULT/EXPRESSION DEFINED]
+31 postal_code text NULLABLE — CEP, só dígitos (8 caracteres)
+32 address text NULLABLE — Logradouro (rua, avenida)
+33 address_number text NULLABLE — Número; texto porque aceita S/N
+34 neighborhood text NULLABLE — Bairro
+35 city text NULLABLE — Cidade
+36 state text NULLABLE — UF com 2 letras
+37 latitude double precision NULLABLE
+38 longitude double precision NULLABLE
+39 deleted_at timestamp with time zone NULLABLE — Soft-delete: NULL = contato vivo. Preenchido por delete_contact()/delete_contacts().
+40 ai_projection_updated_at timestamp with time zone NULLABLE — Quando a projeção de IA (ai_sentiment/ai_priority) foi escrita pela última vez. Usada para impedir que análise de período antigo sobrescreva projeção mais recente.
+41 ai_projection_analysis_id uuid NULLABLE
+42 presence_status text NULLABLE
+43 presence_updated_at timestamp with time zone NULLABLE
+44 last_seen_at timestamp with time zone NULLABLE
+45 blocked_at timestamp with time zone NULLABLE — Instante do bloqueio do contato. NULL = não bloqueado. Substitui a etiqueta textual `Bloqueado` em tags como estado de verdade.
+46 blocked_by uuid NULLABLE — auth.uid() (claim `sub`) de quem bloqueou. NULL quando não bloqueado (ou no backfill da etiqueta legada, que não tem autor).
+47 phone_search_digits text NULLABLE GENERATED [DEFAULT/EXPRESSION DEFINED] — Somente dígitos de phone, gerados para busca consistente sem alterar o formato exibido.
+Constraints:
+chk_contact_type: CHECK (contact_type = ANY (ARRAY['cliente'::text, 'fornecedor'::text, 'transportadora'::text, 'colaborador'::text, 'prestador_servico'::text, 'parceiro'::text]))
+chk_conversation_status_values: CHECK (conversation_status IS NULL OR (conversation_status = ANY (ARRAY['open'::text, 'waiting'::text, 'resolved'::text, 'archived'::text])))
+contacts_ai_priority_canonical: CHECK (ai_is_canonical_priority(ai_priority))
+contacts_ai_sentiment_canonical: CHECK (ai_is_canonical_sentiment(ai_sentiment))
+contacts_consent_status_valores: CHECK (consent_status IS NULL OR (consent_status = ANY (ARRAY['granted'::text, 'unknown'::text, 'revoked'::text])))
+contacts_email_format: CHECK (email IS NULL OR email ~* '^[^@\s]+@[^@\s]+\.[^@\s]+$'::text)
+contacts_phone_not_empty: CHECK (length(btrim(phone)) > 0)
+contacts_presence_status_check: CHECK (presence_status = ANY (ARRAY['online'::text, 'offline'::text]))
+contacts_ai_projection_analysis_id_fkey: FOREIGN KEY (ai_projection_analysis_id) REFERENCES conversation_analyses(id) ON DELETE SET NULL
+contacts_assigned_to_fkey: FOREIGN KEY (assigned_to) REFERENCES profiles(id) ON DELETE SET NULL
+contacts_channel_connection_id_fkey: FOREIGN KEY (channel_connection_id) REFERENCES channel_connections(id)
+contacts_queue_id_fkey: FOREIGN KEY (queue_id) REFERENCES queues(id) ON DELETE SET NULL
+contacts_whatsapp_connection_id_fkey: FOREIGN KEY (whatsapp_connection_id) REFERENCES whatsapp_connections(id) ON DELETE SET NULL
+contacts_pkey: PRIMARY KEY (id)
+contacts_phone_key: UNIQUE (phone)
+Políticas RLS (nome, operação, papéis e modo; as expressões permanecem no catálogo):
+"Users can insert contacts" [command=INSERT; roles=authenticated; PERMISSIVE]
+"Users can update their assigned contacts" [command=UPDATE; roles=authenticated; PERMISSIVE]
+contacts_select_policy [command=SELECT; roles=authenticated; PERMISSIVE]
+
 | propriedade | valor |
 |---|---|
 | tipo | table |

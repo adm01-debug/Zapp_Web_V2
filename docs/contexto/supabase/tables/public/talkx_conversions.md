@@ -1,5 +1,31 @@
 # public.talkx_conversions
 
+> Descrição funcional não estava registrada no catálogo; o conteúdo abaixo documenta a estrutura observável, sem inferir regras de negócio não declaradas.
+
+[CATALOGUE SEMÂNTICO DO PROJETO]
+Objeto: public.talkx_conversions (tabela). RLS habilitada: t; RLS forçada: f.
+Colunas (ordem, tipo e nulabilidade):
+1 id uuid NOT NULL [DEFAULT/EXPRESSION DEFINED]
+2 campaign_id uuid NOT NULL
+3 recipient_id uuid NULLABLE
+4 link_id uuid NULLABLE
+5 value numeric(12,2) NULLABLE
+6 source text NULLABLE
+7 created_at timestamp with time zone NOT NULL [DEFAULT/EXPRESSION DEFINED]
+8 external_ref text NULLABLE
+9 occurred_at timestamp with time zone NOT NULL [DEFAULT/EXPRESSION DEFINED]
+10 currency text NOT NULL [DEFAULT/EXPRESSION DEFINED]
+11 attribution jsonb NULLABLE
+Constraints:
+talkx_conversions_source_check: CHECK (source IS NULL OR (source = ANY (ARRAY['whatsapp'::text, 'manual'::text, 'import'::text, 'api'::text, 'checkout'::text, 'deal'::text])))
+talkx_conversions_value_check: CHECK (value IS NULL OR value >= 0::numeric)
+talkx_conversions_campaign_id_fkey: FOREIGN KEY (campaign_id) REFERENCES talkx_campaigns(id) ON DELETE CASCADE
+talkx_conversions_link_id_fkey: FOREIGN KEY (link_id) REFERENCES talkx_links(id) ON DELETE SET NULL
+talkx_conversions_recipient_id_fkey: FOREIGN KEY (recipient_id) REFERENCES talkx_recipients(id) ON DELETE SET NULL
+talkx_conversions_pkey: PRIMARY KEY (id)
+Políticas RLS (nome, operação, papéis e modo; as expressões permanecem no catálogo):
+talkx_conversions_select [command=SELECT; roles=authenticated; PERMISSIVE]
+
 | propriedade | valor |
 |---|---|
 | tipo | table |

@@ -2,6 +2,29 @@
 
 > Trilha de auditoria: login, mudancas de role/permissao, client_error do front (errorReporter) e acoes sensiveis. Leitura restrita a admin.
 
+[CATALOGUE SEMÂNTICO DO PROJETO]
+Objeto: public.audit_logs (tabela). RLS habilitada: t; RLS forçada: f.
+Colunas (ordem, tipo e nulabilidade):
+1 id uuid NOT NULL [DEFAULT/EXPRESSION DEFINED]
+2 user_id uuid NULLABLE
+3 action text NOT NULL
+4 entity_type text NULLABLE
+5 entity_id uuid NULLABLE
+6 details jsonb NULLABLE [DEFAULT/EXPRESSION DEFINED]
+7 ip_address text NULLABLE
+8 user_agent text NULLABLE
+9 created_at timestamp with time zone NOT NULL [DEFAULT/EXPRESSION DEFINED]
+10 dedupe_key text NULLABLE — IA-WEBHOOK-001: chave idempotente do evento de webhook (ux_audit_logs_dedupe_key: único parcial). Replay da mesma entrega cai em 23505 e não gera novo registro.
+Constraints:
+audit_logs_action_not_empty: CHECK (length(btrim(action)) > 0)
+audit_logs_user_id_fkey: FOREIGN KEY (user_id) REFERENCES auth.users(id) ON DELETE SET NULL
+audit_logs_pkey: PRIMARY KEY (id)
+Políticas RLS (nome, operação, papéis e modo; as expressões permanecem no catálogo):
+"Block authenticated deletes on audit_logs" [command=DELETE; roles=authenticated; PERMISSIVE]
+"Block authenticated updates on audit_logs" [command=UPDATE; roles=authenticated; PERMISSIVE]
+"Block direct audit log inserts" [command=INSERT; roles=authenticated; PERMISSIVE]
+"Only admins can view audit logs" [command=SELECT; roles=authenticated; PERMISSIVE]
+
 | propriedade | valor |
 |---|---|
 | tipo | table |

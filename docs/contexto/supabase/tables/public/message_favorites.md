@@ -1,5 +1,22 @@
 # public.message_favorites
 
+> Descrição funcional não estava registrada no catálogo; o conteúdo abaixo documenta a estrutura observável, sem inferir regras de negócio não declaradas.
+
+[CATALOGUE SEMÂNTICO DO PROJETO]
+Objeto: public.message_favorites (tabela). RLS habilitada: t; RLS forçada: f.
+Colunas (ordem, tipo e nulabilidade):
+1 user_id uuid NOT NULL
+2 message_id uuid NOT NULL
+3 created_at timestamp with time zone NOT NULL [DEFAULT/EXPRESSION DEFINED]
+Constraints:
+message_favorites_message_id_fkey: FOREIGN KEY (message_id) REFERENCES messages(id) ON DELETE CASCADE
+message_favorites_user_id_fkey: FOREIGN KEY (user_id) REFERENCES auth.users(id) ON DELETE CASCADE
+message_favorites_pkey: PRIMARY KEY (user_id, message_id)
+Políticas RLS (nome, operação, papéis e modo; as expressões permanecem no catálogo):
+message_favorites_delete_own [command=DELETE; roles=authenticated; PERMISSIVE]
+message_favorites_insert_own [command=INSERT; roles=authenticated; PERMISSIVE]
+message_favorites_select_own [command=SELECT; roles=authenticated; PERMISSIVE]
+
 | propriedade | valor |
 |---|---|
 | tipo | table |

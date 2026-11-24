@@ -66,11 +66,11 @@
  "commits": {
   "convencao": "conventional commits (observado)",
   "exemplos": [
+   "feat(manutencao): porta o harness de manutencao completo da PR #2926 (#3370)",
+   "fix(ci): exige Replay local das migrations na main (#3367)",
    "fix(ci): guard enxerga wrapper que passa o nome da edge — gmail-send e gmail-sync saem de orfas (#3365)",
    "chore(resgate): preserva dossiês e mapas do resgate na main (#3364)",
-   "feat(inbox): analise de imagem do Copiloto no painel de conversa (#3362)",
-   "chore(db): sincronizar artefatos derivados do banco (#3361)",
-   "chore: remove teardown de produção morto do E2E e dropa as 2 RPCs órfãs (#3360)"
+   "feat(inbox): analise de imagem do Copiloto no painel de conversa (#3362)"
   ]
  },
  "pr_template": ".github/PULL_REQUEST_TEMPLATE.md",

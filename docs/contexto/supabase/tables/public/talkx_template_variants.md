@@ -1,5 +1,33 @@
 # public.talkx_template_variants
 
+> Descrição funcional não estava registrada no catálogo; o conteúdo abaixo documenta a estrutura observável, sem inferir regras de negócio não declaradas.
+
+[CATALOGUE SEMÂNTICO DO PROJETO]
+Objeto: public.talkx_template_variants (tabela). RLS habilitada: t; RLS forçada: f.
+Colunas (ordem, tipo e nulabilidade):
+1 id uuid NOT NULL [DEFAULT/EXPRESSION DEFINED]
+2 template_id uuid NOT NULL
+3 label text NOT NULL
+4 content text NOT NULL
+5 media_url text NULLABLE
+6 media_type text NULLABLE
+7 weight integer NOT NULL [DEFAULT/EXPRESSION DEFINED]
+8 created_at timestamp with time zone NOT NULL [DEFAULT/EXPRESSION DEFINED]
+Constraints:
+talkx_template_variants_content_check: CHECK (length(content) >= 1 AND length(content) <= 65536)
+talkx_template_variants_label_check: CHECK (label = ANY (ARRAY['A'::text, 'B'::text, 'C'::text]))
+talkx_template_variants_media_type_check: CHECK (media_type IS NULL OR (media_type = ANY (ARRAY['image'::text, 'video'::text, 'document'::text, 'audio'::text])))
+talkx_template_variants_media_url_check: CHECK (media_url IS NULL OR length(media_url) <= 8192 AND media_url ~ '^https://'::text)
+talkx_template_variants_weight_check: CHECK (weight > 0 AND weight <= 100)
+talkx_template_variants_template_id_fkey: FOREIGN KEY (template_id) REFERENCES talkx_templates(id) ON DELETE CASCADE
+talkx_template_variants_pkey: PRIMARY KEY (id)
+talkx_template_variants_template_id_label_key: UNIQUE (template_id, label)
+Políticas RLS (nome, operação, papéis e modo; as expressões permanecem no catálogo):
+talkx_template_variants_delete [command=DELETE; roles=authenticated; PERMISSIVE]
+talkx_template_variants_insert [command=INSERT; roles=authenticated; PERMISSIVE]
+talkx_template_variants_select [command=SELECT; roles=authenticated; PERMISSIVE]
+talkx_template_variants_update [command=UPDATE; roles=authenticated; PERMISSIVE]
+
 | propriedade | valor |
 |---|---|
 | tipo | table |

@@ -1,5 +1,32 @@
 # public.message_reports
 
+> Descrição funcional não estava registrada no catálogo; o conteúdo abaixo documenta a estrutura observável, sem inferir regras de negócio não declaradas.
+
+[CATALOGUE SEMÂNTICO DO PROJETO]
+Objeto: public.message_reports (tabela). RLS habilitada: t; RLS forçada: f.
+Colunas (ordem, tipo e nulabilidade):
+1 id uuid NOT NULL [DEFAULT/EXPRESSION DEFINED]
+2 message_id uuid NOT NULL
+3 reporter_id uuid NOT NULL
+4 reason text NOT NULL
+5 note text NULLABLE
+6 status text NOT NULL [DEFAULT/EXPRESSION DEFINED]
+7 created_at timestamp with time zone NOT NULL [DEFAULT/EXPRESSION DEFINED]
+8 resolved_by uuid NULLABLE
+9 resolved_at timestamp with time zone NULLABLE
+Constraints:
+message_reports_note_check: CHECK (note IS NULL OR char_length(note) >= 1 AND char_length(note) <= 500)
+message_reports_reason_check: CHECK (reason = ANY (ARRAY['spam'::text, 'improprio'::text, 'urgencia'::text, 'outro'::text]))
+message_reports_status_check: CHECK (status = ANY (ARRAY['open'::text, 'resolved'::text, 'dismissed'::text]))
+message_reports_message_id_fkey: FOREIGN KEY (message_id) REFERENCES messages(id) ON DELETE CASCADE
+message_reports_reporter_id_fkey: FOREIGN KEY (reporter_id) REFERENCES auth.users(id) ON DELETE CASCADE
+message_reports_resolved_by_fkey: FOREIGN KEY (resolved_by) REFERENCES auth.users(id) ON DELETE SET NULL
+message_reports_pkey: PRIMARY KEY (id)
+message_reports_message_id_reporter_id_key: UNIQUE (message_id, reporter_id)
+Políticas RLS (nome, operação, papéis e modo; as expressões permanecem no catálogo):
+message_reports_select_own_or_admin [command=SELECT; roles=authenticated; PERMISSIVE]
+message_reports_update_admin [command=UPDATE; roles=authenticated; PERMISSIVE]
+
 | propriedade | valor |
 |---|---|
 | tipo | table |

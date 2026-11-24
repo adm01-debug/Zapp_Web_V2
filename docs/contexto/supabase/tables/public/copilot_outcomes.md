@@ -1,5 +1,25 @@
 # public.copilot_outcomes
 
+> Descrição funcional não estava registrada no catálogo; o conteúdo abaixo documenta a estrutura observável, sem inferir regras de negócio não declaradas.
+
+[CATALOGUE SEMÂNTICO DO PROJETO]
+Objeto: public.copilot_outcomes (tabela). RLS habilitada: t; RLS forçada: f.
+Colunas (ordem, tipo e nulabilidade):
+1 id uuid NOT NULL [DEFAULT/EXPRESSION DEFINED]
+2 conversation_id uuid NOT NULL
+3 contact_id uuid NOT NULL
+4 seller_id uuid NOT NULL
+5 outcome text NOT NULL
+6 deal_value numeric NULLABLE
+7 segment text NULLABLE
+8 created_at timestamp with time zone NOT NULL [DEFAULT/EXPRESSION DEFINED]
+Constraints:
+copilot_outcomes_outcome_check: CHECK (outcome = ANY (ARRAY['closed'::text, 'lost'::text]))
+copilot_outcomes_pkey: PRIMARY KEY (id)
+Políticas RLS (nome, operação, papéis e modo; as expressões permanecem no catálogo):
+copilot_outcomes_insert [command=INSERT; roles=authenticated; PERMISSIVE]
+copilot_outcomes_select [command=SELECT; roles=authenticated; PERMISSIVE]
+
 | propriedade | valor |
 |---|---|
 | tipo | table |

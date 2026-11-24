@@ -1,5 +1,28 @@
 # public.knowledge_base_articles
 
+> Descrição funcional não estava registrada no catálogo; o conteúdo abaixo documenta a estrutura observável, sem inferir regras de negócio não declaradas.
+
+[CATALOGUE SEMÂNTICO DO PROJETO]
+Objeto: public.knowledge_base_articles (tabela). RLS habilitada: t; RLS forçada: f.
+Colunas (ordem, tipo e nulabilidade):
+1 id uuid NOT NULL [DEFAULT/EXPRESSION DEFINED]
+2 title text NOT NULL
+3 content text NOT NULL
+4 category text NULLABLE [DEFAULT/EXPRESSION DEFINED]
+5 tags text[] NULLABLE [DEFAULT/EXPRESSION DEFINED]
+6 is_published boolean NULLABLE [DEFAULT/EXPRESSION DEFINED]
+7 embedding_status text NULLABLE [DEFAULT/EXPRESSION DEFINED]
+8 created_by uuid NULLABLE
+9 updated_at timestamp with time zone NULLABLE [DEFAULT/EXPRESSION DEFINED]
+10 created_at timestamp with time zone NULLABLE [DEFAULT/EXPRESSION DEFINED]
+11 search_vector tsvector NULLABLE GENERATED [DEFAULT/EXPRESSION DEFINED]
+Constraints:
+knowledge_base_articles_created_by_fkey: FOREIGN KEY (created_by) REFERENCES profiles(id) ON DELETE SET NULL
+knowledge_base_articles_pkey: PRIMARY KEY (id)
+Políticas RLS (nome, operação, papéis e modo; as expressões permanecem no catálogo):
+"Admins can manage knowledge base" [command=ALL; roles=authenticated; PERMISSIVE]
+"Authenticated can view knowledge base" [command=SELECT; roles=authenticated; PERMISSIVE]
+
 | propriedade | valor |
 |---|---|
 | tipo | table |

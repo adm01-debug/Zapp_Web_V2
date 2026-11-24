@@ -2,6 +2,44 @@
 
 > [RLS-sem-policy: intencional] Fila de jobs de IA. Leitura/escrita pelo ai-jobs-worker (service_role). Front acessa status via RPC ai_job_status (security-definer).
 
+[CATALOGUE SEMÂNTICO DO PROJETO]
+Objeto: public.ai_jobs (tabela). RLS habilitada: t; RLS forçada: f.
+Colunas (ordem, tipo e nulabilidade):
+1 id uuid NOT NULL [DEFAULT/EXPRESSION DEFINED]
+2 idempotency_key text NOT NULL
+3 kind text NOT NULL
+4 function_name text NOT NULL
+5 user_id uuid NULLABLE
+6 payload jsonb NOT NULL [DEFAULT/EXPRESSION DEFINED]
+7 priority integer NOT NULL [DEFAULT/EXPRESSION DEFINED]
+8 status text NOT NULL [DEFAULT/EXPRESSION DEFINED]
+9 attempt_count integer NOT NULL [DEFAULT/EXPRESSION DEFINED]
+10 max_attempts integer NOT NULL [DEFAULT/EXPRESSION DEFINED]
+11 available_at timestamp with time zone NOT NULL [DEFAULT/EXPRESSION DEFINED]
+12 expires_at timestamp with time zone NULLABLE
+13 locked_at timestamp with time zone NULLABLE
+14 locked_by text NULLABLE
+15 lease_token uuid NULLABLE
+16 lease_expires_at timestamp with time zone NULLABLE
+17 heartbeat_at timestamp with time zone NULLABLE
+18 result jsonb NULLABLE
+19 last_error_code text NULLABLE
+20 started_at timestamp with time zone NULLABLE
+21 finished_at timestamp with time zone NULLABLE
+22 created_at timestamp with time zone NOT NULL [DEFAULT/EXPRESSION DEFINED]
+23 updated_at timestamp with time zone NOT NULL [DEFAULT/EXPRESSION DEFINED]
+24 effect_started_at timestamp with time zone NULLABLE — IA-202/R2-API-026: instante em que a tentativa corrente marcou o início do efeito externo (mark_ai_job_effect_started). Limpo a cada claim; preservado em outcome_unknown para reconciliação.
+Constraints:
+ai_jobs_attempt_count_nonneg: CHECK (attempt_count >= 0)
+ai_jobs_max_attempts_range: CHECK (max_attempts >= 1 AND max_attempts <= 50)
+ai_jobs_payload_object: CHECK (jsonb_typeof(payload) = 'object'::text)
+ai_jobs_priority_range: CHECK (priority >= 0 AND priority <= 1000)
+ai_jobs_status_check: CHECK (status = ANY (ARRAY['queued'::text, 'running'::text, 'partial'::text, 'succeeded'::text, 'failed'::text, 'cancelled'::text, 'outcome_unknown'::text]))
+ai_jobs_pkey: PRIMARY KEY (id)
+ai_jobs_idempotency_key_key: UNIQUE (idempotency_key)
+Políticas RLS (nome, operação, papéis e modo; as expressões permanecem no catálogo):
+(RLS habilitada sem política; verificar se o acesso restrito é intencional)
+
 | propriedade | valor |
 |---|---|
 | tipo | table |

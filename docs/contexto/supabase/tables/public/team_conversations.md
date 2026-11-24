@@ -2,6 +2,35 @@
 
 > Chat conversations between team members (direct, group, department)
 
+[CATALOGUE SEMÂNTICO DO PROJETO]
+Objeto: public.team_conversations (tabela). RLS habilitada: t; RLS forçada: f.
+Colunas (ordem, tipo e nulabilidade):
+1 id uuid NOT NULL [DEFAULT/EXPRESSION DEFINED]
+2 type text NOT NULL [DEFAULT/EXPRESSION DEFINED]
+3 name text NULLABLE
+4 avatar_url text NULLABLE
+5 created_by uuid NULLABLE — profiles.id of creator
+6 created_at timestamp with time zone NOT NULL [DEFAULT/EXPRESSION DEFINED]
+7 updated_at timestamp with time zone NOT NULL [DEFAULT/EXPRESSION DEFINED]
+8 department_id uuid NULLABLE
+9 metadata jsonb NOT NULL [DEFAULT/EXPRESSION DEFINED]
+10 direct_member_a uuid NULLABLE
+11 direct_member_b uuid NULLABLE
+Constraints:
+team_conversations_dept_required: CHECK (type <> 'department'::text OR department_id IS NOT NULL)
+team_conversations_group_name_required: CHECK (type <> 'group'::text OR name IS NOT NULL)
+team_conversations_type_check: CHECK (type = ANY (ARRAY['direct'::text, 'group'::text, 'department'::text]))
+team_conversations_created_by_fkey: FOREIGN KEY (created_by) REFERENCES profiles(id)
+team_conversations_department_id_fkey: FOREIGN KEY (department_id) REFERENCES departments(id) ON DELETE CASCADE DEFERRABLE INITIALLY DEFERRED
+team_conversations_direct_member_a_fkey: FOREIGN KEY (direct_member_a) REFERENCES profiles(id) ON DELETE SET NULL
+team_conversations_direct_member_b_fkey: FOREIGN KEY (direct_member_b) REFERENCES profiles(id) ON DELETE SET NULL
+team_conversations_pkey: PRIMARY KEY (id)
+Políticas RLS (nome, operação, papéis e modo; as expressões permanecem no catálogo):
+"Authenticated users can create conversations" [command=INSERT; roles=authenticated; PERMISSIVE]
+"Conversation creator or admin can delete" [command=DELETE; roles=authenticated; PERMISSIVE]
+"Members can view their conversations" [command=SELECT; roles=authenticated; PERMISSIVE]
+team_conversations_update_own [command=UPDATE; roles=authenticated; PERMISSIVE]
+
 | propriedade | valor |
 |---|---|
 | tipo | table |

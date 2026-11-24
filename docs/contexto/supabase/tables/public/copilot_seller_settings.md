@@ -1,5 +1,20 @@
 # public.copilot_seller_settings
 
+> Descrição funcional não estava registrada no catálogo; o conteúdo abaixo documenta a estrutura observável, sem inferir regras de negócio não declaradas.
+
+[CATALOGUE SEMÂNTICO DO PROJETO]
+Objeto: public.copilot_seller_settings (tabela). RLS habilitada: t; RLS forçada: f.
+Colunas (ordem, tipo e nulabilidade):
+1 seller_id uuid NOT NULL
+2 opted_in boolean NOT NULL [DEFAULT/EXPRESSION DEFINED]
+3 updated_at timestamp with time zone NOT NULL [DEFAULT/EXPRESSION DEFINED]
+Constraints:
+copilot_seller_settings_pkey: PRIMARY KEY (seller_id)
+Políticas RLS (nome, operação, papéis e modo; as expressões permanecem no catálogo):
+copilot_seller_settings_insert [command=INSERT; roles=authenticated; PERMISSIVE]
+copilot_seller_settings_select [command=SELECT; roles=authenticated; PERMISSIVE]
+copilot_seller_settings_update [command=UPDATE; roles=authenticated; PERMISSIVE]
+
 | propriedade | valor |
 |---|---|
 | tipo | table |

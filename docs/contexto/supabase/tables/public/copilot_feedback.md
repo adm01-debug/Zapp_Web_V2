@@ -1,5 +1,32 @@
 # public.copilot_feedback
 
+> Descrição funcional não estava registrada no catálogo; o conteúdo abaixo documenta a estrutura observável, sem inferir regras de negócio não declaradas.
+
+[CATALOGUE SEMÂNTICO DO PROJETO]
+Objeto: public.copilot_feedback (tabela). RLS habilitada: t; RLS forçada: f.
+Colunas (ordem, tipo e nulabilidade):
+1 id uuid NOT NULL [DEFAULT/EXPRESSION DEFINED]
+2 conversation_id uuid NOT NULL
+3 contact_id uuid NOT NULL
+4 feedback_type text NOT NULL
+5 edit_level text NULLABLE
+6 suggestion_text text NULLABLE
+7 sent_text text NULLABLE
+8 suggestion_id text NULLABLE
+9 rating text NULLABLE
+10 reason text NULLABLE
+11 created_at timestamp with time zone NOT NULL [DEFAULT/EXPRESSION DEFINED]
+12 created_by uuid NULLABLE [DEFAULT/EXPRESSION DEFINED]
+Constraints:
+copilot_feedback_edit_level_check: CHECK (edit_level = ANY (ARRAY['igual'::text, 'pouco'::text, 'muito'::text]))
+copilot_feedback_feedback_type_check: CHECK (feedback_type = ANY (ARRAY['edit_distance'::text, 'thumbs'::text]))
+copilot_feedback_rating_check: CHECK (rating = ANY (ARRAY['positive'::text, 'negative'::text]))
+copilot_feedback_created_by_fkey: FOREIGN KEY (created_by) REFERENCES auth.users(id)
+copilot_feedback_pkey: PRIMARY KEY (id)
+Políticas RLS (nome, operação, papéis e modo; as expressões permanecem no catálogo):
+copilot_feedback_insert [command=INSERT; roles=authenticated; PERMISSIVE]
+copilot_feedback_select [command=SELECT; roles=authenticated; PERMISSIVE]
+
 | propriedade | valor |
 |---|---|
 | tipo | table |

@@ -1,5 +1,29 @@
 # public.voice_command_logs
 
+> Descrição funcional não estava registrada no catálogo; o conteúdo abaixo documenta a estrutura observável, sem inferir regras de negócio não declaradas.
+
+[CATALOGUE SEMÂNTICO DO PROJETO]
+Objeto: public.voice_command_logs (tabela). RLS habilitada: t; RLS forçada: f.
+Colunas (ordem, tipo e nulabilidade):
+1 id uuid NOT NULL [DEFAULT/EXPRESSION DEFINED]
+2 user_id uuid NOT NULL
+3 transcript text NOT NULL
+4 action text NOT NULL
+5 response text NULLABLE
+6 data jsonb NULLABLE [DEFAULT/EXPRESSION DEFINED]
+7 duration_ms integer NULLABLE
+8 success boolean NULLABLE [DEFAULT/EXPRESSION DEFINED]
+9 created_at timestamp with time zone NULLABLE [DEFAULT/EXPRESSION DEFINED]
+Constraints:
+voice_command_logs_response_length_check: CHECK (response IS NULL OR char_length(response) <= 2000) NOT VALID
+voice_command_logs_transcript_length_check: CHECK (char_length(transcript) <= 2000) NOT VALID
+voice_command_logs_user_id_fkey: FOREIGN KEY (user_id) REFERENCES auth.users(id) ON DELETE CASCADE
+voice_command_logs_pkey: PRIMARY KEY (id)
+Políticas RLS (nome, operação, papéis e modo; as expressões permanecem no catálogo):
+"Users can delete own voice logs" [command=DELETE; roles=authenticated; PERMISSIVE]
+"Users can insert own voice logs" [command=INSERT; roles=authenticated; PERMISSIVE]
+"Users can read own voice logs" [command=SELECT; roles=authenticated; PERMISSIVE]
+
 | propriedade | valor |
 |---|---|
 | tipo | table |

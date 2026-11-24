@@ -2,6 +2,32 @@
 
 > Filas de atendimento (prioridade, tempo maximo de espera) usadas na distribuicao de contatos.
 
+[CATALOGUE SEMÂNTICO DO PROJETO]
+Objeto: public.queues (tabela). RLS habilitada: t; RLS forçada: f.
+Colunas (ordem, tipo e nulabilidade):
+1 id uuid NOT NULL [DEFAULT/EXPRESSION DEFINED]
+2 name text NOT NULL
+3 description text NULLABLE
+4 color text NOT NULL [DEFAULT/EXPRESSION DEFINED]
+5 is_active boolean NULLABLE [DEFAULT/EXPRESSION DEFINED]
+6 max_wait_time_minutes integer NULLABLE [DEFAULT/EXPRESSION DEFINED]
+7 priority integer NULLABLE [DEFAULT/EXPRESSION DEFINED]
+8 created_at timestamp with time zone NOT NULL [DEFAULT/EXPRESSION DEFINED]
+9 updated_at timestamp with time zone NOT NULL [DEFAULT/EXPRESSION DEFINED]
+10 distribution text NOT NULL [DEFAULT/EXPRESSION DEFINED]
+11 overflow_queue_id uuid NULLABLE
+12 max_per_agent integer NULLABLE
+13 sticky_enabled boolean NOT NULL [DEFAULT/EXPRESSION DEFINED]
+14 paused boolean NOT NULL [DEFAULT/EXPRESSION DEFINED]
+Constraints:
+queues_distribution_check: CHECK (distribution = ANY (ARRAY['round_robin'::text, 'least_busy'::text, 'skill'::text]))
+queues_max_per_agent_check: CHECK (max_per_agent IS NULL OR max_per_agent >= 1)
+queues_overflow_queue_id_fkey: FOREIGN KEY (overflow_queue_id) REFERENCES queues(id) ON DELETE SET NULL
+queues_pkey: PRIMARY KEY (id)
+Políticas RLS (nome, operação, papéis e modo; as expressões permanecem no catálogo):
+"Admins can manage queues" [command=ALL; roles=authenticated; PERMISSIVE]
+"Authenticated users can view queues" [command=SELECT; roles=authenticated; PERMISSIVE]
+
 | propriedade | valor |
 |---|---|
 | tipo | table |

@@ -1,5 +1,27 @@
 # public.queue_goals
 
+> Descrição funcional não estava registrada no catálogo; o conteúdo abaixo documenta a estrutura observável, sem inferir regras de negócio não declaradas.
+
+[CATALOGUE SEMÂNTICO DO PROJETO]
+Objeto: public.queue_goals (tabela). RLS habilitada: t; RLS forçada: f.
+Colunas (ordem, tipo e nulabilidade):
+1 id uuid NOT NULL [DEFAULT/EXPRESSION DEFINED]
+2 queue_id uuid NOT NULL
+3 max_waiting_contacts integer NULLABLE [DEFAULT/EXPRESSION DEFINED]
+4 max_avg_wait_minutes integer NULLABLE [DEFAULT/EXPRESSION DEFINED]
+5 min_assignment_rate integer NULLABLE [DEFAULT/EXPRESSION DEFINED]
+6 max_messages_pending integer NULLABLE [DEFAULT/EXPRESSION DEFINED]
+7 alerts_enabled boolean NULLABLE [DEFAULT/EXPRESSION DEFINED]
+8 created_at timestamp with time zone NOT NULL [DEFAULT/EXPRESSION DEFINED]
+9 updated_at timestamp with time zone NOT NULL [DEFAULT/EXPRESSION DEFINED]
+Constraints:
+queue_goals_queue_id_fkey: FOREIGN KEY (queue_id) REFERENCES queues(id) ON DELETE CASCADE
+queue_goals_pkey: PRIMARY KEY (id)
+queue_goals_queue_id_key: UNIQUE (queue_id)
+Políticas RLS (nome, operação, papéis e modo; as expressões permanecem no catálogo):
+"Admins can manage queue goals" [command=ALL; roles=authenticated; PERMISSIVE]
+"Authenticated users can view queue goals" [command=SELECT; roles=authenticated; PERMISSIVE]
+
 | propriedade | valor |
 |---|---|
 | tipo | table |

@@ -1,5 +1,29 @@
 # public.sla_alert_events
 
+> Descrição funcional não estava registrada no catálogo; o conteúdo abaixo documenta a estrutura observável, sem inferir regras de negócio não declaradas.
+
+[CATALOGUE SEMÂNTICO DO PROJETO]
+Objeto: public.sla_alert_events (tabela). RLS habilitada: t; RLS forçada: f.
+Colunas (ordem, tipo e nulabilidade):
+1 id uuid NOT NULL [DEFAULT/EXPRESSION DEFINED]
+2 contact_id uuid NOT NULL
+3 alert_type text NOT NULL
+4 severity text NOT NULL
+5 queue_id uuid NULLABLE
+6 created_at timestamp with time zone NOT NULL [DEFAULT/EXPRESSION DEFINED]
+7 resolved_at timestamp with time zone NULLABLE
+8 resolved_by uuid NULLABLE
+Constraints:
+sla_alert_events_alert_type_check: CHECK (alert_type = ANY (ARRAY['first_response'::text, 'resolution'::text]))
+sla_alert_events_resolved_consistente: CHECK (resolved_at IS NOT NULL OR resolved_by IS NULL)
+sla_alert_events_severity_check: CHECK (severity = ANY (ARRAY['warning'::text, 'breached'::text]))
+sla_alert_events_contact_id_fkey: FOREIGN KEY (contact_id) REFERENCES contacts(id) ON DELETE CASCADE
+sla_alert_events_queue_id_fkey: FOREIGN KEY (queue_id) REFERENCES queues(id) ON DELETE SET NULL
+sla_alert_events_resolved_by_fkey: FOREIGN KEY (resolved_by) REFERENCES profiles(id) ON DELETE SET NULL
+sla_alert_events_pkey: PRIMARY KEY (id)
+Políticas RLS (nome, operação, papéis e modo; as expressões permanecem no catálogo):
+sla_alert_events_select_policy [command=SELECT; roles=authenticated; PERMISSIVE]
+
 | propriedade | valor |
 |---|---|
 | tipo | table |

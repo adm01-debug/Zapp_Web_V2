@@ -2,6 +2,31 @@
 
 > IA-055: tarifas versionadas por modelo/unidade. valid_from inclusivo, valid_to exclusivo (NULL = vigente). source separa tarifa interna de tarifa reconciliada com o extrato do provedor.
 
+[CATALOGUE SEMÂNTICO DO PROJETO]
+Objeto: public.ai_model_prices (tabela). RLS habilitada: t; RLS forçada: f.
+Colunas (ordem, tipo e nulabilidade):
+1 id uuid NOT NULL [DEFAULT/EXPRESSION DEFINED]
+2 provider_id uuid NULLABLE
+3 model text NOT NULL
+4 unit text NOT NULL
+5 currency text NOT NULL [DEFAULT/EXPRESSION DEFINED]
+6 unit_price numeric(18,8) NOT NULL
+7 valid_from timestamp with time zone NOT NULL
+8 valid_to timestamp with time zone NULLABLE
+9 source text NOT NULL [DEFAULT/EXPRESSION DEFINED]
+10 notes text NULLABLE
+11 created_at timestamp with time zone NOT NULL [DEFAULT/EXPRESSION DEFINED]
+Constraints:
+ai_model_prices_currency_check: CHECK (char_length(currency) = 3)
+ai_model_prices_price_check: CHECK (unit_price >= 0::numeric)
+ai_model_prices_source_check: CHECK (source = ANY (ARRAY['internal'::text, 'provider_statement'::text]))
+ai_model_prices_unit_check: CHECK (unit = ANY (ARRAY['token'::text, 'input_token'::text, 'output_token'::text, 'character'::text, 'second'::text, 'request'::text]))
+ai_model_prices_vigencia_check: CHECK (valid_to IS NULL OR valid_to > valid_from)
+ai_model_prices_provider_id_fkey: FOREIGN KEY (provider_id) REFERENCES ai_providers(id) ON DELETE SET NULL
+ai_model_prices_pkey: PRIMARY KEY (id)
+Políticas RLS (nome, operação, papéis e modo; as expressões permanecem no catálogo):
+authenticated_read_ai_model_prices [command=SELECT; roles=authenticated; PERMISSIVE]
+
 | propriedade | valor |
 |---|---|
 | tipo | table |

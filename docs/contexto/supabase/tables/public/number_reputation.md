@@ -1,5 +1,31 @@
 # public.number_reputation
 
+> Descrição funcional não estava registrada no catálogo; o conteúdo abaixo documenta a estrutura observável, sem inferir regras de negócio não declaradas.
+
+[CATALOGUE SEMÂNTICO DO PROJETO]
+Objeto: public.number_reputation (tabela). RLS habilitada: t; RLS forçada: f.
+Colunas (ordem, tipo e nulabilidade):
+1 id uuid NOT NULL [DEFAULT/EXPRESSION DEFINED]
+2 whatsapp_connection_id uuid NOT NULL
+3 health_score integer NOT NULL [DEFAULT/EXPRESSION DEFINED]
+4 messages_sent_today integer NOT NULL [DEFAULT/EXPRESSION DEFINED]
+5 failures_today integer NOT NULL [DEFAULT/EXPRESSION DEFINED]
+6 complaints_count integer NOT NULL [DEFAULT/EXPRESSION DEFINED]
+7 warmup_status text NOT NULL [DEFAULT/EXPRESSION DEFINED]
+8 warmup_day integer NULLABLE [DEFAULT/EXPRESSION DEFINED]
+9 daily_limit integer NULLABLE [DEFAULT/EXPRESSION DEFINED]
+10 last_reset_at timestamp with time zone NULLABLE [DEFAULT/EXPRESSION DEFINED]
+11 created_at timestamp with time zone NOT NULL [DEFAULT/EXPRESSION DEFINED]
+12 updated_at timestamp with time zone NOT NULL [DEFAULT/EXPRESSION DEFINED]
+Constraints:
+number_reputation_whatsapp_connection_id_fkey: FOREIGN KEY (whatsapp_connection_id) REFERENCES whatsapp_connections(id) ON DELETE CASCADE
+number_reputation_pkey: PRIMARY KEY (id)
+number_reputation_whatsapp_connection_id_key: UNIQUE (whatsapp_connection_id)
+Políticas RLS (nome, operação, papéis e modo; as expressões permanecem no catálogo):
+"Admins can insert reputation" [command=INSERT; roles=authenticated; PERMISSIVE]
+"Admins can update reputation" [command=UPDATE; roles=authenticated; PERMISSIVE]
+"Authenticated can view reputation" [command=SELECT; roles=authenticated; PERMISSIVE]
+
 | propriedade | valor |
 |---|---|
 | tipo | table |

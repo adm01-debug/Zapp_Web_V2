@@ -2,6 +2,26 @@
 
 > [RLS-sem-policy: intencional] Reservas de budget de IA gerenciadas exclusivamente pelo ai-jobs-worker (service_role). Nenhum acesso direto do front.
 
+[CATALOGUE SEMÂNTICO DO PROJETO]
+Objeto: public.ai_budget_reservations (tabela). RLS habilitada: t; RLS forçada: f.
+Colunas (ordem, tipo e nulabilidade):
+1 id uuid NOT NULL [DEFAULT/EXPRESSION DEFINED]
+2 idempotency_key text NOT NULL
+3 user_id uuid NULLABLE
+4 function_name text NOT NULL
+5 reserved_tokens integer NOT NULL
+6 actual_tokens integer NULLABLE
+7 status text NOT NULL [DEFAULT/EXPRESSION DEFINED]
+8 expires_at timestamp with time zone NOT NULL
+9 created_at timestamp with time zone NOT NULL [DEFAULT/EXPRESSION DEFINED]
+10 updated_at timestamp with time zone NOT NULL [DEFAULT/EXPRESSION DEFINED]
+Constraints:
+ai_budget_reservations_status_check: CHECK (status = ANY (ARRAY['reserved'::text, 'settled'::text, 'released'::text, 'expired'::text]))
+ai_budget_reservations_pkey: PRIMARY KEY (id)
+ai_budget_reservations_idempotency_key_key: UNIQUE (idempotency_key)
+Políticas RLS (nome, operação, papéis e modo; as expressões permanecem no catálogo):
+(RLS habilitada sem política; verificar se o acesso restrito é intencional)
+
 | propriedade | valor |
 |---|---|
 | tipo | table |

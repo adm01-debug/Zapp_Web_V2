@@ -1,5 +1,35 @@
 # public.ai_usage_logs
 
+> Descrição funcional não estava registrada no catálogo; o conteúdo abaixo documenta a estrutura observável, sem inferir regras de negócio não declaradas.
+
+[CATALOGUE SEMÂNTICO DO PROJETO]
+Objeto: public.ai_usage_logs (tabela). RLS habilitada: t; RLS forçada: f.
+Colunas (ordem, tipo e nulabilidade):
+1 id uuid NOT NULL [DEFAULT/EXPRESSION DEFINED]
+2 user_id uuid NULLABLE
+3 profile_id uuid NULLABLE
+4 function_name text NOT NULL
+5 model text NULLABLE
+6 input_tokens integer NULLABLE [DEFAULT/EXPRESSION DEFINED]
+7 output_tokens integer NULLABLE [DEFAULT/EXPRESSION DEFINED]
+8 total_tokens integer NULLABLE GENERATED [DEFAULT/EXPRESSION DEFINED]
+9 duration_ms integer NULLABLE
+10 status text NOT NULL [DEFAULT/EXPRESSION DEFINED]
+11 error_message text NULLABLE
+12 metadata jsonb NULLABLE
+13 created_at timestamp with time zone NOT NULL [DEFAULT/EXPRESSION DEFINED]
+14 request_id uuid NULLABLE — IA-051: uuid opaco da operação de IA (cliente/worker). Nunca dado pessoal.
+15 job_id uuid NULLABLE — IA-051: job da fila (ai_jobs.id) que originou a execução, quando houver.
+16 attempt smallint NULLABLE — IA-051: tentativa do job (ai_jobs.attempt_count) no momento da execução.
+Constraints:
+ai_usage_logs_profile_id_fkey: FOREIGN KEY (profile_id) REFERENCES profiles(id) ON DELETE SET NULL
+ai_usage_logs_user_id_fkey: FOREIGN KEY (user_id) REFERENCES auth.users(id) ON DELETE SET NULL
+ai_usage_logs_pkey: PRIMARY KEY (id)
+Políticas RLS (nome, operação, papéis e modo; as expressões permanecem no catálogo):
+"Admins can view all AI usage logs" [command=SELECT; roles=authenticated; PERMISSIVE]
+"Service role can insert AI usage logs" [command=INSERT; roles=service_role; PERMISSIVE]
+"Users can view own AI usage logs" [command=SELECT; roles=authenticated; PERMISSIVE]
+
 | propriedade | valor |
 |---|---|
 | tipo | table |

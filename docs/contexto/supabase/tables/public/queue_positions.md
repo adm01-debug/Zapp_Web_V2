@@ -1,5 +1,26 @@
 # public.queue_positions
 
+> Descrição funcional não estava registrada no catálogo; o conteúdo abaixo documenta a estrutura observável, sem inferir regras de negócio não declaradas.
+
+[CATALOGUE SEMÂNTICO DO PROJETO]
+Objeto: public.queue_positions (tabela). RLS habilitada: t; RLS forçada: f.
+Colunas (ordem, tipo e nulabilidade):
+1 id uuid NOT NULL [DEFAULT/EXPRESSION DEFINED]
+2 contact_id uuid NOT NULL
+3 queue_id uuid NOT NULL
+4 "position" integer NOT NULL [DEFAULT/EXPRESSION DEFINED]
+5 estimated_wait_minutes integer NULLABLE
+6 entered_at timestamp with time zone NULLABLE [DEFAULT/EXPRESSION DEFINED]
+7 notified boolean NULLABLE [DEFAULT/EXPRESSION DEFINED]
+8 created_at timestamp with time zone NULLABLE [DEFAULT/EXPRESSION DEFINED]
+Constraints:
+queue_positions_contact_id_fkey: FOREIGN KEY (contact_id) REFERENCES contacts(id)
+queue_positions_queue_id_fkey: FOREIGN KEY (queue_id) REFERENCES queues(id)
+queue_positions_pkey: PRIMARY KEY (id)
+Políticas RLS (nome, operação, papéis e modo; as expressões permanecem no catálogo):
+"Admins can manage queue positions" [command=ALL; roles=authenticated; PERMISSIVE]
+"Users can view queue positions" [command=SELECT; roles=authenticated; PERMISSIVE]
+
 | propriedade | valor |
 |---|---|
 | tipo | table |

@@ -1,5 +1,26 @@
 # public.knowledge_base_files
 
+> Descrição funcional não estava registrada no catálogo; o conteúdo abaixo documenta a estrutura observável, sem inferir regras de negócio não declaradas.
+
+[CATALOGUE SEMÂNTICO DO PROJETO]
+Objeto: public.knowledge_base_files (tabela). RLS habilitada: t; RLS forçada: f.
+Colunas (ordem, tipo e nulabilidade):
+1 id uuid NOT NULL [DEFAULT/EXPRESSION DEFINED]
+2 article_id uuid NULLABLE
+3 file_name text NOT NULL
+4 file_url text NOT NULL
+5 file_type text NULLABLE
+6 file_size integer NULLABLE
+7 processing_status text NULLABLE [DEFAULT/EXPRESSION DEFINED]
+8 extracted_text text NULLABLE
+9 created_at timestamp with time zone NULLABLE [DEFAULT/EXPRESSION DEFINED]
+Constraints:
+knowledge_base_files_article_id_fkey: FOREIGN KEY (article_id) REFERENCES knowledge_base_articles(id) ON DELETE CASCADE
+knowledge_base_files_pkey: PRIMARY KEY (id)
+Políticas RLS (nome, operação, papéis e modo; as expressões permanecem no catálogo):
+"Admins can manage kb files" [command=ALL; roles=authenticated; PERMISSIVE]
+"Users can view knowledge base files" [command=SELECT; roles=authenticated; PERMISSIVE]
+
 | propriedade | valor |
 |---|---|
 | tipo | table |

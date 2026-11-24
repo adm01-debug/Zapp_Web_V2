@@ -1,5 +1,36 @@
 # public.copilot_insights
 
+> Descrição funcional não estava registrada no catálogo; o conteúdo abaixo documenta a estrutura observável, sem inferir regras de negócio não declaradas.
+
+[CATALOGUE SEMÂNTICO DO PROJETO]
+Objeto: public.copilot_insights (tabela). RLS habilitada: t; RLS forçada: f.
+Colunas (ordem, tipo e nulabilidade):
+1 id uuid NOT NULL [DEFAULT/EXPRESSION DEFINED]
+2 session_id uuid NOT NULL
+3 profile_id uuid NOT NULL
+4 insight_type text NOT NULL
+5 content text NOT NULL
+6 source text NOT NULL [DEFAULT/EXPRESSION DEFINED]
+7 model_version text NULLABLE
+8 state_version integer NOT NULL [DEFAULT/EXPRESSION DEFINED]
+9 shown_at timestamp with time zone NULLABLE
+10 used_at timestamp with time zone NULLABLE
+11 dismissed_at timestamp with time zone NULLABLE
+12 created_at timestamp with time zone NOT NULL [DEFAULT/EXPRESSION DEFINED]
+13 tier smallint NOT NULL [DEFAULT/EXPRESSION DEFINED]
+14 latency_ms integer NULLABLE
+15 data jsonb NULLABLE
+Constraints:
+copilot_insights_insight_type_check: CHECK (insight_type = ANY (ARRAY['suggestion'::text, 'alert'::text, 'next_action'::text, 'objection'::text, 'brinde_field'::text, 'temperature_change'::text, 'stage_change'::text, 'attachment'::text, 'follow_up'::text, 'other'::text]))
+copilot_insights_source_check: CHECK (source = ANY (ARRAY['local'::text, 'edge'::text, 'cache'::text]))
+copilot_insights_tier_check: CHECK (tier = ANY (ARRAY[1, 2]))
+copilot_insights_profile_id_fkey: FOREIGN KEY (profile_id) REFERENCES auth.users(id)
+copilot_insights_session_id_fkey: FOREIGN KEY (session_id) REFERENCES copilot_sessions(id) ON DELETE CASCADE
+copilot_insights_pkey: PRIMARY KEY (id)
+Políticas RLS (nome, operação, papéis e modo; as expressões permanecem no catálogo):
+service_role_insights [command=ALL; roles=service_role; PERMISSIVE]
+vendor_own_insights [command=ALL; roles=PUBLIC; PERMISSIVE]
+
 | propriedade | valor |
 |---|---|
 | tipo | table |

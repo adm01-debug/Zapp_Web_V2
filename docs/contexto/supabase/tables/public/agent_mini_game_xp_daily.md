@@ -2,6 +2,25 @@
 
 > [RLS-sem-policy: intencional] Acumulador diário de XP do mini-game. Escrito pelos triggers/edge functions via service_role; leitura pela RPC security-definer get_agent_mini_game_stats.
 
+[CATALOGUE SEMÂNTICO DO PROJETO]
+Objeto: public.agent_mini_game_xp_daily (tabela). RLS habilitada: t; RLS forçada: f.
+Colunas (ordem, tipo e nulabilidade):
+1 profile_id uuid NOT NULL
+2 game_id text NOT NULL
+3 dia date NOT NULL [DEFAULT/EXPRESSION DEFINED]
+4 partidas integer NOT NULL [DEFAULT/EXPRESSION DEFINED]
+5 xp_total bigint NOT NULL [DEFAULT/EXPRESSION DEFINED]
+6 created_at timestamp with time zone NOT NULL [DEFAULT/EXPRESSION DEFINED]
+7 updated_at timestamp with time zone NOT NULL [DEFAULT/EXPRESSION DEFINED]
+Constraints:
+agent_mini_game_xp_daily_game_id_check: CHECK (game_id = ANY (ARRAY['speed-typing'::text, 'quiz'::text, 'response-match'::text, 'emoji-decode'::text]))
+agent_mini_game_xp_daily_partidas_check: CHECK (partidas >= 0)
+agent_mini_game_xp_daily_xp_total_check: CHECK (xp_total >= 0)
+agent_mini_game_xp_daily_profile_id_fkey: FOREIGN KEY (profile_id) REFERENCES profiles(id) ON DELETE CASCADE
+agent_mini_game_xp_daily_pkey: PRIMARY KEY (profile_id, game_id, dia)
+Políticas RLS (nome, operação, papéis e modo; as expressões permanecem no catálogo):
+(RLS habilitada sem política; verificar se o acesso restrito é intencional)
+
 | propriedade | valor |
 |---|---|
 | tipo | table |

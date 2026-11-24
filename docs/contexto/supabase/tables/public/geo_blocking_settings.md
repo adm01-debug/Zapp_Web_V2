@@ -1,5 +1,23 @@
 # public.geo_blocking_settings
 
+> Descrição funcional não estava registrada no catálogo; o conteúdo abaixo documenta a estrutura observável, sem inferir regras de negócio não declaradas.
+
+[CATALOGUE SEMÂNTICO DO PROJETO]
+Objeto: public.geo_blocking_settings (tabela). RLS habilitada: t; RLS forçada: f.
+Colunas (ordem, tipo e nulabilidade):
+1 id uuid NOT NULL [DEFAULT/EXPRESSION DEFINED]
+2 mode text NOT NULL [DEFAULT/EXPRESSION DEFINED]
+3 updated_by uuid NULLABLE
+4 created_at timestamp with time zone NOT NULL [DEFAULT/EXPRESSION DEFINED]
+5 updated_at timestamp with time zone NOT NULL [DEFAULT/EXPRESSION DEFINED]
+Constraints:
+geo_blocking_settings_mode_check: CHECK (mode = ANY (ARRAY['disabled'::text, 'whitelist'::text, 'blacklist'::text]))
+geo_blocking_settings_updated_by_fkey: FOREIGN KEY (updated_by) REFERENCES auth.users(id)
+geo_blocking_settings_pkey: PRIMARY KEY (id)
+Políticas RLS (nome, operação, papéis e modo; as expressões permanecem no catálogo):
+"Admins can manage geo settings" [command=ALL; roles=authenticated; PERMISSIVE]
+"Geo blocking visible to admins only" [command=SELECT; roles=authenticated; PERMISSIVE]
+
 | propriedade | valor |
 |---|---|
 | tipo | table |

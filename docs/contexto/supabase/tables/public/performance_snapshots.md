@@ -1,5 +1,33 @@
 # public.performance_snapshots
 
+> Descrição funcional não estava registrada no catálogo; o conteúdo abaixo documenta a estrutura observável, sem inferir regras de negócio não declaradas.
+
+[CATALOGUE SEMÂNTICO DO PROJETO]
+Objeto: public.performance_snapshots (tabela). RLS habilitada: t; RLS forçada: f.
+Colunas (ordem, tipo e nulabilidade):
+1 id uuid NOT NULL [DEFAULT/EXPRESSION DEFINED]
+2 profile_id uuid NOT NULL
+3 fcp integer NULLABLE [DEFAULT/EXPRESSION DEFINED]
+4 page_load integer NULLABLE [DEFAULT/EXPRESSION DEFINED]
+5 dom_ready integer NULLABLE [DEFAULT/EXPRESSION DEFINED]
+6 ttfb integer NULLABLE [DEFAULT/EXPRESSION DEFINED]
+7 memory_used integer NULLABLE [DEFAULT/EXPRESSION DEFINED]
+8 memory_total integer NULLABLE [DEFAULT/EXPRESSION DEFINED]
+9 dom_nodes integer NULLABLE [DEFAULT/EXPRESSION DEFINED]
+10 network_type text NULLABLE [DEFAULT/EXPRESSION DEFINED]
+11 rtt integer NULLABLE [DEFAULT/EXPRESSION DEFINED]
+12 overall_score integer NULLABLE [DEFAULT/EXPRESSION DEFINED]
+13 user_agent text NULLABLE
+14 created_at timestamp with time zone NOT NULL [DEFAULT/EXPRESSION DEFINED]
+Constraints:
+performance_snapshots_profile_id_fkey: FOREIGN KEY (profile_id) REFERENCES profiles(id) ON DELETE CASCADE
+performance_snapshots_pkey: PRIMARY KEY (id)
+Políticas RLS (nome, operação, papéis e modo; as expressões permanecem no catálogo):
+"Admins can delete performance snapshots" [command=DELETE; roles=authenticated; PERMISSIVE]
+"Admins can view all performance snapshots" [command=SELECT; roles=authenticated; PERMISSIVE]
+"Users can insert own performance snapshots" [command=INSERT; roles=authenticated; PERMISSIVE]
+"Users can view own performance snapshots" [command=SELECT; roles=authenticated; PERMISSIVE]
+
 | propriedade | valor |
 |---|---|
 | tipo | table |

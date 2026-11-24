@@ -1,5 +1,25 @@
 # public.sla_alert_preferences
 
+> Descrição funcional não estava registrada no catálogo; o conteúdo abaixo documenta a estrutura observável, sem inferir regras de negócio não declaradas.
+
+[CATALOGUE SEMÂNTICO DO PROJETO]
+Objeto: public.sla_alert_preferences (tabela). RLS habilitada: t; RLS forçada: f.
+Colunas (ordem, tipo e nulabilidade):
+1 user_id uuid NOT NULL
+2 enabled boolean NOT NULL [DEFAULT/EXPRESSION DEFINED]
+3 alert_first_response boolean NOT NULL [DEFAULT/EXPRESSION DEFINED]
+4 alert_resolution boolean NOT NULL [DEFAULT/EXPRESSION DEFINED]
+5 severity_warning boolean NOT NULL [DEFAULT/EXPRESSION DEFINED]
+6 severity_breached boolean NOT NULL [DEFAULT/EXPRESSION DEFINED]
+7 updated_at timestamp with time zone NOT NULL [DEFAULT/EXPRESSION DEFINED]
+Constraints:
+sla_alert_preferences_user_id_fkey: FOREIGN KEY (user_id) REFERENCES auth.users(id) ON DELETE CASCADE
+sla_alert_preferences_pkey: PRIMARY KEY (user_id)
+Políticas RLS (nome, operação, papéis e modo; as expressões permanecem no catálogo):
+sla_alert_preferences_insert_policy [command=INSERT; roles=authenticated; PERMISSIVE]
+sla_alert_preferences_select_policy [command=SELECT; roles=authenticated; PERMISSIVE]
+sla_alert_preferences_update_policy [command=UPDATE; roles=authenticated; PERMISSIVE]
+
 | propriedade | valor |
 |---|---|
 | tipo | table |

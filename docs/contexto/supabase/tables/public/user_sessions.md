@@ -1,5 +1,31 @@
 # public.user_sessions
 
+> Descrição funcional não estava registrada no catálogo; o conteúdo abaixo documenta a estrutura observável, sem inferir regras de negócio não declaradas.
+
+[CATALOGUE SEMÂNTICO DO PROJETO]
+Objeto: public.user_sessions (tabela). RLS habilitada: t; RLS forçada: f.
+Colunas (ordem, tipo e nulabilidade):
+1 id uuid NOT NULL [DEFAULT/EXPRESSION DEFINED]
+2 user_id uuid NOT NULL
+3 device_id uuid NULLABLE
+4 ip_address text NULLABLE
+5 user_agent text NULLABLE
+6 is_active boolean NULLABLE [DEFAULT/EXPRESSION DEFINED]
+7 started_at timestamp with time zone NOT NULL [DEFAULT/EXPRESSION DEFINED]
+8 last_activity_at timestamp with time zone NOT NULL [DEFAULT/EXPRESSION DEFINED]
+9 expires_at timestamp with time zone NOT NULL [DEFAULT/EXPRESSION DEFINED]
+10 ended_at timestamp with time zone NULLABLE
+11 auth_session_id uuid NULLABLE
+Constraints:
+user_sessions_device_id_fkey: FOREIGN KEY (device_id) REFERENCES user_devices(id) ON DELETE SET NULL
+user_sessions_user_id_fkey: FOREIGN KEY (user_id) REFERENCES auth.users(id) ON DELETE CASCADE
+user_sessions_pkey: PRIMARY KEY (id)
+Políticas RLS (nome, operação, papéis e modo; as expressões permanecem no catálogo):
+"Authenticated can insert own sessions" [command=INSERT; roles=authenticated; PERMISSIVE]
+"Users can delete their own sessions" [command=DELETE; roles=authenticated; PERMISSIVE]
+"Users can update their own sessions" [command=UPDATE; roles=authenticated; PERMISSIVE]
+"Users can view their own sessions" [command=SELECT; roles=authenticated; PERMISSIVE]
+
 | propriedade | valor |
 |---|---|
 | tipo | table |

@@ -2,6 +2,33 @@
 
 > X076 — trilha de toda chamada de IA do Talk X: teto mensal, limite diario e cache de 24 h. cost_usd NULO = sem tarifa em ai_model_prices, nunca zero.
 
+[CATALOGUE SEMÂNTICO DO PROJETO]
+Objeto: public.talkx_ai_requests (tabela). RLS habilitada: t; RLS forçada: f.
+Colunas (ordem, tipo e nulabilidade):
+1 id uuid NOT NULL [DEFAULT/EXPRESSION DEFINED]
+2 kind text NOT NULL
+3 entity_type text NULLABLE
+4 entity_id text NULLABLE
+5 input_hash text NOT NULL — SHA-256 do kind + entrada canonica. Mesmo hash dentro de 24 h devolve o output do cache sem pagar de novo.
+6 output jsonb NULLABLE
+7 model text NULLABLE
+8 tokens_in integer NOT NULL [DEFAULT/EXPRESSION DEFINED]
+9 tokens_out integer NOT NULL [DEFAULT/EXPRESSION DEFINED]
+10 cost_usd numeric(18,8) NULLABLE — Custo medido pela tarifa vigente (ai_model_prices). NULO quando o modelo nao tem tarifa — nao somar como zero.
+11 status text NOT NULL
+12 created_by uuid NOT NULL
+13 created_at timestamp with time zone NOT NULL [DEFAULT/EXPRESSION DEFINED]
+Constraints:
+talkx_ai_requests_cost_usd_check: CHECK (cost_usd IS NULL OR cost_usd >= 0::numeric)
+talkx_ai_requests_kind_check: CHECK (kind = ANY (ARRAY['insight_text'::text, 'message_variation'::text, 'segment_suggestion'::text]))
+talkx_ai_requests_status_check: CHECK (status = ANY (ARRAY['ok'::text, 'error'::text]))
+talkx_ai_requests_tokens_in_check: CHECK (tokens_in >= 0)
+talkx_ai_requests_tokens_out_check: CHECK (tokens_out >= 0)
+talkx_ai_requests_created_by_fkey: FOREIGN KEY (created_by) REFERENCES auth.users(id) ON DELETE CASCADE
+talkx_ai_requests_pkey: PRIMARY KEY (id)
+Políticas RLS (nome, operação, papéis e modo; as expressões permanecem no catálogo):
+talkx_ai_requests_admin_read [command=SELECT; roles=authenticated; PERMISSIVE]
+
 | propriedade | valor |
 |---|---|
 | tipo | table |

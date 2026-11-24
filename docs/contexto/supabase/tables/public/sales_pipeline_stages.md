@@ -1,5 +1,23 @@
 # public.sales_pipeline_stages
 
+> Descrição funcional não estava registrada no catálogo; o conteúdo abaixo documenta a estrutura observável, sem inferir regras de negócio não declaradas.
+
+[CATALOGUE SEMÂNTICO DO PROJETO]
+Objeto: public.sales_pipeline_stages (tabela). RLS habilitada: t; RLS forçada: f.
+Colunas (ordem, tipo e nulabilidade):
+1 id uuid NOT NULL [DEFAULT/EXPRESSION DEFINED]
+2 name text NOT NULL
+3 color text NOT NULL [DEFAULT/EXPRESSION DEFINED]
+4 "position" integer NOT NULL [DEFAULT/EXPRESSION DEFINED]
+5 is_active boolean NULLABLE [DEFAULT/EXPRESSION DEFINED]
+6 created_at timestamp with time zone NULLABLE [DEFAULT/EXPRESSION DEFINED]
+7 updated_at timestamp with time zone NULLABLE [DEFAULT/EXPRESSION DEFINED]
+Constraints:
+sales_pipeline_stages_pkey: PRIMARY KEY (id)
+Políticas RLS (nome, operação, papéis e modo; as expressões permanecem no catálogo):
+"Admins can manage pipeline stages" [command=ALL; roles=authenticated; PERMISSIVE]
+"Authenticated can view pipeline stages" [command=SELECT; roles=authenticated; PERMISSIVE]
+
 | propriedade | valor |
 |---|---|
 | tipo | table |

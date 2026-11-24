@@ -2,6 +2,29 @@
 
 > [bkp-261023] Snapshot de public.team_messages em 23/10/2026 (2 linhas).
 
+[CATALOGUE SEMÂNTICO DO PROJETO]
+Objeto: _bkp_261023.team_messages (tabela). RLS habilitada: t; RLS forçada: f.
+Colunas (ordem, tipo e nulabilidade):
+1 id uuid NULLABLE
+2 conversation_id uuid NULLABLE
+3 sender_id uuid NULLABLE
+4 content text NULLABLE
+5 message_type text NULLABLE
+6 reply_to_id uuid NULLABLE
+7 is_edited boolean NULLABLE
+8 created_at timestamp with time zone NULLABLE
+9 updated_at timestamp with time zone NULLABLE
+10 media_url text NULLABLE
+11 media_type text NULLABLE
+12 status text NULLABLE
+13 media_bucket text NULLABLE
+14 media_path text NULLABLE
+15 metadata jsonb NULLABLE
+Constraints:
+(nenhuma PK/UNIQUE/FK/CHECK/EXCLUDE registrada)
+Políticas RLS (nome, operação, papéis e modo; as expressões permanecem no catálogo):
+(RLS habilitada sem política; verificar se o acesso restrito é intencional)
+
 | propriedade | valor |
 |---|---|
 | tipo | table |

@@ -1,5 +1,27 @@
 # public.email_labels
 
+> Descrição funcional não estava registrada no catálogo; o conteúdo abaixo documenta a estrutura observável, sem inferir regras de negócio não declaradas.
+
+[CATALOGUE SEMÂNTICO DO PROJETO]
+Objeto: public.email_labels (tabela). RLS habilitada: t; RLS forçada: f.
+Colunas (ordem, tipo e nulabilidade):
+1 id uuid NOT NULL [DEFAULT/EXPRESSION DEFINED]
+2 gmail_account_id uuid NOT NULL
+3 gmail_label_id text NOT NULL
+4 name text NOT NULL
+5 label_type text NOT NULL [DEFAULT/EXPRESSION DEFINED]
+6 color text NULLABLE
+7 message_count integer NOT NULL [DEFAULT/EXPRESSION DEFINED]
+8 unread_count integer NOT NULL [DEFAULT/EXPRESSION DEFINED]
+9 created_at timestamp with time zone NOT NULL [DEFAULT/EXPRESSION DEFINED]
+Constraints:
+email_labels_gmail_account_id_fkey: FOREIGN KEY (gmail_account_id) REFERENCES gmail_accounts(id) ON DELETE CASCADE
+email_labels_pkey: PRIMARY KEY (id)
+email_labels_gmail_account_id_gmail_label_id_key: UNIQUE (gmail_account_id, gmail_label_id)
+Políticas RLS (nome, operação, papéis e modo; as expressões permanecem no catálogo):
+"Users can manage labels of own accounts" [command=ALL; roles=authenticated; PERMISSIVE]
+"Users can view labels of own accounts" [command=SELECT; roles=authenticated; PERMISSIVE]
+
 | propriedade | valor |
 |---|---|
 | tipo | table |

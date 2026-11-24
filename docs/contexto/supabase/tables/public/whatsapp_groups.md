@@ -1,5 +1,29 @@
 # public.whatsapp_groups
 
+> Descrição funcional não estava registrada no catálogo; o conteúdo abaixo documenta a estrutura observável, sem inferir regras de negócio não declaradas.
+
+[CATALOGUE SEMÂNTICO DO PROJETO]
+Objeto: public.whatsapp_groups (tabela). RLS habilitada: t; RLS forçada: f.
+Colunas (ordem, tipo e nulabilidade):
+1 id uuid NOT NULL [DEFAULT/EXPRESSION DEFINED]
+2 whatsapp_connection_id uuid NULLABLE
+3 group_id text NOT NULL
+4 name text NOT NULL
+5 description text NULLABLE
+6 participant_count integer NULLABLE [DEFAULT/EXPRESSION DEFINED]
+7 avatar_url text NULLABLE
+8 is_admin boolean NULLABLE [DEFAULT/EXPRESSION DEFINED]
+9 created_at timestamp with time zone NOT NULL [DEFAULT/EXPRESSION DEFINED]
+10 updated_at timestamp with time zone NOT NULL [DEFAULT/EXPRESSION DEFINED]
+11 category text NULLABLE
+Constraints:
+whatsapp_groups_whatsapp_connection_id_fkey: FOREIGN KEY (whatsapp_connection_id) REFERENCES whatsapp_connections(id) ON DELETE CASCADE
+whatsapp_groups_pkey: PRIMARY KEY (id)
+whatsapp_groups_group_id_key: UNIQUE (group_id)
+Políticas RLS (nome, operação, papéis e modo; as expressões permanecem no catálogo):
+"Admins can manage whatsapp groups" [command=ALL; roles=authenticated; PERMISSIVE]
+"Authenticated users can view whatsapp groups" [command=SELECT; roles=authenticated; PERMISSIVE]
+
 | propriedade | valor |
 |---|---|
 | tipo | table |

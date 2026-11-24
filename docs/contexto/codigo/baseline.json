@@ -2,11 +2,21 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "06d10c806370661798d5f308f4777d491c9eb3a1",
+  "commit": "e1a545c6c2e213b3330214ed64be84c976d6484e",
   "branch": "main",
-  "data_commit": "2026-11-24T14:51:32-03:00",
+  "data_commit": "2026-11-24T18:58:15-03:00",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "e1a545c6",
+    "data": "2026-11-24",
+    "assunto": "feat(manutencao): porta o harness de manutencao completo da PR #2926 (#3370)"
+   },
+   {
+    "sha": "21396b9c",
+    "data": "2026-11-24",
+    "assunto": "fix(ci): exige Replay local das migrations na main (#3367)"
+   },
    {
     "sha": "06d10c80",
     "data": "2026-11-24",
@@ -121,19 +131,9 @@
     "sha": "f48c1ce7",
     "data": "2026-11-23",
     "assunto": "⬆️ ci: bump ossf/scorecard-action from 2.5.0 to 2.6.0 (#3336)"
-   },
-   {
-    "sha": "684cc2c2",
-    "data": "2026-11-23",
-    "assunto": "fix(transcricao): fallback de STT pelo OpenRouter e fim do 401 silencioso na voz (#3343)"
-   },
-   {
-    "sha": "9f13ab55",
-    "data": "2026-11-23",
-    "assunto": "⬆️ ci: bump the codeql-action group across 1 directory with 3 updates (#3334)"
    }
   ],
-  "arquivos_mudados_7d": 5030,
+  "arquivos_mudados_7d": 5022,
   "pastas_mais_mudadas_30d": [
    {
     "pasta": "docs/contexto/supabase",
@@ -243,7 +243,7 @@
    },
    {
     "arquivo": "docs/agentes/github-ci.md",
-    "mudancas": 8
+    "mudancas": 9
    },
    {
     "arquivo": "supabase/functions/evolution-api/index.ts",
@@ -316,7 +316,7 @@
  "contagens": {
   "arquivos_total": 15801,
   "arquivos_codigo": 5893,
-  "linhas_codigo": 1140310,
+  "linhas_codigo": 1141333,
   "rotas": 18,
   "rotas_http_backend": 11,
   "vistas_por_id": 55,
@@ -672,7 +672,7 @@
   },
   "scripts/maintenance": {
    "arquivos": 4,
-   "linhas": 1439
+   "linhas": 2462
   },
   "scripts/mutation": {
    "arquivos": 1,
@@ -931,11 +931,11 @@
  ],
  "qualidade": {
   "any": 421,
-  "console_log": 760,
+  "console_log": 767,
   "ts_ignore": 0,
   "eslint_disable": 1,
   "todos": 59,
-  "arquivos_acima_500_linhas": 166
+  "arquivos_acima_500_linhas": 167
  },
  "todos": [
   {

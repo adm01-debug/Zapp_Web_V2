@@ -2,6 +2,19 @@
 
 > Mapa LID -> JID do WhatsApp (identidade anonima vs numero) para reconciliar contatos.
 
+[CATALOGUE SEMÂNTICO DO PROJETO]
+Objeto: public.contact_identity_map (tabela). RLS habilitada: t; RLS forçada: f.
+Colunas (ordem, tipo e nulabilidade):
+1 lid text NOT NULL — Linked-Device ID — 14-18 dígitos sem DDI E.164 válido
+2 jid text NOT NULL — JID real — phone E.164 válido (ex: 5511999999999)
+3 first_seen timestamp with time zone NOT NULL [DEFAULT/EXPRESSION DEFINED]
+4 last_seen timestamp with time zone NOT NULL [DEFAULT/EXPRESSION DEFINED]
+5 source text NULLABLE
+Constraints:
+contact_identity_map_pkey: PRIMARY KEY (lid)
+Políticas RLS (nome, operação, papéis e modo; as expressões permanecem no catálogo):
+supervisor_read [command=SELECT; roles=authenticated; PERMISSIVE]
+
 | propriedade | valor |
 |---|---|
 | tipo | table |

@@ -1,5 +1,23 @@
 # public.talkx_link_clicks
 
+> Descrição funcional não estava registrada no catálogo; o conteúdo abaixo documenta a estrutura observável, sem inferir regras de negócio não declaradas.
+
+[CATALOGUE SEMÂNTICO DO PROJETO]
+Objeto: public.talkx_link_clicks (tabela). RLS habilitada: t; RLS forçada: f.
+Colunas (ordem, tipo e nulabilidade):
+1 id uuid NOT NULL [DEFAULT/EXPRESSION DEFINED]
+2 link_id uuid NOT NULL
+3 recipient_id uuid NULLABLE
+4 clicked_at timestamp with time zone NOT NULL [DEFAULT/EXPRESSION DEFINED]
+5 ua text NULLABLE
+6 ip_hash text NULLABLE
+Constraints:
+talkx_link_clicks_link_id_fkey: FOREIGN KEY (link_id) REFERENCES talkx_links(id) ON DELETE CASCADE
+talkx_link_clicks_recipient_id_fkey: FOREIGN KEY (recipient_id) REFERENCES talkx_recipients(id) ON DELETE SET NULL
+talkx_link_clicks_pkey: PRIMARY KEY (id)
+Políticas RLS (nome, operação, papéis e modo; as expressões permanecem no catálogo):
+"Users can view clicks of own campaigns" [command=SELECT; roles=authenticated; PERMISSIVE]
+
 | propriedade | valor |
 |---|---|
 | tipo | table |

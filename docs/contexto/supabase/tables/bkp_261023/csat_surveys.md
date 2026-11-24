@@ -2,6 +2,21 @@
 
 > [bkp-261023] Snapshot de public.csat_surveys em 23/10/2026 (0 linhas).
 
+[CATALOGUE SEMÂNTICO DO PROJETO]
+Objeto: _bkp_261023.csat_surveys (tabela). RLS habilitada: t; RLS forçada: f.
+Colunas (ordem, tipo e nulabilidade):
+1 id uuid NULLABLE
+2 contact_id uuid NULLABLE
+3 agent_id uuid NULLABLE
+4 rating integer NULLABLE
+5 feedback text NULLABLE
+6 conversation_resolved_at timestamp with time zone NULLABLE
+7 created_at timestamp with time zone NULLABLE
+Constraints:
+(nenhuma PK/UNIQUE/FK/CHECK/EXCLUDE registrada)
+Políticas RLS (nome, operação, papéis e modo; as expressões permanecem no catálogo):
+(RLS habilitada sem política; verificar se o acesso restrito é intencional)
+
 | propriedade | valor |
 |---|---|
 | tipo | table |

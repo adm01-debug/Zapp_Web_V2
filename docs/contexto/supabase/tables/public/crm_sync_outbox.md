@@ -1,5 +1,49 @@
 # public.crm_sync_outbox
 
+> Descrição funcional não estava registrada no catálogo; o conteúdo abaixo documenta a estrutura observável, sem inferir regras de negócio não declaradas.
+
+[CATALOGUE SEMÂNTICO DO PROJETO]
+Objeto: public.crm_sync_outbox (tabela). RLS habilitada: t; RLS forçada: f.
+Colunas (ordem, tipo e nulabilidade):
+1 id uuid NOT NULL [DEFAULT/EXPRESSION DEFINED]
+2 closure_id uuid NULLABLE
+3 contact_id uuid NULLABLE
+4 idempotency_key text NOT NULL
+5 normalized_phone text NULLABLE
+6 payload jsonb NOT NULL [DEFAULT/EXPRESSION DEFINED]
+7 status text NOT NULL [DEFAULT/EXPRESSION DEFINED]
+8 attempt_count integer NOT NULL [DEFAULT/EXPRESSION DEFINED]
+9 max_attempts integer NOT NULL [DEFAULT/EXPRESSION DEFINED]
+10 available_at timestamp with time zone NOT NULL [DEFAULT/EXPRESSION DEFINED]
+11 locked_at timestamp with time zone NULLABLE
+12 locked_by text NULLABLE
+13 last_error_code text NULLABLE
+14 external_interaction_id text NULLABLE
+15 external_contact_id text NULLABLE
+16 external_company_id text NULLABLE
+17 completed_at timestamp with time zone NULLABLE
+18 created_at timestamp with time zone NOT NULL [DEFAULT/EXPRESSION DEFINED]
+19 updated_at timestamp with time zone NOT NULL [DEFAULT/EXPRESSION DEFINED]
+20 lease_token uuid NULLABLE
+Constraints:
+crm_sync_outbox_attempt_count_check: CHECK (attempt_count >= 0)
+crm_sync_outbox_external_ids_bounded: CHECK ((external_interaction_id IS NULL OR length(external_interaction_id) >= 1 AND length(external_interaction_id) <= 200) AND (external_contact_id IS NULL OR length(external_contact_id) >= 1 AND length(external_contact_id) <= 200) AND (external_company_id IS NULL OR length(external_company_id) >= 1 AND length(external_company_id) <= 200))
+crm_sync_outbox_lease_state: CHECK (status = 'processing'::text AND locked_at IS NOT NULL AND locked_by IS NOT NULL AND lease_token IS NOT NULL OR status <> 'processing'::text AND locked_at IS NULL AND locked_by IS NULL AND lease_token IS NULL)
+crm_sync_outbox_max_attempts_check: CHECK (max_attempts >= 1 AND max_attempts <= 20)
+crm_sync_outbox_normalized_phone_check: CHECK (normalized_phone ~ '^[0-9]{8,15}$'::text)
+crm_sync_outbox_payload_check: CHECK (jsonb_typeof(payload) = 'object'::text)
+crm_sync_outbox_payload_size: CHECK (octet_length(payload::text) <= 20000)
+crm_sync_outbox_phone_state: CHECK (normalized_phone IS NOT NULL OR status = 'dead_letter'::text AND (last_error_code = ANY (ARRAY['INVALID_PHONE'::text, 'CONTACT_DELETED'::text])))
+crm_sync_outbox_status_check: CHECK (status = ANY (ARRAY['pending'::text, 'processing'::text, 'succeeded'::text, 'failed'::text, 'dead_letter'::text]))
+crm_sync_outbox_success_state: CHECK (status <> 'succeeded'::text OR completed_at IS NOT NULL AND external_interaction_id IS NOT NULL AND external_contact_id IS NOT NULL)
+crm_sync_outbox_closure_id_fkey: FOREIGN KEY (closure_id) REFERENCES conversation_closures(id) ON DELETE SET NULL
+crm_sync_outbox_contact_id_fkey: FOREIGN KEY (contact_id) REFERENCES contacts(id) ON DELETE SET NULL
+crm_sync_outbox_pkey: PRIMARY KEY (id)
+crm_sync_outbox_closure_id_key: UNIQUE (closure_id)
+crm_sync_outbox_idempotency_key_key: UNIQUE (idempotency_key)
+Políticas RLS (nome, operação, papéis e modo; as expressões permanecem no catálogo):
+"Admins inspect CRM sync outbox" [command=SELECT; roles=authenticated; PERMISSIVE]
+
 | propriedade | valor |
 |---|---|
 | tipo | table |

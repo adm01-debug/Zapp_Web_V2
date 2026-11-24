@@ -2,6 +2,19 @@
 
 > [RLS-sem-policy: intencional] Tabela de rebuild para ACL de mídia do Team Chat. Só service_role durante scripts de migração.
 
+[CATALOGUE SEMÂNTICO DO PROJETO]
+Objeto: public.team_chat_media_acl_r2_db_020_rb (tabela). RLS habilitada: t; RLS forçada: f.
+Colunas (ordem, tipo e nulabilidade):
+1 message_id uuid NOT NULL
+2 media_bucket text NULLABLE
+3 media_path text NULLABLE
+4 media_type text NULLABLE
+5 recorded_at timestamp with time zone NOT NULL [DEFAULT/EXPRESSION DEFINED]
+Constraints:
+team_chat_media_acl_r2_db_020_rb_pkey: PRIMARY KEY (message_id)
+Políticas RLS (nome, operação, papéis e modo; as expressões permanecem no catálogo):
+(RLS habilitada sem política; verificar se o acesso restrito é intencional)
+
 | propriedade | valor |
 |---|---|
 | tipo | table |

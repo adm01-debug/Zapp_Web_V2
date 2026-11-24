@@ -1,5 +1,25 @@
 # public.connection_health_logs
 
+> Descrição funcional não estava registrada no catálogo; o conteúdo abaixo documenta a estrutura observável, sem inferir regras de negócio não declaradas.
+
+[CATALOGUE SEMÂNTICO DO PROJETO]
+Objeto: public.connection_health_logs (tabela). RLS habilitada: t; RLS forçada: f.
+Colunas (ordem, tipo e nulabilidade):
+1 id uuid NOT NULL [DEFAULT/EXPRESSION DEFINED]
+2 connection_id uuid NOT NULL
+3 instance_id text NOT NULL
+4 status text NOT NULL [DEFAULT/EXPRESSION DEFINED]
+5 response_time_ms integer NULLABLE
+6 error_message text NULLABLE
+7 checked_at timestamp with time zone NOT NULL [DEFAULT/EXPRESSION DEFINED]
+Constraints:
+connection_health_logs_connection_id_fkey: FOREIGN KEY (connection_id) REFERENCES whatsapp_connections(id) ON DELETE CASCADE
+connection_health_logs_pkey: PRIMARY KEY (id)
+Políticas RLS (nome, operação, papéis e modo; as expressões permanecem no catálogo):
+"Admins can delete health logs" [command=DELETE; roles=authenticated; PERMISSIVE]
+"Admins can insert health logs" [command=INSERT; roles=authenticated; PERMISSIVE]
+"Admins can view health logs" [command=SELECT; roles=authenticated; PERMISSIVE]
+
 | propriedade | valor |
 |---|---|
 | tipo | table |

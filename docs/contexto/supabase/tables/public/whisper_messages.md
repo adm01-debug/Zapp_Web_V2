@@ -1,5 +1,31 @@
 # public.whisper_messages
 
+> Descrição funcional não estava registrada no catálogo; o conteúdo abaixo documenta a estrutura observável, sem inferir regras de negócio não declaradas.
+
+[CATALOGUE SEMÂNTICO DO PROJETO]
+Objeto: public.whisper_messages (tabela). RLS habilitada: t; RLS forçada: f.
+Colunas (ordem, tipo e nulabilidade):
+1 id uuid NOT NULL [DEFAULT/EXPRESSION DEFINED]
+2 contact_id uuid NOT NULL
+3 sender_id uuid NOT NULL
+4 target_agent_id uuid NOT NULL
+5 content text NOT NULL
+6 is_read boolean NULLABLE [DEFAULT/EXPRESSION DEFINED]
+7 created_at timestamp with time zone NULLABLE [DEFAULT/EXPRESSION DEFINED]
+8 audio_path text NULLABLE
+Constraints:
+whisper_messages_audio_path_do_remetente: CHECK (audio_path IS NULL OR split_part(audio_path, '/'::text, 2) = contact_id::text)
+whisper_messages_audio_path_formato: CHECK (audio_path IS NULL OR audio_path ~ '^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}/[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}/[^/]+$'::text)
+whisper_messages_contact_id_fkey: FOREIGN KEY (contact_id) REFERENCES contacts(id)
+whisper_messages_sender_id_fkey: FOREIGN KEY (sender_id) REFERENCES profiles(id)
+whisper_messages_target_agent_id_fkey: FOREIGN KEY (target_agent_id) REFERENCES profiles(id)
+whisper_messages_pkey: PRIMARY KEY (id)
+Políticas RLS (nome, operação, papéis e modo; as expressões permanecem no catálogo):
+"Users can delete own whisper messages" [command=DELETE; roles=authenticated; PERMISSIVE]
+"Users can insert own whisper messages" [command=INSERT; roles=authenticated; PERMISSIVE]
+"Users can mark own whisper messages as read" [command=UPDATE; roles=authenticated; PERMISSIVE]
+"Users can view own whisper messages" [command=SELECT; roles=authenticated; PERMISSIVE]
+
 | propriedade | valor |
 |---|---|
 | tipo | table |

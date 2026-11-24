@@ -2,6 +2,30 @@
 
 > Delivery and read receipts for team messages
 
+[CATALOGUE SEMÂNTICO DO PROJETO]
+Objeto: public.team_message_receipts (tabela). RLS habilitada: t; RLS forçada: f.
+Colunas (ordem, tipo e nulabilidade):
+1 id uuid NOT NULL [DEFAULT/EXPRESSION DEFINED]
+2 message_id uuid NOT NULL
+3 profile_id uuid NOT NULL — profiles.id of recipient — sender cannot have own receipt (enforced by trigger)
+4 status text NOT NULL [DEFAULT/EXPRESSION DEFINED]
+5 delivered_at timestamp with time zone NULLABLE [DEFAULT/EXPRESSION DEFINED]
+6 read_at timestamp with time zone NULLABLE
+7 conversation_id uuid NOT NULL
+Constraints:
+team_message_receipts_status_check: CHECK (status = ANY (ARRAY['delivered'::text, 'read'::text]))
+team_receipts_delivered_at_required: CHECK ((status <> ALL (ARRAY['delivered'::text, 'read'::text])) OR delivered_at IS NOT NULL)
+team_receipts_read_at_required: CHECK (status <> 'read'::text OR read_at IS NOT NULL)
+team_message_receipts_conversation_id_fkey: FOREIGN KEY (conversation_id) REFERENCES team_conversations(id) ON DELETE CASCADE
+team_message_receipts_message_id_fkey: FOREIGN KEY (message_id) REFERENCES team_messages(id) ON DELETE CASCADE
+team_message_receipts_profile_id_fkey: FOREIGN KEY (profile_id) REFERENCES profiles(id) ON DELETE CASCADE
+team_message_receipts_pkey: PRIMARY KEY (id)
+team_message_receipts_message_profile_unique: UNIQUE (message_id, profile_id)
+Políticas RLS (nome, operação, papéis e modo; as expressões permanecem no catálogo):
+"Conversation members can read receipts" [command=SELECT; roles=authenticated; PERMISSIVE]
+"Members can insert own receipts" [command=INSERT; roles=authenticated; PERMISSIVE]
+team_message_receipts_update_own [command=UPDATE; roles=authenticated; PERMISSIVE]
+
 | propriedade | valor |
 |---|---|
 | tipo | table |

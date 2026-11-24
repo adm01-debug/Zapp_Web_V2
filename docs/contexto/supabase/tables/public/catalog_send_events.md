@@ -2,6 +2,32 @@
 
 > Log append-only de envios de produto do catálogo (E28). Uma linha por envio, com status sent/partial/failed e message_ids. Depois do CT-02 o cliente authenticated tem só SELECT e INSERT; mexer no log depois de gravado exige service_role.
 
+[CATALOGUE SEMÂNTICO DO PROJETO]
+Objeto: public.catalog_send_events (tabela). RLS habilitada: t; RLS forçada: f.
+Colunas (ordem, tipo e nulabilidade):
+1 id uuid NOT NULL [DEFAULT/EXPRESSION DEFINED]
+2 product_id uuid NOT NULL
+3 product_name text NOT NULL
+4 product_sku text NULLABLE
+5 variant_label text NULLABLE
+6 contact_id uuid NULLABLE
+7 agent_id uuid NULLABLE
+8 template text NULLABLE
+9 images_count integer NULLABLE
+10 message_length integer NULLABLE
+11 status text NULLABLE
+12 message_ids jsonb NULLABLE
+13 created_at timestamp with time zone NOT NULL [DEFAULT/EXPRESSION DEFINED]
+Constraints:
+catalog_send_events_status_check: CHECK (status = ANY (ARRAY['sent'::text, 'partial'::text, 'failed'::text]))
+catalog_send_events_template_check: CHECK (template = ANY (ARRAY['formal'::text, 'informal'::text, 'promo'::text, 'custom'::text]))
+catalog_send_events_agent_id_fkey: FOREIGN KEY (agent_id) REFERENCES profiles(id) ON DELETE SET NULL
+catalog_send_events_contact_id_fkey: FOREIGN KEY (contact_id) REFERENCES contacts(id) ON DELETE CASCADE
+catalog_send_events_pkey: PRIMARY KEY (id)
+Políticas RLS (nome, operação, papéis e modo; as expressões permanecem no catálogo):
+"Users can insert own catalog send events" [command=INSERT; roles=authenticated; PERMISSIVE]
+"Users can view own catalog send events" [command=SELECT; roles=authenticated; PERMISSIVE]
+
 | propriedade | valor |
 |---|---|
 | tipo | table |

@@ -2,6 +2,18 @@
 
 > [RLS-sem-policy: intencional] Configuração de rate limits do catálogo. Gerenciado pela edge function promogifts-catalog via service_role.
 
+[CATALOGUE SEMÂNTICO DO PROJETO]
+Objeto: public.catalog_rate_limits (tabela). RLS habilitada: t; RLS forçada: f.
+Colunas (ordem, tipo e nulabilidade):
+1 user_id uuid NOT NULL
+2 action text NOT NULL
+3 window_start timestamp with time zone NOT NULL [DEFAULT/EXPRESSION DEFINED]
+4 count integer NOT NULL
+Constraints:
+catalog_rate_limits_pkey: PRIMARY KEY (user_id, action)
+Políticas RLS (nome, operação, papéis e modo; as expressões permanecem no catálogo):
+(RLS habilitada sem política; verificar se o acesso restrito é intencional)
+
 | propriedade | valor |
 |---|---|
 | tipo | table |

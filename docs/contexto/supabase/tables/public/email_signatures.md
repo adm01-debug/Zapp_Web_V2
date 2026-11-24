@@ -2,6 +2,26 @@
 
 > Assinaturas de e-mail do proprio usuario (nome, HTML) com no maximo uma padrao por dono (indice unico parcial em user_id when is_default). Dono em user_id = auth.uid(); acesso so do dono.
 
+[CATALOGUE SEMÂNTICO DO PROJETO]
+Objeto: public.email_signatures (tabela). RLS habilitada: t; RLS forçada: f.
+Colunas (ordem, tipo e nulabilidade):
+1 id uuid NOT NULL [DEFAULT/EXPRESSION DEFINED]
+2 user_id uuid NOT NULL [DEFAULT/EXPRESSION DEFINED]
+3 name character varying(120) NOT NULL
+4 html text NOT NULL [DEFAULT/EXPRESSION DEFINED]
+5 is_default boolean NOT NULL [DEFAULT/EXPRESSION DEFINED]
+6 created_at timestamp with time zone NOT NULL [DEFAULT/EXPRESSION DEFINED]
+7 updated_at timestamp with time zone NOT NULL [DEFAULT/EXPRESSION DEFINED]
+Constraints:
+email_signatures_html_len: CHECK (char_length(html) <= 20000)
+email_signatures_name_not_blank: CHECK (btrim(name::text) <> ''::text)
+email_signatures_pkey: PRIMARY KEY (id)
+Políticas RLS (nome, operação, papéis e modo; as expressões permanecem no catálogo):
+email_signatures_delete_own [command=DELETE; roles=authenticated; PERMISSIVE]
+email_signatures_insert_own [command=INSERT; roles=authenticated; PERMISSIVE]
+email_signatures_select_own [command=SELECT; roles=authenticated; PERMISSIVE]
+email_signatures_update_own [command=UPDATE; roles=authenticated; PERMISSIVE]
+
 | propriedade | valor |
 |---|---|
 | tipo | table |

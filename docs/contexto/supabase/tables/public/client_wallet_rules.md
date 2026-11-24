@@ -1,5 +1,25 @@
 # public.client_wallet_rules
 
+> Descrição funcional não estava registrada no catálogo; o conteúdo abaixo documenta a estrutura observável, sem inferir regras de negócio não declaradas.
+
+[CATALOGUE SEMÂNTICO DO PROJETO]
+Objeto: public.client_wallet_rules (tabela). RLS habilitada: t; RLS forçada: f.
+Colunas (ordem, tipo e nulabilidade):
+1 id uuid NOT NULL [DEFAULT/EXPRESSION DEFINED]
+2 name text NOT NULL
+3 agent_id uuid NOT NULL
+4 whatsapp_connection_id uuid NULLABLE
+5 priority integer NULLABLE [DEFAULT/EXPRESSION DEFINED]
+6 is_active boolean NULLABLE [DEFAULT/EXPRESSION DEFINED]
+7 created_at timestamp with time zone NOT NULL [DEFAULT/EXPRESSION DEFINED]
+Constraints:
+client_wallet_rules_agent_id_fkey: FOREIGN KEY (agent_id) REFERENCES profiles(id) ON DELETE CASCADE
+client_wallet_rules_whatsapp_connection_id_fkey: FOREIGN KEY (whatsapp_connection_id) REFERENCES whatsapp_connections(id) ON DELETE CASCADE
+client_wallet_rules_pkey: PRIMARY KEY (id)
+Políticas RLS (nome, operação, papéis e modo; as expressões permanecem no catálogo):
+"Admins can manage wallet rules" [command=ALL; roles=authenticated; PERMISSIVE]
+"Wallet rules visible to admins only" [command=SELECT; roles=authenticated; PERMISSIVE]
+
 | propriedade | valor |
 |---|---|
 | tipo | table |

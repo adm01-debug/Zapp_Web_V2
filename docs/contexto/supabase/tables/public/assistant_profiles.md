@@ -1,5 +1,28 @@
 # public.assistant_profiles
 
+> Descrição funcional não estava registrada no catálogo; o conteúdo abaixo documenta a estrutura observável, sem inferir regras de negócio não declaradas.
+
+[CATALOGUE SEMÂNTICO DO PROJETO]
+Objeto: public.assistant_profiles (tabela). RLS habilitada: t; RLS forçada: f.
+Colunas (ordem, tipo e nulabilidade):
+1 user_id uuid NOT NULL
+2 atividade text NOT NULL [DEFAULT/EXPRESSION DEFINED]
+3 foco text NOT NULL [DEFAULT/EXPRESSION DEFINED]
+4 ajuda text NOT NULL [DEFAULT/EXPRESSION DEFINED]
+5 tom text NOT NULL [DEFAULT/EXPRESSION DEFINED]
+6 created_at timestamp with time zone NOT NULL [DEFAULT/EXPRESSION DEFINED]
+7 updated_at timestamp with time zone NOT NULL [DEFAULT/EXPRESSION DEFINED]
+Constraints:
+assistant_profiles_ajuda_check: CHECK (ajuda = ANY (ARRAY['sempre'::text, 'relevante'::text, 'sob_demanda'::text]))
+assistant_profiles_atividade_check: CHECK (atividade = ANY (ARRAY['venda'::text, 'compra'::text, 'atendimento'::text, 'supervisao'::text]))
+assistant_profiles_tom_check: CHECK (tom = ANY (ARRAY['direto'::text, 'consultivo'::text, 'formal'::text]))
+assistant_profiles_user_id_fkey: FOREIGN KEY (user_id) REFERENCES auth.users(id) ON DELETE CASCADE
+assistant_profiles_pkey: PRIMARY KEY (user_id)
+Políticas RLS (nome, operação, papéis e modo; as expressões permanecem no catálogo):
+assistant_profiles_insert [command=INSERT; roles=authenticated; PERMISSIVE]
+assistant_profiles_select [command=SELECT; roles=authenticated; PERMISSIVE]
+assistant_profiles_update [command=UPDATE; roles=authenticated; PERMISSIVE]
+
 | propriedade | valor |
 |---|---|
 | tipo | table |

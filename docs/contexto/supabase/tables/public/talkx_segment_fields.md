@@ -1,5 +1,24 @@
 # public.talkx_segment_fields
 
+> Descrição funcional não estava registrada no catálogo; o conteúdo abaixo documenta a estrutura observável, sem inferir regras de negócio não declaradas.
+
+[CATALOGUE SEMÂNTICO DO PROJETO]
+Objeto: public.talkx_segment_fields (tabela). RLS habilitada: t; RLS forçada: f.
+Colunas (ordem, tipo e nulabilidade):
+1 field text NOT NULL
+2 category text NOT NULL
+3 source text NOT NULL [DEFAULT/EXPRESSION DEFINED]
+4 expr text NOT NULL
+5 kind text NOT NULL
+6 ops text[] NOT NULL
+7 enabled boolean NOT NULL [DEFAULT/EXPRESSION DEFINED]
+Constraints:
+talkx_segment_fields_kind_check: CHECK (kind = ANY (ARRAY['text'::text, 'array'::text, 'number'::text, 'date'::text, 'enum'::text, 'uuid'::text]))
+talkx_segment_fields_pkey: PRIMARY KEY (field)
+Políticas RLS (nome, operação, papéis e modo; as expressões permanecem no catálogo):
+talkx_segment_fields_select [command=SELECT; roles=authenticated; PERMISSIVE]
+talkx_segment_fields_service_role_write [command=ALL; roles=service_role; PERMISSIVE]
+
 | propriedade | valor |
 |---|---|
 | tipo | table |

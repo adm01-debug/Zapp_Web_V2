@@ -1,5 +1,24 @@
 # public.webhook_rate_limits
 
+> Descrição funcional não estava registrada no catálogo; o conteúdo abaixo documenta a estrutura observável, sem inferir regras de negócio não declaradas.
+
+[CATALOGUE SEMÂNTICO DO PROJETO]
+Objeto: public.webhook_rate_limits (tabela). RLS habilitada: t; RLS forçada: f.
+Colunas (ordem, tipo e nulabilidade):
+1 id uuid NOT NULL [DEFAULT/EXPRESSION DEFINED]
+2 instance_id text NOT NULL
+3 event_type text NOT NULL
+4 event_count integer NOT NULL [DEFAULT/EXPRESSION DEFINED]
+5 window_start timestamp with time zone NOT NULL [DEFAULT/EXPRESSION DEFINED]
+6 created_at timestamp with time zone NOT NULL [DEFAULT/EXPRESSION DEFINED]
+Constraints:
+webhook_rate_limits_pkey: PRIMARY KEY (id)
+Políticas RLS (nome, operação, papéis e modo; as expressões permanecem no catálogo):
+"Admins can delete rate limits" [command=DELETE; roles=authenticated; PERMISSIVE]
+"Admins can insert rate limits" [command=INSERT; roles=authenticated; PERMISSIVE]
+"Admins can update rate limits" [command=UPDATE; roles=authenticated; PERMISSIVE]
+"Admins can view rate limits" [command=SELECT; roles=authenticated; PERMISSIVE]
+
 | propriedade | valor |
 |---|---|
 | tipo | table |

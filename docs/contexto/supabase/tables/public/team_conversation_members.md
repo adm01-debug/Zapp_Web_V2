@@ -2,6 +2,31 @@
 
 > Members of a team conversation with read/mute state
 
+[CATALOGUE SEMÂNTICO DO PROJETO]
+Objeto: public.team_conversation_members (tabela). RLS habilitada: t; RLS forçada: f.
+Colunas (ordem, tipo e nulabilidade):
+1 id uuid NOT NULL [DEFAULT/EXPRESSION DEFINED]
+2 conversation_id uuid NOT NULL
+3 profile_id uuid NOT NULL
+4 joined_at timestamp with time zone NOT NULL [DEFAULT/EXPRESSION DEFINED]
+5 last_read_at timestamp with time zone NULLABLE [DEFAULT/EXPRESSION DEFINED]
+6 is_muted boolean NULLABLE [DEFAULT/EXPRESSION DEFINED]
+7 is_pinned boolean NOT NULL [DEFAULT/EXPRESSION DEFINED]
+8 is_archived boolean NOT NULL [DEFAULT/EXPRESSION DEFINED]
+9 member_role text NOT NULL [DEFAULT/EXPRESSION DEFINED]
+Constraints:
+team_conv_members_last_read_at_check: CHECK (last_read_at IS NULL OR last_read_at <= (now() + '00:00:05'::interval))
+team_conversation_members_member_role_check: CHECK (member_role = ANY (ARRAY['owner'::text, 'admin'::text, 'member'::text]))
+team_conversation_members_conversation_id_fkey: FOREIGN KEY (conversation_id) REFERENCES team_conversations(id) ON DELETE CASCADE
+team_conversation_members_profile_id_fkey: FOREIGN KEY (profile_id) REFERENCES profiles(id) ON DELETE CASCADE
+team_conversation_members_pkey: PRIMARY KEY (id)
+team_conversation_members_conversation_id_profile_id_key: UNIQUE (conversation_id, profile_id)
+Políticas RLS (nome, operação, papéis e modo; as expressões permanecem no catálogo):
+tcm_delete_own_or_admin [command=DELETE; roles=authenticated; PERMISSIVE]
+tcm_insert_member [command=INSERT; roles=authenticated; PERMISSIVE]
+tcm_select_own [command=SELECT; roles=authenticated; PERMISSIVE]
+tcm_update_own_prefs [command=UPDATE; roles=authenticated; PERMISSIVE]
+
 | propriedade | valor |
 |---|---|
 | tipo | table |

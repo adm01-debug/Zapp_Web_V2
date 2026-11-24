@@ -1,5 +1,29 @@
 # public.crisis_room_alerts
 
+> Descrição funcional não estava registrada no catálogo; o conteúdo abaixo documenta a estrutura observável, sem inferir regras de negócio não declaradas.
+
+[CATALOGUE SEMÂNTICO DO PROJETO]
+Objeto: public.crisis_room_alerts (tabela). RLS habilitada: t; RLS forçada: f.
+Colunas (ordem, tipo e nulabilidade):
+1 id uuid NOT NULL [DEFAULT/EXPRESSION DEFINED]
+2 severity text NOT NULL [DEFAULT/EXPRESSION DEFINED]
+3 metric_name text NOT NULL
+4 metric_value numeric NULLABLE
+5 threshold numeric NULLABLE
+6 message text NOT NULL
+7 is_active boolean NULLABLE [DEFAULT/EXPRESSION DEFINED]
+8 acknowledged_by uuid NULLABLE
+9 acknowledged_at timestamp with time zone NULLABLE
+10 created_at timestamp with time zone NOT NULL [DEFAULT/EXPRESSION DEFINED]
+Constraints:
+crisis_room_alerts_acknowledged_by_fkey: FOREIGN KEY (acknowledged_by) REFERENCES profiles(id)
+crisis_room_alerts_pkey: PRIMARY KEY (id)
+Políticas RLS (nome, operação, papéis e modo; as expressões permanecem no catálogo):
+"Admins can delete crisis alerts" [command=DELETE; roles=authenticated; PERMISSIVE]
+"Admins can insert crisis alerts" [command=INSERT; roles=authenticated; PERMISSIVE]
+"Admins can update crisis alerts" [command=UPDATE; roles=authenticated; PERMISSIVE]
+"Authenticated can view crisis alerts" [command=SELECT; roles=authenticated; PERMISSIVE]
+
 | propriedade | valor |
 |---|---|
 | tipo | table |

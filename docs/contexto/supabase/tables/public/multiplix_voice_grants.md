@@ -1,5 +1,26 @@
 # public.multiplix_voice_grants
 
+> Descrição funcional não estava registrada no catálogo; o conteúdo abaixo documenta a estrutura observável, sem inferir regras de negócio não declaradas.
+
+[CATALOGUE SEMÂNTICO DO PROJETO]
+Objeto: public.multiplix_voice_grants (tabela). RLS habilitada: t; RLS forçada: t.
+Colunas (ordem, tipo e nulabilidade):
+1 id uuid NOT NULL [DEFAULT/EXPRESSION DEFINED]
+2 voice_id text NOT NULL
+3 titular text NOT NULL
+4 roles app_role[] NULLABLE
+5 perfis uuid[] NULLABLE
+6 origem text NULLABLE
+7 revoked_at timestamp with time zone NULLABLE
+8 created_by uuid NULLABLE
+9 created_at timestamp with time zone NOT NULL [DEFAULT/EXPRESSION DEFINED]
+Constraints:
+multiplix_voice_grants_alvo_obrigatorio: CHECK (roles IS NOT NULL OR perfis IS NOT NULL)
+multiplix_voice_grants_pkey: PRIMARY KEY (id)
+Políticas RLS (nome, operação, papéis e modo; as expressões permanecem no catálogo):
+"Admins read every voice grant" [command=SELECT; roles=authenticated; PERMISSIVE]
+"Callers read their own voice grants" [command=SELECT; roles=authenticated; PERMISSIVE]
+
 | propriedade | valor |
 |---|---|
 | tipo | table |

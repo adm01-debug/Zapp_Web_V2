@@ -1,5 +1,27 @@
 # public.conversation_closures
 
+> Descrição funcional não estava registrada no catálogo; o conteúdo abaixo documenta a estrutura observável, sem inferir regras de negócio não declaradas.
+
+[CATALOGUE SEMÂNTICO DO PROJETO]
+Objeto: public.conversation_closures (tabela). RLS habilitada: t; RLS forçada: f.
+Colunas (ordem, tipo e nulabilidade):
+1 id uuid NOT NULL [DEFAULT/EXPRESSION DEFINED]
+2 contact_id uuid NOT NULL
+3 closed_by uuid NULLABLE
+4 close_reason text NOT NULL
+5 outcome text NULLABLE
+6 classification text NULLABLE
+7 notes text NULLABLE
+8 created_at timestamp with time zone NOT NULL [DEFAULT/EXPRESSION DEFINED]
+9 client_request_id uuid NULLABLE
+Constraints:
+conversation_closures_closed_by_fkey: FOREIGN KEY (closed_by) REFERENCES profiles(id) ON DELETE SET NULL
+conversation_closures_contact_id_fkey: FOREIGN KEY (contact_id) REFERENCES contacts(id) ON DELETE CASCADE
+conversation_closures_pkey: PRIMARY KEY (id)
+Políticas RLS (nome, operação, papéis e modo; as expressões permanecem no catálogo):
+"Agents can create closures for their contacts" [command=INSERT; roles=authenticated; PERMISSIVE]
+"Agents or admins can view closures" [command=SELECT; roles=authenticated; PERMISSIVE]
+
 | propriedade | valor |
 |---|---|
 | tipo | table |

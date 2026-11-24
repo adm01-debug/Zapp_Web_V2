@@ -1,5 +1,29 @@
 # public.talkx_campaign_events
 
+> Descrição funcional não estava registrada no catálogo; o conteúdo abaixo documenta a estrutura observável, sem inferir regras de negócio não declaradas.
+
+[CATALOGUE SEMÂNTICO DO PROJETO]
+Objeto: public.talkx_campaign_events (tabela). RLS habilitada: t; RLS forçada: f.
+Colunas (ordem, tipo e nulabilidade):
+1 id uuid NOT NULL [DEFAULT/EXPRESSION DEFINED]
+2 campaign_id uuid NULLABLE
+3 event_type text NOT NULL
+4 message text NULLABLE
+5 actor_id uuid NULLABLE
+6 created_at timestamp with time zone NOT NULL [DEFAULT/EXPRESSION DEFINED]
+7 entity_type text NULLABLE
+8 entity_id uuid NULLABLE
+Constraints:
+talkx_campaign_events_entity_type_format_check: CHECK (entity_type IS NULL OR entity_type ~ '^[a-z][a-z0-9_.]{1,40}$'::text)
+talkx_campaign_events_target_check: CHECK ((campaign_id IS NOT NULL) <> (entity_type IS NOT NULL AND entity_id IS NOT NULL))
+talkx_campaign_events_type_check: CHECK (event_type = ANY (ARRAY['created'::text, 'updated'::text, 'scheduled'::text, 'started'::text, 'paused'::text, 'resumed'::text, 'cancelled'::text, 'completed'::text, 'note'::text, 'scheduled_updated'::text, 'limits_updated'::text, 'connection_failed'::text, 'resumed_auto'::text, 'skipped_suppressed'::text, 'suppression_add'::text, 'suppression_remove'::text, 'suppression_update'::text, 'segments_reviewed'::text, 'checklist'::text, 'link_created'::text, 'link_updated'::text, 'link_deleted'::text, 'investment_updated'::text, 'report_exported'::text, 'report_shared'::text, 'import_created'::text, 'import_completed'::text, 'ab_winner_decided'::text]))
+talkx_campaign_events_actor_id_fkey: FOREIGN KEY (actor_id) REFERENCES profiles(id) ON DELETE SET NULL
+talkx_campaign_events_campaign_id_fkey: FOREIGN KEY (campaign_id) REFERENCES talkx_campaigns(id) ON DELETE CASCADE
+talkx_campaign_events_pkey: PRIMARY KEY (id)
+Políticas RLS (nome, operação, papéis e modo; as expressões permanecem no catálogo):
+talkx_campaign_events_insert [command=INSERT; roles=authenticated; PERMISSIVE]
+talkx_campaign_events_select [command=SELECT; roles=authenticated; PERMISSIVE]
+
 | propriedade | valor |
 |---|---|
 | tipo | table |

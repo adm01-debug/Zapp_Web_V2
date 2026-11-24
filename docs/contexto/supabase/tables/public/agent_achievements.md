@@ -1,5 +1,24 @@
 # public.agent_achievements
 
+> Descrição funcional não estava registrada no catálogo; o conteúdo abaixo documenta a estrutura observável, sem inferir regras de negócio não declaradas.
+
+[CATALOGUE SEMÂNTICO DO PROJETO]
+Objeto: public.agent_achievements (tabela). RLS habilitada: t; RLS forçada: f.
+Colunas (ordem, tipo e nulabilidade):
+1 id uuid NOT NULL [DEFAULT/EXPRESSION DEFINED]
+2 profile_id uuid NOT NULL
+3 achievement_type text NOT NULL
+4 achievement_name text NOT NULL
+5 achievement_description text NULLABLE
+6 xp_earned integer NOT NULL [DEFAULT/EXPRESSION DEFINED]
+7 earned_at timestamp with time zone NOT NULL [DEFAULT/EXPRESSION DEFINED]
+Constraints:
+agent_achievements_profile_id_fkey: FOREIGN KEY (profile_id) REFERENCES profiles(id) ON DELETE CASCADE
+agent_achievements_pkey: PRIMARY KEY (id)
+Políticas RLS (nome, operação, papéis e modo; as expressões permanecem no catálogo):
+"Only admins can insert achievements directly" [command=INSERT; roles=authenticated; PERMISSIVE]
+"Users can view own or admin all achievements" [command=SELECT; roles=authenticated; PERMISSIVE]
+
 | propriedade | valor |
 |---|---|
 | tipo | table |

@@ -2,6 +2,28 @@
 
 > Instancia de SLA por contato: primeiro contato, primeira resposta (mark_first_response), resolucao e flags de violacao, ligada a sla_configurations.
 
+[CATALOGUE SEMÂNTICO DO PROJETO]
+Objeto: public.conversation_sla (tabela). RLS habilitada: t; RLS forçada: f.
+Colunas (ordem, tipo e nulabilidade):
+1 id uuid NOT NULL [DEFAULT/EXPRESSION DEFINED]
+2 contact_id uuid NULLABLE
+3 sla_configuration_id uuid NULLABLE
+4 first_message_at timestamp with time zone NOT NULL [DEFAULT/EXPRESSION DEFINED]
+5 first_response_at timestamp with time zone NULLABLE
+6 resolved_at timestamp with time zone NULLABLE
+7 first_response_breached boolean NULLABLE [DEFAULT/EXPRESSION DEFINED]
+8 resolution_breached boolean NULLABLE [DEFAULT/EXPRESSION DEFINED]
+9 created_at timestamp with time zone NOT NULL [DEFAULT/EXPRESSION DEFINED]
+10 updated_at timestamp with time zone NOT NULL [DEFAULT/EXPRESSION DEFINED]
+Constraints:
+conversation_sla_contact_id_fkey: FOREIGN KEY (contact_id) REFERENCES contacts(id) ON DELETE CASCADE
+conversation_sla_sla_configuration_id_fkey: FOREIGN KEY (sla_configuration_id) REFERENCES sla_configurations(id)
+conversation_sla_pkey: PRIMARY KEY (id)
+Políticas RLS (nome, operação, papéis e modo; as expressões permanecem no catálogo):
+"Admins can insert SLA" [command=INSERT; roles=authenticated; PERMISSIVE]
+"Admins can update SLA" [command=UPDATE; roles=authenticated; PERMISSIVE]
+conversation_sla_select_policy [command=SELECT; roles=authenticated; PERMISSIVE]
+
 | propriedade | valor |
 |---|---|
 | tipo | table |

@@ -1,5 +1,25 @@
 # public.conversation_snoozes
 
+> Descrição funcional não estava registrada no catálogo; o conteúdo abaixo documenta a estrutura observável, sem inferir regras de negócio não declaradas.
+
+[CATALOGUE SEMÂNTICO DO PROJETO]
+Objeto: public.conversation_snoozes (tabela). RLS habilitada: t; RLS forçada: f.
+Colunas (ordem, tipo e nulabilidade):
+1 id uuid NOT NULL [DEFAULT/EXPRESSION DEFINED]
+2 contact_id uuid NOT NULL
+3 snoozed_by uuid NOT NULL
+4 snooze_until timestamp with time zone NOT NULL
+5 reason text NULLABLE
+6 created_at timestamp with time zone NOT NULL [DEFAULT/EXPRESSION DEFINED]
+Constraints:
+conversation_snoozes_contact_id_fkey: FOREIGN KEY (contact_id) REFERENCES contacts(id) ON DELETE CASCADE
+conversation_snoozes_snoozed_by_fkey: FOREIGN KEY (snoozed_by) REFERENCES profiles(id) ON DELETE CASCADE
+conversation_snoozes_pkey: PRIMARY KEY (id)
+Políticas RLS (nome, operação, papéis e modo; as expressões permanecem no catálogo):
+"Users can create own snoozes" [command=INSERT; roles=authenticated; PERMISSIVE]
+"Users can delete own snoozes" [command=DELETE; roles=authenticated; PERMISSIVE]
+"Users can view own snoozes" [command=SELECT; roles=authenticated; PERMISSIVE]
+
 | propriedade | valor |
 |---|---|
 | tipo | table |

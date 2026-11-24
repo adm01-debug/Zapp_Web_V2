@@ -1,5 +1,25 @@
 # public.multiplix_audience_members
 
+> Descrição funcional não estava registrada no catálogo; o conteúdo abaixo documenta a estrutura observável, sem inferir regras de negócio não declaradas.
+
+[CATALOGUE SEMÂNTICO DO PROJETO]
+Objeto: public.multiplix_audience_members (tabela). RLS habilitada: t; RLS forçada: t.
+Colunas (ordem, tipo e nulabilidade):
+1 id uuid NOT NULL [DEFAULT/EXPRESSION DEFINED]
+2 audience_id uuid NOT NULL
+3 singu_company_id uuid NULLABLE
+4 singu_contact_id uuid NULLABLE
+5 added_reason text NULLABLE
+6 created_at timestamp with time zone NOT NULL [DEFAULT/EXPRESSION DEFINED]
+Constraints:
+multiplix_audience_members_audience_id_fkey: FOREIGN KEY (audience_id) REFERENCES multiplix_audiences(id) ON DELETE CASCADE
+multiplix_audience_members_pkey: PRIMARY KEY (id)
+Políticas RLS (nome, operação, papéis e modo; as expressões permanecem no catálogo):
+"Users can delete members of own audiences" [command=DELETE; roles=authenticated; PERMISSIVE]
+"Users can insert members into own audiences" [command=INSERT; roles=authenticated; PERMISSIVE]
+"Users can update members of own audiences" [command=UPDATE; roles=authenticated; PERMISSIVE]
+"Users can view members of accessible audiences" [command=SELECT; roles=authenticated; PERMISSIVE]
+
 | propriedade | valor |
 |---|---|
 | tipo | table |

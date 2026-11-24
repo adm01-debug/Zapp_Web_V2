@@ -2,6 +2,21 @@
 
 > Associação entre app_role e permissions: define o conjunto de permissões efetivas de cada papel.
 
+[CATALOGUE SEMÂNTICO DO PROJETO]
+Objeto: public.role_permissions (tabela). RLS habilitada: t; RLS forçada: f.
+Colunas (ordem, tipo e nulabilidade):
+1 id uuid NOT NULL [DEFAULT/EXPRESSION DEFINED]
+2 role app_role NOT NULL
+3 permission_id uuid NOT NULL
+4 created_at timestamp with time zone NOT NULL [DEFAULT/EXPRESSION DEFINED]
+Constraints:
+role_permissions_permission_id_fkey: FOREIGN KEY (permission_id) REFERENCES permissions(id) ON DELETE CASCADE
+role_permissions_pkey: PRIMARY KEY (id)
+role_permissions_role_permission_id_key: UNIQUE (role, permission_id)
+Políticas RLS (nome, operação, papéis e modo; as expressões permanecem no catálogo):
+"Admin supervisor can view role permissions" [command=SELECT; roles=authenticated; PERMISSIVE]
+"Admins can manage role permissions" [command=ALL; roles=authenticated; PERMISSIVE]
+
 | propriedade | valor |
 |---|---|
 | tipo | table |

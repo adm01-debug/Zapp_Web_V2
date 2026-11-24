@@ -2542,6 +2542,10 @@
     "arquivos": 1
    },
    {
+    "host": "maintenance.invalid",
+    "arquivos": 1
+   },
+   {
     "host": "malicioso.example",
     "arquivos": 1
    },
@@ -2619,6 +2623,14 @@
    },
    {
     "host": "private.invalid",
+    "arquivos": 1
+   },
+   {
+    "host": "production.invalid",
+    "arquivos": 1
+   },
+   {
+    "host": "production.supabase.co",
     "arquivos": 1
    },
    {

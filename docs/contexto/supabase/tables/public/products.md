@@ -1,5 +1,32 @@
 # public.products
 
+> Descrição funcional não estava registrada no catálogo; o conteúdo abaixo documenta a estrutura observável, sem inferir regras de negócio não declaradas.
+
+[CATALOGUE SEMÂNTICO DO PROJETO]
+Objeto: public.products (tabela). RLS habilitada: t; RLS forçada: f.
+Colunas (ordem, tipo e nulabilidade):
+1 id uuid NOT NULL [DEFAULT/EXPRESSION DEFINED]
+2 name text NOT NULL
+3 description text NULLABLE
+4 price numeric(10,2) NOT NULL
+5 currency text NOT NULL [DEFAULT/EXPRESSION DEFINED]
+6 image_url text NULLABLE
+7 category text NULLABLE
+8 sku text NULLABLE
+9 stock_quantity integer NULLABLE [DEFAULT/EXPRESSION DEFINED]
+10 is_active boolean NULLABLE [DEFAULT/EXPRESSION DEFINED]
+11 retailer_id text NULLABLE
+12 whatsapp_connection_id uuid NULLABLE
+13 created_at timestamp with time zone NOT NULL [DEFAULT/EXPRESSION DEFINED]
+14 updated_at timestamp with time zone NOT NULL [DEFAULT/EXPRESSION DEFINED]
+Constraints:
+products_whatsapp_connection_id_fkey: FOREIGN KEY (whatsapp_connection_id) REFERENCES whatsapp_connections(id) ON DELETE SET NULL
+products_pkey: PRIMARY KEY (id)
+products_sku_key: UNIQUE (sku)
+Políticas RLS (nome, operação, papéis e modo; as expressões permanecem no catálogo):
+"Admins can manage products" [command=ALL; roles=authenticated; PERMISSIVE]
+"Authenticated users can view products" [command=SELECT; roles=authenticated; PERMISSIVE]
+
 | propriedade | valor |
 |---|---|
 | tipo | table |

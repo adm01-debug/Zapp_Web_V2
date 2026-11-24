@@ -1,5 +1,27 @@
 # public.meta_capi_events
 
+> Descrição funcional não estava registrada no catálogo; o conteúdo abaixo documenta a estrutura observável, sem inferir regras de negócio não declaradas.
+
+[CATALOGUE SEMÂNTICO DO PROJETO]
+Objeto: public.meta_capi_events (tabela). RLS habilitada: t; RLS forçada: f.
+Colunas (ordem, tipo e nulabilidade):
+1 id uuid NOT NULL [DEFAULT/EXPRESSION DEFINED]
+2 event_name text NOT NULL
+3 event_time timestamp with time zone NULLABLE [DEFAULT/EXPRESSION DEFINED]
+4 contact_id uuid NULLABLE
+5 pixel_id text NULLABLE
+6 event_source_url text NULLABLE
+7 action_source text NULLABLE [DEFAULT/EXPRESSION DEFINED]
+8 custom_data jsonb NULLABLE [DEFAULT/EXPRESSION DEFINED]
+9 sent_to_meta boolean NULLABLE [DEFAULT/EXPRESSION DEFINED]
+10 meta_response jsonb NULLABLE
+11 created_at timestamp with time zone NULLABLE [DEFAULT/EXPRESSION DEFINED]
+Constraints:
+meta_capi_events_contact_id_fkey: FOREIGN KEY (contact_id) REFERENCES contacts(id) ON DELETE SET NULL
+meta_capi_events_pkey: PRIMARY KEY (id)
+Políticas RLS (nome, operação, papéis e modo; as expressões permanecem no catálogo):
+"Admins can manage capi events" [command=ALL; roles=authenticated; PERMISSIVE]
+
 | propriedade | valor |
 |---|---|
 | tipo | table |

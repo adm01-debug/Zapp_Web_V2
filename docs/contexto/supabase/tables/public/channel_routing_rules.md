@@ -1,5 +1,26 @@
 # public.channel_routing_rules
 
+> Descrição funcional não estava registrada no catálogo; o conteúdo abaixo documenta a estrutura observável, sem inferir regras de negócio não declaradas.
+
+[CATALOGUE SEMÂNTICO DO PROJETO]
+Objeto: public.channel_routing_rules (tabela). RLS habilitada: t; RLS forçada: f.
+Colunas (ordem, tipo e nulabilidade):
+1 id uuid NOT NULL [DEFAULT/EXPRESSION DEFINED]
+2 channel_type channel_type NOT NULL
+3 channel_connection_id uuid NULLABLE
+4 queue_id uuid NULLABLE
+5 priority integer NULLABLE [DEFAULT/EXPRESSION DEFINED]
+6 conditions jsonb NULLABLE [DEFAULT/EXPRESSION DEFINED]
+7 is_active boolean NULLABLE [DEFAULT/EXPRESSION DEFINED]
+8 created_at timestamp with time zone NOT NULL [DEFAULT/EXPRESSION DEFINED]
+Constraints:
+channel_routing_rules_channel_connection_id_fkey: FOREIGN KEY (channel_connection_id) REFERENCES channel_connections(id)
+channel_routing_rules_queue_id_fkey: FOREIGN KEY (queue_id) REFERENCES queues(id)
+channel_routing_rules_pkey: PRIMARY KEY (id)
+Políticas RLS (nome, operação, papéis e modo; as expressões permanecem no catálogo):
+"Admins can manage routing rules" [command=ALL; roles=authenticated; PERMISSIVE]
+"Authenticated can view routing rules" [command=SELECT; roles=authenticated; PERMISSIVE]
+
 | propriedade | valor |
 |---|---|
 | tipo | table |

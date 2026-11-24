@@ -2,6 +2,21 @@
 
 > Talk X · trilha de dados: catálogo dos jobs (X036). Leitura só admin/supervisor; escrita só service_role.
 
+[CATALOGUE SEMÂNTICO DO PROJETO]
+Objeto: public.talkx_data_jobs (tabela). RLS habilitada: t; RLS forçada: f.
+Colunas (ordem, tipo e nulabilidade):
+1 job text NOT NULL
+2 interval_minutes integer NOT NULL [DEFAULT/EXPRESSION DEFINED]
+3 enabled boolean NOT NULL [DEFAULT/EXPRESSION DEFINED]
+4 last_started_at timestamp with time zone NULLABLE
+5 last_finished_at timestamp with time zone NULLABLE
+6 created_at timestamp with time zone NOT NULL [DEFAULT/EXPRESSION DEFINED]
+7 updated_at timestamp with time zone NOT NULL [DEFAULT/EXPRESSION DEFINED]
+Constraints:
+talkx_data_jobs_pkey: PRIMARY KEY (job)
+Políticas RLS (nome, operação, papéis e modo; as expressões permanecem no catálogo):
+talkx_data_jobs_select [command=SELECT; roles=authenticated; PERMISSIVE]
+
 | propriedade | valor |
 |---|---|
 | tipo | table |

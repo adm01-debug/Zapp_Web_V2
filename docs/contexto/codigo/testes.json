@@ -6357,12 +6357,12 @@
   {
    "arquivo": "scripts/maintenance/maintenance.unit.mjs",
    "tipo": "unit",
-   "linhas": 384,
+   "linhas": 887,
    "testa": [
     "scripts/maintenance/lib.mjs",
     "scripts/maintenance/run.mjs"
    ],
-   "casos": 27
+   "casos": 44
   },
   {
    "arquivo": "scripts/qa/contatos-redesign-baseline.cjs",

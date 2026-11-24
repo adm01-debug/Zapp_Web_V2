@@ -2,6 +2,36 @@
 
 > Pending invitations to join a department (token-based)
 
+[CATALOGUE SEMÂNTICO DO PROJETO]
+Objeto: public.department_invitations (tabela). RLS habilitada: t; RLS forçada: f.
+Colunas (ordem, tipo e nulabilidade):
+1 id uuid NOT NULL [DEFAULT/EXPRESSION DEFINED]
+2 department_id uuid NOT NULL
+3 code text NOT NULL
+4 email text NOT NULL [DEFAULT/EXPRESSION DEFINED]
+5 role text NOT NULL [DEFAULT/EXPRESSION DEFINED]
+6 status text NOT NULL [DEFAULT/EXPRESSION DEFINED]
+7 expires_at timestamp with time zone NOT NULL
+8 created_by uuid NULLABLE
+9 created_at timestamp with time zone NOT NULL [DEFAULT/EXPRESSION DEFINED]
+10 used_at timestamp with time zone NULLABLE
+11 used_by uuid NULLABLE
+12 max_uses integer NOT NULL [DEFAULT/EXPRESSION DEFINED]
+13 use_count integer NOT NULL [DEFAULT/EXPRESSION DEFINED]
+Constraints:
+department_invitations_expires_after_created: CHECK (expires_at IS NULL OR expires_at > created_at)
+department_invitations_max_uses_positive: CHECK (max_uses >= 1)
+department_invitations_status_check: CHECK (status = ANY (ARRAY['pending'::text, 'accepted'::text, 'expired'::text, 'revoked'::text])) NOT VALID
+department_invitations_use_count_nonneg: CHECK (use_count >= 0)
+department_invitations_use_count_within_max: CHECK (use_count <= max_uses) NOT VALID
+department_invitations_department_id_fkey: FOREIGN KEY (department_id) REFERENCES departments(id) ON DELETE CASCADE
+department_invitations_used_by_fkey: FOREIGN KEY (used_by) REFERENCES profiles(id) ON DELETE SET NULL
+department_invitations_pkey: PRIMARY KEY (id)
+department_invitations_code_key: UNIQUE (code)
+Políticas RLS (nome, operação, papéis e modo; as expressões permanecem no catálogo):
+department_invitations_select_admin_supervisor [command=SELECT; roles=authenticated; PERMISSIVE]
+department_invitations_write_admin [command=ALL; roles=authenticated; PERMISSIVE]
+
 | propriedade | valor |
 |---|---|
 | tipo | table |

@@ -2,6 +2,35 @@
 
 > Historico imutavel de templates Talk X; escrita somente pela RPC atomica canonica.
 
+[CATALOGUE SEMÂNTICO DO PROJETO]
+Objeto: public.talkx_template_versions (tabela). RLS habilitada: t; RLS forçada: f.
+Colunas (ordem, tipo e nulabilidade):
+1 id uuid NOT NULL [DEFAULT/EXPRESSION DEFINED]
+2 template_id uuid NOT NULL
+3 version_number integer NOT NULL
+4 name text NOT NULL
+5 content text NOT NULL
+6 category text NOT NULL
+7 status text NOT NULL [DEFAULT/EXPRESSION DEFINED]
+8 media_url text NULLABLE
+9 media_type text NULLABLE
+10 tags text[] NOT NULL [DEFAULT/EXPRESSION DEFINED]
+11 custom_variables text[] NOT NULL [DEFAULT/EXPRESSION DEFINED]
+12 saved_by uuid NULLABLE
+13 created_at timestamp with time zone NOT NULL [DEFAULT/EXPRESSION DEFINED]
+14 description text NULLABLE
+15 note text NULLABLE — Nota do usuario no momento de salvar o template (cartao t_a3551220).
+Constraints:
+talkx_template_versions_media_type_check: CHECK (media_type IS NULL OR (media_type = ANY (ARRAY['image'::text, 'video'::text, 'document'::text, 'audio'::text])))
+talkx_template_versions_status_check: CHECK (status = ANY (ARRAY['draft'::text, 'review'::text, 'approved'::text]))
+talkx_template_versions_version_positive: CHECK (version_number > 0)
+talkx_template_versions_saved_by_fkey: FOREIGN KEY (saved_by) REFERENCES profiles(id) ON DELETE SET NULL
+talkx_template_versions_template_id_fkey: FOREIGN KEY (template_id) REFERENCES talkx_templates(id) ON DELETE CASCADE
+talkx_template_versions_pkey: PRIMARY KEY (id)
+talkx_template_versions_template_id_version_number_key: UNIQUE (template_id, version_number)
+Políticas RLS (nome, operação, papéis e modo; as expressões permanecem no catálogo):
+talkx_template_versions_select [command=SELECT; roles=authenticated; PERMISSIVE]
+
 | propriedade | valor |
 |---|---|
 | tipo | table |

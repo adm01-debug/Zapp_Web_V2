@@ -2,6 +2,24 @@
 
 > Historico das tentativas de reconexao por conexao. Escrito pelo sistema (service_role); retencao de 30 dias.
 
+[CATALOGUE SEMÂNTICO DO PROJETO]
+Objeto: public.reconnection_logs (tabela). RLS habilitada: t; RLS forçada: f.
+Colunas (ordem, tipo e nulabilidade):
+1 id uuid NOT NULL [DEFAULT/EXPRESSION DEFINED]
+2 connection_id uuid NOT NULL
+3 attempt integer NOT NULL
+4 result text NOT NULL
+5 reason text NULLABLE
+6 created_at timestamp with time zone NOT NULL [DEFAULT/EXPRESSION DEFINED]
+Constraints:
+reconnection_logs_attempt_check: CHECK (attempt >= 1)
+reconnection_logs_reason_check: CHECK (reason IS NULL OR char_length(reason) <= 200)
+reconnection_logs_result_check: CHECK (result = ANY (ARRAY['success'::text, 'failure'::text, 'skipped'::text]))
+reconnection_logs_connection_id_fkey: FOREIGN KEY (connection_id) REFERENCES whatsapp_connections(id) ON DELETE CASCADE
+reconnection_logs_pkey: PRIMARY KEY (id)
+Políticas RLS (nome, operação, papéis e modo; as expressões permanecem no catálogo):
+"Staff can view reconnection logs" [command=SELECT; roles=authenticated; PERMISSIVE]
+
 | propriedade | valor |
 |---|---|
 | tipo | table |

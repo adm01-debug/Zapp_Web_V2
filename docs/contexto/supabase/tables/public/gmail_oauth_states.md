@@ -2,6 +2,21 @@
 
 > [RLS-sem-policy: intencional] Estados temporários do fluxo OAuth do Gmail (PKCE/state). Criados e consumidos pela edge function gmail-oauth (service_role). Expiração automática.
 
+[CATALOGUE SEMÂNTICO DO PROJETO]
+Objeto: public.gmail_oauth_states (tabela). RLS habilitada: t; RLS forçada: f.
+Colunas (ordem, tipo e nulabilidade):
+1 id uuid NOT NULL [DEFAULT/EXPRESSION DEFINED]
+2 user_id uuid NOT NULL
+3 state text NOT NULL
+4 created_at timestamp with time zone NOT NULL [DEFAULT/EXPRESSION DEFINED]
+5 expires_at timestamp with time zone NOT NULL [DEFAULT/EXPRESSION DEFINED]
+6 consumed_at timestamp with time zone NULLABLE
+Constraints:
+gmail_oauth_states_user_id_fkey: FOREIGN KEY (user_id) REFERENCES auth.users(id) ON DELETE CASCADE
+gmail_oauth_states_pkey: PRIMARY KEY (id)
+Políticas RLS (nome, operação, papéis e modo; as expressões permanecem no catálogo):
+(RLS habilitada sem política; verificar se o acesso restrito é intencional)
+
 | propriedade | valor |
 |---|---|
 | tipo | table |

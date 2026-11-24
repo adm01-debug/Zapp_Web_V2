@@ -1,5 +1,36 @@
 # public.instance_pauses
 
+> Descrição funcional não estava registrada no catálogo; o conteúdo abaixo documenta a estrutura observável, sem inferir regras de negócio não declaradas.
+
+[CATALOGUE SEMÂNTICO DO PROJETO]
+Objeto: public.instance_pauses (tabela). RLS habilitada: t; RLS forçada: f.
+Colunas (ordem, tipo e nulabilidade):
+1 id uuid NOT NULL [DEFAULT/EXPRESSION DEFINED]
+2 instance text NOT NULL — Identificador da conexao de WhatsApp (public.whatsapp_connections.instance_id).
+3 paused_until timestamp with time zone NOT NULL
+4 reason text NOT NULL
+5 paused_by uuid NULLABLE
+6 auto boolean NOT NULL [DEFAULT/EXPRESSION DEFINED]
+7 resumed_at timestamp with time zone NULLABLE
+8 resumed_by uuid NULLABLE
+9 created_at timestamp with time zone NOT NULL [DEFAULT/EXPRESSION DEFINED]
+10 investigated_at timestamp with time zone NULLABLE
+11 investigated_by uuid NULLABLE
+12 investigation_notes text NULLABLE
+Constraints:
+instance_pauses_autor_obrigatorio: CHECK (auto OR paused_by IS NOT NULL)
+instance_pauses_investigacao_completa: CHECK (investigated_by IS NULL OR investigated_at IS NOT NULL)
+instance_pauses_notas_sem_html: CHECK (investigation_notes IS NULL OR investigation_notes !~ '[<>]'::text)
+instance_pauses_notas_tamanho: CHECK (investigation_notes IS NULL OR char_length(investigation_notes) <= 1000)
+instance_pauses_reason_nao_vazio: CHECK (btrim(reason) <> ''::text)
+instance_pauses_resume_consistente: CHECK (resumed_at IS NOT NULL OR resumed_by IS NULL)
+instance_pauses_investigated_by_fkey: FOREIGN KEY (investigated_by) REFERENCES profiles(id) ON DELETE SET NULL
+instance_pauses_paused_by_fkey: FOREIGN KEY (paused_by) REFERENCES profiles(id) ON DELETE SET NULL
+instance_pauses_resumed_by_fkey: FOREIGN KEY (resumed_by) REFERENCES profiles(id) ON DELETE SET NULL
+instance_pauses_pkey: PRIMARY KEY (id)
+Políticas RLS (nome, operação, papéis e modo; as expressões permanecem no catálogo):
+instance_pauses_select_staff [command=SELECT; roles=authenticated; PERMISSIVE]
+
 | propriedade | valor |
 |---|---|
 | tipo | table |

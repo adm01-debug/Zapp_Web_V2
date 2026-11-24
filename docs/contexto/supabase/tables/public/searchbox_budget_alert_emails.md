@@ -2,6 +2,27 @@
 
 > [RLS-sem-policy: intencional] Destinatários dos alertas de budget. Só service_role via edge function searchbox-budget-alert.
 
+[CATALOGUE SEMÂNTICO DO PROJETO]
+Objeto: public.searchbox_budget_alert_emails (tabela). RLS habilitada: t; RLS forçada: f.
+Colunas (ordem, tipo e nulabilidade):
+1 mes text NOT NULL
+2 sessoes integer NOT NULL
+3 status text NOT NULL [DEFAULT/EXPRESSION DEFINED]
+4 attempt_count integer NOT NULL [DEFAULT/EXPRESSION DEFINED]
+5 request_id bigint NULLABLE — id do request devolvido por net.http_post (pg_net), para conciliacao do envio.
+6 http_status integer NULLABLE
+7 last_error text NULLABLE
+8 created_at timestamp with time zone NOT NULL [DEFAULT/EXPRESSION DEFINED]
+9 updated_at timestamp with time zone NOT NULL [DEFAULT/EXPRESSION DEFINED]
+Constraints:
+searchbox_budget_alert_emails_attempt_count_check: CHECK (attempt_count >= 0)
+searchbox_budget_alert_emails_mes_check: CHECK (mes ~ '^[0-9]{4}-[0-9]{2}$'::text)
+searchbox_budget_alert_emails_sessoes_check: CHECK (sessoes >= 0)
+searchbox_budget_alert_emails_status_check: CHECK (status = ANY (ARRAY['pending'::text, 'sent'::text, 'failed'::text, 'uncertain'::text]))
+searchbox_budget_alert_emails_pkey: PRIMARY KEY (mes)
+Políticas RLS (nome, operação, papéis e modo; as expressões permanecem no catálogo):
+(RLS habilitada sem política; verificar se o acesso restrito é intencional)
+
 | propriedade | valor |
 |---|---|
 | tipo | table |

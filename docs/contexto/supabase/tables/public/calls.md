@@ -1,5 +1,50 @@
 # public.calls
 
+> Descrição funcional não estava registrada no catálogo; o conteúdo abaixo documenta a estrutura observável, sem inferir regras de negócio não declaradas.
+
+[CATALOGUE SEMÂNTICO DO PROJETO]
+Objeto: public.calls (tabela). RLS habilitada: t; RLS forçada: f.
+Colunas (ordem, tipo e nulabilidade):
+1 id uuid NOT NULL [DEFAULT/EXPRESSION DEFINED]
+2 contact_id uuid NULLABLE
+3 agent_id uuid NULLABLE
+4 whatsapp_connection_id uuid NULLABLE
+5 direction text NOT NULL
+6 status text NOT NULL [DEFAULT/EXPRESSION DEFINED]
+7 started_at timestamp with time zone NOT NULL [DEFAULT/EXPRESSION DEFINED]
+8 answered_at timestamp with time zone NULLABLE
+9 ended_at timestamp with time zone NULLABLE
+10 duration_seconds integer NULLABLE
+11 recording_url text NULLABLE
+12 notes text NULLABLE
+13 created_at timestamp with time zone NOT NULL [DEFAULT/EXPRESSION DEFINED]
+14 provider_event_id text NULLABLE
+15 channel text NULLABLE
+16 provider_call_id text NULLABLE
+17 peer_number text NULLABLE
+18 peer_name text NULLABLE
+19 answered_by uuid NULLABLE
+20 end_reason text NULLABLE
+21 agent_notes text NULLABLE
+22 recording_status text NOT NULL [DEFAULT/EXPRESSION DEFINED]
+23 talk_seconds integer NULLABLE
+Constraints:
+calls_channel_check: CHECK (channel IS NULL OR (channel = ANY (ARRAY['voip'::text, 'whatsapp'::text])))
+calls_direction_check: CHECK (direction = ANY (ARRAY['inbound'::text, 'outbound'::text]))
+calls_end_reason_check: CHECK (end_reason IS NULL OR (end_reason = ANY (ARRAY['completed'::text, 'hangup_local'::text, 'hangup_remote'::text, 'no_answer'::text, 'busy'::text, 'busy_here'::text, 'cancelled'::text, 'cancelled_remote'::text, 'declined'::text, 'failed'::text, 'timeout'::text])))
+calls_provider_event_id_length: CHECK (provider_event_id IS NULL OR char_length(provider_event_id) >= 1 AND char_length(provider_event_id) <= 200)
+calls_recording_status_check: CHECK (recording_status = ANY (ARRAY['none'::text, 'pending'::text, 'available'::text, 'failed'::text]))
+calls_status_check: CHECK (status = ANY (ARRAY['ringing'::text, 'answered'::text, 'ended'::text, 'missed'::text, 'busy'::text, 'failed'::text, 'cancelled'::text, 'declined'::text]))
+calls_agent_id_fkey: FOREIGN KEY (agent_id) REFERENCES profiles(id) ON DELETE SET NULL
+calls_answered_by_fkey: FOREIGN KEY (answered_by) REFERENCES profiles(id)
+calls_contact_id_fkey: FOREIGN KEY (contact_id) REFERENCES contacts(id) ON DELETE SET NULL
+calls_whatsapp_connection_id_fkey: FOREIGN KEY (whatsapp_connection_id) REFERENCES whatsapp_connections(id) ON DELETE SET NULL
+calls_pkey: PRIMARY KEY (id)
+Políticas RLS (nome, operação, papéis e modo; as expressões permanecem no catálogo):
+"Users can insert calls" [command=INSERT; roles=authenticated; PERMISSIVE]
+"Users can update their calls" [command=UPDATE; roles=authenticated; PERMISSIVE]
+"Users can view own calls" [command=SELECT; roles=authenticated; PERMISSIVE]
+
 | propriedade | valor |
 |---|---|
 | tipo | table |

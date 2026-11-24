@@ -1,5 +1,24 @@
 # public.allowed_countries
 
+> Descrição funcional não estava registrada no catálogo; o conteúdo abaixo documenta a estrutura observável, sem inferir regras de negócio não declaradas.
+
+[CATALOGUE SEMÂNTICO DO PROJETO]
+Objeto: public.allowed_countries (tabela). RLS habilitada: t; RLS forçada: f.
+Colunas (ordem, tipo e nulabilidade):
+1 id uuid NOT NULL [DEFAULT/EXPRESSION DEFINED]
+2 country_code text NOT NULL
+3 country_name text NOT NULL
+4 added_by uuid NULLABLE
+5 created_at timestamp with time zone NOT NULL [DEFAULT/EXPRESSION DEFINED]
+Constraints:
+allowed_countries_added_by_fkey: FOREIGN KEY (added_by) REFERENCES auth.users(id)
+allowed_countries_pkey: PRIMARY KEY (id)
+allowed_countries_country_code_key: UNIQUE (country_code)
+Políticas RLS (nome, operação, papéis e modo; as expressões permanecem no catálogo):
+"Admins can delete allowed countries" [command=DELETE; roles=authenticated; PERMISSIVE]
+"Admins can insert allowed countries" [command=INSERT; roles=authenticated; PERMISSIVE]
+"Admins can view allowed countries" [command=SELECT; roles=authenticated; PERMISSIVE]
+
 | propriedade | valor |
 |---|---|
 | tipo | table |

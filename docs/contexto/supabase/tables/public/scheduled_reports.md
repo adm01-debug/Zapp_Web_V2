@@ -1,5 +1,27 @@
 # public.scheduled_reports
 
+> Descrição funcional não estava registrada no catálogo; o conteúdo abaixo documenta a estrutura observável, sem inferir regras de negócio não declaradas.
+
+[CATALOGUE SEMÂNTICO DO PROJETO]
+Objeto: public.scheduled_reports (tabela). RLS habilitada: t; RLS forçada: f.
+Colunas (ordem, tipo e nulabilidade):
+1 id uuid NOT NULL [DEFAULT/EXPRESSION DEFINED]
+2 name text NOT NULL
+3 report_type text NOT NULL [DEFAULT/EXPRESSION DEFINED]
+4 frequency text NOT NULL [DEFAULT/EXPRESSION DEFINED]
+5 recipients text[] NOT NULL [DEFAULT/EXPRESSION DEFINED]
+6 format text NOT NULL [DEFAULT/EXPRESSION DEFINED]
+7 is_active boolean NULLABLE [DEFAULT/EXPRESSION DEFINED]
+8 next_send_at timestamp with time zone NULLABLE
+9 last_sent_at timestamp with time zone NULLABLE
+10 created_by uuid NULLABLE
+11 created_at timestamp with time zone NOT NULL [DEFAULT/EXPRESSION DEFINED]
+12 updated_at timestamp with time zone NOT NULL [DEFAULT/EXPRESSION DEFINED]
+Constraints:
+scheduled_reports_pkey: PRIMARY KEY (id)
+Políticas RLS (nome, operação, papéis e modo; as expressões permanecem no catálogo):
+"Admins can manage scheduled reports" [command=ALL; roles=authenticated; PERMISSIVE]
+
 | propriedade | valor |
 |---|---|
 | tipo | table |

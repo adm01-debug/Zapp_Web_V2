@@ -2,6 +2,16 @@
 
 > [RLS-sem-policy: intencional] Snapshot das definições de funções antes de migrations críticas. Só leitura por service_role/DBA.
 
+[CATALOGUE SEMÂNTICO DO PROJETO]
+Objeto: public._zapp_fn_before (tabela). RLS habilitada: t; RLS forçada: f.
+Colunas (ordem, tipo e nulabilidade):
+1 k text NULLABLE
+2 h text NULLABLE
+Constraints:
+(nenhuma PK/UNIQUE/FK/CHECK/EXCLUDE registrada)
+Políticas RLS (nome, operação, papéis e modo; as expressões permanecem no catálogo):
+(RLS habilitada sem política; verificar se o acesso restrito é intencional)
+
 | propriedade | valor |
 |---|---|
 | tipo | table |

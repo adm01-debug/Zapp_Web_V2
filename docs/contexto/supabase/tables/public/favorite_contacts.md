@@ -1,5 +1,25 @@
 # public.favorite_contacts
 
+> Descrição funcional não estava registrada no catálogo; o conteúdo abaixo documenta a estrutura observável, sem inferir regras de negócio não declaradas.
+
+[CATALOGUE SEMÂNTICO DO PROJETO]
+Objeto: public.favorite_contacts (tabela). RLS habilitada: t; RLS forçada: f.
+Colunas (ordem, tipo e nulabilidade):
+1 id uuid NOT NULL [DEFAULT/EXPRESSION DEFINED]
+2 contact_id uuid NOT NULL
+3 user_id uuid NOT NULL
+4 created_at timestamp with time zone NOT NULL [DEFAULT/EXPRESSION DEFINED]
+Constraints:
+favorite_contacts_contact_id_fkey: FOREIGN KEY (contact_id) REFERENCES contacts(id) ON DELETE CASCADE
+favorite_contacts_user_id_fkey: FOREIGN KEY (user_id) REFERENCES auth.users(id) ON DELETE CASCADE
+favorite_contacts_pkey: PRIMARY KEY (id)
+favorite_contacts_contact_id_user_id_key: UNIQUE (contact_id, user_id)
+Políticas RLS (nome, operação, papéis e modo; as expressões permanecem no catálogo):
+"Users can create own favorites" [command=INSERT; roles=authenticated; PERMISSIVE]
+"Users can delete own favorites" [command=DELETE; roles=authenticated; PERMISSIVE]
+"Users can update own favorites" [command=UPDATE; roles=authenticated; PERMISSIVE]
+"Users can view own favorites" [command=SELECT; roles=authenticated; PERMISSIVE]
+
 | propriedade | valor |
 |---|---|
 | tipo | table |

@@ -2,6 +2,24 @@
 
 > Anexos de email_messages (unico por mensagem+attachment_id).
 
+[CATALOGUE SEMÂNTICO DO PROJETO]
+Objeto: public.email_attachments (tabela). RLS habilitada: t; RLS forçada: f.
+Colunas (ordem, tipo e nulabilidade):
+1 id uuid NOT NULL [DEFAULT/EXPRESSION DEFINED]
+2 email_message_id uuid NOT NULL
+3 gmail_attachment_id text NOT NULL
+4 filename text NULLABLE
+5 mime_type text NULLABLE
+6 size_bytes bigint NULLABLE
+7 created_at timestamp with time zone NOT NULL [DEFAULT/EXPRESSION DEFINED]
+Constraints:
+email_attachments_email_message_id_fkey: FOREIGN KEY (email_message_id) REFERENCES email_messages(id) ON DELETE CASCADE
+email_attachments_pkey: PRIMARY KEY (id)
+email_attachments_msg_att_key: UNIQUE (email_message_id, gmail_attachment_id)
+Políticas RLS (nome, operação, papéis e modo; as expressões permanecem no catálogo):
+"Users can view attachments of own accounts" [command=SELECT; roles=authenticated; PERMISSIVE]
+"service_role inserts email attachments" [command=INSERT; roles=service_role; PERMISSIVE]
+
 | propriedade | valor |
 |---|---|
 | tipo | table |

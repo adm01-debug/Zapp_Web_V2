@@ -1,5 +1,22 @@
 # public.copilot_conversation_scores
 
+> Descrição funcional não estava registrada no catálogo; o conteúdo abaixo documenta a estrutura observável, sem inferir regras de negócio não declaradas.
+
+[CATALOGUE SEMÂNTICO DO PROJETO]
+Objeto: public.copilot_conversation_scores (tabela). RLS habilitada: t; RLS forçada: f.
+Colunas (ordem, tipo e nulabilidade):
+1 conversation_id uuid NOT NULL
+2 score integer NOT NULL
+3 scored_by uuid NOT NULL
+4 updated_at timestamp with time zone NOT NULL [DEFAULT/EXPRESSION DEFINED]
+Constraints:
+copilot_conversation_scores_score_check: CHECK (score >= 1 AND score <= 5)
+copilot_conversation_scores_pkey: PRIMARY KEY (conversation_id)
+Políticas RLS (nome, operação, papéis e modo; as expressões permanecem no catálogo):
+copilot_conversation_scores_insert [command=INSERT; roles=authenticated; PERMISSIVE]
+copilot_conversation_scores_select [command=SELECT; roles=authenticated; PERMISSIVE]
+copilot_conversation_scores_update [command=UPDATE; roles=authenticated; PERMISSIVE]
+
 | propriedade | valor |
 |---|---|
 | tipo | table |

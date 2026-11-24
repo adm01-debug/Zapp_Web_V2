@@ -2,6 +2,49 @@
 
 > Instancias da Evolution GO conectadas (instance_id unico), status da sessao e configuracao de webhook.
 
+[CATALOGUE SEMÂNTICO DO PROJETO]
+Objeto: public.whatsapp_connections (tabela). RLS habilitada: t; RLS forçada: f.
+Colunas (ordem, tipo e nulabilidade):
+1 id uuid NOT NULL [DEFAULT/EXPRESSION DEFINED]
+2 name text NOT NULL
+3 phone_number text NOT NULL
+4 instance_id text NULLABLE
+5 status text NULLABLE [DEFAULT/EXPRESSION DEFINED]
+6 qr_code text NULLABLE
+7 is_default boolean NULLABLE [DEFAULT/EXPRESSION DEFINED]
+8 created_by uuid NULLABLE
+9 created_at timestamp with time zone NOT NULL [DEFAULT/EXPRESSION DEFINED]
+10 updated_at timestamp with time zone NOT NULL [DEFAULT/EXPRESSION DEFINED]
+11 farewell_message text NULLABLE
+12 farewell_enabled boolean NULLABLE [DEFAULT/EXPRESSION DEFINED]
+13 battery_level integer NULLABLE
+14 is_plugged boolean NULLABLE
+15 retry_count integer NULLABLE [DEFAULT/EXPRESSION DEFINED]
+16 max_retries integer NULLABLE [DEFAULT/EXPRESSION DEFINED]
+17 last_health_check timestamp with time zone NULLABLE
+18 health_status text NULLABLE [DEFAULT/EXPRESSION DEFINED]
+19 health_response_ms integer NULLABLE
+20 instance_token_secret_id uuid NULLABLE
+21 capabilities jsonb NOT NULL [DEFAULT/EXPRESSION DEFINED] — F60: o que esta instancia entrega — {"ptt": true, "document": true, "video": false, "max_chars": 4096, "hourly_limit": 200}. Vazio = nao declarado (trata como desconhecido, nao como "tudo pode").
+22 auto_reconnect_enabled boolean NOT NULL [DEFAULT/EXPRESSION DEFINED] — Se true, a conexao pode ser reconectada automaticamente apos cair.
+23 reconnect_interval_seconds integer NOT NULL [DEFAULT/EXPRESSION DEFINED] — Intervalo minimo entre tentativas de reconexao, em segundos (60..3600).
+24 reconnect_max_attempts integer NOT NULL [DEFAULT/EXPRESSION DEFINED] — Numero maximo de tentativas de reconexao por queda antes de desistir (1..20).
+25 health_reason text NULLABLE — Motivo curto do estado de saude (texto, ate 200 caracteres). Nulo quando nao ha motivo a informar.
+Constraints:
+whatsapp_connections_health_reason_check: CHECK (health_reason IS NULL OR char_length(btrim(health_reason)) >= 1 AND char_length(btrim(health_reason)) <= 200)
+whatsapp_connections_reconnect_interval_seconds_check: CHECK (reconnect_interval_seconds >= 60 AND reconnect_interval_seconds <= 3600)
+whatsapp_connections_reconnect_max_attempts_check: CHECK (reconnect_max_attempts >= 1 AND reconnect_max_attempts <= 20)
+whatsapp_connections_status_check: CHECK (status = ANY (ARRAY['connected'::text, 'disconnected'::text, 'connecting'::text, 'qr_pending'::text]))
+whatsapp_connections_created_by_fkey: FOREIGN KEY (created_by) REFERENCES profiles(id) ON DELETE SET NULL
+whatsapp_connections_instance_token_secret_id_fkey: FOREIGN KEY (instance_token_secret_id) REFERENCES vault.secrets(id) ON DELETE SET NULL
+whatsapp_connections_pkey: PRIMARY KEY (id)
+whatsapp_connections_instance_id_key: UNIQUE (instance_id)
+Políticas RLS (nome, operação, papéis e modo; as expressões permanecem no catálogo):
+"Admin supervisor view connections" [command=SELECT; roles=authenticated; PERMISSIVE]
+"Admins can delete connections" [command=DELETE; roles=authenticated; PERMISSIVE]
+"Admins can insert connections" [command=INSERT; roles=authenticated; PERMISSIVE]
+"Admins can update connections" [command=UPDATE; roles=authenticated; PERMISSIVE]
+
 | propriedade | valor |
 |---|---|
 | tipo | table |

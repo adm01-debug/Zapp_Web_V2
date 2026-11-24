@@ -2,6 +2,44 @@
 
 > Perfil de atendente ligado a auth.users: nome, avatar, departamento e role em cache (fonte de verdade de permissao = user_roles + role_permissions).
 
+[CATALOGUE SEMÂNTICO DO PROJETO]
+Objeto: public.profiles (tabela). RLS habilitada: t; RLS forçada: f.
+Colunas (ordem, tipo e nulabilidade):
+1 id uuid NOT NULL [DEFAULT/EXPRESSION DEFINED]
+2 user_id uuid NOT NULL
+3 name text NOT NULL
+4 email text NULLABLE
+5 avatar_url text NULLABLE
+6 role text NULLABLE [DEFAULT/EXPRESSION DEFINED]
+7 max_chats integer NULLABLE [DEFAULT/EXPRESSION DEFINED]
+8 created_at timestamp with time zone NOT NULL [DEFAULT/EXPRESSION DEFINED]
+9 updated_at timestamp with time zone NOT NULL [DEFAULT/EXPRESSION DEFINED]
+10 job_title text NULLABLE
+11 department text NULLABLE
+12 phone text NULLABLE
+13 access_level text NULLABLE [DEFAULT/EXPRESSION DEFINED] — DEPRECATED 2026-08-30: coluna não está sendo lida por nenhuma policy de acesso crítica.    Fonte de verdade = user_roles + role_permissions. Remover após confirmar 0 consumidores no front.
+14 permissions jsonb NULLABLE [DEFAULT/EXPRESSION DEFINED] — DEPRECATED 2026-08-30: jsonb ad-hoc nunca populado (valor = {} em 100% dos registros).    Sistema de permissões oficial está em permissions + role_permissions. Candidata a DROP.
+15 is_active boolean NULLABLE [DEFAULT/EXPRESSION DEFINED]
+16 session_invalidated_at timestamp with time zone NULLABLE
+17 birthday date NULLABLE
+18 nickname text NULLABLE
+19 signature text NULLABLE
+20 can_download boolean NOT NULL [DEFAULT/EXPRESSION DEFINED]
+21 department_id uuid NULLABLE
+Constraints:
+profiles_role_check: CHECK (role = ANY (ARRAY['admin'::text, 'supervisor'::text, 'agent'::text]))
+profiles_department_id_fkey: FOREIGN KEY (department_id) REFERENCES departments(id)
+profiles_user_id_fkey: FOREIGN KEY (user_id) REFERENCES auth.users(id) ON DELETE CASCADE
+profiles_pkey: PRIMARY KEY (id)
+profiles_user_id_key: UNIQUE (user_id)
+Políticas RLS (nome, operação, papéis e modo; as expressões permanecem no catálogo):
+"Admin supervisor can view all profiles" [command=SELECT; roles=authenticated; PERMISSIVE]
+"Admins can update any profile" [command=UPDATE; roles=authenticated; PERMISSIVE]
+"Block sensitive field changes by non-admins" [command=UPDATE; roles=authenticated; RESTRICTIVE]
+"Users can insert their own profile safely" [command=INSERT; roles=authenticated; PERMISSIVE]
+"Users can update own profile" [command=UPDATE; roles=authenticated; PERMISSIVE]
+"Users can view own profile" [command=SELECT; roles=authenticated; PERMISSIVE]
+
 | propriedade | valor |
 |---|---|
 | tipo | table |

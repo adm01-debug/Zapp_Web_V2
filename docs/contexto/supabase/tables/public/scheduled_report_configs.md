@@ -1,5 +1,31 @@
 # public.scheduled_report_configs
 
+> Descrição funcional não estava registrada no catálogo; o conteúdo abaixo documenta a estrutura observável, sem inferir regras de negócio não declaradas.
+
+[CATALOGUE SEMÂNTICO DO PROJETO]
+Objeto: public.scheduled_report_configs (tabela). RLS habilitada: t; RLS forçada: f.
+Colunas (ordem, tipo e nulabilidade):
+1 id uuid NOT NULL [DEFAULT/EXPRESSION DEFINED]
+2 name text NOT NULL
+3 report_type text NOT NULL [DEFAULT/EXPRESSION DEFINED]
+4 frequency text NOT NULL [DEFAULT/EXPRESSION DEFINED]
+5 recipients text[] NOT NULL [DEFAULT/EXPRESSION DEFINED]
+6 is_active boolean NOT NULL [DEFAULT/EXPRESSION DEFINED]
+7 last_sent_at timestamp with time zone NULLABLE
+8 next_send_at timestamp with time zone NULLABLE
+9 created_by uuid NULLABLE
+10 config jsonb NOT NULL [DEFAULT/EXPRESSION DEFINED]
+11 created_at timestamp with time zone NOT NULL [DEFAULT/EXPRESSION DEFINED]
+12 updated_at timestamp with time zone NOT NULL [DEFAULT/EXPRESSION DEFINED]
+Constraints:
+scheduled_report_configs_created_by_fkey: FOREIGN KEY (created_by) REFERENCES profiles(id) ON DELETE SET NULL
+scheduled_report_configs_pkey: PRIMARY KEY (id)
+Políticas RLS (nome, operação, papéis e modo; as expressões permanecem no catálogo):
+"Admin/supervisor can insert report configs" [command=INSERT; roles=authenticated; PERMISSIVE]
+"Owner or admin can delete report configs" [command=DELETE; roles=authenticated; PERMISSIVE]
+"Owner or admin can read report configs" [command=SELECT; roles=authenticated; PERMISSIVE]
+"Owner or admin can update report configs" [command=UPDATE; roles=authenticated; PERMISSIVE]
+
 | propriedade | valor |
 |---|---|
 | tipo | table |

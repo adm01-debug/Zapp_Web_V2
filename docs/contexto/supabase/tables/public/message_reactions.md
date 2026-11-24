@@ -1,5 +1,32 @@
 # public.message_reactions
 
+> Descrição funcional não estava registrada no catálogo; o conteúdo abaixo documenta a estrutura observável, sem inferir regras de negócio não declaradas.
+
+[CATALOGUE SEMÂNTICO DO PROJETO]
+Objeto: public.message_reactions (tabela). RLS habilitada: t; RLS forçada: f.
+Colunas (ordem, tipo e nulabilidade):
+1 id uuid NOT NULL [DEFAULT/EXPRESSION DEFINED]
+2 message_id uuid NOT NULL
+3 user_id uuid NULLABLE
+4 contact_id uuid NULLABLE
+5 emoji text NOT NULL
+6 created_at timestamp with time zone NOT NULL [DEFAULT/EXPRESSION DEFINED]
+Constraints:
+reaction_author_check: CHECK (user_id IS NOT NULL OR contact_id IS NOT NULL)
+message_reactions_contact_id_fkey: FOREIGN KEY (contact_id) REFERENCES contacts(id) ON DELETE CASCADE
+message_reactions_message_id_fkey: FOREIGN KEY (message_id) REFERENCES messages(id) ON DELETE CASCADE
+message_reactions_user_id_fkey: FOREIGN KEY (user_id) REFERENCES profiles(id) ON DELETE CASCADE
+message_reactions_pkey: PRIMARY KEY (id)
+message_reactions_message_id_contact_id_emoji_key: UNIQUE (message_id, contact_id, emoji)
+message_reactions_message_id_user_id_emoji_key: UNIQUE (message_id, user_id, emoji)
+message_reactions_one_per_agent: UNIQUE (message_id, user_id)
+Políticas RLS (nome, operação, papéis e modo; as expressões permanecem no catálogo):
+"Users can view reactions on accessible messages" [command=SELECT; roles=authenticated; PERMISSIVE]
+message_reactions_delete_policy [command=DELETE; roles=authenticated; PERMISSIVE]
+message_reactions_insert_policy [command=INSERT; roles=authenticated; PERMISSIVE]
+message_reactions_select_policy [command=SELECT; roles=authenticated; PERMISSIVE]
+message_reactions_update_policy [command=UPDATE; roles=authenticated; PERMISSIVE]
+
 | propriedade | valor |
 |---|---|
 | tipo | table |

@@ -4657,7 +4657,7 @@
   {
    "arquivo": "scripts/maintenance/lib.mjs",
    "descricao": null,
-   "linhas": 404,
+   "linhas": 783,
    "env": [],
    "npm_scripts": [],
    "workflows": [],
@@ -4666,7 +4666,7 @@
   {
    "arquivo": "scripts/maintenance/run.mjs",
    "descricao": null,
-   "linhas": 569,
+   "linhas": 710,
    "env": [
     "XDG_STATE_HOME"
    ],

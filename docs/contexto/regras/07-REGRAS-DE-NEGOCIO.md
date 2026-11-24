@@ -1,6 +1,6 @@
 # 07 · REGRAS DE NEGÓCIO
 
-> Gerado automaticamente por AI Context Sync v1.3.2 · commit `06d10c8063` · branch `main` · 2026-11-24 18:16 UTC
+> Gerado automaticamente por AI Context Sync v1.3.2 · commit `e1a545c6c2` · branch `main` · 2026-11-24 22:12 UTC
 > Não edite à mão — regras humanas vão em `manual/`.
 
 ## A. Regras escritas por humanos (`manual/` — prioridade máxima, nunca sobrescrito)
@@ -4985,7 +4985,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | unsupported-filter-column | `analise-prs/resgate-261118-lote3/claude/test-e2e-suite-completa-261104-1428/scripts/e2e-isolated/providers.mjs` |
 | unsupported-order | `analise-prs/resgate-261118-lote3/claude/test-e2e-suite-completa-261104-1428/scripts/e2e-isolated/providers.mjs` |
 | unsupported-range | `analise-prs/resgate-261118-lote3/claude/test-e2e-suite-completa-261104-1428/scripts/e2e-isolated/providers.mjs` |
-| … +2522 linhas — lista completa em `context.json` | |
+| … +2521 linhas — lista completa em `context.json` | |
 
 ## J. Controle de acesso no código (checagens de perfil/permissão)
 

@@ -1,5 +1,24 @@
 # public.away_messages
 
+> Descrição funcional não estava registrada no catálogo; o conteúdo abaixo documenta a estrutura observável, sem inferir regras de negócio não declaradas.
+
+[CATALOGUE SEMÂNTICO DO PROJETO]
+Objeto: public.away_messages (tabela). RLS habilitada: t; RLS forçada: f.
+Colunas (ordem, tipo e nulabilidade):
+1 id uuid NOT NULL [DEFAULT/EXPRESSION DEFINED]
+2 whatsapp_connection_id uuid NOT NULL
+3 content text NULLABLE [DEFAULT/EXPRESSION DEFINED]
+4 is_enabled boolean NULLABLE [DEFAULT/EXPRESSION DEFINED]
+5 created_at timestamp with time zone NOT NULL [DEFAULT/EXPRESSION DEFINED]
+6 updated_at timestamp with time zone NOT NULL [DEFAULT/EXPRESSION DEFINED]
+Constraints:
+away_messages_whatsapp_connection_id_fkey: FOREIGN KEY (whatsapp_connection_id) REFERENCES whatsapp_connections(id) ON DELETE CASCADE
+away_messages_pkey: PRIMARY KEY (id)
+away_messages_whatsapp_connection_id_key: UNIQUE (whatsapp_connection_id)
+Políticas RLS (nome, operação, papéis e modo; as expressões permanecem no catálogo):
+"Admins can manage away messages" [command=ALL; roles=authenticated; PERMISSIVE]
+"Authenticated users can view away messages" [command=SELECT; roles=authenticated; PERMISSIVE]
+
 | propriedade | valor |
 |---|---|
 | tipo | table |
