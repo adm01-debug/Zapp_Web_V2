@@ -2,11 +2,21 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "45a65087324ff2db6d3cf40898e65b918d3f11a2",
+  "commit": "83a70c3e87b4c81877ec186ed1bf2e6b6c164937",
   "branch": "main",
-  "data_commit": "2026-11-24T07:49:27-03:00",
+  "data_commit": "2026-11-24T11:26:47Z",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "83a70c3e",
+    "data": "2026-11-24",
+    "assunto": "chore(db): sincronizar artefatos derivados do banco (#3356)"
+   },
+   {
+    "sha": "592ffa7f",
+    "data": "2026-11-24",
+    "assunto": "fix: elimina o flake de meia-noite do contrato do monitor (vs_yesterday) (#3353)"
+   },
    {
     "sha": "45a65087",
     "data": "2026-11-24",
@@ -121,16 +131,6 @@
     "sha": "7fe8d245",
     "data": "2026-11-23",
     "assunto": "fix: suportar executáveis .exe/.cmd/.bat no Windows em resolverExecutavel (#3331)"
-   },
-   {
-    "sha": "798617f6",
-    "data": "2026-11-23",
-    "assunto": "fix(test): mock useTalkxAi no layout test do TalkXCampaignWizard (#3330)"
-   },
-   {
-    "sha": "2fad0042",
-    "data": "2026-11-23",
-    "assunto": "chore(db): sincronizar artefatos derivados do banco (#3329)"
    }
   ],
   "arquivos_mudados_7d": 5246,
@@ -215,7 +215,7 @@
    },
    {
     "arquivo": "supabase/schema-manifest.json",
-    "mudancas": 14
+    "mudancas": 15
    },
    {
     "arquivo": "supabase/schema-catalog.json",
@@ -301,11 +301,11 @@
   "autores_30d": [
    {
     "autor": "adm01-debug",
-    "commits": 288
+    "commits": 287
    },
    {
     "autor": "github-actions[bot]",
-    "commits": 8
+    "commits": 9
    },
    {
     "autor": "dependabot[bot]",

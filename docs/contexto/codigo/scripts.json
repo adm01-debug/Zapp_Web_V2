@@ -3040,7 +3040,7 @@
   {
    "arquivo": "scripts/db-audit/talkx-monitor-panel.test.sh",
    "descricao": "X140 (Fase 11 · banco + testes): talkx_monitor_panel — KPIs, comparativo com ontem, serie por minuto com zeros, saude do worker e autorizacao.",
-   "linhas": 387,
+   "linhas": 427,
    "env": [],
    "npm_scripts": [],
    "workflows": [],

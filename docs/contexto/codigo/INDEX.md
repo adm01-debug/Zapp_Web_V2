@@ -1,7 +1,7 @@
 # Contexto do projeto para agentes de IA
 
 GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.
-Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR dela) a cada push em `main` e a cada 10 minutos pelo workflow `contexto.yml`; índice único das três fontes em `docs/contexto/00-INDEX.md`. Gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `45a65087324ff2db6d3cf40898e65b918d3f11a2` (2026-11-24T07:49:27-03:00).
+Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR dela) a cada push em `main` e a cada 10 minutos pelo workflow `contexto.yml`; índice único das três fontes em `docs/contexto/00-INDEX.md`. Gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `83a70c3e87b4c81877ec186ed1bf2e6b6c164937` (2026-11-24T11:26:47Z).
 
 ## Como usar (leia antes de planejar ou executar qualquer tarefa)
 1. **Tela/rota/menu** → `rotas.json` (url/vista/menu → arquivo → hooks → tabelas → edges; `rotas_http_backend` para APIs) e `modulos.json` (módulo inteiro + dependências entre módulos).
@@ -397,8 +397,8 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - possiveis_segredos_no_codigo: 6 — ex.: analise-prs/resgate-261118-lote3/claude_pink/cool-dijkstra-xk9ek2/scripts/ci/edge-coverage-authz.unit.mjs:397, analise-prs/resgate-261118-lote3/claude_pink/cool-dijkstra-xk9ek2/scripts/edge-deploy/redigir-log.unit.mjs:38, scripts/ai-context/cenarios.mjs:102
 
 ## Grafo de código (graphify)
-- 103212 nós · 175326 arestas · 9277 comunidades · grafo do commit `45a65087`
-- comunidades maiores: Communities (5953 total, 1987 thin omitted) (3948), TalkXSuppression.tsx (1666), @tanstack/react-query (1531), react (1514), vitest (956), ref_node_fs (894), chat.ts (820), select.tsx (632), cn (604), validation.ts (545), src/hooks/integrations/useTalkXSegments.ts (467), DashboardView.tsx (464)
+- 103215 nós · 175335 arestas · 9128 comunidades · grafo do commit `83a70c3e`
+- comunidades maiores: Communities (5953 total, 1987 thin omitted) (3945), react (1322), lucide-react (1116), vitest (1084), src/components/talkx/TalkXCampaignWizard.tsx (1029), utils.ts (872), TalkXSuppression.tsx (863), validation.ts (667), cn (648), ref_node_assert (523), chat.ts (487), ExternalProductManagement.tsx (480)
 - símbolos mais chamados: cn() (src/lib/utils.ts), useAuth() (src/hooks/auth/useAuth.tsx), jsonResponse() (supabase/functions/_shared/validation.ts), errorResponse() (supabase/functions/_shared/validation.ts), handleCors() (supabase/functions/_shared/validation.ts), fail() (scripts/e2e-isolated/network-proof-policy.mjs), Logger (supabase/functions/_shared/validation.ts), requireEnv() (supabase/functions/_shared/validation.ts), fmtInt() (src/components/talkx/kit/format.ts), fromTable() (src/lib/supabaseHelpers.ts), useUserRole() (src/hooks/system/useUserRole.ts), validationErrorResponse() (supabase/functions/_shared/schemas.ts)
 - consulta local: `graphify query "<pergunta>"`, `graphify path "<A>" "<B>"`, `graphify explain "<X>"`
 
@@ -407,7 +407,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - ESTADO.md (22)
 - docs/talkx/ESTADOS.md (16)
 - src/integrations/supabase/types.ts (15)
-- supabase/schema-manifest.json (14)
+- supabase/schema-manifest.json (15)
 - supabase/schema-catalog.json (13)
 - .github/workflows/db-guard.yml (12)
 - PENDENCIAS.md (12)
@@ -525,6 +525,8 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - CHANGELOG topo: [Unreleased]
 
 ## Últimos commits
+- 2026-11-24 `83a70c3e` chore(db): sincronizar artefatos derivados do banco (#3356)
+- 2026-11-24 `592ffa7f` fix: elimina o flake de meia-noite do contrato do monitor (vs_yesterday) (#3353)
 - 2026-11-24 `45a65087` fix(e2e): serve as 4 imagens restantes pelo mirror ghcr.io do mesmo digest (#3352)
 - 2026-11-24 `38ee260d` chore: corrige o comentario do E2E do Firefox no ci.yml (causa nao e memoria) (#3349)
 - 2026-11-24 `e586a725` fix(e2e): tira o postgrest do ECR anonimo e reconhece a cota "Data limit exceeded" (#3351)
@@ -538,8 +540,6 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - 2026-11-23 `4c1d031f` ⬆️ ci: bump actions/dependency-review-action from 5.0.0 to 5.0.1 in the actions-misc group across 1 directory (#3335)
 - 2026-11-23 `f48c1ce7` ⬆️ ci: bump ossf/scorecard-action from 2.5.0 to 2.6.0 (#3336)
 - 2026-11-23 `684cc2c2` fix(transcricao): fallback de STT pelo OpenRouter e fim do 401 silencioso na voz (#3343)
-- 2026-11-23 `9f13ab55` ⬆️ ci: bump the codeql-action group across 1 directory with 3 updates (#3334)
-- 2026-11-23 `c4ce2b5a` chore(db): sincroniza talkx_ai_requests e corrige o inventario (#3342)
 
 ## Arquivos deste diretório
 - `docs/contexto/codigo/rotas.json`

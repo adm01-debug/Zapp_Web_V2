@@ -1,9 +1,9 @@
 {
  "meta": {
-  "sha": "45a65087324ff2db6d3cf40898e65b918d3f11a2",
+  "sha": "83a70c3e87b4c81877ec186ed1bf2e6b6c164937",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-24 11:13 UTC",
+  "generated_at": "2026-11-24 12:21 UTC",
   "files_total": 15629,
   "code_files": 8930,
   "code_lines": 1417945
@@ -482981,10 +482981,28 @@
   }
  },
  "git": {
-  "sha": "45a65087324ff2db6d3cf40898e65b918d3f11a2",
+  "sha": "83a70c3e87b4c81877ec186ed1bf2e6b6c164937",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "83a70c3e",
+    "date": "2026-11-24",
+    "author": "github-actions[bot]",
+    "subject": "chore(db): sincronizar artefatos derivados do banco (#3356)",
+    "files": [
+     "supabase/schema-manifest.json"
+    ]
+   },
+   {
+    "sha": "592ffa7f",
+    "date": "2026-11-24",
+    "author": "adm01-debug",
+    "subject": "fix: elimina o flake de meia-noite do contrato do monitor (vs_yesterday) (#3353)",
+    "files": [
+     "scripts/db-audit/talkx-monitor-panel.test.sh"
+    ]
+   },
    {
     "sha": "45a65087",
     "date": "2026-11-24",
@@ -483355,53 +483373,24 @@
     "files": [
      "scripts/db-audit/talkx-ab.test.sh"
     ]
-   },
-   {
-    "sha": "7a351f77",
-    "date": "2026-11-22",
-    "author": "adm01-debug",
-    "subject": "feat(assistente): decide por edge as 7 edges restantes da porta unica (#3321)",
-    "files": [
-     "ESTADO.md",
-     "docs/plans/PLANO_ASSISTENTE_PESSOAL_IA_2026-11-15.md",
-     "supabase/deployment-manifest.json",
-     "supabase/functions/_shared/assistant-gateway.test.ts",
-     "supabase/functions/_shared/assistant-gateway.ts",
-     "supabase/functions/assistant-gateway/index.test.ts",
-     "supabase/functions/assistant-gateway/index.ts"
-    ]
-   },
-   {
-    "sha": "1f71f25d",
-    "date": "2026-11-22",
-    "author": "adm01-debug",
-    "subject": "feat(assistente): liga risco de perda e ancoragem de preco na porta unica (#3320)",
-    "files": [
-     "docs/plans/PLANO_ASSISTENTE_PESSOAL_IA_2026-11-15.md",
-     "supabase/deployment-manifest.json",
-     "supabase/functions/_shared/assistant-gateway.test.ts",
-     "supabase/functions/_shared/assistant-gateway.ts",
-     "supabase/functions/assistant-gateway/index.test.ts",
-     "supabase/functions/assistant-gateway/index.ts"
-    ]
    }
   ],
   "hot_files": [
    [
-    "supabase/deployment-manifest.json",
-    4
-   ],
-   [
-    "ESTADO.md",
-    4
+    "supabase/schema-manifest.json",
+    3
    ],
    [
     "scripts/e2e-isolated/images.lock.json",
     3
    ],
    [
-    "docs/plans/PLANO_ASSISTENTE_PESSOAL_IA_2026-11-15.md",
+    "ESTADO.md",
     3
+   ],
+   [
+    "scripts/db-audit/talkx-monitor-panel.test.sh",
+    2
    ],
    [
     ".github/workflows/ci.yml",
@@ -483424,11 +483413,11 @@
     2
    ],
    [
-    "supabase/schema-catalog.json",
+    "supabase/deployment-manifest.json",
     2
    ],
    [
-    "supabase/schema-manifest.json",
+    "supabase/schema-catalog.json",
     2
    ],
    [
@@ -483437,22 +483426,6 @@
    ],
    [
     "src/components/talkx/__tests__/TalkXCampaignWizard.layout.test.tsx",
-    2
-   ],
-   [
-    "supabase/functions/_shared/assistant-gateway.test.ts",
-    2
-   ],
-   [
-    "supabase/functions/_shared/assistant-gateway.ts",
-    2
-   ],
-   [
-    "supabase/functions/assistant-gateway/index.test.ts",
-    2
-   ],
-   [
-    "supabase/functions/assistant-gateway/index.ts",
     2
    ],
    [
@@ -483465,6 +483438,22 @@
    ],
    [
     "scripts/ci/e2e-isolated-pull-image.unit.mjs",
+    1
+   ],
+   [
+    "scripts/e2e-isolated/pull-image.mjs",
+    1
+   ],
+   [
+    "e2e/email-navy-visual.spec.ts",
+    1
+   ],
+   [
+    "e2e/contact-form-email-duplicate.spec.ts",
+    1
+   ],
+   [
+    "e2e/contacts-views.spec.ts",
     1
    ]
   ]
