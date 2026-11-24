@@ -1,0 +1,23 @@
+{
+ "data": "2026-11-01",
+ "origin_main": "532aa09bae",
+ "branches_locais": 4268,
+ "novas_so_locais": 59,
+ "classes": {
+  "LIXO": 34,
+  "SO LOCAL": 20,
+  "PARCIAL": 5
+ },
+ "validade": {
+  "ABSORVIDO": 10,
+  "DIVERGENTE (main mudou o mesmo trecho)": 8,
+  "SOBRA (ausente na main)": 7
+ },
+ "tags_resgate_remoto": 2390,
+ "nao_feito": [
+  "clusters Jaccard",
+  "vereditos LLM",
+  "patch-id global",
+  "arvores sujas/quarentena (nao sobem por decisao)"
+ ]
+}
