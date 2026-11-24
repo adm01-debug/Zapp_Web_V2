@@ -66,11 +66,11 @@
  "commits": {
   "convencao": "conventional commits (observado)",
   "exemplos": [
+   "fix(e2e): retenta o pull em falha transiente de rede do registry (#3357)",
    "chore(db): sincronizar artefatos derivados do banco (#3356)",
    "fix: elimina o flake de meia-noite do contrato do monitor (vs_yesterday) (#3353)",
    "fix(e2e): serve as 4 imagens restantes pelo mirror ghcr.io do mesmo digest (#3352)",
-   "chore: corrige o comentario do E2E do Firefox no ci.yml (causa nao e memoria) (#3349)",
-   "fix(e2e): tira o postgrest do ECR anonimo e reconhece a cota \"Data limit exceeded\" (#3351)"
+   "chore: corrige o comentario do E2E do Firefox no ci.yml (causa nao e memoria) (#3349)"
   ]
  },
  "pr_template": ".github/PULL_REQUEST_TEMPLATE.md",

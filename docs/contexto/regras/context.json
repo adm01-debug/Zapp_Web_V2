@@ -1,15 +1,15 @@
 {
  "meta": {
-  "sha": "83a70c3e87b4c81877ec186ed1bf2e6b6c164937",
+  "sha": "5e609b752407ce748c438f216b7a01ce1d7c2d24",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-24 12:21 UTC",
+  "generated_at": "2026-11-24 13:15 UTC",
   "files_total": 15629,
   "code_files": 8930,
-  "code_lines": 1417945
+  "code_lines": 1418021
  },
  "version": "1.3.2",
- "facts_hash": "2dee64d18b7aad7a",
+ "facts_hash": "e3d595f25bbc33a1",
  "stack": {
   "frameworks": [
    "React + Vite",
@@ -77207,7 +77207,7 @@
   {
    "module": "scripts",
    "files": 501,
-   "lines": 102450,
+   "lines": 102526,
    "tables": [
     "a",
     "alem_do_limite",
@@ -353949,7 +353949,13 @@
   },
   "scripts/ci/e2e-isolated-pull-image.unit.mjs": {
    "path": "scripts/ci/e2e-isolated-pull-image.unit.mjs",
-   "lines": 319,
+   "lines": 361,
+   "params": [
+    {
+     "name": "NETWORK_TIMEOUT",
+     "value": "'Error response from daemon: Get \""
+    }
+   ],
    "rule_comments": [
     "www.docker.com/increase-rate-limit\\n' };",
     "www.docker.com/increase-rate-limit' }, true],",
@@ -359418,10 +359424,11 @@
   },
   "scripts/e2e-isolated/pull-image.mjs": {
    "path": "scripts/e2e-isolated/pull-image.mjs",
-   "lines": 90,
+   "lines": 124,
    "exports": [
     "const PULL_BUDGET_MS",
     "function isPullRateLimited",
+    "function isTransientPullFailure",
     "function pullPinnedImage"
    ],
    "errors": [
@@ -482981,10 +482988,20 @@
   }
  },
  "git": {
-  "sha": "83a70c3e87b4c81877ec186ed1bf2e6b6c164937",
+  "sha": "5e609b752407ce748c438f216b7a01ce1d7c2d24",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "5e609b75",
+    "date": "2026-11-24",
+    "author": "adm01-debug",
+    "subject": "fix(e2e): retenta o pull em falha transiente de rede do registry (#3357)",
+    "files": [
+     "scripts/ci/e2e-isolated-pull-image.unit.mjs",
+     "scripts/e2e-isolated/pull-image.mjs"
+    ]
+   },
    {
     "sha": "83a70c3e",
     "date": "2026-11-24",
@@ -483364,15 +483381,6 @@
     "files": [
      "docs/plans/PLANO_ASSISTENTE_PESSOAL_IA_2026-11-15.md"
     ]
-   },
-   {
-    "sha": "434daf97",
-    "date": "2026-11-22",
-    "author": "adm01-debug",
-    "subject": "fix(ci): torna proporcional a semeadura do caso g do teste A/B do Talk X (#3323)",
-    "files": [
-     "scripts/db-audit/talkx-ab.test.sh"
-    ]
    }
   ],
   "hot_files": [
@@ -483387,6 +483395,14 @@
    [
     "ESTADO.md",
     3
+   ],
+   [
+    "scripts/ci/e2e-isolated-pull-image.unit.mjs",
+    2
+   ],
+   [
+    "scripts/e2e-isolated/pull-image.mjs",
+    2
    ],
    [
     "scripts/db-audit/talkx-monitor-panel.test.sh",
@@ -483434,14 +483450,6 @@
    ],
    [
     ".github/workflows/e2e-logado.yml",
-    1
-   ],
-   [
-    "scripts/ci/e2e-isolated-pull-image.unit.mjs",
-    1
-   ],
-   [
-    "scripts/e2e-isolated/pull-image.mjs",
     1
    ],
    [

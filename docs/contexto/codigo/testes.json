@@ -4886,12 +4886,12 @@
   {
    "arquivo": "scripts/ci/e2e-isolated-pull-image.unit.mjs",
    "tipo": "unit",
-   "linhas": 319,
+   "linhas": 361,
    "testa": [
     "scripts/e2e-isolated/pull-image.mjs",
     "scripts/e2e-isolated/run.mjs"
    ],
-   "casos": 27
+   "casos": 31
   },
   {
    "arquivo": "scripts/ci/e2e-isolated-qr.unit.mjs",

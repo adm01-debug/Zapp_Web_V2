@@ -2459,6 +2459,10 @@
     "arquivos": 1
    },
    {
+    "host": "ghcr.io",
+    "arquivos": 1
+   },
+   {
     "host": "ghe.empresa.com",
     "arquivos": 1
    },
