@@ -131,6 +131,14 @@ jobs:
           sudo apt-get update
           sudo apt-get install --no-install-recommends -y openssl libnss3-tools
 
+      # O GHCR anônimo compartilha cota por IP entre runners hospedados e pode
+      # responder toomanyrequests no pull das imagens pinadas. O token do próprio
+      # workflow autentica o registry sem exigir secret adicional.
+      - name: ghcr.io login (evita rate-limit no pull das imagens pinadas)
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: echo "$GITHUB_TOKEN" | docker login ghcr.io --username "$GITHUB_ACTOR" --password-stdin || true
+
       - name: Validar grupo e executar a suíte no backend descartável
         id: suite
         env:
