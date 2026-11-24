@@ -59,7 +59,7 @@
 | tipo | PERMISSIVE |
 | roles | authenticated |
 | USING |  |
-| WITH CHECK | `(created_by = auth.uid())` |
+| WITH CHECK | `(created_by = ( SELECT auth.uid() AS uid))` |
 
 ### `copilot_feedback_select`
 
@@ -68,7 +68,7 @@
 | comando | SELECT |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `(created_by = auth.uid())` |
+| USING | `(created_by = ( SELECT auth.uid() AS uid))` |
 | WITH CHECK |  |
 
 

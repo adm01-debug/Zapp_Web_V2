@@ -4790,11 +4790,11 @@
   {
    "arquivo": "scripts/ci/e2e-isolated-images.unit.mjs",
    "tipo": "unit",
-   "linhas": 105,
+   "linhas": 133,
    "testa": [
     "scripts/e2e-isolated/resolve-images.mjs"
    ],
-   "casos": 9
+   "casos": 13
   },
   {
    "arquivo": "scripts/ci/e2e-isolated-legacy-workflow.unit.mjs",

@@ -82767,18 +82767,6 @@
       {
         "code": "policy_auth_fn_not_wrapped",
         "detail": "Policy chama auth.uid()/jwt() sem `(select ...)`: é reavaliada por linha; envolva em subselect.",
-        "object": "public.copilot_feedback.copilot_feedback_insert",
-        "severity": "BAIXA"
-      },
-      {
-        "code": "policy_auth_fn_not_wrapped",
-        "detail": "Policy chama auth.uid()/jwt() sem `(select ...)`: é reavaliada por linha; envolva em subselect.",
-        "object": "public.copilot_feedback.copilot_feedback_select",
-        "severity": "BAIXA"
-      },
-      {
-        "code": "policy_auth_fn_not_wrapped",
-        "detail": "Policy chama auth.uid()/jwt() sem `(select ...)`: é reavaliada por linha; envolva em subselect.",
         "object": "public.copilot_help_requests.copilot_help_requests_insert",
         "severity": "BAIXA"
       },
@@ -82833,37 +82821,7 @@
       {
         "code": "policy_auth_fn_not_wrapped",
         "detail": "Policy chama auth.uid()/jwt() sem `(select ...)`: é reavaliada por linha; envolva em subselect.",
-        "object": "public.copilot_seller_settings.copilot_seller_settings_insert",
-        "severity": "BAIXA"
-      },
-      {
-        "code": "policy_auth_fn_not_wrapped",
-        "detail": "Policy chama auth.uid()/jwt() sem `(select ...)`: é reavaliada por linha; envolva em subselect.",
-        "object": "public.copilot_seller_settings.copilot_seller_settings_select",
-        "severity": "BAIXA"
-      },
-      {
-        "code": "policy_auth_fn_not_wrapped",
-        "detail": "Policy chama auth.uid()/jwt() sem `(select ...)`: é reavaliada por linha; envolva em subselect.",
-        "object": "public.copilot_seller_settings.copilot_seller_settings_update",
-        "severity": "BAIXA"
-      },
-      {
-        "code": "policy_auth_fn_not_wrapped",
-        "detail": "Policy chama auth.uid()/jwt() sem `(select ...)`: é reavaliada por linha; envolva em subselect.",
         "object": "public.copilot_sessions.vendor_own_sessions",
-        "severity": "BAIXA"
-      },
-      {
-        "code": "policy_auth_fn_not_wrapped",
-        "detail": "Policy chama auth.uid()/jwt() sem `(select ...)`: é reavaliada por linha; envolva em subselect.",
-        "object": "public.copilot_usage.copilot_usage_insert",
-        "severity": "BAIXA"
-      },
-      {
-        "code": "policy_auth_fn_not_wrapped",
-        "detail": "Policy chama auth.uid()/jwt() sem `(select ...)`: é reavaliada por linha; envolva em subselect.",
-        "object": "public.copilot_usage.copilot_usage_select",
         "severity": "BAIXA"
       },
       {
@@ -83272,30 +83230,6 @@
         "code": "policy_auth_fn_not_wrapped",
         "detail": "Policy chama auth.uid()/jwt() sem `(select ...)`: é reavaliada por linha; envolva em subselect.",
         "object": "public.message_reactions.message_reactions_update_policy",
-        "severity": "BAIXA"
-      },
-      {
-        "code": "policy_auth_fn_not_wrapped",
-        "detail": "Policy chama auth.uid()/jwt() sem `(select ...)`: é reavaliada por linha; envolva em subselect.",
-        "object": "public.message_templates.Users can create their own templates",
-        "severity": "BAIXA"
-      },
-      {
-        "code": "policy_auth_fn_not_wrapped",
-        "detail": "Policy chama auth.uid()/jwt() sem `(select ...)`: é reavaliada por linha; envolva em subselect.",
-        "object": "public.message_templates.Users can delete their own templates",
-        "severity": "BAIXA"
-      },
-      {
-        "code": "policy_auth_fn_not_wrapped",
-        "detail": "Policy chama auth.uid()/jwt() sem `(select ...)`: é reavaliada por linha; envolva em subselect.",
-        "object": "public.message_templates.Users can update their own templates",
-        "severity": "BAIXA"
-      },
-      {
-        "code": "policy_auth_fn_not_wrapped",
-        "detail": "Policy chama auth.uid()/jwt() sem `(select ...)`: é reavaliada por linha; envolva em subselect.",
-        "object": "public.message_templates.Users can view their templates and global ones",
         "severity": "BAIXA"
       },
       {
@@ -93309,7 +93243,7 @@
         "schema": "public",
         "table": "copilot_feedback",
         "using": null,
-        "with_check": "(created_by = auth.uid())"
+        "with_check": "(created_by = ( SELECT auth.uid() AS uid))"
       },
       {
         "cmd": "SELECT",
@@ -93320,7 +93254,7 @@
         ],
         "schema": "public",
         "table": "copilot_feedback",
-        "using": "(created_by = auth.uid())",
+        "using": "(created_by = ( SELECT auth.uid() AS uid))",
         "with_check": null
       },
       {
@@ -93477,7 +93411,7 @@
         "schema": "public",
         "table": "copilot_seller_settings",
         "using": null,
-        "with_check": "(seller_id = auth.uid())"
+        "with_check": "(seller_id = ( SELECT auth.uid() AS uid))"
       },
       {
         "cmd": "SELECT",
@@ -93488,7 +93422,7 @@
         ],
         "schema": "public",
         "table": "copilot_seller_settings",
-        "using": "(seller_id = auth.uid())",
+        "using": "(seller_id = ( SELECT auth.uid() AS uid))",
         "with_check": null
       },
       {
@@ -93500,8 +93434,8 @@
         ],
         "schema": "public",
         "table": "copilot_seller_settings",
-        "using": "(seller_id = auth.uid())",
-        "with_check": "(seller_id = auth.uid())"
+        "using": "(seller_id = ( SELECT auth.uid() AS uid))",
+        "with_check": "(seller_id = ( SELECT auth.uid() AS uid))"
       },
       {
         "cmd": "ALL",
@@ -93537,7 +93471,7 @@
         "schema": "public",
         "table": "copilot_usage",
         "using": null,
-        "with_check": "(seller_id = auth.uid())"
+        "with_check": "(seller_id = ( SELECT auth.uid() AS uid))"
       },
       {
         "cmd": "SELECT",
@@ -93548,7 +93482,7 @@
         ],
         "schema": "public",
         "table": "copilot_usage",
-        "using": "(seller_id = auth.uid())",
+        "using": "(seller_id = ( SELECT auth.uid() AS uid))",
         "with_check": null
       },
       {
@@ -94653,7 +94587,7 @@
         "schema": "public",
         "table": "message_templates",
         "using": null,
-        "with_check": "(user_id = auth.uid())"
+        "with_check": "(user_id = ( SELECT auth.uid() AS uid))"
       },
       {
         "cmd": "DELETE",
@@ -94664,7 +94598,7 @@
         ],
         "schema": "public",
         "table": "message_templates",
-        "using": "(user_id = auth.uid())",
+        "using": "(user_id = ( SELECT auth.uid() AS uid))",
         "with_check": null
       },
       {
@@ -94676,8 +94610,8 @@
         ],
         "schema": "public",
         "table": "message_templates",
-        "using": "(user_id = auth.uid())",
-        "with_check": "(user_id = auth.uid())"
+        "using": "(user_id = ( SELECT auth.uid() AS uid))",
+        "with_check": "(user_id = ( SELECT auth.uid() AS uid))"
       },
       {
         "cmd": "SELECT",
@@ -94688,7 +94622,7 @@
         ],
         "schema": "public",
         "table": "message_templates",
-        "using": "((user_id = auth.uid()) OR (is_global = true))",
+        "using": "((user_id = ( SELECT auth.uid() AS uid)) OR (is_global = true))",
         "with_check": null
       },
       {

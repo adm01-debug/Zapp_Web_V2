@@ -1,15 +1,15 @@
 {
  "meta": {
-  "sha": "38ee260d626591846468accadb9117a73aa710db",
+  "sha": "45a65087324ff2db6d3cf40898e65b918d3f11a2",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-24 10:21 UTC",
+  "generated_at": "2026-11-24 11:13 UTC",
   "files_total": 15629,
   "code_files": 8930,
-  "code_lines": 1417917
+  "code_lines": 1417945
  },
  "version": "1.3.2",
- "facts_hash": "f13de822cbc0fb53",
+ "facts_hash": "2dee64d18b7aad7a",
  "stack": {
   "frameworks": [
    "React + Vite",
@@ -77207,7 +77207,7 @@
   {
    "module": "scripts",
    "files": 501,
-   "lines": 102422,
+   "lines": 102450,
    "tables": [
     "a",
     "alem_do_limite",
@@ -353812,7 +353812,7 @@
   },
   "scripts/ci/e2e-isolated-images.unit.mjs": {
    "path": "scripts/ci/e2e-isolated-images.unit.mjs",
-   "lines": 105,
+   "lines": 133,
    "errors": [
     "unexpected mutation: "
    ],
@@ -482981,10 +482981,20 @@
   }
  },
  "git": {
-  "sha": "38ee260d626591846468accadb9117a73aa710db",
+  "sha": "45a65087324ff2db6d3cf40898e65b918d3f11a2",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "45a65087",
+    "date": "2026-11-24",
+    "author": "adm01-debug",
+    "subject": "fix(e2e): serve as 4 imagens restantes pelo mirror ghcr.io do mesmo digest (#3352)",
+    "files": [
+     "scripts/ci/e2e-isolated-images.unit.mjs",
+     "scripts/e2e-isolated/images.lock.json"
+    ]
+   },
    {
     "sha": "38ee260d",
     "date": "2026-11-24",
@@ -483374,18 +483384,6 @@
      "supabase/functions/assistant-gateway/index.test.ts",
      "supabase/functions/assistant-gateway/index.ts"
     ]
-   },
-   {
-    "sha": "bcf4dcc8",
-    "date": "2026-11-22",
-    "author": "github-actions[bot]",
-    "subject": "chore(db): sincronizar artefatos derivados do banco (#3315)",
-    "files": [
-     "docs/DB-INVENTORY.md",
-     "src/integrations/supabase/types.ts",
-     "supabase/schema-catalog.json",
-     "supabase/schema-manifest.json"
-    ]
    }
   ],
   "hot_files": [
@@ -483398,11 +483396,7 @@
     4
    ],
    [
-    "supabase/schema-catalog.json",
-    3
-   ],
-   [
-    "supabase/schema-manifest.json",
+    "scripts/e2e-isolated/images.lock.json",
     3
    ],
    [
@@ -483411,10 +483405,6 @@
    ],
    [
     ".github/workflows/ci.yml",
-    2
-   ],
-   [
-    "scripts/e2e-isolated/images.lock.json",
     2
    ],
    [
@@ -483434,11 +483424,11 @@
     2
    ],
    [
-    "docs/DB-INVENTORY.md",
+    "supabase/schema-catalog.json",
     2
    ],
    [
-    "src/integrations/supabase/types.ts",
+    "supabase/schema-manifest.json",
     2
    ],
    [
@@ -483466,7 +483456,15 @@
     2
    ],
    [
+    "scripts/ci/e2e-isolated-images.unit.mjs",
+    1
+   ],
+   [
     ".github/workflows/e2e-logado.yml",
+    1
+   ],
+   [
+    "scripts/ci/e2e-isolated-pull-image.unit.mjs",
     1
    ]
   ]

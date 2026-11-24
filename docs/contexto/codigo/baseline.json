@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "38ee260d626591846468accadb9117a73aa710db",
+  "commit": "45a65087324ff2db6d3cf40898e65b918d3f11a2",
   "branch": "main",
-  "data_commit": "2026-11-24T07:20:08-03:00",
+  "data_commit": "2026-11-24T07:49:27-03:00",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "45a65087",
+    "data": "2026-11-24",
+    "assunto": "fix(e2e): serve as 4 imagens restantes pelo mirror ghcr.io do mesmo digest (#3352)"
+   },
    {
     "sha": "38ee260d",
     "data": "2026-11-24",
@@ -126,14 +131,9 @@
     "sha": "2fad0042",
     "data": "2026-11-23",
     "assunto": "chore(db): sincronizar artefatos derivados do banco (#3329)"
-   },
-   {
-    "sha": "d19cc8d0",
-    "data": "2026-11-22",
-    "assunto": "feat: redesign do modulo Contatos conforme previa aprovada (plano 130 etapas, fases 0-M) (#3325)"
    }
   ],
-  "arquivos_mudados_7d": 5247,
+  "arquivos_mudados_7d": 5246,
   "pastas_mais_mudadas_30d": [
    {
     "pasta": "docs/contexto/supabase",
@@ -316,7 +316,7 @@
  "contagens": {
   "arquivos_total": 15781,
   "arquivos_codigo": 5892,
-  "linhas_codigo": 1140076,
+  "linhas_codigo": 1140104,
   "rotas": 18,
   "rotas_http_backend": 11,
   "vistas_por_id": 55,
@@ -628,7 +628,7 @@
   },
   "scripts/ci": {
    "arquivos": 231,
-   "linhas": 50427
+   "linhas": 50455
   },
   "scripts/db": {
    "arquivos": 2,
