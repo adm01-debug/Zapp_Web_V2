@@ -4,10 +4,11 @@
 > `--check` e falha se este arquivo divergir do bloco `# docs:` de cada workflow.
 > Para mudar o que está aqui, mude o bloco no YAML.
 
-**24 workflows.**
+**25 workflows.**
 
 | Workflow | Arquivo | Gatilho | O que prova | Quando falha | Quem é avisado | Custo/sem (min) | Falha (7 d) |
 |---|---|---|---|---|---|---|---|
+| Automação local | [`automation-local.yml`](../../.github/workflows/automation-local.yml) | PR para main, push em main e execução manual. | Contratos estáticos e suites locais de automação em fixtures isoladas. | O job falha; nenhum patch, commit, publicação ou deploy é executado. | O check fica vermelho no GitHub para o autor da PR e mantenedores. | — | — |
 | Branch Hygiene Audit | [`branch-hygiene-audit.yml`](../../.github/workflows/branch-hygiene-audit.yml) | agendado (semanal) e dispatch | branches podaveis, PRs paradas ha mais de 7 dias e SLA dos alertas de code scanning | SLA vencido deixa o job vermelho e publica o diagnostico se o relatorio foi gerado | issue `[branch-hygiene]` no repositorio | — | — |
 | Talk X PR body check | [`check-talkx-pr-body.yml`](../../.github/workflows/check-talkx-pr-body.yml) | pull_request em main (opened, synchronize, reopened e edited); o job só roda quando o título traz `(X<NNN>)` | valida a definição de pronto das etapas Talk X pelo título e corpo da PR | check fica vermelho com a seção ausente ou incompatível com a etapa | autor e revisores pelo check do GitHub | — | — |
 | CI/CD Pipeline | [`ci.yml`](../../.github/workflows/ci.yml) | pull_request, push na main e dispatch | tipos, testes de unidade, contratos Node/Edge, build, security, lint dos workflows (actionlint + shellcheck + zizmor) e E2E publico | PR fica vermelho e o merge e bloqueado pelos required checks | autor do PR e revisor, via checks do GitHub | — | — |
@@ -34,6 +35,13 @@
 | V043-V065 Vercel Env Cleanup | [`vercel-env-cleanup.yml`](../../.github/workflows/vercel-env-cleanup.yml) | dispatch manual com dry-run por padrão | remove variáveis Vercel perigosas ou mortas conforme o inventário | o script aborta antes de alterar variáveis e informa a causa | operador que disparou o workflow | — | — |
 
 ## Detalhe
+
+### Automação local (`automation-local.yml`)
+
+- **Gatilho:** PR para main, push em main e execução manual.
+- **O que prova:** Contratos estáticos e suites locais de automação em fixtures isoladas.
+- **Quando falha:** O job falha; nenhum patch, commit, publicação ou deploy é executado.
+- **Quem é avisado:** O check fica vermelho no GitHub para o autor da PR e mantenedores.
 
 ### Branch Hygiene Audit (`branch-hygiene-audit.yml`)
 
