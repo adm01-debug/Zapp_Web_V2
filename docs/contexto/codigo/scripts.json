@@ -4181,8 +4181,8 @@
   },
   {
    "arquivo": "scripts/e2e-isolated/pull-image.mjs",
-   "descricao": "* Retry only the registry failure observed in the native Docker pull. */",
-   "linhas": 84,
+   "descricao": "Mensagens terminais de cota observadas nos registries pinados. A variante 'Data limit exceeded' chegou pelo ECR publico no run 45326622310 (2026-11-24) e",
+   "linhas": 90,
    "env": [],
    "npm_scripts": [],
    "workflows": [],

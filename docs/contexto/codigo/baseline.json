@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "972831d7527f3b525216445df80d48d96a956bda",
+  "commit": "e586a72577efb8747848068f8f1a64327b8d101c",
   "branch": "main",
-  "data_commit": "2026-11-24T01:15:00-03:00",
+  "data_commit": "2026-11-24T06:56:51-03:00",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "e586a725",
+    "data": "2026-11-24",
+    "assunto": "fix(e2e): tira o postgrest do ECR anonimo e reconhece a cota \"Data limit exceeded\" (#3351)"
+   },
    {
     "sha": "972831d7",
     "data": "2026-11-24",
@@ -126,14 +131,9 @@
     "sha": "ba0b927e",
     "data": "2026-11-22",
     "assunto": "chore(docs): atualiza o estado real do plano do assistente pessoal (#3324)"
-   },
-   {
-    "sha": "434daf97",
-    "data": "2026-11-22",
-    "assunto": "fix(ci): torna proporcional a semeadura do caso g do teste A/B do Talk X (#3323)"
    }
   ],
-  "arquivos_mudados_7d": 5288,
+  "arquivos_mudados_7d": 5253,
   "pastas_mais_mudadas_30d": [
    {
     "pasta": "docs/contexto/supabase",
@@ -316,7 +316,7 @@
  "contagens": {
   "arquivos_total": 15781,
   "arquivos_codigo": 5892,
-  "linhas_codigo": 1140058,
+  "linhas_codigo": 1140076,
   "rotas": 18,
   "rotas_http_backend": 11,
   "vistas_por_id": 55,
@@ -628,7 +628,7 @@
   },
   "scripts/ci": {
    "arquivos": 231,
-   "linhas": 50415
+   "linhas": 50427
   },
   "scripts/db": {
    "arquivos": 2,
@@ -648,7 +648,7 @@
   },
   "scripts/e2e-isolated": {
    "arquivos": 40,
-   "linhas": 6449
+   "linhas": 6455
   },
   "scripts/edge-deploy": {
    "arquivos": 32,
