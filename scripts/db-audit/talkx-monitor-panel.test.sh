@@ -64,6 +64,32 @@ docker info >/dev/null 2>&1 || fail 'Docker daemon nao esta acessivel'
 start_postgres || fail 'PostgreSQL de teste nao iniciou'
 
 # ---------------------------------------------------------------------------
+# Virada de dia: as sementes de "hoje" sao relativas a now() e a RPC le o dia
+# corrente em now(), no fuso da campanha (America/Sao_Paulo). Se o relogio
+# cruzar a meia-noite entre a semeadura e a consulta, os envios de hoje passam
+# a contar como "de ontem" e o comparativo vs_yesterday mente. Nao semeamos nos
+# 180 s antes da meia-noite (o harness inteiro roda em segundos) e, se o dia
+# virar no meio da execucao, refazemos o teste do zero uma unica vez.
+# ---------------------------------------------------------------------------
+campaign_day() { psql_q "SELECT (now() AT TIME ZONE 'America/Sao_Paulo')::date"; }
+seconds_to_midnight() {
+  psql_q "SELECT floor(extract(epoch from
+    (date_trunc('day', now() AT TIME ZONE 'America/Sao_Paulo') + interval '1 day'
+     - (now() AT TIME ZONE 'America/Sao_Paulo'))))::int"
+}
+guard_midnight() {
+  local remaining
+  remaining="$(seconds_to_midnight)"
+  if (( remaining < 180 )); then
+    printf 'WARN: faltam %s s para a virada do dia; aguardando para nao corromper vs_yesterday\n' \
+      "$remaining" >&2
+    sleep $(( remaining + 2 ))
+  fi
+}
+guard_midnight
+seed_day="$(campaign_day)"
+
+# ---------------------------------------------------------------------------
 # Schema minimo: so as colunas que a funcao le, com as mesmas RLS/papeis do modulo.
 # ---------------------------------------------------------------------------
 psql_test >/dev/null <<'SQL'
@@ -285,6 +311,20 @@ case_done high_failure
 pass '(4) 6 falhas em 60 processados => high_failure'
 
 # --- (5) comparativo com ontem -------------------------------------------------
+# O comparativo cruza o dia corrente com o anterior: se o dia virou desde a
+# semeadura, as sementes de "hoje" ja caem em "ontem" e a medicao seria feita
+# contra outro dia. Refaz o teste do zero (no maximo uma vez).
+guard_midnight
+if [[ "$(campaign_day)" != "$seed_day" ]]; then
+  if [[ "${TALKX_MONITOR_PANEL_DAY_RETRY:-0}" == 0 ]]; then
+    printf 'WARN: o dia virou durante o teste (semente %s, agora %s); refazendo do zero\n' \
+      "$seed_day" "$(campaign_day)" >&2
+    cleanup
+    export TALKX_MONITOR_PANEL_DAY_RETRY=1
+    exec bash "${BASH_SOURCE[0]}"
+  fi
+  fail 'o dia virou durante o teste'
+fi
 expect 'vs_yesterday nulo sem envio ontem' "$(psql_q "SELECT jsonb_typeof('$res'::jsonb->'vs_yesterday')")" 'null'
 case_done vs_yesterday_null
 resd="$(panel "$owner" d)"
