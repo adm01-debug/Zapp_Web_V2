@@ -72,7 +72,11 @@ const migracoes = andar(path.join(raiz, 'supabase/migrations'), (n) => n.endsWit
 // normal do wrapper no front (src/lib/invokeEdge.ts). A busca por linha não
 // enxerga o nome da edge quando ela está DEPOIS do `>` do generic, e publicar
 // grupo B nesse caso esconde um chamador de front real (o grupo A vence B).
-const RE_INVOCACAO = /\binvoke(?:Edge)?\s*(?:<[\s\S]{0,400}?>)?\s*\(\s*(['"`])([\w.-]+)\1/g;
+// `call<Algo>Function(` cobre o wrapper que recebe o NOME da edge como primeiro
+// argumento em vez da URL (src/hooks/gmail/gmailApi.ts: `callGmailFunction('gmail-send')`,
+// usado por src/hooks/integrations/useGmail.ts e useGmailLabels.ts): sem ele,
+// `gmail-send` e `gmail-sync` ficavam publicadas como órfãs tendo chamador no front.
+const RE_INVOCACAO = /\b(?:invoke(?:Edge)?|call\w*Function)\s*(?:<[\s\S]{0,400}?>)?\s*\(\s*(['"`])([\w.-]+)\1/g;
 
 /** Linhas (1-based) de `arquivo` que invocam `nome`, inclusive com generic multi-linha. */
 function linhasDaInvocacao(arquivo, nome) {
