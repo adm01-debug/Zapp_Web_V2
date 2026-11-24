@@ -3755,7 +3755,7 @@
   {
    "arquivo": "e2e/contacts-selection.spec.ts",
    "tipo": "e2e",
-   "linhas": 44,
+   "linhas": 49,
    "testa": [],
    "casos": 4
   },

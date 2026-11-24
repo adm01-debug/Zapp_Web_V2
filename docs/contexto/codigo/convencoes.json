@@ -66,11 +66,11 @@
  "commits": {
   "convencao": "conventional commits (observado)",
   "exemplos": [
+   "fix(e2e): desambigua locators de Contatos após o redesign do módulo (#3347)",
    "fix: tira o WebRender/DMABUF do caminho no E2E do Firefox (#3345)",
    "chore: sincroniza pin e digest do Playwright no bump de 16 dependencias (#3344)",
    "⬆️ docker: bump golang from `fa3d596` to `70bd7dd` in /infrastructure/preview-egress-proxy (#3338)",
-   "⬆️ ci: bump actions/dependency-review-action from 5.0.0 to 5.0.1 in the actions-misc group across 1 directory (#3335)",
-   "⬆️ ci: bump ossf/scorecard-action from 2.5.0 to 2.6.0 (#3336)"
+   "⬆️ ci: bump actions/dependency-review-action from 5.0.0 to 5.0.1 in the actions-misc group across 1 directory (#3335)"
   ]
  },
  "pr_template": ".github/PULL_REQUEST_TEMPLATE.md",

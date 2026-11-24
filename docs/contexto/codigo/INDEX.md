@@ -1,7 +1,7 @@
 # Contexto do projeto para agentes de IA
 
 GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.
-Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR dela) a cada push em `main` e a cada 10 minutos pelo workflow `contexto.yml`; índice único das três fontes em `docs/contexto/00-INDEX.md`. Gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `d7fa274ce5200a16bd53f444d38ed61dbc813adb` (2026-11-23T21:15:09-03:00).
+Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR dela) a cada push em `main` e a cada 10 minutos pelo workflow `contexto.yml`; índice único das três fontes em `docs/contexto/00-INDEX.md`. Gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `442bcfb1fa6f9020a89bcbb387e79a194639eb61` (2026-11-23T22:38:55-03:00).
 
 ## Como usar (leia antes de planejar ou executar qualquer tarefa)
 1. **Tela/rota/menu** → `rotas.json` (url/vista/menu → arquivo → hooks → tabelas → edges; `rotas_http_backend` para APIs) e `modulos.json` (módulo inteiro + dependências entre módulos).
@@ -36,7 +36,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 |---|---|
 | arquivos_total | 15781 |
 | arquivos_codigo | 5892 |
-| linhas_codigo | 1140044 |
+| linhas_codigo | 1140049 |
 | rotas | 18 |
 | rotas_http_backend | 11 |
 | vistas_por_id | 55 |
@@ -397,7 +397,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - possiveis_segredos_no_codigo: 6 — ex.: analise-prs/resgate-261118-lote3/claude_pink/cool-dijkstra-xk9ek2/scripts/ci/edge-coverage-authz.unit.mjs:397, analise-prs/resgate-261118-lote3/claude_pink/cool-dijkstra-xk9ek2/scripts/edge-deploy/redigir-log.unit.mjs:38, scripts/ai-context/cenarios.mjs:102
 
 ## Grafo de código (graphify)
-- 103206 nós · 175316 arestas · 9291 comunidades · grafo do commit `d7fa274c`
+- 103206 nós · 175316 arestas · 9291 comunidades · grafo do commit `442bcfb1`
 - comunidades maiores: Communities (5953 total, 1987 thin omitted) (3949), react (1534), lucide-react (1481), TalkXSuppression.tsx (1217), utils.ts (1212), cn (918), validation.ts (687), ExternalProductManagement.tsx (639), ref_node_fs (595), vitest (529), WorkItemSheet.tsx (501), @testing-library/react (456)
 - símbolos mais chamados: cn() (src/lib/utils.ts), useAuth() (src/hooks/auth/useAuth.tsx), jsonResponse() (supabase/functions/_shared/validation.ts), errorResponse() (supabase/functions/_shared/validation.ts), handleCors() (supabase/functions/_shared/validation.ts), fail() (scripts/e2e-isolated/network-proof-policy.mjs), Logger (supabase/functions/_shared/validation.ts), requireEnv() (supabase/functions/_shared/validation.ts), fmtInt() (src/components/talkx/kit/format.ts), fromTable() (src/lib/supabaseHelpers.ts), useUserRole() (src/hooks/system/useUserRole.ts), validationErrorResponse() (supabase/functions/_shared/schemas.ts)
 - consulta local: `graphify query "<pergunta>"`, `graphify path "<A>" "<B>"`, `graphify explain "<X>"`
@@ -525,6 +525,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - CHANGELOG topo: [Unreleased]
 
 ## Últimos commits
+- 2026-11-23 `442bcfb1` fix(e2e): desambigua locators de Contatos após o redesign do módulo (#3347)
 - 2026-11-23 `d7fa274c` fix: tira o WebRender/DMABUF do caminho no E2E do Firefox (#3345)
 - 2026-11-23 `d58476e7` chore: sincroniza pin e digest do Playwright no bump de 16 dependencias (#3344)
 - 2026-11-23 `d09e2cec` ⬆️ docker: bump golang from `fa3d596` to `70bd7dd` in /infrastructure/preview-egress-proxy (#3338)
@@ -539,7 +540,6 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - 2026-11-23 `b32c9845` fix(ia): cobra entrada e saída pelo preço real e destrava o custo de IA (#3326)
 - 2026-11-23 `23b81626` fix(ci): guard do ESTADO.md enxerga invokeEdge com generic e publica grupo real das 7 edges (#3322)
 - 2026-11-23 `c1bfe6e2` chore(lint): baseline 540 issues pre-existentes - desbloqueia pre-push/pre-commit (#3333)
-- 2026-11-23 `54826dbf` fix(test): ampliar janela de serie de 15 para 30 min - corrige flake de meia-noite (#3332)
 
 ## Arquivos deste diretório
 - `docs/contexto/codigo/rotas.json`

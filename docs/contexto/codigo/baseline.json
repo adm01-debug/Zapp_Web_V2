@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "d7fa274ce5200a16bd53f444d38ed61dbc813adb",
+  "commit": "442bcfb1fa6f9020a89bcbb387e79a194639eb61",
   "branch": "main",
-  "data_commit": "2026-11-23T21:15:09-03:00",
+  "data_commit": "2026-11-23T22:38:55-03:00",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "442bcfb1",
+    "data": "2026-11-23",
+    "assunto": "fix(e2e): desambigua locators de Contatos após o redesign do módulo (#3347)"
+   },
    {
     "sha": "d7fa274c",
     "data": "2026-11-23",
@@ -126,14 +131,9 @@
     "sha": "bcf4dcc8",
     "data": "2026-11-22",
     "assunto": "chore(db): sincronizar artefatos derivados do banco (#3315)"
-   },
-   {
-    "sha": "2fc081de",
-    "data": "2026-11-22",
-    "assunto": "feat(assistente): treino por perfil com playbook e catalogo de objecoes (#3319)"
    }
   ],
-  "arquivos_mudados_7d": 5299,
+  "arquivos_mudados_7d": 5294,
   "pastas_mais_mudadas_30d": [
    {
     "pasta": "docs/contexto/supabase",
@@ -316,7 +316,7 @@
  "contagens": {
   "arquivos_total": 15781,
   "arquivos_codigo": 5892,
-  "linhas_codigo": 1140044,
+  "linhas_codigo": 1140049,
   "rotas": 18,
   "rotas_http_backend": 11,
   "vistas_por_id": 55,
@@ -440,7 +440,7 @@
   },
   "e2e/contacts-selection.spec.ts": {
    "arquivos": 1,
-   "linhas": 44
+   "linhas": 49
   },
   "e2e/contacts-snapshots.spec.ts": {
    "arquivos": 1,
