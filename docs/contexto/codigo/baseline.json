@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "5e609b752407ce748c438f216b7a01ce1d7c2d24",
+  "commit": "1437a66467dcaf6751c3def731ca288f19052d2e",
   "branch": "main",
-  "data_commit": "2026-11-24T09:31:48-03:00",
+  "data_commit": "2026-11-24T10:32:20-03:00",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "1437a664",
+    "data": "2026-11-24",
+    "assunto": "infra: alinha o timeout do job E2E com a duracao real (~10 min) (#3355)"
+   },
    {
     "sha": "5e609b75",
     "data": "2026-11-24",
@@ -126,11 +131,6 @@
     "sha": "c1bfe6e2",
     "data": "2026-11-23",
     "assunto": "chore(lint): baseline 540 issues pre-existentes - desbloqueia pre-push/pre-commit (#3333)"
-   },
-   {
-    "sha": "54826dbf",
-    "data": "2026-11-23",
-    "assunto": "fix(test): ampliar janela de serie de 15 para 30 min - corrige flake de meia-noite (#3332)"
    }
   ],
   "arquivos_mudados_7d": 5242,
@@ -239,7 +239,7 @@
    },
    {
     "arquivo": ".github/workflows/ci.yml",
-    "mudancas": 10
+    "mudancas": 11
    },
    {
     "arquivo": "docs/agentes/github-ci.md",

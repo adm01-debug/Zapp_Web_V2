@@ -1,7 +1,7 @@
 # Contexto do projeto para agentes de IA
 
 GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.
-Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR dela) a cada push em `main` e a cada 10 minutos pelo workflow `contexto.yml`; índice único das três fontes em `docs/contexto/00-INDEX.md`. Gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `5e609b752407ce748c438f216b7a01ce1d7c2d24` (2026-11-24T09:31:48-03:00).
+Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR dela) a cada push em `main` e a cada 10 minutos pelo workflow `contexto.yml`; índice único das três fontes em `docs/contexto/00-INDEX.md`. Gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `1437a66467dcaf6751c3def731ca288f19052d2e` (2026-11-24T10:32:20-03:00).
 
 ## Como usar (leia antes de planejar ou executar qualquer tarefa)
 1. **Tela/rota/menu** → `rotas.json` (url/vista/menu → arquivo → hooks → tabelas → edges; `rotas_http_backend` para APIs) e `modulos.json` (módulo inteiro + dependências entre módulos).
@@ -397,7 +397,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - possiveis_segredos_no_codigo: 6 — ex.: analise-prs/resgate-261118-lote3/claude_pink/cool-dijkstra-xk9ek2/scripts/ci/edge-coverage-authz.unit.mjs:397, analise-prs/resgate-261118-lote3/claude_pink/cool-dijkstra-xk9ek2/scripts/edge-deploy/redigir-log.unit.mjs:38, scripts/ai-context/cenarios.mjs:102
 
 ## Grafo de código (graphify)
-- 103221 nós · 175347 arestas · 9275 comunidades · grafo do commit `5e609b75`
+- 103221 nós · 175347 arestas · 9275 comunidades · grafo do commit `1437a664`
 - comunidades maiores: Communities (5953 total, 1987 thin omitted) (3947), lucide-react (1617), react (1426), cn (1282), vitest (1231), TalkXSuppression.tsx (1132), ref_node_fs (726), chat.ts (687), validation.ts (619), DashboardView.tsx (610), useMyWorkItems.ts (583), ref_https (478)
 - símbolos mais chamados: cn() (src/lib/utils.ts), useAuth() (src/hooks/auth/useAuth.tsx), jsonResponse() (supabase/functions/_shared/validation.ts), errorResponse() (supabase/functions/_shared/validation.ts), handleCors() (supabase/functions/_shared/validation.ts), fail() (scripts/e2e-isolated/network-proof-policy.mjs), Logger (supabase/functions/_shared/validation.ts), requireEnv() (supabase/functions/_shared/validation.ts), fmtInt() (src/components/talkx/kit/format.ts), fromTable() (src/lib/supabaseHelpers.ts), useUserRole() (src/hooks/system/useUserRole.ts), validationErrorResponse() (supabase/functions/_shared/schemas.ts)
 - consulta local: `graphify query "<pergunta>"`, `graphify path "<A>" "<B>"`, `graphify explain "<X>"`
@@ -413,7 +413,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - PENDENCIAS.md (12)
 - docs/DB-INVENTORY.md (12)
 - scripts/db-audit/grants-baseline.json (12)
-- .github/workflows/ci.yml (10)
+- .github/workflows/ci.yml (11)
 - docs/agentes/github-ci.md (8)
 - supabase/functions/evolution-api/index.ts (8)
 - docs/ci/README.md (7)
@@ -525,6 +525,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - CHANGELOG topo: [Unreleased]
 
 ## Últimos commits
+- 2026-11-24 `1437a664` infra: alinha o timeout do job E2E com a duracao real (~10 min) (#3355)
 - 2026-11-24 `5e609b75` fix(e2e): retenta o pull em falha transiente de rede do registry (#3357)
 - 2026-11-24 `83a70c3e` chore(db): sincronizar artefatos derivados do banco (#3356)
 - 2026-11-24 `592ffa7f` fix: elimina o flake de meia-noite do contrato do monitor (vs_yesterday) (#3353)
@@ -539,7 +540,6 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - 2026-11-23 `d58476e7` chore: sincroniza pin e digest do Playwright no bump de 16 dependencias (#3344)
 - 2026-11-23 `d09e2cec` ⬆️ docker: bump golang from `fa3d596` to `70bd7dd` in /infrastructure/preview-egress-proxy (#3338)
 - 2026-11-23 `4c1d031f` ⬆️ ci: bump actions/dependency-review-action from 5.0.0 to 5.0.1 in the actions-misc group across 1 directory (#3335)
-- 2026-11-23 `f48c1ce7` ⬆️ ci: bump ossf/scorecard-action from 2.5.0 to 2.6.0 (#3336)
 
 ## Arquivos deste diretório
 - `docs/contexto/codigo/rotas.json`

@@ -1,9 +1,9 @@
 {
  "meta": {
-  "sha": "5e609b752407ce748c438f216b7a01ce1d7c2d24",
+  "sha": "1437a66467dcaf6751c3def731ca288f19052d2e",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-24 13:15 UTC",
+  "generated_at": "2026-11-24 13:33 UTC",
   "files_total": 15629,
   "code_files": 8930,
   "code_lines": 1418021
@@ -482988,10 +482988,19 @@
   }
  },
  "git": {
-  "sha": "5e609b752407ce748c438f216b7a01ce1d7c2d24",
+  "sha": "1437a66467dcaf6751c3def731ca288f19052d2e",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "1437a664",
+    "date": "2026-11-24",
+    "author": "adm01-debug",
+    "subject": "infra: alinha o timeout do job E2E com a duracao real (~10 min) (#3355)",
+    "files": [
+     ".github/workflows/ci.yml"
+    ]
+   },
    {
     "sha": "5e609b75",
     "date": "2026-11-24",
@@ -483372,18 +483381,13 @@
      "src/styles/tokens.css",
      "src/styles/utilities.css"
     ]
-   },
-   {
-    "sha": "ba0b927e",
-    "date": "2026-11-22",
-    "author": "adm01-debug",
-    "subject": "chore(docs): atualiza o estado real do plano do assistente pessoal (#3324)",
-    "files": [
-     "docs/plans/PLANO_ASSISTENTE_PESSOAL_IA_2026-11-15.md"
-    ]
    }
   ],
   "hot_files": [
+   [
+    ".github/workflows/ci.yml",
+    3
+   ],
    [
     "supabase/schema-manifest.json",
     3
@@ -483406,10 +483410,6 @@
    ],
    [
     "scripts/db-audit/talkx-monitor-panel.test.sh",
-    2
-   ],
-   [
-    ".github/workflows/ci.yml",
     2
    ],
    [
