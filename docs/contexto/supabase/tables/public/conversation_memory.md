@@ -58,7 +58,7 @@
 | tipo | PERMISSIVE |
 | roles | authenticated |
 | USING |  |
-| WITH CHECK | `is_contact_visible_to_user(contact_id, auth.uid())` |
+| WITH CHECK | `is_contact_visible_to_user(contact_id, ( SELECT auth.uid() AS uid))` |
 
 ### `Agents can update memory for their contacts`
 
@@ -67,7 +67,7 @@
 | comando | UPDATE |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `is_contact_visible_to_user(contact_id, auth.uid())` |
+| USING | `is_contact_visible_to_user(contact_id, ( SELECT auth.uid() AS uid))` |
 | WITH CHECK |  |
 
 ### `Agents or admins can view memory`
@@ -77,7 +77,7 @@
 | comando | SELECT |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `(is_contact_visible_to_user(contact_id, auth.uid()) OR is_admin_or_supervisor(auth.uid()))` |
+| USING | `(is_contact_visible_to_user(contact_id, ( SELECT auth.uid() AS uid)) OR is_admin_or_supervisor(( SELECT auth.uid() AS uid)))` |
 | WITH CHECK |  |
 
 

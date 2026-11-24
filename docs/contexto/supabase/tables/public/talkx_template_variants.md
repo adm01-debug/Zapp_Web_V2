@@ -67,7 +67,7 @@
 | comando | DELETE |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `(EXISTS ( SELECT 1    FROM talkx_templates template   WHERE ((template.id = talkx_template_variants.template_id) AND ((template.created_by = get_profile_id_for_user(auth.uid())) OR is_admin_or_supervisor(auth.uid())))))` |
+| USING | `(EXISTS ( SELECT 1    FROM talkx_templates template   WHERE ((template.id = talkx_template_variants.template_id) AND ((template.created_by = get_profile_id_for_user(( SELECT auth.uid() AS uid))) OR is_admin_or_supervisor(( SELECT auth.uid() AS uid))))))` |
 | WITH CHECK |  |
 
 ### `talkx_template_variants_insert`
@@ -78,7 +78,7 @@
 | tipo | PERMISSIVE |
 | roles | authenticated |
 | USING |  |
-| WITH CHECK | `(EXISTS ( SELECT 1    FROM talkx_templates template   WHERE ((template.id = talkx_template_variants.template_id) AND ((template.created_by = get_profile_id_for_user(auth.uid())) OR is_admin_or_supervisor(auth.uid())))))` |
+| WITH CHECK | `(EXISTS ( SELECT 1    FROM talkx_templates template   WHERE ((template.id = talkx_template_variants.template_id) AND ((template.created_by = get_profile_id_for_user(( SELECT auth.uid() AS uid))) OR is_admin_or_supervisor(( SELECT auth.uid() AS uid))))))` |
 
 ### `talkx_template_variants_select`
 
@@ -87,7 +87,7 @@
 | comando | SELECT |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `(auth.uid() IS NOT NULL)` |
+| USING | `(( SELECT auth.uid() AS uid) IS NOT NULL)` |
 | WITH CHECK |  |
 
 ### `talkx_template_variants_update`
@@ -97,8 +97,8 @@
 | comando | UPDATE |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `(EXISTS ( SELECT 1    FROM talkx_templates template   WHERE ((template.id = talkx_template_variants.template_id) AND ((template.created_by = get_profile_id_for_user(auth.uid())) OR is_admin_or_supervisor(auth.uid())))))` |
-| WITH CHECK | `(EXISTS ( SELECT 1    FROM talkx_templates template   WHERE ((template.id = talkx_template_variants.template_id) AND ((template.created_by = get_profile_id_for_user(auth.uid())) OR is_admin_or_supervisor(auth.uid())))))` |
+| USING | `(EXISTS ( SELECT 1    FROM talkx_templates template   WHERE ((template.id = talkx_template_variants.template_id) AND ((template.created_by = get_profile_id_for_user(( SELECT auth.uid() AS uid))) OR is_admin_or_supervisor(( SELECT auth.uid() AS uid))))))` |
+| WITH CHECK | `(EXISTS ( SELECT 1    FROM talkx_templates template   WHERE ((template.id = talkx_template_variants.template_id) AND ((template.created_by = get_profile_id_for_user(( SELECT auth.uid() AS uid))) OR is_admin_or_supervisor(( SELECT auth.uid() AS uid))))))` |
 
 
 ## Triggers

@@ -56,7 +56,7 @@
 | comando | DELETE |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `is_admin(auth.uid())` |
+| USING | `is_admin(( SELECT auth.uid() AS uid))` |
 | WITH CHECK |  |
 
 ### `Admins can insert blocked IPs`
@@ -67,7 +67,7 @@
 | tipo | PERMISSIVE |
 | roles | authenticated |
 | USING |  |
-| WITH CHECK | `is_admin(auth.uid())` |
+| WITH CHECK | `is_admin(( SELECT auth.uid() AS uid))` |
 
 ### `Admins can update blocked IPs`
 
@@ -76,7 +76,7 @@
 | comando | UPDATE |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `is_admin(auth.uid())` |
+| USING | `is_admin(( SELECT auth.uid() AS uid))` |
 | WITH CHECK |  |
 
 ### `Only admins can view blocked IPs`
@@ -86,7 +86,7 @@
 | comando | SELECT |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `((EXISTS ( SELECT 1    FROM user_roles   WHERE ((user_roles.user_id = auth.uid()) AND (user_roles.role = 'admin'::app_role)))) OR is_admin_or_supervisor(auth.uid()))` |
+| USING | `((EXISTS ( SELECT 1    FROM user_roles   WHERE ((user_roles.user_id = ( SELECT auth.uid() AS uid)) AND (user_roles.role = 'admin'::app_role)))) OR is_admin_or_supervisor(( SELECT auth.uid() AS uid)))` |
 | WITH CHECK |  |
 
 

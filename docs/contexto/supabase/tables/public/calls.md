@@ -82,7 +82,7 @@
 | tipo | PERMISSIVE |
 | roles | authenticated |
 | USING |  |
-| WITH CHECK | `((agent_id = get_profile_id_for_user(auth.uid())) AND (is_admin_or_supervisor(auth.uid()) OR (contact_id IS NULL) OR is_contact_visible_to_user(contact_id, auth.uid())))` |
+| WITH CHECK | `((agent_id = get_profile_id_for_user(( SELECT auth.uid() AS uid))) AND (is_admin_or_supervisor(( SELECT auth.uid() AS uid)) OR (contact_id IS NULL) OR is_contact_visible_to_user(contact_id, ( SELECT auth.uid() AS uid))))` |
 
 ### `Users can update their calls`
 
@@ -91,8 +91,8 @@
 | comando | UPDATE |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `(agent_id IN ( SELECT profiles.id    FROM profiles   WHERE (profiles.user_id = auth.uid())))` |
-| WITH CHECK | `(agent_id IN ( SELECT profiles.id    FROM profiles   WHERE (profiles.user_id = auth.uid())))` |
+| USING | `(agent_id IN ( SELECT profiles.id    FROM profiles   WHERE (profiles.user_id = ( SELECT auth.uid() AS uid))))` |
+| WITH CHECK | `(agent_id IN ( SELECT profiles.id    FROM profiles   WHERE (profiles.user_id = ( SELECT auth.uid() AS uid))))` |
 
 ### `Users can view own calls`
 
@@ -101,7 +101,7 @@
 | comando | SELECT |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `((agent_id IN ( SELECT profiles.id    FROM profiles   WHERE (profiles.user_id = auth.uid()))) OR is_admin_or_supervisor(auth.uid()))` |
+| USING | `((agent_id IN ( SELECT profiles.id    FROM profiles   WHERE (profiles.user_id = ( SELECT auth.uid() AS uid)))) OR is_admin_or_supervisor(( SELECT auth.uid() AS uid)))` |
 | WITH CHECK |  |
 
 

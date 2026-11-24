@@ -47,7 +47,7 @@
 | tipo | PERMISSIVE |
 | roles | authenticated |
 | USING |  |
-| WITH CHECK | `((scored_by = auth.uid()) AND is_admin_or_supervisor(auth.uid()))` |
+| WITH CHECK | `((scored_by = ( SELECT auth.uid() AS uid)) AND is_admin_or_supervisor(( SELECT auth.uid() AS uid)))` |
 
 ### `copilot_conversation_scores_select`
 
@@ -56,7 +56,7 @@
 | comando | SELECT |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `((scored_by = auth.uid()) OR (conversation_id IN ( SELECT copilot_sessions.conversation_id    FROM copilot_sessions   WHERE (copilot_sessions.profile_id = auth.uid()))) OR is_admin_or_supervisor(auth.uid()))` |
+| USING | `((scored_by = ( SELECT auth.uid() AS uid)) OR (conversation_id IN ( SELECT copilot_sessions.conversation_id    FROM copilot_sessions   WHERE (copilot_sessions.profile_id = ( SELECT auth.uid() AS uid)))) OR is_admin_or_supervisor(( SELECT auth.uid() AS uid)))` |
 | WITH CHECK |  |
 
 ### `copilot_conversation_scores_update`
@@ -66,8 +66,8 @@
 | comando | UPDATE |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `is_admin_or_supervisor(auth.uid())` |
-| WITH CHECK | `((scored_by = auth.uid()) AND is_admin_or_supervisor(auth.uid()))` |
+| USING | `is_admin_or_supervisor(( SELECT auth.uid() AS uid))` |
+| WITH CHECK | `((scored_by = ( SELECT auth.uid() AS uid)) AND is_admin_or_supervisor(( SELECT auth.uid() AS uid)))` |
 
 
 ## Triggers

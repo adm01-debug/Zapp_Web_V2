@@ -66,7 +66,7 @@
 | comando | ALL |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `(profile_id IN ( SELECT profiles.id    FROM profiles   WHERE (profiles.user_id = auth.uid())))` |
+| USING | `(profile_id IN ( SELECT profiles.id    FROM profiles   WHERE (profiles.user_id = ( SELECT auth.uid() AS uid))))` |
 | WITH CHECK |  |
 
 

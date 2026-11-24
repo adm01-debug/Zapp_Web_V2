@@ -55,7 +55,7 @@
 | comando | SELECT |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `(is_admin_or_supervisor(auth.uid()) OR (agent_id = ( SELECT profiles.id    FROM profiles   WHERE (profiles.user_id = auth.uid())  LIMIT 1)))` |
+| USING | `(is_admin_or_supervisor(( SELECT auth.uid() AS uid)) OR (agent_id = ( SELECT profiles.id    FROM profiles   WHERE (profiles.user_id = ( SELECT auth.uid() AS uid))  LIMIT 1)))` |
 | WITH CHECK |  |
 
 ### `Admins can delete NPS surveys`
@@ -65,7 +65,7 @@
 | comando | DELETE |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `is_admin_or_supervisor(auth.uid())` |
+| USING | `is_admin_or_supervisor(( SELECT auth.uid() AS uid))` |
 | WITH CHECK |  |
 
 ### `Admins can update NPS surveys`
@@ -75,7 +75,7 @@
 | comando | UPDATE |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `is_admin_or_supervisor(auth.uid())` |
+| USING | `is_admin_or_supervisor(( SELECT auth.uid() AS uid))` |
 | WITH CHECK |  |
 
 ### `Users can create own NPS surveys`
@@ -86,7 +86,7 @@
 | tipo | PERMISSIVE |
 | roles | authenticated |
 | USING |  |
-| WITH CHECK | `((agent_id IS NOT NULL) AND (agent_id IN ( SELECT profiles.id    FROM profiles   WHERE (profiles.user_id = auth.uid()))))` |
+| WITH CHECK | `((agent_id IS NOT NULL) AND (agent_id IN ( SELECT profiles.id    FROM profiles   WHERE (profiles.user_id = ( SELECT auth.uid() AS uid)))))` |
 
 
 ## Triggers

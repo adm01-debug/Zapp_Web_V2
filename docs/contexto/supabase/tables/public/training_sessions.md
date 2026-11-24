@@ -54,7 +54,7 @@
 | comando | DELETE |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `((profile_id = get_profile_id_for_user(auth.uid())) OR is_admin_or_supervisor(auth.uid()))` |
+| USING | `((profile_id = get_profile_id_for_user(( SELECT auth.uid() AS uid))) OR is_admin_or_supervisor(( SELECT auth.uid() AS uid)))` |
 | WITH CHECK |  |
 
 ### `Users can insert own training sessions`
@@ -65,7 +65,7 @@
 | tipo | PERMISSIVE |
 | roles | authenticated |
 | USING |  |
-| WITH CHECK | `((profile_id = get_profile_id_for_user(auth.uid())) OR is_admin_or_supervisor(auth.uid()))` |
+| WITH CHECK | `((profile_id = get_profile_id_for_user(( SELECT auth.uid() AS uid))) OR is_admin_or_supervisor(( SELECT auth.uid() AS uid)))` |
 
 ### `Users can update own training sessions`
 
@@ -74,7 +74,7 @@
 | comando | UPDATE |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `((profile_id = get_profile_id_for_user(auth.uid())) OR is_admin_or_supervisor(auth.uid()))` |
+| USING | `((profile_id = get_profile_id_for_user(( SELECT auth.uid() AS uid))) OR is_admin_or_supervisor(( SELECT auth.uid() AS uid)))` |
 | WITH CHECK |  |
 
 ### `Users can view own training sessions`
@@ -84,7 +84,7 @@
 | comando | SELECT |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `((profile_id = get_profile_id_for_user(auth.uid())) OR is_admin_or_supervisor(auth.uid()))` |
+| USING | `((profile_id = get_profile_id_for_user(( SELECT auth.uid() AS uid))) OR is_admin_or_supervisor(( SELECT auth.uid() AS uid)))` |
 | WITH CHECK |  |
 
 

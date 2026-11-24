@@ -45,7 +45,7 @@
 | tipo | PERMISSIVE |
 | roles | authenticated |
 | USING |  |
-| WITH CHECK | `(seller_id = ( SELECT auth.uid() AS uid))` |
+| WITH CHECK | `(seller_id = ( SELECT ( SELECT auth.uid() AS uid) AS uid))` |
 
 ### `copilot_seller_settings_select`
 
@@ -54,7 +54,7 @@
 | comando | SELECT |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `(seller_id = ( SELECT auth.uid() AS uid))` |
+| USING | `(seller_id = ( SELECT ( SELECT auth.uid() AS uid) AS uid))` |
 | WITH CHECK |  |
 
 ### `copilot_seller_settings_update`
@@ -64,8 +64,8 @@
 | comando | UPDATE |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `(seller_id = ( SELECT auth.uid() AS uid))` |
-| WITH CHECK | `(seller_id = ( SELECT auth.uid() AS uid))` |
+| USING | `(seller_id = ( SELECT ( SELECT auth.uid() AS uid) AS uid))` |
+| WITH CHECK | `(seller_id = ( SELECT ( SELECT auth.uid() AS uid) AS uid))` |
 
 
 ## Triggers

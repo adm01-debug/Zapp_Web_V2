@@ -58,7 +58,7 @@
 | comando | DELETE |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `((author_id = get_profile_id_for_user(auth.uid())) AND is_contact_visible_to_user(contact_id, auth.uid()))` |
+| USING | `((author_id = get_profile_id_for_user(( SELECT auth.uid() AS uid))) AND is_contact_visible_to_user(contact_id, ( SELECT auth.uid() AS uid)))` |
 | WITH CHECK |  |
 
 ### `contact_notes_insert_policy`
@@ -69,7 +69,7 @@
 | tipo | PERMISSIVE |
 | roles | authenticated |
 | USING |  |
-| WITH CHECK | `((author_id = get_profile_id_for_user(auth.uid())) AND is_contact_visible_to_user(contact_id, auth.uid()))` |
+| WITH CHECK | `((author_id = get_profile_id_for_user(( SELECT auth.uid() AS uid))) AND is_contact_visible_to_user(contact_id, ( SELECT auth.uid() AS uid)))` |
 
 ### `contact_notes_select_policy`
 
@@ -78,7 +78,7 @@
 | comando | SELECT |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `is_contact_visible_to_user(contact_id, auth.uid())` |
+| USING | `is_contact_visible_to_user(contact_id, ( SELECT auth.uid() AS uid))` |
 | WITH CHECK |  |
 
 ### `contact_notes_update_policy`
@@ -88,8 +88,8 @@
 | comando | UPDATE |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `((author_id = get_profile_id_for_user(auth.uid())) AND is_contact_visible_to_user(contact_id, auth.uid()))` |
-| WITH CHECK | `((author_id = get_profile_id_for_user(auth.uid())) AND is_contact_visible_to_user(contact_id, auth.uid()))` |
+| USING | `((author_id = get_profile_id_for_user(( SELECT auth.uid() AS uid))) AND is_contact_visible_to_user(contact_id, ( SELECT auth.uid() AS uid)))` |
+| WITH CHECK | `((author_id = get_profile_id_for_user(( SELECT auth.uid() AS uid))) AND is_contact_visible_to_user(contact_id, ( SELECT auth.uid() AS uid)))` |
 
 
 ## Triggers

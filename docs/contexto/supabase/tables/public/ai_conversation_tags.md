@@ -51,7 +51,7 @@
 | comando | DELETE |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `is_admin_or_supervisor(auth.uid())` |
+| USING | `is_admin_or_supervisor(( SELECT auth.uid() AS uid))` |
 | WITH CHECK |  |
 
 ### `Admins can update ai tags`
@@ -61,7 +61,7 @@
 | comando | UPDATE |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `is_admin_or_supervisor(auth.uid())` |
+| USING | `is_admin_or_supervisor(( SELECT auth.uid() AS uid))` |
 | WITH CHECK |  |
 
 ### `Agents can delete tags on assigned contacts`
@@ -71,7 +71,7 @@
 | comando | DELETE |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `((EXISTS ( SELECT 1    FROM (contacts c      JOIN profiles p ON ((p.id = c.assigned_to)))   WHERE ((c.id = ai_conversation_tags.contact_id) AND (p.user_id = auth.uid())))) OR is_admin_or_supervisor(auth.uid()))` |
+| USING | `((EXISTS ( SELECT 1    FROM (contacts c      JOIN profiles p ON ((p.id = c.assigned_to)))   WHERE ((c.id = ai_conversation_tags.contact_id) AND (p.user_id = ( SELECT auth.uid() AS uid))))) OR is_admin_or_supervisor(( SELECT auth.uid() AS uid)))` |
 | WITH CHECK |  |
 
 ### `Authenticated can view ai tags`
@@ -81,7 +81,7 @@
 | comando | SELECT |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `is_contact_visible_to_user(contact_id, auth.uid())` |
+| USING | `is_contact_visible_to_user(contact_id, ( SELECT auth.uid() AS uid))` |
 | WITH CHECK |  |
 
 ### `Users can insert ai tags for assigned contacts`
@@ -92,7 +92,7 @@
 | tipo | PERMISSIVE |
 | roles | authenticated |
 | USING |  |
-| WITH CHECK | `((contact_id IN ( SELECT c.id    FROM contacts c   WHERE (c.assigned_to IN ( SELECT profiles.id            FROM profiles           WHERE (profiles.user_id = auth.uid()))))) OR is_admin_or_supervisor(auth.uid()))` |
+| WITH CHECK | `((contact_id IN ( SELECT c.id    FROM contacts c   WHERE (c.assigned_to IN ( SELECT profiles.id            FROM profiles           WHERE (profiles.user_id = ( SELECT auth.uid() AS uid)))))) OR is_admin_or_supervisor(( SELECT auth.uid() AS uid)))` |
 
 
 ## Triggers

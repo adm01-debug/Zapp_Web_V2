@@ -85,7 +85,7 @@
 | comando | UPDATE |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `(EXISTS ( SELECT 1    FROM gmail_accounts ga   WHERE ((ga.id = email_messages.gmail_account_id) AND (ga.user_id = auth.uid()))))` |
+| USING | `(EXISTS ( SELECT 1    FROM gmail_accounts ga   WHERE ((ga.id = email_messages.gmail_account_id) AND (ga.user_id = ( SELECT auth.uid() AS uid)))))` |
 | WITH CHECK |  |
 
 ### `Users can view messages of own accounts`
@@ -95,7 +95,7 @@
 | comando | SELECT |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `(EXISTS ( SELECT 1    FROM gmail_accounts ga   WHERE ((ga.id = email_messages.gmail_account_id) AND (ga.user_id = auth.uid()))))` |
+| USING | `(EXISTS ( SELECT 1    FROM gmail_accounts ga   WHERE ((ga.id = email_messages.gmail_account_id) AND (ga.user_id = ( SELECT auth.uid() AS uid)))))` |
 | WITH CHECK |  |
 
 

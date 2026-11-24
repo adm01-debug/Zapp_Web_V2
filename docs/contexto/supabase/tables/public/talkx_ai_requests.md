@@ -65,7 +65,7 @@
 | comando | SELECT |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `COALESCE(is_admin_or_supervisor(auth.uid()), false)` |
+| USING | `COALESCE(is_admin_or_supervisor(( SELECT auth.uid() AS uid)), false)` |
 | WITH CHECK |  |
 
 

@@ -91,7 +91,7 @@
 | comando | SELECT |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `( SELECT has_role(( SELECT auth.uid() AS uid), 'admin'::app_role) AS has_role)` |
+| USING | `( SELECT has_role(( SELECT ( SELECT auth.uid() AS uid) AS uid), 'admin'::app_role) AS has_role)` |
 | WITH CHECK |  |
 
 

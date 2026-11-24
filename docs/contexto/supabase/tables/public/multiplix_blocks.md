@@ -69,7 +69,7 @@
 | comando | DELETE |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `(is_admin_or_supervisor(auth.uid()) AND (EXISTS ( SELECT 1    FROM multiplix_dispatches md   WHERE ((md.id = multiplix_blocks.dispatch_id) AND (md.created_by = ( SELECT profiles.id            FROM profiles           WHERE (profiles.user_id = auth.uid())          LIMIT 1)) AND (md.status = 'draft'::multiplix_dispatch_status)))))` |
+| USING | `(is_admin_or_supervisor(( SELECT auth.uid() AS uid)) AND (EXISTS ( SELECT 1    FROM multiplix_dispatches md   WHERE ((md.id = multiplix_blocks.dispatch_id) AND (md.created_by = ( SELECT profiles.id            FROM profiles           WHERE (profiles.user_id = ( SELECT auth.uid() AS uid))          LIMIT 1)) AND (md.status = 'draft'::multiplix_dispatch_status)))))` |
 | WITH CHECK |  |
 
 ### `Users can insert blocks into own draft dispatches`
@@ -80,7 +80,7 @@
 | tipo | PERMISSIVE |
 | roles | authenticated |
 | USING |  |
-| WITH CHECK | `(is_admin_or_supervisor(auth.uid()) AND (EXISTS ( SELECT 1    FROM multiplix_dispatches md   WHERE ((md.id = multiplix_blocks.dispatch_id) AND (md.created_by = ( SELECT profiles.id            FROM profiles           WHERE (profiles.user_id = auth.uid())          LIMIT 1)) AND (md.status = 'draft'::multiplix_dispatch_status)))))` |
+| WITH CHECK | `(is_admin_or_supervisor(( SELECT auth.uid() AS uid)) AND (EXISTS ( SELECT 1    FROM multiplix_dispatches md   WHERE ((md.id = multiplix_blocks.dispatch_id) AND (md.created_by = ( SELECT profiles.id            FROM profiles           WHERE (profiles.user_id = ( SELECT auth.uid() AS uid))          LIMIT 1)) AND (md.status = 'draft'::multiplix_dispatch_status)))))` |
 
 ### `Users can update blocks of own draft dispatches`
 
@@ -89,8 +89,8 @@
 | comando | UPDATE |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `(is_admin_or_supervisor(auth.uid()) AND (EXISTS ( SELECT 1    FROM multiplix_dispatches md   WHERE ((md.id = multiplix_blocks.dispatch_id) AND (md.created_by = ( SELECT profiles.id            FROM profiles           WHERE (profiles.user_id = auth.uid())          LIMIT 1)) AND (md.status = 'draft'::multiplix_dispatch_status)))))` |
-| WITH CHECK | `(is_admin_or_supervisor(auth.uid()) AND (EXISTS ( SELECT 1    FROM multiplix_dispatches md   WHERE ((md.id = multiplix_blocks.dispatch_id) AND (md.created_by = ( SELECT profiles.id            FROM profiles           WHERE (profiles.user_id = auth.uid())          LIMIT 1)) AND (md.status = 'draft'::multiplix_dispatch_status)))))` |
+| USING | `(is_admin_or_supervisor(( SELECT auth.uid() AS uid)) AND (EXISTS ( SELECT 1    FROM multiplix_dispatches md   WHERE ((md.id = multiplix_blocks.dispatch_id) AND (md.created_by = ( SELECT profiles.id            FROM profiles           WHERE (profiles.user_id = ( SELECT auth.uid() AS uid))          LIMIT 1)) AND (md.status = 'draft'::multiplix_dispatch_status)))))` |
+| WITH CHECK | `(is_admin_or_supervisor(( SELECT auth.uid() AS uid)) AND (EXISTS ( SELECT 1    FROM multiplix_dispatches md   WHERE ((md.id = multiplix_blocks.dispatch_id) AND (md.created_by = ( SELECT profiles.id            FROM profiles           WHERE (profiles.user_id = ( SELECT auth.uid() AS uid))          LIMIT 1)) AND (md.status = 'draft'::multiplix_dispatch_status)))))` |
 
 ### `Users can view blocks of accessible dispatches`
 
@@ -99,7 +99,7 @@
 | comando | SELECT |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `(is_admin_or_supervisor(auth.uid()) AND (EXISTS ( SELECT 1    FROM multiplix_dispatches md   WHERE ((md.id = multiplix_blocks.dispatch_id) AND ((md.created_by = ( SELECT profiles.id            FROM profiles           WHERE (profiles.user_id = auth.uid())          LIMIT 1)) OR is_admin_or_supervisor(auth.uid()))))))` |
+| USING | `(is_admin_or_supervisor(( SELECT auth.uid() AS uid)) AND (EXISTS ( SELECT 1    FROM multiplix_dispatches md   WHERE ((md.id = multiplix_blocks.dispatch_id) AND ((md.created_by = ( SELECT profiles.id            FROM profiles           WHERE (profiles.user_id = ( SELECT auth.uid() AS uid))          LIMIT 1)) OR is_admin_or_supervisor(( SELECT auth.uid() AS uid)))))))` |
 | WITH CHECK |  |
 
 

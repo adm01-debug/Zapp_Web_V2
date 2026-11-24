@@ -57,7 +57,7 @@
 | comando | SELECT |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `is_admin(auth.uid())` |
+| USING | `is_admin(( SELECT auth.uid() AS uid))` |
 | WITH CHECK |  |
 
 

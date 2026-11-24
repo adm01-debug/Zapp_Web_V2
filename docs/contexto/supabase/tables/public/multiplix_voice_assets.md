@@ -64,7 +64,7 @@
 | comando | SELECT |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `((EXISTS ( SELECT 1    FROM multiplix_voice_grants g   WHERE ((g.voice_id = multiplix_voice_assets.voice_id) AND (g.revoked_at IS NULL) AND (((g.roles IS NOT NULL) AND (EXISTS ( SELECT 1            FROM unnest(g.roles) r(r)           WHERE has_role(auth.uid(), r.r)))) OR ((g.perfis IS NOT NULL) AND (EXISTS ( SELECT 1            FROM profiles p           WHERE ((p.user_id = auth.uid()) AND (p.id = ANY (g.perfis)))))))))) OR (created_by = ( SELECT profiles.id    FROM profiles   WHERE (profiles.user_id = auth.uid())  LIMIT 1)) OR is_admin_or_supervisor(auth.uid()))` |
+| USING | `((EXISTS ( SELECT 1    FROM multiplix_voice_grants g   WHERE ((g.voice_id = multiplix_voice_assets.voice_id) AND (g.revoked_at IS NULL) AND (((g.roles IS NOT NULL) AND (EXISTS ( SELECT 1            FROM unnest(g.roles) r(r)           WHERE has_role(( SELECT auth.uid() AS uid), r.r)))) OR ((g.perfis IS NOT NULL) AND (EXISTS ( SELECT 1            FROM profiles p           WHERE ((p.user_id = ( SELECT auth.uid() AS uid)) AND (p.id = ANY (g.perfis)))))))))) OR (created_by = ( SELECT profiles.id    FROM profiles   WHERE (profiles.user_id = ( SELECT auth.uid() AS uid))  LIMIT 1)) OR is_admin_or_supervisor(( SELECT auth.uid() AS uid)))` |
 | WITH CHECK |  |
 
 

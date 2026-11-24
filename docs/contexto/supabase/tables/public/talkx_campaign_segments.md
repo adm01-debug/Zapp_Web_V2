@@ -57,7 +57,7 @@
 | comando | SELECT |
 | tipo | PERMISSIVE |
 | roles | public |
-| USING | `is_admin_or_supervisor(auth.uid())` |
+| USING | `is_admin_or_supervisor(( SELECT auth.uid() AS uid))` |
 | WITH CHECK |  |
 
 ### `Users can create campaign segments`
@@ -68,7 +68,7 @@
 | tipo | PERMISSIVE |
 | roles | public |
 | USING |  |
-| WITH CHECK | `(is_admin_or_supervisor(auth.uid()) AND (EXISTS ( SELECT 1    FROM talkx_campaigns c   WHERE ((c.id = talkx_campaign_segments.campaign_id) AND (c.created_by = ( SELECT p.id            FROM profiles p           WHERE (p.user_id = auth.uid())          LIMIT 1))))))` |
+| WITH CHECK | `(is_admin_or_supervisor(( SELECT auth.uid() AS uid)) AND (EXISTS ( SELECT 1    FROM talkx_campaigns c   WHERE ((c.id = talkx_campaign_segments.campaign_id) AND (c.created_by = ( SELECT p.id            FROM profiles p           WHERE (p.user_id = ( SELECT auth.uid() AS uid))          LIMIT 1))))))` |
 
 ### `Users can delete own draft campaign segments`
 
@@ -77,7 +77,7 @@
 | comando | DELETE |
 | tipo | PERMISSIVE |
 | roles | public |
-| USING | `(EXISTS ( SELECT 1    FROM talkx_campaigns c   WHERE ((c.id = talkx_campaign_segments.campaign_id) AND (c.created_by = ( SELECT p.id            FROM profiles p           WHERE (p.user_id = auth.uid())          LIMIT 1)) AND is_admin_or_supervisor(auth.uid()) AND (c.status = 'draft'::text))))` |
+| USING | `(EXISTS ( SELECT 1    FROM talkx_campaigns c   WHERE ((c.id = talkx_campaign_segments.campaign_id) AND (c.created_by = ( SELECT p.id            FROM profiles p           WHERE (p.user_id = ( SELECT auth.uid() AS uid))          LIMIT 1)) AND is_admin_or_supervisor(( SELECT auth.uid() AS uid)) AND (c.status = 'draft'::text))))` |
 | WITH CHECK |  |
 
 ### `Users can update own campaign segments`
@@ -87,7 +87,7 @@
 | comando | UPDATE |
 | tipo | PERMISSIVE |
 | roles | public |
-| USING | `(EXISTS ( SELECT 1    FROM talkx_campaigns c   WHERE ((c.id = talkx_campaign_segments.campaign_id) AND (c.created_by = ( SELECT p.id            FROM profiles p           WHERE (p.user_id = auth.uid())          LIMIT 1)) AND is_admin_or_supervisor(auth.uid()))))` |
+| USING | `(EXISTS ( SELECT 1    FROM talkx_campaigns c   WHERE ((c.id = talkx_campaign_segments.campaign_id) AND (c.created_by = ( SELECT p.id            FROM profiles p           WHERE (p.user_id = ( SELECT auth.uid() AS uid))          LIMIT 1)) AND is_admin_or_supervisor(( SELECT auth.uid() AS uid)))))` |
 | WITH CHECK |  |
 
 ### `Users can view own campaign segments`
@@ -97,7 +97,7 @@
 | comando | SELECT |
 | tipo | PERMISSIVE |
 | roles | public |
-| USING | `(EXISTS ( SELECT 1    FROM talkx_campaigns c   WHERE ((c.id = talkx_campaign_segments.campaign_id) AND (c.created_by = ( SELECT p.id            FROM profiles p           WHERE (p.user_id = auth.uid())          LIMIT 1)))))` |
+| USING | `(EXISTS ( SELECT 1    FROM talkx_campaigns c   WHERE ((c.id = talkx_campaign_segments.campaign_id) AND (c.created_by = ( SELECT p.id            FROM profiles p           WHERE (p.user_id = ( SELECT auth.uid() AS uid))          LIMIT 1)))))` |
 | WITH CHECK |  |
 
 

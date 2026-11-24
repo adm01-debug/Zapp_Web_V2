@@ -96,7 +96,7 @@
 | comando | ALL |
 | tipo | PERMISSIVE |
 | roles | public |
-| USING | `(profile_id = auth.uid())` |
+| USING | `(profile_id = ( SELECT auth.uid() AS uid))` |
 | WITH CHECK |  |
 
 

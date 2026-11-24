@@ -79,7 +79,7 @@
 | comando | SELECT |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `(EXISTS ( SELECT 1    FROM multiplix_dispatches md   WHERE ((md.id = multiplix_delivery_items.dispatch_id) AND ((md.created_by = ( SELECT profiles.id            FROM profiles           WHERE (profiles.user_id = auth.uid())          LIMIT 1)) OR is_admin_or_supervisor(auth.uid())))))` |
+| USING | `(EXISTS ( SELECT 1    FROM multiplix_dispatches md   WHERE ((md.id = multiplix_delivery_items.dispatch_id) AND ((md.created_by = ( SELECT profiles.id            FROM profiles           WHERE (profiles.user_id = ( SELECT auth.uid() AS uid))          LIMIT 1)) OR is_admin_or_supervisor(( SELECT auth.uid() AS uid))))))` |
 | WITH CHECK |  |
 
 

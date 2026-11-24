@@ -77,7 +77,7 @@
 | comando | DELETE |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `(EXISTS ( SELECT 1    FROM profiles p   WHERE ((p.id = team_message_reactions.profile_id) AND (p.user_id = auth.uid()))))` |
+| USING | `(EXISTS ( SELECT 1    FROM profiles p   WHERE ((p.id = team_message_reactions.profile_id) AND (p.user_id = ( SELECT auth.uid() AS uid)))))` |
 | WITH CHECK |  |
 
 ### `team_message_reactions_insert`
@@ -88,7 +88,7 @@
 | tipo | PERMISSIVE |
 | roles | authenticated |
 | USING |  |
-| WITH CHECK | `((EXISTS ( SELECT 1    FROM profiles p   WHERE ((p.id = team_message_reactions.profile_id) AND (p.user_id = auth.uid())))) AND (EXISTS ( SELECT 1    FROM team_messages tm   WHERE ((tm.id = team_message_reactions.message_id) AND is_team_conversation_member(auth.uid(), tm.conversation_id)))))` |
+| WITH CHECK | `((EXISTS ( SELECT 1    FROM profiles p   WHERE ((p.id = team_message_reactions.profile_id) AND (p.user_id = ( SELECT auth.uid() AS uid))))) AND (EXISTS ( SELECT 1    FROM team_messages tm   WHERE ((tm.id = team_message_reactions.message_id) AND is_team_conversation_member(( SELECT auth.uid() AS uid), tm.conversation_id)))))` |
 
 ### `team_message_reactions_select`
 
@@ -97,7 +97,7 @@
 | comando | SELECT |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `(EXISTS ( SELECT 1    FROM ((team_messages tm      JOIN team_conversation_members tcm ON ((tcm.conversation_id = tm.conversation_id)))      JOIN profiles p ON ((p.id = tcm.profile_id)))   WHERE ((tm.id = team_message_reactions.message_id) AND (p.user_id = auth.uid()))))` |
+| USING | `(EXISTS ( SELECT 1    FROM ((team_messages tm      JOIN team_conversation_members tcm ON ((tcm.conversation_id = tm.conversation_id)))      JOIN profiles p ON ((p.id = tcm.profile_id)))   WHERE ((tm.id = team_message_reactions.message_id) AND (p.user_id = ( SELECT auth.uid() AS uid)))))` |
 | WITH CHECK |  |
 
 

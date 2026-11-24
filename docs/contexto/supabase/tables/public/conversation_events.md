@@ -73,7 +73,7 @@
 | tipo | PERMISSIVE |
 | roles | authenticated |
 | USING |  |
-| WITH CHECK | `(is_contact_visible_to_user(contact_id, auth.uid()) AND (is_admin_or_supervisor(auth.uid()) OR (NOT (performed_by IS DISTINCT FROM current_profile_id()))))` |
+| WITH CHECK | `(is_contact_visible_to_user(contact_id, ( SELECT auth.uid() AS uid)) AND (is_admin_or_supervisor(( SELECT auth.uid() AS uid)) OR (NOT (performed_by IS DISTINCT FROM current_profile_id()))))` |
 
 ### `conversation_events_select_policy`
 
@@ -82,7 +82,7 @@
 | comando | SELECT |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `(is_contact_visible_to_user(contact_id, auth.uid()) OR is_admin_or_supervisor(auth.uid()))` |
+| USING | `(is_contact_visible_to_user(contact_id, ( SELECT auth.uid() AS uid)) OR is_admin_or_supervisor(( SELECT auth.uid() AS uid)))` |
 | WITH CHECK |  |
 
 

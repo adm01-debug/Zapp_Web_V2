@@ -5,5 +5,5 @@ Schemas internos do Supabase ficam fora da introspecção geral (`_analytics, _r
 | schema | owner | USAGE para roles da API | comentário |
 |---|---|---|---|
 | _bkp_261023 | postgres |  | [backup-temporário] Snapshot de segurança criado em 23/10/2026 antes de migrations críticas do GOAL "Backend 100% operacional". Contém: contacts (3730 linhas), schema_migrations (922), functions_before (356), policies_before (456). DROP programado após 22/11/2026 — conferir antes se houve necessidade de restauração. |
-| ops | postgres |  |  |
+| ops | postgres |  | Schema interno de operações e catálogo técnico do projeto. Não exposto pela Data API; alterações e consultas administrativas ficam restritas ao DBA. |
 | public | pg_database_owner | anon, authenticated, service_role | standard public schema |

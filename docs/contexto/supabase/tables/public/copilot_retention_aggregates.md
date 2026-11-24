@@ -57,7 +57,7 @@
 | comando | SELECT |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `(profile_id = auth.uid())` |
+| USING | `(profile_id = ( SELECT auth.uid() AS uid))` |
 | WITH CHECK |  |
 
 ### `service_role_retention`

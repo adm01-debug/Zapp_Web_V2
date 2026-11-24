@@ -6,7 +6,7 @@
 | owner | postgres |
 | RLS habilitado | sim |
 | RLS forçado (owner) | não |
-| policies | 3 |
+| policies | 2 |
 | realtime (publication) | não |
 | replica identity | full |
 | vem de extensão | não |
@@ -51,16 +51,6 @@
 
 ## Policies (RLS)
 
-### `Admins can insert security alerts`
-
-| campo | valor |
-|---|---|
-| comando | INSERT |
-| tipo | PERMISSIVE |
-| roles | authenticated |
-| USING |  |
-| WITH CHECK | `is_admin_or_supervisor(auth.uid())` |
-
 ### `Admins can manage security alerts`
 
 | campo | valor |
@@ -68,8 +58,8 @@
 | comando | ALL |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `is_admin_or_supervisor(auth.uid())` |
-| WITH CHECK | `is_admin_or_supervisor(auth.uid())` |
+| USING | `is_admin_or_supervisor(( SELECT auth.uid() AS uid))` |
+| WITH CHECK | `is_admin_or_supervisor(( SELECT auth.uid() AS uid))` |
 
 ### `security_alerts_self_select`
 
@@ -78,7 +68,7 @@
 | comando | SELECT |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `(user_id = ( SELECT auth.uid() AS uid))` |
+| USING | `(user_id = ( SELECT ( SELECT auth.uid() AS uid) AS uid))` |
 | WITH CHECK |  |
 
 

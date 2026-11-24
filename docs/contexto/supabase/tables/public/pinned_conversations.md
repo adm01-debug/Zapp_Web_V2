@@ -53,7 +53,7 @@
 | tipo | PERMISSIVE |
 | roles | authenticated |
 | USING |  |
-| WITH CHECK | `((pinned_by IN ( SELECT profiles.id    FROM profiles   WHERE (profiles.user_id = auth.uid()))) AND (EXISTS ( SELECT 1    FROM contacts c   WHERE (c.id = pinned_conversations.contact_id))))` |
+| WITH CHECK | `((pinned_by IN ( SELECT profiles.id    FROM profiles   WHERE (profiles.user_id = ( SELECT auth.uid() AS uid)))) AND (EXISTS ( SELECT 1    FROM contacts c   WHERE (c.id = pinned_conversations.contact_id))))` |
 
 ### `Users can delete own pins`
 
@@ -62,7 +62,7 @@
 | comando | DELETE |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `(pinned_by IN ( SELECT profiles.id    FROM profiles   WHERE (profiles.user_id = auth.uid())))` |
+| USING | `(pinned_by IN ( SELECT profiles.id    FROM profiles   WHERE (profiles.user_id = ( SELECT auth.uid() AS uid))))` |
 | WITH CHECK |  |
 
 ### `Users can update own pins`
@@ -72,8 +72,8 @@
 | comando | UPDATE |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `(pinned_by IN ( SELECT profiles.id    FROM profiles   WHERE (profiles.user_id = auth.uid())))` |
-| WITH CHECK | `(pinned_by IN ( SELECT profiles.id    FROM profiles   WHERE (profiles.user_id = auth.uid())))` |
+| USING | `(pinned_by IN ( SELECT profiles.id    FROM profiles   WHERE (profiles.user_id = ( SELECT auth.uid() AS uid))))` |
+| WITH CHECK | `(pinned_by IN ( SELECT profiles.id    FROM profiles   WHERE (profiles.user_id = ( SELECT auth.uid() AS uid))))` |
 
 ### `Users can view own pins`
 
@@ -82,7 +82,7 @@
 | comando | SELECT |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `(pinned_by IN ( SELECT profiles.id    FROM profiles   WHERE (profiles.user_id = auth.uid())))` |
+| USING | `(pinned_by IN ( SELECT profiles.id    FROM profiles   WHERE (profiles.user_id = ( SELECT auth.uid() AS uid))))` |
 | WITH CHECK |  |
 
 

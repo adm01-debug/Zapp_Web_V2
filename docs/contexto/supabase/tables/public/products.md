@@ -6,7 +6,7 @@
 | owner | postgres |
 | RLS habilitado | sim |
 | RLS forçado (owner) | não |
-| policies | 3 |
+| policies | 2 |
 | realtime (publication) | não |
 | replica identity | default |
 | vem de extensão | não |
@@ -54,16 +54,6 @@
 
 ## Policies (RLS)
 
-### `Admins can insert products`
-
-| campo | valor |
-|---|---|
-| comando | INSERT |
-| tipo | PERMISSIVE |
-| roles | authenticated |
-| USING |  |
-| WITH CHECK | `is_admin_or_supervisor(auth.uid())` |
-
 ### `Admins can manage products`
 
 | campo | valor |
@@ -71,8 +61,8 @@
 | comando | ALL |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `is_admin_or_supervisor(auth.uid())` |
-| WITH CHECK | `is_admin_or_supervisor(auth.uid())` |
+| USING | `is_admin_or_supervisor(( SELECT auth.uid() AS uid))` |
+| WITH CHECK | `is_admin_or_supervisor(( SELECT auth.uid() AS uid))` |
 
 ### `Authenticated users can view products`
 

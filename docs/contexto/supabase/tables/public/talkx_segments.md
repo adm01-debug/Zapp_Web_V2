@@ -79,7 +79,7 @@
 | comando | DELETE |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `((created_by = ( SELECT p.id    FROM profiles p   WHERE (p.user_id = auth.uid())  LIMIT 1)) OR is_admin_or_supervisor(auth.uid()))` |
+| USING | `((created_by = ( SELECT p.id    FROM profiles p   WHERE (p.user_id = ( SELECT auth.uid() AS uid))  LIMIT 1)) OR is_admin_or_supervisor(( SELECT auth.uid() AS uid)))` |
 | WITH CHECK |  |
 
 ### `talkx_segments_insert`
@@ -90,7 +90,7 @@
 | tipo | PERMISSIVE |
 | roles | authenticated |
 | USING |  |
-| WITH CHECK | `(created_by = ( SELECT p.id    FROM profiles p   WHERE (p.user_id = auth.uid())  LIMIT 1))` |
+| WITH CHECK | `(created_by = ( SELECT p.id    FROM profiles p   WHERE (p.user_id = ( SELECT auth.uid() AS uid))  LIMIT 1))` |
 
 ### `talkx_segments_select`
 
@@ -99,7 +99,7 @@
 | comando | SELECT |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `((created_by = ( SELECT p.id    FROM profiles p   WHERE (p.user_id = auth.uid())  LIMIT 1)) OR is_admin_or_supervisor(auth.uid()))` |
+| USING | `((created_by = ( SELECT p.id    FROM profiles p   WHERE (p.user_id = ( SELECT auth.uid() AS uid))  LIMIT 1)) OR is_admin_or_supervisor(( SELECT auth.uid() AS uid)))` |
 | WITH CHECK |  |
 
 ### `talkx_segments_update`
@@ -109,8 +109,8 @@
 | comando | UPDATE |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `((created_by = ( SELECT p.id    FROM profiles p   WHERE (p.user_id = auth.uid())  LIMIT 1)) OR is_admin_or_supervisor(auth.uid()))` |
-| WITH CHECK | `((created_by = ( SELECT p.id    FROM profiles p   WHERE (p.user_id = auth.uid())  LIMIT 1)) OR is_admin_or_supervisor(auth.uid()))` |
+| USING | `((created_by = ( SELECT p.id    FROM profiles p   WHERE (p.user_id = ( SELECT auth.uid() AS uid))  LIMIT 1)) OR is_admin_or_supervisor(( SELECT auth.uid() AS uid)))` |
+| WITH CHECK | `((created_by = ( SELECT p.id    FROM profiles p   WHERE (p.user_id = ( SELECT auth.uid() AS uid))  LIMIT 1)) OR is_admin_or_supervisor(( SELECT auth.uid() AS uid)))` |
 
 
 ## Triggers

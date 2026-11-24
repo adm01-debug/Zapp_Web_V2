@@ -61,7 +61,7 @@
 | tipo | PERMISSIVE |
 | roles | authenticated |
 | USING |  |
-| WITH CHECK | `(is_admin_or_supervisor(auth.uid()) AND (owner_id = ( SELECT profiles.id    FROM profiles   WHERE (profiles.user_id = auth.uid())  LIMIT 1)))` |
+| WITH CHECK | `(is_admin_or_supervisor(( SELECT auth.uid() AS uid)) AND (owner_id = ( SELECT profiles.id    FROM profiles   WHERE (profiles.user_id = ( SELECT auth.uid() AS uid))  LIMIT 1)))` |
 
 ### `Users can delete own audiences`
 
@@ -70,7 +70,7 @@
 | comando | DELETE |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `(is_admin_or_supervisor(auth.uid()) AND (owner_id = ( SELECT profiles.id    FROM profiles   WHERE (profiles.user_id = auth.uid())  LIMIT 1)))` |
+| USING | `(is_admin_or_supervisor(( SELECT auth.uid() AS uid)) AND (owner_id = ( SELECT profiles.id    FROM profiles   WHERE (profiles.user_id = ( SELECT auth.uid() AS uid))  LIMIT 1)))` |
 | WITH CHECK |  |
 
 ### `Users can update own audiences`
@@ -80,8 +80,8 @@
 | comando | UPDATE |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `(is_admin_or_supervisor(auth.uid()) AND (owner_id = ( SELECT profiles.id    FROM profiles   WHERE (profiles.user_id = auth.uid())  LIMIT 1)))` |
-| WITH CHECK | `(is_admin_or_supervisor(auth.uid()) AND (owner_id = ( SELECT profiles.id    FROM profiles   WHERE (profiles.user_id = auth.uid())  LIMIT 1)))` |
+| USING | `(is_admin_or_supervisor(( SELECT auth.uid() AS uid)) AND (owner_id = ( SELECT profiles.id    FROM profiles   WHERE (profiles.user_id = ( SELECT auth.uid() AS uid))  LIMIT 1)))` |
+| WITH CHECK | `(is_admin_or_supervisor(( SELECT auth.uid() AS uid)) AND (owner_id = ( SELECT profiles.id    FROM profiles   WHERE (profiles.user_id = ( SELECT auth.uid() AS uid))  LIMIT 1)))` |
 
 ### `Users can view own or shared audiences`
 
@@ -90,7 +90,7 @@
 | comando | SELECT |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `((owner_id = ( SELECT profiles.id    FROM profiles   WHERE (profiles.user_id = auth.uid())  LIMIT 1)) OR (EXISTS ( SELECT 1    FROM unnest(multiplix_audiences.shared_with_roles) shared(role_name)   WHERE has_role(auth.uid(), (shared.role_name)::app_role))))` |
+| USING | `((owner_id = ( SELECT profiles.id    FROM profiles   WHERE (profiles.user_id = ( SELECT auth.uid() AS uid))  LIMIT 1)) OR (EXISTS ( SELECT 1    FROM unnest(multiplix_audiences.shared_with_roles) shared(role_name)   WHERE has_role(( SELECT auth.uid() AS uid), (shared.role_name)::app_role))))` |
 | WITH CHECK |  |
 
 

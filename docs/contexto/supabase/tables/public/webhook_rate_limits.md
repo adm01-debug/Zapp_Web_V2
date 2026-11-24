@@ -48,7 +48,7 @@
 | comando | DELETE |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `is_admin(auth.uid())` |
+| USING | `is_admin(( SELECT auth.uid() AS uid))` |
 | WITH CHECK |  |
 
 ### `Admins can insert rate limits`
@@ -59,7 +59,7 @@
 | tipo | PERMISSIVE |
 | roles | authenticated |
 | USING |  |
-| WITH CHECK | `is_admin(auth.uid())` |
+| WITH CHECK | `is_admin(( SELECT auth.uid() AS uid))` |
 
 ### `Admins can update rate limits`
 
@@ -68,7 +68,7 @@
 | comando | UPDATE |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `is_admin(auth.uid())` |
+| USING | `is_admin(( SELECT auth.uid() AS uid))` |
 | WITH CHECK |  |
 
 ### `Admins can view rate limits`
@@ -78,7 +78,7 @@
 | comando | SELECT |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `is_admin_or_supervisor(auth.uid())` |
+| USING | `is_admin_or_supervisor(( SELECT auth.uid() AS uid))` |
 | WITH CHECK |  |
 
 

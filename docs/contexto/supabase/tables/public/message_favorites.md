@@ -47,7 +47,7 @@
 | comando | DELETE |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `(user_id = ( SELECT auth.uid() AS uid))` |
+| USING | `(user_id = ( SELECT ( SELECT auth.uid() AS uid) AS uid))` |
 | WITH CHECK |  |
 
 ### `message_favorites_insert_own`
@@ -58,7 +58,7 @@
 | tipo | PERMISSIVE |
 | roles | authenticated |
 | USING |  |
-| WITH CHECK | `((user_id = ( SELECT auth.uid() AS uid)) AND (EXISTS ( SELECT 1    FROM messages m   WHERE ((m.id = message_favorites.message_id) AND is_contact_visible_to_user(m.contact_id, ( SELECT auth.uid() AS uid))))))` |
+| WITH CHECK | `((user_id = ( SELECT ( SELECT auth.uid() AS uid) AS uid)) AND (EXISTS ( SELECT 1    FROM messages m   WHERE ((m.id = message_favorites.message_id) AND is_contact_visible_to_user(m.contact_id, ( SELECT ( SELECT auth.uid() AS uid) AS uid))))))` |
 
 ### `message_favorites_select_own`
 
@@ -67,7 +67,7 @@
 | comando | SELECT |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `(user_id = ( SELECT auth.uid() AS uid))` |
+| USING | `(user_id = ( SELECT ( SELECT auth.uid() AS uid) AS uid))` |
 | WITH CHECK |  |
 
 

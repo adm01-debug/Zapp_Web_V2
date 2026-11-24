@@ -49,7 +49,7 @@
 | comando | DELETE |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `(is_admin_or_supervisor(auth.uid()) AND (EXISTS ( SELECT 1    FROM multiplix_audiences ma   WHERE ((ma.id = multiplix_audience_members.audience_id) AND (ma.owner_id = ( SELECT profiles.id            FROM profiles           WHERE (profiles.user_id = auth.uid())          LIMIT 1))))))` |
+| USING | `(is_admin_or_supervisor(( SELECT auth.uid() AS uid)) AND (EXISTS ( SELECT 1    FROM multiplix_audiences ma   WHERE ((ma.id = multiplix_audience_members.audience_id) AND (ma.owner_id = ( SELECT profiles.id            FROM profiles           WHERE (profiles.user_id = ( SELECT auth.uid() AS uid))          LIMIT 1))))))` |
 | WITH CHECK |  |
 
 ### `Users can insert members into own audiences`
@@ -60,7 +60,7 @@
 | tipo | PERMISSIVE |
 | roles | authenticated |
 | USING |  |
-| WITH CHECK | `(is_admin_or_supervisor(auth.uid()) AND (EXISTS ( SELECT 1    FROM multiplix_audiences ma   WHERE ((ma.id = multiplix_audience_members.audience_id) AND (ma.owner_id = ( SELECT profiles.id            FROM profiles           WHERE (profiles.user_id = auth.uid())          LIMIT 1))))))` |
+| WITH CHECK | `(is_admin_or_supervisor(( SELECT auth.uid() AS uid)) AND (EXISTS ( SELECT 1    FROM multiplix_audiences ma   WHERE ((ma.id = multiplix_audience_members.audience_id) AND (ma.owner_id = ( SELECT profiles.id            FROM profiles           WHERE (profiles.user_id = ( SELECT auth.uid() AS uid))          LIMIT 1))))))` |
 
 ### `Users can update members of own audiences`
 
@@ -69,8 +69,8 @@
 | comando | UPDATE |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `(is_admin_or_supervisor(auth.uid()) AND (EXISTS ( SELECT 1    FROM multiplix_audiences ma   WHERE ((ma.id = multiplix_audience_members.audience_id) AND (ma.owner_id = ( SELECT profiles.id            FROM profiles           WHERE (profiles.user_id = auth.uid())          LIMIT 1))))))` |
-| WITH CHECK | `(is_admin_or_supervisor(auth.uid()) AND (EXISTS ( SELECT 1    FROM multiplix_audiences ma   WHERE ((ma.id = multiplix_audience_members.audience_id) AND (ma.owner_id = ( SELECT profiles.id            FROM profiles           WHERE (profiles.user_id = auth.uid())          LIMIT 1))))))` |
+| USING | `(is_admin_or_supervisor(( SELECT auth.uid() AS uid)) AND (EXISTS ( SELECT 1    FROM multiplix_audiences ma   WHERE ((ma.id = multiplix_audience_members.audience_id) AND (ma.owner_id = ( SELECT profiles.id            FROM profiles           WHERE (profiles.user_id = ( SELECT auth.uid() AS uid))          LIMIT 1))))))` |
+| WITH CHECK | `(is_admin_or_supervisor(( SELECT auth.uid() AS uid)) AND (EXISTS ( SELECT 1    FROM multiplix_audiences ma   WHERE ((ma.id = multiplix_audience_members.audience_id) AND (ma.owner_id = ( SELECT profiles.id            FROM profiles           WHERE (profiles.user_id = ( SELECT auth.uid() AS uid))          LIMIT 1))))))` |
 
 ### `Users can view members of accessible audiences`
 
@@ -79,7 +79,7 @@
 | comando | SELECT |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `(EXISTS ( SELECT 1    FROM multiplix_audiences ma   WHERE ((ma.id = multiplix_audience_members.audience_id) AND ((ma.owner_id = ( SELECT profiles.id            FROM profiles           WHERE (profiles.user_id = auth.uid())          LIMIT 1)) OR (EXISTS ( SELECT 1            FROM unnest(ma.shared_with_roles) shared(role_name)           WHERE has_role(auth.uid(), (shared.role_name)::app_role)))))))` |
+| USING | `(EXISTS ( SELECT 1    FROM multiplix_audiences ma   WHERE ((ma.id = multiplix_audience_members.audience_id) AND ((ma.owner_id = ( SELECT profiles.id            FROM profiles           WHERE (profiles.user_id = ( SELECT auth.uid() AS uid))          LIMIT 1)) OR (EXISTS ( SELECT 1            FROM unnest(ma.shared_with_roles) shared(role_name)           WHERE has_role(( SELECT auth.uid() AS uid), (shared.role_name)::app_role)))))))` |
 | WITH CHECK |  |
 
 

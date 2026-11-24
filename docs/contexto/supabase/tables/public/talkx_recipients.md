@@ -112,7 +112,7 @@
 | comando | DELETE |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `(EXISTS ( SELECT 1    FROM talkx_campaigns tc   WHERE ((tc.id = talkx_recipients.campaign_id) AND (tc.created_by = ( SELECT profiles.id            FROM profiles           WHERE (profiles.user_id = auth.uid())          LIMIT 1)) AND (tc.status = 'draft'::text))))` |
+| USING | `(EXISTS ( SELECT 1    FROM talkx_campaigns tc   WHERE ((tc.id = talkx_recipients.campaign_id) AND (tc.created_by = ( SELECT profiles.id            FROM profiles           WHERE (profiles.user_id = ( SELECT auth.uid() AS uid))          LIMIT 1)) AND (tc.status = 'draft'::text))))` |
 | WITH CHECK |  |
 
 ### `Users can insert recipients to own campaigns`
@@ -123,7 +123,7 @@
 | tipo | PERMISSIVE |
 | roles | authenticated |
 | USING |  |
-| WITH CHECK | `(EXISTS ( SELECT 1    FROM talkx_campaigns tc   WHERE ((tc.id = talkx_recipients.campaign_id) AND (tc.created_by = ( SELECT profiles.id            FROM profiles           WHERE (profiles.user_id = auth.uid())          LIMIT 1)))))` |
+| WITH CHECK | `(EXISTS ( SELECT 1    FROM talkx_campaigns tc   WHERE ((tc.id = talkx_recipients.campaign_id) AND (tc.created_by = ( SELECT profiles.id            FROM profiles           WHERE (profiles.user_id = ( SELECT auth.uid() AS uid))          LIMIT 1)))))` |
 
 ### `Users can update recipients of own campaigns`
 
@@ -132,8 +132,8 @@
 | comando | UPDATE |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `(EXISTS ( SELECT 1    FROM talkx_campaigns tc   WHERE ((tc.id = talkx_recipients.campaign_id) AND (tc.created_by = ( SELECT profiles.id            FROM profiles           WHERE (profiles.user_id = auth.uid())          LIMIT 1)))))` |
-| WITH CHECK | `(EXISTS ( SELECT 1    FROM talkx_campaigns tc   WHERE ((tc.id = talkx_recipients.campaign_id) AND (tc.created_by = ( SELECT profiles.id            FROM profiles           WHERE (profiles.user_id = auth.uid())          LIMIT 1)))))` |
+| USING | `(EXISTS ( SELECT 1    FROM talkx_campaigns tc   WHERE ((tc.id = talkx_recipients.campaign_id) AND (tc.created_by = ( SELECT profiles.id            FROM profiles           WHERE (profiles.user_id = ( SELECT auth.uid() AS uid))          LIMIT 1)))))` |
+| WITH CHECK | `(EXISTS ( SELECT 1    FROM talkx_campaigns tc   WHERE ((tc.id = talkx_recipients.campaign_id) AND (tc.created_by = ( SELECT profiles.id            FROM profiles           WHERE (profiles.user_id = ( SELECT auth.uid() AS uid))          LIMIT 1)))))` |
 
 ### `Users can view recipients of own campaigns`
 
@@ -142,7 +142,7 @@
 | comando | SELECT |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `(EXISTS ( SELECT 1    FROM talkx_campaigns tc   WHERE ((tc.id = talkx_recipients.campaign_id) AND ((tc.created_by = ( SELECT profiles.id            FROM profiles           WHERE (profiles.user_id = auth.uid())          LIMIT 1)) OR is_admin_or_supervisor(auth.uid())))))` |
+| USING | `(EXISTS ( SELECT 1    FROM talkx_campaigns tc   WHERE ((tc.id = talkx_recipients.campaign_id) AND ((tc.created_by = ( SELECT profiles.id            FROM profiles           WHERE (profiles.user_id = ( SELECT auth.uid() AS uid))          LIMIT 1)) OR is_admin_or_supervisor(( SELECT auth.uid() AS uid))))))` |
 | WITH CHECK |  |
 
 

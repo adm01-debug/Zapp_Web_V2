@@ -62,8 +62,8 @@
 | comando | ALL |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `is_admin_or_supervisor(auth.uid())` |
-| WITH CHECK | `is_admin_or_supervisor(auth.uid())` |
+| USING | `is_admin_or_supervisor(( SELECT auth.uid() AS uid))` |
+| WITH CHECK | `is_admin_or_supervisor(( SELECT auth.uid() AS uid))` |
 
 ### `Authenticated can view knowledge base`
 
@@ -72,7 +72,7 @@
 | comando | SELECT |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `((is_published = true) OR is_admin_or_supervisor(auth.uid()))` |
+| USING | `((is_published = true) OR is_admin_or_supervisor(( SELECT auth.uid() AS uid)))` |
 | WITH CHECK |  |
 
 

@@ -1,6 +1,6 @@
 # public.user_roles
 
-> Papeis por usuario (admin, supervisor, agent, special_agent). Alteracoes auditadas em audit_logs por trigger.
+> Atribuições de papéis de autorização por auth.users.id. Fonte de verdade para papéis; alterações são auditadas por trigger. Não confundir com profiles.role, que é um campo legado em cache.
 
 | propriedade | valor |
 |---|---|
@@ -51,8 +51,8 @@
 | comando | ALL |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `has_role(auth.uid(), 'admin'::app_role)` |
-| WITH CHECK | `has_role(auth.uid(), 'admin'::app_role)` |
+| USING | `has_role(( SELECT auth.uid() AS uid), 'admin'::app_role)` |
+| WITH CHECK | `has_role(( SELECT auth.uid() AS uid), 'admin'::app_role)` |
 
 ### `Users view own roles, admins view all`
 
@@ -61,7 +61,7 @@
 | comando | SELECT |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `((user_id = auth.uid()) OR is_admin_or_supervisor(auth.uid()))` |
+| USING | `((user_id = ( SELECT auth.uid() AS uid)) OR is_admin_or_supervisor(( SELECT auth.uid() AS uid)))` |
 | WITH CHECK |  |
 
 

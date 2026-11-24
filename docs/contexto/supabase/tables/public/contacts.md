@@ -1,6 +1,6 @@
 # public.contacts
 
-> Contato/cliente por canal (WhatsApp, e-mail, SICOOB): identidade, atribuicao (assigned_to, queue_id), classificacao por IA e conexao de origem. Uma linha = uma conversa/thread ativa com o contato.
+> Registro operacional de contato/conversa por canal. A atribuição é expressa por assigned_to e queue_id; conversation_status descreve o ciclo da conversa; deleted_at IS NULL identifica registros ativos. phone_search_digits é uma chave gerada para busca normalizada, sem alterar o telefone exibido. Uma pessoa pode ter identidades ou conversas em canais distintos.
 
 | propriedade | valor |
 |---|---|
@@ -170,7 +170,7 @@
 | tipo | PERMISSIVE |
 | roles | authenticated |
 | USING |  |
-| WITH CHECK | `(is_admin_or_supervisor(auth.uid()) OR ((assigned_to IS NOT NULL) AND (assigned_to IN ( SELECT profiles.id    FROM profiles   WHERE (profiles.user_id = auth.uid())))))` |
+| WITH CHECK | `(is_admin_or_supervisor(( SELECT auth.uid() AS uid)) OR ((assigned_to IS NOT NULL) AND (assigned_to IN ( SELECT profiles.id    FROM profiles   WHERE (profiles.user_id = ( SELECT auth.uid() AS uid))))))` |
 
 ### `Users can update their assigned contacts`
 
@@ -179,8 +179,8 @@
 | comando | UPDATE |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `can_edit_contact(assigned_to, queue_id, ( SELECT array_agg(v.v) AS array_agg    FROM get_visible_agent_ids(auth.uid()) v(v)), ( SELECT get_profile_id_for_user(auth.uid()) AS get_profile_id_for_user), ( SELECT is_admin_or_supervisor(auth.uid()) AS is_admin_or_supervisor))` |
-| WITH CHECK | `can_edit_contact(assigned_to, queue_id, ( SELECT array_agg(v.v) AS array_agg    FROM get_visible_agent_ids(auth.uid()) v(v)), ( SELECT get_profile_id_for_user(auth.uid()) AS get_profile_id_for_user), ( SELECT is_admin_or_supervisor(auth.uid()) AS is_admin_or_supervisor))` |
+| USING | `can_edit_contact(assigned_to, queue_id, ( SELECT array_agg(v.v) AS array_agg    FROM get_visible_agent_ids(( SELECT auth.uid() AS uid)) v(v)), ( SELECT get_profile_id_for_user(( SELECT auth.uid() AS uid)) AS get_profile_id_for_user), ( SELECT is_admin_or_supervisor(( SELECT auth.uid() AS uid)) AS is_admin_or_supervisor))` |
+| WITH CHECK | `can_edit_contact(assigned_to, queue_id, ( SELECT array_agg(v.v) AS array_agg    FROM get_visible_agent_ids(( SELECT auth.uid() AS uid)) v(v)), ( SELECT get_profile_id_for_user(( SELECT auth.uid() AS uid)) AS get_profile_id_for_user), ( SELECT is_admin_or_supervisor(( SELECT auth.uid() AS uid)) AS is_admin_or_supervisor))` |
 
 ### `contacts_select_policy`
 
@@ -189,7 +189,7 @@
 | comando | SELECT |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `can_edit_contact(assigned_to, queue_id, ( SELECT array_agg(v.v) AS array_agg    FROM get_visible_agent_ids(auth.uid()) v(v)), ( SELECT get_profile_id_for_user(auth.uid()) AS get_profile_id_for_user), ( SELECT is_admin_or_supervisor(auth.uid()) AS is_admin_or_supervisor))` |
+| USING | `can_edit_contact(assigned_to, queue_id, ( SELECT array_agg(v.v) AS array_agg    FROM get_visible_agent_ids(( SELECT auth.uid() AS uid)) v(v)), ( SELECT get_profile_id_for_user(( SELECT auth.uid() AS uid)) AS get_profile_id_for_user), ( SELECT is_admin_or_supervisor(( SELECT auth.uid() AS uid)) AS is_admin_or_supervisor))` |
 | WITH CHECK |  |
 
 

@@ -6,7 +6,7 @@
       "auth": {},
       "connections": [
         {
-          "n": 11,
+          "n": 10,
           "state": null,
           "usename": "authenticator"
         },
@@ -31,16 +31,16 @@
           "usename": "supabase_admin"
         },
         {
-          "n": 4,
+          "n": 2,
           "state": null,
           "usename": "supabase_storage_admin"
         }
       ],
-      "database_bytes": 511454355,
+      "database_bytes": 512822419,
       "queues": [],
       "schema_bytes": [
         {
-          "bytes": 357507072,
+          "bytes": 358055936,
           "schema": "public"
         },
         {
@@ -55,124 +55,124 @@
       "storage": [],
       "top_queries": [
         {
-          "calls": 123,
-          "mean_ms": 815.09,
+          "calls": 124,
+          "mean_ms": 829.33,
           "query": "SELECT jobid, runid, status, start_time, end_time, EXTRACT($2 FROM (end_time - start_time))::numeric(10,2) AS seconds, left(return_message, $3) AS return_message FROM (SELECT *, row_number() OVER (PARTITION BY jobid ORDE",
           "role": "snapshot_reader",
           "rows": 0,
-          "total_ms": 100256
+          "total_ms": 102838
         },
         {
-          "calls": 123,
-          "mean_ms": 425.61,
+          "calls": 124,
+          "mean_ms": 425.63,
           "query": "SELECT table_schema AS schema, table_name AS \"table\", column_name AS \"column\", grantee, string_agg(privilege_type, $1 ORDER BY privilege_type) AS privileges FROM information_schema.column_privileges cp WHERE grantee NOT ",
           "role": "snapshot_reader",
           "rows": 0,
-          "total_ms": 52350
+          "total_ms": 52778
         },
         {
-          "calls": 123,
-          "mean_ms": 146.6,
+          "calls": 124,
+          "mean_ms": 145.45,
           "query": "SELECT e.extname AS name, e.extversion AS version, n.nspname AS schema, (SELECT default_version FROM pg_available_extensions a WHERE a.name = e.extname) AS available_version FROM pg_extension e JOIN pg_namespace n ON n.o",
           "role": "snapshot_reader",
-          "rows": 984,
-          "total_ms": 18032
+          "rows": 992,
+          "total_ms": 18036
         },
         {
-          "calls": 123,
-          "mean_ms": 118.44,
+          "calls": 124,
+          "mean_ms": 118.27,
           "query": "SELECT n.nspname AS schema, p.proname AS name, pg_get_function_identity_arguments(p.oid) AS args, pg_get_function_result(p.oid) AS returns, l.lanname AS language, CASE p.prokind WHEN $1 THEN $2 WHEN $3 THEN $4 WHEN $5 TH",
           "role": "snapshot_reader",
-          "rows": 62634,
-          "total_ms": 14568
+          "rows": 63142,
+          "total_ms": 14665
         },
         {
-          "calls": 123,
-          "mean_ms": 111.78,
+          "calls": 124,
+          "mean_ms": 112.07,
           "query": "SELECT n.nspname AS schema, c.relname AS name, GREATEST(c.reltuples::bigint, $1) AS est_rows, pg_total_relation_size(c.oid) AS total_bytes, pg_relation_size(c.oid) AS heap_bytes, pg_indexes_size(c.oid) AS index_bytes, s.",
           "role": "snapshot_reader",
-          "rows": 27503,
-          "total_ms": 13750
+          "rows": 27728,
+          "total_ms": 13897
         },
         {
-          "calls": 123,
-          "mean_ms": 93.78,
+          "calls": 124,
+          "mean_ms": 93.8,
           "query": "SELECT n.nspname AS schema, c.relname AS \"table\", a.attnum AS position, a.attname AS name, format_type(a.atttypid, a.atttypmod) AS type, NOT a.attnotnull AS nullable, pg_get_expr(d.adbin, d.adrelid) AS \"default\", NULLIF(",
           "role": "snapshot_reader",
-          "rows": 313187,
-          "total_ms": 11535
+          "rows": 315806,
+          "total_ms": 11632
         },
         {
-          "calls": 123,
-          "mean_ms": 82.24,
+          "calls": 124,
+          "mean_ms": 81.94,
           "query": "SELECT version, name, statements FROM supabase_migrations.schema_migrations ORDER BY version",
           "role": "snapshot_reader",
-          "rows": 141374,
-          "total_ms": 10115
+          "rows": 142527,
+          "total_ms": 10161
         },
         {
-          "calls": 123,
-          "mean_ms": 71.01,
+          "calls": 124,
+          "mean_ms": 70.98,
           "query": "SELECT n.nspname AS schema, t.relname AS \"table\", ic.relname AS name, pg_get_indexdef(ix.indexrelid) AS definition, ix.indisunique AS is_unique, ix.indisprimary AS is_primary, ix.indisvalid AS is_valid, am.amname AS meth",
           "role": "snapshot_reader",
-          "rows": 96467,
-          "total_ms": 8734
+          "rows": 97262,
+          "total_ms": 8801
         },
         {
-          "calls": 123,
-          "mean_ms": 54.48,
+          "calls": 124,
+          "mean_ms": 54.45,
           "query": "SELECT n.nspname AS schema, c.relname AS sequence, r.rolname AS grantee, concat_ws($1, CASE WHEN has_sequence_privilege(r.oid, c.oid, $2) THEN $3 END, CASE WHEN has_sequence_privilege(r.oid, c.oid, $4) THEN $5 END, CASE ",
           "role": "snapshot_reader",
-          "rows": 984,
-          "total_ms": 6701
+          "rows": 992,
+          "total_ms": 6752
         },
         {
-          "calls": 123,
-          "mean_ms": 53.32,
+          "calls": 124,
+          "mean_ms": 53.31,
           "query": "SELECT n.nspname AS schema, c.relname AS \"table\", con.conname AS name, CASE con.contype WHEN $1 THEN $2 WHEN $3 THEN $4 WHEN $5 THEN $6 WHEN $7 THEN $8 WHEN $9 THEN $10 ELSE con.contype::text END AS type, pg_get_constrai",
           "role": "snapshot_reader",
-          "rows": 103609,
-          "total_ms": 6558
+          "rows": 104460,
+          "total_ms": 6610
         },
         {
-          "calls": 123,
+          "calls": 124,
           "mean_ms": 53.04,
           "query": "SELECT table_schema AS schema, table_name AS \"table\", grantee, string_agg(privilege_type, $1 ORDER BY privilege_type) AS privileges FROM information_schema.role_table_grants WHERE grantee NOT IN ($2, $3, $4, $5, $6, $7, ",
           "role": "snapshot_reader",
-          "rows": 246,
-          "total_ms": 6524
+          "rows": 248,
+          "total_ms": 6577
         },
         {
-          "calls": 123,
-          "mean_ms": 49.05,
+          "calls": 124,
+          "mean_ms": 49.38,
           "query": "SELECT n.nspname AS schema, c.relname AS name, CASE c.relkind WHEN $1 THEN $2 ELSE $3 END AS kind, pg_get_viewdef(c.oid, $4) AS definition, c.reloptions AS options, pg_get_userbyid(c.relowner) AS owner, obj_description(c",
           "role": "snapshot_reader",
-          "rows": 1599,
-          "total_ms": 6033
+          "rows": 1615,
+          "total_ms": 6123
         },
         {
-          "calls": 123,
-          "mean_ms": 37.51,
+          "calls": 124,
+          "mean_ms": 37.64,
           "query": "SELECT n.nspname AS schema, p.proname AS name, pg_get_function_identity_arguments(p.oid) AS args FROM pg_proc p JOIN pg_namespace n ON n.oid = p.pronamespace WHERE p.prosecdef AND n.nspname NOT IN ($1, $2, $3, $4, $5, $6",
           "role": "snapshot_reader",
           "rows": 0,
-          "total_ms": 4614
+          "total_ms": 4667
         },
         {
-          "calls": 123,
-          "mean_ms": 36.2,
+          "calls": 124,
+          "mean_ms": 36,
           "query": "SELECT n.nspname AS schema, c.relname AS name, CASE c.relkind WHEN $1 THEN $2 WHEN $3 THEN $4 WHEN $5 THEN $6 END AS kind, c.relrowsecurity AS rls_enabled, c.relforcerowsecurity AS rls_forced, pg_get_userbyid(c.relowner)",
           "role": "snapshot_reader",
-          "rows": 27503,
-          "total_ms": 4453
+          "rows": 27728,
+          "total_ms": 4464
         },
         {
-          "calls": 123,
-          "mean_ms": 34.74,
+          "calls": 124,
+          "mean_ms": 34.79,
           "query": "SELECT schemaname AS schema, tablename AS \"table\", policyname AS name, permissive, roles, cmd, qual AS \"using\", with_check FROM pg_policies WHERE schemaname NOT IN ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13,",
           "role": "snapshot_reader",
-          "rows": 68445,
-          "total_ms": 4274
+          "rows": 68992,
+          "total_ms": 4313
         }
       ]
     },
@@ -263,7 +263,7 @@
         "is_primary": false,
         "is_unique": false,
         "name": "idx_agent_achievements_profile",
-        "scans": 98,
+        "scans": 101,
         "schema": "public",
         "table": "agent_achievements"
       },
@@ -290,7 +290,7 @@
         "is_primary": true,
         "is_unique": true,
         "name": "agent_presence_pkey",
-        "scans": 6493,
+        "scans": 6537,
         "schema": "public",
         "table": "agent_presence"
       },
@@ -335,7 +335,7 @@
         "is_primary": false,
         "is_unique": true,
         "name": "agent_stats_profile_id_key",
-        "scans": 5301,
+        "scans": 5475,
         "schema": "public",
         "table": "agent_stats"
       },
@@ -394,11 +394,11 @@
         "table": "agent_visibility_grants"
       },
       {
-        "bytes": 360448,
+        "bytes": 368640,
         "is_primary": false,
         "is_unique": true,
         "name": "ai_budget_reservations_idempotency_key_key",
-        "scans": 3067,
+        "scans": 3187,
         "schema": "public",
         "table": "ai_budget_reservations"
       },
@@ -416,7 +416,7 @@
         "is_primary": false,
         "is_unique": false,
         "name": "idx_ai_budget_reservations_reserved_expiry",
-        "scans": 4489,
+        "scans": 4672,
         "schema": "public",
         "table": "ai_budget_reservations"
       },
@@ -448,20 +448,20 @@
         "table": "ai_conversation_tags"
       },
       {
-        "bytes": 1695744,
+        "bytes": 1712128,
         "is_primary": false,
         "is_unique": true,
         "name": "ai_jobs_idempotency_key_key",
-        "scans": 4560,
+        "scans": 4708,
         "schema": "public",
         "table": "ai_jobs"
       },
       {
-        "bytes": 557056,
+        "bytes": 565248,
         "is_primary": true,
         "is_unique": true,
         "name": "ai_jobs_pkey",
-        "scans": 40189,
+        "scans": 41152,
         "schema": "public",
         "table": "ai_jobs"
       },
@@ -470,7 +470,7 @@
         "is_primary": false,
         "is_unique": false,
         "name": "idx_ai_jobs_queued_priority",
-        "scans": 7242,
+        "scans": 7299,
         "schema": "public",
         "table": "ai_jobs"
       },
@@ -479,7 +479,7 @@
         "is_primary": false,
         "is_unique": false,
         "name": "idx_ai_jobs_running_lease",
-        "scans": 4073,
+        "scans": 4215,
         "schema": "public",
         "table": "ai_jobs"
       },
@@ -488,7 +488,7 @@
         "is_primary": false,
         "is_unique": false,
         "name": "idx_ai_jobs_status_expires",
-        "scans": 7242,
+        "scans": 7299,
         "schema": "public",
         "table": "ai_jobs"
       },
@@ -556,11 +556,11 @@
         "table": "ai_usage_logs"
       },
       {
-        "bytes": 499712,
+        "bytes": 507904,
         "is_primary": false,
         "is_unique": false,
         "name": "idx_ai_usage_logs_created_at",
-        "scans": 8514,
+        "scans": 8826,
         "schema": "public",
         "table": "ai_usage_logs"
       },
@@ -574,7 +574,7 @@
         "table": "ai_usage_logs"
       },
       {
-        "bytes": 344064,
+        "bytes": 368640,
         "is_primary": false,
         "is_unique": false,
         "name": "idx_ai_usage_logs_job_id",
@@ -592,7 +592,7 @@
         "table": "ai_usage_logs"
       },
       {
-        "bytes": 122880,
+        "bytes": 131072,
         "is_primary": false,
         "is_unique": false,
         "name": "idx_ai_usage_logs_request_id",
@@ -632,7 +632,7 @@
         "is_primary": false,
         "is_unique": false,
         "name": "idx_ai_usage_outbox_pendentes",
-        "scans": 736,
+        "scans": 742,
         "schema": "public",
         "table": "ai_usage_outbox"
       },
@@ -902,7 +902,7 @@
         "is_primary": false,
         "is_unique": true,
         "name": "blocked_ips_ip_address_key",
-        "scans": 349,
+        "scans": 354,
         "schema": "public",
         "table": "blocked_ips"
       },
@@ -1388,7 +1388,7 @@
         "is_primary": false,
         "is_unique": false,
         "name": "idx_client_wallet_rules_whatsapp_connection_id",
-        "scans": 1470,
+        "scans": 1488,
         "schema": "public",
         "table": "client_wallet_rules"
       },
@@ -1406,7 +1406,7 @@
         "is_primary": false,
         "is_unique": true,
         "name": "connection_alert_preferences_user_id_key",
-        "scans": 69,
+        "scans": 71,
         "schema": "public",
         "table": "connection_alert_preferences"
       },
@@ -1433,7 +1433,7 @@
         "is_primary": false,
         "is_unique": false,
         "name": "idx_health_logs_checked_at",
-        "scans": 1682,
+        "scans": 1694,
         "schema": "public",
         "table": "connection_health_logs"
       },
@@ -1604,7 +1604,7 @@
         "is_primary": false,
         "is_unique": true,
         "name": "contacts_phone_key",
-        "scans": 39435,
+        "scans": 40506,
         "schema": "public",
         "table": "contacts"
       },
@@ -1613,7 +1613,7 @@
         "is_primary": true,
         "is_unique": true,
         "name": "contacts_pkey",
-        "scans": 6875358,
+        "scans": 7051654,
         "schema": "public",
         "table": "contacts"
       },
@@ -1631,7 +1631,7 @@
         "is_primary": false,
         "is_unique": false,
         "name": "idx_contacts_assigned_queue",
-        "scans": 438,
+        "scans": 454,
         "schema": "public",
         "table": "contacts"
       },
@@ -1649,7 +1649,7 @@
         "is_primary": false,
         "is_unique": false,
         "name": "idx_contacts_assigned_to_gamif",
-        "scans": 3887,
+        "scans": 4043,
         "schema": "public",
         "table": "contacts"
       },
@@ -1694,7 +1694,7 @@
         "is_primary": false,
         "is_unique": false,
         "name": "idx_contacts_created_at",
-        "scans": 6167,
+        "scans": 6494,
         "schema": "public",
         "table": "contacts"
       },
@@ -1748,7 +1748,7 @@
         "is_primary": false,
         "is_unique": false,
         "name": "idx_contacts_queue_id",
-        "scans": 729,
+        "scans": 765,
         "schema": "public",
         "table": "contacts"
       },
@@ -1766,7 +1766,7 @@
         "is_primary": false,
         "is_unique": false,
         "name": "idx_contacts_talk_me_waiting",
-        "scans": 106,
+        "scans": 110,
         "schema": "public",
         "table": "contacts"
       },
@@ -1784,7 +1784,7 @@
         "is_primary": false,
         "is_unique": false,
         "name": "idx_contacts_updated_at",
-        "scans": 269,
+        "scans": 279,
         "schema": "public",
         "table": "contacts"
       },
@@ -2009,7 +2009,7 @@
         "is_primary": false,
         "is_unique": false,
         "name": "idx_events_created_at",
-        "scans": 741,
+        "scans": 777,
         "schema": "public",
         "table": "conversation_events"
       },
@@ -2054,7 +2054,7 @@
         "is_primary": true,
         "is_unique": true,
         "name": "conversation_sla_pkey",
-        "scans": 173,
+        "scans": 177,
         "schema": "public",
         "table": "conversation_sla"
       },
@@ -2063,7 +2063,7 @@
         "is_primary": false,
         "is_unique": false,
         "name": "idx_conversation_sla_contact_id",
-        "scans": 152032,
+        "scans": 157726,
         "schema": "public",
         "table": "conversation_sla"
       },
@@ -2117,7 +2117,7 @@
         "is_primary": false,
         "is_unique": false,
         "name": "idx_conversation_snoozes_snoozed_by",
-        "scans": 234,
+        "scans": 238,
         "schema": "public",
         "table": "conversation_snoozes"
       },
@@ -2275,7 +2275,7 @@
         "table": "copilot_help_requests"
       },
       {
-        "bytes": 417792,
+        "bytes": 442368,
         "is_primary": true,
         "is_unique": true,
         "name": "copilot_insights_pkey",
@@ -2378,7 +2378,7 @@
         "is_primary": false,
         "is_unique": true,
         "name": "copilot_sessions_conversation_id_key",
-        "scans": 4561,
+        "scans": 4709,
         "schema": "public",
         "table": "copilot_sessions"
       },
@@ -2387,7 +2387,7 @@
         "is_primary": true,
         "is_unique": true,
         "name": "copilot_sessions_pkey",
-        "scans": 9883,
+        "scans": 10237,
         "schema": "public",
         "table": "copilot_sessions"
       },
@@ -2603,7 +2603,7 @@
         "is_primary": false,
         "is_unique": false,
         "name": "idx_csat_surveys_contact_invites",
-        "scans": 3686,
+        "scans": 3715,
         "schema": "public",
         "table": "csat_surveys"
       },
@@ -2792,7 +2792,7 @@
         "is_primary": false,
         "is_unique": true,
         "name": "departments_name_key",
-        "scans": 68,
+        "scans": 70,
         "schema": "public",
         "table": "departments"
       },
@@ -2810,7 +2810,7 @@
         "is_primary": true,
         "is_unique": true,
         "name": "edge_rate_limits_pkey",
-        "scans": 57777,
+        "scans": 59934,
         "schema": "public",
         "table": "edge_rate_limits"
       },
@@ -3080,7 +3080,7 @@
         "is_primary": false,
         "is_unique": false,
         "name": "idx_favorite_contacts_user_id",
-        "scans": 458,
+        "scans": 465,
         "schema": "public",
         "table": "favorite_contacts"
       },
@@ -3089,7 +3089,7 @@
         "is_primary": true,
         "is_unique": true,
         "name": "feature_flags_pkey",
-        "scans": 13534,
+        "scans": 13883,
         "schema": "public",
         "table": "feature_flags"
       },
@@ -3197,7 +3197,7 @@
         "is_primary": false,
         "is_unique": true,
         "name": "global_settings_key_key",
-        "scans": 9569,
+        "scans": 9664,
         "schema": "public",
         "table": "global_settings"
       },
@@ -3296,7 +3296,7 @@
         "is_primary": false,
         "is_unique": false,
         "name": "idx_goals_configurations_profile_id",
-        "scans": 520,
+        "scans": 542,
         "schema": "public",
         "table": "goals_configurations"
       },
@@ -3377,7 +3377,7 @@
         "is_primary": false,
         "is_unique": true,
         "name": "ip_whitelist_ip_address_key",
-        "scans": 349,
+        "scans": 354,
         "schema": "public",
         "table": "ip_whitelist"
       },
@@ -3692,7 +3692,7 @@
         "is_primary": false,
         "is_unique": false,
         "name": "idx_messages_agent_id",
-        "scans": 1492,
+        "scans": 1558,
         "schema": "public",
         "table": "messages"
       },
@@ -3715,11 +3715,11 @@
         "table": "messages"
       },
       {
-        "bytes": 3825664,
+        "bytes": 3842048,
         "is_primary": false,
         "is_unique": false,
         "name": "idx_messages_contact_created",
-        "scans": 40878,
+        "scans": 42334,
         "schema": "public",
         "table": "messages"
       },
@@ -3728,7 +3728,7 @@
         "is_primary": false,
         "is_unique": false,
         "name": "idx_messages_contact_id",
-        "scans": 115121,
+        "scans": 118810,
         "schema": "public",
         "table": "messages"
       },
@@ -3746,7 +3746,7 @@
         "is_primary": false,
         "is_unique": false,
         "name": "idx_messages_contact_read_sender",
-        "scans": 10287,
+        "scans": 10639,
         "schema": "public",
         "table": "messages"
       },
@@ -3760,11 +3760,11 @@
         "table": "messages"
       },
       {
-        "bytes": 2736128,
+        "bytes": 2744320,
         "is_primary": false,
         "is_unique": false,
         "name": "idx_messages_created_at",
-        "scans": 7581,
+        "scans": 7826,
         "schema": "public",
         "table": "messages"
       },
@@ -3773,7 +3773,7 @@
         "is_primary": false,
         "is_unique": false,
         "name": "idx_messages_delivery_claimable",
-        "scans": 15287,
+        "scans": 15415,
         "schema": "public",
         "table": "messages"
       },
@@ -3805,11 +3805,11 @@
         "table": "messages"
       },
       {
-        "bytes": 2531328,
+        "bytes": 2539520,
         "is_primary": false,
         "is_unique": false,
         "name": "idx_messages_sender_created_at",
-        "scans": 2943,
+        "scans": 3009,
         "schema": "public",
         "table": "messages"
       },
@@ -3827,7 +3827,7 @@
         "is_primary": false,
         "is_unique": false,
         "name": "idx_messages_unread_contact",
-        "scans": 408,
+        "scans": 426,
         "schema": "public",
         "table": "messages"
       },
@@ -3836,12 +3836,12 @@
         "is_primary": false,
         "is_unique": false,
         "name": "idx_messages_unread_conversas",
-        "scans": 110622,
+        "scans": 114318,
         "schema": "public",
         "table": "messages"
       },
       {
-        "bytes": 811008,
+        "bytes": 819200,
         "is_primary": false,
         "is_unique": false,
         "name": "idx_messages_whatsapp_connection_id",
@@ -3854,7 +3854,7 @@
         "is_primary": false,
         "is_unique": true,
         "name": "messages_external_id_uq",
-        "scans": 58257,
+        "scans": 60856,
         "schema": "public",
         "table": "messages"
       },
@@ -3868,11 +3868,11 @@
         "table": "messages"
       },
       {
-        "bytes": 2686976,
+        "bytes": 2703360,
         "is_primary": true,
         "is_unique": true,
         "name": "messages_pkey",
-        "scans": 40697,
+        "scans": 41934,
         "schema": "public",
         "table": "messages"
       },
@@ -3895,11 +3895,11 @@
         "table": "messages"
       },
       {
-        "bytes": 5701632,
+        "bytes": 5726208,
         "is_primary": false,
         "is_unique": true,
         "name": "ux_messages_dedup",
-        "scans": 5470,
+        "scans": 5636,
         "schema": "public",
         "table": "messages"
       },
@@ -4025,7 +4025,7 @@
         "is_primary": false,
         "is_unique": false,
         "name": "idx_multiplix_delivery_items_dispatch_status",
-        "scans": 3686,
+        "scans": 3715,
         "schema": "public",
         "table": "multiplix_delivery_items"
       },
@@ -4106,7 +4106,7 @@
         "is_primary": false,
         "is_unique": false,
         "name": "idx_multiplix_dispatches_status",
-        "scans": 11058,
+        "scans": 11145,
         "schema": "public",
         "table": "multiplix_dispatches"
       },
@@ -4115,7 +4115,7 @@
         "is_primary": false,
         "is_unique": false,
         "name": "idx_multiplix_dispatches_whatsapp_connection_id",
-        "scans": 26162,
+        "scans": 27357,
         "schema": "public",
         "table": "multiplix_dispatches"
       },
@@ -4178,7 +4178,7 @@
         "is_primary": false,
         "is_unique": true,
         "name": "idx_multiplix_recipients_external_id",
-        "scans": 16528,
+        "scans": 17302,
         "schema": "public",
         "table": "multiplix_recipients"
       },
@@ -4268,7 +4268,7 @@
         "is_primary": false,
         "is_unique": false,
         "name": "idx_notifications_created_at",
-        "scans": 336,
+        "scans": 347,
         "schema": "public",
         "table": "notifications"
       },
@@ -4286,7 +4286,7 @@
         "is_primary": false,
         "is_unique": false,
         "name": "idx_notifications_user_id",
-        "scans": 69,
+        "scans": 71,
         "schema": "public",
         "table": "notifications"
       },
@@ -4304,7 +4304,7 @@
         "is_primary": false,
         "is_unique": true,
         "name": "ux_notifications_user_dedupe_key",
-        "scans": 18586,
+        "scans": 18610,
         "schema": "public",
         "table": "notifications"
       },
@@ -4493,7 +4493,7 @@
         "is_primary": true,
         "is_unique": true,
         "name": "permissions_pkey",
-        "scans": 8873,
+        "scans": 9288,
         "schema": "public",
         "table": "permissions"
       },
@@ -4511,7 +4511,7 @@
         "is_primary": false,
         "is_unique": false,
         "name": "idx_pinned_conversations_pinned_by",
-        "scans": 234,
+        "scans": 238,
         "schema": "public",
         "table": "pinned_conversations"
       },
@@ -5033,7 +5033,7 @@
         "is_primary": false,
         "is_unique": true,
         "name": "saved_filters_inbox_user_lower_name_key",
-        "scans": 60,
+        "scans": 62,
         "schema": "public",
         "table": "saved_filters"
       },
@@ -5069,7 +5069,7 @@
         "is_primary": false,
         "is_unique": false,
         "name": "idx_scheduled_messages_pending",
-        "scans": 7414,
+        "scans": 7472,
         "schema": "public",
         "table": "scheduled_messages"
       },
@@ -5177,7 +5177,7 @@
         "is_primary": false,
         "is_unique": true,
         "name": "security_acl_alerts_aberto_uidx",
-        "scans": 732,
+        "scans": 738,
         "schema": "public",
         "table": "security_acl_alerts"
       },
@@ -5204,7 +5204,7 @@
         "is_primary": false,
         "is_unique": false,
         "name": "idx_security_alerts_created",
-        "scans": 20854,
+        "scans": 20996,
         "schema": "public",
         "table": "security_alerts"
       },
@@ -5222,7 +5222,7 @@
         "is_primary": false,
         "is_unique": false,
         "name": "idx_security_alerts_user_id",
-        "scans": 340,
+        "scans": 351,
         "schema": "public",
         "table": "security_alerts"
       },
@@ -5348,7 +5348,7 @@
         "is_primary": false,
         "is_unique": false,
         "name": "idx_sla_rules_active",
-        "scans": 826,
+        "scans": 854,
         "schema": "public",
         "table": "sla_rules"
       },
@@ -5474,7 +5474,7 @@
         "is_primary": false,
         "is_unique": true,
         "name": "talkx_alerts_open_dedup",
-        "scans": 8847,
+        "scans": 8916,
         "schema": "public",
         "table": "talkx_alerts"
       },
@@ -5798,7 +5798,7 @@
         "is_primary": false,
         "is_unique": false,
         "name": "idx_talkx_campaigns_status",
-        "scans": 20597,
+        "scans": 20608,
         "schema": "public",
         "table": "talkx_campaigns"
       },
@@ -6140,7 +6140,7 @@
         "is_primary": false,
         "is_unique": false,
         "name": "idx_talkx_recipients_campaign_sent_at",
-        "scans": 4681,
+        "scans": 4833,
         "schema": "public",
         "table": "talkx_recipients"
       },
@@ -6167,7 +6167,7 @@
         "is_primary": false,
         "is_unique": false,
         "name": "idx_talkx_recipients_contact_id",
-        "scans": 5612,
+        "scans": 5890,
         "schema": "public",
         "table": "talkx_recipients"
       },
@@ -6176,7 +6176,7 @@
         "is_primary": false,
         "is_unique": false,
         "name": "idx_talkx_recipients_external_id",
-        "scans": 34431,
+        "scans": 36045,
         "schema": "public",
         "table": "talkx_recipients"
       },
@@ -6239,7 +6239,7 @@
         "is_primary": false,
         "is_unique": false,
         "name": "idx_talkx_recipients_status",
-        "scans": 13272,
+        "scans": 13374,
         "schema": "public",
         "table": "talkx_recipients"
       },
@@ -6266,7 +6266,7 @@
         "is_primary": true,
         "is_unique": true,
         "name": "talkx_recipients_pkey",
-        "scans": 14754,
+        "scans": 14870,
         "schema": "public",
         "table": "talkx_recipients"
       },
@@ -6356,7 +6356,7 @@
         "is_primary": true,
         "is_unique": true,
         "name": "talkx_settings_pkey",
-        "scans": 24111,
+        "scans": 24530,
         "schema": "public",
         "table": "talkx_settings"
       },
@@ -6374,7 +6374,7 @@
         "is_primary": false,
         "is_unique": false,
         "name": "talkx_storage_purge_queue_pending_idx",
-        "scans": 7364,
+        "scans": 7422,
         "schema": "public",
         "table": "talkx_storage_purge_queue"
       },
@@ -6878,7 +6878,7 @@
         "is_primary": false,
         "is_unique": true,
         "name": "user_roles_user_id_role_key",
-        "scans": 711,
+        "scans": 733,
         "schema": "public",
         "table": "user_roles"
       },
@@ -6968,7 +6968,7 @@
         "is_primary": false,
         "is_unique": true,
         "name": "user_settings_user_id_key",
-        "scans": 290,
+        "scans": 296,
         "schema": "public",
         "table": "user_settings"
       },
@@ -7040,7 +7040,7 @@
         "is_primary": false,
         "is_unique": true,
         "name": "ux_warroom_alerts_dedupe_key",
-        "scans": 3048,
+        "scans": 3076,
         "schema": "public",
         "table": "warroom_alerts"
       },
@@ -7193,7 +7193,7 @@
         "is_primary": false,
         "is_unique": true,
         "name": "whatsapp_connections_instance_id_key",
-        "scans": 7011,
+        "scans": 7162,
         "schema": "public",
         "table": "whatsapp_connections"
       },
@@ -7202,7 +7202,7 @@
         "is_primary": false,
         "is_unique": true,
         "name": "whatsapp_connections_one_default",
-        "scans": 96,
+        "scans": 98,
         "schema": "public",
         "table": "whatsapp_connections"
       },
@@ -7211,7 +7211,7 @@
         "is_primary": true,
         "is_unique": true,
         "name": "whatsapp_connections_pkey",
-        "scans": 46682,
+        "scans": 47169,
         "schema": "public",
         "table": "whatsapp_connections"
       },
@@ -7361,17 +7361,17 @@
         "total_bytes": 61284352
       },
       {
-        "dead_rows": 2474,
+        "dead_rows": 2720,
         "est_rows": 65372,
-        "heap_bytes": 16711680,
-        "idx_scan": 409603,
-        "index_bytes": 41156608,
+        "heap_bytes": 16842752,
+        "idx_scan": 423321,
+        "index_bytes": 41238528,
         "last_autoanalyze": "2026-11-24T14:06:53.731021+00:00",
         "last_autovacuum": "2026-11-23T19:57:06.285190+00:00",
         "name": "messages",
         "schema": "public",
         "seq_scan": 20,
-        "total_bytes": 57925632
+        "total_bytes": 58138624
       },
       {
         "dead_rows": 1,
@@ -7390,33 +7390,33 @@
         "dead_rows": 13,
         "est_rows": 11393,
         "heap_bytes": 6897664,
-        "idx_scan": 8526,
-        "index_bytes": 2211840,
+        "idx_scan": 8838,
+        "index_bytes": 2252800,
         "last_autoanalyze": "2026-11-24T13:23:51.555006+00:00",
         "last_autovacuum": "2026-11-23T17:27:54.369967+00:00",
         "name": "ai_usage_logs",
         "schema": "public",
         "seq_scan": 17,
-        "total_bytes": 9150464
+        "total_bytes": 9191424
       },
       {
-        "dead_rows": 1752,
-        "est_rows": 10611,
-        "heap_bytes": 6193152,
-        "idx_scan": 63306,
-        "index_bytes": 2342912,
+        "dead_rows": 173,
+        "est_rows": 10689,
+        "heap_bytes": 6340608,
+        "idx_scan": 64673,
+        "index_bytes": 2367488,
         "last_autoanalyze": "2026-11-24T16:10:59.310964+00:00",
-        "last_autovacuum": "2026-11-24T13:30:51.409499+00:00",
+        "last_autovacuum": "2026-11-24T17:04:02.061444+00:00",
         "name": "ai_jobs",
         "schema": "public",
-        "seq_scan": 7262,
-        "total_bytes": 8577024
+        "seq_scan": 7319,
+        "total_bytes": 8749056
       },
       {
-        "dead_rows": 169,
+        "dead_rows": 197,
         "est_rows": 5079,
         "heap_bytes": 1794048,
-        "idx_scan": 6926666,
+        "idx_scan": 7104582,
         "index_bytes": 2727936,
         "last_autoanalyze": "2026-11-23T22:25:08.672762+00:00",
         "last_autovacuum": "2026-11-23T15:03:47.433267+00:00",
@@ -7427,22 +7427,22 @@
       },
       {
         "dead_rows": 0,
-        "est_rows": 9452,
-        "heap_bytes": 3448832,
+        "est_rows": 10462,
+        "heap_bytes": 3522560,
         "idx_scan": 6,
-        "index_bytes": 909312,
-        "last_autoanalyze": "2026-11-24T11:03:44.254622+00:00",
+        "index_bytes": 933888,
+        "last_autoanalyze": "2026-11-24T17:13:02.856907+00:00",
         "last_autovacuum": "2026-11-23T18:57:58.838267+00:00",
         "name": "copilot_insights",
         "schema": "public",
         "seq_scan": 0,
-        "total_bytes": 4399104
+        "total_bytes": 4497408
       },
       {
         "dead_rows": 0,
         "est_rows": 8175,
         "heap_bytes": 1220608,
-        "idx_scan": 72763,
+        "idx_scan": 75025,
         "index_bytes": 2375680,
         "last_autoanalyze": null,
         "last_autovacuum": null,
@@ -7455,7 +7455,7 @@
         "dead_rows": 421,
         "est_rows": 2183,
         "heap_bytes": 1802240,
-        "idx_scan": 19055,
+        "idx_scan": 19092,
         "index_bytes": 737280,
         "last_autoanalyze": "2026-11-21T15:27:34.247157+00:00",
         "last_autovacuum": null,
@@ -7474,7 +7474,7 @@
         "last_autovacuum": null,
         "name": "email_threads",
         "schema": "public",
-        "seq_scan": 152,
+        "seq_scan": 156,
         "total_bytes": 2277376
       },
       {
@@ -7494,7 +7494,7 @@
         "dead_rows": 0,
         "est_rows": 3254,
         "heap_bytes": 671744,
-        "idx_scan": 927,
+        "idx_scan": 963,
         "index_bytes": 802816,
         "last_autoanalyze": null,
         "last_autovacuum": null,
@@ -7517,23 +7517,23 @@
         "total_bytes": 1220608
       },
       {
-        "dead_rows": 495,
+        "dead_rows": 547,
         "est_rows": 2802,
-        "heap_bytes": 557056,
-        "idx_scan": 7556,
-        "index_bytes": 532480,
+        "heap_bytes": 573440,
+        "idx_scan": 7859,
+        "index_bytes": 540672,
         "last_autoanalyze": "2026-11-24T13:38:51.627454+00:00",
         "last_autovacuum": "2026-11-23T16:23:51.180209+00:00",
         "name": "ai_budget_reservations",
         "schema": "public",
         "seq_scan": 0,
-        "total_bytes": 1130496
+        "total_bytes": 1155072
       },
       {
         "dead_rows": 4,
         "est_rows": 2472,
         "heap_bytes": 458752,
-        "idx_scan": 152233,
+        "idx_scan": 157931,
         "index_bytes": 434176,
         "last_autoanalyze": "2026-11-24T13:22:50.741431+00:00",
         "last_autovacuum": null,
@@ -7543,10 +7543,10 @@
         "total_bytes": 917504
       },
       {
-        "dead_rows": 234,
+        "dead_rows": 247,
         "est_rows": 2013,
         "heap_bytes": 237568,
-        "idx_scan": 1682,
+        "idx_scan": 1694,
         "index_bytes": 360448,
         "last_autoanalyze": "2026-11-24T09:02:37.973463+00:00",
         "last_autovacuum": "2026-11-23T20:38:03.501836+00:00",
@@ -7578,16 +7578,16 @@
         "last_autovacuum": null,
         "name": "stickers",
         "schema": "public",
-        "seq_scan": 140,
+        "seq_scan": 156,
         "total_bytes": 565248
       },
       {
-        "dead_rows": 75,
-        "est_rows": 671,
+        "dead_rows": 108,
+        "est_rows": 677,
         "heap_bytes": 294912,
-        "idx_scan": 14524,
+        "idx_scan": 15026,
         "index_bytes": 147456,
-        "last_autoanalyze": "2026-11-24T16:10:59.060540+00:00",
+        "last_autoanalyze": "2026-11-24T16:57:01.387709+00:00",
         "last_autovacuum": "2026-11-24T13:47:51.928991+00:00",
         "name": "copilot_sessions",
         "schema": "public",
@@ -7624,20 +7624,20 @@
         "dead_rows": 0,
         "est_rows": 10,
         "heap_bytes": 8192,
-        "idx_scan": 34363,
+        "idx_scan": 34374,
         "index_bytes": 327680,
         "last_autoanalyze": null,
         "last_autovacuum": null,
         "name": "talkx_campaigns",
         "schema": "public",
-        "seq_scan": 6501,
+        "seq_scan": 6861,
         "total_bytes": 344064
       },
       {
-        "dead_rows": 61,
+        "dead_rows": 65,
         "est_rows": 642,
         "heap_bytes": 155648,
-        "idx_scan": 3050,
+        "idx_scan": 3078,
         "index_bytes": 90112,
         "last_autoanalyze": "2026-11-21T00:39:52.732191+00:00",
         "last_autovacuum": "2026-11-21T00:40:52.764891+00:00",
@@ -7656,7 +7656,7 @@
         "last_autovacuum": null,
         "name": "conversation_tasks",
         "schema": "public",
-        "seq_scan": 7828,
+        "seq_scan": 7889,
         "total_bytes": 278528
       },
       {
@@ -7676,7 +7676,7 @@
         "dead_rows": 0,
         "est_rows": 117,
         "heap_bytes": 147456,
-        "idx_scan": 21195,
+        "idx_scan": 21348,
         "index_bytes": 65536,
         "last_autoanalyze": null,
         "last_autovacuum": null,
@@ -7721,20 +7721,20 @@
         "last_autovacuum": null,
         "name": "whatsapp_groups",
         "schema": "public",
-        "seq_scan": 147,
+        "seq_scan": 151,
         "total_bytes": 221184
       },
       {
-        "dead_rows": 26,
+        "dead_rows": 7,
         "est_rows": 2,
         "heap_bytes": 32768,
-        "idx_scan": 53790,
+        "idx_scan": 54430,
         "index_bytes": 98304,
         "last_autoanalyze": "2026-11-24T15:12:56.177144+00:00",
         "last_autovacuum": null,
         "name": "whatsapp_connections",
         "schema": "public",
-        "seq_scan": 2762,
+        "seq_scan": 2781,
         "total_bytes": 204800
       },
       {
@@ -7773,7 +7773,7 @@
         "last_autovacuum": null,
         "name": "calls",
         "schema": "public",
-        "seq_scan": 2964,
+        "seq_scan": 2986,
         "total_bytes": 172032
       },
       {
@@ -7845,7 +7845,7 @@
         "dead_rows": 0,
         "est_rows": 107,
         "heap_bytes": 24576,
-        "idx_scan": 110,
+        "idx_scan": 113,
         "index_bytes": 57344,
         "last_autoanalyze": null,
         "last_autovacuum": null,
@@ -7903,7 +7903,7 @@
         "last_autovacuum": null,
         "name": "profiles",
         "schema": "public",
-        "seq_scan": 82200,
+        "seq_scan": 83430,
         "total_bytes": 106496
       },
       {
@@ -7942,14 +7942,14 @@
         "last_autovacuum": null,
         "name": "gmail_accounts",
         "schema": "public",
-        "seq_scan": 1754,
+        "seq_scan": 1769,
         "total_bytes": 98304
       },
       {
         "dead_rows": 3,
         "est_rows": 0,
         "heap_bytes": 8192,
-        "idx_scan": 523,
+        "idx_scan": 545,
         "index_bytes": 81920,
         "last_autoanalyze": null,
         "last_autovacuum": null,
@@ -7985,29 +7985,29 @@
         "total_bytes": 98304
       },
       {
-        "dead_rows": 8,
-        "est_rows": 21,
+        "dead_rows": 0,
+        "est_rows": 29,
         "heap_bytes": 32768,
-        "idx_scan": 57777,
+        "idx_scan": 59934,
         "index_bytes": 16384,
-        "last_autoanalyze": "2026-11-24T16:14:59.222921+00:00",
-        "last_autovacuum": "2026-11-24T16:14:59.216675+00:00",
+        "last_autoanalyze": "2026-11-24T17:13:02.194114+00:00",
+        "last_autovacuum": "2026-11-24T17:13:02.188471+00:00",
         "name": "edge_rate_limits",
         "schema": "public",
-        "seq_scan": 491,
+        "seq_scan": 495,
         "total_bytes": 90112
       },
       {
-        "dead_rows": 38,
+        "dead_rows": 25,
         "est_rows": 10,
         "heap_bytes": 8192,
-        "idx_scan": 5303,
+        "idx_scan": 5477,
         "index_bytes": 49152,
-        "last_autoanalyze": "2026-11-24T16:14:59.230270+00:00",
+        "last_autoanalyze": "2026-11-24T17:12:02.128187+00:00",
         "last_autovacuum": null,
         "name": "agent_stats",
         "schema": "public",
-        "seq_scan": 372,
+        "seq_scan": 379,
         "total_bytes": 81920
       },
       {
@@ -8092,7 +8092,7 @@
         "dead_rows": 0,
         "est_rows": 0,
         "heap_bytes": 8192,
-        "idx_scan": 458,
+        "idx_scan": 465,
         "index_bytes": 65536,
         "last_autoanalyze": null,
         "last_autovacuum": null,
@@ -8105,20 +8105,20 @@
         "dead_rows": 0,
         "est_rows": 0,
         "heap_bytes": 0,
-        "idx_scan": 3686,
+        "idx_scan": 3715,
         "index_bytes": 65536,
         "last_autoanalyze": null,
         "last_autovacuum": null,
         "name": "multiplix_delivery_items",
         "schema": "public",
-        "seq_scan": 461,
+        "seq_scan": 471,
         "total_bytes": 73728
       },
       {
         "dead_rows": 0,
         "est_rows": 0,
         "heap_bytes": 8192,
-        "idx_scan": 234,
+        "idx_scan": 238,
         "index_bytes": 65536,
         "last_autoanalyze": null,
         "last_autovacuum": null,
@@ -8137,7 +8137,7 @@
         "last_autovacuum": null,
         "name": "queue_members",
         "schema": "public",
-        "seq_scan": 9150,
+        "seq_scan": 9169,
         "total_bytes": 73728
       },
       {
@@ -8154,16 +8154,16 @@
         "total_bytes": 73728
       },
       {
-        "dead_rows": 42,
+        "dead_rows": 34,
         "est_rows": 6,
         "heap_bytes": 8192,
-        "idx_scan": 6493,
+        "idx_scan": 6537,
         "index_bytes": 16384,
-        "last_autoanalyze": "2026-11-24T16:09:58.959048+00:00",
-        "last_autovacuum": "2026-11-24T15:53:58.104330+00:00",
+        "last_autoanalyze": "2026-11-24T17:09:01.973659+00:00",
+        "last_autovacuum": "2026-11-24T16:52:01.102110+00:00",
         "name": "agent_presence",
         "schema": "public",
-        "seq_scan": 10011,
+        "seq_scan": 10085,
         "total_bytes": 65536
       },
       {
@@ -8196,7 +8196,7 @@
         "dead_rows": 0,
         "est_rows": 0,
         "heap_bytes": 0,
-        "idx_scan": 3700,
+        "idx_scan": 3729,
         "index_bytes": 57344,
         "last_autoanalyze": null,
         "last_autovacuum": null,
@@ -8261,7 +8261,7 @@
         "dead_rows": 0,
         "est_rows": 0,
         "heap_bytes": 8192,
-        "idx_scan": 732,
+        "idx_scan": 738,
         "index_bytes": 49152,
         "last_autoanalyze": null,
         "last_autovacuum": null,
@@ -8274,7 +8274,7 @@
         "dead_rows": 0,
         "est_rows": 0,
         "heap_bytes": 0,
-        "idx_scan": 827,
+        "idx_scan": 855,
         "index_bytes": 57344,
         "last_autoanalyze": null,
         "last_autovacuum": null,
@@ -8339,13 +8339,13 @@
         "dead_rows": 0,
         "est_rows": 0,
         "heap_bytes": 0,
-        "idx_scan": 37220,
+        "idx_scan": 38502,
         "index_bytes": 49152,
         "last_autoanalyze": null,
         "last_autovacuum": null,
         "name": "multiplix_dispatches",
         "schema": "public",
-        "seq_scan": 144,
+        "seq_scan": 146,
         "total_bytes": 57344
       },
       {
@@ -8358,7 +8358,7 @@
         "last_autovacuum": null,
         "name": "role_permissions",
         "schema": "public",
-        "seq_scan": 422,
+        "seq_scan": 440,
         "total_bytes": 57344
       },
       {
@@ -8378,13 +8378,13 @@
         "dead_rows": 1,
         "est_rows": 11,
         "heap_bytes": 8192,
-        "idx_scan": 712,
+        "idx_scan": 734,
         "index_bytes": 49152,
         "last_autoanalyze": null,
         "last_autovacuum": null,
         "name": "user_roles",
         "schema": "public",
-        "seq_scan": 9534672,
+        "seq_scan": 9733468,
         "total_bytes": 57344
       },
       {
@@ -8397,14 +8397,14 @@
         "last_autovacuum": null,
         "name": "ai_providers",
         "schema": "public",
-        "seq_scan": 4243,
+        "seq_scan": 4399,
         "total_bytes": 49152
       },
       {
         "dead_rows": 0,
         "est_rows": 0,
         "heap_bytes": 8192,
-        "idx_scan": 736,
+        "idx_scan": 742,
         "index_bytes": 32768,
         "last_autoanalyze": null,
         "last_autovacuum": null,
@@ -8508,7 +8508,7 @@
         "dead_rows": 0,
         "est_rows": 0,
         "heap_bytes": 8192,
-        "idx_scan": 68,
+        "idx_scan": 70,
         "index_bytes": 32768,
         "last_autoanalyze": null,
         "last_autovacuum": null,
@@ -8521,13 +8521,13 @@
         "dead_rows": 0,
         "est_rows": 0,
         "heap_bytes": 8192,
-        "idx_scan": 13535,
+        "idx_scan": 13884,
         "index_bytes": 32768,
         "last_autoanalyze": null,
         "last_autovacuum": null,
         "name": "feature_flags",
         "schema": "public",
-        "seq_scan": 77,
+        "seq_scan": 79,
         "total_bytes": 49152
       },
       {
@@ -8540,14 +8540,14 @@
         "last_autovacuum": null,
         "name": "geo_blocking_settings",
         "schema": "public",
-        "seq_scan": 350,
+        "seq_scan": 355,
         "total_bytes": 49152
       },
       {
         "dead_rows": 0,
         "est_rows": 0,
         "heap_bytes": 8192,
-        "idx_scan": 9569,
+        "idx_scan": 9664,
         "index_bytes": 32768,
         "last_autoanalyze": null,
         "last_autovacuum": null,
@@ -8560,26 +8560,26 @@
         "dead_rows": 0,
         "est_rows": 0,
         "heap_bytes": 0,
-        "idx_scan": 16528,
+        "idx_scan": 17302,
         "index_bytes": 40960,
         "last_autoanalyze": null,
         "last_autovacuum": null,
         "name": "multiplix_recipients",
         "schema": "public",
-        "seq_scan": 8338,
+        "seq_scan": 8518,
         "total_bytes": 49152
       },
       {
         "dead_rows": 0,
         "est_rows": 0,
         "heap_bytes": 8192,
-        "idx_scan": 8873,
+        "idx_scan": 9288,
         "index_bytes": 32768,
         "last_autoanalyze": null,
         "last_autovacuum": null,
         "name": "permissions",
         "schema": "public",
-        "seq_scan": 136,
+        "seq_scan": 140,
         "total_bytes": 49152
       },
       {
@@ -8605,20 +8605,20 @@
         "last_autovacuum": null,
         "name": "queues",
         "schema": "public",
-        "seq_scan": 2244,
+        "seq_scan": 2303,
         "total_bytes": 49152
       },
       {
         "dead_rows": 0,
         "est_rows": 0,
         "heap_bytes": 0,
-        "idx_scan": 7415,
+        "idx_scan": 7473,
         "index_bytes": 40960,
         "last_autoanalyze": null,
         "last_autovacuum": null,
         "name": "scheduled_messages",
         "schema": "public",
-        "seq_scan": 7373,
+        "seq_scan": 7431,
         "total_bytes": 49152
       },
       {
@@ -8644,7 +8644,7 @@
         "last_autovacuum": null,
         "name": "sla_configurations",
         "schema": "public",
-        "seq_scan": 696,
+        "seq_scan": 720,
         "total_bytes": 49152
       },
       {
@@ -8683,14 +8683,14 @@
         "last_autovacuum": null,
         "name": "talkx_optout_keywords",
         "schema": "public",
-        "seq_scan": 1165,
+        "seq_scan": 1222,
         "total_bytes": 49152
       },
       {
         "dead_rows": 0,
         "est_rows": 0,
         "heap_bytes": 8192,
-        "idx_scan": 290,
+        "idx_scan": 296,
         "index_bytes": 32768,
         "last_autoanalyze": null,
         "last_autovacuum": null,
@@ -8716,7 +8716,7 @@
         "dead_rows": 0,
         "est_rows": 0,
         "heap_bytes": 0,
-        "idx_scan": 350,
+        "idx_scan": 355,
         "index_bytes": 32768,
         "last_autoanalyze": null,
         "last_autovacuum": null,
@@ -8768,7 +8768,7 @@
         "dead_rows": 0,
         "est_rows": 0,
         "heap_bytes": 0,
-        "idx_scan": 234,
+        "idx_scan": 238,
         "index_bytes": 32768,
         "last_autoanalyze": null,
         "last_autovacuum": null,
@@ -9132,7 +9132,7 @@
         "dead_rows": 0,
         "est_rows": 0,
         "heap_bytes": 0,
-        "idx_scan": 1471,
+        "idx_scan": 1489,
         "index_bytes": 24576,
         "last_autoanalyze": null,
         "last_autovacuum": null,
@@ -9288,7 +9288,7 @@
         "dead_rows": 0,
         "est_rows": 0,
         "heap_bytes": 0,
-        "idx_scan": 350,
+        "idx_scan": 355,
         "index_bytes": 24576,
         "last_autoanalyze": null,
         "last_autovacuum": null,
@@ -9385,7 +9385,7 @@
         "last_autovacuum": null,
         "name": "rate_limit_configs",
         "schema": "public",
-        "seq_scan": 349,
+        "seq_scan": 354,
         "total_bytes": 32768
       },
       {
@@ -9405,7 +9405,7 @@
         "dead_rows": 0,
         "est_rows": 0,
         "heap_bytes": 0,
-        "idx_scan": 61,
+        "idx_scan": 63,
         "index_bytes": 24576,
         "last_autoanalyze": null,
         "last_autovacuum": null,
@@ -9431,7 +9431,7 @@
         "dead_rows": 0,
         "est_rows": 0,
         "heap_bytes": 0,
-        "idx_scan": 8847,
+        "idx_scan": 8916,
         "index_bytes": 24576,
         "last_autoanalyze": null,
         "last_autovacuum": null,
@@ -9496,7 +9496,7 @@
         "dead_rows": 7,
         "est_rows": 0,
         "heap_bytes": 8192,
-        "idx_scan": 24111,
+        "idx_scan": 24530,
         "index_bytes": 16384,
         "last_autoanalyze": null,
         "last_autovacuum": null,
@@ -9509,7 +9509,7 @@
         "dead_rows": 0,
         "est_rows": 0,
         "heap_bytes": 0,
-        "idx_scan": 7364,
+        "idx_scan": 7422,
         "index_bytes": 24576,
         "last_autoanalyze": null,
         "last_autovacuum": null,
@@ -9866,7 +9866,7 @@
         "last_autovacuum": null,
         "name": "queue_positions",
         "schema": "public",
-        "seq_scan": 364,
+        "seq_scan": 382,
         "total_bytes": 24576
       },
       {
@@ -9879,7 +9879,7 @@
         "last_autovacuum": null,
         "name": "scheduled_report_configs",
         "schema": "public",
-        "seq_scan": 2282,
+        "seq_scan": 2311,
         "total_bytes": 24576
       },
       {
@@ -10042,7 +10042,7 @@
         "dead_rows": 0,
         "est_rows": 0,
         "heap_bytes": 0,
-        "idx_scan": 69,
+        "idx_scan": 71,
         "index_bytes": 16384,
         "last_autoanalyze": null,
         "last_autovacuum": null,
@@ -10139,7 +10139,7 @@
         "last_autovacuum": null,
         "name": "queue_goals",
         "schema": "public",
-        "seq_scan": 68,
+        "seq_scan": 70,
         "total_bytes": 16384
       },
       {

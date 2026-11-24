@@ -169,7 +169,7 @@
 | comando | SELECT |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `is_admin_or_supervisor(auth.uid())` |
+| USING | `is_admin_or_supervisor(( SELECT auth.uid() AS uid))` |
 | WITH CHECK |  |
 
 ### `Admins can update any profile`
@@ -179,8 +179,8 @@
 | comando | UPDATE |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `is_admin_or_supervisor(auth.uid())` |
-| WITH CHECK | `is_admin_or_supervisor(auth.uid())` |
+| USING | `is_admin_or_supervisor(( SELECT auth.uid() AS uid))` |
+| WITH CHECK | `is_admin_or_supervisor(( SELECT auth.uid() AS uid))` |
 
 ### `Block sensitive field changes by non-admins`
 
@@ -190,7 +190,7 @@
 | tipo | RESTRICTIVE |
 | roles | authenticated |
 | USING |  |
-| WITH CHECK | `(is_admin_or_supervisor(auth.uid()) OR ((role = ( SELECT p.role    FROM profiles p   WHERE (p.user_id = auth.uid()))) AND (access_level = ( SELECT p.access_level    FROM profiles p   WHERE (p.user_id = auth.uid()))) AND (permissions = ( SELECT p.permissions    FROM profiles p   WHERE (p.user_id = auth.uid()))) AND (is_active = ( SELECT p.is_active    FROM profiles p   WHERE (p.user_id = auth.uid())))))` |
+| WITH CHECK | `(is_admin_or_supervisor(( SELECT auth.uid() AS uid)) OR ((role = ( SELECT p.role    FROM profiles p   WHERE (p.user_id = ( SELECT auth.uid() AS uid)))) AND (access_level = ( SELECT p.access_level    FROM profiles p   WHERE (p.user_id = ( SELECT auth.uid() AS uid)))) AND (permissions = ( SELECT p.permissions    FROM profiles p   WHERE (p.user_id = ( SELECT auth.uid() AS uid)))) AND (is_active = ( SELECT p.is_active    FROM profiles p   WHERE (p.user_id = ( SELECT auth.uid() AS uid))))))` |
 
 ### `Users can insert their own profile safely`
 
@@ -200,7 +200,7 @@
 | tipo | PERMISSIVE |
 | roles | authenticated |
 | USING |  |
-| WITH CHECK | `((auth.uid() = user_id) AND ((role IS NULL) OR (role = 'agent'::text)) AND ((access_level IS NULL) OR (access_level = 'basic'::text)) AND ((permissions IS NULL) OR (permissions = '{}'::jsonb)))` |
+| WITH CHECK | `((( SELECT auth.uid() AS uid) = user_id) AND ((role IS NULL) OR (role = 'agent'::text)) AND ((access_level IS NULL) OR (access_level = 'basic'::text)) AND ((permissions IS NULL) OR (permissions = '{}'::jsonb)))` |
 
 ### `Users can update own profile`
 
@@ -209,8 +209,8 @@
 | comando | UPDATE |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `(auth.uid() = user_id)` |
-| WITH CHECK | `(auth.uid() = user_id)` |
+| USING | `(( SELECT auth.uid() AS uid) = user_id)` |
+| WITH CHECK | `(( SELECT auth.uid() AS uid) = user_id)` |
 
 ### `Users can view own profile`
 
@@ -219,7 +219,7 @@
 | comando | SELECT |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `(user_id = auth.uid())` |
+| USING | `(user_id = ( SELECT auth.uid() AS uid))` |
 | WITH CHECK |  |
 
 

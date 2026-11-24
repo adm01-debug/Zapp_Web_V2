@@ -50,7 +50,7 @@
 | tipo | PERMISSIVE |
 | roles | authenticated |
 | USING |  |
-| WITH CHECK | `(user_id = auth.uid())` |
+| WITH CHECK | `(user_id = ( SELECT auth.uid() AS uid))` |
 
 ### `sla_alert_preferences_select_policy`
 
@@ -59,7 +59,7 @@
 | comando | SELECT |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `(user_id = auth.uid())` |
+| USING | `(user_id = ( SELECT auth.uid() AS uid))` |
 | WITH CHECK |  |
 
 ### `sla_alert_preferences_update_policy`
@@ -69,8 +69,8 @@
 | comando | UPDATE |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `(user_id = auth.uid())` |
-| WITH CHECK | `(user_id = auth.uid())` |
+| USING | `(user_id = ( SELECT auth.uid() AS uid))` |
+| WITH CHECK | `(user_id = ( SELECT auth.uid() AS uid))` |
 
 
 ## Triggers

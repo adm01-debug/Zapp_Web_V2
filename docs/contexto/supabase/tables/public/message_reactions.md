@@ -60,7 +60,7 @@
 | comando | SELECT |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `((message_id IN ( SELECT m.id    FROM messages m   WHERE (m.contact_id IN ( SELECT c.id            FROM contacts c           WHERE ((c.assigned_to IN ( SELECT p.id                    FROM profiles p                   WHERE (p.user_id = auth.uid()))) OR (c.assigned_to IS NULL)))))) OR is_admin_or_supervisor(auth.uid()))` |
+| USING | `((message_id IN ( SELECT m.id    FROM messages m   WHERE (m.contact_id IN ( SELECT c.id            FROM contacts c           WHERE ((c.assigned_to IN ( SELECT p.id                    FROM profiles p                   WHERE (p.user_id = ( SELECT auth.uid() AS uid)))) OR (c.assigned_to IS NULL)))))) OR is_admin_or_supervisor(( SELECT auth.uid() AS uid)))` |
 | WITH CHECK |  |
 
 ### `message_reactions_delete_policy`
@@ -70,7 +70,7 @@
 | comando | DELETE |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `((user_id = get_profile_id_for_user(auth.uid())) AND (EXISTS ( SELECT 1    FROM (messages m      JOIN contacts c ON ((c.id = m.contact_id)))   WHERE ((m.id = message_reactions.message_id) AND (is_admin_or_supervisor(auth.uid()) OR (m.contact_id IN ( SELECT c2.id            FROM contacts c2           WHERE (c2.assigned_to IN ( SELECT get_visible_agent_ids(auth.uid()) AS get_visible_agent_ids)))) OR (EXISTS ( SELECT 1            FROM (contacts c3              JOIN queue_members qm ON ((qm.queue_id = c3.queue_id)))           WHERE ((c3.id = m.contact_id) AND (qm.profile_id = get_profile_id_for_user(auth.uid())) AND (qm.is_active = true)))))))))` |
+| USING | `((user_id = get_profile_id_for_user(( SELECT auth.uid() AS uid))) AND (EXISTS ( SELECT 1    FROM (messages m      JOIN contacts c ON ((c.id = m.contact_id)))   WHERE ((m.id = message_reactions.message_id) AND (is_admin_or_supervisor(( SELECT auth.uid() AS uid)) OR (m.contact_id IN ( SELECT c2.id            FROM contacts c2           WHERE (c2.assigned_to IN ( SELECT get_visible_agent_ids(( SELECT auth.uid() AS uid)) AS get_visible_agent_ids)))) OR (EXISTS ( SELECT 1            FROM (contacts c3              JOIN queue_members qm ON ((qm.queue_id = c3.queue_id)))           WHERE ((c3.id = m.contact_id) AND (qm.profile_id = get_profile_id_for_user(( SELECT auth.uid() AS uid))) AND (qm.is_active = true)))))))))` |
 | WITH CHECK |  |
 
 ### `message_reactions_insert_policy`
@@ -81,7 +81,7 @@
 | tipo | PERMISSIVE |
 | roles | authenticated |
 | USING |  |
-| WITH CHECK | `((user_id = get_profile_id_for_user(auth.uid())) AND (EXISTS ( SELECT 1    FROM (messages m      JOIN contacts c ON ((c.id = m.contact_id)))   WHERE ((m.id = message_reactions.message_id) AND (is_admin_or_supervisor(auth.uid()) OR (m.contact_id IN ( SELECT c2.id            FROM contacts c2           WHERE (c2.assigned_to IN ( SELECT get_visible_agent_ids(auth.uid()) AS get_visible_agent_ids)))) OR (EXISTS ( SELECT 1            FROM (contacts c3              JOIN queue_members qm ON ((qm.queue_id = c3.queue_id)))           WHERE ((c3.id = m.contact_id) AND (qm.profile_id = get_profile_id_for_user(auth.uid())) AND (qm.is_active = true)))))))))` |
+| WITH CHECK | `((user_id = get_profile_id_for_user(( SELECT auth.uid() AS uid))) AND (EXISTS ( SELECT 1    FROM (messages m      JOIN contacts c ON ((c.id = m.contact_id)))   WHERE ((m.id = message_reactions.message_id) AND (is_admin_or_supervisor(( SELECT auth.uid() AS uid)) OR (m.contact_id IN ( SELECT c2.id            FROM contacts c2           WHERE (c2.assigned_to IN ( SELECT get_visible_agent_ids(( SELECT auth.uid() AS uid)) AS get_visible_agent_ids)))) OR (EXISTS ( SELECT 1            FROM (contacts c3              JOIN queue_members qm ON ((qm.queue_id = c3.queue_id)))           WHERE ((c3.id = m.contact_id) AND (qm.profile_id = get_profile_id_for_user(( SELECT auth.uid() AS uid))) AND (qm.is_active = true)))))))))` |
 
 ### `message_reactions_select_policy`
 
@@ -90,7 +90,7 @@
 | comando | SELECT |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `(is_admin_or_supervisor(auth.uid()) OR (user_id = get_profile_id_for_user(auth.uid())) OR (contact_id IN ( SELECT c.id    FROM contacts c   WHERE (c.assigned_to IN ( SELECT get_visible_agent_ids(auth.uid()) AS get_visible_agent_ids)))))` |
+| USING | `(is_admin_or_supervisor(( SELECT auth.uid() AS uid)) OR (user_id = get_profile_id_for_user(( SELECT auth.uid() AS uid))) OR (contact_id IN ( SELECT c.id    FROM contacts c   WHERE (c.assigned_to IN ( SELECT get_visible_agent_ids(( SELECT auth.uid() AS uid)) AS get_visible_agent_ids)))))` |
 | WITH CHECK |  |
 
 ### `message_reactions_update_policy`
@@ -100,8 +100,8 @@
 | comando | UPDATE |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `((user_id = get_profile_id_for_user(auth.uid())) AND (EXISTS ( SELECT 1    FROM (messages m      JOIN contacts c ON ((c.id = m.contact_id)))   WHERE ((m.id = message_reactions.message_id) AND (is_admin_or_supervisor(auth.uid()) OR (m.contact_id IN ( SELECT c2.id            FROM contacts c2           WHERE (c2.assigned_to IN ( SELECT get_visible_agent_ids(auth.uid()) AS get_visible_agent_ids)))) OR (EXISTS ( SELECT 1            FROM (contacts c3              JOIN queue_members qm ON ((qm.queue_id = c3.queue_id)))           WHERE ((c3.id = m.contact_id) AND (qm.profile_id = get_profile_id_for_user(auth.uid())) AND (qm.is_active = true)))))))))` |
-| WITH CHECK | `((user_id = get_profile_id_for_user(auth.uid())) AND (EXISTS ( SELECT 1    FROM (messages m      JOIN contacts c ON ((c.id = m.contact_id)))   WHERE ((m.id = message_reactions.message_id) AND (is_admin_or_supervisor(auth.uid()) OR (m.contact_id IN ( SELECT c2.id            FROM contacts c2           WHERE (c2.assigned_to IN ( SELECT get_visible_agent_ids(auth.uid()) AS get_visible_agent_ids)))) OR (EXISTS ( SELECT 1            FROM (contacts c3              JOIN queue_members qm ON ((qm.queue_id = c3.queue_id)))           WHERE ((c3.id = m.contact_id) AND (qm.profile_id = get_profile_id_for_user(auth.uid())) AND (qm.is_active = true)))))))))` |
+| USING | `((user_id = get_profile_id_for_user(( SELECT auth.uid() AS uid))) AND (EXISTS ( SELECT 1    FROM (messages m      JOIN contacts c ON ((c.id = m.contact_id)))   WHERE ((m.id = message_reactions.message_id) AND (is_admin_or_supervisor(( SELECT auth.uid() AS uid)) OR (m.contact_id IN ( SELECT c2.id            FROM contacts c2           WHERE (c2.assigned_to IN ( SELECT get_visible_agent_ids(( SELECT auth.uid() AS uid)) AS get_visible_agent_ids)))) OR (EXISTS ( SELECT 1            FROM (contacts c3              JOIN queue_members qm ON ((qm.queue_id = c3.queue_id)))           WHERE ((c3.id = m.contact_id) AND (qm.profile_id = get_profile_id_for_user(( SELECT auth.uid() AS uid))) AND (qm.is_active = true)))))))))` |
+| WITH CHECK | `((user_id = get_profile_id_for_user(( SELECT auth.uid() AS uid))) AND (EXISTS ( SELECT 1    FROM (messages m      JOIN contacts c ON ((c.id = m.contact_id)))   WHERE ((m.id = message_reactions.message_id) AND (is_admin_or_supervisor(( SELECT auth.uid() AS uid)) OR (m.contact_id IN ( SELECT c2.id            FROM contacts c2           WHERE (c2.assigned_to IN ( SELECT get_visible_agent_ids(( SELECT auth.uid() AS uid)) AS get_visible_agent_ids)))) OR (EXISTS ( SELECT 1            FROM (contacts c3              JOIN queue_members qm ON ((qm.queue_id = c3.queue_id)))           WHERE ((c3.id = m.contact_id) AND (qm.profile_id = get_profile_id_for_user(( SELECT auth.uid() AS uid))) AND (qm.is_active = true)))))))))` |
 
 
 ## Triggers

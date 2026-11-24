@@ -1,6 +1,6 @@
 # public.messages
 
-> Mensagens de todas as origens. O trigger trg_sicoob_reply (Sicoob Bridge) foi removido em 29/09/2026.
+> Uma linha por mensagem recebida ou enviada, vinculada a contato ou grupo e com estado de entrega/edição/exclusão. client_message_id apoia idempotência; delivery_claim_* e delivery_post_started_at controlam tentativas e resultados ambíguos. O antigo trigger trg_sicoob_reply foi removido em 29/09/2026.
 
 | propriedade | valor |
 |---|---|
@@ -136,7 +136,7 @@
 | tipo | PERMISSIVE |
 | roles | authenticated |
 | USING |  |
-| WITH CHECK | `(is_privileged_contact_caller() OR ((sender = 'agent'::text) AND (is_admin_or_supervisor(auth.uid()) OR (((agent_id IS NULL) OR (agent_id IN ( SELECT profiles.id    FROM profiles   WHERE (profiles.user_id = auth.uid())))) AND ((contact_id IN ( SELECT c.id    FROM contacts c   WHERE (c.assigned_to IN ( SELECT get_visible_agent_ids(auth.uid()) AS get_visible_agent_ids)))) OR (EXISTS ( SELECT 1    FROM (contacts c      JOIN queue_members qm ON ((qm.queue_id = c.queue_id)))   WHERE ((c.id = messages.contact_id) AND (qm.profile_id = get_profile_id_for_user(auth.uid())) AND (qm.is_active = true)))))))))` |
+| WITH CHECK | `(is_privileged_contact_caller() OR ((sender = 'agent'::text) AND (is_admin_or_supervisor(( SELECT auth.uid() AS uid)) OR (((agent_id IS NULL) OR (agent_id IN ( SELECT profiles.id    FROM profiles   WHERE (profiles.user_id = ( SELECT auth.uid() AS uid))))) AND ((contact_id IN ( SELECT c.id    FROM contacts c   WHERE (c.assigned_to IN ( SELECT get_visible_agent_ids(( SELECT auth.uid() AS uid)) AS get_visible_agent_ids)))) OR (EXISTS ( SELECT 1    FROM (contacts c      JOIN queue_members qm ON ((qm.queue_id = c.queue_id)))   WHERE ((c.id = messages.contact_id) AND (qm.profile_id = get_profile_id_for_user(( SELECT auth.uid() AS uid))) AND (qm.is_active = true)))))))))` |
 
 ### `Users can update messages from their assigned contacts`
 
@@ -145,8 +145,8 @@
 | comando | UPDATE |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `((contact_id IN ( SELECT c.id    FROM contacts c   WHERE (c.assigned_to IN ( SELECT get_visible_agent_ids(auth.uid()) AS get_visible_agent_ids)))) OR is_admin_or_supervisor(auth.uid()) OR (EXISTS ( SELECT 1    FROM (contacts c      JOIN queue_members qm ON ((qm.queue_id = c.queue_id)))   WHERE ((c.id = messages.contact_id) AND (qm.profile_id = get_profile_id_for_user(auth.uid())) AND (qm.is_active = true)))))` |
-| WITH CHECK | `(is_privileged_contact_caller() OR ((NOT (sender IS DISTINCT FROM message_sender_atual(id))) AND ((contact_id IN ( SELECT c.id    FROM contacts c   WHERE (c.assigned_to IN ( SELECT get_visible_agent_ids(auth.uid()) AS get_visible_agent_ids)))) OR is_admin_or_supervisor(auth.uid()) OR (EXISTS ( SELECT 1    FROM (contacts c      JOIN queue_members qm ON ((qm.queue_id = c.queue_id)))   WHERE ((c.id = messages.contact_id) AND (qm.profile_id = get_profile_id_for_user(auth.uid())) AND (qm.is_active = true)))))))` |
+| USING | `((contact_id IN ( SELECT c.id    FROM contacts c   WHERE (c.assigned_to IN ( SELECT get_visible_agent_ids(( SELECT auth.uid() AS uid)) AS get_visible_agent_ids)))) OR is_admin_or_supervisor(( SELECT auth.uid() AS uid)) OR (EXISTS ( SELECT 1    FROM (contacts c      JOIN queue_members qm ON ((qm.queue_id = c.queue_id)))   WHERE ((c.id = messages.contact_id) AND (qm.profile_id = get_profile_id_for_user(( SELECT auth.uid() AS uid))) AND (qm.is_active = true)))))` |
+| WITH CHECK | `(is_privileged_contact_caller() OR ((NOT (sender IS DISTINCT FROM message_sender_atual(id))) AND ((contact_id IN ( SELECT c.id    FROM contacts c   WHERE (c.assigned_to IN ( SELECT get_visible_agent_ids(( SELECT auth.uid() AS uid)) AS get_visible_agent_ids)))) OR is_admin_or_supervisor(( SELECT auth.uid() AS uid)) OR (EXISTS ( SELECT 1    FROM (contacts c      JOIN queue_members qm ON ((qm.queue_id = c.queue_id)))   WHERE ((c.id = messages.contact_id) AND (qm.profile_id = get_profile_id_for_user(( SELECT auth.uid() AS uid))) AND (qm.is_active = true)))))))` |
 
 ### `messages_select_policy`
 
@@ -155,7 +155,7 @@
 | comando | SELECT |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `(is_admin_or_supervisor(auth.uid()) OR (contact_id IN ( SELECT c.id    FROM contacts c   WHERE (c.assigned_to IN ( SELECT get_visible_agent_ids(auth.uid()) AS get_visible_agent_ids)))) OR (EXISTS ( SELECT 1    FROM (contacts c      JOIN queue_members qm ON ((qm.queue_id = c.queue_id)))   WHERE ((c.id = messages.contact_id) AND (qm.profile_id = get_profile_id_for_user(auth.uid())) AND (qm.is_active = true)))))` |
+| USING | `(is_admin_or_supervisor(( SELECT auth.uid() AS uid)) OR (contact_id IN ( SELECT c.id    FROM contacts c   WHERE (c.assigned_to IN ( SELECT get_visible_agent_ids(( SELECT auth.uid() AS uid)) AS get_visible_agent_ids)))) OR (EXISTS ( SELECT 1    FROM (contacts c      JOIN queue_members qm ON ((qm.queue_id = c.queue_id)))   WHERE ((c.id = messages.contact_id) AND (qm.profile_id = get_profile_id_for_user(( SELECT auth.uid() AS uid))) AND (qm.is_active = true)))))` |
 | WITH CHECK |  |
 
 

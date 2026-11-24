@@ -84,7 +84,7 @@
 | comando | DELETE |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `((created_by = current_profile_id()) OR is_admin_or_supervisor(auth.uid()))` |
+| USING | `((created_by = current_profile_id()) OR is_admin_or_supervisor(( SELECT auth.uid() AS uid)))` |
 | WITH CHECK |  |
 
 ### `tasks_insert_own`
@@ -95,7 +95,7 @@
 | tipo | PERMISSIVE |
 | roles | authenticated |
 | USING |  |
-| WITH CHECK | `((created_by = current_profile_id()) AND ((contact_id IS NULL) OR is_contact_visible_to_user(contact_id, auth.uid())))` |
+| WITH CHECK | `((created_by = current_profile_id()) AND ((contact_id IS NULL) OR is_contact_visible_to_user(contact_id, ( SELECT auth.uid() AS uid))))` |
 
 ### `tasks_select_contact_visible`
 
@@ -104,7 +104,7 @@
 | comando | SELECT |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `((contact_id IS NOT NULL) AND is_contact_visible_to_user(contact_id, auth.uid()))` |
+| USING | `((contact_id IS NOT NULL) AND is_contact_visible_to_user(contact_id, ( SELECT auth.uid() AS uid)))` |
 | WITH CHECK |  |
 
 ### `tasks_select_own`
@@ -114,7 +114,7 @@
 | comando | SELECT |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `((created_by = current_profile_id()) OR is_admin_or_supervisor(auth.uid()))` |
+| USING | `((created_by = current_profile_id()) OR is_admin_or_supervisor(( SELECT auth.uid() AS uid)))` |
 | WITH CHECK |  |
 
 ### `tasks_update_own`
@@ -124,8 +124,8 @@
 | comando | UPDATE |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `((created_by = current_profile_id()) OR is_admin_or_supervisor(auth.uid()))` |
-| WITH CHECK | `((created_by = current_profile_id()) OR is_admin_or_supervisor(auth.uid()))` |
+| USING | `((created_by = current_profile_id()) OR is_admin_or_supervisor(( SELECT auth.uid() AS uid)))` |
+| WITH CHECK | `((created_by = current_profile_id()) OR is_admin_or_supervisor(( SELECT auth.uid() AS uid)))` |
 
 
 ## Triggers

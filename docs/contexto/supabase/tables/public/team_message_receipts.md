@@ -63,7 +63,7 @@
 | comando | SELECT |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `(is_admin_or_supervisor(auth.uid()) OR (EXISTS ( SELECT 1    FROM (team_conversation_members mem      JOIN team_messages tm ON ((tm.id = team_message_receipts.message_id)))   WHERE ((mem.conversation_id = tm.conversation_id) AND (mem.profile_id = current_profile_id())))))` |
+| USING | `(is_admin_or_supervisor(( SELECT auth.uid() AS uid)) OR (EXISTS ( SELECT 1    FROM (team_conversation_members mem      JOIN team_messages tm ON ((tm.id = team_message_receipts.message_id)))   WHERE ((mem.conversation_id = tm.conversation_id) AND (mem.profile_id = current_profile_id())))))` |
 | WITH CHECK |  |
 
 ### `Members can insert own receipts`

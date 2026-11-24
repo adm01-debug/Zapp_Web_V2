@@ -61,7 +61,7 @@
 | comando | SELECT |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `((campaign_id IN ( SELECT tc.id    FROM talkx_campaigns tc   WHERE (tc.created_by = ( SELECT p.id            FROM profiles p           WHERE (p.user_id = auth.uid())          LIMIT 1)))) OR is_admin_or_supervisor(auth.uid()))` |
+| USING | `((campaign_id IN ( SELECT tc.id    FROM talkx_campaigns tc   WHERE (tc.created_by = ( SELECT p.id            FROM profiles p           WHERE (p.user_id = ( SELECT auth.uid() AS uid))          LIMIT 1)))) OR is_admin_or_supervisor(( SELECT auth.uid() AS uid)))` |
 | WITH CHECK |  |
 
 

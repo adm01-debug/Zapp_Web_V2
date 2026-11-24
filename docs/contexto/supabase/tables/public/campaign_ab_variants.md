@@ -54,7 +54,7 @@
 | comando | SELECT |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `(auth.uid() IS NOT NULL)` |
+| USING | `(( SELECT auth.uid() AS uid) IS NOT NULL)` |
 | WITH CHECK |  |
 
 ### `Campaign owners or admins can delete AB variants`
@@ -64,7 +64,7 @@
 | comando | DELETE |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `(EXISTS ( SELECT 1    FROM campaigns c   WHERE ((c.id = campaign_ab_variants.campaign_id) AND ((c.created_by = get_profile_id_for_user(auth.uid())) OR is_admin_or_supervisor(auth.uid())))))` |
+| USING | `(EXISTS ( SELECT 1    FROM campaigns c   WHERE ((c.id = campaign_ab_variants.campaign_id) AND ((c.created_by = get_profile_id_for_user(( SELECT auth.uid() AS uid))) OR is_admin_or_supervisor(( SELECT auth.uid() AS uid))))))` |
 | WITH CHECK |  |
 
 ### `Campaign owners or admins can insert AB variants`
@@ -75,7 +75,7 @@
 | tipo | PERMISSIVE |
 | roles | authenticated |
 | USING |  |
-| WITH CHECK | `(EXISTS ( SELECT 1    FROM campaigns c   WHERE ((c.id = campaign_ab_variants.campaign_id) AND ((c.created_by = get_profile_id_for_user(auth.uid())) OR is_admin_or_supervisor(auth.uid())))))` |
+| WITH CHECK | `(EXISTS ( SELECT 1    FROM campaigns c   WHERE ((c.id = campaign_ab_variants.campaign_id) AND ((c.created_by = get_profile_id_for_user(( SELECT auth.uid() AS uid))) OR is_admin_or_supervisor(( SELECT auth.uid() AS uid))))))` |
 
 ### `Campaign owners or admins can update AB variants`
 
@@ -84,7 +84,7 @@
 | comando | UPDATE |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `(EXISTS ( SELECT 1    FROM campaigns c   WHERE ((c.id = campaign_ab_variants.campaign_id) AND ((c.created_by = get_profile_id_for_user(auth.uid())) OR is_admin_or_supervisor(auth.uid())))))` |
+| USING | `(EXISTS ( SELECT 1    FROM campaigns c   WHERE ((c.id = campaign_ab_variants.campaign_id) AND ((c.created_by = get_profile_id_for_user(( SELECT auth.uid() AS uid))) OR is_admin_or_supervisor(( SELECT auth.uid() AS uid))))))` |
 | WITH CHECK |  |
 
 

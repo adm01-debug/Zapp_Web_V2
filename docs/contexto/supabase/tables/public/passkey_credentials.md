@@ -56,7 +56,7 @@
 | comando | DELETE |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `(user_id = auth.uid())` |
+| USING | `(user_id = ( SELECT auth.uid() AS uid))` |
 | WITH CHECK |  |
 
 ### `Users can update own passkeys`
@@ -66,7 +66,7 @@
 | comando | UPDATE |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `(user_id = auth.uid())` |
+| USING | `(user_id = ( SELECT auth.uid() AS uid))` |
 | WITH CHECK |  |
 
 ### `Users can view own passkeys`
@@ -76,7 +76,7 @@
 | comando | SELECT |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `(user_id = auth.uid())` |
+| USING | `(user_id = ( SELECT auth.uid() AS uid))` |
 | WITH CHECK |  |
 
 

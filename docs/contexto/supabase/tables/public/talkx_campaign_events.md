@@ -58,7 +58,7 @@
 | tipo | PERMISSIVE |
 | roles | authenticated |
 | USING |  |
-| WITH CHECK | `((event_type = ANY (ARRAY['note'::text, 'checklist'::text, 'segments_reviewed'::text])) AND ((EXISTS ( SELECT 1    FROM talkx_campaigns tc   WHERE ((tc.id = talkx_campaign_events.campaign_id) AND ((tc.created_by = ( SELECT p.id            FROM profiles p           WHERE (p.user_id = auth.uid())          LIMIT 1)) OR is_admin_or_supervisor(auth.uid()))))) OR ((campaign_id IS NULL) AND is_admin_or_supervisor(auth.uid()))))` |
+| WITH CHECK | `((event_type = ANY (ARRAY['note'::text, 'checklist'::text, 'segments_reviewed'::text])) AND ((EXISTS ( SELECT 1    FROM talkx_campaigns tc   WHERE ((tc.id = talkx_campaign_events.campaign_id) AND ((tc.created_by = ( SELECT p.id            FROM profiles p           WHERE (p.user_id = ( SELECT auth.uid() AS uid))          LIMIT 1)) OR is_admin_or_supervisor(( SELECT auth.uid() AS uid)))))) OR ((campaign_id IS NULL) AND is_admin_or_supervisor(( SELECT auth.uid() AS uid)))))` |
 
 ### `talkx_campaign_events_select`
 
@@ -67,7 +67,7 @@
 | comando | SELECT |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `((EXISTS ( SELECT 1    FROM talkx_campaigns tc   WHERE ((tc.id = talkx_campaign_events.campaign_id) AND ((tc.created_by = ( SELECT p.id            FROM profiles p           WHERE (p.user_id = auth.uid())          LIMIT 1)) OR is_admin_or_supervisor(auth.uid()))))) OR ((campaign_id IS NULL) AND is_admin_or_supervisor(auth.uid())))` |
+| USING | `((EXISTS ( SELECT 1    FROM talkx_campaigns tc   WHERE ((tc.id = talkx_campaign_events.campaign_id) AND ((tc.created_by = ( SELECT p.id            FROM profiles p           WHERE (p.user_id = ( SELECT auth.uid() AS uid))          LIMIT 1)) OR is_admin_or_supervisor(( SELECT auth.uid() AS uid)))))) OR ((campaign_id IS NULL) AND is_admin_or_supervisor(( SELECT auth.uid() AS uid))))` |
 | WITH CHECK |  |
 
 

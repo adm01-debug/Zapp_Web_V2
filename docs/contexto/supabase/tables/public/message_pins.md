@@ -53,7 +53,7 @@
 | comando | SELECT |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `is_contact_visible_to_user(contact_id, ( SELECT auth.uid() AS uid))` |
+| USING | `is_contact_visible_to_user(contact_id, ( SELECT ( SELECT auth.uid() AS uid) AS uid))` |
 | WITH CHECK |  |
 
 

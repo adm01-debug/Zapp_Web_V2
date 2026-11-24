@@ -1,6 +1,177 @@
 # Views
 
 
+## ops._relation_dictionary_base (view)
+
+| campo | valor |
+|---|---|
+| owner | postgres |
+| security_invoker | sim |
+| opções | security_invoker=true |
+| depende de |  |
+| populada | n/a |
+| comentário | Base privada de metadados de catálogo; não contém valores de linhas da aplicação. Alimenta os dicionários separados. |
+
+
+```sql
+WITH primary_key_columns AS (
+         SELECT con.conrelid,
+            key_col.attnum,
+            con.conname AS constraint_name,
+            key_col.ordinality::integer AS key_position
+           FROM pg_constraint con
+             CROSS JOIN LATERAL unnest(con.conkey) WITH ORDINALITY key_col(attnum, ordinality)
+          WHERE con.contype = 'p'::"char"
+        ), foreign_key_columns AS (
+         SELECT con.conrelid,
+            source_key.attnum,
+            jsonb_agg(jsonb_build_object('constraint', con.conname, 'target_schema', target_ns.nspname, 'target_table', target_rel.relname, 'target_column', target_attr.attname, 'on_update',
+                CASE con.confupdtype
+                    WHEN 'a'::"char" THEN 'NO ACTION'::text
+                    WHEN 'r'::"char" THEN 'RESTRICT'::text
+                    WHEN 'c'::"char" THEN 'CASCADE'::text
+                    WHEN 'n'::"char" THEN 'SET NULL'::text
+                    WHEN 'd'::"char" THEN 'SET DEFAULT'::text
+                    ELSE NULL::text
+                END, 'on_delete',
+                CASE con.confdeltype
+                    WHEN 'a'::"char" THEN 'NO ACTION'::text
+                    WHEN 'r'::"char" THEN 'RESTRICT'::text
+                    WHEN 'c'::"char" THEN 'CASCADE'::text
+                    WHEN 'n'::"char" THEN 'SET NULL'::text
+                    WHEN 'd'::"char" THEN 'SET DEFAULT'::text
+                    ELSE NULL::text
+                END) ORDER BY con.conname, source_key.ordinality) AS foreign_key_targets
+           FROM pg_constraint con
+             CROSS JOIN LATERAL unnest(con.conkey) WITH ORDINALITY source_key(attnum, ordinality)
+             JOIN LATERAL unnest(con.confkey) WITH ORDINALITY target_key(attnum, ordinality) ON target_key.ordinality = source_key.ordinality
+             JOIN pg_class target_rel ON target_rel.oid = con.confrelid
+             JOIN pg_namespace target_ns ON target_ns.oid = target_rel.relnamespace
+             JOIN pg_attribute target_attr ON target_attr.attrelid = target_rel.oid AND target_attr.attnum = target_key.attnum
+          WHERE con.contype = 'f'::"char"
+          GROUP BY con.conrelid, source_key.attnum
+        ), policy_counts AS (
+         SELECT pg_policy.polrelid,
+            count(*)::integer AS rls_policy_count
+           FROM pg_policy
+          GROUP BY pg_policy.polrelid
+        )
+ SELECT
+        CASE
+            WHEN n.nspname = ANY (ARRAY['public'::name, 'ops'::name]) THEN 'application'::text
+            ELSE 'supabase_managed'::text
+        END AS dictionary_scope,
+    n.nspname AS schema_name,
+    c.relname AS object_name,
+        CASE c.relkind
+            WHEN 'r'::"char" THEN 'table'::text
+            WHEN 'p'::"char" THEN 'partitioned_table'::text
+            WHEN 'v'::"char" THEN 'view'::text
+            WHEN 'm'::"char" THEN 'materialized_view'::text
+            WHEN 'f'::"char" THEN 'foreign_table'::text
+            ELSE NULL::text
+        END AS object_type,
+    obj_description(c.oid, 'pg_class'::name) AS object_description,
+    c.relrowsecurity AS rls_enabled,
+    c.relforcerowsecurity AS rls_forced,
+    COALESCE(pc.rls_policy_count, 0) AS rls_policy_count,
+        CASE
+            WHEN c.reltuples >= 0::double precision THEN c.reltuples::bigint
+            ELSE NULL::bigint
+        END AS estimated_rows,
+    a.attnum::integer AS ordinal_position,
+    a.attname AS column_name,
+    format_type(a.atttypid, a.atttypmod) AS data_type,
+    NOT a.attnotnull AS is_nullable,
+    NULLIF(a.attidentity, ''::"char") AS identity_generation,
+    NULLIF(a.attgenerated, ''::"char") AS generated_kind,
+    pg_get_expr(ad.adbin, ad.adrelid, true) AS default_or_generation_expression,
+    col_description(c.oid, a.attnum::integer) AS column_description,
+    pk.constraint_name AS primary_key_constraint,
+    pk.key_position AS primary_key_position,
+    COALESCE(fk.foreign_key_targets, '[]'::jsonb) AS foreign_key_targets
+   FROM pg_class c
+     JOIN pg_namespace n ON n.oid = c.relnamespace
+     JOIN pg_attribute a ON a.attrelid = c.oid AND a.attnum > 0 AND NOT a.attisdropped
+     LEFT JOIN pg_attrdef ad ON ad.adrelid = c.oid AND ad.adnum = a.attnum
+     LEFT JOIN primary_key_columns pk ON pk.conrelid = c.oid AND pk.attnum = a.attnum
+     LEFT JOIN foreign_key_columns fk ON fk.conrelid = c.oid AND fk.attnum = a.attnum
+     LEFT JOIN policy_counts pc ON pc.polrelid = c.oid
+  WHERE (c.relkind = ANY (ARRAY['r'::"char", 'p'::"char", 'v'::"char", 'm'::"char", 'f'::"char"])) AND ((n.nspname = ANY (ARRAY['public'::name, 'ops'::name])) OR (n.nspname = ANY (ARRAY['auth'::name, 'storage'::name, 'realtime'::name, 'cron'::name, 'net'::name, 'vault'::name, 'extensions'::name, 'graphql'::name, 'graphql_public'::name, 'pgbouncer'::name, 'supabase_migrations'::name])));
+```
+
+## ops.application_data_dictionary (view)
+
+| campo | valor |
+|---|---|
+| owner | postgres |
+| security_invoker | sim |
+| opções | security_invoker=true |
+| depende de | ops._relation_dictionary_base |
+| populada | n/a |
+| comentário | Dicionário vivo das relações e colunas dos schemas de aplicação public e ops. Inclui comentários, tipos, defaults, PK/FK, RLS e estimativas do catálogo. |
+
+
+```sql
+SELECT schema_name,
+    object_name,
+    object_type,
+    object_description,
+    rls_enabled,
+    rls_forced,
+    rls_policy_count,
+    estimated_rows,
+    ordinal_position,
+    column_name,
+    data_type,
+    is_nullable,
+    identity_generation,
+    generated_kind,
+    default_or_generation_expression,
+    column_description,
+    primary_key_constraint,
+    primary_key_position,
+    foreign_key_targets
+   FROM ops._relation_dictionary_base
+  WHERE dictionary_scope = 'application'::text;
+```
+
+## ops.managed_schema_dictionary (view)
+
+| campo | valor |
+|---|---|
+| owner | postgres |
+| security_invoker | sim |
+| opções | security_invoker=true |
+| depende de | ops._relation_dictionary_base |
+| populada | n/a |
+| comentário | Dicionário vivo de metadados dos schemas gerenciados pelo Supabase (auth, storage, realtime, cron, net, vault, extensions, graphql, graphql_public, pgbouncer e supabase_migrations). Não altera objetos gerenciados. |
+
+
+```sql
+SELECT schema_name,
+    object_name,
+    object_type,
+    object_description,
+    rls_enabled,
+    rls_forced,
+    rls_policy_count,
+    estimated_rows,
+    ordinal_position,
+    column_name,
+    data_type,
+    is_nullable,
+    identity_generation,
+    generated_kind,
+    default_or_generation_expression,
+    column_description,
+    primary_key_constraint,
+    primary_key_position,
+    foreign_key_targets
+   FROM ops._relation_dictionary_base
+  WHERE dictionary_scope = 'supabase_managed'::text;
+```
+
 ## public.catalog_send_stats (view)
 
 | campo | valor |

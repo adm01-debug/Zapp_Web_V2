@@ -54,7 +54,7 @@
 | tipo | PERMISSIVE |
 | roles | authenticated |
 | USING |  |
-| WITH CHECK | `(user_id = ( SELECT auth.uid() AS uid))` |
+| WITH CHECK | `(user_id = ( SELECT ( SELECT auth.uid() AS uid) AS uid))` |
 
 ### `Users can delete their own templates`
 
@@ -63,7 +63,7 @@
 | comando | DELETE |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `(user_id = ( SELECT auth.uid() AS uid))` |
+| USING | `(user_id = ( SELECT ( SELECT auth.uid() AS uid) AS uid))` |
 | WITH CHECK |  |
 
 ### `Users can update their own templates`
@@ -73,8 +73,8 @@
 | comando | UPDATE |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `(user_id = ( SELECT auth.uid() AS uid))` |
-| WITH CHECK | `(user_id = ( SELECT auth.uid() AS uid))` |
+| USING | `(user_id = ( SELECT ( SELECT auth.uid() AS uid) AS uid))` |
+| WITH CHECK | `(user_id = ( SELECT ( SELECT auth.uid() AS uid) AS uid))` |
 
 ### `Users can view their templates and global ones`
 
@@ -83,7 +83,7 @@
 | comando | SELECT |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `((user_id = ( SELECT auth.uid() AS uid)) OR (is_global = true))` |
+| USING | `((user_id = ( SELECT ( SELECT auth.uid() AS uid) AS uid)) OR (is_global = true))` |
 | WITH CHECK |  |
 
 

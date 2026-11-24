@@ -63,7 +63,7 @@
 | comando | DELETE |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `((uploaded_by = (auth.uid())::text) OR is_admin_or_supervisor(auth.uid()))` |
+| USING | `((uploaded_by = (( SELECT auth.uid() AS uid))::text) OR is_admin_or_supervisor(( SELECT auth.uid() AS uid)))` |
 | WITH CHECK |  |
 
 ### `Sticker insert with ownership`
@@ -74,7 +74,7 @@
 | tipo | PERMISSIVE |
 | roles | authenticated |
 | USING |  |
-| WITH CHECK | `((uploaded_by = (auth.uid())::text) OR is_admin_or_supervisor(auth.uid()))` |
+| WITH CHECK | `((uploaded_by = (( SELECT auth.uid() AS uid))::text) OR is_admin_or_supervisor(( SELECT auth.uid() AS uid)))` |
 
 ### `Sticker update with ownership`
 
@@ -83,8 +83,8 @@
 | comando | UPDATE |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `((uploaded_by = (auth.uid())::text) OR is_admin_or_supervisor(auth.uid()))` |
-| WITH CHECK | `((uploaded_by = (auth.uid())::text) OR is_admin_or_supervisor(auth.uid()))` |
+| USING | `((uploaded_by = (( SELECT auth.uid() AS uid))::text) OR is_admin_or_supervisor(( SELECT auth.uid() AS uid)))` |
+| WITH CHECK | `((uploaded_by = (( SELECT auth.uid() AS uid))::text) OR is_admin_or_supervisor(( SELECT auth.uid() AS uid)))` |
 
 
 ## Triggers

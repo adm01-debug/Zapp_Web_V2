@@ -51,7 +51,7 @@
 | comando | ALL |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `is_admin(auth.uid())` |
+| USING | `is_admin(( SELECT auth.uid() AS uid))` |
 | WITH CHECK |  |
 
 ### `Authenticated can view connection queues`

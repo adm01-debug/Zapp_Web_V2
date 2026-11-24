@@ -62,7 +62,7 @@
 | comando | UPDATE |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `is_admin_or_supervisor(auth.uid())` |
+| USING | `is_admin_or_supervisor(( SELECT auth.uid() AS uid))` |
 | WITH CHECK |  |
 
 ### `Users can insert own stats`
@@ -73,7 +73,7 @@
 | tipo | PERMISSIVE |
 | roles | authenticated |
 | USING |  |
-| WITH CHECK | `(((profile_id IN ( SELECT profiles.id    FROM profiles   WHERE (profiles.user_id = auth.uid()))) OR is_admin_or_supervisor(auth.uid())) AND (is_admin_or_supervisor(auth.uid()) OR ((xp = 0) AND (level = 1) AND (achievements_count = 0))))` |
+| WITH CHECK | `(((profile_id IN ( SELECT profiles.id    FROM profiles   WHERE (profiles.user_id = ( SELECT auth.uid() AS uid)))) OR is_admin_or_supervisor(( SELECT auth.uid() AS uid))) AND (is_admin_or_supervisor(( SELECT auth.uid() AS uid)) OR ((xp = 0) AND (level = 1) AND (achievements_count = 0))))` |
 
 ### `Users can view agent stats`
 
@@ -82,7 +82,7 @@
 | comando | SELECT |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `((profile_id IN ( SELECT p.id    FROM profiles p   WHERE (p.user_id = auth.uid()))) OR is_admin_or_supervisor(auth.uid()))` |
+| USING | `((profile_id IN ( SELECT p.id    FROM profiles p   WHERE (p.user_id = ( SELECT auth.uid() AS uid)))) OR is_admin_or_supervisor(( SELECT auth.uid() AS uid)))` |
 | WITH CHECK |  |
 
 

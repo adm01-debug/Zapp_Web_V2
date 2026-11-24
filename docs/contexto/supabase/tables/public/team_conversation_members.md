@@ -61,7 +61,7 @@
 | comando | DELETE |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `(((profile_id = current_profile_id()) OR is_admin_or_supervisor(auth.uid())) AND (NOT is_last_team_conversation_owner(conversation_id, profile_id)))` |
+| USING | `(((profile_id = current_profile_id()) OR is_admin_or_supervisor(( SELECT auth.uid() AS uid))) AND (NOT is_last_team_conversation_owner(conversation_id, profile_id)))` |
 | WITH CHECK |  |
 
 ### `tcm_insert_member`
@@ -81,7 +81,7 @@
 | comando | SELECT |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `is_team_conversation_member(auth.uid(), conversation_id)` |
+| USING | `is_team_conversation_member(( SELECT auth.uid() AS uid), conversation_id)` |
 | WITH CHECK |  |
 
 ### `tcm_update_own_prefs`

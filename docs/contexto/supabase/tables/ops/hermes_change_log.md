@@ -1,5 +1,7 @@
 # ops.hermes_change_log
 
+> Registro operacional de execuções de mudança: solicitação, risco, alvos, plano, revisão, simulação, execução, verificação, rollback e referências de repositório/branch/commit.
+
 | propriedade | valor |
 |---|---|
 | tipo | table |

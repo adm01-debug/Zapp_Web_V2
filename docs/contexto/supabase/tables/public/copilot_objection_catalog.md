@@ -49,7 +49,7 @@
 | tipo | PERMISSIVE |
 | roles | authenticated |
 | USING |  |
-| WITH CHECK | `(submitted_by = auth.uid())` |
+| WITH CHECK | `(submitted_by = ( SELECT auth.uid() AS uid))` |
 
 ### `copilot_objection_catalog_select`
 

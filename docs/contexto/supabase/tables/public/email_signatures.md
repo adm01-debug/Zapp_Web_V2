@@ -54,7 +54,7 @@
 | comando | DELETE |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `(user_id = ( SELECT auth.uid() AS uid))` |
+| USING | `(user_id = ( SELECT ( SELECT auth.uid() AS uid) AS uid))` |
 | WITH CHECK |  |
 
 ### `email_signatures_insert_own`
@@ -65,7 +65,7 @@
 | tipo | PERMISSIVE |
 | roles | authenticated |
 | USING |  |
-| WITH CHECK | `(user_id = ( SELECT auth.uid() AS uid))` |
+| WITH CHECK | `(user_id = ( SELECT ( SELECT auth.uid() AS uid) AS uid))` |
 
 ### `email_signatures_select_own`
 
@@ -74,7 +74,7 @@
 | comando | SELECT |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `(user_id = ( SELECT auth.uid() AS uid))` |
+| USING | `(user_id = ( SELECT ( SELECT auth.uid() AS uid) AS uid))` |
 | WITH CHECK |  |
 
 ### `email_signatures_update_own`
@@ -84,8 +84,8 @@
 | comando | UPDATE |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `(user_id = ( SELECT auth.uid() AS uid))` |
-| WITH CHECK | `(user_id = ( SELECT auth.uid() AS uid))` |
+| USING | `(user_id = ( SELECT ( SELECT auth.uid() AS uid) AS uid))` |
+| WITH CHECK | `(user_id = ( SELECT ( SELECT auth.uid() AS uid) AS uid))` |
 
 
 ## Triggers

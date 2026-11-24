@@ -60,7 +60,7 @@
 | comando | SELECT |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `((reporter_id = ( SELECT auth.uid() AS uid)) OR is_admin_or_supervisor(( SELECT auth.uid() AS uid)))` |
+| USING | `((reporter_id = ( SELECT ( SELECT auth.uid() AS uid) AS uid)) OR is_admin_or_supervisor(( SELECT ( SELECT auth.uid() AS uid) AS uid)))` |
 | WITH CHECK |  |
 
 ### `message_reports_update_admin`
@@ -70,8 +70,8 @@
 | comando | UPDATE |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `is_admin_or_supervisor(( SELECT auth.uid() AS uid))` |
-| WITH CHECK | `(is_admin_or_supervisor(( SELECT auth.uid() AS uid)) AND ((status = 'open'::text) OR (resolved_by = ( SELECT auth.uid() AS uid))))` |
+| USING | `is_admin_or_supervisor(( SELECT ( SELECT auth.uid() AS uid) AS uid))` |
+| WITH CHECK | `(is_admin_or_supervisor(( SELECT ( SELECT auth.uid() AS uid) AS uid)) AND ((status = 'open'::text) OR (resolved_by = ( SELECT ( SELECT auth.uid() AS uid) AS uid))))` |
 
 
 ## Triggers

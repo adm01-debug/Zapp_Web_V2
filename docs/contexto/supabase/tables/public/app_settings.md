@@ -44,7 +44,7 @@
 | comando | ALL |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `(EXISTS ( SELECT 1    FROM user_roles ur   WHERE ((ur.user_id = ( SELECT auth.uid() AS uid)) AND (ur.role = 'admin'::app_role))))` |
+| USING | `(EXISTS ( SELECT 1    FROM user_roles ur   WHERE ((ur.user_id = ( SELECT ( SELECT auth.uid() AS uid) AS uid)) AND (ur.role = 'admin'::app_role))))` |
 | WITH CHECK |  |
 
 

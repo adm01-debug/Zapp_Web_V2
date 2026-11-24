@@ -84,7 +84,7 @@
 | comando | SELECT |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `is_contact_visible_to_user(contact_id, auth.uid())` |
+| USING | `is_contact_visible_to_user(contact_id, ( SELECT auth.uid() AS uid))` |
 | WITH CHECK |  |
 
 ### `Users can insert own analyses`
@@ -95,7 +95,7 @@
 | tipo | PERMISSIVE |
 | roles | authenticated |
 | USING |  |
-| WITH CHECK | `((analyzed_by = get_profile_id_for_user(auth.uid())) AND is_contact_visible_to_user(contact_id, auth.uid()))` |
+| WITH CHECK | `((analyzed_by = get_profile_id_for_user(( SELECT auth.uid() AS uid))) AND is_contact_visible_to_user(contact_id, ( SELECT auth.uid() AS uid)))` |
 
 
 ## Triggers

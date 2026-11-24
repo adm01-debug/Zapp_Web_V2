@@ -65,7 +65,7 @@
 | tipo | PERMISSIVE |
 | roles | authenticated |
 | USING |  |
-| WITH CHECK | `(is_admin_or_supervisor(auth.uid()) OR ((created_by IN ( SELECT profiles.id    FROM profiles   WHERE (profiles.user_id = auth.uid()))) AND is_contact_visible_to_user(contact_id, auth.uid()) AND user_has_permission(auth.uid(), 'send_messages'::text)))` |
+| WITH CHECK | `(is_admin_or_supervisor(( SELECT auth.uid() AS uid)) OR ((created_by IN ( SELECT profiles.id    FROM profiles   WHERE (profiles.user_id = ( SELECT auth.uid() AS uid)))) AND is_contact_visible_to_user(contact_id, ( SELECT auth.uid() AS uid)) AND user_has_permission(( SELECT auth.uid() AS uid), 'send_messages'::text)))` |
 
 ### `Users can delete their scheduled messages`
 
@@ -74,7 +74,7 @@
 | comando | DELETE |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `((created_by IN ( SELECT profiles.id    FROM profiles   WHERE (profiles.user_id = auth.uid()))) OR is_admin_or_supervisor(auth.uid()))` |
+| USING | `((created_by IN ( SELECT profiles.id    FROM profiles   WHERE (profiles.user_id = ( SELECT auth.uid() AS uid)))) OR is_admin_or_supervisor(( SELECT auth.uid() AS uid)))` |
 | WITH CHECK |  |
 
 ### `Users can update their scheduled messages`
@@ -84,8 +84,8 @@
 | comando | UPDATE |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `((created_by IN ( SELECT profiles.id    FROM profiles   WHERE (profiles.user_id = auth.uid()))) OR is_admin_or_supervisor(auth.uid()))` |
-| WITH CHECK | `(is_admin_or_supervisor(auth.uid()) OR ((created_by IN ( SELECT profiles.id    FROM profiles   WHERE (profiles.user_id = auth.uid()))) AND is_contact_visible_to_user(contact_id, auth.uid()) AND user_has_permission(auth.uid(), 'send_messages'::text)))` |
+| USING | `((created_by IN ( SELECT profiles.id    FROM profiles   WHERE (profiles.user_id = ( SELECT auth.uid() AS uid)))) OR is_admin_or_supervisor(( SELECT auth.uid() AS uid)))` |
+| WITH CHECK | `(is_admin_or_supervisor(( SELECT auth.uid() AS uid)) OR ((created_by IN ( SELECT profiles.id    FROM profiles   WHERE (profiles.user_id = ( SELECT auth.uid() AS uid)))) AND is_contact_visible_to_user(contact_id, ( SELECT auth.uid() AS uid)) AND user_has_permission(( SELECT auth.uid() AS uid), 'send_messages'::text)))` |
 
 ### `Users can view their scheduled messages`
 
@@ -94,7 +94,7 @@
 | comando | SELECT |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `((created_by IN ( SELECT profiles.id    FROM profiles   WHERE (profiles.user_id = auth.uid()))) OR is_admin_or_supervisor(auth.uid()))` |
+| USING | `((created_by IN ( SELECT profiles.id    FROM profiles   WHERE (profiles.user_id = ( SELECT auth.uid() AS uid)))) OR is_admin_or_supervisor(( SELECT auth.uid() AS uid)))` |
 | WITH CHECK |  |
 
 

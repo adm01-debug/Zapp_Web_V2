@@ -50,7 +50,7 @@
 | tipo | PERMISSIVE |
 | roles | authenticated |
 | USING |  |
-| WITH CHECK | `((tagged_by = auth.uid()) AND is_admin_or_supervisor(auth.uid()))` |
+| WITH CHECK | `((tagged_by = ( SELECT auth.uid() AS uid)) AND is_admin_or_supervisor(( SELECT auth.uid() AS uid)))` |
 
 ### `copilot_learning_moments_select`
 
@@ -59,7 +59,7 @@
 | comando | SELECT |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `((tagged_by = auth.uid()) OR (conversation_id IN ( SELECT copilot_sessions.conversation_id    FROM copilot_sessions   WHERE (copilot_sessions.profile_id = auth.uid()))) OR is_admin_or_supervisor(auth.uid()))` |
+| USING | `((tagged_by = ( SELECT auth.uid() AS uid)) OR (conversation_id IN ( SELECT copilot_sessions.conversation_id    FROM copilot_sessions   WHERE (copilot_sessions.profile_id = ( SELECT auth.uid() AS uid)))) OR is_admin_or_supervisor(( SELECT auth.uid() AS uid)))` |
 | WITH CHECK |  |
 
 

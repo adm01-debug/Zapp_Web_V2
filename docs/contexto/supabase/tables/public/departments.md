@@ -1,6 +1,6 @@
 # public.departments
 
-> Organizational departments; each may own a team_conversation of type=department
+> Unidade organizacional associada a membros e conversas de equipe. A configuração de WhatsApp é alterada por RPCs de staff; whatsapp_api_key é segredo e não deve ser exposto em leituras diretas, views públicas ou respostas de API. get_department_whatsapp_config retorna apenas modo, instância e indicador de existência da chave.
 
 | propriedade | valor |
 |---|---|
@@ -65,8 +65,8 @@
 | comando | ALL |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `is_admin(auth.uid())` |
-| WITH CHECK | `is_admin(auth.uid())` |
+| USING | `is_admin(( SELECT auth.uid() AS uid))` |
+| WITH CHECK | `is_admin(( SELECT auth.uid() AS uid))` |
 
 ### `departments_select`
 

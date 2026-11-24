@@ -53,7 +53,7 @@
 | tipo | PERMISSIVE |
 | roles | authenticated |
 | USING |  |
-| WITH CHECK | `((snoozed_by IN ( SELECT profiles.id    FROM profiles   WHERE (profiles.user_id = auth.uid()))) AND (EXISTS ( SELECT 1    FROM contacts c   WHERE (c.id = conversation_snoozes.contact_id))))` |
+| WITH CHECK | `((snoozed_by IN ( SELECT profiles.id    FROM profiles   WHERE (profiles.user_id = ( SELECT auth.uid() AS uid)))) AND (EXISTS ( SELECT 1    FROM contacts c   WHERE (c.id = conversation_snoozes.contact_id))))` |
 
 ### `Users can delete own snoozes`
 
@@ -62,7 +62,7 @@
 | comando | DELETE |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `(snoozed_by IN ( SELECT profiles.id    FROM profiles   WHERE (profiles.user_id = auth.uid())))` |
+| USING | `(snoozed_by IN ( SELECT profiles.id    FROM profiles   WHERE (profiles.user_id = ( SELECT auth.uid() AS uid))))` |
 | WITH CHECK |  |
 
 ### `Users can view own snoozes`
@@ -72,7 +72,7 @@
 | comando | SELECT |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `(snoozed_by IN ( SELECT profiles.id    FROM profiles   WHERE (profiles.user_id = auth.uid())))` |
+| USING | `(snoozed_by IN ( SELECT profiles.id    FROM profiles   WHERE (profiles.user_id = ( SELECT auth.uid() AS uid))))` |
 | WITH CHECK |  |
 
 

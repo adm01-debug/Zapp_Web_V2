@@ -78,7 +78,7 @@
 | tipo | PERMISSIVE |
 | roles | authenticated |
 | USING |  |
-| WITH CHECK | `(created_by = ( SELECT p.id    FROM profiles p   WHERE (p.user_id = auth.uid())  LIMIT 1))` |
+| WITH CHECK | `(created_by = ( SELECT p.id    FROM profiles p   WHERE (p.user_id = ( SELECT auth.uid() AS uid))  LIMIT 1))` |
 
 ### `Conversation creator or admin can delete`
 
@@ -87,7 +87,7 @@
 | comando | DELETE |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `((created_by = current_profile_id()) OR is_admin_or_supervisor(auth.uid()))` |
+| USING | `((created_by = current_profile_id()) OR is_admin_or_supervisor(( SELECT auth.uid() AS uid)))` |
 | WITH CHECK |  |
 
 ### `Members can view their conversations`
@@ -97,7 +97,7 @@
 | comando | SELECT |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `(is_team_conversation_member(auth.uid(), id) OR (created_by = ( SELECT p.id    FROM profiles p   WHERE (p.user_id = auth.uid())  LIMIT 1)))` |
+| USING | `(is_team_conversation_member(( SELECT auth.uid() AS uid), id) OR (created_by = ( SELECT p.id    FROM profiles p   WHERE (p.user_id = ( SELECT auth.uid() AS uid))  LIMIT 1)))` |
 | WITH CHECK |  |
 
 ### `team_conversations_update_own`

@@ -185,7 +185,7 @@
 | comando | SELECT |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `is_admin_or_supervisor(auth.uid())` |
+| USING | `is_admin_or_supervisor(( SELECT auth.uid() AS uid))` |
 | WITH CHECK |  |
 
 ### `Users can create campaigns`
@@ -196,7 +196,7 @@
 | tipo | PERMISSIVE |
 | roles | authenticated |
 | USING |  |
-| WITH CHECK | `((created_by = ( SELECT profiles.id    FROM profiles   WHERE (profiles.user_id = auth.uid())  LIMIT 1)) AND is_admin_or_supervisor(auth.uid()))` |
+| WITH CHECK | `((created_by = ( SELECT profiles.id    FROM profiles   WHERE (profiles.user_id = ( SELECT auth.uid() AS uid))  LIMIT 1)) AND is_admin_or_supervisor(( SELECT auth.uid() AS uid)))` |
 
 ### `Users can delete own draft campaigns`
 
@@ -205,7 +205,7 @@
 | comando | DELETE |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `((created_by = ( SELECT profiles.id    FROM profiles   WHERE (profiles.user_id = auth.uid())  LIMIT 1)) AND is_admin_or_supervisor(auth.uid()) AND (status = 'draft'::text))` |
+| USING | `((created_by = ( SELECT profiles.id    FROM profiles   WHERE (profiles.user_id = ( SELECT auth.uid() AS uid))  LIMIT 1)) AND is_admin_or_supervisor(( SELECT auth.uid() AS uid)) AND (status = 'draft'::text))` |
 | WITH CHECK |  |
 
 ### `Users can update own campaigns`
@@ -215,8 +215,8 @@
 | comando | UPDATE |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `((created_by = ( SELECT profiles.id    FROM profiles   WHERE (profiles.user_id = auth.uid())  LIMIT 1)) AND is_admin_or_supervisor(auth.uid()))` |
-| WITH CHECK | `((created_by = ( SELECT profiles.id    FROM profiles   WHERE (profiles.user_id = auth.uid())  LIMIT 1)) AND is_admin_or_supervisor(auth.uid()))` |
+| USING | `((created_by = ( SELECT profiles.id    FROM profiles   WHERE (profiles.user_id = ( SELECT auth.uid() AS uid))  LIMIT 1)) AND is_admin_or_supervisor(( SELECT auth.uid() AS uid)))` |
+| WITH CHECK | `((created_by = ( SELECT profiles.id    FROM profiles   WHERE (profiles.user_id = ( SELECT auth.uid() AS uid))  LIMIT 1)) AND is_admin_or_supervisor(( SELECT auth.uid() AS uid)))` |
 
 ### `Users can view own campaigns`
 
@@ -225,7 +225,7 @@
 | comando | SELECT |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `(created_by = ( SELECT profiles.id    FROM profiles   WHERE (profiles.user_id = auth.uid())  LIMIT 1))` |
+| USING | `(created_by = ( SELECT profiles.id    FROM profiles   WHERE (profiles.user_id = ( SELECT auth.uid() AS uid))  LIMIT 1))` |
 | WITH CHECK |  |
 
 

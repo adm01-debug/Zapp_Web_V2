@@ -52,7 +52,7 @@
 | comando | SELECT |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `is_admin_or_supervisor(auth.uid())` |
+| USING | `is_admin_or_supervisor(( SELECT auth.uid() AS uid))` |
 | WITH CHECK |  |
 
 ### `Callers read their own voice grants`
@@ -62,7 +62,7 @@
 | comando | SELECT |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `((revoked_at IS NULL) AND (((roles IS NOT NULL) AND (EXISTS ( SELECT 1    FROM unnest(multiplix_voice_grants.roles) r(r)   WHERE has_role(auth.uid(), r.r)))) OR ((perfis IS NOT NULL) AND (EXISTS ( SELECT 1    FROM profiles p   WHERE ((p.user_id = auth.uid()) AND (p.id = ANY (multiplix_voice_grants.perfis))))))))` |
+| USING | `((revoked_at IS NULL) AND (((roles IS NOT NULL) AND (EXISTS ( SELECT 1    FROM unnest(multiplix_voice_grants.roles) r(r)   WHERE has_role(( SELECT auth.uid() AS uid), r.r)))) OR ((perfis IS NOT NULL) AND (EXISTS ( SELECT 1    FROM profiles p   WHERE ((p.user_id = ( SELECT auth.uid() AS uid)) AND (p.id = ANY (multiplix_voice_grants.perfis))))))))` |
 | WITH CHECK |  |
 
 

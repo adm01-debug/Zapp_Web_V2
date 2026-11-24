@@ -57,7 +57,7 @@
 | comando | SELECT |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `(EXISTS ( SELECT 1    FROM talkx_segments s   WHERE ((s.id = talkx_segment_versions.segment_id) AND ((s.created_by = ( SELECT p.id            FROM profiles p           WHERE (p.user_id = auth.uid())          LIMIT 1)) OR is_admin_or_supervisor(auth.uid())))))` |
+| USING | `(EXISTS ( SELECT 1    FROM talkx_segments s   WHERE ((s.id = talkx_segment_versions.segment_id) AND ((s.created_by = ( SELECT p.id            FROM profiles p           WHERE (p.user_id = ( SELECT auth.uid() AS uid))          LIMIT 1)) OR is_admin_or_supervisor(( SELECT auth.uid() AS uid))))))` |
 | WITH CHECK |  |
 
 

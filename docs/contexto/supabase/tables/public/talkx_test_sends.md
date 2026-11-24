@@ -57,7 +57,7 @@
 | comando | SELECT |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `((auth.uid() = created_by) OR (auth.uid() IN ( SELECT profiles.id    FROM profiles   WHERE (profiles.role = 'admin'::text))))` |
+| USING | `((( SELECT auth.uid() AS uid) = created_by) OR (( SELECT auth.uid() AS uid) IN ( SELECT profiles.id    FROM profiles   WHERE (profiles.role = 'admin'::text))))` |
 | WITH CHECK |  |
 
 ### `talkx_test_sends_service_role_write`

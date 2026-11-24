@@ -75,7 +75,7 @@
 | comando | SELECT |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `((auth.uid() IS NOT NULL) AND (EXISTS ( SELECT 1    FROM talkx_templates template   WHERE (template.id = talkx_template_versions.template_id))))` |
+| USING | `((( SELECT auth.uid() AS uid) IS NOT NULL) AND (EXISTS ( SELECT 1    FROM talkx_templates template   WHERE (template.id = talkx_template_versions.template_id))))` |
 | WITH CHECK |  |
 
 

@@ -51,7 +51,7 @@
 | tipo | PERMISSIVE |
 | roles | authenticated |
 | USING |  |
-| WITH CHECK | `(uploaded_by = auth.uid())` |
+| WITH CHECK | `(uploaded_by = ( SELECT auth.uid() AS uid))` |
 
 ### `Authenticated users can update custom emojis`
 
@@ -60,8 +60,8 @@
 | comando | UPDATE |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `((uploaded_by = auth.uid()) OR is_admin_or_supervisor(auth.uid()))` |
-| WITH CHECK | `((uploaded_by = auth.uid()) OR is_admin_or_supervisor(auth.uid()))` |
+| USING | `((uploaded_by = ( SELECT auth.uid() AS uid)) OR is_admin_or_supervisor(( SELECT auth.uid() AS uid)))` |
+| WITH CHECK | `((uploaded_by = ( SELECT auth.uid() AS uid)) OR is_admin_or_supervisor(( SELECT auth.uid() AS uid)))` |
 
 ### `Authenticated users can view custom emojis`
 
@@ -80,7 +80,7 @@
 | comando | DELETE |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `((uploaded_by = auth.uid()) OR is_admin_or_supervisor(auth.uid()))` |
+| USING | `((uploaded_by = ( SELECT auth.uid() AS uid)) OR is_admin_or_supervisor(( SELECT auth.uid() AS uid)))` |
 | WITH CHECK |  |
 
 

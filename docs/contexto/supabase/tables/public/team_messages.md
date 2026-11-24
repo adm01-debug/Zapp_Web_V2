@@ -83,7 +83,7 @@
 | tipo | PERMISSIVE |
 | roles | authenticated |
 | USING |  |
-| WITH CHECK | `(is_team_conversation_member(auth.uid(), conversation_id) AND (sender_id = ( SELECT p.id    FROM profiles p   WHERE (p.user_id = auth.uid())  LIMIT 1)))` |
+| WITH CHECK | `(is_team_conversation_member(( SELECT auth.uid() AS uid), conversation_id) AND (sender_id = ( SELECT p.id    FROM profiles p   WHERE (p.user_id = ( SELECT auth.uid() AS uid))  LIMIT 1)))` |
 
 ### `Members can view conversation messages`
 
@@ -92,7 +92,7 @@
 | comando | SELECT |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `is_team_conversation_member(auth.uid(), conversation_id)` |
+| USING | `is_team_conversation_member(( SELECT auth.uid() AS uid), conversation_id)` |
 | WITH CHECK |  |
 
 ### `Senders can delete own messages`
@@ -102,7 +102,7 @@
 | comando | DELETE |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `(sender_id = ( SELECT p.id    FROM profiles p   WHERE (p.user_id = auth.uid())  LIMIT 1))` |
+| USING | `(sender_id = ( SELECT p.id    FROM profiles p   WHERE (p.user_id = ( SELECT auth.uid() AS uid))  LIMIT 1))` |
 | WITH CHECK |  |
 
 ### `team_messages_update_own`

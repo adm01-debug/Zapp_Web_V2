@@ -54,7 +54,7 @@
 | comando | DELETE |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `is_admin(auth.uid())` |
+| USING | `is_admin(( SELECT auth.uid() AS uid))` |
 | WITH CHECK |  |
 
 ### `dept_invites_insert_admin`
@@ -65,7 +65,7 @@
 | tipo | PERMISSIVE |
 | roles | authenticated |
 | USING |  |
-| WITH CHECK | `(is_admin(auth.uid()) AND ((created_by IS NULL) OR (created_by IN ( SELECT p.id    FROM profiles p   WHERE (p.user_id = auth.uid())))))` |
+| WITH CHECK | `(is_admin(( SELECT auth.uid() AS uid)) AND ((created_by IS NULL) OR (created_by IN ( SELECT p.id    FROM profiles p   WHERE (p.user_id = ( SELECT auth.uid() AS uid))))))` |
 
 ### `dept_invites_select_admin`
 
@@ -74,7 +74,7 @@
 | comando | SELECT |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `is_admin(auth.uid())` |
+| USING | `is_admin(( SELECT auth.uid() AS uid))` |
 | WITH CHECK |  |
 
 

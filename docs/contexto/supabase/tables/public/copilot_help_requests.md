@@ -47,7 +47,7 @@
 | tipo | PERMISSIVE |
 | roles | authenticated |
 | USING |  |
-| WITH CHECK | `(seller_id = auth.uid())` |
+| WITH CHECK | `(seller_id = ( SELECT auth.uid() AS uid))` |
 
 ### `copilot_help_requests_select`
 
@@ -56,7 +56,7 @@
 | comando | SELECT |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `((seller_id = auth.uid()) OR is_admin_or_supervisor(auth.uid()))` |
+| USING | `((seller_id = ( SELECT auth.uid() AS uid)) OR is_admin_or_supervisor(( SELECT auth.uid() AS uid)))` |
 | WITH CHECK |  |
 
 
