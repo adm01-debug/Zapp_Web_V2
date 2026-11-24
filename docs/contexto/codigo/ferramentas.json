@@ -77,8 +77,8 @@
   "dependencias": 69,
   "dev_dependencias": 33,
   "principais": {
-   "@supabase/supabase-js": "^2.119.0",
-   "@tanstack/react-query": "^5.107.1",
+   "@supabase/supabase-js": "^2.119.2",
+   "@tanstack/react-query": "^5.108.1",
    "@tanstack/react-virtual": "^3.14.26",
    "date-fns": "^3.6.0",
    "framer-motion": "^12.43.0",
@@ -91,7 +91,7 @@
    "react-i18next": "^17.1.13",
    "react-resizable-panels": "^2.1.9",
    "react-router-dom": "^7",
-   "recharts": "^3.10.1",
+   "recharts": "^3.11.0",
    "tailwindcss-animate": "^1.0.7",
    "zod": "^4.6.7"
   },
@@ -1699,7 +1699,7 @@
     "arquivo": "infrastructure/preview-egress-proxy/Dockerfile",
     "base": [
      "gcr.io/distroless/static-debian12:nonroot@sha256:afa5c872c891853ca7fcf1f12c3edb23f7eeef36189728842dd51042ff57f7ab",
-     "golang:1.27-alpine@sha256:fa3d596898d9f126af7c01d14ee7597bab3f39cccf392ef36b69fe77cd681f18"
+     "golang:1.27-alpine@sha256:70bd7ddea8b6cbe5d6943cde279d6b67feb10cc924fb9100d1d8757c1575b280"
     ],
     "portas": [
      "8080"
@@ -1729,7 +1729,7 @@
    {
     "pacote": "@elevenlabs/react",
     "servico": "ElevenLabs",
-    "versao": "^1.22.0"
+    "versao": "^1.23.1"
    },
    {
     "pacote": "i18next",
@@ -1744,12 +1744,12 @@
    {
     "pacote": "@tanstack/react-query",
     "servico": "react-query",
-    "versao": "^5.107.1"
+    "versao": "^5.108.1"
    },
    {
     "pacote": "@supabase/supabase-js",
     "servico": "Supabase",
-    "versao": "^2.119.0"
+    "versao": "^2.119.2"
    },
    {
     "pacote": "zod",

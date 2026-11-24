@@ -2,11 +2,21 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "4c1d031f209e351bcc92e35e229c9d5e391e196d",
+  "commit": "d58476e7c31074532c6507e9a05b3ef3703bc8fd",
   "branch": "main",
-  "data_commit": "2026-11-23T20:45:08-03:00",
+  "data_commit": "2026-11-23T21:06:16-03:00",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "d58476e7",
+    "data": "2026-11-23",
+    "assunto": "chore: sincroniza pin e digest do Playwright no bump de 16 dependencias (#3344)"
+   },
+   {
+    "sha": "d09e2cec",
+    "data": "2026-11-23",
+    "assunto": "⬆️ docker: bump golang from `fa3d596` to `70bd7dd` in /infrastructure/preview-egress-proxy (#3338)"
+   },
    {
     "sha": "4c1d031f",
     "data": "2026-11-23",
@@ -121,19 +131,9 @@
     "sha": "4454ed4b",
     "data": "2026-11-22",
     "assunto": "docs(integracoes): plano do gateway de mensagens WhatsApp + SMS (SMSDev) (#3318)"
-   },
-   {
-    "sha": "f1080b15",
-    "data": "2026-11-22",
-    "assunto": "feat(assistente): porta unica liga 6 edges mortas com contexto compartilhado (#3317)"
-   },
-   {
-    "sha": "9f6df25b",
-    "data": "2026-11-22",
-    "assunto": "feat: fase 2 do assistente pessoal (memoria e agenda do contato) (#3316)"
    }
   ],
-  "arquivos_mudados_7d": 5290,
+  "arquivos_mudados_7d": 5300,
   "pastas_mais_mudadas_30d": [
    {
     "pasta": "docs/contexto/supabase",
@@ -239,7 +239,7 @@
    },
    {
     "arquivo": ".github/workflows/ci.yml",
-    "mudancas": 8
+    "mudancas": 9
    },
    {
     "arquivo": "docs/agentes/github-ci.md",
@@ -286,22 +286,22 @@
     "mudancas": 5
    },
    {
+    "arquivo": "bun.lock",
+    "mudancas": 5
+   },
+   {
     "arquivo": "docs/audits/edge-functions-authz-coverage.md",
     "mudancas": 5
    },
    {
     "arquivo": "docs/contexto/regras/manual/regras.md",
     "mudancas": 5
-   },
-   {
-    "arquivo": "docs/prod-readiness.md",
-    "mudancas": 5
    }
   ],
   "autores_30d": [
    {
     "autor": "adm01-debug",
-    "commits": 289
+    "commits": 288
    },
    {
     "autor": "github-actions[bot]",
@@ -309,14 +309,14 @@
    },
    {
     "autor": "dependabot[bot]",
-    "commits": 3
+    "commits": 4
    }
   ]
  },
  "contagens": {
   "arquivos_total": 15781,
   "arquivos_codigo": 5892,
-  "linhas_codigo": 1140014,
+  "linhas_codigo": 1140038,
   "rotas": 18,
   "rotas_http_backend": 11,
   "vistas_por_id": 55,
@@ -628,7 +628,7 @@
   },
   "scripts/ci": {
    "arquivos": 231,
-   "linhas": 50394
+   "linhas": 50415
   },
   "scripts/db": {
    "arquivos": 2,
@@ -648,7 +648,7 @@
   },
   "scripts/e2e-isolated": {
    "arquivos": 40,
-   "linhas": 6446
+   "linhas": 6449
   },
   "scripts/edge-deploy": {
    "arquivos": 32,
@@ -1000,7 +1000,7 @@
   },
   {
    "arquivo": "scripts/ci/e2e-isolated-runtime.unit.mjs",
-   "linha": 1679,
+   "linha": 1683,
    "tipo": "FIXME",
    "texto": "remains failure', fault: 'explicit-skip', failure: 'suite-result-not-clean' },"
   },

@@ -4938,7 +4938,7 @@
   {
    "arquivo": "scripts/ci/e2e-isolated-runtime.unit.mjs",
    "tipo": "unit",
-   "linhas": 1724,
+   "linhas": 1728,
    "testa": [
     "scripts/e2e-isolated/compilation-network.mjs",
     "scripts/e2e-isolated/migrations.mjs",
@@ -5361,9 +5361,9 @@
   {
    "arquivo": "scripts/ci/playwright-version-lock.unit.mjs",
    "tipo": "unit",
-   "linhas": 104,
+   "linhas": 121,
    "testa": [],
-   "casos": 4
+   "casos": 5
   },
   {
    "arquivo": "scripts/ci/proof-sha.unit.mjs",
