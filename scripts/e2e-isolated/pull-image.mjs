@@ -19,33 +19,66 @@ const TERMINALS = [
 ];
 const TERMINAL_LINES = new Set(TERMINALS.flatMap(line => [line, 'Error response from daemon: ' + line]));
 
-/** Retry only the registry failure observed in the native Docker pull. */
-export function isPullRateLimited(result, image) {
+// Falhas transientes de rede do daemon, distintas de cota: o run 45380016893 perdeu o
+// shard deslogado-principal com Client.Timeout no token do ghcr.io e o pull so retentava
+// cota. Retentar nao troca o digest pinado, entao e seguro repetir a mesma referencia.
+const NETWORK_REASONS = [
+  'net/http: request canceled (Client.Timeout exceeded while awaiting headers)',
+  'net/http: request canceled while waiting for connection (Client.Timeout exceeded while awaiting headers)',
+  'net/http: TLS handshake timeout',
+  'net/http: HTTP/1.x transport connection broken: unexpected EOF',
+  'remote error: tls: handshake failure',
+  'unexpected EOF',
+  'i/o timeout',
+  'connection reset by peer',
+  'connection timed out',
+];
+const NETWORK_PREFIX = 'Error response from daemon: Get "https://';
+
+/** So aceita o pedido HTTP ao registry abortado por motivo transiente de rede. */
+function isNetworkTerminal(line) {
+  return line.startsWith(NETWORK_PREFIX) && NETWORK_REASONS.some(reason => line.endsWith(reason));
+}
+
+/** Classifica a unica linha terminal do pull nativo: 'quota', 'network' ou null (sem retry). */
+function classifyPullOutput(result, image) {
   if (!Number.isInteger(result?.status) || result.status < 1 || result.status > 255 ||
-      result.error || result.signal || result.timeout || result.timedOut) return false;
+      result.error || result.signal || result.timeout || result.timedOut) return null;
   // Match the existing assertPinnedImages contract, including its mandatory tag.
   const match = typeof image === 'string' && image.match(/^([a-z0-9./_-]+):([A-Za-z0-9_.-]+)@sha256:([a-f0-9]{64})$/);
-  if (!match) return false;
+  if (!match) return null;
   const [, repository, tag, digest] = match;
   const shortRepository = repository.split('/')[0].includes('.') ? repository.split('/').slice(1).join('/') : repository;
   const headers = new Set([tag, repository + '@sha256:' + digest, image].flatMap(prefix =>
     [repository, shortRepository].map(name => prefix + ': Pulling from ' + name)));
   const channels = [result.stdout, result.stderr];
-  if (channels.some(value => value !== undefined && value !== null && typeof value !== 'string')) return false;
-  if (channels.reduce((size, value) => size + (value?.length ?? 0), 0) > 65_536) return false;
-  let terminals = 0;
+  if (channels.some(value => value !== undefined && value !== null && typeof value !== 'string')) return null;
+  if (channels.reduce((size, value) => size + (value?.length ?? 0), 0) > 65_536) return null;
+  let terminal = null;
   for (const channel of channels) {
     const text = (channel ?? '').replaceAll('\r\n', '\n');
-    if (/[^\x20-\x7e\n]/.test(text)) return false;
+    if (/[^\x20-\x7e\n]/.test(text)) return null;
     const lines = text.split('\n').map(line => line.trim()).filter(Boolean);
     for (let index = 0; index < lines.length; index++) {
       const line = lines[index];
-      if (TERMINAL_LINES.has(line)) {
-        if (index !== lines.length - 1 || ++terminals !== 1) return false;
-      } else if (!headers.has(line) && !SIMPLE_PROGRESS.test(line) && !BYTE_PROGRESS.test(line)) return false;
+      const kind = TERMINAL_LINES.has(line) ? 'quota' : isNetworkTerminal(line) ? 'network' : null;
+      if (kind !== null) {
+        if (index !== lines.length - 1 || terminal !== null) return null;
+        terminal = kind;
+      } else if (!headers.has(line) && !SIMPLE_PROGRESS.test(line) && !BYTE_PROGRESS.test(line)) return null;
     }
   }
-  return terminals === 1;
+  return terminal;
+}
+
+/** Retry only the registry failure observed in the native Docker pull. */
+export function isPullRateLimited(result, image) {
+  return classifyPullOutput(result, image) === 'quota';
+}
+
+/** Falha transiente de rede do registry: retentar mantem o mesmo digest pinado. */
+export function isTransientPullFailure(result, image) {
+  return classifyPullOutput(result, image) === 'network';
 }
 
 /** One budget includes every attempt and wait; runtime/bootstrap never retry. */
@@ -78,7 +111,8 @@ export async function pullPinnedImage({ image, command, onAttempt, signal,
     onAttempt?.(result, attempt);
     await checkpoint();
     if (clock() >= deadline) return exhausted();
-    if (!isPullRateLimited(result, image) || attempt === 4) return result;
+    const retryable = isPullRateLimited(result, image) || isTransientPullFailure(result, image);
+    if (!retryable || attempt === 4) return result;
     const extra = jitter();
     if (!Number.isInteger(extra) || extra < 0 || extra > 5000) throw new Error('invalid-pull-jitter');
     const delay = DELAYS[attempt - 1] + extra;

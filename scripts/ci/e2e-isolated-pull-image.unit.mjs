@@ -4,7 +4,7 @@ import { spawnSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
 import { performance } from 'node:perf_hooks';
 import { setTimeout } from 'node:timers/promises';
-import { isPullRateLimited as classifyPullRateLimit, pullPinnedImage, PULL_BUDGET_MS } from '../e2e-isolated/pull-image.mjs';
+import { isPullRateLimited as classifyPullRateLimit, isTransientPullFailure as classifyTransientFailure, pullPinnedImage, PULL_BUDGET_MS } from '../e2e-isolated/pull-image.mjs';
 import { assertPinnedImages } from '../e2e-isolated/run.mjs';
 
 const IMAGE = 'public.ecr.aws/supabase/postgrest:v14.5@sha256:b574528fe109c8343c1247155734d03df8c34b462f342dca0ccc20244fc36ef9';
@@ -13,6 +13,11 @@ const RATE_DATA_LIMIT = { status: 1, stdout: '', stderr: 'toomanyrequests: Data 
 const RATE_UNAUTHENTICATED = { status: 1, stdout: '', stderr: 'toomanyrequests: You have reached your unauthenticated pull rate limit. Sign in for a higher limit: https://www.docker.com/increase-rate-limit\n' };
 const OK = { status: 0, stdout: 'downloaded\n', stderr: '' };
 const isPullRateLimited = result => classifyPullRateLimit(result, IMAGE);
+const isTransientPullFailure = result => classifyTransientFailure(result, IMAGE);
+// Mensagem real do run 45380016893: o daemon expirou esperando o token do ghcr.io e o
+// shard deslogado-principal caiu com pull-realtime-failed por nao haver retry de rede.
+const NETWORK_TIMEOUT = 'Error response from daemon: Get "https://ghcr.io/v2/supabase/realtime/manifests/sha256:768b559241dd234c4e8852c5c0f504e598b80f1df2ad4dd78d5486fbed2f17a2": Get "https://ghcr.io/token?scope=repository%3Asupabase%2Frealtime%3Apull&service=ghcr.io": net/http: request canceled (Client.Timeout exceeded while awaiting headers)';
+const TIMEOUT = { status: 1, stdout: '', stderr: NETWORK_TIMEOUT + '\n' };
 
 for (const [name, result, expected] of [
   ['observed registry error', RATE, true],
@@ -211,6 +216,43 @@ test('data limit exceeded is retried like every other quota message', async () =
   assert.equal(await pullPinnedImage(f.options), OK);
   assert.equal(f.calls.length, 2);
   assert.deepEqual(f.waits, [15_000]);
+});
+
+for (const [name, reason, expected] of [
+  ['observed ghcr.io token timeout', 'net/http: request canceled (Client.Timeout exceeded while awaiting headers)', true],
+  ['tls handshake timeout', 'net/http: TLS handshake timeout', true],
+  ['dial i/o timeout', 'dial tcp 140.82.112.33:443: i/o timeout', true],
+  ['connection reset by peer', 'read tcp 10.1.0.5:41234->140.82.112.33:443: connection reset by peer', true],
+  ['unexpected EOF', 'unexpected EOF', true],
+]) test('transient network failure is retried: ' + name, () => {
+  const line = 'Error response from daemon: Get "https://ghcr.io/v2/supabase/gotrue/manifests/sha256:' + 'a'.repeat(64) + '": ' + reason;
+  const result = { status: 1, stdout: '', stderr: line + '\n' };
+  assert.equal(isTransientPullFailure(result), expected);
+  assert.equal(isPullRateLimited(result), false, 'network failures are not quota failures');
+});
+
+for (const failure of ['unauthorized: authentication required', 'denied: permission', 'manifest unknown',
+  'no matching manifest for linux/amd64', 'x509: unknown authority', 'certificate rejected',
+  'no space left on device', 'network is unreachable', 'no such host', 'connection refused',
+  'invalid reference format', 'permission denied', 'unknown blob']) test('permanent registry error never retries as network: ' + failure, () => {
+  const line = 'Error response from daemon: Get "https://ghcr.io/v2/supabase/gotrue/manifests/sha256:' + 'a'.repeat(64) + '": ' + failure;
+  assert.equal(isTransientPullFailure({ status: 1, stdout: '', stderr: line + '\n' }), false);
+});
+
+for (const [name, result] of [
+  ['reason without the registry request prefix', { status: 1, stdout: '', stderr: 'net/http: TLS handshake timeout\n' }],
+  ['network line followed by another line', { status: 1, stdout: '', stderr: NETWORK_TIMEOUT + '\nunknown failure\n' }],
+  ['network line and quota line together', { status: 1, stdout: '', stderr: NETWORK_TIMEOUT + '\ntoomanyrequests: Rate exceeded\n' }],
+  ['successful process', { status: 0, stdout: NETWORK_TIMEOUT + '\n', stderr: '' }],
+  ['timeout flag already exhausted the budget', { ...TIMEOUT, timeout: true }],
+]) test('network classification fails closed: ' + name, () => assert.equal(isTransientPullFailure(result), false));
+
+test('ghcr.io token timeout is retried and keeps the pinned digest', async () => {
+  const f = fixture([TIMEOUT, OK]);
+  assert.equal(await pullPinnedImage(f.options), OK);
+  assert.equal(f.calls.length, 2);
+  assert.deepEqual(f.waits, [15_000]);
+  assert.deepEqual(f.calls.map(call => call.image), [IMAGE, IMAGE]);
 });
 
 test('persistent throttling stops at four attempts and at most 120s of waiting', async () => {
