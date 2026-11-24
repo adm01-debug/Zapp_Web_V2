@@ -4,9 +4,9 @@
  "stack": {
   "linguagens": [
    "TypeScript (5090)",
-   "Markdown (4083)",
-   "SQL (3066)",
-   "JSON (1968)",
+   "Markdown (4098)",
+   "SQL (3067)",
+   "JSON (1970)",
    "JavaScript (682)",
    "Shell (265)",
    "Python (125)",
@@ -1177,6 +1177,11 @@
    "linhas": 108
   },
   {
+   "arquivo": "AUDIT-A-PROCESSAR-261031.md",
+   "titulo": "Auditoria ? _a-processar/ZAPP_WEB_V2_LOCAL/Zapp_Web_V2",
+   "linhas": 119
+  },
+  {
    "arquivo": "CHANGELOG.md",
    "titulo": "Changelog",
    "linhas": 90
@@ -1222,6 +1227,11 @@
    "linhas": 465
   },
   {
+   "arquivo": "RESGATE-ANALISE-261031.md",
+   "titulo": "RESGATE-ANALISE-261031.md",
+   "linhas": 456
+  },
+  {
    "arquivo": "SECURITY.md",
    "titulo": "🔒 Política de Segurança — ZAPP-WEB",
    "linhas": 95
@@ -1230,6 +1240,11 @@
    "arquivo": "TESTING_CONVENTION.md",
    "titulo": "TESTING_CONVENTION.md — onde cada teste mora e como ele roda",
    "linhas": 104
+  },
+  {
+   "arquivo": "TRIAGEM-PRS-GITHUB-261031.md",
+   "titulo": "TRIAGEM DE PRs - adm01-debug/Zapp_Web_V2",
+   "linhas": 210
   },
   {
    "arquivo": "docs/BACKUP-RECOVERY-STRATEGY.md",
@@ -1528,6 +1543,10 @@
   },
   {
    "pasta": "docs/ops",
+   "arquivos_md": 1
+  },
+  {
+   "pasta": "docs/resgate",
    "arquivos_md": 1
   }
  ],

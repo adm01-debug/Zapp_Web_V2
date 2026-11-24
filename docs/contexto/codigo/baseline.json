@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "7d4d196e26dda535d1354699a354cbbc371fe494",
+  "commit": "f6d0d50c0a49fabe85c37f577ab0799cdf066bee",
   "branch": "main",
-  "data_commit": "2026-11-24T13:05:41-03:00",
+  "data_commit": "2026-11-24T14:19:54-03:00",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "f6d0d50c",
+    "data": "2026-11-24",
+    "assunto": "chore(resgate): preserva dossiês e mapas do resgate na main (#3364)"
+   },
    {
     "sha": "7d4d196e",
     "data": "2026-11-24",
@@ -126,14 +131,9 @@
     "sha": "c4ce2b5a",
     "data": "2026-11-23",
     "assunto": "chore(db): sincroniza talkx_ai_requests e corrige o inventario (#3342)"
-   },
-   {
-    "sha": "5ba09eae",
-    "data": "2026-11-23",
-    "assunto": "feat(talkx): liga os dois kinds sem tela da IA (insight_text e segment_suggestion) (#3339)"
    }
   ],
-  "arquivos_mudados_7d": 5242,
+  "arquivos_mudados_7d": 5253,
   "pastas_mais_mudadas_30d": [
    {
     "pasta": "docs/contexto/supabase",
@@ -314,7 +314,7 @@
   ]
  },
  "contagens": {
-  "arquivos_total": 15783,
+  "arquivos_total": 15801,
   "arquivos_codigo": 5893,
   "linhas_codigo": 1140306,
   "rotas": 18,
@@ -328,10 +328,10 @@
   "tabelas": 223,
   "migrations": 1153,
   "cron_jobs": 29,
-  "testes": 3229,
+  "testes": 3230,
   "workflows": 24,
   "scripts": 451,
-  "docs_md": 4083
+  "docs_md": 4098
  },
  "por_pasta": {
   "analise-prs/resgate-261115": {

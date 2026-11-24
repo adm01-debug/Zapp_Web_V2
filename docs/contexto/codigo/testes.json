@@ -5,7 +5,7 @@
   "vitest",
   "playwright"
  ],
- "total": 3229,
+ "total": 3230,
  "por_tipo": {
   "contrato": 130,
   "e2e": 89,
@@ -29159,6 +29159,7 @@
   "supabase/tests/indeterminate_optout_outbox.sql",
   "supabase/tests/ingest_inbound_message_reabre_conversa.sql",
   "supabase/tests/instance_auth_event_series.sql",
+  "supabase/tests/instance_pause_investigation.sql",
   "supabase/tests/instance_pauses.sql",
   "supabase/tests/messages_transcribed_at.sql",
   "supabase/tests/messages_trgm_busca.sql",

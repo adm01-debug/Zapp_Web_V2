@@ -35,7 +35,7 @@
   ],
   "docs": [
    "docs (33)",
-   "(raiz) (12)",
+   "(raiz) (15)",
    ".github (1)"
   ]
  },
@@ -66,11 +66,11 @@
  "commits": {
   "convencao": "conventional commits (observado)",
   "exemplos": [
+   "chore(resgate): preserva dossiês e mapas do resgate na main (#3364)",
    "feat(inbox): analise de imagem do Copiloto no painel de conversa (#3362)",
    "chore(db): sincronizar artefatos derivados do banco (#3361)",
    "chore: remove teardown de produção morto do E2E e dropa as 2 RPCs órfãs (#3360)",
-   "fix(tarefas): restaura o foco da captura apos o commit, sem corrida (#3359)",
-   "fix(ci): volta o pin do scorecard-action para v2.5.0 (#3358)"
+   "fix(tarefas): restaura o foco da captura apos o commit, sem corrida (#3359)"
   ]
  },
  "pr_template": ".github/PULL_REQUEST_TEMPLATE.md",

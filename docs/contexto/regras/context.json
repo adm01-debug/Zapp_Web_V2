@@ -1,15 +1,15 @@
 {
  "meta": {
-  "sha": "7d4d196e26dda535d1354699a354cbbc371fe494",
+  "sha": "f6d0d50c0a49fabe85c37f577ab0799cdf066bee",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-24 16:08 UTC",
-  "files_total": 15631,
-  "code_files": 8932,
-  "code_lines": 1418163
+  "generated_at": "2026-11-24 17:21 UTC",
+  "files_total": 15649,
+  "code_files": 8933,
+  "code_lines": 1418657
  },
  "version": "1.3.2",
- "facts_hash": "674fc7b4ec2ca75f",
+ "facts_hash": "f5cd4dd01df6b732",
  "stack": {
   "frameworks": [
    "React + Vite",
@@ -344,7 +344,7 @@
   ],
   "package_manager": "bun",
   "languages": {
-   ".sql": 3066,
+   ".sql": 3067,
    ".tsx": 2831,
    ".ts": 2254,
    ".mjs": 652,
@@ -34940,28 +34940,6 @@
      "v_totals"
     ]
    },
-   "mark_pause_investigated": {
-    "args": "p_pause_id uuid, p_notes text DEFAULT NULL",
-    "returns": "jsonb",
-    "lang": "plpgsql",
-    "src": "supabase/migrations/20261111181000_instance_pause_investigation.sql",
-    "security_definer": true,
-    "search_path": true,
-    "body": "DECLARE v_uid uuid := auth.uid(); v_profile uuid; v_notes text; v_row public.instance_pauses; v_ja boolean; BEGIN IF v_uid IS NULL OR NOT public.is_admin_or_supervisor(v_uid) THEN RAISE EXCEPTION 'sem_permissao_para_investigar_pausa' USING ERRCODE = '42501'; END IF; IF p_pause_id IS NULL THEN RAISE EXCEPTION 'pausa_invalida' USING ERRCODE = '22023'; END IF; v_profile := public.get_profile_id_for_user(v_uid); IF v_profile IS NULL THEN RAISE EXCEPTION 'perfil_nao_encontrado' USING ERRCODE = '42501'; END IF; IF p_notes IS NOT NULL THEN v_notes := btrim(p_notes); IF v_notes = '' THEN v_notes := NULL; END IF; IF v_notes IS NOT NULL THEN IF char_length(v_notes) > 1000 THEN RAISE EXCEPTION 'notas_a …",
-    "raises": [
-     "sem_permissao_para_investigar_pausa",
-     "pausa_invalida",
-     "perfil_nao_encontrado",
-     "notas_acima_do_limite",
-     "notas_com_html",
-     "pausa_nao_encontrada"
-    ],
-    "tables": [
-     "audit_logs",
-     "instance_pauses",
-     "v_row"
-    ]
-   },
    "resolve_outbound_whatsapp_connection": {
     "args": "p_explicit_connection_id uuid, p_assigned_connection_id uuid",
     "returns": "uuid",
@@ -35545,6 +35523,17 @@
     ],
     "tables": []
    },
+   "t_auth": {
+    "args": "p_sub uuid",
+    "returns": "void",
+    "lang": "sql",
+    "src": "supabase/tests/instance_pause_investigation.sql",
+    "security_definer": false,
+    "search_path": false,
+    "body": "SELECT set_config('request.jwt.claims', json_build_object('sub', p_sub, 'role', 'authenticated')::text, true); SELECT set_config('role', 'authenticated', true);",
+    "raises": [],
+    "tables": []
+   },
    "prova": {
     "args": "p_papel text, p_uid uuid, p_account uuid, p_confirm text",
     "returns": "jsonb",
@@ -35837,6 +35826,17 @@
     "tables": []
    },
    "is_instance_paused": {
+    "args": "",
+    "returns": "?",
+    "lang": "",
+    "src": "src/integrations/supabase/types.ts",
+    "security_definer": false,
+    "search_path": false,
+    "body": "",
+    "raises": [],
+    "tables": []
+   },
+   "mark_pause_investigated": {
     "args": "",
     "returns": "?",
     "lang": "",
@@ -48392,6 +48392,7 @@
    "supabase/tests/indeterminate_optout_outbox.sql",
    "supabase/tests/ingest_inbound_message_reabre_conversa.sql",
    "supabase/tests/instance_auth_event_series.sql",
+   "supabase/tests/instance_pause_investigation.sql",
    "supabase/tests/instance_pauses.sql",
    "supabase/tests/messages_transcribed_at.sql",
    "supabase/tests/messages_trgm_busca.sql",
@@ -79250,8 +79251,8 @@
   },
   {
    "module": "supabase/tests",
-   "files": 91,
-   "lines": 27665,
+   "files": 92,
+   "lines": 28159,
    "tables": [],
    "exports": [],
    "docs": [],
@@ -79297,6 +79298,7 @@
     "supabase/tests/indeterminate_optout_outbox.sql",
     "supabase/tests/ingest_inbound_message_reabre_conversa.sql",
     "supabase/tests/instance_auth_event_series.sql",
+    "supabase/tests/instance_pause_investigation.sql",
     "supabase/tests/instance_pauses.sql",
     "supabase/tests/messages_transcribed_at.sql",
     "supabase/tests/messages_trgm_busca.sql",
@@ -79336,8 +79338,7 @@
     "supabase/tests/talkx_segment_lifecycle.sql",
     "supabase/tests/tasks_contact_visibility.sql",
     "supabase/tests/tc002_find_or_create_direct_pair.sql",
-    "supabase/tests/team_chat_files_bucket_limit.sql",
-    "supabase/tests/transfer_conversation_atomicidade.sql"
+    "supabase/tests/team_chat_files_bucket_limit.sql"
    ]
   },
   {
@@ -277832,28 +277833,6 @@
      "v_totals"
     ]
    },
-   "mark_pause_investigated": {
-    "args": "p_pause_id uuid, p_notes text DEFAULT NULL",
-    "returns": "jsonb",
-    "lang": "plpgsql",
-    "src": "supabase/migrations/20261111181000_instance_pause_investigation.sql",
-    "security_definer": true,
-    "search_path": true,
-    "body": "DECLARE v_uid uuid := auth.uid(); v_profile uuid; v_notes text; v_row public.instance_pauses; v_ja boolean; BEGIN IF v_uid IS NULL OR NOT public.is_admin_or_supervisor(v_uid) THEN RAISE EXCEPTION 'sem_permissao_para_investigar_pausa' USING ERRCODE = '42501'; END IF; IF p_pause_id IS NULL THEN RAISE EXCEPTION 'pausa_invalida' USING ERRCODE = '22023'; END IF; v_profile := public.get_profile_id_for_user(v_uid); IF v_profile IS NULL THEN RAISE EXCEPTION 'perfil_nao_encontrado' USING ERRCODE = '42501'; END IF; IF p_notes IS NOT NULL THEN v_notes := btrim(p_notes); IF v_notes = '' THEN v_notes := NULL; END IF; IF v_notes IS NOT NULL THEN IF char_length(v_notes) > 1000 THEN RAISE EXCEPTION 'notas_a …",
-    "raises": [
-     "sem_permissao_para_investigar_pausa",
-     "pausa_invalida",
-     "perfil_nao_encontrado",
-     "notas_acima_do_limite",
-     "notas_com_html",
-     "pausa_nao_encontrada"
-    ],
-    "tables": [
-     "audit_logs",
-     "instance_pauses",
-     "v_row"
-    ]
-   },
    "resolve_outbound_whatsapp_connection": {
     "args": "p_explicit_connection_id uuid, p_assigned_connection_id uuid",
     "returns": "uuid",
@@ -278437,6 +278416,17 @@
     ],
     "tables": []
    },
+   "t_auth": {
+    "args": "p_sub uuid",
+    "returns": "void",
+    "lang": "sql",
+    "src": "supabase/tests/instance_pause_investigation.sql",
+    "security_definer": false,
+    "search_path": false,
+    "body": "SELECT set_config('request.jwt.claims', json_build_object('sub', p_sub, 'role', 'authenticated')::text, true); SELECT set_config('role', 'authenticated', true);",
+    "raises": [],
+    "tables": []
+   },
    "prova": {
     "args": "p_papel text, p_uid uuid, p_account uuid, p_confirm text",
     "returns": "jsonb",
@@ -278729,6 +278719,17 @@
     "tables": []
    },
    "is_instance_paused": {
+    "args": "",
+    "returns": "?",
+    "lang": "",
+    "src": "src/integrations/supabase/types.ts",
+    "security_definer": false,
+    "search_path": false,
+    "body": "",
+    "raises": [],
+    "tables": []
+   },
+   "mark_pause_investigated": {
     "args": "",
     "returns": "?",
     "lang": "",
@@ -293515,6 +293516,7 @@
    "supabase/tests/inbox_wait_summary.sql",
    "supabase/tests/indeterminate_optout_outbox.sql",
    "supabase/tests/ingest_inbound_message_reabre_conversa.sql",
+   "supabase/tests/instance_pause_investigation.sql",
    "supabase/tests/instance_pauses.sql",
    "supabase/tests/messages_transcribed_at.sql",
    "supabase/tests/multiplix_cota_conexao_itens_e_legado.sql",
@@ -293768,7 +293770,6 @@
    "mark_multiplix_item_dispatch_started",
    "mark_multiplix_recipient_dispatch_started",
    "mark_outbound_post_started",
-   "mark_pause_investigated",
    "mark_talkx_recipient_dispatch_started",
    "mark_team_conversation_read",
    "mcp_exec",
@@ -479458,6 +479459,21 @@
     "('e75e24e9-0000-4000-8000-0000000000c1', 'itest-B', 'timeout', now() - interval '30 hours'),"
    ]
   },
+  "supabase/tests/instance_pause_investigation.sql": {
+   "path": "supabase/tests/instance_pause_investigation.sql",
+   "lines": 494,
+   "is_test": true,
+   "temporal": [
+    "OR (v_out ->> 'investigated_at')::timestamptz <= now() - interval '2 minutes' THEN",
+    "VALUES (v_inst_a, now() + interval '30 minutes', 'manutencao', v_admin_prof, false)",
+    "VALUES (v_inst_a, now() - interval '5 minutes', 'limite de envio', NULL, true,",
+    "VALUES (v_inst_b, now() + interval '30 minutes', 'manutencao', v_admin_prof, false)",
+    "VALUES (v_inst_perf, now() + interval '20 minutes', 'limite de envio', NULL, true)",
+    "VALUES (v_inst_sup, now() + interval '20 minutes', 'manutencao', v_admin_prof, false)",
+    "now() - interval '4 minutes', v_admin_prof)"
+   ],
+   "uses_service_role": true
+  },
   "supabase/tests/instance_pauses.sql": {
    "path": "supabase/tests/instance_pauses.sql",
    "lines": 576,
@@ -482979,10 +482995,36 @@
   }
  },
  "git": {
-  "sha": "7d4d196e26dda535d1354699a354cbbc371fe494",
+  "sha": "f6d0d50c0a49fabe85c37f577ab0799cdf066bee",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "f6d0d50c",
+    "date": "2026-11-24",
+    "author": "adm01-debug",
+    "subject": "chore(resgate): preserva dossiês e mapas do resgate na main (#3364)",
+    "files": [
+     "AUDIT-A-PROCESSAR-261031.md",
+     "RESGATE-ANALISE-261031.md",
+     "TRIAGEM-PRS-GITHUB-261031.md",
+     "docs/resgate/MAPA_pos-24-10.md",
+     "docs/resgate/progresso_pos-24-10.json",
+     "resgate-online/RELATORIO_RESGATE.md",
+     "resgate-online/dossies/C007.md",
+     "resgate-online/dossies/C011.md",
+     "resgate-online/dossies/C019.md",
+     "resgate-online/dossies/C097.md",
+     "resgate-online/dossies/C098.md",
+     "resgate-online/dossies/C110.md",
+     "resgate-online/dossies/C121.md",
+     "resgate-online/dossies/C130.md",
+     "resgate-online/dossies/C297.md",
+     "resgate-online/dossies/C303.md",
+     "resgate-online/progresso.json",
+     "supabase/tests/instance_pause_investigation.sql"
+    ]
+   },
    {
     "sha": "7d4d196e",
     "date": "2026-11-24",
@@ -483309,15 +483351,6 @@
      "ESTADO.md",
      "scripts/ci/docs-estado-registry-convention.unit.mjs"
     ]
-   },
-   {
-    "sha": "c1bfe6e2",
-    "date": "2026-11-23",
-    "author": "adm01-debug",
-    "subject": "chore(lint): baseline 540 issues pre-existentes - desbloqueia pre-push/pre-commit (#3333)",
-    "files": [
-     "scripts/ci/eslint-baseline.json"
-    ]
    }
   ],
   "hot_files": [
@@ -483386,19 +483419,19 @@
     2
    ],
    [
-    "src/components/inbox/AIConversationAssistant.tsx",
+    "AUDIT-A-PROCESSAR-261031.md",
     1
    ],
    [
-    "src/components/inbox/ai-tools/ImageAnalysisPanel.tsx",
+    "RESGATE-ANALISE-261031.md",
     1
    ],
    [
-    "src/components/inbox/ai-tools/__tests__/ImageAnalysisPanel.test.tsx",
+    "TRIAGEM-PRS-GITHUB-261031.md",
     1
    ],
    [
-    "scripts/db-audit/grants-baseline.json",
+    "docs/resgate/MAPA_pos-24-10.md",
     1
    ]
   ]

@@ -1,6 +1,6 @@
 # 10 · ACESSO E SEGURANÇA — quem pode o quê
 
-> Gerado automaticamente por AI Context Sync v1.3.2 · commit `7d4d196e26` · branch `main` · 2026-11-24 16:08 UTC
+> Gerado automaticamente por AI Context Sync v1.3.2 · commit `f6d0d50c0a` · branch `main` · 2026-11-24 17:21 UTC
 > Não edite à mão — regras humanas vão em `manual/`.
 
 ## Perfis / roles identificados
@@ -247,7 +247,7 @@
 
 > `—` com RLS ligado = ninguém além de service_role. `sem RLS` = qualquer chave anon lê/escreve tudo.
 
-## Onde o RLS é IGNORADO (service_role) — 1238 arquivo(s)
+## Onde o RLS é IGNORADO (service_role) — 1239 arquivo(s)
 
 - `analise-prs/resgate-261118-lote2/scripts/db-audit/validate-post-apply.mjs`
 - `analise-prs/resgate-261118-lote2/supabase/migrations/20261016193300_copilot_tick_trigger.sql`
@@ -399,7 +399,7 @@
 - `docs/contexto/supabase/functions/public/reassign_absent_agents__7f027ae089526f54.sql`
 - `docs/contexto/supabase/functions/public/reassign_overloaded_agents__12ae32cb1ec02d01.sql`
 - `docs/contexto/supabase/functions/public/record_away_message__d077d0b24f34a751.sql`
-- … +1088 (lista completa em `context.json`)
+- … +1089 (lista completa em `context.json`)
 
 ## Funções SQL `SECURITY DEFINER` (rodam com privilégio do dono, ignoram RLS)
 
@@ -599,7 +599,6 @@
 - `mark_multiplix_item_dispatch_started`
 - `mark_multiplix_recipient_dispatch_started`
 - `mark_outbound_post_started`
-- `mark_pause_investigated`
 - `mark_talkx_recipient_dispatch_started`
 - `mark_team_conversation_read`
 - `mcp_exec`
