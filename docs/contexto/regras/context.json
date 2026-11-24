@@ -1,9 +1,9 @@
 {
  "meta": {
-  "sha": "1437a66467dcaf6751c3def731ca288f19052d2e",
+  "sha": "36701c066057a73257f10896eef9fca8b11fa303",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-24 13:33 UTC",
+  "generated_at": "2026-11-24 13:53 UTC",
   "files_total": 15629,
   "code_files": 8930,
   "code_lines": 1418021
@@ -482988,10 +482988,19 @@
   }
  },
  "git": {
-  "sha": "1437a66467dcaf6751c3def731ca288f19052d2e",
+  "sha": "36701c066057a73257f10896eef9fca8b11fa303",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "36701c06",
+    "date": "2026-11-24",
+    "author": "adm01-debug",
+    "subject": "fix(ci): volta o pin do scorecard-action para v2.5.0 (#3358)",
+    "files": [
+     ".github/workflows/scorecard.yml"
+    ]
+   },
    {
     "sha": "1437a664",
     "date": "2026-11-24",
@@ -483307,83 +483316,13 @@
      "supabase/schema-catalog.json",
      "supabase/schema-manifest.json"
     ]
-   },
-   {
-    "sha": "d19cc8d0",
-    "date": "2026-11-22",
-    "author": "adm01-debug",
-    "subject": "feat: redesign do modulo Contatos conforme previa aprovada (plano 130 etapas, fases 0-M) (#3325)",
-    "files": [
-     "FEATURE_REGISTRY.md",
-     "docs/audits/CONTATOS_REDESIGN_BASELINE_2026-10-12.md",
-     "docs/audits/contatos-redesign-baseline-depois/contatos-1280-dark.png",
-     "docs/audits/contatos-redesign-baseline-depois/contatos-1280-light.png",
-     "docs/audits/contatos-redesign-baseline-depois/contatos-1672-dark.png",
-     "docs/audits/contatos-redesign-baseline-depois/contatos-1672-light.png",
-     "docs/audits/contatos-redesign-baseline-depois/contatos-390-dark.png",
-     "docs/audits/contatos-redesign-baseline-depois/contatos-390-light.png",
-     "docs/audits/contatos-redesign-baseline-depois/contatos-768-dark.png",
-     "docs/audits/contatos-redesign-baseline-depois/contatos-768-light.png",
-     "docs/crm-integration/FLAG_CHANGES.md",
-     "e2e/__screenshots__/contacts-cards-dark-linux.png",
-     "e2e/__screenshots__/contacts-cards-light-linux.png",
-     "e2e/__screenshots__/contacts-list-dark-linux.png",
-     "e2e/__screenshots__/contacts-list-light-linux.png",
-     "e2e/__screenshots__/contacts-table-dark-linux.png",
-     "e2e/__screenshots__/contacts-table-light-linux.png",
-     "scripts/ci/verify-crm-integration-doc.unit.mjs",
-     "scripts/qa/contraste-contatos.d.mts",
-     "src/components/contacts/ContactAnalyticsDashboard.tsx",
-     "src/components/contacts/ContactCard.tsx",
-     "src/components/contacts/ContactCompareDialog.tsx",
-     "src/components/contacts/ContactContentArea.tsx",
-     "src/components/contacts/ContactDetailPanel.tsx",
-     "src/components/contacts/ContactDialogs.tsx",
-     "src/components/contacts/ContactEmptyState.tsx",
-     "src/components/contacts/ContactExploreRail.tsx",
-     "src/components/contacts/ContactForm.tsx",
-     "src/components/contacts/ContactGroupedList.tsx",
-     "src/components/contacts/ContactKanbanView.tsx",
-     "src/components/contacts/ContactKpiCard.tsx",
-     "src/components/contacts/ContactListItem.tsx",
-     "src/components/contacts/ContactMapView.tsx",
-     "src/components/contacts/ContactMergeDialog.tsx",
-     "src/components/contacts/ContactPortrait.tsx",
-     "src/components/contacts/ContactResultsSummary.tsx",
-     "src/components/contacts/ContactSearchWithSuggestions.tsx",
-     "src/components/contacts/ContactStatsCards.tsx",
-     "src/components/contacts/ContactToolbar.tsx",
-     "src/components/contacts/ContactTypeBadge.tsx",
-     "src/components/contacts/ContactTypeTabs.tsx",
-     "src/components/contacts/ContactViewSwitcher.tsx",
-     "src/components/contacts/ContactsSkeleton.tsx",
-     "src/components/contacts/ContactsTable.tsx",
-     "src/components/contacts/ContactsTitleBar.tsx",
-     "src/components/contacts/ContactsView.tsx",
-     "src/components/contacts/FilterPresets.tsx",
-     "src/components/contacts/__tests__/ContactDetailPanel.redesign.test.tsx",
-     "src/components/contacts/__tests__/ContactDialogsK.redesign.test.tsx",
-     "src/components/contacts/__tests__/ContactExploreRail.test.tsx",
-     "src/components/contacts/__tests__/ContactGroupedList.typography.test.tsx",
-     "src/components/contacts/__tests__/ContactListItemGrid.test.tsx",
-     "src/components/contacts/__tests__/ContactPortrait.protecao.test.tsx",
-     "src/components/contacts/__tests__/ContactResultsSummary.selection.test.tsx",
-     "src/components/contacts/__tests__/ContactStatsCards.test.tsx",
-     "src/components/contacts/__tests__/ContactViewsJ.redesign.test.tsx",
-     "src/components/contacts/__tests__/ContactViewsKeyboard.test.tsx",
-     "src/components/contacts/__tests__/ContactViewsL.qualidade.test.tsx",
-     "src/components/contacts/__tests__/ContactViewsM.contrato.test.tsx",
-     "src/components/contacts/__tests__/ContactsTableDesign.test.tsx",
-     "src/hooks/contacts/__tests__/useContainerColumns.test.ts",
-     "src/hooks/contacts/useContactSource.ts",
-     "src/hooks/contacts/useContainerColumns.ts",
-     "src/hooks/crm/useContactsSearch.ts",
-     "src/styles/tokens.css",
-     "src/styles/utilities.css"
-    ]
    }
   ],
   "hot_files": [
+   [
+    ".github/workflows/scorecard.yml",
+    3
+   ],
    [
     ".github/workflows/ci.yml",
     3
@@ -483422,10 +483361,6 @@
    ],
    [
     "docs/pendencias/rascunho-de-campanha-por-ia-ia161.md",
-    2
-   ],
-   [
-    ".github/workflows/scorecard.yml",
     2
    ],
    [

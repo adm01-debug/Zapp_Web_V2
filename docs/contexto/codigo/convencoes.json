@@ -66,11 +66,11 @@
  "commits": {
   "convencao": "conventional commits (observado)",
   "exemplos": [
+   "fix(ci): volta o pin do scorecard-action para v2.5.0 (#3358)",
    "infra: alinha o timeout do job E2E com a duracao real (~10 min) (#3355)",
    "fix(e2e): retenta o pull em falha transiente de rede do registry (#3357)",
    "chore(db): sincronizar artefatos derivados do banco (#3356)",
-   "fix: elimina o flake de meia-noite do contrato do monitor (vs_yesterday) (#3353)",
-   "fix(e2e): serve as 4 imagens restantes pelo mirror ghcr.io do mesmo digest (#3352)"
+   "fix: elimina o flake de meia-noite do contrato do monitor (vs_yesterday) (#3353)"
   ]
  },
  "pr_template": ".github/PULL_REQUEST_TEMPLATE.md",

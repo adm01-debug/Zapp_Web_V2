@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "1437a66467dcaf6751c3def731ca288f19052d2e",
+  "commit": "36701c066057a73257f10896eef9fca8b11fa303",
   "branch": "main",
-  "data_commit": "2026-11-24T10:32:20-03:00",
+  "data_commit": "2026-11-24T10:51:45-03:00",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "36701c06",
+    "data": "2026-11-24",
+    "assunto": "fix(ci): volta o pin do scorecard-action para v2.5.0 (#3358)"
+   },
    {
     "sha": "1437a664",
     "data": "2026-11-24",
@@ -126,11 +131,6 @@
     "sha": "23b81626",
     "data": "2026-11-23",
     "assunto": "fix(ci): guard do ESTADO.md enxerga invokeEdge com generic e publica grupo real das 7 edges (#3322)"
-   },
-   {
-    "sha": "c1bfe6e2",
-    "data": "2026-11-23",
-    "assunto": "chore(lint): baseline 540 issues pre-existentes - desbloqueia pre-push/pre-commit (#3333)"
    }
   ],
   "arquivos_mudados_7d": 5242,
