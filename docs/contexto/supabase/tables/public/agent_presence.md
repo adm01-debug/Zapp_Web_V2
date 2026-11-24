@@ -57,7 +57,7 @@
 | tipo | PERMISSIVE |
 | roles | authenticated |
 | USING |  |
-| WITH CHECK | `(user_id = auth.uid())` |
+| WITH CHECK | `(user_id = ( SELECT auth.uid() AS uid))` |
 
 ### `Users can update own presence`
 
@@ -66,8 +66,8 @@
 | comando | UPDATE |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `(user_id = auth.uid())` |
-| WITH CHECK | `(user_id = auth.uid())` |
+| USING | `(user_id = ( SELECT auth.uid() AS uid))` |
+| WITH CHECK | `(user_id = ( SELECT auth.uid() AS uid))` |
 
 
 ## Triggers

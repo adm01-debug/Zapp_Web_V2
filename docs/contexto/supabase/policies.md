@@ -10,8 +10,8 @@ Visão consolidada (inclui `storage.objects` e `realtime.messages`); detalhes po
 | public.agent_achievements | Only admins can insert achievements directly | INSERT | PERMISSIVE | authenticated |  | `is_admin_or_supervisor(auth.uid())` |
 | public.agent_achievements | Users can view own or admin all achievements | SELECT | PERMISSIVE | authenticated | `((profile_id IN ( SELECT profiles.id    FROM profiles   WHERE (profiles.user_id = auth.uid()))) OR is_admin_or_supervisor(auth.uid()))` |  |
 | public.agent_presence | Authenticated can read all presence | SELECT | PERMISSIVE | authenticated | `true` |  |
-| public.agent_presence | Users can insert own presence | INSERT | PERMISSIVE | authenticated |  | `(user_id = auth.uid())` |
-| public.agent_presence | Users can update own presence | UPDATE | PERMISSIVE | authenticated | `(user_id = auth.uid())` | `(user_id = auth.uid())` |
+| public.agent_presence | Users can insert own presence | INSERT | PERMISSIVE | authenticated |  | `(user_id = ( SELECT auth.uid() AS uid))` |
+| public.agent_presence | Users can update own presence | UPDATE | PERMISSIVE | authenticated | `(user_id = ( SELECT auth.uid() AS uid))` | `(user_id = ( SELECT auth.uid() AS uid))` |
 | public.agent_skills | Admins can manage skills | ALL | PERMISSIVE | authenticated | `is_admin_or_supervisor(auth.uid())` |  |
 | public.agent_skills | Users can view own or admin all skills | SELECT | PERMISSIVE | authenticated | `((profile_id IN ( SELECT profiles.id    FROM profiles   WHERE (profiles.user_id = auth.uid()))) OR is_admin_or_supervisor(auth.uid()))` |  |
 | public.agent_stats | Only admins can update agent stats | UPDATE | PERMISSIVE | authenticated | `is_admin_or_supervisor(auth.uid())` |  |
@@ -37,9 +37,9 @@ Visão consolidada (inclui `storage.objects` e `realtime.messages`); detalhes po
 | public.allowed_countries | Admins can insert allowed countries | INSERT | PERMISSIVE | authenticated |  | `is_admin(auth.uid())` |
 | public.allowed_countries | Admins can view allowed countries | SELECT | PERMISSIVE | authenticated | `is_admin_or_supervisor(auth.uid())` |  |
 | public.app_settings | app_settings_admin_all | ALL | PERMISSIVE | authenticated | `(EXISTS ( SELECT 1    FROM user_roles ur   WHERE ((ur.user_id = ( SELECT auth.uid() AS uid)) AND (ur.role = 'admin'::app_role))))` |  |
-| public.assistant_profiles | assistant_profiles_insert | INSERT | PERMISSIVE | authenticated |  | `(user_id = auth.uid())` |
-| public.assistant_profiles | assistant_profiles_select | SELECT | PERMISSIVE | authenticated | `(user_id = auth.uid())` |  |
-| public.assistant_profiles | assistant_profiles_update | UPDATE | PERMISSIVE | authenticated | `(user_id = auth.uid())` | `(user_id = auth.uid())` |
+| public.assistant_profiles | assistant_profiles_insert | INSERT | PERMISSIVE | authenticated |  | `(user_id = ( SELECT auth.uid() AS uid))` |
+| public.assistant_profiles | assistant_profiles_select | SELECT | PERMISSIVE | authenticated | `(user_id = ( SELECT auth.uid() AS uid))` |  |
+| public.assistant_profiles | assistant_profiles_update | UPDATE | PERMISSIVE | authenticated | `(user_id = ( SELECT auth.uid() AS uid))` | `(user_id = ( SELECT auth.uid() AS uid))` |
 | public.audio_meme_favorites | Users manage own meme favorites | ALL | PERMISSIVE | authenticated | `(user_id = auth.uid())` | `(user_id = auth.uid())` |
 | public.audio_memes | Authenticated users can insert audio memes | INSERT | PERMISSIVE | authenticated |  | `(uploaded_by = auth.uid())` |
 | public.audio_memes | Authenticated users can read audio memes | SELECT | PERMISSIVE | authenticated | `true` |  |
@@ -479,10 +479,10 @@ Visão consolidada (inclui `storage.objects` e `realtime.messages`); detalhes po
 | public.training_sessions | Users can update own training sessions | UPDATE | PERMISSIVE | authenticated | `((profile_id = get_profile_id_for_user(auth.uid())) OR is_admin_or_supervisor(auth.uid()))` |  |
 | public.training_sessions | Users can view own training sessions | SELECT | PERMISSIVE | authenticated | `((profile_id = get_profile_id_for_user(auth.uid())) OR is_admin_or_supervisor(auth.uid()))` |  |
 | public.user_devices | Admins can view all user devices | SELECT | PERMISSIVE | authenticated | `is_admin_or_supervisor(auth.uid())` |  |
-| public.user_devices | Users can delete their own devices | DELETE | PERMISSIVE | authenticated | `(user_id = auth.uid())` |  |
-| public.user_devices | Users can insert their own devices | INSERT | PERMISSIVE | authenticated |  | `(user_id = auth.uid())` |
-| public.user_devices | Users can update their own devices | UPDATE | PERMISSIVE | authenticated | `(user_id = auth.uid())` |  |
-| public.user_devices | Users can view their own devices | SELECT | PERMISSIVE | authenticated | `(user_id = auth.uid())` |  |
+| public.user_devices | Users can delete their own devices | DELETE | PERMISSIVE | authenticated | `(user_id = ( SELECT auth.uid() AS uid))` |  |
+| public.user_devices | Users can insert their own devices | INSERT | PERMISSIVE | authenticated |  | `(user_id = ( SELECT auth.uid() AS uid))` |
+| public.user_devices | Users can update their own devices | UPDATE | PERMISSIVE | authenticated | `(user_id = ( SELECT auth.uid() AS uid))` | `(user_id = ( SELECT auth.uid() AS uid))` |
+| public.user_devices | Users can view their own devices | SELECT | PERMISSIVE | authenticated | `(user_id = ( SELECT auth.uid() AS uid))` |  |
 | public.user_roles | Only admins can manage roles | ALL | PERMISSIVE | authenticated | `has_role(auth.uid(), 'admin'::app_role)` | `has_role(auth.uid(), 'admin'::app_role)` |
 | public.user_roles | Users view own roles, admins view all | SELECT | PERMISSIVE | authenticated | `((user_id = auth.uid()) OR is_admin_or_supervisor(auth.uid()))` |  |
 | public.user_service_accounts | Admins can view all service accounts | SELECT | PERMISSIVE | authenticated | `is_admin_or_supervisor(auth.uid())` |  |
@@ -490,13 +490,13 @@ Visão consolidada (inclui `storage.objects` e `realtime.messages`); detalhes po
 | public.user_service_accounts | Only admins can insert service accounts | INSERT | PERMISSIVE | authenticated |  | `is_admin_or_supervisor(auth.uid())` |
 | public.user_service_accounts | Only admins can update service accounts | UPDATE | PERMISSIVE | authenticated | `is_admin_or_supervisor(auth.uid())` |  |
 | public.user_service_accounts | Users can view own service accounts | SELECT | PERMISSIVE | authenticated | `(auth.uid() = user_id)` |  |
-| public.user_sessions | Authenticated can insert own sessions | INSERT | PERMISSIVE | authenticated |  | `(user_id = auth.uid())` |
-| public.user_sessions | Users can delete their own sessions | DELETE | PERMISSIVE | authenticated | `(user_id = auth.uid())` |  |
-| public.user_sessions | Users can update their own sessions | UPDATE | PERMISSIVE | authenticated | `(user_id = auth.uid())` |  |
-| public.user_sessions | Users can view their own sessions | SELECT | PERMISSIVE | authenticated | `(user_id = auth.uid())` |  |
-| public.user_settings | Users can insert their own settings | INSERT | PERMISSIVE | authenticated |  | `(user_id = auth.uid())` |
-| public.user_settings | Users can update their own settings | UPDATE | PERMISSIVE | authenticated | `(user_id = auth.uid())` |  |
-| public.user_settings | Users can view their own settings | SELECT | PERMISSIVE | authenticated | `(user_id = auth.uid())` |  |
+| public.user_sessions | Authenticated can insert own sessions | INSERT | PERMISSIVE | authenticated |  | `(user_id = ( SELECT auth.uid() AS uid))` |
+| public.user_sessions | Users can delete their own sessions | DELETE | PERMISSIVE | authenticated | `(user_id = ( SELECT auth.uid() AS uid))` |  |
+| public.user_sessions | Users can update their own sessions | UPDATE | PERMISSIVE | authenticated | `(user_id = ( SELECT auth.uid() AS uid))` | `(user_id = ( SELECT auth.uid() AS uid))` |
+| public.user_sessions | Users can view their own sessions | SELECT | PERMISSIVE | authenticated | `(user_id = ( SELECT auth.uid() AS uid))` |  |
+| public.user_settings | Users can insert their own settings | INSERT | PERMISSIVE | authenticated |  | `(user_id = ( SELECT auth.uid() AS uid))` |
+| public.user_settings | Users can update their own settings | UPDATE | PERMISSIVE | authenticated | `(user_id = ( SELECT auth.uid() AS uid))` | `(user_id = ( SELECT auth.uid() AS uid))` |
+| public.user_settings | Users can view their own settings | SELECT | PERMISSIVE | authenticated | `(user_id = ( SELECT auth.uid() AS uid))` |  |
 | public.voice_command_logs | Users can delete own voice logs | DELETE | PERMISSIVE | authenticated | `(auth.uid() = user_id)` |  |
 | public.voice_command_logs | Users can insert own voice logs | INSERT | PERMISSIVE | authenticated |  | `(auth.uid() = user_id)` |
 | public.voice_command_logs | Users can read own voice logs | SELECT | PERMISSIVE | authenticated | `(auth.uid() = user_id)` |  |

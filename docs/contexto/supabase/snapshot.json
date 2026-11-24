@@ -82125,18 +82125,6 @@
       {
         "code": "policy_auth_fn_not_wrapped",
         "detail": "Policy chama auth.uid()/jwt() sem `(select ...)`: é reavaliada por linha; envolva em subselect.",
-        "object": "public.agent_presence.Users can insert own presence",
-        "severity": "BAIXA"
-      },
-      {
-        "code": "policy_auth_fn_not_wrapped",
-        "detail": "Policy chama auth.uid()/jwt() sem `(select ...)`: é reavaliada por linha; envolva em subselect.",
-        "object": "public.agent_presence.Users can update own presence",
-        "severity": "BAIXA"
-      },
-      {
-        "code": "policy_auth_fn_not_wrapped",
-        "detail": "Policy chama auth.uid()/jwt() sem `(select ...)`: é reavaliada por linha; envolva em subselect.",
         "object": "public.agent_skills.Admins can manage skills",
         "severity": "BAIXA"
       },
@@ -82258,24 +82246,6 @@
         "code": "policy_auth_fn_not_wrapped",
         "detail": "Policy chama auth.uid()/jwt() sem `(select ...)`: é reavaliada por linha; envolva em subselect.",
         "object": "public.allowed_countries.Admins can view allowed countries",
-        "severity": "BAIXA"
-      },
-      {
-        "code": "policy_auth_fn_not_wrapped",
-        "detail": "Policy chama auth.uid()/jwt() sem `(select ...)`: é reavaliada por linha; envolva em subselect.",
-        "object": "public.assistant_profiles.assistant_profiles_insert",
-        "severity": "BAIXA"
-      },
-      {
-        "code": "policy_auth_fn_not_wrapped",
-        "detail": "Policy chama auth.uid()/jwt() sem `(select ...)`: é reavaliada por linha; envolva em subselect.",
-        "object": "public.assistant_profiles.assistant_profiles_select",
-        "severity": "BAIXA"
-      },
-      {
-        "code": "policy_auth_fn_not_wrapped",
-        "detail": "Policy chama auth.uid()/jwt() sem `(select ...)`: é reavaliada por linha; envolva em subselect.",
-        "object": "public.assistant_profiles.assistant_profiles_update",
         "severity": "BAIXA"
       },
       {
@@ -84453,30 +84423,6 @@
       {
         "code": "policy_auth_fn_not_wrapped",
         "detail": "Policy chama auth.uid()/jwt() sem `(select ...)`: é reavaliada por linha; envolva em subselect.",
-        "object": "public.user_devices.Users can delete their own devices",
-        "severity": "BAIXA"
-      },
-      {
-        "code": "policy_auth_fn_not_wrapped",
-        "detail": "Policy chama auth.uid()/jwt() sem `(select ...)`: é reavaliada por linha; envolva em subselect.",
-        "object": "public.user_devices.Users can insert their own devices",
-        "severity": "BAIXA"
-      },
-      {
-        "code": "policy_auth_fn_not_wrapped",
-        "detail": "Policy chama auth.uid()/jwt() sem `(select ...)`: é reavaliada por linha; envolva em subselect.",
-        "object": "public.user_devices.Users can update their own devices",
-        "severity": "BAIXA"
-      },
-      {
-        "code": "policy_auth_fn_not_wrapped",
-        "detail": "Policy chama auth.uid()/jwt() sem `(select ...)`: é reavaliada por linha; envolva em subselect.",
-        "object": "public.user_devices.Users can view their own devices",
-        "severity": "BAIXA"
-      },
-      {
-        "code": "policy_auth_fn_not_wrapped",
-        "detail": "Policy chama auth.uid()/jwt() sem `(select ...)`: é reavaliada por linha; envolva em subselect.",
         "object": "public.user_roles.Only admins can manage roles",
         "severity": "BAIXA"
       },
@@ -84514,48 +84460,6 @@
         "code": "policy_auth_fn_not_wrapped",
         "detail": "Policy chama auth.uid()/jwt() sem `(select ...)`: é reavaliada por linha; envolva em subselect.",
         "object": "public.user_service_accounts.Users can view own service accounts",
-        "severity": "BAIXA"
-      },
-      {
-        "code": "policy_auth_fn_not_wrapped",
-        "detail": "Policy chama auth.uid()/jwt() sem `(select ...)`: é reavaliada por linha; envolva em subselect.",
-        "object": "public.user_sessions.Authenticated can insert own sessions",
-        "severity": "BAIXA"
-      },
-      {
-        "code": "policy_auth_fn_not_wrapped",
-        "detail": "Policy chama auth.uid()/jwt() sem `(select ...)`: é reavaliada por linha; envolva em subselect.",
-        "object": "public.user_sessions.Users can delete their own sessions",
-        "severity": "BAIXA"
-      },
-      {
-        "code": "policy_auth_fn_not_wrapped",
-        "detail": "Policy chama auth.uid()/jwt() sem `(select ...)`: é reavaliada por linha; envolva em subselect.",
-        "object": "public.user_sessions.Users can update their own sessions",
-        "severity": "BAIXA"
-      },
-      {
-        "code": "policy_auth_fn_not_wrapped",
-        "detail": "Policy chama auth.uid()/jwt() sem `(select ...)`: é reavaliada por linha; envolva em subselect.",
-        "object": "public.user_sessions.Users can view their own sessions",
-        "severity": "BAIXA"
-      },
-      {
-        "code": "policy_auth_fn_not_wrapped",
-        "detail": "Policy chama auth.uid()/jwt() sem `(select ...)`: é reavaliada por linha; envolva em subselect.",
-        "object": "public.user_settings.Users can insert their own settings",
-        "severity": "BAIXA"
-      },
-      {
-        "code": "policy_auth_fn_not_wrapped",
-        "detail": "Policy chama auth.uid()/jwt() sem `(select ...)`: é reavaliada por linha; envolva em subselect.",
-        "object": "public.user_settings.Users can update their own settings",
-        "severity": "BAIXA"
-      },
-      {
-        "code": "policy_auth_fn_not_wrapped",
-        "detail": "Policy chama auth.uid()/jwt() sem `(select ...)`: é reavaliada por linha; envolva em subselect.",
-        "object": "public.user_settings.Users can view their own settings",
         "severity": "BAIXA"
       },
       {
@@ -91773,7 +91677,7 @@
         "schema": "public",
         "table": "agent_presence",
         "using": null,
-        "with_check": "(user_id = auth.uid())"
+        "with_check": "(user_id = ( SELECT auth.uid() AS uid))"
       },
       {
         "cmd": "UPDATE",
@@ -91784,8 +91688,8 @@
         ],
         "schema": "public",
         "table": "agent_presence",
-        "using": "(user_id = auth.uid())",
-        "with_check": "(user_id = auth.uid())"
+        "using": "(user_id = ( SELECT auth.uid() AS uid))",
+        "with_check": "(user_id = ( SELECT auth.uid() AS uid))"
       },
       {
         "cmd": "ALL",
@@ -92097,7 +92001,7 @@
         "schema": "public",
         "table": "assistant_profiles",
         "using": null,
-        "with_check": "(user_id = auth.uid())"
+        "with_check": "(user_id = ( SELECT auth.uid() AS uid))"
       },
       {
         "cmd": "SELECT",
@@ -92108,7 +92012,7 @@
         ],
         "schema": "public",
         "table": "assistant_profiles",
-        "using": "(user_id = auth.uid())",
+        "using": "(user_id = ( SELECT auth.uid() AS uid))",
         "with_check": null
       },
       {
@@ -92120,8 +92024,8 @@
         ],
         "schema": "public",
         "table": "assistant_profiles",
-        "using": "(user_id = auth.uid())",
-        "with_check": "(user_id = auth.uid())"
+        "using": "(user_id = ( SELECT auth.uid() AS uid))",
+        "with_check": "(user_id = ( SELECT auth.uid() AS uid))"
       },
       {
         "cmd": "ALL",
@@ -97400,7 +97304,7 @@
         ],
         "schema": "public",
         "table": "user_devices",
-        "using": "(user_id = auth.uid())",
+        "using": "(user_id = ( SELECT auth.uid() AS uid))",
         "with_check": null
       },
       {
@@ -97413,7 +97317,7 @@
         "schema": "public",
         "table": "user_devices",
         "using": null,
-        "with_check": "(user_id = auth.uid())"
+        "with_check": "(user_id = ( SELECT auth.uid() AS uid))"
       },
       {
         "cmd": "UPDATE",
@@ -97424,8 +97328,8 @@
         ],
         "schema": "public",
         "table": "user_devices",
-        "using": "(user_id = auth.uid())",
-        "with_check": null
+        "using": "(user_id = ( SELECT auth.uid() AS uid))",
+        "with_check": "(user_id = ( SELECT auth.uid() AS uid))"
       },
       {
         "cmd": "SELECT",
@@ -97436,7 +97340,7 @@
         ],
         "schema": "public",
         "table": "user_devices",
-        "using": "(user_id = auth.uid())",
+        "using": "(user_id = ( SELECT auth.uid() AS uid))",
         "with_check": null
       },
       {
@@ -97533,7 +97437,7 @@
         "schema": "public",
         "table": "user_sessions",
         "using": null,
-        "with_check": "(user_id = auth.uid())"
+        "with_check": "(user_id = ( SELECT auth.uid() AS uid))"
       },
       {
         "cmd": "DELETE",
@@ -97544,7 +97448,7 @@
         ],
         "schema": "public",
         "table": "user_sessions",
-        "using": "(user_id = auth.uid())",
+        "using": "(user_id = ( SELECT auth.uid() AS uid))",
         "with_check": null
       },
       {
@@ -97556,8 +97460,8 @@
         ],
         "schema": "public",
         "table": "user_sessions",
-        "using": "(user_id = auth.uid())",
-        "with_check": null
+        "using": "(user_id = ( SELECT auth.uid() AS uid))",
+        "with_check": "(user_id = ( SELECT auth.uid() AS uid))"
       },
       {
         "cmd": "SELECT",
@@ -97568,7 +97472,7 @@
         ],
         "schema": "public",
         "table": "user_sessions",
-        "using": "(user_id = auth.uid())",
+        "using": "(user_id = ( SELECT auth.uid() AS uid))",
         "with_check": null
       },
       {
@@ -97581,7 +97485,7 @@
         "schema": "public",
         "table": "user_settings",
         "using": null,
-        "with_check": "(user_id = auth.uid())"
+        "with_check": "(user_id = ( SELECT auth.uid() AS uid))"
       },
       {
         "cmd": "UPDATE",
@@ -97592,8 +97496,8 @@
         ],
         "schema": "public",
         "table": "user_settings",
-        "using": "(user_id = auth.uid())",
-        "with_check": null
+        "using": "(user_id = ( SELECT auth.uid() AS uid))",
+        "with_check": "(user_id = ( SELECT auth.uid() AS uid))"
       },
       {
         "cmd": "SELECT",
@@ -97604,7 +97508,7 @@
         ],
         "schema": "public",
         "table": "user_settings",
-        "using": "(user_id = auth.uid())",
+        "using": "(user_id = ( SELECT auth.uid() AS uid))",
         "with_check": null
       },
       {

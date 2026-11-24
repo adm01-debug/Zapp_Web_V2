@@ -60,7 +60,7 @@
 | tipo | PERMISSIVE |
 | roles | authenticated |
 | USING |  |
-| WITH CHECK | `(user_id = auth.uid())` |
+| WITH CHECK | `(user_id = ( SELECT auth.uid() AS uid))` |
 
 ### `Users can delete their own sessions`
 
@@ -69,7 +69,7 @@
 | comando | DELETE |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `(user_id = auth.uid())` |
+| USING | `(user_id = ( SELECT auth.uid() AS uid))` |
 | WITH CHECK |  |
 
 ### `Users can update their own sessions`
@@ -79,8 +79,8 @@
 | comando | UPDATE |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `(user_id = auth.uid())` |
-| WITH CHECK |  |
+| USING | `(user_id = ( SELECT auth.uid() AS uid))` |
+| WITH CHECK | `(user_id = ( SELECT auth.uid() AS uid))` |
 
 ### `Users can view their own sessions`
 
@@ -89,7 +89,7 @@
 | comando | SELECT |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `(user_id = auth.uid())` |
+| USING | `(user_id = ( SELECT auth.uid() AS uid))` |
 | WITH CHECK |  |
 
 
