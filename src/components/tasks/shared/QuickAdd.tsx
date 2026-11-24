@@ -1,4 +1,4 @@
-import { useRef, useState, forwardRef } from 'react';
+import { useEffect, useRef, useState, forwardRef } from 'react';
 import { Plus, Calendar, Bell, Clock, Flag, MoreHorizontal } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -54,6 +54,17 @@ export const QuickAdd = forwardRef<HTMLInputElement, Props>(function QuickAdd(
   const [focoNaCaptura, setFocoNaCaptura]   = useState(false);
 
   const inputRef = useRef<HTMLInputElement | null>(null);
+  // Etapa 043: o foco de retorno é aplicado num efeito, depois do commit em que
+  // `loading` volta a false. Com `setTimeout(0)` havia corrida com esse commit e
+  // o `focus()` caía num `<input disabled>` (no-op), deixando o foco no `<body>`
+  // — era o flake de 1 em N execuções da suíte.
+  const focarAposEnvio = useRef(false);
+
+  useEffect(() => {
+    if (loading || !focarAposEnvio.current) return;
+    focarAposEnvio.current = false;
+    inputRef.current?.focus();
+  }, [loading]);
 
   // O contato do chat é fixo; fora do chat, o chip @ escolhe o contato.
   const contactId = defaultContactId ?? escolhido;
@@ -150,7 +161,7 @@ export const QuickAdd = forwardRef<HTMLInputElement, Props>(function QuickAdd(
       // para o 1º envio).
       limpar();
       // Etapa 043: depois de criar, a próxima captura já começa no campo.
-      window.setTimeout(() => inputRef.current?.focus(), 0);
+      focarAposEnvio.current = true;
     } finally {
       setLoading(false);
     }
