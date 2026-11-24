@@ -17,7 +17,14 @@ permissions:
 
 concurrency:
   group: automation-local-${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  # E98: cancelar em PR e desejavel; em push para a main mataria guarda vivo no meio.
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+# E97: sem `-u` e `pipefail`, um `run:` multi-linha segue depois do primeiro comando que
+# falha e o gate passa sem ter testado nada.
+defaults:
+  run:
+    shell: bash --noprofile --norc -euo pipefail {0}
 
 jobs:
   contracts:
