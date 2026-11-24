@@ -5,7 +5,7 @@
 #   avisa: mesma issue de E2E; cada execução aprovada reconcilia o alerta existente
 # O checkout fixa o SHA aprovado do workflow_run ou o SHA da main no dispatch.
 # O controller cria credenciais sintéticas, isola a rede, executa e limpa o backend.
-# Scripts de teardown de produção permanecem versionados; este workflow não os chama.
+# O teardown de produção foi removido (migration 20261124120000); este workflow não toca a produção.
 
 name: E2E logado
 

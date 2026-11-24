@@ -79,7 +79,7 @@ export function arquivosDeTexto(dir) {
 //
 // ALCANCE HOJE, medido antes de restaurar: a suíte logada roda num backend
 // DESCARTÁVEL (e2e-logado.yml não cita E2E_TEST_EMAIL/PASSWORD nem secrets., e
-// e2e-teardown.unit.mjs:129 trava isso num contrato), e scripts/e2e-isolated/
+// scripts/ci/e2e-logado-workflow.unit.mjs trava isso num contrato), e scripts/e2e-isolated/
 // run.mjs:797-800 alimenta este redator só com as credenciais `E2E_LOCAL_*`
 // desse backend. Ou seja: o token que hoje escapa é o do banco descartável, não
 // o de produção. Isto é profundidade de defesa — o relatório vira artefato de um
