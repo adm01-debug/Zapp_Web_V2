@@ -2,6 +2,10 @@
 
 Diff semântico gerado a cada coleta em que algo mudou.
 
+## 2026-11-24 16:16 UTC
+
+- **functions** alterado (3): `public.has_role(_user_id uuid, _role app_role)`, `public.is_admin(_user_id uuid)`, `public.is_admin_or_supervisor(_user_id uuid)`
+
 ## 2026-11-24 15:13 UTC
 
 - **functions** removido (2): `public.e2e_cleanup()`, `public.e2e_cleanup_conversation_closures()`
