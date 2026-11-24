@@ -1,15 +1,15 @@
 {
  "meta": {
-  "sha": "697de6eb81d02bde739432c8912866f2793eaf70",
+  "sha": "7d4d196e26dda535d1354699a354cbbc371fe494",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-24 15:00 UTC",
-  "files_total": 15629,
-  "code_files": 8930,
-  "code_lines": 1417830
+  "generated_at": "2026-11-24 16:08 UTC",
+  "files_total": 15631,
+  "code_files": 8932,
+  "code_lines": 1418163
  },
  "version": "1.3.2",
- "facts_hash": "2d283b6ae47fcb9a",
+ "facts_hash": "674fc7b4ec2ca75f",
  "stack": {
   "frameworks": [
    "React + Vite",
@@ -345,7 +345,7 @@
   "package_manager": "bun",
   "languages": {
    ".sql": 3066,
-   ".tsx": 2829,
+   ".tsx": 2831,
    ".ts": 2254,
    ".mjs": 652,
    ".py": 125,
@@ -35793,28 +35793,6 @@
     "tables": []
    },
    "complete_crm_sync_outbox": {
-    "args": "",
-    "returns": "?",
-    "lang": "",
-    "src": "src/integrations/supabase/types.ts",
-    "security_definer": false,
-    "search_path": false,
-    "body": "",
-    "raises": [],
-    "tables": []
-   },
-   "e2e_cleanup": {
-    "args": "",
-    "returns": "?",
-    "lang": "",
-    "src": "src/integrations/supabase/types.ts",
-    "security_definer": false,
-    "search_path": false,
-    "body": "",
-    "raises": [],
-    "tables": []
-   },
-   "e2e_cleanup_conversation_closures": {
     "args": "",
     "returns": "?",
     "lang": "",
@@ -73616,7 +73594,7 @@
     "file": ".github/workflows/types-sync.yml"
    }
   ],
-  "components_count": 2608,
+  "components_count": 2610,
   "hooks": [
    {
     "name": "useMotionSeguro",
@@ -77536,8 +77514,8 @@
   },
   {
    "module": "src/components",
-   "files": 2313,
-   "lines": 393775,
+   "files": 2315,
+   "lines": 394110,
    "tables": [
     "agent_skills",
     "agent_visibility_grants",
@@ -78178,7 +78156,7 @@
   {
    "module": "src/integrations",
    "files": 4,
-   "lines": 16033,
+   "lines": 16031,
    "tables": [],
    "exports": [
     "client.ts: SUPABASE_ANON_KEY, GOOGLE_OAUTH_ENABLED, supabase, SupabaseClient",
@@ -97282,6 +97260,14 @@
    {
     "file": "src/components/inbox/useFileUploadLogic.ts",
     "msg": "Selecione uma conversa antes de enviar um arquivo."
+   },
+   {
+    "file": "src/components/inbox/ai-tools/ImageAnalysisPanel.tsx",
+    "msg": " className="
+   },
+   {
+    "file": "src/components/inbox/ai-tools/ImageAnalysisPanel.tsx",
+    "msg": "Nao foi possivel copiar"
    },
    {
     "file": "src/components/inbox/ai-tools/useAnalysisTts.ts",
@@ -137457,6 +137443,12 @@
     "file": "src/components/inbox/AIConversationAssistant.tsx",
     "field": "status",
     "value": "error",
+    "kind": "compara"
+   },
+   {
+    "file": "src/components/inbox/AIConversationAssistant.tsx",
+    "field": "type",
+    "value": "image",
     "kind": "compara"
    },
    {
@@ -190904,6 +190896,46 @@
    {
     "file": "src/components/inbox/ai-tools/__tests__/HistoryTab.test.tsx",
     "name": "mostra o vazio quando não há análises"
+   },
+   {
+    "file": "src/components/inbox/ai-tools/__tests__/ImageAnalysisPanel.test.tsx",
+    "name": "ImageAnalysisPanel — estado vazio"
+   },
+   {
+    "file": "src/components/inbox/ai-tools/__tests__/ImageAnalysisPanel.test.tsx",
+    "name": "avisa que nao ha imagem e nao oferece o botao de analise"
+   },
+   {
+    "file": "src/components/inbox/ai-tools/__tests__/ImageAnalysisPanel.test.tsx",
+    "name": "ImageAnalysisPanel — disparo da edge"
+   },
+   {
+    "file": "src/components/inbox/ai-tools/__tests__/ImageAnalysisPanel.test.tsx",
+    "name": "chama a edge com a URL da imagem e o contexto da conversa"
+   },
+   {
+    "file": "src/components/inbox/ai-tools/__tests__/ImageAnalysisPanel.test.tsx",
+    "name": "corta o contexto em 1000 caracteres (limite do schema da edge)"
+   },
+   {
+    "file": "src/components/inbox/ai-tools/__tests__/ImageAnalysisPanel.test.tsx",
+    "name": "analisa a imagem escolhida quando a conversa tem mais de uma"
+   },
+   {
+    "file": "src/components/inbox/ai-tools/__tests__/ImageAnalysisPanel.test.tsx",
+    "name": "bloqueia o botao enquanto a analise esta em voo"
+   },
+   {
+    "file": "src/components/inbox/ai-tools/__tests__/ImageAnalysisPanel.test.tsx",
+    "name": "ImageAnalysisPanel — resultado"
+   },
+   {
+    "file": "src/components/inbox/ai-tools/__tests__/ImageAnalysisPanel.test.tsx",
+    "name": "mostra os campos do contrato da edge"
+   },
+   {
+    "file": "src/components/inbox/ai-tools/__tests__/ImageAnalysisPanel.test.tsx",
+    "name": "mostra o erro devolvido pela edge sem inventar texto generico"
    },
    {
     "file": "src/components/inbox/ai-tools/__tests__/a11y-ferramentas-ia.test.tsx",
@@ -278663,28 +278695,6 @@
     "raises": [],
     "tables": []
    },
-   "e2e_cleanup": {
-    "args": "",
-    "returns": "?",
-    "lang": "",
-    "src": "src/integrations/supabase/types.ts",
-    "security_definer": false,
-    "search_path": false,
-    "body": "",
-    "raises": [],
-    "tables": []
-   },
-   "e2e_cleanup_conversation_closures": {
-    "args": "",
-    "returns": "?",
-    "lang": "",
-    "src": "src/integrations/supabase/types.ts",
-    "security_definer": false,
-    "search_path": false,
-    "body": "",
-    "raises": [],
-    "tables": []
-   },
    "fn_capture_csat_replies": {
     "args": "",
     "returns": "?",
@@ -285873,6 +285883,7 @@
       "escreve:src/hooks/business/useWarRoomData.ts"
      ],
      "image": [
+      "compara:src/components/inbox/AIConversationAssistant.tsx",
       "compara:src/components/inbox/ForwardMessageDialog.tsx",
       "compara:src/components/inbox/InteractiveMessage.tsx",
       "compara:src/components/inbox/LinkPreview.tsx",
@@ -375846,7 +375857,7 @@
   },
   "src/components/inbox/AIConversationAssistant.tsx": {
    "path": "src/components/inbox/AIConversationAssistant.tsx",
-   "lines": 364,
+   "lines": 391,
    "exports": [
     "function AIConversationAssistant"
    ],
@@ -375867,6 +375878,11 @@
     {
      "field": "status",
      "value": "error",
+     "kind": "compara"
+    },
+    {
+     "field": "type",
+     "value": "image",
      "kind": "compara"
     }
    ],
@@ -381204,6 +381220,20 @@
     "function HistoryTab"
    ]
   },
+  "src/components/inbox/ai-tools/ImageAnalysisPanel.tsx": {
+   "path": "src/components/inbox/ai-tools/ImageAnalysisPanel.tsx",
+   "lines": 183,
+   "exports": [
+    "interface ConversationImage",
+    "interface ImageAnalysisPanelProps",
+    "function ImageAnalysisPanel"
+   ],
+   "errors": [
+    " className=",
+    "Nao foi possivel copiar"
+   ],
+   "doc": "CV-102 — painel de análise de imagem (multimodal). A Edge `ai-multimodal-analysis` está em produção, mas o hook `useImageAnalysis` só era exportado pelo barrel (`src/hooks/copilot/index.ts`): nenhum componente o chamava, então o recurso não existia para o vendedor. Este painel é o consumidor — receb …"
+  },
   "src/components/inbox/ai-tools/KeyPointsTab.tsx": {
    "path": "src/components/inbox/ai-tools/KeyPointsTab.tsx",
    "lines": 76,
@@ -381345,6 +381375,26 @@
     "reabre a análise com todos os campos opcionais gravados",
     "não inventa campos quando a linha antiga não os tem",
     "mostra o vazio quando não há análises"
+   ]
+  },
+  "src/components/inbox/ai-tools/__tests__/ImageAnalysisPanel.test.tsx": {
+   "path": "src/components/inbox/ai-tools/__tests__/ImageAnalysisPanel.test.tsx",
+   "lines": 125,
+   "is_test": true,
+   "errors": [
+    ").textContent).toContain("
+   ],
+   "tests": [
+    "ImageAnalysisPanel — estado vazio",
+    "avisa que nao ha imagem e nao oferece o botao de analise",
+    "ImageAnalysisPanel — disparo da edge",
+    "chama a edge com a URL da imagem e o contexto da conversa",
+    "corta o contexto em 1000 caracteres (limite do schema da edge)",
+    "analisa a imagem escolhida quando a conversa tem mais de uma",
+    "bloqueia o botao enquanto a analise esta em voo",
+    "ImageAnalysisPanel — resultado",
+    "mostra os campos do contrato da edge",
+    "mostra o erro devolvido pela edge sem inventar texto generico"
    ]
   },
   "src/components/inbox/ai-tools/__tests__/a11y-ferramentas-ia.test.tsx": {
@@ -438984,7 +439034,7 @@
   },
   "src/integrations/supabase/types.ts": {
    "path": "src/integrations/supabase/types.ts",
-   "lines": 15960,
+   "lines": 15958,
    "exports": [
     "type Json",
     "type Database",
@@ -482929,10 +482979,35 @@
   }
  },
  "git": {
-  "sha": "697de6eb81d02bde739432c8912866f2793eaf70",
+  "sha": "7d4d196e26dda535d1354699a354cbbc371fe494",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "7d4d196e",
+    "date": "2026-11-24",
+    "author": "adm01-debug",
+    "subject": "feat(inbox): analise de imagem do Copiloto no painel de conversa (#3362)",
+    "files": [
+     "ESTADO.md",
+     "src/components/inbox/AIConversationAssistant.tsx",
+     "src/components/inbox/ai-tools/ImageAnalysisPanel.tsx",
+     "src/components/inbox/ai-tools/__tests__/ImageAnalysisPanel.test.tsx"
+    ]
+   },
+   {
+    "sha": "c3127e8f",
+    "date": "2026-11-24",
+    "author": "github-actions[bot]",
+    "subject": "chore(db): sincronizar artefatos derivados do banco (#3361)",
+    "files": [
+     "docs/DB-INVENTORY.md",
+     "scripts/db-audit/grants-baseline.json",
+     "src/integrations/supabase/types.ts",
+     "supabase/schema-catalog.json",
+     "supabase/schema-manifest.json"
+    ]
+   },
    {
     "sha": "697de6eb",
     "date": "2026-11-24",
@@ -483243,27 +483318,17 @@
     "files": [
      "scripts/ci/eslint-baseline.json"
     ]
-   },
-   {
-    "sha": "54826dbf",
-    "date": "2026-11-23",
-    "author": "adm01-debug",
-    "subject": "fix(test): ampliar janela de serie de 15 para 30 min - corrige flake de meia-noite (#3332)",
-    "files": [
-     "scripts/db-audit/talkx-monitor-panel.test.sh"
-    ]
-   },
-   {
-    "sha": "7fe8d245",
-    "date": "2026-11-23",
-    "author": "adm01-debug",
-    "subject": "fix: suportar executáveis .exe/.cmd/.bat no Windows em resolverExecutavel (#3331)",
-    "files": [
-     "scripts/lib/seguranca-processo.mjs"
-    ]
    }
   ],
   "hot_files": [
+   [
+    "ESTADO.md",
+    4
+   ],
+   [
+    "supabase/schema-manifest.json",
+    3
+   ],
    [
     ".github/workflows/scorecard.yml",
     3
@@ -483277,8 +483342,16 @@
     3
    ],
    [
-    "ESTADO.md",
-    3
+    "docs/DB-INVENTORY.md",
+    2
+   ],
+   [
+    "src/integrations/supabase/types.ts",
+    2
+   ],
+   [
+    "supabase/schema-catalog.json",
+    2
    ],
    [
     ".github/workflows/e2e-logado.yml",
@@ -483290,14 +483363,6 @@
    ],
    [
     "scripts/e2e-isolated/pull-image.mjs",
-    2
-   ],
-   [
-    "supabase/schema-manifest.json",
-    2
-   ],
-   [
-    "scripts/db-audit/talkx-monitor-panel.test.sh",
     2
    ],
    [
@@ -483321,27 +483386,19 @@
     2
    ],
    [
-    "scripts/ci/e2e-logado-workflow.unit.mjs",
+    "src/components/inbox/AIConversationAssistant.tsx",
     1
    ],
    [
-    "scripts/ci/e2e-teardown.mjs",
+    "src/components/inbox/ai-tools/ImageAnalysisPanel.tsx",
     1
    ],
    [
-    "scripts/ci/e2e-teardown.unit.mjs",
+    "src/components/inbox/ai-tools/__tests__/ImageAnalysisPanel.test.tsx",
     1
    ],
    [
-    "scripts/ci/redigir-relatorio.mjs",
-    1
-   ],
-   [
-    "supabase/migrations/20261124120000_drop_rpcs_e2e_orfas.sql",
-    1
-   ],
-   [
-    "src/components/tasks/shared/QuickAdd.tsx",
+    "scripts/db-audit/grants-baseline.json",
     1
    ]
   ]

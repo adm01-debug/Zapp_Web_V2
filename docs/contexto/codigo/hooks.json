@@ -7404,8 +7404,10 @@
    "edges": [],
    "hooks_internos": [],
    "canais_realtime": [],
-   "usado_por": 0,
-   "usado_por_arquivos": [],
+   "usado_por": 1,
+   "usado_por_arquivos": [
+    "src/components/inbox/ai-tools/ImageAnalysisPanel.tsx"
+   ],
    "coberto_por_testes": 0
   },
   {

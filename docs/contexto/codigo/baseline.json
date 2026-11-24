@@ -2,11 +2,21 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "697de6eb81d02bde739432c8912866f2793eaf70",
+  "commit": "7d4d196e26dda535d1354699a354cbbc371fe494",
   "branch": "main",
-  "data_commit": "2026-11-24T11:58:58-03:00",
+  "data_commit": "2026-11-24T13:05:41-03:00",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "7d4d196e",
+    "data": "2026-11-24",
+    "assunto": "feat(inbox): analise de imagem do Copiloto no painel de conversa (#3362)"
+   },
+   {
+    "sha": "c3127e8f",
+    "data": "2026-11-24",
+    "assunto": "chore(db): sincronizar artefatos derivados do banco (#3361)"
+   },
    {
     "sha": "697de6eb",
     "data": "2026-11-24",
@@ -121,19 +131,9 @@
     "sha": "5ba09eae",
     "data": "2026-11-23",
     "assunto": "feat(talkx): liga os dois kinds sem tela da IA (insight_text e segment_suggestion) (#3339)"
-   },
-   {
-    "sha": "2fca6d0d",
-    "data": "2026-11-23",
-    "assunto": "fix: tolera ruido sub-pixel na medicao de 44px do card (#3341)"
-   },
-   {
-    "sha": "340cc4ce",
-    "data": "2026-11-23",
-    "assunto": "feat(talkx): cria a trilha de IA e os tetos que a talkx-ai ja exige (#3327)"
    }
   ],
-  "arquivos_mudados_7d": 5241,
+  "arquivos_mudados_7d": 5242,
   "pastas_mais_mudadas_30d": [
    {
     "pasta": "docs/contexto/supabase",
@@ -145,7 +145,7 @@
    },
    {
     "pasta": "src/components/inbox",
-    "mudancas": 734
+    "mudancas": 737
    },
    {
     "pasta": "docs/reconciliation/reaudit",
@@ -203,7 +203,7 @@
    },
    {
     "arquivo": "ESTADO.md",
-    "mudancas": 22
+    "mudancas": 23
    },
    {
     "arquivo": "docs/talkx/ESTADOS.md",
@@ -211,14 +211,22 @@
    },
    {
     "arquivo": "src/integrations/supabase/types.ts",
-    "mudancas": 15
+    "mudancas": 16
    },
    {
     "arquivo": "supabase/schema-manifest.json",
-    "mudancas": 15
+    "mudancas": 16
    },
    {
     "arquivo": "supabase/schema-catalog.json",
+    "mudancas": 14
+   },
+   {
+    "arquivo": "docs/DB-INVENTORY.md",
+    "mudancas": 13
+   },
+   {
+    "arquivo": "scripts/db-audit/grants-baseline.json",
     "mudancas": 13
    },
    {
@@ -227,14 +235,6 @@
    },
    {
     "arquivo": "PENDENCIAS.md",
-    "mudancas": 12
-   },
-   {
-    "arquivo": "docs/DB-INVENTORY.md",
-    "mudancas": 12
-   },
-   {
-    "arquivo": "scripts/db-audit/grants-baseline.json",
     "mudancas": 12
    },
    {
@@ -301,11 +301,11 @@
   "autores_30d": [
    {
     "autor": "adm01-debug",
-    "commits": 287
+    "commits": 286
    },
    {
     "autor": "github-actions[bot]",
-    "commits": 9
+    "commits": 10
    },
    {
     "autor": "dependabot[bot]",
@@ -314,21 +314,21 @@
   ]
  },
  "contagens": {
-  "arquivos_total": 15781,
-  "arquivos_codigo": 5891,
-  "linhas_codigo": 1139973,
+  "arquivos_total": 15783,
+  "arquivos_codigo": 5893,
+  "linhas_codigo": 1140306,
   "rotas": 18,
   "rotas_http_backend": 11,
   "vistas_por_id": 55,
   "itens_menu": 61,
   "modulos": 149,
-  "componentes": 1063,
+  "componentes": 1064,
   "hooks": 607,
   "edge_functions": 93,
   "tabelas": 223,
   "migrations": 1153,
   "cron_jobs": 29,
-  "testes": 3228,
+  "testes": 3229,
   "workflows": 24,
   "scripts": 451,
   "docs_md": 4083
@@ -727,8 +727,8 @@
    "linhas": 638
   },
   "src/components": {
-   "arquivos": 2313,
-   "linhas": 393775
+   "arquivos": 2315,
+   "linhas": 394110
   },
   "src/config": {
    "arquivos": 3,
@@ -756,7 +756,7 @@
   },
   "src/integrations": {
    "arquivos": 4,
-   "linhas": 16033
+   "linhas": 16031
   },
   "src/lib": {
    "arquivos": 300,
@@ -830,7 +830,7 @@
  "maiores_arquivos": [
   {
    "arquivo": "src/integrations/supabase/types.ts",
-   "linhas": 15960
+   "linhas": 15958
   },
   {
    "arquivo": "scripts/regras_negocio/generate.py",

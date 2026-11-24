@@ -4383,6 +4383,7 @@
   ],
   "src/components/inbox/AIConversationAssistant.tsx": [
    "src/components/inbox/ai-tools/AnalysisTabs.tsx",
+   "src/components/inbox/ai-tools/ImageAnalysisPanel.tsx",
    "src/components/inbox/ai-tools/PeriodFilterSelector.tsx",
    "src/components/inbox/ai-tools/VisionIcon.tsx",
    "src/components/inbox/ai-tools/analysisConfigs.ts",
@@ -5125,6 +5126,11 @@
   "src/components/inbox/ai-tools/HistoryTab.tsx": [
    "src/components/inbox/ai-tools/analysisConfigs.ts",
    "src/components/ui/badge.tsx"
+  ],
+  "src/components/inbox/ai-tools/ImageAnalysisPanel.tsx": [
+   "src/components/ui/button.tsx",
+   "src/hooks/copilot/index.ts",
+   "src/lib/logger.ts"
   ],
   "src/components/inbox/ai-tools/KeyPointsTab.tsx": [
    "src/components/inbox/ai-tools/analysisConfigs.ts",

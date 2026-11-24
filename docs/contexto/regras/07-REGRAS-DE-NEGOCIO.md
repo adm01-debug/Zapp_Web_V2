@@ -1,6 +1,6 @@
 # 07 · REGRAS DE NEGÓCIO
 
-> Gerado automaticamente por AI Context Sync v1.3.2 · commit `697de6eb81` · branch `main` · 2026-11-24 15:00 UTC
+> Gerado automaticamente por AI Context Sync v1.3.2 · commit `7d4d196e26` · branch `main` · 2026-11-24 16:08 UTC
 > Não edite à mão — regras humanas vão em `manual/`.
 
 ## A. Regras escritas por humanos (`manual/` — prioridade máxima, nunca sobrescrito)
@@ -1474,7 +1474,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `type` | `hour` | compara | `src/lib/localDay.ts` |
 | `type` | `hydrate` | compara, escreve | `src/hooks/tasks/useTasksFilters.ts` |
 | `type` | `idle` | compara, escreve | `src/hooks/ui/useLoadingState.ts` |
-| `type` | `image` | compara, escreve | `analise-prs/resgate-261118-lote3/claude/test-e2e-suite-completa-261104-1428/scripts/ci/e2e-isolated-provider-readiness.unit.mjs`<br>`src/components/inbox/ForwardMessageDialog.tsx`<br>`src/components/inbox/InteractiveMessage.tsx`<br>`src/components/inbox/LinkPreview.tsx`<br>`src/components/inbox/ReplyQuote.tsx`<br>… +13 |
+| `type` | `image` | compara, escreve | `analise-prs/resgate-261118-lote3/claude/test-e2e-suite-completa-261104-1428/scripts/ci/e2e-isolated-provider-readiness.unit.mjs`<br>`src/components/inbox/AIConversationAssistant.tsx`<br>`src/components/inbox/ForwardMessageDialog.tsx`<br>`src/components/inbox/InteractiveMessage.tsx`<br>`src/components/inbox/LinkPreview.tsx`<br>… +14 |
 | `type` | `image_url` | compara, escreve | `analise-prs/resgate-regra8-261118/supabase/functions/ai-multimodal-analysis/index.ts`<br>`supabase/functions/_shared/ai-generate.ts`<br>`supabase/functions/_shared/ai-image-input.ts`<br>`supabase/functions/ai-multimodal-analysis/index.ts`<br>`supabase/functions/classify-emoji/index.ts`<br>… +1 |
 | `type` | `implicit` | escreve | `src/hooks/copilot/usePurchaseSignals.ts` |
 | `type` | `incoming_call` | compara, escreve | `src/hooks/communication/useIncomingCallListener.ts`<br>`supabase/functions/_shared/notification-events.ts` |
@@ -4985,7 +4985,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | unsupported-filter-column | `analise-prs/resgate-261118-lote3/claude/test-e2e-suite-completa-261104-1428/scripts/e2e-isolated/providers.mjs` |
 | unsupported-order | `analise-prs/resgate-261118-lote3/claude/test-e2e-suite-completa-261104-1428/scripts/e2e-isolated/providers.mjs` |
 | unsupported-range | `analise-prs/resgate-261118-lote3/claude/test-e2e-suite-completa-261104-1428/scripts/e2e-isolated/providers.mjs` |
-| … +2520 linhas — lista completa em `context.json` | |
+| … +2522 linhas — lista completa em `context.json` | |
 
 ## J. Controle de acesso no código (checagens de perfil/permissão)
 
@@ -5076,7 +5076,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `owner` | `supabase/migrations/20260927270018_team_chat_e28_fix_find_or_create_race.sql` |
 | `anon` | `supabase/migrations/20260927340000_fix_add_agent_xp_negative_and_guard.sql` |
 
-## K. Testes como especificação (26367 testes em 2746 arquivos — nomes completos em `context.json`)
+## K. Testes como especificação (26377 testes em 2747 arquivos — nomes completos em `context.json`)
 
 | Arquivo | Testes | Exemplos do que o sistema DEVE fazer |
 |---|---|---|
@@ -5380,7 +5380,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `src/hooks/__tests__/useChatKeyboardNavigation.test.ts` | 18 | useChatKeyboardNavigation · initializes with no selected message · initializes with isNavigating false · exposes exitNavigationMode function … |
 | `src/hooks/__tests__/useIncomingCallListener.test.tsx` | 18 | useIncomingCallListener · subscribes to notifications scoped to the authenticated user · shows one ringing call from notification metadata and deduplicates replay · propagates the real call id from notification metadata (not the notification row id) … |
 | `src/hooks/__tests__/useWarRoomAlerts.test.tsx` | 18 | useWarRoomAlerts · fetches unread alerts · exposes dismissAlert function · accepts soundEnabled parameter … |
-| … +2446 linhas — lista completa em `context.json` | | |
+| … +2447 linhas — lista completa em `context.json` | | |
 
 ## L. Eventos de webhook tratados (contratos com sistemas externos)
 

@@ -1,7 +1,7 @@
 {
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
- "total": 1063,
+ "total": 1064,
  "orfaos": 138,
  "nomes_duplicados": {
   "AIAutoTagsConfig": [
@@ -7674,6 +7674,24 @@
    "orfao": false
   },
   {
+   "arquivo": "src/components/inbox/ai-tools/ImageAnalysisPanel.tsx",
+   "exports": [
+    "ConversationImage",
+    "ImageAnalysisPanel",
+    "ImageAnalysisPanelProps"
+   ],
+   "export_default": null,
+   "linhas": 183,
+   "dominio": "components/inbox",
+   "hooks_locais": [
+    "useImageAnalysis"
+   ],
+   "tabelas": [],
+   "edges": [],
+   "usado_por": 1,
+   "orfao": false
+  },
+  {
    "arquivo": "src/components/inbox/ai-tools/KeyPointsTab.tsx",
    "exports": [
     "KeyPointsTab"
@@ -7781,7 +7799,7 @@
     "AIConversationAssistant"
    ],
    "export_default": null,
-   "linhas": 364,
+   "linhas": 391,
    "dominio": "components/inbox",
    "hooks_locais": [
     "useAiRequestGeneration",
@@ -16525,7 +16543,7 @@
    "hooks_locais": [],
    "tabelas": [],
    "edges": [],
-   "usado_por": 457,
+   "usado_por": 458,
    "orfao": false
   },
   {
