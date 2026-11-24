@@ -2,11 +2,21 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "442bcfb1fa6f9020a89bcbb387e79a194639eb61",
+  "commit": "7dff0402a335ae0333c3b244726cd2ca3f20297f",
   "branch": "main",
-  "data_commit": "2026-11-23T22:38:55-03:00",
+  "data_commit": "2026-11-23T23:47:52-03:00",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "7dff0402",
+    "data": "2026-11-23",
+    "assunto": "chore(docs): fecha X076 e corrige estado real da IA-161 (#3346)"
+   },
+   {
+    "sha": "e5d1a17d",
+    "data": "2026-11-23",
+    "assunto": "fix(e2e): destrava o Firefox tirando o axe do painel CRM em 320px (#3348)"
+   },
    {
     "sha": "442bcfb1",
     "data": "2026-11-23",
@@ -121,19 +131,9 @@
     "sha": "7a351f77",
     "data": "2026-11-22",
     "assunto": "feat(assistente): decide por edge as 7 edges restantes da porta unica (#3321)"
-   },
-   {
-    "sha": "1f71f25d",
-    "data": "2026-11-22",
-    "assunto": "feat(assistente): liga risco de perda e ancoragem de preco na porta unica (#3320)"
-   },
-   {
-    "sha": "bcf4dcc8",
-    "data": "2026-11-22",
-    "assunto": "chore(db): sincronizar artefatos derivados do banco (#3315)"
    }
   ],
-  "arquivos_mudados_7d": 5294,
+  "arquivos_mudados_7d": 5290,
   "pastas_mais_mudadas_30d": [
    {
     "pasta": "docs/contexto/supabase",
@@ -316,7 +316,7 @@
  "contagens": {
   "arquivos_total": 15781,
   "arquivos_codigo": 5892,
-  "linhas_codigo": 1140049,
+  "linhas_codigo": 1140058,
   "rotas": 18,
   "rotas_http_backend": 11,
   "vistas_por_id": 55,
@@ -476,7 +476,7 @@
   },
   "e2e/email-navy-visual.spec.ts": {
    "arquivos": 1,
-   "linhas": 776
+   "linhas": 785
   },
   "e2e/files-tab.spec.ts": {
    "arquivos": 1,

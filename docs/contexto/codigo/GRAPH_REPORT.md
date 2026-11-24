@@ -1,17 +1,17 @@
 # Graph Report - Zapp_Web_V2  (2026-11-24)
 
 ## Corpus Check
-- 14565 files · ~17,762,402 words
+- 14565 files · ~17,762,574 words
 - Verdict: corpus is large enough that graph structure adds value.
 - Unclassified: 114 file(s) not represented in the graph (top: .tsv 39, .csv 20, .css 15)
 
 ## Summary
-- 103206 nodes · 175316 edges · 9291 communities (5783 shown, 3508 thin omitted)
-- Extraction: 94% EXTRACTED · 6% INFERRED · 0% AMBIGUOUS · INFERRED: 10425 edges (avg confidence: 0.94)
+- 103206 nodes · 175318 edges · 9291 communities (5783 shown, 3508 thin omitted)
+- Extraction: 94% EXTRACTED · 6% INFERRED · 0% AMBIGUOUS · INFERRED: 10427 edges (avg confidence: 0.94)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `442bcfb1`
+- Built from commit: `7dff0402`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -603,6 +603,7 @@
 - FASE C — EDGE FUNCTIONS (Etapas 61–85)
 - FASE C — EDGE FUNCTIONS (Etapas 61–85)
 - FASE C — EDGE FUNCTIONS (Etapas 61–85)
+- SegmentRules
 - CLAUDE.md — ZAPP WEB V2 (leitura OBRIGATÓRIA antes de qualquer ação)
 - cool-dijkstra-xk9ek2/scripts/ci/edge-coverage-authz.unit.mjs
 - Relatório de PRs — adm01-debug/Zapp_Web_V2
@@ -631,7 +632,6 @@
 - admin_unlock_login_autorizacao.sql
 - ai-jobs-estados-e-durabilidade.contract.test.ts
 - Detalhe
-- Vereditos dos 96 caminhos — lote 3 (16 caminhos)
 - busy-cannon-40szm9/src/components/talkx/kit/dialogs.tsx
 - fix-email-navy-contrast-261101-2057/src/components/inbox/__tests__/ContactDetails.mobile-iniciais-sentimento.test.tsx
 - fix-ga-resto-dbmigrate-20261021-0729/scripts/ci/secrets-environments.unit.mjs
@@ -1002,7 +1002,6 @@
 - ReportCharts.descricao-textual.test.tsx
 - IPListasErro.contrasteTema.test.tsx
 - src/components/settings/__tests__/ThemeCustomizer.a11y.test.tsx
-- SegmentRules
 - src/components/talkx/__tests__/TalkXSegments.detailPanel.test.tsx
 - TalkXSegments.gradeEPainel.test.tsx
 - Builder
@@ -1047,6 +1046,7 @@
 - publish-followup-20261021/scripts/ci/ci-artifacts.unit.mjs
 - ci-verde-261021/supabase/functions/evolution-api/index.ts
 - inbox.service.ts
+- Vereditos dos 96 caminhos — lote 3 (16 caminhos)
 - banco: migrations e edge functions (15)
 - Contraste dos badges do catálogo — CT-69
 - SECURITY — módulo Catálogo (ZAPP Web V2)
@@ -2334,7 +2334,6 @@
 - X090 — Ações unificadas + aprovação
 - X052 — Aba e campanha na URL
 - X145 — Aba "Monitor" no módulo
-- X097 — Aba Variações A/B
 - A11Y-CRM-02 — Abas da conversa sem nome < 1536 px
 - CT-020 — Abas por tipo legíveis no celular
 - X113 — Abas Regras Avançadas, Audiências, Modelos
@@ -2416,6 +2415,7 @@
 - SL-017 — Banner honesto da janela de bloqueio da Meta
 - E02 — Banner "WhatsApp indisponível" e bloqueio honesto no compositor
 - Y17-02 — Barras de progresso sem nome (38 nós)
+- A11Y-06 — Barras de progresso sem nome
 - X003 — Base de demonstração das 17 telas
 - SL-125 — Baseline ESLint
 - X075 — Benchmarks e insights no servidor
@@ -2435,7 +2435,7 @@
 - SL-171 — BreadcrumbBar + "Teletransporte"
 - CT-93 — Breadcrumbs catalog. + alerta no Sentry
 - X061 — Bucket privado talkx-media
-- E77 — Bump semanal de toolchain
+- 119 — Bump toolchain, E2E auth no logado, sentinel, docs canônicos, perFile
 - 121 — Bump toolchain, E2E auth no logado, sentinel, docs canônicos, perFile
 - 122 — Bump toolchain, E2E auth no logado, sentinel, docs canônicos, perFile
 - 123 — Bump toolchain, E2E auth no logado, sentinel, docs canônicos, perFile
@@ -2693,6 +2693,7 @@
 - X095 — Envio de arquivo no lugar da URL
 - L-01 — Envio de mensagem agendada
 - X067 — Envio de teste com trilha e limite
+- X064 — Envio interativo com fallback
 - X019 — Envio pela conexão escolhida com ritmo
 - E94 — Envio real de localização confirmado no WhatsApp
 - CT-18 — Envio real pelo chat
@@ -3015,6 +3016,7 @@
 - T1 — Painel "Inteligência Comercial" (briefing, DISC, gatilhos, rapport, horários, churn)
 - X082 — Painel lateral (3 números, dica do dia)
 - E69 — Paralelizar ci.yml
+- IA-100 — Passagem de atendimento com evidências
 - X124 — Passo 1: nome, objetivo com ícone, responsável
 - X133 — Passo Entrega completo
 - CT-73 — Payload de list_products < 30 KB por página
@@ -3223,7 +3225,6 @@
 - T99 — Seção "Telefonia" no CLAUDE.md
 - DASH-018 — SECURITY INVOKER/DEFINER intencional
 - PAR-073 — Segmentos dinâmicos de contatos
-- RES-3 — Segurança: INSERT de tarefa com contact_id de qualquer contato
 - IA-076 — Seleção de contexto transparente
 - CT-60 — Select de fornecedor com contagem
 - A11Y-CRM-03 — Selects sem nome nos filtros e no CRM 360°
@@ -3298,7 +3299,6 @@
 - 183 — Testes reais, contratos de provedor, isolamento, concorrência
 - 185 — Testes reais, contratos de provedor, isolamento, concorrência
 - IA-181 — Testes reais, contratos de provedor, isolamento, concorrência
-- F88 — Testes unitários no ci.yml
 - RES-PERSONALIZADA — Tile "Personalizada"
 - SL-198 — Timeline de envio por mensagem
 - B6 — Toda chamada paga no ledger
@@ -8879,7 +8879,7 @@ Nodes (37): 1. Inbox — cabeçalho do chat e painéis de ferramentas, 4. CRM / 
 
 ### Community 364 - "_ordem.md"
 Cohesion: 0.05
-Nodes (33): A11Y-06 — Barras de progresso sem nome, Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis (+25 more)
+Nodes (33): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis, X097 — Aba Variações A/B (+25 more)
 
 ### Community 365 - "Plano em 50 etapas para simplificar o topo de Contatos e adicionar o botão verde pulsante"
 Cohesion: 0.05
@@ -9773,121 +9773,121 @@ Nodes (26): C61. Confirmar callers de todas as 54 functions Grupo A, C62. Resolv
 Cohesion: 0.08
 Nodes (26): C61. Confirmar callers de todas as 54 functions Grupo A, C62. Resolver todas as 17 functions Grupo E (orphans), C63. Criar shared module `_shared/error-response.ts`, C64. Criar shared module `_shared/logger.ts`, C65. Verificar timeouts em functions com múltiplas queries, C66. Criar shared module `_shared/retry.ts`, C67. Documentar variáveis de ambiente de cada function, C68. Verificar coverage de `deploy-functions.yml` (+18 more)
 
-### Community 589 - "CLAUDE.md — ZAPP WEB V2 (leitura OBRIGATÓRIA antes de qualquer ação)"
+### Community 589 - "SegmentRules"
+Cohesion: 0.10
+Nodes (23): L1 — Correlação busca↔clique na telemetria da busca global (ALTO), L2 — Wizard Talk X avança/lança sem audiência confirmada (ALTO), L3 — Tela admin "Insights de Busca" com duas tabelas sempre vazias e dois números jogados fora (MÉDIO), L4 — pgTAP de `log_search_event` ausente (MÉDIO), L5 — Itens pequenos (BAIXO), Lacunas reais (trabalho perdido, ainda faz sentido), src/components/talkx/TalkXCampaignWizard.tsx, src/components/talkx/useCampaignEditor.ts (+15 more)
+
+### Community 590 - "CLAUDE.md — ZAPP WEB V2 (leitura OBRIGATÓRIA antes de qualquer ação)"
 Cohesion: 0.08
 Nodes (26): 0. Onde se trabalha: banco LOCAL; a produção só recebe o lote do dia (desde 2026-10-04), 1. Banco de dados OFICIAL do projeto, 2. Evolution GO (WhatsApp) — Hostinger, 3. Repo e escrita, 4. Vercel — ZAPP Web V2 (auditoria 2026-10-18), Alocação de versão de migration (2026-09-28) — evita colisão entre sessões paralelas, Auditoria e plano de correções (2026-09-16), Ações pendentes do Joaquim (pós-auditoria 2026-10-18) (+18 more)
 
-### Community 590 - "cool-dijkstra-xk9ek2/scripts/ci/edge-coverage-authz.unit.mjs"
+### Community 591 - "cool-dijkstra-xk9ek2/scripts/ci/edge-coverage-authz.unit.mjs"
 Cohesion: 0.12
 Nodes (25): avaliarRégua(), avaliarStatusTestes(), chaveHelper(), DENO_CONFIG_REL, DIR_CI, DOCS_REL, erroDenoTest(), ESTE_ARQUIVO (+17 more)
 
-### Community 591 - "Relatório de PRs — adm01-debug/Zapp_Web_V2"
+### Community 592 - "Relatório de PRs — adm01-debug/Zapp_Web_V2"
 Cohesion: 0.08
 Nodes (25): 1. Merges Realizados — Esta Sessão (2026-10-30/31), 2. PRs Prontas para Merge (MERGEAR_SE_CI_VERDE), 3. Bloqueio Sistêmico (causa raiz de tudo), 4. PRs para Fechar (COMPLETAR / requer ação antes de merge), 5. PRs Requerendo Decisão Humana (DECISAO_HUMANA), 6. Clusters Temáticos, 7. Cobertura dos Dossiês, 8. Limitação da Análise — Vereditos Sistêmicos vs. Individuais (+17 more)
 
-### Community 592 - "ci-workflows-vermelhos/src/hooks/__tests__/useQueueAnalytics.test.tsx"
+### Community 593 - "ci-workflows-vermelhos/src/hooks/__tests__/useQueueAnalytics.test.tsx"
 Cohesion: 0.08
 Nodes (16): ParametroDeGanhoFalso, dateRange, mockFrom, mockQueueData(), paginatedBuilder(), chain, PaginatedBuilderOptions, PontoDiario (+8 more)
 
-### Community 593 - "5. Achados"
+### Community 594 - "5. Achados"
 Cohesion: 0.08
 Nodes (25): 1. Método (conjunto LOCAL do cartão, banco LOCAL, admin local), 2. Cobertura local executada, 3. Resultado bruto do axe nas 64 medições, 4. Verificado sem problema, 5. Achados, 6. Resumo por severidade, 7. Resumo por tela (nós de violação do axe nas 64 medições e achados), 8. Todos os caminhos pesquisados no código atual (+17 more)
 
-### Community 594 - "3. Achados"
+### Community 595 - "3. Achados"
 Cohesion: 0.08
 Nodes (25): 1. Método (o que foi realmente executado), 2. Cobertura, 3. Achados, 4. Verificado SEM problema (e como foi verificado), 5. Resumo por severidade, 6. Resumo por tela, 7. Contagem bruta do axe (por regra × tela × combo), 8. O que o cartão de correção deve considerar (+17 more)
 
-### Community 595 - "PLANO — Finalização do Módulo Contatos (100 etapas) — 2026-09-29"
+### Community 596 - "PLANO — Finalização do Módulo Contatos (100 etapas) — 2026-09-29"
 Cohesion: 0.09
 Nodes (22): Decisões (preencher), F0 — Decisões e preparação (1–6), F10 — Entrega, deploy e verificação (96–100), F2 — Encerrar o conflito de planos (19–28) — PR só front/docs, F9 — Documentação e inventário (91–95) — junto da PR da F8, Mapa de origem (para rastreabilidade), PLANO — Finalização do Módulo Contatos (100 etapas) — 2026-09-29, Status por fase (+14 more)
 
-### Community 596 - "PROMPT DE EXECUÇÃO — INBOX 360°: ABAS DA CONVERSA + PAINEL DO CONTATO | ZAPP WEB V2"
+### Community 597 - "PROMPT DE EXECUÇÃO — INBOX 360°: ABAS DA CONVERSA + PAINEL DO CONTATO | ZAPP WEB V2"
 Cohesion: 0.08
 Nodes (25): 0.1 O que "manter as cores" significa (regra número 1), 0.2 Regras invioláveis, 0. LEIA ANTES DE TOCAR EM QUALQUER ARQUIVO, 1.1 Stack e comandos (`package.json`), 1.3 Componentes existentes que serão REAPROVEITADOS (não reescreva o que funciona), 1.4 Dados reais disponíveis (Supabase `tnnnlkbymytvtqngbbqh`, verificado via SQL), 1. CONTEXTO VERIFICADO (07/09/2026), 3.1 Arquivos alterados (diff cirúrgico) (+17 more)
 
-### Community 597 - "PROMPT DE EXECUÇÃO — SISTEMA DE SKINS "OPERA GX" (paridade Promo Gifts V4) | ZAPP WEB V2"
+### Community 598 - "PROMPT DE EXECUÇÃO — SISTEMA DE SKINS "OPERA GX" (paridade Promo Gifts V4) | ZAPP WEB V2"
 Cohesion: 0.08
 Nodes (25): 0.1 Por que a tela atual do Zapp "tem skins" e não muda nada (fatos verificados no código), 0.2 Regras invioláveis (anti-falha), 0. LEIA ANTES DE TOCAR EM QUALQUER ARQUIVO, 1.3 Stack e comandos reais (`package.json`), 1.4 Infra de QA já existente (reutilizar), 1. CONTEXTO VERIFICADO (leitura feita em 23/09/2026), 3.1 Arquivos alterados, 3.2 Arquivos novos (+17 more)
 
-### Community 598 - "8. As 150 etapas"
+### Community 599 - "8. As 150 etapas"
 Cohesion: 0.08
 Nodes (25): 10. Fontes consultadas, 1. O que é, em uma frase, 2. Por que vale a pena (evidência externa, com as ressalvas honestas), 3.1 Escopo: o RADAR é **só para vendas**, 3. O que já existe e será reaproveitado (medido no código em 2026-10-16), 4. A metodologia de venda do RADAR: **B·R·I·N·D·E**, 5. Arquitetura-alvo (resumo), 6. Decisões de negócio que dependem do Joaquim (registradas em CV-009, dentro da Fase 1) (+17 more)
 
-### Community 599 - "FASE 4 — Economia de build (V076–V100) — **P1 custo**"
+### Community 600 - "FASE 4 — Economia de build (V076–V100) — **P1 custo**"
 Cohesion: 0.08
 Nodes (26): FASE 4 — Economia de build (V076–V100) — **P1 custo**, V076 — Script `ignoreCommand`, V077 — Testes do script, V078 — Validar contra o histórico real, V079 — Ligar no `vercel.json`, V080 — Provar no preview do próprio PR, V081 — Status do GitHub com build ignorado, V082 — Produção: não pular quando muda dependência (+18 more)
 
-### Community 600 - "FASE 6 — Segurança de borda (V126–V150)"
+### Community 601 - "FASE 6 — Segurança de borda (V126–V150)"
 Cohesion: 0.08
 Nodes (26): FASE 6 — Segurança de borda (V126–V150), V126 — Coletar relatórios de CSP, V127 — Ajustar a CSP às violações legítimas, V128 — `script-src 'unsafe-inline'`, V129 — Promover CSP para enforce, V130 — `report-to` moderno, V131 — `robots.txt` bloqueando tudo, V132 — `X-Robots-Tag: noindex, nofollow` (+18 more)
 
-### Community 601 - "1. Deploy"
+### Community 602 - "1. Deploy"
 Cohesion: 0.08
 Nodes (24): 1.1 Frontend (Vercel), 1.2 Rollback do frontend (< 2 min), 1.3 Edge Functions (Supabase), 1.4 Migrations de banco, 1.5 Checklist pré-merge, 1. Deploy, 2.1 Web Vitals, 2.2 Erros de produção (client) (+16 more)
 
-### Community 602 - "Webhook Security - HMAC Signature Validation"
+### Community 603 - "Webhook Security - HMAC Signature Validation"
 Cohesion: 0.08
 Nodes (25): 1. Fluxo de Validação, 2. Headers Suportados, 3. Formato da Assinatura, Como Funciona, Configuração, Configuração na Evolution API, Geração de Assinatura (Para Testes), Logs de Auditoria (+17 more)
 
-### Community 603 - "scripts/ci/db-migrate-contratos.unit.mjs"
+### Community 604 - "scripts/ci/db-migrate-contratos.unit.mjs"
 Cohesion: 0.12
 Nodes (21): CONTRATOS, envSemDestinoUrl(), EXECUTOR, raiz, rodaCli(), rodaExecutor(), SUPORTADAS, VALIDADORES (+13 more)
 
-### Community 604 - "scripts/ci/edge-coverage-authz.unit.mjs"
+### Community 605 - "scripts/ci/edge-coverage-authz.unit.mjs"
 Cohesion: 0.12
 Nodes (25): avaliarRégua(), avaliarStatusTestes(), chaveHelper(), DENO_CONFIG_REL, DIR_CI, DOCS_REL, erroDenoTest(), ESTE_ARQUIVO (+17 more)
 
-### Community 605 - "mapa-bundle-raw-doc.unit.mjs"
+### Community 606 - "mapa-bundle-raw-doc.unit.mjs"
 Cohesion: 0.11
 Nodes (22): blocoDepois(), BUDGET, CABECALHO_MAIOR, CARREGADOR, colunas(), colunasDaTabela(), comLinha(), comPontos() (+14 more)
 
-### Community 606 - "scripts/db-audit/n011-storage-policies-dedup.test.mjs"
+### Community 607 - "scripts/db-audit/n011-storage-policies-dedup.test.mjs"
 Cohesion: 0.12
 Nodes (23): aplicarStatementsDePolicy(), arquivosBase, arquivosTodos, bucketDe(), caminhoFix, clausula(), dirMig, divide() (+15 more)
 
-### Community 607 - "ContactForm"
+### Community 608 - "ContactForm"
 Cohesion: 0.09
 Nodes (17): assinaturaEndereco(), ContactForm, ContactFormValues, formatCep(), base, ESPERA, h, BASE_VALUES (+9 more)
 
-### Community 608 - "TalkXSuppression.searchServer.test.tsx"
+### Community 609 - "TalkXSuppression.searchServer.test.tsx"
 Cohesion: 0.08
 Nodes (11): h, makeChain(), chain, run(), h, makeChain(), chain, QueryRec (+3 more)
 
-### Community 609 - "useGmail.test.ts"
+### Community 610 - "useGmail.test.ts"
 Cohesion: 0.14
 Nodes (21): createWrapper(), makeFromChain(), MOCK_ACCOUNT, MOCK_THREAD, mockActions(), renderReady(), setupDefaultMocks(), renderOAuthReturn() (+13 more)
 
-### Community 610 - "useTalkXTemplates.test.ts"
+### Community 611 - "useTalkXTemplates.test.ts"
 Cohesion: 0.08
 Nodes (20): authGetSession, authProfile, directMutationResult, directResult, fetchMock, fromTable, listResult, makeBuilder() (+12 more)
 
-### Community 611 - "mediaVolumeElement.ts"
+### Community 612 - "mediaVolumeElement.ts"
 Cohesion: 0.12
 Nodes (18): applyMediaVolumeGain(), bindMediaVolume(), closeMediaAudioContext(), detectNativeVolumeSupport(), elementGainNodes, elementosComGesto, getAudioContextConstructor(), getElementGainNode() (+10 more)
 
-### Community 612 - "externalDB.ts"
+### Community 613 - "externalDB.ts"
 Cohesion: 0.08
 Nodes (25): ExtAchievement, ExtCarrier, ExtCompany, ExtCompanyAddress, ExtCompanyEmail, ExtCompanyPhone, ExtCompanyRFMScore, ExtCompanySocialMedia (+17 more)
 
-### Community 613 - "ai-proxy/index.test.ts"
+### Community 614 - "ai-proxy/index.test.ts"
 Cohesion: 0.08
 Nodes (19): assert(), Chamada, ENV_KEYS, ENV_OK, insertsDeUso(), linhaDeUso(), PROVIDER_ROW, ROTA_AUTH (+11 more)
 
-### Community 614 - "admin_unlock_login_autorizacao.sql"
+### Community 615 - "admin_unlock_login_autorizacao.sql"
 Cohesion: 0.08
 Nodes (18): auth.users, pg_temp.espera_contem(), public.contacts, public.messages, public.notifications, public.permissions, public.profiles, public.role_permissions (+10 more)
 
-### Community 615 - "ai-jobs-estados-e-durabilidade.contract.test.ts"
+### Community 616 - "ai-jobs-estados-e-durabilidade.contract.test.ts"
 Cohesion: 0.09
 Nodes (13): AiJobsModule, ARQ_EDGE, ARQ_MIGRATION, createTableBody(), FROZEN_NON_TERMINALS, FROZEN_STATUSES, FROZEN_TERMINALS, FROZEN_TRANSITIONS (+5 more)
 
-### Community 616 - "Detalhe"
+### Community 617 - "Detalhe"
 Cohesion: 0.08
 Nodes (24): Auto Update PR Branches (`auto-update-pr-branch.yml`), Branch Hygiene Audit (`branch-hygiene-audit.yml`), CI/CD Pipeline (`ci.yml`), CodeQL (`codeql.yml`), Contexto para agentes de IA (10 min) (`contexto.yml`), CRM Sync Worker (`crm-sync-worker.yml`), DB Guard (offline) (`db-guard.yml`), DB Live Guard (`db-live-guard.yml`) (+16 more)
-
-### Community 617 - "Vereditos dos 96 caminhos — lote 3 (16 caminhos)"
-Cohesion: 0.08
-Nodes (23): L1 — Correlação busca↔clique na telemetria da busca global (ALTO), L2 — Wizard Talk X avança/lança sem audiência confirmada (ALTO), L3 — Tela admin "Insights de Busca" com duas tabelas sempre vazias e dois números jogados fora (MÉDIO), L4 — pgTAP de `log_search_event` ausente (MÉDIO), L5 — Itens pequenos (BAIXO), Lacunas reais (trabalho perdido, ainda faz sentido), src/components/admin/SearchInsightsView.tsx, src/components/dashboard/overview/GamificationSection.tsx (+15 more)
 
 ### Community 618 - "busy-cannon-40szm9/src/components/talkx/kit/dialogs.tsx"
 Cohesion: 0.10
@@ -11370,185 +11370,185 @@ Nodes (15): BlocoErro, CLARO, ESCURO, fromMock, hslParaRgb(), luminancia(), medi
 Cohesion: 0.15
 Nodes (15): A11Y, CLARO, classes(), ESCURO, ESTADOS, fundoProprio(), HC_CLARO, HC_ESCURO (+7 more)
 
-### Community 988 - "SegmentRules"
-Cohesion: 0.15
-Nodes (14): SegmentValidationInput, Props, fromMock, rpcMock, rules, summaryCountsFromServer(), TalkXAudienceCountPayload, TalkXAudienceRpc (+6 more)
-
-### Community 989 - "src/components/talkx/__tests__/TalkXSegments.detailPanel.test.tsx"
+### Community 988 - "src/components/talkx/__tests__/TalkXSegments.detailPanel.test.tsx"
 Cohesion: 0.12
 Nodes (6): countResposta, f, pageResposta, segmento, state, chain
 
-### Community 990 - "TalkXSegments.gradeEPainel.test.tsx"
+### Community 989 - "TalkXSegments.gradeEPainel.test.tsx"
 Cohesion: 0.12
 Nodes (7): countResposta, f, pageResposta, segmento, seisCriterios, state, chain
 
-### Community 991 - "Builder"
+### Community 990 - "Builder"
 Cohesion: 0.13
 Nodes (4): Builder, GoalRow, h, NotificationRow
 
-### Community 992 - "src/hooks/__tests__/useTeamChatNotifications.behavior.test.ts"
+### Community 991 - "src/hooks/__tests__/useTeamChatNotifications.behavior.test.ts"
 Cohesion: 0.13
 Nodes (7): FakeAudioContext, FakeGainNode, FakeOscillatorNode, grafo, h, canal, consulta
 
-### Community 993 - "src/hooks/__tests__/useTeamChatNotifications.global.test.tsx"
+### Community 992 - "src/hooks/__tests__/useTeamChatNotifications.global.test.tsx"
 Cohesion: 0.13
 Nodes (7): FakeAudioContext, FakeGainNode, FakeOscillatorNode, grafo, h, canal, consulta
 
-### Community 994 - "auto-close-conversations/index.test.ts"
+### Community 993 - "auto-close-conversations/index.test.ts"
 Cohesion: 0.14
 Nodes (13): CRON_SECRET_ENV, CRON_SECRET_HEADER, assert(), assertNoEffects(), AuthClientOpts, CLOSABLE_CONFIG, makeCloseRun(), makeServiceClient() (+5 more)
 
-### Community 995 - "webauthn/index.test.ts"
+### Community 994 - "webauthn/index.test.ts"
 Cohesion: 0.14
 Nodes (10): AdminOptions, DBFilter, DBResult, fakeAdmin(), fakeDb(), FUTURE, loginDb(), PAST (+2 more)
 
-### Community 996 - "supabase/migrations/20251215024517_1c312256-b6e4-4d34-8dc5-3b03301e369e.sql"
+### Community 995 - "supabase/migrations/20251215024517_1c312256-b6e4-4d34-8dc5-3b03301e369e.sql"
 Cohesion: 0.18
 Nodes (14): auto_assign_contact_trigger, on_auth_user_created, public.auto_assign_contact(), public.client_wallet_rules, public.contacts, public.profiles, public.whatsapp_connections, auth.users (+6 more)
 
-### Community 997 - "public.talkx_template_library_stats"
+### Community 996 - "public.talkx_template_library_stats"
 Cohesion: 0.12
 Nodes (16): public.talkx_template_library_stats(), public.talkx_template_stats(), base_anterior, base_atual, conv, envios, janelas, lider (+8 more)
 
-### Community 998 - "global_settings_secrets_rls.sql"
+### Community 997 - "global_settings_secrets_rls.sql"
 Cohesion: 0.12
 Nodes (10): auth.users, public.contacts, public.messages, public.permissions, public.profiles, public.queues, public.role_permissions, public.whatsapp_connections (+2 more)
 
-### Community 999 - "indeterminate_optout_outbox.sql"
+### Community 998 - "indeterminate_optout_outbox.sql"
 Cohesion: 0.12
 Nodes (8): public.contacts, public.messages, public.optout_call_log, public.profiles, public.talkx_blacklist, public.talkx_recipients, public.talkx_settings, public.whatsapp_connections
 
-### Community 1000 - "update_own_profile_sem_email.sql"
+### Community 999 - "update_own_profile_sem_email.sql"
 Cohesion: 0.12
 Nodes (11): public.blocked_ips, public.contacts, public.conversation_sla, public.is_admin_or_supervisor(), public.login_attempts, public.permissions, public.profiles, public.rate_limit_configs (+3 more)
 
-### Community 1001 - "multiplix-dispatch-audience-saved.contract.test.ts"
+### Community 1000 - "multiplix-dispatch-audience-saved.contract.test.ts"
 Cohesion: 0.12
 Nodes (12): AUDIENCE, AUDIENCE_RULE, INDEX_SRC, OUT_OF_FILTER, PROFILE, ROOT, Row, SavedAudienceFixture (+4 more)
 
-### Community 1002 - "auth.users"
+### Community 1001 - "auth.users"
 Cohesion: 0.12
 Nodes (16): allowed_countries, audio_memes, audit_logs, blocked_countries, blocked_ips, favorite_contacts, geo_blocking_settings, ip_whitelist (+8 more)
 
-### Community 1003 - "Recuperação total do trabalho em branches — 16/11/2026"
+### Community 1002 - "Recuperação total do trabalho em branches — 16/11/2026"
 Cohesion: 0.12
 Nodes (15): Bloco A1 — migrations que não existem na `main`, Bloco A2 — código de aplicação, edge e E2E que não existe na `main`, Bloco A3 — automação que não existe na `main`, Bloco B — documento de análise/auditoria (agregado), Bloco C — a `main` tem o arquivo, em versão sem todas as linhas da branch, Colisão de número de versão — medido no ledger de produção em 16/11/2026, Leitura honesta do bloco C, O que ainda NÃO está decidido (+7 more)
 
-### Community 1004 - "FASE G — PERFORMANCE (Etapas 146–160)"
+### Community 1003 - "FASE G — PERFORMANCE (Etapas 146–160)"
 Cohesion: 0.12
 Nodes (16): FASE G — PERFORMANCE (Etapas 146–160), G146. Medir e documentar Web Vitals baseline, G147. Lazy loading para `mapbox-gl` e `ElevenLabs`, G148. Implementar virtual scrolling em listas longas, G149. Adicionar `React.memo` nos componentes de message bubble, G150. Configurar `staleTime` em React Query para queries pesadas, G151. Consolidar canais Realtime — reduzir de 24 para mínimo, G152. Adicionar debounce em search inputs (+8 more)
 
-### Community 1005 - "FASE H — QUALIDADE E MANUTENIBILIDADE (Etapas 161–175)"
+### Community 1004 - "FASE H — QUALIDADE E MANUTENIBILIDADE (Etapas 161–175)"
 Cohesion: 0.12
 Nodes (16): FASE H — QUALIDADE E MANUTENIBILIDADE (Etapas 161–175), H161. Adicionar ErrorBoundary em todas as páginas, H162. Implementar correlation ID em logs, H163. Mergear PRs de segurança Z-series restantes, H164. Padronizar respostas de erro no front-end, H165. Configurar retry automático em React Query, H166. Criar `src/constants/` para valores mágicos, H167. Documentar árvore de contextos React (+8 more)
 
-### Community 1006 - "FASE I — DOCUMENTAÇÃO E GOVERNANÇA (Etapas 176–190)"
+### Community 1005 - "FASE I — DOCUMENTAÇÃO E GOVERNANÇA (Etapas 176–190)"
 Cohesion: 0.12
 Nodes (16): FASE I — DOCUMENTAÇÃO E GOVERNANÇA (Etapas 176–190), I176. Criar `docs/adr/ADR-001-evolution-messages-partman.md`, I177. Criar `docs/adr/ADR-002-typescript-strict-mode.md`, I178. Criar ADR para política de retenção de dados (LGPD), I179. Criar `docs/architecture/SYSTEM_OVERVIEW.md`, I180. Criar `docs/architecture/DATABASE_ARCHITECTURE.md`, I181. Atualizar `CLAUDE.md` — referenciar novos scripts do plano, I182. Criar `ROADMAP.md` com próximos 90 dias (+8 more)
 
-### Community 1007 - "FASE G — PERFORMANCE (Etapas 146–160)"
+### Community 1006 - "FASE G — PERFORMANCE (Etapas 146–160)"
 Cohesion: 0.12
 Nodes (16): FASE G — PERFORMANCE (Etapas 146–160), G146. Medir e documentar Web Vitals baseline, G147. Lazy loading para `mapbox-gl` e `ElevenLabs`, G148. Implementar virtual scrolling em listas longas, G149. Adicionar `React.memo` nos componentes de message bubble, G150. Configurar `staleTime` em React Query para queries pesadas, G151. Consolidar canais Realtime — reduzir de 24 para mínimo, G152. Adicionar debounce em search inputs (+8 more)
 
-### Community 1008 - "FASE H — QUALIDADE E MANUTENIBILIDADE (Etapas 161–175)"
+### Community 1007 - "FASE H — QUALIDADE E MANUTENIBILIDADE (Etapas 161–175)"
 Cohesion: 0.12
 Nodes (16): FASE H — QUALIDADE E MANUTENIBILIDADE (Etapas 161–175), H161. Adicionar ErrorBoundary em todas as páginas, H162. Implementar correlation ID em logs, H163. Mergear PRs de segurança Z-series restantes, H164. Padronizar respostas de erro no front-end, H165. Configurar retry automático em React Query, H166. Criar `src/constants/` para valores mágicos, H167. Documentar árvore de contextos React (+8 more)
 
-### Community 1009 - "FASE I — DOCUMENTAÇÃO E GOVERNANÇA (Etapas 176–190)"
+### Community 1008 - "FASE I — DOCUMENTAÇÃO E GOVERNANÇA (Etapas 176–190)"
 Cohesion: 0.12
 Nodes (16): FASE I — DOCUMENTAÇÃO E GOVERNANÇA (Etapas 176–190), I176. Criar `docs/adr/ADR-001-evolution-messages-partman.md`, I177. Criar `docs/adr/ADR-002-typescript-strict-mode.md`, I178. Criar ADR para política de retenção de dados (LGPD), I179. Criar `docs/architecture/SYSTEM_OVERVIEW.md`, I180. Criar `docs/architecture/DATABASE_ARCHITECTURE.md`, I181. Atualizar `CLAUDE.md` — referenciar novos scripts do plano, I182. Criar `ROADMAP.md` com próximos 90 dias (+8 more)
 
-### Community 1010 - "FASE G — PERFORMANCE (Etapas 146–160)"
+### Community 1009 - "FASE G — PERFORMANCE (Etapas 146–160)"
 Cohesion: 0.12
 Nodes (16): FASE G — PERFORMANCE (Etapas 146–160), G146. Medir e documentar Web Vitals baseline, G147. Lazy loading para `mapbox-gl` e `ElevenLabs`, G148. Implementar virtual scrolling em listas longas, G149. Adicionar `React.memo` nos componentes de message bubble, G150. Configurar `staleTime` em React Query para queries pesadas, G151. Consolidar canais Realtime — reduzir de 24 para mínimo, G152. Adicionar debounce em search inputs (+8 more)
 
-### Community 1011 - "FASE I — DOCUMENTAÇÃO E GOVERNANÇA (Etapas 176–190)"
+### Community 1010 - "FASE I — DOCUMENTAÇÃO E GOVERNANÇA (Etapas 176–190)"
 Cohesion: 0.12
 Nodes (16): FASE I — DOCUMENTAÇÃO E GOVERNANÇA (Etapas 176–190), I176. Criar `docs/adr/ADR-001-evolution-messages-partman.md`, I177. Criar `docs/adr/ADR-002-typescript-strict-mode.md`, I178. Criar ADR para política de retenção de dados (LGPD), I179. Criar `docs/architecture/SYSTEM_OVERVIEW.md`, I180. Criar `docs/architecture/DATABASE_ARCHITECTURE.md`, I181. Atualizar `CLAUDE.md` — referenciar novos scripts do plano, I182. Criar `ROADMAP.md` com próximos 90 dias (+8 more)
 
-### Community 1012 - "FASE G — PERFORMANCE (Etapas 146–160)"
+### Community 1011 - "FASE G — PERFORMANCE (Etapas 146–160)"
 Cohesion: 0.12
 Nodes (16): FASE G — PERFORMANCE (Etapas 146–160), G146. Medir e documentar Web Vitals baseline, G147. Lazy loading para `mapbox-gl` e `ElevenLabs`, G148. Implementar virtual scrolling em listas longas, G149. Adicionar `React.memo` nos componentes de message bubble, G150. Configurar `staleTime` em React Query para queries pesadas, G151. Consolidar canais Realtime — reduzir de 24 para mínimo, G152. Adicionar debounce em search inputs (+8 more)
 
-### Community 1013 - "FASE H — QUALIDADE E MANUTENIBILIDADE (Etapas 161–175)"
+### Community 1012 - "FASE H — QUALIDADE E MANUTENIBILIDADE (Etapas 161–175)"
 Cohesion: 0.12
 Nodes (16): FASE H — QUALIDADE E MANUTENIBILIDADE (Etapas 161–175), H161. Adicionar ErrorBoundary em todas as páginas, H162. Implementar correlation ID em logs, H163. Mergear PRs de segurança Z-series restantes, H164. Padronizar respostas de erro no front-end, H165. Configurar retry automático em React Query, H166. Criar `src/constants/` para valores mágicos, H167. Documentar árvore de contextos React (+8 more)
 
-### Community 1014 - "FASE I — DOCUMENTAÇÃO E GOVERNANÇA (Etapas 176–190)"
+### Community 1013 - "FASE I — DOCUMENTAÇÃO E GOVERNANÇA (Etapas 176–190)"
 Cohesion: 0.12
 Nodes (16): FASE I — DOCUMENTAÇÃO E GOVERNANÇA (Etapas 176–190), I176. Criar `docs/adr/ADR-001-evolution-messages-partman.md`, I177. Criar `docs/adr/ADR-002-typescript-strict-mode.md`, I178. Criar ADR para política de retenção de dados (LGPD), I179. Criar `docs/architecture/SYSTEM_OVERVIEW.md`, I180. Criar `docs/architecture/DATABASE_ARCHITECTURE.md`, I181. Atualizar `CLAUDE.md` — referenciar novos scripts do plano, I182. Criar `ROADMAP.md` com próximos 90 dias (+8 more)
 
-### Community 1015 - "2. As 4 perguntas com evidência (diff lido)"
+### Community 1014 - "2. As 4 perguntas com evidência (diff lido)"
 Cohesion: 0.12
 Nodes (14): 2.1 Ainda válida?, 2.2 Traz regressão?, 2.4 Regra de negócio correta?, 2. As 4 perguntas com evidência (diff lido), 3. Bloqueio atual, 4. Ação necessária, Dossiê PR #2240 — feat(talkx): X115 — TalkXSegments filtros persistem em URL, 2.1 Ainda válida? (+6 more)
 
-### Community 1016 - "Verificação adversarial"
+### Community 1015 - "Verificação adversarial"
 Cohesion: 0.12
 Nodes (15): Arquivo × achado × evidência, Branch, claude__chore-prod-readiness-261112-1421 — INCORPORADA, Extras X1–X29: todos na main, com substância (não só o rótulo), Histórico depois do merge (main hoje: `dac285f62`, arquivo com 1857 linhas, md5 `b39eb00185048be2cd8245a98261e309`), Lacunas a recuperar, O que de fato só existe na branch (684 linhas por `grep -vxF`) — valor abaixo de médio, Por que o mecânico apontou 665 linhas (+7 more)
 
-### Community 1017 - "Dossiê — claude__fix-team-chat-deeplink-261108-1932 (PR #2818)"
+### Community 1016 - "Dossiê — claude__fix-team-chat-deeplink-261108-1932 (PR #2818)"
 Cohesion: 0.17
 Nodes (14): Arquivo × achado × evidência, Dossiê — claude__feat-teamchat-cid-261021-0758 (PR #2146), Veredito, Verificação adversarial, Única diferença residual, Arquivo × achado × evidência, Dossiê — claude__fix-team-chat-deeplink-261108-1932 (PR #2818), Lacunas a recuperar (+6 more)
 
-### Community 1018 - "claude__festive-faraday-kv669k — auditoria Supabase (PRs #2414 e #2506)"
+### Community 1017 - "claude__festive-faraday-kv669k — auditoria Supabase (PRs #2414 e #2506)"
 Cohesion: 0.12
 Nodes (15): 1. Achado MFA (A-07) — não existe no ledger da main · valor médio, 2. Complemento de `multiplix-voice` (opcional) · valor baixo, 3. Matriz RLS expandida · valor baixo, apagar_branch_seguro: false, Arquivo × achado × evidência, claude__festive-faraday-kv669k — auditoria Supabase (PRs #2414 e #2506), Conclusão, Lacuna 1 (MFA, "valor médio") — REFUTADA: está na main (+7 more)
 
-### Community 1019 - "multiplixResume.test.ts"
+### Community 1018 - "multiplixResume.test.ts"
 Cohesion: 0.16
 Nodes (12): Arquivo × achado × evidência, Banco (produção, só leitura), Dossiê — claude__fix-multiplix-retomar-seguro-261114 (PR #3089), Lacunas a recuperar, Propósito, Verificação adversarial, confirmResumeByStatus(), ConfirmResumeOptions (+4 more)
 
-### Community 1020 - "claude__fix-talkx-cron-startup-timeout-261101-2200 — OBSOLETA"
+### Community 1019 - "claude__fix-talkx-cron-startup-timeout-261101-2200 — OBSOLETA"
 Cohesion: 0.12
 Nodes (15): 1. O diff é 1 arquivo e nada mais, 2. A substituição alegada cobre a necessidade — abri o arquivo da main, 3. C1 não é só "ausente": a migration da branch **não aplica**, 4. C2 é no-op confirmado, e sem o índice seria no-op de qualquer forma, 5. A lacuna residual é a que a triagem apontou, e é baixa — verifiquei linha a linha, 6. A premissa do diagnóstico está desfeita (reconferida), Arquivo × achado × evidência (produção `tnnnlkbymytvtqngbbqh`, somente leitura), claude__fix-talkx-cron-startup-timeout-261101-2200 — OBSOLETA (+7 more)
 
-### Community 1021 - "Dossiê — fix__f1a-supabase-channel-mock-audiomeme-20261018 (PR #2064)"
+### Community 1020 - "Dossiê — fix__f1a-supabase-channel-mock-audiomeme-20261018 (PR #2064)"
 Cohesion: 0.12
 Nodes (15): 1. Universo completo do que a branch tem a mais que a main, 2. Prova de que a corrupção não é artefato do diff — o arquivo da ponta não compila, 3. Os três hunks funcionais estão na main byte a byte, 4. Reexame dos commits intermediários (o ponto mais provável de perda), Achado 1 — 16 linhas de `2c391825f` (formatação), Achado 2 — 3 linhas de `fcc63eed6` (mock do canal realtime), apagar_branch_seguro: **true**, Arquivo × achado × evidência (+7 more)
 
-### Community 1022 - "Arquivo × achado × evidência"
+### Community 1021 - "Arquivo × achado × evidência"
 Cohesion: 0.16
 Nodes (15): 1. Front-end: diferença é cosmética (verificado no diff vs `origin/main`, não vs merge-base), 2. `src/hooks/copilot/useLiveSuggestions.ts` — a main é evolução estrita, e a branch tem bug, 3. `supabase/functions/copilot-live/index.ts` (644 l.) — portar QUEBRARIA o tick em produção, Arquivo × achado × evidência, Conclusão, Integração ponta a ponta já na main, Lacunas a recuperar, pr-2002 — claude/feat-copiloto-cv041-050-suggest-reply-261016-2145 (+7 more)
 
-### Community 1023 - "fix-ga-resto-sonar-contracts-20261021-0726/scripts/ci/catalog-ct73-docs.unit.mjs"
+### Community 1022 - "fix-ga-resto-sonar-contracts-20261021-0726/scripts/ci/catalog-ct73-docs.unit.mjs"
 Cohesion: 0.14
 Nodes (13): CLAUDE_MD, erros, ROOT, SECOES_OBRIGATORIAS, acharNovaMedicao(), BASELINE_MS, estaFechado(), FIXTURE_FECHADO_COM_MEDICAO (+5 more)
 
-### Community 1024 - "festive-carson-ub43wu/src/hooks/chat/__tests__/useTeamChatNotifications.canal-estavel.test.tsx"
+### Community 1023 - "festive-carson-ub43wu/src/hooks/chat/__tests__/useTeamChatNotifications.canal-estavel.test.tsx"
 Cohesion: 0.12
 Nodes (5): FakeNotification, h, NotificacaoFalsa, canal, consulta
 
-### Community 1025 - "feat-ui-visual-texto-longo-261101-1445/src/components/talkx/__tests__/TalkXContactSelector.a11y.test.tsx"
+### Community 1024 - "feat-ui-visual-texto-longo-261101-1445/src/components/talkx/__tests__/TalkXContactSelector.a11y.test.tsx"
 Cohesion: 0.16
 Nodes (12): CONTATOS, corDaClasse(), FOLHA_CONTRASTE, FOLHA_TOKENS, hslDoToken(), luminancia(), razaoDeContraste(), Rgb (+4 more)
 
-### Community 1026 - "fix-codex-findings-161016-1906/scripts/db-audit/n011-storage-policies-dedup.test.mjs"
+### Community 1025 - "fix-codex-findings-161016-1906/scripts/db-audit/n011-storage-policies-dedup.test.mjs"
 Cohesion: 0.22
 Nodes (14): arquivosTodos, bucketDe(), caminhoFix, clausula(), dirMig, divide(), estado(), ler() (+6 more)
 
-### Community 1027 - "ga-ci-verde-261020/src/components/talkx/__tests__/TalkXOverview.table.test.tsx"
+### Community 1026 - "ga-ci-verde-261020/src/components/talkx/__tests__/TalkXOverview.table.test.tsx"
 Cohesion: 0.17
 Nodes (11): CAMPANHAS, celula(), dataDe(), f, linhaDe(), nomesNaTabela(), progressoDe(), renderOverview() (+3 more)
 
-### Community 1028 - "magical-pasteur-iz2pgy/scripts/db-audit/assume-return-conversation.test.sh"
+### Community 1027 - "magical-pasteur-iz2pgy/scripts/db-audit/assume-return-conversation.test.sh"
 Cohesion: 0.28
 Nodes (14): assert_eq(), assume_fields(), checa_contrato(), checa_corrida(), check_error(), exige_falha(), expect_error(), fail() (+6 more)
 
-### Community 1029 - "magical-pasteur-iz2pgy/src/components/inbox/tabs/__tests__/FilesTab.fase6.test.tsx"
+### Community 1028 - "magical-pasteur-iz2pgy/src/components/inbox/tabs/__tests__/FilesTab.fase6.test.tsx"
 Cohesion: 0.15
 Nodes (11): build56(), DOC, enterSelection(), h, IMAGE, imageItem(), mockUseContactMedia, mockUseContactMediaCounts (+3 more)
 
-### Community 1030 - "publish-followup-20261021/scripts/ci/ci-artifacts.unit.mjs"
+### Community 1029 - "publish-followup-20261021/scripts/ci/ci-artifacts.unit.mjs"
 Cohesion: 0.19
 Nodes (13): avaliar(), conjuncao(), disjuncao(), negacao(), primario(), blocoStep(), CENARIOS, ci (+5 more)
 
-### Community 1031 - "ci-verde-261021/supabase/functions/evolution-api/index.ts"
+### Community 1030 - "ci-verde-261021/supabase/functions/evolution-api/index.ts"
 Cohesion: 0.14
 Nodes (12): EvolutionApiDeps, handleEvolutionApi(), pairingCodeFromResponse(), pairingDigits(), PairingFlavor, PairingRoute, readPairingCandidate(), resolvePairingRoute() (+4 more)
 
-### Community 1032 - "inbox.service.ts"
+### Community 1031 - "inbox.service.ts"
 Cohesion: 0.23
 Nodes (9): useInboxFilterTags(), fetchInboxFilterTags(), InboxFilterTag, mapConversations(), mapSilenceRow(), PendingInboxSilenceRpc, toNumber(), toText() (+1 more)
+
+### Community 1032 - "Vereditos dos 96 caminhos — lote 3 (16 caminhos)"
+Cohesion: 0.12
+Nodes (14): src/components/admin/SearchInsightsView.tsx, src/components/dashboard/overview/GamificationSection.tsx, src/components/dashboard/ProgressiveDisclosureDashboard.tsx, src/components/dashboard/ScheduledReportsManager.tsx, src/components/knowledge/KnowledgeBaseView.tsx, src/components/mfa/MFAVerify.tsx, src/components/ui/card.tsx, src/components/ui/phone-input.tsx (+6 more)
 
 ### Community 1033 - "banco: migrations e edge functions (15)"
 Cohesion: 0.12
@@ -16670,333 +16670,333 @@ Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e o
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis, X145 — Aba "Monitor" no módulo
 
-### Community 2320 - "X097 — Aba Variações A/B"
-Cohesion: 0.22
-Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis, X097 — Aba Variações A/B
-
-### Community 2321 - "A11Y-CRM-02 — Abas da conversa sem nome < 1536 px"
+### Community 2320 - "A11Y-CRM-02 — Abas da conversa sem nome < 1536 px"
 Cohesion: 0.22
 Nodes (8): A11Y-CRM-02 — Abas da conversa sem nome < 1536 px, Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2322 - "CT-020 — Abas por tipo legíveis no celular"
+### Community 2321 - "CT-020 — Abas por tipo legíveis no celular"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, CT-020 — Abas por tipo legíveis no celular, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2323 - "X113 — Abas Regras Avançadas, Audiências, Modelos"
+### Community 2322 - "X113 — Abas Regras Avançadas, Audiências, Modelos"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis, X113 — Abas Regras Avançadas, Audiências, Modelos
 
-### Community 2324 - "IA-143 — Abrir evidência sem perder a conversa"
+### Community 2323 - "IA-143 — Abrir evidência sem perder a conversa"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, IA-143 — Abrir evidência sem perder a conversa, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2325 - "ES-30 — "Abrir no CRM""
+### Community 2324 - "ES-30 — "Abrir no CRM""
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, ES-30 — "Abrir no CRM", Estado real conferido, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2326 - "IA-089 — Abster-se sem fundamento"
+### Community 2325 - "IA-089 — Abster-se sem fundamento"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, IA-089 — Abster-se sem fundamento, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2327 - "X198 — Aceite visual 17/17 com o dono"
+### Community 2326 - "X198 — Aceite visual 17/17 com o dono"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis, X198 — Aceite visual 17/17 com o dono
 
-### Community 2328 - "T76 — Acessibilidade (axe 0 serious/critical)"
+### Community 2327 - "T76 — Acessibilidade (axe 0 serious/critical)"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis, T76 — Acessibilidade (axe 0 serious/critical)
 
-### Community 2329 - "T84 — Acessibilidade (axe 0 serious/critical)"
+### Community 2328 - "T84 — Acessibilidade (axe 0 serious/critical)"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis, T84 — Acessibilidade (axe 0 serious/critical)
 
-### Community 2330 - "DASH-089 — Acessibilidade das 9 abas"
+### Community 2329 - "DASH-089 — Acessibilidade das 9 abas"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, DASH-089 — Acessibilidade das 9 abas, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2331 - "ADV-1 — Advisors de segurança/performance do backend de e-mail"
+### Community 2330 - "ADV-1 — Advisors de segurança/performance do backend de e-mail"
 Cohesion: 0.22
 Nodes (8): ADV-1 — Advisors de segurança/performance do backend de e-mail, Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2332 - "TL-179 — Afirmações falsas nos docs"
+### Community 2331 - "TL-179 — Afirmações falsas nos docs"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis, TL-179 — Afirmações falsas nos docs
 
-### Community 2333 - "C-14 — Agente de voz conversacional (ElevenLabs ConvAI)"
+### Community 2332 - "C-14 — Agente de voz conversacional (ElevenLabs ConvAI)"
 Cohesion: 0.22
 Nodes (8): C-14 — Agente de voz conversacional (ElevenLabs ConvAI), Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2334 - "B13 — ai-auto-tag/auth_test.ts no CI"
+### Community 2333 - "B13 — ai-auto-tag/auth_test.ts no CI"
 Cohesion: 0.22
 Nodes (8): B13 — ai-auto-tag/auth_test.ts no CI, Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2335 - "Y22-8 — Ajuda do catálogo com prints reais"
+### Community 2334 - "Y22-8 — Ajuda do catálogo com prints reais"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis, Y22-8 — Ajuda do catálogo com prints reais
 
-### Community 2336 - "E81 — Ajuste Playwright"
+### Community 2335 - "E81 — Ajuste Playwright"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, E81 — Ajuste Playwright, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2337 - "SL-031 — Ajuste Playwright"
+### Community 2336 - "SL-031 — Ajuste Playwright"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis, SL-031 — Ajuste Playwright
 
-### Community 2338 - "E83 — Alerta da suíte logada"
+### Community 2337 - "E83 — Alerta da suíte logada"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, E83 — Alerta da suíte logada, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2339 - "IA-058 — Alerta de consumo anômalo"
+### Community 2338 - "IA-058 — Alerta de consumo anômalo"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, IA-058 — Alerta de consumo anômalo, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2340 - "E91 — Alerta de custo por e-mail"
+### Community 2339 - "E91 — Alerta de custo por e-mail"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, E91 — Alerta de custo por e-mail, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2341 - "OBS-1 — Alerta de desconexão do WhatsApp"
+### Community 2340 - "OBS-1 — Alerta de desconexão do WhatsApp"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, OBS-1 — Alerta de desconexão do WhatsApp, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2342 - "FILA-PER — Alertas de fila persistidos"
+### Community 2341 - "FILA-PER — Alertas de fila persistidos"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, FILA-PER — Alertas de fila persistidos, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2343 - "FILA-AL — Alertas de fila "tempo de espera" e "mensagens pendentes""
+### Community 2342 - "FILA-AL — Alertas de fila "tempo de espera" e "mensagens pendentes""
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, FILA-AL — Alertas de fila "tempo de espera" e "mensagens pendentes", Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2344 - "DASH-073 — Alertas de IA por interface restrita"
+### Community 2343 - "DASH-073 — Alertas de IA por interface restrita"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, DASH-073 — Alertas de IA por interface restrita, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2345 - "C-E35 — Alertas operacionais (conexões, disco, backup, erro de edge)"
+### Community 2344 - "C-E35 — Alertas operacionais (conexões, disco, backup, erro de edge)"
 Cohesion: 0.22
 Nodes (8): C-E35 — Alertas operacionais (conexões, disco, backup, erro de edge), Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2346 - "E30 — allowed_actions / validity checks / limpeza de artifacts"
+### Community 2345 - "E30 — allowed_actions / validity checks / limpeza de artifacts"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, E30 — allowed_actions / validity checks / limpeza de artifacts, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2347 - "E37 — allowed_actions / validity checks / limpeza de artifacts"
+### Community 2346 - "E37 — allowed_actions / validity checks / limpeza de artifacts"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, E37 — allowed_actions / validity checks / limpeza de artifacts, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2348 - "E73 — allowed_actions / validity checks / limpeza de artifacts"
+### Community 2347 - "E73 — allowed_actions / validity checks / limpeza de artifacts"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, E73 — allowed_actions / validity checks / limpeza de artifacts, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2349 - "IA-017 — Allowlist de segredos por provedor"
+### Community 2348 - "IA-017 — Allowlist de segredos por provedor"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, IA-017 — Allowlist de segredos por provedor, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2350 - "B4 — Allowlist de vozes/modelos TTS"
+### Community 2349 - "B4 — Allowlist de vozes/modelos TTS"
 Cohesion: 0.22
 Nodes (8): B4 — Allowlist de vozes/modelos TTS, Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2351 - "IA-010 — Ambiente de ensaio com dados sintéticos"
+### Community 2350 - "IA-010 — Ambiente de ensaio com dados sintéticos"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, IA-010 — Ambiente de ensaio com dados sintéticos, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2352 - "DASH-033 — Análises/sentimento agregados"
+### Community 2351 - "DASH-033 — Análises/sentimento agregados"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, DASH-033 — Análises/sentimento agregados, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2353 - "X129 — Anexar mídia por upload"
+### Community 2352 - "X129 — Anexar mídia por upload"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis, X129 — Anexar mídia por upload
 
-### Community 2354 - "F06 — Anexos: ler e apagar os próprios arquivos (storage)"
+### Community 2353 - "F06 — Anexos: ler e apagar os próprios arquivos (storage)"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, F06 — Anexos: ler e apagar os próprios arquivos (storage), Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2355 - "R1 — Anexos: ler e apagar os próprios arquivos (storage)"
+### Community 2354 - "R1 — Anexos: ler e apagar os próprios arquivos (storage)"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, R1 — Anexos: ler e apagar os próprios arquivos (storage), Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2356 - "TC-12 — Anexos: ler e apagar os próprios arquivos (storage)"
+### Community 2355 - "TC-12 — Anexos: ler e apagar os próprios arquivos (storage)"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis, TC-12 — Anexos: ler e apagar os próprios arquivos (storage)
 
-### Community 2357 - "IA-139 — Anexos no contexto da análise"
+### Community 2356 - "IA-139 — Anexos no contexto da análise"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, IA-139 — Anexos no contexto da análise, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2358 - "CT-039 — Aniversário e redes"
+### Community 2357 - "CT-039 — Aniversário e redes"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, CT-039 — Aniversário e redes, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2359 - "L-40 — Anonimização de CPF/cartão nos prompts/logs de IA"
+### Community 2358 - "L-40 — Anonimização de CPF/cartão nos prompts/logs de IA"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, L-40 — Anonimização de CPF/cartão nos prompts/logs de IA, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2360 - "E94 — Apagar environments órfãos"
+### Community 2359 - "E94 — Apagar environments órfãos"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, E94 — Apagar environments órfãos, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2361 - "L-35 — API pública"
+### Community 2360 - "L-35 — API pública"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, L-35 — API pública, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2362 - "SL-136 — Aposentar dispatcher N8N"
+### Community 2361 - "SL-136 — Aposentar dispatcher N8N"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis, SL-136 — Aposentar dispatcher N8N
 
-### Community 2363 - "E21 — Aposentar EVOLUTION_INSTANCE_TOKEN/NAME"
+### Community 2362 - "E21 — Aposentar EVOLUTION_INSTANCE_TOKEN/NAME"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, E21 — Aposentar EVOLUTION_INSTANCE_TOKEN/NAME, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2364 - "CP2 — AppHeader global (seção atual, busca ⌘K, pílula do usuário)"
+### Community 2363 - "CP2 — AppHeader global (seção atual, busca ⌘K, pílula do usuário)"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, CP2 — AppHeader global (seção atual, busca ⌘K, pílula do usuário), Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2365 - "SL-032 — approvals, audit prod bloqueante, husky, Node 24"
+### Community 2364 - "SL-032 — approvals, audit prod bloqueante, husky, Node 24"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis, SL-032 — approvals, audit prod bloqueante, husky, Node 24
 
-### Community 2366 - "SL-129 — Apps, approvals=1, CODEOWNERS"
+### Community 2365 - "SL-129 — Apps, approvals=1, CODEOWNERS"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis, SL-129 — Apps, approvals=1, CODEOWNERS
 
-### Community 2367 - "SL-142 — Apps, approvals=1, CODEOWNERS"
+### Community 2366 - "SL-142 — Apps, approvals=1, CODEOWNERS"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis, SL-142 — Apps, approvals=1, CODEOWNERS
 
-### Community 2368 - "X066 — Aprovação interna de template"
+### Community 2367 - "X066 — Aprovação interna de template"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis, X066 — Aprovação interna de template
 
-### Community 2369 - "A11Y-09 — aria-expanded em div"
+### Community 2368 - "A11Y-09 — aria-expanded em div"
 Cohesion: 0.22
 Nodes (8): A11Y-09 — aria-expanded em div, Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2370 - "X062 — Assinar mídia do bucket no envio"
+### Community 2369 - "X062 — Assinar mídia do bucket no envio"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis, X062 — Assinar mídia do bucket no envio
 
-### Community 2371 - "L-17 — Atalhos do app instalado / widget home screen"
+### Community 2370 - "L-17 — Atalhos do app instalado / widget home screen"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, L-17 — Atalhos do app instalado / widget home screen, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2372 - "CRM-R3 — Ativar front (VITE_CRM_INTEGRATION_ENABLED)"
+### Community 2371 - "CRM-R3 — Ativar front (VITE_CRM_INTEGRATION_ENABLED)"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, CRM-R3 — Ativar front (VITE_CRM_INTEGRATION_ENABLED), Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2373 - "DASH-036 — Ativas com DISTINCT no servidor"
+### Community 2372 - "DASH-036 — Ativas com DISTINCT no servidor"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, DASH-036 — Ativas com DISTINCT no servidor, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2374 - "X184 — Atividade recente"
+### Community 2373 - "X184 — Atividade recente"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis, X184 — Atividade recente
 
-### Community 2375 - "F64 — Ativos e permissões de voz"
+### Community 2374 - "F64 — Ativos e permissões de voz"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, F64 — Ativos e permissões de voz, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2376 - "SB-97 — Atualizar CRM360_TECHNICAL_DOCS / PAINEL_STATUS"
+### Community 2375 - "SB-97 — Atualizar CRM360_TECHNICAL_DOCS / PAINEL_STATUS"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis, SB-97 — Atualizar CRM360_TECHNICAL_DOCS / PAINEL_STATUS
 
-### Community 2377 - "SB-99 — Atualizar CRM360_TECHNICAL_DOCS / PAINEL_STATUS"
+### Community 2376 - "SB-99 — Atualizar CRM360_TECHNICAL_DOCS / PAINEL_STATUS"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis, SB-99 — Atualizar CRM360_TECHNICAL_DOCS / PAINEL_STATUS
 
-### Community 2378 - "X038 — Atualizar projeção pelo CRM 360 em lotes"
+### Community 2377 - "X038 — Atualizar projeção pelo CRM 360 em lotes"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis, X038 — Atualizar projeção pelo CRM 360 em lotes
 
-### Community 2379 - "I-378 — Auto-delete de branch pós-merge"
+### Community 2378 - "I-378 — Auto-delete de branch pós-merge"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, I-378 — Auto-delete de branch pós-merge, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2380 - "L-09 — Auto-fechamento de conversas inativas"
+### Community 2379 - "L-09 — Auto-fechamento de conversas inativas"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, L-09 — Auto-fechamento de conversas inativas, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2381 - "E22 — Auto-merge do PR de sync"
+### Community 2380 - "E22 — Auto-merge do PR de sync"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, E22 — Auto-merge do PR de sync, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2382 - "SL-025 — Auto-merge do sync"
+### Community 2381 - "SL-025 — Auto-merge do sync"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis, SL-025 — Auto-merge do sync
 
-### Community 2383 - "L-05 — Automações genéricas (regras gatilho→ação)"
+### Community 2382 - "L-05 — Automações genéricas (regras gatilho→ação)"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, L-05 — Automações genéricas (regras gatilho→ação), Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2384 - "DASH-022 — Autoria e fila do momento do fato"
+### Community 2383 - "DASH-022 — Autoria e fila do momento do fato"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, DASH-022 — Autoria e fila do momento do fato, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2385 - "F12 — Autorização por is_admin_or_supervisor"
+### Community 2384 - "F12 — Autorização por is_admin_or_supervisor"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, F12 — Autorização por is_admin_or_supervisor, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2386 - "R9 — Autorização por is_admin_or_supervisor"
+### Community 2385 - "R9 — Autorização por is_admin_or_supervisor"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, R9 — Autorização por is_admin_or_supervisor, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2387 - "IA-085 — Avaliar busca vetorial"
+### Community 2386 - "IA-085 — Avaliar busca vetorial"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, IA-085 — Avaliar busca vetorial, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2388 - "IA-187 — Avaliar voz/multimodal"
+### Community 2387 - "IA-187 — Avaliar voz/multimodal"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, IA-187 — Avaliar voz/multimodal, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2389 - "CT-052 — Avatar foto/iniciais estáveis"
+### Community 2388 - "CT-052 — Avatar foto/iniciais estáveis"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, CT-052 — Avatar foto/iniciais estáveis, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2390 - "L-22 — Avatar gerado por IA"
+### Community 2389 - "L-22 — Avatar gerado por IA"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, L-22 — Avatar gerado por IA, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2391 - "098 — Backfill e carga"
+### Community 2390 - "098 — Backfill e carga"
 Cohesion: 0.22
 Nodes (8): 098 — Backfill e carga, Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2392 - "DASH-097 — Backfill e carga"
+### Community 2391 - "DASH-097 — Backfill e carga"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, DASH-097 — Backfill e carga, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2393 - "BU-E02 — Backup do self-hosted, congelamento, graphify antigo"
+### Community 2392 - "BU-E02 — Backup do self-hosted, congelamento, graphify antigo"
 Cohesion: 0.22
 Nodes (8): BU-E02 — Backup do self-hosted, congelamento, graphify antigo, Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2394 - "E03 — Backup do self-hosted, congelamento, graphify antigo"
+### Community 2393 - "E03 — Backup do self-hosted, congelamento, graphify antigo"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, E03 — Backup do self-hosted, congelamento, graphify antigo, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2395 - "F83 — Badge "Teams" na barra lateral"
+### Community 2394 - "F83 — Badge "Teams" na barra lateral"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, F83 — Badge "Teams" na barra lateral, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2396 - "SL-043 — Badge "Teams" na barra lateral"
+### Community 2395 - "SL-043 — Badge "Teams" na barra lateral"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis, SL-043 — Badge "Teams" na barra lateral
 
-### Community 2397 - "TC-76 — Badge "Teams" na barra lateral"
+### Community 2396 - "TC-76 — Badge "Teams" na barra lateral"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis, TC-76 — Badge "Teams" na barra lateral
 
-### Community 2398 - "X196 — Banco limpo (replay, ledger, permissões)"
+### Community 2397 - "X196 — Banco limpo (replay, ledger, permissões)"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis, X196 — Banco limpo (replay, ledger, permissões)
 
-### Community 2399 - "SL-017 — Banner honesto da janela de bloqueio da Meta"
+### Community 2398 - "SL-017 — Banner honesto da janela de bloqueio da Meta"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis, SL-017 — Banner honesto da janela de bloqueio da Meta
 
-### Community 2400 - "E02 — Banner "WhatsApp indisponível" e bloqueio honesto no compositor"
+### Community 2399 - "E02 — Banner "WhatsApp indisponível" e bloqueio honesto no compositor"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, E02 — Banner "WhatsApp indisponível" e bloqueio honesto no compositor, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2401 - "Y17-02 — Barras de progresso sem nome (38 nós)"
+### Community 2400 - "Y17-02 — Barras de progresso sem nome (38 nós)"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis, Y17-02 — Barras de progresso sem nome (38 nós)
+
+### Community 2401 - "A11Y-06 — Barras de progresso sem nome"
+Cohesion: 0.22
+Nodes (8): A11Y-06 — Barras de progresso sem nome, Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis
 
 ### Community 2402 - "X003 — Base de demonstração das 17 telas"
 Cohesion: 0.22
@@ -17074,9 +17074,9 @@ Nodes (8): Camadas afetadas, Critério de aceite, CT-93 — Breadcrumbs catalog.
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis, X061 — Bucket privado talkx-media
 
-### Community 2421 - "E77 — Bump semanal de toolchain"
+### Community 2421 - "119 — Bump toolchain, E2E auth no logado, sentinel, docs canônicos, perFile"
 Cohesion: 0.22
-Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, E77 — Bump semanal de toolchain, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis
+Nodes (8): 119 — Bump toolchain, E2E auth no logado, sentinel, docs canônicos, perFile, Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis
 
 ### Community 2422 - "121 — Bump toolchain, E2E auth no logado, sentinel, docs canônicos, perFile"
 Cohesion: 0.22
@@ -18106,2429 +18106,2429 @@ Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e o
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis, X067 — Envio de teste com trilha e limite
 
-### Community 2679 - "X019 — Envio pela conexão escolhida com ritmo"
+### Community 2679 - "X064 — Envio interativo com fallback"
+Cohesion: 0.22
+Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis, X064 — Envio interativo com fallback
+
+### Community 2680 - "X019 — Envio pela conexão escolhida com ritmo"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis, X019 — Envio pela conexão escolhida com ritmo
 
-### Community 2680 - "E94 — Envio real de localização confirmado no WhatsApp"
+### Community 2681 - "E94 — Envio real de localização confirmado no WhatsApp"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, E94 — Envio real de localização confirmado no WhatsApp, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2681 - "CT-18 — Envio real pelo chat"
+### Community 2682 - "CT-18 — Envio real pelo chat"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, CT-18 — Envio real pelo chat, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2682 - "IA-079 — Erros silenciosos das ferramentas"
+### Community 2683 - "IA-079 — Erros silenciosos das ferramentas"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, IA-079 — Erros silenciosos das ferramentas, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2683 - "X069 — Escala, realtime, eco no Chat, auditoria"
+### Community 2684 - "X069 — Escala, realtime, eco no Chat, auditoria"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis, X069 — Escala, realtime, eco no Chat, auditoria
 
-### Community 2684 - "SLA-ESC — Escalonamento automático de SLA (DOC-CRON-001)"
+### Community 2685 - "SLA-ESC — Escalonamento automático de SLA (DOC-CRON-001)"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis, SLA-ESC — Escalonamento automático de SLA (DOC-CRON-001)
 
-### Community 2685 - "IA-103 — Escalonamento e retorno"
+### Community 2686 - "IA-103 — Escalonamento e retorno"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, IA-103 — Escalonamento e retorno, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2686 - "ACH-2 — Escolha de saída de áudio / alto-falante"
+### Community 2687 - "ACH-2 — Escolha de saída de áudio / alto-falante"
 Cohesion: 0.22
 Nodes (8): ACH-2 — Escolha de saída de áudio / alto-falante, Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2687 - "SL-246 — Escolha de saída de áudio / alto-falante"
+### Community 2688 - "SL-246 — Escolha de saída de áudio / alto-falante"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis, SL-246 — Escolha de saída de áudio / alto-falante
 
-### Community 2688 - "DASH-013 — Escopo de fila do agente"
+### Community 2689 - "DASH-013 — Escopo de fila do agente"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, DASH-013 — Escopo de fila do agente, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2689 - "SL-018 — Espera, transferência, conferência"
+### Community 2690 - "SL-018 — Espera, transferência, conferência"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis, SL-018 — Espera, transferência, conferência
 
-### Community 2690 - "009 — ESTADO.md, FEATURE_REGISTRY.md, TESTING_CONVENTION.md"
+### Community 2691 - "009 — ESTADO.md, FEATURE_REGISTRY.md, TESTING_CONVENTION.md"
 Cohesion: 0.22
 Nodes (8): 009 — ESTADO.md, FEATURE_REGISTRY.md, TESTING_CONVENTION.md, Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2691 - "010 — ESTADO.md, FEATURE_REGISTRY.md, TESTING_CONVENTION.md"
+### Community 2692 - "010 — ESTADO.md, FEATURE_REGISTRY.md, TESTING_CONVENTION.md"
 Cohesion: 0.22
 Nodes (8): 010 — ESTADO.md, FEATURE_REGISTRY.md, TESTING_CONVENTION.md, Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2692 - "SL-122 — ESTADO.md, FEATURE_REGISTRY.md, TESTING_CONVENTION.md"
+### Community 2693 - "SL-122 — ESTADO.md, FEATURE_REGISTRY.md, TESTING_CONVENTION.md"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis, SL-122 — ESTADO.md, FEATURE_REGISTRY.md, TESTING_CONVENTION.md
 
-### Community 2693 - "DASH-025 — Estados contados unificados"
+### Community 2694 - "DASH-025 — Estados contados unificados"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, DASH-025 — Estados contados unificados, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2694 - "DASH-088 — Estados de widget padronizados"
+### Community 2695 - "DASH-088 — Estados de widget padronizados"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, DASH-088 — Estados de widget padronizados, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2695 - "X048 — Estados WhatsApp desconectado / CRM indisponível / sem permissão"
+### Community 2696 - "X048 — Estados WhatsApp desconectado / CRM indisponível / sem permissão"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis, X048 — Estados WhatsApp desconectado / CRM indisponível / sem permissão
 
-### Community 2696 - "IA-068 — Estimativa × medida"
+### Community 2697 - "IA-068 — Estimativa × medida"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, IA-068 — Estimativa × medida, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2697 - "F66 — Estimativa de consumo de voz e teto"
+### Community 2698 - "F66 — Estimativa de consumo de voz e teto"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, F66 — Estimativa de consumo de voz e teto, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2698 - "DASH-024 — Estoque × fluxo"
+### Community 2699 - "DASH-024 — Estoque × fluxo"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, DASH-024 — Estoque × fluxo, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2699 - "L-45 — Etiqueta do WhatsApp → estágio do pipeline"
+### Community 2700 - "L-45 — Etiqueta do WhatsApp → estágio do pipeline"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, L-45 — Etiqueta do WhatsApp → estágio do pipeline, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2700 - "L-44 — Eventos Evolution STATUS_INSTANCE, LOGOUT_INSTANCE, SEND_MESSAGE_UPDATE"
+### Community 2701 - "L-44 — Eventos Evolution STATUS_INSTANCE, LOGOUT_INSTANCE, SEND_MESSAGE_UPDATE"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, L-44 — Eventos Evolution STATUS_INSTANCE, LOGOUT_INSTANCE, SEND_MESSAGE_UPDATE, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2701 - "IA-078 — Evidência da objeção"
+### Community 2702 - "IA-078 — Evidência da objeção"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, IA-078 — Evidência da objeção, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2702 - "E45 — Evidências em docs/evidencias/plano-quadro-tarefas/"
+### Community 2703 - "E45 — Evidências em docs/evidencias/plano-quadro-tarefas/"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, E45 — Evidências em docs/evidencias/plano-quadro-tarefas/, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2703 - "IA-109 — Evitar loops"
+### Community 2704 - "IA-109 — Evitar loops"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, IA-109 — Evitar loops, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2704 - "SL-061 — Evolution webhook sem assinatura"
+### Community 2705 - "SL-061 — Evolution webhook sem assinatura"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis, SL-061 — Evolution webhook sem assinatura
 
-### Community 2705 - "F75 — Exclusões e públicos salvos"
+### Community 2706 - "F75 — Exclusões e públicos salvos"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, F75 — Exclusões e públicos salvos, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2706 - "GO-12 — Exclusivos da GO não aproveitados: código de pareamento (login sem QR), criar/editar etiqueta, lista de bloqueados, carrossel/link, comunidades/canais, "reproduzido", logs/forcereconnect"
+### Community 2707 - "GO-12 — Exclusivos da GO não aproveitados: código de pareamento (login sem QR), criar/editar etiqueta, lista de bloqueados, carrossel/link, comunidades/canais, "reproduzido", logs/forcereconnect"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, GO-12 — Exclusivos da GO não aproveitados: código de pareamento (login sem QR), criar/editar etiqueta, lista de bloqueados, carrossel/link, comunidades/canais, "reproduzido", logs/forcereconnect, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2707 - "DASH-084 — Execução idempotente"
+### Community 2708 - "DASH-084 — Execução idempotente"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, DASH-084 — Execução idempotente, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2708 - "IA-141 — Experiência de IA unificada"
+### Community 2709 - "IA-141 — Experiência de IA unificada"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, IA-141 — Experiência de IA unificada, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2709 - "L-18 — Exportação automática"
+### Community 2710 - "L-18 — Exportação automática"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, L-18 — Exportação automática, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2710 - "F83 — Exportação CSV/JSON pela edge"
+### Community 2711 - "F83 — Exportação CSV/JSON pela edge"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, F83 — Exportação CSV/JSON pela edge, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2711 - "LGPD-2 — Exportação/portabilidade e exclusão a pedido do titular"
+### Community 2712 - "LGPD-2 — Exportação/portabilidade e exclusão a pedido do titular"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, LGPD-2 — Exportação/portabilidade e exclusão a pedido do titular, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2712 - "X168 — Exportar PDF/CSV"
+### Community 2713 - "X168 — Exportar PDF/CSV"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis, X168 — Exportar PDF/CSV
 
-### Community 2713 - "L-03 — Exportar relatórios (wizard, PDF, Excel, CSV, botão rápido)"
+### Community 2714 - "L-03 — Exportar relatórios (wizard, PDF, Excel, CSV, botão rápido)"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, L-03 — Exportar relatórios (wizard, PDF, Excel, CSV, botão rápido), Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2714 - "C-15 — external-db-bridge"
+### Community 2715 - "C-15 — external-db-bridge"
 Cohesion: 0.22
 Nodes (8): C-15 — external-db-bridge, Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2715 - "IA-092 — Extrair fatos como propostas"
+### Community 2716 - "IA-092 — Extrair fatos como propostas"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, IA-092 — Extrair fatos como propostas, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2716 - "F69 — Falha de TTS → media_pending"
+### Community 2717 - "F69 — Falha de TTS → media_pending"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, F69 — Falha de TTS → media_pending, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2717 - "R2-INB-021 — Favoritar/Fixar mensagem, Responder depois, Reportar, "Adicionar tag" no header, /note e /tag"
+### Community 2718 - "R2-INB-021 — Favoritar/Fixar mensagem, Responder depois, Reportar, "Adicionar tag" no header, /note e /tag"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, R2-INB-021 — Favoritar/Fixar mensagem, Responder depois, Reportar, "Adicionar tag" no header, /note e /tag, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2718 - "F92 — Faxina de órfãos"
+### Community 2719 - "F92 — Faxina de órfãos"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, F92 — Faxina de órfãos, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2719 - "TC-86 — Faxina de órfãos"
+### Community 2720 - "TC-86 — Faxina de órfãos"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis, TC-86 — Faxina de órfãos
 
-### Community 2720 - "WA-00 — Fazer/atender ligação WhatsApp com áudio no sistema"
+### Community 2721 - "WA-00 — Fazer/atender ligação WhatsApp com áudio no sistema"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis, WA-00 — Fazer/atender ligação WhatsApp com áudio no sistema
 
-### Community 2721 - "SL-105 — FCP<1,5 s, TTI<3 s, Lighthouse>90"
+### Community 2722 - "SL-105 — FCP<1,5 s, TTI<3 s, Lighthouse>90"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis, SL-105 — FCP<1,5 s, TTI<3 s, Lighthouse>90
 
-### Community 2722 - "CT-12 — Fechamento do bloco A"
+### Community 2723 - "CT-12 — Fechamento do bloco A"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, CT-12 — Fechamento do bloco A, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2723 - "ES-50 — Fechamento do checklist"
+### Community 2724 - "ES-50 — Fechamento do checklist"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, ES-50 — Fechamento do checklist, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2724 - "T80 — Fechamentos das fases 8 e 9"
+### Community 2725 - "T80 — Fechamentos das fases 8 e 9"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis, T80 — Fechamentos das fases 8 e 9
 
-### Community 2725 - "T88 — Fechamentos das fases 8 e 9"
+### Community 2726 - "T88 — Fechamentos das fases 8 e 9"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis, T88 — Fechamentos das fases 8 e 9
 
-### Community 2726 - "E33 — Fechar alerta CodeQL #13"
+### Community 2727 - "E33 — Fechar alerta CodeQL #13"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, E33 — Fechar alerta CodeQL #13, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2727 - "F35 — Fechar escrita em department_invites"
+### Community 2728 - "F35 — Fechar escrita em department_invites"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, F35 — Fechar escrita em department_invites, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2728 - "CT-036 — Ficha completa Singu (360)"
+### Community 2729 - "CT-036 — Ficha completa Singu (360)"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, CT-036 — Ficha completa Singu (360), Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2729 - "SEC-FRONTEND-01 — Figurinha p/ bucket público; JWT para host não validado"
+### Community 2730 - "SEC-FRONTEND-01 — Figurinha p/ bucket público; JWT para host não validado"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis, SEC-FRONTEND-01 — Figurinha p/ bucket público; JWT para host não validado
 
-### Community 2730 - "SEC-SAIDAS-03 — Figurinha p/ bucket público; JWT para host não validado"
+### Community 2731 - "SEC-SAIDAS-03 — Figurinha p/ bucket público; JWT para host não validado"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis, SEC-SAIDAS-03 — Figurinha p/ bucket público; JWT para host não validado
 
-### Community 2731 - "SL-070 — Fila offline (IndexedDB) e throttle com dedupe entre abas"
+### Community 2732 - "SL-070 — Fila offline (IndexedDB) e throttle com dedupe entre abas"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis, SL-070 — Fila offline (IndexedDB) e throttle com dedupe entre abas
 
-### Community 2732 - "X058 — Fila por segmento e lista paginada"
+### Community 2733 - "X058 — Fila por segmento e lista paginada"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis, X058 — Fila por segmento e lista paginada
 
-### Community 2733 - "GO-11 — Fila RabbitMQ/SQS/Kafka/NATS/Pusher, EvoAI, n8n, proxy, catálogo business, presença da instância, leitura de webhook, find-chats"
+### Community 2734 - "GO-11 — Fila RabbitMQ/SQS/Kafka/NATS/Pusher, EvoAI, n8n, proxy, catálogo business, presença da instância, leitura de webhook, find-chats"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, GO-11 — Fila RabbitMQ/SQS/Kafka/NATS/Pusher, EvoAI, n8n, proxy, catálogo business, presença da instância, leitura de webhook, find-chats, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2734 - "E38 — Filas por conexão e mesmo contato em 2 números"
+### Community 2735 - "E38 — Filas por conexão e mesmo contato em 2 números"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, E38 — Filas por conexão e mesmo contato em 2 números, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2735 - "E39 — Filas por conexão e mesmo contato em 2 números"
+### Community 2736 - "E39 — Filas por conexão e mesmo contato em 2 números"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, E39 — Filas por conexão e mesmo contato em 2 números, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2736 - "CT-64 — Filtro "Novidades" com contagem vinda da edge"
+### Community 2737 - "CT-64 — Filtro "Novidades" com contagem vinda da edge"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, CT-64 — Filtro "Novidades" com contagem vinda da edge, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2737 - "X081 — Filtros, grade e massa"
+### Community 2738 - "X081 — Filtros, grade e massa"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis, X081 — Filtros, grade e massa
 
-### Community 2738 - "CT-018 — Filtros salvos (renomear/atualizar/padrão)"
+### Community 2739 - "CT-018 — Filtros salvos (renomear/atualizar/padrão)"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, CT-018 — Filtros salvos (renomear/atualizar/padrão), Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2739 - "GO-10 — Fixar, silenciar, favoritar, limpar chat e mensagens temporárias"
+### Community 2740 - "GO-10 — Fixar, silenciar, favoritar, limpar chat e mensagens temporárias"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, GO-10 — Fixar, silenciar, favoritar, limpar chat e mensagens temporárias, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2740 - "DASH-093 — Fixtures de escala"
+### Community 2741 - "DASH-093 — Fixtures de escala"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, DASH-093 — Fixtures de escala, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2741 - "CT-004 — Fixtures Singu canônicas"
+### Community 2742 - "CT-004 — Fixtures Singu canônicas"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, CT-004 — Fixtures Singu canônicas, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2742 - "F92 — Flag por departamento"
+### Community 2743 - "F92 — Flag por departamento"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, F92 — Flag por departamento, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2743 - "017 — Flaky detector + regression gate"
+### Community 2744 - "017 — Flaky detector + regression gate"
 Cohesion: 0.22
 Nodes (8): 017 — Flaky detector + regression gate, Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2744 - "X051 — Fluxo único pausar/retomar/cancelar nas 5 telas"
+### Community 2745 - "X051 — Fluxo único pausar/retomar/cancelar nas 5 telas"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis, X051 — Fluxo único pausar/retomar/cancelar nas 5 telas
 
-### Community 2745 - "E75 — Fonte única de toolchain"
+### Community 2746 - "E75 — Fonte única de toolchain"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, E75 — Fonte única de toolchain, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2746 - "Z01 — Fonte única do cálculo de período"
+### Community 2747 - "Z01 — Fonte única do cálculo de período"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis, Z01 — Fonte única do cálculo de período
 
-### Community 2747 - "DASH-070 — Fontes de sentimento consolidadas"
+### Community 2748 - "DASH-070 — Fontes de sentimento consolidadas"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, DASH-070 — Fontes de sentimento consolidadas, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2748 - "A5 — Fontes gerenciais do supervisor"
+### Community 2749 - "A5 — Fontes gerenciais do supervisor"
 Cohesion: 0.22
 Nodes (8): A5 — Fontes gerenciais do supervisor, Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2749 - "S019 — Fontes ligação e e-mail"
+### Community 2750 - "S019 — Fontes ligação e e-mail"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis, S019 — Fontes ligação e e-mail
 
-### Community 2750 - "S026 — Fontes ligação e e-mail"
+### Community 2751 - "S026 — Fontes ligação e e-mail"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis, S026 — Fontes ligação e e-mail
 
-### Community 2751 - "DASH-082 — Frequência apresentada"
+### Community 2752 - "DASH-082 — Frequência apresentada"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, DASH-082 — Frequência apresentada, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2752 - "TC — Funcionalidade"
+### Community 2753 - "TC — Funcionalidade"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis, TC — Funcionalidade
 
-### Community 2753 - "F70 — Fundação visual (tokens)"
+### Community 2754 - "F70 — Fundação visual (tokens)"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, F70 — Fundação visual (tokens), Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2754 - "019 — Fuzz/stress de edges"
+### Community 2755 - "019 — Fuzz/stress de edges"
 Cohesion: 0.22
 Nodes (8): 019 — Fuzz/stress de edges, Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2755 - "X089 — Galeria do mock 04"
+### Community 2756 - "X089 — Galeria do mock 04"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis, X089 — Galeria do mock 04
 
-### Community 2756 - "E-05 — Game day / exercício de DR / restore provado"
+### Community 2757 - "E-05 — Game day / exercício de DR / restore provado"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, E-05 — Game day / exercício de DR / restore provado, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2757 - "HAND-GO — "Gaps GO sem UX ativa, com 501 explícito""
+### Community 2758 - "HAND-GO — "Gaps GO sem UX ativa, com 501 explícito""
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, HAND-GO — "Gaps GO sem UX ativa, com 501 explícito", Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2758 - "F97 — GATE C (RPCs antigas do Singu com anon)"
+### Community 2759 - "F97 — GATE C (RPCs antigas do Singu com anon)"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, F97 — GATE C (RPCs antigas do Singu com anon), Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2759 - "DEC-1 — Gate de cobertura do módulo"
+### Community 2760 - "DEC-1 — Gate de cobertura do módulo"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, DEC-1 — Gate de cobertura do módulo, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2760 - "E-03 — Gate Lighthouse + matriz responsiva"
+### Community 2761 - "E-03 — Gate Lighthouse + matriz responsiva"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, E-03 — Gate Lighthouse + matriz responsiva, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2761 - "T89 — Gates completos + bundle do chunk calls"
+### Community 2762 - "T89 — Gates completos + bundle do chunk calls"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis, T89 — Gates completos + bundle do chunk calls
 
-### Community 2762 - "E53 — Geometria; card Search Box"
+### Community 2763 - "E53 — Geometria; card Search Box"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, E53 — Geometria; card Search Box, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2763 - "RES-GEOM — Geometria; card Search Box"
+### Community 2764 - "RES-GEOM — Geometria; card Search Box"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis, RES-GEOM — Geometria; card Search Box
 
-### Community 2764 - "IA-080 — Gerar → usar → aprovar → enviar"
+### Community 2765 - "IA-080 — Gerar → usar → aprovar → enviar"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, IA-080 — Gerar → usar → aprovar → enviar, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2765 - "X118 — Gerenciador de links rastreáveis no editor"
+### Community 2766 - "X118 — Gerenciador de links rastreáveis no editor"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis, X118 — Gerenciador de links rastreáveis no editor
 
-### Community 2766 - "TC-005 — Gestão de departamento (membros, convites, WhatsApp, auditoria, "Entrar via código", admin abre canal)"
+### Community 2767 - "TC-005 — Gestão de departamento (membros, convites, WhatsApp, auditoria, "Entrar via código", admin abre canal)"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis, TC-005 — Gestão de departamento (membros, convites, WhatsApp, auditoria, "Entrar via código", admin abre canal)
 
-### Community 2767 - "I-1266 — get_team_messages_page quebrada / recursão tcm_select_own"
+### Community 2768 - "I-1266 — get_team_messages_page quebrada / recursão tcm_select_own"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, I-1266 — get_team_messages_page quebrada / recursão tcm_select_own, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2768 - "F98 — Go-live + 72 h"
+### Community 2769 - "F98 — Go-live + 72 h"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, F98 — Go-live + 72 h, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2769 - "L-28 — Google Calendar"
+### Community 2770 - "L-28 — Google Calendar"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, L-28 — Google Calendar, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2770 - "IA-127 — Governança de vozes"
+### Community 2771 - "IA-127 — Governança de vozes"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, IA-127 — Governança de vozes, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2771 - "IA-101 — Governar etiquetas"
+### Community 2772 - "IA-101 — Governar etiquetas"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, IA-101 — Governar etiquetas, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2772 - "A11Y-14 — Gráficos sem alternativa textual"
+### Community 2773 - "A11Y-14 — Gráficos sem alternativa textual"
 Cohesion: 0.22
 Nodes (8): A11Y-14 — Gráficos sem alternativa textual, Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2773 - "F99 — Grafo + CHANGELOG do módulo"
+### Community 2774 - "F99 — Grafo + CHANGELOG do módulo"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, F99 — Grafo + CHANGELOG do módulo, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2774 - "L-43 — Gravação e reconciliação de chamadas"
+### Community 2775 - "L-43 — Gravação e reconciliação de chamadas"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, L-43 — Gravação e reconciliação de chamadas, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2775 - "F68 — Gravação no compositor"
+### Community 2776 - "F68 — Gravação no compositor"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, F68 — Gravação no compositor, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2776 - "X105 — Grupos E/OU como no mock"
+### Community 2777 - "X105 — Grupos E/OU como no mock"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis, X105 — Grupos E/OU como no mock
 
-### Community 2777 - "GO-09 — Grupos: info do convite e mensagens temporárias"
+### Community 2778 - "GO-09 — Grupos: info do convite e mensagens temporárias"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, GO-09 — Grupos: info do convite e mensagens temporárias, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2778 - "L-CI — Guard de layout no CI (trava do shell)"
+### Community 2779 - "L-CI — Guard de layout no CI (trava do shell)"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, L-CI — Guard de layout no CI (trava do shell), Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2779 - "SL-174 — Guard de layout no CI (trava do shell)"
+### Community 2780 - "SL-174 — Guard de layout no CI (trava do shell)"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis, SL-174 — Guard de layout no CI (trava do shell)
 
-### Community 2780 - "F93 — Guards do banco regenerados"
+### Community 2781 - "F93 — Guards do banco regenerados"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, F93 — Guards do banco regenerados, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2781 - "I-1267 — Guards Multiplix fail-open"
+### Community 2782 - "I-1267 — Guards Multiplix fail-open"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, I-1267 — Guards Multiplix fail-open, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2782 - "E15 — Gutter interno de Lista e Agenda"
+### Community 2783 - "E15 — Gutter interno de Lista e Agenda"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, E15 — Gutter interno de Lista e Agenda, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2783 - "F100 — Handoff + aceite"
+### Community 2784 - "F100 — Handoff + aceite"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, F100 — Handoff + aceite, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2784 - "MIG-16 — Hardening de SSH e firewall da VPS Hostinger (fechar 32771/48592)"
+### Community 2785 - "MIG-16 — Hardening de SSH e firewall da VPS Hostinger (fechar 32771/48592)"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, MIG-16 — Hardening de SSH e firewall da VPS Hostinger (fechar 32771/48592), Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2785 - "L9 — hasPermission no servidor"
+### Community 2786 - "L9 — hasPermission no servidor"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, L9 — hasPermission no servidor, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2786 - "DASH-035 — Heatmaps agregados no banco"
+### Community 2787 - "DASH-035 — Heatmaps agregados no banco"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, DASH-035 — Heatmaps agregados no banco, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2787 - "C-09 — "Histórico de envio" de mensagem"
+### Community 2788 - "C-09 — "Histórico de envio" de mensagem"
 Cohesion: 0.22
 Nodes (8): C-09 — "Histórico de envio" de mensagem, Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2788 - "C-07 — Histórico (Journey): ligações e e-mails"
+### Community 2789 - "C-07 — Histórico (Journey): ligações e e-mails"
 Cohesion: 0.22
 Nodes (8): C-07 — Histórico (Journey): ligações e e-mails, Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2789 - "DASH-014 — Histórico por autoria × RLS"
+### Community 2790 - "DASH-014 — Histórico por autoria × RLS"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, DASH-014 — Histórico por autoria × RLS, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2790 - "IA-069 — Histórico sem nova geração"
+### Community 2791 - "IA-069 — Histórico sem nova geração"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, IA-069 — Histórico sem nova geração, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2791 - "T96 — Homologação de áudio (9 cenários) + 0 presas em ringing"
+### Community 2792 - "T96 — Homologação de áudio (9 cenários) + 0 presas em ringing"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis, T96 — Homologação de áudio (9 cenários) + 0 presas em ringing
 
-### Community 2792 - "T97 — Homologação de áudio (9 cenários) + 0 presas em ringing"
+### Community 2793 - "T97 — Homologação de áudio (9 cenários) + 0 presas em ringing"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis, T97 — Homologação de áudio (9 cenários) + 0 presas em ringing
 
-### Community 2793 - "030 — Homologação humana, piloto, ampliação"
+### Community 2794 - "030 — Homologação humana, piloto, ampliação"
 Cohesion: 0.22
 Nodes (8): 030 — Homologação humana, piloto, ampliação, Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2794 - "090 — Homologação humana, piloto, ampliação"
+### Community 2795 - "090 — Homologação humana, piloto, ampliação"
 Cohesion: 0.22
 Nodes (8): 090 — Homologação humana, piloto, ampliação, Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2795 - "096 — Homologação humana, piloto, ampliação"
+### Community 2796 - "096 — Homologação humana, piloto, ampliação"
 Cohesion: 0.22
 Nodes (8): 096 — Homologação humana, piloto, ampliação, Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2796 - "099 — Homologação humana, piloto, ampliação"
+### Community 2797 - "099 — Homologação humana, piloto, ampliação"
 Cohesion: 0.22
 Nodes (8): 099 — Homologação humana, piloto, ampliação, Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2797 - "ES-45 — Homologação visual com dados reais"
+### Community 2798 - "ES-45 — Homologação visual com dados reais"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, ES-45 — Homologação visual com dados reais, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2798 - "ARQ-50 — Homologação visual + relatório final"
+### Community 2799 - "ARQ-50 — Homologação visual + relatório final"
 Cohesion: 0.22
 Nodes (8): ARQ-50 — Homologação visual + relatório final, Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2799 - "IA-110 — Homologar bot sem envio"
+### Community 2800 - "IA-110 — Homologar bot sem envio"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, IA-110 — Homologar bot sem envio, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2800 - "X178 — Hook único + paginação servidor"
+### Community 2801 - "X178 — Hook único + paginação servidor"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis, X178 — Hook único + paginação servidor
 
-### Community 2801 - "TL-002 — Hook morto com DELETE físico"
+### Community 2802 - "TL-002 — Hook morto com DELETE físico"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis, TL-002 — Hook morto com DELETE físico
 
-### Community 2802 - "X144 — Hooks das RPCs com realtime/degradado"
+### Community 2803 - "X144 — Hooks das RPCs com realtime/degradado"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis, X144 — Hooks das RPCs com realtime/degradado
 
-### Community 2803 - "001 — Hooks de commit"
+### Community 2804 - "001 — Hooks de commit"
 Cohesion: 0.22
 Nodes (8): 001 — Hooks de commit, Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2804 - "SL-035 — Hooks de commit"
+### Community 2805 - "SL-035 — Hooks de commit"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis, SL-035 — Hooks de commit
 
-### Community 2805 - "SEC-FRONTEND-02 — href sem validação (XSS no clique)"
+### Community 2806 - "SEC-FRONTEND-02 — href sem validação (XSS no clique)"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis, SEC-FRONTEND-02 — href sem validação (XSS no clique)
 
-### Community 2806 - "IA-012 — Identidades de serviço próprias"
+### Community 2807 - "IA-012 — Identidades de serviço próprias"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, IA-012 — Identidades de serviço próprias, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2807 - "DASH-005 — Identidades documentadas"
+### Community 2808 - "DASH-005 — Identidades documentadas"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, DASH-005 — Identidades documentadas, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2808 - "SB-93 — Impacto de ligar a flag"
+### Community 2809 - "SB-93 — Impacto de ligar a flag"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis, SB-93 — Impacto de ligar a flag
 
-### Community 2809 - "X183 — Importar CSV/XLSX/TXT e exportar"
+### Community 2810 - "X183 — Importar CSV/XLSX/TXT e exportar"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis, X183 — Importar CSV/XLSX/TXT e exportar
 
-### Community 2810 - "X177 — Importar/exportar em lote (RPC)"
+### Community 2811 - "X177 — Importar/exportar em lote (RPC)"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis, X177 — Importar/exportar em lote (RPC)
 
-### Community 2811 - "X093 — Importar/exportar templates"
+### Community 2812 - "X093 — Importar/exportar templates"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis, X093 — Importar/exportar templates
 
-### Community 2812 - "IA-111 — Inatividade real"
+### Community 2813 - "IA-111 — Inatividade real"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, IA-111 — Inatividade real, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2813 - "LOV-T6 — Indicador CRM na lista de conversas"
+### Community 2814 - "LOV-T6 — Indicador CRM na lista de conversas"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, LOV-T6 — Indicador CRM na lista de conversas, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2814 - "IA-057 — Indicadores de saúde dos provedores"
+### Community 2815 - "IA-057 — Indicadores de saúde dos provedores"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, IA-057 — Indicadores de saúde dos provedores, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2815 - "X076 — Infra de IA (talkx-ai)"
+### Community 2816 - "X076 — Infra de IA (talkx-ai)"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis, X076 — Infra de IA (talkx-ai)
 
-### Community 2816 - "IA-083 — Ingestão rastreável"
+### Community 2817 - "IA-083 — Ingestão rastreável"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, IA-083 — Ingestão rastreável, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2817 - "IA-133 — Ingestão segura de anexos"
+### Community 2818 - "IA-133 — Ingestão segura de anexos"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, IA-133 — Ingestão segura de anexos, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2818 - "SL-103 — Initial JS ≤ 300 KB"
+### Community 2819 - "SL-103 — Initial JS ≤ 300 KB"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis, SL-103 — Initial JS ≤ 300 KB
 
-### Community 2819 - "W4-1 — Inlinar predicado de visibilidade no search_contacts"
+### Community 2820 - "W4-1 — Inlinar predicado de visibilidade no search_contacts"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis, W4-1 — Inlinar predicado de visibilidade no search_contacts
 
-### Community 2820 - "X117 — Insights com IA nos segmentos"
+### Community 2821 - "X117 — Insights com IA nos segmentos"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis, X117 — Insights com IA nos segmentos
 
-### Community 2821 - "E32 — Instância desconhecida no webhook → 202"
+### Community 2822 - "E32 — Instância desconhecida no webhook → 202"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, E32 — Instância desconhecida no webhook → 202, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2822 - "028 — Instante de referência, filtros previsíveis, média×mediana"
+### Community 2823 - "028 — Instante de referência, filtros previsíveis, média×mediana"
 Cohesion: 0.22
 Nodes (8): 028 — Instante de referência, filtros previsíveis, média×mediana, Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2823 - "029 — Instante de referência, filtros previsíveis, média×mediana"
+### Community 2824 - "029 — Instante de referência, filtros previsíveis, média×mediana"
 Cohesion: 0.22
 Nodes (8): 029 — Instante de referência, filtros previsíveis, média×mediana, Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2824 - "DASH-027 — Instante de referência, filtros previsíveis, média×mediana"
+### Community 2825 - "DASH-027 — Instante de referência, filtros previsíveis, média×mediana"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, DASH-027 — Instante de referência, filtros previsíveis, média×mediana, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2825 - "DASH-090 — Instrumentar confiabilidade"
+### Community 2826 - "DASH-090 — Instrumentar confiabilidade"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, DASH-090 — Instrumentar confiabilidade, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2826 - "GO-01 — Integrações por instância (Typebot, OpenAI, Dify, Flowise, Chatwoot, EvolutionBot)"
+### Community 2827 - "GO-01 — Integrações por instância (Typebot, OpenAI, Dify, Flowise, Chatwoot, EvolutionBot)"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, GO-01 — Integrações por instância (Typebot, OpenAI, Dify, Flowise, Chatwoot, EvolutionBot), Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2827 - "IA-193 — Integrações reais com escopo mínimo"
+### Community 2828 - "IA-193 — Integrações reais com escopo mínimo"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, IA-193 — Integrações reais com escopo mínimo, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2828 - "L-25 — Integração Bitrix24 (configuração pela tela)"
+### Community 2829 - "L-25 — Integração Bitrix24 (configuração pela tela)"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, L-25 — Integração Bitrix24 (configuração pela tela), Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2829 - "F89 — Integração da fila contra banco"
+### Community 2830 - "F89 — Integração da fila contra banco"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, F89 — Integração da fila contra banco, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2830 - "IA-119 — Inteligência importada do CRM rotulada"
+### Community 2831 - "IA-119 — Inteligência importada do CRM rotulada"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, IA-119 — Inteligência importada do CRM rotulada, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2831 - "L-16 — Internacionalização PT/EN/ES"
+### Community 2832 - "L-16 — Internacionalização PT/EN/ES"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, L-16 — Internacionalização PT/EN/ES, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2832 - "IA-020 — Invalidar caches/acesso"
+### Community 2833 - "IA-020 — Invalidar caches/acesso"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, IA-020 — Invalidar caches/acesso, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2833 - "DASH-047 — Invalidar todos os indicadores"
+### Community 2834 - "DASH-047 — Invalidar todos os indicadores"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, DASH-047 — Invalidar todos os indicadores, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2834 - "DASH-017 — Isolar caches"
+### Community 2835 - "DASH-017 — Isolar caches"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, DASH-017 — Isolar caches, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2835 - "048 — Itens da auditoria de 60 sem etapa no plano vivo"
+### Community 2836 - "048 — Itens da auditoria de 60 sem etapa no plano vivo"
 Cohesion: 0.22
 Nodes (8): 048 — Itens da auditoria de 60 sem etapa no plano vivo, Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2836 - "049 — Itens da auditoria de 60 sem etapa no plano vivo"
+### Community 2837 - "049 — Itens da auditoria de 60 sem etapa no plano vivo"
 Cohesion: 0.22
 Nodes (8): 049 — Itens da auditoria de 60 sem etapa no plano vivo, Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2837 - "050 — Itens da auditoria de 60 sem etapa no plano vivo"
+### Community 2838 - "050 — Itens da auditoria de 60 sem etapa no plano vivo"
 Cohesion: 0.22
 Nodes (8): 050 — Itens da auditoria de 60 sem etapa no plano vivo, Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2838 - "051 — Itens da auditoria de 60 sem etapa no plano vivo"
+### Community 2839 - "051 — Itens da auditoria de 60 sem etapa no plano vivo"
 Cohesion: 0.22
 Nodes (8): 051 — Itens da auditoria de 60 sem etapa no plano vivo, Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2839 - "058 — Itens da auditoria de 60 sem etapa no plano vivo"
+### Community 2840 - "058 — Itens da auditoria de 60 sem etapa no plano vivo"
 Cohesion: 0.22
 Nodes (8): 058 — Itens da auditoria de 60 sem etapa no plano vivo, Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2840 - "TEL-047 — Itens da auditoria de 60 sem etapa no plano vivo"
+### Community 2841 - "TEL-047 — Itens da auditoria de 60 sem etapa no plano vivo"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis, TEL-047 — Itens da auditoria de 60 sem etapa no plano vivo
 
-### Community 2841 - "DASH-064 — Janelas das avaliações"
+### Community 2842 - "DASH-064 — Janelas das avaliações"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, DASH-064 — Janelas das avaliações, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2842 - "E70 — Job "🦕 Edge contracts""
+### Community 2843 - "E70 — Job "🦕 Edge contracts""
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, E70 — Job "🦕 Edge contracts", Estado real conferido, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2843 - "058 — Jobs LGPD"
+### Community 2844 - "058 — Jobs LGPD"
 Cohesion: 0.22
 Nodes (8): 058 — Jobs LGPD, Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2844 - "S084 — JourneyStatsHero"
+### Community 2845 - "S084 — JourneyStatsHero"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis, S084 — JourneyStatsHero
 
-### Community 2845 - "IA-009 — Kill switch (desligar IA no servidor)"
+### Community 2846 - "IA-009 — Kill switch (desligar IA no servidor)"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, IA-009 — Kill switch (desligar IA no servidor), Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2846 - "B8 — Kill switch no servidor"
+### Community 2847 - "B8 — Kill switch no servidor"
 Cohesion: 0.22
 Nodes (8): B8 — Kill switch no servidor, Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2847 - "X146 — KPIs ao vivo com comparativos"
+### Community 2848 - "X146 — KPIs ao vivo com comparativos"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis, X146 — KPIs ao vivo com comparativos
 
-### Community 2848 - "X077 — KPIs da Visão geral vindos da RPC"
+### Community 2849 - "X077 — KPIs da Visão geral vindos da RPC"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis, X077 — KPIs da Visão geral vindos da RPC
 
-### Community 2849 - "CT-051 — KPIs do topo filtram ao clicar"
+### Community 2850 - "CT-051 — KPIs do topo filtram ao clicar"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, CT-051 — KPIs do topo filtram ao clicar, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2850 - "X091 — KPIs e "Desempenho deste template" pelas RPCs"
+### Community 2851 - "X091 — KPIs e "Desempenho deste template" pelas RPCs"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis, X091 — KPIs e "Desempenho deste template" pelas RPCs
 
-### Community 2851 - "L27 — layout-guard verde"
+### Community 2852 - "L27 — layout-guard verde"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, L27 — layout-guard verde, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2852 - "DASH-058 — Ledger de XP idempotente"
+### Community 2853 - "DASH-058 — Ledger de XP idempotente"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, DASH-058 — Ledger de XP idempotente, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2853 - "F62 — Leitura/reprodução e respostas"
+### Community 2854 - "F62 — Leitura/reprodução e respostas"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, F62 — Leitura/reprodução e respostas, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2854 - "037 — Ler histórico antes de aceitar"
+### Community 2855 - "037 — Ler histórico antes de aceitar"
 Cohesion: 0.22
 Nodes (8): 037 — Ler histórico antes de aceitar, Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2855 - "046 — Ler histórico antes de aceitar"
+### Community 2856 - "046 — Ler histórico antes de aceitar"
 Cohesion: 0.22
 Nodes (8): 046 — Ler histórico antes de aceitar, Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2856 - "074 — Ler histórico antes de aceitar"
+### Community 2857 - "074 — Ler histórico antes de aceitar"
 Cohesion: 0.22
 Nodes (8): 074 — Ler histórico antes de aceitar, Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2857 - "L-37 — LGPD — portabilidade e eliminação"
+### Community 2858 - "L-37 — LGPD — portabilidade e eliminação"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, L-37 — LGPD — portabilidade e eliminação, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2858 - "S46 — Lição no CLAUDE.md"
+### Community 2859 - "S46 — Lição no CLAUDE.md"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis, S46 — Lição no CLAUDE.md
 
-### Community 2859 - "DASH-100 — Liberação autorizada"
+### Community 2860 - "DASH-100 — Liberação autorizada"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, DASH-100 — Liberação autorizada, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2860 - "X073 — Lidas/conversões/receita no talkx_overview_stats"
+### Community 2861 - "X073 — Lidas/conversões/receita no talkx_overview_stats"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis, X073 — Lidas/conversões/receita no talkx_overview_stats
 
-### Community 2861 - "SB-91 — Ligar crm.integration e verificar com contatos reais"
+### Community 2862 - "SB-91 — Ligar crm.integration e verificar com contatos reais"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis, SB-91 — Ligar crm.integration e verificar com contatos reais
 
-### Community 2862 - "CT-74 — Lighthouse ≥ 90 e CLS < 0,05"
+### Community 2863 - "CT-74 — Lighthouse ≥ 90 e CLS < 0,05"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, CT-74 — Lighthouse ≥ 90 e CLS < 0,05, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2863 - "IA-018 — Limite do CRM externo"
+### Community 2864 - "IA-018 — Limite do CRM externo"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, IA-018 — Limite do CRM externo, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2864 - "IA-122 — Limites de áudio"
+### Community 2865 - "IA-122 — Limites de áudio"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, IA-122 — Limites de áudio, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2865 - "030 — Limites de dashboard_kpi; integridade temporal"
+### Community 2866 - "030 — Limites de dashboard_kpi; integridade temporal"
 Cohesion: 0.22
 Nodes (8): 030 — Limites de dashboard_kpi; integridade temporal, Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2866 - "DASH-026 — Limites de dashboard_kpi; integridade temporal"
+### Community 2867 - "DASH-026 — Limites de dashboard_kpi; integridade temporal"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, DASH-026 — Limites de dashboard_kpi; integridade temporal, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2867 - "X018 — Limites por minuto/dia/conexão"
+### Community 2868 - "X018 — Limites por minuto/dia/conexão"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis, X018 — Limites por minuto/dia/conexão
 
-### Community 2868 - "SB-98 — Limpeza de órfãos"
+### Community 2869 - "SB-98 — Limpeza de órfãos"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis, SB-98 — Limpeza de órfãos
 
-### Community 2869 - "Linha de Base — Zapp Web V2 (gerado na Fase 0 do GOAL 2026-11-20)"
+### Community 2870 - "Linha de Base — Zapp Web V2 (gerado na Fase 0 do GOAL 2026-11-20)"
 Cohesion: 0.22
 Nodes (8): 92 edge functions (nomes de env, sem valores), Banco Supabase (projeto `tnnnlkbymytvtqngbbqh`) — fotografia, CI na main (evidência 2026-11-20), Erros herdados de produção (baseline — não introduzidos por nós), Escopo do código (contagens do baseline gerado em `docs/contexto/codigo/baseline.json` @ 35d701970e), Front — rotas e navegação, Identidade, Linha de Base — Zapp Web V2 (gerado na Fase 0 do GOAL 2026-11-20)
 
-### Community 2870 - "X152 — Linha do tempo operacional do servidor"
+### Community 2871 - "X152 — Linha do tempo operacional do servidor"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis, X152 — Linha do tempo operacional do servidor
 
-### Community 2871 - "L-26 — Links de pagamento"
+### Community 2872 - "L-26 — Links de pagamento"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, L-26 — Links de pagamento, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2872 - "F70 — Lista de conversas"
+### Community 2873 - "F70 — Lista de conversas"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, F70 — Lista de conversas, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2873 - "TC-63 — Lista de conversas"
+### Community 2874 - "TC-63 — Lista de conversas"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis, TC-63 — Lista de conversas
 
-### Community 2874 - "IA-127 — Lista fechada de vozes/modelos TTS"
+### Community 2875 - "IA-127 — Lista fechada de vozes/modelos TTS"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, IA-127 — Lista fechada de vozes/modelos TTS, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2875 - "X112 — Lista lateral "Meus segmentos""
+### Community 2876 - "X112 — Lista lateral "Meus segmentos""
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis, X112 — Lista lateral "Meus segmentos"
 
-### Community 2876 - "EN-025 — Lista só por página no servidor"
+### Community 2877 - "EN-025 — Lista só por página no servidor"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, EN-025 — Lista só por página no servidor, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2877 - "OTH-005 — Lista só por página no servidor"
+### Community 2878 - "OTH-005 — Lista só por página no servidor"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, OTH-005 — Lista só por página no servidor, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2878 - "X078 — Listagem paginada no servidor"
+### Community 2879 - "X078 — Listagem paginada no servidor"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis, X078 — Listagem paginada no servidor
 
-### Community 2879 - "SEC-EDGE-04 — listUsers sem paginação, CORS , HTML sem escape, erro do provedor no 502"
+### Community 2880 - "SEC-EDGE-04 — listUsers sem paginação, CORS , HTML sem escape, erro do provedor no 502"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis, SEC-EDGE-04 — listUsers sem paginação, CORS , HTML sem escape, erro do provedor no 502
 
-### Community 2880 - "CT-086 — Lixeira 30 dias + telas de lixeira/higiene de legados"
+### Community 2881 - "CT-086 — Lixeira 30 dias + telas de lixeira/higiene de legados"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, CT-086 — Lixeira 30 dias + telas de lixeira/higiene de legados, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2881 - "CT-087 — Lixeira 30 dias + telas de lixeira/higiene de legados"
+### Community 2882 - "CT-087 — Lixeira 30 dias + telas de lixeira/higiene de legados"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, CT-087 — Lixeira 30 dias + telas de lixeira/higiene de legados, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2882 - "055 — Logs de segurança/alertas de ACL"
+### Community 2883 - "055 — Logs de segurança/alertas de ACL"
 Cohesion: 0.22
 Nodes (8): 055 — Logs de segurança/alertas de ACL, Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2883 - "CT-023 — Lote Singu com campos novos"
+### Community 2884 - "CT-023 — Lote Singu com campos novos"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, CT-023 — Lote Singu com campos novos, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2884 - "CT-024 — Lote Singu com campos novos"
+### Community 2885 - "CT-024 — Lote Singu com campos novos"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, CT-024 — Lote Singu com campos novos, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2885 - "L-14 — Métricas de satisfação"
+### Community 2886 - "L-14 — Métricas de satisfação"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, L-14 — Métricas de satisfação, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2886 - "X086 — Métricas de template"
+### Community 2887 - "X086 — Métricas de template"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis, X086 — Métricas de template
 
-### Community 2887 - "IA-066 — Métricas de tempo calculadas por código"
+### Community 2888 - "IA-066 — Métricas de tempo calculadas por código"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, IA-066 — Métricas de tempo calculadas por código, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2888 - "CT-22 — "Mais pedidos" volta sozinho quando houver dado"
+### Community 2889 - "CT-22 — "Mais pedidos" volta sozinho quando houver dado"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, CT-22 — "Mais pedidos" volta sozinho quando houver dado, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2889 - "CT-97 — Manifesto de edges = versão deployada"
+### Community 2890 - "CT-97 — Manifesto de edges = versão deployada"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, CT-97 — Manifesto de edges = versão deployada, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2890 - "CT-057 — Mapa/analytics sob controle"
+### Community 2891 - "CT-057 — Mapa/analytics sob controle"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, CT-057 — Mapa/analytics sob controle, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2891 - "IA-002 — Mapa completo dos fluxos de IA"
+### Community 2892 - "IA-002 — Mapa completo dos fluxos de IA"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, IA-002 — Mapa completo dos fluxos de IA, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2892 - "X074 — Mapa de calor, top segmentos, ranking"
+### Community 2893 - "X074 — Mapa de calor, top segmentos, ranking"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis, X074 — Mapa de calor, top segmentos, ranking
 
-### Community 2893 - "DASH-002 — Mapa de dependências atual"
+### Community 2894 - "DASH-002 — Mapa de dependências atual"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, DASH-002 — Mapa de dependências atual, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2894 - "GO-03 — Marcar mensagem como não lida"
+### Community 2895 - "GO-03 — Marcar mensagem como não lida"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, GO-03 — Marcar mensagem como não lida, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2895 - "DASH-007 — Matriz de acesso aprovada"
+### Community 2896 - "DASH-007 — Matriz de acesso aprovada"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, DASH-007 — Matriz de acesso aprovada, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2896 - "ES-04 — Matriz de permissões com atendente real"
+### Community 2897 - "ES-04 — Matriz de permissões com atendente real"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, ES-04 — Matriz de permissões com atendente real, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2897 - "S42 — Matriz de prints"
+### Community 2898 - "S42 — Matriz de prints"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis, S42 — Matriz de prints
 
-### Community 2898 - "099 — MCP server real read-only"
+### Community 2899 - "099 — MCP server real read-only"
 Cohesion: 0.22
 Nodes (8): 099 — MCP server real read-only, Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2899 - "SL-221 — MCP server real read-only"
+### Community 2900 - "SL-221 — MCP server real read-only"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis, SL-221 — MCP server real read-only
 
-### Community 2900 - "C-E40 — MCPs quebrados"
+### Community 2901 - "C-E40 — MCPs quebrados"
 Cohesion: 0.22
 Nodes (8): C-E40 — MCPs quebrados, Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2901 - "M-E44 — MCPs quebrados"
+### Community 2902 - "M-E44 — MCPs quebrados"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, M-E44 — MCPs quebrados, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2902 - "SL-213 — MCPs quebrados"
+### Community 2903 - "SL-213 — MCPs quebrados"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis, SL-213 — MCPs quebrados
 
-### Community 2903 - "F1 — Mecânicas seguras"
+### Community 2904 - "F1 — Mecânicas seguras"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, F1 — Mecânicas seguras, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2904 - "EN-088 — Medição de memória/GPU em browser real"
+### Community 2905 - "EN-088 — Medição de memória/GPU em browser real"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, EN-088 — Medição de memória/GPU em browser real, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2905 - "OTH-014 — Medição de memória/GPU em browser real"
+### Community 2906 - "OTH-014 — Medição de memória/GPU em browser real"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, OTH-014 — Medição de memória/GPU em browser real, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2906 - "CT-001 — Medição inicial cliques/segundos"
+### Community 2907 - "CT-001 — Medição inicial cliques/segundos"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, CT-001 — Medição inicial cliques/segundos, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2907 - "T35 — Medição renderizada antes/depois"
+### Community 2908 - "T35 — Medição renderizada antes/depois"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis, T35 — Medição renderizada antes/depois
 
-### Community 2908 - "ES-40 — Medir custo das consultas do painel"
+### Community 2909 - "ES-40 — Medir custo das consultas do painel"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, ES-40 — Medir custo das consultas do painel, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2909 - "IA-060 — Medir utilidade da IA"
+### Community 2910 - "IA-060 — Medir utilidade da IA"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, IA-060 — Medir utilidade da IA, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2910 - "IA-084 — Melhorar busca textual"
+### Community 2911 - "IA-084 — Melhorar busca textual"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, IA-084 — Melhorar busca textual, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2911 - "IA-091 — Memória humana preservada com origem"
+### Community 2912 - "IA-091 — Memória humana preservada com origem"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, IA-091 — Memória humana preservada com origem, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2912 - "IA-096 — Memória por atendimento/assunto"
+### Community 2913 - "IA-096 — Memória por atendimento/assunto"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, IA-096 — Memória por atendimento/assunto, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2913 - "F86 — Menções com notificação"
+### Community 2914 - "F86 — Menções com notificação"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, F86 — Menções com notificação, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2914 - "TC-79 — Menções com notificação"
+### Community 2915 - "TC-79 — Menções com notificação"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis, TC-79 — Menções com notificação
 
-### Community 2915 - "L-07 — Mensagem de ausência / horário de atendimento"
+### Community 2916 - "L-07 — Mensagem de ausência / horário de atendimento"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, L-07 — Mensagem de ausência / horário de atendimento, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2916 - "SEC-01 — Mensagem de entrada forjável (INSERT/UPDATE de messages sem fixar origem)"
+### Community 2917 - "SEC-01 — Mensagem de entrada forjável (INSERT/UPDATE de messages sem fixar origem)"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis, SEC-01 — Mensagem de entrada forjável (INSERT/UPDATE de messages sem fixar origem)
 
-### Community 2917 - "L-08 — Mensagens automáticas de boas-vindas e encerramento"
+### Community 2918 - "L-08 — Mensagens automáticas de boas-vindas e encerramento"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, L-08 — Mensagens automáticas de boas-vindas e encerramento, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2918 - "L-02 — Mensagens interativas (botões/listas)"
+### Community 2919 - "L-02 — Mensagens interativas (botões/listas)"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, L-02 — Mensagens interativas (botões/listas), Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2919 - "R2-INB-003 — Mensagens interativas (botões/listas)"
+### Community 2920 - "R2-INB-003 — Mensagens interativas (botões/listas)"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, R2-INB-003 — Mensagens interativas (botões/listas), Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2920 - "SL-001 — Merge do PR #1343"
+### Community 2921 - "SL-001 — Merge do PR #1343"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis, SL-001 — Merge do PR #1343
 
-### Community 2921 - "L-27 — Meta Conversions API"
+### Community 2922 - "L-27 — Meta Conversions API"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, L-27 — Meta Conversions API, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2922 - "DASH-032 — Metas agregadas no servidor"
+### Community 2923 - "DASH-032 — Metas agregadas no servidor"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, DASH-032 — Metas agregadas no servidor, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2923 - "FASE1 — Metas: delta "Progresso Geral", sparklines, kebab "Ações""
+### Community 2924 - "FASE1 — Metas: delta "Progresso Geral", sparklines, kebab "Ações""
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, FASE1 — Metas: delta "Progresso Geral", sparklines, kebab "Ações", Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2924 - "DASH-055 — Metas sem configuração/zero"
+### Community 2925 - "DASH-055 — Metas sem configuração/zero"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, DASH-055 — Metas sem configuração/zero, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2925 - "DASH-056 — Metas versionadas"
+### Community 2926 - "DASH-056 — Metas versionadas"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, DASH-056 — Metas versionadas, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2926 - "IA-019 — Minimizar dados enviados ao modelo"
+### Community 2927 - "IA-019 — Minimizar dados enviados ao modelo"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, IA-019 — Minimizar dados enviados ao modelo, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2927 - "DASH-020 — Minimizar dados sensíveis"
+### Community 2928 - "DASH-020 — Minimizar dados sensíveis"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, DASH-020 — Minimizar dados sensíveis, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2928 - "FID-54 — Mobile 390 e light com print"
+### Community 2929 - "FID-54 — Mobile 390 e light com print"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, FID-54 — Mobile 390 e light com print, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2929 - "X049 — Modal único do kit com presets"
+### Community 2930 - "X049 — Modal único do kit com presets"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis, X049 — Modal único do kit com presets
 
-### Community 2930 - "X136 — Modal "Confirmar disparo" com 3 confirmações"
+### Community 2931 - "X136 — Modal "Confirmar disparo" com 3 confirmações"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis, X136 — Modal "Confirmar disparo" com 3 confirmações
 
-### Community 2931 - "X063 — Modelo de mensagem interativa"
+### Community 2932 - "X063 — Modelo de mensagem interativa"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis, X063 — Modelo de mensagem interativa
 
-### Community 2932 - "X104 — Modelo v2 no front"
+### Community 2933 - "X104 — Modelo v2 no front"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis, X104 — Modelo v2 no front
 
-### Community 2933 - "IA-071 — Modos de tom harmonizados"
+### Community 2934 - "IA-071 — Modos de tom harmonizados"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, IA-071 — Modos de tom harmonizados, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2934 - "F67 — Modos same_audio / personalized"
+### Community 2935 - "F67 — Modos same_audio / personalized"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, F67 — Modos same_audio / personalized, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2935 - "F80 — Monitor com erro legível e paginação"
+### Community 2936 - "F80 — Monitor com erro legível e paginação"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, F80 — Monitor com erro legível e paginação, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2936 - "SL-003 — Monitor de uptime externo + SLO"
+### Community 2937 - "SL-003 — Monitor de uptime externo + SLO"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis, SL-003 — Monitor de uptime externo + SLO
 
-### Community 2937 - "SL-102 — Monitor de uptime externo + SLO"
+### Community 2938 - "SL-102 — Monitor de uptime externo + SLO"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis, SL-102 — Monitor de uptime externo + SLO
 
-### Community 2938 - "SLA-MON — Monitor de violação de SLA no servidor"
+### Community 2939 - "SLA-MON — Monitor de violação de SLA no servidor"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis, SLA-MON — Monitor de violação de SLA no servidor
 
-### Community 2939 - "T75 — Motion sob reduced-motion"
+### Community 2940 - "T75 — Motion sob reduced-motion"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis, T75 — Motion sob reduced-motion
 
-### Community 2940 - "C-13 — Multiplix: 7 RPCs _recipient legadas"
+### Community 2941 - "C-13 — Multiplix: 7 RPCs _recipient legadas"
 Cohesion: 0.22
 Nodes (8): C-13 — Multiplix: 7 RPCs _recipient legadas, Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2941 - "C-12 — Multiplix: vozes, retornos e fila de falhas"
+### Community 2942 - "C-12 — Multiplix: vozes, retornos e fila de falhas"
 Cohesion: 0.22
 Nodes (8): C-12 — Multiplix: vozes, retornos e fila de falhas, Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2942 - "F58 — Mutações"
+### Community 2943 - "F58 — Mutações"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, F58 — Mutações, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2943 - "TC-52 — Mutações"
+### Community 2944 - "TC-52 — Mutações"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis, TC-52 — Mutações
 
-### Community 2944 - "097 — N04, N36, N40"
+### Community 2945 - "097 — N04, N36, N40"
 Cohesion: 0.22
 Nodes (8): 097 — N04, N36, N40, Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2945 - "098 — N04, N36, N40"
+### Community 2946 - "098 — N04, N36, N40"
 Cohesion: 0.22
 Nodes (8): 098 — N04, N36, N40, Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2946 - "TL-096 — N04, N36, N40"
+### Community 2947 - "TL-096 — N04, N36, N40"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis, TL-096 — N04, N36, N40
 
-### Community 2947 - "L-29 — n8n (hub de integrações)"
+### Community 2948 - "L-29 — n8n (hub de integrações)"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, L-29 — n8n (hub de integrações), Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2948 - "F78 — N × M sempre visível + autosave"
+### Community 2949 - "F78 — N × M sempre visível + autosave"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, F78 — N × M sempre visível + autosave, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2949 - "E04 — Número reserva (swap)"
+### Community 2950 - "E04 — Número reserva (swap)"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, E04 — Número reserva (swap), Estado real conferido, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2950 - "IA-006 — Natureza do indicador visível na tela"
+### Community 2951 - "IA-006 — Natureza do indicador visível na tela"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, IA-006 — Natureza do indicador visível na tela, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2951 - "F71 — Nav + rota /multiplix"
+### Community 2952 - "F71 — Nav + rota /multiplix"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, F71 — Nav + rota /multiplix, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2952 - "X041 — Negócio ganho vira conversão; receita e ROI"
+### Community 2953 - "X041 — Negócio ganho vira conversão; receita e ROI"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis, X041 — Negócio ganho vira conversão; receita e ROI
 
-### Community 2953 - "X039 — Negócios ganhos do Bitrix24 → contact_purchases"
+### Community 2954 - "X039 — Negócios ganhos do Bitrix24 → contact_purchases"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis, X039 — Negócios ganhos do Bitrix24 → contact_purchases
 
-### Community 2954 - "018 — Nightly E2E completo + regressão visual"
+### Community 2955 - "018 — Nightly E2E completo + regressão visual"
 Cohesion: 0.22
 Nodes (8): 018 — Nightly E2E completo + regressão visual, Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2955 - "F4 — no-explicit-any"
+### Community 2956 - "F4 — no-explicit-any"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, F4 — no-explicit-any, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2956 - "F5 — no-restricted-imports"
+### Community 2957 - "F5 — no-restricted-imports"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, F5 — no-restricted-imports, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2957 - "SL-090 — noImplicitAny"
+### Community 2958 - "SL-090 — noImplicitAny"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis, SL-090 — noImplicitAny
 
-### Community 2958 - "A06B — Nome acessível do play com nome do arquivo"
+### Community 2959 - "A06B — Nome acessível do play com nome do arquivo"
 Cohesion: 0.22
 Nodes (8): A06B — Nome acessível do play com nome do arquivo, Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2959 - "A11Y-CRM-01 — Nome acessível nos botões só de ícone"
+### Community 2960 - "A11Y-CRM-01 — Nome acessível nos botões só de ícone"
 Cohesion: 0.22
 Nodes (8): A11Y-CRM-01 — Nome acessível nos botões só de ícone, Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2960 - "A2 — Normalização de sentimento"
+### Community 2961 - "A2 — Normalização de sentimento"
 Cohesion: 0.22
 Nodes (8): A2 — Normalização de sentimento, Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2961 - "X098 — Nota da versão, atalhos, histórico"
+### Community 2962 - "X098 — Nota da versão, atalhos, histórico"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis, X098 — Nota da versão, atalhos, histórico
 
-### Community 2962 - "OBS-3 — Notificação de deploy automático com falha"
+### Community 2963 - "OBS-3 — Notificação de deploy automático com falha"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, OBS-3 — Notificação de deploy automático com falha, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2963 - "E90 — Notificar falha da main por WhatsApp"
+### Community 2964 - "E90 — Notificar falha da main por WhatsApp"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, E90 — Notificar falha da main por WhatsApp, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2964 - "SL-159 — Notificar falha da main por WhatsApp"
+### Community 2965 - "SL-159 — Notificar falha da main por WhatsApp"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis, SL-159 — Notificar falha da main por WhatsApp
 
-### Community 2965 - "E41 — Nova conversa sempre com conexão"
+### Community 2966 - "E41 — Nova conversa sempre com conexão"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, E41 — Nova conversa sempre com conexão, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2966 - "L-13 — NPS periódico"
+### Community 2967 - "L-13 — NPS periódico"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, L-13 — NPS periódico, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2967 - "DASH-034 — NPS sem teto de 500"
+### Community 2968 - "DASH-034 — NPS sem teto de 500"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, DASH-034 — NPS sem teto de 500, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2968 - "IA-077 — Objeções no diálogo completo"
+### Community 2969 - "IA-077 — Objeções no diálogo completo"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, IA-077 — Objeções no diálogo completo, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2969 - "E48 — Observabilidade por instância"
+### Community 2970 - "E48 — Observabilidade por instância"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, E48 — Observabilidade por instância, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2970 - "077 — Observado × estimado; metodologia"
+### Community 2971 - "077 — Observado × estimado; metodologia"
 Cohesion: 0.22
 Nodes (8): 077 — Observado × estimado; metodologia, Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2971 - "DASH-076 — Observado × estimado; metodologia"
+### Community 2972 - "DASH-076 — Observado × estimado; metodologia"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, DASH-076 — Observado × estimado; metodologia, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2972 - "SEC-GMAIL — OIDC Gmail bloqueante"
+### Community 2973 - "SEC-GMAIL — OIDC Gmail bloqueante"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis, SEC-GMAIL — OIDC Gmail bloqueante
 
-### Community 2973 - "F2 — only-export-components"
+### Community 2974 - "F2 — only-export-components"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, F2 — only-export-components, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2974 - "IA-045 — Operações longas em fila durável"
+### Community 2975 - "IA-045 — Operações longas em fila durável"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, IA-045 — Operações longas em fila durável, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2975 - "E-12 — Orçamento/alerta de custo multiplataforma"
+### Community 2976 - "E-12 — Orçamento/alerta de custo multiplataforma"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, E-12 — Orçamento/alerta de custo multiplataforma, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2976 - "DASH-040 — Orçamento de desempenho"
+### Community 2977 - "DASH-040 — Orçamento de desempenho"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, DASH-040 — Orçamento de desempenho, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2977 - "SEC-02 — Oráculo de UUID em require_contact_edit_permission e can_delete_contacts"
+### Community 2978 - "SEC-02 — Oráculo de UUID em require_contact_edit_permission e can_delete_contacts"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis, SEC-02 — Oráculo de UUID em require_contact_edit_permission e can_delete_contacts
 
-### Community 2978 - "SEC-03 — Oráculo de UUID em require_contact_edit_permission e can_delete_contacts"
+### Community 2979 - "SEC-03 — Oráculo de UUID em require_contact_edit_permission e can_delete_contacts"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis, SEC-03 — Oráculo de UUID em require_contact_edit_permission e can_delete_contacts
 
-### Community 2979 - "CT-019 — Ordenação por último pedido/tempo sem comprar/RFM"
+### Community 2980 - "CT-019 — Ordenação por último pedido/tempo sem comprar/RFM"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, CT-019 — Ordenação por último pedido/tempo sem comprar/RFM, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2980 - "IA-142 — Origem de cada informação"
+### Community 2981 - "IA-142 — Origem de cada informação"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, IA-142 — Origem de cada informação, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2981 - "X125 — Origem ZAPP / CRM 360 resolvida no servidor"
+### Community 2982 - "X125 — Origem ZAPP / CRM 360 resolvida no servidor"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis, X125 — Origem ZAPP / CRM 360 resolvida no servidor
 
-### Community 2982 - "082 — Outlook/Graph; tracking pixel; Resend+IMAP, templates e assinaturas de e-mail"
+### Community 2983 - "082 — Outlook/Graph; tracking pixel; Resend+IMAP, templates e assinaturas de e-mail"
 Cohesion: 0.22
 Nodes (8): 082 — Outlook/Graph; tracking pixel; Resend+IMAP, templates e assinaturas de e-mail, Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2983 - "083 — Outlook/Graph; tracking pixel; Resend+IMAP, templates e assinaturas de e-mail"
+### Community 2984 - "083 — Outlook/Graph; tracking pixel; Resend+IMAP, templates e assinaturas de e-mail"
 Cohesion: 0.22
 Nodes (8): 083 — Outlook/Graph; tracking pixel; Resend+IMAP, templates e assinaturas de e-mail, Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2984 - "PAR-081 — Outlook/Graph; tracking pixel; Resend+IMAP, templates e assinaturas de e-mail"
+### Community 2985 - "PAR-081 — Outlook/Graph; tracking pixel; Resend+IMAP, templates e assinaturas de e-mail"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, PAR-081 — Outlook/Graph; tracking pixel; Resend+IMAP, templates e assinaturas de e-mail, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2985 - "049 — p95 de leitura/claim, desempenho"
+### Community 2986 - "049 — p95 de leitura/claim, desempenho"
 Cohesion: 0.22
 Nodes (8): 049 — p95 de leitura/claim, desempenho, Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2986 - "088 — p95 de leitura/claim, desempenho"
+### Community 2987 - "088 — p95 de leitura/claim, desempenho"
 Cohesion: 0.22
 Nodes (8): 088 — p95 de leitura/claim, desempenho, Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2987 - "IA-162 — Público em linguagem natural → filtro"
+### Community 2988 - "IA-162 — Público em linguagem natural → filtro"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, IA-162 — Público em linguagem natural → filtro, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2988 - "EVO-1 — Público por linguagem natural"
+### Community 2989 - "EVO-1 — Público por linguagem natural"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, EVO-1 — Público por linguagem natural, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2989 - "S096 — Paginação por rolagem sem teto"
+### Community 2990 - "S096 — Paginação por rolagem sem teto"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis, S096 — Paginação por rolagem sem teto
 
-### Community 2990 - "C-10 — Painéis CRM no detalhe do contato"
+### Community 2991 - "C-10 — Painéis CRM no detalhe do contato"
 Cohesion: 0.22
 Nodes (8): C-10 — Painéis CRM no detalhe do contato, Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2991 - "F73 — Painel 01 completo"
+### Community 2992 - "F73 — Painel 01 completo"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, F73 — Painel 01 completo, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2992 - "F79 — Painel 03: prévia, aptidão, revisão"
+### Community 2993 - "F79 — Painel 03: prévia, aptidão, revisão"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, F79 — Painel 03: prévia, aptidão, revisão, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2993 - "145 — Painel × modal, teclado, estados visuais, legibilidade"
+### Community 2994 - "145 — Painel × modal, teclado, estados visuais, legibilidade"
 Cohesion: 0.22
 Nodes (8): 145 — Painel × modal, teclado, estados visuais, legibilidade, Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2994 - "146 — Painel × modal, teclado, estados visuais, legibilidade"
+### Community 2995 - "146 — Painel × modal, teclado, estados visuais, legibilidade"
 Cohesion: 0.22
 Nodes (8): 146 — Painel × modal, teclado, estados visuais, legibilidade, Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2995 - "147 — Painel × modal, teclado, estados visuais, legibilidade"
+### Community 2996 - "147 — Painel × modal, teclado, estados visuais, legibilidade"
 Cohesion: 0.22
 Nodes (8): 147 — Painel × modal, teclado, estados visuais, legibilidade, Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2996 - "IA-144 — Painel × modal, teclado, estados visuais, legibilidade"
+### Community 2997 - "IA-144 — Painel × modal, teclado, estados visuais, legibilidade"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, IA-144 — Painel × modal, teclado, estados visuais, legibilidade, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2997 - "DIST-6 — Painel de monitoramento da distribuição e alertas de fallback"
+### Community 2998 - "DIST-6 — Painel de monitoramento da distribuição e alertas de fallback"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, DIST-6 — Painel de monitoramento da distribuição e alertas de fallback, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 2998 - "T1 — Painel "Inteligência Comercial" (briefing, DISC, gatilhos, rapport, horários, churn)"
+### Community 2999 - "T1 — Painel "Inteligência Comercial" (briefing, DISC, gatilhos, rapport, horários, churn)"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis, T1 — Painel "Inteligência Comercial" (briefing, DISC, gatilhos, rapport, horários, churn)
 
-### Community 2999 - "X082 — Painel lateral (3 números, dica do dia)"
+### Community 3000 - "X082 — Painel lateral (3 números, dica do dia)"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis, X082 — Painel lateral (3 números, dica do dia)
 
-### Community 3000 - "E69 — Paralelizar ci.yml"
+### Community 3001 - "E69 — Paralelizar ci.yml"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, E69 — Paralelizar ci.yml, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 3001 - "X124 — Passo 1: nome, objetivo com ícone, responsável"
+### Community 3002 - "IA-100 — Passagem de atendimento com evidências"
+Cohesion: 0.22
+Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, IA-100 — Passagem de atendimento com evidências, Raio de impacto, Regras de negócio aplicáveis
+
+### Community 3003 - "X124 — Passo 1: nome, objetivo com ícone, responsável"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis, X124 — Passo 1: nome, objetivo com ícone, responsável
 
-### Community 3002 - "X133 — Passo Entrega completo"
+### Community 3004 - "X133 — Passo Entrega completo"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis, X133 — Passo Entrega completo
 
-### Community 3003 - "CT-73 — Payload de list_products < 30 KB por página"
+### Community 3005 - "CT-73 — Payload de list_products < 30 KB por página"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, CT-73 — Payload de list_products < 30 KB por página, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 3004 - "DASH-057 — Período das metas na interface"
+### Community 3006 - "DASH-057 — Período das metas na interface"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, DASH-057 — Período das metas na interface, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 3005 - "IA-118 — Períodos gerenciais uniformes"
+### Community 3007 - "IA-118 — Períodos gerenciais uniformes"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, IA-118 — Períodos gerenciais uniformes, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 3006 - "DASH-008 — Períodos padronizados (São Paulo)"
+### Community 3008 - "DASH-008 — Períodos padronizados (São Paulo)"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, DASH-008 — Períodos padronizados (São Paulo), Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 3007 - "CT-034 — Perfil Singu na ficha"
+### Community 3009 - "CT-034 — Perfil Singu na ficha"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, CT-034 — Perfil Singu na ficha, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 3008 - "B10 — Perfil somente-leitura"
+### Community 3010 - "B10 — Perfil somente-leitura"
 Cohesion: 0.22
 Nodes (8): B10 — Perfil somente-leitura, Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 3009 - "SL-058 — Perfil somente-leitura"
+### Community 3011 - "SL-058 — Perfil somente-leitura"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis, SL-058 — Perfil somente-leitura
 
-### Community 3010 - "T11 — Persistência real da chamada SIP"
+### Community 3012 - "T11 — Persistência real da chamada SIP"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis, T11 — Persistência real da chamada SIP
 
-### Community 3011 - "IA-163 — Personalização por destinatário"
+### Community 3013 - "IA-163 — Personalização por destinatário"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, IA-163 — Personalização por destinatário, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 3012 - "L-12 — Pesquisa CSAT ao cliente"
+### Community 3014 - "L-12 — Pesquisa CSAT ao cliente"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, L-12 — Pesquisa CSAT ao cliente, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 3013 - "L-20 — Pipeline de Vendas (Kanban de negócios)"
+### Community 3015 - "L-20 — Pipeline de Vendas (Kanban de negócios)"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, L-20 — Pipeline de Vendas (Kanban de negócios), Raio de impacto, Regras de negócio aplicáveis
 
-### Community 3014 - "BKP-1 — PITR, backup semanal, drill, widget"
+### Community 3016 - "BKP-1 — PITR, backup semanal, drill, widget"
 Cohesion: 0.22
 Nodes (8): BKP-1 — PITR, backup semanal, drill, widget, Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 3015 - "C-E33 — PITR + teste de restore"
+### Community 3017 - "C-E33 — PITR + teste de restore"
 Cohesion: 0.22
 Nodes (8): C-E33 — PITR + teste de restore, Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 3016 - "M-E21 — PITR + teste de restore"
+### Community 3018 - "M-E21 — PITR + teste de restore"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, M-E21 — PITR + teste de restore, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 3017 - "SL-029 — PITR + teste de restore"
+### Community 3019 - "SL-029 — PITR + teste de restore"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis, SL-029 — PITR + teste de restore
 
-### Community 3018 - "X002 — Placar automático do V4"
+### Community 3020 - "X002 — Placar automático do V4"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis, X002 — Placar automático do V4
 
-### Community 3019 - "E89 — Podar GitHub Apps"
+### Community 3021 - "E89 — Podar GitHub Apps"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, E89 — Podar GitHub Apps, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 3020 - "ARQ-NP3 — Política D2 ("só dentro do ZAPP") nas bolhas do chat"
+### Community 3022 - "ARQ-NP3 — Política D2 ("só dentro do ZAPP") nas bolhas do chat"
 Cohesion: 0.22
 Nodes (8): ARQ-NP3 — Política D2 ("só dentro do ZAPP") nas bolhas do chat, Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 3021 - "E08 — Política de merge / enforce_admins"
+### Community 3023 - "E08 — Política de merge / enforce_admins"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, E08 — Política de merge / enforce_admins, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 3022 - "M-E07 — Política de merge / enforce_admins"
+### Community 3024 - "M-E07 — Política de merge / enforce_admins"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, M-E07 — Política de merge / enforce_admins, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 3023 - "SL-027 — Política Deno/lock"
+### Community 3025 - "SL-027 — Política Deno/lock"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis, SL-027 — Política Deno/lock
 
-### Community 3024 - "IA-088 — Políticas conflitantes"
+### Community 3026 - "IA-088 — Políticas conflitantes"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, IA-088 — Políticas conflitantes, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 3025 - "DASH-067 — Ponderar por amostra"
+### Community 3027 - "DASH-067 — Ponderar por amostra"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, DASH-067 — Ponderar por amostra, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 3026 - "008 — PR Size Gate + Notify CI Failure"
+### Community 3028 - "008 — PR Size Gate + Notify CI Failure"
 Cohesion: 0.22
 Nodes (8): 008 — PR Size Gate + Notify CI Failure, Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 3027 - "SL-121 — PR Size Gate + Notify CI Failure"
+### Community 3029 - "SL-121 — PR Size Gate + Notify CI Failure"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis, SL-121 — PR Size Gate + Notify CI Failure
 
-### Community 3028 - "C-19 — Prévia de links no chat (proxy de saída)"
+### Community 3030 - "C-19 — Prévia de links no chat (proxy de saída)"
 Cohesion: 0.22
 Nodes (8): C-19 — Prévia de links no chat (proxy de saída), Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 3029 - "X132 — Prévia em moldura de celular com contato real"
+### Community 3031 - "X132 — Prévia em moldura de celular com contato real"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis, X132 — Prévia em moldura de celular com contato real
 
-### Community 3030 - "X088 — Prévia fiel ao WhatsApp"
+### Community 3032 - "X088 — Prévia fiel ao WhatsApp"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis, X088 — Prévia fiel ao WhatsApp
 
-### Community 3031 - "X055 — Prancha TalkXKit e matriz tela×estado"
+### Community 3033 - "X055 — Prancha TalkXKit e matriz tela×estado"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis, X055 — Prancha TalkXKit e matriz tela×estado
 
-### Community 3032 - "DIST-CFG — Preferência "método de distribuição" do usuário"
+### Community 3034 - "DIST-CFG — Preferência "método de distribuição" do usuário"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, DIST-CFG — Preferência "método de distribuição" do usuário, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 3033 - "IA-099 — Preferências autorizadas"
+### Community 3035 - "IA-099 — Preferências autorizadas"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, IA-099 — Preferências autorizadas, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 3034 - "IA-150 — Preferências de formato por usuário"
+### Community 3036 - "IA-150 — Preferências de formato por usuário"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, IA-150 — Preferências de formato por usuário, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 3035 - "FID-13 — Presença "Online" por contato na lista"
+### Community 3037 - "FID-13 — Presença "Online" por contato na lista"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, FID-13 — Presença "Online" por contato na lista, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 3036 - "SL-199 — Presença "Online" por contato na lista"
+### Community 3038 - "SL-199 — Presença "Online" por contato na lista"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis, SL-199 — Presença "Online" por contato na lista
 
-### Community 3037 - "F73 — Presença real"
+### Community 3039 - "F73 — Presença real"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, F73 — Presença real, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 3038 - "DASH-060 — Presença real no ranking"
+### Community 3040 - "DASH-060 — Presença real no ranking"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, DASH-060 — Presença real no ranking, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 3039 - "TC-66 — Presença real"
+### Community 3041 - "TC-66 — Presença real"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis, TC-66 — Presença real
 
-### Community 3040 - "E12 — Preset órfão "Pipeline vazio/Criar Deal" e placeholder da paleta"
+### Community 3042 - "E12 — Preset órfão "Pipeline vazio/Criar Deal" e placeholder da paleta"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, E12 — Preset órfão "Pipeline vazio/Criar Deal" e placeholder da paleta, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 3041 - "SL-206 — Presets de filtros e deep link ?contact=/?message= na Inbox"
+### Community 3043 - "SL-206 — Presets de filtros e deep link ?contact=/?message= na Inbox"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis, SL-206 — Presets de filtros e deep link ?contact=/?message= na Inbox
 
-### Community 3042 - "EVO-2 — Pressão de contato"
+### Community 3044 - "EVO-2 — Pressão de contato"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, EVO-2 — Pressão de contato, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 3043 - "SL-137 — Prettier + ESLint Tailwind"
+### Community 3045 - "SL-137 — Prettier + ESLint Tailwind"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis, SL-137 — Prettier + ESLint Tailwind
 
-### Community 3044 - "X068 — Previsões no servidor (ETA, risco, sobreposição)"
+### Community 3046 - "X068 — Previsões no servidor (ETA, risco, sobreposição)"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis, X068 — Previsões no servidor (ETA, risco, sobreposição)
 
-### Community 3045 - "DASH-CONTROLS-001 — Previsão heurística (95%, 35)"
+### Community 3047 - "DASH-CONTROLS-001 — Previsão heurística (95%, 35)"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, DASH-CONTROLS-001 — Previsão heurística (95%, 35), Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 3046 - "DASH-075 — Previsão sem "95% de confiança""
+### Community 3048 - "DASH-075 — Previsão sem "95% de confiança""
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, DASH-075 — Previsão sem "95% de confiança", Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 3047 - "CT-10 — Primeiro envio real de produto (2 fotos + legenda)"
+### Community 3049 - "CT-10 — Primeiro envio real de produto (2 fotos + legenda)"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, CT-10 — Primeiro envio real de produto (2 fotos + legenda), Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 3048 - "CT-94 — Print da UI reagindo ao 429"
+### Community 3050 - "CT-94 — Print da UI reagindo ao 429"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, CT-94 — Print da UI reagindo ao 429, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 3049 - "360-51 — Prints das 8 abas e medidas Playwright"
+### Community 3051 - "360-51 — Prints das 8 abas e medidas Playwright"
 Cohesion: 0.22
 Nodes (8): 360-51 — Prints das 8 abas e medidas Playwright, Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 3050 - "FID-52 — Prints das 8 abas e medidas Playwright"
+### Community 3052 - "FID-52 — Prints das 8 abas e medidas Playwright"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, FID-52 — Prints das 8 abas e medidas Playwright, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 3051 - "SL-208 — Prints das 8 abas e medidas Playwright"
+### Community 3053 - "SL-208 — Prints das 8 abas e medidas Playwright"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis, SL-208 — Prints das 8 abas e medidas Playwright
 
-### Community 3052 - "X142 — Progresso por segmento e pré-checagem de retomada"
+### Community 3054 - "X142 — Progresso por segmento e pré-checagem de retomada"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis, X142 — Progresso por segmento e pré-checagem de retomada
 
-### Community 3053 - "X037 — Projeção talkx_contact_attributes"
+### Community 3055 - "X037 — Projeção talkx_contact_attributes"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis, X037 — Projeção talkx_contact_attributes
 
-### Community 3054 - "IA-073 — Proteger números/condições"
+### Community 3056 - "IA-073 — Proteger números/condições"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, IA-073 — Proteger números/condições, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 3055 - "E49 — Prova audiovisual pós-deploy"
+### Community 3057 - "E49 — Prova audiovisual pós-deploy"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, E49 — Prova audiovisual pós-deploy, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 3056 - "ARQ-39 — Prova autenticada da cópia na Storage + leitura de mídia recebida"
+### Community 3058 - "ARQ-39 — Prova autenticada da cópia na Storage + leitura de mídia recebida"
 Cohesion: 0.22
 Nodes (8): ARQ-39 — Prova autenticada da cópia na Storage + leitura de mídia recebida, Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 3057 - "X023 — Prova de paridade de deploy das 5 edges"
+### Community 3059 - "X023 — Prova de paridade de deploy das 5 edges"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis, X023 — Prova de paridade de deploy das 5 edges
 
-### Community 3058 - "E45 — Prova de som real (audio.volume em 5 players)"
+### Community 3060 - "E45 — Prova de som real (audio.volume em 5 players)"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, E45 — Prova de som real (audio.volume em 5 players), Estado real conferido, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 3059 - "SL-074 — Prova de som real (audio.volume em 5 players)"
+### Community 3061 - "SL-074 — Prova de som real (audio.volume em 5 players)"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis, SL-074 — Prova de som real (audio.volume em 5 players)
 
-### Community 3060 - "L-32 — Provedor WhatsApp Cloud API oficial"
+### Community 3062 - "L-32 — Provedor WhatsApp Cloud API oficial"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, L-32 — Provedor WhatsApp Cloud API oficial, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 3061 - "E16 — Proxy evolution-api resolve o token pela instância"
+### Community 3063 - "E16 — Proxy evolution-api resolve o token pela instância"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, E16 — Proxy evolution-api resolve o token pela instância, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 3062 - "SL-212 — public/version.json com Evolution antiga"
+### Community 3064 - "SL-212 — public/version.json com Evolution antiga"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis, SL-212 — public/version.json com Evolution antiga
 
-### Community 3063 - "ES-49 — Publicação + smoke autenticado"
+### Community 3065 - "ES-49 — Publicação + smoke autenticado"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, ES-49 — Publicação + smoke autenticado, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 3064 - "E71 — Pular jobs pesados em draft"
+### Community 3066 - "E71 — Pular jobs pesados em draft"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, E71 — Pular jobs pesados em draft, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 3065 - "LGPD-1 — Purge/anonimização por prazo"
+### Community 3067 - "LGPD-1 — Purge/anonimização por prazo"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, LGPD-1 — Purge/anonimização por prazo, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 3066 - "F87 — Push → abre conversa / ?cid= na URL"
+### Community 3068 - "F87 — Push → abre conversa / ?cid= na URL"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, F87 — Push → abre conversa / ?cid= na URL, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 3067 - "L-15 — PWA completo + Web Push"
+### Community 3069 - "L-15 — PWA completo + Web Push"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, L-15 — PWA completo + Web Push, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 3068 - "093 — PWA/Service Worker"
+### Community 3070 - "093 — PWA/Service Worker"
 Cohesion: 0.22
 Nodes (8): 093 — PWA/Service Worker, Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 3069 - "SL-226 — PWA/Service Worker"
+### Community 3071 - "SL-226 — PWA/Service Worker"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis, SL-226 — PWA/Service Worker
 
-### Community 3070 - "CP11 — QA de fidelidade completo"
+### Community 3072 - "CP11 — QA de fidelidade completo"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, CP11 — QA de fidelidade completo, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 3071 - "WIDE-10 — QA global do módulo"
+### Community 3073 - "WIDE-10 — QA global do módulo"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis, WIDE-10 — QA global do módulo
 
-### Community 3072 - "E23 — QR, connect, status, logout e restart com o token certo"
+### Community 3074 - "E23 — QR, connect, status, logout e restart com o token certo"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, E23 — QR, connect, status, logout e restart com o token certo, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 3073 - "E87 — Quarentena E2E formal"
+### Community 3075 - "E87 — Quarentena E2E formal"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, E87 — Quarentena E2E formal, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 3074 - "I-375 — Quebrar god-files do Talk X"
+### Community 3076 - "I-375 — Quebrar god-files do Talk X"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, I-375 — Quebrar god-files do Talk X, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 3075 - "A2 — Quem pode inscrever terceiros em grupo"
+### Community 3077 - "A2 — Quem pode inscrever terceiros em grupo"
 Cohesion: 0.22
 Nodes (8): A2 — Quem pode inscrever terceiros em grupo, Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 3076 - "IA-054 — Quota por ação (não por linha de log)"
+### Community 3078 - "IA-054 — Quota por ação (não por linha de log)"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, IA-054 — Quota por ação (não por linha de log), Raio de impacto, Regras de negócio aplicáveis
 
-### Community 3077 - "X195 — Régua visual como trava"
+### Community 3079 - "X195 — Régua visual como trava"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis, X195 — Régua visual como trava
 
-### Community 3078 - "X004 — Régua visual (print ao lado do mock)"
+### Community 3080 - "X004 — Régua visual (print ao lado do mock)"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis, X004 — Régua visual (print ao lado do mock)
 
-### Community 3079 - "S14 — Rótulo "Compras concluídas""
+### Community 3081 - "S14 — Rótulo "Compras concluídas""
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis, S14 — Rótulo "Compras concluídas"
 
-### Community 3080 - "SV-001 — Rótulo "Compras concluídas""
+### Community 3082 - "SV-001 — Rótulo "Compras concluídas""
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis, SV-001 — Rótulo "Compras concluídas"
 
-### Community 3081 - "RES-SLA — Rótulo SLA violado / barra Equipe"
+### Community 3083 - "RES-SLA — Rótulo SLA violado / barra Equipe"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis, RES-SLA — Rótulo SLA violado / barra Equipe
 
-### Community 3082 - "CT-49 — Rail "Envios hoje / 7 dias""
+### Community 3084 - "CT-49 — Rail "Envios hoje / 7 dias""
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, CT-49 — Rail "Envios hoje / 7 dias", Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 3083 - "X092 — Rail: mais convertidos, sugestões"
+### Community 3085 - "X092 — Rail: mais convertidos, sugestões"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis, X092 — Rail: mais convertidos, sugestões
 
-### Community 3084 - "DASH-059 — Ranking com variação real"
+### Community 3086 - "DASH-059 — Ranking com variação real"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, DASH-059 — Ranking com variação real, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 3085 - "F61 — Rascunho com colar imagem"
+### Community 3087 - "F61 — Rascunho com colar imagem"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, F61 — Rascunho com colar imagem, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 3086 - "X119 — Rascunho com segmentos, mídia, botões, dias"
+### Community 3088 - "X119 — Rascunho com segmentos, mídia, botões, dias"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis, X119 — Rascunho com segmentos, mídia, botões, dias
 
-### Community 3087 - "IA-161 — Rascunho de campanha por IA"
+### Community 3089 - "IA-161 — Rascunho de campanha por IA"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, IA-161 — Rascunho de campanha por IA, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 3088 - "095 — Ratchets TS/@ts-nocheck/dead-code"
+### Community 3090 - "095 — Ratchets TS/@ts-nocheck/dead-code"
 Cohesion: 0.22
 Nodes (8): 095 — Ratchets TS/@ts-nocheck/dead-code, Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 3089 - "SL-232 — Ratchets TS/@ts-nocheck/dead-code"
+### Community 3091 - "SL-232 — Ratchets TS/@ts-nocheck/dead-code"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis, SL-232 — Ratchets TS/@ts-nocheck/dead-code
 
-### Community 3090 - "E33 — Rate limit do webhook por instância"
+### Community 3092 - "E33 — Rate limit do webhook por instância"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, E33 — Rate limit do webhook por instância, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 3091 - "M-E30 — Rate limit nas edges expostas"
+### Community 3093 - "M-E30 — Rate limit nas edges expostas"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, M-E30 — Rate limit nas edges expostas, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 3092 - "I-1265 — Reação cross-team no Team Chat"
+### Community 3094 - "I-1265 — Reação cross-team no Team Chat"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, I-1265 — Reação cross-team no Team Chat, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 3093 - "F3 — react-hooks/"
+### Community 3095 - "F3 — react-hooks/"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, F3 — react-hooks/, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 3094 - "SL-081 — README de canais, tipos derivados, fábrica de queryKeys"
+### Community 3096 - "SL-081 — README de canais, tipos derivados, fábrica de queryKeys"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis, SL-081 — README de canais, tipos derivados, fábrica de queryKeys
 
-### Community 3095 - "F88 — Realtime robusto"
+### Community 3097 - "F88 — Realtime robusto"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, F88 — Realtime robusto, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 3096 - "TC-81 — Realtime robusto"
+### Community 3098 - "TC-81 — Realtime robusto"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis, TC-81 — Realtime robusto
 
-### Community 3097 - "PAR-078 — Rebalanceamento de filas e escalonamento de SLA"
+### Community 3099 - "PAR-078 — Rebalanceamento de filas e escalonamento de SLA"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, PAR-078 — Rebalanceamento de filas e escalonamento de SLA, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 3098 - "F59 — Recalcular público agendado"
+### Community 3100 - "F59 — Recalcular público agendado"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, F59 — Recalcular público agendado, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 3099 - "A7C — Recibos e reações com conversation_id forçado"
+### Community 3101 - "A7C — Recibos e reações com conversation_id forçado"
 Cohesion: 0.22
 Nodes (8): A7C — Recibos e reações com conversation_id forçado, Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 3100 - "TC-009 — Recibos e reações com conversation_id forçado"
+### Community 3102 - "TC-009 — Recibos e reações com conversation_id forçado"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis, TC-009 — Recibos e reações com conversation_id forçado
 
-### Community 3101 - "IA-167 — Recomendação de horário sustentada"
+### Community 3103 - "IA-167 — Recomendação de horário sustentada"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, IA-167 — Recomendação de horário sustentada, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 3102 - "IA-152 — Recomendar produtos com restrições reais"
+### Community 3104 - "IA-152 — Recomendar produtos com restrições reais"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, IA-152 — Recomendar produtos com restrições reais, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 3103 - "RES-2 — Recorrência, subtarefas, colunas personalizáveis, anexos, comentários, arrastar na Agenda, parser de linguagem natural, virtualização, push do navegador"
+### Community 3105 - "RES-2 — Recorrência, subtarefas, colunas personalizáveis, anexos, comentários, arrastar na Agenda, parser de linguagem natural, virtualização, push do navegador"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis, RES-2 — Recorrência, subtarefas, colunas personalizáveis, anexos, comentários, arrastar na Agenda, parser de linguagem natural, virtualização, push do navegador
 
-### Community 3104 - "IA-081 — Recuperação de conhecimento compartilhada"
+### Community 3106 - "IA-081 — Recuperação de conhecimento compartilhada"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, IA-081 — Recuperação de conhecimento compartilhada, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 3105 - "IA-086 — Recuperação híbrida + reordenação"
+### Community 3107 - "IA-086 — Recuperação híbrida + reordenação"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, IA-086 — Recuperação híbrida + reordenação, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 3106 - "SL-201 — Recursos exclusivos da GO (mute/pin de chat, carrossel, link, enquetes, comunidades, newsletter)"
+### Community 3108 - "SL-201 — Recursos exclusivos da GO (mute/pin de chat, carrossel, link, enquetes, comunidades, newsletter)"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis, SL-201 — Recursos exclusivos da GO (mute/pin de chat, carrossel, link, enquetes, comunidades, newsletter)
 
-### Community 3107 - "SB-07 — Registrar decisões D1–D7"
+### Community 3109 - "SB-07 — Registrar decisões D1–D7"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis, SB-07 — Registrar decisões D1–D7
 
-### Community 3108 - "F85 — Registrar envio como interação no Singu"
+### Community 3110 - "F85 — Registrar envio como interação no Singu"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, F85 — Registrar envio como interação no Singu, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 3109 - "IA-093 — Registro de compromissos"
+### Community 3111 - "IA-093 — Registro de compromissos"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, IA-093 — Registro de compromissos, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 3110 - "IA-049 — Registro de consumo nunca perdido"
+### Community 3112 - "IA-049 — Registro de consumo nunca perdido"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, IA-049 — Registro de consumo nunca perdido, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 3111 - "SL-188 — Registry de provedores, provider fake, Cloud API, switchover"
+### Community 3113 - "SL-188 — Registry de provedores, provider fake, Cloud API, switchover"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis, SL-188 — Registry de provedores, provider fake, Cloud API, switchover
 
-### Community 3112 - "T100 — Regra de tipografia no CLAUDE.md"
+### Community 3114 - "T100 — Regra de tipografia no CLAUDE.md"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis, T100 — Regra de tipografia no CLAUDE.md
 
-### Community 3113 - "DASH-086 — Relatório = Dashboard"
+### Community 3115 - "DASH-086 — Relatório = Dashboard"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, DASH-086 — Relatório = Dashboard, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 3114 - "SB-100 — Relatório final §9"
+### Community 3116 - "SB-100 — Relatório final §9"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis, SB-100 — Relatório final §9
 
-### Community 3115 - "L-19 — Relatórios agendados por e-mail"
+### Community 3117 - "L-19 — Relatórios agendados por e-mail"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, L-19 — Relatórios agendados por e-mail, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 3116 - "FASE7 — Relatórios: "Personalizada""
+### Community 3118 - "FASE7 — Relatórios: "Personalizada""
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, FASE7 — Relatórios: "Personalizada", Raio de impacto, Regras de negócio aplicáveis
 
-### Community 3117 - "E-06 — Release candidata, sign-off, canary"
+### Community 3119 - "E-06 — Release candidata, sign-off, canary"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, E-06 — Release candidata, sign-off, canary, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 3118 - "X200 — Release e encerramento"
+### Community 3120 - "X200 — Release e encerramento"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis, X200 — Release e encerramento
 
-### Community 3119 - "CT-100 — Release v1 (tag catalog-v1.0.0 + seção no CLAUDE.md)"
+### Community 3121 - "CT-100 — Release v1 (tag catalog-v1.0.0 + seção no CLAUDE.md)"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, CT-100 — Release v1 (tag catalog-v1.0.0 + seção no CLAUDE.md), Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 3120 - "C-E11 — Remotos ≤ 25"
+### Community 3122 - "C-E11 — Remotos ≤ 25"
 Cohesion: 0.22
 Nodes (8): C-E11 — Remotos ≤ 25, Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 3121 - "M-E04 — Remotos ≤ 25"
+### Community 3123 - "M-E04 — Remotos ≤ 25"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, M-E04 — Remotos ≤ 25, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 3122 - "SL-135 — Remotos ≤ 25"
+### Community 3124 - "SL-135 — Remotos ≤ 25"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis, SL-135 — Remotos ≤ 25
 
-### Community 3123 - "E43 — Remover ações que a GO não tem"
+### Community 3125 - "E43 — Remover ações que a GO não tem"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, E43 — Remover ações que a GO não tem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 3124 - "E-08 — Remover any explícito"
+### Community 3126 - "E-08 — Remover any explícito"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, E-08 — Remover any explícito, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 3125 - "SL-071 — Remover derivação por messages.length (status "Resolvidas")"
+### Community 3127 - "SL-071 — Remover derivação por messages.length (status "Resolvidas")"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis, SL-071 — Remover derivação por messages.length (status "Resolvidas")
 
-### Community 3126 - "E20 — Remover 'PRINCIPAL' fixo dos fluxos"
+### Community 3128 - "E20 — Remover 'PRINCIPAL' fixo dos fluxos"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, E20 — Remover 'PRINCIPAL' fixo dos fluxos, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 3127 - "F96 — Remover RPCs deprecated"
+### Community 3129 - "F96 — Remover RPCs deprecated"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, F96 — Remover RPCs deprecated, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 3128 - "TC-90 — Remover RPCs deprecated"
+### Community 3130 - "TC-90 — Remover RPCs deprecated"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis, TC-90 — Remover RPCs deprecated
 
-### Community 3129 - "F82 — "Repetir com inteligência""
+### Community 3131 - "F82 — "Repetir com inteligência""
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, F82 — "Repetir com inteligência", Raio de impacto, Regras de negócio aplicáveis
 
-### Community 3130 - "SEC-ELEVEN — Replay/insert no webhook ElevenLabs (IA-WEBHOOK-001)"
+### Community 3132 - "SEC-ELEVEN — Replay/insert no webhook ElevenLabs (IA-WEBHOOK-001)"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis, SEC-ELEVEN — Replay/insert no webhook ElevenLabs (IA-WEBHOOK-001)
 
-### Community 3131 - "C-E20 — Replay integral verde"
+### Community 3133 - "C-E20 — Replay integral verde"
 Cohesion: 0.22
 Nodes (8): C-E20 — Replay integral verde, Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 3132 - "M-E24 — Replay integral verde"
+### Community 3134 - "M-E24 — Replay integral verde"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, M-E24 — Replay integral verde, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 3133 - "IA-125 — Reprodução/streaming de áudio"
+### Community 3135 - "IA-125 — Reprodução/streaming de áudio"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, IA-125 — Reprodução/streaming de áudio, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 3134 - "126 — Reprodução/streaming e confirmação de áudio enviado"
+### Community 3136 - "126 — Reprodução/streaming e confirmação de áudio enviado"
 Cohesion: 0.22
 Nodes (8): 126 — Reprodução/streaming e confirmação de áudio enviado, Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 3135 - "IA-125 — Reprodução/streaming e confirmação de áudio enviado"
+### Community 3137 - "IA-125 — Reprodução/streaming e confirmação de áudio enviado"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, IA-125 — Reprodução/streaming e confirmação de áudio enviado, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 3136 - "RES-4 — Resíduos técnicos"
+### Community 3138 - "RES-4 — Resíduos técnicos"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis, RES-4 — Resíduos técnicos
 
-### Community 3137 - "DASH-053 — Resolução por fatos operacionais"
+### Community 3139 - "DASH-053 — Resolução por fatos operacionais"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, DASH-053 — Resolução por fatos operacionais, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 3138 - "F27 — Resolver em lotes de 1.000"
+### Community 3140 - "F27 — Resolver em lotes de 1.000"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, F27 — Resolver em lotes de 1.000, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 3139 - "IA-098 — Resolver identidades com cautela"
+### Community 3141 - "IA-098 — Resolver identidades com cautela"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, IA-098 — Resolver identidades com cautela, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 3140 - "T77 — Responsivo (<1280 Sheet, 390 px)"
+### Community 3142 - "T77 — Responsivo (<1280 Sheet, 390 px)"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis, T77 — Responsivo (<1280 Sheet, 390 px)
 
-### Community 3141 - "EVO-3 — Resposta vira tarefa"
+### Community 3143 - "EVO-3 — Resposta vira tarefa"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, EVO-3 — Resposta vira tarefa, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 3142 - "DASH-049 — Respostas fora de ordem"
+### Community 3144 - "DASH-049 — Respostas fora de ordem"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, DASH-049 — Respostas fora de ordem, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 3143 - "X123 — Restaurar rascunho inteiro"
+### Community 3145 - "X123 — Restaurar rascunho inteiro"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis, X123 — Restaurar rascunho inteiro
 
-### Community 3144 - "IA-016 — Restringir destinos de rede"
+### Community 3146 - "IA-016 — Restringir destinos de rede"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, IA-016 — Restringir destinos de rede, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 3145 - "E90 — Restringir o token público da Mapbox aos domínios da Vercel"
+### Community 3147 - "E90 — Restringir o token público da Mapbox aos domínios da Vercel"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, E90 — Restringir o token público da Mapbox aos domínios da Vercel, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 3146 - "IA-061 — Resumo × análise aprofundada unificados"
+### Community 3148 - "IA-061 — Resumo × análise aprofundada unificados"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, IA-061 — Resumo × análise aprofundada unificados, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 3147 - "X131 — Resumo da campanha calculado no servidor"
+### Community 3149 - "X131 — Resumo da campanha calculado no servidor"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis, X131 — Resumo da campanha calculado no servidor
 
-### Community 3148 - "E53 — Resumo de drift em 1 linha"
+### Community 3150 - "E53 — Resumo de drift em 1 linha"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, E53 — Resumo de drift em 1 linha, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 3149 - "CT-037 — Resumo de interações + briefing"
+### Community 3151 - "CT-037 — Resumo de interações + briefing"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, CT-037 — Resumo de interações + briefing, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 3150 - "CT-038 — Resumo de interações + briefing"
+### Community 3152 - "CT-038 — Resumo de interações + briefing"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, CT-038 — Resumo de interações + briefing, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 3151 - "X108 — Resumo do segmento com números do servidor"
+### Community 3153 - "X108 — Resumo do segmento com números do servidor"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis, X108 — Resumo do segmento com números do servidor
 
-### Community 3152 - "IA-059 — Retirar dado sensível dos logs"
+### Community 3154 - "IA-059 — Retirar dado sensível dos logs"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, IA-059 — Retirar dado sensível dos logs, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 3153 - "CT-088 — Retirar edição em massa; seleção limitada a 3"
+### Community 3155 - "CT-088 — Retirar edição em massa; seleção limitada a 3"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, CT-088 — Retirar edição em massa; seleção limitada a 3, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 3154 - "CT-089 — Retirar edição em massa; seleção limitada a 3"
+### Community 3156 - "CT-089 — Retirar edição em massa; seleção limitada a 3"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, CT-089 — Retirar edição em massa; seleção limitada a 3, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 3155 - "DASH-016 — Revalidar aba ao perder papel"
+### Community 3157 - "DASH-016 — Revalidar aba ao perder papel"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, DASH-016 — Revalidar aba ao perder papel, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 3156 - "DASH-099 — Revisão independente"
+### Community 3158 - "DASH-099 — Revisão independente"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, DASH-099 — Revisão independente, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 3157 - "E34 — Revisão real / conta de agentes"
+### Community 3159 - "E34 — Revisão real / conta de agentes"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, E34 — Revisão real / conta de agentes, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 3158 - "E36 — Revisão real / conta de agentes"
+### Community 3160 - "E36 — Revisão real / conta de agentes"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, E36 — Revisão real / conta de agentes, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 3159 - "CT-060 — Revisão visual J2"
+### Community 3161 - "CT-060 — Revisão visual J2"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, CT-060 — Revisão visual J2, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 3160 - "CRM-R4 — Revogar anon das 5 RPCs antigas no banco do CRM, rotacionar anon key, remover VITE_CLIENTES_"
+### Community 3162 - "CRM-R4 — Revogar anon das 5 RPCs antigas no banco do CRM, rotacionar anon key, remover VITE_CLIENTES_"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, CRM-R4 — Revogar anon das 5 RPCs antigas no banco do CRM, rotacionar anon key, remover VITE_CLIENTES_, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 3161 - "IA-090 — Revogar fontes em todas as camadas"
+### Community 3163 - "IA-090 — Revogar fontes em todas as camadas"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, IA-090 — Revogar fontes em todas as camadas, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 3162 - "052 — Revogar sessão por dispositivo"
+### Community 3164 - "052 — Revogar sessão por dispositivo"
 Cohesion: 0.22
 Nodes (8): 052 — Revogar sessão por dispositivo, Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 3163 - "TL-099 — Revogar token GitHub (E08)"
+### Community 3165 - "TL-099 — Revogar token GitHub (E08)"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis, TL-099 — Revogar token GitHub (E08)
 
-### Community 3164 - "TL-099 — Revogar token GitHub vazado"
+### Community 3166 - "TL-099 — Revogar token GitHub vazado"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis, TL-099 — Revogar token GitHub vazado
 
-### Community 3165 - "CT-03 — REVOKE de zapp_catalog_stats() para authenticated no PromoGifts"
+### Community 3167 - "CT-03 — REVOKE de zapp_catalog_stats() para authenticated no PromoGifts"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, CT-03 — REVOKE de zapp_catalog_stats() para authenticated no PromoGifts, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 3166 - "X040 — RFM calculado localmente"
+### Community 3168 - "X040 — RFM calculado localmente"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis, X040 — RFM calculado localmente
 
-### Community 3167 - "F17 — Ritmo e teto por conexão"
+### Community 3169 - "F17 — Ritmo e teto por conexão"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, F17 — Ritmo e teto por conexão, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 3168 - "X147 — Ritmo, previsto e término"
+### Community 3170 - "X147 — Ritmo, previsto e término"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis, X147 — Ritmo, previsto e término
 
-### Community 3169 - "B15 — RLS de messages × ciclo de vida; bucket audio-memes público"
+### Community 3171 - "B15 — RLS de messages × ciclo de vida; bucket audio-memes público"
 Cohesion: 0.22
 Nodes (8): B15 — RLS de messages × ciclo de vida; bucket audio-memes público, Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 3170 - "CT-91 — RLS testada com 2 usuários reais"
+### Community 3172 - "CT-91 — RLS testada com 2 usuários reais"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, CT-91 — RLS testada com 2 usuários reais, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 3171 - "CT-021 — RLS: vendedor vê só os próprios contatos"
+### Community 3173 - "CT-021 — RLS: vendedor vê só os próprios contatos"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, CT-021 — RLS: vendedor vê só os próprios contatos, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 3172 - "Y17-03 — Rolagem horizontal no celular em /queues/comparison"
+### Community 3174 - "Y17-03 — Rolagem horizontal no celular em /queues/comparison"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis, Y17-03 — Rolagem horizontal no celular em /queues/comparison
 
-### Community 3173 - "E26 — Role ci_readonly"
+### Community 3175 - "E26 — Role ci_readonly"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, E26 — Role ci_readonly, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 3174 - "E61 — Rollback automático de edge"
+### Community 3176 - "E61 — Rollback automático de edge"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, E61 — Rollback automático de edge, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 3175 - "X143 — Rota por situação + URL"
+### Community 3177 - "X143 — Rota por situação + URL"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis, X143 — Rota por situação + URL
 
-### Community 3176 - "MIG-97 — Rotação das credenciais expostas na migração"
+### Community 3178 - "MIG-97 — Rotação das credenciais expostas na migração"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, MIG-97 — Rotação das credenciais expostas na migração, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 3177 - "L-42 — Rotação de credenciais Evolution GO + runbook"
+### Community 3179 - "L-42 — Rotação de credenciais Evolution GO + runbook"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, L-42 — Rotação de credenciais Evolution GO + runbook, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 3178 - "SEC-ROT — Rotação de credenciais (Evolution, service_role, senha DB, Lovable Bearer, MCP)"
+### Community 3180 - "SEC-ROT — Rotação de credenciais (Evolution, service_role, senha DB, Lovable Bearer, MCP)"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis, SEC-ROT — Rotação de credenciais (Evolution, service_role, senha DB, Lovable Bearer, MCP)
 
-### Community 3179 - "M-E29 — Rotação de secrets >90 d"
+### Community 3181 - "M-E29 — Rotação de secrets >90 d"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, M-E29 — Rotação de secrets >90 d, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 3180 - "E14 — Rotação do token de instância"
+### Community 3182 - "E14 — Rotação do token de instância"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, E14 — Rotação do token de instância, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 3181 - "AG-08 — Rotacionar Bearer Lovable; command_allowlist e fail_closed dos hooks secundários"
+### Community 3183 - "AG-08 — Rotacionar Bearer Lovable; command_allowlist e fail_closed dos hooks secundários"
 Cohesion: 0.22
 Nodes (8): AG-08 — Rotacionar Bearer Lovable; command_allowlist e fail_closed dos hooks secundários, Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 3182 - "PAR-077 — Roteador sticky + round-robin + skills"
+### Community 3184 - "PAR-077 — Roteador sticky + round-robin + skills"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, PAR-077 — Roteador sticky + round-robin + skills, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 3183 - "IA-102 — Roteamento determinístico"
+### Community 3185 - "IA-102 — Roteamento determinístico"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, IA-102 — Roteamento determinístico, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 3184 - "221 — rpc_app_bootstrap, MCP server real"
+### Community 3186 - "221 — rpc_app_bootstrap, MCP server real"
 Cohesion: 0.22
 Nodes (8): 221 — rpc_app_bootstrap, MCP server real, Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 3185 - "SL-220 — rpc_app_bootstrap, MCP server real"
+### Community 3187 - "SL-220 — rpc_app_bootstrap, MCP server real"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis, SL-220 — rpc_app_bootstrap, MCP server real
 
-### Community 3186 - "X103 — RPC da biblioteca + histórico diário"
+### Community 3188 - "X103 — RPC da biblioteca + histórico diário"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis, X103 — RPC da biblioteca + histórico diário
 
-### Community 3187 - "E25 — RPC de limpeza E2E"
+### Community 3189 - "E25 — RPC de limpeza E2E"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, E25 — RPC de limpeza E2E, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 3188 - "X084 — RPC save_talkx_template (versão, nota, restauração)"
+### Community 3190 - "X084 — RPC save_talkx_template (versão, nota, restauração)"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis, X084 — RPC save_talkx_template (versão, nota, restauração)
 
-### Community 3189 - "X140 — RPC talkx_monitor_panel"
+### Community 3191 - "X140 — RPC talkx_monitor_panel"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis, X140 — RPC talkx_monitor_panel
 
-### Community 3190 - "X176 — RPCs de leitura da supressão"
+### Community 3192 - "X176 — RPCs de leitura da supressão"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis, X176 — RPCs de leitura da supressão
 
-### Community 3191 - "X141 — RPCs paginadas de destinatários e linha do tempo"
+### Community 3193 - "X141 — RPCs paginadas de destinatários e linha do tempo"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis, X141 — RPCs paginadas de destinatários e linha do tempo
 
-### Community 3192 - "C100-95 — Runbook exclusão/legados"
+### Community 3194 - "C100-95 — Runbook exclusão/legados"
 Cohesion: 0.22
 Nodes (8): C100-95 — Runbook exclusão/legados, Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 3193 - "DASH-063 — Série NPS no gráfico"
+### Community 3195 - "DASH-063 — Série NPS no gráfico"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, DASH-063 — Série NPS no gráfico, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 3194 - "X148 — "Saúde da campanha""
+### Community 3196 - "X148 — "Saúde da campanha""
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis, X148 — "Saúde da campanha"
 
-### Community 3195 - "X102 — Saúde do segmento"
+### Community 3197 - "X102 — Saúde do segmento"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis, X102 — Saúde do segmento
 
-### Community 3196 - "F46 — Sair/remover membro com promoção de dono"
+### Community 3198 - "F46 — Sair/remover membro com promoção de dono"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, F46 — Sair/remover membro com promoção de dono, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 3197 - "TC-004 — Sair/remover membro com promoção de dono"
+### Community 3199 - "TC-004 — Sair/remover membro com promoção de dono"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis, TC-004 — Sair/remover membro com promoção de dono
 
-### Community 3198 - "TC-38 — Sair/remover membro com promoção de dono"
+### Community 3200 - "TC-38 — Sair/remover membro com promoção de dono"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis, TC-38 — Sair/remover membro com promoção de dono
 
-### Community 3199 - "F84 — Sala de retornos"
+### Community 3201 - "F84 — Sala de retornos"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, F84 — Sala de retornos, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 3200 - "X110 — Salvar × Publicar, autosave, versões"
+### Community 3202 - "X110 — Salvar × Publicar, autosave, versões"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis, X110 — Salvar × Publicar, autosave, versões
 
-### Community 3201 - "057 — Scanner de arquivos (VirusTotal)"
+### Community 3203 - "057 — Scanner de arquivos (VirusTotal)"
 Cohesion: 0.22
 Nodes (8): 057 — Scanner de arquivos (VirusTotal), Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 3202 - "IA-113 — Score × probabilidade"
+### Community 3204 - "IA-113 — Score × probabilidade"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, IA-113 — Score × probabilidade, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 3203 - "T06 — Screenshot "antes" + erros de console"
+### Community 3205 - "T06 — Screenshot "antes" + erros de console"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis, T06 — Screenshot "antes" + erros de console
 
-### Community 3204 - "SB-03 — Script de cobertura Singu"
+### Community 3206 - "SB-03 — Script de cobertura Singu"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis, SB-03 — Script de cobertura Singu
 
-### Community 3205 - "C100-94 — Seção "Contatos" no CLAUDE.md"
+### Community 3207 - "C100-94 — Seção "Contatos" no CLAUDE.md"
 Cohesion: 0.22
 Nodes (8): C100-94 — Seção "Contatos" no CLAUDE.md, Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 3206 - "T99 — Seção "Telefonia" no CLAUDE.md"
+### Community 3208 - "T99 — Seção "Telefonia" no CLAUDE.md"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis, T99 — Seção "Telefonia" no CLAUDE.md
 
-### Community 3207 - "DASH-018 — SECURITY INVOKER/DEFINER intencional"
+### Community 3209 - "DASH-018 — SECURITY INVOKER/DEFINER intencional"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, DASH-018 — SECURITY INVOKER/DEFINER intencional, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 3208 - "PAR-073 — Segmentos dinâmicos de contatos"
+### Community 3210 - "PAR-073 — Segmentos dinâmicos de contatos"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, PAR-073 — Segmentos dinâmicos de contatos, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 3209 - "RES-3 — Segurança: INSERT de tarefa com contact_id de qualquer contato"
-Cohesion: 0.22
-Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis, RES-3 — Segurança: INSERT de tarefa com contact_id de qualquer contato
-
-### Community 3210 - "IA-076 — Seleção de contexto transparente"
+### Community 3211 - "IA-076 — Seleção de contexto transparente"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, IA-076 — Seleção de contexto transparente, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 3211 - "CT-60 — Select de fornecedor com contagem"
+### Community 3212 - "CT-60 — Select de fornecedor com contagem"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, CT-60 — Select de fornecedor com contagem, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 3212 - "A11Y-CRM-03 — Selects sem nome nos filtros e no CRM 360°"
+### Community 3213 - "A11Y-CRM-03 — Selects sem nome nos filtros e no CRM 360°"
 Cohesion: 0.22
 Nodes (8): A11Y-CRM-03 — Selects sem nome nos filtros e no CRM 360°, Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 3213 - "039 — Self-test HMAC de webhooks"
+### Community 3214 - "039 — Self-test HMAC de webhooks"
 Cohesion: 0.22
 Nodes (8): 039 — Self-test HMAC de webhooks, Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 3214 - "U04 — Selo no ícone de e-mail do painel"
+### Community 3215 - "U04 — Selo no ícone de e-mail do painel"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis, U04 — Selo no ícone de e-mail do painel
 
-### Community 3215 - "DASH-080 — Semântica dos heatmaps"
+### Community 3216 - "DASH-080 — Semântica dos heatmaps"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, DASH-080 — Semântica dos heatmaps, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 3216 - "IA-021 — Sentimento com o mesmo significado em todo lugar"
+### Community 3217 - "IA-021 — Sentimento com o mesmo significado em todo lugar"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, IA-021 — Sentimento com o mesmo significado em todo lugar, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 3217 - "T4 — Sentimento na lista de conversas/header em tempo real"
+### Community 3218 - "T4 — Sentimento na lista de conversas/header em tempo real"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis, T4 — Sentimento na lista de conversas/header em tempo real
 
-### Community 3218 - "031 — Sentry front + edges"
+### Community 3219 - "031 — Sentry front + edges"
 Cohesion: 0.22
 Nodes (8): 031 — Sentry front + edges, Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 3219 - "032 — Sentry front + edges"
+### Community 3220 - "032 — Sentry front + edges"
 Cohesion: 0.22
 Nodes (8): 032 — Sentry front + edges, Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 3220 - "SL-037 — Sentry front + edges"
+### Community 3221 - "SL-037 — Sentry front + edges"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis, SL-037 — Sentry front + edges
 
-### Community 3221 - "SL-056 — Sentry front + edges"
+### Community 3222 - "SL-056 — Sentry front + edges"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis, SL-056 — Sentry front + edges
 
-### Community 3222 - "L-30 — Sentry (monitoramento de erros)"
+### Community 3223 - "L-30 — Sentry (monitoramento de erros)"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, L-30 — Sentry (monitoramento de erros), Raio de impacto, Regras de negócio aplicáveis
 
-### Community 3223 - "IA-149 — Separar administração e operação"
+### Community 3224 - "IA-149 — Separar administração e operação"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, IA-149 — Separar administração e operação, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 3224 - "IA-015 — Separar leitura de alteração (perfil só leitura)"
+### Community 3225 - "IA-015 — Separar leitura de alteração (perfil só leitura)"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, IA-015 — Separar leitura de alteração (perfil só leitura), Raio de impacto, Regras de negócio aplicáveis
 
-### Community 3225 - "L-06 — Sequências de follow-up"
+### Community 3226 - "L-06 — Sequências de follow-up"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, L-06 — Sequências de follow-up, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 3226 - "E24 — Service role fora do repo"
+### Community 3227 - "E24 — Service role fora do repo"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, E24 — Service role fora do repo, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 3227 - "233 — Service Worker / chunks >500 kB"
+### Community 3228 - "233 — Service Worker / chunks >500 kB"
 Cohesion: 0.22
 Nodes (8): 233 — Service Worker / chunks >500 kB, Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 3228 - "F47 — set_profile_department, request_department_access, notify_team_mentions"
+### Community 3229 - "F47 — set_profile_department, request_department_access, notify_team_mentions"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, F47 — set_profile_department, request_department_access, notify_team_mentions, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 3229 - "E13 — Settings guard"
+### Community 3230 - "E13 — Settings guard"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, E13 — Settings guard, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 3230 - "L17 — Sidebar h-full"
+### Community 3231 - "L17 — Sidebar h-full"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, L17 — Sidebar h-full, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 3231 - "IA-120 — Simulador de capacidade"
+### Community 3232 - "IA-120 — Simulador de capacidade"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, IA-120 — Simulador de capacidade, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 3232 - "E13 — Sinalizar conexão sem credencial"
+### Community 3233 - "E13 — Sinalizar conexão sem credencial"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, E13 — Sinalizar conexão sem credencial, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 3233 - "C-20 — Sincronização com CRM (outbox → Singu)"
+### Community 3234 - "C-20 — Sincronização com CRM (outbox → Singu)"
 Cohesion: 0.22
 Nodes (8): C-20 — Sincronização com CRM (outbox → Singu), Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 3234 - "GO-04 — Sincronizar histórico da conexão"
+### Community 3235 - "GO-04 — Sincronizar histórico da conexão"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, GO-04 — Sincronizar histórico da conexão, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 3235 - "DASH-031 — SLA agregado no servidor"
+### Community 3236 - "DASH-031 — SLA agregado no servidor"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, DASH-031 — SLA agregado no servidor, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 3236 - "SLA-RES — SLA de resolução"
+### Community 3237 - "SLA-RES — SLA de resolução"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis, SLA-RES — SLA de resolução
 
-### Community 3237 - "FASE3 — SLA: deltas "No Prazo"/"Total""
+### Community 3238 - "FASE3 — SLA: deltas "No Prazo"/"Total""
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, FASE3 — SLA: deltas "No Prazo"/"Total", Raio de impacto, Regras de negócio aplicáveis
 
-### Community 3238 - "E-04 — SLO/SLI e alertas acionáveis"
+### Community 3239 - "E-04 — SLO/SLI e alertas acionáveis"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, E-04 — SLO/SLI e alertas acionáveis, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 3239 - "E46 — Smoke E2E do Dashboard"
+### Community 3240 - "E46 — Smoke E2E do Dashboard"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, E46 — Smoke E2E do Dashboard, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 3240 - "T93 — Snapshot final do banco"
+### Community 3241 - "T93 — Snapshot final do banco"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis, T93 — Snapshot final do banco
 
-### Community 3241 - "E10 — SonarCloud"
+### Community 3242 - "E10 — SonarCloud"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, E10 — SonarCloud, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 3242 - "CP6 — StarBackground"
+### Community 3243 - "CP6 — StarBackground"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, CP6 — StarBackground, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 3243 - "SL-172 — StarBackground"
+### Community 3244 - "SL-172 — StarBackground"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis, SL-172 — StarBackground
 
-### Community 3244 - "I-382 — Status por fase do plano Talk X 100"
+### Community 3245 - "I-382 — Status por fase do plano Talk X 100"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, I-382 — Status por fase do plano Talk X 100, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 3245 - "L-36 — Stripe e Google Sheets no hub"
+### Community 3246 - "L-36 — Stripe e Google Sheets no hub"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, L-36 — Stripe e Google Sheets no hub, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 3246 - "X109 — Sub-abas "Prévia e Contatos" e "Sobreposição""
+### Community 3247 - "X109 — Sub-abas "Prévia e Contatos" e "Sobreposição""
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis, X109 — Sub-abas "Prévia e Contatos" e "Sobreposição"
 
-### Community 3247 - "E86 — Supabase local p/ suíte logada"
+### Community 3248 - "E86 — Supabase local p/ suíte logada"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, E86 — Supabase local p/ suíte logada, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 3248 - "IA-117 — Supervisor com métricas reais"
+### Community 3249 - "IA-117 — Supervisor com métricas reais"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, IA-117 — Supervisor com métricas reais, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 3249 - "SL-145 — Tabela canônica do perímetro"
+### Community 3250 - "SL-145 — Tabela canônica do perímetro"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis, SL-145 — Tabela canônica do perímetro
 
-### Community 3250 - "X070 — Tabela de motivos de supressão"
+### Community 3251 - "X070 — Tabela de motivos de supressão"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis, X070 — Tabela de motivos de supressão
 
-### Community 3251 - "X079 — Tabela nas colunas do mock"
+### Community 3252 - "X079 — Tabela nas colunas do mock"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis, X079 — Tabela nas colunas do mock
 
-### Community 3252 - "X150 — Tabela unificada de destinatários"
+### Community 3253 - "X150 — Tabela unificada de destinatários"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis, X150 — Tabela unificada de destinatários
 
-### Community 3253 - "CT-081 — Tags + filtro e/ou/sem"
+### Community 3254 - "CT-081 — Tags + filtro e/ou/sem"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, CT-081 — Tags + filtro e/ou/sem, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 3254 - "SL-148 — Tags v2.0.0-hostinger, catalog-v1.0.0 + release notes"
+### Community 3255 - "SL-148 — Tags v2.0.0-hostinger, catalog-v1.0.0 + release notes"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis, SL-148 — Tags v2.0.0-hostinger, catalog-v1.0.0 + release notes
 
-### Community 3255 - "SL-158 — Tags v2.0.0-hostinger, catalog-v1.0.0 + release notes"
+### Community 3256 - "SL-158 — Tags v2.0.0-hostinger, catalog-v1.0.0 + release notes"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis, SL-158 — Tags v2.0.0-hostinger, catalog-v1.0.0 + release notes
 
-### Community 3256 - "C-11 — Talk X: peças prontas não ligadas"
+### Community 3257 - "C-11 — Talk X: peças prontas não ligadas"
 Cohesion: 0.22
 Nodes (8): C-11 — Talk X: peças prontas não ligadas, Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 3257 - "IA-055 — Tarifas versionadas e custo conciliado"
+### Community 3258 - "IA-055 — Tarifas versionadas e custo conciliado"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, IA-055 — Tarifas versionadas e custo conciliado, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 3258 - "C-02 — Team Chat: painel de performance"
+### Community 3259 - "C-02 — Team Chat: painel de performance"
 Cohesion: 0.22
 Nodes (8): C-02 — Team Chat: painel de performance, Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 3259 - "C-04 — Team Chat: RPCs E37–E49 sem consumidor"
+### Community 3260 - "C-04 — Team Chat: RPCs E37–E49 sem consumidor"
 Cohesion: 0.22
 Nodes (8): C-04 — Team Chat: RPCs E37–E49 sem consumidor, Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 3260 - "C-01 — Team Chat: sair/renomear grupo e transferir departamento"
+### Community 3261 - "C-01 — Team Chat: sair/renomear grupo e transferir departamento"
 Cohesion: 0.22
 Nodes (8): C-01 — Team Chat: sair/renomear grupo e transferir departamento, Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 3261 - "X111 — Tela 03 com rota e breadcrumb"
+### Community 3262 - "X111 — Tela 03 com rota e breadcrumb"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis, X111 — Tela 03 com rota e breadcrumb
 
-### Community 3262 - "X094 — Tela 05 no shell (rota, sub-abas)"
+### Community 3263 - "X094 — Tela 05 no shell (rota, sub-abas)"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis, X094 — Tela 05 no shell (rota, sub-abas)
 
-### Community 3263 - "X156 — Tela 13 "Campanha pausada""
+### Community 3264 - "X156 — Tela 13 "Campanha pausada""
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis, X156 — Tela 13 "Campanha pausada"
 
-### Community 3264 - "F72 — Tela de 3 regiões (Público / Composição / Prévia)"
+### Community 3265 - "F72 — Tela de 3 regiões (Público / Composição / Prévia)"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, F72 — Tela de 3 regiões (Público / Composição / Prévia), Raio de impacto, Regras de negócio aplicáveis
 
-### Community 3265 - "GO-08 — Templates oficiais da Meta (enviar, criar, listar, apagar)"
+### Community 3266 - "GO-08 — Templates oficiais da Meta (enviar, criar, listar, apagar)"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, GO-08 — Templates oficiais da Meta (enviar, criar, listar, apagar), Raio de impacto, Regras de negócio aplicáveis
 
-### Community 3266 - "L-33 — Templates WhatsApp com aprovação oficial"
+### Community 3267 - "L-33 — Templates WhatsApp com aprovação oficial"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, L-33 — Templates WhatsApp com aprovação oficial, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 3267 - "DASH-074 — Tendências de IA corretas"
+### Community 3268 - "DASH-074 — Tendências de IA corretas"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, DASH-074 — Tendências de IA corretas, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 3268 - "SL-197 — Tentativas por mensagem (message_attempts)"
+### Community 3269 - "SL-197 — Tentativas por mensagem (message_attempts)"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis, SL-197 — Tentativas por mensagem (message_attempts)
 
-### Community 3269 - "S18 — Teste com compra pending fora da contagem"
+### Community 3270 - "S18 — Teste com compra pending fora da contagem"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis, S18 — Teste com compra pending fora da contagem
 
-### Community 3270 - "E18 — Teste dedicado do helper de etiquetas"
+### Community 3271 - "E18 — Teste dedicado do helper de etiquetas"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, E18 — Teste dedicado do helper de etiquetas, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 3271 - "S095 — Teste "nada sai do sistema" na aba"
+### Community 3272 - "S095 — Teste "nada sai do sistema" na aba"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis, S095 — Teste "nada sai do sistema" na aba
 
-### Community 3272 - "S15 — Teste negativo de erro de insert"
+### Community 3273 - "S15 — Teste negativo de erro de insert"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis, S15 — Teste negativo de erro de insert
 
-### Community 3273 - "F63 — Teste real de PTT"
+### Community 3274 - "F63 — Teste real de PTT"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, F63 — Teste real de PTT, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 3274 - "U05 — Testes a11y/tempo real; documentação"
+### Community 3275 - "U05 — Testes a11y/tempo real; documentação"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis, U05 — Testes a11y/tempo real; documentação
 
-### Community 3275 - "U06 — Testes a11y/tempo real; documentação"
+### Community 3276 - "U06 — Testes a11y/tempo real; documentação"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis, U06 — Testes a11y/tempo real; documentação
 
-### Community 3276 - "DASH-095 — Testes de concorrência/realtime"
+### Community 3277 - "DASH-095 — Testes de concorrência/realtime"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, DASH-095 — Testes de concorrência/realtime, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 3277 - "CT-113 — Testes de contrato Singu"
+### Community 3278 - "CT-113 — Testes de contrato Singu"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, CT-113 — Testes de contrato Singu, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 3278 - "IA-184 — Testes de injeção de prompt"
+### Community 3279 - "IA-184 — Testes de injeção de prompt"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, IA-184 — Testes de injeção de prompt, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 3279 - "SL-084 — Testes do módulo"
+### Community 3280 - "SL-084 — Testes do módulo"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis, SL-084 — Testes do módulo
 
-### Community 3280 - "182 — Testes reais, contratos de provedor, isolamento, concorrência"
+### Community 3281 - "182 — Testes reais, contratos de provedor, isolamento, concorrência"
 Cohesion: 0.22
 Nodes (8): 182 — Testes reais, contratos de provedor, isolamento, concorrência, Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 3281 - "183 — Testes reais, contratos de provedor, isolamento, concorrência"
+### Community 3282 - "183 — Testes reais, contratos de provedor, isolamento, concorrência"
 Cohesion: 0.22
 Nodes (8): 183 — Testes reais, contratos de provedor, isolamento, concorrência, Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 3282 - "185 — Testes reais, contratos de provedor, isolamento, concorrência"
+### Community 3283 - "185 — Testes reais, contratos de provedor, isolamento, concorrência"
 Cohesion: 0.22
 Nodes (8): 185 — Testes reais, contratos de provedor, isolamento, concorrência, Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, Raio de impacto, Regras de negócio aplicáveis
 
-### Community 3283 - "IA-181 — Testes reais, contratos de provedor, isolamento, concorrência"
+### Community 3284 - "IA-181 — Testes reais, contratos de provedor, isolamento, concorrência"
 Cohesion: 0.22
 Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, IA-181 — Testes reais, contratos de provedor, isolamento, concorrência, Raio de impacto, Regras de negócio aplicáveis
-
-### Community 3284 - "F88 — Testes unitários no ci.yml"
-Cohesion: 0.22
-Nodes (8): Camadas afetadas, Critério de aceite, Dependências, Descrição e origem, Estado real conferido, F88 — Testes unitários no ci.yml, Raio de impacto, Regras de negócio aplicáveis
 
 ### Community 3285 - "RES-PERSONALIZADA — Tile "Personalizada""
 Cohesion: 0.22
@@ -30573,24 +30573,24 @@ Cohesion: 0.67
 Nodes (3): idx_team_conversations_direct_member_a, idx_team_conversations_direct_member_b, public.team_conversations
 
 ## Knowledge Gaps
-- **45174 isolated node(s):** `session-start.sh script`, `PATH`, `target`, `module`, `moduleResolution` (+45169 more)
-  These have ≤1 connection - possible missing edges or undocumented components. (Counts symbols only; 61839 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
+- **45173 isolated node(s):** `session-start.sh script`, `PATH`, `target`, `module`, `moduleResolution` (+45168 more)
+  These have ≤1 connection - possible missing edges or undocumented components. (Counts symbols only; 61838 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
 - **3508 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `vitest` connect `vitest` to `react`, `lucide-react`, `TalkXSuppression.tsx`, `utils.ts`, `cn`, `validation.ts`, `ExternalProductManagement.tsx`, `ref_node_fs`, `WorkItemSheet.tsx`, `@testing-library/react`, `ref_https`, `useUserRole`, `src/components/inbox/WhisperMode.tsx`, `AIConversationAssistant.tsx`, `framer-motion`, `ref_node_path`, `NewTaskDialog.tsx`, `ref_node_child_process`, `vitest-axe`, `ChatPanelHeader.tsx`, `ai-generate.ts`, `src/hooks/copilot/index.ts`, `src/components/settings/SettingsView.tsx`, `ConversationWithMessages`, `MediaMigrationTool.test.tsx`, `InstancePausesPanel.test.tsx`, `.build`, `react-router-dom`, `src/components/inbox/chat/__tests__/useChatPanelHandlers.edicao-rejeitada.test.tsx`, `EmailComposer.test.tsx`, `useMonitoringData.buckets.test.ts`, `QueuesView.editar.test.tsx`, `TalkXCampaignRunning.segmentoPico.test.tsx`, `pending`, `TalkXOverview.filters.test.tsx`, `TalkXSuppression.editReasonVazio.test.tsx`, `TalkXTemplates.duplicarAtalho.test.tsx`, `useContactsSearch.test.tsx`, `useChatPanelHandlers.ts`, `ContactDetailPanel.tsx`, `useAgentCelebrations.test.tsx`, `useCatalogRecentSends.test.tsx`, `useCatalogSendHistory.historicoCompleto.test.tsx`, `useEvolutionApi.payloads.test.ts`, `useMultiplixDispatches.ts`, `ViewRouter`, `ConversationListSidebar.tsx`, `TalkXNoPermissionState`, `TalkXSettings`, `localDay.ts`, `useEvolutionApi`, `EmailComposer.tsx`, `App.tsx`, `src/hooks/__tests__/helpers/alertBehaviorTestKit.ts`, `.failed`, `src/hooks/chat/__tests__/useConversationActions.test.ts`, `useSipClient.ts`, `bucket`, `useInboxBulkActions`, `ProtectedRoute`, `telefonia-contrato-docs.contract.test.ts`, `scripts/ci/check-test-inventory.mjs`, `useAuditLogDashboard.ts`, `CT69_contrasteBadges.test.tsx`, `src/lib/invokeEdge.ts`, `AppRoutes.tsx`, `CallSessionProvider.tsx`, `Etapas`, `crossTabSendDedupe.ts`, `auth.service.ts`, `TestQueryWrapper`, `src/components/talkx/__tests__/TalkXContactSelector.a11y.test.tsx`, `src/components/talkx/TalkXView.tsx`, `theme/presets.ts`, `Etapas`, `useContactsCRUD.test.tsx`, `AIRewriteButton.rascunho-atrasado.test.tsx`, `Collapse.tsx`, `SUPABASE_URL`, `ActiveCallBar`, `useCountUp.test.tsx`, `useGmail.ts`, `src/components/inbox/__tests__/ChatTransferContract.test.tsx`, `periodRange.ts`, `useSearchHistory.ts`, `useChatMediaSending.ts`, `src/components/inbox/__tests__/ContactDetails.quickActions.test.tsx`, `GlobalSearch.navigation.test.tsx`, `VoiceChangerPicker.test.tsx`, `VoiceSelector.test.tsx`, `useMonitoringNotifications.behavior.test.ts`, `mapboxToken.ts`, `QueueGoalsDialog.salvarMetas.test.tsx`, `LoginBlockedLogPanel.test.tsx`, `useMediaLibrary.mutacoes.test.tsx`, `ThemeCustomizer.test.tsx`, `TalkXCampaignRunning.remote-completion.test.tsx`, `useRealtimeMessages.ts`, `TalkXSuppression.add.test.tsx`, `TalkXTemplateImportDialog.test.tsx`, `src/components/admin/useAdminData.ts`, `ci-workflows-vermelhos/src/components/inbox/collaboration/__tests__/RealtimeCollaboration.handoff.test.tsx`, `ci-workflows-vermelhos/src/hooks/__tests__/useIncomingCallListener.test.tsx`, `AIAutoTagsConfig.recentesErro.test.tsx`, `useEmailContactContext.test.tsx`, `talkxHelpIndex.ts`, `useExternalDB.test.ts`, `useGmail.syncParcial.test.tsx`, `src/hooks/__tests__/useGlobalSettings.cache-compartilhado.test.tsx`, `src/hooks/__tests__/useNotifications.test.tsx`, `useUndoableAction.r2-plat-007.test.ts`, `useTalkXInsights.ts`, `emailAttachments.ts`, `stats.ts`, `parseSupabaseStorageObjectUrl`, `cool-dijkstra-xk9ek2/src/components/inbox/__tests__/ChatPanel.typing-presence.test.tsx`, `useMessages`, `catalog.spec.ts`, `useAddressAutocomplete`, `useConversationHistoryTimeline.ts`, `pdfThumbnail.ts`, `RealtimeContactUpdateE2E.test.tsx`, `LocationPicker.integration.test.tsx`, `TalkXAnalytics.tsx`, `MessageSendHistorySheet.tsx`, `Etapas`, `src/components/ui/command-palette.tsx`, `mapboxGeocode.ts`, `CallDialog`, `WarRoomDashboard.tsx`, `typecheck-ratchet.mjs`, `ga-ci-verde-261020/src/components/inbox/chat/__tests__/ChatMessagesArea.agrupar-envio.test.tsx`, `mediaVolumeStore.ts`, `useChatbotFlows.ts`, `accessible-toast.tsx`, `package.json`, `useFilesViewState.ts`, `scripts/edge-deploy/health-check.mjs`, `KeyboardShortcutsDialog.test.tsx`, `MonitoringDiagnosticPanel.sem-export.test.tsx`, `useSipClient.test.ts`, `multiplix-handoff-f100.contract.test.ts`, `src/components/calls/CallHistoryTable.tsx`, `model.ts`, `FASE 1 — Motor: ligar o contrato ao que existe (T09–T22)`, `TalkXCampaignScheduled`, `Plano de 50 etapas — Arquivos do Chat Panel`, `ci-workflows-vermelhos/src/components/inbox/chat/__tests__/ChatInputArea.limite-enter.test.tsx`, `useRealtimeInbox`, `useAddressAutocomplete.ts`, `json`, `TeamChatView`, `ContactMediaItem`, `WhatsAppCallAdapter.ts`, `analytics/useSentimentTrend.ts`, `statements`, `MediaVolume.test.tsx`, `src/hooks/copilot/useCopilotSession.ts`, `PLANO EM 100 ETAPAS`, `chat/motion/index.ts`, `useTeamChatDraft.ts`, `useTypingPresence.ts`, `EmailChatInbox`, `src/components/calls/__tests__/telefoniaContraste.test.tsx`, `WhatsAppConnection`, `3. Pendências detalhadas`, `src/components/inbox/copilot/RadarCards.tsx`, `FilesTab`, `ref_node_crypto`, `TalkXCampaignReport`, `admin`, `fix-ga-fase23-edge-e2e-261020-2200/scripts/ci/redigir-relatorio.mjs`, `useSupervisorQueue.ts`, `useAuthForm`, `safeStorage.ts`, `GenerateParams`, `Fonte de dados por hook`, `useConnectionsHealth.ts`, `ai-response-contracts.ts`, `resolve`, `useRealtimeDashboard.ts`, `fileSenderIdentity.ts`, `Vereditos dos 96 caminhos — lote 4 (16 caminhos)`, `escapeOrFilterValue`, `src/components/inbox/tabs/__tests__/FilesTab.fase6.test.tsx`, `useVolumeRocker.ts`, `ci-workflows-vermelhos/src/components/calls/__tests__/IncomingCallAlert.volume.test.tsx`, `useSipClient`, `ia131-audio-meme-conteudo.contract.test.ts`, `callGmailFunction`, `ensaio-provisionamento.mjs`, `RadarPhase9Panel.tsx`, `cool-dijkstra-xk9ek2/src/components/inbox/chat/__tests__/ChatMessagesArea.agrupar-envio.test.tsx`, `SystemHealthCard.tsx`, `useSupabaseRealtime.ts`, `src/services/outbound-message.service.ts`, `talkxTemplateFile.ts`, `useContactsSearch`, `ErrorBoundary`, `useContactMedia.stickers.test.tsx`, `useContactMedia.ts`, `useRateLimitLogs.ts`, `useRedeemDepartmentInvite.test.tsx`, `GlobalKeyboardProvider.tsx`, `src/hooks/integrations/__tests__/useWhatsAppTemplates.aprovacaoLocal.test.ts`, `feat-ui-visual-texto-longo-261101-1445/src/components/crm360/__tests__/DataExplorerTable.a11y.test.tsx`, `actions.ts`, `Contact360Helpers.tsx`, `useSLACalculation.ts`, `CatalogBulkSendDialog.readiness.test.tsx`, `slaTimeline.ts`, `useDepartmentManagement.ts`, `status.test.ts`, `ci-workflows-vermelhos/src/components/connections/__tests__/BusinessHoursIndicator.test.tsx`, `ci-workflows-vermelhos/src/components/inbox/collaboration/__tests__/ViewersIndicator.presenca.test.tsx`, `ci-workflows-vermelhos/src/hooks/ui/__tests__/useDeviceDetection.select.test.ts`, `IntegrationsPanel.desativar.test.tsx`, `supabase/functions/auth-login/index.test.ts`, `src/components/__tests__/y17Selos.contraste.test.tsx`, `ga-ci-verde-261020/src/components/admin/useAdminData.ts`, `ViewContainer`, `RouteTransition.tsx`, `useTalkXResumeChecklist.ts`, `useAgentPresence.ts`, `useVisiblePolling`, `Arquivo × achado × evidência (amostra que cobre todos os grupos)`, `ci-workflows-vermelhos/src/hooks/__tests__/helpers/alertBehaviorTestKit.ts`, `talkxKeyMetrics.ts`, `fix-unit-tests-src-261024-1630/src/hooks/contacts/__tests__/useContainerColumns.test.ts`, `TalkXHelp`, `rlsSchema.ts`, `ScheduleCalendarView.agenda.test.tsx`, `useTeamMemberDetails.profiles-rpc.test.tsx`, `useGeoBlocking.ts`, `ci-verde-261021/supabase/functions/gmail-oauth/index.test.ts`, `src/components/inbox/chat/__tests__/ChatInputArea.limite-enter.test.tsx`, `useCustomShortcuts.ts`, `useTalkXMediaUpload.ts`, `empty-states.tsx`, `BrindeMeter.test.tsx`, `fix-email-navy-contrast-261101-2057/src/components/__tests__/y17Selos.contraste.test.tsx`, `SuggestionList`, `callStatus.ts`, `Builder`, `7. As 50 etapas`, `FASE 5 — Cache, cabeçalhos e performance de entrega (V101–V125)`, `AutomationCard.tsx`, `useJourneyEmails.ts`, `useGlobalKeyboardShortcuts.ts`, `festive-carson-ub43wu/src/components/ui/command-palette.tsx`, `KnowledgeBaseView.fileActions.test.tsx`, `FileThumb.pdf.test.tsx`, `src/components/inbox/tabs/__tests__/FileThumb.pdf.integration.test.tsx`, `useMentionableProfiles.ts`, `useTalkXCampaignList.ts`, `GmailInboxView.test.tsx`, `src/components/talkx/__tests__/TalkXOverview.table.test.tsx`, `TalkXInteractiveEditor.tsx`, `TalkXSuppression`, `useTalkMeQueue.ts`, `evolutionAdapter.ts`, `VoiceSearchOverlay.tsx`, `TalkXSegmentBuilder`, `communication/useVoiceAgent.ts`, `DailyMetricsKpis.tsx`, `deployment-update.ts`, `JourneyStatsHero.tsx`, `useSupabaseConnectivity.ts`, `useConversationPanelInvalidation.test.tsx`, `useWhatsAppStatus.ts`, `useScheduledReports.test.tsx`, `f1a-lote-b-main/src/hooks/__tests__/helpers/alertBehaviorTestKit.ts`, `contract-kit.ts`, `talkxTimelineCopy.ts`, `useContactSearchV2.ts`, `src/components/inbox/__tests__/contrastePlayerSlider.test.tsx`, `useSLAHistory.ts`, `useNavigationHistory`, `useConversationScore.ts`, `Guia de Contribuição — Zapp Web V2`, `useSavedFilters.test.tsx`, `TalkXTemplateEditor.race.test.tsx`, `mobileAreaSeguraRolagem.test.ts`, `src/hooks/communication/__tests__/audioExclusivo.players.test.tsx`, `ci-workflows-vermelhos/src/pages/queue-details/__tests__/queueMetrics.test.ts`, `useEvolutionApiCore.ts`, `main.tsx`, `UX Audit Report — Zapp Web V2`, `LinkPreview.tsx`, `defaultShortcuts.ts`, `cp1FidelidadeCarvao.test.ts`, `evolution.service.ts`, `useGmail.syncEmAndamento.test.tsx`, `useWarRoomAlerts.test.tsx`, `MultiplixView`, `OnboardingTour.tsx`, `VoiceActionBridge.test.tsx`, `src/hooks/system/useDiagnosticsData.ts`, `d`, `talkxCampaignRules.ts`, `fix-codex-findings-161016-1906/src/lib/invokeEdge.ts`, `talkxCsv.ts`, `useSLARulesCounts.ts`, `journey/motion/index.ts`, `CT83_84_helpSheet.test.tsx`, `ConnectionAuditDialog.test.tsx`, `ConnectionsView.telefone-validacao.test.tsx`, `InstanceSettingsDialog.privacidade.test.tsx`, `GoalsConfigDialog.test.tsx`, `src/components/email/__tests__/EmailChatReplyBar.rascunho.test.tsx`, `professionalFallback.ts`, `JourneyHealthChip.tsx`, `slashCommandsData.ts`, `ConversationListSidebar.empty-state.test.tsx`, `src/components/inbox/__tests__/useFileUploadLogic.u7.test.tsx`, `useEvolutionMonitoring.realtime.test.ts`, `useMonitoringNotifications.audiocontext.test.ts`, `ConnectionAlertPreferencesCard.test.tsx`, `QueuesView.metricasRpc.test.tsx`, `src/components/settings/__tests__/ScheduleSettings.test.tsx`, `TalkXTemplates.gallery.test.tsx`, `TalkXTemplates.route.test.tsx`, `src/components/team-chat/__tests__/useTeamChatPanel.search-antigas.test.tsx`, `timers-unmount.test.tsx`, `TrainingMiniGames.creditoXp.test.tsx`, `ga-ci-verde-261020/src/services/outbound-message.service.ts`, `src/hooks/crm/__tests__/useContactIntelligence.test.tsx`, `useTeamUnreadTotal`, `emailHtml.ts`, `HotRoutePrefetcher.tsx`, `useAudioRecorder.formato.test.ts`, `useReauthentication.test.tsx`, `useTheme.ts`, `TasksKpiStrip.tsx`, `src/hooks/ui/__tests__/useDeviceDetection.select.test.ts`, `CallEngine.test.ts`, `terminoRemoto.ts`, `emailComposeFormat.ts`, `mappers.ts`, `AuditLogDashboard.test.tsx`, `useAutomationSuggestions.ts`, `useExclusiveAudio.ts`, `useContactUnreadEmails.realtime.test.tsx`, `ci-workflows-vermelhos/src/hooks/__tests__/useQueueAnalytics.test.tsx`, `.canAccess`, `ContactForm`, `TalkXSuppression.searchServer.test.tsx`, `useGmail.test.ts`, `useTalkXTemplates.test.ts`, `mediaVolumeElement.ts`, `migrate-media-storage/index.ts`, `ai-jobs-estados-e-durabilidade.contract.test.ts`, `busy-cannon-40szm9/src/components/talkx/kit/dialogs.tsx`, `fix-email-navy-contrast-261101-2057/src/components/inbox/__tests__/ContactDetails.mobile-iniciais-sentimento.test.tsx`, `gerar-banco.mjs`, `audioToMp3.ts`, `fix-email-navy-contrast-261101-2057/src/components/inbox/__tests__/contrastePlayerSlider.test.tsx`, `ci-verde-261021/src/hooks/chat/__tests__/useConversationActions.test.ts`, `useContactMedia.sticker.test.tsx`, `useAIUsageDashboard.ts`, `talkxAiSuggestions.ts`, `useInboxUnreadTotal.ts`, `ai-generate.contract.test.ts`, `src/hooks/admin/useSearchInsights.ts`, `src/hooks/evolution/__tests__/rotas-chamadas-existem.test.ts`, `useCallChannels.test.ts`, `VolumeDial.tsx`, `src/hooks/integrations/useTalkXSuppression.ts`, `scan-icon-buttons.ts`, `feat-copiloto-edge-fases8-10-261024-1700/src/hooks/integrations/__tests__/useTalkXSuppression.test.ts`, `fix-codex-findings-161016-1906/src/hooks/integrations/__tests__/useTalkXSuppression.test.ts`, `ci-workflows-vermelhos/src/components/contacts/__tests__/ContactRegionMap.test.tsx`, `ci-workflows-vermelhos/src/components/inbox/location-picker/__tests__/useLocationPicker.test.tsx`, `ContactService`, `command-palette.a11y.test.tsx`, `Motion e micro-interações`, `singu-adapter.ts`, `useQueueGoalAlerts.test.tsx`, `_adv_edge_legacy_producers.test.ts`, `quadroLarguraFocoContraste.test.tsx`, `tests/contracts/contraste-cores-categoria.contract.test.ts`, `WhatsAppStatusSection.tsx`, `src/components/inbox/__tests__/ContactDetails.mobile-iniciais-sentimento.test.tsx`, `coresCruasInboxCrm.test.tsx`, `usePerformance.ts`, `useContactAgenda.ts`, `useAudioMemes.mediaVolumeBindings.test.tsx`, `mapboxCostGuard.ts`, `useEvolutionMessaging.test.ts`, `ai-vision-classifiers-mock.contract.test.ts`, `TalkXCampaignRunning`, `useLeaderboard.test.tsx`, `src/hooks/integrations/__tests__/useQuarantineMedia.test.tsx`, `useEvolutionIntegrations.test.ts`, `useSwipeNavigation.test.tsx`, `playTtsAudio.ts`, `useSLAConfigurations.test.tsx`, `Inbox 360° — STATUS`, `queryClient.ts`, `ai-routing.contract.test.ts`, `useFilterState.ts`, `ContactDeliveryPanel.tsx`, `src/components/inbox/location-picker/__tests__/useLocationPicker.test.tsx`, `contrasteAA.test.tsx`, `useWebAuthn`, `groupWindow.ts`, `qc`, `fix-email-navy-contrast-261101-2057/src/components/inbox/__tests__/SLAIndicator.contrasteSelos.test.tsx`, `ci-workflows-vermelhos/src/components/calls/__tests__/telefoniaContraste.test.tsx`, `CampaignsView.retomada.test.tsx`, `CrisisRoom.metricas.test.tsx`, `useMonitoringData`, `e2e-isolated-seed-diagnostic.unit.mjs`, `EmailVolumeMedicao.test.tsx`, `StickerManager.envio.test.tsx`, `AudioPlayButton.test.tsx`, `Crm360Tab.test.tsx`, `src/components/inbox/__tests__/SLAIndicator.contrasteSelos.test.tsx`, `planejamento.ts`, `useDashboardKpi.ts`, `useTeamChatRealtimeChannelErrors.test.tsx`, `feat-evolution-rotas-pendentes-261112/src/hooks/evolution/__tests__/rotas-chamadas-existem.test.ts`, `fix-email-navy-contrast-261101-2057/src/components/inbox/__tests__/StatusChips.contrasteChipAtendendo.test.tsx`, `scenario-simulation.test.ts`, `useServiceWorker.ts`, `LiveSuggestion`, `useSpeechToText.ts`, `src/components/calls/__tests__/IncomingCallAlert.provider.test.tsx`, `MobileDrawerMenu.a11y.test.tsx`, `TalkXCampaignActionsCard.test.tsx`, `HighContrastProvider`, `useContactsV2Flags.test.tsx`, `ai-central-routing-ratchet.contract.test.ts`, `ai-rate-limit-e-orcamento.contract.test.ts`, `contraste-aa-componentes.contract.test.ts`, `fix-email-navy-contrast-261101-2057/src/components/settings/__tests__/ThemeCustomizer.a11y.test.tsx`, `fix-email-navy-contrast-261101-2057/tests/contracts/contraste-balao-midia.contract.test.ts`, `emailContactContext.ts`, `e2e-isolated-seed.unit.mjs`, `TrainingMode.avaliacao.test.tsx`, `useRolesPageState.ts`, `SL038_badgesTokensTema.test.tsx`, `tokens-sync.test.ts`, `useChatSearch.ts`, `MessageBubble.contrasteStatus.test.tsx`, `LocationPicker.gpsAtrasado.test.tsx`, `KpiStrip.contraste.test.tsx`, `src/components/inbox/__tests__/StatusChips.contrasteChipAtendendo.test.tsx`, `fundacaoVisual.test.tsx`, `talkxStates.matrix.test.tsx`, `segmentValidation.ts`, `TalkXSegments.detailFresh.test.tsx`, `TalkXTemplatesRail.test.tsx`, `movimentoEContraste.test.tsx`, `chart.tsx`, `useTalkMeQueue.test.tsx`, `useResourcePrefetch.ts`, `sendThrottle.ts`, `serverLogin.ts`, `QuarantineMonitorProvider.r2-api-066.test.tsx`, `tests/contracts/contraste-balao-midia.contract.test.ts`, `AchievementToast.test.tsx`, `emailContactIdentity.ts`, `gravacaoFormato.ts`, `mentionText.ts`, `ci-workflows-vermelhos/src/hooks/__tests__/useTeamChatNotifications.behavior.test.ts`, `ci-workflows-vermelhos/src/hooks/__tests__/useTeamChatNotifications.global.test.tsx`, `useMessageStatus.test.tsx`, `zappSchemas.ts`, `useTalkXLiveChannel.ts`, `BulkActionsBar`, `ResetPassword.redirect-cancelavel.test.tsx`, `TalkXLiveKpiRow.tsx`, `talkxSegmentsRoute.ts`, `CT57_historicoAlem500.test.tsx`, `ReportCharts.descricao-textual.test.tsx`, `IPListasErro.contrasteTema.test.tsx`, `src/components/settings/__tests__/ThemeCustomizer.a11y.test.tsx`, `SegmentRules`, `PerformanceMonitor.apis-ausentes.test.tsx`, `src/components/talkx/__tests__/TalkXSegments.detailPanel.test.tsx`, `TalkXSegments.gradeEPainel.test.tsx`, `Builder`, `src/hooks/__tests__/useTeamChatNotifications.behavior.test.ts`, `src/hooks/__tests__/useTeamChatNotifications.global.test.tsx`, `multiplix-dispatch-audience-saved.contract.test.ts`, `multiplixResume.test.ts`, `festive-carson-ub43wu/src/hooks/chat/__tests__/useTeamChatNotifications.canal-estavel.test.tsx`, `feat-ui-visual-texto-longo-261101-1445/src/components/talkx/__tests__/TalkXContactSelector.a11y.test.tsx`, `ContactNotes.ordemFoco.test.tsx`, `ga-ci-verde-261020/src/components/talkx/__tests__/TalkXOverview.table.test.tsx`, `crm360FormDialogs.a11y.test.tsx`, `magical-pasteur-iz2pgy/src/components/inbox/tabs/__tests__/FilesTab.fase6.test.tsx`, `InboxFilters.todos-os-tipos.test.tsx`, `OnboardingChecklist.a11y.test.tsx`, `inbox.service.ts`, `OnboardingChecklist.test.tsx`, `TalkXLiveMonitor.lifecycle.test.tsx`, `TeamChatView.deeplink-react-query.test.tsx`, `src/components/team-chat/__tests__/useTeamChatPanel.search.test.tsx`, `useTalkX.recipients-paginacao.test.tsx`, `ProtectedRoute.acesso-negado.test.tsx`, `PLANO — Team Chat V2: finalização da implantação (100 etapas, prefixo `TC-`)`, `useQueues.test.tsx`, `CT61_62_65_catalogFilters.test.tsx`, `DashboardCard.test.tsx`, `useDataMasking.ts`, `connection-health.service.ts`, `TalkXSegments.filtrosPaginacao.test.tsx`, `TalkXSegments.groups.test.tsx`, `TalkXSuppression.atividade.test.tsx`, `useGoalsDashboard.test.tsx`, `chartColors.ts`, `execucaoDeCanais.ts`, `rls-boundary.test.ts`, `ai-capabilities.contract.test.ts`, `useTalkXAbStats.ts`, `useConnectionHealthBanner.ts`, `serene-feynman-3uuurw/src/components/admin/__tests__/SearchInsightsView.test.tsx`, `src/hooks/tasks/workItemFormat.ts`, `ci-verde-261021/src/hooks/chat/useConversationActions.ts`, `ci-workflows-vermelhos/src/components/email/__tests__/EmailChatReplyBar.test.tsx`, `ci-workflows-vermelhos/src/components/inbox/tabs/__tests__/FileThumb.pdf.integration.test.tsx`, `ci-workflows-vermelhos/src/components/inbox/__tests__/LocationMessage.test.tsx`, `ci-workflows-vermelhos/src/components/inbox/__tests__/useFileUploadLogic.test.tsx`, `ci-workflows-vermelhos/src/hooks/integrations/__tests__/usePersonalStickers.uso.test.tsx`, `src/components/inbox/__tests__/LocationMessage.test.tsx`, `VoiceChangerPicker.falhas.test.tsx`, `VoiceChangerPicker.reduced-motion.test.tsx`, `useConnectionIncidents.test.ts`, `TalkXSegments.sideList.test.tsx`, `TalkXSuppression.actions.test.tsx`, `TalkXSuppression.kpis.test.tsx`, `useRealtimeDashboard.reconciliacao.test.tsx`, `useAgentGamification.test.tsx`, `useTeamConversations.test.tsx`, `CallSessionProvider.test.tsx`, `ai-resilience-prazos-retry.contract.test.ts`, `magical-pasteur-iz2pgy/src/hooks/tasks/workItemFormat.ts`, `ci-workflows-vermelhos/src/hooks/chat/__tests__/useTeamChatNotifications.nome-e-clique.test.tsx`, `RecordingPlayer.test.tsx`, `src/components/inbox/chat/__tests__/ChatMessagesArea.agrupar-envio.test.tsx`, `AiTab.test.tsx`, `FilesTab.cabecalho-funil.test.tsx`, `useRealtimeDashboard.visibilidade.test.tsx`, `src/hooks/calls/__tests__/useCallRecording.test.tsx`, `src/hooks/chat/__tests__/useTeamChatNotifications.nome-e-clique.test.tsx`, `src/hooks/integrations/__tests__/usePersonalStickers.uso.test.tsx`, `useSecurityPushNotifications.test.ts`, `useClientErrors.ts`, `useDeviceDetection.test.tsx`, `useRealtimeMessages.test.tsx`, `multiplix-docs.contract.test.ts`, `ci-workflows-vermelhos/src/hooks/__tests__/useCSAT.rating.test.tsx`, `fix-email-navy-contrast-261101-2057/tests/contracts/contraste-cores-categoria.contract.test.ts`, `ci-workflows-vermelhos/src/hooks/__tests__/useQueuesComparison.race.test.tsx`, `EmailThreadView.test.tsx`, `TelefoniaTopActions.tsx`, `sonner-offset-mobile.test.tsx`, `CrisisRoom.canais.test.tsx`, `CallHistoryStates.tsx`, `CT55_57_management.test.tsx`, `ExternalProductCatalog.virtualizacao.test.tsx`, `QuoteDraftCard.copia.test.tsx`, `src/components/inbox/chat/__tests__/ChatMessagesArea.pagination.test.tsx`, `FadeSlideIn.test.tsx`, `FileThumb.test.tsx`, `src/components/inbox/__tests__/ChatPanel.typing-presence.test.tsx`, `VoiceChangerPicker.cancelamento-teto.test.tsx`, `TalkXCampaignRunning.lifecycle.test.tsx`, `QueueAlertsDisplay.tsx`, `MediaLibraryAdmin.test.tsx`, `TalkXMonitorHeader.test.tsx`, `TalkXOverview.states.test.tsx`, `TalkXView.monitor.test.tsx`, `src/components/ui/phone-input.tsx`, `useGoalNotifications.dia-local.test.tsx`, `useMultiplixReplies.test.tsx`, `src/hooks/__tests__/useQueuesComparison.race.test.tsx`, `src/hooks/__tests__/useTeamChatNotifications.aviso-navegador.test.tsx`, `contactHealth.ts`, `stickerImage.ts`, `CatalogBulkSendDialog.bulkOutcome.test.tsx`, `instancePauseSeries.ts`, `ContactNotes.semColuna.test.tsx`, `src/hooks/copilot/useObjectionHandler.ts`, `HandoffDialog.test.tsx`, `src/components/inbox/__tests__/GlobalSearch.r2-inb-020.test.tsx`, `SegmentSideList.test.tsx`, `TalkXCampaignScheduled.start-guard.test.tsx`, `TalkXOverview.comparativo.test.tsx`, `useClientWallet.test.tsx`, `useFilesInfiniteScroll.test.tsx`, `useAttachmentSuggestion.ts`, `useSmartTemplates.ts`, `useObjectionDetector.n169.test.tsx`, `usePersonalStickers.webp.test.tsx`, `useTalkXSegments.viewMode.test.tsx`, `useTalkXSuppression.hook-morto.test.ts`, `src/hooks/__tests__/useIncomingCallListener.test.tsx`, `useLoadingState.ts`, `useUniversityHelp.test.tsx`, `ci-workflows-vermelhos/src/components/settings/__tests__/SoundCustomizationPanel.test.tsx`, `useVoiceAgent.comandoSubstituido.test.ts`, `ai-vocabulary-consumers.contract.test.ts`, `ga-ci-verde-261020/src/components/inbox/__tests__/ContactDetails.quickActions.test.tsx`, `AuditLogDashboard.hoje-local.test.tsx`, `src/components/calls/__tests__/IncomingCallAlert.volume.test.tsx`, `ContactNotes.editarFixar.test.tsx`, `AchievementsSystem.test.tsx`, `StickerManager.recentes.r2-inb-062.test.tsx`, `src/components/inbox/__tests__/LocationMessage.liveUntil.test.tsx`, `VoiceChangerPicker.preview-send.test.tsx`, `MediaLibraryAdmin.a11y.test.tsx`, `kit/__tests__/ActiveCampaignIndicator.test.tsx`, `talkxRunningHistory.ts`, `TalkXOverview.bulk.test.tsx`, `TalkXSegments.builder.test.tsx`, `useAbandonmentRate.ts`, `useTerminoRemoto.test.tsx`, `ContactsView.v2Flags.test.tsx`, `usePersonalStickers.identidade.test.tsx`, `useReactionMutations.transport-rejection.test.tsx`, `src/hooks/__tests__/slaDenominadores.test.tsx`, `contact-bulk.service.test.ts`, `ai-vocabulary-parity.contract.test.ts`, `sl218-bloco18-estado.contract.test.ts`, `telefonia-encerramento.contract.test.ts`, `ci-workflows-vermelhos/src/hooks/__tests__/useNotifications.contagem-reconciliada.test.tsx`, `f1a-lote-b-main/src/hooks/__tests__/useNotifications.contagem-reconciliada.test.tsx`, `useBulkActions.archive-fsm.test.tsx`, `parseUserAgent.ts`, `src/components/crm360/__tests__/DataExplorerTable.a11y.test.tsx`, `MessageBubbleUnsupported.test.tsx`, `appRole.ts`, `web-vitals.ts`, `src/hooks/copilot/useDeadlineCalculator.ts`, `GoalsConfigDialog.metas.test.tsx`, `src/components/email/__tests__/EmailChatReplyBar.test.tsx`, `AIEnhanceButton.rascunho-atrasado.test.tsx`, `AiTab.erroAnalise.test.tsx`, `src/components/inbox/__tests__/useFileUploadLogic.test.tsx`, `OmnichannelInbox.test.tsx`, `SecurityOverview.medicao.test.tsx`, `AIGenerateDialog.test.tsx`, `TalkXView.whatsapp-band.test.tsx`, `useRecommendedProducts.test.tsx`, `useTextToSpeech.vozLocal.test.tsx`, `useGhostText.ts`, `useInboxFilterPresets.test.tsx`, `useInboxFilters.fsm-padrao.test.tsx`, `useInboxFilters.type-url.test.tsx`, `useGmail.syncStatus.test.tsx`, `useApplicableSLA.test.ts`, `useWarRoomAlertsMute.behavior.test.tsx`, `audioMemeCategories.ts`, `ResetPassword.segundo-fator-sessoes.test.tsx`, `violetaContraste.test.ts`, `notificationSounds.test.ts`, `mediaMigration.service.ts`, `src/components/admin/__tests__/GmailWebhookMonitor.falha-consulta.test.tsx`, `PasswordStrengthMeter.corrida.test.tsx`, `R2_MOD_010_selecaoPersistente.test.tsx`, `SendProductDialog.test.tsx`, `useDailyBrief.ts`, `sidebarSections.ts`, `InboxSavedFiltersMenu.test.tsx`, `MultiplixView.selecao-composicao.test.tsx`, `TalkXRecipientsTable.test.tsx`, `PeriodComparison.test.tsx`, `src/components/settings/__tests__/SoundCustomizationPanel.test.tsx`, `TalkXAudienceFilters.test.tsx`, `talkxTemplateRoute.ts`, `TalkXCampaignRunning.limits.test.tsx`, `TalkXRecipientRowActions.test.tsx`, `TalkXSegments.library.test.tsx`, `TalkXTemplateEditor.painelMenor.test.tsx`, `EmojiPicker`, `src/hooks/__tests__/useCSAT.rating.test.tsx`, `contratosModulo.test.ts`, `src/hooks/__tests__/useNotifications.contagem-reconciliada.test.tsx`, `useTextToSpeech.lifecycle.test.ts`, `useWarRoomAlerts.aviso-desktop.test.tsx`, `useWarRoomAlerts.silencio-desktop.test.tsx`, `runGuard-simulation.test.ts`, `ai-fallback-and-test.contract.test.ts`, `ai-values.contract.test.ts`, `ia047-idempotencia-de-efeitos.contract.test.ts`, `ci-workflows-vermelhos/src/hooks/integrations/__tests__/useWhatsAppTemplates.aprovacaoLocal.test.ts`, `ci-workflows-vermelhos/src/hooks/__tests__/useTeamChatNotifications.aviso-navegador.test.tsx`, `fase0-banco-local/src/config/supabase.ts`, `ci-workflows-vermelhos/src/components/settings/__tests__/ScheduleSettings.test.tsx`, `ci-workflows-vermelhos/src/hooks/crm/__tests__/useContactIntelligence.test.tsx`, `ci-workflows-vermelhos/src/hooks/__tests__/useGlobalSettings.cache-compartilhado.test.tsx`, `CampaignCreateDialog.r2-mod-005.test.tsx`, `StoryViewer.test.tsx`?**
-  _High betweenness centrality (0.119) - this node is a cross-community bridge._
-- **Why does `Communities (5953 total, 1987 thin omitted)` connect `Communities (5953 total, 1987 thin omitted)` to `TalkXCampaignReport`, `RadarPhase6Panel`, `.build`, `authenticated`, `WorkItemSheet.tsx`, `useReducedMotion`, `calendarDayKey`, `useAnnounce`, `AIConversationAssistant.tsx`, `maintenance/run.mjs`, `TalkXSegmentBuilder`, `RealtimeContactUpdateE2E.test.tsx`, `.canAccess`, `migrate-media-storage/index.ts`, `theme/presets.ts`, `mapboxGeocode.ts`?**
-  _High betweenness centrality (0.058) - this node is a cross-community bridge._
-- **Why does `react` connect `react` to `lucide-react`, `TalkXSuppression.tsx`, `utils.ts`, `cn`, `ExternalProductManagement.tsx`, `vitest`, `WorkItemSheet.tsx`, `@testing-library/react`, `useUserRole`, `src/components/inbox/WhisperMode.tsx`, `AIConversationAssistant.tsx`, `framer-motion`, `ref_node_path`, `NewTaskDialog.tsx`, `vitest-axe`, `ChatPanelHeader.tsx`, `src/hooks/copilot/index.ts`, `src/components/settings/SettingsView.tsx`, `ConversationWithMessages`, `EmailComposer.test.tsx`, `react-router-dom`, `TalkXCampaignRunning.segmentoPico.test.tsx`, `TalkXTemplates.duplicarAtalho.test.tsx`, `useContactsSearch.test.tsx`, `useAgentCelebrations.test.tsx`, `pending`, `useCatalogRecentSends.test.tsx`, `useChatPanelHandlers.ts`, `ContactDetailPanel.tsx`, `useCatalogSendHistory.historicoCompleto.test.tsx`, `feat-copiloto-edges-261101-1330/src/hooks/copilot/index.ts`, `useSLACalculation.ts`, `useMultiplixDispatches.ts`, `ViewRouter`, `ConversationListSidebar.tsx`, `localDay.ts`, `useEvolutionApi`, `EmailComposer.tsx`, `App.tsx`, `src/hooks/__tests__/helpers/alertBehaviorTestKit.ts`, `useSipClient.ts`, `bucket`, `ProtectedRoute`, `useAuditLogDashboard.ts`, `CT69_contrasteBadges.test.tsx`, `src/lib/invokeEdge.ts`, `AppRoutes.tsx`, `CallSessionProvider.tsx`, `auth.service.ts`, `TestQueryWrapper`, `src/components/talkx/TalkXView.tsx`, `theme/presets.ts`, `Etapas`, `AIRewriteButton.rascunho-atrasado.test.tsx`, `Collapse.tsx`, `useCountUp.test.tsx`, `SUPABASE_URL`, `MultiplixView`, `useGmail.ts`, `VoiceChangerPicker.test.tsx`, `useSearchHistory.ts`, `useChatMediaSending.ts`, `feat-copiloto-edges-261101-1330/src/hooks/copilot/useLossRiskDetector.ts`, `feat-copiloto-edges-261101-1330/src/hooks/copilot/useObjectionHandler.ts`, `feat-copiloto-hooks-261101-1500/src/hooks/copilot/useLeadThermometer.ts`, `feat-copiloto-hooks-261101-1500/src/hooks/copilot/useLossRiskDetector.ts`, `mapboxToken.ts`, `TalkXCampaignRunning.remote-completion.test.tsx`, `TalkXSuppression.add.test.tsx`, `TalkXTemplateImportDialog.test.tsx`, `TasksKpiStrip.tsx`, `ContextualEmptyState.tsx`, `command-palette.a11y.test.tsx`, `useRealtimeMessages.ts`, `ga-ci-verde-261020/src/services/outbound-message.service.ts`, `src/components/admin/useAdminData.ts`, `useUrgencyEscalation.ts`, `useEmailContactContext.test.tsx`, `AIAutoTagsConfig.recentesErro.test.tsx`, `useExternalDB.test.ts`, `talkxHelpIndex.ts`, `useGmail.syncParcial.test.tsx`, `src/hooks/__tests__/useGlobalSettings.cache-compartilhado.test.tsx`, `src/hooks/__tests__/useNotifications.test.tsx`, `useTalkXInsights.ts`, `parseSupabaseStorageObjectUrl`, `useMessages`, `useConversationHistoryTimeline.ts`, `RealtimeContactUpdateE2E.test.tsx`, `TalkXAnalytics.tsx`, `MessageSendHistorySheet.tsx`, `Etapas`, `src/components/ui/command-palette.tsx`, `CallDialog`, `WarRoomDashboard.tsx`, `ga-ci-verde-261020/src/components/inbox/chat/__tests__/ChatMessagesArea.agrupar-envio.test.tsx`, `mediaVolumeStore.ts`, `useChatbotFlows.ts`, `accessible-toast.tsx`, `package.json`, `feat-radar-motor-telas-261101-1330/src/components/inbox/copilot/RadarCards.tsx`, `useFilesViewState.ts`, `KeyboardShortcutsDialog.test.tsx`, `src/components/calls/CallHistoryTable.tsx`, `model.ts`, `debounce.ts`, `TalkXCampaignScheduled`, `Plano de 50 etapas — Arquivos do Chat Panel`, `kind-gates-87mwoe/src/hooks/integrations/useTalkXSegments.ts`, `ci-workflows-vermelhos/src/components/inbox/chat/__tests__/ChatInputArea.limite-enter.test.tsx`, `useAddressAutocomplete.ts`, `TeamChatView`, `ContactMediaItem`, `WhatsAppCallAdapter.ts`, `analytics/useSentimentTrend.ts`, `MediaVolume.test.tsx`, `src/hooks/copilot/useCopilotSession.ts`, `chat/motion/index.ts`, `useTeamChatDraft.ts`, `useTypingPresence.ts`, `EmailChatInbox`, `src/components/calls/__tests__/telefoniaContraste.test.tsx`, `3. Pendências detalhadas`, `src/components/inbox/copilot/RadarCards.tsx`, `FilesTab`, `ref_node_crypto`, `TalkXCampaignReport`, `useSupervisorQueue.ts`, `safeStorage.ts`, `Fonte de dados por hook`, `useConnectionsHealth.ts`, `resolve`, `useRealtimeDashboard.ts`, `fileSenderIdentity.ts`, `escapeOrFilterValue`, `useVolumeRocker.ts`, `ci-workflows-vermelhos/src/components/calls/__tests__/IncomingCallAlert.volume.test.tsx`, `callGmailFunction`, `publish-followup-20261021/src/hooks/integrations/useTalkXSegments.ts`, `RadarPhase9Panel.tsx`, `cool-dijkstra-xk9ek2/src/components/inbox/chat/__tests__/ChatMessagesArea.agrupar-envio.test.tsx`, `useSupabaseRealtime.ts`, `src/services/outbound-message.service.ts`, `talkxTemplateFile.ts`, `useContactsSearch`, `ErrorBoundary`, `useContactMedia.stickers.test.tsx`, `useContactMedia.ts`, `useRateLimitLogs.ts`, `GlobalKeyboardProvider.tsx`, `actions.ts`, `SwipeGestures.tsx`, `Contact360Helpers.tsx`, `tabLeaderStore.ts`, `CatalogBulkSendDialog.readiness.test.tsx`, `slaTimeline.ts`, `ci-workflows-vermelhos/src/components/connections/__tests__/BusinessHoursIndicator.test.tsx`, `RouteTransition.tsx`, `useAgentPresence.ts`, `ga-ci-verde-261020/src/components/admin/useAdminData.ts`, `ViewContainer`, `useTalkXResumeChecklist.ts`, `instance-pauses.service.ts`, `useVisiblePolling`, `Arquivo × achado × evidência (amostra que cobre todos os grupos)`, `talkxKeyMetrics.ts`, `fix-unit-tests-src-261024-1630/src/hooks/contacts/__tests__/useContainerColumns.test.ts`, `fix-unit-tests-src-261024-1630/src/hooks/integrations/useTalkXSegments.ts`, `ga-ci-verde-261020/src/hooks/integrations/useTalkXSegments.ts`, `sidebar-primitives.tsx`, `TalkXHelp`, `ga-ci-verde-261020/src/components/talkx/useCampaignEditor.ts`, `ScheduleCalendarView.agenda.test.tsx`, `useTeamMemberDetails.profiles-rpc.test.tsx`, `useGeoBlocking.ts`, `src/components/inbox/chat/__tests__/ChatInputArea.limite-enter.test.tsx`, `useCustomShortcuts.ts`, `useTalkXMediaUpload.ts`, `empty-states.tsx`, `BrindeMeter.test.tsx`, `AutomationCard.tsx`, `useJourneyEmails.ts`, `useGlobalKeyboardShortcuts.ts`, `festive-carson-ub43wu/src/components/ui/command-palette.tsx`, `FileThumb.pdf.test.tsx`, `useMentionableProfiles.ts`, `useTalkXCampaignList.ts`, `GmailInboxView.test.tsx`, `src/components/talkx/__tests__/TalkXOverview.table.test.tsx`, `TalkXInteractiveEditor.tsx`, `TalkXSuppression`, `useTalkMeQueue.ts`, `evolutionAdapter.ts`, `VoiceSearchOverlay.tsx`, `TalkXSegmentBuilder`, `communication/useVoiceAgent.ts`, `DailyMetricsKpis.tsx`, `deployment-update.ts`, `JourneyStatsHero.tsx`, `useSupabaseConnectivity.ts`, `useConversationPanelInvalidation.test.tsx`, `useWhatsAppStatus.ts`, `useScheduledReports.test.tsx`, `Prefetcher.tsx`, `talkxTimelineCopy.ts`, `useContactSearchV2.ts`, `src/components/inbox/__tests__/contrastePlayerSlider.test.tsx`, `useSLAHistory.ts`, `useNavigationHistory`, `useConversationScore.ts`, `fix-radar-fase6-cv056-shortcuts-261108-2335/src/hooks/copilot/useRadarPanel.ts`, `Guia de Contribuição — Zapp Web V2`, `useSavedFilters.test.tsx`, `TalkXTemplateEditor.race.test.tsx`, `src/hooks/communication/__tests__/audioExclusivo.players.test.tsx`, `useEvolutionApiCore.ts`, `main.tsx`, `UX Audit Report — Zapp Web V2`, `LinkPreview.tsx`, `defaultShortcuts.ts`, `buttons.tsx`, `useGmail.syncEmAndamento.test.tsx`, `useWarRoomAlerts.test.tsx`, `OnboardingTour.tsx`, `VoiceActionBridge.test.tsx`, `motion.tsx`, `src/hooks/system/useDiagnosticsData.ts`, `d`, `talkxCampaignRules.ts`, `useSLARulesCounts.ts`, `journey/motion/index.ts`, `CT83_84_helpSheet.test.tsx`, `ConnectionsView.telefone-validacao.test.tsx`, `JourneyHealthChip.tsx`, `quadroLarguraFocoContraste.test.tsx`, `src/components/email/__tests__/EmailChatReplyBar.rascunho.test.tsx`, `useAudioMemes.mediaVolumeBindings.test.tsx`, `useEvolutionMessaging.test.ts`, `ConversationListSidebar.empty-state.test.tsx`, `src/components/inbox/__tests__/useFileUploadLogic.u7.test.tsx`, `src/components/settings/__tests__/ScheduleSettings.test.tsx`, `TalkXTemplates.route.test.tsx`, `timers-unmount.test.tsx`, `src/hooks/crm/__tests__/useContactIntelligence.test.tsx`, `useTheme.ts`, `useTeamUnreadTotal`, `HotRoutePrefetcher.tsx`, `AuditLogDashboard.test.tsx`, `useAutomationSuggestions.ts`, `useExclusiveAudio.ts`, `ContactForm`, `TalkXSuppression.searchServer.test.tsx`, `useGmail.test.ts`, `useTalkXTemplates.test.ts`, `busy-cannon-40szm9/src/components/talkx/kit/dialogs.tsx`, `useContactMedia.sticker.test.tsx`, `useAIUsageDashboard.ts`, `talkxAiSuggestions.ts`, `useInboxUnreadTotal.ts`, `VolumeDial.tsx`, `src/hooks/integrations/useTalkXSuppression.ts`, `feat-copiloto-edge-fases8-10-261024-1700/src/hooks/integrations/__tests__/useTalkXSuppression.test.ts`, `fix-codex-findings-161016-1906/src/hooks/integrations/__tests__/useTalkXSuppression.test.ts`, `Motion e micro-interações`, `a11yComponents.tsx`, `WhatsAppStatusSection.tsx`, `usePerformance.ts`, `useContactAgenda.ts`, `TalkXCampaignRunning`, `useLeaderboard.test.tsx`, `playTtsAudio.ts`, `useSLAConfigurations.test.tsx`, `useFilterState.ts`, `ContactDeliveryPanel.tsx`, `useMonitoringData.ts`, `contrasteAA.test.tsx`, `useWebAuthn`, `qc`, `CampaignsView.retomada.test.tsx`, `e2e-isolated-seed-diagnostic.unit.mjs`, `ScrollEffects.tsx`, `EmailVolumeMedicao.test.tsx`, `StickerManager.envio.test.tsx`, `useConnectionIncidents.ts`, `planejamento.ts`, `useDashboardKpi.ts`, `useTeamChatRealtimeChannelErrors.test.tsx`, `useServiceWorker.ts`, `LiveSuggestion`, `useSpeechToText.ts`, `TalkXCampaignActionsCard.test.tsx`, `HighContrastProvider`, `useContactsV2Flags.test.tsx`, `radar-motor-copilot-live-301030/src/components/inbox/copilot/RadarCards.tsx`, `useRolesPageState.ts`, `dashboard/metrics/index.ts`, `useChatSearch.ts`, `fundacaoVisual.test.tsx`, `talkxStates.matrix.test.tsx`, `TalkXSegments.detailFresh.test.tsx`, `TalkXTemplatesRail.test.tsx`, `chart.tsx`, `useResourcePrefetch.ts`, `AchievementToast.test.tsx`, `useTalkXLiveChannel.ts`, `TalkXLiveKpiRow.tsx`, `SegmentRules`, `src/components/talkx/__tests__/TalkXSegments.detailPanel.test.tsx`, `festive-carson-ub43wu/src/hooks/chat/__tests__/useTeamChatNotifications.canal-estavel.test.tsx`, `ContactNotes.ordemFoco.test.tsx`, `crm360FormDialogs.a11y.test.tsx`, `InboxFilters.todos-os-tipos.test.tsx`, `OnboardingChecklist.a11y.test.tsx`, `OnboardingChecklist.test.tsx`, `inbox.service.ts`, `talkxHelpMarkdown.tsx`, `TalkXLiveMonitor.lifecycle.test.tsx`, `useNonAnnoyingFollowUp.ts`, `useTradeOffer.ts`, `useTalkX.recipients-paginacao.test.tsx`, `ProtectedRoute.acesso-negado.test.tsx`, `useDataMasking.ts`, `TalkXSegments.filtrosPaginacao.test.tsx`, `TalkXSegments.groups.test.tsx`, `TalkXSuppression.atividade.test.tsx`, `useGoalsDashboard.test.tsx`, `useConnectionHealthBanner.ts`, `ci-verde-261021/src/hooks/chat/useConversationActions.ts`, `ci-workflows-vermelhos/src/components/email/__tests__/EmailChatReplyBar.test.tsx`, `ci-workflows-vermelhos/src/components/inbox/__tests__/useFileUploadLogic.test.tsx`, `ci-workflows-vermelhos/src/hooks/integrations/__tests__/usePersonalStickers.uso.test.tsx`, `useInboxFilterPresets.ts`, `VoiceChangerPicker.falhas.test.tsx`, `VoiceChangerPicker.reduced-motion.test.tsx`, `useEvolutionMonitoring.ts`, `TalkXSegments.sideList.test.tsx`, `TalkXSuppression.kpis.test.tsx`, `useAgentGamification.test.tsx`, `useTeamConversations.test.tsx`, `festive-carson-ub43wu/src/hooks/system/useDiagnosticsData.ts`, `ga-ci-verde-261020/src/hooks/system/useDiagnosticsData.ts`, `kind-gates-87mwoe/src/hooks/system/useDiagnosticsData.ts`, `magical-pasteur-iz2pgy/src/hooks/system/useDiagnosticsData.ts`, `RecordingPlayer.test.tsx`, `contactsMotion.ts`, `src/components/inbox/chat/__tests__/ChatMessagesArea.agrupar-envio.test.tsx`, `src/hooks/calls/__tests__/useCallRecording.test.tsx`, `src/hooks/integrations/__tests__/usePersonalStickers.uso.test.tsx`, `useClientErrors.ts`, `useDeviceDetection.test.tsx`, `ci-workflows-vermelhos/src/hooks/__tests__/useCSAT.rating.test.tsx`, `EmailThreadView.test.tsx`, `QuoteDraftCard.copia.test.tsx`, `src/components/inbox/chat/__tests__/ChatMessagesArea.pagination.test.tsx`, `FadeSlideIn.test.tsx`, `VoiceChangerPicker.cancelamento-teto.test.tsx`, `TalkXCampaignRunning.lifecycle.test.tsx`, `src/components/ui/phone-input.tsx`, `useMultiplixReplies.test.tsx`, `ContactNotes.semColuna.test.tsx`, `src/hooks/copilot/useObjectionHandler.ts`, `SegmentSideList.test.tsx`, `TalkXCampaignScheduled.start-guard.test.tsx`, `TalkXOverview.comparativo.test.tsx`, `useFilesInfiniteScroll.test.tsx`, `useAttachmentSuggestion.ts`, `useSmartTemplates.ts`, `usePersonalStickers.webp.test.tsx`, `useTalkXSegments.viewMode.test.tsx`, `useLoadingState.ts`, `ci-workflows-vermelhos/src/components/settings/__tests__/SoundCustomizationPanel.test.tsx`, `SwipeableListItem.tsx`, `ContactNotes.editarFixar.test.tsx`, `AchievementsSystem.test.tsx`, `StickerManager.recentes.r2-inb-062.test.tsx`, `VoiceChangerPicker.preview-send.test.tsx`, `TalkXSegments.builder.test.tsx`, `ContactsView.v2Flags.test.tsx`, `usePersonalStickers.identidade.test.tsx`, `useReactionMutations.transport-rejection.test.tsx`, `src/hooks/__tests__/slaDenominadores.test.tsx`, `ci-workflows-vermelhos/src/hooks/__tests__/useNotifications.contagem-reconciliada.test.tsx`, `f1a-lote-b-main/src/hooks/__tests__/useNotifications.contagem-reconciliada.test.tsx`, `useBulkActions.archive-fsm.test.tsx`, `src/hooks/copilot/useDeadlineCalculator.ts`, `src/components/email/__tests__/EmailChatReplyBar.test.tsx`, `AIEnhanceButton.rascunho-atrasado.test.tsx`, `src/components/inbox/__tests__/useFileUploadLogic.test.tsx`, `AIGenerateDialog.test.tsx`, `useRecommendedProducts.test.tsx`, `useGhostText.ts`, `useInboxFilterPresets.test.tsx`, `useInboxFilters.fsm-padrao.test.tsx`, `useInboxFilters.type-url.test.tsx`, `useGmail.syncStatus.test.tsx`, `useWarRoomAlertsMute.behavior.test.tsx`, `PasswordStrengthMeter.corrida.test.tsx`, `SendProductDialog.test.tsx`, `MultiplixView.selecao-composicao.test.tsx`, `TalkXRecipientsTable.test.tsx`, `src/components/settings/__tests__/SoundCustomizationPanel.test.tsx`, `TalkXAudienceFilters.test.tsx`, `TalkXCampaignRunning.limits.test.tsx`, `TalkXRecipientRowActions.test.tsx`, `TalkXSegments.library.test.tsx`, `TalkXTemplateEditor.painelMenor.test.tsx`, `src/hooks/__tests__/useCSAT.rating.test.tsx`, `src/hooks/__tests__/useNotifications.contagem-reconciliada.test.tsx`, `useWarRoomAlerts.aviso-desktop.test.tsx`, `useWarRoomAlerts.silencio-desktop.test.tsx`, `ci-workflows-vermelhos/src/components/settings/__tests__/ScheduleSettings.test.tsx`, `ci-workflows-vermelhos/src/hooks/crm/__tests__/useContactIntelligence.test.tsx`, `ci-workflows-vermelhos/src/hooks/__tests__/useGlobalSettings.cache-compartilhado.test.tsx`, `CampaignCreateDialog.r2-mod-005.test.tsx`, `telefonia-fase8-motion-a11y-responsivo-2610031530007c/src/components/calls/Keypad.tsx`, `Plano: paridade V3 → V2, doc 26 (hooks raiz S–Z) — 13/10/2026`?**
-  _High betweenness centrality (0.054) - this node is a cross-community bridge._
+- **Why does `vitest` connect `vitest` to `react`, `lucide-react`, `TalkXSuppression.tsx`, `utils.ts`, `cn`, `validation.ts`, `ExternalProductManagement.tsx`, `ref_node_fs`, `WorkItemSheet.tsx`, `@testing-library/react`, `ref_https`, `useUserRole`, `src/components/inbox/WhisperMode.tsx`, `AIConversationAssistant.tsx`, `framer-motion`, `ref_node_path`, `NewTaskDialog.tsx`, `ref_node_child_process`, `vitest-axe`, `ChatPanelHeader.tsx`, `ai-generate.ts`, `src/hooks/copilot/index.ts`, `src/components/settings/SettingsView.tsx`, `ConversationWithMessages`, `MediaMigrationTool.test.tsx`, `InstancePausesPanel.test.tsx`, `.build`, `react-router-dom`, `src/components/inbox/chat/__tests__/useChatPanelHandlers.edicao-rejeitada.test.tsx`, `EmailComposer.test.tsx`, `useMonitoringData.buckets.test.ts`, `QueuesView.editar.test.tsx`, `TalkXCampaignRunning.segmentoPico.test.tsx`, `pending`, `TalkXOverview.filters.test.tsx`, `TalkXSuppression.editReasonVazio.test.tsx`, `TalkXTemplates.duplicarAtalho.test.tsx`, `useContactsSearch.test.tsx`, `useChatPanelHandlers.ts`, `ContactDetailPanel.tsx`, `useAgentCelebrations.test.tsx`, `useCatalogRecentSends.test.tsx`, `useCatalogSendHistory.historicoCompleto.test.tsx`, `useEvolutionApi.payloads.test.ts`, `useMultiplixDispatches.ts`, `ViewRouter`, `ConversationListSidebar.tsx`, `TalkXNoPermissionState`, `TalkXSettings`, `localDay.ts`, `useEvolutionApi`, `EmailComposer.tsx`, `App.tsx`, `src/hooks/__tests__/helpers/alertBehaviorTestKit.ts`, `.failed`, `src/hooks/chat/__tests__/useConversationActions.test.ts`, `useSipClient.ts`, `bucket`, `useInboxBulkActions`, `ProtectedRoute`, `telefonia-contrato-docs.contract.test.ts`, `scripts/ci/check-test-inventory.mjs`, `useAuditLogDashboard.ts`, `CT69_contrasteBadges.test.tsx`, `src/lib/invokeEdge.ts`, `AppRoutes.tsx`, `CallSessionProvider.tsx`, `Etapas`, `crossTabSendDedupe.ts`, `auth.service.ts`, `TestQueryWrapper`, `src/components/talkx/__tests__/TalkXContactSelector.a11y.test.tsx`, `src/components/talkx/TalkXView.tsx`, `theme/presets.ts`, `Etapas`, `useContactsCRUD.test.tsx`, `AIRewriteButton.rascunho-atrasado.test.tsx`, `Collapse.tsx`, `SUPABASE_URL`, `ActiveCallBar`, `useCountUp.test.tsx`, `useGmail.ts`, `src/components/inbox/__tests__/ChatTransferContract.test.tsx`, `periodRange.ts`, `useSearchHistory.ts`, `useChatMediaSending.ts`, `src/components/inbox/__tests__/ContactDetails.quickActions.test.tsx`, `GlobalSearch.navigation.test.tsx`, `VoiceChangerPicker.test.tsx`, `VoiceSelector.test.tsx`, `useMonitoringNotifications.behavior.test.ts`, `mapboxToken.ts`, `QueueGoalsDialog.salvarMetas.test.tsx`, `LoginBlockedLogPanel.test.tsx`, `useMediaLibrary.mutacoes.test.tsx`, `ThemeCustomizer.test.tsx`, `TalkXCampaignRunning.remote-completion.test.tsx`, `useRealtimeMessages.ts`, `TalkXSuppression.add.test.tsx`, `TalkXTemplateImportDialog.test.tsx`, `src/components/admin/useAdminData.ts`, `ci-workflows-vermelhos/src/components/inbox/collaboration/__tests__/RealtimeCollaboration.handoff.test.tsx`, `ci-workflows-vermelhos/src/hooks/__tests__/useIncomingCallListener.test.tsx`, `AIAutoTagsConfig.recentesErro.test.tsx`, `useEmailContactContext.test.tsx`, `talkxHelpIndex.ts`, `useExternalDB.test.ts`, `useGmail.syncParcial.test.tsx`, `src/hooks/__tests__/useGlobalSettings.cache-compartilhado.test.tsx`, `src/hooks/__tests__/useNotifications.test.tsx`, `useUndoableAction.r2-plat-007.test.ts`, `useTalkXInsights.ts`, `emailAttachments.ts`, `stats.ts`, `parseSupabaseStorageObjectUrl`, `cool-dijkstra-xk9ek2/src/components/inbox/__tests__/ChatPanel.typing-presence.test.tsx`, `useMessages`, `catalog.spec.ts`, `useAddressAutocomplete`, `useConversationHistoryTimeline.ts`, `pdfThumbnail.ts`, `RealtimeContactUpdateE2E.test.tsx`, `LocationPicker.integration.test.tsx`, `TalkXAnalytics.tsx`, `MessageSendHistorySheet.tsx`, `Etapas`, `src/components/ui/command-palette.tsx`, `mapboxGeocode.ts`, `CallDialog`, `WarRoomDashboard.tsx`, `typecheck-ratchet.mjs`, `ga-ci-verde-261020/src/components/inbox/chat/__tests__/ChatMessagesArea.agrupar-envio.test.tsx`, `mediaVolumeStore.ts`, `useChatbotFlows.ts`, `accessible-toast.tsx`, `package.json`, `useFilesViewState.ts`, `scripts/edge-deploy/health-check.mjs`, `KeyboardShortcutsDialog.test.tsx`, `MonitoringDiagnosticPanel.sem-export.test.tsx`, `useSipClient.test.ts`, `multiplix-handoff-f100.contract.test.ts`, `src/components/calls/CallHistoryTable.tsx`, `model.ts`, `FASE 1 — Motor: ligar o contrato ao que existe (T09–T22)`, `TalkXCampaignScheduled`, `Plano de 50 etapas — Arquivos do Chat Panel`, `ci-workflows-vermelhos/src/components/inbox/chat/__tests__/ChatInputArea.limite-enter.test.tsx`, `useRealtimeInbox`, `useAddressAutocomplete.ts`, `json`, `TeamChatView`, `ContactMediaItem`, `WhatsAppCallAdapter.ts`, `analytics/useSentimentTrend.ts`, `statements`, `MediaVolume.test.tsx`, `src/hooks/copilot/useCopilotSession.ts`, `PLANO EM 100 ETAPAS`, `chat/motion/index.ts`, `useTeamChatDraft.ts`, `useTypingPresence.ts`, `EmailChatInbox`, `src/components/calls/__tests__/telefoniaContraste.test.tsx`, `WhatsAppConnection`, `3. Pendências detalhadas`, `src/components/inbox/copilot/RadarCards.tsx`, `FilesTab`, `ref_node_crypto`, `TalkXCampaignReport`, `admin`, `fix-ga-fase23-edge-e2e-261020-2200/scripts/ci/redigir-relatorio.mjs`, `useSupervisorQueue.ts`, `useAuthForm`, `safeStorage.ts`, `GenerateParams`, `Fonte de dados por hook`, `useConnectionsHealth.ts`, `ai-response-contracts.ts`, `resolve`, `useRealtimeDashboard.ts`, `fileSenderIdentity.ts`, `Vereditos dos 96 caminhos — lote 4 (16 caminhos)`, `escapeOrFilterValue`, `src/components/inbox/tabs/__tests__/FilesTab.fase6.test.tsx`, `useVolumeRocker.ts`, `ci-workflows-vermelhos/src/components/calls/__tests__/IncomingCallAlert.volume.test.tsx`, `useSipClient`, `ia131-audio-meme-conteudo.contract.test.ts`, `callGmailFunction`, `ensaio-provisionamento.mjs`, `RadarPhase9Panel.tsx`, `cool-dijkstra-xk9ek2/src/components/inbox/chat/__tests__/ChatMessagesArea.agrupar-envio.test.tsx`, `SystemHealthCard.tsx`, `useSupabaseRealtime.ts`, `src/services/outbound-message.service.ts`, `talkxTemplateFile.ts`, `useContactsSearch`, `ErrorBoundary`, `useContactMedia.stickers.test.tsx`, `useContactMedia.ts`, `useRateLimitLogs.ts`, `useRedeemDepartmentInvite.test.tsx`, `GlobalKeyboardProvider.tsx`, `src/hooks/integrations/__tests__/useWhatsAppTemplates.aprovacaoLocal.test.ts`, `feat-ui-visual-texto-longo-261101-1445/src/components/crm360/__tests__/DataExplorerTable.a11y.test.tsx`, `actions.ts`, `Contact360Helpers.tsx`, `useSLACalculation.ts`, `CatalogBulkSendDialog.readiness.test.tsx`, `slaTimeline.ts`, `useDepartmentManagement.ts`, `status.test.ts`, `ci-workflows-vermelhos/src/components/connections/__tests__/BusinessHoursIndicator.test.tsx`, `ci-workflows-vermelhos/src/components/inbox/collaboration/__tests__/ViewersIndicator.presenca.test.tsx`, `ci-workflows-vermelhos/src/hooks/ui/__tests__/useDeviceDetection.select.test.ts`, `IntegrationsPanel.desativar.test.tsx`, `supabase/functions/auth-login/index.test.ts`, `src/components/__tests__/y17Selos.contraste.test.tsx`, `ga-ci-verde-261020/src/components/admin/useAdminData.ts`, `ViewContainer`, `RouteTransition.tsx`, `useTalkXResumeChecklist.ts`, `useAgentPresence.ts`, `useVisiblePolling`, `Arquivo × achado × evidência (amostra que cobre todos os grupos)`, `ci-workflows-vermelhos/src/hooks/__tests__/helpers/alertBehaviorTestKit.ts`, `talkxKeyMetrics.ts`, `fix-unit-tests-src-261024-1630/src/hooks/contacts/__tests__/useContainerColumns.test.ts`, `TalkXHelp`, `rlsSchema.ts`, `ScheduleCalendarView.agenda.test.tsx`, `useTeamMemberDetails.profiles-rpc.test.tsx`, `useGeoBlocking.ts`, `ci-verde-261021/supabase/functions/gmail-oauth/index.test.ts`, `src/components/inbox/chat/__tests__/ChatInputArea.limite-enter.test.tsx`, `useCustomShortcuts.ts`, `useTalkXMediaUpload.ts`, `empty-states.tsx`, `BrindeMeter.test.tsx`, `fix-email-navy-contrast-261101-2057/src/components/__tests__/y17Selos.contraste.test.tsx`, `SuggestionList`, `callStatus.ts`, `Builder`, `7. As 50 etapas`, `FASE 5 — Cache, cabeçalhos e performance de entrega (V101–V125)`, `AutomationCard.tsx`, `useJourneyEmails.ts`, `useGlobalKeyboardShortcuts.ts`, `festive-carson-ub43wu/src/components/ui/command-palette.tsx`, `KnowledgeBaseView.fileActions.test.tsx`, `FileThumb.pdf.test.tsx`, `src/components/inbox/tabs/__tests__/FileThumb.pdf.integration.test.tsx`, `useMentionableProfiles.ts`, `useTalkXCampaignList.ts`, `GmailInboxView.test.tsx`, `src/components/talkx/__tests__/TalkXOverview.table.test.tsx`, `TalkXInteractiveEditor.tsx`, `TalkXSuppression`, `useTalkMeQueue.ts`, `evolutionAdapter.ts`, `VoiceSearchOverlay.tsx`, `TalkXSegmentBuilder`, `communication/useVoiceAgent.ts`, `DailyMetricsKpis.tsx`, `deployment-update.ts`, `JourneyStatsHero.tsx`, `useSupabaseConnectivity.ts`, `useConversationPanelInvalidation.test.tsx`, `useWhatsAppStatus.ts`, `useScheduledReports.test.tsx`, `f1a-lote-b-main/src/hooks/__tests__/helpers/alertBehaviorTestKit.ts`, `contract-kit.ts`, `talkxTimelineCopy.ts`, `useContactSearchV2.ts`, `src/components/inbox/__tests__/contrastePlayerSlider.test.tsx`, `useSLAHistory.ts`, `useNavigationHistory`, `useConversationScore.ts`, `Guia de Contribuição — Zapp Web V2`, `useSavedFilters.test.tsx`, `TalkXTemplateEditor.race.test.tsx`, `mobileAreaSeguraRolagem.test.ts`, `src/hooks/communication/__tests__/audioExclusivo.players.test.tsx`, `ci-workflows-vermelhos/src/pages/queue-details/__tests__/queueMetrics.test.ts`, `useEvolutionApiCore.ts`, `main.tsx`, `UX Audit Report — Zapp Web V2`, `LinkPreview.tsx`, `defaultShortcuts.ts`, `cp1FidelidadeCarvao.test.ts`, `evolution.service.ts`, `useGmail.syncEmAndamento.test.tsx`, `useWarRoomAlerts.test.tsx`, `MultiplixView`, `OnboardingTour.tsx`, `VoiceActionBridge.test.tsx`, `src/hooks/system/useDiagnosticsData.ts`, `d`, `talkxCampaignRules.ts`, `fix-codex-findings-161016-1906/src/lib/invokeEdge.ts`, `talkxCsv.ts`, `useSLARulesCounts.ts`, `journey/motion/index.ts`, `CT83_84_helpSheet.test.tsx`, `ConnectionAuditDialog.test.tsx`, `ConnectionsView.telefone-validacao.test.tsx`, `InstanceSettingsDialog.privacidade.test.tsx`, `GoalsConfigDialog.test.tsx`, `src/components/email/__tests__/EmailChatReplyBar.rascunho.test.tsx`, `professionalFallback.ts`, `JourneyHealthChip.tsx`, `slashCommandsData.ts`, `ConversationListSidebar.empty-state.test.tsx`, `src/components/inbox/__tests__/useFileUploadLogic.u7.test.tsx`, `useEvolutionMonitoring.realtime.test.ts`, `useMonitoringNotifications.audiocontext.test.ts`, `ConnectionAlertPreferencesCard.test.tsx`, `QueuesView.metricasRpc.test.tsx`, `src/components/settings/__tests__/ScheduleSettings.test.tsx`, `TalkXTemplates.gallery.test.tsx`, `TalkXTemplates.route.test.tsx`, `src/components/team-chat/__tests__/useTeamChatPanel.search-antigas.test.tsx`, `timers-unmount.test.tsx`, `TrainingMiniGames.creditoXp.test.tsx`, `ga-ci-verde-261020/src/services/outbound-message.service.ts`, `src/hooks/crm/__tests__/useContactIntelligence.test.tsx`, `useTeamUnreadTotal`, `emailHtml.ts`, `HotRoutePrefetcher.tsx`, `useAudioRecorder.formato.test.ts`, `useReauthentication.test.tsx`, `useTheme.ts`, `TasksKpiStrip.tsx`, `src/hooks/ui/__tests__/useDeviceDetection.select.test.ts`, `CallEngine.test.ts`, `terminoRemoto.ts`, `emailComposeFormat.ts`, `mappers.ts`, `AuditLogDashboard.test.tsx`, `useAutomationSuggestions.ts`, `useExclusiveAudio.ts`, `useContactUnreadEmails.realtime.test.tsx`, `SegmentRules`, `ci-workflows-vermelhos/src/hooks/__tests__/useQueueAnalytics.test.tsx`, `.canAccess`, `ContactForm`, `TalkXSuppression.searchServer.test.tsx`, `useGmail.test.ts`, `useTalkXTemplates.test.ts`, `mediaVolumeElement.ts`, `migrate-media-storage/index.ts`, `ai-jobs-estados-e-durabilidade.contract.test.ts`, `busy-cannon-40szm9/src/components/talkx/kit/dialogs.tsx`, `fix-email-navy-contrast-261101-2057/src/components/inbox/__tests__/ContactDetails.mobile-iniciais-sentimento.test.tsx`, `gerar-banco.mjs`, `audioToMp3.ts`, `fix-email-navy-contrast-261101-2057/src/components/inbox/__tests__/contrastePlayerSlider.test.tsx`, `ci-verde-261021/src/hooks/chat/__tests__/useConversationActions.test.ts`, `useContactMedia.sticker.test.tsx`, `useAIUsageDashboard.ts`, `talkxAiSuggestions.ts`, `useInboxUnreadTotal.ts`, `ai-generate.contract.test.ts`, `src/hooks/admin/useSearchInsights.ts`, `src/hooks/evolution/__tests__/rotas-chamadas-existem.test.ts`, `useCallChannels.test.ts`, `VolumeDial.tsx`, `src/hooks/integrations/useTalkXSuppression.ts`, `scan-icon-buttons.ts`, `feat-copiloto-edge-fases8-10-261024-1700/src/hooks/integrations/__tests__/useTalkXSuppression.test.ts`, `fix-codex-findings-161016-1906/src/hooks/integrations/__tests__/useTalkXSuppression.test.ts`, `ci-workflows-vermelhos/src/components/contacts/__tests__/ContactRegionMap.test.tsx`, `ci-workflows-vermelhos/src/components/inbox/location-picker/__tests__/useLocationPicker.test.tsx`, `ContactService`, `command-palette.a11y.test.tsx`, `Motion e micro-interações`, `singu-adapter.ts`, `useQueueGoalAlerts.test.tsx`, `_adv_edge_legacy_producers.test.ts`, `quadroLarguraFocoContraste.test.tsx`, `tests/contracts/contraste-cores-categoria.contract.test.ts`, `WhatsAppStatusSection.tsx`, `src/components/inbox/__tests__/ContactDetails.mobile-iniciais-sentimento.test.tsx`, `coresCruasInboxCrm.test.tsx`, `usePerformance.ts`, `useContactAgenda.ts`, `useAudioMemes.mediaVolumeBindings.test.tsx`, `mapboxCostGuard.ts`, `useEvolutionMessaging.test.ts`, `ai-vision-classifiers-mock.contract.test.ts`, `TalkXCampaignRunning`, `useLeaderboard.test.tsx`, `src/hooks/integrations/__tests__/useQuarantineMedia.test.tsx`, `useEvolutionIntegrations.test.ts`, `useSwipeNavigation.test.tsx`, `playTtsAudio.ts`, `useSLAConfigurations.test.tsx`, `Inbox 360° — STATUS`, `queryClient.ts`, `ai-routing.contract.test.ts`, `useFilterState.ts`, `ContactDeliveryPanel.tsx`, `src/components/inbox/location-picker/__tests__/useLocationPicker.test.tsx`, `contrasteAA.test.tsx`, `useWebAuthn`, `groupWindow.ts`, `qc`, `fix-email-navy-contrast-261101-2057/src/components/inbox/__tests__/SLAIndicator.contrasteSelos.test.tsx`, `ci-workflows-vermelhos/src/components/calls/__tests__/telefoniaContraste.test.tsx`, `CampaignsView.retomada.test.tsx`, `CrisisRoom.metricas.test.tsx`, `useMonitoringData`, `e2e-isolated-seed-diagnostic.unit.mjs`, `EmailVolumeMedicao.test.tsx`, `StickerManager.envio.test.tsx`, `AudioPlayButton.test.tsx`, `Crm360Tab.test.tsx`, `src/components/inbox/__tests__/SLAIndicator.contrasteSelos.test.tsx`, `planejamento.ts`, `useDashboardKpi.ts`, `useTeamChatRealtimeChannelErrors.test.tsx`, `feat-evolution-rotas-pendentes-261112/src/hooks/evolution/__tests__/rotas-chamadas-existem.test.ts`, `fix-email-navy-contrast-261101-2057/src/components/inbox/__tests__/StatusChips.contrasteChipAtendendo.test.tsx`, `scenario-simulation.test.ts`, `useServiceWorker.ts`, `LiveSuggestion`, `useSpeechToText.ts`, `src/components/calls/__tests__/IncomingCallAlert.provider.test.tsx`, `MobileDrawerMenu.a11y.test.tsx`, `TalkXCampaignActionsCard.test.tsx`, `HighContrastProvider`, `useContactsV2Flags.test.tsx`, `ai-central-routing-ratchet.contract.test.ts`, `ai-rate-limit-e-orcamento.contract.test.ts`, `contraste-aa-componentes.contract.test.ts`, `fix-email-navy-contrast-261101-2057/src/components/settings/__tests__/ThemeCustomizer.a11y.test.tsx`, `fix-email-navy-contrast-261101-2057/tests/contracts/contraste-balao-midia.contract.test.ts`, `emailContactContext.ts`, `e2e-isolated-seed.unit.mjs`, `TrainingMode.avaliacao.test.tsx`, `useRolesPageState.ts`, `SL038_badgesTokensTema.test.tsx`, `tokens-sync.test.ts`, `useChatSearch.ts`, `MessageBubble.contrasteStatus.test.tsx`, `LocationPicker.gpsAtrasado.test.tsx`, `KpiStrip.contraste.test.tsx`, `src/components/inbox/__tests__/StatusChips.contrasteChipAtendendo.test.tsx`, `fundacaoVisual.test.tsx`, `talkxStates.matrix.test.tsx`, `segmentValidation.ts`, `TalkXSegments.detailFresh.test.tsx`, `TalkXTemplatesRail.test.tsx`, `movimentoEContraste.test.tsx`, `chart.tsx`, `useTalkMeQueue.test.tsx`, `useResourcePrefetch.ts`, `sendThrottle.ts`, `serverLogin.ts`, `QuarantineMonitorProvider.r2-api-066.test.tsx`, `tests/contracts/contraste-balao-midia.contract.test.ts`, `AchievementToast.test.tsx`, `emailContactIdentity.ts`, `gravacaoFormato.ts`, `mentionText.ts`, `ci-workflows-vermelhos/src/hooks/__tests__/useTeamChatNotifications.behavior.test.ts`, `ci-workflows-vermelhos/src/hooks/__tests__/useTeamChatNotifications.global.test.tsx`, `useMessageStatus.test.tsx`, `zappSchemas.ts`, `useTalkXLiveChannel.ts`, `BulkActionsBar`, `ResetPassword.redirect-cancelavel.test.tsx`, `TalkXLiveKpiRow.tsx`, `talkxSegmentsRoute.ts`, `CT57_historicoAlem500.test.tsx`, `ReportCharts.descricao-textual.test.tsx`, `IPListasErro.contrasteTema.test.tsx`, `src/components/settings/__tests__/ThemeCustomizer.a11y.test.tsx`, `src/components/talkx/__tests__/TalkXSegments.detailPanel.test.tsx`, `PerformanceMonitor.apis-ausentes.test.tsx`, `TalkXSegments.gradeEPainel.test.tsx`, `Builder`, `src/hooks/__tests__/useTeamChatNotifications.behavior.test.ts`, `src/hooks/__tests__/useTeamChatNotifications.global.test.tsx`, `multiplix-dispatch-audience-saved.contract.test.ts`, `multiplixResume.test.ts`, `festive-carson-ub43wu/src/hooks/chat/__tests__/useTeamChatNotifications.canal-estavel.test.tsx`, `feat-ui-visual-texto-longo-261101-1445/src/components/talkx/__tests__/TalkXContactSelector.a11y.test.tsx`, `ContactNotes.ordemFoco.test.tsx`, `ga-ci-verde-261020/src/components/talkx/__tests__/TalkXOverview.table.test.tsx`, `crm360FormDialogs.a11y.test.tsx`, `magical-pasteur-iz2pgy/src/components/inbox/tabs/__tests__/FilesTab.fase6.test.tsx`, `InboxFilters.todos-os-tipos.test.tsx`, `OnboardingChecklist.a11y.test.tsx`, `inbox.service.ts`, `OnboardingChecklist.test.tsx`, `TalkXLiveMonitor.lifecycle.test.tsx`, `TeamChatView.deeplink-react-query.test.tsx`, `src/components/team-chat/__tests__/useTeamChatPanel.search.test.tsx`, `useTalkX.recipients-paginacao.test.tsx`, `ProtectedRoute.acesso-negado.test.tsx`, `PLANO — Team Chat V2: finalização da implantação (100 etapas, prefixo `TC-`)`, `useQueues.test.tsx`, `CT61_62_65_catalogFilters.test.tsx`, `DashboardCard.test.tsx`, `useDataMasking.ts`, `connection-health.service.ts`, `TalkXSegments.filtrosPaginacao.test.tsx`, `TalkXSegments.groups.test.tsx`, `TalkXSuppression.atividade.test.tsx`, `useGoalsDashboard.test.tsx`, `chartColors.ts`, `execucaoDeCanais.ts`, `rls-boundary.test.ts`, `ai-capabilities.contract.test.ts`, `useTalkXAbStats.ts`, `useConnectionHealthBanner.ts`, `serene-feynman-3uuurw/src/components/admin/__tests__/SearchInsightsView.test.tsx`, `src/hooks/tasks/workItemFormat.ts`, `ci-verde-261021/src/hooks/chat/useConversationActions.ts`, `ci-workflows-vermelhos/src/components/email/__tests__/EmailChatReplyBar.test.tsx`, `ci-workflows-vermelhos/src/components/inbox/tabs/__tests__/FileThumb.pdf.integration.test.tsx`, `ci-workflows-vermelhos/src/components/inbox/__tests__/LocationMessage.test.tsx`, `ci-workflows-vermelhos/src/components/inbox/__tests__/useFileUploadLogic.test.tsx`, `ci-workflows-vermelhos/src/hooks/integrations/__tests__/usePersonalStickers.uso.test.tsx`, `src/components/inbox/__tests__/LocationMessage.test.tsx`, `VoiceChangerPicker.falhas.test.tsx`, `VoiceChangerPicker.reduced-motion.test.tsx`, `useConnectionIncidents.test.ts`, `TalkXSegments.sideList.test.tsx`, `TalkXSuppression.actions.test.tsx`, `TalkXSuppression.kpis.test.tsx`, `useRealtimeDashboard.reconciliacao.test.tsx`, `useAgentGamification.test.tsx`, `useTeamConversations.test.tsx`, `CallSessionProvider.test.tsx`, `ai-resilience-prazos-retry.contract.test.ts`, `magical-pasteur-iz2pgy/src/hooks/tasks/workItemFormat.ts`, `ci-workflows-vermelhos/src/hooks/chat/__tests__/useTeamChatNotifications.nome-e-clique.test.tsx`, `RecordingPlayer.test.tsx`, `src/components/inbox/chat/__tests__/ChatMessagesArea.agrupar-envio.test.tsx`, `AiTab.test.tsx`, `FilesTab.cabecalho-funil.test.tsx`, `useRealtimeDashboard.visibilidade.test.tsx`, `src/hooks/calls/__tests__/useCallRecording.test.tsx`, `src/hooks/chat/__tests__/useTeamChatNotifications.nome-e-clique.test.tsx`, `src/hooks/integrations/__tests__/usePersonalStickers.uso.test.tsx`, `useSecurityPushNotifications.test.ts`, `useClientErrors.ts`, `useDeviceDetection.test.tsx`, `useRealtimeMessages.test.tsx`, `multiplix-docs.contract.test.ts`, `ci-workflows-vermelhos/src/hooks/__tests__/useCSAT.rating.test.tsx`, `fix-email-navy-contrast-261101-2057/tests/contracts/contraste-cores-categoria.contract.test.ts`, `ci-workflows-vermelhos/src/hooks/__tests__/useQueuesComparison.race.test.tsx`, `EmailThreadView.test.tsx`, `TelefoniaTopActions.tsx`, `sonner-offset-mobile.test.tsx`, `CrisisRoom.canais.test.tsx`, `CallHistoryStates.tsx`, `CT55_57_management.test.tsx`, `ExternalProductCatalog.virtualizacao.test.tsx`, `QuoteDraftCard.copia.test.tsx`, `src/components/inbox/chat/__tests__/ChatMessagesArea.pagination.test.tsx`, `FadeSlideIn.test.tsx`, `FileThumb.test.tsx`, `src/components/inbox/__tests__/ChatPanel.typing-presence.test.tsx`, `VoiceChangerPicker.cancelamento-teto.test.tsx`, `TalkXCampaignRunning.lifecycle.test.tsx`, `QueueAlertsDisplay.tsx`, `MediaLibraryAdmin.test.tsx`, `TalkXMonitorHeader.test.tsx`, `TalkXOverview.states.test.tsx`, `TalkXView.monitor.test.tsx`, `src/components/ui/phone-input.tsx`, `useGoalNotifications.dia-local.test.tsx`, `useMultiplixReplies.test.tsx`, `src/hooks/__tests__/useQueuesComparison.race.test.tsx`, `src/hooks/__tests__/useTeamChatNotifications.aviso-navegador.test.tsx`, `contactHealth.ts`, `stickerImage.ts`, `CatalogBulkSendDialog.bulkOutcome.test.tsx`, `instancePauseSeries.ts`, `ContactNotes.semColuna.test.tsx`, `src/hooks/copilot/useObjectionHandler.ts`, `HandoffDialog.test.tsx`, `src/components/inbox/__tests__/GlobalSearch.r2-inb-020.test.tsx`, `SegmentSideList.test.tsx`, `TalkXCampaignScheduled.start-guard.test.tsx`, `TalkXOverview.comparativo.test.tsx`, `useClientWallet.test.tsx`, `useFilesInfiniteScroll.test.tsx`, `useAttachmentSuggestion.ts`, `useSmartTemplates.ts`, `useObjectionDetector.n169.test.tsx`, `usePersonalStickers.webp.test.tsx`, `useTalkXSegments.viewMode.test.tsx`, `useTalkXSuppression.hook-morto.test.ts`, `src/hooks/__tests__/useIncomingCallListener.test.tsx`, `useLoadingState.ts`, `useUniversityHelp.test.tsx`, `ci-workflows-vermelhos/src/components/settings/__tests__/SoundCustomizationPanel.test.tsx`, `useVoiceAgent.comandoSubstituido.test.ts`, `ai-vocabulary-consumers.contract.test.ts`, `ga-ci-verde-261020/src/components/inbox/__tests__/ContactDetails.quickActions.test.tsx`, `AuditLogDashboard.hoje-local.test.tsx`, `src/components/calls/__tests__/IncomingCallAlert.volume.test.tsx`, `ContactNotes.editarFixar.test.tsx`, `AchievementsSystem.test.tsx`, `StickerManager.recentes.r2-inb-062.test.tsx`, `src/components/inbox/__tests__/LocationMessage.liveUntil.test.tsx`, `VoiceChangerPicker.preview-send.test.tsx`, `MediaLibraryAdmin.a11y.test.tsx`, `kit/__tests__/ActiveCampaignIndicator.test.tsx`, `talkxRunningHistory.ts`, `TalkXOverview.bulk.test.tsx`, `TalkXSegments.builder.test.tsx`, `useAbandonmentRate.ts`, `useTerminoRemoto.test.tsx`, `ContactsView.v2Flags.test.tsx`, `usePersonalStickers.identidade.test.tsx`, `useReactionMutations.transport-rejection.test.tsx`, `src/hooks/__tests__/slaDenominadores.test.tsx`, `contact-bulk.service.test.ts`, `ai-vocabulary-parity.contract.test.ts`, `sl218-bloco18-estado.contract.test.ts`, `telefonia-encerramento.contract.test.ts`, `ci-workflows-vermelhos/src/hooks/__tests__/useNotifications.contagem-reconciliada.test.tsx`, `f1a-lote-b-main/src/hooks/__tests__/useNotifications.contagem-reconciliada.test.tsx`, `useBulkActions.archive-fsm.test.tsx`, `parseUserAgent.ts`, `src/components/crm360/__tests__/DataExplorerTable.a11y.test.tsx`, `MessageBubbleUnsupported.test.tsx`, `appRole.ts`, `web-vitals.ts`, `src/hooks/copilot/useDeadlineCalculator.ts`, `GoalsConfigDialog.metas.test.tsx`, `src/components/email/__tests__/EmailChatReplyBar.test.tsx`, `AIEnhanceButton.rascunho-atrasado.test.tsx`, `AiTab.erroAnalise.test.tsx`, `src/components/inbox/__tests__/useFileUploadLogic.test.tsx`, `OmnichannelInbox.test.tsx`, `SecurityOverview.medicao.test.tsx`, `AIGenerateDialog.test.tsx`, `TalkXView.whatsapp-band.test.tsx`, `useRecommendedProducts.test.tsx`, `useTextToSpeech.vozLocal.test.tsx`, `useGhostText.ts`, `useInboxFilterPresets.test.tsx`, `useInboxFilters.fsm-padrao.test.tsx`, `useInboxFilters.type-url.test.tsx`, `useGmail.syncStatus.test.tsx`, `useApplicableSLA.test.ts`, `useWarRoomAlertsMute.behavior.test.tsx`, `audioMemeCategories.ts`, `ResetPassword.segundo-fator-sessoes.test.tsx`, `violetaContraste.test.ts`, `notificationSounds.test.ts`, `mediaMigration.service.ts`, `src/components/admin/__tests__/GmailWebhookMonitor.falha-consulta.test.tsx`, `PasswordStrengthMeter.corrida.test.tsx`, `R2_MOD_010_selecaoPersistente.test.tsx`, `SendProductDialog.test.tsx`, `useDailyBrief.ts`, `sidebarSections.ts`, `InboxSavedFiltersMenu.test.tsx`, `MultiplixView.selecao-composicao.test.tsx`, `TalkXRecipientsTable.test.tsx`, `PeriodComparison.test.tsx`, `src/components/settings/__tests__/SoundCustomizationPanel.test.tsx`, `TalkXAudienceFilters.test.tsx`, `talkxTemplateRoute.ts`, `TalkXCampaignRunning.limits.test.tsx`, `TalkXRecipientRowActions.test.tsx`, `TalkXSegments.library.test.tsx`, `TalkXTemplateEditor.painelMenor.test.tsx`, `EmojiPicker`, `src/hooks/__tests__/useCSAT.rating.test.tsx`, `contratosModulo.test.ts`, `src/hooks/__tests__/useNotifications.contagem-reconciliada.test.tsx`, `useTextToSpeech.lifecycle.test.ts`, `useWarRoomAlerts.aviso-desktop.test.tsx`, `useWarRoomAlerts.silencio-desktop.test.tsx`, `runGuard-simulation.test.ts`, `ai-fallback-and-test.contract.test.ts`, `ai-values.contract.test.ts`, `ia047-idempotencia-de-efeitos.contract.test.ts`, `ci-workflows-vermelhos/src/hooks/integrations/__tests__/useWhatsAppTemplates.aprovacaoLocal.test.ts`, `ci-workflows-vermelhos/src/hooks/__tests__/useTeamChatNotifications.aviso-navegador.test.tsx`, `fase0-banco-local/src/config/supabase.ts`, `ci-workflows-vermelhos/src/components/settings/__tests__/ScheduleSettings.test.tsx`, `ci-workflows-vermelhos/src/hooks/crm/__tests__/useContactIntelligence.test.tsx`, `ci-workflows-vermelhos/src/hooks/__tests__/useGlobalSettings.cache-compartilhado.test.tsx`, `CampaignCreateDialog.r2-mod-005.test.tsx`, `StoryViewer.test.tsx`?**
+  _High betweenness centrality (0.141) - this node is a cross-community bridge._
+- **Why does `Estado real conferido` connect `X076 — Infra de IA (talkx-ai)` to `TalkXSegmentBuilder`, `TalkXAnalytics.tsx`?**
+  _High betweenness centrality (0.140) - this node is a cross-community bridge._
 - **Are the 7 inferred relationships involving `cn()` (e.g. with `2.2 Traz regressão?` and `3. `src/components/talkx/kit/ServiceStatusSheet.tsx` — novo (médio)`) actually correct?**
   _`cn()` has 7 INFERRED edges - model-reasoned connections that need verification._
 - **What connects `session-start.sh script`, `PATH`, `target` to the rest of the system?**
-  _45174 weakly-connected nodes found - possible documentation gaps or missing edges._
+  _45173 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `Communities (5953 total, 1987 thin omitted)` be split into smaller, more focused modules?**
   _Cohesion score 0.0005064573309698658 - nodes in this community are weakly interconnected._
 - **Should `react` be split into smaller, more focused modules?**
   _Cohesion score 0.0031289042201510277 - nodes in this community are weakly interconnected._
+- **Should `lucide-react` be split into smaller, more focused modules?**
+  _Cohesion score 0.007038706498530942 - nodes in this community are weakly interconnected._

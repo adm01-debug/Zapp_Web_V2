@@ -1,15 +1,15 @@
 {
  "meta": {
-  "sha": "442bcfb1fa6f9020a89bcbb387e79a194639eb61",
+  "sha": "7dff0402a335ae0333c3b244726cd2ca3f20297f",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-24 02:19 UTC",
+  "generated_at": "2026-11-24 03:17 UTC",
   "files_total": 15629,
   "code_files": 8930,
-  "code_lines": 1417890
+  "code_lines": 1417899
  },
  "version": "1.3.2",
- "facts_hash": "69d2b01588fd6ee8",
+ "facts_hash": "9ca8d97f89ab2dac",
  "stack": {
   "frameworks": [
    "React + Vite",
@@ -77052,7 +77052,7 @@
   {
    "module": "e2e",
    "files": 79,
-   "lines": 18728,
+   "lines": 18737,
    "tables": [],
    "exports": [
     "auth-diagnostics.ts: AuthTargetError, AuthTarget, classifyAuthTarget, usesExternalHttpsServer, assertAuthenticatedTarget, AuthObservation",
@@ -350069,7 +350069,7 @@
   },
   "e2e/email-navy-visual.spec.ts": {
    "path": "e2e/email-navy-visual.spec.ts",
-   "lines": 776,
+   "lines": 785,
    "is_test": true,
    "params": [
     {
@@ -482984,10 +482984,29 @@
   }
  },
  "git": {
-  "sha": "442bcfb1fa6f9020a89bcbb387e79a194639eb61",
+  "sha": "7dff0402a335ae0333c3b244726cd2ca3f20297f",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "7dff0402",
+    "date": "2026-11-23",
+    "author": "adm01-debug",
+    "subject": "chore(docs): fecha X076 e corrige estado real da IA-161 (#3346)",
+    "files": [
+     "docs/pendencias/infra-de-ia-talkx-ai-x076.md",
+     "docs/pendencias/rascunho-de-campanha-por-ia-ia161.md"
+    ]
+   },
+   {
+    "sha": "e5d1a17d",
+    "date": "2026-11-23",
+    "author": "adm01-debug",
+    "subject": "fix(e2e): destrava o Firefox tirando o axe do painel CRM em 320px (#3348)",
+    "files": [
+     "e2e/email-navy-visual.spec.ts"
+    ]
+   },
    {
     "sha": "442bcfb1",
     "date": "2026-11-23",
@@ -483389,54 +483408,12 @@
      "supabase/functions/assistant-gateway/index.test.ts",
      "supabase/functions/assistant-gateway/index.ts"
     ]
-   },
-   {
-    "sha": "9f6df25b",
-    "date": "2026-11-22",
-    "author": "adm01-debug",
-    "subject": "feat: fase 2 do assistente pessoal (memoria e agenda do contato) (#3316)",
-    "files": [
-     "src/components/dashboard/DailyBriefStrip.tsx",
-     "src/components/dashboard/DashboardView.tsx",
-     "src/components/dashboard/__tests__/DailyBriefStrip.test.ts",
-     "src/components/inbox/tabs/AiTab.tsx",
-     "src/components/inbox/tabs/AssistantAgendaCard.tsx",
-     "src/components/inbox/tabs/__tests__/AiTab.erroAnalise.test.tsx",
-     "src/components/inbox/tabs/__tests__/AiTab.test.tsx",
-     "src/components/inbox/tabs/__tests__/AssistantAgendaCard.test.tsx",
-     "src/hooks/assistant/useContactAgenda.ts",
-     "src/hooks/assistant/useDailyBrief.ts",
-     "src/hooks/assistant/useReminderOffer.ts",
-     "src/lib/assistant/__tests__/detectReminderIntent.test.ts",
-     "src/lib/assistant/dailyBrief.ts",
-     "src/lib/assistant/detectReminderIntent.ts",
-     "supabase/deployment-manifest.json",
-     "supabase/functions/copilot-live/index.test.ts",
-     "supabase/functions/copilot-live/index.ts"
-    ]
-   },
-   {
-    "sha": "b35911db",
-    "date": "2026-11-22",
-    "author": "adm01-debug",
-    "subject": "feat(assistente): Fase 1 — identidade do assistente pessoal (perfil + motor RADAR) (#3310)",
-    "files": [
-     "src/components/settings/AssistantProfileSettings.tsx",
-     "src/components/settings/SettingsView.tsx",
-     "src/components/settings/__tests__/SettingsView.test.tsx",
-     "src/hooks/assistant/useAssistantProfile.ts",
-     "src/integrations/supabase/types.ts",
-     "supabase/deployment-manifest.json",
-     "supabase/functions/copilot-live/index.test.ts",
-     "supabase/functions/copilot-live/index.ts",
-     "supabase/migrations/20261121190000_assistant_profiles.sql"
-    ]
    }
   ],
   "hot_files": [
    [
     "supabase/deployment-manifest.json",
-    8
+    6
    ],
    [
     "ESTADO.md",
@@ -483459,10 +483436,6 @@
     4
    ],
    [
-    "src/integrations/supabase/types.ts",
-    3
-   ],
-   [
     "supabase/schema-catalog.json",
     3
    ],
@@ -483475,12 +483448,12 @@
     3
    ],
    [
-    "supabase/functions/copilot-live/index.test.ts",
-    3
+    "docs/pendencias/infra-de-ia-talkx-ai-x076.md",
+    2
    ],
    [
-    "supabase/functions/copilot-live/index.ts",
-    3
+    "docs/pendencias/rascunho-de-campanha-por-ia-ia161.md",
+    2
    ],
    [
     ".github/workflows/scorecard.yml",
@@ -483488,6 +483461,10 @@
    ],
    [
     "docs/DB-INVENTORY.md",
+    2
+   ],
+   [
+    "src/integrations/supabase/types.ts",
     2
    ],
    [
@@ -483499,8 +483476,8 @@
     2
    ],
    [
-    "src/components/inbox/tabs/AiTab.tsx",
-    2
+    "e2e/email-navy-visual.spec.ts",
+    1
    ],
    [
     "e2e/contact-form-email-duplicate.spec.ts",
