@@ -507,14 +507,25 @@ jobs:
       # `firefox-email-navy` sai do passo acima e roda sozinho, com UM worker.
       #
       # Ele vinha falhando com "Page crashed" perto do fim de
-      # email-navy-visual.spec.ts (134 testes), e sempre em teste variavel — a
-      # marca de falta de memoria no processo de conteudo, nao de um teste ruim.
-      # Os `workers` do playwright.config sao globais (4 no CI), entao o projeto
-      # subia 4 Firefox ao mesmo tempo no runner de 2 nucleos; `--workers=1`
-      # derruba o pico para um quarto. Duas reducoes anteriores de consumo
-      # (processo de conteudo unico, PR #3180; trace sem screenshot nem snapshot,
-      # PR #3182) levaram as falhas de 6 para 3 e depois para 1, o que sustenta a
-      # mesma causa.
+      # email-navy-visual.spec.ts.
+      #
+      # A causa nao e falta de memoria. O teste, reproduzido isolado,
+      # derruba o processo de conteudo com segfault nativo em libxul.so
+      # (dmesg: "segfault at 0 ... in libxul.so ... signal 11") com pico de
+      # RSS de 573 MB, e o crash e probabilistico: o mesmo `axe.run` sobre a
+      # gaveta do painel CRM em 320 px falha em cerca de 2 de 3 execucoes e
+      # passa nas outras. Desligar WebRender e aceleracao (PR #3345), o JIT,
+      # a regra `hidden-content` ou trocar o alvo do axe nao muda o resultado.
+      #
+      # O que resolveu foi tirar o `axe.run` do projeto Firefox no teste de
+      # 320 px (e2e/email-navy-visual.spec.ts): o projeto fechou 31/31 testes
+      # sem crash. A cobertura de acessibilidade segue em
+      # chromium-email-navy e webkit-email-navy, que rodam a mesma spec com o
+      # mesmo axe no passo anterior.
+      #
+      # `--workers=1` fica: as reducoes anteriores de consumo (processo de
+      # conteudo unico, PR #3180; trace sem screenshot nem snapshot, PR #3182)
+      # baixaram o pico de memoria mas nao eliminaram o crash.
       #
       # Passo separado em vez de job separado: o guard scripts/ci/ci-artifacts.unit.mjs
       # trava este workflow em 2 uploads de artefato, e um job novo exigiria
