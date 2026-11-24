@@ -49,7 +49,7 @@ test.describe('DialogContent — rodapé alcançável em 1280x720', () => {
       await page.setViewportSize(VIEWPORT);
       await gotoContacts(page);
 
-      await page.getByRole('button', { name: 'Novo contato' }).click();
+      await page.getByTestId('contact-create-fab').click();
       const addDialog = page.getByRole('dialog', { name: 'Adicionar Contato' });
       await expect(addDialog).toBeVisible();
 
@@ -77,7 +77,7 @@ test.describe('DialogContent — rodapé alcançável em 1280x720', () => {
       await gotoContacts(page);
 
       // Cria via UI para ter um contato real e abrir o modal de edição.
-      await page.getByRole('button', { name: 'Novo contato' }).click();
+      await page.getByTestId('contact-create-fab').click();
       const addDialog = page.getByRole('dialog', { name: 'Adicionar Contato' });
       await addDialog.locator('#name').fill(name);
       await addDialog.locator('#phone').fill(phone);
