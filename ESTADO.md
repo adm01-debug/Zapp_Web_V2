@@ -21,11 +21,11 @@ partir do código e falha quando:
 
 | Grupo | Edges |
 |---|---|
-| A | 62 |
+| A | 64 |
 | B | 2 |
 | C | 4 |
 | D | 6 |
-| E | 19 |
+| E | 17 |
 | **total** | **93** |
 
 ## Tabela
@@ -89,8 +89,8 @@ partir do código e falha quando:
 | `get-sip-password` | A | `src/lib/calls/sipProvisioning.ts:98` |
 | `gmail-cron-sync` | C | `supabase/migrations/20260829110000_gmail_incremental_sync_cron.sql:18` · `supabase/config.toml:17` |
 | `gmail-oauth` | A | `src/hooks/integrations/useGmailOAuth.ts:79` |
-| `gmail-send` | E | — sem chamador no repositório — |
-| `gmail-sync` | E | — sem chamador no repositório — |
+| `gmail-send` | A | `src/hooks/integrations/useGmail.ts:495` · `src/hooks/integrations/useGmail.ts:504` · `src/hooks/integrations/useGmail.ts:513` |
+| `gmail-sync` | A | `src/hooks/integrations/useGmailLabels.ts:127` · `src/hooks/integrations/useGmailLabels.ts:175` · `src/hooks/integrations/useGmailLabels.ts:216` |
 | `gmail-webhook` | A | `src/components/admin/GmailWebhookMonitor.tsx:230` · `supabase/config.toml:14` |
 | `health` | E | — sem chamador no repositório — |
 | `invite-user` | A | `src/components/agents/InviteAgentDialog.tsx:48` · `supabase/config.toml:96` |
@@ -140,8 +140,6 @@ mantém a lista honesta.
 - `copilot-live`
 - `elevenlabs-agent-token`
 - `external-db-bridge`
-- `gmail-send`
-- `gmail-sync`
 - `health`
 - `metrics`
 - `multiplix-voices`
