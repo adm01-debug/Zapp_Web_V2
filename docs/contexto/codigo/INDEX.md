@@ -1,7 +1,7 @@
 # Contexto do projeto para agentes de IA
 
 GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.
-Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR dela) a cada push em `main` e a cada 10 minutos pelo workflow `contexto.yml`; índice único das três fontes em `docs/contexto/00-INDEX.md`. Gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `f6d0d50c0a49fabe85c37f577ab0799cdf066bee` (2026-11-24T14:19:54-03:00).
+Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR dela) a cada push em `main` e a cada 10 minutos pelo workflow `contexto.yml`; índice único das três fontes em `docs/contexto/00-INDEX.md`. Gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `06d10c806370661798d5f308f4777d491c9eb3a1` (2026-11-24T14:51:32-03:00).
 
 ## Como usar (leia antes de planejar ou executar qualquer tarefa)
 1. **Tela/rota/menu** → `rotas.json` (url/vista/menu → arquivo → hooks → tabelas → edges; `rotas_http_backend` para APIs) e `modulos.json` (módulo inteiro + dependências entre módulos).
@@ -36,7 +36,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 |---|---|
 | arquivos_total | 15801 |
 | arquivos_codigo | 5893 |
-| linhas_codigo | 1140306 |
+| linhas_codigo | 1140310 |
 | rotas | 18 |
 | rotas_http_backend | 11 |
 | vistas_por_id | 55 |
@@ -397,14 +397,14 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - possiveis_segredos_no_codigo: 6 — ex.: analise-prs/resgate-261118-lote3/claude_pink/cool-dijkstra-xk9ek2/scripts/ci/edge-coverage-authz.unit.mjs:397, analise-prs/resgate-261118-lote3/claude_pink/cool-dijkstra-xk9ek2/scripts/edge-deploy/redigir-log.unit.mjs:38, scripts/ai-context/cenarios.mjs:102
 
 ## Grafo de código (graphify)
-- 103387 nós · 175507 arestas · 9276 comunidades · grafo do commit `f6d0d50c`
+- 103387 nós · 175507 arestas · 9276 comunidades · grafo do commit `06d10c80`
 - comunidades maiores: Communities (5953 total, 1987 thin omitted) (3947), react (1608), cn (1415), TalkXSuppression.tsx (1134), vitest (1071), lucide-react (999), src/components/ui/badge.tsx (889), ref_node_fs (843), DashboardView.tsx (706), validation.ts (629), sonner (447), scripts/ci/e2e-isolated-runtime.unit.mjs (442)
 - símbolos mais chamados: cn() (src/lib/utils.ts), useAuth() (src/hooks/auth/useAuth.tsx), jsonResponse() (supabase/functions/_shared/validation.ts), errorResponse() (supabase/functions/_shared/validation.ts), handleCors() (supabase/functions/_shared/validation.ts), fail() (scripts/e2e-isolated/network-proof-policy.mjs), Logger (supabase/functions/_shared/validation.ts), requireEnv() (supabase/functions/_shared/validation.ts), fmtInt() (src/components/talkx/kit/format.ts), fromTable() (src/lib/supabaseHelpers.ts), useUserRole() (src/hooks/system/useUserRole.ts), validationErrorResponse() (supabase/functions/_shared/schemas.ts)
 - consulta local: `graphify query "<pergunta>"`, `graphify path "<A>" "<B>"`, `graphify explain "<X>"`
 
 ## Hotspots (arquivos mais alterados, 90 dias)
 - supabase/deployment-manifest.json (36)
-- ESTADO.md (23)
+- ESTADO.md (24)
 - docs/talkx/ESTADOS.md (16)
 - src/integrations/supabase/types.ts (16)
 - supabase/schema-manifest.json (16)
@@ -481,7 +481,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - `CHANGELOG.md` — Changelog (90 linhas)
 - `CLAUDE.md` (2 linhas)
 - `CONTRIBUTING.md` — Guia de Contribuição — Zapp Web V2 (119 linhas)
-- `ESTADO.md` — ESTADO.md — o que está ligado e quem chama (156 linhas)
+- `ESTADO.md` — ESTADO.md — o que está ligado e quem chama (154 linhas)
 - `FEATURE_REGISTRY.md` — FEATURE_REGISTRY.md — registro das views do V2 (108 linhas)
 - `HANDOFF_NEXT_SESSION.md` — HANDOFF — Próxima sessão (Claude Code) (177 linhas)
 - `PENDENCIAS.md` — PENDÊNCIAS CI — 2026-11-12 (461 linhas)
@@ -528,6 +528,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - CHANGELOG topo: [Unreleased]
 
 ## Últimos commits
+- 2026-11-24 `06d10c80` fix(ci): guard enxerga wrapper que passa o nome da edge — gmail-send e gmail-sync saem de orfas (#3365)
 - 2026-11-24 `f6d0d50c` chore(resgate): preserva dossiês e mapas do resgate na main (#3364)
 - 2026-11-24 `7d4d196e` feat(inbox): analise de imagem do Copiloto no painel de conversa (#3362)
 - 2026-11-24 `c3127e8f` chore(db): sincronizar artefatos derivados do banco (#3361)
@@ -542,7 +543,6 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - 2026-11-24 `38ee260d` chore: corrige o comentario do E2E do Firefox no ci.yml (causa nao e memoria) (#3349)
 - 2026-11-24 `e586a725` fix(e2e): tira o postgrest do ECR anonimo e reconhece a cota "Data limit exceeded" (#3351)
 - 2026-11-24 `972831d7` fix(e2e): casa o titulo real do dialog de mesclagem (#3350)
-- 2026-11-23 `7dff0402` chore(docs): fecha X076 e corrige estado real da IA-161 (#3346)
 
 ## Arquivos deste diretório
 - `docs/contexto/codigo/rotas.json`

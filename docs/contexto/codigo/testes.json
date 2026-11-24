@@ -4648,7 +4648,7 @@
   {
    "arquivo": "scripts/ci/docs-estado-registry-convention.unit.mjs",
    "tipo": "unit",
-   "linhas": 442,
+   "linhas": 446,
    "testa": [],
    "casos": 15
   },
