@@ -1,7 +1,7 @@
 # Contexto do projeto para agentes de IA
 
 GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.
-Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR dela) a cada push em `main` e a cada 10 minutos pelo workflow `contexto.yml`; índice único das três fontes em `docs/contexto/00-INDEX.md`. Gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `e586a72577efb8747848068f8f1a64327b8d101c` (2026-11-24T06:56:51-03:00).
+Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR dela) a cada push em `main` e a cada 10 minutos pelo workflow `contexto.yml`; índice único das três fontes em `docs/contexto/00-INDEX.md`. Gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `38ee260d626591846468accadb9117a73aa710db` (2026-11-24T07:20:08-03:00).
 
 ## Como usar (leia antes de planejar ou executar qualquer tarefa)
 1. **Tela/rota/menu** → `rotas.json` (url/vista/menu → arquivo → hooks → tabelas → edges; `rotas_http_backend` para APIs) e `modulos.json` (módulo inteiro + dependências entre módulos).
@@ -397,7 +397,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - possiveis_segredos_no_codigo: 6 — ex.: analise-prs/resgate-261118-lote3/claude_pink/cool-dijkstra-xk9ek2/scripts/ci/edge-coverage-authz.unit.mjs:397, analise-prs/resgate-261118-lote3/claude_pink/cool-dijkstra-xk9ek2/scripts/edge-deploy/redigir-log.unit.mjs:38, scripts/ai-context/cenarios.mjs:102
 
 ## Grafo de código (graphify)
-- 103209 nós · 175321 arestas · 9259 comunidades · grafo do commit `e586a725`
+- 103209 nós · 175321 arestas · 9259 comunidades · grafo do commit `38ee260d`
 - comunidades maiores: Communities (5953 total, 1987 thin omitted) (3947), @tanstack/react-query (1537), lucide-react (1286), cn (1161), src/components/ui/dialog.tsx (852), ref_node_fs (834), TalkXSuppression.tsx (738), DashboardView.tsx (717), validation.ts (558), CallSessionProvider.tsx (535), vitest (499), schemas.ts (465)
 - símbolos mais chamados: cn() (src/lib/utils.ts), useAuth() (src/hooks/auth/useAuth.tsx), jsonResponse() (supabase/functions/_shared/validation.ts), errorResponse() (supabase/functions/_shared/validation.ts), handleCors() (supabase/functions/_shared/validation.ts), fail() (scripts/e2e-isolated/network-proof-policy.mjs), Logger (supabase/functions/_shared/validation.ts), requireEnv() (supabase/functions/_shared/validation.ts), fmtInt() (src/components/talkx/kit/format.ts), fromTable() (src/lib/supabaseHelpers.ts), useUserRole() (src/hooks/system/useUserRole.ts), validationErrorResponse() (supabase/functions/_shared/schemas.ts)
 - consulta local: `graphify query "<pergunta>"`, `graphify path "<A>" "<B>"`, `graphify explain "<X>"`
@@ -413,7 +413,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - PENDENCIAS.md (12)
 - docs/DB-INVENTORY.md (12)
 - scripts/db-audit/grants-baseline.json (12)
-- .github/workflows/ci.yml (9)
+- .github/workflows/ci.yml (10)
 - docs/agentes/github-ci.md (8)
 - supabase/functions/evolution-api/index.ts (8)
 - docs/ci/README.md (7)
@@ -525,6 +525,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - CHANGELOG topo: [Unreleased]
 
 ## Últimos commits
+- 2026-11-24 `38ee260d` chore: corrige o comentario do E2E do Firefox no ci.yml (causa nao e memoria) (#3349)
 - 2026-11-24 `e586a725` fix(e2e): tira o postgrest do ECR anonimo e reconhece a cota "Data limit exceeded" (#3351)
 - 2026-11-24 `972831d7` fix(e2e): casa o titulo real do dialog de mesclagem (#3350)
 - 2026-11-23 `7dff0402` chore(docs): fecha X076 e corrige estado real da IA-161 (#3346)
@@ -539,7 +540,6 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - 2026-11-23 `9f13ab55` ⬆️ ci: bump the codeql-action group across 1 directory with 3 updates (#3334)
 - 2026-11-23 `c4ce2b5a` chore(db): sincroniza talkx_ai_requests e corrige o inventario (#3342)
 - 2026-11-23 `5ba09eae` feat(talkx): liga os dois kinds sem tela da IA (insight_text e segment_suggestion) (#3339)
-- 2026-11-23 `2fca6d0d` fix: tolera ruido sub-pixel na medicao de 44px do card (#3341)
 
 ## Arquivos deste diretório
 - `docs/contexto/codigo/rotas.json`

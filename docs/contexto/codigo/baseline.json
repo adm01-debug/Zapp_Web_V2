@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "e586a72577efb8747848068f8f1a64327b8d101c",
+  "commit": "38ee260d626591846468accadb9117a73aa710db",
   "branch": "main",
-  "data_commit": "2026-11-24T06:56:51-03:00",
+  "data_commit": "2026-11-24T07:20:08-03:00",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "38ee260d",
+    "data": "2026-11-24",
+    "assunto": "chore: corrige o comentario do E2E do Firefox no ci.yml (causa nao e memoria) (#3349)"
+   },
    {
     "sha": "e586a725",
     "data": "2026-11-24",
@@ -126,14 +131,9 @@
     "sha": "d19cc8d0",
     "data": "2026-11-22",
     "assunto": "feat: redesign do modulo Contatos conforme previa aprovada (plano 130 etapas, fases 0-M) (#3325)"
-   },
-   {
-    "sha": "ba0b927e",
-    "data": "2026-11-22",
-    "assunto": "chore(docs): atualiza o estado real do plano do assistente pessoal (#3324)"
    }
   ],
-  "arquivos_mudados_7d": 5253,
+  "arquivos_mudados_7d": 5247,
   "pastas_mais_mudadas_30d": [
    {
     "pasta": "docs/contexto/supabase",
@@ -239,7 +239,7 @@
    },
    {
     "arquivo": ".github/workflows/ci.yml",
-    "mudancas": 9
+    "mudancas": 10
    },
    {
     "arquivo": "docs/agentes/github-ci.md",

@@ -1,9 +1,9 @@
 {
  "meta": {
-  "sha": "e586a72577efb8747848068f8f1a64327b8d101c",
+  "sha": "38ee260d626591846468accadb9117a73aa710db",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-24 09:58 UTC",
+  "generated_at": "2026-11-24 10:21 UTC",
   "files_total": 15629,
   "code_files": 8930,
   "code_lines": 1417917
@@ -482981,10 +482981,19 @@
   }
  },
  "git": {
-  "sha": "e586a72577efb8747848068f8f1a64327b8d101c",
+  "sha": "38ee260d626591846468accadb9117a73aa710db",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "38ee260d",
+    "date": "2026-11-24",
+    "author": "adm01-debug",
+    "subject": "chore: corrige o comentario do E2E do Firefox no ci.yml (causa nao e memoria) (#3349)",
+    "files": [
+     ".github/workflows/ci.yml"
+    ]
+   },
    {
     "sha": "e586a725",
     "date": "2026-11-24",
@@ -483377,38 +483386,15 @@
      "supabase/schema-catalog.json",
      "supabase/schema-manifest.json"
     ]
-   },
-   {
-    "sha": "2fc081de",
-    "date": "2026-11-22",
-    "author": "adm01-debug",
-    "subject": "feat(assistente): treino por perfil com playbook e catalogo de objecoes (#3319)",
-    "files": [
-     "ESTADO.md",
-     "docs/plans/PLANO_ASSISTENTE_PESSOAL_IA_2026-11-15.md",
-     "supabase/deployment-manifest.json",
-     "supabase/functions/_shared/assistant-gateway.ts",
-     "supabase/functions/_shared/assistant-playbook.test.ts",
-     "supabase/functions/_shared/assistant-playbook.ts",
-     "supabase/functions/ai-objection-handler/index.ts",
-     "supabase/functions/assistant-gateway/index.test.ts",
-     "supabase/functions/assistant-gateway/index.ts",
-     "supabase/functions/copilot-live/index.test.ts",
-     "supabase/functions/copilot-live/index.ts"
-    ]
    }
   ],
   "hot_files": [
    [
     "supabase/deployment-manifest.json",
-    5
+    4
    ],
    [
     "ESTADO.md",
-    5
-   ],
-   [
-    "docs/plans/PLANO_ASSISTENTE_PESSOAL_IA_2026-11-15.md",
     4
    ],
    [
@@ -483420,16 +483406,12 @@
     3
    ],
    [
-    "supabase/functions/_shared/assistant-gateway.ts",
+    "docs/plans/PLANO_ASSISTENTE_PESSOAL_IA_2026-11-15.md",
     3
    ],
    [
-    "supabase/functions/assistant-gateway/index.test.ts",
-    3
-   ],
-   [
-    "supabase/functions/assistant-gateway/index.ts",
-    3
+    ".github/workflows/ci.yml",
+    2
    ],
    [
     "scripts/e2e-isolated/images.lock.json",
@@ -483472,11 +483454,19 @@
     2
    ],
    [
-    ".github/workflows/e2e-logado.yml",
-    1
+    "supabase/functions/_shared/assistant-gateway.ts",
+    2
    ],
    [
-    "scripts/ci/e2e-isolated-pull-image.unit.mjs",
+    "supabase/functions/assistant-gateway/index.test.ts",
+    2
+   ],
+   [
+    "supabase/functions/assistant-gateway/index.ts",
+    2
+   ],
+   [
+    ".github/workflows/e2e-logado.yml",
     1
    ]
   ]
