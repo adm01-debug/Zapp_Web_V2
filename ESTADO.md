@@ -36,7 +36,7 @@ partir do código e falha quando:
 | `assistant-gateway` | A | `src/lib/assistant/askGateway.ts:34` |
 | `ai-churn-analysis` | A | `src/components/ai/ChurnPredictionDashboard.tsx:126` |
 | `ai-classify-tickets` | A | `src/components/ai/AutoTicketClassifier.tsx:146` |
-| `ai-conversation-analysis` | A | `src/components/inbox/AIConversationAssistant.tsx:108` · `supabase/functions/assistant-gateway/index.ts:49` |
+| `ai-conversation-analysis` | A | `src/components/inbox/AIConversationAssistant.tsx:109` · `supabase/functions/assistant-gateway/index.ts:49` |
 | `ai-conversation-summary` | A | `src/components/inbox/ConversationSummary.tsx:92` · `supabase/functions/assistant-gateway/index.ts:39` |
 | `ai-deadline-calculator` | A | `src/hooks/copilot/useDeadlineCalculator.ts:86` |
 | `ai-enhance-message` | A | `src/components/inbox/chat/AIEnhanceButton.tsx:63` · `src/components/inbox/chat/AIRewriteButton.tsx:51` · `supabase/functions/assistant-gateway/index.ts:47` |

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { log } from '@/lib/logger';
 import { PeriodFilterSelector, usePeriodFilter, getPeriodDays } from './ai-tools/PeriodFilterSelector';
@@ -28,6 +28,7 @@ import { type AnalysisData, type AnalysisMessage, type AiEnvelope, aiEnvelopeErr
 import { normalizeScore } from '@/lib/ai-values';
 import { buildPeriodKey, useAiRequestGeneration } from '@/lib/aiRequest/context';
 import { mascararParaIA } from '@/hooks/copilot/useDataMasking';
+import { ImageAnalysisPanel } from './ai-tools/ImageAnalysisPanel';
 
 interface AIConversationAssistantProps {
   messages: AnalysisMessage[];
@@ -208,6 +209,30 @@ export function AIConversationAssistant({ messages, contactId, contactName, isOp
     ? normalizeScore(analysis.sentimentScore, { min: 0, max: 100, scale: 'percent' }).value
     : null;
 
+  // CV-102 — imagens que o cliente mandou nesta conversa, para a análise multimodal.
+  const imagensDaConversa = useMemo(
+    () =>
+      filteredMessages
+        .filter((m) => m.type === 'image' && typeof m.mediaUrl === 'string' && m.mediaUrl !== '')
+        .map((m) => ({
+          url: m.mediaUrl as string,
+          label: m.sender === 'contact' ? `Imagem enviada por ${contactName}` : 'Imagem enviada pelo agente',
+        })),
+    [filteredMessages, contactName],
+  );
+
+  // Contexto mascarado (a Edge limita a 1000 caracteres) para a análise de imagem.
+  const contextoDaConversa = useMemo(
+    () =>
+      mascararParaIA(
+        filteredMessages
+          .slice(-10)
+          .map((m) => `${m.sender}: ${m.content}`)
+          .join('\n'),
+      ).slice(0, 1000),
+    [filteredMessages],
+  );
+
   if (!isOpen) return null;
 
   return (
@@ -333,6 +358,8 @@ export function AIConversationAssistant({ messages, contactId, contactName, isOp
           onLoadHistory={setAnalysis}
         />
       )}
+
+      <ImageAnalysisPanel images={imagensDaConversa} conversationContext={contextoDaConversa} />
 
       {!analysis && !isLoading && canAnalyze && (
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="py-8 text-center">
