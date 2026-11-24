@@ -70,8 +70,8 @@ test.describe('Contatos — vistas', () => {
     test.skip((await next.count()) === 0 || (await next.isDisabled()), 'menos de uma página de contatos');
 
     await next.click();
-    await expect(page.getByText(/Página\s*2\s*de/)).toBeVisible();
+    await expect(page.getByTestId('contacts-page-indicator')).toHaveText(/^2\s*\/\s*\d+$/);
     await page.getByRole('button', { name: 'Página anterior' }).click();
-    await expect(page.getByText(/Página\s*1\s*de/)).toBeVisible();
+    await expect(page.getByTestId('contacts-page-indicator')).toHaveText(/^1\s*\/\s*\d+$/);
   });
 });
