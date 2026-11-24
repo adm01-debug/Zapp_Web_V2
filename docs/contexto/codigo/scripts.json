@@ -1,7 +1,7 @@
 {
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
- "total": 452,
+ "total": 451,
  "scripts": [
   {
    "arquivo": "scripts/ai-context/cenarios.mjs",
@@ -306,15 +306,6 @@
   {
    "arquivo": "scripts/ci/commit-msg-lint.mjs",
    "descricao": "Gate de mensagem de commit: a funcao do commitlint sem dependencia nova (os pacotes lint-staged/commitlint sao proibidos pelas regras da 2a leva). O hook .husky/commit-msg",
-   "linhas": 108,
-   "env": [],
-   "npm_scripts": [],
-   "workflows": [],
-   "orfao": false
-  },
-  {
-   "arquivo": "scripts/ci/e2e-teardown.mjs",
-   "descricao": "E25 (docs/audits/PLANO_GITHUB_ACTIONS_100_ETAPAS_2026-10-01.md, achado G-09): limpeza da fixture do E2E logado SEM a chave mestra do banco.",
    "linhas": 108,
    "env": [],
    "npm_scripts": [],

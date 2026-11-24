@@ -1,7 +1,7 @@
 # Contexto do projeto para agentes de IA
 
 GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.
-Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR dela) a cada push em `main` e a cada 10 minutos pelo workflow `contexto.yml`; índice único das três fontes em `docs/contexto/00-INDEX.md`. Gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `feee9f79fc1365595ca4104e134e9b776aeb7657` (2026-11-24T11:13:37-03:00).
+Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR dela) a cada push em `main` e a cada 10 minutos pelo workflow `contexto.yml`; índice único das três fontes em `docs/contexto/00-INDEX.md`. Gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `697de6eb81d02bde739432c8912866f2793eaf70` (2026-11-24T11:58:58-03:00).
 
 ## Como usar (leia antes de planejar ou executar qualquer tarefa)
 1. **Tela/rota/menu** → `rotas.json` (url/vista/menu → arquivo → hooks → tabelas → edges; `rotas_http_backend` para APIs) e `modulos.json` (módulo inteiro + dependências entre módulos).
@@ -14,7 +14,7 @@ Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR
 Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua tarefa; não carregue tudo.
 
 ## Stack
-- linguagens: TypeScript (5088), Markdown (4083), SQL (3065), JSON (1968), JavaScript (683), Shell (265), Python (125), YAML (112)
+- linguagens: TypeScript (5088), Markdown (4083), SQL (3066), JSON (1968), JavaScript (682), Shell (265), Python (125), YAML (112)
 - linguagem_principal: TypeScript
 - framework: React
 - backend_http: n/d
@@ -35,8 +35,8 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 | item | qtd |
 |---|---|
 | arquivos_total | 15781 |
-| arquivos_codigo | 5892 |
-| linhas_codigo | 1140191 |
+| arquivos_codigo | 5891 |
+| linhas_codigo | 1139973 |
 | rotas | 18 |
 | rotas_http_backend | 11 |
 | vistas_por_id | 55 |
@@ -46,11 +46,11 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 | hooks | 607 |
 | edge_functions | 93 |
 | tabelas | 223 |
-| migrations | 1152 |
+| migrations | 1153 |
 | cron_jobs | 29 |
 | testes | 3228 |
 | workflows | 24 |
-| scripts | 452 |
+| scripts | 451 |
 | docs_md | 4083 |
 
 ## Onde ficam as coisas
@@ -61,7 +61,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - testes: co-localizado (__tests__) (2378), outro (349), co-localizado (*.test) (237)
 - edge_functions: supabase/functions
 - migrations: supabase/migrations
-- scripts: scripts/db-audit (304), scripts/ci (44), scripts/e2e-isolated (41)
+- scripts: scripts/db-audit (304), scripts/ci (43), scripts/e2e-isolated (41)
 - docs: docs (33), (raiz) (12), .github (1)
 - nomenclatura: {"componentes":"PascalCase (89%)","hooks":"use + PascalCase","servicos":"camelCase (73%)","edge_functions":"kebab-case (96%)","tabelas":"snake_case (91%)"}
 - instruções para agentes no repo: AGENTS.md, CLAUDE.md
@@ -397,8 +397,8 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - possiveis_segredos_no_codigo: 6 — ex.: analise-prs/resgate-261118-lote3/claude_pink/cool-dijkstra-xk9ek2/scripts/ci/edge-coverage-authz.unit.mjs:397, analise-prs/resgate-261118-lote3/claude_pink/cool-dijkstra-xk9ek2/scripts/edge-deploy/redigir-log.unit.mjs:38, scripts/ai-context/cenarios.mjs:102
 
 ## Grafo de código (graphify)
-- 103221 nós · 175347 arestas · 9275 comunidades · grafo do commit `feee9f79`
-- comunidades maiores: Communities (5953 total, 1987 thin omitted) (3947), lucide-react (1617), react (1426), cn (1282), vitest (1231), TalkXSuppression.tsx (1132), ref_node_fs (726), chat.ts (687), validation.ts (619), DashboardView.tsx (610), useMyWorkItems.ts (583), ref_https (478)
+- 103214 nós · 175336 arestas · 9206 comunidades · grafo do commit `697de6eb`
+- comunidades maiores: Communities (5953 total, 1987 thin omitted) (3949), lucide-react (1416), react (1204), utils.ts (895), cn (730), ref_node_fs (706), chat.ts (706), validation.ts (626), ref_https (491), src/hooks/integrations/useTalkXSegments.ts (443), inspect.ts (386), @testing-library/react (385)
 - símbolos mais chamados: cn() (src/lib/utils.ts), useAuth() (src/hooks/auth/useAuth.tsx), jsonResponse() (supabase/functions/_shared/validation.ts), errorResponse() (supabase/functions/_shared/validation.ts), handleCors() (supabase/functions/_shared/validation.ts), fail() (scripts/e2e-isolated/network-proof-policy.mjs), Logger (supabase/functions/_shared/validation.ts), requireEnv() (supabase/functions/_shared/validation.ts), fmtInt() (src/components/talkx/kit/format.ts), fromTable() (src/lib/supabaseHelpers.ts), useUserRole() (src/hooks/system/useUserRole.ts), validationErrorResponse() (supabase/functions/_shared/schemas.ts)
 - consulta local: `graphify query "<pergunta>"`, `graphify path "<A>" "<B>"`, `graphify explain "<X>"`
 
@@ -525,6 +525,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - CHANGELOG topo: [Unreleased]
 
 ## Últimos commits
+- 2026-11-24 `697de6eb` chore: remove teardown de produção morto do E2E e dropa as 2 RPCs órfãs (#3360)
 - 2026-11-24 `feee9f79` fix(tarefas): restaura o foco da captura apos o commit, sem corrida (#3359)
 - 2026-11-24 `36701c06` fix(ci): volta o pin do scorecard-action para v2.5.0 (#3358)
 - 2026-11-24 `1437a664` infra: alinha o timeout do job E2E com a duracao real (~10 min) (#3355)
@@ -539,7 +540,6 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - 2026-11-23 `e5d1a17d` fix(e2e): destrava o Firefox tirando o axe do painel CRM em 320px (#3348)
 - 2026-11-23 `442bcfb1` fix(e2e): desambigua locators de Contatos após o redesign do módulo (#3347)
 - 2026-11-23 `d7fa274c` fix: tira o WebRender/DMABUF do caminho no E2E do Firefox (#3345)
-- 2026-11-23 `d58476e7` chore: sincroniza pin e digest do Playwright no bump de 16 dependencias (#3344)
 
 ## Arquivos deste diretório
 - `docs/contexto/codigo/rotas.json`

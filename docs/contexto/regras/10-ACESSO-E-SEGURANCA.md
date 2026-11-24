@@ -1,6 +1,6 @@
 # 10 · ACESSO E SEGURANÇA — quem pode o quê
 
-> Gerado automaticamente por AI Context Sync v1.3.2 · commit `feee9f79fc` · branch `main` · 2026-11-24 14:16 UTC
+> Gerado automaticamente por AI Context Sync v1.3.2 · commit `697de6eb81` · branch `main` · 2026-11-24 15:00 UTC
 > Não edite à mão — regras humanas vão em `manual/`.
 
 ## Perfis / roles identificados
@@ -492,7 +492,6 @@
 - `departments_overview`
 - `dispatch_scheduled_messages`
 - `duplicate_talkx_campaign`
-- `e2e_cleanup`
 - `edit_message`
 - `effective_role`
 - `enforce_contacts_consent_status_guard`

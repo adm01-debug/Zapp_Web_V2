@@ -5033,6 +5033,15 @@
    "casos": 18
   },
   {
+   "arquivo": "scripts/ci/e2e-logado-workflow.unit.mjs",
+   "tipo": "unit",
+   "linhas": 22,
+   "testa": [
+    "scripts/ci/workflow-test-support.mjs"
+   ],
+   "casos": 2
+  },
+  {
    "arquivo": "scripts/ci/e2e-media-volume-fixture.unit.mjs",
    "tipo": "unit",
    "linhas": 332,
@@ -5064,13 +5073,6 @@
     "scripts/ci/workflow-test-support.mjs"
    ],
    "casos": 6
-  },
-  {
-   "arquivo": "scripts/ci/e2e-teardown.unit.mjs",
-   "tipo": "unit",
-   "linhas": 132,
-   "testa": [],
-   "casos": 8
   },
   {
    "arquivo": "scripts/ci/edge-coverage-authz.unit.mjs",
@@ -29292,7 +29294,7 @@
   "scripts/ci/typecheck-ratchet.mjs": 1,
   "scripts/ci/vercel-env-baseline.mjs": 1,
   "scripts/ci/vercel-env-cleanup.mjs": 1,
-  "scripts/ci/workflow-test-support.mjs": 17,
+  "scripts/ci/workflow-test-support.mjs": 18,
   "scripts/db-audit/check-deployments-ledger.mjs": 1,
   "scripts/db-audit/check-realtime-subscriptions.mjs": 1,
   "scripts/db-audit/check-runtime-config.mjs": 1,

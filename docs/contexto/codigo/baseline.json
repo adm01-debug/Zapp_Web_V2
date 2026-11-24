@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "feee9f79fc1365595ca4104e134e9b776aeb7657",
+  "commit": "697de6eb81d02bde739432c8912866f2793eaf70",
   "branch": "main",
-  "data_commit": "2026-11-24T11:13:37-03:00",
+  "data_commit": "2026-11-24T11:58:58-03:00",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "697de6eb",
+    "data": "2026-11-24",
+    "assunto": "chore: remove teardown de produção morto do E2E e dropa as 2 RPCs órfãs (#3360)"
+   },
    {
     "sha": "feee9f79",
     "data": "2026-11-24",
@@ -126,14 +131,9 @@
     "sha": "340cc4ce",
     "data": "2026-11-23",
     "assunto": "feat(talkx): cria a trilha de IA e os tetos que a talkx-ai ja exige (#3327)"
-   },
-   {
-    "sha": "b32c9845",
-    "data": "2026-11-23",
-    "assunto": "fix(ia): cobra entrada e saída pelo preço real e destrava o custo de IA (#3326)"
    }
   ],
-  "arquivos_mudados_7d": 5243,
+  "arquivos_mudados_7d": 5241,
   "pastas_mais_mudadas_30d": [
    {
     "pasta": "docs/contexto/supabase",
@@ -315,8 +315,8 @@
  },
  "contagens": {
   "arquivos_total": 15781,
-  "arquivos_codigo": 5892,
-  "linhas_codigo": 1140191,
+  "arquivos_codigo": 5891,
+  "linhas_codigo": 1139973,
   "rotas": 18,
   "rotas_http_backend": 11,
   "vistas_por_id": 55,
@@ -326,11 +326,11 @@
   "hooks": 607,
   "edge_functions": 93,
   "tabelas": 223,
-  "migrations": 1152,
+  "migrations": 1153,
   "cron_jobs": 29,
   "testes": 3228,
   "workflows": 24,
-  "scripts": 452,
+  "scripts": 451,
   "docs_md": 4083
  },
  "por_pasta": {
@@ -627,8 +627,8 @@
    "linhas": 337
   },
   "scripts/ci": {
-   "arquivos": 231,
-   "linhas": 50497
+   "arquivos": 230,
+   "linhas": 50279
   },
   "scripts/db": {
    "arquivos": 2,
@@ -931,7 +931,7 @@
  ],
  "qualidade": {
   "any": 421,
-  "console_log": 762,
+  "console_log": 760,
   "ts_ignore": 0,
   "eslint_disable": 1,
   "todos": 59,
