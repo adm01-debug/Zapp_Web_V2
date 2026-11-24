@@ -41,7 +41,7 @@ test.describe('Contatos — seleção e ações em lote', () => {
     const merge = page.getByRole('button', { name: /Mesclar/ });
     test.skip((await merge.count()) === 0, 'Mesclar exige perfil admin/supervisor');
     await merge.click();
-    await expect(page.getByRole('dialog', { name: /Mesclar Contatos/ })).toBeVisible();
+    await expect(page.getByRole('dialog', { name: /Mesclar contatos/i })).toBeVisible();
     await page.keyboard.press('Escape');
     await expect(page.getByRole('dialog')).toBeHidden();
   });

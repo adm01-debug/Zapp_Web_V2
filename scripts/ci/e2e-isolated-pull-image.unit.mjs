@@ -9,6 +9,7 @@ import { assertPinnedImages } from '../e2e-isolated/run.mjs';
 
 const IMAGE = 'public.ecr.aws/supabase/postgrest:v14.5@sha256:b574528fe109c8343c1247155734d03df8c34b462f342dca0ccc20244fc36ef9';
 const RATE = { status: 1, stdout: '', stderr: 'toomanyrequests: Rate exceeded\n' };
+const RATE_DATA_LIMIT = { status: 1, stdout: '', stderr: 'toomanyrequests: Data limit exceeded\n' };
 const RATE_UNAUTHENTICATED = { status: 1, stdout: '', stderr: 'toomanyrequests: You have reached your unauthenticated pull rate limit. Sign in for a higher limit: https://www.docker.com/increase-rate-limit\n' };
 const OK = { status: 0, stdout: 'downloaded\n', stderr: '' };
 const isPullRateLimited = result => classifyPullRateLimit(result, IMAGE);
@@ -16,6 +17,10 @@ const isPullRateLimited = result => classifyPullRateLimit(result, IMAGE);
 for (const [name, result, expected] of [
   ['observed registry error', RATE, true],
   ['unauthenticated pull rate limit', RATE_UNAUTHENTICATED, true],
+  ['data limit exceeded observed on the ECR public pull', RATE_DATA_LIMIT, true],
+  ['daemon prefix data limit exceeded', { ...RATE_DATA_LIMIT, stderr: 'Error response from daemon: toomanyrequests: Data limit exceeded' }, true],
+  ['stdout channel data limit exceeded', { ...RATE_DATA_LIMIT, stdout: RATE_DATA_LIMIT.stderr, stderr: '' }, true],
+  ['data limit exceeded with extra line', { ...RATE_DATA_LIMIT, stderr: RATE_DATA_LIMIT.stderr + 'unknown failure' }, false],
   ['daemon prefix', { ...RATE, stderr: 'Error response from daemon: toomanyrequests: Rate exceeded' }, true],
   ['daemon prefix unauthenticated', { ...RATE_UNAUTHENTICATED, stderr: 'Error response from daemon: toomanyrequests: You have reached your unauthenticated pull rate limit. Sign in for a higher limit: https://www.docker.com/increase-rate-limit' }, true],
   ['stdout channel', { ...RATE, stdout: RATE.stderr, stderr: '' }, true],
@@ -199,6 +204,13 @@ for (const failures of [0, 1, 2, 3]) test('pull succeeds after ' + failures + ' 
   assert.deepEqual(f.calls.map(call => call.image), Array(failures + 1).fill(IMAGE));
   assert.deepEqual(f.calls.map(call => call.timeout), [900_000, 885_000, 855_000, 795_000].slice(0, failures + 1));
   assert.deepEqual(f.observations.map(x => x.attempt), Array.from({ length: failures + 1 }, (_, i) => i + 1));
+});
+
+test('data limit exceeded is retried like every other quota message', async () => {
+  const f = fixture([RATE_DATA_LIMIT, OK]);
+  assert.equal(await pullPinnedImage(f.options), OK);
+  assert.equal(f.calls.length, 2);
+  assert.deepEqual(f.waits, [15_000]);
 });
 
 test('persistent throttling stops at four attempts and at most 120s of waiting', async () => {

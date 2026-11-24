@@ -9,8 +9,15 @@ const SIMPLE_PROGRESS = new RegExp('^' + HEX + ': (?:Pulling fs layer|Waiting|Do
 const SIZE = '[0-9]+(?:\\.[0-9]+)?(?:B|kB|MB|GB|TB)';
 const BAR = '\\[(?=[=> ]{1,60}\\])={0,60}>? {0,60}\\]';
 const BYTE_PROGRESS = new RegExp('^' + HEX + ': (?:Downloading|Extracting) ' + BAR + ' +' + SIZE + '/' + SIZE + '$');
-const TERMINAL = 'toomanyrequests: Rate exceeded';
-const TERMINAL_UNAUTHENTICATED = 'toomanyrequests: You have reached your unauthenticated pull rate limit. Sign in for a higher limit: https://www.docker.com/increase-rate-limit';
+// Mensagens terminais de cota observadas nos registries pinados. A variante
+// 'Data limit exceeded' chegou pelo ECR publico no run 45326622310 (2026-11-24) e
+// nao era reconhecida, o que anulava os retries e derrubava o shard authenticated-2-of-3.
+const TERMINALS = [
+  'toomanyrequests: Rate exceeded',
+  'toomanyrequests: Data limit exceeded',
+  'toomanyrequests: You have reached your unauthenticated pull rate limit. Sign in for a higher limit: https://www.docker.com/increase-rate-limit',
+];
+const TERMINAL_LINES = new Set(TERMINALS.flatMap(line => [line, 'Error response from daemon: ' + line]));
 
 /** Retry only the registry failure observed in the native Docker pull. */
 export function isPullRateLimited(result, image) {
@@ -33,8 +40,7 @@ export function isPullRateLimited(result, image) {
     const lines = text.split('\n').map(line => line.trim()).filter(Boolean);
     for (let index = 0; index < lines.length; index++) {
       const line = lines[index];
-      if (line === TERMINAL || line === TERMINAL_UNAUTHENTICATED ||
-          line === 'Error response from daemon: ' + TERMINAL || line === 'Error response from daemon: ' + TERMINAL_UNAUTHENTICATED) {
+      if (TERMINAL_LINES.has(line)) {
         if (index !== lines.length - 1 || ++terminals !== 1) return false;
       } else if (!headers.has(line) && !SIMPLE_PROGRESS.test(line) && !BYTE_PROGRESS.test(line)) return false;
     }
