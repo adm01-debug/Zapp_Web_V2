@@ -27,7 +27,12 @@ test.describe('Contatos — seleção e ações em lote', () => {
       await card.getByRole('checkbox').click();
     }
 
-    await page.getByRole('button', { name: /Comparar/ }).click();
+    // Dois botoes "Comparar" apos o redesign: o da toolbar (com icone) e o da
+    // faixa de resumo (so texto). A acao em lote e a da toolbar.
+    await page
+      .getByRole('button', { name: 'Comparar' })
+      .filter({ has: page.locator('svg') })
+      .click();
     const compare = page.getByRole('dialog', { name: 'Comparar Contatos' });
     await expect(compare).toBeVisible();
     await page.keyboard.press('Escape');

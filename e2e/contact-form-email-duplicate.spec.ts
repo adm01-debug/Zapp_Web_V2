@@ -100,7 +100,7 @@ test.describe('Formulário de contato — aviso de email duplicado', () => {
     await page.locator('[data-tour="contacts"]').click();
 
     // Abre o diálogo "Adicionar Contato"
-    await page.getByRole('button', { name: /novo contato/i }).click();
+    await page.getByTestId('contact-create-fab').click();
 
     // Digita o email do fixture (já existe no banco) no campo de email do formulário
     await page
@@ -127,7 +127,7 @@ test.describe('Formulário de contato — aviso de telefone duplicado', () => {
     await page.locator('[data-tour="contacts"]').click();
 
     // Abre o diálogo "Adicionar Contato"
-    await page.getByRole('button', { name: /novo contato/i }).click();
+    await page.getByTestId('contact-create-fab').click();
 
     // Digita o telefone do fixture (já existe no banco) no campo phone do formulário.
     // O sufixo "88776655" (últimos 8 dígitos de FIXTURE_PHONE) é único no banco.
