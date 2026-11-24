@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "d58476e7c31074532c6507e9a05b3ef3703bc8fd",
+  "commit": "d7fa274ce5200a16bd53f444d38ed61dbc813adb",
   "branch": "main",
-  "data_commit": "2026-11-23T21:06:16-03:00",
+  "data_commit": "2026-11-23T21:15:09-03:00",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "d7fa274c",
+    "data": "2026-11-23",
+    "assunto": "fix: tira o WebRender/DMABUF do caminho no E2E do Firefox (#3345)"
+   },
    {
     "sha": "d58476e7",
     "data": "2026-11-23",
@@ -126,14 +131,9 @@
     "sha": "2fc081de",
     "data": "2026-11-22",
     "assunto": "feat(assistente): treino por perfil com playbook e catalogo de objecoes (#3319)"
-   },
-   {
-    "sha": "4454ed4b",
-    "data": "2026-11-22",
-    "assunto": "docs(integracoes): plano do gateway de mensagens WhatsApp + SMS (SMSDev) (#3318)"
    }
   ],
-  "arquivos_mudados_7d": 5300,
+  "arquivos_mudados_7d": 5299,
   "pastas_mais_mudadas_30d": [
    {
     "pasta": "docs/contexto/supabase",
@@ -316,7 +316,7 @@
  "contagens": {
   "arquivos_total": 15781,
   "arquivos_codigo": 5892,
-  "linhas_codigo": 1140038,
+  "linhas_codigo": 1140044,
   "rotas": 18,
   "rotas_http_backend": 11,
   "vistas_por_id": 55,
@@ -612,7 +612,7 @@
   },
   "playwright.config.ts": {
    "arquivos": 1,
-   "linhas": 407
+   "linhas": 413
   },
   "postcss.config.js": {
    "arquivos": 1,

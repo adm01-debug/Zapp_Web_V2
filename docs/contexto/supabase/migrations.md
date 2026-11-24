@@ -1155,3 +1155,4 @@ SQL em `migrations/<versao>_<nome>.sql`. Mudanças feitas pelo Dashboard/SQL Edi
 | 20261120080000 | [scheduled_report_cron](migrations/20261120080000_scheduled_report_cron.sql) | 8 |
 | 20261121190000 | [assistant_profiles](migrations/20261121190000_assistant_profiles.sql) | 9 |
 | 20261122190000 | [ia055_precos_entrada_e_saida](migrations/20261122190000_ia055_precos_entrada_e_saida.sql) | 8 |
+| 20261122200000 | [x076_talkx_ai_requests](migrations/20261122200000_x076_talkx_ai_requests.sql) | 13 |

@@ -2,6 +2,10 @@
 
 Diff semântico gerado a cada coleta em que algo mudou.
 
+## 2026-11-24 00:30 UTC
+
+- **migrations** adicionado (1): `20261122200000_x076_talkx_ai_requests`
+
 ## 2026-11-23 23:18 UTC
 
 - **indexes** adicionado (8): `public.idx_away_message_log_whatsapp_connection_id`, `public.idx_message_favorites_message_id`, `public.idx_message_pins_message_id`, `public.idx_message_reports_reporter_id`, `public.idx_talkx_campaign_segments_segment_id`, `public.idx_talkx_campaigns_ab_winner_decided_by`, `public.idx_talkx_campaigns_ab_winner_variant_id`, `public.idx_team_message_receipts_profile_id`
