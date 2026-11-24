@@ -13348,8 +13348,6 @@ export type Database = {
           isSetofReturn: false
         }
       }
-      e2e_cleanup: { Args: never; Returns: undefined }
-      e2e_cleanup_conversation_closures: { Args: never; Returns: number }
       edit_message: {
         Args: { p_message_id: string; p_new_content: string }
         Returns: {

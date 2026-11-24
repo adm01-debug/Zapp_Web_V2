@@ -2732,8 +2732,6 @@
         "departments_overview",
         "dispatch_scheduled_messages",
         "duplicate_talkx_campaign",
-        "e2e_cleanup",
-        "e2e_cleanup_conversation_closures",
         "edit_message",
         "effective_role",
         "encrypt_gmail_token",
@@ -3042,7 +3040,7 @@
         "warroom_agent_today",
         "warroom_queue_stats"
     ],
-    "generated_at": "2026-11-23",
+    "generated_at": "2026-11-24",
     "format_version": 2,
     "check_constraints": [
         "agent_mini_game_xp_daily.agent_mini_game_xp_daily_game_id_check:CHECK ((game_id = ANY (ARRAY['speed-typing'::text, 'quiz'::text, 'response-match'::text, 'emoji-decode'::text])))",
@@ -3515,8 +3513,6 @@
         "departments_overview()->TABLE(department_id uuid, name text, is_active boolean, member_count bigint, queue_count bigint, conversation_count bigint)|kind=f",
         "dispatch_scheduled_messages(p_limit integer)->TABLE(scheduled_message_id uuid, outcome text, message_id uuid, failure_reason text)|kind=f",
         "duplicate_talkx_campaign(p_campaign_id uuid)->talkx_campaigns|kind=f",
-        "e2e_cleanup()->void|kind=f",
-        "e2e_cleanup_conversation_closures()->integer|kind=f",
         "edit_message(p_message_id uuid, p_new_content text)->messages|kind=f",
         "effective_role(_user_id uuid)->app_role|kind=f",
         "encrypt_gmail_token(p_token text)->bytea|kind=f",

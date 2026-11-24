@@ -5199,7 +5199,6 @@
         "conversation_closures.trg_reject_repeated_conversation_closure_without_reopen": "9fa92e6b84f191d04e0105b02936b7fe"
     },
     "functions": {
-        "f:e2e_cleanup()": "32ea9065d54bc18e3ff04d352163f449",
         "f:reap_ai_jobs()": "6af088787f1639ee50cf28d7728da1c2",
         "f:app_bootstrap()": "94fcebd24be5ba44b6d248c913fb6082",
         "f:agent_workload()": "87d5544a4c1b2028c17e2969070d603b",
@@ -5340,7 +5339,6 @@
         "f:resolve_sla_alert(p_event_id uuid)": "016c19f04e3397836c71619564edbb39",
         "f:talkx_segment_tags(p_segment uuid)": "7e311a73eb7c9ad5ff06b62d1799556a",
         "f:whisper_messages_somente_is_read()": "31298e507a9697b648793d3658864d2d",
-        "f:e2e_cleanup_conversation_closures()": "ecf13d916b8dcf1d65696371eea76a34",
         "f:enforce_talkx_campaign_mutability()": "6c4e92ac38ccfb789a08a84efdfd3eeb",
         "f:ensure_single_default_ai_provider()": "23f44faf916e9b72516f4e16617d7163",
         "f:force_conversation_closure_author()": "6dd2f26ffd106055fda9711703f86b5f",
@@ -6582,7 +6580,7 @@
         "e:public.multiplix_dispatch_status|postgres|USAGE|grantor=postgres": "68934a3e9455fa72420237eb05902327",
         "e:public.multiplix_recipient_status|postgres|USAGE|grantor=postgres": "68934a3e9455fa72420237eb05902327"
     },
-    "generated_at": "2026-11-24T11:16:06Z",
+    "generated_at": "2026-11-24T15:00:30Z",
     "column_grants": {
         "r:public.departments.id|authenticated|INSERT|grantor=postgres": "68934a3e9455fa72420237eb05902327",
         "r:public.departments.id|authenticated|SELECT|grantor=postgres": "68934a3e9455fa72420237eb05902327",
@@ -6734,14 +6732,11 @@
     },
     "format_version": 2,
     "routine_grants": {
-        "f:e2e_cleanup()|postgres|EXECUTE|grantor=postgres": "68934a3e9455fa72420237eb05902327",
         "f:reap_ai_jobs()|postgres|EXECUTE|grantor=postgres": "68934a3e9455fa72420237eb05902327",
         "f:app_bootstrap()|postgres|EXECUTE|grantor=postgres": "68934a3e9455fa72420237eb05902327",
         "f:agent_workload()|postgres|EXECUTE|grantor=postgres": "68934a3e9455fa72420237eb05902327",
         "f:get_team_inbox()|postgres|EXECUTE|grantor=postgres": "68934a3e9455fa72420237eb05902327",
-        "f:e2e_cleanup()|service_role|EXECUTE|grantor=postgres": "68934a3e9455fa72420237eb05902327",
         "f:handle_new_user()|postgres|EXECUTE|grantor=postgres": "68934a3e9455fa72420237eb05902327",
-        "f:e2e_cleanup()|authenticated|EXECUTE|grantor=postgres": "68934a3e9455fa72420237eb05902327",
         "f:init_agent_stats()|postgres|EXECUTE|grantor=postgres": "68934a3e9455fa72420237eb05902327",
         "f:notify_due_tasks()|postgres|EXECUTE|grantor=postgres": "68934a3e9455fa72420237eb05902327",
         "f:reap_ai_jobs()|service_role|EXECUTE|grantor=postgres": "68934a3e9455fa72420237eb05902327",
@@ -6970,7 +6965,6 @@
         "f:talkx_segment_tags(p_segment uuid)|postgres|EXECUTE|grantor=postgres": "68934a3e9455fa72420237eb05902327",
         "f:talkx_template_library_kpis()|authenticated|EXECUTE|grantor=postgres": "68934a3e9455fa72420237eb05902327",
         "f:whisper_messages_somente_is_read()|postgres|EXECUTE|grantor=postgres": "68934a3e9455fa72420237eb05902327",
-        "f:e2e_cleanup_conversation_closures()|postgres|EXECUTE|grantor=postgres": "68934a3e9455fa72420237eb05902327",
         "f:enforce_talkx_campaign_mutability()|postgres|EXECUTE|grantor=postgres": "68934a3e9455fa72420237eb05902327",
         "f:ensure_single_default_ai_provider()|postgres|EXECUTE|grantor=postgres": "68934a3e9455fa72420237eb05902327",
         "f:fn_list_audio_meme_categories()|service_role|EXECUTE|grantor=postgres": "68934a3e9455fa72420237eb05902327",
@@ -7072,7 +7066,6 @@
         "f:cancel_ai_job(p_id uuid, p_reason text)|postgres|EXECUTE|grantor=postgres": "68934a3e9455fa72420237eb05902327",
         "f:claim_due_csat_surveys(p_limit integer)|postgres|EXECUTE|grantor=postgres": "68934a3e9455fa72420237eb05902327",
         "f:clear_login_attempts(p_email text)|authenticated|EXECUTE|grantor=postgres": "68934a3e9455fa72420237eb05902327",
-        "f:e2e_cleanup_conversation_closures()|service_role|EXECUTE|grantor=postgres": "68934a3e9455fa72420237eb05902327",
         "f:enforce_contacts_consent_status_guard()|postgres|EXECUTE|grantor=postgres": "68934a3e9455fa72420237eb05902327",
         "f:enforce_multiplix_dispatch_mutability()|postgres|EXECUTE|grantor=postgres": "68934a3e9455fa72420237eb05902327",
         "f:fn_send_audio_meme(p_meme_id uuid)|authenticated|EXECUTE|grantor=postgres": "68934a3e9455fa72420237eb05902327",
@@ -7098,7 +7091,6 @@
         "f:talkx_top_segments(p_limit integer)|service_role|EXECUTE|grantor=postgres": "68934a3e9455fa72420237eb05902327",
         "f:ai_is_canonical_churn_risk(p_value text)|postgres|EXECUTE|grantor=postgres": "68934a3e9455fa72420237eb05902327",
         "f:conversation_event_assign_performed_by()|postgres|EXECUTE|grantor=postgres": "68934a3e9455fa72420237eb05902327",
-        "f:e2e_cleanup_conversation_closures()|authenticated|EXECUTE|grantor=postgres": "68934a3e9455fa72420237eb05902327",
         "f:enforce_conversation_status_transition()|postgres|EXECUTE|grantor=postgres": "68934a3e9455fa72420237eb05902327",
         "f:enforce_multiplix_recipient_mutability()|postgres|EXECUTE|grantor=postgres": "68934a3e9455fa72420237eb05902327",
         "f:enforce_saved_filters_inbox_limite()|service_role|EXECUTE|grantor=postgres": "68934a3e9455fa72420237eb05902327",
