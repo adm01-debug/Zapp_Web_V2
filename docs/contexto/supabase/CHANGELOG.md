@@ -2,6 +2,11 @@
 
 Diff semântico gerado a cada coleta em que algo mudou.
 
+## 2026-11-24 15:13 UTC
+
+- **functions** removido (2): `public.e2e_cleanup()`, `public.e2e_cleanup_conversation_closures()`
+- **migrations** adicionado (1): `20261124120000_drop_rpcs_e2e_orfas`
+
 ## 2026-11-24 11:13 UTC
 
 - **lints** removido (11): `policy_auth_fn_not_wrapped:public.copilot_feedback.copilot_feedback_insert`, `policy_auth_fn_not_wrapped:public.copilot_feedback.copilot_feedback_select`, `policy_auth_fn_not_wrapped:public.copilot_seller_settings.copilot_seller_settings_insert`, `policy_auth_fn_not_wrapped:public.copilot_seller_settings.copilot_seller_settings_select`, `policy_auth_fn_not_wrapped:public.copilot_seller_settings.copilot_seller_settings_update`, `policy_auth_fn_not_wrapped:public.copilot_usage.copilot_usage_insert`, `policy_auth_fn_not_wrapped:public.copilot_usage.copilot_usage_select`, `policy_auth_fn_not_wrapped:public.message_templates.Users can create their own templates`, `policy_auth_fn_not_wrapped:public.message_templates.Users can delete their own templates`, `policy_auth_fn_not_wrapped:public.message_templates.Users can update their own templates`, `policy_auth_fn_not_wrapped:public.message_templates.Users can view their templates and global ones`

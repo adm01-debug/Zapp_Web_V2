@@ -1156,3 +1156,4 @@ SQL em `migrations/<versao>_<nome>.sql`. Mudanças feitas pelo Dashboard/SQL Edi
 | 20261121190000 | [assistant_profiles](migrations/20261121190000_assistant_profiles.sql) | 9 |
 | 20261122190000 | [ia055_precos_entrada_e_saida](migrations/20261122190000_ia055_precos_entrada_e_saida.sql) | 8 |
 | 20261122200000 | [x076_talkx_ai_requests](migrations/20261122200000_x076_talkx_ai_requests.sql) | 13 |
+| 20261124120000 | [drop_rpcs_e2e_orfas](migrations/20261124120000_drop_rpcs_e2e_orfas.sql) | 1 |

@@ -53367,71 +53367,6 @@
         "volatility": "volatile"
       },
       {
-        "args": "",
-        "callers": {
-          "code": [],
-          "code_total_files": 0,
-          "cron": [],
-          "db": [],
-          "triggers": [],
-          "views": []
-        },
-        "comment": null,
-        "config": [
-          "search_path=public, pg_temp"
-        ],
-        "definition": null,
-        "definition_sha": "d3302d2e4a007b8f",
-        "execute_api_roles": "authenticated, service_role",
-        "execute_public": false,
-        "is_trigger_fn": false,
-        "kind": "function",
-        "language": "plpgsql",
-        "leakproof": false,
-        "name": "e2e_cleanup",
-        "owner": "postgres",
-        "returns": "void",
-        "schema": "public",
-        "security_definer": true,
-        "strict": false,
-        "volatility": "volatile"
-      },
-      {
-        "args": "",
-        "callers": {
-          "code": [
-            {
-              "file": "scripts/ci/e2e-teardown.mjs",
-              "hits": 1
-            }
-          ],
-          "code_total_files": 1,
-          "cron": [],
-          "db": [],
-          "triggers": [],
-          "views": []
-        },
-        "comment": "E25: limpa a fixture de conversation_closures do E2E logado sem a service role; so o usuario de teste do E2E (auth.uid()) e so o contato fixo do fixture.",
-        "config": [
-          "search_path=pg_catalog, public"
-        ],
-        "definition": null,
-        "definition_sha": "53287ec6231f20df",
-        "execute_api_roles": "authenticated, service_role",
-        "execute_public": false,
-        "is_trigger_fn": false,
-        "kind": "function",
-        "language": "plpgsql",
-        "leakproof": false,
-        "name": "e2e_cleanup_conversation_closures",
-        "owner": "postgres",
-        "returns": "integer",
-        "schema": "public",
-        "security_definer": true,
-        "strict": false,
-        "volatility": "volatile"
-      },
-      {
         "args": "p_message_id uuid, p_new_content text",
         "callers": {
           "code": [
@@ -91537,6 +91472,12 @@
         "statements": 13,
         "statements_sha": "f96af8f97cc5059b",
         "version": "20261122200000"
+      },
+      {
+        "name": "drop_rpcs_e2e_orfas",
+        "statements": 1,
+        "statements_sha": "5e3d74b853976a0d",
+        "version": "20261124120000"
       }
     ],
     "policies": [
