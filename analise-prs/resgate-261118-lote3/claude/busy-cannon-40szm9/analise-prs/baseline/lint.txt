@@ -1,5 +1,0 @@
-746 problemas (533 erros, 213 warnings) — todos pré-existentes no main.
-EXIT=0
-
-Nota: lint não faz exit 1 por erros de regra, só relata.
-Regressão = erro NOVO não presente neste baseline.
