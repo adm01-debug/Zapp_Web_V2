@@ -284,7 +284,7 @@
   {
    "arquivo": "scripts/ci/check-workflow-pins-resolvem.mjs",
    "descricao": "Todo pin de Action (`owner/repo@<sha40> # vX.Y.Z`) precisa ser o commit REAL da tag declarada no comentário.",
-   "linhas": 98,
+   "linhas": 147,
    "env": [],
    "npm_scripts": [],
    "workflows": [

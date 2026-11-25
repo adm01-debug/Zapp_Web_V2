@@ -1,7 +1,7 @@
 # Contexto do projeto para agentes de IA
 
 GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.
-Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR dela) a cada push em `main` e a cada 10 minutos pelo workflow `contexto.yml`; índice único das três fontes em `docs/contexto/00-INDEX.md`. Gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `57f6063f5cd5edaab3c0f0e11669534cb1b6a904` (2026-11-25T12:33:36-03:00).
+Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR dela) a cada push em `main` e a cada 10 minutos pelo workflow `contexto.yml`; índice único das três fontes em `docs/contexto/00-INDEX.md`. Gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `d2e992a923613e7f45bd045dceae364f817681c7` (2026-11-25T12:50:16-03:00).
 
 ## Como usar (leia antes de planejar ou executar qualquer tarefa)
 1. **Tela/rota/menu** → `rotas.json` (url/vista/menu → arquivo → hooks → tabelas → edges; `rotas_http_backend` para APIs) e `modulos.json` (módulo inteiro + dependências entre módulos).
@@ -36,7 +36,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 |---|---|
 | arquivos_total | 14796 |
 | arquivos_codigo | 5141 |
-| linhas_codigo | 952989 |
+| linhas_codigo | 953107 |
 | rotas | 18 |
 | rotas_http_backend | 11 |
 | vistas_por_id | 55 |
@@ -397,8 +397,8 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - possiveis_segredos_no_codigo: 4 — ex.: scripts/ai-context/cenarios.mjs:102, scripts/ci/edge-coverage-authz.unit.mjs:398, scripts/ci/inventario-banco.unit.mjs:147
 
 ## Grafo de código (graphify)
-- 96120 nós · 160688 arestas · 9007 comunidades · grafo do commit `57f6063f`
-- comunidades maiores: Communities (8869 total, 3472 thin omitted) (5378), lucide-react (1323), TalkXSuppression.tsx (1019), cn (938), @tanstack/react-query (866), vitest (738), chat.ts (719), ExternalProductManagement.tsx (609), DashboardView.tsx (602), ContactDetailPanel.tsx (480), ref_node_assert (421), ref_node_fs (408)
+- 96128 nós · 160702 arestas · 9026 comunidades · grafo do commit `d2e992a9`
+- comunidades maiores: Communities (8869 total, 3472 thin omitted) (5379), cn (1211), lucide-react (1173), @tanstack/react-query (1110), vitest (838), DashboardView.tsx (643), ref_node_assert (590), ref_node_fs (535), FilesTab.tsx (510), ContactDetailPanel.tsx (495), validation.ts (467), ref_https (423)
 - símbolos mais chamados: cn() (src/lib/utils.ts), useAuth() (src/hooks/auth/useAuth.tsx), jsonResponse() (supabase/functions/_shared/validation.ts), errorResponse() (supabase/functions/_shared/validation.ts), handleCors() (supabase/functions/_shared/validation.ts), fail() (scripts/e2e-isolated/network-proof-policy.mjs), Logger (supabase/functions/_shared/validation.ts), requireEnv() (supabase/functions/_shared/validation.ts), fmtInt() (src/components/talkx/kit/format.ts), useUserRole() (src/hooks/system/useUserRole.ts), validationErrorResponse() (supabase/functions/_shared/schemas.ts), .from() (supabase/functions/_shared/evolution-types.ts)
 - consulta local: `graphify query "<pergunta>"`, `graphify path "<A>" "<B>"`, `graphify explain "<X>"`
 
@@ -540,6 +540,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - CHANGELOG topo: [Unreleased]
 
 ## Últimos commits
+- 2026-11-25 `d2e992a9` fix: ls-remote dos pins repete com backoff quando o runner leva 403 (#3378)
 - 2026-11-25 `57f6063f` ci: roda o lint ratchet no CI (divida nova de lint nos arquivos do PR) (#3377)
 - 2026-11-25 `26469075` chore(contexto): main recebe o snapshot gerado por PR automatica (#3375)
 - 2026-11-25 `1e7fec6a` infra: valida a virada do dominio principal para o build do V2 (#3374)
@@ -554,7 +555,6 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - 2026-11-24 `06d10c80` fix(ci): guard enxerga wrapper que passa o nome da edge — gmail-send e gmail-sync saem de orfas (#3365)
 - 2026-11-24 `f6d0d50c` chore(resgate): preserva dossiês e mapas do resgate na main (#3364)
 - 2026-11-24 `7d4d196e` feat(inbox): analise de imagem do Copiloto no painel de conversa (#3362)
-- 2026-11-24 `c3127e8f` chore(db): sincronizar artefatos derivados do banco (#3361)
 
 ## Arquivos deste diretório
 - `docs/contexto/codigo/rotas.json`

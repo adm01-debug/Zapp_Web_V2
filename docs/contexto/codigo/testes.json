@@ -949,11 +949,11 @@
   {
    "arquivo": "scripts/ci/check-workflow-pins-resolvem.unit.mjs",
    "tipo": "unit",
-   "linhas": 51,
+   "linhas": 120,
    "testa": [
     "scripts/ci/check-workflow-pins-resolvem.mjs"
    ],
-   "casos": 4
+   "casos": 10
   },
   {
    "arquivo": "scripts/ci/check-workflow-pins.unit.mjs",

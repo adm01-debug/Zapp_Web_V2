@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "57f6063f5cd5edaab3c0f0e11669534cb1b6a904",
+  "commit": "d2e992a923613e7f45bd045dceae364f817681c7",
   "branch": "main",
-  "data_commit": "2026-11-25T12:33:36-03:00",
+  "data_commit": "2026-11-25T12:50:16-03:00",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "d2e992a9",
+    "data": "2026-11-25",
+    "assunto": "fix: ls-remote dos pins repete com backoff quando o runner leva 403 (#3378)"
+   },
    {
     "sha": "57f6063f",
     "data": "2026-11-25",
@@ -126,14 +131,9 @@
     "sha": "38ee260d",
     "data": "2026-11-24",
     "assunto": "chore: corrige o comentario do E2E do Firefox no ci.yml (causa nao e memoria) (#3349)"
-   },
-   {
-    "sha": "e586a725",
-    "data": "2026-11-24",
-    "assunto": "fix(e2e): tira o postgrest do ECR anonimo e reconhece a cota \"Data limit exceeded\" (#3351)"
    }
   ],
-  "arquivos_mudados_7d": 4393,
+  "arquivos_mudados_7d": 4395,
   "pastas_mais_mudadas_30d": [
    {
     "pasta": "docs/contexto/supabase",
@@ -316,7 +316,7 @@
  "contagens": {
   "arquivos_total": 14796,
   "arquivos_codigo": 5141,
-  "linhas_codigo": 952989,
+  "linhas_codigo": 953107,
   "rotas": 18,
   "rotas_http_backend": 11,
   "vistas_por_id": 55,
@@ -632,7 +632,7 @@
   },
   "scripts/ci": {
    "arquivos": 231,
-   "linhas": 50403
+   "linhas": 50521
   },
   "scripts/db": {
    "arquivos": 2,

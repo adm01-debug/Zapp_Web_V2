@@ -1,15 +1,15 @@
 {
  "meta": {
-  "sha": "57f6063f5cd5edaab3c0f0e11669534cb1b6a904",
+  "sha": "d2e992a923613e7f45bd045dceae364f817681c7",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-25 15:35 UTC",
+  "generated_at": "2026-11-25 16:18 UTC",
   "files_total": 14643,
   "code_files": 8177,
-  "code_lines": 1229818
+  "code_lines": 1229936
  },
  "version": "1.3.2",
- "facts_hash": "a34d7705ac24bed7",
+ "facts_hash": "0fd02a9419b568e6",
  "stack": {
   "frameworks": [
    "React + Vite",
@@ -75739,7 +75739,7 @@
   {
    "module": "scripts",
    "files": 505,
-   "lines": 106597,
+   "lines": 106715,
    "tables": [
     "a",
     "alem_do_limite",
@@ -75808,7 +75808,7 @@
     "check-talkx-docs.unit.mjs: PREDECESSORES, DOCS_CORRENTES, diretoriosGerados, violacoes",
     "check-talkx-pr-body.mjs: etapaIdDoTitulo, secao, temTelaVisual, verificarCorpo, carregarEtapas",
     "check-test-inventory.mjs: RAIZ, ALLOWLIST_NODE, padroesNodeDeWorkflow, casaPadrao, orfaosNode, suitesCobertasPorImport",
-    "check-workflow-pins-resolvem.mjs: coletarPins, commitDaTag, verificarPins",
+    "check-workflow-pins-resolvem.mjs: ESPERA_MS, MAX_INSISTENCIAS, MARCADOR_TRANSITORIO, falhaTransitoria, coletarPins, commitDaTag",
     "check-workflow-pins.mjs: TOOLCHAIN_PATH, TOOLCHAIN_KEYS, findMutableActionRefs, findUnauthorizedActionOwners, findUnpinnedImages, loadToolchain",
     "ci-local-lib.mjs: ExpressaoNaoSuportada, usaFuncaoStatus, paraNumero, verdadeiro, paraTexto, igual",
     "commit-msg-lint.mjs: TIPOS, SUBJECT_MIN_LENGTH, cabecalhoDaMensagem, validarMensagem, main",
@@ -294060,11 +294060,30 @@
   },
   "scripts/ci/check-workflow-pins-resolvem.mjs": {
    "path": "scripts/ci/check-workflow-pins-resolvem.mjs",
-   "lines": 98,
+   "lines": 147,
    "exports": [
+    "const ESPERA_MS",
+    "const MAX_INSISTENCIAS",
+    "const MARCADOR_TRANSITORIO",
+    "function falhaTransitoria",
     "function coletarPins",
     "function commitDaTag",
-    "function verificarPins"
+    "function verificarPins",
+    "function lsRemoteComRetry"
+   ],
+   "params": [
+    {
+     "name": "MAX_INSISTENCIAS",
+     "value": "3"
+    },
+    {
+     "name": "MARCADOR_TRANSITORIO",
+     "value": "'limite/instabilidade de rede do runner'"
+    }
+   ],
+   "rule_comments": [
+    "sai marcada como limite do runner em vez de aparecer como pin errado.",
+    "Falha de ambiente (limite de IP do runner, DNS, timeout, conexão cortada) não é pin errado:"
    ],
    "doc": "!/usr/bin/env node Todo pin de Action (`owner/repo@<sha40> # vX.Y.Z`) precisa ser o commit REAL da tag declarada no comentário. O check-workflow-pins.mjs confere formato (40 hex, repositório autorizado), mas não se o SHA existe. Em 15/10/2026 o scorecard.yml estava com dois pins inexistentes desde o …",
    "temporal": [
@@ -294073,7 +294092,7 @@
   },
   "scripts/ci/check-workflow-pins-resolvem.unit.mjs": {
    "path": "scripts/ci/check-workflow-pins-resolvem.unit.mjs",
-   "lines": 51,
+   "lines": 120,
    "params": [
     {
      "name": "REAL",
@@ -294087,6 +294106,9 @@
      "name": "TAG_OBJ",
      "value": "'ea651e62978af7915d09fe2e282747c798bf2dab'"
     }
+   ],
+   "rule_comments": [
+    "nenhuma mudança de código: aquilo era limite de IP, não pin errado."
    ]
   },
   "scripts/ci/check-workflow-pins.mjs": {
@@ -424223,10 +424245,20 @@
   }
  },
  "git": {
-  "sha": "57f6063f5cd5edaab3c0f0e11669534cb1b6a904",
+  "sha": "d2e992a923613e7f45bd045dceae364f817681c7",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "d2e992a9",
+    "date": "2026-11-25",
+    "author": "adm01-debug",
+    "subject": "fix: ls-remote dos pins repete com backoff quando o runner leva 403 (#3378)",
+    "files": [
+     "scripts/ci/check-workflow-pins-resolvem.mjs",
+     "scripts/ci/check-workflow-pins-resolvem.unit.mjs"
+    ]
+   },
    {
     "sha": "57f6063f",
     "date": "2026-11-25",
@@ -425865,15 +425897,6 @@
      "e2e/contacts-views.spec.ts",
      "e2e/dialog-rodape-viewport.spec.ts"
     ]
-   },
-   {
-    "sha": "d7fa274c",
-    "date": "2026-11-23",
-    "author": "adm01-debug",
-    "subject": "fix: tira o WebRender/DMABUF do caminho no E2E do Firefox (#3345)",
-    "files": [
-     "playwright.config.ts"
-    ]
    }
   ],
   "hot_files": [
@@ -425930,6 +425953,14 @@
     2
    ],
    [
+    "scripts/ci/check-workflow-pins-resolvem.mjs",
+    1
+   ],
+   [
+    "scripts/ci/check-workflow-pins-resolvem.unit.mjs",
+    1
+   ],
+   [
     "scripts/ci/ci-gate.unit.mjs",
     1
    ],
@@ -425947,14 +425978,6 @@
    ],
    [
     "scripts/ci/verify-release-targets-dominio.unit.mjs",
-    1
-   ],
-   [
-    "scripts/vercel/README.md",
-    1
-   ],
-   [
-    "scripts/vercel/verify-release-targets.mjs",
     1
    ]
   ]
