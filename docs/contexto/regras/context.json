@@ -1,15 +1,15 @@
 {
  "meta": {
-  "sha": "6ee63ddbf78e67412ee6e305107e00f376c9a3a9",
+  "sha": "e4c2b861f1f1d71c1f50187d6458f44ddd85b72b",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-25 22:59 UTC",
-  "files_total": 14651,
-  "code_files": 8185,
-  "code_lines": 1231905
+  "generated_at": "2026-11-25 23:29 UTC",
+  "files_total": 14653,
+  "code_files": 8187,
+  "code_lines": 1231942
  },
  "version": "1.3.2",
- "facts_hash": "1fd655f90804664a",
+ "facts_hash": "3a79a19d220742b6",
  "stack": {
   "frameworks": [
    "React + Vite",
@@ -369,7 +369,7 @@
   "languages": {
    ".sql": 3063,
    ".tsx": 2483,
-   ".ts": 2016,
+   ".ts": 2018,
    ".mjs": 496,
    ".py": 125,
    ".cjs": 19,
@@ -72728,7 +72728,7 @@
     "file": ".github/workflows/types-sync.yml"
    }
   ],
-  "components_count": 2320,
+  "components_count": 2322,
   "hooks": [
    {
     "name": "useMotionSeguro",
@@ -76076,8 +76076,8 @@
   },
   {
    "module": "src/components",
-   "files": 2318,
-   "lines": 395269,
+   "files": 2320,
+   "lines": 395306,
    "tables": [
     "agent_skills",
     "agent_visibility_grants",
@@ -99138,8 +99138,12 @@
     "text": "cai na própria coluna visível (mesma regra da prop do Quadro)"
    },
    {
-    "file": "src/components/tasks/list/taskRowCells.tsx",
-    "text": "* Stub temporário: retorna o prazo formatado completo para o tooltip, ou null se ausente. */"
+    "file": "src/components/tasks/list/prazoCompleto.ts",
+    "text": "* Etapa 057 — texto do tooltip da célula Prazo."
+   },
+   {
+    "file": "src/components/tasks/list/prazoCompleto.ts",
+    "text": "* Não inventa um segundo formato de data (D21): parte do rótulo da regra única"
    },
    {
     "file": "src/components/tasks/shared/DateLabel.tsx",
@@ -181405,6 +181409,26 @@
    {
     "file": "src/components/tasks/__tests__/newTaskDialog.test.tsx",
     "name": "sem violação de acessibilidade (axe)"
+   },
+   {
+    "file": "src/components/tasks/__tests__/prazoCompleto.test.ts",
+    "name": "prazoCompleto"
+   },
+   {
+    "file": "src/components/tasks/__tests__/prazoCompleto.test.ts",
+    "name": "usa a regra unica de data e acrescenta o dia exato"
+   },
+   {
+    "file": "src/components/tasks/__tests__/prazoCompleto.test.ts",
+    "name": "em outro dia mantem o rotulo curto e o dia exato"
+   },
+   {
+    "file": "src/components/tasks/__tests__/prazoCompleto.test.ts",
+    "name": "sem valor devolve null (a celula nao mostra tooltip)"
+   },
+   {
+    "file": "src/components/tasks/__tests__/prazoCompleto.test.ts",
+    "name": "valor invalido devolve null"
    },
    {
     "file": "src/components/tasks/__tests__/primitivosCompartilhados.test.tsx",
@@ -346673,6 +346697,18 @@
     "sem violação de acessibilidade (axe)"
    ]
   },
+  "src/components/tasks/__tests__/prazoCompleto.test.ts": {
+   "path": "src/components/tasks/__tests__/prazoCompleto.test.ts",
+   "lines": 24,
+   "is_test": true,
+   "tests": [
+    "prazoCompleto",
+    "usa a regra unica de data e acrescenta o dia exato",
+    "em outro dia mantem o rotulo curto e o dia exato",
+    "sem valor devolve null (a celula nao mostra tooltip)",
+    "valor invalido devolve null"
+   ]
+  },
   "src/components/tasks/__tests__/primitivosCompartilhados.test.tsx": {
    "path": "src/components/tasks/__tests__/primitivosCompartilhados.test.tsx",
    "lines": 383,
@@ -347065,9 +347101,20 @@
     "transition={{ duration: reduceMotion ? 0 : 0.15, delay: reduceMotion ? 0 : Math.min(index, 12) * 0.02 }}"
    ]
   },
+  "src/components/tasks/list/prazoCompleto.ts": {
+   "path": "src/components/tasks/list/prazoCompleto.ts",
+   "lines": 28,
+   "exports": [
+    "function prazoCompleto"
+   ],
+   "rule_comments": [
+    "* Etapa 057 — texto do tooltip da célula Prazo.",
+    "* Não inventa um segundo formato de data (D21): parte do rótulo da regra única"
+   ]
+  },
   "src/components/tasks/list/taskRowCells.tsx": {
    "path": "src/components/tasks/list/taskRowCells.tsx",
-   "lines": 264,
+   "lines": 249,
    "exports": [
     "function PriorityCell",
     "function DueCell",
@@ -347085,9 +347132,6 @@
      "value": "cancelled",
      "kind": "compara"
     }
-   ],
-   "rule_comments": [
-    "* Stub temporário: retorna o prazo formatado completo para o tooltip, ou null se ausente. */"
    ]
   },
   "src/components/tasks/shared/AgingDot.tsx": {
@@ -424901,10 +424945,21 @@
   }
  },
  "git": {
-  "sha": "6ee63ddbf78e67412ee6e305107e00f376c9a3a9",
+  "sha": "e4c2b861f1f1d71c1f50187d6458f44ddd85b72b",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "e4c2b861",
+    "date": "2026-11-25",
+    "author": "adm01-debug",
+    "subject": "fix: tooltip do prazo usa a regra única de data e o módulo prazoCompleto (#3391)",
+    "files": [
+     "src/components/tasks/__tests__/prazoCompleto.test.ts",
+     "src/components/tasks/list/prazoCompleto.ts",
+     "src/components/tasks/list/taskRowCells.tsx"
+    ]
+   },
    {
     "sha": "6ee63ddb",
     "date": "2026-11-25",
@@ -426553,16 +426608,6 @@
     "files": [
      "scripts/db-audit/talkx-monitor-panel.test.sh"
     ]
-   },
-   {
-    "sha": "45a65087",
-    "date": "2026-11-24",
-    "author": "adm01-debug",
-    "subject": "fix(e2e): serve as 4 imagens restantes pelo mirror ghcr.io do mesmo digest (#3352)",
-    "files": [
-     "scripts/ci/e2e-isolated-images.unit.mjs",
-     "scripts/e2e-isolated/images.lock.json"
-    ]
    }
   ],
   "hot_files": [
@@ -426599,6 +426644,18 @@
     2
    ],
    [
+    "src/components/tasks/__tests__/prazoCompleto.test.ts",
+    1
+   ],
+   [
+    "src/components/tasks/list/prazoCompleto.ts",
+    1
+   ],
+   [
+    "src/components/tasks/list/taskRowCells.tsx",
+    1
+   ],
+   [
     "src/components/alerts/EvolutionDisconnectBanner.tsx",
     1
    ],
@@ -426632,18 +426689,6 @@
    ],
    [
     "src/components/inbox/contact-details/SlaTimelineSection.tsx",
-    1
-   ],
-   [
-    "src/components/inbox/contact-details/__tests__/SlaTimelineSection.test.tsx",
-    1
-   ],
-   [
-    "src/components/inbox/contact-details/sidebar/sidebarSections.ts",
-    1
-   ],
-   [
-    "src/lib/__tests__/redactPII.test.ts",
     1
    ]
   ]

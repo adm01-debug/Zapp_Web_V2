@@ -7574,9 +7574,9 @@
   },
   {
    "modulo": "components/tasks",
-   "arquivos": 51,
-   "testes": 50,
-   "linhas": 7097,
+   "arquivos": 52,
+   "testes": 51,
+   "linhas": 7110,
    "itens_menu": [
     "Tarefas"
    ],

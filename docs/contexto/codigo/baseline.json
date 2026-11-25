@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "6ee63ddbf78e67412ee6e305107e00f376c9a3a9",
+  "commit": "e4c2b861f1f1d71c1f50187d6458f44ddd85b72b",
   "branch": "main",
-  "data_commit": "2026-11-25T22:51:42Z",
+  "data_commit": "2026-11-25T23:25:15Z",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "e4c2b861",
+    "data": "2026-11-25",
+    "assunto": "fix: tooltip do prazo usa a regra única de data e o módulo prazoCompleto (#3391)"
+   },
    {
     "sha": "6ee63ddb",
     "data": "2026-11-25",
@@ -126,14 +131,9 @@
     "sha": "feee9f79",
     "data": "2026-11-24",
     "assunto": "fix(tarefas): restaura o foco da captura apos o commit, sem corrida (#3359)"
-   },
-   {
-    "sha": "36701c06",
-    "data": "2026-11-24",
-    "assunto": "fix(ci): volta o pin do scorecard-action para v2.5.0 (#3358)"
    }
   ],
-  "arquivos_mudados_7d": 4389,
+  "arquivos_mudados_7d": 4392,
   "pastas_mais_mudadas_30d": [
    {
     "pasta": "docs/contexto/supabase",
@@ -222,10 +222,6 @@
     "mudancas": 14
    },
    {
-    "arquivo": ".github/workflows/db-guard.yml",
-    "mudancas": 12
-   },
-   {
     "arquivo": "PENDENCIAS.md",
     "mudancas": 12
    },
@@ -234,7 +230,7 @@
     "mudancas": 12
    },
    {
-    "arquivo": ".github/workflows/ci.yml",
+    "arquivo": ".github/workflows/db-guard.yml",
     "mudancas": 11
    },
    {
@@ -244,6 +240,10 @@
    {
     "arquivo": "scripts/db-audit/grants-baseline.json",
     "mudancas": 11
+   },
+   {
+    "arquivo": ".github/workflows/ci.yml",
+    "mudancas": 10
    },
    {
     "arquivo": "docs/ci/README.md",
@@ -282,10 +282,6 @@
     "mudancas": 5
    },
    {
-    "arquivo": "TESTING_CONVENTION.md",
-    "mudancas": 5
-   },
-   {
     "arquivo": "bun.lock",
     "mudancas": 5
    },
@@ -295,6 +291,10 @@
    },
    {
     "arquivo": "docs/contexto/regras/manual/regras.md",
+    "mudancas": 5
+   },
+   {
+    "arquivo": "docs/prod-readiness.md",
     "mudancas": 5
    }
   ],
@@ -314,9 +314,9 @@
   ]
  },
  "contagens": {
-  "arquivos_total": 14804,
-  "arquivos_codigo": 5149,
-  "linhas_codigo": 955076,
+  "arquivos_total": 14806,
+  "arquivos_codigo": 5151,
+  "linhas_codigo": 955113,
   "rotas": 18,
   "rotas_http_backend": 11,
   "vistas_por_id": 55,
@@ -328,7 +328,7 @@
   "tabelas": 223,
   "migrations": 1153,
   "cron_jobs": 29,
-  "testes": 2828,
+  "testes": 2829,
   "workflows": 26,
   "scripts": 453,
   "docs_md": 3988
@@ -739,8 +739,8 @@
    "linhas": 638
   },
   "src/components": {
-   "arquivos": 2318,
-   "linhas": 395269
+   "arquivos": 2320,
+   "linhas": 395306
   },
   "src/config": {
    "arquivos": 3,
@@ -946,7 +946,7 @@
   "console_log": 505,
   "ts_ignore": 0,
   "eslint_disable": 1,
-  "todos": 54,
+  "todos": 53,
   "arquivos_acima_500_linhas": 115
  },
  "todos": [
@@ -1075,12 +1075,6 @@
    "linha": 193,
    "tipo": "TODO",
    "texto": "controle novo do cartão tem alvo de >= 40 px nas"
-  },
-  {
-   "arquivo": "src/components/tasks/list/taskRowCells.tsx",
-   "linha": 17,
-   "tipo": "TODO",
-   "texto": "arquivo prazoCompleto.tsx não implementado — inline temporário abaixo"
   },
   {
    "arquivo": "src/components/team-chat/__tests__/team-chat-exhaustive-audit.test.ts",

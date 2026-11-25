@@ -12457,7 +12457,7 @@
     "StatusCell"
    ],
    "export_default": null,
-   "linhas": 264,
+   "linhas": 249,
    "dominio": "components/tasks",
    "hooks_locais": [],
    "tabelas": [],

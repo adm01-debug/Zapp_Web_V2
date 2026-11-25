@@ -1,7 +1,7 @@
 # Contexto do projeto para agentes de IA
 
 GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.
-Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR dela) a cada push em `main` e a cada 10 minutos pelo workflow `contexto.yml`; índice único das três fontes em `docs/contexto/00-INDEX.md`. Gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `6ee63ddbf78e67412ee6e305107e00f376c9a3a9` (2026-11-25T22:51:42Z).
+Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR dela) a cada push em `main` e a cada 10 minutos pelo workflow `contexto.yml`; índice único das três fontes em `docs/contexto/00-INDEX.md`. Gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `e4c2b861f1f1d71c1f50187d6458f44ddd85b72b` (2026-11-25T23:25:15Z).
 
 ## Como usar (leia antes de planejar ou executar qualquer tarefa)
 1. **Tela/rota/menu** → `rotas.json` (url/vista/menu → arquivo → hooks → tabelas → edges; `rotas_http_backend` para APIs) e `modulos.json` (módulo inteiro + dependências entre módulos).
@@ -14,7 +14,7 @@ Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR
 Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua tarefa; não carregue tudo.
 
 ## Stack
-- linguagens: TypeScript (4504), Markdown (3988), SQL (3063), JSON (1939), JavaScript (524), Shell (252), Python (125), YAML (43)
+- linguagens: TypeScript (4506), Markdown (3988), SQL (3063), JSON (1939), JavaScript (524), Shell (252), Python (125), YAML (43)
 - linguagem_principal: TypeScript
 - framework: React
 - backend_http: n/d
@@ -34,9 +34,9 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 ## Números
 | item | qtd |
 |---|---|
-| arquivos_total | 14804 |
-| arquivos_codigo | 5149 |
-| linhas_codigo | 955076 |
+| arquivos_total | 14806 |
+| arquivos_codigo | 5151 |
+| linhas_codigo | 955113 |
 | rotas | 18 |
 | rotas_http_backend | 11 |
 | vistas_por_id | 55 |
@@ -48,7 +48,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 | tabelas | 223 |
 | migrations | 1153 |
 | cron_jobs | 29 |
-| testes | 2828 |
+| testes | 2829 |
 | workflows | 26 |
 | scripts | 453 |
 | docs_md | 3988 |
@@ -58,7 +58,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - componentes: src/components (901), src/pages (26), src/features (2)
 - hooks: src/hooks (431), src/components (74), src/contexts (2)
 - servicos_logica: src/lib (157), src/services (20), src/utils (8)
-- testes: co-localizado (__tests__) (2101), outro (260), co-localizado (*.test) (202)
+- testes: co-localizado (__tests__) (2102), outro (260), co-localizado (*.test) (202)
 - edge_functions: supabase/functions
 - migrations: supabase/migrations
 - scripts: scripts/db-audit (304), scripts/ci (43), scripts/e2e-isolated (41)
@@ -109,7 +109,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 | components/security | 2 | 2 | 23 | 29 | 6 | 16 |
 | components/settings | 2 | 2 | 45 | 48 | 8 | 30 |
 | components/talkx | 1 | 2 | 105 | 78 | 7 | 24 |
-| components/tasks | 1 | 1 | 51 | 27 | 2 | 11 |
+| components/tasks | 1 | 1 | 52 | 27 | 2 | 11 |
 | components/team-chat | 1 | 1 | 27 | 67 | 9 | 15 |
 | components/theme | 0 | 0 | 5 | 2 | 0 | 0 |
 | components/transcriptions | 1 | 1 | 2 | 4 | 0 | 1 |
@@ -397,8 +397,8 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - possiveis_segredos_no_codigo: 4 — ex.: scripts/ai-context/cenarios.mjs:102, scripts/ci/edge-coverage-authz.unit.mjs:398, scripts/ci/inventario-banco.unit.mjs:147
 
 ## Grafo de código (graphify)
-- 96188 nós · 160886 arestas · 8904 comunidades · grafo do commit `6ee63ddb`
-- comunidades maiores: Communities (8869 total, 3472 thin omitted) (5378), TalkXSuppression.tsx (1297), vitest (977), lucide-react (879), @tanstack/react-query (803), utils.ts (755), react (693), cn (573), ExternalProductManagement.tsx (547), ref_node_fs (502), RealtimeInboxView.tsx (397), chat.ts (382)
+- 96192 nós · 160898 arestas · 8833 comunidades · grafo do commit `e4c2b861`
+- comunidades maiores: Communities (8869 total, 3472 thin omitted) (5378), react (1136), vitest (902), cn (785), lucide-react (698), ref_node_fs (692), framer-motion (681), Conversation (546), DashboardView.tsx (543), FilesTab.tsx (481), chat.ts (437), react-router-dom (427)
 - símbolos mais chamados: cn() (src/lib/utils.ts), useAuth() (src/hooks/auth/useAuth.tsx), jsonResponse() (supabase/functions/_shared/validation.ts), errorResponse() (supabase/functions/_shared/validation.ts), handleCors() (supabase/functions/_shared/validation.ts), fail() (scripts/e2e-isolated/network-proof-policy.mjs), Logger (supabase/functions/_shared/validation.ts), requireEnv() (supabase/functions/_shared/validation.ts), fmtInt() (src/components/talkx/kit/format.ts), useUserRole() (src/hooks/system/useUserRole.ts), validationErrorResponse() (supabase/functions/_shared/schemas.ts), .from() (supabase/functions/_shared/evolution-types.ts)
 - consulta local: `graphify query "<pergunta>"`, `graphify path "<A>" "<B>"`, `graphify explain "<X>"`
 
@@ -409,12 +409,12 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - docs/talkx/ESTADOS.md (15)
 - src/integrations/supabase/types.ts (15)
 - supabase/schema-catalog.json (14)
-- .github/workflows/db-guard.yml (12)
 - PENDENCIAS.md (12)
 - docs/DB-INVENTORY.md (12)
-- .github/workflows/ci.yml (11)
+- .github/workflows/db-guard.yml (11)
 - docs/agentes/github-ci.md (11)
 - scripts/db-audit/grants-baseline.json (11)
+- .github/workflows/ci.yml (10)
 - docs/ci/README.md (10)
 - scripts/ci/ci-docs-baseline.unit.mjs (9)
 - supabase/functions/evolution-api/index.ts (8)
@@ -540,6 +540,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - CHANGELOG topo: [Unreleased]
 
 ## Últimos commits
+- 2026-11-25 `e4c2b861` fix: tooltip do prazo usa a regra única de data e o módulo prazoCompleto (#3391)
 - 2026-11-25 `6ee63ddb` fix: canal único de realtime nas conexões e reconciliação de INSTANCE_GONE (#3390)
 - 2026-11-25 `4855bda8` fix: asserção do E2E da sidebar não confunde a seção de SLA com o accordion antigo (#3389)
 - 2026-11-25 `078aacb5` feat: tela da linha do tempo de SLA no painel do contato (#3383)
@@ -554,7 +555,6 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - 2026-11-25 `1d87b06f` chore(lint): reancora baseline nas posicoes atuais (divida inalterada, 540 = 540) (#3373)
 - 2026-11-25 `3be6edc8` chore: sincroniza docs/contexto com a publicacao oficial (mapa deixa de citar 149 caminhos mortos) (#3372)
 - 2026-11-25 `51918129` chore: aposenta acervo de resgate 261118 lote3 ja triado (1.029 arquivos, zero perdas) (#3371)
-- 2026-11-25 `06a1cbe6` feat(automacao): recupera harness local da PR #2926 sobre o main atual (#3366)
 
 ## Arquivos deste diretório
 - `docs/contexto/codigo/rotas.json`

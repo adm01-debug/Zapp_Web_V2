@@ -7216,8 +7216,12 @@
    "src/hooks/tasks/workItem.types.ts",
    "src/hooks/tasks/workItemAggregates.ts"
   ],
+  "src/components/tasks/list/prazoCompleto.ts": [
+   "src/hooks/tasks/workItemFormat.ts"
+  ],
   "src/components/tasks/list/taskRowCells.tsx": [
    "src/components/tasks/board/MoveToMenu.tsx",
+   "src/components/tasks/list/prazoCompleto.ts",
    "src/components/tasks/shared/DateLabel.tsx",
    "src/components/tasks/shared/StatusPill.tsx",
    "src/components/tasks/shared/cardActions.ts",
