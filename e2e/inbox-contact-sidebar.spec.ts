@@ -109,9 +109,12 @@ test.describe('Sidebar "Detalhes do Contato" — 3 seções', () => {
     await expect(panel.getByText('Dados Pessoais')).toBeVisible();
     await expect(panel.getByText('Perfil Singu')).toBeVisible();
     // Nenhuma seção do accordion antigo sobrou (rótulos de
-    // contactDetailSections.ts removidos na etapa 86).
+    // contactDetailSections.ts removidos na etapa 86). `exact: true` e
+    // obrigatorio: getByText casa por substring e sem diferenciar caixa, entao
+    // 'Linha do Tempo' pegaria a secao "Linha do tempo de SLA"
+    // (SlaTimelineSection), que e legitima e nao veio do accordion antigo.
     for (const velho of ['CRM 360°', 'Notas Privadas', 'Linha do Tempo', 'Scoring & LGPD']) {
-      await expect(panel.getByText(velho)).toHaveCount(0);
+      await expect(panel.getByText(velho, { exact: true })).toHaveCount(0);
     }
   });
 
