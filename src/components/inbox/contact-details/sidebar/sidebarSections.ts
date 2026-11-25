@@ -29,8 +29,13 @@
  * (`useExternalContact360`, `types/contact360.ts`) e faltava só a tela. Valor
  * conhecido a mais, chave de storage intacta, e FORA de DEFAULT_OPEN_SECTIONS —
  * a consulta ao CRM externo só acontece quando o atendente abre a seção.
+ *
+ * `sla-timeline` (Linha do tempo de SLA) entrou em 2026-11-25 pela mesma regra de
+ * `crm360`: `src/lib/slaTimeline.ts`, o hook `useContactSlaTimeline` e os testes já
+ * estavam na main e faltava só a tela. Valor conhecido a mais, chave de storage
+ * intacta, e FORA de DEFAULT_OPEN_SECTIONS — a leitura dos marcos só roda ao abrir.
  */
-export const SIDEBAR_SECTIONS = ['professional', 'personal', 'singu', 'intelligence', 'delivery', 'memoria', 'atendimento', 'crm360'] as const;
+export const SIDEBAR_SECTIONS = ['professional', 'personal', 'singu', 'intelligence', 'delivery', 'memoria', 'atendimento', 'crm360', 'sla-timeline'] as const;
 export type SidebarSectionValue = (typeof SIDEBAR_SECTIONS)[number];
 
 export const DEFAULT_OPEN_SECTIONS: SidebarSectionValue[] = ['professional', 'personal', 'singu', 'intelligence', 'delivery'];
