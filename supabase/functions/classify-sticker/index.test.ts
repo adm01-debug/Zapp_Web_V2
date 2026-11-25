@@ -48,7 +48,7 @@ const ENV_OK = {
   SUPABASE_URL: BASE,
   SUPABASE_ANON_KEY: ANON_KEY,
   SUPABASE_SERVICE_ROLE_KEY: SERVICE_ROLE,
-  TEST_VISION_KEY: "chave-visao-de-teste",
+  OPENAI_API_KEY: "chave-visao-de-teste",
 };
 const ENV_KEYS = Object.keys(ENV_OK) as Array<keyof typeof ENV_OK>;
 
@@ -59,7 +59,7 @@ const PROVEDOR_VISAO = [{
   name: "Visao",
   provider_type: "openai_compatible",
   api_endpoint: ENDPOINT_VISAO,
-  api_key_secret_name: "TEST_VISION_KEY",
+  api_key_secret_name: "OPENAI_API_KEY",
   model: "modelo-visao",
   system_prompt: null,
   config: { capabilities: { modalities: ["vision"] } },

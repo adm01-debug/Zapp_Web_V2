@@ -71,7 +71,7 @@ const USER_ID = "11111111-2222-4333-8444-555555555555";
 const ANON_KEY = "anon-key-sintetica";
 const SERVICE_KEY = "service-role-sintetica-1234567890";
 const PROVIDER_ENDPOINT = "https://provedor-visao.test/v1/chat/completions";
-const PROVIDER_SECRET_NAME = "CHAVE_VISAO_TESTE";
+const PROVIDER_SECRET_NAME = "OPENAI_API_KEY";
 const MODELO_VISAO = "modelo-visao-teste";
 
 /** PNG mínimo (conteúdo irrelevante: o base64 é o que importa). */
