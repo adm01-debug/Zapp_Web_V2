@@ -1,15 +1,15 @@
 {
  "meta": {
-  "sha": "6d87cf6cda6a79a5122a68d7492122c7a8d4c384",
+  "sha": "06a1cbe6261f6f13b12741e4442c24be64af1080",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-25 09:56 UTC",
-  "files_total": 15650,
-  "code_files": 8933,
-  "code_lines": 1419684
+  "generated_at": "2026-11-25 10:17 UTC",
+  "files_total": 15659,
+  "code_files": 8937,
+  "code_lines": 1422818
  },
  "version": "1.3.2",
- "facts_hash": "daa42b024d7c5d59",
+ "facts_hash": "105bca38bc20f704",
  "stack": {
   "frameworks": [
    "React + Vite",
@@ -124,7 +124,16 @@
    "contexto:ia:test": "node --test scripts/ai-context/gerar.unit.mjs",
    "prepare": "husky || true",
    "ci:local": "node scripts/ci/ci-local.mjs",
-   "ci:local:rapido": "node scripts/ci/ci-local.mjs --rapido"
+   "ci:local:rapido": "node scripts/ci/ci-local.mjs --rapido",
+   "automation:doctor": "node scripts/automation.mjs doctor",
+   "automation:test": "node scripts/automation.mjs test",
+   "automation:check": "node scripts/automation.mjs check --ref HEAD",
+   "automation:heal": "node scripts/automation.mjs heal --ref origin/main",
+   "automation:nightly": "node scripts/automation.mjs nightly --ref origin/main",
+   "automation:graph": "node scripts/automation.mjs graph",
+   "automation:status": "node scripts/automation.mjs graph status",
+   "automation:install-hooks": "node scripts/automation.mjs install-hooks",
+   "automation:uninstall-hooks": "node scripts/automation.mjs uninstall-hooks"
   },
   "infra": [
    {
@@ -159,6 +168,15 @@
     "triggers": [
      "push",
      "schedule",
+     "workflow_dispatch"
+    ]
+   },
+   {
+    "file": ".github/workflows/automation-local.yml",
+    "name": "Automação local",
+    "triggers": [
+     "pull_request",
+     "push",
      "workflow_dispatch"
     ]
    },
@@ -356,7 +374,7 @@
    ".sql": 3067,
    ".tsx": 2831,
    ".ts": 2254,
-   ".mjs": 652,
+   ".mjs": 656,
    ".py": 125,
    ".cjs": 19,
    ".js": 11,
@@ -77195,8 +77213,8 @@
   },
   {
    "module": "scripts",
-   "files": 500,
-   "lines": 103335,
+   "files": 504,
+   "lines": 106469,
    "tables": [
     "a",
     "alem_do_limite",
@@ -77244,6 +77262,8 @@
     "x_novo"
    ],
    "exports": [
+    "automation.mjs: parseArgs, validateConfig, execute, appendExclude, removeExclude, main",
+    "graphify-local.mjs: GraphError, run, acquire, validateConfig, fingerprint, validateGraph",
     "gerar.unit.mjs: AppRoutes, useContacts, depois, normal, AuthRoutes",
     "a11y-button-name-ratchet.mjs: readTagEnd, listSourceFiles, scanFile, scanAll, runRatchet, main",
     "a11y-button-name-ratchet.unit.mjs: IconButton, SearchSelect, TabsDemo, TabsDemo, IconButton, IconButton",
@@ -77281,17 +77301,15 @@
     "mapa-bundle-raw-doc.unit.mjs: DOC, VITE_CONFIG, BUDGET, CARREGADOR, numeroPtBr, comPontos",
     "marcador-specs.mjs: PREFIXO, nomesDeTestResults, marcadorDe, corpoDe, eLoginFalhou, tituloDe",
     "matriz-oth013-validar.py: fail, no_duplicate_keys, walk, pending_entry, matrix_row, main",
-    "multiplix-send-mutation-ci.unit.mjs: RUNNER, passos, comandos, violacoes",
-    "playwright-version-lock.unit.mjs: versaoPlaywrightDoLock, pinsDivergentes",
-    "redigir-relatorio.mjs: TAMANHO_MINIMO, extensaoDe, normalizarSegredos, arquivosDeTexto, redigirPadroes, redigirConteudo"
+    "multiplix-send-mutation-ci.unit.mjs: RUNNER, passos, comandos, violacoes"
    ],
    "docs": [
+    "automation.mjs: !/usr/bin/env node",
+    "graphify-local.mjs: !/usr/bin/env node",
     "cenarios.mjs: Simulação de cenários do gerador: monta centenas de repositórios sintéticos (variantes de SQL, rotas, menus, edges, workflows, monorepo, Python, arquivos corrompidos, fuzz) e confere: não trava, erros_do_gerador vazio, saída determinística e extração esperada. Rodar: node scripts/ai-context/cenarios …",
     "gerar.mjs: !/usr/bin/env node Gera o contexto de projeto para agentes de IA (padrão: inventario/ia/*). Zero dependências. Node >= 18. Genérico: funciona em qualquer repositório. JS/TS (React, Next, Vue, Svelte, Nuxt, Remix, Astro, Express/Hono/Fastify/Nest), Python (FastAPI/Flask/Django), e qualquer outra ling …",
     "gerar.unit.mjs: Teste do gerador de contexto (scripts/ai-context/gerar.mjs). Monta um repositório sintético em pasta temporária cobrindo os casos que o gerador precisa entender (rotas aninhadas, lazy, menu, hooks, edge functions, migrations em ordem, barrel re-export, backend HTTP, Python, nested tsconfig) e confer …",
-    "validate-plan.mjs: !/usr/bin/env node Valida docs/catalogo/PLANO_IMPLEMENTACAO_CATALOGO_100.md: 100 etapas, 10 sub-etapas e checklist em cada.",
-    "a11y-button-name-ratchet.mjs: !/usr/bin/env node Ratchet: fails CI if the count of a11y button-name violations grows above baseline. Covers three defect classes from the Y13 audit: 1. <Button size=\"icon\"> without aria-label, title, or sr-only text 2. <SelectTrigger> without accessible name (aria-label, aria-labelledby, or text) …",
-    "a11y-button-name-ratchet.unit.mjs: !/usr/bin/env node Unit tests for a11y-button-name-ratchet.mjs. Uses fixture files in a temp directory to exercise red and green cases."
+    "validate-plan.mjs: !/usr/bin/env node Valida docs/catalogo/PLANO_IMPLEMENTACAO_CATALOGO_100.md: 100 etapas, 10 sub-etapas e checklist em cada."
    ],
    "deps": [
     "#",
@@ -77336,6 +77354,10 @@
     "supabase/functions"
    ],
    "file_list": [
+    "scripts/automation.mjs",
+    "scripts/automation.unit.mjs",
+    "scripts/graphify-local.mjs",
+    "scripts/graphify-local.unit.mjs",
     "scripts/ai-context/cenarios.mjs",
     "scripts/ai-context/gerar.mjs",
     "scripts/ai-context/gerar.unit.mjs",
@@ -77411,11 +77433,7 @@
     "scripts/ci/dashboard-readme-drift.unit.mjs",
     "scripts/ci/db-guard-confiabilidade.unit.mjs",
     "scripts/ci/db-inventory-doc.unit.mjs",
-    "scripts/ci/db-migrate-contratos.unit.mjs",
-    "scripts/ci/db-migrate-workflow.unit.mjs",
-    "scripts/ci/deno-reproducibility.unit.mjs",
-    "scripts/ci/deploy-functions-workflow.unit.mjs",
-    "scripts/ci/design-system-status-honesty.unit.mjs"
+    "scripts/ci/db-migrate-contratos.unit.mjs"
    ]
   },
   {
@@ -83839,6 +83857,9 @@
    "FIXTURE_CONFIG": [
     "scripts/ci/branch-hygiene-runtime.unit.mjs"
    ],
+   "FIXTURE_GRAPH_EXIT": [
+    "scripts/automation.unit.mjs"
+   ],
    "FIXTURE_NETWORK": [
     "scripts/ci/branch-hygiene-runtime.unit.mjs"
    ],
@@ -84039,6 +84060,12 @@
    "GRANTS_SQL_PATH": [
     "scripts/db-audit/check-triple-parity.mjs"
    ],
+   "GRAPHIFY_FIXTURE_": [
+    "scripts/graphify-local.unit.mjs"
+   ],
+   "GRAPHIFY_FIXTURE_SECRET": [
+    "scripts/graphify-local.unit.mjs"
+   ],
    "HARNESS_TEST_STATE": [
     "scripts/ci/edge-http-harness.unit.mjs"
    ],
@@ -84206,6 +84233,7 @@
     "scripts/edge-deploy/api-traversal.unit.mjs",
     "scripts/edge-deploy/log-injection.unit.mjs",
     "scripts/edge-deploy/secrets-scope.unit.mjs",
+    "scripts/graphify-local.unit.mjs",
     "scripts/lib/seguranca-processo.mjs",
     "scripts/tarefas/seed-local-imagens.unit.mjs"
    ],
@@ -84377,6 +84405,9 @@
     "analise-prs/resgate-261118-lote3/claude_pink/cool-dijkstra-xk9ek2/scripts/ci/edge-coverage-authz.unit.mjs",
     "analise-prs/resgate-261118-lote3/fix/ci-workflows-vermelhos/scripts/ci/edge-coverage-authz.unit.mjs",
     "scripts/ci/edge-coverage-authz.unit.mjs"
+   ],
+   "REPO_AUTOMATION_CHAINING": [
+    "scripts/automation.mjs"
    ],
    "REPO_ROOT": [
     "scripts/supabase_snapshot/snapshot.py"
@@ -94252,6 +94283,10 @@
    {
     "file": "e2e/fixtures/arquivos-local/seed.ts",
     "msg": "seed: upload ${caminho} falhou (${res.status}): ${await res.text()}"
+   },
+   {
+    "file": "scripts/automation.unit.mjs",
+    "msg": "falha fixture"
    },
    {
     "file": "scripts/ai-context/cenarios.mjs",
@@ -351604,6 +351639,101 @@
     "Unskewed requests must not pay the worst-case retention (nonce map capacity)."
    ]
   },
+  "scripts/automation.mjs": {
+   "path": "scripts/automation.mjs",
+   "lines": 992,
+   "exports": [
+    "function parseArgs",
+    "function validateConfig",
+    "function execute",
+    "function appendExclude",
+    "function removeExclude",
+    "function main"
+   ],
+   "env": [
+    "REPO_AUTOMATION_CHAINING"
+   ],
+   "rule_comments": [
+    "Não trunque: um append concorrente deve sobreviver à reversão.",
+    "Remove somente os arquivos conhecidos criados por esta instalação."
+   ],
+   "doc": "!/usr/bin/env node",
+   "calc_fns": [
+    {
+     "name": "validateConfig",
+     "params": "c",
+     "body": "onlyKeys( c, [ 'version', 'name', 'entrypoint', 'testSuites', 'motor', 'graph', 'graphConfig', 'aliases', 'registrations', 'ci', 'nightly', 'timeoutMs', 'toolingPatterns', 'sourcePatterns', 'requirements', 'snapshot', 'motorConfig', 'motorSource', ], 'config' ); if (c.version !== 1 || typeof c.name !== 'string' || !c.name) throw fail('config: version 1 e name obrigatórios'); if (typeof c.entrypoint !== 'string' || !c.entrypoint) throw fail('entrypoint obrigatório'); if ( !Array.isArray(c.testSui …"
+    }
+   ],
+   "temporal": [
+    "timeout: 15000,",
+    "{ cwd, timeout = 300000, capture = false, env = process.env } = {}"
+   ]
+  },
+  "scripts/automation.unit.mjs": {
+   "path": "scripts/automation.unit.mjs",
+   "lines": 603,
+   "env": [
+    "FIXTURE_GRAPH_EXIT"
+   ],
+   "errors": [
+    "falha fixture"
+   ],
+   "temporal": [
+    "timeout: 15000,",
+    "{ timeout: 100, capture: true }"
+   ]
+  },
+  "scripts/graphify-local.mjs": {
+   "path": "scripts/graphify-local.mjs",
+   "lines": 1076,
+   "exports": [
+    "class GraphError",
+    "function run",
+    "function acquire",
+    "function validateConfig",
+    "function fingerprint",
+    "function validateGraph",
+    "function assertResources",
+    "function adoptInitial",
+    "function main",
+    "function acquireGlobal"
+   ],
+   "rule_comments": [
+    "1024 * 1024) fail('Arquivo de código excede o limite de512MB');"
+   ],
+   "doc": "!/usr/bin/env node",
+   "calc_fns": [
+    {
+     "name": "validateConfig",
+     "params": "c",
+     "body": "const keys = [ 'version', 'project', 'environment', 'pin', 'pythonVersion', 'state', 'output', 'adapter', 'scope', 'partial', 'timeoutMs', 'minAvailableMb', 'metadata', ]; if ( !c || c.version !== 1 || Object.keys(c).some((k) => !keys.includes(k)) || !/^[A-Za-z0-9_.-]+$/.test(c.project || '') || !/^\\d+\\.\\d+\\.\\d+$/.test(c.pin || '') ) fail('Configuração Graphify inválida'); for (const key of ['environment', 'state', 'output']) if (!safeRelative(c[key])) fail('Caminho da configuração deve ser rela …"
+    },
+    {
+     "name": "validateGraph",
+     "params": "file, partial = false",
+     "body": "const descriptor = await open( file, constants.O_RDONLY | constants.O_NOFOLLOW | constants.O_NONBLOCK ); try { const info = await descriptor.stat({ bigint: true }); if (!info.isFile() || info.size > 512n * 1024n * 1024n) fail('Artefato do grafo não é arquivo regular ou excede512MB'); const bytes = await descriptor.readFile(), after = await descriptor.stat({ bigint: true }); if ( BigInt(bytes.length) !== info.size || after.size !== info.size || after.mtimeNs !== info.mtimeNs || after.ctimeNs !== …"
+    },
+    {
+     "name": "generate",
+     "params": "ctx, fp, expectedGraph",
+     "body": "await resources(ctx); const prefix = await offline(ctx); const job = path.join(ctx.state, 'runs', `${Date.now()}-${randomUUID()}`); await mkdir(job, { recursive: true, mode: 0o700 }); let step = 0; const execute = async (argv, env = ctx.env) => { if (ctx.interrupted()) fail('Execução interrompida'); const result = await run([...prefix, ...argv], ctx.root, env, ctx.config.timeoutMs); const log = path.join(job, `${step++}.log`); await writeFile(log, redact(result.output), { mode: 0o600 }); if (res …"
+    }
+   ],
+   "temporal": [
+    "const timeout = setTimeout(() => { kill(); done(); }, 1500);",
+    "hard ||= setTimeout(() => { kill('SIGKILL'); finish(1); }, 1000);"
+   ]
+  },
+  "scripts/graphify-local.unit.mjs": {
+   "path": "scripts/graphify-local.unit.mjs",
+   "lines": 463,
+   "env": [
+    "GRAPHIFY_FIXTURE_",
+    "GRAPHIFY_FIXTURE_SECRET",
+    "PATH"
+   ]
+  },
   "scripts/ai-context/cenarios.mjs": {
    "path": "scripts/ai-context/cenarios.mjs",
    "lines": 173,
@@ -483018,10 +483148,33 @@
   }
  },
  "git": {
-  "sha": "6d87cf6cda6a79a5122a68d7492122c7a8d4c384",
+  "sha": "06a1cbe6261f6f13b12741e4442c24be64af1080",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "06a1cbe6",
+    "date": "2026-11-25",
+    "author": "adm01-debug",
+    "subject": "feat(automacao): recupera harness local da PR #2926 sobre o main atual (#3366)",
+    "files": [
+     ".github/workflows/automation-local.yml",
+     ".gitignore",
+     "docs/AUTOMACAO_LOCAL.md",
+     "docs/agentes/github-ci.md",
+     "docs/ci/README.md",
+     "graphify.local.json",
+     "package.json",
+     "scripts/automation.config.json",
+     "scripts/automation.mjs",
+     "scripts/automation.unit.mjs",
+     "scripts/ci/ci-docs-baseline.unit.mjs",
+     "scripts/graphify-local.mjs",
+     "scripts/graphify-local.unit.mjs",
+     "scripts/maintenance/README.md",
+     "scripts/maintenance/config.example.json"
+    ]
+   },
    {
     "sha": "6d87cf6c",
     "date": "2026-11-25",
@@ -483348,24 +483501,13 @@
      "supabase/schema-catalog.json",
      "supabase/schema-manifest.json"
     ]
-   },
-   {
-    "sha": "5ba09eae",
-    "date": "2026-11-23",
-    "author": "adm01-debug",
-    "subject": "feat(talkx): liga os dois kinds sem tela da IA (insight_text e segment_suggestion) (#3339)",
-    "files": [
-     "src/components/talkx/TalkXAnalytics.tsx",
-     "src/components/talkx/kit/insight.tsx",
-     "src/components/talkx/segments/TalkXSegmentBuilder.tsx",
-     "src/components/talkx/segments/__tests__/TalkXSegmentBuilder.ia.test.tsx",
-     "src/components/talkx/segments/segmentBuilderReducer.ts",
-     "src/hooks/talkx/__tests__/talkxAiSuggestions.test.ts",
-     "src/hooks/talkx/talkxAiSuggestions.ts"
-    ]
    }
   ],
   "hot_files": [
+   [
+    "docs/agentes/github-ci.md",
+    3
+   ],
    [
     "supabase/schema-manifest.json",
     3
@@ -483383,7 +483525,15 @@
     3
    ],
    [
-    "docs/agentes/github-ci.md",
+    "docs/ci/README.md",
+    2
+   ],
+   [
+    "package.json",
+    2
+   ],
+   [
+    "scripts/ci/ci-docs-baseline.unit.mjs",
     2
    ],
    [
@@ -483419,31 +483569,19 @@
     2
    ],
    [
-    ".github/workflows/auto-update-pr-branch.yml",
+    ".github/workflows/automation-local.yml",
     1
    ],
    [
-    "docs/ci/README.md",
+    ".gitignore",
     1
    ],
    [
-    "scripts/ci/ci-docs-baseline.unit.mjs",
+    "docs/AUTOMACAO_LOCAL.md",
     1
    ],
    [
-    "scripts/maintenance/config.json",
-    1
-   ],
-   [
-    "scripts/maintenance/lib.mjs",
-    1
-   ],
-   [
-    "scripts/maintenance/maintenance.unit.mjs",
-    1
-   ],
-   [
-    "scripts/maintenance/run.mjs",
+    "graphify.local.json",
     1
    ]
   ]

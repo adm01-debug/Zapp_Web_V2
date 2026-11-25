@@ -5,13 +5,13 @@
   "vitest",
   "playwright"
  ],
- "total": 3230,
+ "total": 3232,
  "por_tipo": {
   "contrato": 130,
   "e2e": 89,
   "pytest": 3,
   "qa": 10,
-  "unit": 2906
+  "unit": 2908
  },
  "onde_ficam": [
   {
@@ -20,7 +20,7 @@
   },
   {
    "padrao": "outro",
-   "arquivos": 349
+   "arquivos": 351
   },
   {
    "padrao": "co-localizado (*.test)",
@@ -4200,6 +4200,15 @@
    "casos": 5
   },
   {
+   "arquivo": "scripts/automation.unit.mjs",
+   "tipo": "unit",
+   "linhas": 603,
+   "testa": [
+    "scripts/automation.mjs"
+   ],
+   "casos": 32
+  },
+  {
    "arquivo": "scripts/catalog/validate-plan.unit.mjs",
    "tipo": "unit",
    "linhas": 260,
@@ -6344,6 +6353,15 @@
     "scripts/eslint/no-secret-compare.js"
    ],
    "casos": 6
+  },
+  {
+   "arquivo": "scripts/graphify-local.unit.mjs",
+   "tipo": "unit",
+   "linhas": 463,
+   "testa": [
+    "scripts/graphify-local.mjs"
+   ],
+   "casos": 24
   },
   {
    "arquivo": "scripts/lib/seguranca-processo.unit.mjs",
@@ -29273,6 +29291,7 @@
   "analise-prs/resgate-261118-lote3/resolve-2381-from-main/src/components/inbox/copilot/RadarPanel.tsx": 1,
   "analise-prs/resgate-261118-lote3/resolve-2381-from-main/supabase/functions/_shared/copilot-tick.ts": 1,
   "performance-budget.json": 2,
+  "scripts/automation.mjs": 1,
   "scripts/ci/actions-kpi.mjs": 1,
   "scripts/ci/aplicar-perimetro.mjs": 1,
   "scripts/ci/audit-prod.mjs": 1,
@@ -29373,6 +29392,7 @@
   "scripts/edge-deploy/talkx-preflight.mjs": 1,
   "scripts/edge-deploy/unchanged-from-log.mjs": 1,
   "scripts/eslint/no-secret-compare.js": 1,
+  "scripts/graphify-local.mjs": 1,
   "scripts/ia/ensaio-provisionamento.mjs": 1,
   "scripts/inventario/gerar-banco.mjs": 1,
   "scripts/inventario/gerar-rotas.mjs": 1,

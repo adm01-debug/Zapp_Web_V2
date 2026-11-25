@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "6d87cf6cda6a79a5122a68d7492122c7a8d4c384",
+  "commit": "06a1cbe6261f6f13b12741e4442c24be64af1080",
   "branch": "main",
-  "data_commit": "2026-11-25T06:54:36-03:00",
+  "data_commit": "2026-11-25T07:15:49-03:00",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "06a1cbe6",
+    "data": "2026-11-25",
+    "assunto": "feat(automacao): recupera harness local da PR #2926 sobre o main atual (#3366)"
+   },
    {
     "sha": "6d87cf6c",
     "data": "2026-11-25",
@@ -126,14 +131,9 @@
     "sha": "d09e2cec",
     "data": "2026-11-23",
     "assunto": "⬆️ docker: bump golang from `fa3d596` to `70bd7dd` in /infrastructure/preview-egress-proxy (#3338)"
-   },
-   {
-    "sha": "4c1d031f",
-    "data": "2026-11-23",
-    "assunto": "⬆️ ci: bump actions/dependency-review-action from 5.0.0 to 5.0.1 in the actions-misc group across 1 directory (#3335)"
    }
   ],
-  "arquivos_mudados_7d": 4369,
+  "arquivos_mudados_7d": 4380,
   "pastas_mais_mudadas_30d": [
    {
     "pasta": "docs/contexto/supabase",
@@ -238,20 +238,20 @@
     "mudancas": 12
    },
    {
+    "arquivo": "docs/agentes/github-ci.md",
+    "mudancas": 11
+   },
+   {
     "arquivo": ".github/workflows/ci.yml",
     "mudancas": 10
    },
    {
-    "arquivo": "docs/agentes/github-ci.md",
-    "mudancas": 10
-   },
-   {
     "arquivo": "docs/ci/README.md",
-    "mudancas": 8
+    "mudancas": 9
    },
    {
     "arquivo": "scripts/ci/ci-docs-baseline.unit.mjs",
-    "mudancas": 8
+    "mudancas": 9
    },
    {
     "arquivo": "supabase/functions/evolution-api/index.ts",
@@ -263,6 +263,10 @@
    },
    {
     "arquivo": "docs/plans/PLANO_ASSISTENTE_PESSOAL_IA_2026-11-15.md",
+    "mudancas": 6
+   },
+   {
+    "arquivo": "package.json",
     "mudancas": 6
    },
    {
@@ -292,10 +296,6 @@
    {
     "arquivo": "docs/audits/edge-functions-authz-coverage.md",
     "mudancas": 5
-   },
-   {
-    "arquivo": "docs/contexto/regras/manual/regras.md",
-    "mudancas": 5
    }
   ],
   "autores_30d": [
@@ -314,9 +314,9 @@
   ]
  },
  "contagens": {
-  "arquivos_total": 15802,
-  "arquivos_codigo": 5893,
-  "linhas_codigo": 1141333,
+  "arquivos_total": 15811,
+  "arquivos_codigo": 5897,
+  "linhas_codigo": 1144467,
   "rotas": 18,
   "rotas_http_backend": 11,
   "vistas_por_id": 55,
@@ -328,10 +328,10 @@
   "tabelas": 223,
   "migrations": 1153,
   "cron_jobs": 29,
-  "testes": 3230,
-  "workflows": 25,
-  "scripts": 451,
-  "docs_md": 4098
+  "testes": 3232,
+  "workflows": 26,
+  "scripts": 453,
+  "docs_md": 4099
  },
  "por_pasta": {
   "analise-prs/resgate-261115": {
@@ -622,6 +622,14 @@
    "arquivos": 3,
    "linhas": 1556
   },
+  "scripts/automation.mjs": {
+   "arquivos": 1,
+   "linhas": 992
+  },
+  "scripts/automation.unit.mjs": {
+   "arquivos": 1,
+   "linhas": 603
+  },
   "scripts/catalog": {
    "arquivos": 2,
    "linhas": 337
@@ -657,6 +665,14 @@
   "scripts/eslint": {
    "arquivos": 2,
    "linhas": 127
+  },
+  "scripts/graphify-local.mjs": {
+   "arquivos": 1,
+   "linhas": 1076
+  },
+  "scripts/graphify-local.unit.mjs": {
+   "arquivos": 1,
+   "linhas": 463
   },
   "scripts/ia": {
    "arquivos": 1,
@@ -913,6 +929,10 @@
    "linhas": 1085
   },
   {
+   "arquivo": "scripts/graphify-local.mjs",
+   "linhas": 1076
+  },
+  {
    "arquivo": "src/components/catalog/catalogShared.tsx",
    "linhas": 1066
   },
@@ -923,19 +943,15 @@
   {
    "arquivo": "supabase/functions/multiplix-dispatch/actions/inspect.ts",
    "linhas": 1040
-  },
-  {
-   "arquivo": "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/talkx/TalkXCampaignRunning.tsx",
-   "linhas": 1030
   }
  ],
  "qualidade": {
   "any": 421,
-  "console_log": 767,
+  "console_log": 774,
   "ts_ignore": 0,
   "eslint_disable": 1,
   "todos": 59,
-  "arquivos_acima_500_linhas": 167
+  "arquivos_acima_500_linhas": 169
  },
  "todos": [
   {

@@ -1,7 +1,7 @@
 {
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
- "total": 451,
+ "total": 453,
  "scripts": [
   {
    "arquivo": "scripts/ai-context/cenarios.mjs",
@@ -37,6 +37,29 @@
    ],
    "workflows": [
     "contexto.yml"
+   ],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/automation.mjs",
+   "descricao": null,
+   "linhas": 992,
+   "env": [
+    "REPO_AUTOMATION_CHAINING"
+   ],
+   "npm_scripts": [
+    "automation:doctor",
+    "automation:test",
+    "automation:check",
+    "automation:heal",
+    "automation:nightly",
+    "automation:graph",
+    "automation:status",
+    "automation:install-hooks",
+    "automation:uninstall-hooks"
+   ],
+   "workflows": [
+    "automation-local.yml"
    ],
    "orfao": false
   },
@@ -4562,6 +4585,15 @@
    "arquivo": "scripts/eslint/no-secret-compare.js",
    "descricao": "* Z012 — proíbe comparação direta (===|!==) de identificadores que aludam a credenciais.",
    "linhas": 71,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/graphify-local.mjs",
+   "descricao": null,
+   "linhas": 1076,
    "env": [],
    "npm_scripts": [],
    "workflows": [],

@@ -1,7 +1,7 @@
 # Contexto do projeto para agentes de IA
 
 GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.
-Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR dela) a cada push em `main` e a cada 10 minutos pelo workflow `contexto.yml`; índice único das três fontes em `docs/contexto/00-INDEX.md`. Gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `6d87cf6cda6a79a5122a68d7492122c7a8d4c384` (2026-11-25T06:54:36-03:00).
+Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR dela) a cada push em `main` e a cada 10 minutos pelo workflow `contexto.yml`; índice único das três fontes em `docs/contexto/00-INDEX.md`. Gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `06a1cbe6261f6f13b12741e4442c24be64af1080` (2026-11-25T07:15:49-03:00).
 
 ## Como usar (leia antes de planejar ou executar qualquer tarefa)
 1. **Tela/rota/menu** → `rotas.json` (url/vista/menu → arquivo → hooks → tabelas → edges; `rotas_http_backend` para APIs) e `modulos.json` (módulo inteiro + dependências entre módulos).
@@ -14,7 +14,7 @@ Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR
 Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua tarefa; não carregue tudo.
 
 ## Stack
-- linguagens: TypeScript (5090), Markdown (4098), SQL (3067), JSON (1970), JavaScript (682), Shell (265), Python (125), YAML (113)
+- linguagens: TypeScript (5090), Markdown (4099), SQL (3067), JSON (1973), JavaScript (686), Shell (265), Python (125), YAML (114)
 - linguagem_principal: TypeScript
 - framework: React
 - backend_http: n/d
@@ -34,9 +34,9 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 ## Números
 | item | qtd |
 |---|---|
-| arquivos_total | 15802 |
-| arquivos_codigo | 5893 |
-| linhas_codigo | 1141333 |
+| arquivos_total | 15811 |
+| arquivos_codigo | 5897 |
+| linhas_codigo | 1144467 |
 | rotas | 18 |
 | rotas_http_backend | 11 |
 | vistas_por_id | 55 |
@@ -48,21 +48,21 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 | tabelas | 223 |
 | migrations | 1153 |
 | cron_jobs | 29 |
-| testes | 3230 |
-| workflows | 25 |
-| scripts | 451 |
-| docs_md | 4098 |
+| testes | 3232 |
+| workflows | 26 |
+| scripts | 453 |
+| docs_md | 4099 |
 
 ## Onde ficam as coisas
 - telas: src/components (54), src/pages (18)
 - componentes: src/components (900), analise-prs/resgate-261118-lote3 (129), src/pages (26)
 - hooks: src/hooks (430), analise-prs/resgate-261118-lote3 (92), src/components (74)
 - servicos_logica: src/lib (156), src/services (20), src/utils (8)
-- testes: co-localizado (__tests__) (2379), outro (349), co-localizado (*.test) (237)
+- testes: co-localizado (__tests__) (2379), outro (351), co-localizado (*.test) (237)
 - edge_functions: supabase/functions
 - migrations: supabase/migrations
 - scripts: scripts/db-audit (304), scripts/ci (43), scripts/e2e-isolated (41)
-- docs: docs (33), (raiz) (15), .github (1)
+- docs: docs (34), (raiz) (15), .github (1)
 - nomenclatura: {"componentes":"PascalCase (89%)","hooks":"use + PascalCase","servicos":"camelCase (73%)","edge_functions":"kebab-case (96%)","tabelas":"snake_case (91%)"}
 - instruções para agentes no repo: AGENTS.md, CLAUDE.md
 
@@ -397,8 +397,8 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - possiveis_segredos_no_codigo: 6 — ex.: analise-prs/resgate-261118-lote3/claude_pink/cool-dijkstra-xk9ek2/scripts/ci/edge-coverage-authz.unit.mjs:397, analise-prs/resgate-261118-lote3/claude_pink/cool-dijkstra-xk9ek2/scripts/edge-deploy/redigir-log.unit.mjs:38, scripts/ai-context/cenarios.mjs:102
 
 ## Grafo de código (graphify)
-- 103405 nós · 175585 arestas · 9218 comunidades · grafo do commit `6d87cf6c`
-- comunidades maiores: Communities (5953 total, 1987 thin omitted) (3943), react (1258), lucide-react (1204), utils.ts (1133), TalkXSuppression.tsx (1057), sonner (952), vitest (875), ref_node_fs (811), DashboardView.tsx (736), cn (676), validation.ts (548), ref_https (487)
+- 103505 nós · 175926 arestas · 9310 comunidades · grafo do commit `06a1cbe6`
+- comunidades maiores: Communities (5953 total, 1987 thin omitted) (3947), lucide-react (1552), react (1423), TalkXSuppression.tsx (1225), cn (1172), vitest (1148), ref_node_fs (875), DashboardView.tsx (581), src/components/inbox/RealtimeInboxView.tsx (529), validation.ts (506), ExternalProductManagement.tsx (489), WorkItemSheet.tsx (487)
 - símbolos mais chamados: cn() (src/lib/utils.ts), useAuth() (src/hooks/auth/useAuth.tsx), jsonResponse() (supabase/functions/_shared/validation.ts), errorResponse() (supabase/functions/_shared/validation.ts), handleCors() (supabase/functions/_shared/validation.ts), fail() (scripts/e2e-isolated/network-proof-policy.mjs), Logger (supabase/functions/_shared/validation.ts), requireEnv() (supabase/functions/_shared/validation.ts), fmtInt() (src/components/talkx/kit/format.ts), fromTable() (src/lib/supabaseHelpers.ts), useUserRole() (src/hooks/system/useUserRole.ts), validationErrorResponse() (supabase/functions/_shared/schemas.ts)
 - consulta local: `graphify query "<pergunta>"`, `graphify path "<A>" "<B>"`, `graphify explain "<X>"`
 
@@ -413,14 +413,15 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - scripts/db-audit/grants-baseline.json (13)
 - .github/workflows/db-guard.yml (12)
 - PENDENCIAS.md (12)
+- docs/agentes/github-ci.md (11)
 - .github/workflows/ci.yml (10)
-- docs/agentes/github-ci.md (10)
-- docs/ci/README.md (8)
-- scripts/ci/ci-docs-baseline.unit.mjs (8)
+- docs/ci/README.md (9)
+- scripts/ci/ci-docs-baseline.unit.mjs (9)
 - supabase/functions/evolution-api/index.ts (8)
 
 ## Workflows
 - `auto-update-pr-branch.yml` — Auto Update PR Branches (push, schedule, workflow_dispatch, workflow_run; cron 7,37 * * * *)
+- `automation-local.yml` — Automação local (pull_request, push, workflow_dispatch)
 - `branch-hygiene-audit.yml` — Branch Hygiene Audit (schedule, workflow_dispatch; cron 56 7 * * 1)
 - `check-talkx-pr-body.yml` — Talk X PR body check (pull_request)
 - `ci.yml` — CI/CD Pipeline (pull_request, push, workflow_dispatch)
@@ -474,6 +475,15 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - `prepare`: `husky || true`
 - `ci:local`: `node scripts/ci/ci-local.mjs`
 - `ci:local:rapido`: `node scripts/ci/ci-local.mjs --rapido`
+- `automation:doctor`: `node scripts/automation.mjs doctor`
+- `automation:test`: `node scripts/automation.mjs test`
+- `automation:check`: `node scripts/automation.mjs check --ref HEAD`
+- `automation:heal`: `node scripts/automation.mjs heal --ref origin/main`
+- `automation:nightly`: `node scripts/automation.mjs nightly --ref origin/main`
+- `automation:graph`: `node scripts/automation.mjs graph`
+- `automation:status`: `node scripts/automation.mjs graph status`
+- `automation:install-hooks`: `node scripts/automation.mjs install-hooks`
+- `automation:uninstall-hooks`: `node scripts/automation.mjs uninstall-hooks`
 
 ## Documentos (raiz e docs/)
 - `.github/PULL_REQUEST_TEMPLATE.md` (65 linhas)
@@ -492,6 +502,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - `SECURITY.md` — 🔒 Política de Segurança — ZAPP-WEB (95 linhas)
 - `TESTING_CONVENTION.md` — TESTING_CONVENTION.md — onde cada teste mora e como ele roda (104 linhas)
 - `TRIAGEM-PRS-GITHUB-261031.md` — TRIAGEM DE PRs - adm01-debug/Zapp_Web_V2 (210 linhas)
+- `docs/AUTOMACAO_LOCAL.md` — Automação local — Zapp_Web_V2 (713 linhas)
 - `docs/BACKUP-RECOVERY-STRATEGY.md` — 🔐 ZAPP-WEB — Estratégia de Backup e Recovery (336 linhas)
 - `docs/CAPACIDADES.md` — Capacidades de chamada por canal (59 linhas)
 - `docs/COMPLETE_SYSTEM_FEATURES.md` — 📋 Levantamento Completo de Funcionalidades do Sistema (1061 linhas)
@@ -529,6 +540,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - CHANGELOG topo: [Unreleased]
 
 ## Últimos commits
+- 2026-11-25 `06a1cbe6` feat(automacao): recupera harness local da PR #2926 sobre o main atual (#3366)
 - 2026-11-25 `6d87cf6c` feat(ci): restaura a fila de merge serial (auto-update-pr-branch) (#3368)
 - 2026-11-24 `e1a545c6` feat(manutencao): porta o harness de manutencao completo da PR #2926 (#3370)
 - 2026-11-24 `21396b9c` fix(ci): exige Replay local das migrations na main (#3367)
@@ -543,7 +555,6 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - 2026-11-24 `5e609b75` fix(e2e): retenta o pull em falha transiente de rede do registry (#3357)
 - 2026-11-24 `83a70c3e` chore(db): sincronizar artefatos derivados do banco (#3356)
 - 2026-11-24 `592ffa7f` fix: elimina o flake de meia-noite do contrato do monitor (vs_yesterday) (#3353)
-- 2026-11-24 `45a65087` fix(e2e): serve as 4 imagens restantes pelo mirror ghcr.io do mesmo digest (#3352)
 
 ## Arquivos deste diretório
 - `docs/contexto/codigo/rotas.json`
