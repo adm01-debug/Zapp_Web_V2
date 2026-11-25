@@ -176,10 +176,10 @@ test("normalizacao do code frame nao engole divida nova", () => {
     const source = "function a() {\n  keep();\n  impure();\n  return 1;\n}\n";
     const baseline = createBaseline([result(root, "src/a.ts", source, [purityMessage(3)])], root);
 
-    // Mesma mensagem normalizada, mas fora do contexto antigo: continua sendo divida nova.
-    const contextoDiferente = "function b() {\n  keep();\n  nada();\n  impure();\n}\n";
+    // Mesma mensagem normalizada, mas o codigo da ocorrencia mudou: continua sendo divida nova.
+    const outraLinha = "function a() {\n  keep();\n  impuro2();\n  return 1;\n}\n";
     assert.equal(
-      compareBaseline(baseline, [result(root, "src/a.ts", contextoDiferente, [purityMessage(4)])], root)
+      compareBaseline(baseline, [result(root, "src/a.ts", outraLinha, [purityMessage(3)])], root)
         .added.length,
       1,
     );
@@ -195,16 +195,30 @@ test("normalizacao do code frame nao engole divida nova", () => {
   }
 });
 
-test("bloqueia substituicao por ancora identica em outra posicao sem contexto estavel", () => {
+test("aceita a mesma ocorrencia que mudou de posicao no arquivo (ancora de conteudo)", () => {
   const { root, cleanup } = fixture();
   try {
     const baseline = createBaseline([result(root, "src/a.ts", "missing();\n")], root);
-    const replacement = result(root, "src/a.ts", "fixed();\n\nmissing();\n", [
+    const moved = result(root, "src/a.ts", "fixed();\n\nmissing();\n", [message({ line: 3, endLine: 3 })]);
+    const comparison = compareBaseline(baseline, [moved], root);
+    assert.deepEqual(comparison.added, []);
+    assert.deepEqual(comparison.removed, []);
+  } finally {
+    cleanup();
+  }
+});
+
+test("bloqueia a mesma ocorrencia repetida uma vez a mais no mesmo arquivo", () => {
+  const { root, cleanup } = fixture();
+  try {
+    const baseline = createBaseline([result(root, "src/a.ts", "missing();\n")], root);
+    const duplicada = result(root, "src/a.ts", "fixed();\n\nmissing();\nmissing();\n", [
       message({ line: 3, endLine: 3 }),
+      message({ line: 4, endLine: 4 }),
     ]);
-    const comparison = compareBaseline(baseline, [replacement], root);
+    const comparison = compareBaseline(baseline, [duplicada], root);
     assert.equal(comparison.added.length, 1);
-    assert.equal(comparison.removed.length, 1);
+    assert.equal(comparison.removed.length, 0);
   } finally {
     cleanup();
   }

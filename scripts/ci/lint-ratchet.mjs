@@ -282,9 +282,9 @@ function uniqueRenameAliases(baseline, current) {
 // numeros de linha e o `:linha:coluna` do arquivo. Como a chave do ratchet inclui a mensagem, isso
 // amarrava a ocorrencia a posicao ABSOLUTA: inserir uma linha acima de uma ocorrencia antiga a fazia
 // parecer nova, mesmo com codigo e contexto identicos — e o pre-commit (`--staged`) e o pre-push
-// (repo inteiro) bloqueiam o commit por causa disso. A posicao continua sendo exigida pelas fases de
-// localizacao e de ancora (line/column/spanHash/lineHash/contextHash); aqui sai apenas o ruido de
-// posicao que vive dentro do TEXTO da mensagem.
+// (repo inteiro) bloqueiam o commit por causa disso. A primeira fase continua exigindo a posicao
+// exata (line/column/spanHash/lineHash) e as demais exigem ancora de conteudo; aqui sai apenas o
+// ruido de posicao que vive dentro do TEXTO da mensagem.
 const CODE_FRAME_LINE_NUMBER = /(^|\s)>?\s*\d{1,7}\s*\|(?=\s|$)/g;
 const MESSAGE_FILE_LOCATION = /(?<=[A-Za-z_./\\-]):\d{1,7}:\d{1,7}(?=\s|$)/g;
 
@@ -368,13 +368,20 @@ export function compareBaseline(baseline, report, root = process.cwd()) {
   const currentMatched = new Set();
 
   matchPhase(baseline.issues, currentIssues, baselineMatched, currentMatched, locationKey);
-  matchPhase(
-    baseline.issues,
-    currentIssues,
-    baselineMatched,
-    currentMatched,
-    (issue, canonicalFile) => anchoredKey(issue, canonicalFile, "contextHash"),
-  );
+  // Deslocamento de linha puro (linha inserida/removida acima, reordenacao de bloco) muda a posicao
+  // e pode mudar o contexto vizinho sem tocar no codigo da ocorrencia. As ancoras de conteudo
+  // reconhecem esse caso sem abrir espaco para divida nova: o arquivo canonico, a regra, a
+  // severidade, o messageId e o TEXTO normalizado da ocorrencia continuam tendo de ser identicos —
+  // trocar o codigo por outro muda o hash e segue sendo divida nova.
+  for (const anchorField of ["contextHash", "spanHash", "lineHash"]) {
+    matchPhase(
+      baseline.issues,
+      currentIssues,
+      baselineMatched,
+      currentMatched,
+      (issue, canonicalFile) => anchoredKey(issue, canonicalFile, anchorField),
+    );
+  }
 
   const added = currentIssues
     .filter((_, index) => !currentMatched.has(index))
