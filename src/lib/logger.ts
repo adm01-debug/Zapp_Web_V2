@@ -1,5 +1,6 @@
 // Centralized logging utility with correlation IDs and structured output
 // Logs are automatically filtered in production builds
+import { redactPII, redactPIIValue } from '@/lib/redactPII';
 
 const isDev = import.meta.env.DEV;
 
@@ -44,7 +45,12 @@ class Logger {
 
   private formatMessage(level: LogLevel, message: string): string {
     const timestamp = new Date().toISOString();
-    return `[${timestamp}] [${level.toUpperCase()}] [${this.module}] [sid:${sessionId.slice(0, 8)}] ${message}`;
+    // PII/segredo redigido também no console: nunca vaza em print de tela.
+    return `[${timestamp}] [${level.toUpperCase()}] [${this.module}] [sid:${sessionId.slice(0, 8)}] ${redactPII(message)}`;
+  }
+
+  private redactArgs(args: unknown[]): unknown[] {
+    return args.map((arg) => redactPIIValue(arg));
   }
 
   private shouldLog(level: LogLevel): boolean {
@@ -56,22 +62,22 @@ class Logger {
 
   debug(message: string, ...args: unknown[]): void {
     if (!this.shouldLog('debug')) return;
-    console.debug(this.formatMessage('debug', message), ...args);
+    console.debug(this.formatMessage('debug', message), ...this.redactArgs(args));
   }
 
   info(message: string, ...args: unknown[]): void {
     if (!this.shouldLog('info')) return;
-    console.info(this.formatMessage('info', message), ...args);
+    console.info(this.formatMessage('info', message), ...this.redactArgs(args));
   }
 
   warn(message: string, ...args: unknown[]): void {
     if (!this.shouldLog('warn')) return;
-    console.warn(this.formatMessage('warn', message), ...args);
+    console.warn(this.formatMessage('warn', message), ...this.redactArgs(args));
   }
 
   error(message: string, ...args: unknown[]): void {
     if (!this.shouldLog('error')) return;
-    console.error(this.formatMessage('error', message), ...args);
+    console.error(this.formatMessage('error', message), ...this.redactArgs(args));
   }
 
   /** Log with explicit correlation ID for request tracing */
