@@ -21,6 +21,14 @@ export const TARGETS = Object.freeze({
     frame: 'SAMEORIGIN',
     robots: null,
   }),
+  // Virada de producao: o dominio principal servindo o build do V2. Ligado pela
+  // variable ZAPP_PROD_TARGET=v2 do repositorio; nunca roda junto com o alvo v3.
+  dominio: Object.freeze({
+    label: 'V2 - dominio principal',
+    url: 'https://zappweb.app.br',
+        frame: 'DENY',
+        robots: 'noindex, nofollow',
+  }),
 });
 
 function inteiro(name, value, { min, max }) {
@@ -41,7 +49,7 @@ export function parseArgs(argv) {
     args[match[1]] = match[2];
   }
   const target = args.target;
-  if (!Object.hasOwn(TARGETS, target)) throw new Error('--target deve ser v2 ou v3');
+  if (!Object.hasOwn(TARGETS, target)) throw new Error('--target deve ser v2, v3 ou dominio');
   // Flag omitida (sem --expected-sha=) e flag passada vazia (--expected-sha=, ex.:
   // GITHUB_SHA falhou ao expandir) nao sao a mesma coisa: a segunda e erro de uso,
   // nao "nao verificar o deploy" silenciosamente.
@@ -81,7 +89,7 @@ function assetSeguro(value, field) {
 
 export function validarVersao(target, body, { expectedSha = null, now = Date.now() } = {}) {
   if (!body || typeof body !== 'object' || Array.isArray(body)) throw new Error('version.json inválido');
-  if (target === 'v2') {
+  if (target === 'v2' || target === 'dominio') {
     if (!SHA.test(body.buildId ?? '')) throw new Error('V2 buildId inválido');
     if (expectedSha && body.buildId !== expectedSha) {
       throw new Error(`V2 ainda em ${body.buildId.slice(0, 12)}; esperado ${expectedSha.slice(0, 12)}`);
@@ -157,7 +165,7 @@ async function umaTentativa({ target, expectedSha, fetchImpl, now, requestTimeou
 
     let body;
     try { body = await versionRes.json(); } catch { throw new Error('version.json não é JSON válido'); }
-    if (target === 'v2' && expectedSha && SHA.test(body?.buildId ?? '') && body.buildId !== expectedSha
+    if ((target === 'v2' || target === 'dominio') && expectedSha && SHA.test(body?.buildId ?? '') && body.buildId !== expectedSha
       && ancestralImpl(expectedSha, body.buildId)) {
       return validarVersao(target, body, { now });
     }
