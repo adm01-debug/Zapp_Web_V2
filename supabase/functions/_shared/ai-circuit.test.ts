@@ -74,6 +74,11 @@ interface EstadoStub {
   /** Status/body que o ENDPOINT DO PROVEDOR devolve. */
   providerStatus: number;
   providerBody: unknown;
+  /**
+   * Linhas de `feature_flags` visíveis para o gate de provedor (SL-010). Ausente
+   * (`undefined`) = tabela vazia, que é "o operador não desligou" — nada bloqueia.
+   */
+  flags?: Array<{ key: string; enabled: boolean }>;
 }
 
 interface Contadores {
@@ -82,6 +87,8 @@ interface Contadores {
   leiturasLedger: number;
   consultasLedger: string[];
   insertsLog: Array<Record<string, unknown>>;
+  /** Leituras do gate de provedor em `feature_flags` (SL-010). */
+  leiturasFlags: number;
 }
 
 function stubFetch(estado: EstadoStub): { contadores: Contadores; restaurar: () => void } {
@@ -91,6 +98,7 @@ function stubFetch(estado: EstadoStub): { contadores: Contadores; restaurar: () 
     leiturasLedger: 0,
     consultasLedger: [],
     insertsLog: [],
+    leiturasFlags: 0,
   };
   const original = globalThis.fetch;
   globalThis.fetch = ((input: string | URL | Request, init?: RequestInit) => {
@@ -134,6 +142,15 @@ function stubFetch(estado: EstadoStub): { contadores: Contadores; restaurar: () 
         });
       }
       return Promise.resolve(json([], 201));
+    }
+    if (url.includes("/rest/v1/feature_flags")) {
+      contadores.leiturasFlags++;
+      // Fiel ao PostgREST: `.maybeSingle()` devolve UM OBJETO (ou null), nunca lista —
+      // é o que o gate de provedor consome (SL-010 e IA-009 §2.2).
+      const filtro = new URL(url).searchParams.get("key");
+      const chave = filtro?.startsWith("eq.") ? filtro.slice(3) : null;
+      const linha = (estado.flags ?? []).find((flag) => flag.key === chave) ?? null;
+      return Promise.resolve(json(linha));
     }
     return Promise.reject(new Error(`fetch nao esperado no teste: ${metodo} ${url}`));
   }) as typeof fetch;
@@ -568,4 +585,69 @@ Deno.test("IA-050: deriveCircuitVerdict — limiar, janela, cooldown e o que NÃ
     ).state,
     "closed",
   );
+});
+
+// ---------------------------------------------------------------------------
+// (SL-010) Kill switch por PROVEDOR: `ai.provider.<nome>` = false bloqueia a
+// chamada ANTES de gastar token, e o bloqueio entra no ledger como 'denied'.
+// ---------------------------------------------------------------------------
+Deno.test("SL-010: provedor desligado em feature_flags bloqueia SEM chamar o provedor", async () => {
+  const restaurarEnv = stubEnv();
+  const estado: EstadoStub = {
+    ledger: [],
+    probeHits: 1,
+    providerStatus: 200,
+    providerBody: SUCESSO_PROVEDOR,
+    // A chave que a migration da IA-009 §2.2 semeia para 'openai_compatible'.
+    flags: [{ key: "ai.provider.openai", enabled: false }],
+  };
+  const { contadores, restaurar } = stubFetch(estado);
+  try {
+    const resultado = await chamarGenerate();
+
+    assertEquals(resultado.ok, false, "provedor desligado tinha de devolver falha explícita");
+    assertEquals(resultado.errorCode, "AI_DISABLED", "o código tem de dizer que foi o operador");
+    assertEquals(resultado.response.status, 503, "desligamento responde 503, não 200");
+    assertEquals(resultado.data, null, "nada do provedor pode ser devolvido como dado");
+    assertEquals(
+      contadores.provedor,
+      0,
+      "com o provedor desligado NENHUMA chamada pode chegar ao endpoint (sem custo)",
+    );
+    assert(contadores.leiturasFlags > 0, "o gate tinha de consultar feature_flags");
+    assertEquals(contadores.leiturasLedger, 0, "o gate vem antes da leitura do circuito");
+
+    assertEquals(contadores.insertsLog.length, 1, "o desligamento tinha de ser auditado");
+    assertEquals(
+      contadores.insertsLog[0]?.status,
+      "denied",
+      "'denied' é o status sem chamada ao provedor (não consome quota nem abre circuito)",
+    );
+    assertLogComProvider(contadores, "denied");
+  } finally {
+    restaurar();
+    restaurarEnv();
+  }
+});
+
+Deno.test("SL-010: sem linha em feature_flags o provedor continua liberado (zero regressão)", async () => {
+  const restaurarEnv = stubEnv();
+  // `flags` ausente = tabela vazia em produção hoje. A ausência NÃO pode bloquear.
+  const estado: EstadoStub = {
+    ledger: ledgerComErros(2, 5_000),
+    probeHits: 1,
+    providerStatus: 200,
+    providerBody: SUCESSO_PROVEDOR,
+  };
+  const { contadores, restaurar } = stubFetch(estado);
+  try {
+    const resultado = await chamarGenerate();
+    assertEquals(resultado.ok, true, "sem semente o provedor tinha de responder normalmente");
+    assertEquals(contadores.provedor, 1, "a chamada tinha de chegar ao provedor");
+    assert(contadores.leiturasFlags > 0, "o gate consulta a chave mesmo quando ela não existe");
+    assertLogComProvider(contadores, "success");
+  } finally {
+    restaurar();
+    restaurarEnv();
+  }
 });
