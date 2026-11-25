@@ -98,6 +98,7 @@ import {
 import { extractTokenUsage, logAiUsage } from "./ai-usage.ts";
 import { releaseBudget, reserveBudget, settleBudget } from "./ai-budget.ts";
 import { admitAiProviderCall } from "./ai-circuit.ts";
+import { isAiProviderEnabled } from "./ai-feature-flags.ts";
 
 /**
  * Teto de tempo padrão do TEXTO PURO (mesmo valor do gateway antigo — IA-032).
@@ -202,13 +203,31 @@ export const AI_CIRCUIT_OPEN_STATUS = "circuit_open";
  */
 export const AI_REQUEST_ERROR_STATUS = "request_error";
 
+/**
+ * `status` do ledger para tentativa NEGADA pelo kill switch de provedor
+ * (SL-010 / IA-009 §2.2): o provedor está desligado em `feature_flags`, então ele
+ * NUNCA foi chamado. Usa o `status` que o próprio ledger já trata como "sem
+ * chamada paga" (`ai-usage.ts`), para o desligamento não consumir a quota de quem
+ * chamou.
+ */
+export const AI_DISABLED_STATUS = "denied";
+
+/**
+ * Código estável do bloqueio por provedor DESLIGADO (SL-010 / IA-009 §2.2).
+ * Diferente de orçamento e circuito: aqui não houve falha nem limite — a
+ * infraestrutura paga foi desligada de propósito. Sai como HTTP 503 com ESTE
+ * código, explícito, nunca resposta vazia apresentada como sucesso.
+ */
+export const AI_DISABLED_ERROR_CODE = "AI_DISABLED";
+
 /** Todo código de erro que um desfecho do despacho pode carregar. */
 export type AiGenerateErrorCode =
   | AiRoutingErrorCode
   | AiCapabilityErrorCode
   | typeof AI_TIMEOUT_ERROR_CODE
   | typeof AI_BUDGET_ERROR_CODE
-  | typeof AI_CIRCUIT_OPEN_ERROR_CODE;
+  | typeof AI_CIRCUIT_OPEN_ERROR_CODE
+  | typeof AI_DISABLED_ERROR_CODE;
 
 /** Tentativas extras do `withRetry` e base do backoff (igual ao ai-proxy). */
 const RETRY_MAX = 2;
@@ -862,6 +881,37 @@ export async function generateWithRouting(params: GenerateParams): Promise<Gener
   // que é a resposta honesta.
   rotaProviderType = provider.provider_type ?? null;
   rotaModelRequested = model;
+
+  // --- SL-010 / IA-009 §2.2: provedor DESLIGADO barra antes de gastar ---------
+  // A leitura é feita a cada chamada (sem cache: o TTL do `useFeatureFlag` é do
+  // cliente). Só o `false` explícito do operador bloqueia: leitura não confiável não
+  // derruba toda a IA (nesse cenário o portão de capacidade, esse sim fechado, é quem
+  // barra). O provedor nem é tocado e a linha do ledger sai como `denied` — o status
+  // que `ai-usage.ts` já trata como "sem chamada paga", para o desligamento não
+  // consumir a quota. Fica ANTES da checagem de capacidade e da reserva de orçamento
+  // pelo mesmo motivo: desligado é para não gastar. Atendimento humano intacto — o
+  // consumidor recebe `ok:false` explícito (503 + AI_DISABLED) e segue o fluxo dele.
+  const provedorLiberado = await isAiProviderEnabled(provider.provider_type);
+  if (!provedorLiberado) {
+    const motivo = `Provedor de IA (${provider.provider_type}) desligado em feature_flags.`;
+    await logUsage({
+      model,
+      status: AI_DISABLED_STATUS,
+      errorMessage: motivo,
+      providerId,
+      providerName,
+      modelSubstituted,
+    });
+    return finish(
+      false,
+      failureResponse(503, AI_DISABLED_ERROR_CODE, motivo),
+      null,
+      providerId,
+      providerName,
+      model,
+      AI_DISABLED_ERROR_CODE,
+    );
+  }
 
   // --- (3) capacidades: só quando o chamador declarou a necessidade -----------
   if (need !== null) {

@@ -9,8 +9,12 @@ import {
   AI_CAPABILITY_FLAG_PREFIX,
   AI_CAPABILITY_BY_FUNCTION,
   aiCapabilityFlagKey,
+  aiBotFlagKey,
+  aiProviderFlagKey,
   capabilityFlagKeyForFunction,
   enforceAiCapability,
+  isAiBotPaused,
+  isAiProviderEnabled,
   type CapabilityFlagReader,
 } from "../ai-feature-flags.ts";
 
@@ -155,4 +159,78 @@ Deno.test("CV-010: função sem capacidade no mapa não é bloqueada", async () 
     readFlag: flagReader(false), // mesmo com flag false, não bloqueia
   });
   assertEquals(resp, null);
+});
+
+// ---------------------------------------------------------------------------
+// 7. SL-010 / IA-009 §2.2 — chave de PROVEDOR (`ai.provider.*`)
+// ---------------------------------------------------------------------------
+
+Deno.test("SL-010: provider_type do banco vira o nome da chave do desenho", () => {
+  // Sem esta tradução, o operador desliga `ai.provider.openai` (nome do desenho) e a
+  // consulta seria `ai.provider.openai_compatible` — o desligamento não desligaria nada.
+  assertEquals(aiProviderFlagKey("openai_compatible"), "ai.provider.openai");
+  assertEquals(aiProviderFlagKey("google_gemini"), "ai.provider.gemini");
+  assertEquals(aiProviderFlagKey("elevenlabs"), "ai.provider.elevenlabs");
+  // Tipo fora do mapa usa o próprio `provider_type`: nenhum provedor fica sem chave.
+  assertEquals(aiProviderFlagKey("lovable_ai"), "ai.provider.lovable_ai");
+  assertEquals(aiProviderFlagKey("custom_webhook"), "ai.provider.custom_webhook");
+  // A coluna do banco é texto livre em caixa; a chave é canônica em minúsculas.
+  assertEquals(aiProviderFlagKey("OPENAI_COMPATIBLE"), "ai.provider.openai");
+  assertEquals(aiProviderFlagKey(""), null);
+  assertEquals(aiProviderFlagKey("tipo com espaço"), null);
+  assertEquals(aiProviderFlagKey(null), null);
+  assertEquals(aiProviderFlagKey(undefined), null);
+});
+
+Deno.test("SL-010: só o `false` explícito do provedor bloqueia a chamada", async () => {
+  // `false` explícito = desligado pelo operador → BLOQUEIA.
+  assertEquals(await isAiProviderEnabled("openai_compatible", flagReader(false)), false);
+  // `true` explícito = ligado.
+  assertEquals(await isAiProviderEnabled("openai_compatible", flagReader(true)), true);
+  // Leitura não confiável (`null`) não bloqueia: um blip do PostgREST não pode
+  // derrubar toda a IA — o portão de capacidade é quem fecha nesse cenário.
+  assertEquals(await isAiProviderEnabled("openai_compatible", flagReader(null)), true);
+  // Leitor que lança também não bloqueia (mesmo motivo).
+  const throwing: CapabilityFlagReader = async () => {
+    throw new Error("PostgREST indisponível");
+  };
+  assertEquals(await isAiProviderEnabled("openai_compatible", throwing), true);
+  // Sem tipo de provedor não há decisão de operador para respeitar.
+  assertEquals(await isAiProviderEnabled(null, flagReader(false)), true);
+});
+
+Deno.test("SL-010: a chave consultada é a mesma que a semente cria em feature_flags", async () => {
+  let consultada: string | null = null;
+  const espiao: CapabilityFlagReader = async (key) => {
+    consultada = key;
+    return false;
+  };
+  await isAiProviderEnabled("openai_compatible", espiao);
+  assertEquals(consultada, "ai.provider.openai");
+});
+
+// ---------------------------------------------------------------------------
+// 8. SL-010 / IA-009 §2.3 — pausa de UMA conexão (`ai.bot.*`)
+// ---------------------------------------------------------------------------
+
+Deno.test("SL-010: ai.bot.<connectionId> é a chave de pausa da conexão", () => {
+  assertEquals(aiBotFlagKey("a1111111-b222-4333-8444-55555555555f"), "ai.bot.a1111111-b222-4333-8444-55555555555f");
+  assertEquals(aiBotFlagKey(" CONEXAO-1 "), "ai.bot.conexao-1");
+  assertEquals(aiBotFlagKey(""), null);
+  assertEquals(aiBotFlagKey("com espaço"), null);
+  assertEquals(aiBotFlagKey(null), null);
+});
+
+Deno.test("SL-010: bot é PAUSA — só false explícito pausa; ausência não pausa nada", async () => {
+  assertEquals(await isAiBotPaused("conexao-1", flagReader(false)), true);
+  // `true` explícito e ausência (leitor permissivo devolve true) == rodando.
+  assertEquals(await isAiBotPaused("conexao-1", flagReader(true)), false);
+  // Leitura não confiável não inventa pausa: o portão de capacidade já é fechado.
+  assertEquals(await isAiBotPaused("conexao-1", flagReader(null)), false);
+  const throwing: CapabilityFlagReader = async () => {
+    throw new Error("PostgREST indisponível");
+  };
+  assertEquals(await isAiBotPaused("conexao-1", throwing), false);
+  // Sem conexão válida não há pausa a aplicar.
+  assertEquals(await isAiBotPaused(null, flagReader(false)), false);
 });

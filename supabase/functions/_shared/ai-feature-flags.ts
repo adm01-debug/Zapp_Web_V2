@@ -269,3 +269,106 @@ export async function enforceAiCapability(
   }));
   return capabilityDisabledResponse(opts.req);
 }
+
+/**
+ * SL-010 / IA-009 §2.2 — chave que desliga UM PROVEDOR.
+ *
+ * A capacidade (§2.1) diz "esta função de IA está liberada"; o provedor diz "esta
+ * infraestrutura paga está liberada". São decisões diferentes: um provedor fora do ar
+ * (ou caro demais num dia) cai por esta chave sem desligar a capacidade inteira.
+ */
+export const AI_PROVIDER_FLAG_PREFIX = "ai.provider.";
+
+/**
+ * SL-010 / IA-009 §2.3 — chave que PAUSA a automação de UMA conexão.
+ *
+ * Pausa de bot não é permissão: existe para calar uma conexão sem derrubar as outras.
+ */
+export const AI_BOT_FLAG_PREFIX = "ai.bot.";
+
+/**
+ * `ai_providers.provider_type` → nome da chave como o desenho a nomeia (§2.2).
+ *
+ * O banco usa outro vocabulário (`openai_compatible`, `google_gemini`); sem a tradução,
+ * a chave que o operador desliga conforme o desenho não seria a chave consultada aqui —
+ * o desligamento documentado não desligaria nada. Tipo fora do mapa usa o próprio
+ * `provider_type`, para nenhum provedor ficar sem chave.
+ */
+export const AI_PROVIDER_FLAG_NAME_BY_TYPE: Readonly<Record<string, string>> = Object.freeze({
+  openai_compatible: "openai",
+  google_gemini: "gemini",
+  lovable_ai: "lovable_ai",
+  custom_webhook: "custom_webhook",
+  custom_agent: "custom_agent",
+  elevenlabs: "elevenlabs",
+});
+
+/**
+ * Parte de chave aceita pelo CHECK de `feature_flags`
+ * (`^[a-z0-9][a-z0-9_.-]{0,63}$`, descontado o prefixo). Valor fora do formato não
+ * pode existir na tabela: devolver `null` evita consultar uma chave que nunca casaria.
+ */
+function normalizeFlagKeyPart(value: unknown): string | null {
+  if (typeof value !== "string") return null;
+  const parte = value.trim().toLowerCase();
+  return /^[a-z0-9][a-z0-9_.-]{0,40}$/.test(parte) ? parte : null;
+}
+
+/** Chave do provedor (`ai.provider.<nome do desenho>`), ou `null` sem tipo válido. */
+export function aiProviderFlagKey(providerType: unknown): string | null {
+  const parte = normalizeFlagKeyPart(providerType);
+  if (parte === null) return null;
+  return `${AI_PROVIDER_FLAG_PREFIX}${AI_PROVIDER_FLAG_NAME_BY_TYPE[parte] ?? parte}`;
+}
+
+/** Chave de pausa da conexão (`ai.bot.<connectionId>`), ou `null` sem conexão válida. */
+export function aiBotFlagKey(connectionId: unknown): string | null {
+  const parte = normalizeFlagKeyPart(connectionId);
+  return parte === null ? null : `${AI_BOT_FLAG_PREFIX}${parte}`;
+}
+
+/**
+ * O provedor pode ser chamado AGORA?
+ *
+ * Mesma leitura tri-estado de `readCapabilityFlag`: linha ausente = LIGADO (o operador
+ * não desligou), `false` = desligado, `null` = leitura não confiável. Aqui SÓ o `false`
+ * explícito bloqueia: um blip do PostgREST (`null`) não pode derrubar toda a IA de uma
+ * vez — e, nesse cenário, o portão de capacidade já bloqueia as funções mapeadas.
+ * Tipo de provedor que não produz chave (vazio/nulo) não bloqueia — não há decisão de
+ * operador para respeitar, e o `provider_type` é NOT NULL no banco.
+ */
+export async function isAiProviderEnabled(
+  providerType: unknown,
+  readFlag: CapabilityFlagReader = readCapabilityFlag,
+): Promise<boolean> {
+  const flagKey = aiProviderFlagKey(providerType);
+  if (!flagKey) return true;
+  let enabled: boolean | null;
+  try {
+    enabled = await readFlag(flagKey);
+  } catch (_err) {
+    enabled = null;
+  }
+  return enabled !== false;
+}
+
+/**
+ * A automação desta conexão está PAUSADA? (`ai.bot.<connectionId>`, §2.3)
+ *
+ * Só `enabled = false` explícito pausa; linha ausente não pausa nada — o contrário
+ * desligaria o bot de TODA conexão existente por omissão. Leitura que falhou também não
+ * inventa pausa: o portão de capacidade (`readChatbotL1Flag`, fechado) já barra o bot
+ * quando a leitura de `feature_flags` não é confiável.
+ */
+export async function isAiBotPaused(
+  connectionId: unknown,
+  readFlag: CapabilityFlagReader = readCapabilityFlag,
+): Promise<boolean> {
+  const flagKey = aiBotFlagKey(connectionId);
+  if (!flagKey) return false;
+  try {
+    return (await readFlag(flagKey)) === false;
+  } catch (_err) {
+    return false;
+  }
+}
