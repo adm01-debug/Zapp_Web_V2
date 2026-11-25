@@ -5,6 +5,7 @@
 // Anônimo (tela de Auth) não reporta: a RPC exige auth.uid().
 import { logAudit } from '@/lib/audit';
 import { getSessionId } from '@/lib/logger';
+import { redactPII, redactPIIValue } from '@/lib/redactPII';
 
 // Global injetado pelo define do Vite; ausente em jsdom/vitest — o typeof
 // guard evita ReferenceError em qualquer teste que importe os boundaries.
@@ -64,19 +65,20 @@ export function reportClientError(
     try { errMsg = JSON.stringify(error) ?? 'unknown'; } catch { errMsg = 'unknown'; }
   }
   const stack = error instanceof Error ? (error.stack ?? '') : '';
-  const err = { message: errMsg, stack };
-  const message = errMsg;
+  // PII/segredo sai redigido: nada disso pode chegar a audit_logs.
+  const message = redactPII(errMsg);
+  const safeStack = redactPII(stack);
   const source = typeof context.source === 'string' ? context.source : undefined;
   if (!shouldReport(message, source)) return;
   void logAudit({
     action: 'client_error',
-    details: {
-      ...context,                                      // campos extras primeiro
-      message: errMsg.slice(0, MAX_FIELD_LEN),         // campos canônicos sobrescrevem
-      stack: stack.slice(0, MAX_FIELD_LEN),
+    details: redactPIIValue({
+      ...context,                                  // campos extras primeiro
+      message: message.slice(0, MAX_FIELD_LEN),    // campos canônicos sobrescrevem
+      stack: safeStack.slice(0, MAX_FIELD_LEN),
       path: window.location.pathname,
       buildId: BUILD_ID.slice(0, 12),
       sessionId: getSessionId(),
-    },
+    }) as Record<string, unknown>,
   });
 }
