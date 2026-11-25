@@ -66,11 +66,11 @@
  "commits": {
   "convencao": "conventional commits (observado)",
   "exemplos": [
+   "chore(contexto): main recebe o snapshot gerado por PR automatica (#3375)",
    "infra: valida a virada do dominio principal para o build do V2 (#3374)",
    "fix(lint): ratchet aceita ocorrencia identica deslocada de linha (#3376)",
    "chore(lint): reancora baseline nas posicoes atuais (divida inalterada, 540 = 540) (#3373)",
-   "chore: sincroniza docs/contexto com a publicacao oficial (mapa deixa de citar 149 caminhos mortos) (#3372)",
-   "chore: aposenta acervo de resgate 261118 lote3 ja triado (1.029 arquivos, zero perdas) (#3371)"
+   "chore: sincroniza docs/contexto com a publicacao oficial (mapa deixa de citar 149 caminhos mortos) (#3372)"
   ]
  },
  "pr_template": ".github/PULL_REQUEST_TEMPLATE.md",

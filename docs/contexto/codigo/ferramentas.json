@@ -372,6 +372,7 @@
     "codigo",
     "banco",
     "regras",
+    "sincronizar-main",
     "publicar"
    ],
    "permissoes": [

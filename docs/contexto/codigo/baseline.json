@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "1e7fec6a80c6011d9c6ea774649f882e67cc8295",
+  "commit": "264690757c8f05a4a875512c5b7f4669b030b491",
   "branch": "main",
-  "data_commit": "2026-11-25T10:22:42-03:00",
+  "data_commit": "2026-11-25T10:40:21-03:00",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "26469075",
+    "data": "2026-11-25",
+    "assunto": "chore(contexto): main recebe o snapshot gerado por PR automatica (#3375)"
+   },
    {
     "sha": "1e7fec6a",
     "data": "2026-11-25",
@@ -126,14 +131,9 @@
     "sha": "972831d7",
     "data": "2026-11-24",
     "assunto": "fix(e2e): casa o titulo real do dialog de mesclagem (#3350)"
-   },
-   {
-    "sha": "7dff0402",
-    "data": "2026-11-23",
-    "assunto": "chore(docs): fecha X076 e corrige estado real da IA-161 (#3346)"
    }
   ],
-  "arquivos_mudados_7d": 4396,
+  "arquivos_mudados_7d": 4397,
   "pastas_mais_mudadas_30d": [
    {
     "pasta": "docs/contexto/supabase",

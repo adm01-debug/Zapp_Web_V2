@@ -1,9 +1,9 @@
 {
  "meta": {
-  "sha": "1e7fec6a80c6011d9c6ea774649f882e67cc8295",
+  "sha": "264690757c8f05a4a875512c5b7f4669b030b491",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-25 13:24 UTC",
+  "generated_at": "2026-11-25 13:41 UTC",
   "files_total": 14643,
   "code_files": 8177,
   "code_lines": 1229818
@@ -424223,10 +424223,19 @@
   }
  },
  "git": {
-  "sha": "1e7fec6a80c6011d9c6ea774649f882e67cc8295",
+  "sha": "264690757c8f05a4a875512c5b7f4669b030b491",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "26469075",
+    "date": "2026-11-25",
+    "author": "adm01-debug",
+    "subject": "chore(contexto): main recebe o snapshot gerado por PR automatica (#3375)",
+    "files": [
+     ".github/workflows/contexto.yml"
+    ]
+   },
    {
     "sha": "1e7fec6a",
     "date": "2026-11-25",
@@ -425872,15 +425881,6 @@
      "scripts/e2e-isolated/network-proof-policy.mjs",
      "scripts/e2e-isolated/run.mjs"
     ]
-   },
-   {
-    "sha": "d09e2cec",
-    "date": "2026-11-23",
-    "author": "dependabot[bot]",
-    "subject": "⬆️ docker: bump golang from `fa3d596` to `70bd7dd` in /infrastructure/preview-egress-proxy (#3338)",
-    "files": [
-     "infrastructure/preview-egress-proxy/Dockerfile"
-    ]
    }
   ],
   "hot_files": [
@@ -425937,6 +425937,10 @@
     2
    ],
    [
+    ".github/workflows/contexto.yml",
+    1
+   ],
+   [
     ".github/workflows/front-release-targets.yml",
     1
    ],
@@ -425958,10 +425962,6 @@
    ],
    [
     "scripts/ci/lint-ratchet.mjs",
-    1
-   ],
-   [
-    "scripts/ci/lint-ratchet.unit.mjs",
     1
    ]
   ]
