@@ -4,6 +4,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/ui/use-toast';
 import { avisarCopia, copiarTexto } from '@/lib/clipboard';
 import { useEvolutionApi } from '@/hooks/integrations/useEvolutionApi';
+import { queryClient } from '@/lib/queryClient';
+import { useConnectionsRealtime, type ConnectionsChange } from '@/hooks/inbox/useConnectionsRealtime';
 
 export interface WhatsAppConnection {
   id: string;
@@ -49,6 +51,35 @@ const INITIAL_QR_STATE: QrCodeDialogState = {
   qrCode: null,
   status: 'loading',
 };
+
+/**
+ * A Edge (`delete-instance` em `supabase/functions/evolution-api/index.ts`) não
+ * devolve `code: 'INSTANCE_GONE'`: quando a instância some da GO ela responde
+ * HTTP 200 com corpo `{ error: true, status: 404, message: 'Instância não
+ * encontrada na Evolution GO.' }`, e o `useEvolutionApiCore` repassa como
+ * `apiStatus: data.status` + `message`. Este predicado reconhece os TRÊS
+ * formatos (code novo, apiStatus/status 404, mensagem) para que o gerente trate
+ * "já removida" como estado a reconciliar — e nunca como falha que mantém a
+ * linha local. Exportado para teste direto.
+ */
+export function isInstanceGone(error: unknown): boolean {
+  const e = error as { code?: string; apiStatus?: number; status?: number; message?: string } | null;
+  if (!e || typeof e !== 'object') return false;
+  if (e.code === 'INSTANCE_GONE') return true;
+  if (e.apiStatus === 404 || e.status === 404) return true;
+  const msg = typeof e.message === 'string' ? e.message : '';
+  return /não encontrada|not found|INSTANCE_GONE/i.test(msg);
+}
+
+/**
+ * Invalida os cards que mostram o estado da conexão (Talk X / envio de
+ * catálogo). Sem isso o card segue exibindo "Conectada" depois de a conexão
+ * ser desconectada/excluída/trocada de padrão até o staleTime de 30s expirar.
+ */
+function invalidarStatusDeConexao(): void {
+  void queryClient.invalidateQueries({ queryKey: ['talkx-connection-status'] });
+  void queryClient.invalidateQueries({ queryKey: ['catalog-send-readiness'] });
+}
 
 export function useConnectionsManager() {
   const [connections, setConnections] = useState<WhatsAppConnection[]>([]);
@@ -113,43 +144,38 @@ export function useConnectionsManager() {
     };
   }, []);
 
+  // Realtime unificado: tópico único por montagem, canal fechado no unmount e
+  // um único aviso de "conectado" por transição (a faixa de desconexão usa o
+  // mesmo hook, então as duas telas deixaram de brigar pelo canal).
+  const { announceConnected } = useConnectionsRealtime({
+    onChange: (payload: ConnectionsChange) => {
+      log.debug('Connection update:', payload);
+      if (payload.eventType === 'UPDATE') {
+        const newConn = payload.new as WhatsAppConnection;
+        setConnections((prev) =>
+          prev.map((conn) =>
+            conn.id === newConn.id ? newConn : conn
+          )
+        );
+        if (qrCodeDialogRef.current.open && qrCodeDialogRef.current.connectionId === newConn.id) {
+          if (newConn.status === 'connected') {
+            setQrCodeDialog((prev) => ({ ...prev, status: 'connected', qrCode: null }));
+          } else if (newConn.qr_code) {
+            setQrCodeDialog((prev) => ({ ...prev, qrCode: newConn.qr_code, status: 'pending' }));
+          }
+        }
+      } else if (payload.eventType === 'INSERT') {
+        setConnections((prev) => [payload.new as WhatsAppConnection, ...prev]);
+      } else if (payload.eventType === 'DELETE') {
+        setConnections((prev) => prev.filter((conn) => conn.id !== (payload.old as { id: string }).id));
+      }
+    },
+  });
+
   useEffect(() => {
     void fetchConnections();
 
-    const channel = supabase
-      .channel('whatsapp-connections-changes')
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'whatsapp_connections' },
-        (payload) => {
-          log.debug('Connection update:', payload);
-          if (payload.eventType === 'UPDATE') {
-            setConnections((prev) =>
-              prev.map((conn) =>
-                conn.id === (payload.new as WhatsAppConnection).id
-                  ? (payload.new as WhatsAppConnection)
-                  : conn
-              )
-            );
-            if (qrCodeDialogRef.current.open && qrCodeDialogRef.current.connectionId === (payload.new as WhatsAppConnection).id) {
-              const newConn = payload.new as WhatsAppConnection;
-              if (newConn.status === 'connected') {
-                setQrCodeDialog((prev) => ({ ...prev, status: 'connected', qrCode: null }));
-              } else if (newConn.qr_code) {
-                setQrCodeDialog((prev) => ({ ...prev, qrCode: newConn.qr_code, status: 'pending' }));
-              }
-            }
-          } else if (payload.eventType === 'INSERT') {
-            setConnections((prev) => [payload.new as WhatsAppConnection, ...prev]);
-          } else if (payload.eventType === 'DELETE') {
-            setConnections((prev) => prev.filter((conn) => conn.id !== (payload.old as { id: string }).id));
-          }
-        }
-      )
-      .subscribe();
-
     return () => {
-      supabase.removeChannel(channel);
       if (pollingIntervalRef.current) clearInterval(pollingIntervalRef.current);
     };
   }, []);
@@ -238,14 +264,16 @@ export function useConnectionsManager() {
           clearInterval(interval);
           if (pollingIntervalRef.current === interval) pollingIntervalRef.current = null;
           setQrCodeDialog((prev) => ({ ...prev, status: 'connected', qrCode: null }));
-          toast({ title: 'Conectado!', description: 'WhatsApp conectado com sucesso.' });
+          // Um aviso por transição: se o realtime já viu este "conectado", o
+          // announceConnected engole o duplicado (antes o operador recebia dois).
+          announceConnected({ id: connectionId, status: 'connected' });
         }
       } catch (error) {
         log.error('Status polling error:', error);
       }
     }, 3000);
     pollingIntervalRef.current = interval;
-  }, [getInstanceStatus]);
+  }, [getInstanceStatus, announceConnected]);
 
   const handleShowQrCode = async (connection: WhatsAppConnection) => {
     if (!connection.instance_id) {
@@ -377,6 +405,8 @@ export function useConnectionsManager() {
       return false;
     }
 
+    // O card do Talk X / catálogo lia 'Conectada' até o staleTime expirar.
+    invalidarStatusDeConexao();
     return true;
   };
 
@@ -397,6 +427,7 @@ export function useConnectionsManager() {
       return;
     }
     setConnections((prev) => prev.map((conn) => ({ ...conn, is_default: conn.id === data })));
+    invalidarStatusDeConexao();
     toast({ title: 'Conexão padrão atualizada' });
   };
 
@@ -406,45 +437,62 @@ export function useConnectionsManager() {
   // confirma), depois o vínculo local. Se o vínculo sobrar, o estado é
   // "exclusão pendente" — nunca sucesso mudo.
   const handleDelete = async (connection: WhatsAppConnection) => {
+    let instanciaJaAusente = false;
     try {
       if (connection.instance_id) {
         // Sem `.catch(() => {})`: a rejeição da GO sobe e interrompe o fluxo,
         // para não remover o vínculo local com a instância remota ainda viva.
         await deleteInstance(connection.instance_id);
       }
-
-      // Idempotente: cobre linha órfã (sem instance_id) e o caso de o edge não
-      // ter conseguido apagar o vínculo local após o OK da GO.
-      const { error } = await supabase
-        .from('whatsapp_connections')
-        .delete()
-        .eq('id', connection.id);
-
-      if (error) {
+    } catch (error: unknown) {
+      // B2: a instância pode já não existir na Evolution — e a Edge/linha local
+      // podem já ter sumido. É estado a reconciliar, não falha: segue para
+      // limpar o vínculo (idempotente). O formato REAL da Edge é
+      // `{ error: true, status: 404, message: 'Instância não encontrada…' }`
+      // (sem `code`), por isso o predicado aceita os três formatos.
+      if (!isInstanceGone(error)) {
+        log.error('Error deleting connection:', error);
+        // Falha na GO: nada foi apagado localmente. Re-sincroniza o estado real
+        // e mostra o motivo — nunca anuncia sucesso.
+        await fetchConnections();
         toast({
-          title: 'Exclusão pendente',
-          description: connection.instance_id
-            ? 'A instância foi removida na Evolution GO, mas o vínculo local não pôde ser apagado. Tente excluir novamente.'
-            : 'Não foi possível apagar o vínculo local. Tente novamente.',
+          title: 'Erro ao excluir',
+          description: `${error instanceof Error ? error.message : 'Erro desconhecido'} — a conexão foi mantida.`,
           variant: 'destructive',
         });
-        await fetchConnections();
         return;
       }
+      instanciaJaAusente = true;
+    }
 
-      setConnections((prev) => prev.filter((conn) => conn.id !== connection.id));
-      toast({ title: 'Conexão removida', description: 'A conexão foi excluída com sucesso.' });
-    } catch (error: unknown) {
-      log.error('Error deleting connection:', error);
-      // Falha na GO: nada foi apagado localmente. Re-sincroniza o estado real
-      // e mostra o motivo — nunca anuncia sucesso.
-      await fetchConnections();
+    // Idempotente: cobre linha órfã (sem instance_id), o INSTANCE_GONE acima e o
+    // caso de o edge não ter conseguido apagar o vínculo local após o OK da GO.
+    const { error } = await supabase
+      .from('whatsapp_connections')
+      .delete()
+      .eq('id', connection.id);
+
+    if (error) {
       toast({
-        title: 'Erro ao excluir',
-        description: `${error instanceof Error ? error.message : 'Erro desconhecido'} — a conexão foi mantida.`,
+        title: 'Exclusão pendente',
+        description: connection.instance_id
+          ? 'A instância foi removida na Evolution GO, mas o vínculo local não pôde ser apagado. Tente excluir novamente.'
+          : 'Não foi possível apagar o vínculo local. Tente novamente.',
         variant: 'destructive',
       });
+      await fetchConnections();
+      return;
     }
+
+    setConnections((prev) => prev.filter((conn) => conn.id !== connection.id));
+    // O card do Talk X / catálogo lia 'Conectada' até o staleTime expirar.
+    invalidarStatusDeConexao();
+    toast({
+      title: 'Conexão removida',
+      description: instanciaJaAusente
+        ? 'A instância já não existia na Evolution GO; o vínculo local foi limpo.'
+        : 'A conexão foi excluída com sucesso.',
+    });
   };
 
   const closeQrDialog = () => {
