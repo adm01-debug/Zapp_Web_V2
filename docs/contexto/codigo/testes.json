@@ -22713,11 +22713,11 @@
   {
    "arquivo": "supabase/functions/_shared/__tests__/ai-feature-flags.test.ts",
    "tipo": "unit",
-   "linhas": 159,
+   "linhas": 237,
    "testa": [
     "supabase/functions/_shared/ai-feature-flags.ts"
    ],
-   "casos": 11
+   "casos": 16
   },
   {
    "arquivo": "supabase/functions/_shared/__tests__/ai-quota-acao-calculada.test.ts",
@@ -23067,7 +23067,7 @@
   {
    "arquivo": "supabase/functions/_shared/__tests__/evolution-webhook-messages.chatbot-l1.test.ts",
    "tipo": "unit",
-   "linhas": 541,
+   "linhas": 546,
    "testa": [
     "supabase/functions/_shared/evolution-go-adapter.ts",
     "supabase/functions/_shared/evolution-helpers.ts",
@@ -23475,13 +23475,13 @@
   {
    "arquivo": "supabase/functions/_shared/ai-circuit.test.ts",
    "tipo": "unit",
-   "linhas": 572,
+   "linhas": 654,
    "testa": [
     "supabase/functions/_shared/ai-circuit.ts",
     "supabase/functions/_shared/ai-generate.ts",
     "supabase/functions/_shared/ai-usage.ts"
    ],
-   "casos": 7
+   "casos": 9
   },
   {
    "arquivo": "supabase/functions/_shared/ai-generate.test.ts",
@@ -23823,7 +23823,7 @@
   {
    "arquivo": "supabase/functions/ai-proxy/index.test.ts",
    "tipo": "unit",
-   "linhas": 402,
+   "linhas": 407,
    "testa": [
     "supabase/functions/ai-proxy/index.ts"
    ],

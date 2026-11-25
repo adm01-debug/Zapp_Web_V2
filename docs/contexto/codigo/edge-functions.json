@@ -685,7 +685,7 @@
    "nome": "ai-proxy",
    "entrada": "supabase/functions/ai-proxy/index.ts",
    "arquivos": 1,
-   "linhas": 953,
+   "linhas": 968,
    "verify_jwt": true,
    "metodos": [],
    "tabelas": [
@@ -700,6 +700,7 @@
    "hosts_externos": [],
    "usa_shared": [
     "ai-capabilities.ts",
+    "ai-feature-flags.ts",
     "ai-guards.ts",
     "ai-providers.ts",
     "ai-routing.ts",

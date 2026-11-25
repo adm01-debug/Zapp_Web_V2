@@ -1,6 +1,6 @@
 # 07 · REGRAS DE NEGÓCIO
 
-> Gerado automaticamente por AI Context Sync v1.3.2 · commit `e4c2b861f1` · branch `main` · 2026-11-25 23:29 UTC
+> Gerado automaticamente por AI Context Sync v1.3.2 · commit `34b5d25e20` · branch `main` · 2026-11-25 23:55 UTC
 > Não edite à mão — regras humanas vão em `manual/`.
 
 ## A. Regras escritas por humanos (`manual/` — prioridade máxima, nunca sobrescrito)
@@ -3906,7 +3906,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `DEFAULT_REFRESH_MS` | `60` | `src/hooks/admin/useSupervisorQueue.ts` |
 | `RECENT_SENDS_WINDOW_DAYS` | `30` | `src/hooks/agents/useAgentRecentSends.ts` |
 | `DAY_MS` | `24` | `src/hooks/agents/useAgentRecentSends.ts` |
-| … +702 linhas — lista completa em `context.json` | | |
+| … +704 linhas — lista completa em `context.json` | | |
 
 ### H.2 Prazos, expirações e janelas de tempo
 
@@ -4733,7 +4733,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `owner` | `supabase/migrations/20260927270018_team_chat_e28_fix_find_or_create_race.sql` |
 | `anon` | `supabase/migrations/20260927340000_fix_add_agent_xp_negative_and_guard.sql` |
 
-## K. Testes como especificação (22946 testes em 2436 arquivos — nomes completos em `context.json`)
+## K. Testes como especificação (22953 testes em 2436 arquivos — nomes completos em `context.json`)
 
 | Arquivo | Testes | Exemplos do que o sistema DEVE fazer |
 |---|---|---|
@@ -5554,4 +5554,4 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | Mostra no máximo 2 sugestões para não poluir o painel | `src/components/inbox/copilot/MissingQuestions.tsx` |
 | * CV-035/036 — Alerta de ocasião comercial detectada + prazo de entrega. | `src/components/inbox/copilot/OccasionAlert.tsx` |
 | Sobe/desce a linha uma posição por vez, trocando apenas de lugar os objetos | `src/components/inbox/interactive-builder/useInteractiveMessage.ts` |
-| … +1830 linhas — lista completa em `context.json` | |
+| … +1832 linhas — lista completa em `context.json` | |

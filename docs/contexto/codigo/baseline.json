@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "e4c2b861f1f1d71c1f50187d6458f44ddd85b72b",
+  "commit": "34b5d25e207a838afaa5e289e1285fc00225ce52",
   "branch": "main",
-  "data_commit": "2026-11-25T23:25:15Z",
+  "data_commit": "2026-11-25T23:49:06Z",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "34b5d25e",
+    "data": "2026-11-25",
+    "assunto": "feat: kill switch por provedor (IA-009 2.2) e pausa de bot por conexao (IA-009 2.3) (#3386)"
+   },
    {
     "sha": "e4c2b861",
     "data": "2026-11-25",
@@ -126,14 +131,9 @@
     "sha": "697de6eb",
     "data": "2026-11-24",
     "assunto": "chore: remove teardown de produção morto do E2E e dropa as 2 RPCs órfãs (#3360)"
-   },
-   {
-    "sha": "feee9f79",
-    "data": "2026-11-24",
-    "assunto": "fix(tarefas): restaura o foco da captura apos o commit, sem corrida (#3359)"
    }
   ],
-  "arquivos_mudados_7d": 4392,
+  "arquivos_mudados_7d": 2737,
   "pastas_mais_mudadas_30d": [
    {
     "pasta": "docs/contexto/supabase",
@@ -173,7 +173,7 @@
    },
    {
     "pasta": "supabase/functions/_shared",
-    "mudancas": 235
+    "mudancas": 241
    },
    {
     "pasta": "analise-prs/resgate-261118-lote3/hermes",
@@ -199,11 +199,11 @@
   "arquivos_mais_mudados_90d": [
    {
     "arquivo": "supabase/deployment-manifest.json",
-    "mudancas": 35
+    "mudancas": 36
    },
    {
     "arquivo": "ESTADO.md",
-    "mudancas": 23
+    "mudancas": 24
    },
    {
     "arquivo": "supabase/schema-manifest.json",
@@ -222,15 +222,15 @@
     "mudancas": 14
    },
    {
-    "arquivo": "PENDENCIAS.md",
-    "mudancas": 12
-   },
-   {
     "arquivo": "docs/DB-INVENTORY.md",
     "mudancas": 12
    },
    {
     "arquivo": ".github/workflows/db-guard.yml",
+    "mudancas": 11
+   },
+   {
+    "arquivo": "PENDENCIAS.md",
     "mudancas": 11
    },
    {
@@ -262,10 +262,6 @@
     "mudancas": 7
    },
    {
-    "arquivo": "RELATORIO_CI.md",
-    "mudancas": 6
-   },
-   {
     "arquivo": "docs/plans/PLANO_ASSISTENTE_PESSOAL_IA_2026-11-15.md",
     "mudancas": 6
    },
@@ -279,6 +275,10 @@
    },
    {
     "arquivo": ".github/workflows/types-sync.yml",
+    "mudancas": 5
+   },
+   {
+    "arquivo": "RELATORIO_CI.md",
     "mudancas": 5
    },
    {
@@ -316,7 +316,7 @@
  "contagens": {
   "arquivos_total": 14806,
   "arquivos_codigo": 5151,
-  "linhas_codigo": 955113,
+  "linhas_codigo": 955458,
   "rotas": 18,
   "rotas_http_backend": 11,
   "vistas_por_id": 55,
@@ -816,7 +816,7 @@
   },
   "supabase/functions": {
    "arquivos": 432,
-   "linhas": 130566
+   "linhas": 130911
   },
   "tailwind.config.ts": {
    "arquivos": 1,
@@ -861,12 +861,12 @@
    "linhas": 1497
   },
   {
-   "arquivo": "supabase/functions/talkx-send/index.ts",
-   "linhas": 1488
+   "arquivo": "supabase/functions/_shared/evolution-webhook-messages.ts",
+   "linhas": 1490
   },
   {
-   "arquivo": "supabase/functions/_shared/evolution-webhook-messages.ts",
-   "linhas": 1483
+   "arquivo": "supabase/functions/talkx-send/index.ts",
+   "linhas": 1488
   },
   {
    "arquivo": "supabase/functions/_shared/ai-usage.ts",
@@ -898,7 +898,7 @@
   },
   {
    "arquivo": "supabase/functions/_shared/ai-generate.ts",
-   "linhas": 1090
+   "linhas": 1140
   },
   {
    "arquivo": "scripts/ci/ci-local-lib.mjs",

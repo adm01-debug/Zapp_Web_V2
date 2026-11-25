@@ -1,15 +1,15 @@
 {
  "meta": {
-  "sha": "e4c2b861f1f1d71c1f50187d6458f44ddd85b72b",
+  "sha": "34b5d25e207a838afaa5e289e1285fc00225ce52",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-25 23:29 UTC",
+  "generated_at": "2026-11-25 23:55 UTC",
   "files_total": 14653,
   "code_files": 8187,
-  "code_lines": 1231942
+  "code_lines": 1232287
  },
  "version": "1.3.2",
- "facts_hash": "3a79a19d220742b6",
+ "facts_hash": "386226123bb2d1e0",
  "stack": {
   "frameworks": [
    "React + Vite",
@@ -69718,6 +69718,7 @@
      "ai_providers",
      "ai_usage_logs",
      "contacts",
+     "feature_flags",
      "messages",
      "profiles",
      "talkx_campaigns",
@@ -77478,7 +77479,7 @@
   {
    "module": "supabase/functions",
    "files": 432,
-   "lines": 130566,
+   "lines": 130911,
    "tables": [
     "agent_stats",
     "ai_conversation_tags",
@@ -102822,6 +102823,14 @@
     "text": "* Slug da Edge Function (mesmo nome usado na cota/rate limit). */"
    },
    {
+    "file": "supabase/functions/_shared/ai-feature-flags.ts",
+    "text": "* Pausa de bot não é permissão: existe para calar uma conexão sem derrubar as outras."
+   },
+   {
+    "file": "supabase/functions/_shared/ai-feature-flags.ts",
+    "text": "explícito bloqueia: um blip do PostgREST (`null`) não pode derrubar toda a IA de uma"
+   },
+   {
     "file": "supabase/functions/_shared/ai-generate.ts",
     "text": "É o valor que os consumidores de texto sempre tiveram: NÃO pode regredir."
    },
@@ -102863,6 +102872,10 @@
    },
    {
     "file": "supabase/functions/_shared/ai-generate.ts",
+    "text": "Diferente de orçamento e circuito: aqui não houve falha nem limite — a"
+   },
+   {
+    "file": "supabase/functions/_shared/ai-generate.ts",
     "text": "* Estimativa de consumo em tokens, usada APENAS para dimensionar a RESERVA de"
    },
    {
@@ -102876,10 +102889,6 @@
    {
     "file": "supabase/functions/_shared/ai-generate.ts",
     "text": "(`functionName`, dono, modelo, mensagens e limite de saída) produz SEMPRE a mesma"
-   },
-   {
-    "file": "supabase/functions/_shared/ai-generate.ts",
-    "text": "* O estouro do prazo aborta o `AbortController` do provedor (IA-040) e chega aqui"
    },
    {
     "file": "supabase/functions/_shared/ai-guards.ts",
@@ -117636,6 +117645,16 @@
     "file": "supabase/functions/_shared/ai-generate.ts",
     "name": "AI_REQUEST_ERROR_STATUS",
     "value": "\"request_error\""
+   },
+   {
+    "file": "supabase/functions/_shared/ai-generate.ts",
+    "name": "AI_DISABLED_STATUS",
+    "value": "\"denied\""
+   },
+   {
+    "file": "supabase/functions/_shared/ai-generate.ts",
+    "name": "AI_DISABLED_ERROR_CODE",
+    "value": "\"AI_DISABLED\""
    },
    {
     "file": "supabase/functions/_shared/ai-generate.ts",
@@ -215999,6 +216018,14 @@
     "name": "IA-050: deriveCircuitVerdict — limiar, janela, cooldown e o que NÃO é falha de provedor"
    },
    {
+    "file": "supabase/functions/_shared/ai-circuit.test.ts",
+    "name": "SL-010: provedor desligado em feature_flags bloqueia SEM chamar o provedor"
+   },
+   {
+    "file": "supabase/functions/_shared/ai-circuit.test.ts",
+    "name": "SL-010: sem linha em feature_flags o provedor continua liberado (zero regressão)"
+   },
+   {
     "file": "supabase/functions/_shared/ai-generate.test.ts",
     "name": "canonicalize: pontuação vs sem — em "
    },
@@ -216817,6 +216844,26 @@
    {
     "file": "supabase/functions/_shared/__tests__/ai-feature-flags.test.ts",
     "name": "CV-010: função sem capacidade no mapa não é bloqueada"
+   },
+   {
+    "file": "supabase/functions/_shared/__tests__/ai-feature-flags.test.ts",
+    "name": "SL-010: provider_type do banco vira o nome da chave do desenho"
+   },
+   {
+    "file": "supabase/functions/_shared/__tests__/ai-feature-flags.test.ts",
+    "name": "SL-010: só o "
+   },
+   {
+    "file": "supabase/functions/_shared/__tests__/ai-feature-flags.test.ts",
+    "name": "SL-010: a chave consultada é a mesma que a semente cria em feature_flags"
+   },
+   {
+    "file": "supabase/functions/_shared/__tests__/ai-feature-flags.test.ts",
+    "name": "SL-010: ai.bot.<connectionId> é a chave de pausa da conexão"
+   },
+   {
+    "file": "supabase/functions/_shared/__tests__/ai-feature-flags.test.ts",
+    "name": "SL-010: bot é PAUSA — só false explícito pausa; ausência não pausa nada"
    },
    {
     "file": "supabase/functions/_shared/__tests__/ai-quota-acao-calculada.test.ts",
@@ -393999,8 +394046,11 @@
   },
   "supabase/functions/_shared/ai-circuit.test.ts": {
    "path": "supabase/functions/_shared/ai-circuit.test.ts",
-   "lines": 572,
+   "lines": 654,
    "is_test": true,
+   "rule_comments": [
+    "`flags` ausente = tabela vazia em produção hoje. A ausência NÃO pode bloquear."
+   ],
    "doc": "IA-050 — circuit breaker por provedor de IA no despacho central. Defeito provado na auditoria (IA-CIRCUIT-001): `generateWithRouting` retentava e devolvia erro explícito, mas NUNCA suspendia um provedor que só falha — cada request novo voltava a bater no provedor caído (fetch real + espera + custo). …",
    "calc_fns": [
     {
@@ -394016,7 +394066,9 @@
     "IA-050: meia-abertura SEM token de sonda bloqueia sem fetch (sonda única por janela)",
     "IA-050: sonda que FALHA (5xx do provedor) reabre o circuito — a admissão seguinte já bloqueia",
     "IA-050: seis 4xx do pedido não abrem o circuito e a falha transitória ainda abre",
-    "IA-050: deriveCircuitVerdict — limiar, janela, cooldown e o que NÃO é falha de provedor"
+    "IA-050: deriveCircuitVerdict — limiar, janela, cooldown e o que NÃO é falha de provedor",
+    "SL-010: provedor desligado em feature_flags bloqueia SEM chamar o provedor",
+    "SL-010: sem linha em feature_flags o provedor continua liberado (zero regressão)"
    ],
    "uses_service_role": true
   },
@@ -394310,7 +394362,7 @@
   },
   "supabase/functions/_shared/ai-feature-flags.ts": {
    "path": "supabase/functions/_shared/ai-feature-flags.ts",
-   "lines": 272,
+   "lines": 375,
    "exports": [
     "type AiCapability",
     "const AI_CAPABILITY_FLAG_PREFIX",
@@ -394321,7 +394373,14 @@
     "function readCapabilityFlag",
     "function readCapabilityFlagFailClosed",
     "interface AiCapabilityGateOptions",
-    "function enforceAiCapability"
+    "function enforceAiCapability",
+    "const AI_PROVIDER_FLAG_PREFIX",
+    "const AI_BOT_FLAG_PREFIX",
+    "const AI_PROVIDER_FLAG_NAME_BY_TYPE",
+    "function aiProviderFlagKey",
+    "function aiBotFlagKey",
+    "function isAiProviderEnabled",
+    "function isAiBotPaused"
    ],
    "tables": [
     {
@@ -394348,7 +394407,9 @@
    "rule_comments": [
     "(`src/hooks/system/useFeatureFlag.ts`) e, no servidor, apenas por",
     "* Chave que a função deve ler, ou `null` quando ela não tem capacidade declarada. */",
-    "* Slug da Edge Function (mesmo nome usado na cota/rate limit). */"
+    "* Slug da Edge Function (mesmo nome usado na cota/rate limit). */",
+    "* Pausa de bot não é permissão: existe para calar uma conexão sem derrubar as outras.",
+    "explícito bloqueia: um blip do PostgREST (`null`) não pode derrubar toda a IA de uma"
    ],
    "uses_service_role": true
   },
@@ -394390,7 +394451,7 @@
   },
   "supabase/functions/_shared/ai-generate.ts": {
    "path": "supabase/functions/_shared/ai-generate.ts",
-   "lines": 1090,
+   "lines": 1140,
    "exports": [
     "function resolveDefaultTimeoutMs",
     "const AI_TIMEOUT_ERROR_CODE",
@@ -394398,6 +394459,8 @@
     "const AI_CIRCUIT_OPEN_ERROR_CODE",
     "const AI_CIRCUIT_OPEN_STATUS",
     "const AI_REQUEST_ERROR_STATUS",
+    "const AI_DISABLED_STATUS",
+    "const AI_DISABLED_ERROR_CODE",
     "type AiGenerateErrorCode",
     "const DEFAULT_AI_BUDGET_TOKENS",
     "const VISION_TOKENS_POR_IMAGEM",
@@ -394453,6 +394516,14 @@
     {
      "name": "AI_REQUEST_ERROR_STATUS",
      "value": "\"request_error\""
+    },
+    {
+     "name": "AI_DISABLED_STATUS",
+     "value": "\"denied\""
+    },
+    {
+     "name": "AI_DISABLED_ERROR_CODE",
+     "value": "\"AI_DISABLED\""
     },
     {
      "name": "RETRY_MAX",
@@ -394511,11 +394582,11 @@
     "* Código estável do estouro de prazo (IA-041). Não vem de `ai-routing`/",
     "desfecho do provedor (o provedor nem foi chamado): não pode entrar como",
     "modelo, 422...). O provedor respondeu — está no ar — e por isso NÃO pode",
+    "Diferente de orçamento e circuito: aqui não houve falha nem limite — a",
     "* Estimativa de consumo em tokens, usada APENAS para dimensionar a RESERVA de",
     "— limite superior de propósito: estimar a mais só reduz a folga da reserva, e o",
     "Circular/exótico não pode derrubar o despacho: sem medida da entrada, fica a saída.",
-    "(`functionName`, dono, modelo, mensagens e limite de saída) produz SEMPRE a mesma",
-    "* O estouro do prazo aborta o `AbortController` do provedor (IA-040) e chega aqui"
+    "(`functionName`, dono, modelo, mensagens e limite de saída) produz SEMPRE a mesma"
    ],
    "calc_fns": [
     {
@@ -397298,7 +397369,7 @@
   },
   "supabase/functions/_shared/evolution-webhook-messages.ts": {
    "path": "supabase/functions/_shared/evolution-webhook-messages.ts",
-   "lines": 1483,
+   "lines": 1490,
    "exports": [
     "interface OptOutKeyword",
     "function resetOptOutKeywordCache",
@@ -399480,10 +399551,13 @@
   },
   "supabase/functions/_shared/__tests__/ai-feature-flags.test.ts": {
    "path": "supabase/functions/_shared/__tests__/ai-feature-flags.test.ts",
-   "lines": 159,
+   "lines": 237,
    "is_test": true,
    "errors": [
     "PostgREST indisponível"
+   ],
+   "rule_comments": [
+    "Leitura não confiável (`null`) não bloqueia: um blip do PostgREST não pode"
    ],
    "doc": "CV-010: Testes unitários do gate de capacidade `copilot_live`. Cobre: mapeamento de função → chave, comportamento do gate com flag desligada, ligada, ausente e falha de leitura.",
    "tests": [
@@ -399497,7 +399571,12 @@
     "CV-010: flag=true permite (retorna null)",
     "CV-010: falha de leitura (null) bloqueia com 503 — fail-closed",
     "CV-010: leitor que lança exceção bloqueia com 503 — fail-closed",
-    "CV-010: função sem capacidade no mapa não é bloqueada"
+    "CV-010: função sem capacidade no mapa não é bloqueada",
+    "SL-010: provider_type do banco vira o nome da chave do desenho",
+    "SL-010: só o ",
+    "SL-010: a chave consultada é a mesma que a semente cria em feature_flags",
+    "SL-010: ai.bot.<connectionId> é a chave de pausa da conexão",
+    "SL-010: bot é PAUSA — só false explícito pausa; ausência não pausa nada"
    ]
   },
   "supabase/functions/_shared/__tests__/ai-quota-acao-calculada.test.ts": {
@@ -400285,7 +400364,7 @@
   },
   "supabase/functions/_shared/__tests__/evolution-webhook-messages.chatbot-l1.test.ts": {
    "path": "supabase/functions/_shared/__tests__/evolution-webhook-messages.chatbot-l1.test.ts",
-   "lines": 541,
+   "lines": 546,
    "is_test": true,
    "params": [
     {
@@ -402808,7 +402887,7 @@
   },
   "supabase/functions/ai-proxy/index.test.ts": {
    "path": "supabase/functions/ai-proxy/index.test.ts",
-   "lines": 402,
+   "lines": 407,
    "is_test": true,
    "params": [
     {
@@ -402845,7 +402924,7 @@
   },
   "supabase/functions/ai-proxy/index.ts": {
    "path": "supabase/functions/ai-proxy/index.ts",
-   "lines": 953,
+   "lines": 968,
    "exports": [
     "function handleAiProxy"
    ],
@@ -424945,10 +425024,28 @@
   }
  },
  "git": {
-  "sha": "e4c2b861f1f1d71c1f50187d6458f44ddd85b72b",
+  "sha": "34b5d25e207a838afaa5e289e1285fc00225ce52",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "34b5d25e",
+    "date": "2026-11-25",
+    "author": "adm01-debug",
+    "subject": "feat: kill switch por provedor (IA-009 2.2) e pausa de bot por conexao (IA-009 2.3) (#3386)",
+    "files": [
+     "ESTADO.md",
+     "supabase/deployment-manifest.json",
+     "supabase/functions/_shared/__tests__/ai-feature-flags.test.ts",
+     "supabase/functions/_shared/__tests__/evolution-webhook-messages.chatbot-l1.test.ts",
+     "supabase/functions/_shared/ai-circuit.test.ts",
+     "supabase/functions/_shared/ai-feature-flags.ts",
+     "supabase/functions/_shared/ai-generate.ts",
+     "supabase/functions/_shared/evolution-webhook-messages.ts",
+     "supabase/functions/ai-proxy/index.test.ts",
+     "supabase/functions/ai-proxy/index.ts"
+    ]
+   },
    {
     "sha": "e4c2b861",
     "date": "2026-11-25",
@@ -426599,18 +426696,13 @@
     "files": [
      "supabase/schema-manifest.json"
     ]
-   },
-   {
-    "sha": "592ffa7f",
-    "date": "2026-11-24",
-    "author": "adm01-debug",
-    "subject": "fix: elimina o flake de meia-noite do contrato do monitor (vs_yesterday) (#3353)",
-    "files": [
-     "scripts/db-audit/talkx-monitor-panel.test.sh"
-    ]
    }
   ],
   "hot_files": [
+   [
+    "ESTADO.md",
+    3
+   ],
    [
     "docs/ci/README.md",
     3
@@ -426618,6 +426710,10 @@
    [
     "docs/agentes/github-ci.md",
     3
+   ],
+   [
+    "supabase/deployment-manifest.json",
+    2
    ],
    [
     ".github/workflows/ci.yml",
@@ -426636,12 +426732,40 @@
     2
    ],
    [
-    "ESTADO.md",
+    "supabase/schema-manifest.json",
     2
    ],
    [
-    "supabase/schema-manifest.json",
-    2
+    "supabase/functions/_shared/__tests__/ai-feature-flags.test.ts",
+    1
+   ],
+   [
+    "supabase/functions/_shared/__tests__/evolution-webhook-messages.chatbot-l1.test.ts",
+    1
+   ],
+   [
+    "supabase/functions/_shared/ai-circuit.test.ts",
+    1
+   ],
+   [
+    "supabase/functions/_shared/ai-feature-flags.ts",
+    1
+   ],
+   [
+    "supabase/functions/_shared/ai-generate.ts",
+    1
+   ],
+   [
+    "supabase/functions/_shared/evolution-webhook-messages.ts",
+    1
+   ],
+   [
+    "supabase/functions/ai-proxy/index.test.ts",
+    1
+   ],
+   [
+    "supabase/functions/ai-proxy/index.ts",
+    1
    ],
    [
     "src/components/tasks/__tests__/prazoCompleto.test.ts",
@@ -426653,42 +426777,6 @@
    ],
    [
     "src/components/tasks/list/taskRowCells.tsx",
-    1
-   ],
-   [
-    "src/components/alerts/EvolutionDisconnectBanner.tsx",
-    1
-   ],
-   [
-    "src/components/alerts/__tests__/EvolutionDisconnectBanner.realtime.test.tsx",
-    1
-   ],
-   [
-    "src/hooks/inbox/__tests__/useConnectionsManager.b2.test.ts",
-    1
-   ],
-   [
-    "src/hooks/inbox/__tests__/useConnectionsRealtime.test.ts",
-    1
-   ],
-   [
-    "src/hooks/inbox/useConnectionsManager.ts",
-    1
-   ],
-   [
-    "src/hooks/inbox/useConnectionsRealtime.ts",
-    1
-   ],
-   [
-    "e2e/inbox-contact-sidebar.spec.ts",
-    1
-   ],
-   [
-    "src/components/inbox/ContactDetails.tsx",
-    1
-   ],
-   [
-    "src/components/inbox/contact-details/SlaTimelineSection.tsx",
     1
    ]
   ]
