@@ -501,8 +501,8 @@
     },
     {
       "path": "supabase/functions/ai-proxy/index.ts",
-      "bytes": 42331,
-      "sha256": "e383c9916ff94f91db549b60bac14148feb418ce4c086ed3f56847bfe8ed5e95"
+      "bytes": 43326,
+      "sha256": "47ff5395dad105933526ce5eb0ab3f2f36ab4d8e6198e5a2b7d045d7c616ce68"
     },
     {
       "path": "supabase/functions/ai-suggest-reply/index.ts",
@@ -1354,7 +1354,7 @@
       "name": "ai-proxy",
       "entrypoint": "supabase/functions/ai-proxy/index.ts",
       "verify_jwt": true,
-      "source_sha256": "9baace052b2facfa189dc7ce695d9d41d15ce9e5f1c6a221a03c6c68273cdf65",
+      "source_sha256": "3da308013b7ad3e34b64a9d05d0caeb840878c1f56de6e8a80b0040b2553f428",
       "source_files": [
         "supabase/functions/_shared/ai-capabilities.ts",
         "supabase/functions/_shared/ai-feature-flags.ts",
@@ -2863,5 +2863,5 @@
       ]
     }
   ],
-  "manifest_sha256": "55e7ec048539eaf036710fdb74e6ce99e15c3db7bee2cc5c1061966b5e26e99e"
+  "manifest_sha256": "420030f9c5c346cbc19b58591213878b0acaa50089f01036024701d942a26aa5"
 }
