@@ -35,7 +35,16 @@
     "contexto:ia:test": "node --test scripts/ai-context/gerar.unit.mjs",
     "prepare": "husky || true",
     "ci:local": "node scripts/ci/ci-local.mjs",
-    "ci:local:rapido": "node scripts/ci/ci-local.mjs --rapido"
+    "ci:local:rapido": "node scripts/ci/ci-local.mjs --rapido",
+    "automation:doctor": "node scripts/automation.mjs doctor",
+    "automation:test": "node scripts/automation.mjs test",
+    "automation:check": "node scripts/automation.mjs check --ref HEAD",
+    "automation:heal": "node scripts/automation.mjs heal --ref origin/main",
+    "automation:nightly": "node scripts/automation.mjs nightly --ref origin/main",
+    "automation:graph": "node scripts/automation.mjs graph",
+    "automation:status": "node scripts/automation.mjs graph status",
+    "automation:install-hooks": "node scripts/automation.mjs install-hooks",
+    "automation:uninstall-hooks": "node scripts/automation.mjs uninstall-hooks"
   },
   "dependencies": {
     "@axe-core/react": "^4.14.0",
