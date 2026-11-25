@@ -322,7 +322,9 @@
     "GITHUB_STEP_SUMMARY"
    ],
    "npm_scripts": [],
-   "workflows": [],
+   "workflows": [
+    "auto-update-pr-branch.yml"
+   ],
    "orfao": false
   },
   {

@@ -1,7 +1,7 @@
 # Contexto do projeto para agentes de IA
 
 GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.
-Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR dela) a cada push em `main` e a cada 10 minutos pelo workflow `contexto.yml`; índice único das três fontes em `docs/contexto/00-INDEX.md`. Gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `e1a545c6c2e213b3330214ed64be84c976d6484e` (2026-11-24T18:58:15-03:00).
+Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR dela) a cada push em `main` e a cada 10 minutos pelo workflow `contexto.yml`; índice único das três fontes em `docs/contexto/00-INDEX.md`. Gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `6d87cf6cda6a79a5122a68d7492122c7a8d4c384` (2026-11-25T06:54:36-03:00).
 
 ## Como usar (leia antes de planejar ou executar qualquer tarefa)
 1. **Tela/rota/menu** → `rotas.json` (url/vista/menu → arquivo → hooks → tabelas → edges; `rotas_http_backend` para APIs) e `modulos.json` (módulo inteiro + dependências entre módulos).
@@ -14,7 +14,7 @@ Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR
 Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua tarefa; não carregue tudo.
 
 ## Stack
-- linguagens: TypeScript (5090), Markdown (4098), SQL (3067), JSON (1970), JavaScript (682), Shell (265), Python (125), YAML (112)
+- linguagens: TypeScript (5090), Markdown (4098), SQL (3067), JSON (1970), JavaScript (682), Shell (265), Python (125), YAML (113)
 - linguagem_principal: TypeScript
 - framework: React
 - backend_http: n/d
@@ -34,7 +34,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 ## Números
 | item | qtd |
 |---|---|
-| arquivos_total | 15801 |
+| arquivos_total | 15802 |
 | arquivos_codigo | 5893 |
 | linhas_codigo | 1141333 |
 | rotas | 18 |
@@ -49,7 +49,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 | migrations | 1153 |
 | cron_jobs | 29 |
 | testes | 3230 |
-| workflows | 24 |
+| workflows | 25 |
 | scripts | 451 |
 | docs_md | 4098 |
 
@@ -397,8 +397,8 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - possiveis_segredos_no_codigo: 6 — ex.: analise-prs/resgate-261118-lote3/claude_pink/cool-dijkstra-xk9ek2/scripts/ci/edge-coverage-authz.unit.mjs:397, analise-prs/resgate-261118-lote3/claude_pink/cool-dijkstra-xk9ek2/scripts/edge-deploy/redigir-log.unit.mjs:38, scripts/ai-context/cenarios.mjs:102
 
 ## Grafo de código (graphify)
-- 103404 nós · 175584 arestas · 9243 comunidades · grafo do commit `e1a545c6`
-- comunidades maiores: Communities (5953 total, 1987 thin omitted) (3947), TalkXSuppression.tsx (1578), react (1510), lucide-react (1500), utils.ts (1171), vitest (1085), cn (595), validation.ts (579), WorkItemSheet.tsx (560), ref_node_fs (544), ref_https (510), ExternalProductManagement.tsx (496)
+- 103405 nós · 175585 arestas · 9218 comunidades · grafo do commit `6d87cf6c`
+- comunidades maiores: Communities (5953 total, 1987 thin omitted) (3943), react (1258), lucide-react (1204), utils.ts (1133), TalkXSuppression.tsx (1057), sonner (952), vitest (875), ref_node_fs (811), DashboardView.tsx (736), cn (676), validation.ts (548), ref_https (487)
 - símbolos mais chamados: cn() (src/lib/utils.ts), useAuth() (src/hooks/auth/useAuth.tsx), jsonResponse() (supabase/functions/_shared/validation.ts), errorResponse() (supabase/functions/_shared/validation.ts), handleCors() (supabase/functions/_shared/validation.ts), fail() (scripts/e2e-isolated/network-proof-policy.mjs), Logger (supabase/functions/_shared/validation.ts), requireEnv() (supabase/functions/_shared/validation.ts), fmtInt() (src/components/talkx/kit/format.ts), fromTable() (src/lib/supabaseHelpers.ts), useUserRole() (src/hooks/system/useUserRole.ts), validationErrorResponse() (supabase/functions/_shared/schemas.ts)
 - consulta local: `graphify query "<pergunta>"`, `graphify path "<A>" "<B>"`, `graphify explain "<X>"`
 
@@ -413,13 +413,14 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - scripts/db-audit/grants-baseline.json (13)
 - .github/workflows/db-guard.yml (12)
 - PENDENCIAS.md (12)
-- .github/workflows/ci.yml (11)
-- docs/agentes/github-ci.md (9)
+- .github/workflows/ci.yml (10)
+- docs/agentes/github-ci.md (10)
+- docs/ci/README.md (8)
+- scripts/ci/ci-docs-baseline.unit.mjs (8)
 - supabase/functions/evolution-api/index.ts (8)
-- docs/ci/README.md (7)
-- scripts/ci/ci-docs-baseline.unit.mjs (7)
 
 ## Workflows
+- `auto-update-pr-branch.yml` — Auto Update PR Branches (push, schedule, workflow_dispatch, workflow_run; cron 7,37 * * * *)
 - `branch-hygiene-audit.yml` — Branch Hygiene Audit (schedule, workflow_dispatch; cron 56 7 * * 1)
 - `check-talkx-pr-body.yml` — Talk X PR body check (pull_request)
 - `ci.yml` — CI/CD Pipeline (pull_request, push, workflow_dispatch)
@@ -528,6 +529,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - CHANGELOG topo: [Unreleased]
 
 ## Últimos commits
+- 2026-11-25 `6d87cf6c` feat(ci): restaura a fila de merge serial (auto-update-pr-branch) (#3368)
 - 2026-11-24 `e1a545c6` feat(manutencao): porta o harness de manutencao completo da PR #2926 (#3370)
 - 2026-11-24 `21396b9c` fix(ci): exige Replay local das migrations na main (#3367)
 - 2026-11-24 `06d10c80` fix(ci): guard enxerga wrapper que passa o nome da edge — gmail-send e gmail-sync saem de orfas (#3365)
@@ -542,7 +544,6 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - 2026-11-24 `83a70c3e` chore(db): sincronizar artefatos derivados do banco (#3356)
 - 2026-11-24 `592ffa7f` fix: elimina o flake de meia-noite do contrato do monitor (vs_yesterday) (#3353)
 - 2026-11-24 `45a65087` fix(e2e): serve as 4 imagens restantes pelo mirror ghcr.io do mesmo digest (#3352)
-- 2026-11-24 `38ee260d` chore: corrige o comentario do E2E do Firefox no ci.yml (causa nao e memoria) (#3349)
 
 ## Arquivos deste diretório
 - `docs/contexto/codigo/rotas.json`

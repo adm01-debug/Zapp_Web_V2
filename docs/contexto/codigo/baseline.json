@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "e1a545c6c2e213b3330214ed64be84c976d6484e",
+  "commit": "6d87cf6cda6a79a5122a68d7492122c7a8d4c384",
   "branch": "main",
-  "data_commit": "2026-11-24T18:58:15-03:00",
+  "data_commit": "2026-11-25T06:54:36-03:00",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "6d87cf6c",
+    "data": "2026-11-25",
+    "assunto": "feat(ci): restaura a fila de merge serial (auto-update-pr-branch) (#3368)"
+   },
    {
     "sha": "e1a545c6",
     "data": "2026-11-24",
@@ -126,14 +131,9 @@
     "sha": "4c1d031f",
     "data": "2026-11-23",
     "assunto": "⬆️ ci: bump actions/dependency-review-action from 5.0.0 to 5.0.1 in the actions-misc group across 1 directory (#3335)"
-   },
-   {
-    "sha": "f48c1ce7",
-    "data": "2026-11-23",
-    "assunto": "⬆️ ci: bump ossf/scorecard-action from 2.5.0 to 2.6.0 (#3336)"
    }
   ],
-  "arquivos_mudados_7d": 5022,
+  "arquivos_mudados_7d": 4369,
   "pastas_mais_mudadas_30d": [
    {
     "pasta": "docs/contexto/supabase",
@@ -239,30 +239,26 @@
    },
    {
     "arquivo": ".github/workflows/ci.yml",
-    "mudancas": 11
+    "mudancas": 10
    },
    {
     "arquivo": "docs/agentes/github-ci.md",
-    "mudancas": 9
+    "mudancas": 10
+   },
+   {
+    "arquivo": "docs/ci/README.md",
+    "mudancas": 8
+   },
+   {
+    "arquivo": "scripts/ci/ci-docs-baseline.unit.mjs",
+    "mudancas": 8
    },
    {
     "arquivo": "supabase/functions/evolution-api/index.ts",
     "mudancas": 8
    },
    {
-    "arquivo": "docs/ci/README.md",
-    "mudancas": 7
-   },
-   {
-    "arquivo": "scripts/ci/ci-docs-baseline.unit.mjs",
-    "mudancas": 7
-   },
-   {
     "arquivo": "RELATORIO_CI.md",
-    "mudancas": 6
-   },
-   {
-    "arquivo": "TESTING_CONVENTION.md",
     "mudancas": 6
    },
    {
@@ -283,6 +279,10 @@
    },
    {
     "arquivo": ".github/workflows/types-sync.yml",
+    "mudancas": 5
+   },
+   {
+    "arquivo": "TESTING_CONVENTION.md",
     "mudancas": 5
    },
    {
@@ -314,7 +314,7 @@
   ]
  },
  "contagens": {
-  "arquivos_total": 15801,
+  "arquivos_total": 15802,
   "arquivos_codigo": 5893,
   "linhas_codigo": 1141333,
   "rotas": 18,
@@ -329,7 +329,7 @@
   "migrations": 1153,
   "cron_jobs": 29,
   "testes": 3230,
-  "workflows": 24,
+  "workflows": 25,
   "scripts": 451,
   "docs_md": 4098
  },
