@@ -88,8 +88,8 @@ Fatos do perímetro que já custaram retrabalho:
 ## Workflows
 
 A fonte canônica do inventário é o **gerado** `docs/ci/README.md` (`scripts/ci/render-workflow-docs.mjs
---check` roda no CI; não editar à mão). Hoje são **25** arquivos em `.github/workflows/`:
-`automation-local`, `branch-hygiene-audit`, `check-talkx-pr-body`, `ci`, `codeql`, `crm-sync-worker`, `db-guard`,
+--check` roda no CI; não editar à mão). Hoje são **26** arquivos em `.github/workflows/`:
+`automation-local`, `auto-update-pr-branch`, `branch-hygiene-audit`, `check-talkx-pr-body`, `ci`, `codeql`, `crm-sync-worker`, `db-guard`,
 `db-live-guard`, `db-migrate`, `contexto`, `deploy-functions`, `e2e-baselines`, `e2e-logado`,
 `e2e-logado-isolado`, `e2e-talkx`, `front-release-targets`, `inventario-estado-semanal`, `notifica-falha-main`,
 `scorecard`, `settings-guard`, `talkx-status-regen`, `targeted-ledger-evidence`, `types-sync`,
