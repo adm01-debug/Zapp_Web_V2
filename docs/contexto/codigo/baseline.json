@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "d91f6507ccd6a67f2ba71568de1437a0e147a56f",
+  "commit": "078aacb5e29c2f27adc243ca07cf2b5fe162b144",
   "branch": "main",
-  "data_commit": "2026-11-25T17:19:17-03:00",
+  "data_commit": "2026-11-25T18:11:00-03:00",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "078aacb5",
+    "data": "2026-11-25",
+    "assunto": "feat: tela da linha do tempo de SLA no painel do contato (#3383)"
+   },
    {
     "sha": "d91f6507",
     "data": "2026-11-25",
@@ -126,14 +131,9 @@
     "sha": "5e609b75",
     "data": "2026-11-24",
     "assunto": "fix(e2e): retenta o pull em falha transiente de rede do registry (#3357)"
-   },
-   {
-    "sha": "83a70c3e",
-    "data": "2026-11-24",
-    "assunto": "chore(db): sincronizar artefatos derivados do banco (#3356)"
    }
   ],
-  "arquivos_mudados_7d": 4386,
+  "arquivos_mudados_7d": 4388,
   "pastas_mais_mudadas_30d": [
    {
     "pasta": "docs/contexto/supabase",
@@ -149,7 +149,7 @@
    },
    {
     "pasta": "src/components/inbox",
-    "mudancas": 727
+    "mudancas": 731
    },
    {
     "pasta": "docs/reconciliation/reaudit",
@@ -222,10 +222,6 @@
     "mudancas": 14
    },
    {
-    "arquivo": "docs/DB-INVENTORY.md",
-    "mudancas": 13
-   },
-   {
     "arquivo": ".github/workflows/db-guard.yml",
     "mudancas": 12
    },
@@ -234,7 +230,7 @@
     "mudancas": 12
    },
    {
-    "arquivo": "scripts/db-audit/grants-baseline.json",
+    "arquivo": "docs/DB-INVENTORY.md",
     "mudancas": 12
    },
    {
@@ -243,6 +239,10 @@
    },
    {
     "arquivo": "docs/agentes/github-ci.md",
+    "mudancas": 11
+   },
+   {
+    "arquivo": "scripts/db-audit/grants-baseline.json",
     "mudancas": 11
    },
    {
@@ -314,21 +314,21 @@
   ]
  },
  "contagens": {
-  "arquivos_total": 14798,
-  "arquivos_codigo": 5143,
-  "linhas_codigo": 953514,
+  "arquivos_total": 14800,
+  "arquivos_codigo": 5145,
+  "linhas_codigo": 954307,
   "rotas": 18,
   "rotas_http_backend": 11,
   "vistas_por_id": 55,
   "itens_menu": 61,
   "modulos": 149,
-  "componentes": 935,
+  "componentes": 936,
   "hooks": 515,
   "edge_functions": 93,
   "tabelas": 223,
   "migrations": 1153,
   "cron_jobs": 29,
-  "testes": 2824,
+  "testes": 2825,
   "workflows": 26,
   "scripts": 453,
   "docs_md": 3988
@@ -739,8 +739,8 @@
    "linhas": 638
   },
   "src/components": {
-   "arquivos": 2315,
-   "linhas": 394231
+   "arquivos": 2317,
+   "linhas": 395024
   },
   "src/config": {
    "arquivos": 3,

@@ -3,7 +3,7 @@
  "format_version": 2,
  "stack": {
   "linguagens": [
-   "TypeScript (4498)",
+   "TypeScript (4500)",
    "Markdown (3988)",
    "SQL (3063)",
    "JSON (1939)",
@@ -2987,11 +2987,11 @@
     "ocorrencias": 20
    },
    {
-    "papel": "authenticated",
-    "ocorrencias": 18
+    "papel": "group",
+    "ocorrencias": 19
    },
    {
-    "papel": "group",
+    "papel": "authenticated",
     "ocorrencias": 18
    },
    {

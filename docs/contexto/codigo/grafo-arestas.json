@@ -2965,6 +2965,7 @@
    "src/components/inbox/contact-details/ConversationMemorySection.tsx",
    "src/components/inbox/contact-details/EditContactDialog.tsx",
    "src/components/inbox/contact-details/ExternalContact360Panel.tsx",
+   "src/components/inbox/contact-details/SlaTimelineSection.tsx",
    "src/components/inbox/contact-details/editContactShape.ts",
    "src/components/inbox/contact-details/sidebar/ContactSidebarSections.tsx",
    "src/components/inbox/contact-details/sidebar/SidebarSection.tsx",
@@ -4168,6 +4169,15 @@
    "src/components/ui/slider.tsx",
    "src/hooks/crm/useContactLeadRisk.ts",
    "src/hooks/system/useUserRole.ts",
+   "src/lib/utils.ts"
+  ],
+  "src/components/inbox/contact-details/SlaTimelineSection.tsx": [
+   "src/components/inbox/chat/motion/index.ts",
+   "src/components/inbox/contact-details/sidebar/SidebarEmpty.tsx",
+   "src/components/inbox/contact-details/sidebar/SidebarSection.tsx",
+   "src/hooks/sla/useContactSlaTimeline.ts",
+   "src/lib/motion.ts",
+   "src/lib/slaTimeline.ts",
    "src/lib/utils.ts"
   ],
   "src/components/inbox/contact-details/StoryViewer.tsx": [

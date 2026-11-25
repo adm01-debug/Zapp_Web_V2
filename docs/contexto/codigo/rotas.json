@@ -137,6 +137,7 @@
     "useContactSearch",
     "useContactSearchV2",
     "useContactSidebar",
+    "useContactSlaTimeline",
     "useContactSource",
     "useContactStats",
     "useContactSummaryNote",
@@ -693,6 +694,7 @@
     "useContactSearch",
     "useContactSearchV2",
     "useContactSidebar",
+    "useContactSlaTimeline",
     "useContactSource",
     "useContactStats",
     "useContactSummaryNote",
@@ -1444,7 +1446,7 @@
     "unknown",
     "user"
    ],
-   "arquivos_puxados": 1591
+   "arquivos_puxados": 1593
   },
   {
    "protegida": false,
@@ -5173,6 +5175,7 @@
     "useContactQuickActions",
     "useContactSearch",
     "useContactSidebar",
+    "useContactSlaTimeline",
     "useContactStats",
     "useContactSummaryNote",
     "useContactUnreadEmails",
@@ -5452,6 +5455,7 @@
     "useContactQuickActions",
     "useContactSearch",
     "useContactSidebar",
+    "useContactSlaTimeline",
     "useContactStats",
     "useContactSummaryNote",
     "useContactUnreadEmails",
@@ -5803,7 +5807,7 @@
     "unknown",
     "user"
    ],
-   "arquivos_puxados": 712
+   "arquivos_puxados": 715
   },
   {
    "id": "integrations",

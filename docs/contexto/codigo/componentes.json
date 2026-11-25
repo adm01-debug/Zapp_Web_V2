@@ -1,7 +1,7 @@
 {
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
- "total": 935,
+ "total": 936,
  "orfaos": 45,
  "nomes_duplicados": {
   "AchievementBadge": [
@@ -6215,7 +6215,7 @@
    "hooks_locais": [],
    "tabelas": [],
    "edges": [],
-   "usado_por": 5,
+   "usado_por": 6,
    "orfao": false
   },
   {
@@ -6246,7 +6246,7 @@
    ],
    "tabelas": [],
    "edges": [],
-   "usado_por": 6,
+   "usado_por": 7,
    "orfao": false
   },
   {
@@ -6291,6 +6291,23 @@
    "tabelas": [],
    "edges": [],
    "usado_por": 2,
+   "orfao": false
+  },
+  {
+   "arquivo": "src/components/inbox/contact-details/SlaTimelineSection.tsx",
+   "exports": [
+    "SlaTimelineSection"
+   ],
+   "export_default": null,
+   "linhas": 418,
+   "dominio": "components/inbox",
+   "hooks_locais": [
+    "useContactSlaTimeline",
+    "useReducedMotion"
+   ],
+   "tabelas": [],
+   "edges": [],
+   "usado_por": 1,
    "orfao": false
   },
   {
@@ -6351,7 +6368,7 @@
     "ContactDetails"
    ],
    "export_default": null,
-   "linhas": 166,
+   "linhas": 172,
    "dominio": "components/inbox",
    "hooks_locais": [
     "useContactEnrichedData",

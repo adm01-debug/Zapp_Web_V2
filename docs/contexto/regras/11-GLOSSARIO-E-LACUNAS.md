@@ -1,6 +1,6 @@
 # 11 · GLOSSÁRIO, DADOS DE REFERÊNCIA E LACUNAS
 
-> Gerado automaticamente por AI Context Sync v1.3.2 · commit `d91f6507cc` · branch `main` · 2026-11-25 20:23 UTC
+> Gerado automaticamente por AI Context Sync v1.3.2 · commit `078aacb5e2` · branch `main` · 2026-11-25 21:12 UTC
 > Não edite à mão — regras humanas vão em `manual/`.
 
 ## Glossário do domínio (entidades do sistema)
@@ -290,7 +290,7 @@
 | `StoryMediaKind` (TS) | image \| video \| text |  | `src/components/inbox/contact-details/storyUtils.ts` |
 | `SidebarSectionTone` (TS) | blue \| purple \| green |  | `src/components/inbox/contact-details/sidebar/SidebarSection.tsx` |
 | `SinguDetailKind` (TS) | metaprograms \| fears \| decision \| budget \| influencers \| rapport \| objections |  | `src/components/inbox/contact-details/sidebar/SinguProfileDetailSheet.tsx` |
-| `SIDEBAR_SECTIONS` (TS) | 'professional', 'personal', 'singu', 'intelligence', 'delivery', 'memoria', 'atendimento', 'crm360' |  | `src/components/inbox/contact-details/sidebar/sidebarSections.ts` |
+| `SIDEBAR_SECTIONS` (TS) | 'professional', 'personal', 'singu', 'intelligence', 'delivery', 'memoria', 'atendimento', 'crm360', 'sla-timeline' |  | `src/components/inbox/contact-details/sidebar/sidebarSections.ts` |
 | `ReopenAction` (TS) | reopen \| unarchive |  | `src/components/inbox/conversation-list/ConversationReopenDialog.tsx` |
 | `MainTab` (TS) | open \| resolved \| search |  | `src/components/inbox/conversation-list/StatusChips.tsx` |
 | `SubTab` (TS) | attending \| waiting |  | `src/components/inbox/conversation-list/StatusChips.tsx` |

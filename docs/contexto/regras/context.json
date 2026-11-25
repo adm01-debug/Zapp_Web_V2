@@ -1,15 +1,15 @@
 {
  "meta": {
-  "sha": "d91f6507ccd6a67f2ba71568de1437a0e147a56f",
+  "sha": "078aacb5e29c2f27adc243ca07cf2b5fe162b144",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-25 20:23 UTC",
-  "files_total": 14645,
-  "code_files": 8179,
-  "code_lines": 1230343
+  "generated_at": "2026-11-25 21:12 UTC",
+  "files_total": 14647,
+  "code_files": 8181,
+  "code_lines": 1231136
  },
  "version": "1.3.2",
- "facts_hash": "f6478258397227e2",
+ "facts_hash": "64a4097fa24c2c48",
  "stack": {
   "frameworks": [
    "React + Vite",
@@ -368,7 +368,7 @@
   "package_manager": "bun",
   "languages": {
    ".sql": 3063,
-   ".tsx": 2480,
+   ".tsx": 2482,
    ".ts": 2013,
    ".mjs": 496,
    ".py": 125,
@@ -72728,7 +72728,7 @@
     "file": ".github/workflows/types-sync.yml"
    }
   ],
-  "components_count": 2317,
+  "components_count": 2319,
   "hooks": [
    {
     "name": "useMotionSeguro",
@@ -76072,8 +76072,8 @@
   },
   {
    "module": "src/components",
-   "files": 2315,
-   "lines": 394231,
+   "files": 2317,
+   "lines": 395024,
    "tables": [
     "agent_skills",
     "agent_visibility_grants",
@@ -85985,7 +85985,7 @@
    {
     "file": "src/components/inbox/contact-details/sidebar/sidebarSections.ts",
     "name": "SIDEBAR_SECTIONS",
-    "values": "'professional', 'personal', 'singu', 'intelligence', 'delivery', 'memoria', 'atendimento', 'crm360'"
+    "values": "'professional', 'personal', 'singu', 'intelligence', 'delivery', 'memoria', 'atendimento', 'crm360', 'sla-timeline'"
    },
    {
     "file": "src/components/inbox/conversation-list/ConversationReopenDialog.tsx",
@@ -97988,6 +97988,30 @@
     "text": "- o Salvar grava apenas o que mudou e invalida o `contact-lead-score` que a"
    },
    {
+    "file": "src/components/inbox/contact-details/SlaTimelineSection.tsx",
+    "text": "Marco sem prazo fica neutro."
+   },
+   {
+    "file": "src/components/inbox/contact-details/SlaTimelineSection.tsx",
+    "text": "`warning`→`warning`, `breached`→`destructive`) e o trecho de marco sem prazo"
+   },
+   {
+    "file": "src/components/inbox/contact-details/SlaTimelineSection.tsx",
+    "text": "máximo 40 ms por item; com `prefers-reduced-motion` os traços nascem prontos"
+   },
+   {
+    "file": "src/components/inbox/contact-details/SlaTimelineSection.tsx",
+    "text": "* Escalonamento da entrada dos marcos — teto de 40 ms por item (regra de movimento). */"
+   },
+   {
+    "file": "src/components/inbox/contact-details/SlaTimelineSection.tsx",
+    "text": "prazo (`na`) é NEUTRO: o kit não tem tom neutro e está fora do escopo deste"
+   },
+   {
+    "file": "src/components/inbox/contact-details/SlaTimelineSection.tsx",
+    "text": "* Linha de apoio: duração consumida contra o prazo; sem desfecho, o prazo; sem nada, o instante. */"
+   },
+   {
     "file": "src/components/inbox/contact-details/WhatsAppCatalogSection.tsx",
     "text": "* Catálogo e coleções do WhatsApp Business do CONTATO (`get-catalog` e"
    },
@@ -98006,6 +98030,10 @@
    {
     "file": "src/components/inbox/contact-details/sidebar/sidebarSections.ts",
     "text": "interações, canais e redes) entrou em 2026-11-17, pela mesma regra de"
+   },
+   {
+    "file": "src/components/inbox/contact-details/sidebar/sidebarSections.ts",
+    "text": "* `sla-timeline` (Linha do tempo de SLA) entrou em 2026-11-25 pela mesma regra de"
    },
    {
     "file": "src/components/inbox/copilot/InsightCard.tsx",
@@ -114379,6 +114407,26 @@
     "value": "5"
    },
    {
+    "file": "src/components/inbox/contact-details/SlaTimelineSection.tsx",
+    "name": "ROW_H",
+    "value": "56"
+   },
+   {
+    "file": "src/components/inbox/contact-details/SlaTimelineSection.tsx",
+    "name": "DOT_CENTER",
+    "value": "22"
+   },
+   {
+    "file": "src/components/inbox/contact-details/SlaTimelineSection.tsx",
+    "name": "ITEM_STAGGER_S",
+    "value": "0.04"
+   },
+   {
+    "file": "src/components/inbox/contact-details/SlaTimelineSection.tsx",
+    "name": "STAGGER_CAP",
+    "value": "6"
+   },
+   {
     "file": "src/components/inbox/contact-details/storyUtils.ts",
     "name": "STORY_DURATION_MS",
     "value": "5000"
@@ -122666,6 +122714,24 @@
     "file": "src/components/inbox/contact-details/ConversationMemorySection.tsx",
     "field": "status",
     "value": "error",
+    "kind": "compara"
+   },
+   {
+    "file": "src/components/inbox/contact-details/SlaTimelineSection.tsx",
+    "field": "status",
+    "value": "error",
+    "kind": "compara"
+   },
+   {
+    "file": "src/components/inbox/contact-details/SlaTimelineSection.tsx",
+    "field": "status",
+    "value": "na",
+    "kind": "compara"
+   },
+   {
+    "file": "src/components/inbox/contact-details/SlaTimelineSection.tsx",
+    "field": "status",
+    "value": "na",
     "kind": "compara"
    },
    {
@@ -163089,6 +163155,66 @@
    {
     "file": "src/components/inbox/contact-details/__tests__/LeadRiskScorePanel.test.tsx",
     "name": "UPDATE com a linha devolvida confirma o salvamento"
+   },
+   {
+    "file": "src/components/inbox/contact-details/__tests__/SlaTimelineSection.test.tsx",
+    "name": "SlaTimelineSection — a linha do tempo no painel do contato"
+   },
+   {
+    "file": "src/components/inbox/contact-details/__tests__/SlaTimelineSection.test.tsx",
+    "name": "mostra os marcos reais com a situação de cada um"
+   },
+   {
+    "file": "src/components/inbox/contact-details/__tests__/SlaTimelineSection.test.tsx",
+    "name": "cada trecho da linha pinta pela situação do marco acima dele"
+   },
+   {
+    "file": "src/components/inbox/contact-details/__tests__/SlaTimelineSection.test.tsx",
+    "name": "o filtro de período esconde o que ficou fora da janela"
+   },
+   {
+    "file": "src/components/inbox/contact-details/__tests__/SlaTimelineSection.test.tsx",
+    "name": "o filtro por tipo deixa só os marcos escolhidos"
+   },
+   {
+    "file": "src/components/inbox/contact-details/__tests__/SlaTimelineSection.test.tsx",
+    "name": "o grupo de tipos navega por setas (roving tabindex) e Enter alterna o chip focado"
+   },
+   {
+    "file": "src/components/inbox/contact-details/__tests__/SlaTimelineSection.test.tsx",
+    "name": "Esc limpa os filtros ativos sem fechar o painel"
+   },
+   {
+    "file": "src/components/inbox/contact-details/__tests__/SlaTimelineSection.test.tsx",
+    "name": "estado vazio ensina o que fazer, sem esconder os filtros"
+   },
+   {
+    "file": "src/components/inbox/contact-details/__tests__/SlaTimelineSection.test.tsx",
+    "name": "sem o prazo carregado avisa em vez de mostrar lista vazia"
+   },
+   {
+    "file": "src/components/inbox/contact-details/__tests__/SlaTimelineSection.test.tsx",
+    "name": "falha na leitura dos marcos não vira "
+   },
+   {
+    "file": "src/components/inbox/contact-details/__tests__/SlaTimelineSection.test.tsx",
+    "name": "enquanto o prazo carrega mostra o skeleton, não uma lista vazia"
+   },
+   {
+    "file": "src/components/inbox/contact-details/__tests__/SlaTimelineSection.test.tsx",
+    "name": "com movimento reduzido o traço nasce pronto e nada se desloca"
+   },
+   {
+    "file": "src/components/inbox/contact-details/__tests__/SlaTimelineSection.test.tsx",
+    "name": "o estado da seção persiste no mesmo acordeão do painel"
+   },
+   {
+    "file": "src/components/inbox/contact-details/__tests__/SlaTimelineSection.test.tsx",
+    "name": "ContactDetails — a seção vive no acordeão persistido"
+   },
+   {
+    "file": "src/components/inbox/contact-details/__tests__/SlaTimelineSection.test.tsx",
+    "name": "abrir a seção grava "
    },
    {
     "file": "src/components/inbox/contact-details/__tests__/WhatsAppStatusSection.test.tsx",
@@ -256125,6 +256251,7 @@
       "compara:src/components/inbox/ConversationSummary.tsx",
       "compara:src/components/inbox/FileUploader.tsx",
       "compara:src/components/inbox/contact-details/ConversationMemorySection.tsx",
+      "compara:src/components/inbox/contact-details/SlaTimelineSection.tsx",
       "compara:src/components/inbox/contact-details/sidebar/SinguProfileSection.tsx",
       "compara:src/components/inbox/location-picker/SuggestionList.tsx",
       "compara:src/components/monitoring/hooks/useConnectionIncidents.ts",
@@ -256604,6 +256731,10 @@
       "compara:src/hooks/team-chat/useTeamMessages.ts",
       "compara:src/hooks/team-chat/useTeamPresence.ts"
      ],
+     "na": [
+      "compara:src/components/inbox/contact-details/SlaTimelineSection.tsx",
+      "escreve:src/lib/slaTimeline.ts"
+     ],
      "waiting": [
       "compara:src/components/inbox/conversation-list/reopenChip.ts",
       "compara:src/components/tasks/board/BoardColumn.tsx",
@@ -256923,9 +257054,6 @@
      ],
      "403": [
       "compara:src/lib/rlsError.ts"
-     ],
-     "na": [
-      "escreve:src/lib/slaTimeline.ts"
      ],
      "declined": [
       "compara:src/lib/calls/callStatus.ts",
@@ -317593,7 +317721,7 @@
   },
   "src/components/inbox/ContactDetails.tsx": {
    "path": "src/components/inbox/ContactDetails.tsx",
-   "lines": 166,
+   "lines": 172,
    "exports": [
     "function ContactDetails"
    ],
@@ -325606,6 +325734,56 @@
     }
    ]
   },
+  "src/components/inbox/contact-details/SlaTimelineSection.tsx": {
+   "path": "src/components/inbox/contact-details/SlaTimelineSection.tsx",
+   "lines": 418,
+   "exports": [
+    "function SlaTimelineSection"
+   ],
+   "params": [
+    {
+     "name": "ROW_H",
+     "value": "56"
+    },
+    {
+     "name": "DOT_CENTER",
+     "value": "22"
+    },
+    {
+     "name": "ITEM_STAGGER_S",
+     "value": "0.04"
+    },
+    {
+     "name": "STAGGER_CAP",
+     "value": "6"
+    }
+   ],
+   "status_values": [
+    {
+     "field": "status",
+     "value": "error",
+     "kind": "compara"
+    },
+    {
+     "field": "status",
+     "value": "na",
+     "kind": "compara"
+    },
+    {
+     "field": "status",
+     "value": "na",
+     "kind": "compara"
+    }
+   ],
+   "rule_comments": [
+    "Marco sem prazo fica neutro.",
+    "`warning`→`warning`, `breached`→`destructive`) e o trecho de marco sem prazo",
+    "máximo 40 ms por item; com `prefers-reduced-motion` os traços nascem prontos",
+    "* Escalonamento da entrada dos marcos — teto de 40 ms por item (regra de movimento). */",
+    "prazo (`na`) é NEUTRO: o kit não tem tom neutro e está fora do escopo deste",
+    "* Linha de apoio: duração consumida contra o prazo; sem desfecho, o prazo; sem nada, o instante. */"
+   ]
+  },
   "src/components/inbox/contact-details/StoryViewer.tsx": {
    "path": "src/components/inbox/contact-details/StoryViewer.tsx",
    "lines": 288,
@@ -326055,6 +326233,40 @@
     "UPDATE com a linha devolvida confirma o salvamento"
    ]
   },
+  "src/components/inbox/contact-details/__tests__/SlaTimelineSection.test.tsx": {
+   "path": "src/components/inbox/contact-details/__tests__/SlaTimelineSection.test.tsx",
+   "lines": 364,
+   "is_test": true,
+   "params": [
+    {
+     "name": "MIN",
+     "value": "60"
+    }
+   ],
+   "rule_comments": [
+    "* r1 (2 h atrás): 1ª resposta em 4/5 min → em risco; resolução em 5/10 min → no prazo. */",
+    "marco sem prazo (abertura de conversa) não ganha selo",
+    "marco sem prazo: trecho neutro por `--muted-foreground` (não o azul padrão do kit)"
+   ],
+   "doc": "Prova de tela da seção \"Linha do tempo de SLA\" do painel do contato. Renderiza o componente REAL dentro do acordeão real: o único mock é a rede do Supabase, então a leitura paginada, a montagem dos marcos (`buildSlaMilestones`) e o filtro de período/tipo (`filterSlaMilestones`) são os de produção. A …",
+   "tests": [
+    "SlaTimelineSection — a linha do tempo no painel do contato",
+    "mostra os marcos reais com a situação de cada um",
+    "cada trecho da linha pinta pela situação do marco acima dele",
+    "o filtro de período esconde o que ficou fora da janela",
+    "o filtro por tipo deixa só os marcos escolhidos",
+    "o grupo de tipos navega por setas (roving tabindex) e Enter alterna o chip focado",
+    "Esc limpa os filtros ativos sem fechar o painel",
+    "estado vazio ensina o que fazer, sem esconder os filtros",
+    "sem o prazo carregado avisa em vez de mostrar lista vazia",
+    "falha na leitura dos marcos não vira ",
+    "enquanto o prazo carrega mostra o skeleton, não uma lista vazia",
+    "com movimento reduzido o traço nasce pronto e nada se desloca",
+    "o estado da seção persiste no mesmo acordeão do painel",
+    "ContactDetails — a seção vive no acordeão persistido",
+    "abrir a seção grava "
+   ]
+  },
   "src/components/inbox/contact-details/__tests__/WhatsAppStatusSection.test.tsx": {
    "path": "src/components/inbox/contact-details/__tests__/WhatsAppStatusSection.test.tsx",
    "lines": 319,
@@ -326295,7 +326507,7 @@
   },
   "src/components/inbox/contact-details/sidebar/sidebarSections.ts": {
    "path": "src/components/inbox/contact-details/sidebar/sidebarSections.ts",
-   "lines": 90,
+   "lines": 95,
    "exports": [
     "const SIDEBAR_SECTIONS",
     "type SidebarSectionValue",
@@ -326307,13 +326519,14 @@
    "enums": [
     {
      "name": "SIDEBAR_SECTIONS",
-     "values": "'professional', 'personal', 'singu', 'intelligence', 'delivery', 'memoria', 'atendimento', 'crm360'"
+     "values": "'professional', 'personal', 'singu', 'intelligence', 'delivery', 'memoria', 'atendimento', 'crm360', 'sla-timeline'"
     }
    ],
    "rule_comments": [
     "apenas mais um valor conhecido: a chave de storage NÃO muda, então a",
     "2026-10-16 e segue a MESMA regra de `intelligence`: valor conhecido a mais,",
-    "interações, canais e redes) entrou em 2026-11-17, pela mesma regra de"
+    "interações, canais e redes) entrou em 2026-11-17, pela mesma regra de",
+    "* `sla-timeline` (Linha do tempo de SLA) entrou em 2026-11-25 pela mesma regra de"
    ],
    "calc_fns": [
     {
@@ -424425,10 +424638,22 @@
   }
  },
  "git": {
-  "sha": "d91f6507ccd6a67f2ba71568de1437a0e147a56f",
+  "sha": "078aacb5e29c2f27adc243ca07cf2b5fe162b144",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "078aacb5",
+    "date": "2026-11-25",
+    "author": "adm01-debug",
+    "subject": "feat: tela da linha do tempo de SLA no painel do contato (#3383)",
+    "files": [
+     "src/components/inbox/ContactDetails.tsx",
+     "src/components/inbox/contact-details/SlaTimelineSection.tsx",
+     "src/components/inbox/contact-details/__tests__/SlaTimelineSection.test.tsx",
+     "src/components/inbox/contact-details/sidebar/sidebarSections.ts"
+    ]
+   },
    {
     "sha": "d91f6507",
     "date": "2026-11-25",
@@ -426073,15 +426298,6 @@
      "scripts/e2e-isolated/images.lock.json",
      "scripts/e2e-isolated/pull-image.mjs"
     ]
-   },
-   {
-    "sha": "972831d7",
-    "date": "2026-11-24",
-    "author": "adm01-debug",
-    "subject": "fix(e2e): casa o titulo real do dialog de mesclagem (#3350)",
-    "files": [
-     "e2e/contacts-selection.spec.ts"
-    ]
    }
   ],
   "hot_files": [
@@ -426134,6 +426350,22 @@
     2
    ],
    [
+    "src/components/inbox/ContactDetails.tsx",
+    1
+   ],
+   [
+    "src/components/inbox/contact-details/SlaTimelineSection.tsx",
+    1
+   ],
+   [
+    "src/components/inbox/contact-details/__tests__/SlaTimelineSection.test.tsx",
+    1
+   ],
+   [
+    "src/components/inbox/contact-details/sidebar/sidebarSections.ts",
+    1
+   ],
+   [
     "src/lib/__tests__/redactPII.test.ts",
     1
    ],
@@ -426147,22 +426379,6 @@
    ],
    [
     "src/lib/redactPII.ts",
-    1
-   ],
-   [
-    "src/__tests__/a11y/icon-buttons-baseline.json",
-    1
-   ],
-   [
-    "src/components/admin/PlaybooksManager.tsx",
-    1
-   ],
-   [
-    "docs/pendencias/filtro-novidades-com-contagem-vinda-da-edge-ct64.md",
-    1
-   ],
-   [
-    "src/components/catalog/CatalogRail.tsx",
     1
    ]
   ]

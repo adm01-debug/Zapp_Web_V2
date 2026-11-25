@@ -1,6 +1,6 @@
 # 07 · REGRAS DE NEGÓCIO
 
-> Gerado automaticamente por AI Context Sync v1.3.2 · commit `d91f6507cc` · branch `main` · 2026-11-25 20:23 UTC
+> Gerado automaticamente por AI Context Sync v1.3.2 · commit `078aacb5e2` · branch `main` · 2026-11-25 21:12 UTC
 > Não edite à mão — regras humanas vão em `manual/`.
 
 ## A. Regras escritas por humanos (`manual/` — prioridade máxima, nunca sobrescrito)
@@ -1683,7 +1683,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | StoryMediaKind | image \| video \| text | `src/components/inbox/contact-details/storyUtils.ts` |
 | SidebarSectionTone | blue \| purple \| green | `src/components/inbox/contact-details/sidebar/SidebarSection.tsx` |
 | SinguDetailKind | metaprograms \| fears \| decision \| budget \| influencers \| rapport \| objections | `src/components/inbox/contact-details/sidebar/SinguProfileDetailSheet.tsx` |
-| SIDEBAR_SECTIONS | 'professional', 'personal', 'singu', 'intelligence', 'delivery', 'memoria', 'atendimento', 'crm360' | `src/components/inbox/contact-details/sidebar/sidebarSections.ts` |
+| SIDEBAR_SECTIONS | 'professional', 'personal', 'singu', 'intelligence', 'delivery', 'memoria', 'atendimento', 'crm360', 'sla-timeline' | `src/components/inbox/contact-details/sidebar/sidebarSections.ts` |
 | ReopenAction | reopen \| unarchive | `src/components/inbox/conversation-list/ConversationReopenDialog.tsx` |
 | MainTab | open \| resolved \| search | `src/components/inbox/conversation-list/StatusChips.tsx` |
 | SubTab | attending \| waiting | `src/components/inbox/conversation-list/StatusChips.tsx` |
@@ -3702,6 +3702,10 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `EDIT_WINDOW_MINUTES` | `15` | `src/components/inbox/chat/useChatPanelHandlers.ts` |
 | `MAX_LINES` | `4` | `src/components/inbox/contact-details/AIInsightsWidget.tsx` |
 | `LIST_LIMIT` | `5` | `src/components/inbox/contact-details/ConversationMemorySection.tsx` |
+| `ROW_H` | `56` | `src/components/inbox/contact-details/SlaTimelineSection.tsx` |
+| `DOT_CENTER` | `22` | `src/components/inbox/contact-details/SlaTimelineSection.tsx` |
+| `ITEM_STAGGER_S` | `0.04` | `src/components/inbox/contact-details/SlaTimelineSection.tsx` |
+| `STAGGER_CAP` | `6` | `src/components/inbox/contact-details/SlaTimelineSection.tsx` |
 | `STORY_DURATION_MS` | `5000` | `src/components/inbox/contact-details/storyUtils.ts` |
 | `THINKING_TIMEOUT_MS` | `8000` | `src/components/inbox/copilot/RadarPanel.tsx` |
 | `DEBOUNCE_MS` | `300` | `src/components/inbox/location-picker/useAddressAutocomplete.ts` |
@@ -3898,11 +3902,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `DEFAULT_REFRESH_MS` | `60` | `src/hooks/admin/useSupervisorQueue.ts` |
 | `RECENT_SENDS_WINDOW_DAYS` | `30` | `src/hooks/agents/useAgentRecentSends.ts` |
 | `DAY_MS` | `24` | `src/hooks/agents/useAgentRecentSends.ts` |
-| `LOGS_PER_PAGE` | `50` | `src/hooks/analytics/useAIUsageDashboard.ts` |
-| `MESMO_CICLO_MS` | `1` | `src/hooks/analytics/useAIUsageDashboard.ts` |
-| `GOAL_CHECK_INTERVAL_MS` | `600` | `src/hooks/analytics/useGoalNotifications.ts` |
-| `QUEUE_GOAL_ALERTS_INTERVAL_MS` | `5` | `src/hooks/analytics/useQueueGoalAlerts.ts` |
-| … +698 linhas — lista completa em `context.json` | | |
+| … +702 linhas — lista completa em `context.json` | | |
 
 ### H.2 Prazos, expirações e janelas de tempo
 
@@ -4729,7 +4729,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `owner` | `supabase/migrations/20260927270018_team_chat_e28_fix_find_or_create_race.sql` |
 | `anon` | `supabase/migrations/20260927340000_fix_add_agent_xp_negative_and_guard.sql` |
 
-## K. Testes como especificação (22892 testes em 2431 arquivos — nomes completos em `context.json`)
+## K. Testes como especificação (22907 testes em 2432 arquivos — nomes completos em `context.json`)
 
 | Arquivo | Testes | Exemplos do que o sistema DEVE fazer |
 |---|---|---|
@@ -5033,7 +5033,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `supabase/functions/multiplix-dispatch/actions/__tests__/listing.test.ts` | 17 | dispatch.list escopo: sem permissao ampla so devolve os disparos do dono · dispatch.list escopo: usuario sem profile e sem permissao -> lista vazia (nao consulta a tabela) · dispatch.list escopo: a permissao ampla ve os disparos de qualquer dono · dispatch.list paginacao: limit/offset recortam na ordem created_at desc e total e exato … |
 | `supabase/functions/talkx-ai/index.test.ts` | 17 | X076: flag ai_insights desligada recusa com 403 ai_disabled e não paga o proxy · X076: orçamento mensal no padrão (0 = desligado) recusa com 403 ai_disabled · X076: gasto do mês no teto recusa com 429 budget_exceeded e não paga o proxy · X076: gasto abaixo do teto passa (o teto não é desligamento geral) … |
 | `tests/contracts/ai-values.contract.test.ts` | 17 | IA-023 · normalizeScore nunca inventa número · trata ausência como ausência (não como 50 nem 3) · rejeita string numérica em vez de coagir ( · rejeita NaN/Infinity … |
-| … +2131 linhas — lista completa em `context.json` | | |
+| … +2132 linhas — lista completa em `context.json` | | |
 
 ## L. Eventos de webhook tratados (contratos com sistemas externos)
 
@@ -5534,20 +5534,20 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | * Cada grupo é renderizado em no máximo 5 linhas (o resto é contado). */ | `src/components/inbox/contact-details/ConversationMemorySection.tsx` |
 | E-mail e sites aparecem como texto, sem link (regra: nenhuma informação sai | `src/components/inbox/contact-details/EvolutionContactProfileSection.tsx` |
 | - o Salvar grava apenas o que mudou e invalida o `contact-lead-score` que a | `src/components/inbox/contact-details/LeadRiskScorePanel.tsx` |
+| Marco sem prazo fica neutro. | `src/components/inbox/contact-details/SlaTimelineSection.tsx` |
+| `warning`→`warning`, `breached`→`destructive`) e o trecho de marco sem prazo | `src/components/inbox/contact-details/SlaTimelineSection.tsx` |
+| máximo 40 ms por item; com `prefers-reduced-motion` os traços nascem prontos | `src/components/inbox/contact-details/SlaTimelineSection.tsx` |
+| * Escalonamento da entrada dos marcos — teto de 40 ms por item (regra de movimento). */ | `src/components/inbox/contact-details/SlaTimelineSection.tsx` |
+| prazo (`na`) é NEUTRO: o kit não tem tom neutro e está fora do escopo deste | `src/components/inbox/contact-details/SlaTimelineSection.tsx` |
+| * Linha de apoio: duração consumida contra o prazo; sem desfecho, o prazo; sem nada, o instante. */ | `src/components/inbox/contact-details/SlaTimelineSection.tsx` |
 | * Catálogo e coleções do WhatsApp Business do CONTATO (`get-catalog` e | `src/components/inbox/contact-details/WhatsAppCatalogSection.tsx` |
 | Contato sem WhatsApp Business volta lista vazia; na Evolution GO, `notSupported`. | `src/components/inbox/contact-details/WhatsAppCatalogSection.tsx` |
 | apenas mais um valor conhecido: a chave de storage NÃO muda, então a | `src/components/inbox/contact-details/sidebar/sidebarSections.ts` |
 | 2026-10-16 e segue a MESMA regra de `intelligence`: valor conhecido a mais, | `src/components/inbox/contact-details/sidebar/sidebarSections.ts` |
 | interações, canais e redes) entrou em 2026-11-17, pela mesma regra de | `src/components/inbox/contact-details/sidebar/sidebarSections.ts` |
+| * `sla-timeline` (Linha do tempo de SLA) entrou em 2026-11-25 pela mesma regra de | `src/components/inbox/contact-details/sidebar/sidebarSections.ts` |
 | CV-040: cartão sem fontes nunca deve existir — avisa no desenvolvimento */} | `src/components/inbox/copilot/InsightCard.tsx` |
 | Mostra no máximo 2 sugestões para não poluir o painel | `src/components/inbox/copilot/MissingQuestions.tsx` |
 | * CV-035/036 — Alerta de ocasião comercial detectada + prazo de entrega. | `src/components/inbox/copilot/OccasionAlert.tsx` |
 | Sobe/desce a linha uma posição por vez, trocando apenas de lugar os objetos | `src/components/inbox/interactive-builder/useInteractiveMessage.ts` |
-| * E27: a pausa é limite de uso, não ausência de resultado — o aviso diz quanto falta e lembra que | `src/components/inbox/location-picker/SuggestionList.tsx` |
-| expira, o texto cai para o aviso genérico (o hook decide quando tentar de novo). | `src/components/inbox/location-picker/SuggestionList.tsx` |
-| mês não ganha botão: nova tentativa não muda o limite, seria só ruído. | `src/components/inbox/location-picker/SuggestionList.tsx` |
-| "Tentar novamente". Chegando ao fim do prazo, o próprio aviso pede a retomada (o hook vê o | `src/components/inbox/location-picker/SuggestionList.tsx` |
-| morto, que dizia limite vigente quando não havia mais nenhum. Zero é "já pode tentar". | `src/components/inbox/location-picker/searchErrors.ts` |
-| * F2/E15: causas de falha do `/suggest` que são **rota quebrada** (não limite de uso) e por isso | `src/components/inbox/location-picker/useAddressAutocomplete.ts` |
-| caem no `/forward`. `rate_limited` (429) e guarda de custo ficam de fora: são limite, não rota — | `src/components/inbox/location-picker/useAddressAutocomplete.ts` |
-| … +1822 linhas — lista completa em `context.json` | |
+| … +1829 linhas — lista completa em `context.json` | |

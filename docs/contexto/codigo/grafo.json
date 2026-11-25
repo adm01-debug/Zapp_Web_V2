@@ -1,12 +1,12 @@
 {
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
- "nos": 2411,
- "arestas": 8299,
+ "nos": 2412,
+ "arestas": 8307,
  "hubs": [
   {
    "arquivo": "src/lib/utils.ts",
-   "importado_por": 484
+   "importado_por": 485
   },
   {
    "arquivo": "src/integrations/supabase/client.ts",
@@ -42,7 +42,7 @@
   },
   {
    "arquivo": "src/types/chat.ts",
-   "importado_por": 128
+   "importado_por": 129
   },
   {
    "arquivo": "src/hooks/auth/useAuth.tsx",
@@ -530,7 +530,6 @@
   "src/hooks/shortcuts/index.ts",
   "src/hooks/sip/index.ts",
   "src/hooks/sla/index.ts",
-  "src/hooks/sla/useContactSlaTimeline.ts",
   "src/hooks/sticker-picker/index.ts",
   "src/hooks/system/index.ts",
   "src/hooks/tasks/useMyTasks.ts",

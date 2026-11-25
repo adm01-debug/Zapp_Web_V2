@@ -4185,7 +4185,7 @@
    "zod_schemas": 0,
    "flags": [],
    "papeis": [],
-   "usado_por": 20,
+   "usado_por": 21,
    "usado_por_modulos": [
     "components/contacts",
     "components/inbox",
@@ -5089,8 +5089,9 @@
    "zod_schemas": 0,
    "flags": [],
    "papeis": [],
-   "usado_por": 2,
+   "usado_por": 3,
    "usado_por_modulos": [
+    "components/inbox",
     "hooks/sla"
    ],
    "coberto_por_testes": 2,
@@ -5529,7 +5530,7 @@
    "zod_schemas": 0,
    "flags": [],
    "papeis": [],
-   "usado_por": 482,
+   "usado_por": 483,
    "usado_por_modulos": [
     "components",
     "components/a11y",
