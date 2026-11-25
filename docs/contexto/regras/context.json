@@ -1,9 +1,9 @@
 {
  "meta": {
-  "sha": "264690757c8f05a4a875512c5b7f4669b030b491",
+  "sha": "57f6063f5cd5edaab3c0f0e11669534cb1b6a904",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-25 13:41 UTC",
+  "generated_at": "2026-11-25 15:35 UTC",
   "files_total": 14643,
   "code_files": 8177,
   "code_lines": 1229818
@@ -424223,10 +424223,22 @@
   }
  },
  "git": {
-  "sha": "264690757c8f05a4a875512c5b7f4669b030b491",
+  "sha": "57f6063f5cd5edaab3c0f0e11669534cb1b6a904",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "57f6063f",
+    "date": "2026-11-25",
+    "author": "adm01-debug",
+    "subject": "ci: roda o lint ratchet no CI (divida nova de lint nos arquivos do PR) (#3377)",
+    "files": [
+     ".github/workflows/ci.yml",
+     "docs/ci/README.md",
+     "scripts/ci/ci-gate.unit.mjs",
+     "scripts/ci/eslint-baseline.json"
+    ]
+   },
    {
     "sha": "26469075",
     "date": "2026-11-25",
@@ -425862,50 +425874,27 @@
     "files": [
      "playwright.config.ts"
     ]
-   },
-   {
-    "sha": "d58476e7",
-    "date": "2026-11-23",
-    "author": "adm01-debug",
-    "subject": "chore: sincroniza pin e digest do Playwright no bump de 16 dependencias (#3344)",
-    "files": [
-     ".github/toolchain.json",
-     ".github/workflows/ci.yml",
-     ".github/workflows/e2e-baselines.yml",
-     ".github/workflows/e2e-talkx.yml",
-     "bun.lock",
-     "package.json",
-     "scripts/ci/e2e-isolated-runtime.unit.mjs",
-     "scripts/ci/playwright-version-lock.unit.mjs",
-     "scripts/e2e-isolated/images.lock.json",
-     "scripts/e2e-isolated/network-proof-policy.mjs",
-     "scripts/e2e-isolated/run.mjs"
-    ]
    }
   ],
   "hot_files": [
-   [
-    "docs/agentes/github-ci.md",
-    3
-   ],
    [
     ".github/workflows/ci.yml",
     3
    ],
    [
-    "scripts/e2e-isolated/images.lock.json",
+    "docs/ci/README.md",
     3
    ],
    [
+    "docs/agentes/github-ci.md",
+    3
+   ],
+   [
+    "scripts/ci/eslint-baseline.json",
+    2
+   ],
+   [
     "scripts/automation.config.json",
-    2
-   ],
-   [
-    "docs/ci/README.md",
-    2
-   ],
-   [
-    "package.json",
     2
    ],
    [
@@ -425933,8 +425922,16 @@
     2
    ],
    [
+    "scripts/e2e-isolated/images.lock.json",
+    2
+   ],
+   [
     "e2e/contacts-selection.spec.ts",
     2
+   ],
+   [
+    "scripts/ci/ci-gate.unit.mjs",
+    1
    ],
    [
     ".github/workflows/contexto.yml",
@@ -425958,10 +425955,6 @@
    ],
    [
     "scripts/vercel/verify-release-targets.mjs",
-    1
-   ],
-   [
-    "scripts/ci/lint-ratchet.mjs",
     1
    ]
   ]

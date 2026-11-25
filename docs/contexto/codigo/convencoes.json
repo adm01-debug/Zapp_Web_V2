@@ -66,11 +66,11 @@
  "commits": {
   "convencao": "conventional commits (observado)",
   "exemplos": [
+   "ci: roda o lint ratchet no CI (divida nova de lint nos arquivos do PR) (#3377)",
    "chore(contexto): main recebe o snapshot gerado por PR automatica (#3375)",
    "infra: valida a virada do dominio principal para o build do V2 (#3374)",
    "fix(lint): ratchet aceita ocorrencia identica deslocada de linha (#3376)",
-   "chore(lint): reancora baseline nas posicoes atuais (divida inalterada, 540 = 540) (#3373)",
-   "chore: sincroniza docs/contexto com a publicacao oficial (mapa deixa de citar 149 caminhos mortos) (#3372)"
+   "chore(lint): reancora baseline nas posicoes atuais (divida inalterada, 540 = 540) (#3373)"
   ]
  },
  "pr_template": ".github/PULL_REQUEST_TEMPLATE.md",

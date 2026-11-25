@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "264690757c8f05a4a875512c5b7f4669b030b491",
+  "commit": "57f6063f5cd5edaab3c0f0e11669534cb1b6a904",
   "branch": "main",
-  "data_commit": "2026-11-25T10:40:21-03:00",
+  "data_commit": "2026-11-25T12:33:36-03:00",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "57f6063f",
+    "data": "2026-11-25",
+    "assunto": "ci: roda o lint ratchet no CI (divida nova de lint nos arquivos do PR) (#3377)"
+   },
    {
     "sha": "26469075",
     "data": "2026-11-25",
@@ -126,14 +131,9 @@
     "sha": "e586a725",
     "data": "2026-11-24",
     "assunto": "fix(e2e): tira o postgrest do ECR anonimo e reconhece a cota \"Data limit exceeded\" (#3351)"
-   },
-   {
-    "sha": "972831d7",
-    "data": "2026-11-24",
-    "assunto": "fix(e2e): casa o titulo real do dialog de mesclagem (#3350)"
    }
   ],
-  "arquivos_mudados_7d": 4397,
+  "arquivos_mudados_7d": 4393,
   "pastas_mais_mudadas_30d": [
    {
     "pasta": "docs/contexto/supabase",
@@ -149,7 +149,7 @@
    },
    {
     "pasta": "src/components/inbox",
-    "mudancas": 737
+    "mudancas": 727
    },
    {
     "pasta": "docs/reconciliation/reaudit",
@@ -173,7 +173,7 @@
    },
    {
     "pasta": "supabase/functions/_shared",
-    "mudancas": 238
+    "mudancas": 235
    },
    {
     "pasta": "analise-prs/resgate-261118-lote3/hermes",
@@ -199,11 +199,11 @@
   "arquivos_mais_mudados_90d": [
    {
     "arquivo": "supabase/deployment-manifest.json",
-    "mudancas": 36
+    "mudancas": 35
    },
    {
     "arquivo": "ESTADO.md",
-    "mudancas": 24
+    "mudancas": 23
    },
    {
     "arquivo": "docs/talkx/ESTADOS.md",
@@ -238,16 +238,16 @@
     "mudancas": 12
    },
    {
+    "arquivo": ".github/workflows/ci.yml",
+    "mudancas": 11
+   },
+   {
     "arquivo": "docs/agentes/github-ci.md",
     "mudancas": 11
    },
    {
-    "arquivo": ".github/workflows/ci.yml",
-    "mudancas": 10
-   },
-   {
     "arquivo": "docs/ci/README.md",
-    "mudancas": 9
+    "mudancas": 10
    },
    {
     "arquivo": "scripts/ci/ci-docs-baseline.unit.mjs",
@@ -256,6 +256,10 @@
    {
     "arquivo": "supabase/functions/evolution-api/index.ts",
     "mudancas": 8
+   },
+   {
+    "arquivo": "scripts/ci/eslint-baseline.json",
+    "mudancas": 7
    },
    {
     "arquivo": "RELATORIO_CI.md",
@@ -270,19 +274,7 @@
     "mudancas": 6
    },
    {
-    "arquivo": "scripts/ci/eslint-baseline.json",
-    "mudancas": 6
-   },
-   {
     "arquivo": "src/components/talkx/TalkXView.tsx",
-    "mudancas": 6
-   },
-   {
-    "arquivo": "supabase/functions/message-delivery/index.test.ts",
-    "mudancas": 6
-   },
-   {
-    "arquivo": "supabase/functions/message-delivery/index.ts",
     "mudancas": 6
    },
    {
@@ -295,6 +287,14 @@
    },
    {
     "arquivo": "bun.lock",
+    "mudancas": 5
+   },
+   {
+    "arquivo": "docs/audits/edge-functions-authz-coverage.md",
+    "mudancas": 5
+   },
+   {
+    "arquivo": "docs/contexto/regras/manual/regras.md",
     "mudancas": 5
    }
   ],

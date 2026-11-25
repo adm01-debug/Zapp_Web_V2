@@ -432,7 +432,9 @@
     "lint",
     "lint:fix"
    ],
-   "workflows": [],
+   "workflows": [
+    "ci.yml"
+   ],
    "orfao": false
   },
   {
