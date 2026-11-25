@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "06a1cbe6261f6f13b12741e4442c24be64af1080",
+  "commit": "5191812994ef42c100afe9d3afff331a266a4a57",
   "branch": "main",
-  "data_commit": "2026-11-25T07:15:49-03:00",
+  "data_commit": "2026-11-25T07:44:09-03:00",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "51918129",
+    "data": "2026-11-25",
+    "assunto": "chore: aposenta acervo de resgate 261118 lote3 ja triado (1.029 arquivos, zero perdas) (#3371)"
+   },
    {
     "sha": "06a1cbe6",
     "data": "2026-11-25",
@@ -126,14 +131,9 @@
     "sha": "d58476e7",
     "data": "2026-11-23",
     "assunto": "chore: sincroniza pin e digest do Playwright no bump de 16 dependencias (#3344)"
-   },
-   {
-    "sha": "d09e2cec",
-    "data": "2026-11-23",
-    "assunto": "⬆️ docker: bump golang from `fa3d596` to `70bd7dd` in /infrastructure/preview-egress-proxy (#3338)"
    }
   ],
-  "arquivos_mudados_7d": 4380,
+  "arquivos_mudados_7d": 4381,
   "pastas_mais_mudadas_30d": [
    {
     "pasta": "docs/contexto/supabase",
@@ -144,6 +144,10 @@
     "mudancas": 1635
    },
    {
+    "pasta": "analise-prs/resgate-261118-lote3/claude",
+    "mudancas": 1022
+   },
+   {
     "pasta": "src/components/inbox",
     "mudancas": 737
    },
@@ -152,12 +156,12 @@
     "mudancas": 538
    },
    {
-    "pasta": "analise-prs/resgate-261118-lote3/claude",
-    "mudancas": 511
-   },
-   {
     "pasta": "docs/_arquivo/analise-prs",
     "mudancas": 429
+   },
+   {
+    "pasta": "analise-prs/resgate-261118-lote3/fix",
+    "mudancas": 424
    },
    {
     "pasta": "src/components/talkx",
@@ -172,8 +176,8 @@
     "mudancas": 238
    },
    {
-    "pasta": "analise-prs/resgate-261118-lote3/fix",
-    "mudancas": 212
+    "pasta": "analise-prs/resgate-261118-lote3/hermes",
+    "mudancas": 232
    },
    {
     "pasta": "src/hooks/__tests__",
@@ -190,10 +194,6 @@
    {
     "pasta": "src/components/dashboard",
     "mudancas": 145
-   },
-   {
-    "pasta": "src/components/ui",
-    "mudancas": 129
    }
   ],
   "arquivos_mais_mudados_90d": [
@@ -314,24 +314,24 @@
   ]
  },
  "contagens": {
-  "arquivos_total": 15811,
-  "arquivos_codigo": 5897,
-  "linhas_codigo": 1144467,
+  "arquivos_total": 14786,
+  "arquivos_codigo": 5140,
+  "linhas_codigo": 952861,
   "rotas": 18,
   "rotas_http_backend": 11,
   "vistas_por_id": 55,
   "itens_menu": 61,
   "modulos": 149,
-  "componentes": 1064,
-  "hooks": 607,
+  "componentes": 935,
+  "hooks": 515,
   "edge_functions": 93,
   "tabelas": 223,
   "migrations": 1153,
   "cron_jobs": 29,
-  "testes": 3232,
+  "testes": 2822,
   "workflows": 26,
   "scripts": 453,
-  "docs_md": 4099
+  "docs_md": 3986
  },
  "por_pasta": {
   "analise-prs/resgate-261115": {
@@ -341,10 +341,6 @@
   "analise-prs/resgate-261118-lote2": {
    "arquivos": 15,
    "linhas": 1658
-  },
-  "analise-prs/resgate-261118-lote3": {
-   "arquivos": 757,
-   "linhas": 191606
   },
   "analise-prs/resgate-regra8-261118": {
    "arquivos": 11,
@@ -873,16 +869,8 @@
    "linhas": 1483
   },
   {
-   "arquivo": "analise-prs/resgate-261118-lote3/claude/feat-message-delivery-post-iniciado-261101-1937/supabase/functions/_shared/evolution-webhook-messages.ts",
-   "linhas": 1446
-  },
-  {
    "arquivo": "supabase/functions/_shared/ai-usage.ts",
    "linhas": 1420
-  },
-  {
-   "arquivo": "analise-prs/resgate-261118-lote3/fix/ci-verde-261021/supabase/functions/evolution-api/index.ts",
-   "linhas": 1311
   },
   {
    "arquivo": "docs/reconciliation/reaudit/2026-10-03/reports/database/build_report.py",
@@ -893,20 +881,12 @@
    "linhas": 1286
   },
   {
-   "arquivo": "analise-prs/resgate-261118-lote3/codex/publish-followup-20261021/src/components/talkx/useCampaignEditor.ts",
-   "linhas": 1282
-  },
-  {
    "arquivo": "supabase/functions/multiplix-send/index.ts",
    "linhas": 1264
   },
   {
    "arquivo": "src/components/catalog/ExternalProductManagement.tsx",
    "linhas": 1228
-  },
-  {
-   "arquivo": "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/talkx/useCampaignEditor.ts",
-   "linhas": 1190
   },
   {
    "arquivo": "supabase/functions/connection-health-check/index.ts",
@@ -943,47 +923,33 @@
   {
    "arquivo": "supabase/functions/multiplix-dispatch/actions/inspect.ts",
    "linhas": 1040
+  },
+  {
+   "arquivo": "docs/reconciliation/reaudit/2026-10-03/reports/providers/build_report.py",
+   "linhas": 1024
+  },
+  {
+   "arquivo": "supabase/functions/crm-integration/index.ts",
+   "linhas": 998
+  },
+  {
+   "arquivo": "scripts/automation.mjs",
+   "linhas": 992
+  },
+  {
+   "arquivo": "docs/reconciliation/reaudit/2026-10-03/reports/auth/extend-second-pass.py",
+   "linhas": 975
   }
  ],
  "qualidade": {
-  "any": 421,
-  "console_log": 774,
+  "any": 390,
+  "console_log": 505,
   "ts_ignore": 0,
   "eslint_disable": 1,
-  "todos": 59,
-  "arquivos_acima_500_linhas": 169
+  "todos": 54,
+  "arquivos_acima_500_linhas": 114
  },
  "todos": [
-  {
-   "arquivo": "analise-prs/resgate-261118-lote3/claude/fix-unit-tests-src-261024-1630/src/components/agents/__tests__/AgentsView.capacidade.test.tsx",
-   "linha": 2,
-   "tipo": "TODO",
-   "texto": "contato com"
-  },
-  {
-   "arquivo": "analise-prs/resgate-261118-lote3/claude/radar-motor-copilot-live-301030/supabase/functions/ai-jobs-worker/index.ts",
-   "linha": 423,
-   "tipo": "TODO",
-   "texto": "caminho — inclusive erro e infra."
-  },
-  {
-   "arquivo": "analise-prs/resgate-261118-lote3/claude/w85-w86-w87-ossf-scorecard/scripts/ci/security-workflow.unit.mjs",
-   "linha": 36,
-   "tipo": "XXX",
-   "texto": "}} — evita falso positivo em comentários"
-  },
-  {
-   "arquivo": "analise-prs/resgate-261118-lote3/codex/publish-followup-20261021/scripts/ci/ci-artifacts.unit.mjs",
-   "linha": 11,
-   "tipo": "TODO",
-   "texto": "PR"
-  },
-  {
-   "arquivo": "analise-prs/resgate-261118-lote3/resolve-2381-from-main/supabase/functions/ai-jobs-worker/index.ts",
-   "linha": 423,
-   "tipo": "TODO",
-   "texto": "caminho — inclusive erro e infra."
-  },
   {
    "arquivo": "e2e/onboarding-tour.spec.ts",
    "linha": 12,
@@ -1323,6 +1289,7 @@
    "Spam -> SPAM"
   ],
   "edges_orfas": [
+   "ai-auto-tag",
    "ai-deadline-calculator",
    "ai-lead-temperature",
    "ai-loss-risk",
@@ -1336,9 +1303,11 @@
    "create-user",
    "elevenlabs-agent-token",
    "external-db-bridge",
+   "fetch-link-preview",
    "gmail-send",
    "gmail-sync",
    "health",
+   "message-delivery",
    "metrics",
    "migrate-media-storage",
    "multiplix-voices",
@@ -1363,7 +1332,6 @@
    "company_addresses",
    "company_social_media",
    "contact_phones",
-   "contact_purchases",
    "customers",
    "product_variants",
    "suppliers"
@@ -1393,99 +1361,6 @@
   ],
   "componentes_orfaos": [
    "analise-prs/resgate-261118-lote2/src/components/copilot/RadarPhase6Panel.tsx",
-   "analise-prs/resgate-261118-lote3/claude_05/festive-carson-ub43wu/src/components/ui/command-palette.tsx",
-   "analise-prs/resgate-261118-lote3/claude_05/festive-carson-ub43wu/src/hooks/auth/useAuth.tsx",
-   "analise-prs/resgate-261118-lote3/claude_05/serene-feynman-3uuurw/src/components/admin/SearchInsightsView.tsx",
-   "analise-prs/resgate-261118-lote3/claude_pink/cool-dijkstra-xk9ek2/src/components/inbox/chat/ChatMessagesArea.tsx",
-   "analise-prs/resgate-261118-lote3/claude/busy-cannon-40szm9/src/components/contacts/ContactPurchaseHistory.tsx",
-   "analise-prs/resgate-261118-lote3/claude/busy-cannon-40szm9/src/components/inbox/ContactPurchasesPanel.tsx",
-   "analise-prs/resgate-261118-lote3/claude/busy-cannon-40szm9/src/components/talkx/kit/dialogs.tsx",
-   "analise-prs/resgate-261118-lote3/claude/busy-cannon-40szm9/src/components/ui/dialog.tsx",
-   "analise-prs/resgate-261118-lote3/claude/busy-cannon-40szm9/src/components/ui/sheet.tsx",
-   "analise-prs/resgate-261118-lote3/claude/feat-message-delivery-post-iniciado-261101-1937/src/components/inbox/chat/SendErrorBanner.tsx",
-   "analise-prs/resgate-261118-lote3/claude/feat-message-delivery-post-iniciado-261101-1937/src/components/inbox/chat/UnconfirmedMessagesPanel.tsx",
-   "analise-prs/resgate-261118-lote3/claude/feat-pausa-entrega-campanhas-261101-1400/src/components/multiplix/MultiplixMonitor.tsx",
-   "analise-prs/resgate-261118-lote3/claude/feat-radar-motor-telas-261101-1330/src/components/inbox/chat/ChatInputArea.tsx",
-   "analise-prs/resgate-261118-lote3/claude/feat-radar-motor-telas-261101-1330/src/components/inbox/copilot/RadarCards.tsx",
-   "analise-prs/resgate-261118-lote3/claude/feat-radar-motor-telas-261101-1330/src/components/inbox/copilot/RadarLive.tsx",
-   "analise-prs/resgate-261118-lote3/claude/feat-talkx-x048-estados-servico-261101-2100/src/components/talkx/kit/ServiceStatusSheet.tsx",
-   "analise-prs/resgate-261118-lote3/claude/feat-talkx-x054-cmdk-261108-0100/src/components/keyboard/CommandPaletteHost.tsx",
-   "analise-prs/resgate-261118-lote3/claude/feat-talkx-x054-cmdk-261108-0100/src/components/talkx/TalkXView.tsx",
-   "analise-prs/resgate-261118-lote3/claude/feat-ui-visual-texto-longo-261101-1445/src/components/ui/badge.tsx",
-   "analise-prs/resgate-261118-lote3/claude/feat-ui-visual-texto-longo-261101-1445/src/components/ui/tabs.tsx",
-   "analise-prs/resgate-261118-lote3/claude/fix-codex-findings-161016-1906/src/components/inbox/chat/ChatMessagesArea.tsx",
-   "analise-prs/resgate-261118-lote3/claude/fix-codex-findings-161016-1906/src/components/talkx/TalkXTemplates.tsx",
-   "analise-prs/resgate-261118-lote3/claude/fix-radar-fase6-cv056-shortcuts-261108-2335/src/components/inbox/ChatPanel.tsx",
-   "analise-prs/resgate-261118-lote3/claude/fix-talkx-segmentos-regressao-261101-1944/src/components/talkx/TalkXSegments.tsx",
-   "analise-prs/resgate-261118-lote3/claude/fix-unit-tests-src-261024-1630/src/components/admin/AdminView.tsx",
-   "analise-prs/resgate-261118-lote3/claude/fix-unit-tests-src-261024-1630/src/components/admin/MediaMigrationTool.tsx",
-   "analise-prs/resgate-261118-lote3/claude/fix-unit-tests-src-261024-1630/src/components/talkx/TalkXOverview.tsx",
-   "analise-prs/resgate-261118-lote3/claude/fix-unit-tests-src-261024-1630/src/components/talkx/TalkXTemplateEditor.tsx",
-   "analise-prs/resgate-261118-lote3/claude/fix-unit-tests-src-261024-1630/src/hooks/auth/useAuth.tsx",
-   "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/admin/MediaMigrationTool.tsx",
-   "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/catalog/WhatsAppTemplatesManager.tsx",
-   "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/gamification/MiniGameDialogs.tsx",
-   "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/inbox/conversation-list/StatusChips.tsx",
-   "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/inbox/CRMAutoSync.tsx",
-   "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/inbox/MessageReactions.tsx",
-   "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/inbox/quick-replies/QuickReplyCardList.tsx",
-   "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/inbox/RealtimeInboxView.tsx",
-   "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/inbox/VirtualizedRealtimeList.tsx",
-   "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/inbox/VoiceChangerPicker.tsx",
-   "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/inbox/VoiceSelector.tsx",
-   "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/inbox/WhisperMode.tsx",
-   "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/security/AuditLogDashboard.tsx",
-   "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/settings/SettingsView.tsx",
-   "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/talkx/TalkXTemplateEditor.tsx",
-   "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/talkx/TalkXView.tsx",
-   "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/team-chat/TeamChatPanel.tsx",
-   "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/ui/command-palette.tsx",
-   "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/ui/phone-input.tsx",
-   "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/hooks/auth/useAuth.tsx",
-   "analise-prs/resgate-261118-lote3/claude/kind-gates-87mwoe/src/components/knowledge/KnowledgeBaseView.tsx",
-   "analise-prs/resgate-261118-lote3/claude/magical-pasteur-iz2pgy/src/components/ui/command-palette.tsx",
-   "analise-prs/resgate-261118-lote3/claude/magical-pasteur-iz2pgy/src/hooks/auth/useAuth.tsx",
-   "analise-prs/resgate-261118-lote3/claude/radar-motor-copilot-live-301030/src/components/inbox/chat/ChatInputArea.tsx",
-   "analise-prs/resgate-261118-lote3/claude/radar-motor-copilot-live-301030/src/components/inbox/copilot/RadarLive.tsx",
-   "analise-prs/resgate-261118-lote3/codex/fix-failed-workflows-20261020/src/components/admin/AdminView.tsx",
-   "analise-prs/resgate-261118-lote3/codex/fix-failed-workflows-20261020/src/components/shared/ConversationEmptyState.tsx",
-   "analise-prs/resgate-261118-lote3/codex/publish-followup-20261021/src/components/admin/SearchInsightsView.tsx",
-   "analise-prs/resgate-261118-lote3/codex/publish-followup-20261021/src/components/connections/ConnectionCard.tsx",
-   "analise-prs/resgate-261118-lote3/codex/publish-followup-20261021/src/components/talkx/TalkXCampaignWizard.tsx",
-   "analise-prs/resgate-261118-lote3/fix/ci-verde-261021/src/components/inbox/ChatPanel.tsx",
-   "analise-prs/resgate-261118-lote3/fix/ci-verde-261021/src/components/inbox/RealtimeCollaboration.tsx",
-   "analise-prs/resgate-261118-lote3/hermes/robustez-primitivos-ui-2610121626bec5-2610141859e423/src/components/BulkActionsBar.tsx",
-   "analise-prs/resgate-261118-lote3/hermes/robustez-primitivos-ui-2610121626bec5-2610141859e423/src/components/campaigns/CampaignsView.tsx",
-   "analise-prs/resgate-261118-lote3/hermes/robustez-primitivos-ui-2610121626bec5-2610141859e423/src/components/connections/IntegrationsPanel.tsx",
-   "analise-prs/resgate-261118-lote3/hermes/robustez-primitivos-ui-2610121626bec5-2610141859e423/src/components/dashboard/MetricComparison.tsx",
-   "analise-prs/resgate-261118-lote3/hermes/robustez-primitivos-ui-2610121626bec5-2610141859e423/src/components/dashboard/MiniSparkline.tsx",
-   "analise-prs/resgate-261118-lote3/hermes/robustez-primitivos-ui-2610121626bec5-2610141859e423/src/components/dashboard/TrendIndicator.tsx",
-   "analise-prs/resgate-261118-lote3/hermes/robustez-primitivos-ui-2610121626bec5-2610141859e423/src/components/gamification/GamificationProvider.tsx",
-   "analise-prs/resgate-261118-lote3/hermes/robustez-primitivos-ui-2610121626bec5-2610141859e423/src/components/inbox/chat/ChatHeader.tsx",
-   "analise-prs/resgate-261118-lote3/hermes/robustez-primitivos-ui-2610121626bec5-2610141859e423/src/components/inbox/ContactPurchasesPanel.tsx",
-   "analise-prs/resgate-261118-lote3/hermes/robustez-primitivos-ui-2610121626bec5-2610141859e423/src/components/inbox/MessageContextMenu.tsx",
-   "analise-prs/resgate-261118-lote3/hermes/robustez-primitivos-ui-2610121626bec5-2610141859e423/src/components/inbox/SwipeableListItem.tsx",
-   "analise-prs/resgate-261118-lote3/hermes/robustez-primitivos-ui-2610121626bec5-2610141859e423/src/components/mobile/InAppNotificationProvider.tsx",
-   "analise-prs/resgate-261118-lote3/hermes/robustez-primitivos-ui-2610121626bec5-2610141859e423/src/components/multiplix/MultiplixComposerDialog.tsx",
-   "analise-prs/resgate-261118-lote3/hermes/robustez-primitivos-ui-2610121626bec5-2610141859e423/src/components/reports/AutoExportManager.tsx",
-   "analise-prs/resgate-261118-lote3/hermes/robustez-primitivos-ui-2610121626bec5-2610141859e423/src/components/settings/AIAutoTagsConfig.tsx",
-   "analise-prs/resgate-261118-lote3/hermes/robustez-primitivos-ui-2610121626bec5-2610141859e423/src/components/ui/dialog.tsx",
-   "analise-prs/resgate-261118-lote3/hermes/robustez-primitivos-ui-2610121626bec5-2610141859e423/src/components/ui/hover-card.tsx",
-   "analise-prs/resgate-261118-lote3/hermes/robustez-primitivos-ui-2610121626bec5-2610141859e423/src/components/ui/menubar.tsx",
-   "analise-prs/resgate-261118-lote3/hermes/robustez-primitivos-ui-2610121626bec5-2610141859e423/src/components/ui/offline-indicator.tsx",
-   "analise-prs/resgate-261118-lote3/hermes/robustez-primitivos-ui-2610121626bec5-2610141859e423/src/components/ui/pagination.tsx",
-   "analise-prs/resgate-261118-lote3/hermes/robustez-primitivos-ui-2610121626bec5-2610141859e423/src/components/ui/resizable.tsx",
-   "analise-prs/resgate-261118-lote3/hermes/robustez-primitivos-ui-2610121626bec5-2610141859e423/src/components/ui/skip-link.tsx",
-   "analise-prs/resgate-261118-lote3/hermes/telefonia-fase8-motion-a11y-responsivo-2610031530007c/src/components/calls/IncomingCallAlert.tsx",
-   "analise-prs/resgate-261118-lote3/hermes/telefonia-fase8-motion-a11y-responsivo-2610031530007c/src/components/calls/Keypad.tsx",
-   "analise-prs/resgate-261118-lote3/hermes/telefonia-fase8-motion-a11y-responsivo-2610031530007c/src/components/campaigns/CampaignsView.tsx",
-   "analise-prs/resgate-261118-lote3/hermes/telefonia-fase8-motion-a11y-responsivo-2610031530007c/src/components/connections/IntegrationsPanel.tsx",
-   "analise-prs/resgate-261118-lote3/hermes/telefonia-fase8-motion-a11y-responsivo-2610031530007c/src/components/dashboard/RealtimeMetricsPanel.tsx",
-   "analise-prs/resgate-261118-lote3/hermes/telefonia-fase8-motion-a11y-responsivo-2610031530007c/src/components/inbox/contact-details/ContactAccordionSections.tsx",
-   "analise-prs/resgate-261118-lote3/hermes/telefonia-fase8-motion-a11y-responsivo-2610031530007c/src/components/multiplix/MultiplixComposerDialog.tsx",
-   "analise-prs/resgate-261118-lote3/hermes/telefonia-fase8-motion-a11y-responsivo-2610031530007c/src/components/settings/AIAutoTagsConfig.tsx",
-   "analise-prs/resgate-261118-lote3/resolve-2381-from-main/src/components/inbox/chat/ChatInputArea.tsx",
-   "analise-prs/resgate-261118-lote3/resolve-2381-from-main/src/components/inbox/copilot/RadarLive.tsx",
    "src/components/calls/DialPad.tsx",
    "src/components/cognitive/ProgressiveDisclosure.tsx",
    "src/components/CommandPalette.tsx",
@@ -1532,184 +1407,48 @@
    "src/components/ui/SkeletonList.tsx"
   ],
   "componentes_com_nome_duplicado": [
-   "AIAutoTagsConfig",
    "AchievementBadge",
-   "AdminView",
-   "AlertsCard",
-   "AuditLogDashboard",
-   "AuthProvider",
-   "Badge",
-   "BadgeProps",
    "BreadcrumbItem",
-   "BrindeCard",
-   "BulkActionsBar",
-   "CRMAutoSync",
-   "CRMSyncButton",
-   "CallHistoryTable",
-   "CallsKpiGrid",
-   "CampaignCreateDialog",
-   "CampaignsView",
-   "ChatInputArea",
-   "ChatMessagesArea",
-   "ChatMessagesAreaRef",
-   "ChatPanel",
-   "ChipTab",
    "CommandGroup",
    "CommandItem",
    "CommandPalette",
-   "CommandPaletteHost",
-   "ConfirmCheck",
-   "ConfirmDetail",
-   "ConfirmReasonField",
-   "ConnectionCard",
-   "ConnectionToast",
-   "ContactPurchasesPanel",
    "ContactsEmptyState",
-   "ConversationEmptyState",
-   "ConversationEmptyStateProps",
    "ConversationHeatmap",
    "DashboardEmptyState",
-   "DecisionMakerCard",
-   "Dialog",
-   "DialogClose",
-   "DialogContent",
-   "DialogDescription",
-   "DialogFooter",
-   "DialogHeader",
-   "DialogOverlay",
-   "DialogPortal",
-   "DialogTitle",
-   "DialogTrigger",
-   "ELEVENLABS_VOICES",
-   "ENTITY_TYPES_BY_FILTER",
-   "ElevenLabsVoice",
-   "EmojiDecodeGame",
    "EmptyState",
    "FeatureSpotlight",
    "FilterOption",
-   "FloatingActionButton",
    "FloatingParticles",
    "HandoffDialog",
    "HighContrastProvider",
-   "InboxEmptyChat",
    "InboxEmptyState",
-   "IncomingCallAlert",
    "InfoBanner",
    "InfoRow",
    "InsightCard",
-   "IntegrationsPanel",
    "InternalNotesPanel",
-   "KeyboardAwareContainer",
-   "Keypad",
-   "KnowledgeBaseView",
-   "LeadRiskScorePanel",
    "LiveRegion",
-   "LongPressMenu",
    "MagneticButton",
-   "MainTab",
-   "MediaMigrationTool",
    "MessagePreview",
-   "MessageReactions",
-   "MetricComparison",
-   "MiniSparkline",
    "MotionButton",
-   "MultiplixComposerDialog",
-   "MultiplixMonitor",
-   "NextStepCard",
    "NotificationsEmptyState",
-   "OfflineIndicator",
-   "PhoneInput",
-   "PinchZoom",
-   "ProductsCard",
-   "QuickReactionBar",
-   "QuickReplyCardList",
-   "QuizGame",
-   "ROLE_ACTION_PREFIX",
-   "ROLE_FILTER_VALUE",
-   "RadarLive",
-   "RadarLiveProps",
-   "RadarPanel",
-   "RadarPanelProps",
-   "RealtimeCollaboration",
-   "RealtimeInboxView",
-   "RecipientKpis",
-   "RecipientRow",
-   "RecipientsPage",
    "RippleButton",
    "SLAAgentTable",
    "ScheduledReportsManager",
    "SearchEmptyState",
-   "SearchInsightsView",
    "SectionCard",
    "SectionHeader",
-   "SegmentLike",
-   "SegmentSideList",
-   "SegmentSideListProps",
-   "SendErrorBanner",
-   "SendErrorBannerProps",
-   "ServiceStatusSheet",
-   "SettingsView",
-   "Sheet",
-   "SheetClose",
-   "SheetContent",
-   "SheetDescription",
-   "SheetFooter",
-   "SheetHeader",
-   "SheetOverlay",
-   "SheetPortal",
-   "SheetTitle",
-   "SheetTrigger",
-   "Sidebar",
    "SkeletonList",
-   "SkipLink",
    "SkipLinks",
-   "SlideOverPanel",
-   "SpeedDialFAB",
-   "SpeedTypingGame",
-   "StageCard",
    "StaggerList",
-   "StatusChips",
    "StatusPill",
-   "SubTab",
-   "SuggestionsCard",
-   "Tabs",
-   "TabsContent",
-   "TabsList",
-   "TabsTrigger",
-   "TalkXCampaignRunning",
-   "TalkXCampaignWizard",
-   "TalkXConfirmDialog",
-   "TalkXDialogShell",
    "TalkXNoData",
-   "TalkXOverview",
-   "TalkXRecipientsTable",
-   "TalkXSegments",
-   "TalkXTemplateEditor",
-   "TalkXTemplates",
-   "TalkXTone",
-   "TalkXTopView",
-   "TalkXView",
-   "TalkXWizardDelivery",
-   "TalkXWizardReview",
-   "TeamChatPanel",
-   "TelefoniaView",
-   "TemplateListItem",
    "TemplatePreview",
    "Toaster",
-   "TouchRipple",
    "TranscriptionsEmptyState",
    "TrendIndicator",
-   "UnconfirmedMessagesPanel",
-   "UnconfirmedMessagesPanelProps",
    "VariableInserter",
    "ViewersIndicator",
-   "VirtualizedRealtimeList",
-   "VoiceChangerPicker",
-   "VoiceDictationButton",
-   "VoiceSelector",
-   "WhatsAppTemplatesManager",
-   "WhisperMode",
-   "WizardState"
+   "VoiceDictationButton"
   ],
   "scripts_orfaos": [
    "scripts/db-audit/n118-window-open-proof.test.sql"
@@ -1725,10 +1464,8 @@
    "VITE_SEARCHBOX_MONTHLY_SESSION_LIMIT",
    "ZAPP_CSS_UNDER_TEST"
   ],
-  "ciclos_de_import": 12,
+  "ciclos_de_import": 11,
   "possiveis_segredos_no_codigo": [
-   "analise-prs/resgate-261118-lote3/claude_pink/cool-dijkstra-xk9ek2/scripts/ci/edge-coverage-authz.unit.mjs:397",
-   "analise-prs/resgate-261118-lote3/claude_pink/cool-dijkstra-xk9ek2/scripts/edge-deploy/redigir-log.unit.mjs:38",
    "scripts/ai-context/cenarios.mjs:102",
    "scripts/ci/edge-coverage-authz.unit.mjs:398",
    "scripts/ci/inventario-banco.unit.mjs:147",

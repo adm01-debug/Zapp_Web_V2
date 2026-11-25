@@ -1,11 +1,11 @@
 # 10 · ACESSO E SEGURANÇA — quem pode o quê
 
-> Gerado automaticamente por AI Context Sync v1.3.2 · commit `06a1cbe626` · branch `main` · 2026-11-25 10:17 UTC
+> Gerado automaticamente por AI Context Sync v1.3.2 · commit `5191812994` · branch `main` · 2026-11-25 10:52 UTC
 > Não edite à mão — regras humanas vão em `manual/`.
 
 ## Perfis / roles identificados
 
-`admin`, `agent`, `anon`, `boolean`, `bwp`, `customer`, `customers_own`, `denied`, `driver`, `edge`, `gateway`, `granted`, `intermediary`, `leader`, `next`, `owner`, `positive`, `postgres`, `role`, `service_role`, `spec`, `special_agent`, `string`, `supervisor`, `unknown`, `untrusted`, `value`
+`admin`, `agent`, `anon`, `boolean`, `bwp`, `customer`, `customers_own`, `denied`, `granted`, `intermediary`, `leader`, `next`, `owner`, `postgres`, `role`, `service_role`, `special_agent`, `string`, `supervisor`, `unknown`, `value`
 
 - Tabelas de perfil/permissão: `user_roles`, `queue_members`, `permissions`, `role_permissions`, `team_conversation_members`, `multiplix_audience_members`
 - Colunas de perfil: `profiles.role` (text DEFAULT 'agent'), `user_roles.role` (app_role NOT NULL), `whatsapp_groups.is_admin` (boolean | null), `role_permissions.role` (Database["public"]["Enums"]["app_role"] not null), `department_invitations.role` (text NOT NULL DEFAULT 'agent')
@@ -247,65 +247,13 @@
 
 > `—` com RLS ligado = ninguém além de service_role. `sem RLS` = qualquer chave anon lê/escreve tudo.
 
-## Onde o RLS é IGNORADO (service_role) — 1239 arquivo(s)
+## Onde o RLS é IGNORADO (service_role) — 1187 arquivo(s)
 
 - `analise-prs/resgate-261118-lote2/scripts/db-audit/validate-post-apply.mjs`
 - `analise-prs/resgate-261118-lote2/supabase/migrations/20261016193300_copilot_tick_trigger.sql`
 - `analise-prs/resgate-261118-lote2/supabase/migrations/20261016193400_copilot_presence.sql`
 - `analise-prs/resgate-261118-lote2/supabase/migrations/20261016250000_e2e_fixture_message_rpc.sql`
 - `analise-prs/resgate-261118-lote2/supabase/migrations/20261101133000_outbound_post_started.sql`
-- `analise-prs/resgate-261118-lote3/claude/busy-cannon-40szm9/scripts/team-chat-db-validate.mjs`
-- `analise-prs/resgate-261118-lote3/claude/busy-cannon-40szm9/supabase/tests/contact_purchases_rls_author.sql`
-- `analise-prs/resgate-261118-lote3/claude/busy-cannon-40szm9/supabase/tests/special_agent_visibility.sql`
-- `analise-prs/resgate-261118-lote3/claude/feat-e75-toolchain-env-281028-0600/scripts/ci/message-delivery-phase1-rollout.unit.mjs`
-- `analise-prs/resgate-261118-lote3/claude/feat-message-delivery-post-iniciado-261101-1937/supabase/functions/_shared/evolution-webhook-messages.ts`
-- `analise-prs/resgate-261118-lote3/claude/feat-message-delivery-post-iniciado-261101-1937/supabase/functions/message-delivery/index.test.ts`
-- `analise-prs/resgate-261118-lote3/claude/feat-message-delivery-post-iniciado-261101-1937/supabase/functions/message-delivery/index.ts`
-- `analise-prs/resgate-261118-lote3/claude/feat-pausa-entrega-campanhas-261101-1400/supabase/functions/message-delivery/index.test.ts`
-- `analise-prs/resgate-261118-lote3/claude/fix-codex-findings-161016-1906/scripts/db-audit/ai-projection-version-guard.test.mjs`
-- `analise-prs/resgate-261118-lote3/claude/fix-ga-fase23-edge-e2e-261020-2200/scripts/ci/e2e-teardown.mjs`
-- `analise-prs/resgate-261118-lote3/claude/fix-ga-fase23-edge-e2e-261020-2200/scripts/ci/e2e-teardown.unit.mjs`
-- `analise-prs/resgate-261118-lote3/claude/fix-ga-resto-dbmigrate-20261021-0729/scripts/ci/secrets-environments.unit.mjs`
-- `analise-prs/resgate-261118-lote3/claude/fix-ga-resto-sonar-contracts-20261021-0726/scripts/ci/check-test-inventory.mjs`
-- `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/scripts/ci/check-test-inventory.mjs`
-- `analise-prs/resgate-261118-lote3/claude/magical-pasteur-iz2pgy/supabase/migrations/20261010062941_talkx_campaign_recipients_page.sql`
-- `analise-prs/resgate-261118-lote3/claude/radar-motor-copilot-live-301030/supabase/functions/ai-jobs-worker/index.ts`
-- `analise-prs/resgate-261118-lote3/claude/test-e2e-suite-completa-261104-1428/e2e/fixtures/onboarding-isolated.ts`
-- `analise-prs/resgate-261118-lote3/claude/test-e2e-suite-completa-261104-1428/scripts/ci/e2e-isolated-provider-readiness.unit.mjs`
-- `analise-prs/resgate-261118-lote3/claude/test-e2e-suite-completa-261104-1428/scripts/ci/e2e-isolated-runtime.unit.mjs`
-- `analise-prs/resgate-261118-lote3/claude/test-e2e-suite-completa-261104-1428/scripts/ci/e2e-isolated-suite.unit.mjs`
-- `analise-prs/resgate-261118-lote3/claude/test-e2e-suite-completa-261104-1428/scripts/ci/e2e-isolated-tls.unit.mjs`
-- `analise-prs/resgate-261118-lote3/claude/test-e2e-suite-completa-261104-1428/scripts/e2e-isolated/providers.mjs`
-- `analise-prs/resgate-261118-lote3/claude/test-e2e-suite-completa-261104-1428/scripts/e2e-isolated/stack.mjs`
-- `analise-prs/resgate-261118-lote3/claude/test-e2e-suite-completa-261104-1428/supabase/functions/detect-new-device/index.test.ts`
-- `analise-prs/resgate-261118-lote3/claude/test-e2e-tls-diagnostico-261104-1340/scripts/ci/e2e-isolated-runtime.unit.mjs`
-- `analise-prs/resgate-261118-lote3/claude/test-e2e-tls-diagnostico-261104-1340/scripts/ci/e2e-isolated-tls.unit.mjs`
-- `analise-prs/resgate-261118-lote3/claude/test-e2e-tls-diagnostico-261104-1340/scripts/e2e-isolated/runtime-contract.mjs`
-- `analise-prs/resgate-261118-lote3/claude/test-e2e-webkit-tls-261104-1430/scripts/ci/e2e-isolated-runtime.unit.mjs`
-- `analise-prs/resgate-261118-lote3/claude/test-e2e-webkit-tls-261104-1430/scripts/ci/e2e-isolated-tls.unit.mjs`
-- `analise-prs/resgate-261118-lote3/claude/test-e2e-webkit-tls-261104-1430/scripts/e2e-isolated/runtime-contract.mjs`
-- `analise-prs/resgate-261118-lote3/claude_04/clever-ramanujan-xllbpo/supabase/migrations/20261026220300_classificar_rls_sem_policy.sql`
-- `analise-prs/resgate-261118-lote3/claude_pink/cool-dijkstra-xk9ek2/scripts/ci/edge-coverage-authz.unit.mjs`
-- `analise-prs/resgate-261118-lote3/claude_pink/cool-dijkstra-xk9ek2/scripts/ci/secrets-environments.unit.mjs`
-- `analise-prs/resgate-261118-lote3/claude_pink/cool-dijkstra-xk9ek2/scripts/db-audit/validate-runtime-proof.mjs`
-- `analise-prs/resgate-261118-lote3/codex/publish-followup-20261021/supabase/functions/connection-health-check/index.ts`
-- `analise-prs/resgate-261118-lote3/codex/publish-followup-20261021/supabase/tests/search_events.sql`
-- `analise-prs/resgate-261118-lote3/fix/ci-verde-261021/supabase/functions/auth-login/index.test.ts`
-- `analise-prs/resgate-261118-lote3/fix/ci-verde-261021/supabase/functions/auth-login/index.ts`
-- `analise-prs/resgate-261118-lote3/fix/ci-verde-261021/supabase/functions/connection-health-check/index.ts`
-- `analise-prs/resgate-261118-lote3/fix/ci-verde-261021/supabase/functions/evolution-api/index.ts`
-- `analise-prs/resgate-261118-lote3/fix/ci-verde-261021/supabase/functions/gmail-cron-sync/index.ts`
-- `analise-prs/resgate-261118-lote3/fix/ci-verde-261021/supabase/functions/gmail-oauth/index.test.ts`
-- `analise-prs/resgate-261118-lote3/fix/ci-verde-261021/supabase/functions/revoke-auth-sessions/index.test.ts`
-- `analise-prs/resgate-261118-lote3/fix/ci-workflows-vermelhos/scripts/ci/check-test-inventory.mjs`
-- `analise-prs/resgate-261118-lote3/fix/ci-workflows-vermelhos/src/components/inbox/__tests__/AudioMessagePlayer.transcricao.test.tsx`
-- `analise-prs/resgate-261118-lote3/fix/ci-workflows-vermelhos/supabase/functions/auth-login/index.ts`
-- `analise-prs/resgate-261118-lote3/fix/ci-workflows-vermelhos/supabase/functions/connection-health-check/index.ts`
-- `analise-prs/resgate-261118-lote3/fix/ci-workflows-vermelhos/supabase/functions/gmail-cron-sync/index.ts`
-- `analise-prs/resgate-261118-lote3/fix/ci-workflows-vermelhos/supabase/functions/webauthn/index.ts`
-- `analise-prs/resgate-261118-lote3/hermes/telefonia-fase8-motion-a11y-responsivo-2610031530007c/scripts/team-chat-db-validate.mjs`
-- `analise-prs/resgate-261118-lote3/hermes/telefonia-fase8-motion-a11y-responsivo-2610031530007c/scripts/team-chat-db-validate.unit.mjs`
-- `analise-prs/resgate-261118-lote3/resolve-2381-from-main/supabase/functions/ai-jobs-worker/index.ts`
 - `analise-prs/resgate-regra8-261118/supabase/migrations/20261016193000_copilot_sessions.sql`
 - `analise-prs/resgate-regra8-261118/supabase/migrations/20261016193100_copilot_insights.sql`
 - `analise-prs/resgate-regra8-261118/supabase/migrations/20261016193200_copilot_feedback.sql`
@@ -399,7 +347,59 @@
 - `docs/contexto/supabase/functions/public/reassign_absent_agents__7f027ae089526f54.sql`
 - `docs/contexto/supabase/functions/public/reassign_overloaded_agents__12ae32cb1ec02d01.sql`
 - `docs/contexto/supabase/functions/public/record_away_message__d077d0b24f34a751.sql`
-- … +1089 (lista completa em `context.json`)
+- `docs/contexto/supabase/functions/public/record_multiplix_item_delivered__03ffe31962894a2f.sql`
+- `docs/contexto/supabase/functions/public/record_multiplix_item_sent__c40d460d8fa2e6dc.sql`
+- `docs/contexto/supabase/functions/public/record_multiplix_recipient_delivered__f995a51f9bdbc935.sql`
+- `docs/contexto/supabase/functions/public/record_multiplix_recipient_sent__f3a82a923c929abf.sql`
+- `docs/contexto/supabase/functions/public/record_sla_alert__e0549354300379a9.sql`
+- `docs/contexto/supabase/functions/public/record_talkx_conversion__2930096ff26d1e5d.sql`
+- `docs/contexto/supabase/functions/public/record_talkx_recipient_receipt__03ffe31962894a2f.sql`
+- `docs/contexto/supabase/functions/public/record_talkx_recipient_sent__f3a82a923c929abf.sql`
+- `docs/contexto/supabase/functions/public/release_multiplix_item_claim__c22632654d9599da.sql`
+- `docs/contexto/supabase/functions/public/release_multiplix_recipient_claim__06663f60f3d4f539.sql`
+- `docs/contexto/supabase/functions/public/release_talkx_campaign_worker__a2e0bd3328251d4d.sql`
+- `docs/contexto/supabase/functions/public/release_talkx_recipient_claim__06663f60f3d4f539.sql`
+- `docs/contexto/supabase/functions/public/reopen_conversation__0d066d155db16327.sql`
+- `docs/contexto/supabase/functions/public/reorder_multiplix_blocks__c4fef4fb901b3f3f.sql`
+- `docs/contexto/supabase/functions/public/reschedule_multiplix_item__7fc0bc15e062d3ee.sql`
+- `docs/contexto/supabase/functions/public/reschedule_multiplix_recipient__d43c19460669710f.sql`
+- `docs/contexto/supabase/functions/public/reschedule_talkx_recipient__d43c19460669710f.sql`
+- `docs/contexto/supabase/functions/public/resolve_contact_guard_actor__12ae32cb1ec02d01.sql`
+- `docs/contexto/supabase/functions/public/retry_talkx_recipient__f2f1330eacc0c683.sql`
+- `docs/contexto/supabase/functions/public/run_crm_sync_outbox_cleanup__42af59d86530ab39.sql`
+- `docs/contexto/supabase/functions/public/schedule_next_talkx_recurrence__bb5b5d5e016ff1cd.sql`
+- `docs/contexto/supabase/functions/public/secd_caller_ok__e8385b6c6f25ec7f.sql`
+- `docs/contexto/supabase/functions/public/set_instance_token__a1edd11a82f78dee.sql`
+- `docs/contexto/supabase/functions/public/set_voip_profile_credentials__6781e0e9fdb1c569.sql`
+- `docs/contexto/supabase/functions/public/should_send_away_message__d077d0b24f34a751.sql`
+- `docs/contexto/supabase/functions/public/sweep_multiplix_stuck_items__392a67ea4728569f.sql`
+- `docs/contexto/supabase/functions/public/sweep_multiplix_stuck_recipients__392a67ea4728569f.sql`
+- `docs/contexto/supabase/functions/public/sweep_talkx_stuck_recipients__392a67ea4728569f.sql`
+- `docs/contexto/supabase/functions/public/talkx_blacklist_audit_trigger__12ae32cb1ec02d01.sql`
+- `docs/contexto/supabase/functions/public/talkx_campaign_logs__6ea5eced6ba5de7c.sql`
+- `docs/contexto/supabase/functions/public/talkx_campaign_pace__bb5b5d5e016ff1cd.sql`
+- `docs/contexto/supabase/functions/public/talkx_campaign_recipients_page__f288321088ab325b.sql`
+- `docs/contexto/supabase/functions/public/talkx_campaign_reply_stats__bb5b5d5e016ff1cd.sql`
+- `docs/contexto/supabase/functions/public/talkx_campaign_segment_progress__bb5b5d5e016ff1cd.sql`
+- `docs/contexto/supabase/functions/public/talkx_campaign_window_open__61cc26966468c095.sql`
+- `docs/contexto/supabase/functions/public/talkx_connection_send_budget__fce2cc40d1afd926.sql`
+- `docs/contexto/supabase/functions/public/talkx_engine_alerts__12ae32cb1ec02d01.sql`
+- `docs/contexto/supabase/functions/public/talkx_engine_cron_runs__392a67ea4728569f.sql`
+- `docs/contexto/supabase/functions/public/talkx_next_recipients__fcafbf6cc8ff8a95.sql`
+- `docs/contexto/supabase/functions/public/talkx_recipient_is_suppressed__9fe3ca9675bcc440.sql`
+- `docs/contexto/supabase/functions/public/talkx_suppress_contact__2a581f3c02c34d7b.sql`
+- `docs/contexto/supabase/functions/public/transfer_conversation__4408a28933c6fb80.sql`
+- `docs/contexto/supabase/functions/public/transition_multiplix_dispatch__c5cac09fa57e46b9.sql`
+- `docs/contexto/supabase/functions/public/transition_talkx_campaign__623d149cb598ec65.sql`
+- `docs/contexto/supabase/functions/public/trigger_ai_jobs_tick__12ae32cb1ec02d01.sql`
+- `docs/contexto/supabase/functions/public/trigger_pending_multiplix_dispatches__12ae32cb1ec02d01.sql`
+- `docs/contexto/supabase/functions/public/trigger_talkx_engine_tick__12ae32cb1ec02d01.sql`
+- `docs/contexto/supabase/functions/public/upsert_crm_contact_link_guarded__ba0dc72fad6fea55.sql`
+- `docs/contexto/supabase/migrations/20260319210215_7e6c3714-7ce1-4cd3-930c-f25b87b10103.sql`
+- `docs/contexto/supabase/migrations/20260319210228_f33bb285-7797-4bfe-93c6-94f4096b83a6.sql`
+- `docs/contexto/supabase/migrations/20260320133103_90061855-3227-445f-a47a-a15c38ac5cf2.sql`
+- `docs/contexto/supabase/migrations/20260401002519_b7df7d1f-2caf-48c2-a23b-62df9f4fc772.sql`
+- … +1037 (lista completa em `context.json`)
 
 ## Funções SQL `SECURITY DEFINER` (rodam com privilégio do dono, ignoram RLS)
 
@@ -890,7 +890,7 @@ Middleware matcher (Next.js): nenhum
 | grant | authenticated, anon, service_role | execute | `pg_temp.assert_permitido`, `pg_temp.assert_negado`, `is_contact_visible_to_user`, `get_visible_agent_ids`, `get_profile_id_for_user`, `is_admin_or_supervisor` |
 | grant | authenticated, anon, service_role | insert | `prova_hz503_asserts` |
 | grant | authenticated, anon, service_role | select, insert, update, delete | `password_reset_requests`, `conversation_analyses` |
-| grant | authenticated, service_role | execute | `talkx_campaign_recipients_page`, `get_department_whatsapp_credentials`, `dashboard_leaderboard`, `search_contacts`, `ai_usage_cost_summary`, `merge_contacts_atomic`, `get_department_whatsapp_credentials`, `get_crm_sync_health`, `get_crm_sync_health`, `merge_contacts_atomic`, `get_profile_id_for_user`, `get_visible_agent_ids`, `is_contact_visible_to_user`, `close_conversation_atomic`, `is_valid_talkx_schedule_timezone` … +129 |
+| grant | authenticated, service_role | execute | `get_department_whatsapp_credentials`, `dashboard_leaderboard`, `search_contacts`, `ai_usage_cost_summary`, `merge_contacts_atomic`, `get_department_whatsapp_credentials`, `get_crm_sync_health`, `get_crm_sync_health`, `merge_contacts_atomic`, `get_profile_id_for_user`, `get_visible_agent_ids`, `is_contact_visible_to_user`, `close_conversation_atomic`, `is_valid_talkx_schedule_timezone`, `is_valid_talkx_schedule_timezone` … +128 |
 | grant | authenticated, service_role | select | `talkx_campaign_optouts`, `talkx_engine_health`, `talkx_engine_health`, `talkx_ddd_regions`, `security_acl_alerts`, `talkx_campaign_optouts`, `profiles`, `user_roles`, `t88_ids`, `profiles`, `profiles` |
 | grant | authenticated, service_role | select, insert, update | `messages` |
 | grant | authenticated, service_role | select, insert, update, delete | `contact_notes`, `contact_protection_policy` |
@@ -907,7 +907,7 @@ Middleware matcher (Next.js): nenhum
 | grant | service_role, postgres | execute | `mcp_exec`, `mcp_exec_many` |
 | revoke | PUBLIC | all | `run_copilot_retention`, `get_identity_matrix`, `dashboard_leaderboard`, `get_identity_matrix`, `enqueue_crm_sync_from_closure`, `enforce_talkx_campaign_mutability`, `enforce_talkx_recipient_snapshot_mutability`, `enforce_talkx_campaign_mutability`, `enforce_talkx_recipient_snapshot_mutability`, `enforce_talkx_campaign_mutability`, `is_valid_talkx_schedule_timezone`, `talkx_overview_stats`, `talkx_campaign_report`, `talkx_segment_tags`, `talkx_benchmarks` … +51 |
 | revoke | PUBLIC | execute | `dashboard_kpi`, `dashboard_contact_counts`, `dashboard_hourly_volume`, `set_conversation_status`, `record_failed_login`, `messages_sla_first_response_trigger`, `calculate_level`, `normalize_contact_phone`, `dashboard_kpi`, `dashboard_contact_counts`, `dashboard_hourly_volume`, `grant_agent_achievement`, `grant_agent_achievement`, `add_agent_xp`, `update_agent_streak` … +31 |
-| revoke | PUBLIC, anon | all | `resolve_unconfirmed_message`, `talkx_campaign_recipients_page`, `mark_first_response`, `mark_first_response`, `mark_first_response`, `count_searchbox_sessions_this_month`, `merge_contacts_atomic`, `mark_first_response`, `mark_first_response`, `mark_first_response`, `get_crm_sync_health`, `get_crm_sync_health`, `merge_contacts_atomic`, `get_profile_id_for_user`, `get_visible_agent_ids` … +133 |
+| revoke | PUBLIC, anon | all | `resolve_unconfirmed_message`, `mark_first_response`, `mark_first_response`, `mark_first_response`, `count_searchbox_sessions_this_month`, `merge_contacts_atomic`, `mark_first_response`, `mark_first_response`, `mark_first_response`, `get_crm_sync_health`, `get_crm_sync_health`, `merge_contacts_atomic`, `get_profile_id_for_user`, `get_visible_agent_ids`, `is_contact_visible_to_user` … +132 |
 | revoke | PUBLIC, anon | execute | `get_department_whatsapp_credentials`, `get_identity_matrix`, `get_own_lockout_status`, `effective_role`, `is_admin`, `is_ip_blocked`, `is_ip_whitelisted`, `is_country_allowed`, `is_country_blocked`, `audit_role_permissions_changes`, `sync_profile_role_from_user_roles`, `sync_thread_last_sender`, `update_device_last_seen`, `update_global_settings_updated_at`, `update_updated_at_column` … +87 |
 | revoke | PUBLIC, anon, authenticated | all | `enqueue_copilot_tick_on_contact_message`, `mark_outbound_post_started`, `claim_outbound_message`, `register_first_response_internal`, `register_first_response_internal`, `notify_due_reminders`, `guard_message_provenance_fields`, `backfill_reminders_to_conversation_tasks`, `purge_talkx_expired_data`, `guard_contact_note_identity`, `retry_talkx_recipient`, `grant_agent_achievement_internal`, `talkx_next_recipients`, `encrypt_gmail_token`, `decrypt_gmail_token` … +233 |
 | revoke | PUBLIC, anon, authenticated | all privileges | `webhook_failures` |
@@ -918,7 +918,7 @@ Middleware matcher (Next.js): nenhum
 | revoke | PUBLIC, anon, authenticated, service_role | execute | `audit_contact_deletion_change`, `audit_contact_address_change`, `audit_role_changes`, `audit_role_permissions_changes`, `department_audit_logs_fill_profile_name`, `record_talkx_campaign_lifecycle_event`, `set_talkx_recipient_status_changed_at`, `conversation_task_rearm_on_remind_change`, `audit_contact_block_change`, `sanitize_reset_request`, `rate_limit_reset_requests` |
 | revoke | PUBLIC, anon, service_role | all | `enqueue_outbound_message`, `enqueue_rich_outbound_message`, `replace_talkx_draft_recipients`, `save_talkx_campaign_draft`, `enqueue_outbound_message`, `enqueue_outbound_message`, `enqueue_rich_outbound_message`, `enqueue_outbound_message`, `log_unauthorized_inbox_scope`, `enqueue_group_outbound_message`, `admin_list_cron_jobs`, `admin_toggle_cron_job`, `set_contact_blocked`, `crisis_room_snapshot`, `talkx_block_recipient` … +3 |
 | revoke | PUBLIC, authenticated | execute | `run_copilot_retention` |
-| revoke | anon | all | `link_preview_cache`, `feature_flags`, `search_my_calls`, `my_calls_kpi`, `upsert_my_call`, `set_call_agent_notes`, `team_conversations`, `team_conversation_members`, `team_messages`, `team_message_reactions`, `team_message_receipts`, `departments`, `department_invitations`, `department_invites`, `department_audit_logs` … +32 |
+| revoke | anon | all | `feature_flags`, `search_my_calls`, `my_calls_kpi`, `upsert_my_call`, `set_call_agent_notes`, `team_conversations`, `team_conversation_members`, `team_messages`, `team_message_reactions`, `team_message_receipts`, `departments`, `department_invitations`, `department_invites`, `department_audit_logs`, `multiplix_dispatches` … +31 |
 | revoke | anon | all privileges | `contact_notes` |
 | revoke | anon | delete | `passkey_credentials` |
 | revoke | anon | execute | `record_failed_login`, `is_account_locked`, `is_account_locked`, `record_failed_login`, `dashboard_kpi`, `dashboard_contact_counts`, `dashboard_hourly_volume`, `dashboard_leaderboard`, `sync_contact_status_on_closure`, `is_account_locked`, `is_account_locked`, `record_failed_login`, `talkx_benchmarks`, `talkx_benchmarks`, `set_conversation_status` … +53 |
@@ -939,7 +939,7 @@ Middleware matcher (Next.js): nenhum
 | revoke | anon, authenticated | truncate, delete, update, trigger, references | `talkx_campaign_events` |
 | revoke | anon, authenticated | truncate, trigger, references | `team_conversations`, `team_conversation_members`, `team_messages`, `team_message_reactions`, `team_message_receipts`, `departments`, `department_invitations`, `department_invites`, `department_audit_logs` |
 | revoke | anon, public | execute | `notify_due_tasks` |
-| revoke | authenticated | all | `link_preview_cache`, `persist_conversation_analysis`, `replace_ai_conversation_tags`, `persist_conversation_analysis`, `agent_mini_game_xp_daily`, `ai_usage_outbox`, `outbox_events`, `log_login_block`, `connection_alert_preferences`, `whisper_messages_somente_is_read`, `link_preview_cache` |
+| revoke | authenticated | all | `persist_conversation_analysis`, `replace_ai_conversation_tags`, `persist_conversation_analysis`, `agent_mini_game_xp_daily`, `ai_usage_outbox`, `outbox_events`, `log_login_block`, `connection_alert_preferences`, `whisper_messages_somente_is_read`, `link_preview_cache` |
 | revoke | authenticated | all privileges | `audit_logs` |
 | revoke | authenticated | delete | `team_message_receipts`, `departments` |
 | revoke | authenticated | execute | `encrypt_gmail_token`, `decrypt_gmail_token`, `cleanup_expired_challenges`, `cleanup_link_preview_cache`, `encrypt_gmail_token`, `decrypt_gmail_token`, `decrypt_gmail_token`, `encrypt_gmail_token`, `get_channel_credentials`, `cleanup_expired_challenges`, `cleanup_link_preview_cache`, `is_account_locked`, `record_failed_login`, `set_conversation_status`, `get_own_lockout_status` … +2 |
@@ -971,13 +971,12 @@ Middleware matcher (Next.js): nenhum
 | Tabela | Problema | Arquivos |
 |---|---|---|
 | `ai_jobs` | RLS ligado sem nenhuma política → só service_role acessa |  |
-| `email_threads` | front faz INSERT mas nenhuma política RLS permite INSERT → vai falhar/retornar vazio para usuários | `analise-prs/resgate-261118-lote3/claude_pink/cool-dijkstra-xk9ek2/supabase/functions/_shared/gmail-helpers.ts`<br>`analise-prs/resgate-261118-lote3/fix/ci-verde-261021/supabase/functions/_shared/gmail-helpers.ts`<br>`analise-prs/resgate-261118-lote3/fix/ci-workflows-vermelhos/supabase/functions/_shared/gmail-helpers.ts` |
 | `gmail_oauth_states` | RLS ligado sem nenhuma política → só service_role acessa |  |
 | `link_preview_cache` | RLS ligado sem nenhuma política → só service_role acessa |  |
 | `messages` | front faz DELETE mas nenhuma política RLS permite DELETE → vai falhar/retornar vazio para usuários | `src/components/monitoring/hooks/useMonitoringActions.ts` |
 | `query_telemetry` | front faz SELECT mas nenhuma política RLS permite SELECT → vai falhar/retornar vazio para usuários | `src/pages/AdminTelemetriaPage.tsx` |
 | `talkx_test_send_claims` | RLS ligado sem nenhuma política → só service_role acessa |  |
-| `whisper_messages` | front faz UPDATE mas nenhuma política RLS permite UPDATE → vai falhar/retornar vazio para usuários | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/inbox/WhisperMode.tsx`<br>`src/components/inbox/WhisperMode.tsx` |
+| `whisper_messages` | front faz UPDATE mas nenhuma política RLS permite UPDATE → vai falhar/retornar vazio para usuários | `src/components/inbox/WhisperMode.tsx` |
 
 ## Multi-tenancy
 

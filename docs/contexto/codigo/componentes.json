@@ -1,109 +1,16 @@
 {
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
- "total": 1064,
- "orfaos": 138,
+ "total": 935,
+ "orfaos": 45,
  "nomes_duplicados": {
-  "AIAutoTagsConfig": [
-   "analise-prs/resgate-261118-lote3/hermes/robustez-primitivos-ui-2610121626bec5-2610141859e423/src/components/settings/AIAutoTagsConfig.tsx",
-   "analise-prs/resgate-261118-lote3/hermes/telefonia-fase8-motion-a11y-responsivo-2610031530007c/src/components/settings/AIAutoTagsConfig.tsx"
-  ],
   "AchievementBadge": [
    "src/components/gamification/AchievementBadge.tsx",
    "src/components/leaderboard/LeaderboardHelpers.tsx"
   ],
-  "AdminView": [
-   "analise-prs/resgate-261118-lote3/claude/fix-unit-tests-src-261024-1630/src/components/admin/AdminView.tsx",
-   "analise-prs/resgate-261118-lote3/codex/fix-failed-workflows-20261020/src/components/admin/AdminView.tsx",
-   "src/components/admin/AdminView.tsx"
-  ],
-  "AlertsCard": [
-   "analise-prs/resgate-261118-lote3/claude/feat-radar-motor-telas-261101-1330/src/components/inbox/copilot/RadarCards.tsx",
-   "analise-prs/resgate-261118-lote3/claude/radar-motor-copilot-live-301030/src/components/inbox/copilot/RadarCards.tsx",
-   "analise-prs/resgate-261118-lote3/resolve-2381-from-main/src/components/inbox/copilot/RadarCards.tsx",
-   "src/components/inbox/copilot/RadarCards.tsx"
-  ],
-  "AuditLogDashboard": [
-   "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/security/AuditLogDashboard.tsx",
-   "src/components/security/AuditLogDashboard.tsx"
-  ],
-  "AuthProvider": [
-   "analise-prs/resgate-261118-lote3/claude_05/festive-carson-ub43wu/src/hooks/auth/useAuth.tsx",
-   "analise-prs/resgate-261118-lote3/claude/fix-unit-tests-src-261024-1630/src/hooks/auth/useAuth.tsx",
-   "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/hooks/auth/useAuth.tsx",
-   "analise-prs/resgate-261118-lote3/claude/magical-pasteur-iz2pgy/src/hooks/auth/useAuth.tsx",
-   "src/hooks/auth/useAuth.tsx"
-  ],
-  "Badge": [
-   "analise-prs/resgate-261118-lote3/claude/feat-ui-visual-texto-longo-261101-1445/src/components/ui/badge.tsx",
-   "src/components/ui/badge.tsx"
-  ],
-  "BadgeProps": [
-   "analise-prs/resgate-261118-lote3/claude/feat-ui-visual-texto-longo-261101-1445/src/components/ui/badge.tsx",
-   "src/components/ui/badge.tsx"
-  ],
   "BreadcrumbItem": [
    "src/components/layout/PageHeader.tsx",
    "src/components/ui/breadcrumb.tsx"
-  ],
-  "BrindeCard": [
-   "analise-prs/resgate-261118-lote3/claude/feat-radar-motor-telas-261101-1330/src/components/inbox/copilot/RadarCards.tsx",
-   "analise-prs/resgate-261118-lote3/claude/radar-motor-copilot-live-301030/src/components/inbox/copilot/RadarCards.tsx",
-   "analise-prs/resgate-261118-lote3/resolve-2381-from-main/src/components/inbox/copilot/RadarCards.tsx",
-   "src/components/inbox/copilot/RadarCards.tsx"
-  ],
-  "BulkActionsBar": [
-   "analise-prs/resgate-261118-lote3/hermes/robustez-primitivos-ui-2610121626bec5-2610141859e423/src/components/BulkActionsBar.tsx",
-   "src/components/contacts/BulkActionsBar.tsx"
-  ],
-  "CRMAutoSync": [
-   "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/inbox/CRMAutoSync.tsx",
-   "src/components/inbox/CRMAutoSync.tsx"
-  ],
-  "CRMSyncButton": [
-   "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/inbox/CRMAutoSync.tsx",
-   "src/components/inbox/CRMAutoSync.tsx"
-  ],
-  "CallHistoryTable": [
-   "analise-prs/resgate-261118-lote3/hermes/telefonia-fase8-motion-a11y-responsivo-2610031530007c/src/components/calls/CallHistoryTable.tsx",
-   "src/components/calls/CallHistoryTable.tsx"
-  ],
-  "CallsKpiGrid": [
-   "analise-prs/resgate-261118-lote3/hermes/telefonia-fase8-motion-a11y-responsivo-2610031530007c/src/components/calls/CallsKpiGrid.tsx",
-   "src/components/calls/CallsKpiGrid.tsx"
-  ],
-  "CampaignCreateDialog": [
-   "analise-prs/resgate-261118-lote3/hermes/robustez-primitivos-ui-2610121626bec5-2610141859e423/src/components/campaigns/CampaignCreateDialog.tsx",
-   "analise-prs/resgate-261118-lote3/hermes/telefonia-fase8-motion-a11y-responsivo-2610031530007c/src/components/campaigns/CampaignCreateDialog.tsx"
-  ],
-  "CampaignsView": [
-   "analise-prs/resgate-261118-lote3/hermes/robustez-primitivos-ui-2610121626bec5-2610141859e423/src/components/campaigns/CampaignsView.tsx",
-   "analise-prs/resgate-261118-lote3/hermes/telefonia-fase8-motion-a11y-responsivo-2610031530007c/src/components/campaigns/CampaignsView.tsx"
-  ],
-  "ChatInputArea": [
-   "analise-prs/resgate-261118-lote3/claude/feat-radar-motor-telas-261101-1330/src/components/inbox/chat/ChatInputArea.tsx",
-   "analise-prs/resgate-261118-lote3/claude/radar-motor-copilot-live-301030/src/components/inbox/chat/ChatInputArea.tsx",
-   "analise-prs/resgate-261118-lote3/resolve-2381-from-main/src/components/inbox/chat/ChatInputArea.tsx",
-   "src/components/inbox/chat/ChatInputArea.tsx"
-  ],
-  "ChatMessagesArea": [
-   "analise-prs/resgate-261118-lote3/claude_pink/cool-dijkstra-xk9ek2/src/components/inbox/chat/ChatMessagesArea.tsx",
-   "analise-prs/resgate-261118-lote3/claude/fix-codex-findings-161016-1906/src/components/inbox/chat/ChatMessagesArea.tsx",
-   "src/components/inbox/chat/ChatMessagesArea.tsx"
-  ],
-  "ChatMessagesAreaRef": [
-   "analise-prs/resgate-261118-lote3/claude_pink/cool-dijkstra-xk9ek2/src/components/inbox/chat/ChatMessagesArea.tsx",
-   "analise-prs/resgate-261118-lote3/claude/fix-codex-findings-161016-1906/src/components/inbox/chat/ChatMessagesArea.tsx",
-   "src/components/inbox/chat/ChatMessagesArea.tsx"
-  ],
-  "ChatPanel": [
-   "analise-prs/resgate-261118-lote3/claude/fix-radar-fase6-cv056-shortcuts-261108-2335/src/components/inbox/ChatPanel.tsx",
-   "analise-prs/resgate-261118-lote3/fix/ci-verde-261021/src/components/inbox/ChatPanel.tsx",
-   "src/components/inbox/ChatPanel.tsx"
-  ],
-  "ChipTab": [
-   "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/inbox/conversation-list/StatusChips.tsx",
-   "src/components/inbox/conversation-list/StatusChips.tsx"
   ],
   "CommandGroup": [
    "src/components/ui/command-palette-data.tsx",
@@ -114,51 +21,12 @@
    "src/components/ui/command.tsx"
   ],
   "CommandPalette": [
-   "analise-prs/resgate-261118-lote3/claude_05/festive-carson-ub43wu/src/components/ui/command-palette.tsx",
-   "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/ui/command-palette.tsx",
-   "analise-prs/resgate-261118-lote3/claude/magical-pasteur-iz2pgy/src/components/ui/command-palette.tsx",
    "src/components/CommandPalette.tsx",
    "src/components/ui/command-palette.tsx"
-  ],
-  "CommandPaletteHost": [
-   "analise-prs/resgate-261118-lote3/claude/feat-talkx-x054-cmdk-261108-0100/src/components/keyboard/CommandPaletteHost.tsx",
-   "src/components/keyboard/CommandPaletteHost.tsx"
-  ],
-  "ConfirmCheck": [
-   "analise-prs/resgate-261118-lote3/claude/busy-cannon-40szm9/src/components/talkx/kit/dialogs.tsx",
-   "src/components/talkx/kit/dialogs.tsx"
-  ],
-  "ConfirmDetail": [
-   "analise-prs/resgate-261118-lote3/claude/busy-cannon-40szm9/src/components/talkx/kit/dialogs.tsx",
-   "src/components/talkx/kit/dialogs.tsx"
-  ],
-  "ConfirmReasonField": [
-   "analise-prs/resgate-261118-lote3/claude/busy-cannon-40szm9/src/components/talkx/kit/dialogs.tsx",
-   "src/components/talkx/kit/dialogs.tsx"
-  ],
-  "ConnectionCard": [
-   "analise-prs/resgate-261118-lote3/codex/publish-followup-20261021/src/components/connections/ConnectionCard.tsx",
-   "src/components/connections/ConnectionCard.tsx"
-  ],
-  "ConnectionToast": [
-   "analise-prs/resgate-261118-lote3/hermes/robustez-primitivos-ui-2610121626bec5-2610141859e423/src/components/ui/offline-indicator.tsx",
-   "src/components/ui/offline-indicator.tsx"
-  ],
-  "ContactPurchasesPanel": [
-   "analise-prs/resgate-261118-lote3/claude/busy-cannon-40szm9/src/components/inbox/ContactPurchasesPanel.tsx",
-   "analise-prs/resgate-261118-lote3/hermes/robustez-primitivos-ui-2610121626bec5-2610141859e423/src/components/inbox/ContactPurchasesPanel.tsx"
   ],
   "ContactsEmptyState": [
    "src/components/ui/empty-states.tsx",
    "src/components/ui/empty-states/ConvenienceExports.tsx"
-  ],
-  "ConversationEmptyState": [
-   "analise-prs/resgate-261118-lote3/codex/fix-failed-workflows-20261020/src/components/shared/ConversationEmptyState.tsx",
-   "src/components/shared/ConversationEmptyState.tsx"
-  ],
-  "ConversationEmptyStateProps": [
-   "analise-prs/resgate-261118-lote3/codex/fix-failed-workflows-20261020/src/components/shared/ConversationEmptyState.tsx",
-   "src/components/shared/ConversationEmptyState.tsx"
   ],
   "ConversationHeatmap": [
    "src/components/dashboard/ConversationHeatmap.tsx",
@@ -167,78 +35,6 @@
   "DashboardEmptyState": [
    "src/components/ui/empty-states.tsx",
    "src/components/ui/empty-states/ConvenienceExports.tsx"
-  ],
-  "DecisionMakerCard": [
-   "analise-prs/resgate-261118-lote3/claude/feat-radar-motor-telas-261101-1330/src/components/inbox/copilot/RadarCards.tsx",
-   "analise-prs/resgate-261118-lote3/claude/radar-motor-copilot-live-301030/src/components/inbox/copilot/RadarCards.tsx",
-   "analise-prs/resgate-261118-lote3/resolve-2381-from-main/src/components/inbox/copilot/RadarCards.tsx",
-   "src/components/inbox/copilot/RadarCards.tsx"
-  ],
-  "Dialog": [
-   "analise-prs/resgate-261118-lote3/claude/busy-cannon-40szm9/src/components/ui/dialog.tsx",
-   "analise-prs/resgate-261118-lote3/hermes/robustez-primitivos-ui-2610121626bec5-2610141859e423/src/components/ui/dialog.tsx",
-   "src/components/ui/dialog.tsx"
-  ],
-  "DialogClose": [
-   "analise-prs/resgate-261118-lote3/claude/busy-cannon-40szm9/src/components/ui/dialog.tsx",
-   "analise-prs/resgate-261118-lote3/hermes/robustez-primitivos-ui-2610121626bec5-2610141859e423/src/components/ui/dialog.tsx",
-   "src/components/ui/dialog.tsx"
-  ],
-  "DialogContent": [
-   "analise-prs/resgate-261118-lote3/claude/busy-cannon-40szm9/src/components/ui/dialog.tsx",
-   "analise-prs/resgate-261118-lote3/hermes/robustez-primitivos-ui-2610121626bec5-2610141859e423/src/components/ui/dialog.tsx",
-   "src/components/ui/dialog.tsx"
-  ],
-  "DialogDescription": [
-   "analise-prs/resgate-261118-lote3/claude/busy-cannon-40szm9/src/components/ui/dialog.tsx",
-   "analise-prs/resgate-261118-lote3/hermes/robustez-primitivos-ui-2610121626bec5-2610141859e423/src/components/ui/dialog.tsx",
-   "src/components/ui/dialog.tsx"
-  ],
-  "DialogFooter": [
-   "analise-prs/resgate-261118-lote3/claude/busy-cannon-40szm9/src/components/ui/dialog.tsx",
-   "analise-prs/resgate-261118-lote3/hermes/robustez-primitivos-ui-2610121626bec5-2610141859e423/src/components/ui/dialog.tsx",
-   "src/components/ui/dialog.tsx"
-  ],
-  "DialogHeader": [
-   "analise-prs/resgate-261118-lote3/claude/busy-cannon-40szm9/src/components/ui/dialog.tsx",
-   "analise-prs/resgate-261118-lote3/hermes/robustez-primitivos-ui-2610121626bec5-2610141859e423/src/components/ui/dialog.tsx",
-   "src/components/ui/dialog.tsx"
-  ],
-  "DialogOverlay": [
-   "analise-prs/resgate-261118-lote3/claude/busy-cannon-40szm9/src/components/ui/dialog.tsx",
-   "analise-prs/resgate-261118-lote3/hermes/robustez-primitivos-ui-2610121626bec5-2610141859e423/src/components/ui/dialog.tsx",
-   "src/components/ui/dialog.tsx"
-  ],
-  "DialogPortal": [
-   "analise-prs/resgate-261118-lote3/claude/busy-cannon-40szm9/src/components/ui/dialog.tsx",
-   "analise-prs/resgate-261118-lote3/hermes/robustez-primitivos-ui-2610121626bec5-2610141859e423/src/components/ui/dialog.tsx",
-   "src/components/ui/dialog.tsx"
-  ],
-  "DialogTitle": [
-   "analise-prs/resgate-261118-lote3/claude/busy-cannon-40szm9/src/components/ui/dialog.tsx",
-   "analise-prs/resgate-261118-lote3/hermes/robustez-primitivos-ui-2610121626bec5-2610141859e423/src/components/ui/dialog.tsx",
-   "src/components/ui/dialog.tsx"
-  ],
-  "DialogTrigger": [
-   "analise-prs/resgate-261118-lote3/claude/busy-cannon-40szm9/src/components/ui/dialog.tsx",
-   "analise-prs/resgate-261118-lote3/hermes/robustez-primitivos-ui-2610121626bec5-2610141859e423/src/components/ui/dialog.tsx",
-   "src/components/ui/dialog.tsx"
-  ],
-  "ELEVENLABS_VOICES": [
-   "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/inbox/VoiceSelector.tsx",
-   "src/components/inbox/VoiceSelector.tsx"
-  ],
-  "ENTITY_TYPES_BY_FILTER": [
-   "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/security/AuditLogDashboard.tsx",
-   "src/components/security/AuditLogDashboard.tsx"
-  ],
-  "ElevenLabsVoice": [
-   "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/inbox/VoiceSelector.tsx",
-   "src/components/inbox/VoiceSelector.tsx"
-  ],
-  "EmojiDecodeGame": [
-   "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/gamification/MiniGameDialogs.tsx",
-   "src/components/gamification/MiniGameDialogs.tsx"
   ],
   "EmptyState": [
    "src/components/ui/empty-state.tsx",
@@ -253,16 +49,11 @@
    "src/components/inbox/ContactTypeFilter.tsx",
    "src/components/talkx/kit/filters.tsx"
   ],
-  "FloatingActionButton": [
-   "analise-prs/resgate-261118-lote3/hermes/robustez-primitivos-ui-2610121626bec5-2610141859e423/src/components/mobile/BottomSheet.tsx",
-   "analise-prs/resgate-261118-lote3/hermes/robustez-primitivos-ui-2610121626bec5-2610141859e423/src/components/mobile/FloatingActionButtons.tsx"
-  ],
   "FloatingParticles": [
    "src/components/dashboard/FloatingParticles.tsx",
    "src/components/voice/FloatingParticles.tsx"
   ],
   "HandoffDialog": [
-   "analise-prs/resgate-261118-lote3/fix/ci-verde-261021/src/components/inbox/RealtimeCollaboration.tsx",
    "src/components/inbox/collaboration/HandoffDialog.tsx",
    "src/components/inbox/RealtimeCollaboration.tsx"
   ],
@@ -270,17 +61,9 @@
    "src/components/theme/HighContrastProvider.tsx",
    "src/components/theme/HighContrastToggle.tsx"
   ],
-  "InboxEmptyChat": [
-   "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/inbox/InboxEmptyChat.tsx",
-   "src/components/inbox/InboxEmptyChat.tsx"
-  ],
   "InboxEmptyState": [
    "src/components/ui/empty-states.tsx",
    "src/components/ui/empty-states/ConvenienceExports.tsx"
-  ],
-  "IncomingCallAlert": [
-   "analise-prs/resgate-261118-lote3/hermes/telefonia-fase8-motion-a11y-responsivo-2610031530007c/src/components/calls/IncomingCallAlert.tsx",
-   "src/components/calls/IncomingCallAlert.tsx"
   ],
   "InfoBanner": [
    "src/components/cognitive/FeatureSpotlight.tsx",
@@ -294,169 +77,29 @@
    "src/components/inbox/copilot/InsightCard.tsx",
    "src/components/talkx/kit/insight.tsx"
   ],
-  "IntegrationsPanel": [
-   "analise-prs/resgate-261118-lote3/hermes/robustez-primitivos-ui-2610121626bec5-2610141859e423/src/components/connections/IntegrationsPanel.tsx",
-   "analise-prs/resgate-261118-lote3/hermes/telefonia-fase8-motion-a11y-responsivo-2610031530007c/src/components/connections/IntegrationsPanel.tsx"
-  ],
   "InternalNotesPanel": [
-   "analise-prs/resgate-261118-lote3/fix/ci-verde-261021/src/components/inbox/RealtimeCollaboration.tsx",
    "src/components/inbox/collaboration/InternalNotesPanel.tsx",
    "src/components/inbox/RealtimeCollaboration.tsx"
-  ],
-  "KeyboardAwareContainer": [
-   "analise-prs/resgate-261118-lote3/hermes/robustez-primitivos-ui-2610121626bec5-2610141859e423/src/components/mobile/BottomSheet.tsx",
-   "analise-prs/resgate-261118-lote3/hermes/robustez-primitivos-ui-2610121626bec5-2610141859e423/src/components/mobile/FloatingActionButtons.tsx"
-  ],
-  "Keypad": [
-   "analise-prs/resgate-261118-lote3/hermes/telefonia-fase8-motion-a11y-responsivo-2610031530007c/src/components/calls/Keypad.tsx",
-   "src/components/calls/Keypad.tsx"
-  ],
-  "KnowledgeBaseView": [
-   "analise-prs/resgate-261118-lote3/claude/kind-gates-87mwoe/src/components/knowledge/KnowledgeBaseView.tsx",
-   "src/components/knowledge/KnowledgeBaseView.tsx"
-  ],
-  "LeadRiskScorePanel": [
-   "analise-prs/resgate-261118-lote3/hermes/telefonia-fase8-motion-a11y-responsivo-2610031530007c/src/components/inbox/LeadRiskScorePanel.tsx",
-   "src/components/inbox/contact-details/LeadRiskScorePanel.tsx"
   ],
   "LiveRegion": [
    "src/components/a11y/a11yComponents.tsx",
    "src/components/ui/visually-hidden.tsx"
   ],
-  "LongPressMenu": [
-   "analise-prs/resgate-261118-lote3/hermes/robustez-primitivos-ui-2610121626bec5-2610141859e423/src/components/mobile/MobileNavigation.tsx",
-   "analise-prs/resgate-261118-lote3/hermes/robustez-primitivos-ui-2610121626bec5-2610141859e423/src/components/mobile/MobileSlidePanel.tsx"
-  ],
   "MagneticButton": [
    "src/components/effects/ScrollEffects.tsx",
    "src/components/ui/micro-interactions/buttons.tsx"
-  ],
-  "MainTab": [
-   "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/inbox/conversation-list/StatusChips.tsx",
-   "src/components/inbox/conversation-list/StatusChips.tsx"
-  ],
-  "MediaMigrationTool": [
-   "analise-prs/resgate-261118-lote3/claude/fix-unit-tests-src-261024-1630/src/components/admin/MediaMigrationTool.tsx",
-   "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/admin/MediaMigrationTool.tsx",
-   "src/components/admin/MediaMigrationTool.tsx"
   ],
   "MessagePreview": [
    "src/components/inbox/interactive-builder/MessagePreview.tsx",
    "src/components/inbox/MessagePreview.tsx"
   ],
-  "MessageReactions": [
-   "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/inbox/MessageReactions.tsx",
-   "src/components/inbox/MessageReactions.tsx"
-  ],
-  "MetricComparison": [
-   "analise-prs/resgate-261118-lote3/hermes/robustez-primitivos-ui-2610121626bec5-2610141859e423/src/components/dashboard/MetricComparison.tsx",
-   "src/components/dashboard/metrics/MetricComparison.tsx"
-  ],
-  "MiniSparkline": [
-   "analise-prs/resgate-261118-lote3/hermes/robustez-primitivos-ui-2610121626bec5-2610141859e423/src/components/dashboard/MiniSparkline.tsx",
-   "src/components/dashboard/metrics/MiniSparkline.tsx"
-  ],
   "MotionButton": [
    "src/components/ui/button.tsx",
    "src/components/ui/motion/components.tsx"
   ],
-  "MultiplixComposerDialog": [
-   "analise-prs/resgate-261118-lote3/hermes/robustez-primitivos-ui-2610121626bec5-2610141859e423/src/components/multiplix/MultiplixComposerDialog.tsx",
-   "analise-prs/resgate-261118-lote3/hermes/telefonia-fase8-motion-a11y-responsivo-2610031530007c/src/components/multiplix/MultiplixComposerDialog.tsx"
-  ],
-  "MultiplixMonitor": [
-   "analise-prs/resgate-261118-lote3/claude/feat-pausa-entrega-campanhas-261101-1400/src/components/multiplix/MultiplixMonitor.tsx",
-   "src/components/multiplix/MultiplixMonitor.tsx"
-  ],
-  "NextStepCard": [
-   "analise-prs/resgate-261118-lote3/claude/feat-radar-motor-telas-261101-1330/src/components/inbox/copilot/RadarCards.tsx",
-   "analise-prs/resgate-261118-lote3/claude/radar-motor-copilot-live-301030/src/components/inbox/copilot/RadarCards.tsx",
-   "analise-prs/resgate-261118-lote3/resolve-2381-from-main/src/components/inbox/copilot/RadarCards.tsx",
-   "src/components/inbox/copilot/RadarCards.tsx"
-  ],
   "NotificationsEmptyState": [
    "src/components/ui/empty-states.tsx",
    "src/components/ui/empty-states/ConvenienceExports.tsx"
-  ],
-  "OfflineIndicator": [
-   "analise-prs/resgate-261118-lote3/hermes/robustez-primitivos-ui-2610121626bec5-2610141859e423/src/components/ui/offline-indicator.tsx",
-   "src/components/ui/offline-indicator.tsx"
-  ],
-  "PhoneInput": [
-   "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/ui/phone-input.tsx",
-   "src/components/ui/phone-input.tsx"
-  ],
-  "PinchZoom": [
-   "analise-prs/resgate-261118-lote3/hermes/robustez-primitivos-ui-2610121626bec5-2610141859e423/src/components/mobile/MobileNavigation.tsx",
-   "analise-prs/resgate-261118-lote3/hermes/robustez-primitivos-ui-2610121626bec5-2610141859e423/src/components/mobile/MobileSlidePanel.tsx"
-  ],
-  "ProductsCard": [
-   "analise-prs/resgate-261118-lote3/claude/feat-radar-motor-telas-261101-1330/src/components/inbox/copilot/RadarCards.tsx",
-   "analise-prs/resgate-261118-lote3/claude/radar-motor-copilot-live-301030/src/components/inbox/copilot/RadarCards.tsx",
-   "analise-prs/resgate-261118-lote3/resolve-2381-from-main/src/components/inbox/copilot/RadarCards.tsx",
-   "src/components/inbox/copilot/RadarCards.tsx"
-  ],
-  "QuickReactionBar": [
-   "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/inbox/MessageReactions.tsx",
-   "src/components/inbox/MessageReactions.tsx"
-  ],
-  "QuickReplyCardList": [
-   "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/inbox/quick-replies/QuickReplyCardList.tsx",
-   "src/components/inbox/quick-replies/QuickReplyCardList.tsx"
-  ],
-  "QuizGame": [
-   "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/gamification/MiniGameDialogs.tsx",
-   "src/components/gamification/MiniGameDialogs.tsx"
-  ],
-  "ROLE_ACTION_PREFIX": [
-   "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/security/AuditLogDashboard.tsx",
-   "src/components/security/AuditLogDashboard.tsx"
-  ],
-  "ROLE_FILTER_VALUE": [
-   "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/security/AuditLogDashboard.tsx",
-   "src/components/security/AuditLogDashboard.tsx"
-  ],
-  "RadarLive": [
-   "analise-prs/resgate-261118-lote3/claude/feat-radar-motor-telas-261101-1330/src/components/inbox/copilot/RadarLive.tsx",
-   "analise-prs/resgate-261118-lote3/claude/radar-motor-copilot-live-301030/src/components/inbox/copilot/RadarLive.tsx",
-   "analise-prs/resgate-261118-lote3/resolve-2381-from-main/src/components/inbox/copilot/RadarLive.tsx",
-   "src/components/inbox/copilot/RadarLive.tsx"
-  ],
-  "RadarLiveProps": [
-   "analise-prs/resgate-261118-lote3/claude/feat-radar-motor-telas-261101-1330/src/components/inbox/copilot/RadarLive.tsx",
-   "analise-prs/resgate-261118-lote3/claude/radar-motor-copilot-live-301030/src/components/inbox/copilot/RadarLive.tsx",
-   "analise-prs/resgate-261118-lote3/resolve-2381-from-main/src/components/inbox/copilot/RadarLive.tsx",
-   "src/components/inbox/copilot/RadarLive.tsx"
-  ],
-  "RadarPanel": [
-   "analise-prs/resgate-261118-lote3/claude/radar-motor-copilot-live-301030/src/components/inbox/copilot/RadarPanel.tsx",
-   "analise-prs/resgate-261118-lote3/resolve-2381-from-main/src/components/inbox/copilot/RadarPanel.tsx",
-   "src/components/inbox/copilot/RadarPanel.tsx"
-  ],
-  "RadarPanelProps": [
-   "analise-prs/resgate-261118-lote3/claude/radar-motor-copilot-live-301030/src/components/inbox/copilot/RadarPanel.tsx",
-   "analise-prs/resgate-261118-lote3/resolve-2381-from-main/src/components/inbox/copilot/RadarPanel.tsx",
-   "src/components/inbox/copilot/RadarPanel.tsx"
-  ],
-  "RealtimeCollaboration": [
-   "analise-prs/resgate-261118-lote3/fix/ci-verde-261021/src/components/inbox/RealtimeCollaboration.tsx",
-   "src/components/inbox/RealtimeCollaboration.tsx"
-  ],
-  "RealtimeInboxView": [
-   "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/inbox/RealtimeInboxView.tsx",
-   "src/components/inbox/RealtimeInboxView.tsx"
-  ],
-  "RecipientKpis": [
-   "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/talkx/tracking/TalkXRecipientsTable.tsx",
-   "src/components/talkx/tracking/TalkXRecipientsTable.tsx"
-  ],
-  "RecipientRow": [
-   "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/talkx/tracking/TalkXRecipientsTable.tsx",
-   "src/components/talkx/tracking/TalkXRecipientsTable.tsx"
-  ],
-  "RecipientsPage": [
-   "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/talkx/tracking/TalkXRecipientsTable.tsx",
-   "src/components/talkx/tracking/TalkXRecipientsTable.tsx"
   ],
   "RippleButton": [
    "src/components/effects/ScrollEffects.tsx",
@@ -474,11 +117,6 @@
    "src/components/ui/empty-states.tsx",
    "src/components/ui/empty-states/ConvenienceExports.tsx"
   ],
-  "SearchInsightsView": [
-   "analise-prs/resgate-261118-lote3/claude_05/serene-feynman-3uuurw/src/components/admin/SearchInsightsView.tsx",
-   "analise-prs/resgate-261118-lote3/codex/publish-followup-20261021/src/components/admin/SearchInsightsView.tsx",
-   "src/components/admin/SearchInsightsView.tsx"
-  ],
   "SectionCard": [
    "src/components/catalog/catalogShared.tsx",
    "src/components/inbox/tabs/SectionCard.tsx"
@@ -487,224 +125,25 @@
    "src/components/dashboard/DashboardSectionHeader.tsx",
    "src/components/dashboard/overview/DashboardCard.tsx"
   ],
-  "SegmentLike": [
-   "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/talkx/segments/SegmentSideList.tsx",
-   "src/components/talkx/segments/SegmentSideList.tsx"
-  ],
-  "SegmentSideList": [
-   "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/talkx/segments/SegmentSideList.tsx",
-   "src/components/talkx/segments/SegmentSideList.tsx"
-  ],
-  "SegmentSideListProps": [
-   "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/talkx/segments/SegmentSideList.tsx",
-   "src/components/talkx/segments/SegmentSideList.tsx"
-  ],
-  "SendErrorBanner": [
-   "analise-prs/resgate-261118-lote3/claude/feat-message-delivery-post-iniciado-261101-1937/src/components/inbox/chat/SendErrorBanner.tsx",
-   "src/components/inbox/chat/SendErrorBanner.tsx"
-  ],
-  "SendErrorBannerProps": [
-   "analise-prs/resgate-261118-lote3/claude/feat-message-delivery-post-iniciado-261101-1937/src/components/inbox/chat/SendErrorBanner.tsx",
-   "src/components/inbox/chat/SendErrorBanner.tsx"
-  ],
-  "ServiceStatusSheet": [
-   "analise-prs/resgate-261118-lote3/claude/feat-talkx-x048-estados-servico-261101-2100/src/components/talkx/kit/ServiceStatusSheet.tsx",
-   "src/components/talkx/kit/ServiceStatusSheet.tsx"
-  ],
-  "SettingsView": [
-   "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/settings/SettingsView.tsx",
-   "src/components/settings/SettingsView.tsx"
-  ],
-  "Sheet": [
-   "analise-prs/resgate-261118-lote3/claude/busy-cannon-40szm9/src/components/ui/sheet.tsx",
-   "src/components/ui/sheet.tsx"
-  ],
-  "SheetClose": [
-   "analise-prs/resgate-261118-lote3/claude/busy-cannon-40szm9/src/components/ui/sheet.tsx",
-   "src/components/ui/sheet.tsx"
-  ],
-  "SheetContent": [
-   "analise-prs/resgate-261118-lote3/claude/busy-cannon-40szm9/src/components/ui/sheet.tsx",
-   "src/components/ui/sheet.tsx"
-  ],
-  "SheetDescription": [
-   "analise-prs/resgate-261118-lote3/claude/busy-cannon-40szm9/src/components/ui/sheet.tsx",
-   "src/components/ui/sheet.tsx"
-  ],
-  "SheetFooter": [
-   "analise-prs/resgate-261118-lote3/claude/busy-cannon-40szm9/src/components/ui/sheet.tsx",
-   "src/components/ui/sheet.tsx"
-  ],
-  "SheetHeader": [
-   "analise-prs/resgate-261118-lote3/claude/busy-cannon-40szm9/src/components/ui/sheet.tsx",
-   "src/components/ui/sheet.tsx"
-  ],
-  "SheetOverlay": [
-   "analise-prs/resgate-261118-lote3/claude/busy-cannon-40szm9/src/components/ui/sheet.tsx",
-   "src/components/ui/sheet.tsx"
-  ],
-  "SheetPortal": [
-   "analise-prs/resgate-261118-lote3/claude/busy-cannon-40szm9/src/components/ui/sheet.tsx",
-   "src/components/ui/sheet.tsx"
-  ],
-  "SheetTitle": [
-   "analise-prs/resgate-261118-lote3/claude/busy-cannon-40szm9/src/components/ui/sheet.tsx",
-   "src/components/ui/sheet.tsx"
-  ],
-  "SheetTrigger": [
-   "analise-prs/resgate-261118-lote3/claude/busy-cannon-40szm9/src/components/ui/sheet.tsx",
-   "src/components/ui/sheet.tsx"
-  ],
-  "Sidebar": [
-   "analise-prs/resgate-261118-lote3/hermes/robustez-primitivos-ui-2610121626bec5-2610141859e423/src/components/ui/sidebar/sidebar-primitives.tsx",
-   "src/components/layout/Sidebar.tsx"
-  ],
   "SkeletonList": [
    "src/components/ui/skeleton.tsx",
    "src/components/ui/SkeletonList.tsx"
   ],
-  "SkipLink": [
-   "analise-prs/resgate-261118-lote3/hermes/robustez-primitivos-ui-2610121626bec5-2610141859e423/src/components/ui/skip-link.tsx",
-   "src/components/ui/skip-link.tsx"
-  ],
   "SkipLinks": [
-   "analise-prs/resgate-261118-lote3/hermes/robustez-primitivos-ui-2610121626bec5-2610141859e423/src/components/ui/skip-link.tsx",
    "src/components/a11y/a11yComponents.tsx",
    "src/components/ui/skip-link.tsx"
-  ],
-  "SlideOverPanel": [
-   "analise-prs/resgate-261118-lote3/hermes/robustez-primitivos-ui-2610121626bec5-2610141859e423/src/components/mobile/MobileNavigation.tsx",
-   "analise-prs/resgate-261118-lote3/hermes/robustez-primitivos-ui-2610121626bec5-2610141859e423/src/components/mobile/MobileSlidePanel.tsx"
-  ],
-  "SpeedDialFAB": [
-   "analise-prs/resgate-261118-lote3/hermes/robustez-primitivos-ui-2610121626bec5-2610141859e423/src/components/mobile/BottomSheet.tsx",
-   "analise-prs/resgate-261118-lote3/hermes/robustez-primitivos-ui-2610121626bec5-2610141859e423/src/components/mobile/FloatingActionButtons.tsx"
-  ],
-  "SpeedTypingGame": [
-   "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/gamification/MiniGameDialogs.tsx",
-   "src/components/gamification/MiniGameDialogs.tsx"
-  ],
-  "StageCard": [
-   "analise-prs/resgate-261118-lote3/claude/feat-radar-motor-telas-261101-1330/src/components/inbox/copilot/RadarCards.tsx",
-   "analise-prs/resgate-261118-lote3/claude/radar-motor-copilot-live-301030/src/components/inbox/copilot/RadarCards.tsx",
-   "analise-prs/resgate-261118-lote3/resolve-2381-from-main/src/components/inbox/copilot/RadarCards.tsx",
-   "src/components/inbox/copilot/RadarCards.tsx"
   ],
   "StaggerList": [
    "src/components/inbox/chat/motion/StaggerList.tsx",
    "src/components/ui/SkeletonList.tsx"
   ],
-  "StatusChips": [
-   "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/inbox/conversation-list/StatusChips.tsx",
-   "src/components/inbox/conversation-list/StatusChips.tsx"
-  ],
   "StatusPill": [
    "src/components/talkx/kit/primitives.tsx",
    "src/components/tasks/shared/StatusPill.tsx"
   ],
-  "SubTab": [
-   "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/inbox/conversation-list/StatusChips.tsx",
-   "src/components/inbox/conversation-list/StatusChips.tsx"
-  ],
-  "SuggestionsCard": [
-   "analise-prs/resgate-261118-lote3/claude/feat-radar-motor-telas-261101-1330/src/components/inbox/copilot/RadarCards.tsx",
-   "analise-prs/resgate-261118-lote3/claude/radar-motor-copilot-live-301030/src/components/inbox/copilot/RadarCards.tsx",
-   "analise-prs/resgate-261118-lote3/resolve-2381-from-main/src/components/inbox/copilot/RadarCards.tsx",
-   "src/components/inbox/copilot/RadarCards.tsx"
-  ],
-  "Tabs": [
-   "analise-prs/resgate-261118-lote3/claude/feat-ui-visual-texto-longo-261101-1445/src/components/ui/tabs.tsx",
-   "src/components/ui/tabs.tsx"
-  ],
-  "TabsContent": [
-   "analise-prs/resgate-261118-lote3/claude/feat-ui-visual-texto-longo-261101-1445/src/components/ui/tabs.tsx",
-   "src/components/ui/tabs.tsx"
-  ],
-  "TabsList": [
-   "analise-prs/resgate-261118-lote3/claude/feat-ui-visual-texto-longo-261101-1445/src/components/ui/tabs.tsx",
-   "src/components/ui/tabs.tsx"
-  ],
-  "TabsTrigger": [
-   "analise-prs/resgate-261118-lote3/claude/feat-ui-visual-texto-longo-261101-1445/src/components/ui/tabs.tsx",
-   "src/components/ui/tabs.tsx"
-  ],
-  "TalkXCampaignRunning": [
-   "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/talkx/TalkXCampaignRunning.tsx",
-   "src/components/talkx/TalkXCampaignRunning.tsx"
-  ],
-  "TalkXCampaignWizard": [
-   "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/talkx/TalkXCampaignWizard.tsx",
-   "analise-prs/resgate-261118-lote3/codex/publish-followup-20261021/src/components/talkx/TalkXCampaignWizard.tsx",
-   "src/components/talkx/TalkXCampaignWizard.tsx"
-  ],
-  "TalkXConfirmDialog": [
-   "analise-prs/resgate-261118-lote3/claude/busy-cannon-40szm9/src/components/talkx/kit/dialogs.tsx",
-   "src/components/talkx/kit/dialogs.tsx"
-  ],
-  "TalkXDialogShell": [
-   "analise-prs/resgate-261118-lote3/claude/busy-cannon-40szm9/src/components/talkx/kit/dialogs.tsx",
-   "src/components/talkx/kit/dialogs.tsx"
-  ],
   "TalkXNoData": [
    "src/components/talkx/kit/kpi.tsx",
    "src/components/talkx/kit/states.tsx"
-  ],
-  "TalkXOverview": [
-   "analise-prs/resgate-261118-lote3/claude/fix-unit-tests-src-261024-1630/src/components/talkx/TalkXOverview.tsx",
-   "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/talkx/TalkXOverview.tsx",
-   "src/components/talkx/TalkXOverview.tsx"
-  ],
-  "TalkXRecipientsTable": [
-   "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/talkx/tracking/TalkXRecipientsTable.tsx",
-   "src/components/talkx/tracking/TalkXRecipientsTable.tsx"
-  ],
-  "TalkXSegments": [
-   "analise-prs/resgate-261118-lote3/claude/fix-talkx-segmentos-regressao-261101-1944/src/components/talkx/TalkXSegments.tsx",
-   "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/talkx/TalkXSegments.tsx",
-   "src/components/talkx/TalkXSegments.tsx"
-  ],
-  "TalkXTemplateEditor": [
-   "analise-prs/resgate-261118-lote3/claude/fix-unit-tests-src-261024-1630/src/components/talkx/TalkXTemplateEditor.tsx",
-   "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/talkx/TalkXTemplateEditor.tsx",
-   "src/components/talkx/TalkXTemplateEditor.tsx"
-  ],
-  "TalkXTemplates": [
-   "analise-prs/resgate-261118-lote3/claude/fix-codex-findings-161016-1906/src/components/talkx/TalkXTemplates.tsx",
-   "src/components/talkx/TalkXTemplates.tsx"
-  ],
-  "TalkXTone": [
-   "analise-prs/resgate-261118-lote3/claude/busy-cannon-40szm9/src/components/talkx/kit/dialogs.tsx",
-   "src/components/talkx/kit/dialogs.tsx"
-  ],
-  "TalkXTopView": [
-   "analise-prs/resgate-261118-lote3/claude/feat-talkx-x054-cmdk-261108-0100/src/components/talkx/TalkXView.tsx",
-   "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/talkx/TalkXView.tsx",
-   "src/components/talkx/TalkXView.tsx"
-  ],
-  "TalkXView": [
-   "analise-prs/resgate-261118-lote3/claude/feat-talkx-x054-cmdk-261108-0100/src/components/talkx/TalkXView.tsx",
-   "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/talkx/TalkXView.tsx",
-   "src/components/talkx/TalkXView.tsx"
-  ],
-  "TalkXWizardDelivery": [
-   "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/talkx/TalkXWizardDelivery.tsx",
-   "src/components/talkx/TalkXWizardDelivery.tsx"
-  ],
-  "TalkXWizardReview": [
-   "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/talkx/TalkXWizardDelivery.tsx",
-   "src/components/talkx/TalkXWizardDelivery.tsx"
-  ],
-  "TeamChatPanel": [
-   "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/team-chat/TeamChatPanel.tsx",
-   "src/components/team-chat/TeamChatPanel.tsx"
-  ],
-  "TelefoniaView": [
-   "analise-prs/resgate-261118-lote3/hermes/telefonia-fase8-motion-a11y-responsivo-2610031530007c/src/components/calls/TelefoniaView.tsx",
-   "src/components/calls/TelefoniaView.tsx"
-  ],
-  "TemplateListItem": [
-   "analise-prs/resgate-261118-lote3/claude/fix-codex-findings-161016-1906/src/components/talkx/TalkXTemplates.tsx",
-   "src/components/talkx/TalkXTemplates.tsx"
   ],
   "TemplatePreview": [
    "src/components/inbox/templates/TemplateEditorDialog.tsx",
@@ -714,64 +153,25 @@
    "src/components/ui/sonner.tsx",
    "src/components/ui/toaster.tsx"
   ],
-  "TouchRipple": [
-   "analise-prs/resgate-261118-lote3/hermes/robustez-primitivos-ui-2610121626bec5-2610141859e423/src/components/mobile/SwipeGestures.tsx",
-   "analise-prs/resgate-261118-lote3/hermes/robustez-primitivos-ui-2610121626bec5-2610141859e423/src/components/mobile/TouchRipple.tsx"
-  ],
   "TranscriptionsEmptyState": [
    "src/components/ui/empty-states.tsx",
    "src/components/ui/empty-states/ConvenienceExports.tsx"
   ],
   "TrendIndicator": [
-   "analise-prs/resgate-261118-lote3/hermes/robustez-primitivos-ui-2610121626bec5-2610141859e423/src/components/dashboard/TrendIndicator.tsx",
    "src/components/dashboard/metrics/TrendIndicator.tsx",
    "src/components/dashboard/SentimentHelpers.tsx"
-  ],
-  "UnconfirmedMessagesPanel": [
-   "analise-prs/resgate-261118-lote3/claude/feat-message-delivery-post-iniciado-261101-1937/src/components/inbox/chat/UnconfirmedMessagesPanel.tsx",
-   "src/components/inbox/chat/UnconfirmedMessagesPanel.tsx"
-  ],
-  "UnconfirmedMessagesPanelProps": [
-   "analise-prs/resgate-261118-lote3/claude/feat-message-delivery-post-iniciado-261101-1937/src/components/inbox/chat/UnconfirmedMessagesPanel.tsx",
-   "src/components/inbox/chat/UnconfirmedMessagesPanel.tsx"
   ],
   "VariableInserter": [
    "src/components/inbox/templates/TemplateEditorDialog.tsx",
    "src/components/inbox/TemplatesWithVariables.tsx"
   ],
   "ViewersIndicator": [
-   "analise-prs/resgate-261118-lote3/fix/ci-verde-261021/src/components/inbox/RealtimeCollaboration.tsx",
    "src/components/inbox/collaboration/ViewersIndicator.tsx",
    "src/components/inbox/RealtimeCollaboration.tsx"
-  ],
-  "VirtualizedRealtimeList": [
-   "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/inbox/VirtualizedRealtimeList.tsx",
-   "src/components/inbox/VirtualizedRealtimeList.tsx"
-  ],
-  "VoiceChangerPicker": [
-   "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/inbox/VoiceChangerPicker.tsx",
-   "src/components/inbox/VoiceChangerPicker.tsx"
   ],
   "VoiceDictationButton": [
    "src/components/copilot/VoiceDictation.tsx",
    "src/components/mobile/VoiceDictationButton.tsx"
-  ],
-  "VoiceSelector": [
-   "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/inbox/VoiceSelector.tsx",
-   "src/components/inbox/VoiceSelector.tsx"
-  ],
-  "WhatsAppTemplatesManager": [
-   "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/catalog/WhatsAppTemplatesManager.tsx",
-   "src/components/catalog/WhatsAppTemplatesManager.tsx"
-  ],
-  "WhisperMode": [
-   "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/inbox/WhisperMode.tsx",
-   "src/components/inbox/WhisperMode.tsx"
-  ],
-  "WizardState": [
-   "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/talkx/TalkXCampaignWizard.tsx",
-   "analise-prs/resgate-261118-lote3/codex/publish-followup-20261021/src/components/talkx/TalkXCampaignWizard.tsx",
-   "src/components/talkx/TalkXCampaignWizard.tsx"
   ]
  },
  "componentes": [
@@ -791,2315 +191,6 @@
    "edges": [],
    "usado_por": 0,
    "orfao": true
-  },
-  {
-   "arquivo": "analise-prs/resgate-261118-lote3/claude_05/festive-carson-ub43wu/src/components/ui/command-palette.tsx",
-   "exports": [
-    "CommandPalette"
-   ],
-   "export_default": null,
-   "linhas": 306,
-   "dominio": null,
-   "hooks_locais": [
-    "useCommandPalette",
-    "useDebounce"
-   ],
-   "tabelas": [],
-   "edges": [],
-   "usado_por": 0,
-   "orfao": true
-  },
-  {
-   "arquivo": "analise-prs/resgate-261118-lote3/claude_05/festive-carson-ub43wu/src/hooks/auth/useAuth.tsx",
-   "exports": [
-    "AuthProvider"
-   ],
-   "export_default": null,
-   "linhas": 255,
-   "dominio": null,
-   "hooks_locais": [
-    "useAuth"
-   ],
-   "tabelas": [],
-   "edges": [],
-   "usado_por": 0,
-   "orfao": true
-  },
-  {
-   "arquivo": "analise-prs/resgate-261118-lote3/claude_05/serene-feynman-3uuurw/src/components/admin/SearchInsightsView.tsx",
-   "exports": [
-    "SearchInsightsView"
-   ],
-   "export_default": "SearchInsightsView",
-   "linhas": 247,
-   "dominio": null,
-   "hooks_locais": [
-    "useSearchInsights"
-   ],
-   "tabelas": [],
-   "edges": [],
-   "usado_por": 0,
-   "orfao": true
-  },
-  {
-   "arquivo": "analise-prs/resgate-261118-lote3/claude_pink/cool-dijkstra-xk9ek2/src/components/inbox/chat/ChatMessagesArea.tsx",
-   "exports": [
-    "ChatMessagesArea",
-    "ChatMessagesAreaRef"
-   ],
-   "export_default": null,
-   "linhas": 516,
-   "dominio": null,
-   "hooks_locais": [
-    "useReducedMotion"
-   ],
-   "tabelas": [],
-   "edges": [],
-   "usado_por": 0,
-   "orfao": true
-  },
-  {
-   "arquivo": "analise-prs/resgate-261118-lote3/claude/busy-cannon-40szm9/src/components/contacts/ContactPurchaseHistory.tsx",
-   "exports": [
-    "ContactPurchaseHistory"
-   ],
-   "export_default": null,
-   "linhas": 168,
-   "dominio": null,
-   "hooks_locais": [],
-   "tabelas": [
-    "contact_purchases"
-   ],
-   "edges": [],
-   "usado_por": 0,
-   "orfao": true
-  },
-  {
-   "arquivo": "analise-prs/resgate-261118-lote3/claude/busy-cannon-40szm9/src/components/inbox/ContactPurchasesPanel.tsx",
-   "exports": [
-    "ContactPurchasesPanel"
-   ],
-   "export_default": null,
-   "linhas": 218,
-   "dominio": null,
-   "hooks_locais": [
-    "useContactPurchases"
-   ],
-   "tabelas": [
-    "contact_purchases"
-   ],
-   "edges": [],
-   "usado_por": 0,
-   "orfao": true
-  },
-  {
-   "arquivo": "analise-prs/resgate-261118-lote3/claude/busy-cannon-40szm9/src/components/talkx/kit/dialogs.tsx",
-   "exports": [
-    "ConfirmCheck",
-    "ConfirmDetail",
-    "ConfirmReasonField",
-    "TalkXConfirmDialog",
-    "TalkXDialogShell",
-    "TalkXTone"
-   ],
-   "export_default": null,
-   "linhas": 242,
-   "dominio": null,
-   "hooks_locais": [
-    "useReducedMotion"
-   ],
-   "tabelas": [],
-   "edges": [],
-   "usado_por": 0,
-   "orfao": true
-  },
-  {
-   "arquivo": "analise-prs/resgate-261118-lote3/claude/busy-cannon-40szm9/src/components/ui/dialog.tsx",
-   "exports": [
-    "Dialog",
-    "DialogClose",
-    "DialogContent",
-    "DialogDescription",
-    "DialogFooter",
-    "DialogHeader",
-    "DialogOverlay",
-    "DialogPortal",
-    "DialogTitle",
-    "DialogTrigger"
-   ],
-   "export_default": null,
-   "linhas": 133,
-   "dominio": null,
-   "hooks_locais": [],
-   "tabelas": [],
-   "edges": [],
-   "usado_por": 0,
-   "orfao": true
-  },
-  {
-   "arquivo": "analise-prs/resgate-261118-lote3/claude/busy-cannon-40szm9/src/components/ui/sheet.tsx",
-   "exports": [
-    "Sheet",
-    "SheetClose",
-    "SheetContent",
-    "SheetDescription",
-    "SheetFooter",
-    "SheetHeader",
-    "SheetOverlay",
-    "SheetPortal",
-    "SheetTitle",
-    "SheetTrigger"
-   ],
-   "export_default": null,
-   "linhas": 108,
-   "dominio": null,
-   "hooks_locais": [],
-   "tabelas": [],
-   "edges": [],
-   "usado_por": 0,
-   "orfao": true
-  },
-  {
-   "arquivo": "analise-prs/resgate-261118-lote3/claude/feat-message-delivery-post-iniciado-261101-1937/src/components/inbox/chat/SendErrorBanner.tsx",
-   "exports": [
-    "SendErrorBanner",
-    "SendErrorBannerProps"
-   ],
-   "export_default": null,
-   "linhas": 228,
-   "dominio": null,
-   "hooks_locais": [
-    "useReducedMotion"
-   ],
-   "tabelas": [],
-   "edges": [],
-   "usado_por": 0,
-   "orfao": true
-  },
-  {
-   "arquivo": "analise-prs/resgate-261118-lote3/claude/feat-message-delivery-post-iniciado-261101-1937/src/components/inbox/chat/UnconfirmedMessagesPanel.tsx",
-   "exports": [
-    "UnconfirmedMessagesPanel",
-    "UnconfirmedMessagesPanelProps"
-   ],
-   "export_default": null,
-   "linhas": 127,
-   "dominio": null,
-   "hooks_locais": [
-    "useReducedMotion",
-    "useUnconfirmedMessages",
-    "useUserRole"
-   ],
-   "tabelas": [],
-   "edges": [],
-   "usado_por": 0,
-   "orfao": true
-  },
-  {
-   "arquivo": "analise-prs/resgate-261118-lote3/claude/feat-pausa-entrega-campanhas-261101-1400/src/components/multiplix/MultiplixMonitor.tsx",
-   "exports": [
-    "MultiplixMonitor"
-   ],
-   "export_default": null,
-   "linhas": 565,
-   "dominio": null,
-   "hooks_locais": [
-    "useConfirmMultiplixDispatch",
-    "useMultiplixDispatch",
-    "useMultiplixDispatchAction",
-    "useMultiplixEstimate",
-    "useMultiplixRecipients",
-    "useMultiplixReplies"
-   ],
-   "tabelas": [],
-   "edges": [],
-   "usado_por": 0,
-   "orfao": true
-  },
-  {
-   "arquivo": "analise-prs/resgate-261118-lote3/claude/feat-radar-motor-telas-261101-1330/src/components/inbox/chat/ChatInputArea.tsx",
-   "exports": [
-    "ChatInputArea"
-   ],
-   "export_default": null,
-   "linhas": 352,
-   "dominio": null,
-   "hooks_locais": [
-    "useChatInputLogic",
-    "useMentions"
-   ],
-   "tabelas": [],
-   "edges": [],
-   "usado_por": 0,
-   "orfao": true
-  },
-  {
-   "arquivo": "analise-prs/resgate-261118-lote3/claude/feat-radar-motor-telas-261101-1330/src/components/inbox/copilot/RadarCards.tsx",
-   "exports": [
-    "AlertsCard",
-    "BrindeCard",
-    "DecisionMakerCard",
-    "NextStepCard",
-    "ProductsCard",
-    "StageCard",
-    "SuggestionsCard"
-   ],
-   "export_default": null,
-   "linhas": 265,
-   "dominio": null,
-   "hooks_locais": [],
-   "tabelas": [],
-   "edges": [],
-   "usado_por": 0,
-   "orfao": true
-  },
-  {
-   "arquivo": "analise-prs/resgate-261118-lote3/claude/feat-radar-motor-telas-261101-1330/src/components/inbox/copilot/RadarLive.tsx",
-   "exports": [
-    "RadarLive",
-    "RadarLiveProps"
-   ],
-   "export_default": "RadarLive",
-   "linhas": 62,
-   "dominio": null,
-   "hooks_locais": [
-    "useAuth",
-    "useCopilotSession",
-    "useLiveSuggestions",
-    "useRadarPanel"
-   ],
-   "tabelas": [],
-   "edges": [],
-   "usado_por": 0,
-   "orfao": true
-  },
-  {
-   "arquivo": "analise-prs/resgate-261118-lote3/claude/feat-talkx-x048-estados-servico-261101-2100/src/components/talkx/kit/ServiceStatusSheet.tsx",
-   "exports": [
-    "ServiceStatusSheet"
-   ],
-   "export_default": null,
-   "linhas": 98,
-   "dominio": null,
-   "hooks_locais": [],
-   "tabelas": [],
-   "edges": [],
-   "usado_por": 0,
-   "orfao": true
-  },
-  {
-   "arquivo": "analise-prs/resgate-261118-lote3/claude/feat-talkx-x054-cmdk-261108-0100/src/components/keyboard/CommandPaletteHost.tsx",
-   "exports": [
-    "CommandPaletteHost"
-   ],
-   "export_default": null,
-   "linhas": 34,
-   "dominio": null,
-   "hooks_locais": [
-    "useCatalogQuickSearch",
-    "useModuleCommandItems",
-    "useTalkXCommandItems"
-   ],
-   "tabelas": [],
-   "edges": [],
-   "usado_por": 0,
-   "orfao": true
-  },
-  {
-   "arquivo": "analise-prs/resgate-261118-lote3/claude/feat-talkx-x054-cmdk-261108-0100/src/components/talkx/TalkXView.tsx",
-   "exports": [
-    "TalkXTopView",
-    "TalkXView"
-   ],
-   "export_default": "TalkXView",
-   "linhas": 639,
-   "dominio": null,
-   "hooks_locais": [
-    "useGlobalKeyboard",
-    "useTalkX",
-    "useTalkXSegments",
-    "useTalkXServiceStatus",
-    "useTalkXTemplates",
-    "useTeamProfiles"
-   ],
-   "tabelas": [],
-   "edges": [],
-   "usado_por": 0,
-   "orfao": true
-  },
-  {
-   "arquivo": "analise-prs/resgate-261118-lote3/claude/feat-ui-visual-texto-longo-261101-1445/src/components/ui/badge.tsx",
-   "exports": [
-    "Badge",
-    "BadgeProps"
-   ],
-   "export_default": null,
-   "linhas": 43,
-   "dominio": null,
-   "hooks_locais": [],
-   "tabelas": [],
-   "edges": [],
-   "usado_por": 0,
-   "orfao": true
-  },
-  {
-   "arquivo": "analise-prs/resgate-261118-lote3/claude/feat-ui-visual-texto-longo-261101-1445/src/components/ui/tabs.tsx",
-   "exports": [
-    "Tabs",
-    "TabsContent",
-    "TabsList",
-    "TabsTrigger"
-   ],
-   "export_default": null,
-   "linhas": 59,
-   "dominio": null,
-   "hooks_locais": [],
-   "tabelas": [],
-   "edges": [],
-   "usado_por": 0,
-   "orfao": true
-  },
-  {
-   "arquivo": "analise-prs/resgate-261118-lote3/claude/fix-codex-findings-161016-1906/src/components/inbox/chat/ChatMessagesArea.tsx",
-   "exports": [
-    "ChatMessagesArea",
-    "ChatMessagesAreaRef"
-   ],
-   "export_default": null,
-   "linhas": 499,
-   "dominio": null,
-   "hooks_locais": [
-    "useReducedMotion"
-   ],
-   "tabelas": [],
-   "edges": [],
-   "usado_por": 0,
-   "orfao": true
-  },
-  {
-   "arquivo": "analise-prs/resgate-261118-lote3/claude/fix-codex-findings-161016-1906/src/components/talkx/TalkXTemplates.tsx",
-   "exports": [
-    "TalkXTemplates",
-    "TemplateListItem"
-   ],
-   "export_default": null,
-   "linhas": 566,
-   "dominio": null,
-   "hooks_locais": [
-    "useTalkXFilterState",
-    "useTalkXTemplateLibraryStats",
-    "useTalkXTemplates"
-   ],
-   "tabelas": [],
-   "edges": [],
-   "usado_por": 0,
-   "orfao": true
-  },
-  {
-   "arquivo": "analise-prs/resgate-261118-lote3/claude/fix-radar-fase6-cv056-shortcuts-261108-2335/src/components/inbox/ChatPanel.tsx",
-   "exports": [
-    "ChatPanel"
-   ],
-   "export_default": null,
-   "linhas": 539,
-   "dominio": null,
-   "hooks_locais": [
-    "useAmbientColor",
-    "useChatMediaSending",
-    "useChatMessageNavigation",
-    "useChatPanelHandlers",
-    "useEvolutionApi",
-    "useMessageSignature",
-    "useQuickReplies",
-    "useScheduledMessages",
-    "useTextToSpeech",
-    "useTypingPresence",
-    "useUserSettings"
-   ],
-   "tabelas": [
-    "profiles"
-   ],
-   "edges": [],
-   "usado_por": 0,
-   "orfao": true
-  },
-  {
-   "arquivo": "analise-prs/resgate-261118-lote3/claude/fix-talkx-segmentos-regressao-261101-1944/src/components/talkx/TalkXSegments.tsx",
-   "exports": [
-    "TalkXSegments"
-   ],
-   "export_default": null,
-   "linhas": 887,
-   "dominio": null,
-   "hooks_locais": [
-    "useAudienceEstimate",
-    "useTalkXSegments"
-   ],
-   "tabelas": [],
-   "edges": [],
-   "usado_por": 0,
-   "orfao": true
-  },
-  {
-   "arquivo": "analise-prs/resgate-261118-lote3/claude/fix-unit-tests-src-261024-1630/src/components/admin/AdminView.tsx",
-   "exports": [
-    "AdminView"
-   ],
-   "export_default": null,
-   "linhas": 505,
-   "dominio": null,
-   "hooks_locais": [
-    "useAdminData",
-    "useUserRole"
-   ],
-   "tabelas": [],
-   "edges": [],
-   "usado_por": 0,
-   "orfao": true
-  },
-  {
-   "arquivo": "analise-prs/resgate-261118-lote3/claude/fix-unit-tests-src-261024-1630/src/components/admin/MediaMigrationTool.tsx",
-   "exports": [
-    "MediaMigrationTool"
-   ],
-   "export_default": null,
-   "linhas": 256,
-   "dominio": null,
-   "hooks_locais": [],
-   "tabelas": [
-    "audit_logs",
-    "messages",
-    "profiles"
-   ],
-   "edges": [],
-   "usado_por": 0,
-   "orfao": true
-  },
-  {
-   "arquivo": "analise-prs/resgate-261118-lote3/claude/fix-unit-tests-src-261024-1630/src/components/talkx/TalkXOverview.tsx",
-   "exports": [
-    "TalkXOverview"
-   ],
-   "export_default": null,
-   "linhas": 474,
-   "dominio": null,
-   "hooks_locais": [
-    "useCampaignRowActions",
-    "useTalkXInsights",
-    "useTalkXLifecycle",
-    "useTalkXOverviewStats"
-   ],
-   "tabelas": [],
-   "edges": [],
-   "usado_por": 0,
-   "orfao": true
-  },
-  {
-   "arquivo": "analise-prs/resgate-261118-lote3/claude/fix-unit-tests-src-261024-1630/src/components/talkx/TalkXTemplateEditor.tsx",
-   "exports": [
-    "TalkXTemplateEditor"
-   ],
-   "export_default": null,
-   "linhas": 800,
-   "dominio": null,
-   "hooks_locais": [
-    "useTalkX",
-    "useTalkXConfirm",
-    "useTalkXTemplateLibraryStats",
-    "useTalkXTemplateStats",
-    "useTalkXTemplates"
-   ],
-   "tabelas": [],
-   "edges": [],
-   "usado_por": 0,
-   "orfao": true
-  },
-  {
-   "arquivo": "analise-prs/resgate-261118-lote3/claude/fix-unit-tests-src-261024-1630/src/hooks/auth/useAuth.tsx",
-   "exports": [
-    "AuthProvider"
-   ],
-   "export_default": null,
-   "linhas": 256,
-   "dominio": null,
-   "hooks_locais": [
-    "useAuth"
-   ],
-   "tabelas": [],
-   "edges": [],
-   "usado_por": 0,
-   "orfao": true
-  },
-  {
-   "arquivo": "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/admin/MediaMigrationTool.tsx",
-   "exports": [
-    "MediaMigrationTool"
-   ],
-   "export_default": null,
-   "linhas": 388,
-   "dominio": null,
-   "hooks_locais": [],
-   "tabelas": [
-    "audit_logs",
-    "messages",
-    "profiles"
-   ],
-   "edges": [],
-   "usado_por": 0,
-   "orfao": true
-  },
-  {
-   "arquivo": "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/catalog/WhatsAppTemplatesManager.tsx",
-   "exports": [
-    "WhatsAppTemplatesManager"
-   ],
-   "export_default": null,
-   "linhas": 254,
-   "dominio": null,
-   "hooks_locais": [
-    "useReducedMotion",
-    "useUserRole",
-    "useWhatsAppTemplates"
-   ],
-   "tabelas": [],
-   "edges": [],
-   "usado_por": 0,
-   "orfao": true
-  },
-  {
-   "arquivo": "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/gamification/MiniGameDialogs.tsx",
-   "exports": [
-    "EmojiDecodeGame",
-    "QuizGame",
-    "SpeedTypingGame"
-   ],
-   "export_default": null,
-   "linhas": 183,
-   "dominio": null,
-   "hooks_locais": [],
-   "tabelas": [],
-   "edges": [],
-   "usado_por": 0,
-   "orfao": true
-  },
-  {
-   "arquivo": "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/inbox/conversation-list/StatusChips.tsx",
-   "exports": [
-    "ChipTab",
-    "MainTab",
-    "StatusChips",
-    "SubTab"
-   ],
-   "export_default": null,
-   "linhas": 106,
-   "dominio": null,
-   "hooks_locais": [
-    "useAuth"
-   ],
-   "tabelas": [],
-   "edges": [],
-   "usado_por": 0,
-   "orfao": true
-  },
-  {
-   "arquivo": "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/inbox/CRMAutoSync.tsx",
-   "exports": [
-    "CRMAutoSync",
-    "CRMSyncButton"
-   ],
-   "export_default": null,
-   "linhas": 180,
-   "dominio": null,
-   "hooks_locais": [
-    "useSyncToCRM"
-   ],
-   "tabelas": [],
-   "edges": [],
-   "usado_por": 0,
-   "orfao": true
-  },
-  {
-   "arquivo": "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/inbox/InboxEmptyChat.tsx",
-   "exports": [
-    "InboxEmptyChat",
-    "InboxEmptyChatProps"
-   ],
-   "export_default": null,
-   "linhas": 170,
-   "dominio": null,
-   "hooks_locais": [
-    "useCustomShortcuts",
-    "useReducedMotion"
-   ],
-   "tabelas": [],
-   "edges": [],
-   "usado_por": 1,
-   "orfao": false
-  },
-  {
-   "arquivo": "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/inbox/MessageReactions.tsx",
-   "exports": [
-    "MessageReactions",
-    "QuickReactionBar"
-   ],
-   "export_default": null,
-   "linhas": 366,
-   "dominio": null,
-   "hooks_locais": [
-    "useMessageReactions"
-   ],
-   "tabelas": [],
-   "edges": [],
-   "usado_por": 0,
-   "orfao": true
-  },
-  {
-   "arquivo": "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/inbox/quick-replies/QuickReplyCardList.tsx",
-   "exports": [
-    "QuickReplyCardList"
-   ],
-   "export_default": null,
-   "linhas": 144,
-   "dominio": null,
-   "hooks_locais": [],
-   "tabelas": [],
-   "edges": [],
-   "usado_por": 0,
-   "orfao": true
-  },
-  {
-   "arquivo": "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/inbox/RealtimeInboxView.tsx",
-   "exports": [
-    "RealtimeInboxView"
-   ],
-   "export_default": null,
-   "linhas": 580,
-   "dominio": null,
-   "hooks_locais": [
-    "useContactCrm360",
-    "useContactUnreadEmails",
-    "useConversationActions",
-    "useConversationTabCounts",
-    "useFeatureFlag",
-    "useGlobalSearchShortcut",
-    "useInboxBulkActions",
-    "useInboxFilters",
-    "useIsMobile",
-    "usePullToRefresh",
-    "useRealtimeInbox",
-    "useTalkMeQueue"
-   ],
-   "tabelas": [],
-   "edges": [],
-   "usado_por": 0,
-   "orfao": true
-  },
-  {
-   "arquivo": "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/inbox/VirtualizedRealtimeList.tsx",
-   "exports": [
-    "VirtualizedRealtimeList"
-   ],
-   "export_default": null,
-   "linhas": 778,
-   "dominio": null,
-   "hooks_locais": [
-    "useAgentsLite",
-    "useApplicableSLA",
-    "useAuth",
-    "useDensity"
-   ],
-   "tabelas": [],
-   "edges": [],
-   "usado_por": 0,
-   "orfao": true
-  },
-  {
-   "arquivo": "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/inbox/VoiceChangerPicker.tsx",
-   "exports": [
-    "VoiceChangerPicker"
-   ],
-   "export_default": null,
-   "linhas": 545,
-   "dominio": null,
-   "hooks_locais": [
-    "useReducedMotion"
-   ],
-   "tabelas": [],
-   "edges": [
-    "voice-changer"
-   ],
-   "usado_por": 0,
-   "orfao": true
-  },
-  {
-   "arquivo": "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/inbox/VoiceSelector.tsx",
-   "exports": [
-    "ELEVENLABS_VOICES",
-    "ElevenLabsVoice",
-    "VoiceSelector"
-   ],
-   "export_default": null,
-   "linhas": 275,
-   "dominio": null,
-   "hooks_locais": [],
-   "tabelas": [],
-   "edges": [
-    "elevenlabs-tts"
-   ],
-   "usado_por": 0,
-   "orfao": true
-  },
-  {
-   "arquivo": "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/inbox/WhisperMode.tsx",
-   "exports": [
-    "WhisperMode"
-   ],
-   "export_default": null,
-   "linhas": 787,
-   "dominio": null,
-   "hooks_locais": [
-    "useAgents",
-    "useAudioRecorder",
-    "useAuth",
-    "useMediaElementVolume",
-    "useReducedMotion",
-    "useWhisperCount"
-   ],
-   "tabelas": [
-    "profiles",
-    "whisper_messages"
-   ],
-   "edges": [],
-   "usado_por": 0,
-   "orfao": true
-  },
-  {
-   "arquivo": "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/security/AuditLogDashboard.tsx",
-   "exports": [
-    "AuditLogDashboard",
-    "ENTITY_TYPES_BY_FILTER",
-    "ROLE_ACTION_PREFIX",
-    "ROLE_FILTER_VALUE"
-   ],
-   "export_default": null,
-   "linhas": 283,
-   "dominio": null,
-   "hooks_locais": [
-    "useAuditLogDashboard"
-   ],
-   "tabelas": [],
-   "edges": [],
-   "usado_por": 0,
-   "orfao": true
-  },
-  {
-   "arquivo": "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/settings/SettingsView.tsx",
-   "exports": [
-    "SettingsView"
-   ],
-   "export_default": null,
-   "linhas": 298,
-   "dominio": null,
-   "hooks_locais": [
-    "useOnboarding",
-    "useUserRole",
-    "useUserSettings"
-   ],
-   "tabelas": [],
-   "edges": [],
-   "usado_por": 0,
-   "orfao": true
-  },
-  {
-   "arquivo": "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/talkx/segments/SegmentSideList.tsx",
-   "exports": [
-    "SegmentLike",
-    "SegmentSideList",
-    "SegmentSideListProps"
-   ],
-   "export_default": null,
-   "linhas": 321,
-   "dominio": null,
-   "hooks_locais": [
-    "useAuth"
-   ],
-   "tabelas": [],
-   "edges": [],
-   "usado_por": 1,
-   "orfao": false
-  },
-  {
-   "arquivo": "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/talkx/TalkXCampaignRunning.tsx",
-   "exports": [
-    "TalkXCampaignRunning"
-   ],
-   "export_default": null,
-   "linhas": 1030,
-   "dominio": null,
-   "hooks_locais": [
-    "useTalkX",
-    "useTalkXResumeChecklist"
-   ],
-   "tabelas": [],
-   "edges": [],
-   "usado_por": 1,
-   "orfao": false
-  },
-  {
-   "arquivo": "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/talkx/TalkXCampaignWizard.tsx",
-   "exports": [
-    "TalkXCampaignWizard",
-    "WizardState"
-   ],
-   "export_default": null,
-   "linhas": 754,
-   "dominio": null,
-   "hooks_locais": [
-    "useAudienceEstimate",
-    "useCRMAdminAccess",
-    "useCampaignEditor",
-    "useContactCustomFields",
-    "useTalkXLinks"
-   ],
-   "tabelas": [],
-   "edges": [],
-   "usado_por": 2,
-   "orfao": false
-  },
-  {
-   "arquivo": "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/talkx/TalkXOverview.tsx",
-   "exports": [
-    "TalkXOverview"
-   ],
-   "export_default": null,
-   "linhas": 503,
-   "dominio": null,
-   "hooks_locais": [
-    "useCampaignRowActions",
-    "useTalkXInsights",
-    "useTalkXLifecycle",
-    "useTalkXOverviewStats"
-   ],
-   "tabelas": [],
-   "edges": [],
-   "usado_por": 1,
-   "orfao": false
-  },
-  {
-   "arquivo": "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/talkx/TalkXSegments.tsx",
-   "exports": [
-    "TalkXSegments"
-   ],
-   "export_default": null,
-   "linhas": 834,
-   "dominio": null,
-   "hooks_locais": [
-    "useAudienceEstimate",
-    "useTalkXSegments"
-   ],
-   "tabelas": [],
-   "edges": [],
-   "usado_por": 1,
-   "orfao": false
-  },
-  {
-   "arquivo": "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/talkx/TalkXTemplateEditor.tsx",
-   "exports": [
-    "TalkXTemplateEditor"
-   ],
-   "export_default": null,
-   "linhas": 830,
-   "dominio": null,
-   "hooks_locais": [
-    "useTalkX",
-    "useTalkXConfirm",
-    "useTalkXTemplateLibraryStats",
-    "useTalkXTemplateStats",
-    "useTalkXTemplates"
-   ],
-   "tabelas": [],
-   "edges": [],
-   "usado_por": 0,
-   "orfao": true
-  },
-  {
-   "arquivo": "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/talkx/TalkXView.tsx",
-   "exports": [
-    "TalkXTopView",
-    "TalkXView"
-   ],
-   "export_default": "TalkXView",
-   "linhas": 638,
-   "dominio": null,
-   "hooks_locais": [
-    "useTalkX",
-    "useTalkXSegments",
-    "useTalkXServiceStatus",
-    "useTalkXTemplates",
-    "useTeamProfiles"
-   ],
-   "tabelas": [],
-   "edges": [],
-   "usado_por": 0,
-   "orfao": true
-  },
-  {
-   "arquivo": "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/talkx/TalkXWizardDelivery.tsx",
-   "exports": [
-    "TalkXWizardDelivery",
-    "TalkXWizardReview"
-   ],
-   "export_default": null,
-   "linhas": 419,
-   "dominio": null,
-   "hooks_locais": [
-    "useContactCustomFields",
-    "useTalkXInsights",
-    "useTalkXLifecycle"
-   ],
-   "tabelas": [],
-   "edges": [],
-   "usado_por": 1,
-   "orfao": false
-  },
-  {
-   "arquivo": "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/talkx/tracking/TalkXRecipientsTable.tsx",
-   "exports": [
-    "RecipientKpis",
-    "RecipientRow",
-    "RecipientsPage",
-    "TalkXRecipientsTable"
-   ],
-   "export_default": null,
-   "linhas": 251,
-   "dominio": null,
-   "hooks_locais": [],
-   "tabelas": [],
-   "edges": [],
-   "usado_por": 1,
-   "orfao": false
-  },
-  {
-   "arquivo": "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/team-chat/TeamChatPanel.tsx",
-   "exports": [
-    "TeamChatPanel"
-   ],
-   "export_default": null,
-   "linhas": 195,
-   "dominio": null,
-   "hooks_locais": [
-    "useTeamChatPanel"
-   ],
-   "tabelas": [],
-   "edges": [],
-   "usado_por": 0,
-   "orfao": true
-  },
-  {
-   "arquivo": "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/ui/command-palette.tsx",
-   "exports": [
-    "CommandPalette"
-   ],
-   "export_default": null,
-   "linhas": 327,
-   "dominio": null,
-   "hooks_locais": [
-    "useCommandPalette",
-    "useDebounce"
-   ],
-   "tabelas": [],
-   "edges": [],
-   "usado_por": 0,
-   "orfao": true
-  },
-  {
-   "arquivo": "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/ui/phone-input.tsx",
-   "exports": [
-    "PhoneInput"
-   ],
-   "export_default": null,
-   "linhas": 99,
-   "dominio": null,
-   "hooks_locais": [],
-   "tabelas": [],
-   "edges": [],
-   "usado_por": 0,
-   "orfao": true
-  },
-  {
-   "arquivo": "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/hooks/auth/useAuth.tsx",
-   "exports": [
-    "AuthProvider"
-   ],
-   "export_default": null,
-   "linhas": 258,
-   "dominio": null,
-   "hooks_locais": [
-    "useAuth"
-   ],
-   "tabelas": [],
-   "edges": [],
-   "usado_por": 0,
-   "orfao": true
-  },
-  {
-   "arquivo": "analise-prs/resgate-261118-lote3/claude/kind-gates-87mwoe/src/components/knowledge/KnowledgeBaseView.tsx",
-   "exports": [
-    "KnowledgeBaseView"
-   ],
-   "export_default": null,
-   "linhas": 264,
-   "dominio": null,
-   "hooks_locais": [
-    "useKnowledgeBase",
-    "useReducedMotion"
-   ],
-   "tabelas": [],
-   "edges": [],
-   "usado_por": 0,
-   "orfao": true
-  },
-  {
-   "arquivo": "analise-prs/resgate-261118-lote3/claude/magical-pasteur-iz2pgy/src/components/ui/command-palette.tsx",
-   "exports": [
-    "CommandPalette"
-   ],
-   "export_default": null,
-   "linhas": 292,
-   "dominio": null,
-   "hooks_locais": [
-    "useCommandPalette",
-    "useDebounce"
-   ],
-   "tabelas": [],
-   "edges": [],
-   "usado_por": 0,
-   "orfao": true
-  },
-  {
-   "arquivo": "analise-prs/resgate-261118-lote3/claude/magical-pasteur-iz2pgy/src/hooks/auth/useAuth.tsx",
-   "exports": [
-    "AuthProvider"
-   ],
-   "export_default": null,
-   "linhas": 256,
-   "dominio": null,
-   "hooks_locais": [
-    "useAuth"
-   ],
-   "tabelas": [],
-   "edges": [],
-   "usado_por": 0,
-   "orfao": true
-  },
-  {
-   "arquivo": "analise-prs/resgate-261118-lote3/claude/radar-motor-copilot-live-301030/src/components/inbox/chat/ChatInputArea.tsx",
-   "exports": [
-    "ChatInputArea"
-   ],
-   "export_default": null,
-   "linhas": 352,
-   "dominio": null,
-   "hooks_locais": [
-    "useChatInputLogic",
-    "useMentions"
-   ],
-   "tabelas": [],
-   "edges": [],
-   "usado_por": 0,
-   "orfao": true
-  },
-  {
-   "arquivo": "analise-prs/resgate-261118-lote3/claude/radar-motor-copilot-live-301030/src/components/inbox/copilot/RadarCards.tsx",
-   "exports": [
-    "AlertsCard",
-    "BrindeCard",
-    "DecisionMakerCard",
-    "NextStepCard",
-    "ProductsCard",
-    "StageCard",
-    "SuggestionsCard"
-   ],
-   "export_default": null,
-   "linhas": 265,
-   "dominio": null,
-   "hooks_locais": [],
-   "tabelas": [],
-   "edges": [],
-   "usado_por": 1,
-   "orfao": false
-  },
-  {
-   "arquivo": "analise-prs/resgate-261118-lote3/claude/radar-motor-copilot-live-301030/src/components/inbox/copilot/RadarLive.tsx",
-   "exports": [
-    "RadarLive",
-    "RadarLiveProps"
-   ],
-   "export_default": "RadarLive",
-   "linhas": 62,
-   "dominio": null,
-   "hooks_locais": [
-    "useAuth",
-    "useCopilotSession",
-    "useLiveSuggestions",
-    "useRadarPanel"
-   ],
-   "tabelas": [],
-   "edges": [],
-   "usado_por": 0,
-   "orfao": true
-  },
-  {
-   "arquivo": "analise-prs/resgate-261118-lote3/claude/radar-motor-copilot-live-301030/src/components/inbox/copilot/RadarPanel.tsx",
-   "exports": [
-    "RadarPanel",
-    "RadarPanelProps"
-   ],
-   "export_default": null,
-   "linhas": 452,
-   "dominio": null,
-   "hooks_locais": [],
-   "tabelas": [],
-   "edges": [],
-   "usado_por": 1,
-   "orfao": false
-  },
-  {
-   "arquivo": "analise-prs/resgate-261118-lote3/codex/fix-failed-workflows-20261020/src/components/admin/AdminView.tsx",
-   "exports": [
-    "AdminView"
-   ],
-   "export_default": null,
-   "linhas": 496,
-   "dominio": null,
-   "hooks_locais": [
-    "useAdminData",
-    "useUserRole"
-   ],
-   "tabelas": [],
-   "edges": [],
-   "usado_por": 0,
-   "orfao": true
-  },
-  {
-   "arquivo": "analise-prs/resgate-261118-lote3/codex/fix-failed-workflows-20261020/src/components/shared/ConversationEmptyState.tsx",
-   "exports": [
-    "ConversationEmptyState",
-    "ConversationEmptyStateProps"
-   ],
-   "export_default": null,
-   "linhas": 88,
-   "dominio": null,
-   "hooks_locais": [
-    "useReducedMotion"
-   ],
-   "tabelas": [],
-   "edges": [],
-   "usado_por": 0,
-   "orfao": true
-  },
-  {
-   "arquivo": "analise-prs/resgate-261118-lote3/codex/publish-followup-20261021/src/components/admin/SearchInsightsView.tsx",
-   "exports": [
-    "SearchInsightsView"
-   ],
-   "export_default": "SearchInsightsView",
-   "linhas": 216,
-   "dominio": null,
-   "hooks_locais": [
-    "useSearchInsights"
-   ],
-   "tabelas": [],
-   "edges": [],
-   "usado_por": 0,
-   "orfao": true
-  },
-  {
-   "arquivo": "analise-prs/resgate-261118-lote3/codex/publish-followup-20261021/src/components/connections/ConnectionCard.tsx",
-   "exports": [
-    "ConnectionCard"
-   ],
-   "export_default": null,
-   "linhas": 267,
-   "dominio": null,
-   "hooks_locais": [
-    "useUserRole"
-   ],
-   "tabelas": [],
-   "edges": [],
-   "usado_por": 0,
-   "orfao": true
-  },
-  {
-   "arquivo": "analise-prs/resgate-261118-lote3/codex/publish-followup-20261021/src/components/talkx/TalkXCampaignWizard.tsx",
-   "exports": [
-    "TalkXCampaignWizard",
-    "WizardState"
-   ],
-   "export_default": null,
-   "linhas": 768,
-   "dominio": null,
-   "hooks_locais": [
-    "useAudienceEstimate",
-    "useCRMAdminAccess",
-    "useCampaignEditor",
-    "useContactCustomFields",
-    "useTalkXLinks"
-   ],
-   "tabelas": [],
-   "edges": [],
-   "usado_por": 0,
-   "orfao": true
-  },
-  {
-   "arquivo": "analise-prs/resgate-261118-lote3/fix/ci-verde-261021/src/components/inbox/ChatPanel.tsx",
-   "exports": [
-    "ChatPanel"
-   ],
-   "export_default": null,
-   "linhas": 527,
-   "dominio": null,
-   "hooks_locais": [
-    "useAmbientColor",
-    "useChatMediaSending",
-    "useChatMessageNavigation",
-    "useChatPanelHandlers",
-    "useEvolutionApi",
-    "useMessageSignature",
-    "useQuickReplies",
-    "useScheduledMessages",
-    "useTextToSpeech",
-    "useTypingPresence",
-    "useUserSettings"
-   ],
-   "tabelas": [
-    "profiles"
-   ],
-   "edges": [],
-   "usado_por": 0,
-   "orfao": true
-  },
-  {
-   "arquivo": "analise-prs/resgate-261118-lote3/fix/ci-verde-261021/src/components/inbox/RealtimeCollaboration.tsx",
-   "exports": [
-    "HandoffDialog",
-    "InternalNotesPanel",
-    "RealtimeCollaboration",
-    "ViewersIndicator"
-   ],
-   "export_default": null,
-   "linhas": 126,
-   "dominio": null,
-   "hooks_locais": [],
-   "tabelas": [
-    "contact_notes",
-    "contacts",
-    "profiles"
-   ],
-   "edges": [],
-   "usado_por": 0,
-   "orfao": true
-  },
-  {
-   "arquivo": "analise-prs/resgate-261118-lote3/hermes/robustez-primitivos-ui-2610121626bec5-2610141859e423/src/components/BulkActionsBar.tsx",
-   "exports": [
-    "BulkActionsBar"
-   ],
-   "export_default": "BulkActionsBar",
-   "linhas": 131,
-   "dominio": null,
-   "hooks_locais": [],
-   "tabelas": [],
-   "edges": [],
-   "usado_por": 0,
-   "orfao": true
-  },
-  {
-   "arquivo": "analise-prs/resgate-261118-lote3/hermes/robustez-primitivos-ui-2610121626bec5-2610141859e423/src/components/campaigns/CampaignABTesting.tsx",
-   "exports": [
-    "CampaignABTesting"
-   ],
-   "export_default": null,
-   "linhas": 171,
-   "dominio": null,
-   "hooks_locais": [],
-   "tabelas": [
-    "campaign_ab_variants"
-   ],
-   "edges": [],
-   "usado_por": 1,
-   "orfao": false
-  },
-  {
-   "arquivo": "analise-prs/resgate-261118-lote3/hermes/robustez-primitivos-ui-2610121626bec5-2610141859e423/src/components/campaigns/CampaignCreateDialog.tsx",
-   "exports": [
-    "CampaignCreateDialog",
-    "MessageType",
-    "TargetType"
-   ],
-   "export_default": null,
-   "linhas": 212,
-   "dominio": null,
-   "hooks_locais": [],
-   "tabelas": [],
-   "edges": [],
-   "usado_por": 1,
-   "orfao": false
-  },
-  {
-   "arquivo": "analise-prs/resgate-261118-lote3/hermes/robustez-primitivos-ui-2610121626bec5-2610141859e423/src/components/campaigns/CampaignsView.tsx",
-   "exports": [
-    "CampaignsView"
-   ],
-   "export_default": null,
-   "linhas": 262,
-   "dominio": null,
-   "hooks_locais": [
-    "useCampaigns"
-   ],
-   "tabelas": [],
-   "edges": [],
-   "usado_por": 0,
-   "orfao": true
-  },
-  {
-   "arquivo": "analise-prs/resgate-261118-lote3/hermes/robustez-primitivos-ui-2610121626bec5-2610141859e423/src/components/connections/IntegrationsPanel.tsx",
-   "exports": [
-    "IntegrationsPanel"
-   ],
-   "export_default": null,
-   "linhas": 336,
-   "dominio": null,
-   "hooks_locais": [
-    "useEvolutionApi"
-   ],
-   "tabelas": [],
-   "edges": [],
-   "usado_por": 0,
-   "orfao": true
-  },
-  {
-   "arquivo": "analise-prs/resgate-261118-lote3/hermes/robustez-primitivos-ui-2610121626bec5-2610141859e423/src/components/dashboard/MetricComparison.tsx",
-   "exports": [
-    "ComparisonCard",
-    "MetricComparison",
-    "TeamComparison"
-   ],
-   "export_default": null,
-   "linhas": 275,
-   "dominio": null,
-   "hooks_locais": [],
-   "tabelas": [],
-   "edges": [],
-   "usado_por": 0,
-   "orfao": true
-  },
-  {
-   "arquivo": "analise-prs/resgate-261118-lote3/hermes/robustez-primitivos-ui-2610121626bec5-2610141859e423/src/components/dashboard/MiniSparkline.tsx",
-   "exports": [
-    "MiniSparkline"
-   ],
-   "export_default": null,
-   "linhas": 31,
-   "dominio": null,
-   "hooks_locais": [],
-   "tabelas": [],
-   "edges": [],
-   "usado_por": 0,
-   "orfao": true
-  },
-  {
-   "arquivo": "analise-prs/resgate-261118-lote3/hermes/robustez-primitivos-ui-2610121626bec5-2610141859e423/src/components/dashboard/TrendIndicator.tsx",
-   "exports": [
-    "CompactTrendBadge",
-    "TrendData",
-    "TrendIndicator",
-    "TrendSparkline"
-   ],
-   "export_default": null,
-   "linhas": 286,
-   "dominio": null,
-   "hooks_locais": [],
-   "tabelas": [],
-   "edges": [],
-   "usado_por": 0,
-   "orfao": true
-  },
-  {
-   "arquivo": "analise-prs/resgate-261118-lote3/hermes/robustez-primitivos-ui-2610121626bec5-2610141859e423/src/components/gamification/GamificationProvider.tsx",
-   "exports": [
-    "GamificationProvider"
-   ],
-   "export_default": null,
-   "linhas": 223,
-   "dominio": null,
-   "hooks_locais": [
-    "useAgentGamification",
-    "useGamification"
-   ],
-   "tabelas": [],
-   "edges": [],
-   "usado_por": 0,
-   "orfao": true
-  },
-  {
-   "arquivo": "analise-prs/resgate-261118-lote3/hermes/robustez-primitivos-ui-2610121626bec5-2610141859e423/src/components/inbox/chat/ChatHeader.tsx",
-   "exports": [
-    "ChatHeader"
-   ],
-   "export_default": null,
-   "linhas": 214,
-   "dominio": null,
-   "hooks_locais": [
-    "useCRMIntegrationEnabled",
-    "useContactIntelligence",
-    "useExternalContact360"
-   ],
-   "tabelas": [],
-   "edges": [],
-   "usado_por": 0,
-   "orfao": true
-  },
-  {
-   "arquivo": "analise-prs/resgate-261118-lote3/hermes/robustez-primitivos-ui-2610121626bec5-2610141859e423/src/components/inbox/ContactPurchasesPanel.tsx",
-   "exports": [
-    "ContactPurchasesPanel"
-   ],
-   "export_default": null,
-   "linhas": 135,
-   "dominio": null,
-   "hooks_locais": [
-    "useContactPurchases"
-   ],
-   "tabelas": [
-    "contact_purchases"
-   ],
-   "edges": [],
-   "usado_por": 0,
-   "orfao": true
-  },
-  {
-   "arquivo": "analise-prs/resgate-261118-lote3/hermes/robustez-primitivos-ui-2610121626bec5-2610141859e423/src/components/inbox/MessageContextMenu.tsx",
-   "exports": [
-    "MessageContextMenu"
-   ],
-   "export_default": null,
-   "linhas": 240,
-   "dominio": null,
-   "hooks_locais": [],
-   "tabelas": [],
-   "edges": [],
-   "usado_por": 0,
-   "orfao": true
-  },
-  {
-   "arquivo": "analise-prs/resgate-261118-lote3/hermes/robustez-primitivos-ui-2610121626bec5-2610141859e423/src/components/inbox/QueuePositionNotifier.tsx",
-   "exports": [
-    "QueuePositionNotifier"
-   ],
-   "export_default": null,
-   "linhas": 55,
-   "dominio": null,
-   "hooks_locais": [],
-   "tabelas": [
-    "queue_positions",
-    "queues"
-   ],
-   "edges": [],
-   "usado_por": 1,
-   "orfao": false
-  },
-  {
-   "arquivo": "analise-prs/resgate-261118-lote3/hermes/robustez-primitivos-ui-2610121626bec5-2610141859e423/src/components/inbox/SwipeableListItem.tsx",
-   "exports": [
-    "SWIPE_ACTIONS",
-    "SwipeableListItem"
-   ],
-   "export_default": null,
-   "linhas": 145,
-   "dominio": null,
-   "hooks_locais": [],
-   "tabelas": [],
-   "edges": [],
-   "usado_por": 0,
-   "orfao": true
-  },
-  {
-   "arquivo": "analise-prs/resgate-261118-lote3/hermes/robustez-primitivos-ui-2610121626bec5-2610141859e423/src/components/mobile/BottomSheet.tsx",
-   "exports": [
-    "BottomSheet",
-    "FloatingActionButton",
-    "KeyboardAwareContainer",
-    "SpeedDialFAB"
-   ],
-   "export_default": null,
-   "linhas": 77,
-   "dominio": null,
-   "hooks_locais": [],
-   "tabelas": [],
-   "edges": [],
-   "usado_por": 1,
-   "orfao": false
-  },
-  {
-   "arquivo": "analise-prs/resgate-261118-lote3/hermes/robustez-primitivos-ui-2610121626bec5-2610141859e423/src/components/mobile/FloatingActionButtons.tsx",
-   "exports": [
-    "FloatingActionButton",
-    "KeyboardAwareContainer",
-    "SpeedDialFAB"
-   ],
-   "export_default": null,
-   "linhas": 120,
-   "dominio": null,
-   "hooks_locais": [],
-   "tabelas": [],
-   "edges": [],
-   "usado_por": 1,
-   "orfao": false
-  },
-  {
-   "arquivo": "analise-prs/resgate-261118-lote3/hermes/robustez-primitivos-ui-2610121626bec5-2610141859e423/src/components/mobile/InAppNotification.tsx",
-   "exports": [
-    "InAppNotification",
-    "InAppNotificationData"
-   ],
-   "export_default": null,
-   "linhas": 73,
-   "dominio": null,
-   "hooks_locais": [],
-   "tabelas": [],
-   "edges": [],
-   "usado_por": 1,
-   "orfao": false
-  },
-  {
-   "arquivo": "analise-prs/resgate-261118-lote3/hermes/robustez-primitivos-ui-2610121626bec5-2610141859e423/src/components/mobile/InAppNotificationProvider.tsx",
-   "exports": [
-    "InAppNotificationProvider"
-   ],
-   "export_default": null,
-   "linhas": 32,
-   "dominio": null,
-   "hooks_locais": [
-    "useInAppNotification"
-   ],
-   "tabelas": [],
-   "edges": [],
-   "usado_por": 0,
-   "orfao": true
-  },
-  {
-   "arquivo": "analise-prs/resgate-261118-lote3/hermes/robustez-primitivos-ui-2610121626bec5-2610141859e423/src/components/mobile/MobileNavigation.tsx",
-   "exports": [
-    "LongPressMenu",
-    "MobileTabBar",
-    "PinchZoom",
-    "SlideOverPanel"
-   ],
-   "export_default": null,
-   "linhas": 70,
-   "dominio": null,
-   "hooks_locais": [],
-   "tabelas": [],
-   "edges": [],
-   "usado_por": 1,
-   "orfao": false
-  },
-  {
-   "arquivo": "analise-prs/resgate-261118-lote3/hermes/robustez-primitivos-ui-2610121626bec5-2610141859e423/src/components/mobile/MobileSlidePanel.tsx",
-   "exports": [
-    "LongPressMenu",
-    "PinchZoom",
-    "SlideOverPanel"
-   ],
-   "export_default": null,
-   "linhas": 166,
-   "dominio": null,
-   "hooks_locais": [],
-   "tabelas": [],
-   "edges": [],
-   "usado_por": 1,
-   "orfao": false
-  },
-  {
-   "arquivo": "analise-prs/resgate-261118-lote3/hermes/robustez-primitivos-ui-2610121626bec5-2610141859e423/src/components/mobile/SwipeGestures.tsx",
-   "exports": [
-    "PullToRefresh",
-    "SwipeableRow",
-    "TouchRipple"
-   ],
-   "export_default": null,
-   "linhas": 145,
-   "dominio": null,
-   "hooks_locais": [],
-   "tabelas": [],
-   "edges": [],
-   "usado_por": 5,
-   "orfao": false
-  },
-  {
-   "arquivo": "analise-prs/resgate-261118-lote3/hermes/robustez-primitivos-ui-2610121626bec5-2610141859e423/src/components/mobile/TouchRipple.tsx",
-   "exports": [
-    "TouchRipple"
-   ],
-   "export_default": null,
-   "linhas": 73,
-   "dominio": null,
-   "hooks_locais": [],
-   "tabelas": [],
-   "edges": [],
-   "usado_por": 1,
-   "orfao": false
-  },
-  {
-   "arquivo": "analise-prs/resgate-261118-lote3/hermes/robustez-primitivos-ui-2610121626bec5-2610141859e423/src/components/multiplix/MultiplixComposerDialog.tsx",
-   "exports": [
-    "MultiplixComposerDialog"
-   ],
-   "export_default": null,
-   "linhas": 221,
-   "dominio": null,
-   "hooks_locais": [
-    "useCreateMultiplixDispatch"
-   ],
-   "tabelas": [],
-   "edges": [],
-   "usado_por": 0,
-   "orfao": true
-  },
-  {
-   "arquivo": "analise-prs/resgate-261118-lote3/hermes/robustez-primitivos-ui-2610121626bec5-2610141859e423/src/components/reports/AutoExportManager.tsx",
-   "exports": [
-    "AutoExportManager"
-   ],
-   "export_default": null,
-   "linhas": 33,
-   "dominio": null,
-   "hooks_locais": [],
-   "tabelas": [],
-   "edges": [],
-   "usado_por": 0,
-   "orfao": true
-  },
-  {
-   "arquivo": "analise-prs/resgate-261118-lote3/hermes/robustez-primitivos-ui-2610121626bec5-2610141859e423/src/components/settings/AIAutoTagsConfig.tsx",
-   "exports": [
-    "AIAutoTagsConfig"
-   ],
-   "export_default": null,
-   "linhas": 195,
-   "dominio": null,
-   "hooks_locais": [],
-   "tabelas": [
-    "ai_conversation_tags",
-    "contacts"
-   ],
-   "edges": [
-    "ai-auto-tag"
-   ],
-   "usado_por": 0,
-   "orfao": true
-  },
-  {
-   "arquivo": "analise-prs/resgate-261118-lote3/hermes/robustez-primitivos-ui-2610121626bec5-2610141859e423/src/components/ui/dialog.tsx",
-   "exports": [
-    "Dialog",
-    "DialogClose",
-    "DialogContent",
-    "DialogDescription",
-    "DialogFooter",
-    "DialogHeader",
-    "DialogOverlay",
-    "DialogPortal",
-    "DialogTitle",
-    "DialogTrigger"
-   ],
-   "export_default": null,
-   "linhas": 169,
-   "dominio": null,
-   "hooks_locais": [],
-   "tabelas": [],
-   "edges": [],
-   "usado_por": 0,
-   "orfao": true
-  },
-  {
-   "arquivo": "analise-prs/resgate-261118-lote3/hermes/robustez-primitivos-ui-2610121626bec5-2610141859e423/src/components/ui/hover-card.tsx",
-   "exports": [
-    "HoverCard",
-    "HoverCardContent",
-    "HoverCardTrigger"
-   ],
-   "export_default": null,
-   "linhas": 28,
-   "dominio": null,
-   "hooks_locais": [],
-   "tabelas": [],
-   "edges": [],
-   "usado_por": 0,
-   "orfao": true
-  },
-  {
-   "arquivo": "analise-prs/resgate-261118-lote3/hermes/robustez-primitivos-ui-2610121626bec5-2610141859e423/src/components/ui/menubar.tsx",
-   "exports": [
-    "Menubar",
-    "MenubarCheckboxItem",
-    "MenubarContent",
-    "MenubarGroup",
-    "MenubarItem",
-    "MenubarLabel",
-    "MenubarMenu",
-    "MenubarPortal",
-    "MenubarRadioGroup",
-    "MenubarRadioItem",
-    "MenubarSeparator",
-    "MenubarShortcut",
-    "MenubarSub",
-    "MenubarSubContent",
-    "MenubarSubTrigger",
-    "MenubarTrigger"
-   ],
-   "export_default": null,
-   "linhas": 208,
-   "dominio": null,
-   "hooks_locais": [],
-   "tabelas": [],
-   "edges": [],
-   "usado_por": 0,
-   "orfao": true
-  },
-  {
-   "arquivo": "analise-prs/resgate-261118-lote3/hermes/robustez-primitivos-ui-2610121626bec5-2610141859e423/src/components/ui/offline-indicator.tsx",
-   "exports": [
-    "ConnectionToast",
-    "OfflineIndicator"
-   ],
-   "export_default": null,
-   "linhas": 147,
-   "dominio": null,
-   "hooks_locais": [
-    "useOfflineStatus"
-   ],
-   "tabelas": [],
-   "edges": [],
-   "usado_por": 0,
-   "orfao": true
-  },
-  {
-   "arquivo": "analise-prs/resgate-261118-lote3/hermes/robustez-primitivos-ui-2610121626bec5-2610141859e423/src/components/ui/pagination.tsx",
-   "exports": [
-    "Pagination",
-    "PaginationContent",
-    "PaginationEllipsis",
-    "PaginationItem",
-    "PaginationLink",
-    "PaginationNext",
-    "PaginationPrevious"
-   ],
-   "export_default": null,
-   "linhas": 82,
-   "dominio": null,
-   "hooks_locais": [],
-   "tabelas": [],
-   "edges": [],
-   "usado_por": 0,
-   "orfao": true
-  },
-  {
-   "arquivo": "analise-prs/resgate-261118-lote3/hermes/robustez-primitivos-ui-2610121626bec5-2610141859e423/src/components/ui/resizable.tsx",
-   "exports": [
-    "ResizableHandle",
-    "ResizablePanel",
-    "ResizablePanelGroup"
-   ],
-   "export_default": null,
-   "linhas": 38,
-   "dominio": null,
-   "hooks_locais": [],
-   "tabelas": [],
-   "edges": [],
-   "usado_por": 0,
-   "orfao": true
-  },
-  {
-   "arquivo": "analise-prs/resgate-261118-lote3/hermes/robustez-primitivos-ui-2610121626bec5-2610141859e423/src/components/ui/sidebar/sidebar-context.tsx",
-   "exports": [
-    "SIDEBAR_COOKIE_MAX_AGE",
-    "SIDEBAR_COOKIE_NAME",
-    "SIDEBAR_KEYBOARD_SHORTCUT",
-    "SIDEBAR_WIDTH",
-    "SIDEBAR_WIDTH_ICON",
-    "SIDEBAR_WIDTH_MOBILE",
-    "SidebarContext",
-    "SidebarContextType",
-    "SidebarProvider"
-   ],
-   "export_default": null,
-   "linhas": 112,
-   "dominio": null,
-   "hooks_locais": [
-    "useIsMobile",
-    "useSidebar"
-   ],
-   "tabelas": [],
-   "edges": [],
-   "usado_por": 3,
-   "orfao": false
-  },
-  {
-   "arquivo": "analise-prs/resgate-261118-lote3/hermes/robustez-primitivos-ui-2610121626bec5-2610141859e423/src/components/ui/sidebar/sidebar-menu.tsx",
-   "exports": [
-    "SidebarMenu",
-    "SidebarMenuAction",
-    "SidebarMenuBadge",
-    "SidebarMenuButton",
-    "SidebarMenuItem",
-    "SidebarMenuSkeleton",
-    "SidebarMenuSub",
-    "SidebarMenuSubButton",
-    "SidebarMenuSubItem"
-   ],
-   "export_default": null,
-   "linhas": 193,
-   "dominio": null,
-   "hooks_locais": [
-    "useSidebar"
-   ],
-   "tabelas": [],
-   "edges": [],
-   "usado_por": 1,
-   "orfao": false
-  },
-  {
-   "arquivo": "analise-prs/resgate-261118-lote3/hermes/robustez-primitivos-ui-2610121626bec5-2610141859e423/src/components/ui/sidebar/sidebar-primitives.tsx",
-   "exports": [
-    "Sidebar",
-    "SidebarContent",
-    "SidebarFooter",
-    "SidebarGroup",
-    "SidebarGroupAction",
-    "SidebarGroupContent",
-    "SidebarGroupLabel",
-    "SidebarHeader",
-    "SidebarInput",
-    "SidebarInset",
-    "SidebarRail",
-    "SidebarSeparator",
-    "SidebarTrigger"
-   ],
-   "export_default": null,
-   "linhas": 243,
-   "dominio": null,
-   "hooks_locais": [
-    "useSidebar"
-   ],
-   "tabelas": [],
-   "edges": [],
-   "usado_por": 1,
-   "orfao": false
-  },
-  {
-   "arquivo": "analise-prs/resgate-261118-lote3/hermes/robustez-primitivos-ui-2610121626bec5-2610141859e423/src/components/ui/skip-link.tsx",
-   "exports": [
-    "SkipLink",
-    "SkipLinks"
-   ],
-   "export_default": null,
-   "linhas": 153,
-   "dominio": null,
-   "hooks_locais": [],
-   "tabelas": [],
-   "edges": [],
-   "usado_por": 0,
-   "orfao": true
-  },
-  {
-   "arquivo": "analise-prs/resgate-261118-lote3/hermes/telefonia-fase8-motion-a11y-responsivo-2610031530007c/src/components/calls/CallHistoryTable.tsx",
-   "exports": [
-    "CallHistoryTable"
-   ],
-   "export_default": null,
-   "linhas": 110,
-   "dominio": null,
-   "hooks_locais": [],
-   "tabelas": [],
-   "edges": [],
-   "usado_por": 1,
-   "orfao": false
-  },
-  {
-   "arquivo": "analise-prs/resgate-261118-lote3/hermes/telefonia-fase8-motion-a11y-responsivo-2610031530007c/src/components/calls/CallsKpiGrid.tsx",
-   "exports": [
-    "CallsKpiGrid"
-   ],
-   "export_default": null,
-   "linhas": 71,
-   "dominio": null,
-   "hooks_locais": [
-    "useCallsKpi",
-    "useMotionSeguro"
-   ],
-   "tabelas": [],
-   "edges": [],
-   "usado_por": 1,
-   "orfao": false
-  },
-  {
-   "arquivo": "analise-prs/resgate-261118-lote3/hermes/telefonia-fase8-motion-a11y-responsivo-2610031530007c/src/components/calls/IncomingCallAlert.tsx",
-   "exports": [
-    "IncomingCallAlert"
-   ],
-   "export_default": null,
-   "linhas": 233,
-   "dominio": null,
-   "hooks_locais": [
-    "useCallChannels",
-    "useCallSession",
-    "useIncomingCallListener",
-    "useMotionSeguro",
-    "useNotificationSettings",
-    "useTerminoRemoto"
-   ],
-   "tabelas": [],
-   "edges": [],
-   "usado_por": 0,
-   "orfao": true
-  },
-  {
-   "arquivo": "analise-prs/resgate-261118-lote3/hermes/telefonia-fase8-motion-a11y-responsivo-2610031530007c/src/components/calls/Keypad.tsx",
-   "exports": [
-    "Keypad"
-   ],
-   "export_default": null,
-   "linhas": 92,
-   "dominio": null,
-   "hooks_locais": [
-    "useMotionSeguro"
-   ],
-   "tabelas": [],
-   "edges": [],
-   "usado_por": 0,
-   "orfao": true
-  },
-  {
-   "arquivo": "analise-prs/resgate-261118-lote3/hermes/telefonia-fase8-motion-a11y-responsivo-2610031530007c/src/components/calls/TelefoniaView.tsx",
-   "exports": [
-    "TelefoniaView"
-   ],
-   "export_default": null,
-   "linhas": 305,
-   "dominio": null,
-   "hooks_locais": [
-    "useAuth",
-    "useCallSession",
-    "useCalls",
-    "useMediaElementVolume",
-    "useMotionSeguro",
-    "useMyCalls",
-    "useTelefoniaFilters",
-    "useUserRole"
-   ],
-   "tabelas": [],
-   "edges": [],
-   "usado_por": 1,
-   "orfao": false
-  },
-  {
-   "arquivo": "analise-prs/resgate-261118-lote3/hermes/telefonia-fase8-motion-a11y-responsivo-2610031530007c/src/components/campaigns/CampaignCreateDialog.tsx",
-   "exports": [
-    "CampaignCreateDialog"
-   ],
-   "export_default": null,
-   "linhas": 123,
-   "dominio": null,
-   "hooks_locais": [],
-   "tabelas": [],
-   "edges": [],
-   "usado_por": 1,
-   "orfao": false
-  },
-  {
-   "arquivo": "analise-prs/resgate-261118-lote3/hermes/telefonia-fase8-motion-a11y-responsivo-2610031530007c/src/components/campaigns/CampaignsView.tsx",
-   "exports": [
-    "CampaignsView"
-   ],
-   "export_default": null,
-   "linhas": 235,
-   "dominio": null,
-   "hooks_locais": [
-    "useCampaigns"
-   ],
-   "tabelas": [],
-   "edges": [],
-   "usado_por": 0,
-   "orfao": true
-  },
-  {
-   "arquivo": "analise-prs/resgate-261118-lote3/hermes/telefonia-fase8-motion-a11y-responsivo-2610031530007c/src/components/connections/IntegrationsPanel.tsx",
-   "exports": [
-    "IntegrationsPanel"
-   ],
-   "export_default": null,
-   "linhas": 330,
-   "dominio": null,
-   "hooks_locais": [
-    "useEvolutionApi"
-   ],
-   "tabelas": [],
-   "edges": [],
-   "usado_por": 0,
-   "orfao": true
-  },
-  {
-   "arquivo": "analise-prs/resgate-261118-lote3/hermes/telefonia-fase8-motion-a11y-responsivo-2610031530007c/src/components/dashboard/RealtimeMetricsPanel.tsx",
-   "exports": [
-    "RealtimeMetricsPanel"
-   ],
-   "export_default": null,
-   "linhas": 183,
-   "dominio": null,
-   "hooks_locais": [
-    "useRealtimeDashboard"
-   ],
-   "tabelas": [],
-   "edges": [],
-   "usado_por": 0,
-   "orfao": true
-  },
-  {
-   "arquivo": "analise-prs/resgate-261118-lote3/hermes/telefonia-fase8-motion-a11y-responsivo-2610031530007c/src/components/inbox/contact-details/AssignmentSection.tsx",
-   "exports": [
-    "AssignmentSection"
-   ],
-   "export_default": null,
-   "linhas": 118,
-   "dominio": null,
-   "hooks_locais": [
-    "useAgents",
-    "useContactAssignment",
-    "useQueues"
-   ],
-   "tabelas": [],
-   "edges": [],
-   "usado_por": 1,
-   "orfao": false
-  },
-  {
-   "arquivo": "analise-prs/resgate-261118-lote3/hermes/telefonia-fase8-motion-a11y-responsivo-2610031530007c/src/components/inbox/contact-details/ContactAccordionSections.tsx",
-   "exports": [
-    "ContactAccordionSections"
-   ],
-   "export_default": null,
-   "linhas": 194,
-   "dominio": null,
-   "hooks_locais": [
-    "useCRMIntegrationEnabled"
-   ],
-   "tabelas": [],
-   "edges": [],
-   "usado_por": 0,
-   "orfao": true
-  },
-  {
-   "arquivo": "analise-prs/resgate-261118-lote3/hermes/telefonia-fase8-motion-a11y-responsivo-2610031530007c/src/components/inbox/contact-details/ContactInfoSection.tsx",
-   "exports": [
-    "ContactInfoSection"
-   ],
-   "export_default": null,
-   "linhas": 157,
-   "dominio": null,
-   "hooks_locais": [],
-   "tabelas": [
-    "contacts"
-   ],
-   "edges": [],
-   "usado_por": 1,
-   "orfao": false
-  },
-  {
-   "arquivo": "analise-prs/resgate-261118-lote3/hermes/telefonia-fase8-motion-a11y-responsivo-2610031530007c/src/components/inbox/contact-details/LastActivityWidget.tsx",
-   "exports": [
-    "LastActivityWidget"
-   ],
-   "export_default": null,
-   "linhas": 31,
-   "dominio": null,
-   "hooks_locais": [
-    "useConversationHistoryTimeline"
-   ],
-   "tabelas": [],
-   "edges": [],
-   "usado_por": 1,
-   "orfao": false
-  },
-  {
-   "arquivo": "analise-prs/resgate-261118-lote3/hermes/telefonia-fase8-motion-a11y-responsivo-2610031530007c/src/components/inbox/contact-details/SLAAndAITagsSection.tsx",
-   "exports": [
-    "SLAAndAITagsSection"
-   ],
-   "export_default": null,
-   "linhas": 106,
-   "dominio": null,
-   "hooks_locais": [],
-   "tabelas": [],
-   "edges": [],
-   "usado_por": 1,
-   "orfao": false
-  },
-  {
-   "arquivo": "analise-prs/resgate-261118-lote3/hermes/telefonia-fase8-motion-a11y-responsivo-2610031530007c/src/components/inbox/ConversationMemoryPanel.tsx",
-   "exports": [
-    "ConversationMemoryPanel"
-   ],
-   "export_default": null,
-   "linhas": 253,
-   "dominio": null,
-   "hooks_locais": [],
-   "tabelas": [
-    "conversation_memory"
-   ],
-   "edges": [],
-   "usado_por": 1,
-   "orfao": false
-  },
-  {
-   "arquivo": "analise-prs/resgate-261118-lote3/hermes/telefonia-fase8-motion-a11y-responsivo-2610031530007c/src/components/inbox/ConversationTimeline.tsx",
-   "exports": [
-    "ConversationTimeline"
-   ],
-   "export_default": null,
-   "linhas": 143,
-   "dominio": null,
-   "hooks_locais": [],
-   "tabelas": [
-    "conversation_events"
-   ],
-   "edges": [],
-   "usado_por": 1,
-   "orfao": false
-  },
-  {
-   "arquivo": "analise-prs/resgate-261118-lote3/hermes/telefonia-fase8-motion-a11y-responsivo-2610031530007c/src/components/inbox/LeadRiskScorePanel.tsx",
-   "exports": [
-    "LeadRiskScorePanel"
-   ],
-   "export_default": null,
-   "linhas": 150,
-   "dominio": null,
-   "hooks_locais": [],
-   "tabelas": [
-    "contacts"
-   ],
-   "edges": [],
-   "usado_por": 1,
-   "orfao": false
-  },
-  {
-   "arquivo": "analise-prs/resgate-261118-lote3/hermes/telefonia-fase8-motion-a11y-responsivo-2610031530007c/src/components/multiplix/MultiplixComposerDialog.tsx",
-   "exports": [
-    "MultiplixComposerDialog"
-   ],
-   "export_default": null,
-   "linhas": 174,
-   "dominio": null,
-   "hooks_locais": [
-    "useCreateMultiplixDispatch"
-   ],
-   "tabelas": [],
-   "edges": [],
-   "usado_por": 0,
-   "orfao": true
-  },
-  {
-   "arquivo": "analise-prs/resgate-261118-lote3/hermes/telefonia-fase8-motion-a11y-responsivo-2610031530007c/src/components/settings/AIAutoTagsConfig.tsx",
-   "exports": [
-    "AIAutoTagsConfig"
-   ],
-   "export_default": null,
-   "linhas": 167,
-   "dominio": null,
-   "hooks_locais": [],
-   "tabelas": [
-    "ai_conversation_tags",
-    "contacts"
-   ],
-   "edges": [
-    "ai-auto-tag"
-   ],
-   "usado_por": 0,
-   "orfao": true
-  },
-  {
-   "arquivo": "analise-prs/resgate-261118-lote3/resolve-2381-from-main/src/components/inbox/chat/ChatInputArea.tsx",
-   "exports": [
-    "ChatInputArea"
-   ],
-   "export_default": null,
-   "linhas": 352,
-   "dominio": null,
-   "hooks_locais": [
-    "useChatInputLogic",
-    "useMentions"
-   ],
-   "tabelas": [],
-   "edges": [],
-   "usado_por": 0,
-   "orfao": true
-  },
-  {
-   "arquivo": "analise-prs/resgate-261118-lote3/resolve-2381-from-main/src/components/inbox/copilot/RadarCards.tsx",
-   "exports": [
-    "AlertsCard",
-    "BrindeCard",
-    "DecisionMakerCard",
-    "NextStepCard",
-    "ProductsCard",
-    "StageCard",
-    "SuggestionsCard"
-   ],
-   "export_default": null,
-   "linhas": 265,
-   "dominio": null,
-   "hooks_locais": [],
-   "tabelas": [],
-   "edges": [],
-   "usado_por": 1,
-   "orfao": false
-  },
-  {
-   "arquivo": "analise-prs/resgate-261118-lote3/resolve-2381-from-main/src/components/inbox/copilot/RadarLive.tsx",
-   "exports": [
-    "RadarLive",
-    "RadarLiveProps"
-   ],
-   "export_default": "RadarLive",
-   "linhas": 62,
-   "dominio": null,
-   "hooks_locais": [
-    "useAuth",
-    "useCopilotSession",
-    "useLiveSuggestions",
-    "useRadarPanel"
-   ],
-   "tabelas": [],
-   "edges": [],
-   "usado_por": 0,
-   "orfao": true
-  },
-  {
-   "arquivo": "analise-prs/resgate-261118-lote3/resolve-2381-from-main/src/components/inbox/copilot/RadarPanel.tsx",
-   "exports": [
-    "RadarPanel",
-    "RadarPanelProps"
-   ],
-   "export_default": null,
-   "linhas": 452,
-   "dominio": null,
-   "hooks_locais": [],
-   "tabelas": [],
-   "edges": [],
-   "usado_por": 1,
-   "orfao": false
   },
   {
    "arquivo": "src/App.tsx",
@@ -3663,7 +754,7 @@
    "hooks_locais": [],
    "tabelas": [],
    "edges": [],
-   "usado_por": 4,
+   "usado_por": 2,
    "orfao": false
   },
   {
@@ -5482,7 +2573,7 @@
    "hooks_locais": [],
    "tabelas": [],
    "edges": [],
-   "usado_por": 10,
+   "usado_por": 8,
    "orfao": false
   },
   {
@@ -5659,7 +2750,7 @@
    "hooks_locais": [],
    "tabelas": [],
    "edges": [],
-   "usado_por": 5,
+   "usado_por": 2,
    "orfao": false
   },
   {
@@ -5784,7 +2875,7 @@
    ],
    "tabelas": [],
    "edges": [],
-   "usado_por": 5,
+   "usado_por": 2,
    "orfao": false
   },
   {
@@ -6259,7 +3350,7 @@
    "hooks_locais": [],
    "tabelas": [],
    "edges": [],
-   "usado_por": 13,
+   "usado_por": 11,
    "orfao": false
   },
   {
@@ -6505,7 +3596,7 @@
    ],
    "tabelas": [],
    "edges": [],
-   "usado_por": 53,
+   "usado_por": 40,
    "orfao": false
   },
   {
@@ -6536,7 +3627,7 @@
    ],
    "tabelas": [],
    "edges": [],
-   "usado_por": 12,
+   "usado_por": 10,
    "orfao": false
   },
   {
@@ -7084,7 +4175,7 @@
    "hooks_locais": [],
    "tabelas": [],
    "edges": [],
-   "usado_por": 13,
+   "usado_por": 11,
    "orfao": false
   },
   {
@@ -9301,7 +6392,7 @@
    "hooks_locais": [],
    "tabelas": [],
    "edges": [],
-   "usado_por": 9,
+   "usado_por": 4,
    "orfao": false
   },
   {
@@ -9530,7 +6621,7 @@
    ],
    "tabelas": [],
    "edges": [],
-   "usado_por": 4,
+   "usado_por": 1,
    "orfao": false
   },
   {
@@ -9726,7 +6817,7 @@
    ],
    "tabelas": [],
    "edges": [],
-   "usado_por": 8,
+   "usado_por": 3,
    "orfao": false
   },
   {
@@ -10128,7 +7219,7 @@
    ],
    "tabelas": [],
    "edges": [],
-   "usado_por": 2,
+   "usado_por": 1,
    "orfao": false
   },
   {
@@ -10422,7 +7513,7 @@
     "stickers"
    ],
    "edges": [],
-   "usado_por": 2,
+   "usado_por": 1,
    "orfao": false
   },
   {
@@ -11420,7 +8511,7 @@
    ],
    "tabelas": [],
    "edges": [],
-   "usado_por": 4,
+   "usado_por": 3,
    "orfao": false
   },
   {
@@ -11519,7 +8610,7 @@
    ],
    "tabelas": [],
    "edges": [],
-   "usado_por": 16,
+   "usado_por": 14,
    "orfao": false
   },
   {
@@ -11533,7 +8624,7 @@
    "hooks_locais": [],
    "tabelas": [],
    "edges": [],
-   "usado_por": 2,
+   "usado_por": 1,
    "orfao": false
   },
   {
@@ -11839,7 +8930,7 @@
    "hooks_locais": [],
    "tabelas": [],
    "edges": [],
-   "usado_por": 2,
+   "usado_por": 1,
    "orfao": false
   },
   {
@@ -12268,7 +9359,7 @@
    ],
    "tabelas": [],
    "edges": [],
-   "usado_por": 2,
+   "usado_por": 1,
    "orfao": false
   },
   {
@@ -12400,7 +9491,7 @@
    ],
    "tabelas": [],
    "edges": [],
-   "usado_por": 3,
+   "usado_por": 2,
    "orfao": false
   },
   {
@@ -13508,7 +10599,7 @@
    ],
    "tabelas": [],
    "edges": [],
-   "usado_por": 2,
+   "usado_por": 1,
    "orfao": false
   },
   {
@@ -13524,7 +10615,7 @@
    ],
    "tabelas": [],
    "edges": [],
-   "usado_por": 2,
+   "usado_por": 1,
    "orfao": false
   },
   {
@@ -13572,7 +10663,7 @@
    ],
    "tabelas": [],
    "edges": [],
-   "usado_por": 2,
+   "usado_por": 1,
    "orfao": false
   },
   {
@@ -13613,7 +10704,7 @@
    "edges": [
     "chatbot-l1"
    ],
-   "usado_por": 2,
+   "usado_por": 1,
    "orfao": false
   },
   {
@@ -13648,7 +10739,7 @@
     "whatsapp_connections"
    ],
    "edges": [],
-   "usado_por": 2,
+   "usado_por": 1,
    "orfao": false
   },
   {
@@ -13683,7 +10774,7 @@
     "followup_steps"
    ],
    "edges": [],
-   "usado_por": 2,
+   "usado_por": 1,
    "orfao": false
   },
   {
@@ -13699,7 +10790,7 @@
    ],
    "tabelas": [],
    "edges": [],
-   "usado_por": 2,
+   "usado_por": 1,
    "orfao": false
   },
   {
@@ -13716,7 +10807,7 @@
    ],
    "tabelas": [],
    "edges": [],
-   "usado_por": 2,
+   "usado_por": 1,
    "orfao": false
   },
   {
@@ -13732,7 +10823,7 @@
    ],
    "tabelas": [],
    "edges": [],
-   "usado_por": 2,
+   "usado_por": 1,
    "orfao": false
   },
   {
@@ -13748,7 +10839,7 @@
    ],
    "tabelas": [],
    "edges": [],
-   "usado_por": 3,
+   "usado_por": 2,
    "orfao": false
   },
   {
@@ -13799,7 +10890,7 @@
    ],
    "tabelas": [],
    "edges": [],
-   "usado_por": 2,
+   "usado_por": 1,
    "orfao": false
   },
   {
@@ -13816,7 +10907,7 @@
    ],
    "tabelas": [],
    "edges": [],
-   "usado_por": 2,
+   "usado_por": 1,
    "orfao": false
   },
   {
@@ -13833,7 +10924,7 @@
    ],
    "tabelas": [],
    "edges": [],
-   "usado_por": 2,
+   "usado_por": 1,
    "orfao": false
   },
   {
@@ -13871,7 +10962,7 @@
     "queues"
    ],
    "edges": [],
-   "usado_por": 2,
+   "usado_por": 1,
    "orfao": false
   },
   {
@@ -13984,7 +11075,7 @@
    ],
    "tabelas": [],
    "edges": [],
-   "usado_por": 2,
+   "usado_por": 1,
    "orfao": false
   },
   {
@@ -14063,7 +11154,7 @@
    ],
    "tabelas": [],
    "edges": [],
-   "usado_por": 6,
+   "usado_por": 4,
    "orfao": false
   },
   {
@@ -15487,7 +12578,7 @@
    ],
    "tabelas": [],
    "edges": [],
-   "usado_por": 2,
+   "usado_por": 1,
    "orfao": false
   },
   {
@@ -16432,7 +13523,7 @@
    "hooks_locais": [],
    "tabelas": [],
    "edges": [],
-   "usado_por": 5,
+   "usado_por": 4,
    "orfao": false
   },
   {
@@ -16456,7 +13547,7 @@
    "hooks_locais": [],
    "tabelas": [],
    "edges": [],
-   "usado_por": 68,
+   "usado_por": 56,
    "orfao": false
   },
   {
@@ -16491,7 +13582,7 @@
    "hooks_locais": [],
    "tabelas": [],
    "edges": [],
-   "usado_por": 66,
+   "usado_por": 58,
    "orfao": false
   },
   {
@@ -16506,7 +13597,7 @@
    "hooks_locais": [],
    "tabelas": [],
    "edges": [],
-   "usado_por": 252,
+   "usado_por": 222,
    "orfao": false
   },
   {
@@ -16543,7 +13634,7 @@
    "hooks_locais": [],
    "tabelas": [],
    "edges": [],
-   "usado_por": 458,
+   "usado_por": 409,
    "orfao": false
   },
   {
@@ -16578,7 +13669,7 @@
    "hooks_locais": [],
    "tabelas": [],
    "edges": [],
-   "usado_por": 212,
+   "usado_por": 193,
    "orfao": false
   },
   {
@@ -16612,7 +13703,7 @@
    "hooks_locais": [],
    "tabelas": [],
    "edges": [],
-   "usado_por": 31,
+   "usado_por": 28,
    "orfao": false
   },
   {
@@ -16645,7 +13736,7 @@
    ],
    "tabelas": [],
    "edges": [],
-   "usado_por": 3,
+   "usado_por": 2,
    "orfao": false
   },
   {
@@ -16695,7 +13786,7 @@
    "hooks_locais": [],
    "tabelas": [],
    "edges": [],
-   "usado_por": 2,
+   "usado_por": 1,
    "orfao": false
   },
   {
@@ -16718,7 +13809,7 @@
    "hooks_locais": [],
    "tabelas": [],
    "edges": [],
-   "usado_por": 117,
+   "usado_por": 98,
    "orfao": false
   },
   {
@@ -16769,7 +13860,7 @@
    "hooks_locais": [],
    "tabelas": [],
    "edges": [],
-   "usado_por": 52,
+   "usado_por": 41,
    "orfao": false
   },
   {
@@ -16994,7 +14085,7 @@
    "hooks_locais": [],
    "tabelas": [],
    "edges": [],
-   "usado_por": 203,
+   "usado_por": 173,
    "orfao": false
   },
   {
@@ -17008,7 +14099,7 @@
    "hooks_locais": [],
    "tabelas": [],
    "edges": [],
-   "usado_por": 128,
+   "usado_por": 115,
    "orfao": false
   },
   {
@@ -17025,7 +14116,7 @@
    ],
    "tabelas": [],
    "edges": [],
-   "usado_por": 3,
+   "usado_por": 2,
    "orfao": false
   },
   {
@@ -17212,7 +14303,7 @@
    "hooks_locais": [],
    "tabelas": [],
    "edges": [],
-   "usado_por": 54,
+   "usado_por": 47,
    "orfao": false
   },
   {
@@ -17226,7 +14317,7 @@
    "hooks_locais": [],
    "tabelas": [],
    "edges": [],
-   "usado_por": 34,
+   "usado_por": 28,
    "orfao": false
   },
   {
@@ -17242,7 +14333,7 @@
    ],
    "tabelas": [],
    "edges": [],
-   "usado_por": 2,
+   "usado_por": 1,
    "orfao": false
   },
   {
@@ -17286,7 +14377,7 @@
    "hooks_locais": [],
    "tabelas": [],
    "edges": [],
-   "usado_por": 79,
+   "usado_por": 75,
    "orfao": false
   },
   {
@@ -17314,7 +14405,7 @@
    "hooks_locais": [],
    "tabelas": [],
    "edges": [],
-   "usado_por": 15,
+   "usado_por": 10,
    "orfao": false
   },
   {
@@ -17337,7 +14428,7 @@
    "hooks_locais": [],
    "tabelas": [],
    "edges": [],
-   "usado_por": 140,
+   "usado_por": 116,
    "orfao": false
   },
   {
@@ -17351,7 +14442,7 @@
    "hooks_locais": [],
    "tabelas": [],
    "edges": [],
-   "usado_por": 15,
+   "usado_por": 14,
    "orfao": false
   },
   {
@@ -17374,7 +14465,7 @@
    "hooks_locais": [],
    "tabelas": [],
    "edges": [],
-   "usado_por": 20,
+   "usado_por": 16,
    "orfao": false
   },
   {
@@ -17394,7 +14485,7 @@
    "hooks_locais": [],
    "tabelas": [],
    "edges": [],
-   "usado_por": 87,
+   "usado_por": 81,
    "orfao": false
   },
   {
@@ -17438,7 +14529,7 @@
    "hooks_locais": [],
    "tabelas": [],
    "edges": [],
-   "usado_por": 13,
+   "usado_por": 11,
    "orfao": false
   },
   {
@@ -17515,7 +14606,7 @@
    "hooks_locais": [],
    "tabelas": [],
    "edges": [],
-   "usado_por": 62,
+   "usado_por": 55,
    "orfao": false
   },
   {
@@ -17536,7 +14627,7 @@
    "hooks_locais": [],
    "tabelas": [],
    "edges": [],
-   "usado_por": 17,
+   "usado_por": 14,
    "orfao": false
   },
   {
@@ -17553,7 +14644,7 @@
    "hooks_locais": [],
    "tabelas": [],
    "edges": [],
-   "usado_por": 45,
+   "usado_por": 39,
    "orfao": false
   },
   {
@@ -17568,7 +14659,7 @@
    "hooks_locais": [],
    "tabelas": [],
    "edges": [],
-   "usado_por": 58,
+   "usado_por": 49,
    "orfao": false
   },
   {
@@ -17652,7 +14743,7 @@
    "hooks_locais": [],
    "tabelas": [],
    "edges": [],
-   "usado_por": 115,
+   "usado_por": 100,
    "orfao": false
   },
   {
@@ -17751,7 +14842,7 @@
    "edges": [
     "elevenlabs-dialogue"
    ],
-   "usado_por": 2,
+   "usado_por": 1,
    "orfao": false
   },
   {
@@ -17767,7 +14858,7 @@
    "edges": [
     "elevenlabs-voice-design"
    ],
-   "usado_por": 2,
+   "usado_por": 1,
    "orfao": false
   },
   {
@@ -17944,7 +15035,7 @@
    ],
    "tabelas": [],
    "edges": [],
-   "usado_por": 2,
+   "usado_por": 1,
    "orfao": false
   },
   {
@@ -17960,7 +15051,7 @@
    ],
    "tabelas": [],
    "edges": [],
-   "usado_por": 134,
+   "usado_por": 111,
    "orfao": false
   },
   {
@@ -18431,7 +15522,7 @@
    ],
    "tabelas": [],
    "edges": [],
-   "usado_por": 14,
+   "usado_por": 12,
    "orfao": false
   },
   {

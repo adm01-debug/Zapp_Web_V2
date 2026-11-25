@@ -8,13 +8,13 @@
   ],
   "componentes": [
    "src/components (900)",
-   "analise-prs/resgate-261118-lote3 (129)",
-   "src/pages (26)"
+   "src/pages (26)",
+   "src/features (2)"
   ],
   "hooks": [
    "src/hooks (430)",
-   "analise-prs/resgate-261118-lote3 (92)",
-   "src/components (74)"
+   "src/components (74)",
+   "src/contexts (2)"
   ],
   "servicos_logica": [
    "src/lib (156)",
@@ -22,9 +22,9 @@
    "src/utils (8)"
   ],
   "testes": [
-   "co-localizado (__tests__) (2379)",
-   "outro (351)",
-   "co-localizado (*.test) (237)"
+   "co-localizado (__tests__) (2096)",
+   "outro (259)",
+   "co-localizado (*.test) (202)"
   ],
   "edge_functions": "supabase/functions",
   "migrations": "supabase/migrations",
@@ -40,15 +40,15 @@
   ]
  },
  "nomenclatura": {
-  "componentes": "PascalCase (89%)",
+  "componentes": "PascalCase (90%)",
   "hooks": "use + PascalCase",
   "servicos": "camelCase (73%)",
   "edge_functions": "kebab-case (96%)",
   "tabelas": "snake_case (91%)"
  },
- "barrels_index": 86,
+ "barrels_index": 72,
  "extensao_componentes": [
-  ".tsx (1064)"
+  ".tsx (935)"
  ],
  "alias_imports": {
   "analise-prs/resgate-261115/auditoria/bruto/diarios-sessao/": {
@@ -66,11 +66,11 @@
  "commits": {
   "convencao": "conventional commits (observado)",
   "exemplos": [
+   "chore: aposenta acervo de resgate 261118 lote3 ja triado (1.029 arquivos, zero perdas) (#3371)",
    "feat(automacao): recupera harness local da PR #2926 sobre o main atual (#3366)",
    "feat(ci): restaura a fila de merge serial (auto-update-pr-branch) (#3368)",
    "feat(manutencao): porta o harness de manutencao completo da PR #2926 (#3370)",
-   "fix(ci): exige Replay local das migrations na main (#3367)",
-   "fix(ci): guard enxerga wrapper que passa o nome da edge — gmail-send e gmail-sync saem de orfas (#3365)"
+   "fix(ci): exige Replay local das migrations na main (#3367)"
   ]
  },
  "pr_template": ".github/PULL_REQUEST_TEMPLATE.md",

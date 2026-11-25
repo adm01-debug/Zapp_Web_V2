@@ -3,14 +3,14 @@
  "format_version": 2,
  "stack": {
   "linguagens": [
-   "TypeScript (5090)",
-   "Markdown (4099)",
-   "SQL (3067)",
-   "JSON (1973)",
-   "JavaScript (686)",
-   "Shell (265)",
+   "TypeScript (4496)",
+   "Markdown (3986)",
+   "SQL (3056)",
+   "JSON (1939)",
+   "JavaScript (523)",
+   "Shell (252)",
    "Python (125)",
-   "YAML (114)"
+   "YAML (43)"
   ],
   "linguagem_principal": "TypeScript",
   "framework": "React",
@@ -1778,16 +1778,6 @@
   ],
   "dockerfiles": [
    {
-    "arquivo": "analise-prs/resgate-261118-lote3/claude/fix-ga-fase78-perimetro-custo-261020-2200/infrastructure/preview-egress-proxy/Dockerfile",
-    "base": [
-     "gcr.io/distroless/static-debian12:nonroot@sha256:afa5c872c891853ca7fcf1f12c3edb23f7eeef36189728842dd51042ff57f7ab",
-     "golang:1.24-alpine@sha256:8bee1901f1e530bfb4a7850aa7a479d17ae3a18beb6e09064ed54cfd245b7191"
-    ],
-    "portas": [
-     "8080"
-    ]
-   },
-   {
     "arquivo": "infrastructure/preview-egress-proxy/Dockerfile",
     "base": [
      "gcr.io/distroless/static-debian12:nonroot@sha256:afa5c872c891853ca7fcf1f12c3edb23f7eeef36189728842dd51042ff57f7ab",
@@ -1852,59 +1842,47 @@
   "hosts_externos": [
    {
     "host": "stub.supabase.co",
-    "arquivos": 40
+    "arquivos": 38
    },
    {
     "host": "edge.invalid",
-    "arquivos": 39
+    "arquivos": 37
    },
    {
     "host": "cdn.test",
-    "arquivos": 31
+    "arquivos": 25
    },
    {
     "host": "proj.supabase.co",
-    "arquivos": 29
+    "arquivos": 24
    },
    {
     "host": "zapp-web-v2.vercel.app",
-    "arquivos": 26
-   },
-   {
-    "host": "example.invalid",
-    "arquivos": 23
+    "arquivos": 24
    },
    {
     "host": "edge.test",
-    "arquivos": 22
-   },
-   {
-    "host": "tnnnlkbymytvtqngbbqh.supabase.co",
     "arquivos": 21
    },
    {
-    "host": "example.supabase.co",
-    "arquivos": 16
+    "host": "example.invalid",
+    "arquivos": 21
    },
    {
-    "host": "exemplo.com",
-    "arquivos": 16
-   },
-   {
-    "host": "projeto.supabase.co",
-    "arquivos": 16
-   },
-   {
-    "host": "api.resend.com",
-    "arquivos": 15
+    "host": "tnnnlkbymytvtqngbbqh.supabase.co",
+    "arquivos": 18
    },
    {
     "host": "exemplo.test",
     "arquivos": 14
    },
    {
-    "host": "gmail.googleapis.com",
+    "host": "projeto.supabase.co",
     "arquivos": 14
+   },
+   {
+    "host": "example.supabase.co",
+    "arquivos": 13
    },
    {
     "host": "supabase-test.example",
@@ -1915,7 +1893,7 @@
     "arquivos": 12
    },
    {
-    "host": "local.test",
+    "host": "exemplo.com",
     "arquivos": 12
    },
    {
@@ -1923,15 +1901,15 @@
     "arquivos": 12
    },
    {
-    "host": "evolution.test",
+    "host": "api.resend.com",
     "arquivos": 11
    },
    {
-    "host": "cdn.exemplo",
-    "arquivos": 10
+    "host": "local.test",
+    "arquivos": 11
    },
    {
-    "host": "projeto-de-teste.supabase.co",
+    "host": "evolution.test",
     "arquivos": 10
    },
    {
@@ -1939,16 +1917,8 @@
     "arquivos": 9
    },
    {
-    "host": "mmg.whatsapp.net",
+    "host": "gmail.googleapis.com",
     "arquivos": 9
-   },
-   {
-    "host": "pps.whatsapp.net",
-    "arquivos": 9
-   },
-   {
-    "host": "api.mapbox.com",
-    "arquivos": 8
    },
    {
     "host": "evil.example",
@@ -1959,23 +1929,23 @@
     "arquivos": 8
    },
    {
-    "host": "project.test",
-    "arquivos": 8
-   },
-   {
-    "host": "test.supabase.co",
-    "arquivos": 8
-   },
-   {
     "host": "zapp.example",
     "arquivos": 8
    },
    {
-    "host": "zappweb.app.br",
-    "arquivos": 8
+    "host": "cdn.exemplo",
+    "arquivos": 7
    },
    {
-    "host": "api.supabase.com",
+    "host": "mmg.whatsapp.net",
+    "arquivos": 7
+   },
+   {
+    "host": "pps.whatsapp.net",
+    "arquivos": 7
+   },
+   {
+    "host": "projeto-de-teste.supabase.co",
     "arquivos": 7
    },
    {
@@ -1984,6 +1954,10 @@
    },
    {
     "host": "x.supabase.co",
+    "arquivos": 7
+   },
+   {
+    "host": "zappweb.app.br",
     "arquivos": 7
    },
    {
@@ -1999,15 +1973,15 @@
     "arquivos": 6
    },
    {
-    "host": "oauth2.googleapis.com",
-    "arquivos": 6
-   },
-   {
     "host": "projeto.teste.supabase.co",
     "arquivos": 6
    },
    {
     "host": "provider.invalid",
+    "arquivos": 6
+   },
+   {
+    "host": "test.supabase.co",
     "arquivos": 6
    },
    {
@@ -2019,14 +1993,6 @@
     "arquivos": 5
    },
    {
-    "host": "evolution.invalid",
-    "arquivos": 5
-   },
-   {
-    "host": "exemplo.invalid",
-    "arquivos": 5
-   },
-   {
     "host": "imagedelivery.net",
     "arquivos": 5
    },
@@ -2035,19 +2001,7 @@
     "arquivos": 5
    },
    {
-    "host": "loja.example",
-    "arquivos": 5
-   },
-   {
     "host": "proxy.invalid",
-    "arquivos": 5
-   },
-   {
-    "host": "supabase.invalid",
-    "arquivos": 5
-   },
-   {
-    "host": "test.com",
     "arquivos": 5
    },
    {
@@ -2055,7 +2009,19 @@
     "arquivos": 5
    },
    {
-    "host": "edge.local",
+    "host": "api.mapbox.com",
+    "arquivos": 4
+   },
+   {
+    "host": "api.supabase.com",
+    "arquivos": 4
+   },
+   {
+    "host": "evolution.invalid",
+    "arquivos": 4
+   },
+   {
+    "host": "exemplo.invalid",
     "arquivos": 4
    },
    {
@@ -2071,10 +2037,6 @@
     "arquivos": 4
    },
    {
-    "host": "local.invalid",
-    "arquivos": 4
-   },
-   {
     "host": "openrouter.ai",
     "arquivos": 4
    },
@@ -2083,19 +2045,11 @@
     "arquivos": 4
    },
    {
-    "host": "project.supabase.co",
+    "host": "project.test",
     "arquivos": 4
    },
    {
-    "host": "storage.invalid",
-    "arquivos": 4
-   },
-   {
-    "host": "stub.invalid",
-    "arquivos": 4
-   },
-   {
-    "host": "www.google.com",
+    "host": "supabase.invalid",
     "arquivos": 4
    },
    {
@@ -2115,15 +2069,11 @@
     "arquivos": 3
    },
    {
-    "host": "empresa.example.test",
+    "host": "edge.local",
     "arquivos": 3
    },
    {
     "host": "evolution.exemplo.com",
-    "arquivos": 3
-   },
-   {
-    "host": "exemplo.invalido",
     "arquivos": 3
    },
    {
@@ -2143,11 +2093,19 @@
     "arquivos": 3
    },
    {
+    "host": "oauth2.googleapis.com",
+    "arquivos": 3
+   },
+   {
     "host": "offline.invalid",
     "arquivos": 3
    },
    {
     "host": "outro.supabase.co",
+    "arquivos": 3
+   },
+   {
+    "host": "project.supabase.co",
     "arquivos": 3
    },
    {
@@ -2163,15 +2121,19 @@
     "arquivos": 3
    },
    {
-    "host": "signed.invalid",
-    "arquivos": 3
-   },
-   {
     "host": "storage.local",
     "arquivos": 3
    },
    {
-    "host": "typebot.io",
+    "host": "stub.invalid",
+    "arquivos": 3
+   },
+   {
+    "host": "test.com",
+    "arquivos": 3
+   },
+   {
+    "host": "www.google.com",
     "arquivos": 3
    },
    {
@@ -2180,10 +2142,6 @@
    },
    {
     "host": "api.deepseek.test",
-    "arquivos": 2
-   },
-   {
-    "host": "api.dify.ai",
     "arquivos": 2
    },
    {
@@ -2203,27 +2161,15 @@
     "arquivos": 2
    },
    {
-    "host": "app.test",
-    "arquivos": 2
-   },
-   {
-    "host": "audio.ogg",
-    "arquivos": 2
-   },
-   {
-    "host": "bot.empresa.com",
-    "arquivos": 2
-   },
-   {
-    "host": "chatwoot.empresa.com",
-    "arquivos": 2
-   },
-   {
     "host": "edge-smoke.invalid",
     "arquivos": 2
    },
    {
     "host": "egress.proxy.test",
+    "arquivos": 2
+   },
+   {
+    "host": "empresa.example.test",
     "arquivos": 2
    },
    {
@@ -2235,15 +2181,15 @@
     "arquivos": 2
    },
    {
+    "host": "exemplo.invalido",
+    "arquivos": 2
+   },
+   {
     "host": "facebook.com",
     "arquivos": 2
    },
    {
     "host": "facebook.example",
-    "arquivos": 2
-   },
-   {
-    "host": "flowise.empresa.com",
     "arquivos": 2
    },
    {
@@ -2255,11 +2201,11 @@
     "arquivos": 2
    },
    {
-    "host": "img.jpg",
+    "host": "linkedin.com",
     "arquivos": 2
    },
    {
-    "host": "linkedin.com",
+    "host": "local.invalid",
     "arquivos": 2
    },
    {
@@ -2267,7 +2213,7 @@
     "arquivos": 2
    },
    {
-    "host": "outro.exemplo.com",
+    "host": "loja.example",
     "arquivos": 2
    },
    {
@@ -2279,15 +2225,11 @@
     "arquivos": 2
    },
    {
-    "host": "projeto-teste.local",
-    "arquivos": 2
-   },
-   {
     "host": "provedor-ia.test",
     "arquivos": 2
    },
    {
-    "host": "sticker.webp",
+    "host": "storage.invalid",
     "arquivos": 2
    },
    {
@@ -2296,14 +2238,6 @@
    },
    {
     "host": "supabase.test",
-    "arquivos": 2
-   },
-   {
-    "host": "teste.local",
-    "arquivos": 2
-   },
-   {
-    "host": "tnnnlkbymytvtqngbbqh.functions.supabase.co",
     "arquivos": 2
    },
    {
@@ -2316,10 +2250,6 @@
    },
    {
     "host": "va.vercel-scripts.com",
-    "arquivos": 2
-   },
-   {
-    "host": "vpkmqeumtxhrwgawxdrl.supabase.co",
     "arquivos": 2
    },
    {
@@ -2399,11 +2329,19 @@
     "arquivos": 1
    },
    {
+    "host": "app.test",
+    "arquivos": 1
+   },
+   {
     "host": "atacante.local",
     "arquivos": 1
    },
    {
     "host": "atomicabr.com.br",
+    "arquivos": 1
+   },
+   {
+    "host": "audio.ogg",
     "arquivos": 1
    },
    {
@@ -2424,10 +2362,6 @@
    },
    {
     "host": "blog.exemplo.com",
-    "arquivos": 1
-   },
-   {
-    "host": "bot.exemplo",
     "arquivos": 1
    },
    {
@@ -2463,10 +2397,6 @@
     "arquivos": 1
    },
    {
-    "host": "chat.exemplo",
-    "arquivos": 1
-   },
-   {
     "host": "cid.mmg.whatsapp.net",
     "arquivos": 1
    },
@@ -2476,10 +2406,6 @@
    },
    {
     "host": "db.interno.test",
-    "arquivos": 1
-   },
-   {
-    "host": "dify.exemplo",
     "arquivos": 1
    },
    {
@@ -2507,10 +2433,6 @@
     "arquivos": 1
    },
    {
-    "host": "evoai.exemplo",
-    "arquivos": 1
-   },
-   {
     "host": "evolution.example",
     "arquivos": 1
    },
@@ -2528,10 +2450,6 @@
    },
    {
     "host": "exemplo.com.br",
-    "arquivos": 1
-   },
-   {
-    "host": "flowise.exemplo",
     "arquivos": 1
    },
    {
@@ -2583,6 +2501,10 @@
     "arquivos": 1
    },
    {
+    "host": "img.jpg",
+    "arquivos": 1
+   },
+   {
     "host": "img.remoto.test",
     "arquivos": 1
    },
@@ -2627,10 +2549,6 @@
     "arquivos": 1
    },
    {
-    "host": "n8n.exemplo",
-    "arquivos": 1
-   },
-   {
     "host": "noticia.test",
     "arquivos": 1
    },
@@ -2660,6 +2578,10 @@
    },
    {
     "host": "outro.com",
+    "arquivos": 1
+   },
+   {
+    "host": "outro.exemplo.com",
     "arquivos": 1
    },
    {
@@ -2716,6 +2638,10 @@
    },
    {
     "host": "projeto-errado.supabase.co",
+    "arquivos": 1
+   },
+   {
+    "host": "projeto-teste.local",
     "arquivos": 1
    },
    {
@@ -2783,6 +2709,14 @@
     "arquivos": 1
    },
    {
+    "host": "signed.invalid",
+    "arquivos": 1
+   },
+   {
+    "host": "sticker.webp",
+    "arquivos": 1
+   },
+   {
     "host": "suaempresa.com",
     "arquivos": 1
    },
@@ -2807,6 +2741,14 @@
     "arquivos": 1
    },
    {
+    "host": "teste.local",
+    "arquivos": 1
+   },
+   {
+    "host": "tnnnlkbymytvtqngbbqh.functions.supabase.co",
+    "arquivos": 1
+   },
+   {
     "host": "tnnnlkbymytvtqngbbqh.supabase.co.evil.test",
     "arquivos": 1
    },
@@ -2819,15 +2761,15 @@
     "arquivos": 1
    },
    {
-    "host": "typebot.exemplo",
-    "arquivos": 1
-   },
-   {
     "host": "untrusted.example.invalid",
     "arquivos": 1
    },
    {
     "host": "vimeo.com",
+    "arquivos": 1
+   },
+   {
+    "host": "vpkmqeumtxhrwgawxdrl.supabase.co",
     "arquivos": 1
    },
    {
@@ -2985,14 +2927,12 @@
    "smoke-messages",
    "talkx-logs-${campaignId}",
    "talkx-mon-${campaignId}",
-   "team-chat-notifications:${profile.id}",
    "team-chat-updates",
    "team-messages-${conversationId}",
    "team-presence-${conversationId}",
    "team-reactions-${conversationId}",
    "team-read-state-${conversationId}",
    "team-typing-${conversationId}",
-   "team-unread-${conversationId}",
    "termino-remoto-${callIdEmCurso}",
    "typing:${contact.id}",
    "warroom-alerts-realtime",
@@ -3004,66 +2944,54 @@
   "papeis_no_codigo": [
    {
     "papel": "alert",
-    "ocorrencias": 145
+    "ocorrencias": 127
    },
    {
     "papel": "status",
-    "ocorrencias": 130
+    "ocorrencias": 113
    },
    {
     "papel": "admin",
-    "ocorrencias": 79
+    "ocorrencias": 71
    },
    {
     "papel": "agent",
-    "ocorrencias": 73
-   },
-   {
-    "papel": "user",
-    "ocorrencias": 61
+    "ocorrencias": 63
    },
    {
     "papel": "supervisor",
-    "ocorrencias": 43
+    "ocorrencias": 39
+   },
+   {
+    "papel": "user",
+    "ocorrencias": 38
    },
    {
     "papel": "dialog",
-    "ocorrencias": 36
-   },
-   {
-    "papel": "button",
-    "ocorrencias": 26
-   },
-   {
-    "papel": "region",
-    "ocorrencias": 26
-   },
-   {
-    "papel": "group",
-    "ocorrencias": 25
+    "ocorrencias": 30
    },
    {
     "papel": "img",
-    "ocorrencias": 22
-   },
-   {
-    "papel": "authenticated",
     "ocorrencias": 21
    },
    {
-    "papel": "tab",
+    "papel": "region",
+    "ocorrencias": 21
+   },
+   {
+    "papel": "button",
     "ocorrencias": 20
    },
    {
-    "papel": "tablist",
-    "ocorrencias": 19
+    "papel": "authenticated",
+    "ocorrencias": 18
    },
    {
-    "papel": "listbox",
-    "ocorrencias": 17
+    "papel": "group",
+    "ocorrencias": 18
    },
    {
-    "papel": "option",
+    "papel": "tab",
     "ocorrencias": 16
    },
    {
@@ -3071,27 +2999,23 @@
     "ocorrencias": 15
    },
    {
+    "papel": "tablist",
+    "ocorrencias": 15
+   },
+   {
+    "papel": "listbox",
+    "ocorrencias": 14
+   },
+   {
     "papel": "radiogroup",
     "ocorrencias": 14
    },
    {
-    "papel": "combobox",
-    "ocorrencias": 12
-   },
-   {
-    "papel": "progressbar",
-    "ocorrencias": 12
-   },
-   {
-    "papel": "alertdialog",
-    "ocorrencias": 11
-   },
-   {
-    "papel": "anon",
-    "ocorrencias": 11
-   },
-   {
     "papel": "menuitem",
+    "ocorrencias": 11
+   },
+   {
+    "papel": "option",
     "ocorrencias": 11
    },
    {
@@ -3099,51 +3023,51 @@
     "ocorrencias": 11
    },
    {
-    "papel": "toolbar",
+    "papel": "anon",
     "ocorrencias": 10
+   },
+   {
+    "papel": "progressbar",
+    "ocorrencias": 10
+   },
+   {
+    "papel": "combobox",
+    "ocorrencias": 9
    },
    {
     "papel": "system",
     "ocorrencias": 9
    },
    {
-    "papel": "log",
-    "ocorrencias": 8
-   },
-   {
-    "papel": "menu",
-    "ocorrencias": 8
-   },
-   {
     "papel": "note",
     "ocorrencias": 8
    },
    {
+    "papel": "alertdialog",
+    "ocorrencias": 7
+   },
+   {
+    "papel": "toolbar",
+    "ocorrencias": 7
+   },
+   {
     "papel": "list",
-    "ocorrencias": 7
-   },
-   {
-    "papel": "tabpanel",
-    "ocorrencias": 7
-   },
-   {
-    "papel": "complementary",
     "ocorrencias": 6
    },
    {
-    "papel": "navigation",
+    "papel": "log",
     "ocorrencias": 5
    },
    {
-    "papel": "string",
+    "papel": "menu",
     "ocorrencias": 5
    },
    {
-    "papel": "RH",
-    "ocorrencias": 4
+    "papel": "tabpanel",
+    "ocorrencias": 5
    },
    {
-    "papel": "presentation",
+    "papel": "complementary",
     "ocorrencias": 4
    },
    {
@@ -3171,6 +3095,14 @@
     "ocorrencias": 3
    },
    {
+    "papel": "navigation",
+    "ocorrencias": 3
+   },
+   {
+    "papel": "presentation",
+    "ocorrencias": 3
+   },
+   {
     "papel": "row",
     "ocorrencias": 3
    },
@@ -3187,11 +3119,7 @@
     "ocorrencias": 3
    },
    {
-    "papel": "driver",
-    "ocorrencias": 2
-   },
-   {
-    "papel": "edge",
+    "papel": "RH",
     "ocorrencias": 2
    },
    {
@@ -3207,10 +3135,6 @@
     "ocorrencias": 2
    },
    {
-    "papel": "gateway",
-    "ocorrencias": 2
-   },
-   {
     "papel": "gridcell",
     "ocorrencias": 2
    },
@@ -3219,19 +3143,11 @@
     "ocorrencias": 2
    },
    {
-    "papel": "positive",
+    "papel": "string",
     "ocorrencias": 2
    },
    {
     "papel": "switch",
-    "ocorrencias": 2
-   },
-   {
-    "papel": "timer",
-    "ocorrencias": 2
-   },
-   {
-    "papel": "untrusted",
     "ocorrencias": 2
    },
    {
@@ -3263,7 +3179,19 @@
     "ocorrencias": 1
    },
    {
+    "papel": "driver",
+    "ocorrencias": 1
+   },
+   {
+    "papel": "edge",
+    "ocorrencias": 1
+   },
+   {
     "papel": "fundo",
+    "ocorrencias": 1
+   },
+   {
+    "papel": "gateway",
     "ocorrencias": 1
    },
    {
@@ -3288,6 +3216,10 @@
    },
    {
     "papel": "parent",
+    "ocorrencias": 1
+   },
+   {
+    "papel": "positive",
     "ocorrencias": 1
    },
    {
@@ -3327,7 +3259,15 @@
     "ocorrencias": 1
    },
    {
+    "papel": "timer",
+    "ocorrencias": 1
+   },
+   {
     "papel": "unknown",
+    "ocorrencias": 1
+   },
+   {
+    "papel": "untrusted",
     "ocorrencias": 1
    }
   ],
@@ -3665,18 +3605,6 @@
   "total": 16,
   "flags": [
    {
-    "flag": "ENABLE_IMAGE_TRANSFORMATION",
-    "arquivos": 2
-   },
-   {
-    "flag": "FEATURE_REGISTRY",
-    "arquivos": 2
-   },
-   {
-    "flag": "inbox.talk-me",
-    "arquivos": 2
-   },
-   {
     "flag": "ENABLE_ANALYTICS",
     "arquivos": 1
    },
@@ -3690,6 +3618,10 @@
    },
    {
     "flag": "ENABLE_GMAIL_INTEGRATION",
+    "arquivos": 1
+   },
+   {
+    "flag": "ENABLE_IMAGE_TRANSFORMATION",
     "arquivos": 1
    },
    {
@@ -3709,6 +3641,10 @@
     "arquivos": 1
    },
    {
+    "flag": "FEATURE_REGISTRY",
+    "arquivos": 1
+   },
+   {
     "flag": "FEATURE_TILE",
     "arquivos": 1
    },
@@ -3718,6 +3654,10 @@
    },
    {
     "flag": "crm.integration",
+    "arquivos": 1
+   },
+   {
+    "flag": "inbox.talk-me",
     "arquivos": 1
    },
    {

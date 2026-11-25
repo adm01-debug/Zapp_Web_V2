@@ -1,6 +1,6 @@
 # 11 · GLOSSÁRIO, DADOS DE REFERÊNCIA E LACUNAS
 
-> Gerado automaticamente por AI Context Sync v1.3.2 · commit `06a1cbe626` · branch `main` · 2026-11-25 10:17 UTC
+> Gerado automaticamente por AI Context Sync v1.3.2 · commit `5191812994` · branch `main` · 2026-11-25 10:52 UTC
 > Não edite à mão — regras humanas vão em `manual/`.
 
 ## Glossário do domínio (entidades do sistema)
@@ -245,69 +245,69 @@
 | `multiplix_block_type` (enum) | text, voice_ai, audio_recorded, file |  | banco |
 | `multiplix_eligibility` (enum) | eligible, no_destination, suppressed, out_of_scope, media_pending, connection_unavailable, requires_template |  | banco |
 | `talkx_blacklist_reason` (enum) | opt_out, bounce, spam, manual, other |  | banco |
-| `TalkXTone` (TS) | primary \| danger \| success \| violet |  | `analise-prs/resgate-261118-lote3/claude/busy-cannon-40szm9/src/components/talkx/kit/dialogs.tsx` |
-| `DeadlineFeasibility` (TS) | ok \| tight \| impossible |  | `analise-prs/resgate-261118-lote3/claude/feat-copiloto-edges-261101-1330/src/hooks/copilot/useDeadlineCalculator.ts` |
-| `LeadTemperature` (TS) | cold \| warm \| hot |  | `analise-prs/resgate-261118-lote3/claude/feat-copiloto-edges-261101-1330/src/hooks/copilot/useLeadThermometer.ts` |
-| `LossRiskLevel` (TS) | low \| medium \| high |  | `analise-prs/resgate-261118-lote3/claude/feat-copiloto-edges-261101-1330/src/hooks/copilot/useLossRiskDetector.ts` |
-| `ObjeçãoType` (TS) | preco \| prazo \| quantidade_minima \| concorrente \| chefe \| qualidade \| frete \| generica |  | `analise-prs/resgate-261118-lote3/claude/feat-copiloto-edges-261101-1330/src/hooks/copilot/useObjectionHandler.ts` |
-| `DeadlineFeasibility` (TS) | ok \| tight \| impossible |  | `analise-prs/resgate-261118-lote3/claude/feat-copiloto-hooks-261101-1500/src/hooks/copilot/useDeadlineCalculator.ts` |
-| `LeadTemperature` (TS) | cold \| warm \| hot |  | `analise-prs/resgate-261118-lote3/claude/feat-copiloto-hooks-261101-1500/src/hooks/copilot/useLeadThermometer.ts` |
-| `LossRiskLevel` (TS) | low \| medium \| high |  | `analise-prs/resgate-261118-lote3/claude/feat-copiloto-hooks-261101-1500/src/hooks/copilot/useLossRiskDetector.ts` |
-| `ObjeçãoType` (TS) | preco \| prazo \| quantidade_minima \| concorrente \| chefe \| qualidade \| frete \| generica |  | `analise-prs/resgate-261118-lote3/claude/feat-copiloto-hooks-261101-1500/src/hooks/copilot/useObjectionHandler.ts` |
-| `DeliveryErrorCode` (TS) | invalid_number \| instance_unavailable \| provider_rejected \| provider_unavailable \| rate_limited \| in_progress \| receipt_unconfirmed \| media_invalid |  | `analise-prs/resgate-261118-lote3/claude/feat-message-delivery-post-iniciado-261101-1937/supabase/functions/message-delivery/index.ts` |
-| `TalkXWorkerState` (TS) | sending \| stalled \| paused_manual \| paused_auto \| done |  | `analise-prs/resgate-261118-lote3/claude/feat-pausa-entrega-campanhas-261101-1400/src/components/talkx/tracking/talkxHealth.ts` |
-| `BrindeLetter` (TS) | B \| R \| I \| N \| D \| E |  | `analise-prs/resgate-261118-lote3/claude/feat-radar-motor-telas-261101-1330/src/hooks/copilot/useCopilotSession.ts` |
-| `SALE_STAGES` (TS) | "novo_contato", "qualificando", "apresentando", "negociando", "fechando", "pos_venda", "perdido", |  | `analise-prs/resgate-261118-lote3/claude/feat-radar-motor-telas-261101-1330/supabase/functions/_shared/copilot-tick.ts` |
-| `DECISION_ROLES` (TS) | "buyer", "user", "approver", "intermediary", "unknown" |  | `analise-prs/resgate-261118-lote3/claude/feat-radar-motor-telas-261101-1330/supabase/functions/_shared/copilot-tick.ts` |
-| `SUGGESTION_PATHS` (TS) | "avancar", "descobrir", "relacionar" |  | `analise-prs/resgate-261118-lote3/claude/feat-radar-motor-telas-261101-1330/supabase/functions/_shared/copilot-tick.ts` |
-| `TalkXTopView` (TS) | tabs \| wizard \| monitor \| scheduled \| running \| paused |  | `analise-prs/resgate-261118-lote3/claude/feat-talkx-x054-cmdk-261108-0100/src/components/talkx/TalkXView.tsx` |
-| `SuppressionActivityAction` (TS) | add \| remove \| update \| import \| export |  | `analise-prs/resgate-261118-lote3/claude/fix-db-guard-pguser-261019-1430/src/hooks/integrations/useTalkXSuppression.ts` |
-| `SUPPRESSION_ACTIVITY_EVENT_TYPES` (TS) | 'suppression_add', 'suppression_remove', 'suppression_update', 'suppression_import', 'suppression_export', |  | `analise-prs/resgate-261118-lote3/claude/fix-db-guard-pguser-261019-1430/src/hooks/integrations/useTalkXSuppression.ts` |
-| `RadarPanelMode` (TS) | mini \| normal \| focus |  | `analise-prs/resgate-261118-lote3/claude/fix-radar-fase6-cv056-shortcuts-261108-2335/src/hooks/copilot/useRadarPanel.ts` |
-| `RuleField` (TS) | tags \| company \| contact_type \| conversation_status \| channel_type \| consent_status \| lead_score \| risk_score \| ai_priority \| ai_sentiment \| lead_origin \| updated_at \| created_at \| email \| city \| state \| assigned_to \| group_category \| real_sector \| real_uf |  | `analise-prs/resgate-261118-lote3/claude/fix-unit-tests-src-261024-1630/src/hooks/integrations/useTalkXSegments.ts` |
-| `RuleOp` (TS) | eq \| neq \| contains \| not_contains \| gt \| gte \| lt \| lte \| in_last_days \| not_in_last_days \| is_set \| is_empty |  | `analise-prs/resgate-261118-lote3/claude/fix-unit-tests-src-261024-1630/src/hooks/integrations/useTalkXSegments.ts` |
-| `SegmentJoin` (TS) | and \| or |  | `analise-prs/resgate-261118-lote3/claude/fix-unit-tests-src-261024-1630/src/hooks/integrations/useTalkXSegments.ts` |
-| `TalkXSegmentBulkAction` (TS) | draft \| activate \| deactivate \| archive \| tag |  | `analise-prs/resgate-261118-lote3/claude/fix-unit-tests-src-261024-1630/src/hooks/integrations/useTalkXSegments.ts` |
-| `TalkXSegmentsViewMode` (TS) | list \| grid |  | `analise-prs/resgate-261118-lote3/claude/fix-unit-tests-src-261024-1630/src/hooks/integrations/useTalkXSegments.ts` |
-| `LIBRARY_STATS_QUERY_KEY` (TS) | 'talkx-segment-library-stats', SEGMENT_TIMEZONE |  | `analise-prs/resgate-261118-lote3/claude/fix-unit-tests-src-261024-1630/src/hooks/integrations/useTalkXSegments.ts` |
-| `MainTab` (TS) | open \| resolved \| search |  | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/inbox/conversation-list/StatusChips.tsx` |
-| `SubTab` (TS) | attending \| waiting |  | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/inbox/conversation-list/StatusChips.tsx` |
-| `ChipTab` (TS) | all \| unread \| attending \| waiting \| resolved \| archived |  | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/inbox/conversation-list/StatusChips.tsx` |
-| `TalkXTopView` (TS) | tabs \| wizard \| monitor \| scheduled \| running \| paused |  | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/talkx/TalkXView.tsx` |
-| `AudienceSource` (TS) | contacts \| segment \| crm360 |  | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/talkx/useCampaignEditor.ts` |
-| `RuleField` (TS) | tags \| company \| contact_type \| conversation_status \| channel_type \| consent_status \| lead_score \| risk_score \| ai_priority \| ai_sentiment \| lead_origin \| updated_at \| created_at \| email \| city \| state \| assigned_to \| group_category \| real_sector \| real_uf |  | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/hooks/integrations/useTalkXSegments.ts` |
-| `RuleOp` (TS) | eq \| neq \| contains \| not_contains \| gt \| gte \| lt \| lte \| in_last_days \| not_in_last_days \| is_set \| is_empty |  | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/hooks/integrations/useTalkXSegments.ts` |
-| `SegmentJoin` (TS) | and \| or |  | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/hooks/integrations/useTalkXSegments.ts` |
-| `TalkXSegmentBulkAction` (TS) | draft \| activate \| deactivate \| archive \| tag |  | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/hooks/integrations/useTalkXSegments.ts` |
-| `TalkXSegmentsViewMode` (TS) | list \| grid |  | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/hooks/integrations/useTalkXSegments.ts` |
-| `LIBRARY_STATS_QUERY_KEY` (TS) | 'talkx-segment-library-stats', SEGMENT_TIMEZONE |  | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/hooks/integrations/useTalkXSegments.ts` |
-| `HealthStatus` (TS) | healthy \| degraded \| down \| unauthorized \| unknown |  | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/hooks/system/useDiagnosticsData.ts` |
-| `OutboundMessageType` (TS) | text \| image \| audio \| video \| document \| sticker \| location |  | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/services/outbound-message.service.ts` |
-| `RuleField` (TS) | tags \| company \| contact_type \| conversation_status \| channel_type \| consent_status \| lead_score \| risk_score \| ai_priority \| ai_sentiment \| lead_origin \| updated_at \| created_at \| email \| city \| state \| assigned_to \| group_category \| real_sector \| real_uf |  | `analise-prs/resgate-261118-lote3/claude/kind-gates-87mwoe/src/hooks/integrations/useTalkXSegments.ts` |
-| `RuleOp` (TS) | eq \| neq \| contains \| not_contains \| gt \| gte \| lt \| lte \| in_last_days \| not_in_last_days \| is_set \| is_empty |  | `analise-prs/resgate-261118-lote3/claude/kind-gates-87mwoe/src/hooks/integrations/useTalkXSegments.ts` |
-| `SegmentJoin` (TS) | and \| or |  | `analise-prs/resgate-261118-lote3/claude/kind-gates-87mwoe/src/hooks/integrations/useTalkXSegments.ts` |
-| `TalkXSegmentBulkAction` (TS) | draft \| activate \| deactivate \| archive \| tag |  | `analise-prs/resgate-261118-lote3/claude/kind-gates-87mwoe/src/hooks/integrations/useTalkXSegments.ts` |
-| `TalkXSegmentsViewMode` (TS) | list \| grid |  | `analise-prs/resgate-261118-lote3/claude/kind-gates-87mwoe/src/hooks/integrations/useTalkXSegments.ts` |
-| `LIBRARY_STATS_QUERY_KEY` (TS) | 'talkx-segment-library-stats', SEGMENT_TIMEZONE |  | `analise-prs/resgate-261118-lote3/claude/kind-gates-87mwoe/src/hooks/integrations/useTalkXSegments.ts` |
-| `HealthStatus` (TS) | healthy \| degraded \| down \| unauthorized \| unknown |  | `analise-prs/resgate-261118-lote3/claude/kind-gates-87mwoe/src/hooks/system/useDiagnosticsData.ts` |
-| `HealthStatus` (TS) | healthy \| degraded \| down \| unauthorized \| unknown |  | `analise-prs/resgate-261118-lote3/claude/magical-pasteur-iz2pgy/src/hooks/system/useDiagnosticsData.ts` |
-| `WorkItemDateFormat` (TS) | datetime \| day |  | `analise-prs/resgate-261118-lote3/claude/magical-pasteur-iz2pgy/src/hooks/tasks/workItemFormat.ts` |
-| `MES_CURTO_PT_BR` (TS) | 'jan.', 'fev.', 'mar.', 'abr.', 'mai.', 'jun.', 'jul.', 'ago.', 'set.', 'out.', 'nov.', 'dez.', |  | `analise-prs/resgate-261118-lote3/claude/magical-pasteur-iz2pgy/src/hooks/tasks/workItemFormat.ts` |
-| `BrindeLetter` (TS) | B \| R \| I \| N \| D \| E |  | `analise-prs/resgate-261118-lote3/claude/radar-motor-copilot-live-301030/src/hooks/copilot/useCopilotSession.ts` |
-| `SALE_STAGES` (TS) | "novo_contato", "qualificando", "apresentando", "negociando", "fechando", "pos_venda", "perdido", |  | `analise-prs/resgate-261118-lote3/claude/radar-motor-copilot-live-301030/supabase/functions/_shared/copilot-tick.ts` |
-| `SUGGESTION_PATHS` (TS) | "avancar", "descobrir", "relacionar" |  | `analise-prs/resgate-261118-lote3/claude/radar-motor-copilot-live-301030/supabase/functions/_shared/copilot-tick.ts` |
-| `HealthStatus` (TS) | healthy \| degraded \| down \| unauthorized \| unknown |  | `analise-prs/resgate-261118-lote3/claude_05/festive-carson-ub43wu/src/hooks/system/useDiagnosticsData.ts` |
-| `GmailHistoryResetOutcome` (TS) | reset \| conflict |  | `analise-prs/resgate-261118-lote3/claude_pink/cool-dijkstra-xk9ek2/supabase/functions/_shared/gmail-helpers.ts` |
-| `GmailAccountFailure` (TS) | reauth_required \| error |  | `analise-prs/resgate-261118-lote3/claude_pink/cool-dijkstra-xk9ek2/supabase/functions/_shared/gmail-helpers.ts` |
-| `AudienceSource` (TS) | contacts \| segment \| crm360 |  | `analise-prs/resgate-261118-lote3/codex/publish-followup-20261021/src/components/talkx/useCampaignEditor.ts` |
-| `RuleField` (TS) | tags \| company \| contact_type \| conversation_status \| channel_type \| consent_status \| lead_score \| risk_score \| ai_priority \| ai_sentiment \| lead_origin \| updated_at \| created_at \| email \| city \| state \| assigned_to \| group_category \| real_sector \| real_uf |  | `analise-prs/resgate-261118-lote3/codex/publish-followup-20261021/src/hooks/integrations/useTalkXSegments.ts` |
-| `RuleOp` (TS) | eq \| neq \| contains \| not_contains \| gt \| gte \| lt \| lte \| in_last_days \| not_in_last_days \| is_set \| is_empty |  | `analise-prs/resgate-261118-lote3/codex/publish-followup-20261021/src/hooks/integrations/useTalkXSegments.ts` |
-| `SegmentJoin` (TS) | and \| or |  | `analise-prs/resgate-261118-lote3/codex/publish-followup-20261021/src/hooks/integrations/useTalkXSegments.ts` |
-| `TalkXSegmentBulkAction` (TS) | draft \| activate \| deactivate \| archive \| tag |  | `analise-prs/resgate-261118-lote3/codex/publish-followup-20261021/src/hooks/integrations/useTalkXSegments.ts` |
-| `TalkXSegmentsViewMode` (TS) | list \| grid |  | `analise-prs/resgate-261118-lote3/codex/publish-followup-20261021/src/hooks/integrations/useTalkXSegments.ts` |
-| `LIBRARY_STATS_QUERY_KEY` (TS) | 'talkx-segment-library-stats', SEGMENT_TIMEZONE |  | `analise-prs/resgate-261118-lote3/codex/publish-followup-20261021/src/hooks/integrations/useTalkXSegments.ts` |
-| `HealthLevel` (TS) | healthy \| degraded \| disconnected |  | `analise-prs/resgate-261118-lote3/codex/publish-followup-20261021/supabase/functions/connection-health-check/index.ts` |
-| … +449 linhas — lista completa em `context.json` | | | |
+| `CHAVE_TAREFAS_AGENDADAS` (TS) | 'admin-cron-jobs' |  | `src/components/admin/useTarefasAgendadas.ts` |
+| `TriggerConfigInput` (TS) | keywords \| number \| text |  | `src/components/automations/automationConstants.ts` |
+| `CanalDeSaida` (TS) | voip \| whatsapp |  | `src/components/calls/NewCallPanel.tsx` |
+| `PERIODOS` (TS) | { value: 'hoje', label: 'Hoje' }, { value: 'ontem', label: 'Ontem' }, { value: '7d', label: '7 dias' }, { value: '30d', label: '30 dias' }, { value: 'mes', label: 'Este mês' }, { value: 'mes_passado', label: 'Mês passado' }, |  | `src/components/calls/periodos.ts` |
+| `CatalogRailAlertId` (TS) | sync \| low_stock |  | `src/components/catalog/CatalogRail.tsx` |
+| `CatalogRailFilterKey` (TS) | in_stock \| featured \| new_30d |  | `src/components/catalog/CatalogRail.tsx` |
+| `CATALOG_RAIL_TIPS` (TS) | 'Use "Enviar" no card para mandar o produto direto no WhatsApp do contato.', 'Filtre por "Em destaque" para montar uma seleção pronta antes da reunião.', 'O filtro "Novidades" mostra o que entrou nos últimos 30 dias — bom para prospecção.', 'Estoque baixo aparece no rail: priorize esses brindes ante … |  | `src/components/catalog/CatalogRail.tsx` |
+| `ProductBadgeKind` (TS) | out \| bestseller \| new \| featured \| instock |  | `src/components/catalog/catalogShared.tsx` |
+| `MessageTemplate` (TS) | formal \| informal \| promo |  | `src/components/catalog/sendProductUtils.ts` |
+| `SendMode` (TS) | product \| variant |  | `src/components/catalog/sendProductUtils.ts` |
+| `EDGE_CONDITIONS` (TS) | { value: 'true', label: 'Verdadeiro' }, { value: 'false', label: 'Falso' }, |  | `src/components/chatbot/chatbotNodeConfig.ts` |
+| `PRESENCE_OPTIONS` (TS) | { value: 'available', label: 'Disponível (online)' }, { value: 'unavailable', label: 'Indisponível (offline)' }, |  | `src/components/connections/instancePresenceOptions.ts` |
+| `ContactViewMode` (TS) | grid \| list \| table \| map \| kanban \| analytics |  | `src/components/contacts/ContactViewSwitcher.tsx` |
+| `AlertLevel` (TS) | ok \| warning \| critical |  | `src/components/copilot/SpeedToLeadAlert.tsx` |
+| `TransparencyLabelVariant` (TS) | inline \| banner \| badge |  | `src/components/copilot/TransparencyLabel.tsx` |
+| `SystemHealthGrade` (TS) | excelente \| bom \| atencao \| critico |  | `src/components/dashboard/systemHealth.ts` |
+| `SystemHealthTone` (TS) | success \| info \| warning \| danger |  | `src/components/dashboard/systemHealth.ts` |
+| `SystemHealthItemStatus` (TS) | ok \| warn \| bad |  | `src/components/dashboard/systemHealth.ts` |
+| `SystemHealthItemId` (TS) | connections \| failures \| stalled |  | `src/components/dashboard/systemHealth.ts` |
+| `GoalStatusTone` (TS) | success \| primary \| warning \| destructive |  | `src/components/dashboard/goals/goalsStatus.ts` |
+| `TrendDirection` (TS) | up \| down \| neutral |  | `src/components/dashboard/metrics/types.ts` |
+| `MetricSize` (TS) | sm \| md \| lg \| xl |  | `src/components/dashboard/metrics/types.ts` |
+| `MetricVariant` (TS) | default \| success \| warning \| danger \| info |  | `src/components/dashboard/metrics/types.ts` |
+| `MOTIVATION_PHRASES` (TS) | 'Disciplina hoje, resultados amanhã.', 'Cada conversa é uma oportunidade.', 'Constância vence intensidade.', 'Um passo de cada vez, sempre em frente.', 'Excelência é hábito, não acidente.', 'Foco no cliente, resultado garantido.', 'Hoje é um bom dia para superar ontem.', |  | `src/components/dashboard/overview/motivationPhrases.ts` |
+| `SLARateTone` (TS) | success \| warning \| destructive |  | `src/components/dashboard/sla/slaRate.ts` |
+| `FeatureState` (TS) | active \| disabled |  | `src/components/docs/featuresSectionsData.ts` |
+| `AchievementType` (TS) | fast_response \| streak \| first_message \| resolution \| perfect_rating \| level_up \| daily_goal \| speed_demon \| achievement |  | `src/components/gamification/AchievementToast.tsx` |
+| `GameType` (TS) | speed-typing \| quiz \| response-match \| emoji-decode |  | `src/components/gamification/miniGamesData.ts` |
+| `EPHEMERAL_OPTIONS` (TS) | { value: '0', label: 'Desligado' }, { value: '86400', label: '24 horas' }, { value: '604800', label: '7 dias' }, { value: '7776000', label: '90 dias' }, |  | `src/components/groups/groupEvolutionOptions.ts` |
+| `MediaVolumeControlVariant` (TS) | bubble \| overlay \| sidebar |  | `src/components/inbox/MediaVolumeControl.tsx` |
+| `TransferTargetType` (TS) | agent \| queue |  | `src/components/inbox/TransferDialog.tsx` |
+| `ResultType` (TS) | message \| contact \| transcription \| action \| crm |  | `src/components/inbox/useGlobalSearchData.ts` |
+| `DateFilter` (TS) | all \| today \| 7days \| 30days \| 90days |  | `src/components/inbox/useGlobalSearchData.ts` |
+| `MediaTypeFilter` (TS) | all \| text \| image \| video \| audio \| document \| link |  | `src/components/inbox/useGlobalSearchData.ts` |
+| `AnalysisPeriod` (TS) | all \| last_interaction \| today \| 3d \| 7d \| 14d \| 30d \| 90d \| custom |  | `src/components/inbox/ai-tools/PeriodFilterSelector.tsx` |
+| `ConversationTab` (TS) | chat \| files \| ia \| crm \| orders \| history \| tasks \| notes |  | `src/components/inbox/chat/ConversationTabs.tsx` |
+| `DialogKey` (TS) | quickReplies \| slashCommands \| transferDialog \| scheduleDialog \| callDialog \| globalSearch \| chatSearch \| interactiveBuilder \| forwardDialog \| locationPicker \| aiAssistant \| catalogDirect \| whisper \| templatesWithVars \| realtimeTranscription \| closeDialog |  | `src/components/inbox/chat/dialogKeys.ts` |
+| `ActiveTool` (TS) | chatSearch \| objections \| university \| aiAssistant \| summary |  | `src/components/inbox/chat/dialogKeys.ts` |
+| `SendTimelineState` (TS) | done \| current \| pending \| error |  | `src/components/inbox/chat/messageSendTimeline.ts` |
+| `EstadoDeEnvio` (TS) | queued \| inFlight \| failed |  | `src/components/inbox/chat/messageSendTimeline.ts` |
+| `MorphState` (TS) | idle \| loading \| success \| error |  | `src/components/inbox/chat/motion/MorphButton.tsx` |
+| `MotionTone` (TS) | info \| primary \| success \| warning \| destructive \| whatsapp |  | `src/components/inbox/chat/motion/tone.ts` |
+| `StoryMediaKind` (TS) | image \| video \| text |  | `src/components/inbox/contact-details/storyUtils.ts` |
+| `SidebarSectionTone` (TS) | blue \| purple \| green |  | `src/components/inbox/contact-details/sidebar/SidebarSection.tsx` |
+| `SinguDetailKind` (TS) | metaprograms \| fears \| decision \| budget \| influencers \| rapport \| objections |  | `src/components/inbox/contact-details/sidebar/SinguProfileDetailSheet.tsx` |
+| `SIDEBAR_SECTIONS` (TS) | 'professional', 'personal', 'singu', 'intelligence', 'delivery', 'memoria', 'atendimento', 'crm360' |  | `src/components/inbox/contact-details/sidebar/sidebarSections.ts` |
+| `ReopenAction` (TS) | reopen \| unarchive |  | `src/components/inbox/conversation-list/ConversationReopenDialog.tsx` |
+| `MainTab` (TS) | open \| resolved \| search |  | `src/components/inbox/conversation-list/StatusChips.tsx` |
+| `SubTab` (TS) | attending \| waiting |  | `src/components/inbox/conversation-list/StatusChips.tsx` |
+| `ChipTab` (TS) | all \| unread \| attending \| waiting \| resolved \| archived |  | `src/components/inbox/conversation-list/StatusChips.tsx` |
+| `SearchStatus` (TS) | idle \| typing \| loading \| ok \| empty \| error \| paused |  | `src/components/inbox/location-picker/useAddressAutocomplete.ts` |
+| `LocationOrigin` (TS) | suggest \| forward \| click \| gps |  | `src/components/inbox/location-picker/useLocationPicker.ts` |
+| `FileThumbSize` (TS) | card \| row \| cell |  | `src/components/inbox/tabs/FileThumb.tsx` |
+| `KpiTone` (TS) | blue \| green \| purple \| yellow \| red |  | `src/components/inbox/tabs/KpiStrip.tsx` |
+| `SenderAvatarSize` (TS) | sm \| md |  | `src/components/inbox/tabs/SenderAvatar.tsx` |
+| `DocumentFamily` (TS) | pdf \| sheet \| doc \| ppt \| archive \| generic |  | `src/components/inbox/tabs/fileDisplay.ts` |
+| `GlowToken` (TS) | primary \| success \| warning \| info \| muted |  | `src/components/inbox/tabs/journey/motion/presets.ts` |
+| `TimePeriod` (TS) | 1h \| 6h \| 12h \| 24h \| 7d |  | `src/components/monitoring/hooks/types.ts` |
+| `AlertSeverity` (TS) | critical \| warning |  | `src/components/monitoring/hooks/useConnectionIncidents.ts` |
+| `INSTANCE_PAUSES_QUERY_KEY` (TS) | 'instance-pauses' |  | `src/components/monitoring/hooks/useInstancePauses.ts` |
+| `MetricStatus` (TS) | good \| warning \| critical |  | `src/components/performance/metricThresholds.ts` |
+| `PeriodOption` (TS) | 7d \| 14d \| 30d \| custom |  | `src/components/queues/PeriodSelector.tsx` |
+| … +374 linhas — lista completa em `context.json` | | | |
 
 ## Dados de referência (seed — planos, categorias, perfis fixos)
 
@@ -325,67 +325,7 @@
 |---|---|---|
 | status | valor `Auditar` para `phase` usado no código não existe em nenhum enum do banco/TS | `escreve:analise-prs/resgate-261115/auditoria/ferramentas/auditar-pr.js`<br>`escreve:analise-prs/resgate-261115/auditoria/ferramentas/auditar-veredito.js` |
 | status | valor `Confirmar` para `phase` usado no código não existe em nenhum enum do banco/TS | `escreve:analise-prs/resgate-261115/auditoria/ferramentas/auditar-pr.js`<br>`escreve:analise-prs/resgate-261115/auditoria/ferramentas/auditar-veredito.js` |
-| status | valor `preflight` para `phase` usado no código não existe em nenhum enum do banco/TS | `escreve:analise-prs/resgate-261118-lote3/claude/test-e2e-suite-completa-261104-1428/scripts/e2e-isolated/run.mjs`<br>`escreve:analise-prs/resgate-261118-lote3/claude/test-e2e-tls-diagnostico-261104-1340/scripts/e2e-isolated/run.mjs`<br>`escreve:analise-prs/resgate-261118-lote3/claude/test-e2e-webkit-tls-261104-1430/scripts/e2e-isolated/run.mjs` |
-| status | valor `IMPLEMENTED_AWAITING_RUNTIME_EVIDENCE` para `status` usado no código não existe em nenhum enum do banco/TS | `escreve:analise-prs/resgate-261118-lote3/claude/feat-E90-main-failure-notify-261101-1730/scripts/ci/ci-docs-baseline.unit.mjs`<br>`escreve:analise-prs/resgate-261118-lote3/claude/wizardly-ride-dimxnt/scripts/ci/ci-docs-baseline.unit.mjs`<br>`escreve:analise-prs/resgate-261118-lote3/claude_pink/cool-dijkstra-xk9ek2/scripts/ci/ci-docs-baseline.unit.mjs`<br>`escreve:analise-prs/resgate-261118-lote3/codex/fix-failed-workflows-20261020/scripts/ci/ci-docs-baseline.unit.mjs` |
-| status | valor `PARTIAL` para `status` usado no código não existe em nenhum enum do banco/TS | `escreve:analise-prs/resgate-261118-lote3/claude/feat-E90-main-failure-notify-261101-1730/scripts/ci/ci-docs-baseline.unit.mjs`<br>`escreve:analise-prs/resgate-261118-lote3/claude/fix-ga-resto-sonar-contracts-20261021-0726/scripts/talkx/v4-status.unit.mjs`<br>`escreve:analise-prs/resgate-261118-lote3/claude/wizardly-ride-dimxnt/scripts/ci/ci-docs-baseline.unit.mjs`<br>`escreve:analise-prs/resgate-261118-lote3/claude_pink/cool-dijkstra-xk9ek2/scripts/ci/ci-docs-baseline.unit.mjs` |
-| status | valor `enabled` para `status` usado no código não existe em nenhum enum do banco/TS | `compara:src/components/security/SecuritySettingsPanel.tsx`<br>`escreve:analise-prs/resgate-261118-lote3/claude/fix-db-guard-pguser-261019-1430/scripts/ci/github-settings-guard.unit.mjs`<br>`escreve:analise-prs/resgate-261118-lote3/claude/fix-ga-fase78-perimetro-custo-261020-2200/scripts/ci/github-settings-guard.unit.mjs`<br>`escreve:analise-prs/resgate-261118-lote3/codex/fix-failed-workflows-20261020/scripts/ci/github-settings-guard.unit.mjs` |
-| status | valor `DONE_VERIFIED` para `status` usado no código não existe em nenhum enum do banco/TS | `compara:analise-prs/resgate-261118-lote3/claude/fix-ga-resto-sonar-contracts-20261021-0726/scripts/talkx/v4-status.unit.mjs`<br>`escreve:analise-prs/resgate-261118-lote3/claude/fix-ga-resto-sonar-contracts-20261021-0726/scripts/talkx/v4-status.unit.mjs` |
-| status | valor `QUASE_LA` para `status` usado no código não existe em nenhum enum do banco/TS | `escreve:analise-prs/resgate-261118-lote3/claude/fix-ga-resto-sonar-contracts-20261021-0726/scripts/talkx/v4-status.unit.mjs` |
-| status | valor `SUBSCRIBED` para `status` usado no código não existe em nenhum enum do banco/TS | `compara:analise-prs/resgate-261118-lote3/claude/fix-unit-tests-src-261024-1630/src/hooks/gamification/useAgentCelebrations.ts`<br>`compara:analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/hooks/communication/useAudioMemes.ts`<br>`compara:analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/hooks/team-chat/useTeamMessages.ts`<br>`compara:src/components/inbox/collaboration/ViewersIndicator.tsx` |
-| status | valor `COMPLETED` para `status` usado no código não existe em nenhum enum do banco/TS | `compara:analise-prs/resgate-261118-lote3/claude/ga-ci-batch-ga49-ga54-ga60-ga64-231023/scripts/ci/fila-merge.mjs`<br>`compara:analise-prs/resgate-261118-lote3/claude_04/trusting-newton-duiglt/scripts/ci/fila-merge.mjs`<br>`compara:analise-prs/resgate-261118-lote3/claude_pink/cool-dijkstra-xk9ek2/scripts/ci/fila-merge.mjs`<br>`escreve:analise-prs/resgate-261118-lote3/claude_pink/cool-dijkstra-xk9ek2/scripts/ci/fila-merge.unit.mjs` |
-| status | valor `CHANNEL_ERROR` para `status` usado no código não existe em nenhum enum do banco/TS | `compara:analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/hooks/communication/useAudioMemes.ts`<br>`compara:src/hooks/communication/useAudioMemes.ts`<br>`compara:src/hooks/realtime/useSupabaseRealtime.ts`<br>`compara:src/hooks/team-chat/useTeamConversations.ts` |
-| status | valor `TIMED_OUT` para `status` usado no código não existe em nenhum enum do banco/TS | `compara:analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/hooks/communication/useAudioMemes.ts`<br>`compara:src/hooks/communication/useAudioMemes.ts`<br>`compara:src/hooks/realtime/useSupabaseRealtime.ts`<br>`compara:src/hooks/team-chat/useTeamConversations.ts` |
-| status | valor `string` para `status` usado no código não existe em nenhum enum do banco/TS | `compara:analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/services/outbound-message.service.ts`<br>`compara:analise-prs/resgate-261118-lote3/fix/ci-verde-261021/supabase/functions/_shared/evolution-webhook-handlers.ts`<br>`compara:analise-prs/resgate-261118-lote3/fix/ci-workflows-vermelhos/supabase/functions/_shared/evolution-webhook-handlers.ts`<br>`compara:src/lib/calls/terminoRemoto.ts` |
-| status | valor `passed` para `status` usado no código não existe em nenhum enum do banco/TS | `compara:analise-prs/resgate-261118-lote3/claude/test-e2e-suite-completa-261104-1428/scripts/e2e-isolated/results.mjs`<br>`escreve:analise-prs/resgate-261118-lote3/claude/test-e2e-suite-completa-261104-1428/scripts/ci/e2e-isolated-results.unit.mjs` |
-| status | valor `expected` para `status` usado no código não existe em nenhum enum do banco/TS | `compara:analise-prs/resgate-261118-lote3/claude/test-e2e-suite-completa-261104-1428/scripts/e2e-isolated/results.mjs`<br>`escreve:analise-prs/resgate-261118-lote3/claude/test-e2e-suite-completa-261104-1428/scripts/ci/e2e-isolated-results.unit.mjs` |
-| status | valor `flaky` para `status` usado no código não existe em nenhum enum do banco/TS | `compara:analise-prs/resgate-261118-lote3/claude/test-e2e-suite-completa-261104-1428/scripts/e2e-isolated/results.mjs` |
-| status | valor `IN_PROGRESS` para `status` usado no código não existe em nenhum enum do banco/TS | `compara:analise-prs/resgate-261118-lote3/claude_pink/cool-dijkstra-xk9ek2/scripts/ci/fila-merge.mjs`<br>`escreve:analise-prs/resgate-261118-lote3/claude_pink/cool-dijkstra-xk9ek2/scripts/ci/fila-merge.unit.mjs`<br>`escreve:analise-prs/resgate-261118-lote3/f3/strict-false-baseline-20261018/scripts/ci/fila-merge.unit.mjs` |
-| status | valor `QUEUED` para `status` usado no código não existe em nenhum enum do banco/TS | `compara:analise-prs/resgate-261118-lote3/claude_pink/cool-dijkstra-xk9ek2/scripts/ci/fila-merge.mjs` |
-| status | valor `WAITING` para `status` usado no código não existe em nenhum enum do banco/TS | `compara:analise-prs/resgate-261118-lote3/claude_pink/cool-dijkstra-xk9ek2/scripts/ci/fila-merge.mjs` |
-| status | valor `PENDING` para `status` usado no código não existe em nenhum enum do banco/TS | `compara:analise-prs/resgate-261118-lote3/claude_pink/cool-dijkstra-xk9ek2/scripts/ci/fila-merge.mjs` |
-| status | valor `qr_pending` para `status` usado no código não existe em nenhum enum do banco/TS | `compara:analise-prs/resgate-261118-lote3/codex/publish-followup-20261021/supabase/functions/connection-health-check/index.ts`<br>`compara:analise-prs/resgate-261118-lote3/fix/ci-verde-261021/supabase/functions/_shared/evolution-webhook-handlers.ts`<br>`compara:analise-prs/resgate-261118-lote3/fix/ci-verde-261021/supabase/functions/connection-health-check/index.ts`<br>`compara:analise-prs/resgate-261118-lote3/fix/ci-workflows-vermelhos/supabase/functions/_shared/evolution-webhook-handlers.ts` |
-| status | valor `fulfilled` para `status` usado no código não existe em nenhum enum do banco/TS | `compara:analise-prs/resgate-261118-lote3/fix/ci-verde-261021/supabase/functions/gmail-cron-sync/index.ts`<br>`compara:analise-prs/resgate-261118-lote3/fix/ci-workflows-vermelhos/supabase/functions/gmail-cron-sync/index.ts`<br>`compara:src/hooks/analytics/useGoalNotifications.ts`<br>`compara:src/hooks/integrations/useWhatsAppStatus.ts` |
-| status | valor `block` para `status` usado no código não existe em nenhum enum do banco/TS | `compara:analise-prs/resgate-261118-lote3/hermes/robustez-primitivos-ui-2610121626bec5-2610141859e423/src/hooks/evolution/useEvolutionIntegrations.ts`<br>`compara:src/hooks/integrations/useEvolutionApi.ts`<br>`escreve:analise-prs/resgate-261118-lote3/hermes/robustez-primitivos-ui-2610121626bec5-2610141859e423/src/hooks/evolution/useEvolutionIntegrations.ts`<br>`escreve:src/hooks/integrations/useEvolutionApi.ts` |
-| status | valor `required` para `status` usado no código não existe em nenhum enum do banco/TS | `escreve:src/components/auth/ProtectedRoute.tsx` |
-| status | valor `ativo` para `status` usado no código não existe em nenhum enum do banco/TS | `escreve:src/components/crm360/CompanyFormDialog.tsx` |
-| status | valor `uploading` para `status` usado no código não existe em nenhum enum do banco/TS | `compara:src/components/inbox/FileUploader.tsx`<br>`escreve:src/components/inbox/useFileUploadLogic.ts` |
-| status | valor `demo` para `status` usado no código não existe em nenhum enum do banco/TS | `compara:src/components/integrations/IntegrationsHub.tsx`<br>`escreve:src/components/integrations/IntegrationsHub.tsx` |
-| status | valor `verified` para `status` usado no código não existe em nenhum enum do banco/TS | `compara:src/components/mfa/MFASettings.tsx`<br>`compara:src/components/mfa/MFAVerify.tsx`<br>`compara:src/components/security/SecurityOverview.tsx`<br>`compara:src/components/security/SecuritySettingsPanel.tsx` |
-| status | valor `testing` para `status` usado no código não existe em nenhum enum do banco/TS | `compara:src/components/monitoring/MonitoringConnectionsList.tsx`<br>`compara:src/components/monitoring/MonitoringWebhookPanel.tsx`<br>`escreve:src/components/monitoring/hooks/useMonitoringActions.ts` |
-| status | valor `pending_setup` para `status` usado no código não existe em nenhum enum do banco/TS | `compara:src/components/omnichannel/OmnichannelInbox.tsx`<br>`compara:src/components/omnichannel/OmnichannelManager.tsx`<br>`escreve:src/components/omnichannel/OmnichannelManager.tsx` |
-| status | valor `paid` para `status` usado no código não existe em nenhum enum do banco/TS | `compara:src/components/payments/PaymentLinksView.tsx` |
-| status | valor `unmeasured` para `status` usado no código não existe em nenhum enum do banco/TS | `escreve:src/components/security/SecurityOverview.tsx` |
-| status | valor `on` para `status` usado no código não existe em nenhum enum do banco/TS | `compara:src/components/security/SecurityOverview.tsx` |
-| status | valor `off` para `status` usado no código não existe em nenhum enum do banco/TS | `compara:src/components/security/SecurityOverview.tsx` |
-| status | valor `fallback` para `status` usado no código não existe em nenhum enum do banco/TS | `compara:src/components/settings/ai-providers/AIProviderHealthPanel.tsx`<br>`compara:supabase/functions/_shared/ai-usage.ts` |
-| status | valor `decided` para `status` usado no código não existe em nenhum enum do banco/TS | `compara:src/components/talkx/TalkXCampaignRunning.tsx`<br>`compara:src/hooks/integrations/useTalkXAbStats.ts`<br>`escreve:src/hooks/integrations/useTalkXAbStats.ts` |
-| status | valor `insufficient_data` para `status` usado no código não existe em nenhum enum do banco/TS | `compara:src/components/talkx/TalkXCampaignRunning.tsx`<br>`escreve:src/hooks/integrations/useTalkXAbStats.ts` |
-| status | valor `suprimido` para `status` usado no código não existe em nenhum enum do banco/TS | `compara:src/components/talkx/TalkXSuppression.tsx` |
-| status | valor `published` para `status` usado no código não existe em nenhum enum do banco/TS | `compara:src/components/whatsapp-flows/WhatsAppFlowsBuilder.tsx` |
-| status | valor `unverified` para `status` usado no código não existe em nenhum enum do banco/TS | `compara:src/hooks/auth/useMFA.ts` |
-| status | valor `won` para `status` usado no código não existe em nenhum enum do banco/TS | `compara:src/hooks/chat/useConversationHistoryTimeline.ts`<br>`compara:src/hooks/crm/useContactCrm360.ts`<br>`compara:src/lib/journey/mappers.ts` |
-| status | valor `lost` para `status` usado no código não existe em nenhum enum do banco/TS | `compara:src/hooks/chat/useConversationHistoryTimeline.ts`<br>`compara:src/lib/journey/mappers.ts` |
-| status | valor `offer` para `status` usado no código não existe em nenhum enum do banco/TS | `compara:src/hooks/communication/useIncomingCallListener.ts`<br>`compara:supabase/functions/_shared/notification-events.ts` |
-| status | valor `not-found` para `status` usado no código não existe em nenhum enum do banco/TS | `escreve:src/hooks/inbox/useRealtimeInbox.ts` |
-| status | valor `segstatus` para `status` usado no código não existe em nenhum enum do banco/TS | `escreve:src/hooks/integrations/useTalkXSegments.ts` |
-| status | valor `CLOSED` para `status` usado no código não existe em nenhum enum do banco/TS | `compara:src/hooks/realtime/useSupabaseRealtime.ts` |
-| status | valor `request_error` para `status` usado no código não existe em nenhum enum do banco/TS | `compara:supabase/functions/_shared/ai-usage.ts` |
-| status | valor `unblock` para `status` usado no código não existe em nenhum enum do banco/TS | `compara:supabase/functions/_shared/evolution-go-routes.ts` |
-| status | valor `approved_email_failed` para `status` usado no código não existe em nenhum enum do banco/TS | `escreve:supabase/functions/approve-password-reset/index.ts` |
-| status | valor `unhealthy` para `status` usado no código não existe em nenhum enum do banco/TS | `escreve:supabase/functions/health/index.ts` |
-| status | valor `string` para `transcription_status` usado no código não existe em nenhum enum do banco/TS | `compara:supabase/functions/ai-transcribe-audio/index.ts` |
-| status | valor `suspended` para `state` usado no código não existe em nenhum enum do banco/TS | `compara:analise-prs/resgate-261118-lote3/claude/fix-unit-tests-src-261024-1630/src/hooks/chat/useTeamChatNotifications.ts`<br>`compara:analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/hooks/chat/useTeamChatNotifications.ts`<br>`compara:analise-prs/resgate-261118-lote3/claude/magical-pasteur-iz2pgy/src/hooks/chat/useTeamChatNotifications.ts`<br>`compara:analise-prs/resgate-261118-lote3/claude_05/festive-carson-ub43wu/src/hooks/chat/useTeamChatNotifications.ts` |
-| status | valor `SUCCESS` para `state` usado no código não existe em nenhum enum do banco/TS | `compara:analise-prs/resgate-261118-lote3/claude/ga-ci-batch-ga49-ga54-ga60-ga64-231023/scripts/ci/fila-merge.mjs`<br>`compara:analise-prs/resgate-261118-lote3/claude_04/trusting-newton-duiglt/scripts/ci/fila-merge.mjs`<br>`compara:analise-prs/resgate-261118-lote3/claude_pink/cool-dijkstra-xk9ek2/scripts/ci/fila-merge.mjs`<br>`escreve:analise-prs/resgate-261118-lote3/claude_pink/cool-dijkstra-xk9ek2/scripts/ci/fila-merge.unit.mjs` |
-| status | valor `FAILURE` para `state` usado no código não existe em nenhum enum do banco/TS | `compara:analise-prs/resgate-261118-lote3/claude/ga-ci-batch-ga49-ga54-ga60-ga64-231023/scripts/ci/fila-merge.mjs`<br>`compara:analise-prs/resgate-261118-lote3/claude_04/trusting-newton-duiglt/scripts/ci/fila-merge.mjs`<br>`compara:analise-prs/resgate-261118-lote3/claude_pink/cool-dijkstra-xk9ek2/scripts/ci/fila-merge.mjs` |
-| status | valor `ERROR` para `state` usado no código não existe em nenhum enum do banco/TS | `compara:analise-prs/resgate-261118-lote3/claude/ga-ci-batch-ga49-ga54-ga60-ga64-231023/scripts/ci/fila-merge.mjs`<br>`compara:analise-prs/resgate-261118-lote3/claude_04/trusting-newton-duiglt/scripts/ci/fila-merge.mjs`<br>`compara:analise-prs/resgate-261118-lote3/claude_pink/cool-dijkstra-xk9ek2/scripts/ci/fila-merge.mjs` |
-| status | valor `SUBSCRIBED` para `state` usado no código não existe em nenhum enum do banco/TS | `compara:analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/hooks/system/useDiagnosticsData.ts`<br>`compara:analise-prs/resgate-261118-lote3/claude/kind-gates-87mwoe/src/hooks/system/useDiagnosticsData.ts`<br>`compara:analise-prs/resgate-261118-lote3/claude/magical-pasteur-iz2pgy/src/hooks/system/useDiagnosticsData.ts`<br>`compara:analise-prs/resgate-261118-lote3/claude_05/festive-carson-ub43wu/src/hooks/system/useDiagnosticsData.ts` |
-| status | valor `CHANNEL_ERROR` para `state` usado no código não existe em nenhum enum do banco/TS | `compara:analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/hooks/system/useDiagnosticsData.ts`<br>`compara:analise-prs/resgate-261118-lote3/claude/kind-gates-87mwoe/src/hooks/system/useDiagnosticsData.ts`<br>`compara:analise-prs/resgate-261118-lote3/claude/magical-pasteur-iz2pgy/src/hooks/system/useDiagnosticsData.ts`<br>`compara:analise-prs/resgate-261118-lote3/claude_05/festive-carson-ub43wu/src/hooks/system/useDiagnosticsData.ts` |
-| status | valor `TIMED_OUT` para `state` usado no código não existe em nenhum enum do banco/TS | `compara:analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/hooks/system/useDiagnosticsData.ts`<br>`compara:analise-prs/resgate-261118-lote3/claude/kind-gates-87mwoe/src/hooks/system/useDiagnosticsData.ts`<br>`compara:analise-prs/resgate-261118-lote3/claude/magical-pasteur-iz2pgy/src/hooks/system/useDiagnosticsData.ts`<br>`compara:analise-prs/resgate-261118-lote3/claude_05/festive-carson-ub43wu/src/hooks/system/useDiagnosticsData.ts` |
-| status | valor `CLOSED` para `state` usado no código não existe em nenhum enum do banco/TS | `compara:analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/hooks/system/useDiagnosticsData.ts`<br>`compara:analise-prs/resgate-261118-lote3/claude/kind-gates-87mwoe/src/hooks/system/useDiagnosticsData.ts`<br>`compara:analise-prs/resgate-261118-lote3/claude/magical-pasteur-iz2pgy/src/hooks/system/useDiagnosticsData.ts`<br>`compara:analise-prs/resgate-261118-lote3/claude_05/festive-carson-ub43wu/src/hooks/system/useDiagnosticsData.ts` |
-| status | valor `PENDING` para `state` usado no código não existe em nenhum enum do banco/TS | `escreve:analise-prs/resgate-261118-lote3/claude_pink/cool-dijkstra-xk9ek2/scripts/ci/fila-merge.unit.mjs`<br>`escreve:analise-prs/resgate-261118-lote3/f3/strict-false-baseline-20261018/scripts/ci/fila-merge.unit.mjs` |
-| status | valor `string` para `state` usado no código não existe em nenhum enum do banco/TS | `compara:analise-prs/resgate-261118-lote3/fix/ci-verde-261021/supabase/functions/evolution-api/index.ts`<br>`compara:supabase/functions/evolution-api/index.ts` |
-| status | valor `expanded` para `state` usado no código não existe em nenhum enum do banco/TS | `escreve:analise-prs/resgate-261118-lote3/hermes/robustez-primitivos-ui-2610121626bec5-2610141859e423/src/components/ui/sidebar/sidebar-context.tsx` |
-| status | valor `collapsed` para `state` usado no código não existe em nenhum enum do banco/TS | `compara:analise-prs/resgate-261118-lote3/hermes/robustez-primitivos-ui-2610121626bec5-2610141859e423/src/components/ui/sidebar/sidebar-menu.tsx`<br>`compara:analise-prs/resgate-261118-lote3/hermes/robustez-primitivos-ui-2610121626bec5-2610141859e423/src/components/ui/sidebar/sidebar-primitives.tsx` |
+| status | valor `suspended` para `state` usado no código não existe em nenhum enum do banco/TS | `compara:src/components/calls/IncomingCallAlert.tsx`<br>`compara:src/components/monitoring/hooks/useMonitoringNotifications.ts`<br>`compara:src/hooks/chat/useTeamChatNotifications.ts`<br>`compara:src/lib/mediaVolumeElement.ts` |
 | status | valor `object` para `state` usado no código não existe em nenhum enum do banco/TS | `compara:src/components/email/EmailChatInbox.tsx`<br>`compara:src/components/team-chat/TeamChatView.tsx`<br>`compara:src/hooks/system/useNavigationHistory.ts`<br>`compara:src/lib/postLoginRedirect.ts` |
 | status | valor `ativa` para `state` usado no código não existe em nenhum enum do banco/TS | `compara:src/components/monitoring/MonitoringInstancePauses.tsx` |
 | status | valor `retomada` para `state` usado no código não existe em nenhum enum do banco/TS | `compara:src/components/monitoring/MonitoringInstancePauses.tsx` |
@@ -393,6 +333,10 @@
 | status | valor `Registered` para `state` usado no código não existe em nenhum enum do banco/TS | `compara:src/hooks/sip/useSipConnection.ts` |
 | status | valor `Unregistered` para `state` usado no código não existe em nenhum enum do banco/TS | `compara:src/hooks/sip/useSipConnection.ts` |
 | status | valor `Terminated` para `state` usado no código não existe em nenhum enum do banco/TS | `compara:src/hooks/sip/useSipConnection.ts`<br>`compara:src/lib/calls/adapters/CallEngine.ts` |
+| status | valor `SUBSCRIBED` para `state` usado no código não existe em nenhum enum do banco/TS | `compara:src/hooks/system/useDiagnosticsData.ts` |
+| status | valor `CHANNEL_ERROR` para `state` usado no código não existe em nenhum enum do banco/TS | `compara:src/hooks/system/useDiagnosticsData.ts` |
+| status | valor `TIMED_OUT` para `state` usado no código não existe em nenhum enum do banco/TS | `compara:src/hooks/system/useDiagnosticsData.ts` |
+| status | valor `CLOSED` para `state` usado no código não existe em nenhum enum do banco/TS | `compara:src/hooks/system/useDiagnosticsData.ts` |
 | status | valor `Establishing` para `state` usado no código não existe em nenhum enum do banco/TS | `compara:src/lib/calls/adapters/CallEngine.ts` |
 | status | valor `Established` para `state` usado no código não existe em nenhum enum do banco/TS | `compara:src/lib/calls/adapters/CallEngine.ts`<br>`compara:src/lib/calls/adapters/SipCallAdapter.ts` |
 | status | valor `confirmed` para `state` usado no código não existe em nenhum enum do banco/TS | `compara:supabase/functions/_shared/effect-reconcile.ts`<br>`escreve:supabase/functions/_shared/effect-reconcile.ts` |
@@ -402,30 +346,63 @@
 | status | valor `provider_error` para `state` usado no código não existe em nenhum enum do banco/TS | `escreve:supabase/functions/classify-emoji/index.ts`<br>`escreve:supabase/functions/classify-sticker/index.ts` |
 | status | valor `low_confidence` para `state` usado no código não existe em nenhum enum do banco/TS | `escreve:supabase/functions/classify-emoji/index.ts`<br>`escreve:supabase/functions/classify-sticker/index.ts` |
 | status | valor `unexpected_error` para `state` usado no código não existe em nenhum enum do banco/TS | `escreve:supabase/functions/classify-emoji/index.ts`<br>`escreve:supabase/functions/classify-sticker/index.ts` |
-| status | valor `catalog-detail` para `stage` usado no código não existe em nenhum enum do banco/TS | `compara:analise-prs/resgate-261118-lote3/claude/test-e2e-suite-completa-261104-1428/scripts/ci/e2e-isolated-provider-readiness.unit.mjs` |
-| status | valor `rls-storage` para `stage` usado no código não existe em nenhum enum do banco/TS | `compara:analise-prs/resgate-261118-lote3/claude/test-e2e-suite-completa-261104-1428/scripts/ci/e2e-isolated-provider-readiness.unit.mjs` |
-| status | valor `openssl` para `stage` usado no código não existe em nenhum enum do banco/TS | `compara:analise-prs/resgate-261118-lote3/claude/test-e2e-suite-completa-261104-1428/scripts/ci/e2e-isolated-tls.unit.mjs`<br>`compara:analise-prs/resgate-261118-lote3/claude/test-e2e-tls-diagnostico-261104-1340/scripts/ci/e2e-isolated-tls.unit.mjs`<br>`compara:analise-prs/resgate-261118-lote3/claude/test-e2e-webkit-tls-261104-1430/scripts/ci/e2e-isolated-tls.unit.mjs` |
-| status | valor `nss-create` para `stage` usado no código não existe em nenhum enum do banco/TS | `compara:analise-prs/resgate-261118-lote3/claude/test-e2e-suite-completa-261104-1428/scripts/ci/e2e-isolated-tls.unit.mjs`<br>`compara:analise-prs/resgate-261118-lote3/claude/test-e2e-tls-diagnostico-261104-1340/scripts/ci/e2e-isolated-tls.unit.mjs`<br>`compara:analise-prs/resgate-261118-lote3/claude/test-e2e-webkit-tls-261104-1430/scripts/ci/e2e-isolated-tls.unit.mjs` |
+| status | valor `string` para `state` usado no código não existe em nenhum enum do banco/TS | `compara:supabase/functions/evolution-api/index.ts` |
+| status | valor `opt_in` para `consent_status` usado no código não existe em nenhum enum do banco/TS | `escreve:src/adapters/evolutionAdapter.ts` |
+| status | valor `required` para `status` usado no código não existe em nenhum enum do banco/TS | `escreve:src/components/auth/ProtectedRoute.tsx` |
+| status | valor `ativo` para `status` usado no código não existe em nenhum enum do banco/TS | `escreve:src/components/crm360/CompanyFormDialog.tsx` |
+| status | valor `uploading` para `status` usado no código não existe em nenhum enum do banco/TS | `compara:src/components/inbox/FileUploader.tsx`<br>`escreve:src/components/inbox/useFileUploadLogic.ts` |
+| status | valor `SUBSCRIBED` para `status` usado no código não existe em nenhum enum do banco/TS | `compara:src/components/inbox/collaboration/ViewersIndicator.tsx`<br>`compara:src/hooks/analytics/useRealtimeDashboard.ts`<br>`compara:src/hooks/chat/useTypingPresence.ts`<br>`compara:src/hooks/communication/useAudioMemes.ts` |
+| status | valor `demo` para `status` usado no código não existe em nenhum enum do banco/TS | `compara:src/components/integrations/IntegrationsHub.tsx`<br>`escreve:src/components/integrations/IntegrationsHub.tsx` |
+| status | valor `verified` para `status` usado no código não existe em nenhum enum do banco/TS | `compara:src/components/mfa/MFASettings.tsx`<br>`compara:src/components/mfa/MFAVerify.tsx`<br>`compara:src/components/security/SecurityOverview.tsx`<br>`compara:src/components/security/SecuritySettingsPanel.tsx` |
+| status | valor `testing` para `status` usado no código não existe em nenhum enum do banco/TS | `compara:src/components/monitoring/MonitoringConnectionsList.tsx`<br>`compara:src/components/monitoring/MonitoringWebhookPanel.tsx`<br>`escreve:src/components/monitoring/hooks/useMonitoringActions.ts` |
+| status | valor `pending_setup` para `status` usado no código não existe em nenhum enum do banco/TS | `compara:src/components/omnichannel/OmnichannelInbox.tsx`<br>`compara:src/components/omnichannel/OmnichannelManager.tsx`<br>`escreve:src/components/omnichannel/OmnichannelManager.tsx` |
+| status | valor `qr_pending` para `status` usado no código não existe em nenhum enum do banco/TS | `compara:src/components/omnichannel/OmnichannelInbox.tsx`<br>`compara:supabase/functions/_shared/evolution-webhook-handlers.ts`<br>`compara:supabase/functions/connection-health-check/index.ts`<br>`escreve:supabase/functions/_shared/evolution-webhook-handlers.ts` |
+| status | valor `paid` para `status` usado no código não existe em nenhum enum do banco/TS | `compara:src/components/payments/PaymentLinksView.tsx` |
+| status | valor `unmeasured` para `status` usado no código não existe em nenhum enum do banco/TS | `escreve:src/components/security/SecurityOverview.tsx` |
+| status | valor `on` para `status` usado no código não existe em nenhum enum do banco/TS | `compara:src/components/security/SecurityOverview.tsx` |
+| status | valor `off` para `status` usado no código não existe em nenhum enum do banco/TS | `compara:src/components/security/SecurityOverview.tsx` |
+| status | valor `enabled` para `status` usado no código não existe em nenhum enum do banco/TS | `compara:src/components/security/SecuritySettingsPanel.tsx`<br>`escreve:src/components/security/SecuritySettingsPanel.tsx` |
+| status | valor `fallback` para `status` usado no código não existe em nenhum enum do banco/TS | `compara:src/components/settings/ai-providers/AIProviderHealthPanel.tsx`<br>`compara:supabase/functions/_shared/ai-usage.ts` |
+| status | valor `decided` para `status` usado no código não existe em nenhum enum do banco/TS | `compara:src/components/talkx/TalkXCampaignRunning.tsx`<br>`compara:src/hooks/integrations/useTalkXAbStats.ts`<br>`escreve:src/hooks/integrations/useTalkXAbStats.ts` |
+| status | valor `insufficient_data` para `status` usado no código não existe em nenhum enum do banco/TS | `compara:src/components/talkx/TalkXCampaignRunning.tsx`<br>`escreve:src/hooks/integrations/useTalkXAbStats.ts` |
+| status | valor `suprimido` para `status` usado no código não existe em nenhum enum do banco/TS | `compara:src/components/talkx/TalkXSuppression.tsx` |
+| status | valor `published` para `status` usado no código não existe em nenhum enum do banco/TS | `compara:src/components/whatsapp-flows/WhatsAppFlowsBuilder.tsx` |
+| status | valor `fulfilled` para `status` usado no código não existe em nenhum enum do banco/TS | `compara:src/hooks/analytics/useGoalNotifications.ts`<br>`compara:src/hooks/integrations/useWhatsAppStatus.ts`<br>`compara:src/lib/commandPaletteSearch.ts`<br>`compara:supabase/functions/gmail-cron-sync/index.ts` |
+| status | valor `unverified` para `status` usado no código não existe em nenhum enum do banco/TS | `compara:src/hooks/auth/useMFA.ts` |
+| status | valor `won` para `status` usado no código não existe em nenhum enum do banco/TS | `compara:src/hooks/chat/useConversationHistoryTimeline.ts`<br>`compara:src/hooks/crm/useContactCrm360.ts`<br>`compara:src/lib/journey/mappers.ts` |
+| status | valor `lost` para `status` usado no código não existe em nenhum enum do banco/TS | `compara:src/hooks/chat/useConversationHistoryTimeline.ts`<br>`compara:src/lib/journey/mappers.ts` |
+| status | valor `CHANNEL_ERROR` para `status` usado no código não existe em nenhum enum do banco/TS | `compara:src/hooks/communication/useAudioMemes.ts`<br>`compara:src/hooks/realtime/useSupabaseRealtime.ts`<br>`compara:src/hooks/team-chat/useTeamConversations.ts`<br>`compara:src/hooks/team-chat/useTeamMessageReactions.ts` |
+| status | valor `TIMED_OUT` para `status` usado no código não existe em nenhum enum do banco/TS | `compara:src/hooks/communication/useAudioMemes.ts`<br>`compara:src/hooks/realtime/useSupabaseRealtime.ts`<br>`compara:src/hooks/team-chat/useTeamConversations.ts`<br>`compara:src/hooks/team-chat/useTeamMessageReactions.ts` |
+| status | valor `offer` para `status` usado no código não existe em nenhum enum do banco/TS | `compara:src/hooks/communication/useIncomingCallListener.ts`<br>`compara:supabase/functions/_shared/notification-events.ts` |
+| status | valor `not-found` para `status` usado no código não existe em nenhum enum do banco/TS | `escreve:src/hooks/inbox/useRealtimeInbox.ts` |
+| status | valor `block` para `status` usado no código não existe em nenhum enum do banco/TS | `compara:src/hooks/integrations/useEvolutionApi.ts`<br>`escreve:src/hooks/integrations/useEvolutionApi.ts` |
+| status | valor `segstatus` para `status` usado no código não existe em nenhum enum do banco/TS | `escreve:src/hooks/integrations/useTalkXSegments.ts` |
+| status | valor `CLOSED` para `status` usado no código não existe em nenhum enum do banco/TS | `compara:src/hooks/realtime/useSupabaseRealtime.ts` |
+| status | valor `string` para `status` usado no código não existe em nenhum enum do banco/TS | `compara:src/lib/calls/terminoRemoto.ts`<br>`compara:src/services/outbound-message.service.ts`<br>`compara:supabase/functions/_shared/evolution-webhook-handlers.ts`<br>`compara:supabase/functions/elevenlabs-webhook/index.ts` |
+| status | valor `request_error` para `status` usado no código não existe em nenhum enum do banco/TS | `compara:supabase/functions/_shared/ai-usage.ts` |
+| status | valor `unblock` para `status` usado no código não existe em nenhum enum do banco/TS | `compara:supabase/functions/_shared/evolution-go-routes.ts` |
+| status | valor `approved_email_failed` para `status` usado no código não existe em nenhum enum do banco/TS | `escreve:supabase/functions/approve-password-reset/index.ts` |
+| status | valor `unhealthy` para `status` usado no código não existe em nenhum enum do banco/TS | `escreve:supabase/functions/health/index.ts` |
+| status | valor `selectContact` para `step` usado no código não existe em nenhum enum do banco/TS | `compara:src/components/catalog/CatalogBulkSendDialog.tsx`<br>`compara:src/components/catalog/SendProductDialog.tsx`<br>`compara:src/components/catalog/useSendProduct.ts` |
+| status | valor `configure` para `step` usado no código não existe em nenhum enum do banco/TS | `compara:src/components/catalog/SendProductDialog.tsx`<br>`escreve:src/components/catalog/useSendProduct.ts` |
+| status | valor `intro` para `step` usado no código não existe em nenhum enum do banco/TS | `compara:src/components/mfa/MFAEnroll.tsx` |
+| status | valor `qr` para `step` usado no código não existe em nenhum enum do banco/TS | `compara:src/components/mfa/MFAEnroll.tsx` |
+| status | valor `stop` para `step` usado no código não existe em nenhum enum do banco/TS | `compara:supabase/functions/talkx-send/index.ts` |
 | status | valor `loaded` para `stage` usado no código não existe em nenhum enum do banco/TS | `compara:src/components/catalog/catalogShared.tsx`<br>`escreve:src/components/catalog/catalogShared.tsx` |
 | status | valor `string` para `stage` usado no código não existe em nenhum enum do banco/TS | `compara:src/lib/mapboxToken.ts` |
 | status | valor `rpc_error` para `stage` usado no código não existe em nenhum enum do banco/TS | `escreve:supabase/functions/_shared/ai-budget.ts` |
 | status | valor `no_rows` para `stage` usado no código não existe em nenhum enum do banco/TS | `escreve:supabase/functions/_shared/ai-budget.ts` |
 | status | valor `bad_shape` para `stage` usado no código não existe em nenhum enum do banco/TS | `escreve:supabase/functions/_shared/ai-budget.ts` |
 | status | valor `exception` para `stage` usado no código não existe em nenhum enum do banco/TS | `escreve:supabase/functions/_shared/ai-budget.ts` |
-| status | valor `opt_in` para `consent_status` usado no código não existe em nenhum enum do banco/TS | `escreve:src/adapters/evolutionAdapter.ts` |
-| status | valor `selectContact` para `step` usado no código não existe em nenhum enum do banco/TS | `compara:src/components/catalog/CatalogBulkSendDialog.tsx`<br>`compara:src/components/catalog/SendProductDialog.tsx`<br>`compara:src/components/catalog/useSendProduct.ts` |
-| status | valor `configure` para `step` usado no código não existe em nenhum enum do banco/TS | `compara:src/components/catalog/SendProductDialog.tsx`<br>`escreve:src/components/catalog/useSendProduct.ts` |
-| status | valor `intro` para `step` usado no código não existe em nenhum enum do banco/TS | `compara:src/components/mfa/MFAEnroll.tsx` |
-| status | valor `qr` para `step` usado no código não existe em nenhum enum do banco/TS | `compara:src/components/mfa/MFAEnroll.tsx` |
-| status | valor `stop` para `step` usado no código não existe em nenhum enum do banco/TS | `compara:supabase/functions/talkx-send/index.ts` |
 | status | valor `string` para `call_status` usado no código não existe em nenhum enum do banco/TS | `compara:src/hooks/communication/useIncomingCallListener.ts` |
+| status | valor `string` para `transcription_status` usado no código não existe em nenhum enum do banco/TS | `compara:supabase/functions/ai-transcribe-audio/index.ts` |
 | status | valor `string` para `connection_status` usado no código não existe em nenhum enum do banco/TS | `compara:src/hooks/integrations/useTalkXServerResumePrecheck.ts` |
 | coluna | coluna `company_id` usada no código não existe no schema de `contacts` |  |
 | coluna | coluna `company` usada no código não existe no schema de `talkx_blacklist` |  |
 | tabela | tabela `a` usada no código não existe nas migrations/types do repo | `scripts/ai-context/cenarios.mjs` |
 | tabela | tabela `alem_do_limite` usada no código não existe nas migrations/types do repo | `scripts/ci/inventario-rotas.unit.mjs` |
 | tabela | tabela `audit_log` usada no código não existe nas migrations/types do repo | `scripts/ci/supabase-usage-guard-forward-projection.unit.mjs` |
-| tabela | tabela `avatars` usada no código não existe nas migrations/types do repo | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/admin/useAdminData.ts`<br>`src/components/admin/useAdminData.ts`<br>`src/components/settings/AvatarUpload.tsx` |
+| tabela | tabela `avatars` usada no código não existe nas migrations/types do repo | `src/components/admin/useAdminData.ts`<br>`src/components/settings/AvatarUpload.tsx` |
 | tabela | tabela `carriers` usada no código não existe nas migrations/types do repo | `supabase/functions/crm-integration/index.ts` |
 | tabela | tabela `categories` usada no código não existe nas migrations/types do repo | `supabase/functions/promogifts-catalog/index.ts` |
 | tabela | tabela `clientes` usada no código não existe nas migrations/types do repo | `supabase/functions/external-db-bridge/filters-validation.test.ts` |
@@ -434,7 +411,6 @@
 | tabela | tabela `company_addresses` usada no código não existe nas migrations/types do repo | `supabase/functions/crm-integration/index.ts` |
 | tabela | tabela `company_social_media` usada no código não existe nas migrations/types do repo | `supabase/functions/crm-integration/index.ts` |
 | tabela | tabela `contact_phones` usada no código não existe nas migrations/types do repo | `supabase/functions/crm-integration/index.ts` |
-| tabela | tabela `contact_purchases` usada no código não existe nas migrations/types do repo | `analise-prs/resgate-261118-lote3/claude/busy-cannon-40szm9/src/components/contacts/ContactPurchaseHistory.tsx`<br>`analise-prs/resgate-261118-lote3/claude/busy-cannon-40szm9/src/components/inbox/ContactPurchasesPanel.tsx`<br>`analise-prs/resgate-261118-lote3/claude/busy-cannon-40szm9/src/hooks/crm/useContactPurchases.ts`<br>`analise-prs/resgate-261118-lote3/hermes/robustez-primitivos-ui-2610121626bec5-2610141859e423/src/components/inbox/ContactPurchasesPanel.tsx` |
 | tabela | tabela `contatos` usada no código não existe nas migrations/types do repo | `scripts/ci/inventario-banco.unit.mjs` |
 | tabela | tabela `customers` usada no código não existe nas migrations/types do repo | `supabase/functions/crm-integration/index.ts` |
 | tabela | tabela `dashboard_table` usada no código não existe nas migrations/types do repo | `scripts/ai-context/gerar.unit.mjs` |
@@ -474,13 +450,12 @@
 | tabela | tabela `x` usada no código não existe nas migrations/types do repo | `scripts/ci/supabase-usage-guard-forward-projection.unit.mjs`<br>`scripts/db-audit/supabase-usage-guard.mjs` |
 | tabela | tabela `x_novo` usada no código não existe nas migrations/types do repo | `scripts/ci/supabase-usage-guard-forward-projection.unit.mjs` |
 | rls | `ai_jobs`: RLS ligado sem nenhuma política → só service_role acessa |  |
-| rls | `email_threads`: front faz INSERT mas nenhuma política RLS permite INSERT → vai falhar/retornar vazio para usuários | `analise-prs/resgate-261118-lote3/claude_pink/cool-dijkstra-xk9ek2/supabase/functions/_shared/gmail-helpers.ts`<br>`analise-prs/resgate-261118-lote3/fix/ci-verde-261021/supabase/functions/_shared/gmail-helpers.ts`<br>`analise-prs/resgate-261118-lote3/fix/ci-workflows-vermelhos/supabase/functions/_shared/gmail-helpers.ts` |
 | rls | `gmail_oauth_states`: RLS ligado sem nenhuma política → só service_role acessa |  |
 | rls | `link_preview_cache`: RLS ligado sem nenhuma política → só service_role acessa |  |
 | rls | `messages`: front faz DELETE mas nenhuma política RLS permite DELETE → vai falhar/retornar vazio para usuários | `src/components/monitoring/hooks/useMonitoringActions.ts` |
 | rls | `query_telemetry`: front faz SELECT mas nenhuma política RLS permite SELECT → vai falhar/retornar vazio para usuários | `src/pages/AdminTelemetriaPage.tsx` |
 | rls | `talkx_test_send_claims`: RLS ligado sem nenhuma política → só service_role acessa |  |
-| rls | `whisper_messages`: front faz UPDATE mas nenhuma política RLS permite UPDATE → vai falhar/retornar vazio para usuários | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/inbox/WhisperMode.tsx`<br>`src/components/inbox/WhisperMode.tsx` |
+| rls | `whisper_messages`: front faz UPDATE mas nenhuma política RLS permite UPDATE → vai falhar/retornar vazio para usuários | `src/components/inbox/WhisperMode.tsx` |
 | edge | edge function `dashboard-edge` invocada mas não existe em supabase/functions/ | `scripts/ai-context/gerar.unit.mjs` |
 | edge | edge function `edge-a` invocada mas não existe em supabase/functions/ | `scripts/ci/inventario-rotas.unit.mjs` |
 | edge | edge function `fixture-edge` invocada mas não existe em supabase/functions/ | `scripts/ai-context/gerar.unit.mjs` |
@@ -519,11 +494,6 @@
 | rpc | RPC `x` chamada mas não definida nas migrations/types | `scripts/db-audit/supabase-usage-guard.mjs`<br>`scripts/db-audit/supabase-usage-guard.test.mjs`<br>`scripts/inventario/gerar-rotas.mjs` |
 | rpc | RPC `y` chamada mas não definida nas migrations/types | `scripts/db-audit/supabase-usage-guard.mjs` |
 | rpc | RPC `zapp_catalog_stats` chamada mas não definida nas migrations/types | `supabase/functions/promogifts-catalog/index.ts` |
-| dinâmico | 1 chamada(s) `.from(variável)` — tabela só conhecida em runtime | `analise-prs/resgate-261118-lote3/claude/fix-unit-tests-src-261024-1630/src/hooks/integrations/useKnowledgeBase.ts` |
-| dinâmico | 1 chamada(s) `.from(variável)` — tabela só conhecida em runtime | `analise-prs/resgate-261118-lote3/claude/kind-gates-87mwoe/src/hooks/integrations/useKnowledgeBase.ts` |
-| dinâmico | 1 chamada(s) `.from(variável)` — tabela só conhecida em runtime | `analise-prs/resgate-261118-lote3/claude_05/festive-carson-ub43wu/src/hooks/integrations/useKnowledgeBase.ts` |
-| dinâmico | 1 chamada(s) `.from(variável)` — tabela só conhecida em runtime | `analise-prs/resgate-261118-lote3/fix/ci-workflows-vermelhos/src/hooks/__tests__/useScheduledMessages.test.tsx` |
-| dinâmico | 1 chamada(s) `.from(variável)` — tabela só conhecida em runtime | `analise-prs/resgate-261118-lote3/hermes/telefonia-fase8-motion-a11y-responsivo-2610031530007c/src/components/inbox/__tests__/ConversationMemoryPanel.test.tsx` |
 | dinâmico | 4 chamada(s) `.from(variável)` — tabela só conhecida em runtime | `scripts/ci/inventario-rotas.unit.mjs` |
 | dinâmico | 1 chamada(s) `.from(variável)` — tabela só conhecida em runtime | `scripts/inventario/gerar-banco.mjs` |
 | dinâmico | 2 chamada(s) `.from(variável)` — tabela só conhecida em runtime | `scripts/regras_negocio/generate.py` |

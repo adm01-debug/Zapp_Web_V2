@@ -1947,7 +1947,7 @@
   {
    "nome": "audio-memes",
    "criado_em_sql": true,
-   "usado_em": 3
+   "usado_em": 2
   },
   {
    "nome": "audio-messages",
@@ -2002,7 +2002,7 @@
   {
    "nome": "whatsapp-media",
    "criado_em_sql": true,
-   "usado_em": 11
+   "usado_em": 4
   }
  ],
  "tabelas": {
@@ -2208,7 +2208,7 @@
     "so_na_migration": [],
     "so_no_types": []
    },
-   "usada_no_front": 4,
+   "usada_no_front": 3,
    "usada_em_edges": [],
    "triggers": [],
    "sem_rls": false,
@@ -2599,7 +2599,7 @@
     "so_na_migration": [],
     "so_no_types": []
    },
-   "usada_no_front": 4,
+   "usada_no_front": 3,
    "usada_em_edges": [
     "send-scheduled-report"
    ],
@@ -2916,7 +2916,7 @@
     "so_na_migration": [],
     "so_no_types": []
    },
-   "usada_no_front": 3,
+   "usada_no_front": 1,
    "usada_em_edges": [
     "ai-classify-tickets"
    ],
@@ -3146,7 +3146,7 @@
     "so_na_migration": [],
     "so_no_types": []
    },
-   "usada_no_front": 2,
+   "usada_no_front": 0,
    "usada_em_edges": [
     "ai-jobs-worker"
    ],
@@ -4180,7 +4180,7 @@
     "so_na_migration": [],
     "so_no_types": []
    },
-   "usada_no_front": 3,
+   "usada_no_front": 2,
    "usada_em_edges": [],
    "triggers": [],
    "sem_rls": false,
@@ -4333,7 +4333,7 @@
     "so_na_migration": [],
     "so_no_types": []
    },
-   "usada_no_front": 15,
+   "usada_no_front": 7,
    "usada_em_edges": [
     "approve-password-reset",
     "connection-health-check",
@@ -5356,7 +5356,7 @@
     "so_na_migration": [],
     "so_no_types": []
    },
-   "usada_no_front": 5,
+   "usada_no_front": 4,
    "usada_em_edges": [
     "get-call-recording",
     "sync-call-records"
@@ -5502,11 +5502,11 @@
     "so_na_migration": [],
     "so_no_types": []
    },
-   "usada_no_front": 1,
+   "usada_no_front": 0,
    "usada_em_edges": [],
    "triggers": [],
    "sem_rls": false,
-   "nao_usada": false
+   "nao_usada": true
   },
   "campaign_contacts": {
    "colunas": {
@@ -5629,11 +5629,11 @@
     "so_na_migration": [],
     "so_no_types": []
    },
-   "usada_no_front": 1,
+   "usada_no_front": 0,
    "usada_em_edges": [],
    "triggers": [],
    "sem_rls": false,
-   "nao_usada": false
+   "nao_usada": true
   },
   "campaigns": {
    "colunas": {
@@ -5869,13 +5869,13 @@
     "so_na_migration": [],
     "so_no_types": []
    },
-   "usada_no_front": 1,
+   "usada_no_front": 0,
    "usada_em_edges": [],
    "triggers": [
     "update_campaigns_updated_at"
    ],
    "sem_rls": false,
-   "nao_usada": false
+   "nao_usada": true
   },
   "catalog_favorites": {
    "colunas": {
@@ -6816,7 +6816,7 @@
     "so_na_migration": [],
     "so_no_types": []
    },
-   "usada_no_front": 3,
+   "usada_no_front": 2,
    "usada_em_edges": [
     "_shared",
     "chatbot-l1"
@@ -7041,7 +7041,7 @@
     "so_na_migration": [],
     "so_no_types": []
    },
-   "usada_no_front": 2,
+   "usada_no_front": 1,
    "usada_em_edges": [
     "connection-health-check"
    ],
@@ -7153,7 +7153,7 @@
     "so_na_migration": [],
     "so_no_types": []
    },
-   "usada_no_front": 12,
+   "usada_no_front": 5,
    "usada_em_edges": [
     "connection-health-check"
    ],
@@ -7603,7 +7603,7 @@
     "so_na_migration": [],
     "so_no_types": []
    },
-   "usada_no_front": 1,
+   "usada_no_front": 0,
    "usada_em_edges": [
     "_shared"
    ],
@@ -7778,7 +7778,7 @@
     "so_na_migration": [],
     "so_no_types": []
    },
-   "usada_no_front": 7,
+   "usada_no_front": 6,
    "usada_em_edges": [
     "_shared",
     "ai-suggest-reply",
@@ -8429,7 +8429,7 @@
     "so_na_migration": [],
     "so_no_types": []
    },
-   "usada_no_front": 84,
+   "usada_no_front": 59,
    "usada_em_edges": [
     "_shared",
     "ai-auto-tag",
@@ -8730,7 +8730,7 @@
     "so_na_migration": [],
     "so_no_types": []
    },
-   "usada_no_front": 8,
+   "usada_no_front": 7,
    "usada_em_edges": [
     "_shared",
     "send-scheduled-report",
@@ -9064,7 +9064,7 @@
     "so_na_migration": [],
     "so_no_types": []
    },
-   "usada_no_front": 8,
+   "usada_no_front": 5,
    "usada_em_edges": [
     "_shared"
    ],
@@ -9206,7 +9206,7 @@
     "so_na_migration": [],
     "so_no_types": []
    },
-   "usada_no_front": 4,
+   "usada_no_front": 3,
    "usada_em_edges": [],
    "triggers": [
     "update_conversation_memory_updated_at"
@@ -9350,7 +9350,7 @@
     "so_na_migration": [],
     "so_no_types": []
    },
-   "usada_no_front": 10,
+   "usada_no_front": 9,
    "usada_em_edges": [
     "send-scheduled-report"
    ],
@@ -9460,7 +9460,7 @@
     "so_na_migration": [],
     "so_no_types": []
    },
-   "usada_no_front": 2,
+   "usada_no_front": 1,
    "usada_em_edges": [],
    "triggers": [],
    "sem_rls": false,
@@ -10190,7 +10190,7 @@
     "so_na_migration": [],
     "so_no_types": []
    },
-   "usada_no_front": 4,
+   "usada_no_front": 1,
    "usada_em_edges": [
     "copilot-live"
    ],
@@ -10929,7 +10929,7 @@
     "so_na_migration": [],
     "so_no_types": []
    },
-   "usada_no_front": 7,
+   "usada_no_front": 1,
    "usada_em_edges": [
     "_shared",
     "copilot-live"
@@ -12616,7 +12616,7 @@
     "so_na_migration": [],
     "so_no_types": []
    },
-   "usada_no_front": 5,
+   "usada_no_front": 2,
    "usada_em_edges": [
     "_shared",
     "gmail-sync",
@@ -12733,7 +12733,7 @@
     "so_na_migration": [],
     "so_no_types": []
    },
-   "usada_no_front": 4,
+   "usada_no_front": 1,
    "usada_em_edges": [
     "_shared",
     "gmail-sync"
@@ -12990,7 +12990,7 @@
     "so_na_migration": [],
     "so_no_types": []
    },
-   "usada_no_front": 7,
+   "usada_no_front": 4,
    "usada_em_edges": [
     "_shared",
     "crm-integration",
@@ -13333,7 +13333,7 @@
     "so_na_migration": [],
     "so_no_types": []
    },
-   "usada_no_front": 8,
+   "usada_no_front": 5,
    "usada_em_edges": [
     "_shared",
     "crm-integration",
@@ -13444,11 +13444,11 @@
     "so_na_migration": [],
     "so_no_types": []
    },
-   "usada_no_front": 1,
+   "usada_no_front": 0,
    "usada_em_edges": [],
    "triggers": [],
    "sem_rls": false,
-   "nao_usada": false
+   "nao_usada": true
   },
   "favorite_contacts": {
    "colunas": {
@@ -13535,7 +13535,7 @@
     "so_na_migration": [],
     "so_no_types": []
    },
-   "usada_no_front": 2,
+   "usada_no_front": 1,
    "usada_em_edges": [],
    "triggers": [],
    "sem_rls": false,
@@ -13671,7 +13671,7 @@
      "key"
     ]
    },
-   "usada_no_front": 2,
+   "usada_no_front": 1,
    "usada_em_edges": [
     "_shared",
     "crm-integration"
@@ -14184,7 +14184,7 @@
      "key"
     ]
    },
-   "usada_no_front": 8,
+   "usada_no_front": 3,
    "usada_em_edges": [
     "_shared",
     "connection-health-check",
@@ -14371,7 +14371,7 @@
     "so_na_migration": [],
     "so_no_types": []
    },
-   "usada_no_front": 5,
+   "usada_no_front": 0,
    "usada_em_edges": [
     "_shared",
     "create-user",
@@ -14592,7 +14592,7 @@
     "so_na_migration": [],
     "so_no_types": []
    },
-   "usada_no_front": 4,
+   "usada_no_front": 3,
    "usada_em_edges": [],
    "triggers": [
     "update_goals_configurations_updated_at"
@@ -14962,7 +14962,7 @@
     "so_na_migration": [],
     "so_no_types": []
    },
-   "usada_no_front": 5,
+   "usada_no_front": 2,
    "usada_em_edges": [
     "ai-kb-ingest",
     "chatbot-l1"
@@ -15080,7 +15080,7 @@
     "so_na_migration": [],
     "so_no_types": []
    },
-   "usada_no_front": 4,
+   "usada_no_front": 1,
    "usada_em_edges": [
     "ai-kb-ingest"
    ],
@@ -16504,7 +16504,7 @@
     "so_na_migration": [],
     "so_no_types": []
    },
-   "usada_no_front": 72,
+   "usada_no_front": 47,
    "usada_em_edges": [
     "_shared",
     "ai-auto-tag",
@@ -18559,7 +18559,7 @@
     "so_na_migration": [],
     "so_no_types": []
    },
-   "usada_no_front": 6,
+   "usada_no_front": 3,
    "usada_em_edges": [
     "ai-auto-tag",
     "connection-health-check",
@@ -19282,7 +19282,7 @@
     "so_na_migration": [],
     "so_no_types": []
    },
-   "usada_no_front": 2,
+   "usada_no_front": 1,
    "usada_em_edges": [
     "webauthn"
    ],
@@ -19805,7 +19805,7 @@
     "so_na_migration": [],
     "so_no_types": []
    },
-   "usada_no_front": 2,
+   "usada_no_front": 1,
    "usada_em_edges": [],
    "triggers": [],
    "sem_rls": false,
@@ -20344,7 +20344,7 @@
     "so_na_migration": [],
     "so_no_types": []
    },
-   "usada_no_front": 80,
+   "usada_no_front": 59,
    "usada_em_edges": [
     "_shared",
     "actions",
@@ -20955,11 +20955,11 @@
     "so_na_migration": [],
     "so_no_types": []
    },
-   "usada_no_front": 1,
+   "usada_no_front": 0,
    "usada_em_edges": [],
    "triggers": [],
    "sem_rls": false,
-   "nao_usada": false
+   "nao_usada": true
   },
   "queue_skill_requirements": {
    "colunas": {
@@ -21189,7 +21189,7 @@
     "so_na_migration": [],
     "so_no_types": []
    },
-   "usada_no_front": 15,
+   "usada_no_front": 14,
    "usada_em_edges": [
     "ai-auto-tag",
     "voice-copilot-action"
@@ -23970,7 +23970,7 @@
     "so_na_migration": [],
     "so_no_types": []
    },
-   "usada_no_front": 6,
+   "usada_no_front": 5,
    "usada_em_edges": [
     "_shared"
    ],
@@ -24697,7 +24697,7 @@
     "so_na_migration": [],
     "so_no_types": []
    },
-   "usada_no_front": 3,
+   "usada_no_front": 2,
    "usada_em_edges": [],
    "triggers": [
     "trg_talkx_blacklist_audit",
@@ -26762,7 +26762,7 @@
     "so_na_migration": [],
     "so_no_types": []
    },
-   "usada_no_front": 1,
+   "usada_no_front": 0,
    "usada_em_edges": [
     "_shared"
    ],
@@ -27177,7 +27177,7 @@
     "so_na_migration": [],
     "so_no_types": []
    },
-   "usada_no_front": 8,
+   "usada_no_front": 5,
    "usada_em_edges": [
     "_shared",
     "talkx-link",
@@ -27765,7 +27765,7 @@
      "key"
     ]
    },
-   "usada_no_front": 2,
+   "usada_no_front": 1,
    "usada_em_edges": [
     "_shared",
     "talkx-scheduler",
@@ -28914,7 +28914,7 @@
     "so_na_migration": [],
     "so_no_types": []
    },
-   "usada_no_front": 8,
+   "usada_no_front": 4,
    "usada_em_edges": [],
    "triggers": [],
    "sem_rls": false,
@@ -29511,7 +29511,7 @@
     "so_na_migration": [],
     "so_no_types": []
    },
-   "usada_no_front": 6,
+   "usada_no_front": 5,
    "usada_em_edges": [],
    "triggers": [
     "after_team_message_insert_bump_conversation",
@@ -29897,7 +29897,7 @@
     "so_na_migration": [],
     "so_no_types": []
    },
-   "usada_no_front": 8,
+   "usada_no_front": 7,
    "usada_em_edges": [
     "ai-auto-tag",
     "connection-health-check",
@@ -30540,7 +30540,7 @@
     "so_na_migration": [],
     "so_no_types": []
    },
-   "usada_no_front": 8,
+   "usada_no_front": 6,
    "usada_em_edges": [
     "sentiment-alert"
    ],
@@ -30904,7 +30904,7 @@
     "so_na_migration": [],
     "so_no_types": []
    },
-   "usada_no_front": 7,
+   "usada_no_front": 1,
    "usada_em_edges": [
     "_shared",
     "connection-health-check"
@@ -31001,7 +31001,7 @@
     "so_na_migration": [],
     "so_no_types": []
    },
-   "usada_no_front": 1,
+   "usada_no_front": 0,
    "usada_em_edges": [
     "webauthn"
    ],
@@ -31585,7 +31585,7 @@
     "so_na_migration": [],
     "so_no_types": []
    },
-   "usada_no_front": 43,
+   "usada_no_front": 24,
    "usada_em_edges": [
     "_shared",
     "batch-fetch-avatars",
@@ -32204,7 +32204,7 @@
     "so_na_migration": [],
     "so_no_types": []
    },
-   "usada_no_front": 4,
+   "usada_no_front": 3,
    "usada_em_edges": [],
    "triggers": [
     "whisper_messages_somente_is_read",
@@ -32222,7 +32222,6 @@
   "company_addresses",
   "company_social_media",
   "contact_phones",
-  "contact_purchases",
   "customers",
   "product_variants",
   "suppliers"
@@ -32234,19 +32233,14 @@
    "usada_em": 1
   },
   {
-   "nome": "add_agent_xp",
+   "nome": "add_wa_tag_if_not_exists",
    "definida": true,
    "usada_em": 1
   },
   {
-   "nome": "add_wa_tag_if_not_exists",
-   "definida": true,
-   "usada_em": 3
-  },
-  {
    "nome": "admin_set_role",
    "definida": false,
-   "usada_em": 3
+   "usada_em": 2
   },
   {
    "nome": "ai_budget_reconcile",
@@ -32281,7 +32275,7 @@
   {
    "nome": "apply_client_wallet",
    "definida": true,
-   "usada_em": 2
+   "usada_em": 1
   },
   {
    "nome": "attribute_multiplix_item_reply",
@@ -32336,7 +32330,7 @@
   {
    "nome": "claim_outbound_message",
    "definida": true,
-   "usada_em": 4
+   "usada_em": 2
   },
   {
    "nome": "claim_talkx_campaign_worker",
@@ -32351,12 +32345,12 @@
   {
    "nome": "cleanup_expired_challenges",
    "definida": true,
-   "usada_em": 2
+   "usada_em": 1
   },
   {
    "nome": "clear_login_attempts",
    "definida": true,
-   "usada_em": 6
+   "usada_em": 3
   },
   {
    "nome": "close_conversation_atomic",
@@ -32386,7 +32380,7 @@
   {
    "nome": "complete_outbound_message",
    "definida": true,
-   "usada_em": 4
+   "usada_em": 2
   },
   {
    "nome": "complete_talkx_campaign_if_drained",
@@ -32406,7 +32400,7 @@
   {
    "nome": "consume_login_gate",
    "definida": true,
-   "usada_em": 3
+   "usada_em": 1
   },
   {
    "nome": "consume_rate_limit",
@@ -32451,7 +32445,7 @@
   {
    "nome": "dashboard_sentiment_alerts",
    "definida": true,
-   "usada_em": 2
+   "usada_em": 1
   },
   {
    "nome": "delete_contact",
@@ -32486,12 +32480,12 @@
   {
    "nome": "enqueue_outbound_message",
    "definida": true,
-   "usada_em": 2
+   "usada_em": 1
   },
   {
    "nome": "enqueue_rich_outbound_message",
    "definida": true,
-   "usada_em": 2
+   "usada_em": 1
   },
   {
    "nome": "fail_crm_sync_outbox",
@@ -32501,7 +32495,7 @@
   {
    "nome": "fail_outbound_message",
    "definida": true,
-   "usada_em": 4
+   "usada_em": 2
   },
   {
    "nome": "find_or_create_direct_conversation",
@@ -32516,22 +32510,22 @@
   {
    "nome": "fn_list_audio_memes_for_user",
    "definida": true,
-   "usada_em": 2
+   "usada_em": 1
   },
   {
    "nome": "fn_send_audio_meme",
    "definida": true,
-   "usada_em": 2
+   "usada_em": 1
   },
   {
    "nome": "fn_toggle_user_meme_favorite",
    "definida": true,
-   "usada_em": 2
+   "usada_em": 1
   },
   {
    "nome": "get_ai_jobs_cron_secret",
    "definida": true,
-   "usada_em": 3
+   "usada_em": 1
   },
   {
    "nome": "get_avatars_refresh_cron_secret",
@@ -32546,7 +32540,7 @@
   {
    "nome": "get_connection_health_check_cron_secret",
    "definida": true,
-   "usada_em": 4
+   "usada_em": 1
   },
   {
    "nome": "get_contact_360_by_phone",
@@ -32571,7 +32565,7 @@
   {
    "nome": "get_gmail_tokens",
    "definida": true,
-   "usada_em": 5
+   "usada_em": 2
   },
   {
    "nome": "get_inbox_contact_summaries",
@@ -32581,7 +32575,7 @@
   {
    "nome": "get_instance_token",
    "definida": true,
-   "usada_em": 10
+   "usada_em": 6
   },
   {
    "nome": "get_last_message_dates",
@@ -32621,20 +32615,15 @@
   {
    "nome": "get_team_messages_page",
    "definida": true,
-   "usada_em": 2
+   "usada_em": 1
   },
   {
    "nome": "get_team_profiles",
    "definida": true,
-   "usada_em": 8
+   "usada_em": 4
   },
   {
    "nome": "get_visible_agent_ids",
-   "definida": true,
-   "usada_em": 1
-  },
-  {
-   "nome": "grant_agent_achievement",
    "definida": true,
    "usada_em": 1
   },
@@ -32659,16 +32648,6 @@
    "usada_em": 1
   },
   {
-   "nome": "increment_agent_messages",
-   "definida": true,
-   "usada_em": 1
-  },
-  {
-   "nome": "increment_agent_resolutions",
-   "definida": true,
-   "usada_em": 1
-  },
-  {
    "nome": "increment_custom_emoji_use",
    "definida": true,
    "usada_em": 1
@@ -32676,12 +32655,12 @@
   {
    "nome": "ingest_inbound_message",
    "definida": true,
-   "usada_em": 3
+   "usada_em": 2
   },
   {
    "nome": "is_account_locked",
    "definida": true,
-   "usada_em": 3
+   "usada_em": 1
   },
   {
    "nome": "is_admin",
@@ -32691,12 +32670,12 @@
   {
    "nome": "is_admin_or_supervisor",
    "definida": true,
-   "usada_em": 29
+   "usada_em": 25
   },
   {
    "nome": "is_contact_visible_to_user",
    "definida": true,
-   "usada_em": 2
+   "usada_em": 1
   },
   {
    "nome": "is_instance_paused",
@@ -32706,7 +32685,7 @@
   {
    "nome": "is_within_business_hours",
    "definida": true,
-   "usada_em": 5
+   "usada_em": 2
   },
   {
    "nome": "kick_talkx_campaign",
@@ -32731,7 +32710,7 @@
   {
    "nome": "log_login_block",
    "definida": true,
-   "usada_em": 3
+   "usada_em": 1
   },
   {
    "nome": "log_message_attempt",
@@ -32761,7 +32740,7 @@
   {
    "nome": "mark_outbound_post_started",
    "definida": true,
-   "usada_em": 3
+   "usada_em": 2
   },
   {
    "nome": "mark_pause_investigated",
@@ -32776,7 +32755,7 @@
   {
    "nome": "mark_team_conversation_read",
    "definida": true,
-   "usada_em": 2
+   "usada_em": 1
   },
   {
    "nome": "merge_contacts_atomic",
@@ -32886,22 +32865,22 @@
   {
    "nome": "record_away_message",
    "definida": true,
-   "usada_em": 2
+   "usada_em": 1
   },
   {
    "nome": "record_failed_login",
    "definida": true,
-   "usada_em": 5
+   "usada_em": 2
   },
   {
    "nome": "record_incoming_call_event",
    "definida": false,
-   "usada_em": 3
+   "usada_em": 1
   },
   {
    "nome": "record_multiplix_item_delivered",
    "definida": true,
-   "usada_em": 2
+   "usada_em": 1
   },
   {
    "nome": "record_multiplix_item_sent",
@@ -32911,7 +32890,7 @@
   {
    "nome": "record_multiplix_recipient_delivered",
    "definida": true,
-   "usada_em": 2
+   "usada_em": 1
   },
   {
    "nome": "record_talkx_conversion",
@@ -32926,7 +32905,7 @@
   {
    "nome": "record_talkx_recipient_receipt",
    "definida": true,
-   "usada_em": 2
+   "usada_em": 1
   },
   {
    "nome": "record_talkx_recipient_sent",
@@ -32936,7 +32915,7 @@
   {
    "nome": "register_multiplix_connection_failure",
    "definida": true,
-   "usada_em": 4
+   "usada_em": 2
   },
   {
    "nome": "release_multiplix_item_claim",
@@ -32956,22 +32935,22 @@
   {
    "nome": "remove_wa_label_from_all_contacts",
    "definida": true,
-   "usada_em": 3
+   "usada_em": 1
   },
   {
    "nome": "remove_wa_tag_by_prefix",
    "definida": true,
-   "usada_em": 3
+   "usada_em": 1
   },
   {
    "nome": "rename_wa_label_on_all_contacts",
    "definida": true,
-   "usada_em": 3
+   "usada_em": 1
   },
   {
    "nome": "reopen_conversation",
    "definida": true,
-   "usada_em": 2
+   "usada_em": 1
   },
   {
    "nome": "reorder_multiplix_blocks",
@@ -32999,11 +32978,6 @@
    "usada_em": 1
   },
   {
-   "nome": "resolve_unconfirmed_message",
-   "definida": true,
-   "usada_em": 1
-  },
-  {
    "nome": "resume_instance",
    "definida": true,
    "usada_em": 1
@@ -33021,7 +32995,7 @@
   {
    "nome": "revoke_auth_sessions",
    "definida": true,
-   "usada_em": 4
+   "usada_em": 2
   },
   {
    "nome": "search_contacts",
@@ -33036,7 +33010,7 @@
   {
    "nome": "search_insights",
    "definida": true,
-   "usada_em": 3
+   "usada_em": 1
   },
   {
    "nome": "search_knowledge_base",
@@ -33051,7 +33025,7 @@
   {
    "nome": "search_team_messages",
    "definida": true,
-   "usada_em": 3
+   "usada_em": 2
   },
   {
    "nome": "sentiment_trend",
@@ -33061,7 +33035,7 @@
   {
    "nome": "set_conversation_status",
    "definida": true,
-   "usada_em": 2
+   "usada_em": 1
   },
   {
    "nome": "set_conversations_status",
@@ -33071,7 +33045,7 @@
   {
    "nome": "set_default_whatsapp_connection",
    "definida": true,
-   "usada_em": 2
+   "usada_em": 1
   },
   {
    "nome": "set_department_whatsapp_config",
@@ -33081,7 +33055,7 @@
   {
    "nome": "set_instance_token",
    "definida": true,
-   "usada_em": 2
+   "usada_em": 1
   },
   {
    "nome": "set_team_member_pref",
@@ -33091,7 +33065,7 @@
   {
    "nome": "should_send_away_message",
    "definida": true,
-   "usada_em": 2
+   "usada_em": 1
   },
   {
    "nome": "skill_based_assign",
@@ -33101,7 +33075,7 @@
   {
    "nome": "store_gmail_tokens",
    "definida": true,
-   "usada_em": 5
+   "usada_em": 2
   },
   {
    "nome": "sync_interaction_from_zapp",
@@ -33151,7 +33125,7 @@
   {
    "nome": "talkx_campaign_recipients_page",
    "definida": true,
-   "usada_em": 2
+   "usada_em": 1
   },
   {
    "nome": "talkx_campaign_report",
@@ -33196,7 +33170,7 @@
   {
    "nome": "talkx_match_optout",
    "definida": true,
-   "usada_em": 2
+   "usada_em": 1
   },
   {
    "nome": "talkx_next_recipients",
@@ -33216,7 +33190,7 @@
   {
    "nome": "talkx_suppress_contact",
    "definida": true,
-   "usada_em": 2
+   "usada_em": 1
   },
   {
    "nome": "talkx_top_segments",
@@ -33236,7 +33210,7 @@
   {
    "nome": "transfer_conversation",
    "definida": true,
-   "usada_em": 8
+   "usada_em": 1
   },
   {
    "nome": "transfer_team_conversation_department",
@@ -33257,11 +33231,6 @@
    "nome": "transition_talkx_campaign",
    "definida": true,
    "usada_em": 3
-  },
-  {
-   "nome": "update_agent_streak",
-   "definida": true,
-   "usada_em": 1
   },
   {
    "nome": "update_own_profile",
@@ -33286,12 +33255,12 @@
   {
    "nome": "warroom_agent_today",
    "definida": true,
-   "usada_em": 2
+   "usada_em": 1
   },
   {
    "nome": "warroom_queue_stats",
    "definida": true,
-   "usada_em": 2
+   "usada_em": 1
   },
   {
    "nome": "zapp_catalog_stats",

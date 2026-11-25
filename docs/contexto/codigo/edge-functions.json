@@ -254,13 +254,10 @@
     "schemas.ts",
     "validation.ts"
    ],
-   "chamada_pelo_front": [
-    "analise-prs/resgate-261118-lote3/hermes/robustez-primitivos-ui-2610121626bec5-2610141859e423/src/components/settings/AIAutoTagsConfig.tsx",
-    "analise-prs/resgate-261118-lote3/hermes/telefonia-fase8-motion-a11y-responsivo-2610031530007c/src/components/settings/AIAutoTagsConfig.tsx"
-   ],
+   "chamada_pelo_front": [],
    "chamada_por_edges": [],
    "chamada_por_sql_ou_cron": false,
-   "orfa": false,
+   "orfa": true,
    "testes": 2
   },
   {
@@ -508,9 +505,6 @@
     "validation.ts"
    ],
    "chamada_pelo_front": [
-    "analise-prs/resgate-261118-lote3/claude/fix-unit-tests-src-261024-1630/src/hooks/integrations/useKnowledgeBase.ts",
-    "analise-prs/resgate-261118-lote3/claude/kind-gates-87mwoe/src/hooks/integrations/useKnowledgeBase.ts",
-    "analise-prs/resgate-261118-lote3/claude_05/festive-carson-ub43wu/src/hooks/integrations/useKnowledgeBase.ts",
     "src/hooks/integrations/useKnowledgeBase.ts"
    ],
    "chamada_por_edges": [],
@@ -793,7 +787,6 @@
     "validation.ts"
    ],
    "chamada_pelo_front": [
-    "analise-prs/resgate-261118-lote3/claude/feat-message-delivery-post-iniciado-261101-1937/supabase/functions/_shared/evolution-webhook-messages.ts",
     "src/components/inbox/AudioMessagePlayer.tsx"
    ],
    "chamada_por_edges": [],
@@ -930,13 +923,12 @@
     "validation.ts"
    ],
    "chamada_pelo_front": [
-    "analise-prs/resgate-261118-lote3/claude/test-e2e-suite-completa-261104-1428/scripts/e2e-isolated/verify-providers.mjs",
     "src/lib/serverLogin.ts"
    ],
    "chamada_por_edges": [],
    "chamada_por_sql_ou_cron": false,
    "orfa": false,
-   "testes": 2
+   "testes": 1
   },
   {
    "nome": "auto-close-conversations",
@@ -1033,9 +1025,6 @@
     "validation.ts"
    ],
    "chamada_pelo_front": [
-    "analise-prs/resgate-261118-lote3/claude/feat-copiloto-edges-261101-1330/src/hooks/inbox/useInboxBulkActions.ts",
-    "analise-prs/resgate-261118-lote3/claude/kind-gates-87mwoe/src/hooks/inbox/useInboxBulkActions.ts",
-    "analise-prs/resgate-261118-lote3/fix/ci-verde-261021/src/hooks/inbox/useInboxBulkActions.ts",
     "src/hooks/chat/useNewConversation.ts",
     "src/hooks/inbox/useInboxBulkActions.ts"
    ],
@@ -1111,7 +1100,6 @@
     "validation.ts"
    ],
    "chamada_pelo_front": [
-    "analise-prs/resgate-261118-lote3/claude/feat-message-delivery-post-iniciado-261101-1937/supabase/functions/_shared/evolution-webhook-messages.ts",
     "src/components/settings/ChatbotL1Config.tsx"
    ],
    "chamada_por_edges": [],
@@ -1141,7 +1129,6 @@
     "validation.ts"
    ],
    "chamada_pelo_front": [
-    "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/hooks/communication/useAudioMemes.ts",
     "src/components/settings/media-library/AIGenerateDialog.tsx",
     "src/hooks/communication/useAudioMemes.ts"
    ],
@@ -1201,7 +1188,6 @@
     "validation.ts"
    ],
    "chamada_pelo_front": [
-    "analise-prs/resgate-261118-lote3/claude/feat-message-delivery-post-iniciado-261101-1937/supabase/functions/_shared/evolution-webhook-messages.ts",
     "src/components/inbox/chat/MessageBubble.tsx",
     "src/hooks/sticker-picker/useStickerPicker.ts"
    ],
@@ -1299,7 +1285,7 @@
    "chamada_por_edges": [],
    "chamada_por_sql_ou_cron": true,
    "orfa": false,
-   "testes": 2
+   "testes": 1
   },
   {
    "nome": "copilot-live",
@@ -1483,7 +1469,7 @@
    "chamada_por_edges": [],
    "chamada_por_sql_ou_cron": false,
    "orfa": false,
-   "testes": 2
+   "testes": 1
   },
   {
    "nome": "elevenlabs-agent-token",
@@ -1650,7 +1636,6 @@
     "validation.ts"
    ],
    "chamada_pelo_front": [
-    "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/inbox/VoiceSelector.tsx",
     "src/components/inbox/TextToAudioButton.tsx",
     "src/components/inbox/VoiceSelector.tsx"
    ],
@@ -1879,7 +1864,6 @@
     "validation.ts"
    ],
    "chamada_pelo_front": [
-    "analise-prs/resgate-261118-lote3/fix/ci-verde-261021/supabase/functions/evolution-api/index.ts",
     "src/components/monitoring/hooks/useMonitoringActions.ts"
    ],
    "chamada_por_edges": [
@@ -1972,12 +1956,10 @@
     "ssrf.ts",
     "validation.ts"
    ],
-   "chamada_pelo_front": [
-    "analise-prs/resgate-261118-lote3/claude/feat-message-delivery-post-iniciado-261101-1937/supabase/functions/_shared/evolution-webhook-messages.ts"
-   ],
+   "chamada_pelo_front": [],
    "chamada_por_edges": [],
    "chamada_por_sql_ou_cron": false,
-   "orfa": false,
+   "orfa": true,
    "testes": 2
   },
   {
@@ -2128,7 +2110,7 @@
    "chamada_por_edges": [],
    "chamada_por_sql_ou_cron": false,
    "orfa": false,
-   "testes": 2
+   "testes": 1
   },
   {
    "nome": "gmail-send",
@@ -2323,13 +2305,11 @@
     "instance_pause.ts",
     "validation.ts"
    ],
-   "chamada_pelo_front": [
-    "analise-prs/resgate-261118-lote3/claude/test-e2e-suite-completa-261104-1428/scripts/e2e-isolated/verify-providers.mjs"
-   ],
+   "chamada_pelo_front": [],
    "chamada_por_edges": [],
    "chamada_por_sql_ou_cron": false,
-   "orfa": false,
-   "testes": 3
+   "orfa": true,
+   "testes": 1
   },
   {
    "nome": "metrics",
@@ -2611,7 +2591,6 @@
     "validation.ts"
    ],
    "chamada_pelo_front": [
-    "analise-prs/resgate-261118-lote3/claude/test-e2e-suite-completa-261104-1428/scripts/e2e-isolated/verify-providers.mjs",
     "src/hooks/integrations/useCatalogQuickSearch.ts",
     "src/hooks/integrations/useExternalCatalog.ts"
    ],
@@ -2740,7 +2719,7 @@
    "chamada_por_edges": [],
    "chamada_por_sql_ou_cron": false,
    "orfa": false,
-   "testes": 2
+   "testes": 1
   },
   {
    "nome": "searchbox-budget-alert",
@@ -3265,7 +3244,6 @@
     "validation.ts"
    ],
    "chamada_pelo_front": [
-    "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/inbox/VoiceChangerPicker.tsx",
     "src/components/inbox/VoiceChangerPicker.tsx"
    ],
    "chamada_por_edges": [],
