@@ -1,15 +1,15 @@
 {
  "meta": {
-  "sha": "d2e992a923613e7f45bd045dceae364f817681c7",
+  "sha": "9086dfdb4db32f6fe29f849c8b5185dd8a4c36fb",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-25 16:18 UTC",
+  "generated_at": "2026-11-25 16:31 UTC",
   "files_total": 14643,
   "code_files": 8177,
-  "code_lines": 1229936
+  "code_lines": 1230040
  },
  "version": "1.3.2",
- "facts_hash": "0fd02a9419b568e6",
+ "facts_hash": "9ef6c05a7d91f3c8",
  "stack": {
   "frameworks": [
    "React + Vite",
@@ -77474,7 +77474,7 @@
   {
    "module": "supabase/functions",
    "files": 432,
-   "lines": 130462,
+   "lines": 130566,
    "tables": [
     "agent_stats",
     "ai_conversation_tags",
@@ -81171,7 +81171,9 @@
     "id",
     "image_url",
     "is_active",
+    "is_new",
     "name",
+    "novelty_expires_at",
     "price",
     "stock_quantity"
    ],
@@ -84553,6 +84555,14 @@
    {
     "table": "talkx_blacklist",
     "column": "company"
+   },
+   {
+    "table": "products",
+    "column": "is_new"
+   },
+   {
+    "table": "products",
+    "column": "novelty_expires_at"
    }
   ]
  },
@@ -85780,7 +85790,7 @@
    {
     "file": "src/components/catalog/CatalogRail.tsx",
     "name": "CATALOG_RAIL_TIPS",
-    "values": "'Use \"Enviar\" no card para mandar o produto direto no WhatsApp do contato.', 'Filtre por \"Em destaque\" para montar uma seleção pronta antes da reunião.', 'O filtro \"Novidades\" mostra o que entrou nos últimos 30 dias — bom para prospecção.', 'Estoque baixo aparece no rail: priorize esses brindes ante …"
+    "values": "'Use \"Enviar\" no card para mandar o produto direto no WhatsApp do contato.', 'Filtre por \"Em destaque\" para montar uma seleção pronta antes da reunião.', 'O filtro \"Novidades\" traz o que o fornecedor marcou como novidade e ainda está no prazo — bom para prospecção.', 'Estoque baixo aparece no rail: …"
    },
    {
     "file": "src/components/catalog/catalogShared.tsx",
@@ -104795,11 +104805,23 @@
    },
    {
     "file": "supabase/functions/promogifts-catalog/index.ts",
+    "text": "created_at ao flag `is_new` — regra que o Promo Gifts V4 já aposentou (ver o"
+   },
+   {
+    "file": "supabase/functions/promogifts-catalog/index.ts",
+    "text": "comentário da regra de novidade no topo deste módulo). Para o card"
+   },
+   {
+    "file": "supabase/functions/promogifts-catalog/index.ts",
     "text": "CT-77: exportado para o teste de rate limit derivar o limite do próprio"
    },
    {
     "file": "supabase/functions/promogifts-catalog/index.ts",
     "text": "é conhecida (corpo inválido/malformado). O limite efetivo está por ação, em"
+   },
+   {
+    "file": "supabase/functions/promogifts-catalog/index.ts",
+    "text": "Regra de \"novidade\" do catálogo — a mesma do Promo Gifts V4"
    },
    {
     "file": "supabase/functions/promogifts-catalog/index.ts",
@@ -104816,10 +104838,6 @@
    {
     "file": "supabase/functions/promogifts-catalog/index.ts",
     "text": "CT-19 — o corpo já foi lido/validado acima (antes do rate limit, para a"
-   },
-   {
-    "file": "supabase/functions/promogifts-catalog/index.ts",
-    "text": "dias não deve aparecer no filtro new_30d (listagem e exportação)."
    },
    {
     "file": "supabase/functions/promogifts-catalog/index.ts",
@@ -118565,11 +118583,6 @@
     "file": "supabase/functions/promogifts-catalog/index.ts",
     "name": "RATE_WINDOW_MS",
     "value": "60"
-   },
-   {
-    "file": "supabase/functions/promogifts-catalog/index.ts",
-    "name": "NEW_PRODUCT_WINDOW_MS",
-    "value": "30"
    },
    {
     "file": "supabase/functions/recover-message-media/index.ts",
@@ -136103,6 +136116,12 @@
     "body": "if (asset.invalidated_at) return false; if (caller.isStaff) return true; if (asset.created_by !== null && caller.profileId !== null && asset.created_by === caller.profileId) { return true; } return grants.some((grant) => grant.voice_id === asset.voice_id && grantReachesCaller(grant, caller));"
    },
    {
+    "file": "supabase/functions/promogifts-catalog/index.ts",
+    "name": "aplicarContagemCanonicaDeNovidades",
+    "params": "extClient: SupabaseClient, stats: unknown, nowIso: string,",
+    "body": "const { count, error } = await extClient .from(\"products\") .select(\"id\", { count: \"exact\", head: true }) .eq(\"is_active\", true) .eq(\"is_new\", true) .gt(\"novelty_expires_at\", nowIso); if (error || typeof count !== \"number\") return stats; return { ...(stats as Record<string, unknown>), new_30d: count };"
+   },
+   {
     "file": "supabase/functions/send-scheduled-report/index.ts",
     "name": "calculateNextSend",
     "params": "frequency: string",
@@ -136991,10 +137010,6 @@
    {
     "file": "supabase/functions/metrics/index.ts",
     "line": "const WINDOW_MS = 24 * 60 * 60 * 1000;"
-   },
-   {
-    "file": "supabase/functions/promogifts-catalog/index.ts",
-    "line": "const NEW_PRODUCT_WINDOW_MS = 30 * 24 * 60 * 60 * 1000;"
    },
    {
     "file": "supabase/functions/recover-message-media/index.ts",
@@ -223606,6 +223621,18 @@
    },
    {
     "file": "supabase/functions/promogifts-catalog/index.actions.test.ts",
+    "name": "novidade canônica: a contagem substitui o new_30d do RPC e preserva os outros campos"
+   },
+   {
+    "file": "supabase/functions/promogifts-catalog/index.actions.test.ts",
+    "name": "novidade canônica: a contagem usa o MESMO predicado da grade (only_active + is_new + expiração futura)"
+   },
+   {
+    "file": "supabase/functions/promogifts-catalog/index.actions.test.ts",
+    "name": "novidade canônica: falha na contagem mantém o número do RPC (o card não zera por erro)"
+   },
+   {
+    "file": "supabase/functions/promogifts-catalog/index.actions.test.ts",
     "name": "CT-77 catalog_stats chama a RPC e o segundo acesso usa o cache do isolate"
    },
    {
@@ -223702,15 +223729,15 @@
    },
    {
     "file": "supabase/functions/promogifts-catalog/index.test.ts",
-    "name": "list_products com is_new=true exige is_new=true E created_at >= agora-30d (inclusivo)"
+    "name": "list_products com is_new=true exige is_new=true E novelty_expires_at > agora"
    },
    {
     "file": "supabase/functions/promogifts-catalog/index.test.ts",
-    "name": "list_products: a contagem de fallback (PGRST103) usa o MESMO corte, calculado uma vez por requisição"
+    "name": "list_products: a contagem de fallback (PGRST103) usa a MESMA fronteira, calculada uma vez por requisição"
    },
    {
     "file": "supabase/functions/promogifts-catalog/index.test.ts",
-    "name": "list_products sem is_new não aplica corte de created_at nem filtra is_new"
+    "name": "list_products sem is_new não aplica fronteira de novidade nem filtra is_new"
    },
    {
     "file": "supabase/functions/promogifts-catalog/pagination.test.ts",
@@ -278940,6 +278967,16 @@
     "where": []
    },
    {
+    "kind": "coluna",
+    "msg": "coluna `is_new` usada no código não existe no schema de `products`",
+    "where": []
+   },
+   {
+    "kind": "coluna",
+    "msg": "coluna `novelty_expires_at` usada no código não existe no schema de `products`",
+    "where": []
+   },
+   {
     "kind": "tabela",
     "msg": "tabela `a` usada no código não existe nas migrations/types do repo",
     "where": [
@@ -307815,7 +307852,7 @@
     },
     {
      "name": "CATALOG_RAIL_TIPS",
-     "values": "'Use \"Enviar\" no card para mandar o produto direto no WhatsApp do contato.', 'Filtre por \"Em destaque\" para montar uma seleção pronta antes da reunião.', 'O filtro \"Novidades\" mostra o que entrou nos últimos 30 dias — bom para prospecção.', 'Estoque baixo aparece no rail: priorize esses brindes ante …"
+     "values": "'Use \"Enviar\" no card para mandar o produto direto no WhatsApp do contato.', 'Filtre por \"Em destaque\" para montar uma seleção pronta antes da reunião.', 'O filtro \"Novidades\" traz o que o fornecedor marcou como novidade e ainda está no prazo — bom para prospecção.', 'Estoque baixo aparece no rail: …"
     }
    ],
    "params": [
@@ -410705,16 +410742,24 @@
   },
   "supabase/functions/promogifts-catalog/index.actions.test.ts": {
    "path": "supabase/functions/promogifts-catalog/index.actions.test.ts",
-   "lines": 694,
+   "lines": 759,
    "is_test": true,
    "errors": [
     "${message ?? "
+   ],
+   "params": [
+    {
+     "name": "NOVIDADE_NOW",
+     "value": "'2026-11-25T12:00:00.000Z'"
+    }
    ],
    "rule_comments": [
     "bootstrap) + rate limit.",
     "* Builder encadeável mínimo do PostgREST: cada método filtra/organiza e volta",
     "Isso e o que prova que a edge passou a delegar o limite ao store compartilhado: os",
     "atravessam este fake sem tocar no `index.ts` do rate limit.",
+    "─── contagem canônica de novidades (regra do Promo Gifts V4) ───",
+    "esse número somando a janela de 30 dias sobre created_at ao flag, regra que",
     "pode já vir cacheada por outro teste; o invariante é \"no máximo 1\").",
     "─── rate limit ─────────────────────────────────────────────────",
     "Decisao explicita do CT-19: o limite e protecao, nao caminho critico. Se a funcao",
@@ -410736,6 +410781,9 @@
     "CT-77 get_product id fora do formato UUID devolve 400 antes de consultar",
     "CT-77 list_categories devolve categorias ativas e não deletadas",
     "CT-77 list_suppliers devolve fornecedores ativos",
+    "novidade canônica: a contagem substitui o new_30d do RPC e preserva os outros campos",
+    "novidade canônica: a contagem usa o MESMO predicado da grade (only_active + is_new + expiração futura)",
+    "novidade canônica: falha na contagem mantém o número do RPC (o card não zera por erro)",
     "CT-77 catalog_stats chama a RPC e o segundo acesso usa o cache do isolate",
     "CT-77 bootstrap devolve categorias + fornecedores + stats numa chamada só",
     "CT-77 rate limit: as RATE_LIMIT primeiras requisições do mesmo usuário passam e a seguinte devolve 429",
@@ -410759,18 +410807,20 @@
   },
   "supabase/functions/promogifts-catalog/index.test.ts": {
    "path": "supabase/functions/promogifts-catalog/index.test.ts",
-   "lines": 218,
+   "lines": 221,
    "is_test": true,
    "errors": [
     "${msg ?? "
    ],
    "params": [
     {
-     "name": "EXPECTED_CUTOFF",
-     "value": "'2026-09-06T15:04:05.000Z'"
+     "name": "EXPECTED_NOW",
+     "value": "'2026-10-06T15:04:05.000Z'"
     }
    ],
    "rule_comments": [
+    "─── Regra de \"novidade\" do filtro \"novos\" (list_products + is_new) ───────",
+    "edge o predicado passa a exigir novelty_expires_at > agora — a regra do",
     "* Client local falso: JWT válido e cota de rate limit sempre disponível. */"
    ],
    "tests": [
@@ -410783,17 +410833,18 @@
     "buildTagOrExpr: valores vazios/só-sujeira após sanitize são descartados",
     "buildTagOrExpr: array vazio retorna null (sem cláusulas)",
     "buildTagOrExpr: só valores que sanitizam para vazio retorna null",
-    "list_products com is_new=true exige is_new=true E created_at >= agora-30d (inclusivo)",
-    "list_products: a contagem de fallback (PGRST103) usa o MESMO corte, calculado uma vez por requisição",
-    "list_products sem is_new não aplica corte de created_at nem filtra is_new"
+    "list_products com is_new=true exige is_new=true E novelty_expires_at > agora",
+    "list_products: a contagem de fallback (PGRST103) usa a MESMA fronteira, calculada uma vez por requisição",
+    "list_products sem is_new não aplica fronteira de novidade nem filtra is_new"
    ]
   },
   "supabase/functions/promogifts-catalog/index.ts": {
    "path": "supabase/functions/promogifts-catalog/index.ts",
-   "lines": 574,
+   "lines": 610,
    "exports": [
     "function buildProductOrderClauses",
     "function buildTagOrExpr",
+    "function aplicarContagemCanonicaDeNovidades",
     "const RATE_LIMIT",
     "const RATE_WINDOW_MS",
     "const ACTION_RATE_LIMITS",
@@ -410801,6 +410852,10 @@
     "function promogiftsCatalogHandler"
    ],
    "tables": [
+    {
+     "table": "products",
+     "op": "select"
+    },
     {
      "table": "categories",
      "op": "select"
@@ -410847,14 +410902,17 @@
     }
    ],
    "table_cols": {
+    "products": [
+     "id",
+     "is_active",
+     "is_new",
+     "novelty_expires_at"
+    ],
     "categories": [
      "deleted_at",
      "id",
      "is_active",
      "path"
-    ],
-    "products": [
-     "id"
     ],
     "product_variants": [
      "is_active",
@@ -410918,10 +410976,6 @@
     {
      "name": "RATE_WINDOW_MS",
      "value": "60"
-    },
-    {
-     "name": "NEW_PRODUCT_WINDOW_MS",
-     "value": "30"
     }
    ],
    "status_values": [
@@ -410932,17 +410986,23 @@
     }
    ],
    "rule_comments": [
+    "created_at ao flag `is_new` — regra que o Promo Gifts V4 já aposentou (ver o",
+    "comentário da regra de novidade no topo deste módulo). Para o card",
     "CT-77: exportado para o teste de rate limit derivar o limite do próprio",
     "é conhecida (corpo inválido/malformado). O limite efetivo está por ação, em",
+    "Regra de \"novidade\" do catálogo — a mesma do Promo Gifts V4",
     "* CT-19 (E26.3) — limite POR AÇÃO. `list_products` é a ação que abre a tela e",
     "indisponivel, o catalogo continua servindo (o limite e protecao, nao caminho",
     "ação precisa ser conhecida ANTES de checar o limite. O corpo é lido e",
     "CT-19 — o corpo já foi lido/validado acima (antes do rate limit, para a",
-    "dias não deve aparecer no filtro new_30d (listagem e exportação).",
     "offset+limit). O PostgREST responde com erro de range em vez de"
    ],
-   "temporal": [
-    "const NEW_PRODUCT_WINDOW_MS = 30 * 24 * 60 * 60 * 1000;"
+   "calc_fns": [
+    {
+     "name": "aplicarContagemCanonicaDeNovidades",
+     "params": "extClient: SupabaseClient, stats: unknown, nowIso: string,",
+     "body": "const { count, error } = await extClient .from(\"products\") .select(\"id\", { count: \"exact\", head: true }) .eq(\"is_active\", true) .eq(\"is_new\", true) .gt(\"novelty_expires_at\", nowIso); if (error || typeof count !== \"number\") return stats; return { ...(stats as Record<string, unknown>), new_30d: count };"
+    }
    ],
    "percents": [
     "// FTS real (search_vector, 100% preenchido — trigger BEFORE INSERT"
@@ -424245,10 +424305,24 @@
   }
  },
  "git": {
-  "sha": "d2e992a923613e7f45bd045dceae364f817681c7",
+  "sha": "9086dfdb4db32f6fe29f849c8b5185dd8a4c36fb",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "9086dfdb",
+    "date": "2026-11-25",
+    "author": "adm01-debug",
+    "subject": "fix: novidade do catalogo passa a usar a expiracao do banco (regra do Promo Gifts V4) (#3379)",
+    "files": [
+     "docs/pendencias/filtro-novidades-com-contagem-vinda-da-edge-ct64.md",
+     "src/components/catalog/CatalogRail.tsx",
+     "supabase/deployment-manifest.json",
+     "supabase/functions/promogifts-catalog/index.actions.test.ts",
+     "supabase/functions/promogifts-catalog/index.test.ts",
+     "supabase/functions/promogifts-catalog/index.ts"
+    ]
+   },
    {
     "sha": "d2e992a9",
     "date": "2026-11-25",
@@ -425885,18 +425959,6 @@
     "files": [
      "e2e/email-navy-visual.spec.ts"
     ]
-   },
-   {
-    "sha": "442bcfb1",
-    "date": "2026-11-23",
-    "author": "adm01-debug",
-    "subject": "fix(e2e): desambigua locators de Contatos após o redesign do módulo (#3347)",
-    "files": [
-     "e2e/contact-form-email-duplicate.spec.ts",
-     "e2e/contacts-selection.spec.ts",
-     "e2e/contacts-views.spec.ts",
-     "e2e/dialog-rodape-viewport.spec.ts"
-    ]
    }
   ],
   "hot_files": [
@@ -425949,8 +426011,28 @@
     2
    ],
    [
-    "e2e/contacts-selection.spec.ts",
-    2
+    "docs/pendencias/filtro-novidades-com-contagem-vinda-da-edge-ct64.md",
+    1
+   ],
+   [
+    "src/components/catalog/CatalogRail.tsx",
+    1
+   ],
+   [
+    "supabase/deployment-manifest.json",
+    1
+   ],
+   [
+    "supabase/functions/promogifts-catalog/index.actions.test.ts",
+    1
+   ],
+   [
+    "supabase/functions/promogifts-catalog/index.test.ts",
+    1
+   ],
+   [
+    "supabase/functions/promogifts-catalog/index.ts",
+    1
    ],
    [
     "scripts/ci/check-workflow-pins-resolvem.mjs",
@@ -425958,26 +426040,6 @@
    ],
    [
     "scripts/ci/check-workflow-pins-resolvem.unit.mjs",
-    1
-   ],
-   [
-    "scripts/ci/ci-gate.unit.mjs",
-    1
-   ],
-   [
-    ".github/workflows/contexto.yml",
-    1
-   ],
-   [
-    ".github/workflows/front-release-targets.yml",
-    1
-   ],
-   [
-    "scripts/ci/front-release-targets.unit.mjs",
-    1
-   ],
-   [
-    "scripts/ci/verify-release-targets-dominio.unit.mjs",
     1
    ]
   ]

@@ -2565,7 +2565,7 @@
    "nome": "promogifts-catalog",
    "entrada": "supabase/functions/promogifts-catalog/index.ts",
    "arquivos": 1,
-   "linhas": 574,
+   "linhas": 610,
    "verify_jwt": true,
    "metodos": [],
    "tabelas": [

@@ -1,6 +1,6 @@
 # 11 · GLOSSÁRIO, DADOS DE REFERÊNCIA E LACUNAS
 
-> Gerado automaticamente por AI Context Sync v1.3.2 · commit `d2e992a923` · branch `main` · 2026-11-25 16:18 UTC
+> Gerado automaticamente por AI Context Sync v1.3.2 · commit `9086dfdb4d` · branch `main` · 2026-11-25 16:31 UTC
 > Não edite à mão — regras humanas vão em `manual/`.
 
 ## Glossário do domínio (entidades do sistema)
@@ -251,7 +251,7 @@
 | `PERIODOS` (TS) | { value: 'hoje', label: 'Hoje' }, { value: 'ontem', label: 'Ontem' }, { value: '7d', label: '7 dias' }, { value: '30d', label: '30 dias' }, { value: 'mes', label: 'Este mês' }, { value: 'mes_passado', label: 'Mês passado' }, |  | `src/components/calls/periodos.ts` |
 | `CatalogRailAlertId` (TS) | sync \| low_stock |  | `src/components/catalog/CatalogRail.tsx` |
 | `CatalogRailFilterKey` (TS) | in_stock \| featured \| new_30d |  | `src/components/catalog/CatalogRail.tsx` |
-| `CATALOG_RAIL_TIPS` (TS) | 'Use "Enviar" no card para mandar o produto direto no WhatsApp do contato.', 'Filtre por "Em destaque" para montar uma seleção pronta antes da reunião.', 'O filtro "Novidades" mostra o que entrou nos últimos 30 dias — bom para prospecção.', 'Estoque baixo aparece no rail: priorize esses brindes ante … |  | `src/components/catalog/CatalogRail.tsx` |
+| `CATALOG_RAIL_TIPS` (TS) | 'Use "Enviar" no card para mandar o produto direto no WhatsApp do contato.', 'Filtre por "Em destaque" para montar uma seleção pronta antes da reunião.', 'O filtro "Novidades" traz o que o fornecedor marcou como novidade e ainda está no prazo — bom para prospecção.', 'Estoque baixo aparece no rail: … |  | `src/components/catalog/CatalogRail.tsx` |
 | `ProductBadgeKind` (TS) | out \| bestseller \| new \| featured \| instock |  | `src/components/catalog/catalogShared.tsx` |
 | `MessageTemplate` (TS) | formal \| informal \| promo |  | `src/components/catalog/sendProductUtils.ts` |
 | `SendMode` (TS) | product \| variant |  | `src/components/catalog/sendProductUtils.ts` |
@@ -399,6 +399,8 @@
 | status | valor `string` para `connection_status` usado no código não existe em nenhum enum do banco/TS | `compara:src/hooks/integrations/useTalkXServerResumePrecheck.ts` |
 | coluna | coluna `company_id` usada no código não existe no schema de `contacts` |  |
 | coluna | coluna `company` usada no código não existe no schema de `talkx_blacklist` |  |
+| coluna | coluna `is_new` usada no código não existe no schema de `products` |  |
+| coluna | coluna `novelty_expires_at` usada no código não existe no schema de `products` |  |
 | tabela | tabela `a` usada no código não existe nas migrations/types do repo | `scripts/ai-context/cenarios.mjs` |
 | tabela | tabela `alem_do_limite` usada no código não existe nas migrations/types do repo | `scripts/ci/inventario-rotas.unit.mjs` |
 | tabela | tabela `audit_log` usada no código não existe nas migrations/types do repo | `scripts/ci/supabase-usage-guard-forward-projection.unit.mjs` |

@@ -1,6 +1,6 @@
 # 07 · REGRAS DE NEGÓCIO
 
-> Gerado automaticamente por AI Context Sync v1.3.2 · commit `d2e992a923` · branch `main` · 2026-11-25 16:18 UTC
+> Gerado automaticamente por AI Context Sync v1.3.2 · commit `9086dfdb4d` · branch `main` · 2026-11-25 16:31 UTC
 > Não edite à mão — regras humanas vão em `manual/`.
 
 ## A. Regras escritas por humanos (`manual/` — prioridade máxima, nunca sobrescrito)
@@ -1644,7 +1644,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | PERIODOS | { value: 'hoje', label: 'Hoje' }, { value: 'ontem', label: 'Ontem' }, { value: '7d', label: '7 dias' }, { value: '30d', label: '30 dias' }, { value: 'mes', label: 'Este mês' }, { value: 'mes_passado', label: 'Mês passado' }, | `src/components/calls/periodos.ts` |
 | CatalogRailAlertId | sync \| low_stock | `src/components/catalog/CatalogRail.tsx` |
 | CatalogRailFilterKey | in_stock \| featured \| new_30d | `src/components/catalog/CatalogRail.tsx` |
-| CATALOG_RAIL_TIPS | 'Use "Enviar" no card para mandar o produto direto no WhatsApp do contato.', 'Filtre por "Em destaque" para montar uma seleção pronta antes da reunião.', 'O filtro "Novidades" mostra o que entrou nos últimos 30 dias — bom para prospecção.', 'Estoque baixo aparece no rail: priorize esses brindes ante … | `src/components/catalog/CatalogRail.tsx` |
+| CATALOG_RAIL_TIPS | 'Use "Enviar" no card para mandar o produto direto no WhatsApp do contato.', 'Filtre por "Em destaque" para montar uma seleção pronta antes da reunião.', 'O filtro "Novidades" traz o que o fornecedor marcou como novidade e ainda está no prazo — bom para prospecção.', 'Estoque baixo aparece no rail: … | `src/components/catalog/CatalogRail.tsx` |
 | ProductBadgeKind | out \| bestseller \| new \| featured \| instock | `src/components/catalog/catalogShared.tsx` |
 | MessageTemplate | formal \| informal \| promo | `src/components/catalog/sendProductUtils.ts` |
 | SendMode | product \| variant | `src/components/catalog/sendProductUtils.ts` |
@@ -3396,6 +3396,10 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
   ```
   if (asset.invalidated_at) return false; if (caller.isStaff) return true; if (asset.created_by !== null && caller.profileId !== null && asset.created_by === caller.profileId) { return true; } return grants.some((grant) => grant.voice_id === asset.voice_id && grantReachesCaller(grant, caller));
   ```
+- **aplicarContagemCanonicaDeNovidades(extClient: SupabaseClient, stats: unknown, nowIso: string,)** — `supabase/functions/promogifts-catalog/index.ts`
+  ```
+  const { count, error } = await extClient .from("products") .select("id", { count: "exact", head: true }) .eq("is_active", true) .eq("is_new", true) .gt("novelty_expires_at", nowIso); if (error || typeof count !== "number") return stats; return { ...(stats as Record<string, unknown>), new_30d: count };
+  ```
 - **calculateNextSend(frequency: string)** — `supabase/functions/send-scheduled-report/index.ts`
   ```
   const next = new Date(); switch (frequency) { case "daily": next.setDate(next.getDate() + 1); next.setHours(8, 0, 0, 0); break; case "weekly": next.setDate(next.getDate() + ((1 + 7 - next.getDay()) % 7 || 7)); next.setHours(8, 0, 0, 0); break; case "biweekly": next.setDate(next.getDate() + 14); next.setHours(8, 0, 0, 0); break; case "monthly": next.setMonth(next.getMonth() + 1, 1); next.setHours(8, 0, 0, 0); break; } return next.toISOString();
@@ -3898,7 +3902,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `GOAL_CHECK_INTERVAL_MS` | `600` | `src/hooks/analytics/useGoalNotifications.ts` |
 | `QUEUE_GOAL_ALERTS_INTERVAL_MS` | `5` | `src/hooks/analytics/useQueueGoalAlerts.ts` |
 | `MAX_HISTORY` | `60` | `src/hooks/analytics/useRealtimeDashboard.ts` |
-| … +696 linhas — lista completa em `context.json` | | |
+| … +695 linhas — lista completa em `context.json` | | |
 
 ### H.2 Prazos, expirações e janelas de tempo
 
@@ -4120,7 +4124,6 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `await new Promise((r) => setTimeout(r, 2000));` | `supabase/functions/evolution-api/index.ts` |
 | `const CACHE_TTL_MS = 1000 * 60 * 60 * 6; // 6h for hits` | `supabase/functions/fetch-link-preview/index.ts` |
 | `const WINDOW_MS = 24 * 60 * 60 * 1000;` | `supabase/functions/metrics/index.ts` |
-| `const NEW_PRODUCT_WINDOW_MS = 30 * 24 * 60 * 60 * 1000;` | `supabase/functions/promogifts-catalog/index.ts` |
 | `export const RECOVERY_COOLDOWN_MS = 10 * 60 * 1000;` | `supabase/functions/recover-message-media/index.ts` |
 | `const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);` | `supabase/functions/send-scheduled-report/index.ts` |
 | `const desde = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();` | `supabase/functions/sync-call-records/index.ts` |
@@ -4204,7 +4207,8 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `v_window := interval '60 seconds';` | `supabase/migrations/20261007000311_catalogo_rate_limit_politica_confiavel.sql` |
 | `v_minute_start := statement_timestamp() - interval '1 minute';` | `supabase/migrations/20261009031223_talkx_multiplix_consumo_compartilhado.sql` |
 | `v_next_day_at := v_day_start + interval '1 day';` | `supabase/migrations/20261009031223_talkx_multiplix_consumo_compartilhado.sql` |
-| … +93 linhas — lista completa em `context.json` | |
+| `-- create or replace function public.record_talkx_conversion(p_campaign_id uuid, p_external_ref text, p_value numeric, p_source text, p_currency text default 'B …` | `supabase/migrations/20261009031958_talkx_v4_x041_atribuicao_negocio_ganho_receita_roi.sql` |
+| … +92 linhas — lista completa em `context.json` | |
 
 ### H.3 Limites de paginação
 
@@ -4725,7 +4729,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `owner` | `supabase/migrations/20260927270018_team_chat_e28_fix_find_or_create_race.sql` |
 | `anon` | `supabase/migrations/20260927340000_fix_add_agent_xp_negative_and_guard.sql` |
 
-## K. Testes como especificação (22878 testes em 2430 arquivos — nomes completos em `context.json`)
+## K. Testes como especificação (22881 testes em 2430 arquivos — nomes completos em `context.json`)
 
 | Arquivo | Testes | Exemplos do que o sistema DEVE fazer |
 |---|---|---|
@@ -4823,6 +4827,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `src/components/notifications/__tests__/SoundVolumeControl.test.tsx` | 31 | SoundVolumeControl — sobe e desce o volume dos alertas · com o painel aberto, sobe o volume de 5 em 5 com a roda para cima · com o painel aberto, desce o volume de 5 em 5 com a roda para baixo · com o painel FECHADO a roda não mexe no volume (B5 — rolar a sidebar não ajusta) … |
 | `src/components/talkx/__tests__/TalkXCampaignScheduled.test.tsx` | 31 | Tela 10 — configurações de agendamento (X137) · separa data e horário na parede local do fuso da campanha · o mínimo da data é hoje NO FUSO DA CAMPANHA, não hoje em UTC · salvar grava o mesmo instante e o mesmo fuso que foram lidos, com o perfil e a supressão … |
 | `src/hooks/evolution/__tests__/useEvolutionApiCore.test.ts` | 31 | tempo limite: 45 s com AbortController · aborta a chamada pendurada e sobe erro em pt-BR com  · não aborta antes da hora: em 44,999 s a chamada continua em voo e o signal segue vivo · resposta que chega antes do limite não é abortada depois: o timer não sobra … |
+| `supabase/functions/promogifts-catalog/index.actions.test.ts` | 31 | CT-77 sem Authorization devolve 401 e nem toca no client externo · CT-77 ação desconhecida devolve 400 Invalid request · CT-77 sem secrets do catálogo (e sem client injetado) devolve 503 CATALOG_NOT_CONFIGURED · CT-77 list_products devolve data + meta.total e aplica busca sem acento e OR de cores … |
 | `src/components/gmail/__tests__/EmailComposer.test.tsx` | 30 | EmailComposer — inicialização e comportamento de envio · modo new: campo Para vazio e botão Enviar desabilitado · restaura rascunho isolado da conta e sinaliza anexos que precisam ser selecionados novamente · remove a sessão local e o draft remoto ao confirmar descarte de conteúdo restaurado … |
 | `src/components/inbox/chat/motion/__tests__/chat-motion.test.tsx` | 30 | AnimatedNumber · (1) com movimento reduzido entrega o valor final na hora, em pt-BR · (2) sem redução conta de 0 até o valor EXATO (não para em  · ShimmerSkeleton … |
 | `src/components/inbox/tabs/__tests__/FileCard.test.tsx` | 30 | FileCard — layout do mockup (R04, S28–S31) · S28: a linha 1 e o nome; o nome completo/tecnico fica na dica · S29: a linha 2 e so tipo · tamanho, com virgula no decimal · S30: a linha 3 e a data curta do cartao … |
@@ -4844,7 +4849,6 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `src/components/layout/__tests__/Sidebar.test.tsx` | 28 | Sidebar — nav primária e grupos compartilham uma única área de rolagem · Multiplix continua entre Contatos e Catálogo, e todos os três estão dentro do mesmo container com scroll · staff SEM a permissão nomeada não vê Multiplix na nav primária (papel não basta — F25) · agente COM a permissão nomeada vê Multiplix na nav primária (F25) … |
 | `src/components/ui/__tests__/VolumeDial.test.tsx` | 28 | VolumeDial — papel, nome e valores acessíveis · expõe role=slider focável com min/max/now/valuetext · usa valueLabel no centro e no texto falado quando informado · não tem violação de acessibilidade … |
 | `src/hooks/system/__tests__/useGeoBlocking.test.ts` | 28 | useGeoBlocking — leitura dos dados · carrega settings e as duas listas, com ordem decrescente por created_at · lista vazia (data null) não quebra e vira lista vazia · exceção de rede na primeira leitura avisa e encerra o carregamento … |
-| `supabase/functions/promogifts-catalog/index.actions.test.ts` | 28 | CT-77 sem Authorization devolve 401 e nem toca no client externo · CT-77 ação desconhecida devolve 400 Invalid request · CT-77 sem secrets do catálogo (e sem client injetado) devolve 503 CATALOG_NOT_CONFIGURED · CT-77 list_products devolve data + meta.total e aplica busca sem acento e OR de cores … |
 | `supabase/functions/revoke-auth-sessions/index.test.ts` | 28 | global self: usuário comum pode revogar as próprias sessões sem ser admin · global de terceiro por usuário comum é recusado (403) · global de terceiro por admin é permitido (revoga por user_id) · local exige target_session_id … |
 | `tests/contracts/ia131-audio-meme-conteudo.contract.test.ts` | 28 | (1) ai-audio-input: download AUTENTICADO e limites · baixa o objeto no endpoint autenticado e devolve base64 + formato mp3 · identidade de serviço usa a service role EXPLÍCITA (fluxo interno) · sem storageIdentity falha FECHADO, sem nenhuma rede … |
 | `src/components/catalog/__tests__/useSendProduct.test.tsx` | 27 | useSendToContact — CT-04: caption na primeira foto, texto só sem foto · 3 fotos viram 3 mensagens (não 4), só a primeira com o texto como caption · sem foto, o texto vai como mensagem de texto (1 mensagem) · 1 foto usa o mesmo caminho de 1 mensagem (sem texto solto) … |
@@ -5546,4 +5550,4 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | morto, que dizia limite vigente quando não havia mais nenhum. Zero é "já pode tentar". | `src/components/inbox/location-picker/searchErrors.ts` |
 | * F2/E15: causas de falha do `/suggest` que são **rota quebrada** (não limite de uso) e por isso | `src/components/inbox/location-picker/useAddressAutocomplete.ts` |
 | caem no `/forward`. `rate_limited` (429) e guarda de custo ficam de fora: são limite, não rota — | `src/components/inbox/location-picker/useAddressAutocomplete.ts` |
-| … +1820 linhas — lista completa em `context.json` | |
+| … +1822 linhas — lista completa em `context.json` | |

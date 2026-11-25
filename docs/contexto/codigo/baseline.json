@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "d2e992a923613e7f45bd045dceae364f817681c7",
+  "commit": "9086dfdb4db32f6fe29f849c8b5185dd8a4c36fb",
   "branch": "main",
-  "data_commit": "2026-11-25T12:50:16-03:00",
+  "data_commit": "2026-11-25T13:30:11-03:00",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "9086dfdb",
+    "data": "2026-11-25",
+    "assunto": "fix: novidade do catalogo passa a usar a expiracao do banco (regra do Promo Gifts V4) (#3379)"
+   },
    {
     "sha": "d2e992a9",
     "data": "2026-11-25",
@@ -126,14 +131,9 @@
     "sha": "45a65087",
     "data": "2026-11-24",
     "assunto": "fix(e2e): serve as 4 imagens restantes pelo mirror ghcr.io do mesmo digest (#3352)"
-   },
-   {
-    "sha": "38ee260d",
-    "data": "2026-11-24",
-    "assunto": "chore: corrige o comentario do E2E do Firefox no ci.yml (causa nao e memoria) (#3349)"
    }
   ],
-  "arquivos_mudados_7d": 4395,
+  "arquivos_mudados_7d": 4399,
   "pastas_mais_mudadas_30d": [
    {
     "pasta": "docs/contexto/supabase",
@@ -199,7 +199,7 @@
   "arquivos_mais_mudados_90d": [
    {
     "arquivo": "supabase/deployment-manifest.json",
-    "mudancas": 35
+    "mudancas": 36
    },
    {
     "arquivo": "ESTADO.md",
@@ -316,7 +316,7 @@
  "contagens": {
   "arquivos_total": 14796,
   "arquivos_codigo": 5141,
-  "linhas_codigo": 953107,
+  "linhas_codigo": 953211,
   "rotas": 18,
   "rotas_http_backend": 11,
   "vistas_por_id": 55,
@@ -816,7 +816,7 @@
   },
   "supabase/functions": {
    "arquivos": 432,
-   "linhas": 130462
+   "linhas": 130566
   },
   "tailwind.config.ts": {
    "arquivos": 1,

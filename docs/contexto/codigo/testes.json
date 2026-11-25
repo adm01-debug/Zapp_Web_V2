@@ -24458,16 +24458,16 @@
   {
    "arquivo": "supabase/functions/promogifts-catalog/index.actions.test.ts",
    "tipo": "unit",
-   "linhas": 694,
+   "linhas": 759,
    "testa": [
     "supabase/functions/promogifts-catalog/index.ts"
    ],
-   "casos": 29
+   "casos": 32
   },
   {
    "arquivo": "supabase/functions/promogifts-catalog/index.test.ts",
    "tipo": "unit",
-   "linhas": 218,
+   "linhas": 221,
    "testa": [
     "supabase/functions/promogifts-catalog/index.ts"
    ],
