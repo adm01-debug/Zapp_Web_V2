@@ -1758,12 +1758,12 @@
   {
    "arquivo": "scripts/ci/lint-ratchet.unit.mjs",
    "tipo": "unit",
-   "linhas": 788,
+   "linhas": 802,
    "testa": [
     "scripts/ci/lint-ratchet.mjs",
     "scripts/lib/seguranca-processo.mjs"
    ],
-   "casos": 38
+   "casos": 39
   },
   {
    "arquivo": "scripts/ci/list-destructive.unit.mjs",

@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "1d87b06fe7459ae259e7e767329e4d85dc65dcdb",
+  "commit": "985b4e382ff2342db8b83537bb01a0594485b5d5",
   "branch": "main",
-  "data_commit": "2026-11-25T08:50:19-03:00",
+  "data_commit": "2026-11-25T09:43:26-03:00",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "985b4e38",
+    "data": "2026-11-25",
+    "assunto": "fix(lint): ratchet aceita ocorrencia identica deslocada de linha (#3376)"
+   },
    {
     "sha": "1d87b06f",
     "data": "2026-11-25",
@@ -126,14 +131,9 @@
     "sha": "e5d1a17d",
     "data": "2026-11-23",
     "assunto": "fix(e2e): destrava o Firefox tirando o axe do painel CRM em 320px (#3348)"
-   },
-   {
-    "sha": "442bcfb1",
-    "data": "2026-11-23",
-    "assunto": "fix(e2e): desambigua locators de Contatos após o redesign do módulo (#3347)"
    }
   ],
-  "arquivos_mudados_7d": 4390,
+  "arquivos_mudados_7d": 4392,
   "pastas_mais_mudadas_30d": [
    {
     "pasta": "docs/contexto/supabase",
@@ -316,7 +316,7 @@
  "contagens": {
   "arquivos_total": 14795,
   "arquivos_codigo": 5140,
-  "linhas_codigo": 952861,
+  "linhas_codigo": 952882,
   "rotas": 18,
   "rotas_http_backend": 11,
   "vistas_por_id": 55,
@@ -632,7 +632,7 @@
   },
   "scripts/ci": {
    "arquivos": 230,
-   "linhas": 50283
+   "linhas": 50304
   },
   "scripts/db": {
    "arquivos": 2,

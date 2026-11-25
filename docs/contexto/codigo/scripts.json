@@ -426,7 +426,7 @@
   {
    "arquivo": "scripts/ci/lint-ratchet.mjs",
    "descricao": "Artefatos produzidos por testes nao sao fonte do projeto. O ESLint nao le o .gitignore por padrao em todas as versoes/configuracoes, entao o ratchet os",
-   "linhas": 664,
+   "linhas": 671,
    "env": [],
    "npm_scripts": [
     "lint",
