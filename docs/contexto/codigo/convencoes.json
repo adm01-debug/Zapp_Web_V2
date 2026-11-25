@@ -66,11 +66,11 @@
  "commits": {
   "convencao": "conventional commits (observado)",
   "exemplos": [
+   "feat(playbooks): ativo/inativo, exclusao com confirmacao e acesso por teclado (#3381)",
    "fix: novidade do catalogo passa a usar a expiracao do banco (regra do Promo Gifts V4) (#3379)",
    "fix: ls-remote dos pins repete com backoff quando o runner leva 403 (#3378)",
    "ci: roda o lint ratchet no CI (divida nova de lint nos arquivos do PR) (#3377)",
-   "chore(contexto): main recebe o snapshot gerado por PR automatica (#3375)",
-   "infra: valida a virada do dominio principal para o build do V2 (#3374)"
+   "chore(contexto): main recebe o snapshot gerado por PR automatica (#3375)"
   ]
  },
  "pr_template": ".github/PULL_REQUEST_TEMPLATE.md",

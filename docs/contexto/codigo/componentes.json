@@ -446,7 +446,7 @@
     "PlaybooksManager"
    ],
    "export_default": null,
-   "linhas": 284,
+   "linhas": 405,
    "dominio": "components/admin",
    "hooks_locais": [],
    "tabelas": [
@@ -13547,7 +13547,7 @@
    "hooks_locais": [],
    "tabelas": [],
    "edges": [],
-   "usado_por": 56,
+   "usado_por": 57,
    "orfao": false
   },
   {
@@ -14606,7 +14606,7 @@
    "hooks_locais": [],
    "tabelas": [],
    "edges": [],
-   "usado_por": 55,
+   "usado_por": 56,
    "orfao": false
   },
   {

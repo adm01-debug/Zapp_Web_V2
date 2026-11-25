@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "9086dfdb4db32f6fe29f849c8b5185dd8a4c36fb",
+  "commit": "73476efff8f22ec805c367fa8d2858a142a9c243",
   "branch": "main",
-  "data_commit": "2026-11-25T13:30:11-03:00",
+  "data_commit": "2026-11-25T16:46:05-03:00",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "73476eff",
+    "data": "2026-11-25",
+    "assunto": "feat(playbooks): ativo/inativo, exclusao com confirmacao e acesso por teclado (#3381)"
+   },
    {
     "sha": "9086dfdb",
     "data": "2026-11-25",
@@ -126,14 +131,9 @@
     "sha": "592ffa7f",
     "data": "2026-11-24",
     "assunto": "fix: elimina o flake de meia-noite do contrato do monitor (vs_yesterday) (#3353)"
-   },
-   {
-    "sha": "45a65087",
-    "data": "2026-11-24",
-    "assunto": "fix(e2e): serve as 4 imagens restantes pelo mirror ghcr.io do mesmo digest (#3352)"
    }
   ],
-  "arquivos_mudados_7d": 4399,
+  "arquivos_mudados_7d": 4385,
   "pastas_mais_mudadas_30d": [
    {
     "pasta": "docs/contexto/supabase",
@@ -210,12 +210,12 @@
     "mudancas": 16
    },
    {
-    "arquivo": "src/integrations/supabase/types.ts",
+    "arquivo": "supabase/schema-manifest.json",
     "mudancas": 16
    },
    {
-    "arquivo": "supabase/schema-manifest.json",
-    "mudancas": 16
+    "arquivo": "src/integrations/supabase/types.ts",
+    "mudancas": 15
    },
    {
     "arquivo": "supabase/schema-catalog.json",
@@ -226,15 +226,15 @@
     "mudancas": 13
    },
    {
-    "arquivo": "scripts/db-audit/grants-baseline.json",
-    "mudancas": 13
-   },
-   {
     "arquivo": ".github/workflows/db-guard.yml",
     "mudancas": 12
    },
    {
     "arquivo": "PENDENCIAS.md",
+    "mudancas": 12
+   },
+   {
+    "arquivo": "scripts/db-audit/grants-baseline.json",
     "mudancas": 12
    },
    {
@@ -316,7 +316,7 @@
  "contagens": {
   "arquivos_total": 14796,
   "arquivos_codigo": 5141,
-  "linhas_codigo": 953211,
+  "linhas_codigo": 953332,
   "rotas": 18,
   "rotas_http_backend": 11,
   "vistas_por_id": 55,
@@ -740,7 +740,7 @@
   },
   "src/components": {
    "arquivos": 2315,
-   "linhas": 394110
+   "linhas": 394231
   },
   "src/config": {
    "arquivos": 3,

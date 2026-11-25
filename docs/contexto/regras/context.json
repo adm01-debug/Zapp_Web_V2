@@ -1,15 +1,15 @@
 {
  "meta": {
-  "sha": "9086dfdb4db32f6fe29f849c8b5185dd8a4c36fb",
+  "sha": "73476efff8f22ec805c367fa8d2858a142a9c243",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-25 16:31 UTC",
+  "generated_at": "2026-11-25 19:47 UTC",
   "files_total": 14643,
   "code_files": 8177,
-  "code_lines": 1230040
+  "code_lines": 1230161
  },
  "version": "1.3.2",
- "facts_hash": "9ef6c05a7d91f3c8",
+ "facts_hash": "09c4ba6b0c652644",
  "stack": {
   "frameworks": [
    "React + Vite",
@@ -76073,7 +76073,7 @@
   {
    "module": "src/components",
    "files": 2315,
-   "lines": 394110,
+   "lines": 394231,
    "tables": [
     "agent_skills",
     "agent_visibility_grants",
@@ -90890,6 +90890,10 @@
    {
     "file": "src/components/admin/GmailWebhookMonitor.tsx",
     "msg": " className="
+   },
+   {
+    "file": "src/components/admin/PlaybooksManager.tsx",
+    "msg": "Erro ao remover"
    },
    {
     "file": "src/components/admin/PlaybooksManager.tsx",
@@ -113923,6 +113927,11 @@
     "file": "src/components/admin/AdminView.tsx",
     "name": "LIMITE_CHATS_PADRAO",
     "value": "5"
+   },
+   {
+    "file": "src/components/admin/PlaybooksManager.tsx",
+    "name": "ERRO_CARGA",
+    "value": "'Não foi possível carregar os playbooks. Tente novamente.'"
    },
    {
     "file": "src/components/admin/TrainingMode.tsx",
@@ -304213,7 +304222,7 @@
   },
   "src/components/admin/PlaybooksManager.tsx": {
    "path": "src/components/admin/PlaybooksManager.tsx",
-   "lines": 284,
+   "lines": 405,
    "exports": [
     "function PlaybooksManager"
    ],
@@ -304241,8 +304250,15 @@
     ]
    },
    "errors": [
+    "Erro ao remover",
     "Erro ao salvar",
     "Nome obrigatório"
+   ],
+   "params": [
+    {
+     "name": "ERRO_CARGA",
+     "value": "'Não foi possível carregar os playbooks. Tente novamente.'"
+    }
    ]
   },
   "src/components/admin/PublicApiDashboard.tsx": {
@@ -424305,10 +424321,20 @@
   }
  },
  "git": {
-  "sha": "9086dfdb4db32f6fe29f849c8b5185dd8a4c36fb",
+  "sha": "73476efff8f22ec805c367fa8d2858a142a9c243",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "73476eff",
+    "date": "2026-11-25",
+    "author": "adm01-debug",
+    "subject": "feat(playbooks): ativo/inativo, exclusao com confirmacao e acesso por teclado (#3381)",
+    "files": [
+     "src/__tests__/a11y/icon-buttons-baseline.json",
+     "src/components/admin/PlaybooksManager.tsx"
+    ]
+   },
    {
     "sha": "9086dfdb",
     "date": "2026-11-25",
@@ -425950,15 +425976,6 @@
      "docs/pendencias/infra-de-ia-talkx-ai-x076.md",
      "docs/pendencias/rascunho-de-campanha-por-ia-ia161.md"
     ]
-   },
-   {
-    "sha": "e5d1a17d",
-    "date": "2026-11-23",
-    "author": "adm01-debug",
-    "subject": "fix(e2e): destrava o Firefox tirando o axe do painel CRM em 320px (#3348)",
-    "files": [
-     "e2e/email-navy-visual.spec.ts"
-    ]
    }
   ],
   "hot_files": [
@@ -426011,6 +426028,14 @@
     2
    ],
    [
+    "src/__tests__/a11y/icon-buttons-baseline.json",
+    1
+   ],
+   [
+    "src/components/admin/PlaybooksManager.tsx",
+    1
+   ],
+   [
     "docs/pendencias/filtro-novidades-com-contagem-vinda-da-edge-ct64.md",
     1
    ],
@@ -426032,14 +426057,6 @@
    ],
    [
     "supabase/functions/promogifts-catalog/index.ts",
-    1
-   ],
-   [
-    "scripts/ci/check-workflow-pins-resolvem.mjs",
-    1
-   ],
-   [
-    "scripts/ci/check-workflow-pins-resolvem.unit.mjs",
     1
    ]
   ]

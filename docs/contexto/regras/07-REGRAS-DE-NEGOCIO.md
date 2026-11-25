@@ -1,6 +1,6 @@
 # 07 · REGRAS DE NEGÓCIO
 
-> Gerado automaticamente por AI Context Sync v1.3.2 · commit `9086dfdb4d` · branch `main` · 2026-11-25 16:31 UTC
+> Gerado automaticamente por AI Context Sync v1.3.2 · commit `73476efff8` · branch `main` · 2026-11-25 19:47 UTC
 > Não edite à mão — regras humanas vão em `manual/`.
 
 ## A. Regras escritas por humanos (`manual/` — prioridade máxima, nunca sobrescrito)
@@ -3612,6 +3612,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `LIMITE_CHATS_MIN` | `1` | `src/components/admin/AdminView.tsx` |
 | `LIMITE_CHATS_MAX` | `50` | `src/components/admin/AdminView.tsx` |
 | `LIMITE_CHATS_PADRAO` | `5` | `src/components/admin/AdminView.tsx` |
+| `ERRO_CARGA` | `'Não foi possível carregar os playbooks. Tente novamente.'` | `src/components/admin/PlaybooksManager.tsx` |
 | `MIN_DETALHE` | `60` | `src/components/admin/TrainingMode.tsx` |
 | `RAMAL_MAX_LENGTH` | `64` | `src/components/admin/VoipRamalField.tsx` |
 | `MAX_ACOES_DISPUTADAS` | `50` | `src/components/admin/dedupeEntreAbas.ts` |
@@ -3901,8 +3902,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `MESMO_CICLO_MS` | `1` | `src/hooks/analytics/useAIUsageDashboard.ts` |
 | `GOAL_CHECK_INTERVAL_MS` | `600` | `src/hooks/analytics/useGoalNotifications.ts` |
 | `QUEUE_GOAL_ALERTS_INTERVAL_MS` | `5` | `src/hooks/analytics/useQueueGoalAlerts.ts` |
-| `MAX_HISTORY` | `60` | `src/hooks/analytics/useRealtimeDashboard.ts` |
-| … +695 linhas — lista completa em `context.json` | | |
+| … +696 linhas — lista completa em `context.json` | | |
 
 ### H.2 Prazos, expirações e janelas de tempo
 
@@ -4655,7 +4655,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | disk-full | `scripts/ci/e2e-isolated-provider-readiness.unit.mjs` |
 | must-not-read-service-role | `scripts/ci/e2e-isolated-provider-readiness.unit.mjs` |
 | synthetic transport rejection | `scripts/ci/e2e-isolated-runtime-probe.unit.mjs` |
-| … +1859 linhas — lista completa em `context.json` | |
+| … +1860 linhas — lista completa em `context.json` | |
 
 ## J. Controle de acesso no código (checagens de perfil/permissão)
 

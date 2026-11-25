@@ -3071,12 +3071,12 @@
     "ocorrencias": 5
    },
    {
-    "papel": "complementary",
+    "papel": "article",
     "ocorrencias": 4
    },
    {
-    "papel": "article",
-    "ocorrencias": 3
+    "papel": "complementary",
+    "ocorrencias": 4
    },
    {
     "papel": "assistant",

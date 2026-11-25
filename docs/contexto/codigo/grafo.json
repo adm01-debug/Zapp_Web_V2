@@ -2,7 +2,7 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "nos": 2410,
- "arestas": 8295,
+ "arestas": 8297,
  "hubs": [
   {
    "arquivo": "src/lib/utils.ts",
@@ -82,15 +82,15 @@
   },
   {
    "arquivo": "src/components/ui/alert-dialog.tsx",
+   "importado_por": 57
+  },
+  {
+   "arquivo": "src/components/ui/switch.tsx",
    "importado_por": 56
   },
   {
    "arquivo": "supabase/functions/_shared/schemas.ts",
    "importado_por": 56
-  },
-  {
-   "arquivo": "src/components/ui/switch.tsx",
-   "importado_por": 55
   },
   {
    "arquivo": "src/components/talkx/talkxShared.ts",

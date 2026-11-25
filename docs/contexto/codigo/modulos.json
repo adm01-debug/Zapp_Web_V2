@@ -292,7 +292,7 @@
    "modulo": "components/admin",
    "arquivos": 25,
    "testes": 39,
-   "linhas": 5169,
+   "linhas": 5290,
    "itens_menu": [
     "Admin",
     "Consumo IA",
@@ -408,6 +408,7 @@
     "admin",
     "agent",
     "alert",
+    "article",
     "customer",
     "link",
     "presentation",
