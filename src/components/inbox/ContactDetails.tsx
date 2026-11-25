@@ -14,6 +14,7 @@ import { ExternalContact360Panel } from './contact-details/ExternalContact360Pan
 import { ContactDeliveryPanel } from './contact-details/ContactDeliveryPanel';
 import { ConversationMemorySection } from './contact-details/ConversationMemorySection';
 import { AtendimentoSection } from './contact-details/AtendimentoSection';
+import { SlaTimelineSection } from './contact-details/SlaTimelineSection';
 import { useContactEnrichedData } from '@/hooks/crm/useContactEnrichedData';
 import { useConversationActions } from '@/hooks/chat/useConversationActions';
 import { useContactQuickActions } from '@/hooks/inbox/useContactQuickActions';
@@ -152,6 +153,11 @@ export function ContactDetails({ conversation, onClose }: ContactDetailsProps) {
             {/* Restaurados (2026-11-12): começam recolhidos e só buscam dado ao abrir. */}
             <ConversationMemorySection contactId={contact.id} index={6} />
             <AtendimentoSection contactId={contact.id} phone={contact.phone} name={contact.name} index={7} />
+            {/* Resgate: a linha do tempo de SLA (marcos reais de `conversation_sla`
+                + transferências de `conversation_events`) tinha lib, hook e testes na
+                main desde 12/10, mas nenhuma tela. Recolhida por padrão, como as
+                vizinhas: a leitura só acontece quando o atendente abre a seção. */}
+            <SlaTimelineSection contactId={contact.id} index={8} />
           </Accordion>
         </div>
       </div>
