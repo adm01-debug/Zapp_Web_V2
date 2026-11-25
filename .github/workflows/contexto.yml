@@ -293,6 +293,74 @@ jobs:
           if-no-files-found: error
           retention-days: 1
 
+  # A branch `contexto` e a prova por execucao; a main so recebia o snapshot por PR manual, entao entre uma
+  # PR e outra o mapa da main apontava commit velho (manifest.commit, rotas, regras). Este job leva o snapshot
+  # para a main por PR com auto-merge, no maximo uma por vez e uma por dia: o ci.yml roda em TODO pull_request,
+  # entao uma PR a cada execucao enfileiraria o CI inteiro na frente das PRs de trabalho.
+  # Sem laco: o merge toca apenas docs/contexto/{codigo,supabase,regras}, que nao esta nos paths deste
+  # workflow, e regras/manual/ (que esta) e restaurado da main em vez de copiado do snapshot.
+  sincronizar-main:
+    name: Main recebe o snapshot (1x/dia, via PR)
+    needs: [gate, publicar]
+    if: ${{ !cancelled() && needs.gate.result == 'success' && needs.publicar.result == 'success' }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    permissions:  # zizmor: ignore[excessive-permissions]
+      contents: write # publica a branch contexto-sync
+      pull-requests: write # abre/reaproveita a PR e liga o auto-merge
+    steps:
+      - name: Checkout (main)
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          fetch-depth: 1
+
+      - name: Levar o snapshot publicado para a main
+        env:
+          GH_TOKEN: ${{ github.token }}
+          MIN_HORAS: '20'
+          SYNC_BRANCH: contexto-sync
+        run: |
+          git config user.name 'contexto[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git fetch --quiet --depth 1 origin "$CONTEXTO_BRANCH"
+          ABERTA=$(gh pr list --head "$SYNC_BRANCH" --state open --json number --jq '.[0].number // empty')
+          if [ -z "$ABERTA" ]; then
+            ULTIMO=$(git log -1 --format=%ct -- "$CONTEXTO_DIR" 2>/dev/null || echo 0)
+            IDADE_H=$(( ( $(date +%s) - ${ULTIMO:-0} ) / 3600 ))
+            if [ "$IDADE_H" -lt "$MIN_HORAS" ]; then
+              echo "main recebeu snapshot ha ${IDADE_H}h (< ${MIN_HORAS}h) e nao ha PR aberta — nada a fazer."
+              exit 0
+            fi
+          fi
+          git checkout --quiet -B "$SYNC_BRANCH"
+          # git checkout <tree> -- <dir> faz merge e ressuscita arquivo que a main tem e o snapshot nao;
+          # git archive escreve exatamente o tree, entao a main passa a espelhar o snapshot (inclusive remocoes).
+          rm -rf "$CONTEXTO_DIR/codigo" "$CONTEXTO_DIR/supabase" "$CONTEXTO_DIR/regras"
+          git archive FETCH_HEAD "$CONTEXTO_DIR" | tar -x -C .
+          # regras/manual/ e texto humano e a main e dona: o snapshot nunca o sobrescreve.
+          git checkout --quiet HEAD -- "$CONTEXTO_DIR/regras/manual" 2>/dev/null \
+            || rm -rf "$CONTEXTO_DIR/regras/manual"
+          git add -A -- "$CONTEXTO_DIR"
+          if git diff --cached --quiet; then echo "main ja tem este snapshot — nada a fazer."; exit 0; fi
+          git commit --quiet -m "chore(contexto): main recebe o snapshot de $CONTEXTO_BRANCH @ ${GITHUB_SHA:0:7} [skip ci]"
+          REMOTE="https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+          git push --quiet --force "$REMOTE" "HEAD:refs/heads/$SYNC_BRANCH"
+          if [ -z "$ABERTA" ]; then
+            gh pr create --base main --head "$SYNC_BRANCH" \
+              --title 'chore(contexto): main recebe o snapshot gerado (automatico)' \
+              --body "$(printf '%s\n' \
+                'PR automatica do workflow contexto.yml. Leva para a main o snapshot ja publicado na branch contexto' \
+                '(codigo/, supabase/, regras/ e 00-INDEX.md), para o mapa que os agentes leem na main deixar de' \
+                'apontar commit velho entre uma PR manual e outra.' \
+                '' \
+                '- regras/manual/ fica como esta na main: texto humano nao e sobrescrito.' \
+                '- Nao edite esta branch: ela e recriada a cada execucao. O merge esta em auto (squash).')"
+            ABERTA=$(gh pr view "$SYNC_BRANCH" --json number --jq .number)
+          fi
+          gh pr merge "$ABERTA" --auto --squash --delete-branch \
+            || echo "auto-merge nao pode ser ligado agora (branch desatualizada ou checks pendentes) — a proxima execucao tenta de novo."
+
   publicar:
     name: Índice único + branch contexto
     needs: [gate, codigo, banco, regras]
