@@ -1,5 +1,25 @@
 # public.entity_versions
 
+> Descrição funcional não estava registrada no catálogo; o conteúdo abaixo documenta a estrutura observável, sem inferir regras de negócio não declaradas.
+
+[CATALOGUE SEMÂNTICO DO PROJETO]
+Objeto: public.entity_versions (tabela). RLS habilitada: t; RLS forçada: f.
+Colunas (ordem, tipo e nulabilidade):
+1 id uuid NOT NULL [DEFAULT/EXPRESSION DEFINED]
+2 entity_type text NOT NULL
+3 entity_id uuid NOT NULL
+4 version_number integer NOT NULL
+5 data jsonb NOT NULL [DEFAULT/EXPRESSION DEFINED]
+6 changed_by uuid NULLABLE
+7 change_summary text NULLABLE
+8 created_at timestamp with time zone NOT NULL [DEFAULT/EXPRESSION DEFINED]
+Constraints:
+entity_versions_pkey: PRIMARY KEY (id)
+entity_versions_entity_type_entity_id_version_number_key: UNIQUE (entity_type, entity_id, version_number)
+Políticas RLS (nome, operação, papéis e modo; as expressões permanecem no catálogo):
+"Admins can view entity versions" [command=SELECT; roles=authenticated; PERMISSIVE]
+"Block authenticated version inserts" [command=INSERT; roles=authenticated; PERMISSIVE]
+
 | propriedade | valor |
 |---|---|
 | tipo | table |
@@ -52,7 +72,7 @@
 | comando | SELECT |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `is_admin_or_supervisor(auth.uid())` |
+| USING | `is_admin_or_supervisor(( SELECT auth.uid() AS uid))` |
 | WITH CHECK |  |
 
 ### `Block authenticated version inserts`

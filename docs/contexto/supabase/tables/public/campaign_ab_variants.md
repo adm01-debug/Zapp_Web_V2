@@ -1,5 +1,30 @@
 # public.campaign_ab_variants
 
+> Descrição funcional não estava registrada no catálogo; o conteúdo abaixo documenta a estrutura observável, sem inferir regras de negócio não declaradas.
+
+[CATALOGUE SEMÂNTICO DO PROJETO]
+Objeto: public.campaign_ab_variants (tabela). RLS habilitada: t; RLS forçada: f.
+Colunas (ordem, tipo e nulabilidade):
+1 id uuid NOT NULL [DEFAULT/EXPRESSION DEFINED]
+2 campaign_id uuid NOT NULL
+3 variant_name text NOT NULL [DEFAULT/EXPRESSION DEFINED]
+4 message_content text NOT NULL
+5 media_url text NULLABLE
+6 send_count integer NULLABLE [DEFAULT/EXPRESSION DEFINED]
+7 delivered_count integer NULLABLE [DEFAULT/EXPRESSION DEFINED]
+8 read_count integer NULLABLE [DEFAULT/EXPRESSION DEFINED]
+9 response_count integer NULLABLE [DEFAULT/EXPRESSION DEFINED]
+10 is_winner boolean NULLABLE [DEFAULT/EXPRESSION DEFINED]
+11 created_at timestamp with time zone NOT NULL [DEFAULT/EXPRESSION DEFINED]
+Constraints:
+campaign_ab_variants_campaign_id_fkey: FOREIGN KEY (campaign_id) REFERENCES campaigns(id) ON DELETE CASCADE
+campaign_ab_variants_pkey: PRIMARY KEY (id)
+Políticas RLS (nome, operação, papéis e modo; as expressões permanecem no catálogo):
+"Authenticated can view AB variants" [command=SELECT; roles=authenticated; PERMISSIVE]
+"Campaign owners or admins can delete AB variants" [command=DELETE; roles=authenticated; PERMISSIVE]
+"Campaign owners or admins can insert AB variants" [command=INSERT; roles=authenticated; PERMISSIVE]
+"Campaign owners or admins can update AB variants" [command=UPDATE; roles=authenticated; PERMISSIVE]
+
 | propriedade | valor |
 |---|---|
 | tipo | table |
@@ -54,7 +79,7 @@
 | comando | SELECT |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `(auth.uid() IS NOT NULL)` |
+| USING | `(( SELECT auth.uid() AS uid) IS NOT NULL)` |
 | WITH CHECK |  |
 
 ### `Campaign owners or admins can delete AB variants`
@@ -64,7 +89,7 @@
 | comando | DELETE |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `(EXISTS ( SELECT 1    FROM campaigns c   WHERE ((c.id = campaign_ab_variants.campaign_id) AND ((c.created_by = get_profile_id_for_user(auth.uid())) OR is_admin_or_supervisor(auth.uid())))))` |
+| USING | `(EXISTS ( SELECT 1    FROM campaigns c   WHERE ((c.id = campaign_ab_variants.campaign_id) AND ((c.created_by = get_profile_id_for_user(( SELECT auth.uid() AS uid))) OR is_admin_or_supervisor(( SELECT auth.uid() AS uid))))))` |
 | WITH CHECK |  |
 
 ### `Campaign owners or admins can insert AB variants`
@@ -75,7 +100,7 @@
 | tipo | PERMISSIVE |
 | roles | authenticated |
 | USING |  |
-| WITH CHECK | `(EXISTS ( SELECT 1    FROM campaigns c   WHERE ((c.id = campaign_ab_variants.campaign_id) AND ((c.created_by = get_profile_id_for_user(auth.uid())) OR is_admin_or_supervisor(auth.uid())))))` |
+| WITH CHECK | `(EXISTS ( SELECT 1    FROM campaigns c   WHERE ((c.id = campaign_ab_variants.campaign_id) AND ((c.created_by = get_profile_id_for_user(( SELECT auth.uid() AS uid))) OR is_admin_or_supervisor(( SELECT auth.uid() AS uid))))))` |
 
 ### `Campaign owners or admins can update AB variants`
 
@@ -84,7 +109,7 @@
 | comando | UPDATE |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `(EXISTS ( SELECT 1    FROM campaigns c   WHERE ((c.id = campaign_ab_variants.campaign_id) AND ((c.created_by = get_profile_id_for_user(auth.uid())) OR is_admin_or_supervisor(auth.uid())))))` |
+| USING | `(EXISTS ( SELECT 1    FROM campaigns c   WHERE ((c.id = campaign_ab_variants.campaign_id) AND ((c.created_by = get_profile_id_for_user(( SELECT auth.uid() AS uid))) OR is_admin_or_supervisor(( SELECT auth.uid() AS uid))))))` |
 | WITH CHECK |  |
 
 

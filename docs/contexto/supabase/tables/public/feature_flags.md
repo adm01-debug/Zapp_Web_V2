@@ -2,6 +2,31 @@
 
 > Feature flags globais (key -> enabled). Leitura por qualquer usuario autenticado, escrita apenas admin via RLS. Consumido por useFeatureFlag no front.
 
+[CATALOGUE SEMÂNTICO DO PROJETO]
+Objeto: public.feature_flags (tabela). RLS habilitada: t; RLS forçada: f.
+Colunas (ordem, tipo e nulabilidade):
+1 key text NOT NULL
+2 enabled boolean NOT NULL [DEFAULT/EXPRESSION DEFINED]
+3 description text NULLABLE
+4 updated_at timestamp with time zone NOT NULL [DEFAULT/EXPRESSION DEFINED]
+5 updated_by uuid NULLABLE
+6 rollout_percentage integer NOT NULL [DEFAULT/EXPRESSION DEFINED] — Percentual estável (0..100) do rollout. Avaliado por hash de (user_id || key) mod 100 em public.evaluate_feature_flags.
+7 allowed_roles text[] NOT NULL [DEFAULT/EXPRESSION DEFINED] — Papéis (app_role::text) com acesso garantido. Vazio = todos os papéis passam pelo portão de papel.
+8 allowed_user_ids uuid[] NOT NULL [DEFAULT/EXPRESSION DEFINED] — UUIDs com acesso sempre garantido (vencem papel e percentual). NUNCA exposta ao cliente comum.
+9 blocked_user_ids uuid[] NOT NULL [DEFAULT/EXPRESSION DEFINED] — UUIDs sempre barrados (vencem permitidos). NUNCA exposta ao cliente comum.
+10 expires_at timestamp with time zone NULLABLE — Quando preenchida no passado, a flag deixa de valer. NULL = sem expiração.
+11 metadata jsonb NOT NULL [DEFAULT/EXPRESSION DEFINED]
+Constraints:
+feature_flags_key_check: CHECK (key ~ '^[a-z0-9][a-z0-9_.-]{0,63}$'::text)
+feature_flags_rollout_percentage_check: CHECK (rollout_percentage >= 0 AND rollout_percentage <= 100)
+feature_flags_updated_by_fkey: FOREIGN KEY (updated_by) REFERENCES auth.users(id) ON DELETE SET NULL
+feature_flags_pkey: PRIMARY KEY (key)
+Políticas RLS (nome, operação, papéis e modo; as expressões permanecem no catálogo):
+feature_flags_delete_admin [command=DELETE; roles=authenticated; PERMISSIVE]
+feature_flags_insert_admin [command=INSERT; roles=authenticated; PERMISSIVE]
+feature_flags_select_admin_supervisor [command=SELECT; roles=authenticated; PERMISSIVE]
+feature_flags_update_admin [command=UPDATE; roles=authenticated; PERMISSIVE]
+
 | propriedade | valor |
 |---|---|
 | tipo | table |
@@ -58,7 +83,7 @@
 | comando | DELETE |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `is_admin(auth.uid())` |
+| USING | `is_admin(( SELECT auth.uid() AS uid))` |
 | WITH CHECK |  |
 
 ### `feature_flags_insert_admin`
@@ -69,7 +94,7 @@
 | tipo | PERMISSIVE |
 | roles | authenticated |
 | USING |  |
-| WITH CHECK | `is_admin(auth.uid())` |
+| WITH CHECK | `is_admin(( SELECT auth.uid() AS uid))` |
 
 ### `feature_flags_select_admin_supervisor`
 
@@ -78,7 +103,7 @@
 | comando | SELECT |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `is_admin_or_supervisor(auth.uid())` |
+| USING | `is_admin_or_supervisor(( SELECT auth.uid() AS uid))` |
 | WITH CHECK |  |
 
 ### `feature_flags_update_admin`
@@ -88,8 +113,8 @@
 | comando | UPDATE |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `is_admin(auth.uid())` |
-| WITH CHECK | `is_admin(auth.uid())` |
+| USING | `is_admin(( SELECT auth.uid() AS uid))` |
+| WITH CHECK | `is_admin(( SELECT auth.uid() AS uid))` |
 
 
 ## Triggers

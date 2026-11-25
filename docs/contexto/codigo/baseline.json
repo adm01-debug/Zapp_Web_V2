@@ -2,162 +2,170 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "35d701970e6862a726b9018be8cc1777bf094ef7",
+  "commit": "5191812994ef42c100afe9d3afff331a266a4a57",
   "branch": "main",
-  "data_commit": "2026-11-18T18:52:26-03:00",
+  "data_commit": "2026-11-25T07:44:09-03:00",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
    {
-    "sha": "35d70197",
-    "data": "2026-11-18",
-    "assunto": "O types-sync passa a commitar o DB-INVENTORY que ele regenera (#3267)"
+    "sha": "51918129",
+    "data": "2026-11-25",
+    "assunto": "chore: aposenta acervo de resgate 261118 lote3 ja triado (1.029 arquivos, zero perdas) (#3371)"
    },
    {
-    "sha": "4366aa60",
-    "data": "2026-11-18",
-    "assunto": "DB-INVENTORY ganha gerador, e o types-sync para de congelar a cada objeto novo (#3266)"
+    "sha": "06a1cbe6",
+    "data": "2026-11-25",
+    "assunto": "feat(automacao): recupera harness local da PR #2926 sobre o main atual (#3366)"
    },
    {
-    "sha": "f058a63e",
-    "data": "2026-11-18",
-    "assunto": "Registra a auditoria de liquidação de branches, PEND=0 (#3264)"
+    "sha": "6d87cf6c",
+    "data": "2026-11-25",
+    "assunto": "feat(ci): restaura a fila de merge serial (auto-update-pr-branch) (#3368)"
    },
    {
-    "sha": "33359709",
-    "data": "2026-11-18",
-    "assunto": "Teste A/B de campanha: termina o X065, que estava parado na metade (#3262)"
+    "sha": "e1a545c6",
+    "data": "2026-11-24",
+    "assunto": "feat(manutencao): porta o harness de manutencao completo da PR #2926 (#3370)"
    },
    {
-    "sha": "0116fcc0",
-    "data": "2026-11-18",
-    "assunto": "Migration do índice do agendador substituída por uma que tolera falta de permissão (#3265)"
+    "sha": "21396b9c",
+    "data": "2026-11-24",
+    "assunto": "fix(ci): exige Replay local das migrations na main (#3367)"
    },
    {
-    "sha": "8724c09b",
-    "data": "2026-11-18",
-    "assunto": "Redator do relatório volta a apagar token por padrão, não só por valor (#3263)"
+    "sha": "06d10c80",
+    "data": "2026-11-24",
+    "assunto": "fix(ci): guard enxerga wrapper que passa o nome da edge — gmail-send e gmail-sync saem de orfas (#3365)"
    },
    {
-    "sha": "e6404cc4",
-    "data": "2026-11-18",
-    "assunto": "Índice que falta em cron.job_run_details, sem duplicar a retenção (#3259)"
+    "sha": "f6d0d50c",
+    "data": "2026-11-24",
+    "assunto": "chore(resgate): preserva dossiês e mapas do resgate na main (#3364)"
    },
    {
-    "sha": "4c32726f",
-    "data": "2026-11-18",
-    "assunto": "Restaura o OpenSSF Scorecard, apagado por engano em 5721e4f50 (#3261)"
+    "sha": "7d4d196e",
+    "data": "2026-11-24",
+    "assunto": "feat(inbox): analise de imagem do Copiloto no painel de conversa (#3362)"
    },
    {
-    "sha": "6a23f0f1",
-    "data": "2026-11-18",
-    "assunto": "Liga a recomendação de produto por IA, que estava paga e desligada (#3260)"
+    "sha": "c3127e8f",
+    "data": "2026-11-24",
+    "assunto": "chore(db): sincronizar artefatos derivados do banco (#3361)"
    },
    {
-    "sha": "77d0316b",
-    "data": "2026-11-18",
-    "assunto": "Aproveita 5 melhorias que estavam presas em branches nunca mergeadas (#3258)"
+    "sha": "697de6eb",
+    "data": "2026-11-24",
+    "assunto": "chore: remove teardown de produção morto do E2E e dropa as 2 RPCs órfãs (#3360)"
    },
    {
-    "sha": "8486d56b",
-    "data": "2026-11-18",
-    "assunto": "Destrava o sync de tipos, parado desde que o inventário virou guarda sem gerador (#3256)"
+    "sha": "feee9f79",
+    "data": "2026-11-24",
+    "assunto": "fix(tarefas): restaura o foco da captura apos o commit, sem corrida (#3359)"
    },
    {
-    "sha": "fbba175b",
-    "data": "2026-11-18",
-    "assunto": "Fecha o resíduo de 18 linhas que a prova de fechamento achou (lote 3b) (#3257)"
+    "sha": "36701c06",
+    "data": "2026-11-24",
+    "assunto": "fix(ci): volta o pin do scorecard-action para v2.5.0 (#3358)"
    },
    {
-    "sha": "1a009b1e",
-    "data": "2026-11-18",
-    "assunto": "Resgate lote 3 — os 1.009 arquivos que só existem em branch, pelos três eixos (#3255)"
+    "sha": "1437a664",
+    "data": "2026-11-24",
+    "assunto": "infra: alinha o timeout do job E2E com a duracao real (~10 min) (#3355)"
    },
    {
-    "sha": "6131ecf0",
-    "data": "2026-11-18",
-    "assunto": "As duas RPCs que o Talk X chama com 404, e a cegueira do guard que deixou passar (#3254)"
+    "sha": "5e609b75",
+    "data": "2026-11-24",
+    "assunto": "fix(e2e): retenta o pull em falha transiente de rede do registry (#3357)"
    },
    {
-    "sha": "2b671e64",
-    "data": "2026-11-18",
-    "assunto": "Envio de localização para de disparar três vezes no mesmo clique (#3253)"
+    "sha": "83a70c3e",
+    "data": "2026-11-24",
+    "assunto": "chore(db): sincronizar artefatos derivados do banco (#3356)"
    },
    {
-    "sha": "95f67165",
-    "data": "2026-11-18",
-    "assunto": "Lint do pre-push para de travar em arquivo byte-exato de resgate (#3252)"
+    "sha": "592ffa7f",
+    "data": "2026-11-24",
+    "assunto": "fix: elimina o flake de meia-noite do contrato do monitor (vs_yesterday) (#3353)"
    },
    {
-    "sha": "f9c29173",
-    "data": "2026-11-18",
-    "assunto": "chore(resgate): preserva 585 arquivos que só existiam em branch (lote 2 — adjudicação de 88 branches) (#3251)"
+    "sha": "45a65087",
+    "data": "2026-11-24",
+    "assunto": "fix(e2e): serve as 4 imagens restantes pelo mirror ghcr.io do mesmo digest (#3352)"
    },
    {
-    "sha": "6095e644",
-    "data": "2026-11-18",
-    "assunto": "chore(resgate): preserva na main os 29 arquivos de regra 8 das branches que vão fechar (#3250)"
+    "sha": "38ee260d",
+    "data": "2026-11-24",
+    "assunto": "chore: corrige o comentario do E2E do Firefox no ci.yml (causa nao e memoria) (#3349)"
    },
    {
-    "sha": "cfd64128",
-    "data": "2026-11-18",
-    "assunto": "Visão 360 do CRM dentro da conversa — a main tinha o hook e os tipos, faltava a tela (#3248)"
+    "sha": "e586a725",
+    "data": "2026-11-24",
+    "assunto": "fix(e2e): tira o postgrest do ECR anonimo e reconhece a cota \"Data limit exceeded\" (#3351)"
    },
    {
-    "sha": "aab80996",
-    "data": "2026-11-18",
-    "assunto": "Pinça de dois dedos na imagem da conversa — resgate de trabalho descartado por engano (#3246)"
+    "sha": "972831d7",
+    "data": "2026-11-24",
+    "assunto": "fix(e2e): casa o titulo real do dialog de mesclagem (#3350)"
    },
    {
-    "sha": "c2a7dbcb",
-    "data": "2026-11-18",
-    "assunto": "Resgata 8 ferramentas de CI escritas por outros agentes que nunca entraram na main (#3244)"
+    "sha": "7dff0402",
+    "data": "2026-11-23",
+    "assunto": "chore(docs): fecha X076 e corrige estado real da IA-161 (#3346)"
    },
    {
-    "sha": "bbf1295f",
-    "data": "2026-11-18",
-    "assunto": "Fila de merge serial resgatada — 5 agentes tentaram, nenhum entregou (#3231)"
+    "sha": "e5d1a17d",
+    "data": "2026-11-23",
+    "assunto": "fix(e2e): destrava o Firefox tirando o axe do painel CRM em 320px (#3348)"
    },
    {
-    "sha": "97ef722f",
-    "data": "2026-11-18",
-    "assunto": "A documentação de CI lia um kpi.json que ninguém gerava — agora alguém gera (#3237)"
+    "sha": "442bcfb1",
+    "data": "2026-11-23",
+    "assunto": "fix(e2e): desambigua locators de Contatos após o redesign do módulo (#3347)"
    },
    {
-    "sha": "53cb6006",
-    "data": "2026-11-18",
-    "assunto": "O atendente passa a corrigir a memória da conversa, não só ler (#3242)"
+    "sha": "d7fa274c",
+    "data": "2026-11-23",
+    "assunto": "fix: tira o WebRender/DMABUF do caminho no E2E do Firefox (#3345)"
    },
    {
-    "sha": "80ff6cf3",
-    "data": "2026-11-18",
-    "assunto": "Errata do laudo: RLS sem policy nessas 19 tabelas é decisão implementada, não lacuna aberta (#3240)"
+    "sha": "d58476e7",
+    "data": "2026-11-23",
+    "assunto": "chore: sincroniza pin e digest do Playwright no bump de 16 dependencias (#3344)"
    }
   ],
-  "arquivos_mudados_7d": 4836,
+  "arquivos_mudados_7d": 4381,
   "pastas_mais_mudadas_30d": [
+   {
+    "pasta": "docs/contexto/supabase",
+    "mudancas": 1915
+   },
    {
     "pasta": "analise-prs/resgate-261115/auditoria",
     "mudancas": 1635
    },
    {
+    "pasta": "analise-prs/resgate-261118-lote3/claude",
+    "mudancas": 1022
+   },
+   {
     "pasta": "src/components/inbox",
-    "mudancas": 719
+    "mudancas": 737
    },
    {
     "pasta": "docs/reconciliation/reaudit",
     "mudancas": 538
    },
    {
-    "pasta": "analise-prs/resgate-261118-lote3/claude",
-    "mudancas": 511
-   },
-   {
     "pasta": "docs/_arquivo/analise-prs",
     "mudancas": 429
    },
    {
+    "pasta": "analise-prs/resgate-261118-lote3/fix",
+    "mudancas": 424
+   },
+   {
     "pasta": "src/components/talkx",
-    "mudancas": 351
+    "mudancas": 369
    },
    {
     "pasta": "analise-prs/resgate-261115/dossies",
@@ -165,11 +173,11 @@
    },
    {
     "pasta": "supabase/functions/_shared",
-    "mudancas": 226
+    "mudancas": 238
    },
    {
-    "pasta": "analise-prs/resgate-261118-lote3/fix",
-    "mudancas": 212
+    "pasta": "analise-prs/resgate-261118-lote3/hermes",
+    "mudancas": 232
    },
    {
     "pasta": "src/hooks/__tests__",
@@ -177,88 +185,84 @@
    },
    {
     "pasta": "src/hooks/integrations",
-    "mudancas": 143
+    "mudancas": 146
+   },
+   {
+    "pasta": "src/components/contacts",
+    "mudancas": 145
    },
    {
     "pasta": "src/components/dashboard",
-    "mudancas": 139
-   },
-   {
-    "pasta": "src/components/ui",
-    "mudancas": 130
-   },
-   {
-    "pasta": "analise-prs/resgate-261118-lote3/hermes",
-    "mudancas": 116
-   },
-   {
-    "pasta": "src/lib/__tests__",
-    "mudancas": 116
+    "mudancas": 145
    }
   ],
   "arquivos_mais_mudados_90d": [
    {
     "arquivo": "supabase/deployment-manifest.json",
-    "mudancas": 28
+    "mudancas": 36
    },
    {
     "arquivo": "ESTADO.md",
-    "mudancas": 16
+    "mudancas": 24
    },
    {
     "arquivo": "docs/talkx/ESTADOS.md",
+    "mudancas": 16
+   },
+   {
+    "arquivo": "src/integrations/supabase/types.ts",
+    "mudancas": 16
+   },
+   {
+    "arquivo": "supabase/schema-manifest.json",
+    "mudancas": 16
+   },
+   {
+    "arquivo": "supabase/schema-catalog.json",
+    "mudancas": 14
+   },
+   {
+    "arquivo": "docs/DB-INVENTORY.md",
     "mudancas": 13
    },
    {
     "arquivo": "scripts/db-audit/grants-baseline.json",
-    "mudancas": 12
-   },
-   {
-    "arquivo": ".github/workflows/ci.yml",
-    "mudancas": 11
+    "mudancas": 13
    },
    {
     "arquivo": ".github/workflows/db-guard.yml",
-    "mudancas": 10
+    "mudancas": 12
    },
    {
     "arquivo": "PENDENCIAS.md",
+    "mudancas": 12
+   },
+   {
+    "arquivo": "docs/agentes/github-ci.md",
+    "mudancas": 11
+   },
+   {
+    "arquivo": ".github/workflows/ci.yml",
     "mudancas": 10
    },
    {
-    "arquivo": "src/integrations/supabase/types.ts",
-    "mudancas": 10
-   },
-   {
-    "arquivo": "supabase/schema-manifest.json",
-    "mudancas": 10
-   },
-   {
-    "arquivo": "docs/DB-INVENTORY.md",
+    "arquivo": "docs/ci/README.md",
     "mudancas": 9
    },
    {
-    "arquivo": "supabase/schema-catalog.json",
+    "arquivo": "scripts/ci/ci-docs-baseline.unit.mjs",
     "mudancas": 9
-   },
-   {
-    "arquivo": "scripts/db-audit/known-violations.json",
-    "mudancas": 7
    },
    {
     "arquivo": "supabase/functions/evolution-api/index.ts",
-    "mudancas": 7
-   },
-   {
-    "arquivo": ".github/workflows/types-sync.yml",
-    "mudancas": 6
+    "mudancas": 8
    },
    {
     "arquivo": "RELATORIO_CI.md",
     "mudancas": 6
    },
    {
-    "arquivo": "TESTING_CONVENTION.md",
+    "arquivo": "docs/plans/PLANO_ASSISTENTE_PESSOAL_IA_2026-11-15.md",
     "mudancas": 6
    },
    {
@@ -266,15 +270,7 @@
     "mudancas": 6
    },
    {
-    "arquivo": "scripts/edge-deploy/health-check.mjs",
-    "mudancas": 6
-   },
-   {
-    "arquivo": "scripts/edge-deploy/health-check.unit.mjs",
-    "mudancas": 6
-   },
-   {
-    "arquivo": "src/components/talkx/report/__tests__/TalkXCampaignReport.test.tsx",
+    "arquivo": "src/components/talkx/TalkXView.tsx",
     "mudancas": 6
    },
    {
@@ -286,52 +282,56 @@
     "mudancas": 6
    },
    {
-    "arquivo": "docs/agentes/github-ci.md",
+    "arquivo": ".github/workflows/types-sync.yml",
     "mudancas": 5
    },
    {
-    "arquivo": "docs/ci/README.md",
+    "arquivo": "TESTING_CONVENTION.md",
     "mudancas": 5
    },
    {
-    "arquivo": "docs/contexto/regras/manual/regras.md",
+    "arquivo": "bun.lock",
+    "mudancas": 5
+   },
+   {
+    "arquivo": "docs/audits/edge-functions-authz-coverage.md",
     "mudancas": 5
    }
   ],
   "autores_30d": [
    {
     "autor": "adm01-debug",
-    "commits": 293
+    "commits": 286
    },
    {
     "autor": "github-actions[bot]",
-    "commits": 4
+    "commits": 10
    },
    {
     "autor": "dependabot[bot]",
-    "commits": 3
+    "commits": 4
    }
   ]
  },
  "contagens": {
-  "arquivos_total": 12692,
-  "arquivos_codigo": 5835,
-  "linhas_codigo": 1128870,
+  "arquivos_total": 14786,
+  "arquivos_codigo": 5140,
+  "linhas_codigo": 952861,
   "rotas": 18,
   "rotas_http_backend": 11,
   "vistas_por_id": 55,
   "itens_menu": 61,
-  "modulos": 147,
-  "componentes": 1054,
-  "hooks": 599,
-  "edge_functions": 92,
-  "tabelas": 221,
-  "migrations": 1145,
-  "cron_jobs": 28,
-  "testes": 3196,
-  "workflows": 22,
-  "scripts": 451,
-  "docs_md": 2730
+  "modulos": 149,
+  "componentes": 935,
+  "hooks": 515,
+  "edge_functions": 93,
+  "tabelas": 223,
+  "migrations": 1153,
+  "cron_jobs": 29,
+  "testes": 2822,
+  "workflows": 26,
+  "scripts": 453,
+  "docs_md": 3986
  },
  "por_pasta": {
   "analise-prs/resgate-261115": {
@@ -341,10 +341,6 @@
   "analise-prs/resgate-261118-lote2": {
    "arquivos": 15,
    "linhas": 1658
-  },
-  "analise-prs/resgate-261118-lote3": {
-   "arquivos": 757,
-   "linhas": 191606
   },
   "analise-prs/resgate-regra8-261118": {
    "arquivos": 11,
@@ -392,7 +388,7 @@
   },
   "e2e/a11y-toque-44px.spec.ts": {
    "arquivos": 1,
-   "linhas": 288
+   "linhas": 292
   },
   "e2e/auth-diagnostics.ts": {
    "arquivos": 1,
@@ -440,7 +436,7 @@
   },
   "e2e/contacts-selection.spec.ts": {
    "arquivos": 1,
-   "linhas": 44
+   "linhas": 49
   },
   "e2e/contacts-snapshots.spec.ts": {
    "arquivos": 1,
@@ -476,7 +472,7 @@
   },
   "e2e/email-navy-visual.spec.ts": {
    "arquivos": 1,
-   "linhas": 776
+   "linhas": 785
   },
   "e2e/files-tab.spec.ts": {
    "arquivos": 1,
@@ -612,7 +608,7 @@
   },
   "playwright.config.ts": {
    "arquivos": 1,
-   "linhas": 401
+   "linhas": 413
   },
   "postcss.config.js": {
    "arquivos": 1,
@@ -622,21 +618,29 @@
    "arquivos": 3,
    "linhas": 1556
   },
+  "scripts/automation.mjs": {
+   "arquivos": 1,
+   "linhas": 992
+  },
+  "scripts/automation.unit.mjs": {
+   "arquivos": 1,
+   "linhas": 603
+  },
   "scripts/catalog": {
    "arquivos": 2,
    "linhas": 337
   },
   "scripts/ci": {
-   "arquivos": 231,
-   "linhas": 50268
+   "arquivos": 230,
+   "linhas": 50283
   },
   "scripts/db": {
    "arquivos": 2,
    "linhas": 142
   },
   "scripts/db-audit": {
-   "arquivos": 94,
-   "linhas": 17522
+   "arquivos": 95,
+   "linhas": 17803
   },
   "scripts/db-tests": {
    "arquivos": 3,
@@ -648,15 +652,23 @@
   },
   "scripts/e2e-isolated": {
    "arquivos": 40,
-   "linhas": 6441
+   "linhas": 6489
   },
   "scripts/edge-deploy": {
    "arquivos": 32,
-   "linhas": 4915
+   "linhas": 4918
   },
   "scripts/eslint": {
    "arquivos": 2,
    "linhas": 127
+  },
+  "scripts/graphify-local.mjs": {
+   "arquivos": 1,
+   "linhas": 1076
+  },
+  "scripts/graphify-local.unit.mjs": {
+   "arquivos": 1,
+   "linhas": 463
   },
   "scripts/ia": {
    "arquivos": 1,
@@ -668,19 +680,19 @@
   },
   "scripts/lib": {
    "arquivos": 2,
-   "linhas": 418
+   "linhas": 422
   },
   "scripts/maintenance": {
    "arquivos": 4,
-   "linhas": 1439
+   "linhas": 2462
   },
   "scripts/mutation": {
    "arquivos": 1,
    "linhas": 537
   },
   "scripts/qa": {
-   "arquivos": 9,
-   "linhas": 1809
+   "arquivos": 10,
+   "linhas": 1827
   },
   "scripts/recuperacao-branches": {
    "arquivos": 1,
@@ -727,8 +739,8 @@
    "linhas": 638
   },
   "src/components": {
-   "arquivos": 2284,
-   "linhas": 388352
+   "arquivos": 2315,
+   "linhas": 394110
   },
   "src/config": {
    "arquivos": 3,
@@ -747,8 +759,8 @@
    "linhas": 3293
   },
   "src/hooks": {
-   "arquivos": 1020,
-   "linhas": 166021
+   "arquivos": 1032,
+   "linhas": 167285
   },
   "src/i18n": {
    "arquivos": 2,
@@ -756,15 +768,15 @@
   },
   "src/integrations": {
    "arquivos": 4,
-   "linhas": 15870
+   "linhas": 16031
   },
   "src/lib": {
-   "arquivos": 295,
-   "linhas": 40008
+   "arquivos": 300,
+   "linhas": 40450
   },
   "src/main.tsx": {
    "arquivos": 1,
-   "linhas": 112
+   "linhas": 131
   },
   "src/pages": {
    "arquivos": 75,
@@ -803,8 +815,8 @@
    "linhas": 1708
   },
   "supabase/functions": {
-   "arquivos": 423,
-   "linhas": 127065
+   "arquivos": 432,
+   "linhas": 130462
   },
   "tailwind.config.ts": {
    "arquivos": 1,
@@ -830,7 +842,7 @@
  "maiores_arquivos": [
   {
    "arquivo": "src/integrations/supabase/types.ts",
-   "linhas": 15797
+   "linhas": 15958
   },
   {
    "arquivo": "scripts/regras_negocio/generate.py",
@@ -842,7 +854,7 @@
   },
   {
    "arquivo": "supabase/functions/evolution-api/index.ts",
-   "linhas": 1569
+   "linhas": 1610
   },
   {
    "arquivo": "scripts/ci/ci-local.mjs",
@@ -850,47 +862,31 @@
   },
   {
    "arquivo": "supabase/functions/talkx-send/index.ts",
-   "linhas": 1484
+   "linhas": 1488
   },
   {
    "arquivo": "supabase/functions/_shared/evolution-webhook-messages.ts",
    "linhas": 1483
   },
   {
-   "arquivo": "analise-prs/resgate-261118-lote3/claude/feat-message-delivery-post-iniciado-261101-1937/supabase/functions/_shared/evolution-webhook-messages.ts",
-   "linhas": 1446
-  },
-  {
    "arquivo": "supabase/functions/_shared/ai-usage.ts",
-   "linhas": 1364
-  },
-  {
-   "arquivo": "analise-prs/resgate-261118-lote3/fix/ci-verde-261021/supabase/functions/evolution-api/index.ts",
-   "linhas": 1311
+   "linhas": 1420
   },
   {
    "arquivo": "docs/reconciliation/reaudit/2026-10-03/reports/database/build_report.py",
    "linhas": 1298
   },
   {
-   "arquivo": "analise-prs/resgate-261118-lote3/codex/publish-followup-20261021/src/components/talkx/useCampaignEditor.ts",
-   "linhas": 1282
+   "arquivo": "src/components/talkx/useCampaignEditor.ts",
+   "linhas": 1286
   },
   {
    "arquivo": "supabase/functions/multiplix-send/index.ts",
    "linhas": 1264
   },
   {
-   "arquivo": "src/components/talkx/useCampaignEditor.ts",
-   "linhas": 1232
-  },
-  {
    "arquivo": "src/components/catalog/ExternalProductManagement.tsx",
    "linhas": 1228
-  },
-  {
-   "arquivo": "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/talkx/useCampaignEditor.ts",
-   "linhas": 1190
   },
   {
    "arquivo": "supabase/functions/connection-health-check/index.ts",
@@ -913,6 +909,10 @@
    "linhas": 1085
   },
   {
+   "arquivo": "scripts/graphify-local.mjs",
+   "linhas": 1076
+  },
+  {
    "arquivo": "src/components/catalog/catalogShared.tsx",
    "linhas": 1066
   },
@@ -925,49 +925,31 @@
    "linhas": 1040
   },
   {
-   "arquivo": "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/talkx/TalkXCampaignRunning.tsx",
-   "linhas": 1030
+   "arquivo": "docs/reconciliation/reaudit/2026-10-03/reports/providers/build_report.py",
+   "linhas": 1024
+  },
+  {
+   "arquivo": "supabase/functions/crm-integration/index.ts",
+   "linhas": 998
+  },
+  {
+   "arquivo": "scripts/automation.mjs",
+   "linhas": 992
+  },
+  {
+   "arquivo": "docs/reconciliation/reaudit/2026-10-03/reports/auth/extend-second-pass.py",
+   "linhas": 975
   }
  ],
  "qualidade": {
-  "any": 421,
-  "console_log": 762,
+  "any": 390,
+  "console_log": 505,
   "ts_ignore": 0,
   "eslint_disable": 1,
-  "todos": 59,
-  "arquivos_acima_500_linhas": 162
+  "todos": 54,
+  "arquivos_acima_500_linhas": 114
  },
  "todos": [
-  {
-   "arquivo": "analise-prs/resgate-261118-lote3/claude/fix-unit-tests-src-261024-1630/src/components/agents/__tests__/AgentsView.capacidade.test.tsx",
-   "linha": 2,
-   "tipo": "TODO",
-   "texto": "contato com"
-  },
-  {
-   "arquivo": "analise-prs/resgate-261118-lote3/claude/radar-motor-copilot-live-301030/supabase/functions/ai-jobs-worker/index.ts",
-   "linha": 423,
-   "tipo": "TODO",
-   "texto": "caminho — inclusive erro e infra."
-  },
-  {
-   "arquivo": "analise-prs/resgate-261118-lote3/claude/w85-w86-w87-ossf-scorecard/scripts/ci/security-workflow.unit.mjs",
-   "linha": 36,
-   "tipo": "XXX",
-   "texto": "}} — evita falso positivo em comentários"
-  },
-  {
-   "arquivo": "analise-prs/resgate-261118-lote3/codex/publish-followup-20261021/scripts/ci/ci-artifacts.unit.mjs",
-   "linha": 11,
-   "tipo": "TODO",
-   "texto": "PR"
-  },
-  {
-   "arquivo": "analise-prs/resgate-261118-lote3/resolve-2381-from-main/supabase/functions/ai-jobs-worker/index.ts",
-   "linha": 423,
-   "tipo": "TODO",
-   "texto": "caminho — inclusive erro e infra."
-  },
   {
    "arquivo": "e2e/onboarding-tour.spec.ts",
    "linha": 12,
@@ -1000,7 +982,7 @@
   },
   {
    "arquivo": "scripts/ci/e2e-isolated-runtime.unit.mjs",
-   "linha": 1679,
+   "linha": 1683,
    "tipo": "FIXME",
    "texto": "remains failure', fault: 'explicit-skip', failure: 'suite-result-not-clean' },"
   },
@@ -1228,7 +1210,7 @@
   },
   {
    "arquivo": "supabase/functions/talkx-ai/index.ts",
-   "linha": 496,
+   "linha": 503,
    "tipo": "TODO",
    "texto": "caminho: se falhar, a"
   },
@@ -1307,6 +1289,7 @@
    "Spam -> SPAM"
   ],
   "edges_orfas": [
+   "ai-auto-tag",
    "ai-deadline-calculator",
    "ai-lead-temperature",
    "ai-loss-risk",
@@ -1320,9 +1303,11 @@
    "create-user",
    "elevenlabs-agent-token",
    "external-db-bridge",
+   "fetch-link-preview",
    "gmail-send",
    "gmail-sync",
    "health",
+   "message-delivery",
    "metrics",
    "migrate-media-storage",
    "multiplix-voices",
@@ -1347,7 +1332,6 @@
    "company_addresses",
    "company_social_media",
    "contact_phones",
-   "contact_purchases",
    "customers",
    "product_variants",
    "suppliers"
@@ -1357,7 +1341,6 @@
    "edge_rate_limits",
    "feature_flags",
    "global_settings",
-   "talkx_campaigns",
    "talkx_contact_attributes",
    "talkx_settings"
   ],
@@ -1378,99 +1361,6 @@
   ],
   "componentes_orfaos": [
    "analise-prs/resgate-261118-lote2/src/components/copilot/RadarPhase6Panel.tsx",
-   "analise-prs/resgate-261118-lote3/claude_05/festive-carson-ub43wu/src/components/ui/command-palette.tsx",
-   "analise-prs/resgate-261118-lote3/claude_05/festive-carson-ub43wu/src/hooks/auth/useAuth.tsx",
-   "analise-prs/resgate-261118-lote3/claude_05/serene-feynman-3uuurw/src/components/admin/SearchInsightsView.tsx",
-   "analise-prs/resgate-261118-lote3/claude_pink/cool-dijkstra-xk9ek2/src/components/inbox/chat/ChatMessagesArea.tsx",
-   "analise-prs/resgate-261118-lote3/claude/busy-cannon-40szm9/src/components/contacts/ContactPurchaseHistory.tsx",
-   "analise-prs/resgate-261118-lote3/claude/busy-cannon-40szm9/src/components/inbox/ContactPurchasesPanel.tsx",
-   "analise-prs/resgate-261118-lote3/claude/busy-cannon-40szm9/src/components/talkx/kit/dialogs.tsx",
-   "analise-prs/resgate-261118-lote3/claude/busy-cannon-40szm9/src/components/ui/dialog.tsx",
-   "analise-prs/resgate-261118-lote3/claude/busy-cannon-40szm9/src/components/ui/sheet.tsx",
-   "analise-prs/resgate-261118-lote3/claude/feat-message-delivery-post-iniciado-261101-1937/src/components/inbox/chat/SendErrorBanner.tsx",
-   "analise-prs/resgate-261118-lote3/claude/feat-message-delivery-post-iniciado-261101-1937/src/components/inbox/chat/UnconfirmedMessagesPanel.tsx",
-   "analise-prs/resgate-261118-lote3/claude/feat-pausa-entrega-campanhas-261101-1400/src/components/multiplix/MultiplixMonitor.tsx",
-   "analise-prs/resgate-261118-lote3/claude/feat-radar-motor-telas-261101-1330/src/components/inbox/chat/ChatInputArea.tsx",
-   "analise-prs/resgate-261118-lote3/claude/feat-radar-motor-telas-261101-1330/src/components/inbox/copilot/RadarCards.tsx",
-   "analise-prs/resgate-261118-lote3/claude/feat-radar-motor-telas-261101-1330/src/components/inbox/copilot/RadarLive.tsx",
-   "analise-prs/resgate-261118-lote3/claude/feat-talkx-x048-estados-servico-261101-2100/src/components/talkx/kit/ServiceStatusSheet.tsx",
-   "analise-prs/resgate-261118-lote3/claude/feat-talkx-x054-cmdk-261108-0100/src/components/keyboard/CommandPaletteHost.tsx",
-   "analise-prs/resgate-261118-lote3/claude/feat-talkx-x054-cmdk-261108-0100/src/components/talkx/TalkXView.tsx",
-   "analise-prs/resgate-261118-lote3/claude/feat-ui-visual-texto-longo-261101-1445/src/components/ui/badge.tsx",
-   "analise-prs/resgate-261118-lote3/claude/feat-ui-visual-texto-longo-261101-1445/src/components/ui/tabs.tsx",
-   "analise-prs/resgate-261118-lote3/claude/fix-codex-findings-161016-1906/src/components/inbox/chat/ChatMessagesArea.tsx",
-   "analise-prs/resgate-261118-lote3/claude/fix-codex-findings-161016-1906/src/components/talkx/TalkXTemplates.tsx",
-   "analise-prs/resgate-261118-lote3/claude/fix-radar-fase6-cv056-shortcuts-261108-2335/src/components/inbox/ChatPanel.tsx",
-   "analise-prs/resgate-261118-lote3/claude/fix-talkx-segmentos-regressao-261101-1944/src/components/talkx/TalkXSegments.tsx",
-   "analise-prs/resgate-261118-lote3/claude/fix-unit-tests-src-261024-1630/src/components/admin/AdminView.tsx",
-   "analise-prs/resgate-261118-lote3/claude/fix-unit-tests-src-261024-1630/src/components/admin/MediaMigrationTool.tsx",
-   "analise-prs/resgate-261118-lote3/claude/fix-unit-tests-src-261024-1630/src/components/talkx/TalkXOverview.tsx",
-   "analise-prs/resgate-261118-lote3/claude/fix-unit-tests-src-261024-1630/src/components/talkx/TalkXTemplateEditor.tsx",
-   "analise-prs/resgate-261118-lote3/claude/fix-unit-tests-src-261024-1630/src/hooks/auth/useAuth.tsx",
-   "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/admin/MediaMigrationTool.tsx",
-   "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/catalog/WhatsAppTemplatesManager.tsx",
-   "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/gamification/MiniGameDialogs.tsx",
-   "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/inbox/conversation-list/StatusChips.tsx",
-   "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/inbox/CRMAutoSync.tsx",
-   "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/inbox/MessageReactions.tsx",
-   "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/inbox/quick-replies/QuickReplyCardList.tsx",
-   "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/inbox/RealtimeInboxView.tsx",
-   "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/inbox/VirtualizedRealtimeList.tsx",
-   "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/inbox/VoiceChangerPicker.tsx",
-   "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/inbox/VoiceSelector.tsx",
-   "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/inbox/WhisperMode.tsx",
-   "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/security/AuditLogDashboard.tsx",
-   "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/settings/SettingsView.tsx",
-   "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/talkx/TalkXTemplateEditor.tsx",
-   "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/talkx/TalkXView.tsx",
-   "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/team-chat/TeamChatPanel.tsx",
-   "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/ui/command-palette.tsx",
-   "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/ui/phone-input.tsx",
-   "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/hooks/auth/useAuth.tsx",
-   "analise-prs/resgate-261118-lote3/claude/kind-gates-87mwoe/src/components/knowledge/KnowledgeBaseView.tsx",
-   "analise-prs/resgate-261118-lote3/claude/magical-pasteur-iz2pgy/src/components/ui/command-palette.tsx",
-   "analise-prs/resgate-261118-lote3/claude/magical-pasteur-iz2pgy/src/hooks/auth/useAuth.tsx",
-   "analise-prs/resgate-261118-lote3/claude/radar-motor-copilot-live-301030/src/components/inbox/chat/ChatInputArea.tsx",
-   "analise-prs/resgate-261118-lote3/claude/radar-motor-copilot-live-301030/src/components/inbox/copilot/RadarLive.tsx",
-   "analise-prs/resgate-261118-lote3/codex/fix-failed-workflows-20261020/src/components/admin/AdminView.tsx",
-   "analise-prs/resgate-261118-lote3/codex/fix-failed-workflows-20261020/src/components/shared/ConversationEmptyState.tsx",
-   "analise-prs/resgate-261118-lote3/codex/publish-followup-20261021/src/components/admin/SearchInsightsView.tsx",
-   "analise-prs/resgate-261118-lote3/codex/publish-followup-20261021/src/components/connections/ConnectionCard.tsx",
-   "analise-prs/resgate-261118-lote3/codex/publish-followup-20261021/src/components/talkx/TalkXCampaignWizard.tsx",
-   "analise-prs/resgate-261118-lote3/fix/ci-verde-261021/src/components/inbox/ChatPanel.tsx",
-   "analise-prs/resgate-261118-lote3/fix/ci-verde-261021/src/components/inbox/RealtimeCollaboration.tsx",
-   "analise-prs/resgate-261118-lote3/hermes/robustez-primitivos-ui-2610121626bec5-2610141859e423/src/components/BulkActionsBar.tsx",
-   "analise-prs/resgate-261118-lote3/hermes/robustez-primitivos-ui-2610121626bec5-2610141859e423/src/components/campaigns/CampaignsView.tsx",
-   "analise-prs/resgate-261118-lote3/hermes/robustez-primitivos-ui-2610121626bec5-2610141859e423/src/components/connections/IntegrationsPanel.tsx",
-   "analise-prs/resgate-261118-lote3/hermes/robustez-primitivos-ui-2610121626bec5-2610141859e423/src/components/dashboard/MetricComparison.tsx",
-   "analise-prs/resgate-261118-lote3/hermes/robustez-primitivos-ui-2610121626bec5-2610141859e423/src/components/dashboard/MiniSparkline.tsx",
-   "analise-prs/resgate-261118-lote3/hermes/robustez-primitivos-ui-2610121626bec5-2610141859e423/src/components/dashboard/TrendIndicator.tsx",
-   "analise-prs/resgate-261118-lote3/hermes/robustez-primitivos-ui-2610121626bec5-2610141859e423/src/components/gamification/GamificationProvider.tsx",
-   "analise-prs/resgate-261118-lote3/hermes/robustez-primitivos-ui-2610121626bec5-2610141859e423/src/components/inbox/chat/ChatHeader.tsx",
-   "analise-prs/resgate-261118-lote3/hermes/robustez-primitivos-ui-2610121626bec5-2610141859e423/src/components/inbox/ContactPurchasesPanel.tsx",
-   "analise-prs/resgate-261118-lote3/hermes/robustez-primitivos-ui-2610121626bec5-2610141859e423/src/components/inbox/MessageContextMenu.tsx",
-   "analise-prs/resgate-261118-lote3/hermes/robustez-primitivos-ui-2610121626bec5-2610141859e423/src/components/inbox/SwipeableListItem.tsx",
-   "analise-prs/resgate-261118-lote3/hermes/robustez-primitivos-ui-2610121626bec5-2610141859e423/src/components/mobile/InAppNotificationProvider.tsx",
-   "analise-prs/resgate-261118-lote3/hermes/robustez-primitivos-ui-2610121626bec5-2610141859e423/src/components/multiplix/MultiplixComposerDialog.tsx",
-   "analise-prs/resgate-261118-lote3/hermes/robustez-primitivos-ui-2610121626bec5-2610141859e423/src/components/reports/AutoExportManager.tsx",
-   "analise-prs/resgate-261118-lote3/hermes/robustez-primitivos-ui-2610121626bec5-2610141859e423/src/components/settings/AIAutoTagsConfig.tsx",
-   "analise-prs/resgate-261118-lote3/hermes/robustez-primitivos-ui-2610121626bec5-2610141859e423/src/components/ui/dialog.tsx",
-   "analise-prs/resgate-261118-lote3/hermes/robustez-primitivos-ui-2610121626bec5-2610141859e423/src/components/ui/hover-card.tsx",
-   "analise-prs/resgate-261118-lote3/hermes/robustez-primitivos-ui-2610121626bec5-2610141859e423/src/components/ui/menubar.tsx",
-   "analise-prs/resgate-261118-lote3/hermes/robustez-primitivos-ui-2610121626bec5-2610141859e423/src/components/ui/offline-indicator.tsx",
-   "analise-prs/resgate-261118-lote3/hermes/robustez-primitivos-ui-2610121626bec5-2610141859e423/src/components/ui/pagination.tsx",
-   "analise-prs/resgate-261118-lote3/hermes/robustez-primitivos-ui-2610121626bec5-2610141859e423/src/components/ui/resizable.tsx",
-   "analise-prs/resgate-261118-lote3/hermes/robustez-primitivos-ui-2610121626bec5-2610141859e423/src/components/ui/skip-link.tsx",
-   "analise-prs/resgate-261118-lote3/hermes/telefonia-fase8-motion-a11y-responsivo-2610031530007c/src/components/calls/IncomingCallAlert.tsx",
-   "analise-prs/resgate-261118-lote3/hermes/telefonia-fase8-motion-a11y-responsivo-2610031530007c/src/components/calls/Keypad.tsx",
-   "analise-prs/resgate-261118-lote3/hermes/telefonia-fase8-motion-a11y-responsivo-2610031530007c/src/components/campaigns/CampaignsView.tsx",
-   "analise-prs/resgate-261118-lote3/hermes/telefonia-fase8-motion-a11y-responsivo-2610031530007c/src/components/connections/IntegrationsPanel.tsx",
-   "analise-prs/resgate-261118-lote3/hermes/telefonia-fase8-motion-a11y-responsivo-2610031530007c/src/components/dashboard/RealtimeMetricsPanel.tsx",
-   "analise-prs/resgate-261118-lote3/hermes/telefonia-fase8-motion-a11y-responsivo-2610031530007c/src/components/inbox/contact-details/ContactAccordionSections.tsx",
-   "analise-prs/resgate-261118-lote3/hermes/telefonia-fase8-motion-a11y-responsivo-2610031530007c/src/components/multiplix/MultiplixComposerDialog.tsx",
-   "analise-prs/resgate-261118-lote3/hermes/telefonia-fase8-motion-a11y-responsivo-2610031530007c/src/components/settings/AIAutoTagsConfig.tsx",
-   "analise-prs/resgate-261118-lote3/resolve-2381-from-main/src/components/inbox/chat/ChatInputArea.tsx",
-   "analise-prs/resgate-261118-lote3/resolve-2381-from-main/src/components/inbox/copilot/RadarLive.tsx",
    "src/components/calls/DialPad.tsx",
    "src/components/cognitive/ProgressiveDisclosure.tsx",
    "src/components/CommandPalette.tsx",
@@ -1485,18 +1375,14 @@
    "src/components/inbox/BusinessHoursBadge.tsx",
    "src/components/inbox/chat/ChatHeaderToolbar.tsx",
    "src/components/inbox/copilot/BrindeMeter.tsx",
-   "src/components/inbox/copilot/DecisionMakerBadge.tsx",
    "src/components/inbox/copilot/InsightCard.tsx",
    "src/components/inbox/copilot/MissingQuestions.tsx",
-   "src/components/inbox/copilot/OccasionAlert.tsx",
    "src/components/inbox/copilot/StageIndicator.tsx",
-   "src/components/inbox/copilot/StakeholdersCard.tsx",
    "src/components/inbox/KeyboardShortcutsHelp.tsx",
    "src/components/inbox/LinkPreview.tsx",
    "src/components/inbox/MessageContextActions.tsx",
    "src/components/inbox/MessagePreview.tsx",
    "src/components/inbox/SentimentIndicator.tsx",
-   "src/components/inbox/SpeedSelector.tsx",
    "src/components/inbox/tabs/journey/JourneyFilters.tsx",
    "src/components/inbox/tabs/journey/JourneyStatsHero.tsx",
    "src/components/inbox/tabs/journey/JourneyTimeline.tsx",
@@ -1509,8 +1395,6 @@
    "src/components/talkx/TalkXHelp.tsx",
    "src/components/talkx/TalkXInteractiveEditor.tsx",
    "src/components/talkx/TalkXMediaDropzone.tsx",
-   "src/components/talkx/tracking/TalkXOperationalTimeline.tsx",
-   "src/components/talkx/tracking/TalkXSegmentProgressTable.tsx",
    "src/components/tasks/list/taskRowCells.tsx",
    "src/components/tasks/shared/TaskCheckbox.tsx",
    "src/components/team-chat/EnterDepartmentByCode.tsx",
@@ -1523,184 +1407,48 @@
    "src/components/ui/SkeletonList.tsx"
   ],
   "componentes_com_nome_duplicado": [
-   "AIAutoTagsConfig",
    "AchievementBadge",
-   "AdminView",
-   "AlertsCard",
-   "AuditLogDashboard",
-   "AuthProvider",
-   "Badge",
-   "BadgeProps",
    "BreadcrumbItem",
-   "BrindeCard",
-   "BulkActionsBar",
-   "CRMAutoSync",
-   "CRMSyncButton",
-   "CallHistoryTable",
-   "CallsKpiGrid",
-   "CampaignCreateDialog",
-   "CampaignsView",
-   "ChatInputArea",
-   "ChatMessagesArea",
-   "ChatMessagesAreaRef",
-   "ChatPanel",
-   "ChipTab",
    "CommandGroup",
    "CommandItem",
    "CommandPalette",
-   "CommandPaletteHost",
-   "ConfirmCheck",
-   "ConfirmDetail",
-   "ConfirmReasonField",
-   "ConnectionCard",
-   "ConnectionToast",
-   "ContactPurchasesPanel",
    "ContactsEmptyState",
-   "ConversationEmptyState",
-   "ConversationEmptyStateProps",
    "ConversationHeatmap",
    "DashboardEmptyState",
-   "DecisionMakerCard",
-   "Dialog",
-   "DialogClose",
-   "DialogContent",
-   "DialogDescription",
-   "DialogFooter",
-   "DialogHeader",
-   "DialogOverlay",
-   "DialogPortal",
-   "DialogTitle",
-   "DialogTrigger",
-   "ELEVENLABS_VOICES",
-   "ENTITY_TYPES_BY_FILTER",
-   "ElevenLabsVoice",
-   "EmojiDecodeGame",
    "EmptyState",
    "FeatureSpotlight",
    "FilterOption",
-   "FloatingActionButton",
    "FloatingParticles",
    "HandoffDialog",
    "HighContrastProvider",
-   "InboxEmptyChat",
    "InboxEmptyState",
-   "IncomingCallAlert",
    "InfoBanner",
    "InfoRow",
    "InsightCard",
-   "IntegrationsPanel",
    "InternalNotesPanel",
-   "KeyboardAwareContainer",
-   "Keypad",
-   "KnowledgeBaseView",
-   "LeadRiskScorePanel",
    "LiveRegion",
-   "LongPressMenu",
    "MagneticButton",
-   "MainTab",
-   "MediaMigrationTool",
    "MessagePreview",
-   "MessageReactions",
-   "MetricComparison",
-   "MiniSparkline",
    "MotionButton",
-   "MultiplixComposerDialog",
-   "MultiplixMonitor",
-   "NextStepCard",
    "NotificationsEmptyState",
-   "OfflineIndicator",
-   "PhoneInput",
-   "PinchZoom",
-   "ProductsCard",
-   "QuickReactionBar",
-   "QuickReplyCardList",
-   "QuizGame",
-   "ROLE_ACTION_PREFIX",
-   "ROLE_FILTER_VALUE",
-   "RadarLive",
-   "RadarLiveProps",
-   "RadarPanel",
-   "RadarPanelProps",
-   "RealtimeCollaboration",
-   "RealtimeInboxView",
-   "RecipientKpis",
-   "RecipientRow",
-   "RecipientsPage",
    "RippleButton",
    "SLAAgentTable",
    "ScheduledReportsManager",
    "SearchEmptyState",
-   "SearchInsightsView",
    "SectionCard",
    "SectionHeader",
-   "SegmentLike",
-   "SegmentSideList",
-   "SegmentSideListProps",
-   "SendErrorBanner",
-   "SendErrorBannerProps",
-   "ServiceStatusSheet",
-   "SettingsView",
-   "Sheet",
-   "SheetClose",
-   "SheetContent",
-   "SheetDescription",
-   "SheetFooter",
-   "SheetHeader",
-   "SheetOverlay",
-   "SheetPortal",
-   "SheetTitle",
-   "SheetTrigger",
-   "Sidebar",
    "SkeletonList",
-   "SkipLink",
    "SkipLinks",
-   "SlideOverPanel",
-   "SpeedDialFAB",
-   "SpeedTypingGame",
-   "StageCard",
    "StaggerList",
-   "StatusChips",
    "StatusPill",
-   "SubTab",
-   "SuggestionsCard",
-   "Tabs",
-   "TabsContent",
-   "TabsList",
-   "TabsTrigger",
-   "TalkXCampaignRunning",
-   "TalkXCampaignWizard",
-   "TalkXConfirmDialog",
-   "TalkXDialogShell",
    "TalkXNoData",
-   "TalkXOverview",
-   "TalkXRecipientsTable",
-   "TalkXSegments",
-   "TalkXTemplateEditor",
-   "TalkXTemplates",
-   "TalkXTone",
-   "TalkXTopView",
-   "TalkXView",
-   "TalkXWizardDelivery",
-   "TalkXWizardReview",
-   "TeamChatPanel",
-   "TelefoniaView",
-   "TemplateListItem",
    "TemplatePreview",
    "Toaster",
-   "TouchRipple",
    "TranscriptionsEmptyState",
    "TrendIndicator",
-   "UnconfirmedMessagesPanel",
-   "UnconfirmedMessagesPanelProps",
    "VariableInserter",
    "ViewersIndicator",
-   "VirtualizedRealtimeList",
-   "VoiceChangerPicker",
-   "VoiceDictationButton",
-   "VoiceSelector",
-   "WhatsAppTemplatesManager",
-   "WhisperMode",
-   "WizardState"
+   "VoiceDictationButton"
   ],
   "scripts_orfaos": [
    "scripts/db-audit/n118-window-open-proof.test.sql"
@@ -1711,14 +1459,13 @@
    "NODE_ENV",
    "PROD",
    "TZ",
+   "VITE_A11Y_AUDIT_CONTINUO",
    "VITE_APP_VERSION",
    "VITE_SEARCHBOX_MONTHLY_SESSION_LIMIT",
    "ZAPP_CSS_UNDER_TEST"
   ],
-  "ciclos_de_import": 12,
+  "ciclos_de_import": 11,
   "possiveis_segredos_no_codigo": [
-   "analise-prs/resgate-261118-lote3/claude_pink/cool-dijkstra-xk9ek2/scripts/ci/edge-coverage-authz.unit.mjs:397",
-   "analise-prs/resgate-261118-lote3/claude_pink/cool-dijkstra-xk9ek2/scripts/edge-deploy/redigir-log.unit.mjs:38",
    "scripts/ai-context/cenarios.mjs:102",
    "scripts/ci/edge-coverage-authz.unit.mjs:398",
    "scripts/ci/inventario-banco.unit.mjs:147",

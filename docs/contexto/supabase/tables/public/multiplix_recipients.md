@@ -1,5 +1,48 @@
 # public.multiplix_recipients
 
+> Descrição funcional não estava registrada no catálogo; o conteúdo abaixo documenta a estrutura observável, sem inferir regras de negócio não declaradas.
+
+[CATALOGUE SEMÂNTICO DO PROJETO]
+Objeto: public.multiplix_recipients (tabela). RLS habilitada: t; RLS forçada: t.
+Colunas (ordem, tipo e nulabilidade):
+1 id uuid NOT NULL [DEFAULT/EXPRESSION DEFINED]
+2 dispatch_id uuid NOT NULL
+3 company_id uuid NOT NULL
+4 company_name_snapshot text NULLABLE
+5 destino_e164 text NULLABLE
+6 destino_origem text NULLABLE
+7 personalized_message text NULLABLE
+8 status multiplix_recipient_status NOT NULL [DEFAULT/EXPRESSION DEFINED]
+9 sent_at timestamp with time zone NULLABLE
+10 delivered_at timestamp with time zone NULLABLE
+11 error_message text NULLABLE
+12 delivery_claim_token uuid NULLABLE
+13 delivery_claimed_at timestamp with time zone NULLABLE
+14 delivery_claim_expires_at timestamp with time zone NULLABLE
+15 delivery_claimed_by text NULLABLE
+16 delivery_attempt_count integer NOT NULL [DEFAULT/EXPRESSION DEFINED]
+17 created_at timestamp with time zone NOT NULL [DEFAULT/EXPRESSION DEFINED]
+18 updated_at timestamp with time zone NOT NULL [DEFAULT/EXPRESSION DEFINED]
+19 attempt_count integer NOT NULL [DEFAULT/EXPRESSION DEFINED]
+20 retry_after timestamp with time zone NULLABLE
+21 provider_dispatch_started_at timestamp with time zone NULLABLE
+22 external_id text NULLABLE
+23 singu_contact_id uuid NULLABLE
+24 eligibility multiplix_eligibility NOT NULL [DEFAULT/EXPRESSION DEFINED]
+25 eligibility_reason text NULLABLE
+26 variables_snapshot jsonb NULLABLE
+27 audience_version integer NULLABLE
+28 inclusion_reason text NULLABLE
+Constraints:
+multiplix_recipients_delivery_claim_state: CHECK (status = 'sending'::multiplix_recipient_status AND delivery_claim_token IS NOT NULL AND delivery_claimed_at IS NOT NULL AND delivery_claim_expires_at IS NOT NULL AND delivery_claimed_by IS NOT NULL OR status <> 'sending'::multiplix_recipient_status AND delivery_claim_token IS NULL AND delivery_claimed_at IS NULL AND delivery_claim_expires_at IS NULL AND delivery_claimed_by IS NULL)
+multiplix_recipients_external_id_bounded: CHECK (external_id IS NULL OR length(btrim(external_id)) >= 1 AND length(btrim(external_id)) <= 512)
+multiplix_recipients_dispatch_id_fkey: FOREIGN KEY (dispatch_id) REFERENCES multiplix_dispatches(id) ON DELETE CASCADE
+multiplix_recipients_pkey: PRIMARY KEY (id)
+multiplix_recipients_dispatch_destino_key: UNIQUE NULLS NOT DISTINCT (dispatch_id, destino_e164)
+Políticas RLS (nome, operação, papéis e modo; as expressões permanecem no catálogo):
+"Users can delete recipients of own draft dispatches" [command=DELETE; roles=authenticated; PERMISSIVE]
+"Users can view recipients of accessible dispatches" [command=SELECT; roles=authenticated; PERMISSIVE]
+
 | propriedade | valor |
 |---|---|
 | tipo | table |
@@ -85,7 +128,7 @@
 | comando | DELETE |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `(is_admin_or_supervisor(auth.uid()) AND (EXISTS ( SELECT 1    FROM multiplix_dispatches md   WHERE ((md.id = multiplix_recipients.dispatch_id) AND (md.created_by = ( SELECT profiles.id            FROM profiles           WHERE (profiles.user_id = auth.uid())          LIMIT 1)) AND (md.status = 'draft'::multiplix_dispatch_status)))))` |
+| USING | `(is_admin_or_supervisor(( SELECT auth.uid() AS uid)) AND (EXISTS ( SELECT 1    FROM multiplix_dispatches md   WHERE ((md.id = multiplix_recipients.dispatch_id) AND (md.created_by = ( SELECT profiles.id            FROM profiles           WHERE (profiles.user_id = ( SELECT auth.uid() AS uid))          LIMIT 1)) AND (md.status = 'draft'::multiplix_dispatch_status)))))` |
 | WITH CHECK |  |
 
 ### `Users can view recipients of accessible dispatches`
@@ -95,7 +138,7 @@
 | comando | SELECT |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `(EXISTS ( SELECT 1    FROM multiplix_dispatches md   WHERE ((md.id = multiplix_recipients.dispatch_id) AND ((md.created_by = ( SELECT profiles.id            FROM profiles           WHERE (profiles.user_id = auth.uid())          LIMIT 1)) OR is_admin_or_supervisor(auth.uid())))))` |
+| USING | `(EXISTS ( SELECT 1    FROM multiplix_dispatches md   WHERE ((md.id = multiplix_recipients.dispatch_id) AND ((md.created_by = ( SELECT profiles.id            FROM profiles           WHERE (profiles.user_id = ( SELECT auth.uid() AS uid))          LIMIT 1)) OR is_admin_or_supervisor(( SELECT auth.uid() AS uid))))))` |
 | WITH CHECK |  |
 
 

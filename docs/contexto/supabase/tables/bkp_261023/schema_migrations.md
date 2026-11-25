@@ -2,11 +2,22 @@
 
 > [bkp-261023] Snapshot de supabase_migrations.schema_migrations em 23/10/2026 (922 linhas).
 
+[CATALOGUE SEMÂNTICO DO PROJETO]
+Objeto: _bkp_261023.schema_migrations (tabela). RLS habilitada: t; RLS forçada: f.
+Colunas (ordem, tipo e nulabilidade):
+1 version text NULLABLE
+2 statements text[] NULLABLE
+3 name text NULLABLE
+Constraints:
+(nenhuma PK/UNIQUE/FK/CHECK/EXCLUDE registrada)
+Políticas RLS (nome, operação, papéis e modo; as expressões permanecem no catálogo):
+(RLS habilitada sem política; verificar se o acesso restrito é intencional)
+
 | propriedade | valor |
 |---|---|
 | tipo | table |
 | owner | postgres |
-| RLS habilitado | não |
+| RLS habilitado | sim |
 | RLS forçado (owner) | não |
 | policies | 0 |
 | realtime (publication) | não |
@@ -35,7 +46,7 @@ _nenhum_
 
 ## Policies (RLS)
 
-> ⚠️ RLS **desabilitado** nesta tabela.
+> ⚠️ RLS habilitado **sem policies**: nenhum acesso via API (anon/authenticated).
 
 
 

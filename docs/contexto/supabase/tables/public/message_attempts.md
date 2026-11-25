@@ -1,5 +1,29 @@
 # public.message_attempts
 
+> Descrição funcional não estava registrada no catálogo; o conteúdo abaixo documenta a estrutura observável, sem inferir regras de negócio não declaradas.
+
+[CATALOGUE SEMÂNTICO DO PROJETO]
+Objeto: public.message_attempts (tabela). RLS habilitada: t; RLS forçada: f.
+Colunas (ordem, tipo e nulabilidade):
+1 id uuid NOT NULL [DEFAULT/EXPRESSION DEFINED]
+2 message_id uuid NOT NULL
+3 attempt_no integer NOT NULL
+4 outcome text NOT NULL
+5 error_code text NULLABLE
+6 error_message text NULLABLE
+7 provider_status integer NULLABLE
+8 provider_response jsonb NULLABLE
+9 duration_ms integer NULLABLE
+10 created_at timestamp with time zone NOT NULL [DEFAULT/EXPRESSION DEFINED]
+Constraints:
+message_attempts_error_message_len_check: CHECK (error_message IS NULL OR length(error_message) <= 500)
+message_attempts_outcome_check: CHECK (outcome = ANY (ARRAY['claimed'::text, 'sent'::text, 'failed_retryable'::text, 'failed_final'::text]))
+message_attempts_message_id_fkey: FOREIGN KEY (message_id) REFERENCES messages(id) ON DELETE CASCADE
+message_attempts_pkey: PRIMARY KEY (id)
+message_attempts_unique: UNIQUE (message_id, attempt_no, outcome)
+Políticas RLS (nome, operação, papéis e modo; as expressões permanecem no catálogo):
+message_attempts_select_admin [command=SELECT; roles=authenticated; PERMISSIVE]
+
 | propriedade | valor |
 |---|---|
 | tipo | table |
@@ -57,7 +81,7 @@
 | comando | SELECT |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `is_admin(auth.uid())` |
+| USING | `is_admin(( SELECT auth.uid() AS uid))` |
 | WITH CHECK |  |
 
 

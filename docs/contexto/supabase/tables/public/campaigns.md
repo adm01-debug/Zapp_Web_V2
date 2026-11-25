@@ -1,12 +1,49 @@
 # public.campaigns
 
+> Descrição funcional não estava registrada no catálogo; o conteúdo abaixo documenta a estrutura observável, sem inferir regras de negócio não declaradas.
+
+[CATALOGUE SEMÂNTICO DO PROJETO]
+Objeto: public.campaigns (tabela). RLS habilitada: t; RLS forçada: f.
+Colunas (ordem, tipo e nulabilidade):
+1 id uuid NOT NULL [DEFAULT/EXPRESSION DEFINED]
+2 name text NOT NULL
+3 description text NULLABLE
+4 message_content text NOT NULL
+5 message_type text NOT NULL [DEFAULT/EXPRESSION DEFINED]
+6 media_url text NULLABLE
+7 status text NOT NULL [DEFAULT/EXPRESSION DEFINED]
+8 scheduled_at timestamp with time zone NULLABLE
+9 started_at timestamp with time zone NULLABLE
+10 completed_at timestamp with time zone NULLABLE
+11 total_contacts integer NOT NULL [DEFAULT/EXPRESSION DEFINED]
+12 sent_count integer NOT NULL [DEFAULT/EXPRESSION DEFINED]
+13 delivered_count integer NOT NULL [DEFAULT/EXPRESSION DEFINED]
+14 read_count integer NOT NULL [DEFAULT/EXPRESSION DEFINED]
+15 failed_count integer NOT NULL [DEFAULT/EXPRESSION DEFINED]
+16 whatsapp_connection_id uuid NULLABLE
+17 created_by uuid NULLABLE
+18 target_type text NOT NULL [DEFAULT/EXPRESSION DEFINED]
+19 target_filter jsonb NULLABLE [DEFAULT/EXPRESSION DEFINED]
+20 send_interval_seconds integer NULLABLE [DEFAULT/EXPRESSION DEFINED]
+21 created_at timestamp with time zone NOT NULL [DEFAULT/EXPRESSION DEFINED]
+22 updated_at timestamp with time zone NOT NULL [DEFAULT/EXPRESSION DEFINED]
+Constraints:
+campaigns_status_check: CHECK (status = ANY (ARRAY['draft'::text, 'scheduled'::text, 'sending'::text, 'completed'::text, 'cancelled'::text, 'paused'::text]))
+campaigns_target_type_check: CHECK (target_type = ANY (ARRAY['all'::text, 'tag'::text, 'queue'::text, 'custom'::text]))
+campaigns_created_by_fkey: FOREIGN KEY (created_by) REFERENCES profiles(id)
+campaigns_whatsapp_connection_id_fkey: FOREIGN KEY (whatsapp_connection_id) REFERENCES whatsapp_connections(id)
+campaigns_pkey: PRIMARY KEY (id)
+Políticas RLS (nome, operação, papéis e modo; as expressões permanecem no catálogo):
+"Admins can manage campaigns" [command=ALL; roles=authenticated; PERMISSIVE]
+"Campaigns visible to admins or creator" [command=SELECT; roles=authenticated; PERMISSIVE]
+
 | propriedade | valor |
 |---|---|
 | tipo | table |
 | owner | postgres |
 | RLS habilitado | sim |
 | RLS forçado (owner) | não |
-| policies | 3 |
+| policies | 2 |
 | realtime (publication) | não |
 | replica identity | default |
 | vem de extensão | não |
@@ -71,16 +108,6 @@
 
 ## Policies (RLS)
 
-### `Admins can insert campaigns`
-
-| campo | valor |
-|---|---|
-| comando | INSERT |
-| tipo | PERMISSIVE |
-| roles | authenticated |
-| USING |  |
-| WITH CHECK | `is_admin_or_supervisor(auth.uid())` |
-
 ### `Admins can manage campaigns`
 
 | campo | valor |
@@ -88,7 +115,7 @@
 | comando | ALL |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `is_admin_or_supervisor(auth.uid())` |
+| USING | `is_admin_or_supervisor(( SELECT auth.uid() AS uid))` |
 | WITH CHECK |  |
 
 ### `Campaigns visible to admins or creator`
@@ -98,7 +125,7 @@
 | comando | SELECT |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `(is_admin_or_supervisor(auth.uid()) OR (created_by = ( SELECT profiles.id    FROM profiles   WHERE (profiles.user_id = auth.uid())  LIMIT 1)))` |
+| USING | `(is_admin_or_supervisor(( SELECT auth.uid() AS uid)) OR (created_by = ( SELECT profiles.id    FROM profiles   WHERE (profiles.user_id = ( SELECT auth.uid() AS uid))  LIMIT 1)))` |
 | WITH CHECK |  |
 
 

@@ -1,5 +1,31 @@
 # public.contact_notes
 
+> Descrição funcional não estava registrada no catálogo; o conteúdo abaixo documenta a estrutura observável, sem inferir regras de negócio não declaradas.
+
+[CATALOGUE SEMÂNTICO DO PROJETO]
+Objeto: public.contact_notes (tabela). RLS habilitada: t; RLS forçada: f.
+Colunas (ordem, tipo e nulabilidade):
+1 id uuid NOT NULL [DEFAULT/EXPRESSION DEFINED]
+2 contact_id uuid NOT NULL
+3 author_id uuid NOT NULL
+4 content text NOT NULL
+5 created_at timestamp with time zone NOT NULL [DEFAULT/EXPRESSION DEFINED]
+6 updated_at timestamp with time zone NOT NULL [DEFAULT/EXPRESSION DEFINED]
+7 category text NOT NULL [DEFAULT/EXPRESSION DEFINED]
+8 is_done boolean NOT NULL [DEFAULT/EXPRESSION DEFINED]
+9 due_date timestamp with time zone NULLABLE
+10 is_pinned boolean NOT NULL [DEFAULT/EXPRESSION DEFINED]
+Constraints:
+contact_notes_category_check: CHECK (category = ANY (ARRAY['note'::text, 'fact'::text, 'objection'::text, 'promise'::text]))
+contact_notes_author_id_fkey: FOREIGN KEY (author_id) REFERENCES profiles(id) ON DELETE CASCADE
+contact_notes_contact_id_fkey: FOREIGN KEY (contact_id) REFERENCES contacts(id) ON DELETE CASCADE
+contact_notes_pkey: PRIMARY KEY (id)
+Políticas RLS (nome, operação, papéis e modo; as expressões permanecem no catálogo):
+contact_notes_delete_policy [command=DELETE; roles=authenticated; PERMISSIVE]
+contact_notes_insert_policy [command=INSERT; roles=authenticated; PERMISSIVE]
+contact_notes_select_policy [command=SELECT; roles=authenticated; PERMISSIVE]
+contact_notes_update_policy [command=UPDATE; roles=authenticated; PERMISSIVE]
+
 | propriedade | valor |
 |---|---|
 | tipo | table |
@@ -58,7 +84,7 @@
 | comando | DELETE |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `((author_id = get_profile_id_for_user(auth.uid())) AND is_contact_visible_to_user(contact_id, auth.uid()))` |
+| USING | `((author_id = get_profile_id_for_user(( SELECT auth.uid() AS uid))) AND is_contact_visible_to_user(contact_id, ( SELECT auth.uid() AS uid)))` |
 | WITH CHECK |  |
 
 ### `contact_notes_insert_policy`
@@ -69,7 +95,7 @@
 | tipo | PERMISSIVE |
 | roles | authenticated |
 | USING |  |
-| WITH CHECK | `((author_id = get_profile_id_for_user(auth.uid())) AND is_contact_visible_to_user(contact_id, auth.uid()))` |
+| WITH CHECK | `((author_id = get_profile_id_for_user(( SELECT auth.uid() AS uid))) AND is_contact_visible_to_user(contact_id, ( SELECT auth.uid() AS uid)))` |
 
 ### `contact_notes_select_policy`
 
@@ -78,7 +104,7 @@
 | comando | SELECT |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `is_contact_visible_to_user(contact_id, auth.uid())` |
+| USING | `is_contact_visible_to_user(contact_id, ( SELECT auth.uid() AS uid))` |
 | WITH CHECK |  |
 
 ### `contact_notes_update_policy`
@@ -88,8 +114,8 @@
 | comando | UPDATE |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `((author_id = get_profile_id_for_user(auth.uid())) AND is_contact_visible_to_user(contact_id, auth.uid()))` |
-| WITH CHECK | `((author_id = get_profile_id_for_user(auth.uid())) AND is_contact_visible_to_user(contact_id, auth.uid()))` |
+| USING | `((author_id = get_profile_id_for_user(( SELECT auth.uid() AS uid))) AND is_contact_visible_to_user(contact_id, ( SELECT auth.uid() AS uid)))` |
+| WITH CHECK | `((author_id = get_profile_id_for_user(( SELECT auth.uid() AS uid))) AND is_contact_visible_to_user(contact_id, ( SELECT auth.uid() AS uid)))` |
 
 
 ## Triggers

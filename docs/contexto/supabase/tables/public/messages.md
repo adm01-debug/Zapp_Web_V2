@@ -1,6 +1,71 @@
 # public.messages
 
-> Mensagens de todas as origens. O trigger trg_sicoob_reply (Sicoob Bridge) foi removido em 29/09/2026.
+> Uma linha por mensagem recebida ou enviada, vinculada a contato ou grupo e com estado de entrega/edição/exclusão. client_message_id apoia idempotência; delivery_claim_* e delivery_post_started_at controlam tentativas e resultados ambíguos. O antigo trigger trg_sicoob_reply foi removido em 29/09/2026.
+
+[CATALOGUE SEMÂNTICO DO PROJETO]
+Objeto: public.messages (tabela). RLS habilitada: t; RLS forçada: f.
+Colunas (ordem, tipo e nulabilidade):
+1 id uuid NOT NULL [DEFAULT/EXPRESSION DEFINED]
+2 contact_id uuid NULLABLE
+3 whatsapp_connection_id uuid NULLABLE
+4 sender text NOT NULL
+5 content text NOT NULL
+6 message_type text NOT NULL [DEFAULT/EXPRESSION DEFINED]
+7 media_url text NULLABLE
+8 is_read boolean NULLABLE [DEFAULT/EXPRESSION DEFINED]
+9 agent_id uuid NULLABLE
+10 external_id text NULLABLE
+11 created_at timestamp with time zone NOT NULL [DEFAULT/EXPRESSION DEFINED]
+12 updated_at timestamp with time zone NOT NULL [DEFAULT/EXPRESSION DEFINED]
+13 transcription text NULLABLE
+14 transcription_status text NULLABLE [DEFAULT/EXPRESSION DEFINED]
+15 status text NULLABLE [DEFAULT/EXPRESSION DEFINED]
+16 status_updated_at timestamp with time zone NULLABLE [DEFAULT/EXPRESSION DEFINED]
+17 is_deleted boolean NULLABLE [DEFAULT/EXPRESSION DEFINED]
+18 channel_type text NULLABLE [DEFAULT/EXPRESSION DEFINED]
+19 channel_connection_id uuid NULLABLE
+20 is_edited boolean NOT NULL [DEFAULT/EXPRESSION DEFINED]
+21 ptt boolean NULLABLE
+22 audio_meme_id uuid NULLABLE
+23 media_type text NULLABLE
+24 media_mimetype text NULLABLE
+25 media_filename text NULLABLE
+26 media_size bigint NULLABLE
+27 media_meta jsonb NULLABLE
+28 caption text NULLABLE
+29 link_preview jsonb NULLABLE
+30 reply_to_id uuid NULLABLE
+31 client_message_id uuid NULLABLE — Idempotency key supplied by the client; unique within contact_id.
+32 delivery_claim_token uuid NULLABLE
+33 delivery_claimed_at timestamp with time zone NULLABLE
+34 delivery_claim_expires_at timestamp with time zone NULLABLE
+35 delivery_claimed_by text NULLABLE
+36 delivery_last_claim_token uuid NULLABLE
+37 delivery_attempt_count integer NOT NULL [DEFAULT/EXPRESSION DEFINED]
+38 transcribed_at timestamp with time zone NULLABLE
+39 sender_participant_jid text NULLABLE
+40 sender_display_name text NULLABLE
+41 whatsapp_group_id uuid NULLABLE — Destino de grupo da fila de envio (whatsapp_groups.id). Mutuamente exclusivo com contact_id em mensagens novas; NULL nas mensagens de contato e no historico.
+42 delivery_post_started_at timestamp with time zone NULLABLE — PD-79: instante em que a Edge marcou o POST ao provedor (mark_outbound_post_started). Com lease vencido, torna o resultado ambiguo e o claim recusa reivindicar de novo (sem reenvio cego). NULL quando o POST nunca comecou.
+43 manually_resolved_at timestamp with time zone NULLABLE — C110: timestamp da resolução manual por admin/supervisor via resolve_unconfirmed_message. Quando preenchido, o reconciliador e o webhook de recibos ignoram atualizações de status desta mensagem.
+Constraints:
+messages_delivery_attempt_count_nonnegative: CHECK (delivery_attempt_count >= 0)
+messages_delivery_claim_state: CHECK (delivery_claim_token IS NULL AND delivery_claimed_at IS NULL AND delivery_claim_expires_at IS NULL AND delivery_claimed_by IS NULL OR delivery_claim_token IS NOT NULL AND delivery_claimed_at IS NOT NULL AND delivery_claim_expires_at IS NOT NULL AND delivery_claimed_by IS NOT NULL AND delivery_claim_expires_at > delivery_claimed_at AND length(delivery_claimed_by) >= 1 AND length(delivery_claimed_by) <= 100)
+messages_message_type_check: CHECK (message_type = ANY (ARRAY['text'::text, 'image'::text, 'audio'::text, 'video'::text, 'document'::text, 'sticker'::text, 'location'::text, 'contact'::text, 'poll'::text, 'button'::text, 'list'::text, 'reaction'::text, 'vcard'::text, 'ptt'::text, 'link'::text, 'template'::text, 'interactive'::text, 'order'::text, 'product'::text, 'catalog'::text, 'buttons'::text]))
+messages_sender_check: CHECK (sender = ANY (ARRAY['agent'::text, 'contact'::text]))
+messages_single_outbound_destination_chk: CHECK (NOT (contact_id IS NOT NULL AND whatsapp_group_id IS NOT NULL))
+messages_agent_id_fkey: FOREIGN KEY (agent_id) REFERENCES profiles(id) ON DELETE SET NULL
+messages_audio_meme_id_fkey: FOREIGN KEY (audio_meme_id) REFERENCES audio_memes(id) ON DELETE SET NULL
+messages_channel_connection_id_fkey: FOREIGN KEY (channel_connection_id) REFERENCES channel_connections(id)
+messages_contact_id_fkey: FOREIGN KEY (contact_id) REFERENCES contacts(id) ON DELETE CASCADE
+messages_reply_to_id_fkey: FOREIGN KEY (reply_to_id) REFERENCES messages(id) ON DELETE SET NULL
+messages_whatsapp_connection_id_fkey: FOREIGN KEY (whatsapp_connection_id) REFERENCES whatsapp_connections(id) ON DELETE SET NULL
+messages_whatsapp_group_id_fkey: FOREIGN KEY (whatsapp_group_id) REFERENCES whatsapp_groups(id) ON DELETE SET NULL
+messages_pkey: PRIMARY KEY (id)
+Políticas RLS (nome, operação, papéis e modo; as expressões permanecem no catálogo):
+"Users can insert messages" [command=INSERT; roles=authenticated; PERMISSIVE]
+"Users can update messages from their assigned contacts" [command=UPDATE; roles=authenticated; PERMISSIVE]
+messages_select_policy [command=SELECT; roles=authenticated; PERMISSIVE]
 
 | propriedade | valor |
 |---|---|
@@ -136,7 +201,7 @@
 | tipo | PERMISSIVE |
 | roles | authenticated |
 | USING |  |
-| WITH CHECK | `(is_privileged_contact_caller() OR ((sender = 'agent'::text) AND (is_admin_or_supervisor(auth.uid()) OR (((agent_id IS NULL) OR (agent_id IN ( SELECT profiles.id    FROM profiles   WHERE (profiles.user_id = auth.uid())))) AND ((contact_id IN ( SELECT c.id    FROM contacts c   WHERE (c.assigned_to IN ( SELECT get_visible_agent_ids(auth.uid()) AS get_visible_agent_ids)))) OR (EXISTS ( SELECT 1    FROM (contacts c      JOIN queue_members qm ON ((qm.queue_id = c.queue_id)))   WHERE ((c.id = messages.contact_id) AND (qm.profile_id = get_profile_id_for_user(auth.uid())) AND (qm.is_active = true)))))))))` |
+| WITH CHECK | `(is_privileged_contact_caller() OR ((sender = 'agent'::text) AND (is_admin_or_supervisor(( SELECT auth.uid() AS uid)) OR (((agent_id IS NULL) OR (agent_id IN ( SELECT profiles.id    FROM profiles   WHERE (profiles.user_id = ( SELECT auth.uid() AS uid))))) AND ((contact_id IN ( SELECT c.id    FROM contacts c   WHERE (c.assigned_to IN ( SELECT get_visible_agent_ids(( SELECT auth.uid() AS uid)) AS get_visible_agent_ids)))) OR (EXISTS ( SELECT 1    FROM (contacts c      JOIN queue_members qm ON ((qm.queue_id = c.queue_id)))   WHERE ((c.id = messages.contact_id) AND (qm.profile_id = get_profile_id_for_user(( SELECT auth.uid() AS uid))) AND (qm.is_active = true)))))))))` |
 
 ### `Users can update messages from their assigned contacts`
 
@@ -145,8 +210,8 @@
 | comando | UPDATE |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `((contact_id IN ( SELECT c.id    FROM contacts c   WHERE (c.assigned_to IN ( SELECT get_visible_agent_ids(auth.uid()) AS get_visible_agent_ids)))) OR is_admin_or_supervisor(auth.uid()) OR (EXISTS ( SELECT 1    FROM (contacts c      JOIN queue_members qm ON ((qm.queue_id = c.queue_id)))   WHERE ((c.id = messages.contact_id) AND (qm.profile_id = get_profile_id_for_user(auth.uid())) AND (qm.is_active = true)))))` |
-| WITH CHECK | `(is_privileged_contact_caller() OR ((NOT (sender IS DISTINCT FROM message_sender_atual(id))) AND ((contact_id IN ( SELECT c.id    FROM contacts c   WHERE (c.assigned_to IN ( SELECT get_visible_agent_ids(auth.uid()) AS get_visible_agent_ids)))) OR is_admin_or_supervisor(auth.uid()) OR (EXISTS ( SELECT 1    FROM (contacts c      JOIN queue_members qm ON ((qm.queue_id = c.queue_id)))   WHERE ((c.id = messages.contact_id) AND (qm.profile_id = get_profile_id_for_user(auth.uid())) AND (qm.is_active = true)))))))` |
+| USING | `((contact_id IN ( SELECT c.id    FROM contacts c   WHERE (c.assigned_to IN ( SELECT get_visible_agent_ids(( SELECT auth.uid() AS uid)) AS get_visible_agent_ids)))) OR is_admin_or_supervisor(( SELECT auth.uid() AS uid)) OR (EXISTS ( SELECT 1    FROM (contacts c      JOIN queue_members qm ON ((qm.queue_id = c.queue_id)))   WHERE ((c.id = messages.contact_id) AND (qm.profile_id = get_profile_id_for_user(( SELECT auth.uid() AS uid))) AND (qm.is_active = true)))))` |
+| WITH CHECK | `(is_privileged_contact_caller() OR ((NOT (sender IS DISTINCT FROM message_sender_atual(id))) AND ((contact_id IN ( SELECT c.id    FROM contacts c   WHERE (c.assigned_to IN ( SELECT get_visible_agent_ids(( SELECT auth.uid() AS uid)) AS get_visible_agent_ids)))) OR is_admin_or_supervisor(( SELECT auth.uid() AS uid)) OR (EXISTS ( SELECT 1    FROM (contacts c      JOIN queue_members qm ON ((qm.queue_id = c.queue_id)))   WHERE ((c.id = messages.contact_id) AND (qm.profile_id = get_profile_id_for_user(( SELECT auth.uid() AS uid))) AND (qm.is_active = true)))))))` |
 
 ### `messages_select_policy`
 
@@ -155,7 +220,7 @@
 | comando | SELECT |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `(is_admin_or_supervisor(auth.uid()) OR (contact_id IN ( SELECT c.id    FROM contacts c   WHERE (c.assigned_to IN ( SELECT get_visible_agent_ids(auth.uid()) AS get_visible_agent_ids)))) OR (EXISTS ( SELECT 1    FROM (contacts c      JOIN queue_members qm ON ((qm.queue_id = c.queue_id)))   WHERE ((c.id = messages.contact_id) AND (qm.profile_id = get_profile_id_for_user(auth.uid())) AND (qm.is_active = true)))))` |
+| USING | `(is_admin_or_supervisor(( SELECT auth.uid() AS uid)) OR (contact_id IN ( SELECT c.id    FROM contacts c   WHERE (c.assigned_to IN ( SELECT get_visible_agent_ids(( SELECT auth.uid() AS uid)) AS get_visible_agent_ids)))) OR (EXISTS ( SELECT 1    FROM (contacts c      JOIN queue_members qm ON ((qm.queue_id = c.queue_id)))   WHERE ((c.id = messages.contact_id) AND (qm.profile_id = get_profile_id_for_user(( SELECT auth.uid() AS uid))) AND (qm.is_active = true)))))` |
 | WITH CHECK |  |
 
 

@@ -2,6 +2,28 @@
 
 > Trilha append-only de exclusao/restauracao/purge de contato. Gravada por trigger em public.contacts; escrita so via SECURITY DEFINER; leitura so admin/supervisor.
 
+[CATALOGUE SEMÂNTICO DO PROJETO]
+Objeto: public.contact_deletion_audit (tabela). RLS habilitada: t; RLS forçada: f.
+Colunas (ordem, tipo e nulabilidade):
+1 id bigint NOT NULL IDENTITY
+2 contact_id uuid NOT NULL — id de public.contacts no momento do evento. Sem FK de proposito: purga nao pode apagar/rebaixar a trilha.
+3 operation text NOT NULL — delete = soft-delete (NULL -> ts); restore = ts -> NULL; update_marker = ts trocado por outro ts (adulteracao); purge = DELETE fisico.
+4 deleted_at_from timestamp with time zone NULLABLE — contacts.deleted_at ANTES da mudanca (NULL = contato vivo). Valor gravado pelo CHAMADOR (relogio do cliente) — nao serve como tempo confiavel; use performed_at.
+5 deleted_at_to timestamp with time zone NULLABLE — contacts.deleted_at DEPOIS da mudanca (NULL = contato vivo). Mesma ressalva de relogio do de-from.
+6 performed_by uuid NULLABLE — auth.uid() (claim `sub`) do chamador. NULL em TODO purge (DELETE fisico): quem apaga e service_role/postgres/dashboard_user e nenhum carrega `sub`. A autoria desses casos esta em performed_by_db_role.
+7 performed_by_profile uuid NULLABLE — public.profiles.id correspondente a performed_by, resolvido na hora do evento.
+8 performed_by_db_role text NOT NULL [DEFAULT/EXPRESSION DEFINED] — session_user da conexao que executou a mudanca (R3). Sempre preenchido, inclusive no purge — e o unico autor da trilha quando performed_by e NULL.
+9 performed_at timestamp with time zone NOT NULL [DEFAULT/EXPRESSION DEFINED]
+Constraints:
+contact_deletion_audit_operation_check: CHECK (operation = ANY (ARRAY['delete'::text, 'restore'::text, 'update_marker'::text, 'purge'::text]))
+contact_deletion_audit_shape_check: CHECK (operation = 'delete'::text AND deleted_at_from IS NULL AND deleted_at_to IS NOT NULL OR operation = 'restore'::text AND deleted_at_from IS NOT NULL AND deleted_at_to IS NULL OR operation = 'purge'::text AND NOT deleted_at_from IS DISTINCT FROM deleted_at_to OR operation = 'update_marker'::text AND deleted_at_from IS NOT NULL AND deleted_at_to IS NOT NULL AND deleted_at_from IS DISTINCT FROM deleted_at_to)
+contact_deletion_audit_pkey: PRIMARY KEY (id)
+Políticas RLS (nome, operação, papéis e modo; as expressões permanecem no catálogo):
+contact_deletion_audit_block_authenticated_delete [command=DELETE; roles=authenticated; PERMISSIVE]
+contact_deletion_audit_block_authenticated_insert [command=INSERT; roles=authenticated; PERMISSIVE]
+contact_deletion_audit_block_authenticated_update [command=UPDATE; roles=authenticated; PERMISSIVE]
+contact_deletion_audit_select_admin_supervisor [command=SELECT; roles=authenticated; PERMISSIVE]
+
 | propriedade | valor |
 |---|---|
 | tipo | table |
@@ -86,7 +108,7 @@
 | comando | SELECT |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `is_admin_or_supervisor(auth.uid())` |
+| USING | `is_admin_or_supervisor(( SELECT auth.uid() AS uid))` |
 | WITH CHECK |  |
 
 

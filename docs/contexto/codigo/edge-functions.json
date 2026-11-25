@@ -2,7 +2,7 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "pasta": "supabase/functions",
- "total": 92,
+ "total": 93,
  "verify_jwt_false": [
   "ai-usage-outbox-drain",
   "auth-login",
@@ -16,6 +16,7 @@
   "gmail-webhook",
   "public-api",
   "searchbox-budget-alert",
+  "send-scheduled-report",
   "sync-call-records",
   "talkx-link",
   "whatsapp-webhook"
@@ -134,6 +135,10 @@
   "supabase/functions/_shared/ai-usage.ts",
   "supabase/functions/_shared/ai-values.ts",
   "supabase/functions/_shared/ai-vocabulary.ts",
+  "supabase/functions/_shared/assistant-gateway.test.ts",
+  "supabase/functions/_shared/assistant-gateway.ts",
+  "supabase/functions/_shared/assistant-playbook.test.ts",
+  "supabase/functions/_shared/assistant-playbook.ts",
   "supabase/functions/_shared/contract-kit.ts",
   "supabase/functions/_shared/contracts.ts",
   "supabase/functions/_shared/copilot-tick.ts",
@@ -249,13 +254,10 @@
     "schemas.ts",
     "validation.ts"
    ],
-   "chamada_pelo_front": [
-    "analise-prs/resgate-261118-lote3/hermes/robustez-primitivos-ui-2610121626bec5-2610141859e423/src/components/settings/AIAutoTagsConfig.tsx",
-    "analise-prs/resgate-261118-lote3/hermes/telefonia-fase8-motion-a11y-responsivo-2610031530007c/src/components/settings/AIAutoTagsConfig.tsx"
-   ],
+   "chamada_pelo_front": [],
    "chamada_por_edges": [],
    "chamada_por_sql_ou_cron": false,
-   "orfa": false,
+   "orfa": true,
    "testes": 2
   },
   {
@@ -503,9 +505,6 @@
     "validation.ts"
    ],
    "chamada_pelo_front": [
-    "analise-prs/resgate-261118-lote3/claude/fix-unit-tests-src-261024-1630/src/hooks/integrations/useKnowledgeBase.ts",
-    "analise-prs/resgate-261118-lote3/claude/kind-gates-87mwoe/src/hooks/integrations/useKnowledgeBase.ts",
-    "analise-prs/resgate-261118-lote3/claude_05/festive-carson-ub43wu/src/hooks/integrations/useKnowledgeBase.ts",
     "src/hooks/integrations/useKnowledgeBase.ts"
    ],
    "chamada_por_edges": [],
@@ -602,7 +601,7 @@
    "nome": "ai-objection-handler",
    "entrada": "supabase/functions/ai-objection-handler/index.ts",
    "arquivos": 1,
-   "linhas": 142,
+   "linhas": 144,
    "verify_jwt": true,
    "metodos": [],
    "tabelas": [],
@@ -759,8 +758,8 @@
   {
    "nome": "ai-transcribe-audio",
    "entrada": "supabase/functions/ai-transcribe-audio/index.ts",
-   "arquivos": 1,
-   "linhas": 752,
+   "arquivos": 2,
+   "linhas": 1126,
    "verify_jwt": true,
    "metodos": [],
    "tabelas": [
@@ -768,13 +767,15 @@
    ],
    "rpcs": [],
    "env": [
+    "OPENROUTER_STT_MODEL",
     "SUPABASE_SERVICE_ROLE_KEY",
     "SUPABASE_URL"
    ],
    "buckets": [],
    "chama_edges": [],
    "hosts_externos": [
-    "api.elevenlabs.io"
+    "api.elevenlabs.io",
+    "openrouter.ai"
    ],
    "usa_shared": [
     "ai-audio-authz.ts",
@@ -786,13 +787,12 @@
     "validation.ts"
    ],
    "chamada_pelo_front": [
-    "analise-prs/resgate-261118-lote3/claude/feat-message-delivery-post-iniciado-261101-1937/supabase/functions/_shared/evolution-webhook-messages.ts",
     "src/components/inbox/AudioMessagePlayer.tsx"
    ],
    "chamada_por_edges": [],
    "chamada_por_sql_ou_cron": false,
    "orfa": false,
-   "testes": 1
+   "testes": 2
   },
   {
    "nome": "ai-usage-outbox-drain",
@@ -859,6 +859,43 @@
    "testes": 1
   },
   {
+   "nome": "assistant-gateway",
+   "entrada": "supabase/functions/assistant-gateway/index.ts",
+   "arquivos": 1,
+   "linhas": 563,
+   "verify_jwt": true,
+   "metodos": [],
+   "tabelas": [
+    "assistant_profiles",
+    "contacts",
+    "conversation_tasks",
+    "messages",
+    "sales_deals"
+   ],
+   "rpcs": [],
+   "env": [
+    "SUPABASE_ANON_KEY",
+    "SUPABASE_URL"
+   ],
+   "buckets": [],
+   "chama_edges": [],
+   "hosts_externos": [],
+   "usa_shared": [
+    "ai-feature-flags.ts",
+    "ai-guards.ts",
+    "assistant-gateway.ts",
+    "assistant-playbook.ts",
+    "validation.ts"
+   ],
+   "chamada_pelo_front": [
+    "src/lib/assistant/askGateway.ts"
+   ],
+   "chamada_por_edges": [],
+   "chamada_por_sql_ou_cron": false,
+   "orfa": false,
+   "testes": 2
+  },
+  {
    "nome": "auth-login",
    "entrada": "supabase/functions/auth-login/index.ts",
    "arquivos": 1,
@@ -886,13 +923,12 @@
     "validation.ts"
    ],
    "chamada_pelo_front": [
-    "analise-prs/resgate-261118-lote3/claude/test-e2e-suite-completa-261104-1428/scripts/e2e-isolated/verify-providers.mjs",
     "src/lib/serverLogin.ts"
    ],
    "chamada_por_edges": [],
    "chamada_por_sql_ou_cron": false,
    "orfa": false,
-   "testes": 2
+   "testes": 1
   },
   {
    "nome": "auto-close-conversations",
@@ -989,9 +1025,6 @@
     "validation.ts"
    ],
    "chamada_pelo_front": [
-    "analise-prs/resgate-261118-lote3/claude/feat-copiloto-edges-261101-1330/src/hooks/inbox/useInboxBulkActions.ts",
-    "analise-prs/resgate-261118-lote3/claude/kind-gates-87mwoe/src/hooks/inbox/useInboxBulkActions.ts",
-    "analise-prs/resgate-261118-lote3/fix/ci-verde-261021/src/hooks/inbox/useInboxBulkActions.ts",
     "src/hooks/chat/useNewConversation.ts",
     "src/hooks/inbox/useInboxBulkActions.ts"
    ],
@@ -1067,7 +1100,6 @@
     "validation.ts"
    ],
    "chamada_pelo_front": [
-    "analise-prs/resgate-261118-lote3/claude/feat-message-delivery-post-iniciado-261101-1937/supabase/functions/_shared/evolution-webhook-messages.ts",
     "src/components/settings/ChatbotL1Config.tsx"
    ],
    "chamada_por_edges": [],
@@ -1097,7 +1129,6 @@
     "validation.ts"
    ],
    "chamada_pelo_front": [
-    "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/hooks/communication/useAudioMemes.ts",
     "src/components/settings/media-library/AIGenerateDialog.tsx",
     "src/hooks/communication/useAudioMemes.ts"
    ],
@@ -1157,7 +1188,6 @@
     "validation.ts"
    ],
    "chamada_pelo_front": [
-    "analise-prs/resgate-261118-lote3/claude/feat-message-delivery-post-iniciado-261101-1937/supabase/functions/_shared/evolution-webhook-messages.ts",
     "src/components/inbox/chat/MessageBubble.tsx",
     "src/hooks/sticker-picker/useStickerPicker.ts"
    ],
@@ -1255,19 +1285,21 @@
    "chamada_por_edges": [],
    "chamada_por_sql_ou_cron": true,
    "orfa": false,
-   "testes": 2
+   "testes": 1
   },
   {
    "nome": "copilot-live",
    "entrada": "supabase/functions/copilot-live/index.ts",
    "arquivos": 1,
-   "linhas": 303,
+   "linhas": 354,
    "verify_jwt": true,
    "metodos": [
     "OPTIONS"
    ],
    "tabelas": [
+    "assistant_profiles",
     "contacts",
+    "conversation_tasks",
     "copilot_insights",
     "copilot_sessions",
     "profiles"
@@ -1283,6 +1315,7 @@
    "usa_shared": [
     "ai-generate.ts",
     "ai-guards.ts",
+    "assistant-playbook.ts",
     "cors-origins.ts"
    ],
    "chamada_pelo_front": [],
@@ -1436,7 +1469,7 @@
    "chamada_por_edges": [],
    "chamada_por_sql_ou_cron": false,
    "orfa": false,
-   "testes": 2
+   "testes": 1
   },
   {
    "nome": "elevenlabs-agent-token",
@@ -1603,7 +1636,6 @@
     "validation.ts"
    ],
    "chamada_pelo_front": [
-    "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/inbox/VoiceSelector.tsx",
     "src/components/inbox/TextToAudioButton.tsx",
     "src/components/inbox/VoiceSelector.tsx"
    ],
@@ -1707,7 +1739,7 @@
    "nome": "evolution-api",
    "entrada": "supabase/functions/evolution-api/index.ts",
    "arquivos": 1,
-   "linhas": 1569,
+   "linhas": 1610,
    "verify_jwt": true,
    "metodos": [],
    "tabelas": [
@@ -1832,7 +1864,6 @@
     "validation.ts"
    ],
    "chamada_pelo_front": [
-    "analise-prs/resgate-261118-lote3/fix/ci-verde-261021/supabase/functions/evolution-api/index.ts",
     "src/components/monitoring/hooks/useMonitoringActions.ts"
    ],
    "chamada_por_edges": [
@@ -1925,12 +1956,10 @@
     "ssrf.ts",
     "validation.ts"
    ],
-   "chamada_pelo_front": [
-    "analise-prs/resgate-261118-lote3/claude/feat-message-delivery-post-iniciado-261101-1937/supabase/functions/_shared/evolution-webhook-messages.ts"
-   ],
+   "chamada_pelo_front": [],
    "chamada_por_edges": [],
    "chamada_por_sql_ou_cron": false,
-   "orfa": false,
+   "orfa": true,
    "testes": 2
   },
   {
@@ -2081,7 +2110,7 @@
    "chamada_por_edges": [],
    "chamada_por_sql_ou_cron": false,
    "orfa": false,
-   "testes": 2
+   "testes": 1
   },
   {
    "nome": "gmail-send",
@@ -2276,13 +2305,11 @@
     "instance_pause.ts",
     "validation.ts"
    ],
-   "chamada_pelo_front": [
-    "analise-prs/resgate-261118-lote3/claude/test-e2e-suite-completa-261104-1428/scripts/e2e-isolated/verify-providers.mjs"
-   ],
+   "chamada_pelo_front": [],
    "chamada_por_edges": [],
    "chamada_por_sql_ou_cron": false,
-   "orfa": false,
-   "testes": 3
+   "orfa": true,
+   "testes": 1
   },
   {
    "nome": "metrics",
@@ -2564,7 +2591,6 @@
     "validation.ts"
    ],
    "chamada_pelo_front": [
-    "analise-prs/resgate-261118-lote3/claude/test-e2e-suite-completa-261104-1428/scripts/e2e-isolated/verify-providers.mjs",
     "src/hooks/integrations/useCatalogQuickSearch.ts",
     "src/hooks/integrations/useExternalCatalog.ts"
    ],
@@ -2693,7 +2719,7 @@
    "chamada_por_edges": [],
    "chamada_por_sql_ou_cron": false,
    "orfa": false,
-   "testes": 2
+   "testes": 1
   },
   {
    "nome": "searchbox-budget-alert",
@@ -2786,18 +2812,18 @@
    "nome": "send-scheduled-report",
    "entrada": "supabase/functions/send-scheduled-report/index.ts",
    "arquivos": 1,
-   "linhas": 471,
-   "verify_jwt": true,
+   "linhas": 546,
+   "verify_jwt": false,
    "metodos": [],
    "tabelas": [
     "agent_stats",
     "contacts",
     "conversation_analyses",
     "conversation_sla",
-    "messages",
-    "scheduled_reports"
+    "messages"
    ],
    "rpcs": [
+    "get_scheduled_report_cron_secret",
     "is_admin_or_supervisor"
    ],
    "env": [
@@ -2819,10 +2845,11 @@
     "validation.ts"
    ],
    "chamada_pelo_front": [
-    "src/hooks/chat/useScheduledReports.ts"
+    "src/hooks/chat/useScheduledReports.ts",
+    "src/hooks/dashboard/useScheduledReportConfigs.ts"
    ],
    "chamada_por_edges": [],
-   "chamada_por_sql_ou_cron": false,
+   "chamada_por_sql_ou_cron": true,
    "orfa": false,
    "testes": 1
   },
@@ -2924,7 +2951,7 @@
    "nome": "talkx-ai",
    "entrada": "supabase/functions/talkx-ai/index.ts",
    "arquivos": 1,
-   "linhas": 599,
+   "linhas": 606,
    "verify_jwt": true,
    "metodos": [
     "POST"
@@ -3059,7 +3086,7 @@
    "nome": "talkx-send",
    "entrada": "supabase/functions/talkx-send/index.ts",
    "arquivos": 3,
-   "linhas": 2723,
+   "linhas": 2745,
    "verify_jwt": true,
    "metodos": [],
    "tabelas": [
@@ -3144,7 +3171,7 @@
    ],
    "chamada_por_sql_ou_cron": true,
    "orfa": false,
-   "testes": 13
+   "testes": 14
   },
   {
    "nome": "talkx-storage-purge",
@@ -3217,7 +3244,6 @@
     "validation.ts"
    ],
    "chamada_pelo_front": [
-    "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/inbox/VoiceChangerPicker.tsx",
     "src/components/inbox/VoiceChangerPicker.tsx"
    ],
    "chamada_por_edges": [],

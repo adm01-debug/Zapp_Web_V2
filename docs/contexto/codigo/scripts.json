@@ -1,7 +1,7 @@
 {
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
- "total": 451,
+ "total": 453,
  "scripts": [
   {
    "arquivo": "scripts/ai-context/cenarios.mjs",
@@ -37,6 +37,29 @@
    ],
    "workflows": [
     "contexto.yml"
+   ],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/automation.mjs",
+   "descricao": null,
+   "linhas": 992,
+   "env": [
+    "REPO_AUTOMATION_CHAINING"
+   ],
+   "npm_scripts": [
+    "automation:doctor",
+    "automation:test",
+    "automation:check",
+    "automation:heal",
+    "automation:nightly",
+    "automation:graph",
+    "automation:status",
+    "automation:install-hooks",
+    "automation:uninstall-hooks"
+   ],
+   "workflows": [
+    "automation-local.yml"
    ],
    "orfao": false
   },
@@ -104,7 +127,7 @@
   {
    "arquivo": "scripts/ci/branch-podaveis.mjs",
    "descricao": "W98 — comando pronto de poda de branches (usado pelo branch-hygiene-audit.yml). O plano oferecia duas saídas: apagar sozinho ou só gerar o comando. Apagar é",
-   "linhas": 193,
+   "linhas": 195,
    "env": [],
    "npm_scripts": [],
    "workflows": [
@@ -313,15 +336,6 @@
    "orfao": false
   },
   {
-   "arquivo": "scripts/ci/e2e-teardown.mjs",
-   "descricao": "E25 (docs/audits/PLANO_GITHUB_ACTIONS_100_ETAPAS_2026-10-01.md, achado G-09): limpeza da fixture do E2E logado SEM a chave mestra do banco.",
-   "linhas": 108,
-   "env": [],
-   "npm_scripts": [],
-   "workflows": [],
-   "orfao": false
-  },
-  {
    "arquivo": "scripts/ci/fila-merge.mjs",
    "descricao": "Fila de merge serial (substitui a fila nativa, indisponível em conta `User`). Problema medido em 15/10/2026: com `strict=true`, cada merge na `main` deixava",
    "linhas": 225,
@@ -331,7 +345,9 @@
     "GITHUB_STEP_SUMMARY"
    ],
    "npm_scripts": [],
-   "workflows": [],
+   "workflows": [
+    "auto-update-pr-branch.yml"
+   ],
    "orfao": false
   },
   {
@@ -585,6 +601,17 @@
    "arquivo": "scripts/db-audit/ai-usage-cost-window-open.test.sh",
    "descricao": "Item 265 (R2-AUTH-041, P2) — a consulta de CUSTO do painel de IA recebia `p_until` nulo (janela aberta ate agora) e comparava `l.created_at < NULL`:",
    "linhas": 158,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [
+    "db-guard.yml"
+   ],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/ai-usage-price-input-output.test.sh",
+   "descricao": "IA-055 §2 — o relatorio de custo de IA cobrava `unit_price * total_tokens`: um preco UNICO para tokens de entrada e de saida, quando o fornecedor cobra",
+   "linhas": 197,
    "env": [],
    "npm_scripts": [],
    "workflows": [
@@ -940,7 +967,7 @@
   {
    "arquivo": "scripts/db-audit/check-webhook-failures-acl.sql",
    "descricao": null,
-   "linhas": 142,
+   "linhas": 150,
    "env": [],
    "npm_scripts": [],
    "workflows": [],
@@ -949,7 +976,7 @@
   {
    "arquivo": "scripts/db-audit/check-webhook-failures-acl.test.sh",
    "descricao": null,
-   "linhas": 142,
+   "linhas": 151,
    "env": [],
    "npm_scripts": [],
    "workflows": [
@@ -2562,7 +2589,7 @@
   {
    "arquivo": "scripts/db-audit/talkx-ab.test.sh",
    "descricao": "X065 Talk X: teste A/B de campanha — colunas, atribuicao no snapshot, estatistica por variante e decisao da vencedora.",
-   "linhas": 329,
+   "linhas": 343,
    "env": [],
    "npm_scripts": [],
    "workflows": [
@@ -3006,8 +3033,8 @@
   },
   {
    "arquivo": "scripts/db-audit/talkx-message-snapshot.test.sh",
-   "descricao": null,
-   "linhas": 85,
+   "descricao": "X065: a 20261118220000 SUBSTITUI a funcao acima — no primeiro snapshot a decisao do worker sobre a variante passa a valer, NULL incluso. Sem carregar",
+   "linhas": 110,
    "env": [],
    "npm_scripts": [],
    "workflows": [
@@ -3029,7 +3056,7 @@
   {
    "arquivo": "scripts/db-audit/talkx-monitor-panel.test.sh",
    "descricao": "X140 (Fase 11 · banco + testes): talkx_monitor_panel — KPIs, comparativo com ontem, serie por minuto com zeros, saude do worker e autorizacao.",
-   "linhas": 385,
+   "linhas": 427,
    "env": [],
    "npm_scripts": [],
    "workflows": [],
@@ -4024,7 +4051,7 @@
   {
    "arquivo": "scripts/e2e-isolated/migrations.mjs",
    "descricao": "Only the active migration chain was inspected. These hashes bind the review of Vault calls to exact source bytes; future changes must be reviewed again.",
-   "linhas": 81,
+   "linhas": 84,
    "env": [],
    "npm_scripts": [],
    "workflows": [],
@@ -4170,8 +4197,8 @@
   },
   {
    "arquivo": "scripts/e2e-isolated/pull-image.mjs",
-   "descricao": "* Retry only the registry failure observed in the native Docker pull. */",
-   "linhas": 82,
+   "descricao": "Mensagens terminais de cota observadas nos registries pinados. A variante 'Data limit exceeded' chegou pelo ECR publico no run 45326622310 (2026-11-24) e",
+   "linhas": 124,
    "env": [],
    "npm_scripts": [],
    "workflows": [],
@@ -4232,7 +4259,7 @@
   {
    "arquivo": "scripts/e2e-isolated/run.mjs",
    "descricao": null,
-   "linhas": 823,
+   "linhas": 826,
    "env": [
     "GITHUB_OUTPUT",
     "PATH"
@@ -4508,7 +4535,7 @@
   {
    "arquivo": "scripts/edge-deploy/smoke-functions.mjs",
    "descricao": "W61: origens canônicas lidas de allowed-origins.json (sincronizado com validation.ts) verify_jwt=false is required for cron callers that cannot mint a user JWT,",
-   "linhas": 212,
+   "linhas": 215,
    "env": [],
    "npm_scripts": [],
    "workflows": [
@@ -4558,6 +4585,15 @@
    "arquivo": "scripts/eslint/no-secret-compare.js",
    "descricao": "* Z012 — proíbe comparação direta (===|!==) de identificadores que aludam a credenciais.",
    "linhas": 71,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/graphify-local.mjs",
+   "descricao": null,
+   "linhas": 1076,
    "env": [],
    "npm_scripts": [],
    "workflows": [],
@@ -4644,7 +4680,7 @@
   {
    "arquivo": "scripts/lib/seguranca-processo.mjs",
    "descricao": "* Utilidades compartilhadas pelos scripts de auditoria/CI.",
-   "linhas": 118,
+   "linhas": 122,
    "env": [
     "PATH"
    ],
@@ -4655,7 +4691,7 @@
   {
    "arquivo": "scripts/maintenance/lib.mjs",
    "descricao": null,
-   "linhas": 404,
+   "linhas": 783,
    "env": [],
    "npm_scripts": [],
    "workflows": [],
@@ -4664,7 +4700,7 @@
   {
    "arquivo": "scripts/maintenance/run.mjs",
    "descricao": null,
-   "linhas": 569,
+   "linhas": 710,
    "env": [
     "XDG_STATE_HOME"
    ],

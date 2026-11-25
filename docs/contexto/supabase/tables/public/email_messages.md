@@ -2,6 +2,44 @@
 
 > Mensagens de e-mail de uma email_thread (corpo texto/HTML sanitizado no front por src/lib/emailHtml.ts).
 
+[CATALOGUE SEMÂNTICO DO PROJETO]
+Objeto: public.email_messages (tabela). RLS habilitada: t; RLS forçada: f.
+Colunas (ordem, tipo e nulabilidade):
+1 id uuid NOT NULL [DEFAULT/EXPRESSION DEFINED]
+2 thread_id uuid NOT NULL
+3 gmail_message_id text NOT NULL
+4 gmail_account_id uuid NOT NULL
+5 from_address text NOT NULL [DEFAULT/EXPRESSION DEFINED]
+6 from_name text NULLABLE
+7 to_addresses text[] NOT NULL [DEFAULT/EXPRESSION DEFINED]
+8 cc_addresses text[] NOT NULL [DEFAULT/EXPRESSION DEFINED]
+9 bcc_addresses text[] NOT NULL [DEFAULT/EXPRESSION DEFINED]
+10 reply_to_address text NULLABLE
+11 subject text NOT NULL [DEFAULT/EXPRESSION DEFINED]
+12 body_text text NOT NULL [DEFAULT/EXPRESSION DEFINED]
+13 body_html text NOT NULL [DEFAULT/EXPRESSION DEFINED]
+14 snippet text NOT NULL [DEFAULT/EXPRESSION DEFINED]
+15 label_ids text[] NOT NULL [DEFAULT/EXPRESSION DEFINED]
+16 is_read boolean NOT NULL [DEFAULT/EXPRESSION DEFINED]
+17 is_starred boolean NOT NULL [DEFAULT/EXPRESSION DEFINED]
+18 has_attachments boolean NOT NULL [DEFAULT/EXPRESSION DEFINED]
+19 in_reply_to text NULLABLE
+20 references_header text NULLABLE
+21 internal_date timestamp with time zone NOT NULL [DEFAULT/EXPRESSION DEFINED]
+22 direction text NOT NULL [DEFAULT/EXPRESSION DEFINED]
+23 created_at timestamp with time zone NOT NULL [DEFAULT/EXPRESSION DEFINED]
+24 message_id_header text NULLABLE
+Constraints:
+email_messages_direction_check: CHECK (direction = ANY (ARRAY['inbound'::text, 'outbound'::text]))
+email_messages_from_format: CHECK (from_address ~* '^[^@\s]+@[^@\s]+\.[^@\s]+$'::text)
+email_messages_gmail_account_id_fkey: FOREIGN KEY (gmail_account_id) REFERENCES gmail_accounts(id) ON DELETE CASCADE
+email_messages_thread_id_fkey: FOREIGN KEY (thread_id) REFERENCES email_threads(id) ON DELETE CASCADE
+email_messages_pkey: PRIMARY KEY (id)
+email_messages_gmail_account_id_gmail_message_id_key: UNIQUE (gmail_account_id, gmail_message_id)
+Políticas RLS (nome, operação, papéis e modo; as expressões permanecem no catálogo):
+"Users can update messages of own accounts" [command=UPDATE; roles=authenticated; PERMISSIVE]
+"Users can view messages of own accounts" [command=SELECT; roles=authenticated; PERMISSIVE]
+
 | propriedade | valor |
 |---|---|
 | tipo | table |
@@ -85,7 +123,7 @@
 | comando | UPDATE |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `(EXISTS ( SELECT 1    FROM gmail_accounts ga   WHERE ((ga.id = email_messages.gmail_account_id) AND (ga.user_id = auth.uid()))))` |
+| USING | `(EXISTS ( SELECT 1    FROM gmail_accounts ga   WHERE ((ga.id = email_messages.gmail_account_id) AND (ga.user_id = ( SELECT auth.uid() AS uid)))))` |
 | WITH CHECK |  |
 
 ### `Users can view messages of own accounts`
@@ -95,7 +133,7 @@
 | comando | SELECT |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `(EXISTS ( SELECT 1    FROM gmail_accounts ga   WHERE ((ga.id = email_messages.gmail_account_id) AND (ga.user_id = auth.uid()))))` |
+| USING | `(EXISTS ( SELECT 1    FROM gmail_accounts ga   WHERE ((ga.id = email_messages.gmail_account_id) AND (ga.user_id = ( SELECT auth.uid() AS uid)))))` |
 | WITH CHECK |  |
 
 

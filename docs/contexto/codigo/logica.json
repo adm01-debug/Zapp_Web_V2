@@ -1,14 +1,14 @@
 {
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
- "total": 212,
+ "total": 215,
  "por_camada": {
   "adapters": 2,
   "config": 2,
   "contexts": 2,
   "data": 5,
   "integrations": 3,
-  "lib": 153,
+  "lib": 156,
   "providers": 1,
   "python": 15,
   "segments": 1,
@@ -655,7 +655,7 @@
     "integrations/supabase",
     "lib"
    ],
-   "coberto_por_testes": 22,
+   "coberto_por_testes": 19,
    "orfao": false
   },
   {
@@ -736,7 +736,7 @@
    "usado_por_modulos": [
     "components/inbox"
    ],
-   "coberto_por_testes": 4,
+   "coberto_por_testes": 2,
    "orfao": false
   },
   {
@@ -785,7 +785,7 @@
    "zod_schemas": 0,
    "flags": [],
    "papeis": [],
-   "usado_por": 13,
+   "usado_por": 5,
    "usado_por_modulos": [
     "components/inbox",
     "data/copilot",
@@ -870,7 +870,7 @@
    "zod_schemas": 0,
    "flags": [],
    "papeis": [],
-   "usado_por": 460,
+   "usado_por": 385,
    "usado_por_modulos": [
     "components/admin",
     "components/agents",
@@ -902,6 +902,7 @@
     "hooks/admin",
     "hooks/agents",
     "hooks/analytics",
+    "hooks/assistant",
     "hooks/auth",
     "hooks/business",
     "hooks/calls",
@@ -931,13 +932,14 @@
     "hooks/ui",
     "hooks/voice",
     "lib",
+    "lib/assistant",
     "lib/calls",
     "lib/inbox",
     "pages",
     "pages/admin",
     "services"
    ],
-   "coberto_por_testes": 50,
+   "coberto_por_testes": 38,
    "orfao": false
   },
   {
@@ -980,7 +982,7 @@
     "TablesUpdate"
    ],
    "export_default": null,
-   "linhas": 15797,
+   "linhas": 15958,
    "tabelas": [],
    "rpcs": [],
    "edges": [],
@@ -989,7 +991,7 @@
    "zod_schemas": 0,
    "flags": [],
    "papeis": [],
-   "usado_por": 37,
+   "usado_por": 33,
    "usado_por_modulos": [
     "components/admin",
     "components/automations",
@@ -1051,7 +1053,7 @@
    "zod_schemas": 0,
    "flags": [],
    "papeis": [],
-   "usado_por": 9,
+   "usado_por": 8,
    "usado_por_modulos": [
     "components/ai",
     "components/dashboard",
@@ -1076,7 +1078,7 @@
    "zod_schemas": 0,
    "flags": [],
    "papeis": [],
-   "usado_por": 17,
+   "usado_por": 12,
    "usado_por_modulos": [
     "adapters",
     "components/ai",
@@ -1174,6 +1176,88 @@
    "orfao": false
   },
   {
+   "arquivo": "src/lib/assistant/askGateway.ts",
+   "camada": "lib",
+   "exports": [
+    "AskGatewayArgs",
+    "GatewayAnswer",
+    "GatewaySource",
+    "SOURCE_LABELS",
+    "askGateway"
+   ],
+   "export_default": null,
+   "linhas": 92,
+   "tabelas": [],
+   "rpcs": [],
+   "edges": [
+    "assistant-gateway"
+   ],
+   "env": [],
+   "externos": [],
+   "zod_schemas": 0,
+   "flags": [],
+   "papeis": [],
+   "usado_por": 2,
+   "usado_por_modulos": [
+    "components/inbox",
+    "hooks/assistant"
+   ],
+   "coberto_por_testes": 2,
+   "orfao": false
+  },
+  {
+   "arquivo": "src/lib/assistant/dailyBrief.ts",
+   "camada": "lib",
+   "exports": [
+    "DailyBrief",
+    "fetchDailyBrief"
+   ],
+   "export_default": null,
+   "linhas": 60,
+   "tabelas": [
+    "conversation_tasks",
+    "messages",
+    "sales_deals"
+   ],
+   "rpcs": [],
+   "edges": [],
+   "env": [],
+   "externos": [],
+   "zod_schemas": 0,
+   "flags": [],
+   "papeis": [],
+   "usado_por": 1,
+   "usado_por_modulos": [
+    "hooks/assistant"
+   ],
+   "coberto_por_testes": 1,
+   "orfao": false
+  },
+  {
+   "arquivo": "src/lib/assistant/detectReminderIntent.ts",
+   "camada": "lib",
+   "exports": [
+    "ReminderIntent",
+    "detectReminderIntent"
+   ],
+   "export_default": null,
+   "linhas": 143,
+   "tabelas": [],
+   "rpcs": [],
+   "edges": [],
+   "env": [],
+   "externos": [],
+   "zod_schemas": 0,
+   "flags": [],
+   "papeis": [],
+   "usado_por": 1,
+   "usado_por_modulos": [
+    "hooks/assistant"
+   ],
+   "coberto_por_testes": 1,
+   "orfao": false
+  },
+  {
    "arquivo": "src/lib/audio/gravacaoFormato.ts",
    "camada": "lib",
    "exports": [
@@ -1194,7 +1278,7 @@
    "zod_schemas": 0,
    "flags": [],
    "papeis": [],
-   "usado_por": 2,
+   "usado_por": 1,
    "usado_por_modulos": [
     "services"
    ],
@@ -1229,7 +1313,7 @@
     "hooks/communication",
     "hooks/inbox"
    ],
-   "coberto_por_testes": 4,
+   "coberto_por_testes": 3,
    "orfao": false
   },
   {
@@ -1287,7 +1371,7 @@
    "usado_por_modulos": [
     "hooks/communication"
    ],
-   "coberto_por_testes": 3,
+   "coberto_por_testes": 2,
    "orfao": false
   },
   {
@@ -1362,7 +1446,7 @@
    "zod_schemas": 0,
    "flags": [],
    "papeis": [],
-   "usado_por": 24,
+   "usado_por": 20,
    "usado_por_modulos": [
     "components/agents",
     "components/calls",
@@ -1397,7 +1481,7 @@
    "zod_schemas": 0,
    "flags": [],
    "papeis": [],
-   "usado_por": 6,
+   "usado_por": 2,
    "usado_por_modulos": [
     "hooks/auth",
     "hooks/ui"
@@ -1482,7 +1566,7 @@
     "hooks/communication",
     "lib/calls"
    ],
-   "coberto_por_testes": 3,
+   "coberto_por_testes": 2,
    "orfao": false
   },
   {
@@ -1575,7 +1659,7 @@
    "zod_schemas": 0,
    "flags": [],
    "papeis": [],
-   "usado_por": 17,
+   "usado_por": 16,
    "usado_por_modulos": [
     "components/calls",
     "hooks/calls",
@@ -1613,7 +1697,7 @@
     "hooks/sip",
     "lib/calls"
    ],
-   "coberto_por_testes": 6,
+   "coberto_por_testes": 5,
    "orfao": false
   },
   {
@@ -1637,7 +1721,7 @@
    "zod_schemas": 0,
    "flags": [],
    "papeis": [],
-   "usado_por": 8,
+   "usado_por": 6,
    "usado_por_modulos": [
     "components/calls",
     "lib/journey"
@@ -1671,7 +1755,7 @@
    "zod_schemas": 0,
    "flags": [],
    "papeis": [],
-   "usado_por": 6,
+   "usado_por": 5,
    "usado_por_modulos": [
     "components/calls",
     "components/inbox",
@@ -1696,7 +1780,7 @@
    "zod_schemas": 0,
    "flags": [],
    "papeis": [],
-   "usado_por": 2,
+   "usado_por": 1,
    "usado_por_modulos": [
     "components/calls"
    ],
@@ -1721,7 +1805,7 @@
    "zod_schemas": 0,
    "flags": [],
    "papeis": [],
-   "usado_por": 2,
+   "usado_por": 1,
    "usado_por_modulos": [
     "components/calls"
    ],
@@ -1833,7 +1917,7 @@
     "lib/calls",
     "providers"
    ],
-   "coberto_por_testes": 13,
+   "coberto_por_testes": 8,
    "orfao": false
   },
   {
@@ -1974,7 +2058,7 @@
     "follower",
     "leader"
    ],
-   "usado_por": 5,
+   "usado_por": 4,
    "usado_por_modulos": [
     "components/calls",
     "hooks/communication",
@@ -2028,7 +2112,7 @@
    "zod_schemas": 0,
    "flags": [],
    "papeis": [],
-   "usado_por": 2,
+   "usado_por": 1,
    "usado_por_modulos": [
     "components/calls"
    ],
@@ -2062,7 +2146,7 @@
    "zod_schemas": 0,
    "flags": [],
    "papeis": [],
-   "usado_por": 3,
+   "usado_por": 2,
    "usado_por_modulos": [
     "components/calls",
     "hooks/calls"
@@ -2140,7 +2224,7 @@
    "zod_schemas": 0,
    "flags": [],
    "papeis": [],
-   "usado_por": 20,
+   "usado_por": 19,
    "usado_por_modulos": [
     "components/admin",
     "components/catalog",
@@ -2244,7 +2328,7 @@
    "zod_schemas": 0,
    "flags": [],
    "papeis": [],
-   "usado_por": 6,
+   "usado_por": 5,
    "usado_por_modulos": [
     "components/copilot",
     "components/email",
@@ -2413,7 +2497,7 @@
    "zod_schemas": 0,
    "flags": [],
    "papeis": [],
-   "usado_por": 3,
+   "usado_por": 2,
    "usado_por_modulos": [
     "components/admin",
     "services"
@@ -2523,7 +2607,8 @@
    "usado_por_modulos": [
     "components/inbox",
     "hooks/communication",
-    "hooks/voice"
+    "hooks/voice",
+    "lib/assistant"
    ],
    "coberto_por_testes": 2,
    "orfao": false
@@ -2677,7 +2762,7 @@
    "zod_schemas": 0,
    "flags": [],
    "papeis": [],
-   "usado_por": 7,
+   "usado_por": 3,
    "usado_por_modulos": [
     "components/email",
     "components/gmail",
@@ -2867,7 +2952,7 @@
     "hooks/team-chat",
     "lib"
    ],
-   "coberto_por_testes": 7,
+   "coberto_por_testes": 6,
    "orfao": false
   },
   {
@@ -2993,7 +3078,7 @@
    "zod_schemas": 0,
    "flags": [],
    "papeis": [],
-   "usado_por": 30,
+   "usado_por": 28,
    "usado_por_modulos": [
     "components/dashboard",
     "components/reports",
@@ -3054,7 +3139,7 @@
     "components/inbox",
     "hooks/chat"
    ],
-   "coberto_por_testes": 7,
+   "coberto_por_testes": 6,
    "orfao": false
   },
   {
@@ -3079,7 +3164,7 @@
    "usado_por_modulos": [
     "components/inbox"
    ],
-   "coberto_por_testes": 4,
+   "coberto_por_testes": 3,
    "orfao": false
   },
   {
@@ -3112,7 +3197,7 @@
    "zod_schemas": 0,
    "flags": [],
    "papeis": [],
-   "usado_por": 19,
+   "usado_por": 18,
    "usado_por_modulos": [
     "components/calls",
     "components/inbox",
@@ -3120,7 +3205,7 @@
     "components/talkx",
     "lib/calls"
    ],
-   "coberto_por_testes": 5,
+   "coberto_por_testes": 4,
    "orfao": false
   },
   {
@@ -3236,7 +3321,7 @@
    "zod_schemas": 0,
    "flags": [],
    "papeis": [],
-   "usado_por": 6,
+   "usado_por": 2,
    "usado_por_modulos": [
     "components/inbox",
     "hooks/auth"
@@ -3302,7 +3387,7 @@
    "zod_schemas": 0,
    "flags": [],
    "papeis": [],
-   "usado_por": 39,
+   "usado_por": 22,
    "usado_por_modulos": [
     "components/admin",
     "components/inbox",
@@ -3310,9 +3395,10 @@
     "hooks/copilot",
     "hooks/integrations",
     "hooks/security",
+    "hooks/talkx",
     "services"
    ],
-   "coberto_por_testes": 3,
+   "coberto_por_testes": 4,
    "orfao": false
   },
   {
@@ -3601,7 +3687,7 @@
     "lib/calls",
     "providers"
    ],
-   "coberto_por_testes": 5,
+   "coberto_por_testes": 4,
    "orfao": false
   },
   {
@@ -3622,7 +3708,7 @@
    "zod_schemas": 0,
    "flags": [],
    "papeis": [],
-   "usado_por": 6,
+   "usado_por": 4,
    "usado_por_modulos": [
     "components/keyboard",
     "components/talkx",
@@ -3671,7 +3757,7 @@
    "zod_schemas": 0,
    "flags": [],
    "papeis": [],
-   "usado_por": 44,
+   "usado_por": 31,
    "usado_por_modulos": [
     "components/contacts",
     "components/dashboard",
@@ -3715,7 +3801,7 @@
    "zod_schemas": 0,
    "flags": [],
    "papeis": [],
-   "usado_por": 245,
+   "usado_por": 211,
    "usado_por_modulos": [
     "components",
     "components/admin",
@@ -3743,6 +3829,7 @@
     "features/talk-me",
     "hooks/admin",
     "hooks/analytics",
+    "hooks/assistant",
     "hooks/auth",
     "hooks/business",
     "hooks/calls",
@@ -3779,7 +3866,7 @@
     "services/crm",
     "utils"
    ],
-   "coberto_por_testes": 18,
+   "coberto_por_testes": 15,
    "orfao": false
   },
   {
@@ -3881,7 +3968,7 @@
     "components/inbox",
     "lib"
    ],
-   "coberto_por_testes": 16,
+   "coberto_por_testes": 13,
    "orfao": false
   },
   {
@@ -3939,7 +4026,7 @@
    "usado_por_modulos": [
     "components/inbox"
    ],
-   "coberto_por_testes": 7,
+   "coberto_por_testes": 6,
    "orfao": false
   },
   {
@@ -3974,7 +4061,7 @@
     "components/contacts",
     "components/inbox"
    ],
-   "coberto_por_testes": 20,
+   "coberto_por_testes": 14,
    "orfao": false
   },
   {
@@ -4001,7 +4088,7 @@
    "zod_schemas": 0,
    "flags": [],
    "papeis": [],
-   "usado_por": 14,
+   "usado_por": 11,
    "usado_por_modulos": [
     "components/inbox",
     "hooks/communication",
@@ -4040,13 +4127,13 @@
    "zod_schemas": 0,
    "flags": [],
    "papeis": [],
-   "usado_por": 6,
+   "usado_por": 5,
    "usado_por_modulos": [
     "components/inbox",
     "hooks/communication",
     "lib"
    ],
-   "coberto_por_testes": 17,
+   "coberto_por_testes": 13,
    "orfao": false
   },
   {
@@ -4098,7 +4185,7 @@
    "zod_schemas": 0,
    "flags": [],
    "papeis": [],
-   "usado_por": 25,
+   "usado_por": 20,
    "usado_por_modulos": [
     "components/contacts",
     "components/inbox",
@@ -4152,7 +4239,7 @@
     "hooks/realtime",
     "hooks/sla"
    ],
-   "coberto_por_testes": 3,
+   "coberto_por_testes": 2,
    "orfao": false
   },
   {
@@ -4189,7 +4276,7 @@
    "zod_schemas": 0,
    "flags": [],
    "papeis": [],
-   "usado_por": 7,
+   "usado_por": 2,
    "usado_por_modulos": [
     "hooks/auth",
     "services"
@@ -4313,7 +4400,7 @@
    "usado_por_modulos": [
     "hooks/chat"
    ],
-   "coberto_por_testes": 2,
+   "coberto_por_testes": 1,
    "orfao": false
   },
   {
@@ -4382,7 +4469,7 @@
    "zod_schemas": 0,
    "flags": [],
    "papeis": [],
-   "usado_por": 13,
+   "usado_por": 12,
    "usado_por_modulos": [
     "components/contacts",
     "components/inbox",
@@ -4469,7 +4556,7 @@
     "hooks/integrations",
     "providers"
    ],
-   "coberto_por_testes": 4,
+   "coberto_por_testes": 3,
    "orfao": false
   },
   {
@@ -4538,7 +4625,7 @@
    "zod_schemas": 0,
    "flags": [],
    "papeis": [],
-   "usado_por": 25,
+   "usado_por": 20,
    "usado_por_modulos": [
     "components/inbox",
     "hooks/analytics",
@@ -4626,7 +4713,7 @@
    "zod_schemas": 0,
    "flags": [],
    "papeis": [],
-   "usado_por": 10,
+   "usado_por": 5,
    "usado_por_modulos": [
     "components/admin",
     "components/security",
@@ -4739,7 +4826,7 @@
    "zod_schemas": 0,
    "flags": [],
    "papeis": [],
-   "usado_por": 17,
+   "usado_por": 16,
    "usado_por_modulos": [
     "components/contacts",
     "components/dashboard",
@@ -4807,7 +4894,7 @@
    "zod_schemas": 0,
    "flags": [],
    "papeis": [],
-   "usado_por": 2,
+   "usado_por": 1,
    "usado_por_modulos": [
     "services"
    ],
@@ -4858,7 +4945,7 @@
    "zod_schemas": 0,
    "flags": [],
    "papeis": [],
-   "usado_por": 5,
+   "usado_por": 4,
    "usado_por_modulos": [
     "adapters",
     "components/inbox",
@@ -4931,8 +5018,9 @@
    "zod_schemas": 0,
    "flags": [],
    "papeis": [],
-   "usado_por": 2,
+   "usado_por": 3,
    "usado_por_modulos": [
+    "components/contacts",
     "components/inbox"
    ],
    "coberto_por_testes": 1,
@@ -5078,7 +5166,7 @@
    "zod_schemas": 0,
    "flags": [],
    "papeis": [],
-   "usado_por": 13,
+   "usado_por": 9,
    "usado_por_modulos": [
     "components/admin",
     "components/inbox",
@@ -5111,7 +5199,7 @@
    "zod_schemas": 0,
    "flags": [],
    "papeis": [],
-   "usado_por": 14,
+   "usado_por": 10,
    "usado_por_modulos": [
     "components/inbox",
     "components/settings",
@@ -5140,7 +5228,7 @@
    "zod_schemas": 0,
    "flags": [],
    "papeis": [],
-   "usado_por": 43,
+   "usado_por": 31,
    "usado_por_modulos": [
     "components/admin",
     "components/security",
@@ -5151,7 +5239,7 @@
     "pages",
     "pages/admin"
    ],
-   "coberto_por_testes": 3,
+   "coberto_por_testes": 2,
    "orfao": false
   },
   {
@@ -5303,7 +5391,7 @@
    "zod_schemas": 0,
    "flags": [],
    "papeis": [],
-   "usado_por": 6,
+   "usado_por": 2,
    "usado_por_modulos": [
     "hooks/auth",
     "hooks/chat"
@@ -5332,12 +5420,12 @@
    "zod_schemas": 0,
    "flags": [],
    "papeis": [],
-   "usado_por": 8,
+   "usado_por": 4,
    "usado_por_modulos": [
     "components/team-chat",
     "hooks/chat"
    ],
-   "coberto_por_testes": 3,
+   "coberto_por_testes": 2,
    "orfao": false
   },
   {
@@ -5359,7 +5447,7 @@
    "zod_schemas": 0,
    "flags": [],
    "papeis": [],
-   "usado_por": 6,
+   "usado_por": 5,
    "usado_por_modulos": [
     "components/inbox",
     "components/tasks",
@@ -5367,7 +5455,7 @@
     "hooks/inbox",
     "hooks/tasks"
    ],
-   "coberto_por_testes": 3,
+   "coberto_por_testes": 2,
    "orfao": false
   },
   {
@@ -5387,7 +5475,7 @@
    "zod_schemas": 0,
    "flags": [],
    "papeis": [],
-   "usado_por": 2,
+   "usado_por": 3,
    "usado_por_modulos": [
     "components/inbox"
    ],
@@ -5414,7 +5502,7 @@
    "zod_schemas": 0,
    "flags": [],
    "papeis": [],
-   "usado_por": 556,
+   "usado_por": 482,
    "usado_por_modulos": [
     "components",
     "components/a11y",
@@ -5487,7 +5575,7 @@
    "zod_schemas": 0,
    "flags": [],
    "papeis": [],
-   "usado_por": 2,
+   "usado_por": 1,
    "usado_por_modulos": [
     "components/inbox"
    ],
@@ -5520,7 +5608,7 @@
     "components/inbox",
     "components/notifications"
    ],
-   "coberto_por_testes": 5,
+   "coberto_por_testes": 4,
    "orfao": false
   },
   {
@@ -5768,7 +5856,7 @@
    "zod_schemas": 0,
    "flags": [],
    "papeis": [],
-   "usado_por": 10,
+   "usado_por": 6,
    "usado_por_modulos": [
     "components/auth",
     "components/inbox",
@@ -5776,7 +5864,7 @@
     "hooks/crm",
     "services"
    ],
-   "coberto_por_testes": 9,
+   "coberto_por_testes": 6,
    "orfao": false
   },
   {
@@ -5797,7 +5885,7 @@
    "zod_schemas": 0,
    "flags": [],
    "papeis": [],
-   "usado_por": 7,
+   "usado_por": 5,
    "usado_por_modulos": [
     "components/inbox",
     "components/omnichannel",
@@ -5805,7 +5893,7 @@
     "hooks/inbox",
     "services"
    ],
-   "coberto_por_testes": 2,
+   "coberto_por_testes": 1,
    "orfao": false
   },
   {
@@ -6071,11 +6159,11 @@
    "zod_schemas": 0,
    "flags": [],
    "papeis": [],
-   "usado_por": 2,
+   "usado_por": 1,
    "usado_por_modulos": [
     "components/monitoring"
    ],
-   "coberto_por_testes": 2,
+   "coberto_por_testes": 1,
    "orfao": false
   },
   {
@@ -6321,7 +6409,7 @@
    "zod_schemas": 0,
    "flags": [],
    "papeis": [],
-   "usado_por": 7,
+   "usado_por": 5,
    "usado_por_modulos": [
     "components/inbox",
     "components/omnichannel",
@@ -6384,7 +6472,7 @@
    "zod_schemas": 0,
    "flags": [],
    "papeis": [],
-   "usado_por": 4,
+   "usado_por": 3,
    "usado_por_modulos": [
     "components/settings",
     "hooks/communication"
@@ -6409,7 +6497,7 @@
    "zod_schemas": 0,
    "flags": [],
    "papeis": [],
-   "usado_por": 8,
+   "usado_por": 7,
    "usado_por_modulos": [
     "components/inbox",
     "components/team-chat",
@@ -6489,7 +6577,7 @@
    "zod_schemas": 0,
    "flags": [],
    "papeis": [],
-   "usado_por": 14,
+   "usado_por": 12,
    "usado_por_modulos": [
     "components/notifications",
     "components/settings",
@@ -6501,7 +6589,7 @@
     "hooks/realtime",
     "hooks/sla"
    ],
-   "coberto_por_testes": 5,
+   "coberto_por_testes": 4,
    "orfao": false
   },
   {
@@ -6587,7 +6675,7 @@
    "zod_schemas": 0,
    "flags": [],
    "papeis": [],
-   "usado_por": 18,
+   "usado_por": 14,
    "usado_por_modulos": [
     "components/contacts",
     "components/inbox",

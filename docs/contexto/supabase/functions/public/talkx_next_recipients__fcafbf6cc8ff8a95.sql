@@ -1,5 +1,5 @@
 CREATE OR REPLACE FUNCTION public.talkx_next_recipients(p_campaign_id uuid, p_limit integer DEFAULT 20)
- RETURNS TABLE(recipient_id uuid, contact_id uuid, status text, attempt_count integer, retry_after timestamp with time zone, personalized_message text, contact_name text, contact_nickname text, contact_phone text, contact_company text)
+ RETURNS TABLE(recipient_id uuid, contact_id uuid, status text, attempt_count integer, retry_after timestamp with time zone, personalized_message text, variant_id uuid, contact_name text, contact_nickname text, contact_phone text, contact_company text)
  LANGUAGE plpgsql
  STABLE SECURITY DEFINER
  SET search_path TO 'public', 'pg_temp'
@@ -21,6 +21,7 @@ BEGIN
          recipient.attempt_count,
          recipient.retry_after,
          recipient.personalized_message,
+         recipient.variant_id,
          contact.name,
          contact.nickname,
          contact.phone,

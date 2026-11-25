@@ -1,6 +1,25 @@
 # public.departments
 
-> Organizational departments; each may own a team_conversation of type=department
+> Unidade organizacional associada a membros e conversas de equipe. A configuração de WhatsApp é alterada por RPCs de staff; whatsapp_api_key é segredo e não deve ser exposto em leituras diretas, views públicas ou respostas de API. get_department_whatsapp_config retorna apenas modo, instância e indicador de existência da chave.
+
+[CATALOGUE SEMÂNTICO DO PROJETO]
+Objeto: public.departments (tabela). RLS habilitada: t; RLS forçada: f.
+Colunas (ordem, tipo e nulabilidade):
+1 id uuid NOT NULL [DEFAULT/EXPRESSION DEFINED]
+2 name text NOT NULL
+3 is_active boolean NOT NULL [DEFAULT/EXPRESSION DEFINED]
+4 whatsapp_mode text NOT NULL [DEFAULT/EXPRESSION DEFINED]
+5 whatsapp_api_key text NULLABLE
+6 whatsapp_instance_id text NULLABLE
+7 created_at timestamp with time zone NOT NULL [DEFAULT/EXPRESSION DEFINED]
+8 updated_at timestamp with time zone NOT NULL [DEFAULT/EXPRESSION DEFINED]
+Constraints:
+departments_whatsapp_mode_check: CHECK (whatsapp_mode = ANY (ARRAY['none'::text, 'evolution'::text, 'official'::text]))
+departments_pkey: PRIMARY KEY (id)
+departments_name_key: UNIQUE (name)
+Políticas RLS (nome, operação, papéis e modo; as expressões permanecem no catálogo):
+departments_admin_write [command=ALL; roles=authenticated; PERMISSIVE]
+departments_select [command=SELECT; roles=authenticated; PERMISSIVE]
 
 | propriedade | valor |
 |---|---|
@@ -65,8 +84,8 @@
 | comando | ALL |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `is_admin(auth.uid())` |
-| WITH CHECK | `is_admin(auth.uid())` |
+| USING | `is_admin(( SELECT auth.uid() AS uid))` |
+| WITH CHECK | `is_admin(( SELECT auth.uid() AS uid))` |
 
 ### `departments_select`
 

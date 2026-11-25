@@ -1,5 +1,30 @@
 # public.training_sessions
 
+> Descrição funcional não estava registrada no catálogo; o conteúdo abaixo documenta a estrutura observável, sem inferir regras de negócio não declaradas.
+
+[CATALOGUE SEMÂNTICO DO PROJETO]
+Objeto: public.training_sessions (tabela). RLS habilitada: t; RLS forçada: f.
+Colunas (ordem, tipo e nulabilidade):
+1 id uuid NOT NULL [DEFAULT/EXPRESSION DEFINED]
+2 profile_id uuid NOT NULL
+3 scenario_name text NOT NULL
+4 scenario_type text NULLABLE [DEFAULT/EXPRESSION DEFINED]
+5 messages jsonb NULLABLE [DEFAULT/EXPRESSION DEFINED]
+6 score integer NULLABLE
+7 feedback text NULLABLE
+8 status text NULLABLE [DEFAULT/EXPRESSION DEFINED]
+9 started_at timestamp with time zone NOT NULL [DEFAULT/EXPRESSION DEFINED]
+10 completed_at timestamp with time zone NULLABLE
+11 created_at timestamp with time zone NOT NULL [DEFAULT/EXPRESSION DEFINED]
+Constraints:
+training_sessions_profile_id_fkey: FOREIGN KEY (profile_id) REFERENCES profiles(id) ON DELETE CASCADE
+training_sessions_pkey: PRIMARY KEY (id)
+Políticas RLS (nome, operação, papéis e modo; as expressões permanecem no catálogo):
+"Users can delete own training sessions" [command=DELETE; roles=authenticated; PERMISSIVE]
+"Users can insert own training sessions" [command=INSERT; roles=authenticated; PERMISSIVE]
+"Users can update own training sessions" [command=UPDATE; roles=authenticated; PERMISSIVE]
+"Users can view own training sessions" [command=SELECT; roles=authenticated; PERMISSIVE]
+
 | propriedade | valor |
 |---|---|
 | tipo | table |
@@ -54,7 +79,7 @@
 | comando | DELETE |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `((profile_id = get_profile_id_for_user(auth.uid())) OR is_admin_or_supervisor(auth.uid()))` |
+| USING | `((profile_id = get_profile_id_for_user(( SELECT auth.uid() AS uid))) OR is_admin_or_supervisor(( SELECT auth.uid() AS uid)))` |
 | WITH CHECK |  |
 
 ### `Users can insert own training sessions`
@@ -65,7 +90,7 @@
 | tipo | PERMISSIVE |
 | roles | authenticated |
 | USING |  |
-| WITH CHECK | `((profile_id = get_profile_id_for_user(auth.uid())) OR is_admin_or_supervisor(auth.uid()))` |
+| WITH CHECK | `((profile_id = get_profile_id_for_user(( SELECT auth.uid() AS uid))) OR is_admin_or_supervisor(( SELECT auth.uid() AS uid)))` |
 
 ### `Users can update own training sessions`
 
@@ -74,7 +99,7 @@
 | comando | UPDATE |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `((profile_id = get_profile_id_for_user(auth.uid())) OR is_admin_or_supervisor(auth.uid()))` |
+| USING | `((profile_id = get_profile_id_for_user(( SELECT auth.uid() AS uid))) OR is_admin_or_supervisor(( SELECT auth.uid() AS uid)))` |
 | WITH CHECK |  |
 
 ### `Users can view own training sessions`
@@ -84,7 +109,7 @@
 | comando | SELECT |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `((profile_id = get_profile_id_for_user(auth.uid())) OR is_admin_or_supervisor(auth.uid()))` |
+| USING | `((profile_id = get_profile_id_for_user(( SELECT auth.uid() AS uid))) OR is_admin_or_supervisor(( SELECT auth.uid() AS uid)))` |
 | WITH CHECK |  |
 
 

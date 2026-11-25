@@ -1,5 +1,31 @@
 # public.query_telemetry
 
+> Descrição funcional não estava registrada no catálogo; o conteúdo abaixo documenta a estrutura observável, sem inferir regras de negócio não declaradas.
+
+[CATALOGUE SEMÂNTICO DO PROJETO]
+Objeto: public.query_telemetry (tabela). RLS habilitada: t; RLS forçada: f.
+Colunas (ordem, tipo e nulabilidade):
+1 id uuid NOT NULL [DEFAULT/EXPRESSION DEFINED]
+2 operation text NOT NULL [DEFAULT/EXPRESSION DEFINED]
+3 table_name text NULLABLE
+4 rpc_name text NULLABLE
+5 duration_ms integer NOT NULL [DEFAULT/EXPRESSION DEFINED]
+6 record_count integer NULLABLE
+7 query_limit integer NULLABLE
+8 query_offset integer NULLABLE
+9 count_mode text NULLABLE
+10 severity text NOT NULL [DEFAULT/EXPRESSION DEFINED]
+11 error_message text NULLABLE
+12 user_id uuid NULLABLE
+13 created_at timestamp with time zone NOT NULL [DEFAULT/EXPRESSION DEFINED]
+Constraints:
+query_telemetry_user_id_fkey: FOREIGN KEY (user_id) REFERENCES auth.users(id) ON DELETE SET NULL
+query_telemetry_pkey: PRIMARY KEY (id)
+Políticas RLS (nome, operação, papéis e modo; as expressões permanecem no catálogo):
+"Admins can delete telemetry" [command=DELETE; roles=authenticated; PERMISSIVE]
+"Users can insert own telemetry" [command=INSERT; roles=authenticated; PERMISSIVE]
+"Users can view own telemetry" [command=SELECT; roles=authenticated; PERMISSIVE]
+
 | propriedade | valor |
 |---|---|
 | tipo | table |
@@ -58,7 +84,7 @@
 | comando | DELETE |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `is_admin_or_supervisor(auth.uid())` |
+| USING | `is_admin_or_supervisor(( SELECT auth.uid() AS uid))` |
 | WITH CHECK |  |
 
 ### `Users can insert own telemetry`
@@ -69,7 +95,7 @@
 | tipo | PERMISSIVE |
 | roles | authenticated |
 | USING |  |
-| WITH CHECK | `(user_id = auth.uid())` |
+| WITH CHECK | `(user_id = ( SELECT auth.uid() AS uid))` |
 
 ### `Users can view own telemetry`
 
@@ -78,7 +104,7 @@
 | comando | SELECT |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `((user_id = auth.uid()) OR is_admin_or_supervisor(auth.uid()))` |
+| USING | `((user_id = ( SELECT auth.uid() AS uid)) OR is_admin_or_supervisor(( SELECT auth.uid() AS uid)))` |
 | WITH CHECK |  |
 
 

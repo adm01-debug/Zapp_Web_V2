@@ -1,5 +1,20 @@
 # public.talkx_settings
 
+> Descrição funcional não estava registrada no catálogo; o conteúdo abaixo documenta a estrutura observável, sem inferir regras de negócio não declaradas.
+
+[CATALOGUE SEMÂNTICO DO PROJETO]
+Objeto: public.talkx_settings (tabela). RLS habilitada: t; RLS forçada: f.
+Colunas (ordem, tipo e nulabilidade):
+1 key text NOT NULL
+2 value jsonb NOT NULL
+3 description text NULLABLE
+4 updated_at timestamp with time zone NOT NULL [DEFAULT/EXPRESSION DEFINED]
+Constraints:
+talkx_settings_pkey: PRIMARY KEY (key)
+Políticas RLS (nome, operação, papéis e modo; as expressões permanecem no catálogo):
+authenticated_read_talkx_settings [command=SELECT; roles=authenticated; PERMISSIVE]
+talkx_settings_admin_write [command=UPDATE; roles=authenticated; PERMISSIVE]
+
 | propriedade | valor |
 |---|---|
 | tipo | table |
@@ -55,8 +70,8 @@
 | comando | UPDATE |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `is_admin_or_supervisor(auth.uid())` |
-| WITH CHECK | `is_admin_or_supervisor(auth.uid())` |
+| USING | `is_admin_or_supervisor(( SELECT auth.uid() AS uid))` |
+| WITH CHECK | `is_admin_or_supervisor(( SELECT auth.uid() AS uid))` |
 
 
 ## Triggers

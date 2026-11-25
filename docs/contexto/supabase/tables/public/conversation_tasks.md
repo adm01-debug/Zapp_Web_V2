@@ -1,5 +1,45 @@
 # public.conversation_tasks
 
+> Descrição funcional não estava registrada no catálogo; o conteúdo abaixo documenta a estrutura observável, sem inferir regras de negócio não declaradas.
+
+[CATALOGUE SEMÂNTICO DO PROJETO]
+Objeto: public.conversation_tasks (tabela). RLS habilitada: t; RLS forçada: f.
+Colunas (ordem, tipo e nulabilidade):
+1 id uuid NOT NULL [DEFAULT/EXPRESSION DEFINED]
+2 contact_id uuid NULLABLE
+3 title text NOT NULL
+4 description text NULLABLE
+5 assigned_to uuid NULLABLE
+6 created_by uuid NOT NULL
+7 due_date timestamp with time zone NULLABLE
+8 priority text NOT NULL [DEFAULT/EXPRESSION DEFINED]
+9 status text NOT NULL [DEFAULT/EXPRESSION DEFINED]
+10 completed_at timestamp with time zone NULLABLE
+11 created_at timestamp with time zone NOT NULL [DEFAULT/EXPRESSION DEFINED]
+12 updated_at timestamp with time zone NOT NULL [DEFAULT/EXPRESSION DEFINED]
+13 remind_at timestamp with time zone NULLABLE
+14 notified_at timestamp with time zone NULLABLE
+15 waiting_reason text NULLABLE
+16 "position" integer NOT NULL [DEFAULT/EXPRESSION DEFINED]
+17 started_at timestamp with time zone NULLABLE
+18 status_changed_at timestamp with time zone NOT NULL [DEFAULT/EXPRESSION DEFINED]
+19 client_task_id uuid NULLABLE — IA-047: chave idempotente do clique de criação de tarefa (ux_conversation_tasks_creator_client_key: created_by+client_task_id único, parcial).
+20 migrated_from_reminder_id uuid NULLABLE
+Constraints:
+conversation_tasks_status_check: CHECK (status = ANY (ARRAY['backlog'::text, 'todo'::text, 'doing'::text, 'waiting'::text, 'done'::text, 'cancelled'::text]))
+conversation_tasks_waiting_reason_check: CHECK (status <> 'waiting'::text OR waiting_reason IS NOT NULL)
+conversation_tasks_assigned_to_fkey: FOREIGN KEY (assigned_to) REFERENCES profiles(id) ON DELETE SET NULL
+conversation_tasks_contact_id_fkey: FOREIGN KEY (contact_id) REFERENCES contacts(id) ON DELETE SET NULL
+conversation_tasks_created_by_fkey: FOREIGN KEY (created_by) REFERENCES profiles(id) ON DELETE SET NULL
+conversation_tasks_migrated_from_reminder_id_fkey: FOREIGN KEY (migrated_from_reminder_id) REFERENCES reminders(id) ON DELETE SET NULL
+conversation_tasks_pkey: PRIMARY KEY (id)
+Políticas RLS (nome, operação, papéis e modo; as expressões permanecem no catálogo):
+tasks_delete_own [command=DELETE; roles=authenticated; PERMISSIVE]
+tasks_insert_own [command=INSERT; roles=authenticated; PERMISSIVE]
+tasks_select_contact_visible [command=SELECT; roles=authenticated; PERMISSIVE]
+tasks_select_own [command=SELECT; roles=authenticated; PERMISSIVE]
+tasks_update_own [command=UPDATE; roles=authenticated; PERMISSIVE]
+
 | propriedade | valor |
 |---|---|
 | tipo | table |
@@ -84,7 +124,7 @@
 | comando | DELETE |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `((created_by = current_profile_id()) OR is_admin_or_supervisor(auth.uid()))` |
+| USING | `((created_by = current_profile_id()) OR is_admin_or_supervisor(( SELECT auth.uid() AS uid)))` |
 | WITH CHECK |  |
 
 ### `tasks_insert_own`
@@ -95,7 +135,7 @@
 | tipo | PERMISSIVE |
 | roles | authenticated |
 | USING |  |
-| WITH CHECK | `((created_by = current_profile_id()) AND ((contact_id IS NULL) OR is_contact_visible_to_user(contact_id, auth.uid())))` |
+| WITH CHECK | `((created_by = current_profile_id()) AND ((contact_id IS NULL) OR is_contact_visible_to_user(contact_id, ( SELECT auth.uid() AS uid))))` |
 
 ### `tasks_select_contact_visible`
 
@@ -104,7 +144,7 @@
 | comando | SELECT |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `((contact_id IS NOT NULL) AND is_contact_visible_to_user(contact_id, auth.uid()))` |
+| USING | `((contact_id IS NOT NULL) AND is_contact_visible_to_user(contact_id, ( SELECT auth.uid() AS uid)))` |
 | WITH CHECK |  |
 
 ### `tasks_select_own`
@@ -114,7 +154,7 @@
 | comando | SELECT |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `((created_by = current_profile_id()) OR is_admin_or_supervisor(auth.uid()))` |
+| USING | `((created_by = current_profile_id()) OR is_admin_or_supervisor(( SELECT auth.uid() AS uid)))` |
 | WITH CHECK |  |
 
 ### `tasks_update_own`
@@ -124,8 +164,8 @@
 | comando | UPDATE |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `((created_by = current_profile_id()) OR is_admin_or_supervisor(auth.uid()))` |
-| WITH CHECK | `((created_by = current_profile_id()) OR is_admin_or_supervisor(auth.uid()))` |
+| USING | `((created_by = current_profile_id()) OR is_admin_or_supervisor(( SELECT auth.uid() AS uid)))` |
+| WITH CHECK | `((created_by = current_profile_id()) OR is_admin_or_supervisor(( SELECT auth.uid() AS uid)))` |
 
 
 ## Triggers

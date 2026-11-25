@@ -1,12 +1,37 @@
 # public.security_alerts
 
+> Descrição funcional não estava registrada no catálogo; o conteúdo abaixo documenta a estrutura observável, sem inferir regras de negócio não declaradas.
+
+[CATALOGUE SEMÂNTICO DO PROJETO]
+Objeto: public.security_alerts (tabela). RLS habilitada: t; RLS forçada: f.
+Colunas (ordem, tipo e nulabilidade):
+1 id uuid NOT NULL [DEFAULT/EXPRESSION DEFINED]
+2 alert_type text NOT NULL
+3 severity text NOT NULL [DEFAULT/EXPRESSION DEFINED]
+4 title text NOT NULL
+5 description text NULLABLE
+6 ip_address text NULLABLE
+7 user_id uuid NULLABLE
+8 metadata jsonb NULLABLE [DEFAULT/EXPRESSION DEFINED]
+9 is_resolved boolean NULLABLE [DEFAULT/EXPRESSION DEFINED]
+10 resolved_by uuid NULLABLE
+11 resolved_at timestamp with time zone NULLABLE
+12 created_at timestamp with time zone NOT NULL [DEFAULT/EXPRESSION DEFINED]
+Constraints:
+security_alerts_resolved_by_fkey: FOREIGN KEY (resolved_by) REFERENCES auth.users(id) ON DELETE SET NULL
+security_alerts_user_id_fkey: FOREIGN KEY (user_id) REFERENCES auth.users(id) ON DELETE SET NULL
+security_alerts_pkey: PRIMARY KEY (id)
+Políticas RLS (nome, operação, papéis e modo; as expressões permanecem no catálogo):
+"Admins can manage security alerts" [command=ALL; roles=authenticated; PERMISSIVE]
+security_alerts_self_select [command=SELECT; roles=authenticated; PERMISSIVE]
+
 | propriedade | valor |
 |---|---|
 | tipo | table |
 | owner | postgres |
 | RLS habilitado | sim |
 | RLS forçado (owner) | não |
-| policies | 3 |
+| policies | 2 |
 | realtime (publication) | não |
 | replica identity | full |
 | vem de extensão | não |
@@ -51,16 +76,6 @@
 
 ## Policies (RLS)
 
-### `Admins can insert security alerts`
-
-| campo | valor |
-|---|---|
-| comando | INSERT |
-| tipo | PERMISSIVE |
-| roles | authenticated |
-| USING |  |
-| WITH CHECK | `is_admin_or_supervisor(auth.uid())` |
-
 ### `Admins can manage security alerts`
 
 | campo | valor |
@@ -68,8 +83,8 @@
 | comando | ALL |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `is_admin_or_supervisor(auth.uid())` |
-| WITH CHECK | `is_admin_or_supervisor(auth.uid())` |
+| USING | `is_admin_or_supervisor(( SELECT auth.uid() AS uid))` |
+| WITH CHECK | `is_admin_or_supervisor(( SELECT auth.uid() AS uid))` |
 
 ### `security_alerts_self_select`
 
@@ -78,7 +93,7 @@
 | comando | SELECT |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `(user_id = ( SELECT auth.uid() AS uid))` |
+| USING | `(user_id = ( SELECT ( SELECT auth.uid() AS uid) AS uid))` |
 | WITH CHECK |  |
 
 

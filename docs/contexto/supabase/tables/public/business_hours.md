@@ -1,5 +1,27 @@
 # public.business_hours
 
+> Descrição funcional não estava registrada no catálogo; o conteúdo abaixo documenta a estrutura observável, sem inferir regras de negócio não declaradas.
+
+[CATALOGUE SEMÂNTICO DO PROJETO]
+Objeto: public.business_hours (tabela). RLS habilitada: t; RLS forçada: f.
+Colunas (ordem, tipo e nulabilidade):
+1 id uuid NOT NULL [DEFAULT/EXPRESSION DEFINED]
+2 whatsapp_connection_id uuid NOT NULL
+3 day_of_week integer NOT NULL
+4 is_open boolean NULLABLE [DEFAULT/EXPRESSION DEFINED]
+5 open_time time without time zone NULLABLE [DEFAULT/EXPRESSION DEFINED]
+6 close_time time without time zone NULLABLE [DEFAULT/EXPRESSION DEFINED]
+7 created_at timestamp with time zone NOT NULL [DEFAULT/EXPRESSION DEFINED]
+8 updated_at timestamp with time zone NOT NULL [DEFAULT/EXPRESSION DEFINED]
+Constraints:
+business_hours_day_of_week_check: CHECK (day_of_week >= 0 AND day_of_week <= 6)
+business_hours_whatsapp_connection_id_fkey: FOREIGN KEY (whatsapp_connection_id) REFERENCES whatsapp_connections(id) ON DELETE CASCADE
+business_hours_pkey: PRIMARY KEY (id)
+business_hours_whatsapp_connection_id_day_of_week_key: UNIQUE (whatsapp_connection_id, day_of_week)
+Políticas RLS (nome, operação, papéis e modo; as expressões permanecem no catálogo):
+"Admins can manage business hours" [command=ALL; roles=authenticated; PERMISSIVE]
+"Authenticated users can view business hours" [command=SELECT; roles=authenticated; PERMISSIVE]
+
 | propriedade | valor |
 |---|---|
 | tipo | table |
@@ -54,8 +76,8 @@
 | comando | ALL |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `is_admin_or_supervisor(auth.uid())` |
-| WITH CHECK | `is_admin_or_supervisor(auth.uid())` |
+| USING | `is_admin_or_supervisor(( SELECT auth.uid() AS uid))` |
+| WITH CHECK | `is_admin_or_supervisor(( SELECT auth.uid() AS uid))` |
 
 ### `Authenticated users can view business hours`
 

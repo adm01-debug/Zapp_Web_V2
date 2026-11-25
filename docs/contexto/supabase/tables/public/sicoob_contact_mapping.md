@@ -1,5 +1,26 @@
 # public.sicoob_contact_mapping
 
+> Descrição funcional não estava registrada no catálogo; o conteúdo abaixo documenta a estrutura observável, sem inferir regras de negócio não declaradas.
+
+[CATALOGUE SEMÂNTICO DO PROJETO]
+Objeto: public.sicoob_contact_mapping (tabela). RLS habilitada: t; RLS forçada: f.
+Colunas (ordem, tipo e nulabilidade):
+1 id uuid NOT NULL [DEFAULT/EXPRESSION DEFINED]
+2 contact_id uuid NOT NULL
+3 sicoob_user_id text NOT NULL
+4 sicoob_vendedor_id text NOT NULL
+5 sicoob_singular_id text NOT NULL
+6 zappweb_agent_id uuid NULLABLE
+7 created_at timestamp with time zone NULLABLE [DEFAULT/EXPRESSION DEFINED]
+Constraints:
+sicoob_contact_mapping_contact_id_fkey: FOREIGN KEY (contact_id) REFERENCES contacts(id) ON DELETE CASCADE
+sicoob_contact_mapping_zappweb_agent_id_fkey: FOREIGN KEY (zappweb_agent_id) REFERENCES profiles(id)
+sicoob_contact_mapping_pkey: PRIMARY KEY (id)
+sicoob_contact_mapping_sicoob_user_id_sicoob_singular_id_key: UNIQUE (sicoob_user_id, sicoob_singular_id)
+Políticas RLS (nome, operação, papéis e modo; as expressões permanecem no catálogo):
+"Authenticated users can insert sicoob mappings" [command=INSERT; roles=authenticated; PERMISSIVE]
+"Only admins can view sicoob mappings" [command=SELECT; roles=authenticated; PERMISSIVE]
+
 | propriedade | valor |
 |---|---|
 | tipo | table |
@@ -55,7 +76,7 @@
 | tipo | PERMISSIVE |
 | roles | authenticated |
 | USING |  |
-| WITH CHECK | `is_admin_or_supervisor(auth.uid())` |
+| WITH CHECK | `is_admin_or_supervisor(( SELECT auth.uid() AS uid))` |
 
 ### `Only admins can view sicoob mappings`
 
@@ -64,7 +85,7 @@
 | comando | SELECT |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `is_admin_or_supervisor(auth.uid())` |
+| USING | `is_admin_or_supervisor(( SELECT auth.uid() AS uid))` |
 | WITH CHECK |  |
 
 

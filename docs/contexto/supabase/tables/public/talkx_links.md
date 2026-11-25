@@ -1,5 +1,32 @@
 # public.talkx_links
 
+> Descrição funcional não estava registrada no catálogo; o conteúdo abaixo documenta a estrutura observável, sem inferir regras de negócio não declaradas.
+
+[CATALOGUE SEMÂNTICO DO PROJETO]
+Objeto: public.talkx_links (tabela). RLS habilitada: t; RLS forçada: f.
+Colunas (ordem, tipo e nulabilidade):
+1 id uuid NOT NULL [DEFAULT/EXPRESSION DEFINED]
+2 campaign_id uuid NOT NULL
+3 label text NOT NULL
+4 target_url text NOT NULL
+5 slug text NOT NULL
+6 created_at timestamp with time zone NOT NULL [DEFAULT/EXPRESSION DEFINED]
+7 utm_source text NULLABLE
+8 utm_medium text NULLABLE
+9 utm_campaign text NULLABLE
+10 utm_content text NULLABLE
+11 utm_term text NULLABLE
+12 created_by uuid NULLABLE
+Constraints:
+talkx_links_label_format_check: CHECK (label ~ '^[a-z0-9][a-z0-9_-]{0,39}$'::text)
+talkx_links_target_url_check: CHECK (target_url ~ '^https://'::text)
+talkx_links_campaign_id_fkey: FOREIGN KEY (campaign_id) REFERENCES talkx_campaigns(id) ON DELETE CASCADE
+talkx_links_created_by_fkey: FOREIGN KEY (created_by) REFERENCES profiles(id) ON DELETE SET NULL
+talkx_links_pkey: PRIMARY KEY (id)
+Políticas RLS (nome, operação, papéis e modo; as expressões permanecem no catálogo):
+"Admins can view all links" [command=SELECT; roles=authenticated; PERMISSIVE]
+"Users can view links of own campaigns" [command=SELECT; roles=authenticated; PERMISSIVE]
+
 | propriedade | valor |
 |---|---|
 | tipo | table |
@@ -69,7 +96,7 @@
 | comando | SELECT |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `is_admin_or_supervisor(auth.uid())` |
+| USING | `is_admin_or_supervisor(( SELECT auth.uid() AS uid))` |
 | WITH CHECK |  |
 
 ### `Users can view links of own campaigns`
@@ -79,7 +106,7 @@
 | comando | SELECT |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `(campaign_id IN ( SELECT tc.id    FROM talkx_campaigns tc   WHERE (tc.created_by = ( SELECT p.id            FROM profiles p           WHERE (p.user_id = auth.uid())          LIMIT 1))))` |
+| USING | `(campaign_id IN ( SELECT tc.id    FROM talkx_campaigns tc   WHERE (tc.created_by = ( SELECT p.id            FROM profiles p           WHERE (p.user_id = ( SELECT auth.uid() AS uid))          LIMIT 1))))` |
 | WITH CHECK |  |
 
 

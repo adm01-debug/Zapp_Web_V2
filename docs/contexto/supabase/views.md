@@ -1,6 +1,177 @@
 # Views
 
 
+## ops._relation_dictionary_base (view)
+
+| campo | valor |
+|---|---|
+| owner | postgres |
+| security_invoker | sim |
+| opções | security_invoker=true |
+| depende de |  |
+| populada | n/a |
+| comentário | Base privada de metadados de catálogo; não contém valores de linhas da aplicação. Alimenta os dicionários separados.  [CATALOGUE SEMÂNTICO DO PROJETO] Objeto: ops._relation_dictionary_base (view). RLS habilitada: f; RLS forçada: f. Colunas (ordem, tipo e nulabilidade): 1 dictionary_scope text NULLABLE 2 schema_name name NULLABLE 3 object_name name NULLABLE 4 object_type text NULLABLE 5 object_description text NULLABLE 6 rls_enabled boolean NULLABLE 7 rls_forced boolean NULLABLE 8 rls_policy_count integer NULLABLE 9 estimated_rows bigint NULLABLE 10 ordinal_position integer NULLABLE 11 column_name name NULLABLE 12 data_type text NULLABLE 13 is_nullable boolean NULLABLE 14 identity_generation "char" NULLABLE 15 generated_kind "char" NULLABLE 16 default_or_generation_expression text NULLABLE 17 column_description text NULLABLE 18 primary_key_constraint name NULLABLE 19 primary_key_position integer NULLABLE 20 foreign_key_targets jsonb NULLABLE Constraints: (nenhuma PK/UNIQUE/FK/CHECK/EXCLUDE registrada) Políticas RLS (nome, operação, papéis e modo; as expressões permanecem no catálogo): (RLS desabilitada) |
+
+
+```sql
+WITH primary_key_columns AS (
+         SELECT con.conrelid,
+            key_col.attnum,
+            con.conname AS constraint_name,
+            key_col.ordinality::integer AS key_position
+           FROM pg_constraint con
+             CROSS JOIN LATERAL unnest(con.conkey) WITH ORDINALITY key_col(attnum, ordinality)
+          WHERE con.contype = 'p'::"char"
+        ), foreign_key_columns AS (
+         SELECT con.conrelid,
+            source_key.attnum,
+            jsonb_agg(jsonb_build_object('constraint', con.conname, 'target_schema', target_ns.nspname, 'target_table', target_rel.relname, 'target_column', target_attr.attname, 'on_update',
+                CASE con.confupdtype
+                    WHEN 'a'::"char" THEN 'NO ACTION'::text
+                    WHEN 'r'::"char" THEN 'RESTRICT'::text
+                    WHEN 'c'::"char" THEN 'CASCADE'::text
+                    WHEN 'n'::"char" THEN 'SET NULL'::text
+                    WHEN 'd'::"char" THEN 'SET DEFAULT'::text
+                    ELSE NULL::text
+                END, 'on_delete',
+                CASE con.confdeltype
+                    WHEN 'a'::"char" THEN 'NO ACTION'::text
+                    WHEN 'r'::"char" THEN 'RESTRICT'::text
+                    WHEN 'c'::"char" THEN 'CASCADE'::text
+                    WHEN 'n'::"char" THEN 'SET NULL'::text
+                    WHEN 'd'::"char" THEN 'SET DEFAULT'::text
+                    ELSE NULL::text
+                END) ORDER BY con.conname, source_key.ordinality) AS foreign_key_targets
+           FROM pg_constraint con
+             CROSS JOIN LATERAL unnest(con.conkey) WITH ORDINALITY source_key(attnum, ordinality)
+             JOIN LATERAL unnest(con.confkey) WITH ORDINALITY target_key(attnum, ordinality) ON target_key.ordinality = source_key.ordinality
+             JOIN pg_class target_rel ON target_rel.oid = con.confrelid
+             JOIN pg_namespace target_ns ON target_ns.oid = target_rel.relnamespace
+             JOIN pg_attribute target_attr ON target_attr.attrelid = target_rel.oid AND target_attr.attnum = target_key.attnum
+          WHERE con.contype = 'f'::"char"
+          GROUP BY con.conrelid, source_key.attnum
+        ), policy_counts AS (
+         SELECT pg_policy.polrelid,
+            count(*)::integer AS rls_policy_count
+           FROM pg_policy
+          GROUP BY pg_policy.polrelid
+        )
+ SELECT
+        CASE
+            WHEN n.nspname = ANY (ARRAY['public'::name, 'ops'::name]) THEN 'application'::text
+            ELSE 'supabase_managed'::text
+        END AS dictionary_scope,
+    n.nspname AS schema_name,
+    c.relname AS object_name,
+        CASE c.relkind
+            WHEN 'r'::"char" THEN 'table'::text
+            WHEN 'p'::"char" THEN 'partitioned_table'::text
+            WHEN 'v'::"char" THEN 'view'::text
+            WHEN 'm'::"char" THEN 'materialized_view'::text
+            WHEN 'f'::"char" THEN 'foreign_table'::text
+            ELSE NULL::text
+        END AS object_type,
+    obj_description(c.oid, 'pg_class'::name) AS object_description,
+    c.relrowsecurity AS rls_enabled,
+    c.relforcerowsecurity AS rls_forced,
+    COALESCE(pc.rls_policy_count, 0) AS rls_policy_count,
+        CASE
+            WHEN c.reltuples >= 0::double precision THEN c.reltuples::bigint
+            ELSE NULL::bigint
+        END AS estimated_rows,
+    a.attnum::integer AS ordinal_position,
+    a.attname AS column_name,
+    format_type(a.atttypid, a.atttypmod) AS data_type,
+    NOT a.attnotnull AS is_nullable,
+    NULLIF(a.attidentity, ''::"char") AS identity_generation,
+    NULLIF(a.attgenerated, ''::"char") AS generated_kind,
+    pg_get_expr(ad.adbin, ad.adrelid, true) AS default_or_generation_expression,
+    col_description(c.oid, a.attnum::integer) AS column_description,
+    pk.constraint_name AS primary_key_constraint,
+    pk.key_position AS primary_key_position,
+    COALESCE(fk.foreign_key_targets, '[]'::jsonb) AS foreign_key_targets
+   FROM pg_class c
+     JOIN pg_namespace n ON n.oid = c.relnamespace
+     JOIN pg_attribute a ON a.attrelid = c.oid AND a.attnum > 0 AND NOT a.attisdropped
+     LEFT JOIN pg_attrdef ad ON ad.adrelid = c.oid AND ad.adnum = a.attnum
+     LEFT JOIN primary_key_columns pk ON pk.conrelid = c.oid AND pk.attnum = a.attnum
+     LEFT JOIN foreign_key_columns fk ON fk.conrelid = c.oid AND fk.attnum = a.attnum
+     LEFT JOIN policy_counts pc ON pc.polrelid = c.oid
+  WHERE (c.relkind = ANY (ARRAY['r'::"char", 'p'::"char", 'v'::"char", 'm'::"char", 'f'::"char"])) AND ((n.nspname = ANY (ARRAY['public'::name, 'ops'::name])) OR (n.nspname = ANY (ARRAY['auth'::name, 'storage'::name, 'realtime'::name, 'cron'::name, 'net'::name, 'vault'::name, 'extensions'::name, 'graphql'::name, 'graphql_public'::name, 'pgbouncer'::name, 'supabase_migrations'::name])));
+```
+
+## ops.application_data_dictionary (view)
+
+| campo | valor |
+|---|---|
+| owner | postgres |
+| security_invoker | sim |
+| opções | security_invoker=true |
+| depende de | ops._relation_dictionary_base |
+| populada | n/a |
+| comentário | Dicionário vivo das relações e colunas dos schemas de aplicação public e ops. Inclui comentários, tipos, defaults, PK/FK, RLS e estimativas do catálogo.  [CATALOGUE SEMÂNTICO DO PROJETO] Objeto: ops.application_data_dictionary (view). RLS habilitada: f; RLS forçada: f. Colunas (ordem, tipo e nulabilidade): 1 schema_name name NULLABLE 2 object_name name NULLABLE 3 object_type text NULLABLE 4 object_description text NULLABLE 5 rls_enabled boolean NULLABLE 6 rls_forced boolean NULLABLE 7 rls_policy_count integer NULLABLE 8 estimated_rows bigint NULLABLE 9 ordinal_position integer NULLABLE 10 column_name name NULLABLE 11 data_type text NULLABLE 12 is_nullable boolean NULLABLE 13 identity_generation "char" NULLABLE 14 generated_kind "char" NULLABLE 15 default_or_generation_expression text NULLABLE 16 column_description text NULLABLE 17 primary_key_constraint name NULLABLE 18 primary_key_position integer NULLABLE 19 foreign_key_targets jsonb NULLABLE Constraints: (nenhuma PK/UNIQUE/FK/CHECK/EXCLUDE registrada) Políticas RLS (nome, operação, papéis e modo; as expressões permanecem no catálogo): (RLS desabilitada) |
+
+
+```sql
+SELECT schema_name,
+    object_name,
+    object_type,
+    object_description,
+    rls_enabled,
+    rls_forced,
+    rls_policy_count,
+    estimated_rows,
+    ordinal_position,
+    column_name,
+    data_type,
+    is_nullable,
+    identity_generation,
+    generated_kind,
+    default_or_generation_expression,
+    column_description,
+    primary_key_constraint,
+    primary_key_position,
+    foreign_key_targets
+   FROM ops._relation_dictionary_base
+  WHERE dictionary_scope = 'application'::text;
+```
+
+## ops.managed_schema_dictionary (view)
+
+| campo | valor |
+|---|---|
+| owner | postgres |
+| security_invoker | sim |
+| opções | security_invoker=true |
+| depende de | ops._relation_dictionary_base |
+| populada | n/a |
+| comentário | Dicionário vivo de metadados dos schemas gerenciados pelo Supabase (auth, storage, realtime, cron, net, vault, extensions, graphql, graphql_public, pgbouncer e supabase_migrations). Não altera objetos gerenciados.  [CATALOGUE SEMÂNTICO DO PROJETO] Objeto: ops.managed_schema_dictionary (view). RLS habilitada: f; RLS forçada: f. Colunas (ordem, tipo e nulabilidade): 1 schema_name name NULLABLE 2 object_name name NULLABLE 3 object_type text NULLABLE 4 object_description text NULLABLE 5 rls_enabled boolean NULLABLE 6 rls_forced boolean NULLABLE 7 rls_policy_count integer NULLABLE 8 estimated_rows bigint NULLABLE 9 ordinal_position integer NULLABLE 10 column_name name NULLABLE 11 data_type text NULLABLE 12 is_nullable boolean NULLABLE 13 identity_generation "char" NULLABLE 14 generated_kind "char" NULLABLE 15 default_or_generation_expression text NULLABLE 16 column_description text NULLABLE 17 primary_key_constraint name NULLABLE 18 primary_key_position integer NULLABLE 19 foreign_key_targets jsonb NULLABLE Constraints: (nenhuma PK/UNIQUE/FK/CHECK/EXCLUDE registrada) Políticas RLS (nome, operação, papéis e modo; as expressões permanecem no catálogo): (RLS desabilitada) |
+
+
+```sql
+SELECT schema_name,
+    object_name,
+    object_type,
+    object_description,
+    rls_enabled,
+    rls_forced,
+    rls_policy_count,
+    estimated_rows,
+    ordinal_position,
+    column_name,
+    data_type,
+    is_nullable,
+    identity_generation,
+    generated_kind,
+    default_or_generation_expression,
+    column_description,
+    primary_key_constraint,
+    primary_key_position,
+    foreign_key_targets
+   FROM ops._relation_dictionary_base
+  WHERE dictionary_scope = 'supabase_managed'::text;
+```
+
 ## public.catalog_send_stats (view)
 
 | campo | valor |
@@ -10,7 +181,7 @@
 | opções | security_invoker=on |
 | depende de | public.catalog_send_events |
 | populada | n/a |
-| comentário | CT-48: envios do catalogo por dia (30d), por agente e por produto, com parciais/falhas e taxas. security_invoker=on (respeita a RLS por agent_id de catalog_send_events). |
+| comentário | CT-48: envios do catalogo por dia (30d), por agente e por produto, com parciais/falhas e taxas. security_invoker=on (respeita a RLS por agent_id de catalog_send_events).  [CATALOGUE SEMÂNTICO DO PROJETO] Objeto: public.catalog_send_stats (view). RLS habilitada: f; RLS forçada: f. Colunas (ordem, tipo e nulabilidade): 1 grao text NULLABLE 2 chave text NULLABLE 3 rotulo text NULLABLE 4 total bigint NULLABLE 5 enviados bigint NULLABLE 6 parciais bigint NULLABLE 7 falhas bigint NULLABLE 8 taxa_parcial numeric NULLABLE 9 taxa_falha numeric NULLABLE Constraints: (nenhuma PK/UNIQUE/FK/CHECK/EXCLUDE registrada) Políticas RLS (nome, operação, papéis e modo; as expressões permanecem no catálogo): (RLS desabilitada) |
 
 
 ```sql
@@ -99,7 +270,7 @@ WITH base AS (
 | opções | security_invoker=true |
 | depende de | public.channel_connections |
 | populada | n/a |
-| comentário |  |
+| comentário | Descrição funcional não estava registrada no catálogo; o conteúdo abaixo documenta a estrutura observável, sem inferir regras de negócio não declaradas.  [CATALOGUE SEMÂNTICO DO PROJETO] Objeto: public.channel_connections_safe (view). RLS habilitada: f; RLS forçada: f. Colunas (ordem, tipo e nulabilidade): 1 id uuid NULLABLE 2 channel_type channel_type NULLABLE 3 name text NULLABLE 4 status text NULLABLE 5 is_active boolean NULLABLE 6 external_account_id text NULLABLE 7 external_page_id text NULLABLE 8 webhook_url text NULLABLE 9 whatsapp_connection_id uuid NULLABLE 10 created_at timestamp with time zone NULLABLE 11 updated_at timestamp with time zone NULLABLE 12 created_by uuid NULLABLE Constraints: (nenhuma PK/UNIQUE/FK/CHECK/EXCLUDE registrada) Políticas RLS (nome, operação, papéis e modo; as expressões permanecem no catálogo): (RLS desabilitada) |
 
 
 ```sql
@@ -127,7 +298,7 @@ SELECT id,
 | opções | security_invoker=true |
 | depende de | public.gmail_accounts |
 | populada | n/a |
-| comentário |  |
+| comentário | Descrição funcional não estava registrada no catálogo; o conteúdo abaixo documenta a estrutura observável, sem inferir regras de negócio não declaradas.  [CATALOGUE SEMÂNTICO DO PROJETO] Objeto: public.gmail_accounts_safe (view). RLS habilitada: f; RLS forçada: f. Colunas (ordem, tipo e nulabilidade): 1 id uuid NULLABLE 2 user_id uuid NULLABLE 3 email_address text NULLABLE 4 is_active boolean NULLABLE 5 sync_status text NULLABLE 6 last_sync_at timestamp with time zone NULLABLE 7 last_error text NULLABLE 8 token_expires_at timestamp with time zone NULLABLE 9 created_at timestamp with time zone NULLABLE 10 updated_at timestamp with time zone NULLABLE Constraints: (nenhuma PK/UNIQUE/FK/CHECK/EXCLUDE registrada) Políticas RLS (nome, operação, papéis e modo; as expressões permanecem no catálogo): (RLS desabilitada) |
 
 
 ```sql
@@ -153,7 +324,7 @@ SELECT id,
 | opções | security_invoker=true |
 | depende de | public.password_reset_requests |
 | populada | n/a |
-| comentário |  |
+| comentário | Descrição funcional não estava registrada no catálogo; o conteúdo abaixo documenta a estrutura observável, sem inferir regras de negócio não declaradas.  [CATALOGUE SEMÂNTICO DO PROJETO] Objeto: public.password_reset_requests_safe (view). RLS habilitada: f; RLS forçada: f. Colunas (ordem, tipo e nulabilidade): 1 id uuid NULLABLE 2 user_id uuid NULLABLE 3 email text NULLABLE 4 reason text NULLABLE 5 status text NULLABLE 6 reviewed_by uuid NULLABLE 7 reviewed_at timestamp with time zone NULLABLE 8 rejection_reason text NULLABLE 9 token_expires_at timestamp with time zone NULLABLE 10 ip_address text NULLABLE 11 user_agent text NULLABLE 12 created_at timestamp with time zone NULLABLE 13 updated_at timestamp with time zone NULLABLE Constraints: (nenhuma PK/UNIQUE/FK/CHECK/EXCLUDE registrada) Políticas RLS (nome, operação, papéis e modo; as expressões permanecem no catálogo): (RLS desabilitada) |
 
 
 ```sql
@@ -182,7 +353,7 @@ SELECT id,
 | opções | security_invoker=true |
 | depende de | public.profiles |
 | populada | n/a |
-| comentário |  |
+| comentário | Descrição funcional não estava registrada no catálogo; o conteúdo abaixo documenta a estrutura observável, sem inferir regras de negócio não declaradas.  [CATALOGUE SEMÂNTICO DO PROJETO] Objeto: public.profiles_public (view). RLS habilitada: f; RLS forçada: f. Colunas (ordem, tipo e nulabilidade): 1 id uuid NULLABLE 2 user_id uuid NULLABLE 3 name text NULLABLE 4 avatar_url text NULLABLE 5 is_active boolean NULLABLE 6 department text NULLABLE 7 job_title text NULLABLE Constraints: (nenhuma PK/UNIQUE/FK/CHECK/EXCLUDE registrada) Políticas RLS (nome, operação, papéis e modo; as expressões permanecem no catálogo): (RLS desabilitada) |
 
 
 ```sql
@@ -205,7 +376,7 @@ SELECT id,
 | opções | security_invoker=true |
 | depende de | public.audit_logs |
 | populada | n/a |
-| comentário | E52: consumo diario do Searchbox (sessoes) e avisos de teto (degradacoes), no fuso America/Sao_Paulo. Fonte: audit_logs, a mesma da RPC count_searchbox_sessions_this_month. |
+| comentário | E52: consumo diario do Searchbox (sessoes) e avisos de teto (degradacoes), no fuso America/Sao_Paulo. Fonte: audit_logs, a mesma da RPC count_searchbox_sessions_this_month.  [CATALOGUE SEMÂNTICO DO PROJETO] Objeto: public.searchbox_usage_daily (view). RLS habilitada: f; RLS forçada: f. Colunas (ordem, tipo e nulabilidade): 1 dia date NULLABLE 2 sessoes integer NULLABLE 3 degradacoes integer NULLABLE 4 ultimo_evento_em timestamp with time zone NULLABLE Constraints: (nenhuma PK/UNIQUE/FK/CHECK/EXCLUDE registrada) Políticas RLS (nome, operação, papéis e modo; as expressões permanecem no catálogo): (RLS desabilitada) |
 
 
 ```sql
@@ -228,7 +399,7 @@ SELECT (created_at AT TIME ZONE 'America/Sao_Paulo'::text)::date AS dia,
 | opções | security_invoker=true |
 | depende de | public.talkx_campaigns |
 | populada | n/a |
-| comentário |  |
+| comentário | Descrição funcional não estava registrada no catálogo; o conteúdo abaixo documenta a estrutura observável, sem inferir regras de negócio não declaradas.  [CATALOGUE SEMÂNTICO DO PROJETO] Objeto: public.talkx_campaign_metrics (view). RLS habilitada: f; RLS forçada: f. Colunas (ordem, tipo e nulabilidade): 1 campaign_id uuid NULLABLE 2 segment_id uuid NULLABLE 3 template_id uuid NULLABLE 4 status text NULLABLE 5 total_recipients integer NULLABLE 6 sent_count integer NULLABLE 7 delivered_count integer NULLABLE 8 replied_count integer NULLABLE 9 outcome_unknown_count integer NULLABLE 10 delivery_rate_pct numeric NULLABLE 11 reply_rate_pct numeric NULLABLE 12 duration_secs integer NULLABLE 13 started_at timestamp with time zone NULLABLE 14 completed_at timestamp with time zone NULLABLE 15 created_at timestamp with time zone NULLABLE 16 id uuid NULLABLE 17 campaign_name text NULLABLE Constraints: (nenhuma PK/UNIQUE/FK/CHECK/EXCLUDE registrada) Políticas RLS (nome, operação, papéis e modo; as expressões permanecem no catálogo): (RLS desabilitada) |
 
 
 ```sql
@@ -270,7 +441,7 @@ SELECT id AS campaign_id,
 | opções | security_invoker=true |
 | depende de | public.talkx_blacklist |
 | populada | n/a |
-| comentário | Talk X (X029/X070): opt-outs por campanha (reason_code opt_out). security_invoker=on: a RLS de talkx_blacklist de quem consulta continua valendo. |
+| comentário | Talk X (X029/X070): opt-outs por campanha (reason_code opt_out). security_invoker=on: a RLS de talkx_blacklist de quem consulta continua valendo.  [CATALOGUE SEMÂNTICO DO PROJETO] Objeto: public.talkx_campaign_optouts (view). RLS habilitada: f; RLS forçada: f. Colunas (ordem, tipo e nulabilidade): 1 campaign_id uuid NULLABLE 2 optout_count bigint NULLABLE 3 auto_optout_count bigint NULLABLE 4 last_optout_at timestamp with time zone NULLABLE Constraints: (nenhuma PK/UNIQUE/FK/CHECK/EXCLUDE registrada) Políticas RLS (nome, operação, papéis e modo; as expressões permanecem no catálogo): (RLS desabilitada) |
 
 
 ```sql
@@ -292,7 +463,7 @@ SELECT campaign_id,
 | opções | security_invoker=true |
 | depende de | public.talkx_campaigns, public.talkx_recipients |
 | populada | n/a |
-| comentário | X033 + X126: saude do motor Talk X (security_invoker). Sinais: stalled_campaign (sending sem envio novo >15min com janela aberta), stale_lease (destinatario sending com lease vencido), outcome_unknown_24h e failure_rate_15m (ambos por status_changed_at: so a troca REAL de status conta, nunca o expurgo de PII) e cron_run (ultimas 60 execucoes do cron do Talk X com status/return_message). |
+| comentário | X033 + X126: saude do motor Talk X (security_invoker). Sinais: stalled_campaign (sending sem envio novo >15min com janela aberta), stale_lease (destinatario sending com lease vencido), outcome_unknown_24h e failure_rate_15m (ambos por status_changed_at: so a troca REAL de status conta, nunca o expurgo de PII) e cron_run (ultimas 60 execucoes do cron do Talk X com status/return_message).  [CATALOGUE SEMÂNTICO DO PROJETO] Objeto: public.talkx_engine_health (view). RLS habilitada: f; RLS forçada: f. Colunas (ordem, tipo e nulabilidade): 1 kind text NULLABLE 2 campaign_id uuid NULLABLE 3 recipient_id uuid NULLABLE 4 status text NULLABLE 5 return_message text NULLABLE 6 metric_count bigint NULLABLE 7 metric_rate numeric NULLABLE 8 detail jsonb NULLABLE 9 observed_at timestamp with time zone NULLABLE Constraints: (nenhuma PK/UNIQUE/FK/CHECK/EXCLUDE registrada) Políticas RLS (nome, operação, papéis e modo; as expressões permanecem no catálogo): (RLS desabilitada) |
 
 
 ```sql
@@ -376,7 +547,7 @@ UNION ALL
 | opções | security_invoker=true |
 | depende de | public.team_conversation_members, public.team_message_receipts, public.team_messages |
 | populada | n/a |
-| comentário |  |
+| comentário | Descrição funcional não estava registrada no catálogo; o conteúdo abaixo documenta a estrutura observável, sem inferir regras de negócio não declaradas.  [CATALOGUE SEMÂNTICO DO PROJETO] Objeto: public.team_message_read_state (view). RLS habilitada: f; RLS forçada: f. Colunas (ordem, tipo e nulabilidade): 1 message_id uuid NULLABLE 2 conversation_id uuid NULLABLE 3 member_count bigint NULLABLE 4 read_count bigint NULLABLE 5 all_read boolean NULLABLE Constraints: (nenhuma PK/UNIQUE/FK/CHECK/EXCLUDE registrada) Políticas RLS (nome, operação, papéis e modo; as expressões permanecem no catálogo): (RLS desabilitada) |
 
 
 ```sql
@@ -408,7 +579,7 @@ SELECT m.id AS message_id,
 | opções | security_invoker=true |
 | depende de | public.whatsapp_connections |
 | populada | n/a |
-| comentário |  |
+| comentário | Descrição funcional não estava registrada no catálogo; o conteúdo abaixo documenta a estrutura observável, sem inferir regras de negócio não declaradas.  [CATALOGUE SEMÂNTICO DO PROJETO] Objeto: public.whatsapp_connections_agent (view). RLS habilitada: f; RLS forçada: f. Colunas (ordem, tipo e nulabilidade): 1 id uuid NULLABLE 2 name text NULLABLE 3 status text NULLABLE 4 phone_number text NULLABLE 5 is_default boolean NULLABLE Constraints: (nenhuma PK/UNIQUE/FK/CHECK/EXCLUDE registrada) Políticas RLS (nome, operação, papéis e modo; as expressões permanecem no catálogo): (RLS desabilitada) |
 
 
 ```sql
@@ -429,7 +600,7 @@ SELECT id,
 | opções | security_invoker=true |
 | depende de | public.whatsapp_connections |
 | populada | n/a |
-| comentário |  |
+| comentário | Descrição funcional não estava registrada no catálogo; o conteúdo abaixo documenta a estrutura observável, sem inferir regras de negócio não declaradas.  [CATALOGUE SEMÂNTICO DO PROJETO] Objeto: public.whatsapp_connections_public (view). RLS habilitada: f; RLS forçada: f. Colunas (ordem, tipo e nulabilidade): 1 id uuid NULLABLE 2 name text NULLABLE 3 status text NULLABLE 4 is_default boolean NULLABLE Constraints: (nenhuma PK/UNIQUE/FK/CHECK/EXCLUDE registrada) Políticas RLS (nome, operação, papéis e modo; as expressões permanecem no catálogo): (RLS desabilitada) |
 
 
 ```sql
@@ -449,7 +620,7 @@ SELECT id,
 | opções | security_invoker=true |
 | depende de | public.whatsapp_connections |
 | populada | n/a |
-| comentário |  |
+| comentário | Descrição funcional não estava registrada no catálogo; o conteúdo abaixo documenta a estrutura observável, sem inferir regras de negócio não declaradas.  [CATALOGUE SEMÂNTICO DO PROJETO] Objeto: public.whatsapp_connections_safe (view). RLS habilitada: f; RLS forçada: f. Colunas (ordem, tipo e nulabilidade): 1 id uuid NULLABLE 2 name text NULLABLE 3 phone_number text NULLABLE 4 status text NULLABLE 5 is_default boolean NULLABLE 6 qr_code text NULLABLE 7 instance_id text NULLABLE 8 farewell_message text NULLABLE 9 farewell_enabled boolean NULLABLE 10 battery_level integer NULLABLE 11 is_plugged boolean NULLABLE 12 retry_count integer NULLABLE 13 max_retries integer NULLABLE 14 last_health_check timestamp with time zone NULLABLE 15 health_status text NULLABLE 16 health_response_ms integer NULLABLE 17 created_by uuid NULLABLE 18 created_at timestamp with time zone NULLABLE 19 updated_at timestamp with time zone NULLABLE 20 health_reason text NULLABLE Constraints: (nenhuma PK/UNIQUE/FK/CHECK/EXCLUDE registrada) Políticas RLS (nome, operação, papéis e modo; as expressões permanecem no catálogo): (RLS desabilitada) |
 
 
 ```sql

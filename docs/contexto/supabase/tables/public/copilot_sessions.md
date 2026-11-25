@@ -1,5 +1,51 @@
 # public.copilot_sessions
 
+> Descrição funcional não estava registrada no catálogo; o conteúdo abaixo documenta a estrutura observável, sem inferir regras de negócio não declaradas.
+
+[CATALOGUE SEMÂNTICO DO PROJETO]
+Objeto: public.copilot_sessions (tabela). RLS habilitada: t; RLS forçada: f.
+Colunas (ordem, tipo e nulabilidade):
+1 id uuid NOT NULL [DEFAULT/EXPRESSION DEFINED]
+2 conversation_id uuid NOT NULL
+3 contact_id uuid NOT NULL
+4 profile_id uuid NOT NULL
+5 brinde_budget text NULLABLE
+6 brinde_responsible text NULLABLE
+7 brinde_intention text NULLABLE
+8 brinde_quantity integer NULLABLE
+9 brinde_deadline date NULLABLE
+10 brinde_delivery text NULLABLE
+11 brinde_meter integer NOT NULL [DEFAULT/EXPRESSION DEFINED]
+12 sale_stage text NOT NULL [DEFAULT/EXPRESSION DEFINED]
+13 temperature integer NOT NULL [DEFAULT/EXPRESSION DEFINED]
+14 state_version integer NOT NULL [DEFAULT/EXPRESSION DEFINED]
+15 started_at timestamp with time zone NOT NULL [DEFAULT/EXPRESSION DEFINED]
+16 last_tick_at timestamp with time zone NULLABLE
+17 closed_at timestamp with time zone NULLABLE
+18 created_at timestamp with time zone NOT NULL [DEFAULT/EXPRESSION DEFINED]
+19 updated_at timestamp with time zone NOT NULL [DEFAULT/EXPRESSION DEFINED]
+20 brinde_evidence jsonb NOT NULL [DEFAULT/EXPRESSION DEFINED] — CV-031 — id da mensagem que originou cada letra B·R·I·N·D·E.
+21 comm_style text NULLABLE — CV-037 — etiquetas de estilo de comunicação do cliente.
+22 decision_role text NULLABLE — CV-038 — papel do interlocutor na decisão (buyer/approver/intermediary/…).
+23 occasion text NULLABLE — CV-035/036 — ocasião comercial detectada (natal, sipat, outubro_rosa, …).
+24 stakeholders jsonb NOT NULL [DEFAULT/EXPRESSION DEFINED] — CV-039 — pessoas citadas na conversa que participam da decisão.
+25 brinde_state jsonb NOT NULL [DEFAULT/EXPRESSION DEFINED] — CV-026 -- estado acumulado B.R.I.N.D.E da sessao; atualizado atomicamente por merge_brinde_state().
+26 last_processed_message_at timestamp with time zone NULLABLE
+27 intent text NULLABLE
+28 sentiment text NULLABLE
+29 last_contact_message_at timestamp with time zone NULLABLE
+Constraints:
+copilot_sessions_brinde_meter_check: CHECK (brinde_meter >= 0 AND brinde_meter <= 6)
+copilot_sessions_decision_role_check: CHECK (decision_role = ANY (ARRAY['buyer'::text, 'user'::text, 'approver'::text, 'intermediary'::text, 'unknown'::text]))
+copilot_sessions_sale_stage_check: CHECK (sale_stage = ANY (ARRAY['novo_contato'::text, 'qualificando'::text, 'apresentando'::text, 'negociando'::text, 'fechando'::text, 'pos_venda'::text, 'perdido'::text]))
+copilot_sessions_temperature_check: CHECK (temperature >= 0 AND temperature <= 100)
+copilot_sessions_profile_id_fkey: FOREIGN KEY (profile_id) REFERENCES auth.users(id)
+copilot_sessions_pkey: PRIMARY KEY (id)
+copilot_sessions_conversation_id_key: UNIQUE (conversation_id)
+Políticas RLS (nome, operação, papéis e modo; as expressões permanecem no catálogo):
+service_role_sessions [command=ALL; roles=service_role; PERMISSIVE]
+vendor_own_sessions [command=ALL; roles=PUBLIC; PERMISSIVE]
+
 | propriedade | valor |
 |---|---|
 | tipo | table |
@@ -96,7 +142,7 @@
 | comando | ALL |
 | tipo | PERMISSIVE |
 | roles | public |
-| USING | `(profile_id = auth.uid())` |
+| USING | `(profile_id = ( SELECT auth.uid() AS uid))` |
 | WITH CHECK |  |
 
 

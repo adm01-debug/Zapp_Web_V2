@@ -7,48 +7,48 @@
    "src/pages (18)"
   ],
   "componentes": [
-   "src/components (890)",
-   "analise-prs/resgate-261118-lote3 (129)",
-   "src/pages (26)"
+   "src/components (900)",
+   "src/pages (26)",
+   "src/features (2)"
   ],
   "hooks": [
-   "src/hooks (422)",
-   "analise-prs/resgate-261118-lote3 (92)",
-   "src/components (74)"
+   "src/hooks (430)",
+   "src/components (74)",
+   "src/contexts (2)"
   ],
   "servicos_logica": [
-   "src/lib (153)",
+   "src/lib (156)",
    "src/services (20)",
    "src/utils (8)"
   ],
   "testes": [
-   "co-localizado (__tests__) (2353)",
-   "outro (348)",
-   "co-localizado (*.test) (231)"
+   "co-localizado (__tests__) (2096)",
+   "outro (259)",
+   "co-localizado (*.test) (202)"
   ],
   "edge_functions": "supabase/functions",
   "migrations": "supabase/migrations",
   "scripts": [
-   "scripts/db-audit (303)",
-   "scripts/ci (44)",
+   "scripts/db-audit (304)",
+   "scripts/ci (43)",
    "scripts/e2e-isolated (41)"
   ],
   "docs": [
-   "docs (33)",
-   "(raiz) (12)",
+   "docs (34)",
+   "(raiz) (15)",
    ".github (1)"
   ]
  },
  "nomenclatura": {
-  "componentes": "PascalCase (89%)",
+  "componentes": "PascalCase (90%)",
   "hooks": "use + PascalCase",
   "servicos": "camelCase (73%)",
   "edge_functions": "kebab-case (96%)",
   "tabelas": "snake_case (91%)"
  },
- "barrels_index": 85,
+ "barrels_index": 72,
  "extensao_componentes": [
-  ".tsx (1054)"
+  ".tsx (935)"
  ],
  "alias_imports": {
   "analise-prs/resgate-261115/auditoria/bruto/diarios-sessao/": {
@@ -64,13 +64,13 @@
   }
  },
  "commits": {
-  "convencao": "livre",
+  "convencao": "conventional commits (observado)",
   "exemplos": [
-   "O types-sync passa a commitar o DB-INVENTORY que ele regenera (#3267)",
-   "DB-INVENTORY ganha gerador, e o types-sync para de congelar a cada objeto novo (#3266)",
-   "Registra a auditoria de liquidação de branches, PEND=0 (#3264)",
-   "Teste A/B de campanha: termina o X065, que estava parado na metade (#3262)",
-   "Migration do índice do agendador substituída por uma que tolera falta de permissão (#3265)"
+   "chore: aposenta acervo de resgate 261118 lote3 ja triado (1.029 arquivos, zero perdas) (#3371)",
+   "feat(automacao): recupera harness local da PR #2926 sobre o main atual (#3366)",
+   "feat(ci): restaura a fila de merge serial (auto-update-pr-branch) (#3368)",
+   "feat(manutencao): porta o harness de manutencao completo da PR #2926 (#3370)",
+   "fix(ci): exige Replay local das migrations na main (#3367)"
   ]
  },
  "pr_template": ".github/PULL_REQUEST_TEMPLATE.md",

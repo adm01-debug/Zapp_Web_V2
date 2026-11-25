@@ -2,6 +2,24 @@
 
 > [RLS-sem-policy: intencional] Fila de purge de storage do TalkX. Gerenciada pela edge function talkx-storage-purge (service_role).
 
+[CATALOGUE SEMÂNTICO DO PROJETO]
+Objeto: public.talkx_storage_purge_queue (tabela). RLS habilitada: t; RLS forçada: f.
+Colunas (ordem, tipo e nulabilidade):
+1 id uuid NOT NULL [DEFAULT/EXPRESSION DEFINED]
+2 bucket_id text NOT NULL
+3 object_name text NOT NULL
+4 object_id uuid NULLABLE
+5 reason text NOT NULL [DEFAULT/EXPRESSION DEFINED]
+6 enqueued_at timestamp with time zone NOT NULL [DEFAULT/EXPRESSION DEFINED]
+7 attempts integer NOT NULL [DEFAULT/EXPRESSION DEFINED]
+8 last_error text NULLABLE
+9 processed_at timestamp with time zone NULLABLE
+Constraints:
+talkx_storage_purge_queue_attempts_check: CHECK (attempts >= 0)
+talkx_storage_purge_queue_pkey: PRIMARY KEY (id)
+Políticas RLS (nome, operação, papéis e modo; as expressões permanecem no catálogo):
+(RLS habilitada sem política; verificar se o acesso restrito é intencional)
+
 | propriedade | valor |
 |---|---|
 | tipo | table |

@@ -1,5 +1,22 @@
 # public.copilot_conversation_scores
 
+> Descrição funcional não estava registrada no catálogo; o conteúdo abaixo documenta a estrutura observável, sem inferir regras de negócio não declaradas.
+
+[CATALOGUE SEMÂNTICO DO PROJETO]
+Objeto: public.copilot_conversation_scores (tabela). RLS habilitada: t; RLS forçada: f.
+Colunas (ordem, tipo e nulabilidade):
+1 conversation_id uuid NOT NULL
+2 score integer NOT NULL
+3 scored_by uuid NOT NULL
+4 updated_at timestamp with time zone NOT NULL [DEFAULT/EXPRESSION DEFINED]
+Constraints:
+copilot_conversation_scores_score_check: CHECK (score >= 1 AND score <= 5)
+copilot_conversation_scores_pkey: PRIMARY KEY (conversation_id)
+Políticas RLS (nome, operação, papéis e modo; as expressões permanecem no catálogo):
+copilot_conversation_scores_insert [command=INSERT; roles=authenticated; PERMISSIVE]
+copilot_conversation_scores_select [command=SELECT; roles=authenticated; PERMISSIVE]
+copilot_conversation_scores_update [command=UPDATE; roles=authenticated; PERMISSIVE]
+
 | propriedade | valor |
 |---|---|
 | tipo | table |
@@ -47,7 +64,7 @@
 | tipo | PERMISSIVE |
 | roles | authenticated |
 | USING |  |
-| WITH CHECK | `((scored_by = auth.uid()) AND is_admin_or_supervisor(auth.uid()))` |
+| WITH CHECK | `((scored_by = ( SELECT auth.uid() AS uid)) AND is_admin_or_supervisor(( SELECT auth.uid() AS uid)))` |
 
 ### `copilot_conversation_scores_select`
 
@@ -56,7 +73,7 @@
 | comando | SELECT |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `((scored_by = auth.uid()) OR (conversation_id IN ( SELECT copilot_sessions.conversation_id    FROM copilot_sessions   WHERE (copilot_sessions.profile_id = auth.uid()))) OR is_admin_or_supervisor(auth.uid()))` |
+| USING | `((scored_by = ( SELECT auth.uid() AS uid)) OR (conversation_id IN ( SELECT copilot_sessions.conversation_id    FROM copilot_sessions   WHERE (copilot_sessions.profile_id = ( SELECT auth.uid() AS uid)))) OR is_admin_or_supervisor(( SELECT auth.uid() AS uid)))` |
 | WITH CHECK |  |
 
 ### `copilot_conversation_scores_update`
@@ -66,8 +83,8 @@
 | comando | UPDATE |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `is_admin_or_supervisor(auth.uid())` |
-| WITH CHECK | `((scored_by = auth.uid()) AND is_admin_or_supervisor(auth.uid()))` |
+| USING | `is_admin_or_supervisor(( SELECT auth.uid() AS uid))` |
+| WITH CHECK | `((scored_by = ( SELECT auth.uid() AS uid)) AND is_admin_or_supervisor(( SELECT auth.uid() AS uid)))` |
 
 
 ## Triggers

@@ -1,5 +1,29 @@
 # public.message_templates
 
+> Descrição funcional não estava registrada no catálogo; o conteúdo abaixo documenta a estrutura observável, sem inferir regras de negócio não declaradas.
+
+[CATALOGUE SEMÂNTICO DO PROJETO]
+Objeto: public.message_templates (tabela). RLS habilitada: t; RLS forçada: f.
+Colunas (ordem, tipo e nulabilidade):
+1 id uuid NOT NULL [DEFAULT/EXPRESSION DEFINED]
+2 user_id uuid NOT NULL
+3 title text NOT NULL
+4 content text NOT NULL
+5 shortcut text NULLABLE
+6 category text NULLABLE [DEFAULT/EXPRESSION DEFINED]
+7 is_global boolean NULLABLE [DEFAULT/EXPRESSION DEFINED]
+8 use_count integer NULLABLE [DEFAULT/EXPRESSION DEFINED]
+9 created_at timestamp with time zone NOT NULL [DEFAULT/EXPRESSION DEFINED]
+10 updated_at timestamp with time zone NOT NULL [DEFAULT/EXPRESSION DEFINED]
+Constraints:
+message_templates_user_id_fkey: FOREIGN KEY (user_id) REFERENCES auth.users(id) ON DELETE CASCADE
+message_templates_pkey: PRIMARY KEY (id)
+Políticas RLS (nome, operação, papéis e modo; as expressões permanecem no catálogo):
+"Users can create their own templates" [command=INSERT; roles=authenticated; PERMISSIVE]
+"Users can delete their own templates" [command=DELETE; roles=authenticated; PERMISSIVE]
+"Users can update their own templates" [command=UPDATE; roles=authenticated; PERMISSIVE]
+"Users can view their templates and global ones" [command=SELECT; roles=authenticated; PERMISSIVE]
+
 | propriedade | valor |
 |---|---|
 | tipo | table |
@@ -54,7 +78,7 @@
 | tipo | PERMISSIVE |
 | roles | authenticated |
 | USING |  |
-| WITH CHECK | `(user_id = auth.uid())` |
+| WITH CHECK | `(user_id = ( SELECT ( SELECT auth.uid() AS uid) AS uid))` |
 
 ### `Users can delete their own templates`
 
@@ -63,7 +87,7 @@
 | comando | DELETE |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `(user_id = auth.uid())` |
+| USING | `(user_id = ( SELECT ( SELECT auth.uid() AS uid) AS uid))` |
 | WITH CHECK |  |
 
 ### `Users can update their own templates`
@@ -73,8 +97,8 @@
 | comando | UPDATE |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `(user_id = auth.uid())` |
-| WITH CHECK | `(user_id = auth.uid())` |
+| USING | `(user_id = ( SELECT ( SELECT auth.uid() AS uid) AS uid))` |
+| WITH CHECK | `(user_id = ( SELECT ( SELECT auth.uid() AS uid) AS uid))` |
 
 ### `Users can view their templates and global ones`
 
@@ -83,7 +107,7 @@
 | comando | SELECT |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `((user_id = auth.uid()) OR (is_global = true))` |
+| USING | `((user_id = ( SELECT ( SELECT auth.uid() AS uid) AS uid)) OR (is_global = true))` |
 | WITH CHECK |  |
 
 

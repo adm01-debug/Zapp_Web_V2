@@ -1,5 +1,46 @@
 # public.conversation_analyses
 
+> Descrição funcional não estava registrada no catálogo; o conteúdo abaixo documenta a estrutura observável, sem inferir regras de negócio não declaradas.
+
+[CATALOGUE SEMÂNTICO DO PROJETO]
+Objeto: public.conversation_analyses (tabela). RLS habilitada: t; RLS forçada: f.
+Colunas (ordem, tipo e nulabilidade):
+1 id uuid NOT NULL [DEFAULT/EXPRESSION DEFINED]
+2 contact_id uuid NOT NULL
+3 analyzed_by uuid NULLABLE
+4 summary text NOT NULL
+5 status text NOT NULL [DEFAULT/EXPRESSION DEFINED]
+6 key_points text[] NULLABLE [DEFAULT/EXPRESSION DEFINED]
+7 next_steps text[] NULLABLE [DEFAULT/EXPRESSION DEFINED]
+8 sentiment text NULLABLE
+9 sentiment_score integer NULLABLE
+10 topics text[] NULLABLE [DEFAULT/EXPRESSION DEFINED]
+11 urgency text NULLABLE
+12 customer_satisfaction integer NULLABLE
+13 message_count integer NULLABLE [DEFAULT/EXPRESSION DEFINED]
+14 created_at timestamp with time zone NOT NULL [DEFAULT/EXPRESSION DEFINED]
+15 department text NULLABLE [DEFAULT/EXPRESSION DEFINED]
+16 relationship_type text NULLABLE
+17 agent_performance jsonb NULLABLE — Desempenho estimado pelo modelo (empathy/clarity/efficiency/knowledge 1-10). Antes existia só na resposta viva e sumia ao recarregar.
+18 churn_risk text NULLABLE
+19 sales_opportunity text NULLABLE
+20 analysis_version integer NOT NULL [DEFAULT/EXPRESSION DEFINED] — Versão do contrato de saída usado na análise (IA-025).
+21 period_days integer NULLABLE
+22 coverage jsonb NULLABLE — Evidência/cobertura da análise (quantas mensagens, recorte de período, valores recusados). Distingue medido de estimado.
+23 model text NULLABLE
+24 analyzed_at timestamp with time zone NOT NULL [DEFAULT/EXPRESSION DEFINED]
+25 request_key text NULLABLE — IA-047: chave idempotente do pedido de análise (ux_conversation_analyses_contact_request_key: contact_id+request_key único, parcial).
+Constraints:
+conversation_analyses_churn_risk_canonical: CHECK (ai_is_canonical_churn_risk(churn_risk))
+conversation_analyses_sentiment_canonical: CHECK (ai_is_canonical_sentiment(sentiment))
+conversation_analyses_urgency_canonical: CHECK (ai_is_canonical_urgency(urgency))
+conversation_analyses_analyzed_by_fkey: FOREIGN KEY (analyzed_by) REFERENCES profiles(id)
+conversation_analyses_contact_id_fkey: FOREIGN KEY (contact_id) REFERENCES contacts(id) ON DELETE CASCADE
+conversation_analyses_pkey: PRIMARY KEY (id)
+Políticas RLS (nome, operação, papéis e modo; as expressões permanecem no catálogo):
+"Authenticated users can view analyses" [command=SELECT; roles=authenticated; PERMISSIVE]
+"Users can insert own analyses" [command=INSERT; roles=authenticated; PERMISSIVE]
+
 | propriedade | valor |
 |---|---|
 | tipo | table |
@@ -84,7 +125,7 @@
 | comando | SELECT |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `is_contact_visible_to_user(contact_id, auth.uid())` |
+| USING | `is_contact_visible_to_user(contact_id, ( SELECT auth.uid() AS uid))` |
 | WITH CHECK |  |
 
 ### `Users can insert own analyses`
@@ -95,7 +136,7 @@
 | tipo | PERMISSIVE |
 | roles | authenticated |
 | USING |  |
-| WITH CHECK | `((analyzed_by = get_profile_id_for_user(auth.uid())) AND is_contact_visible_to_user(contact_id, auth.uid()))` |
+| WITH CHECK | `((analyzed_by = get_profile_id_for_user(( SELECT auth.uid() AS uid))) AND is_contact_visible_to_user(contact_id, ( SELECT auth.uid() AS uid)))` |
 
 
 ## Triggers

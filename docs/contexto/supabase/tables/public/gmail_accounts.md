@@ -1,5 +1,36 @@
 # public.gmail_accounts
 
+> Descrição funcional não estava registrada no catálogo; o conteúdo abaixo documenta a estrutura observável, sem inferir regras de negócio não declaradas.
+
+[CATALOGUE SEMÂNTICO DO PROJETO]
+Objeto: public.gmail_accounts (tabela). RLS habilitada: t; RLS forçada: f.
+Colunas (ordem, tipo e nulabilidade):
+1 id uuid NOT NULL [DEFAULT/EXPRESSION DEFINED]
+2 user_id uuid NOT NULL
+3 email_address text NOT NULL
+4 is_active boolean NOT NULL [DEFAULT/EXPRESSION DEFINED]
+5 sync_status text NOT NULL [DEFAULT/EXPRESSION DEFINED]
+6 last_sync_at timestamp with time zone NULLABLE
+7 last_error text NULLABLE
+10 token_expires_at timestamp with time zone NULLABLE
+11 created_at timestamp with time zone NOT NULL [DEFAULT/EXPRESSION DEFINED]
+12 updated_at timestamp with time zone NOT NULL [DEFAULT/EXPRESSION DEFINED]
+13 access_token_encrypted bytea NULLABLE
+14 refresh_token_encrypted bytea NULLABLE
+15 history_id text NULLABLE
+16 watch_expiration timestamp with time zone NULLABLE
+17 error_count integer NOT NULL [DEFAULT/EXPRESSION DEFINED] — Falhas seguidas de sincronizacao (espera crescente no gmail-cron-sync)
+18 next_attempt_at timestamp with time zone NULLABLE — Quando a conta pode ser tentada de novo pelo cron (NULL = ja pode)
+Constraints:
+gmail_accounts_user_id_fkey: FOREIGN KEY (user_id) REFERENCES auth.users(id) ON DELETE RESTRICT
+gmail_accounts_pkey: PRIMARY KEY (id)
+gmail_accounts_email_address_key: UNIQUE (email_address)
+Políticas RLS (nome, operação, papéis e modo; as expressões permanecem no catálogo):
+"Block authenticated gmail deletes" [command=DELETE; roles=authenticated; RESTRICTIVE]
+"Block authenticated gmail inserts" [command=INSERT; roles=authenticated; RESTRICTIVE]
+"Block authenticated gmail updates" [command=UPDATE; roles=authenticated; RESTRICTIVE]
+"Users can view their own gmail accounts" [command=SELECT; roles=authenticated; PERMISSIVE]
+
 | propriedade | valor |
 |---|---|
 | tipo | table |
@@ -101,7 +132,7 @@
 | comando | SELECT |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `(user_id = auth.uid())` |
+| USING | `(user_id = ( SELECT auth.uid() AS uid))` |
 | WITH CHECK |  |
 
 

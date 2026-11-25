@@ -1,6 +1,6 @@
 # 07 · REGRAS DE NEGÓCIO
 
-> Gerado automaticamente por AI Context Sync v1.3.2 · commit `35d701970e` · branch `main` · 2026-11-18 21:56 UTC
+> Gerado automaticamente por AI Context Sync v1.3.2 · commit `5191812994` · branch `main` · 2026-11-25 10:52 UTC
 > Não edite à mão — regras humanas vão em `manual/`.
 
 ## A. Regras escritas por humanos (`manual/` — prioridade máxima, nunca sobrescrito)
@@ -423,7 +423,7 @@ Demais dúvidas: nenhuma (entrevista concluída em 2026-11-03). Novas dúvidas: 
 | `email_attachments` | service_role inserts email attachments | INSERT | service_role | permissive |  | `true` |
 | `permissions` | Admins can manage permissions | ALL | authenticated | permissive | `is_admin(auth.uid())` | `is_admin(auth.uid())` |
 | `role_permissions` | Admins can manage role permissions | ALL | authenticated | permissive | `is_admin(auth.uid())` | `is_admin(auth.uid())` |
-| … +283 linhas — lista completa em `context.json` | | | | | | |
+| … +287 linhas — lista completa em `context.json` | | | | | | |
 
 ## C. Restrições de dados (obrigatório / único / default / CHECK / FK / calculada)
 
@@ -484,9 +484,50 @@ Demais dúvidas: nenhuma (entrevista concluída em 2026-11-03). Novas dúvidas: 
 | `copilot_retention_aggregates` | `created_at` | default now() |
 | `copilot_retention_aggregates` | `updated_at` | default now() |
 | `copilot_retention_aggregates` | `(tabela)` | UNIQUE (profile_id, agg_date) |
-| `ai_conversation_tags` | `id` | PK; default gen_random_uuid() |
-| `ai_conversation_tags` | `contact_id` | obrigatório; FK → contacts.id |
-| `ai_conversation_tags` | `created_at` | default now() |
+| `profiles` | `id` | PK; default gen_random_uuid() |
+| `profiles` | `user_id` | obrigatório; único; FK → users.id ON DELETE CASCADE |
+| `profiles` | `name` | obrigatório |
+| `profiles` | `role` | default 'agent' |
+| `profiles` | `permissions` | default '{}'::jsonb |
+| `profiles` | `access_level` | default 'active' |
+| `profiles` | `is_active` | default true |
+| `profiles` | `can_download` | obrigatório |
+| `profiles` | `created_at` | obrigatório |
+| `profiles` | `updated_at` | obrigatório |
+| `whatsapp_connections` | `id` | PK; default gen_random_uuid() |
+| `whatsapp_connections` | `auto_reconnect_enabled` | obrigatório |
+| `whatsapp_connections` | `capabilities` | obrigatório |
+| `whatsapp_connections` | `created_at` | obrigatório |
+| `whatsapp_connections` | `name` | obrigatório |
+| `whatsapp_connections` | `phone_number` | obrigatório |
+| `whatsapp_connections` | `reconnect_interval_seconds` | obrigatório |
+| `whatsapp_connections` | `reconnect_max_attempts` | obrigatório |
+| `whatsapp_connections` | `updated_at` | obrigatório |
+| `contacts` | `id` | PK; default gen_random_uuid() |
+| `contacts` | `conversation_status` | obrigatório |
+| `contacts` | `created_at` | obrigatório |
+| `contacts` | `is_lid_legacy` | obrigatório |
+| `contacts` | `name` | obrigatório |
+| `contacts` | `phone` | obrigatório |
+| `contacts` | `updated_at` | obrigatório |
+| `client_wallet_rules` | `id` | PK; default gen_random_uuid() |
+| `client_wallet_rules` | `name` | obrigatório |
+| `client_wallet_rules` | `agent_id` | obrigatório; FK → profiles.id ON DELETE CASCADE |
+| `client_wallet_rules` | `whatsapp_connection_id` | FK → whatsapp_connections.id ON DELETE CASCADE |
+| `client_wallet_rules` | `priority` | default 0 |
+| `client_wallet_rules` | `is_active` | default true |
+| `client_wallet_rules` | `created_at` | default now() |
+| `user_roles` | `id` | PK; default gen_random_uuid() |
+| `user_roles` | `user_id` | obrigatório |
+| `user_roles` | `role` | obrigatório |
+| `user_roles` | `created_at` | obrigatório |
+| `user_roles` | `(tabela)` | UNIQUE (user_id, role) |
+| `audit_logs` | `id` | PK; default gen_random_uuid() |
+| `audit_logs` | `user_id` | FK → users.id ON DELETE SET NULL |
+| `audit_logs` | `action` | obrigatório |
+| `audit_logs` | `details` | default '{}' |
+| `audit_logs` | `created_at` | default now() |
+| `audit_logs` | `(tabela)` | constraint audit_logs_action_not_empty CHECK (length(btrim(action)) > 0) |
 | `calls` | `id` | PK; default gen_random_uuid() |
 | `calls` | `contact_id` | FK → contacts.id ON DELETE SET NULL |
 | `calls` | `agent_id` | FK → profiles.id ON DELETE SET NULL |
@@ -501,24 +542,80 @@ Demais dúvidas: nenhuma (entrevista concluída em 2026-11-03). Novas dúvidas: 
 | `calls` | `(tabela)` | constraint calls_recording_status_check check (recording_status in ('none', 'pending', 'available', 'failed')) not valid |
 | `calls` | `(tabela)` | constraint calls_end_reason_check check (end_reason is null or end_reason in ( 'completed', 'hangup_local', 'hangup_remote', 'no_answer', 'busy', 'busy_here', 'cancelled', 'cancelled_remote', 'declined', 'failed', 'timeout' )) not valid |
 | `calls` | `(tabela)` | constraint calls_status_check check (status = any (array[ 'ringing', 'answered', 'ended', 'missed', 'busy', 'failed', 'cancelled', 'declined' ])) not valid |
-| `campaign_contacts` | `id` | PK; default gen_random_uuid() |
-| `campaign_contacts` | `campaign_id` | obrigatório; FK → campaigns.id ON DELETE CASCADE |
-| `campaign_contacts` | `contact_id` | obrigatório; FK → contacts.id ON DELETE CASCADE |
-| `campaign_contacts` | `status` | default 'pending'; CHECK status IN ('pending', 'sent', 'delivered', 'read', 'failed') |
-| `campaign_contacts` | `created_at` | default now() |
-| `chatbot_executions` | `id` | PK; default gen_random_uuid() |
-| `chatbot_executions` | `flow_id` | obrigatório; FK → chatbot_flows.id ON DELETE CASCADE |
-| `chatbot_executions` | `contact_id` | obrigatório; FK → contacts.id ON DELETE CASCADE |
-| `chatbot_executions` | `status` | default 'running'; CHECK status IN ('running', 'completed', 'failed', 'paused', 'cancelled') |
-| `chatbot_executions` | `variables` | default '{}'::jsonb |
-| `chatbot_executions` | `started_at` | default now() |
-| `chatbot_executions` | `created_at` | default now() |
-| `contact_custom_fields` | `id` | PK; default gen_random_uuid() |
-| `contact_custom_fields` | `contact_id` | obrigatório; FK → contacts.id ON DELETE CASCADE |
-| `contact_custom_fields` | `field_name` | obrigatório |
-| `contact_custom_fields` | `field_type` | default 'text' |
-| `contact_custom_fields` | `created_at` | default now() |
-| `contact_custom_fields` | `updated_at` | default now() |
+| `whatsapp_groups` | `id` | PK; default gen_random_uuid() |
+| `whatsapp_groups` | `created_at` | obrigatório |
+| `whatsapp_groups` | `group_id` | obrigatório |
+| `whatsapp_groups` | `name` | obrigatório |
+| `whatsapp_groups` | `updated_at` | obrigatório |
+| `message_templates` | `id` | PK; default gen_random_uuid() |
+| `message_templates` | `is_global` | default false |
+| `message_templates` | `content` | obrigatório |
+| `message_templates` | `created_at` | obrigatório |
+| `message_templates` | `title` | obrigatório |
+| `message_templates` | `updated_at` | obrigatório |
+| `agent_stats` | `id` | PK; default gen_random_uuid() |
+| `agent_stats` | `profile_id` | obrigatório; FK → profiles.id ON DELETE CASCADE |
+| `agent_stats` | `xp` | default 0 |
+| `agent_stats` | `level` | default 1 |
+| `agent_stats` | `achievements_count` | default 0 |
+| `agent_stats` | `messages_sent` | default 0 |
+| `agent_stats` | `messages_received` | default 0 |
+| `agent_stats` | `conversations_resolved` | default 0 |
+| `agent_stats` | `customer_satisfaction_score` | default 0 |
+| `agent_stats` | `current_streak` | default 0 |
+| `agent_stats` | `best_streak` | default 0 |
+| `agent_stats` | `created_at` | default now() |
+| `agent_stats` | `updated_at` | default now() |
+| `agent_stats` | `(tabela)` | UNIQUE(profile_id) |
+| `agent_stats` | `(tabela)` | constraint chk_xp_non_negative CHECK (xp >= 0) NOT VALID |
+| `agent_stats` | `(tabela)` | constraint chk_level_min_one CHECK (level >= 1) NOT VAFIDD |
+| `agent_stats` | `(tabela)` | constraint chk_xp_non_negative CHECK (xp >= 0) NOT VALID |
+| `agent_stats` | `(tabela)` | constraint chk_level_min_one CHECK (level >= 1) NOT VALID |
+| `agent_achievements` | `id` | PK; default gen_random_uuid() |
+| `agent_achievements` | `profile_id` | obrigatório; FK → profiles.id ON DELETE CASCADE |
+| `agent_achievements` | `achievement_type` | obrigatório |
+| `agent_achievements` | `achievement_name` | obrigatório |
+| `agent_achievements` | `xp_earned` | default 0 |
+| `agent_achievements` | `earned_at` | default now() |
+| `sla_configurations` | `id` | PK; default gen_random_uuid() |
+| `sla_configurations` | `created_at` | obrigatório |
+| `sla_configurations` | `first_response_minutes` | obrigatório |
+| `sla_configurations` | `name` | obrigatório |
+| `sla_configurations` | `priority` | obrigatório |
+| `sla_configurations` | `resolution_minutes` | obrigatório |
+| `sla_configurations` | `updated_at` | obrigatório |
+| `conversation_sla` | `id` | PK; default gen_random_uuid() |
+| `conversation_sla` | `created_at` | obrigatório |
+| `conversation_sla` | `first_message_at` | obrigatório |
+| `conversation_sla` | `updated_at` | obrigatório |
+| `queues` | `id` | PK; default gen_random_uuid() |
+| `queues` | `color` | obrigatório |
+| `queues` | `created_at` | obrigatório |
+| `queues` | `distribution` | obrigatório |
+| `queues` | `name` | obrigatório |
+| `queues` | `paused` | obrigatório |
+| `queues` | `sticky_enabled` | obrigatório |
+| `queues` | `updated_at` | obrigatório |
+| `queue_members` | `id` | PK; default gen_random_uuid() |
+| `queue_members` | `queue_id` | obrigatório; FK → queues.id ON DELETE CASCADE |
+| `queue_members` | `profile_id` | obrigatório; FK → profiles.id ON DELETE CASCADE |
+| `queue_members` | `is_active` | default true |
+| `queue_members` | `created_at` | obrigatório |
+| `queue_goals` | `id` | PK; default gen_random_uuid() |
+| `queue_goals` | `created_at` | obrigatório |
+| `queue_goals` | `queue_id` | obrigatório |
+| `queue_goals` | `updated_at` | obrigatório |
+| `products` | `id` | PK; default gen_random_uuid() |
+| `products` | `created_at` | obrigatório |
+| `products` | `currency` | obrigatório |
+| `products` | `name` | obrigatório |
+| `products` | `price` | obrigatório |
+| `products` | `updated_at` | obrigatório |
+| `user_settings` | `id` | PK; default gen_random_uuid() |
+| `user_settings` | `created_at` | obrigatório |
+| `user_settings` | `onboarding_completed` | obrigatório |
+| `user_settings` | `sound_volume` | obrigatório |
+| `user_settings` | `updated_at` | obrigatório |
 | `contact_notes` | `id` | PK; default gen_random_uuid() |
 | `contact_notes` | `contact_id` | FK → contacts.id ON DELETE CASCADE |
 | `contact_notes` | `author_id` | FK → profiles.id ON DELETE CASCADE |
@@ -528,6 +625,33 @@ Demais dúvidas: nenhuma (entrevista concluída em 2026-11-03). Novas dúvidas: 
 | `contact_notes` | `is_done` | obrigatório |
 | `contact_notes` | `is_pinned` | obrigatório |
 | `contact_notes` | `updated_at` | obrigatório |
+| `business_hours` | `id` | PK; default gen_random_uuid() |
+| `business_hours` | `whatsapp_connection_id` | obrigatório; FK → whatsapp_connections.id ON DELETE CASCADE |
+| `business_hours` | `day_of_week` | obrigatório; CHECK day_of_week >= 0 AND day_of_week <= 6 |
+| `business_hours` | `is_open` | default true |
+| `business_hours` | `open_time` | default '09:00:00' |
+| `business_hours` | `close_time` | default '18:00:00' |
+| `business_hours` | `created_at` | default now() |
+| `business_hours` | `updated_at` | default now() |
+| `business_hours` | `(tabela)` | UNIQUE(whatsapp_connection_id, day_of_week) |
+| `away_messages` | `id` | PK; default gen_random_uuid() |
+| `away_messages` | `whatsapp_connection_id` | obrigatório; único; FK → whatsapp_connections.id ON DELETE CASCADE |
+| `away_messages` | `content` | default 'Estamos |
+| `away_messages` | `is_enabled` | default true |
+| `away_messages` | `created_at` | default now() |
+| `away_messages` | `updated_at` | default now() |
+| `message_reactions` | `id` | PK; default gen_random_uuid() |
+| `message_reactions` | `created_at` | obrigatório |
+| `message_reactions` | `emoji` | obrigatório |
+| `message_reactions` | `message_id` | obrigatório |
+| `scheduled_messages` | `id` | PK; default gen_random_uuid() |
+| `scheduled_messages` | `contact_id` | obrigatório |
+| `scheduled_messages` | `content` | obrigatório |
+| `scheduled_messages` | `created_at` | obrigatório |
+| `scheduled_messages` | `message_type` | obrigatório |
+| `scheduled_messages` | `scheduled_at` | obrigatório |
+| `scheduled_messages` | `status` | obrigatório |
+| `scheduled_messages` | `updated_at` | obrigatório |
 | `conversation_analyses` | `id` | PK; default gen_random_uuid() |
 | `conversation_analyses` | `contact_id` | obrigatório; FK → contacts.id ON DELETE CASCADE |
 | `conversation_analyses` | `analyzed_by` | FK → profiles.id |
@@ -546,190 +670,66 @@ Demais dúvidas: nenhuma (entrevista concluída em 2026-11-03). Novas dúvidas: 
 | `conversation_analyses` | `(tabela)` | constraint conversation_analyses_sentiment_canonical check (public.ai_is_canonical_sentiment(sentiment)) not valid |
 | `conversation_analyses` | `(tabela)` | constraint conversation_analyses_urgency_canonical check (public.ai_is_canonical_urgency(urgency)) not valid |
 | `conversation_analyses` | `(tabela)` | constraint conversation_analyses_churn_risk_canonical check (public.ai_is_canonical_churn_risk(churn_risk)) not valid |
-| `conversation_closures` | `id` | PK; default gen_random_uuid() |
-| `conversation_closures` | `contact_id` | obrigatório; FK → contacts.id ON DELETE CASCADE |
-| `conversation_closures` | `closed_by` | FK → profiles.id ON DELETE SET NULL |
-| `conversation_closures` | `close_reason` | obrigatório |
-| `conversation_closures` | `created_at` | default now() |
-| `conversation_events` | `id` | PK; default gen_random_uuid() |
-| `conversation_events` | `contact_id` | obrigatório; FK → contacts.id ON DELETE CASCADE |
-| `conversation_events` | `event_type` | obrigatório |
-| `conversation_events` | `from_agent_id` | FK → profiles.id |
-| `conversation_events` | `to_agent_id` | FK → profiles.id |
-| `conversation_events` | `from_queue_id` | FK → queues.id |
-| `conversation_events` | `to_queue_id` | FK → queues.id |
-| `conversation_events` | `metadata` | default '{}' |
-| `conversation_events` | `performed_by` | FK → profiles.id |
-| `conversation_events` | `created_at` | default now() |
-| `conversation_events` | `closure_id` | FK → conversation_closures.id ON DELETE CASCADE |
-| `conversation_events` | `(tabela)` | constraint conversation_events_closure_id_fkey FOREIGN KEY (closure_id) REFERENCES public.conversation_closures(id) ON DELETE CASCADE NOT VALID, ADD CONSTRAINT conversation_events_closure_type_check CHECK (closure_id IS NULL OR event_type = 'close') NOT VALID |
-| `conversation_memory` | `id` | PK; default gen_random_uuid() |
-| `conversation_memory` | `contact_id` | obrigatório; único; FK → contacts.id ON DELETE CASCADE |
-| `conversation_memory` | `facts` | default '[]'::jsonb |
-| `conversation_memory` | `objections_handled` | default '[]'::jsonb |
-| `conversation_memory` | `promises_made` | default '[]'::jsonb |
-| `conversation_memory` | `pending_items` | default '[]'::jsonb |
-| `conversation_memory` | `updated_by` | FK → profiles.id ON DELETE SET NULL |
-| `conversation_memory` | `created_at` | default now() |
-| `conversation_memory` | `updated_at` | default now() |
-| `conversation_sla` | `id` | PK; default gen_random_uuid() |
-| `conversation_sla` | `created_at` | obrigatório |
-| `conversation_sla` | `first_message_at` | obrigatório |
-| `conversation_sla` | `updated_at` | obrigatório |
-| `conversation_snoozes` | `id` | PK; default gen_random_uuid() |
-| `conversation_snoozes` | `contact_id` | obrigatório; FK → contacts.id ON DELETE CASCADE |
-| `conversation_snoozes` | `snoozed_by` | obrigatório; FK → profiles.id ON DELETE CASCADE |
-| `conversation_snoozes` | `snooze_until` | obrigatório |
-| `conversation_snoozes` | `created_at` | default now() |
-| `conversation_tasks` | `id` | PK; default gen_random_uuid() |
-| `conversation_tasks` | `contact_id` | FK → contacts.id ON DELETE CASCADE |
-| `conversation_tasks` | `created_at` | obrigatório |
-| `conversation_tasks` | `created_by` | obrigatório |
-| `conversation_tasks` | `position` | obrigatório |
-| `conversation_tasks` | `priority` | obrigatório |
-| `conversation_tasks` | `status_changed_at` | obrigatório |
-| `conversation_tasks` | `title` | obrigatório |
-| `conversation_tasks` | `updated_at` | obrigatório |
-| `csat_surveys` | `id` | PK; default gen_random_uuid() |
-| `csat_surveys` | `contact_id` | obrigatório; FK → contacts.id ON DELETE CASCADE |
-| `csat_surveys` | `agent_id` | obrigatório; FK → profiles.id ON DELETE SET NULL |
-| `csat_surveys` | `rating` | obrigatório |
-| `csat_surveys` | `created_at` | default now() |
-| `csat_surveys` | `send_at` | obrigatório |
-| `csat_surveys` | `status` | obrigatório |
-| `email_threads` | `id` | PK; default gen_random_uuid() |
-| `email_threads` | `gmail_account_id` | obrigatório; FK → gmail_accounts.id ON DELETE CASCADE |
-| `email_threads` | `gmail_thread_id` | obrigatório |
-| `email_threads` | `contact_id` | FK → contacts.id ON DELETE SET NULL |
-| `email_threads` | `subject` | default '' |
-| `email_threads` | `snippet` | default '' |
-| `email_threads` | `label_ids` | default '{}' |
-| `email_threads` | `message_count` | default 0 |
-| `email_threads` | `is_unread` | default true |
-| `email_threads` | `is_starred` | default false |
-| `email_threads` | `is_important` | default false |
-| `email_threads` | `last_message_at` | default now() |
-| `email_threads` | `status` | default 'open' |
-| `email_threads` | `priority` | default 'medium' |
-| `email_threads` | `tags` | default '{}' |
-| `email_threads` | `created_at` | default now() |
-| `email_threads` | `updated_at` | default now() |
-| `email_threads` | `(tabela)` | UNIQUE(gmail_account_id, gmail_thread_id) |
-| `favorite_contacts` | `id` | PK; default gen_random_uuid() |
-| `favorite_contacts` | `contact_id` | obrigatório; FK → contacts.id ON DELETE CASCADE |
-| `favorite_contacts` | `user_id` | obrigatório; FK → users.id ON DELETE CASCADE |
-| `favorite_contacts` | `created_at` | default now() |
-| `favorite_contacts` | `(tabela)` | UNIQUE(contact_id, user_id) |
-| `followup_executions` | `id` | PK; default gen_random_uuid() |
-| `followup_executions` | `sequence_id` | obrigatório; FK → followup_sequences.id |
-| `followup_executions` | `contact_id` | obrigatório; FK → contacts.id |
-| `followup_executions` | `current_step` | default 0 |
-| `followup_executions` | `status` | default 'pending' |
-| `followup_executions` | `started_at` | default now() |
-| `followup_executions` | `created_at` | default now() |
-| `message_reactions` | `id` | PK; default gen_random_uuid() |
-| `message_reactions` | `created_at` | obrigatório |
-| `message_reactions` | `emoji` | obrigatório |
-| `message_reactions` | `message_id` | obrigatório |
-| `meta_capi_events` | `id` | PK; default gen_random_uuid() |
-| `meta_capi_events` | `event_name` | obrigatório |
-| `meta_capi_events` | `event_time` | default now() |
-| `meta_capi_events` | `contact_id` | FK → contacts.id ON DELETE SET NULL |
-| `meta_capi_events` | `action_source` | default 'chat' |
-| `meta_capi_events` | `custom_data` | default '{}' |
-| `meta_capi_events` | `sent_to_meta` | default false |
-| `meta_capi_events` | `created_at` | default now() |
-| `nps_surveys` | `id` | PK; default gen_random_uuid() |
-| `nps_surveys` | `contact_id` | obrigatório; FK → contacts.id ON DELETE CASCADE |
-| `nps_surveys` | `agent_id` | FK → profiles.id |
-| `nps_surveys` | `score` | obrigatório; CHECK score >= 0 AND score <= 10 |
-| `nps_surveys` | `survey_type` | default 'manual'; CHECK survey_type IN ('periodic', 'post_resolution', 'manual') |
-| `nps_surveys` | `created_at` | default now() |
-| `pinned_conversations` | `id` | PK; default gen_random_uuid() |
-| `pinned_conversations` | `contact_id` | obrigatório; FK → contacts.id ON DELETE CASCADE |
-| `pinned_conversations` | `pinned_by` | obrigatório; FK → profiles.id ON DELETE CASCADE |
-| `pinned_conversations` | `position` | default 0 |
-| `pinned_conversations` | `created_at` | default now() |
-| `pinned_conversations` | `(tabela)` | UNIQUE(contact_id, pinned_by) |
-| `queue_positions` | `id` | PK; default gen_random_uuid() |
-| `queue_positions` | `contact_id` | obrigatório |
-| `queue_positions` | `position` | obrigatório |
-| `queue_positions` | `queue_id` | obrigatório |
-| `reminders` | `id` | PK; default gen_random_uuid() |
-| `reminders` | `contact_id` | FK → contacts.id ON DELETE SET NULL |
-| `reminders` | `profile_id` | obrigatório; FK → profiles.id ON DELETE CASCADE |
-| `reminders` | `title` | obrigatório |
-| `reminders` | `remind_at` | obrigatório |
-| `reminders` | `is_dismissed` | default false |
-| `reminders` | `created_at` | default now() |
-| `reminders` | `migrated_task_id` | FK → conversation_tasks.id ON DELETE SET NULL |
-| `sales_deals` | `id` | PK; default gen_random_uuid() |
-| `sales_deals` | `title` | obrigatório |
-| `sales_deals` | `value` | default 0 |
-| `sales_deals` | `currency` | default 'BRL' |
-| `sales_deals` | `stage_id` | FK → sales_pipeline_stages.id ON DELETE SET NULL |
-| `sales_deals` | `contact_id` | FK → contacts.id ON DELETE CASCADE |
-| `sales_deals` | `assigned_to` | FK → profiles.id ON DELETE SET NULL |
-| `sales_deals` | `priority` | default 'medium' |
-| `sales_deals` | `tags` | default '{}' |
-| `sales_deals` | `status` | default 'open' |
-| `sales_deals` | `created_at` | default now() |
-| `sales_deals` | `updated_at` | default now() |
-| `scheduled_messages` | `id` | PK; default gen_random_uuid() |
-| `scheduled_messages` | `contact_id` | obrigatório |
-| `scheduled_messages` | `content` | obrigatório |
-| `scheduled_messages` | `created_at` | obrigatório |
-| `scheduled_messages` | `message_type` | obrigatório |
-| `scheduled_messages` | `scheduled_at` | obrigatório |
-| `scheduled_messages` | `status` | obrigatório |
-| `scheduled_messages` | `updated_at` | obrigatório |
-| `sicoob_contact_mapping` | `id` | PK; default gen_random_uuid() |
-| `sicoob_contact_mapping` | `contact_id` | obrigatório |
-| `sicoob_contact_mapping` | `sicoob_singular_id` | obrigatório |
-| `sicoob_contact_mapping` | `sicoob_user_id` | obrigatório |
-| `sicoob_contact_mapping` | `sicoob_vendedor_id` | obrigatório |
-| `sla_rules` | `id` | PK; default gen_random_uuid() |
-| `sla_rules` | `name` | obrigatório |
-| `sla_rules` | `first_response_minutes` | default 5 |
-| `sla_rules` | `resolution_minutes` | default 60 |
-| `sla_rules` | `priority` | default 0 |
-| `sla_rules` | `contact_id` | FK → contacts.id ON DELETE CASCADE |
-| `sla_rules` | `queue_id` | FK → queues.id ON DELETE CASCADE |
-| `sla_rules` | `agent_id` | FK → profiles.id ON DELETE CASCADE |
-| `sla_rules` | `is_active` | default true |
-| `sla_rules` | `created_at` | default now() |
-| `sla_rules` | `updated_at` | default now() |
-| `sla_rules` | `metadata` | default '{}'::jsonb |
-| `talkx_blacklist` | `created_at` | obrigatório |
-| `talkx_blacklist` | `id` | obrigatório |
-| `talkx_blacklist` | `origin` | obrigatório |
-| `talkx_recipients` | `id` | PK |
-| `talkx_recipients` | `campaign_id` | obrigatório; FK → talkx_campaigns.id |
-| `talkx_recipients` | `status` | default 'pending' |
-| `talkx_recipients` | `attempt_count` | default 0 |
-| `talkx_recipients` | `created_at` | default statement_timestamp() |
-| `talkx_recipients` | `updated_at` | default statement_timestamp() |
-| `talkx_recipients` | `click_count` | obrigatório |
-| `talkx_recipients` | `delivery_attempt_count` | obrigatório |
-| `talkx_recipients` | `manual_retry_count` | obrigatório |
-| `talkx_recipients` | `status_changed_at` | obrigatório |
-| `whisper_messages` | `id` | PK; default gen_random_uuid() |
-| `whisper_messages` | `contact_id` | obrigatório; FK → contacts.id |
-| `whisper_messages` | `sender_id` | obrigatório; FK → profiles.id |
-| `whisper_messages` | `target_agent_id` | obrigatório; FK → profiles.id |
-| `whisper_messages` | `content` | obrigatório |
-| `whisper_messages` | `is_read` | default false |
-| `whisper_messages` | `created_at` | default now() |
-| `whisper_messages` | `(tabela)` | constraint whisper_messages_audio_path_formato check ( audio_path is null or audio_path ~ '^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}/[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}/[^/]+$' ) |
-| `whisper_messages` | `(tabela)` | constraint whisper_messages_audio_path_do_remetente check ( audio_path is null or split_part(audio_path, '/', 2) = contact_id::text ) |
-| `contacts` | `id` | PK; default gen_random_uuid() |
-| `contacts` | `conversation_status` | obrigatório |
-| `contacts` | `created_at` | obrigatório |
-| `contacts` | `is_lid_legacy` | obrigatório |
-| `contacts` | `name` | obrigatório |
-| `contacts` | `phone` | obrigatório |
-| `contacts` | `updated_at` | obrigatório |
-| … +1388 linhas — lista completa em `context.json` | | |
+| `goals_configurations` | `id` | PK; default gen_random_uuid() |
+| `goals_configurations` | `created_at` | obrigatório |
+| `goals_configurations` | `daily_target` | obrigatório |
+| `goals_configurations` | `goal_type` | obrigatório |
+| `goals_configurations` | `monthly_target` | obrigatório |
+| `goals_configurations` | `updated_at` | obrigatório |
+| `goals_configurations` | `weekly_target` | obrigatório |
+| `notifications` | `id` | PK; default gen_random_uuid() |
+| `notifications` | `user_id` | obrigatório |
+| `notifications` | `type` | obrigatório |
+| `notifications` | `title` | obrigatório |
+| `notifications` | `message` | obrigatório |
+| `notifications` | `metadata` | default '{}'::jsonb |
+| `notifications` | `dedupe_key` | único |
+| `notifications` | `is_read` | default false |
+| `notifications` | `created_at` | default now() |
+| `rate_limit_configs` | `id` | PK; default gen_random_uuid() |
+| `rate_limit_configs` | `block_duration_minutes` | obrigatório |
+| `rate_limit_configs` | `created_at` | obrigatório |
+| `rate_limit_configs` | `endpoint_pattern` | obrigatório |
+| `rate_limit_configs` | `max_requests` | obrigatório |
+| `rate_limit_configs` | `name` | obrigatório |
+| `rate_limit_configs` | `updated_at` | obrigatório |
+| `rate_limit_configs` | `window_seconds` | obrigatório |
+| `rate_limit_logs` | `id` | PK; default gen_random_uuid() |
+| `rate_limit_logs` | `created_at` | obrigatório |
+| `rate_limit_logs` | `endpoint` | obrigatório |
+| `rate_limit_logs` | `ip_address` | obrigatório |
+| `rate_limit_logs` | `request_count` | obrigatório |
+| `blocked_ips` | `id` | PK; default gen_random_uuid() |
+| `blocked_ips` | `blocked_at` | obrigatório |
+| `blocked_ips` | `created_at` | obrigatório |
+| `blocked_ips` | `ip_address` | obrigatório |
+| `blocked_ips` | `reason` | obrigatório |
+| `ip_whitelist` | `id` | PK; default gen_random_uuid() |
+| `ip_whitelist` | `created_at` | obrigatório |
+| `ip_whitelist` | `ip_address` | obrigatório |
+| `mfa_sessions` | `id` | PK; default gen_random_uuid() |
+| `mfa_sessions` | `created_at` | obrigatório |
+| `mfa_sessions` | `expires_at` | obrigatório |
+| `mfa_sessions` | `factor_id` | obrigatório |
+| `security_alerts` | `id` | PK; default gen_random_uuid() |
+| `security_alerts` | `alert_type` | obrigatório |
+| `security_alerts` | `severity` | default 'medium' |
+| `security_alerts` | `title` | obrigatório |
+| `security_alerts` | `user_id` | FK → users.id ON DELETE SET NULL |
+| `security_alerts` | `metadata` | default '{}' |
+| `security_alerts` | `is_resolved` | default false |
+| `security_alerts` | `resolved_by` | FK → users.id ON DELETE SET NULL |
+| `security_alerts` | `created_at` | default now() |
+| `permissions` | `id` | PK; default gen_random_uuid() |
+| `permissions` | `category` | obrigatório |
+| `permissions` | `created_at` | obrigatório |
+| `permissions` | `name` | obrigatório |
+| `role_permissions` | `id` | PK; default gen_random_uuid() |
+| `role_permissions` | `created_at` | obrigatório |
+| `role_permissions` | `permission_id` | obrigatório |
+| `role_permissions` | `role` | obrigatório |
+| `user_devices` | `id` | PK; default gen_random_uuid() |
+| … +1407 linhas — lista completa em `context.json` | | |
 
 ## D. Automações no banco (triggers e funções — regras que rodam sozinhas)
 
@@ -957,9 +957,6 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `mark_talkx_recipient_dispatch_started` | service_role_required | `supabase/migrations/20260912110000_harden_talkx_delivery_receipts.sql` |
 | `mark_talkx_recipient_dispatch_started` | invalid_talkx_provider_dispatch | `supabase/migrations/20260912110000_harden_talkx_delivery_receipts.sql` |
 | `mark_talkx_recipient_dispatch_started` | talkx_delivery_claim_conflict | `supabase/migrations/20260912110000_harden_talkx_delivery_receipts.sql` |
-| `persist_talkx_recipient_message_snapshot` | service_role_required | `supabase/migrations/20260912120000_snapshot_talkx_recipient_messages.sql` |
-| `persist_talkx_recipient_message_snapshot` | invalid_talkx_recipient_message_snapshot | `supabase/migrations/20260912120000_snapshot_talkx_recipient_messages.sql` |
-| `persist_talkx_recipient_message_snapshot` | talkx_delivery_claim_conflict | `supabase/migrations/20260912120000_snapshot_talkx_recipient_messages.sql` |
 | `reschedule_talkx_recipient` | service_role_required | `supabase/migrations/20260916210000_talkx_e91_resilience.sql` |
 | `reschedule_talkx_recipient` | talkx_delivery_claim_conflict | `supabase/migrations/20260916210000_talkx_e91_resilience.sql` |
 | `persist_sentiment_alert` | sentiment alert details do not match analysis | `supabase/migrations/20260922220000_atomic_call_and_sentiment_notifications.sql` |
@@ -1084,8 +1081,6 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `claim_talkx_campaign_worker` | invalid_talkx_campaign_claim | `supabase/migrations/20261001311230_talkx_campaign_worker_lease.sql` |
 | `release_talkx_campaign_worker` | service_role_required | `supabase/migrations/20261001311230_talkx_campaign_worker_lease.sql` |
 | `release_talkx_campaign_worker` | invalid_talkx_campaign_release | `supabase/migrations/20261001311230_talkx_campaign_worker_lease.sql` |
-| `talkx_next_recipients` | service_role_required | `supabase/migrations/20261001311230_talkx_campaign_worker_lease.sql` |
-| `talkx_next_recipients` | invalid_talkx_campaign_id | `supabase/migrations/20261001311230_talkx_campaign_worker_lease.sql` |
 | `sweep_talkx_stuck_recipients` | service_role_required | `supabase/migrations/20261001391230_talkx_engine_tick.sql` |
 | `sweep_talkx_stuck_recipients` | invalid_talkx_sweep_limit | `supabase/migrations/20261001391230_talkx_engine_tick.sql` |
 | `kick_talkx_campaign` | service_role_required | `supabase/migrations/20261001391230_talkx_engine_tick.sql` |
@@ -1203,7 +1198,12 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `talkx_audience_query` | invalid_talkx_audience_rule_value | `supabase/migrations/20261003232707_talkx_lgpd_consentimento_expurgo.sql` |
 | `talkx_audience_query` | invalid_talkx_audience_rule_value | `supabase/migrations/20261003232707_talkx_lgpd_consentimento_expurgo.sql` |
 | `talkx_audience_query` | invalid_talkx_audience_rule_value | `supabase/migrations/20261003232707_talkx_lgpd_consentimento_expurgo.sql` |
-| … +712 linhas — lista completa em `context.json` | | |
+| `talkx_audience_query` | invalid_talkx_audience_rule_value | `supabase/migrations/20261003232707_talkx_lgpd_consentimento_expurgo.sql` |
+| `add_agent_xp` | permission denied | `supabase/migrations/20261003272707_reconcile_local_replay_with_canonical.sql` |
+| `add_agent_xp` | p_xp must be a positive integer, got % | `supabase/migrations/20261003272707_reconcile_local_replay_with_canonical.sql` |
+| `add_agent_xp` | p_xp exceeds single-call maximum of 500, got % | `supabase/migrations/20261003272707_reconcile_local_replay_with_canonical.sql` |
+| `cleanup_expired_challenges` | cleanup_expired_challenges: operacao restrita a service_role | `supabase/migrations/20261003272707_reconcile_local_replay_with_canonical.sql` |
+| … +720 linhas — lista completa em `context.json` | | |
 
 ## E. Estados, máquinas de estado e transições
 
@@ -1217,59 +1217,59 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `copilot_insights` | `state_version` | **livre (sem enum/CHECK)** | `1` |
 | `messages` | `status` | **livre (sem enum/CHECK)** |  |
 | `messages` | `transcription_status` | **livre (sem enum/CHECK)** |  |
-| `calls` | `status` | `answered`, `busy`, `cancelled`, `declined`, `ended`, `failed`, `missed`, `ringing` | `ringing` |
-| `calls` | `recording_status` | `available`, `failed`, `none`, `pending` |  |
-| `campaign_contacts` | `status` | `delivered`, `failed`, `pending`, `read`, `sent` | `pending` |
-| `chatbot_executions` | `status` | `cancelled`, `completed`, `failed`, `paused`, `running` | `running` |
-| `conversation_analyses` | `status` | **livre (sem enum/CHECK)** | `pendente` |
-| `conversation_tasks` | `status` | **livre (sem enum/CHECK)** |  |
-| `csat_surveys` | `status` | **livre (sem enum/CHECK)** |  |
-| `email_threads` | `status` | **livre (sem enum/CHECK)** | `open` |
-| `followup_executions` | `current_step` | **livre (sem enum/CHECK)** | `0` |
-| `followup_executions` | `status` | **livre (sem enum/CHECK)** | `pending` |
-| `sales_deals` | `status` | **livre (sem enum/CHECK)** | `open` |
-| `scheduled_messages` | `status` | **livre (sem enum/CHECK)** |  |
-| `talkx_recipients` | `status` | **livre (sem enum/CHECK)** | `pending` |
+| `whatsapp_connections` | `health_status` | **livre (sem enum/CHECK)** |  |
+| `whatsapp_connections` | `status` | **livre (sem enum/CHECK)** |  |
 | `contacts` | `consent_status` | **livre (sem enum/CHECK)** |  |
 | `contacts` | `conversation_status` | **livre (sem enum/CHECK)** |  |
 | `contacts` | `presence_status` | **livre (sem enum/CHECK)** |  |
 | `contacts` | `state` | **livre (sem enum/CHECK)** |  |
-| `gmail_accounts` | `sync_status` | **livre (sem enum/CHECK)** |  |
-| `whatsapp_connections` | `health_status` | **livre (sem enum/CHECK)** |  |
-| `whatsapp_connections` | `status` | **livre (sem enum/CHECK)** |  |
+| `calls` | `status` | `answered`, `busy`, `cancelled`, `declined`, `ended`, `failed`, `missed`, `ringing` | `ringing` |
+| `calls` | `recording_status` | `available`, `failed`, `none`, `pending` |  |
+| `scheduled_messages` | `status` | **livre (sem enum/CHECK)** |  |
+| `conversation_analyses` | `status` | **livre (sem enum/CHECK)** | `pendente` |
+| `password_reset_requests` | `status` | `approved`, `pending`, `rejected` | `pending` |
+| `whatsapp_templates` | `status` | **livre (sem enum/CHECK)** | `draft` |
+| `csat_surveys` | `status` | **livre (sem enum/CHECK)** |  |
+| `campaigns` | `status` | `cancelled`, `completed`, `draft`, `paused`, `scheduled`, `sending` | `draft` |
+| `campaign_contacts` | `status` | `delivered`, `failed`, `pending`, `read`, `sent` | `pending` |
+| `chatbot_executions` | `status` | `cancelled`, `completed`, `failed`, `paused`, `running` | `running` |
+| `sales_deals` | `status` | **livre (sem enum/CHECK)** | `open` |
+| `knowledge_base_articles` | `embedding_status` | **livre (sem enum/CHECK)** | `pending` |
+| `knowledge_base_files` | `processing_status` | **livre (sem enum/CHECK)** | `pending` |
 | `whatsapp_flows` | `status` | **livre (sem enum/CHECK)** | `draft` |
 | `followup_steps` | `step_order` | **livre (sem enum/CHECK)** | `1` |
-| `campaigns` | `status` | `cancelled`, `completed`, `draft`, `paused`, `scheduled`, `sending` | `draft` |
-| `knowledge_base_articles` | `embedding_status` | **livre (sem enum/CHECK)** | `pending` |
+| `followup_executions` | `current_step` | **livre (sem enum/CHECK)** | `0` |
+| `followup_executions` | `status` | **livre (sem enum/CHECK)** | `pending` |
 | `channel_connections` | `status` | **livre (sem enum/CHECK)** | `disconnected` |
-| `whatsapp_templates` | `status` | **livre (sem enum/CHECK)** | `draft` |
-| `knowledge_base_files` | `processing_status` | **livre (sem enum/CHECK)** | `pending` |
-| `team_messages` | `status` | `delivered`, `failed`, `read`, `sent` | `sent` |
-| `training_sessions` | `status` | **livre (sem enum/CHECK)** | `in_progress` |
 | `connection_health_logs` | `status` | **livre (sem enum/CHECK)** | `unknown` |
+| `team_messages` | `status` | `delivered`, `failed`, `read`, `sent` | `sent` |
+| `gmail_accounts` | `sync_status` | **livre (sem enum/CHECK)** |  |
+| `email_threads` | `status` | **livre (sem enum/CHECK)** | `open` |
+| `ai_usage_logs` | `status` | **livre (sem enum/CHECK)** | `success` |
 | `talkx_campaigns` | `status` | **livre (sem enum/CHECK)** |  |
 | `talkx_campaigns` | `draft_step` | **livre (sem enum/CHECK)** |  |
+| `talkx_recipients` | `status` | **livre (sem enum/CHECK)** | `pending` |
+| `conversation_tasks` | `status` | **livre (sem enum/CHECK)** |  |
 | `number_reputation` | `warmup_status` | **livre (sem enum/CHECK)** | `none` |
-| `password_reset_requests` | `status` | `approved`, `pending`, `rejected` | `pending` |
-| `ai_usage_logs` | `status` | **livre (sem enum/CHECK)** | `success` |
-| `department_invitations` | `status` | `accepted`, `expired`, `pending`, `revoked` | `pending` |
+| `training_sessions` | `status` | **livre (sem enum/CHECK)** | `in_progress` |
 | `ops.hermes_change_log` | `status` | **livre (sem enum/CHECK)** | `planejado` |
 | `talkx_segments` | `status` | `active`, `draft`, `inactive` | `active` |
 | `talkx_templates` | `status` | `approved`, `draft`, `review` | `approved` |
 | `crm_sync_outbox` | `status` | `dead_letter`, `failed`, `pending`, `processing`, `succeeded` | `pending` |
-| `talkx_template_versions` | `status` | **livre (sem enum/CHECK)** | `draft` |
 | `catalog_send_events` | `status` | `failed`, `partial`, `sent` |  |
 | `agent_presence` | `status` | `away`, `offline`, `online` | `online` |
 | `multiplix_dispatches` | `status` | `cancelled`, `completed`, `draft`, `failed`, `paused`, `scheduled`, `sending` |  |
 | `multiplix_recipients` | `status` | `delivered`, `failed`, `pending`, `sending`, `sent`, `skipped` |  |
 | `team_message_receipts` | `status` | `delivered`, `read` | `delivered` |
+| `department_invitations` | `status` | `accepted`, `expired`, `pending`, `revoked` | `pending` |
 | `multiplix_delivery_items` | `status` | `pending`, `sending`, `sent`, `delivered`, `read`, `failed`, `failed_transient`, `skipped`, `cancelled`, `outcome_unknown` | `pending` |
-| `ai_budget_reservations` | `status` | `expired`, `released`, `reserved`, `settled` | `reserved` |
 | `ai_jobs` | `status` | `cancelled`, `failed`, `outcome_unknown`, `partial`, `queued`, `running`, `succeeded` | `queued` |
 | `talkx_campaign_segments` | `status` | `done`, `paused`, `pending`, `sending` | `pending` |
 | `talkx_delivery_log` | `stage` | `claim`, `complete`, `dispatch`, `reconcile`, `suppress_check` |  |
 | `talkx_delivery_log` | `http_status` | **livre (sem enum/CHECK)** |  |
 | `gmail_oauth_states` | `state` | **livre (sem enum/CHECK)** |  |
+| `talkx_template_versions` | `status` | **livre (sem enum/CHECK)** | `draft` |
+| `ai_budget_reservations` | `status` | `expired`, `released`, `reserved`, `settled` | `reserved` |
 | `searchbox_budget_alert_emails` | `status` | `failed`, `pending`, `sent`, `uncertain` | `pending` |
 | `searchbox_budget_alert_emails` | `http_status` | **livre (sem enum/CHECK)** |  |
 | `talkx_contact_attributes` | `state` | **livre (sem enum/CHECK)** |  |
@@ -1280,6 +1280,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `message_reports` | `status` | `dismissed`, `open`, `resolved` | `open` |
 | `qr_attempts` | `status` | `connected`, `error`, `expired`, `pending` |  |
 | `copilot_objection_catalog` | `status` | **livre (sem enum/CHECK)** | `pending_review` |
+| `talkx_ai_requests` | `status` | `error`, `ok` |  |
 | `_zapp_mig133_log` | `status` | **livre (sem enum/CHECK)** |  |
 
 ### E.2 Mapas de transição declarados no código
@@ -1327,7 +1328,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `type` | `CANCEL_REMOTE` | compara, escreve | `src/lib/calls/session.ts`<br>`src/providers/CallSessionProvider.tsx` |
 | `type` | `CLAIM` | compara, escreve | `src/components/admin/dedupeEntreAbas.ts`<br>`src/lib/calls/tabLeaderStore.ts`<br>`src/lib/crossTabDrainLock.ts`<br>`src/lib/crossTabSendDedupe.ts` |
 | `type` | `CLEAR` | compara, escreve | `src/components/inbox/location-picker/useAddressAutocomplete.ts` |
-| `type` | `CLOSE` | compara, escreve | `analise-prs/resgate-261118-lote3/claude/fix-radar-fase6-cv056-shortcuts-261108-2335/src/components/inbox/ChatPanel.tsx`<br>`analise-prs/resgate-261118-lote3/fix/ci-verde-261021/src/components/inbox/ChatPanel.tsx`<br>`src/components/inbox/ChatPanel.tsx` |
+| `type` | `CLOSE` | compara, escreve | `src/components/inbox/ChatPanel.tsx` |
 | `type` | `CheckboxGroup` | compara, escreve | `src/components/whatsapp-flows/FlowComponentPreview.tsx`<br>`src/components/whatsapp-flows/WhatsAppFlowsBuilder.tsx` |
 | `type` | `DEFAULT` | escreve | `src/components/tasks/board/boardInteracao.ts` |
 | `type` | `DIAL` | compara, escreve | `src/lib/calls/session.ts`<br>`src/providers/CallSessionProvider.tsx` |
@@ -1343,19 +1344,17 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `type` | `HEADER` | escreve | `src/components/catalog/metaTemplatePayload.ts` |
 | `type` | `HEARTBEAT` | compara, escreve | `src/lib/calls/tabLeaderStore.ts` |
 | `type` | `HIGHLIGHT` | compara, escreve | `src/components/inbox/location-picker/useAddressAutocomplete.ts` |
-| `type` | `IDAT` | compara | `analise-prs/resgate-261118-lote3/claude/test-e2e-suite-completa-261104-1428/scripts/ci/e2e-isolated-tls.unit.mjs`<br>`analise-prs/resgate-261118-lote3/claude/test-e2e-tls-diagnostico-261104-1340/scripts/ci/e2e-isolated-tls.unit.mjs`<br>`analise-prs/resgate-261118-lote3/claude/test-e2e-webkit-tls-261104-1430/scripts/ci/e2e-isolated-tls.unit.mjs` |
-| `type` | `IHDR` | compara | `analise-prs/resgate-261118-lote3/claude/test-e2e-suite-completa-261104-1428/scripts/ci/e2e-isolated-tls.unit.mjs`<br>`analise-prs/resgate-261118-lote3/claude/test-e2e-tls-diagnostico-261104-1340/scripts/ci/e2e-isolated-tls.unit.mjs`<br>`analise-prs/resgate-261118-lote3/claude/test-e2e-webkit-tls-261104-1430/scripts/ci/e2e-isolated-tls.unit.mjs` |
 | `type` | `INVITE_RECEIVED` | compara, escreve | `src/lib/calls/session.ts`<br>`src/providers/CallSessionProvider.tsx` |
-| `type` | `NOTIFICATION_CLICK` | compara | `analise-prs/resgate-261118-lote3/claude/fix-unit-tests-src-261024-1630/src/hooks/chat/useTeamChatNotifications.ts`<br>`analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/hooks/chat/useTeamChatNotifications.ts`<br>`analise-prs/resgate-261118-lote3/claude/magical-pasteur-iz2pgy/src/hooks/chat/useTeamChatNotifications.ts`<br>`analise-prs/resgate-261118-lote3/claude_05/festive-carson-ub43wu/src/hooks/chat/useTeamChatNotifications.ts`<br>`src/hooks/chat/useTeamChatNotifications.ts`<br>… +1 |
-| `type` | `OPEN` | compara, escreve | `analise-prs/resgate-261118-lote3/claude/fix-radar-fase6-cv056-shortcuts-261108-2335/src/components/inbox/ChatPanel.tsx`<br>`analise-prs/resgate-261118-lote3/fix/ci-verde-261021/src/components/inbox/ChatPanel.tsx`<br>`src/components/inbox/ChatPanel.tsx` |
+| `type` | `NOTIFICATION_CLICK` | compara | `src/hooks/chat/useTeamChatNotifications.ts`<br>`src/hooks/system/useSecurityPushNotifications.ts` |
+| `type` | `OPEN` | compara, escreve | `src/components/inbox/ChatPanel.tsx` |
 | `type` | `REJECT` | compara, escreve | `src/lib/calls/session.ts`<br>`src/providers/CallSessionProvider.tsx` |
 | `type` | `RELEASE` | compara, escreve | `src/lib/calls/tabLeaderStore.ts`<br>`src/lib/crossTabDrainLock.ts`<br>`src/lib/crossTabSendDedupe.ts` |
 | `type` | `REMOVE_TOAST` | compara, escreve | `src/hooks/ui/use-toast.ts` |
-| `type` | `RESET` | compara, escreve | `analise-prs/resgate-261118-lote3/claude/fix-radar-fase6-cv056-shortcuts-261108-2335/src/components/inbox/ChatPanel.tsx`<br>`analise-prs/resgate-261118-lote3/fix/ci-verde-261021/src/components/inbox/ChatPanel.tsx`<br>`src/components/calls/PostCallSummary.tsx`<br>`src/components/inbox/ChatPanel.tsx`<br>`src/lib/calls/session.ts`<br>… +1 |
+| `type` | `RESET` | compara, escreve | `src/components/calls/PostCallSummary.tsx`<br>`src/components/inbox/ChatPanel.tsx`<br>`src/lib/calls/session.ts`<br>`src/providers/CallSessionProvider.tsx` |
 | `type` | `RETRIEVE_END` | compara, escreve | `src/components/inbox/location-picker/useAddressAutocomplete.ts` |
 | `type` | `RETRIEVE_ERROR` | compara, escreve | `src/components/inbox/location-picker/useAddressAutocomplete.ts` |
 | `type` | `RETRIEVE_START` | compara, escreve | `src/components/inbox/location-picker/useAddressAutocomplete.ts` |
-| `type` | `RETRY` | compara, escreve | `analise-prs/resgate-261118-lote3/fix/ci-workflows-vermelhos/scripts/mutation/run-mapa.mjs`<br>`src/components/inbox/location-picker/useAddressAutocomplete.ts` |
+| `type` | `RETRY` | compara, escreve | `src/components/inbox/location-picker/useAddressAutocomplete.ts` |
 | `type` | `RINGING` | compara, escreve | `src/lib/calls/session.ts`<br>`src/providers/CallSessionProvider.tsx` |
 | `type` | `RadioButtonsGroup` | compara, escreve | `src/components/whatsapp-flows/FlowComponentPreview.tsx`<br>`src/components/whatsapp-flows/WhatsAppFlowsBuilder.tsx` |
 | `type` | `SECURITY_ACTION` | compara | `src/hooks/system/useSecurityPushNotifications.ts` |
@@ -1365,7 +1364,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `type` | `SUGGEST_START` | compara, escreve | `src/components/inbox/location-picker/useAddressAutocomplete.ts` |
 | `type` | `SUGGEST_SUCCESS` | compara, escreve | `src/components/inbox/location-picker/useAddressAutocomplete.ts` |
 | `type` | `TIMEOUT` | compara, escreve | `src/lib/calls/session.ts`<br>`src/providers/CallSessionProvider.tsx` |
-| `type` | `TOGGLE` | compara, escreve | `analise-prs/resgate-261118-lote3/claude/fix-radar-fase6-cv056-shortcuts-261108-2335/src/components/inbox/ChatPanel.tsx`<br>`analise-prs/resgate-261118-lote3/fix/ci-verde-261021/src/components/inbox/ChatPanel.tsx`<br>`src/components/inbox/ChatPanel.tsx` |
+| `type` | `TOGGLE` | compara, escreve | `src/components/inbox/ChatPanel.tsx` |
 | `type` | `TextArea` | compara, escreve | `src/components/whatsapp-flows/FlowComponentPreview.tsx`<br>`src/components/whatsapp-flows/WhatsAppFlowsBuilder.tsx` |
 | `type` | `TextBody` | compara, escreve | `src/components/whatsapp-flows/FlowComponentPreview.tsx`<br>`src/components/whatsapp-flows/WhatsAppFlowsBuilder.tsx` |
 | `type` | `TextHeading` | compara, escreve | `src/components/whatsapp-flows/FlowComponentPreview.tsx`<br>`src/components/whatsapp-flows/WhatsAppFlowsBuilder.tsx` |
@@ -1380,7 +1379,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `type` | `addRule` | compara, escreve | `src/components/talkx/segments/TalkXSegmentBuilder.tsx`<br>`src/components/talkx/segments/segmentBuilderReducer.ts` |
 | `type` | `add_tag` | escreve | `src/components/automations/automationConstants.ts` |
 | `type` | `advanced` | compara, escreve | `src/components/catalog/ExternalProductManagement.tsx` |
-| `type` | `agent` | compara, escreve | `analise-prs/resgate-261118-lote3/claude/feat-copiloto-edges-261101-1330/src/hooks/inbox/useInboxBulkActions.ts`<br>`analise-prs/resgate-261118-lote3/claude/fix-radar-fase6-cv056-shortcuts-261108-2335/src/components/inbox/ChatPanel.tsx`<br>`analise-prs/resgate-261118-lote3/claude/kind-gates-87mwoe/src/hooks/inbox/useInboxBulkActions.ts`<br>`analise-prs/resgate-261118-lote3/fix/ci-verde-261021/src/components/inbox/ChatPanel.tsx`<br>`analise-prs/resgate-261118-lote3/fix/ci-verde-261021/src/hooks/chat/useConversationActions.ts`<br>… +5 |
+| `type` | `agent` | compara, escreve | `src/components/inbox/BulkActionsToolbar.tsx`<br>`src/components/inbox/ChatPanel.tsx`<br>`src/hooks/chat/useConversationActions.ts`<br>`src/hooks/inbox/useInboxBulkActions.ts` |
 | `type` | `ai-stats` | compara, escreve | `src/components/dashboard/DashboardWidgetRenderer.tsx`<br>`src/hooks/analytics/useDashboardWidgets.ts` |
 | `type` | `all` | compara, escreve | `src/components/contacts/useContactsViewState.ts`<br>`src/components/inbox/tabs/journey/JourneyFilters.tsx`<br>`src/hooks/chat/useConversationHistoryTimeline.ts` |
 | `type` | `array` | escreve | `analise-prs/resgate-261115/auditoria/ferramentas/auditar-pr.js`<br>`analise-prs/resgate-261115/auditoria/ferramentas/auditar-veredito.js`<br>`supabase/functions/_shared/ai-conversation-pipeline.ts`<br>`supabase/functions/ai-conversation-analysis/index.ts`<br>`supabase/functions/ai-conversation-summary/index.ts` |
@@ -1391,18 +1390,17 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `type` | `audio_meme` | compara | `src/components/team-chat/teamChatParts.tsx` |
 | `type` | `audio_memes` | compara | `src/components/settings/MediaLibraryAdmin.tsx`<br>`src/components/settings/media-library/useMediaLibrary.ts`<br>`src/components/settings/media-library/useMediaUpload.ts` |
 | `type` | `audio_recorded` | compara | `supabase/functions/_shared/multiplix-content.ts`<br>`supabase/functions/multiplix-dispatch/actions/inspect.ts` |
-| `type` | `authentication` | escreve, filtra | `analise-prs/resgate-261118-lote3/fix/ci-workflows-vermelhos/supabase/functions/webauthn/index.ts`<br>`supabase/functions/webauthn/index.ts` |
+| `type` | `authentication` | escreve, filtra | `supabase/functions/webauthn/index.ts` |
 | `type` | `avatar` | compara | `src/components/ui/micro-interactions/skeletons.tsx` |
-| `type` | `bind` | escreve | `analise-prs/resgate-261118-lote3/claude/test-e2e-suite-completa-261104-1428/scripts/ci/e2e-isolated-runtime.unit.mjs`<br>`analise-prs/resgate-261118-lote3/claude/test-e2e-suite-completa-261104-1428/scripts/e2e-isolated/run.mjs`<br>`analise-prs/resgate-261118-lote3/claude/test-e2e-tls-diagnostico-261104-1340/scripts/ci/e2e-isolated-runtime.unit.mjs`<br>`analise-prs/resgate-261118-lote3/claude/test-e2e-tls-diagnostico-261104-1340/scripts/e2e-isolated/run.mjs`<br>`analise-prs/resgate-261118-lote3/claude/test-e2e-tls-diagnostico-261104-1340/scripts/e2e-isolated/tls.mjs`<br>… +2 |
 | `type` | `body` | escreve | `src/components/catalog/sendTemplatePayload.ts` |
 | `type` | `bold` | compara, escreve | `src/components/inbox/MessagePreview.tsx` |
-| `type` | `boolean` | compara, escreve | `analise-prs/resgate-261115/auditoria/ferramentas/auditar-pr.js`<br>`analise-prs/resgate-261115/auditoria/ferramentas/auditar-veredito.js`<br>`analise-prs/resgate-261118-lote3/hermes/robustez-primitivos-ui-2610121626bec5-2610141859e423/src/components/connections/IntegrationsPanel.tsx`<br>`analise-prs/resgate-261118-lote3/hermes/telefonia-fase8-motion-a11y-responsivo-2610031530007c/src/components/connections/IntegrationsPanel.tsx`<br>`supabase/functions/voice-agent/index.ts` |
-| `type` | `broadcast` | escreve | `analise-prs/resgate-261118-lote3/fix/ci-verde-261021/supabase/functions/_shared/evolution-webhook-handlers.ts`<br>`analise-prs/resgate-261118-lote3/fix/ci-workflows-vermelhos/supabase/functions/_shared/evolution-webhook-handlers.ts`<br>`src/hooks/team-chat/useTeamTyping.ts`<br>`supabase/functions/_shared/evolution-webhook-handlers.ts` |
+| `type` | `boolean` | escreve | `analise-prs/resgate-261115/auditoria/ferramentas/auditar-pr.js`<br>`analise-prs/resgate-261115/auditoria/ferramentas/auditar-veredito.js`<br>`supabase/functions/voice-agent/index.ts` |
+| `type` | `broadcast` | escreve | `src/hooks/team-chat/useTeamTyping.ts`<br>`supabase/functions/_shared/evolution-webhook-handlers.ts` |
 | `type` | `business_hours` | escreve | `src/components/automations/automationConstants.ts` |
 | `type` | `button` | escreve | `src/types/chat.ts` |
 | `type` | `buttons` | compara | `src/components/inbox/InteractiveMessage.tsx` |
-| `type` | `buy_signal` | escreve | `analise-prs/resgate-261118-lote3/claude/feat-radar-motor-telas-261101-1330/supabase/functions/_shared/copilot-tick.ts`<br>`analise-prs/resgate-261118-lote3/claude/radar-motor-copilot-live-301030/supabase/functions/_shared/copilot-tick.ts`<br>`analise-prs/resgate-261118-lote3/resolve-2381-from-main/supabase/functions/_shared/copilot-tick.ts`<br>`supabase/functions/_shared/copilot-tick.ts` |
-| `type` | `call` | compara, escreve | `analise-prs/resgate-261118-lote3/claude/feat-message-delivery-post-iniciado-261101-1937/supabase/functions/message-delivery/index.ts`<br>`src/components/inbox/InteractiveMessage.tsx`<br>`src/components/inbox/InteractiveMessageBuilder.tsx`<br>`src/components/inbox/interactive-builder/ButtonTypeHelpers.tsx`<br>`src/components/inbox/interactive-builder/useInteractiveMessage.ts`<br>… +2 |
+| `type` | `buy_signal` | escreve | `supabase/functions/_shared/copilot-tick.ts` |
+| `type` | `call` | compara, escreve | `src/components/inbox/InteractiveMessage.tsx`<br>`src/components/inbox/InteractiveMessageBuilder.tsx`<br>`src/components/inbox/interactive-builder/ButtonTypeHelpers.tsx`<br>`src/components/inbox/interactive-builder/useInteractiveMessage.ts`<br>`src/lib/journey/mappers.ts`<br>… +1 |
 | `type` | `card` | compara, escreve | `src/components/ui/micro-interactions/skeletons.tsx`<br>`src/hooks/copilot/useDataMasking.ts`<br>`src/hooks/copilot/usePIIDetector.ts` |
 | `type` | `category` | compara, escreve | `src/components/catalog/ExternalProductManagement.tsx` |
 | `type` | `cep` | escreve | `src/hooks/copilot/useDataMasking.ts` |
@@ -1414,19 +1412,18 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `type` | `cnpj` | escreve | `src/hooks/copilot/useDataMasking.ts`<br>`src/hooks/copilot/usePIIDetector.ts` |
 | `type` | `code` | compara, escreve | `src/components/inbox/MessagePreview.tsx` |
 | `type` | `company` | compara, escreve | `src/components/contacts/ContactSearchWithSuggestions.tsx` |
-| `type` | `competitor_mention` | escreve | `analise-prs/resgate-261118-lote3/claude/feat-radar-motor-telas-261101-1330/supabase/functions/_shared/copilot-tick.ts`<br>`analise-prs/resgate-261118-lote3/claude/radar-motor-copilot-live-301030/supabase/functions/_shared/copilot-tick.ts`<br>`analise-prs/resgate-261118-lote3/resolve-2381-from-main/supabase/functions/_shared/copilot-tick.ts`<br>`supabase/functions/_shared/copilot-tick.ts` |
+| `type` | `competitor_mention` | escreve | `supabase/functions/_shared/copilot-tick.ts` |
 | `type` | `complete_tasks` | escreve | `src/hooks/chat/useNextBestAction.ts` |
 | `type` | `condition` | compara | `src/components/chatbot/ChatbotFlowEditor.tsx`<br>`src/components/chatbot/ChatbotNodeDialogs.tsx`<br>`src/components/chatbot/chatbotNodeConfig.ts` |
 | `type` | `confetti` | compara, escreve | `src/components/effects/Confetti.tsx` |
-| `type` | `connection` | compara, escreve | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/hooks/system/useDiagnosticsData.ts`<br>`analise-prs/resgate-261118-lote3/claude/kind-gates-87mwoe/src/hooks/system/useDiagnosticsData.ts`<br>`analise-prs/resgate-261118-lote3/claude/magical-pasteur-iz2pgy/src/hooks/system/useDiagnosticsData.ts`<br>`analise-prs/resgate-261118-lote3/claude_05/festive-carson-ub43wu/src/hooks/system/useDiagnosticsData.ts`<br>`analise-prs/resgate-261118-lote3/fix/ci-verde-261021/src/hooks/chat/useConversationActions.ts`<br>… +2 |
-| `type` | `connection_alert` | escreve | `analise-prs/resgate-261118-lote3/codex/publish-followup-20261021/supabase/functions/connection-health-check/index.ts`<br>`analise-prs/resgate-261118-lote3/fix/ci-verde-261021/supabase/functions/connection-health-check/index.ts`<br>`analise-prs/resgate-261118-lote3/fix/ci-workflows-vermelhos/supabase/functions/connection-health-check/index.ts`<br>`supabase/functions/connection-health-check/index.ts` |
+| `type` | `connection` | compara, escreve | `src/hooks/chat/useConversationActions.ts`<br>`src/hooks/system/useDiagnosticsData.ts` |
+| `type` | `connection_alert` | escreve | `supabase/functions/connection-health-check/index.ts` |
 | `type` | `contact` | compara, escreve | `src/components/inbox/chat/useChatPanelHandlers.ts`<br>`src/components/inbox/search/GlobalSearchResults.tsx`<br>`src/components/inbox/useGlobalSearchData.ts`<br>`src/hooks/chat/useForwardMedia.ts`<br>`src/hooks/chat/useForwardMessage.ts`<br>… +1 |
 | `type` | `counter` | escreve | `supabase/functions/_shared/observability.ts` |
 | `type` | `cpf` | escreve | `src/hooks/copilot/useDataMasking.ts`<br>`src/hooks/copilot/usePIIDetector.ts` |
 | `type` | `created` | escreve | `src/components/contacts/ContactActivityTimeline.tsx` |
-| `type` | `critical` | compara, escreve | `analise-prs/resgate-261118-lote3/claude/kind-gates-87mwoe/src/hooks/business/useWarRoomData.ts`<br>`src/components/dashboard/WarRoomDashboard.tsx`<br>`src/components/dashboard/war-room/WarRoomAlertRow.tsx`<br>`src/hooks/business/useWarRoomData.ts` |
+| `type` | `critical` | compara, escreve | `src/components/dashboard/WarRoomDashboard.tsx`<br>`src/components/dashboard/war-room/WarRoomAlertRow.tsx`<br>`src/hooks/business/useWarRoomData.ts` |
 | `type` | `crm` | compara, escreve | `src/components/inbox/search/GlobalSearchResults.tsx`<br>`src/components/inbox/useGlobalSearchData.ts` |
-| `type` | `cross_sell` | escreve | `analise-prs/resgate-261118-lote3/claude/feat-copiloto-edge-fases8-10-261024-1700/supabase/functions/ai-product-recommendation/index.ts` |
 | `type` | `crosssell` | escreve | `src/hooks/copilot/useUpsellSuggestion.ts` |
 | `type` | `csp-violation` | compara, escreve | `supabase/functions/csp-report/index.ts` |
 | `type` | `custom_emojis` | compara | `src/components/settings/media-library/useMediaLibrary.ts` |
@@ -1434,11 +1431,11 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `type` | `dashboard` | compara | `src/components/performance/LazyRoutes.tsx` |
 | `type` | `data_unavailable` | escreve | `src/hooks/chat/useNextBestAction.ts` |
 | `type` | `date` | compara, escreve | `src/components/email/EmailChatThread.tsx` |
-| `type` | `deadline_request` | escreve | `analise-prs/resgate-261118-lote3/claude/feat-radar-motor-telas-261101-1330/supabase/functions/_shared/copilot-tick.ts`<br>`analise-prs/resgate-261118-lote3/claude/radar-motor-copilot-live-301030/supabase/functions/_shared/copilot-tick.ts`<br>`analise-prs/resgate-261118-lote3/resolve-2381-from-main/supabase/functions/_shared/copilot-tick.ts`<br>`supabase/functions/_shared/copilot-tick.ts` |
+| `type` | `deadline_request` | escreve | `supabase/functions/_shared/copilot-tick.ts` |
 | `type` | `deal` | escreve | `src/lib/journey/mappers.ts` |
 | `type` | `delay` | compara | `src/components/chatbot/ChatbotFlowEditor.tsx`<br>`src/components/chatbot/ChatbotNodeDialogs.tsx` |
-| `type` | `delete` | compara, escreve | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/team-chat/useTeamChatPanel.ts`<br>`analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/hooks/team-chat/useTeamMessages.ts`<br>`src/components/team-chat/useTeamChatPanel.ts`<br>`src/hooks/team-chat/useTeamMessages.ts` |
-| `type` | `department` | compara | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/team-chat/useTeamChatPanel.ts`<br>`src/components/team-chat/useTeamChatPanel.ts`<br>`src/hooks/team-chat/useTeamChatMutations.ts`<br>`src/lib/teamChatRules.ts` |
+| `type` | `delete` | compara, escreve | `src/components/team-chat/useTeamChatPanel.ts`<br>`src/hooks/team-chat/useTeamMessages.ts` |
+| `type` | `department` | compara | `src/components/team-chat/useTeamChatPanel.ts`<br>`src/hooks/team-chat/useTeamChatMutations.ts`<br>`src/lib/teamChatRules.ts` |
 | `type` | `description` | compara, escreve | `src/components/talkx/segments/TalkXSegmentBuilder.tsx`<br>`src/components/talkx/segments/segmentBuilderReducer.ts` |
 | `type` | `detail` | escreve | `src/lib/journey/mappers.ts` |
 | `type` | `direct` | compara, escreve | `src/components/inbox/AISuggestions.tsx`<br>`src/components/team-chat/TeamConversationList.tsx`<br>`src/components/team-chat/TeamMemberDetails.tsx`<br>`src/hooks/team-chat/useTeamChatMutations.ts`<br>`src/hooks/team-chat/useTeamConversations.ts`<br>… +1 |
@@ -1449,16 +1446,14 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `type` | `email_change` | compara | `src/pages/VerifyEmail.tsx` |
 | `type` | `emoji` | compara | `src/components/team-chat/teamChatParts.tsx` |
 | `type` | `empathetic` | compara | `src/components/inbox/AISuggestions.tsx` |
-| `type` | `error` | compara, escreve | `src/hooks/ui/useLoadingState.ts` |
+| `type` | `error` | compara, escreve | `src/components/contacts/ContactEmptyState.tsx`<br>`src/hooks/ui/useLoadingState.ts` |
 | `type` | `escalate` | escreve | `src/hooks/chat/useNextBestAction.ts` |
 | `type` | `event` | escreve | `src/lib/web-vitals.ts` |
 | `type` | `explicit` | compara, escreve | `src/components/copilot/RadarPhase10Panel.tsx`<br>`src/hooks/copilot/usePurchaseSignals.ts` |
-| `type` | `fail` | escreve | `analise-prs/resgate-261118-lote3/claude/test-e2e-suite-completa-261104-1428/scripts/ci/e2e-isolated-results.unit.mjs` |
 | `type` | `featured` | compara, escreve | `src/components/catalog/ExternalProductManagement.tsx` |
 | `type` | `file` | compara | `src/components/inbox/chat/useChatPanelHandlers.ts` |
 | `type` | `filtered-empty` | compara | `src/components/contacts/ContactEmptyState.tsx` |
 | `type` | `first-input` | escreve | `src/hooks/analytics/usePerformanceOptimizations.ts`<br>`src/lib/web-vitals.ts` |
-| `type` | `fixme` | escreve | `analise-prs/resgate-261118-lote3/claude/test-e2e-suite-completa-261104-1428/scripts/ci/e2e-isolated-results.unit.mjs`<br>`analise-prs/resgate-261118-lote3/claude/test-e2e-suite-completa-261104-1428/scripts/ci/e2e-isolated-runtime.unit.mjs` |
 | `type` | `follow_up` | escreve | `src/hooks/chat/useNextBestAction.ts` |
 | `type` | `followup` | compara | `src/components/inbox/AISuggestions.tsx` |
 | `type` | `form` | compara | `src/components/performance/LazyRoutes.tsx` |
@@ -1473,17 +1468,15 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `type` | `hour` | compara | `src/lib/localDay.ts` |
 | `type` | `hydrate` | compara, escreve | `src/hooks/tasks/useTasksFilters.ts` |
 | `type` | `idle` | compara, escreve | `src/hooks/ui/useLoadingState.ts` |
-| `type` | `image` | compara, escreve | `analise-prs/resgate-261118-lote3/claude/test-e2e-suite-completa-261104-1428/scripts/ci/e2e-isolated-provider-readiness.unit.mjs`<br>`src/components/inbox/ForwardMessageDialog.tsx`<br>`src/components/inbox/InteractiveMessage.tsx`<br>`src/components/inbox/LinkPreview.tsx`<br>`src/components/inbox/ReplyQuote.tsx`<br>… +13 |
+| `type` | `image` | compara, escreve | `src/components/inbox/AIConversationAssistant.tsx`<br>`src/components/inbox/ForwardMessageDialog.tsx`<br>`src/components/inbox/InteractiveMessage.tsx`<br>`src/components/inbox/LinkPreview.tsx`<br>`src/components/inbox/ReplyQuote.tsx`<br>… +13 |
 | `type` | `image_url` | compara, escreve | `analise-prs/resgate-regra8-261118/supabase/functions/ai-multimodal-analysis/index.ts`<br>`supabase/functions/_shared/ai-generate.ts`<br>`supabase/functions/_shared/ai-image-input.ts`<br>`supabase/functions/ai-multimodal-analysis/index.ts`<br>`supabase/functions/classify-emoji/index.ts`<br>… +1 |
 | `type` | `implicit` | escreve | `src/hooks/copilot/usePurchaseSignals.ts` |
 | `type` | `incoming_call` | compara, escreve | `src/hooks/communication/useIncomingCallListener.ts`<br>`supabase/functions/_shared/notification-events.ts` |
 | `type` | `info` | escreve | `src/hooks/system/useNotifications.ts` |
-| `type` | `input_audio` | escreve | `supabase/functions/_shared/ai-audio-input.ts`<br>`supabase/functions/classify-audio-meme/index.ts` |
-| `type` | `insert` | escreve | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/hooks/team-chat/useTeamMessages.ts` |
+| `type` | `input_audio` | escreve | `supabase/functions/_shared/ai-audio-input.ts`<br>`supabase/functions/ai-transcribe-audio/openrouter-stt.ts`<br>`supabase/functions/classify-audio-meme/index.ts` |
 | `type` | `integer` | escreve | `analise-prs/resgate-261115/auditoria/ferramentas/auditar-pr.js`<br>`analise-prs/resgate-261115/auditoria/ferramentas/auditar-veredito.js` |
 | `type` | `interactive` | compara | `src/components/inbox/ForwardMessageDialog.tsx`<br>`src/components/inbox/chat/MessageBubble.tsx` |
 | `type` | `isNew` | compara, escreve | `src/components/catalog/ExternalProductManagement.tsx` |
-| `type` | `issue` | escreve | `analise-prs/resgate-261118-lote3/claude/test-e2e-suite-completa-261104-1428/scripts/ci/e2e-isolated-results.unit.mjs` |
 | `type` | `italic` | compara, escreve | `src/components/inbox/MessagePreview.tsx` |
 | `type` | `keyword` | escreve | `src/components/automations/automationConstants.ts` |
 | `type` | `konami` | compara, escreve | `src/components/effects/EasterEggs.tsx` |
@@ -1498,11 +1491,11 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `type` | `load` | compara, escreve | `src/components/talkx/segments/segmentBuilderReducer.ts` |
 | `type` | `loading` | compara, escreve | `src/components/ui/accessible-toast.tsx`<br>`src/components/ui/micro-interactions/feedback.tsx`<br>`src/hooks/ui/useLoadingState.ts` |
 | `type` | `location` | compara | `src/components/inbox/ReplyQuote.tsx`<br>`src/components/inbox/chat/MessageBubble.tsx` |
-| `type` | `logo_sent` | escreve | `analise-prs/resgate-261118-lote3/claude/feat-radar-motor-telas-261101-1330/supabase/functions/_shared/copilot-tick.ts`<br>`analise-prs/resgate-261118-lote3/claude/radar-motor-copilot-live-301030/supabase/functions/_shared/copilot-tick.ts`<br>`analise-prs/resgate-261118-lote3/resolve-2381-from-main/supabase/functions/_shared/copilot-tick.ts`<br>`supabase/functions/_shared/copilot-tick.ts` |
+| `type` | `logo_sent` | escreve | `supabase/functions/_shared/copilot-tick.ts` |
 | `type` | `longtask` | escreve | `src/lib/web-vitals.ts` |
 | `type` | `lowStock` | compara, escreve | `src/components/catalog/ExternalProductManagement.tsx` |
-| `type` | `magiclink` | escreve | `analise-prs/resgate-261118-lote3/fix/ci-workflows-vermelhos/supabase/functions/webauthn/index.ts`<br>`src/hooks/auth/useAuthForm.ts`<br>`supabase/functions/webauthn/index.ts` |
-| `type` | `message` | compara, escreve | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/inbox/RealtimeInboxView.tsx`<br>`analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/hooks/system/useDiagnosticsData.ts`<br>`analise-prs/resgate-261118-lote3/claude/kind-gates-87mwoe/src/hooks/system/useDiagnosticsData.ts`<br>`analise-prs/resgate-261118-lote3/claude/magical-pasteur-iz2pgy/src/hooks/system/useDiagnosticsData.ts`<br>`analise-prs/resgate-261118-lote3/claude_05/festive-carson-ub43wu/src/hooks/system/useDiagnosticsData.ts`<br>… +8 |
+| `type` | `magiclink` | escreve | `src/hooks/auth/useAuthForm.ts`<br>`supabase/functions/webauthn/index.ts` |
+| `type` | `message` | compara, escreve | `src/components/chatbot/ChatbotNodeDialogs.tsx`<br>`src/components/email/EmailChatThread.tsx`<br>`src/components/inbox/RealtimeInboxView.tsx`<br>`src/components/inbox/search/GlobalSearchResults.tsx`<br>`src/components/inbox/useGlobalSearchData.ts`<br>… +3 |
 | `type` | `message_in` | compara | `src/components/monitoring/MonitoringEventTimeline.tsx` |
 | `type` | `message_out` | compara | `src/components/monitoring/MonitoringEventTimeline.tsx` |
 | `type` | `message_sent` | escreve | `src/components/contacts/ContactActivityTimeline.tsx` |
@@ -1515,34 +1508,32 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `type` | `no-contacts` | compara, escreve | `src/components/contacts/ContactEmptyState.tsx` |
 | `type` | `no-results` | compara | `src/components/contacts/ContactEmptyState.tsx` |
 | `type` | `note` | escreve | `src/components/contacts/ContactActivityTimeline.tsx`<br>`src/lib/journey/mappers.ts` |
-| `type` | `number` | compara, escreve | `analise-prs/resgate-261118-lote3/hermes/robustez-primitivos-ui-2610121626bec5-2610141859e423/src/components/connections/IntegrationsPanel.tsx`<br>`analise-prs/resgate-261118-lote3/hermes/telefonia-fase8-motion-a11y-responsivo-2610031530007c/src/components/connections/IntegrationsPanel.tsx`<br>`supabase/functions/ai-conversation-analysis/index.ts`<br>`supabase/functions/ai-conversation-summary/index.ts` |
+| `type` | `number` | escreve | `supabase/functions/ai-conversation-analysis/index.ts`<br>`supabase/functions/ai-conversation-summary/index.ts` |
 | `type` | `object` | escreve | `analise-prs/resgate-261115/auditoria/ferramentas/auditar-pr.js`<br>`analise-prs/resgate-261115/auditoria/ferramentas/auditar-veredito.js`<br>`supabase/functions/_shared/ai-conversation-pipeline.ts`<br>`supabase/functions/ai-conversation-analysis/index.ts`<br>`supabase/functions/ai-conversation-summary/index.ts`<br>… +1 |
-| `type` | `objection` | escreve | `analise-prs/resgate-261118-lote3/claude/feat-radar-motor-telas-261101-1330/supabase/functions/_shared/copilot-tick.ts`<br>`analise-prs/resgate-261118-lote3/claude/radar-motor-copilot-live-301030/supabase/functions/_shared/copilot-tick.ts`<br>`analise-prs/resgate-261118-lote3/resolve-2381-from-main/supabase/functions/_shared/copilot-tick.ts`<br>`supabase/functions/_shared/copilot-tick.ts` |
+| `type` | `objection` | escreve | `supabase/functions/_shared/copilot-tick.ts` |
 | `type` | `onlyInStock` | compara, escreve | `src/components/catalog/ExternalProductManagement.tsx` |
 | `type` | `ordered-list` | compara | `src/components/inbox/chat/RichTextToolbar.tsx` |
-| `type` | `owner` | escreve | `analise-prs/resgate-261118-lote3/claude/test-e2e-suite-completa-261104-1428/scripts/ci/e2e-isolated-results.unit.mjs` |
 | `type` | `paint` | escreve | `src/hooks/analytics/usePerformanceOptimizations.ts`<br>`src/lib/web-vitals.ts` |
 | `type` | `party` | compara | `src/components/effects/EasterEggs.tsx` |
 | `type` | `phone` | compara, escreve | `src/components/inbox/InteractiveMessage.tsx`<br>`src/hooks/copilot/useDataMasking.ts`<br>`src/hooks/copilot/usePIIDetector.ts` |
 | `type` | `price_negotiation_won` | escreve | `src/hooks/copilot/useLearningMoment.ts` |
-| `type` | `price_request` | escreve | `analise-prs/resgate-261118-lote3/claude/feat-radar-motor-telas-261101-1330/supabase/functions/_shared/copilot-tick.ts`<br>`analise-prs/resgate-261118-lote3/claude/radar-motor-copilot-live-301030/supabase/functions/_shared/copilot-tick.ts`<br>`analise-prs/resgate-261118-lote3/resolve-2381-from-main/supabase/functions/_shared/copilot-tick.ts`<br>`supabase/functions/_shared/copilot-tick.ts` |
+| `type` | `price_request` | escreve | `supabase/functions/_shared/copilot-tick.ts` |
 | `type` | `prio` | compara, escreve | `src/hooks/tasks/useTasksFilters.ts` |
-| `type` | `product` | escreve | `analise-prs/resgate-261118-lote3/claude/feat-copiloto-edge-fases8-10-261024-1700/supabase/functions/ai-multimodal-analysis/index.ts` |
 | `type` | `ptt` | escreve | `supabase/functions/_shared/evolution-go-routes.ts` |
 | `type` | `ptv` | escreve | `supabase/functions/_shared/evolution-go-routes.ts` |
-| `type` | `public-key` | compara, escreve | `analise-prs/resgate-261118-lote3/fix/ci-workflows-vermelhos/supabase/functions/webauthn/index.ts`<br>`supabase/functions/webauthn/index.ts` |
+| `type` | `public-key` | compara, escreve | `supabase/functions/webauthn/index.ts` |
 | `type` | `question` | compara | `src/components/chatbot/ChatbotFlowEditor.tsx`<br>`src/components/chatbot/ChatbotNodeDialogs.tsx` |
-| `type` | `queue` | compara | `analise-prs/resgate-261118-lote3/claude/feat-copiloto-edges-261101-1330/src/hooks/inbox/useInboxBulkActions.ts`<br>`analise-prs/resgate-261118-lote3/claude/fix-radar-fase6-cv056-shortcuts-261108-2335/src/components/inbox/ChatPanel.tsx`<br>`analise-prs/resgate-261118-lote3/claude/kind-gates-87mwoe/src/hooks/inbox/useInboxBulkActions.ts`<br>`analise-prs/resgate-261118-lote3/fix/ci-verde-261021/src/components/inbox/ChatPanel.tsx`<br>`analise-prs/resgate-261118-lote3/fix/ci-verde-261021/src/hooks/chat/useConversationActions.ts`<br>… +4 |
+| `type` | `queue` | compara | `src/components/inbox/ChatPanel.tsx`<br>`src/hooks/chat/useConversationActions.ts`<br>`src/hooks/inbox/useInboxBulkActions.ts` |
 | `type` | `queues` | compara, escreve | `src/components/dashboard/DashboardWidgetRenderer.tsx`<br>`src/hooks/analytics/useDashboardWidgets.ts` |
 | `type` | `reactivation` | escreve | `src/hooks/integrations/useTalkXInsights.ts` |
 | `type` | `readself` | compara | `supabase/functions/_shared/evolution-go-adapter.ts` |
 | `type` | `redo` | compara, escreve | `src/components/talkx/segments/TalkXSegmentBuilder.tsx`<br>`src/components/talkx/segments/segmentBuilderReducer.ts` |
-| `type` | `registration` | escreve, filtra | `analise-prs/resgate-261118-lote3/fix/ci-workflows-vermelhos/supabase/functions/webauthn/index.ts`<br>`supabase/functions/webauthn/index.ts` |
+| `type` | `registration` | escreve, filtra | `supabase/functions/webauthn/index.ts` |
 | `type` | `reminder_due` | compara, escreve | `src/components/notifications/NotificationItem.tsx`<br>`src/hooks/system/useNotifications.ts`<br>`src/hooks/tasks/useWorkItemNotifications.ts` |
-| `type` | `remove` | compara | `analise-prs/resgate-261118-lote3/fix/ci-verde-261021/supabase/functions/_shared/evolution-webhook-handlers.ts`<br>`analise-prs/resgate-261118-lote3/fix/ci-workflows-vermelhos/supabase/functions/_shared/evolution-webhook-handlers.ts`<br>`supabase/functions/_shared/evolution-webhook-handlers.ts` |
+| `type` | `remove` | compara | `supabase/functions/_shared/evolution-webhook-handlers.ts` |
 | `type` | `removeGroup` | compara, escreve | `src/components/talkx/segments/TalkXSegmentBuilder.tsx`<br>`src/components/talkx/segments/segmentBuilderReducer.ts` |
 | `type` | `removeRule` | compara, escreve | `src/components/talkx/segments/TalkXSegmentBuilder.tsx`<br>`src/components/talkx/segments/segmentBuilderReducer.ts` |
-| `type` | `reply` | compara, escreve | `analise-prs/resgate-261118-lote3/claude/feat-message-delivery-post-iniciado-261101-1937/supabase/functions/message-delivery/index.ts`<br>`src/components/inbox/InteractiveMessage.tsx`<br>`src/components/inbox/InteractiveMessageBuilder.tsx`<br>`src/components/inbox/interactive-builder/ButtonTypeHelpers.tsx`<br>`src/components/inbox/interactive-builder/useInteractiveMessage.ts`<br>… +4 |
+| `type` | `reply` | compara, escreve | `src/components/inbox/InteractiveMessage.tsx`<br>`src/components/inbox/InteractiveMessageBuilder.tsx`<br>`src/components/inbox/interactive-builder/ButtonTypeHelpers.tsx`<br>`src/components/inbox/interactive-builder/useInteractiveMessage.ts`<br>`src/components/talkx/TalkXInteractiveEditor.tsx`<br>… +3 |
 | `type` | `reset` | compara, escreve | `src/components/talkx/segments/TalkXSegmentBuilder.tsx`<br>`src/components/talkx/segments/segmentBuilderReducer.ts` |
 | `type` | `resolve_pending` | escreve | `src/hooks/chat/useNextBestAction.ts` |
 | `type` | `respond` | escreve | `src/hooks/chat/useNextBestAction.ts` |
@@ -1554,35 +1545,34 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `type` | `select` | escreve | `src/lib/zappSchemas.ts` |
 | `type` | `send_message` | escreve | `src/components/automations/automationConstants.ts` |
 | `type` | `send_notification` | escreve | `src/components/automations/automationConstants.ts` |
-| `type` | `sent` | escreve | `analise-prs/resgate-261118-lote3/hermes/robustez-primitivos-ui-2610121626bec5-2610141859e423/src/hooks/gamification/mutations.ts` |
 | `type` | `sentiment_alert` | compara, escreve | `src/hooks/inbox/useRealtimeSentimentAlerts.ts`<br>`supabase/functions/_shared/notification-events.ts`<br>`supabase/functions/sentiment-alert/index.ts` |
 | `type` | `setMatch` | compara, escreve | `src/components/talkx/segments/TalkXSegmentBuilder.tsx`<br>`src/components/talkx/segments/segmentBuilderReducer.ts` |
 | `type` | `signup` | compara, escreve | `src/pages/VerifyEmail.tsx` |
 | `type` | `silent` | escreve | `src/hooks/copilot/useStallDetector.ts` |
-| `type` | `skip` | compara, escreve | `analise-prs/resgate-261118-lote3/claude/test-e2e-suite-completa-261104-1428/scripts/ci/e2e-isolated-results.unit.mjs`<br>`analise-prs/resgate-261118-lote3/claude/test-e2e-suite-completa-261104-1428/scripts/ci/e2e-isolated-runtime.unit.mjs`<br>`analise-prs/resgate-261118-lote3/claude/test-e2e-suite-completa-261104-1428/scripts/e2e-isolated/results.mjs` |
 | `type` | `sort` | compara, escreve | `src/components/catalog/ExternalProductManagement.tsx` |
-| `type` | `spring` | escreve | `analise-prs/resgate-261118-lote3/claude/feat-message-delivery-post-iniciado-261101-1937/src/components/inbox/chat/SendErrorBanner.tsx`<br>`analise-prs/resgate-261118-lote3/claude/feat-message-delivery-post-iniciado-261101-1937/src/components/inbox/chat/UnconfirmedMessagesPanel.tsx`<br>`analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/inbox/VoiceChangerPicker.tsx`<br>`analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/inbox/WhisperMode.tsx`<br>`analise-prs/resgate-261118-lote3/hermes/robustez-primitivos-ui-2610121626bec5-2610141859e423/src/components/BulkActionsBar.tsx`<br>… +63 |
+| `type` | `spring` | escreve | `src/components/calls/IncomingCallAlert.tsx`<br>`src/components/contacts/ContactDialogs.tsx`<br>`src/components/contacts/ContactTypeTabs.tsx`<br>`src/components/contacts/ContactViewSwitcher.tsx`<br>`src/components/dashboard/DashboardWidgetRenderer.tsx`<br>… +50 |
 | `type` | `star` | compara | `src/components/effects/Confetti.tsx` |
 | `type` | `start` | compara, escreve | `src/components/chatbot/ChatbotFlowEditor.tsx`<br>`src/hooks/integrations/useChatbotFlows.ts` |
 | `type` | `stat` | compara | `src/components/ui/micro-interactions/skeletons.tsx` |
 | `type` | `stats` | compara, escreve | `src/components/dashboard/DashboardWidgetRenderer.tsx`<br>`src/hooks/analytics/useDashboardWidgets.ts` |
 | `type` | `sticker` | compara | `src/components/inbox/MediaPreview.tsx`<br>`src/components/inbox/ReplyQuote.tsx`<br>`src/components/inbox/chat/MessageBubble.tsx`<br>`src/components/inbox/media-gallery/MediaPreviewDialog.tsx`<br>`src/components/inbox/tabs/FileDetailPanel.tsx`<br>… +3 |
 | `type` | `stickers` | compara | `src/components/settings/media-library/useMediaLibrary.ts`<br>`src/components/settings/media-library/useMediaUpload.ts` |
-| `type` | `string` | compara, escreve | `analise-prs/resgate-261115/auditoria/ferramentas/auditar-pr.js`<br>`analise-prs/resgate-261115/auditoria/ferramentas/auditar-veredito.js`<br>`analise-prs/resgate-261118-lote3/claude/feat-message-delivery-post-iniciado-261101-1937/supabase/functions/message-delivery/index.ts`<br>`analise-prs/resgate-261118-lote3/claude/test-e2e-suite-completa-261104-1428/scripts/e2e-isolated/results.mjs`<br>`analise-prs/resgate-261118-lote3/fix/ci-verde-261021/supabase/functions/evolution-api/index.ts`<br>… +7 |
+| `type` | `string` | compara, escreve | `analise-prs/resgate-261115/auditoria/ferramentas/auditar-pr.js`<br>`analise-prs/resgate-261115/auditoria/ferramentas/auditar-veredito.js`<br>`supabase/functions/_shared/ai-conversation-pipeline.ts`<br>`supabase/functions/ai-conversation-analysis/index.ts`<br>`supabase/functions/ai-conversation-summary/index.ts`<br>… +4 |
 | `type` | `style` | compara | `src/hooks/performance/useDataOptimization.ts` |
 | `type` | `success` | compara, escreve | `src/components/ui/micro-interactions/feedback.tsx`<br>`src/hooks/ui/useLoadingState.ts` |
 | `type` | `successful_close` | escreve | `src/hooks/copilot/useLearningMoment.ts` |
+| `type` | `suggestRules` | compara, escreve | `src/components/talkx/segments/TalkXSegmentBuilder.tsx`<br>`src/components/talkx/segments/segmentBuilderReducer.ts` |
 | `type` | `suggestion` | escreve | `src/components/inbox/copilot/InsightCard.tsx` |
 | `type` | `supplier` | compara, escreve | `src/components/catalog/ExternalProductManagement.tsx` |
 | `type` | `support` | escreve | `src/components/admin/TrainingMode.tsx` |
-| `type` | `svg` | escreve | `analise-prs/resgate-261118-lote3/fix/ci-verde-261021/supabase/functions/evolution-api/index.ts`<br>`supabase/functions/evolution-api/index.ts` |
-| `type` | `system` | compara, escreve | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/hooks/system/useDiagnosticsData.ts`<br>`analise-prs/resgate-261118-lote3/claude/kind-gates-87mwoe/src/hooks/system/useDiagnosticsData.ts`<br>`analise-prs/resgate-261118-lote3/claude/magical-pasteur-iz2pgy/src/hooks/system/useDiagnosticsData.ts`<br>`analise-prs/resgate-261118-lote3/claude_05/festive-carson-ub43wu/src/hooks/system/useDiagnosticsData.ts`<br>`analise-prs/resgate-261118-lote3/claude_pink/cool-dijkstra-xk9ek2/supabase/functions/_shared/gmail-helpers.ts`<br>… +5 |
+| `type` | `svg` | escreve | `supabase/functions/evolution-api/index.ts` |
+| `type` | `system` | compara, escreve | `src/hooks/system/useDiagnosticsData.ts`<br>`supabase/functions/_shared/gmail-helpers.ts`<br>`supabase/functions/gmail-sync/index.ts` |
 | `type` | `tag` | escreve | `src/components/contacts/ContactSearchWithSuggestions.tsx` |
 | `type` | `tag_added` | escreve | `src/components/automations/automationConstants.ts` |
 | `type` | `task` | escreve | `src/lib/journey/mappers.ts` |
-| `type` | `team_chat` | compara, escreve | `analise-prs/resgate-261118-lote3/claude/fix-unit-tests-src-261024-1630/src/hooks/chat/useTeamChatNotifications.ts`<br>`analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/hooks/chat/useTeamChatNotifications.ts`<br>`analise-prs/resgate-261118-lote3/claude/magical-pasteur-iz2pgy/src/hooks/chat/useTeamChatNotifications.ts`<br>`analise-prs/resgate-261118-lote3/claude_05/festive-carson-ub43wu/src/hooks/chat/useTeamChatNotifications.ts`<br>`src/hooks/chat/useTeamChatNotifications.ts` |
+| `type` | `team_chat` | compara, escreve | `src/hooks/chat/useTeamChatNotifications.ts` |
 | `type` | `template` | escreve | `src/hooks/integrations/useTalkXInsights.ts` |
-| `type` | `text` | compara, escreve | `analise-prs/resgate-261118-lote3/claude/feat-message-delivery-post-iniciado-261101-1937/src/components/inbox/chat/SendErrorBanner.tsx`<br>`analise-prs/resgate-261118-lote3/hermes/robustez-primitivos-ui-2610121626bec5-2610141859e423/src/components/inbox/MessageContextMenu.tsx`<br>`analise-prs/resgate-regra8-261118/supabase/functions/ai-multimodal-analysis/index.ts`<br>`src/components/catalog/sendTemplatePayload.ts`<br>`src/components/inbox/AdvancedMessageMenu.tsx`<br>… +17 |
+| `type` | `text` | compara, escreve | `analise-prs/resgate-regra8-261118/supabase/functions/ai-multimodal-analysis/index.ts`<br>`src/components/catalog/sendTemplatePayload.ts`<br>`src/components/inbox/AdvancedMessageMenu.tsx`<br>`src/components/inbox/ForwardMessageDialog.tsx`<br>`src/components/inbox/InteractiveMessage.tsx`<br>… +16 |
 | `type` | `time_inactive` | escreve | `src/components/automations/automationConstants.ts` |
 | `type` | `timing` | escreve | `src/hooks/integrations/useTalkXInsights.ts` |
 | `type` | `toggleAlarm` | compara, escreve | `src/hooks/tasks/useTasksFilters.ts` |
@@ -1590,17 +1580,17 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `type` | `totp` | escreve | `src/hooks/auth/useMFA.ts` |
 | `type` | `transcription` | compara, escreve | `src/components/inbox/search/GlobalSearchResults.tsx`<br>`src/components/inbox/useGlobalSearchData.ts` |
 | `type` | `transfer` | compara | `src/components/chatbot/ChatbotFlowEditor.tsx`<br>`src/components/chatbot/ChatbotNodeDialogs.tsx`<br>`src/components/chatbot/chatbotNodeConfig.ts` |
-| `type` | `unanswered_question` | escreve | `analise-prs/resgate-261118-lote3/claude/feat-radar-motor-telas-261101-1330/supabase/functions/_shared/copilot-tick.ts`<br>`analise-prs/resgate-261118-lote3/claude/radar-motor-copilot-live-301030/supabase/functions/_shared/copilot-tick.ts`<br>`analise-prs/resgate-261118-lote3/resolve-2381-from-main/supabase/functions/_shared/copilot-tick.ts`<br>`supabase/functions/_shared/copilot-tick.ts` |
+| `type` | `unanswered_question` | escreve | `supabase/functions/_shared/copilot-tick.ts` |
+| `type` | `unavailable` | compara | `src/components/contacts/ContactEmptyState.tsx` |
 | `type` | `undo` | compara, escreve | `src/components/talkx/segments/TalkXSegmentBuilder.tsx`<br>`src/components/talkx/segments/segmentBuilderReducer.ts` |
 | `type` | `unsupported` | compara | `src/components/inbox/chat/MessageBubble.tsx`<br>`src/components/inbox/chat/MessageBubbleUnsupported.tsx`<br>`src/types/chat.ts` |
-| `type` | `update` | compara, escreve | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/team-chat/useTeamChatPanel.ts`<br>`analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/hooks/team-chat/useTeamMessages.ts`<br>`src/hooks/team-chat/useTeamMessages.ts` |
+| `type` | `update` | escreve | `src/hooks/team-chat/useTeamMessages.ts` |
 | `type` | `updateRule` | compara, escreve | `src/components/talkx/segments/TalkXSegmentBuilder.tsx`<br>`src/components/talkx/segments/segmentBuilderReducer.ts` |
 | `type` | `upsell` | compara, escreve | `src/components/copilot/UpsellCard.tsx`<br>`src/hooks/chat/useNextBestAction.ts`<br>`src/hooks/copilot/useUpsellSuggestion.ts` |
 | `type` | `urgent_conversation` | escreve | `supabase/functions/ai-auto-tag/index.ts` |
-| `type` | `url` | compara, escreve | `analise-prs/resgate-261118-lote3/claude/feat-message-delivery-post-iniciado-261101-1937/supabase/functions/message-delivery/index.ts`<br>`src/components/inbox/InteractiveMessage.tsx`<br>`src/components/inbox/InteractiveMessageBuilder.tsx`<br>`src/components/inbox/interactive-builder/ButtonTypeHelpers.tsx`<br>`src/components/inbox/interactive-builder/useInteractiveMessage.ts`<br>… +1 |
+| `type` | `url` | compara, escreve | `src/components/inbox/InteractiveMessage.tsx`<br>`src/components/inbox/InteractiveMessageBuilder.tsx`<br>`src/components/inbox/interactive-builder/ButtonTypeHelpers.tsx`<br>`src/components/inbox/interactive-builder/useInteractiveMessage.ts`<br>`supabase/functions/message-delivery/index.ts` |
 | `type` | `video` | compara, escreve | `src/components/inbox/ForwardMessageDialog.tsx`<br>`src/components/inbox/LinkPreview.tsx`<br>`src/components/inbox/MediaPreview.tsx`<br>`src/components/inbox/ReplyQuote.tsx`<br>`src/components/inbox/chat/MessageBubble.tsx`<br>… +8 |
 | `type` | `voice_ai` | compara | `supabase/functions/_shared/multiplix-content.ts`<br>`supabase/functions/multiplix-dispatch/actions/inspect.ts` |
-| `type` | `volume` | compara, escreve | `analise-prs/resgate-261118-lote3/claude/test-e2e-suite-completa-261104-1428/scripts/ci/e2e-isolated-runtime.unit.mjs`<br>`analise-prs/resgate-261118-lote3/claude/test-e2e-suite-completa-261104-1428/scripts/e2e-isolated/run.mjs`<br>`analise-prs/resgate-261118-lote3/claude/test-e2e-tls-diagnostico-261104-1340/scripts/ci/e2e-isolated-runtime.unit.mjs`<br>`analise-prs/resgate-261118-lote3/claude/test-e2e-tls-diagnostico-261104-1340/scripts/e2e-isolated/run.mjs`<br>`analise-prs/resgate-261118-lote3/claude/test-e2e-webkit-tls-261104-1430/scripts/ci/e2e-isolated-runtime.unit.mjs`<br>… +1 |
 | `type` | `waiting_contacts` | escreve | `src/hooks/business/useQueueGoals.ts` |
 | `type` | `websearch` | escreve | `supabase/functions/promogifts-catalog/index.ts` |
 | `type` | `website` | escreve | `src/components/inbox/LinkPreview.tsx` |
@@ -1611,107 +1601,43 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `phase` | `error` | compara | `src/components/voice/VoiceOrb.tsx`<br>`src/components/voice/VoiceSearchOverlay.tsx`<br>`src/components/voice/usePhaseColors.ts` |
 | `phase` | `idle` | compara | `src/components/voice/VoiceOrb.tsx`<br>`src/components/voice/VoiceSearchOverlay.tsx`<br>`src/components/voice/usePhaseColors.ts` |
 | `phase` | `listening` | compara | `src/components/voice/AudioFrequencyVisualizer.tsx`<br>`src/components/voice/VoiceOrb.tsx`<br>`src/components/voice/VoiceSearchOverlay.tsx`<br>`src/components/voice/usePhaseColors.ts` |
-| `phase` | `preflight` | escreve | `analise-prs/resgate-261118-lote3/claude/test-e2e-suite-completa-261104-1428/scripts/e2e-isolated/run.mjs`<br>`analise-prs/resgate-261118-lote3/claude/test-e2e-tls-diagnostico-261104-1340/scripts/e2e-isolated/run.mjs`<br>`analise-prs/resgate-261118-lote3/claude/test-e2e-webkit-tls-261104-1430/scripts/e2e-isolated/run.mjs` |
 | `phase` | `processing` | compara | `src/components/voice/AudioFrequencyVisualizer.tsx`<br>`src/components/voice/VoiceOrb.tsx`<br>`src/components/voice/VoiceSearchOverlay.tsx`<br>`src/components/voice/VoiceTranscriptArea.tsx`<br>`src/components/voice/usePhaseColors.ts` |
 | `phase` | `speaking` | compara | `src/components/voice/AudioFrequencyVisualizer.tsx`<br>`src/components/voice/VoiceOrb.tsx`<br>`src/components/voice/VoiceSearchOverlay.tsx`<br>`src/components/voice/usePhaseColors.ts` |
-| `status` | `403` | compara | `src/lib/rlsError.ts` |
-| `status` | `CHANNEL_ERROR` | compara | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/hooks/communication/useAudioMemes.ts`<br>`src/hooks/communication/useAudioMemes.ts`<br>`src/hooks/realtime/useSupabaseRealtime.ts`<br>`src/hooks/team-chat/useTeamConversations.ts`<br>`src/hooks/team-chat/useTeamMessageReactions.ts`<br>… +2 |
-| `status` | `CLOSED` | compara | `src/hooks/realtime/useSupabaseRealtime.ts` |
-| `status` | `COMPLETED` | compara, escreve | `analise-prs/resgate-261118-lote3/claude/ga-ci-batch-ga49-ga54-ga60-ga64-231023/scripts/ci/fila-merge.mjs`<br>`analise-prs/resgate-261118-lote3/claude_04/trusting-newton-duiglt/scripts/ci/fila-merge.mjs`<br>`analise-prs/resgate-261118-lote3/claude_pink/cool-dijkstra-xk9ek2/scripts/ci/fila-merge.mjs`<br>`analise-prs/resgate-261118-lote3/claude_pink/cool-dijkstra-xk9ek2/scripts/ci/fila-merge.unit.mjs`<br>`analise-prs/resgate-261118-lote3/f3/strict-false-baseline-20261018/scripts/ci/fila-merge.unit.mjs` |
-| `status` | `DONE_VERIFIED` | compara, escreve | `analise-prs/resgate-261118-lote3/claude/fix-ga-resto-sonar-contracts-20261021-0726/scripts/talkx/v4-status.unit.mjs` |
-| `status` | `IMPLEMENTED_AWAITING_RUNTIME_EVIDENCE` | escreve | `analise-prs/resgate-261118-lote3/claude/feat-E90-main-failure-notify-261101-1730/scripts/ci/ci-docs-baseline.unit.mjs`<br>`analise-prs/resgate-261118-lote3/claude/wizardly-ride-dimxnt/scripts/ci/ci-docs-baseline.unit.mjs`<br>`analise-prs/resgate-261118-lote3/claude_pink/cool-dijkstra-xk9ek2/scripts/ci/ci-docs-baseline.unit.mjs`<br>`analise-prs/resgate-261118-lote3/codex/fix-failed-workflows-20261020/scripts/ci/ci-docs-baseline.unit.mjs`<br>`analise-prs/resgate-261118-lote3/codex/publish-followup-20261021/scripts/ci/ci-docs-baseline.unit.mjs`<br>… +2 |
-| `status` | `IN_PROGRESS` | compara, escreve | `analise-prs/resgate-261118-lote3/claude_pink/cool-dijkstra-xk9ek2/scripts/ci/fila-merge.mjs`<br>`analise-prs/resgate-261118-lote3/claude_pink/cool-dijkstra-xk9ek2/scripts/ci/fila-merge.unit.mjs`<br>`analise-prs/resgate-261118-lote3/f3/strict-false-baseline-20261018/scripts/ci/fila-merge.unit.mjs` |
-| … +294 linhas — lista completa em `context.json` | | | |
+| `state` | `CHANNEL_ERROR` | compara | `src/hooks/system/useDiagnosticsData.ts` |
+| `state` | `CLOSED` | compara | `src/hooks/system/useDiagnosticsData.ts` |
+| `state` | `Established` | compara | `src/lib/calls/adapters/CallEngine.ts`<br>`src/lib/calls/adapters/SipCallAdapter.ts` |
+| `state` | `Establishing` | compara | `src/lib/calls/adapters/CallEngine.ts` |
+| `state` | `Registered` | compara | `src/hooks/sip/useSipConnection.ts` |
+| `state` | `SUBSCRIBED` | compara | `src/hooks/system/useDiagnosticsData.ts` |
+| `state` | `TIMED_OUT` | compara | `src/hooks/system/useDiagnosticsData.ts` |
+| `state` | `Terminated` | compara | `src/hooks/sip/useSipConnection.ts`<br>`src/lib/calls/adapters/CallEngine.ts` |
+| `state` | `Unregistered` | compara | `src/hooks/sip/useSipConnection.ts` |
+| `state` | `active` | compara | `src/components/inbox/contact-details/StoryViewer.tsx` |
+| `state` | `after_due` | escreve | `src/hooks/tasks/useWorkItemDraft.ts`<br>`src/hooks/tasks/workItemPresets.ts` |
+| `state` | `ativa` | compara | `src/components/monitoring/MonitoringInstancePauses.tsx` |
+| `state` | `available` | compara | `supabase/functions/_shared/evolution-webhook-handlers.ts` |
+| `state` | `close` | compara | `supabase/functions/connection-health-check/index.ts`<br>`supabase/functions/evolution-api/index.ts` |
+| `state` | `closed` | compara, escreve | `src/components/monitoring/hooks/useMonitoringNotifications.ts`<br>`src/hooks/chat/useTypingPresence.ts`<br>`supabase/functions/_shared/ai-circuit.ts` |
+| `state` | `confirmed` | compara, escreve | `supabase/functions/_shared/effect-reconcile.ts` |
+| `state` | `connected` | compara | `src/components/omnichannel/OmnichannelInbox.tsx`<br>`supabase/functions/webhook-diagnostic/index.ts` |
+| `state` | `current` | compara, escreve | `src/components/inbox/chat/MessageSendHistorySheet.tsx`<br>`src/components/inbox/chat/messageSendTimeline.ts` |
+| `state` | `done` | compara, escreve | `src/components/inbox/chat/messageSendTimeline.ts`<br>`src/components/inbox/contact-details/StoryViewer.tsx` |
+| … +260 linhas — lista completa em `context.json` | | | |
 
 ### E.4 Enums e listas de valores
 
 | Nome | Valores | Onde |
 |---|---|---|
-| ai_provider_type | `lovable_ai`, `openai_compatible`, `google_gemini`, `custom_webhook`, `custom_agent` | banco |
 | app_role | `admin`, `supervisor`, `special_agent`, `agent` | banco |
 | channel_type | `whatsapp`, `instagram`, `telegram`, `messenger`, `webchat`, `email` | banco |
 | service_account_type | `google_sheets`, `google_docs`, `google_calendar`, `google_drive`, `dropbox` | banco |
+| ai_provider_type | `lovable_ai`, `openai_compatible`, `google_gemini`, `custom_webhook`, `custom_agent` | banco |
 | multiplix_dispatch_status | `draft`, `scheduled`, `sending`, `paused`, `completed`, `completed_with_failures`, `failed`, `cancelled` | banco |
 | multiplix_recipient_status | `pending`, `sending`, `sent`, `delivered`, `read`, `failed`, `skipped`, `cancelled`, `outcome_unknown` | banco |
 | multiplix_item_status | `pending`, `sending`, `sent`, `delivered`, `read`, `failed`, `failed_transient`, `skipped`, `cancelled`, `outcome_unknown` | banco |
 | multiplix_block_type | `text`, `voice_ai`, `audio_recorded`, `file` | banco |
 | multiplix_eligibility | `eligible`, `no_destination`, `suppressed`, `out_of_scope`, `media_pending`, `connection_unavailable`, `requires_template` | banco |
 | talkx_blacklist_reason | `opt_out`, `bounce`, `spam`, `manual`, `other` | banco |
-| TalkXTone | primary \| danger \| success \| violet | `analise-prs/resgate-261118-lote3/claude/busy-cannon-40szm9/src/components/talkx/kit/dialogs.tsx` |
-| DeadlineFeasibility | ok \| tight \| impossible | `analise-prs/resgate-261118-lote3/claude/feat-copiloto-edges-261101-1330/src/hooks/copilot/useDeadlineCalculator.ts` |
-| LeadTemperature | cold \| warm \| hot | `analise-prs/resgate-261118-lote3/claude/feat-copiloto-edges-261101-1330/src/hooks/copilot/useLeadThermometer.ts` |
-| LossRiskLevel | low \| medium \| high | `analise-prs/resgate-261118-lote3/claude/feat-copiloto-edges-261101-1330/src/hooks/copilot/useLossRiskDetector.ts` |
-| ObjeçãoType | preco \| prazo \| quantidade_minima \| concorrente \| chefe \| qualidade \| frete \| generica | `analise-prs/resgate-261118-lote3/claude/feat-copiloto-edges-261101-1330/src/hooks/copilot/useObjectionHandler.ts` |
-| DeadlineFeasibility | ok \| tight \| impossible | `analise-prs/resgate-261118-lote3/claude/feat-copiloto-hooks-261101-1500/src/hooks/copilot/useDeadlineCalculator.ts` |
-| LeadTemperature | cold \| warm \| hot | `analise-prs/resgate-261118-lote3/claude/feat-copiloto-hooks-261101-1500/src/hooks/copilot/useLeadThermometer.ts` |
-| LossRiskLevel | low \| medium \| high | `analise-prs/resgate-261118-lote3/claude/feat-copiloto-hooks-261101-1500/src/hooks/copilot/useLossRiskDetector.ts` |
-| ObjeçãoType | preco \| prazo \| quantidade_minima \| concorrente \| chefe \| qualidade \| frete \| generica | `analise-prs/resgate-261118-lote3/claude/feat-copiloto-hooks-261101-1500/src/hooks/copilot/useObjectionHandler.ts` |
-| DeliveryErrorCode | invalid_number \| instance_unavailable \| provider_rejected \| provider_unavailable \| rate_limited \| in_progress \| receipt_unconfirmed \| media_invalid | `analise-prs/resgate-261118-lote3/claude/feat-message-delivery-post-iniciado-261101-1937/supabase/functions/message-delivery/index.ts` |
-| TalkXWorkerState | sending \| stalled \| paused_manual \| paused_auto \| done | `analise-prs/resgate-261118-lote3/claude/feat-pausa-entrega-campanhas-261101-1400/src/components/talkx/tracking/talkxHealth.ts` |
-| BrindeLetter | B \| R \| I \| N \| D \| E | `analise-prs/resgate-261118-lote3/claude/feat-radar-motor-telas-261101-1330/src/hooks/copilot/useCopilotSession.ts` |
-| SALE_STAGES | "novo_contato", "qualificando", "apresentando", "negociando", "fechando", "pos_venda", "perdido", | `analise-prs/resgate-261118-lote3/claude/feat-radar-motor-telas-261101-1330/supabase/functions/_shared/copilot-tick.ts` |
-| DECISION_ROLES | "buyer", "user", "approver", "intermediary", "unknown" | `analise-prs/resgate-261118-lote3/claude/feat-radar-motor-telas-261101-1330/supabase/functions/_shared/copilot-tick.ts` |
-| SUGGESTION_PATHS | "avancar", "descobrir", "relacionar" | `analise-prs/resgate-261118-lote3/claude/feat-radar-motor-telas-261101-1330/supabase/functions/_shared/copilot-tick.ts` |
-| TalkXTopView | tabs \| wizard \| monitor \| scheduled \| running \| paused | `analise-prs/resgate-261118-lote3/claude/feat-talkx-x054-cmdk-261108-0100/src/components/talkx/TalkXView.tsx` |
-| SuppressionActivityAction | add \| remove \| update \| import \| export | `analise-prs/resgate-261118-lote3/claude/fix-db-guard-pguser-261019-1430/src/hooks/integrations/useTalkXSuppression.ts` |
-| SUPPRESSION_ACTIVITY_EVENT_TYPES | 'suppression_add', 'suppression_remove', 'suppression_update', 'suppression_import', 'suppression_export', | `analise-prs/resgate-261118-lote3/claude/fix-db-guard-pguser-261019-1430/src/hooks/integrations/useTalkXSuppression.ts` |
-| RadarPanelMode | mini \| normal \| focus | `analise-prs/resgate-261118-lote3/claude/fix-radar-fase6-cv056-shortcuts-261108-2335/src/hooks/copilot/useRadarPanel.ts` |
-| RuleField | tags \| company \| contact_type \| conversation_status \| channel_type \| consent_status \| lead_score \| risk_score \| ai_priority \| ai_sentiment \| lead_origin \| updated_at \| created_at \| email \| city \| state \| assigned_to \| group_category \| real_sector \| real_uf | `analise-prs/resgate-261118-lote3/claude/fix-unit-tests-src-261024-1630/src/hooks/integrations/useTalkXSegments.ts` |
-| RuleOp | eq \| neq \| contains \| not_contains \| gt \| gte \| lt \| lte \| in_last_days \| not_in_last_days \| is_set \| is_empty | `analise-prs/resgate-261118-lote3/claude/fix-unit-tests-src-261024-1630/src/hooks/integrations/useTalkXSegments.ts` |
-| SegmentJoin | and \| or | `analise-prs/resgate-261118-lote3/claude/fix-unit-tests-src-261024-1630/src/hooks/integrations/useTalkXSegments.ts` |
-| TalkXSegmentBulkAction | draft \| activate \| deactivate \| archive \| tag | `analise-prs/resgate-261118-lote3/claude/fix-unit-tests-src-261024-1630/src/hooks/integrations/useTalkXSegments.ts` |
-| TalkXSegmentsViewMode | list \| grid | `analise-prs/resgate-261118-lote3/claude/fix-unit-tests-src-261024-1630/src/hooks/integrations/useTalkXSegments.ts` |
-| LIBRARY_STATS_QUERY_KEY | 'talkx-segment-library-stats', SEGMENT_TIMEZONE | `analise-prs/resgate-261118-lote3/claude/fix-unit-tests-src-261024-1630/src/hooks/integrations/useTalkXSegments.ts` |
-| MainTab | open \| resolved \| search | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/inbox/conversation-list/StatusChips.tsx` |
-| SubTab | attending \| waiting | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/inbox/conversation-list/StatusChips.tsx` |
-| ChipTab | all \| unread \| attending \| waiting \| resolved \| archived | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/inbox/conversation-list/StatusChips.tsx` |
-| TalkXTopView | tabs \| wizard \| monitor \| scheduled \| running \| paused | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/talkx/TalkXView.tsx` |
-| AudienceSource | contacts \| segment \| crm360 | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/talkx/useCampaignEditor.ts` |
-| RuleField | tags \| company \| contact_type \| conversation_status \| channel_type \| consent_status \| lead_score \| risk_score \| ai_priority \| ai_sentiment \| lead_origin \| updated_at \| created_at \| email \| city \| state \| assigned_to \| group_category \| real_sector \| real_uf | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/hooks/integrations/useTalkXSegments.ts` |
-| RuleOp | eq \| neq \| contains \| not_contains \| gt \| gte \| lt \| lte \| in_last_days \| not_in_last_days \| is_set \| is_empty | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/hooks/integrations/useTalkXSegments.ts` |
-| SegmentJoin | and \| or | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/hooks/integrations/useTalkXSegments.ts` |
-| TalkXSegmentBulkAction | draft \| activate \| deactivate \| archive \| tag | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/hooks/integrations/useTalkXSegments.ts` |
-| TalkXSegmentsViewMode | list \| grid | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/hooks/integrations/useTalkXSegments.ts` |
-| LIBRARY_STATS_QUERY_KEY | 'talkx-segment-library-stats', SEGMENT_TIMEZONE | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/hooks/integrations/useTalkXSegments.ts` |
-| HealthStatus | healthy \| degraded \| down \| unauthorized \| unknown | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/hooks/system/useDiagnosticsData.ts` |
-| OutboundMessageType | text \| image \| audio \| video \| document \| sticker \| location | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/services/outbound-message.service.ts` |
-| RuleField | tags \| company \| contact_type \| conversation_status \| channel_type \| consent_status \| lead_score \| risk_score \| ai_priority \| ai_sentiment \| lead_origin \| updated_at \| created_at \| email \| city \| state \| assigned_to \| group_category \| real_sector \| real_uf | `analise-prs/resgate-261118-lote3/claude/kind-gates-87mwoe/src/hooks/integrations/useTalkXSegments.ts` |
-| RuleOp | eq \| neq \| contains \| not_contains \| gt \| gte \| lt \| lte \| in_last_days \| not_in_last_days \| is_set \| is_empty | `analise-prs/resgate-261118-lote3/claude/kind-gates-87mwoe/src/hooks/integrations/useTalkXSegments.ts` |
-| SegmentJoin | and \| or | `analise-prs/resgate-261118-lote3/claude/kind-gates-87mwoe/src/hooks/integrations/useTalkXSegments.ts` |
-| TalkXSegmentBulkAction | draft \| activate \| deactivate \| archive \| tag | `analise-prs/resgate-261118-lote3/claude/kind-gates-87mwoe/src/hooks/integrations/useTalkXSegments.ts` |
-| TalkXSegmentsViewMode | list \| grid | `analise-prs/resgate-261118-lote3/claude/kind-gates-87mwoe/src/hooks/integrations/useTalkXSegments.ts` |
-| LIBRARY_STATS_QUERY_KEY | 'talkx-segment-library-stats', SEGMENT_TIMEZONE | `analise-prs/resgate-261118-lote3/claude/kind-gates-87mwoe/src/hooks/integrations/useTalkXSegments.ts` |
-| HealthStatus | healthy \| degraded \| down \| unauthorized \| unknown | `analise-prs/resgate-261118-lote3/claude/kind-gates-87mwoe/src/hooks/system/useDiagnosticsData.ts` |
-| HealthStatus | healthy \| degraded \| down \| unauthorized \| unknown | `analise-prs/resgate-261118-lote3/claude/magical-pasteur-iz2pgy/src/hooks/system/useDiagnosticsData.ts` |
-| WorkItemDateFormat | datetime \| day | `analise-prs/resgate-261118-lote3/claude/magical-pasteur-iz2pgy/src/hooks/tasks/workItemFormat.ts` |
-| MES_CURTO_PT_BR | 'jan.', 'fev.', 'mar.', 'abr.', 'mai.', 'jun.', 'jul.', 'ago.', 'set.', 'out.', 'nov.', 'dez.', | `analise-prs/resgate-261118-lote3/claude/magical-pasteur-iz2pgy/src/hooks/tasks/workItemFormat.ts` |
-| BrindeLetter | B \| R \| I \| N \| D \| E | `analise-prs/resgate-261118-lote3/claude/radar-motor-copilot-live-301030/src/hooks/copilot/useCopilotSession.ts` |
-| SALE_STAGES | "novo_contato", "qualificando", "apresentando", "negociando", "fechando", "pos_venda", "perdido", | `analise-prs/resgate-261118-lote3/claude/radar-motor-copilot-live-301030/supabase/functions/_shared/copilot-tick.ts` |
-| SUGGESTION_PATHS | "avancar", "descobrir", "relacionar" | `analise-prs/resgate-261118-lote3/claude/radar-motor-copilot-live-301030/supabase/functions/_shared/copilot-tick.ts` |
-| HealthStatus | healthy \| degraded \| down \| unauthorized \| unknown | `analise-prs/resgate-261118-lote3/claude_05/festive-carson-ub43wu/src/hooks/system/useDiagnosticsData.ts` |
-| GmailHistoryResetOutcome | reset \| conflict | `analise-prs/resgate-261118-lote3/claude_pink/cool-dijkstra-xk9ek2/supabase/functions/_shared/gmail-helpers.ts` |
-| GmailAccountFailure | reauth_required \| error | `analise-prs/resgate-261118-lote3/claude_pink/cool-dijkstra-xk9ek2/supabase/functions/_shared/gmail-helpers.ts` |
-| AudienceSource | contacts \| segment \| crm360 | `analise-prs/resgate-261118-lote3/codex/publish-followup-20261021/src/components/talkx/useCampaignEditor.ts` |
-| RuleField | tags \| company \| contact_type \| conversation_status \| channel_type \| consent_status \| lead_score \| risk_score \| ai_priority \| ai_sentiment \| lead_origin \| updated_at \| created_at \| email \| city \| state \| assigned_to \| group_category \| real_sector \| real_uf | `analise-prs/resgate-261118-lote3/codex/publish-followup-20261021/src/hooks/integrations/useTalkXSegments.ts` |
-| RuleOp | eq \| neq \| contains \| not_contains \| gt \| gte \| lt \| lte \| in_last_days \| not_in_last_days \| is_set \| is_empty | `analise-prs/resgate-261118-lote3/codex/publish-followup-20261021/src/hooks/integrations/useTalkXSegments.ts` |
-| SegmentJoin | and \| or | `analise-prs/resgate-261118-lote3/codex/publish-followup-20261021/src/hooks/integrations/useTalkXSegments.ts` |
-| TalkXSegmentBulkAction | draft \| activate \| deactivate \| archive \| tag | `analise-prs/resgate-261118-lote3/codex/publish-followup-20261021/src/hooks/integrations/useTalkXSegments.ts` |
-| TalkXSegmentsViewMode | list \| grid | `analise-prs/resgate-261118-lote3/codex/publish-followup-20261021/src/hooks/integrations/useTalkXSegments.ts` |
-| LIBRARY_STATS_QUERY_KEY | 'talkx-segment-library-stats', SEGMENT_TIMEZONE | `analise-prs/resgate-261118-lote3/codex/publish-followup-20261021/src/hooks/integrations/useTalkXSegments.ts` |
-| HealthLevel | healthy \| degraded \| disconnected | `analise-prs/resgate-261118-lote3/codex/publish-followup-20261021/supabase/functions/connection-health-check/index.ts` |
-| GmailHistoryResetOutcome | reset \| conflict | `analise-prs/resgate-261118-lote3/fix/ci-verde-261021/supabase/functions/_shared/gmail-helpers.ts` |
-| GmailAccountFailure | reauth_required \| error | `analise-prs/resgate-261118-lote3/fix/ci-verde-261021/supabase/functions/_shared/gmail-helpers.ts` |
-| HealthLevel | healthy \| degraded \| disconnected | `analise-prs/resgate-261118-lote3/fix/ci-verde-261021/supabase/functions/connection-health-check/index.ts` |
-| PairingFlavor | go \| v2 | `analise-prs/resgate-261118-lote3/fix/ci-verde-261021/supabase/functions/evolution-api/index.ts` |
-| GmailHistoryResetOutcome | reset \| conflict | `analise-prs/resgate-261118-lote3/fix/ci-workflows-vermelhos/supabase/functions/_shared/gmail-helpers.ts` |
-| GmailAccountFailure | reauth_required \| error | `analise-prs/resgate-261118-lote3/fix/ci-workflows-vermelhos/supabase/functions/_shared/gmail-helpers.ts` |
-| HealthLevel | healthy \| degraded \| disconnected | `analise-prs/resgate-261118-lote3/fix/ci-workflows-vermelhos/supabase/functions/connection-health-check/index.ts` |
-| TargetType | all \| tag \| queue \| groups \| custom | `analise-prs/resgate-261118-lote3/hermes/robustez-primitivos-ui-2610121626bec5-2610141859e423/src/components/campaigns/CampaignCreateDialog.tsx` |
-| MessageType | text \| image \| video \| document | `analise-prs/resgate-261118-lote3/hermes/robustez-primitivos-ui-2610121626bec5-2610141859e423/src/components/campaigns/CampaignCreateDialog.tsx` |
-| CallResultFilter | ended_answered \| ended_missed \| missed \| busy \| failed \| ringing \| answered | `analise-prs/resgate-261118-lote3/hermes/telefonia-fase8-motion-a11y-responsivo-2610031530007c/src/hooks/communication/useCallHistory.ts` |
-| BrindeLetter | B \| R \| I \| N \| D \| E | `analise-prs/resgate-261118-lote3/resolve-2381-from-main/src/hooks/copilot/useCopilotSession.ts` |
-| SALE_STAGES | "novo_contato", "qualificando", "apresentando", "negociando", "fechando", "pos_venda", "perdido", | `analise-prs/resgate-261118-lote3/resolve-2381-from-main/supabase/functions/_shared/copilot-tick.ts` |
-| SUGGESTION_PATHS | "avancar", "descobrir", "relacionar" | `analise-prs/resgate-261118-lote3/resolve-2381-from-main/supabase/functions/_shared/copilot-tick.ts` |
 | CHAVE_TAREFAS_AGENDADAS | 'admin-cron-jobs' | `src/components/admin/useTarefasAgendadas.ts` |
 | TriggerConfigInput | keywords \| number \| text | `src/components/automations/automationConstants.ts` |
 | CanalDeSaida | voip \| whatsapp | `src/components/calls/NewCallPanel.tsx` |
@@ -1833,6 +1759,9 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | TimeFilter | 1h \| 6h \| 24h \| 7d \| 30d | `src/hooks/analytics/useAIUsageDashboard.ts` |
 | WidgetSize | small \| medium \| large \| full | `src/hooks/analytics/useDashboardWidgets.ts` |
 | InsightPeriod | 24h \| 7d \| 30d | `src/hooks/analytics/useRecentAnalyses.ts` |
+| Atividade | venda \| compra \| atendimento \| supervisao | `src/hooks/assistant/useAssistantProfile.ts` |
+| AjudaPreferida | sempre \| relevante \| sob_demanda | `src/hooks/assistant/useAssistantProfile.ts` |
+| TomPreferido | direto \| consultivo \| formal | `src/hooks/assistant/useAssistantProfile.ts` |
 | MFA_TOTP_QUERY_KEY | 'mfa-verified-totp' | `src/hooks/auth/useMFA.ts` |
 | ReauthMotivo | senha_incorreta \| conta_bloqueada \| indisponivel \| rede \| codigo_necessario \| codigo_incorreto | `src/hooks/auth/useReauthentication.ts` |
 | QUEUE_GOAL_BANDS | 50, 75, 100 | `src/hooks/business/useQueueGoals.ts` |
@@ -1927,64 +1856,84 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | TalkXInsightAction | new-campaign \| templates \| campaigns | `src/hooks/integrations/useTalkXInsights.ts` |
 | TalkXLiveStatus | connecting \| live \| degraded \| offline | `src/hooks/integrations/useTalkXLiveChannel.ts` |
 | TalkXResumeChecklistItemKey | segments \| templates \| limits \| schedule \| autoresponse | `src/hooks/integrations/useTalkXResumeChecklist.ts` |
-| … +215 linhas — lista completa em `context.json` | | |
+| TalkXResumeChecklistVerification | auto \| manual | `src/hooks/integrations/useTalkXResumeChecklist.ts` |
+| TalkXResumeChecklistStatus | ok \| attention \| pending \| done \| unknown | `src/hooks/integrations/useTalkXResumeChecklist.ts` |
+| RuleField | tags \| company \| contact_type \| conversation_status \| channel_type \| consent_status \| lead_score \| risk_score \| ai_priority \| ai_sentiment \| lead_origin \| updated_at \| created_at \| email \| city \| state \| assigned_to \| group_category \| real_sector \| real_uf | `src/hooks/integrations/useTalkXSegments.ts` |
+| RuleOp | eq \| neq \| contains \| not_contains \| gt \| gte \| lt \| lte \| in_last_days \| not_in_last_days \| is_set \| is_empty | `src/hooks/integrations/useTalkXSegments.ts` |
+| SegmentJoin | and \| or | `src/hooks/integrations/useTalkXSegments.ts` |
+| TalkXSegmentBulkAction | draft \| activate \| deactivate \| archive \| tag | `src/hooks/integrations/useTalkXSegments.ts` |
+| TalkXSegmentsViewMode | list \| grid | `src/hooks/integrations/useTalkXSegments.ts` |
+| LIBRARY_STATS_QUERY_KEY | 'talkx-segment-library-stats', SEGMENT_TIMEZONE | `src/hooks/integrations/useTalkXSegments.ts` |
+| SEGMENT_LIBRARY_PAGE_SIZES | 8, 10, 20, 50 | `src/hooks/integrations/useTalkXSegments.ts` |
+| TalkXResumeBlocker | connection_not_connected \| outside_send_window \| recipients_suppressed | `src/hooks/integrations/useTalkXServerResumePrecheck.ts` |
+| SuppressionActivityAction | add \| remove \| update \| import \| export | `src/hooks/integrations/useTalkXSuppression.ts` |
+| SUPPRESSION_ACTIVITY_EVENT_TYPES | 'suppression_add', 'suppression_remove', 'suppression_update', 'suppression_import', 'suppression_export', | `src/hooks/integrations/useTalkXSuppression.ts` |
+| TALKX_TEMPLATE_STATS_PERIODS | 7, 30, 90 | `src/hooks/integrations/useTalkXTemplateStats.ts` |
+| RealtimeChannelHealth | connecting \| connected \| error | `src/hooks/realtime/realtimeStatusStore.ts` |
+| RealtimeStatus | idle \| connecting \| connected \| disconnected | `src/hooks/realtime/realtimeStatusStore.ts` |
+| SipStatus | idle \| connecting \| registered \| reconnecting \| unavailable | `src/hooks/sip/useSipConnection.ts` |
+| FirstResponseOutcome | on_time \| breached \| pending | `src/hooks/sla/slaFirstResponse.ts` |
+| SLAStatus | ok \| warning \| breached | `src/hooks/sla/useSLACalculation.ts` |
+| HistoryPeriod | 7d \| 14d \| 30d \| 90d | `src/hooks/sla/useSLAHistory.ts` |
+| PeriodFilter | today \| week \| month \| all | `src/hooks/sla/useSLAMetrics.ts` |
+| SLARuleScope | contact \| company \| job_title \| contact_type \| queue \| agent | `src/hooks/sla/useSLARules.ts` |
+| ConnectionAlertKind | degraded \| disconnected | `src/hooks/system/useConnectionAlertPreferences.ts` |
+| HealthStatus | healthy \| degraded \| down \| unauthorized \| unknown | `src/hooks/system/useDiagnosticsData.ts` |
+| FEATURE_FLAGS_QUERY_KEY | 'feature-flags' | `src/hooks/system/useFeatureFlag.ts` |
+| MotivoRecusaTrocaDeModo | pais-nao-detectado \| whitelist-sem-pais-do-admin \| blacklist-com-pais-do-admin | `src/hooks/system/useGeoBlocking.ts` |
+| GLOBAL_SETTINGS_QUERY_KEY | 'global-settings' | `src/hooks/system/useGlobalSettings.ts` |
+| SoundTypeOption | beep \| chime \| bell \| alert \| soft | `src/hooks/system/useNotificationSettings.ts` |
+| RateLimitSortKey | created_at \| ip_address \| endpoint \| request_count \| blocked | `src/hooks/system/useRateLimitLogs.ts` |
+| RateLimitSortDir | asc \| desc | `src/hooks/system/useRateLimitLogs.ts` |
+| SupabaseConnectivityStatus | checking \| online \| degraded \| offline | `src/hooks/system/useSupabaseConnectivity.ts` |
+| TALKX_AI_KINDS | 'insight_text', 'message_variation', 'segment_suggestion' | `src/hooks/talkx/useTalkxAi.ts` |
+| WorkItemStatus | backlog \| todo \| doing \| waiting \| done \| cancelled | `src/hooks/tasks/workItem.types.ts` |
+| Priority | low \| medium \| high \| urgent | `src/hooks/tasks/workItem.types.ts` |
+| TransitionBlockReason | wip_full \| waiting_reason_required \| invalid_transition | `src/hooks/tasks/workItem.types.ts` |
+| BoardDueColumnKey | atrasadas \| paraHoje \| fazendo \| concluidas | `src/hooks/tasks/workItemBoardGroups.ts` |
+| DueFilter | all \| overdue \| today \| week \| none | `src/hooks/tasks/workItemFilters.ts` |
+| WorkItemDateFormat | datetime \| day | `src/hooks/tasks/workItemFormat.ts` |
+| MES_CURTO_PT_BR | 'jan.', 'fev.', 'mar.', 'abr.', 'mai.', 'jun.', 'jul.', 'ago.', 'set.', 'out.', 'nov.', 'dez.', | `src/hooks/tasks/workItemFormat.ts` |
+| DuePreset | today \| tomorrow \| nextWeek | `src/hooks/tasks/workItemPresets.ts` |
+| RemindPreset | in1h \| tomorrow9 \| nextMonday9 | `src/hooks/tasks/workItemPresets.ts` |
+| RemindCoherenceState | ok \| in_past \| after_due \| no_due | `src/hooks/tasks/workItemPresets.ts` |
+| TeamConversationType | direct \| group \| department | `src/hooks/team-chat/teamChatTypes.ts` |
+| TeamMemberRole | owner \| admin \| member | `src/hooks/team-chat/teamChatTypes.ts` |
+| DEPARTMENT_AUDIT_ACTIONS | 'accept_invite', 'create_invite', 'join_department', 'leave_department', 'remove_member', 'update_settings', 'delete_department', 'create_department', 'update_role', 'kick_member', 'create_group', 'delete_group', 'whatsapp_updated', 'access_requested', 'invite_created', 'invite_revoked', 'invite_acc … | `src/hooks/team-chat/teamChatTypes.ts` |
+| TeamMessageStatusType | sending \| sent \| delivered \| read \| failed \| deleted | `src/hooks/team-chat/teamMessageStatus.ts` |
+| TeamFileKind | image \| document \| audio \| other | `src/hooks/team-chat/useTeamFiles.ts` |
+| TEAM_FILE_REACTION_MEDIA_TYPES | 'sticker', 'emoji', 'audio_meme' | `src/hooks/team-chat/useTeamFiles.ts` |
+| DensityMode | comfortable \| compact \| dense | `src/hooks/ui/useDensity.ts` |
+| Theme | light \| dark \| system | `src/hooks/ui/useTheme.ts` |
+| ResolvedTheme | light \| dark | `src/hooks/ui/useTheme.ts` |
+| VoiceAgentPhase | idle \| booting \| listening \| processing \| speaking \| error | `src/hooks/voice/types.ts` |
+| VoiceActionLevel | success \| info \| warning | `src/hooks/voice/voiceActionPlan.ts` |
+| FILTER_PARAM_KEYS | 'q', 'status', 'tags', 'agent', 'from', 'to', 'type' | `src/hooks/voice/voiceActionPlan.ts` |
+| VoiceSessionEndReason | inactivity \| duration \| hidden | `src/hooks/voice/voiceSessionLimits.ts` |
+| AuditAction | login \| logout \| message_sent \| message_received \| contact_created \| contact_updated \| connection_created \| connection_deleted \| call_started \| call_ended \| transfer \| settings_changed \| client_error \| searchbox_session \| searchbox_cost_guard \| searchbox_budget_warning \| searchbox_selected \| location_sent \| unauthorized_access | `src/lib/audit.ts` |
+| CHART_PALETTE | CHART_COLORS.primary, CHART_COLORS.secondary, CHART_COLORS.tertiary, CHART_COLORS.quaternary, CHART_COLORS.quinary, CHART_COLORS.senary, CHART_COLORS.septenary, CHART_COLORS.octonary, CHART_COLORS.nonary, CHART_COLORS.denary, | `src/lib/chartColors.ts` |
+| CHART_PALETTE_MINI | CHART_COLORS.primary, CHART_COLORS.secondary, CHART_COLORS.tertiary, CHART_COLORS.quaternary, CHART_COLORS.quinary, | `src/lib/chartColors.ts` |
+| STATUS_PALETTE | CHART_COLORS.resolved, CHART_COLORS.pending, CHART_COLORS.waiting, CHART_COLORS.open, | `src/lib/chartColors.ts` |
+| SENTIMENT_PALETTE | CHART_COLORS.positive, CHART_COLORS.neutral, CHART_COLORS.negative, | `src/lib/chartColors.ts` |
+| ContactHealthFieldKey | name \| phone \| email \| company \| job_title \| contact_type \| address \| assigned_to | `src/lib/contactHealth.ts` |
+| ContactHealthLevel | completo \| bom \| incompleto \| critico \| indefinido | `src/lib/contactHealth.ts` |
+| CRMIntegrationAction | rpc \| select \| mutate \| contactLookup \| contactLookupBatch \| emailContactContext \| linkEmailContactCompany \| enqueueSync \| health \| companyNames \| roleNames | `src/lib/crmIntegration.ts` |
+| AcaoNaAtualizacao | recarregar-agora \| avisar-e-recarregar-ao-esconder | `src/lib/deployment-update.ts` |
+| EmailErrorKind | offline \| permission \| authentication \| rate-limit \| server \| unknown | `src/lib/emailErrorState.ts` |
+| EmailThreadStateFilter | all \| unread \| starred | `src/lib/emailThreadQuery.ts` |
+| EmailThreadPeriodFilter | all \| today \| 7d \| 30d | `src/lib/emailThreadQuery.ts` |
+| SenderKind | self \| agent \| contact \| team | `src/lib/fileSenderIdentity.ts` |
+| PauseWindow | 24h \| 7d | `src/lib/instancePauseSeries.ts` |
+| GoalPeriodKey | today \| week \| month | `src/lib/localDay.ts` |
+| GeoFailureKind | aborted \| timeout \| rate_limited \| http \| network \| not_found | `src/lib/mapboxGeocode.ts` |
+| MapboxFailureKind | timeout \| unauthorized \| rate_limited \| server_error \| network \| invalid_token \| forbidden \| unknown | `src/lib/mapboxToken.ts` |
+| NavegadorDetectado | Edge \| Opera \| Firefox \| Samsung Internet \| Chrome \| Safari \| Unknown | `src/lib/parseUserAgent.ts` |
+| … +146 linhas — lista completa em `context.json` | | |
 
 ## F. Validações de entrada
 
 ### F.1 Schemas Zod
 
-- **BodySchema** (`analise-prs/resgate-261118-lote3/claude/feat-copiloto-edge-fases8-10-261024-1700/supabase/functions/ai-deadline-calculator/index.ts`, z.object):
-  ```ts
-  { conversationId: z.string().uuid(), contactId: z.string().uuid().optional().nullable(), messages: z.array(MessageSchema).max(30).optional().default([]), latestMessage: z.string().max(2000).optional(), }
-  ```
-- **BodySchema** (`analise-prs/resgate-261118-lote3/claude/feat-copiloto-edge-fases8-10-261024-1700/supabase/functions/ai-lead-temperature/index.ts`, z.object):
-  ```ts
-  { conversationId: z.string().uuid(), contactId: z.string().uuid().optional().nullable(), messages: z.array(MessageSchema).max(30).optional().default([]), silenceThresholdMinutes: z.number().min(0).optional().default(60), }
-  ```
-- **BodySchema** (`analise-prs/resgate-261118-lote3/claude/feat-copiloto-edge-fases8-10-261024-1700/supabase/functions/ai-loss-risk/index.ts`, z.object):
-  ```ts
-  { conversationId: z.string().uuid(), contactId: z.string().uuid().optional().nullable(), messages: z.array(MessageSchema).max(30).optional().default([]), triggerThreshold: z.number().min(0).max(100).optional().default(50), }
-  ```
-- **BodySchema** (`analise-prs/resgate-261118-lote3/claude/feat-copiloto-edge-fases8-10-261024-1700/supabase/functions/ai-multimodal-analysis/index.ts`, z.object):
-  ```ts
-  { conversationId: z.string().uuid(), contactId: z.string().uuid().optional().nullable(), mediaUrl: z.string().url().max(2048), mediaType: z.enum(["image", "audio", "document", "video"]), analysisHint: z.string().max(500).optional(), }
-  ```
-- **BodySchema** (`analise-prs/resgate-261118-lote3/claude/feat-copiloto-edge-fases8-10-261024-1700/supabase/functions/ai-objection-handler/index.ts`, z.object):
-  ```ts
-  { conversationId: z.string().uuid(), contactId: z.string().uuid().optional().nullable(), messages: z.array(MessageSchema).max(30).optional().default([]), latestMessage: z.string().max(2000).optional(), }
-  ```
-- **BodySchema** (`analise-prs/resgate-261118-lote3/claude/feat-copiloto-edge-fases8-10-261024-1700/supabase/functions/ai-price-anchor/index.ts`, z.object):
-  ```ts
-  { conversationId: z.string().uuid(), contactId: z.string().uuid().optional().nullable(), messages: z.array(MessageSchema).max(30).optional().default([]), latestMessage: z.string().max(2000).optional(), sellerMaxDiscountPct: z.number().min(0).max(100).optional(), }
-  ```
-- **BodySchema** (`analise-prs/resgate-261118-lote3/claude/feat-copiloto-edge-fases8-10-261024-1700/supabase/functions/ai-product-recommendation/index.ts`, z.object):
-  ```ts
-  { conversationId: z.string().uuid(), contactId: z.string().uuid().optional().nullable(), messages: z.array(MessageSchema).max(30).optional().default([]), latestMessage: z.string().max(2000).optional(), currentFunnelStage: z.string().max(50).optional(), }
-  ```
-- **CopilotTier1Schema** (`analise-prs/resgate-261118-lote3/claude/feat-radar-motor-telas-261101-1330/supabase/functions/_shared/copilot-tick.ts`, z.object):
-  ```ts
-  { sale_stage: z.enum(SALE_STAGES).optional(), temperature: z.number().int().min(0).max(100).optional(), brinde: z.object({ budget: texto(120).optional(), responsible: texto(120).optional(), intention: texto(200).optional(), quantity: z.number().int().positive().max(10_000_000).optional(), deadline: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(), delivery: texto(200).optional(), }).partial().optional(), brinde_evidence: z.record(texto(300)).optional(), intent: texto(80).optional(), sentiment: texto(40).optional(), comm_style: texto(80).optional(), decision_role: texto(80).optional(), occasion: texto(120).optional(), stakeholders: z.array(z.object({ name: texto(120).optional(), role: texto(120).optional() })).max(10).optional(), key_moments: z.array(texto(40)).max(10).optional(), risks: …
-  ```
-- **CopilotTier2Schema** (`analise-prs/resgate-261118-lote3/claude/feat-radar-motor-telas-261101-1330/supabase/functions/_shared/copilot-tick.ts`, z.object):
-  ```ts
-  { next_action: texto(160).optional(), suggestions: z.array(z.object({ path: z.enum(SUGGESTION_PATHS), text: texto(300), play_name: texto(80).optional(), sources: z.array(z.object({ text: texto(300), letter: z.enum(["B", "R", "I", "N", "D", "E"]).optional(), })).max(6).optional(), split_messages: z.array(texto(300)).max(3).optional(), })).min(1).max(3), }
-  ```
-- **CopilotTier1Schema** (`analise-prs/resgate-261118-lote3/claude/radar-motor-copilot-live-301030/supabase/functions/_shared/copilot-tick.ts`, z.object):
-  ```ts
-  { sale_stage: z.enum(SALE_STAGES).optional(), temperature: z.number().int().min(0).max(100).optional(), brinde: z.object({ budget: texto(120).optional(), responsible: texto(120).optional(), intention: texto(200).optional(), quantity: z.number().int().positive().max(10_000_000).optional(), deadline: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(), delivery: texto(200).optional(), }).partial().optional(), brinde_evidence: z.record(texto(300)).optional(), intent: texto(80).optional(), sentiment: texto(40).optional(), comm_style: texto(80).optional(), decision_role: texto(80).optional(), occasion: texto(120).optional(), stakeholders: z.array(z.object({ name: texto(120).optional(), role: texto(120).optional() })).max(10).optional(), key_moments: z.array(texto(40)).max(10).optional(), risks: …
-  ```
-- **CopilotTier2Schema** (`analise-prs/resgate-261118-lote3/claude/radar-motor-copilot-live-301030/supabase/functions/_shared/copilot-tick.ts`, z.object):
-  ```ts
-  { next_action: texto(160).optional(), suggestions: z.array(z.object({ path: z.enum(SUGGESTION_PATHS), text: texto(300), play_name: texto(80).optional(), sources: z.array(z.object({ text: texto(300), letter: z.enum(["B", "R", "I", "N", "D", "E"]).optional(), })).max(6).optional(), split_messages: z.array(texto(300)).max(3).optional(), })).min(1).max(3), }
-  ```
-- **CopilotTier1Schema** (`analise-prs/resgate-261118-lote3/resolve-2381-from-main/supabase/functions/_shared/copilot-tick.ts`, z.object):
-  ```ts
-  { sale_stage: z.enum(SALE_STAGES).optional(), temperature: z.number().int().min(0).max(100).optional(), brinde: z.object({ budget: texto(120).optional(), responsible: texto(120).optional(), intention: texto(200).optional(), quantity: z.number().int().positive().max(10_000_000).optional(), deadline: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(), delivery: texto(200).optional(), }).partial().optional(), brinde_evidence: z.record(texto(300)).optional(), intent: texto(80).optional(), sentiment: texto(40).optional(), comm_style: texto(80).optional(), decision_role: texto(80).optional(), occasion: texto(120).optional(), stakeholders: z.array(z.object({ name: texto(120).optional(), role: texto(120).optional() })).max(10).optional(), key_moments: z.array(texto(40)).max(10).optional(), risks: …
-  ```
-- **CopilotTier2Schema** (`analise-prs/resgate-261118-lote3/resolve-2381-from-main/supabase/functions/_shared/copilot-tick.ts`, z.object):
-  ```ts
-  { next_action: texto(160).optional(), suggestions: z.array(z.object({ path: z.enum(SUGGESTION_PATHS), text: texto(300), play_name: texto(80).optional(), sources: z.array(z.object({ text: texto(300), letter: z.enum(["B", "R", "I", "N", "D", "E"]).optional(), })).max(6).optional(), split_messages: z.array(texto(300)).max(3).optional(), })).min(1).max(3), }
-  ```
 - **loginSchema** (`src/hooks/auth/useAuthForm.ts`, z.object):
   ```ts
   { email: z.string().email('Email inválido'), password: z.string().min(1, 'Senha é obrigatória'), }
@@ -2463,21 +2412,6 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 
 | Campo | Restrições | Arquivo |
 |---|---|---|
-| `audit_de` | type=date | `analise-prs/resgate-261118-lote3/claude/fix-unit-tests-src-261024-1630/src/components/admin/AdminView.tsx` |
-| `audit_ate` | type=date | `analise-prs/resgate-261118-lote3/claude/fix-unit-tests-src-261024-1630/src/components/admin/AdminView.tsx` |
-| `edit_avatar` | accept=image/* | `analise-prs/resgate-261118-lote3/claude/fix-unit-tests-src-261024-1630/src/components/admin/AdminView.tsx` |
-| `edit_maxchats` | type=number, min=LIMITE_CHATS_MIN, max=LIMITE_CHATS_MAX | `analise-prs/resgate-261118-lote3/claude/fix-unit-tests-src-261024-1630/src/components/admin/AdminView.tsx` |
-| `add_email` | type=email | `analise-prs/resgate-261118-lote3/claude/fix-unit-tests-src-261024-1630/src/components/admin/AdminView.tsx` |
-| `add_senha` | type=password | `analise-prs/resgate-261118-lote3/claude/fix-unit-tests-src-261024-1630/src/components/admin/AdminView.tsx` |
-| `audit_de` | type=date | `analise-prs/resgate-261118-lote3/codex/fix-failed-workflows-20261020/src/components/admin/AdminView.tsx` |
-| `audit_ate` | type=date | `analise-prs/resgate-261118-lote3/codex/fix-failed-workflows-20261020/src/components/admin/AdminView.tsx` |
-| `edit_avatar` | accept=image/* | `analise-prs/resgate-261118-lote3/codex/fix-failed-workflows-20261020/src/components/admin/AdminView.tsx` |
-| `edit_maxchats` | type=number, min=LIMITE_CHATS_MIN, max=LIMITE_CHATS_MAX | `analise-prs/resgate-261118-lote3/codex/fix-failed-workflows-20261020/src/components/admin/AdminView.tsx` |
-| `add_email` | type=email | `analise-prs/resgate-261118-lote3/codex/fix-failed-workflows-20261020/src/components/admin/AdminView.tsx` |
-| `add_senha` | type=password | `analise-prs/resgate-261118-lote3/codex/fix-failed-workflows-20261020/src/components/admin/AdminView.tsx` |
-| `campaign-media-url` | type=url, required=true | `analise-prs/resgate-261118-lote3/hermes/robustez-primitivos-ui-2610121626bec5-2610141859e423/src/components/campaigns/CampaignCreateDialog.tsx` |
-| `campaign-target-value` | required=true | `analise-prs/resgate-261118-lote3/hermes/robustez-primitivos-ui-2610121626bec5-2610141859e423/src/components/campaigns/CampaignCreateDialog.tsx` |
-| `campaign-interval` | type=number | `analise-prs/resgate-261118-lote3/hermes/robustez-primitivos-ui-2610121626bec5-2610141859e423/src/components/campaigns/CampaignCreateDialog.tsx` |
 | `audit_de` | type=date | `src/components/admin/AdminView.tsx` |
 | `audit_ate` | type=date | `src/components/admin/AdminView.tsx` |
 | `edit_avatar` | accept=image/* | `src/components/admin/AdminView.tsx` |
@@ -2513,6 +2447,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `sla-notes` | min, max | `src/components/settings/sla/SLARuleFormDialog.tsx` |
 | `talkx-schedule-date` | type=date, min=minimumDate | `src/components/talkx/TalkXCampaignScheduled.tsx` |
 | `talkx-repeat-end` | type=date, min=localDate \|\| minimumDate | `src/components/talkx/TalkXCampaignScheduled.tsx` |
+| `ab-min-sample` | min, type=number, min=1, max=1000000 | `src/components/talkx/TalkXWizardDelivery.tsx` |
 | `new-ta` | type=date | `src/components/tasks/shared/new-task/PrazoField.tsx` |
 | `nt-lembrete-data` | type=date | `src/components/tasks/shared/new-task/RemindField.tsx` |
 | `id` | max | `src/components/tasks/shared/new-task/TaskTitleField.tsx` |
@@ -2536,20 +2471,20 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 
 | View | SELECT |
 |---|---|
-| `whatsapp_connections_public` | `SELECT id, name, status, is_default FROM public.whatsapp_connections` |
-| `whatsapp_connections_safe` | `SELECT id, name, phone_number, status, is_default, CASE WHEN public.has_role(auth.uid(), 'admin'::public.app_role) THEN qr_code ELSE NULL::text END AS qr_code, CASE WHEN public.has_role(auth.uid(), 'admin'::public.app_role) THEN instance_id ELSE NULL::text END AS instance_id, farewell_message, farew …` |
-| `whatsapp_connections_agent` | `SELECT id, name, status, phone_number, is_default FROM public.whatsapp_connections` |
 | `profiles_public` | `SELECT id, user_id, name, avatar_url, is_active, department, job_title FROM public.profiles` |
-| `channel_connections_safe` | `SELECT id, channel_type, name, status, is_active, external_account_id, external_page_id, webhook_url, whatsapp_connection_id, created_at, updated_at, created_by FROM public.channel_connections` |
-| `gmail_accounts_safe` | `SELECT id, user_id, email_address, is_active, sync_status, last_sync_at, last_error, token_expires_at, created_at, updated_at FROM public.gmail_accounts` |
+| `whatsapp_connections_public` | `SELECT id, name, status, is_default FROM public.whatsapp_connections` |
 | `password_reset_requests_safe` | `SELECT id, user_id, email, reason, status, reviewed_by, reviewed_at, rejection_reason, token_expires_at, ip_address, user_agent, created_at, updated_at FROM public.password_reset_requests` |
 | `login_attempts_safe` | `SELECT id, email, attempt_count, locked_until, last_attempt_at, created_at, updated_at FROM public.login_attempts` |
+| `gmail_accounts_safe` | `SELECT id, user_id, email_address, is_active, sync_status, last_sync_at, last_error, token_expires_at, created_at, updated_at FROM public.gmail_accounts` |
+| `whatsapp_connections_agent` | `SELECT id, name, status, phone_number, is_default FROM public.whatsapp_connections` |
+| `channel_connections_safe` | `SELECT id, channel_type, name, status, is_active, external_account_id, external_page_id, webhook_url, whatsapp_connection_id, created_at, updated_at, created_by FROM public.channel_connections` |
+| `whatsapp_connections_safe` | `SELECT id, name, phone_number, status, is_default, CASE WHEN public.has_role(auth.uid(), 'admin'::public.app_role) THEN qr_code ELSE NULL::text END AS qr_code, CASE WHEN public.has_role(auth.uid(), 'admin'::public.app_role) THEN instance_id ELSE NULL::text END AS instance_id, farewell_message, farew …` |
 | `talkx_campaign_metrics` | `SELECT id AS campaign_id, segment_id, template_id, status, total_recipients, sent_count, delivered_count, COALESCE(replied_count, 0) AS replied_count, outcome_unknown_count, round( CASE WHEN sent_count > 0 THEN delivered_count::numeric / sent_count::numeric * 100::numeric ELSE 0::numeric END, 1) AS …` |
 | `catalog_send_stats` | `with base as ( select created_at::date as dia, agent_id, product_id, product_name, coalesce(status, '') as status from public.catalog_send_events where created_at >= (now() - interval '30 days') ), por_dia as ( select 'dia'::text as grao, dia::text as chave, dia::text as rotulo, count(*) as total, c …` |
 | `searchbox_usage_daily` | `SELECT (a.created_at AT TIME ZONE 'America/Sao_Paulo')::date AS dia, count(*) FILTER (WHERE a.action = 'searchbox_session')::integer AS sessoes, count(*) FILTER (WHERE a.action = 'searchbox_cost_guard')::integer AS degradacoes, max(a.created_at) AS ultimo_evento_em FROM public.audit_logs a WHERE a.a …` |
+| `team_message_read_state` | `SELECT m.id AS message_id, m.conversation_id, COUNT(DISTINCT tcm.profile_id) AS member_count, COUNT(DISTINCT CASE WHEN r.status = 'read' AND r.profile_id <> m.sender_id THEN r.profile_id END) AS read_count, COUNT(DISTINCT CASE WHEN r.status = 'read' AND r.profile_id <> m.sender_id THEN r.profile_id …` |
 | `talkx_campaign_optouts` | `SELECT b.campaign_id, count(*)::bigint AS optout_count, count(*) FILTER (WHERE b.origin = 'auto_optout')::bigint AS auto_optout_count, max(b.created_at) AS last_optout_at FROM public.talkx_blacklist AS b WHERE b.campaign_id IS NOT NULL AND b.reason_code = 'opt_out' GROUP BY b.campaign_id` |
 | `talkx_engine_health` | `WITH sending_activity AS ( SELECT c.id AS campaign_id, COALESCE( (SELECT max(r.sent_at) FROM public.talkx_recipients AS r WHERE r.campaign_id = c.id AND r.sent_at IS NOT NULL), c.started_at, c.updated_at ) AS last_activity_at FROM public.talkx_campaigns AS c WHERE c.status = 'sending' ) SELECT 'stal …` |
-| `team_message_read_state` | `SELECT m.id AS message_id, m.conversation_id, COUNT(DISTINCT tcm.profile_id) AS member_count, COUNT(DISTINCT CASE WHEN r.status = 'read' AND r.profile_id <> m.sender_id THEN r.profile_id END) AS read_count, COUNT(DISTINCT CASE WHEN r.status = 'read' AND r.profile_id <> m.sender_id THEN r.profile_id …` |
 
 ### G.3 Funções de cálculo/decisão no código
 
@@ -2560,194 +2495,6 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 - **valor(nome)** — `analise-prs/resgate-261118-lote2/scripts/db-audit/compose-confirm-hash.mjs`
   ```
   const i = args.indexOf(nome); return i === -1 ? undefined : args[i + 1];
-  ```
-- **usePriceAnchoring({ clientText, messages = [], }: { clientText: string; messages?: Array<{ content: string; sender: string }>; })** — `analise-prs/resgate-261118-lote3/claude/feat-copiloto-edges-261101-1330/src/hooks/copilot/usePriceAnchoring.ts`
-  ```
-  const [aiResult, setAiResult] = useState<AiPriceAnchorResult | null>(null); const [aiLoading, setAiLoading] = useState(false); const [aiError, setAiError] = useState<string | null>(null); const abortRef = useRef<AbortController | null>(null); const local = useMemo((): PriceAnchoringResult => { if (!clientText) return { triggered: false, anchorScript: '', costPerUseScript: '' }; const lower = clientText.toLowerCase(); const triggered = PRICE_SENSITIVITY_TRIGGERS.some((t) => lower.includes(t)); if …
-  ```
-- **usePriceAnchoring({ clientText, messages = [], }: { clientText: string; messages?: Array<{ content: string; sender: string }>; })** — `analise-prs/resgate-261118-lote3/claude/feat-copiloto-hooks-261101-1500/src/hooks/copilot/usePriceAnchoring.ts`
-  ```
-  const [aiResult, setAiResult] = useState<AiPriceAnchorResult | null>(null); const [aiLoading, setAiLoading] = useState(false); const [aiError, setAiError] = useState<string | null>(null); const abortRef = useRef<AbortController | null>(null); const local = useMemo((): PriceAnchoringResult => { if (!clientText) return { triggered: false, anchorScript: '', costPerUseScript: '' }; const lower = clientText.toLowerCase(); const triggered = PRICE_SENSITIVITY_TRIGGERS.some((t) => lower.includes(t)); if …
-  ```
-- **podeReenviarComoTexto(mensagem: Message | null | undefined)** — `analise-prs/resgate-261118-lote3/claude/feat-message-delivery-post-iniciado-261101-1937/src/components/inbox/chat/SendErrorBanner.tsx`
-  ```
-  if (!mensagem || mensagem.type !== 'text') return false; // @ts-expect-error -- coluna adicionada por migration 20261101133000 (tipos regenerados no próximo types-sync) return !mensagem.delivery_post_started_at;
-  ```
-- **shouldUseTier2(keyMoments: string[])** — `analise-prs/resgate-261118-lote3/claude/feat-radar-motor-telas-261101-1330/supabase/functions/_shared/copilot-tick.ts`
-  ```
-  return keyMoments.some((m) => TIER2_MOMENTS.has(m));
-  ```
-- **invalidBusinessHours(reason: string)** — `analise-prs/resgate-261118-lote3/claude/fix-codex-findings-161016-1906/supabase/functions/_shared/talkx-window.ts`
-  ```
-  return { invalid: true, invalidReason: reason };
-  ```
-- **invalidDnd(reason: string)** — `analise-prs/resgate-261118-lote3/claude/fix-codex-findings-161016-1906/supabase/functions/_shared/talkx-window.ts`
-  ```
-  return { start: "", end: "", sundays: false, holidays: [], invalid: true, invalidReason: reason };
-  ```
-- **slugValido(slug)** — `analise-prs/resgate-261118-lote3/claude/fix-ga-fase23-edge-e2e-261020-2200/scripts/edge-deploy/health-check.mjs`
-  ```
-  return typeof slug === 'string' && /^[A-Za-z0-9][A-Za-z0-9_-]*$/.test(slug);
-  ```
-- **maisLentos(jobs, { limite = 5 } = {})** — `analise-prs/resgate-261118-lote3/claude/fix-ga-fase78-perimetro-custo-261020-2200/scripts/ci/actions-kpi.mjs`
-  ```
-  return (jobs ?? []) .map((j) => ({ job: j.name, workflow: j.workflow_name ?? '', minutos: Math.round(duracaoMinutos({ run_started_at: j.started_at, updated_at: j.completed_at }) * 10) / 10, })) .sort((a, b) => b.minutos - a.minutos) .slice(0, limite);
-  ```
-- **maisNova(local, remota)** — `analise-prs/resgate-261118-lote3/claude/fix-ga-fase78-perimetro-custo-261020-2200/scripts/ci/bump-toolchain.mjs`
-  ```
-  const lp = semver(local).split('.').map((x) => parseInt(x, 10) || 0); const rp = semver(remota).split('.').map((x) => parseInt(x, 10) || 0); for (let i = 0; i < Math.max(lp.length, rp.length); i++) { const l = lp[i] ?? 0; const r = rp[i] ?? 0; if (r > l) return true; if (l > r) return false; } return false;
-  ```
-- **maisNova(local, remota)** — `analise-prs/resgate-261118-lote3/claude/fix-ga-resto-sonar-contracts-20261021-0726/scripts/ci/bump-toolchain.mjs`
-  ```
-  const lp = semver(local).split('.').map((x) => Number.parseInt(x, 10) || 0); const rp = semver(remota).split('.').map((x) => Number.parseInt(x, 10) || 0); for (let i = 0; i < Math.max(lp.length, rp.length); i++) { const l = lp[i] ?? 0; const r = rp[i] ?? 0; if (r > l) return true; if (l > r) return false; } return false;
-  ```
-- **validarFlags(tokens, origem)** — `analise-prs/resgate-261118-lote3/claude/fix-ga-resto-sonar-contracts-20261021-0726/scripts/db-audit/run-runtime-contract.mjs`
-  ```
-  if (tokens.length === 0) throw new Error(`contrato ${origem}: chamada sem flags de cliente`); const juntos = tokens.join(' '); if (!/(^|\s)-v\s+ON_ERROR_STOP=1(\s|$)/.test(juntos)) { throw new Error(`contrato ${origem}: falta -v ON_ERROR_STOP=1 (o SQL falharia em silencio)`); } for (const token of tokens) { if (!FLAGS_ACEITOS.has(token)) { throw new Error(`contrato ${origem}: flag nao declarada "${token}"`); } } return tokens;
-  ```
-- **validarSql(sql, origem)** — `analise-prs/resgate-261118-lote3/claude/fix-ga-resto-sonar-contracts-20261021-0726/scripts/db-audit/run-runtime-contract.mjs`
-  ```
-  const texto = desfazerAspasDuplasBash(sql, origem).trim(); if (!texto) throw new Error(`contrato ${origem}: -c sem SQL`); if (/RUNTIME=/.test(texto)) { throw new Error(`contrato ${origem}: o texto de -c tem substituicao de shell; nao e SQL`); } if (!/^(WITH|SELECT|VALUES)\b/i.test(texto)) { throw new Error(`contrato ${origem}: o texto de -c nao comeca por WITH/SELECT/VALUES`); } return texto;
-  ```
-- **computeStatus(etapas, elementos, doneSet)** — `analise-prs/resgate-261118-lote3/claude/fix-ga-resto-sonar-contracts-20261021-0726/scripts/talkx/v4-status.mjs`
-  ```
-  // elemento -> conjunto de etapas que o citam em `fecha`. const citing = new Map(); for (const e of etapas) { for (const fid of e.fecha || []) { if (!/^T\d{2}-\d{3}$/.test(fid)) continue; // só elementos do mock são por tela if (!citing.has(fid)) citing.set(fid, new Set()); citing.get(fid).add(e.id); } } let doneCount = 0; const fases = new Map(); for (const e of etapas) { const concluida = doneSet.has(e.id); if (concluida) doneCount++; if (!fases.has(e.fase)) fases.set(e.fase, { total: 0, concl …
-  ```
-- **generateMarkdown(status)** — `analise-prs/resgate-261118-lote3/claude/fix-ga-resto-sonar-contracts-20261021-0726/scripts/talkx/v4-status.mjs`
-  ```
-  const L = []; L.push('# STATUS — Talk X · Plano V4 (placar)'); L.push(''); L.push('> Gerado por `scripts/talkx/v4-status.mjs`. Não editar à mão — o CI confere com `--check`.'); L.push( '> Etapas concluídas = estado `DONE_VERIFIED` na avaliação verificada de `docs/reconciliation/tasks/P046.json`, casada por ID `X<NNN>`.', ); L.push( '> Marcador histórico (`(X<NNN>)` em título de commit) registra apenas que houve uma entrega: não equivale a conclusão.', ); L.push(''); L.push('## Etapas concluídas' …
-  ```
-- **apply(user: LoggedAgentUser | null | undefined)** — `analise-prs/resgate-261118-lote3/claude/fix-radar-fase6-cv056-shortcuts-261108-2335/src/components/inbox/ChatPanel.tsx`
-  ```
-  if (!user?.id) { if (!cancelled) setIdentity(null); return; } const metadataName = typeof user.user_metadata?.name === 'string' ? user.user_metadata.name.trim() : ''; let name = metadataName || user.email || ''; try { const { data } = await supabase.from('profiles').select('name').eq('user_id', user.id).maybeSingle(); if (data?.name) name = data.name; } catch (err) { // Sem o nome do perfil a identidade continua correta e o rótulo cai nos // metadados (ou no e-mail); a falha não é engolida em si …
-  ```
-- **applySegmentBulkAction(input: { action: TalkXSegmentBulkAction; ids: string[]; tag?: string; })** — `analise-prs/resgate-261118-lote3/claude/fix-unit-tests-src-261024-1630/src/hooks/integrations/useTalkXSegments.ts`
-  ```
-  // Ids únicos, como a própria RPC faz — sem isto um id repetido ficaria "sem // resposta" na hora de casar as linhas devolvidas. const ids = Array.from(new Set(input.ids.filter((id) => typeof id === 'string' && id.trim() !== ''))); if (ids.length === 0) throw new Error('Selecione ao menos um segmento.'); const tag = input.tag?.trim(); // Falha fechada ANTES de chamar o servidor: entrada inválida não aplica nada. if (input.action === 'tag' && !tag) throw new Error('Informe a tag para aplicar em m …
-  ```
-- **invalidate()** — `analise-prs/resgate-261118-lote3/claude/fix-unit-tests-src-261024-1630/src/hooks/integrations/useTalkXSegments.ts`
-  ```
-  qc.invalidateQueries({ queryKey: ['talkx-segments'] }); // Publicar/editar/excluir segmento muda o estoque e a origem dos KPIs: sem // isto o total do topo fica velho até o próximo recarregamento. qc.invalidateQueries({ queryKey: LIBRARY_STATS_QUERY_KEY });
-  ```
-- **maisLentos(jobs, { limite = 5 } = {})** — `analise-prs/resgate-261118-lote3/claude/ga-ci-batch-ga49-ga54-ga60-ga64-231023/scripts/ci/actions-kpi.mjs`
-  ```
-  return (jobs ?? []) .map((j) => ({ job: j.name, workflow: j.workflow_name ?? '', minutos: Math.round(duracaoMinutos({ run_started_at: j.started_at, updated_at: j.completed_at }) * 10) / 10, })) .sort((a, b) => b.minutos - a.minutos) .slice(0, limite);
-  ```
-- **sentimentScoreValue(raw: unknown)** — `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/dashboard/useSentimentData.ts`
-  ```
-  return normalizeScore(raw, { min: 0, max: 100, scale: 'percent' }).value;
-  ```
-- **generateInstanceName(name: string)** — `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/hooks/inbox/useConnectionsManager.ts`
-  ```
-  
-  ```
-- **applySegmentBulkAction(input: { action: TalkXSegmentBulkAction; ids: string[]; tag?: string; })** — `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/hooks/integrations/useTalkXSegments.ts`
-  ```
-  // Ids únicos, como a própria RPC faz — sem isto um id repetido ficaria "sem // resposta" na hora de casar as linhas devolvidas. const ids = Array.from(new Set(input.ids.filter((id) => typeof id === 'string' && id.trim() !== ''))); if (ids.length === 0) throw new Error('Selecione ao menos um segmento.'); const tag = input.tag?.trim(); // Falha fechada ANTES de chamar o servidor: entrada inválida não aplica nada. if (input.action === 'tag' && !tag) throw new Error('Informe a tag para aplicar em m …
-  ```
-- **invalidate()** — `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/hooks/integrations/useTalkXSegments.ts`
-  ```
-  qc.invalidateQueries({ queryKey: ['talkx-segments'] }); // Publicar/editar/excluir segmento muda o estoque e a origem dos KPIs: sem // isto o total do topo fica velho até o próximo recarregamento. qc.invalidateQueries({ queryKey: LIBRARY_STATS_QUERY_KEY });
-  ```
-- **revalidar()** — `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/hooks/team-chat/useTeamMessages.ts`
-  ```
-  void queryClient.invalidateQueries({ queryKey: queryKeys.messages(conversationId) }); void queryClient.invalidateQueries({ queryKey: queryKeys.inbox() });
-  ```
-- **applySegmentBulkAction(input: { action: TalkXSegmentBulkAction; ids: string[]; tag?: string; })** — `analise-prs/resgate-261118-lote3/claude/kind-gates-87mwoe/src/hooks/integrations/useTalkXSegments.ts`
-  ```
-  // Ids únicos, como a própria RPC faz — sem isto um id repetido ficaria "sem // resposta" na hora de casar as linhas devolvidas. const ids = Array.from(new Set(input.ids.filter((id) => typeof id === 'string' && id.trim() !== ''))); if (ids.length === 0) throw new Error('Selecione ao menos um segmento.'); const tag = input.tag?.trim(); // Falha fechada ANTES de chamar o servidor: entrada inválida não aplica nada. if (input.action === 'tag' && !tag) throw new Error('Informe a tag para aplicar em m …
-  ```
-- **invalidate()** — `analise-prs/resgate-261118-lote3/claude/kind-gates-87mwoe/src/hooks/integrations/useTalkXSegments.ts`
-  ```
-  qc.invalidateQueries({ queryKey: ['talkx-segments'] }); // Publicar/editar/excluir segmento muda o estoque e a origem dos KPIs: sem // isto o total do topo fica velho até o próximo recarregamento. qc.invalidateQueries({ queryKey: LIBRARY_STATS_QUERY_KEY });
-  ```
-- **shouldUseTier2(keyMoments: string[])** — `analise-prs/resgate-261118-lote3/claude/radar-motor-copilot-live-301030/supabase/functions/_shared/copilot-tick.ts`
-  ```
-  return keyMoments.some((m) => TIER2_MOMENTS.has(m));
-  ```
-- **validId(value)** — `analise-prs/resgate-261118-lote3/claude/test-e2e-suite-completa-261104-1428/scripts/e2e-isolated/verify-providers.mjs`
-  ```
-  typeof value === 'string' && /^[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}$/.test(value);
-  ```
-- **validText(value)** — `analise-prs/resgate-261118-lote3/claude/test-e2e-suite-completa-261104-1428/scripts/e2e-isolated/verify-providers.mjs`
-  ```
-  typeof value === 'string' && value.length > 0;
-  ```
-- **validateEvidence(value)** — `analise-prs/resgate-261118-lote3/claude/test-e2e-suite-completa-261104-1428/scripts/e2e-isolated/verify-providers.mjs`
-  ```
-  if (!owns(value, PROVIDER_ORIGIN) || value.network_namespace !== networkNamespace || !Number.isSafeInteger(value.count) || value.count < 0 || !Array.isArray(value.message_ids) || value.message_ids.length !== value.count || new Set(value.message_ids).size !== value.count || !value.message_ids.every(id => typeof id === 'string' && /^local-[a-zA-Z0-9-]{1,100}$/.test(id)) || !Array.isArray(value.media_receipts) || new Set(value.media_receipts.map(row => row.message_id)).size !== value.media_receipts …
-  ```
-- **maisLentos(jobs, { limite = 5 } = {})** — `analise-prs/resgate-261118-lote3/claude_pink/cool-dijkstra-xk9ek2/scripts/ci/actions-kpi.mjs`
-  ```
-  return (jobs ?? []) .map((j) => ({ job: j.name, workflow: j.workflow_name ?? '', minutos: Math.round(duracaoMinutos({ run_started_at: j.started_at, updated_at: j.completed_at }) * 10) / 10, })) .sort((a, b) => b.minutos - a.minutos) .slice(0, limite);
-  ```
-- **maisNova(local, remota)** — `analise-prs/resgate-261118-lote3/claude_pink/cool-dijkstra-xk9ek2/scripts/ci/bump-toolchain.mjs`
-  ```
-  const lp = semver(local).split('.').map((x) => parseInt(x, 10) || 0); const rp = semver(remota).split('.').map((x) => parseInt(x, 10) || 0); for (let i = 0; i < Math.max(lp.length, rp.length); i++) { const l = lp[i] ?? 0; const r = rp[i] ?? 0; if (r > l) return true; if (l > r) return false; } return false;
-  ```
-- **validarEntrada({ sha, repo, workflow })** — `analise-prs/resgate-261118-lote3/claude_pink/cool-dijkstra-xk9ek2/scripts/ci/reuso-arvore.mjs`
-  ```
-  if (!REPO_RE.test(repo ?? '')) throw new Error('GITHUB_REPOSITORY com formato inválido'); if (!SHA_RE.test(sha ?? '')) throw new Error('GITHUB_SHA com formato inválido'); if (!WORKFLOWS_COM_REUSO.includes(workflow)) throw new Error('--workflow fora da lista de workflows com reuso');
-  ```
-- **valor(nome)** — `analise-prs/resgate-261118-lote3/claude_pink/cool-dijkstra-xk9ek2/scripts/db-audit/dry-run-plan.mjs`
-  ```
-  const i = args.indexOf(nome); return i === -1 ? undefined : args[i + 1];
-  ```
-- **validarFlags(tokens, origem)** — `analise-prs/resgate-261118-lote3/claude_pink/cool-dijkstra-xk9ek2/scripts/db-audit/run-runtime-contract.mjs`
-  ```
-  if (tokens.length === 0) throw new Error(`contrato ${origem}: chamada sem flags de cliente`); const juntos = tokens.join(' '); if (!/(^|\s)-v\s+ON_ERROR_STOP=1(\s|$)/.test(juntos)) { throw new Error(`contrato ${origem}: falta -v ON_ERROR_STOP=1 (o SQL falharia em silencio)`); } for (const token of tokens) { if (!FLAGS_ACEITOS.has(token)) { throw new Error(`contrato ${origem}: flag nao declarada "${token}"`); } } return tokens;
-  ```
-- **validarSql(sql, origem)** — `analise-prs/resgate-261118-lote3/claude_pink/cool-dijkstra-xk9ek2/scripts/db-audit/run-runtime-contract.mjs`
-  ```
-  const texto = desfazerAspasDuplasBash(sql, origem).trim(); if (!texto) throw new Error(`contrato ${origem}: -c sem SQL`); if (/RUNTIME=/.test(texto)) { throw new Error(`contrato ${origem}: o texto de -c tem substituicao de shell; nao e SQL`); } if (!/^(WITH|SELECT|VALUES)\b/i.test(texto)) { throw new Error(`contrato ${origem}: o texto de -c nao comeca por WITH/SELECT/VALUES`); } return texto;
-  ```
-- **ensureValidToken(supabase: SupabaseClient, account: GmailAccountForToken, log: Logger, onUpdatedAt?: (updatedAt: string)** — `analise-prs/resgate-261118-lote3/claude_pink/cool-dijkstra-xk9ek2/supabase/functions/_shared/gmail-helpers.ts`
-  ```
-  void,
-  ```
-- **valorRegistroMarkdown(valor)** — `analise-prs/resgate-261118-lote3/codex/publish-followup-20261021/scripts/ci/docs-estado-registry-convention.unit.mjs`
-  ```
-  return valor === '—' ? null : valor.slice(1, -1);
-  ```
-- **validarRegrasDeAudiencia(rules: SegmentRules | null | undefined)** — `analise-prs/resgate-261118-lote3/codex/publish-followup-20261021/src/hooks/integrations/useTalkXSegments.ts`
-  ```
-  for (const group of rules?.groups ?? []) { for (const rule of group.rules) { if (rule.field === 'real_sector' || rule.field === 'real_uf') { throw new Error(`Regra ${rule.field} requer pré-resolução em p_contact_ids`); } } }
-  ```
-- **applySegmentBulkAction(input: { action: TalkXSegmentBulkAction; ids: string[]; tag?: string; })** — `analise-prs/resgate-261118-lote3/codex/publish-followup-20261021/src/hooks/integrations/useTalkXSegments.ts`
-  ```
-  // Ids únicos, como a própria RPC faz — sem isto um id repetido ficaria "sem // resposta" na hora de casar as linhas devolvidas. const ids = Array.from(new Set(input.ids.filter((id) => typeof id === 'string' && id.trim() !== ''))); if (ids.length === 0) throw new Error('Selecione ao menos um segmento.'); const tag = input.tag?.trim(); // Falha fechada ANTES de chamar o servidor: entrada inválida não aplica nada. if (input.action === 'tag' && !tag) throw new Error('Informe a tag para aplicar em m …
-  ```
-- **invalidate()** — `analise-prs/resgate-261118-lote3/codex/publish-followup-20261021/src/hooks/integrations/useTalkXSegments.ts`
-  ```
-  qc.invalidateQueries({ queryKey: ['talkx-segments'] }); // Publicar/editar/excluir segmento muda o estoque e a origem dos KPIs: sem // isto o total do topo fica velho até o próximo recarregamento. qc.invalidateQueries({ queryKey: LIBRARY_STATS_QUERY_KEY });
-  ```
-- **apply(user: LoggedAgentUser | null | undefined)** — `analise-prs/resgate-261118-lote3/fix/ci-verde-261021/src/components/inbox/ChatPanel.tsx`
-  ```
-  if (!user?.id) { if (!cancelled) setIdentity(null); return; } const metadataName = typeof user.user_metadata?.name === 'string' ? user.user_metadata.name.trim() : ''; let name = metadataName || user.email || ''; try { const { data } = await supabase.from('profiles').select('name').eq('user_id', user.id).maybeSingle(); if (data?.name) name = data.name; } catch (err) { // Sem o nome do perfil a identidade continua correta e o rótulo cai nos // metadados (ou no e-mail); a falha não é engolida em si …
-  ```
-- **ensureValidToken(supabase: SupabaseClient, account: GmailAccountForToken, log: Logger)** — `analise-prs/resgate-261118-lote3/fix/ci-verde-261021/supabase/functions/_shared/gmail-helpers.ts`
-  ```
-  const storedTokens = await getTokens(supabase, account.id); if (Date.now() < new Date(account.token_expires_at).getTime() - 5 * 60 * 1000) return storedTokens.access_token; log.info("Refreshing Gmail token"); const tokens = await requestGmailTokenRefresh(storedTokens.refresh_token, requireEnv("GOOGLE_CLIENT_ID"), requireEnv("GOOGLE_CLIENT_SECRET")); const newExpiresAt = new Date(Date.now() + tokens.expires_in * 1000).toISOString(); await storeTokens(supabase, account.id, tokens.access_token, tok …
-  ```
-- **pairingValidity(payload: unknown, nowMs: number)** — `analise-prs/resgate-261118-lote3/fix/ci-verde-261021/supabase/functions/evolution-api/index.ts`
-  ```
-  expiresInSeconds: number; expiresAt: string
-  ```
-- **ensureValidToken(supabase: SupabaseClient, account: GmailAccountForToken, log: Logger)** — `analise-prs/resgate-261118-lote3/fix/ci-workflows-vermelhos/supabase/functions/_shared/gmail-helpers.ts`
-  ```
-  const storedTokens = await getTokens(supabase, account.id); if (Date.now() < new Date(account.token_expires_at).getTime() - 5 * 60 * 1000) return storedTokens.access_token; log.info("Refreshing Gmail token"); const tokens = await requestGmailTokenRefresh(storedTokens.refresh_token, requireEnv("GOOGLE_CLIENT_ID"), requireEnv("GOOGLE_CLIENT_SECRET")); const newExpiresAt = new Date(Date.now() + tokens.expires_in * 1000).toISOString(); await storeTokens(supabase, account.id, tokens.access_token, tok …
-  ```
-- **generateChallenge()** — `analise-prs/resgate-261118-lote3/fix/ci-workflows-vermelhos/supabase/functions/webauthn/index.ts`
-  ```
-  const array = new Uint8Array(32); crypto.getRandomValues(array); return base64URLEncode(array.buffer);
-  ```
-- **calculateTrend(current: number, previous: number)** — `analise-prs/resgate-261118-lote3/hermes/robustez-primitivos-ui-2610121626bec5-2610141859e423/src/components/dashboard/TrendIndicator.tsx`
-  ```
-  percentage: number; direction: 'up' | 'down' | 'neutral'; absoluteChange: number;
-  ```
-- **shouldUseTier2(keyMoments: string[])** — `analise-prs/resgate-261118-lote3/resolve-2381-from-main/supabase/functions/_shared/copilot-tick.ts`
-  ```
-  return keyMoments.some((m) => TIER2_MOMENTS.has(m));
   ```
 - **valor(nome)** — `analise-prs/resgate-regra8-261118/scripts/db-audit/dry-run-plan.mjs`
   ```
@@ -2899,7 +2646,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
   ```
 - **generateSummary()** — `src/components/inbox/ConversationSummary.tsx`
   ```
-  if (!canGenerateSummary) { toast.error('O período selecionado precisa ter pelo menos 10 mensagens.'); return; } const request = beginRequest(); setIsLoading(true); try { const { data, error } = await supabase.functions.invoke('ai-conversation-summary', { body: { messages: filteredMessages.map(m => ({ sender: m.sender, content: m.content, created_at: m.created_at })), contactName, contactId, requestId: request.requestId }, }); // IA-048 — a resposta só vale se contato/período ainda forem os do cl …
+  if (!canGenerateSummary) { toast.error('O período selecionado precisa ter pelo menos 10 mensagens.'); return; } const request = beginRequest(); setIsLoading(true); try { const { data, error } = await supabase.functions.invoke('ai-conversation-summary', { body: { messages: filteredMessages.map(m => ({ sender: m.sender, content: mascararParaIA(m.content), created_at: m.created_at })), contactName, contactId, requestId: request.requestId }, }); // IA-048 — a resposta só vale se contato/período aind …
   ```
 - **formatCurrency(v: number | null)** — `src/components/inbox/chat/CrmBadges.tsx`
   ```
@@ -3024,6 +2771,10 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 - **applyRadius(px: number)** — `src/components/settings/theme/presets.ts`
   ```
   const safe = clampRadius(px); document.documentElement.style.setProperty('--radius', `${safe / 16}rem`);
+  ```
+- **gerarVariacao()** — `src/components/talkx/TalkXCampaignWizard.tsx`
+  ```
+  setAvisoIa(null); const texto = ed.messageTemplate.trim(); if (texto === '') { setAvisoIa('Escreva a mensagem antes de pedir uma variação para a IA.'); return; } const variaveisNaMensagem = texto.match(/\{\{[^{}]+\}\}/g) ?? []; iaVariacao.mutate( { kind: 'message_variation', input: { texto }, entity_type: 'talkx_campaign', ...(ed.draftCampaignId ? { entity_id: ed.draftCampaignId } : {}), }, { onSuccess: (resposta) => { const saida = resposta.output; if (typeof saida !== 'string') { setAvisoIa('A …
   ```
 - **applyLink(url: string)** — `src/components/talkx/TalkXMediaDropzone.tsx`
   ```
@@ -3173,6 +2924,10 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
   ```
   queryClient.invalidateQueries({ queryKey: contactNotesKey(contactId, user?.id) }); queryClient.invalidateQueries({ queryKey: conversationTabCountsKey(contactId) });
   ```
+- **calculateNextSendAt(frequency: string)** — `src/hooks/dashboard/useScheduledReportConfigs.ts`
+  ```
+  const next = new Date(); switch (frequency) { case 'daily': next.setDate(next.getDate() + 1); next.setHours(8, 0, 0, 0); break; case 'weekly': next.setDate(next.getDate() + ((1 + 7 - next.getDay()) % 7 || 7)); next.setHours(8, 0, 0, 0); break; case 'biweekly': next.setDate(next.getDate() + 14); next.setHours(8, 0, 0, 0); break; case 'monthly': next.setMonth(next.getMonth() + 1, 1); next.setHours(8, 0, 0, 0); break; // custom é sob demanda (botão "Enviar agora") — nunca agenda. default: return nu …
+  ```
 - **avgScore(row: SentimentTrendRow)** — `src/hooks/dashboard/useSentimentTrend.ts`
   ```
   const media = toNumberOrNull(row.media); if (media !== null) return media / 50 - 1; return toNumberOrNull(row.indice) ?? 0;
@@ -3272,6 +3027,14 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 - **calculateStats(data: RateLimitLog[])** — `src/hooks/system/useRateLimitLogs.ts`
   ```
   const totalRequests = data.reduce((sum, log) => sum + log.request_count, 0); const blockedRequests = data.filter(log => log.blocked).length; const uniqueIPs = new Set(data.map(log => log.ip_address)).size; const endpointCounts: Record<string, number> = {}; data.forEach(log => { endpointCounts[log.endpoint] = (endpointCounts[log.endpoint] || 0) + log.request_count; }); const topEndpoints = Object.entries(endpointCounts) .map(([endpoint, count]) => ({ endpoint, count })) .sort((a, b) => b.count - …
+  ```
+- **campoValido(valor: unknown)** — `src/hooks/talkx/talkxAiSuggestions.ts`
+  ```
+  return typeof valor === 'string' && RULE_FIELDS.some((f) => f.value === valor);
+  ```
+- **operadorValido(field: RuleField, op: unknown)** — `src/hooks/talkx/talkxAiSuggestions.ts`
+  ```
+  if (typeof op !== 'string') return false; const permitidos = RULE_OPS[tipoDoCampo(field)] ?? []; return permitidos.some((o) => o.value === op);
   ```
 - **generateClientTaskId()** — `src/hooks/tasks/useMyWorkItems.ts`
   ```
@@ -3481,6 +3244,10 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
   ```
   desarmar(); try { await leitor.cancel(motivo); } catch { /* já encerrado */ }
   ```
+- **calcularCustoPorPonta(tarifas: TarifaDeModelo[], consulta: { model: string; em: string | Date; tokensIn: number; tokensOut: number },)** — `supabase/functions/_shared/ai-usage.ts`
+  ```
+  granularidade: "entrada_saida" | "preco_unico" | null
+  ```
 - **calcularCusto(tarifas: TarifaDeModelo[], consulta: { model: string; unit: UnidadeCobravel; em: string | Date; quantidade: number },)** — `supabase/functions/_shared/ai-usage.ts`
   ```
   if (!Number.isFinite(consulta.quantidade) || consulta.quantidade < 0) { return { custo: null, moeda: null, tarifa: null, fonte: null, motivo: "quantidade_invalida" }; } const tarifa = tarifaAplicavel(tarifas, consulta); if (tarifa === null) { return { custo: null, moeda: null, tarifa: null, fonte: null, motivo: "sem_tarifa_vigente" }; } if (!Number.isFinite(tarifa.unitPrice) || tarifa.unitPrice < 0) { return { custo: null, moeda: null, tarifa: null, fonte: null, motivo: "tarifa_invalida" }; } // …
@@ -3581,7 +3348,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
   ```
   const context = ctx ?? {}; const destination = typeof recipient?.destination === "string" ? recipient.destination.trim() : ""; // 1) Sem destino (ou marcado inválido): nada mais é avaliável. if (destination === "") { return { class: "no_destination", reason: "missing_destination" }; } if (context.destinationValid === false) { return { class: "no_destination", reason: "invalid_destination" }; } // 2) Opt-out (talkx_blacklist) — bloqueio duro, domina o transitório. if (isBlacklisted(destination, c …
   ```
-- **generateLiveSuggestion(opts: { lastClientMessage?: string; draftText?: string; saleStage?: string; userId: string; })** — `supabase/functions/copilot-live/index.ts`
+- **generateLiveSuggestion(opts: { lastClientMessage?: string; draftText?: string; saleStage?: string; userId: string; profile?: { atividade?: stri)** — `supabase/functions/copilot-live/index.ts`
   ```
   content: string; modelVersion: string
   ```
@@ -3631,7 +3398,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
   ```
 - **calculateNextSend(frequency: string)** — `supabase/functions/send-scheduled-report/index.ts`
   ```
-  const next = new Date(); switch (frequency) { case "daily": next.setDate(next.getDate() + 1); next.setHours(8, 0, 0, 0); break; case "weekly": next.setDate(next.getDate() + ((1 + 7 - next.getDay()) % 7 || 7)); next.setHours(8, 0, 0, 0); break; case "monthly": next.setMonth(next.getMonth() + 1, 1); next.setHours(8, 0, 0, 0); break; } return next.toISOString();
+  const next = new Date(); switch (frequency) { case "daily": next.setDate(next.getDate() + 1); next.setHours(8, 0, 0, 0); break; case "weekly": next.setDate(next.getDate() + ((1 + 7 - next.getDay()) % 7 || 7)); next.setHours(8, 0, 0, 0); break; case "biweekly": next.setDate(next.getDate() + 14); next.setHours(8, 0, 0, 0); break; case "monthly": next.setMonth(next.getMonth() + 1, 1); next.setHours(8, 0, 0, 0); break; } return next.toISOString();
   ```
 - **validarEntrada(kind: TalkxAiKind, input: unknown)** — `supabase/functions/talkx-ai/index.ts`
   ```
@@ -3657,42 +3424,6 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `// Verifica que o CLAUDE.md contém as seções obrigatórias e não encolheu >30%.` | `analise-prs/resgate-261118-lote2/scripts/ci/claude-md-guard.mjs` |
 | `/** Stagger do plano: `i * 0.03` com teto de 5 itens (o resto entra junto, sem fila). */` | `analise-prs/resgate-261118-lote2/src/hooks/useMotionSeguro.ts` |
 | `atraso: (indice) => (anima ? Math.min(indice, 4) * 0.03 : 0),` | `analise-prs/resgate-261118-lote2/src/hooks/useMotionSeguro.ts` |
-| `transition={{ delay: i * 0.04 }}` | `analise-prs/resgate-261118-lote3/claude/busy-cannon-40szm9/src/components/contacts/ContactPurchaseHistory.tsx` |
-| `transition={{ delay: idx * 0.05 }}` | `analise-prs/resgate-261118-lote3/claude/busy-cannon-40szm9/src/components/inbox/ContactPurchasesPanel.tsx` |
-| `// pulados nunca chega a 100% e "Restantes" fica preso contando quem ja foi` | `analise-prs/resgate-261118-lote3/claude/feat-pausa-entrega-campanhas-261101-1400/src/components/multiplix/MultiplixMonitor.tsx` |
-| `// 100% local"; `chromium-mapa`, travado em `ci-e2e-projects.unit.mjs`).` | `analise-prs/resgate-261118-lote3/claude/fix-codex-findings-161016-1906/scripts/ci/workflow-contracts.unit.mjs` |
-| `// 2. os specs que NÃO precisam de produção já rodam 100% locais com custo de` | `analise-prs/resgate-261118-lote3/claude/fix-codex-findings-161016-1906/scripts/ci/workflow-contracts.unit.mjs` |
-| `// REST/RPC do Supabase e a API da Mapbox 100% mockados — NÃO usam` | `analise-prs/resgate-261118-lote3/claude/fix-e2e-workers-timeout-tests-011101-1800/playwright.config.ts` |
-| `const DEFAULT_THRESHOLD = 0.10; // 10% de 5xx = falha` | `analise-prs/resgate-261118-lote3/claude/fix-ga-fase23-edge-e2e-261020-2200/scripts/edge-deploy/health-check.mjs` |
-| `// 100% local"; `chromium-mapa`, travado em `ci-e2e-projects.unit.mjs`).` | `analise-prs/resgate-261118-lote3/claude/fix-ga-resto-sonar-contracts-20261021-0726/scripts/ci/workflow-contracts.unit.mjs` |
-| `// 2. os specs que NÃO precisam de produção já rodam 100% locais com custo de` | `analise-prs/resgate-261118-lote3/claude/fix-ga-resto-sonar-contracts-20261021-0726/scripts/ci/workflow-contracts.unit.mjs` |
-| `const DEFAULT_THRESHOLD = 0.10; // 10% de 5xx = falha` | `analise-prs/resgate-261118-lote3/claude/fix-ga-resto-sonar-contracts-20261021-0726/scripts/edge-deploy/health-check.mjs` |
-| `osc.start(now + i * 0.05); // Slight stagger for richness` | `analise-prs/resgate-261118-lote3/claude/fix-unit-tests-src-261024-1630/src/hooks/chat/useTeamChatNotifications.ts` |
-| `transition={{ duration: 2.4, repeat: Infinity, ease: 'easeInOut', delay: i * 0.2 }}` | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/inbox/InboxEmptyChat.tsx` |
-| `// como 0% derrubaria o progresso de metas que têm dado de verdade.` | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/hooks/analytics/useGoalsDashboard.ts` |
-| `osc.start(now + i * 0.05); // Slight stagger for richness` | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/hooks/chat/useTeamChatNotifications.ts` |
-| `osc.start(now + i * 0.05); // Slight stagger for richness` | `analise-prs/resgate-261118-lote3/claude/magical-pasteur-iz2pgy/src/hooks/chat/useTeamChatNotifications.ts` |
-| `// REST/RPC do Supabase e a API da Mapbox 100% mockados — NÃO usam` | `analise-prs/resgate-261118-lote3/claude/test-e2e-suite-completa-261104-1428/playwright.config.ts` |
-| `// REST/RPC do Supabase e a API da Mapbox 100% mockados — NÃO usam` | `analise-prs/resgate-261118-lote3/claude/test-e2e-tls-diagnostico-261104-1340/playwright.config.ts` |
-| `// REST/RPC do Supabase e a API da Mapbox 100% mockados — NÃO usam` | `analise-prs/resgate-261118-lote3/claude/test-e2e-webkit-tls-261104-1430/playwright.config.ts` |
-| `osc.start(now + i * 0.05); // Slight stagger for richness` | `analise-prs/resgate-261118-lote3/claude_05/festive-carson-ub43wu/src/hooks/chat/useTeamChatNotifications.ts` |
-| `// REST/RPC do Supabase e a API da Mapbox 100% mockados — NÃO usam` | `analise-prs/resgate-261118-lote3/claude_pink/cool-dijkstra-xk9ek2/playwright.config.ts` |
-| `// autorização em `supabase/functions/_shared/` não pode ficar abaixo de 50%.` | `analise-prs/resgate-261118-lote3/claude_pink/cool-dijkstra-xk9ek2/scripts/ci/edge-coverage-authz.unit.mjs` |
-| `// está hoje em ~45% e a régua é um piso contra queda, não um teto por arquivo.` | `analise-prs/resgate-261118-lote3/claude_pink/cool-dijkstra-xk9ek2/scripts/ci/edge-coverage-authz.unit.mjs` |
-| `const DEFAULT_THRESHOLD = 0.10; // 10% de 5xx = falha` | `analise-prs/resgate-261118-lote3/claude_pink/cool-dijkstra-xk9ek2/scripts/edge-deploy/health-check.mjs` |
-| `// 100% local"; `chromium-mapa`, travado em `ci-e2e-projects.unit.mjs`).` | `analise-prs/resgate-261118-lote3/codex/publish-followup-20261021/scripts/ci/workflow-contracts.unit.mjs` |
-| `// 2. os specs que NÃO precisam de produção já rodam 100% locais com custo de` | `analise-prs/resgate-261118-lote3/codex/publish-followup-20261021/scripts/ci/workflow-contracts.unit.mjs` |
-| `// autorização em `supabase/functions/_shared/` não pode ficar abaixo de 50%.` | `analise-prs/resgate-261118-lote3/fix/ci-workflows-vermelhos/scripts/ci/edge-coverage-authz.unit.mjs` |
-| `// está hoje em ~45% e a régua é um piso contra queda, não um teto por arquivo.` | `analise-prs/resgate-261118-lote3/fix/ci-workflows-vermelhos/scripts/ci/edge-coverage-authz.unit.mjs` |
-| `transition={{ delay: idx * 0.05 }}` | `analise-prs/resgate-261118-lote3/hermes/robustez-primitivos-ui-2610121626bec5-2610141859e423/src/components/inbox/ContactPurchasesPanel.tsx` |
-| `if (newPercentage < snapPoints[0] * 0.5 && !preventClose) { haptics.light(); onClose(); }` | `analise-prs/resgate-261118-lote3/hermes/robustez-primitivos-ui-2610121626bec5-2610141859e423/src/components/mobile/BottomSheet.tsx` |
-| `<motion.div ref={containerRef} animate={{ y: isPulling ? pullDistance * 0.3 : 0 }} transition={{ type: 'spring', stiffness: 400, damping: 30 }}` | `analise-prs/resgate-261118-lote3/hermes/robustez-primitivos-ui-2610121626bec5-2610141859e423/src/components/mobile/SwipeGestures.tsx` |
-| `const distance = Math.max(0, (e.touches[0].clientY - startY.current) * 0.5);` | `analise-prs/resgate-261118-lote3/hermes/robustez-primitivos-ui-2610121626bec5-2610141859e423/src/components/mobile/SwipeGestures.tsx` |
-| `const vol = (notifSettings.soundVolume ?? 70) / 100 * 0.2;` | `analise-prs/resgate-261118-lote3/hermes/telefonia-fase8-motion-a11y-responsivo-2610031530007c/src/components/calls/IncomingCallAlert.tsx` |
-| `transition={{ delay: i * 0.03 }}` | `analise-prs/resgate-261118-lote3/hermes/telefonia-fase8-motion-a11y-responsivo-2610031530007c/src/components/dashboard/RealtimeMetricsPanel.tsx` |
-| `transition={{ delay: i * 0.05 }}` | `analise-prs/resgate-261118-lote3/hermes/telefonia-fase8-motion-a11y-responsivo-2610031530007c/src/components/dashboard/RealtimeMetricsPanel.tsx` |
-| `transition={{ delay: idx * 0.04 }}` | `analise-prs/resgate-261118-lote3/hermes/telefonia-fase8-motion-a11y-responsivo-2610031530007c/src/components/inbox/ConversationTimeline.tsx` |
-| `transition={{ delay: i * 0.05 }}` | `analise-prs/resgate-261118-lote3/hermes/telefonia-fase8-motion-a11y-responsivo-2610031530007c/src/components/inbox/contact-details/SLAAndAITagsSection.tsx` |
 | `transition={{ duration: 0.3, delay: index * 0.1 }}` | `src/components/agents/AgentsView.tsx` |
 | `{...enter(reduceMotion ? 0 : 0.9 + index * 0.1)}` | `src/components/auth/HeroBenefits.tsx` |
 | `transition={{ delay: index * 0.05 }}` | `src/components/auth/PasswordStrengthMeter.tsx` |
@@ -3703,11 +3434,11 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `transition={{ delay: hour.day_of_week * 0.05 }}` | `src/components/connections/BusinessHoursDialog.tsx` |
 | `transition={{ delay: index * 0.04 }}` | `src/components/contacts/ContactActivityTimeline.tsx` |
 | `transition={{ delay: i * 0.03, duration: 0.4 }}` | `src/components/contacts/ContactAnalyticsDashboard.tsx` |
-| `transition={{ delay: i * 0.05 + 0.2, duration: 0.5 }}` | `src/components/contacts/ContactAnalyticsDashboard.tsx` |
-| `transition={{ delay: i * 0.05 }}` | `src/components/contacts/ContactAnalyticsDashboard.tsx` |
+| `transition={{ delay: i * 0.04 + 0.2, duration: 0.5 }}` | `src/components/contacts/ContactAnalyticsDashboard.tsx` |
+| `transition={{ delay: i * 0.04 }}` | `src/components/contacts/ContactAnalyticsDashboard.tsx` |
 | `transition={{ duration: 0.15, delay: Math.min(index, 12) * 0.02 }}` | `src/components/contacts/ContactContentArea.tsx` |
+| `deslocamento += delta * 0.021;` | `src/components/contacts/ContactExploreRail.tsx` |
 | `transition={{ delay: gi * 0.03 }}` | `src/components/contacts/ContactGroupedList.tsx` |
-| `transition={{ delay: colIndex * 0.08 }}` | `src/components/contacts/ContactKanbanView.tsx` |
 | `transition={{ delay: i * 0.04 + 0.2, duration: 0.5 }}` | `src/components/contacts/ContactMapView.tsx` |
 | `transition={{ delay: i * 0.04 }}` | `src/components/contacts/ContactMapView.tsx` |
 | `transition={{ delay: i * 0.03 }}` | `src/components/contacts/ContactNotes.tsx` |
@@ -3856,6 +3587,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `else if (avgMonthly > 0 && recentMessageCount < avgMonthly * 0.5) riskScore += 20;` | `supabase/functions/ai-churn-analysis/churn-risk.ts` |
 | `else if (avgMonthly > 0 && recentMessageCount < avgMonthly * 0.7) riskScore += 10;` | `supabase/functions/ai-churn-analysis/churn-risk.ts` |
 | `if (avgMonthly > 0 && recentMessageCount < avgMonthly * 0.3) riskScore += 30;` | `supabase/functions/ai-churn-analysis/churn-risk.ts` |
+| `* recusada — 1.414 chamadas no mês, 100% HTTP 401, zero transcrições desde` | `supabase/functions/ai-transcribe-audio/openrouter-stt.ts` |
 | `// só Content-Type) — strictMode=true rejeitaria 100% do tráfego GO.` | `supabase/functions/evolution-webhook/index.ts` |
 | `// FTS real (search_vector, 100% preenchido — trigger BEFORE INSERT` | `supabase/functions/promogifts-catalog/index.ts` |
 | `// null) derrubava 100% dos destinatários com unknown_placeholder. Busca` | `supabase/functions/talkx-send/index.ts` |
@@ -3870,303 +3602,303 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `DOS` | `'/home/user/Zapp_Web_V2/analise-prs/resgate-261115/dossies'` | `analise-prs/resgate-261115/auditoria/ferramentas/auditar-veredito.js` |
 | `COMMIT` | `'d7af7a671c'` | `analise-prs/resgate-261118-lote2/scripts/ci/compose-confirm-hash.unit.mjs` |
 | `RUNTIME` | `'b'` | `analise-prs/resgate-261118-lote2/scripts/ci/proof-sha.unit.mjs` |
-| `MAX_AMOUNT` | `100` | `analise-prs/resgate-261118-lote3/claude/busy-cannon-40szm9/src/components/inbox/ContactPurchasesPanel.tsx` |
-| `AMOUNT_HINT` | `'Informe um valor entre R$ 0,00 e R$ 100.000.000,00.'` | `analise-prs/resgate-261118-lote3/claude/busy-cannon-40szm9/src/components/inbox/ContactPurchasesPanel.tsx` |
-| `SECAO_ABERTURA` | `'### Etapas superadas pela política vigente'` | `analise-prs/resgate-261118-lote3/claude/feat-E90-main-failure-notify-261101-1730/scripts/ci/ci-docs-baseline.unit.mjs` |
-| `PONTO` | `'.'` | `analise-prs/resgate-261118-lote3/claude/feat-E90-main-failure-notify-261101-1730/scripts/ci/ci-docs-baseline.unit.mjs` |
-| `BARRA` | `'\\'` | `analise-prs/resgate-261118-lote3/claude/feat-E90-main-failure-notify-261101-1730/scripts/ci/ci-docs-baseline.unit.mjs` |
-| `SILENCIO_DIAS` | `5` | `analise-prs/resgate-261118-lote3/claude/feat-copiloto-edges-261101-1330/src/hooks/copilot/useLossRiskDetector.ts` |
-| `SILENCIO_DIAS` | `5` | `analise-prs/resgate-261118-lote3/claude/feat-copiloto-hooks-261101-1500/src/hooks/copilot/useLossRiskDetector.ts` |
-| `AMBIGUOUS_THRESHOLD_MS` | `2` | `analise-prs/resgate-261118-lote3/claude/feat-message-delivery-post-iniciado-261101-1937/src/hooks/delivery/useUnconfirmedMessages.ts` |
-| `OPT_OUT_ACCENTS` | `"áàâãäåéèêëíìîïóòôõöúùûüçñýÁÀÂÃÄÅÉÈÊËÍÌÎÏÓÒÔÕÖÚÙÛÜÇÑÝ"` | `analise-prs/resgate-261118-lote3/claude/feat-message-delivery-post-iniciado-261101-1937/supabase/functions/_shared/evolution-webhook-messages.ts` |
-| `OPT_OUT_ASCII` | `"aaaaaaeeeeiiiiooooouuuucnyaaaaaaeeeeiiiiooooouuuucny"` | `analise-prs/resgate-261118-lote3/claude/feat-message-delivery-post-iniciado-261101-1937/supabase/functions/_shared/evolution-webhook-messages.ts` |
-| `AWAY_MESSAGE_WORKER` | `"edge:evolution-webhook:away"` | `analise-prs/resgate-261118-lote3/claude/feat-message-delivery-post-iniciado-261101-1937/supabase/functions/_shared/evolution-webhook-messages.ts` |
-| `CHATBOT_L1_WORKER` | `"edge:evolution-webhook:chatbot-l1"` | `analise-prs/resgate-261118-lote3/claude/feat-message-delivery-post-iniciado-261101-1937/supabase/functions/_shared/evolution-webhook-messages.ts` |
-| `MAX_REQUEST_BYTES` | `8` | `analise-prs/resgate-261118-lote3/claude/feat-message-delivery-post-iniciado-261101-1937/supabase/functions/message-delivery/index.ts` |
-| `TALKX_STALL_MIN_MS` | `180` | `analise-prs/resgate-261118-lote3/claude/feat-pausa-entrega-campanhas-261101-1400/src/components/talkx/tracking/talkxHealth.ts` |
-| `TALKX_RATE_WINDOW_MIN` | `5` | `analise-prs/resgate-261118-lote3/claude/feat-pausa-entrega-campanhas-261101-1400/src/components/talkx/tracking/talkxHealth.ts` |
-| `COPILOT_TICK_KIND` | `"copilot.tick"` | `analise-prs/resgate-261118-lote3/claude/feat-radar-motor-telas-261101-1330/supabase/functions/_shared/copilot-tick.ts` |
-| `MAX_NEW_MESSAGES` | `20` | `analise-prs/resgate-261118-lote3/claude/feat-radar-motor-telas-261101-1330/supabase/functions/_shared/copilot-tick.ts` |
-| `MAX_CONTEXT_MESSAGES` | `5` | `analise-prs/resgate-261118-lote3/claude/feat-radar-motor-telas-261101-1330/supabase/functions/_shared/copilot-tick.ts` |
-| `SHA` | `'a'` | `analise-prs/resgate-261118-lote3/claude/feat-talkx-x054-cmdk-261108-0100/scripts/vercel/verify-production.unit.mjs` |
-| `BOTTOM_FOLLOW_THRESHOLD_PX` | `100` | `analise-prs/resgate-261118-lote3/claude/fix-codex-findings-161016-1906/src/components/inbox/chat/ChatMessagesArea.tsx` |
-| `SELO_ENVIADA_MS` | `1000` | `analise-prs/resgate-261118-lote3/claude/fix-codex-findings-161016-1906/src/components/inbox/chat/ChatMessagesArea.tsx` |
-| `REVIEW_STALE_DAYS` | `3` | `analise-prs/resgate-261118-lote3/claude/fix-codex-findings-161016-1906/src/components/talkx/TalkXTemplates.tsx` |
-| `CACHE_TTL` | `1000` | `analise-prs/resgate-261118-lote3/claude/fix-codex-findings-161016-1906/src/hooks/system/useOfflineCache.ts` |
-| `CORRELATION_HEADER` | `'x-correlation-id'` | `analise-prs/resgate-261118-lote3/claude/fix-codex-findings-161016-1906/src/lib/invokeEdge.ts` |
-| `REQUEST_ID_HEADER` | `'x-request-id'` | `analise-prs/resgate-261118-lote3/claude/fix-codex-findings-161016-1906/src/lib/invokeEdge.ts` |
-| `EDGE_ERROR_NETWORK` | `'EDGE_ERROR_NETWORK'` | `analise-prs/resgate-261118-lote3/claude/fix-codex-findings-161016-1906/src/lib/invokeEdge.ts` |
-| `EDGE_ERROR_UNKNOWN` | `'EDGE_ERROR_UNKNOWN'` | `analise-prs/resgate-261118-lote3/claude/fix-codex-findings-161016-1906/src/lib/invokeEdge.ts` |
-| `DEFAULT_SCHEDULE_TIMEZONE` | `"America/Sao_Paulo"` | `analise-prs/resgate-261118-lote3/claude/fix-codex-findings-161016-1906/supabase/functions/_shared/talkx-window.ts` |
-| `DEFAULT_BUSINESS_HOURS_START` | `"08:00"` | `analise-prs/resgate-261118-lote3/claude/fix-codex-findings-161016-1906/supabase/functions/_shared/talkx-window.ts` |
-| `DEFAULT_BUSINESS_HOURS_END` | `"18:00"` | `analise-prs/resgate-261118-lote3/claude/fix-codex-findings-161016-1906/supabase/functions/_shared/talkx-window.ts` |
-| `RUNBOOK_SEGREDOS` | `'docs/runbooks/migracao-segredos-environments.md'` | `analise-prs/resgate-261118-lote3/claude/fix-db-guard-pguser-261019-1430/scripts/ci/github-settings-guard.mjs` |
-| `ISSUE_LABEL` | `'settings-guard'` | `analise-prs/resgate-261118-lote3/claude/fix-db-guard-pguser-261019-1430/scripts/ci/github-settings-guard.mjs` |
-| `ISSUE_TITLE` | `'[settings-guard] perimeter regression detected'` | `analise-prs/resgate-261118-lote3/claude/fix-db-guard-pguser-261019-1430/scripts/ci/github-settings-guard.mjs` |
-| `BRANCH` | `'main'` | `analise-prs/resgate-261118-lote3/claude/fix-db-guard-pguser-261019-1430/scripts/ci/github-settings-guard.mjs` |
-| `SEIS_HORAS_MS` | `6` | `analise-prs/resgate-261118-lote3/claude/fix-db-guard-pguser-261019-1430/scripts/ci/github-settings-guard.mjs` |
-| `SETE_DIAS_MS` | `7` | `analise-prs/resgate-261118-lote3/claude/fix-db-guard-pguser-261019-1430/scripts/ci/github-settings-guard.mjs` |
-| `TITULO` | `'[settings-guard] perimeter regression detected'` | `analise-prs/resgate-261118-lote3/claude/fix-db-guard-pguser-261019-1430/scripts/ci/github-settings-guard.unit.mjs` |
-| `CONTEXTS_OK` | `"['` | `analise-prs/resgate-261118-lote3/claude/fix-db-guard-pguser-261019-1430/scripts/ci/github-settings-guard.unit.mjs` |
-| `ACTIONS_OK` | `"send({ enabled: true, allowed_actions: '` | `analise-prs/resgate-261118-lote3/claude/fix-db-guard-pguser-261019-1430/scripts/ci/github-settings-guard.unit.mjs` |
-| `WORKFLOW_PERMS_OK` | `"send({ default_workflow_permissions: '` | `analise-prs/resgate-261118-lote3/claude/fix-db-guard-pguser-261019-1430/scripts/ci/github-settings-guard.unit.mjs` |
-| `SELECTED_PATTERNS` | `"['` | `analise-prs/resgate-261118-lote3/claude/fix-db-guard-pguser-261019-1430/scripts/ci/github-settings-guard.unit.mjs` |
-| `SEM_ESCOPO` | `"send({ message: '` | `analise-prs/resgate-261118-lote3/claude/fix-db-guard-pguser-261019-1430/scripts/ci/github-settings-guard.unit.mjs` |
-| `GUARD` | `'github-actions[bot]'` | `analise-prs/resgate-261118-lote3/claude/fix-db-guard-pguser-261019-1430/scripts/ci/github-settings-guard.unit.mjs` |
-| `SEIS_HORAS_MS` | `6` | `analise-prs/resgate-261118-lote3/claude/fix-db-guard-pguser-261019-1430/scripts/ci/github-settings-guard.unit.mjs` |
-| `LEDGER_STATEMENTS_HASH_DOMAIN` | `'zapp-migration-ledger-statements-v1\0'` | `analise-prs/resgate-261118-lote3/claude/fix-ga-fase1-lote-banco-261020-2200/scripts/db-audit/check-migration-drift.mjs` |
-| `COMMENT_ONLY_KIND` | `'ledger-only/comment-only'` | `analise-prs/resgate-261118-lote3/claude/fix-ga-fase1-lote-banco-261020-2200/scripts/db-audit/check-migration-drift.mjs` |
-| `PINNED_REPLAY_KIND` | `'ledger-divergence/pinned-replay'` | `analise-prs/resgate-261118-lote3/claude/fix-ga-fase1-lote-banco-261020-2200/scripts/db-audit/check-migration-drift.mjs` |
-| `RPC_PADRAO` | `'e2e_cleanup_conversation_closures'` | `analise-prs/resgate-261118-lote3/claude/fix-ga-fase23-edge-e2e-261020-2200/scripts/ci/e2e-teardown.mjs` |
-| `BASE` | `'https://projeto-teste.supabase.co'` | `analise-prs/resgate-261118-lote3/claude/fix-ga-fase23-edge-e2e-261020-2200/scripts/ci/e2e-teardown.unit.mjs` |
-| `CHAVE_PUBLICA` | `'chave-publica-do-projeto'` | `analise-prs/resgate-261118-lote3/claude/fix-ga-fase23-edge-e2e-261020-2200/scripts/ci/e2e-teardown.unit.mjs` |
-| `EMAIL` | `'e2e@exemplo.invalid'` | `analise-prs/resgate-261118-lote3/claude/fix-ga-fase23-edge-e2e-261020-2200/scripts/ci/e2e-teardown.unit.mjs` |
-| `SENTINELA_SERVICE_ROLE` | `'valor-da-chave-mestra-que-nao-pode-viajar'` | `analise-prs/resgate-261118-lote3/claude/fix-ga-fase23-edge-e2e-261020-2200/scripts/ci/e2e-teardown.unit.mjs` |
-| `NOME_PASSO` | `'E2E teardown - limpar fixture de conversation_closures'` | `analise-prs/resgate-261118-lote3/claude/fix-ga-fase23-edge-e2e-261020-2200/scripts/ci/e2e-teardown.unit.mjs` |
-| `TAMANHO_MINIMO` | `5` | `analise-prs/resgate-261118-lote3/claude/fix-ga-fase23-edge-e2e-261020-2200/scripts/ci/redigir-relatorio.mjs` |
-| `EMAIL` | `'usuario.de.teste@example.com'` | `analise-prs/resgate-261118-lote3/claude/fix-ga-fase23-edge-e2e-261020-2200/scripts/ci/redigir-relatorio.unit.mjs` |
-| `CANONICAL_PROJECT` | `'tnnnlkbymytvtqngbbqh'` | `analise-prs/resgate-261118-lote3/claude/fix-ga-fase23-edge-e2e-261020-2200/scripts/edge-deploy/health-check.mjs` |
-| `MGMT_BASE` | `'https://api.supabase.com'` | `analise-prs/resgate-261118-lote3/claude/fix-ga-fase23-edge-e2e-261020-2200/scripts/edge-deploy/health-check.mjs` |
-| `DEFAULT_THRESHOLD` | `0.10` | `analise-prs/resgate-261118-lote3/claude/fix-ga-fase23-edge-e2e-261020-2200/scripts/edge-deploy/health-check.mjs` |
-| `DEFAULT_WAIT_MS` | `5` | `analise-prs/resgate-261118-lote3/claude/fix-ga-fase23-edge-e2e-261020-2200/scripts/edge-deploy/health-check.mjs` |
-| `WINDOW_MINUTES` | `5` | `analise-prs/resgate-261118-lote3/claude/fix-ga-fase23-edge-e2e-261020-2200/scripts/edge-deploy/health-check.mjs` |
-| `UM_DIA` | `24` | `analise-prs/resgate-261118-lote3/claude/fix-ga-fase78-perimetro-custo-261020-2200/scripts/ci/actions-kpi.mjs` |
-| `POR_PAGINA` | `100` | `analise-prs/resgate-261118-lote3/claude/fix-ga-fase78-perimetro-custo-261020-2200/scripts/ci/actions-kpi.mjs` |
-| `RUNBOOK_SEGREDOS` | `'docs/runbooks/migracao-segredos-environments.md'` | `analise-prs/resgate-261118-lote3/claude/fix-ga-fase78-perimetro-custo-261020-2200/scripts/ci/github-settings-guard.mjs` |
-| `ISSUE_LABEL` | `'settings-guard'` | `analise-prs/resgate-261118-lote3/claude/fix-ga-fase78-perimetro-custo-261020-2200/scripts/ci/github-settings-guard.mjs` |
-| `ISSUE_TITLE` | `'[settings-guard] perimeter regression detected'` | `analise-prs/resgate-261118-lote3/claude/fix-ga-fase78-perimetro-custo-261020-2200/scripts/ci/github-settings-guard.mjs` |
-| `BRANCH` | `'main'` | `analise-prs/resgate-261118-lote3/claude/fix-ga-fase78-perimetro-custo-261020-2200/scripts/ci/github-settings-guard.mjs` |
-| `SEIS_HORAS_MS` | `6` | `analise-prs/resgate-261118-lote3/claude/fix-ga-fase78-perimetro-custo-261020-2200/scripts/ci/github-settings-guard.mjs` |
-| `SETE_DIAS_MS` | `7` | `analise-prs/resgate-261118-lote3/claude/fix-ga-fase78-perimetro-custo-261020-2200/scripts/ci/github-settings-guard.mjs` |
-| `TITULO` | `'[settings-guard] perimeter regression detected'` | `analise-prs/resgate-261118-lote3/claude/fix-ga-fase78-perimetro-custo-261020-2200/scripts/ci/github-settings-guard.unit.mjs` |
-| `CONTEXTS_OK` | `"['` | `analise-prs/resgate-261118-lote3/claude/fix-ga-fase78-perimetro-custo-261020-2200/scripts/ci/github-settings-guard.unit.mjs` |
-| `ACTIONS_OK` | `"send({ enabled: true, allowed_actions: '` | `analise-prs/resgate-261118-lote3/claude/fix-ga-fase78-perimetro-custo-261020-2200/scripts/ci/github-settings-guard.unit.mjs` |
-| `WORKFLOW_PERMS_OK` | `"send({ default_workflow_permissions: '` | `analise-prs/resgate-261118-lote3/claude/fix-ga-fase78-perimetro-custo-261020-2200/scripts/ci/github-settings-guard.unit.mjs` |
-| `SELECTED_PATTERNS` | `"['` | `analise-prs/resgate-261118-lote3/claude/fix-ga-fase78-perimetro-custo-261020-2200/scripts/ci/github-settings-guard.unit.mjs` |
-| `SEM_ESCOPO` | `"send({ message: '` | `analise-prs/resgate-261118-lote3/claude/fix-ga-fase78-perimetro-custo-261020-2200/scripts/ci/github-settings-guard.unit.mjs` |
-| `GUARD` | `'github-actions[bot]'` | `analise-prs/resgate-261118-lote3/claude/fix-ga-fase78-perimetro-custo-261020-2200/scripts/ci/github-settings-guard.unit.mjs` |
-| `LIMITE_COMENTARIOS` | `20` | `analise-prs/resgate-261118-lote3/claude/fix-ga-fase78-perimetro-custo-261020-2200/scripts/ci/issue-rotativa.mjs` |
-| `CABECALHO` | `'DRY RUN: migrations will *not* be pushed to the database.'` | `analise-prs/resgate-261118-lote3/claude/fix-ga-resto-dbmigrate-20261021-0729/scripts/ci/dry-run-plan.unit.mjs` |
-| `ALVO` | `'20261001120000'` | `analise-prs/resgate-261118-lote3/claude/fix-ga-resto-dbmigrate-20261021-0729/scripts/ci/dry-run-plan.unit.mjs` |
-| `TETO_KB` | `30` | `analise-prs/resgate-261118-lote3/claude/fix-ga-resto-sonar-contracts-20261021-0726/scripts/ci/catalog-ct73-docs.unit.mjs` |
-| `CI_TS_GLOB` | `"supabase/functions/**/*.test.ts"` | `analise-prs/resgate-261118-lote3/claude/fix-ga-resto-sonar-contracts-20261021-0726/scripts/ci/check-test-inventory.mjs` |
-| `RUNBOOK_SEGREDOS` | `'docs/runbooks/migracao-segredos-environments.md'` | `analise-prs/resgate-261118-lote3/claude/fix-ga-resto-sonar-contracts-20261021-0726/scripts/ci/github-settings-guard.mjs` |
-| `ISSUE_LABEL` | `'settings-guard'` | `analise-prs/resgate-261118-lote3/claude/fix-ga-resto-sonar-contracts-20261021-0726/scripts/ci/github-settings-guard.mjs` |
-| `ISSUE_TITLE` | `'[settings-guard] perimeter regression detected'` | `analise-prs/resgate-261118-lote3/claude/fix-ga-resto-sonar-contracts-20261021-0726/scripts/ci/github-settings-guard.mjs` |
-| `BRANCH` | `'main'` | `analise-prs/resgate-261118-lote3/claude/fix-ga-resto-sonar-contracts-20261021-0726/scripts/ci/github-settings-guard.mjs` |
-| `SEIS_HORAS_MS` | `6` | `analise-prs/resgate-261118-lote3/claude/fix-ga-resto-sonar-contracts-20261021-0726/scripts/ci/github-settings-guard.mjs` |
-| `SETE_DIAS_MS` | `7` | `analise-prs/resgate-261118-lote3/claude/fix-ga-resto-sonar-contracts-20261021-0726/scripts/ci/github-settings-guard.mjs` |
-| `LIMIAR` | `6.4` | `analise-prs/resgate-261118-lote3/claude/fix-ga-resto-sonar-contracts-20261021-0726/scripts/ci/lamejs-attack-indexing.unit.mjs` |
-| `BLOCK` | `1152` | `analise-prs/resgate-261118-lote3/claude/fix-ga-resto-sonar-contracts-20261021-0726/scripts/ci/lamejs-attack-indexing.unit.mjs` |
-| `BLOCK` | `1152` | `analise-prs/resgate-261118-lote3/claude/fix-ga-resto-sonar-contracts-20261021-0726/scripts/ci/lamejs-attack-indexing.unit.mjs` |
-| `CANONICAL_PROJECT` | `'tnnnlkbymytvtqngbbqh'` | `analise-prs/resgate-261118-lote3/claude/fix-ga-resto-sonar-contracts-20261021-0726/scripts/edge-deploy/health-check.mjs` |
-| `MGMT_BASE` | `'https://api.supabase.com'` | `analise-prs/resgate-261118-lote3/claude/fix-ga-resto-sonar-contracts-20261021-0726/scripts/edge-deploy/health-check.mjs` |
-| `DEFAULT_THRESHOLD` | `0.10` | `analise-prs/resgate-261118-lote3/claude/fix-ga-resto-sonar-contracts-20261021-0726/scripts/edge-deploy/health-check.mjs` |
-| `DEFAULT_WAIT_MS` | `5` | `analise-prs/resgate-261118-lote3/claude/fix-ga-resto-sonar-contracts-20261021-0726/scripts/edge-deploy/health-check.mjs` |
-| `WINDOW_MINUTES` | `5` | `analise-prs/resgate-261118-lote3/claude/fix-ga-resto-sonar-contracts-20261021-0726/scripts/edge-deploy/health-check.mjs` |
-| `STATUS_CONCLUIDO` | `'DONE_VERIFIED'` | `analise-prs/resgate-261118-lote3/claude/fix-ga-resto-sonar-contracts-20261021-0726/scripts/talkx/v4-status.mjs` |
-| `THINKING_TIMEOUT_MS` | `10` | `analise-prs/resgate-261118-lote3/claude/fix-radar-fase6-cv056-shortcuts-261108-2335/src/hooks/copilot/useRadarPanel.ts` |
-| `LIMITE_CHATS_MIN` | `1` | `analise-prs/resgate-261118-lote3/claude/fix-unit-tests-src-261024-1630/src/components/admin/AdminView.tsx` |
-| `LIMITE_CHATS_MAX` | `50` | `analise-prs/resgate-261118-lote3/claude/fix-unit-tests-src-261024-1630/src/components/admin/AdminView.tsx` |
-| `LIMITE_CHATS_PADRAO` | `5` | `analise-prs/resgate-261118-lote3/claude/fix-unit-tests-src-261024-1630/src/components/admin/AdminView.tsx` |
-| `CONSULTA_PAINEL_LARGO` | `'(min-width: 1280px)'` | `analise-prs/resgate-261118-lote3/claude/fix-unit-tests-src-261024-1630/src/components/talkx/TalkXTemplateEditor.tsx` |
-| `SLA_MONITOR_SOURCE` | `'sla-monitor'` | `analise-prs/resgate-261118-lote3/claude/fix-unit-tests-src-261024-1630/src/hooks/business/useWarRoomAlerts.ts` |
-| `SLA_BREACH_PAGE` | `1000` | `analise-prs/resgate-261118-lote3/claude/fix-unit-tests-src-261024-1630/src/hooks/business/useWarRoomAlerts.ts` |
-| `CANAL_BASE` | `'agente-celebracoes'` | `analise-prs/resgate-261118-lote3/claude/fix-unit-tests-src-261024-1630/src/hooks/gamification/useAgentCelebrations.ts` |
-| `JANELA_CONQUISTAS` | `20` | `analise-prs/resgate-261118-lote3/claude/fix-unit-tests-src-261024-1630/src/hooks/gamification/useAgentCelebrations.ts` |
-| `DEFAULT_CHIP` | `'attending'` | `analise-prs/resgate-261118-lote3/claude/fix-unit-tests-src-261024-1630/src/hooks/inbox/useInboxFilters.ts` |
-| `SEGMENT_TIMEZONE` | `'America/Sao_Paulo'` | `analise-prs/resgate-261118-lote3/claude/fix-unit-tests-src-261024-1630/src/hooks/integrations/useTalkXSegments.ts` |
-| `AUDIENCE_RPC_PAGE_LIMIT` | `1000` | `analise-prs/resgate-261118-lote3/claude/fix-unit-tests-src-261024-1630/src/hooks/integrations/useTalkXSegments.ts` |
-| `BULK_ACTION_MAX_IDS` | `200` | `analise-prs/resgate-261118-lote3/claude/fix-unit-tests-src-261024-1630/src/hooks/integrations/useTalkXSegments.ts` |
-| `UM_DIA` | `24` | `analise-prs/resgate-261118-lote3/claude/ga-ci-batch-ga49-ga54-ga60-ga64-231023/scripts/ci/actions-kpi.mjs` |
-| `POR_PAGINA` | `100` | `analise-prs/resgate-261118-lote3/claude/ga-ci-batch-ga49-ga54-ga60-ga64-231023/scripts/ci/actions-kpi.mjs` |
-| `LIMITE_PUSHES_LOTE` | `15` | `analise-prs/resgate-261118-lote3/claude/ga-ci-batch-ga49-ga54-ga60-ga64-231023/scripts/ci/actions-kpi.mjs` |
-| `JANELA_LOTE_HORAS` | `24` | `analise-prs/resgate-261118-lote3/claude/ga-ci-batch-ga49-ga54-ga60-ga64-231023/scripts/ci/actions-kpi.mjs` |
-| `TETO_TRAVADA_MS` | `45` | `analise-prs/resgate-261118-lote3/claude/ga-ci-batch-ga49-ga54-ga60-ga64-231023/scripts/ci/fila-merge.mjs` |
-| `CI_TS_GLOB` | `"supabase/functions/**/*.test.ts"` | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/scripts/ci/check-test-inventory.mjs` |
-| `OPERACAO` | `'docs/talkx/OPERACAO.md'` | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/scripts/ci/talkx-docs-drift.unit.mjs` |
-| `CHANGELOG` | `'docs/talkx/CHANGELOG_TALKX.md'` | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/scripts/ci/talkx-docs-drift.unit.mjs` |
-| `SPEC_TALKX` | `'e2e/talkx.spec.ts'` | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/scripts/ci/talkx-docs-drift.unit.mjs` |
-| `MIGRATION_ACTION` | `'media_migration'` | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/admin/MediaMigrationTool.tsx` |
-| `HISTORY_LIMIT` | `10` | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/admin/MediaMigrationTool.tsx` |
-| `AVATAR_BUCKET` | `'avatars'` | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/admin/useAdminData.ts` |
-| `AUDIT_PAGE_SIZE` | `50` | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/admin/useAdminData.ts` |
-| `PAGE` | `1000` | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/dashboard/useSentimentData.ts` |
-| `HEADER_HEIGHT` | `32` | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/inbox/VirtualizedRealtimeList.tsx` |
-| `FALLBACK_FIRST_RESPONSE_MINUTES` | `5` | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/inbox/VirtualizedRealtimeList.tsx` |
-| `PLAYBACK_BLOCKED` | `'O navegador bloqueou a reprodução. Toque no botão de novo.'` | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/inbox/VoiceChangerPicker.tsx` |
-| `MAX_RECORDING_MS` | `60` | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/inbox/VoiceChangerPicker.tsx` |
-| `ERRO_UPLOAD_AUDIO` | `'Não foi possível enviar o áudio do sussurro. Tente de novo.'` | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/inbox/WhisperMode.tsx` |
-| `ROLE_FILTER_VALUE` | `"role_events"` | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/security/AuditLogDashboard.tsx` |
-| `LOGS_PAGE_LIMIT` | `200` | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/security/AuditLogDashboard.tsx` |
-| `INSIGHT_REPLY_GROWTH_MIN` | `30` | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/talkx/TalkXCampaignRunning.tsx` |
-| `CONSULTA_PAINEL_LARGO` | `'(min-width: 1280px)'` | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/talkx/TalkXTemplateEditor.tsx` |
-| `FORECAST_MIN_CAMPAIGNS` | `5` | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/talkx/TalkXWizardDelivery.tsx` |
-| `FORECAST_MIN_SENT` | `100` | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/talkx/TalkXWizardDelivery.tsx` |
-| `FORECAST_WINDOW_DAYS` | `90` | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/talkx/TalkXWizardDelivery.tsx` |
-| `MESSAGE_LIMIT` | `4096` | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/talkx/useCampaignEditor.ts` |
-| `DEFAULT_SCHEDULE_TIMEZONE` | `'America/Sao_Paulo'` | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/talkx/useCampaignEditor.ts` |
-| `AUDIENCE_FILTER_DEBOUNCE_MS` | `350` | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/talkx/useCampaignEditor.ts` |
-| `AUDIENCE_PREVIEW_LIMIT` | `5000` | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/talkx/useCampaignEditor.ts` |
-| `TAG_FIELD` | `'tags'` | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/talkx/useCampaignEditor.ts` |
-| `PAGE_SIZE` | `50` | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/talkx/tracking/TalkXRecipientsTable.tsx` |
-| `SEARCH_MIN_CHARS` | `2` | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/team-chat/useTeamChatPanel.ts` |
-| `SEARCH_LIMIT` | `100` | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/team-chat/useTeamChatPanel.ts` |
-| `DEFAULT_CHIP` | `'attending'` | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/hooks/inbox/useInboxFilters.ts` |
-| `SEGMENT_TIMEZONE` | `'America/Sao_Paulo'` | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/hooks/integrations/useTalkXSegments.ts` |
-| `AUDIENCE_RPC_PAGE_LIMIT` | `1000` | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/hooks/integrations/useTalkXSegments.ts` |
-| `BULK_ACTION_MAX_IDS` | `200` | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/hooks/integrations/useTalkXSegments.ts` |
-| `REALTIME_PROBE_TIMEOUT_MS` | `5000` | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/hooks/system/useDiagnosticsData.ts` |
-| `HEARTBEAT_SAUDAVEL_MS` | `15` | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/hooks/system/useDiagnosticsData.ts` |
-| `HEARTBEAT_DEGRADADO_MS` | `60` | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/hooks/system/useDiagnosticsData.ts` |
-| `TEAM_MESSAGES_PAGE_SIZE` | `200` | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/hooks/team-chat/useTeamMessages.ts` |
-| `OFFLINE_QUEUE_DATABASE` | `'zapp-offline-outbox'` | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/lib/offlineQueue.ts` |
-| `OFFLINE_QUEUE_DATABASE_VERSION` | `1` | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/lib/offlineQueue.ts` |
-| `OFFLINE_QUEUE_STORE` | `'outbound_messages'` | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/lib/offlineQueue.ts` |
-| `PENDING_ACTION_TTL_MS` | `2` | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/services/outbound-message.service.ts` |
-| `WARROOM_MAX_ROWS` | `200` | `analise-prs/resgate-261118-lote3/claude/kind-gates-87mwoe/src/hooks/business/useWarRoomData.ts` |
-| `DEFAULT_CHIP` | `'attending'` | `analise-prs/resgate-261118-lote3/claude/kind-gates-87mwoe/src/hooks/inbox/useInboxFilters.ts` |
-| `SEGMENT_TIMEZONE` | `'America/Sao_Paulo'` | `analise-prs/resgate-261118-lote3/claude/kind-gates-87mwoe/src/hooks/integrations/useTalkXSegments.ts` |
-| `AUDIENCE_RPC_PAGE_LIMIT` | `1000` | `analise-prs/resgate-261118-lote3/claude/kind-gates-87mwoe/src/hooks/integrations/useTalkXSegments.ts` |
-| `BULK_ACTION_MAX_IDS` | `200` | `analise-prs/resgate-261118-lote3/claude/kind-gates-87mwoe/src/hooks/integrations/useTalkXSegments.ts` |
-| `REALTIME_PROBE_TIMEOUT_MS` | `5000` | `analise-prs/resgate-261118-lote3/claude/kind-gates-87mwoe/src/hooks/system/useDiagnosticsData.ts` |
-| `HEARTBEAT_SAUDAVEL_MS` | `15` | `analise-prs/resgate-261118-lote3/claude/kind-gates-87mwoe/src/hooks/system/useDiagnosticsData.ts` |
-| `HEARTBEAT_DEGRADADO_MS` | `60` | `analise-prs/resgate-261118-lote3/claude/kind-gates-87mwoe/src/hooks/system/useDiagnosticsData.ts` |
-| `DEFAULT_CHIP` | `'attending'` | `analise-prs/resgate-261118-lote3/claude/magical-pasteur-iz2pgy/src/hooks/inbox/useInboxFilters.ts` |
-| `REALTIME_PROBE_TIMEOUT_MS` | `5000` | `analise-prs/resgate-261118-lote3/claude/magical-pasteur-iz2pgy/src/hooks/system/useDiagnosticsData.ts` |
-| `HEARTBEAT_SAUDAVEL_MS` | `15` | `analise-prs/resgate-261118-lote3/claude/magical-pasteur-iz2pgy/src/hooks/system/useDiagnosticsData.ts` |
-| `HEARTBEAT_DEGRADADO_MS` | `60` | `analise-prs/resgate-261118-lote3/claude/magical-pasteur-iz2pgy/src/hooks/system/useDiagnosticsData.ts` |
-| `DEFAULT_TTS_SPEED` | `1.0` | `analise-prs/resgate-261118-lote3/claude/magical-pasteur-iz2pgy/src/hooks/system/useUserSettings.ts` |
-| `THINKING_TIMEOUT_MS` | `8000` | `analise-prs/resgate-261118-lote3/claude/radar-motor-copilot-live-301030/src/components/inbox/copilot/RadarPanel.tsx` |
-| `COPILOT_TICK_KIND` | `"copilot.tick"` | `analise-prs/resgate-261118-lote3/claude/radar-motor-copilot-live-301030/supabase/functions/_shared/copilot-tick.ts` |
-| `MAX_NEW_MESSAGES` | `20` | `analise-prs/resgate-261118-lote3/claude/radar-motor-copilot-live-301030/supabase/functions/_shared/copilot-tick.ts` |
-| `MAX_CONTEXT_MESSAGES` | `5` | `analise-prs/resgate-261118-lote3/claude/radar-motor-copilot-live-301030/supabase/functions/_shared/copilot-tick.ts` |
-| `CLAIM_LIMIT` | `10` | `analise-prs/resgate-261118-lote3/claude/radar-motor-copilot-live-301030/supabase/functions/ai-jobs-worker/index.ts` |
-| `CLAIM_LEASE_SECONDS` | `60` | `analise-prs/resgate-261118-lote3/claude/radar-motor-copilot-live-301030/supabase/functions/ai-jobs-worker/index.ts` |
-| `HEARTBEAT_LEASE_SECONDS` | `120` | `analise-prs/resgate-261118-lote3/claude/radar-motor-copilot-live-301030/supabase/functions/ai-jobs-worker/index.ts` |
-| `GENERATE_LEASE_MARGIN_MS` | `15` | `analise-prs/resgate-261118-lote3/claude/radar-motor-copilot-live-301030/supabase/functions/ai-jobs-worker/index.ts` |
-| `AI_GENERATE_FLAG` | `"AI_JOBS_ENABLE_AI_GENERATE"` | `analise-prs/resgate-261118-lote3/claude/radar-motor-copilot-live-301030/supabase/functions/ai-jobs-worker/index.ts` |
-| `PLATFORM_BLOB` | `'96a821d6c8389d526a9a5d65554687412510a92a'` | `analise-prs/resgate-261118-lote3/claude/test-e2e-suite-completa-261104-1428/scripts/ci/e2e-isolated-results.unit.mjs` |
-| `PLATFORM_FILE` | `'e2e/conversation.spec.ts'` | `analise-prs/resgate-261118-lote3/claude/test-e2e-suite-completa-261104-1428/scripts/ci/e2e-isolated-results.unit.mjs` |
-| `SOURCE_SHA` | `'a96bbd4cbaeed5a8bad7c42af347e56960e6cac7'` | `analise-prs/resgate-261118-lote3/claude/test-e2e-suite-completa-261104-1428/scripts/ci/e2e-isolated-results.unit.mjs` |
-| `SOURCE_SHA` | `'a'` | `analise-prs/resgate-261118-lote3/claude/test-e2e-suite-completa-261104-1428/scripts/ci/e2e-isolated-runtime.unit.mjs` |
-| `MIGRATION` | `'20260101000000_fixture.sql'` | `analise-prs/resgate-261118-lote3/claude/test-e2e-suite-completa-261104-1428/scripts/ci/e2e-isolated-runtime.unit.mjs` |
-| `SQL` | `'select 1;\n'` | `analise-prs/resgate-261118-lote3/claude/test-e2e-suite-completa-261104-1428/scripts/ci/e2e-isolated-runtime.unit.mjs` |
-| `FUNCTION_SOURCE` | `'// graph fixture, never executed\n'` | `analise-prs/resgate-261118-lote3/claude/test-e2e-suite-completa-261104-1428/scripts/ci/e2e-isolated-runtime.unit.mjs` |
-| `RUN` | `'zapp-e2e-suite-contract-0001'` | `analise-prs/resgate-261118-lote3/claude/test-e2e-suite-completa-261104-1428/scripts/ci/e2e-isolated-suite.unit.mjs` |
-| `SHA` | `'a'` | `analise-prs/resgate-261118-lote3/claude/test-e2e-suite-completa-261104-1428/scripts/ci/e2e-isolated-suite.unit.mjs` |
-| `MAX_BODY` | `1024` | `analise-prs/resgate-261118-lote3/claude/test-e2e-suite-completa-261104-1428/scripts/e2e-isolated/providers.mjs` |
-| `MAX_MEDIA_BYTES` | `50` | `analise-prs/resgate-261118-lote3/claude/test-e2e-suite-completa-261104-1428/scripts/e2e-isolated/providers.mjs` |
-| `SOURCE_SHA` | `'a'` | `analise-prs/resgate-261118-lote3/claude/test-e2e-tls-diagnostico-261104-1340/scripts/ci/e2e-isolated-runtime.unit.mjs` |
-| `MIGRATION` | `'20260101000000_fixture.sql'` | `analise-prs/resgate-261118-lote3/claude/test-e2e-tls-diagnostico-261104-1340/scripts/ci/e2e-isolated-runtime.unit.mjs` |
-| `SQL` | `'select 1;\n'` | `analise-prs/resgate-261118-lote3/claude/test-e2e-tls-diagnostico-261104-1340/scripts/ci/e2e-isolated-runtime.unit.mjs` |
-| `ORIGIN` | `'https://127.0.0.1:5173'` | `analise-prs/resgate-261118-lote3/claude/test-e2e-tls-diagnostico-261104-1340/scripts/e2e-isolated/runtime-contract.mjs` |
-| `OFFICIAL_HOST` | `'tnnnlkbymytvtqngbbqh.supabase.co'` | `analise-prs/resgate-261118-lote3/claude/test-e2e-tls-diagnostico-261104-1340/scripts/e2e-isolated/runtime-contract.mjs` |
-| `OWNER_LABEL` | `'zapp.e2e.owner'` | `analise-prs/resgate-261118-lote3/claude/test-e2e-tls-diagnostico-261104-1340/scripts/e2e-isolated/runtime-contract.mjs` |
-| `PURPOSE_LABEL` | `'zapp.e2e.purpose'` | `analise-prs/resgate-261118-lote3/claude/test-e2e-tls-diagnostico-261104-1340/scripts/e2e-isolated/runtime-contract.mjs` |
-| `PURPOSE` | `'isolated-auth'` | `analise-prs/resgate-261118-lote3/claude/test-e2e-tls-diagnostico-261104-1340/scripts/e2e-isolated/runtime-contract.mjs` |
-| `TLS_ORIGIN` | `'https://127.0.0.1:5173'` | `analise-prs/resgate-261118-lote3/claude/test-e2e-tls-diagnostico-261104-1340/scripts/e2e-isolated/tls.mjs` |
-| `TLS_PUBLIC` | `'/run/zapp-e2e-tls'` | `analise-prs/resgate-261118-lote3/claude/test-e2e-tls-diagnostico-261104-1340/scripts/e2e-isolated/tls.mjs` |
-| `TLS_PRIVATE` | `'/run/zapp-e2e-tls-private'` | `analise-prs/resgate-261118-lote3/claude/test-e2e-tls-diagnostico-261104-1340/scripts/e2e-isolated/tls.mjs` |
-| `SOURCE_SHA` | `'a'` | `analise-prs/resgate-261118-lote3/claude/test-e2e-webkit-tls-261104-1430/scripts/ci/e2e-isolated-runtime.unit.mjs` |
-| `MIGRATION` | `'20260101000000_fixture.sql'` | `analise-prs/resgate-261118-lote3/claude/test-e2e-webkit-tls-261104-1430/scripts/ci/e2e-isolated-runtime.unit.mjs` |
-| `SQL` | `'select 1;\n'` | `analise-prs/resgate-261118-lote3/claude/test-e2e-webkit-tls-261104-1430/scripts/ci/e2e-isolated-runtime.unit.mjs` |
-| `ORIGIN` | `'https://127.0.0.1:5173'` | `analise-prs/resgate-261118-lote3/claude/test-e2e-webkit-tls-261104-1430/scripts/e2e-isolated/runtime-contract.mjs` |
-| `OFFICIAL_HOST` | `'tnnnlkbymytvtqngbbqh.supabase.co'` | `analise-prs/resgate-261118-lote3/claude/test-e2e-webkit-tls-261104-1430/scripts/e2e-isolated/runtime-contract.mjs` |
-| `OWNER_LABEL` | `'zapp.e2e.owner'` | `analise-prs/resgate-261118-lote3/claude/test-e2e-webkit-tls-261104-1430/scripts/e2e-isolated/runtime-contract.mjs` |
-| `PURPOSE_LABEL` | `'zapp.e2e.purpose'` | `analise-prs/resgate-261118-lote3/claude/test-e2e-webkit-tls-261104-1430/scripts/e2e-isolated/runtime-contract.mjs` |
-| `PURPOSE` | `'isolated-auth'` | `analise-prs/resgate-261118-lote3/claude/test-e2e-webkit-tls-261104-1430/scripts/e2e-isolated/runtime-contract.mjs` |
-| `SECAO_ABERTURA` | `'### Etapas superadas pela política vigente'` | `analise-prs/resgate-261118-lote3/claude/wizardly-ride-dimxnt/scripts/ci/ci-docs-baseline.unit.mjs` |
-| `PONTO` | `'.'` | `analise-prs/resgate-261118-lote3/claude/wizardly-ride-dimxnt/scripts/ci/ci-docs-baseline.unit.mjs` |
-| `BARRA` | `'\\'` | `analise-prs/resgate-261118-lote3/claude/wizardly-ride-dimxnt/scripts/ci/ci-docs-baseline.unit.mjs` |
-| `DEFAULT_CHIP` | `'attending'` | `analise-prs/resgate-261118-lote3/claude_05/festive-carson-ub43wu/src/hooks/inbox/useInboxFilters.ts` |
-| `REALTIME_PROBE_TIMEOUT_MS` | `5000` | `analise-prs/resgate-261118-lote3/claude_05/festive-carson-ub43wu/src/hooks/system/useDiagnosticsData.ts` |
-| `HEARTBEAT_SAUDAVEL_MS` | `15` | `analise-prs/resgate-261118-lote3/claude_05/festive-carson-ub43wu/src/hooks/system/useDiagnosticsData.ts` |
-| `HEARTBEAT_DEGRADADO_MS` | `60` | `analise-prs/resgate-261118-lote3/claude_05/festive-carson-ub43wu/src/hooks/system/useDiagnosticsData.ts` |
-| `DEFAULT_SEARCH_INSIGHTS_PERIOD` | `30` | `analise-prs/resgate-261118-lote3/claude_05/serene-feynman-3uuurw/src/hooks/admin/useSearchInsights.ts` |
-| `UM_DIA` | `24` | `analise-prs/resgate-261118-lote3/claude_pink/cool-dijkstra-xk9ek2/scripts/ci/actions-kpi.mjs` |
-| `POR_PAGINA` | `100` | `analise-prs/resgate-261118-lote3/claude_pink/cool-dijkstra-xk9ek2/scripts/ci/actions-kpi.mjs` |
-| `SECAO_ABERTURA` | `'### Etapas superadas pela política vigente'` | `analise-prs/resgate-261118-lote3/claude_pink/cool-dijkstra-xk9ek2/scripts/ci/ci-docs-baseline.unit.mjs` |
-| `MIN_LINE_COVERAGE_PCT` | `50` | `analise-prs/resgate-261118-lote3/claude_pink/cool-dijkstra-xk9ek2/scripts/ci/edge-coverage-authz.unit.mjs` |
-| `SHARED_DIR_REL` | `'supabase/functions/_shared'` | `analise-prs/resgate-261118-lote3/claude_pink/cool-dijkstra-xk9ek2/scripts/ci/edge-coverage-authz.unit.mjs` |
-| `TESTS_DIR_REL` | `'supabase/functions/_shared/__tests__'` | `analise-prs/resgate-261118-lote3/claude_pink/cool-dijkstra-xk9ek2/scripts/ci/edge-coverage-authz.unit.mjs` |
-| `DOCS_REL` | `'docs/audits/edge-functions-authz-coverage.md'` | `analise-prs/resgate-261118-lote3/claude_pink/cool-dijkstra-xk9ek2/scripts/ci/edge-coverage-authz.unit.mjs` |
-| `DENO_CONFIG_REL` | `'scripts/ci/deno.json'` | `analise-prs/resgate-261118-lote3/claude_pink/cool-dijkstra-xk9ek2/scripts/ci/edge-coverage-authz.unit.mjs` |
-| `MAX_DIAGNOSTICO_DENO` | `6` | `analise-prs/resgate-261118-lote3/claude_pink/cool-dijkstra-xk9ek2/scripts/ci/edge-coverage-authz.unit.mjs` |
-| `TETO_EM_VOO_MS` | `45` | `analise-prs/resgate-261118-lote3/claude_pink/cool-dijkstra-xk9ek2/scripts/ci/fila-merge.mjs` |
-| `RUNBOOK_SEGREDOS` | `'docs/runbooks/migracao-segredos-environments.md'` | `analise-prs/resgate-261118-lote3/claude_pink/cool-dijkstra-xk9ek2/scripts/ci/github-settings-guard.mjs` |
-| `ISSUE_LABEL` | `'settings-guard'` | `analise-prs/resgate-261118-lote3/claude_pink/cool-dijkstra-xk9ek2/scripts/ci/github-settings-guard.mjs` |
-| `ISSUE_TITLE` | `'[settings-guard] perimeter regression detected'` | `analise-prs/resgate-261118-lote3/claude_pink/cool-dijkstra-xk9ek2/scripts/ci/github-settings-guard.mjs` |
-| `BRANCH` | `'main'` | `analise-prs/resgate-261118-lote3/claude_pink/cool-dijkstra-xk9ek2/scripts/ci/github-settings-guard.mjs` |
-| `SEIS_HORAS_MS` | `6` | `analise-prs/resgate-261118-lote3/claude_pink/cool-dijkstra-xk9ek2/scripts/ci/github-settings-guard.mjs` |
-| `SETE_DIAS_MS` | `7` | `analise-prs/resgate-261118-lote3/claude_pink/cool-dijkstra-xk9ek2/scripts/ci/github-settings-guard.mjs` |
-| `LIMITE_COMENTARIOS` | `20` | `analise-prs/resgate-261118-lote3/claude_pink/cool-dijkstra-xk9ek2/scripts/ci/issue-rotativa.mjs` |
-| `JOB_REUSO` | `'♻️ Reuso de árvore já testada'` | `analise-prs/resgate-261118-lote3/claude_pink/cool-dijkstra-xk9ek2/scripts/ci/reuso-arvore.mjs` |
-| `API` | `'https://api.github.com'` | `analise-prs/resgate-261118-lote3/claude_pink/cool-dijkstra-xk9ek2/scripts/ci/reuso-arvore.mjs` |
-| `SENTINEL_W55` | `'📄 Contratos pulados — apenas docs (W55)'` | `analise-prs/resgate-261118-lote3/claude_pink/cool-dijkstra-xk9ek2/scripts/ci/reuso-arvore.mjs` |
-| `LEDGER_STATEMENTS_HASH_DOMAIN` | `'zapp-migration-ledger-statements-v1\0'` | `analise-prs/resgate-261118-lote3/claude_pink/cool-dijkstra-xk9ek2/scripts/db-audit/check-migration-drift.mjs` |
-| `COMMENT_ONLY_KIND` | `'ledger-only/comment-only'` | `analise-prs/resgate-261118-lote3/claude_pink/cool-dijkstra-xk9ek2/scripts/db-audit/check-migration-drift.mjs` |
-| `PINNED_REPLAY_KIND` | `'ledger-divergence/pinned-replay'` | `analise-prs/resgate-261118-lote3/claude_pink/cool-dijkstra-xk9ek2/scripts/db-audit/check-migration-drift.mjs` |
-| `PASSO_VALIDAR_LEDGER` | `'- name: Validar pos-apply'` | `analise-prs/resgate-261118-lote3/claude_pink/cool-dijkstra-xk9ek2/scripts/db-audit/extrair-consulta-ledger.mjs` |
-| `CANONICAL_PROJECT` | `'tnnnlkbymytvtqngbbqh'` | `analise-prs/resgate-261118-lote3/claude_pink/cool-dijkstra-xk9ek2/scripts/edge-deploy/health-check.mjs` |
-| `MGMT_BASE` | `'https://api.supabase.com'` | `analise-prs/resgate-261118-lote3/claude_pink/cool-dijkstra-xk9ek2/scripts/edge-deploy/health-check.mjs` |
-| `DEFAULT_THRESHOLD` | `0.10` | `analise-prs/resgate-261118-lote3/claude_pink/cool-dijkstra-xk9ek2/scripts/edge-deploy/health-check.mjs` |
-| `DEFAULT_WAIT_MS` | `5` | `analise-prs/resgate-261118-lote3/claude_pink/cool-dijkstra-xk9ek2/scripts/edge-deploy/health-check.mjs` |
-| `WINDOW_MINUTES` | `5` | `analise-prs/resgate-261118-lote3/claude_pink/cool-dijkstra-xk9ek2/scripts/edge-deploy/health-check.mjs` |
-| `BOTTOM_FOLLOW_THRESHOLD_PX` | `100` | `analise-prs/resgate-261118-lote3/claude_pink/cool-dijkstra-xk9ek2/src/components/inbox/chat/ChatMessagesArea.tsx` |
-| `SELO_ENVIADA_MS` | `1000` | `analise-prs/resgate-261118-lote3/claude_pink/cool-dijkstra-xk9ek2/src/components/inbox/chat/ChatMessagesArea.tsx` |
-| `GMAIL_API` | `"https://gmail.googleapis.com/gmail/v1/users/me"` | `analise-prs/resgate-261118-lote3/claude_pink/cool-dijkstra-xk9ek2/supabase/functions/_shared/gmail-helpers.ts` |
-| `GMAIL_RETRY_BASE_DELAY_MS` | `60` | `analise-prs/resgate-261118-lote3/claude_pink/cool-dijkstra-xk9ek2/supabase/functions/_shared/gmail-helpers.ts` |
-| `GMAIL_RETRY_MAX_DELAY_MS` | `60` | `analise-prs/resgate-261118-lote3/claude_pink/cool-dijkstra-xk9ek2/supabase/functions/_shared/gmail-helpers.ts` |
-| `GMAIL_SYNC_CLAIM_STALE_MS` | `5` | `analise-prs/resgate-261118-lote3/claude_pink/cool-dijkstra-xk9ek2/supabase/functions/_shared/gmail-helpers.ts` |
-| `GMAIL_REAUTH_HTTP_STATUS` | `409` | `analise-prs/resgate-261118-lote3/claude_pink/cool-dijkstra-xk9ek2/supabase/functions/_shared/gmail-helpers.ts` |
-| `GMAIL_MESSAGES_MAX_PAGES` | `100` | `analise-prs/resgate-261118-lote3/claude_pink/cool-dijkstra-xk9ek2/supabase/functions/_shared/gmail-helpers.ts` |
-| `GMAIL_REAUTH_MESSAGE` | `"Sessão do Gmail expirada — reconecte a conta"` | `analise-prs/resgate-261118-lote3/claude_pink/cool-dijkstra-xk9ek2/supabase/functions/_shared/gmail-helpers.ts` |
-| `GMAIL_REAUTH_HTTP_STATUS` | `409` | `analise-prs/resgate-261118-lote3/claude_pink/cool-dijkstra-xk9ek2/supabase/functions/_shared/gmail-helpers.ts` |
-| `SECAO_ABERTURA` | `'### Etapas superadas pela política vigente'` | `analise-prs/resgate-261118-lote3/codex/fix-failed-workflows-20261020/scripts/ci/ci-docs-baseline.unit.mjs` |
-| `TITULO` | `'[settings-guard] perimeter regression detected'` | `analise-prs/resgate-261118-lote3/codex/fix-failed-workflows-20261020/scripts/ci/github-settings-guard.unit.mjs` |
-| `CONTEXTS_OK` | `"['` | `analise-prs/resgate-261118-lote3/codex/fix-failed-workflows-20261020/scripts/ci/github-settings-guard.unit.mjs` |
-| `ACTIONS_OK` | `"send({ enabled: true, allowed_actions: '` | `analise-prs/resgate-261118-lote3/codex/fix-failed-workflows-20261020/scripts/ci/github-settings-guard.unit.mjs` |
-| `WORKFLOW_PERMS_OK` | `"send({ default_workflow_permissions: '` | `analise-prs/resgate-261118-lote3/codex/fix-failed-workflows-20261020/scripts/ci/github-settings-guard.unit.mjs` |
-| `SELECTED_PATTERNS` | `"['` | `analise-prs/resgate-261118-lote3/codex/fix-failed-workflows-20261020/scripts/ci/github-settings-guard.unit.mjs` |
-| `SEM_ESCOPO` | `"send({ message: '` | `analise-prs/resgate-261118-lote3/codex/fix-failed-workflows-20261020/scripts/ci/github-settings-guard.unit.mjs` |
-| `GUARD` | `'github-actions[bot]'` | `analise-prs/resgate-261118-lote3/codex/fix-failed-workflows-20261020/scripts/ci/github-settings-guard.unit.mjs` |
-| `LIMITE_CHATS_MIN` | `1` | `analise-prs/resgate-261118-lote3/codex/fix-failed-workflows-20261020/src/components/admin/AdminView.tsx` |
-| `LIMITE_CHATS_MAX` | `50` | `analise-prs/resgate-261118-lote3/codex/fix-failed-workflows-20261020/src/components/admin/AdminView.tsx` |
-| `LIMITE_CHATS_PADRAO` | `5` | `analise-prs/resgate-261118-lote3/codex/fix-failed-workflows-20261020/src/components/admin/AdminView.tsx` |
-| `STEP` | `' {6}- name:'` | `analise-prs/resgate-261118-lote3/codex/publish-followup-20261021/scripts/ci/ci-artifacts.unit.mjs` |
-| `PROP` | `' {8}'` | `analise-prs/resgate-261118-lote3/codex/publish-followup-20261021/scripts/ci/ci-artifacts.unit.mjs` |
-| `SECAO_ABERTURA` | `'### Etapas superadas pela política vigente'` | `analise-prs/resgate-261118-lote3/codex/publish-followup-20261021/scripts/ci/ci-docs-baseline.unit.mjs` |
-| `RUNTIME` | `'a'` | `analise-prs/resgate-261118-lote3/codex/publish-followup-20261021/scripts/ci/confirm-hash.unit.mjs` |
-| `ARQUIVO` | `'b'` | `analise-prs/resgate-261118-lote3/codex/publish-followup-20261021/scripts/ci/confirm-hash.unit.mjs` |
-| `COMMIT` | `'c'` | `analise-prs/resgate-261118-lote3/codex/publish-followup-20261021/scripts/ci/confirm-hash.unit.mjs` |
-| `LACUNA_ORFA` | `'sem chamador no repositório'` | `analise-prs/resgate-261118-lote3/codex/publish-followup-20261021/scripts/ci/docs-estado-registry-convention.unit.mjs` |
-| `TITULO` | `'[settings-guard] perimeter regression detected'` | `analise-prs/resgate-261118-lote3/codex/publish-followup-20261021/scripts/ci/github-settings-guard.unit.mjs` |
-| `CONTEXTS_OK` | `"['` | `analise-prs/resgate-261118-lote3/codex/publish-followup-20261021/scripts/ci/github-settings-guard.unit.mjs` |
-| `ACTIONS_OK` | `"send({ enabled: true, allowed_actions: '` | `analise-prs/resgate-261118-lote3/codex/publish-followup-20261021/scripts/ci/github-settings-guard.unit.mjs` |
-| `WORKFLOW_PERMS_OK` | `"send({ default_workflow_permissions: '` | `analise-prs/resgate-261118-lote3/codex/publish-followup-20261021/scripts/ci/github-settings-guard.unit.mjs` |
-| `SELECTED_PATTERNS` | `"['` | `analise-prs/resgate-261118-lote3/codex/publish-followup-20261021/scripts/ci/github-settings-guard.unit.mjs` |
-| `SEM_ESCOPO` | `"send({ message: '` | `analise-prs/resgate-261118-lote3/codex/publish-followup-20261021/scripts/ci/github-settings-guard.unit.mjs` |
-| `GUARD` | `'github-actions[bot]'` | `analise-prs/resgate-261118-lote3/codex/publish-followup-20261021/scripts/ci/github-settings-guard.unit.mjs` |
-| `MESSAGE_LIMIT` | `4096` | `analise-prs/resgate-261118-lote3/codex/publish-followup-20261021/src/components/talkx/useCampaignEditor.ts` |
-| `DEFAULT_SCHEDULE_TIMEZONE` | `'America/Sao_Paulo'` | `analise-prs/resgate-261118-lote3/codex/publish-followup-20261021/src/components/talkx/useCampaignEditor.ts` |
-| `AUDIENCE_FILTER_DEBOUNCE_MS` | `350` | `analise-prs/resgate-261118-lote3/codex/publish-followup-20261021/src/components/talkx/useCampaignEditor.ts` |
-| `AUDIENCE_PREVIEW_LIMIT` | `5000` | `analise-prs/resgate-261118-lote3/codex/publish-followup-20261021/src/components/talkx/useCampaignEditor.ts` |
-| `TAG_FIELD` | `'tags'` | `analise-prs/resgate-261118-lote3/codex/publish-followup-20261021/src/components/talkx/useCampaignEditor.ts` |
-| `DEFAULT_SEARCH_INSIGHTS_PERIOD` | `30` | `analise-prs/resgate-261118-lote3/codex/publish-followup-20261021/src/hooks/admin/useSearchInsights.ts` |
-| `SEGMENT_TIMEZONE` | `'America/Sao_Paulo'` | `analise-prs/resgate-261118-lote3/codex/publish-followup-20261021/src/hooks/integrations/useTalkXSegments.ts` |
-| `AUDIENCE_RPC_PAGE_LIMIT` | `1000` | `analise-prs/resgate-261118-lote3/codex/publish-followup-20261021/src/hooks/integrations/useTalkXSegments.ts` |
-| `BULK_ACTION_MAX_IDS` | `200` | `analise-prs/resgate-261118-lote3/codex/publish-followup-20261021/src/hooks/integrations/useTalkXSegments.ts` |
-| `HEALTH_CHECK_CONCURRENCY` | `3` | `analise-prs/resgate-261118-lote3/codex/publish-followup-20261021/supabase/functions/connection-health-check/index.ts` |
-| `TOTAL_TIMEOUT_MS` | `45` | `analise-prs/resgate-261118-lote3/codex/publish-followup-20261021/supabase/functions/connection-health-check/index.ts` |
-| `STALE_SESSION_MS` | `6` | `analise-prs/resgate-261118-lote3/codex/publish-followup-20261021/supabase/functions/connection-health-check/index.ts` |
-| `WEBHOOK_SILENT_MS` | `30` | `analise-prs/resgate-261118-lote3/codex/publish-followup-20261021/supabase/functions/connection-health-check/index.ts` |
-| `DEFAULT_INBOX_SILENCE_MINUTES` | `10` | `analise-prs/resgate-261118-lote3/codex/publish-followup-20261021/supabase/functions/connection-health-check/index.ts` |
-| `MIN_INBOX_SILENCE_MINUTES` | `1` | `analise-prs/resgate-261118-lote3/codex/publish-followup-20261021/supabase/functions/connection-health-check/index.ts` |
-| `MAX_INBOX_SILENCE_MINUTES` | `1440` | `analise-prs/resgate-261118-lote3/codex/publish-followup-20261021/supabase/functions/connection-health-check/index.ts` |
-| `TITULO` | `'[settings-guard] perimeter regression detected'` | `analise-prs/resgate-261118-lote3/f3/strict-false-baseline-20261018/scripts/ci/github-settings-guard.unit.mjs` |
-| `CONTEXTS_OK` | `"['` | `analise-prs/resgate-261118-lote3/f3/strict-false-baseline-20261018/scripts/ci/github-settings-guard.unit.mjs` |
-| … +1047 linhas — lista completa em `context.json` | | |
+| `CORTE` | `'20261016000000'` | `analise-prs/resgate-regra8-261118/scripts/db-audit/check-ddl-deployments.mjs` |
+| `BRANCH` | `'main'` | `analise-prs/variantes-261118/claude__fix-ga-fase78-perimetro-custo-261020-2200/scripts/ci/aplicar-perimetro.mjs` |
+| `MAX_RECENT` | `5` | `src/components/CommandPalette.tsx` |
+| `LIMITE_CHATS_MIN` | `1` | `src/components/admin/AdminView.tsx` |
+| `LIMITE_CHATS_MAX` | `50` | `src/components/admin/AdminView.tsx` |
+| `LIMITE_CHATS_PADRAO` | `5` | `src/components/admin/AdminView.tsx` |
+| `MIN_DETALHE` | `60` | `src/components/admin/TrainingMode.tsx` |
+| `RAMAL_MAX_LENGTH` | `64` | `src/components/admin/VoipRamalField.tsx` |
+| `MAX_ACOES_DISPUTADAS` | `50` | `src/components/admin/dedupeEntreAbas.ts` |
+| `MAX_ROTULOS` | `200` | `src/components/admin/dedupeEntreAbas.ts` |
+| `AVATAR_BUCKET` | `'avatars'` | `src/components/admin/useAdminData.ts` |
+| `AUDIT_PAGE_SIZE` | `50` | `src/components/admin/useAdminData.ts` |
+| `ESPERA_BUSCA_MS` | `300` | `src/components/calls/ContactPicker.tsx` |
+| `LIMITE` | `6` | `src/components/calls/ContactPicker.tsx` |
+| `RING_GAIN_CAP` | `0.2` | `src/components/calls/IncomingCallAlert.tsx` |
+| `CHAVE_CANAL` | `'tel:new-call-channel'` | `src/components/calls/NewCallPanel.tsx` |
+| `TOQUE_SEGUNDOS` | `5` | `src/components/calls/OfferCallButton.tsx` |
+| `POS_CHAMADA_MS` | `3000` | `src/components/calls/PostCallSummary.tsx` |
+| `JANELA_PAGINAS` | `7` | `src/components/calls/paginas.ts` |
+| `JANELA` | `7` | `src/components/calls/paginas.ts` |
+| `FALLBACK_PRICE_CEILING` | `2000` | `src/components/catalog/CatalogAdvancedFilters.tsx` |
+| `CATALOG_BULK_SEND_MAX` | `10` | `src/components/catalog/CatalogBulkBar.tsx` |
+| `CATALOG_RAIL_SYNC_ALERT_DAYS` | `3` | `src/components/catalog/CatalogRail.tsx` |
+| `RECENT_SENDS_LIMIT` | `5` | `src/components/catalog/ContactSelectionStep.tsx` |
+| `PAGE_SIZE` | `24` | `src/components/catalog/ExternalProductCatalog.tsx` |
+| `LIST_ROW_HEIGHT` | `72` | `src/components/catalog/ExternalProductCatalog.tsx` |
+| `LIST_COLUMNS` | `5` | `src/components/catalog/ExternalProductCatalog.tsx` |
+| `VIRTUALIZE_MIN_PAGE_SIZE` | `48` | `src/components/catalog/ExternalProductCatalog.tsx` |
+| `LIST_OVERSCAN` | `6` | `src/components/catalog/ExternalProductCatalog.tsx` |
+| `MAX_MESSAGE_LENGTH` | `2000` | `src/components/catalog/SendProductDialog.tsx` |
+| `MAX_IMAGES` | `10` | `src/components/catalog/SendProductDialog.tsx` |
+| `DRAFT_DEBOUNCE_MS` | `500` | `src/components/catalog/SendProductDialog.tsx` |
+| `UNKNOWN_PRICE_LABEL` | `'Preço a confirmar'` | `src/components/catalog/catalogShared.tsx` |
+| `UNKNOWN_STOCK_LABEL` | `'Estoque a confirmar'` | `src/components/catalog/catalogShared.tsx` |
+| `PHOTO_MIN_INTERVAL_MS` | `800` | `src/components/catalog/useSendProduct.ts` |
+| `PHOTO_INTERVAL_JITTER_MS` | `700` | `src/components/catalog/useSendProduct.ts` |
+| `DEFAULT_CONDITION_OPERATOR` | `'equals'` | `src/components/chatbot/chatbotNodeConfig.ts` |
+| `MIN_DELAY_SECONDS` | `1` | `src/components/chatbot/chatbotNodeConfig.ts` |
+| `DEFAULT_DELAY_SECONDS` | `5` | `src/components/chatbot/chatbotNodeConfig.ts` |
+| `MULTI_CONNECTION_LOCKED_MESSAGE` | `'Múltiplas conexões ainda não estão habilitadas neste sistema'` | `src/components/connections/ConnectionsView.tsx` |
+| `HISTORY_SHOWN` | `10` | `src/components/connections/InstancePausesPanel.tsx` |
+| `ERRO_CONFIG` | `'Não foi possível ler as configurações desta conexão.'` | `src/components/connections/InstanceSettingsDialog.tsx` |
+| `ERRO_PERFIL` | `'Não foi possível ler o perfil desta conexão.'` | `src/components/connections/InstanceSettingsDialog.tsx` |
+| `NOTA_MAX` | `120` | `src/components/contacts/ContactActivityTimeline.tsx` |
+| `MAX_CONTATOS` | `3` | `src/components/contacts/ContactCompareDialog.tsx` |
+| `ADDRESS_SEARCH_TYPES` | `'address,street,place'` | `src/components/contacts/ContactForm.tsx` |
+| `MAX_RECENT` | `5` | `src/components/contacts/ContactSearchWithSuggestions.tsx` |
+| `CONTACTS_FICHA_DISTANCE` | `12` | `src/components/contacts/contactsMotion.ts` |
+| `COUNT_LABEL` | `'mensagens'` | `src/components/dashboard/ActivityHeatmap.tsx` |
+| `OVERVIEW_TAB` | `'overview'` | `src/components/dashboard/DashboardView.tsx` |
+| `MAX_PERCENT_TARGET` | `100` | `src/components/dashboard/GoalsConfigDialog.tsx` |
+| `CONNECTIONS_MAX` | `40` | `src/components/dashboard/systemHealth.ts` |
+| `FAILURES_MAX` | `30` | `src/components/dashboard/systemHealth.ts` |
+| `STALLED_MAX` | `30` | `src/components/dashboard/systemHealth.ts` |
+| `FAILURE_ZERO_RATE` | `0.1` | `src/components/dashboard/systemHealth.ts` |
+| `STALLED_STEP` | `10` | `src/components/dashboard/systemHealth.ts` |
+| `PAGE` | `1000` | `src/components/dashboard/useSentimentData.ts` |
+| `RADIUS` | `42` | `src/components/dashboard/overview/DailyGoalsCard.tsx` |
+| `CIRCUMFERENCE` | `2` | `src/components/dashboard/overview/DailyGoalsCard.tsx` |
+| `PAGE_SIZE` | `8` | `src/components/dashboard/sla/SLAAgentTable.tsx` |
+| `MIN_INTERVALO_ENTRE_CHECKS_MS` | `60` | `src/components/diagnostics/ConnectionHealthPanel.tsx` |
+| `INITIAL_LIST_SIZE` | `5` | `src/components/email/EmailContactPanel.tsx` |
+| `CHAVE_RECORDES` | `'miniGameHighScores'` | `src/components/gamification/TrainingMiniGames.tsx` |
+| `SEARCH_DEBOUNCE_MS` | `300` | `src/components/gmail/GmailInboxView.tsx` |
+| `INACTIVE_MINUTES` | `30` | `src/components/inbox/AgentReassignmentPanel.tsx` |
+| `SIDEBAR_MIN_WIDTH` | `280` | `src/components/inbox/ConversationListSidebar.tsx` |
+| `SIDEBAR_MAX_WIDTH` | `600` | `src/components/inbox/ConversationListSidebar.tsx` |
+| `SIDEBAR_DEFAULT_WIDTH` | `350` | `src/components/inbox/ConversationListSidebar.tsx` |
+| `SIDEBAR_WIDTH_STEP` | `16` | `src/components/inbox/ConversationListSidebar.tsx` |
+| `SIDEBAR_RESERVED_WIDTH` | `60` | `src/components/inbox/ConversationListSidebar.tsx` |
+| `LOW_VOLUME_THRESHOLD` | `30` | `src/components/inbox/MediaVolumeControl.tsx` |
+| `HEADER_HEIGHT` | `32` | `src/components/inbox/VirtualizedRealtimeList.tsx` |
+| `FALLBACK_FIRST_RESPONSE_MINUTES` | `5` | `src/components/inbox/VirtualizedRealtimeList.tsx` |
+| `PLAYBACK_BLOCKED` | `'O navegador bloqueou a reprodução. Toque no botão de novo.'` | `src/components/inbox/VoiceChanger.tsx` |
+| `PLAYBACK_BLOCKED` | `'O navegador bloqueou a reprodução. Toque no botão de novo.'` | `src/components/inbox/VoiceChangerPicker.tsx` |
+| `MAX_RECORDING_MS` | `60` | `src/components/inbox/VoiceChangerPicker.tsx` |
+| `BUCKET` | `'audio-messages'` | `src/components/inbox/WhisperAudioPlayer.tsx` |
+| `BUCKET_AUDIO` | `'audio-messages'` | `src/components/inbox/WhisperMode.tsx` |
+| `CONEXAO_WHATSAPP_INDISPONIVEL` | `'Conexão WhatsApp não disponível.'` | `src/components/inbox/useChatMediaSending.ts` |
+| `MAX_FILES` | `10` | `src/components/inbox/useFileUploadLogic.ts` |
+| `MIN_SEARCH_EVENT_TERM_LENGTH` | `3` | `src/components/inbox/useGlobalSearchData.ts` |
+| `DAY_MS` | `24` | `src/components/inbox/ai-tools/PeriodFilterSelector.tsx` |
+| `SESSION_GAP_MS` | `4` | `src/components/inbox/ai-tools/PeriodFilterSelector.tsx` |
+| `BOTTOM_FOLLOW_THRESHOLD_PX` | `100` | `src/components/inbox/chat/ChatMessagesArea.tsx` |
+| `SELO_ENVIADA_MS` | `1000` | `src/components/inbox/chat/ChatMessagesArea.tsx` |
+| `DEFAULT_FIRST_RESPONSE_MINUTES` | `5` | `src/components/inbox/chat/ChatPanelHeader.tsx` |
+| `PREVIEW_LIMIT` | `5` | `src/components/inbox/chat/ChatSearchResultsList.tsx` |
+| `STAGGER_MS` | `0.03` | `src/components/inbox/chat/ChatSearchResultsList.tsx` |
+| `PRESENCE_ONLINE_WINDOW_MS` | `2` | `src/components/inbox/chat/contactPresence.ts` |
+| `PRESENCE_UNKNOWN_LABEL` | `'Presença do contato não informada'` | `src/components/inbox/chat/contactPresence.ts` |
+| `JANELA_AGRUPAMENTO_MS` | `5` | `src/components/inbox/chat/groupWindow.ts` |
+| `CHAR_LIMIT` | `4096` | `src/components/inbox/chat/useChatInputLogic.ts` |
+| `EDIT_WINDOW_MINUTES` | `15` | `src/components/inbox/chat/useChatPanelHandlers.ts` |
+| `MAX_LINES` | `4` | `src/components/inbox/contact-details/AIInsightsWidget.tsx` |
+| `LIST_LIMIT` | `5` | `src/components/inbox/contact-details/ConversationMemorySection.tsx` |
+| `STORY_DURATION_MS` | `5000` | `src/components/inbox/contact-details/storyUtils.ts` |
+| `THINKING_TIMEOUT_MS` | `8000` | `src/components/inbox/copilot/RadarPanel.tsx` |
+| `DEBOUNCE_MS` | `300` | `src/components/inbox/location-picker/useAddressAutocomplete.ts` |
+| `RATE_LIMIT_BACKOFF_MS` | `60` | `src/components/inbox/location-picker/useAddressAutocomplete.ts` |
+| `SKELETON_ROWS` | `6` | `src/components/inbox/tabs/FilesContent.tsx` |
+| `SIDE_BY_SIDE_MIN_WIDTH` | `1100` | `src/components/inbox/tabs/FilesTab.tsx` |
+| `DETAIL_PANEL_WIDTH` | `260` | `src/components/inbox/tabs/FilesTab.tsx` |
+| `DETAIL_PANEL_GAP` | `16` | `src/components/inbox/tabs/FilesTab.tsx` |
+| `MAX_PAGES_TO_LOAD_ALL` | `500` | `src/components/inbox/tabs/FilesTab.tsx` |
+| `AREA_DE_TOQUE` | `"[@media(pointer:coarse)]:after:content-['` | `src/components/inbox/tabs/fileActionButton.ts` |
+| `TEXTO_QUALQUER_DATA` | `'Qualquer data'` | `src/components/inbox/tabs/journey/JourneyFilters.tsx` |
+| `MIN_USUARIOS_PARA_BUSCA` | `8` | `src/components/inbox/tabs/journey/JourneyFilters.tsx` |
+| `CONSULTA_MOVIMENTO_REDUZIDO` | `'(prefers-reduced-motion: reduce)'` | `src/components/inbox/tabs/journey/JourneyStatsHero.tsx` |
+| `DURACAO_CONTAGEM_MS` | `600` | `src/components/inbox/tabs/journey/JourneyStatsHero.tsx` |
+| `MAX_ESCALONADOS` | `8` | `src/components/inbox/tabs/journey/JourneyStatsHero.tsx` |
+| `PASSO_ESCALONADO_MS` | `60` | `src/components/inbox/tabs/journey/JourneyStatsHero.tsx` |
+| `SERIE_LARGURA` | `320` | `src/components/inbox/tabs/journey/JourneyStatsHero.tsx` |
+| `SERIE_ALTURA` | `64` | `src/components/inbox/tabs/journey/JourneyStatsHero.tsx` |
+| `SERIE_MARGEM` | `6` | `src/components/inbox/tabs/journey/JourneyStatsHero.tsx` |
+| `DISTANCIA_PX` | `8` | `src/components/inbox/tabs/journey/motion/FadeSlideIn.tsx` |
+| `HIGHLIGHT_DURATION_MS` | `1500` | `src/components/inbox/tabs/journey/motion/HighlightPulse.tsx` |
+| `STAGGER_PER_ITEM_MS` | `60` | `src/components/inbox/tabs/journey/motion/presets.ts` |
+| `STAGGER_MAX_ITEMS` | `8` | `src/components/inbox/tabs/journey/motion/presets.ts` |
+| `COUNT_UP_DURATION_MS` | `600` | `src/components/inbox/tabs/journey/motion/useCountUp.ts` |
+| `MAX_RECENTS` | `5` | `src/components/mobile/MobileDrawerMenu.tsx` |
+| `SWIPE_THRESHOLD` | `60` | `src/components/mobile/SwipeableMessage.tsx` |
+| `DAYS` | `7` | `src/components/monitoring/MonitoringAvailabilityHeatmap.tsx` |
+| `INBOX_SILENCE_MIN_MINUTES` | `1` | `src/components/monitoring/MonitoringInboxSilence.tsx` |
+| `INBOX_SILENCE_MAX_MINUTES` | `1440` | `src/components/monitoring/MonitoringInboxSilence.tsx` |
+| `INBOX_SILENCE_DEFAULT_MINUTES` | `10` | `src/components/monitoring/MonitoringInboxSilence.tsx` |
+| `UPTIME_TARGET` | `99.5` | `src/components/monitoring/MonitoringIncidents.tsx` |
+| `SLA_TARGET` | `99.5` | `src/components/monitoring/MonitoringSLAPanel.tsx` |
+| `SLA_WINDOW_MS` | `24` | `src/components/monitoring/hooks/types.ts` |
+| `AVAILABILITY_WINDOW_MS` | `7` | `src/components/monitoring/hooks/types.ts` |
+| `HEALTH_LOGS_LIMIT` | `2000` | `src/components/monitoring/hooks/types.ts` |
+| `REALTIME_DEBOUNCE_MS` | `500` | `src/components/monitoring/hooks/useEvolutionMonitoring.ts` |
+| `INBOX_SILENCE_POLL_MS` | `60` | `src/components/monitoring/hooks/useInboxSilence.ts` |
+| `RPC_TIMEOUT_MS` | `15` | `src/components/monitoring/hooks/useInboxSilence.ts` |
+| `HOUR_MS` | `60` | `src/components/monitoring/hooks/useMonitoringData.ts` |
+| `DAY_MS` | `24` | `src/components/monitoring/hooks/useMonitoringData.ts` |
+| `LEGACY_UNQUEUED_PAUSE_REASON` | `'legacy_queue_unmaterialized'` | `src/components/multiplix/MultiplixMonitor.tsx` |
+| `RAMO_NAO_INFORMADO` | `'Não informado'` | `src/components/multiplix/MultiplixView.tsx` |
+| `PAGE_SIZE` | `50` | `src/components/multiplix/MultiplixView.tsx` |
+| `SERVER_PAGE_MAX` | `200` | `src/components/multiplix/MultiplixView.tsx` |
+| `POLICY_MAX_IDS` | `10` | `src/components/multiplix/MultiplixView.tsx` |
+| `PREVIEW_OPTIONS_MAX` | `200` | `src/components/multiplix/MultiplixView.tsx` |
+| `AUDIENCE_ROW_ESTIMATE` | `56` | `src/components/multiplix/MultiplixView.tsx` |
+| `SOUND_VOLUME_STEP` | `5` | `src/components/notifications/SoundVolumeControl.tsx` |
+| `SOUND_VOLUME_MIN` | `10` | `src/components/notifications/SoundVolumeControl.tsx` |
+| `SOUND_VOLUME_MAX` | `100` | `src/components/notifications/SoundVolumeControl.tsx` |
+| `LOW_VOLUME_THRESHOLD` | `30` | `src/components/notifications/SoundVolumeControl.tsx` |
+| `SAVE_DEBOUNCE_MS` | `400` | `src/components/notifications/SoundVolumeControl.tsx` |
+| `SEARCH_MIN_LENGTH` | `2` | `src/components/omnichannel/OmnichannelInbox.tsx` |
+| `SEARCH_DEBOUNCE_MS` | `300` | `src/components/omnichannel/OmnichannelInbox.tsx` |
+| `SEARCH_RESULT_LIMIT` | `50` | `src/components/omnichannel/OmnichannelInbox.tsx` |
+| `SEARCH_MESSAGES_LIMIT` | `500` | `src/components/omnichannel/OmnichannelInbox.tsx` |
+| `HISTORY_NOT_LOADED_LABEL` | `'Histórico não carregado'` | `src/components/omnichannel/OmnichannelInbox.tsx` |
+| `PAUSA_ENTRE_CHUNKS_MS` | `150` | `src/components/performance/hotRoutePrefetch.ts` |
+| `SEM_AMOSTRA_LABEL` | `'Sem dados avaliados no período'` | `src/components/queues/SLAMetricCards.tsx` |
+| `EMPTY` | `'—'` | `src/components/reports/PeriodComparison.tsx` |
+| `ACL_ALERTS_TABLE` | `'security_acl_alerts'` | `src/components/security/AclAlertsPanel.tsx` |
+| `ACL_ALERTS_LIMIT` | `200` | `src/components/security/AclAlertsPanel.tsx` |
+| `ACL_ALERTS_REFRESH_MS` | `30` | `src/components/security/AclAlertsPanel.tsx` |
+| `ROLE_FILTER_VALUE` | `'role_events'` | `src/components/security/AuditLogDashboard.tsx` |
+| `LOGS_PAGE_LIMIT` | `200` | `src/components/security/AuditLogDashboard.tsx` |
+| `DISMISS_TTL_MS` | `24` | `src/components/security/MfaAdminNudge.tsx` |
+| `MAX_TIMEOUT_MS` | `2` | `src/components/security/MfaAdminNudge.tsx` |
+| `VISIBLE_LIMIT` | `3` | `src/components/security/RateLimitRealtimeAlerts.tsx` |
+| `CHAVE_TRANSCRICAO` | `'auto_transcription_enabled'` | `src/components/settings/AutomationSettings.tsx` |
+| `DEFAULT_OPEN_TIME` | `'09:00'` | `src/components/settings/ScheduleSettings.tsx` |
+| `DEFAULT_CLOSE_TIME` | `'18:00'` | `src/components/settings/ScheduleSettings.tsx` |
+| `HORAS_DA_JANELA` | `24` | `src/components/settings/ai-providers/AIProviderHealthPanel.tsx` |
+| `MAX_UPLOAD_SIZE_MB` | `10` | `src/components/settings/media-library/useMediaLibrary.ts` |
+| `FIRST_RESPONSE_MINUTES` | `5` | `src/components/settings/sla/SLARuleFormDialog.tsx` |
+| `RESOLUTION_MINUTES_PADRAO` | `60` | `src/components/settings/sla/SLARuleFormDialog.tsx` |
+| `PRIDE_RED` | `'0 85% 55%'` | `src/components/settings/theme/presets.ts` |
+| `PRIDE_ORANGE` | `'30 90% 55%'` | `src/components/settings/theme/presets.ts` |
+| `PRIDE_YELLOW` | `'55 90% 50%'` | `src/components/settings/theme/presets.ts` |
+| `PRIDE_GREEN` | `'130 70% 45%'` | `src/components/settings/theme/presets.ts` |
+| `PRIDE_BLUE` | `'210 80% 55%'` | `src/components/settings/theme/presets.ts` |
+| `PRIDE_PURPLE` | `'280 80% 58%'` | `src/components/settings/theme/presets.ts` |
+| `PRIDE_PINK` | `'330 85% 52%'` | `src/components/settings/theme/presets.ts` |
+| `NO_DATA_LABEL` | `'sem dados ainda'` | `src/components/talkx/TalkXAudienceFilters.tsx` |
+| `ANY_VALUE` | `'all'` | `src/components/talkx/TalkXAudienceFilters.tsx` |
+| `INSIGHT_REPLY_GROWTH_MIN` | `30` | `src/components/talkx/TalkXCampaignRunning.tsx` |
+| `NO_VALUE` | `'—'` | `src/components/talkx/TalkXCampaignWizard.tsx` |
+| `CONTACT_ROW_ESTIMATE` | `56` | `src/components/talkx/TalkXContactSelector.tsx` |
+| `CONTACT_OVERSCAN` | `6` | `src/components/talkx/TalkXContactSelector.tsx` |
+| `FIELD` | `'h-9 text-xs bg-input/40 border-border/70'` | `src/components/talkx/TalkXInteractiveEditor.tsx` |
+| `REFETCH` | `4000` | `src/components/talkx/TalkXLiveMonitor.tsx` |
+| `ADD_CONTACT_LIST_LIMIT` | `50` | `src/components/talkx/TalkXSuppression.tsx` |
+| `CONTACT_SEARCH_DEBOUNCE_MS` | `300` | `src/components/talkx/TalkXSuppression.tsx` |
+| `PHONE_MIN_DIGITS` | `10` | `src/components/talkx/TalkXSuppression.tsx` |
+| `PHONE_MAX_DIGITS` | `15` | `src/components/talkx/TalkXSuppression.tsx` |
+| `ACTIVITY_RAIL_LIMIT` | `5` | `src/components/talkx/TalkXSuppression.tsx` |
+| `ACTIVITY_HISTORY_PAGE_SIZE` | `20` | `src/components/talkx/TalkXSuppression.tsx` |
+| `CONSULTA_PAINEL_LARGO` | `'(min-width: 1280px)'` | `src/components/talkx/TalkXTemplateEditor.tsx` |
+| `REVIEW_STALE_DAYS` | `3` | `src/components/talkx/TalkXTemplates.tsx` |
+| `FORECAST_MIN_CAMPAIGNS` | `5` | `src/components/talkx/TalkXWizardDelivery.tsx` |
+| `FORECAST_MIN_SENT` | `100` | `src/components/talkx/TalkXWizardDelivery.tsx` |
+| `FORECAST_WINDOW_DAYS` | `90` | `src/components/talkx/TalkXWizardDelivery.tsx` |
+| `MAX_INTERACTIVE_BUTTONS` | `3` | `src/components/talkx/talkxInteractive.ts` |
+| `MAX_BUTTON_LABEL` | `20` | `src/components/talkx/talkxInteractive.ts` |
+| `MAX_POLL_QUESTION` | `255` | `src/components/talkx/talkxInteractive.ts` |
+| `MIN_POLL_OPTIONS` | `2` | `src/components/talkx/talkxInteractive.ts` |
+| `MAX_POLL_OPTIONS` | `12` | `src/components/talkx/talkxInteractive.ts` |
+| `LIMITS_MIN_S` | `3` | `src/components/talkx/talkxLimits.ts` |
+| `LIMITS_MAX_S` | `600` | `src/components/talkx/talkxLimits.ts` |
+| `TEMPLATE_FILE_MAX_BYTES` | `2` | `src/components/talkx/talkxTemplateFile.ts` |
+| `TEMPLATE_CONTENT_MAX` | `65536` | `src/components/talkx/talkxTemplateFile.ts` |
+| `TEMPLATE_DESCRIPTION_MAX` | `4000` | `src/components/talkx/talkxTemplateFile.ts` |
+| `TEMPLATE_TAGS_MAX` | `50` | `src/components/talkx/talkxTemplateFile.ts` |
+| `TEMPLATE_TAG_MAX` | `64` | `src/components/talkx/talkxTemplateFile.ts` |
+| `SUFIXO_COPIA` | `' (cópia)'` | `src/components/talkx/talkxTemplateFile.ts` |
+| `TEMPLATE_FILE_MAX_ROWS` | `500` | `src/components/talkx/talkxTemplateFile.ts` |
+| `SEP` | `';'` | `src/components/talkx/talkxTemplateFile.ts` |
+| `UTF8_BOM` | `'﻿'` | `src/components/talkx/talkxTemplateFile.ts` |
+| `TEMPLATE_TAB` | `'templates'` | `src/components/talkx/talkxTemplateRoute.ts` |
+| `MESSAGE_LIMIT` | `4096` | `src/components/talkx/useCampaignEditor.ts` |
+| `DEFAULT_SCHEDULE_TIMEZONE` | `'America/Sao_Paulo'` | `src/components/talkx/useCampaignEditor.ts` |
+| `AUDIENCE_FILTER_DEBOUNCE_MS` | `350` | `src/components/talkx/useCampaignEditor.ts` |
+| `AUDIENCE_PREVIEW_LIMIT` | `5000` | `src/components/talkx/useCampaignEditor.ts` |
+| `TAG_FIELD` | `'tags'` | `src/components/talkx/useCampaignEditor.ts` |
+| `ENVIO_NAO_ACEITO` | `'O envio não foi aceito. Tente novamente.'` | `src/components/talkx/useTalkXLifecycle.tsx` |
+| `TALKX_MEDIA_BUCKET` | `'talkx-media'` | `src/components/talkx/useTalkXMediaUpload.ts` |
+| `TALKX_MEDIA_MAX_BYTES` | `16` | `src/components/talkx/useTalkXMediaUpload.ts` |
+| `VIEW_W` | `320` | `src/components/talkx/analytics/AnalyticsFunnel.tsx` |
+| `STEP_H` | `34` | `src/components/talkx/analytics/AnalyticsFunnel.tsx` |
+| `GAP` | `8` | `src/components/talkx/analytics/AnalyticsFunnel.tsx` |
+| `FUNNEL_TITLE` | `'Entrega → Leitura → Resposta → Conversão'` | `src/components/talkx/analytics/AnalyticsFunnel.tsx` |
+| `HELP_GUIDES_SLUG` | `'guias'` | `src/components/talkx/help/talkxHelpIndex.ts` |
+| `HELP_ALL_TOPICS` | `'all'` | `src/components/talkx/help/talkxHelpIndex.ts` |
+| `HELP_WORDS_PER_MINUTE` | `200` | `src/components/talkx/help/talkxHelpIndex.ts` |
+| `HELP_SCREEN` | `'help'` | `src/components/talkx/help/talkxHelpRoute.ts` |
+| `LIMIT` | `5` | `src/components/talkx/kit/ActiveCampaignIndicator.tsx` |
+| `PREVIEW_DEFAULT_TIMEZONE` | `"America/Sao_Paulo"` | `src/components/talkx/kit/personalize.ts` |
+| `CODIGO_SEM_PERMISSAO` | `'42501'` | `src/components/talkx/kit/states.tsx` |
+| `DEFAULT_TIMEZONE` | `'America/Sao_Paulo'` | `src/components/talkx/report/TalkXCampaignReport.tsx` |
+| `REPORT_SAMPLE_LIMIT` | `20` | `src/components/talkx/report/talkxReportData.ts` |
+| `HISTORY_LIMIT` | `50` | `src/components/talkx/segments/segmentBuilderReducer.ts` |
+| `COALESCE_MS` | `800` | `src/components/talkx/segments/segmentBuilderReducer.ts` |
+| `SEGMENT_DESCRIPTION_MAX` | `160` | `src/components/talkx/segments/segmentValidation.ts` |
+| `GAUGE_RADIUS` | `34` | `src/components/talkx/suppression/ProtectionGauge.tsx` |
+| `GAUGE_CIRCUMFERENCE` | `2` | `src/components/talkx/suppression/ProtectionGauge.tsx` |
+| `NOTA` | `'text-2xs text-foreground-secondary'` | `src/components/talkx/tracking/TalkXAbTestResults.tsx` |
+| `SPARK_POINTS` | `7` | `src/components/talkx/tracking/TalkXLiveKpiRow.tsx` |
+| `MAX_DAY_OPTIONS` | `31` | `src/components/talkx/tracking/TalkXMonitorHeader.tsx` |
+| `PAGE_SIZE` | `50` | `src/components/talkx/tracking/TalkXRecipientsTable.tsx` |
+| `TALKX_STALL_MIN_MS` | `180` | `src/components/talkx/tracking/talkxHealth.ts` |
+| `TALKX_RATE_WINDOW_MIN` | `5` | `src/components/talkx/tracking/talkxHealth.ts` |
+| `SEGMENT_PREVIEW_SIZE` | `4` | `src/components/talkx/tracking/talkxSegmentProgress.ts` |
+| `MANUAL_SEGMENT_LABEL` | `'Seleção manual'` | `src/components/talkx/tracking/talkxSegmentProgress.ts` |
+| `SUMMARY_BUCKET` | `'hour'` | `src/components/talkx/tracking/talkxSentSummary.ts` |
+| `HOUR_MS` | `3` | `src/components/talkx/tracking/talkxSentSummary.ts` |
+| `ID_PAINEL_ABAS` | `'board-tabpanel'` | `src/components/tasks/board/TasksBoardMode.tsx` |
+| `UMA_HORA_MS` | `3` | `src/components/tasks/shared/new-task/CoerenciaLembrete.tsx` |
+| `HORA_PADRAO` | `'09:00'` | `src/components/tasks/shared/new-task/RemindField.tsx` |
+| `TITLE_MAX` | `200` | `src/components/tasks/shared/new-task/TaskTitleField.tsx` |
+| `COR_APOIO` | `'text-2xs text-muted-foreground'` | `src/components/tasks/shared/sheet/PlanejamentoSection.tsx` |
+| `CHAVE_PAINEL_EXPANDIDO` | `'tasks-painel-expandido'` | `src/components/tasks/shared/sheet/painel.ts` |
+| `VALOR_EXPANDIDO` | `'1'` | `src/components/tasks/shared/sheet/painel.ts` |
+| `TEXTO_AGENDADO` | `'Agendado'` | `src/components/tasks/shared/sheet/planejamento.ts` |
+| `MIN_SEARCH_CHARS` | `2` | `src/components/team-chat/useTeamChatPanel.ts` |
+| `SEARCH_LIMIT` | `100` | `src/components/team-chat/useTeamChatPanel.ts` |
+| `CHAT_FONT_SIZE_VAR` | `'--chat-font-size'` | `src/components/theme/useChatTextSize.ts` |
+| `DEFAULT_CHAT_TEXT_SIZE` | `'padrao'` | `src/components/theme/useChatTextSize.ts` |
+| `MAX_DURATION` | `0.4` | `src/components/transitions/transitionVariants.ts` |
+| `ARCO_GRAUS` | `270` | `src/components/ui/VolumeDial.tsx` |
+| `INICIO_GRAUS` | `135` | `src/components/ui/VolumeDial.tsx` |
+| `RAIO` | `42` | `src/components/ui/VolumeDial.tsx` |
+| `ESPESSURA` | `8` | `src/components/ui/VolumeDial.tsx` |
+| `DURACAO_CONTAGEM` | `0.25` | `src/components/ui/VolumeDial.tsx` |
+| `TAMANHO_BASE` | `96` | `src/components/ui/VolumeDial.tsx` |
+| `KNOB_BASE` | `14` | `src/components/ui/VolumeDial.tsx` |
+| `FONTE_BASE` | `24` | `src/components/ui/VolumeDial.tsx` |
+| `RAIO_MINIMO_ARRASTE` | `0.6` | `src/components/ui/VolumeDial.tsx` |
+| `FOCAVEIS` | `'button:not([disabled]), [role="` | `src/components/ui/VolumeSliderPopoverContent.tsx` |
+| `DURACAO_SAIDA_MS` | `300` | `src/components/ui/accessible-toast.tsx` |
+| `BALLOON_GAP` | `8` | `src/components/ui/quick-peek.tsx` |
+| `BAR_COUNT` | `24` | `src/components/voice/AudioFrequencyVisualizer.tsx` |
+| `MIN_HEIGHT` | `3` | `src/components/voice/AudioFrequencyVisualizer.tsx` |
+| `MAX_HEIGHT` | `32` | `src/components/voice/AudioFrequencyVisualizer.tsx` |
+| `BAR_WIDTH` | `3` | `src/components/voice/AudioFrequencyVisualizer.tsx` |
+| `BAR_GAP` | `2` | `src/components/voice/AudioFrequencyVisualizer.tsx` |
+| `TARGET_UPDATE_INTERVAL_MS` | `120` | `src/components/voice/AudioFrequencyVisualizer.tsx` |
+| `PAGE_SIZE` | `50` | `src/features/talk-me/useTalkMeQueue.ts` |
+| `MAX_RECONCILE_PAGES` | `3` | `src/features/talk-me/useTalkMeQueue.ts` |
+| `REALTIME_DEBOUNCE_MS` | `350` | `src/features/talk-me/useTalkMeQueue.ts` |
+| `REALTIME_MAX_WAIT_MS` | `2` | `src/features/talk-me/useTalkMeQueue.ts` |
+| `ELIGIBILITY_RECONCILE_INTERVAL_MS` | `60` | `src/features/talk-me/useTalkMeQueue.ts` |
+| `RESOLVED_CONFLICT_MESSAGE` | `'Este atendimento já foi resolvido'` | `src/features/talk-me/useTalkMeQueue.ts` |
+| `DEFAULT_SEARCH_INSIGHTS_PERIOD` | `30` | `src/hooks/admin/useSearchInsights.ts` |
+| `SUPERVISOR_PAGE_SIZE` | `200` | `src/hooks/admin/useSupervisorQueue.ts` |
+| `DEFAULT_REFRESH_MS` | `60` | `src/hooks/admin/useSupervisorQueue.ts` |
+| `RECENT_SENDS_WINDOW_DAYS` | `30` | `src/hooks/agents/useAgentRecentSends.ts` |
+| `DAY_MS` | `24` | `src/hooks/agents/useAgentRecentSends.ts` |
+| `LOGS_PER_PAGE` | `50` | `src/hooks/analytics/useAIUsageDashboard.ts` |
+| `MESMO_CICLO_MS` | `1` | `src/hooks/analytics/useAIUsageDashboard.ts` |
+| `GOAL_CHECK_INTERVAL_MS` | `600` | `src/hooks/analytics/useGoalNotifications.ts` |
+| `QUEUE_GOAL_ALERTS_INTERVAL_MS` | `5` | `src/hooks/analytics/useQueueGoalAlerts.ts` |
+| `MAX_HISTORY` | `60` | `src/hooks/analytics/useRealtimeDashboard.ts` |
+| … +696 linhas — lista completa em `context.json` | | |
 
 ### H.2 Prazos, expirações e janelas de tempo
 
@@ -4179,109 +3911,6 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `VALUES (p_session_id, v_profile_id, now() + interval '90 seconds')` | `analise-prs/resgate-261118-lote2/supabase/migrations/20261016193400_copilot_presence.sql` |
 | `expires_at timestamptz NOT NULL DEFAULT now() + interval '90 seconds',` | `analise-prs/resgate-261118-lote2/supabase/migrations/20261016193400_copilot_presence.sql` |
 | `now() + interval '4 seconds',` | `analise-prs/resgate-261118-lote2/supabase/migrations/20261030200000_copilot_live_motor.sql` |
-| `const AMBIGUOUS_THRESHOLD_MS = 2 * 60 * 1000;` | `analise-prs/resgate-261118-lote3/claude/feat-message-delivery-post-iniciado-261101-1937/src/hooks/delivery/useUnconfirmedMessages.ts` |
-| `const cutoff = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();` | `analise-prs/resgate-261118-lote3/claude/feat-message-delivery-post-iniciado-261101-1937/supabase/functions/_shared/evolution-webhook-messages.ts` |
-| `const day2Start = startOfDay(addDays(now, 2));` | `analise-prs/resgate-261118-lote3/claude/fix-codex-findings-161016-1906/src/hooks/tasks/workItemAggregates.ts` |
-| `const sevenDayLimit = startOfDay(addDays(now, 7));` | `analise-prs/resgate-261118-lote3/claude/fix-codex-findings-161016-1906/src/hooks/tasks/workItemAggregates.ts` |
-| `const tomorrowStart = startOfDay(addDays(now, 1));` | `analise-prs/resgate-261118-lote3/claude/fix-codex-findings-161016-1906/src/hooks/tasks/workItemAggregates.ts` |
-| `if (filtro === 'today') return due < startOfDay(addDays(now, 1));` | `analise-prs/resgate-261118-lote3/claude/fix-codex-findings-161016-1906/src/hooks/tasks/workItemAggregates.ts` |
-| `return due < startOfDay(addDays(now, 7)); // filtro === 'week'` | `analise-prs/resgate-261118-lote3/claude/fix-codex-findings-161016-1906/src/hooks/tasks/workItemAggregates.ts` |
-| `const SEIS_HORAS_MS = 6 * 60 * 60 * 1000;` | `analise-prs/resgate-261118-lote3/claude/fix-db-guard-pguser-261019-1430/scripts/ci/github-settings-guard.mjs` |
-| `const SETE_DIAS_MS = 7 * 24 * 60 * 60 * 1000;` | `analise-prs/resgate-261118-lote3/claude/fix-db-guard-pguser-261019-1430/scripts/ci/github-settings-guard.mjs` |
-| `const SEIS_HORAS_MS = 6 * 60 * 60 * 1000;` | `analise-prs/resgate-261118-lote3/claude/fix-db-guard-pguser-261019-1430/scripts/ci/github-settings-guard.unit.mjs` |
-| `const DEFAULT_WAIT_MS = 5 * 60 * 1000; // 5 min` | `analise-prs/resgate-261118-lote3/claude/fix-ga-fase23-edge-e2e-261020-2200/scripts/edge-deploy/health-check.mjs` |
-| `const UM_DIA = 24 * 60 * 60 * 1000;` | `analise-prs/resgate-261118-lote3/claude/fix-ga-fase78-perimetro-custo-261020-2200/scripts/ci/actions-kpi.mjs` |
-| `const SEIS_HORAS_MS = 6 * 60 * 60 * 1000;` | `analise-prs/resgate-261118-lote3/claude/fix-ga-fase78-perimetro-custo-261020-2200/scripts/ci/github-settings-guard.mjs` |
-| `const SETE_DIAS_MS = 7 * 24 * 60 * 60 * 1000;` | `analise-prs/resgate-261118-lote3/claude/fix-ga-fase78-perimetro-custo-261020-2200/scripts/ci/github-settings-guard.mjs` |
-| `const SEIS_HORAS_MS = 6 * 60 * 60 * 1000;` | `analise-prs/resgate-261118-lote3/claude/fix-ga-resto-sonar-contracts-20261021-0726/scripts/ci/github-settings-guard.mjs` |
-| `const SETE_DIAS_MS = 7 * 24 * 60 * 60 * 1000;` | `analise-prs/resgate-261118-lote3/claude/fix-ga-resto-sonar-contracts-20261021-0726/scripts/ci/github-settings-guard.mjs` |
-| `const DEFAULT_WAIT_MS = 5 * 60 * 1000; // 5 min` | `analise-prs/resgate-261118-lote3/claude/fix-ga-resto-sonar-contracts-20261021-0726/scripts/edge-deploy/health-check.mjs` |
-| `destaqueTimerRef.current = setTimeout(() => { destaqueTimerRef.current = null; setDeliveryFocusId(null); }, 1200);` | `analise-prs/resgate-261118-lote3/claude/fix-radar-fase6-cv056-shortcuts-261108-2335/src/components/inbox/ChatPanel.tsx` |
-| `const UM_DIA = 24 * 60 * 60 * 1000;` | `analise-prs/resgate-261118-lote3/claude/ga-ci-batch-ga49-ga54-ga60-ga64-231023/scripts/ci/actions-kpi.mjs` |
-| `export const TETO_TRAVADA_MS = 45 * 60 * 1000;` | `analise-prs/resgate-261118-lote3/claude/ga-ci-batch-ga49-ga54-ga60-ga64-231023/scripts/ci/fila-merge.mjs` |
-| `enviadoTimerRef.current = window.setTimeout(() => { if (isMountedRef.current) setEnviadoOk(false); }, 1500);` | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/inbox/WhisperMode.tsx` |
-| `setTimeout(resolve, 3000);` | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/hooks/communication/useAudioMemes.ts` |
-| `const HEARTBEAT_DEGRADADO_MS = 60 * 60 * 1000;` | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/hooks/system/useDiagnosticsData.ts` |
-| `const HEARTBEAT_SAUDAVEL_MS = 15 * 60 * 1000;` | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/hooks/system/useDiagnosticsData.ts` |
-| `const fiveMinAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString();` | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/hooks/system/useDiagnosticsData.ts` |
-| `const since = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();` | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/hooks/system/useDiagnosticsData.ts` |
-| `export const PENDING_ACTION_TTL_MS = 2 * 60 * 1000;` | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/services/outbound-message.service.ts` |
-| `const HEARTBEAT_DEGRADADO_MS = 60 * 60 * 1000;` | `analise-prs/resgate-261118-lote3/claude/kind-gates-87mwoe/src/hooks/system/useDiagnosticsData.ts` |
-| `const HEARTBEAT_SAUDAVEL_MS = 15 * 60 * 1000;` | `analise-prs/resgate-261118-lote3/claude/kind-gates-87mwoe/src/hooks/system/useDiagnosticsData.ts` |
-| `const fiveMinAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString();` | `analise-prs/resgate-261118-lote3/claude/kind-gates-87mwoe/src/hooks/system/useDiagnosticsData.ts` |
-| `const since = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();` | `analise-prs/resgate-261118-lote3/claude/kind-gates-87mwoe/src/hooks/system/useDiagnosticsData.ts` |
-| `const HEARTBEAT_DEGRADADO_MS = 60 * 60 * 1000;` | `analise-prs/resgate-261118-lote3/claude/magical-pasteur-iz2pgy/src/hooks/system/useDiagnosticsData.ts` |
-| `const HEARTBEAT_SAUDAVEL_MS = 15 * 60 * 1000;` | `analise-prs/resgate-261118-lote3/claude/magical-pasteur-iz2pgy/src/hooks/system/useDiagnosticsData.ts` |
-| `const fiveMinAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString();` | `analise-prs/resgate-261118-lote3/claude/magical-pasteur-iz2pgy/src/hooks/system/useDiagnosticsData.ts` |
-| `const since = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();` | `analise-prs/resgate-261118-lote3/claude/magical-pasteur-iz2pgy/src/hooks/system/useDiagnosticsData.ts` |
-| `inactivity_timeout: 30,` | `analise-prs/resgate-261118-lote3/claude/magical-pasteur-iz2pgy/src/hooks/system/useUserSettings.ts` |
-| `assert.deepEqual(options, { waitUntil: 'load', timeout: 15_000 });` | `analise-prs/resgate-261118-lote3/claude/test-e2e-suite-completa-261104-1428/scripts/ci/e2e-isolated-tls.unit.mjs` |
-| `minVersion: version, maxVersion: version, timeout: 5_000 }, response => {` | `analise-prs/resgate-261118-lote3/claude/test-e2e-suite-completa-261104-1428/scripts/ci/e2e-isolated-tls.unit.mjs` |
-| `encoding: 'utf8', timeout: 10000,` | `analise-prs/resgate-261118-lote3/claude/test-e2e-suite-completa-261104-1428/scripts/ci/e2e-isolated-workflow.unit.mjs` |
-| `], { timeout: 210_000 });` | `analise-prs/resgate-261118-lote3/claude/test-e2e-suite-completa-261104-1428/scripts/e2e-isolated/run.mjs` |
-| `const driverRun = (args, code, timeout = 240_000, { recordLog = true } = {}) => {` | `analise-prs/resgate-261118-lote3/claude/test-e2e-suite-completa-261104-1428/scripts/e2e-isolated/run.mjs` |
-| `cwd: ROOT, encoding: 'utf8', timeout: 120_000, maxBuffer: 64 * 1024 * 1024,` | `analise-prs/resgate-261118-lote3/claude/test-e2e-suite-completa-261104-1428/scripts/e2e-isolated/run.mjs` |
-| `required(docker(['pull', image], { timeout: 15 * 60_000 }), 'pull-' + name + '-failed');` | `analise-prs/resgate-261118-lote3/claude/test-e2e-suite-completa-261104-1428/scripts/e2e-isolated/run.mjs` |
-| `const response = await page.goto(TLS_ORIGIN + '/__e2e/tls-probe', { waitUntil: 'load', timeout: 15_000 });` | `analise-prs/resgate-261118-lote3/claude/test-e2e-suite-completa-261104-1428/scripts/e2e-isolated/tls-probe.mjs` |
-| `const warmup = await negative.goto(warmupUrl, { waitUntil: 'load', timeout: 15_000 });` | `analise-prs/resgate-261118-lote3/claude/test-e2e-suite-completa-261104-1428/scripts/e2e-isolated/tls-probe.mjs` |
-| `try { await negative.goto(controlUrl(kind), { waitUntil: 'load', timeout: 15_000 }); }` | `analise-prs/resgate-261118-lote3/claude/test-e2e-suite-completa-261104-1428/scripts/e2e-isolated/tls-probe.mjs` |
-| `], { timeout: 210_000 });` | `analise-prs/resgate-261118-lote3/claude/test-e2e-tls-diagnostico-261104-1340/scripts/e2e-isolated/run.mjs` |
-| `const browserResult = docker(['exec', '-w', '/work', driver.name, ...cli], { timeout: 600_000 });` | `analise-prs/resgate-261118-lote3/claude/test-e2e-tls-diagnostico-261104-1340/scripts/e2e-isolated/run.mjs` |
-| `const driverRun = (args, code, timeout = 240_000, { recordLog = true } = {}) => {` | `analise-prs/resgate-261118-lote3/claude/test-e2e-tls-diagnostico-261104-1340/scripts/e2e-isolated/run.mjs` |
-| `cwd: ROOT, encoding: 'utf8', timeout: 120_000, maxBuffer: 64 * 1024 * 1024,` | `analise-prs/resgate-261118-lote3/claude/test-e2e-tls-diagnostico-261104-1340/scripts/e2e-isolated/run.mjs` |
-| `required(docker(['pull', image], { timeout: 15 * 60_000 }), 'pull-' + name + '-failed');` | `analise-prs/resgate-261118-lote3/claude/test-e2e-tls-diagnostico-261104-1340/scripts/e2e-isolated/run.mjs` |
-| `expires_at: new Date(now + 60 * 60 * 1000).toISOString(),` | `analise-prs/resgate-261118-lote3/claude/test-e2e-tls-diagnostico-261104-1340/scripts/e2e-isolated/runtime-contract.mjs` |
-| `role, iss: 'supabase', iat: Math.floor(now / 1000), exp: Math.floor(now / 1000) + 4 * 60 * 60,` | `analise-prs/resgate-261118-lote3/claude/test-e2e-tls-diagnostico-261104-1340/scripts/e2e-isolated/runtime-contract.mjs` |
-| `const response = await page.goto(TLS_ORIGIN + '/__e2e/tls-probe', { waitUntil: 'load', timeout: 15_000 });` | `analise-prs/resgate-261118-lote3/claude/test-e2e-tls-diagnostico-261104-1340/scripts/e2e-isolated/tls-probe.mjs` |
-| `try { await negative.goto(controlUrl(kind), { waitUntil: 'load', timeout: 15_000 }); }` | `analise-prs/resgate-261118-lote3/claude/test-e2e-tls-diagnostico-261104-1340/scripts/e2e-isolated/tls-probe.mjs` |
-| `cwd, env: { PATH: process.env.PATH }, encoding: 'utf8', timeout: 60_000,` | `analise-prs/resgate-261118-lote3/claude/test-e2e-tls-diagnostico-261104-1340/scripts/e2e-isolated/tls.mjs` |
-| `assert.deepEqual(options, { waitUntil: 'load', timeout: 15_000 });` | `analise-prs/resgate-261118-lote3/claude/test-e2e-webkit-tls-261104-1430/scripts/ci/e2e-isolated-tls.unit.mjs` |
-| `minVersion: version, maxVersion: version, timeout: 5_000 }, response => {` | `analise-prs/resgate-261118-lote3/claude/test-e2e-webkit-tls-261104-1430/scripts/ci/e2e-isolated-tls.unit.mjs` |
-| `], { timeout: 210_000 });` | `analise-prs/resgate-261118-lote3/claude/test-e2e-webkit-tls-261104-1430/scripts/e2e-isolated/run.mjs` |
-| `const browserResult = docker(['exec', '-w', '/work', driver.name, ...cli], { timeout: 600_000 });` | `analise-prs/resgate-261118-lote3/claude/test-e2e-webkit-tls-261104-1430/scripts/e2e-isolated/run.mjs` |
-| `const driverRun = (args, code, timeout = 240_000, { recordLog = true } = {}) => {` | `analise-prs/resgate-261118-lote3/claude/test-e2e-webkit-tls-261104-1430/scripts/e2e-isolated/run.mjs` |
-| `cwd: ROOT, encoding: 'utf8', timeout: 120_000, maxBuffer: 64 * 1024 * 1024,` | `analise-prs/resgate-261118-lote3/claude/test-e2e-webkit-tls-261104-1430/scripts/e2e-isolated/run.mjs` |
-| `required(docker(['pull', image], { timeout: 15 * 60_000 }), 'pull-' + name + '-failed');` | `analise-prs/resgate-261118-lote3/claude/test-e2e-webkit-tls-261104-1430/scripts/e2e-isolated/run.mjs` |
-| `expires_at: new Date(now + 60 * 60 * 1000).toISOString(),` | `analise-prs/resgate-261118-lote3/claude/test-e2e-webkit-tls-261104-1430/scripts/e2e-isolated/runtime-contract.mjs` |
-| `role, iss: 'supabase', iat: Math.floor(now / 1000), exp: Math.floor(now / 1000) + 4 * 60 * 60,` | `analise-prs/resgate-261118-lote3/claude/test-e2e-webkit-tls-261104-1430/scripts/e2e-isolated/runtime-contract.mjs` |
-| `const response = await page.goto(TLS_ORIGIN + '/__e2e/tls-probe', { waitUntil: 'load', timeout: 15_000 });` | `analise-prs/resgate-261118-lote3/claude/test-e2e-webkit-tls-261104-1430/scripts/e2e-isolated/tls-probe.mjs` |
-| `try { await negative.goto(controlUrl(kind), { waitUntil: 'load', timeout: 15_000 }); }` | `analise-prs/resgate-261118-lote3/claude/test-e2e-webkit-tls-261104-1430/scripts/e2e-isolated/tls-probe.mjs` |
-| `const HEARTBEAT_DEGRADADO_MS = 60 * 60 * 1000;` | `analise-prs/resgate-261118-lote3/claude_05/festive-carson-ub43wu/src/hooks/system/useDiagnosticsData.ts` |
-| `const HEARTBEAT_SAUDAVEL_MS = 15 * 60 * 1000;` | `analise-prs/resgate-261118-lote3/claude_05/festive-carson-ub43wu/src/hooks/system/useDiagnosticsData.ts` |
-| `const fiveMinAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString();` | `analise-prs/resgate-261118-lote3/claude_05/festive-carson-ub43wu/src/hooks/system/useDiagnosticsData.ts` |
-| `const since = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();` | `analise-prs/resgate-261118-lote3/claude_05/festive-carson-ub43wu/src/hooks/system/useDiagnosticsData.ts` |
-| `const UM_DIA = 24 * 60 * 60 * 1000;` | `analise-prs/resgate-261118-lote3/claude_pink/cool-dijkstra-xk9ek2/scripts/ci/actions-kpi.mjs` |
-| `const corte = agora - 24 * 60 * 60 * 1000;` | `analise-prs/resgate-261118-lote3/claude_pink/cool-dijkstra-xk9ek2/scripts/ci/actions-kpi.mjs` |
-| `timeout: 120_000,` | `analise-prs/resgate-261118-lote3/claude_pink/cool-dijkstra-xk9ek2/scripts/ci/edge-coverage-authz.unit.mjs` |
-| `timeout: 60_000,` | `analise-prs/resgate-261118-lote3/claude_pink/cool-dijkstra-xk9ek2/scripts/ci/edge-coverage-authz.unit.mjs` |
-| `const TETO_EM_VOO_MS = 45 * 60 * 1000; // GA49: PR em dia sem check em andamento há > 45 min → bloqueada` | `analise-prs/resgate-261118-lote3/claude_pink/cool-dijkstra-xk9ek2/scripts/ci/fila-merge.mjs` |
-| `const SEIS_HORAS_MS = 6 * 60 * 60 * 1000;` | `analise-prs/resgate-261118-lote3/claude_pink/cool-dijkstra-xk9ek2/scripts/ci/github-settings-guard.mjs` |
-| `const SETE_DIAS_MS = 7 * 24 * 60 * 60 * 1000;` | `analise-prs/resgate-261118-lote3/claude_pink/cool-dijkstra-xk9ek2/scripts/ci/github-settings-guard.mjs` |
-| `const DEFAULT_WAIT_MS = 5 * 60 * 1000; // 5 min` | `analise-prs/resgate-261118-lote3/claude_pink/cool-dijkstra-xk9ek2/scripts/edge-deploy/health-check.mjs` |
-| `if (Date.now() < new Date(account.token_expires_at).getTime() - 5 * 60 * 1000) return storedTokens.access_token;` | `analise-prs/resgate-261118-lote3/claude_pink/cool-dijkstra-xk9ek2/supabase/functions/_shared/gmail-helpers.ts` |
-| `const STALE_SESSION_MS = 6 * 60 * 60 * 1000;` | `analise-prs/resgate-261118-lote3/codex/publish-followup-20261021/supabase/functions/connection-health-check/index.ts` |
-| `const WEBHOOK_SILENT_MS = 30 * 60 * 1000;` | `analise-prs/resgate-261118-lote3/codex/publish-followup-20261021/supabase/functions/connection-health-check/index.ts` |
-| `const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();` | `analise-prs/resgate-261118-lote3/codex/publish-followup-20261021/supabase/functions/connection-health-check/index.ts` |
-| `destaqueTimerRef.current = setTimeout(() => { destaqueTimerRef.current = null; setDeliveryFocusId(null); }, 1200);` | `analise-prs/resgate-261118-lote3/fix/ci-verde-261021/src/components/inbox/ChatPanel.tsx` |
-| `const delayMs = Math.min(6 * 60 * 60 * 1000, 60_000 * 2 ** (exp - 1));` | `analise-prs/resgate-261118-lote3/fix/ci-verde-261021/supabase/functions/_shared/gmail-helpers.ts` |
-| `if (Date.now() < new Date(account.token_expires_at).getTime() - 5 * 60 * 1000) return storedTokens.access_token;` | `analise-prs/resgate-261118-lote3/fix/ci-verde-261021/supabase/functions/_shared/gmail-helpers.ts` |
-| `const STALE_SESSION_MS = 6 * 60 * 60 * 1000;` | `analise-prs/resgate-261118-lote3/fix/ci-verde-261021/supabase/functions/connection-health-check/index.ts` |
-| `const WEBHOOK_SILENT_MS = 30 * 60 * 1000;` | `analise-prs/resgate-261118-lote3/fix/ci-verde-261021/supabase/functions/connection-health-check/index.ts` |
-| `const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();` | `analise-prs/resgate-261118-lote3/fix/ci-verde-261021/supabase/functions/connection-health-check/index.ts` |
-| `await new Promise((r) => setTimeout(r, 1500));` | `analise-prs/resgate-261118-lote3/fix/ci-verde-261021/supabase/functions/evolution-api/index.ts` |
-| `await new Promise((r) => setTimeout(r, 2000));` | `analise-prs/resgate-261118-lote3/fix/ci-verde-261021/supabase/functions/evolution-api/index.ts` |
-| `timeout: 120_000,` | `analise-prs/resgate-261118-lote3/fix/ci-workflows-vermelhos/scripts/ci/edge-coverage-authz.unit.mjs` |
-| `timeout: 60_000,` | `analise-prs/resgate-261118-lote3/fix/ci-workflows-vermelhos/scripts/ci/edge-coverage-authz.unit.mjs` |
-| `if (Date.now() < new Date(account.token_expires_at).getTime() - 5 * 60 * 1000) return storedTokens.access_token;` | `analise-prs/resgate-261118-lote3/fix/ci-workflows-vermelhos/supabase/functions/_shared/gmail-helpers.ts` |
-| `const STALE_SESSION_MS = 6 * 60 * 60 * 1000;` | `analise-prs/resgate-261118-lote3/fix/ci-workflows-vermelhos/supabase/functions/connection-health-check/index.ts` |
-| `const WEBHOOK_SILENT_MS = 30 * 60 * 1000;` | `analise-prs/resgate-261118-lote3/fix/ci-workflows-vermelhos/supabase/functions/connection-health-check/index.ts` |
-| `const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();` | `analise-prs/resgate-261118-lote3/fix/ci-workflows-vermelhos/supabase/functions/connection-health-check/index.ts` |
-| `options: { challenge, rpId, timeout: 60000, userVerification: 'required' },` | `analise-prs/resgate-261118-lote3/fix/ci-workflows-vermelhos/supabase/functions/webauthn/index.ts` |
-| `timeout: 60000, attestation: 'none', excludeCredentials,` | `analise-prs/resgate-261118-lote3/fix/ci-workflows-vermelhos/supabase/functions/webauthn/index.ts` |
-| `await new Promise(r => setTimeout(r, 1000));` | `analise-prs/resgate-261118-lote3/hermes/robustez-primitivos-ui-2610121626bec5-2610141859e423/src/components/settings/AIAutoTagsConfig.tsx` |
-| `timerRef.current = setTimeout(() => { timerRef.current = null; setWasOffline(false); }, 3000);` | `analise-prs/resgate-261118-lote3/hermes/robustez-primitivos-ui-2610121626bec5-2610141859e423/src/components/ui/offline-indicator.tsx` |
-| `indicatorTimerRef.current = setTimeout(() => setShowIndicator(false), 3000);` | `analise-prs/resgate-261118-lote3/hermes/robustez-primitivos-ui-2610121626bec5-2610141859e423/src/components/ui/skip-link.tsx` |
-| `await new Promise(r => setTimeout(r, 1000));` | `analise-prs/resgate-261118-lote3/hermes/telefonia-fase8-motion-a11y-responsivo-2610031530007c/src/components/settings/AIAutoTagsConfig.tsx` |
 | `WHERE created_at < now() - interval '30 days'` | `analise-prs/resgate-regra8-261118/supabase/migrations/20261016193500_copilot_retention.sql` |
 | `WHERE created_at < now() - interval '90 days';` | `analise-prs/resgate-regra8-261118/supabase/migrations/20261016193500_copilot_retention.sql` |
 | `WHERE f.created_at < now() - interval '30 days'` | `analise-prs/resgate-regra8-261118/supabase/migrations/20261016193500_copilot_retention.sql` |
@@ -4458,6 +4087,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `const DRAFT_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000;` | `src/lib/emailDraftSession.ts` |
 | `setTimeout(() => resolve(load()), 1000 * attempt)` | `src/lib/lazyWithRetry.ts` |
 | `const POLL_INTERVAL_MS = 5 * 60 * 1000;` | `src/lib/mapboxCostGuard.ts` |
+| `const STALLED_AFTER_MS = 2 * 60 * 60 * 1000;` | `src/lib/assistant/dailyBrief.ts` |
 | `export const MESSAGE_GROUP_WINDOW_MS = 10 * 60 * 1000;` | `src/lib/journey/mappers.ts` |
 | `const DIA_MS = 24 * 60 * 60 * 1000;` | `src/lib/journey/periodRange.ts` |
 | `const threshold = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();` | `src/pages/AdminTelemetriaPage.tsx` |
@@ -4472,55 +4102,114 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `if (!options?.requireInteraction) { setTimeout(() => notification.close(), 5000); }` | `src/utils/notificationSounds.ts` |
 | `const since = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();` | `supabase/functions/_shared/ai-guards.ts` |
 | `const TOKEN_CACHE_TTL_MS = 5 * 60 * 1000;` | `supabase/functions/_shared/evolution-instance-token.ts` |
-| … +195 linhas — lista completa em `context.json` | |
+| `const cutoff = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();` | `supabase/functions/_shared/evolution-webhook-messages.ts` |
+| `if (Date.now() < new Date(account.token_expires_at).getTime() - 5 * 60 * 1000) return storedTokens.access_token;` | `supabase/functions/_shared/gmail-helpers.ts` |
+| `const JWKS_CACHE_TTL_MS = 15 * 60 * 1000;` | `supabase/functions/_shared/hmac-validation.ts` |
+| `const DAY_MS = 24 * 60 * 60 * 1000;` | `supabase/functions/ai-churn-analysis/churn-risk.ts` |
+| `const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();` | `supabase/functions/batch-fetch-avatars/index.ts` |
+| `if (i + 5 < contacts.length) await new Promise(r => setTimeout(r, 1000));` | `supabase/functions/batch-fetch-avatars/index.ts` |
+| `const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();` | `supabase/functions/cleanup-rate-limit-logs/index.ts` |
+| `const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();` | `supabase/functions/cleanup-rate-limit-logs/index.ts` |
+| `const STALE_SESSION_MS = 6 * 60 * 60 * 1000;` | `supabase/functions/connection-health-check/index.ts` |
+| `const WEBHOOK_SILENT_MS = 30 * 60 * 1000;` | `supabase/functions/connection-health-check/index.ts` |
+| `const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();` | `supabase/functions/connection-health-check/index.ts` |
+| `export const LEVEL1_DEGRADED_MS = 30 * 60 * 1000;` | `supabase/functions/connection-health-check/index.ts` |
+| `export const LEVEL1_DISCONNECTED_MS = 15 * 60 * 1000;` | `supabase/functions/connection-health-check/index.ts` |
+| `export const LEVEL2_MS = 60 * 60 * 1000;` | `supabase/functions/connection-health-check/index.ts` |
+| `expires_at: new Date(args.now.getTime() + 24 * 60 * 60 * 1000).toISOString(),` | `supabase/functions/detect-new-device/index.ts` |
+| `await new Promise((r) => setTimeout(r, 2000));` | `supabase/functions/evolution-api/index.ts` |
+| `const CACHE_TTL_MS = 1000 * 60 * 60 * 6; // 6h for hits` | `supabase/functions/fetch-link-preview/index.ts` |
+| `const WINDOW_MS = 24 * 60 * 60 * 1000;` | `supabase/functions/metrics/index.ts` |
+| `const NEW_PRODUCT_WINDOW_MS = 30 * 24 * 60 * 60 * 1000;` | `supabase/functions/promogifts-catalog/index.ts` |
+| `export const RECOVERY_COOLDOWN_MS = 10 * 60 * 1000;` | `supabase/functions/recover-message-media/index.ts` |
+| `const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);` | `supabase/functions/send-scheduled-report/index.ts` |
+| `const desde = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();` | `supabase/functions/sync-call-records/index.ts` |
+| `const CACHE_TTL_MS = 24 * 60 * 60 * 1000;` | `supabase/functions/talkx-ai/index.ts` |
+| `const CONVERT_WINDOW_MS = 5 * 60 * 1000; // x-talkx-timestamp tolera ±5 min` | `supabase/functions/talkx-link/index.ts` |
+| `const windowStart = new Date(Date.now() - 10 * 60 * 1000).toISOString();` | `supabase/functions/talkx-send/index.ts` |
+| `options: { challenge, rpId, timeout: 60000, userVerification: 'required' },` | `supabase/functions/webauthn/index.ts` |
+| `timeout: 60000, attestation: 'none', excludeCredentials,` | `supabase/functions/webauthn/index.ts` |
+| `const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString();` | `supabase/functions/webhook-diagnostic/index.ts` |
+| `expires_at TIMESTAMPTZ NOT NULL DEFAULT (now() + interval '5 minutes')` | `supabase/migrations/20251231115910_4da9c2d9-f6a8-4dc8-90ad-6efa0e1c9de0.sql` |
+| `expires_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT (now() + interval '24 hours'),` | `supabase/migrations/20251231123128_44dfe57a-e66d-4ffe-ad25-544966e4b9a3.sql` |
+| `expires_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT (now() + interval '5 minutes')` | `supabase/migrations/20251231124607_b7b9f19a-a6cf-43d2-9ddf-5f87f4a84244.sql` |
+| `AND created_at > now() - interval '1 hour';` | `supabase/migrations/20260410105209_872755b9-b0b5-4338-a541-688258a70ae9.sql` |
+| `AND attempt_time < now() - interval '15 minutes';` | `supabase/migrations/20260829080000_fix_guard_session_user.sql` |
+| `AND m.created_at > now() - interval '30 days'` | `supabase/migrations/20260902100005_e24_backfill_assigned_to_active_contacts.sql` |
+| `first_response_breached = v_now > first_message_at + interval '5 minutes'` | `supabase/migrations/20260903120000_register_first_response.sql` |
+| `v_now > v_first_message_at + interval '5 minutes'` | `supabase/migrations/20260903120000_register_first_response.sql` |
+| `first_response_breached = v_now > first_message_at + interval '5 minutes'` | `supabase/migrations/20260903160000_harden_mark_first_response.sql` |
+| `v_now > v_first_message_at + interval '5 minutes'` | `supabase/migrations/20260903160000_harden_mark_first_response.sql` |
+| `p_responded_at > v_first_message_at + interval '5 minutes'` | `supabase/migrations/20260903225000_sla_first_response_v2.sql` |
+| `p_responded_at > v_first_message_at + interval '5 minutes'` | `supabase/migrations/20260903233000_sla_base_only_valid_messages.sql` |
+| `SELECT cron.schedule('cleanup-edge-rate-limits', '15 4 * * *', $cron$DELETE FROM public.edge_rate_limits WHERE updated_at < now() - interval '1 day'$cron$);` | `supabase/migrations/20260905020000_edge_rate_limits.sql` |
+| `SELECT cron.schedule('cleanup-edge-rate-limits', '*/15 * * * *', $cron$DELETE FROM public.edge_rate_limits WHERE updated_at < now() - interval '1 hour'$cron$);` | `supabase/migrations/20260905070000_ingest_lock_feature_flags_audit_rate_limit_cleanup.sql` |
+| `OR (q.status = 'processing' AND q.locked_at < now() - interval '5 minutes')` | `supabase/migrations/20260908180000_crm_contact_links_and_sync_outbox.sql` |
+| `OR (status = 'processing' AND locked_at < now() - interval '5 minutes')` | `supabase/migrations/20260908180000_crm_contact_links_and_sync_outbox.sql` |
+| `WHERE status = 'succeeded' AND completed_at >= now() - interval '24 hours'` | `supabase/migrations/20260908180000_crm_contact_links_and_sync_outbox.sql` |
+| `AND locked_at < now() - interval '5 minutes'` | `supabase/migrations/20260908220000_harden_crm_sync_outbox_leases.sql` |
+| `OR (q.status = 'processing' AND q.locked_at < now() - interval '5 minutes')` | `supabase/migrations/20260908220000_harden_crm_sync_outbox_leases.sql` |
+| `OR (status = 'processing' AND locked_at < now() - interval '5 minutes')` | `supabase/migrations/20260908220000_harden_crm_sync_outbox_leases.sql` |
+| `WHERE status = 'succeeded' AND completed_at >= now() - interval '24 hours'` | `supabase/migrations/20260908220000_harden_crm_sync_outbox_leases.sql` |
+| `AND locked_at < now() - interval '5 minutes'` | `supabase/migrations/20260909120000_validate_crm_outbox_acl_and_atomic_merge.sql` |
+| `WHERE status = 'processing' AND locked_at < now() - interval '5 minutes'` | `supabase/migrations/20260909120000_validate_crm_outbox_acl_and_atomic_merge.sql` |
+| `v_cutoff timestamptz := now() - interval '90 days';` | `supabase/migrations/20260916150000_talkx_e89_benchmarks.sql` |
+| `v_cutoff timestamptz := now() - interval '90 days';` | `supabase/migrations/20260916220000_fix_talkx_benchmarks_anon_grant_and_e90_execute.sql` |
+| `AND updated_at < now() - interval '90 seconds';` | `supabase/migrations/20260925100542_agent_presence_server_ttl.sql` |
+| `ELSE (date_trunc('day', now() AT TIME ZONE 'America/Sao_Paulo') - interval '6 days') AT TIME ZONE 'America/Sao_Paulo'` | `supabase/migrations/20260926112500_dashboard_leaderboard_rpc.sql` |
+| `WHEN 'month' THEN (date_trunc('day', now() AT TIME ZONE 'America/Sao_Paulo') - interval '29 days') AT TIME ZONE 'America/Sao_Paulo'` | `supabase/migrations/20260926112500_dashboard_leaderboard_rpc.sql` |
+| `p_since timestamptz DEFAULT now() - interval '1 day',` | `supabase/migrations/20260927120000_dashboard_kpi_p_since_default_null_guard.sql` |
+| `IF v_dispatch.status = 'sending' AND v_dispatch.updated_at > now() - interval '3 minutes' THEN` | `supabase/migrations/20260927600000_fix_multiplix_dispatch_start_sending.sql` |
+| `CREATE OR REPLACE FUNCTION public.team_messages_edit_guard() RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $f$ BEGIN IF OLD.send …` | `supabase/migrations/20260929180000_team_chat_e28_edit_guard_trigger.sql` |
+| `ALTER TABLE public.team_conversation_members ADD CONSTRAINT team_conv_members_last_read_at_check CHECK (last_read_at IS NULL OR last_read_at <= now() + interval …` | `supabase/migrations/20260929210000_team_chat_e31_conversation_members_constraints.sql` |
+| `IF v_dispatch.status = 'sending' AND v_dispatch.updated_at > now() - interval '3 minutes' THEN` | `supabase/migrations/20260929600000_multiplix_send_engine_fixes.sql` |
+| `date_trunc('day', p_to) - interval '1 day',` | `supabase/migrations/20260930670000_talkx_v16_time_series_sent_delivered.sql` |
+| `interval '1 day'` | `supabase/migrations/20260930670000_talkx_v16_time_series_sent_delivered.sql` |
+| `where created_at >= (now() - interval '30 days')` | `supabase/migrations/20260930740000_catalogo_send_stats.sql` |
+| `IF v_dispatch.status = 'sending' AND v_dispatch.updated_at > now() - interval '3 minutes' THEN` | `supabase/migrations/20261002521230_f59_transition_dispatch_enum_cast.sql` |
+| `v_minute_start := statement_timestamp() - interval '1 minute';` | `supabase/migrations/20261002551230_talkx_limits_ritmo.sql` |
+| `v_next_day_at := v_day_start + interval '1 day';` | `supabase/migrations/20261002551230_talkx_limits_ritmo.sql` |
+| `((p_to - interval '1 microsecond') AT TIME ZONE p_timezone)::date,` | `supabase/migrations/20261002631230_talkx_v4_x072_overview_stats.sql` |
+| `interval '1 day'` | `supabase/migrations/20261002631230_talkx_v4_x072_overview_stats.sql` |
+| `AND d.paused_at >= statement_timestamp() - interval '5 seconds';` | `supabase/migrations/20261002671230_f60_conexao_capacidades_e_risco.sql` |
+| `IF p_occurred_at > now() + interval '1 hour' THEN` | `supabase/migrations/20261002691230_talkx_v4_x021_links_conversoes_investimento.sql` |
+| `now() - interval '1 minute'` | `supabase/migrations/20261003192707_fixture_e2e_aba_arquivos_segunda_midia.sql` |
+| `AND r.updated_at >= now() - interval '24 hours'` | `supabase/migrations/20261003242707_talkx_log_saude_alertas.sql` |
+| `WHERE a.last_activity_at < now() - interval '15 minutes'` | `supabase/migrations/20261003242707_talkx_log_saude_alertas.sql` |
+| `WHERE log.created_at < v_now - interval '30 days'` | `supabase/migrations/20261003242707_talkx_log_saude_alertas.sql` |
+| `WHERE r.updated_at >= now() - interval '15 minutes'` | `supabase/migrations/20261003242707_talkx_log_saude_alertas.sql` |
+| `ELSE (date_trunc('day', now() AT TIME ZONE 'America/Sao_Paulo') - interval '6 days') AT TIME ZONE 'America/Sao_Paulo'` | `supabase/migrations/20261003272707_reconcile_local_replay_with_canonical.sql` |
+| `IF OLD.created_at < now() - interval '48 hours' THEN` | `supabase/migrations/20261003272707_reconcile_local_replay_with_canonical.sql` |
+| `WHEN 'month' THEN (date_trunc('day', now() AT TIME ZONE 'America/Sao_Paulo') - interval '29 days') AT TIME ZONE 'America/Sao_Paulo'` | `supabase/migrations/20261003272707_reconcile_local_replay_with_canonical.sql` |
+| `IF v_purge_attempt_at IS NULL OR v_purge_attempt_at <= now() - interval '1 hour' THEN` | `supabase/migrations/20261004173439_talkx_tick_nao_aborta_no_expurgo.sql` |
+| `WHERE log.created_at < v_now - interval '30 days'` | `supabase/migrations/20261004173439_talkx_tick_nao_aborta_no_expurgo.sql` |
+| `expires_at timestamptz not null default (now() + interval '10 minutes'),` | `supabase/migrations/20261004195051_gmail_oauth_state_attempts.sql` |
+| `IF v_purge_attempt_at IS NULL OR v_purge_attempt_at <= now() - interval '1 hour' THEN` | `supabase/migrations/20261005111026_talkx_storage_purge_drain.sql` |
+| `-- CREATE OR REPLACE FUNCTION public.register_first_response_internal(p_contact_id uuid, p_responded_at timestamptz, p_before_created_at timestamptz DEFAULT NUL …` | `supabase/migrations/20261005151753_sla_first_response_granular.sql` |
+| `ai_projection_updated_at = greatest(p_analyzed_at, v_current_projection + interval '1 microsecond'),` | `supabase/migrations/20261006160117_ai_context_version_atomic_persist.sql` |
+| `-- and r.updated_at >= now() - interval '24 hours'` | `supabase/migrations/20261006193547_talkx_purge_nao_falsa_falha_recente.sql` |
+| `-- where a.last_activity_at < now() - interval '15 minutes'` | `supabase/migrations/20261006193547_talkx_purge_nao_falsa_falha_recente.sql` |
+| `-- where r.updated_at >= now() - interval '15 minutes'` | `supabase/migrations/20261006193547_talkx_purge_nao_falsa_falha_recente.sql` |
+| `AND r.status_changed_at >= now() - interval '24 hours'` | `supabase/migrations/20261006193547_talkx_purge_nao_falsa_falha_recente.sql` |
+| `WHERE a.last_activity_at < now() - interval '15 minutes'` | `supabase/migrations/20261006193547_talkx_purge_nao_falsa_falha_recente.sql` |
+| `WHERE r.status_changed_at >= now() - interval '15 minutes'` | `supabase/migrations/20261006193547_talkx_purge_nao_falsa_falha_recente.sql` |
+| `-- Rollback: UPDATE public.talkx_settings SET description = 'X032: dias de retencao de linhas terminais de IA (ai_jobs).' WHERE key = 'retention_days_ai'; CREAT …` | `supabase/migrations/20261006205053_talkx_expurgo_escopo_ai_jobs.sql` |
+| `WHERE log.created_at < v_now - interval '30 days'` | `supabase/migrations/20261006205053_talkx_expurgo_escopo_ai_jobs.sql` |
+| `-- CREATE OR REPLACE FUNCTION public.talkx_connection_send_budget(p_connection_id uuid) RETURNS jsonb LANGUAGE plpgsql STABLE SECURITY DEFINER SET search_path = …` | `supabase/migrations/20261006211601_mx04_cota_conexao_itens_e_legado.sql` |
+| `v_minute_start := statement_timestamp() - interval '1 minute';` | `supabase/migrations/20261006211601_mx04_cota_conexao_itens_e_legado.sql` |
+| `v_next_day_at := v_day_start + interval '1 day';` | `supabase/migrations/20261006211601_mx04_cota_conexao_itens_e_legado.sql` |
+| `AND created_at > now() - interval '1 hour';` | `supabase/migrations/20261006221242_recuperacao_anonima_pedido_reset.sql` |
+| `-- Rollback: IF p_occurred_at > now() + interval '1 hour' THEN` | `supabase/migrations/20261006222007_talkx_conversion_defaults_webhook.sql` |
+| `IF v_occurred_at > now() + interval '1 hour' THEN` | `supabase/migrations/20261006222007_talkx_conversion_defaults_webhook.sql` |
+| `v_window := interval '60 seconds';` | `supabase/migrations/20261007000311_catalogo_rate_limit_politica_confiavel.sql` |
+| `v_minute_start := statement_timestamp() - interval '1 minute';` | `supabase/migrations/20261009031223_talkx_multiplix_consumo_compartilhado.sql` |
+| `v_next_day_at := v_day_start + interval '1 day';` | `supabase/migrations/20261009031223_talkx_multiplix_consumo_compartilhado.sql` |
+| … +93 linhas — lista completa em `context.json` | |
 
 ### H.3 Limites de paginação
 
 | Limite | Arquivo |
 |---|---|
-| 20 | `analise-prs/resgate-261118-lote3/claude/busy-cannon-40szm9/src/components/contacts/ContactPurchaseHistory.tsx` |
-| 1 | `analise-prs/resgate-261118-lote3/claude/feat-message-delivery-post-iniciado-261101-1937/supabase/functions/_shared/evolution-webhook-messages.ts` |
-| 1 | `analise-prs/resgate-261118-lote3/claude/feat-message-delivery-post-iniciado-261101-1937/supabase/functions/_shared/evolution-webhook-msg-handlers.ts` |
-| 1 | `analise-prs/resgate-261118-lote3/claude/feat-radar-motor-telas-261101-1330/src/hooks/copilot/useCopilotSession.ts` |
-| 1 | `analise-prs/resgate-261118-lote3/claude/fix-db-guard-pguser-261019-1430/src/hooks/integrations/useTalkXSuppression.ts` |
-| 500 | `analise-prs/resgate-261118-lote3/claude/fix-db-guard-pguser-261019-1430/src/hooks/integrations/useTalkXSuppression.ts` |
-| 10 | `analise-prs/resgate-261118-lote3/claude/fix-unit-tests-src-261024-1630/src/components/admin/MediaMigrationTool.tsx` |
-| 50 | `analise-prs/resgate-261118-lote3/claude/fix-unit-tests-src-261024-1630/src/hooks/business/useWarRoomAlerts.ts` |
-| 1 | `analise-prs/resgate-261118-lote3/claude/fix-unit-tests-src-261024-1630/src/hooks/chat/useTeamChatNotifications.ts` |
-| 20 | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/inbox/WhisperMode.tsx` |
-| 100 | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/talkx/TalkXCampaignRunning.tsx` |
-| 2000 | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/talkx/TalkXCampaignRunning.tsx` |
-| 50 | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/talkx/TalkXCampaignRunning.tsx` |
-| 200 | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/talkx/tracking/TalkXRecipientsTable.tsx` |
-| 60 | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/team-chat/useTeamChatPanel.ts` |
-| 1 | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/hooks/chat/useTeamChatNotifications.ts` |
-| 1 | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/hooks/system/useDiagnosticsData.ts` |
-| 10 | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/hooks/system/useDiagnosticsData.ts` |
-| 20 | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/hooks/system/useDiagnosticsData.ts` |
-| 200 | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/hooks/team-chat/useTeamMessages.ts` |
-| 1 | `analise-prs/resgate-261118-lote3/claude/kind-gates-87mwoe/src/hooks/system/useDiagnosticsData.ts` |
-| 10 | `analise-prs/resgate-261118-lote3/claude/kind-gates-87mwoe/src/hooks/system/useDiagnosticsData.ts` |
-| 20 | `analise-prs/resgate-261118-lote3/claude/kind-gates-87mwoe/src/hooks/system/useDiagnosticsData.ts` |
-| 1 | `analise-prs/resgate-261118-lote3/claude/magical-pasteur-iz2pgy/src/hooks/chat/useTeamChatNotifications.ts` |
-| 1 | `analise-prs/resgate-261118-lote3/claude/magical-pasteur-iz2pgy/src/hooks/system/useDiagnosticsData.ts` |
-| 10 | `analise-prs/resgate-261118-lote3/claude/magical-pasteur-iz2pgy/src/hooks/system/useDiagnosticsData.ts` |
-| 20 | `analise-prs/resgate-261118-lote3/claude/magical-pasteur-iz2pgy/src/hooks/system/useDiagnosticsData.ts` |
-| 1 | `analise-prs/resgate-261118-lote3/claude_05/festive-carson-ub43wu/src/hooks/chat/useTeamChatNotifications.ts` |
-| 1 | `analise-prs/resgate-261118-lote3/claude_05/festive-carson-ub43wu/src/hooks/system/useDiagnosticsData.ts` |
-| 10 | `analise-prs/resgate-261118-lote3/claude_05/festive-carson-ub43wu/src/hooks/system/useDiagnosticsData.ts` |
-| 20 | `analise-prs/resgate-261118-lote3/claude_05/festive-carson-ub43wu/src/hooks/system/useDiagnosticsData.ts` |
-| 1 | `analise-prs/resgate-261118-lote3/codex/publish-followup-20261021/supabase/functions/connection-health-check/index.ts` |
-| 1 | `analise-prs/resgate-261118-lote3/fix/ci-verde-261021/supabase/functions/_shared/evolution-webhook-handlers.ts` |
-| 1 | `analise-prs/resgate-261118-lote3/fix/ci-verde-261021/supabase/functions/connection-health-check/index.ts` |
-| 5000 | `analise-prs/resgate-261118-lote3/fix/ci-verde-261021/supabase/functions/evolution-api/index.ts` |
-| 1 | `analise-prs/resgate-261118-lote3/fix/ci-workflows-vermelhos/supabase/functions/_shared/evolution-webhook-handlers.ts` |
-| 1 | `analise-prs/resgate-261118-lote3/fix/ci-workflows-vermelhos/supabase/functions/connection-health-check/index.ts` |
-| 1 | `analise-prs/resgate-261118-lote3/fix/ci-workflows-vermelhos/supabase/functions/webauthn/index.ts` |
-| 1 | `analise-prs/resgate-261118-lote3/hermes/robustez-primitivos-ui-2610121626bec5-2610141859e423/src/components/inbox/QueuePositionNotifier.tsx` |
-| 20 | `analise-prs/resgate-261118-lote3/hermes/robustez-primitivos-ui-2610121626bec5-2610141859e423/src/components/settings/AIAutoTagsConfig.tsx` |
-| 50 | `analise-prs/resgate-261118-lote3/hermes/telefonia-fase8-motion-a11y-responsivo-2610031530007c/src/components/inbox/ConversationTimeline.tsx` |
-| 20 | `analise-prs/resgate-261118-lote3/hermes/telefonia-fase8-motion-a11y-responsivo-2610031530007c/src/components/settings/AIAutoTagsConfig.tsx` |
-| 200 | `analise-prs/resgate-261118-lote3/hermes/telefonia-fase8-motion-a11y-responsivo-2610031530007c/src/hooks/communication/useCallHistory.ts` |
 | 20 | `src/components/admin/SupervisorCopilot.tsx` |
 | 50 | `src/components/admin/SupervisorCopilot.tsx` |
 | 10 | `src/components/admin/TrainingMode.tsx` |
@@ -4567,6 +4256,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | 5000 | `src/hooks/analytics/useRealtimeDashboard.ts` |
 | 400 | `src/hooks/analytics/useRecentSentimentAlerts.ts` |
 | 400 | `src/hooks/analytics/useSentimentTrend.ts` |
+| 10 | `src/hooks/assistant/useContactAgenda.ts` |
 | 1000 | `src/hooks/business/useAbandonmentRate.ts` |
 | 1 | `src/hooks/business/useWarRoomAlerts.ts` |
 | 50 | `src/hooks/business/useWarRoomAlerts.ts` |
@@ -4630,11 +4320,14 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | 5 | `supabase/functions/ai-auto-tag/index.ts` |
 | 1 | `supabase/functions/ai-churn-analysis/churn-risk.ts` |
 | 5 | `supabase/functions/ai-suggest-reply/index.ts` |
+| 1 | `supabase/functions/assistant-gateway/index.ts` |
+| 5 | `supabase/functions/assistant-gateway/index.ts` |
 | 500 | `supabase/functions/batch-fetch-avatars/index.ts` |
 | 1 | `supabase/functions/chatbot-l1/index.ts` |
 | 15 | `supabase/functions/chatbot-l1/index.ts` |
 | 5 | `supabase/functions/chatbot-l1/index.ts` |
 | 1 | `supabase/functions/connection-health-check/index.ts` |
+| 5 | `supabase/functions/copilot-live/index.ts` |
 | 1 | `supabase/functions/create-user/index.ts` |
 | 1 | `supabase/functions/crm-integration/index.ts` |
 | 100 | `supabase/functions/crm-integration/index.ts` |
@@ -4664,323 +4357,306 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | versao fora de forma: ${v} | `analise-prs/resgate-261118-lote2/scripts/db-audit/compose-confirm-hash.mjs` |
 | versions, runtimeShas e arquivoShas precisam ter o mesmo tamanho | `analise-prs/resgate-261118-lote2/scripts/db-audit/compose-confirm-hash.mjs` |
 | sem runtime_sha256 | `analise-prs/resgate-261118-lote2/scripts/db-audit/proof-sha.mjs` |
-|  className= | `analise-prs/resgate-261118-lote3/claude/busy-cannon-40szm9/src/components/inbox/ContactPurchasesPanel.tsx` |
-| Não foi possível registrar. Tente novamente. | `analise-prs/resgate-261118-lote3/claude/busy-cannon-40szm9/src/components/inbox/ContactPurchasesPanel.tsx` |
-| Não foi possível registrar: usuário não identificado. | `analise-prs/resgate-261118-lote3/claude/busy-cannon-40szm9/src/components/inbox/ContactPurchasesPanel.tsx` |
-|  className= | `analise-prs/resgate-261118-lote3/claude/busy-cannon-40szm9/src/components/talkx/kit/dialogs.tsx` |
-| Não foi possível registrar. Tente novamente. | `analise-prs/resgate-261118-lote3/claude/busy-cannon-40szm9/src/hooks/crm/useContactPurchases.ts` |
-| AI gateway error [${response.status}] | `analise-prs/resgate-261118-lote3/claude/feat-copiloto-edge-fns-fases8-15-261024-1615/supabase/functions/ai-deadline-calculator/index.ts` |
-| AI gateway error [${response.status}] | `analise-prs/resgate-261118-lote3/claude/feat-copiloto-edge-fns-fases8-15-261024-1615/supabase/functions/ai-lead-temperature/index.ts` |
-| AI gateway error [${response.status}] | `analise-prs/resgate-261118-lote3/claude/feat-copiloto-edge-fns-fases8-15-261024-1615/supabase/functions/ai-loss-risk/index.ts` |
-| AI gateway error [${response.status}] | `analise-prs/resgate-261118-lote3/claude/feat-copiloto-edge-fns-fases8-15-261024-1615/supabase/functions/ai-multimodal-analysis/index.ts` |
-| AI gateway error [${response.status}] | `analise-prs/resgate-261118-lote3/claude/feat-copiloto-edge-fns-fases8-15-261024-1615/supabase/functions/ai-objection-handler/index.ts` |
-| AI gateway error [${response.status}] | `analise-prs/resgate-261118-lote3/claude/feat-copiloto-edge-fns-fases8-15-261024-1615/supabase/functions/ai-price-anchor/index.ts` |
-| AI gateway error [${response.status}] | `analise-prs/resgate-261118-lote3/claude/feat-copiloto-edge-fns-fases8-15-261024-1615/supabase/functions/ai-product-recommendation/index.ts` |
-| Erro ao arquivar contatos | `analise-prs/resgate-261118-lote3/claude/feat-copiloto-edges-261101-1330/src/hooks/inbox/useInboxBulkActions.ts` |
-| Erro ao buscar avatares:  | `analise-prs/resgate-261118-lote3/claude/feat-copiloto-edges-261101-1330/src/hooks/inbox/useInboxBulkActions.ts` |
-| Erro ao marcar como lido | `analise-prs/resgate-261118-lote3/claude/feat-copiloto-edges-261101-1330/src/hooks/inbox/useInboxBulkActions.ts` |
-| Erro ao transferir contatos | `analise-prs/resgate-261118-lote3/claude/feat-copiloto-edges-261101-1330/src/hooks/inbox/useInboxBulkActions.ts` |
-| Erro ao transferir contatos: ${transferidos} de ${contactIds.length} contato(s) transferido(s); ${failures.length} falharam | `analise-prs/resgate-261118-lote3/claude/feat-copiloto-edges-261101-1330/src/hooks/inbox/useInboxBulkActions.ts` |
-| nenhum contato lido | `analise-prs/resgate-261118-lote3/claude/feat-copiloto-edges-261101-1330/src/hooks/inbox/useInboxBulkActions.ts` |
-| AI gateway error [${response.status}] | `analise-prs/resgate-261118-lote3/claude/feat-copiloto-edges-261101-1330/supabase/functions/ai-deadline-calculator/index.ts` |
-| AI gateway error [${response.status}] | `analise-prs/resgate-261118-lote3/claude/feat-copiloto-edges-261101-1330/supabase/functions/ai-lead-temperature/index.ts` |
-| AI gateway error [${response.status}] | `analise-prs/resgate-261118-lote3/claude/feat-copiloto-edges-261101-1330/supabase/functions/ai-loss-risk/index.ts` |
-| AI gateway error [${response.status}] | `analise-prs/resgate-261118-lote3/claude/feat-copiloto-edges-261101-1330/supabase/functions/ai-objection-handler/index.ts` |
-| AI gateway error [${response.status}] | `analise-prs/resgate-261118-lote3/claude/feat-copiloto-edges-261101-1330/supabase/functions/ai-price-anchor/index.ts` |
-| AI gateway error [${response.status}] | `analise-prs/resgate-261118-lote3/claude/feat-copiloto-edges-261101-1330/supabase/functions/ai-product-recommendation/index.ts` |
-| AI gateway error [${response.status}] | `analise-prs/resgate-261118-lote3/claude/feat-copiloto-edges-fases8-10-261024-1545/supabase/functions/ai-deadline-calculator/index.ts` |
-| AI gateway error [${response.status}] | `analise-prs/resgate-261118-lote3/claude/feat-copiloto-edges-fases8-10-261024-1545/supabase/functions/ai-lead-temperature/index.ts` |
-| AI gateway error [${response.status}] | `analise-prs/resgate-261118-lote3/claude/feat-copiloto-edges-fases8-10-261024-1545/supabase/functions/ai-loss-risk/index.ts` |
-| AI gateway error [${response.status}] | `analise-prs/resgate-261118-lote3/claude/feat-copiloto-edges-fases8-10-261024-1545/supabase/functions/ai-multimodal-analysis/index.ts` |
-| AI gateway error [${response.status}] | `analise-prs/resgate-261118-lote3/claude/feat-copiloto-edges-fases8-10-261024-1545/supabase/functions/ai-objection-handler/index.ts` |
-| AI gateway error [${response.status}] | `analise-prs/resgate-261118-lote3/claude/feat-copiloto-edges-fases8-10-261024-1545/supabase/functions/ai-price-anchor/index.ts` |
-| AI gateway error [${response.status}] | `analise-prs/resgate-261118-lote3/claude/feat-copiloto-edges-fases8-10-261024-1545/supabase/functions/ai-product-recommendation/index.ts` |
-| fonte única de versões ausente ou ilegível em ${TOOLCHAIN_PATH}: ${error.message} | `analise-prs/resgate-261118-lote3/claude/feat-e75-toolchain-env-281028-0600/scripts/ci/check-workflow-pins.mjs` |
-| fonte única de versões incompleta em ${TOOLCHAIN_PATH}: falta a versão de  | `analise-prs/resgate-261118-lote3/claude/feat-e75-toolchain-env-281028-0600/scripts/ci/check-workflow-pins.mjs` |
-| fonte única de versões inválida em ${TOOLCHAIN_PATH}: o arquivo precisa ser um objeto JSON | `analise-prs/resgate-261118-lote3/claude/feat-e75-toolchain-env-281028-0600/scripts/ci/check-workflow-pins.mjs` |
-|              data-testid= | `analise-prs/resgate-261118-lote3/claude/feat-message-delivery-post-iniciado-261101-1937/src/components/inbox/chat/SendErrorBanner.tsx` |
-| invalid_buttons_payload | `analise-prs/resgate-261118-lote3/claude/feat-message-delivery-post-iniciado-261101-1937/supabase/functions/message-delivery/index.ts` |
-| invalid_contact_card_payload | `analise-prs/resgate-261118-lote3/claude/feat-message-delivery-post-iniciado-261101-1937/supabase/functions/message-delivery/index.ts` |
-| invalid_list_payload | `analise-prs/resgate-261118-lote3/claude/feat-message-delivery-post-iniciado-261101-1937/supabase/functions/message-delivery/index.ts` |
-| invalid_location_payload | `analise-prs/resgate-261118-lote3/claude/feat-message-delivery-post-iniciado-261101-1937/supabase/functions/message-delivery/index.ts` |
-| invalid_poll_payload | `analise-prs/resgate-261118-lote3/claude/feat-message-delivery-post-iniciado-261101-1937/supabase/functions/message-delivery/index.ts` |
-| mark_outbound_post_started_failed | `analise-prs/resgate-261118-lote3/claude/feat-message-delivery-post-iniciado-261101-1937/supabase/functions/message-delivery/index.ts` |
-| media_resolve_failed | `analise-prs/resgate-261118-lote3/claude/feat-message-delivery-post-iniciado-261101-1937/supabase/functions/message-delivery/index.ts` |
-| missing_media_url | `analise-prs/resgate-261118-lote3/claude/feat-message-delivery-post-iniciado-261101-1937/supabase/functions/message-delivery/index.ts` |
-| missing_rich_delivery_payload | `analise-prs/resgate-261118-lote3/claude/feat-message-delivery-post-iniciado-261101-1937/supabase/functions/message-delivery/index.ts` |
-| rich_payload_read_failed | `analise-prs/resgate-261118-lote3/claude/feat-message-delivery-post-iniciado-261101-1937/supabase/functions/message-delivery/index.ts` |
-| unsupported_message_type | `analise-prs/resgate-261118-lote3/claude/feat-message-delivery-post-iniciado-261101-1937/supabase/functions/message-delivery/index.ts` |
-|  className= | `analise-prs/resgate-261118-lote3/claude/feat-pausa-entrega-campanhas-261101-1400/src/components/multiplix/MultiplixMonitor.tsx` |
-| , content: risk, data: { risk } });   }   if (out.next_action) {     rows.push({ ...base, insight_type:  | `analise-prs/resgate-261118-lote3/claude/feat-radar-motor-telas-261101-1330/supabase/functions/_shared/copilot-tick.ts` |
-| COPILOT_BAD_PAYLOAD | `analise-prs/resgate-261118-lote3/claude/feat-radar-motor-telas-261101-1330/supabase/functions/_shared/copilot-tick.ts` |
-| COPILOT_READ_FAILED | `analise-prs/resgate-261118-lote3/claude/feat-radar-motor-telas-261101-1330/supabase/functions/_shared/copilot-tick.ts` |
-| COPILOT_SESSION_NOT_FOUND | `analise-prs/resgate-261118-lote3/claude/feat-radar-motor-telas-261101-1330/supabase/functions/_shared/copilot-tick.ts` |
-| COPILOT_TIER1_CONTRACT | `analise-prs/resgate-261118-lote3/claude/feat-radar-motor-telas-261101-1330/supabase/functions/_shared/copilot-tick.ts` |
-| COPILOT_TIER1_FAILED | `analise-prs/resgate-261118-lote3/claude/feat-radar-motor-telas-261101-1330/supabase/functions/_shared/copilot-tick.ts` |
-| COPILOT_WRITE_FAILED | `analise-prs/resgate-261118-lote3/claude/feat-radar-motor-telas-261101-1330/supabase/functions/_shared/copilot-tick.ts` |
-| Erro ao cancelar | `analise-prs/resgate-261118-lote3/claude/feat-talkx-x054-cmdk-261108-0100/src/components/talkx/TalkXView.tsx` |
-| Erro ao pausar | `analise-prs/resgate-261118-lote3/claude/feat-talkx-x054-cmdk-261108-0100/src/components/talkx/TalkXView.tsx` |
-| Template não encontrado ou sem acesso. | `analise-prs/resgate-261118-lote3/claude/fix-codex-findings-161016-1906/src/components/talkx/TalkXTemplates.tsx` |
-| GitHub API ${method} ${path} → ${res.status}: ${text} | `analise-prs/resgate-261118-lote3/claude/fix-db-guard-pguser-261019-1430/scripts/ci/github-settings-guard.mjs` |
-| Erro: ${msg} | `analise-prs/resgate-261118-lote3/claude/fix-db-guard-pguser-261019-1430/src/hooks/integrations/useTalkXSuppression.ts` |
-| phone invalido apos normalizacao | `analise-prs/resgate-261118-lote3/claude/fix-db-guard-pguser-261019-1430/src/hooks/integrations/useTalkXSuppression.ts` |
-| phone ou contact_id obrigatório | `analise-prs/resgate-261118-lote3/claude/fix-db-guard-pguser-261019-1430/src/hooks/integrations/useTalkXSuppression.ts` |
-| falha ao consultar schema_migrations via psql: ${lastStderr \|\|  | `analise-prs/resgate-261118-lote3/claude/fix-ga-fase1-lote-banco-261020-2200/scripts/db-audit/check-migration-drift.mjs` |
-| falha ao consultar schema_migrations via psql: ${safe} | `analise-prs/resgate-261118-lote3/claude/fix-ga-fase1-lote-banco-261020-2200/scripts/db-audit/check-migration-drift.mjs` |
-| RPC ${rpc} recusada (HTTP ${resposta.status}) | `analise-prs/resgate-261118-lote3/claude/fix-ga-fase23-edge-e2e-261020-2200/scripts/ci/e2e-teardown.mjs` |
-| login do usuario de teste nao devolveu access_token | `analise-prs/resgate-261118-lote3/claude/fix-ga-fase23-edge-e2e-261020-2200/scripts/ci/e2e-teardown.mjs` |
-| login do usuario de teste recusado (HTTP ${login.status}) | `analise-prs/resgate-261118-lote3/claude/fix-ga-fase23-edge-e2e-261020-2200/scripts/ci/e2e-teardown.mjs` |
-| logout recusado (HTTP ${saida.status}) | `analise-prs/resgate-261118-lote3/claude/fix-ga-fase23-edge-e2e-261020-2200/scripts/ci/e2e-teardown.mjs` |
-| central directory corrompido | `analise-prs/resgate-261118-lote3/claude/fix-ga-fase23-edge-e2e-261020-2200/scripts/ci/redigir-relatorio.mjs` |
-| local header corrompido | `analise-prs/resgate-261118-lote3/claude/fix-ga-fase23-edge-e2e-261020-2200/scripts/ci/redigir-relatorio.mjs` |
-| metodo de compressao ${metodo} nao suportado | `analise-prs/resgate-261118-lote3/claude/fix-ga-fase23-edge-e2e-261020-2200/scripts/ci/redigir-relatorio.mjs` |
-| zip criptografado nao suportado | `analise-prs/resgate-261118-lote3/claude/fix-ga-fase23-edge-e2e-261020-2200/scripts/ci/redigir-relatorio.mjs` |
-| zip sem end of central directory | `analise-prs/resgate-261118-lote3/claude/fix-ga-fase23-edge-e2e-261020-2200/scripts/ci/redigir-relatorio.mjs` |
-| zip64 nao suportado | `analise-prs/resgate-261118-lote3/claude/fix-ga-fase23-edge-e2e-261020-2200/scripts/ci/redigir-relatorio.mjs` |
-| --project-ref obrigatorio | `analise-prs/resgate-261118-lote3/claude/fix-ga-fase23-edge-e2e-261020-2200/scripts/edge-deploy/health-check.mjs` |
-| Apenas o projeto canonico e aceito | `analise-prs/resgate-261118-lote3/claude/fix-ga-fase23-edge-e2e-261020-2200/scripts/edge-deploy/health-check.mjs` |
-| Argumento desconhecido: ${argv[i]} | `analise-prs/resgate-261118-lote3/claude/fix-ga-fase23-edge-e2e-261020-2200/scripts/edge-deploy/health-check.mjs` |
-| ${metodo} ${caminho} -> ${r.status} | `analise-prs/resgate-261118-lote3/claude/fix-ga-fase78-perimetro-custo-261020-2200/scripts/ci/actions-kpi.mjs` |
-| GitHub API ${method} ${path} → ${res.status}: ${text} | `analise-prs/resgate-261118-lote3/claude/fix-ga-fase78-perimetro-custo-261020-2200/scripts/ci/github-settings-guard.mjs` |
-| GitHub API POST /graphql → ${res.status}: ${text} | `analise-prs/resgate-261118-lote3/claude/fix-ga-fase78-perimetro-custo-261020-2200/scripts/ci/github-settings-guard.mjs` |
-| gh mock não coberto: ${method} ${path} | `analise-prs/resgate-261118-lote3/claude/fix-ga-fase78-perimetro-custo-261020-2200/scripts/ci/issue-rotativa.unit.mjs` |
-| GitHub API ${method} ${path} → ${res.status}: ${text} | `analise-prs/resgate-261118-lote3/claude/fix-ga-resto-sonar-contracts-20261021-0726/scripts/ci/github-settings-guard.mjs` |
-| contrato ${arquivo}: nenhuma invocacao declarada | `analise-prs/resgate-261118-lote3/claude/fix-ga-resto-sonar-contracts-20261021-0726/scripts/db-audit/run-runtime-contract.mjs` |
-| contrato ${origem}: -c  | `analise-prs/resgate-261118-lote3/claude/fix-ga-resto-sonar-contracts-20261021-0726/scripts/db-audit/run-runtime-contract.mjs` |
-| contrato ${origem}: -c sem SQL | `analise-prs/resgate-261118-lote3/claude/fix-ga-resto-sonar-contracts-20261021-0726/scripts/db-audit/run-runtime-contract.mjs` |
-| contrato ${origem}: arquivo de contrato nao termina em .sql ( | `analise-prs/resgate-261118-lote3/claude/fix-ga-resto-sonar-contracts-20261021-0726/scripts/db-audit/run-runtime-contract.mjs` |
-| contrato ${origem}: chamada sem flags de cliente | `analise-prs/resgate-261118-lote3/claude/fix-ga-resto-sonar-contracts-20261021-0726/scripts/db-audit/run-runtime-contract.mjs` |
-| contrato ${origem}: continuacao sem  | `analise-prs/resgate-261118-lote3/claude/fix-ga-resto-sonar-contracts-20261021-0726/scripts/db-audit/run-runtime-contract.mjs` |
-| contrato ${origem}: falta -v ON_ERROR_STOP=1 (o SQL falharia em silencio) | `analise-prs/resgate-261118-lote3/claude/fix-ga-resto-sonar-contracts-20261021-0726/scripts/db-audit/run-runtime-contract.mjs` |
-| contrato ${origem}: flag nao declarada  | `analise-prs/resgate-261118-lote3/claude/fix-ga-resto-sonar-contracts-20261021-0726/scripts/db-audit/run-runtime-contract.mjs` |
-| contrato ${origem}: forma nao declarada em  | `analise-prs/resgate-261118-lote3/claude/fix-ga-resto-sonar-contracts-20261021-0726/scripts/db-audit/run-runtime-contract.mjs` |
-| contrato ${origem}: invocacao sem rotulo do case nem versao no nome do arquivo | `analise-prs/resgate-261118-lote3/claude/fix-ga-resto-sonar-contracts-20261021-0726/scripts/db-audit/run-runtime-contract.mjs` |
-| contrato ${origem}: o texto de -c nao comeca por WITH/SELECT/VALUES | `analise-prs/resgate-261118-lote3/claude/fix-ga-resto-sonar-contracts-20261021-0726/scripts/db-audit/run-runtime-contract.mjs` |
-| contrato ${origem}: o texto de -c tem substituicao de shell ( | `analise-prs/resgate-261118-lote3/claude/fix-ga-resto-sonar-contracts-20261021-0726/scripts/db-audit/run-runtime-contract.mjs` |
-| contrato ${origem}: o texto de -c tem substituicao de shell (crase); nao e SQL | `analise-prs/resgate-261118-lote3/claude/fix-ga-resto-sonar-contracts-20261021-0726/scripts/db-audit/run-runtime-contract.mjs` |
-| contrato ${origem}: o texto de -c tem substituicao de shell; nao e SQL | `analise-prs/resgate-261118-lote3/claude/fix-ga-resto-sonar-contracts-20261021-0726/scripts/db-audit/run-runtime-contract.mjs` |
-| contrato de runtime ausente para a versao ${versao}: ${arquivo} | `analise-prs/resgate-261118-lote3/claude/fix-ga-resto-sonar-contracts-20261021-0726/scripts/db-audit/run-runtime-contract.mjs` |
-| contrato vazio para a versao ${versao}: ${arquivo} | `analise-prs/resgate-261118-lote3/claude/fix-ga-resto-sonar-contracts-20261021-0726/scripts/db-audit/run-runtime-contract.mjs` |
-| contrato: a versao ${v} esta declarada em mais de um contrato | `analise-prs/resgate-261118-lote3/claude/fix-ga-resto-sonar-contracts-20261021-0726/scripts/db-audit/run-runtime-contract.mjs` |
-| contrato: mais de um ramo generico (*) declarado | `analise-prs/resgate-261118-lote3/claude/fix-ga-resto-sonar-contracts-20261021-0726/scripts/db-audit/run-runtime-contract.mjs` |
-| contrato: nenhum ramo generico (*) declarado (nao ha fallback para o inventario) | `analise-prs/resgate-261118-lote3/claude/fix-ga-resto-sonar-contracts-20261021-0726/scripts/db-audit/run-runtime-contract.mjs` |
-| nenhum contrato de runtime em ${dir} | `analise-prs/resgate-261118-lote3/claude/fix-ga-resto-sonar-contracts-20261021-0726/scripts/db-audit/run-runtime-contract.mjs` |
-| versao alvo invalida:  | `analise-prs/resgate-261118-lote3/claude/fix-ga-resto-sonar-contracts-20261021-0726/scripts/db-audit/run-runtime-contract.mjs` |
-| --project-ref obrigatorio | `analise-prs/resgate-261118-lote3/claude/fix-ga-resto-sonar-contracts-20261021-0726/scripts/edge-deploy/health-check.mjs` |
-| Apenas o projeto canonico e aceito | `analise-prs/resgate-261118-lote3/claude/fix-ga-resto-sonar-contracts-20261021-0726/scripts/edge-deploy/health-check.mjs` |
-| Argumento desconhecido: ${argv[i]} | `analise-prs/resgate-261118-lote3/claude/fix-ga-resto-sonar-contracts-20261021-0726/scripts/edge-deploy/health-check.mjs` |
-| Management API retornou HTTP ${res.status} na consulta de analytics | `analise-prs/resgate-261118-lote3/claude/fix-ga-resto-sonar-contracts-20261021-0726/scripts/edge-deploy/health-check.mjs` |
-| P046.json não traz a lista  | `analise-prs/resgate-261118-lote3/claude/fix-ga-resto-sonar-contracts-20261021-0726/scripts/talkx/v4-status.mjs` |
-| P046.json traz ${byId.size} avaliações, esperado ${esperado} | `analise-prs/resgate-261118-lote3/claude/fix-ga-resto-sonar-contracts-20261021-0726/scripts/talkx/v4-status.mjs` |
-| avaliação ausente para a etapa: ${e.id} | `analise-prs/resgate-261118-lote3/claude/fix-ga-resto-sonar-contracts-20261021-0726/scripts/talkx/v4-status.mjs` |
-| avaliação desconhecida (sem etapa): ${id} | `analise-prs/resgate-261118-lote3/claude/fix-ga-resto-sonar-contracts-20261021-0726/scripts/talkx/v4-status.mjs` |
-| avaliação duplicada: ${id} | `analise-prs/resgate-261118-lote3/claude/fix-ga-resto-sonar-contracts-20261021-0726/scripts/talkx/v4-status.mjs` |
-| elemento duplicado no inventário: ${id} | `analise-prs/resgate-261118-lote3/claude/fix-ga-resto-sonar-contracts-20261021-0726/scripts/talkx/v4-status.mjs` |
-| estado de avaliação desconhecido em ${id}: ${t.status} | `analise-prs/resgate-261118-lote3/claude/fix-ga-resto-sonar-contracts-20261021-0726/scripts/talkx/v4-status.mjs` |
-| estado inesperado no inventário ${f}: ${id} →  | `analise-prs/resgate-261118-lote3/claude/fix-ga-resto-sonar-contracts-20261021-0726/scripts/talkx/v4-status.mjs` |
-| etapa inexistente: ${id} | `analise-prs/resgate-261118-lote3/claude/fix-ga-resto-sonar-contracts-20261021-0726/scripts/talkx/v4-status.mjs` |
-| etapas.json não é uma lista | `analise-prs/resgate-261118-lote3/claude/fix-ga-resto-sonar-contracts-20261021-0726/scripts/talkx/v4-status.mjs` |
-| id de avaliação inválido: ${id} | `analise-prs/resgate-261118-lote3/claude/fix-ga-resto-sonar-contracts-20261021-0726/scripts/talkx/v4-status.mjs` |
-| id de etapa duplicado: ${e.id} | `analise-prs/resgate-261118-lote3/claude/fix-ga-resto-sonar-contracts-20261021-0726/scripts/talkx/v4-status.mjs` |
-| id de etapa inválido: ${e.id} | `analise-prs/resgate-261118-lote3/claude/fix-ga-resto-sonar-contracts-20261021-0726/scripts/talkx/v4-status.mjs` |
-| Erro ao transferir | `analise-prs/resgate-261118-lote3/claude/fix-radar-fase6-cv056-shortcuts-261108-2335/src/components/inbox/ChatPanel.tsx` |
-| Não foi possível criar a referência durável do anexo | `analise-prs/resgate-261118-lote3/claude/fix-radar-fase6-cv056-shortcuts-261108-2335/src/components/inbox/ChatPanel.tsx` |
-| Erro ao salvar segmento: ${e instanceof Error ? e.message : String(e)} | `analise-prs/resgate-261118-lote3/claude/fix-talkx-segmentos-regressao-261101-1944/src/components/talkx/TalkXSegments.tsx` |
-| Não foi possível aplicar a ação: ${e instanceof Error ? e.message : String(e)} | `analise-prs/resgate-261118-lote3/claude/fix-talkx-segmentos-regressao-261101-1944/src/components/talkx/TalkXSegments.tsx` |
-| Segmento não encontrado ou sem acesso. | `analise-prs/resgate-261118-lote3/claude/fix-talkx-segmentos-regressao-261101-1944/src/components/talkx/TalkXSegments.tsx` |
-|  className= | `analise-prs/resgate-261118-lote3/claude/fix-unit-tests-src-261024-1630/src/components/admin/AdminView.tsx` |
-| Informe uma URL de mídia HTTPS válida. | `analise-prs/resgate-261118-lote3/claude/fix-unit-tests-src-261024-1630/src/components/talkx/TalkXTemplateEditor.tsx` |
-| Versão do template indisponível; reabra o editor | `analise-prs/resgate-261118-lote3/claude/fix-unit-tests-src-261024-1630/src/components/talkx/TalkXTemplateEditor.tsx` |
-| useAuth must be used within an AuthProvider | `analise-prs/resgate-261118-lote3/claude/fix-unit-tests-src-261024-1630/src/hooks/auth/useAuth.tsx` |
-| Arquivo removido da base, mas o objeto não foi localizado para exclusão no Storage. | `analise-prs/resgate-261118-lote3/claude/fix-unit-tests-src-261024-1630/src/hooks/integrations/useKnowledgeBase.ts` |
-| Arquivo removido da base, mas o objeto não pôde ser excluído do Storage. | `analise-prs/resgate-261118-lote3/claude/fix-unit-tests-src-261024-1630/src/hooks/integrations/useKnowledgeBase.ts` |
-| Erro ao excluir arquivo | `analise-prs/resgate-261118-lote3/claude/fix-unit-tests-src-261024-1630/src/hooks/integrations/useKnowledgeBase.ts` |
-| Erro ao remover artigo | `analise-prs/resgate-261118-lote3/claude/fix-unit-tests-src-261024-1630/src/hooks/integrations/useKnowledgeBase.ts` |
-| Erro no upload | `analise-prs/resgate-261118-lote3/claude/fix-unit-tests-src-261024-1630/src/hooks/integrations/useKnowledgeBase.ts` |
-| Falha ao reprocessar | `analise-prs/resgate-261118-lote3/claude/fix-unit-tests-src-261024-1630/src/hooks/integrations/useKnowledgeBase.ts` |
-| Falha no processamento | `analise-prs/resgate-261118-lote3/claude/fix-unit-tests-src-261024-1630/src/hooks/integrations/useKnowledgeBase.ts` |
-| Sem texto extraível | `analise-prs/resgate-261118-lote3/claude/fix-unit-tests-src-261024-1630/src/hooks/integrations/useKnowledgeBase.ts` |
-| ${rule.field} requer pré-resolução via p_contact_ids antes de chamar a RPC | `analise-prs/resgate-261118-lote3/claude/fix-unit-tests-src-261024-1630/src/hooks/integrations/useTalkXSegments.ts` |
-| Erro ao atualizar segmento: ${e.message} | `analise-prs/resgate-261118-lote3/claude/fix-unit-tests-src-261024-1630/src/hooks/integrations/useTalkXSegments.ts` |
-| Erro ao excluir: ${e.message} | `analise-prs/resgate-261118-lote3/claude/fix-unit-tests-src-261024-1630/src/hooks/integrations/useTalkXSegments.ts` |
-| Erro ao salvar segmento: ${e.message} | `analise-prs/resgate-261118-lote3/claude/fix-unit-tests-src-261024-1630/src/hooks/integrations/useTalkXSegments.ts` |
-| Grupo de segmento inválido | `analise-prs/resgate-261118-lote3/claude/fix-unit-tests-src-261024-1630/src/hooks/integrations/useTalkXSegments.ts` |
-| Informe a tag para aplicar em massa. | `analise-prs/resgate-261118-lote3/claude/fix-unit-tests-src-261024-1630/src/hooks/integrations/useTalkXSegments.ts` |
-| Perfil ainda não carregado | `analise-prs/resgate-261118-lote3/claude/fix-unit-tests-src-261024-1630/src/hooks/integrations/useTalkXSegments.ts` |
-| Regra de segmento inválida: ${rule.field} | `analise-prs/resgate-261118-lote3/claude/fix-unit-tests-src-261024-1630/src/hooks/integrations/useTalkXSegments.ts` |
-| Selecione ao menos um segmento. | `analise-prs/resgate-261118-lote3/claude/fix-unit-tests-src-261024-1630/src/hooks/integrations/useTalkXSegments.ts` |
-| Failed to create audio object reference | `analise-prs/resgate-261118-lote3/claude/fix-unit-tests-src-261024-1630/src/services/chat.service.ts` |
-| ${metodo} ${caminho} -> ${r.status} | `analise-prs/resgate-261118-lote3/claude/ga-ci-batch-ga49-ga54-ga60-ga64-231023/scripts/ci/actions-kpi.mjs` |
-| A senha deve ter pelo menos ${MIN_PASSWORD_LENGTH} caracteres | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/admin/useAdminData.ts` |
-| Erro ao atualizar status | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/admin/useAdminData.ts` |
-| Erro ao enviar foto | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/admin/useAdminData.ts` |
-| Erro ao fazer upload da foto | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/admin/useAdminData.ts` |
-| Erro ao salvar usuário | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/admin/useAdminData.ts` |
-| Não foi possível carregar a auditoria. Tente novamente. | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/admin/useAdminData.ts` |
-| Não foi possível carregar os nomes dos autores. | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/admin/useAdminData.ts` |
-| Não foi possível carregar os papéis dos usuários. Tente novamente. | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/admin/useAdminData.ts` |
-| Não foi possível carregar os usuários. Tente novamente. | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/admin/useAdminData.ts` |
-| Preencha todos os campos obrigatórios | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/admin/useAdminData.ts` |
-| . Cast local via  | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/dashboard/useSentimentData.ts` |
-| Contato não encontrado no CRM | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/inbox/CRMAutoSync.tsx` |
-| Erro ao sincronizar com CRM | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/inbox/CRMAutoSync.tsx` |
-|  className= | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/inbox/RealtimeInboxView.tsx` |
-| Falha ao reabrir conversa | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/inbox/RealtimeInboxView.tsx` |
-|                            {...entradaErro}                           className= | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/inbox/VoiceChangerPicker.tsx` |
-| Envio de áudio não confirmado | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/inbox/VoiceChangerPicker.tsx` |
-| Erro ao enviar áudio | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/inbox/VoiceChangerPicker.tsx` |
-| Erro ao transformar voz: ${msg} | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/inbox/VoiceChangerPicker.tsx` |
-| Este navegador não grava áudio neste formato. | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/inbox/VoiceChangerPicker.tsx` |
-| Gravação limitada a 60 segundos | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/inbox/VoiceChangerPicker.tsx` |
-| Nenhum microfone encontrado neste dispositivo. | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/inbox/VoiceChangerPicker.tsx` |
-| Não foi possível acessar o microfone | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/inbox/VoiceChangerPicker.tsx` |
-| Permissão de microfone negada. Libere o acesso no navegador. | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/inbox/VoiceChangerPicker.tsx` |
-| Sessão expirada: entre de novo para enviar a voz transformada | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/inbox/VoiceChangerPicker.tsx` |
-| Erro ao carregar preview da voz | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/inbox/VoiceSelector.tsx` |
-| Erro ao gerar preview | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/inbox/VoiceSelector.tsx` |
-| Erro ao reproduzir preview | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/inbox/VoiceSelector.tsx` |
-|                  data-testid= | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/inbox/WhisperMode.tsx` |
-| Não foi possível marcar os sussurros como lidos. | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/inbox/WhisperMode.tsx` |
-|  className= | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/security/AuditLogDashboard.tsx` |
-| Campanha cancelada. | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/talkx/TalkXCampaignRunning.tsx` |
-| Erro ao cancelar a campanha. | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/talkx/TalkXCampaignRunning.tsx` |
-| Erro ao pausar a campanha. | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/talkx/TalkXCampaignRunning.tsx` |
-| Erro ao retomar campanha. | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/talkx/TalkXCampaignRunning.tsx` |
-|  className= | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/talkx/TalkXCampaignWizard.tsx` |
-| Erro ao salvar segmento: ${e instanceof Error ? e.message : String(e)} | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/talkx/TalkXSegments.tsx` |
-| Não foi possível aplicar a ação: ${e instanceof Error ? e.message : String(e)} | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/talkx/TalkXSegments.tsx` |
-| Segmento não encontrado ou sem acesso. | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/talkx/TalkXSegments.tsx` |
-| Informe uma URL de mídia HTTPS válida. | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/talkx/TalkXTemplateEditor.tsx` |
-| Versão do template indisponível; reabra o editor | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/talkx/TalkXTemplateEditor.tsx` |
-| Erro ao cancelar | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/talkx/TalkXView.tsx` |
-| Erro ao pausar | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/talkx/TalkXView.tsx` |
-|  className= | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/talkx/TalkXWizardDelivery.tsx` |
-| A audiência deste rascunho ainda está carregando. Aguarde antes de salvar. | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/talkx/useCampaignEditor.ts` |
-| A campanha não foi iniciada. Verifique a conexão e tente novamente. | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/talkx/useCampaignEditor.ts` |
-| Informe uma data e hora locais válidas. | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/talkx/useCampaignEditor.ts` |
-| Não foi possível carregar toda a audiência do rascunho. | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/talkx/useCampaignEditor.ts` |
-| O fuso horário selecionado é inválido. | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/talkx/useCampaignEditor.ts` |
-| O horário selecionado não existe no fuso informado devido ao horário de verão. Escolha outro horário. | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/talkx/useCampaignEditor.ts` |
-| O horário selecionado é ambíguo devido ao horário de verão. Escolha outro horário. | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/talkx/useCampaignEditor.ts` |
-| O instante UTC informado é inválido. | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/talkx/useCampaignEditor.ts` |
-| O navegador não oferece uma fonte segura para identificar o rascunho. | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/talkx/useCampaignEditor.ts` |
-| Revise público, mensagem e agendamento antes de salvar a programação. | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/talkx/useCampaignEditor.ts` |
-| Revise público, mensagem, agendamento e confirmações antes de lançar. | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/talkx/useCampaignEditor.ts` |
-|  className= | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/team-chat/TeamChatPanel.tsx` |
-| Erro ao editar | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/team-chat/useTeamChatPanel.ts` |
-| Erro ao enviar mensagem | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/team-chat/useTeamChatPanel.ts` |
-| Erro ao enviar áudio | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/team-chat/useTeamChatPanel.ts` |
-| Erro ao excluir | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/team-chat/useTeamChatPanel.ts` |
-| useAuth must be used within an AuthProvider | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/hooks/auth/useAuth.tsx` |
-| Arquivo excede 5MB | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/hooks/communication/useAudioMemes.ts` |
-| Arquivo não é um áudio válido | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/hooks/communication/useAudioMemes.ts` |
-| Erro ao enviar arquivo | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/hooks/communication/useAudioMemes.ts` |
-| Erro ao processar áudio | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/hooks/communication/useAudioMemes.ts` |
-| Erro ao salvar áudio meme no banco de dados | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/hooks/communication/useAudioMemes.ts` |
-| Não foi possível alterar a categoria | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/hooks/communication/useAudioMemes.ts` |
-| Não foi possível remover o áudio meme | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/hooks/communication/useAudioMemes.ts` |
-| O áudio convertido em MP3 excede 5MB. Use um áudio mais curto. | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/hooks/communication/useAudioMemes.ts` |
-| O áudio saiu da lista, mas o arquivo não pôde ser apagado do armazenamento | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/hooks/communication/useAudioMemes.ts` |
-| Sessão expirada: entre novamente para enviar o áudio | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/hooks/communication/useAudioMemes.ts` |
-| Erro ao criar conexão | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/hooks/inbox/useConnectionsManager.ts` |
-| Erro ao definir conexão padrão | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/hooks/inbox/useConnectionsManager.ts` |
-| Erro ao desconectar | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/hooks/inbox/useConnectionsManager.ts` |
-| Esta conexão não possui uma instância configurada. | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/hooks/inbox/useConnectionsManager.ts` |
-| Exclusão pendente | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/hooks/inbox/useConnectionsManager.ts` |
-| Erro ao atualizar segmento: ${e.message} | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/hooks/integrations/useTalkXSegments.ts` |
-| Erro ao excluir: ${e.message} | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/hooks/integrations/useTalkXSegments.ts` |
-| Erro ao salvar segmento: ${e.message} | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/hooks/integrations/useTalkXSegments.ts` |
-| Grupo de segmento inválido | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/hooks/integrations/useTalkXSegments.ts` |
-| Informe a tag para aplicar em massa. | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/hooks/integrations/useTalkXSegments.ts` |
-| Perfil ainda não carregado | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/hooks/integrations/useTalkXSegments.ts` |
-| Regra de segmento inválida: ${rule.field} | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/hooks/integrations/useTalkXSegments.ts` |
-| Selecione ao menos um segmento. | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/hooks/integrations/useTalkXSegments.ts` |
-| Failed to create audio object reference | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/services/chat.service.ts` |
-| Resposta inválida do serviço de entrega. | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/services/outbound-message.service.ts` |
-| Seu navegador não suporta identificadores de entrega seguros. Atualize-o e tente novamente. | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/services/outbound-message.service.ts` |
-| warroom_agent_today devolveu ${rows.length} linhas | `analise-prs/resgate-261118-lote3/claude/kind-gates-87mwoe/src/hooks/business/useWarRoomData.ts` |
-| warroom_queue_stats devolveu ${rows.length} linhas | `analise-prs/resgate-261118-lote3/claude/kind-gates-87mwoe/src/hooks/business/useWarRoomData.ts` |
-| Erro ao arquivar contatos | `analise-prs/resgate-261118-lote3/claude/kind-gates-87mwoe/src/hooks/inbox/useInboxBulkActions.ts` |
-| Erro ao buscar avatares:  | `analise-prs/resgate-261118-lote3/claude/kind-gates-87mwoe/src/hooks/inbox/useInboxBulkActions.ts` |
-| Erro ao marcar como lido | `analise-prs/resgate-261118-lote3/claude/kind-gates-87mwoe/src/hooks/inbox/useInboxBulkActions.ts` |
-| Erro ao transferir contatos | `analise-prs/resgate-261118-lote3/claude/kind-gates-87mwoe/src/hooks/inbox/useInboxBulkActions.ts` |
-| Erro ao transferir contatos: ${transferidos} de ${contactIds.length} contato(s) transferido(s); ${failures.length} falharam | `analise-prs/resgate-261118-lote3/claude/kind-gates-87mwoe/src/hooks/inbox/useInboxBulkActions.ts` |
-| nenhum contato lido | `analise-prs/resgate-261118-lote3/claude/kind-gates-87mwoe/src/hooks/inbox/useInboxBulkActions.ts` |
-| Arquivo removido da base, mas o objeto não foi localizado para exclusão no Storage. | `analise-prs/resgate-261118-lote3/claude/kind-gates-87mwoe/src/hooks/integrations/useKnowledgeBase.ts` |
-| Arquivo removido da base, mas o objeto não pôde ser excluído do Storage. | `analise-prs/resgate-261118-lote3/claude/kind-gates-87mwoe/src/hooks/integrations/useKnowledgeBase.ts` |
-| Erro ao excluir arquivo | `analise-prs/resgate-261118-lote3/claude/kind-gates-87mwoe/src/hooks/integrations/useKnowledgeBase.ts` |
-| Erro ao remover artigo | `analise-prs/resgate-261118-lote3/claude/kind-gates-87mwoe/src/hooks/integrations/useKnowledgeBase.ts` |
-| Erro no upload | `analise-prs/resgate-261118-lote3/claude/kind-gates-87mwoe/src/hooks/integrations/useKnowledgeBase.ts` |
-| Falha ao reprocessar | `analise-prs/resgate-261118-lote3/claude/kind-gates-87mwoe/src/hooks/integrations/useKnowledgeBase.ts` |
-| Falha no processamento | `analise-prs/resgate-261118-lote3/claude/kind-gates-87mwoe/src/hooks/integrations/useKnowledgeBase.ts` |
-| Sem texto extraível | `analise-prs/resgate-261118-lote3/claude/kind-gates-87mwoe/src/hooks/integrations/useKnowledgeBase.ts` |
-| ${rule.field} requer pré-resolução via p_contact_ids antes de chamar o motor | `analise-prs/resgate-261118-lote3/claude/kind-gates-87mwoe/src/hooks/integrations/useTalkXSegments.ts` |
-| Erro ao atualizar segmento: ${e.message} | `analise-prs/resgate-261118-lote3/claude/kind-gates-87mwoe/src/hooks/integrations/useTalkXSegments.ts` |
-| Erro ao excluir: ${e.message} | `analise-prs/resgate-261118-lote3/claude/kind-gates-87mwoe/src/hooks/integrations/useTalkXSegments.ts` |
-| Erro ao salvar segmento: ${e.message} | `analise-prs/resgate-261118-lote3/claude/kind-gates-87mwoe/src/hooks/integrations/useTalkXSegments.ts` |
-| Grupo de segmento inválido | `analise-prs/resgate-261118-lote3/claude/kind-gates-87mwoe/src/hooks/integrations/useTalkXSegments.ts` |
-| Informe a tag para aplicar em massa. | `analise-prs/resgate-261118-lote3/claude/kind-gates-87mwoe/src/hooks/integrations/useTalkXSegments.ts` |
-| Perfil ainda não carregado | `analise-prs/resgate-261118-lote3/claude/kind-gates-87mwoe/src/hooks/integrations/useTalkXSegments.ts` |
-| Regra de segmento inválida: ${rule.field} | `analise-prs/resgate-261118-lote3/claude/kind-gates-87mwoe/src/hooks/integrations/useTalkXSegments.ts` |
-| Selecione ao menos um segmento. | `analise-prs/resgate-261118-lote3/claude/kind-gates-87mwoe/src/hooks/integrations/useTalkXSegments.ts` |
-| useAuth must be used within an AuthProvider | `analise-prs/resgate-261118-lote3/claude/magical-pasteur-iz2pgy/src/hooks/auth/useAuth.tsx` |
-| Erro ao carregar configurações | `analise-prs/resgate-261118-lote3/claude/magical-pasteur-iz2pgy/src/hooks/system/useUserSettings.ts` |
-| Erro ao salvar | `analise-prs/resgate-261118-lote3/claude/magical-pasteur-iz2pgy/src/hooks/system/useUserSettings.ts` |
-| Você precisa estar logado para salvar configurações. | `analise-prs/resgate-261118-lote3/claude/magical-pasteur-iz2pgy/src/hooks/system/useUserSettings.ts` |
-| , content: risk, data: { risk } });   }   if (out.next_action) {     rows.push({ ...base, insight_type:  | `analise-prs/resgate-261118-lote3/claude/radar-motor-copilot-live-301030/supabase/functions/_shared/copilot-tick.ts` |
-| COPILOT_BAD_PAYLOAD | `analise-prs/resgate-261118-lote3/claude/radar-motor-copilot-live-301030/supabase/functions/_shared/copilot-tick.ts` |
-| COPILOT_READ_FAILED | `analise-prs/resgate-261118-lote3/claude/radar-motor-copilot-live-301030/supabase/functions/_shared/copilot-tick.ts` |
-| COPILOT_SESSION_NOT_FOUND | `analise-prs/resgate-261118-lote3/claude/radar-motor-copilot-live-301030/supabase/functions/_shared/copilot-tick.ts` |
-| COPILOT_TIER1_CONTRACT | `analise-prs/resgate-261118-lote3/claude/radar-motor-copilot-live-301030/supabase/functions/_shared/copilot-tick.ts` |
-| COPILOT_WRITE_FAILED | `analise-prs/resgate-261118-lote3/claude/radar-motor-copilot-live-301030/supabase/functions/_shared/copilot-tick.ts` |
-| AI_GENERATE_BAD_PAYLOAD | `analise-prs/resgate-261118-lote3/claude/radar-motor-copilot-live-301030/supabase/functions/ai-jobs-worker/index.ts` |
-| AI_GENERATE_DISABLED | `analise-prs/resgate-261118-lote3/claude/radar-motor-copilot-live-301030/supabase/functions/ai-jobs-worker/index.ts` |
-| ai-jobs-worker: WORKER_ID inválido: ${WORKER_ID} | `analise-prs/resgate-261118-lote3/claude/radar-motor-copilot-live-301030/supabase/functions/ai-jobs-worker/index.ts` |
-| ai-jobs-worker: job ${job.id} sem linha ou sem lease_token | `analise-prs/resgate-261118-lote3/claude/radar-motor-copilot-live-301030/supabase/functions/ai-jobs-worker/index.ts` |
-| ai-jobs-worker: leitura de ai_jobs falhou: ${error.message} | `analise-prs/resgate-261118-lote3/claude/radar-motor-copilot-live-301030/supabase/functions/ai-jobs-worker/index.ts` |
-| Unexpected controlled boundary:  | `analise-prs/resgate-261118-lote3/claude/test-e2e-suite-completa-261104-1428/scripts/ci/e2e-isolated-provider-readiness.unit.mjs` |
-| must-not-read-service-role | `analise-prs/resgate-261118-lote3/claude/test-e2e-suite-completa-261104-1428/scripts/ci/e2e-isolated-provider-readiness.unit.mjs` |
-| ECONNREFUSED | `analise-prs/resgate-261118-lote3/claude/test-e2e-suite-completa-261104-1428/scripts/ci/e2e-isolated-tls.unit.mjs` |
-| Timeout 10000ms exceeded | `analise-prs/resgate-261118-lote3/claude/test-e2e-suite-completa-261104-1428/scripts/ci/e2e-isolated-tls.unit.mjs` |
-| connection refused | `analise-prs/resgate-261118-lote3/claude/test-e2e-suite-completa-261104-1428/scripts/ci/e2e-isolated-tls.unit.mjs` |
-| context failed | `analise-prs/resgate-261118-lote3/claude/test-e2e-suite-completa-261104-1428/scripts/ci/e2e-isolated-tls.unit.mjs` |
-| controlled invalid JSON | `analise-prs/resgate-261118-lote3/claude/test-e2e-suite-completa-261104-1428/scripts/ci/e2e-isolated-tls.unit.mjs` |
-| frame unavailable | `analise-prs/resgate-261118-lote3/claude/test-e2e-suite-completa-261104-1428/scripts/ci/e2e-isolated-tls.unit.mjs` |
-| invalid peer certificate:  | `analise-prs/resgate-261118-lote3/claude/test-e2e-suite-completa-261104-1428/scripts/ci/e2e-isolated-tls.unit.mjs` |
-| must-not-fetch | `analise-prs/resgate-261118-lote3/claude/test-e2e-suite-completa-261104-1428/scripts/ci/e2e-isolated-tls.unit.mjs` |
-| operation timed out | `analise-prs/resgate-261118-lote3/claude/test-e2e-suite-completa-261104-1428/scripts/ci/e2e-isolated-tls.unit.mjs` |
-| R1_SKIP | `analise-prs/resgate-261118-lote3/claude/test-e2e-suite-completa-261104-1428/scripts/ci/e2e-tarefas-project.unit.mjs` |
-| invalid-local-media | `analise-prs/resgate-261118-lote3/claude/test-e2e-suite-completa-261104-1428/scripts/e2e-isolated/providers.mjs` |
-| local-media-empty | `analise-prs/resgate-261118-lote3/claude/test-e2e-suite-completa-261104-1428/scripts/e2e-isolated/providers.mjs` |
-| local-media-too-large | `analise-prs/resgate-261118-lote3/claude/test-e2e-suite-completa-261104-1428/scripts/e2e-isolated/providers.mjs` |
-| local-media-unavailable | `analise-prs/resgate-261118-lote3/claude/test-e2e-suite-completa-261104-1428/scripts/e2e-isolated/providers.mjs` |
-| unsupported-filter | `analise-prs/resgate-261118-lote3/claude/test-e2e-suite-completa-261104-1428/scripts/e2e-isolated/providers.mjs` |
-| unsupported-filter-column | `analise-prs/resgate-261118-lote3/claude/test-e2e-suite-completa-261104-1428/scripts/e2e-isolated/providers.mjs` |
-| unsupported-order | `analise-prs/resgate-261118-lote3/claude/test-e2e-suite-completa-261104-1428/scripts/e2e-isolated/providers.mjs` |
-| unsupported-range | `analise-prs/resgate-261118-lote3/claude/test-e2e-suite-completa-261104-1428/scripts/e2e-isolated/providers.mjs` |
-| … +2500 linhas — lista completa em `context.json` | |
+| GitHub Deployments API → ${res.status}: ${text.slice(0, 300)} | `analise-prs/resgate-regra8-261118/scripts/db-audit/check-ddl-deployments.mjs` |
+| AI gateway error [${response.status}] | `analise-prs/resgate-regra8-261118/supabase/functions/ai-multimodal-analysis/index.ts` |
+| GitHub API ${metodo} ${path} → ${res.status}: ${(await res.text()).slice(0, 200)} | `analise-prs/variantes-261118/claude__fix-ga-fase78-perimetro-custo-261020-2200/scripts/ci/aplicar-perimetro.mjs` |
+| GitHub API ${method} ${path} → ${res.status}: ${text.slice(0, 300)} | `analise-prs/variantes-261118/claude_pink__cool-dijkstra-xk9ek2/scripts/ci/aplicar-perimetro.mjs` |
+| ,      | `docs/contexto/supabase/functions/public/admin_cron_jobs_permitidos__12ae32cb1ec02d01.sql` |
+|        AND metadata->> | `docs/contexto/supabase/functions/public/notify_searchbox_budget__12ae32cb1ec02d01.sql` |
+| ,       jsonb_build_object( | `docs/contexto/supabase/functions/public/notify_searchbox_budget__12ae32cb1ec02d01.sql` |
+|          OR v_existing_notification.metadata->> | `docs/contexto/supabase/functions/public/persist_sentiment_alert__edf924afdb1f4626.sql` |
+|        OR v_existing_audit.entity_type IS DISTINCT FROM  | `docs/contexto/supabase/functions/public/persist_sentiment_alert__edf924afdb1f4626.sql` |
+| , ADD COLUMN IF NOT EXISTS goal_sound_type text DEFAULT  | `docs/contexto/supabase/migrations/20251228182332_ee86c1e9-8728-4e9b-a719-7bbdc7986176.sql` |
+|          OR v_existing_notification.metadata->> | `docs/contexto/supabase/migrations/20260922220000_atomic_call_and_sentiment_notifications.sql` |
+|        OR v_existing_audit.entity_type IS DISTINCT FROM  | `docs/contexto/supabase/migrations/20260922220000_atomic_call_and_sentiment_notifications.sql` |
+|        AND metadata->> | `docs/contexto/supabase/migrations/20261002601230_searchbox_budget_alert_cron.sql` |
+| ,       jsonb_build_object( | `docs/contexto/supabase/migrations/20261002601230_searchbox_budget_alert_cron.sql` |
+| ,     body :=  | `docs/contexto/supabase/migrations/20261002601230_searchbox_budget_alert_cron.sql` |
+| ,persisted_action_present: | `docs/reconciliation/reaudit/2026-10-03/probes/auth/second-pass-probes.cjs` |
+| Unexpected import  | `docs/reconciliation/reaudit/2026-10-03/probes/auth/second-pass-probes.cjs` |
+| }];  const saveRules=expression(file, | `docs/reconciliation/reaudit/2026-10-03/probes/auth/second-pass-probes.cjs` |
+| Unexpected import  | `docs/reconciliation/reaudit/2026-10-03/probes/auth/source-probes.cjs` |
+| ,metadata:{contact_id: | `docs/reconciliation/reaudit/2026-10-03/reports/inbox/probes/pass5/run.mjs` |
+| NETWORK_DISABLED_BY_PROBE | `docs/reconciliation/reaudit/2026-10-03/reports/infra/probe-ai-review.mjs` |
+| Import denied: ${name} | `docs/reconciliation/reaudit/2026-10-03/reports/infra/probe-observability.mjs` |
+| synthetic rejected promise | `docs/reconciliation/reaudit/2026-10-03/reports/infra/probe-observability.mjs` |
+| Network forbidden by offline probe | `docs/reconciliation/reaudit/2026-10-03/reports/infra/probe-second-pass.mjs` |
+| );   assert.match(nullOutput.props.className,/min-h-screen/u);   assert.match(words(nullOutput),/Ops! Algo deu errado/u);   const explicit = { type: | `docs/reconciliation/reaudit/2026-10-03/reports/infra/probe-telemetry-error.mjs` |
+| Network prohibited in infra re-audit probe | `docs/reconciliation/reaudit/2026-10-03/reports/infra/probe.mjs` |
+| Committed server-side, response lost (synthetic) | `docs/reconciliation/reaudit/2026-10-03/reports/modules/offline_probes.cjs` |
+| Controlled failure | `docs/reconciliation/reaudit/2026-10-03/reports/modules/offline_probes.cjs` |
+| Unexpected preview/create path | `docs/reconciliation/reaudit/2026-10-03/reports/modules/offline_probes.cjs` |
+| Unexpected schema response | `docs/reconciliation/reaudit/2026-10-03/reports/modules/offline_probes.cjs` |
+| Unmocked import: ${p} | `docs/reconciliation/reaudit/2026-10-03/reports/modules/offline_probes.cjs` |
+| Unused query | `docs/reconciliation/reaudit/2026-10-03/reports/modules/offline_probes.cjs` |
+| Formatted parser diagnostics | `docs/reconciliation/reaudit/2026-10-03/reports/modules/vendor_prepare.cjs` |
+| Function traversal mismatch | `docs/reconciliation/reaudit/2026-10-03/reports/modules/vendor_prepare.cjs` |
+| Original parser diagnostics | `docs/reconciliation/reaudit/2026-10-03/reports/modules/vendor_prepare.cjs` |
+| Fixture has one final target | `docs/reconciliation/reaudit/2026-10-03/reports/providers/reproduce-channel-consumers.mjs` |
+| Group mounting disabled | `docs/reconciliation/reaudit/2026-10-03/reports/providers/reproduce-channel-consumers.mjs` |
+| No DB expected in group fixture | `docs/reconciliation/reaudit/2026-10-03/reports/providers/reproduce-channel-consumers.mjs` |
+| No provider call expected during maintenance | `docs/reconciliation/reaudit/2026-10-03/reports/providers/reproduce-channel-consumers.mjs` |
+| Not part of fixture | `docs/reconciliation/reaudit/2026-10-03/reports/providers/reproduce-channel-consumers.mjs` |
+| Real network forbidden | `docs/reconciliation/reaudit/2026-10-03/reports/providers/reproduce-channel-consumers.mjs` |
+| Unspecified Omni query ${table} | `docs/reconciliation/reaudit/2026-10-03/reports/providers/reproduce-channel-consumers.mjs` |
+| fixture transient server error | `docs/reconciliation/reaudit/2026-10-03/reports/providers/reproduce-channel-consumers.mjs` |
+| Fallback not expected | `docs/reconciliation/reaudit/2026-10-03/reports/providers/reproduce-final-endpoints.mjs` |
+| Network forbidden in audit probe | `docs/reconciliation/reaudit/2026-10-03/reports/providers/reproduce-final-endpoints.mjs` |
+| Unexpected network boundary in audit probe | `docs/reconciliation/reaudit/2026-10-03/reports/providers/reproduce-final-endpoints.mjs` |
+| Unexpected table ${table} | `docs/reconciliation/reaudit/2026-10-03/reports/providers/reproduce-final-endpoints.mjs` |
+| Use explicit DI boundary | `docs/reconciliation/reaudit/2026-10-03/reports/providers/reproduce-final-endpoints.mjs` |
+| Network forbidden in audit | `docs/reconciliation/reaudit/2026-10-03/reports/providers/reproduce-frontend-persistence.mjs` |
+| No toast should run in this path | `docs/reconciliation/reaudit/2026-10-03/reports/providers/reproduce-frontend-persistence.mjs` |
+| Unexpected table ${table} | `docs/reconciliation/reaudit/2026-10-03/reports/providers/reproduce-frontend-persistence.mjs` |
+| Effects/timers must not run in this fixture | `docs/reconciliation/reaudit/2026-10-03/reports/providers/reproduce-frontend-providers.mjs` |
+| Lifecycle DB effect intentionally not executed | `docs/reconciliation/reaudit/2026-10-03/reports/providers/reproduce-frontend-providers.mjs` |
+| Network forbidden in audit probe | `docs/reconciliation/reaudit/2026-10-03/reports/providers/reproduce-frontend-providers.mjs` |
+| No write expected for failed sync | `docs/reconciliation/reaudit/2026-10-03/reports/providers/reproduce-frontend-providers.mjs` |
+| Not exercised | `docs/reconciliation/reaudit/2026-10-03/reports/providers/reproduce-frontend-providers.mjs` |
+| One recipient should not invoke delay | `docs/reconciliation/reaudit/2026-10-03/reports/providers/reproduce-frontend-providers.mjs` |
+| Network forbidden in audit probe | `docs/reconciliation/reaudit/2026-10-03/reports/providers/reproduce-media-ai-control.mjs` |
+| No permission RPC expected in this source path | `docs/reconciliation/reaudit/2026-10-03/reports/providers/reproduce-media-ai-control.mjs` |
+| No stream in fixture | `docs/reconciliation/reaudit/2026-10-03/reports/providers/reproduce-media-ai-control.mjs` |
+| Valid fixture only | `docs/reconciliation/reaudit/2026-10-03/reports/providers/reproduce-media-ai-control.mjs` |
+| fixture quota denied | `docs/reconciliation/reaudit/2026-10-03/reports/providers/reproduce-media-ai-control.mjs` |
+| Network forbidden in audit probe | `docs/reconciliation/reaudit/2026-10-03/reports/providers/reproduce-multiplix-review.mjs` |
+| Real fetch forbidden in audit probe | `docs/reconciliation/reaudit/2026-10-03/reports/providers/reproduce-privileged-effects.mjs` |
+| Unexpected authorization denial | `docs/reconciliation/reaudit/2026-10-03/reports/providers/reproduce-privileged-effects.mjs` |
+| , metadata: { mes:  | `docs/reconciliation/reaudit/2026-10-03/reports/providers/reproduce-security-maintenance.mjs` |
+| Invalid-input fixture was not part of these probes | `docs/reconciliation/reaudit/2026-10-03/reports/providers/reproduce-security-maintenance.mjs` |
+| Missing fixture ${name} | `docs/reconciliation/reaudit/2026-10-03/reports/providers/reproduce-security-maintenance.mjs` |
+| Real network forbidden | `docs/reconciliation/reaudit/2026-10-03/reports/providers/reproduce-security-maintenance.mjs` |
+| Unspecified network boundary | `docs/reconciliation/reaudit/2026-10-03/reports/providers/reproduce-security-maintenance.mjs` |
+| unauthorized | `docs/reconciliation/reaudit/2026-10-03/reports/providers/reproduce-security-maintenance.mjs` |
+| Invalid manifest path | `docs/reconciliation/reaudit/2026-10-03/reports/providers/verify-source.mjs` |
+| Refusing audit: checkout HEAD differs from the pinned commit | `docs/reconciliation/reaudit/2026-10-03/reports/providers/verify-source.mjs` |
+| Refusing audit: root source integrity manifest is incompatible | `docs/reconciliation/reaudit/2026-10-03/reports/providers/verify-source.mjs` |
+| Refusing audit: source integrity mismatch at ${entry.path} | `docs/reconciliation/reaudit/2026-10-03/reports/providers/verify-source.mjs` |
+| Refusing audit: unexpectedly incomplete backend manifest | `docs/reconciliation/reaudit/2026-10-03/reports/providers/verify-source.mjs` |
+| Unexpected runtime dependency | `docs/reconciliation/reaudit/2026-10-03/tools/call_engine_probes.cjs` |
+| Usage: node call_engine_probes.cjs SOURCE INTEGRITY TYPESCRIPT OUTPUT | `docs/reconciliation/reaudit/2026-10-03/tools/call_engine_probes.cjs` |
+| Unexpected retry | `docs/reconciliation/reaudit/2026-10-03/tools/call_lifecycle_probes.cjs` |
+| Usage: node call_lifecycle_probes.cjs SOURCE INTEGRITY TYPESCRIPT OUTPUT | `docs/reconciliation/reaudit/2026-10-03/tools/call_lifecycle_probes.cjs` |
+| Usage: node call_overlay_probes.cjs SOURCE INTEGRITY TYPESCRIPT OUTPUT | `docs/reconciliation/reaudit/2026-10-03/tools/call_overlay_probes.cjs` |
+| Invalid source path | `docs/reconciliation/reaudit/2026-10-03/tools/catalog_microfunctions.mjs` |
+| Snapshot drift:  | `docs/reconciliation/reaudit/2026-10-03/tools/catalog_microfunctions.mjs` |
+| Usage: node catalog_microfunctions.mjs SOURCE INTEGRITY_JSON TYPESCRIPT_JS OUT_DIR | `docs/reconciliation/reaudit/2026-10-03/tools/catalog_microfunctions.mjs` |
+| Network is forbidden in these offline probes | `docs/reconciliation/reaudit/2026-10-03/tools/communication_probes.cjs` |
+| SOURCE, INTEGRITY_JSON, TYPESCRIPT_JS and OUTPUT required | `docs/reconciliation/reaudit/2026-10-03/tools/communication_probes.cjs` |
+| Unexpected new send | `docs/reconciliation/reaudit/2026-10-03/tools/communication_probes.cjs` |
+| synthetic denial | `docs/reconciliation/reaudit/2026-10-03/tools/communication_probes.cjs` |
+| Unexpected invalid fixture | `docs/reconciliation/reaudit/2026-10-03/tools/gmail_oauth_probes.cjs` |
+| Unexpected mocked URL | `docs/reconciliation/reaudit/2026-10-03/tools/gmail_oauth_probes.cjs` |
+| Usage: node gmail_oauth_probes.cjs SOURCE INTEGRITY TYPESCRIPT OUTPUT | `docs/reconciliation/reaudit/2026-10-03/tools/gmail_oauth_probes.cjs` |
+| Source changed: ${file} | `docs/reconciliation/reaudit/2026-10-03/tools/import_graph.mjs` |
+| Usage: node mobile_shell_probes.cjs SOURCE INTEGRITY TYPESCRIPT OUTPUT | `docs/reconciliation/reaudit/2026-10-03/tools/mobile_shell_probes.cjs` |
+| Usage: node platform_probes.cjs SOURCE INTEGRITY TYPESCRIPT OUTPUT | `docs/reconciliation/reaudit/2026-10-03/tools/platform_probes.cjs` |
+| Usage: node queue_tail_probes.cjs SOURCE INTEGRITY TYPESCRIPT OUTPUT | `docs/reconciliation/reaudit/2026-10-03/tools/queue_tail_probes.cjs` |
+| Four arguments required | `docs/reconciliation/reaudit/2026-10-03/tools/root_source_probes.cjs` |
+| Usage: node sla_navigation_probe.cjs SOURCE INTEGRITY TYPESCRIPT OUTPUT | `docs/reconciliation/reaudit/2026-10-03/tools/sla_navigation_probe.cjs` |
+| Node is required; --repo also requires Git with the pinned revisions locally available | `docs/reconciliation/reaudit/2026-10-04-delta-65679f3/run_probes.py` |
+| Original-validator reproduction failed:  | `docs/reconciliation/reaudit/2026-10-04-delta-65679f3/run_probes.py` |
+| Pinned Git object unavailable:  | `docs/reconciliation/reaudit/2026-10-04-delta-65679f3/run_probes.py` |
+| Source hash mismatch; refusing execution:  | `docs/reconciliation/reaudit/2026-10-04-delta-65679f3/run_probes.py` |
+| Source path escapes its declared directory | `docs/reconciliation/reaudit/2026-10-04-delta-65679f3/run_probes.py` |
+| Audit root cannot be a symlink | `docs/reconciliation/reaudit/2026-10-04-delta-65679f3/verify_bundle.py` |
+| Bundle file set mismatch; extra= | `docs/reconciliation/reaudit/2026-10-04-delta-65679f3/verify_bundle.py` |
+| Bundle root cannot be a symlink | `docs/reconciliation/reaudit/2026-10-04-delta-65679f3/verify_bundle.py` |
+| Byte count mismatch:  | `docs/reconciliation/reaudit/2026-10-04-delta-65679f3/verify_bundle.py` |
+| Composed R2 + extension file set mismatch | `docs/reconciliation/reaudit/2026-10-04-delta-65679f3/verify_bundle.py` |
+| Duplicate, invalid or self-referential manifest path | `docs/reconciliation/reaudit/2026-10-04-delta-65679f3/verify_bundle.py` |
+| Extension must be at its declared path under audit_root | `docs/reconciliation/reaudit/2026-10-04-delta-65679f3/verify_bundle.py` |
+| Git blob mismatch:  | `docs/reconciliation/reaudit/2026-10-04-delta-65679f3/verify_bundle.py` |
+| Historical manifest differs from pinned R2; reconciliation required | `docs/reconciliation/reaudit/2026-10-04-delta-65679f3/verify_bundle.py` |
+| Invalid SHA256:  | `docs/reconciliation/reaudit/2026-10-04-delta-65679f3/verify_bundle.py` |
+| Invalid relative path | `docs/reconciliation/reaudit/2026-10-04-delta-65679f3/verify_bundle.py` |
+| Manifest bytes_of_hashed_files mismatch | `docs/reconciliation/reaudit/2026-10-04-delta-65679f3/verify_bundle.py` |
+| Manifest file_count mismatch | `docs/reconciliation/reaudit/2026-10-04-delta-65679f3/verify_bundle.py` |
+| Manifest requires a nonempty files list | `docs/reconciliation/reaudit/2026-10-04-delta-65679f3/verify_bundle.py` |
+| Missing file:  | `docs/reconciliation/reaudit/2026-10-04-delta-65679f3/verify_bundle.py` |
+| Noncanonical or escaping path:  | `docs/reconciliation/reaudit/2026-10-04-delta-65679f3/verify_bundle.py` |
+| SHA256 mismatch:  | `docs/reconciliation/reaudit/2026-10-04-delta-65679f3/verify_bundle.py` |
+| Symlink rejected:  | `docs/reconciliation/reaudit/2026-10-04-delta-65679f3/verify_bundle.py` |
+| Git source ref: expected a pinned 7-to-40-character hexadecimal ID | `docs/reconciliation/reproduce/validate_package.py` |
+| Source checkout: expected a directory | `docs/reconciliation/reproduce/validate_package.py` |
+| Source validation requires system Git at /usr/bin/git or /bin/git | `docs/reconciliation/reproduce/validate_package.py` |
+| Validation report: evidence must be a real directory and target must not be a symlink | `docs/reconciliation/reproduce/validate_package.py` |
+| Network is forbidden in these audit probes | `docs/reconciliation/reproduce/cross-module/reproduce_cross_module.mjs` |
+| attested source must be a regular file: ${relativePath} | `docs/reconciliation/reproduce/lib/source-provenance.mjs` |
+| cannot verify checkout HEAD at ${checkout} (${error.message}) | `docs/reconciliation/reproduce/lib/source-provenance.mjs` |
+| cannot verify checkout HEAD at ${root} (${error.message}) | `docs/reconciliation/reproduce/lib/source-provenance.mjs` |
+| checkout HEAD ${observedHead} is not the audited baseline ${expected.baseline_sha} | `docs/reconciliation/reproduce/lib/source-provenance.mjs` |
+| invalid expected hash for ${relativePath} | `docs/reconciliation/reproduce/lib/source-provenance.mjs` |
+| missing attested source ${relativePath} (${error.message}) | `docs/reconciliation/reproduce/lib/source-provenance.mjs` |
+| network request observed while the offline probe runs: ${url} | `docs/reconciliation/reproduce/lib/source-provenance.mjs` |
+| only fixed relative source paths are accepted: ${relativePath} | `docs/reconciliation/reproduce/lib/source-provenance.mjs` |
+| pins must declare baseline_sha and source_sha256 | `docs/reconciliation/reproduce/lib/source-provenance.mjs` |
+| pins must list at least one attested source | `docs/reconciliation/reproduce/lib/source-provenance.mjs` |
+| source escapes the checkout: ${relativePath} | `docs/reconciliation/reproduce/lib/source-provenance.mjs` |
+| unattested source bytes for ${relativePath} (expected ${expectedHash}, observed ${observed}) | `docs/reconciliation/reproduce/lib/source-provenance.mjs` |
+| Expected a regular ${kind} | `docs/reconciliation/reproduce/multiplix/reproduce_multiplix.mjs` |
+| Expected at most one repository root argument | `docs/reconciliation/reproduce/multiplix/reproduce_multiplix.mjs` |
+| Invalid pinned source boundaries | `docs/reconciliation/reproduce/multiplix/reproduce_multiplix.mjs` |
+| Invalid repository root | `docs/reconciliation/reproduce/multiplix/reproduce_multiplix.mjs` |
+| Media forbidden in text probe | `docs/reconciliation/reproduce/multiplix/reproduce_multiplix.mjs` |
+| Network forbidden in audit probe | `docs/reconciliation/reproduce/multiplix/reproduce_multiplix.mjs` |
+| Path must be canonical | `docs/reconciliation/reproduce/multiplix/reproduce_multiplix.mjs` |
+| Pinned source marker must occur exactly once | `docs/reconciliation/reproduce/multiplix/reproduce_multiplix.mjs` |
+| Real DB client forbidden | `docs/reconciliation/reproduce/multiplix/reproduce_multiplix.mjs` |
+| Repository HEAD must equal audited baseline ${BASELINE} | `docs/reconciliation/reproduce/multiplix/reproduce_multiplix.mjs` |
+| Repository root must equal the canonical Git toplevel | `docs/reconciliation/reproduce/multiplix/reproduce_multiplix.mjs` |
+| Source SHA-256 mismatch: ${source.path} | `docs/reconciliation/reproduce/multiplix/reproduce_multiplix.mjs` |
+| Source byte length mismatch: ${source.path} | `docs/reconciliation/reproduce/multiplix/reproduce_multiplix.mjs` |
+| Source changed while opening: ${source.path} | `docs/reconciliation/reproduce/multiplix/reproduce_multiplix.mjs` |
+| Source changed while reading: ${source.path} | `docs/reconciliation/reproduce/multiplix/reproduce_multiplix.mjs` |
+| Source escapes the attested repository root | `docs/reconciliation/reproduce/multiplix/reproduce_multiplix.mjs` |
+| Storage forbidden in this text probe | `docs/reconciliation/reproduce/multiplix/reproduce_multiplix.mjs` |
+| Symlink paths are forbidden in this probe | `docs/reconciliation/reproduce/multiplix/reproduce_multiplix.mjs` |
+| Baseline SHA256 mismatch: ${relativePath} | `docs/reconciliation/reproduce/skins/skins_probe.mjs` |
+| Missing CSS block: ${header} | `docs/reconciliation/reproduce/skins/skins_probe.mjs` |
+| Missing inline boot script in pinned source | `docs/reconciliation/reproduce/skins/skins_probe.mjs` |
+| Network is disabled in the offline Skins probe | `docs/reconciliation/reproduce/skins/skins_probe.mjs` |
+| Source escapes checkout: ${relativePath} | `docs/reconciliation/reproduce/skins/skins_probe.mjs` |
+| Unterminated CSS block: ${header} | `docs/reconciliation/reproduce/skins/skins_probe.mjs` |
+| Unterminated CSS comment in pinned source | `docs/reconciliation/reproduce/skins/skins_probe.mjs` |
+| Unterminated static import in pinned source | `docs/reconciliation/reproduce/skins/skins_probe.mjs` |
+| simulated quota exhausted | `docs/reconciliation/reproduce/skins/skins_probe.mjs` |
+| Unattested module: ${p} | `docs/reconciliation/reproduce/volume/volume_offline_probe.mjs` |
+| storage denied | `docs/reconciliation/reproduce/volume/volume_offline_probe.mjs` |
+| REMOTE_FULL_SUITE_BLOCKED | `e2e/auth-diagnostics.ts` |
+| TARGET_CREDENTIALS | `e2e/auth-diagnostics.ts` |
+| TARGET_DOMAIN_UNVERIFIED | `e2e/auth-diagnostics.ts` |
+| TARGET_HTTPS_REQUIRED | `e2e/auth-diagnostics.ts` |
+| TARGET_INVALID | `e2e/auth-diagnostics.ts` |
+| TARGET_NOT_ORIGIN | `e2e/auth-diagnostics.ts` |
+| TARGET_ORIGIN_REJECTED | `e2e/auth-diagnostics.ts` |
+| ) generico: o app dispara toasts alheios ao login   // (ex.:  | `e2e/auth.setup.ts` |
+| E2E_TEST_EMAIL e/ou E2E_TEST_PASSWORD nao estao definidas. Os testes que dependem de  | `e2e/auth.setup.ts` |
+| [E2E setup/${diagnostic.code}] ${diagnostic.message} | `e2e/auth.setup.ts` |
+| [E2E setup/${diagnostic.code}] ${diagnostic.message} Tentativas realizadas: ${tentativa}. | `e2e/auth.setup.ts` |
+| [E2E setup/${diagnostic.code}] ${diagnostic.message} Veja o trace do Playwright. | `e2e/auth.setup.ts` |
+| [E2E setup] O app nao respondeu em 15 s ao navegar para /auth.  | `e2e/auth.setup.ts` |
+| Sessão Supabase não encontrada no localStorage | `e2e/fixtures/contacts-page.ts` |
+| consulta de contacts falhou: HTTP ${res.status()} | `e2e/fixtures/contacts-page.ts` |
+| limpeza E97: consulta de contacts falhou HTTP ${res.status()} | `e2e/fixtures/contacts-page.ts` |
+| limpeza E97: delete_contact falhou HTTP ${del.status()} | `e2e/fixtures/contacts-page.ts` |
+| storageState sem access_token: rode o projeto  | `e2e/fixtures/contacts-page.ts` |
+| Falha ao inserir mensagem de fixture: HTTP ${msgResponse.status()}  | `e2e/fixtures/e2e-contact.ts` |
+| Sessão do Supabase não encontrada no storageState — e2e/auth.setup.ts deveria  | `e2e/fixtures/e2e-contact.ts` |
+| set_conversation_status falhou: HTTP ${rpcResponse.status()} ${body} | `e2e/fixtures/e2e-contact.ts` |
+| Recusado: UUID do usuário inválido para cleanup de draft E2E. | `e2e/fixtures/e2e-talkx.ts` |
+| Recusado: nome de draft não corresponde a esta execução E2E. | `e2e/fixtures/e2e-talkx.ts` |
+| Recusado: projeto e ID do teste são obrigatórios para nomear um draft E2E. | `e2e/fixtures/e2e-talkx.ts` |
+| Sessão autenticada válida (token e UUID do usuário) não encontrada no localStorage —  | `e2e/fixtures/e2e-talkx.ts` |
+| [e2e-talkx] cleanup exato do draft falhou: HTTP ${response.status()} | `e2e/fixtures/e2e-talkx.ts` |
+| ambiguous | `e2e/fixtures/fixture-conversation.ts` |
+| not-visible | `e2e/fixtures/fixture-conversation.ts` |
+| [e2e-http/ | `e2e/fixtures/function-completion.ts` |
+| [e2e-isolated/qr-admin-login] | `e2e/fixtures/isolated-qr.ts` |
+| [e2e-isolated/qr-admin-session] | `e2e/fixtures/isolated-qr.ts` |
+| [e2e-isolated/qr-base-url] | `e2e/fixtures/isolated-qr.ts` |
+| [E2E tour/${code}] | `e2e/fixtures/onboarding-isolated.ts` |
+| [e2e/isolated-fixture] configuração local incompleta ou divergente | `e2e/fixtures/supabase-env.ts` |
+| [e2e] ${name} nao encontrada em .env.production. Esse arquivo e a fonte PRIMARIA  | `e2e/fixtures/supabase-env.ts` |
+| seed arquivos-local: ${rotulo} aponta para host não-local (${host}). Proibido. | `e2e/fixtures/arquivos-local/seed.ts` |
+| seed arquivos-local: variável ${nome} ausente (rode via env de zapp-db-local) | `e2e/fixtures/arquivos-local/seed.ts` |
+| seed: assinatura como usuário falhou (${signRes.status}): ${signJson.error ?? signRes.statusText} | `e2e/fixtures/arquivos-local/seed.ts` |
+| seed: contagem como usuário falhou (${res.status}): ${await res.text()} | `e2e/fixtures/arquivos-local/seed.ts` |
+| seed: corpo de referência vazio | `e2e/fixtures/arquivos-local/seed.ts` |
+| seed: download assinado falhou (${getRes.status}) | `e2e/fixtures/arquivos-local/seed.ts` |
+| seed: esperadas ${E2E_ARQUIVOS.contagens.todos} mídias visíveis, RLS devolveu ${totalMidia} | `e2e/fixtures/arquivos-local/seed.ts` |
+| seed: esperadas ${TOTAL_PAGINACAO} mídias de paginação, RLS devolveu ${totalPaginacao} | `e2e/fixtures/arquivos-local/seed.ts` |
+| seed: login do usuário sintético falhou (${res.status}): ${json.error_description ?? res.statusText} | `e2e/fixtures/arquivos-local/seed.ts` |
+| seed: objeto privado acessível via rota pública — fixture inseguro | `e2e/fixtures/arquivos-local/seed.ts` |
+| seed: objeto privado baixado difere do esperado (${baixado.length} bytes vs ${esperado.length}) | `e2e/fixtures/arquivos-local/seed.ts` |
+| seed: upload ${caminho} falhou (${res.status}): ${await res.text()} | `e2e/fixtures/arquivos-local/seed.ts` |
+| falha fixture | `scripts/automation.unit.mjs` |
+| ${msg}: esperado ${JSON.stringify(b)} obtido ${JSON.stringify(a)} | `scripts/ai-context/cenarios.mjs` |
+| --out  | `scripts/ai-context/gerar.mjs` |
+| Argumento desconhecido: ${arg} | `scripts/ci/a11y-button-name-ratchet.mjs` |
+| Valor ausente para ${arg}. | `scripts/ci/a11y-button-name-ratchet.mjs` |
+| ${metodo} ${caminho} -> ${r.status} | `scripts/ci/actions-kpi.mjs` |
+| GitHub API ${metodo} ${path} → ${res.status}: ${(await res.text()).slice(0, 200)} | `scripts/ci/aplicar-perimetro.mjs` |
+| --level invalido: ${args.level} | `scripts/ci/audit-prod.mjs` |
+| Argumento desconhecido: ${argv[index]} | `scripts/ci/audit-prod.mjs` |
+| network disabled in fixture | `scripts/ci/branch-hygiene-runtime.unit.mjs` |
+| PR sem headRefName | `scripts/ci/branch-podaveis.mjs` |
+| a lista de PRs abertas não é um array | `scripts/ci/branch-podaveis.mjs` |
+| a lista de PRs abertas veio cheia (${dados.length} >= limite ${limite}); pode haver PR que não veio | `scripts/ci/branch-podaveis.mjs` |
+| argumento inválido: ${chave} | `scripts/ci/branch-podaveis.mjs` |
+| falta --${obrigatorio} | `scripts/ci/branch-podaveis.mjs` |
+| Argumento desconhecido: ${argv[index]} | `scripts/ci/bundle-budget.mjs` |
+| asset referenciado no index.html nao existe: ${href} | `scripts/ci/bundle-budget.mjs` |
+| vite.config.ts: bloco codeSplitting.groups nao encontrado | `scripts/ci/bundle-budget.unit.mjs` |
+| vite.config.ts: fecho do bloco groups nao encontrado | `scripts/ci/bundle-budget.unit.mjs` |
+| vite.config.ts: nenhum grupo com name/priority/test foi lido | `scripts/ci/bundle-budget.unit.mjs` |
+| audit_report.pdf is timezone-dependent: ${zones.join( | `scripts/ci/check-audit-pdf-determinism.mjs` |
+| Argumento desconhecido: ${argv[i]} | `scripts/ci/check-bundle-secrets.mjs` |
+| ), { recursive: true });   mkdirSync(path.join(raiz,  | `scripts/ci/check-edge-error-exposure.unit.mjs` |
+| ${caminho} deve exportar quarentena como lista | `scripts/ci/check-quarantine.mjs` |
+| argumento desconhecido: ${argumento} | `scripts/ci/check-quarantine.mjs` |
+| argumento incompleto: use --hoje=AAAA-MM-DD | `scripts/ci/check-quarantine.mjs` |
+| argumento repetido: --${nome} | `scripts/ci/check-quarantine.mjs` |
+| fonte única de versões ausente ou ilegível em ${TOOLCHAIN_PATH}: ${error.message} | `scripts/ci/check-workflow-pins.mjs` |
+| fonte única de versões incompleta em ${TOOLCHAIN_PATH}: falta a versão de  | `scripts/ci/check-workflow-pins.mjs` |
+| fonte única de versões inválida em ${TOOLCHAIN_PATH}: o arquivo precisa ser um objeto JSON | `scripts/ci/check-workflow-pins.mjs` |
+| contexto sem  | `scripts/ci/ci-artifacts.unit.mjs` |
+| expressao incompleta em  | `scripts/ci/ci-artifacts.unit.mjs` |
+| falta  | `scripts/ci/ci-artifacts.unit.mjs` |
+| funcao desconhecida em  | `scripts/ci/ci-artifacts.unit.mjs` |
+| operando nao booleano em  | `scripts/ci/ci-artifacts.unit.mjs` |
+| sobrou token em  | `scripts/ci/ci-artifacts.unit.mjs` |
+| ciclo em needs envolvendo ${id} | `scripts/ci/ci-local-lib.mjs` |
+| delimitador  | `scripts/ci/ci-local-lib.mjs` |
+| git add --intent-to-add falhou: ${(ita.stderr ??  | `scripts/ci/ci-local-lib.mjs` |
+| git diff ${alvo} falhou: ${(d.stderr ??  | `scripts/ci/ci-local-lib.mjs` |
+| git diff --raw: linha inesperada  | `scripts/ci/ci-local-lib.mjs` |
+| git merge-base falhou: ${(mb.stderr ??  | `scripts/ci/ci-local-lib.mjs` |
+| ${cmd} ${args.slice(0, 3).join( | `scripts/ci/ci-local.mjs` |
+| docker run do serviço ${svc} falhou: ${msg.slice(-3).join( | `scripts/ci/ci-local.mjs` |
+| env ${k} do serviço ${svc}: ${r.erros.join( | `scripts/ci/ci-local.mjs` |
+| git diff do working tree falhou | `scripts/ci/ci-local.mjs` |
+| serviço ${svc} não ficou de pé (estado: ${estado \|\|  | `scripts/ci/ci-local.mjs` |
+| serviço ${svc} não ficou pronto em 120 s (estado: ${estado}) | `scripts/ci/ci-local.mjs` |
+| PRIVATE-SOURCE | `scripts/ci/command-palette-contacts.unit.mjs` |
+| não deve carregar lista nem gravar dados | `scripts/ci/command-palette-contacts.unit.mjs` |
+| Artifact-id sem arquivo correspondente | `scripts/ci/contexto-publicacao.unit.mjs` |
+| Download simulado falhou: ${failDownload} | `scripts/ci/contexto-publicacao.unit.mjs` |
+| ).   assert.doesNotMatch(readme, /não mais\s+lido direto pelo dashboard/,  | `scripts/ci/dashboard-readme-drift.unit.mjs` |
+| I/O não permitido | `scripts/ci/e2e-auth-diagnostics.unit.mjs` |
+| credential-canary password-canary | `scripts/ci/e2e-auth-isolation.unit.mjs` |
+| leitura proibida: ${key} | `scripts/ci/e2e-auth-isolation.unit.mjs` |
+| password-canary | `scripts/ci/e2e-auth-isolation.unit.mjs` |
+| I/O externo proibido nesta simulação | `scripts/ci/e2e-auth-setup.unit.mjs` |
+| Leitura de dados sensiveis proibida | `scripts/ci/e2e-auth-setup.unit.mjs` |
+| [E2E setup/ISOLATION_PROOF] prova recusada | `scripts/ci/e2e-auth-setup.unit.mjs` |
+| prazo simulado | `scripts/ci/e2e-auth-setup.unit.mjs` |
+| forbidden- | `scripts/ci/e2e-email-navigation-diagnostics.unit.mjs` |
+| SENSITIVE-RAW-NATIVE | `scripts/ci/e2e-http-regressions.unit.mjs` |
+| rede proibida neste teste | `scripts/ci/e2e-isolated-alert.unit.mjs` |
+| fixture-refusal | `scripts/ci/e2e-isolated-fixture-access.unit.mjs` |
+| controlled missing file | `scripts/ci/e2e-isolated-fixtures.unit.mjs` |
+| unexpected file read | `scripts/ci/e2e-isolated-fixtures.unit.mjs` |
+| unexpected mutation:  | `scripts/ci/e2e-isolated-images.unit.mjs` |
+| bad JWT | `scripts/ci/e2e-isolated-loader.unit.mjs` |
+| bad signature | `scripts/ci/e2e-isolated-loader.unit.mjs` |
+| bundle denied | `scripts/ci/e2e-isolated-loader.unit.mjs` |
+| stat denied | `scripts/ci/e2e-isolated-loader.unit.mjs` |
+| worker error | `scripts/ci/e2e-isolated-loader.unit.mjs` |
+| credentials read before gateway verification | `scripts/ci/e2e-isolated-login-seed.unit.mjs` |
+| credentials read before isolation | `scripts/ci/e2e-isolated-login-seed.unit.mjs` |
+| network blocked | `scripts/ci/e2e-isolated-network-contexts.unit.mjs` |
+| Unexpected controlled boundary:  | `scripts/ci/e2e-isolated-provider-readiness.unit.mjs` |
+| diagnostic-write-failed | `scripts/ci/e2e-isolated-provider-readiness.unit.mjs` |
+| disk-full | `scripts/ci/e2e-isolated-provider-readiness.unit.mjs` |
+| must-not-read-service-role | `scripts/ci/e2e-isolated-provider-readiness.unit.mjs` |
+| synthetic transport rejection | `scripts/ci/e2e-isolated-runtime-probe.unit.mjs` |
+| … +1857 linhas — lista completa em `context.json` | |
 
 ## J. Controle de acesso no código (checagens de perfil/permissão)
 
 | Valor comparado | Arquivo |
 |---|---|
-| `string` | `analise-prs/resgate-261118-lote3/claude/feat-radar-motor-telas-261101-1330/src/hooks/copilot/useCopilotSession.ts` |
-| `granted` | `analise-prs/resgate-261118-lote3/claude/fix-unit-tests-src-261024-1630/src/hooks/business/useWarRoomAlerts.ts` |
-| `granted` | `analise-prs/resgate-261118-lote3/claude/fix-unit-tests-src-261024-1630/src/hooks/chat/useTeamChatNotifications.ts` |
-| `profileId` | `analise-prs/resgate-261118-lote3/claude/fix-unit-tests-src-261024-1630/src/hooks/gamification/useAgentCelebrations.ts` |
-| `admin` | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/inbox/WhisperMode.tsx` |
-| `supervisor` | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/inbox/WhisperMode.tsx` |
-| `granted` | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/hooks/chat/useTeamChatNotifications.ts` |
-| `string` | `analise-prs/resgate-261118-lote3/claude/radar-motor-copilot-live-301030/src/hooks/copilot/useCopilotSession.ts` |
-| `positive` | `analise-prs/resgate-261118-lote3/claude/test-e2e-suite-completa-261104-1428/scripts/ci/e2e-isolated-tls.unit.mjs` |
-| `spec` | `analise-prs/resgate-261118-lote3/claude/test-e2e-suite-completa-261104-1428/scripts/ci/e2e-isolated-tls.unit.mjs` |
-| `untrusted` | `analise-prs/resgate-261118-lote3/claude/test-e2e-suite-completa-261104-1428/scripts/ci/e2e-isolated-tls.unit.mjs` |
-| `driver` | `analise-prs/resgate-261118-lote3/claude/test-e2e-tls-diagnostico-261104-1340/scripts/e2e-isolated/tls.mjs` |
-| `edge` | `analise-prs/resgate-261118-lote3/claude/test-e2e-tls-diagnostico-261104-1340/scripts/e2e-isolated/tls.mjs` |
-| `gateway` | `analise-prs/resgate-261118-lote3/claude/test-e2e-tls-diagnostico-261104-1340/scripts/e2e-isolated/tls.mjs` |
-| `admin` | `analise-prs/resgate-261118-lote3/hermes/telefonia-fase8-motion-a11y-responsivo-2610031530007c/src/components/calls/TelefoniaView.tsx` |
-| `supervisor` | `analise-prs/resgate-261118-lote3/hermes/telefonia-fase8-motion-a11y-responsivo-2610031530007c/src/components/calls/TelefoniaView.tsx` |
-| `string` | `analise-prs/resgate-261118-lote3/resolve-2381-from-main/src/hooks/copilot/useCopilotSession.ts` |
 | `bwp` | `analise-prs/variantes-261118/claude_pink__cool-dijkstra-xk9ek2/scripts/ci/aplicar-perimetro.mjs` |
 | `undefined` | `analise-prs/variantes-261118/claude_pink__cool-dijkstra-xk9ek2/scripts/ci/aplicar-perimetro.mjs` |
 | `agent` | `src/components/admin/TrainingMode.tsx` |
@@ -5049,11 +4725,10 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `owner` | `supabase/migrations/20260927270018_team_chat_e28_fix_find_or_create_race.sql` |
 | `anon` | `supabase/migrations/20260927340000_fix_add_agent_xp_negative_and_guard.sql` |
 
-## K. Testes como especificação (26049 testes em 2715 arquivos — nomes completos em `context.json`)
+## K. Testes como especificação (22878 testes em 2430 arquivos — nomes completos em `context.json`)
 
 | Arquivo | Testes | Exemplos do que o sistema DEVE fazer |
 |---|---|---|
-| `analise-prs/resgate-261118-lote3/codex/publish-followup-20261021/src/components/talkx/__tests__/useCampaignEditor.test.tsx` | 80 | useCampaignEditor — draft integrity · rejects a nonexistent local DST time instead of silently moving the scheduled instant · converts a valid time after the DST transition using the offset in effect at that time · rejects an ambiguous local DST time instead of arbitrarily choosing one occurrence … |
 | `scripts/db-audit/check-migration-drift.test.mjs` | 80 | aceita migration com nome e SQL equivalentes no ledger · aceita registro legado sem name/statements, sem inventar evidencia · fixa arquivo legado por hash sem chamar seus bytes de conteudo historico · name-and-file-pinned falha para arquivo/nome alterado ou SQL recuperado no ledger … |
 | `src/components/catalog/__tests__/catalogShared.test.tsx` | 80 | catalogShared · formatPrice formata em BRL pt-BR · formatPrice arredonda para 2 casas · formatStock adiciona sufixo  … |
 | `src/components/settings/__tests__/MediaLibraryAdmin.test.tsx` | 80 | MediaLibraryAdmin · Main Component Rendering · renders the main title · renders the description … |
@@ -5062,25 +4737,19 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `src/hooks/__tests__/useExternalCatalog.test.ts` | 80 | useExternalCatalog · Initialization · initializes with empty state · exposes all expected methods … |
 | `src/hooks/tasks/__tests__/workItemAggregates.test.ts` | 80 | Fase F — correções da auditoria · a busca ignora acento e caixa:  · lista nula não derruba o recorte (guarda  · concluída SEM carimbo entra nos 7 dias da Lista (mesma regra do Quadro) … |
 | `supabase/functions/multiplix-send/index.test.ts` | 80 | personalize resolve {{empresa}} com o nome da empresa · personalize resolve {{saudacao}} para um período válido do dia · personalize mantém o texto byte a byte E reporta {{empresa}} sem valor em missing (MX06) · personalize usa fallback [variavel] para placeholder fora do conjunto fixo (nunca lança) … |
-| `analise-prs/resgate-261118-lote3/claude/fix-ga-fase1-lote-banco-261020-2200/scripts/db-audit/check-migration-drift.test.mjs` | 74 | aceita migration com nome e SQL equivalentes no ledger · aceita registro legado sem name/statements, sem inventar evidencia · fixa arquivo legado por hash sem chamar seus bytes de conteudo historico · name-and-file-pinned falha para arquivo/nome alterado ou SQL recuperado no ledger … |
-| `analise-prs/resgate-261118-lote3/codex/publish-followup-20261021/scripts/db-audit/check-migration-drift.test.mjs` | 73 | aceita migration com nome e SQL equivalentes no ledger · aceita registro legado sem name/statements, sem inventar evidencia · fixa arquivo legado por hash sem chamar seus bytes de conteudo historico · name-and-file-pinned falha para arquivo/nome alterado ou SQL recuperado no ledger … |
 | `supabase/functions/evolution-api/index.test.ts` | 73 | R2-API-001: ${action} sem papel devolve 403 e não produz I/O no provedor · R2-API-001: admin conserva a operação (set-webhook chega ao provedor) · R2-API-001: ${action} sem papel devolve 403 e não produz I/O no provedor · R2-API-001: ação desconhecida com admin passa o gate e cai no 404 do handler … |
-| `analise-prs/resgate-261118-lote3/fix/ci-verde-261021/scripts/db-audit/check-migration-drift.test.mjs` | 72 | aceita migration com nome e SQL equivalentes no ledger · aceita registro legado sem name/statements, sem inventar evidencia · fixa arquivo legado por hash sem chamar seus bytes de conteudo historico · name-and-file-pinned falha para arquivo/nome alterado ou SQL recuperado no ledger … |
-| `analise-prs/resgate-261118-lote3/fix/ci-workflows-vermelhos/scripts/db-audit/check-migration-drift.test.mjs` | 72 | aceita migration com nome e SQL equivalentes no ledger · aceita registro legado sem name/statements, sem inventar evidencia · fixa arquivo legado por hash sem chamar seus bytes de conteudo historico · name-and-file-pinned falha para arquivo/nome alterado ou SQL recuperado no ledger … |
 | `src/components/talkx/__tests__/talkxTemplateFile.test.ts` | 72 | X093 · talkxTemplateFile — parseTemplateFile · CSV básico com cabeçalho name;content · CSV com BOM é limpo · CSV com aspas duplas em campo … |
 | `src/lib/__tests__/emailHtml.test.ts` | 70 | sanitizeEmailHtml — XSS básico · remove <script> · remove event handlers (onclick, onerror, onload) · remove javascript: em href … |
-| `analise-prs/resgate-261118-lote3/fix/ci-workflows-vermelhos/src/hooks/__tests__/useEvolutionApi.test.ts` | 69 | useEvolutionApi - Exhaustive Test Suite · Initialization · starts with isLoading = false · exposes all supported functions … |
 | `src/hooks/__tests__/useEvolutionApi.test.ts` | 69 | useEvolutionApi - Exhaustive Test Suite · Initialization · starts with isLoading = false · exposes all supported functions … |
 | `src/hooks/__tests__/useSipClient.test.ts` | 69 | useSipClient · should start with disconnected status · should set connecting status when connect is called · should become registered when registerer fires Registered … |
 | `supabase/functions/talkx-send/index.test.ts` | 69 | personalize resolves the built-in placeholders (nome/apelido/empresa/saudacao) · personalize falls back to a bracket placeholder for an unresolved variable instead of throwing · personalize substitutes the real value when the contact has that custom field · personalize resolves multiple custom values in the same message … |
-| `analise-prs/resgate-261118-lote3/hermes/telefonia-fase8-motion-a11y-responsivo-2610031530007c/src/components/team-chat/__tests__/team-chat-security-gaps.test.ts` | 66 | Team Chat — Security Analysis · RLS Policy Gaps · GAP: INSERT on team_conversation_members only checks auth.uid() IS NOT NULL · GAP: No DELETE policy on team_conversations … |
 | `src/lib/journey/__tests__/mappers.test.ts` | 66 | mapMessages · agrupa mensagens seguidas do MESMO autor em até 10 min · na virada de 10 min: exatamente 10 min agrupa, 10 min + 1 ms não agrupa · autores diferentes não entram na mesma rajada … |
 | `src/lib/journey/__tests__/periodRange.test.ts` | 64 | resolveRange — atalhos (D04) · any devolve intervalo aberto e não marca inválido · today cobre o dia inteiro do relógio do aparelho · ${preset} começa em (hoje − ${dias - 1}) 00:00 e vai até o fim de hoje … |
 | `src/components/inbox/location-picker/__tests__/useAddressAutocomplete.test.tsx` | 62 | useAddressAutocomplete · proximidade depende das coordenadas, não da identidade do objeto · %s: centro equivalente conserva destaque e seleção sem repetir a busca · novo objeto com coordenadas zero não aborta nem substitui a consulta em voo … |
+| `supabase/functions/_shared/ai-usage.test.ts` | 59 | logAiUsageDetached: com EdgeRuntime.waitUntil, entrega a promessa ao runtime sem bloquear · registrarConsumoDeDiagnostico: export do ai-proxy preserva o consumo provider_test · logAiUsageDetached: sem EdgeRuntime.waitUntil, AGUARDA a promessa até o insert concluir · ai-proxy: os logs de consumo usam  … |
 | `src/lib/calls/adapters/__tests__/CallEngine.test.ts` | 55 | SipCallAdapter.setMuted (T18) · muteia a track de áudio e devolve o estado LIDO (não o pedido) · desmuta a track e devolve o estado lido · sem mídia devolve null, para o chamador decidir pela intenção … |
 | `src/components/settings/theme/__tests__/presets.test.ts` | 54 | §1 catálogo · tem 19 presets com ids únicos · corporate é o primeiro · ordem é clássicas (10) seguidas de GX (9) … |
 | `supabase/functions/message-delivery/index.test.ts` | 54 | message delivery rejects methods other than POST before reading secrets · message delivery rejects unauthenticated callers before reading the body · message delivery builds an Evolution poll only from a valid persisted payload · message delivery rejects a malformed persisted contact payload … |
-| `supabase/functions/_shared/ai-usage.test.ts` | 53 | logAiUsageDetached: com EdgeRuntime.waitUntil, entrega a promessa ao runtime sem bloquear · registrarConsumoDeDiagnostico: export do ai-proxy preserva o consumo provider_test · logAiUsageDetached: sem EdgeRuntime.waitUntil, AGUARDA a promessa até o insert concluir · ai-proxy: os logs de consumo usam  … |
 | `src/components/tasks/__tests__/TasksModule.test.tsx` | 50 | TasksModule — etapa 57 (QuickAdd da Agenda) · na Agenda existe um único QuickAdd, já apontando para o dia selecionado · TasksModule — etapa 45 (barra de filtros) · traz o toggle de concluídas na linha de captura e deixa a barra sem duplicar … |
 | `src/lib/journey/__tests__/stats.test.ts` | 50 | computeJourneyStats — totais por categoria (S074) · conta cada categoria separada e a soma em  · linha com data inválida não entra na conta nem produz NaN · entrada vazia devolve zeros sem estourar … |
 | `src/components/ai/__tests__/AutoTicketClassifier.test.tsx` | 49 | AutoTicketClassifier · Rendering · renders title · renders auto-classify switch … |
@@ -5090,14 +4759,9 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `src/components/inbox/contact-details/__tests__/ContactHeaderSection.test.tsx` | 47 | ContactHeaderSection · renders contact first name · renders company name · does not render phone number or WhatsApp link … |
 | `src/components/talkx/__tests__/TalkXView.route.test.tsx` | 47 | TalkXView wizard route integration · restores the routed draft and its requested step on first render · autosave do rascunho novo não remonta o wizard quando a lista de campanhas recarrega · voltar entre passos do rascunho novo não expulsa o usuário enquanto a lista não traz o rascunho … |
 | `tests/contracts/ai-routing.contract.test.ts` | 47 | IA-031/034 — resolveProvider: um padrão por finalidade, nunca arbitrário · exatamente 1 padrão ativo para a finalidade → resolve para ele · 0 padrões → NO_PROVIDER (a ausência vira indisponibilidade explícita) · 2+ padrões para a mesma finalidade → AMBIGUOUS_PROVIDER (jamais escolher uma) … |
-| `analise-prs/resgate-261118-lote3/claude/feat-ui-visual-texto-longo-261101-1445/src/components/ai/__tests__/ChurnPredictionDashboard.test.tsx` | 46 | ChurnPredictionDashboard · Rendering · renders title · renders subtitle … |
 | `src/components/ai/__tests__/ChurnPredictionDashboard.test.tsx` | 46 | ChurnPredictionDashboard · Rendering · renders title · renders subtitle … |
 | `src/components/performance/__tests__/PerformanceMonitor.test.tsx` | 46 | PerformanceMonitor · Rendering · renders title · renders subtitle … |
-| `analise-prs/resgate-261118-lote3/claude/feat-message-delivery-post-iniciado-261101-1937/supabase/functions/message-delivery/index.test.ts` | 44 | message delivery rejects methods other than POST before reading secrets · message delivery rejects unauthenticated callers before reading the body · message delivery builds an Evolution poll only from a valid persisted payload · message delivery rejects a malformed persisted contact payload … |
-| `analise-prs/resgate-261118-lote3/codex/publish-followup-20261021/src/hooks/integrations/__tests__/useTalkXSegments.test.ts` | 43 | rulesToPostgrest · fails closed instead of dropping an unknown rule · keeps a valid rule as a PostgREST filter · escapes a trailing backslash before quoting, so the filter string cannot stay open … |
 | `src/components/catalog/__tests__/ExternalProductManagement.test.tsx` | 43 | ExternalProductManagement · mostra o título e a contagem total de produtos · E32: chip de sync recente mostra  · E32: chip de sync com mais de 24h mostra data/hora (tom neutro) … |
-| `analise-prs/resgate-261118-lote3/claude/fix-talkx-x006-test-limites-261101-2130/src/components/talkx/__tests__/TalkX.test.tsx` | 42 | useTalkX · initializes with empty campaigns · has null selectedCampaignId by default · setSelectedCampaignId updates state … |
-| `analise-prs/resgate-261118-lote3/claude/kind-gates-87mwoe/src/hooks/inbox/__tests__/useInboxBulkActions.test.ts` | 42 | useInboxBulkActions — seleção · estado inicial: fora do modo de seleção, sem ids e sem loading · toggleSelectionMode liga e, ao desligar, limpa a seleção · toggleSelection alterna o id e devolve um Set NOVO (não muta o anterior) … |
 | `src/components/catalog/__tests__/CatalogRail.test.tsx` | 42 | CatalogRail — E51 banner · renderiza a copy do banner e nao inclui o placeholder do mock · usa o 1o produto em destaque COM imagem (ignora destaque sem foto) · le a foto de primary_image_url (campo canonico do ExternalProduct) … |
 | `src/components/catalog/__tests__/SendProductDialog.test.tsx` | 42 | SendProductDialog — Fase 7 (E72-E75 parcial) · mostra o contador de caracteres da mensagem (E73) · acima de 2000 caracteres, desabilita  · dentro do limite,  … |
 | `src/components/security/__tests__/AuditLogDashboard.test.tsx` | 42 | AuditLogDashboard · Query columns · selects explicit columns instead of * for audit_logs · a lista de 200 pede ordem determinística, com desempate por id … |
@@ -5106,14 +4770,8 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `src/hooks/integrations/__tests__/useTalkXSegments.test.ts` | 42 | rulesToPostgrest · fails closed instead of dropping an unknown rule · keeps a valid rule as a PostgREST filter · escapes a trailing backslash before quoting, so the filter string cannot stay open … |
 | `src/providers/__tests__/CallSessionProvider.test.tsx` | 42 | CallSessionProvider (T10) · aceite:  · openDialer emite zapp:navigate e sincroniza useNavigationHistory para voip · mantém os campos que a UI antiga consome (TelefoniaView/DialPad/ActiveCallBar) … |
 | `supabase/functions/crm-integration/index.test.ts` | 42 | sidebar lookup resolves the expected RPC and logs only bounded telemetry · sidebar lookup returns 409 when the stable identity differs · intelligence lookup returns 409 when the stable identity differs · intelligence lookup resolves when the external identity matches the stable link … |
-| `analise-prs/resgate-261118-lote3/claude/fix-unit-tests-src-261024-1630/src/hooks/inbox/__tests__/useInboxBulkActions.test.ts` | 41 | useInboxBulkActions — seleção · estado inicial: fora do modo de seleção, sem ids e sem loading · toggleSelectionMode liga e, ao desligar, limpa a seleção · toggleSelection alterna o id e devolve um Set NOVO (não muta o anterior) … |
-| `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/hooks/inbox/__tests__/useInboxBulkActions.test.ts` | 41 | useInboxBulkActions — seleção · estado inicial: fora do modo de seleção, sem ids e sem loading · toggleSelectionMode liga e, ao desligar, limpa a seleção · toggleSelection alterna o id e devolve um Set NOVO (não muta o anterior) … |
-| `analise-prs/resgate-261118-lote3/claude/magical-pasteur-iz2pgy/src/hooks/inbox/__tests__/useInboxBulkActions.test.ts` | 41 | useInboxBulkActions — seleção · estado inicial: fora do modo de seleção, sem ids e sem loading · toggleSelectionMode liga e, ao desligar, limpa a seleção · toggleSelection alterna o id e devolve um Set NOVO (não muta o anterior) … |
-| `analise-prs/resgate-261118-lote3/fix/ci-verde-261021/src/hooks/inbox/__tests__/useInboxBulkActions.test.ts` | 41 | useInboxBulkActions — seleção · estado inicial: fora do modo de seleção, sem ids e sem loading · toggleSelectionMode liga e, ao desligar, limpa a seleção · toggleSelection alterna o id e devolve um Set NOVO (não muta o anterior) … |
 | `supabase/functions/connection-health-check/index.test.ts` | 41 | E24: cada conexão consulta o provedor com o token DELA, nunca com a chave global · E24: sem token próprio no Vault a instância não é consultada com a credencial de outra · E24: falha ao LER a credencial do Vault não usa a rede e registra o motivo · E25: GO logada SEM socket (Connected:false, LoggedIn:true) → degraded, nunca healthy … |
 | `tests/contracts/ai-vision-classifiers-mock.contract.test.ts` | 41 | (1) visão: imagem embutida em DATA URL, download autenticado e modelo do servidor · classify-emoji baixa no servidor e envia  · classify-sticker segue a MESMA rota: data URL embutida e endpoint de visão · o endpoint do provedor de TEXTO padrão NUNCA é chamado quando a modalidade é visão … |
-| `analise-prs/resgate-261118-lote3/fix/ci-workflows-vermelhos/src/hooks/chat/__tests__/useForwardMessage.test.ts` | 40 | useForwardMessage — carga dos destinos ao abrir · só consulta o banco quando  · com allowGroups=false não busca a tabela de grupos · erro de rede/RLS ao buscar contatos: lista vazia, erro registrado e isLoading de volta a false … |
-| `analise-prs/resgate-261118-lote3/hermes/robustez-primitivos-ui-2610121626bec5-2610141859e423/src/lib/__tests__/groupsAutoSync.test.ts` | 40 | Group Data Extraction · JID Resolution · uses id field first · falls back to jid … |
 | `src/hooks/chat/__tests__/useForwardMessage.test.ts` | 40 | useForwardMessage — carga dos destinos ao abrir · só consulta o banco quando  · com allowGroups=false não busca a tabela de grupos · erro de rede/RLS ao buscar contatos: lista vazia, erro registrado e isLoading de volta a false … |
 | `src/hooks/integrations/__tests__/useTalkXTemplates.test.ts` | 40 | useTalkXTemplates — listagem · carrega a lista com o select do criador e a ordem por uso/atualizacao · expoe lista vazia quando o banco responde null · propaga o erro de RLS/rede da listagem (nao engole) … |
 | `src/lib/calls/adapters/__tests__/SipCallAdapter.test.ts` | 40 | SipCallAdapter — host, destino e validação do número (T09) · o host da URI vem do UA, não da sessão · é discável quando a URI resolve, e a URI leva o número com o host do UA · número malformado (a URI não resolve) não é discável … |
@@ -5129,14 +4787,15 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `src/lib/__tests__/mediaVolumeStore.test.ts` | 37 | mediaVolumeStore · default e leitura · nasce com 80 e sem mute (E01) · mantém a identidade do snapshot quando nada muda (exigência do useSyncExternalStore) … |
 | `src/services/__tests__/evolution.service.test.ts` | 37 | getEvolutionInstances · traduz a view segura: instance_name vem de  · devolve lista vazia quando a view volta vazia ou null (nunca undefined) · propaga o erro de leitura (RLS 42501) em vez de devolver lista vazia … |
 | `supabase/functions/auth-login/index.test.ts` | 37 | negação por IP (403) responde ANTES de body/credenciais/efeitos · negação por país (403) não chama autenticação nem grava tentativa · erro de decisão responde 503 (indecidível, sem vazar regras) · bloqueio por país registra log_login_block com IP, país, motivo e user-agent … |
-| `analise-prs/resgate-261118-lote3/fix/ci-verde-261021/supabase/functions/auth-login/index.test.ts` | 36 | negação por IP (403) responde ANTES de body/credenciais/efeitos · negação por país (403) não chama autenticação nem grava tentativa · erro de decisão responde 503 (indecidível, sem vazar regras) · bloqueio por país registra log_login_block com IP, país, motivo e user-agent … |
 | `src/components/security/__tests__/RateLimitConfigPanel.test.tsx` | 36 | RateLimitConfigPanel · Rendering · renders title · renders description … |
 | `src/features/talk-me/__tests__/TalkMeView.test.tsx` | 36 | TalkMeView · mostra os dados reais e mantém o atendimento mais antigo selecionado · navega manualmente sem autoplay e oferece fallback para áudio e cadastro incompleto · aceita uma única identidade e só abre o chat depois da confirmação do servidor … |
 | `src/lib/__tests__/slaTimeline.test.ts` | 36 | slaStatusForDuration · sem duração não há situação · sem prazo válido não há situação · dentro do prazo com folga é  … |
 | `src/components/email/__tests__/EmailChatThread.test.tsx` | 35 | EmailChatThread · preserva a leitura antiga, avisa sobre nova mensagem e desce sob comando · não usa rolagem animada quando movimento reduzido está ativo · lifecycle: setSelectedThreadId … |
 | `src/components/inbox/__tests__/linkPreviewUtils.test.ts` | 35 | isImageUrl · aceita as extensões de imagem conhecidas · ignora maiúsculas/minúsculas · aceita quando a extensão vem antes de query string … |
+| `src/components/inbox/copilot/__tests__/RadarPanel.test.tsx` | 35 | RadarPanel CV-051 · renderiza o painel com aria-label  · renderiza versão recolhida com botão de expandir · chama onToggleCollapsed ao clicar em recolher … |
 | `src/components/tasks/__tests__/primitivosCompartilhados.test.tsx` | 35 | TaskCheckbox — um checkbox circular para o módulo inteiro · é CIRCULAR (D16) e alterna pelo clique · guardado: aria-checked=true, nome  · desabilitado não dispara e sai do tab … |
 | `src/lib/__tests__/chartColors.test.ts` | 35 | chartColors · CHART_COLORS · has primary colors · has semantic colors … |
+| `supabase/functions/send-scheduled-report/index.test.ts` | 35 | auth: sem identidade → 401 e zero lookup/Resend/service-role · auth: x-cron-secret errado → 401 sem efeito · auth: CRON_SECRET vazio → x-cron-secret não autoriza (fail closed) · auth: Bearer inválido → 401 sem efeito … |
 | `tests/contracts/ai-image-input.contract.test.ts` | 35 | toInlineImage — caminho autenticado do Storage · baixa o objeto %s com service role e monta a data URL byte a byte · normaliza o mime com parâmetros do content-type · codifica cada segmento do caminho sem quebrar a URL do objeto … |
 | `src/components/inbox/contact-details/__tests__/EditContactDialog.test.tsx` | 34 | EditContactDialog · renders dialog title · pre-fills contact name · pre-fills contact phone … |
 | `src/features/talk-me/__tests__/useTalkMeQueue.test.tsx` | 34 | useTalkMeQueue · não consulta as RPCs enquanto a feature flag está desabilitada · carrega apenas a fila autorizada, normaliza os dados e remove o contato após o aceite · bloqueia duplo clique local enquanto o primeiro aceite aguarda o servidor … |
@@ -5152,16 +4811,12 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `src/hooks/analytics/__tests__/useGoalsDashboard.test.tsx` | 33 | useGoalsDashboard — funções de cor (limites) · progresso %i%% usa %s · fundo do progresso %i%% usa %s · oferece exatamente os três períodos do produto … |
 | `src/lib/calls/__tests__/session.test.ts` | 33 | session — estado inicial · devolve um objeto novo, ocioso e sem sessão · session — transições válidas (Apêndice C) · ${caso.de} + ${caso.evento.type} → ${caso.para} … |
 | `supabase/functions/multiplix-audience/index.test.ts` | 33 | F08: só destinatário classificado como eligible entra no disparo · F08: linha sem company_id não vira destinatário · F08: sem classificação explícita o destinatário entra como eligible · F08: campos que não existem no contrato não passam para a RPC … |
-| `analise-prs/resgate-261118-lote3/fix/ci-workflows-vermelhos/src/lib/__tests__/pdfThumbnail.test.ts` | 32 | renderPdfThumbnail — pdfjs-dist só sob demanda · não carrega pdfjs-dist no import do módulo e só o carrega na primeira miniatura · não tem import estático de pdfjs-dist no arquivo-fonte (o contrato M03 varre o resto) · aponta o worker para o asset resolvido com ?url e manda os BYTES baixados ao getDocument … |
-| `src/components/inbox/copilot/__tests__/RadarPanel.test.tsx` | 32 | RadarPanel CV-051 · renderiza o painel com aria-label  · renderiza versão recolhida com botão de expandir · chama onToggleCollapsed ao clicar em recolher … |
 | `src/components/onboarding/__tests__/OnboardingTour.test.tsx` | 32 | TourProvider · provides default inactive state · starts tour with steps · navigates forward through steps … |
 | `src/hooks/__tests__/useResourcePrefetch.test.ts` | 32 | usePrefetch · exposes prefetch function · exposes schedulePrefetch function · exposes cancelPrefetch function … |
 | `src/hooks/integrations/__tests__/useGmail.test.ts` | 32 | useGmail · accounts query · retorna lista via callGmailFunction · fallback para supabase.rpc quando callGmailFunction lança … |
 | `src/lib/__tests__/accessError.test.ts` | 32 | isAccessDeniedError — entradas inválidas · false para null · false para undefined · false para string … |
 | `src/lib/__tests__/pdfThumbnail.test.ts` | 32 | renderPdfThumbnail — pdfjs-dist só sob demanda · não carrega pdfjs-dist no import do módulo e só o carrega na primeira miniatura · não tem import estático de pdfjs-dist no arquivo-fonte (o contrato M03 varre o resto) · aponta o worker para o asset resolvido com ?url e manda os BYTES baixados ao getDocument … |
 | `src/lib/calls/__tests__/callStatus.test.ts` | 32 | normalizeStatus · mantém o status persistido  · traduz o legado completed → ended · traduz o legado ongoing → answered … |
-| `analise-prs/resgate-261118-lote3/fix/ci-workflows-vermelhos/src/components/inbox/__tests__/PlaybackSpeed.test.tsx` | 31 | AudioMessagePlayer - Playback Speed Controls · renders speed button with default 1x · speed button is visible for sent messages · speed button is visible for received messages … |
-| `analise-prs/resgate-261118-lote3/fix/ci-workflows-vermelhos/src/components/inbox/location-picker/__tests__/useLocationPicker.test.tsx` | 31 | useLocationPicker · carrega o mapa e limpa o spinner no evento load · container que só aparece depois da troca de aba ainda cria o mapa e arma o watchdog · timeout do token vira mensagem de timeout e é reportado … |
 | `src/components/inbox/__tests__/PlaybackSpeed.test.tsx` | 31 | AudioMessagePlayer - Playback Speed Controls · renders speed button with default 1x · speed button is visible for sent messages · speed button is visible for received messages … |
 | `src/components/inbox/__tests__/useInteractiveMessage.test.ts` | 31 | useInteractiveMessage — limites do WhatsApp · aceita 3 botões e recusa o 4º com aviso · aceita 10 seções e recusa a 11ª com aviso · aceita 10 itens numa seção e recusa o 11º com aviso … |
 | `src/components/inbox/location-picker/__tests__/useLocationPicker.test.tsx` | 31 | useLocationPicker · carrega o mapa e limpa o spinner no evento load · container que só aparece depois da troca de aba ainda cria o mapa e arma o watchdog · timeout do token vira mensagem de timeout e é reportado … |
@@ -5175,7 +4830,6 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `src/hooks/tasks/__tests__/useWorkItemDraft.test.tsx` | 30 | useWorkItemDraft — rascunho e patch mínimo (148/149) · o rascunho nasce dos campos do item (sem alterações pendentes) · sem item o rascunho é null e salvar é no-op · patch mínimo: alterar só o título envia SÓ o título … |
 | `src/lib/__tests__/supervisorPriority.test.ts` | 30 | computePriority (regras P1-P4) · P1: sem atendente há exatamente 30 min (fronteira) · P1: 29 min sem atendente NÃO é P1 (fronteira abaixo) · P1: com atendente, 30 min de espera não dispara a regra de  … |
 | `tests/contracts/ai-resilience-prazos-retry.contract.test.ts` | 30 | (1) classifyFailure: transitório × permanente × estado desconhecido (IA-042) · %s → transient (pode reenviar) · %s → permanent (NUNCA reenviar) · erro de REDE (sem resposta HTTP) → transient … |
-| `analise-prs/resgate-261118-lote3/fix/ci-verde-261021/supabase/functions/revoke-auth-sessions/index.test.ts` | 29 | global self: usuário comum pode revogar as próprias sessões sem ser admin · global de terceiro por usuário comum é recusado (403) · global de terceiro por admin é permitido (revoga por user_id) · local exige target_session_id … |
 | `src/components/catalog/__tests__/ContactSelectionStep.test.tsx` | 29 | ContactSelectionStep · botão de enviar fica desabilitado sem contato selecionado · com contato selecionado, o botão habilita e mostra o nome · sem busca e sem resultados, mostra o estado vazio de  … |
 | `src/components/email/__tests__/EmailContactPanel.test.tsx` | 29 | EmailContactPanel · renders only the safe company fields returned by the Email context · does not mistake a disabled CRM integration for a missing company · informs an authorized user when the explicit company link fails … |
 | `src/components/inbox/tabs/journey/__tests__/JourneyStatsHero.test.tsx` | 29 | JourneyStatsHero — estrutura e dados · renderiza os dois blocos com os valores do contato e do período · mantém a grade de 2 colunas no celular e 4 no desktop nos dois blocos de cartões · com dados vazios mostra traços e estados vazios, sem quebrar … |
@@ -5184,6 +4838,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `src/hooks/__tests__/useChatSearch.test.ts` | 29 | useChatSearch · returns empty results initially · searches text content after debounce · excludes deleted messages … |
 | `src/hooks/chat/__tests__/useConversationActions.test.ts` | 29 | useConversationActions · archiveContact · arquiva pela RPC set_conversations_status (a mesma do /archive e do lote) e NÃO mexe no responsável · anuncia o novo estado no evento que atualiza chip/lista sem esperar refetch … |
 | `src/services/__tests__/contact-bulk.service.test.ts` | 29 | emptyOutcome / pendingIds · emptyOutcome devolve listas NOVAS a cada chamada (mutar uma não afeta a outra) · pendingIds junta recusados e falhos, na ordem (recusados primeiro) · applyContactFieldUpdate … |
+| `supabase/functions/assistant-gateway/index.test.ts` | 29 | 401 quando o JWT não autentica · 400 quando não há pedido · 503 da guarda de IA é repassado sem chamar capacidade · panorama devolve resposta com >=3 fontes e a origem de cada pedaço … |
 | `src/components/contacts/__tests__/ExternalDataIntegration.test.tsx` | 28 | useExternalEmpresas · usa a ação estreita  · não cai mais no RPC admin-only nem no select genérico · sem  … |
 | `src/components/gmail/__tests__/GmailInboxView.test.tsx` | 28 | GmailInboxView · exibe estado  · renderiza a lista de threads do inbox quando há conta ativa · pasta inicial (Inbox) consulta o rótulo INBOX e não filtra em memória … |
 | `src/components/layout/__tests__/Sidebar.test.tsx` | 28 | Sidebar — nav primária e grupos compartilham uma única área de rolagem · Multiplix continua entre Contatos e Catálogo, e todos os três estão dentro do mesmo container com scroll · staff SEM a permissão nomeada não vê Multiplix na nav primária (papel não basta — F25) · agente COM a permissão nomeada vê Multiplix na nav primária (F25) … |
@@ -5192,7 +4847,6 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `supabase/functions/promogifts-catalog/index.actions.test.ts` | 28 | CT-77 sem Authorization devolve 401 e nem toca no client externo · CT-77 ação desconhecida devolve 400 Invalid request · CT-77 sem secrets do catálogo (e sem client injetado) devolve 503 CATALOG_NOT_CONFIGURED · CT-77 list_products devolve data + meta.total e aplica busca sem acento e OR de cores … |
 | `supabase/functions/revoke-auth-sessions/index.test.ts` | 28 | global self: usuário comum pode revogar as próprias sessões sem ser admin · global de terceiro por usuário comum é recusado (403) · global de terceiro por admin é permitido (revoga por user_id) · local exige target_session_id … |
 | `tests/contracts/ia131-audio-meme-conteudo.contract.test.ts` | 28 | (1) ai-audio-input: download AUTENTICADO e limites · baixa o objeto no endpoint autenticado e devolve base64 + formato mp3 · identidade de serviço usa a service role EXPLÍCITA (fluxo interno) · sem storageIdentity falha FECHADO, sem nenhuma rede … |
-| `analise-prs/resgate-261118-lote3/hermes/robustez-primitivos-ui-2610121626bec5-2610141859e423/src/lib/__tests__/webhookStatusPriority.test.ts` | 27 | Webhook Status Priority · Null Current Status · always updates when current is null · Forward Progression … |
 | `src/components/catalog/__tests__/useSendProduct.test.tsx` | 27 | useSendToContact — CT-04: caption na primeira foto, texto só sem foto · 3 fotos viram 3 mensagens (não 4), só a primeira com o texto como caption · sem foto, o texto vai como mensagem de texto (1 mensagem) · 1 foto usa o mesmo caminho de 1 mensagem (sem texto solto) … |
 | `src/components/talkx/__tests__/talkxRoute.test.ts` | 27 | Talk X route contract (X052) · sem parâmetros abre a Visão geral e não normaliza nada · lê a aba e a sub-visão gravadas · tab=campaigns é alias de overview … |
 | `src/hooks/analytics/__tests__/useAIStats.test.tsx` | 27 | calculateTrend — variação entre janelas · (%s -> %s) = %s/change %s/%% %s · variação abaixo de 1% é reportada como estável, sem número inventado · anterior zero com atual positivo é alta de 100% (não divisão por zero) … |
@@ -5202,9 +4856,6 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `src/lib/journey/__tests__/model.test.ts` | 27 | KIND_TO_CATEGORY · cobre todos os tipos finos e só eles · CATEGORY_META · cobre todas as categorias e só elas … |
 | `supabase/functions/_shared/__tests__/ai-response-contracts.test.ts` | 27 | análise bem formada passa e preserva os valores · sentiment fora do vocabulário canônico é rejeitado · sentimentScore em string é rejeitado (não vira 80) · sentimentScore fora da faixa 0-100 é rejeitado … |
 | `tests/contracts/ai-conversation-summary-contract.test.ts` | 27 | ai-conversation-summary — sem fallback que invente análise (IA-023) · não inventa defaults numéricos para sentimento/satisfação ausentes · não usa o fallback textual que sintetizava um resumo · não aplica o default de churnRisk nem clamp em braço … |
-| `analise-prs/resgate-261118-lote3/claude/feat-copiloto-edge-fases8-10-261024-1700/src/hooks/gamification/__tests__/mutations.test.tsx` | 26 | useGamificationMutations — XP · credita XP pelo perfil e devolve o resultado da RPC · invalida o cache do agente depois de creditar XP · sem perfil a mutação falha antes de tocar o banco … |
-| `analise-prs/resgate-261118-lote3/fix/ci-verde-261021/src/hooks/chat/__tests__/useConversationActions.test.ts` | 26 | useConversationActions · archiveContact · arquiva pela RPC set_conversation_status (a mesma do diálogo de encerrar) e NÃO mexe no responsável · anuncia o novo estado no evento que atualiza chip/lista sem esperar refetch … |
-| `analise-prs/resgate-261118-lote3/hermes/robustez-primitivos-ui-2610121626bec5-2610141859e423/src/lib/__tests__/rateLimiter.test.ts` | 26 | Rate Limiter · Basic Behavior · allows first request · allows up to 300 requests in a window … |
 | `e2e/skins-e2e.spec.ts` | 26 | CP8 — fidelidade das 19 skins · as 19 skins aplicam as vars exatas do catálogo e a cor pintada (sidebar/fundo, ΔE76 ≤ 6) · modo claro mantém a skin: corporate, gx-classic e diversity · raio: GX trava em 10px, clássica em 14px, presets rápidos seguem livres … |
 | `src/components/inbox/__tests__/VirtualizedRealtimeList.test.tsx` | 26 | VirtualizedRealtimeList — badge de canal e mini-avatar do atendente · mostra o badge do canal para Instagram, mas não para WhatsApp · esconde o mini-avatar quando a conversa é do próprio usuário logado (compara com o profile.id, não com o auth id — #349) · sem entrada no agentsMap para o assigned_to, não quebra e não mostra mini-avatar … |
 | `src/components/ui/__tests__/message-reactions.test.tsx` | 26 | ReactionBadge · mostra emoji e contagem no nome acessível (plural) · usa singular no nome acessível quando é só uma reação · aria-pressed=true quando eu já reagi … |
@@ -5212,18 +4863,17 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `src/hooks/integrations/__tests__/useExternalDB.test.ts` | 26 | useExternalSelect · usa limit 50 / offset 0 por padrão e devolve os dados · repassa select, filtros, ordem, paginacao e modo de contagem · não busca quando a flag do CRM está desligada … |
 | `src/lib/__tests__/quarantineStore.test.ts` | 26 | subscribe / getSnapshot · chama o listener a cada mudança e para depois do unsubscribe · mantém a mesma referência de snapshot enquanto nada muda (contrato do useSyncExternalStore) · get … |
 | `src/segments/__tests__/segmentRules.test.ts` | 26 | normalizeRules · returns an empty v2 set for null input · converts numeric text to number on number fields · keeps numeric-looking text as string on text fields … |
-| `analise-prs/resgate-261118-lote3/hermes/robustez-primitivos-ui-2610121626bec5-2610141859e423/src/components/ui/__tests__/robustez-primitivos.test.tsx` | 25 | (a) DialogContent — descrição acessível de fallback · diálogo SEM aria-describedby ganha a descrição oculta em pt-BR · diálogo com aria-describedby={undefined} de propósito NÃO ganha descrição injetada · diálogo com aria-describedby do chamador preserva o valor e não duplica … |
 | `src/components/inbox/__tests__/MediaVolume.test.tsx` | 25 | volume das mídias — controle, aplicação e separação dos alertas · E38/E39: com a mídia em mudo, o alerta continua saindo no ganho de settings.soundVolume · E40: mexer no volume da mídia não cria nem altera nó WebAudio dos alertas · E38: mexer no volume da mídia não escreve nas configurações de notificação (soundVolume) … |
 | `src/hooks/__tests__/useReauthentication.test.tsx` | 25 | useReauthentication · initializes with correct default state · reauthenticate succeeds with correct password · reauthenticate keeps AAL2 untouched when the session is already elevated … |
 | `src/hooks/chat/__tests__/useContactMedia.test.tsx` | 25 | useContactMedia — paginacao por keyset (etapa 41) · pede 60+1 por pagina e para no fim quando a pagina vem incompleta · pagina cheia (61 linhas) tem proxima pagina e o cursor (created_at, id) entra no 2o .or() · aceite etapa 41: 201 itens em 4 paginas de 60 e o 201o aparece no fim … |
 | `src/hooks/chat/__tests__/useFilesViewState.test.tsx` | 25 | useFilesViewState — preferencias (localStorage) · storage ausente: comeca no default decidido em D3 (grid, 4 colunas) · storage invalido: JSON quebrado, versao desconhecida e valores fora do dominio caem no default · sanitiza campo a campo: viewMode valido com columns invalido mantem o viewMode … |
 | `src/lib/calls/__tests__/persistence.test.ts` | 25 | upsertMyCall — mapa p_* da RPC · grava a chamada tocando com os nomes exatos dos parâmetros · grava o fim com status/motivo/duração e OMITE o que não tem valor · upsertMyCall — retry idempotente … |
+| `supabase/functions/ai-transcribe-audio/index.test.ts` | 25 | SL-195a: magic bytes vencem metadado divergente — OGG servido como audio/mpeg vai como audio/ogg · SL-195a: magic bytes vencem metadado divergente — MPEG servido como audio/ogg vai como audio/mpeg · SL-195a: assinatura não reconhecida mantém o fallback do metadado declarado (não regride) · SL-195a: resolveTranscriptionAudioFormat marca a fonte da decisão … |
 | `supabase/functions/multiplix-dispatch/actions/__tests__/inspect.test.ts` | 25 | F48 preview: cada bloco reproduz EXATAMENTE o payload do worker para o destinatario · F48 preview: conteudo com placeholders é identico ao worker para outro destinatario · F48 preview: sem blocos, cai no template do dispatch — o MESMO payload do worker atual · F48 preview: destinatario de outro dono/inexistente responde 404 nomeado … |
-| `supabase/functions/send-scheduled-report/index.test.ts` | 25 | auth: sem identidade → 401 e zero lookup/Resend/service-role · auth: x-cron-secret errado → 401 sem efeito · auth: CRON_SECRET vazio → x-cron-secret não autoriza (fail closed) · auth: Bearer inválido → 401 sem efeito … |
-| `analise-prs/resgate-261118-lote3/hermes/robustez-primitivos-ui-2610121626bec5-2610141859e423/src/lib/__tests__/phoneNormalization.test.ts` | 24 | Phone Normalization · Standard JIDs · strips @s.whatsapp.net suffix · strips @g.us suffix for groups … |
 | `e2e/navegacao-modulos.spec.ts` | 24 | Navegação por todos os módulos (desktop) · abre as 42 entradas mapeadas, o modo Quadro de Tarefas e a busca global sem erro de console nem requisição falha · Navegação por todos os módulos (celular 390x844) · abre as 42 entradas mapeadas pelo menu móvel, o modo Quadro de Tarefas e a busca do cabeçalho sem erro de console nem requisição falha … |
 | `src/components/inbox/__tests__/ConversationTabs.test.tsx` | 24 | etapa 75 — ConversationTabs (8 abas da fusão) · renderiza as 8 abas e nenhuma aba removida · badge de Tarefas mostra tasksOpen · não renderiza badge quando o contador é zero … |
 | `src/components/inbox/chat/__tests__/ChatSearchBar.test.tsx` | 24 | ChatSearchBar · renders nothing when closed · renders input and filters when open · finds messages by text content … |
+| `src/components/talkx/report/__tests__/TalkXCampaignReport.test.tsx` | 24 | talkxReportData · talkxReportSeriesFromRows · retorna array vazio para entrada vazia · agrupa 2 envios do mesmo dia em um único balde … |
 | `src/hooks/__tests__/useBitrixApi.test.ts` | 24 | useBitrixApi · initializes with loading false · initializes with error null · exposes listLeads function … |
 | `src/hooks/evolution/__tests__/useEvolutionMessaging.test.ts` | 24 | mapeamento ação -> payload da edge function · $name envia $action com o corpo do roteador · envia a mensagem pelo caminho da edge function, nunca direto para a Evolution · expõe exatamente as funções do contrato (nada a mais, nada a menos) … |
 | `src/hooks/system/__tests__/useSecurityPushNotifications.test.ts` | 24 | useSecurityPushNotifications — envio do alerta · com push disponível envia notificação com IP, urgência e vibração longa · severidade baixa não exige interação e usa vibração curta · descrição ausente cai no texto padrão … |
@@ -5232,8 +4882,6 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `src/services/__tests__/navigation.service.test.ts` | 24 | NavigationService integration maturity · keeps incomplete integrations out of production-ready groups · exposes every navigation id exactly once across primary and grouped menus · preserves the full-layout contract for workspace views … |
 | `supabase/functions/evolution-api/connect-go-token.test.ts` | 24 | connect: erro de rede/DNS na GO → 200 + go_unreachable (antes: 500 do catch-all) · connect: tempo esgotado no /instance/connect → 200 + go_unreachable 504 · connect: /instance/qr estoura o tempo (GO dorme 3 s no GetQr) → go_unreachable, sem lançar · connect: QR lento numa instância já pareada (sessão morta) → go_unreachable e ZERO delete/create … |
 | `supabase/functions/talkx-scheduler/index.test.ts` | 24 | X015 auth: sem x-cron-secret e sem Authorization → 401 · X015 auth: x-cron-secret errado → 401 · X015 auth: x-cron-secret correto → passa e o tick sem campanhas fecha 200 · X015 auth: Authorization Bearer com a service key → passa (não é 401) … |
-| `analise-prs/resgate-261118-lote3/fix/ci-workflows-vermelhos/src/components/email/__tests__/EmailChatReplyBar.test.tsx` | 23 | EmailChatReplyBar · resolvedTo display · reply inbound: mostra from_address no  · reply outbound: mostra to_addresses[0] no  … |
-| `analise-prs/resgate-261118-lote3/hermes/robustez-primitivos-ui-2610121626bec5-2610141859e423/src/hooks/evolution/__tests__/useEvolutionIntegrations.test.ts` | 23 | mapeamento ação -> payload da edge function · $name envia $action com o corpo do roteador · expõe exatamente as funções do contrato (nada a mais, nada a menos) · leitura devolve o dado da edge function … |
 | `src/components/catalog/__tests__/sendProductUtils.test.ts` | 23 | groupVariantsByColor · agrupa variantes pela cor e coleta thumbs sem duplicar · usa  · lista vazia retorna array vazio … |
 | `src/components/contacts/__tests__/useContactFormValidation.test.ts` | 23 | useContactFormValidation — checkEmailDuplicate · debounces query by 500 ms — no call before timeout · consecutive changes within 500 ms fire only one query (last value wins) · escapes % wildcard in email passed to ilike … |
 | `src/components/email/__tests__/EmailChatReplyBar.test.tsx` | 23 | EmailChatReplyBar · resolvedTo display · reply inbound: mostra from_address no  · reply outbound: mostra to_addresses[0] no  … |
@@ -5241,7 +4889,6 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `src/components/inbox/contact-details/__tests__/ContactActionButtons.test.tsx` | 23 | ContactActionButtons · abre o dropdown de  · abre o dropdown de  · desabilita o botão de e-mail quando o contato não tem e-mail … |
 | `src/components/inbox/location-picker/__tests__/SuggestionList.test.tsx` | 23 | SuggestionList — pausa de 429 (A3-04) · oferece  · espera acabada não mostra  · E57: a contagem de sugestões é anunciada em região viva (getByRole( … |
 | `src/components/inbox/tabs/__tests__/AudioPlayButton.test.tsx` | 23 | AudioPlayButton (A02/D03/D04) · D03: montar não assina nem cria áudio; a URL sai no PRIMEIRO clique e o som toca · D04: mostra o tempo restante e a barra fina enquanto toca; ao terminar volta ao play · D03: erro de URL expirada renova UMA vez e volta a tocar, sem mensagem de falha … |
-| `src/components/talkx/report/__tests__/TalkXCampaignReport.test.tsx` | 23 | talkxReportData · talkxReportSeriesFromRows · retorna array vazio para entrada vazia · agrupa 2 envios do mesmo dia em um único balde … |
 | `src/hooks/__tests__/useDashboardWidgets.test.ts` | 23 | useDashboardWidgets · initializes with default widgets · all widgets have required fields · visibleWidgets only contains visible widgets … |
 | `src/hooks/__tests__/useSLACalculation.test.ts` | 23 | calculateStatus · returns ok when completed on time · returns breached when completed late · returns ok with plenty of time remaining … |
 | `src/hooks/calls/__tests__/useCallChannels.test.ts` | 23 | capacidadesPorCanal — VoIP · registrado e sem problema de microfone: disca, recebe e recusa · reconectando: não disca nem recebe, motivo  · conectando cai na mesma família de reconexão … |
@@ -5251,8 +4898,6 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `src/lib/calls/__tests__/events.test.ts` | 23 | events — constantes do contrato · usa os nomes de evento do Apêndice D (novo) e do legado · events — round-trip de dispatchStartCall/onStartCall · emite CustomEvent tipado em document e entrega o payload intacto … |
 | `supabase/functions/get-call-recording/index.test.ts` | 23 | T73: sem tipo na origem assume audio/mpeg · T73: repassa faixa, tamanho e suporte a ranges · T73: sem tamanho/faixa, nao inventa cabecalho · T73: audio de cliente nunca e cacheado por intermediario … |
 | `tests/contracts/ai-conversation-analysis-contract.test.ts` | 23 | IA-023 · a análise não inventa dado quando a IA não devolve · não tem mais os defaults fabricados (50 / 3 /  · não sintetiza análise a partir de texto livre ( · usa o contrato numérico em vez de clamp com fallback … |
-| `analise-prs/resgate-261118-lote3/claude/fix-e2e-workers-timeout-tests-011101-1800/e2e/email-navy-visual.spec.ts` | 22 | rota real renderiza lista, conversa e compositor com o tema do sistema sem chamadas externas mutáveis · workspace do Email não introduz violações axe · superfícies do Email herdam os mesmos tokens do sistema em claro e escuro · busca, ajuda e foco do diálogo funcionam por teclado … |
-| `analise-prs/resgate-261118-lote3/fix/ci-workflows-vermelhos/src/hooks/communication/__tests__/useCallEngineSink.test.ts` | 22 | useCallEngineSink — ponte para estado, timer e toast (T09) · status, mute e erro caem no setter/toast certos · onSession escreve a direção na REF (o sink é memoizado) e no estado · atendida liga o cronômetro e encerrada o para (nunca invertidos) … |
 | `e2e/email-navy-visual.spec.ts` | 22 | rota real renderiza lista, conversa e compositor com o tema do sistema sem chamadas externas mutáveis · workspace do Email não introduz violações axe · superfícies do Email herdam os mesmos tokens do sistema em claro e escuro · busca, ajuda e foco do diálogo funcionam por teclado … |
 | `src/__tests__/rls-boundary.test.ts` | 22 | RLS boundary - anon role (SELECT returns empty) · ${table}: anon SELECT returns [] (RLS filters all rows) · RLS boundary - anon role (writes blocked with 42501) · ${table}: anon INSERT -> 42501 … |
 | `src/components/inbox/__tests__/CloseConversationDialog.test.tsx` | 22 | CloseConversationDialog — ações válidas por estado · estado open: oferece Encerrar e Arquivar, não oferece Reabrir · estado waiting: oferece Encerrar e Reabrir, não oferece Arquivar · estado resolved: oferece Reabrir e Arquivar, não oferece Encerrar … |
@@ -5270,8 +4915,6 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `src/styles/__tests__/cp1FidelidadeCarvao.test.ts` | 22 | SL181 · CP1 ΔE — page/card/sidebar em carvão (dark) · fundo da página é #0e0e10 (ΔE = 0) — o mesmo rgb(14,14,16) do ledger CP1 · card é hsl(240 5% 10%) (ΔE = 0 contra o alvo do plano) · sidebar fica na família carvão, um degrau mais fundo que a página (ΔE ≤ 1,5) … |
 | `supabase/functions/create-user/index.test.ts` | 22 | R2-AUTH-016 (a): falha no upsert de user_roles -> erro + deleteUser · R2-AUTH-016b (a2): sem role no corpo grava  · R2-AUTH-016b (a3): domínio não confiável recebe o papel pedido · R2-AUTH-016 (b): update de profiles falha -> erro + deleteUser … |
 | `tests/contracts/contraste-aa-componentes.contract.test.ts` | 22 | contraste AA — o parser de tokens não pode quebrar por causa do arquivo · acha o token no SEGUNDO bloco :root (tokens.css com 2 blocos) · ignora menção ao seletor dentro de comentário · não se perde com chave aninhada dentro do bloco … |
-| `analise-prs/resgate-261118-lote3/claude/fix-unit-tests-src-261024-1630/src/lib/__tests__/filesPeriod.adversarial.test.ts` | 21 | filesPeriod (adversarial) — fuso: o corte é o dia LOCAL, não a fatia UTC do ISO · o primeiro milissegundo do dia local entra (fatia UTC ainda é o MESMO dia, em UTC-3) · data só com dia ( · filesPeriod (adversarial) — viradas de dia, mês e ano … |
-| `analise-prs/resgate-261118-lote3/claude/test-e2e-suite-completa-261104-1428/supabase/functions/detect-new-device/index.test.ts` | 21 | extractAuthSessionId extrai session_id do claim JWT · extractAuthSessionId devolve null sem claim ou com token malformado · extractAuthSessionId ignora session_id fora do claim (só o token conta) · decideSessionUpsert atualiza linha existente da mesma sessão Auth … |
 | `src/__tests__/a11y/icon-button-names.test.ts` | 21 | varredura de botões de ícone — casos sintéticos · detecta <Button size=\ · não acusa quando há aria-label · não acusa quando há title … |
 | `src/components/calls/__tests__/calls-access.test.ts` | 21 | Telefonia — acesso e fronteiras (T07) · encontra a superfície de telefonia (o teste não passa por vacuidade) · nenhum arquivo da telefonia carrega a chave service_role · o hook de SIP não fala SIP direto: a fronteira é o adapter (invariante do T09) … |
 | `src/components/inbox/chat/__tests__/ConversationTabs.cp8.test.tsx` | 21 | CP8 · geometria das 8 abas · a barra mantém a altura do header do painel (53px) e não volta aos 48px do plano · a aba ativa mede 36px (h-9) — dentro do alvo 36±2 do E.2 · todas as 8 abas têm a mesma altura (nenhuma aba encolhe ao ser selecionada) … |
@@ -5285,8 +4928,6 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `src/lib/__tests__/rlsConversationAccess.test.ts` | 21 | RLS real: contacts (schema resolvido das migrations) · o conjunto de policies bate com o manifest do schema real · SELECT delega ao predicado canonico can_edit_contact (dono, fila ou admin) · INSERT exige admin/supervisor OU auto-atribuicao (assigned_to = proprio perfil) … |
 | `supabase/functions/_shared/__tests__/webhook-auth-gates.test.ts` | 21 | whatsapp-webhook: POST sem assinatura -> 401 antes de qualquer efeito (sem SUPABASE_URL configurada) · whatsapp-webhook: assinatura HMAC inválida -> 401 · whatsapp-webhook: replay — assinatura válida de OUTRO corpo -> 401 · whatsapp-webhook: sem WHATSAPP_APP_SECRET configurado -> 401 (falha fechada, mesmo com header bem formado) … |
 | `supabase/functions/detect-new-device/index.test.ts` | 21 | extractAuthSessionId extrai session_id do claim JWT · extractAuthSessionId devolve null sem claim ou com token malformado · extractAuthSessionId ignora session_id fora do claim (só o token conta) · decideSessionUpsert atualiza linha existente da mesma sessão Auth … |
-| `analise-prs/resgate-261118-lote3/claude/feat-copiloto-edge-fases8-10-261024-1700/src/hooks/integrations/__tests__/useTalkXSuppression.test.ts` | 20 | useTalkXSuppression — listagem · lista as 500 entradas mais recentes da supressao · expoe lista vazia quando o banco responde null · marca isError quando a listagem falha (RLS/rede) … |
-| `analise-prs/resgate-261118-lote3/fix/ci-workflows-vermelhos/src/hooks/admin/__tests__/useSupervisorQueue.test.tsx` | 20 | useSupervisorQueue — leitura e priorização · lê conversas abertas com os filtros certos, resolve nomes e ordena P1→P4 · conversas resolvidas/fechadas/deletadas não entram na fila · corta em 200 mantendo as MAIS ANTIGAS e sinaliza  … |
 | `src/components/calls/__tests__/CallDialog.test.tsx` | 20 | CallDialog — aceite T21: abrir o diálogo NÃO insere em  · disca pelo provider e não toca em nenhum caminho de escrita da tabela  · não disca de novo quando a chamada já existe ( · disca UMA única vez por abertura, mesmo com  … |
 | `src/components/contacts/__tests__/useContactsCRUD.test.tsx` | 20 | useContactsCRUD — edição não apaga endereço (C1) · E01 — editar só o nome preserva endereço e coordenada da linha completa · E05 — abre a edição com 1 fetch pelo id · E05 — falha do getById não perde endereço: o update não escreve os campos de endereço … |
 | `src/components/gmail/__tests__/EmailThreadView.test.tsx` | 20 | EmailThreadView · chama setSelectedThreadId com thread.id no mount · chama setSelectedThreadId(null) no unmount · exibe o subject da thread no header … |
@@ -5301,11 +4942,6 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `src/services/__tests__/outbound-message.service.test.ts` | 20 | sendOutboundMessage · enqueues first and only then asks the authenticated delivery gateway to dispatch · does not dispatch when authorization or validation prevents enqueueing · foto com URL inválida: o enqueue rejeitado impede o dispatch e propaga a falha … |
 | `src/utils/__tests__/notificationSounds.test.ts` | 20 | notificationSounds · playNotificationSound · plays default message sound without error · plays with chime sound type … |
 | `supabase/functions/_shared/messaging/__tests__/personalize.test.ts` | 20 | personalize resolves the built-in placeholders (nome/apelido/nome_completo/empresa) · personalize {{apelido}} cai no primeiro nome quando o contato nao tem apelido · personalize built-in sem valor entra em missing e mantem o texto vazio (X020) · personalize falls back to a bracket placeholder for an unresolved variable instead of throwing … |
-| `analise-prs/resgate-261118-lote3/claude/fix-codex-findings-161016-1906/src/hooks/integrations/__tests__/useTalkXSuppression.test.ts` | 19 | useTalkXSuppression — listagem · lista as 500 entradas mais recentes da supressao · expoe lista vazia quando o banco responde null · marca isError quando a listagem falha (RLS/rede) … |
-| `analise-prs/resgate-261118-lote3/claude/fix-email-navy-contrast-261101-2057/src/components/inbox/__tests__/ContactDetails.mobile-iniciais-sentimento.test.tsx` | 19 | ContactDetailsResponsive — painel no celular · monta como sheet de altura definida e painel de largura total · anuncia o painel ao leitor de tela (título + descrição ligados ao diálogo) · no desktop não monta sheet — o painel lateral continua igual … |
-| `analise-prs/resgate-261118-lote3/fix/ci-workflows-vermelhos/src/components/inbox/__tests__/FileUploader.u4-u6-motivo-e-tokens.test.tsx` | 19 | U4 — o motivo da falha aparece em texto na fila · mostra o motivo do upload que falhou, não só o selo  · mostra o motivo do arquivo inválido (limite/tipo) também na fila · U4 — Esc e clique fora não descartam o envio em andamento … |
-| `analise-prs/resgate-261118-lote3/fix/ci-workflows-vermelhos/src/components/inbox/tabs/__tests__/FileDetailPanel.test.tsx` | 19 | FileDetailContent — SL-083 (G4/G5) · G5: mostra a URL assinada em lote sem pedir assinatura individual · G5: quando a URL em lote falha, renova UMA vez pelo locator durável · G4: não oferece  … |
-| `analise-prs/resgate-261118-lote3/fix/ci-workflows-vermelhos/src/hooks/__tests__/useQueueAnalytics.test.tsx` | 19 | useQueueAnalytics · fetches analytics data · returns daily data array · returns hourly data array … |
 | `scripts/db-audit/check-catalog-fresh.test.mjs` | 19 | aceita conjuntos identicos em ordem diferente · falha quando surge coluna nova no banco · falha quando o tipo de uma coluna muda · falha quando a nulabilidade de uma coluna muda … |
 | `scripts/db-audit/check-triple-parity.test.mjs` | 19 | paridade tripla verde quando as tres pernas batem (generated_at ignorado) · detecta divergencia arquivos↔ledger (sha256/count) · detecta edge em disco fora do manifesto e vice-versa · detecta grants-baseline desatualizado … |
 | `src/components/calls/__tests__/NewCallPanel.test.tsx` | 19 | NewCallPanel (T56/T59/T60) · tem o segmentado VoIP/WhatsApp como radiogroup, independente das abas do historico · lembra o canal escolhido no localStorage · desabilita a opcao sem capacidade de discar … |
@@ -5327,6 +4963,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `src/hooks/integrations/__tests__/useMultiplixDispatches.multiplix-audience.test.ts` | 19 | buildMultiplixAudienceSelectPayload — a intenção vai inteira e nada é expandido · omite o que não foi informado e não inventa chave nenhuma · público salvo viaja por referência (audience_id), nunca pelos membros · manual e exclude viram company_ids/contact_ids completos … |
 | `src/hooks/sla/__tests__/useContactSlaTimeline.test.tsx` | 19 | useContactSlaTimeline — marcos reais · monta os marcos das linhas gravadas, do mais recente para o mais antigo · aplica o prazo da hierarquia do contato (2min), não o padrão do sistema · lê só o contato pedido e só os eventos de transferência do TR1 … |
 | `src/hooks/sla/__tests__/useSLAConfigurations.test.tsx` | 19 | useSLAConfigurations — leitura · carrega as configurações ordenando por prioridade crescente · leitura que volta nula sem erro deixa a lista vazia · erro de RLS na leitura deixa a lista vazia sem travar a tela … |
+| `src/hooks/talkx/__tests__/talkxAiSuggestions.test.ts` | 19 | sugestaoParaRegras · A: saida fora do formato nao vira regra · A: campo que nao existe no catalogo e descartado, nao aplicado · A: operador invalido para o tipo do campo e recusado (uuid nao aceita contem) … |
 | `src/hooks/ui/__tests__/useVolumeRocker.test.tsx` | 19 | useVolumeRocker — painel, matriz de opções e fechamento · com enabled=false não muta, não ajusta, não abre e ignora a roda · com wheelEnabled=false a roda não ajusta nada (e a página pode rolar), mas as setas continuam · a roda ajusta ±step (com o painel aberto) e impede a rolagem da página junto … |
 | `src/lib/__tests__/chunkReload.test.ts` | 19 | chunkReload — reconhecimento · reconhece as mensagens de chunk sem diferenciar maiusculas · reconhece erro nomeado ChunkLoadError sem mensagem conhecida · nao confunde erro comum com falha de chunk … |
 | `src/lib/__tests__/filesPeriod.test.ts` | 19 | filesPeriod — buildPeriodRange · all (Qualquer data) e last_interaction não filtram · Hoje vai da meia-noite ao fim do dia LOCAL · Últimos 7 dias começa no início do 7º dia anterior e termina no fim de hoje … |
@@ -5337,9 +4974,6 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `tests/contracts/ia047-idempotencia-de-efeitos.contract.test.ts` | 19 | (1) banco: três colunas novas NULLABLE (IA-047) · (2) banco: três índices únicos PARCIAIS com o where correto (IA-047) · a migration NÃO cria índice único TOTAL sobre a coluna nova (risco de colisão com histórico) · (3) banco: aditivo, idempotente, com rollback e sem transação explícita … |
 | `tests/contracts/requireauth-network-policy.contract.test.ts` | 19 | canonicalEndpointFromUrl — endpoint canônico estável a partir da URL · extrai o nome da função do gateway /functions/v1/<nome> · descarta sub-path e devolve só o nome da função · usa o primeiro segmento quando não há a barra functions/v1 … |
 | `tests/contracts/sl059-ia010-provisionamento.contract.test.ts` | 19 | SL-059 / IA-010 — ambiente de ensaio provisionável sem tocar produção · o gerador existe no repositório e o plano cobre o §2 da IA-010 · todo registro nasce marcado: prefixo ENSAIO-, domínio de teste e faixa de telefone própria · nenhum dado pessoal real: sem CPF/CNPJ e sem telefone repetido no plano … |
-| `analise-prs/resgate-261118-lote3/claude/fix-talkx-segmentos-regressao-261101-1944/src/components/talkx/__tests__/TalkXSegments.detailPanel.test.tsx` | 18 | TalkXSegments · painel  · mostra  · Esc fecha o painel e devolve o foco à linha da tabela · o ✕ fecha o painel e devolve o foco à linha … |
-| `analise-prs/resgate-261118-lote3/fix/ci-verde-261021/supabase/functions/gmail-oauth/index.test.ts` | 18 | get-auth-url sem state responde 400 e não registra tentativa · get-auth-url com state registra a tentativa vinculada ao usuário e devolve a URL · exchange-code sem state responde 400 sem tocar no Google · exchange-code com state divergente/não registrado responde 403 sem tocar no Google … |
-| `analise-prs/resgate-261118-lote3/fix/ci-workflows-vermelhos/src/hooks/__tests__/useIncomingCallListener.test.tsx` | 18 | useIncomingCallListener · subscribes to notifications scoped to the authenticated user · shows one ringing call from notification metadata and deduplicates replay · propagates the real call id from notification metadata (not the notification row id) … |
 | `src/components/automations/__tests__/AutomationEditorDialog.test.tsx` | 18 | AutomationEditorDialog — estado por registro (R2-MOD-001) · mostra os dados do registro aberto · ao trocar de registro (mesmo componente montado), não reaproveita o estado do anterior · ao abrir  … |
 | `src/components/groups/__tests__/GroupsView.test.tsx` | 18 | GroupsView · renders the page title · shows empty state when no groups · renders groups when data loads … |
 | `src/components/inbox/__tests__/InboxSavedFiltersMenu.test.tsx` | 18 | InboxSavedFiltersMenu — filtros salvos do inbox · lista vazia: orienta e mantém  · aplicar: o conteúdo do preset chega ao onApply e o menu fecha · salvar: grava o filtro que está na tela, com o nome digitado … |
@@ -5353,15 +4987,54 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `src/hooks/chat/__tests__/useAutomationSuggestions.test.tsx` | 18 | useAutomationSuggestions · não vai à Edge quando a última mensagem é do agente (lastInboundMessageId nulo) · chama a Edge com o contact_id e expõe as sugestões do contrato, com a fonte carimbada · espera o debounce antes de chamar (mensagem que ainda está chegando não gasta IA) … |
 | `src/hooks/chat/journey/__tests__/useJourneyActors.test.tsx` | 18 | useJourneyActors — regras de quem agiu (S063) · usuário com perfil: nome e foto do perfil, em UMA consulta em lote · perfil ausente:  · erro/RLS negado não lança: o ator cai no  … |
 | `src/hooks/communication/__tests__/useTranscriptionNotifications.filtros.test.ts` | 18 | sinalDeConclusao — não depende de payload.old · sem sinal de recência, evento com old só de id não é conclusão · carimbo antigo não passa; carimbo de agora passa · fronteira da janela (~30 s): 45 s já é antigo; 5 s ainda é recente … |
-| … +2415 linhas — lista completa em `context.json` | | |
+| `src/hooks/integrations/__tests__/useCatalogContactSearch.test.ts` | 18 | logCatalogSendEvent — CT-78 (implementação real, sem mock da função) · grava em catalog_send_events com o payload snake_case completo · campos opcionais ausentes viram null (nunca undefined) · aceita os 3 status possíveis sem transformá-los … |
+| `src/hooks/integrations/__tests__/useMultiplixAudience.test.ts` | 18 | useMultiplixAudience — listagens de apoio · busca os ramos com a acao list_ramos e o token da sessao · busca as UFs com a acao list_ufs · recusa sem sessao, sem chegar a chamar a Edge … |
+| `src/lib/__tests__/fileSenderIdentity.test.ts` | 18 | resolveSenderIdentity — quem enviou (R01 / D01) · sender= · sender= · agent_id do usuario logado vira  … |
+| `src/lib/__tests__/localDay.test.ts` | 18 | localDayKey — dia no fuso LOCAL do navegador · usa o dia local, nao a fatia UTC do ISO · fim do dia local continua no proprio dia · devolve null para valor ausente ou invalido (nao estoura) … |
+| `src/lib/calls/__tests__/duration.test.ts` | 18 | talkSeconds · usa talk_seconds quando existe · respeita talk_seconds = 0 (não recalcula pelos timestamps) · calcula answered_at → ended_at quando talk_seconds é null … |
+| `supabase/functions/_shared/assistant-gateway.test.ts` | 18 | normaliza acento, caixa e espaço · panorama do cliente aciona agenda + resumo + temperatura · panorama aceita variações sem acento e  · pedido só de agenda não aciona modelo … |
+| `supabase/functions/gmail-oauth/index.test.ts` | 18 | get-auth-url sem state responde 400 e não registra tentativa · get-auth-url com state registra a tentativa vinculada ao usuário e devolve a URL · exchange-code sem state responde 400 sem tocar no Google · exchange-code com state divergente/não registrado responde 403 sem tocar no Google … |
+| `tests/contracts/_adv_vocabulary-consumers-gaps.test.ts` | 18 | ADVERSARIAL — defeitos de consumidor (comparação morta / ausência → valor) · $file :: $what · ADVERSARIAL — chaves de vocabulário EN fora do módulo canônico · $file :: $what … |
+| `tests/contracts/ai-endpoints-auth.contract.test.ts` | 18 | endpoints de IA — ordem entre autenticação e gasto de provedor (IA-011) · ${fn} autentica o chamador antes de chamar o provedor · o contrato não confunde import com chamada (guarda do próprio teste) · cliente do voice-agent — credencial da sessão (IA-011, regressão A1) … |
+| `tests/contracts/crm-sentiment-boundary.contract.test.ts` | 18 | sentimentForExternalCrm — mapa canônico pt-BR → domínio EN do CRM · cobre exatamente os 4 canônicos (nem a mais, nem a menos) · aceita variação de caixa/espaço do valor canônico · ausência não vira token — nunca inventa sentimento … |
+| `src/components/admin/__tests__/adminDownloadPermission.test.ts` | 17 | useAdminData - can_download no handleSaveUser · envia can_download no payload de update · envia can_download=false quando desabilitado · UserWithRole interface … |
+| `src/components/catalog/__tests__/CatalogAdvancedFilters.test.tsx` | 17 | CatalogAdvancedFilters — faixa de preço (slider real, E36) · sem stats, usa o teto de fallback (2000) — nunca hardcoded  · com stats.price_max, o teto vem dele (arredondado para cima) — nunca um valor fixo · inicializa o slider com priceMin/priceMax de filters, clampado ao teto real … |
+| `src/components/connections/__tests__/InstanceSettingsDialog.config-perfil.test.tsx` | 17 | InstanceSettingsDialog — aba Config · carrega as configurações da instância e reflete os valores do provedor · salvar envia o estado completo da aba com o nome da instância · recusa do provedor não finge sucesso: mostra erro … |
+| `src/components/contacts/__tests__/ContactViewsM.contrato.test.tsx` | 17 | ZD-098/ZD-097 — contraste AA dos tokens de Contatos · todo par de texto do modulo passa 4.5:1 no claro e no escuro · --contacts-quiet nao volta ao valor que reprovava no card escuro · ZD-098 — piso da escala tipografica … |
+| `src/components/dashboard/__tests__/DashboardCard.test.tsx` | 17 | DashboardCard · renderiza os filhos dentro do card · SectionHeader · renderiza título, subtítulo e tile no tamanho 44 … |
+| `src/components/dashboard/__tests__/WarRoomDashboard.estado-a11y.test.tsx` | 17 | WarRoomDashboard — carregando e erro · mostra esqueleto enquanto carrega, sem apresentar zero como se fosse medido · falha de leitura vira estado de erro com “Tentar de novo”, e o retry recarrega · WarRoomDashboard — nomes acessíveis e movimento … |
+| `src/components/email/__tests__/EmailChatBubble.test.tsx` | 17 | sanitizeEmailHtml (h538172) · remove width fixo px de table/td mas mantém cores · mantém img (antes removida) e adiciona lazy + no-referrer · força target=_blank + rel=noopener em links … |
+| `src/components/gmail/__tests__/ThreadListItem.test.tsx` | 17 | ThreadListItem · renderiza como button clicável · displayName prioridade 1: contact.name sobrepõe last_from_name · displayName prioridade 2: last_from_name quando sem contact.name … |
+| `src/components/inbox/__tests__/QuickReplyCardList.test.tsx` | 17 | QuickReplyCardList — carregando · mostra três esqueletos de carregamento e nenhum template · QuickReplyCardList — vazio · sem favoritos avisa e não oferece criação … |
+| `src/components/inbox/__tests__/inboxA11yLoteReacoes.test.tsx` | 17 | BulkActionsToolbar — barra do lote · faz a animação de saída: a barra some DEPOIS do AnimatePresence, não de uma vez · expõe a barra como toolbar nomeada e anuncia a contagem · não tem violação de axe com a barra aberta … |
+| `src/components/inbox/copilot/__tests__/LiveSuggestions.test.tsx` | 17 | LiveSuggestions CV-041 · renderiza 3 cartões de sugestão · exibe labels de caminho corretos · chama onUse com o texto correto ao clicar em Usar … |
+| `src/components/inbox/tabs/__tests__/FileThumb.test.tsx` | 17 | FileThumb (etapa 26) · loading: mostra skeleton enquanto a URL assinada resolve · ready: imagem do cartão usa object-contain; miniatura usa object-cover · E37: imagem do CF Images recebe srcSet com as variantes; sem srcSet para as demais … |
+| `src/components/monitoring/__tests__/useConnectionIncidents.test.ts` | 17 | derivação — uptime 24 h por conexão · calcula o percentual saudável por conexão e ignora check fora da janela · sem nenhum check na janela, o percentual é null (nunca 100%) · derivação — incidentes … |
+| `src/components/onboarding/__tests__/TourOverlay.a11y.test.tsx` | 17 | SHELL-05 — sem alvo de tour no DOM (casco do celular) o tour não abre · não abre cartão nenhum e não avança sozinho pelos passos vazios · o WelcomeModal esconde  · o WelcomeModal mostra o botão quando os alvos existem e ele dispara o tour … |
+| `src/components/talkx/__tests__/TalkXAudienceFilters.test.tsx` | 17 | X126 · os filtros de audiência (mock 08) · na ordem do mock: Status do contato, Empresa, Estágio no funil, Vendedor, RFM, Localização · não oferece mais filtro de Tag: nenhum controle, nenhum checkbox e nenhum texto de tag · Status do contato usa a entrada do catálogo ( … |
+| `src/components/ui/__tests__/timers-unmount.test.tsx` | 17 | skip-link · não abre varredura por intervalo e limpa o aviso de Tab no unmount · não renderiza <nav> vazio quando nenhum alvo existe na tela · a detecção de alvo é por mutação do documento, não por intervalo … |
+| `src/hooks/__tests__/useAudioRecorder.test.ts` | 17 | useAudioRecorder · initializes with isRecording false · initializes with duration 0 · initializes with audioUrl null … |
+| `src/hooks/__tests__/useDeviceDetection.test.tsx` | 17 | useDeviceDetection · reusa o aviso único por sessão do provider de auth (sem segunda chamada a detect-new-device) · initializes with loading=true · returns empty devices initially … |
+| `src/hooks/__tests__/useParallax.test.ts` | 17 | useParallax · initializes with zero offset · initializes scrollProgress at zero · getTransform returns translateY by default … |
+| `src/hooks/__tests__/useSLANotifications.contract.test.ts` | 17 | useSLANotifications — contrato do payload · estouro marca o alerta de erro com a ação Abrir conversa e 10s de exibição · estouro já marcado no INSERT também avisa (dedupe é do hook, não do clique) · estouro que já vinha marcado na linha anterior não repete o aviso … |
+| `src/hooks/chat/__tests__/useForwardMedia.test.ts` | 17 | forwardMediaMessages — etapa 36: copia por par e locator do path copiado · 2 arquivos x 2 destinos = 4 copias e 4 envios, mediaUrl = getPublicUrl do path copiado · item de áudio copia e gera locator no bucket audio-messages · item não resolvível é marcado como não encaminhável e NÃO tenta copiar … |
+| `src/hooks/communication/__tests__/mediaVolume.players.test.tsx` | 17 | S41 — MediaPreviewDialog (janela do arquivo) obedece o volume das mídias · o vídeo do visualizador obedece ao volume global (S41) · o áudio do visualizador obedece ao volume global (S41) · S42 — AudioMessagePlayer (via useAudioPlayer) obedece … |
+| `src/hooks/contacts/__tests__/useContactSearchV2.test.tsx` | 17 | useContactSearchV2 — busca na primeira letra, no debounce curto · consulta a RPC local no debounce (≤ 300 ms) e devolve o resultado · espaço em volta não vira busca e o campo vazio não consulta · useContactSearchV2 — corrida entre buscas … |
+| `src/hooks/contacts/__tests__/useContainerColumns.test.ts` | 17 | resolveContainerColumns — regra do design nos 4 limites · largura >= 1200 usa a preferência do usuário · largura >= 900 nunca passa de 3, mesmo com preferência 4 · largura >= 560 devolve 2 (sem preferência que valha aqui) … |
+| `src/hooks/ui/__tests__/use-toast.test.tsx` | 17 | toast() + useToast() · registra o toast e o hook o enxerga aberto · devolve um id por chamada (não reaproveita id) · respeita o limite de um toast na tela: o novo substitui o antigo … |
+| `src/lib/__tests__/serverLogin.test.ts` | 17 | serverLogin · chama a edge auth-login com apikey/bearer anon e devolve os tokens · nao forca regiao na invocacao: usa roteamento padrao do Supabase · 401 devolve a recusa com o estado do lock … |
+| `src/lib/audio/__tests__/gravacaoFormato.test.ts` | 17 | escolherMimeGravacao · escolhe webm/opus quando o navegador suporta (Chrome/Edge/Firefox) · escolhe audio/mp4 no Safari, que recusa webm · devolve null quando nenhum formato da lista é suportado (navegador decide o padrão) … |
+| `supabase/functions/_shared/__tests__/ai-context-revalidation.test.ts` | 17 | requestId válido é aceito nos quatro schemas · requestId malformado é rejeitado (não é ecoado como lixo) · cliente ANTIGO (sem requestId/contextVersion) continua aceito — compatibilidade · periodKey (nome canônico do frontend) é aceito como apelido da versão de contexto … |
+| `supabase/functions/ai-transcribe-audio/openrouter-stt.test.ts` | 17 | formato: containers que a edge reconhece viram a extensão do input_audio · formato: mime de outro tipo ou desconhecido não vira extensão inventada · formato: parâmetro do content-type (codecs) não atrapalha e o case não importa · base64: buffer maior que o bloco interno é convertido byte a byte … |
+| `supabase/functions/multiplix-dispatch/actions/__tests__/listing.test.ts` | 17 | dispatch.list escopo: sem permissao ampla so devolve os disparos do dono · dispatch.list escopo: usuario sem profile e sem permissao -> lista vazia (nao consulta a tabela) · dispatch.list escopo: a permissao ampla ve os disparos de qualquer dono · dispatch.list paginacao: limit/offset recortam na ordem created_at desc e total e exato … |
+| `supabase/functions/talkx-ai/index.test.ts` | 17 | X076: flag ai_insights desligada recusa com 403 ai_disabled e não paga o proxy · X076: orçamento mensal no padrão (0 = desligado) recusa com 403 ai_disabled · X076: gasto do mês no teto recusa com 429 budget_exceeded e não paga o proxy · X076: gasto abaixo do teto passa (o teto não é desligamento geral) … |
+| `tests/contracts/ai-values.contract.test.ts` | 17 | IA-023 · normalizeScore nunca inventa número · trata ausência como ausência (não como 50 nem 3) · rejeita string numérica em vez de coagir ( · rejeita NaN/Infinity … |
+| … +2130 linhas — lista completa em `context.json` | | |
 
 ## L. Eventos de webhook tratados (contratos com sistemas externos)
 
 | Evento | Arquivo |
 |---|---|
-| `delete` | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/team-chat/useTeamChatPanel.ts` |
-| `update` | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/team-chat/useTeamChatPanel.ts` |
-| `string` | `analise-prs/resgate-261118-lote3/fix/ci-verde-261021/supabase/functions/evolution-api/index.ts` |
 | `image` | `src/components/inbox/LinkPreview.tsx` |
 | `video` | `src/components/inbox/LinkPreview.tsx` |
 | `delete` | `src/components/team-chat/useTeamChatPanel.ts` |
@@ -5387,36 +5060,6 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 
 | Chamada | Arquivo |
 |---|---|
-| `invoke(` | `analise-prs/resgate-261118-lote3/claude/feat-copiloto-edges-261101-1330/src/hooks/inbox/useInboxBulkActions.ts` |
-| `sendWhatsAppAudio` | `analise-prs/resgate-261118-lote3/claude/feat-message-delivery-post-iniciado-261101-1937/supabase/functions/message-delivery/index.ts` |
-| `invoke(` | `analise-prs/resgate-261118-lote3/claude/fix-codex-findings-161016-1906/src/lib/invokeEdge.ts` |
-| `notify` | `analise-prs/resgate-261118-lote3/claude/fix-ga-fase1-lote-banco-261020-2200/scripts/db-audit/check-migration-drift.mjs` |
-| `notify` | `analise-prs/resgate-261118-lote3/claude/fix-unit-tests-src-261024-1630/src/hooks/chat/useTeamChatNotifications.ts` |
-| `invoke(` | `analise-prs/resgate-261118-lote3/claude/fix-unit-tests-src-261024-1630/src/hooks/integrations/useKnowledgeBase.ts` |
-| `notify` | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/hooks/chat/useTeamChatNotifications.ts` |
-| `invoke(` | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/hooks/communication/useAudioMemes.ts` |
-| `enqueue(` | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/lib/offlineQueue.ts` |
-| `enqueue(` | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/services/outbound-message.service.ts` |
-| `invoke(` | `analise-prs/resgate-261118-lote3/claude/kind-gates-87mwoe/src/hooks/inbox/useInboxBulkActions.ts` |
-| `invoke(` | `analise-prs/resgate-261118-lote3/claude/kind-gates-87mwoe/src/hooks/integrations/useKnowledgeBase.ts` |
-| `notify` | `analise-prs/resgate-261118-lote3/claude/magical-pasteur-iz2pgy/src/hooks/chat/useTeamChatNotifications.ts` |
-| `enqueue(` | `analise-prs/resgate-261118-lote3/claude/test-e2e-suite-completa-261104-1428/scripts/ci/e2e-isolated-provider-readiness.unit.mjs` |
-| `notify` | `analise-prs/resgate-261118-lote3/claude/test-e2e-suite-completa-261104-1428/scripts/e2e-isolated/run.mjs` |
-| `notify` | `analise-prs/resgate-261118-lote3/claude/test-e2e-tls-diagnostico-261104-1340/scripts/e2e-isolated/run.mjs` |
-| `notify` | `analise-prs/resgate-261118-lote3/claude/test-e2e-webkit-tls-261104-1430/scripts/e2e-isolated/run.mjs` |
-| `notify` | `analise-prs/resgate-261118-lote3/claude_05/festive-carson-ub43wu/src/hooks/chat/useTeamChatNotifications.ts` |
-| `invoke(` | `analise-prs/resgate-261118-lote3/claude_05/festive-carson-ub43wu/src/hooks/integrations/useKnowledgeBase.ts` |
-| `notify` | `analise-prs/resgate-261118-lote3/claude_pink/cool-dijkstra-xk9ek2/scripts/db-audit/check-migration-drift.mjs` |
-| `invoke(` | `analise-prs/resgate-261118-lote3/codex/publish-followup-20261021/scripts/ci/docs-estado-registry-convention.unit.mjs` |
-| `notifyOptedIn` | `analise-prs/resgate-261118-lote3/codex/publish-followup-20261021/supabase/functions/connection-health-check/index.ts` |
-| `invoke(` | `analise-prs/resgate-261118-lote3/fix/ci-verde-261021/src/hooks/inbox/useInboxBulkActions.ts` |
-| `notify` | `analise-prs/resgate-261118-lote3/fix/ci-verde-261021/supabase/functions/_shared/evolution-webhook-handlers.ts` |
-| `notifyOptedIn` | `analise-prs/resgate-261118-lote3/fix/ci-verde-261021/supabase/functions/connection-health-check/index.ts` |
-| `sendWhatsAppAudio` | `analise-prs/resgate-261118-lote3/fix/ci-verde-261021/supabase/functions/evolution-api/index.ts` |
-| `notify` | `analise-prs/resgate-261118-lote3/fix/ci-workflows-vermelhos/supabase/functions/_shared/evolution-webhook-handlers.ts` |
-| `notifyOptedIn` | `analise-prs/resgate-261118-lote3/fix/ci-workflows-vermelhos/supabase/functions/connection-health-check/index.ts` |
-| `invoke(` | `analise-prs/resgate-261118-lote3/hermes/robustez-primitivos-ui-2610121626bec5-2610141859e423/src/components/settings/AIAutoTagsConfig.tsx` |
-| `invoke(` | `analise-prs/resgate-261118-lote3/hermes/telefonia-fase8-motion-a11y-responsivo-2610031530007c/src/components/settings/AIAutoTagsConfig.tsx` |
 | `invoke(` | `src/components/admin/ForceLogoutButton.tsx` |
 | `invoke(` | `src/components/admin/SupervisorCopilot.tsx` |
 | `invoke(` | `src/components/agents/InviteAgentDialog.tsx` |
@@ -5475,6 +5118,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `invoke(` | `src/hooks/communication/useAudioMemes.ts` |
 | `invoke(` | `src/hooks/communication/useVoiceAgent.ts` |
 | `invoke(` | `src/hooks/connections/useConnectionsHealth.ts` |
+| `invoke(` | `src/hooks/dashboard/useScheduledReportConfigs.ts` |
 | `invoke(` | `src/hooks/evolution/useEvolutionApiCore.ts` |
 | `invoke(` | `src/hooks/gmail/gmailApi.ts` |
 | `invoke(` | `src/hooks/groups/actions.ts` |
@@ -5535,6 +5179,19 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `enqueue(` | `src/services/outbound-message.service.ts` |
 | `enqueue(` | `supabase/functions/_shared/ai-providers.ts` |
 | `enqueue(` | `supabase/functions/_shared/ai-usage.ts` |
+| `.add('agenda'` | `supabase/functions/_shared/assistant-gateway.ts` |
+| `.add('analisar_conversa'` | `supabase/functions/_shared/assistant-gateway.ts` |
+| `.add('analisar_imagem'` | `supabase/functions/_shared/assistant-gateway.ts` |
+| `.add('ancoragem_preco'` | `supabase/functions/_shared/assistant-gateway.ts` |
+| `.add('calcular_prazo'` | `supabase/functions/_shared/assistant-gateway.ts` |
+| `.add('etiquetar_conversa'` | `supabase/functions/_shared/assistant-gateway.ts` |
+| `.add('melhorar_mensagem'` | `supabase/functions/_shared/assistant-gateway.ts` |
+| `.add('recomendar_produto'` | `supabase/functions/_shared/assistant-gateway.ts` |
+| `.add('resumo_conversa'` | `supabase/functions/_shared/assistant-gateway.ts` |
+| `.add('risco_perda'` | `supabase/functions/_shared/assistant-gateway.ts` |
+| `.add('sugerir_resposta'` | `supabase/functions/_shared/assistant-gateway.ts` |
+| `.add('temperatura_lead'` | `supabase/functions/_shared/assistant-gateway.ts` |
+| `.add('tratar_objecao'` | `supabase/functions/_shared/assistant-gateway.ts` |
 | `sendWhatsAppAudio` | `supabase/functions/_shared/evolution-go-routes.ts` |
 | `sendWhatsAppAudio` | `supabase/functions/_shared/evolution-send.ts` |
 | `notify` | `supabase/functions/_shared/evolution-webhook-handlers.ts` |
@@ -5605,288 +5262,288 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | 100)}% vs commit base (limite: 30%)`, | `analise-prs/resgate-261118-lote2/scripts/ci/claude-md-guard.mjs` |
 | 1. ledger com cabeçalho '--' no bruto (run 37355980323) → deve passar | `analise-prs/resgate-261118-lote2/scripts/db-audit/verify-ledger-statements.unit.mjs` |
 | Se o parse falhar, o motivo deve ser claro (JSON inválido), não silencioso | `analise-prs/resgate-261118-lote2/scripts/db-audit/verify-ledger-statements.unit.mjs` |
-| * E97-E99: Team Chat DB validation script. | `analise-prs/resgate-261118-lote3/claude/busy-cannon-40szm9/scripts/team-chat-db-validate.mjs` |
-| Verifies required tables and RPC are accessible via the Supabase REST API. | `analise-prs/resgate-261118-lote3/claude/busy-cannon-40szm9/scripts/team-chat-db-validate.mjs` |
-| * `created_at`/`purchased_at` inválido não pode derrubar a lista: vira '—'. */ | `analise-prs/resgate-261118-lote3/claude/busy-cannon-40szm9/src/components/inbox/ContactPurchasesPanel.tsx` |
-| Trava de duplo clique: o insert em voo não pode ser disparado de novo. | `analise-prs/resgate-261118-lote3/claude/busy-cannon-40szm9/src/components/inbox/ContactPurchasesPanel.tsx` |
-| a evidência de uma etapa não pode ser trocada pelo texto de outra (foi o defeito da E13). | `analise-prs/resgate-261118-lote3/claude/feat-E90-main-failure-notify-261101-1730/scripts/ci/ci-docs-baseline.unit.mjs` |
-| limite de evidência/i); | `analise-prs/resgate-261118-lote3/claude/feat-E90-main-failure-notify-261101-1730/scripts/ci/ci-docs-baseline.unit.mjs` |
-| *${id}**`)), `${id} deve estar medido na tabela de abertura`); | `analise-prs/resgate-261118-lote3/claude/feat-E90-main-failure-notify-261101-1730/scripts/ci/ci-docs-baseline.unit.mjs` |
-| (ex.: playwright@1.63.0) em chamadas de assert. Versão deve ser lida do bun.lock. | `analise-prs/resgate-261118-lote3/claude/feat-E90-main-failure-notify-261101-1730/scripts/ci/ci-docs-baseline.unit.mjs` |
-| W95: CONTRIBUTING.md deve referenciar o stack e o fluxo atuais | `analise-prs/resgate-261118-lote3/claude/feat-E90-main-failure-notify-261101-1730/scripts/ci/ci-docs-baseline.unit.mjs` |
-| W32 — docs/MIGRATIONS.md deve ter a secao "Fluxo diario (lote)" com os termos obrigatorios | `analise-prs/resgate-261118-lote3/claude/feat-E90-main-failure-notify-261101-1730/scripts/ci/ci-docs-baseline.unit.mjs` |
-| CV-111–120: calculadora de prazo — extrai prazo pedido e monta rascunho de proposta. | `analise-prs/resgate-261118-lote3/claude/feat-copiloto-edge-fases8-10-261024-1700/supabase/functions/ai-deadline-calculator/index.ts` |
-| CV-081–090: âncora de preço — enquadra valor, sugere desconto máximo permitido. | `analise-prs/resgate-261118-lote3/claude/feat-copiloto-edge-fases8-10-261024-1700/supabase/functions/ai-price-anchor/index.ts` |
-| ── Fase 9 (CV-081-090) — Catálogo, Prazo, Orçamento ───────────────────────── | `analise-prs/resgate-261118-lote3/claude/feat-copiloto-edges-261101-1330/src/hooks/copilot/index.ts` |
-| * CV-083 — Calculadora de prazo real. | `analise-prs/resgate-261118-lote3/claude/feat-copiloto-edges-261101-1330/src/hooks/copilot/useDeadlineCalculator.ts` |
-| Resultado AI: async via edge `ai-deadline-calculator` (invocar `analyze()`). | `analise-prs/resgate-261118-lote3/claude/feat-copiloto-edges-261101-1330/src/hooks/copilot/useDeadlineCalculator.ts` |
-| * CV-083 — Calculadora de prazo real. | `analise-prs/resgate-261118-lote3/claude/feat-copiloto-hooks-261101-1500/src/hooks/copilot/useDeadlineCalculator.ts` |
-| Resultado AI: async via edge `ai-deadline-calculator` (invocar `analyze()`). | `analise-prs/resgate-261118-lote3/claude/feat-copiloto-hooks-261101-1500/src/hooks/copilot/useDeadlineCalculator.ts` |
-| E75: qualquer literal é violação — o YAML deve usar ${{ env.* }} lido do toolchain. | `analise-prs/resgate-261118-lote3/claude/feat-e75-toolchain-env-281028-0600/scripts/ci/check-workflow-pins.mjs` |
-| "stripInstanceToken declarado em escopo de módulo"; aqui verificamos apenas que existem. | `analise-prs/resgate-261118-lote3/claude/feat-evolution-rotas-pendentes-261112/scripts/ci/evolution-edge-fixes.unit.mjs` |
-| O SELECT+maybeSingle antigo (check-then-act) não pode voltar. | `analise-prs/resgate-261118-lote3/claude/feat-evolution-rotas-pendentes-261112/scripts/ci/evolution-edge-fixes.unit.mjs` |
-| amigável e não pode acionar compensação na GO (nada foi criado lá ainda). | `analise-prs/resgate-261118-lote3/claude/feat-evolution-rotas-pendentes-261112/scripts/ci/evolution-edge-fixes.unit.mjs` |
-| proxyToEvolution devolve error:true tanto pra erro de negocio da GO | `analise-prs/resgate-261118-lote3/claude/feat-evolution-rotas-pendentes-261112/scripts/ci/evolution-edge-fixes.unit.mjs` |
-| =/, "TOKEN_KEYS não pode estar dentro de create-connection — precisa ser de módulo"); | `analise-prs/resgate-261118-lote3/claude/feat-evolution-rotas-pendentes-261112/scripts/ci/evolution-edge-fixes.unit.mjs` |
-| =/, "stripInstanceToken não pode estar dentro de create-connection"); | `analise-prs/resgate-261118-lote3/claude/feat-evolution-rotas-pendentes-261112/scripts/ci/evolution-edge-fixes.unit.mjs` |
-| iniciado e o resultado é ambíguo — não oferecer reenvio cego. O operador deve | `analise-prs/resgate-261118-lote3/claude/feat-message-delivery-post-iniciado-261101-1937/src/components/inbox/chat/SendErrorBanner.tsx` |
-| de correção manual — o RPC resolve_unconfirmed_message valida a permissão no banco. | `analise-prs/resgate-261118-lote3/claude/feat-message-delivery-post-iniciado-261101-1937/src/components/inbox/chat/UnconfirmedMessagesPanel.tsx` |
-| * Casa com a MESMA regra de public.talkx_match_optout: `exact` tem prioridade, | `analise-prs/resgate-261118-lote3/claude/feat-message-delivery-post-iniciado-261101-1937/supabase/functions/_shared/evolution-webhook-messages.ts` |
-| Avatar apontando para o CDN do WhatsApp (URL expira) precisa ser re-buscado. | `analise-prs/resgate-261118-lote3/claude/feat-message-delivery-post-iniciado-261101-1937/supabase/functions/_shared/evolution-webhook-messages.ts` |
-| permissão de envio). O webhook roda com a service key (`service_role`) e | `analise-prs/resgate-261118-lote3/claude/feat-message-delivery-post-iniciado-261101-1937/supabase/functions/_shared/evolution-webhook-messages.ts` |
-| * Efeito incerto (5xx/tempo/id ausente): reconciliação SOMENTE-LEITURA, sem reenvio. */ | `analise-prs/resgate-261118-lote3/claude/feat-message-delivery-post-iniciado-261101-1937/supabase/functions/_shared/evolution-webhook-messages.ts` |
-| a enfileira e entrega no mesmo pipeline oficial. No máximo uma vez por 24 h, | `analise-prs/resgate-261118-lote3/claude/feat-message-delivery-post-iniciado-261101-1937/supabase/functions/_shared/evolution-webhook-messages.ts` |
-| e o processamento da mensagem recebida segue (a ausência não pode derrubar o | `analise-prs/resgate-261118-lote3/claude/feat-message-delivery-post-iniciado-261101-1937/supabase/functions/_shared/evolution-webhook-messages.ts` |
-| QUALQUER erro (função inexistente, sem permissão) = NÃO enviar. | `analise-prs/resgate-261118-lote3/claude/feat-message-delivery-post-iniciado-261101-1937/supabase/functions/_shared/evolution-webhook-messages.ts` |
-| * Efeito incerto (5xx/tempo/id ausente): reconciliação SOMENTE-LEITURA, sem reenvio. */ | `analise-prs/resgate-261118-lote3/claude/feat-message-delivery-post-iniciado-261101-1937/supabase/functions/_shared/evolution-webhook-messages.ts` |
-| lança: a resposta automática não pode derrubar o webhook. | `analise-prs/resgate-261118-lote3/claude/feat-message-delivery-post-iniciado-261101-1937/supabase/functions/_shared/evolution-webhook-messages.ts` |
-| PK-09: carteira por regra no contato que CHEGA. A tela da carteira promete | `analise-prs/resgate-261118-lote3/claude/feat-message-delivery-post-iniciado-261101-1937/supabase/functions/_shared/evolution-webhook-messages.ts` |
-| anunciar envio. Um 4xx/5xx não pode virar "Confirmacao enviada" no log: | `analise-prs/resgate-261118-lote3/claude/feat-message-delivery-post-iniciado-261101-1937/supabase/functions/_shared/evolution-webhook-messages.ts` |
-| (o contato acabou de pedir para sair). NUNCA lança: falha aqui não pode | `analise-prs/resgate-261118-lote3/claude/feat-message-delivery-post-iniciado-261101-1937/supabase/functions/_shared/evolution-webhook-messages.ts` |
-| Use order+limit(1) so concurrent duplicates don't throw on maybeSingle. | `analise-prs/resgate-261118-lote3/claude/feat-message-delivery-post-iniciado-261101-1937/supabase/functions/_shared/evolution-webhook-msg-handlers.ts` |
-| Use order+limit(1) so concurrent duplicates don't throw on maybeSingle. | `analise-prs/resgate-261118-lote3/claude/feat-message-delivery-post-iniciado-261101-1937/supabase/functions/_shared/evolution-webhook-msg-handlers.ts` |
-| Use order+limit(1) so concurrent duplicates don't throw on maybeSingle. | `analise-prs/resgate-261118-lote3/claude/feat-message-delivery-post-iniciado-261101-1937/supabase/functions/_shared/evolution-webhook-msg-handlers.ts` |
-| Use order+limit(1) so concurrent duplicates don't throw on maybeSingle | `analise-prs/resgate-261118-lote3/claude/feat-message-delivery-post-iniciado-261101-1937/supabase/functions/_shared/evolution-webhook-msg-handlers.ts` |
-| * true SOMENTE quando o POST já saiu e a confirmação falhou: não reenvie cego. */ | `analise-prs/resgate-261118-lote3/claude/feat-message-delivery-post-iniciado-261101-1937/supabase/functions/message-delivery/index.ts` |
-| * Limite de envios do próprio Zapp (não é recusa do provedor). */ | `analise-prs/resgate-261118-lote3/claude/feat-message-delivery-post-iniciado-261101-1937/supabase/functions/message-delivery/index.ts` |
-| dessa migration, e a função não pode depender dela. | `analise-prs/resgate-261118-lote3/claude/feat-message-delivery-post-iniciado-261101-1937/supabase/functions/message-delivery/index.ts` |
-| * IA-047: enfileira a RECONCILIAÇÃO (somente-leitura, idempotente, SEM reenvio) | `analise-prs/resgate-261118-lote3/claude/feat-message-delivery-post-iniciado-261101-1937/supabase/functions/message-delivery/index.ts` |
-| ambíguo, enfileira a RECONCILIAÇÃO (somente-leitura, sem reenvio). | `analise-prs/resgate-261118-lote3/claude/feat-message-delivery-post-iniciado-261101-1937/supabase/functions/message-delivery/index.ts` |
-| IA-047: temos o id do provedor — o varredor confirma por ele, SOMENTE-LEITURA. | `analise-prs/resgate-261118-lote3/claude/feat-message-delivery-post-iniciado-261101-1937/supabase/functions/message-delivery/index.ts` |
-| Antes so o `data` era lido: qualquer falha (disparo removido, sem permissao, | `analise-prs/resgate-261118-lote3/claude/feat-pausa-entrega-campanhas-261101-1400/src/components/multiplix/MultiplixMonitor.tsx` |
-| F80: CARREGANDO tambem nao e vazio — a primeira pagina em andamento nao pode | `analise-prs/resgate-261118-lote3/claude/feat-pausa-entrega-campanhas-261101-1400/src/components/multiplix/MultiplixMonitor.tsx` |
-| (`prefers-reduced-motion` desliga) — regra de efeito sutil do projeto. | `analise-prs/resgate-261118-lote3/claude/feat-pausa-entrega-campanhas-261101-1400/src/components/multiplix/MultiplixMonitor.tsx` |
-| talkxHealth.ts — X148: regra pura da "Saúde da Campanha" (acompanhamento da campanha). | `analise-prs/resgate-261118-lote3/claude/feat-pausa-entrega-campanhas-261101-1400/src/components/talkx/tracking/talkxHealth.ts` |
-| AQUI, no cliente, das mesmas evidências que a regra do motor usa no banco: | `analise-prs/resgate-261118-lote3/claude/feat-pausa-entrega-campanhas-261101-1400/src/components/talkx/tracking/talkxHealth.ts` |
-| sem envio há mais que o maior entre 3 min e 3×(intervalo máximo + digitação); | `analise-prs/resgate-261118-lote3/claude/feat-pausa-entrega-campanhas-261101-1400/src/components/talkx/tracking/talkxHealth.ts` |
-| // A regra vive fora do .tsx porque o lint (react-refresh/only-export-components) só | `analise-prs/resgate-261118-lote3/claude/feat-pausa-entrega-campanhas-261101-1400/src/components/talkx/tracking/talkxHealth.ts` |
-| * Estados do worker — o mesmo conjunto que a regra do motor classifica no banco. */ | `analise-prs/resgate-261118-lote3/claude/feat-pausa-entrega-campanhas-261101-1400/src/components/talkx/tracking/talkxHealth.ts` |
-| * Máximo de mensagens novas enviadas ao modelo por tick. */ | `analise-prs/resgate-261118-lote3/claude/feat-radar-motor-telas-261101-1330/supabase/functions/_shared/copilot-tick.ts` |
-| Sanitiza deadline inválida antes de usar em patch ou prompt tier2. | `analise-prs/resgate-261118-lote3/claude/feat-radar-motor-telas-261101-1330/supabase/functions/_shared/copilot-tick.ts` |
-| yet. It is safe to keep the current editor alive, but a reload must still | `analise-prs/resgate-261118-lote3/claude/feat-talkx-x054-cmdk-261108-0100/src/components/talkx/TalkXView.tsx` |
-| deve ganhar acesso a segredo só porque o YAML mudou. Todo invariante aqui é | `analise-prs/resgate-261118-lote3/claude/fix-codex-findings-161016-1906/scripts/ci/workflow-contracts.unit.mjs` |
-| Reforça o invariante central: código de PR de terceiro não pode alcançar | `analise-prs/resgate-261118-lote3/claude/fix-codex-findings-161016-1906/scripts/ci/workflow-contracts.unit.mjs` |
-| job que instala apenas Chromium (e2e-talkx.yml) satisfaz o job que precisa de | `analise-prs/resgate-261118-lote3/claude/fix-codex-findings-161016-1906/scripts/ci/workflow-contracts.unit.mjs` |
-| seed mínimo em CI para a suíte logada". **Avaliado neste repositório e NÃO | `analise-prs/resgate-261118-lote3/claude/fix-codex-findings-161016-1906/scripts/ci/workflow-contracts.unit.mjs` |
-| 4. um "seed mínimo" teria de recriar `profiles`/`user_roles`/contatos/ | `analise-prs/resgate-261118-lote3/claude/fix-codex-findings-161016-1906/scripts/ci/workflow-contracts.unit.mjs` |
-| não pode entrar em silêncio num PR: estes casos obrigam a revisitar a decisão | `analise-prs/resgate-261118-lote3/claude/fix-codex-findings-161016-1906/scripts/ci/workflow-contracts.unit.mjs` |
-| Corpo de `run: \|` é shell, não YAML — não pode virar cabeçalho de job. | `analise-prs/resgate-261118-lote3/claude/fix-codex-findings-161016-1906/scripts/ci/workflow-contracts.unit.mjs` |
-| apenas consumimos o contrato — nenhuma consulta e feita neste componente. | `analise-prs/resgate-261118-lote3/claude/fix-codex-findings-161016-1906/src/components/inbox/chat/ChatMessagesArea.tsx` |
-| lendo e nada pode mover o scroll. Mesmo limite do painel de equipe. */ | `analise-prs/resgate-261118-lote3/claude/fix-codex-findings-161016-1906/src/components/inbox/chat/ChatMessagesArea.tsx` |
-| * Dias inteiros desde uma data ISO (o relógio fica fora do render — regra de pureza). */ | `analise-prs/resgate-261118-lote3/claude/fix-codex-findings-161016-1906/src/components/talkx/TalkXTemplates.tsx` |
-| * Peso de prioridade (menor = primeiro) — usado na ordenacao por prazo (etapa 49) e por coluna. */ | `analise-prs/resgate-261118-lote3/claude/fix-codex-findings-161016-1906/src/hooks/tasks/workItemAggregates.ts` |
-| * R2-MOD-058 — regra ÚNICA de "prazo vencido" do módulo de Tarefas. O app grava | `analise-prs/resgate-261118-lote3/claude/fix-codex-findings-161016-1906/src/hooks/tasks/workItemAggregates.ts` |
-| dois tipos de prazo (`temHora`) e cada um vence de um jeito: | `analise-prs/resgate-261118-lote3/claude/fix-codex-findings-161016-1906/src/hooks/tasks/workItemAggregates.ts` |
-| * Antes o badge do menu comparava o prazo com o instante e o módulo (KPI, seções | `analise-prs/resgate-261118-lote3/claude/fix-codex-findings-161016-1906/src/hooks/tasks/workItemAggregates.ts` |
-| regra do `splitDoneByRecency` do Quadro ("tarefa nunca fica escondida por | `analise-prs/resgate-261118-lote3/claude/fix-codex-findings-161016-1906/src/hooks/tasks/workItemAggregates.ts` |
-| * Casa o prazo de um item com o recorte escolhido (etapa 024/037). | `analise-prs/resgate-261118-lote3/claude/fix-codex-findings-161016-1906/src/hooks/tasks/workItemAggregates.ts` |
-| `today` segue o veredito de `bucketByDue`: é o prazo de hoje SEM contar o que | `analise-prs/resgate-261118-lote3/claude/fix-codex-findings-161016-1906/src/hooks/tasks/workItemAggregates.ts` |
-| * @param now âncora do recorte de prazo (injetável para o teste). | `analise-prs/resgate-261118-lote3/claude/fix-codex-findings-161016-1906/src/hooks/tasks/workItemAggregates.ts` |
-| prazo (`primary`), alarme (`warning`) e atrasada (`destructive`). | `analise-prs/resgate-261118-lote3/claude/fix-codex-findings-161016-1906/src/hooks/tasks/workItemAggregates.ts` |
-| * prazo com hora marcada. */ | `analise-prs/resgate-261118-lote3/claude/fix-codex-findings-161016-1906/src/hooks/tasks/workItemAggregates.ts` |
-| * prazo de dia inteiro (sem hora). */ | `analise-prs/resgate-261118-lote3/claude/fix-codex-findings-161016-1906/src/hooks/tasks/workItemAggregates.ts` |
-| * Os três grupos do dia selecionado (etapa 55). Um item com prazo **e** alarme no | `analise-prs/resgate-261118-lote3/claude/fix-codex-findings-161016-1906/src/hooks/tasks/workItemAggregates.ts` |
-| * Linhas do dia: a tarefa com prazo E alarme conta UMA vez. */ | `analise-prs/resgate-261118-lote3/claude/fix-codex-findings-161016-1906/src/hooks/tasks/workItemAggregates.ts` |
-| prazo · M lembretes") não podem sair do número de pontos — saem daqui. | `analise-prs/resgate-261118-lote3/claude/fix-codex-findings-161016-1906/src/hooks/tasks/workItemAggregates.ts` |
-| "2 lembretes, 1 prazo" (a ordem e o texto da etapa 111). Sem nada no dia, | `analise-prs/resgate-261118-lote3/claude/fix-codex-findings-161016-1906/src/hooks/tasks/workItemAggregates.ts` |
-| * A Edge já tem `_shared/observability.ts` (withRequestId) e `_shared/validation.ts` | `analise-prs/resgate-261118-lote3/claude/fix-codex-findings-161016-1906/src/lib/invokeEdge.ts` |
-| `Access-Control-Allow-Headers` de `_shared/validation.ts` neste mesmo cartão — | `analise-prs/resgate-261118-lote3/claude/fix-codex-findings-161016-1906/src/lib/invokeEdge.ts` |
-| * Código de domínio (ex: `VALIDATION_ERROR`, `forbidden`). */ | `analise-prs/resgate-261118-lote3/claude/fix-codex-findings-161016-1906/src/lib/invokeEdge.ts` |
-| - Envelope canônico `{ error: { code, message, fields } }` (validação estruturada) | `analise-prs/resgate-261118-lote3/claude/fix-codex-findings-161016-1906/src/lib/invokeEdge.ts` |
-| `data: null`): o discriminante não pode ser remontado à mão. | `analise-prs/resgate-261118-lote3/claude/fix-codex-findings-161016-1906/src/lib/invokeEdge.ts` |
-| days: number[] de 0 a 6, 0 = domingo }`. String JSON é aceita apenas como | `analise-prs/resgate-261118-lote3/claude/fix-codex-findings-161016-1906/supabase/functions/_shared/talkx-window.ts` |
-| janela (não pode cair silenciosamente no default, que é o que acontecia antes | `analise-prs/resgate-261118-lote3/claude/fix-codex-findings-161016-1906/supabase/functions/_shared/talkx-window.ts` |
-| "outside_weekdays"). Regra combinada com o cartão-irmão N-118 | `analise-prs/resgate-261118-lote3/claude/fix-codex-findings-161016-1906/supabase/functions/_shared/talkx-window.ts` |
-| permissao push/admin). Campo ausente nao e divergencia: e ponto cego, e passa | `analise-prs/resgate-261118-lote3/claude/fix-db-guard-pguser-261019-1430/scripts/ci/github-settings-guard.mjs` |
-| W04: o GET /repos so devolve os campos de merge para quem tem permissao | `analise-prs/resgate-261118-lote3/claude/fix-db-guard-pguser-261019-1430/scripts/ci/github-settings-guard.mjs` |
-| )`, 200, 'resposta sem os campos de merge: o token nao tem permissao push/admin para le-los'); | `analise-prs/resgate-261118-lote3/claude/fix-db-guard-pguser-261019-1430/scripts/ci/github-settings-guard.mjs` |
-| comentario humano ou de outro bot depois do marcador nao pode zerar o dedupe, e um | `analise-prs/resgate-261118-lote3/claude/fix-db-guard-pguser-261019-1430/scripts/ci/github-settings-guard.mjs` |
-| marcador colado por terceiros nao pode acioná-lo (achados do Codex na PR #1920). | `analise-prs/resgate-261118-lote3/claude/fix-db-guard-pguser-261019-1430/scripts/ci/github-settings-guard.mjs` |
-| Um humano (ou outro bot) comentando na issue nao pode fazer o guard voltar a | `analise-prs/resgate-261118-lote3/claude/fix-db-guard-pguser-261019-1430/scripts/ci/github-settings-guard.unit.mjs` |
-| Apos 6 h o guard deve renovar o comentario — sem restaurar, so registrar. | `analise-prs/resgate-261118-lote3/claude/fix-db-guard-pguser-261019-1430/scripts/ci/github-settings-guard.unit.mjs` |
-| `\n` NÃO pode forjar uma linha nova no log do workflow. | `analise-prs/resgate-261118-lote3/claude/fix-db-guard-pguser-261019-1430/scripts/ci/github-settings-guard.unit.mjs` |
-| CI minimo (16/10/2026): o job `security:` (gitleaks + bun audit) foi removido. | `analise-prs/resgate-261118-lote3/claude/fix-db-guard-pguser-261019-1430/scripts/ci/security-workflow.unit.mjs` |
-| O unico par de secrets exposto no ci.yml deve ser o par de chaves publicaveis | `analise-prs/resgate-261118-lote3/claude/fix-db-guard-pguser-261019-1430/scripts/ci/security-workflow.unit.mjs` |
-| atividade é da lista do mesmo jeito; o que o usuário não pode ver, o RLS barra. | `analise-prs/resgate-261118-lote3/claude/fix-db-guard-pguser-261019-1430/src/hooks/integrations/useTalkXSuppression.ts` |
-| nunca um `.limit()` solto, que devolveria um subconjunto arbitrário. | `analise-prs/resgate-261118-lote3/claude/fix-db-guard-pguser-261019-1430/src/hooks/integrations/useTalkXSuppression.ts` |
-| E87: quarentena formal. Schema em e2e/quarantine.js; a validacao da forma e a cobranca | `analise-prs/resgate-261118-lote3/claude/fix-e2e-workers-timeout-tests-011101-1800/playwright.config.ts` |
-| do prazo vivem em scripts/ci/check-quarantine.mjs. | `analise-prs/resgate-261118-lote3/claude/fix-e2e-workers-timeout-tests-011101-1800/playwright.config.ts` |
-| (E2E_TEST_EMAIL/E2E_TEST_PASSWORD) e o backend de verdade. Por isso valem 2 APENAS | `analise-prs/resgate-261118-lote3/claude/fix-e2e-workers-timeout-tests-011101-1800/playwright.config.ts` |
-| A regra e travada por scripts/ci/playwright-config-e81.unit.mjs. | `analise-prs/resgate-261118-lote3/claude/fix-e2e-workers-timeout-tests-011101-1800/playwright.config.ts` |
-| outro SO não pode ser comparada com o render do Linux do `e2e-logado.yml`. | `analise-prs/resgate-261118-lote3/claude/fix-e2e-workers-timeout-tests-011101-1800/playwright.config.ts` |
-| auth.spec.ts exercita a tela de login deslogada (tabs, validação de | `analise-prs/resgate-261118-lote3/claude/fix-e2e-workers-timeout-tests-011101-1800/playwright.config.ts` |
-| formulário) e nunca deve depender do projeto "setup" — rodar só este | `analise-prs/resgate-261118-lote3/claude/fix-e2e-workers-timeout-tests-011101-1800/playwright.config.ts` |
-| a propria porta e' o comportamento util. O que nao pode acontecer e' | `analise-prs/resgate-261118-lote3/claude/fix-e2e-workers-timeout-tests-011101-1800/playwright.config.ts` |
-| "stripInstanceToken declarado em escopo de módulo"; aqui verificamos apenas que existem. | `analise-prs/resgate-261118-lote3/claude/fix-evolution-rotas-orfas-261112/scripts/ci/evolution-edge-fixes.unit.mjs` |
-| O SELECT+maybeSingle antigo (check-then-act) não pode voltar. | `analise-prs/resgate-261118-lote3/claude/fix-evolution-rotas-orfas-261112/scripts/ci/evolution-edge-fixes.unit.mjs` |
-| amigável e não pode acionar compensação na GO (nada foi criado lá ainda). | `analise-prs/resgate-261118-lote3/claude/fix-evolution-rotas-orfas-261112/scripts/ci/evolution-edge-fixes.unit.mjs` |
-| proxyToEvolution devolve error:true tanto pra erro de negocio da GO | `analise-prs/resgate-261118-lote3/claude/fix-evolution-rotas-orfas-261112/scripts/ci/evolution-edge-fixes.unit.mjs` |
-| =/, "TOKEN_KEYS não pode estar dentro de create-connection — precisa ser de módulo"); | `analise-prs/resgate-261118-lote3/claude/fix-evolution-rotas-orfas-261112/scripts/ci/evolution-edge-fixes.unit.mjs` |
-| =/, "stripInstanceToken não pode estar dentro de create-connection"); | `analise-prs/resgate-261118-lote3/claude/fix-evolution-rotas-orfas-261112/scripts/ci/evolution-edge-fixes.unit.mjs` |
-| Teste unitario nunca deve alcancar banco: mesmo que o runner/CI tenha | `analise-prs/resgate-261118-lote3/claude/fix-ga-fase1-lote-banco-261020-2200/scripts/ci/db-migrate-contratos.unit.mjs` |
-| O aviso nao pode ir para o stdout: e' la que o workflow faz JSON.parse. | `analise-prs/resgate-261118-lote3/claude/fix-ga-fase1-lote-banco-261020-2200/scripts/ci/db-migrate-contratos.unit.mjs` |
-| * A validacao local sempre roda. A comparacao com o ledger so e pulada quando | `analise-prs/resgate-261118-lote3/claude/fix-ga-fase1-lote-banco-261020-2200/scripts/db-audit/check-migration-drift.mjs` |
-| pura, violando a regra 7 da secao 1 do CLAUDE.md. Saía exit 0 com apenas | `analise-prs/resgate-261118-lote3/claude/fix-ga-fase1-lote-banco-261020-2200/scripts/db-audit/check-migration-drift.mjs` |
-| Debuggers must never reach first-party production code. Third-party | `analise-prs/resgate-261118-lote3/claude/fix-ga-fase23-edge-e2e-261020-2200/eslint.config.js` |
-| function_logs do Supabase por console. A regra segue valendo no resto do | `analise-prs/resgate-261118-lote3/claude/fix-ga-fase23-edge-e2e-261020-2200/eslint.config.js` |
-| prazo (data futura ISO). Projeto orfao e spec que nunca roda: o teste reprova. | `analise-prs/resgate-261118-lote3/claude/fix-ga-fase23-edge-e2e-261020-2200/scripts/ci/ci-e2e-projects.unit.mjs` |
-| exemplo: "chromium-novo": { prazo: "2026-12-31", motivo: "issue #0000" }, | `analise-prs/resgate-261118-lote3/claude/fix-ga-fase23-edge-e2e-261020-2200/scripts/ci/ci-e2e-projects.unit.mjs` |
-| * Variaveis sem as quais a limpeza nao pode rodar (secret ausente = passo pulado). */ | `analise-prs/resgate-261118-lote3/claude/fix-ga-fase23-edge-e2e-261020-2200/scripts/ci/e2e-teardown.mjs` |
-| deste passo e nao pode entrar na assercao. | `analise-prs/resgate-261118-lote3/claude/fix-ga-fase23-edge-e2e-261020-2200/scripts/ci/e2e-teardown.unit.mjs` |
-| diretório ausente ou sem permissão: não é motivo para derrubar o CI | `analise-prs/resgate-261118-lote3/claude/fix-ga-fase23-edge-e2e-261020-2200/scripts/ci/redigir-relatorio.mjs` |
-| falhava. Agora 4xx = ::error:: (configuração/permissão errada é defeito real); | `analise-prs/resgate-261118-lote3/claude/fix-ga-fase23-edge-e2e-261020-2200/scripts/edge-deploy/health-check.mjs` |
-| 4xx: configuração/permissão/escopo errado — `severidade: 'erro'` (GA29). | `analise-prs/resgate-261118-lote3/claude/fix-ga-fase23-edge-e2e-261020-2200/scripts/edge-deploy/health-check.mjs` |
-| GA29: 4xx (endpoint/permissao/escopo) = defeito real, ::error:: com exit 1. | `analise-prs/resgate-261118-lote3/claude/fix-ga-fase23-edge-e2e-261020-2200/scripts/edge-deploy/health-check.mjs` |
-| GA92: 1 GET por run estourava o limite de 1.000/h do GITHUB_TOKEN (1.014 runs em | `analise-prs/resgate-261118-lote3/claude/fix-ga-fase78-perimetro-custo-261020-2200/scripts/ci/actions-kpi.mjs` |
-| read/, 'nem actions: read deve ficar no topo'); | `analise-prs/resgate-261118-lote3/claude/fix-ga-fase78-perimetro-custo-261020-2200/scripts/ci/actions-kpi.unit.mjs` |
-| GA92: o passo do KPI nao pode derrubar o hygiene de segunda se a API | `analise-prs/resgate-261118-lote3/claude/fix-ga-fase78-perimetro-custo-261020-2200/scripts/ci/actions-kpi.unit.mjs` |
-| limitar (1.014 runs em 7 d > limite de 1.000/h do GITHUB_TOKEN). | `analise-prs/resgate-261118-lote3/claude/fix-ga-fase78-perimetro-custo-261020-2200/scripts/ci/actions-kpi.unit.mjs` |
-| permissao push/admin). Campo ausente nao e divergencia: e ponto cego, e passa | `analise-prs/resgate-261118-lote3/claude/fix-ga-fase78-perimetro-custo-261020-2200/scripts/ci/github-settings-guard.mjs` |
-| `GET /repos` omite os campos de merge para tokens sem permissao push/admin; | `analise-prs/resgate-261118-lote3/claude/fix-ga-fase78-perimetro-custo-261020-2200/scripts/ci/github-settings-guard.mjs` |
-| W04: o GET /repos so devolve os campos de merge para quem tem permissao | `analise-prs/resgate-261118-lote3/claude/fix-ga-fase78-perimetro-custo-261020-2200/scripts/ci/github-settings-guard.mjs` |
-| )`, 200, 'nem REST nem GraphQL expuseram os campos de merge: o token nao tem permissao para le-los'); | `analise-prs/resgate-261118-lote3/claude/fix-ga-fase78-perimetro-custo-261020-2200/scripts/ci/github-settings-guard.mjs` |
-| Um humano (ou outro bot) comentando na issue nao pode fazer o guard voltar a | `analise-prs/resgate-261118-lote3/claude/fix-ga-fase78-perimetro-custo-261020-2200/scripts/ci/github-settings-guard.unit.mjs` |
-| PATCH automatico, a regra e uma so: mesma causa + janela = suprime. | `analise-prs/resgate-261118-lote3/claude/fix-ga-fase78-perimetro-custo-261020-2200/scripts/ci/github-settings-guard.unit.mjs` |
-| `\n` NÃO pode forjar uma linha nova no log do workflow. | `analise-prs/resgate-261118-lote3/claude/fix-ga-fase78-perimetro-custo-261020-2200/scripts/ci/github-settings-guard.unit.mjs` |
-| Esta função implementa a rotação: quando o limite é atingido, fecha a issue | `analise-prs/resgate-261118-lote3/claude/fix-ga-fase78-perimetro-custo-261020-2200/scripts/ci/issue-rotativa.mjs` |
-| * `gh(method, path, body?)` deve ser a função que faz chamadas à API do GitHub, | `analise-prs/resgate-261118-lote3/claude/fix-ga-fase78-perimetro-custo-261020-2200/scripts/ci/issue-rotativa.mjs` |
-| (Mesma regra do settings-guard; sem isto um number forjado quebra o log.) | `analise-prs/resgate-261118-lote3/claude/fix-ga-fase78-perimetro-custo-261020-2200/scripts/ci/issue-rotativa.mjs` |
-| Retorna o total real, não apenas os da primeira página. | `analise-prs/resgate-261118-lote3/claude/fix-ga-fase78-perimetro-custo-261020-2200/scripts/ci/issue-rotativa.mjs` |
-| 7"), "nova issue deve linkar para a anterior"); | `analise-prs/resgate-261118-lote3/claude/fix-ga-fase78-perimetro-custo-261020-2200/scripts/ci/issue-rotativa.unit.mjs` |
-| sync so altera esse arquivo dentro de scripts/db-audit/** e nao deve redisparar o workflow. | `analise-prs/resgate-261118-lote3/claude/fix-ga-resto-dbmigrate-20261021-0729/scripts/ci/parity-hardening.unit.mjs` |
-| DESTINO_URL (senha inclusa) nunca deve ir pro argv do psql — so pro env, | `analise-prs/resgate-261118-lote3/claude/fix-ga-resto-dbmigrate-20261021-0729/scripts/ci/parity-hardening.unit.mjs` |
-| DESTINO_URL (senha inclusa) nunca deve ir pro argv do psql — so pro env, | `analise-prs/resgate-261118-lote3/claude/fix-ga-resto-dbmigrate-20261021-0729/scripts/ci/parity-hardening.unit.mjs` |
-| DESTINO_URL (senha inclusa) nunca deve ir pro argv do psql — so pro env, | `analise-prs/resgate-261118-lote3/claude/fix-ga-resto-dbmigrate-20261021-0729/scripts/ci/parity-hardening.unit.mjs` |
-| psql(\s\|$)/m, `${arquivo} nao pode invocar psql: so devolve SQL ao wrapper`); | `analise-prs/resgate-261118-lote3/claude/fix-ga-resto-dbmigrate-20261021-0729/scripts/ci/parity-hardening.unit.mjs` |
-| read/, 'nem actions: read deve ficar no topo'); | `analise-prs/resgate-261118-lote3/claude/fix-ga-resto-sonar-contracts-20261021-0726/scripts/ci/actions-kpi.unit.mjs` |
-| Regra condicional do CT-73: declarar o item fechado SEM nova medicao real (no | `analise-prs/resgate-261118-lote3/claude/fix-ga-resto-sonar-contracts-20261021-0726/scripts/ci/catalog-ct73-docs.unit.mjs` |
-| E os retries de conexao valem SO no preflight, que e somente leitura -- no | `analise-prs/resgate-261118-lote3/claude/fix-ga-resto-sonar-contracts-20261021-0726/scripts/ci/db-migrate-workflow.unit.mjs` |
-| A validacao exporta SUPABASE_DB_URL nos outputs (supabase_db_url=) com a | `analise-prs/resgate-261118-lote3/claude/fix-ga-resto-sonar-contracts-20261021-0726/scripts/ci/db-migrate-workflow.unit.mjs` |
-| permissao push/admin). Campo ausente nao e divergencia: e ponto cego, e passa | `analise-prs/resgate-261118-lote3/claude/fix-ga-resto-sonar-contracts-20261021-0726/scripts/ci/github-settings-guard.mjs` |
-| W04: o GET /repos so devolve os campos de merge para quem tem permissao | `analise-prs/resgate-261118-lote3/claude/fix-ga-resto-sonar-contracts-20261021-0726/scripts/ci/github-settings-guard.mjs` |
-| )`, 200, 'resposta sem os campos de merge: o token nao tem permissao push/admin para le-los'); | `analise-prs/resgate-261118-lote3/claude/fix-ga-resto-sonar-contracts-20261021-0726/scripts/ci/github-settings-guard.mjs` |
-| comentario humano ou de outro bot depois do marcador nao pode zerar o dedupe, e um | `analise-prs/resgate-261118-lote3/claude/fix-ga-resto-sonar-contracts-20261021-0726/scripts/ci/github-settings-guard.mjs` |
-| marcador colado por terceiros nao pode acioná-lo (achados do Codex na PR #1920). | `analise-prs/resgate-261118-lote3/claude/fix-ga-resto-sonar-contracts-20261021-0726/scripts/ci/github-settings-guard.mjs` |
-| 436: os nove subintervalos de energia somam apenas nos tres grupos inteiros ya[1..3]', () => { | `analise-prs/resgate-261118-lote3/claude/fix-ga-resto-sonar-contracts-20261021-0726/scripts/ci/lamejs-attack-indexing.unit.mjs` |
-| deve ganhar acesso a segredo só porque o YAML mudou. Todo invariante aqui é | `analise-prs/resgate-261118-lote3/claude/fix-ga-resto-sonar-contracts-20261021-0726/scripts/ci/workflow-contracts.unit.mjs` |
-| CI mínimo (16/10/2026): sem trigger push no db-live-guard, não há bloco paths — contrato satisfeito. | `analise-prs/resgate-261118-lote3/claude/fix-ga-resto-sonar-contracts-20261021-0726/scripts/ci/workflow-contracts.unit.mjs` |
-| Reforça o invariante central: código de PR de terceiro não pode alcançar | `analise-prs/resgate-261118-lote3/claude/fix-ga-resto-sonar-contracts-20261021-0726/scripts/ci/workflow-contracts.unit.mjs` |
-| job que instala apenas Chromium (e2e-talkx.yml) satisfaz o job que precisa de | `analise-prs/resgate-261118-lote3/claude/fix-ga-resto-sonar-contracts-20261021-0726/scripts/ci/workflow-contracts.unit.mjs` |
-| É uma permissão elevada que só faz sentido quando o job de fato escreve no | `analise-prs/resgate-261118-lote3/claude/fix-ga-resto-sonar-contracts-20261021-0726/scripts/ci/workflow-contracts.unit.mjs` |
-| seed mínimo em CI para a suíte logada". **Avaliado neste repositório e NÃO | `analise-prs/resgate-261118-lote3/claude/fix-ga-resto-sonar-contracts-20261021-0726/scripts/ci/workflow-contracts.unit.mjs` |
-| 4. um "seed mínimo" teria de recriar `profiles`/`user_roles`/contatos/ | `analise-prs/resgate-261118-lote3/claude/fix-ga-resto-sonar-contracts-20261021-0726/scripts/ci/workflow-contracts.unit.mjs` |
-| não pode entrar em silêncio num PR: estes casos obrigam a revisitar a decisão | `analise-prs/resgate-261118-lote3/claude/fix-ga-resto-sonar-contracts-20261021-0726/scripts/ci/workflow-contracts.unit.mjs` |
-| Corpo de `run: \|` é shell, não YAML — não pode virar cabeçalho de job. | `analise-prs/resgate-261118-lote3/claude/fix-ga-resto-sonar-contracts-20261021-0726/scripts/ci/workflow-contracts.unit.mjs` |
-| de migration nao pode esconder os outros checks —, entao quem decide se o | `analise-prs/resgate-261118-lote3/claude/fix-ga-resto-sonar-contracts-20261021-0726/scripts/db-audit/consolidar-veredito.mjs` |
-| outro drift (migration, reset de ambiente), e a raiz deve apontar o estrutural. | `analise-prs/resgate-261118-lote3/claude/fix-ga-resto-sonar-contracts-20261021-0726/scripts/db-audit/consolidar-veredito.mjs` |
-| dentro dela o bash desfaz apenas \" \\ \$ \` e \<newline> (continuacao de | `analise-prs/resgate-261118-lote3/claude/fix-ga-resto-sonar-contracts-20261021-0726/scripts/db-audit/run-runtime-contract.mjs` |
-| `versoes` e null apenas no ramo generico (`*)`). | `analise-prs/resgate-261118-lote3/claude/fix-ga-resto-sonar-contracts-20261021-0726/scripts/db-audit/run-runtime-contract.mjs` |
-| nunca ::error:: — o check não pode derrubar deploys por indisponibilidade de | `analise-prs/resgate-261118-lote3/claude/fix-ga-resto-sonar-contracts-20261021-0726/scripts/edge-deploy/health-check.mjs` |
-| * Fonte de verdade do estado: a avaliação verificada de P046.json (entrada somente | `analise-prs/resgate-261118-lote3/claude/fix-ga-resto-sonar-contracts-20261021-0726/scripts/talkx/v4-status.mjs` |
-| leitura). SOMENTE o estado `DONE_VERIFIED` significa etapa concluída. O marcador | `analise-prs/resgate-261118-lote3/claude/fix-ga-resto-sonar-contracts-20261021-0726/scripts/talkx/v4-status.mjs` |
-| contagem (aparece apenas como nota informativa na saída padrão). | `analise-prs/resgate-261118-lote3/claude/fix-ga-resto-sonar-contracts-20261021-0726/scripts/talkx/v4-status.mjs` |
-| * Avaliação verificada do plano (fonte canônica do estado atual). Somente leitura. */ | `analise-prs/resgate-261118-lote3/claude/fix-ga-resto-sonar-contracts-20261021-0726/scripts/talkx/v4-status.mjs` |
-| no PATH: é o que a regra S4036 exige. | `analise-prs/resgate-261118-lote3/claude/fix-ga-resto-sonar-contracts-20261021-0726/scripts/talkx/v4-status.mjs` |
-| * Etapas concluídas = somente as avaliadas como `DONE_VERIFIED`. | `analise-prs/resgate-261118-lote3/claude/fix-ga-resto-sonar-contracts-20261021-0726/scripts/talkx/v4-status.mjs` |
-| de migration nao pode esconder os outros checks —, entao quem decide se o | `analise-prs/resgate-261118-lote3/claude/fix-ga-resto-typessync-20261021-0730/scripts/db-audit/consolidar-veredito.mjs` |
-| outro drift (migration, reset de ambiente), e a raiz deve apontar o estrutural. | `analise-prs/resgate-261118-lote3/claude/fix-ga-resto-typessync-20261021-0730/scripts/db-audit/consolidar-veredito.mjs` |
-| CV-081-090 — Fase 9: catálogo, prazo, orçamento | `analise-prs/resgate-261118-lote3/claude/fix-radar-fase6-cv056-shortcuts-261108-2335/src/components/copilot/index.ts` |
-| contato, então o anexo agendado não pode ficar fora de `<contact_id>/...`. | `analise-prs/resgate-261118-lote3/claude/fix-radar-fase6-cv056-shortcuts-261108-2335/src/components/inbox/ChatPanel.tsx` |
-| Auto-expira o mute global via timer; evita Date.now() no caminho de render. | `analise-prs/resgate-261118-lote3/claude/fix-radar-fase6-cv056-shortcuts-261108-2335/src/hooks/copilot/useRadarPanel.ts` |
-| globalMutedUntil > 0 é puro (comparação com 0). O timer acima zera quando expira. | `analise-prs/resgate-261118-lote3/claude/fix-radar-fase6-cv056-shortcuts-261108-2335/src/hooks/copilot/useRadarPanel.ts` |
-| injetam um hook mínimo: o hook real sempre devolve os seis. | `analise-prs/resgate-261118-lote3/claude/fix-talkx-segmentos-regressao-261101-1944/src/components/talkx/TalkXSegments.tsx` |
-| Uma condição em branco não pode ir para o banco: recusa com o número exato | `analise-prs/resgate-261118-lote3/claude/fix-talkx-segmentos-regressao-261101-1944/src/components/talkx/TalkXSegments.tsx` |
-| O campo "Limite de Chats" usa type=number, mas o navegador permite apagar o | `analise-prs/resgate-261118-lote3/claude/fix-unit-tests-src-261024-1630/src/components/admin/AdminView.tsx` |
-| grupos principais da navegação). A permissão `google_calendar` era oferecida aqui e | `analise-prs/resgate-261118-lote3/claude/fix-unit-tests-src-261024-1630/src/components/admin/AdminView.tsx` |
-| `profiles.access_level` está DEPRECATED: o campo é registro, não permissão. */} | `analise-prs/resgate-261118-lote3/claude/fix-unit-tests-src-261024-1630/src/components/admin/AdminView.tsx` |
-| falha (o erro é mostrado pelo boundary, o giro não pode ficar preso). | `analise-prs/resgate-261118-lote3/claude/fix-unit-tests-src-261024-1630/src/components/talkx/TalkXOverview.tsx` |
-| descartada de A (que chega depois da troca para B) nao pode alterar o painel | `analise-prs/resgate-261118-lote3/claude/fix-unit-tests-src-261024-1630/src/components/talkx/TalkXTemplateEditor.tsx` |
-| * R2-AUTH-005 (item 239): a resposta de uma busca de perfil nao pode repor | `analise-prs/resgate-261118-lote3/claude/fix-unit-tests-src-261024-1630/src/hooks/auth/useAuth.tsx` |
-| Identidade diferente: o perfil anterior nao pode continuar na tela e so a | `analise-prs/resgate-261118-lote3/claude/fix-unit-tests-src-261024-1630/src/hooks/auth/useAuth.tsx` |
-| Supabase pode falhar e não emitir SIGNED_OUT — a limpeza não pode depender dele). | `analise-prs/resgate-261118-lote3/claude/fix-unit-tests-src-261024-1630/src/hooks/auth/useAuth.tsx` |
-| alertas visíveis numa consulta de APRESENTAÇÃO (limit 50) e gravava sem chave. | `analise-prs/resgate-261118-lote3/claude/fix-unit-tests-src-261024-1630/src/hooks/business/useWarRoomAlerts.ts` |
-| fora do inbox) e não deve entrar no `mediaVolumeStore`. O volume dele é o volume de | `analise-prs/resgate-261118-lote3/claude/fix-unit-tests-src-261024-1630/src/hooks/business/useWarRoomAlerts.ts` |
-| SLA breach monitor — checa a cada 60 s e cria no máximo UM alerta por incidente. | `analise-prs/resgate-261118-lote3/claude/fix-unit-tests-src-261024-1630/src/hooks/business/useWarRoomAlerts.ts` |
-| (`mediaVolumeStore`), porque o atendente não pode silenciar alerta sem querer ao mexer | `analise-prs/resgate-261118-lote3/claude/fix-unit-tests-src-261024-1630/src/hooks/chat/useTeamChatNotifications.ts` |
-| Check if user is a member of this conversation. limit(1) em vez de | `analise-prs/resgate-261118-lote3/claude/fix-unit-tests-src-261024-1630/src/hooks/chat/useTeamChatNotifications.ts` |
-| HZ3-001: o aviso depende SÓ da permissão do navegador já concedida — o | `analise-prs/resgate-261118-lote3/claude/fix-unit-tests-src-261024-1630/src/hooks/chat/useTeamChatNotifications.ts` |
-| silenciava quem concedeu a permissão e não assinou o push: ficava só com o | `analise-prs/resgate-261118-lote3/claude/fix-unit-tests-src-261024-1630/src/hooks/chat/useTeamChatNotifications.ts` |
-| retomada acontece quando o conjunto encolhe no vencimento do prazo. | `analise-prs/resgate-261118-lote3/claude/fix-unit-tests-src-261024-1630/src/hooks/inbox/useInboxFilters.ts` |
-| Busca só em memória: telefone/nome digitado não pode ir para a URL. | `analise-prs/resgate-261118-lote3/claude/fix-unit-tests-src-261024-1630/src/hooks/inbox/useInboxFilters.ts` |
-| Adiamento (R2-INB-029): conversa adiada sai da listagem até o prazo vencer. | `analise-prs/resgate-261118-lote3/claude/fix-unit-tests-src-261024-1630/src/hooks/inbox/useInboxFilters.ts` |
-| `snoozedIds` só traz os adiamentos ainda vigentes — no vencimento o hook de | `analise-prs/resgate-261118-lote3/claude/fix-unit-tests-src-261024-1630/src/hooks/inbox/useInboxFilters.ts` |
-| como "resolvida" apenas a que nunca teve nenhuma). | `analise-prs/resgate-261118-lote3/claude/fix-unit-tests-src-261024-1630/src/hooks/inbox/useInboxFilters.ts` |
-| datas) e tipo de contato. A regra vive em passesExtraFilters, em | `analise-prs/resgate-261118-lote3/claude/fix-unit-tests-src-261024-1630/src/hooks/inbox/useInboxFilters.ts` |
-| todos: dias de calendario em Sao Paulo, e nao o fuso do navegador de quem montou a regra. | `analise-prs/resgate-261118-lote3/claude/fix-unit-tests-src-261024-1630/src/hooks/integrations/useTalkXSegments.ts` |
-| para a regra nunca oferecer categoria que o banco não guarda. | `analise-prs/resgate-261118-lote3/claude/fix-unit-tests-src-261024-1630/src/hooks/integrations/useTalkXSegments.ts` |
-| Tipos de contato e status de conversa vem das fontes canonicas: uma regra de segmento | `analise-prs/resgate-261118-lote3/claude/fix-unit-tests-src-261024-1630/src/hooks/integrations/useTalkXSegments.ts` |
-| e prioridade na escala EN do front. Uma regra de segmento nunca pode | `analise-prs/resgate-261118-lote3/claude/fix-unit-tests-src-261024-1630/src/hooks/integrations/useTalkXSegments.ts` |
-| condição nasce em branco no construtor e não pode ir para o motor. | `analise-prs/resgate-261118-lote3/claude/fix-unit-tests-src-261024-1630/src/hooks/integrations/useTalkXSegments.ts` |
-| estimativa/PostgREST (uma regra vazia derrubaria o count para 0 e o botão para | `analise-prs/resgate-261118-lote3/claude/fix-unit-tests-src-261024-1630/src/hooks/integrations/useTalkXSegments.ts` |
-| de funcionar); as incompletas viram apenas a contagem que a tela exibe fora da | `analise-prs/resgate-261118-lote3/claude/fix-unit-tests-src-261024-1630/src/hooks/integrations/useTalkXSegments.ts` |
-| "Em breve" (lead_score/risk_score/lead_origin): a regra é completa e bem descrita | `analise-prs/resgate-261118-lote3/claude/fix-unit-tests-src-261024-1630/src/hooks/integrations/useTalkXSegments.ts` |
-| Coluna uuid nao compara com string vazia (`eq.`): "vazio" aqui e apenas nulo. | `analise-prs/resgate-261118-lote3/claude/fix-unit-tests-src-261024-1630/src/hooks/integrations/useTalkXSegments.ts` |
-| vazio ainda representa a base inteira, mas uma regra inválida nunca pode ser | `analise-prs/resgate-261118-lote3/claude/fix-unit-tests-src-261024-1630/src/hooks/integrations/useTalkXSegments.ts` |
-| mascarado pelo servidor e a paginação percorre até `limit` (ou o fim da lista). | `analise-prs/resgate-261118-lote3/claude/fix-unit-tests-src-261024-1630/src/hooks/integrations/useTalkXSegments.ts` |
-| * O lote é dividido em chamadas de no máximo `BULK_ACTION_MAX_IDS` (a RPC recusa | `analise-prs/resgate-261118-lote3/claude/fix-unit-tests-src-261024-1630/src/hooks/integrations/useTalkXSegments.ts` |
-| Debuggers must never reach first-party production code. Third-party | `analise-prs/resgate-261118-lote3/claude/ga-ci-batch-ga49-ga54-ga60-ga64-231023/eslint.config.js` |
-| function_logs do Supabase por console. A regra segue valendo no resto do | `analise-prs/resgate-261118-lote3/claude/ga-ci-batch-ga49-ga54-ga60-ga64-231023/eslint.config.js` |
-| read/, 'nem actions: read deve ficar no topo'); | `analise-prs/resgate-261118-lote3/claude/ga-ci-batch-ga49-ga54-ga60-ga64-231023/scripts/ci/actions-kpi.unit.mjs` |
-| // Regra desta fila: | `analise-prs/resgate-261118-lote3/claude/ga-ci-batch-ga49-ga54-ga60-ga64-231023/scripts/ci/fila-merge.mjs` |
-| em profiles.avatar_url (o bucket é privado e a URL assinada expira). */ | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/admin/useAdminData.ts` |
-| R2-AUTH-004 (item 6): desativar deve depender da operação server-side | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/admin/useAdminData.ts` |
-| Guarda o caminho do arquivo (não a URL assinada, que expira) | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/admin/useAdminData.ts` |
-| Guarda o caminho do arquivo (não a URL assinada, que expira) | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/admin/useAdminData.ts` |
-| gráfico diário e o ranking de agentes com apenas uma fatia. Agora a leitura | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/dashboard/useSentimentData.ts` |
-| retomá-la no vencimento do prazo (R2-INB-029). | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/inbox/RealtimeInboxView.tsx` |
-| já com conversas não lidas não é mensagem nova e não pode ser anunciado. | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/inbox/RealtimeInboxView.tsx` |
-| pré-visualização. Valor desconhecido NÃO vira rótulo inventado (mesma regra | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/inbox/VirtualizedRealtimeList.tsx` |
-| R2-SLA-003: a linha enviava o prazo FIXO de 5 min ao badge compacto, | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/inbox/VirtualizedRealtimeList.tsx` |
-| mesmo quando uma regra granular (por contato/empresa/cargo/tipo/fila/ | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/inbox/VirtualizedRealtimeList.tsx` |
-| caimos no indicador com o prazo fixo anterior, sem chamar o hook e sem | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/inbox/VirtualizedRealtimeList.tsx` |
-| desmontado) enquanto a permissão estava pendente. Nesse caso o stream | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/inbox/VoiceChangerPicker.tsx` |
-| O motivo real muda a ação do usuário: permissão negada, microfone | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/inbox/VoiceChangerPicker.tsx` |
-| depois não pode tocar por baixo da voz nova. | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/inbox/VoiceSelector.tsx` |
-| Nota de voz: o gravador é o motor do PE-59/PE-24 (limite de 300 s e liberação de | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/inbox/WhisperMode.tsx` |
-| Minutos sem envio entram no denominador — sem isso o prazo ficava otimista (R2-MOD-033). | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/talkx/TalkXCampaignRunning.tsx` |
-| P2: deriva somente de campanhas ativas; sai da view quando concluir/cancelar | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/talkx/TalkXCampaignRunning.tsx` |
-| E61/E73: avisa na saída da ABA apenas quando existe alteração realmente | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/talkx/TalkXCampaignWizard.tsx` |
-| então o teclado não pula validação), o foco acompanha e `aria-current="step"` | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/talkx/TalkXCampaignWizard.tsx` |
-| mesmo limite bloqueia "Continuar" no hook (uma régua só, sem divergir). | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/talkx/TalkXCampaignWizard.tsx` |
-| falha (o erro é mostrado pelo boundary, o giro não pode ficar preso). | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/talkx/TalkXOverview.tsx` |
-| injetam um hook mínimo: o hook real sempre devolve os seis. | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/talkx/TalkXSegments.tsx` |
-| Uma condição em branco não pode ir para o banco: recusa com o número exato | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/talkx/TalkXSegments.tsx` |
-| descartada de A (que chega depois da troca para B) nao pode alterar o painel | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/talkx/TalkXTemplateEditor.tsx` |
-| yet. It is safe to keep the current editor alive, but a reload must still | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/talkx/TalkXView.tsx` |
-| * X128 — limite do corpo da mensagem. É o mesmo teto que a RPC de rascunho/ | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/talkx/useCampaignEditor.ts` |
-| aceitamos somente o instante que reconstrói exatamente a parede local. | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/talkx/useCampaignEditor.ts` |
-| * Regra de tag não entra em nenhum rascunho: com o campo fora do catálogo ela | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/talkx/useCampaignEditor.ts` |
-| textual como chave irmã, que não pode viajar dentro das regras. | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/talkx/useCampaignEditor.ts` |
-| * Uma regra ainda em branco não pode ir para o motor: `rulesToPostgrest` lança | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/talkx/useCampaignEditor.ts` |
-| em regra inválida (de propósito — nunca ampliar a audiência em silêncio). | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/talkx/useCampaignEditor.ts` |
-| * Valor atual de uma regra simples de um campo (atalho Empresa do seletor). */ | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/talkx/useCampaignEditor.ts` |
-| * Acrescenta (ou substitui) a regra de um campo no primeiro grupo. */ | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/talkx/useCampaignEditor.ts` |
-| * Acrescenta a regra informada ao primeiro grupo (sem deduplicar). */ | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/talkx/useCampaignEditor.ts` |
-| regra), por isso continua como estado próprio — só refina a lista. | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/talkx/useCampaignEditor.ts` |
-| V26 — mesma regra do applyTemplate: a versão vem do ponteiro da coluna | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/talkx/useCampaignEditor.ts` |
-| V24 — o filtro de Empresa do seletor vira atalho para uma regra do motor: o | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/talkx/useCampaignEditor.ts` |
-| exige media_url e media_type juntos, então um tipo sem URL não pode avançar). | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/talkx/useCampaignEditor.ts` |
-| O baseline deve acompanhar o último snapshot confirmado. Caso o | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/talkx/useCampaignEditor.ts` |
-| precisa ser persistida — não pode ser tratada como "sem alteração". | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/talkx/useCampaignEditor.ts` |
-| cliente mínimo tipado aqui, sem `any` solto e sem eslint-disable. | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/talkx/tracking/TalkXRecipientsTable.tsx` |
-| Só a primeira página mostra o esqueleto: carregar mais não pode apagar a lista. | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/talkx/tracking/TalkXRecipientsTable.tsx` |
-| SL-016 — a busca server-side tem mínimo e teto: abaixo de 2 caracteres o | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/team-chat/useTeamChatPanel.ts` |
-| pode transferir (`canTransfer`, a única regra de papel) E numa conversa de | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/team-chat/useTeamChatPanel.ts` |
-| Abaixo do mínimo não há busca aplicada: o servidor nem é consultado e a | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/team-chat/useTeamChatPanel.ts` |
-| a falha da conversa A não pode aparecer na conversa B enquanto a busca de B | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/team-chat/useTeamChatPanel.ts` |
-| aviso de falha não pode ficar na tela por cima do resultado que chegou. | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/team-chat/useTeamChatPanel.ts` |
-| O servidor devolve no máximo o teto: lote cheio significa "100+". | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/team-chat/useTeamChatPanel.ts` |
-| estava em voo quando o debounce de 300 ms liberou a busca seguinte não pode mais virar | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/ui/command-palette.tsx` |
-| cabem no celular parcial, e apagar um dígito de "98765-4321" não pode | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/ui/phone-input.tsx` |
-| Teto: no máximo 9 dígitos após o DDD. | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/ui/phone-input.tsx` |
-| * Extrai apenas os dígitos de uma string. */ | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/ui/phone-input.tsx` |
-| - Aceita apenas dígitos | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/ui/phone-input.tsx` |
-| * R2-AUTH-005 (item 239): a resposta de uma busca de perfil nao pode repor | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/hooks/auth/useAuth.tsx` |
-| Identidade diferente: o perfil anterior nao pode continuar na tela e so a | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/hooks/auth/useAuth.tsx` |
-| Supabase pode falhar e não emitir SIGNED_OUT — a limpeza não pode depender dele). | `analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/hooks/auth/useAuth.tsx` |
-| … +2491 linhas — lista completa em `context.json` | |
+| Teste unitario nunca deve alcancar banco: mesmo que o runner/CI tenha | `analise-prs/resgate-regra8-261118/scripts/ci/db-migrate-contratos.unit.mjs` |
+| O aviso nao pode ir para o stdout: e' la que o workflow faz JSON.parse. | `analise-prs/resgate-regra8-261118/scripts/ci/db-migrate-contratos.unit.mjs` |
+| E os retries de conexao valem SO no preflight, que e somente leitura -- no | `analise-prs/resgate-regra8-261118/scripts/ci/db-migrate-workflow.unit.mjs` |
+| A validacao exporta SUPABASE_DB_URL no GITHUB_ENV com a MESMA string | `analise-prs/resgate-regra8-261118/scripts/ci/db-migrate-workflow.unit.mjs` |
+| versions sem Deployment sao reportadas apenas para entradas apos o corte de | `analise-prs/resgate-regra8-261118/scripts/db-audit/check-ddl-deployments.mjs` |
+| Unskewed requests must not pay the worst-case retention (nonce map capacity). | `infrastructure/preview-egress-proxy/main_test.go` |
+| the app must remain usable even if a non-critical overlay fails to load. | `src/App.tsx` |
+| Presenca real do WhatsApp: contato derivado apenas do historico nao tem | `src/adapters/evolutionAdapter.ts` |
+| firstResponseAt DEVE ser null (cronometro conta). So usamos a linha | `src/adapters/inboxAdapter.ts` |
+| * Global theme initializer — must be mounted at the app root. | `src/components/ThemeInitializer.tsx` |
+| O campo "Limite de Chats" usa type=number, mas o navegador permite apagar o | `src/components/admin/AdminView.tsx` |
+| grupos principais da navegação). A permissão `google_calendar` era oferecida aqui e | `src/components/admin/AdminView.tsx` |
+| supervisor não deve nem ver a aba (evita abrir uma tela que só daria acesso negado). | `src/components/admin/AdminView.tsx` |
+| `profiles.access_level` está DEPRECATED: o campo é registro, não permissão. */} | `src/components/admin/AdminView.tsx` |
+| (`profiles.is_active`) é permissão de acesso, não presença — R2-AUTH-036/R2-MOD-030. | `src/components/admin/CrisisRoom.tsx` |
+| TODAS as sessões do usuário alvo. NUNCA atualizar apenas | `src/components/admin/ForceLogoutButton.tsx` |
+| qualquer uma delas nao pode sobrescrever o ultimo dado bom com zero. | `src/components/admin/GmailWebhookMonitor.tsx` |
+| e cliques por tipo de resultado. Leitura apenas — esta tela NÃO exporta, não | `src/components/admin/SearchInsightsView.tsx` |
+| ler o relógio durante o render (regra react-hooks/purity). | `src/components/admin/SupervisorCopilot.tsx` |
+| Limite do ramal no banco: `check (ramal ~ '^[0-9A-Za-z][0-9A-Za-z._@+-]{0,63}$')` | `src/components/admin/VoipRamalField.tsx` |
+| em profiles.avatar_url (o bucket é privado e a URL assinada expira). */ | `src/components/admin/useAdminData.ts` |
+| R2-AUTH-004 (item 6): desativar deve depender da operação server-side | `src/components/admin/useAdminData.ts` |
+| Guarda o caminho do arquivo (não a URL assinada, que expira) | `src/components/admin/useAdminData.ts` |
+| Guarda o caminho do arquivo (não a URL assinada, que expira) | `src/components/admin/useAdminData.ts` |
+| não pode mostrá-lo. | `src/components/admin/useTarefasAgendadas.ts` |
+| (regra `react-refresh/only-export-components` do lint do projeto). | `src/components/agents/inviteErrors.ts` |
+| Testemunho — apenas no desktop */} | `src/components/auth/HeroBenefits.tsx` |
+| * BUG-8 FIX: reset hasPermission whenever the user identity or the required | `src/components/auth/ProtectedRoute.tsx` |
+| permission changes so stale permission state is never shown to a new user. | `src/components/auth/ProtectedRoute.tsx` |
+| enquanto ainda estamos buscando permissão/MFA (o conteúdo segue fail closed). | `src/components/auth/ProtectedRoute.tsx` |
+| só a rota tentada e o papel/permissão exigidos. `rotaNegada` muda quando a | `src/components/auth/ProtectedRoute.tsx` |
+| condição vazia; a validação do save barra o campo obrigatório sem valor. | `src/components/automations/AutomationEditorDialog.tsx` |
+| apenas a prop `automation` (o `open` só o esconde). Como os inicializadores de | `src/components/automations/AutomationEditorDialog.tsx` |
+| somente dados comprovadamente incompatíveis com o novo tipo são removidos. | `src/components/automations/automationConstants.ts` |
+| permissão de microfone à página (comportamento do navegador, não bug): nesse | `src/components/calls/CallDialog.tsx` |
+| demorar (o navegador pergunta a permissão) e um clique sem resposta na | `src/components/calls/CallDialog.tsx` |
+| O navegador recusou (saída desconectada, sem permissão): o motivo fica na | `src/components/calls/CallDialog.tsx` |
+| * Só admin e supervisor escolhem o escopo; agente comum vê apenas "Minhas ligações". */ | `src/components/calls/CallHistoryCard.tsx` |
+| * A busca é o único campo com atraso: digitar não pode disparar uma consulta por | `src/components/calls/CallHistoryToolbar.tsx` |
+| efeito, que a regra react-hooks/set-state-in-effect (com razão) barra. | `src/components/calls/CallHistoryToolbar.tsx` |
+| * Numero ja pedido pelo clique-para-discar (T29). Preenche o campo SOMENTE se | `src/components/calls/DialPad.tsx` |
+| * O toque soa em `soundVolume/100 * RING_GAIN_CAP` — no MÁXIMO 20 % de ganho, bem | `src/components/calls/IncomingCallAlert.tsx` |
+| nunca deve ser plugado neste componente: quem abaixa o áudio do cliente não pode, sem | `src/components/calls/IncomingCallAlert.tsx` |
+| * Foto que não carrega não pode virar um quadrado vazio: a falha fica ancorada | `src/components/calls/IncomingCallAlert.tsx` |
+| Play ringtone only if sound is enabled and not in quiet hours | `src/components/calls/IncomingCallAlert.tsx` |
+| porque aqui o agente JA apertou o botao - o painel nao pode so preencher e esperar. | `src/components/calls/NewCallPanel.tsx` |
+| `setState` no proprio corpo, que a regra `react-hooks/set-state-in-effect` recusa. | `src/components/calls/RecordingPlayer.tsx` |
+| a regra, nao um estado de erro: com D3=b (sem servico de gravacao) nem requisicao sai, | `src/components/calls/RecordingPlayer.tsx` |
+| este componente saiba nada sobre permissao. | `src/components/calls/TelefoniaTopActions.tsx` |
+| reivindica no boot não pode derrubar quem já segura a linha. | `src/components/calls/TelefoniaView.tsx` |
+| apenas as proprias ligacoes. | `src/components/calls/TelefoniaView.tsx` |
+| * Mostra no maximo 7 botoes deslizando em volta da pagina atual, em vez de listar | `src/components/calls/paginas.ts` |
+| (regra `react-refresh/only-export-components`), e a constante e consumida tambem | `src/components/calls/periodos.ts` |
+| valor fixo na UI (placeholder do campo "Máximo" usa priceCeiling, que já | `src/components/catalog/CatalogAdvancedFilters.tsx` |
+| CT-28 — além do envio, a barra favorita os selecionados e impõe o limite de | `src/components/catalog/CatalogBulkBar.tsx` |
+| * CT-28 — limite de produtos por envio em massa. Acima disso o envio é | `src/components/catalog/CatalogBulkBar.tsx` |
+| * CT-28 — limite de produtos por envio (default `CATALOG_BULK_SEND_MAX`). */ | `src/components/catalog/CatalogBulkBar.tsx` |
+| CT-28 — "limite 10 por envio com mensagem clara": acima do limite o botão | `src/components/catalog/CatalogBulkBar.tsx` |
+| inicial). `lazy()` fica em ESCOPO DE MÓDULO: a regra | `src/components/catalog/CatalogProductCard.tsx` |
+| CatalogCategoryLike no catalogShared: o rail não precisa (nem deve) | `src/components/catalog/CatalogRail.tsx` |
+| isso: o bootstrap hoje devolve apenas categories/suppliers/stats. */ | `src/components/catalog/CatalogRail.tsx` |
+| botão que não faz nada (regra do plano: nada morto). */ | `src/components/catalog/CatalogRail.tsx` |
+| não existe URL pública confirmada para elas no repo (a regra do plano é nada | `src/components/catalog/CatalogRail.tsx` |
+| `lazy()` fica em ESCOPO DE MÓDULO: a regra `react-hooks/static-components` | `src/components/catalog/ExternalProductCatalog.tsx` |
+| opção do `TalkXPagination` (8/10/20/50): o limite existe para o corte não | `src/components/catalog/ExternalProductCatalog.tsx` |
+| novo `limit` (o efeito de filtros não observa `pageSize` de propósito). | `src/components/catalog/ExternalProductCatalog.tsx` |
+| nova) e a UI não pode quebrar por causa de um atalho. | `src/components/catalog/ExternalProductCatalog.tsx` |
+| em ESCOPO DE MÓDULO: a regra react-hooks/static-components rejeita lazy no | `src/components/catalog/ExternalProductManagement.tsx` |
+| resultado de cada persistência, então o sucesso conta apenas o que o | `src/components/catalog/ExternalProductManagement.tsx` |
+| não duplicar a regra. */ | `src/components/catalog/ExternalProductManagement.tsx` |
+| falha dele (id inexistente/sem permissão) devolve null, caindo no | `src/components/catalog/ExternalProductManagement.tsx` |
+| N-058 — alvo de toque: no celular cada aba tem no mínimo 44 px | `src/components/catalog/ExternalProductManagement.tsx` |
+| CT-72 — as 4 capas acima da dobra saem eager + fetchpriority=high (mesma regra da grade do catálogo). */ | `src/components/catalog/ExternalProductManagement.tsx` |
+| * Templates na Meta (WhatsApp Business Cloud API) por conexão: listar | `src/components/catalog/MetaTemplatesDialog.tsx` |
+| layout: MetaTile (Qtd. mínima / Prazo / Origem), SectionCard (Descrição / | `src/components/catalog/ProductDetailDialog.tsx` |
+| * R2-MOD-046 — o override de navegação ‹ › não pode sobreviver ao | `src/components/catalog/ProductDetailDialog.tsx` |
+| CT-31 — Qtd. mínima / Prazo / Origem em grade de 3 colunas (MetaTile) */} | `src/components/catalog/ProductDetailDialog.tsx` |
+| produto com 11+ imagens abria acima do limite anunciado. | `src/components/catalog/SendProductDialog.tsx` |
+| justamente para não entrarem na chave de reset — acrescentar foto não pode | `src/components/catalog/SendProductDialog.tsx` |
+| máximo possível" (min entre as fotos visíveis e MAX_IMAGES). Sem isso, um | `src/components/catalog/SendProductDialog.tsx` |
+| isso, um estado acima do limite (inicial ou restaurado) virava envio real | `src/components/catalog/SendProductDialog.tsx` |
+| Y29 — sem permissão nem o fetch das fotos acontece: a porta única avisa e | `src/components/catalog/SendProductDialog.tsx` |
+| R2-MOD-011 — o comando final revalida o teto: um estado acima do limite | `src/components/catalog/SendProductDialog.tsx` |
+| (ex.: "Selecionar todas" com mais de 10 fotos visíveis) não pode virar | `src/components/catalog/SendProductDialog.tsx` |
+| passo do contato) também recusa estado acima do limite. | `src/components/catalog/SendProductDialog.tsx` |
+| * Só funciona com template APROVADO pela Meta numa conexão WhatsApp Business | `src/components/catalog/SendTemplateDialog.tsx` |
+| A RLS permite escrita a admin e supervisor; agentes podem apenas consultar. | `src/components/catalog/WhatsAppTemplatesManager.tsx` |
+| O gate acompanha essa permissão para não oferecer ações que falhariam no banco. | `src/components/catalog/WhatsAppTemplatesManager.tsx` |
+| * O chamador deve substituir o endereco sem criar entrada de historico. */ | `src/components/catalog/catalogCategoryRoute.ts` |
+| `null` = duplicado/malformado e nunca deve selecionar uma categoria. */ | `src/components/catalog/catalogCategoryRoute.ts` |
+| Toda a exportação saiu do produto (regra do dono: nenhuma informação sai do | `src/components/catalog/catalogExport.ts` |
+| * Tile de metadado do detalhe do produto (Qtd. mínima / Prazo / Origem), | `src/components/catalog/catalogShared.tsx` |
+| * Constrói um `ExternalProduct` mínimo a partir de um `CatalogFavorite` | `src/components/catalog/catalogShared.tsx` |
+| é conferido ANTES do `fetch` — sem permissão não há requisição de mídia nem | `src/components/catalog/sendProductUtils.ts` |
+| * Jitter aleatório somado ao intervalo mínimo, para o ritmo não ser metronômico. */ | `src/components/catalog/useSendProduct.ts` |
+| * Não é `Math.random()`: a regra S2245 do Sonar marca PRNG fraco como | `src/components/catalog/useSendProduct.ts` |
+| CT-43 — debounce de 300 ms e mínimo de 2 caracteres: um único caractere | `src/components/catalog/useSendProduct.ts` |
+| ou remount, porque staleTime apenas marca o cache como velho. | `src/components/catalog/useSendProduct.ts` |
+| nenhum controle para definir a regra, a ação ou o destino — e `Salvar` | `src/components/chatbot/chatbotNodeConfig.ts` |
+| fluxo usem a mesma regra. | `src/components/chatbot/chatbotNodeConfig.ts` |
+| * Operadores oferecidos para a regra de um nó Condição. */ | `src/components/chatbot/chatbotNodeConfig.ts` |
+| * Mínimo aceito para o atraso do nó Aguardar; abaixo disso não tem efeito prático. */ | `src/components/chatbot/chatbotNodeConfig.ts` |
+| cartão, e alargar a validação para os tipos já configuráveis mudaria o | `src/components/chatbot/chatbotNodeConfig.ts` |
+| limit(1) em vez de single(): single() força o header | `src/components/connections/BusinessHoursIndicator.tsx` |
+| Check if current time is within business hours | `src/components/connections/BusinessHoursIndicator.tsx` |
+| ja aciona o retry com backoff) nao deve esconder o badge — so !data | `src/components/connections/BusinessHoursIndicator.tsx` |
+| Validação do telefone antes de criar: número brasileiro (DDI 55) precisa ter | `src/components/connections/ConnectionsView.tsx` |
+| * Valida a URL da foto de perfil (http(s) e tamanho máximo). Devolve o problema em pt-BR, ou null. */ | `src/components/connections/InstanceSettingsDialog.tsx` |
+| erro é o caso do atendente e não pode virar "Aquecimento iniciado". | `src/components/connections/NumberReputationMonitor.tsx` |
+| * 13/11 — "o sistema deve buscar a chave sozinho". Aparece no diálogo de QR | `src/components/connections/SyncCredentialAction.tsx` |
+| (`instance_token_invalid` / `instance_token_missing`). Regra do dono | `src/components/connections/SyncCredentialAction.tsx` |
+| precedência — é o dado do banco, não uma segunda cópia da regra. | `src/components/contacts/BulkActionsBar.tsx` |
+| - `canChangeTypeSelection` (permissão por contato, do banco) tem precedência | `src/components/contacts/BulkActionsBar.tsx` |
+| axe acusa TODO o texto dele com a regra `region` (fora de `<main>`). | `src/components/contacts/ContactActivityTimeline.tsx` |
+| horizontal (rótulo · trilho · contagem) com no máximo 680px de largura. | `src/components/contacts/ContactAnalyticsDashboard.tsx` |
+| * Comparar é uma leitura lado a lado: no máximo 3 contatos (a CT-089 aplica o | `src/components/contacts/ContactCompareDialog.tsx` |
+| mesmo limite na seleção do módulo). Menos de 2 não é comparação. | `src/components/contacts/ContactCompareDialog.tsx` |
+| * Grade explícita quando a largura do contêiner já foi medida (regra do design). */ | `src/components/contacts/ContactContentArea.tsx` |
+| erro e vazio são explicitamente tratados — contato sem envio não pode | `src/components/contacts/ContactDetailPanel.tsx` |
+| * Regra 3 (item 5): campos cuja edição MANUAL pode invalidar a coordenada já gravada. */ | `src/components/contacts/ContactForm.tsx` |
+| digitando — a resposta de um endereço que saiu de cena não pode valer para o endereço vigente. | `src/components/contacts/ContactForm.tsx` |
+| Regra 3 da decisão 20260930-122408-sem-tarefa (opção a): o operador reescreveu o endereço à | `src/components/contacts/ContactForm.tsx` |
+| Regra 2: a coordenada nova acompanha o endereço escolhido — o aviso de "coordenada velha" sai. | `src/components/contacts/ContactForm.tsx` |
+| snapshot da prop foi capturado antes dele e nao pode sobrescreve-lo — senao | `src/components/contacts/ContactKanbanView.tsx` |
+| Item so aparece quando o usuario pode excluir ESTE contato (a permissao | `src/components/contacts/ContactListItem.tsx` |
+| `total_count` vem do servidor sobre o filtro inteiro (antes do LIMIT), não | `src/components/contacts/ContactToolbar.tsx` |
+| deve ser bloqueado -- mesma semântica do item avulso (`undefined` = segue | `src/components/contacts/ContactsView.tsx` |
+| permissão habilita; seleção sem informação não bloqueia. | `src/components/contacts/ContactsView.tsx` |
+| * Mesclar não tem permissão por contato: a RPC `merge_contacts_atomic` recusa | `src/components/contacts/ContactsView.tsx` |
+| resumo do Singu, quando existe) no que a tela deve mostrar. Regra única: | `src/components/contacts/contactDisplay.ts` |
+| * O item "Excluir" só deve ser oferecido quando o usuário pode excluir aquele | `src/components/contacts/contactPermissions.ts` |
+| * Por que não replicar a regra no front: a condição depende de `assigned_to` e | `src/components/contacts/contactPermissions.ts` |
+| uma segunda cópia da regra — foi assim que "Editar" e "Excluir" divergiram | `src/components/contacts/contactPermissions.ts` |
+| bloqueado (mesma regra do item avulso — `undefined` = segue disponível). O bug | `src/components/contacts/contactPermissions.ts` |
+| * Basta UM selecionado conhecido com permissão para habilitar — o lote é parcial | `src/components/contacts/contactPermissions.ts` |
+| * Decide se o botão "Mesclar" da barra de ações em massa deve ser oferecido. | `src/components/contacts/contactPermissions.ts` |
+| * Diferente de excluir, mesclar não tem permissão por contato: a RPC | `src/components/contacts/contactPermissions.ts` |
+| segunda cópia da regra. Ele devolve `boolean \| null` (`null` = consulta em | `src/components/contacts/contactPermissions.ts` |
+| cópia da regra no cliente (foi assim que "Editar" e "Excluir" divergiram, | `src/components/contacts/contactPermissions.ts` |
+| * Semântica idêntica à série: basta UM selecionado conhecido com permissão para | `src/components/contacts/contactPermissions.ts` |
+| consulta), só quem a página/filtro atual não tem — nunca refaz a regra de | `src/components/contacts/resolveMergeContacts.ts` |
+| negócio no cliente, só completa o dado que falta. | `src/components/contacts/resolveMergeContacts.ts` |
+| (mesmo predicado de permissão do banco). `undefined` = ainda não respondeu | `src/components/contacts/types.ts` |
+| * Exibe no máximo 2 sugestões ao mesmo tempo para não poluir a UI. | `src/components/copilot/AttachmentSuggestion.tsx` |
+| * Motivos rápidos disponíveis (somente no thumbs down): | `src/components/copilot/CopilotFeedback.tsx` |
+| * Card que exibe o resultado do cálculo de prazo de entrega. | `src/components/copilot/DeadlineCalcCard.tsx` |
+| * Banner de aviso quando vendedor está prestes a dar desconto impulsivo. | `src/components/copilot/DiscountGuardrailBanner.tsx` |
+| Deve ser filho do mesmo container relativo que envolve o textarea. | `src/components/copilot/GhostTextOverlay.tsx` |
+| Aparece somente quando há ghost text ativo. | `src/components/copilot/GhostTextOverlay.tsx` |
+| RADAR (que derivam de regra local e aparecem sozinhos), este custa uma | `src/components/copilot/ProductRecommendationCard.tsx` |
+| Desconto — alerta inline (sempre visível enquanto o draft tem desconto) */} | `src/components/copilot/RadarPhase8Panel.tsx` |
+| portao abaixo escondia o painel inteiro quando nenhum card de REGRA tinha | `src/components/copilot/RadarPhase8to15Panel.tsx` |
+| Guardrail de desconto */} | `src/components/copilot/RadarPhase8to15Panel.tsx` |
+| Prazo de entrega */} | `src/components/copilot/RadarPhase8to15Panel.tsx` |
+| * Painel RADAR da Fase 9: catálogo, prazo reverso, orçamento, frete, upsell, kits, mockup. | `src/components/copilot/RadarPhase9Panel.tsx` |
+| * Limite de aviso em segundos (padrão: 120 = 2 min). */ | `src/components/copilot/SpeedToLeadAlert.tsx` |
+| * Limite crítico em segundos (padrão: 300 = 5 min). */ | `src/components/copilot/SpeedToLeadAlert.tsx` |
+| * Exibe ao vendedor (e somente ao vendedor) um indicador discreto de que o | `src/components/copilot/TransparencyLabel.tsx` |
+| Reforça a regra CV-064: sugestão vai para o rascunho, o vendedor decide o envio. | `src/components/copilot/TransparencyLabel.tsx` |
+| CV-081-090 — Fase 9: catálogo, prazo, orçamento | `src/components/copilot/index.ts` |
+| Enquanto a permissão de supervisor é checada, mostra um esqueleto do | `src/components/crm360/CRM360ExplorerView.tsx` |
+| Mesma regra para o tempo de resposta: só entra na média quem teve 1ª resposta medida. | `src/components/dashboard/AgentPerformancePanel.tsx` |
+| * Alvo de cada desafio = regra do jogo (o que a tela NÃO pode inventar é o | `src/components/dashboard/DashboardWidgetRenderer.tsx` |
+| * R2-SLA-001 — "no prazo" no dia: o denominador é a conversa avaliada; a pendente NÃO é sucesso. */ | `src/components/dashboard/SLAMetricsDashboard.tsx` |
+| `totalConversations - totalBreaches`, que contava a pendente como "no prazo". | `src/components/dashboard/SLAMetricsDashboard.tsx` |
+| systemHealth.ts — regra pura da nota "Saúde do Sistema" (0-100) do painel principal. | `src/components/dashboard/systemHealth.ts` |
+| Componente não pode exportar isto (lint react-refresh/only-export-components), por isso | `src/components/dashboard/systemHealth.ts` |
+| a regra vive fora do .tsx. | `src/components/dashboard/systemHealth.ts` |
+| * Pontos obtidos e o máximo do sinal. */ | `src/components/dashboard/systemHealth.ts` |
+| gráfico diário e o ranking de agentes com apenas uma fatia. Agora a leitura | `src/components/dashboard/useSentimentData.ts` |
+| 0-100 e o detalhe por sinal vêm da regra pura em ../systemHealth.ts, calculada no cliente | `src/components/dashboard/overview/SystemHealthCard.tsx` |
+| de alerta do backend), então clique repetido não pode virar enxurrada. | `src/components/diagnostics/ConnectionHealthPanel.tsx` |
+| * Detalhe por sinal: coleta falhada ou não executada não pode ser exibida como se | `src/components/diagnostics/DiagnosticsView.tsx` |
+| Os mini-games NÃO creditam XP: o cliente não pode creditar XP (PB-18/D4) e | `src/components/gamification/miniGamesData.ts` |
+| HTML sanitizado é a fonte visual da verdade quando existe (mesma regra do | `src/components/gmail/EmailThreadView.tsx` |
+| Consulta fracassada nao e thread vazia: o array padrao vazio nao pode | `src/components/gmail/EmailThreadView.tsx` |
+| Geração falhou: o chip não pode continuar marcado como se o tom tivesse | `src/components/inbox/AISuggestions.tsx` |
+| * Telefone do cartão de contato: 8 a 15 dígitos — o MESMO limite que o | `src/components/inbox/AdvancedMessageMenu.tsx` |
+| (regra react-hooks/purity): alem de impuro, o sorteio acontecia a cada re-render — e o timer da | `src/components/inbox/AudioRecorder.tsx` |
+| reabrir o canal — uma consulta lenta (ou travada) a `profiles` não pode | `src/components/inbox/ChatPanel.tsx` |
+| contato, então o anexo agendado não pode ficar fora de `<contact_id>/...`. | `src/components/inbox/ChatPanel.tsx` |
+| isContentEditable: mesma situação em divs/spans editáveis — Esc deve | `src/components/inbox/ContactDetails.tsx` |
+| O teto acompanha a janela: a lista não pode engolir o painel da conversa. | `src/components/inbox/ConversationListSidebar.tsx` |
+| * Setas ajustam de pouco em pouco; Home/End vão ao mínimo/máximo. */ | `src/components/inbox/ConversationListSidebar.tsx` |
+| vivas ficam de fora: uma mensagem que chega não pode descartar o resumo em voo. | `src/components/inbox/ConversationSummary.tsx` |
+| * R2-INB-018: operação REAL do host para as ações rápidas que não são apenas | `src/components/inbox/GlobalSearch.tsx` |
+| apenas fechavam a busca, sem abrir conversa nem gestão de respostas. | `src/components/inbox/GlobalSearch.tsx` |
+| passar por `handleSearch`: o índice não pode sobrar fora dela. | `src/components/inbox/GlobalSearch.tsx` |
+| de gravar — a regra é a mesma função nos dois lugares). | `src/components/inbox/InboxSavedFiltersMenu.tsx` |
+| `tecla`: a regra local/no-secret-compare confunde `.key` (tecla) com credencial. | `src/components/inbox/InboxSavedFiltersMenu.tsx` |
+| a área de transferência não voltou: a regra do dono é não abrir caminho novo | `src/components/inbox/KnowledgeBaseSearchPanel.tsx` |
+| Sem `load` nem `error` no prazo: vira erro com retry em vez de spinner eterno. | `src/components/inbox/LocationMessage.tsx` |
+| useRef não pode ser lido/escrito durante o render (react-hooks/refs) - useState é o | `src/components/inbox/LocationPicker.tsx` |
+| candidatos) — Enter com o campo vazio não pode abrir uma caixa vazia só com a atribuição. | `src/components/inbox/LocationPicker.tsx` |
+| E26: falha do `/retrieve` (com o fallback do E16 já tentado) não pode fechar a lista — o | `src/components/inbox/LocationPicker.tsx` |
+| Enquanto a lista visível é a da busca manual, o teclado não pode mexer no | `src/components/inbox/LocationPicker.tsx` |
+| caminho de imagem (`profiles.can_download`); sem permissão, nem fetch nem anchor. | `src/components/inbox/MediaPreview.tsx` |
+| fila, o guard só permite atribuir para o próprio usuário (mesma regra do | `src/components/inbox/RealtimeCollaboration.tsx` |
+| retomá-la no vencimento do prazo (R2-INB-029). | `src/components/inbox/RealtimeInboxView.tsx` |
+| já com conversas não lidas não é mensagem nova e não pode ser anunciado. | `src/components/inbox/RealtimeInboxView.tsx` |
+| Esc é do diálogo: não pode vazar para o painel de baixo (inbox fecha por baixo). | `src/components/inbox/VideoFullscreen.tsx` |
+| pré-visualização. Valor desconhecido NÃO vira rótulo inventado (mesma regra | `src/components/inbox/VirtualizedRealtimeList.tsx` |
+| R2-SLA-003: a linha enviava o prazo FIXO de 5 min ao badge compacto, | `src/components/inbox/VirtualizedRealtimeList.tsx` |
+| mesmo quando uma regra granular (por contato/empresa/cargo/tipo/fila/ | `src/components/inbox/VirtualizedRealtimeList.tsx` |
+| caimos no indicador com o prazo fixo anterior, sem chamar o hook e sem | `src/components/inbox/VirtualizedRealtimeList.tsx` |
+| Regra 4 do cartao: nenhum setState depois de desmontar. | `src/components/inbox/VoiceChanger.tsx` |
+| Regra 4: depois de desmontar, não entrega o blob nem mexe em estado. | `src/components/inbox/VoiceChanger.tsx` |
+| desmontado) enquanto a permissão estava pendente. Nesse caso o stream | `src/components/inbox/VoiceChangerPicker.tsx` |
+| O motivo real muda a ação do usuário: permissão negada, microfone | `src/components/inbox/VoiceChangerPicker.tsx` |
+| Stop any current preview (e a geração anterior, que não pode tocar por baixo desta) | `src/components/inbox/VoiceSelector.tsx` |
+| e um supervisor não pode marcar como lidos os sussurros endereçados a outro. | `src/components/inbox/WhisperMode.tsx` |
+| * `HOVER_REVEAL_TAP` acrescenta o alvo de toque mínimo de 40 px | `src/components/inbox/hoverActions.ts` |
+| muda de tamanho. Onde o ponto é um contêiner de ações, o mínimo vale para a | `src/components/inbox/hoverActions.ts` |
+| * Regra (medida em produção em 03/10, item 6 do S41): | `src/components/inbox/resolveActiveTab.ts` |
+| de teste do E2E — mesma regra do banco (resolve_outbound_whatsapp_connection). | `src/components/inbox/useChatMediaSending.ts` |
+| ausente (objeto orfao); `null` = estado indeterminado (a consulta falhou). Somente | `src/components/inbox/useFileUploadLogic.ts` |
+| for incerto: o retry nao pode refazer o upload (URL novo mudaria a actionKey) nem criar | `src/components/inbox/useFileUploadLogic.ts` |
+| * Mínimo de caracteres para a busca virar evento (abaixo disso é navegação, não consulta). */ | `src/components/inbox/useGlobalSearchData.ts` |
+| A tag entra na CONSULTA, antes do `.limit(10)`: filtrar em JS depois do | `src/components/inbox/useGlobalSearchData.ts` |
+| LIMIT devolvia zero quando o contato marcado era o 11º da ordem. | `src/components/inbox/useGlobalSearchData.ts` |
+| Regra dos três níveis (regras.md §4.2): o atendente sempre sabe que a conexão caiu. */} | `src/components/inbox/chat/ChatInputArea.tsx` |
+| apenas consumimos o contrato — nenhuma consulta e feita neste componente. | `src/components/inbox/chat/ChatMessagesArea.tsx` |
+| lendo e nada pode mover o scroll. Mesmo limite do painel de equipe. */ | `src/components/inbox/chat/ChatMessagesArea.tsx` |
+| * Prazo seguro de 1ª resposta enquanto o prazo aplicável ainda não chegou do hook. */ | `src/components/inbox/chat/ChatPanelHeader.tsx` |
+| * Escalonamento máximo por item (cartão: no máximo 40 ms). */ | `src/components/inbox/chat/ChatSearchResultsList.tsx` |
+| `event.key` comparado direto esbarra na regra local/no-secret-compare (o nome | `src/components/inbox/chat/ConversationTabs.tsx` |
+| do membro tem "key"); o alias mantém a leitura e passa a regra. | `src/components/inbox/chat/ConversationTabs.tsx` |
+| * Nº de e-mails não lidos do contato; o chip só deve ser montado com count > 0. */ | `src/components/inbox/chat/EmailUnreadChip.tsx` |
+| * Acima de 99 o número visível vira `99+` (mesma regra do selo da sidebar — D01). */ | `src/components/inbox/chat/EmailUnreadChip.tsx` |
+| embutido como `data:` URL. Prévia antiga guardada com URL remota não pode ser | `src/components/inbox/chat/LinkPreviewCard.tsx` |
+| Code blocks (```...```) — must come before inline | `src/components/inbox/chat/MarkdownPreview.tsx` |
+| não pode compartilhar o objeto da mensagem: apagar a mensagem/arquivo não pode quebrar o | `src/components/inbox/chat/MessageBubble.tsx` |
+| então quem fala é o badge — o id cru não pode aparecer no balão. | `src/components/inbox/chat/MessageBubble.tsx` |
+| * O balão não pode ficar vazio: sem ramo para `type === 'unsupported'` o `MessageBubble` | `src/components/inbox/chat/MessageBubbleUnsupported.tsx` |
+| coluna/migration/Edge nova. O corte é a regra da casa `react-refresh/only-export-components` | `src/components/inbox/chat/MessageSendHistorySheet.tsx` |
+| AA do E.3; `--info` só no ícone), animação apenas com `motion-safe:`, nada de exportar/baixar novo | `src/components/inbox/chat/MessageSendHistorySheet.tsx` |
+| de correção manual — o RPC resolve_unconfirmed_message valida a permissão no banco. | `src/components/inbox/chat/UnconfirmedMessagesPanel.tsx` |
+| * Regra única (uma só fonte para o limiar): só afirma "Online" quando | `src/components/inbox/chat/contactPresence.ts` |
+| 2 minutos — um `online` velho é sinal morto e não pode virar afirmação. | `src/components/inbox/chat/contactPresence.ts` |
+| (regra react-refresh/only-export-components). | `src/components/inbox/chat/contactPresence.ts` |
+| * O minimo que a regra de agrupamento precisa de uma mensagem. */ | `src/components/inbox/chat/groupWindow.ts` |
+| `MessageSendHistorySheet.tsx`; o cálculo mora aqui porque a regra da casa | `src/components/inbox/chat/messageSendTimeline.ts` |
+| entao nunca casa com pilula (volta `confirmed`). Mora aqui (e nao no `.tsx`) porque a regra | `src/components/inbox/chat/messageSendTimeline.ts` |
+| * Limite de caracteres do editor de mensagem — fonte única (contador, botão e envio). */ | `src/components/inbox/chat/useChatInputLogic.ts` |
+| * R2-INB-016 (item 312) — a assinatura de texto CONTA no limite de 4096: o limite representa | `src/components/inbox/chat/useChatInputLogic.ts` |
+| `__tests__/ChatInputArea.limite-enter.test.tsx`, e não por convenção. | `src/components/inbox/chat/useChatInputLogic.ts` |
+| * Grandeza do limite: corpo que vai ser enviado (sem espaços nas pontas, como o transporte | `src/components/inbox/chat/useChatInputLogic.ts` |
+| (useChatPanelHandlers.handleSend), então lá o limite segue medindo o corpo do editor. | `src/components/inbox/chat/useChatInputLogic.ts` |
+| ENVIO — com o editor aberto, o prazo pode vencer antes de o usuário salvar, e o | `src/components/inbox/chat/useChatPanelHandlers.ts` |
+| * R2-INB-016 (item 312) — limite de caracteres do editor. O botão Enviar já era | `src/components/inbox/chat/useChatPanelHandlers.ts` |
+| payload acima do limite anunciado saía sem resistência. A recusa (com aviso, sem | `src/components/inbox/chat/useChatPanelHandlers.ts` |
+| R2-INB-016 (item 312): o limite mede o payload REAL deste envio — o mesmo número do | `src/components/inbox/chat/useChatPanelHandlers.ts` |
+| R2-INB-016: os dois valores são os que o limite mediu no topo do comando. | `src/components/inbox/chat/useChatPanelHandlers.ts` |
+| R2-INB-014: `writeText` pode rejeitar (permissão negada / contexto inseguro). Sem | `src/components/inbox/chat/useChatPanelHandlers.ts` |
+| `zappMotion` (`deliberate` + `ease.standard`) — o kit não carrega prazo solto. | `src/components/inbox/chat/motion/DrawLine.tsx` |
+| * Prazo do realce, em ms — derivado de `zappDurations` (nada solto no kit). */ | `src/components/inbox/chat/motion/FlashRing.tsx` |
+| * Prazo do realce (ms) — encurtado nos testes. */ | `src/components/inbox/chat/motion/FlashRing.tsx` |
+| * Prazo da celebração, em ms — derivado de `zappDurations` (nada solto no kit). */ | `src/components/inbox/chat/motion/PopBurst.tsx` |
+| O atraso de cada item sai de `zappStaggerDelaySeconds` (a regra, com o teto, | `src/components/inbox/chat/motion/StaggerList.tsx` |
+| * Regra do dono (11/10/2026): só as cores que o sistema já tem. Toda cor sai | `src/components/inbox/chat/motion/tone.ts` |
+| Falha real (ID inválido, permissão negada, nada gravado): o diálogo | `src/components/inbox/collaboration/HandoffDialog.tsx` |
+| apenas com quem casa o termo digitado, sem corte pela amostra de 20. | `src/components/inbox/collaboration/MentionInput.tsx` |
+| * Acima de 99 o selo vira `99+` (mesma regra do selo da sidebar — D01). */ | `src/components/inbox/contact-details/ContactActionButtons.tsx` |
+| abaixo do mínimo WCAG 1.4.11 (3:1) para ícones. L reduzido pra | `src/components/inbox/contact-details/ContactActionButtons.tsx` |
+| mais etiquetas); o selo por etiqueta deve sumir quando a coluna dedicada | `src/components/inbox/contact-details/ContactHeaderSection.tsx` |
+| * Cada grupo é renderizado em no máximo 5 linhas (o resto é contado). */ | `src/components/inbox/contact-details/ConversationMemorySection.tsx` |
+| E-mail e sites aparecem como texto, sem link (regra: nenhuma informação sai | `src/components/inbox/contact-details/EvolutionContactProfileSection.tsx` |
+| - o Salvar grava apenas o que mudou e invalida o `contact-lead-score` que a | `src/components/inbox/contact-details/LeadRiskScorePanel.tsx` |
+| * Catálogo e coleções do WhatsApp Business do CONTATO (`get-catalog` e | `src/components/inbox/contact-details/WhatsAppCatalogSection.tsx` |
+| Contato sem WhatsApp Business volta lista vazia; na Evolution GO, `notSupported`. | `src/components/inbox/contact-details/WhatsAppCatalogSection.tsx` |
+| apenas mais um valor conhecido: a chave de storage NÃO muda, então a | `src/components/inbox/contact-details/sidebar/sidebarSections.ts` |
+| 2026-10-16 e segue a MESMA regra de `intelligence`: valor conhecido a mais, | `src/components/inbox/contact-details/sidebar/sidebarSections.ts` |
+| interações, canais e redes) entrou em 2026-11-17, pela mesma regra de | `src/components/inbox/contact-details/sidebar/sidebarSections.ts` |
+| CV-040: cartão sem fontes nunca deve existir — avisa no desenvolvimento */} | `src/components/inbox/copilot/InsightCard.tsx` |
+| Mostra no máximo 2 sugestões para não poluir o painel | `src/components/inbox/copilot/MissingQuestions.tsx` |
+| * CV-035/036 — Alerta de ocasião comercial detectada + prazo de entrega. | `src/components/inbox/copilot/OccasionAlert.tsx` |
+| Sobe/desce a linha uma posição por vez, trocando apenas de lugar os objetos | `src/components/inbox/interactive-builder/useInteractiveMessage.ts` |
+| * E27: a pausa é limite de uso, não ausência de resultado — o aviso diz quanto falta e lembra que | `src/components/inbox/location-picker/SuggestionList.tsx` |
+| expira, o texto cai para o aviso genérico (o hook decide quando tentar de novo). | `src/components/inbox/location-picker/SuggestionList.tsx` |
+| mês não ganha botão: nova tentativa não muda o limite, seria só ruído. | `src/components/inbox/location-picker/SuggestionList.tsx` |
+| "Tentar novamente". Chegando ao fim do prazo, o próprio aviso pede a retomada (o hook vê o | `src/components/inbox/location-picker/SuggestionList.tsx` |
+| morto, que dizia limite vigente quando não havia mais nenhum. Zero é "já pode tentar". | `src/components/inbox/location-picker/searchErrors.ts` |
+| * F2/E15: causas de falha do `/suggest` que são **rota quebrada** (não limite de uso) e por isso | `src/components/inbox/location-picker/useAddressAutocomplete.ts` |
+| caem no `/forward`. `rate_limited` (429) e guarda de custo ficam de fora: são limite, não rota — | `src/components/inbox/location-picker/useAddressAutocomplete.ts` |
+| … +1820 linhas — lista completa em `context.json` | |

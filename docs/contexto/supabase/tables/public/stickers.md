@@ -1,5 +1,29 @@
 # public.stickers
 
+> Descrição funcional não estava registrada no catálogo; o conteúdo abaixo documenta a estrutura observável, sem inferir regras de negócio não declaradas.
+
+[CATALOGUE SEMÂNTICO DO PROJETO]
+Objeto: public.stickers (tabela). RLS habilitada: t; RLS forçada: f.
+Colunas (ordem, tipo e nulabilidade):
+1 id uuid NOT NULL [DEFAULT/EXPRESSION DEFINED]
+2 name text NULLABLE
+3 image_url text NOT NULL
+4 category text NULLABLE [DEFAULT/EXPRESSION DEFINED]
+5 uploaded_by text NULLABLE
+6 is_favorite boolean NULLABLE [DEFAULT/EXPRESSION DEFINED]
+7 use_count integer NULLABLE [DEFAULT/EXPRESSION DEFINED]
+8 created_at timestamp with time zone NULLABLE [DEFAULT/EXPRESSION DEFINED]
+9 updated_at timestamp with time zone NULLABLE [DEFAULT/EXPRESSION DEFINED]
+10 owner_id uuid NULLABLE
+Constraints:
+stickers_owner_id_fkey: FOREIGN KEY (owner_id) REFERENCES profiles(id) ON DELETE CASCADE
+stickers_pkey: PRIMARY KEY (id)
+Políticas RLS (nome, operação, papéis e modo; as expressões permanecem no catálogo):
+"Authenticated users can view stickers" [command=SELECT; roles=authenticated; PERMISSIVE]
+"Sticker delete with ownership" [command=DELETE; roles=authenticated; PERMISSIVE]
+"Sticker insert with ownership" [command=INSERT; roles=authenticated; PERMISSIVE]
+"Sticker update with ownership" [command=UPDATE; roles=authenticated; PERMISSIVE]
+
 | propriedade | valor |
 |---|---|
 | tipo | table |
@@ -63,7 +87,7 @@
 | comando | DELETE |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `((uploaded_by = (auth.uid())::text) OR is_admin_or_supervisor(auth.uid()))` |
+| USING | `((uploaded_by = (( SELECT auth.uid() AS uid))::text) OR is_admin_or_supervisor(( SELECT auth.uid() AS uid)))` |
 | WITH CHECK |  |
 
 ### `Sticker insert with ownership`
@@ -74,7 +98,7 @@
 | tipo | PERMISSIVE |
 | roles | authenticated |
 | USING |  |
-| WITH CHECK | `((uploaded_by = (auth.uid())::text) OR is_admin_or_supervisor(auth.uid()))` |
+| WITH CHECK | `((uploaded_by = (( SELECT auth.uid() AS uid))::text) OR is_admin_or_supervisor(( SELECT auth.uid() AS uid)))` |
 
 ### `Sticker update with ownership`
 
@@ -83,8 +107,8 @@
 | comando | UPDATE |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `((uploaded_by = (auth.uid())::text) OR is_admin_or_supervisor(auth.uid()))` |
-| WITH CHECK | `((uploaded_by = (auth.uid())::text) OR is_admin_or_supervisor(auth.uid()))` |
+| USING | `((uploaded_by = (( SELECT auth.uid() AS uid))::text) OR is_admin_or_supervisor(( SELECT auth.uid() AS uid)))` |
+| WITH CHECK | `((uploaded_by = (( SELECT auth.uid() AS uid))::text) OR is_admin_or_supervisor(( SELECT auth.uid() AS uid)))` |
 
 
 ## Triggers

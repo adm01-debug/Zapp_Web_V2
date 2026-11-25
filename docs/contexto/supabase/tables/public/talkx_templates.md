@@ -1,5 +1,47 @@
 # public.talkx_templates
 
+> Descrição funcional não estava registrada no catálogo; o conteúdo abaixo documenta a estrutura observável, sem inferir regras de negócio não declaradas.
+
+[CATALOGUE SEMÂNTICO DO PROJETO]
+Objeto: public.talkx_templates (tabela). RLS habilitada: t; RLS forçada: f.
+Colunas (ordem, tipo e nulabilidade):
+1 id uuid NOT NULL [DEFAULT/EXPRESSION DEFINED]
+2 name text NOT NULL
+3 description text NULLABLE
+4 category text NOT NULL [DEFAULT/EXPRESSION DEFINED]
+5 content text NOT NULL
+6 media_url text NULLABLE
+7 media_type text NULLABLE
+8 tags text[] NOT NULL [DEFAULT/EXPRESSION DEFINED]
+9 status text NOT NULL [DEFAULT/EXPRESSION DEFINED]
+10 use_count integer NOT NULL [DEFAULT/EXPRESSION DEFINED]
+11 created_by uuid NULLABLE
+12 created_at timestamp with time zone NOT NULL [DEFAULT/EXPRESSION DEFINED]
+13 updated_at timestamp with time zone NOT NULL [DEFAULT/EXPRESSION DEFINED]
+14 custom_variables text[] NOT NULL [DEFAULT/EXPRESSION DEFINED]
+15 current_version_id uuid NULLABLE — Versao (talkx_template_versions.id) que corresponde ao conteudo VIVO do template. Mantida por update_talkx_template_with_snapshot.
+16 channel text NOT NULL [DEFAULT/EXPRESSION DEFINED]
+17 icon text NULLABLE
+18 interactive jsonb NULLABLE
+19 media_file_name text NULLABLE
+20 media_size_bytes bigint NULLABLE
+21 media_width integer NULLABLE
+22 media_height integer NULLABLE
+23 archived_at timestamp with time zone NULLABLE
+Constraints:
+talkx_templates_channel_check: CHECK (channel = 'whatsapp'::text)
+talkx_templates_icon_check: CHECK (icon IS NULL OR char_length(icon) <= 16)
+talkx_templates_media_type_check: CHECK (media_type IS NULL OR (media_type = ANY (ARRAY['image'::text, 'video'::text, 'document'::text, 'audio'::text])))
+talkx_templates_status_check: CHECK (status = ANY (ARRAY['draft'::text, 'review'::text, 'approved'::text]))
+talkx_templates_created_by_fkey: FOREIGN KEY (created_by) REFERENCES profiles(id) ON DELETE SET NULL
+talkx_templates_current_version_id_fkey: FOREIGN KEY (current_version_id) REFERENCES talkx_template_versions(id) ON DELETE SET NULL
+talkx_templates_pkey: PRIMARY KEY (id)
+Políticas RLS (nome, operação, papéis e modo; as expressões permanecem no catálogo):
+talkx_templates_delete [command=DELETE; roles=authenticated; PERMISSIVE]
+talkx_templates_insert [command=INSERT; roles=authenticated; PERMISSIVE]
+talkx_templates_select [command=SELECT; roles=authenticated; PERMISSIVE]
+talkx_templates_update [command=UPDATE; roles=authenticated; PERMISSIVE]
+
 | propriedade | valor |
 |---|---|
 | tipo | table |
@@ -83,7 +125,7 @@
 | comando | DELETE |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `((created_by = ( SELECT p.id    FROM profiles p   WHERE (p.user_id = auth.uid())  LIMIT 1)) OR is_admin_or_supervisor(auth.uid()))` |
+| USING | `((created_by = ( SELECT p.id    FROM profiles p   WHERE (p.user_id = ( SELECT auth.uid() AS uid))  LIMIT 1)) OR is_admin_or_supervisor(( SELECT auth.uid() AS uid)))` |
 | WITH CHECK |  |
 
 ### `talkx_templates_insert`
@@ -94,7 +136,7 @@
 | tipo | PERMISSIVE |
 | roles | authenticated |
 | USING |  |
-| WITH CHECK | `(created_by = ( SELECT p.id    FROM profiles p   WHERE (p.user_id = auth.uid())  LIMIT 1))` |
+| WITH CHECK | `(created_by = ( SELECT p.id    FROM profiles p   WHERE (p.user_id = ( SELECT auth.uid() AS uid))  LIMIT 1))` |
 
 ### `talkx_templates_select`
 
@@ -103,7 +145,7 @@
 | comando | SELECT |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `(auth.uid() IS NOT NULL)` |
+| USING | `(( SELECT auth.uid() AS uid) IS NOT NULL)` |
 | WITH CHECK |  |
 
 ### `talkx_templates_update`
@@ -113,8 +155,8 @@
 | comando | UPDATE |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `((created_by = ( SELECT p.id    FROM profiles p   WHERE (p.user_id = auth.uid())  LIMIT 1)) OR is_admin_or_supervisor(auth.uid()))` |
-| WITH CHECK | `((created_by = ( SELECT p.id    FROM profiles p   WHERE (p.user_id = auth.uid())  LIMIT 1)) OR is_admin_or_supervisor(auth.uid()))` |
+| USING | `((created_by = ( SELECT p.id    FROM profiles p   WHERE (p.user_id = ( SELECT auth.uid() AS uid))  LIMIT 1)) OR is_admin_or_supervisor(( SELECT auth.uid() AS uid)))` |
+| WITH CHECK | `((created_by = ( SELECT p.id    FROM profiles p   WHERE (p.user_id = ( SELECT auth.uid() AS uid))  LIMIT 1)) OR is_admin_or_supervisor(( SELECT auth.uid() AS uid)))` |
 
 
 ## Triggers

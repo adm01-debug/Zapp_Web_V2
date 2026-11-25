@@ -2,6 +2,29 @@
 
 > Emoji reactions on team messages (one per user per emoji per message)
 
+[CATALOGUE SEMÂNTICO DO PROJETO]
+Objeto: public.team_message_reactions (tabela). RLS habilitada: t; RLS forçada: f.
+Colunas (ordem, tipo e nulabilidade):
+1 id uuid NOT NULL [DEFAULT/EXPRESSION DEFINED]
+2 message_id uuid NOT NULL
+3 profile_id uuid NOT NULL
+4 emoji text NOT NULL
+5 created_at timestamp with time zone NOT NULL [DEFAULT/EXPRESSION DEFINED]
+6 conversation_id uuid NOT NULL
+Constraints:
+team_reactions_emoji_length: CHECK (char_length(emoji) >= 1 AND char_length(emoji) <= 8)
+team_message_reactions_conversation_id_fkey: FOREIGN KEY (conversation_id) REFERENCES team_conversations(id) ON DELETE CASCADE
+team_message_reactions_message_id_fkey: FOREIGN KEY (message_id) REFERENCES team_messages(id) ON DELETE CASCADE
+team_message_reactions_profile_id_fkey: FOREIGN KEY (profile_id) REFERENCES profiles(id) ON DELETE CASCADE
+team_message_reactions_pkey: PRIMARY KEY (id)
+team_message_reactions_unique: UNIQUE (message_id, profile_id, emoji)
+Políticas RLS (nome, operação, papéis e modo; as expressões permanecem no catálogo):
+reactions_delete [command=DELETE; roles=authenticated; PERMISSIVE]
+reactions_select [command=SELECT; roles=authenticated; PERMISSIVE]
+team_message_reactions_delete [command=DELETE; roles=authenticated; PERMISSIVE]
+team_message_reactions_insert [command=INSERT; roles=authenticated; PERMISSIVE]
+team_message_reactions_select [command=SELECT; roles=authenticated; PERMISSIVE]
+
 | propriedade | valor |
 |---|---|
 | tipo | table |
@@ -77,7 +100,7 @@
 | comando | DELETE |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `(EXISTS ( SELECT 1    FROM profiles p   WHERE ((p.id = team_message_reactions.profile_id) AND (p.user_id = auth.uid()))))` |
+| USING | `(EXISTS ( SELECT 1    FROM profiles p   WHERE ((p.id = team_message_reactions.profile_id) AND (p.user_id = ( SELECT auth.uid() AS uid)))))` |
 | WITH CHECK |  |
 
 ### `team_message_reactions_insert`
@@ -88,7 +111,7 @@
 | tipo | PERMISSIVE |
 | roles | authenticated |
 | USING |  |
-| WITH CHECK | `((EXISTS ( SELECT 1    FROM profiles p   WHERE ((p.id = team_message_reactions.profile_id) AND (p.user_id = auth.uid())))) AND (EXISTS ( SELECT 1    FROM team_messages tm   WHERE ((tm.id = team_message_reactions.message_id) AND is_team_conversation_member(auth.uid(), tm.conversation_id)))))` |
+| WITH CHECK | `((EXISTS ( SELECT 1    FROM profiles p   WHERE ((p.id = team_message_reactions.profile_id) AND (p.user_id = ( SELECT auth.uid() AS uid))))) AND (EXISTS ( SELECT 1    FROM team_messages tm   WHERE ((tm.id = team_message_reactions.message_id) AND is_team_conversation_member(( SELECT auth.uid() AS uid), tm.conversation_id)))))` |
 
 ### `team_message_reactions_select`
 
@@ -97,7 +120,7 @@
 | comando | SELECT |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `(EXISTS ( SELECT 1    FROM ((team_messages tm      JOIN team_conversation_members tcm ON ((tcm.conversation_id = tm.conversation_id)))      JOIN profiles p ON ((p.id = tcm.profile_id)))   WHERE ((tm.id = team_message_reactions.message_id) AND (p.user_id = auth.uid()))))` |
+| USING | `(EXISTS ( SELECT 1    FROM ((team_messages tm      JOIN team_conversation_members tcm ON ((tcm.conversation_id = tm.conversation_id)))      JOIN profiles p ON ((p.id = tcm.profile_id)))   WHERE ((tm.id = team_message_reactions.message_id) AND (p.user_id = ( SELECT auth.uid() AS uid)))))` |
 | WITH CHECK |  |
 
 

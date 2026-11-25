@@ -2,6 +2,126 @@
 
 Diff semântico gerado a cada coleta em que algo mudou.
 
+## 2026-11-25 03:16 UTC
+
+- **realtime** adicionado (1): `supabase_realtime_messages_publication:realtime.messages_2026_11_28`
+- **realtime** removido (1): `supabase_realtime_messages_publication:realtime.messages_2026_11_21`
+
+## 2026-11-24 22:11 UTC
+
+- **tabelas** alterado (225): `_bkp_261023.agent_stats`, `_bkp_261023.contacts`, `_bkp_261023.csat_surveys`, `_bkp_261023.functions_before`, `_bkp_261023.global_settings`, `_bkp_261023.policies_before`, `_bkp_261023.schema_migrations`, `_bkp_261023.team_messages`, `_bkp_261023.user_settings`, `ops.hermes_change_log`, `public._rb_message_reactions_contato_20261007001008`, `public._rb_message_reactions_one_per_agent_20261107121000`, `public._zapp_fn_before`, `public._zapp_mig133_log`, `public.agent_achievements`, `public.agent_mini_game_xp_daily`, `public.agent_presence`, `public.agent_skills`, `public.agent_stats`, `public.agent_visibility_grants`, `public.ai_budget_reservations`, `public.ai_conversation_tags`, `public.ai_jobs`, `public.ai_model_prices`, `public.ai_providers`, `public.ai_usage_logs`, `public.ai_usage_outbox`, `public.allowed_countries`, `public.app_settings`, `public.assistant_profiles`, `public.audio_meme_favorites`, `public.audio_memes`, `public.audit_logs`, `public.auto_close_config`, `public.automations`, `public.away_message_log`, `public.away_messages`, `public.blocked_countries`, `public.blocked_ips`, `public.business_hours` … (+185)
+- **views** alterado (16): `ops._relation_dictionary_base`, `ops.application_data_dictionary`, `ops.managed_schema_dictionary`, `public.catalog_send_stats`, `public.channel_connections_safe`, `public.gmail_accounts_safe`, `public.password_reset_requests_safe`, `public.profiles_public`, `public.searchbox_usage_daily`, `public.talkx_campaign_metrics`, `public.talkx_campaign_optouts`, `public.talkx_engine_health`, `public.team_message_read_state`, `public.whatsapp_connections_agent`, `public.whatsapp_connections_public`, `public.whatsapp_connections_safe`
+
+## 2026-11-24 17:13 UTC
+
+- **colunas** adicionado (58): `ops._relation_dictionary_base.column_description`, `ops._relation_dictionary_base.column_name`, `ops._relation_dictionary_base.data_type`, `ops._relation_dictionary_base.default_or_generation_expression`, `ops._relation_dictionary_base.dictionary_scope`, `ops._relation_dictionary_base.estimated_rows`, `ops._relation_dictionary_base.foreign_key_targets`, `ops._relation_dictionary_base.generated_kind`, `ops._relation_dictionary_base.identity_generation`, `ops._relation_dictionary_base.is_nullable`, `ops._relation_dictionary_base.object_description`, `ops._relation_dictionary_base.object_name`, `ops._relation_dictionary_base.object_type`, `ops._relation_dictionary_base.ordinal_position`, `ops._relation_dictionary_base.primary_key_constraint`, `ops._relation_dictionary_base.primary_key_position`, `ops._relation_dictionary_base.rls_enabled`, `ops._relation_dictionary_base.rls_forced`, `ops._relation_dictionary_base.rls_policy_count`, `ops._relation_dictionary_base.schema_name`, `ops.application_data_dictionary.column_description`, `ops.application_data_dictionary.column_name`, `ops.application_data_dictionary.data_type`, `ops.application_data_dictionary.default_or_generation_expression`, `ops.application_data_dictionary.estimated_rows`, `ops.application_data_dictionary.foreign_key_targets`, `ops.application_data_dictionary.generated_kind`, `ops.application_data_dictionary.identity_generation`, `ops.application_data_dictionary.is_nullable`, `ops.application_data_dictionary.object_description`, `ops.application_data_dictionary.object_name`, `ops.application_data_dictionary.object_type`, `ops.application_data_dictionary.ordinal_position`, `ops.application_data_dictionary.primary_key_constraint`, `ops.application_data_dictionary.primary_key_position`, `ops.application_data_dictionary.rls_enabled`, `ops.application_data_dictionary.rls_forced`, `ops.application_data_dictionary.rls_policy_count`, `ops.application_data_dictionary.schema_name`, `ops.managed_schema_dictionary.column_description` … (+18)
+- **lints** removido (405): `policy_auth_fn_not_wrapped:public.agent_achievements.Only admins can insert achievements directly`, `policy_auth_fn_not_wrapped:public.agent_achievements.Users can view own or admin all achievements`, `policy_auth_fn_not_wrapped:public.agent_skills.Admins can manage skills`, `policy_auth_fn_not_wrapped:public.agent_skills.Users can view own or admin all skills`, `policy_auth_fn_not_wrapped:public.agent_stats.Only admins can update agent stats`, `policy_auth_fn_not_wrapped:public.agent_stats.Users can insert own stats`, `policy_auth_fn_not_wrapped:public.agent_stats.Users can view agent stats`, `policy_auth_fn_not_wrapped:public.agent_visibility_grants.Admins and supervisors can manage visibility grants`, `policy_auth_fn_not_wrapped:public.agent_visibility_grants.Agents can view own grants`, `policy_auth_fn_not_wrapped:public.ai_conversation_tags.Admins can delete ai tags`, `policy_auth_fn_not_wrapped:public.ai_conversation_tags.Admins can update ai tags`, `policy_auth_fn_not_wrapped:public.ai_conversation_tags.Agents can delete tags on assigned contacts`, `policy_auth_fn_not_wrapped:public.ai_conversation_tags.Authenticated can view ai tags`, `policy_auth_fn_not_wrapped:public.ai_conversation_tags.Users can insert ai tags for assigned contacts`, `policy_auth_fn_not_wrapped:public.ai_providers.Admins can delete AI providers`, `policy_auth_fn_not_wrapped:public.ai_providers.Admins can insert AI providers`, `policy_auth_fn_not_wrapped:public.ai_providers.Admins can update AI providers`, `policy_auth_fn_not_wrapped:public.ai_providers.Admins can view AI providers`, `policy_auth_fn_not_wrapped:public.ai_usage_logs.Admins can view all AI usage logs`, `policy_auth_fn_not_wrapped:public.ai_usage_logs.Users can view own AI usage logs`, `policy_auth_fn_not_wrapped:public.allowed_countries.Admins can delete allowed countries`, `policy_auth_fn_not_wrapped:public.allowed_countries.Admins can insert allowed countries`, `policy_auth_fn_not_wrapped:public.allowed_countries.Admins can view allowed countries`, `policy_auth_fn_not_wrapped:public.audio_meme_favorites.Users manage own meme favorites`, `policy_auth_fn_not_wrapped:public.audio_memes.Authenticated users can insert audio memes`, `policy_auth_fn_not_wrapped:public.audio_memes.Authenticated users can update audio memes`, `policy_auth_fn_not_wrapped:public.audio_memes.Users can delete own audio memes`, `policy_auth_fn_not_wrapped:public.auto_close_config.Admins can manage auto-close config`, `policy_auth_fn_not_wrapped:public.automations.Admin/supervisor can create automations`, `policy_auth_fn_not_wrapped:public.automations.Admin/supervisor can delete automations`, `policy_auth_fn_not_wrapped:public.automations.Admin/supervisor can update automations`, `policy_auth_fn_not_wrapped:public.automations.Automations visible to admins only`, `policy_auth_fn_not_wrapped:public.away_messages.Admins can manage away messages`, `policy_auth_fn_not_wrapped:public.blocked_countries.Admins can delete blocked countries`, `policy_auth_fn_not_wrapped:public.blocked_countries.Admins can insert blocked countries`, `policy_auth_fn_not_wrapped:public.blocked_countries.Admins can view blocked countries`, `policy_auth_fn_not_wrapped:public.blocked_ips.Admins can delete blocked IPs`, `policy_auth_fn_not_wrapped:public.blocked_ips.Admins can insert blocked IPs`, `policy_auth_fn_not_wrapped:public.blocked_ips.Admins can update blocked IPs`, `policy_auth_fn_not_wrapped:public.blocked_ips.Only admins can view blocked IPs` … (+365)
+- **policies (RLS)** removido (12): `public.campaign_contacts.Admins can insert campaign contacts`, `public.campaign_contacts.Admins can view campaign contacts`, `public.campaigns.Admins can insert campaigns`, `public.chatbot_flows.Admins can insert chatbot flows`, `public.followup_sequences.Admins can view followup sequences`, `public.followup_steps.Admins can view followup steps`, `public.meta_capi_events.Admins can view capi events`, `public.products.Admins can insert products`, `public.scheduled_reports.Admins can insert scheduled reports`, `public.scheduled_reports.Admins can view scheduled reports`, `public.security_alerts.Admins can insert security alerts`, `public.whatsapp_templates.Admins can insert templates`
+- **policies (RLS)** alterado (439): `public.agent_achievements.Only admins can insert achievements directly`, `public.agent_achievements.Users can view own or admin all achievements`, `public.agent_presence.Users can insert own presence`, `public.agent_presence.Users can update own presence`, `public.agent_skills.Admins can manage skills`, `public.agent_skills.Users can view own or admin all skills`, `public.agent_stats.Only admins can update agent stats`, `public.agent_stats.Users can insert own stats`, `public.agent_stats.Users can view agent stats`, `public.agent_visibility_grants.Admins and supervisors can manage visibility grants`, `public.agent_visibility_grants.Agents can view own grants`, `public.ai_conversation_tags.Admins can delete ai tags`, `public.ai_conversation_tags.Admins can update ai tags`, `public.ai_conversation_tags.Agents can delete tags on assigned contacts`, `public.ai_conversation_tags.Authenticated can view ai tags`, `public.ai_conversation_tags.Users can insert ai tags for assigned contacts`, `public.ai_providers.Admins can delete AI providers`, `public.ai_providers.Admins can insert AI providers`, `public.ai_providers.Admins can update AI providers`, `public.ai_providers.Admins can view AI providers`, `public.ai_usage_logs.Admins can view all AI usage logs`, `public.ai_usage_logs.Users can view own AI usage logs`, `public.allowed_countries.Admins can delete allowed countries`, `public.allowed_countries.Admins can insert allowed countries`, `public.allowed_countries.Admins can view allowed countries`, `public.app_settings.app_settings_admin_all`, `public.assistant_profiles.assistant_profiles_insert`, `public.assistant_profiles.assistant_profiles_select`, `public.assistant_profiles.assistant_profiles_update`, `public.audio_meme_favorites.Users manage own meme favorites`, `public.audio_memes.Authenticated users can insert audio memes`, `public.audio_memes.Authenticated users can update audio memes`, `public.audio_memes.Users can delete own audio memes`, `public.audit_logs.Only admins can view audit logs`, `public.auto_close_config.Admins can manage auto-close config`, `public.automations.Admin/supervisor can create automations`, `public.automations.Admin/supervisor can delete automations`, `public.automations.Admin/supervisor can update automations`, `public.automations.Automations visible to admins only`, `public.away_messages.Admins can manage away messages` … (+399)
+- **tabelas** alterado (6): `ops.hermes_change_log`, `public.contacts`, `public.departments`, `public.messages`, `public.role_permissions`, `public.user_roles`
+- **views** adicionado (3): `ops._relation_dictionary_base`, `ops.application_data_dictionary`, `ops.managed_schema_dictionary`
+
+## 2026-11-24 16:16 UTC
+
+- **functions** alterado (3): `public.has_role(_user_id uuid, _role app_role)`, `public.is_admin(_user_id uuid)`, `public.is_admin_or_supervisor(_user_id uuid)`
+
+## 2026-11-24 15:13 UTC
+
+- **functions** removido (2): `public.e2e_cleanup()`, `public.e2e_cleanup_conversation_closures()`
+- **migrations** adicionado (1): `20261124120000_drop_rpcs_e2e_orfas`
+
+## 2026-11-24 11:13 UTC
+
+- **lints** removido (11): `policy_auth_fn_not_wrapped:public.copilot_feedback.copilot_feedback_insert`, `policy_auth_fn_not_wrapped:public.copilot_feedback.copilot_feedback_select`, `policy_auth_fn_not_wrapped:public.copilot_seller_settings.copilot_seller_settings_insert`, `policy_auth_fn_not_wrapped:public.copilot_seller_settings.copilot_seller_settings_select`, `policy_auth_fn_not_wrapped:public.copilot_seller_settings.copilot_seller_settings_update`, `policy_auth_fn_not_wrapped:public.copilot_usage.copilot_usage_insert`, `policy_auth_fn_not_wrapped:public.copilot_usage.copilot_usage_select`, `policy_auth_fn_not_wrapped:public.message_templates.Users can create their own templates`, `policy_auth_fn_not_wrapped:public.message_templates.Users can delete their own templates`, `policy_auth_fn_not_wrapped:public.message_templates.Users can update their own templates`, `policy_auth_fn_not_wrapped:public.message_templates.Users can view their templates and global ones`
+- **policies (RLS)** alterado (11): `public.copilot_feedback.copilot_feedback_insert`, `public.copilot_feedback.copilot_feedback_select`, `public.copilot_seller_settings.copilot_seller_settings_insert`, `public.copilot_seller_settings.copilot_seller_settings_select`, `public.copilot_seller_settings.copilot_seller_settings_update`, `public.copilot_usage.copilot_usage_insert`, `public.copilot_usage.copilot_usage_select`, `public.message_templates.Users can create their own templates`, `public.message_templates.Users can delete their own templates`, `public.message_templates.Users can update their own templates`, `public.message_templates.Users can view their templates and global ones`
+
+## 2026-11-24 10:13 UTC
+
+- **lints** removido (16): `policy_auth_fn_not_wrapped:public.agent_presence.Users can insert own presence`, `policy_auth_fn_not_wrapped:public.agent_presence.Users can update own presence`, `policy_auth_fn_not_wrapped:public.assistant_profiles.assistant_profiles_insert`, `policy_auth_fn_not_wrapped:public.assistant_profiles.assistant_profiles_select`, `policy_auth_fn_not_wrapped:public.assistant_profiles.assistant_profiles_update`, `policy_auth_fn_not_wrapped:public.user_devices.Users can delete their own devices`, `policy_auth_fn_not_wrapped:public.user_devices.Users can insert their own devices`, `policy_auth_fn_not_wrapped:public.user_devices.Users can update their own devices`, `policy_auth_fn_not_wrapped:public.user_devices.Users can view their own devices`, `policy_auth_fn_not_wrapped:public.user_sessions.Authenticated can insert own sessions`, `policy_auth_fn_not_wrapped:public.user_sessions.Users can delete their own sessions`, `policy_auth_fn_not_wrapped:public.user_sessions.Users can update their own sessions`, `policy_auth_fn_not_wrapped:public.user_sessions.Users can view their own sessions`, `policy_auth_fn_not_wrapped:public.user_settings.Users can insert their own settings`, `policy_auth_fn_not_wrapped:public.user_settings.Users can update their own settings`, `policy_auth_fn_not_wrapped:public.user_settings.Users can view their own settings`
+- **policies (RLS)** alterado (16): `public.agent_presence.Users can insert own presence`, `public.agent_presence.Users can update own presence`, `public.assistant_profiles.assistant_profiles_insert`, `public.assistant_profiles.assistant_profiles_select`, `public.assistant_profiles.assistant_profiles_update`, `public.user_devices.Users can delete their own devices`, `public.user_devices.Users can insert their own devices`, `public.user_devices.Users can update their own devices`, `public.user_devices.Users can view their own devices`, `public.user_sessions.Authenticated can insert own sessions`, `public.user_sessions.Users can delete their own sessions`, `public.user_sessions.Users can update their own sessions`, `public.user_sessions.Users can view their own sessions`, `public.user_settings.Users can insert their own settings`, `public.user_settings.Users can update their own settings`, `public.user_settings.Users can view their own settings`
+
+## 2026-11-24 01:15 UTC
+
+- **realtime** adicionado (1): `supabase_realtime_messages_publication:realtime.messages_2026_11_27`
+- **realtime** removido (1): `supabase_realtime_messages_publication:realtime.messages_2026_11_20`
+
+## 2026-11-24 00:30 UTC
+
+- **migrations** adicionado (1): `20261122200000_x076_talkx_ai_requests`
+
+## 2026-11-23 23:18 UTC
+
+- **indexes** adicionado (8): `public.idx_away_message_log_whatsapp_connection_id`, `public.idx_message_favorites_message_id`, `public.idx_message_pins_message_id`, `public.idx_message_reports_reporter_id`, `public.idx_talkx_campaign_segments_segment_id`, `public.idx_talkx_campaigns_ab_winner_decided_by`, `public.idx_talkx_campaigns_ab_winner_variant_id`, `public.idx_team_message_receipts_profile_id`
+- **lints** removido (8): `fk_without_index:public.away_message_log.away_message_log_whatsapp_connection_id_fkey`, `fk_without_index:public.message_favorites.message_favorites_message_id_fkey`, `fk_without_index:public.message_pins.message_pins_message_id_fkey`, `fk_without_index:public.message_reports.message_reports_reporter_id_fkey`, `fk_without_index:public.talkx_campaign_segments.talkx_campaign_segments_segment_id_fkey`, `fk_without_index:public.talkx_campaigns.talkx_campaigns_ab_winner_decided_by_fkey`, `fk_without_index:public.talkx_campaigns.talkx_campaigns_ab_winner_variant_id_fkey`, `fk_without_index:public.team_message_receipts.team_message_receipts_profile_id_fkey`
+- **tabelas** alterado (9): `_bkp_261023.agent_stats`, `_bkp_261023.contacts`, `_bkp_261023.csat_surveys`, `_bkp_261023.functions_before`, `_bkp_261023.global_settings`, `_bkp_261023.policies_before`, `_bkp_261023.schema_migrations`, `_bkp_261023.team_messages`, `_bkp_261023.user_settings`
+
+## 2026-11-23 20:14 UTC
+
+- **colunas** adicionado (13): `public.talkx_ai_requests.cost_usd`, `public.talkx_ai_requests.created_at`, `public.talkx_ai_requests.created_by`, `public.talkx_ai_requests.entity_id`, `public.talkx_ai_requests.entity_type`, `public.talkx_ai_requests.id`, `public.talkx_ai_requests.input_hash`, `public.talkx_ai_requests.kind`, `public.talkx_ai_requests.model`, `public.talkx_ai_requests.output`, `public.talkx_ai_requests.status`, `public.talkx_ai_requests.tokens_in`, `public.talkx_ai_requests.tokens_out`
+- **constraints** adicionado (7): `public.talkx_ai_requests.talkx_ai_requests_cost_usd_check`, `public.talkx_ai_requests.talkx_ai_requests_created_by_fkey`, `public.talkx_ai_requests.talkx_ai_requests_kind_check`, `public.talkx_ai_requests.talkx_ai_requests_pkey`, `public.talkx_ai_requests.talkx_ai_requests_status_check`, `public.talkx_ai_requests.talkx_ai_requests_tokens_in_check`, `public.talkx_ai_requests.talkx_ai_requests_tokens_out_check`
+- **functions** alterado (1): `public.is_admin_or_supervisor(_user_id uuid)`
+- **indexes** adicionado (4): `public.talkx_ai_requests_cache_idx`, `public.talkx_ai_requests_mes_idx`, `public.talkx_ai_requests_pkey`, `public.talkx_ai_requests_usuario_dia_idx`
+- **lints** adicionado (1): `policy_auth_fn_not_wrapped:public.talkx_ai_requests.talkx_ai_requests_admin_read`
+- **migrations** adicionado (1): `20261122190000_ia055_precos_entrada_e_saida`
+- **policies (RLS)** adicionado (1): `public.talkx_ai_requests.talkx_ai_requests_admin_read`
+- **tabelas** adicionado (1): `public.talkx_ai_requests`
+
+## 2026-11-23 06:31 UTC
+
+- **realtime** adicionado (1): `supabase_realtime_messages_publication:realtime.messages_2026_11_26`
+- **realtime** removido (1): `supabase_realtime_messages_publication:realtime.messages_2026_11_19`
+
+## 2026-11-22 19:11 UTC
+
+- **constraints** alterado (1): `public.ai_model_prices.ai_model_prices_unit_check`
+- **functions** alterado (1): `public.ai_usage_cost_summary(p_since timestamp with time zone, p_until timestamp with time zone, p_top_functions integer)`
+
+## 2026-11-22 12:17 UTC
+
+- **colunas** adicionado (7): `public.assistant_profiles.ajuda`, `public.assistant_profiles.atividade`, `public.assistant_profiles.created_at`, `public.assistant_profiles.foco`, `public.assistant_profiles.tom`, `public.assistant_profiles.updated_at`, `public.assistant_profiles.user_id`
+- **constraints** adicionado (5): `public.assistant_profiles.assistant_profiles_ajuda_check`, `public.assistant_profiles.assistant_profiles_atividade_check`, `public.assistant_profiles.assistant_profiles_pkey`, `public.assistant_profiles.assistant_profiles_tom_check`, `public.assistant_profiles.assistant_profiles_user_id_fkey`
+- **indexes** adicionado (1): `public.assistant_profiles_pkey`
+- **lints** adicionado (3): `policy_auth_fn_not_wrapped:public.assistant_profiles.assistant_profiles_insert`, `policy_auth_fn_not_wrapped:public.assistant_profiles.assistant_profiles_select`, `policy_auth_fn_not_wrapped:public.assistant_profiles.assistant_profiles_update`
+- **migrations** adicionado (1): `20261121190000_assistant_profiles`
+- **policies (RLS)** adicionado (3): `public.assistant_profiles.assistant_profiles_insert`, `public.assistant_profiles.assistant_profiles_select`, `public.assistant_profiles.assistant_profiles_update`
+- **tabelas** adicionado (1): `public.assistant_profiles`
+
+## 2026-11-22 03:16 UTC
+
+- **realtime** adicionado (1): `supabase_realtime_messages_publication:realtime.messages_2026_11_25`
+- **realtime** removido (1): `supabase_realtime_messages_publication:realtime.messages_2026_11_18`
+
+## 2026-11-21 21:10 UTC
+
+- **functions** alterado (1): `public.talkx_campaign_segment_progress(p_campaign_id uuid)`
+
+## 2026-11-21 12:17 UTC
+
+- **functions** adicionado (2): `public.get_scheduled_report_cron_secret()`, `public.trigger_due_scheduled_report_configs()`
+- **migrations** adicionado (1): `20261120080000_scheduled_report_cron`
+- **vault secrets (nomes)** adicionado (1): `scheduled_report_cron_secret`
+
+## 2026-11-21 04:14 UTC
+
+- **realtime** adicionado (1): `supabase_realtime_messages_publication:realtime.messages_2026_11_24`
+- **realtime** removido (1): `supabase_realtime_messages_publication:realtime.messages_2026_11_17`
+
+## 2026-11-20 05:14 UTC
+
+- **realtime** removido (1): `supabase_realtime_messages_publication:realtime.messages_2026_11_16`
+
+## 2026-11-20 02:18 UTC
+
+- **realtime** adicionado (1): `supabase_realtime_messages_publication:realtime.messages_2026_11_23`
+
+## 2026-11-19 11:13 UTC
+
+- **functions** adicionado (1): `public.set_talkx_campaign_ab(p_campaign_id uuid, p_expected_revision bigint, p_ab_enabled boolean, p_ab_metric text, p_ab_min_sample integer)`
+- **functions** alterado (3): `public.is_admin_or_supervisor(_user_id uuid)`, `public.persist_talkx_recipient_message_snapshot(p_recipient_id uuid, p_claim_token uuid, p_personalized_message text, p_media_url text, p_media_type text, p_variant_id uuid)`, `public.talkx_next_recipients(p_campaign_id uuid, p_limit integer)`
+- **migrations** adicionado (3): `20261118210000_talkx_next_recipients_variant_id`, `20261118220000_talkx_snapshot_variante_primeiro_vale`, `20261119010000_talkx_set_campaign_ab`
+- **realtime** adicionado (1): `supabase_realtime_messages_publication:realtime.messages_2026_11_22`
+- **realtime** removido (1): `supabase_realtime_messages_publication:realtime.messages_2026_11_15`
+
 ## 2026-11-18 21:12 UTC
 
 - **colunas** adicionado (6): `public.talkx_campaigns.ab_enabled`, `public.talkx_campaigns.ab_metric`, `public.talkx_campaigns.ab_min_sample`, `public.talkx_campaigns.ab_winner_decided_at`, `public.talkx_campaigns.ab_winner_decided_by`, `public.talkx_campaigns.ab_winner_variant_id`

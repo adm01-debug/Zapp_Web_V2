@@ -1,5 +1,21 @@
 # public.ai_usage_outbox
 
+> Descrição funcional não estava registrada no catálogo; o conteúdo abaixo documenta a estrutura observável, sem inferir regras de negócio não declaradas.
+
+[CATALOGUE SEMÂNTICO DO PROJETO]
+Objeto: public.ai_usage_outbox (tabela). RLS habilitada: t; RLS forçada: f.
+Colunas (ordem, tipo e nulabilidade):
+1 id uuid NOT NULL [DEFAULT/EXPRESSION DEFINED]
+2 payload jsonb NOT NULL
+3 motivo text NOT NULL
+4 tentativas integer NOT NULL [DEFAULT/EXPRESSION DEFINED]
+5 created_at timestamp with time zone NOT NULL [DEFAULT/EXPRESSION DEFINED]
+6 processed_at timestamp with time zone NULLABLE
+Constraints:
+ai_usage_outbox_pkey: PRIMARY KEY (id)
+Políticas RLS (nome, operação, papéis e modo; as expressões permanecem no catálogo):
+ai_usage_outbox_service_role [command=ALL; roles=service_role; PERMISSIVE]
+
 | propriedade | valor |
 |---|---|
 | tipo | table |

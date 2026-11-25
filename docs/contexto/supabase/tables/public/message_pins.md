@@ -1,5 +1,24 @@
 # public.message_pins
 
+> Descrição funcional não estava registrada no catálogo; o conteúdo abaixo documenta a estrutura observável, sem inferir regras de negócio não declaradas.
+
+[CATALOGUE SEMÂNTICO DO PROJETO]
+Objeto: public.message_pins (tabela). RLS habilitada: t; RLS forçada: f.
+Colunas (ordem, tipo e nulabilidade):
+1 id uuid NOT NULL [DEFAULT/EXPRESSION DEFINED]
+2 contact_id uuid NOT NULL
+3 message_id uuid NOT NULL
+4 pinned_by uuid NOT NULL
+5 pinned_at timestamp with time zone NOT NULL [DEFAULT/EXPRESSION DEFINED]
+Constraints:
+message_pins_contact_id_fkey: FOREIGN KEY (contact_id) REFERENCES contacts(id) ON DELETE CASCADE
+message_pins_message_id_fkey: FOREIGN KEY (message_id) REFERENCES messages(id) ON DELETE CASCADE
+message_pins_pinned_by_fkey: FOREIGN KEY (pinned_by) REFERENCES auth.users(id) ON DELETE CASCADE
+message_pins_pkey: PRIMARY KEY (id)
+message_pins_contact_id_message_id_key: UNIQUE (contact_id, message_id)
+Políticas RLS (nome, operação, papéis e modo; as expressões permanecem no catálogo):
+message_pins_select_visible [command=SELECT; roles=authenticated; PERMISSIVE]
+
 | propriedade | valor |
 |---|---|
 | tipo | table |
@@ -38,6 +57,7 @@
 
 | nome | método | colunas | único | válido | predicado | definição |
 |---|---|---|---|---|---|---|
+| idx_message_pins_message_id | btree | message_id | não | sim |  | `CREATE INDEX idx_message_pins_message_id ON public.message_pins USING btree (message_id)` |
 | idx_message_pins_pinned_by | btree | pinned_by | não | sim |  | `CREATE INDEX idx_message_pins_pinned_by ON public.message_pins USING btree (pinned_by)` |
 | message_pins_contact_id_message_id_key | btree | contact_id, message_id | sim | sim |  | `CREATE UNIQUE INDEX message_pins_contact_id_message_id_key ON public.message_pins USING btree (contact_id, message_id)` |
 | message_pins_pkey | btree | id | sim | sim |  | `CREATE UNIQUE INDEX message_pins_pkey ON public.message_pins USING btree (id)` |
@@ -52,7 +72,7 @@
 | comando | SELECT |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `is_contact_visible_to_user(contact_id, ( SELECT auth.uid() AS uid))` |
+| USING | `is_contact_visible_to_user(contact_id, ( SELECT ( SELECT auth.uid() AS uid) AS uid))` |
 | WITH CHECK |  |
 
 

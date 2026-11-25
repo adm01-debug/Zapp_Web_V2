@@ -2,8 +2,8 @@
  "produtor": "ai-context-sync",
  "versao": "1.3.2",
  "perfil": "regras",
- "gerado_em": "2026-11-18 21:56 UTC",
- "commit": "35d701970e6862a726b9018be8cc1777bf094ef7",
+ "gerado_em": "2026-11-25 10:52 UTC",
+ "commit": "5191812994ef42c100afe9d3afff331a266a4a57",
  "fonte": "código + migrations/types + manual/ (regras de negócio)",
  "entrada": "07-REGRAS-DE-NEGOCIO.md",
  "arquivos": [
@@ -12,7 +12,7 @@
   "11-GLOSSARIO-E-LACUNAS.md",
   "context.json"
  ],
- "schema_real_em": "",
- "inconsistencias": 249,
+ "schema_real_em": "docs/contexto/supabase",
+ "inconsistencias": 222,
  "lacunas": 47
 }

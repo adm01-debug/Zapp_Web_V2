@@ -1,5 +1,27 @@
 # public.custom_emojis
 
+> Descrição funcional não estava registrada no catálogo; o conteúdo abaixo documenta a estrutura observável, sem inferir regras de negócio não declaradas.
+
+[CATALOGUE SEMÂNTICO DO PROJETO]
+Objeto: public.custom_emojis (tabela). RLS habilitada: t; RLS forçada: f.
+Colunas (ordem, tipo e nulabilidade):
+1 id uuid NOT NULL [DEFAULT/EXPRESSION DEFINED]
+2 name text NOT NULL
+3 image_url text NOT NULL
+4 category text NULLABLE [DEFAULT/EXPRESSION DEFINED]
+5 is_favorite boolean NULLABLE [DEFAULT/EXPRESSION DEFINED]
+6 use_count integer NULLABLE [DEFAULT/EXPRESSION DEFINED]
+7 uploaded_by uuid NULLABLE
+8 created_at timestamp with time zone NULLABLE [DEFAULT/EXPRESSION DEFINED]
+9 updated_at timestamp with time zone NULLABLE [DEFAULT/EXPRESSION DEFINED]
+Constraints:
+custom_emojis_pkey: PRIMARY KEY (id)
+Políticas RLS (nome, operação, papéis e modo; as expressões permanecem no catálogo):
+"Authenticated users can insert custom emojis" [command=INSERT; roles=authenticated; PERMISSIVE]
+"Authenticated users can update custom emojis" [command=UPDATE; roles=authenticated; PERMISSIVE]
+"Authenticated users can view custom emojis" [command=SELECT; roles=authenticated; PERMISSIVE]
+"Users can delete own or admin custom emojis" [command=DELETE; roles=authenticated; PERMISSIVE]
+
 | propriedade | valor |
 |---|---|
 | tipo | table |
@@ -51,7 +73,7 @@
 | tipo | PERMISSIVE |
 | roles | authenticated |
 | USING |  |
-| WITH CHECK | `(uploaded_by = auth.uid())` |
+| WITH CHECK | `(uploaded_by = ( SELECT auth.uid() AS uid))` |
 
 ### `Authenticated users can update custom emojis`
 
@@ -60,8 +82,8 @@
 | comando | UPDATE |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `((uploaded_by = auth.uid()) OR is_admin_or_supervisor(auth.uid()))` |
-| WITH CHECK | `((uploaded_by = auth.uid()) OR is_admin_or_supervisor(auth.uid()))` |
+| USING | `((uploaded_by = ( SELECT auth.uid() AS uid)) OR is_admin_or_supervisor(( SELECT auth.uid() AS uid)))` |
+| WITH CHECK | `((uploaded_by = ( SELECT auth.uid() AS uid)) OR is_admin_or_supervisor(( SELECT auth.uid() AS uid)))` |
 
 ### `Authenticated users can view custom emojis`
 
@@ -80,7 +102,7 @@
 | comando | DELETE |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `((uploaded_by = auth.uid()) OR is_admin_or_supervisor(auth.uid()))` |
+| USING | `((uploaded_by = ( SELECT auth.uid() AS uid)) OR is_admin_or_supervisor(( SELECT auth.uid() AS uid)))` |
 | WITH CHECK |  |
 
 

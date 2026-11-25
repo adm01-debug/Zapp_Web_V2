@@ -1,5 +1,26 @@
 # public.csat_auto_config
 
+> Descrição funcional não estava registrada no catálogo; o conteúdo abaixo documenta a estrutura observável, sem inferir regras de negócio não declaradas.
+
+[CATALOGUE SEMÂNTICO DO PROJETO]
+Objeto: public.csat_auto_config (tabela). RLS habilitada: t; RLS forçada: f.
+Colunas (ordem, tipo e nulabilidade):
+1 id uuid NOT NULL [DEFAULT/EXPRESSION DEFINED]
+2 is_enabled boolean NULLABLE [DEFAULT/EXPRESSION DEFINED]
+3 delay_minutes integer NULLABLE [DEFAULT/EXPRESSION DEFINED]
+4 message_template text NULLABLE [DEFAULT/EXPRESSION DEFINED]
+5 whatsapp_connection_id uuid NULLABLE
+6 updated_by uuid NULLABLE
+7 created_at timestamp with time zone NULLABLE [DEFAULT/EXPRESSION DEFINED]
+8 updated_at timestamp with time zone NULLABLE [DEFAULT/EXPRESSION DEFINED]
+Constraints:
+csat_auto_config_updated_by_fkey: FOREIGN KEY (updated_by) REFERENCES profiles(id)
+csat_auto_config_whatsapp_connection_id_fkey: FOREIGN KEY (whatsapp_connection_id) REFERENCES whatsapp_connections(id)
+csat_auto_config_pkey: PRIMARY KEY (id)
+Políticas RLS (nome, operação, papéis e modo; as expressões permanecem no catálogo):
+"Admins can manage csat config" [command=ALL; roles=authenticated; PERMISSIVE]
+"Authenticated can view csat config" [command=SELECT; roles=authenticated; PERMISSIVE]
+
 | propriedade | valor |
 |---|---|
 | tipo | table |
@@ -53,7 +74,7 @@
 | comando | ALL |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `is_admin_or_supervisor(auth.uid())` |
+| USING | `is_admin_or_supervisor(( SELECT auth.uid() AS uid))` |
 | WITH CHECK |  |
 
 ### `Authenticated can view csat config`

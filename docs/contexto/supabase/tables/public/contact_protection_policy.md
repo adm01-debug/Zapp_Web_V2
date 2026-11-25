@@ -2,6 +2,27 @@
 
 > CT-091: politica de protecao de contatos. scope_role NULL = padrao global; linha por papel sobrepoe. Só o admin altera.
 
+[CATALOGUE SEMÂNTICO DO PROJETO]
+Objeto: public.contact_protection_policy (tabela). RLS habilitada: t; RLS forçada: f.
+Colunas (ordem, tipo e nulabilidade):
+1 id uuid NOT NULL [DEFAULT/EXPRESSION DEFINED]
+2 scope_role app_role NULLABLE — Papel ao qual a politica se aplica (app_role). NULL = politica global (padrao do sistema).
+3 bloquear_copia boolean NOT NULL [DEFAULT/EXPRESSION DEFINED]
+4 bloquear_impressao boolean NOT NULL [DEFAULT/EXPRESSION DEFINED]
+5 marca_dagua boolean NOT NULL [DEFAULT/EXPRESSION DEFINED]
+6 mascarar_contato boolean NOT NULL [DEFAULT/EXPRESSION DEFINED]
+7 limite_fichas_hora integer NOT NULL [DEFAULT/EXPRESSION DEFINED] — Maximo de fichas de contato que o usuario pode abrir por hora (0 = sem fichas).
+8 created_at timestamp with time zone NOT NULL [DEFAULT/EXPRESSION DEFINED]
+9 updated_at timestamp with time zone NOT NULL [DEFAULT/EXPRESSION DEFINED]
+Constraints:
+contact_protection_policy_limite_check: CHECK (limite_fichas_hora >= 0)
+contact_protection_policy_pkey: PRIMARY KEY (id)
+Políticas RLS (nome, operação, papéis e modo; as expressões permanecem no catálogo):
+"Admins can delete contact protection policy" [command=DELETE; roles=authenticated; PERMISSIVE]
+"Admins can insert contact protection policy" [command=INSERT; roles=authenticated; PERMISSIVE]
+"Admins can update contact protection policy" [command=UPDATE; roles=authenticated; PERMISSIVE]
+"Admins can view contact protection policy" [command=SELECT; roles=authenticated; PERMISSIVE]
+
 | propriedade | valor |
 |---|---|
 | tipo | table |
@@ -54,7 +75,7 @@
 | comando | DELETE |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `has_role(auth.uid(), 'admin'::app_role)` |
+| USING | `has_role(( SELECT auth.uid() AS uid), 'admin'::app_role)` |
 | WITH CHECK |  |
 
 ### `Admins can insert contact protection policy`
@@ -65,7 +86,7 @@
 | tipo | PERMISSIVE |
 | roles | authenticated |
 | USING |  |
-| WITH CHECK | `has_role(auth.uid(), 'admin'::app_role)` |
+| WITH CHECK | `has_role(( SELECT auth.uid() AS uid), 'admin'::app_role)` |
 
 ### `Admins can update contact protection policy`
 
@@ -74,8 +95,8 @@
 | comando | UPDATE |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `has_role(auth.uid(), 'admin'::app_role)` |
-| WITH CHECK | `has_role(auth.uid(), 'admin'::app_role)` |
+| USING | `has_role(( SELECT auth.uid() AS uid), 'admin'::app_role)` |
+| WITH CHECK | `has_role(( SELECT auth.uid() AS uid), 'admin'::app_role)` |
 
 ### `Admins can view contact protection policy`
 
@@ -84,7 +105,7 @@
 | comando | SELECT |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `has_role(auth.uid(), 'admin'::app_role)` |
+| USING | `has_role(( SELECT auth.uid() AS uid), 'admin'::app_role)` |
 | WITH CHECK |  |
 
 

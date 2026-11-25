@@ -1,5 +1,61 @@
 # public.talkx_recipients
 
+> Descrição funcional não estava registrada no catálogo; o conteúdo abaixo documenta a estrutura observável, sem inferir regras de negócio não declaradas.
+
+[CATALOGUE SEMÂNTICO DO PROJETO]
+Objeto: public.talkx_recipients (tabela). RLS habilitada: t; RLS forçada: f.
+Colunas (ordem, tipo e nulabilidade):
+1 id uuid NOT NULL [DEFAULT/EXPRESSION DEFINED]
+2 campaign_id uuid NOT NULL
+3 contact_id uuid NOT NULL
+4 personalized_message text NULLABLE
+5 status text NOT NULL [DEFAULT/EXPRESSION DEFINED]
+6 sent_at timestamp with time zone NULLABLE
+7 delivered_at timestamp with time zone NULLABLE
+8 error_message text NULLABLE
+9 created_at timestamp with time zone NOT NULL [DEFAULT/EXPRESSION DEFINED]
+10 updated_at timestamp with time zone NOT NULL [DEFAULT/EXPRESSION DEFINED]
+11 variant_id uuid NULLABLE
+12 external_id text NULLABLE
+13 delivery_claim_token uuid NULLABLE
+14 delivery_claimed_at timestamp with time zone NULLABLE
+15 delivery_claim_expires_at timestamp with time zone NULLABLE
+16 delivery_claimed_by text NULLABLE
+17 delivery_attempt_count integer NOT NULL [DEFAULT/EXPRESSION DEFINED]
+18 delivery_last_claim_token uuid NULLABLE
+19 provider_dispatch_started_at timestamp with time zone NULLABLE
+20 variant_id_snapshot uuid NULLABLE
+21 message_snapshot_at timestamp with time zone NULLABLE
+22 media_url_snapshot text NULLABLE
+23 media_type_snapshot text NULLABLE
+24 replied_at timestamp with time zone NULLABLE
+25 reply_message_id uuid NULLABLE
+26 clicked_at timestamp with time zone NULLABLE
+27 click_count integer NOT NULL [DEFAULT/EXPRESSION DEFINED]
+28 attempt_count integer NOT NULL [DEFAULT/EXPRESSION DEFINED]
+29 retry_after timestamp with time zone NULLABLE
+30 read_at timestamp with time zone NULLABLE
+31 segment_id uuid NULLABLE — Talk X (X057): segmento de origem do destinatario — o PRIMEIRO segmento da campanha que contem o contato.
+32 manual_retry_count smallint NOT NULL [DEFAULT/EXPRESSION DEFINED] — Reenvios MANUAIS de um destinatário em estado terminal (failed/skipped) — teto de 3 (X031).
+33 status_changed_at timestamp with time zone NOT NULL [DEFAULT/EXPRESSION DEFINED] — X126: instante da ultima troca REAL de status do destinatario (gatilho trg_talkx_recipients_status_changed_at). Nao acompanha expurgo de PII nem edicao de outros campos (updated_at acompanha). A saude do motor (talkx_engine_health.failure_rate_15m e outcome_unknown_24h) usa esta coluna.
+34 failed_at timestamp with time zone NULLABLE
+Constraints:
+talkx_recipients_delivery_claim_state: CHECK (status = 'sending'::text AND delivery_claim_token IS NOT NULL AND delivery_claimed_at IS NOT NULL AND delivery_claim_expires_at IS NOT NULL AND delivery_claimed_by IS NOT NULL OR status <> 'sending'::text AND delivery_claim_token IS NULL AND delivery_claimed_at IS NULL AND delivery_claim_expires_at IS NULL AND delivery_claimed_by IS NULL)
+talkx_recipients_external_id_bounded: CHECK (external_id IS NULL OR length(btrim(external_id)) >= 1 AND length(btrim(external_id)) <= 512)
+talkx_recipients_media_snapshot_shape: CHECK (media_url_snapshot IS NULL AND media_type_snapshot IS NULL OR length(btrim(media_url_snapshot)) >= 1 AND length(btrim(media_url_snapshot)) <= 8192 AND (media_type_snapshot = ANY (ARRAY['image'::text, 'video'::text, 'document'::text, 'audio'::text])))
+talkx_recipients_status_check: CHECK (status = ANY (ARRAY['pending'::text, 'sending'::text, 'sent'::text, 'delivered'::text, 'failed'::text, 'skipped'::text, 'outcome_unknown'::text, 'cancelled'::text]))
+talkx_recipients_campaign_id_fkey: FOREIGN KEY (campaign_id) REFERENCES talkx_campaigns(id) ON DELETE CASCADE
+talkx_recipients_contact_id_fkey: FOREIGN KEY (contact_id) REFERENCES contacts(id) ON DELETE CASCADE
+talkx_recipients_reply_message_id_fkey: FOREIGN KEY (reply_message_id) REFERENCES messages(id) ON DELETE SET NULL
+talkx_recipients_variant_id_fkey: FOREIGN KEY (variant_id) REFERENCES talkx_template_variants(id) ON DELETE SET NULL
+talkx_recipients_pkey: PRIMARY KEY (id)
+talkx_recipients_campaign_id_contact_id_key: UNIQUE (campaign_id, contact_id)
+Políticas RLS (nome, operação, papéis e modo; as expressões permanecem no catálogo):
+"Users can delete recipients of own campaigns" [command=DELETE; roles=authenticated; PERMISSIVE]
+"Users can insert recipients to own campaigns" [command=INSERT; roles=authenticated; PERMISSIVE]
+"Users can update recipients of own campaigns" [command=UPDATE; roles=authenticated; PERMISSIVE]
+"Users can view recipients of own campaigns" [command=SELECT; roles=authenticated; PERMISSIVE]
+
 | propriedade | valor |
 |---|---|
 | tipo | table |
@@ -112,7 +168,7 @@
 | comando | DELETE |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `(EXISTS ( SELECT 1    FROM talkx_campaigns tc   WHERE ((tc.id = talkx_recipients.campaign_id) AND (tc.created_by = ( SELECT profiles.id            FROM profiles           WHERE (profiles.user_id = auth.uid())          LIMIT 1)) AND (tc.status = 'draft'::text))))` |
+| USING | `(EXISTS ( SELECT 1    FROM talkx_campaigns tc   WHERE ((tc.id = talkx_recipients.campaign_id) AND (tc.created_by = ( SELECT profiles.id            FROM profiles           WHERE (profiles.user_id = ( SELECT auth.uid() AS uid))          LIMIT 1)) AND (tc.status = 'draft'::text))))` |
 | WITH CHECK |  |
 
 ### `Users can insert recipients to own campaigns`
@@ -123,7 +179,7 @@
 | tipo | PERMISSIVE |
 | roles | authenticated |
 | USING |  |
-| WITH CHECK | `(EXISTS ( SELECT 1    FROM talkx_campaigns tc   WHERE ((tc.id = talkx_recipients.campaign_id) AND (tc.created_by = ( SELECT profiles.id            FROM profiles           WHERE (profiles.user_id = auth.uid())          LIMIT 1)))))` |
+| WITH CHECK | `(EXISTS ( SELECT 1    FROM talkx_campaigns tc   WHERE ((tc.id = talkx_recipients.campaign_id) AND (tc.created_by = ( SELECT profiles.id            FROM profiles           WHERE (profiles.user_id = ( SELECT auth.uid() AS uid))          LIMIT 1)))))` |
 
 ### `Users can update recipients of own campaigns`
 
@@ -132,8 +188,8 @@
 | comando | UPDATE |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `(EXISTS ( SELECT 1    FROM talkx_campaigns tc   WHERE ((tc.id = talkx_recipients.campaign_id) AND (tc.created_by = ( SELECT profiles.id            FROM profiles           WHERE (profiles.user_id = auth.uid())          LIMIT 1)))))` |
-| WITH CHECK | `(EXISTS ( SELECT 1    FROM talkx_campaigns tc   WHERE ((tc.id = talkx_recipients.campaign_id) AND (tc.created_by = ( SELECT profiles.id            FROM profiles           WHERE (profiles.user_id = auth.uid())          LIMIT 1)))))` |
+| USING | `(EXISTS ( SELECT 1    FROM talkx_campaigns tc   WHERE ((tc.id = talkx_recipients.campaign_id) AND (tc.created_by = ( SELECT profiles.id            FROM profiles           WHERE (profiles.user_id = ( SELECT auth.uid() AS uid))          LIMIT 1)))))` |
+| WITH CHECK | `(EXISTS ( SELECT 1    FROM talkx_campaigns tc   WHERE ((tc.id = talkx_recipients.campaign_id) AND (tc.created_by = ( SELECT profiles.id            FROM profiles           WHERE (profiles.user_id = ( SELECT auth.uid() AS uid))          LIMIT 1)))))` |
 
 ### `Users can view recipients of own campaigns`
 
@@ -142,7 +198,7 @@
 | comando | SELECT |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `(EXISTS ( SELECT 1    FROM talkx_campaigns tc   WHERE ((tc.id = talkx_recipients.campaign_id) AND ((tc.created_by = ( SELECT profiles.id            FROM profiles           WHERE (profiles.user_id = auth.uid())          LIMIT 1)) OR is_admin_or_supervisor(auth.uid())))))` |
+| USING | `(EXISTS ( SELECT 1    FROM talkx_campaigns tc   WHERE ((tc.id = talkx_recipients.campaign_id) AND ((tc.created_by = ( SELECT profiles.id            FROM profiles           WHERE (profiles.user_id = ( SELECT auth.uid() AS uid))          LIMIT 1)) OR is_admin_or_supervisor(( SELECT auth.uid() AS uid))))))` |
 | WITH CHECK |  |
 
 
