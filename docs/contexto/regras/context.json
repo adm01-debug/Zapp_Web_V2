@@ -1,15 +1,15 @@
 {
  "meta": {
-  "sha": "73476efff8f22ec805c367fa8d2858a142a9c243",
+  "sha": "d91f6507ccd6a67f2ba71568de1437a0e147a56f",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-25 19:47 UTC",
-  "files_total": 14643,
-  "code_files": 8177,
-  "code_lines": 1230161
+  "generated_at": "2026-11-25 20:23 UTC",
+  "files_total": 14645,
+  "code_files": 8179,
+  "code_lines": 1230343
  },
  "version": "1.3.2",
- "facts_hash": "09c4ba6b0c652644",
+ "facts_hash": "f6478258397227e2",
  "stack": {
   "frameworks": [
    "React + Vite",
@@ -369,7 +369,7 @@
   "languages": {
    ".sql": 3063,
    ".tsx": 2480,
-   ".ts": 2011,
+   ".ts": 2013,
    ".mjs": 496,
    ".py": 125,
    ".cjs": 19,
@@ -69252,7 +69252,7 @@
      "log_audit_event",
      "user_has_permission"
     ],
-    "deps_count": 55
+    "deps_count": 56
    },
    {
     "path": "*",
@@ -69261,7 +69261,7 @@
     "tables_transitive": [],
     "invokes_transitive": [],
     "rpc_transitive": [],
-    "deps_count": 3
+    "deps_count": 4
    },
    {
     "path": "/",
@@ -69299,7 +69299,7 @@
      "log_audit_event",
      "user_has_permission"
     ],
-    "deps_count": 174
+    "deps_count": 175
    },
    {
     "path": "/2fa",
@@ -69316,7 +69316,7 @@
     "rpc_transitive": [
      "get_inbox_contact_summaries"
     ],
-    "deps_count": 39
+    "deps_count": 40
    },
    {
     "path": "/auth",
@@ -69333,7 +69333,7 @@
     "rpc_transitive": [
      "clear_login_attempts"
     ],
-    "deps_count": 43
+    "deps_count": 44
    },
    {
     "path": "/auth/callback",
@@ -69374,7 +69374,7 @@
      "get_last_message_dates",
      "search_contacts"
     ],
-    "deps_count": 49
+    "deps_count": 50
    },
    {
     "path": "/forgot-password",
@@ -69391,7 +69391,7 @@
     "rpc_transitive": [
      "get_inbox_contact_summaries"
     ],
-    "deps_count": 41
+    "deps_count": 42
    },
    {
     "path": "/install",
@@ -69420,7 +69420,7 @@
     "rpc_transitive": [
      "get_inbox_contact_summaries"
     ],
-    "deps_count": 63
+    "deps_count": 64
    },
    {
     "path": "/queues/comparison",
@@ -69439,7 +69439,7 @@
     "rpc_transitive": [
      "get_inbox_contact_summaries"
     ],
-    "deps_count": 46
+    "deps_count": 47
    },
    {
     "path": "/reset-password",
@@ -69448,7 +69448,7 @@
     "tables_transitive": [],
     "invokes_transitive": [],
     "rpc_transitive": [],
-    "deps_count": 16
+    "deps_count": 17
    },
    {
     "path": "/sla",
@@ -69474,7 +69474,7 @@
      "app_bootstrap",
      "user_has_permission"
     ],
-    "deps_count": 101
+    "deps_count": 102
    },
    {
     "path": "/sla/history",
@@ -69496,7 +69496,7 @@
      "app_bootstrap",
      "user_has_permission"
     ],
-    "deps_count": 84
+    "deps_count": 85
    },
    {
     "path": "/verify-email",
@@ -76740,8 +76740,8 @@
   },
   {
    "module": "src/lib",
-   "files": 300,
-   "lines": 40450,
+   "files": 302,
+   "lines": 40632,
    "tables": [
     "contacts",
     "conversation_tasks",
@@ -116947,6 +116947,16 @@
     "file": "src/lib/pdfThumbnail.ts",
     "name": "PDF_THUMBNAIL_LARGURA_PADRAO",
     "value": "320"
+   },
+   {
+    "file": "src/lib/redactPII.ts",
+    "name": "EMAIL_REDACTED",
+    "value": "'[EMAIL_REDACTED]'"
+   },
+   {
+    "file": "src/lib/redactPII.ts",
+    "name": "PHONE_REDACTED",
+    "value": "'[TELEFONE_REDACTED]'"
    },
    {
     "file": "src/lib/secureRandom.ts",
@@ -208831,6 +208841,50 @@
    {
     "file": "src/lib/__tests__/realtimeTopic.canais-fixos.test.tsx",
     "name": "(4) AudioMessagePlayer: nenhuma bolha abre canal próprio (P1-9 — transcrição vem pelo canal da conversa)"
+   },
+   {
+    "file": "src/lib/__tests__/redactPII.test.ts",
+    "name": "redactPII (string)"
+   },
+   {
+    "file": "src/lib/__tests__/redactPII.test.ts",
+    "name": "mascara e-mail preservando o restante da mensagem"
+   },
+   {
+    "file": "src/lib/__tests__/redactPII.test.ts",
+    "name": "mascara telefone BR com e sem formatação"
+   },
+   {
+    "file": "src/lib/__tests__/redactPII.test.ts",
+    "name": "mascara JWT inteiro"
+   },
+   {
+    "file": "src/lib/__tests__/redactPII.test.ts",
+    "name": "mascara valor em apikey= preservando a chave"
+   },
+   {
+    "file": "src/lib/__tests__/redactPII.test.ts",
+    "name": "mascara segredo longo solto (base64/hex)"
+   },
+   {
+    "file": "src/lib/__tests__/redactPII.test.ts",
+    "name": "mascara e-mail dentro de stack trace"
+   },
+   {
+    "file": "src/lib/__tests__/redactPII.test.ts",
+    "name": "não altera texto sem PII"
+   },
+   {
+    "file": "src/lib/__tests__/redactPII.test.ts",
+    "name": "redactPIIValue (details aninhados)"
+   },
+   {
+    "file": "src/lib/__tests__/redactPII.test.ts",
+    "name": "mascara strings aninhadas e chaves sensíveis"
+   },
+   {
+    "file": "src/lib/__tests__/redactPII.test.ts",
+    "name": "mantém valores não-string e não-objeto"
    },
    {
     "file": "src/lib/__tests__/reload-blockers.test.ts",
@@ -381256,7 +381310,7 @@
   },
   "src/lib/errorReporter.ts": {
    "path": "src/lib/errorReporter.ts",
-   "lines": 83,
+   "lines": 85,
    "exports": [
     "function shouldReport",
     "function resetErrorReporterForTests",
@@ -381645,7 +381699,7 @@
   },
   "src/lib/logger.ts": {
    "path": "src/lib/logger.ts",
-   "lines": 132,
+   "lines": 138,
    "exports": [
     "function generateCorrelationId",
     "function getSessionId",
@@ -382259,6 +382313,28 @@
    "exports": [
     "function uniqueRealtimeTopic"
    ]
+  },
+  "src/lib/redactPII.ts": {
+   "path": "src/lib/redactPII.ts",
+   "lines": 93,
+   "exports": [
+    "const EMAIL_REDACTED",
+    "const PHONE_REDACTED",
+    "const SECRET_REDACTED",
+    "function redactPII",
+    "function redactPIIValue"
+   ],
+   "params": [
+    {
+     "name": "EMAIL_REDACTED",
+     "value": "'[EMAIL_REDACTED]'"
+    },
+    {
+     "name": "PHONE_REDACTED",
+     "value": "'[TELEFONE_REDACTED]'"
+    }
+   ],
+   "doc": "Redação de PII e segredos para tudo que sai do sistema em log/auditoria. Mensagens de erro do PostgREST, da Edge e de terceiros às vezes carregam e-mail, telefone BR, JWT e chaves de API. Nada disso pode ser gravado em `audit_logs` nem impresso no console do navegador. Este módulo concentra a redaçã …"
   },
   "src/lib/reload-blockers.ts": {
    "path": "src/lib/reload-blockers.ts",
@@ -384675,6 +384751,34 @@
     "(2) useMessageReactions: dois hooks da mesma mensagem pedem canais distintos",
     "(3) WhisperMode: duas montagens do mesmo contato pedem canais distintos",
     "(4) AudioMessagePlayer: nenhuma bolha abre canal próprio (P1-9 — transcrição vem pelo canal da conversa)"
+   ]
+  },
+  "src/lib/__tests__/redactPII.test.ts": {
+   "path": "src/lib/__tests__/redactPII.test.ts",
+   "lines": 81,
+   "is_test": true,
+   "params": [
+    {
+     "name": "EMAIL",
+     "value": "'maria.souza@example.com'"
+    },
+    {
+     "name": "JWT",
+     "value": "'eyJ'"
+    }
+   ],
+   "tests": [
+    "redactPII (string)",
+    "mascara e-mail preservando o restante da mensagem",
+    "mascara telefone BR com e sem formatação",
+    "mascara JWT inteiro",
+    "mascara valor em apikey= preservando a chave",
+    "mascara segredo longo solto (base64/hex)",
+    "mascara e-mail dentro de stack trace",
+    "não altera texto sem PII",
+    "redactPIIValue (details aninhados)",
+    "mascara strings aninhadas e chaves sensíveis",
+    "mantém valores não-string e não-objeto"
    ]
   },
   "src/lib/__tests__/reload-blockers.test.ts": {
@@ -424321,10 +424425,22 @@
   }
  },
  "git": {
-  "sha": "73476efff8f22ec805c367fa8d2858a142a9c243",
+  "sha": "d91f6507ccd6a67f2ba71568de1437a0e147a56f",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "d91f6507",
+    "date": "2026-11-25",
+    "author": "adm01-debug",
+    "subject": "feat: redige PII e segredos em logs, auditoria e telemetria (#3382)",
+    "files": [
+     "src/lib/__tests__/redactPII.test.ts",
+     "src/lib/errorReporter.ts",
+     "src/lib/logger.ts",
+     "src/lib/redactPII.ts"
+    ]
+   },
    {
     "sha": "73476eff",
     "date": "2026-11-25",
@@ -425966,16 +426082,6 @@
     "files": [
      "e2e/contacts-selection.spec.ts"
     ]
-   },
-   {
-    "sha": "7dff0402",
-    "date": "2026-11-23",
-    "author": "adm01-debug",
-    "subject": "chore(docs): fecha X076 e corrige estado real da IA-161 (#3346)",
-    "files": [
-     "docs/pendencias/infra-de-ia-talkx-ai-x076.md",
-     "docs/pendencias/rascunho-de-campanha-por-ia-ia161.md"
-    ]
    }
   ],
   "hot_files": [
@@ -426028,6 +426134,22 @@
     2
    ],
    [
+    "src/lib/__tests__/redactPII.test.ts",
+    1
+   ],
+   [
+    "src/lib/errorReporter.ts",
+    1
+   ],
+   [
+    "src/lib/logger.ts",
+    1
+   ],
+   [
+    "src/lib/redactPII.ts",
+    1
+   ],
+   [
     "src/__tests__/a11y/icon-buttons-baseline.json",
     1
    ],
@@ -426041,22 +426163,6 @@
    ],
    [
     "src/components/catalog/CatalogRail.tsx",
-    1
-   ],
-   [
-    "supabase/deployment-manifest.json",
-    1
-   ],
-   [
-    "supabase/functions/promogifts-catalog/index.actions.test.ts",
-    1
-   ],
-   [
-    "supabase/functions/promogifts-catalog/index.test.ts",
-    1
-   ],
-   [
-    "supabase/functions/promogifts-catalog/index.ts",
     1
    ]
   ]

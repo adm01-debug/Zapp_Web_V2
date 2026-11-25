@@ -14205,9 +14205,9 @@
   },
   {
    "modulo": "lib",
-   "arquivos": 116,
+   "arquivos": 117,
    "testes": 0,
-   "linhas": 10906,
+   "linhas": 11007,
    "itens_menu": [],
    "telas": [],
    "rotas_http": [],
@@ -14449,7 +14449,7 @@
   {
    "modulo": "lib/__tests__",
    "arquivos": 0,
-   "testes": 114,
+   "testes": 115,
    "linhas": 0,
    "itens_menu": [],
    "telas": [],

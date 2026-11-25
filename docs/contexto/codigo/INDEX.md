@@ -1,7 +1,7 @@
 # Contexto do projeto para agentes de IA
 
 GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.
-Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR dela) a cada push em `main` e a cada 10 minutos pelo workflow `contexto.yml`; índice único das três fontes em `docs/contexto/00-INDEX.md`. Gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `73476efff8f22ec805c367fa8d2858a142a9c243` (2026-11-25T16:46:05-03:00).
+Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR dela) a cada push em `main` e a cada 10 minutos pelo workflow `contexto.yml`; índice único das três fontes em `docs/contexto/00-INDEX.md`. Gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `d91f6507ccd6a67f2ba71568de1437a0e147a56f` (2026-11-25T17:19:17-03:00).
 
 ## Como usar (leia antes de planejar ou executar qualquer tarefa)
 1. **Tela/rota/menu** → `rotas.json` (url/vista/menu → arquivo → hooks → tabelas → edges; `rotas_http_backend` para APIs) e `modulos.json` (módulo inteiro + dependências entre módulos).
@@ -14,7 +14,7 @@ Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR
 Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua tarefa; não carregue tudo.
 
 ## Stack
-- linguagens: TypeScript (4496), Markdown (3988), SQL (3063), JSON (1939), JavaScript (524), Shell (252), Python (125), YAML (43)
+- linguagens: TypeScript (4498), Markdown (3988), SQL (3063), JSON (1939), JavaScript (524), Shell (252), Python (125), YAML (43)
 - linguagem_principal: TypeScript
 - framework: React
 - backend_http: n/d
@@ -34,9 +34,9 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 ## Números
 | item | qtd |
 |---|---|
-| arquivos_total | 14796 |
-| arquivos_codigo | 5141 |
-| linhas_codigo | 953332 |
+| arquivos_total | 14798 |
+| arquivos_codigo | 5143 |
+| linhas_codigo | 953514 |
 | rotas | 18 |
 | rotas_http_backend | 11 |
 | vistas_por_id | 55 |
@@ -48,7 +48,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 | tabelas | 223 |
 | migrations | 1153 |
 | cron_jobs | 29 |
-| testes | 2823 |
+| testes | 2824 |
 | workflows | 26 |
 | scripts | 453 |
 | docs_md | 3988 |
@@ -57,8 +57,8 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - telas: src/components (54), src/pages (18)
 - componentes: src/components (900), src/pages (26), src/features (2)
 - hooks: src/hooks (430), src/components (74), src/contexts (2)
-- servicos_logica: src/lib (156), src/services (20), src/utils (8)
-- testes: co-localizado (__tests__) (2096), outro (260), co-localizado (*.test) (202)
+- servicos_logica: src/lib (157), src/services (20), src/utils (8)
+- testes: co-localizado (__tests__) (2097), outro (260), co-localizado (*.test) (202)
 - edge_functions: supabase/functions
 - migrations: supabase/migrations
 - scripts: scripts/db-audit (304), scripts/ci (43), scripts/e2e-isolated (41)
@@ -141,7 +141,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 | hooks/team-chat | 0 | 0 | 22 | 48 | 2 | 12 |
 | hooks/ui | 0 | 0 | 34 | 50 | 4 | 7 |
 | hooks/voice | 0 | 0 | 9 | 1 | 2 | 0 |
-| lib | 0 | 0 | 116 | 19 | 6 | 17 |
+| lib | 0 | 0 | 117 | 19 | 6 | 17 |
 | lib/calls | 0 | 0 | 22 | 2 | 1 | 0 |
 | lib/journey | 0 | 0 | 6 | 0 | 0 | 0 |
 | pages | 1 | 16 | 18 | 513 | 51 | 122 |
@@ -397,8 +397,8 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - possiveis_segredos_no_codigo: 4 — ex.: scripts/ai-context/cenarios.mjs:102, scripts/ci/edge-coverage-authz.unit.mjs:398, scripts/ci/inventario-banco.unit.mjs:147
 
 ## Grafo de código (graphify)
-- 96131 nós · 160718 arestas · 8873 comunidades · grafo do commit `73476eff`
-- comunidades maiores: Communities (8869 total, 3472 thin omitted) (5377), TalkXSuppression.tsx (1311), react (1243), lucide-react (1127), ref_node_fs (636), DashboardView.tsx (567), vitest (553), useAuth (550), client.ts (535), validation.ts (451), e2e-isolated-runtime.unit.mjs (436), ref_https (429)
+- 96140 nós · 160745 arestas · 9096 comunidades · grafo do commit `d91f6507`
+- comunidades maiores: Communities (8869 total, 3472 thin omitted) (5379), cn (1431), @tanstack/react-query (1137), lucide-react (931), react (926), vitest (823), button.tsx (789), chat.ts (696), ref_node_assert (660), ref_node_fs (593), DashboardView.tsx (520), ExternalProductManagement.tsx (469)
 - símbolos mais chamados: cn() (src/lib/utils.ts), useAuth() (src/hooks/auth/useAuth.tsx), jsonResponse() (supabase/functions/_shared/validation.ts), errorResponse() (supabase/functions/_shared/validation.ts), handleCors() (supabase/functions/_shared/validation.ts), fail() (scripts/e2e-isolated/network-proof-policy.mjs), Logger (supabase/functions/_shared/validation.ts), requireEnv() (supabase/functions/_shared/validation.ts), fmtInt() (src/components/talkx/kit/format.ts), useUserRole() (src/hooks/system/useUserRole.ts), validationErrorResponse() (supabase/functions/_shared/schemas.ts), .from() (supabase/functions/_shared/evolution-types.ts)
 - consulta local: `graphify query "<pergunta>"`, `graphify path "<A>" "<B>"`, `graphify explain "<X>"`
 
@@ -540,6 +540,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - CHANGELOG topo: [Unreleased]
 
 ## Últimos commits
+- 2026-11-25 `d91f6507` feat: redige PII e segredos em logs, auditoria e telemetria (#3382)
 - 2026-11-25 `73476eff` feat(playbooks): ativo/inativo, exclusao com confirmacao e acesso por teclado (#3381)
 - 2026-11-25 `9086dfdb` fix: novidade do catalogo passa a usar a expiracao do banco (regra do Promo Gifts V4) (#3379)
 - 2026-11-25 `d2e992a9` fix: ls-remote dos pins repete com backoff quando o runner leva 403 (#3378)
@@ -554,7 +555,6 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - 2026-11-25 `6d87cf6c` feat(ci): restaura a fila de merge serial (auto-update-pr-branch) (#3368)
 - 2026-11-24 `e1a545c6` feat(manutencao): porta o harness de manutencao completo da PR #2926 (#3370)
 - 2026-11-24 `21396b9c` fix(ci): exige Replay local das migrations na main (#3367)
-- 2026-11-24 `06d10c80` fix(ci): guard enxerga wrapper que passa o nome da edge — gmail-send e gmail-sync saem de orfas (#3365)
 
 ## Arquivos deste diretório
 - `docs/contexto/codigo/rotas.json`

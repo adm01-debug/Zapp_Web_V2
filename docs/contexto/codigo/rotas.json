@@ -1444,7 +1444,7 @@
     "unknown",
     "user"
    ],
-   "arquivos_puxados": 1590
+   "arquivos_puxados": 1591
   },
   {
    "protegida": false,
@@ -1469,7 +1469,7 @@
    "canais_realtime": [],
    "flags": [],
    "papeis": [],
-   "arquivos_puxados": 3
+   "arquivos_puxados": 4
   },
   {
    "protegida": false,
@@ -1548,7 +1548,7 @@
    "papeis": [
     "alert"
    ],
-   "arquivos_puxados": 54
+   "arquivos_puxados": 55
   },
   {
    "protegida": false,
@@ -1666,7 +1666,7 @@
     "alert",
     "supervisor"
    ],
-   "arquivos_puxados": 69
+   "arquivos_puxados": 70
   },
   {
    "protegida": true,
@@ -1762,7 +1762,7 @@
     "alert",
     "supervisor"
    ],
-   "arquivos_puxados": 67
+   "arquivos_puxados": 68
   },
   {
    "protegida": false,
@@ -1845,7 +1845,7 @@
    "papeis": [
     "alert"
    ],
-   "arquivos_puxados": 64
+   "arquivos_puxados": 65
   },
   {
    "protegida": false,
@@ -2414,7 +2414,7 @@
     "unknown",
     "user"
    ],
-   "arquivos_puxados": 482
+   "arquivos_puxados": 483
   },
   {
    "protegida": false,
@@ -2488,7 +2488,7 @@
    "papeis": [
     "alert"
    ],
-   "arquivos_puxados": 56
+   "arquivos_puxados": 57
   },
   {
    "protegida": false,
@@ -2625,7 +2625,7 @@
     "presentation",
     "status"
    ],
-   "arquivos_puxados": 78
+   "arquivos_puxados": 79
   },
   {
    "protegida": true,
@@ -2703,7 +2703,7 @@
    "papeis": [
     "status"
    ],
-   "arquivos_puxados": 61
+   "arquivos_puxados": 62
   },
   {
    "protegida": false,
@@ -2745,7 +2745,7 @@
     "progressbar",
     "status"
    ],
-   "arquivos_puxados": 16
+   "arquivos_puxados": 17
   },
   {
    "protegida": true,
@@ -2902,7 +2902,7 @@
     "status",
     "supervisor"
    ],
-   "arquivos_puxados": 145
+   "arquivos_puxados": 146
   },
   {
    "protegida": true,
@@ -3043,7 +3043,7 @@
     "status",
     "supervisor"
    ],
-   "arquivos_puxados": 123
+   "arquivos_puxados": 124
   },
   {
    "protegida": false,
@@ -3419,7 +3419,7 @@
    "papeis": [
     "status"
    ],
-   "arquivos_puxados": 60
+   "arquivos_puxados": 61
   },
   {
    "id": "admin",
@@ -3530,7 +3530,7 @@
     "tablist",
     "tabpanel"
    ],
-   "arquivos_puxados": 96
+   "arquivos_puxados": 97
   },
   {
    "id": "agents",
@@ -3638,7 +3638,7 @@
     "status",
     "supervisor"
    ],
-   "arquivos_puxados": 89
+   "arquivos_puxados": 90
   },
   {
    "id": "ai-usage",
@@ -3694,7 +3694,7 @@
    "papeis": [
     "alert"
    ],
-   "arquivos_puxados": 12
+   "arquivos_puxados": 13
   },
   {
    "id": "automations",
@@ -3765,7 +3765,7 @@
    "papeis": [
     "status"
    ],
-   "arquivos_puxados": 60
+   "arquivos_puxados": 61
   },
   {
    "id": "catalog",
@@ -3889,7 +3889,7 @@
     "radiogroup",
     "status"
    ],
-   "arquivos_puxados": 135
+   "arquivos_puxados": 136
   },
   {
    "id": "chatbot",
@@ -3925,7 +3925,7 @@
     "note",
     "status"
    ],
-   "arquivos_puxados": 28
+   "arquivos_puxados": 29
   },
   {
    "id": "churn",
@@ -4082,7 +4082,7 @@
     "status",
     "supervisor"
    ],
-   "arquivos_puxados": 111
+   "arquivos_puxados": 112
   },
   {
    "id": "contacts",
@@ -4312,7 +4312,7 @@
     "tablist",
     "tabpanel"
    ],
-   "arquivos_puxados": 241
+   "arquivos_puxados": 242
   },
   {
    "id": "crm360",
@@ -4411,7 +4411,7 @@
     "status",
     "supervisor"
    ],
-   "arquivos_puxados": 81
+   "arquivos_puxados": 82
   },
   {
    "id": "dashboard",
@@ -4624,7 +4624,7 @@
     "status",
     "supervisor"
    ],
-   "arquivos_puxados": 203
+   "arquivos_puxados": 204
   },
   {
    "id": "diagnostics",
@@ -4658,7 +4658,7 @@
    ],
    "flags": [],
    "papeis": [],
-   "arquivos_puxados": 17
+   "arquivos_puxados": 18
   },
   {
    "id": "docs",
@@ -4800,7 +4800,7 @@
     "status",
     "toolbar"
    ],
-   "arquivos_puxados": 105
+   "arquivos_puxados": 106
   },
   {
    "id": "evolution-monitor",
@@ -4914,7 +4914,7 @@
     "tab",
     "tablist"
    ],
-   "arquivos_puxados": 102
+   "arquivos_puxados": 103
   },
   {
    "id": "gmail",
@@ -5001,7 +5001,7 @@
     "status",
     "toolbar"
    ],
-   "arquivos_puxados": 79
+   "arquivos_puxados": 80
   },
   {
    "id": "gmail-webhook",
@@ -5028,7 +5028,7 @@
    "papeis": [
     "alert"
    ],
-   "arquivos_puxados": 8
+   "arquivos_puxados": 9
   },
   {
    "id": "google-calendar",
@@ -5107,7 +5107,7 @@
     "note",
     "presentation"
    ],
-   "arquivos_puxados": 42
+   "arquivos_puxados": 43
   },
   {
    "id": "inbox",
@@ -5803,7 +5803,7 @@
     "unknown",
     "user"
    ],
-   "arquivos_puxados": 711
+   "arquivos_puxados": 712
   },
   {
    "id": "integrations",
@@ -5902,7 +5902,7 @@
     "alert",
     "supervisor"
    ],
-   "arquivos_puxados": 77
+   "arquivos_puxados": 78
   },
   {
    "id": "knowledge",
@@ -5970,7 +5970,7 @@
     "progressbar",
     "status"
    ],
-   "arquivos_puxados": 12
+   "arquivos_puxados": 13
   },
   {
    "id": "meta-capi",
@@ -6141,7 +6141,7 @@
     "region",
     "status"
    ],
-   "arquivos_puxados": 111
+   "arquivos_puxados": 112
   },
   {
    "id": "nps",
@@ -6173,7 +6173,7 @@
     "alert",
     "status"
    ],
-   "arquivos_puxados": 14
+   "arquivos_puxados": 15
   },
   {
    "id": "omni-inbox",
@@ -6728,7 +6728,7 @@
     "unknown",
     "user"
    ],
-   "arquivos_puxados": 516
+   "arquivos_puxados": 517
   },
   {
    "id": "omnichannel",
@@ -6823,7 +6823,7 @@
    ],
    "flags": [],
    "papeis": [],
-   "arquivos_puxados": 51
+   "arquivos_puxados": 52
   },
   {
    "id": "privacy",
@@ -6886,7 +6886,7 @@
    ],
    "flags": [],
    "papeis": [],
-   "arquivos_puxados": 48
+   "arquivos_puxados": 49
   },
   {
    "id": "public-api",
@@ -6958,7 +6958,7 @@
     "presentation",
     "status"
    ],
-   "arquivos_puxados": 45
+   "arquivos_puxados": 46
   },
   {
    "id": "reports",
@@ -7091,7 +7091,7 @@
     "presentation",
     "status"
    ],
-   "arquivos_puxados": 59
+   "arquivos_puxados": 60
   },
   {
    "id": "search-insights",
@@ -7238,7 +7238,7 @@
     "status",
     "supervisor"
    ],
-   "arquivos_puxados": 112
+   "arquivos_puxados": 113
   },
   {
    "id": "sentiment",
@@ -7268,7 +7268,7 @@
    "papeis": [
     "alert"
    ],
-   "arquivos_puxados": 17
+   "arquivos_puxados": 18
   },
   {
    "id": "settings",
@@ -7446,7 +7446,7 @@
     "tablist",
     "user"
    ],
-   "arquivos_puxados": 163
+   "arquivos_puxados": 164
   },
   {
    "id": "sla",
@@ -7611,7 +7611,7 @@
     "system",
     "user"
    ],
-   "arquivos_puxados": 92
+   "arquivos_puxados": 93
   },
   {
    "id": "talkx",
@@ -7894,7 +7894,7 @@
     "tab",
     "tablist"
    ],
-   "arquivos_puxados": 263
+   "arquivos_puxados": 264
   },
   {
    "id": "talkx-kit",
@@ -7985,7 +7985,7 @@
     "menuitem",
     "status"
    ],
-   "arquivos_puxados": 84
+   "arquivos_puxados": 85
   },
   {
    "id": "tasks",
@@ -8113,7 +8113,7 @@
     "tab",
     "tablist"
    ],
-   "arquivos_puxados": 139
+   "arquivos_puxados": 140
   },
   {
    "id": "team-chat",
@@ -8345,7 +8345,7 @@
     "tablist",
     "toolbar"
    ],
-   "arquivos_puxados": 159
+   "arquivos_puxados": 160
   },
   {
    "id": "telemetry",
@@ -8402,7 +8402,7 @@
     "radio",
     "radiogroup"
    ],
-   "arquivos_puxados": 15
+   "arquivos_puxados": 16
   },
   {
    "id": "ticket-classifier",
@@ -8463,7 +8463,7 @@
    "papeis": [
     "status"
    ],
-   "arquivos_puxados": 28
+   "arquivos_puxados": 29
   },
   {
    "id": "voip",
@@ -8615,7 +8615,7 @@
     "status",
     "supervisor"
    ],
-   "arquivos_puxados": 135
+   "arquivos_puxados": 136
   },
   {
    "id": "wa-flows",
@@ -8743,7 +8743,7 @@
     "alert",
     "supervisor"
    ],
-   "arquivos_puxados": 74
+   "arquivos_puxados": 75
   },
   {
    "id": "wallet",
@@ -8874,7 +8874,7 @@
     "log",
     "status"
    ],
-   "arquivos_puxados": 61
+   "arquivos_puxados": 62
   }
  ],
  "menu": [

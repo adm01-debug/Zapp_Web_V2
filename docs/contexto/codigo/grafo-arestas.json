@@ -10346,7 +10346,8 @@
   ],
   "src/lib/errorReporter.ts": [
    "src/lib/audit.ts",
-   "src/lib/logger.ts"
+   "src/lib/logger.ts",
+   "src/lib/redactPII.ts"
   ],
   "src/lib/externalProxy.ts": [
    "src/integrations/supabase/client.ts"
@@ -10387,6 +10388,9 @@
   ],
   "src/lib/lazyWithRetry.ts": [
    "src/lib/chunkReload.ts"
+  ],
+  "src/lib/logger.ts": [
+   "src/lib/redactPII.ts"
   ],
   "src/lib/loginAttempts.ts": [
    "src/integrations/supabase/client.ts",

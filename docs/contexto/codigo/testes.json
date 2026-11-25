@@ -5,18 +5,18 @@
   "vitest",
   "playwright"
  ],
- "total": 2823,
+ "total": 2824,
  "por_tipo": {
   "contrato": 116,
   "e2e": 76,
   "pytest": 3,
   "qa": 10,
-  "unit": 2526
+  "unit": 2527
  },
  "onde_ficam": [
   {
    "padrao": "co-localizado (__tests__)",
-   "arquivos": 2096
+   "arquivos": 2097
   },
   {
    "padrao": "outro",
@@ -21115,6 +21115,15 @@
    "casos": 4
   },
   {
+   "arquivo": "src/lib/__tests__/redactPII.test.ts",
+   "tipo": "unit",
+   "linhas": 81,
+   "testa": [
+    "src/lib/redactPII.ts"
+   ],
+   "casos": 9
+  },
+  {
    "arquivo": "src/lib/__tests__/reload-blockers.test.ts",
    "tipo": "unit",
    "linhas": 151,
@@ -27157,6 +27166,7 @@
   "src/lib/queryClient.ts": 1,
   "src/lib/queryRetry.ts": 1,
   "src/lib/realtimeTopic.ts": 1,
+  "src/lib/redactPII.ts": 1,
   "src/lib/reload-blockers.ts": 4,
   "src/lib/retry.ts": 1,
   "src/lib/rlsError.ts": 2,

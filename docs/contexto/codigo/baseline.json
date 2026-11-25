@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "73476efff8f22ec805c367fa8d2858a142a9c243",
+  "commit": "d91f6507ccd6a67f2ba71568de1437a0e147a56f",
   "branch": "main",
-  "data_commit": "2026-11-25T16:46:05-03:00",
+  "data_commit": "2026-11-25T17:19:17-03:00",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "d91f6507",
+    "data": "2026-11-25",
+    "assunto": "feat: redige PII e segredos em logs, auditoria e telemetria (#3382)"
+   },
    {
     "sha": "73476eff",
     "data": "2026-11-25",
@@ -126,14 +131,9 @@
     "sha": "83a70c3e",
     "data": "2026-11-24",
     "assunto": "chore(db): sincronizar artefatos derivados do banco (#3356)"
-   },
-   {
-    "sha": "592ffa7f",
-    "data": "2026-11-24",
-    "assunto": "fix: elimina o flake de meia-noite do contrato do monitor (vs_yesterday) (#3353)"
    }
   ],
-  "arquivos_mudados_7d": 4385,
+  "arquivos_mudados_7d": 4386,
   "pastas_mais_mudadas_30d": [
    {
     "pasta": "docs/contexto/supabase",
@@ -314,9 +314,9 @@
   ]
  },
  "contagens": {
-  "arquivos_total": 14796,
-  "arquivos_codigo": 5141,
-  "linhas_codigo": 953332,
+  "arquivos_total": 14798,
+  "arquivos_codigo": 5143,
+  "linhas_codigo": 953514,
   "rotas": 18,
   "rotas_http_backend": 11,
   "vistas_por_id": 55,
@@ -328,7 +328,7 @@
   "tabelas": 223,
   "migrations": 1153,
   "cron_jobs": 29,
-  "testes": 2823,
+  "testes": 2824,
   "workflows": 26,
   "scripts": 453,
   "docs_md": 3988
@@ -771,8 +771,8 @@
    "linhas": 16031
   },
   "src/lib": {
-   "arquivos": 300,
-   "linhas": 40450
+   "arquivos": 302,
+   "linhas": 40632
   },
   "src/main.tsx": {
    "arquivos": 1,
