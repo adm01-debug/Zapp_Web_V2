@@ -7,12 +7,12 @@ import {
 } from './workflow-test-support.mjs';
 
 const source = readFileSync(new URL('../../.github/workflows/ci.yml', import.meta.url), 'utf8');
-const required = ['typecheck', 'unit-tests', 'node-scripts', 'edge-contracts', 'build', 'security', 'workflow-lint'];
+const required = ['typecheck', 'unit-tests', 'node-scripts', 'lint-ratchet', 'edge-contracts', 'build', 'security', 'workflow-lint'];
 const gate = jobOf(source, 'ci-gate');
 const step = onlyStep(stepsOf(gate), (item) => runOf(item).includes('needs.'), 'decisao do CI Gate');
 const script = runOf(step);
 
-test('CI Gate mantém as sete dependências e executa uma decisão bloqueante', () => {
+test('CI Gate mantém as oito dependências e executa uma decisão bloqueante', () => {
   const needs = valueOf(gate, 'needs', 4);
   assert.match(needs, /^\[[\w,\s-]+\]$/);
   const names = needs.slice(1, -1).split(',').map((name) => name.trim());
@@ -82,7 +82,7 @@ for (const result of ['failure', 'cancelled', 'skipped']) {
   add('all_' + result, Object.fromEntries(required.map((name) => [name, result])), false);
 }
 add('draft_intentional_skips', draftSkips, true, draftEvent);
-for (const name of ['node-scripts', 'edge-contracts', 'security', 'workflow-lint']) {
+for (const name of ['node-scripts', 'lint-ratchet', 'edge-contracts', 'security', 'workflow-lint']) {
   add('draft_' + name + '_cancelled', { ...draftSkips, [name]: 'cancelled' }, false, draftEvent);
 }
 for (const name of required.filter((item) => !['unit-tests', 'build'].includes(item))) {

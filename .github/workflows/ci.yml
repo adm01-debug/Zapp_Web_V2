@@ -1,6 +1,6 @@
 # docs:
 #   gatilho: pull_request, push na main e dispatch
-#   prova: tipos, testes de unidade, contratos Node/Edge, build, security, lint dos workflows (actionlint + shellcheck + zizmor) e E2E publico
+#   prova: tipos, testes de unidade, contratos Node/Edge, build, security, lint dos workflows (actionlint + shellcheck + zizmor), lint ratchet (divida nova nos arquivos alterados) e E2E publico
 #   falha: PR fica vermelho e o merge e bloqueado pelos required checks
 #   avisa: autor do PR e revisor, via checks do GitHub
 # nao-e-bug:
@@ -199,6 +199,52 @@ jobs:
 
       - name: 🛡️ src/ não lê VITE_SUPABASE_URL/PUBLISHABLE_KEY via import.meta.env
         run: node scripts/ci/check-supabase-url-import-meta.mjs
+
+  # JOB 3b: Lint ratchet (divida nova de lint nos arquivos alterados)
+  # ===========================================
+  # O mesmo gate do hook local (.husky/pre-push -> scripts/ci/lint-ratchet.mjs).
+  # PR aberta pela web nao passa pelo hook de ninguem e entrava com divida nova de
+  # lint sem ninguem ver; aqui a divida nova reprova o PR.
+  # `--base` recorta o ESLint para os arquivos do range (repo inteiro custa ~1m40s
+  # local, por isso o passo nao cabe no SLO de 90s do node-scripts).
+  lint-ratchet:
+    name: 🧵 Lint ratchet
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          # fetch-depth: 0 para o git diff achar o merge-base (base do PR) e o HEAD^ do push
+          fetch-depth: 0
+
+      - name: 🟩 Setup Node
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: '24'
+
+      - name: 🧄 Setup Bun
+        uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
+        with:
+          bun-version: '1.4.0'
+
+      - name: 💾 Cache de dependências Bun
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.bun/install/cache
+          key: bun-${{ hashFiles('bun.lock') }}
+          restore-keys: bun-
+
+      - name: 📚 Install dependencies
+        run: bun install --frozen-lockfile --ignore-scripts
+
+      - name: 🧵 Lint ratchet nos arquivos alterados
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: |
+          # No PR, base.sha e o merge-base resolvido pelo proprio ratchet; no push/dispatch, HEAD^
+          node scripts/ci/lint-ratchet.mjs --base "${BASE_SHA:-HEAD^}"
 
   edge-contracts:
     name: 🦕 Edge contracts
@@ -408,13 +454,14 @@ jobs:
     name: ✅ CI Gate (required check)
     runs-on: ubuntu-24.04
     if: always()
-    needs: [typecheck, unit-tests, node-scripts, edge-contracts, build, security, workflow-lint]
+    needs: [typecheck, unit-tests, node-scripts, lint-ratchet, edge-contracts, build, security, workflow-lint]
     steps:
       - name: Verificar resultado dos jobs obrigatórios
         run: |
           echo "typecheck: ${{ needs.typecheck.result }}"
           echo "unit-tests: ${{ needs.unit-tests.result }}"
           echo "node-scripts: ${{ needs.node-scripts.result }}"
+          echo "lint-ratchet: ${{ needs.lint-ratchet.result }}"
           echo "edge-contracts: ${{ needs.edge-contracts.result }}"
           echo "build: ${{ needs.build.result }}"
           echo "security: ${{ needs.security.result }}"
@@ -422,6 +469,7 @@ jobs:
           if [[ "${{ needs.typecheck.result }}" != "success" || \
                 ( "${{ needs.unit-tests.result }}" != "success" && ! ( "${{ github.event.pull_request.draft == true }}" == "true" && "${{ needs.unit-tests.result }}" == "skipped" ) ) || \
                 "${{ needs.node-scripts.result }}" != "success" || \
+                "${{ needs.lint-ratchet.result }}" != "success" || \
                 "${{ needs.edge-contracts.result }}" != "success" || \
                 ( "${{ needs.build.result }}" != "success" && ! ( "${{ github.event.pull_request.draft == true }}" == "true" && "${{ needs.build.result }}" == "skipped" ) ) || \
                 "${{ needs.security.result }}" != "success" || \

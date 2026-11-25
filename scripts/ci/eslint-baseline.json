@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "command": "eslint . --format json",
-  "eslintVersion": "9.39.5",
+  "eslintVersion": "9.32.0",
   "eslintConfigSha256": "1b0f91f2eabf8c2f6dfab3d38eb0bab8af66f642a404ef0d1b55b67f39e6c0c0",
   "files": [
     {
