@@ -157,7 +157,11 @@ const ROTA_POLICY = {
   match: "/rest/v1/rpc/resolve_network_policy",
   body: [{ allowed: true, reason: null, rate_limit_max_requests: 30, rate_limit_window_seconds: 60 }],
 };
-const ROTAS_BASE = [ROTA_AUTH, ROTA_POLICY, ROTA_RATE, ROTA_PROVIDERS, ROTA_PROFILES, ROTA_USAGE, ROTA_OPENAI];
+// SL-010 / IA-009 2.2: o gate de provedor le `feature_flags` (service role) antes
+// de chamar o provedor. Ausencia de linha e o padrao "o operador nao desligou"
+// (`readCapabilityFlag` devolve true), entao `[]` preserva o fluxo normal.
+const ROTA_FEATURE_FLAGS = { match: "/rest/v1/feature_flags", body: [] };
+const ROTAS_BASE = [ROTA_AUTH, ROTA_POLICY, ROTA_RATE, ROTA_PROVIDERS, ROTA_PROFILES, ROTA_USAGE, ROTA_OPENAI, ROTA_FEATURE_FLAGS];
 
 function makeRequest(body: unknown): Request {
   return new Request("https://stub.supabase.co/functions/v1/ai-proxy", {
@@ -178,10 +182,11 @@ function corpoTeste(extra: Record<string, unknown> = {}): Record<string, unknown
 
 const paraOpenAI = (chamadas: Chamada[]) =>
   chamadas.filter((c) => new URL(c.url.replace(/^SEM_STUB /, "")).hostname === "api.openai.com");
+const semPrefixoStub = (c: Chamada) => new URL(c.url.replace(/^SEM_STUB /, ""));
 const insertsDeUso = (chamadas: Chamada[]) =>
-  chamadas.filter((c) => c.metodo === "POST" && new URL(c.url).pathname === "/rest/v1/ai_usage_logs");
+  chamadas.filter((c) => c.metodo === "POST" && semPrefixoStub(c).pathname === "/rest/v1/ai_usage_logs");
 const chamadasDePapel = (chamadas: Chamada[]) =>
-  chamadas.filter((c) => new URL(c.url).pathname === "/rest/v1/rpc/is_admin_or_supervisor");
+  chamadas.filter((c) => semPrefixoStub(c).pathname === "/rest/v1/rpc/is_admin_or_supervisor");
 
 /** A linha recebida pelo PostgREST (supabase-js manda objeto ou [objeto]). */
 function linhaDeUso(chamadas: Chamada[]): Record<string, unknown> {
