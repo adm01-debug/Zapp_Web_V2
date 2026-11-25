@@ -3,7 +3,7 @@
  "format_version": 2,
  "stack": {
   "linguagens": [
-   "TypeScript (4500)",
+   "TypeScript (4504)",
    "Markdown (3988)",
    "SQL (3063)",
    "JSON (1939)",
@@ -2923,7 +2923,6 @@
    "conversation:${contactId}",
    "copilot_insights:${sessionId}",
    "diagnostics-realtime-probe",
-   "disconnect-banner",
    "gmail-threads-realtime",
    "monitoring-status-${Math.random().toString(36).slice(2)}",
    "multiplix-mon-${dispatchId}",
@@ -2940,7 +2939,6 @@
    "termino-remoto-${callIdEmCurso}",
    "typing:${contact.id}",
    "warroom-alerts-realtime",
-   "whatsapp-connections-changes",
    "work-items:${profileId}:${secureRandomFloat().toString(36).slice(2)}"
   ]
  },

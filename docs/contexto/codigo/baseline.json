@@ -2,11 +2,21 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "078aacb5e29c2f27adc243ca07cf2b5fe162b144",
+  "commit": "6ee63ddbf78e67412ee6e305107e00f376c9a3a9",
   "branch": "main",
-  "data_commit": "2026-11-25T18:11:00-03:00",
+  "data_commit": "2026-11-25T22:51:42Z",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "6ee63ddb",
+    "data": "2026-11-25",
+    "assunto": "fix: canal único de realtime nas conexões e reconciliação de INSTANCE_GONE (#3390)"
+   },
+   {
+    "sha": "4855bda8",
+    "data": "2026-11-25",
+    "assunto": "fix: asserção do E2E da sidebar não confunde a seção de SLA com o accordion antigo (#3389)"
+   },
    {
     "sha": "078aacb5",
     "data": "2026-11-25",
@@ -121,19 +131,9 @@
     "sha": "36701c06",
     "data": "2026-11-24",
     "assunto": "fix(ci): volta o pin do scorecard-action para v2.5.0 (#3358)"
-   },
-   {
-    "sha": "1437a664",
-    "data": "2026-11-24",
-    "assunto": "infra: alinha o timeout do job E2E com a duracao real (~10 min) (#3355)"
-   },
-   {
-    "sha": "5e609b75",
-    "data": "2026-11-24",
-    "assunto": "fix(e2e): retenta o pull em falha transiente de rede do registry (#3357)"
    }
   ],
-  "arquivos_mudados_7d": 4388,
+  "arquivos_mudados_7d": 4389,
   "pastas_mais_mudadas_30d": [
    {
     "pasta": "docs/contexto/supabase",
@@ -165,7 +165,7 @@
    },
    {
     "pasta": "src/components/talkx",
-    "mudancas": 369
+    "mudancas": 365
    },
    {
     "pasta": "analise-prs/resgate-261115/dossies",
@@ -199,19 +199,19 @@
   "arquivos_mais_mudados_90d": [
    {
     "arquivo": "supabase/deployment-manifest.json",
-    "mudancas": 36
+    "mudancas": 35
    },
    {
     "arquivo": "ESTADO.md",
     "mudancas": 23
    },
    {
-    "arquivo": "docs/talkx/ESTADOS.md",
+    "arquivo": "supabase/schema-manifest.json",
     "mudancas": 16
    },
    {
-    "arquivo": "supabase/schema-manifest.json",
-    "mudancas": 16
+    "arquivo": "docs/talkx/ESTADOS.md",
+    "mudancas": 15
    },
    {
     "arquivo": "src/integrations/supabase/types.ts",
@@ -314,21 +314,21 @@
   ]
  },
  "contagens": {
-  "arquivos_total": 14800,
-  "arquivos_codigo": 5145,
-  "linhas_codigo": 954307,
+  "arquivos_total": 14804,
+  "arquivos_codigo": 5149,
+  "linhas_codigo": 955076,
   "rotas": 18,
   "rotas_http_backend": 11,
   "vistas_por_id": 55,
   "itens_menu": 61,
   "modulos": 149,
   "componentes": 936,
-  "hooks": 515,
+  "hooks": 516,
   "edge_functions": 93,
   "tabelas": 223,
   "migrations": 1153,
   "cron_jobs": 29,
-  "testes": 2825,
+  "testes": 2828,
   "workflows": 26,
   "scripts": 453,
   "docs_md": 3988
@@ -484,7 +484,7 @@
   },
   "e2e/inbox-contact-sidebar.spec.ts": {
    "arquivos": 1,
-   "linhas": 165
+   "linhas": 168
   },
   "e2e/inbox-contraste.spec.ts": {
    "arquivos": 1,
@@ -739,8 +739,8 @@
    "linhas": 638
   },
   "src/components": {
-   "arquivos": 2317,
-   "linhas": 395024
+   "arquivos": 2318,
+   "linhas": 395269
   },
   "src/config": {
    "arquivos": 3,
@@ -759,8 +759,8 @@
    "linhas": 3293
   },
   "src/hooks": {
-   "arquivos": 1032,
-   "linhas": 167285
+   "arquivos": 1035,
+   "linhas": 167806
   },
   "src/i18n": {
    "arquivos": 2,
@@ -947,7 +947,7 @@
   "ts_ignore": 0,
   "eslint_disable": 1,
   "todos": 54,
-  "arquivos_acima_500_linhas": 114
+  "arquivos_acima_500_linhas": 115
  },
  "todos": [
   {

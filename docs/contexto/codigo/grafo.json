@@ -1,8 +1,8 @@
 {
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
- "nos": 2412,
- "arestas": 8307,
+ "nos": 2413,
+ "arestas": 8314,
  "hubs": [
   {
    "arquivo": "src/lib/utils.ts",
@@ -10,7 +10,7 @@
   },
   {
    "arquivo": "src/integrations/supabase/client.ts",
-   "importado_por": 423
+   "importado_por": 424
   },
   {
    "arquivo": "src/components/ui/button.tsx",
@@ -18,7 +18,7 @@
   },
   {
    "arquivo": "src/lib/logger.ts",
-   "importado_por": 226
+   "importado_por": 227
   },
   {
    "arquivo": "src/components/ui/badge.tsx",
@@ -70,7 +70,7 @@
   },
   {
    "arquivo": "src/hooks/ui/use-toast.ts",
-   "importado_por": 72
+   "importado_por": 73
   },
   {
    "arquivo": "src/hooks/tasks/workItem.types.ts",
@@ -638,7 +638,7 @@
   {
    "modulo": "hooks/inbox",
    "depende_de": 20,
-   "importado_por": 6
+   "importado_por": 7
   },
   {
    "modulo": "hooks/realtime",

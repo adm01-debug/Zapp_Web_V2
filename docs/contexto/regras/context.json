@@ -1,15 +1,15 @@
 {
  "meta": {
-  "sha": "078aacb5e29c2f27adc243ca07cf2b5fe162b144",
+  "sha": "6ee63ddbf78e67412ee6e305107e00f376c9a3a9",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-25 21:12 UTC",
-  "files_total": 14647,
-  "code_files": 8181,
-  "code_lines": 1231136
+  "generated_at": "2026-11-25 22:59 UTC",
+  "files_total": 14651,
+  "code_files": 8185,
+  "code_lines": 1231905
  },
  "version": "1.3.2",
- "facts_hash": "64a4097fa24c2c48",
+ "facts_hash": "1fd655f90804664a",
  "stack": {
   "frameworks": [
    "React + Vite",
@@ -368,8 +368,8 @@
   "package_manager": "bun",
   "languages": {
    ".sql": 3063,
-   ".tsx": 2482,
-   ".ts": 2013,
+   ".tsx": 2483,
+   ".ts": 2016,
    ".mjs": 496,
    ".py": 125,
    ".cjs": 19,
@@ -72728,7 +72728,7 @@
     "file": ".github/workflows/types-sync.yml"
    }
   ],
-  "components_count": 2319,
+  "components_count": 2320,
   "hooks": [
    {
     "name": "useMotionSeguro",
@@ -74069,6 +74069,10 @@
    {
     "name": "useConnectionsManager",
     "file": "src/hooks/inbox/useConnectionsManager.ts"
+   },
+   {
+    "name": "useConnectionsRealtime",
+    "file": "src/hooks/inbox/useConnectionsRealtime.ts"
    },
    {
     "name": "useContactDeliveryStats",
@@ -75584,7 +75588,7 @@
   {
    "module": "e2e",
    "files": 79,
-   "lines": 18737,
+   "lines": 18740,
    "tables": [],
    "exports": [
     "auth-diagnostics.ts: AuthTargetError, AuthTarget, classifyAuthTarget, usesExternalHttpsServer, assertAuthenticatedTarget, AuthObservation",
@@ -76072,8 +76076,8 @@
   },
   {
    "module": "src/components",
-   "files": 2317,
-   "lines": 395024,
+   "files": 2318,
+   "lines": 395269,
    "tables": [
     "agent_skills",
     "agent_visibility_grants",
@@ -76421,8 +76425,8 @@
   },
   {
    "module": "src/hooks",
-   "files": 1032,
-   "lines": 167285,
+   "files": 1035,
+   "lines": 167806,
    "tables": [
     "agent_achievements",
     "agent_stats",
@@ -83879,9 +83883,6 @@
    "diagnostics-realtime-probe": [
     "src/hooks/system/useDiagnosticsData.ts"
    ],
-   "disconnect-banner": [
-    "src/components/alerts/EvolutionDisconnectBanner.tsx"
-   ],
    "gmail-threads-realtime": [
     "src/hooks/integrations/useGmail.ts"
    ],
@@ -83932,9 +83933,6 @@
    ],
    "warroom-alerts-realtime": [
     "src/hooks/business/useWarRoomAlerts.ts"
-   ],
-   "whatsapp-connections-changes": [
-    "src/hooks/inbox/useConnectionsManager.ts"
    ],
    "work-items:${profileId}:${secureRandomFloat().toString(36).slice(2)}": [
     "src/hooks/tasks/useMyWorkItems.ts"
@@ -84034,6 +84032,10 @@
    },
    {
     "file": "src/components/admin/useAdminData.ts",
+    "count": 1
+   },
+   {
+    "file": "src/components/alerts/__tests__/EvolutionDisconnectBanner.realtime.test.tsx",
     "count": 1
    },
    {
@@ -119732,6 +119734,12 @@
     "file": "src/components/alerts/EvolutionDisconnectBanner.tsx",
     "field": "status",
     "value": "disconnected",
+    "kind": "compara"
+   },
+   {
+    "file": "src/components/alerts/EvolutionDisconnectBanner.tsx",
+    "field": "status",
+    "value": "disconnected",
     "kind": "filtra"
    },
    {
@@ -128167,6 +128175,12 @@
    {
     "file": "src/hooks/inbox/useConnectionsManager.ts",
     "field": "status",
+    "value": "connected",
+    "kind": "escreve"
+   },
+   {
+    "file": "src/hooks/inbox/useConnectionsManager.ts",
+    "field": "status",
     "value": "pending",
     "kind": "escreve"
    },
@@ -128256,6 +128270,12 @@
    },
    {
     "file": "src/hooks/inbox/useConnectionsManager.ts",
+    "field": "status",
+    "value": "connected",
+    "kind": "compara"
+   },
+   {
+    "file": "src/hooks/inbox/useConnectionsRealtime.ts",
     "field": "status",
     "value": "connected",
     "kind": "compara"
@@ -135521,6 +135541,12 @@
     "name": "canArchiveConversation",
     "params": "status: string | null | undefined",
     "body": "return status !== 'waiting' && status !== 'archived';"
+   },
+   {
+    "file": "src/hooks/inbox/useConnectionsManager.ts",
+    "name": "invalidarStatusDeConexao",
+    "params": "",
+    "body": "void queryClient.invalidateQueries({ queryKey: ['talkx-connection-status'] }); void queryClient.invalidateQueries({ queryKey: ['catalog-send-readiness'] });"
    },
    {
     "file": "src/hooks/inbox/useConnectionsManager.ts",
@@ -144011,6 +144037,62 @@
    {
     "file": "src/components/alerts/__tests__/EvolutionDisconnectBanner.preferencia.test.tsx",
     "name": "desligar só o tipo degradado NAO esconde o aviso de conexão caída"
+   },
+   {
+    "file": "src/components/alerts/__tests__/EvolutionDisconnectBanner.realtime.test.tsx",
+    "name": "EvolutionDisconnectBanner — realtime com tópico único"
+   },
+   {
+    "file": "src/components/alerts/__tests__/EvolutionDisconnectBanner.realtime.test.tsx",
+    "name": "não usa mais o tópico fixo "
+   },
+   {
+    "file": "src/components/alerts/__tests__/EvolutionDisconnectBanner.realtime.test.tsx",
+    "name": "duas faixas montadas ao mesmo tempo não compartilham o mesmo canal"
+   },
+   {
+    "file": "src/components/alerts/__tests__/EvolutionDisconnectBanner.realtime.test.tsx",
+    "name": "remove o canal ao desmontar"
+   },
+   {
+    "file": "src/components/alerts/__tests__/EvolutionDisconnectBanner.realtime.test.tsx",
+    "name": "EvolutionDisconnectBanner — refetch filtrado por conexão"
+   },
+   {
+    "file": "src/components/alerts/__tests__/EvolutionDisconnectBanner.realtime.test.tsx",
+    "name": "ignora UPDATE de conexão alheia que continua fora de "
+   },
+   {
+    "file": "src/components/alerts/__tests__/EvolutionDisconnectBanner.realtime.test.tsx",
+    "name": "refaz a leitura quando uma conexão ENTRA em "
+   },
+   {
+    "file": "src/components/alerts/__tests__/EvolutionDisconnectBanner.realtime.test.tsx",
+    "name": "refaz a leitura quando uma conexão SAI de "
+   },
+   {
+    "file": "src/components/alerts/__tests__/EvolutionDisconnectBanner.realtime.test.tsx",
+    "name": "ignora DELETE de conexão que não estava na lista exibida"
+   },
+   {
+    "file": "src/components/alerts/__tests__/EvolutionDisconnectBanner.realtime.test.tsx",
+    "name": "não dispara o aviso "
+   },
+   {
+    "file": "src/components/alerts/__tests__/EvolutionDisconnectBanner.realtime.test.tsx",
+    "name": "EvolutionDisconnectBanner — reconnect anuncia o erro real"
+   },
+   {
+    "file": "src/components/alerts/__tests__/EvolutionDisconnectBanner.realtime.test.tsx",
+    "name": "erro lógico da Edge (HTTP 200 com error no corpo) vira toast de erro, sem "
+   },
+   {
+    "file": "src/components/alerts/__tests__/EvolutionDisconnectBanner.realtime.test.tsx",
+    "name": "aceite real vira um único "
+   },
+   {
+    "file": "src/components/alerts/__tests__/EvolutionDisconnectBanner.realtime.test.tsx",
+    "name": "falha de transporte vira toast de erro (nunca silêncio)"
    },
    {
     "file": "src/components/auth/__tests__/HeroBenefits.test.tsx",
@@ -197561,6 +197643,50 @@
     "name": "sucesso → erro nulo e diálogo fechado (sem regressão)"
    },
    {
+    "file": "src/hooks/inbox/__tests__/useConnectionsManager.b2.test.ts",
+    "name": "useConnectionsManager.handleDelete — code INSTANCE_GONE"
+   },
+   {
+    "file": "src/hooks/inbox/__tests__/useConnectionsManager.b2.test.ts",
+    "name": "trata INSTANCE_GONE como já removida: limpa o vínculo local e não anuncia erro"
+   },
+   {
+    "file": "src/hooks/inbox/__tests__/useConnectionsManager.b2.test.ts",
+    "name": "formato REAL da Edge (HTTP 200 com { error, status 404 } e sem code) também é "
+   },
+   {
+    "file": "src/hooks/inbox/__tests__/useConnectionsManager.b2.test.ts",
+    "name": "erro real (sem code) continua erro: mantém a conexão e re-sincroniza"
+   },
+   {
+    "file": "src/hooks/inbox/__tests__/useConnectionsManager.b2.test.ts",
+    "name": "useConnectionsManager — invalida o status exibido nos cards"
+   },
+   {
+    "file": "src/hooks/inbox/__tests__/useConnectionsManager.b2.test.ts",
+    "name": "excluir invalida talkx-connection-status e catalog-send-readiness"
+   },
+   {
+    "file": "src/hooks/inbox/__tests__/useConnectionsManager.b2.test.ts",
+    "name": "desconectar invalida o status exibido"
+   },
+   {
+    "file": "src/hooks/inbox/__tests__/useConnectionsManager.b2.test.ts",
+    "name": "definir padrão invalida o status exibido"
+   },
+   {
+    "file": "src/hooks/inbox/__tests__/useConnectionsManager.b2.test.ts",
+    "name": "isInstanceGone — formatos aceitos (code, HTTP 404 e mensagem)"
+   },
+   {
+    "file": "src/hooks/inbox/__tests__/useConnectionsManager.b2.test.ts",
+    "name": "aceita code INSTANCE_GONE, apiStatus 404 e "
+   },
+   {
+    "file": "src/hooks/inbox/__tests__/useConnectionsManager.b2.test.ts",
+    "name": "recusa erro real, nulo e indefinido"
+   },
+   {
     "file": "src/hooks/inbox/__tests__/useConnectionsManager.credencial.test.ts",
     "name": "useConnectionsManager — credencial da instância (13/11)"
    },
@@ -197691,6 +197817,42 @@
    {
     "file": "src/hooks/inbox/__tests__/useConnectionsManager.tra005.test.ts",
     "name": "linha órfã sem instance_id: apaga só o vínculo local, sem chamar a GO"
+   },
+   {
+    "file": "src/hooks/inbox/__tests__/useConnectionsRealtime.test.ts",
+    "name": "useConnectionsRealtime — canal único por montagem"
+   },
+   {
+    "file": "src/hooks/inbox/__tests__/useConnectionsRealtime.test.ts",
+    "name": "abre o canal com tópico único (dois consumidores não compartilham)"
+   },
+   {
+    "file": "src/hooks/inbox/__tests__/useConnectionsRealtime.test.ts",
+    "name": "desfaz a assinatura e remove o canal no unmount"
+   },
+   {
+    "file": "src/hooks/inbox/__tests__/useConnectionsRealtime.test.ts",
+    "name": "em StrictMode (monta/desmonta 2x) não reusa tópico nem estoura"
+   },
+   {
+    "file": "src/hooks/inbox/__tests__/useConnectionsRealtime.test.ts",
+    "name": "useConnectionsRealtime — um aviso por transição para conectado"
+   },
+   {
+    "file": "src/hooks/inbox/__tests__/useConnectionsRealtime.test.ts",
+    "name": "anuncia uma vez e só volta a anunciar depois de sair do estado conectado"
+   },
+   {
+    "file": "src/hooks/inbox/__tests__/useConnectionsRealtime.test.ts",
+    "name": "via evento real: UPDATE sem transição (connected→connected) não anuncia"
+   },
+   {
+    "file": "src/hooks/inbox/__tests__/useConnectionsRealtime.test.ts",
+    "name": "announce:false silencia o aviso mas mantém o onChange"
+   },
+   {
+    "file": "src/hooks/inbox/__tests__/useConnectionsRealtime.test.ts",
+    "name": "dois consumidores (gerente + faixa) anunciam a transição uma vez só"
    },
    {
     "file": "src/hooks/inbox/__tests__/useContactQuickActions.test.tsx",
@@ -256376,6 +256538,7 @@
       "compara:supabase/functions/auth-login/index.ts"
      ],
      "disconnected": [
+      "compara:src/components/alerts/EvolutionDisconnectBanner.tsx",
       "compara:src/components/connections/ConnectionsView.tsx",
       "compara:src/components/monitoring/hooks/useConnectionIncidents.ts",
       "compara:supabase/functions/_shared/evolution-webhook-handlers.ts",
@@ -256548,6 +256711,7 @@
       "compara:src/hooks/calls/useCallChannels.ts",
       "compara:src/hooks/inbox/useConnectionHealthBanner.ts",
       "compara:src/hooks/inbox/useConnectionsManager.ts",
+      "compara:src/hooks/inbox/useConnectionsRealtime.ts",
       "compara:src/hooks/system/useDiagnosticsData.ts",
       "compara:src/services/evolution.service.ts",
       "compara:supabase-export/BLOCO_01_schema_completo.sql",
@@ -279885,6 +280049,13 @@
     "kind": "dinâmico",
     "msg": "1 chamada(s) `.from(variável)` — tabela só conhecida em runtime",
     "where": [
+     "src/components/alerts/__tests__/EvolutionDisconnectBanner.realtime.test.tsx"
+    ]
+   },
+   {
+    "kind": "dinâmico",
+    "msg": "1 chamada(s) `.from(variável)` — tabela só conhecida em runtime",
+    "where": [
      "src/components/schedule/__tests__/ScheduleCalendarView.a11y.test.tsx"
     ]
    },
@@ -291492,7 +291663,7 @@
   },
   "e2e/inbox-contact-sidebar.spec.ts": {
    "path": "e2e/inbox-contact-sidebar.spec.ts",
-   "lines": 165,
+   "lines": 168,
    "is_test": true,
    "temporal": [
     "await expect(panel).toBeVisible({ timeout: 20_000 });"
@@ -306065,7 +306236,7 @@
   },
   "src/components/alerts/EvolutionDisconnectBanner.tsx": {
    "path": "src/components/alerts/EvolutionDisconnectBanner.tsx",
-   "lines": 146,
+   "lines": 167,
    "exports": [
     "function EvolutionDisconnectBanner"
    ],
@@ -306083,13 +306254,15 @@
      "status"
     ]
    },
-   "channels": [
-    "disconnect-banner"
-   ],
    "errors": [
     "Erro ao reconectar ${conn.instance_id}"
    ],
    "status_values": [
+    {
+     "field": "status",
+     "value": "disconnected",
+     "kind": "compara"
+    },
     {
      "field": "status",
      "value": "disconnected",
@@ -306153,6 +306326,31 @@
     "com o tipo ligado, a faixa aparece normalmente",
     "sem linha salva (padrao do banco) a faixa aparece",
     "desligar só o tipo degradado NAO esconde o aviso de conexão caída"
+   ]
+  },
+  "src/components/alerts/__tests__/EvolutionDisconnectBanner.realtime.test.tsx": {
+   "path": "src/components/alerts/__tests__/EvolutionDisconnectBanner.realtime.test.tsx",
+   "lines": 224,
+   "is_test": true,
+   "dyn_from": 1,
+   "tests": [
+    "EvolutionDisconnectBanner — realtime com tópico único",
+    "não usa mais o tópico fixo ",
+    "duas faixas montadas ao mesmo tempo não compartilham o mesmo canal",
+    "remove o canal ao desmontar",
+    "EvolutionDisconnectBanner — refetch filtrado por conexão",
+    "ignora UPDATE de conexão alheia que continua fora de ",
+    "refaz a leitura quando uma conexão ENTRA em ",
+    "refaz a leitura quando uma conexão SAI de ",
+    "ignora DELETE de conexão que não estava na lista exibida",
+    "não dispara o aviso ",
+    "EvolutionDisconnectBanner — reconnect anuncia o erro real",
+    "erro lógico da Edge (HTTP 200 com error no corpo) vira toast de erro, sem ",
+    "aceite real vira um único ",
+    "falha de transporte vira toast de erro (nunca silêncio)"
+   ],
+   "side_effects": [
+    "invoke("
    ]
   },
   "src/components/auth/HeroBenefits.tsx": {
@@ -366764,11 +366962,12 @@
   },
   "src/hooks/inbox/useConnectionsManager.ts": {
    "path": "src/hooks/inbox/useConnectionsManager.ts",
-   "lines": 481,
+   "lines": 529,
    "exports": [
     "interface WhatsAppConnection",
     "interface QrCodeDialogState",
     "const INSTANCE_TOKEN_ERROR_CODES",
+    "function isInstanceGone",
     "function useConnectionsManager"
    ],
    "tables": [
@@ -366806,9 +367005,6 @@
    "rpc": [
     "set_default_whatsapp_connection"
    ],
-   "channels": [
-    "whatsapp-connections-changes"
-   ],
    "errors": [
     "Erro ao criar conexão",
     "Erro ao definir conexão padrão",
@@ -366839,6 +367035,11 @@
     {
      "field": "status",
      "value": "pending",
+     "kind": "escreve"
+    },
+    {
+     "field": "status",
+     "value": "connected",
      "kind": "escreve"
     },
     {
@@ -366937,10 +367138,34 @@
    ],
    "calc_fns": [
     {
+     "name": "invalidarStatusDeConexao",
+     "params": "",
+     "body": "void queryClient.invalidateQueries({ queryKey: ['talkx-connection-status'] }); void queryClient.invalidateQueries({ queryKey: ['catalog-send-readiness'] });"
+    },
+    {
      "name": "generateInstanceName",
      "params": "name: string",
      "body": ""
     }
+   ]
+  },
+  "src/hooks/inbox/useConnectionsRealtime.ts": {
+   "path": "src/hooks/inbox/useConnectionsRealtime.ts",
+   "lines": 113,
+   "exports": [
+    "interface ConnectionRealtimeRow",
+    "interface ConnectionsChange",
+    "function useConnectionsRealtime"
+   ],
+   "status_values": [
+    {
+     "field": "status",
+     "value": "connected",
+     "kind": "compara"
+    }
+   ],
+   "hooks": [
+    "useConnectionsRealtime"
    ]
   },
   "src/hooks/inbox/useContactDeliveryStats.ts": {
@@ -367546,6 +367771,28 @@
     "sucesso → erro nulo e diálogo fechado (sem regressão)"
    ]
   },
+  "src/hooks/inbox/__tests__/useConnectionsManager.b2.test.ts": {
+   "path": "src/hooks/inbox/__tests__/useConnectionsManager.b2.test.ts",
+   "lines": 204,
+   "is_test": true,
+   "rule_comments": [
+    "(`ConnectionsView.telefone-validacao.test.tsx`) e aceita E.164 de outro DDI de",
+    "propósito, o que a regra de DDD brasileiro daquela época recusaria."
+   ],
+   "tests": [
+    "useConnectionsManager.handleDelete — code INSTANCE_GONE",
+    "trata INSTANCE_GONE como já removida: limpa o vínculo local e não anuncia erro",
+    "formato REAL da Edge (HTTP 200 com { error, status 404 } e sem code) também é ",
+    "erro real (sem code) continua erro: mantém a conexão e re-sincroniza",
+    "useConnectionsManager — invalida o status exibido nos cards",
+    "excluir invalida talkx-connection-status e catalog-send-readiness",
+    "desconectar invalida o status exibido",
+    "definir padrão invalida o status exibido",
+    "isInstanceGone — formatos aceitos (code, HTTP 404 e mensagem)",
+    "aceita code INSTANCE_GONE, apiStatus 404 e ",
+    "recusa erro real, nulo e indefinido"
+   ]
+  },
   "src/hooks/inbox/__tests__/useConnectionsManager.credencial.test.ts": {
    "path": "src/hooks/inbox/__tests__/useConnectionsManager.credencial.test.ts",
    "lines": 135,
@@ -367637,6 +367884,22 @@
     "marca exclusão pendente quando a GO apaga a instância mas o vínculo local permanece",
     "confirma a exclusão só quando a GO e o vínculo local saem",
     "linha órfã sem instance_id: apaga só o vínculo local, sem chamar a GO"
+   ]
+  },
+  "src/hooks/inbox/__tests__/useConnectionsRealtime.test.ts": {
+   "path": "src/hooks/inbox/__tests__/useConnectionsRealtime.test.ts",
+   "lines": 156,
+   "is_test": true,
+   "tests": [
+    "useConnectionsRealtime — canal único por montagem",
+    "abre o canal com tópico único (dois consumidores não compartilham)",
+    "desfaz a assinatura e remove o canal no unmount",
+    "em StrictMode (monta/desmonta 2x) não reusa tópico nem estoura",
+    "useConnectionsRealtime — um aviso por transição para conectado",
+    "anuncia uma vez e só volta a anunciar depois de sair do estado conectado",
+    "via evento real: UPDATE sem transição (connected→connected) não anuncia",
+    "announce:false silencia o aviso mas mantém o onChange",
+    "dois consumidores (gerente + faixa) anunciam a transição uma vez só"
    ]
   },
   "src/hooks/inbox/__tests__/useContactQuickActions.test.tsx": {
@@ -424638,10 +424901,33 @@
   }
  },
  "git": {
-  "sha": "078aacb5e29c2f27adc243ca07cf2b5fe162b144",
+  "sha": "6ee63ddbf78e67412ee6e305107e00f376c9a3a9",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "6ee63ddb",
+    "date": "2026-11-25",
+    "author": "adm01-debug",
+    "subject": "fix: canal único de realtime nas conexões e reconciliação de INSTANCE_GONE (#3390)",
+    "files": [
+     "src/components/alerts/EvolutionDisconnectBanner.tsx",
+     "src/components/alerts/__tests__/EvolutionDisconnectBanner.realtime.test.tsx",
+     "src/hooks/inbox/__tests__/useConnectionsManager.b2.test.ts",
+     "src/hooks/inbox/__tests__/useConnectionsRealtime.test.ts",
+     "src/hooks/inbox/useConnectionsManager.ts",
+     "src/hooks/inbox/useConnectionsRealtime.ts"
+    ]
+   },
+   {
+    "sha": "4855bda8",
+    "date": "2026-11-25",
+    "author": "adm01-debug",
+    "subject": "fix: asserção do E2E da sidebar não confunde a seção de SLA com o accordion antigo (#3389)",
+    "files": [
+     "e2e/inbox-contact-sidebar.spec.ts"
+    ]
+   },
    {
     "sha": "078aacb5",
     "date": "2026-11-25",
@@ -426277,34 +426563,9 @@
      "scripts/ci/e2e-isolated-images.unit.mjs",
      "scripts/e2e-isolated/images.lock.json"
     ]
-   },
-   {
-    "sha": "38ee260d",
-    "date": "2026-11-24",
-    "author": "adm01-debug",
-    "subject": "chore: corrige o comentario do E2E do Firefox no ci.yml (causa nao e memoria) (#3349)",
-    "files": [
-     ".github/workflows/ci.yml"
-    ]
-   },
-   {
-    "sha": "e586a725",
-    "date": "2026-11-24",
-    "author": "adm01-debug",
-    "subject": "fix(e2e): tira o postgrest do ECR anonimo e reconhece a cota \"Data limit exceeded\" (#3351)",
-    "files": [
-     ".github/workflows/e2e-logado.yml",
-     "scripts/ci/e2e-isolated-pull-image.unit.mjs",
-     "scripts/e2e-isolated/images.lock.json",
-     "scripts/e2e-isolated/pull-image.mjs"
-    ]
    }
   ],
   "hot_files": [
-   [
-    ".github/workflows/ci.yml",
-    3
-   ],
    [
     "docs/ci/README.md",
     3
@@ -426312,6 +426573,10 @@
    [
     "docs/agentes/github-ci.md",
     3
+   ],
+   [
+    ".github/workflows/ci.yml",
+    2
    ],
    [
     "scripts/ci/eslint-baseline.json",
@@ -426334,20 +426599,32 @@
     2
    ],
    [
-    ".github/workflows/e2e-logado.yml",
-    2
+    "src/components/alerts/EvolutionDisconnectBanner.tsx",
+    1
    ],
    [
-    "scripts/ci/e2e-isolated-pull-image.unit.mjs",
-    2
+    "src/components/alerts/__tests__/EvolutionDisconnectBanner.realtime.test.tsx",
+    1
    ],
    [
-    "scripts/e2e-isolated/pull-image.mjs",
-    2
+    "src/hooks/inbox/__tests__/useConnectionsManager.b2.test.ts",
+    1
    ],
    [
-    "scripts/e2e-isolated/images.lock.json",
-    2
+    "src/hooks/inbox/__tests__/useConnectionsRealtime.test.ts",
+    1
+   ],
+   [
+    "src/hooks/inbox/useConnectionsManager.ts",
+    1
+   ],
+   [
+    "src/hooks/inbox/useConnectionsRealtime.ts",
+    1
+   ],
+   [
+    "e2e/inbox-contact-sidebar.spec.ts",
+    1
    ],
    [
     "src/components/inbox/ContactDetails.tsx",
@@ -426367,18 +426644,6 @@
    ],
    [
     "src/lib/__tests__/redactPII.test.ts",
-    1
-   ],
-   [
-    "src/lib/errorReporter.ts",
-    1
-   ],
-   [
-    "src/lib/logger.ts",
-    1
-   ],
-   [
-    "src/lib/redactPII.ts",
     1
    ]
   ]

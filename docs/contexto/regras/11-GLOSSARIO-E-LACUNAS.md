@@ -1,6 +1,6 @@
 # 11 · GLOSSÁRIO, DADOS DE REFERÊNCIA E LACUNAS
 
-> Gerado automaticamente por AI Context Sync v1.3.2 · commit `078aacb5e2` · branch `main` · 2026-11-25 21:12 UTC
+> Gerado automaticamente por AI Context Sync v1.3.2 · commit `6ee63ddbf7` · branch `main` · 2026-11-25 22:59 UTC
 > Não edite à mão — regras humanas vão em `manual/`.
 
 ## Glossário do domínio (entidades do sistema)
@@ -501,6 +501,7 @@
 | dinâmico | 2 chamada(s) `.from(variável)` — tabela só conhecida em runtime | `scripts/regras_negocio/generate.py` |
 | dinâmico | 3 chamada(s) `.from(variável)` — tabela só conhecida em runtime | `src/__tests__/rls-boundary.test.ts` |
 | dinâmico | 1 chamada(s) `.from(variável)` — tabela só conhecida em runtime | `src/components/admin/useAdminData.ts` |
+| dinâmico | 1 chamada(s) `.from(variável)` — tabela só conhecida em runtime | `src/components/alerts/__tests__/EvolutionDisconnectBanner.realtime.test.tsx` |
 | dinâmico | 1 chamada(s) `.from(variável)` — tabela só conhecida em runtime | `src/components/schedule/__tests__/ScheduleCalendarView.a11y.test.tsx` |
 | dinâmico | 1 chamada(s) `.from(variável)` — tabela só conhecida em runtime | `src/components/schedule/__tests__/ScheduleCalendarView.agenda.test.tsx` |
 | dinâmico | 1 chamada(s) `.from(variável)` — tabela só conhecida em runtime | `src/components/security/__tests__/AuditLogDashboard.hoje-janela24h.test.tsx` |

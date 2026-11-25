@@ -700,10 +700,11 @@
     "EvolutionDisconnectBanner"
    ],
    "export_default": null,
-   "linhas": 146,
+   "linhas": 167,
    "dominio": "components/alerts",
    "hooks_locais": [
     "useConnectionAlertPreferences",
+    "useConnectionsRealtime",
     "useReducedMotion"
    ],
    "tabelas": [

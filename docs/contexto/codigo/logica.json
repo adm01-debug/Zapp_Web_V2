@@ -870,7 +870,7 @@
    "zod_schemas": 0,
    "flags": [],
    "papeis": [],
-   "usado_por": 385,
+   "usado_por": 386,
    "usado_por_modulos": [
     "components/admin",
     "components/agents",
@@ -3801,7 +3801,7 @@
    "zod_schemas": 0,
    "flags": [],
    "papeis": [],
-   "usado_por": 211,
+   "usado_por": 212,
    "usado_por_modulos": [
     "components",
     "components/admin",
@@ -4577,12 +4577,13 @@
    "zod_schemas": 0,
    "flags": [],
    "papeis": [],
-   "usado_por": 2,
+   "usado_por": 3,
    "usado_por_modulos": [
     "hooks/auth",
+    "hooks/inbox",
     "providers"
    ],
-   "coberto_por_testes": 1,
+   "coberto_por_testes": 2,
    "orfao": false
   },
   {
@@ -4625,7 +4626,7 @@
    "zod_schemas": 0,
    "flags": [],
    "papeis": [],
-   "usado_por": 20,
+   "usado_por": 21,
    "usado_por_modulos": [
     "components/inbox",
     "hooks/analytics",

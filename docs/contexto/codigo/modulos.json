@@ -651,8 +651,8 @@
   {
    "modulo": "components/alerts",
    "arquivos": 1,
-   "testes": 4,
-   "linhas": 146,
+   "testes": 5,
+   "linhas": 167,
    "itens_menu": [],
    "telas": [],
    "rotas_http": [],
@@ -660,6 +660,7 @@
    "hooks_locais": [
     "useAuth",
     "useConnectionAlertPreferences",
+    "useConnectionsRealtime",
     "useMessageUpdateBatcher",
     "useNotificationSettings",
     "useOfflineCache",
@@ -692,8 +693,7 @@
    ],
    "buckets": [],
    "canais_realtime": [
-    "chat-reactions:${messageId}",
-    "disconnect-banner"
+    "chat-reactions:${messageId}"
    ],
    "env": [
     "DEV"
@@ -713,6 +713,7 @@
     "pages"
    ],
    "depende_de_modulos": [
+    "hooks/inbox",
     "hooks/system",
     "integrations/supabase",
     "lib"
@@ -1386,6 +1387,7 @@
     "useConnectionAuditLogs",
     "useConnectionQueues",
     "useConnectionsManager",
+    "useConnectionsRealtime",
     "useEvolutionApi",
     "useEvolutionApiCore",
     "useEvolutionGroups",
@@ -1446,8 +1448,7 @@
    ],
    "buckets": [],
    "canais_realtime": [
-    "chat-reactions:${messageId}",
-    "whatsapp-connections-changes"
+    "chat-reactions:${messageId}"
    ],
    "env": [
     "DEV"
@@ -3750,6 +3751,7 @@
     "useConnectionQueues",
     "useConnectionsHealth",
     "useConnectionsManager",
+    "useConnectionsRealtime",
     "useContactAgenda",
     "useContactCrm360",
     "useContactCustomFields",
@@ -4448,7 +4450,6 @@
     "team-reactions-${conversationId}",
     "team-read-state-${conversationId}",
     "warroom-alerts-realtime",
-    "whatsapp-connections-changes",
     "work-items:${profileId}:${secureRandomFloat().toString(36).slice(2)}"
    ],
    "env": [
@@ -5855,6 +5856,7 @@
     "useConnectionQueues",
     "useConnectionsHealth",
     "useConnectionsManager",
+    "useConnectionsRealtime",
     "useContactAgenda",
     "useContactCrm360",
     "useContactDeliveryStats",
@@ -6405,7 +6407,6 @@
     "team-messages-${conversationId}",
     "team-reactions-${conversationId}",
     "team-read-state-${conversationId}",
-    "whatsapp-connections-changes",
     "work-items:${profileId}:${secureRandomFloat().toString(36).slice(2)}"
    ],
    "env": [
@@ -7022,6 +7023,7 @@
     "useChatTextSize",
     "useConnectionAlertPreferences",
     "useConnectionsManager",
+    "useConnectionsRealtime",
     "useCustomShortcuts",
     "useDensity",
     "useEvolutionApi",
@@ -7125,8 +7127,7 @@
     "stickers"
    ],
    "canais_realtime": [
-    "chat-reactions:${messageId}",
-    "whatsapp-connections-changes"
+    "chat-reactions:${messageId}"
    ],
    "env": [
     "DEV"
@@ -11050,9 +11051,9 @@
   },
   {
    "modulo": "hooks/inbox",
-   "arquivos": 20,
-   "testes": 36,
-   "linhas": 3711,
+   "arquivos": 21,
+   "testes": 38,
+   "linhas": 3872,
    "itens_menu": [],
    "telas": [],
    "rotas_http": [],
@@ -11072,6 +11073,7 @@
     "useConnectionHealthBanner",
     "useConnectionQueues",
     "useConnectionsManager",
+    "useConnectionsRealtime",
     "useContactCrm360",
     "useContactDeliveryStats",
     "useContactLeadScore",
@@ -11134,6 +11136,7 @@
     "useConnectionHealthBanner",
     "useConnectionQueues",
     "useConnectionsManager",
+    "useConnectionsRealtime",
     "useContactDeliveryStats",
     "useContactQuickActions",
     "useInboxBulkActions",
@@ -11206,8 +11209,7 @@
    "buckets": [],
    "canais_realtime": [
     "agent-presence-changes",
-    "chat-reactions:${messageId}",
-    "whatsapp-connections-changes"
+    "chat-reactions:${messageId}"
    ],
    "env": [
     "DEV"
@@ -11250,6 +11252,7 @@
     ]
    },
    "importado_por_outros_modulos": [
+    "components/alerts",
     "components/connections",
     "components/inbox",
     "components/notifications",
@@ -12487,6 +12490,7 @@
     "useConnectionQueues",
     "useConnectionsHealth",
     "useConnectionsManager",
+    "useConnectionsRealtime",
     "useContactAgenda",
     "useContactCrm360",
     "useContactCustomFields",
@@ -13256,7 +13260,6 @@
     "conversation:${contactId}",
     "copilot_insights:${sessionId}",
     "diagnostics-realtime-probe",
-    "disconnect-banner",
     "gmail-threads-realtime",
     "monitoring-status-${Math.random().toString(36).slice(2)}",
     "multiplix-mon-${dispatchId}",
@@ -13268,7 +13271,6 @@
     "team-reactions-${conversationId}",
     "team-read-state-${conversationId}",
     "warroom-alerts-realtime",
-    "whatsapp-connections-changes",
     "work-items:${profileId}:${secureRandomFloat().toString(36).slice(2)}"
    ],
    "env": [
@@ -15014,6 +15016,7 @@
     "useConnectionQueues",
     "useConnectionsHealth",
     "useConnectionsManager",
+    "useConnectionsRealtime",
     "useContactAgenda",
     "useContactCrm360",
     "useContactCustomFields",
@@ -15720,7 +15723,6 @@
     "conversation:${contactId}",
     "copilot_insights:${sessionId}",
     "diagnostics-realtime-probe",
-    "disconnect-banner",
     "gmail-threads-realtime",
     "monitoring-status-${Math.random().toString(36).slice(2)}",
     "multiplix-mon-${dispatchId}",
@@ -15732,7 +15734,6 @@
     "team-reactions-${conversationId}",
     "team-read-state-${conversationId}",
     "warroom-alerts-realtime",
-    "whatsapp-connections-changes",
     "work-items:${profileId}:${secureRandomFloat().toString(36).slice(2)}"
    ],
    "env": [
@@ -16350,6 +16351,7 @@
     "useConnectionQueues",
     "useConnectionsHealth",
     "useConnectionsManager",
+    "useConnectionsRealtime",
     "useContactAgenda",
     "useContactCrm360",
     "useContactCustomFields",
@@ -17063,7 +17065,6 @@
     "conversation:${contactId}",
     "copilot_insights:${sessionId}",
     "diagnostics-realtime-probe",
-    "disconnect-banner",
     "gmail-threads-realtime",
     "monitoring-status-${Math.random().toString(36).slice(2)}",
     "multiplix-mon-${dispatchId}",
@@ -17075,7 +17076,6 @@
     "team-reactions-${conversationId}",
     "team-read-state-${conversationId}",
     "warroom-alerts-realtime",
-    "whatsapp-connections-changes",
     "work-items:${profileId}:${secureRandomFloat().toString(36).slice(2)}"
    ],
    "env": [

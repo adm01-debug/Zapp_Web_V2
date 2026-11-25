@@ -1,7 +1,7 @@
 {
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
- "total": 515,
+ "total": 516,
  "hooks": [
   {
    "arquivo": "analise-prs/resgate-261118-lote2/src/hooks/useMotionSeguro.ts",
@@ -7744,7 +7744,7 @@
    "hooks_exportados": [
     "useConnectionsManager"
    ],
-   "linhas": 481,
+   "linhas": 529,
    "dominio": "hooks/inbox",
    "tabelas": [
     "whatsapp_connections"
@@ -7755,15 +7755,14 @@
    "edges": [],
    "hooks_internos": [
     "useCallback",
+    "useConnectionsRealtime",
     "useEffect",
     "useEvolutionApi",
     "useLayoutEffect",
     "useRef",
     "useState"
    ],
-   "canais_realtime": [
-    "whatsapp-connections-changes"
-   ],
+   "canais_realtime": [],
    "usado_por": 5,
    "usado_por_arquivos": [
     "src/components/connections/ConnectionCard.tsx",
@@ -7772,7 +7771,31 @@
     "src/components/settings/ScheduleSettings.tsx",
     "src/hooks/inbox/index.ts"
    ],
-   "coberto_por_testes": 9
+   "coberto_por_testes": 10
+  },
+  {
+   "arquivo": "src/hooks/inbox/useConnectionsRealtime.ts",
+   "hooks_exportados": [
+    "useConnectionsRealtime"
+   ],
+   "linhas": 113,
+   "dominio": "hooks/inbox",
+   "tabelas": [],
+   "rpcs": [],
+   "edges": [],
+   "hooks_internos": [
+    "useCallback",
+    "useEffect",
+    "useLayoutEffect",
+    "useRef"
+   ],
+   "canais_realtime": [],
+   "usado_por": 2,
+   "usado_por_arquivos": [
+    "src/components/alerts/EvolutionDisconnectBanner.tsx",
+    "src/hooks/inbox/useConnectionsManager.ts"
+   ],
+   "coberto_por_testes": 1
   },
   {
    "arquivo": "src/hooks/inbox/useContactDeliveryStats.ts",
@@ -12165,7 +12188,7 @@
     "useSyncExternalStore"
    ],
    "canais_realtime": [],
-   "usado_por": 59,
+   "usado_por": 60,
    "usado_por_arquivos": [
     "src/components/connections/ConnectionCard.tsx",
     "src/components/effects/EasterEggs.tsx",

@@ -118,6 +118,7 @@
     "useConnectionQueues",
     "useConnectionsHealth",
     "useConnectionsManager",
+    "useConnectionsRealtime",
     "useContactActivity",
     "useContactAgenda",
     "useContactCrm360",
@@ -676,6 +677,7 @@
     "useConnectionQueues",
     "useConnectionsHealth",
     "useConnectionsManager",
+    "useConnectionsRealtime",
     "useContactAgenda",
     "useContactCrm360",
     "useContactCustomFields",
@@ -1369,7 +1371,6 @@
     "conversation:${contactId}",
     "copilot_insights:${sessionId}",
     "diagnostics-realtime-probe",
-    "disconnect-banner",
     "gmail-threads-realtime",
     "monitoring-status-${Math.random().toString(36).slice(2)}",
     "multiplix-mon-${dispatchId}",
@@ -1381,7 +1382,6 @@
     "team-reactions-${conversationId}",
     "team-read-state-${conversationId}",
     "warroom-alerts-realtime",
-    "whatsapp-connections-changes",
     "work-items:${profileId}:${secureRandomFloat().toString(36).slice(2)}"
    ],
    "flags": [
@@ -1446,7 +1446,7 @@
     "unknown",
     "user"
    ],
-   "arquivos_puxados": 1593
+   "arquivos_puxados": 1594
   },
   {
    "protegida": false,
@@ -3968,6 +3968,7 @@
     "useConnectionAuditLogs",
     "useConnectionQueues",
     "useConnectionsManager",
+    "useConnectionsRealtime",
     "useContext",
     "useEffect",
     "useEvolutionApi",
@@ -4013,6 +4014,7 @@
     "useConnectionAuditLogs",
     "useConnectionQueues",
     "useConnectionsManager",
+    "useConnectionsRealtime",
     "useEvolutionApi",
     "useEvolutionApiCore",
     "useEvolutionGroups",
@@ -4071,8 +4073,7 @@
     "evolution-sync"
    ],
    "canais_realtime": [
-    "chat-reactions:${messageId}",
-    "whatsapp-connections-changes"
+    "chat-reactions:${messageId}"
    ],
    "flags": [],
    "papeis": [
@@ -4084,7 +4085,7 @@
     "status",
     "supervisor"
    ],
-   "arquivos_puxados": 112
+   "arquivos_puxados": 116
   },
   {
    "id": "contacts",
@@ -7291,6 +7292,7 @@
     "useChatTextSize",
     "useConnectionAlertPreferences",
     "useConnectionsManager",
+    "useConnectionsRealtime",
     "useContext",
     "useCustomShortcuts",
     "useDensity",
@@ -7347,6 +7349,7 @@
     "useChatTextSize",
     "useConnectionAlertPreferences",
     "useConnectionsManager",
+    "useConnectionsRealtime",
     "useCustomShortcuts",
     "useDensity",
     "useEvolutionApi",
@@ -7430,8 +7433,7 @@
     "elevenlabs-voice-design"
    ],
    "canais_realtime": [
-    "chat-reactions:${messageId}",
-    "whatsapp-connections-changes"
+    "chat-reactions:${messageId}"
    ],
    "flags": [],
    "papeis": [
@@ -7450,7 +7452,7 @@
     "tablist",
     "user"
    ],
-   "arquivos_puxados": 164
+   "arquivos_puxados": 168
   },
   {
    "id": "sla",

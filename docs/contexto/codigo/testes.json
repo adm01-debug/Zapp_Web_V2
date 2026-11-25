@@ -5,18 +5,18 @@
   "vitest",
   "playwright"
  ],
- "total": 2825,
+ "total": 2828,
  "por_tipo": {
   "contrato": 116,
   "e2e": 76,
   "pytest": 3,
   "qa": 10,
-  "unit": 2528
+  "unit": 2531
  },
  "onde_ficam": [
   {
    "padrao": "co-localizado (__tests__)",
-   "arquivos": 2098
+   "arquivos": 2101
   },
   {
    "padrao": "outro",
@@ -483,7 +483,7 @@
   {
    "arquivo": "e2e/inbox-contact-sidebar.spec.ts",
    "tipo": "e2e",
-   "linhas": 165,
+   "linhas": 168,
    "testa": [],
    "casos": 5
   },
@@ -3749,6 +3749,15 @@
     "src/components/alerts/EvolutionDisconnectBanner.tsx"
    ],
    "casos": 4
+  },
+  {
+   "arquivo": "src/components/alerts/__tests__/EvolutionDisconnectBanner.realtime.test.tsx",
+   "tipo": "unit",
+   "linhas": 224,
+   "testa": [
+    "src/components/alerts/EvolutionDisconnectBanner.tsx"
+   ],
+   "casos": 11
   },
   {
    "arquivo": "src/components/auth/__tests__/HeroBenefits.test.tsx",
@@ -18466,6 +18475,16 @@
    "casos": 5
   },
   {
+   "arquivo": "src/hooks/inbox/__tests__/useConnectionsManager.b2.test.ts",
+   "tipo": "unit",
+   "linhas": 204,
+   "testa": [
+    "src/hooks/inbox/useConnectionsManager.ts",
+    "src/lib/queryClient.ts"
+   ],
+   "casos": 8
+  },
+  {
    "arquivo": "src/hooks/inbox/__tests__/useConnectionsManager.credencial.test.ts",
    "tipo": "unit",
    "linhas": 135,
@@ -18527,6 +18546,15 @@
     "src/hooks/inbox/useConnectionsManager.ts"
    ],
    "casos": 4
+  },
+  {
+   "arquivo": "src/hooks/inbox/__tests__/useConnectionsRealtime.test.ts",
+   "tipo": "unit",
+   "linhas": 156,
+   "testa": [
+    "src/hooks/inbox/useConnectionsRealtime.ts"
+   ],
+   "casos": 7
   },
   {
    "arquivo": "src/hooks/inbox/__tests__/useContactQuickActions.test.tsx",
@@ -25920,7 +25948,7 @@
   "src/components/ai/ChurnPredictionDashboard.tsx": 1,
   "src/components/ai/churnRisk.ts": 1,
   "src/components/ai/ticketClassification.ts": 1,
-  "src/components/alerts/EvolutionDisconnectBanner.tsx": 4,
+  "src/components/alerts/EvolutionDisconnectBanner.tsx": 5,
   "src/components/auth/HeroBenefits.tsx": 1,
   "src/components/auth/PasswordStrengthMeter.tsx": 3,
   "src/components/auth/ProtectedRoute.tsx": 4,
@@ -26867,7 +26895,8 @@
   "src/hooks/inbox/useAutoCloseConversations.ts": 1,
   "src/hooks/inbox/useConnectionHealthBanner.ts": 1,
   "src/hooks/inbox/useConnectionQueues.ts": 1,
-  "src/hooks/inbox/useConnectionsManager.ts": 9,
+  "src/hooks/inbox/useConnectionsManager.ts": 10,
+  "src/hooks/inbox/useConnectionsRealtime.ts": 1,
   "src/hooks/inbox/useContactQuickActions.ts": 1,
   "src/hooks/inbox/useInboxBulkActions.ts": 1,
   "src/hooks/inbox/useInboxFilterPresets.ts": 2,
@@ -27177,7 +27206,7 @@
   "src/lib/postgrestFilters.ts": 1,
   "src/lib/productName.ts": 5,
   "src/lib/quarantineStore.ts": 3,
-  "src/lib/queryClient.ts": 1,
+  "src/lib/queryClient.ts": 2,
   "src/lib/queryRetry.ts": 1,
   "src/lib/realtimeTopic.ts": 1,
   "src/lib/redactPII.ts": 1,

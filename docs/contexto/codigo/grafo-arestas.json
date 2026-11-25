@@ -675,6 +675,7 @@
    "src/lib/ai-values.ts"
   ],
   "src/components/alerts/EvolutionDisconnectBanner.tsx": [
+   "src/hooks/inbox/useConnectionsRealtime.ts",
    "src/hooks/system/useConnectionAlertPreferences.ts",
    "src/integrations/supabase/client.ts",
    "src/lib/utils.ts"
@@ -9181,11 +9182,19 @@
    "src/lib/logger.ts"
   ],
   "src/hooks/inbox/useConnectionsManager.ts": [
+   "src/hooks/inbox/useConnectionsRealtime.ts",
    "src/hooks/integrations/useEvolutionApi.ts",
    "src/hooks/ui/use-toast.ts",
    "src/integrations/supabase/client.ts",
    "src/lib/clipboard.ts",
-   "src/lib/logger.ts"
+   "src/lib/logger.ts",
+   "src/lib/queryClient.ts"
+  ],
+  "src/hooks/inbox/useConnectionsRealtime.ts": [
+   "src/hooks/ui/use-toast.ts",
+   "src/integrations/supabase/client.ts",
+   "src/lib/logger.ts",
+   "src/lib/realtimeTopic.ts"
   ],
   "src/hooks/inbox/useContactDeliveryStats.ts": [
    "src/integrations/supabase/client.ts"
