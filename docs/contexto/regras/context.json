@@ -1,15 +1,15 @@
 {
  "meta": {
-  "sha": "5191812994ef42c100afe9d3afff331a266a4a57",
+  "sha": "1d87b06fe7459ae259e7e767329e4d85dc65dcdb",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-25 10:52 UTC",
-  "files_total": 14633,
-  "code_files": 8169,
-  "code_lines": 1229066
+  "generated_at": "2026-11-25 12:22 UTC",
+  "files_total": 14642,
+  "code_files": 8176,
+  "code_lines": 1229690
  },
  "version": "1.3.2",
- "facts_hash": "7351847a6ea27a16",
+ "facts_hash": "d82b079b7e97de54",
  "stack": {
   "frameworks": [
    "React + Vite",
@@ -367,7 +367,7 @@
   ],
   "package_manager": "bun",
   "languages": {
-   ".sql": 3056,
+   ".sql": 3063,
    ".tsx": 2480,
    ".ts": 2011,
    ".mjs": 495,
@@ -15587,6 +15587,162 @@
     "comment": "",
     "origin": "migration"
    },
+   "assistant_profiles": {
+    "columns": [
+     {
+      "name": "user_id",
+      "type": "UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE",
+      "fk": "users.id ON DELETE CASCADE",
+      "generated": "",
+      "src": "supabase/migrations/20261121190000_assistant_profiles.sql"
+     },
+     {
+      "name": "atividade",
+      "type": "TEXT NOT NULL DEFAULT 'atendimento' CHECK (atividade IN ('venda', 'compra', 'atendimento', 'supervisao'))",
+      "fk": "",
+      "generated": "",
+      "src": "supabase/migrations/20261121190000_assistant_profiles.sql"
+     },
+     {
+      "name": "foco",
+      "type": "TEXT NOT NULL DEFAULT ''",
+      "fk": "",
+      "generated": "",
+      "src": "supabase/migrations/20261121190000_assistant_profiles.sql"
+     },
+     {
+      "name": "ajuda",
+      "type": "TEXT NOT NULL DEFAULT 'relevante' CHECK (ajuda IN ('sempre', 'relevante', 'sob_demanda'))",
+      "fk": "",
+      "generated": "",
+      "src": "supabase/migrations/20261121190000_assistant_profiles.sql"
+     },
+     {
+      "name": "tom",
+      "type": "TEXT NOT NULL DEFAULT 'consultivo' CHECK (tom IN ('direto', 'consultivo', 'formal'))",
+      "fk": "",
+      "generated": "",
+      "src": "supabase/migrations/20261121190000_assistant_profiles.sql"
+     },
+     {
+      "name": "created_at",
+      "type": "TIMESTAMPTZ NOT NULL DEFAULT now()",
+      "fk": "",
+      "generated": "",
+      "src": "supabase/migrations/20261121190000_assistant_profiles.sql"
+     },
+     {
+      "name": "updated_at",
+      "type": "TIMESTAMPTZ NOT NULL DEFAULT now()",
+      "fk": "",
+      "generated": "",
+      "src": "supabase/migrations/20261121190000_assistant_profiles.sql"
+     }
+    ],
+    "constraints": [],
+    "src": "supabase/migrations/20261121190000_assistant_profiles.sql",
+    "comment": "",
+    "origin": "migration"
+   },
+   "talkx_ai_requests": {
+    "columns": [
+     {
+      "name": "id",
+      "type": "uuid PRIMARY KEY DEFAULT gen_random_uuid()",
+      "fk": "",
+      "generated": "",
+      "src": "supabase/migrations/20261122200000_x076_talkx_ai_requests.sql"
+     },
+     {
+      "name": "kind",
+      "type": "text NOT NULL CHECK (kind IN ('insight_text', 'message_variation', 'segment_suggestion'))",
+      "fk": "",
+      "generated": "",
+      "src": "supabase/migrations/20261122200000_x076_talkx_ai_requests.sql"
+     },
+     {
+      "name": "entity_type",
+      "type": "text",
+      "fk": "",
+      "generated": "",
+      "src": "supabase/migrations/20261122200000_x076_talkx_ai_requests.sql"
+     },
+     {
+      "name": "entity_id",
+      "type": "text",
+      "fk": "",
+      "generated": "",
+      "src": "supabase/migrations/20261122200000_x076_talkx_ai_requests.sql"
+     },
+     {
+      "name": "input_hash",
+      "type": "text NOT NULL",
+      "fk": "",
+      "generated": "",
+      "src": "supabase/migrations/20261122200000_x076_talkx_ai_requests.sql"
+     },
+     {
+      "name": "output",
+      "type": "jsonb",
+      "fk": "",
+      "generated": "",
+      "src": "supabase/migrations/20261122200000_x076_talkx_ai_requests.sql"
+     },
+     {
+      "name": "model",
+      "type": "text",
+      "fk": "",
+      "generated": "",
+      "src": "supabase/migrations/20261122200000_x076_talkx_ai_requests.sql"
+     },
+     {
+      "name": "tokens_in",
+      "type": "integer NOT NULL DEFAULT 0 CHECK (tokens_in >= 0)",
+      "fk": "",
+      "generated": "",
+      "src": "supabase/migrations/20261122200000_x076_talkx_ai_requests.sql"
+     },
+     {
+      "name": "tokens_out",
+      "type": "integer NOT NULL DEFAULT 0 CHECK (tokens_out >= 0)",
+      "fk": "",
+      "generated": "",
+      "src": "supabase/migrations/20261122200000_x076_talkx_ai_requests.sql"
+     },
+     {
+      "name": "cost_usd",
+      "type": "numeric(18, 8) CHECK (cost_usd IS NULL OR cost_usd >= 0)",
+      "fk": "",
+      "generated": "",
+      "src": "supabase/migrations/20261122200000_x076_talkx_ai_requests.sql"
+     },
+     {
+      "name": "status",
+      "type": "text NOT NULL CHECK (status IN ('ok', 'error'))",
+      "fk": "",
+      "generated": "",
+      "src": "supabase/migrations/20261122200000_x076_talkx_ai_requests.sql"
+     },
+     {
+      "name": "created_by",
+      "type": "uuid NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE",
+      "fk": "users.id ON DELETE CASCADE",
+      "generated": "",
+      "src": "supabase/migrations/20261122200000_x076_talkx_ai_requests.sql"
+     },
+     {
+      "name": "created_at",
+      "type": "timestamptz NOT NULL DEFAULT now()",
+      "fk": "",
+      "generated": "",
+      "src": "supabase/migrations/20261122200000_x076_talkx_ai_requests.sql"
+     }
+    ],
+    "constraints": [],
+    "src": "supabase/migrations/20261122200000_x076_talkx_ai_requests.sql",
+    "comment": "X076 — trilha de toda chamada de IA do Talk X: teto mensal, limite diario e cache de 24 h. cost_usd NULO = sem tarifa em ai_model_prices, nunca zero.",
+    "origin": "migration"
+   },
    "talkx_template_versions": {
     "columns": [
      {
@@ -18129,162 +18285,6 @@
     "constraints": [],
     "src": "supabase/migrations/20261113170200_away_message_rpcs.sql",
     "comment": "Registro de envio da mensagem de ausência por contato+conexão (janela de 24 h consultada por should_send_away_message). Só service_role, via RPC.",
-    "origin": "migration"
-   },
-   "assistant_profiles": {
-    "columns": [
-     {
-      "name": "user_id",
-      "type": "UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE",
-      "fk": "users.id ON DELETE CASCADE",
-      "generated": "",
-      "src": "supabase/migrations/20261121190000_assistant_profiles.sql"
-     },
-     {
-      "name": "atividade",
-      "type": "TEXT NOT NULL DEFAULT 'atendimento' CHECK (atividade IN ('venda', 'compra', 'atendimento', 'supervisao'))",
-      "fk": "",
-      "generated": "",
-      "src": "supabase/migrations/20261121190000_assistant_profiles.sql"
-     },
-     {
-      "name": "foco",
-      "type": "TEXT NOT NULL DEFAULT ''",
-      "fk": "",
-      "generated": "",
-      "src": "supabase/migrations/20261121190000_assistant_profiles.sql"
-     },
-     {
-      "name": "ajuda",
-      "type": "TEXT NOT NULL DEFAULT 'relevante' CHECK (ajuda IN ('sempre', 'relevante', 'sob_demanda'))",
-      "fk": "",
-      "generated": "",
-      "src": "supabase/migrations/20261121190000_assistant_profiles.sql"
-     },
-     {
-      "name": "tom",
-      "type": "TEXT NOT NULL DEFAULT 'consultivo' CHECK (tom IN ('direto', 'consultivo', 'formal'))",
-      "fk": "",
-      "generated": "",
-      "src": "supabase/migrations/20261121190000_assistant_profiles.sql"
-     },
-     {
-      "name": "created_at",
-      "type": "TIMESTAMPTZ NOT NULL DEFAULT now()",
-      "fk": "",
-      "generated": "",
-      "src": "supabase/migrations/20261121190000_assistant_profiles.sql"
-     },
-     {
-      "name": "updated_at",
-      "type": "TIMESTAMPTZ NOT NULL DEFAULT now()",
-      "fk": "",
-      "generated": "",
-      "src": "supabase/migrations/20261121190000_assistant_profiles.sql"
-     }
-    ],
-    "constraints": [],
-    "src": "supabase/migrations/20261121190000_assistant_profiles.sql",
-    "comment": "",
-    "origin": "migration"
-   },
-   "talkx_ai_requests": {
-    "columns": [
-     {
-      "name": "id",
-      "type": "uuid PRIMARY KEY DEFAULT gen_random_uuid()",
-      "fk": "",
-      "generated": "",
-      "src": "supabase/migrations/20261122200000_x076_talkx_ai_requests.sql"
-     },
-     {
-      "name": "kind",
-      "type": "text NOT NULL CHECK (kind IN ('insight_text', 'message_variation', 'segment_suggestion'))",
-      "fk": "",
-      "generated": "",
-      "src": "supabase/migrations/20261122200000_x076_talkx_ai_requests.sql"
-     },
-     {
-      "name": "entity_type",
-      "type": "text",
-      "fk": "",
-      "generated": "",
-      "src": "supabase/migrations/20261122200000_x076_talkx_ai_requests.sql"
-     },
-     {
-      "name": "entity_id",
-      "type": "text",
-      "fk": "",
-      "generated": "",
-      "src": "supabase/migrations/20261122200000_x076_talkx_ai_requests.sql"
-     },
-     {
-      "name": "input_hash",
-      "type": "text NOT NULL",
-      "fk": "",
-      "generated": "",
-      "src": "supabase/migrations/20261122200000_x076_talkx_ai_requests.sql"
-     },
-     {
-      "name": "output",
-      "type": "jsonb",
-      "fk": "",
-      "generated": "",
-      "src": "supabase/migrations/20261122200000_x076_talkx_ai_requests.sql"
-     },
-     {
-      "name": "model",
-      "type": "text",
-      "fk": "",
-      "generated": "",
-      "src": "supabase/migrations/20261122200000_x076_talkx_ai_requests.sql"
-     },
-     {
-      "name": "tokens_in",
-      "type": "integer NOT NULL DEFAULT 0 CHECK (tokens_in >= 0)",
-      "fk": "",
-      "generated": "",
-      "src": "supabase/migrations/20261122200000_x076_talkx_ai_requests.sql"
-     },
-     {
-      "name": "tokens_out",
-      "type": "integer NOT NULL DEFAULT 0 CHECK (tokens_out >= 0)",
-      "fk": "",
-      "generated": "",
-      "src": "supabase/migrations/20261122200000_x076_talkx_ai_requests.sql"
-     },
-     {
-      "name": "cost_usd",
-      "type": "numeric(18, 8) CHECK (cost_usd IS NULL OR cost_usd >= 0)",
-      "fk": "",
-      "generated": "",
-      "src": "supabase/migrations/20261122200000_x076_talkx_ai_requests.sql"
-     },
-     {
-      "name": "status",
-      "type": "text NOT NULL CHECK (status IN ('ok', 'error'))",
-      "fk": "",
-      "generated": "",
-      "src": "supabase/migrations/20261122200000_x076_talkx_ai_requests.sql"
-     },
-     {
-      "name": "created_by",
-      "type": "uuid NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE",
-      "fk": "users.id ON DELETE CASCADE",
-      "generated": "",
-      "src": "supabase/migrations/20261122200000_x076_talkx_ai_requests.sql"
-     },
-     {
-      "name": "created_at",
-      "type": "timestamptz NOT NULL DEFAULT now()",
-      "fk": "",
-      "generated": "",
-      "src": "supabase/migrations/20261122200000_x076_talkx_ai_requests.sql"
-     }
-    ],
-    "constraints": [],
-    "src": "supabase/migrations/20261122200000_x076_talkx_ai_requests.sql",
-    "comment": "X076 — trilha de toda chamada de IA do Talk X: teto mensal, limite diario e cache de 24 h. cost_usd NULO = sem tarifa em ai_model_prices, nunca zero.",
     "origin": "migration"
    },
    "auth.users": {
@@ -45822,6 +45822,12 @@
     "src": "docs/contexto/supabase/migrations/20261002601230_searchbox_budget_alert_cron.sql"
    },
    {
+    "job": "send-scheduled-report-trigger",
+    "schedule": "*/2 * * * *",
+    "body": "SELECT public.trigger_due_scheduled_report_configs()",
+    "src": "docs/contexto/supabase/migrations/20261120080000_scheduled_report_cron.sql"
+   },
+   {
     "job": "cleanup-link-preview-cache",
     "schedule": "0 3 * * *",
     "body": "SELECT public.cleanup_link_preview_cache()",
@@ -47202,6 +47208,11 @@
    "docs/contexto/supabase/migrations/20261118210000_talkx_next_recipients_variant_id.sql",
    "docs/contexto/supabase/migrations/20261118220000_talkx_snapshot_variante_primeiro_vale.sql",
    "docs/contexto/supabase/migrations/20261119010000_talkx_set_campaign_ab.sql",
+   "docs/contexto/supabase/migrations/20261120080000_scheduled_report_cron.sql",
+   "docs/contexto/supabase/migrations/20261121190000_assistant_profiles.sql",
+   "docs/contexto/supabase/migrations/20261122190000_ia055_precos_entrada_e_saida.sql",
+   "docs/contexto/supabase/migrations/20261122200000_x076_talkx_ai_requests.sql",
+   "docs/contexto/supabase/migrations/20261124120000_drop_rpcs_e2e_orfas.sql",
    "docs/migration/source-ddl/contacts_inbound_fks.sql",
    "docs/migration/source-ddl/functions_views.sql",
    "docs/migration/source-ddl/table_contacts.sql",
@@ -49865,22 +49876,6 @@
     "objkind": "function",
     "roles": "authenticated",
     "src": "docs/contexto/supabase/migrations/20261108211000_talkx_campaign_resume_precheck.sql"
-   },
-   {
-    "kind": "revoke",
-    "privs": "all",
-    "object": "talkx_next_recipients",
-    "objkind": "function",
-    "roles": "PUBLIC, anon, authenticated",
-    "src": "docs/contexto/supabase/migrations/20261118210000_talkx_next_recipients_variant_id.sql"
-   },
-   {
-    "kind": "grant",
-    "privs": "execute",
-    "object": "talkx_next_recipients",
-    "objkind": "function",
-    "roles": "service_role",
-    "src": "docs/contexto/supabase/migrations/20261118210000_talkx_next_recipients_variant_id.sql"
    },
    {
     "kind": "grant",
@@ -69134,6 +69129,9 @@
    "column:talkx_campaigns.ab_enabled": "X065 — quando true, o snapshot de audiencia grava a variante de cada destinatario.",
    "column:talkx_campaigns.ab_metric": "X065 — metrica que decide a vencedora: reply_rate, click_rate ou delivery_rate.",
    "column:talkx_campaigns.ab_min_sample": "X065 — amostra minima POR VARIANTE para a decisao automatica aceitar um vencedor.",
+   "table:talkx_ai_requests": "X076 — trilha de toda chamada de IA do Talk X: teto mensal, limite diario e cache de 24 h. cost_usd NULO = sem tarifa em ai_model_prices, nunca zero.",
+   "column:talkx_ai_requests.input_hash": "SHA-256 do kind + entrada canonica. Mesmo hash dentro de 24 h devolve o output do cache sem pagar de novo.",
+   "column:talkx_ai_requests.cost_usd": "Custo medido pela tarifa vigente (ai_model_prices). NULO quando o modelo nao tem tarifa — nao somar como zero.",
    "column:contact_identity_map.lid": "Linked-Device ID — identificador de 14-18 dígitos sem DDI E.164 válido",
    "column:contact_identity_map.jid": "JID real — phone E.164 válido (ex: 5511999999999)",
    "column:contact_identity_map.source": "Origem do mapeamento: SenderAlt (webhook), manual, inference",
@@ -69211,10 +69209,7 @@
    "column:search_events.term_length": "Comprimento do termo digitado. O termo em si nunca e gravado (nem hash).",
    "column:search_events.had_results": "falso = a busca nao devolveu nenhum resultado.",
    "column:search_events.result_kind": "Tipo do resultado clicado; null quando nao houve clique.",
-   "column:copilot_sessions.brinde_state": "CV-026 -- estado acumulado B.R.I.N.D.E da sessao; atualizado atomicamente por merge_brinde_state().",
-   "table:talkx_ai_requests": "X076 — trilha de toda chamada de IA do Talk X: teto mensal, limite diario e cache de 24 h. cost_usd NULO = sem tarifa em ai_model_prices, nunca zero.",
-   "column:talkx_ai_requests.input_hash": "SHA-256 do kind + entrada canonica. Mesmo hash dentro de 24 h devolve o output do cache sem pagar de novo.",
-   "column:talkx_ai_requests.cost_usd": "Custo medido pela tarifa vigente (ai_model_prices). NULO quando o modelo nao tem tarifa — nao somar como zero."
+   "column:copilot_sessions.brinde_state": "CV-026 -- estado acumulado B.R.I.N.D.E da sessao; atualizado atomicamente por merge_brinde_state()."
   },
   "types_file": "src/integrations/supabase/types.ts"
  },
@@ -75425,8 +75420,8 @@
   },
   {
    "module": "docs",
-   "files": 1861,
-   "lines": 122292,
+   "files": 1868,
+   "lines": 122916,
    "tables": [
     "department_invites",
     "departments",
@@ -84273,13 +84268,13 @@
     "catalog_favorites",
     "agent_presence",
     "gmail_oauth_states",
+    "assistant_profiles",
+    "talkx_ai_requests",
     "message_favorites",
     "message_pins",
     "message_reports",
     "sla_alert_preferences",
-    "connection_alert_preferences",
-    "assistant_profiles",
-    "talkx_ai_requests"
+    "connection_alert_preferences"
    ],
    "profiles": [
     "client_wallet_rules",
@@ -112142,6 +112137,86 @@
     "rule": "default now()"
    },
    {
+    "table": "assistant_profiles",
+    "column": "user_id",
+    "rule": "PK; FK → users.id ON DELETE CASCADE"
+   },
+   {
+    "table": "assistant_profiles",
+    "column": "atividade",
+    "rule": "default 'atendimento'; CHECK atividade IN ('venda', 'compra', 'atendimento', 'supervisao')"
+   },
+   {
+    "table": "assistant_profiles",
+    "column": "foco",
+    "rule": "default ''"
+   },
+   {
+    "table": "assistant_profiles",
+    "column": "ajuda",
+    "rule": "default 'relevante'; CHECK ajuda IN ('sempre', 'relevante', 'sob_demanda')"
+   },
+   {
+    "table": "assistant_profiles",
+    "column": "tom",
+    "rule": "default 'consultivo'; CHECK tom IN ('direto', 'consultivo', 'formal')"
+   },
+   {
+    "table": "assistant_profiles",
+    "column": "created_at",
+    "rule": "default now()"
+   },
+   {
+    "table": "assistant_profiles",
+    "column": "updated_at",
+    "rule": "default now()"
+   },
+   {
+    "table": "talkx_ai_requests",
+    "column": "id",
+    "rule": "PK; default gen_random_uuid()"
+   },
+   {
+    "table": "talkx_ai_requests",
+    "column": "kind",
+    "rule": "obrigatório; CHECK kind IN ('insight_text', 'message_variation', 'segment_suggestion')"
+   },
+   {
+    "table": "talkx_ai_requests",
+    "column": "input_hash",
+    "rule": "obrigatório"
+   },
+   {
+    "table": "talkx_ai_requests",
+    "column": "tokens_in",
+    "rule": "default 0; CHECK tokens_in >= 0"
+   },
+   {
+    "table": "talkx_ai_requests",
+    "column": "tokens_out",
+    "rule": "default 0; CHECK tokens_out >= 0"
+   },
+   {
+    "table": "talkx_ai_requests",
+    "column": "cost_usd",
+    "rule": "CHECK cost_usd IS NULL OR cost_usd >= 0"
+   },
+   {
+    "table": "talkx_ai_requests",
+    "column": "status",
+    "rule": "obrigatório; CHECK status IN ('ok', 'error')"
+   },
+   {
+    "table": "talkx_ai_requests",
+    "column": "created_by",
+    "rule": "obrigatório; FK → users.id ON DELETE CASCADE"
+   },
+   {
+    "table": "talkx_ai_requests",
+    "column": "created_at",
+    "rule": "default now()"
+   },
+   {
     "table": "talkx_template_versions",
     "column": "id",
     "rule": "PK; default gen_random_uuid()"
@@ -113504,86 +113579,6 @@
    {
     "table": "away_message_log",
     "column": "sent_at",
-    "rule": "default now()"
-   },
-   {
-    "table": "assistant_profiles",
-    "column": "user_id",
-    "rule": "PK; FK → users.id ON DELETE CASCADE"
-   },
-   {
-    "table": "assistant_profiles",
-    "column": "atividade",
-    "rule": "default 'atendimento'; CHECK atividade IN ('venda', 'compra', 'atendimento', 'supervisao')"
-   },
-   {
-    "table": "assistant_profiles",
-    "column": "foco",
-    "rule": "default ''"
-   },
-   {
-    "table": "assistant_profiles",
-    "column": "ajuda",
-    "rule": "default 'relevante'; CHECK ajuda IN ('sempre', 'relevante', 'sob_demanda')"
-   },
-   {
-    "table": "assistant_profiles",
-    "column": "tom",
-    "rule": "default 'consultivo'; CHECK tom IN ('direto', 'consultivo', 'formal')"
-   },
-   {
-    "table": "assistant_profiles",
-    "column": "created_at",
-    "rule": "default now()"
-   },
-   {
-    "table": "assistant_profiles",
-    "column": "updated_at",
-    "rule": "default now()"
-   },
-   {
-    "table": "talkx_ai_requests",
-    "column": "id",
-    "rule": "PK; default gen_random_uuid()"
-   },
-   {
-    "table": "talkx_ai_requests",
-    "column": "kind",
-    "rule": "obrigatório; CHECK kind IN ('insight_text', 'message_variation', 'segment_suggestion')"
-   },
-   {
-    "table": "talkx_ai_requests",
-    "column": "input_hash",
-    "rule": "obrigatório"
-   },
-   {
-    "table": "talkx_ai_requests",
-    "column": "tokens_in",
-    "rule": "default 0; CHECK tokens_in >= 0"
-   },
-   {
-    "table": "talkx_ai_requests",
-    "column": "tokens_out",
-    "rule": "default 0; CHECK tokens_out >= 0"
-   },
-   {
-    "table": "talkx_ai_requests",
-    "column": "cost_usd",
-    "rule": "CHECK cost_usd IS NULL OR cost_usd >= 0"
-   },
-   {
-    "table": "talkx_ai_requests",
-    "column": "status",
-    "rule": "obrigatório; CHECK status IN ('ok', 'error')"
-   },
-   {
-    "table": "talkx_ai_requests",
-    "column": "created_by",
-    "rule": "obrigatório; FK → users.id ON DELETE CASCADE"
-   },
-   {
-    "table": "talkx_ai_requests",
-    "column": "created_at",
     "rule": "default now()"
    },
    {
@@ -254118,6 +254113,17 @@
      "type": "text not null"
     },
     {
+     "table": "talkx_ai_requests",
+     "column": "status",
+     "enum": "",
+     "allowed": [
+      "error",
+      "ok"
+     ],
+     "default": "",
+     "type": "text NOT NULL CHECK (status IN ('ok', 'error'))"
+    },
+    {
      "table": "talkx_template_versions",
      "column": "status",
      "enum": "",
@@ -254231,17 +254237,6 @@
      "allowed": [],
      "default": "pending_review",
      "type": "TEXT NOT NULL DEFAULT 'pending_review'"
-    },
-    {
-     "table": "talkx_ai_requests",
-     "column": "status",
-     "enum": "",
-     "allowed": [
-      "error",
-      "ok"
-     ],
-     "default": "",
-     "type": "text NOT NULL CHECK (status IN ('ok', 'error'))"
     },
     {
      "table": "_zapp_mig133_log",
@@ -260754,6 +260749,8 @@
    "docs/contexto/supabase/migrations/20261118210000_talkx_next_recipients_variant_id.sql",
    "docs/contexto/supabase/migrations/20261118220000_talkx_snapshot_variante_primeiro_vale.sql",
    "docs/contexto/supabase/migrations/20261119010000_talkx_set_campaign_ab.sql",
+   "docs/contexto/supabase/migrations/20261120080000_scheduled_report_cron.sql",
+   "docs/contexto/supabase/migrations/20261122190000_ia055_precos_entrada_e_saida.sql",
    "docs/migration/source-ddl/table_gmail_accounts.sql",
    "docs/reconciliation/reaudit/2026-10-03/probes/auth/source-probes.cjs",
    "docs/reconciliation/reaudit/2026-10-03/reports/database/build_report.py",
@@ -263166,22 +263163,6 @@
     "objkind": "function",
     "roles": "authenticated",
     "src": "docs/contexto/supabase/migrations/20261108211000_talkx_campaign_resume_precheck.sql"
-   },
-   {
-    "kind": "revoke",
-    "privs": "all",
-    "object": "talkx_next_recipients",
-    "objkind": "function",
-    "roles": "PUBLIC, anon, authenticated",
-    "src": "docs/contexto/supabase/migrations/20261118210000_talkx_next_recipients_variant_id.sql"
-   },
-   {
-    "kind": "grant",
-    "privs": "execute",
-    "object": "talkx_next_recipients",
-    "objkind": "function",
-    "roles": "service_role",
-    "src": "docs/contexto/supabase/migrations/20261118210000_talkx_next_recipients_variant_id.sql"
    },
    {
     "kind": "grant",
@@ -278036,6 +278017,14 @@
     "created_at",
     "created_by"
    ],
+   "assistant_profiles": [
+    "created_at",
+    "updated_at"
+   ],
+   "talkx_ai_requests": [
+    "created_at",
+    "created_by"
+   ],
    "talkx_template_versions": [
     "created_at"
    ],
@@ -278152,14 +278141,6 @@
     "updated_at"
    ],
    "away_message_log": [],
-   "assistant_profiles": [
-    "created_at",
-    "updated_at"
-   ],
-   "talkx_ai_requests": [
-    "created_at",
-    "created_by"
-   ],
    "auth.users": [],
    "storage.buckets": [],
    "storage.objects": [],
@@ -278343,6 +278324,11 @@
     "TEXT"
    ],
    [
+    "talkx_ai_requests",
+    "cost_usd",
+    "numeric(18,"
+   ],
+   [
     "talkx_template_versions",
     "custom_variables",
     "text[]"
@@ -278356,11 +278342,6 @@
     "talkx_segment_library_history",
     "total_segments",
     "integer"
-   ],
-   [
-    "talkx_ai_requests",
-    "cost_usd",
-    "numeric(18,"
    ]
   ]
  },
@@ -281256,7 +281237,7 @@
   },
   "docs/contexto/supabase/functions/public/ai_usage_cost_summary__912132d06dbc1b34.sql": {
    "path": "docs/contexto/supabase/functions/public/ai_usage_cost_summary__912132d06dbc1b34.sql",
-   "lines": 120
+   "lines": 196
   },
   "docs/contexto/supabase/functions/public/ai_usage_summary__65c7c26561a4ef66.sql": {
    "path": "docs/contexto/supabase/functions/public/ai_usage_summary__65c7c26561a4ef66.sql",
@@ -281965,6 +281946,10 @@
    "path": "docs/contexto/supabase/functions/public/get_profile_role_for_check__3f8eaa7e0f000602.sql",
    "lines": 13
   },
+  "docs/contexto/supabase/functions/public/get_scheduled_report_cron_secret__12ae32cb1ec02d01.sql": {
+   "path": "docs/contexto/supabase/functions/public/get_scheduled_report_cron_secret__12ae32cb1ec02d01.sql",
+   "lines": 12
+  },
   "docs/contexto/supabase/functions/public/get_send_metrics__7ba1a44d5adcfb5e.sql": {
    "path": "docs/contexto/supabase/functions/public/get_send_metrics__7ba1a44d5adcfb5e.sql",
    "lines": 128,
@@ -282096,7 +282081,7 @@
   },
   "docs/contexto/supabase/functions/public/has_role__582c15feaee5796c.sql": {
    "path": "docs/contexto/supabase/functions/public/has_role__582c15feaee5796c.sql",
-   "lines": 12
+   "lines": 15
   },
   "docs/contexto/supabase/functions/public/heartbeat_ai_job__1eafbd26938e2f84.sql": {
    "path": "docs/contexto/supabase/functions/public/heartbeat_ai_job__1eafbd26938e2f84.sql",
@@ -282150,11 +282135,11 @@
   },
   "docs/contexto/supabase/functions/public/is_admin__e207a757f8e4efc0.sql": {
    "path": "docs/contexto/supabase/functions/public/is_admin__e207a757f8e4efc0.sql",
-   "lines": 12
+   "lines": 15
   },
   "docs/contexto/supabase/functions/public/is_admin_or_supervisor__e207a757f8e4efc0.sql": {
    "path": "docs/contexto/supabase/functions/public/is_admin_or_supervisor__e207a757f8e4efc0.sql",
-   "lines": 12
+   "lines": 15
   },
   "docs/contexto/supabase/functions/public/is_contact_visible_to_user__7cbf00919796f46a.sql": {
    "path": "docs/contexto/supabase/functions/public/is_contact_visible_to_user__7cbf00919796f46a.sql",
@@ -283189,7 +283174,7 @@
   },
   "docs/contexto/supabase/functions/public/talkx_next_recipients__fcafbf6cc8ff8a95.sql": {
    "path": "docs/contexto/supabase/functions/public/talkx_next_recipients__fcafbf6cc8ff8a95.sql",
-   "lines": 50,
+   "lines": 51,
    "uses_service_role": true
   },
   "docs/contexto/supabase/functions/public/talkx_normalize_optout_text__ef8014110eb40895.sql": {
@@ -283417,6 +283402,10 @@
   "docs/contexto/supabase/functions/public/trigger_crm_sync_outbox__12ae32cb1ec02d01.sql": {
    "path": "docs/contexto/supabase/functions/public/trigger_crm_sync_outbox__12ae32cb1ec02d01.sql",
    "lines": 17
+  },
+  "docs/contexto/supabase/functions/public/trigger_due_scheduled_report_configs__12ae32cb1ec02d01.sql": {
+   "path": "docs/contexto/supabase/functions/public/trigger_due_scheduled_report_configs__12ae32cb1ec02d01.sql",
+   "lines": 34
   },
   "docs/contexto/supabase/functions/public/trigger_pending_multiplix_dispatches__12ae32cb1ec02d01.sql": {
    "path": "docs/contexto/supabase/functions/public/trigger_pending_multiplix_dispatches__12ae32cb1ec02d01.sql",
@@ -288603,7 +288592,7 @@
   },
   "docs/contexto/supabase/migrations/20261118210000_talkx_next_recipients_variant_id.sql": {
    "path": "docs/contexto/supabase/migrations/20261118210000_talkx_next_recipients_variant_id.sql",
-   "lines": 113,
+   "lines": 114,
    "uses_service_role": true
   },
   "docs/contexto/supabase/migrations/20261118220000_talkx_snapshot_variante_primeiro_vale.sql": {
@@ -288615,6 +288604,28 @@
    "path": "docs/contexto/supabase/migrations/20261119010000_talkx_set_campaign_ab.sql",
    "lines": 117,
    "uses_service_role": true
+  },
+  "docs/contexto/supabase/migrations/20261120080000_scheduled_report_cron.sql": {
+   "path": "docs/contexto/supabase/migrations/20261120080000_scheduled_report_cron.sql",
+   "lines": 86,
+   "uses_service_role": true
+  },
+  "docs/contexto/supabase/migrations/20261121190000_assistant_profiles.sql": {
+   "path": "docs/contexto/supabase/migrations/20261121190000_assistant_profiles.sql",
+   "lines": 47
+  },
+  "docs/contexto/supabase/migrations/20261122190000_ia055_precos_entrada_e_saida.sql": {
+   "path": "docs/contexto/supabase/migrations/20261122190000_ia055_precos_entrada_e_saida.sql",
+   "lines": 301,
+   "uses_service_role": true
+  },
+  "docs/contexto/supabase/migrations/20261122200000_x076_talkx_ai_requests.sql": {
+   "path": "docs/contexto/supabase/migrations/20261122200000_x076_talkx_ai_requests.sql",
+   "lines": 53
+  },
+  "docs/contexto/supabase/migrations/20261124120000_drop_rpcs_e2e_orfas.sql": {
+   "path": "docs/contexto/supabase/migrations/20261124120000_drop_rpcs_e2e_orfas.sql",
+   "lines": 4
   },
   "docs/dashboard/rls-snapshot-2026-09.sql": {
    "path": "docs/dashboard/rls-snapshot-2026-09.sql",
@@ -424182,10 +424193,306 @@
   }
  },
  "git": {
-  "sha": "5191812994ef42c100afe9d3afff331a266a4a57",
+  "sha": "1d87b06fe7459ae259e7e767329e4d85dc65dcdb",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "1d87b06f",
+    "date": "2026-11-25",
+    "author": "adm01-debug",
+    "subject": "chore(lint): reancora baseline nas posicoes atuais (divida inalterada, 540 = 540) (#3373)",
+    "files": [
+     "scripts/ci/eslint-baseline.json"
+    ]
+   },
+   {
+    "sha": "3be6edc8",
+    "date": "2026-11-25",
+    "author": "adm01-debug",
+    "subject": "chore: sincroniza docs/contexto com a publicacao oficial (mapa deixa de citar 149 caminhos mortos) (#3372)",
+    "files": [
+     "docs/contexto/00-INDEX.md",
+     "docs/contexto/codigo/GRAPH_REPORT.md",
+     "docs/contexto/codigo/INDEX.md",
+     "docs/contexto/codigo/banco.json",
+     "docs/contexto/codigo/baseline.json",
+     "docs/contexto/codigo/componentes.json",
+     "docs/contexto/codigo/convencoes.json",
+     "docs/contexto/codigo/edge-functions.json",
+     "docs/contexto/codigo/ferramentas.json",
+     "docs/contexto/codigo/grafo-arestas.json",
+     "docs/contexto/codigo/grafo-graphify.json",
+     "docs/contexto/codigo/grafo.json",
+     "docs/contexto/codigo/hooks.json",
+     "docs/contexto/codigo/logica.json",
+     "docs/contexto/codigo/manifest.json",
+     "docs/contexto/codigo/modulos.json",
+     "docs/contexto/codigo/rotas.json",
+     "docs/contexto/codigo/scripts.json",
+     "docs/contexto/codigo/testes.json",
+     "docs/contexto/regras/07-REGRAS-DE-NEGOCIO.md",
+     "docs/contexto/regras/10-ACESSO-E-SEGURANCA.md",
+     "docs/contexto/regras/11-GLOSSARIO-E-LACUNAS.md",
+     "docs/contexto/regras/context.json",
+     "docs/contexto/regras/manifest.json",
+     "docs/contexto/supabase/CHANGELOG.md",
+     "docs/contexto/supabase/README.md",
+     "docs/contexto/supabase/functions.md",
+     "docs/contexto/supabase/functions/public/ai_usage_cost_summary__912132d06dbc1b34.sql",
+     "docs/contexto/supabase/functions/public/get_scheduled_report_cron_secret__12ae32cb1ec02d01.sql",
+     "docs/contexto/supabase/functions/public/has_role__582c15feaee5796c.sql",
+     "docs/contexto/supabase/functions/public/is_admin__e207a757f8e4efc0.sql",
+     "docs/contexto/supabase/functions/public/is_admin_or_supervisor__e207a757f8e4efc0.sql",
+     "docs/contexto/supabase/functions/public/talkx_next_recipients__fcafbf6cc8ff8a95.sql",
+     "docs/contexto/supabase/functions/public/trigger_due_scheduled_report_configs__12ae32cb1ec02d01.sql",
+     "docs/contexto/supabase/indexes.md",
+     "docs/contexto/supabase/lints.md",
+     "docs/contexto/supabase/manifest.json",
+     "docs/contexto/supabase/migrations.md",
+     "docs/contexto/supabase/migrations/20261118210000_talkx_next_recipients_variant_id.sql",
+     "docs/contexto/supabase/migrations/20261120080000_scheduled_report_cron.sql",
+     "docs/contexto/supabase/migrations/20261121190000_assistant_profiles.sql",
+     "docs/contexto/supabase/migrations/20261122190000_ia055_precos_entrada_e_saida.sql",
+     "docs/contexto/supabase/migrations/20261122200000_x076_talkx_ai_requests.sql",
+     "docs/contexto/supabase/migrations/20261124120000_drop_rpcs_e2e_orfas.sql",
+     "docs/contexto/supabase/policies.md",
+     "docs/contexto/supabase/realtime.md",
+     "docs/contexto/supabase/relationships.md",
+     "docs/contexto/supabase/schemas.md",
+     "docs/contexto/supabase/snapshot.json",
+     "docs/contexto/supabase/stats.json",
+     "docs/contexto/supabase/stats.md",
+     "docs/contexto/supabase/tables.md",
+     "docs/contexto/supabase/tables/bkp_261023/agent_stats.md",
+     "docs/contexto/supabase/tables/bkp_261023/contacts.md",
+     "docs/contexto/supabase/tables/bkp_261023/csat_surveys.md",
+     "docs/contexto/supabase/tables/bkp_261023/functions_before.md",
+     "docs/contexto/supabase/tables/bkp_261023/global_settings.md",
+     "docs/contexto/supabase/tables/bkp_261023/policies_before.md",
+     "docs/contexto/supabase/tables/bkp_261023/schema_migrations.md",
+     "docs/contexto/supabase/tables/bkp_261023/team_messages.md",
+     "docs/contexto/supabase/tables/bkp_261023/user_settings.md",
+     "docs/contexto/supabase/tables/ops/hermes_change_log.md",
+     "docs/contexto/supabase/tables/public/agent_achievements.md",
+     "docs/contexto/supabase/tables/public/agent_mini_game_xp_daily.md",
+     "docs/contexto/supabase/tables/public/agent_presence.md",
+     "docs/contexto/supabase/tables/public/agent_skills.md",
+     "docs/contexto/supabase/tables/public/agent_stats.md",
+     "docs/contexto/supabase/tables/public/agent_visibility_grants.md",
+     "docs/contexto/supabase/tables/public/ai_budget_reservations.md",
+     "docs/contexto/supabase/tables/public/ai_conversation_tags.md",
+     "docs/contexto/supabase/tables/public/ai_jobs.md",
+     "docs/contexto/supabase/tables/public/ai_model_prices.md",
+     "docs/contexto/supabase/tables/public/ai_providers.md",
+     "docs/contexto/supabase/tables/public/ai_usage_logs.md",
+     "docs/contexto/supabase/tables/public/ai_usage_outbox.md",
+     "docs/contexto/supabase/tables/public/allowed_countries.md",
+     "docs/contexto/supabase/tables/public/app_settings.md",
+     "docs/contexto/supabase/tables/public/assistant_profiles.md",
+     "docs/contexto/supabase/tables/public/audio_meme_favorites.md",
+     "docs/contexto/supabase/tables/public/audio_memes.md",
+     "docs/contexto/supabase/tables/public/audit_logs.md",
+     "docs/contexto/supabase/tables/public/auto_close_config.md",
+     "docs/contexto/supabase/tables/public/automations.md",
+     "docs/contexto/supabase/tables/public/away_message_log.md",
+     "docs/contexto/supabase/tables/public/away_messages.md",
+     "docs/contexto/supabase/tables/public/blocked_countries.md",
+     "docs/contexto/supabase/tables/public/blocked_ips.md",
+     "docs/contexto/supabase/tables/public/business_hours.md",
+     "docs/contexto/supabase/tables/public/calls.md",
+     "docs/contexto/supabase/tables/public/campaign_ab_variants.md",
+     "docs/contexto/supabase/tables/public/campaign_contacts.md",
+     "docs/contexto/supabase/tables/public/campaigns.md",
+     "docs/contexto/supabase/tables/public/catalog_favorites.md",
+     "docs/contexto/supabase/tables/public/catalog_rate_limit_hits.md",
+     "docs/contexto/supabase/tables/public/catalog_rate_limits.md",
+     "docs/contexto/supabase/tables/public/catalog_send_events.md",
+     "docs/contexto/supabase/tables/public/channel_connections.md",
+     "docs/contexto/supabase/tables/public/channel_routing_rules.md",
+     "docs/contexto/supabase/tables/public/chatbot_executions.md",
+     "docs/contexto/supabase/tables/public/chatbot_flows.md",
+     "docs/contexto/supabase/tables/public/client_wallet_rules.md",
+     "docs/contexto/supabase/tables/public/connection_alert_preferences.md",
+     "docs/contexto/supabase/tables/public/connection_health_logs.md",
+     "docs/contexto/supabase/tables/public/contact_block_audit.md",
+     "docs/contexto/supabase/tables/public/contact_custom_fields.md",
+     "docs/contexto/supabase/tables/public/contact_deletion_audit.md",
+     "docs/contexto/supabase/tables/public/contact_identity_map.md",
+     "docs/contexto/supabase/tables/public/contact_notes.md",
+     "docs/contexto/supabase/tables/public/contact_protection_policy.md",
+     "docs/contexto/supabase/tables/public/contacts.md",
+     "docs/contexto/supabase/tables/public/conversation_analyses.md",
+     "docs/contexto/supabase/tables/public/conversation_closures.md",
+     "docs/contexto/supabase/tables/public/conversation_events.md",
+     "docs/contexto/supabase/tables/public/conversation_memory.md",
+     "docs/contexto/supabase/tables/public/conversation_sla.md",
+     "docs/contexto/supabase/tables/public/conversation_snoozes.md",
+     "docs/contexto/supabase/tables/public/conversation_tasks.md",
+     "docs/contexto/supabase/tables/public/copilot_conversation_scores.md",
+     "docs/contexto/supabase/tables/public/copilot_feedback.md",
+     "docs/contexto/supabase/tables/public/copilot_help_requests.md",
+     "docs/contexto/supabase/tables/public/copilot_insights.md",
+     "docs/contexto/supabase/tables/public/copilot_learning_moments.md",
+     "docs/contexto/supabase/tables/public/copilot_objection_catalog.md",
+     "docs/contexto/supabase/tables/public/copilot_outcomes.md",
+     "docs/contexto/supabase/tables/public/copilot_retention_aggregates.md",
+     "docs/contexto/supabase/tables/public/copilot_seller_settings.md",
+     "docs/contexto/supabase/tables/public/copilot_sessions.md",
+     "docs/contexto/supabase/tables/public/copilot_usage.md",
+     "docs/contexto/supabase/tables/public/crisis_room_alerts.md",
+     "docs/contexto/supabase/tables/public/crm_contact_links.md",
+     "docs/contexto/supabase/tables/public/crm_sync_outbox.md",
+     "docs/contexto/supabase/tables/public/csat_auto_config.md",
+     "docs/contexto/supabase/tables/public/csat_surveys.md",
+     "docs/contexto/supabase/tables/public/custom_emojis.md",
+     "docs/contexto/supabase/tables/public/deal_activities.md",
+     "docs/contexto/supabase/tables/public/department_audit_logs.md",
+     "docs/contexto/supabase/tables/public/department_invitations.md",
+     "docs/contexto/supabase/tables/public/department_invites.md",
+     "docs/contexto/supabase/tables/public/departments.md",
+     "docs/contexto/supabase/tables/public/edge_rate_limits.md",
+     "docs/contexto/supabase/tables/public/email_attachments.md",
+     "docs/contexto/supabase/tables/public/email_labels.md",
+     "docs/contexto/supabase/tables/public/email_messages.md",
+     "docs/contexto/supabase/tables/public/email_signatures.md",
+     "docs/contexto/supabase/tables/public/email_threads.md",
+     "docs/contexto/supabase/tables/public/entity_versions.md",
+     "docs/contexto/supabase/tables/public/favorite_contacts.md",
+     "docs/contexto/supabase/tables/public/feature_flags.md",
+     "docs/contexto/supabase/tables/public/followup_executions.md",
+     "docs/contexto/supabase/tables/public/followup_sequences.md",
+     "docs/contexto/supabase/tables/public/followup_steps.md",
+     "docs/contexto/supabase/tables/public/geo_blocking_settings.md",
+     "docs/contexto/supabase/tables/public/global_settings.md",
+     "docs/contexto/supabase/tables/public/gmail_accounts.md",
+     "docs/contexto/supabase/tables/public/gmail_oauth_states.md",
+     "docs/contexto/supabase/tables/public/goals_configurations.md",
+     "docs/contexto/supabase/tables/public/instance_pauses.md",
+     "docs/contexto/supabase/tables/public/ip_whitelist.md",
+     "docs/contexto/supabase/tables/public/knowledge_base_articles.md",
+     "docs/contexto/supabase/tables/public/knowledge_base_files.md",
+     "docs/contexto/supabase/tables/public/link_preview_cache.md",
+     "docs/contexto/supabase/tables/public/link_preview_cache_metrics.md",
+     "docs/contexto/supabase/tables/public/login_attempts.md",
+     "docs/contexto/supabase/tables/public/message_attempts.md",
+     "docs/contexto/supabase/tables/public/message_favorites.md",
+     "docs/contexto/supabase/tables/public/message_pins.md",
+     "docs/contexto/supabase/tables/public/message_reactions.md",
+     "docs/contexto/supabase/tables/public/message_reports.md",
+     "docs/contexto/supabase/tables/public/message_templates.md",
+     "docs/contexto/supabase/tables/public/messages.md",
+     "docs/contexto/supabase/tables/public/meta_capi_events.md",
+     "docs/contexto/supabase/tables/public/mfa_sessions.md",
+     "docs/contexto/supabase/tables/public/multiplix_audience_members.md",
+     "docs/contexto/supabase/tables/public/multiplix_audiences.md",
+     "docs/contexto/supabase/tables/public/multiplix_blocks.md",
+     "docs/contexto/supabase/tables/public/multiplix_delivery_items.md",
+     "docs/contexto/supabase/tables/public/multiplix_dispatches.md",
+     "docs/contexto/supabase/tables/public/multiplix_events.md",
+     "docs/contexto/supabase/tables/public/multiplix_recipients.md",
+     "docs/contexto/supabase/tables/public/multiplix_voice_assets.md",
+     "docs/contexto/supabase/tables/public/multiplix_voice_grants.md",
+     "docs/contexto/supabase/tables/public/notifications.md",
+     "docs/contexto/supabase/tables/public/nps_surveys.md",
+     "docs/contexto/supabase/tables/public/number_reputation.md",
+     "docs/contexto/supabase/tables/public/outbox_events.md",
+     "docs/contexto/supabase/tables/public/passkey_credentials.md",
+     "docs/contexto/supabase/tables/public/password_reset_requests.md",
+     "docs/contexto/supabase/tables/public/performance_snapshots.md",
+     "docs/contexto/supabase/tables/public/permissions.md",
+     "docs/contexto/supabase/tables/public/pinned_conversations.md",
+     "docs/contexto/supabase/tables/public/playbooks.md",
+     "docs/contexto/supabase/tables/public/products.md",
+     "docs/contexto/supabase/tables/public/profiles.md",
+     "docs/contexto/supabase/tables/public/qr_attempts.md",
+     "docs/contexto/supabase/tables/public/query_telemetry.md",
+     "docs/contexto/supabase/tables/public/queue_goals.md",
+     "docs/contexto/supabase/tables/public/queue_members.md",
+     "docs/contexto/supabase/tables/public/queue_positions.md",
+     "docs/contexto/supabase/tables/public/queue_skill_requirements.md",
+     "docs/contexto/supabase/tables/public/queues.md",
+     "docs/contexto/supabase/tables/public/rate_limit_configs.md",
+     "docs/contexto/supabase/tables/public/rate_limit_logs.md",
+     "docs/contexto/supabase/tables/public/rb_message_reactions_contato_20261007001008.md",
+     "docs/contexto/supabase/tables/public/rb_message_reactions_one_per_agent_20261107121000.md",
+     "docs/contexto/supabase/tables/public/reconnection_logs.md",
+     "docs/contexto/supabase/tables/public/reminders.md",
+     "docs/contexto/supabase/tables/public/role_permissions.md",
+     "docs/contexto/supabase/tables/public/sales_deals.md",
+     "docs/contexto/supabase/tables/public/sales_pipeline_stages.md",
+     "docs/contexto/supabase/tables/public/saved_filters.md",
+     "docs/contexto/supabase/tables/public/scheduled_messages.md",
+     "docs/contexto/supabase/tables/public/scheduled_report_configs.md",
+     "docs/contexto/supabase/tables/public/scheduled_reports.md",
+     "docs/contexto/supabase/tables/public/search_events.md",
+     "docs/contexto/supabase/tables/public/searchbox_budget_alert_cron.md",
+     "docs/contexto/supabase/tables/public/searchbox_budget_alert_emails.md",
+     "docs/contexto/supabase/tables/public/security_acl_alerts.md",
+     "docs/contexto/supabase/tables/public/security_alerts.md",
+     "docs/contexto/supabase/tables/public/sicoob_contact_mapping.md",
+     "docs/contexto/supabase/tables/public/sla_alert_events.md",
+     "docs/contexto/supabase/tables/public/sla_alert_preferences.md",
+     "docs/contexto/supabase/tables/public/sla_configurations.md",
+     "docs/contexto/supabase/tables/public/sla_rules.md",
+     "docs/contexto/supabase/tables/public/stickers.md",
+     "docs/contexto/supabase/tables/public/talkx_ai_requests.md",
+     "docs/contexto/supabase/tables/public/talkx_alerts.md",
+     "docs/contexto/supabase/tables/public/talkx_blacklist.md",
+     "docs/contexto/supabase/tables/public/talkx_campaign_events.md",
+     "docs/contexto/supabase/tables/public/talkx_campaign_segments.md",
+     "docs/contexto/supabase/tables/public/talkx_campaigns.md",
+     "docs/contexto/supabase/tables/public/talkx_contact_attributes.md",
+     "docs/contexto/supabase/tables/public/talkx_conversions.md",
+     "docs/contexto/supabase/tables/public/talkx_data_jobs.md",
+     "docs/contexto/supabase/tables/public/talkx_delivery_log.md",
+     "docs/contexto/supabase/tables/public/talkx_help_views.md",
+     "docs/contexto/supabase/tables/public/talkx_link_clicks.md",
+     "docs/contexto/supabase/tables/public/talkx_links.md",
+     "docs/contexto/supabase/tables/public/talkx_optout_keywords.md",
+     "docs/contexto/supabase/tables/public/talkx_recipients.md",
+     "docs/contexto/supabase/tables/public/talkx_segment_fields.md",
+     "docs/contexto/supabase/tables/public/talkx_segment_library_history.md",
+     "docs/contexto/supabase/tables/public/talkx_segment_versions.md",
+     "docs/contexto/supabase/tables/public/talkx_segments.md",
+     "docs/contexto/supabase/tables/public/talkx_settings.md",
+     "docs/contexto/supabase/tables/public/talkx_storage_purge_queue.md",
+     "docs/contexto/supabase/tables/public/talkx_suppression_reasons.md",
+     "docs/contexto/supabase/tables/public/talkx_template_variants.md",
+     "docs/contexto/supabase/tables/public/talkx_template_versions.md",
+     "docs/contexto/supabase/tables/public/talkx_templates.md",
+     "docs/contexto/supabase/tables/public/talkx_test_send_claims.md",
+     "docs/contexto/supabase/tables/public/talkx_test_sends.md",
+     "docs/contexto/supabase/tables/public/team_chat_media_acl_r2_db_020_rb.md",
+     "docs/contexto/supabase/tables/public/team_conversation_members.md",
+     "docs/contexto/supabase/tables/public/team_conversations.md",
+     "docs/contexto/supabase/tables/public/team_message_reactions.md",
+     "docs/contexto/supabase/tables/public/team_message_receipts.md",
+     "docs/contexto/supabase/tables/public/team_messages.md",
+     "docs/contexto/supabase/tables/public/training_sessions.md",
+     "docs/contexto/supabase/tables/public/user_devices.md",
+     "docs/contexto/supabase/tables/public/user_roles.md",
+     "docs/contexto/supabase/tables/public/user_service_accounts.md",
+     "docs/contexto/supabase/tables/public/user_sessions.md",
+     "docs/contexto/supabase/tables/public/user_settings.md",
+     "docs/contexto/supabase/tables/public/voice_command_logs.md",
+     "docs/contexto/supabase/tables/public/voip_profile_credentials.md",
+     "docs/contexto/supabase/tables/public/warroom_alerts.md",
+     "docs/contexto/supabase/tables/public/webauthn_challenges.md",
+     "docs/contexto/supabase/tables/public/webhook_failures.md",
+     "docs/contexto/supabase/tables/public/webhook_rate_limits.md",
+     "docs/contexto/supabase/tables/public/whatsapp_connection_queues.md",
+     "docs/contexto/supabase/tables/public/whatsapp_connections.md",
+     "docs/contexto/supabase/tables/public/whatsapp_flows.md",
+     "docs/contexto/supabase/tables/public/whatsapp_groups.md",
+     "docs/contexto/supabase/tables/public/whatsapp_templates.md",
+     "docs/contexto/supabase/tables/public/whisper_messages.md",
+     "docs/contexto/supabase/tables/public/zapp_fn_before.md",
+     "docs/contexto/supabase/tables/public/zapp_mig133_log.md",
+     "docs/contexto/supabase/vault.md",
+     "docs/contexto/supabase/views.md"
+    ]
+   },
    {
     "sha": "51918129",
     "date": "2026-11-25",
@@ -425538,38 +425845,11 @@
     "files": [
      ".github/workflows/scorecard.yml"
     ]
-   },
-   {
-    "sha": "684cc2c2",
-    "date": "2026-11-23",
-    "author": "adm01-debug",
-    "subject": "fix(transcricao): fallback de STT pelo OpenRouter e fim do 401 silencioso na voz (#3343)",
-    "files": [
-     "supabase/deployment-manifest.json",
-     "supabase/functions/ai-transcribe-audio/index.test.ts",
-     "supabase/functions/ai-transcribe-audio/index.ts",
-     "supabase/functions/ai-transcribe-audio/openrouter-stt.test.ts",
-     "supabase/functions/ai-transcribe-audio/openrouter-stt.ts"
-    ]
-   },
-   {
-    "sha": "9f13ab55",
-    "date": "2026-11-23",
-    "author": "dependabot[bot]",
-    "subject": "⬆️ ci: bump the codeql-action group across 1 directory with 3 updates (#3334)",
-    "files": [
-     ".github/workflows/codeql.yml",
-     ".github/workflows/scorecard.yml"
-    ]
    }
   ],
   "hot_files": [
    [
     "docs/agentes/github-ci.md",
-    3
-   ],
-   [
-    ".github/workflows/scorecard.yml",
     3
    ],
    [
@@ -425605,6 +425885,10 @@
     2
    ],
    [
+    ".github/workflows/scorecard.yml",
+    2
+   ],
+   [
     "scripts/ci/e2e-isolated-pull-image.unit.mjs",
     2
    ],
@@ -425617,31 +425901,31 @@
     2
    ],
    [
-    "analise-prs/resgate-261118-lote3/MANIFESTO.tsv",
+    "scripts/ci/eslint-baseline.json",
     1
    ],
    [
-    "analise-prs/resgate-261118-lote3/README.md",
+    "docs/contexto/00-INDEX.md",
     1
    ],
    [
-    "analise-prs/resgate-261118-lote3/VEREDITO.md",
+    "docs/contexto/codigo/GRAPH_REPORT.md",
     1
    ],
    [
-    "analise-prs/resgate-261118-lote3/automation/types-sync/scripts/db-audit/grants-baseline.json",
+    "docs/contexto/codigo/INDEX.md",
     1
    ],
    [
-    "analise-prs/resgate-261118-lote3/claude/busy-cannon-40szm9/PENDENCIAS.md",
+    "docs/contexto/codigo/banco.json",
     1
    ],
    [
-    "analise-prs/resgate-261118-lote3/claude/busy-cannon-40szm9/analise-prs/baseline/BASELINE.md",
+    "docs/contexto/codigo/baseline.json",
     1
    ],
    [
-    "analise-prs/resgate-261118-lote3/claude/busy-cannon-40szm9/analise-prs/baseline/build.txt",
+    "docs/contexto/codigo/componentes.json",
     1
    ]
   ]

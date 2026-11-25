@@ -1,7 +1,7 @@
 # Contexto do projeto para agentes de IA
 
 GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.
-Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR dela) a cada push em `main` e a cada 10 minutos pelo workflow `contexto.yml`; índice único das três fontes em `docs/contexto/00-INDEX.md`. Gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `5191812994ef42c100afe9d3afff331a266a4a57` (2026-11-25T07:44:09-03:00).
+Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR dela) a cada push em `main` e a cada 10 minutos pelo workflow `contexto.yml`; índice único das três fontes em `docs/contexto/00-INDEX.md`. Gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `1d87b06fe7459ae259e7e767329e4d85dc65dcdb` (2026-11-25T08:50:19-03:00).
 
 ## Como usar (leia antes de planejar ou executar qualquer tarefa)
 1. **Tela/rota/menu** → `rotas.json` (url/vista/menu → arquivo → hooks → tabelas → edges; `rotas_http_backend` para APIs) e `modulos.json` (módulo inteiro + dependências entre módulos).
@@ -14,7 +14,7 @@ Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR
 Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua tarefa; não carregue tudo.
 
 ## Stack
-- linguagens: TypeScript (4496), Markdown (3986), SQL (3056), JSON (1939), JavaScript (523), Shell (252), Python (125), YAML (43)
+- linguagens: TypeScript (4496), Markdown (3988), SQL (3063), JSON (1939), JavaScript (523), Shell (252), Python (125), YAML (43)
 - linguagem_principal: TypeScript
 - framework: React
 - backend_http: n/d
@@ -34,7 +34,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 ## Números
 | item | qtd |
 |---|---|
-| arquivos_total | 14786 |
+| arquivos_total | 14795 |
 | arquivos_codigo | 5140 |
 | linhas_codigo | 952861 |
 | rotas | 18 |
@@ -51,7 +51,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 | testes | 2822 |
 | workflows | 26 |
 | scripts | 453 |
-| docs_md | 3986 |
+| docs_md | 3988 |
 
 ## Onde ficam as coisas
 - telas: src/components (54), src/pages (18)
@@ -397,8 +397,8 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - possiveis_segredos_no_codigo: 4 — ex.: scripts/ai-context/cenarios.mjs:102, scripts/ci/edge-coverage-authz.unit.mjs:398, scripts/ci/inventario-banco.unit.mjs:147
 
 ## Grafo de código (graphify)
-- 94629 nós · 159195 arestas · 8869 comunidades · grafo do commit `51918129`
-- comunidades maiores: Communities (5953 total, 1987 thin omitted) (3943), vitest (1252), TalkXSuppression.tsx (1098), lucide-react (987), cn (961), client.ts (859), react (819), useTeamChatPanel.ts (584), validation.ts (553), DashboardView.tsx (545), ExternalProductManagement.tsx (535), ref_https (517)
+- 96115 nós · 160678 arestas · 8858 comunidades · grafo do commit `1d87b06f`
+- comunidades maiores: Communities (8869 total, 3472 thin omitted) (5378), react (1127), lucide-react (969), vitest (945), TalkXSuppression.tsx (896), button.tsx (788), cn (728), DashboardView.tsx (618), validation.ts (602), ref_node_assert (579), @tanstack/react-query (556), ExternalProductManagement.tsx (530)
 - símbolos mais chamados: cn() (src/lib/utils.ts), useAuth() (src/hooks/auth/useAuth.tsx), jsonResponse() (supabase/functions/_shared/validation.ts), errorResponse() (supabase/functions/_shared/validation.ts), handleCors() (supabase/functions/_shared/validation.ts), fail() (scripts/e2e-isolated/network-proof-policy.mjs), Logger (supabase/functions/_shared/validation.ts), requireEnv() (supabase/functions/_shared/validation.ts), fmtInt() (src/components/talkx/kit/format.ts), useUserRole() (src/hooks/system/useUserRole.ts), validationErrorResponse() (supabase/functions/_shared/schemas.ts), .from() (supabase/functions/_shared/evolution-types.ts)
 - consulta local: `graphify query "<pergunta>"`, `graphify path "<A>" "<B>"`, `graphify explain "<X>"`
 
@@ -536,10 +536,12 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - `docs/contracts.md` — Contratos das Edge Functions (51 linhas)
 - `docs/crm-external-grants.md` — GRANTs Externos — CRM pgxfvjmuubtbowutlide (111 linhas)
 - `docs/prod-readiness.md` — Prontidão de produção — Zapp Web V2 (main @ `ab657aa34`) (1858 linhas)
-- subpastas de docs/: docs/pendencias (1093), docs/_arquivo (593), docs/contexto (261), docs/audits (183), docs/reconciliation (134), docs/design (64), docs/plans (59), docs/talkx (52), docs/ia (19), docs/adr (17), docs/catalogo (15), docs/runbooks (14), docs/multiplix (12), docs/mapa (10), docs/copiloto (9), docs/ci (8), docs/decisions (8), docs/handoffs (8), docs/agentes (6), docs/migration (6), docs/tipografia (6), docs/evidencias (5), docs/telefonia (3), docs/architecture (2), docs/security (2), docs/team-chat (2), docs/crm-integration (1), docs/dashboard (1), docs/design-system (1), docs/edge-functions-recovered (1), docs/hermes (1), docs/integracoes (1), docs/ops (1), docs/resgate (1)
+- subpastas de docs/: docs/pendencias (1093), docs/_arquivo (593), docs/contexto (263), docs/audits (183), docs/reconciliation (134), docs/design (64), docs/plans (59), docs/talkx (52), docs/ia (19), docs/adr (17), docs/catalogo (15), docs/runbooks (14), docs/multiplix (12), docs/mapa (10), docs/copiloto (9), docs/ci (8), docs/decisions (8), docs/handoffs (8), docs/agentes (6), docs/migration (6), docs/tipografia (6), docs/evidencias (5), docs/telefonia (3), docs/architecture (2), docs/security (2), docs/team-chat (2), docs/crm-integration (1), docs/dashboard (1), docs/design-system (1), docs/edge-functions-recovered (1), docs/hermes (1), docs/integracoes (1), docs/ops (1), docs/resgate (1)
 - CHANGELOG topo: [Unreleased]
 
 ## Últimos commits
+- 2026-11-25 `1d87b06f` chore(lint): reancora baseline nas posicoes atuais (divida inalterada, 540 = 540) (#3373)
+- 2026-11-25 `3be6edc8` chore: sincroniza docs/contexto com a publicacao oficial (mapa deixa de citar 149 caminhos mortos) (#3372)
 - 2026-11-25 `51918129` chore: aposenta acervo de resgate 261118 lote3 ja triado (1.029 arquivos, zero perdas) (#3371)
 - 2026-11-25 `06a1cbe6` feat(automacao): recupera harness local da PR #2926 sobre o main atual (#3366)
 - 2026-11-25 `6d87cf6c` feat(ci): restaura a fila de merge serial (auto-update-pr-branch) (#3368)
@@ -553,8 +555,6 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - 2026-11-24 `feee9f79` fix(tarefas): restaura o foco da captura apos o commit, sem corrida (#3359)
 - 2026-11-24 `36701c06` fix(ci): volta o pin do scorecard-action para v2.5.0 (#3358)
 - 2026-11-24 `1437a664` infra: alinha o timeout do job E2E com a duracao real (~10 min) (#3355)
-- 2026-11-24 `5e609b75` fix(e2e): retenta o pull em falha transiente de rede do registry (#3357)
-- 2026-11-24 `83a70c3e` chore(db): sincronizar artefatos derivados do banco (#3356)
 
 ## Arquivos deste diretório
 - `docs/contexto/codigo/rotas.json`

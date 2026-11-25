@@ -1,6 +1,6 @@
 # 07 · REGRAS DE NEGÓCIO
 
-> Gerado automaticamente por AI Context Sync v1.3.2 · commit `5191812994` · branch `main` · 2026-11-25 10:52 UTC
+> Gerado automaticamente por AI Context Sync v1.3.2 · commit `1d87b06fe7` · branch `main` · 2026-11-25 12:22 UTC
 > Não edite à mão — regras humanas vão em `manual/`.
 
 ## A. Regras escritas por humanos (`manual/` — prioridade máxima, nunca sobrescrito)
@@ -1268,6 +1268,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `talkx_delivery_log` | `stage` | `claim`, `complete`, `dispatch`, `reconcile`, `suppress_check` |  |
 | `talkx_delivery_log` | `http_status` | **livre (sem enum/CHECK)** |  |
 | `gmail_oauth_states` | `state` | **livre (sem enum/CHECK)** |  |
+| `talkx_ai_requests` | `status` | `error`, `ok` |  |
 | `talkx_template_versions` | `status` | **livre (sem enum/CHECK)** | `draft` |
 | `ai_budget_reservations` | `status` | `expired`, `released`, `reserved`, `settled` | `reserved` |
 | `searchbox_budget_alert_emails` | `status` | `failed`, `pending`, `sent`, `uncertain` | `pending` |
@@ -1280,7 +1281,6 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `message_reports` | `status` | `dismissed`, `open`, `resolved` | `open` |
 | `qr_attempts` | `status` | `connected`, `error`, `expired`, `pending` |  |
 | `copilot_objection_catalog` | `status` | **livre (sem enum/CHECK)** | `pending_review` |
-| `talkx_ai_requests` | `status` | `error`, `ok` |  |
 | `_zapp_mig133_log` | `status` | **livre (sem enum/CHECK)** |  |
 
 ### E.2 Mapas de transição declarados no código

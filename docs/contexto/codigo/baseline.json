@@ -2,11 +2,21 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "5191812994ef42c100afe9d3afff331a266a4a57",
+  "commit": "1d87b06fe7459ae259e7e767329e4d85dc65dcdb",
   "branch": "main",
-  "data_commit": "2026-11-25T07:44:09-03:00",
+  "data_commit": "2026-11-25T08:50:19-03:00",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "1d87b06f",
+    "data": "2026-11-25",
+    "assunto": "chore(lint): reancora baseline nas posicoes atuais (divida inalterada, 540 = 540) (#3373)"
+   },
+   {
+    "sha": "3be6edc8",
+    "data": "2026-11-25",
+    "assunto": "chore: sincroniza docs/contexto com a publicacao oficial (mapa deixa de citar 149 caminhos mortos) (#3372)"
+   },
    {
     "sha": "51918129",
     "data": "2026-11-25",
@@ -121,23 +131,13 @@
     "sha": "442bcfb1",
     "data": "2026-11-23",
     "assunto": "fix(e2e): desambigua locators de Contatos após o redesign do módulo (#3347)"
-   },
-   {
-    "sha": "d7fa274c",
-    "data": "2026-11-23",
-    "assunto": "fix: tira o WebRender/DMABUF do caminho no E2E do Firefox (#3345)"
-   },
-   {
-    "sha": "d58476e7",
-    "data": "2026-11-23",
-    "assunto": "chore: sincroniza pin e digest do Playwright no bump de 16 dependencias (#3344)"
    }
   ],
-  "arquivos_mudados_7d": 4381,
+  "arquivos_mudados_7d": 4390,
   "pastas_mais_mudadas_30d": [
    {
     "pasta": "docs/contexto/supabase",
-    "mudancas": 1915
+    "mudancas": 2170
    },
    {
     "pasta": "analise-prs/resgate-261115/auditoria",
@@ -270,6 +270,10 @@
     "mudancas": 6
    },
    {
+    "arquivo": "scripts/ci/eslint-baseline.json",
+    "mudancas": 6
+   },
+   {
     "arquivo": "src/components/talkx/TalkXView.tsx",
     "mudancas": 6
    },
@@ -292,10 +296,6 @@
    {
     "arquivo": "bun.lock",
     "mudancas": 5
-   },
-   {
-    "arquivo": "docs/audits/edge-functions-authz-coverage.md",
-    "mudancas": 5
    }
   ],
   "autores_30d": [
@@ -314,7 +314,7 @@
   ]
  },
  "contagens": {
-  "arquivos_total": 14786,
+  "arquivos_total": 14795,
   "arquivos_codigo": 5140,
   "linhas_codigo": 952861,
   "rotas": 18,
@@ -331,7 +331,7 @@
   "testes": 2822,
   "workflows": 26,
   "scripts": 453,
-  "docs_md": 3986
+  "docs_md": 3988
  },
  "por_pasta": {
   "analise-prs/resgate-261115": {
