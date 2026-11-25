@@ -1,5 +1,25 @@
 # public.deal_activities
 
+> Descrição funcional não estava registrada no catálogo; o conteúdo abaixo documenta a estrutura observável, sem inferir regras de negócio não declaradas.
+
+[CATALOGUE SEMÂNTICO DO PROJETO]
+Objeto: public.deal_activities (tabela). RLS habilitada: t; RLS forçada: f.
+Colunas (ordem, tipo e nulabilidade):
+1 id uuid NOT NULL [DEFAULT/EXPRESSION DEFINED]
+2 deal_id uuid NOT NULL
+3 activity_type text NOT NULL
+4 description text NULLABLE
+5 performed_by uuid NULLABLE
+6 created_at timestamp with time zone NULLABLE [DEFAULT/EXPRESSION DEFINED]
+Constraints:
+deal_activities_deal_id_fkey: FOREIGN KEY (deal_id) REFERENCES sales_deals(id) ON DELETE CASCADE
+deal_activities_performed_by_fkey: FOREIGN KEY (performed_by) REFERENCES profiles(id) ON DELETE SET NULL
+deal_activities_pkey: PRIMARY KEY (id)
+Políticas RLS (nome, operação, papéis e modo; as expressões permanecem no catálogo):
+"Admins can view deal activities" [command=SELECT; roles=authenticated; PERMISSIVE]
+"Agents can view activities on their deals" [command=SELECT; roles=authenticated; PERMISSIVE]
+"Authenticated can insert deal activities" [command=INSERT; roles=authenticated; PERMISSIVE]
+
 | propriedade | valor |
 |---|---|
 | tipo | table |
@@ -51,7 +71,7 @@
 | comando | SELECT |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `is_admin_or_supervisor(auth.uid())` |
+| USING | `is_admin_or_supervisor(( SELECT auth.uid() AS uid))` |
 | WITH CHECK |  |
 
 ### `Agents can view activities on their deals`
@@ -61,7 +81,7 @@
 | comando | SELECT |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `(is_admin_or_supervisor(auth.uid()) OR (performed_by = get_profile_id_for_user(auth.uid())) OR (deal_id IN ( SELECT sd.id    FROM sales_deals sd   WHERE (sd.assigned_to = get_profile_id_for_user(auth.uid())))))` |
+| USING | `(is_admin_or_supervisor(( SELECT auth.uid() AS uid)) OR (performed_by = get_profile_id_for_user(( SELECT auth.uid() AS uid))) OR (deal_id IN ( SELECT sd.id    FROM sales_deals sd   WHERE (sd.assigned_to = get_profile_id_for_user(( SELECT auth.uid() AS uid))))))` |
 | WITH CHECK |  |
 
 ### `Authenticated can insert deal activities`
@@ -72,7 +92,7 @@
 | tipo | PERMISSIVE |
 | roles | authenticated |
 | USING |  |
-| WITH CHECK | `((performed_by = get_profile_id_for_user(auth.uid())) AND (is_admin_or_supervisor(auth.uid()) OR (deal_id IN ( SELECT deal.id    FROM sales_deals deal   WHERE (deal.assigned_to = get_profile_id_for_user(auth.uid()))))))` |
+| WITH CHECK | `((performed_by = get_profile_id_for_user(( SELECT auth.uid() AS uid))) AND (is_admin_or_supervisor(( SELECT auth.uid() AS uid)) OR (deal_id IN ( SELECT deal.id    FROM sales_deals deal   WHERE (deal.assigned_to = get_profile_id_for_user(( SELECT auth.uid() AS uid)))))))` |
 
 
 ## Triggers

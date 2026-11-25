@@ -2,6 +2,25 @@
 
 > Dead-letter dos webhooks (endpoint, evento, payload truncado, erro, retries). ACL restrita a service_role.
 
+[CATALOGUE SEMÂNTICO DO PROJETO]
+Objeto: public.webhook_failures (tabela). RLS habilitada: t; RLS forçada: f.
+Colunas (ordem, tipo e nulabilidade):
+1 id uuid NOT NULL [DEFAULT/EXPRESSION DEFINED]
+2 endpoint text NOT NULL
+3 event_type text NULLABLE
+4 instance text NULLABLE
+5 payload_truncated jsonb NULLABLE
+6 payload_sha256 text NULLABLE
+7 error_message text NOT NULL
+8 error_at timestamp with time zone NOT NULL [DEFAULT/EXPRESSION DEFINED]
+9 retry_count integer NOT NULL [DEFAULT/EXPRESSION DEFINED]
+10 resolved boolean NOT NULL [DEFAULT/EXPRESSION DEFINED]
+11 resolved_at timestamp with time zone NULLABLE
+Constraints:
+webhook_failures_pkey: PRIMARY KEY (id)
+Políticas RLS (nome, operação, papéis e modo; as expressões permanecem no catálogo):
+service_role_full [command=ALL; roles=service_role; PERMISSIVE]
+
 | propriedade | valor |
 |---|---|
 | tipo | table |

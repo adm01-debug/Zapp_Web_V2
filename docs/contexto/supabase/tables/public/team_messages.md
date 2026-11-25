@@ -2,6 +2,42 @@
 
 > Messages within a team conversation
 
+[CATALOGUE SEMÂNTICO DO PROJETO]
+Objeto: public.team_messages (tabela). RLS habilitada: t; RLS forçada: f.
+Colunas (ordem, tipo e nulabilidade):
+1 id uuid NOT NULL [DEFAULT/EXPRESSION DEFINED]
+2 conversation_id uuid NOT NULL
+3 sender_id uuid NOT NULL — References profiles.id (NOT auth.uid)
+4 content text NOT NULL
+5 message_type text NOT NULL [DEFAULT/EXPRESSION DEFINED]
+6 reply_to_id uuid NULLABLE
+7 is_edited boolean NOT NULL [DEFAULT/EXPRESSION DEFINED]
+8 created_at timestamp with time zone NOT NULL [DEFAULT/EXPRESSION DEFINED]
+9 updated_at timestamp with time zone NOT NULL [DEFAULT/EXPRESSION DEFINED]
+10 media_url text NULLABLE — URL temporária; prefer media_bucket+media_path para acesso persistente
+11 media_type text NULLABLE
+12 status text NOT NULL [DEFAULT/EXPRESSION DEFINED]
+13 media_bucket text NULLABLE
+14 media_path text NULLABLE
+15 metadata jsonb NULLABLE [DEFAULT/EXPRESSION DEFINED]
+Constraints:
+team_messages_content_not_empty: CHECK (TRIM(BOTH FROM content) <> ''::text OR media_url IS NOT NULL OR media_type IS NOT NULL AND media_bucket IS NOT NULL AND media_path IS NOT NULL)
+team_messages_media_consistency: CHECK (media_bucket IS NULL AND media_path IS NULL AND (media_url IS NULL) = (media_type IS NULL) OR media_type IS NOT NULL AND media_bucket IS NOT NULL AND media_path IS NOT NULL)
+team_messages_media_path_matches_sender_conversation: CHECK (media_bucket IS DISTINCT FROM 'team-chat-files'::text OR media_path IS NOT NULL AND split_part(media_path, '/'::text, 1) = sender_id::text AND split_part(media_path, '/'::text, 2) = conversation_id::text AND split_part(media_path, '/'::text, 3) <> ''::text)
+team_messages_message_type_check: CHECK (message_type = ANY (ARRAY['text'::text, 'image'::text, 'video'::text, 'audio'::text, 'document'::text, 'system'::text]))
+team_messages_no_self_reply: CHECK (reply_to_id IS NULL OR reply_to_id <> id)
+team_messages_status_check: CHECK (status = ANY (ARRAY['sent'::text, 'delivered'::text, 'read'::text, 'failed'::text]))
+team_messages_type_media_check: CHECK ((message_type = ANY (ARRAY['text'::text, 'image'::text, 'audio'::text, 'video'::text, 'file'::text, 'sticker'::text, 'system'::text])) OR media_url IS NULL)
+team_messages_conversation_id_fkey: FOREIGN KEY (conversation_id) REFERENCES team_conversations(id) ON DELETE CASCADE
+team_messages_reply_to_id_fkey: FOREIGN KEY (reply_to_id) REFERENCES team_messages(id) ON DELETE SET NULL
+team_messages_sender_id_fkey: FOREIGN KEY (sender_id) REFERENCES profiles(id)
+team_messages_pkey: PRIMARY KEY (id)
+Políticas RLS (nome, operação, papéis e modo; as expressões permanecem no catálogo):
+"Members can send messages" [command=INSERT; roles=authenticated; PERMISSIVE]
+"Members can view conversation messages" [command=SELECT; roles=authenticated; PERMISSIVE]
+"Senders can delete own messages" [command=DELETE; roles=authenticated; PERMISSIVE]
+team_messages_update_own [command=UPDATE; roles=authenticated; PERMISSIVE]
+
 | propriedade | valor |
 |---|---|
 | tipo | table |
@@ -83,7 +119,7 @@
 | tipo | PERMISSIVE |
 | roles | authenticated |
 | USING |  |
-| WITH CHECK | `(is_team_conversation_member(auth.uid(), conversation_id) AND (sender_id = ( SELECT p.id    FROM profiles p   WHERE (p.user_id = auth.uid())  LIMIT 1)))` |
+| WITH CHECK | `(is_team_conversation_member(( SELECT auth.uid() AS uid), conversation_id) AND (sender_id = ( SELECT p.id    FROM profiles p   WHERE (p.user_id = ( SELECT auth.uid() AS uid))  LIMIT 1)))` |
 
 ### `Members can view conversation messages`
 
@@ -92,7 +128,7 @@
 | comando | SELECT |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `is_team_conversation_member(auth.uid(), conversation_id)` |
+| USING | `is_team_conversation_member(( SELECT auth.uid() AS uid), conversation_id)` |
 | WITH CHECK |  |
 
 ### `Senders can delete own messages`
@@ -102,7 +138,7 @@
 | comando | DELETE |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `(sender_id = ( SELECT p.id    FROM profiles p   WHERE (p.user_id = auth.uid())  LIMIT 1))` |
+| USING | `(sender_id = ( SELECT p.id    FROM profiles p   WHERE (p.user_id = ( SELECT auth.uid() AS uid))  LIMIT 1))` |
 | WITH CHECK |  |
 
 ### `team_messages_update_own`

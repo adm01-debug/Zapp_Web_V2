@@ -1,5 +1,31 @@
 # public.crm_contact_links
 
+> Descrição funcional não estava registrada no catálogo; o conteúdo abaixo documenta a estrutura observável, sem inferir regras de negócio não declaradas.
+
+[CATALOGUE SEMÂNTICO DO PROJETO]
+Objeto: public.crm_contact_links (tabela). RLS habilitada: t; RLS forçada: f.
+Colunas (ordem, tipo e nulabilidade):
+1 id uuid NOT NULL [DEFAULT/EXPRESSION DEFINED]
+2 zapp_contact_id uuid NOT NULL
+3 external_contact_id text NOT NULL
+4 external_company_id text NULLABLE
+5 normalized_phone text NULLABLE
+6 link_source text NOT NULL [DEFAULT/EXPRESSION DEFINED]
+7 linked_by uuid NULLABLE
+8 linked_at timestamp with time zone NOT NULL [DEFAULT/EXPRESSION DEFINED]
+9 verified_at timestamp with time zone NULLABLE
+Constraints:
+crm_contact_links_link_source_check: CHECK (link_source = ANY (ARRAY['phone_lookup'::text, 'manual'::text, 'sync_result'::text]))
+crm_contact_links_normalized_phone_check: CHECK (normalized_phone IS NULL OR normalized_phone ~ '^[0-9]{8,15}$'::text)
+crm_contact_links_linked_by_fkey: FOREIGN KEY (linked_by) REFERENCES profiles(id) ON DELETE SET NULL
+crm_contact_links_zapp_contact_id_fkey: FOREIGN KEY (zapp_contact_id) REFERENCES contacts(id) ON DELETE RESTRICT
+crm_contact_links_pkey: PRIMARY KEY (id)
+crm_contact_links_external_contact_id_key: UNIQUE (external_contact_id)
+crm_contact_links_zapp_contact_id_key: UNIQUE (zapp_contact_id)
+Políticas RLS (nome, operação, papéis e modo; as expressões permanecem no catálogo):
+"Admins manage CRM links" [command=ALL; roles=authenticated; PERMISSIVE]
+"Visible contact CRM links" [command=SELECT; roles=authenticated; PERMISSIVE]
+
 | propriedade | valor |
 |---|---|
 | tipo | table |
@@ -60,8 +86,8 @@
 | comando | ALL |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `is_admin_or_supervisor(auth.uid())` |
-| WITH CHECK | `is_admin_or_supervisor(auth.uid())` |
+| USING | `is_admin_or_supervisor(( SELECT auth.uid() AS uid))` |
+| WITH CHECK | `is_admin_or_supervisor(( SELECT auth.uid() AS uid))` |
 
 ### `Visible contact CRM links`
 
@@ -70,7 +96,7 @@
 | comando | SELECT |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `is_contact_visible_to_user(zapp_contact_id, auth.uid())` |
+| USING | `is_contact_visible_to_user(zapp_contact_id, ( SELECT auth.uid() AS uid))` |
 | WITH CHECK |  |
 
 

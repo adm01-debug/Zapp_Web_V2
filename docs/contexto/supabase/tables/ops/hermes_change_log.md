@@ -1,5 +1,40 @@
 # ops.hermes_change_log
 
+> Registro operacional de execuções de mudança: solicitação, risco, alvos, plano, revisão, simulação, execução, verificação, rollback e referências de repositório/branch/commit.
+
+[CATALOGUE SEMÂNTICO DO PROJETO]
+Objeto: ops.hermes_change_log (tabela). RLS habilitada: t; RLS forçada: f.
+Colunas (ordem, tipo e nulabilidade):
+1 id bigint NOT NULL [DEFAULT/EXPRESSION DEFINED]
+2 run_id uuid NOT NULL [DEFAULT/EXPRESSION DEFINED]
+3 created_at timestamp with time zone NOT NULL [DEFAULT/EXPRESSION DEFINED]
+4 finished_at timestamp with time zone NULLABLE
+5 origem text NOT NULL
+6 solicitante text NULLABLE
+7 pedido text NOT NULL
+8 status text NOT NULL [DEFAULT/EXPRESSION DEFINED]
+9 risco text NULLABLE
+10 alvos text[] NULLABLE
+11 planner_model text NULLABLE
+12 reviewer_model text NULLABLE
+13 executor_model text NULLABLE
+14 plano jsonb NULLABLE
+15 parecer jsonb NULLABLE
+16 simulacao jsonb NULLABLE
+17 execucao jsonb NULLABLE
+18 verificacao jsonb NULLABLE
+19 rollback text NULLABLE
+20 repo text NULLABLE
+21 branch text NULLABLE
+22 commit_sha text NULLABLE
+23 pr_url text NULLABLE
+24 custo_usd numeric(10,4) NULLABLE
+25 erro text NULLABLE
+Constraints:
+hermes_change_log_pkey: PRIMARY KEY (id)
+Políticas RLS (nome, operação, papéis e modo; as expressões permanecem no catálogo):
+service_role_full_hermes_change_log [command=ALL; roles=service_role; PERMISSIVE]
+
 | propriedade | valor |
 |---|---|
 | tipo | table |

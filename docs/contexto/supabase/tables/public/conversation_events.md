@@ -2,6 +2,34 @@
 
 > Linha do tempo de uma conversa: transferencias de agente/fila, abertura/fechamento e demais transicoes, com quem executou (performed_by) e metadata.
 
+[CATALOGUE SEMÂNTICO DO PROJETO]
+Objeto: public.conversation_events (tabela). RLS habilitada: t; RLS forçada: f.
+Colunas (ordem, tipo e nulabilidade):
+1 id uuid NOT NULL [DEFAULT/EXPRESSION DEFINED]
+2 contact_id uuid NOT NULL
+3 event_type text NOT NULL
+4 from_agent_id uuid NULLABLE
+5 to_agent_id uuid NULLABLE
+6 from_queue_id uuid NULLABLE
+7 to_queue_id uuid NULLABLE
+8 metadata jsonb NULLABLE [DEFAULT/EXPRESSION DEFINED]
+9 performed_by uuid NULLABLE
+10 created_at timestamp with time zone NOT NULL [DEFAULT/EXPRESSION DEFINED]
+11 closure_id uuid NULLABLE — FK for the single close event produced by an atomic closure.
+Constraints:
+conversation_events_closure_type_check: CHECK (closure_id IS NULL OR event_type = 'close'::text)
+conversation_events_closure_id_fkey: FOREIGN KEY (closure_id) REFERENCES conversation_closures(id) ON DELETE CASCADE
+conversation_events_contact_id_fkey: FOREIGN KEY (contact_id) REFERENCES contacts(id) ON DELETE CASCADE
+conversation_events_from_agent_id_fkey: FOREIGN KEY (from_agent_id) REFERENCES profiles(id)
+conversation_events_from_queue_id_fkey: FOREIGN KEY (from_queue_id) REFERENCES queues(id)
+conversation_events_performed_by_fkey: FOREIGN KEY (performed_by) REFERENCES profiles(id)
+conversation_events_to_agent_id_fkey: FOREIGN KEY (to_agent_id) REFERENCES profiles(id)
+conversation_events_to_queue_id_fkey: FOREIGN KEY (to_queue_id) REFERENCES queues(id)
+conversation_events_pkey: PRIMARY KEY (id)
+Políticas RLS (nome, operação, papéis e modo; as expressões permanecem no catálogo):
+"Authorized users can insert events" [command=INSERT; roles=authenticated; PERMISSIVE]
+conversation_events_select_policy [command=SELECT; roles=authenticated; PERMISSIVE]
+
 | propriedade | valor |
 |---|---|
 | tipo | table |
@@ -73,7 +101,7 @@
 | tipo | PERMISSIVE |
 | roles | authenticated |
 | USING |  |
-| WITH CHECK | `(is_contact_visible_to_user(contact_id, auth.uid()) AND (is_admin_or_supervisor(auth.uid()) OR (NOT (performed_by IS DISTINCT FROM current_profile_id()))))` |
+| WITH CHECK | `(is_contact_visible_to_user(contact_id, ( SELECT auth.uid() AS uid)) AND (is_admin_or_supervisor(( SELECT auth.uid() AS uid)) OR (NOT (performed_by IS DISTINCT FROM current_profile_id()))))` |
 
 ### `conversation_events_select_policy`
 
@@ -82,7 +110,7 @@
 | comando | SELECT |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `(is_contact_visible_to_user(contact_id, auth.uid()) OR is_admin_or_supervisor(auth.uid()))` |
+| USING | `(is_contact_visible_to_user(contact_id, ( SELECT auth.uid() AS uid)) OR is_admin_or_supervisor(( SELECT auth.uid() AS uid)))` |
 | WITH CHECK |  |
 
 

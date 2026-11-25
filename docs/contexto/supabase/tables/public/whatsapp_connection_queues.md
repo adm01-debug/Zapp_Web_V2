@@ -1,5 +1,23 @@
 # public.whatsapp_connection_queues
 
+> Descrição funcional não estava registrada no catálogo; o conteúdo abaixo documenta a estrutura observável, sem inferir regras de negócio não declaradas.
+
+[CATALOGUE SEMÂNTICO DO PROJETO]
+Objeto: public.whatsapp_connection_queues (tabela). RLS habilitada: t; RLS forçada: f.
+Colunas (ordem, tipo e nulabilidade):
+1 id uuid NOT NULL [DEFAULT/EXPRESSION DEFINED]
+2 whatsapp_connection_id uuid NOT NULL
+3 queue_id uuid NOT NULL
+4 created_at timestamp with time zone NOT NULL [DEFAULT/EXPRESSION DEFINED]
+Constraints:
+whatsapp_connection_queues_queue_id_fkey: FOREIGN KEY (queue_id) REFERENCES queues(id) ON DELETE CASCADE
+whatsapp_connection_queues_whatsapp_connection_id_fkey: FOREIGN KEY (whatsapp_connection_id) REFERENCES whatsapp_connections(id) ON DELETE CASCADE
+whatsapp_connection_queues_pkey: PRIMARY KEY (id)
+whatsapp_connection_queues_whatsapp_connection_id_queue_id_key: UNIQUE (whatsapp_connection_id, queue_id)
+Políticas RLS (nome, operação, papéis e modo; as expressões permanecem no catálogo):
+"Admins can manage connection queues" [command=ALL; roles=authenticated; PERMISSIVE]
+"Authenticated can view connection queues" [command=SELECT; roles=authenticated; PERMISSIVE]
+
 | propriedade | valor |
 |---|---|
 | tipo | table |
@@ -51,7 +69,7 @@
 | comando | ALL |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `is_admin(auth.uid())` |
+| USING | `is_admin(( SELECT auth.uid() AS uid))` |
 | WITH CHECK |  |
 
 ### `Authenticated can view connection queues`

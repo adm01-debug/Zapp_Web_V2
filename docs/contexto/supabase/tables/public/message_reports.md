@@ -1,5 +1,32 @@
 # public.message_reports
 
+> Descrição funcional não estava registrada no catálogo; o conteúdo abaixo documenta a estrutura observável, sem inferir regras de negócio não declaradas.
+
+[CATALOGUE SEMÂNTICO DO PROJETO]
+Objeto: public.message_reports (tabela). RLS habilitada: t; RLS forçada: f.
+Colunas (ordem, tipo e nulabilidade):
+1 id uuid NOT NULL [DEFAULT/EXPRESSION DEFINED]
+2 message_id uuid NOT NULL
+3 reporter_id uuid NOT NULL
+4 reason text NOT NULL
+5 note text NULLABLE
+6 status text NOT NULL [DEFAULT/EXPRESSION DEFINED]
+7 created_at timestamp with time zone NOT NULL [DEFAULT/EXPRESSION DEFINED]
+8 resolved_by uuid NULLABLE
+9 resolved_at timestamp with time zone NULLABLE
+Constraints:
+message_reports_note_check: CHECK (note IS NULL OR char_length(note) >= 1 AND char_length(note) <= 500)
+message_reports_reason_check: CHECK (reason = ANY (ARRAY['spam'::text, 'improprio'::text, 'urgencia'::text, 'outro'::text]))
+message_reports_status_check: CHECK (status = ANY (ARRAY['open'::text, 'resolved'::text, 'dismissed'::text]))
+message_reports_message_id_fkey: FOREIGN KEY (message_id) REFERENCES messages(id) ON DELETE CASCADE
+message_reports_reporter_id_fkey: FOREIGN KEY (reporter_id) REFERENCES auth.users(id) ON DELETE CASCADE
+message_reports_resolved_by_fkey: FOREIGN KEY (resolved_by) REFERENCES auth.users(id) ON DELETE SET NULL
+message_reports_pkey: PRIMARY KEY (id)
+message_reports_message_id_reporter_id_key: UNIQUE (message_id, reporter_id)
+Políticas RLS (nome, operação, papéis e modo; as expressões permanecem no catálogo):
+message_reports_select_own_or_admin [command=SELECT; roles=authenticated; PERMISSIVE]
+message_reports_update_admin [command=UPDATE; roles=authenticated; PERMISSIVE]
+
 | propriedade | valor |
 |---|---|
 | tipo | table |
@@ -45,6 +72,7 @@
 
 | nome | método | colunas | único | válido | predicado | definição |
 |---|---|---|---|---|---|---|
+| idx_message_reports_reporter_id | btree | reporter_id | não | sim |  | `CREATE INDEX idx_message_reports_reporter_id ON public.message_reports USING btree (reporter_id)` |
 | idx_message_reports_resolved_by | btree | resolved_by | não | sim |  | `CREATE INDEX idx_message_reports_resolved_by ON public.message_reports USING btree (resolved_by)` |
 | message_reports_message_id_reporter_id_key | btree | message_id, reporter_id | sim | sim |  | `CREATE UNIQUE INDEX message_reports_message_id_reporter_id_key ON public.message_reports USING btree (message_id, reporter_id)` |
 | message_reports_pkey | btree | id | sim | sim |  | `CREATE UNIQUE INDEX message_reports_pkey ON public.message_reports USING btree (id)` |
@@ -59,7 +87,7 @@
 | comando | SELECT |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `((reporter_id = ( SELECT auth.uid() AS uid)) OR is_admin_or_supervisor(( SELECT auth.uid() AS uid)))` |
+| USING | `((reporter_id = ( SELECT ( SELECT auth.uid() AS uid) AS uid)) OR is_admin_or_supervisor(( SELECT ( SELECT auth.uid() AS uid) AS uid)))` |
 | WITH CHECK |  |
 
 ### `message_reports_update_admin`
@@ -69,8 +97,8 @@
 | comando | UPDATE |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `is_admin_or_supervisor(( SELECT auth.uid() AS uid))` |
-| WITH CHECK | `(is_admin_or_supervisor(( SELECT auth.uid() AS uid)) AND ((status = 'open'::text) OR (resolved_by = ( SELECT auth.uid() AS uid))))` |
+| USING | `is_admin_or_supervisor(( SELECT ( SELECT auth.uid() AS uid) AS uid))` |
+| WITH CHECK | `(is_admin_or_supervisor(( SELECT ( SELECT auth.uid() AS uid) AS uid)) AND ((status = 'open'::text) OR (resolved_by = ( SELECT ( SELECT auth.uid() AS uid) AS uid))))` |
 
 
 ## Triggers

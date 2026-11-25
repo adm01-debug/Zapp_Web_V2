@@ -1,5 +1,21 @@
 # public.copilot_help_requests
 
+> Descrição funcional não estava registrada no catálogo; o conteúdo abaixo documenta a estrutura observável, sem inferir regras de negócio não declaradas.
+
+[CATALOGUE SEMÂNTICO DO PROJETO]
+Objeto: public.copilot_help_requests (tabela). RLS habilitada: t; RLS forçada: f.
+Colunas (ordem, tipo e nulabilidade):
+1 id uuid NOT NULL [DEFAULT/EXPRESSION DEFINED]
+2 conversation_id uuid NOT NULL
+3 contact_id uuid NOT NULL
+4 seller_id uuid NOT NULL
+5 created_at timestamp with time zone NOT NULL [DEFAULT/EXPRESSION DEFINED]
+Constraints:
+copilot_help_requests_pkey: PRIMARY KEY (id)
+Políticas RLS (nome, operação, papéis e modo; as expressões permanecem no catálogo):
+copilot_help_requests_insert [command=INSERT; roles=authenticated; PERMISSIVE]
+copilot_help_requests_select [command=SELECT; roles=authenticated; PERMISSIVE]
+
 | propriedade | valor |
 |---|---|
 | tipo | table |
@@ -47,7 +63,7 @@
 | tipo | PERMISSIVE |
 | roles | authenticated |
 | USING |  |
-| WITH CHECK | `(seller_id = auth.uid())` |
+| WITH CHECK | `(seller_id = ( SELECT auth.uid() AS uid))` |
 
 ### `copilot_help_requests_select`
 
@@ -56,7 +72,7 @@
 | comando | SELECT |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `((seller_id = auth.uid()) OR is_admin_or_supervisor(auth.uid()))` |
+| USING | `((seller_id = ( SELECT auth.uid() AS uid)) OR is_admin_or_supervisor(( SELECT auth.uid() AS uid)))` |
 | WITH CHECK |  |
 
 

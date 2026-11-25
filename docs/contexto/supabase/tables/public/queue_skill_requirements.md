@@ -1,5 +1,23 @@
 # public.queue_skill_requirements
 
+> Descrição funcional não estava registrada no catálogo; o conteúdo abaixo documenta a estrutura observável, sem inferir regras de negócio não declaradas.
+
+[CATALOGUE SEMÂNTICO DO PROJETO]
+Objeto: public.queue_skill_requirements (tabela). RLS habilitada: t; RLS forçada: f.
+Colunas (ordem, tipo e nulabilidade):
+1 id uuid NOT NULL [DEFAULT/EXPRESSION DEFINED]
+2 queue_id uuid NOT NULL
+3 skill_name text NOT NULL
+4 min_level integer NULLABLE [DEFAULT/EXPRESSION DEFINED]
+5 created_at timestamp with time zone NULLABLE [DEFAULT/EXPRESSION DEFINED]
+Constraints:
+queue_skill_requirements_queue_id_fkey: FOREIGN KEY (queue_id) REFERENCES queues(id) ON DELETE CASCADE
+queue_skill_requirements_pkey: PRIMARY KEY (id)
+queue_skill_requirements_queue_id_skill_name_key: UNIQUE (queue_id, skill_name)
+Políticas RLS (nome, operação, papéis e modo; as expressões permanecem no catálogo):
+"Admins can manage queue skills" [command=ALL; roles=authenticated; PERMISSIVE]
+"Authenticated can view queue skills" [command=SELECT; roles=authenticated; PERMISSIVE]
+
 | propriedade | valor |
 |---|---|
 | tipo | table |
@@ -50,7 +68,7 @@
 | comando | ALL |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `is_admin_or_supervisor(auth.uid())` |
+| USING | `is_admin_or_supervisor(( SELECT auth.uid() AS uid))` |
 | WITH CHECK |  |
 
 ### `Authenticated can view queue skills`

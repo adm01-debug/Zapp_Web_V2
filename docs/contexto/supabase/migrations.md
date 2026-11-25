@@ -1149,3 +1149,11 @@ SQL em `migrations/<versao>_<nome>.sql`. Mudanças feitas pelo Dashboard/SQL Edi
 | 20261117120000 | [talkx_x091_template_stats_rpcs](migrations/20261117120000_talkx_x091_template_stats_rpcs.sql) | 6 |
 | 20261118190000 | [talkx_x065_ab_campanha](migrations/20261118190000_talkx_x065_ab_campanha.sql) | 17 |
 | 20261118200000 | [talkx_cron_indice_falha_suave](migrations/20261118200000_talkx_cron_indice_falha_suave.sql) | 0 |
+| 20261118210000 | [talkx_next_recipients_variant_id](migrations/20261118210000_talkx_next_recipients_variant_id.sql) | 4 |
+| 20261118220000 | [talkx_snapshot_variante_primeiro_vale](migrations/20261118220000_talkx_snapshot_variante_primeiro_vale.sql) | 1 |
+| 20261119010000 | [talkx_set_campaign_ab](migrations/20261119010000_talkx_set_campaign_ab.sql) | 3 |
+| 20261120080000 | [scheduled_report_cron](migrations/20261120080000_scheduled_report_cron.sql) | 8 |
+| 20261121190000 | [assistant_profiles](migrations/20261121190000_assistant_profiles.sql) | 9 |
+| 20261122190000 | [ia055_precos_entrada_e_saida](migrations/20261122190000_ia055_precos_entrada_e_saida.sql) | 8 |
+| 20261122200000 | [x076_talkx_ai_requests](migrations/20261122200000_x076_talkx_ai_requests.sql) | 13 |
+| 20261124120000 | [drop_rpcs_e2e_orfas](migrations/20261124120000_drop_rpcs_e2e_orfas.sql) | 1 |

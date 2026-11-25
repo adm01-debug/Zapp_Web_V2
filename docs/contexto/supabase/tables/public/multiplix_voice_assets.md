@@ -1,5 +1,28 @@
 # public.multiplix_voice_assets
 
+> Descrição funcional não estava registrada no catálogo; o conteúdo abaixo documenta a estrutura observável, sem inferir regras de negócio não declaradas.
+
+[CATALOGUE SEMÂNTICO DO PROJETO]
+Objeto: public.multiplix_voice_assets (tabela). RLS habilitada: t; RLS forçada: t.
+Colunas (ordem, tipo e nulabilidade):
+1 id uuid NOT NULL [DEFAULT/EXPRESSION DEFINED]
+2 hash text NOT NULL
+3 caminho text NOT NULL
+4 voice_id text NOT NULL
+5 modelo text NULLABLE
+6 caracteres integer NULLABLE
+7 duracao_ms integer NULLABLE
+8 created_by uuid NULLABLE
+9 invalidated_at timestamp with time zone NULLABLE
+10 created_at timestamp with time zone NOT NULL [DEFAULT/EXPRESSION DEFINED]
+Constraints:
+multiplix_voice_assets_caracteres_nao_negativo: CHECK (caracteres IS NULL OR caracteres >= 0)
+multiplix_voice_assets_duracao_nao_negativa: CHECK (duracao_ms IS NULL OR duracao_ms >= 0)
+multiplix_voice_assets_pkey: PRIMARY KEY (id)
+multiplix_voice_assets_hash_key: UNIQUE (hash)
+Políticas RLS (nome, operação, papéis e modo; as expressões permanecem no catálogo):
+"Granted callers can read voice assets" [command=SELECT; roles=authenticated; PERMISSIVE]
+
 | propriedade | valor |
 |---|---|
 | tipo | table |
@@ -64,7 +87,7 @@
 | comando | SELECT |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `((EXISTS ( SELECT 1    FROM multiplix_voice_grants g   WHERE ((g.voice_id = multiplix_voice_assets.voice_id) AND (g.revoked_at IS NULL) AND (((g.roles IS NOT NULL) AND (EXISTS ( SELECT 1            FROM unnest(g.roles) r(r)           WHERE has_role(auth.uid(), r.r)))) OR ((g.perfis IS NOT NULL) AND (EXISTS ( SELECT 1            FROM profiles p           WHERE ((p.user_id = auth.uid()) AND (p.id = ANY (g.perfis)))))))))) OR (created_by = ( SELECT profiles.id    FROM profiles   WHERE (profiles.user_id = auth.uid())  LIMIT 1)) OR is_admin_or_supervisor(auth.uid()))` |
+| USING | `((EXISTS ( SELECT 1    FROM multiplix_voice_grants g   WHERE ((g.voice_id = multiplix_voice_assets.voice_id) AND (g.revoked_at IS NULL) AND (((g.roles IS NOT NULL) AND (EXISTS ( SELECT 1            FROM unnest(g.roles) r(r)           WHERE has_role(( SELECT auth.uid() AS uid), r.r)))) OR ((g.perfis IS NOT NULL) AND (EXISTS ( SELECT 1            FROM profiles p           WHERE ((p.user_id = ( SELECT auth.uid() AS uid)) AND (p.id = ANY (g.perfis)))))))))) OR (created_by = ( SELECT profiles.id    FROM profiles   WHERE (profiles.user_id = ( SELECT auth.uid() AS uid))  LIMIT 1)) OR is_admin_or_supervisor(( SELECT auth.uid() AS uid)))` |
 | WITH CHECK |  |
 
 

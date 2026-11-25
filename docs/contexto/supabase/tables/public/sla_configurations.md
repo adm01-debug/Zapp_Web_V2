@@ -2,6 +2,24 @@
 
 > Configuracoes de SLA (minutos para primeira resposta e resolucao, prioridade, default).
 
+[CATALOGUE SEMÂNTICO DO PROJETO]
+Objeto: public.sla_configurations (tabela). RLS habilitada: t; RLS forçada: f.
+Colunas (ordem, tipo e nulabilidade):
+1 id uuid NOT NULL [DEFAULT/EXPRESSION DEFINED]
+2 name text NOT NULL
+3 first_response_minutes integer NOT NULL [DEFAULT/EXPRESSION DEFINED]
+4 resolution_minutes integer NOT NULL [DEFAULT/EXPRESSION DEFINED]
+5 priority text NOT NULL [DEFAULT/EXPRESSION DEFINED]
+6 is_default boolean NULLABLE [DEFAULT/EXPRESSION DEFINED]
+7 is_active boolean NULLABLE [DEFAULT/EXPRESSION DEFINED]
+8 created_at timestamp with time zone NOT NULL [DEFAULT/EXPRESSION DEFINED]
+9 updated_at timestamp with time zone NOT NULL [DEFAULT/EXPRESSION DEFINED]
+Constraints:
+sla_configurations_pkey: PRIMARY KEY (id)
+Políticas RLS (nome, operação, papéis e modo; as expressões permanecem no catálogo):
+"Admins can manage SLA configurations" [command=ALL; roles=authenticated; PERMISSIVE]
+"Authenticated users can view SLA configurations" [command=SELECT; roles=authenticated; PERMISSIVE]
+
 | propriedade | valor |
 |---|---|
 | tipo | table |
@@ -60,8 +78,8 @@
 | comando | ALL |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `is_admin_or_supervisor(auth.uid())` |
-| WITH CHECK | `is_admin_or_supervisor(auth.uid())` |
+| USING | `is_admin_or_supervisor(( SELECT auth.uid() AS uid))` |
+| WITH CHECK | `is_admin_or_supervisor(( SELECT auth.uid() AS uid))` |
 
 ### `Authenticated users can view SLA configurations`
 

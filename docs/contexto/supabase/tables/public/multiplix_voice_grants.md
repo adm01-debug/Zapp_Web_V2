@@ -1,5 +1,26 @@
 # public.multiplix_voice_grants
 
+> Descrição funcional não estava registrada no catálogo; o conteúdo abaixo documenta a estrutura observável, sem inferir regras de negócio não declaradas.
+
+[CATALOGUE SEMÂNTICO DO PROJETO]
+Objeto: public.multiplix_voice_grants (tabela). RLS habilitada: t; RLS forçada: t.
+Colunas (ordem, tipo e nulabilidade):
+1 id uuid NOT NULL [DEFAULT/EXPRESSION DEFINED]
+2 voice_id text NOT NULL
+3 titular text NOT NULL
+4 roles app_role[] NULLABLE
+5 perfis uuid[] NULLABLE
+6 origem text NULLABLE
+7 revoked_at timestamp with time zone NULLABLE
+8 created_by uuid NULLABLE
+9 created_at timestamp with time zone NOT NULL [DEFAULT/EXPRESSION DEFINED]
+Constraints:
+multiplix_voice_grants_alvo_obrigatorio: CHECK (roles IS NOT NULL OR perfis IS NOT NULL)
+multiplix_voice_grants_pkey: PRIMARY KEY (id)
+Políticas RLS (nome, operação, papéis e modo; as expressões permanecem no catálogo):
+"Admins read every voice grant" [command=SELECT; roles=authenticated; PERMISSIVE]
+"Callers read their own voice grants" [command=SELECT; roles=authenticated; PERMISSIVE]
+
 | propriedade | valor |
 |---|---|
 | tipo | table |
@@ -52,7 +73,7 @@
 | comando | SELECT |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `is_admin_or_supervisor(auth.uid())` |
+| USING | `is_admin_or_supervisor(( SELECT auth.uid() AS uid))` |
 | WITH CHECK |  |
 
 ### `Callers read their own voice grants`
@@ -62,7 +83,7 @@
 | comando | SELECT |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `((revoked_at IS NULL) AND (((roles IS NOT NULL) AND (EXISTS ( SELECT 1    FROM unnest(multiplix_voice_grants.roles) r(r)   WHERE has_role(auth.uid(), r.r)))) OR ((perfis IS NOT NULL) AND (EXISTS ( SELECT 1    FROM profiles p   WHERE ((p.user_id = auth.uid()) AND (p.id = ANY (multiplix_voice_grants.perfis))))))))` |
+| USING | `((revoked_at IS NULL) AND (((roles IS NOT NULL) AND (EXISTS ( SELECT 1    FROM unnest(multiplix_voice_grants.roles) r(r)   WHERE has_role(( SELECT auth.uid() AS uid), r.r)))) OR ((perfis IS NOT NULL) AND (EXISTS ( SELECT 1    FROM profiles p   WHERE ((p.user_id = ( SELECT auth.uid() AS uid)) AND (p.id = ANY (multiplix_voice_grants.perfis))))))))` |
 | WITH CHECK |  |
 
 

@@ -2,6 +2,22 @@
 
 > Talk X (X029): palavras de opt-out configuraveis. match_mode exact = mensagem inteira; contains = palavra em qualquer posicao.
 
+[CATALOGUE SEMÂNTICO DO PROJETO]
+Objeto: public.talkx_optout_keywords (tabela). RLS habilitada: t; RLS forçada: f.
+Colunas (ordem, tipo e nulabilidade):
+1 keyword text NOT NULL
+2 match_mode text NOT NULL [DEFAULT/EXPRESSION DEFINED]
+3 active boolean NOT NULL [DEFAULT/EXPRESSION DEFINED]
+4 created_by uuid NULLABLE
+5 created_at timestamp with time zone NOT NULL [DEFAULT/EXPRESSION DEFINED]
+Constraints:
+talkx_optout_keywords_match_mode_check: CHECK (match_mode = ANY (ARRAY['exact'::text, 'contains'::text]))
+talkx_optout_keywords_created_by_fkey: FOREIGN KEY (created_by) REFERENCES profiles(id) ON DELETE SET NULL
+talkx_optout_keywords_pkey: PRIMARY KEY (keyword)
+Políticas RLS (nome, operação, papéis e modo; as expressões permanecem no catálogo):
+talkx_optout_keywords_admin_write [command=ALL; roles=authenticated; PERMISSIVE]
+talkx_optout_keywords_select [command=SELECT; roles=authenticated; PERMISSIVE]
+
 | propriedade | valor |
 |---|---|
 | tipo | table |
@@ -51,8 +67,8 @@
 | comando | ALL |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `is_admin(auth.uid())` |
-| WITH CHECK | `is_admin(auth.uid())` |
+| USING | `is_admin(( SELECT auth.uid() AS uid))` |
+| WITH CHECK | `is_admin(( SELECT auth.uid() AS uid))` |
 
 ### `talkx_optout_keywords_select`
 
@@ -61,7 +77,7 @@
 | comando | SELECT |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `is_admin_or_supervisor(auth.uid())` |
+| USING | `is_admin_or_supervisor(( SELECT auth.uid() AS uid))` |
 | WITH CHECK |  |
 
 

@@ -1,5 +1,24 @@
 # public.auto_close_config
 
+> Descrição funcional não estava registrada no catálogo; o conteúdo abaixo documenta a estrutura observável, sem inferir regras de negócio não declaradas.
+
+[CATALOGUE SEMÂNTICO DO PROJETO]
+Objeto: public.auto_close_config (tabela). RLS habilitada: t; RLS forçada: f.
+Colunas (ordem, tipo e nulabilidade):
+1 id uuid NOT NULL [DEFAULT/EXPRESSION DEFINED]
+2 inactivity_hours integer NOT NULL [DEFAULT/EXPRESSION DEFINED]
+3 is_enabled boolean NOT NULL [DEFAULT/EXPRESSION DEFINED]
+4 close_message text NULLABLE [DEFAULT/EXPRESSION DEFINED]
+5 updated_by uuid NULLABLE
+6 created_at timestamp with time zone NOT NULL [DEFAULT/EXPRESSION DEFINED]
+7 updated_at timestamp with time zone NOT NULL [DEFAULT/EXPRESSION DEFINED]
+Constraints:
+auto_close_config_updated_by_fkey: FOREIGN KEY (updated_by) REFERENCES profiles(id) ON DELETE SET NULL
+auto_close_config_pkey: PRIMARY KEY (id)
+Políticas RLS (nome, operação, papéis e modo; as expressões permanecem no catálogo):
+"Admins can manage auto-close config" [command=ALL; roles=authenticated; PERMISSIVE]
+"Authenticated users can view auto-close config" [command=SELECT; roles=authenticated; PERMISSIVE]
+
 | propriedade | valor |
 |---|---|
 | tipo | table |
@@ -50,8 +69,8 @@
 | comando | ALL |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `is_admin_or_supervisor(auth.uid())` |
-| WITH CHECK | `is_admin_or_supervisor(auth.uid())` |
+| USING | `is_admin_or_supervisor(( SELECT auth.uid() AS uid))` |
+| WITH CHECK | `is_admin_or_supervisor(( SELECT auth.uid() AS uid))` |
 
 ### `Authenticated users can view auto-close config`
 

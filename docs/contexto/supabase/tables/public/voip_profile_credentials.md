@@ -2,6 +2,23 @@
 
 > [RLS-sem-policy: intencional] Credenciais SIP por perfil. Escrita/leitura pela RPC security-definer set_voip_profile_credentials. Sem grant a anon/authenticated.
 
+[CATALOGUE SEMÂNTICO DO PROJETO]
+Objeto: public.voip_profile_credentials (tabela). RLS habilitada: t; RLS forçada: f.
+Colunas (ordem, tipo e nulabilidade):
+1 id uuid NOT NULL [DEFAULT/EXPRESSION DEFINED]
+2 profile_id uuid NOT NULL
+3 ramal text NOT NULL — Ramal/usuário SIP do atendente. Único sem diferenciar maiúsculas/minúsculas: um ramal pertence a um único atendente.
+4 vault_secret_id uuid NOT NULL — id do segredo em vault.secrets. A senha é decifrada apenas dentro das RPCs SECURITY DEFINER deste arquivo.
+5 created_at timestamp with time zone NOT NULL [DEFAULT/EXPRESSION DEFINED]
+6 updated_at timestamp with time zone NOT NULL [DEFAULT/EXPRESSION DEFINED]
+Constraints:
+voip_profile_credentials_ramal_check: CHECK (ramal ~ '^[0-9A-Za-z][0-9A-Za-z._@+-]{0,63}$'::text)
+voip_profile_credentials_profile_id_fkey: FOREIGN KEY (profile_id) REFERENCES profiles(id) ON DELETE CASCADE
+voip_profile_credentials_pkey: PRIMARY KEY (id)
+voip_profile_credentials_profile_id_key: UNIQUE (profile_id)
+Políticas RLS (nome, operação, papéis e modo; as expressões permanecem no catálogo):
+(RLS habilitada sem política; verificar se o acesso restrito é intencional)
+
 | propriedade | valor |
 |---|---|
 | tipo | table |

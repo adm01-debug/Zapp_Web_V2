@@ -2,6 +2,28 @@
 
 > Contador de falhas de login por e-mail com bloqueio exponencial (record_failed_login / is_account_locked / clear_login_attempts). Acesso apenas via SECURITY DEFINER e edges service_role.
 
+[CATALOGUE SEMÂNTICO DO PROJETO]
+Objeto: public.login_attempts (tabela). RLS habilitada: t; RLS forçada: f.
+Colunas (ordem, tipo e nulabilidade):
+1 id uuid NOT NULL [DEFAULT/EXPRESSION DEFINED]
+2 email text NOT NULL
+3 ip_address text NULLABLE
+4 user_agent text NULLABLE
+5 attempt_count integer NOT NULL [DEFAULT/EXPRESSION DEFINED]
+6 last_attempt_at timestamp with time zone NOT NULL [DEFAULT/EXPRESSION DEFINED]
+7 locked_until timestamp with time zone NULLABLE
+8 created_at timestamp with time zone NOT NULL [DEFAULT/EXPRESSION DEFINED]
+9 updated_at timestamp with time zone NOT NULL [DEFAULT/EXPRESSION DEFINED]
+Constraints:
+login_attempts_attempt_count_max: CHECK (attempt_count <= 10000)
+login_attempts_pkey: PRIMARY KEY (id)
+login_attempts_email_key: UNIQUE (email)
+Políticas RLS (nome, operação, papéis e modo; as expressões permanecem no catálogo):
+"Admins and supervisors can view login attempts" [command=SELECT; roles=authenticated; PERMISSIVE]
+"Block authenticated inserts on login_attempts" [command=INSERT; roles=authenticated; PERMISSIVE]
+"Block authenticated updates on login_attempts" [command=UPDATE; roles=authenticated; PERMISSIVE]
+"Only admins can delete login attempts" [command=DELETE; roles=authenticated; PERMISSIVE]
+
 | propriedade | valor |
 |---|---|
 | tipo | table |
@@ -56,7 +78,7 @@
 | comando | SELECT |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `is_admin_or_supervisor(auth.uid())` |
+| USING | `is_admin_or_supervisor(( SELECT auth.uid() AS uid))` |
 | WITH CHECK |  |
 
 ### `Block authenticated inserts on login_attempts`
@@ -86,7 +108,7 @@
 | comando | DELETE |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `is_admin_or_supervisor(auth.uid())` |
+| USING | `is_admin_or_supervisor(( SELECT auth.uid() AS uid))` |
 | WITH CHECK |  |
 
 

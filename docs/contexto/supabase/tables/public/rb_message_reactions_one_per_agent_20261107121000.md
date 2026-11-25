@@ -2,6 +2,20 @@
 
 > Rollback privado das duplicatas de reação removidas ao instalar a unicidade por agente/mensagem.
 
+[CATALOGUE SEMÂNTICO DO PROJETO]
+Objeto: public._rb_message_reactions_one_per_agent_20261107121000 (tabela). RLS habilitada: t; RLS forçada: f.
+Colunas (ordem, tipo e nulabilidade):
+1 id uuid NOT NULL
+2 message_id uuid NOT NULL
+3 user_id uuid NULLABLE
+4 contact_id uuid NULLABLE
+5 emoji text NOT NULL
+6 created_at timestamp with time zone NOT NULL
+Constraints:
+_rb_message_reactions_one_per_agent_20261107121000_pkey: PRIMARY KEY (id)
+Políticas RLS (nome, operação, papéis e modo; as expressões permanecem no catálogo):
+"No client access to reaction rollback backup" [command=ALL; roles=anon, authenticated; PERMISSIVE]
+
 | propriedade | valor |
 |---|---|
 | tipo | table |

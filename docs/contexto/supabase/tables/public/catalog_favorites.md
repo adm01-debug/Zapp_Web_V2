@@ -2,6 +2,23 @@
 
 > Favoritos do catálogo por agente (E50). RLS por dono (policy ALL TO authenticated); grants de cliente depois do CT-01: SELECT/INSERT/UPDATE/DELETE para authenticated, nada para anon.
 
+[CATALOGUE SEMÂNTICO DO PROJETO]
+Objeto: public.catalog_favorites (tabela). RLS habilitada: t; RLS forçada: f.
+Colunas (ordem, tipo e nulabilidade):
+1 id uuid NOT NULL [DEFAULT/EXPRESSION DEFINED]
+2 user_id uuid NOT NULL
+3 product_id uuid NOT NULL
+4 product_name text NOT NULL
+5 product_sku text NULLABLE
+6 primary_image_url text NULLABLE
+7 created_at timestamp with time zone NOT NULL [DEFAULT/EXPRESSION DEFINED]
+Constraints:
+catalog_favorites_user_id_fkey: FOREIGN KEY (user_id) REFERENCES auth.users(id) ON DELETE CASCADE
+catalog_favorites_pkey: PRIMARY KEY (id)
+catalog_favorites_user_id_product_id_key: UNIQUE (user_id, product_id)
+Políticas RLS (nome, operação, papéis e modo; as expressões permanecem no catálogo):
+"Users can manage own catalog favorites" [command=ALL; roles=authenticated; PERMISSIVE]
+
 | propriedade | valor |
 |---|---|
 | tipo | table |
@@ -54,7 +71,7 @@
 | comando | ALL |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `(user_id = auth.uid())` |
+| USING | `(user_id = ( SELECT auth.uid() AS uid))` |
 | WITH CHECK |  |
 
 

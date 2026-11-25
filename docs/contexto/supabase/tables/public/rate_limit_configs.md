@@ -1,5 +1,25 @@
 # public.rate_limit_configs
 
+> Descrição funcional não estava registrada no catálogo; o conteúdo abaixo documenta a estrutura observável, sem inferir regras de negócio não declaradas.
+
+[CATALOGUE SEMÂNTICO DO PROJETO]
+Objeto: public.rate_limit_configs (tabela). RLS habilitada: t; RLS forçada: f.
+Colunas (ordem, tipo e nulabilidade):
+1 id uuid NOT NULL [DEFAULT/EXPRESSION DEFINED]
+2 name text NOT NULL
+3 endpoint_pattern text NOT NULL
+4 max_requests integer NOT NULL [DEFAULT/EXPRESSION DEFINED]
+5 window_seconds integer NOT NULL [DEFAULT/EXPRESSION DEFINED]
+6 block_duration_minutes integer NOT NULL [DEFAULT/EXPRESSION DEFINED]
+7 is_active boolean NULLABLE [DEFAULT/EXPRESSION DEFINED]
+8 created_at timestamp with time zone NOT NULL [DEFAULT/EXPRESSION DEFINED]
+9 updated_at timestamp with time zone NOT NULL [DEFAULT/EXPRESSION DEFINED]
+Constraints:
+rate_limit_configs_pkey: PRIMARY KEY (id)
+Políticas RLS (nome, operação, papéis e modo; as expressões permanecem no catálogo):
+"Admins can manage rate limit configs" [command=ALL; roles=authenticated; PERMISSIVE]
+"Admins can read rate limit configs" [command=SELECT; roles=authenticated; PERMISSIVE]
+
 | propriedade | valor |
 |---|---|
 | tipo | table |
@@ -50,8 +70,8 @@
 | comando | ALL |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `is_admin(auth.uid())` |
-| WITH CHECK | `is_admin(auth.uid())` |
+| USING | `is_admin(( SELECT auth.uid() AS uid))` |
+| WITH CHECK | `is_admin(( SELECT auth.uid() AS uid))` |
 
 ### `Admins can read rate limit configs`
 
@@ -60,7 +80,7 @@
 | comando | SELECT |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `is_admin_or_supervisor(auth.uid())` |
+| USING | `is_admin_or_supervisor(( SELECT auth.uid() AS uid))` |
 | WITH CHECK |  |
 
 

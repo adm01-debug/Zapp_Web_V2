@@ -1,5 +1,41 @@
 # public.talkx_blacklist
 
+> Descrição funcional não estava registrada no catálogo; o conteúdo abaixo documenta a estrutura observável, sem inferir regras de negócio não declaradas.
+
+[CATALOGUE SEMÂNTICO DO PROJETO]
+Objeto: public.talkx_blacklist (tabela). RLS habilitada: t; RLS forçada: f.
+Colunas (ordem, tipo e nulabilidade):
+1 id uuid NOT NULL [DEFAULT/EXPRESSION DEFINED]
+2 contact_id uuid NULLABLE
+3 reason text NULLABLE [DEFAULT/EXPRESSION DEFINED]
+4 blocked_by uuid NULLABLE
+5 created_at timestamp with time zone NOT NULL [DEFAULT/EXPRESSION DEFINED]
+6 origin text NOT NULL [DEFAULT/EXPRESSION DEFINED]
+7 campaign_id uuid NULLABLE
+8 phone text NULLABLE
+9 reason_code text NULLABLE
+10 expires_at timestamp with time zone NULLABLE
+11 source_message_id uuid NULLABLE
+12 removed_by uuid NULLABLE
+13 removed_at timestamp with time zone NULLABLE
+14 import_batch_id uuid NULLABLE
+15 removal_reason text NULLABLE
+Constraints:
+talkx_blacklist_origin_check: CHECK (origin = ANY (ARRAY['manual'::text, 'optout'::text, 'system'::text, 'lgpd'::text, 'list'::text, 'auto_optout'::text]))
+talkx_blacklist_phone_or_contact: CHECK (phone IS NOT NULL OR contact_id IS NOT NULL)
+talkx_blacklist_blocked_by_fkey: FOREIGN KEY (blocked_by) REFERENCES profiles(id) ON DELETE SET NULL
+talkx_blacklist_campaign_id_fkey: FOREIGN KEY (campaign_id) REFERENCES talkx_campaigns(id) ON DELETE SET NULL
+talkx_blacklist_contact_id_fkey: FOREIGN KEY (contact_id) REFERENCES contacts(id) ON DELETE CASCADE
+talkx_blacklist_reason_code_fk: FOREIGN KEY (reason_code) REFERENCES talkx_suppression_reasons(code) ON UPDATE CASCADE ON DELETE RESTRICT
+talkx_blacklist_removed_by_fkey: FOREIGN KEY (removed_by) REFERENCES profiles(id) ON DELETE SET NULL
+talkx_blacklist_source_message_id_fkey: FOREIGN KEY (source_message_id) REFERENCES messages(id) ON DELETE SET NULL
+talkx_blacklist_pkey: PRIMARY KEY (id)
+Políticas RLS (nome, operação, papéis e modo; as expressões permanecem no catálogo):
+"Admins can add to blacklist" [command=INSERT; roles=authenticated; PERMISSIVE]
+"Only admins can view blacklist" [command=SELECT; roles=authenticated; PERMISSIVE]
+talkx_blacklist_no_delete [command=DELETE; roles=authenticated; PERMISSIVE]
+talkx_blacklist_update [command=UPDATE; roles=authenticated; PERMISSIVE]
+
 | propriedade | valor |
 |---|---|
 | tipo | table |
@@ -77,7 +113,7 @@
 | tipo | PERMISSIVE |
 | roles | authenticated |
 | USING |  |
-| WITH CHECK | `is_admin_or_supervisor(auth.uid())` |
+| WITH CHECK | `is_admin_or_supervisor(( SELECT auth.uid() AS uid))` |
 
 ### `Only admins can view blacklist`
 
@@ -86,7 +122,7 @@
 | comando | SELECT |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `is_admin_or_supervisor(auth.uid())` |
+| USING | `is_admin_or_supervisor(( SELECT auth.uid() AS uid))` |
 | WITH CHECK |  |
 
 ### `talkx_blacklist_no_delete`
@@ -106,8 +142,8 @@
 | comando | UPDATE |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `is_admin_or_supervisor(auth.uid())` |
-| WITH CHECK | `is_admin_or_supervisor(auth.uid())` |
+| USING | `is_admin_or_supervisor(( SELECT auth.uid() AS uid))` |
+| WITH CHECK | `is_admin_or_supervisor(( SELECT auth.uid() AS uid))` |
 
 
 ## Triggers

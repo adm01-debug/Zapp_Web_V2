@@ -3,14 +3,14 @@
  "format_version": 2,
  "stack": {
   "linguagens": [
-   "TypeScript (5032)",
-   "Markdown (2730)",
-   "JSON (1963)",
-   "SQL (1402)",
-   "JavaScript (682)",
-   "Shell (264)",
+   "TypeScript (4496)",
+   "Markdown (3986)",
+   "SQL (3056)",
+   "JSON (1939)",
+   "JavaScript (523)",
+   "Shell (252)",
    "Python (125)",
-   "YAML (110)"
+   "YAML (43)"
   ],
   "linguagem_principal": "TypeScript",
   "framework": "React",
@@ -46,6 +46,15 @@
   "nome": "zapp-web-v2",
   "versao": "0.2.0",
   "scripts": {
+   "automation:check": "node scripts/automation.mjs check --ref HEAD",
+   "automation:doctor": "node scripts/automation.mjs doctor",
+   "automation:graph": "node scripts/automation.mjs graph",
+   "automation:heal": "node scripts/automation.mjs heal --ref origin/main",
+   "automation:install-hooks": "node scripts/automation.mjs install-hooks",
+   "automation:nightly": "node scripts/automation.mjs nightly --ref origin/main",
+   "automation:status": "node scripts/automation.mjs graph status",
+   "automation:test": "node scripts/automation.mjs test",
+   "automation:uninstall-hooks": "node scripts/automation.mjs uninstall-hooks",
    "build": "vite build",
    "build:dev": "vite build --mode development",
    "ci:local": "node scripts/ci/ci-local.mjs",
@@ -77,8 +86,8 @@
   "dependencias": 69,
   "dev_dependencias": 33,
   "principais": {
-   "@supabase/supabase-js": "^2.119.0",
-   "@tanstack/react-query": "^5.107.1",
+   "@supabase/supabase-js": "^2.119.2",
+   "@tanstack/react-query": "^5.108.1",
    "@tanstack/react-virtual": "^3.14.26",
    "date-fns": "^3.6.0",
    "framer-motion": "^12.43.0",
@@ -91,7 +100,7 @@
    "react-i18next": "^17.1.13",
    "react-resizable-panels": "^2.1.9",
    "react-router-dom": "^7",
-   "recharts": "^3.10.1",
+   "recharts": "^3.11.0",
    "tailwindcss-animate": "^1.0.7",
    "zod": "^4.6.7"
   },
@@ -134,6 +143,65 @@
   "vitest.config.ts"
  ],
  "workflows": [
+  {
+   "arquivo": ".github/workflows/auto-update-pr-branch.yml",
+   "nome": "Auto Update PR Branches",
+   "gatilhos": [
+    "push",
+    "schedule",
+    "workflow_dispatch",
+    "workflow_run"
+   ],
+   "crons": [
+    "7,37 * * * *"
+   ],
+   "branches": [
+    "main"
+   ],
+   "jobs": [
+    "update-behind-branches"
+   ],
+   "permissoes": [],
+   "scripts_usados": [
+    "scripts/ci/fila-merge.mjs"
+   ],
+   "npm_scripts": [],
+   "secrets": [
+    "GITHUB_TOKEN"
+   ],
+   "actions": [
+    "actions/checkout",
+    "actions/setup-node"
+   ]
+  },
+  {
+   "arquivo": ".github/workflows/automation-local.yml",
+   "nome": "Automação local",
+   "gatilhos": [
+    "pull_request",
+    "push",
+    "workflow_dispatch"
+   ],
+   "crons": [],
+   "branches": [
+    "main"
+   ],
+   "jobs": [
+    "contracts"
+   ],
+   "permissoes": [
+    "contents: read"
+   ],
+   "scripts_usados": [
+    "scripts/automation.mjs"
+   ],
+   "npm_scripts": [],
+   "secrets": [],
+   "actions": [
+    "actions/checkout",
+    "actions/setup-node"
+   ]
+  },
   {
    "arquivo": ".github/workflows/branch-hygiene-audit.yml",
    "nome": "Branch Hygiene Audit",
@@ -375,6 +443,7 @@
     "scripts/db-audit/ai-block03-vocabulary-contract.test.sh",
     "scripts/db-audit/ai-read-policies-queue-scope.test.sh",
     "scripts/db-audit/ai-usage-cost-window-open.test.sh",
+    "scripts/db-audit/ai-usage-price-input-output.test.sh",
     "scripts/db-audit/anon-privileges-contact-messages.test.sh",
     "scripts/db-audit/assume-return-conversation.test.sh",
     "scripts/db-audit/auto-reconnect-logs.test.sh",
@@ -666,6 +735,30 @@
    ]
   },
   {
+   "arquivo": ".github/workflows/dependency-review.yml",
+   "nome": "Dependency Review",
+   "gatilhos": [
+    "pull_request"
+   ],
+   "crons": [],
+   "branches": [
+    "main"
+   ],
+   "jobs": [
+    "dependency-review"
+   ],
+   "permissoes": [
+    "contents: read"
+   ],
+   "scripts_usados": [],
+   "npm_scripts": [],
+   "secrets": [],
+   "actions": [
+    "actions/checkout",
+    "actions/dependency-review-action"
+   ]
+  },
+  {
    "arquivo": ".github/workflows/deploy-functions.yml",
    "nome": "Deploy Edge Functions",
    "gatilhos": [
@@ -704,6 +797,33 @@
     "actions/upload-artifact",
     "denoland/setup-deno",
     "supabase/setup-cli"
+   ]
+  },
+  {
+   "arquivo": ".github/workflows/e2e-baselines.yml",
+   "nome": "e2e-baselines",
+   "gatilhos": [
+    "workflow_dispatch"
+   ],
+   "crons": [],
+   "branches": [],
+   "jobs": [
+    "regerar"
+   ],
+   "permissoes": [
+    "contents: read"
+   ],
+   "scripts_usados": [],
+   "npm_scripts": [
+    "test:e2e"
+   ],
+   "secrets": [],
+   "actions": [
+    "actions/cache",
+    "actions/checkout",
+    "actions/github-script",
+    "oven-sh/setup-bun",
+    "peter-evans/create-pull-request"
    ]
   },
   {
@@ -1125,6 +1245,11 @@
    "linhas": 108
   },
   {
+   "arquivo": "AUDIT-A-PROCESSAR-261031.md",
+   "titulo": "Auditoria ? _a-processar/ZAPP_WEB_V2_LOCAL/Zapp_Web_V2",
+   "linhas": 119
+  },
+  {
    "arquivo": "CHANGELOG.md",
    "titulo": "Changelog",
    "linhas": 90
@@ -1137,17 +1262,17 @@
   {
    "arquivo": "CONTRIBUTING.md",
    "titulo": "Guia de Contribuição — Zapp Web V2",
-   "linhas": 112
+   "linhas": 119
   },
   {
    "arquivo": "ESTADO.md",
    "titulo": "ESTADO.md — o que está ligado e quem chama",
-   "linhas": 163
+   "linhas": 154
   },
   {
    "arquivo": "FEATURE_REGISTRY.md",
    "titulo": "FEATURE_REGISTRY.md — registro das views do V2",
-   "linhas": 89
+   "linhas": 108
   },
   {
    "arquivo": "HANDOFF_NEXT_SESSION.md",
@@ -1157,7 +1282,7 @@
   {
    "arquivo": "PENDENCIAS.md",
    "titulo": "PENDÊNCIAS CI — 2026-11-12",
-   "linhas": 446
+   "linhas": 461
   },
   {
    "arquivo": "README.md",
@@ -1170,6 +1295,11 @@
    "linhas": 465
   },
   {
+   "arquivo": "RESGATE-ANALISE-261031.md",
+   "titulo": "RESGATE-ANALISE-261031.md",
+   "linhas": 456
+  },
+  {
    "arquivo": "SECURITY.md",
    "titulo": "🔒 Política de Segurança — ZAPP-WEB",
    "linhas": 95
@@ -1178,6 +1308,16 @@
    "arquivo": "TESTING_CONVENTION.md",
    "titulo": "TESTING_CONVENTION.md — onde cada teste mora e como ele roda",
    "linhas": 104
+  },
+  {
+   "arquivo": "TRIAGEM-PRS-GITHUB-261031.md",
+   "titulo": "TRIAGEM DE PRs - adm01-debug/Zapp_Web_V2",
+   "linhas": 210
+  },
+  {
+   "arquivo": "docs/AUTOMACAO_LOCAL.md",
+   "titulo": "Automação local — Zapp_Web_V2",
+   "linhas": 713
   },
   {
    "arquivo": "docs/BACKUP-RECOVERY-STRATEGY.md",
@@ -1207,7 +1347,7 @@
   {
    "arquivo": "docs/DB-INVENTORY.md",
    "titulo": "Inventário de objetos do banco — `public`",
-   "linhas": 292
+   "linhas": 294
   },
   {
    "arquivo": "docs/DB-SECURITY.md",
@@ -1262,7 +1402,7 @@
   {
    "arquivo": "docs/MIGRATIONS.md",
    "titulo": "Migrations — procedimento e armadilhas",
-   "linhas": 595
+   "linhas": 613
   },
   {
    "arquivo": "docs/POP-ATENDIMENTO-BASICO.md",
@@ -1327,7 +1467,7 @@
   {
    "arquivo": "docs/auditoria-liquidação-branches.md",
    "titulo": "Auditoria de Liquidação de Branches — Zapp_Web_V2",
-   "linhas": 44
+   "linhas": 41
   },
   {
    "arquivo": "docs/contracts.md",
@@ -1347,8 +1487,16 @@
  ],
  "docs_em_subpastas": [
   {
+   "pasta": "docs/pendencias",
+   "arquivos_md": 1093
+  },
+  {
    "pasta": "docs/_arquivo",
    "arquivos_md": 593
+  },
+  {
+   "pasta": "docs/contexto",
+   "arquivos_md": 261
   },
   {
    "pasta": "docs/audits",
@@ -1424,11 +1572,7 @@
   },
   {
    "pasta": "docs/evidencias",
-   "arquivos_md": 4
-  },
-  {
-   "pasta": "docs/contexto",
-   "arquivos_md": 3
+   "arquivos_md": 5
   },
   {
    "pasta": "docs/telefonia",
@@ -1467,7 +1611,15 @@
    "arquivos_md": 1
   },
   {
+   "pasta": "docs/integracoes",
+   "arquivos_md": 1
+  },
+  {
    "pasta": "docs/ops",
+   "arquivos_md": 1
+  },
+  {
+   "pasta": "docs/resgate",
    "arquivos_md": 1
   }
  ],
@@ -1505,6 +1657,7 @@
    "NODE_ENV",
    "PROD",
    "TZ",
+   "VITE_A11Y_AUDIT_CONTINUO",
    "VITE_APP_VERSION",
    "VITE_CRM_INTEGRATION_ENABLED",
    "VITE_SEARCHBOX_MONTHLY_SESSION_LIMIT",
@@ -1536,6 +1689,7 @@
    "MESSAGING_MEDIA_MAX_BYTES",
    "MULTIPLIX_BATCH_SIZE",
    "MULTIPLIX_SCOPE_HMAC_SECRET",
+   "OPENROUTER_STT_MODEL",
    "PREVIEW_EGRESS_PROXY_URL",
    "PREVIEW_EGRESS_SHARED_SECRET",
    "PROMOGIFTS_SUPABASE_SERVICE_ROLE_KEY",
@@ -1591,6 +1745,7 @@
    "NODE_ENV",
    "PROD",
    "TZ",
+   "VITE_A11Y_AUDIT_CONTINUO",
    "VITE_APP_VERSION",
    "VITE_SEARCHBOX_MONTHLY_SESSION_LIMIT",
    "ZAPP_CSS_UNDER_TEST"
@@ -1623,20 +1778,10 @@
   ],
   "dockerfiles": [
    {
-    "arquivo": "analise-prs/resgate-261118-lote3/claude/fix-ga-fase78-perimetro-custo-261020-2200/infrastructure/preview-egress-proxy/Dockerfile",
-    "base": [
-     "gcr.io/distroless/static-debian12:nonroot@sha256:afa5c872c891853ca7fcf1f12c3edb23f7eeef36189728842dd51042ff57f7ab",
-     "golang:1.24-alpine@sha256:8bee1901f1e530bfb4a7850aa7a479d17ae3a18beb6e09064ed54cfd245b7191"
-    ],
-    "portas": [
-     "8080"
-    ]
-   },
-   {
     "arquivo": "infrastructure/preview-egress-proxy/Dockerfile",
     "base": [
      "gcr.io/distroless/static-debian12:nonroot@sha256:afa5c872c891853ca7fcf1f12c3edb23f7eeef36189728842dd51042ff57f7ab",
-     "golang:1.27-alpine@sha256:fa3d596898d9f126af7c01d14ee7597bab3f39cccf392ef36b69fe77cd681f18"
+     "golang:1.27-alpine@sha256:70bd7ddea8b6cbe5d6943cde279d6b67feb10cc924fb9100d1d8757c1575b280"
     ],
     "portas": [
      "8080"
@@ -1666,7 +1811,7 @@
    {
     "pacote": "@elevenlabs/react",
     "servico": "ElevenLabs",
-    "versao": "^1.22.0"
+    "versao": "^1.23.1"
    },
    {
     "pacote": "i18next",
@@ -1681,12 +1826,12 @@
    {
     "pacote": "@tanstack/react-query",
     "servico": "react-query",
-    "versao": "^5.107.1"
+    "versao": "^5.108.1"
    },
    {
     "pacote": "@supabase/supabase-js",
     "servico": "Supabase",
-    "versao": "^2.119.0"
+    "versao": "^2.119.2"
    },
    {
     "pacote": "zod",
@@ -1697,58 +1842,50 @@
   "hosts_externos": [
    {
     "host": "stub.supabase.co",
-    "arquivos": 40
+    "arquivos": 38
    },
    {
     "host": "edge.invalid",
-    "arquivos": 39
+    "arquivos": 37
    },
    {
     "host": "cdn.test",
-    "arquivos": 31
+    "arquivos": 25
    },
    {
     "host": "proj.supabase.co",
-    "arquivos": 29
+    "arquivos": 24
    },
    {
     "host": "zapp-web-v2.vercel.app",
-    "arquivos": 26
-   },
-   {
-    "host": "example.invalid",
-    "arquivos": 23
+    "arquivos": 24
    },
    {
     "host": "edge.test",
-    "arquivos": 22
-   },
-   {
-    "host": "tnnnlkbymytvtqngbbqh.supabase.co",
     "arquivos": 21
    },
    {
-    "host": "example.supabase.co",
-    "arquivos": 16
+    "host": "example.invalid",
+    "arquivos": 21
    },
    {
-    "host": "exemplo.com",
-    "arquivos": 16
-   },
-   {
-    "host": "projeto.supabase.co",
-    "arquivos": 16
-   },
-   {
-    "host": "api.resend.com",
-    "arquivos": 15
-   },
-   {
-    "host": "gmail.googleapis.com",
-    "arquivos": 14
+    "host": "tnnnlkbymytvtqngbbqh.supabase.co",
+    "arquivos": 18
    },
    {
     "host": "exemplo.test",
+    "arquivos": 14
+   },
+   {
+    "host": "projeto.supabase.co",
+    "arquivos": 14
+   },
+   {
+    "host": "example.supabase.co",
+    "arquivos": 13
+   },
+   {
+    "host": "supabase-test.example",
     "arquivos": 13
    },
    {
@@ -1756,7 +1893,7 @@
     "arquivos": 12
    },
    {
-    "host": "local.test",
+    "host": "exemplo.com",
     "arquivos": 12
    },
    {
@@ -1764,19 +1901,15 @@
     "arquivos": 12
    },
    {
-    "host": "supabase-test.example",
-    "arquivos": 12
-   },
-   {
-    "host": "evolution.test",
+    "host": "api.resend.com",
     "arquivos": 11
    },
    {
-    "host": "cdn.exemplo",
-    "arquivos": 10
+    "host": "local.test",
+    "arquivos": 11
    },
    {
-    "host": "projeto-de-teste.supabase.co",
+    "host": "evolution.test",
     "arquivos": 10
    },
    {
@@ -1784,27 +1917,15 @@
     "arquivos": 9
    },
    {
-    "host": "mmg.whatsapp.net",
+    "host": "gmail.googleapis.com",
     "arquivos": 9
-   },
-   {
-    "host": "pps.whatsapp.net",
-    "arquivos": 9
-   },
-   {
-    "host": "api.mapbox.com",
-    "arquivos": 8
    },
    {
     "host": "evil.example",
     "arquivos": 8
    },
    {
-    "host": "project.test",
-    "arquivos": 8
-   },
-   {
-    "host": "test.supabase.co",
+    "host": "evolution-test.example",
     "arquivos": 8
    },
    {
@@ -1812,15 +1933,19 @@
     "arquivos": 8
    },
    {
-    "host": "zappweb.app.br",
-    "arquivos": 8
-   },
-   {
-    "host": "api.supabase.com",
+    "host": "cdn.exemplo",
     "arquivos": 7
    },
    {
-    "host": "evolution-test.example",
+    "host": "mmg.whatsapp.net",
+    "arquivos": 7
+   },
+   {
+    "host": "pps.whatsapp.net",
+    "arquivos": 7
+   },
+   {
+    "host": "projeto-de-teste.supabase.co",
     "arquivos": 7
    },
    {
@@ -1829,6 +1954,10 @@
    },
    {
     "host": "x.supabase.co",
+    "arquivos": 7
+   },
+   {
+    "host": "zappweb.app.br",
     "arquivos": 7
    },
    {
@@ -1844,15 +1973,15 @@
     "arquivos": 6
    },
    {
-    "host": "oauth2.googleapis.com",
-    "arquivos": 6
-   },
-   {
     "host": "projeto.teste.supabase.co",
     "arquivos": 6
    },
    {
     "host": "provider.invalid",
+    "arquivos": 6
+   },
+   {
+    "host": "test.supabase.co",
     "arquivos": 6
    },
    {
@@ -1864,19 +1993,11 @@
     "arquivos": 5
    },
    {
-    "host": "evolution.invalid",
-    "arquivos": 5
-   },
-   {
-    "host": "exemplo.invalid",
-    "arquivos": 5
-   },
-   {
     "host": "imagedelivery.net",
     "arquivos": 5
    },
    {
-    "host": "loja.example",
+    "host": "instagram.com",
     "arquivos": 5
    },
    {
@@ -1884,16 +2005,24 @@
     "arquivos": 5
    },
    {
-    "host": "supabase.invalid",
-    "arquivos": 5
-   },
-   {
-    "host": "test.com",
-    "arquivos": 5
-   },
-   {
     "host": "x.com",
     "arquivos": 5
+   },
+   {
+    "host": "api.mapbox.com",
+    "arquivos": 4
+   },
+   {
+    "host": "api.supabase.com",
+    "arquivos": 4
+   },
+   {
+    "host": "evolution.invalid",
+    "arquivos": 4
+   },
+   {
+    "host": "exemplo.invalid",
+    "arquivos": 4
    },
    {
     "host": "external.invalid",
@@ -1908,11 +2037,7 @@
     "arquivos": 4
    },
    {
-    "host": "instagram.com",
-    "arquivos": 4
-   },
-   {
-    "host": "local.invalid",
+    "host": "openrouter.ai",
     "arquivos": 4
    },
    {
@@ -1920,19 +2045,11 @@
     "arquivos": 4
    },
    {
-    "host": "project.supabase.co",
+    "host": "project.test",
     "arquivos": 4
    },
    {
-    "host": "storage.invalid",
-    "arquivos": 4
-   },
-   {
-    "host": "stub.invalid",
-    "arquivos": 4
-   },
-   {
-    "host": "www.google.com",
+    "host": "supabase.invalid",
     "arquivos": 4
    },
    {
@@ -1956,15 +2073,7 @@
     "arquivos": 3
    },
    {
-    "host": "empresa.example.test",
-    "arquivos": 3
-   },
-   {
     "host": "evolution.exemplo.com",
-    "arquivos": 3
-   },
-   {
-    "host": "exemplo.invalido",
     "arquivos": 3
    },
    {
@@ -1984,15 +2093,19 @@
     "arquivos": 3
    },
    {
+    "host": "oauth2.googleapis.com",
+    "arquivos": 3
+   },
+   {
     "host": "offline.invalid",
     "arquivos": 3
    },
    {
-    "host": "openrouter.ai",
+    "host": "outro.supabase.co",
     "arquivos": 3
    },
    {
-    "host": "outro.supabase.co",
+    "host": "project.supabase.co",
     "arquivos": 3
    },
    {
@@ -2008,15 +2121,19 @@
     "arquivos": 3
    },
    {
-    "host": "signed.invalid",
-    "arquivos": 3
-   },
-   {
     "host": "storage.local",
     "arquivos": 3
    },
    {
-    "host": "typebot.io",
+    "host": "stub.invalid",
+    "arquivos": 3
+   },
+   {
+    "host": "test.com",
+    "arquivos": 3
+   },
+   {
+    "host": "www.google.com",
     "arquivos": 3
    },
    {
@@ -2025,10 +2142,6 @@
    },
    {
     "host": "api.deepseek.test",
-    "arquivos": 2
-   },
-   {
-    "host": "api.dify.ai",
     "arquivos": 2
    },
    {
@@ -2048,27 +2161,15 @@
     "arquivos": 2
    },
    {
-    "host": "app.test",
-    "arquivos": 2
-   },
-   {
-    "host": "audio.ogg",
-    "arquivos": 2
-   },
-   {
-    "host": "bot.empresa.com",
-    "arquivos": 2
-   },
-   {
-    "host": "chatwoot.empresa.com",
-    "arquivos": 2
-   },
-   {
     "host": "edge-smoke.invalid",
     "arquivos": 2
    },
    {
     "host": "egress.proxy.test",
+    "arquivos": 2
+   },
+   {
+    "host": "empresa.example.test",
     "arquivos": 2
    },
    {
@@ -2080,15 +2181,15 @@
     "arquivos": 2
    },
    {
+    "host": "exemplo.invalido",
+    "arquivos": 2
+   },
+   {
     "host": "facebook.com",
     "arquivos": 2
    },
    {
     "host": "facebook.example",
-    "arquivos": 2
-   },
-   {
-    "host": "flowise.empresa.com",
     "arquivos": 2
    },
    {
@@ -2100,11 +2201,11 @@
     "arquivos": 2
    },
    {
-    "host": "img.jpg",
+    "host": "linkedin.com",
     "arquivos": 2
    },
    {
-    "host": "linkedin.com",
+    "host": "local.invalid",
     "arquivos": 2
    },
    {
@@ -2112,7 +2213,7 @@
     "arquivos": 2
    },
    {
-    "host": "outro.exemplo.com",
+    "host": "loja.example",
     "arquivos": 2
    },
    {
@@ -2124,15 +2225,11 @@
     "arquivos": 2
    },
    {
-    "host": "projeto-teste.local",
-    "arquivos": 2
-   },
-   {
     "host": "provedor-ia.test",
     "arquivos": 2
    },
    {
-    "host": "sticker.webp",
+    "host": "storage.invalid",
     "arquivos": 2
    },
    {
@@ -2141,14 +2238,6 @@
    },
    {
     "host": "supabase.test",
-    "arquivos": 2
-   },
-   {
-    "host": "teste.local",
-    "arquivos": 2
-   },
-   {
-    "host": "tnnnlkbymytvtqngbbqh.functions.supabase.co",
     "arquivos": 2
    },
    {
@@ -2164,7 +2253,7 @@
     "arquivos": 2
    },
    {
-    "host": "vpkmqeumtxhrwgawxdrl.supabase.co",
+    "host": "www.docker.com",
     "arquivos": 2
    },
    {
@@ -2240,11 +2329,19 @@
     "arquivos": 1
    },
    {
+    "host": "app.test",
+    "arquivos": 1
+   },
+   {
     "host": "atacante.local",
     "arquivos": 1
    },
    {
     "host": "atomicabr.com.br",
+    "arquivos": 1
+   },
+   {
+    "host": "audio.ogg",
     "arquivos": 1
    },
    {
@@ -2268,15 +2365,15 @@
     "arquivos": 1
    },
    {
-    "host": "bot.exemplo",
-    "arquivos": 1
-   },
-   {
     "host": "broken.test",
     "arquivos": 1
    },
    {
     "host": "cdn.example",
+    "arquivos": 1
+   },
+   {
+    "host": "cdn.example.test",
     "arquivos": 1
    },
    {
@@ -2288,15 +2385,15 @@
     "arquivos": 1
    },
    {
+    "host": "cdn.local",
+    "arquivos": 1
+   },
+   {
     "host": "cdn.promo.test",
     "arquivos": 1
    },
    {
     "host": "cdn.terceiro.test",
-    "arquivos": 1
-   },
-   {
-    "host": "chat.exemplo",
     "arquivos": 1
    },
    {
@@ -2309,10 +2406,6 @@
    },
    {
     "host": "db.interno.test",
-    "arquivos": 1
-   },
-   {
-    "host": "dify.exemplo",
     "arquivos": 1
    },
    {
@@ -2340,10 +2433,6 @@
     "arquivos": 1
    },
    {
-    "host": "evoai.exemplo",
-    "arquivos": 1
-   },
-   {
     "host": "evolution.example",
     "arquivos": 1
    },
@@ -2364,10 +2453,6 @@
     "arquivos": 1
    },
    {
-    "host": "flowise.exemplo",
-    "arquivos": 1
-   },
-   {
     "host": "fonts.gstatic.com",
     "arquivos": 1
    },
@@ -2381,6 +2466,10 @@
    },
    {
     "host": "fresh.test",
+    "arquivos": 1
+   },
+   {
+    "host": "ghcr.io",
     "arquivos": 1
    },
    {
@@ -2409,6 +2498,10 @@
    },
    {
     "host": "img.com",
+    "arquivos": 1
+   },
+   {
+    "host": "img.jpg",
     "arquivos": 1
    },
    {
@@ -2444,15 +2537,15 @@
     "arquivos": 1
    },
    {
+    "host": "maintenance.invalid",
+    "arquivos": 1
+   },
+   {
     "host": "malicioso.example",
     "arquivos": 1
    },
    {
     "host": "mmg.whatsapp.net.evil.com",
-    "arquivos": 1
-   },
-   {
-    "host": "n8n.exemplo",
     "arquivos": 1
    },
    {
@@ -2485,6 +2578,10 @@
    },
    {
     "host": "outro.com",
+    "arquivos": 1
+   },
+   {
+    "host": "outro.exemplo.com",
     "arquivos": 1
    },
    {
@@ -2524,6 +2621,14 @@
     "arquivos": 1
    },
    {
+    "host": "production.invalid",
+    "arquivos": 1
+   },
+   {
+    "host": "production.supabase.co",
+    "arquivos": 1
+   },
+   {
     "host": "proj.supabase.test",
     "arquivos": 1
    },
@@ -2533,6 +2638,10 @@
    },
    {
     "host": "projeto-errado.supabase.co",
+    "arquivos": 1
+   },
+   {
+    "host": "projeto-teste.local",
     "arquivos": 1
    },
    {
@@ -2600,6 +2709,14 @@
     "arquivos": 1
    },
    {
+    "host": "signed.invalid",
+    "arquivos": 1
+   },
+   {
+    "host": "sticker.webp",
+    "arquivos": 1
+   },
+   {
     "host": "suaempresa.com",
     "arquivos": 1
    },
@@ -2624,6 +2741,14 @@
     "arquivos": 1
    },
    {
+    "host": "teste.local",
+    "arquivos": 1
+   },
+   {
+    "host": "tnnnlkbymytvtqngbbqh.functions.supabase.co",
+    "arquivos": 1
+   },
+   {
     "host": "tnnnlkbymytvtqngbbqh.supabase.co.evil.test",
     "arquivos": 1
    },
@@ -2636,15 +2761,15 @@
     "arquivos": 1
    },
    {
-    "host": "typebot.exemplo",
-    "arquivos": 1
-   },
-   {
     "host": "untrusted.example.invalid",
     "arquivos": 1
    },
    {
     "host": "vimeo.com",
+    "arquivos": 1
+   },
+   {
+    "host": "vpkmqeumtxhrwgawxdrl.supabase.co",
     "arquivos": 1
    },
    {
@@ -2782,6 +2907,7 @@
    "gmail-webhook",
    "public-api",
    "searchbox-budget-alert",
+   "send-scheduled-report",
    "sync-call-records",
    "talkx-link",
    "whatsapp-webhook"
@@ -2801,14 +2927,12 @@
    "smoke-messages",
    "talkx-logs-${campaignId}",
    "talkx-mon-${campaignId}",
-   "team-chat-notifications:${profile.id}",
    "team-chat-updates",
    "team-messages-${conversationId}",
    "team-presence-${conversationId}",
    "team-reactions-${conversationId}",
    "team-read-state-${conversationId}",
    "team-typing-${conversationId}",
-   "team-unread-${conversationId}",
    "termino-remoto-${callIdEmCurso}",
    "typing:${contact.id}",
    "warroom-alerts-realtime",
@@ -2820,66 +2944,54 @@
   "papeis_no_codigo": [
    {
     "papel": "alert",
-    "ocorrencias": 139
+    "ocorrencias": 127
    },
    {
     "papel": "status",
-    "ocorrencias": 125
+    "ocorrencias": 113
    },
    {
     "papel": "admin",
-    "ocorrencias": 79
+    "ocorrencias": 71
    },
    {
     "papel": "agent",
-    "ocorrencias": 73
-   },
-   {
-    "papel": "user",
-    "ocorrencias": 60
+    "ocorrencias": 63
    },
    {
     "papel": "supervisor",
-    "ocorrencias": 43
+    "ocorrencias": 39
+   },
+   {
+    "papel": "user",
+    "ocorrencias": 38
    },
    {
     "papel": "dialog",
-    "ocorrencias": 36
-   },
-   {
-    "papel": "button",
-    "ocorrencias": 26
-   },
-   {
-    "papel": "region",
-    "ocorrencias": 26
-   },
-   {
-    "papel": "group",
-    "ocorrencias": 23
+    "ocorrencias": 30
    },
    {
     "papel": "img",
-    "ocorrencias": 22
-   },
-   {
-    "papel": "authenticated",
     "ocorrencias": 21
    },
    {
-    "papel": "tab",
-    "ocorrencias": 19
+    "papel": "region",
+    "ocorrencias": 21
    },
    {
-    "papel": "tablist",
+    "papel": "button",
+    "ocorrencias": 20
+   },
+   {
+    "papel": "authenticated",
     "ocorrencias": 18
    },
    {
-    "papel": "listbox",
-    "ocorrencias": 17
+    "papel": "group",
+    "ocorrencias": 18
    },
    {
-    "papel": "option",
+    "papel": "tab",
     "ocorrencias": 16
    },
    {
@@ -2887,27 +2999,23 @@
     "ocorrencias": 15
    },
    {
+    "papel": "tablist",
+    "ocorrencias": 15
+   },
+   {
+    "papel": "listbox",
+    "ocorrencias": 14
+   },
+   {
     "papel": "radiogroup",
     "ocorrencias": 14
    },
    {
-    "papel": "combobox",
-    "ocorrencias": 12
-   },
-   {
-    "papel": "progressbar",
-    "ocorrencias": 12
-   },
-   {
-    "papel": "alertdialog",
-    "ocorrencias": 11
-   },
-   {
-    "papel": "anon",
-    "ocorrencias": 11
-   },
-   {
     "papel": "menuitem",
+    "ocorrencias": 11
+   },
+   {
+    "papel": "option",
     "ocorrencias": 11
    },
    {
@@ -2915,52 +3023,52 @@
     "ocorrencias": 11
    },
    {
-    "papel": "toolbar",
+    "papel": "anon",
     "ocorrencias": 10
    },
    {
-    "papel": "log",
-    "ocorrencias": 8
+    "papel": "progressbar",
+    "ocorrencias": 10
+   },
+   {
+    "papel": "combobox",
+    "ocorrencias": 9
+   },
+   {
+    "papel": "system",
+    "ocorrencias": 9
    },
    {
     "papel": "note",
     "ocorrencias": 8
    },
    {
-    "papel": "system",
-    "ocorrencias": 8
+    "papel": "alertdialog",
+    "ocorrencias": 7
+   },
+   {
+    "papel": "toolbar",
+    "ocorrencias": 7
    },
    {
     "papel": "list",
-    "ocorrencias": 7
+    "ocorrencias": 6
+   },
+   {
+    "papel": "log",
+    "ocorrencias": 5
    },
    {
     "papel": "menu",
-    "ocorrencias": 7
-   },
-   {
-    "papel": "complementary",
-    "ocorrencias": 6
+    "ocorrencias": 5
    },
    {
     "papel": "tabpanel",
-    "ocorrencias": 6
-   },
-   {
-    "papel": "navigation",
     "ocorrencias": 5
    },
    {
-    "papel": "string",
-    "ocorrencias": 5
-   },
-   {
-    "papel": "presentation",
+    "papel": "complementary",
     "ocorrencias": 4
-   },
-   {
-    "papel": "RH",
-    "ocorrencias": 3
    },
    {
     "papel": "article",
@@ -2987,6 +3095,14 @@
     "ocorrencias": 3
    },
    {
+    "papel": "navigation",
+    "ocorrencias": 3
+   },
+   {
+    "papel": "presentation",
+    "ocorrencias": 3
+   },
+   {
     "papel": "row",
     "ocorrencias": 3
    },
@@ -3003,11 +3119,7 @@
     "ocorrencias": 3
    },
    {
-    "papel": "driver",
-    "ocorrencias": 2
-   },
-   {
-    "papel": "edge",
+    "papel": "RH",
     "ocorrencias": 2
    },
    {
@@ -3015,11 +3127,11 @@
     "ocorrencias": 2
    },
    {
-    "papel": "fornecedor",
+    "papel": "form",
     "ocorrencias": 2
    },
    {
-    "papel": "gateway",
+    "papel": "fornecedor",
     "ocorrencias": 2
    },
    {
@@ -3031,19 +3143,11 @@
     "ocorrencias": 2
    },
    {
-    "papel": "positive",
+    "papel": "string",
     "ocorrencias": 2
    },
    {
     "papel": "switch",
-    "ocorrencias": 2
-   },
-   {
-    "papel": "timer",
-    "ocorrencias": 2
-   },
-   {
-    "papel": "untrusted",
     "ocorrencias": 2
    },
    {
@@ -3075,11 +3179,19 @@
     "ocorrencias": 1
    },
    {
-    "papel": "form",
+    "papel": "driver",
+    "ocorrencias": 1
+   },
+   {
+    "papel": "edge",
     "ocorrencias": 1
    },
    {
     "papel": "fundo",
+    "ocorrencias": 1
+   },
+   {
+    "papel": "gateway",
     "ocorrencias": 1
    },
    {
@@ -3104,6 +3216,10 @@
    },
    {
     "papel": "parent",
+    "ocorrencias": 1
+   },
+   {
+    "papel": "positive",
     "ocorrencias": 1
    },
    {
@@ -3143,7 +3259,15 @@
     "ocorrencias": 1
    },
    {
+    "papel": "timer",
+    "ocorrencias": 1
+   },
+   {
     "papel": "unknown",
+    "ocorrencias": 1
+   },
+   {
+    "papel": "untrusted",
     "ocorrencias": 1
    }
   ],
@@ -3481,18 +3605,6 @@
   "total": 16,
   "flags": [
    {
-    "flag": "ENABLE_IMAGE_TRANSFORMATION",
-    "arquivos": 2
-   },
-   {
-    "flag": "FEATURE_REGISTRY",
-    "arquivos": 2
-   },
-   {
-    "flag": "inbox.talk-me",
-    "arquivos": 2
-   },
-   {
     "flag": "ENABLE_ANALYTICS",
     "arquivos": 1
    },
@@ -3506,6 +3618,10 @@
    },
    {
     "flag": "ENABLE_GMAIL_INTEGRATION",
+    "arquivos": 1
+   },
+   {
+    "flag": "ENABLE_IMAGE_TRANSFORMATION",
     "arquivos": 1
    },
    {
@@ -3525,6 +3641,10 @@
     "arquivos": 1
    },
    {
+    "flag": "FEATURE_REGISTRY",
+    "arquivos": 1
+   },
+   {
     "flag": "FEATURE_TILE",
     "arquivos": 1
    },
@@ -3534,6 +3654,10 @@
    },
    {
     "flag": "crm.integration",
+    "arquivos": 1
+   },
+   {
+    "flag": "inbox.talk-me",
     "arquivos": 1
    },
    {

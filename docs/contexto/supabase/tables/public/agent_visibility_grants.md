@@ -1,5 +1,26 @@
 # public.agent_visibility_grants
 
+> Descrição funcional não estava registrada no catálogo; o conteúdo abaixo documenta a estrutura observável, sem inferir regras de negócio não declaradas.
+
+[CATALOGUE SEMÂNTICO DO PROJETO]
+Objeto: public.agent_visibility_grants (tabela). RLS habilitada: t; RLS forçada: f.
+Colunas (ordem, tipo e nulabilidade):
+1 id uuid NOT NULL [DEFAULT/EXPRESSION DEFINED]
+2 agent_id uuid NOT NULL
+3 can_see_agent_id uuid NOT NULL
+4 granted_by uuid NULLABLE
+5 created_at timestamp with time zone NOT NULL [DEFAULT/EXPRESSION DEFINED]
+Constraints:
+agent_visibility_grants_no_self_grant: CHECK (agent_id <> can_see_agent_id)
+agent_visibility_grants_agent_id_fkey: FOREIGN KEY (agent_id) REFERENCES profiles(id) ON DELETE CASCADE
+agent_visibility_grants_can_see_agent_id_fkey: FOREIGN KEY (can_see_agent_id) REFERENCES profiles(id) ON DELETE CASCADE
+agent_visibility_grants_granted_by_fkey: FOREIGN KEY (granted_by) REFERENCES profiles(id) ON DELETE SET NULL
+agent_visibility_grants_pkey: PRIMARY KEY (id)
+agent_visibility_grants_agent_id_can_see_agent_id_key: UNIQUE (agent_id, can_see_agent_id)
+Políticas RLS (nome, operação, papéis e modo; as expressões permanecem no catálogo):
+"Admins and supervisors can manage visibility grants" [command=ALL; roles=authenticated; PERMISSIVE]
+"Agents can view own grants" [command=SELECT; roles=authenticated; PERMISSIVE]
+
 | propriedade | valor |
 |---|---|
 | tipo | table |
@@ -55,8 +76,8 @@
 | comando | ALL |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `is_admin_or_supervisor(auth.uid())` |
-| WITH CHECK | `is_admin_or_supervisor(auth.uid())` |
+| USING | `is_admin_or_supervisor(( SELECT auth.uid() AS uid))` |
+| WITH CHECK | `is_admin_or_supervisor(( SELECT auth.uid() AS uid))` |
 
 ### `Agents can view own grants`
 
@@ -65,7 +86,7 @@
 | comando | SELECT |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `(has_role(auth.uid(), 'agent'::app_role) AND (agent_id IN ( SELECT p.id    FROM profiles p   WHERE (p.user_id = auth.uid()))))` |
+| USING | `(has_role(( SELECT auth.uid() AS uid), 'agent'::app_role) AND (agent_id IN ( SELECT p.id    FROM profiles p   WHERE (p.user_id = ( SELECT auth.uid() AS uid)))))` |
 | WITH CHECK |  |
 
 

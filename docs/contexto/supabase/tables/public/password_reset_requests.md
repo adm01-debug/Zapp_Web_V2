@@ -1,5 +1,35 @@
 # public.password_reset_requests
 
+> Descrição funcional não estava registrada no catálogo; o conteúdo abaixo documenta a estrutura observável, sem inferir regras de negócio não declaradas.
+
+[CATALOGUE SEMÂNTICO DO PROJETO]
+Objeto: public.password_reset_requests (tabela). RLS habilitada: t; RLS forçada: f.
+Colunas (ordem, tipo e nulabilidade):
+1 id uuid NOT NULL [DEFAULT/EXPRESSION DEFINED]
+2 user_id uuid NOT NULL
+3 email text NOT NULL
+4 reason text NULLABLE
+5 status text NOT NULL [DEFAULT/EXPRESSION DEFINED]
+6 reviewed_by uuid NULLABLE
+7 reviewed_at timestamp with time zone NULLABLE
+8 rejection_reason text NULLABLE
+10 token_expires_at timestamp with time zone NULLABLE
+11 ip_address text NULLABLE
+12 user_agent text NULLABLE
+13 created_at timestamp with time zone NOT NULL [DEFAULT/EXPRESSION DEFINED]
+14 updated_at timestamp with time zone NOT NULL [DEFAULT/EXPRESSION DEFINED]
+Constraints:
+password_reset_requests_status_check: CHECK (status = ANY (ARRAY['pending'::text, 'approved'::text, 'rejected'::text]))
+password_reset_requests_reviewed_by_fkey: FOREIGN KEY (reviewed_by) REFERENCES auth.users(id)
+password_reset_requests_user_id_fkey: FOREIGN KEY (user_id) REFERENCES auth.users(id) ON DELETE CASCADE
+password_reset_requests_pkey: PRIMARY KEY (id)
+Políticas RLS (nome, operação, papéis e modo; as expressões permanecem no catálogo):
+"Admins can delete password reset requests" [command=DELETE; roles=authenticated; PERMISSIVE]
+"Admins can update reset requests without token access" [command=UPDATE; roles=authenticated; PERMISSIVE]
+"Admins can view reset requests" [command=SELECT; roles=authenticated; PERMISSIVE]
+"Anon can file a password reset request" [command=INSERT; roles=anon; PERMISSIVE]
+"Users can request own password reset" [command=INSERT; roles=authenticated; PERMISSIVE]
+
 | propriedade | valor |
 |---|---|
 | tipo | table |
@@ -61,7 +91,7 @@
 | comando | DELETE |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `has_role(auth.uid(), 'admin'::app_role)` |
+| USING | `has_role(( SELECT auth.uid() AS uid), 'admin'::app_role)` |
 | WITH CHECK |  |
 
 ### `Admins can update reset requests without token access`
@@ -71,8 +101,8 @@
 | comando | UPDATE |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `has_role(auth.uid(), 'admin'::app_role)` |
-| WITH CHECK | `has_role(auth.uid(), 'admin'::app_role)` |
+| USING | `has_role(( SELECT auth.uid() AS uid), 'admin'::app_role)` |
+| WITH CHECK | `has_role(( SELECT auth.uid() AS uid), 'admin'::app_role)` |
 
 ### `Admins can view reset requests`
 
@@ -81,7 +111,7 @@
 | comando | SELECT |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `has_role(auth.uid(), 'admin'::app_role)` |
+| USING | `has_role(( SELECT auth.uid() AS uid), 'admin'::app_role)` |
 | WITH CHECK |  |
 
 ### `Anon can file a password reset request`
@@ -102,7 +132,7 @@
 | tipo | PERMISSIVE |
 | roles | authenticated |
 | USING |  |
-| WITH CHECK | `(user_id = auth.uid())` |
+| WITH CHECK | `(user_id = ( SELECT auth.uid() AS uid))` |
 
 
 ## Triggers

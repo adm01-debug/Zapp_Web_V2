@@ -1,5 +1,46 @@
 # public.multiplix_delivery_items
 
+> Descrição funcional não estava registrada no catálogo; o conteúdo abaixo documenta a estrutura observável, sem inferir regras de negócio não declaradas.
+
+[CATALOGUE SEMÂNTICO DO PROJETO]
+Objeto: public.multiplix_delivery_items (tabela). RLS habilitada: t; RLS forçada: f.
+Colunas (ordem, tipo e nulabilidade):
+1 id uuid NOT NULL [DEFAULT/EXPRESSION DEFINED]
+2 dispatch_id uuid NOT NULL
+3 recipient_id uuid NOT NULL
+4 block_id uuid NOT NULL
+5 dispatch_version integer NOT NULL
+6 status multiplix_item_status NOT NULL [DEFAULT/EXPRESSION DEFINED]
+7 attempt_count integer NOT NULL [DEFAULT/EXPRESSION DEFINED]
+8 next_attempt_at timestamp with time zone NULLABLE
+9 lease_token uuid NULLABLE
+10 lease_until timestamp with time zone NULLABLE
+11 worker_id text NULLABLE
+12 external_id text NULLABLE
+13 personalized_message text NULLABLE
+14 provider_dispatch_started_at timestamp with time zone NULLABLE
+15 idempotency_key text NULLABLE GENERATED [DEFAULT/EXPRESSION DEFINED]
+16 error_class text NULLABLE
+17 error_message text NULLABLE
+18 sent_at timestamp with time zone NULLABLE
+19 delivered_at timestamp with time zone NULLABLE
+20 read_at timestamp with time zone NULLABLE
+21 created_at timestamp with time zone NOT NULL [DEFAULT/EXPRESSION DEFINED]
+22 updated_at timestamp with time zone NOT NULL [DEFAULT/EXPRESSION DEFINED]
+23 replied_at timestamp with time zone NULLABLE — F52/F62: instante da resposta do contato correlacionada a este item (ortogonal ao status).
+24 reply_attribution text NULLABLE — F62: linked (external_id casou) | inferred (janela + numero). NULL enquanto sem resposta.
+25 voice_asset_id uuid NULLABLE — F65: ativo de voz (multiplix_voice_assets) que o envio deste item usa. Preenchido pelo prepare; NULL em bloco de voz ainda nao renderizado (o item segura a fila, ver F69).
+Constraints:
+multiplix_delivery_items_reply_attribution_check: CHECK (reply_attribution IS NULL OR (reply_attribution = ANY (ARRAY['linked'::text, 'inferred'::text])))
+multiplix_delivery_items_block_id_fkey: FOREIGN KEY (block_id) REFERENCES multiplix_blocks(id) ON DELETE CASCADE
+multiplix_delivery_items_dispatch_id_fkey: FOREIGN KEY (dispatch_id) REFERENCES multiplix_dispatches(id) ON DELETE CASCADE
+multiplix_delivery_items_recipient_id_fkey: FOREIGN KEY (recipient_id) REFERENCES multiplix_recipients(id) ON DELETE CASCADE
+multiplix_delivery_items_voice_asset_id_fkey: FOREIGN KEY (voice_asset_id) REFERENCES multiplix_voice_assets(id) ON DELETE SET NULL
+multiplix_delivery_items_pkey: PRIMARY KEY (id)
+multiplix_delivery_items_idempotency_key_key: UNIQUE (idempotency_key)
+Políticas RLS (nome, operação, papéis e modo; as expressões permanecem no catálogo):
+"Users can view delivery items of accessible dispatches" [command=SELECT; roles=authenticated; PERMISSIVE]
+
 | propriedade | valor |
 |---|---|
 | tipo | table |
@@ -79,7 +120,7 @@
 | comando | SELECT |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `(EXISTS ( SELECT 1    FROM multiplix_dispatches md   WHERE ((md.id = multiplix_delivery_items.dispatch_id) AND ((md.created_by = ( SELECT profiles.id            FROM profiles           WHERE (profiles.user_id = auth.uid())          LIMIT 1)) OR is_admin_or_supervisor(auth.uid())))))` |
+| USING | `(EXISTS ( SELECT 1    FROM multiplix_dispatches md   WHERE ((md.id = multiplix_delivery_items.dispatch_id) AND ((md.created_by = ( SELECT profiles.id            FROM profiles           WHERE (profiles.user_id = ( SELECT auth.uid() AS uid))          LIMIT 1)) OR is_admin_or_supervisor(( SELECT auth.uid() AS uid))))))` |
 | WITH CHECK |  |
 
 

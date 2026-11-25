@@ -17,6 +17,7 @@
 | public.ai_usage_logs | profile_id | public.profiles | id | SET NULL | NO ACTION |
 | public.ai_usage_logs | user_id | auth.users | id | SET NULL | NO ACTION |
 | public.allowed_countries | added_by | auth.users | id | NO ACTION | NO ACTION |
+| public.assistant_profiles | user_id | auth.users | id | CASCADE | NO ACTION |
 | public.audio_meme_favorites | meme_id | public.audio_memes | id | CASCADE | NO ACTION |
 | public.audio_meme_favorites | user_id | auth.users | id | CASCADE | NO ACTION |
 | public.audio_memes | uploaded_by | auth.users | id | SET NULL | NO ACTION |
@@ -211,6 +212,7 @@
 | public.sla_rules | contact_id | public.contacts | id | CASCADE | NO ACTION |
 | public.sla_rules | queue_id | public.queues | id | CASCADE | NO ACTION |
 | public.stickers | owner_id | public.profiles | id | CASCADE | NO ACTION |
+| public.talkx_ai_requests | created_by | auth.users | id | CASCADE | NO ACTION |
 | public.talkx_alerts | campaign_id | public.talkx_campaigns | id | CASCADE | NO ACTION |
 | public.talkx_blacklist | blocked_by | public.profiles | id | SET NULL | NO ACTION |
 | public.talkx_blacklist | campaign_id | public.talkx_campaigns | id | SET NULL | NO ACTION |

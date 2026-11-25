@@ -2,6 +2,18 @@
 
 > [RLS-sem-policy: intencional] Bucket de rate limiting das edge functions. Escrito/lido pelo middleware de rate limit (service_role). Cron cleanup-edge-rate-limits purga a cada 15 min.
 
+[CATALOGUE SEMÂNTICO DO PROJETO]
+Objeto: public.edge_rate_limits (tabela). RLS habilitada: t; RLS forçada: f.
+Colunas (ordem, tipo e nulabilidade):
+1 key text NOT NULL
+2 window_start timestamp with time zone NOT NULL [DEFAULT/EXPRESSION DEFINED]
+3 hits integer NOT NULL [DEFAULT/EXPRESSION DEFINED]
+4 updated_at timestamp with time zone NOT NULL [DEFAULT/EXPRESSION DEFINED]
+Constraints:
+edge_rate_limits_pkey: PRIMARY KEY (key)
+Políticas RLS (nome, operação, papéis e modo; as expressões permanecem no catálogo):
+(RLS habilitada sem política; verificar se o acesso restrito é intencional)
+
 | propriedade | valor |
 |---|---|
 | tipo | table |

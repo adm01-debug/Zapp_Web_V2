@@ -1,7 +1,7 @@
 {
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
- "total": 599,
+ "total": 515,
  "hooks": [
   {
    "arquivo": "analise-prs/resgate-261118-lote2/src/hooks/useMotionSeguro.ts",
@@ -20,2234 +20,6 @@
    "usado_por": 0,
    "usado_por_arquivos": [],
    "coberto_por_testes": 1
-  },
-  {
-   "arquivo": "analise-prs/resgate-261118-lote3/claude_05/festive-carson-ub43wu/src/components/ui/command-palette.tsx",
-   "hooks_exportados": [
-    "useCommandPalette"
-   ],
-   "linhas": 306,
-   "dominio": null,
-   "tabelas": [],
-   "rpcs": [],
-   "edges": [],
-   "hooks_internos": [
-    "useCallback",
-    "useDebounce",
-    "useEffect",
-    "useMemo",
-    "useRef",
-    "useState"
-   ],
-   "canais_realtime": [],
-   "usado_por": 0,
-   "usado_por_arquivos": [],
-   "coberto_por_testes": 0
-  },
-  {
-   "arquivo": "analise-prs/resgate-261118-lote3/claude_05/festive-carson-ub43wu/src/hooks/auth/useAuth.tsx",
-   "hooks_exportados": [
-    "useAuth"
-   ],
-   "linhas": 255,
-   "dominio": null,
-   "tabelas": [],
-   "rpcs": [],
-   "edges": [],
-   "hooks_internos": [
-    "useCallback",
-    "useContext",
-    "useEffect",
-    "useQueryClient",
-    "useRef",
-    "useState"
-   ],
-   "canais_realtime": [],
-   "usado_por": 0,
-   "usado_por_arquivos": [],
-   "coberto_por_testes": 0
-  },
-  {
-   "arquivo": "analise-prs/resgate-261118-lote3/claude_05/festive-carson-ub43wu/src/hooks/chat/useTeamChatNotifications.ts",
-   "hooks_exportados": [
-    "useActiveTeamChatConversation",
-    "useActiveTeamChatConversationId",
-    "useTeamChatNotifications"
-   ],
-   "linhas": 276,
-   "dominio": null,
-   "tabelas": [
-    "team_conversation_members"
-   ],
-   "rpcs": [
-    "get_team_profiles"
-   ],
-   "edges": [],
-   "hooks_internos": [
-    "useAuth",
-    "useEffect",
-    "useLayoutEffect",
-    "useNotificationSettings",
-    "useRef",
-    "useSyncExternalStore"
-   ],
-   "canais_realtime": [
-    "team-chat-notifications:${profile.id}"
-   ],
-   "usado_por": 0,
-   "usado_por_arquivos": [],
-   "coberto_por_testes": 0
-  },
-  {
-   "arquivo": "analise-prs/resgate-261118-lote3/claude_05/festive-carson-ub43wu/src/hooks/inbox/useInboxFilters.ts",
-   "hooks_exportados": [
-    "useInboxFilters"
-   ],
-   "linhas": 298,
-   "dominio": null,
-   "tabelas": [],
-   "rpcs": [],
-   "edges": [],
-   "hooks_internos": [
-    "useCallback",
-    "useMemo",
-    "useSearchParams",
-    "useState",
-    "useUrlFilters"
-   ],
-   "canais_realtime": [],
-   "usado_por": 0,
-   "usado_por_arquivos": [],
-   "coberto_por_testes": 0
-  },
-  {
-   "arquivo": "analise-prs/resgate-261118-lote3/claude_05/festive-carson-ub43wu/src/hooks/integrations/useKnowledgeBase.ts",
-   "hooks_exportados": [
-    "useKnowledgeBase"
-   ],
-   "linhas": 232,
-   "dominio": null,
-   "tabelas": [
-    "knowledge_base_articles",
-    "knowledge_base_files"
-   ],
-   "rpcs": [],
-   "edges": [
-    "ai-kb-ingest"
-   ],
-   "hooks_internos": [
-    "useCallback",
-    "useState"
-   ],
-   "canais_realtime": [],
-   "usado_por": 0,
-   "usado_por_arquivos": [],
-   "coberto_por_testes": 0
-  },
-  {
-   "arquivo": "analise-prs/resgate-261118-lote3/claude_05/festive-carson-ub43wu/src/hooks/system/useDiagnosticsData.ts",
-   "hooks_exportados": [
-    "useDiagnosticsData"
-   ],
-   "linhas": 469,
-   "dominio": null,
-   "tabelas": [
-    "connection_health_logs",
-    "contacts",
-    "messages",
-    "whatsapp_connections"
-   ],
-   "rpcs": [],
-   "edges": [],
-   "hooks_internos": [
-    "useCallback",
-    "useState",
-    "useVisiblePolling"
-   ],
-   "canais_realtime": [
-    "diagnostics-realtime-probe"
-   ],
-   "usado_por": 0,
-   "usado_por_arquivos": [],
-   "coberto_por_testes": 0
-  },
-  {
-   "arquivo": "analise-prs/resgate-261118-lote3/claude_05/serene-feynman-3uuurw/src/hooks/admin/useSearchInsights.ts",
-   "hooks_exportados": [
-    "useSearchInsights"
-   ],
-   "linhas": 97,
-   "dominio": null,
-   "tabelas": [],
-   "rpcs": [
-    "search_insights"
-   ],
-   "edges": [],
-   "hooks_internos": [
-    "useQuery"
-   ],
-   "canais_realtime": [],
-   "usado_por": 0,
-   "usado_por_arquivos": [],
-   "coberto_por_testes": 0
-  },
-  {
-   "arquivo": "analise-prs/resgate-261118-lote3/claude/busy-cannon-40szm9/src/hooks/crm/useContactPurchases.ts",
-   "hooks_exportados": [
-    "useContactPurchases",
-    "useCreateContactPurchase"
-   ],
-   "linhas": 76,
-   "dominio": null,
-   "tabelas": [
-    "contact_purchases"
-   ],
-   "rpcs": [],
-   "edges": [],
-   "hooks_internos": [
-    "useMutation",
-    "useQuery",
-    "useQueryClient"
-   ],
-   "canais_realtime": [],
-   "usado_por": 0,
-   "usado_por_arquivos": [],
-   "coberto_por_testes": 0
-  },
-  {
-   "arquivo": "analise-prs/resgate-261118-lote3/claude/feat-copiloto-edges-261101-1330/src/hooks/copilot/index.ts",
-   "hooks_exportados": [
-    "useAiJudge",
-    "useAttachmentSuggestion",
-    "useAudioTone",
-    "useAudioTranscription",
-    "useBattleCard",
-    "useBiasChecker",
-    "useBrandColors",
-    "useCoachingTip",
-    "useConversationScore",
-    "useCopilotFeedback",
-    "useCopilotLearning",
-    "useCopilotSupervisor",
-    "useCostDashboard",
-    "useDataMasking",
-    "useDeadlineCalculator",
-    "useDiscountGuardrail",
-    "useFirstResponseScript",
-    "useFollowUpContent",
-    "useFollowUpTiming",
-    "useFreightEstimate",
-    "useGhostText",
-    "useGuardrails",
-    "useHonestUrgency",
-    "useImageAnalysis",
-    "useLeadThermometer",
-    "useLearningMoment",
-    "useLgpdFilter",
-    "useLiveScoring",
-    "useLogoAnalysis",
-    "useLossRiskDetector",
-    "useMediaPrivacy",
-    "useMinQuantityAlert",
-    "useMinQuantityAlternative",
-    "useMockupTrigger",
-    "useMultimodalAnalysis",
-    "useNegotiationGuard",
-    "useNonAnnoyingFollowUp",
-    "useObjectionHandler",
-    "useOccasionKits",
-    "usePIIDetector",
-    "usePdfExtraction",
-    "usePostRejection",
-    "usePriceAnchoring",
-    "useProductRecommendation",
-    "usePromptVersioning",
-    "usePurchaseSignals",
-    "useQuoteDraft",
-    "useSilenceDetector",
-    "useSmartTemplates",
-    "useSpeedToLead",
-    "useStallDetector",
-    "useSupervisorDashboard",
-    "useSupervisorInsights",
-    "useTradeOffer",
-    "useUpsellSuggestion",
-    "useUrgencyEscalation",
-    "useVendorAuthorization",
-    "useVoiceDictation",
-    "useVouPensarDetector",
-    "useWhisperChannel"
-   ],
-   "linhas": 137,
-   "dominio": null,
-   "tabelas": [],
-   "rpcs": [],
-   "edges": [],
-   "hooks_internos": [],
-   "canais_realtime": [],
-   "usado_por": 0,
-   "usado_por_arquivos": [],
-   "coberto_por_testes": 0
-  },
-  {
-   "arquivo": "analise-prs/resgate-261118-lote3/claude/feat-copiloto-edges-261101-1330/src/hooks/copilot/useDeadlineCalculator.ts",
-   "hooks_exportados": [
-    "useDeadlineCalculator"
-   ],
-   "linhas": 107,
-   "dominio": null,
-   "tabelas": [],
-   "rpcs": [],
-   "edges": [],
-   "hooks_internos": [
-    "useCallback",
-    "useMemo",
-    "useState"
-   ],
-   "canais_realtime": [],
-   "usado_por": 1,
-   "usado_por_arquivos": [
-    "analise-prs/resgate-261118-lote3/claude/feat-copiloto-edges-261101-1330/src/hooks/copilot/index.ts"
-   ],
-   "coberto_por_testes": 0
-  },
-  {
-   "arquivo": "analise-prs/resgate-261118-lote3/claude/feat-copiloto-edges-261101-1330/src/hooks/copilot/useImageAnalysis.ts",
-   "hooks_exportados": [
-    "useImageAnalysis"
-   ],
-   "linhas": 59,
-   "dominio": null,
-   "tabelas": [],
-   "rpcs": [],
-   "edges": [],
-   "hooks_internos": [
-    "useCallback",
-    "useState"
-   ],
-   "canais_realtime": [],
-   "usado_por": 1,
-   "usado_por_arquivos": [
-    "analise-prs/resgate-261118-lote3/claude/feat-copiloto-edges-261101-1330/src/hooks/copilot/index.ts"
-   ],
-   "coberto_por_testes": 0
-  },
-  {
-   "arquivo": "analise-prs/resgate-261118-lote3/claude/feat-copiloto-edges-261101-1330/src/hooks/copilot/useLeadThermometer.ts",
-   "hooks_exportados": [
-    "useLeadThermometer"
-   ],
-   "linhas": 79,
-   "dominio": null,
-   "tabelas": [],
-   "rpcs": [],
-   "edges": [],
-   "hooks_internos": [
-    "useCallback",
-    "useMemo",
-    "useState"
-   ],
-   "canais_realtime": [],
-   "usado_por": 1,
-   "usado_por_arquivos": [
-    "analise-prs/resgate-261118-lote3/claude/feat-copiloto-edges-261101-1330/src/hooks/copilot/index.ts"
-   ],
-   "coberto_por_testes": 0
-  },
-  {
-   "arquivo": "analise-prs/resgate-261118-lote3/claude/feat-copiloto-edges-261101-1330/src/hooks/copilot/useLossRiskDetector.ts",
-   "hooks_exportados": [
-    "useLossRiskDetector"
-   ],
-   "linhas": 120,
-   "dominio": null,
-   "tabelas": [],
-   "rpcs": [],
-   "edges": [],
-   "hooks_internos": [
-    "useCallback",
-    "useMemo",
-    "useState"
-   ],
-   "canais_realtime": [],
-   "usado_por": 1,
-   "usado_por_arquivos": [
-    "analise-prs/resgate-261118-lote3/claude/feat-copiloto-edges-261101-1330/src/hooks/copilot/index.ts"
-   ],
-   "coberto_por_testes": 0
-  },
-  {
-   "arquivo": "analise-prs/resgate-261118-lote3/claude/feat-copiloto-edges-261101-1330/src/hooks/copilot/useObjectionHandler.ts",
-   "hooks_exportados": [
-    "useObjectionHandler"
-   ],
-   "linhas": 143,
-   "dominio": null,
-   "tabelas": [],
-   "rpcs": [],
-   "edges": [],
-   "hooks_internos": [
-    "useCallback",
-    "useMemo",
-    "useState"
-   ],
-   "canais_realtime": [],
-   "usado_por": 1,
-   "usado_por_arquivos": [
-    "analise-prs/resgate-261118-lote3/claude/feat-copiloto-edges-261101-1330/src/hooks/copilot/index.ts"
-   ],
-   "coberto_por_testes": 0
-  },
-  {
-   "arquivo": "analise-prs/resgate-261118-lote3/claude/feat-copiloto-edges-261101-1330/src/hooks/copilot/usePriceAnchoring.ts",
-   "hooks_exportados": [
-    "usePriceAnchoring"
-   ],
-   "linhas": 80,
-   "dominio": null,
-   "tabelas": [],
-   "rpcs": [],
-   "edges": [],
-   "hooks_internos": [
-    "useCallback",
-    "useMemo",
-    "useState"
-   ],
-   "canais_realtime": [],
-   "usado_por": 1,
-   "usado_por_arquivos": [
-    "analise-prs/resgate-261118-lote3/claude/feat-copiloto-edges-261101-1330/src/hooks/copilot/index.ts"
-   ],
-   "coberto_por_testes": 0
-  },
-  {
-   "arquivo": "analise-prs/resgate-261118-lote3/claude/feat-copiloto-edges-261101-1330/src/hooks/copilot/useProductRecommendation.ts",
-   "hooks_exportados": [
-    "useProductRecommendation"
-   ],
-   "linhas": 61,
-   "dominio": null,
-   "tabelas": [],
-   "rpcs": [],
-   "edges": [],
-   "hooks_internos": [
-    "useCallback",
-    "useState"
-   ],
-   "canais_realtime": [],
-   "usado_por": 1,
-   "usado_por_arquivos": [
-    "analise-prs/resgate-261118-lote3/claude/feat-copiloto-edges-261101-1330/src/hooks/copilot/index.ts"
-   ],
-   "coberto_por_testes": 0
-  },
-  {
-   "arquivo": "analise-prs/resgate-261118-lote3/claude/feat-copiloto-edges-261101-1330/src/hooks/inbox/useInboxBulkActions.ts",
-   "hooks_exportados": [
-    "useInboxBulkActions"
-   ],
-   "linhas": 268,
-   "dominio": null,
-   "tabelas": [
-    "contacts",
-    "messages"
-   ],
-   "rpcs": [
-    "transfer_conversation"
-   ],
-   "edges": [
-    "batch-fetch-avatars"
-   ],
-   "hooks_internos": [
-    "useCallback",
-    "useEffect",
-    "useMemo",
-    "useState",
-    "useUndoableAction"
-   ],
-   "canais_realtime": [],
-   "usado_por": 0,
-   "usado_por_arquivos": [],
-   "coberto_por_testes": 0
-  },
-  {
-   "arquivo": "analise-prs/resgate-261118-lote3/claude/feat-copiloto-hooks-261101-1500/src/hooks/copilot/useDeadlineCalculator.ts",
-   "hooks_exportados": [
-    "useDeadlineCalculator"
-   ],
-   "linhas": 107,
-   "dominio": null,
-   "tabelas": [],
-   "rpcs": [],
-   "edges": [],
-   "hooks_internos": [
-    "useCallback",
-    "useMemo",
-    "useState"
-   ],
-   "canais_realtime": [],
-   "usado_por": 0,
-   "usado_por_arquivos": [],
-   "coberto_por_testes": 0
-  },
-  {
-   "arquivo": "analise-prs/resgate-261118-lote3/claude/feat-copiloto-hooks-261101-1500/src/hooks/copilot/useImageAnalysis.ts",
-   "hooks_exportados": [
-    "useImageAnalysis"
-   ],
-   "linhas": 59,
-   "dominio": null,
-   "tabelas": [],
-   "rpcs": [],
-   "edges": [],
-   "hooks_internos": [
-    "useCallback",
-    "useState"
-   ],
-   "canais_realtime": [],
-   "usado_por": 0,
-   "usado_por_arquivos": [],
-   "coberto_por_testes": 0
-  },
-  {
-   "arquivo": "analise-prs/resgate-261118-lote3/claude/feat-copiloto-hooks-261101-1500/src/hooks/copilot/useLeadThermometer.ts",
-   "hooks_exportados": [
-    "useLeadThermometer"
-   ],
-   "linhas": 79,
-   "dominio": null,
-   "tabelas": [],
-   "rpcs": [],
-   "edges": [],
-   "hooks_internos": [
-    "useCallback",
-    "useMemo",
-    "useState"
-   ],
-   "canais_realtime": [],
-   "usado_por": 0,
-   "usado_por_arquivos": [],
-   "coberto_por_testes": 0
-  },
-  {
-   "arquivo": "analise-prs/resgate-261118-lote3/claude/feat-copiloto-hooks-261101-1500/src/hooks/copilot/useLossRiskDetector.ts",
-   "hooks_exportados": [
-    "useLossRiskDetector"
-   ],
-   "linhas": 120,
-   "dominio": null,
-   "tabelas": [],
-   "rpcs": [],
-   "edges": [],
-   "hooks_internos": [
-    "useCallback",
-    "useMemo",
-    "useState"
-   ],
-   "canais_realtime": [],
-   "usado_por": 0,
-   "usado_por_arquivos": [],
-   "coberto_por_testes": 0
-  },
-  {
-   "arquivo": "analise-prs/resgate-261118-lote3/claude/feat-copiloto-hooks-261101-1500/src/hooks/copilot/useObjectionHandler.ts",
-   "hooks_exportados": [
-    "useObjectionHandler"
-   ],
-   "linhas": 145,
-   "dominio": null,
-   "tabelas": [],
-   "rpcs": [],
-   "edges": [],
-   "hooks_internos": [
-    "useCallback",
-    "useMemo",
-    "useState"
-   ],
-   "canais_realtime": [],
-   "usado_por": 0,
-   "usado_por_arquivos": [],
-   "coberto_por_testes": 0
-  },
-  {
-   "arquivo": "analise-prs/resgate-261118-lote3/claude/feat-copiloto-hooks-261101-1500/src/hooks/copilot/usePriceAnchoring.ts",
-   "hooks_exportados": [
-    "usePriceAnchoring"
-   ],
-   "linhas": 80,
-   "dominio": null,
-   "tabelas": [],
-   "rpcs": [],
-   "edges": [],
-   "hooks_internos": [
-    "useCallback",
-    "useMemo",
-    "useState"
-   ],
-   "canais_realtime": [],
-   "usado_por": 0,
-   "usado_por_arquivos": [],
-   "coberto_por_testes": 0
-  },
-  {
-   "arquivo": "analise-prs/resgate-261118-lote3/claude/feat-copiloto-hooks-261101-1500/src/hooks/copilot/useProductRecommendation.ts",
-   "hooks_exportados": [
-    "useProductRecommendation"
-   ],
-   "linhas": 61,
-   "dominio": null,
-   "tabelas": [],
-   "rpcs": [],
-   "edges": [],
-   "hooks_internos": [
-    "useCallback",
-    "useState"
-   ],
-   "canais_realtime": [],
-   "usado_por": 0,
-   "usado_por_arquivos": [],
-   "coberto_por_testes": 0
-  },
-  {
-   "arquivo": "analise-prs/resgate-261118-lote3/claude/feat-evolution-rotas-pendentes-261112/src/hooks/connections/useConnectionOptions.ts",
-   "hooks_exportados": [
-    "useConnectionOptions"
-   ],
-   "linhas": 22,
-   "dominio": null,
-   "tabelas": [
-    "whatsapp_connections"
-   ],
-   "rpcs": [],
-   "edges": [],
-   "hooks_internos": [
-    "useQuery"
-   ],
-   "canais_realtime": [],
-   "usado_por": 0,
-   "usado_por_arquivos": [],
-   "coberto_por_testes": 0
-  },
-  {
-   "arquivo": "analise-prs/resgate-261118-lote3/claude/feat-message-delivery-post-iniciado-261101-1937/src/hooks/delivery/useUnconfirmedMessages.ts",
-   "hooks_exportados": [
-    "useUnconfirmedMessages"
-   ],
-   "linhas": 89,
-   "dominio": null,
-   "tabelas": [
-    "messages"
-   ],
-   "rpcs": [
-    "resolve_unconfirmed_message"
-   ],
-   "edges": [],
-   "hooks_internos": [
-    "useMutation",
-    "useQuery",
-    "useQueryClient"
-   ],
-   "canais_realtime": [],
-   "usado_por": 0,
-   "usado_por_arquivos": [],
-   "coberto_por_testes": 0
-  },
-  {
-   "arquivo": "analise-prs/resgate-261118-lote3/claude/feat-radar-motor-telas-261101-1330/src/hooks/copilot/useCopilotSession.ts",
-   "hooks_exportados": [
-    "useCopilotSession"
-   ],
-   "linhas": 129,
-   "dominio": null,
-   "tabelas": [
-    "copilot_sessions"
-   ],
-   "rpcs": [],
-   "edges": [],
-   "hooks_internos": [
-    "useCallback",
-    "useEffect",
-    "useState"
-   ],
-   "canais_realtime": [],
-   "usado_por": 0,
-   "usado_por_arquivos": [],
-   "coberto_por_testes": 0
-  },
-  {
-   "arquivo": "analise-prs/resgate-261118-lote3/claude/fix-codex-findings-161016-1906/src/hooks/system/useOfflineCache.ts",
-   "hooks_exportados": [
-    "useOfflineCache"
-   ],
-   "linhas": 127,
-   "dominio": null,
-   "tabelas": [],
-   "rpcs": [],
-   "edges": [],
-   "hooks_internos": [
-    "useCallback",
-    "useEffect",
-    "useRef",
-    "useState"
-   ],
-   "canais_realtime": [],
-   "usado_por": 0,
-   "usado_por_arquivos": [],
-   "coberto_por_testes": 0
-  },
-  {
-   "arquivo": "analise-prs/resgate-261118-lote3/claude/fix-console-status-msgs-261112/src/hooks/connections/useConnectionOptions.ts",
-   "hooks_exportados": [
-    "useConnectionOptions"
-   ],
-   "linhas": 22,
-   "dominio": null,
-   "tabelas": [
-    "whatsapp_connections"
-   ],
-   "rpcs": [],
-   "edges": [],
-   "hooks_internos": [
-    "useQuery"
-   ],
-   "canais_realtime": [],
-   "usado_por": 0,
-   "usado_por_arquivos": [],
-   "coberto_por_testes": 0
-  },
-  {
-   "arquivo": "analise-prs/resgate-261118-lote3/claude/fix-db-guard-pguser-261019-1430/src/hooks/integrations/useTalkXSuppression.ts",
-   "hooks_exportados": [
-    "useTalkXSuppression",
-    "useTalkXSuppressionActivity",
-    "useTalkXSuppressionStats"
-   ],
-   "linhas": 401,
-   "dominio": null,
-   "tabelas": [
-    "contacts",
-    "talkx_blacklist"
-   ],
-   "rpcs": [],
-   "edges": [],
-   "hooks_internos": [
-    "useMutation",
-    "useQuery"
-   ],
-   "canais_realtime": [],
-   "usado_por": 0,
-   "usado_por_arquivos": [],
-   "coberto_por_testes": 0
-  },
-  {
-   "arquivo": "analise-prs/resgate-261118-lote3/claude/fix-evolution-instance-bypass-261112/src/hooks/connections/useConnectionOptions.ts",
-   "hooks_exportados": [
-    "useConnectionOptions"
-   ],
-   "linhas": 22,
-   "dominio": null,
-   "tabelas": [
-    "whatsapp_connections"
-   ],
-   "rpcs": [],
-   "edges": [],
-   "hooks_internos": [
-    "useQuery"
-   ],
-   "canais_realtime": [],
-   "usado_por": 0,
-   "usado_por_arquivos": [],
-   "coberto_por_testes": 0
-  },
-  {
-   "arquivo": "analise-prs/resgate-261118-lote3/claude/fix-evolution-integra-cadeia-261113-1052/src/hooks/connections/useConnectionOptions.ts",
-   "hooks_exportados": [
-    "useConnectionOptions"
-   ],
-   "linhas": 22,
-   "dominio": null,
-   "tabelas": [
-    "whatsapp_connections"
-   ],
-   "rpcs": [],
-   "edges": [],
-   "hooks_internos": [
-    "useQuery"
-   ],
-   "canais_realtime": [],
-   "usado_por": 0,
-   "usado_por_arquivos": [],
-   "coberto_por_testes": 0
-  },
-  {
-   "arquivo": "analise-prs/resgate-261118-lote3/claude/fix-radar-fase6-cv056-shortcuts-261108-2335/src/hooks/copilot/useRadarPanel.ts",
-   "hooks_exportados": [
-    "useRadarPanel"
-   ],
-   "linhas": 228,
-   "dominio": null,
-   "tabelas": [],
-   "rpcs": [],
-   "edges": [],
-   "hooks_internos": [
-    "useCallback",
-    "useEffect",
-    "useRef",
-    "useState"
-   ],
-   "canais_realtime": [],
-   "usado_por": 0,
-   "usado_por_arquivos": [],
-   "coberto_por_testes": 0
-  },
-  {
-   "arquivo": "analise-prs/resgate-261118-lote3/claude/fix-unit-tests-src-261024-1630/src/hooks/auth/useAuth.tsx",
-   "hooks_exportados": [
-    "useAuth"
-   ],
-   "linhas": 256,
-   "dominio": null,
-   "tabelas": [],
-   "rpcs": [],
-   "edges": [],
-   "hooks_internos": [
-    "useCallback",
-    "useContext",
-    "useEffect",
-    "useQueryClient",
-    "useRef",
-    "useState"
-   ],
-   "canais_realtime": [],
-   "usado_por": 0,
-   "usado_por_arquivos": [],
-   "coberto_por_testes": 0
-  },
-  {
-   "arquivo": "analise-prs/resgate-261118-lote3/claude/fix-unit-tests-src-261024-1630/src/hooks/business/useWarRoomAlerts.ts",
-   "hooks_exportados": [
-    "useWarRoomAlerts"
-   ],
-   "linhas": 221,
-   "dominio": null,
-   "tabelas": [
-    "conversation_sla",
-    "warroom_alerts"
-   ],
-   "rpcs": [],
-   "edges": [],
-   "hooks_internos": [
-    "useCallback",
-    "useEffect",
-    "useNotificationSettings",
-    "useQuery",
-    "useQueryClient"
-   ],
-   "canais_realtime": [
-    "warroom-alerts-realtime"
-   ],
-   "usado_por": 0,
-   "usado_por_arquivos": [],
-   "coberto_por_testes": 0
-  },
-  {
-   "arquivo": "analise-prs/resgate-261118-lote3/claude/fix-unit-tests-src-261024-1630/src/hooks/chat/useTeamChatNotifications.ts",
-   "hooks_exportados": [
-    "useActiveTeamChatConversation",
-    "useActiveTeamChatConversationId",
-    "useTeamChatNotifications"
-   ],
-   "linhas": 285,
-   "dominio": null,
-   "tabelas": [
-    "team_conversation_members"
-   ],
-   "rpcs": [
-    "get_team_profiles"
-   ],
-   "edges": [],
-   "hooks_internos": [
-    "useAuth",
-    "useEffect",
-    "useNotificationSettings",
-    "useRef",
-    "useSyncExternalStore"
-   ],
-   "canais_realtime": [
-    "team-chat-notifications:${profile.id}"
-   ],
-   "usado_por": 0,
-   "usado_por_arquivos": [],
-   "coberto_por_testes": 0
-  },
-  {
-   "arquivo": "analise-prs/resgate-261118-lote3/claude/fix-unit-tests-src-261024-1630/src/hooks/gamification/useAgentCelebrations.ts",
-   "hooks_exportados": [
-    "useAgentCelebrations"
-   ],
-   "linhas": 291,
-   "dominio": null,
-   "tabelas": [
-    "agent_achievements",
-    "agent_stats",
-    "profiles"
-   ],
-   "rpcs": [],
-   "edges": [],
-   "hooks_internos": [
-    "useAuth",
-    "useCallback",
-    "useEffect",
-    "useQuery",
-    "useRef"
-   ],
-   "canais_realtime": [],
-   "usado_por": 0,
-   "usado_por_arquivos": [],
-   "coberto_por_testes": 0
-  },
-  {
-   "arquivo": "analise-prs/resgate-261118-lote3/claude/fix-unit-tests-src-261024-1630/src/hooks/inbox/useInboxFilters.ts",
-   "hooks_exportados": [
-    "useInboxFilters"
-   ],
-   "linhas": 305,
-   "dominio": null,
-   "tabelas": [],
-   "rpcs": [],
-   "edges": [],
-   "hooks_internos": [
-    "useCallback",
-    "useMemo",
-    "useSearchParams",
-    "useState",
-    "useUrlFilters"
-   ],
-   "canais_realtime": [],
-   "usado_por": 0,
-   "usado_por_arquivos": [],
-   "coberto_por_testes": 0
-  },
-  {
-   "arquivo": "analise-prs/resgate-261118-lote3/claude/fix-unit-tests-src-261024-1630/src/hooks/integrations/useKnowledgeBase.ts",
-   "hooks_exportados": [
-    "useKnowledgeBase"
-   ],
-   "linhas": 232,
-   "dominio": null,
-   "tabelas": [
-    "knowledge_base_articles",
-    "knowledge_base_files"
-   ],
-   "rpcs": [],
-   "edges": [
-    "ai-kb-ingest"
-   ],
-   "hooks_internos": [
-    "useCallback",
-    "useState"
-   ],
-   "canais_realtime": [],
-   "usado_por": 0,
-   "usado_por_arquivos": [],
-   "coberto_por_testes": 0
-  },
-  {
-   "arquivo": "analise-prs/resgate-261118-lote3/claude/fix-unit-tests-src-261024-1630/src/hooks/integrations/useTalkXSegments.ts",
-   "hooks_exportados": [
-    "useAudienceEstimate",
-    "useSegmentLibraryStats",
-    "useTalkXSegments"
-   ],
-   "linhas": 663,
-   "dominio": null,
-   "tabelas": [],
-   "rpcs": [],
-   "edges": [],
-   "hooks_internos": [
-    "useAuth",
-    "useMutation",
-    "useQuery",
-    "useQueryClient"
-   ],
-   "canais_realtime": [],
-   "usado_por": 0,
-   "usado_por_arquivos": [],
-   "coberto_por_testes": 0
-  },
-  {
-   "arquivo": "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/admin/useAdminData.ts",
-   "hooks_exportados": [
-    "useAdminData"
-   ],
-   "linhas": 508,
-   "dominio": null,
-   "tabelas": [
-    "audit_logs",
-    "avatars",
-    "profiles",
-    "user_roles"
-   ],
-   "rpcs": [
-    "admin_set_role"
-   ],
-   "edges": [],
-   "hooks_internos": [
-    "useCallback",
-    "useState"
-   ],
-   "canais_realtime": [],
-   "usado_por": 0,
-   "usado_por_arquivos": [],
-   "coberto_por_testes": 0
-  },
-  {
-   "arquivo": "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/dashboard/useSentimentData.ts",
-   "hooks_exportados": [
-    "useSentimentData"
-   ],
-   "linhas": 252,
-   "dominio": null,
-   "tabelas": [
-    "conversation_analyses",
-    "profiles"
-   ],
-   "rpcs": [
-    "dashboard_sentiment_alerts"
-   ],
-   "edges": [],
-   "hooks_internos": [
-    "useCallback",
-    "useEffect",
-    "useMemo",
-    "useState"
-   ],
-   "canais_realtime": [],
-   "usado_por": 0,
-   "usado_por_arquivos": [],
-   "coberto_por_testes": 0
-  },
-  {
-   "arquivo": "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/talkx/useCampaignEditor.ts",
-   "hooks_exportados": [
-    "useCampaignEditor"
-   ],
-   "linhas": 1190,
-   "dominio": null,
-   "tabelas": [
-    "profiles",
-    "talkx_recipients",
-    "whatsapp_connections"
-   ],
-   "rpcs": [],
-   "edges": [],
-   "hooks_internos": [
-    "useAuth",
-    "useCallback",
-    "useDebouncedValue",
-    "useEffect",
-    "useMemo",
-    "useQuery",
-    "useRef",
-    "useState",
-    "useTalkX",
-    "useTalkXSegments",
-    "useTalkXTemplates"
-   ],
-   "canais_realtime": [],
-   "usado_por": 3,
-   "usado_por_arquivos": [
-    "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/talkx/TalkXCampaignWizard.tsx",
-    "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/talkx/TalkXView.tsx",
-    "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/talkx/TalkXWizardDelivery.tsx"
-   ],
-   "coberto_por_testes": 0
-  },
-  {
-   "arquivo": "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/team-chat/useTeamChatPanel.ts",
-   "hooks_exportados": [
-    "useTeamChatPanel"
-   ],
-   "linhas": 611,
-   "dominio": null,
-   "tabelas": [
-    "team_messages",
-    "user_settings"
-   ],
-   "rpcs": [
-    "search_team_messages"
-   ],
-   "edges": [],
-   "hooks_internos": [
-    "useAuth",
-    "useCallback",
-    "useDebounce",
-    "useDeleteConversation",
-    "useDeleteTeamMessage",
-    "useEditTeamMessage",
-    "useEffect",
-    "useLeaveConversation",
-    "useMemo",
-    "useRef",
-    "useRemoveConversationMember",
-    "useRenameConversation",
-    "useSendTeamMessage",
-    "useState",
-    "useTeamMessageReactions",
-    "useTeamMessages",
-    "useTextToSpeech",
-    "useToggleMuteConversation",
-    "useUserSettings"
-   ],
-   "canais_realtime": [],
-   "usado_por": 1,
-   "usado_por_arquivos": [
-    "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/team-chat/TeamChatPanel.tsx"
-   ],
-   "coberto_por_testes": 1
-  },
-  {
-   "arquivo": "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/ui/command-palette.tsx",
-   "hooks_exportados": [
-    "useCommandPalette"
-   ],
-   "linhas": 327,
-   "dominio": null,
-   "tabelas": [],
-   "rpcs": [],
-   "edges": [],
-   "hooks_internos": [
-    "useCallback",
-    "useDebounce",
-    "useEffect",
-    "useMemo",
-    "useRef",
-    "useState"
-   ],
-   "canais_realtime": [],
-   "usado_por": 0,
-   "usado_por_arquivos": [],
-   "coberto_por_testes": 0
-  },
-  {
-   "arquivo": "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/hooks/analytics/useGoalsDashboard.ts",
-   "hooks_exportados": [
-    "useGoalsDashboard"
-   ],
-   "linhas": 226,
-   "dominio": null,
-   "tabelas": [
-    "contacts",
-    "goals_configurations",
-    "messages",
-    "profiles"
-   ],
-   "rpcs": [],
-   "edges": [],
-   "hooks_internos": [
-    "useAuth",
-    "useEffect",
-    "useMemo",
-    "useQuery",
-    "useRef",
-    "useState"
-   ],
-   "canais_realtime": [],
-   "usado_por": 0,
-   "usado_por_arquivos": [],
-   "coberto_por_testes": 0
-  },
-  {
-   "arquivo": "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/hooks/auth/useAuth.tsx",
-   "hooks_exportados": [
-    "useAuth"
-   ],
-   "linhas": 258,
-   "dominio": null,
-   "tabelas": [],
-   "rpcs": [],
-   "edges": [],
-   "hooks_internos": [
-    "useCallback",
-    "useContext",
-    "useEffect",
-    "useQueryClient",
-    "useRef",
-    "useState"
-   ],
-   "canais_realtime": [],
-   "usado_por": 0,
-   "usado_por_arquivos": [],
-   "coberto_por_testes": 0
-  },
-  {
-   "arquivo": "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/hooks/chat/useTeamChatNotifications.ts",
-   "hooks_exportados": [
-    "useActiveTeamChatConversation",
-    "useActiveTeamChatConversationId",
-    "useTeamChatNotifications"
-   ],
-   "linhas": 354,
-   "dominio": null,
-   "tabelas": [
-    "team_conversation_members"
-   ],
-   "rpcs": [
-    "get_team_profiles"
-   ],
-   "edges": [],
-   "hooks_internos": [
-    "useAuth",
-    "useContext",
-    "useEffect",
-    "useNotificationSettings",
-    "usePushNotifications",
-    "useRef",
-    "useSyncExternalStore"
-   ],
-   "canais_realtime": [],
-   "usado_por": 0,
-   "usado_por_arquivos": [],
-   "coberto_por_testes": 0
-  },
-  {
-   "arquivo": "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/hooks/communication/useAudioMemes.ts",
-   "hooks_exportados": [
-    "useAudioMemes"
-   ],
-   "linhas": 426,
-   "dominio": null,
-   "tabelas": [
-    "audio_memes"
-   ],
-   "rpcs": [
-    "fn_list_audio_memes_for_user",
-    "fn_send_audio_meme",
-    "fn_toggle_user_meme_favorite"
-   ],
-   "edges": [
-    "classify-audio-meme"
-   ],
-   "hooks_internos": [
-    "useCallback",
-    "useEffect",
-    "useRef",
-    "useState"
-   ],
-   "canais_realtime": [],
-   "usado_por": 0,
-   "usado_por_arquivos": [],
-   "coberto_por_testes": 0
-  },
-  {
-   "arquivo": "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/hooks/inbox/useConnectionsManager.ts",
-   "hooks_exportados": [
-    "useConnectionsManager"
-   ],
-   "linhas": 441,
-   "dominio": null,
-   "tabelas": [
-    "whatsapp_connections"
-   ],
-   "rpcs": [
-    "set_default_whatsapp_connection"
-   ],
-   "edges": [],
-   "hooks_internos": [
-    "useCallback",
-    "useEffect",
-    "useEvolutionApi",
-    "useLayoutEffect",
-    "useRef",
-    "useState"
-   ],
-   "canais_realtime": [
-    "whatsapp-connections-changes"
-   ],
-   "usado_por": 0,
-   "usado_por_arquivos": [],
-   "coberto_por_testes": 0
-  },
-  {
-   "arquivo": "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/hooks/inbox/useInboxFilters.ts",
-   "hooks_exportados": [
-    "useInboxFilters"
-   ],
-   "linhas": 300,
-   "dominio": null,
-   "tabelas": [],
-   "rpcs": [],
-   "edges": [],
-   "hooks_internos": [
-    "useCallback",
-    "useMemo",
-    "useSearchParams",
-    "useState",
-    "useUrlFilters"
-   ],
-   "canais_realtime": [],
-   "usado_por": 0,
-   "usado_por_arquivos": [],
-   "coberto_por_testes": 0
-  },
-  {
-   "arquivo": "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/hooks/integrations/useTalkXSegments.ts",
-   "hooks_exportados": [
-    "useAudienceEstimate",
-    "useSegmentLibraryStats",
-    "useTalkXSegments"
-   ],
-   "linhas": 653,
-   "dominio": null,
-   "tabelas": [],
-   "rpcs": [],
-   "edges": [],
-   "hooks_internos": [
-    "useAuth",
-    "useMutation",
-    "useQuery",
-    "useQueryClient"
-   ],
-   "canais_realtime": [],
-   "usado_por": 0,
-   "usado_por_arquivos": [],
-   "coberto_por_testes": 0
-  },
-  {
-   "arquivo": "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/hooks/system/useDiagnosticsData.ts",
-   "hooks_exportados": [
-    "useDiagnosticsData"
-   ],
-   "linhas": 472,
-   "dominio": null,
-   "tabelas": [
-    "connection_health_logs",
-    "contacts",
-    "messages",
-    "whatsapp_connections"
-   ],
-   "rpcs": [],
-   "edges": [],
-   "hooks_internos": [
-    "useCallback",
-    "useState",
-    "useVisiblePolling"
-   ],
-   "canais_realtime": [
-    "diagnostics-realtime-probe"
-   ],
-   "usado_por": 0,
-   "usado_por_arquivos": [],
-   "coberto_por_testes": 0
-  },
-  {
-   "arquivo": "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/hooks/team-chat/useTeamMessages.ts",
-   "hooks_exportados": [
-    "useTeamMessages"
-   ],
-   "linhas": 224,
-   "dominio": null,
-   "tabelas": [],
-   "rpcs": [
-    "get_team_messages_page",
-    "mark_team_conversation_read"
-   ],
-   "edges": [],
-   "hooks_internos": [
-    "useAuth",
-    "useEffect",
-    "useMemo",
-    "useQuery",
-    "useQueryClient",
-    "useRef",
-    "useTeamReadState"
-   ],
-   "canais_realtime": [
-    "team-messages-${conversationId}"
-   ],
-   "usado_por": 0,
-   "usado_por_arquivos": [],
-   "coberto_por_testes": 0
-  },
-  {
-   "arquivo": "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/hooks/team-chat/useTeamReadState.ts",
-   "hooks_exportados": [
-    "useTeamReadState"
-   ],
-   "linhas": 123,
-   "dominio": null,
-   "tabelas": [
-    "team_message_read_state"
-   ],
-   "rpcs": [],
-   "edges": [],
-   "hooks_internos": [
-    "useEffect",
-    "useQuery",
-    "useQueryClient"
-   ],
-   "canais_realtime": [
-    "team-read-state-${conversationId}"
-   ],
-   "usado_por": 1,
-   "usado_por_arquivos": [
-    "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/hooks/team-chat/useTeamMessages.ts"
-   ],
-   "coberto_por_testes": 0
-  },
-  {
-   "arquivo": "analise-prs/resgate-261118-lote3/claude/kind-gates-87mwoe/src/hooks/business/useWarRoomData.ts",
-   "hooks_exportados": [
-    "useWarRoomData",
-    "useWarRoomMetrics"
-   ],
-   "linhas": 216,
-   "dominio": null,
-   "tabelas": [
-    "profiles"
-   ],
-   "rpcs": [
-    "warroom_agent_today",
-    "warroom_queue_stats"
-   ],
-   "edges": [],
-   "hooks_internos": [
-    "useAgentPresenceMap",
-    "useMemo",
-    "useQuery"
-   ],
-   "canais_realtime": [],
-   "usado_por": 0,
-   "usado_por_arquivos": [],
-   "coberto_por_testes": 0
-  },
-  {
-   "arquivo": "analise-prs/resgate-261118-lote3/claude/kind-gates-87mwoe/src/hooks/inbox/useInboxBulkActions.ts",
-   "hooks_exportados": [
-    "useInboxBulkActions"
-   ],
-   "linhas": 276,
-   "dominio": null,
-   "tabelas": [
-    "contacts",
-    "messages"
-   ],
-   "rpcs": [
-    "transfer_conversation"
-   ],
-   "edges": [
-    "batch-fetch-avatars"
-   ],
-   "hooks_internos": [
-    "useCallback",
-    "useEffect",
-    "useMemo",
-    "useState",
-    "useUndoableAction"
-   ],
-   "canais_realtime": [],
-   "usado_por": 0,
-   "usado_por_arquivos": [],
-   "coberto_por_testes": 0
-  },
-  {
-   "arquivo": "analise-prs/resgate-261118-lote3/claude/kind-gates-87mwoe/src/hooks/inbox/useInboxFilters.ts",
-   "hooks_exportados": [
-    "useInboxFilters"
-   ],
-   "linhas": 314,
-   "dominio": null,
-   "tabelas": [],
-   "rpcs": [],
-   "edges": [],
-   "hooks_internos": [
-    "useCallback",
-    "useMemo",
-    "useSearchParams",
-    "useState",
-    "useUrlFilters"
-   ],
-   "canais_realtime": [],
-   "usado_por": 0,
-   "usado_por_arquivos": [],
-   "coberto_por_testes": 0
-  },
-  {
-   "arquivo": "analise-prs/resgate-261118-lote3/claude/kind-gates-87mwoe/src/hooks/integrations/useKnowledgeBase.ts",
-   "hooks_exportados": [
-    "useKnowledgeBase"
-   ],
-   "linhas": 241,
-   "dominio": null,
-   "tabelas": [
-    "knowledge_base_articles",
-    "knowledge_base_files"
-   ],
-   "rpcs": [],
-   "edges": [
-    "ai-kb-ingest"
-   ],
-   "hooks_internos": [
-    "useCallback",
-    "useState"
-   ],
-   "canais_realtime": [],
-   "usado_por": 0,
-   "usado_por_arquivos": [],
-   "coberto_por_testes": 0
-  },
-  {
-   "arquivo": "analise-prs/resgate-261118-lote3/claude/kind-gates-87mwoe/src/hooks/integrations/useTalkXSegments.ts",
-   "hooks_exportados": [
-    "useAudienceEstimate",
-    "useSegmentLibraryStats",
-    "useTalkXSegments"
-   ],
-   "linhas": 674,
-   "dominio": null,
-   "tabelas": [],
-   "rpcs": [],
-   "edges": [],
-   "hooks_internos": [
-    "useAuth",
-    "useMutation",
-    "useQuery",
-    "useQueryClient"
-   ],
-   "canais_realtime": [],
-   "usado_por": 0,
-   "usado_por_arquivos": [],
-   "coberto_por_testes": 0
-  },
-  {
-   "arquivo": "analise-prs/resgate-261118-lote3/claude/kind-gates-87mwoe/src/hooks/system/useDiagnosticsData.ts",
-   "hooks_exportados": [
-    "useDiagnosticsData"
-   ],
-   "linhas": 492,
-   "dominio": null,
-   "tabelas": [
-    "connection_health_logs",
-    "contacts",
-    "messages",
-    "whatsapp_connections"
-   ],
-   "rpcs": [],
-   "edges": [],
-   "hooks_internos": [
-    "useCallback",
-    "useState",
-    "useVisiblePolling"
-   ],
-   "canais_realtime": [
-    "diagnostics-realtime-probe"
-   ],
-   "usado_por": 0,
-   "usado_por_arquivos": [],
-   "coberto_por_testes": 0
-  },
-  {
-   "arquivo": "analise-prs/resgate-261118-lote3/claude/magical-pasteur-iz2pgy/src/components/ui/command-palette.tsx",
-   "hooks_exportados": [
-    "useCommandPalette"
-   ],
-   "linhas": 292,
-   "dominio": null,
-   "tabelas": [],
-   "rpcs": [],
-   "edges": [],
-   "hooks_internos": [
-    "useCallback",
-    "useDebounce",
-    "useEffect",
-    "useMemo",
-    "useRef",
-    "useState"
-   ],
-   "canais_realtime": [],
-   "usado_por": 0,
-   "usado_por_arquivos": [],
-   "coberto_por_testes": 0
-  },
-  {
-   "arquivo": "analise-prs/resgate-261118-lote3/claude/magical-pasteur-iz2pgy/src/hooks/auth/useAuth.tsx",
-   "hooks_exportados": [
-    "useAuth"
-   ],
-   "linhas": 256,
-   "dominio": null,
-   "tabelas": [],
-   "rpcs": [],
-   "edges": [],
-   "hooks_internos": [
-    "useCallback",
-    "useContext",
-    "useEffect",
-    "useQueryClient",
-    "useRef",
-    "useState"
-   ],
-   "canais_realtime": [],
-   "usado_por": 0,
-   "usado_por_arquivos": [],
-   "coberto_por_testes": 0
-  },
-  {
-   "arquivo": "analise-prs/resgate-261118-lote3/claude/magical-pasteur-iz2pgy/src/hooks/chat/useTeamChatNotifications.ts",
-   "hooks_exportados": [
-    "useActiveTeamChatConversation",
-    "useActiveTeamChatConversationId",
-    "useTeamChatNotifications"
-   ],
-   "linhas": 290,
-   "dominio": null,
-   "tabelas": [
-    "team_conversation_members"
-   ],
-   "rpcs": [
-    "get_team_profiles"
-   ],
-   "edges": [],
-   "hooks_internos": [
-    "useAuth",
-    "useEffect",
-    "useNotificationSettings",
-    "usePushNotifications",
-    "useRef",
-    "useSyncExternalStore"
-   ],
-   "canais_realtime": [
-    "team-chat-notifications:${profile.id}"
-   ],
-   "usado_por": 0,
-   "usado_por_arquivos": [],
-   "coberto_por_testes": 0
-  },
-  {
-   "arquivo": "analise-prs/resgate-261118-lote3/claude/magical-pasteur-iz2pgy/src/hooks/inbox/useInboxFilters.ts",
-   "hooks_exportados": [
-    "useInboxFilters"
-   ],
-   "linhas": 301,
-   "dominio": null,
-   "tabelas": [],
-   "rpcs": [],
-   "edges": [],
-   "hooks_internos": [
-    "useCallback",
-    "useMemo",
-    "useState",
-    "useUrlFilters"
-   ],
-   "canais_realtime": [],
-   "usado_por": 0,
-   "usado_por_arquivos": [],
-   "coberto_por_testes": 0
-  },
-  {
-   "arquivo": "analise-prs/resgate-261118-lote3/claude/magical-pasteur-iz2pgy/src/hooks/system/useDiagnosticsData.ts",
-   "hooks_exportados": [
-    "useDiagnosticsData"
-   ],
-   "linhas": 470,
-   "dominio": null,
-   "tabelas": [
-    "connection_health_logs",
-    "contacts",
-    "messages",
-    "whatsapp_connections"
-   ],
-   "rpcs": [],
-   "edges": [],
-   "hooks_internos": [
-    "useCallback",
-    "useState",
-    "useVisiblePolling"
-   ],
-   "canais_realtime": [
-    "diagnostics-realtime-probe"
-   ],
-   "usado_por": 0,
-   "usado_por_arquivos": [],
-   "coberto_por_testes": 0
-  },
-  {
-   "arquivo": "analise-prs/resgate-261118-lote3/claude/magical-pasteur-iz2pgy/src/hooks/system/useUserSettings.ts",
-   "hooks_exportados": [
-    "useUserSettings"
-   ],
-   "linhas": 306,
-   "dominio": null,
-   "tabelas": [
-    "user_settings"
-   ],
-   "rpcs": [],
-   "edges": [],
-   "hooks_internos": [
-    "useAuth",
-    "useCallback",
-    "useEffect",
-    "useRef",
-    "useState",
-    "useTheme"
-   ],
-   "canais_realtime": [],
-   "usado_por": 0,
-   "usado_por_arquivos": [],
-   "coberto_por_testes": 0
-  },
-  {
-   "arquivo": "analise-prs/resgate-261118-lote3/claude/radar-motor-copilot-live-301030/src/hooks/copilot/useCopilotSession.ts",
-   "hooks_exportados": [
-    "useCopilotSession"
-   ],
-   "linhas": 125,
-   "dominio": null,
-   "tabelas": [
-    "copilot_sessions"
-   ],
-   "rpcs": [],
-   "edges": [],
-   "hooks_internos": [
-    "useCallback",
-    "useEffect",
-    "useState"
-   ],
-   "canais_realtime": [],
-   "usado_por": 0,
-   "usado_por_arquivos": [],
-   "coberto_por_testes": 0
-  },
-  {
-   "arquivo": "analise-prs/resgate-261118-lote3/codex/publish-followup-20261021/src/components/talkx/useCampaignEditor.ts",
-   "hooks_exportados": [
-    "useCampaignEditor"
-   ],
-   "linhas": 1282,
-   "dominio": null,
-   "tabelas": [
-    "profiles",
-    "talkx_recipients",
-    "whatsapp_connections"
-   ],
-   "rpcs": [],
-   "edges": [],
-   "hooks_internos": [
-    "useAuth",
-    "useCallback",
-    "useDebouncedValue",
-    "useEffect",
-    "useMemo",
-    "useQuery",
-    "useRef",
-    "useState",
-    "useTalkX",
-    "useTalkXSegments",
-    "useTalkXTemplates"
-   ],
-   "canais_realtime": [],
-   "usado_por": 1,
-   "usado_por_arquivos": [
-    "analise-prs/resgate-261118-lote3/codex/publish-followup-20261021/src/components/talkx/TalkXCampaignWizard.tsx"
-   ],
-   "coberto_por_testes": 0
-  },
-  {
-   "arquivo": "analise-prs/resgate-261118-lote3/codex/publish-followup-20261021/src/hooks/admin/useSearchInsights.ts",
-   "hooks_exportados": [
-    "useSearchInsights"
-   ],
-   "linhas": 99,
-   "dominio": null,
-   "tabelas": [],
-   "rpcs": [
-    "search_insights"
-   ],
-   "edges": [],
-   "hooks_internos": [
-    "useQuery"
-   ],
-   "canais_realtime": [],
-   "usado_por": 0,
-   "usado_por_arquivos": [],
-   "coberto_por_testes": 0
-  },
-  {
-   "arquivo": "analise-prs/resgate-261118-lote3/codex/publish-followup-20261021/src/hooks/integrations/useTalkXSegments.ts",
-   "hooks_exportados": [
-    "useAudienceEstimate",
-    "useSegmentLibraryStats",
-    "useTalkXSegments"
-   ],
-   "linhas": 701,
-   "dominio": null,
-   "tabelas": [],
-   "rpcs": [],
-   "edges": [],
-   "hooks_internos": [
-    "useAuth",
-    "useMutation",
-    "useQuery",
-    "useQueryClient"
-   ],
-   "canais_realtime": [],
-   "usado_por": 0,
-   "usado_por_arquivos": [],
-   "coberto_por_testes": 0
-  },
-  {
-   "arquivo": "analise-prs/resgate-261118-lote3/fix/ci-verde-261021/src/hooks/chat/useConversationActions.ts",
-   "hooks_exportados": [
-    "useConversationActions"
-   ],
-   "linhas": 389,
-   "dominio": null,
-   "tabelas": [
-    "conversation_snoozes",
-    "favorite_contacts",
-    "pinned_conversations",
-    "profiles"
-   ],
-   "rpcs": [
-    "reopen_conversation",
-    "set_conversation_status",
-    "transfer_conversation"
-   ],
-   "edges": [],
-   "hooks_internos": [
-    "useCallback",
-    "useEffect",
-    "useMemo",
-    "useRef",
-    "useState"
-   ],
-   "canais_realtime": [],
-   "usado_por": 0,
-   "usado_por_arquivos": [],
-   "coberto_por_testes": 0
-  },
-  {
-   "arquivo": "analise-prs/resgate-261118-lote3/fix/ci-verde-261021/src/hooks/inbox/useInboxBulkActions.ts",
-   "hooks_exportados": [
-    "useInboxBulkActions"
-   ],
-   "linhas": 272,
-   "dominio": null,
-   "tabelas": [
-    "contacts",
-    "messages"
-   ],
-   "rpcs": [
-    "transfer_conversation"
-   ],
-   "edges": [
-    "batch-fetch-avatars"
-   ],
-   "hooks_internos": [
-    "useCallback",
-    "useEffect",
-    "useMemo",
-    "useState",
-    "useUndoableAction"
-   ],
-   "canais_realtime": [],
-   "usado_por": 0,
-   "usado_por_arquivos": [],
-   "coberto_por_testes": 0
-  },
-  {
-   "arquivo": "analise-prs/resgate-261118-lote3/hermes/robustez-primitivos-ui-2610121626bec5-2610141859e423/src/components/gamification/GamificationProvider.tsx",
-   "hooks_exportados": [
-    "useGamification"
-   ],
-   "linhas": 223,
-   "dominio": null,
-   "tabelas": [],
-   "rpcs": [],
-   "edges": [],
-   "hooks_internos": [
-    "useAgentGamification",
-    "useCallback",
-    "useContext",
-    "useEffect"
-   ],
-   "canais_realtime": [],
-   "usado_por": 0,
-   "usado_por_arquivos": [],
-   "coberto_por_testes": 0
-  },
-  {
-   "arquivo": "analise-prs/resgate-261118-lote3/hermes/robustez-primitivos-ui-2610121626bec5-2610141859e423/src/components/mobile/InAppNotificationProvider.tsx",
-   "hooks_exportados": [
-    "useInAppNotification"
-   ],
-   "linhas": 32,
-   "dominio": null,
-   "tabelas": [],
-   "rpcs": [],
-   "edges": [],
-   "hooks_internos": [
-    "useCallback",
-    "useContext"
-   ],
-   "canais_realtime": [],
-   "usado_por": 0,
-   "usado_por_arquivos": [],
-   "coberto_por_testes": 0
-  },
-  {
-   "arquivo": "analise-prs/resgate-261118-lote3/hermes/robustez-primitivos-ui-2610121626bec5-2610141859e423/src/components/ui/offline-indicator.tsx",
-   "hooks_exportados": [
-    "useOfflineStatus"
-   ],
-   "linhas": 147,
-   "dominio": null,
-   "tabelas": [],
-   "rpcs": [],
-   "edges": [],
-   "hooks_internos": [
-    "useCallback",
-    "useEffect",
-    "useRef",
-    "useState"
-   ],
-   "canais_realtime": [],
-   "usado_por": 0,
-   "usado_por_arquivos": [],
-   "coberto_por_testes": 0
-  },
-  {
-   "arquivo": "analise-prs/resgate-261118-lote3/hermes/robustez-primitivos-ui-2610121626bec5-2610141859e423/src/components/ui/sidebar.tsx",
-   "hooks_exportados": [
-    "useSidebar"
-   ],
-   "linhas": 28,
-   "dominio": null,
-   "tabelas": [],
-   "rpcs": [],
-   "edges": [],
-   "hooks_internos": [],
-   "canais_realtime": [],
-   "usado_por": 0,
-   "usado_por_arquivos": [],
-   "coberto_por_testes": 0
-  },
-  {
-   "arquivo": "analise-prs/resgate-261118-lote3/hermes/robustez-primitivos-ui-2610121626bec5-2610141859e423/src/components/ui/sidebar/index.ts",
-   "hooks_exportados": [
-    "useSidebar"
-   ],
-   "linhas": 28,
-   "dominio": null,
-   "tabelas": [],
-   "rpcs": [],
-   "edges": [],
-   "hooks_internos": [],
-   "canais_realtime": [],
-   "usado_por": 1,
-   "usado_por_arquivos": [
-    "analise-prs/resgate-261118-lote3/hermes/robustez-primitivos-ui-2610121626bec5-2610141859e423/src/components/ui/sidebar.tsx"
-   ],
-   "coberto_por_testes": 0
-  },
-  {
-   "arquivo": "analise-prs/resgate-261118-lote3/hermes/robustez-primitivos-ui-2610121626bec5-2610141859e423/src/components/ui/sidebar/sidebar-context.tsx",
-   "hooks_exportados": [
-    "useSidebar"
-   ],
-   "linhas": 112,
-   "dominio": null,
-   "tabelas": [],
-   "rpcs": [],
-   "edges": [],
-   "hooks_internos": [
-    "useCallback",
-    "useContext",
-    "useEffect",
-    "useIsMobile",
-    "useState"
-   ],
-   "canais_realtime": [],
-   "usado_por": 3,
-   "usado_por_arquivos": [
-    "analise-prs/resgate-261118-lote3/hermes/robustez-primitivos-ui-2610121626bec5-2610141859e423/src/components/ui/sidebar/index.ts",
-    "analise-prs/resgate-261118-lote3/hermes/robustez-primitivos-ui-2610121626bec5-2610141859e423/src/components/ui/sidebar/sidebar-menu.tsx",
-    "analise-prs/resgate-261118-lote3/hermes/robustez-primitivos-ui-2610121626bec5-2610141859e423/src/components/ui/sidebar/sidebar-primitives.tsx"
-   ],
-   "coberto_por_testes": 0
-  },
-  {
-   "arquivo": "analise-prs/resgate-261118-lote3/hermes/robustez-primitivos-ui-2610121626bec5-2610141859e423/src/hooks/communication/useCampaigns.ts",
-   "hooks_exportados": [
-    "useCampaigns"
-   ],
-   "linhas": 114,
-   "dominio": null,
-   "tabelas": [
-    "campaign_contacts",
-    "campaigns"
-   ],
-   "rpcs": [],
-   "edges": [],
-   "hooks_internos": [
-    "useMutation",
-    "useQuery",
-    "useQueryClient"
-   ],
-   "canais_realtime": [],
-   "usado_por": 0,
-   "usado_por_arquivos": [],
-   "coberto_por_testes": 0
-  },
-  {
-   "arquivo": "analise-prs/resgate-261118-lote3/hermes/robustez-primitivos-ui-2610121626bec5-2610141859e423/src/hooks/crm/useContactAssignment.ts",
-   "hooks_exportados": [
-    "useContactAssignment"
-   ],
-   "linhas": 39,
-   "dominio": null,
-   "tabelas": [
-    "contacts"
-   ],
-   "rpcs": [],
-   "edges": [],
-   "hooks_internos": [
-    "useCallback"
-   ],
-   "canais_realtime": [],
-   "usado_por": 0,
-   "usado_por_arquivos": [],
-   "coberto_por_testes": 0
-  },
-  {
-   "arquivo": "analise-prs/resgate-261118-lote3/hermes/robustez-primitivos-ui-2610121626bec5-2610141859e423/src/hooks/crm/useContactPurchases.ts",
-   "hooks_exportados": [
-    "useContactPurchases"
-   ],
-   "linhas": 33,
-   "dominio": null,
-   "tabelas": [
-    "contact_purchases"
-   ],
-   "rpcs": [],
-   "edges": [],
-   "hooks_internos": [
-    "useQuery"
-   ],
-   "canais_realtime": [],
-   "usado_por": 0,
-   "usado_por_arquivos": [],
-   "coberto_por_testes": 0
-  },
-  {
-   "arquivo": "analise-prs/resgate-261118-lote3/hermes/robustez-primitivos-ui-2610121626bec5-2610141859e423/src/hooks/evolution/useEvolutionIntegrations.ts",
-   "hooks_exportados": [
-    "useEvolutionIntegrations"
-   ],
-   "linhas": 157,
-   "dominio": null,
-   "tabelas": [],
-   "rpcs": [],
-   "edges": [],
-   "hooks_internos": [
-    "useCallback"
-   ],
-   "canais_realtime": [],
-   "usado_por": 0,
-   "usado_por_arquivos": [],
-   "coberto_por_testes": 0
-  },
-  {
-   "arquivo": "analise-prs/resgate-261118-lote3/hermes/robustez-primitivos-ui-2610121626bec5-2610141859e423/src/hooks/gamification/mutations.ts",
-   "hooks_exportados": [
-    "useGamificationMutations"
-   ],
-   "linhas": 99,
-   "dominio": null,
-   "tabelas": [],
-   "rpcs": [
-    "add_agent_xp",
-    "grant_agent_achievement",
-    "increment_agent_messages",
-    "increment_agent_resolutions",
-    "update_agent_streak"
-   ],
-   "edges": [],
-   "hooks_internos": [
-    "useMutation",
-    "useQueryClient"
-   ],
-   "canais_realtime": [],
-   "usado_por": 0,
-   "usado_por_arquivos": [],
-   "coberto_por_testes": 0
-  },
-  {
-   "arquivo": "analise-prs/resgate-261118-lote3/hermes/robustez-primitivos-ui-2610121626bec5-2610141859e423/src/hooks/inbox/useBulkActions.ts",
-   "hooks_exportados": [
-    "useBulkActions"
-   ],
-   "linhas": 197,
-   "dominio": null,
-   "tabelas": [],
-   "rpcs": [],
-   "edges": [],
-   "hooks_internos": [
-    "useCallback",
-    "useMemo",
-    "useQueryClient",
-    "useState"
-   ],
-   "canais_realtime": [],
-   "usado_por": 0,
-   "usado_por_arquivos": [],
-   "coberto_por_testes": 0
-  },
-  {
-   "arquivo": "analise-prs/resgate-261118-lote3/hermes/robustez-primitivos-ui-2610121626bec5-2610141859e423/src/hooks/inbox/useInboxFilterTags.ts",
-   "hooks_exportados": [
-    "useInboxFilterTags"
-   ],
-   "linhas": 23,
-   "dominio": null,
-   "tabelas": [],
-   "rpcs": [],
-   "edges": [],
-   "hooks_internos": [
-    "useQuery"
-   ],
-   "canais_realtime": [],
-   "usado_por": 0,
-   "usado_por_arquivos": [],
-   "coberto_por_testes": 2
-  },
-  {
-   "arquivo": "analise-prs/resgate-261118-lote3/hermes/robustez-primitivos-ui-2610121626bec5-2610141859e423/src/hooks/system/useVersions.ts",
-   "hooks_exportados": [
-    "useVersions"
-   ],
-   "linhas": 59,
-   "dominio": null,
-   "tabelas": [
-    "entity_versions"
-   ],
-   "rpcs": [],
-   "edges": [],
-   "hooks_internos": [
-    "useMutation",
-    "useQuery",
-    "useQueryClient"
-   ],
-   "canais_realtime": [],
-   "usado_por": 0,
-   "usado_por_arquivos": [],
-   "coberto_por_testes": 0
-  },
-  {
-   "arquivo": "analise-prs/resgate-261118-lote3/hermes/telefonia-fase8-motion-a11y-responsivo-2610031530007c/src/hooks/communication/useCallHistory.ts",
-   "hooks_exportados": [
-    "useCallHistory"
-   ],
-   "linhas": 135,
-   "dominio": null,
-   "tabelas": [
-    "calls",
-    "contacts"
-   ],
-   "rpcs": [],
-   "edges": [],
-   "hooks_internos": [
-    "useInfiniteQuery",
-    "useQuery"
-   ],
-   "canais_realtime": [],
-   "usado_por": 0,
-   "usado_por_arquivos": [],
-   "coberto_por_testes": 1
-  },
-  {
-   "arquivo": "analise-prs/resgate-261118-lote3/hermes/telefonia-fase8-motion-a11y-responsivo-2610031530007c/src/hooks/inbox/useBulkActions.ts",
-   "hooks_exportados": [
-    "useBulkActions"
-   ],
-   "linhas": 190,
-   "dominio": null,
-   "tabelas": [],
-   "rpcs": [],
-   "edges": [],
-   "hooks_internos": [
-    "useCallback",
-    "useMemo",
-    "useQueryClient",
-    "useState"
-   ],
-   "canais_realtime": [],
-   "usado_por": 0,
-   "usado_por_arquivos": [],
-   "coberto_por_testes": 0
-  },
-  {
-   "arquivo": "analise-prs/resgate-261118-lote3/hermes/telefonia-fase8-motion-a11y-responsivo-2610031530007c/src/hooks/inbox/useInboxFilterTags.ts",
-   "hooks_exportados": [
-    "useInboxFilterTags"
-   ],
-   "linhas": 18,
-   "dominio": null,
-   "tabelas": [
-    "contacts"
-   ],
-   "rpcs": [],
-   "edges": [],
-   "hooks_internos": [
-    "useQuery"
-   ],
-   "canais_realtime": [],
-   "usado_por": 0,
-   "usado_por_arquivos": [],
-   "coberto_por_testes": 0
-  },
-  {
-   "arquivo": "analise-prs/resgate-261118-lote3/hermes/telefonia-fase8-motion-a11y-responsivo-2610031530007c/src/hooks/team-chat/useTeamUnreadCount.ts",
-   "hooks_exportados": [
-    "useTeamUnreadCount"
-   ],
-   "linhas": 37,
-   "dominio": null,
-   "tabelas": [],
-   "rpcs": [],
-   "edges": [],
-   "hooks_internos": [
-    "useCallback",
-    "useEffect"
-   ],
-   "canais_realtime": [
-    "team-unread-${conversationId}"
-   ],
-   "usado_por": 0,
-   "usado_por_arquivos": [],
-   "coberto_por_testes": 0
-  },
-  {
-   "arquivo": "analise-prs/resgate-261118-lote3/resolve-2381-from-main/src/hooks/copilot/useCopilotSession.ts",
-   "hooks_exportados": [
-    "useCopilotSession"
-   ],
-   "linhas": 125,
-   "dominio": null,
-   "tabelas": [
-    "copilot_sessions"
-   ],
-   "rpcs": [],
-   "edges": [],
-   "hooks_internos": [
-    "useCallback",
-    "useEffect",
-    "useState"
-   ],
-   "canais_realtime": [],
-   "usado_por": 0,
-   "usado_por_arquivos": [],
-   "coberto_por_testes": 0
   },
   {
    "arquivo": "analise-prs/resgate-regra8-261118/src/hooks/copilot/useMultimodalAnalysis.ts",
@@ -2377,7 +149,7 @@
     "src/components/admin/AdminView.tsx",
     "src/pages/admin/useRolesPageState.ts"
    ],
-   "coberto_por_testes": 17
+   "coberto_por_testes": 15
   },
   {
    "arquivo": "src/components/admin/useTarefasAgendadas.ts",
@@ -2477,9 +249,8 @@
     "useState"
    ],
    "canais_realtime": [],
-   "usado_por": 21,
+   "usado_por": 20,
    "usado_por_arquivos": [
-    "analise-prs/resgate-261118-lote3/claude/feat-pausa-entrega-campanhas-261101-1400/src/components/multiplix/MultiplixMonitor.tsx",
     "src/components/catalog/CatalogBulkSendDialog.tsx",
     "src/components/catalog/ContactSelectionStep.tsx",
     "src/components/catalog/ExternalProductCatalog.tsx",
@@ -2537,8 +308,10 @@
     "useReducedMotion"
    ],
    "canais_realtime": [],
-   "usado_por": 0,
-   "usado_por_arquivos": [],
+   "usado_por": 1,
+   "usado_por_arquivos": [
+    "src/components/contacts/ContactExploreRail.tsx"
+   ],
    "coberto_por_testes": 1
   },
   {
@@ -2615,7 +388,7 @@
     "src/components/contacts/ContactDialogs.tsx",
     "src/components/contacts/useContactsViewState.ts"
    ],
-   "coberto_por_testes": 1
+   "coberto_por_testes": 2
   },
   {
    "arquivo": "src/components/contacts/useContactsViewState.ts",
@@ -2912,7 +685,7 @@
    "usado_por_arquivos": [
     "src/components/inbox/ChatPanel.tsx"
    ],
-   "coberto_por_testes": 14
+   "coberto_por_testes": 13
   },
   {
    "arquivo": "src/components/inbox/collaboration/ViewersIndicator.tsx",
@@ -3119,7 +892,7 @@
     "src/components/inbox/ChatPanel.tsx",
     "src/hooks/inbox/useContactQuickActions.ts"
    ],
-   "coberto_por_testes": 4
+   "coberto_por_testes": 3
   },
   {
    "arquivo": "src/components/inbox/useFileUploadLogic.ts",
@@ -3144,7 +917,7 @@
    "usado_por_arquivos": [
     "src/components/inbox/FileUploader.tsx"
    ],
-   "coberto_por_testes": 6
+   "coberto_por_testes": 4
   },
   {
    "arquivo": "src/components/inbox/useGlobalSearchData.ts",
@@ -3199,9 +972,8 @@
     "useState"
    ],
    "canais_realtime": [],
-   "usado_por": 4,
+   "usado_por": 3,
    "usado_por_arquivos": [
-    "analise-prs/resgate-261118-lote3/claude/feat-talkx-x054-cmdk-261108-0100/src/components/talkx/TalkXView.tsx",
     "src/App.tsx",
     "src/components/talkx/TalkXView.tsx",
     "src/pages/Index.tsx"
@@ -3667,7 +1439,7 @@
    "hooks_exportados": [
     "useCampaignEditor"
    ],
-   "linhas": 1232,
+   "linhas": 1286,
    "dominio": "components/talkx",
    "tabelas": [
     "profiles",
@@ -3699,7 +1471,7 @@
     "src/components/talkx/TalkXWizardDelivery.tsx",
     "src/components/talkx/talkxWizardRoute.ts"
    ],
-   "coberto_por_testes": 5
+   "coberto_por_testes": 3
   },
   {
    "arquivo": "src/components/talkx/useCampaignRowActions.tsx",
@@ -4022,13 +1794,12 @@
     "useState"
    ],
    "canais_realtime": [],
-   "usado_por": 3,
+   "usado_por": 2,
    "usado_por_arquivos": [
-    "analise-prs/resgate-261118-lote3/claude/feat-talkx-x054-cmdk-261108-0100/src/components/keyboard/CommandPaletteHost.tsx",
     "src/components/keyboard/CommandPaletteHost.tsx",
     "src/hooks/integrations/useCatalogQuickSearch.ts"
    ],
-   "coberto_por_testes": 7
+   "coberto_por_testes": 6
   },
   {
    "arquivo": "src/components/ui/form.tsx",
@@ -4071,7 +1842,7 @@
    "usado_por_arquivos": [
     "src/pages/Index.tsx"
    ],
-   "coberto_por_testes": 2
+   "coberto_por_testes": 1
   },
   {
    "arquivo": "src/components/ui/use-toast.ts",
@@ -4110,7 +1881,7 @@
    "usado_por_arquivos": [
     "src/App.tsx"
    ],
-   "coberto_por_testes": 2
+   "coberto_por_testes": 1
   },
   {
    "arquivo": "src/components/voice/usePhaseColors.ts",
@@ -4205,9 +1976,8 @@
     "useSupabaseRealtime"
    ],
    "canais_realtime": [],
-   "usado_por": 3,
+   "usado_por": 2,
    "usado_por_arquivos": [
-    "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/inbox/RealtimeInboxView.tsx",
     "src/components/inbox/RealtimeInboxView.tsx",
     "src/features/talk-me/TalkMeView.tsx"
    ],
@@ -4229,10 +1999,8 @@
     "useQuery"
    ],
    "canais_realtime": [],
-   "usado_por": 3,
+   "usado_por": 1,
    "usado_por_arquivos": [
-    "analise-prs/resgate-261118-lote3/claude_05/serene-feynman-3uuurw/src/components/admin/SearchInsightsView.tsx",
-    "analise-prs/resgate-261118-lote3/codex/publish-followup-20261021/src/components/admin/SearchInsightsView.tsx",
     "src/components/admin/SearchInsightsView.tsx"
    ],
    "coberto_por_testes": 1
@@ -4260,7 +2028,7 @@
    "canais_realtime": [],
    "usado_por": 0,
    "usado_por_arquivos": [],
-   "coberto_por_testes": 2
+   "coberto_por_testes": 1
   },
   {
    "arquivo": "src/hooks/agents/useAgentPendingCounts.ts",
@@ -4304,7 +2072,7 @@
    "usado_por_arquivos": [
     "src/components/agents/AgentsView.tsx"
    ],
-   "coberto_por_testes": 3
+   "coberto_por_testes": 1
   },
   {
    "arquivo": "src/hooks/analytics/useActiveAIProvider.ts",
@@ -4360,7 +2128,7 @@
    "hooks_exportados": [
     "useAIUsageDashboard"
    ],
-   "linhas": 357,
+   "linhas": 363,
    "dominio": "hooks/analytics",
    "tabelas": [
     "ai_usage_logs",
@@ -4434,7 +2202,7 @@
     "src/components/dashboard/overview/GamificationSection.tsx",
     "src/hooks/analytics/index.ts"
    ],
-   "coberto_por_testes": 5
+   "coberto_por_testes": 4
   },
   {
    "arquivo": "src/hooks/analytics/useGoalNotifications.ts",
@@ -4466,7 +2234,7 @@
     "src/components/notifications/GoalNotificationProvider.tsx",
     "src/hooks/analytics/index.ts"
    ],
-   "coberto_por_testes": 5
+   "coberto_por_testes": 4
   },
   {
    "arquivo": "src/hooks/analytics/useGoalsDashboard.ts",
@@ -4586,7 +2354,7 @@
     "src/components/performance/PerformanceMonitor.tsx",
     "src/hooks/analytics/index.ts"
    ],
-   "coberto_por_testes": 2
+   "coberto_por_testes": 1
   },
   {
    "arquivo": "src/hooks/analytics/useQueueGoalAlerts.ts",
@@ -4634,9 +2402,8 @@
     "useVisiblePolling"
    ],
    "canais_realtime": [],
-   "usado_por": 5,
+   "usado_por": 4,
    "usado_por_arquivos": [
-    "analise-prs/resgate-261118-lote3/hermes/telefonia-fase8-motion-a11y-responsivo-2610031530007c/src/components/dashboard/RealtimeMetricsPanel.tsx",
     "src/components/dashboard/DashboardView.tsx",
     "src/components/dashboard/overview/DashboardKpiRow.tsx",
     "src/components/dashboard/overview/NowPanel.tsx",
@@ -4710,6 +2477,119 @@
    "coberto_por_testes": 1
   },
   {
+   "arquivo": "src/hooks/assistant/useAssistantGateway.ts",
+   "hooks_exportados": [
+    "useAssistantGateway"
+   ],
+   "linhas": 20,
+   "dominio": "hooks/assistant",
+   "tabelas": [],
+   "rpcs": [],
+   "edges": [],
+   "hooks_internos": [],
+   "canais_realtime": [],
+   "usado_por": 1,
+   "usado_por_arquivos": [
+    "src/components/inbox/tabs/AssistantAskCard.tsx"
+   ],
+   "coberto_por_testes": 0
+  },
+  {
+   "arquivo": "src/hooks/assistant/useAssistantProfile.ts",
+   "hooks_exportados": [
+    "useAssistantProfile"
+   ],
+   "linhas": 104,
+   "dominio": "hooks/assistant",
+   "tabelas": [
+    "assistant_profiles"
+   ],
+   "rpcs": [],
+   "edges": [],
+   "hooks_internos": [
+    "useAuth",
+    "useCallback",
+    "useEffect",
+    "useState"
+   ],
+   "canais_realtime": [],
+   "usado_por": 1,
+   "usado_por_arquivos": [
+    "src/components/settings/AssistantProfileSettings.tsx"
+   ],
+   "coberto_por_testes": 0
+  },
+  {
+   "arquivo": "src/hooks/assistant/useContactAgenda.ts",
+   "hooks_exportados": [
+    "useContactAgenda"
+   ],
+   "linhas": 143,
+   "dominio": "hooks/assistant",
+   "tabelas": [
+    "conversation_tasks"
+   ],
+   "rpcs": [],
+   "edges": [],
+   "hooks_internos": [
+    "useAuth",
+    "useCallback",
+    "useMutation",
+    "useQuery",
+    "useQueryClient"
+   ],
+   "canais_realtime": [],
+   "usado_por": 1,
+   "usado_por_arquivos": [
+    "src/hooks/assistant/useReminderOffer.ts"
+   ],
+   "coberto_por_testes": 0
+  },
+  {
+   "arquivo": "src/hooks/assistant/useDailyBrief.ts",
+   "hooks_exportados": [
+    "useDailyBrief"
+   ],
+   "linhas": 24,
+   "dominio": "hooks/assistant",
+   "tabelas": [],
+   "rpcs": [],
+   "edges": [],
+   "hooks_internos": [
+    "useAuth",
+    "useQuery"
+   ],
+   "canais_realtime": [],
+   "usado_por": 1,
+   "usado_por_arquivos": [
+    "src/components/dashboard/DailyBriefStrip.tsx"
+   ],
+   "coberto_por_testes": 0
+  },
+  {
+   "arquivo": "src/hooks/assistant/useReminderOffer.ts",
+   "hooks_exportados": [
+    "useReminderOffer"
+   ],
+   "linhas": 96,
+   "dominio": "hooks/assistant",
+   "tabelas": [],
+   "rpcs": [],
+   "edges": [],
+   "hooks_internos": [
+    "useCallback",
+    "useContactAgenda",
+    "useMemo",
+    "useState"
+   ],
+   "canais_realtime": [],
+   "usado_por": 1,
+   "usado_por_arquivos": [
+    "src/components/inbox/tabs/AssistantAgendaCard.tsx"
+   ],
+   "coberto_por_testes": 0
+  },
+  {
    "arquivo": "src/hooks/auth/useAuth.tsx",
    "hooks_exportados": [
     "useAuth"
@@ -4728,38 +2608,38 @@
     "useState"
    ],
    "canais_realtime": [],
-   "usado_por": 131,
+   "usado_por": 111,
    "usado_por_arquivos": [
-    "analise-prs/resgate-261118-lote3/claude/feat-radar-motor-telas-261101-1330/src/components/inbox/copilot/RadarLive.tsx",
-    "analise-prs/resgate-261118-lote3/claude/fix-unit-tests-src-261024-1630/src/hooks/chat/useTeamChatNotifications.ts",
-    "analise-prs/resgate-261118-lote3/claude/fix-unit-tests-src-261024-1630/src/hooks/gamification/useAgentCelebrations.ts",
-    "analise-prs/resgate-261118-lote3/claude/fix-unit-tests-src-261024-1630/src/hooks/integrations/useTalkXSegments.ts",
-    "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/inbox/VirtualizedRealtimeList.tsx",
-    "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/inbox/WhisperMode.tsx",
-    "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/inbox/conversation-list/StatusChips.tsx",
-    "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/talkx/segments/SegmentSideList.tsx",
-    "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/talkx/useCampaignEditor.ts",
-    "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/team-chat/useTeamChatPanel.ts",
-    "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/hooks/analytics/useGoalsDashboard.ts",
-    "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/hooks/chat/useTeamChatNotifications.ts",
-    "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/hooks/integrations/useTalkXSegments.ts",
-    "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/hooks/team-chat/useTeamMessages.ts",
-    "analise-prs/resgate-261118-lote3/claude/kind-gates-87mwoe/src/hooks/integrations/useTalkXSegments.ts",
-    "analise-prs/resgate-261118-lote3/claude/magical-pasteur-iz2pgy/src/hooks/chat/useTeamChatNotifications.ts",
-    "analise-prs/resgate-261118-lote3/claude/magical-pasteur-iz2pgy/src/hooks/system/useUserSettings.ts",
-    "analise-prs/resgate-261118-lote3/claude/radar-motor-copilot-live-301030/src/components/inbox/copilot/RadarLive.tsx",
-    "analise-prs/resgate-261118-lote3/claude_05/festive-carson-ub43wu/src/hooks/chat/useTeamChatNotifications.ts",
-    "analise-prs/resgate-261118-lote3/codex/publish-followup-20261021/src/components/talkx/useCampaignEditor.ts",
-    "analise-prs/resgate-261118-lote3/codex/publish-followup-20261021/src/hooks/integrations/useTalkXSegments.ts",
-    "analise-prs/resgate-261118-lote3/hermes/telefonia-fase8-motion-a11y-responsivo-2610031530007c/src/components/calls/TelefoniaView.tsx",
-    "analise-prs/resgate-261118-lote3/resolve-2381-from-main/src/components/inbox/copilot/RadarLive.tsx",
     "src/App.tsx",
     "src/components/auth/ProtectedRoute.tsx",
     "src/components/automations/AutomationsManager.tsx",
     "src/components/calls/SelectedCallPanel.tsx",
     "src/components/calls/TelefoniaView.tsx",
     "src/components/catalog/CatalogBulkSendDialog.tsx",
-    "src/components/catalog/SendProductDialog.tsx"
+    "src/components/catalog/SendProductDialog.tsx",
+    "src/components/compliance/LGPDComplianceView.tsx",
+    "src/components/contacts/ContactNotes.tsx",
+    "src/components/contacts/useContactsCRUD.ts",
+    "src/components/dashboard/GoalsConfigDialog.tsx",
+    "src/components/dashboard/overview/DashboardTopBar.tsx",
+    "src/components/dashboard/overview/GreetingBanner.tsx",
+    "src/components/inbox/MessageTemplates.tsx",
+    "src/components/inbox/TemplatesWithVariables.tsx",
+    "src/components/inbox/TransferDialog.tsx",
+    "src/components/inbox/VirtualizedRealtimeList.tsx",
+    "src/components/inbox/WhisperMode.tsx",
+    "src/components/inbox/chat/MessageBubble.tsx",
+    "src/components/inbox/collaboration/HandoffDialog.tsx",
+    "src/components/inbox/collaboration/InternalNotesPanel.tsx",
+    "src/components/inbox/collaboration/ViewersIndicator.tsx",
+    "src/components/inbox/conversation-list/StatusChips.tsx",
+    "src/components/inbox/copilot/RadarLive.tsx",
+    "src/components/inbox/tabs/FilesTab.tsx",
+    "src/components/onboarding/OnboardingChecklist.tsx",
+    "src/components/security/BlockedIPDialogs.tsx",
+    "src/components/security/IPWhitelistPanel.tsx",
+    "src/components/security/MfaAdminNudge.tsx",
+    "src/components/security/SecurityOverview.tsx"
    ],
    "coberto_por_testes": 8
   },
@@ -4893,7 +2773,7 @@
     "src/hooks/auth/index.ts",
     "src/hooks/auth/useAuthForm.ts"
    ],
-   "coberto_por_testes": 2
+   "coberto_por_testes": 1
   },
   {
    "arquivo": "src/hooks/business/useAbandonmentRate.ts",
@@ -4946,7 +2826,7 @@
     "src/components/settings/ScheduleSettings.tsx",
     "src/hooks/business/index.ts"
    ],
-   "coberto_por_testes": 3
+   "coberto_por_testes": 2
   },
   {
    "arquivo": "src/hooks/business/useBusinessHoursCheck.ts",
@@ -5026,7 +2906,7 @@
     "src/components/dashboard/overview/CsatCard.tsx",
     "src/hooks/business/index.ts"
    ],
-   "coberto_por_testes": 5
+   "coberto_por_testes": 3
   },
   {
    "arquivo": "src/hooks/business/useDemandPrediction.ts",
@@ -5106,7 +2986,7 @@
     "src/components/queues/QueueCharts.tsx",
     "src/hooks/business/index.ts"
    ],
-   "coberto_por_testes": 2
+   "coberto_por_testes": 1
   },
   {
    "arquivo": "src/hooks/business/useQueueGoals.ts",
@@ -5136,7 +3016,7 @@
     "src/hooks/analytics/useQueueGoalAlerts.ts",
     "src/hooks/business/index.ts"
    ],
-   "coberto_por_testes": 6
+   "coberto_por_testes": 5
   },
   {
    "arquivo": "src/hooks/business/useQueues.ts",
@@ -5160,9 +3040,8 @@
     "useToast"
    ],
    "canais_realtime": [],
-   "usado_por": 8,
+   "usado_por": 7,
    "usado_por_arquivos": [
-    "analise-prs/resgate-261118-lote3/hermes/telefonia-fase8-motion-a11y-responsivo-2610031530007c/src/components/inbox/contact-details/AssignmentSection.tsx",
     "src/components/connections/ConnectionQueuesDialog.tsx",
     "src/components/dashboard/DashboardFilters.tsx",
     "src/components/inbox/InboxFilters.tsx",
@@ -5200,7 +3079,7 @@
     "src/components/queues/QueuesComparisonDashboard.tsx",
     "src/hooks/business/index.ts"
    ],
-   "coberto_por_testes": 4
+   "coberto_por_testes": 2
   },
   {
    "arquivo": "src/hooks/business/useWarRoomAlerts.ts",
@@ -5306,9 +3185,8 @@
     "useMemo"
    ],
    "canais_realtime": [],
-   "usado_por": 5,
+   "usado_por": 4,
    "usado_por_arquivos": [
-    "analise-prs/resgate-261118-lote3/hermes/telefonia-fase8-motion-a11y-responsivo-2610031530007c/src/components/calls/IncomingCallAlert.tsx",
     "src/components/calls/ActiveCallPanel.tsx",
     "src/components/calls/IncomingCallAlert.tsx",
     "src/components/calls/NewCallPanel.tsx",
@@ -5357,9 +3235,8 @@
    "canais_realtime": [
     "calls-kpi-realtime"
    ],
-   "usado_por": 3,
+   "usado_por": 2,
    "usado_por_arquivos": [
-    "analise-prs/resgate-261118-lote3/hermes/telefonia-fase8-motion-a11y-responsivo-2610031530007c/src/components/calls/CallsKpiGrid.tsx",
     "src/components/calls/CallsKpiGrid.tsx",
     "src/hooks/calls/useMyCalls.ts"
    ],
@@ -5403,10 +3280,8 @@
     "useQuery"
    ],
    "canais_realtime": [],
-   "usado_por": 8,
+   "usado_por": 6,
    "usado_por_arquivos": [
-    "analise-prs/resgate-261118-lote3/hermes/telefonia-fase8-motion-a11y-responsivo-2610031530007c/src/components/calls/CallHistoryTable.tsx",
-    "analise-prs/resgate-261118-lote3/hermes/telefonia-fase8-motion-a11y-responsivo-2610031530007c/src/components/calls/TelefoniaView.tsx",
     "src/components/calls/CallContactCell.tsx",
     "src/components/calls/CallHistoryTable.tsx",
     "src/components/calls/SelectedCallPanel.tsx",
@@ -5432,9 +3307,8 @@
     "useState"
    ],
    "canais_realtime": [],
-   "usado_por": 2,
+   "usado_por": 1,
    "usado_por_arquivos": [
-    "analise-prs/resgate-261118-lote3/hermes/telefonia-fase8-motion-a11y-responsivo-2610031530007c/src/components/calls/TelefoniaView.tsx",
     "src/components/calls/TelefoniaView.tsx"
    ],
    "coberto_por_testes": 1
@@ -5457,9 +3331,8 @@
    "canais_realtime": [
     "termino-remoto-${callIdEmCurso}"
    ],
-   "usado_por": 2,
+   "usado_por": 1,
    "usado_por_arquivos": [
-    "analise-prs/resgate-261118-lote3/hermes/telefonia-fase8-motion-a11y-responsivo-2610031530007c/src/components/calls/IncomingCallAlert.tsx",
     "src/components/calls/IncomingCallAlert.tsx"
    ],
    "coberto_por_testes": 1
@@ -5632,7 +3505,7 @@
     "src/hooks/chat/useMessages.ts",
     "src/hooks/chat/usePdfThumbnail.ts"
    ],
-   "coberto_por_testes": 39
+   "coberto_por_testes": 31
   },
   {
    "arquivo": "src/hooks/chat/useContactMediaCounts.ts",
@@ -5656,7 +3529,7 @@
     "src/hooks/chat/useFilesActions.ts",
     "src/hooks/chat/useMessages.ts"
    ],
-   "coberto_por_testes": 12
+   "coberto_por_testes": 11
   },
   {
    "arquivo": "src/hooks/chat/useConversationActions.ts",
@@ -5683,9 +3556,8 @@
     "useState"
    ],
    "canais_realtime": [],
-   "usado_por": 7,
+   "usado_por": 6,
    "usado_por_arquivos": [
-    "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/inbox/RealtimeInboxView.tsx",
     "src/components/inbox/ContactDetails.tsx",
     "src/components/inbox/ConversationListSidebar.tsx",
     "src/components/inbox/RealtimeInboxView.tsx",
@@ -5693,7 +3565,7 @@
     "src/components/inbox/contact-details/ContactHeaderSection.tsx",
     "src/hooks/chat/index.ts"
    ],
-   "coberto_por_testes": 5
+   "coberto_por_testes": 4
   },
   {
    "arquivo": "src/hooks/chat/useConversationAnalyses.ts",
@@ -5720,7 +3592,7 @@
     "src/components/inbox/AIConversationAssistant.tsx",
     "src/hooks/chat/index.ts"
    ],
-   "coberto_por_testes": 2
+   "coberto_por_testes": 1
   },
   {
    "arquivo": "src/hooks/chat/useConversationHistoryTimeline.ts",
@@ -5747,9 +3619,8 @@
     "useQuery"
    ],
    "canais_realtime": [],
-   "usado_por": 2,
+   "usado_por": 1,
    "usado_por_arquivos": [
-    "analise-prs/resgate-261118-lote3/hermes/telefonia-fase8-motion-a11y-responsivo-2610031530007c/src/components/inbox/contact-details/LastActivityWidget.tsx",
     "src/components/inbox/tabs/JourneyTab.tsx"
    ],
    "coberto_por_testes": 6
@@ -5792,10 +3663,8 @@
     "useQuery"
    ],
    "canais_realtime": [],
-   "usado_por": 9,
+   "usado_por": 7,
    "usado_por_arquivos": [
-    "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/inbox/RealtimeInboxView.tsx",
-    "analise-prs/resgate-261118-lote3/fix/ci-verde-261021/src/components/inbox/RealtimeCollaboration.tsx",
     "src/components/inbox/RealtimeCollaboration.tsx",
     "src/components/inbox/RealtimeInboxView.tsx",
     "src/components/inbox/chat/ConversationTabs.tsx",
@@ -5804,7 +3673,7 @@
     "src/hooks/chat/useMessages.ts",
     "src/hooks/crm/useContactNotes.ts"
    ],
-   "coberto_por_testes": 12
+   "coberto_por_testes": 11
   },
   {
    "arquivo": "src/hooks/chat/useExclusiveAudio.ts",
@@ -5826,7 +3695,7 @@
     "src/hooks/communication/audioPlaybackBus.ts",
     "src/hooks/communication/useAudioPlayer.ts"
    ],
-   "coberto_por_testes": 6
+   "coberto_por_testes": 5
   },
   {
    "arquivo": "src/hooks/chat/useFilesActions.ts",
@@ -5945,7 +3814,7 @@
     "src/components/inbox/tabs/filesSort.ts",
     "src/hooks/chat/useFilesContainerColumns.ts"
    ],
-   "coberto_por_testes": 13
+   "coberto_por_testes": 12
   },
   {
    "arquivo": "src/hooks/chat/useForwardMedia.ts",
@@ -5966,7 +3835,7 @@
     "src/components/inbox/tabs/FilesTab.tsx",
     "src/hooks/chat/useForwardMessage.ts"
    ],
-   "coberto_por_testes": 5
+   "coberto_por_testes": 3
   },
   {
    "arquivo": "src/hooks/chat/useForwardMessage.ts",
@@ -5995,7 +3864,7 @@
     "src/components/inbox/tabs/FilesTab.tsx",
     "src/hooks/chat/index.ts"
    ],
-   "coberto_por_testes": 6
+   "coberto_por_testes": 3
   },
   {
    "arquivo": "src/hooks/chat/useGroupsManager.ts",
@@ -6097,13 +3966,12 @@
     "useRef"
    ],
    "canais_realtime": [],
-   "usado_por": 3,
+   "usado_por": 2,
    "usado_por_arquivos": [
-    "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/inbox/MessageReactions.tsx",
     "src/components/inbox/MessageReactions.tsx",
     "src/hooks/chat/index.ts"
    ],
-   "coberto_por_testes": 5
+   "coberto_por_testes": 4
   },
   {
    "arquivo": "src/hooks/chat/useMessages.ts",
@@ -6154,14 +4022,12 @@
     "useState"
    ],
    "canais_realtime": [],
-   "usado_por": 4,
+   "usado_por": 2,
    "usado_por_arquivos": [
-    "analise-prs/resgate-261118-lote3/claude/fix-radar-fase6-cv056-shortcuts-261108-2335/src/components/inbox/ChatPanel.tsx",
-    "analise-prs/resgate-261118-lote3/fix/ci-verde-261021/src/components/inbox/ChatPanel.tsx",
     "src/components/inbox/ChatPanel.tsx",
     "src/hooks/chat/index.ts"
    ],
-   "coberto_por_testes": 3
+   "coberto_por_testes": 2
   },
   {
    "arquivo": "src/hooks/chat/useMessageStatus.ts",
@@ -6209,7 +4075,7 @@
     "src/components/inbox/MessageTemplates.tsx",
     "src/hooks/chat/index.ts"
    ],
-   "coberto_por_testes": 2
+   "coberto_por_testes": 1
   },
   {
    "arquivo": "src/hooks/chat/useNewConversation.ts",
@@ -6289,7 +4155,7 @@
    "usado_por_arquivos": [
     "src/components/inbox/tabs/FileThumb.tsx"
    ],
-   "coberto_por_testes": 3
+   "coberto_por_testes": 2
   },
   {
    "arquivo": "src/hooks/chat/useQuickReplies.ts",
@@ -6313,14 +4179,8 @@
     "useState"
    ],
    "canais_realtime": [],
-   "usado_por": 14,
+   "usado_por": 8,
    "usado_por_arquivos": [
-    "analise-prs/resgate-261118-lote3/claude/feat-radar-motor-telas-261101-1330/src/components/inbox/chat/ChatInputArea.tsx",
-    "analise-prs/resgate-261118-lote3/claude/fix-radar-fase6-cv056-shortcuts-261108-2335/src/components/inbox/ChatPanel.tsx",
-    "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/inbox/quick-replies/QuickReplyCardList.tsx",
-    "analise-prs/resgate-261118-lote3/claude/radar-motor-copilot-live-301030/src/components/inbox/chat/ChatInputArea.tsx",
-    "analise-prs/resgate-261118-lote3/fix/ci-verde-261021/src/components/inbox/ChatPanel.tsx",
-    "analise-prs/resgate-261118-lote3/resolve-2381-from-main/src/components/inbox/chat/ChatInputArea.tsx",
     "src/components/copilot/RadarPhase7Panel.tsx",
     "src/components/inbox/ChatPanel.tsx",
     "src/components/inbox/QuickRepliesManager.tsx",
@@ -6330,7 +4190,7 @@
     "src/hooks/chat/index.ts",
     "src/hooks/copilot/useSmartTemplates.ts"
    ],
-   "coberto_por_testes": 6
+   "coberto_por_testes": 5
   },
   {
    "arquivo": "src/hooks/chat/useRealtimeMessages.ts",
@@ -6351,19 +4211,8 @@
     "useState"
    ],
    "canais_realtime": [],
-   "usado_por": 30,
+   "usado_por": 19,
    "usado_por_arquivos": [
-    "analise-prs/resgate-261118-lote3/claude/feat-copiloto-edges-261101-1330/src/hooks/inbox/useInboxBulkActions.ts",
-    "analise-prs/resgate-261118-lote3/claude/fix-codex-findings-161016-1906/src/hooks/system/useOfflineCache.ts",
-    "analise-prs/resgate-261118-lote3/claude/fix-unit-tests-src-261024-1630/src/hooks/inbox/useInboxFilters.ts",
-    "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/inbox/VirtualizedRealtimeList.tsx",
-    "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/inbox/conversation-list/StatusChips.tsx",
-    "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/hooks/inbox/useInboxFilters.ts",
-    "analise-prs/resgate-261118-lote3/claude/kind-gates-87mwoe/src/hooks/inbox/useInboxBulkActions.ts",
-    "analise-prs/resgate-261118-lote3/claude/kind-gates-87mwoe/src/hooks/inbox/useInboxFilters.ts",
-    "analise-prs/resgate-261118-lote3/claude/magical-pasteur-iz2pgy/src/hooks/inbox/useInboxFilters.ts",
-    "analise-prs/resgate-261118-lote3/claude_05/festive-carson-ub43wu/src/hooks/inbox/useInboxFilters.ts",
-    "analise-prs/resgate-261118-lote3/fix/ci-verde-261021/src/hooks/inbox/useInboxBulkActions.ts",
     "src/adapters/evolutionAdapter.ts",
     "src/adapters/inboxAdapter.ts",
     "src/components/inbox/ContactTypeFilter.tsx",
@@ -6384,7 +4233,7 @@
     "src/hooks/system/useOfflineCache.ts",
     "src/services/realtime.service.ts"
    ],
-   "coberto_por_testes": 28
+   "coberto_por_testes": 21
   },
   {
    "arquivo": "src/hooks/chat/useRecommendedProducts.ts",
@@ -6453,15 +4302,13 @@
     "useQueryClient"
    ],
    "canais_realtime": [],
-   "usado_por": 5,
+   "usado_por": 3,
    "usado_por_arquivos": [
-    "analise-prs/resgate-261118-lote3/claude/fix-radar-fase6-cv056-shortcuts-261108-2335/src/components/inbox/ChatPanel.tsx",
-    "analise-prs/resgate-261118-lote3/fix/ci-verde-261021/src/components/inbox/ChatPanel.tsx",
     "src/components/inbox/ChatPanel.tsx",
     "src/components/schedule/ScheduleCalendarView.tsx",
     "src/hooks/chat/index.ts"
    ],
-   "coberto_por_testes": 2
+   "coberto_por_testes": 1
   },
   {
    "arquivo": "src/hooks/chat/useScheduledReports.ts",
@@ -6489,7 +4336,7 @@
     "src/components/reports/ScheduledReportsManager.tsx",
     "src/hooks/chat/index.ts"
    ],
-   "coberto_por_testes": 3
+   "coberto_por_testes": 2
   },
   {
    "arquivo": "src/hooks/chat/useTeamChat.ts",
@@ -6509,10 +4356,8 @@
    "edges": [],
    "hooks_internos": [],
    "canais_realtime": [],
-   "usado_por": 10,
+   "usado_por": 8,
    "usado_por_arquivos": [
-    "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/team-chat/TeamChatPanel.tsx",
-    "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/team-chat/useTeamChatPanel.ts",
     "src/components/team-chat/NewConversationDialog.tsx",
     "src/components/team-chat/TeamChatInputArea.tsx",
     "src/components/team-chat/TeamChatPanel.tsx",
@@ -6522,7 +4367,7 @@
     "src/components/team-chat/useTeamChatPanel.ts",
     "src/hooks/chat/index.ts"
    ],
-   "coberto_por_testes": 16
+   "coberto_por_testes": 13
   },
   {
    "arquivo": "src/hooks/chat/useTeamChatDraft.ts",
@@ -6546,7 +4391,7 @@
     "src/components/team-chat/TeamChatInputArea.tsx",
     "src/hooks/chat/index.ts"
    ],
-   "coberto_por_testes": 4
+   "coberto_por_testes": 3
   },
   {
    "arquivo": "src/hooks/chat/useTeamChatNotifications.ts",
@@ -6578,7 +4423,7 @@
     "src/components/team-chat/TeamChatView.tsx",
     "src/hooks/chat/index.ts"
    ],
-   "coberto_por_testes": 12
+   "coberto_por_testes": 6
   },
   {
    "arquivo": "src/hooks/chat/useTypingPresence.ts",
@@ -6597,14 +4442,12 @@
     "useState"
    ],
    "canais_realtime": [],
-   "usado_por": 4,
+   "usado_por": 2,
    "usado_por_arquivos": [
-    "analise-prs/resgate-261118-lote3/claude/fix-radar-fase6-cv056-shortcuts-261108-2335/src/components/inbox/ChatPanel.tsx",
-    "analise-prs/resgate-261118-lote3/fix/ci-verde-261021/src/components/inbox/ChatPanel.tsx",
     "src/components/inbox/ChatPanel.tsx",
     "src/hooks/chat/index.ts"
    ],
-   "coberto_por_testes": 6
+   "coberto_por_testes": 5
   },
   {
    "arquivo": "src/hooks/chat/useWhisperCount.ts",
@@ -6625,13 +4468,12 @@
     "useQueryClient"
    ],
    "canais_realtime": [],
-   "usado_por": 3,
+   "usado_por": 2,
    "usado_por_arquivos": [
-    "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/inbox/WhisperMode.tsx",
     "src/components/inbox/WhisperMode.tsx",
     "src/hooks/chat/useWhisperMessagesMutation.ts"
    ],
-   "coberto_por_testes": 3
+   "coberto_por_testes": 2
   },
   {
    "arquivo": "src/hooks/chat/useWhisperMessagesMutation.ts",
@@ -6656,7 +4498,7 @@
    "usado_por_arquivos": [
     "src/components/inbox/chat/useChatPanelHandlers.ts"
    ],
-   "coberto_por_testes": 2
+   "coberto_por_testes": 1
   },
   {
    "arquivo": "src/hooks/communication/useAudioMemes.ts",
@@ -6733,9 +4575,8 @@
     "useState"
    ],
    "canais_realtime": [],
-   "usado_por": 5,
+   "usado_por": 4,
    "usado_por_arquivos": [
-    "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/inbox/WhisperMode.tsx",
     "src/components/inbox/AudioRecorder.tsx",
     "src/components/inbox/WhisperMode.tsx",
     "src/hooks/communication/index.ts",
@@ -6779,19 +4620,15 @@
     "useCallback"
    ],
    "canais_realtime": [],
-   "usado_por": 9,
+   "usado_por": 5,
    "usado_por_arquivos": [
-    "analise-prs/resgate-261118-lote3/claude/feat-copiloto-edges-261101-1330/src/hooks/inbox/useInboxBulkActions.ts",
-    "analise-prs/resgate-261118-lote3/claude/kind-gates-87mwoe/src/hooks/inbox/useInboxBulkActions.ts",
-    "analise-prs/resgate-261118-lote3/fix/ci-verde-261021/src/hooks/inbox/useInboxBulkActions.ts",
-    "analise-prs/resgate-261118-lote3/hermes/telefonia-fase8-motion-a11y-responsivo-2610031530007c/src/components/calls/TelefoniaView.tsx",
     "src/components/calls/PostCallSummary.tsx",
     "src/components/calls/SelectedCallPanel.tsx",
     "src/components/calls/TelefoniaView.tsx",
     "src/hooks/communication/index.ts",
     "src/hooks/inbox/useInboxBulkActions.ts"
    ],
-   "coberto_por_testes": 4
+   "coberto_por_testes": 3
   },
   {
    "arquivo": "src/hooks/communication/useIncomingCallListener.ts",
@@ -6813,14 +4650,13 @@
     "useRef"
    ],
    "canais_realtime": [],
-   "usado_por": 4,
+   "usado_por": 3,
    "usado_por_arquivos": [
-    "analise-prs/resgate-261118-lote3/hermes/telefonia-fase8-motion-a11y-responsivo-2610031530007c/src/components/calls/IncomingCallAlert.tsx",
     "src/components/calls/IncomingCallAlert.tsx",
     "src/hooks/calls/useAcoesDoAlerta.ts",
     "src/hooks/communication/index.ts"
    ],
-   "coberto_por_testes": 3
+   "coberto_por_testes": 2
   },
   {
    "arquivo": "src/hooks/communication/useMediaElementVolume.ts",
@@ -6838,10 +4674,8 @@
     "useMediaVolume"
    ],
    "canais_realtime": [],
-   "usado_por": 13,
+   "usado_por": 11,
    "usado_por_arquivos": [
-    "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/inbox/WhisperMode.tsx",
-    "analise-prs/resgate-261118-lote3/hermes/telefonia-fase8-motion-a11y-responsivo-2610031530007c/src/components/calls/TelefoniaView.tsx",
     "src/components/calls/RecordingPlayer.tsx",
     "src/components/inbox/AudioRecorder.tsx",
     "src/components/inbox/MediaPreview.tsx",
@@ -6994,12 +4828,8 @@
     "useState"
    ],
    "canais_realtime": [],
-   "usado_por": 8,
+   "usado_por": 4,
    "usado_por_arquivos": [
-    "analise-prs/resgate-261118-lote3/claude/fix-radar-fase6-cv056-shortcuts-261108-2335/src/components/inbox/ChatPanel.tsx",
-    "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/inbox/VoiceSelector.tsx",
-    "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/team-chat/useTeamChatPanel.ts",
-    "analise-prs/resgate-261118-lote3/fix/ci-verde-261021/src/components/inbox/ChatPanel.tsx",
     "src/components/inbox/ChatPanel.tsx",
     "src/components/inbox/VoiceSelector.tsx",
     "src/components/team-chat/useTeamChatPanel.ts",
@@ -7158,6 +4988,26 @@
    "coberto_por_testes": 2
   },
   {
+   "arquivo": "src/hooks/contacts/useContactSource.ts",
+   "hooks_exportados": [
+    "useContactSource"
+   ],
+   "linhas": 25,
+   "dominio": "hooks/contacts",
+   "tabelas": [],
+   "rpcs": [],
+   "edges": [],
+   "hooks_internos": [
+    "useCRMIntegrationEnabled"
+   ],
+   "canais_realtime": [],
+   "usado_por": 1,
+   "usado_por_arquivos": [
+    "src/components/contacts/ContactsTitleBar.tsx"
+   ],
+   "coberto_por_testes": 0
+  },
+  {
    "arquivo": "src/hooks/contacts/useContactsV2Flags.ts",
    "hooks_exportados": [
     "useContactsV2Flags"
@@ -7193,9 +5043,11 @@
     "useLayoutEffect"
    ],
    "canais_realtime": [],
-   "usado_por": 0,
-   "usado_por_arquivos": [],
-   "coberto_por_testes": 2
+   "usado_por": 1,
+   "usado_por_arquivos": [
+    "src/components/contacts/ContactContentArea.tsx"
+   ],
+   "coberto_por_testes": 1
   },
   {
    "arquivo": "src/hooks/copilot/index.ts",
@@ -7267,8 +5119,10 @@
    "edges": [],
    "hooks_internos": [],
    "canais_realtime": [],
-   "usado_por": 0,
-   "usado_por_arquivos": [],
+   "usado_por": 1,
+   "usado_por_arquivos": [
+    "src/components/inbox/ai-tools/ImageAnalysisPanel.tsx"
+   ],
    "coberto_por_testes": 0
   },
   {
@@ -7519,22 +5373,14 @@
     "useState"
    ],
    "canais_realtime": [],
-   "usado_por": 12,
+   "usado_por": 4,
    "usado_por_arquivos": [
-    "analise-prs/resgate-261118-lote3/claude/feat-radar-motor-telas-261101-1330/src/components/inbox/copilot/RadarCards.tsx",
-    "analise-prs/resgate-261118-lote3/claude/feat-radar-motor-telas-261101-1330/src/components/inbox/copilot/RadarLive.tsx",
-    "analise-prs/resgate-261118-lote3/claude/radar-motor-copilot-live-301030/src/components/inbox/copilot/RadarCards.tsx",
-    "analise-prs/resgate-261118-lote3/claude/radar-motor-copilot-live-301030/src/components/inbox/copilot/RadarLive.tsx",
-    "analise-prs/resgate-261118-lote3/claude/radar-motor-copilot-live-301030/src/components/inbox/copilot/RadarPanel.tsx",
-    "analise-prs/resgate-261118-lote3/resolve-2381-from-main/src/components/inbox/copilot/RadarCards.tsx",
-    "analise-prs/resgate-261118-lote3/resolve-2381-from-main/src/components/inbox/copilot/RadarLive.tsx",
-    "analise-prs/resgate-261118-lote3/resolve-2381-from-main/src/components/inbox/copilot/RadarPanel.tsx",
     "src/components/inbox/copilot/RadarCards.tsx",
     "src/components/inbox/copilot/RadarLive.tsx",
     "src/components/inbox/copilot/RadarPanel.tsx",
     "src/components/inbox/tabs/AiTab.tsx"
    ],
-   "coberto_por_testes": 3
+   "coberto_por_testes": 2
   },
   {
    "arquivo": "src/hooks/copilot/useCopilotSupervisor.ts",
@@ -7590,10 +5436,15 @@
     "useMemo"
    ],
    "canais_realtime": [],
-   "usado_por": 2,
+   "usado_por": 7,
    "usado_por_arquivos": [
+    "src/components/inbox/AIConversationAssistant.tsx",
     "src/components/inbox/AISuggestions.tsx",
-    "src/hooks/copilot/index.ts"
+    "src/components/inbox/ConversationSummary.tsx",
+    "src/components/inbox/chat/AIEnhanceButton.tsx",
+    "src/components/inbox/chat/AIRewriteButton.tsx",
+    "src/hooks/copilot/index.ts",
+    "src/hooks/inbox/useObjectionDetector.ts"
    ],
    "coberto_por_testes": 3
   },
@@ -7916,23 +5767,15 @@
    "canais_realtime": [
     "copilot_insights:${sessionId}"
    ],
-   "usado_por": 13,
+   "usado_por": 5,
    "usado_por_arquivos": [
-    "analise-prs/resgate-261118-lote3/claude/feat-radar-motor-telas-261101-1330/src/components/inbox/copilot/RadarCards.tsx",
-    "analise-prs/resgate-261118-lote3/claude/feat-radar-motor-telas-261101-1330/src/components/inbox/copilot/RadarLive.tsx",
-    "analise-prs/resgate-261118-lote3/claude/radar-motor-copilot-live-301030/src/components/inbox/copilot/RadarCards.tsx",
-    "analise-prs/resgate-261118-lote3/claude/radar-motor-copilot-live-301030/src/components/inbox/copilot/RadarLive.tsx",
-    "analise-prs/resgate-261118-lote3/claude/radar-motor-copilot-live-301030/src/components/inbox/copilot/RadarPanel.tsx",
-    "analise-prs/resgate-261118-lote3/resolve-2381-from-main/src/components/inbox/copilot/RadarCards.tsx",
-    "analise-prs/resgate-261118-lote3/resolve-2381-from-main/src/components/inbox/copilot/RadarLive.tsx",
-    "analise-prs/resgate-261118-lote3/resolve-2381-from-main/src/components/inbox/copilot/RadarPanel.tsx",
     "src/components/inbox/copilot/LiveSuggestions.tsx",
     "src/components/inbox/copilot/RadarCards.tsx",
     "src/components/inbox/copilot/RadarLive.tsx",
     "src/components/inbox/copilot/RadarPanel.tsx",
     "src/components/inbox/tabs/AiTab.tsx"
    ],
-   "coberto_por_testes": 4
+   "coberto_por_testes": 2
   },
   {
    "arquivo": "src/hooks/copilot/useLogoAnalysis.ts",
@@ -8336,17 +6179,9 @@
     "useState"
    ],
    "canais_realtime": [],
-   "usado_por": 12,
+   "usado_por": 4,
    "usado_por_arquivos": [
     "analise-prs/resgate-261118-lote2/src/components/copilot/RadarPhase6Panel.tsx",
-    "analise-prs/resgate-261118-lote3/claude/feat-radar-motor-telas-261101-1330/src/components/inbox/copilot/RadarCards.tsx",
-    "analise-prs/resgate-261118-lote3/claude/feat-radar-motor-telas-261101-1330/src/components/inbox/copilot/RadarLive.tsx",
-    "analise-prs/resgate-261118-lote3/claude/radar-motor-copilot-live-301030/src/components/inbox/copilot/RadarCards.tsx",
-    "analise-prs/resgate-261118-lote3/claude/radar-motor-copilot-live-301030/src/components/inbox/copilot/RadarLive.tsx",
-    "analise-prs/resgate-261118-lote3/claude/radar-motor-copilot-live-301030/src/components/inbox/copilot/RadarPanel.tsx",
-    "analise-prs/resgate-261118-lote3/resolve-2381-from-main/src/components/inbox/copilot/RadarCards.tsx",
-    "analise-prs/resgate-261118-lote3/resolve-2381-from-main/src/components/inbox/copilot/RadarLive.tsx",
-    "analise-prs/resgate-261118-lote3/resolve-2381-from-main/src/components/inbox/copilot/RadarPanel.tsx",
     "src/components/inbox/copilot/RadarCards.tsx",
     "src/components/inbox/copilot/RadarLive.tsx",
     "src/components/inbox/copilot/RadarPanel.tsx"
@@ -8664,9 +6499,8 @@
    "canais_realtime": [
     "agent-presence-changes"
    ],
-   "usado_por": 8,
+   "usado_por": 7,
    "usado_por_arquivos": [
-    "analise-prs/resgate-261118-lote3/claude/kind-gates-87mwoe/src/hooks/business/useWarRoomData.ts",
     "src/components/admin/CrisisRoom.tsx",
     "src/components/layout/AppShell.tsx",
     "src/components/layout/SidebarUserPill.tsx",
@@ -8723,10 +6557,8 @@
     "useQuery"
    ],
    "canais_realtime": [],
-   "usado_por": 11,
+   "usado_por": 9,
    "usado_por_arquivos": [
-    "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/inbox/WhisperMode.tsx",
-    "analise-prs/resgate-261118-lote3/hermes/telefonia-fase8-motion-a11y-responsivo-2610031530007c/src/components/inbox/contact-details/AssignmentSection.tsx",
     "src/components/agents/AgentsView.tsx",
     "src/components/dashboard/DashboardFilters.tsx",
     "src/components/inbox/InboxFilters.tsx",
@@ -8756,9 +6588,8 @@
     "useQuery"
    ],
    "canais_realtime": [],
-   "usado_por": 2,
+   "usado_por": 1,
    "usado_por_arquivos": [
-    "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/inbox/VirtualizedRealtimeList.tsx",
     "src/components/inbox/VirtualizedRealtimeList.tsx"
    ],
    "coberto_por_testes": 8
@@ -8787,11 +6618,8 @@
     "useQueryClient"
    ],
    "canais_realtime": [],
-   "usado_por": 10,
+   "usado_por": 7,
    "usado_por_arquivos": [
-    "analise-prs/resgate-261118-lote3/claude/busy-cannon-40szm9/src/components/inbox/ContactPurchasesPanel.tsx",
-    "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/inbox/RealtimeInboxView.tsx",
-    "analise-prs/resgate-261118-lote3/hermes/robustez-primitivos-ui-2610121626bec5-2610141859e423/src/components/inbox/ContactPurchasesPanel.tsx",
     "src/components/inbox/RealtimeInboxView.tsx",
     "src/components/inbox/tabs/AiTab.tsx",
     "src/components/inbox/tabs/CommercialSummaryStrip.tsx",
@@ -8818,16 +6646,13 @@
     "useState"
    ],
    "canais_realtime": [],
-   "usado_por": 6,
+   "usado_por": 3,
    "usado_por_arquivos": [
-    "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/talkx/TalkXCampaignWizard.tsx",
-    "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/talkx/TalkXWizardDelivery.tsx",
-    "analise-prs/resgate-261118-lote3/codex/publish-followup-20261021/src/components/talkx/TalkXCampaignWizard.tsx",
     "src/components/talkx/TalkXCampaignWizard.tsx",
     "src/components/talkx/TalkXWizardDelivery.tsx",
     "src/hooks/crm/index.ts"
    ],
-   "coberto_por_testes": 4
+   "coberto_por_testes": 2
   },
   {
    "arquivo": "src/hooks/crm/useContactEnrichedData.ts",
@@ -8846,11 +6671,8 @@
     "useSupabaseRealtime"
    ],
    "canais_realtime": [],
-   "usado_por": 10,
+   "usado_por": 7,
    "usado_por_arquivos": [
-    "analise-prs/resgate-261118-lote3/hermes/telefonia-fase8-motion-a11y-responsivo-2610031530007c/src/components/inbox/contact-details/ContactAccordionSections.tsx",
-    "analise-prs/resgate-261118-lote3/hermes/telefonia-fase8-motion-a11y-responsivo-2610031530007c/src/components/inbox/contact-details/ContactInfoSection.tsx",
-    "analise-prs/resgate-261118-lote3/hermes/telefonia-fase8-motion-a11y-responsivo-2610031530007c/src/components/inbox/contact-details/SLAAndAITagsSection.tsx",
     "src/components/inbox/ContactDetails.tsx",
     "src/components/inbox/contact-details/ContactHeaderSection.tsx",
     "src/components/inbox/contact-details/editContactShape.ts",
@@ -8859,7 +6681,7 @@
     "src/components/inbox/tabs/Crm360Tab.tsx",
     "src/hooks/crm/index.ts"
    ],
-   "coberto_por_testes": 3
+   "coberto_por_testes": 2
   },
   {
    "arquivo": "src/hooks/crm/useContactIntelligence.ts",
@@ -8875,9 +6697,8 @@
     "useCRMIntegrationEnabled"
    ],
    "canais_realtime": [],
-   "usado_por": 4,
+   "usado_por": 3,
    "usado_por_arquivos": [
-    "analise-prs/resgate-261118-lote3/hermes/robustez-primitivos-ui-2610121626bec5-2610141859e423/src/components/inbox/chat/ChatHeader.tsx",
     "src/components/inbox/contact-details/AIInsightsWidget.tsx",
     "src/components/inbox/contact-details/ContactIntelligencePanel.tsx",
     "src/hooks/crm/index.ts"
@@ -8936,7 +6757,7 @@
     "src/components/inbox/tabs/NotesTab.tsx",
     "src/hooks/crm/index.ts"
    ],
-   "coberto_por_testes": 8
+   "coberto_por_testes": 7
   },
   {
    "arquivo": "src/hooks/crm/useContactSidebar.ts",
@@ -8952,8 +6773,9 @@
     "useCRMIntegrationEnabled"
    ],
    "canais_realtime": [],
-   "usado_por": 1,
+   "usado_por": 2,
    "usado_por_arquivos": [
+    "src/components/contacts/ContactDetailPanel.tsx",
     "src/components/inbox/contact-details/sidebar/ContactSidebarSections.tsx"
    ],
    "coberto_por_testes": 1
@@ -8985,7 +6807,7 @@
    "hooks_exportados": [
     "useContactsSearch"
    ],
-   "linhas": 259,
+   "linhas": 281,
    "dominio": "hooks/crm",
    "tabelas": [],
    "rpcs": [],
@@ -8998,8 +6820,9 @@
     "useState"
    ],
    "canais_realtime": [],
-   "usado_por": 3,
+   "usado_por": 4,
    "usado_por_arquivos": [
+    "src/components/contacts/ContactsView.tsx",
     "src/components/contacts/useContactsCRUD.ts",
     "src/components/tasks/shared/ContactCombobox.tsx",
     "src/hooks/crm/index.ts"
@@ -9097,10 +6920,8 @@
     "useQuery"
    ],
    "canais_realtime": [],
-   "usado_por": 7,
+   "usado_por": 5,
    "usado_por_arquivos": [
-    "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/talkx/TalkXCampaignWizard.tsx",
-    "analise-prs/resgate-261118-lote3/codex/publish-followup-20261021/src/components/talkx/TalkXCampaignWizard.tsx",
     "src/components/contacts/AdvancedCRMSearch.tsx",
     "src/components/contacts/ContactsView.tsx",
     "src/components/talkx/TalkXAnalytics.tsx",
@@ -9167,9 +6988,8 @@
     "useCRMIntegrationEnabled"
    ],
    "canais_realtime": [],
-   "usado_por": 5,
+   "usado_por": 4,
    "usado_por_arquivos": [
-    "analise-prs/resgate-261118-lote3/hermes/robustez-primitivos-ui-2610121626bec5-2610141859e423/src/components/inbox/chat/ChatHeader.tsx",
     "src/components/inbox/chat/ChatPanelHeader.tsx",
     "src/components/inbox/contact-details/ContactHeaderSection.tsx",
     "src/components/inbox/contact-details/ExternalContact360Panel.tsx",
@@ -9261,10 +7081,8 @@
     "useQuery"
    ],
    "canais_realtime": [],
-   "usado_por": 8,
+   "usado_por": 6,
    "usado_por_arquivos": [
-    "analise-prs/resgate-261118-lote3/claude/feat-talkx-x054-cmdk-261108-0100/src/components/talkx/TalkXView.tsx",
-    "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/talkx/TalkXView.tsx",
     "src/components/agents/ConfigurePermissionsDialog.tsx",
     "src/components/talkx/TalkXView.tsx",
     "src/components/team-chat/NewConversationDialog.tsx",
@@ -9444,13 +7262,15 @@
    "hooks_exportados": [
     "useScheduledReportConfigs"
    ],
-   "linhas": 63,
+   "linhas": 100,
    "dominio": "hooks/dashboard",
    "tabelas": [
     "scheduled_report_configs"
    ],
    "rpcs": [],
-   "edges": [],
+   "edges": [
+    "send-scheduled-report"
+   ],
    "hooks_internos": [
     "useMutation",
     "useQuery",
@@ -9526,9 +7346,8 @@
     "useQueryClient"
    ],
    "canais_realtime": [],
-   "usado_por": 2,
+   "usado_por": 1,
    "usado_por_arquivos": [
-    "analise-prs/resgate-261118-lote3/claude/feat-message-delivery-post-iniciado-261101-1937/src/components/inbox/chat/UnconfirmedMessagesPanel.tsx",
     "src/components/inbox/chat/UnconfirmedMessagesPanel.tsx"
    ],
    "coberto_por_testes": 2
@@ -9581,7 +7400,7 @@
     "src/hooks/evolution/useEvolutionMessaging.ts",
     "src/hooks/integrations/useEvolutionApi.ts"
    ],
-   "coberto_por_testes": 5
+   "coberto_por_testes": 4
   },
   {
    "arquivo": "src/hooks/evolution/useEvolutionGroups.ts",
@@ -9698,9 +7517,8 @@
     "useRef"
    ],
    "canais_realtime": [],
-   "usado_por": 9,
+   "usado_por": 8,
    "usado_por_arquivos": [
-    "analise-prs/resgate-261118-lote3/hermes/robustez-primitivos-ui-2610121626bec5-2610141859e423/src/components/gamification/GamificationProvider.tsx",
     "src/components/dashboard/goals/GoalsRail.tsx",
     "src/components/dashboard/overview/GreetingBanner.tsx",
     "src/components/gamification/AchievementBadge.tsx",
@@ -9762,9 +7580,8 @@
     "useRef"
    ],
    "canais_realtime": [],
-   "usado_por": 3,
+   "usado_por": 2,
    "usado_por_arquivos": [
-    "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/inbox/RealtimeInboxView.tsx",
     "src/components/inbox/RealtimeInboxView.tsx",
     "src/components/inbox/contact-details/ContactActionButtons.tsx"
    ],
@@ -9820,7 +7637,7 @@
     "src/hooks/chat/useGroupsManager.ts",
     "src/hooks/groups/index.ts"
    ],
-   "coberto_por_testes": 2
+   "coberto_por_testes": 1
   },
   {
    "arquivo": "src/hooks/inbox/useAutoCloseConversations.ts",
@@ -9920,7 +7737,7 @@
     "src/components/connections/ConnectionQueuesDialog.tsx",
     "src/hooks/inbox/index.ts"
    ],
-   "coberto_por_testes": 2
+   "coberto_por_testes": 1
   },
   {
    "arquivo": "src/hooks/inbox/useConnectionsManager.ts",
@@ -9947,16 +7764,15 @@
    "canais_realtime": [
     "whatsapp-connections-changes"
    ],
-   "usado_por": 6,
+   "usado_por": 5,
    "usado_por_arquivos": [
-    "analise-prs/resgate-261118-lote3/codex/publish-followup-20261021/src/components/connections/ConnectionCard.tsx",
     "src/components/connections/ConnectionCard.tsx",
     "src/components/connections/ConnectionsView.tsx",
     "src/components/settings/MessagesSettings.tsx",
     "src/components/settings/ScheduleSettings.tsx",
     "src/hooks/inbox/index.ts"
    ],
-   "coberto_por_testes": 13
+   "coberto_por_testes": 9
   },
   {
    "arquivo": "src/hooks/inbox/useContactDeliveryStats.ts",
@@ -10025,13 +7841,12 @@
     "useUndoableAction"
    ],
    "canais_realtime": [],
-   "usado_por": 3,
+   "usado_por": 2,
    "usado_por_arquivos": [
-    "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/inbox/RealtimeInboxView.tsx",
     "src/components/inbox/RealtimeInboxView.tsx",
     "src/hooks/inbox/index.ts"
    ],
-   "coberto_por_testes": 6
+   "coberto_por_testes": 1
   },
   {
    "arquivo": "src/hooks/inbox/useInboxFilterPresets.ts",
@@ -10078,9 +7893,8 @@
     "useUrlFilters"
    ],
    "canais_realtime": [],
-   "usado_por": 3,
+   "usado_por": 2,
    "usado_por_arquivos": [
-    "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/inbox/RealtimeInboxView.tsx",
     "src/components/inbox/RealtimeInboxView.tsx",
     "src/hooks/inbox/index.ts"
    ],
@@ -10167,7 +7981,7 @@
    "hooks_exportados": [
     "useObjectionDetector"
    ],
-   "linhas": 221,
+   "linhas": 222,
    "dominio": "hooks/inbox",
    "tabelas": [],
    "rpcs": [],
@@ -10217,13 +8031,12 @@
     "useState"
    ],
    "canais_realtime": [],
-   "usado_por": 3,
+   "usado_por": 2,
    "usado_por_arquivos": [
-    "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/inbox/RealtimeInboxView.tsx",
     "src/components/inbox/RealtimeInboxView.tsx",
     "src/hooks/inbox/index.ts"
    ],
-   "coberto_por_testes": 9
+   "coberto_por_testes": 8
   },
   {
    "arquivo": "src/hooks/inbox/useRealtimeSentimentAlerts.ts",
@@ -10271,7 +8084,7 @@
     "src/components/inbox/AIConversationAssistant.tsx",
     "src/hooks/inbox/index.ts"
    ],
-   "coberto_por_testes": 4
+   "coberto_por_testes": 3
   },
   {
    "arquivo": "src/hooks/integrations/useBitrixApi.ts",
@@ -10351,9 +8164,8 @@
     "useCallback"
    ],
    "canais_realtime": [],
-   "usado_por": 2,
+   "usado_por": 1,
    "usado_por_arquivos": [
-    "analise-prs/resgate-261118-lote3/claude/feat-talkx-x054-cmdk-261108-0100/src/components/keyboard/CommandPaletteHost.tsx",
     "src/components/keyboard/CommandPaletteHost.tsx"
    ],
    "coberto_por_testes": 0
@@ -10530,13 +8342,8 @@
     "useEvolutionMessaging"
    ],
    "canais_realtime": [],
-   "usado_por": 22,
+   "usado_por": 17,
    "usado_por_arquivos": [
-    "analise-prs/resgate-261118-lote3/claude/fix-radar-fase6-cv056-shortcuts-261108-2335/src/components/inbox/ChatPanel.tsx",
-    "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/hooks/inbox/useConnectionsManager.ts",
-    "analise-prs/resgate-261118-lote3/fix/ci-verde-261021/src/components/inbox/ChatPanel.tsx",
-    "analise-prs/resgate-261118-lote3/hermes/robustez-primitivos-ui-2610121626bec5-2610141859e423/src/components/connections/IntegrationsPanel.tsx",
-    "analise-prs/resgate-261118-lote3/hermes/telefonia-fase8-motion-a11y-responsivo-2610031530007c/src/components/connections/IntegrationsPanel.tsx",
     "src/components/calls/OfferCallButton.tsx",
     "src/components/catalog/MetaTemplatesDialog.tsx",
     "src/components/catalog/SendTemplateDialog.tsx",
@@ -10555,7 +8362,7 @@
     "src/hooks/integrations/index.ts",
     "src/hooks/reactions/useReactionMutations.ts"
    ],
-   "coberto_por_testes": 3
+   "coberto_por_testes": 2
   },
   {
    "arquivo": "src/hooks/integrations/useEvolutionContactProfile.ts",
@@ -10724,7 +8531,7 @@
     "src/hooks/integrations/index.ts",
     "src/lib/emailContactIdentity.ts"
    ],
-   "coberto_por_testes": 32
+   "coberto_por_testes": 30
   },
   {
    "arquivo": "src/hooks/integrations/useGmailDataPurge.ts",
@@ -10821,9 +8628,8 @@
     "useState"
    ],
    "canais_realtime": [],
-   "usado_por": 3,
+   "usado_por": 2,
    "usado_por_arquivos": [
-    "analise-prs/resgate-261118-lote3/claude/kind-gates-87mwoe/src/components/knowledge/KnowledgeBaseView.tsx",
     "src/components/knowledge/KnowledgeBaseView.tsx",
     "src/hooks/integrations/index.ts"
    ],
@@ -10893,12 +8699,8 @@
     "useUserRole"
    ],
    "canais_realtime": [],
-   "usado_por": 6,
+   "usado_por": 2,
    "usado_por_arquivos": [
-    "analise-prs/resgate-261118-lote3/claude/feat-talkx-x054-cmdk-261108-0100/src/components/keyboard/CommandPaletteHost.tsx",
-    "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/ui/command-palette.tsx",
-    "analise-prs/resgate-261118-lote3/claude/magical-pasteur-iz2pgy/src/components/ui/command-palette.tsx",
-    "analise-prs/resgate-261118-lote3/claude_05/festive-carson-ub43wu/src/components/ui/command-palette.tsx",
     "src/components/keyboard/CommandPaletteHost.tsx",
     "src/components/ui/command-palette.tsx"
    ],
@@ -10924,10 +8726,8 @@
     "useMutation"
    ],
    "canais_realtime": [],
-   "usado_por": 4,
+   "usado_por": 2,
    "usado_por_arquivos": [
-    "analise-prs/resgate-261118-lote3/hermes/robustez-primitivos-ui-2610121626bec5-2610141859e423/src/components/multiplix/MultiplixComposerDialog.tsx",
-    "analise-prs/resgate-261118-lote3/hermes/telefonia-fase8-motion-a11y-responsivo-2610031530007c/src/components/multiplix/MultiplixComposerDialog.tsx",
     "src/components/multiplix/MultiplixView.tsx",
     "src/hooks/integrations/useMultiplixDispatches.ts"
    ],
@@ -10960,11 +8760,8 @@
     "useQuery"
    ],
    "canais_realtime": [],
-   "usado_por": 6,
+   "usado_por": 3,
    "usado_por_arquivos": [
-    "analise-prs/resgate-261118-lote3/claude/feat-pausa-entrega-campanhas-261101-1400/src/components/multiplix/MultiplixMonitor.tsx",
-    "analise-prs/resgate-261118-lote3/hermes/robustez-primitivos-ui-2610121626bec5-2610141859e423/src/components/multiplix/MultiplixComposerDialog.tsx",
-    "analise-prs/resgate-261118-lote3/hermes/telefonia-fase8-motion-a11y-responsivo-2610031530007c/src/components/multiplix/MultiplixComposerDialog.tsx",
     "src/components/multiplix/MultiplixMonitor.tsx",
     "src/components/multiplix/MultiplixView.tsx",
     "src/hooks/integrations/useMultiplixReplies.ts"
@@ -10987,9 +8784,8 @@
     "useQuery"
    ],
    "canais_realtime": [],
-   "usado_por": 2,
+   "usado_por": 1,
    "usado_por_arquivos": [
-    "analise-prs/resgate-261118-lote3/claude/feat-pausa-entrega-campanhas-261101-1400/src/components/multiplix/MultiplixMonitor.tsx",
     "src/components/multiplix/MultiplixMonitor.tsx"
    ],
    "coberto_por_testes": 1
@@ -11020,7 +8816,7 @@
     "src/components/inbox/stickers/PersonalStickers.tsx",
     "src/hooks/integrations/index.ts"
    ],
-   "coberto_por_testes": 4
+   "coberto_por_testes": 3
   },
   {
    "arquivo": "src/hooks/integrations/useQuarantineForMessage.ts",
@@ -11083,9 +8879,8 @@
     "useQueryClient"
    ],
    "canais_realtime": [],
-   "usado_por": 4,
+   "usado_por": 3,
    "usado_por_arquivos": [
-    "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/inbox/CRMAutoSync.tsx",
     "src/components/inbox/CRMAutoSync.tsx",
     "src/components/inbox/contact-details/ContactActionButtons.tsx",
     "src/hooks/integrations/index.ts"
@@ -11116,20 +8911,8 @@
     "useState"
    ],
    "canais_realtime": [],
-   "usado_por": 34,
+   "usado_por": 22,
    "usado_por_arquivos": [
-    "analise-prs/resgate-261118-lote3/claude/feat-talkx-x054-cmdk-261108-0100/src/components/talkx/TalkXView.tsx",
-    "analise-prs/resgate-261118-lote3/claude/fix-unit-tests-src-261024-1630/src/components/talkx/TalkXOverview.tsx",
-    "analise-prs/resgate-261118-lote3/claude/fix-unit-tests-src-261024-1630/src/components/talkx/TalkXTemplateEditor.tsx",
-    "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/talkx/TalkXCampaignRunning.tsx",
-    "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/talkx/TalkXCampaignWizard.tsx",
-    "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/talkx/TalkXOverview.tsx",
-    "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/talkx/TalkXTemplateEditor.tsx",
-    "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/talkx/TalkXView.tsx",
-    "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/talkx/TalkXWizardDelivery.tsx",
-    "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/talkx/useCampaignEditor.ts",
-    "analise-prs/resgate-261118-lote3/codex/publish-followup-20261021/src/components/talkx/TalkXCampaignWizard.tsx",
-    "analise-prs/resgate-261118-lote3/codex/publish-followup-20261021/src/components/talkx/useCampaignEditor.ts",
     "src/components/talkx/TalkXAnalytics.tsx",
     "src/components/talkx/TalkXCampaignPaused.tsx",
     "src/components/talkx/TalkXCampaignRunning.tsx",
@@ -11147,28 +8930,36 @@
     "src/components/talkx/tracking/talkxCampaignRules.ts",
     "src/components/talkx/useCampaignEditor.ts",
     "src/components/talkx/useCampaignRowActions.tsx",
-    "src/components/talkx/useTalkXLifecycle.tsx"
+    "src/components/talkx/useTalkXLifecycle.tsx",
+    "src/hooks/integrations/index.ts",
+    "src/hooks/integrations/useTalkXCampaignList.ts",
+    "src/lib/talkxCsv.ts",
+    "src/lib/talkxReportPdf.ts"
    ],
-   "coberto_por_testes": 31
+   "coberto_por_testes": 28
   },
   {
    "arquivo": "src/hooks/integrations/useTalkXAbStats.ts",
    "hooks_exportados": [
+    "useDecidirTalkXAbWinner",
     "useTalkXAbStats"
    ],
-   "linhas": 78,
+   "linhas": 165,
    "dominio": "hooks/integrations",
    "tabelas": [],
    "rpcs": [],
    "edges": [],
    "hooks_internos": [
-    "useQuery"
+    "useMutation",
+    "useQuery",
+    "useQueryClient"
    ],
    "canais_realtime": [],
-   "usado_por": 2,
+   "usado_por": 3,
    "usado_por_arquivos": [
     "src/components/talkx/TalkXCampaignRunning.tsx",
-    "src/components/talkx/tracking/TalkXAbTestResults.tsx"
+    "src/components/talkx/tracking/TalkXAbTestResults.tsx",
+    "src/components/talkx/useCampaignEditor.ts"
    ],
    "coberto_por_testes": 1
   },
@@ -11281,9 +9072,8 @@
     "useQuery"
    ],
    "canais_realtime": [],
-   "usado_por": 2,
+   "usado_por": 1,
    "usado_por_arquivos": [
-    "analise-prs/resgate-261118-lote3/claude/feat-talkx-x054-cmdk-261108-0100/src/components/keyboard/CommandPaletteHost.tsx",
     "src/components/keyboard/CommandPaletteHost.tsx"
    ],
    "coberto_por_testes": 1
@@ -11356,11 +9146,8 @@
     "useQuery"
    ],
    "canais_realtime": [],
-   "usado_por": 6,
+   "usado_por": 3,
    "usado_por_arquivos": [
-    "analise-prs/resgate-261118-lote3/claude/fix-unit-tests-src-261024-1630/src/components/talkx/TalkXOverview.tsx",
-    "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/talkx/TalkXOverview.tsx",
-    "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/talkx/TalkXWizardDelivery.tsx",
     "src/components/talkx/TalkXAnalytics.tsx",
     "src/components/talkx/TalkXOverview.tsx",
     "src/components/talkx/TalkXWizardDelivery.tsx"
@@ -11388,10 +9175,8 @@
     "useQueryClient"
    ],
    "canais_realtime": [],
-   "usado_por": 4,
+   "usado_por": 2,
    "usado_por_arquivos": [
-    "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/talkx/TalkXCampaignWizard.tsx",
-    "analise-prs/resgate-261118-lote3/codex/publish-followup-20261021/src/components/talkx/TalkXCampaignWizard.tsx",
     "src/components/talkx/TalkXCampaignWizard.tsx",
     "src/components/talkx/links/TalkXLinksManager.tsx"
    ],
@@ -11475,10 +9260,8 @@
     "useQuery"
    ],
    "canais_realtime": [],
-   "usado_por": 5,
+   "usado_por": 3,
    "usado_por_arquivos": [
-    "analise-prs/resgate-261118-lote3/claude/fix-unit-tests-src-261024-1630/src/components/talkx/TalkXOverview.tsx",
-    "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/talkx/TalkXOverview.tsx",
     "src/components/talkx/TalkXOverview.tsx",
     "src/components/talkx/__dev__/TalkXKit.tsx",
     "src/hooks/integrations/useTalkX.ts"
@@ -11505,13 +9288,35 @@
     "useQueryClient"
    ],
    "canais_realtime": [],
-   "usado_por": 3,
+   "usado_por": 2,
    "usado_por_arquivos": [
-    "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/talkx/TalkXCampaignRunning.tsx",
     "src/components/talkx/TalkXCampaignRunning.tsx",
     "src/components/talkx/tracking/TalkXResumeChecklist.tsx"
    ],
    "coberto_por_testes": 2
+  },
+  {
+   "arquivo": "src/hooks/integrations/useTalkXSegmentProgress.ts",
+   "hooks_exportados": [
+    "useTalkXSegmentProgress"
+   ],
+   "linhas": 59,
+   "dominio": "hooks/integrations",
+   "tabelas": [],
+   "rpcs": [
+    "talkx_campaign_segment_progress"
+   ],
+   "edges": [],
+   "hooks_internos": [
+    "useMemo",
+    "useQuery"
+   ],
+   "canais_realtime": [],
+   "usado_por": 1,
+   "usado_por_arquivos": [
+    "src/components/talkx/report/TalkXCampaignReport.tsx"
+   ],
+   "coberto_por_testes": 1
   },
   {
    "arquivo": "src/hooks/integrations/useTalkXSegments.ts",
@@ -11532,19 +9337,8 @@
     "useQueryClient"
    ],
    "canais_realtime": [],
-   "usado_por": 24,
+   "usado_por": 14,
    "usado_por_arquivos": [
-    "analise-prs/resgate-261118-lote3/claude/feat-talkx-x054-cmdk-261108-0100/src/components/talkx/TalkXView.tsx",
-    "analise-prs/resgate-261118-lote3/claude/fix-talkx-segmentos-regressao-261101-1944/src/components/talkx/TalkXSegments.tsx",
-    "analise-prs/resgate-261118-lote3/claude/fix-unit-tests-src-261024-1630/src/components/talkx/TalkXOverview.tsx",
-    "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/talkx/TalkXCampaignWizard.tsx",
-    "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/talkx/TalkXOverview.tsx",
-    "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/talkx/TalkXSegments.tsx",
-    "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/talkx/TalkXView.tsx",
-    "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/talkx/segments/SegmentSideList.tsx",
-    "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/talkx/useCampaignEditor.ts",
-    "analise-prs/resgate-261118-lote3/codex/publish-followup-20261021/src/components/talkx/TalkXCampaignWizard.tsx",
-    "analise-prs/resgate-261118-lote3/codex/publish-followup-20261021/src/components/talkx/useCampaignEditor.ts",
     "src/components/talkx/TalkXAudienceFilters.tsx",
     "src/components/talkx/TalkXCampaignWizard.tsx",
     "src/components/talkx/TalkXOverview.tsx",
@@ -11557,9 +9351,10 @@
     "src/components/talkx/segments/segmentBuilderReducer.ts",
     "src/components/talkx/segments/segmentValidation.ts",
     "src/components/talkx/useCampaignEditor.ts",
-    "src/hooks/integrations/useTalkXCampaignSummary.ts"
+    "src/hooks/integrations/useTalkXCampaignSummary.ts",
+    "src/hooks/talkx/talkxAiSuggestions.ts"
    ],
-   "coberto_por_testes": 37
+   "coberto_por_testes": 33
   },
   {
    "arquivo": "src/hooks/integrations/useTalkXServerResumePrecheck.ts",
@@ -11600,11 +9395,8 @@
     "useEffect"
    ],
    "canais_realtime": [],
-   "usado_por": 6,
+   "usado_por": 3,
    "usado_por_arquivos": [
-    "analise-prs/resgate-261118-lote3/claude/feat-talkx-x048-estados-servico-261101-2100/src/components/talkx/kit/ServiceStatusSheet.tsx",
-    "analise-prs/resgate-261118-lote3/claude/feat-talkx-x054-cmdk-261108-0100/src/components/talkx/TalkXView.tsx",
-    "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/talkx/TalkXView.tsx",
     "src/components/talkx/TalkXView.tsx",
     "src/components/talkx/kit/ServiceStatusSheet.tsx",
     "src/components/talkx/kit/states.tsx"
@@ -11654,7 +9446,7 @@
    "usado_por_arquivos": [
     "src/components/talkx/TalkXSuppression.tsx"
    ],
-   "coberto_por_testes": 4
+   "coberto_por_testes": 2
   },
   {
    "arquivo": "src/hooks/integrations/useTalkXTemplates.ts",
@@ -11681,15 +9473,8 @@
     "useQueryClient"
    ],
    "canais_realtime": [],
-   "usado_por": 12,
+   "usado_por": 5,
    "usado_por_arquivos": [
-    "analise-prs/resgate-261118-lote3/claude/feat-talkx-x054-cmdk-261108-0100/src/components/talkx/TalkXView.tsx",
-    "analise-prs/resgate-261118-lote3/claude/fix-codex-findings-161016-1906/src/components/talkx/TalkXTemplates.tsx",
-    "analise-prs/resgate-261118-lote3/claude/fix-unit-tests-src-261024-1630/src/components/talkx/TalkXTemplateEditor.tsx",
-    "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/talkx/TalkXTemplateEditor.tsx",
-    "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/talkx/TalkXView.tsx",
-    "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/talkx/useCampaignEditor.ts",
-    "analise-prs/resgate-261118-lote3/codex/publish-followup-20261021/src/components/talkx/useCampaignEditor.ts",
     "src/components/talkx/TalkXTemplateEditor.tsx",
     "src/components/talkx/TalkXTemplateImportDialog.tsx",
     "src/components/talkx/TalkXTemplates.tsx",
@@ -11710,9 +9495,8 @@
    "edges": [],
    "hooks_internos": [],
    "canais_realtime": [],
-   "usado_por": 3,
+   "usado_por": 2,
    "usado_por_arquivos": [
-    "analise-prs/resgate-261118-lote3/claude/fix-codex-findings-161016-1906/src/components/talkx/TalkXTemplates.tsx",
     "src/components/talkx/TalkXTemplates.tsx",
     "src/hooks/integrations/useTalkXTemplates.ts"
    ],
@@ -11733,11 +9517,8 @@
     "useQuery"
    ],
    "canais_realtime": [],
-   "usado_por": 5,
+   "usado_por": 2,
    "usado_por_arquivos": [
-    "analise-prs/resgate-261118-lote3/claude/fix-codex-findings-161016-1906/src/components/talkx/TalkXTemplates.tsx",
-    "analise-prs/resgate-261118-lote3/claude/fix-unit-tests-src-261024-1630/src/components/talkx/TalkXTemplateEditor.tsx",
-    "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/talkx/TalkXTemplateEditor.tsx",
     "src/components/talkx/TalkXTemplateEditor.tsx",
     "src/components/talkx/TalkXTemplates.tsx"
    ],
@@ -11770,7 +9551,7 @@
     "src/components/inbox/contact-details/storyUtils.ts",
     "src/hooks/integrations/index.ts"
    ],
-   "coberto_por_testes": 3
+   "coberto_por_testes": 2
   },
   {
    "arquivo": "src/hooks/integrations/useWhatsAppTemplates.ts",
@@ -11791,9 +9572,8 @@
     "useState"
    ],
    "canais_realtime": [],
-   "usado_por": 7,
+   "usado_por": 6,
    "usado_por_arquivos": [
-    "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/catalog/WhatsAppTemplatesManager.tsx",
     "src/components/catalog/MetaTemplatesDialog.tsx",
     "src/components/catalog/SendTemplateDialog.tsx",
     "src/components/catalog/WhatsAppTemplatesManager.tsx",
@@ -11801,7 +9581,7 @@
     "src/components/catalog/sendTemplatePayload.ts",
     "src/hooks/integrations/index.ts"
    ],
-   "coberto_por_testes": 5
+   "coberto_por_testes": 4
   },
   {
    "arquivo": "src/hooks/payments/usePaymentLinks.ts",
@@ -11982,10 +9762,8 @@
     "useState"
    ],
    "canais_realtime": [],
-   "usado_por": 6,
+   "usado_por": 4,
    "usado_por_arquivos": [
-    "analise-prs/resgate-261118-lote3/claude/fix-codex-findings-161016-1906/src/components/inbox/chat/ChatMessagesArea.tsx",
-    "analise-prs/resgate-261118-lote3/claude_pink/cool-dijkstra-xk9ek2/src/components/inbox/chat/ChatMessagesArea.tsx",
     "src/components/inbox/chat/ChatMessagesArea.tsx",
     "src/hooks/chat/useMessageReactions.ts",
     "src/hooks/reactions/index.ts",
@@ -12180,12 +9958,8 @@
     "useEffect"
    ],
    "canais_realtime": [],
-   "usado_por": 13,
+   "usado_por": 9,
    "usado_por_arquivos": [
-    "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/hooks/system/useDiagnosticsData.ts",
-    "analise-prs/resgate-261118-lote3/claude/kind-gates-87mwoe/src/hooks/system/useDiagnosticsData.ts",
-    "analise-prs/resgate-261118-lote3/claude/magical-pasteur-iz2pgy/src/hooks/system/useDiagnosticsData.ts",
-    "analise-prs/resgate-261118-lote3/claude_05/festive-carson-ub43wu/src/hooks/system/useDiagnosticsData.ts",
     "src/components/diagnostics/ConnectionHealthPanel.tsx",
     "src/components/monitoring/hooks/useInboxSilence.ts",
     "src/components/security/AclAlertsPanel.tsx",
@@ -12218,9 +9992,8 @@
     "useState"
    ],
    "canais_realtime": [],
-   "usado_por": 2,
+   "usado_por": 1,
    "usado_por_arquivos": [
-    "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/security/AuditLogDashboard.tsx",
     "src/components/security/AuditLogDashboard.tsx"
    ],
    "coberto_por_testes": 0
@@ -12292,9 +10065,8 @@
     "useQuery"
    ],
    "canais_realtime": [],
-   "usado_por": 5,
+   "usado_por": 4,
    "usado_por_arquivos": [
-    "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/inbox/VirtualizedRealtimeList.tsx",
     "src/components/inbox/VirtualizedRealtimeList.tsx",
     "src/components/inbox/chat/ChatPanelHeader.tsx",
     "src/hooks/sla/index.ts",
@@ -12363,7 +10135,7 @@
     "src/components/inbox/SLAIndicator.tsx",
     "src/hooks/sla/index.ts"
    ],
-   "coberto_por_testes": 3
+   "coberto_por_testes": 2
   },
   {
    "arquivo": "src/hooks/sla/useSLAConfigurations.ts",
@@ -12415,7 +10187,7 @@
     "src/components/sla/SLAHistoryDashboard.tsx",
     "src/hooks/sla/index.ts"
    ],
-   "coberto_por_testes": 3
+   "coberto_por_testes": 2
   },
   {
    "arquivo": "src/hooks/sla/useSLAMetrics.ts",
@@ -12443,7 +10215,7 @@
     "src/components/queues/SLADashboard.tsx",
     "src/hooks/sla/index.ts"
    ],
-   "coberto_por_testes": 4
+   "coberto_por_testes": 2
   },
   {
    "arquivo": "src/hooks/sla/useSLANotifications.ts",
@@ -12614,7 +10386,7 @@
     "src/features/talk-me/TalkMeMedia.tsx",
     "src/hooks/chat/usePdfThumbnail.ts"
    ],
-   "coberto_por_testes": 3
+   "coberto_por_testes": 2
   },
   {
    "arquivo": "src/hooks/system/index.ts",
@@ -12723,10 +10495,8 @@
     "useFeatureFlag"
    ],
    "canais_realtime": [],
-   "usado_por": 22,
+   "usado_por": 21,
    "usado_por_arquivos": [
-    "analise-prs/resgate-261118-lote3/hermes/robustez-primitivos-ui-2610121626bec5-2610141859e423/src/components/inbox/chat/ChatHeader.tsx",
-    "analise-prs/resgate-261118-lote3/hermes/telefonia-fase8-motion-a11y-responsivo-2610031530007c/src/components/inbox/contact-details/ContactAccordionSections.tsx",
     "src/components/admin/AdminCRMDashboard.tsx",
     "src/components/contacts/ContactsView.tsx",
     "src/components/crm360/CRM360ExplorerView.tsx",
@@ -12736,6 +10506,7 @@
     "src/components/inbox/search/GlobalSearchFilters.tsx",
     "src/components/inbox/useGlobalSearchData.ts",
     "src/components/talkx/TalkXContactSelector.tsx",
+    "src/hooks/contacts/useContactSource.ts",
     "src/hooks/crm/useAdvancedContactSearch.ts",
     "src/hooks/crm/useContactIntelligence.ts",
     "src/hooks/crm/useContactSidebar.ts",
@@ -12806,11 +10577,8 @@
     "useEffect"
    ],
    "canais_realtime": [],
-   "usado_por": 6,
+   "usado_por": 3,
    "usado_por_arquivos": [
-    "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/ui/command-palette.tsx",
-    "analise-prs/resgate-261118-lote3/claude/magical-pasteur-iz2pgy/src/components/ui/command-palette.tsx",
-    "analise-prs/resgate-261118-lote3/claude_05/festive-carson-ub43wu/src/components/ui/command-palette.tsx",
     "src/components/ui/command-palette.tsx",
     "src/hooks/analytics/usePerformanceOptimizations.ts",
     "src/hooks/system/index.ts"
@@ -12936,9 +10704,8 @@
     "useQuery"
    ],
    "canais_realtime": [],
-   "usado_por": 6,
+   "usado_por": 5,
    "usado_por_arquivos": [
-    "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/inbox/RealtimeInboxView.tsx",
     "src/components/inbox/RealtimeInboxView.tsx",
     "src/components/inbox/contact-details/ContactActionButtons.tsx",
     "src/hooks/contacts/useContactsV2Flags.ts",
@@ -12999,7 +10766,7 @@
     "src/components/settings/IntegrationKeysSection.tsx",
     "src/hooks/system/index.ts"
    ],
-   "coberto_por_testes": 6
+   "coberto_por_testes": 3
   },
   {
    "arquivo": "src/hooks/system/useIdleCallback.ts",
@@ -13111,18 +10878,8 @@
     "useRef"
    ],
    "canais_realtime": [],
-   "usado_por": 36,
+   "usado_por": 26,
    "usado_por_arquivos": [
-    "analise-prs/resgate-261118-lote3/claude/feat-talkx-x054-cmdk-261108-0100/src/components/talkx/TalkXView.tsx",
-    "analise-prs/resgate-261118-lote3/claude/fix-unit-tests-src-261024-1630/src/hooks/chat/useTeamChatNotifications.ts",
-    "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/inbox/RealtimeInboxView.tsx",
-    "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/talkx/TalkXCampaignWizard.tsx",
-    "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/talkx/TalkXView.tsx",
-    "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/talkx/TalkXWizardDelivery.tsx",
-    "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/hooks/chat/useTeamChatNotifications.ts",
-    "analise-prs/resgate-261118-lote3/claude/magical-pasteur-iz2pgy/src/hooks/chat/useTeamChatNotifications.ts",
-    "analise-prs/resgate-261118-lote3/claude_05/festive-carson-ub43wu/src/hooks/chat/useTeamChatNotifications.ts",
-    "analise-prs/resgate-261118-lote3/codex/publish-followup-20261021/src/components/talkx/TalkXCampaignWizard.tsx",
     "src/components/admin/AdminCRMDashboard.tsx",
     "src/components/calls/ActiveCallBar.tsx",
     "src/components/catalog/ContactSelectionStep.tsx",
@@ -13142,7 +10899,13 @@
     "src/components/talkx/TalkXCampaignWizard.tsx",
     "src/components/talkx/TalkXView.tsx",
     "src/components/talkx/TalkXWizardDelivery.tsx",
-    "src/hooks/chat/useTeamChatNotifications.ts"
+    "src/hooks/chat/useTeamChatNotifications.ts",
+    "src/hooks/integrations/useGmail.ts",
+    "src/hooks/system/index.ts",
+    "src/hooks/tasks/useWorkItemNotifications.ts",
+    "src/hooks/ui/useGlobalKeyboardShortcuts.ts",
+    "src/lib/openContactChat.ts",
+    "src/pages/Index.tsx"
    ],
    "coberto_por_testes": 8
   },
@@ -13202,7 +10965,7 @@
     "src/hooks/system/index.ts",
     "src/hooks/tasks/useWorkItemNotifications.ts"
    ],
-   "coberto_por_testes": 11
+   "coberto_por_testes": 7
   },
   {
    "arquivo": "src/hooks/system/useNotificationSettings.ts",
@@ -13225,13 +10988,8 @@
     "useRef"
    ],
    "canais_realtime": [],
-   "usado_por": 24,
+   "usado_por": 19,
    "usado_por_arquivos": [
-    "analise-prs/resgate-261118-lote3/claude/fix-unit-tests-src-261024-1630/src/hooks/chat/useTeamChatNotifications.ts",
-    "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/hooks/chat/useTeamChatNotifications.ts",
-    "analise-prs/resgate-261118-lote3/claude/magical-pasteur-iz2pgy/src/hooks/chat/useTeamChatNotifications.ts",
-    "analise-prs/resgate-261118-lote3/claude_05/festive-carson-ub43wu/src/hooks/chat/useTeamChatNotifications.ts",
-    "analise-prs/resgate-261118-lote3/hermes/telefonia-fase8-motion-a11y-responsivo-2610031530007c/src/components/calls/IncomingCallAlert.tsx",
     "src/components/calls/IncomingCallAlert.tsx",
     "src/components/dashboard/WarRoomDashboard.tsx",
     "src/components/monitoring/hooks/useMonitoringNotifications.ts",
@@ -13271,12 +11029,8 @@
     "useState"
    ],
    "canais_realtime": [],
-   "usado_por": 7,
+   "usado_por": 3,
    "usado_por_arquivos": [
-    "analise-prs/resgate-261118-lote3/claude/fix-unit-tests-src-261024-1630/src/hooks/auth/useAuth.tsx",
-    "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/hooks/auth/useAuth.tsx",
-    "analise-prs/resgate-261118-lote3/claude/magical-pasteur-iz2pgy/src/hooks/auth/useAuth.tsx",
-    "analise-prs/resgate-261118-lote3/claude_05/festive-carson-ub43wu/src/hooks/auth/useAuth.tsx",
     "src/hooks/auth/useAuth.tsx",
     "src/hooks/inbox/useRealtimeInbox.ts",
     "src/hooks/system/index.ts"
@@ -13369,16 +11123,14 @@
     "useEffect"
    ],
    "canais_realtime": [],
-   "usado_por": 6,
+   "usado_por": 4,
    "usado_por_arquivos": [
-    "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/hooks/chat/useTeamChatNotifications.ts",
-    "analise-prs/resgate-261118-lote3/claude/magical-pasteur-iz2pgy/src/hooks/chat/useTeamChatNotifications.ts",
     "src/components/notifications/PushNotificationCard.tsx",
     "src/components/security/SecurityNotificationsPanel.tsx",
     "src/hooks/system/index.ts",
     "src/hooks/system/useSecurityPushNotifications.ts"
    ],
-   "coberto_por_testes": 3
+   "coberto_por_testes": 2
   },
   {
    "arquivo": "src/hooks/system/useRateLimitLogs.ts",
@@ -13403,7 +11155,7 @@
     "src/hooks/system/index.ts",
     "src/pages/admin/RateLimitDashboard.tsx"
    ],
-   "coberto_por_testes": 4
+   "coberto_por_testes": 3
   },
   {
    "arquivo": "src/hooks/system/useResourcePrefetch.ts",
@@ -13454,7 +11206,7 @@
    "usado_por_arquivos": [
     "src/hooks/system/index.ts"
    ],
-   "coberto_por_testes": 2
+   "coberto_por_testes": 1
   },
   {
    "arquivo": "src/hooks/system/useSearchHistory.ts",
@@ -13530,7 +11282,7 @@
     "src/App.tsx",
     "src/hooks/system/index.ts"
    ],
-   "coberto_por_testes": 2
+   "coberto_por_testes": 1
   },
   {
    "arquivo": "src/hooks/system/useSkillBasedAssign.ts",
@@ -13638,11 +11390,8 @@
     "useRef"
    ],
    "canais_realtime": [],
-   "usado_por": 5,
+   "usado_por": 2,
    "usado_por_arquivos": [
-    "analise-prs/resgate-261118-lote3/claude/feat-copiloto-edges-261101-1330/src/hooks/inbox/useInboxBulkActions.ts",
-    "analise-prs/resgate-261118-lote3/claude/kind-gates-87mwoe/src/hooks/inbox/useInboxBulkActions.ts",
-    "analise-prs/resgate-261118-lote3/fix/ci-verde-261021/src/hooks/inbox/useInboxBulkActions.ts",
     "src/hooks/inbox/useInboxBulkActions.ts",
     "src/hooks/system/index.ts"
    ],
@@ -13664,13 +11413,8 @@
     "useSearchParams"
    ],
    "canais_realtime": [],
-   "usado_por": 7,
+   "usado_por": 2,
    "usado_por_arquivos": [
-    "analise-prs/resgate-261118-lote3/claude/fix-unit-tests-src-261024-1630/src/hooks/inbox/useInboxFilters.ts",
-    "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/hooks/inbox/useInboxFilters.ts",
-    "analise-prs/resgate-261118-lote3/claude/kind-gates-87mwoe/src/hooks/inbox/useInboxFilters.ts",
-    "analise-prs/resgate-261118-lote3/claude/magical-pasteur-iz2pgy/src/hooks/inbox/useInboxFilters.ts",
-    "analise-prs/resgate-261118-lote3/claude_05/festive-carson-ub43wu/src/hooks/inbox/useInboxFilters.ts",
     "src/hooks/inbox/useInboxFilters.ts",
     "src/hooks/system/index.ts"
    ],
@@ -13695,16 +11439,8 @@
     "useMemo"
    ],
    "canais_realtime": [],
-   "usado_por": 47,
+   "usado_por": 39,
    "usado_por_arquivos": [
-    "analise-prs/resgate-261118-lote3/claude/feat-message-delivery-post-iniciado-261101-1937/src/components/inbox/chat/UnconfirmedMessagesPanel.tsx",
-    "analise-prs/resgate-261118-lote3/claude/fix-unit-tests-src-261024-1630/src/components/admin/AdminView.tsx",
-    "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/admin/useAdminData.ts",
-    "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/catalog/WhatsAppTemplatesManager.tsx",
-    "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/settings/SettingsView.tsx",
-    "analise-prs/resgate-261118-lote3/codex/fix-failed-workflows-20261020/src/components/admin/AdminView.tsx",
-    "analise-prs/resgate-261118-lote3/codex/publish-followup-20261021/src/components/connections/ConnectionCard.tsx",
-    "analise-prs/resgate-261118-lote3/hermes/telefonia-fase8-motion-a11y-responsivo-2610031530007c/src/components/calls/TelefoniaView.tsx",
     "src/components/CommandPalette.tsx",
     "src/components/admin/AdminUsersTable.tsx",
     "src/components/admin/AdminView.tsx",
@@ -13726,7 +11462,15 @@
     "src/components/inbox/InboxFilters.tsx",
     "src/components/inbox/chat/UnconfirmedMessagesPanel.tsx",
     "src/components/inbox/contact-details/EvolutionContactProfileSection.tsx",
-    "src/components/inbox/contact-details/LeadRiskScorePanel.tsx"
+    "src/components/inbox/contact-details/LeadRiskScorePanel.tsx",
+    "src/components/inbox/contact-details/WhatsAppCatalogSection.tsx",
+    "src/components/inbox/useGlobalSearchData.ts",
+    "src/components/integrations/GmailIntegrationCard.tsx",
+    "src/components/layout/Sidebar.tsx",
+    "src/components/layout/SidebarUserPill.tsx",
+    "src/components/mobile/MobileDrawerMenu.tsx",
+    "src/components/security/MfaAdminNudge.tsx",
+    "src/components/security/SecurityOverview.tsx"
    ],
    "coberto_por_testes": 5
   },
@@ -13751,18 +11495,36 @@
     "useTheme"
    ],
    "canais_realtime": [],
-   "usado_por": 8,
+   "usado_por": 4,
    "usado_por_arquivos": [
-    "analise-prs/resgate-261118-lote3/claude/fix-radar-fase6-cv056-shortcuts-261108-2335/src/components/inbox/ChatPanel.tsx",
-    "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/settings/SettingsView.tsx",
-    "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/team-chat/useTeamChatPanel.ts",
-    "analise-prs/resgate-261118-lote3/fix/ci-verde-261021/src/components/inbox/ChatPanel.tsx",
     "src/components/inbox/ChatPanel.tsx",
     "src/components/settings/SettingsView.tsx",
     "src/components/team-chat/useTeamChatPanel.ts",
     "src/hooks/system/index.ts"
    ],
    "coberto_por_testes": 3
+  },
+  {
+   "arquivo": "src/hooks/talkx/useTalkxAi.ts",
+   "hooks_exportados": [
+    "useTalkxAi"
+   ],
+   "linhas": 114,
+   "dominio": "hooks/talkx",
+   "tabelas": [],
+   "rpcs": [],
+   "edges": [],
+   "hooks_internos": [
+    "useMutation"
+   ],
+   "canais_realtime": [],
+   "usado_por": 3,
+   "usado_por_arquivos": [
+    "src/components/talkx/TalkXCampaignWizard.tsx",
+    "src/components/talkx/kit/insight.tsx",
+    "src/components/talkx/segments/TalkXSegmentBuilder.tsx"
+   ],
+   "coberto_por_testes": 1
   },
   {
    "arquivo": "src/hooks/tasks/useMyTasks.ts",
@@ -13808,7 +11570,7 @@
    "canais_realtime": [
     "work-items:${profileId}:${secureRandomFloat().toString(36).slice(2)}"
    ],
-   "usado_por": 16,
+   "usado_por": 17,
    "usado_por_arquivos": [
     "src/components/inbox/chat/useChatPanelHandlers.ts",
     "src/components/inbox/tabs/Crm360Tab.tsx",
@@ -13822,6 +11584,7 @@
     "src/components/tasks/shared/NewTaskDialog.tsx",
     "src/components/tasks/shared/QuickAdd.tsx",
     "src/components/tasks/shared/WorkItemSheet.tsx",
+    "src/hooks/assistant/useContactAgenda.ts",
     "src/hooks/tasks/useMyTasks.ts",
     "src/hooks/tasks/useWorkItemDraft.ts",
     "src/hooks/tasks/useWorkItemNotifications.ts",
@@ -13962,7 +11725,7 @@
     "src/components/team-chat/department-management/DepartmentMembersView.tsx",
     "src/components/team-chat/department-management/DepartmentWhatsAppView.tsx"
    ],
-   "coberto_por_testes": 7
+   "coberto_por_testes": 5
   },
   {
    "arquivo": "src/hooks/team-chat/useParticipantStats.ts",
@@ -14069,9 +11832,8 @@
     "useQueryClient"
    ],
    "canais_realtime": [],
-   "usado_por": 6,
+   "usado_por": 5,
    "usado_por_arquivos": [
-    "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/team-chat/useTeamChatPanel.ts",
     "src/components/team-chat/MoveDepartmentDialog.tsx",
     "src/components/team-chat/TransferConversationDialog.tsx",
     "src/components/team-chat/useTeamChatPanel.ts",
@@ -14182,9 +11944,8 @@
    "canais_realtime": [
     "team-reactions-${conversationId}"
    ],
-   "usado_por": 2,
+   "usado_por": 1,
    "usado_por_arquivos": [
-    "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/team-chat/useTeamChatPanel.ts",
     "src/components/team-chat/useTeamChatPanel.ts"
    ],
    "coberto_por_testes": 4
@@ -14214,14 +11975,13 @@
    "canais_realtime": [
     "team-messages-${conversationId}"
    ],
-   "usado_por": 4,
+   "usado_por": 3,
    "usado_por_arquivos": [
-    "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/team-chat/useTeamChatPanel.ts",
     "src/components/team-chat/useTeamChatPanel.ts",
     "src/hooks/chat/useTeamChat.ts",
     "src/hooks/team-chat/index.ts"
    ],
-   "coberto_por_testes": 6
+   "coberto_por_testes": 5
   },
   {
    "arquivo": "src/hooks/team-chat/useTeamMessageSearch.ts",
@@ -14370,10 +12130,8 @@
     "useEffect"
    ],
    "canais_realtime": [],
-   "usado_por": 16,
+   "usado_por": 14,
    "usado_por_arquivos": [
-    "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/inbox/RealtimeInboxView.tsx",
-    "analise-prs/resgate-261118-lote3/hermes/robustez-primitivos-ui-2610121626bec5-2610141859e423/src/components/ui/sidebar/sidebar-context.tsx",
     "src/components/catalog/ProductDetailDialog.tsx",
     "src/components/catalog/SendProductDialog.tsx",
     "src/components/inbox/AudioRecorder.tsx",
@@ -14405,23 +12163,8 @@
     "useSyncExternalStore"
    ],
    "canais_realtime": [],
-   "usado_por": 73,
+   "usado_por": 59,
    "usado_por_arquivos": [
-    "analise-prs/resgate-261118-lote3/claude/feat-message-delivery-post-iniciado-261101-1937/src/hooks/delivery/useUnconfirmedMessages.ts",
-    "analise-prs/resgate-261118-lote3/claude/feat-radar-motor-telas-261101-1330/src/components/inbox/chat/ChatInputArea.tsx",
-    "analise-prs/resgate-261118-lote3/claude/fix-radar-fase6-cv056-shortcuts-261108-2335/src/components/inbox/ChatPanel.tsx",
-    "analise-prs/resgate-261118-lote3/claude/fix-unit-tests-src-261024-1630/src/hooks/integrations/useKnowledgeBase.ts",
-    "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/hooks/inbox/useConnectionsManager.ts",
-    "analise-prs/resgate-261118-lote3/claude/kind-gates-87mwoe/src/hooks/integrations/useKnowledgeBase.ts",
-    "analise-prs/resgate-261118-lote3/claude/magical-pasteur-iz2pgy/src/hooks/system/useUserSettings.ts",
-    "analise-prs/resgate-261118-lote3/claude/radar-motor-copilot-live-301030/src/components/inbox/chat/ChatInputArea.tsx",
-    "analise-prs/resgate-261118-lote3/claude_05/festive-carson-ub43wu/src/hooks/integrations/useKnowledgeBase.ts",
-    "analise-prs/resgate-261118-lote3/codex/publish-followup-20261021/src/components/connections/ConnectionCard.tsx",
-    "analise-prs/resgate-261118-lote3/fix/ci-verde-261021/src/components/inbox/ChatPanel.tsx",
-    "analise-prs/resgate-261118-lote3/hermes/robustez-primitivos-ui-2610121626bec5-2610141859e423/src/components/inbox/chat/ChatHeader.tsx",
-    "analise-prs/resgate-261118-lote3/hermes/robustez-primitivos-ui-2610121626bec5-2610141859e423/src/components/settings/AIAutoTagsConfig.tsx",
-    "analise-prs/resgate-261118-lote3/hermes/telefonia-fase8-motion-a11y-responsivo-2610031530007c/src/components/settings/AIAutoTagsConfig.tsx",
-    "analise-prs/resgate-261118-lote3/resolve-2381-from-main/src/components/inbox/chat/ChatInputArea.tsx",
     "src/components/connections/ConnectionCard.tsx",
     "src/components/effects/EasterEggs.tsx",
     "src/components/gamification/TrainingMiniGames.tsx",
@@ -14436,7 +12179,22 @@
     "src/components/inbox/chat/MessageBubble.tsx",
     "src/components/inbox/chat/SendErrorBanner.tsx",
     "src/components/inbox/chat/useChatPanelHandlers.ts",
-    "src/components/inbox/interactive-builder/useInteractiveMessage.ts"
+    "src/components/inbox/interactive-builder/useInteractiveMessage.ts",
+    "src/components/inbox/location-picker/useLocationPicker.ts",
+    "src/components/inbox/tabs/NotesTab.tsx",
+    "src/components/inbox/useChatMediaSending.ts",
+    "src/components/notifications/NotificationSettingsPanel.tsx",
+    "src/components/payments/PaymentLinksView.tsx",
+    "src/components/settings/AssistantProfileSettings.tsx",
+    "src/components/settings/CSATAutoConfig.tsx",
+    "src/components/settings/ChatbotL1Config.tsx",
+    "src/components/settings/FollowUpSequences.tsx",
+    "src/components/settings/SkillBasedRoutingSettings.tsx",
+    "src/components/settings/ai-providers/useAIProviders.ts",
+    "src/components/ui/toaster.tsx",
+    "src/components/ui/use-toast.ts",
+    "src/components/whatsapp-flows/WhatsAppFlowsBuilder.tsx",
+    "src/hooks/auth/useAuthForm.ts"
    ],
    "coberto_por_testes": 13
   },
@@ -14478,10 +12236,8 @@
     "useMemo"
    ],
    "canais_realtime": [],
-   "usado_por": 4,
+   "usado_por": 2,
    "usado_por_arquivos": [
-    "analise-prs/resgate-261118-lote3/claude/fix-radar-fase6-cv056-shortcuts-261108-2335/src/components/inbox/ChatPanel.tsx",
-    "analise-prs/resgate-261118-lote3/fix/ci-verde-261021/src/components/inbox/ChatPanel.tsx",
     "src/components/inbox/ChatPanel.tsx",
     "src/hooks/ui/index.ts"
    ],
@@ -14524,9 +12280,8 @@
     "useSyncExternalStore"
    ],
    "canais_realtime": [],
-   "usado_por": 8,
+   "usado_por": 7,
    "usado_por_arquivos": [
-    "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/inbox/InboxEmptyChat.tsx",
     "src/components/inbox/InboxEmptyChat.tsx",
     "src/components/inbox/KeyboardShortcutsHelp.tsx",
     "src/components/keyboard/KeyboardShortcutsDialog.tsx",
@@ -14574,9 +12329,8 @@
     "useEffect"
    ],
    "canais_realtime": [],
-   "usado_por": 4,
+   "usado_por": 3,
    "usado_por_arquivos": [
-    "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/inbox/VirtualizedRealtimeList.tsx",
     "src/components/inbox/VirtualizedRealtimeList.tsx",
     "src/components/settings/AppearanceSettings.tsx",
     "src/hooks/ui/index.ts"
@@ -14610,7 +12364,7 @@
     "src/components/security/SecurityOverview.tsx",
     "src/hooks/ui/index.ts"
    ],
-   "coberto_por_testes": 3
+   "coberto_por_testes": 2
   },
   {
    "arquivo": "src/hooks/ui/useDocumentTitle.ts",
@@ -14672,13 +12426,12 @@
     "useEffect"
    ],
    "canais_realtime": [],
-   "usado_por": 3,
+   "usado_por": 2,
    "usado_por_arquivos": [
-    "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/inbox/RealtimeInboxView.tsx",
     "src/components/inbox/RealtimeInboxView.tsx",
     "src/hooks/ui/index.ts"
    ],
-   "coberto_por_testes": 3
+   "coberto_por_testes": 2
   },
   {
    "arquivo": "src/hooks/ui/useKeyboardHeight.ts",
@@ -14807,14 +12560,13 @@
     "useQueryClient"
    ],
    "canais_realtime": [],
-   "usado_por": 4,
+   "usado_por": 3,
    "usado_por_arquivos": [
-    "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/settings/SettingsView.tsx",
     "src/components/settings/SettingsView.tsx",
     "src/hooks/ui/index.ts",
     "src/pages/Index.tsx"
    ],
-   "coberto_por_testes": 2
+   "coberto_por_testes": 1
   },
   {
    "arquivo": "src/hooks/ui/useOnboardingChecklist.ts",
@@ -14906,9 +12658,8 @@
     "useState"
    ],
    "canais_realtime": [],
-   "usado_por": 3,
+   "usado_por": 2,
    "usado_por_arquivos": [
-    "analise-prs/resgate-261118-lote3/claude/ga-ci-verde-261020/src/components/inbox/RealtimeInboxView.tsx",
     "src/components/inbox/RealtimeInboxView.tsx",
     "src/hooks/ui/index.ts"
    ],
@@ -15044,9 +12795,8 @@
     "useEffect"
    ],
    "canais_realtime": [],
-   "usado_por": 10,
+   "usado_por": 9,
    "usado_por_arquivos": [
-    "analise-prs/resgate-261118-lote3/claude/magical-pasteur-iz2pgy/src/hooks/system/useUserSettings.ts",
     "src/components/ThemeInitializer.tsx",
     "src/components/layout/Sidebar.tsx",
     "src/components/mobile/MobileDrawerMenu.tsx",
@@ -15192,9 +12942,8 @@
    "edges": [],
    "hooks_internos": [],
    "canais_realtime": [],
-   "usado_por": 5,
+   "usado_por": 4,
    "usado_por_arquivos": [
-    "analise-prs/resgate-261118-lote3/claude/magical-pasteur-iz2pgy/src/hooks/system/useUserSettings.ts",
     "src/components/settings/AppearanceSettings.tsx",
     "src/components/settings/LanguageSelector.tsx",
     "src/hooks/system/useUserSettings.ts",
@@ -15298,10 +13047,8 @@
     "useSipClient"
    ],
    "canais_realtime": [],
-   "usado_por": 14,
+   "usado_por": 12,
    "usado_por_arquivos": [
-    "analise-prs/resgate-261118-lote3/hermes/telefonia-fase8-motion-a11y-responsivo-2610031530007c/src/components/calls/IncomingCallAlert.tsx",
-    "analise-prs/resgate-261118-lote3/hermes/telefonia-fase8-motion-a11y-responsivo-2610031530007c/src/components/calls/TelefoniaView.tsx",
     "src/components/calls/ActiveCallBar.tsx",
     "src/components/calls/ActiveCallPanel.tsx",
     "src/components/calls/CallDialog.tsx",

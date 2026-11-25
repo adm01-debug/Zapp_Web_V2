@@ -2,6 +2,26 @@
 
 > Talk X · projeção de atributos comerciais por contato (X037). Nesta leva só as colunas de compra/RFM (X040); as colunas de CRM entram por ALTER nas ondas de banco.
 
+[CATALOGUE SEMÂNTICO DO PROJETO]
+Objeto: public.talkx_contact_attributes (tabela). RLS habilitada: t; RLS forçada: f.
+Colunas (ordem, tipo e nulabilidade):
+1 contact_id uuid NOT NULL
+2 last_purchase_at timestamp with time zone NULLABLE
+3 orders_count integer NOT NULL [DEFAULT/EXPRESSION DEFINED]
+4 total_spent numeric(14,2) NOT NULL [DEFAULT/EXPRESSION DEFINED]
+5 avg_ticket numeric(14,2) NULLABLE
+6 rfm_recency_days integer NULLABLE
+7 rfm_frequency integer NULLABLE
+8 rfm_monetary integer NULLABLE
+9 rfm_segment text NULLABLE
+10 purchases_synced_at timestamp with time zone NULLABLE
+11 updated_at timestamp with time zone NOT NULL [DEFAULT/EXPRESSION DEFINED]
+Constraints:
+talkx_contact_attributes_contact_id_fkey: FOREIGN KEY (contact_id) REFERENCES contacts(id) ON DELETE CASCADE
+talkx_contact_attributes_pkey: PRIMARY KEY (contact_id)
+Políticas RLS (nome, operação, papéis e modo; as expressões permanecem no catálogo):
+talkx_contact_attributes_select [command=SELECT; roles=authenticated; PERMISSIVE]
+
 | propriedade | valor |
 |---|---|
 | tipo | table |
@@ -58,7 +78,7 @@
 | comando | SELECT |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `(is_admin_or_supervisor(auth.uid()) OR is_contact_visible_to_user(contact_id, auth.uid()))` |
+| USING | `(is_admin_or_supervisor(( SELECT auth.uid() AS uid)) OR is_contact_visible_to_user(contact_id, ( SELECT auth.uid() AS uid)))` |
 | WITH CHECK |  |
 
 

@@ -1,5 +1,34 @@
 # public.csat_surveys
 
+> Descrição funcional não estava registrada no catálogo; o conteúdo abaixo documenta a estrutura observável, sem inferir regras de negócio não declaradas.
+
+[CATALOGUE SEMÂNTICO DO PROJETO]
+Objeto: public.csat_surveys (tabela). RLS habilitada: t; RLS forçada: f.
+Colunas (ordem, tipo e nulabilidade):
+1 id uuid NOT NULL [DEFAULT/EXPRESSION DEFINED]
+2 contact_id uuid NOT NULL
+3 agent_id uuid NULLABLE
+4 rating integer NULLABLE
+5 feedback text NULLABLE
+6 conversation_resolved_at timestamp with time zone NULLABLE
+7 created_at timestamp with time zone NOT NULL [DEFAULT/EXPRESSION DEFINED]
+8 status text NOT NULL [DEFAULT/EXPRESSION DEFINED]
+9 send_at timestamp with time zone NOT NULL [DEFAULT/EXPRESSION DEFINED]
+10 responded_at timestamp with time zone NULLABLE
+11 conversation_id uuid NULLABLE
+12 message_text text NULLABLE
+Constraints:
+csat_surveys_rating_range: CHECK (rating IS NULL OR rating >= 1 AND rating <= 5)
+csat_surveys_responded_consistency: CHECK ((status = 'responded'::text) = (responded_at IS NOT NULL))
+csat_surveys_status_check: CHECK (status = ANY (ARRAY['scheduled'::text, 'sent'::text, 'responded'::text, 'failed'::text]))
+csat_surveys_agent_id_fkey: FOREIGN KEY (agent_id) REFERENCES profiles(id) ON DELETE SET NULL
+csat_surveys_contact_id_fkey: FOREIGN KEY (contact_id) REFERENCES contacts(id) ON DELETE CASCADE
+csat_surveys_pkey: PRIMARY KEY (id)
+Políticas RLS (nome, operação, papéis e modo; as expressões permanecem no catálogo):
+"Service role manages CSAT surveys" [command=ALL; roles=service_role; PERMISSIVE]
+"Users can insert CSAT surveys" [command=INSERT; roles=authenticated; PERMISSIVE]
+"Users can view own CSAT surveys" [command=SELECT; roles=authenticated; PERMISSIVE]
+
 | propriedade | valor |
 |---|---|
 | tipo | table |
@@ -75,7 +104,7 @@
 | tipo | PERMISSIVE |
 | roles | authenticated |
 | USING |  |
-| WITH CHECK | `((agent_id IS NULL) OR (agent_id IN ( SELECT profiles.id    FROM profiles   WHERE (profiles.user_id = auth.uid()))) OR is_admin_or_supervisor(auth.uid()))` |
+| WITH CHECK | `((agent_id IS NULL) OR (agent_id IN ( SELECT profiles.id    FROM profiles   WHERE (profiles.user_id = ( SELECT auth.uid() AS uid)))) OR is_admin_or_supervisor(( SELECT auth.uid() AS uid)))` |
 
 ### `Users can view own CSAT surveys`
 
@@ -84,7 +113,7 @@
 | comando | SELECT |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `((agent_id IN ( SELECT profiles.id    FROM profiles   WHERE (profiles.user_id = auth.uid()))) OR is_admin_or_supervisor(auth.uid()))` |
+| USING | `((agent_id IN ( SELECT profiles.id    FROM profiles   WHERE (profiles.user_id = ( SELECT auth.uid() AS uid)))) OR is_admin_or_supervisor(( SELECT auth.uid() AS uid)))` |
 | WITH CHECK |  |
 
 

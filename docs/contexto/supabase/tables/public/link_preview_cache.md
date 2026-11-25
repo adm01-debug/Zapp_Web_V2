@@ -2,6 +2,20 @@
 
 > [RLS-sem-policy: intencional] Cache de previews de links. Populado pela edge function fetch-link-preview (service_role). Grants a anon/authenticated revogados em 20261026220300.
 
+[CATALOGUE SEMÂNTICO DO PROJETO]
+Objeto: public.link_preview_cache (tabela). RLS habilitada: t; RLS forçada: f.
+Colunas (ordem, tipo e nulabilidade):
+1 url_hash text NOT NULL
+2 url text NOT NULL
+3 preview jsonb NULLABLE
+4 expires_at timestamp with time zone NOT NULL
+5 created_at timestamp with time zone NOT NULL [DEFAULT/EXPRESSION DEFINED]
+6 updated_at timestamp with time zone NOT NULL [DEFAULT/EXPRESSION DEFINED]
+Constraints:
+link_preview_cache_pkey: PRIMARY KEY (url_hash)
+Políticas RLS (nome, operação, papéis e modo; as expressões permanecem no catálogo):
+(RLS habilitada sem política; verificar se o acesso restrito é intencional)
+
 | propriedade | valor |
 |---|---|
 | tipo | table |

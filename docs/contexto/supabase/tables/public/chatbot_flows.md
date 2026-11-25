@@ -1,12 +1,41 @@
 # public.chatbot_flows
 
+> Descrição funcional não estava registrada no catálogo; o conteúdo abaixo documenta a estrutura observável, sem inferir regras de negócio não declaradas.
+
+[CATALOGUE SEMÂNTICO DO PROJETO]
+Objeto: public.chatbot_flows (tabela). RLS habilitada: t; RLS forçada: f.
+Colunas (ordem, tipo e nulabilidade):
+1 id uuid NOT NULL [DEFAULT/EXPRESSION DEFINED]
+2 name text NOT NULL
+3 description text NULLABLE
+4 is_active boolean NULLABLE [DEFAULT/EXPRESSION DEFINED]
+5 trigger_type text NOT NULL [DEFAULT/EXPRESSION DEFINED]
+6 trigger_value text NULLABLE
+7 nodes jsonb NOT NULL [DEFAULT/EXPRESSION DEFINED]
+8 edges jsonb NOT NULL [DEFAULT/EXPRESSION DEFINED]
+9 variables jsonb NULLABLE [DEFAULT/EXPRESSION DEFINED]
+10 whatsapp_connection_id uuid NULLABLE
+11 created_by uuid NULLABLE
+12 execution_count integer NULLABLE [DEFAULT/EXPRESSION DEFINED]
+13 last_executed_at timestamp with time zone NULLABLE
+14 created_at timestamp with time zone NOT NULL [DEFAULT/EXPRESSION DEFINED]
+15 updated_at timestamp with time zone NOT NULL [DEFAULT/EXPRESSION DEFINED]
+Constraints:
+chatbot_flows_trigger_type_check: CHECK (trigger_type = ANY (ARRAY['keyword'::text, 'first_message'::text, 'menu'::text, 'webhook'::text, 'schedule'::text, 'ai_l1'::text]))
+chatbot_flows_created_by_fkey: FOREIGN KEY (created_by) REFERENCES profiles(id)
+chatbot_flows_whatsapp_connection_id_fkey: FOREIGN KEY (whatsapp_connection_id) REFERENCES whatsapp_connections(id)
+chatbot_flows_pkey: PRIMARY KEY (id)
+Políticas RLS (nome, operação, papéis e modo; as expressões permanecem no catálogo):
+"Admins can manage chatbot flows" [command=ALL; roles=authenticated; PERMISSIVE]
+"Authenticated can view chatbot flows" [command=SELECT; roles=authenticated; PERMISSIVE]
+
 | propriedade | valor |
 |---|---|
 | tipo | table |
 | owner | postgres |
 | RLS habilitado | sim |
 | RLS forçado (owner) | não |
-| policies | 3 |
+| policies | 2 |
 | realtime (publication) | não |
 | replica identity | default |
 | vem de extensão | não |
@@ -63,16 +92,6 @@
 
 ## Policies (RLS)
 
-### `Admins can insert chatbot flows`
-
-| campo | valor |
-|---|---|
-| comando | INSERT |
-| tipo | PERMISSIVE |
-| roles | authenticated |
-| USING |  |
-| WITH CHECK | `is_admin_or_supervisor(auth.uid())` |
-
 ### `Admins can manage chatbot flows`
 
 | campo | valor |
@@ -80,7 +99,7 @@
 | comando | ALL |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `is_admin_or_supervisor(auth.uid())` |
+| USING | `is_admin_or_supervisor(( SELECT auth.uid() AS uid))` |
 | WITH CHECK |  |
 
 ### `Authenticated can view chatbot flows`

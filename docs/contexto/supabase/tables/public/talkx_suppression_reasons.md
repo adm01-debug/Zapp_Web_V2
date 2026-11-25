@@ -1,5 +1,28 @@
 # public.talkx_suppression_reasons
 
+> Descrição funcional não estava registrada no catálogo; o conteúdo abaixo documenta a estrutura observável, sem inferir regras de negócio não declaradas.
+
+[CATALOGUE SEMÂNTICO DO PROJETO]
+Objeto: public.talkx_suppression_reasons (tabela). RLS habilitada: t; RLS forçada: f.
+Colunas (ordem, tipo e nulabilidade):
+1 code text NOT NULL
+2 label text NOT NULL
+3 tone text NOT NULL [DEFAULT/EXPRESSION DEFINED]
+4 is_system boolean NOT NULL [DEFAULT/EXPRESSION DEFINED]
+5 active boolean NOT NULL [DEFAULT/EXPRESSION DEFINED]
+6 sort_order integer NOT NULL [DEFAULT/EXPRESSION DEFINED]
+7 created_by uuid NULLABLE
+8 created_at timestamp with time zone NOT NULL [DEFAULT/EXPRESSION DEFINED]
+Constraints:
+talkx_suppression_reasons_code_check: CHECK (code = lower(code) AND code ~ '^[a-z_]+$'::text)
+talkx_suppression_reasons_tone_check: CHECK (tone = ANY (ARRAY['informativo'::text, 'alerta'::text, 'crítico'::text]))
+talkx_suppression_reasons_created_by_fkey: FOREIGN KEY (created_by) REFERENCES auth.users(id) ON DELETE SET NULL
+talkx_suppression_reasons_pkey: PRIMARY KEY (code)
+Políticas RLS (nome, operação, papéis e modo; as expressões permanecem no catálogo):
+talkx_suppression_reasons_read [command=SELECT; roles=authenticated; PERMISSIVE]
+talkx_suppression_reasons_update [command=UPDATE; roles=authenticated; PERMISSIVE]
+talkx_suppression_reasons_write [command=INSERT; roles=authenticated; PERMISSIVE]
+
 | propriedade | valor |
 |---|---|
 | tipo | table |
@@ -71,8 +94,8 @@
 | comando | UPDATE |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `is_admin_or_supervisor(auth.uid())` |
-| WITH CHECK | `is_admin_or_supervisor(auth.uid())` |
+| USING | `is_admin_or_supervisor(( SELECT auth.uid() AS uid))` |
+| WITH CHECK | `is_admin_or_supervisor(( SELECT auth.uid() AS uid))` |
 
 ### `talkx_suppression_reasons_write`
 
@@ -82,7 +105,7 @@
 | tipo | PERMISSIVE |
 | roles | authenticated |
 | USING |  |
-| WITH CHECK | `is_admin_or_supervisor(auth.uid())` |
+| WITH CHECK | `is_admin_or_supervisor(( SELECT auth.uid() AS uid))` |
 
 
 ## Triggers

@@ -2,6 +2,27 @@
 
 > CV-143 — agregados diários de uso do copiloto RADAR por atendente.
 
+[CATALOGUE SEMÂNTICO DO PROJETO]
+Objeto: public.copilot_retention_aggregates (tabela). RLS habilitada: t; RLS forçada: f.
+Colunas (ordem, tipo e nulabilidade):
+1 id uuid NOT NULL [DEFAULT/EXPRESSION DEFINED]
+2 profile_id uuid NOT NULL
+3 agg_date date NOT NULL
+4 sessions_opened integer NOT NULL [DEFAULT/EXPRESSION DEFINED]
+5 ticks_processed integer NOT NULL [DEFAULT/EXPRESSION DEFINED]
+6 insights_gen integer NOT NULL [DEFAULT/EXPRESSION DEFINED]
+7 brinde_complete integer NOT NULL [DEFAULT/EXPRESSION DEFINED]
+8 avg_temperature numeric(5,2) NULLABLE
+9 created_at timestamp with time zone NOT NULL [DEFAULT/EXPRESSION DEFINED]
+10 updated_at timestamp with time zone NOT NULL [DEFAULT/EXPRESSION DEFINED]
+Constraints:
+copilot_retention_aggregates_profile_id_fkey: FOREIGN KEY (profile_id) REFERENCES auth.users(id) ON DELETE CASCADE
+copilot_retention_aggregates_pkey: PRIMARY KEY (id)
+copilot_retention_aggregates_profile_id_agg_date_key: UNIQUE (profile_id, agg_date)
+Políticas RLS (nome, operação, papéis e modo; as expressões permanecem no catálogo):
+own_retention [command=SELECT; roles=authenticated; PERMISSIVE]
+service_role_retention [command=ALL; roles=service_role; PERMISSIVE]
+
 | propriedade | valor |
 |---|---|
 | tipo | table |
@@ -57,7 +78,7 @@
 | comando | SELECT |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `(profile_id = auth.uid())` |
+| USING | `(profile_id = ( SELECT auth.uid() AS uid))` |
 | WITH CHECK |  |
 
 ### `service_role_retention`

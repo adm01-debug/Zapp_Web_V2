@@ -10,6 +10,7 @@
 | gmail_encryption_key | Chave simetrica pgp_sym_encrypt dos tokens Gmail (gmail_accounts.*_encrypted). Gerada in-db 2026-08-27. NUNCA logar. | 2026-08-27 20:35:44.045073+00:00 |
 | multiplix_cron_secret |  | 2026-09-27 13:15:36.266338+00:00 |
 | multiplix_send_url |  | 2026-09-29 14:51:37.775897+00:00 |
+| scheduled_report_cron_secret | Credencial de maquina do cron de relatorios agendados (pg_cron -> send-scheduled-report). Gerada in-db 2026-11-20. NUNCA logar. | 2026-11-21 12:11:43.422551+00:00 |
 | sicoob_service_role_key | Service role key do projeto oficial tnnnlkbymytvtqngbbqh — usada por notify_sicoob_on_reply para chamar a edge function sicoob-bridge-reply | 2026-08-27 19:34:11.065065+00:00 |
 | talkx_anon_key | Zapp Web V2 anon key para pg_cron → talkx-scheduler | 2026-09-08 21:18:16.883903+00:00 |
 | talkx_cron_secret |  | 2026-10-02 02:14:00.867726+00:00 |

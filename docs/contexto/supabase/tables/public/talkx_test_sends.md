@@ -1,5 +1,29 @@
 # public.talkx_test_sends
 
+> Descrição funcional não estava registrada no catálogo; o conteúdo abaixo documenta a estrutura observável, sem inferir regras de negócio não declaradas.
+
+[CATALOGUE SEMÂNTICO DO PROJETO]
+Objeto: public.talkx_test_sends (tabela). RLS habilitada: t; RLS forçada: f.
+Colunas (ordem, tipo e nulabilidade):
+1 id uuid NOT NULL [DEFAULT/EXPRESSION DEFINED]
+2 template_id uuid NULLABLE
+3 campaign_id uuid NULLABLE
+4 connection_id uuid NOT NULL
+5 to_phone text NOT NULL
+6 status text NOT NULL [DEFAULT/EXPRESSION DEFINED]
+7 provider_message_id text NULLABLE
+8 error text NULLABLE
+9 created_by uuid NULLABLE
+10 created_at timestamp with time zone NOT NULL [DEFAULT/EXPRESSION DEFINED]
+Constraints:
+talkx_test_sends_campaign_id_fkey: FOREIGN KEY (campaign_id) REFERENCES talkx_campaigns(id)
+talkx_test_sends_connection_id_fkey: FOREIGN KEY (connection_id) REFERENCES whatsapp_connections(id)
+talkx_test_sends_template_id_fkey: FOREIGN KEY (template_id) REFERENCES talkx_templates(id)
+talkx_test_sends_pkey: PRIMARY KEY (id)
+Políticas RLS (nome, operação, papéis e modo; as expressões permanecem no catálogo):
+talkx_test_sends_owner_admin_read [command=SELECT; roles=authenticated; PERMISSIVE]
+talkx_test_sends_service_role_write [command=ALL; roles=service_role; PERMISSIVE]
+
 | propriedade | valor |
 |---|---|
 | tipo | table |
@@ -57,7 +81,7 @@
 | comando | SELECT |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `((auth.uid() = created_by) OR (auth.uid() IN ( SELECT profiles.id    FROM profiles   WHERE (profiles.role = 'admin'::text))))` |
+| USING | `((( SELECT auth.uid() AS uid) = created_by) OR (( SELECT auth.uid() AS uid) IN ( SELECT profiles.id    FROM profiles   WHERE (profiles.role = 'admin'::text))))` |
 | WITH CHECK |  |
 
 ### `talkx_test_sends_service_role_write`

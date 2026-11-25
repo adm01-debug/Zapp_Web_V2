@@ -2,6 +2,22 @@
 
 > X033: alertas do motor Talk X. Um alerta aberto por (tipo, campanha); fechado sozinho quando o sinal deixa de disparar (resolved_at). Escrito por talkx_engine_alerts (service_role), lido por admin/supervisor.
 
+[CATALOGUE SEMÂNTICO DO PROJETO]
+Objeto: public.talkx_alerts (tabela). RLS habilitada: t; RLS forçada: f.
+Colunas (ordem, tipo e nulabilidade):
+1 id uuid NOT NULL [DEFAULT/EXPRESSION DEFINED]
+2 kind text NOT NULL
+3 campaign_id uuid NULLABLE
+4 payload jsonb NOT NULL [DEFAULT/EXPRESSION DEFINED]
+5 opened_at timestamp with time zone NOT NULL [DEFAULT/EXPRESSION DEFINED]
+6 resolved_at timestamp with time zone NULLABLE
+Constraints:
+talkx_alerts_kind_check: CHECK (kind = ANY (ARRAY['stalled_campaign'::text, 'stale_lease'::text, 'outcome_unknown'::text, 'high_failure_rate'::text, 'cron_degraded'::text, 'purge_failed'::text]))
+talkx_alerts_campaign_id_fkey: FOREIGN KEY (campaign_id) REFERENCES talkx_campaigns(id) ON DELETE CASCADE
+talkx_alerts_pkey: PRIMARY KEY (id)
+Políticas RLS (nome, operação, papéis e modo; as expressões permanecem no catálogo):
+talkx_alerts_select [command=SELECT; roles=authenticated; PERMISSIVE]
+
 | propriedade | valor |
 |---|---|
 | tipo | table |
@@ -53,7 +69,7 @@
 | comando | SELECT |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `is_admin_or_supervisor(auth.uid())` |
+| USING | `is_admin_or_supervisor(( SELECT auth.uid() AS uid))` |
 | WITH CHECK |  |
 
 

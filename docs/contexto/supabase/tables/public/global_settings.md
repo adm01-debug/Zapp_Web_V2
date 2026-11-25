@@ -1,5 +1,26 @@
 # public.global_settings
 
+> Descrição funcional não estava registrada no catálogo; o conteúdo abaixo documenta a estrutura observável, sem inferir regras de negócio não declaradas.
+
+[CATALOGUE SEMÂNTICO DO PROJETO]
+Objeto: public.global_settings (tabela). RLS habilitada: t; RLS forçada: f.
+Colunas (ordem, tipo e nulabilidade):
+1 id uuid NOT NULL [DEFAULT/EXPRESSION DEFINED]
+2 key text NOT NULL
+3 value text NULLABLE
+4 description text NULLABLE
+5 updated_by uuid NULLABLE
+6 created_at timestamp with time zone NOT NULL [DEFAULT/EXPRESSION DEFINED]
+7 updated_at timestamp with time zone NOT NULL [DEFAULT/EXPRESSION DEFINED]
+Constraints:
+global_settings_inbox_silence_minutes_range: CHECK (key <> 'inbox_silence_minutes'::text OR value IS NOT NULL AND value ~ '^[0-9]{1,4}$'::text AND value::integer >= 1 AND value::integer <= 1440)
+global_settings_no_plaintext_api_token: CHECK (key <> 'api_token'::text)
+global_settings_pkey: PRIMARY KEY (id)
+global_settings_key_key: UNIQUE (key)
+Políticas RLS (nome, operação, papéis e modo; as expressões permanecem no catálogo):
+"Admins can manage global settings" [command=ALL; roles=authenticated; PERMISSIVE]
+"Admins can view global settings" [command=SELECT; roles=authenticated; PERMISSIVE]
+
 | propriedade | valor |
 |---|---|
 | tipo | table |
@@ -52,8 +73,8 @@
 | comando | ALL |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `is_admin(auth.uid())` |
-| WITH CHECK | `is_admin(auth.uid())` |
+| USING | `is_admin(( SELECT auth.uid() AS uid))` |
+| WITH CHECK | `is_admin(( SELECT auth.uid() AS uid))` |
 
 ### `Admins can view global settings`
 
@@ -62,7 +83,7 @@
 | comando | SELECT |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `(is_admin(auth.uid()) OR (is_admin_or_supervisor(auth.uid()) AND (key !~ '(_api_key\|_secret\|_token)$'::text)))` |
+| USING | `(is_admin(( SELECT auth.uid() AS uid)) OR (is_admin_or_supervisor(( SELECT auth.uid() AS uid)) AND (key !~ '(_api_key\|_secret\|_token)$'::text)))` |
 | WITH CHECK |  |
 
 

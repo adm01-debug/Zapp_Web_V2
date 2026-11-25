@@ -1,5 +1,38 @@
 # public.sales_deals
 
+> Descrição funcional não estava registrada no catálogo; o conteúdo abaixo documenta a estrutura observável, sem inferir regras de negócio não declaradas.
+
+[CATALOGUE SEMÂNTICO DO PROJETO]
+Objeto: public.sales_deals (tabela). RLS habilitada: t; RLS forçada: f.
+Colunas (ordem, tipo e nulabilidade):
+1 id uuid NOT NULL [DEFAULT/EXPRESSION DEFINED]
+2 title text NOT NULL
+3 value numeric(12,2) NULLABLE [DEFAULT/EXPRESSION DEFINED]
+4 currency text NULLABLE [DEFAULT/EXPRESSION DEFINED]
+5 stage_id uuid NULLABLE
+6 contact_id uuid NULLABLE
+7 assigned_to uuid NULLABLE
+8 priority text NULLABLE [DEFAULT/EXPRESSION DEFINED]
+9 expected_close_date date NULLABLE
+10 notes text NULLABLE
+11 tags text[] NULLABLE [DEFAULT/EXPRESSION DEFINED]
+12 status text NULLABLE [DEFAULT/EXPRESSION DEFINED]
+13 won_at timestamp with time zone NULLABLE
+14 lost_at timestamp with time zone NULLABLE
+15 lost_reason text NULLABLE
+16 created_at timestamp with time zone NULLABLE [DEFAULT/EXPRESSION DEFINED]
+17 updated_at timestamp with time zone NULLABLE [DEFAULT/EXPRESSION DEFINED]
+Constraints:
+sales_deals_assigned_to_fkey: FOREIGN KEY (assigned_to) REFERENCES profiles(id) ON DELETE SET NULL
+sales_deals_contact_id_fkey: FOREIGN KEY (contact_id) REFERENCES contacts(id) ON DELETE CASCADE
+sales_deals_stage_id_fkey: FOREIGN KEY (stage_id) REFERENCES sales_pipeline_stages(id) ON DELETE SET NULL
+sales_deals_pkey: PRIMARY KEY (id)
+Políticas RLS (nome, operação, papéis e modo; as expressões permanecem no catálogo):
+"Admins can delete deals" [command=DELETE; roles=authenticated; PERMISSIVE]
+"Users can insert deals" [command=INSERT; roles=authenticated; PERMISSIVE]
+"Users can update assigned deals" [command=UPDATE; roles=authenticated; PERMISSIVE]
+"Users can view assigned or admin deals" [command=SELECT; roles=authenticated; PERMISSIVE]
+
 | propriedade | valor |
 |---|---|
 | tipo | table |
@@ -71,7 +104,7 @@
 | comando | DELETE |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `is_admin_or_supervisor(auth.uid())` |
+| USING | `is_admin_or_supervisor(( SELECT auth.uid() AS uid))` |
 | WITH CHECK |  |
 
 ### `Users can insert deals`
@@ -82,7 +115,7 @@
 | tipo | PERMISSIVE |
 | roles | authenticated |
 | USING |  |
-| WITH CHECK | `((assigned_to IS NULL) OR (assigned_to IN ( SELECT profiles.id    FROM profiles   WHERE (profiles.user_id = auth.uid()))) OR is_admin_or_supervisor(auth.uid()))` |
+| WITH CHECK | `((assigned_to IS NULL) OR (assigned_to IN ( SELECT profiles.id    FROM profiles   WHERE (profiles.user_id = ( SELECT auth.uid() AS uid)))) OR is_admin_or_supervisor(( SELECT auth.uid() AS uid)))` |
 
 ### `Users can update assigned deals`
 
@@ -91,8 +124,8 @@
 | comando | UPDATE |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `((assigned_to IN ( SELECT profiles.id    FROM profiles   WHERE (profiles.user_id = auth.uid()))) OR is_admin_or_supervisor(auth.uid()))` |
-| WITH CHECK | `((assigned_to IN ( SELECT profiles.id    FROM profiles   WHERE (profiles.user_id = auth.uid()))) OR is_admin_or_supervisor(auth.uid()))` |
+| USING | `((assigned_to IN ( SELECT profiles.id    FROM profiles   WHERE (profiles.user_id = ( SELECT auth.uid() AS uid)))) OR is_admin_or_supervisor(( SELECT auth.uid() AS uid)))` |
+| WITH CHECK | `((assigned_to IN ( SELECT profiles.id    FROM profiles   WHERE (profiles.user_id = ( SELECT auth.uid() AS uid)))) OR is_admin_or_supervisor(( SELECT auth.uid() AS uid)))` |
 
 ### `Users can view assigned or admin deals`
 
@@ -101,7 +134,7 @@
 | comando | SELECT |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `(is_admin_or_supervisor(auth.uid()) OR (assigned_to IN ( SELECT profiles.id    FROM profiles   WHERE (profiles.user_id = auth.uid()))))` |
+| USING | `(is_admin_or_supervisor(( SELECT auth.uid() AS uid)) OR (assigned_to IN ( SELECT profiles.id    FROM profiles   WHERE (profiles.user_id = ( SELECT auth.uid() AS uid)))))` |
 | WITH CHECK |  |
 
 

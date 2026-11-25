@@ -1,5 +1,34 @@
 # public.user_devices
 
+> Descrição funcional não estava registrada no catálogo; o conteúdo abaixo documenta a estrutura observável, sem inferir regras de negócio não declaradas.
+
+[CATALOGUE SEMÂNTICO DO PROJETO]
+Objeto: public.user_devices (tabela). RLS habilitada: t; RLS forçada: f.
+Colunas (ordem, tipo e nulabilidade):
+1 id uuid NOT NULL [DEFAULT/EXPRESSION DEFINED]
+2 user_id uuid NOT NULL
+3 device_fingerprint text NOT NULL
+4 device_name text NULLABLE
+5 browser text NULLABLE
+6 os text NULLABLE
+7 ip_address text NULLABLE
+8 city text NULLABLE
+9 country text NULLABLE
+10 is_trusted boolean NULLABLE [DEFAULT/EXPRESSION DEFINED]
+11 first_seen_at timestamp with time zone NOT NULL [DEFAULT/EXPRESSION DEFINED]
+12 last_seen_at timestamp with time zone NOT NULL [DEFAULT/EXPRESSION DEFINED]
+13 created_at timestamp with time zone NOT NULL [DEFAULT/EXPRESSION DEFINED]
+Constraints:
+user_devices_user_id_fkey: FOREIGN KEY (user_id) REFERENCES auth.users(id) ON DELETE CASCADE
+user_devices_pkey: PRIMARY KEY (id)
+user_devices_user_id_device_fingerprint_key: UNIQUE (user_id, device_fingerprint)
+Políticas RLS (nome, operação, papéis e modo; as expressões permanecem no catálogo):
+"Admins can view all user devices" [command=SELECT; roles=authenticated; PERMISSIVE]
+"Users can delete their own devices" [command=DELETE; roles=authenticated; PERMISSIVE]
+"Users can insert their own devices" [command=INSERT; roles=authenticated; PERMISSIVE]
+"Users can update their own devices" [command=UPDATE; roles=authenticated; PERMISSIVE]
+"Users can view their own devices" [command=SELECT; roles=authenticated; PERMISSIVE]
+
 | propriedade | valor |
 |---|---|
 | tipo | table |
@@ -65,7 +94,7 @@
 | comando | SELECT |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `is_admin_or_supervisor(auth.uid())` |
+| USING | `is_admin_or_supervisor(( SELECT auth.uid() AS uid))` |
 | WITH CHECK |  |
 
 ### `Users can delete their own devices`
@@ -75,7 +104,7 @@
 | comando | DELETE |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `(user_id = auth.uid())` |
+| USING | `(user_id = ( SELECT ( SELECT auth.uid() AS uid) AS uid))` |
 | WITH CHECK |  |
 
 ### `Users can insert their own devices`
@@ -86,7 +115,7 @@
 | tipo | PERMISSIVE |
 | roles | authenticated |
 | USING |  |
-| WITH CHECK | `(user_id = auth.uid())` |
+| WITH CHECK | `(user_id = ( SELECT ( SELECT auth.uid() AS uid) AS uid))` |
 
 ### `Users can update their own devices`
 
@@ -95,8 +124,8 @@
 | comando | UPDATE |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `(user_id = auth.uid())` |
-| WITH CHECK |  |
+| USING | `(user_id = ( SELECT ( SELECT auth.uid() AS uid) AS uid))` |
+| WITH CHECK | `(user_id = ( SELECT ( SELECT auth.uid() AS uid) AS uid))` |
 
 ### `Users can view their own devices`
 
@@ -105,7 +134,7 @@
 | comando | SELECT |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `(user_id = auth.uid())` |
+| USING | `(user_id = ( SELECT ( SELECT auth.uid() AS uid) AS uid))` |
 | WITH CHECK |  |
 
 

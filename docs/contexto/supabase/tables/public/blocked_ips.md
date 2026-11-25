@@ -1,5 +1,30 @@
 # public.blocked_ips
 
+> Descrição funcional não estava registrada no catálogo; o conteúdo abaixo documenta a estrutura observável, sem inferir regras de negócio não declaradas.
+
+[CATALOGUE SEMÂNTICO DO PROJETO]
+Objeto: public.blocked_ips (tabela). RLS habilitada: t; RLS forçada: f.
+Colunas (ordem, tipo e nulabilidade):
+1 id uuid NOT NULL [DEFAULT/EXPRESSION DEFINED]
+2 ip_address text NOT NULL
+3 reason text NOT NULL
+4 blocked_by uuid NULLABLE
+5 blocked_at timestamp with time zone NOT NULL [DEFAULT/EXPRESSION DEFINED]
+6 expires_at timestamp with time zone NULLABLE
+7 is_permanent boolean NULLABLE [DEFAULT/EXPRESSION DEFINED]
+8 request_count integer NULLABLE [DEFAULT/EXPRESSION DEFINED]
+9 last_attempt_at timestamp with time zone NULLABLE
+10 created_at timestamp with time zone NOT NULL [DEFAULT/EXPRESSION DEFINED]
+Constraints:
+blocked_ips_blocked_by_fkey: FOREIGN KEY (blocked_by) REFERENCES auth.users(id) ON DELETE SET NULL
+blocked_ips_pkey: PRIMARY KEY (id)
+blocked_ips_ip_address_key: UNIQUE (ip_address)
+Políticas RLS (nome, operação, papéis e modo; as expressões permanecem no catálogo):
+"Admins can delete blocked IPs" [command=DELETE; roles=authenticated; PERMISSIVE]
+"Admins can insert blocked IPs" [command=INSERT; roles=authenticated; PERMISSIVE]
+"Admins can update blocked IPs" [command=UPDATE; roles=authenticated; PERMISSIVE]
+"Only admins can view blocked IPs" [command=SELECT; roles=authenticated; PERMISSIVE]
+
 | propriedade | valor |
 |---|---|
 | tipo | table |
@@ -56,7 +81,7 @@
 | comando | DELETE |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `is_admin(auth.uid())` |
+| USING | `is_admin(( SELECT auth.uid() AS uid))` |
 | WITH CHECK |  |
 
 ### `Admins can insert blocked IPs`
@@ -67,7 +92,7 @@
 | tipo | PERMISSIVE |
 | roles | authenticated |
 | USING |  |
-| WITH CHECK | `is_admin(auth.uid())` |
+| WITH CHECK | `is_admin(( SELECT auth.uid() AS uid))` |
 
 ### `Admins can update blocked IPs`
 
@@ -76,7 +101,7 @@
 | comando | UPDATE |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `is_admin(auth.uid())` |
+| USING | `is_admin(( SELECT auth.uid() AS uid))` |
 | WITH CHECK |  |
 
 ### `Only admins can view blocked IPs`
@@ -86,7 +111,7 @@
 | comando | SELECT |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `((EXISTS ( SELECT 1    FROM user_roles   WHERE ((user_roles.user_id = auth.uid()) AND (user_roles.role = 'admin'::app_role)))) OR is_admin_or_supervisor(auth.uid()))` |
+| USING | `((EXISTS ( SELECT 1    FROM user_roles   WHERE ((user_roles.user_id = ( SELECT auth.uid() AS uid)) AND (user_roles.role = 'admin'::app_role)))) OR is_admin_or_supervisor(( SELECT auth.uid() AS uid)))` |
 | WITH CHECK |  |
 
 

@@ -1,5 +1,64 @@
 # public.user_settings
 
+> Descrição funcional não estava registrada no catálogo; o conteúdo abaixo documenta a estrutura observável, sem inferir regras de negócio não declaradas.
+
+[CATALOGUE SEMÂNTICO DO PROJETO]
+Objeto: public.user_settings (tabela). RLS habilitada: t; RLS forçada: f.
+Colunas (ordem, tipo e nulabilidade):
+1 id uuid NOT NULL [DEFAULT/EXPRESSION DEFINED]
+2 user_id uuid NOT NULL
+3 business_hours_enabled boolean NULLABLE [DEFAULT/EXPRESSION DEFINED]
+4 business_hours_start text NULLABLE [DEFAULT/EXPRESSION DEFINED]
+5 business_hours_end text NULLABLE [DEFAULT/EXPRESSION DEFINED]
+6 work_days integer[] NULLABLE [DEFAULT/EXPRESSION DEFINED]
+7 welcome_message text NULLABLE [DEFAULT/EXPRESSION DEFINED]
+8 away_message text NULLABLE [DEFAULT/EXPRESSION DEFINED]
+9 closing_message text NULLABLE [DEFAULT/EXPRESSION DEFINED]
+10 auto_assignment_enabled boolean NULLABLE [DEFAULT/EXPRESSION DEFINED]
+11 auto_assignment_method text NULLABLE [DEFAULT/EXPRESSION DEFINED]
+12 inactivity_timeout integer NULLABLE [DEFAULT/EXPRESSION DEFINED]
+13 sound_enabled boolean NULLABLE [DEFAULT/EXPRESSION DEFINED]
+14 browser_notifications_enabled boolean NULLABLE [DEFAULT/EXPRESSION DEFINED]
+15 quiet_hours_enabled boolean NULLABLE [DEFAULT/EXPRESSION DEFINED]
+16 quiet_hours_start text NULLABLE [DEFAULT/EXPRESSION DEFINED]
+17 quiet_hours_end text NULLABLE [DEFAULT/EXPRESSION DEFINED]
+18 theme text NULLABLE [DEFAULT/EXPRESSION DEFINED]
+19 language text NULLABLE [DEFAULT/EXPRESSION DEFINED]
+20 compact_mode boolean NULLABLE [DEFAULT/EXPRESSION DEFINED]
+21 created_at timestamp with time zone NOT NULL [DEFAULT/EXPRESSION DEFINED]
+22 updated_at timestamp with time zone NOT NULL [DEFAULT/EXPRESSION DEFINED]
+23 sentiment_alert_threshold integer NULLABLE [DEFAULT/EXPRESSION DEFINED] — Threshold percentage below which sentiment alerts are triggered (0-100)
+24 sentiment_alert_enabled boolean NULLABLE [DEFAULT/EXPRESSION DEFINED] — Whether sentiment alerts are enabled for this user
+25 sentiment_consecutive_count integer NULLABLE [DEFAULT/EXPRESSION DEFINED] — Number of consecutive low sentiment analyses required to trigger alert
+26 tts_voice_id text NULLABLE [DEFAULT/EXPRESSION DEFINED] — ElevenLabs voice ID for text-to-speech
+27 tts_speed numeric NULLABLE [DEFAULT/EXPRESSION DEFINED]
+28 auto_transcription_enabled boolean NULLABLE [DEFAULT/EXPRESSION DEFINED]
+29 transcription_notification_enabled boolean NULLABLE [DEFAULT/EXPRESSION DEFINED]
+30 message_sound_type text NULLABLE [DEFAULT/EXPRESSION DEFINED] — Som de mensagem nova: beep | chime | bell | alert | soft (vocabulario unico do front: SoundTypeOption / SoundType).
+31 mention_sound_type text NULLABLE [DEFAULT/EXPRESSION DEFINED] — Som de mencao: beep | chime | bell | alert | soft.
+32 sla_sound_type text NULLABLE [DEFAULT/EXPRESSION DEFINED] — Som de violacao de SLA: beep | chime | bell | alert | soft.
+33 goal_sound_type text NULLABLE [DEFAULT/EXPRESSION DEFINED] — Som de meta atingida: beep | chime | bell | alert | soft.
+34 transcription_sound_type text NULLABLE [DEFAULT/EXPRESSION DEFINED] — Som de transcricao pronta: beep | chime | bell | alert | soft.
+35 sound_volume integer NOT NULL [DEFAULT/EXPRESSION DEFINED] — Volume dos alertas do sistema, NOT NULL, 10-100 (default 70; mesmo intervalo do Slider do painel e do DEFAULT_SETTINGS do front). Mudo = sound_enabled.
+36 new_message_sound_enabled boolean NULLABLE [DEFAULT/EXPRESSION DEFINED] — Som/aviso de "Novas Mensagens" (default true, igual a NotificationSettings.newMessageSound); NULL = sem preferencia gravada.
+37 mention_sound_enabled boolean NULLABLE [DEFAULT/EXPRESSION DEFINED] — Som/aviso de "Menções" (default true, igual a NotificationSettings.mentionSound); NULL = sem preferencia gravada.
+38 sla_breach_sound_enabled boolean NULLABLE [DEFAULT/EXPRESSION DEFINED] — Som/aviso de "Violação de SLA" (default true, igual a NotificationSettings.slaBreachSound); NULL = sem preferencia gravada.
+39 onboarding_completed boolean NOT NULL [DEFAULT/EXPRESSION DEFINED] — Tour de onboarding concluído (default false). Fonte da verdade para exibir/reiniciar o tour; as linhas existentes na aplicação da migration foram backfilladas como true (critério documentado em 20261013044344_user_settings_onboarding_completed.sql).
+Constraints:
+user_settings_goal_sound_type_valid: CHECK (goal_sound_type = ANY (ARRAY['beep'::text, 'chime'::text, 'bell'::text, 'alert'::text, 'soft'::text]))
+user_settings_mention_sound_type_valid: CHECK (mention_sound_type = ANY (ARRAY['beep'::text, 'chime'::text, 'bell'::text, 'alert'::text, 'soft'::text]))
+user_settings_message_sound_type_valid: CHECK (message_sound_type = ANY (ARRAY['beep'::text, 'chime'::text, 'bell'::text, 'alert'::text, 'soft'::text]))
+user_settings_sla_sound_type_valid: CHECK (sla_sound_type = ANY (ARRAY['beep'::text, 'chime'::text, 'bell'::text, 'alert'::text, 'soft'::text]))
+user_settings_sound_volume_range: CHECK (sound_volume >= 10 AND sound_volume <= 100)
+user_settings_transcription_sound_type_valid: CHECK (transcription_sound_type = ANY (ARRAY['beep'::text, 'chime'::text, 'bell'::text, 'alert'::text, 'soft'::text]))
+user_settings_user_id_fkey: FOREIGN KEY (user_id) REFERENCES auth.users(id) ON DELETE CASCADE
+user_settings_pkey: PRIMARY KEY (id)
+user_settings_user_id_key: UNIQUE (user_id)
+Políticas RLS (nome, operação, papéis e modo; as expressões permanecem no catálogo):
+"Users can insert their own settings" [command=INSERT; roles=authenticated; PERMISSIVE]
+"Users can update their own settings" [command=UPDATE; roles=authenticated; PERMISSIVE]
+"Users can view their own settings" [command=SELECT; roles=authenticated; PERMISSIVE]
+
 | propriedade | valor |
 |---|---|
 | tipo | table |
@@ -90,7 +149,7 @@
 | tipo | PERMISSIVE |
 | roles | authenticated |
 | USING |  |
-| WITH CHECK | `(user_id = auth.uid())` |
+| WITH CHECK | `(user_id = ( SELECT ( SELECT auth.uid() AS uid) AS uid))` |
 
 ### `Users can update their own settings`
 
@@ -99,8 +158,8 @@
 | comando | UPDATE |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `(user_id = auth.uid())` |
-| WITH CHECK |  |
+| USING | `(user_id = ( SELECT ( SELECT auth.uid() AS uid) AS uid))` |
+| WITH CHECK | `(user_id = ( SELECT ( SELECT auth.uid() AS uid) AS uid))` |
 
 ### `Users can view their own settings`
 
@@ -109,7 +168,7 @@
 | comando | SELECT |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `(user_id = auth.uid())` |
+| USING | `(user_id = ( SELECT ( SELECT auth.uid() AS uid) AS uid))` |
 | WITH CHECK |  |
 
 

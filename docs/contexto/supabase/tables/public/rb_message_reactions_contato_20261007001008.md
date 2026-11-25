@@ -2,6 +2,16 @@
 
 > [RLS-sem-policy: intencional] Tabela de rebuild de 07/10/2026. Acesso apenas por service_role durante scripts de reconciliação.
 
+[CATALOGUE SEMÂNTICO DO PROJETO]
+Objeto: public._rb_message_reactions_contato_20261007001008 (tabela). RLS habilitada: t; RLS forçada: f.
+Colunas (ordem, tipo e nulabilidade):
+1 reaction_id uuid NOT NULL
+2 contact_id_original uuid NOT NULL
+Constraints:
+_rb_message_reactions_contato_20261007001008_pkey: PRIMARY KEY (reaction_id)
+Políticas RLS (nome, operação, papéis e modo; as expressões permanecem no catálogo):
+(RLS habilitada sem política; verificar se o acesso restrito é intencional)
+
 | propriedade | valor |
 |---|---|
 | tipo | table |

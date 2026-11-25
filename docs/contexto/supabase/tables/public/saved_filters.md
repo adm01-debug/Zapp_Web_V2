@@ -1,5 +1,29 @@
 # public.saved_filters
 
+> Descrição funcional não estava registrada no catálogo; o conteúdo abaixo documenta a estrutura observável, sem inferir regras de negócio não declaradas.
+
+[CATALOGUE SEMÂNTICO DO PROJETO]
+Objeto: public.saved_filters (tabela). RLS habilitada: t; RLS forçada: f.
+Colunas (ordem, tipo e nulabilidade):
+1 id uuid NOT NULL [DEFAULT/EXPRESSION DEFINED]
+2 user_id uuid NOT NULL
+3 entity_type text NOT NULL
+4 name text NOT NULL
+5 filters jsonb NOT NULL [DEFAULT/EXPRESSION DEFINED]
+6 is_default boolean NULLABLE [DEFAULT/EXPRESSION DEFINED]
+7 created_at timestamp with time zone NOT NULL [DEFAULT/EXPRESSION DEFINED]
+8 updated_at timestamp with time zone NOT NULL [DEFAULT/EXPRESSION DEFINED]
+9 is_shared boolean NULLABLE [DEFAULT/EXPRESSION DEFINED]
+Constraints:
+saved_filters_user_id_fkey: FOREIGN KEY (user_id) REFERENCES auth.users(id) ON DELETE CASCADE
+saved_filters_pkey: PRIMARY KEY (id)
+Políticas RLS (nome, operação, papéis e modo; as expressões permanecem no catálogo):
+"Users can delete own saved filters" [command=DELETE; roles=authenticated; PERMISSIVE]
+"Users can insert own saved filters" [command=INSERT; roles=authenticated; PERMISSIVE]
+"Users can update own saved filters" [command=UPDATE; roles=authenticated; PERMISSIVE]
+"Users can view own saved filters" [command=SELECT; roles=authenticated; PERMISSIVE]
+"Users can view shared filters" [command=SELECT; roles=authenticated; PERMISSIVE]
+
 | propriedade | valor |
 |---|---|
 | tipo | table |
@@ -53,7 +77,7 @@
 | comando | DELETE |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `(user_id = auth.uid())` |
+| USING | `(user_id = ( SELECT auth.uid() AS uid))` |
 | WITH CHECK |  |
 
 ### `Users can insert own saved filters`
@@ -64,7 +88,7 @@
 | tipo | PERMISSIVE |
 | roles | authenticated |
 | USING |  |
-| WITH CHECK | `(user_id = auth.uid())` |
+| WITH CHECK | `(user_id = ( SELECT auth.uid() AS uid))` |
 
 ### `Users can update own saved filters`
 
@@ -73,7 +97,7 @@
 | comando | UPDATE |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `(user_id = auth.uid())` |
+| USING | `(user_id = ( SELECT auth.uid() AS uid))` |
 | WITH CHECK |  |
 
 ### `Users can view own saved filters`
@@ -83,7 +107,7 @@
 | comando | SELECT |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `(user_id = auth.uid())` |
+| USING | `(user_id = ( SELECT auth.uid() AS uid))` |
 | WITH CHECK |  |
 
 ### `Users can view shared filters`

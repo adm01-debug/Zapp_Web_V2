@@ -1,5 +1,28 @@
 # public.audio_memes
 
+> Descrição funcional não estava registrada no catálogo; o conteúdo abaixo documenta a estrutura observável, sem inferir regras de negócio não declaradas.
+
+[CATALOGUE SEMÂNTICO DO PROJETO]
+Objeto: public.audio_memes (tabela). RLS habilitada: t; RLS forçada: f.
+Colunas (ordem, tipo e nulabilidade):
+1 id uuid NOT NULL [DEFAULT/EXPRESSION DEFINED]
+2 name text NOT NULL
+3 audio_url text NOT NULL
+4 category text NOT NULL [DEFAULT/EXPRESSION DEFINED]
+5 duration_seconds numeric(6,2) NULLABLE
+6 is_favorite boolean NOT NULL [DEFAULT/EXPRESSION DEFINED]
+7 use_count integer NOT NULL [DEFAULT/EXPRESSION DEFINED]
+8 uploaded_by uuid NULLABLE
+9 created_at timestamp with time zone NOT NULL [DEFAULT/EXPRESSION DEFINED]
+Constraints:
+audio_memes_uploaded_by_fkey: FOREIGN KEY (uploaded_by) REFERENCES auth.users(id) ON DELETE SET NULL
+audio_memes_pkey: PRIMARY KEY (id)
+Políticas RLS (nome, operação, papéis e modo; as expressões permanecem no catálogo):
+"Authenticated users can insert audio memes" [command=INSERT; roles=authenticated; PERMISSIVE]
+"Authenticated users can read audio memes" [command=SELECT; roles=authenticated; PERMISSIVE]
+"Authenticated users can update audio memes" [command=UPDATE; roles=authenticated; PERMISSIVE]
+"Users can delete own audio memes" [command=DELETE; roles=authenticated; PERMISSIVE]
+
 | propriedade | valor |
 |---|---|
 | tipo | table |
@@ -61,7 +84,7 @@
 | tipo | PERMISSIVE |
 | roles | authenticated |
 | USING |  |
-| WITH CHECK | `(uploaded_by = auth.uid())` |
+| WITH CHECK | `(uploaded_by = ( SELECT auth.uid() AS uid))` |
 
 ### `Authenticated users can read audio memes`
 
@@ -80,8 +103,8 @@
 | comando | UPDATE |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `((uploaded_by = auth.uid()) OR is_admin_or_supervisor(auth.uid()))` |
-| WITH CHECK | `((uploaded_by = auth.uid()) OR is_admin_or_supervisor(auth.uid()))` |
+| USING | `((uploaded_by = ( SELECT auth.uid() AS uid)) OR is_admin_or_supervisor(( SELECT auth.uid() AS uid)))` |
+| WITH CHECK | `((uploaded_by = ( SELECT auth.uid() AS uid)) OR is_admin_or_supervisor(( SELECT auth.uid() AS uid)))` |
 
 ### `Users can delete own audio memes`
 
@@ -90,7 +113,7 @@
 | comando | DELETE |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `((uploaded_by = auth.uid()) OR is_admin_or_supervisor(auth.uid()))` |
+| USING | `((uploaded_by = ( SELECT auth.uid() AS uid)) OR is_admin_or_supervisor(( SELECT auth.uid() AS uid)))` |
 | WITH CHECK |  |
 
 

@@ -36,7 +36,7 @@
 -- Rollback: recriar a versao de 20261001311230 (sem variant_id no RETURNS TABLE)
 -- e reaplicar os mesmos REVOKE/GRANT.
 
-DROP FUNCTION IF EXISTS public.talkx_next_recipients(uuid, integer);
+DROP FUNCTION IF EXISTS public.talkx_next_recipients(uuid, integer)
 
 CREATE FUNCTION public.talkx_next_recipients(
   p_campaign_id uuid,
@@ -103,10 +103,11 @@ BEGIN
   ORDER BY recipient.created_at, recipient.id
   LIMIT LEAST(GREATEST(COALESCE(p_limit, 20), 1), 200);
 END;
-$function$;
+$function$
 
 -- Reproduz o ACL de hoje: funcao nova nasceria com EXECUTE para PUBLIC.
 REVOKE ALL ON FUNCTION public.talkx_next_recipients(uuid, integer)
-  FROM PUBLIC, anon, authenticated;
+  FROM PUBLIC, anon, authenticated
+
 GRANT EXECUTE ON FUNCTION public.talkx_next_recipients(uuid, integer)
-  TO service_role;
+  TO service_role

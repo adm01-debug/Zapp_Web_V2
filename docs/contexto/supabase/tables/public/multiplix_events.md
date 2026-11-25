@@ -2,6 +2,25 @@
 
 > Trilha append-only do motor de envio Multiplix (F34). So cresce: DELETE sempre rejeitado e UPDATE so e aceito quando seu unico efeito e zerar uma FK (trigger guard_multiplix_event_immutable). FKs: dispatch_id e recipient_id ON DELETE RESTRICT (evento e registro historico).
 
+[CATALOGUE SEMÂNTICO DO PROJETO]
+Objeto: public.multiplix_events (tabela). RLS habilitada: t; RLS forçada: f.
+Colunas (ordem, tipo e nulabilidade):
+1 id uuid NOT NULL [DEFAULT/EXPRESSION DEFINED]
+2 dispatch_id uuid NOT NULL
+3 recipient_id uuid NULLABLE
+4 item_id uuid NULLABLE
+5 kind text NOT NULL — Tipo do evento. Vocabulario inicial (text+CHECK): dispatch_*/recipient_*/item_* + note. Evolui por migration.
+6 payload jsonb NULLABLE — Dados do evento (livre). Nao guardar segredo/PII: a leitura por authenticated passa pela RLS do dispatch.
+7 correlation_id uuid NULLABLE
+8 created_at timestamp with time zone NOT NULL [DEFAULT/EXPRESSION DEFINED]
+Constraints:
+multiplix_events_kind_check: CHECK (kind = ANY (ARRAY['dispatch_created'::text, 'dispatch_scheduled'::text, 'dispatch_started'::text, 'dispatch_paused'::text, 'dispatch_resumed'::text, 'dispatch_completed'::text, 'dispatch_failed'::text, 'dispatch_cancelled'::text, 'recipient_queued'::text, 'recipient_claimed'::text, 'recipient_sent'::text, 'recipient_delivered'::text, 'recipient_read'::text, 'recipient_failed'::text, 'recipient_skipped'::text, 'recipient_cancelled'::text, 'recipient_outcome_unknown'::text, 'item_queued'::text, 'item_claimed'::text, 'item_sent'::text, 'item_delivered'::text, 'item_read'::text, 'item_failed'::text, 'item_rescheduled'::text, 'item_dead_letter'::text, 'item_skipped'::text, 'item_cancelled'::text, 'connection_at_risk'::text, 'connection_failure'::text, 'note'::text]))
+multiplix_events_dispatch_id_fkey: FOREIGN KEY (dispatch_id) REFERENCES multiplix_dispatches(id) ON DELETE RESTRICT
+multiplix_events_recipient_id_fkey: FOREIGN KEY (recipient_id) REFERENCES multiplix_recipients(id) ON DELETE RESTRICT
+multiplix_events_pkey: PRIMARY KEY (id)
+Políticas RLS (nome, operação, papéis e modo; as expressões permanecem no catálogo):
+"Users can view events of accessible dispatches" [command=SELECT; roles=authenticated; PERMISSIVE]
+
 | propriedade | valor |
 |---|---|
 | tipo | table |
@@ -57,7 +76,7 @@
 | comando | SELECT |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `(EXISTS ( SELECT 1    FROM multiplix_dispatches md   WHERE ((md.id = multiplix_events.dispatch_id) AND ((md.created_by = ( SELECT profiles.id            FROM profiles           WHERE (profiles.user_id = auth.uid())          LIMIT 1)) OR is_admin_or_supervisor(auth.uid())))))` |
+| USING | `(EXISTS ( SELECT 1    FROM multiplix_dispatches md   WHERE ((md.id = multiplix_events.dispatch_id) AND ((md.created_by = ( SELECT profiles.id            FROM profiles           WHERE (profiles.user_id = ( SELECT auth.uid() AS uid))          LIMIT 1)) OR is_admin_or_supervisor(( SELECT auth.uid() AS uid))))))` |
 | WITH CHECK |  |
 
 

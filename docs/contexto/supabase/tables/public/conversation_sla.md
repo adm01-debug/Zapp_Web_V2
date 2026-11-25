@@ -2,6 +2,28 @@
 
 > Instancia de SLA por contato: primeiro contato, primeira resposta (mark_first_response), resolucao e flags de violacao, ligada a sla_configurations.
 
+[CATALOGUE SEMÂNTICO DO PROJETO]
+Objeto: public.conversation_sla (tabela). RLS habilitada: t; RLS forçada: f.
+Colunas (ordem, tipo e nulabilidade):
+1 id uuid NOT NULL [DEFAULT/EXPRESSION DEFINED]
+2 contact_id uuid NULLABLE
+3 sla_configuration_id uuid NULLABLE
+4 first_message_at timestamp with time zone NOT NULL [DEFAULT/EXPRESSION DEFINED]
+5 first_response_at timestamp with time zone NULLABLE
+6 resolved_at timestamp with time zone NULLABLE
+7 first_response_breached boolean NULLABLE [DEFAULT/EXPRESSION DEFINED]
+8 resolution_breached boolean NULLABLE [DEFAULT/EXPRESSION DEFINED]
+9 created_at timestamp with time zone NOT NULL [DEFAULT/EXPRESSION DEFINED]
+10 updated_at timestamp with time zone NOT NULL [DEFAULT/EXPRESSION DEFINED]
+Constraints:
+conversation_sla_contact_id_fkey: FOREIGN KEY (contact_id) REFERENCES contacts(id) ON DELETE CASCADE
+conversation_sla_sla_configuration_id_fkey: FOREIGN KEY (sla_configuration_id) REFERENCES sla_configurations(id)
+conversation_sla_pkey: PRIMARY KEY (id)
+Políticas RLS (nome, operação, papéis e modo; as expressões permanecem no catálogo):
+"Admins can insert SLA" [command=INSERT; roles=authenticated; PERMISSIVE]
+"Admins can update SLA" [command=UPDATE; roles=authenticated; PERMISSIVE]
+conversation_sla_select_policy [command=SELECT; roles=authenticated; PERMISSIVE]
+
 | propriedade | valor |
 |---|---|
 | tipo | table |
@@ -61,7 +83,7 @@
 | tipo | PERMISSIVE |
 | roles | authenticated |
 | USING |  |
-| WITH CHECK | `is_admin_or_supervisor(auth.uid())` |
+| WITH CHECK | `is_admin_or_supervisor(( SELECT auth.uid() AS uid))` |
 
 ### `Admins can update SLA`
 
@@ -70,7 +92,7 @@
 | comando | UPDATE |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `is_admin_or_supervisor(auth.uid())` |
+| USING | `is_admin_or_supervisor(( SELECT auth.uid() AS uid))` |
 | WITH CHECK |  |
 
 ### `conversation_sla_select_policy`
@@ -80,7 +102,7 @@
 | comando | SELECT |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `(is_admin_or_supervisor(auth.uid()) OR (contact_id IN ( SELECT c.id    FROM contacts c   WHERE (c.assigned_to IN ( SELECT get_visible_agent_ids(auth.uid()) AS get_visible_agent_ids)))))` |
+| USING | `(is_admin_or_supervisor(( SELECT auth.uid() AS uid)) OR (contact_id IN ( SELECT c.id    FROM contacts c   WHERE (c.assigned_to IN ( SELECT get_visible_agent_ids(( SELECT auth.uid() AS uid)) AS get_visible_agent_ids)))))` |
 | WITH CHECK |  |
 
 

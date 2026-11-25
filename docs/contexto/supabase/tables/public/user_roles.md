@@ -1,6 +1,21 @@
 # public.user_roles
 
-> Papeis por usuario (admin, supervisor, agent, special_agent). Alteracoes auditadas em audit_logs por trigger.
+> Atribuições de papéis de autorização por auth.users.id. Fonte de verdade para papéis; alterações são auditadas por trigger. Não confundir com profiles.role, que é um campo legado em cache.
+
+[CATALOGUE SEMÂNTICO DO PROJETO]
+Objeto: public.user_roles (tabela). RLS habilitada: t; RLS forçada: f.
+Colunas (ordem, tipo e nulabilidade):
+1 id uuid NOT NULL [DEFAULT/EXPRESSION DEFINED]
+2 user_id uuid NOT NULL
+3 role app_role NOT NULL [DEFAULT/EXPRESSION DEFINED]
+4 created_at timestamp with time zone NOT NULL [DEFAULT/EXPRESSION DEFINED]
+Constraints:
+user_roles_user_id_fkey: FOREIGN KEY (user_id) REFERENCES auth.users(id) ON DELETE CASCADE
+user_roles_pkey: PRIMARY KEY (id)
+user_roles_user_id_role_key: UNIQUE (user_id, role)
+Políticas RLS (nome, operação, papéis e modo; as expressões permanecem no catálogo):
+"Only admins can manage roles" [command=ALL; roles=authenticated; PERMISSIVE]
+"Users view own roles, admins view all" [command=SELECT; roles=authenticated; PERMISSIVE]
 
 | propriedade | valor |
 |---|---|
@@ -51,8 +66,8 @@
 | comando | ALL |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `has_role(auth.uid(), 'admin'::app_role)` |
-| WITH CHECK | `has_role(auth.uid(), 'admin'::app_role)` |
+| USING | `has_role(( SELECT auth.uid() AS uid), 'admin'::app_role)` |
+| WITH CHECK | `has_role(( SELECT auth.uid() AS uid), 'admin'::app_role)` |
 
 ### `Users view own roles, admins view all`
 
@@ -61,7 +76,7 @@
 | comando | SELECT |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `((user_id = auth.uid()) OR is_admin_or_supervisor(auth.uid()))` |
+| USING | `((user_id = ( SELECT auth.uid() AS uid)) OR is_admin_or_supervisor(( SELECT auth.uid() AS uid)))` |
 | WITH CHECK |  |
 
 

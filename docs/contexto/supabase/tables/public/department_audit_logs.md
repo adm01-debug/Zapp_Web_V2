@@ -2,6 +2,24 @@
 
 > Immutable audit trail for department membership and config changes
 
+[CATALOGUE SEMÂNTICO DO PROJETO]
+Objeto: public.department_audit_logs (tabela). RLS habilitada: t; RLS forçada: f.
+Colunas (ordem, tipo e nulabilidade):
+1 id uuid NOT NULL [DEFAULT/EXPRESSION DEFINED]
+2 department_id uuid NOT NULL
+3 action text NOT NULL
+4 profile_id uuid NULLABLE
+5 details jsonb NOT NULL [DEFAULT/EXPRESSION DEFINED]
+6 created_at timestamp with time zone NOT NULL [DEFAULT/EXPRESSION DEFINED]
+7 profile_name text NULLABLE
+Constraints:
+department_audit_logs_action_check: CHECK (action = ANY (ARRAY['accept_invite'::text, 'create_invite'::text, 'join_department'::text, 'leave_department'::text, 'remove_member'::text, 'update_settings'::text, 'delete_department'::text, 'create_department'::text, 'update_role'::text, 'kick_member'::text, 'create_group'::text, 'delete_group'::text, 'whatsapp_updated'::text, 'access_requested'::text, 'invite_created'::text, 'invite_revoked'::text, 'invite_accepted'::text, 'member_added'::text, 'member_removed'::text, 'department_transferred'::text, 'add_member'::text, 'delete_invite'::text])) NOT VALID
+department_audit_logs_department_id_fkey: FOREIGN KEY (department_id) REFERENCES departments(id) ON DELETE CASCADE
+department_audit_logs_profile_id_fkey: FOREIGN KEY (profile_id) REFERENCES profiles(id) ON DELETE SET NULL
+department_audit_logs_pkey: PRIMARY KEY (id)
+Políticas RLS (nome, operação, papéis e modo; as expressões permanecem no catálogo):
+dept_audit_select_own_dept [command=SELECT; roles=authenticated; PERMISSIVE]
+
 | propriedade | valor |
 |---|---|
 | tipo | table |
