@@ -37,6 +37,7 @@ import {
   filterExtraBody,
   type AiProviderRow,
 } from "../_shared/ai-routing.ts";
+import { isAiProviderEnabled } from "../_shared/ai-feature-flags.ts";
 import {
   AiCapabilityError,
   assertCapabilities,
@@ -700,6 +701,17 @@ export async function handleAiProxy(req: Request): Promise<Response> {
 
     log.info("Routing AI call", { provider: providerName, type: providerType, use_for, model: routing.model });
 
+    // SL-010 / IA-009 §2.2 — provedor DESLIGADO não é tocado nem por esta rota.
+    // O gate do `ai-generate` cobre o roteador de produto; aqui é a rota de transporte,
+    // que integração externa e bundle velho chamam direto. Sem esta checagem o kill
+    // switch valeria só no caminho que ninguém usa para burlar. Diagnóstico (`test:true`)
+    // sai antes, de propósito: ele existe para medir um provedor específico.
+    if (!(await isAiProviderEnabled(providerType))) {
+      const motivo = `Provedor de IA (${providerType}) desligado em feature_flags.`;
+      log.warn("Provedor desligado por feature flag", { provider: providerName, type: providerType });
+      return jsonResponse({ error: { code: "AI_DISABLED", message: motivo } }, 503, req);
+    }
+
     // IA-036: capacidade declarada ANTES do dispatch — o cliente recebe o `code` da
     // capacidade (mesmo formato do erro de roteamento), não um 5xx opaco.
     try {
@@ -746,7 +758,10 @@ export async function handleAiProxy(req: Request): Promise<Response> {
       const target = rows.find((row) => row?.id === fallbackProviderId) ?? null;
       if (target === null) return null;
       // Mesma linha da origem e provedor desligado não são destinos aceitáveis.
-      if (target.id !== provider.id && target.is_active === true) return target;
+      // O destino do fallback também respeita o kill switch do §2.2.
+      if (target.id !== provider.id && target.is_active === true) {
+        return (await isAiProviderEnabled(target.provider_type)) ? target : null;
+      }
       return null;
     };
 
