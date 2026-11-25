@@ -18,35 +18,35 @@ Valores aproximados de propósito, para não gerar commits a cada coleta. Fora d
 |---|---|---|---|---|---|---|---|---|
 | public.email_attachments | ~71.5k | 138.6 MB | 61.6 MB | 76.9 MB | 0 | 0 | ~10 |  |
 | public.email_messages | ~3.2k | 58.4 MB | 4.2 MB | 17.9 MB | 0 | ~50 | ~230 |  |
-| public.messages | ~66.8k | 56.8 MB | 16.2 MB | 40.5 MB | ~980 | ~20 | ~473.9k | 2026-11-24 |
+| public.messages | ~66.8k | 56.8 MB | 16.2 MB | 40.5 MB | ~980 | ~20 | ~475.8k | 2026-11-24 |
 | public.audit_logs | ~89.1k | 38.7 MB | 25.5 MB | 13.2 MB | 1 | 0 | ~20 |  |
 | public.ai_usage_logs | ~13.3k | 9.8 MB | 7.4 MB | 2.4 MB | 0 | ~20 | ~10.8k | 2026-11-24 |
-| public.ai_jobs | ~11.6k | 9.1 MB | 6.6 MB | 2.5 MB | ~2.1k | ~7.9k | ~75.2k | 2026-11-24 |
+| public.ai_jobs | ~11.6k | 9.1 MB | 6.6 MB | 2.5 MB | ~2.1k | ~7.9k | ~75.5k | 2026-11-24 |
 | public.copilot_insights | ~11.6k | 5.0 MB | 3.8 MB | 1.1 MB | 0 | 0 | 6 | 2026-11-23 |
 | public.contacts | ~4.7k | 4.4 MB | 1.7 MB | 2.6 MB | ~140 | ~100 | ~9.3M | 2026-11-24 |
-| public.talkx_recipients | ~8.2k | 3.5 MB | 1.2 MB | 2.3 MB | 0 | 0 | ~87.4k |  |
-| public.notifications | ~2.2k | 2.5 MB | 1.7 MB | 720.0 KB | ~440 | 0 | ~19.4k |  |
+| public.talkx_recipients | ~8.2k | 3.5 MB | 1.2 MB | 2.3 MB | 0 | 0 | ~87.7k |  |
+| public.notifications | ~2.2k | 2.5 MB | 1.7 MB | 720.0 KB | ~440 | 0 | ~19.5k |  |
 | public.email_threads | ~2.5k | 2.2 MB | 1.5 MB | 680.0 KB | 0 | ~170 | ~101.3k |  |
 | _bkp_261023.schema_migrations | ~920 | 1.5 MB | 1.0 MB | 0 B | 0 | ~10 |  |  |
 | public.conversation_events | ~3.3k | 1.4 MB | 656.0 KB | 784.0 KB | 0 | 0 | ~1.1k |  |
 | public.ai_budget_reservations | ~3.1k | 1.2 MB | 624.0 KB | 536.0 KB | ~210 | 0 | ~9.7k | 2026-11-24 |
 | _bkp_261023.contacts | ~3.7k | 1.2 MB | 1.1 MB | 0 B | 0 | ~10 |  |  |
-| public.conversation_sla | ~2.5k | 944.0 KB | 472.0 KB | 448.0 KB | 4 | ~10 | ~167.6k |  |
-| public.connection_health_logs | ~2k | 624.0 KB | 232.0 KB | 352.0 KB | ~360 | 0 | ~1.8k | 2026-11-23 |
+| public.conversation_sla | ~2.5k | 944.0 KB | 472.0 KB | 448.0 KB | 4 | ~10 | ~168.7k |  |
+| public.connection_health_logs | ~2k | 624.0 KB | 232.0 KB | 352.0 KB | ~370 | 0 | ~1.8k | 2026-11-23 |
 | _bkp_261023.functions_before | ~360 | 600.0 KB | 512.0 KB | 0 B | 0 | 9 |  |  |
 | public.stickers | ~1.2k | 568.0 KB | 464.0 KB | 72.0 KB | 3 | ~180 | 1 |  |
 | public.copilot_sessions | ~730 | 552.0 KB | 368.0 KB | 144.0 KB | ~60 | 2 | ~19.1k | 2026-11-25 |
 | public.crm_sync_outbox | ~460 | 472.0 KB | 200.0 KB | 232.0 KB | 0 | ~10 | 0 |  |
 | public.contact_deletion_audit | ~720 | 384.0 KB | 176.0 KB | 176.0 KB | 0 | 1 | 2 |  |
-| public.talkx_campaigns | ~10 | 336.0 KB | 8.0 KB | 320.0 KB | 0 | ~10.2k | ~34.5k |  |
+| public.talkx_campaigns | ~10 | 336.0 KB | 8.0 KB | 320.0 KB | 0 | ~10.6k | ~34.5k |  |
 | public.warroom_alerts | ~640 | 280.0 KB | 152.0 KB | 88.0 KB | ~80 | 2 | ~3.3k | 2026-11-21 |
 | public.conversation_tasks | 1 | 272.0 KB | 8.0 KB | 224.0 KB | 0 | ~8.5k | 0 |  |
 | _bkp_261023.policies_before | ~460 | 264.0 KB | 256.0 KB | 0 B | 0 | 9 |  |  |
-| public.security_alerts | ~120 | 240.0 KB | 144.0 KB | 64.0 KB | 0 | 0 | ~23.4k |  |
+| public.security_alerts | ~120 | 240.0 KB | 144.0 KB | 64.0 KB | 0 | 0 | ~23.6k |  |
 | public.audio_memes | ~540 | 232.0 KB | 144.0 KB | 56.0 KB | 0 | 0 | 1 |  |
 | public.message_reactions | ~110 | 216.0 KB | 16.0 KB | 160.0 KB | 0 | ~460 | ~40 |  |
 | public.whatsapp_groups | ~190 | 216.0 KB | 120.0 KB | 64.0 KB | 0 | ~160 | 0 |  |
-| public.whatsapp_connections | 2 | 200.0 KB | 32.0 KB | 96.0 KB | ~30 | ~3k | ~59.8k |  |
+| public.whatsapp_connections | 2 | 200.0 KB | 32.0 KB | 96.0 KB | ~10 | ~3k | ~60.2k |  |
 | ops.hermes_change_log | 0 | 184.0 KB | 16.0 KB | 64.0 KB | 0 | 0 | 0 |  |
 | public.user_sessions | ~120 | 184.0 KB | 48.0 KB | 96.0 KB | 3 | ~10 | ~20 |  |
 | public.calls | ~20 | 168.0 KB | 16.0 KB | 120.0 KB | 4 | ~3.2k | ~10 |  |
@@ -67,7 +67,7 @@ Valores aproximados de propósito, para não gerar commits a cada coleta. Fora d
 | public.goals_configurations | 0 | 96.0 KB | 8.0 KB | 80.0 KB | 3 | 0 | ~610 |  |
 | public.login_attempts | 3 | 96.0 KB | 8.0 KB | 48.0 KB | 0 | ~20 | 0 |  |
 | public.team_messages | 2 | 96.0 KB | 8.0 KB | 80.0 KB | 0 | ~210 | 0 |  |
-| public.edge_rate_limits | ~10 | 88.0 KB | 32.0 KB | 16.0 KB | ~20 | ~530 | ~71.7k | 2026-11-25 |
+| public.edge_rate_limits | ~10 | 88.0 KB | 32.0 KB | 16.0 KB | ~30 | ~540 | ~71.7k | 2026-11-25 |
 | public.ai_model_prices | 0 | 80.0 KB | 8.0 KB | 64.0 KB | 0 | 9 | ~216k |  |
 | public.talkx_ai_requests | 0 | 80.0 KB | 8.0 KB | 64.0 KB | 3 | ~10 | ~20 |  |
 | public.talkx_segments | 1 | 80.0 KB | 8.0 KB | 64.0 KB | 0 | ~10 | 0 |  |
@@ -79,21 +79,21 @@ Valores aproximados de propósito, para não gerar commits a cada coleta. Fora d
 | public.pinned_conversations | 0 | 72.0 KB | 8.0 KB | 64.0 KB | 0 | 0 | ~250 |  |
 | public.queue_members | 4 | 72.0 KB | 8.0 KB | 64.0 KB | 0 | ~9.2k | ~10 |  |
 | public.team_conversation_members | 4 | 72.0 KB | 8.0 KB | 56.0 KB | 0 | ~490 | ~1.2k |  |
-| public.agent_presence | 6 | 64.0 KB | 8.0 KB | 16.0 KB | ~20 | ~11k | ~7.2k | 2026-11-25 |
+| public.agent_presence | 6 | 64.0 KB | 8.0 KB | 16.0 KB | ~30 | ~11.1k | ~7.3k | 2026-11-25 |
 | public.ai_conversation_tags | 0 | 64.0 KB | 8.0 KB | 48.0 KB | 0 | 0 | 0 |  |
 | public.catalog_rate_limits | 4 | 64.0 KB | 8.0 KB | 16.0 KB | 0 | 0 | 0 |  |
 | public.csat_surveys | 0 | 64.0 KB | 0 B | 56.0 KB | 0 | 6 | ~4k |  |
 | public.email_labels | ~20 | 64.0 KB | 8.0 KB | 48.0 KB | 0 | ~10 | 0 |  |
-| public.link_preview_cache | 0 | 64.0 KB | 8.0 KB | 32.0 KB | ~20 | ~40 | ~30 |  |
+| public.link_preview_cache | 1 | 64.0 KB | 8.0 KB | 32.0 KB | ~30 | ~40 | ~30 |  |
 | public.performance_snapshots | 0 | 64.0 KB | 8.0 KB | 48.0 KB | 0 | 0 | 1 |  |
 | public.reconnection_logs | 0 | 64.0 KB | 8.0 KB | 48.0 KB | 0 | 0 | 5 |  |
-| public.security_acl_alerts | 0 | 64.0 KB | 8.0 KB | 48.0 KB | 0 | 0 | ~790 |  |
+| public.security_acl_alerts | 0 | 64.0 KB | 8.0 KB | 48.0 KB | 0 | 0 | ~800 |  |
 | public.sla_rules | 0 | 64.0 KB | 0 B | 56.0 KB | 0 | 2 | ~990 |  |
 | public.talkx_suppression_reasons | 6 | 64.0 KB | 8.0 KB | 48.0 KB | 0 | 1 | 0 |  |
 | public.whatsapp_flows | 0 | 64.0 KB | 8.0 KB | 48.0 KB | 0 | 1 | 1 |  |
 | public.instance_pauses | 0 | 56.0 KB | 0 B | 48.0 KB | 0 | 3 | 7 |  |
 | public.link_preview_cache_metrics | ~50 | 56.0 KB | 16.0 KB | 16.0 KB | 0 | 0 | 0 |  |
-| public.multiplix_dispatches | 0 | 56.0 KB | 0 B | 48.0 KB | 0 | ~150 | ~44.7k |  |
+| public.multiplix_dispatches | 0 | 56.0 KB | 0 B | 48.0 KB | 0 | ~150 | ~44.8k |  |
 | public.role_permissions | ~60 | 56.0 KB | 8.0 KB | 48.0 KB | 0 | ~460 | 0 |  |
 | public.team_message_receipts | 0 | 56.0 KB | 0 B | 48.0 KB | 0 | 1 | 5 |  |
 | public.user_roles | ~10 | 56.0 KB | 8.0 KB | 48.0 KB | 1 | ~12.4M | ~810 |  |
@@ -109,12 +109,12 @@ Valores aproximados de propósito, para não gerar commits a cada coleta. Fora d
 | public.departments | 0 | 48.0 KB | 8.0 KB | 32.0 KB | 0 | 1 | ~70 |  |
 | public.feature_flags | 0 | 48.0 KB | 8.0 KB | 32.0 KB | 0 | ~80 | ~16.9k |  |
 | public.geo_blocking_settings | 1 | 48.0 KB | 8.0 KB | 32.0 KB | 0 | ~380 | 0 |  |
-| public.global_settings | 0 | 48.0 KB | 8.0 KB | 32.0 KB | 0 | 6 | ~10.5k |  |
-| public.multiplix_recipients | 0 | 48.0 KB | 0 B | 40.0 KB | 0 | ~10.2k | ~20.6k |  |
+| public.global_settings | 0 | 48.0 KB | 8.0 KB | 32.0 KB | 0 | 6 | ~10.6k |  |
+| public.multiplix_recipients | 0 | 48.0 KB | 0 B | 40.0 KB | 0 | ~10.3k | ~20.6k |  |
 | public.permissions | 0 | 48.0 KB | 8.0 KB | 32.0 KB | 0 | ~150 | ~9.6k |  |
 | public.products | 0 | 48.0 KB | 0 B | 40.0 KB | 0 | 3 | 0 |  |
 | public.queues | 1 | 48.0 KB | 8.0 KB | 32.0 KB | 0 | ~2.5k | 1 |  |
-| public.scheduled_messages | 0 | 48.0 KB | 0 B | 40.0 KB | 0 | ~8k | ~8k |  |
+| public.scheduled_messages | 0 | 48.0 KB | 0 B | 40.0 KB | 0 | ~8k | ~8.1k |  |
 | public.sla_alert_events | 0 | 48.0 KB | 0 B | 40.0 KB | 0 | 6 | 1 |  |
 | public.sla_configurations | 3 | 48.0 KB | 8.0 KB | 32.0 KB | 0 | ~810 | 0 |  |
 | public.talkx_conversions | 0 | 48.0 KB | 0 B | 40.0 KB | 0 | 8 | 0 |  |
@@ -139,8 +139,8 @@ Valores aproximados de propósito, para não gerar commits a cada coleta. Fora d
 | public.search_events | 0 | 40.0 KB | 0 B | 32.0 KB | 0 | 0 | 6 |  |
 | public.sicoob_contact_mapping | 0 | 40.0 KB | 0 B | 32.0 KB | 0 | 0 | 1 |  |
 | public.talkx_contact_attributes | 0 | 40.0 KB | 0 B | 32.0 KB | 0 | 0 | 0 |  |
-| public.talkx_delivery_log | 0 | 40.0 KB | 0 B | 32.0 KB | 0 | 5 | 0 |  |
-| public.talkx_link_clicks | 0 | 40.0 KB | 0 B | 32.0 KB | 0 | 5 | 3 |  |
+| public.talkx_delivery_log | 0 | 40.0 KB | 0 B | 32.0 KB | 0 | 6 | 0 |  |
+| public.talkx_link_clicks | 0 | 40.0 KB | 0 B | 32.0 KB | 0 | 6 | 3 |  |
 | public.talkx_test_sends | 0 | 40.0 KB | 0 B | 32.0 KB | 0 | 5 | 0 |  |
 | public.team_message_reactions | 0 | 40.0 KB | 0 B | 32.0 KB | 0 | 0 | 2 |  |
 | public.whisper_messages | 0 | 40.0 KB | 0 B | 32.0 KB | 0 | 0 | 2 |  |
@@ -182,7 +182,7 @@ Valores aproximados de propósito, para não gerar commits a cada coleta. Fora d
 | public.talkx_data_jobs | 0 | 32.0 KB | 8.0 KB | 16.0 KB | 0 | 0 | 0 |  |
 | public.talkx_segment_fields | 0 | 32.0 KB | 8.0 KB | 16.0 KB | 0 | 0 | 0 |  |
 | public.talkx_segment_versions | 0 | 32.0 KB | 0 B | 24.0 KB | 0 | 0 | 1 |  |
-| public.talkx_settings | 0 | 32.0 KB | 8.0 KB | 16.0 KB | 7 | 6 | ~28.5k |  |
+| public.talkx_settings | 0 | 32.0 KB | 8.0 KB | 16.0 KB | 8 | 6 | ~28.6k |  |
 | public.talkx_storage_purge_queue | 0 | 32.0 KB | 0 B | 24.0 KB | 0 | 1 | ~8k |  |
 | public.talkx_template_variants | 0 | 32.0 KB | 0 B | 24.0 KB | 0 | 0 | 0 |  |
 | public.voice_command_logs | 0 | 32.0 KB | 0 B | 24.0 KB | 0 | 0 | 1 |  |
@@ -214,7 +214,7 @@ Valores aproximados de propósito, para não gerar commits a cada coleta. Fora d
 | public.scheduled_report_configs | 0 | 24.0 KB | 0 B | 16.0 KB | 0 | ~2.6k | 1 |  |
 | public.talkx_help_views | 0 | 24.0 KB | 0 B | 16.0 KB | 0 | 0 | 0 |  |
 | public.talkx_segment_library_history | 0 | 24.0 KB | 8.0 KB | 16.0 KB | 0 | 0 | 8 |  |
-| public.talkx_test_send_claims | 0 | 24.0 KB | 0 B | 16.0 KB | 0 | 0 | 5 |  |
+| public.talkx_test_send_claims | 0 | 24.0 KB | 0 B | 16.0 KB | 0 | 0 | 6 |  |
 | public.training_sessions | 0 | 24.0 KB | 0 B | 16.0 KB | 0 | 1 | 1 |  |
 | public.user_service_accounts | 0 | 24.0 KB | 0 B | 16.0 KB | 0 | 0 | 1 |  |
 | public.webhook_rate_limits | 0 | 24.0 KB | 0 B | 16.0 KB | 0 | 0 | 0 |  |
@@ -289,21 +289,21 @@ _nenhum_
 ## Consultas mais custosas (pg_stat_statements, desde o último reset)
 | role | chamadas (~) | total ms (~) | média ms | query |
 |---|---|---|---|---|
-| snapshot_reader | ~130 | ~120.4k | 905.60 | `SELECT jobid, runid, status, start_time, end_time, EXTRACT($2 FROM (end_time - start_time))::numeric(10,2) AS seconds, left(return_message, $3) AS return_message FROM (SELECT *, row_number() OVER (PARTITION BY jobid ORDE` |
-| snapshot_reader | ~130 | ~56.8k | 427.17 | `SELECT table_schema AS schema, table_name AS "table", column_name AS "column", grantee, string_agg(privilege_type, $1 ORDER BY privilege_type) AS privileges FROM information_schema.column_privileges cp WHERE grantee NOT ` |
-| snapshot_reader | ~130 | ~19.5k | 146.81 | `SELECT e.extname AS name, e.extversion AS version, n.nspname AS schema, (SELECT default_version FROM pg_available_extensions a WHERE a.name = e.extname) AS available_version FROM pg_extension e JOIN pg_namespace n ON n.o` |
-| snapshot_reader | ~130 | ~16k | 120.06 | `SELECT n.nspname AS schema, p.proname AS name, pg_get_function_identity_arguments(p.oid) AS args, pg_get_function_result(p.oid) AS returns, l.lanname AS language, CASE p.prokind WHEN $1 THEN $2 WHEN $3 THEN $4 WHEN $5 TH` |
-| snapshot_reader | ~130 | ~15.1k | 113.58 | `SELECT n.nspname AS schema, c.relname AS name, GREATEST(c.reltuples::bigint, $1) AS est_rows, pg_total_relation_size(c.oid) AS total_bytes, pg_relation_size(c.oid) AS heap_bytes, pg_indexes_size(c.oid) AS index_bytes, s.` |
-| snapshot_reader | ~130 | ~12.6k | 94.95 | `SELECT n.nspname AS schema, c.relname AS "table", a.attnum AS position, a.attname AS name, format_type(a.atttypid, a.atttypmod) AS type, NOT a.attnotnull AS nullable, pg_get_expr(d.adbin, d.adrelid) AS "default", NULLIF(` |
-| snapshot_reader | ~130 | ~11.6k | 86.89 | `SELECT version, name, statements FROM supabase_migrations.schema_migrations ORDER BY version` |
-| snapshot_reader | ~130 | ~9.4k | 71.03 | `SELECT n.nspname AS schema, t.relname AS "table", ic.relname AS name, pg_get_indexdef(ix.indexrelid) AS definition, ix.indisunique AS is_unique, ix.indisprimary AS is_primary, ix.indisvalid AS is_valid, am.amname AS meth` |
-| snapshot_reader | ~130 | ~7.3k | 54.71 | `SELECT n.nspname AS schema, c.relname AS sequence, r.rolname AS grantee, concat_ws($1, CASE WHEN has_sequence_privilege(r.oid, c.oid, $2) THEN $3 END, CASE WHEN has_sequence_privilege(r.oid, c.oid, $4) THEN $5 END, CASE ` |
-| snapshot_reader | ~130 | ~7.2k | 53.80 | `SELECT n.nspname AS schema, c.relname AS name, CASE c.relkind WHEN $1 THEN $2 ELSE $3 END AS kind, pg_get_viewdef(c.oid, $4) AS definition, c.reloptions AS options, pg_get_userbyid(c.relowner) AS owner, obj_description(c` |
-| snapshot_reader | ~130 | ~7.1k | 53.48 | `SELECT table_schema AS schema, table_name AS "table", grantee, string_agg(privilege_type, $1 ORDER BY privilege_type) AS privileges FROM information_schema.role_table_grants WHERE grantee NOT IN ($2, $3, $4, $5, $6, $7, ` |
-| snapshot_reader | ~130 | ~7.1k | 53.31 | `SELECT n.nspname AS schema, c.relname AS "table", con.conname AS name, CASE con.contype WHEN $1 THEN $2 WHEN $3 THEN $4 WHEN $5 THEN $6 WHEN $7 THEN $8 WHEN $9 THEN $10 ELSE con.contype::text END AS type, pg_get_constrai` |
-| snapshot_reader | ~130 | ~5.5k | 40.99 | `SELECT n.nspname AS schema, c.relname AS name, CASE c.relkind WHEN $1 THEN $2 WHEN $3 THEN $4 WHEN $5 THEN $6 END AS kind, c.relrowsecurity AS rls_enabled, c.relforcerowsecurity AS rls_forced, pg_get_userbyid(c.relowner)` |
-| snapshot_reader | ~130 | ~5k | 37.62 | `SELECT n.nspname AS schema, p.proname AS name, pg_get_function_identity_arguments(p.oid) AS args FROM pg_proc p JOIN pg_namespace n ON n.oid = p.pronamespace WHERE p.prosecdef AND n.nspname NOT IN ($1, $2, $3, $4, $5, $6` |
-| snapshot_reader | ~130 | ~4.7k | 35.51 | `SELECT schemaname AS schema, tablename AS "table", policyname AS name, permissive, roles, cmd, qual AS "using", with_check FROM pg_policies WHERE schemaname NOT IN ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13,` |
+| snapshot_reader | ~130 | ~122.1k | 910.90 | `SELECT jobid, runid, status, start_time, end_time, EXTRACT($2 FROM (end_time - start_time))::numeric(10,2) AS seconds, left(return_message, $3) AS return_message FROM (SELECT *, row_number() OVER (PARTITION BY jobid ORDE` |
+| snapshot_reader | ~130 | ~57.2k | 427.05 | `SELECT table_schema AS schema, table_name AS "table", column_name AS "column", grantee, string_agg(privilege_type, $1 ORDER BY privilege_type) AS privileges FROM information_schema.column_privileges cp WHERE grantee NOT ` |
+| snapshot_reader | ~130 | ~19.7k | 146.73 | `SELECT e.extname AS name, e.extversion AS version, n.nspname AS schema, (SELECT default_version FROM pg_available_extensions a WHERE a.name = e.extname) AS available_version FROM pg_extension e JOIN pg_namespace n ON n.o` |
+| snapshot_reader | ~130 | ~16.1k | 120.45 | `SELECT n.nspname AS schema, p.proname AS name, pg_get_function_identity_arguments(p.oid) AS args, pg_get_function_result(p.oid) AS returns, l.lanname AS language, CASE p.prokind WHEN $1 THEN $2 WHEN $3 THEN $4 WHEN $5 TH` |
+| snapshot_reader | ~130 | ~15.2k | 113.72 | `SELECT n.nspname AS schema, c.relname AS name, GREATEST(c.reltuples::bigint, $1) AS est_rows, pg_total_relation_size(c.oid) AS total_bytes, pg_relation_size(c.oid) AS heap_bytes, pg_indexes_size(c.oid) AS index_bytes, s.` |
+| snapshot_reader | ~130 | ~12.7k | 95.09 | `SELECT n.nspname AS schema, c.relname AS "table", a.attnum AS position, a.attname AS name, format_type(a.atttypid, a.atttypmod) AS type, NOT a.attnotnull AS nullable, pg_get_expr(d.adbin, d.adrelid) AS "default", NULLIF(` |
+| snapshot_reader | ~130 | ~11.7k | 87.39 | `SELECT version, name, statements FROM supabase_migrations.schema_migrations ORDER BY version` |
+| snapshot_reader | ~130 | ~9.5k | 71.00 | `SELECT n.nspname AS schema, t.relname AS "table", ic.relname AS name, pg_get_indexdef(ix.indexrelid) AS definition, ix.indisunique AS is_unique, ix.indisprimary AS is_primary, ix.indisvalid AS is_valid, am.amname AS meth` |
+| snapshot_reader | ~130 | ~7.3k | 54.69 | `SELECT n.nspname AS schema, c.relname AS sequence, r.rolname AS grantee, concat_ws($1, CASE WHEN has_sequence_privilege(r.oid, c.oid, $2) THEN $3 END, CASE WHEN has_sequence_privilege(r.oid, c.oid, $4) THEN $5 END, CASE ` |
+| snapshot_reader | ~130 | ~7.2k | 53.93 | `SELECT n.nspname AS schema, c.relname AS name, CASE c.relkind WHEN $1 THEN $2 ELSE $3 END AS kind, pg_get_viewdef(c.oid, $4) AS definition, c.reloptions AS options, pg_get_userbyid(c.relowner) AS owner, obj_description(c` |
+| snapshot_reader | ~130 | ~7.2k | 53.46 | `SELECT table_schema AS schema, table_name AS "table", grantee, string_agg(privilege_type, $1 ORDER BY privilege_type) AS privileges FROM information_schema.role_table_grants WHERE grantee NOT IN ($2, $3, $4, $5, $6, $7, ` |
+| snapshot_reader | ~130 | ~7.1k | 53.33 | `SELECT n.nspname AS schema, c.relname AS "table", con.conname AS name, CASE con.contype WHEN $1 THEN $2 WHEN $3 THEN $4 WHEN $5 THEN $6 WHEN $7 THEN $8 WHEN $9 THEN $10 ELSE con.contype::text END AS type, pg_get_constrai` |
+| snapshot_reader | ~130 | ~5.6k | 41.45 | `SELECT n.nspname AS schema, c.relname AS name, CASE c.relkind WHEN $1 THEN $2 WHEN $3 THEN $4 WHEN $5 THEN $6 END AS kind, c.relrowsecurity AS rls_enabled, c.relforcerowsecurity AS rls_forced, pg_get_userbyid(c.relowner)` |
+| snapshot_reader | ~130 | ~5k | 37.61 | `SELECT n.nspname AS schema, p.proname AS name, pg_get_function_identity_arguments(p.oid) AS args FROM pg_proc p JOIN pg_namespace n ON n.oid = p.pronamespace WHERE p.prosecdef AND n.nspname NOT IN ($1, $2, $3, $4, $5, $6` |
+| snapshot_reader | ~130 | ~4.8k | 35.55 | `SELECT schemaname AS schema, tablename AS "table", policyname AS name, permissive, roles, cmd, qual AS "using", with_check FROM pg_policies WHERE schemaname NOT IN ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13,` |
 
 
 ## Conexões

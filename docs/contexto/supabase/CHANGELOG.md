@@ -2,6 +2,11 @@
 
 Diff semântico gerado a cada coleta em que algo mudou.
 
+## 2026-11-25 03:16 UTC
+
+- **realtime** adicionado (1): `supabase_realtime_messages_publication:realtime.messages_2026_11_28`
+- **realtime** removido (1): `supabase_realtime_messages_publication:realtime.messages_2026_11_21`
+
 ## 2026-11-24 22:11 UTC
 
 - **tabelas** alterado (225): `_bkp_261023.agent_stats`, `_bkp_261023.contacts`, `_bkp_261023.csat_surveys`, `_bkp_261023.functions_before`, `_bkp_261023.global_settings`, `_bkp_261023.policies_before`, `_bkp_261023.schema_migrations`, `_bkp_261023.team_messages`, `_bkp_261023.user_settings`, `ops.hermes_change_log`, `public._rb_message_reactions_contato_20261007001008`, `public._rb_message_reactions_one_per_agent_20261107121000`, `public._zapp_fn_before`, `public._zapp_mig133_log`, `public.agent_achievements`, `public.agent_mini_game_xp_daily`, `public.agent_presence`, `public.agent_skills`, `public.agent_stats`, `public.agent_visibility_grants`, `public.ai_budget_reservations`, `public.ai_conversation_tags`, `public.ai_jobs`, `public.ai_model_prices`, `public.ai_providers`, `public.ai_usage_logs`, `public.ai_usage_outbox`, `public.allowed_countries`, `public.app_settings`, `public.assistant_profiles`, `public.audio_meme_favorites`, `public.audio_memes`, `public.audit_logs`, `public.auto_close_config`, `public.automations`, `public.away_message_log`, `public.away_messages`, `public.blocked_countries`, `public.blocked_ips`, `public.business_hours` … (+185)
