@@ -185,6 +185,27 @@ const PRODUCT_FIELDS = `id, name, description, short_description, sku, sale_pric
 let catalogStatsCache: { data: unknown; expiresAt: number } | null = null;
 const CATALOG_STATS_TTL_MS = 60_000;
 
+// O RPC `zapp_catalog_stats` conta `new_30d` somando a janela de 30 dias sobre
+// created_at ao flag `is_new` — regra que o Promo Gifts V4 já aposentou (ver o
+// comentário da regra de novidade no topo deste módulo). Para o card
+// "Novidades" não divergir da grade, a contagem é refeita aqui com o MESMO
+// predicado de `list_products` (only_active + is_new + expiração futura).
+// Falha na contagem mantém o número do RPC: o card nunca zera por erro.
+export async function aplicarContagemCanonicaDeNovidades(
+  extClient: SupabaseClient,
+  stats: unknown,
+  nowIso: string,
+): Promise<unknown> {
+  const { count, error } = await extClient
+    .from("products")
+    .select("id", { count: "exact", head: true })
+    .eq("is_active", true)
+    .eq("is_new", true)
+    .gt("novelty_expires_at", nowIso);
+  if (error || typeof count !== "number") return stats;
+  return { ...(stats as Record<string, unknown>), new_30d: count };
+}
+
 // CT-19: o contador NAO mora mais aqui. Ele e uma linha por (usuario, acao) na tabela
 // public.catalog_rate_limits, checada atomicamente pela funcao catalog_rate_limit_hit.
 // O Map em memoria por isolate nao limitava sob concorrencia (medido: 61, 120 e 300
@@ -197,9 +218,16 @@ const CATALOG_STATS_TTL_MS = 60_000;
 export const RATE_LIMIT = 60;
 export const RATE_WINDOW_MS = 60_000;
 
-/** Janela do filtro "novos" (`is_new` em list_products): 30 dias, fronteira
- * inclusiva (created_at >= corte). */
-const NEW_PRODUCT_WINDOW_MS = 30 * 24 * 60 * 60 * 1000;
+// Regra de "novidade" do catálogo — a mesma do Promo Gifts V4
+// (src/hooks/products/novelty-core.ts, `applyNoveltyPredicate`): a fonte da
+// verdade é o banco de produtos, `is_new` + expiração futura em
+// `novelty_expires_at` (coluna canônica; `is_new_expires_at` é cópia de
+// compatibilidade mantida em sync pelo trigger trg_sync_novelty_expires_at).
+// Exigir expiração futura respeita o desligamento manual do flag e se
+// auto-corrige entre execuções do cron cleanup-novelties. NÃO usar janela de
+// 30 dias sobre created_at: medido em 2026-11-25 no banco de produtos, ela
+// escondia 107 das 222 novidades reais (novidade detectada ~21 dias depois da
+// criação do produto).
 
 /**
  * CT-19 (E26.3) — limite POR AÇÃO. `list_products` é a ação que abre a tela e
@@ -289,8 +317,8 @@ export interface CatalogHandlerDeps {
   localClient?: SupabaseClient;
   /** Substitui o client do catálogo externo (PROMOGIFTS_*). */
   extClient?: SupabaseClient;
-  /** Relógio injetável: o teste fixa o instante e prova o valor exato do
-   * corte de 30 dias do filtro `is_new` (fronteira inclusiva, UTC/ISO). */
+  /** Relógio injetável: o teste fixa o instante e prova o valor exato da
+   * fronteira de expiração do filtro `is_new` (UTC/ISO). */
   now?: () => Date;
 }
 
@@ -383,16 +411,14 @@ export async function promogiftsCatalogHandler(
         price_min, price_max, color, material, has_engraving,
       } = paramsParse.data;
 
-      // Janela inclusiva de 30 dias do filtro "novos": o contrato público
-      // continua `is_new: true`, mas o predicado exige também
-      // created_at >= agora-30d — produto marcado como novo há mais de 30
-      // dias não deve aparecer no filtro new_30d (listagem e exportação).
-      // O corte é calculado UMA vez por requisição, em UTC/ISO, fora do
-      // buildProductsQuery: a consulta paginada e a contagem de fallback do
-      // PGRST103 usam exatamente o mesmo instante de corte.
-      const newProductsCutoffIso = new Date(
-        (deps.now?.() ?? new Date()).getTime() - NEW_PRODUCT_WINDOW_MS,
-      ).toISOString();
+      // Fronteira de expiração do filtro "novos": o contrato público continua
+      // `is_new: true`, mas o predicado exige também novelty_expires_at >
+      // agora — novidade vencida sai da listagem e da exportação mesmo antes
+      // do cron cleanup-novelties desligar a flag. O instante é calculado UMA
+      // vez por requisição, em UTC/ISO, fora do buildProductsQuery: a consulta
+      // paginada e a contagem de fallback do PGRST103 usam exatamente a mesma
+      // fronteira.
+      const noveltyCutoffIso = (deps.now?.() ?? new Date()).toISOString();
 
       // Categoria + descendentes: path e um caminho materializado por
       // uuid ("/pai/filho/"); o proprio id ja e prefixo do path dos filhos.
@@ -417,7 +443,7 @@ export async function promogiftsCatalogHandler(
           q = categoryIds && categoryIds.length > 0 ? q.in("category_id", categoryIds) : q.eq("category_id", category_id);
         }
         if (is_featured) q = q.eq("is_featured", true);
-        if (is_new) q = q.eq("is_new", true).gte("created_at", newProductsCutoffIso);
+        if (is_new) q = q.eq("is_new", true).gt("novelty_expires_at", noveltyCutoffIso);
         if (is_bestseller) q = q.eq("is_bestseller", true);
         if (is_kit) q = q.eq("is_kit", true);
         if (allows_personalization) q = q.eq("allows_personalization", true);
@@ -546,8 +572,13 @@ export async function promogiftsCatalogHandler(
       if (catErr) return externalDatabaseErrorResponse(catErr, req, log);
       if (supErr) return externalDatabaseErrorResponse(supErr, req, log);
       if (statsErr) return externalDatabaseErrorResponse(statsErr, req, log);
-      catalogStatsCache = { data: stats, expiresAt: Date.now() + CATALOG_STATS_TTL_MS };
-      return jsonRes({ data: { categories, suppliers, stats }, meta: { cached: false } }, 200, req);
+      const statsCanonicos = await aplicarContagemCanonicaDeNovidades(
+        extClient,
+        stats,
+        (deps.now?.() ?? new Date()).toISOString(),
+      );
+      catalogStatsCache = { data: statsCanonicos, expiresAt: Date.now() + CATALOG_STATS_TTL_MS };
+      return jsonRes({ data: { categories, suppliers, stats: statsCanonicos }, meta: { cached: false } }, 200, req);
     }
 
     if (action === "catalog_stats") {
@@ -556,8 +587,13 @@ export async function promogiftsCatalogHandler(
       }
       const { data, error } = await extClient.rpc("zapp_catalog_stats");
       if (error) return externalDatabaseErrorResponse(error, req, log);
-      catalogStatsCache = { data, expiresAt: Date.now() + CATALOG_STATS_TTL_MS };
-      return jsonRes({ data, meta: { cached: false } }, 200, req);
+      const stats = await aplicarContagemCanonicaDeNovidades(
+        extClient,
+        data,
+        (deps.now?.() ?? new Date()).toISOString(),
+      );
+      catalogStatsCache = { data: stats, expiresAt: Date.now() + CATALOG_STATS_TTL_MS };
+      return jsonRes({ data: stats, meta: { cached: false } }, 200, req);
     }
 
     return jsonRes({ error: "Invalid action" }, 400, req);

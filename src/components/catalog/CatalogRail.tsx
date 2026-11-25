@@ -40,7 +40,7 @@ export const CATALOG_RAIL_SYNC_ALERT_DAYS = 3;
 export const CATALOG_RAIL_TIPS = [
   'Use "Enviar" no card para mandar o produto direto no WhatsApp do contato.',
   'Filtre por "Em destaque" para montar uma seleção pronta antes da reunião.',
-  'O filtro "Novidades" mostra o que entrou nos últimos 30 dias — bom para prospecção.',
+  'O filtro "Novidades" traz o que o fornecedor marcou como novidade e ainda está no prazo — bom para prospecção.',
   'Estoque baixo aparece no rail: priorize esses brindes antes que acabem.',
   'Abra o produto pelo card para ver cores, prazo e quantidade mínima antes de enviar.',
 ] as const;
