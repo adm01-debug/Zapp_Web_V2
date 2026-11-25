@@ -49,9 +49,35 @@ jobs:
           --attempts=30
           --interval-ms=10000
 
+  v2-dominio:
+    name: V2 - dominio principal (cutover)
+    # Virada de producao: ativado pela variable ZAPP_PROD_TARGET=v2, depois de mover
+    # zappweb.app.br para o projeto V2 na Vercel. Sem a variable, a trilha V3 continua.
+    if: github.ref == 'refs/heads/main' && vars.ZAPP_PROD_TARGET == 'v2'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - name: Checkout da main
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Setup Node 24
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: '24'
+
+      - name: Confirmar release V2 no dominio principal
+        run: >-
+          node scripts/vercel/verify-release-targets.mjs
+          --target=dominio
+          --expected-sha="${GITHUB_SHA}"
+          --attempts=30
+          --interval-ms=10000
+
   v3-domain:
     name: V3 · domínio principal
-    if: github.ref == 'refs/heads/main'
+    if: github.ref == 'refs/heads/main' && vars.ZAPP_PROD_TARGET != 'v2'
     runs-on: ubuntu-24.04
     timeout-minutes: 5
     steps:
