@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "985b4e382ff2342db8b83537bb01a0594485b5d5",
+  "commit": "1e7fec6a80c6011d9c6ea774649f882e67cc8295",
   "branch": "main",
-  "data_commit": "2026-11-25T09:43:26-03:00",
+  "data_commit": "2026-11-25T10:22:42-03:00",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "1e7fec6a",
+    "data": "2026-11-25",
+    "assunto": "infra: valida a virada do dominio principal para o build do V2 (#3374)"
+   },
    {
     "sha": "985b4e38",
     "data": "2026-11-25",
@@ -126,14 +131,9 @@
     "sha": "7dff0402",
     "data": "2026-11-23",
     "assunto": "chore(docs): fecha X076 e corrige estado real da IA-161 (#3346)"
-   },
-   {
-    "sha": "e5d1a17d",
-    "data": "2026-11-23",
-    "assunto": "fix(e2e): destrava o Firefox tirando o axe do painel CRM em 320px (#3348)"
    }
   ],
-  "arquivos_mudados_7d": 4392,
+  "arquivos_mudados_7d": 4396,
   "pastas_mais_mudadas_30d": [
    {
     "pasta": "docs/contexto/supabase",
@@ -314,9 +314,9 @@
   ]
  },
  "contagens": {
-  "arquivos_total": 14795,
-  "arquivos_codigo": 5140,
-  "linhas_codigo": 952882,
+  "arquivos_total": 14796,
+  "arquivos_codigo": 5141,
+  "linhas_codigo": 952989,
   "rotas": 18,
   "rotas_http_backend": 11,
   "vistas_por_id": 55,
@@ -328,7 +328,7 @@
   "tabelas": 223,
   "migrations": 1153,
   "cron_jobs": 29,
-  "testes": 2822,
+  "testes": 2823,
   "workflows": 26,
   "scripts": 453,
   "docs_md": 3988
@@ -631,8 +631,8 @@
    "linhas": 337
   },
   "scripts/ci": {
-   "arquivos": 230,
-   "linhas": 50304
+   "arquivos": 231,
+   "linhas": 50403
   },
   "scripts/db": {
    "arquivos": 2,
@@ -724,7 +724,7 @@
   },
   "scripts/vercel": {
    "arquivos": 2,
-   "linhas": 368
+   "linhas": 376
   },
   "src/App.tsx": {
    "arquivos": 1,

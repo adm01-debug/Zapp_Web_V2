@@ -1,6 +1,6 @@
 # 07 · REGRAS DE NEGÓCIO
 
-> Gerado automaticamente por AI Context Sync v1.3.2 · commit `985b4e382f` · branch `main` · 2026-11-25 13:14 UTC
+> Gerado automaticamente por AI Context Sync v1.3.2 · commit `1e7fec6a80` · branch `main` · 2026-11-25 13:24 UTC
 > Não edite à mão — regras humanas vão em `manual/`.
 
 ## A. Regras escritas por humanos (`manual/` — prioridade máxima, nunca sobrescrito)
@@ -4651,7 +4651,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | disk-full | `scripts/ci/e2e-isolated-provider-readiness.unit.mjs` |
 | must-not-read-service-role | `scripts/ci/e2e-isolated-provider-readiness.unit.mjs` |
 | synthetic transport rejection | `scripts/ci/e2e-isolated-runtime-probe.unit.mjs` |
-| … +1857 linhas — lista completa em `context.json` | |
+| … +1859 linhas — lista completa em `context.json` | |
 
 ## J. Controle de acesso no código (checagens de perfil/permissão)
 

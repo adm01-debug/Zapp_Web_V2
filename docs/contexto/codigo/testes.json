@@ -5,13 +5,13 @@
   "vitest",
   "playwright"
  ],
- "total": 2822,
+ "total": 2823,
  "por_tipo": {
   "contrato": 116,
   "e2e": 76,
   "pytest": 3,
   "qa": 10,
-  "unit": 2525
+  "unit": 2526
  },
  "onde_ficam": [
   {
@@ -20,7 +20,7 @@
   },
   {
    "padrao": "outro",
-   "arquivos": 259
+   "arquivos": 260
   },
   {
    "padrao": "co-localizado (*.test)",
@@ -2225,6 +2225,15 @@
     "scripts/db-audit/verify-ledger-statements.mjs"
    ],
    "casos": 11
+  },
+  {
+   "arquivo": "scripts/ci/verify-release-targets-dominio.unit.mjs",
+   "tipo": "unit",
+   "linhas": 99,
+   "testa": [
+    "scripts/vercel/verify-release-targets.mjs"
+   ],
+   "casos": 7
   },
   {
    "arquivo": "scripts/ci/verify-release-targets-sucessor.unit.mjs",
@@ -25856,7 +25865,7 @@
   "scripts/talkx/v4-status.mjs": 1,
   "scripts/ui-audit/width-check.mjs": 1,
   "scripts/ui-audit/width-regression.mjs": 1,
-  "scripts/vercel/verify-release-targets.mjs": 4,
+  "scripts/vercel/verify-release-targets.mjs": 5,
   "src/App.tsx": 4,
   "src/adapters/evolutionAdapter.ts": 2,
   "src/adapters/inboxAdapter.ts": 2,

@@ -7,7 +7,7 @@
    "Markdown (3988)",
    "SQL (3063)",
    "JSON (1939)",
-   "JavaScript (523)",
+   "JavaScript (524)",
    "Shell (252)",
    "Python (125)",
    "YAML (43)"
@@ -939,6 +939,7 @@
    ],
    "jobs": [
     "v2-alias",
+    "v2-dominio",
     "v3-domain"
    ],
    "permissoes": [
@@ -1933,6 +1934,10 @@
     "arquivos": 8
    },
    {
+    "host": "zappweb.app.br",
+    "arquivos": 8
+   },
+   {
     "host": "cdn.exemplo",
     "arquivos": 7
    },
@@ -1954,10 +1959,6 @@
    },
    {
     "host": "x.supabase.co",
-    "arquivos": 7
-   },
-   {
-    "host": "zappweb.app.br",
     "arquivos": 7
    },
    {

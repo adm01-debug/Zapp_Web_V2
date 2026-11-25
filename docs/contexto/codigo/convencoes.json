@@ -23,7 +23,7 @@
   ],
   "testes": [
    "co-localizado (__tests__) (2096)",
-   "outro (259)",
+   "outro (260)",
    "co-localizado (*.test) (202)"
   ],
   "edge_functions": "supabase/functions",
@@ -66,11 +66,11 @@
  "commits": {
   "convencao": "conventional commits (observado)",
   "exemplos": [
+   "infra: valida a virada do dominio principal para o build do V2 (#3374)",
    "fix(lint): ratchet aceita ocorrencia identica deslocada de linha (#3376)",
    "chore(lint): reancora baseline nas posicoes atuais (divida inalterada, 540 = 540) (#3373)",
    "chore: sincroniza docs/contexto com a publicacao oficial (mapa deixa de citar 149 caminhos mortos) (#3372)",
-   "chore: aposenta acervo de resgate 261118 lote3 ja triado (1.029 arquivos, zero perdas) (#3371)",
-   "feat(automacao): recupera harness local da PR #2926 sobre o main atual (#3366)"
+   "chore: aposenta acervo de resgate 261118 lote3 ja triado (1.029 arquivos, zero perdas) (#3371)"
   ]
  },
  "pr_template": ".github/PULL_REQUEST_TEMPLATE.md",

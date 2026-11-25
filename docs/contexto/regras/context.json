@@ -1,15 +1,15 @@
 {
  "meta": {
-  "sha": "985b4e382ff2342db8b83537bb01a0594485b5d5",
+  "sha": "1e7fec6a80c6011d9c6ea774649f882e67cc8295",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-25 13:14 UTC",
-  "files_total": 14642,
-  "code_files": 8176,
-  "code_lines": 1229711
+  "generated_at": "2026-11-25 13:24 UTC",
+  "files_total": 14643,
+  "code_files": 8177,
+  "code_lines": 1229818
  },
  "version": "1.3.2",
- "facts_hash": "3b746f4a39c65ac3",
+ "facts_hash": "a34d7705ac24bed7",
  "stack": {
   "frameworks": [
    "React + Vite",
@@ -370,7 +370,7 @@
    ".sql": 3063,
    ".tsx": 2480,
    ".ts": 2011,
-   ".mjs": 495,
+   ".mjs": 496,
    ".py": 125,
    ".cjs": 19,
    ".js": 9,
@@ -75738,8 +75738,8 @@
   },
   {
    "module": "scripts",
-   "files": 504,
-   "lines": 106490,
+   "files": 505,
+   "lines": 106597,
    "tables": [
     "a",
     "alem_do_limite",
@@ -89446,6 +89446,14 @@
     "msg": "grep falhou: "
    },
    {
+    "file": "scripts/ci/verify-release-targets-dominio.unit.mjs",
+    "msg": "nao deveria consultar git"
+   },
+   {
+    "file": "scripts/ci/verify-release-targets-dominio.unit.mjs",
+    "msg": "url inesperada: ${url}"
+   },
+   {
     "file": "scripts/ci/verify-release-targets-sucessor.unit.mjs",
     "msg": "não deveria consultar"
    },
@@ -90787,7 +90795,7 @@
    },
    {
     "file": "scripts/vercel/verify-release-targets.mjs",
-    "msg": "--target deve ser v2 ou v3"
+    "msg": "--target deve ser v2, v3 ou dominio"
    },
    {
     "file": "scripts/vercel/verify-release-targets.mjs",
@@ -297341,6 +297349,27 @@
    "lines": 120,
    "doc": "E65: prova de que o registro no ledger nao passa com `statements` NULL, vazio ou divergente do arquivo. Antes desta etapa, o passo \"Validar registro no ledger\" do db-migrate.yml provava so' `count(*) = 1`: uma linha com statements NULL ou vazio era aceita, e a trilha de auditoria perdia o conteudo e …"
   },
+  "scripts/ci/verify-release-targets-dominio.unit.mjs": {
+   "path": "scripts/ci/verify-release-targets-dominio.unit.mjs",
+   "lines": 99,
+   "errors": [
+    "nao deveria consultar git",
+    "url inesperada: ${url}"
+   ],
+   "params": [
+    {
+     "name": "ESPERADO",
+     "value": "'a'"
+    },
+    {
+     "name": "PUBLICADO",
+     "value": "'b'"
+    }
+   ],
+   "rule_comments": [
+    "Headers que o projeto V2 publica (vercel.json). A virada do dominio nao pode"
+   ]
+  },
   "scripts/ci/verify-release-targets-sucessor.unit.mjs": {
    "path": "scripts/ci/verify-release-targets-sucessor.unit.mjs",
    "lines": 52,
@@ -302937,7 +302966,7 @@
   },
   "scripts/vercel/verify-release-targets.mjs": {
    "path": "scripts/vercel/verify-release-targets.mjs",
-   "lines": 251,
+   "lines": 259,
    "exports": [
     "const TARGETS",
     "function parseArgs",
@@ -302954,7 +302983,7 @@
     "--expected-sha deve ser um SHA completo",
     "--expected-sha não pode ser vazio",
     "--expected-sha pertence somente ao alvo v2",
-    "--target deve ser v2 ou v3",
+    "--target deve ser v2, v3 ou dominio",
     "SPA V2 sem entry JavaScript",
     "V2 ainda em ${body.buildId.slice(0, 12)}; esperado ${expectedSha.slice(0, 12)}",
     "V2 buildId inválido",
@@ -424194,10 +424223,24 @@
   }
  },
  "git": {
-  "sha": "985b4e382ff2342db8b83537bb01a0594485b5d5",
+  "sha": "1e7fec6a80c6011d9c6ea774649f882e67cc8295",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "1e7fec6a",
+    "date": "2026-11-25",
+    "author": "adm01-debug",
+    "subject": "infra: valida a virada do dominio principal para o build do V2 (#3374)",
+    "files": [
+     ".github/workflows/front-release-targets.yml",
+     "scripts/automation.config.json",
+     "scripts/ci/front-release-targets.unit.mjs",
+     "scripts/ci/verify-release-targets-dominio.unit.mjs",
+     "scripts/vercel/README.md",
+     "scripts/vercel/verify-release-targets.mjs"
+    ]
+   },
    {
     "sha": "985b4e38",
     "date": "2026-11-25",
@@ -425838,15 +425881,6 @@
     "files": [
      "infrastructure/preview-egress-proxy/Dockerfile"
     ]
-   },
-   {
-    "sha": "4c1d031f",
-    "date": "2026-11-23",
-    "author": "dependabot[bot]",
-    "subject": "⬆️ ci: bump actions/dependency-review-action from 5.0.0 to 5.0.1 in the actions-misc group across 1 directory (#3335)",
-    "files": [
-     ".github/workflows/dependency-review.yml"
-    ]
    }
   ],
   "hot_files": [
@@ -425861,6 +425895,10 @@
    [
     "scripts/e2e-isolated/images.lock.json",
     3
+   ],
+   [
+    "scripts/automation.config.json",
+    2
    ],
    [
     "docs/ci/README.md",
@@ -425899,35 +425937,31 @@
     2
    ],
    [
+    ".github/workflows/front-release-targets.yml",
+    1
+   ],
+   [
+    "scripts/ci/front-release-targets.unit.mjs",
+    1
+   ],
+   [
+    "scripts/ci/verify-release-targets-dominio.unit.mjs",
+    1
+   ],
+   [
+    "scripts/vercel/README.md",
+    1
+   ],
+   [
+    "scripts/vercel/verify-release-targets.mjs",
+    1
+   ],
+   [
     "scripts/ci/lint-ratchet.mjs",
     1
    ],
    [
     "scripts/ci/lint-ratchet.unit.mjs",
-    1
-   ],
-   [
-    "scripts/ci/eslint-baseline.json",
-    1
-   ],
-   [
-    "docs/contexto/00-INDEX.md",
-    1
-   ],
-   [
-    "docs/contexto/codigo/GRAPH_REPORT.md",
-    1
-   ],
-   [
-    "docs/contexto/codigo/INDEX.md",
-    1
-   ],
-   [
-    "docs/contexto/codigo/banco.json",
-    1
-   ],
-   [
-    "docs/contexto/codigo/baseline.json",
     1
    ]
   ]
