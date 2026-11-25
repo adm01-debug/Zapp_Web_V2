@@ -11,7 +11,13 @@
  * Sem imports de `std/assert`: o lock do CI é `--frozen`, então as asserções
  * são locais (mesmo padrão de index.test.ts / crm-integration/index.test.ts).
  */
-import { promogiftsCatalogHandler, RATE_LIMIT, ACTION_RATE_LIMITS, type CatalogHandlerDeps } from './index.ts';
+import {
+  promogiftsCatalogHandler,
+  RATE_LIMIT,
+  ACTION_RATE_LIMITS,
+  aplicarContagemCanonicaDeNovidades,
+  type CatalogHandlerDeps,
+} from './index.ts';
 
 function assert(condition: unknown, message: string): asserts condition {
   if (!condition) throw new Error(message);
@@ -71,6 +77,7 @@ class MockQueryBuilder {
   is(...a: unknown[]): this { return this.chain('is', a); }
   like(...a: unknown[]): this { return this.chain('like', a); }
   gte(...a: unknown[]): this { return this.chain('gte', a); }
+  gt(...a: unknown[]): this { return this.chain('gt', a); }
   lte(...a: unknown[]): this { return this.chain('lte', a); }
   not(...a: unknown[]): this { return this.chain('not', a); }
   or(...a: unknown[]): this { return this.chain('or', a); }
@@ -355,6 +362,64 @@ Deno.test('CT-77 list_suppliers devolve fornecedores ativos', async () => {
   assertExists(call);
   assertEquals(argOf(call, 'eq', 0), 'active');
 });
+
+// ─── contagem canônica de novidades (regra do Promo Gifts V4) ───
+//
+// O card "Novidades" usa `stats.new_30d`; o RPC do banco de produtos conta
+// esse número somando a janela de 30 dias sobre created_at ao flag, regra que
+// o V4 aposentou. A contagem canônica (abaixo) é testada direto porque o
+// resultado do RPC fica em cache de isolate por 60s — exercitá-la pelo handler
+// tornaria o teste dependente da ordem dos testes.
+
+const NOVIDADE_NOW = '2026-11-25T12:00:00.000Z';
+
+Deno.test('novidade canônica: a contagem substitui o new_30d do RPC e preserva os outros campos', async () => {
+  const ext = new MockCatalogClient({ products: [{ data: null, error: null, count: 222 }] });
+  const stats = await aplicarContagemCanonicaDeNovidades(
+    ext as unknown as ExtClient,
+    { total: 7964, in_stock: 6267, new_30d: 236 },
+    NOVIDADE_NOW,
+  );
+
+  const s = stats as { total: number; in_stock: number; new_30d: number };
+  assertEquals(s.new_30d, 222, 'o número do card tem de vir do predicado canônico, não do RPC');
+  assertEquals(s.total, 7964, 'os demais campos do RPC têm de passar intactos');
+  assertEquals(s.in_stock, 6267, 'os demais campos do RPC têm de passar intactos');
+});
+
+Deno.test('novidade canônica: a contagem usa o MESMO predicado da grade (only_active + is_new + expiração futura)', async () => {
+  const ext = new MockCatalogClient({ products: [{ data: null, error: null, count: 222 }] });
+  await aplicarContagemCanonicaDeNovidades(ext as unknown as ExtClient, { new_30d: 236 }, NOVIDADE_NOW);
+
+  const call = ext.calls.find((c) => c.table === 'products');
+  assertExists(call, 'esperava uma consulta em products');
+  assertEquals(call.methods.includes('select'), true, 'esperava select()');
+  const pares = call.methods
+    .map((m, idx) => ({ m, a: call.args[idx] }))
+    .filter((x) => x.m === 'eq' || x.m === 'gt')
+    .map((x) => `${x.m}(${String(x.a[0])})`);
+  assertEquals(
+    JSON.stringify(pares),
+    JSON.stringify(['eq(is_active)', 'eq(is_new)', 'gt(novelty_expires_at)']),
+    'o predicado tem de ser is_active + is_new + novelty_expires_at > agora',
+  );
+  const gt = call.args[call.methods.indexOf('gt')];
+  assertEquals(gt[1], NOVIDADE_NOW, 'a fronteira tem de ser o instante injetado');
+  const opcoes = call.args[call.methods.indexOf('select')][1] as { count?: string; head?: boolean };
+  assertEquals(opcoes.count, 'exact', 'esperava count exact');
+  assertEquals(opcoes.head, true, 'esperava head: true (contagem sem trafegar linhas)');
+});
+
+Deno.test('novidade canônica: falha na contagem mantém o número do RPC (o card não zera por erro)', async () => {
+  const ext = new MockCatalogClient({ products: [{ data: null, error: { message: 'sem permissao' }, count: null }] });
+  const stats = await aplicarContagemCanonicaDeNovidades(
+    ext as unknown as ExtClient,
+    { total: 7964, new_30d: 236 },
+    NOVIDADE_NOW,
+  );
+  assertEquals((stats as { new_30d: number }).new_30d, 236, 'erro na contagem não pode zerar o card');
+});
+
 
 // ─── catalog_stats / bootstrap ──────────────────────────────────
 

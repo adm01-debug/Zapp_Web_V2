@@ -86,13 +86,13 @@ Deno.test('buildTagOrExpr: só valores que sanitizam para vazio retorna null', (
   assertEquals(buildTagOrExpr('materials', ['%%%', '...', '()']), null);
 });
 
-// ─── Janela de 30 dias do filtro "novos" (list_products + is_new) ─────────
+// ─── Regra de "novidade" do filtro "novos" (list_products + is_new) ───────
 //
 // O contrato público continua `is_new: true` (o front manda só isso), mas na
-// edge o predicado passa a exigir created_at >= agora-30d, com fronteira
-// INCLUSIVA e o corte calculado uma vez por requisição em UTC/ISO. Sem essa
-// segunda condição, produto marcado como novo há mais de 30 dias continuava
-// na listagem e na exportação do filtro new_30d.
+// edge o predicado passa a exigir novelty_expires_at > agora — a regra do
+// banco de produtos (Promo Gifts V4): `is_new` + expiração futura, sem janela
+// sobre created_at. Novidade vencida sai da listagem e da exportação mesmo
+// antes do cron cleanup-novelties desligar a flag.
 //
 // Os testes chamam o handler real (promogiftsCatalogHandler) com os clients
 // injetados pelo seam CT-77 e o relógio fixo via deps.now — nada de banco.
@@ -150,11 +150,11 @@ function postCatalog(body: unknown): Request {
   });
 }
 
-// Relógio fixo: o corte de 30 dias a partir de 2026-10-06T15:04:05Z é
-// exatamente 2026-09-06T15:04:05.000Z (literal — não recomputado aqui, para
-// o teste provar o VALOR e não a fórmula).
+// Relógio fixo: a fronteira de expiração é exatamente o instante injetado
+// (literal — não recomputado aqui, para o teste provar o VALOR e não a
+// fórmula).
 const FIXED_NOW = new Date('2026-10-06T15:04:05.000Z');
-const EXPECTED_CUTOFF = '2026-09-06T15:04:05.000Z';
+const EXPECTED_NOW = '2026-10-06T15:04:05.000Z';
 
 function catalogDeps(terminals: QueryTerminal[], calls: QueryCall[]): CatalogHandlerDeps {
   return {
@@ -164,7 +164,7 @@ function catalogDeps(terminals: QueryTerminal[], calls: QueryCall[]): CatalogHan
   } as unknown as CatalogHandlerDeps;
 }
 
-Deno.test('list_products com is_new=true exige is_new=true E created_at >= agora-30d (inclusivo)', async () => {
+Deno.test('list_products com is_new=true exige is_new=true E novelty_expires_at > agora', async () => {
   const calls: QueryCall[] = [];
   const res = await promogiftsCatalogHandler(
     postCatalog({ action: 'list_products', params: { is_new: true } }),
@@ -178,13 +178,16 @@ Deno.test('list_products com is_new=true exige is_new=true E created_at >= agora
     'esperava o predicado eq("is_new", true)',
   );
   assertEquals(
-    calls.some((c) => c.m === 'gte' && c.args[0] === 'created_at' && c.args[1] === EXPECTED_CUTOFF),
+    calls.some((c) => c.m === 'gt' && c.args[0] === 'novelty_expires_at' && c.args[1] === EXPECTED_NOW),
     true,
-    `esperava o predicado gte("created_at", "${EXPECTED_CUTOFF}")`,
+    `esperava o predicado gt("novelty_expires_at", "${EXPECTED_NOW}")`,
   );
+  // A janela de 30 dias sobre created_at deixou de existir: ela escondia a
+  // maioria das novidades (detectadas depois da criação do produto).
+  assertEquals(calls.some((c) => c.m === 'gte' && c.args[0] === 'created_at'), false);
 });
 
-Deno.test('list_products: a contagem de fallback (PGRST103) usa o MESMO corte, calculado uma vez por requisição', async () => {
+Deno.test('list_products: a contagem de fallback (PGRST103) usa a MESMA fronteira, calculada uma vez por requisição', async () => {
   const calls: QueryCall[] = [];
   const res = await promogiftsCatalogHandler(
     postCatalog({ action: 'list_products', params: { is_new: true, offset: 500 } }),
@@ -196,15 +199,15 @@ Deno.test('list_products: a contagem de fallback (PGRST103) usa o MESMO corte, c
 
   assertEquals(res.status, 200);
   // A consulta paginada e a contagem de fallback têm de usar o mesmo instante
-  // de corte — se o corte fosse recalculado por consulta, os valores podiam
+  // de fronteira — se fosse recalculado por consulta, os valores podiam
   // divergir e a fronteira deixava de ser determinística.
-  const cortes = calls
-    .filter((c) => c.m === 'gte' && c.args[0] === 'created_at')
+  const fronteiras = calls
+    .filter((c) => c.m === 'gt' && c.args[0] === 'novelty_expires_at')
     .map((c) => c.args[1]);
-  assertEquals(JSON.stringify(cortes), JSON.stringify([EXPECTED_CUTOFF, EXPECTED_CUTOFF]));
+  assertEquals(JSON.stringify(fronteiras), JSON.stringify([EXPECTED_NOW, EXPECTED_NOW]));
 });
 
-Deno.test('list_products sem is_new não aplica corte de created_at nem filtra is_new', async () => {
+Deno.test('list_products sem is_new não aplica fronteira de novidade nem filtra is_new', async () => {
   const calls: QueryCall[] = [];
   const res = await promogiftsCatalogHandler(
     postCatalog({ action: 'list_products', params: {} }),
@@ -212,6 +215,6 @@ Deno.test('list_products sem is_new não aplica corte de created_at nem filtra i
   );
 
   assertEquals(res.status, 200);
-  assertEquals(calls.some((c) => c.m === 'gte' && c.args[0] === 'created_at'), false);
+  assertEquals(calls.some((c) => c.m === 'gt' && c.args[0] === 'novelty_expires_at'), false);
   assertEquals(calls.some((c) => c.m === 'eq' && c.args[0] === 'is_new'), false);
 });
