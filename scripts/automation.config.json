@@ -5234,6 +5234,14 @@
       "reason": "Script pré-existente no main, fora do escopo do harness de automação local; segue acionado manualmente pelo fluxo atual."
     },
     {
+          "id": "legacy-89444548d87605a0",
+          "kind": "legacy",
+          "files": ["scripts/ci/verify-release-targets-dominio.unit.mjs"],
+          "manual": ["node", "scripts/ci/verify-release-targets-dominio.unit.mjs"],
+          "triggers": ["manual"],
+          "reason": "Script pré-existente no main, fora do escopo do harness de automação local; segue acionado manualmente pelo fluxo atual."
+        },
+        {
       "id": "legacy-fd967478b1859dcc",
       "kind": "legacy",
       "files": ["scripts/ci/verify-release-targets-sucessor.unit.mjs"],

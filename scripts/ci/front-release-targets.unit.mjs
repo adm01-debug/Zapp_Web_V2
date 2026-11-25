@@ -66,7 +66,7 @@ test('CLI exige trilha explícita e reserva expected-sha para V2', () => {
     target: 'v2', expectedSha: SHA_V2, attempts: 30, intervalMs: 10_000,
   });
   assert.throws(() => parseArgs(['--target=v3', `--expected-sha=${SHA_V2}`]), /somente ao alvo v2/);
-  assert.throws(() => parseArgs(['--target=produção']), /v2 ou v3/);
+  assert.throws(() => parseArgs(['--target=produção']), /v2, v3 ou dominio/);
   assert.throws(() => parseArgs(['--target=v2', '--attempts=61']), /inteiro entre 1 e 60/);
   assert.throws(() => parseArgs(['--target=v2', '--url=https:\/\/exemplo.invalid']), /argumento desconhecido/);
 });
