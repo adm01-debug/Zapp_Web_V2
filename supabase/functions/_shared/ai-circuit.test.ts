@@ -37,7 +37,7 @@ const PROVEDOR = {
   name: "Provedor Teste",
   provider_type: "openai_compatible",
   api_endpoint: PROVIDER_ENDPOINT,
-  api_key_secret_name: "TEST_PROVIDER_KEY",
+  api_key_secret_name: "OPENAI_API_KEY",
   model: "modelo-teste",
   system_prompt: null,
   config: null,
@@ -52,7 +52,7 @@ function stubEnv(): () => void {
   const envs = {
     SUPABASE_URL,
     SUPABASE_SERVICE_ROLE_KEY: "service-role-key-de-teste",
-    TEST_PROVIDER_KEY: "chave-de-teste",
+    OPENAI_API_KEY: "chave-de-teste",
   };
   for (const [nome, valor] of Object.entries(envs)) {
     prev[nome] = Deno.env.get(nome);
