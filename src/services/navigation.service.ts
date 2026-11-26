@@ -130,6 +130,9 @@ export class NavigationService {
           { id: 'admin', icon: UserCog, label: 'Admin', roles: ADMIN_ONLY },
           // HZ1-06: números da busca global. A RPC que alimenta a tela nega quem
           // não é admin/supervisor — o item usa o mesmo filtro (STAFF_ROLES).
+          // CV-143: serie diaria do copiloto RADAR. A RPC de recalculo exige
+          // admin/supervisor; o item usa o mesmo filtro (STAFF_ROLES).
+          { id: 'copilot-retention', icon: BarChart3, label: 'Retenção Copiloto', roles: STAFF_ROLES },
           { id: 'search-insights', icon: SearchCheck, label: 'Insights de Busca', roles: STAFF_ROLES },
           { id: 'themes', icon: Palette, label: 'Skins', roles: STAFF_ROLES },
           { id: 'docs', icon: BookOpen, label: 'Documentação', roles: STAFF_ROLES },

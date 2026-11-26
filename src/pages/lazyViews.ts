@@ -51,6 +51,8 @@ export const GmailWebhookMonitor = lazyWithRetry(() => import('@/components/admi
 export const MediaMigrationTool = lazyWithRetry(() => import('@/components/admin/MediaMigrationTool').then(m => ({ default: m.MediaMigrationTool })));
 export const CRM360ExplorerView = lazyWithRetry(() => import('@/components/crm360/CRM360ExplorerView').then(m => ({ default: m.CRM360ExplorerView })));
 export const AIUsageDashboard = lazyWithRetry(() => import('@/components/admin/AIUsageDashboard').then(m => ({ default: m.AIUsageDashboard })));
+// CV-143: serie diaria do agregado do copiloto RADAR (copilot_retention_aggregates).
+export const CopilotRetentionPage = lazyWithRetry(() => import('@/pages/admin/CopilotRetentionPage').then(m => ({ default: m.CopilotRetentionPage })));
 export const SearchInsightsView = lazyWithRetry(() => import('@/components/admin/SearchInsightsView').then(m => ({ default: m.SearchInsightsView })));
 export const TalkXView = lazyWithRetry(() => import('@/components/talkx/TalkXView'));
 // X055 — prancha de referência do Talk X: só alcançável por ?view=talkx-kit
