@@ -4,7 +4,9 @@
  * O sujeito é o hook REAL; a dublagem é a fronteira de rede (`supabase.from`/`rpc`/`channel`).
  * Regras provadas: filtros de status/tipo/severidade chegando ao PostgREST, ordem e teto da leitura,
  * nome do contato resolvido em uma consulta só, linha fora do contrato descartada, resolução pelo
- * RPC `resolve_sla_alert` (mensagens de erro traduzidas) e canal de Realtime aberto/limpo.
+ * RPC `resolve_sla_alert` (mensagens de erro traduzidas) e recarga por demanda. Sem assinatura de
+ * Realtime: `sla_alert_events` nao esta na publicacao, uma assinatura aqui seria canal que nunca
+ * entrega evento (o guard `check-realtime-subscriptions` recusa exatamente isso).
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import React from 'react';
@@ -17,8 +19,6 @@ const h = vi.hoisted(() => ({
   tables: {} as Record<string, { data: unknown; error: unknown }>,
   rpcs: [] as Array<{ fn: string; args: unknown }>,
   rpcError: null as unknown,
-  channels: [] as string[],
-  removed: [] as unknown[],
   userId: 'u-1' as string | null,
 }));
 
@@ -72,17 +72,6 @@ vi.mock('@/integrations/supabase/client', () => ({
       h.rpcs.push({ fn, args });
       return Promise.resolve({ data: null, error: h.rpcError });
     },
-    channel: (topic: string) => {
-      h.channels.push(topic);
-      const canal: Record<string, unknown> = {};
-      canal.on = () => canal;
-      canal.subscribe = () => canal;
-      return canal;
-    },
-    removeChannel: (canal: unknown) => {
-      h.removed.push(canal);
-      return Promise.resolve('ok');
-    },
   },
 }));
 
@@ -129,8 +118,6 @@ beforeEach(() => {
   h.tables = {};
   h.rpcs = [];
   h.rpcError = null;
-  h.channels = [];
-  h.removed = [];
   h.userId = 'u-1';
   toastMock.success.mockClear();
   toastMock.error.mockClear();
@@ -199,15 +186,19 @@ describe('fetchSlaAlertEvents', () => {
 });
 
 describe('useSlaAlertEvents', () => {
-  it('abre e limpa o canal de Realtime dos alertas', async () => {
-    h.tables.sla_alert_events = { data: [], error: null };
-    const { unmount } = setup();
+  it('recarrega a lista por demanda', async () => {
+    h.tables.sla_alert_events = { data: [evento('e1')], error: null };
+    h.tables.contacts = { data: [{ id: 'c-1', name: 'Ana', phone: null }], error: null };
+    const { result } = setup();
 
-    await waitFor(() => expect(h.channels).toHaveLength(1));
-    expect(h.channels[0]).toContain('sla-alert-events');
+    await waitFor(() => expect(result.current.alerts).toHaveLength(1));
 
-    unmount();
-    await waitFor(() => expect(h.removed).toHaveLength(1));
+    h.tables.sla_alert_events = { data: [evento('e1'), evento('e2')], error: null };
+    await act(async () => {
+      await result.current.refetch();
+    });
+
+    await waitFor(() => expect(result.current.alerts).toHaveLength(2));
   });
 
   it('resolve pelo RPC, avisa e invalida o cache', async () => {

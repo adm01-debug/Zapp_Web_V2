@@ -1,10 +1,8 @@
-import { useEffect } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { getLogger } from '@/lib/logger';
-import { uniqueRealtimeTopic } from '@/lib/realtimeTopic';
 import {
   isSlaAlertSeverity,
   isSlaAlertType,
@@ -165,27 +163,6 @@ export function useSlaAlertEvents(filters: SlaAlertFilters = DEFAULT_SLA_ALERT_F
     enabled: Boolean(userId),
     staleTime: 30_000,
   });
-
-  useEffect(() => {
-    if (!userId) return;
-    // Alerta aberto/fechado em qualquer aba atualiza a lista daqui.
-    const channel = supabase
-      .channel(uniqueRealtimeTopic('sla-alert-events'))
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'sla_alert_events' },
-        () => {
-          void queryClient.invalidateQueries({ queryKey: [SLA_ALERT_EVENTS_QUERY_KEY] });
-        },
-      )
-      .subscribe((status) => {
-        log.debug('Subscription status', { status });
-      });
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [userId, queryClient]);
 
   const resolveMutation = useMutation({
     mutationFn: async (eventId: string) => {

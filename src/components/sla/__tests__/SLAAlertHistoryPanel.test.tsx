@@ -93,6 +93,12 @@ describe.each([['claro', false], ['escuro', true]] as const)('SLAAlertHistoryPan
     expect(estado.refetch).toHaveBeenCalled();
   });
 
+  it('ATUALIZAR: o botão refaz a consulta (a tabela não está na publicação de Realtime)', () => {
+    montar();
+    fireEvent.click(screen.getByTestId('sla-alertas-atualizar'));
+    expect(estado.refetch).toHaveBeenCalledTimes(1);
+  });
+
   it('VAZIO: diz que não há alerta aberto', () => {
     montar();
     expect(screen.getByTestId('sla-alertas-vazio')).toHaveTextContent('Nenhum alerta de SLA aberto');

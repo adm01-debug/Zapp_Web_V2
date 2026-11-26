@@ -71,6 +71,16 @@ export const SLAAlertHistoryPanel = () => {
             </ToggleGroupItem>
           ))}
         </ToggleGroup>
+        <Button
+          variant="ghost"
+          size="sm"
+          className="h-8 gap-1 text-xs"
+          data-testid="sla-alertas-atualizar"
+          onClick={() => void refetch()}
+        >
+          <RefreshCw className="h-3.5 w-3.5" />
+          Atualizar
+        </Button>
       </div>
 
       <div className="mt-4 flex flex-wrap items-center gap-4 text-xs text-muted-foreground">
