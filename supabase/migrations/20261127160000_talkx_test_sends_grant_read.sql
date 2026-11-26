@@ -1,0 +1,21 @@
+-- C-11 · Talk X: a trilha do envio de teste tem politica de leitura e nenhum GRANT.
+-- Rollback: REVOKE SELECT ON public.talkx_test_sends FROM authenticated;
+--
+-- `20261009120000_talkx_test_sends.sql` faz
+--   REVOKE ALL ON public.talkx_test_sends FROM PUBLIC, anon, authenticated;
+-- e, na sequencia, cria a politica
+--   "talkx_test_sends_owner_admin_read" FOR SELECT TO authenticated
+--     USING (auth.uid() = created_by OR auth.uid() IN (SELECT id FROM profiles WHERE role = 'admin'))
+-- Sem o GRANT, a policy nunca alcanca ninguem: a leitura como `authenticated` e
+-- recusada antes da RLS entrar em jogo. Verificado no banco oficial:
+--   ERROR:  permission denied for table talkx_test_sends
+--   HINT:   Grant the required privileges to the current role with:
+--           GRANT SELECT ON public.talkx_test_sends TO authenticated;
+--   has_table_privilege('authenticated','public.talkx_test_sends','SELECT') = false
+-- Ou seja: a edge grava a trilha (service_role) e o operador que pediu o teste
+-- nunca pode ve-la — o registro existe para ninguem.
+--
+-- O GRANT devolve SO a leitura, e a RLS continua entregando apenas as linhas do
+-- proprio autor ou de admin (INSERT/UPDATE/DELETE seguem exclusivos do
+-- service_role, como o REVOKE ALL original determina).
+GRANT SELECT ON public.talkx_test_sends TO authenticated;
