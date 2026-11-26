@@ -8,7 +8,7 @@
   },
   "summary": {
     "function_count": 93,
-    "source_file_count": 184,
+    "source_file_count": 185,
     "verify_jwt_true": 77,
     "verify_jwt_false": 16
   },
@@ -56,8 +56,8 @@
     },
     {
       "path": "supabase/functions/_shared/ai-generate.ts",
-      "bytes": 46753,
-      "sha256": "99a6c655d3d76bd5980f68b02b72f3502af9bc897db708e127e478565207e8e9"
+      "bytes": 47924,
+      "sha256": "aab290522864a98b5f50bedef68e111df39db87edb3dc5d3d151157c289354dc"
     },
     {
       "path": "supabase/functions/_shared/ai-guards.ts",
@@ -83,6 +83,11 @@
       "path": "supabase/functions/_shared/ai-kb-ingest.ts",
       "bytes": 6048,
       "sha256": "486548e47d0e797ab4068ee3d247bc64debfb96cb1f39581316c34aad994f65e"
+    },
+    {
+      "path": "supabase/functions/_shared/ai-provider-egress.ts",
+      "bytes": 16646,
+      "sha256": "6d91fbed00fd45197104caa2f03c059deb2f7405d6eec12ea917880fe5bf8f8c"
     },
     {
       "path": "supabase/functions/_shared/ai-providers.ts",
@@ -501,8 +506,8 @@
     },
     {
       "path": "supabase/functions/ai-proxy/index.ts",
-      "bytes": 43326,
-      "sha256": "47ff5395dad105933526ce5eb0ab3f2f36ab4d8e6198e5a2b7d045d7c616ce68"
+      "bytes": 44382,
+      "sha256": "58f056f45af423a3c33206a662f9209bab8ac198c43e6f973772b41950f1a5c5"
     },
     {
       "path": "supabase/functions/ai-suggest-reply/index.ts",
@@ -940,7 +945,7 @@
       "name": "ai-auto-tag",
       "entrypoint": "supabase/functions/ai-auto-tag/index.ts",
       "verify_jwt": true,
-      "source_sha256": "2588e6b917a9a889a7515e0b892ddd0a70ccd421750929bc4bfc200d05391f36",
+      "source_sha256": "e5500c234ba4c5d3dddcbdd3948579ab201eb31f9c996703331ded5f07803f1e",
       "source_files": [
         "supabase/functions/_shared/ai-budget.ts",
         "supabase/functions/_shared/ai-capabilities.ts",
@@ -949,6 +954,7 @@
         "supabase/functions/_shared/ai-generate.ts",
         "supabase/functions/_shared/ai-guards.ts",
         "supabase/functions/_shared/ai-json.ts",
+        "supabase/functions/_shared/ai-provider-egress.ts",
         "supabase/functions/_shared/ai-providers.ts",
         "supabase/functions/_shared/ai-response-contracts.ts",
         "supabase/functions/_shared/ai-routing.ts",
@@ -962,6 +968,7 @@
         "supabase/functions/_shared/request-policy.ts",
         "supabase/functions/_shared/schemas.ts",
         "supabase/functions/_shared/secure-random.ts",
+        "supabase/functions/_shared/ssrf.ts",
         "supabase/functions/_shared/validation.ts",
         "supabase/functions/ai-auto-tag/index.ts"
       ]
@@ -1013,7 +1020,7 @@
       "name": "ai-conversation-analysis",
       "entrypoint": "supabase/functions/ai-conversation-analysis/index.ts",
       "verify_jwt": true,
-      "source_sha256": "d9ee649e27f8a3b93d33b758d3406a027803f063318c1e21006e9b20fb2f844e",
+      "source_sha256": "cd4709e848adc81cc018f811cc3a3f0b4d17273dc130225164400354b1bbc41a",
       "source_files": [
         "supabase/functions/_shared/ai-budget.ts",
         "supabase/functions/_shared/ai-capabilities.ts",
@@ -1023,6 +1030,7 @@
         "supabase/functions/_shared/ai-generate.ts",
         "supabase/functions/_shared/ai-guards.ts",
         "supabase/functions/_shared/ai-json.ts",
+        "supabase/functions/_shared/ai-provider-egress.ts",
         "supabase/functions/_shared/ai-providers.ts",
         "supabase/functions/_shared/ai-response-contracts.ts",
         "supabase/functions/_shared/ai-routing.ts",
@@ -1036,6 +1044,7 @@
         "supabase/functions/_shared/request-policy.ts",
         "supabase/functions/_shared/schemas.ts",
         "supabase/functions/_shared/secure-random.ts",
+        "supabase/functions/_shared/ssrf.ts",
         "supabase/functions/_shared/validation.ts",
         "supabase/functions/ai-conversation-analysis/index.ts"
       ]
@@ -1044,7 +1053,7 @@
       "name": "ai-conversation-summary",
       "entrypoint": "supabase/functions/ai-conversation-summary/index.ts",
       "verify_jwt": true,
-      "source_sha256": "d726cd0d4a97d2c427f2689166a22623f888c0d929fd23ddac77c05fb8f66f44",
+      "source_sha256": "749482357036bb8f78c4fedd1177027f98943089eb7d2b523e52f5f716245974",
       "source_files": [
         "supabase/functions/_shared/ai-budget.ts",
         "supabase/functions/_shared/ai-capabilities.ts",
@@ -1054,6 +1063,7 @@
         "supabase/functions/_shared/ai-generate.ts",
         "supabase/functions/_shared/ai-guards.ts",
         "supabase/functions/_shared/ai-json.ts",
+        "supabase/functions/_shared/ai-provider-egress.ts",
         "supabase/functions/_shared/ai-providers.ts",
         "supabase/functions/_shared/ai-response-contracts.ts",
         "supabase/functions/_shared/ai-routing.ts",
@@ -1067,6 +1077,7 @@
         "supabase/functions/_shared/request-policy.ts",
         "supabase/functions/_shared/schemas.ts",
         "supabase/functions/_shared/secure-random.ts",
+        "supabase/functions/_shared/ssrf.ts",
         "supabase/functions/_shared/validation.ts",
         "supabase/functions/ai-conversation-summary/contact-context.ts",
         "supabase/functions/ai-conversation-summary/index.ts"
@@ -1076,7 +1087,7 @@
       "name": "ai-deadline-calculator",
       "entrypoint": "supabase/functions/ai-deadline-calculator/index.ts",
       "verify_jwt": true,
-      "source_sha256": "7df1a8e0af723f140da65471a20692166d9724e3d997c7300d40c55a462b87fb",
+      "source_sha256": "74748fb438dd16301359fe806b78e2861f5682ff556d21d2a32b4884dc5834fe",
       "source_files": [
         "supabase/functions/_shared/ai-budget.ts",
         "supabase/functions/_shared/ai-capabilities.ts",
@@ -1085,6 +1096,7 @@
         "supabase/functions/_shared/ai-generate.ts",
         "supabase/functions/_shared/ai-guards.ts",
         "supabase/functions/_shared/ai-json.ts",
+        "supabase/functions/_shared/ai-provider-egress.ts",
         "supabase/functions/_shared/ai-providers.ts",
         "supabase/functions/_shared/ai-response-contracts.ts",
         "supabase/functions/_shared/ai-routing.ts",
@@ -1097,6 +1109,7 @@
         "supabase/functions/_shared/request-policy.ts",
         "supabase/functions/_shared/schemas.ts",
         "supabase/functions/_shared/secure-random.ts",
+        "supabase/functions/_shared/ssrf.ts",
         "supabase/functions/_shared/validation.ts",
         "supabase/functions/ai-deadline-calculator/index.ts"
       ]
@@ -1105,7 +1118,7 @@
       "name": "ai-enhance-message",
       "entrypoint": "supabase/functions/ai-enhance-message/index.ts",
       "verify_jwt": true,
-      "source_sha256": "377e348ea85139c81f51b8a733978f5d2c732d5dcd44284184ed53b05d3541a2",
+      "source_sha256": "606706a47c6d046c04234ac94fb3e207fc7fe74cad3db11f89388ae551beceee",
       "source_files": [
         "supabase/functions/_shared/ai-budget.ts",
         "supabase/functions/_shared/ai-capabilities.ts",
@@ -1113,6 +1126,7 @@
         "supabase/functions/_shared/ai-feature-flags.ts",
         "supabase/functions/_shared/ai-generate.ts",
         "supabase/functions/_shared/ai-guards.ts",
+        "supabase/functions/_shared/ai-provider-egress.ts",
         "supabase/functions/_shared/ai-providers.ts",
         "supabase/functions/_shared/ai-routing.ts",
         "supabase/functions/_shared/ai-usage.ts",
@@ -1123,6 +1137,7 @@
         "supabase/functions/_shared/request-policy.ts",
         "supabase/functions/_shared/schemas.ts",
         "supabase/functions/_shared/secure-random.ts",
+        "supabase/functions/_shared/ssrf.ts",
         "supabase/functions/_shared/validation.ts",
         "supabase/functions/ai-enhance-message/index.ts"
       ]
@@ -1131,7 +1146,7 @@
       "name": "ai-jobs-worker",
       "entrypoint": "supabase/functions/ai-jobs-worker/index.ts",
       "verify_jwt": true,
-      "source_sha256": "b728e674068e85ad3c23ffa5ed08d6e6acc9e7473ec8fae3eb600ce5e6f853b3",
+      "source_sha256": "e33ea2ff1d6f2c178e4b3b54fb8d8160fcac58dca5783164cd2ff7bbd5b9a072",
       "source_files": [
         "supabase/functions/_shared/ai-budget.ts",
         "supabase/functions/_shared/ai-capabilities.ts",
@@ -1140,6 +1155,7 @@
         "supabase/functions/_shared/ai-generate.ts",
         "supabase/functions/_shared/ai-guards.ts",
         "supabase/functions/_shared/ai-jobs.ts",
+        "supabase/functions/_shared/ai-provider-egress.ts",
         "supabase/functions/_shared/ai-providers.ts",
         "supabase/functions/_shared/ai-routing.ts",
         "supabase/functions/_shared/ai-usage.ts",
@@ -1154,6 +1170,7 @@
         "supabase/functions/_shared/rate-limit-log.ts",
         "supabase/functions/_shared/request-policy.ts",
         "supabase/functions/_shared/secure-random.ts",
+        "supabase/functions/_shared/ssrf.ts",
         "supabase/functions/_shared/validation.ts",
         "supabase/functions/ai-jobs-worker/index.ts"
       ]
@@ -1178,7 +1195,7 @@
       "name": "ai-lead-temperature",
       "entrypoint": "supabase/functions/ai-lead-temperature/index.ts",
       "verify_jwt": true,
-      "source_sha256": "7525d4bba7836643db146b3eef7c10849d69f7f91b1e65780a18d17128c84c16",
+      "source_sha256": "b45fdd1a2c38515861120c067c808ec34e9c372613b6eaaa4f34f7a2d329d296",
       "source_files": [
         "supabase/functions/_shared/ai-budget.ts",
         "supabase/functions/_shared/ai-capabilities.ts",
@@ -1187,6 +1204,7 @@
         "supabase/functions/_shared/ai-generate.ts",
         "supabase/functions/_shared/ai-guards.ts",
         "supabase/functions/_shared/ai-json.ts",
+        "supabase/functions/_shared/ai-provider-egress.ts",
         "supabase/functions/_shared/ai-providers.ts",
         "supabase/functions/_shared/ai-response-contracts.ts",
         "supabase/functions/_shared/ai-routing.ts",
@@ -1199,6 +1217,7 @@
         "supabase/functions/_shared/request-policy.ts",
         "supabase/functions/_shared/schemas.ts",
         "supabase/functions/_shared/secure-random.ts",
+        "supabase/functions/_shared/ssrf.ts",
         "supabase/functions/_shared/validation.ts",
         "supabase/functions/ai-lead-temperature/index.ts"
       ]
@@ -1207,7 +1226,7 @@
       "name": "ai-loss-risk",
       "entrypoint": "supabase/functions/ai-loss-risk/index.ts",
       "verify_jwt": true,
-      "source_sha256": "025926bdc7794bdaf5d1f429484d503f1605d55bfc6e2a7664a313e53db927cb",
+      "source_sha256": "aa2e0ff625a3c69962391614bb099ceaf11ae6fec0b34040206851268e394e0b",
       "source_files": [
         "supabase/functions/_shared/ai-budget.ts",
         "supabase/functions/_shared/ai-capabilities.ts",
@@ -1216,6 +1235,7 @@
         "supabase/functions/_shared/ai-generate.ts",
         "supabase/functions/_shared/ai-guards.ts",
         "supabase/functions/_shared/ai-json.ts",
+        "supabase/functions/_shared/ai-provider-egress.ts",
         "supabase/functions/_shared/ai-providers.ts",
         "supabase/functions/_shared/ai-response-contracts.ts",
         "supabase/functions/_shared/ai-routing.ts",
@@ -1228,6 +1248,7 @@
         "supabase/functions/_shared/request-policy.ts",
         "supabase/functions/_shared/schemas.ts",
         "supabase/functions/_shared/secure-random.ts",
+        "supabase/functions/_shared/ssrf.ts",
         "supabase/functions/_shared/validation.ts",
         "supabase/functions/ai-loss-risk/index.ts"
       ]
@@ -1236,7 +1257,7 @@
       "name": "ai-multimodal-analysis",
       "entrypoint": "supabase/functions/ai-multimodal-analysis/index.ts",
       "verify_jwt": true,
-      "source_sha256": "b935dcb365c4aeede7f3e1ca0f70246c294a079555df73e3fc4f5647e164c902",
+      "source_sha256": "f793e1005f183c2bcf35a0d21f58bd9320eda4936d6842af6a5e5145e4a04fdd",
       "source_files": [
         "supabase/functions/_shared/ai-budget.ts",
         "supabase/functions/_shared/ai-capabilities.ts",
@@ -1246,6 +1267,7 @@
         "supabase/functions/_shared/ai-guards.ts",
         "supabase/functions/_shared/ai-image-input.ts",
         "supabase/functions/_shared/ai-json.ts",
+        "supabase/functions/_shared/ai-provider-egress.ts",
         "supabase/functions/_shared/ai-providers.ts",
         "supabase/functions/_shared/ai-response-contracts.ts",
         "supabase/functions/_shared/ai-routing.ts",
@@ -1267,7 +1289,7 @@
       "name": "ai-objection-handler",
       "entrypoint": "supabase/functions/ai-objection-handler/index.ts",
       "verify_jwt": true,
-      "source_sha256": "c60e302ad5a68c3f07ebace65a88fc82b79664a87852dfb37146487eb3f2e63e",
+      "source_sha256": "141d44356ef917d8837b504f18c1e68c68f2ca7a8a7c4e7dce89fe981b8007a1",
       "source_files": [
         "supabase/functions/_shared/ai-budget.ts",
         "supabase/functions/_shared/ai-capabilities.ts",
@@ -1276,6 +1298,7 @@
         "supabase/functions/_shared/ai-generate.ts",
         "supabase/functions/_shared/ai-guards.ts",
         "supabase/functions/_shared/ai-json.ts",
+        "supabase/functions/_shared/ai-provider-egress.ts",
         "supabase/functions/_shared/ai-providers.ts",
         "supabase/functions/_shared/ai-response-contracts.ts",
         "supabase/functions/_shared/ai-routing.ts",
@@ -1288,6 +1311,7 @@
         "supabase/functions/_shared/request-policy.ts",
         "supabase/functions/_shared/schemas.ts",
         "supabase/functions/_shared/secure-random.ts",
+        "supabase/functions/_shared/ssrf.ts",
         "supabase/functions/_shared/validation.ts",
         "supabase/functions/ai-objection-handler/index.ts"
       ]
@@ -1296,7 +1320,7 @@
       "name": "ai-price-anchor",
       "entrypoint": "supabase/functions/ai-price-anchor/index.ts",
       "verify_jwt": true,
-      "source_sha256": "0a7c2c3cea7033c73c348b37aaa6802666d2d007135688e373bd5035fba32a03",
+      "source_sha256": "3ff3baf11bb9012188b9b8d5fa4874c35ffd82c902d674acbe8ad605d143d81d",
       "source_files": [
         "supabase/functions/_shared/ai-budget.ts",
         "supabase/functions/_shared/ai-capabilities.ts",
@@ -1305,6 +1329,7 @@
         "supabase/functions/_shared/ai-generate.ts",
         "supabase/functions/_shared/ai-guards.ts",
         "supabase/functions/_shared/ai-json.ts",
+        "supabase/functions/_shared/ai-provider-egress.ts",
         "supabase/functions/_shared/ai-providers.ts",
         "supabase/functions/_shared/ai-response-contracts.ts",
         "supabase/functions/_shared/ai-routing.ts",
@@ -1317,6 +1342,7 @@
         "supabase/functions/_shared/request-policy.ts",
         "supabase/functions/_shared/schemas.ts",
         "supabase/functions/_shared/secure-random.ts",
+        "supabase/functions/_shared/ssrf.ts",
         "supabase/functions/_shared/validation.ts",
         "supabase/functions/ai-price-anchor/index.ts"
       ]
@@ -1325,7 +1351,7 @@
       "name": "ai-product-recommendation",
       "entrypoint": "supabase/functions/ai-product-recommendation/index.ts",
       "verify_jwt": true,
-      "source_sha256": "e0dd935af3577805a97a5bd4a2e8b9dcb583369692651de17bd6b64e6dc9ea1d",
+      "source_sha256": "145c760d6b9b8617f0ea70f69327a664d29581b9f3635c36b9869c286a364f8e",
       "source_files": [
         "supabase/functions/_shared/ai-budget.ts",
         "supabase/functions/_shared/ai-capabilities.ts",
@@ -1334,6 +1360,7 @@
         "supabase/functions/_shared/ai-generate.ts",
         "supabase/functions/_shared/ai-guards.ts",
         "supabase/functions/_shared/ai-json.ts",
+        "supabase/functions/_shared/ai-provider-egress.ts",
         "supabase/functions/_shared/ai-providers.ts",
         "supabase/functions/_shared/ai-response-contracts.ts",
         "supabase/functions/_shared/ai-routing.ts",
@@ -1346,6 +1373,7 @@
         "supabase/functions/_shared/request-policy.ts",
         "supabase/functions/_shared/schemas.ts",
         "supabase/functions/_shared/secure-random.ts",
+        "supabase/functions/_shared/ssrf.ts",
         "supabase/functions/_shared/validation.ts",
         "supabase/functions/ai-product-recommendation/index.ts"
       ]
@@ -1354,11 +1382,12 @@
       "name": "ai-proxy",
       "entrypoint": "supabase/functions/ai-proxy/index.ts",
       "verify_jwt": true,
-      "source_sha256": "c9484969aafbddd8e955e99463af064e5e1961e21e9981a3d3683836a3979050",
+      "source_sha256": "2f56969040c1407f97d69d4a701f4089c93fc675a7b0109c33a9a8f16855e0d9",
       "source_files": [
         "supabase/functions/_shared/ai-capabilities.ts",
         "supabase/functions/_shared/ai-feature-flags.ts",
         "supabase/functions/_shared/ai-guards.ts",
+        "supabase/functions/_shared/ai-provider-egress.ts",
         "supabase/functions/_shared/ai-providers.ts",
         "supabase/functions/_shared/ai-routing.ts",
         "supabase/functions/_shared/ai-usage.ts",
@@ -1369,6 +1398,7 @@
         "supabase/functions/_shared/request-policy.ts",
         "supabase/functions/_shared/schemas.ts",
         "supabase/functions/_shared/secure-random.ts",
+        "supabase/functions/_shared/ssrf.ts",
         "supabase/functions/_shared/validation.ts",
         "supabase/functions/ai-proxy/index.ts"
       ]
@@ -1377,7 +1407,7 @@
       "name": "ai-suggest-reply",
       "entrypoint": "supabase/functions/ai-suggest-reply/index.ts",
       "verify_jwt": true,
-      "source_sha256": "50114552f1c2f6ed8bc1ea40f2a59b02e7127983dbffc79bc64dae3f6db398e0",
+      "source_sha256": "1db7e6562350a0459db22b5df554a1813e201a4550f4b1498db57bc7c2baa672",
       "source_files": [
         "supabase/functions/_shared/ai-budget.ts",
         "supabase/functions/_shared/ai-capabilities.ts",
@@ -1385,6 +1415,7 @@
         "supabase/functions/_shared/ai-feature-flags.ts",
         "supabase/functions/_shared/ai-generate.ts",
         "supabase/functions/_shared/ai-guards.ts",
+        "supabase/functions/_shared/ai-provider-egress.ts",
         "supabase/functions/_shared/ai-providers.ts",
         "supabase/functions/_shared/ai-response-contracts.ts",
         "supabase/functions/_shared/ai-routing.ts",
@@ -1397,6 +1428,7 @@
         "supabase/functions/_shared/request-policy.ts",
         "supabase/functions/_shared/schemas.ts",
         "supabase/functions/_shared/secure-random.ts",
+        "supabase/functions/_shared/ssrf.ts",
         "supabase/functions/_shared/validation.ts",
         "supabase/functions/ai-suggest-reply/index.ts"
       ]
@@ -1511,7 +1543,7 @@
       "name": "automation-suggest-reply",
       "entrypoint": "supabase/functions/automation-suggest-reply/index.ts",
       "verify_jwt": true,
-      "source_sha256": "eba276a6d297a718a50686bc974bc0b7dd30e4da9a59aee1dec54b72aefe5906",
+      "source_sha256": "438bd52272c58f4b77c84f3cfcd2d173cc7f1b2630784904d788daf1ba4695a5",
       "source_files": [
         "supabase/functions/_shared/ai-budget.ts",
         "supabase/functions/_shared/ai-capabilities.ts",
@@ -1520,6 +1552,7 @@
         "supabase/functions/_shared/ai-generate.ts",
         "supabase/functions/_shared/ai-guards.ts",
         "supabase/functions/_shared/ai-json.ts",
+        "supabase/functions/_shared/ai-provider-egress.ts",
         "supabase/functions/_shared/ai-providers.ts",
         "supabase/functions/_shared/ai-routing.ts",
         "supabase/functions/_shared/ai-usage.ts",
@@ -1528,6 +1561,7 @@
         "supabase/functions/_shared/rate-limit-log.ts",
         "supabase/functions/_shared/request-policy.ts",
         "supabase/functions/_shared/secure-random.ts",
+        "supabase/functions/_shared/ssrf.ts",
         "supabase/functions/_shared/validation.ts",
         "supabase/functions/automation-suggest-reply/index.ts"
       ]
@@ -1572,7 +1606,7 @@
       "name": "chatbot-l1",
       "entrypoint": "supabase/functions/chatbot-l1/index.ts",
       "verify_jwt": true,
-      "source_sha256": "e5a113e2d2881c93191acc8918653eba96b3f0a443102e8688813742ef09ba45",
+      "source_sha256": "d0c9d783aad96c07c9659786b08a22cc180bd12bc5eb3669c0a5dc237205fb2b",
       "source_files": [
         "supabase/functions/_shared/ai-budget.ts",
         "supabase/functions/_shared/ai-capabilities.ts",
@@ -1581,6 +1615,7 @@
         "supabase/functions/_shared/ai-generate.ts",
         "supabase/functions/_shared/ai-guards.ts",
         "supabase/functions/_shared/ai-json.ts",
+        "supabase/functions/_shared/ai-provider-egress.ts",
         "supabase/functions/_shared/ai-providers.ts",
         "supabase/functions/_shared/ai-response-contracts.ts",
         "supabase/functions/_shared/ai-routing.ts",
@@ -1593,6 +1628,7 @@
         "supabase/functions/_shared/request-policy.ts",
         "supabase/functions/_shared/schemas.ts",
         "supabase/functions/_shared/secure-random.ts",
+        "supabase/functions/_shared/ssrf.ts",
         "supabase/functions/_shared/validation.ts",
         "supabase/functions/chatbot-l1/index.ts"
       ]
@@ -1601,7 +1637,7 @@
       "name": "classify-audio-meme",
       "entrypoint": "supabase/functions/classify-audio-meme/index.ts",
       "verify_jwt": true,
-      "source_sha256": "671a5f746a1f9840c71c74642b56523f5b65d60279e247e8eeb084555d1a9989",
+      "source_sha256": "93804f27453310abbeda64e2106fb39b5358b8c58cd757396d59cff5a239bc6a",
       "source_files": [
         "supabase/functions/_shared/ai-audio-input.ts",
         "supabase/functions/_shared/ai-auth.ts",
@@ -1611,6 +1647,7 @@
         "supabase/functions/_shared/ai-feature-flags.ts",
         "supabase/functions/_shared/ai-generate.ts",
         "supabase/functions/_shared/ai-guards.ts",
+        "supabase/functions/_shared/ai-provider-egress.ts",
         "supabase/functions/_shared/ai-providers.ts",
         "supabase/functions/_shared/ai-routing.ts",
         "supabase/functions/_shared/ai-usage.ts",
@@ -1630,7 +1667,7 @@
       "name": "classify-emoji",
       "entrypoint": "supabase/functions/classify-emoji/index.ts",
       "verify_jwt": true,
-      "source_sha256": "cdc3ed720db0a97ea12e67adc44e640ed2071117f977488599793388127416d5",
+      "source_sha256": "090b9d4f9f4c5a8071a002fd9527ee5c61d9f4f58dd922c3bc46ca875449ebbf",
       "source_files": [
         "supabase/functions/_shared/ai-auth.ts",
         "supabase/functions/_shared/ai-budget.ts",
@@ -1640,6 +1677,7 @@
         "supabase/functions/_shared/ai-generate.ts",
         "supabase/functions/_shared/ai-guards.ts",
         "supabase/functions/_shared/ai-image-input.ts",
+        "supabase/functions/_shared/ai-provider-egress.ts",
         "supabase/functions/_shared/ai-providers.ts",
         "supabase/functions/_shared/ai-routing.ts",
         "supabase/functions/_shared/ai-usage.ts",
@@ -1659,7 +1697,7 @@
       "name": "classify-sticker",
       "entrypoint": "supabase/functions/classify-sticker/index.ts",
       "verify_jwt": true,
-      "source_sha256": "2a89b4f515bf6eaa047a167db487c522bd0d655e0907544e5d02129144725323",
+      "source_sha256": "536688c492a0d328a875a396e6f7114f1dfb8f33c800e0ea03773478878cc98b",
       "source_files": [
         "supabase/functions/_shared/ai-auth.ts",
         "supabase/functions/_shared/ai-budget.ts",
@@ -1669,6 +1707,7 @@
         "supabase/functions/_shared/ai-generate.ts",
         "supabase/functions/_shared/ai-guards.ts",
         "supabase/functions/_shared/ai-image-input.ts",
+        "supabase/functions/_shared/ai-provider-egress.ts",
         "supabase/functions/_shared/ai-providers.ts",
         "supabase/functions/_shared/ai-routing.ts",
         "supabase/functions/_shared/ai-usage.ts",
@@ -1723,7 +1762,7 @@
       "name": "copilot-live",
       "entrypoint": "supabase/functions/copilot-live/index.ts",
       "verify_jwt": true,
-      "source_sha256": "759621580e0d2e4df6dabdca3376bb562a950499f3d09283cfd386dfa77b98f0",
+      "source_sha256": "e8ee1a37e4b9b556d49c658e33e4fa417b4d4304fdc139e242578bb0ee2d2f8c",
       "source_files": [
         "supabase/functions/_shared/ai-budget.ts",
         "supabase/functions/_shared/ai-capabilities.ts",
@@ -1731,6 +1770,7 @@
         "supabase/functions/_shared/ai-feature-flags.ts",
         "supabase/functions/_shared/ai-generate.ts",
         "supabase/functions/_shared/ai-guards.ts",
+        "supabase/functions/_shared/ai-provider-egress.ts",
         "supabase/functions/_shared/ai-providers.ts",
         "supabase/functions/_shared/ai-routing.ts",
         "supabase/functions/_shared/ai-usage.ts",
@@ -1740,6 +1780,7 @@
         "supabase/functions/_shared/rate-limit-log.ts",
         "supabase/functions/_shared/request-policy.ts",
         "supabase/functions/_shared/secure-random.ts",
+        "supabase/functions/_shared/ssrf.ts",
         "supabase/functions/_shared/validation.ts",
         "supabase/functions/copilot-live/index.ts"
       ]
@@ -2750,7 +2791,7 @@
       "name": "voice-agent",
       "entrypoint": "supabase/functions/voice-agent/index.ts",
       "verify_jwt": true,
-      "source_sha256": "ee80a9c2c0f2a0263b4b46f421b820023e8ec358a5d9938c25e4bf3549438d60",
+      "source_sha256": "e15560744dc6c872a427ddf080de16dc33066960437caa85a787adf69c9a496b",
       "source_files": [
         "supabase/functions/_shared/ai-auth.ts",
         "supabase/functions/_shared/ai-budget.ts",
@@ -2759,6 +2800,7 @@
         "supabase/functions/_shared/ai-feature-flags.ts",
         "supabase/functions/_shared/ai-generate.ts",
         "supabase/functions/_shared/ai-guards.ts",
+        "supabase/functions/_shared/ai-provider-egress.ts",
         "supabase/functions/_shared/ai-providers.ts",
         "supabase/functions/_shared/ai-routing.ts",
         "supabase/functions/_shared/ai-usage.ts",
@@ -2767,6 +2809,7 @@
         "supabase/functions/_shared/rate-limit-log.ts",
         "supabase/functions/_shared/request-policy.ts",
         "supabase/functions/_shared/secure-random.ts",
+        "supabase/functions/_shared/ssrf.ts",
         "supabase/functions/_shared/validation.ts",
         "supabase/functions/voice-agent/index.ts"
       ]
@@ -2863,5 +2906,5 @@
       ]
     }
   ],
-  "manifest_sha256": "169d092721300f5112ebcd8a3c70a2b51bf0dbb7cb5d3a18f297457a4e043815"
+  "manifest_sha256": "a52c14a3985218930f56c6bbaca67a7d7ebf0bef9a6cbb67d02e60010a941eea"
 }
