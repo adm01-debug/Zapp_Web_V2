@@ -25,8 +25,8 @@ partir do código e falha quando:
 | B | 2 |
 | C | 4 |
 | D | 6 |
-| E | 17 |
-| **total** | **93** |
+| E | 18 |
+| **total** | **94** |
 
 ## Tabela
 
@@ -50,7 +50,7 @@ partir do código e falha quando:
 | `ai-product-recommendation` | A | `src/hooks/copilot/useProductRecommendation.ts:57` |
 | `ai-proxy` | A | `src/components/admin/SupervisorCopilot.tsx:89` · `src/components/settings/ai-providers/useAIProviders.ts:121` · `src/hooks/inbox/useObjectionDetector.ts:91` · `src/hooks/inbox/useObjectionDetector.ts:165` · `src/hooks/ui/useUniversityHelp.ts:130` · `supabase/functions/talkx-ai/index.ts:596` |
 | `ai-suggest-reply` | A | `src/components/inbox/AISuggestions.tsx:104` · `supabase/functions/assistant-gateway/index.ts:40` |
-| `ai-transcribe-audio` | A | `src/components/inbox/AudioMessagePlayer.tsx:71` · `supabase/functions/_shared/evolution-webhook-messages.ts:1464` |
+| `ai-transcribe-audio` | A | `src/components/inbox/AudioMessagePlayer.tsx:71` · `supabase/functions/_shared/evolution-webhook-messages.ts:1523` |
 | `ai-usage-outbox-drain` | C | `supabase/migrations/20261103223000_ai_usage_outbox_drain_cron.sql:64` · `supabase/config.toml:103` |
 | `approve-password-reset` | A | `src/components/security/PasswordResetRequestsPanel.tsx:32` · `src/components/security/PasswordResetRequestsPanel.tsx:51` · `src/hooks/security/usePasswordResetRequests.ts:51` · `src/hooks/security/usePasswordResetRequests.ts:72` |
 | `auth-login` | A | `src/lib/serverLogin.ts:129` · `supabase/config.toml:39` |
@@ -58,10 +58,10 @@ partir do código e falha quando:
 | `automation-suggest-reply` | A | `src/hooks/chat/useAutomationSuggestions.ts:192` |
 | `batch-fetch-avatars` | A | `src/hooks/chat/useNewConversation.ts:146` · `src/hooks/chat/useNewConversation.ts:154` · `src/hooks/inbox/useInboxBulkActions.ts:323` · `supabase/migrations/20260828200100_cron_avatars_refresh_hourly.sql:11` · `supabase/migrations/20260902000200_fix_cron_avatars_refresh_key.sql:10` · `supabase/migrations/20260930250000_reschedule_cron_secrets_l5.sql:74` · `supabase/migrations/20260930390000_endurece_l5_contrato_e_jobs.sql:130` · `supabase/migrations/20260930430000_cron_sem_dml_direto_v2.sql:161` · `supabase/config.toml:26` |
 | `bitrix-api` | A | `src/components/integrations/BitrixIntegrationView.tsx:29` · `src/hooks/integrations/useBitrixApi.ts:33` |
-| `chatbot-l1` | A | `src/components/settings/ChatbotL1Config.tsx:235` · `supabase/functions/_shared/evolution-webhook-messages.ts:621` |
+| `chatbot-l1` | A | `src/components/settings/ChatbotL1Config.tsx:235` · `supabase/functions/_shared/evolution-webhook-messages.ts:631` |
 | `classify-audio-meme` | A | `src/components/settings/media-library/AIGenerateDialog.tsx:59` · `src/hooks/communication/useAudioMemes.ts:250` |
 | `classify-emoji` | A | `src/hooks/integrations/useCustomEmojis.ts:142` |
-| `classify-sticker` | A | `src/components/inbox/chat/MessageBubble.tsx:329` · `src/hooks/sticker-picker/useStickerPicker.ts:148` · `supabase/functions/_shared/evolution-webhook-messages.ts:1441` |
+| `classify-sticker` | A | `src/components/inbox/chat/MessageBubble.tsx:329` · `src/hooks/sticker-picker/useStickerPicker.ts:148` · `supabase/functions/_shared/evolution-webhook-messages.ts:1500` |
 | `cleanup-rate-limit-logs` | E | — sem chamador no repositório — |
 | `connection-health-check` | A | `src/components/connections/ConnectionsView.tsx:136` · `src/components/diagnostics/ConnectionHealthPanel.tsx:95` · `src/components/monitoring/hooks/useMonitoringActions.ts:18` · `supabase/migrations/20260924100800_schedule_connection_health_check_cron.sql:16` · `supabase/migrations/20260930250000_reschedule_cron_secrets_l5.sql:56` · `supabase/migrations/20260930390000_endurece_l5_contrato_e_jobs.sql:87` · `supabase/migrations/20260930430000_cron_sem_dml_direto_v2.sql:116` · `supabase/config.toml:23` |
 | `copilot-live` | E | — sem chamador no repositório — |
@@ -83,7 +83,7 @@ partir do código e falha quando:
 | `evolution-webhook` | A | `src/components/monitoring/hooks/useMonitoringActions.ts:31` · `src/components/monitoring/hooks/useMonitoringActions.ts:60` · `supabase/functions/_shared/evolution-go-routes.ts:263` · `supabase/functions/_shared/evolution-sync-actions.ts:227` · `supabase/functions/_shared/evolution-sync-actions.ts:300` · `supabase/functions/evolution-api/index.ts:690` · `supabase/functions/evolution-api/index.ts:885` · `supabase/functions/webhook-diagnostic/index.ts:96` · `supabase/functions/webhook-diagnostic/index.ts:169` · `supabase/functions/webhook-diagnostic/index.ts:304` · `supabase/functions/webhook-diagnostic/index.ts:314` · `supabase/config.toml:8` |
 | `external-db-bridge` | E | — sem chamador no repositório — |
 | `external-db-proxy` | A | `src/lib/externalProxy.ts:33` |
-| `fetch-link-preview` | B | `supabase/functions/_shared/evolution-webhook-messages.ts:276` |
+| `fetch-link-preview` | B | `supabase/functions/_shared/evolution-webhook-messages.ts:290` |
 | `get-call-recording` | A | `src/hooks/calls/useCallRecording.ts:35` · `supabase/config.toml:84` |
 | `get-mapbox-token` | A | `src/lib/mapboxToken.ts:87` |
 | `get-sip-password` | A | `src/lib/calls/sipProvisioning.ts:98` |
@@ -124,6 +124,7 @@ partir do código e falha quando:
 | `voice-copilot-action` | E | — sem chamador no repositório — |
 | `webauthn` | A | `src/hooks/auth/useWebAuthn.ts:51` · `src/hooks/auth/useWebAuthn.ts:83` · `src/hooks/auth/useWebAuthn.ts:106` · `src/hooks/auth/useWebAuthn.ts:136` |
 | `webhook-diagnostic` | A | `src/components/monitoring/hooks/useMonitoringActions.ts:79` |
+| `webhook-replay` | E | — sem chamador no repositório — |
 | `whatsapp-webhook` | D | `supabase/config.toml:11` |
 
 ## Órfãs (23) — GATE B
@@ -152,3 +153,4 @@ mantém a lista honesta.
 - `talkx-scheduler`
 - `talkx-storage-purge`
 - `voice-copilot-action`
+- `webhook-replay`
