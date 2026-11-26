@@ -1,7 +1,7 @@
 # Contexto do projeto para agentes de IA
 
 GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.
-Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR dela) a cada push em `main` e a cada 10 minutos pelo workflow `contexto.yml`; índice único das três fontes em `docs/contexto/00-INDEX.md`. Gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `6e6264b6f49cfc709898b951fd346cd83466481f` (2026-11-26T04:03:10Z).
+Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR dela) a cada push em `main` e a cada 10 minutos pelo workflow `contexto.yml`; índice único das três fontes em `docs/contexto/00-INDEX.md`. Gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `73c76a78423470f9db324a144222b5abae8b9704` (2026-11-26T04:18:38Z).
 
 ## Como usar (leia antes de planejar ou executar qualquer tarefa)
 1. **Tela/rota/menu** → `rotas.json` (url/vista/menu → arquivo → hooks → tabelas → edges; `rotas_http_backend` para APIs) e `modulos.json` (módulo inteiro + dependências entre módulos).
@@ -36,7 +36,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 |---|---|
 | arquivos_total | 14843 |
 | arquivos_codigo | 5175 |
-| linhas_codigo | 960359 |
+| linhas_codigo | 960428 |
 | rotas | 18 |
 | rotas_http_backend | 11 |
 | vistas_por_id | 55 |
@@ -388,7 +388,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - edges_chamadas_sem_pasta: 0
 - tabelas_sem_rls: 0
 - tabelas_usadas_sem_definicao: 10 — ex.: avatars, carriers, categories
-- tabelas_com_drift_migration_vs_types: 9 — ex.: app_settings, conversation_tasks, edge_rate_limits
+- tabelas_com_drift_migration_vs_types: 6 — ex.: app_settings, edge_rate_limits, feature_flags
 - rpcs_sem_definicao: 13 — ex.: admin_set_role, complete_crm_sync_outbox, get_companies_by_phones_batch
 - componentes_orfaos: 45 — ex.: analise-prs/resgate-261118-lote2/src/components/copilot/RadarPhase6Panel.tsx, src/components/calls/DialPad.tsx, src/components/cognitive/ProgressiveDisclosure.tsx
 - componentes_com_nome_duplicado: 42 — ex.: AchievementBadge, BreadcrumbItem, CommandGroup
@@ -398,7 +398,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - possiveis_segredos_no_codigo: 4 — ex.: scripts/ai-context/cenarios.mjs:102, scripts/ci/edge-coverage-authz.unit.mjs:398, scripts/ci/inventario-banco.unit.mjs:147
 
 ## Grafo de código (graphify)
-- 96478 nós · 161503 arestas · 9019 comunidades · grafo do commit `6e6264b6`
+- 96478 nós · 161503 arestas · 9019 comunidades · grafo do commit `73c76a78`
 - comunidades maiores: Communities (8869 total, 3472 thin omitted) (5378), TalkXSuppression.tsx (1421), react (1408), lucide-react (1132), vitest (978), cn (733), utils.ts (712), chat.ts (579), ref_node_fs (573), catalogShared.tsx (492), validation.ts (459), useMyWorkItems.ts (377)
 - símbolos mais chamados: cn() (src/lib/utils.ts), useAuth() (src/hooks/auth/useAuth.tsx), jsonResponse() (supabase/functions/_shared/validation.ts), errorResponse() (supabase/functions/_shared/validation.ts), handleCors() (supabase/functions/_shared/validation.ts), fail() (scripts/e2e-isolated/network-proof-policy.mjs), Logger (supabase/functions/_shared/validation.ts), requireEnv() (supabase/functions/_shared/validation.ts), fmtInt() (src/components/talkx/kit/format.ts), .from() (supabase/functions/_shared/evolution-types.ts), useUserRole() (src/hooks/system/useUserRole.ts), validationErrorResponse() (supabase/functions/_shared/schemas.ts)
 - consulta local: `graphify query "<pergunta>"`, `graphify path "<A>" "<B>"`, `graphify explain "<X>"`
@@ -406,16 +406,16 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 ## Hotspots (arquivos mais alterados, 90 dias)
 - supabase/deployment-manifest.json (39)
 - ESTADO.md (27)
-- supabase/schema-manifest.json (16)
+- supabase/schema-manifest.json (17)
+- docs/DB-INVENTORY.md (16)
 - .github/workflows/db-guard.yml (15)
-- docs/DB-INVENTORY.md (15)
 - docs/talkx/ESTADOS.md (15)
 - src/integrations/supabase/types.ts (15)
-- supabase/schema-catalog.json (14)
+- supabase/schema-catalog.json (15)
+- scripts/db-audit/grants-baseline.json (11)
 - .github/workflows/ci.yml (10)
 - PENDENCIAS.md (10)
 - docs/agentes/github-ci.md (10)
-- scripts/db-audit/grants-baseline.json (10)
 - docs/ci/README.md (9)
 - supabase/functions/evolution-api/index.ts (9)
 - scripts/ci/ci-docs-baseline.unit.mjs (8)
@@ -509,7 +509,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - `docs/COMPLETE_SYSTEM_FEATURES.md` — 📋 Levantamento Completo de Funcionalidades do Sistema (1061 linhas)
 - `docs/CONEXOES_WHATSAPP_RUNBOOK.md` — Runbook — Conexões de WhatsApp (V2) (235 linhas)
 - `docs/CRM360_TECHNICAL_DOCS.md` — ZAPP-WEB × CRM 360° — Documentação Técnica (109 linhas)
-- `docs/DB-INVENTORY.md` — Inventário de objetos do banco — `public` (296 linhas)
+- `docs/DB-INVENTORY.md` — Inventário de objetos do banco — `public` (297 linhas)
 - `docs/DB-SECURITY.md` — Seguranca do banco — notas operacionais (279 linhas)
 - `docs/DEPLOYMENT.md` — 🚀 Guia de Deploy - ZAPP-WEB (349 linhas)
 - `docs/DISTRIBUTION-FALLBACKS.md` — Distribuição de Atendimentos — Tabela-Verdade de Fallbacks (314 linhas)
@@ -541,6 +541,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - CHANGELOG topo: [Unreleased]
 
 ## Últimos commits
+- 2026-11-26 `73c76a78` chore(db): sincronizar artefatos derivados do banco (#3399)
 - 2026-11-26 `6e6264b6` feat(edge): dead-letter reprocessável quando o ingest da mensagem recebida falha (E35) (#3397)
 - 2026-11-26 `284367aa` feat: trilha de auditoria das conexoes e reconciliacao de INSTANCE_GONE (#3398)
 - 2026-11-26 `501f3bb5` fix: trava exclusao de template do Talk X em campanha (N-127/N-127b) (#3394)
@@ -555,7 +556,6 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - 2026-11-25 `6ee63ddb` fix: canal único de realtime nas conexões e reconciliação de INSTANCE_GONE (#3390)
 - 2026-11-25 `4855bda8` fix: asserção do E2E da sidebar não confunde a seção de SLA com o accordion antigo (#3389)
 - 2026-11-25 `078aacb5` feat: tela da linha do tempo de SLA no painel do contato (#3383)
-- 2026-11-25 `d91f6507` feat: redige PII e segredos em logs, auditoria e telemetria (#3382)
 
 ## Arquivos deste diretório
 - `docs/contexto/codigo/rotas.json`

@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "6e6264b6f49cfc709898b951fd346cd83466481f",
+  "commit": "73c76a78423470f9db324a144222b5abae8b9704",
   "branch": "main",
-  "data_commit": "2026-11-26T04:03:10Z",
+  "data_commit": "2026-11-26T04:18:38Z",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "73c76a78",
+    "data": "2026-11-26",
+    "assunto": "chore(db): sincronizar artefatos derivados do banco (#3399)"
+   },
    {
     "sha": "6e6264b6",
     "data": "2026-11-26",
@@ -126,14 +131,9 @@
     "sha": "3be6edc8",
     "data": "2026-11-25",
     "assunto": "chore: sincroniza docs/contexto com a publicacao oficial (mapa deixa de citar 149 caminhos mortos) (#3372)"
-   },
-   {
-    "sha": "51918129",
-    "data": "2026-11-25",
-    "assunto": "chore: aposenta acervo de resgate 261118 lote3 ja triado (1.029 arquivos, zero perdas) (#3371)"
    }
   ],
-  "arquivos_mudados_7d": 2782,
+  "arquivos_mudados_7d": 2780,
   "pastas_mais_mudadas_30d": [
    {
     "pasta": "docs/contexto/supabase",
@@ -165,7 +165,7 @@
    },
    {
     "pasta": "src/components/talkx",
-    "mudancas": 365
+    "mudancas": 363
    },
    {
     "pasta": "analise-prs/resgate-261115/dossies",
@@ -207,14 +207,14 @@
    },
    {
     "arquivo": "supabase/schema-manifest.json",
+    "mudancas": 17
+   },
+   {
+    "arquivo": "docs/DB-INVENTORY.md",
     "mudancas": 16
    },
    {
     "arquivo": ".github/workflows/db-guard.yml",
-    "mudancas": 15
-   },
-   {
-    "arquivo": "docs/DB-INVENTORY.md",
     "mudancas": 15
    },
    {
@@ -227,7 +227,11 @@
    },
    {
     "arquivo": "supabase/schema-catalog.json",
-    "mudancas": 14
+    "mudancas": 15
+   },
+   {
+    "arquivo": "scripts/db-audit/grants-baseline.json",
+    "mudancas": 11
    },
    {
     "arquivo": ".github/workflows/ci.yml",
@@ -239,10 +243,6 @@
    },
    {
     "arquivo": "docs/agentes/github-ci.md",
-    "mudancas": 10
-   },
-   {
-    "arquivo": "scripts/db-audit/grants-baseline.json",
     "mudancas": 10
    },
    {
@@ -301,11 +301,11 @@
   "autores_30d": [
    {
     "autor": "adm01-debug",
-    "commits": 286
+    "commits": 285
    },
    {
     "autor": "github-actions[bot]",
-    "commits": 10
+    "commits": 11
    },
    {
     "autor": "dependabot[bot]",
@@ -316,7 +316,7 @@
  "contagens": {
   "arquivos_total": 14843,
   "arquivos_codigo": 5175,
-  "linhas_codigo": 960359,
+  "linhas_codigo": 960428,
   "rotas": 18,
   "rotas_http_backend": 11,
   "vistas_por_id": 55,
@@ -768,7 +768,7 @@
   },
   "src/integrations": {
    "arquivos": 4,
-   "linhas": 16031
+   "linhas": 16100
   },
   "src/lib": {
    "arquivos": 302,
@@ -842,7 +842,7 @@
  "maiores_arquivos": [
   {
    "arquivo": "src/integrations/supabase/types.ts",
-   "linhas": 15958
+   "linhas": 16027
   },
   {
    "arquivo": "scripts/regras_negocio/generate.py",
@@ -1333,14 +1333,11 @@
   ],
   "tabelas_com_drift_migration_vs_types": [
    "app_settings",
-   "conversation_tasks",
    "edge_rate_limits",
    "feature_flags",
-   "geo_blocking_settings",
    "global_settings",
    "talkx_contact_attributes",
-   "talkx_settings",
-   "webhook_failures"
+   "talkx_settings"
   ],
   "rpcs_sem_definicao": [
    "admin_set_role",

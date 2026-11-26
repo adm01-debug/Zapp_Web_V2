@@ -1,6 +1,6 @@
 # 11 · GLOSSÁRIO, DADOS DE REFERÊNCIA E LACUNAS
 
-> Gerado automaticamente por AI Context Sync v1.3.2 · commit `6e6264b6f4` · branch `main` · 2026-11-26 04:04 UTC
+> Gerado automaticamente por AI Context Sync v1.3.2 · commit `73c76a7842` · branch `main` · 2026-11-26 05:14 UTC
 > Não edite à mão — regras humanas vão em `manual/`.
 
 ## Glossário do domínio (entidades do sistema)
@@ -67,7 +67,7 @@
 | `conversation_memory` | _(sem COMMENT ON TABLE — significado não documentado)_ | 11 colunas | migration |
 | `conversation_sla` | Instancia de SLA por contato: primeiro contato, primeira resposta (mark_first_response), resolucao e flags de violacao, ligada a sla_configurations. | 10 colunas | migration |
 | `conversation_snoozes` | _(sem COMMENT ON TABLE — significado não documentado)_ | 6 colunas | migration |
-| `conversation_tasks` | _(sem COMMENT ON TABLE — significado não documentado)_ | 20 colunas | migration |
+| `conversation_tasks` | _(sem COMMENT ON TABLE — significado não documentado)_ | 21 colunas | migration |
 | `copilot_conversation_scores` | _(sem COMMENT ON TABLE — significado não documentado)_ | 4 colunas | migration |
 | `copilot_feedback` | _(sem COMMENT ON TABLE — significado não documentado)_ | 12 colunas | migration |
 | `copilot_help_requests` | _(sem COMMENT ON TABLE — significado não documentado)_ | 5 colunas | migration |
@@ -228,7 +228,7 @@
 | `voip_profile_credentials` | _(sem COMMENT ON TABLE — significado não documentado)_ | 6 colunas | types.ts |
 | `warroom_alerts` | _(sem COMMENT ON TABLE — significado não documentado)_ | 9 colunas | migration |
 | `webauthn_challenges` | _(sem COMMENT ON TABLE — significado não documentado)_ | 6 colunas | migration |
-| `webhook_failures` | Dead-letter dos webhooks (endpoint, evento, payload truncado, erro, retries). ACL restrita a service_role. | 12 colunas | migration |
+| `webhook_failures` | Dead-letter dos webhooks (endpoint, evento, payload truncado, erro, retries). ACL restrita a service_role. | 13 colunas | migration |
 | `webhook_rate_limits` | _(sem COMMENT ON TABLE — significado não documentado)_ | 6 colunas | migration |
 | `whatsapp_connection_queues` | _(sem COMMENT ON TABLE — significado não documentado)_ | 4 colunas | migration |
 | `whatsapp_connections` | Instancias da Evolution GO conectadas (instance_id unico), status da sessao e configuracao de webhook. | 25 colunas | migration |
@@ -401,7 +401,6 @@
 | coluna | coluna `company` usada no código não existe no schema de `talkx_blacklist` |  |
 | coluna | coluna `is_new` usada no código não existe no schema de `products` |  |
 | coluna | coluna `novelty_expires_at` usada no código não existe no schema de `products` |  |
-| coluna | coluna `replay_payload` usada no código não existe no schema de `webhook_failures` |  |
 | tabela | tabela `a` usada no código não existe nas migrations/types do repo | `scripts/ai-context/cenarios.mjs` |
 | tabela | tabela `alem_do_limite` usada no código não existe nas migrations/types do repo | `scripts/ci/inventario-rotas.unit.mjs` |
 | tabela | tabela `audit_log` usada no código não existe nas migrations/types do repo | `scripts/ci/supabase-usage-guard-forward-projection.unit.mjs` |

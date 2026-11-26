@@ -1,15 +1,15 @@
 {
  "meta": {
-  "sha": "6e6264b6f49cfc709898b951fd346cd83466481f",
+  "sha": "73c76a78423470f9db324a144222b5abae8b9704",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-26 04:04 UTC",
+  "generated_at": "2026-11-26 05:14 UTC",
   "files_total": 14690,
   "code_files": 8220,
-  "code_lines": 1238422
+  "code_lines": 1238491
  },
  "version": "1.3.2",
- "facts_hash": "3dfdcd673fdba6ba",
+ "facts_hash": "72a88c3d58f56d27",
  "stack": {
   "frameworks": [
    "React + Vite",
@@ -10858,6 +10858,13 @@
       "src": "src/integrations/supabase/types.ts"
      },
      {
+      "name": "message_id",
+      "type": "string | null",
+      "fk": "",
+      "generated": "",
+      "src": "src/integrations/supabase/types.ts"
+     },
+     {
       "name": "migrated_from_reminder_id",
       "type": "string | null",
       "fk": "",
@@ -11947,6 +11954,13 @@
       "fk": "",
       "generated": "",
       "src": "supabase/migrations/20261126010000_webhook_failures_replay.sql"
+     },
+     {
+      "name": "replay_payload",
+      "type": "Json | null",
+      "fk": "",
+      "generated": "",
+      "src": "src/integrations/supabase/types.ts"
      }
     ],
     "constraints": [],
@@ -77201,7 +77215,7 @@
   {
    "module": "src/integrations",
    "files": 4,
-   "lines": 16031,
+   "lines": 16100,
    "tables": [],
    "exports": [
     "client.ts: SUPABASE_ANON_KEY, GOOGLE_OAUTH_ENABLED, supabase, SupabaseClient",
@@ -85118,10 +85132,6 @@
    {
     "table": "products",
     "column": "novelty_expires_at"
-   },
-   {
-    "table": "webhook_failures",
-    "column": "replay_payload"
    }
   ]
  },
@@ -281044,11 +281054,6 @@
     "where": []
    },
    {
-    "kind": "coluna",
-    "msg": "coluna `replay_payload` usada no código não existe no schema de `webhook_failures`",
-    "where": []
-   },
-   {
     "kind": "tabela",
     "msg": "tabela `a` usada no código não existe nas migrations/types do repo",
     "where": [
@@ -382941,7 +382946,7 @@
   },
   "src/integrations/supabase/types.ts": {
    "path": "src/integrations/supabase/types.ts",
-   "lines": 15958,
+   "lines": 16027,
    "exports": [
     "type Json",
     "type Database",
@@ -427379,10 +427384,23 @@
   }
  },
  "git": {
-  "sha": "6e6264b6f49cfc709898b951fd346cd83466481f",
+  "sha": "73c76a78423470f9db324a144222b5abae8b9704",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "73c76a78",
+    "date": "2026-11-26",
+    "author": "github-actions[bot]",
+    "subject": "chore(db): sincronizar artefatos derivados do banco (#3399)",
+    "files": [
+     "docs/DB-INVENTORY.md",
+     "scripts/db-audit/grants-baseline.json",
+     "src/integrations/supabase/types.ts",
+     "supabase/schema-catalog.json",
+     "supabase/schema-manifest.json"
+    ]
+   },
    {
     "sha": "6e6264b6",
     "date": "2026-11-26",
@@ -429089,16 +429107,6 @@
      "scripts/ci/github-settings-baseline.json",
      "scripts/ci/github-settings-guard.unit.mjs"
     ]
-   },
-   {
-    "sha": "06d10c80",
-    "date": "2026-11-24",
-    "author": "adm01-debug",
-    "subject": "fix(ci): guard enxerga wrapper que passa o nome da edge — gmail-send e gmail-sync saem de orfas (#3365)",
-    "files": [
-     "ESTADO.md",
-     "scripts/ci/docs-estado-registry-convention.unit.mjs"
-    ]
    }
   ],
   "hot_files": [
@@ -429111,16 +429119,16 @@
     6
    ],
    [
-    "ESTADO.md",
-    5
+    "docs/DB-INVENTORY.md",
+    4
    ],
    [
     ".github/workflows/db-guard.yml",
     4
    ],
    [
-    "docs/DB-INVENTORY.md",
-    3
+    "ESTADO.md",
+    4
    ],
    [
     "docs/ci/README.md",
@@ -429159,27 +429167,27 @@
     2
    ],
    [
+    "scripts/db-audit/grants-baseline.json",
+    1
+   ],
+   [
+    "src/integrations/supabase/types.ts",
+    1
+   ],
+   [
+    "supabase/schema-catalog.json",
+    1
+   ],
+   [
+    "supabase/schema-manifest.json",
+    1
+   ],
+   [
     "scripts/db-audit/check-webhook-failures-replay.sql",
     1
    ],
    [
     "scripts/db-audit/check-webhook-failures-replay.test.sh",
-    1
-   ],
-   [
-    "supabase/functions/_shared/__tests__/webhook-dead-letter.test.ts",
-    1
-   ],
-   [
-    "supabase/functions/_shared/webhook-dead-letter.ts",
-    1
-   ],
-   [
-    "supabase/functions/evolution-webhook/index.test.ts",
-    1
-   ],
-   [
-    "supabase/functions/evolution-webhook/index.ts",
     1
    ]
   ]

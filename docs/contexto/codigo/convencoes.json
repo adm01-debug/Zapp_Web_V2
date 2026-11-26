@@ -66,11 +66,11 @@
  "commits": {
   "convencao": "conventional commits (observado)",
   "exemplos": [
+   "chore(db): sincronizar artefatos derivados do banco (#3399)",
    "feat(edge): dead-letter reprocessável quando o ingest da mensagem recebida falha (E35) (#3397)",
    "feat: trilha de auditoria das conexoes e reconciliacao de INSTANCE_GONE (#3398)",
    "fix: trava exclusao de template do Talk X em campanha (N-127/N-127b) (#3394)",
-   "feat: acoes por mensagem (favoritar, fixar, responder depois, denunciar) (#3395)",
-   "feat: bloqueio de login por cidade (paridade Promo Gifts V4) (#3393)"
+   "feat: acoes por mensagem (favoritar, fixar, responder depois, denunciar) (#3395)"
   ]
  },
  "pr_template": ".github/PULL_REQUEST_TEMPLATE.md",
