@@ -29,7 +29,7 @@ set -Eeuo pipefail
 
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 base_migration="$repo_root/supabase/migrations/20261004182245_resolve_network_policy_rpc.sql"
-migration="$repo_root/supabase/migrations/20261007022808_city_whitelist_network_policy.sql"
+migration="$repo_root/supabase/migrations/20261126010508_city_whitelist_network_policy.sql"
 postgres_image="${CITY_POLICY_TEST_POSTGRES_IMAGE:-postgres:17-alpine}"
 
 fail() { printf '[FAIL] %s\n' "$1" >&2; exit 1; }
