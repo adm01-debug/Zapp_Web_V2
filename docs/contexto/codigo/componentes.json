@@ -1,7 +1,7 @@
 {
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
- "total": 940,
+ "total": 941,
  "orfaos": 45,
  "nomes_duplicados": {
   "AchievementBadge": [
@@ -11734,6 +11734,22 @@
    "orfao": false
   },
   {
+   "arquivo": "src/components/talkx/segments/SegmentTagsBlock.tsx",
+   "exports": [
+    "SegmentTagsBlock"
+   ],
+   "export_default": null,
+   "linhas": 60,
+   "dominio": "components/talkx",
+   "hooks_locais": [
+    "useTalkXSegmentTags"
+   ],
+   "tabelas": [],
+   "edges": [],
+   "usado_por": 1,
+   "orfao": false
+  },
+  {
    "arquivo": "src/components/talkx/segments/TalkXSegmentBuilder.tsx",
    "exports": [
     "TalkXSegmentBuilder",
@@ -12044,7 +12060,7 @@
     "TalkXSegments"
    ],
    "export_default": null,
-   "linhas": 840,
+   "linhas": 844,
    "dominio": "components/talkx",
    "hooks_locais": [
     "useAudienceEstimate",

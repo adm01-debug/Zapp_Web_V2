@@ -7,12 +7,12 @@
    "src/pages (18)"
   ],
   "componentes": [
-   "src/components (905)",
+   "src/components (906)",
    "src/pages (26)",
    "src/features (2)"
   ],
   "hooks": [
-   "src/hooks (440)",
+   "src/hooks (441)",
    "src/components (74)",
    "src/contexts (2)"
   ],
@@ -22,7 +22,7 @@
    "src/utils (8)"
   ],
   "testes": [
-   "co-localizado (__tests__) (2116)",
+   "co-localizado (__tests__) (2118)",
    "outro (260)",
    "co-localizado (*.test) (203)"
   ],
@@ -48,7 +48,7 @@
  },
  "barrels_index": 74,
  "extensao_componentes": [
-  ".tsx (940)"
+  ".tsx (941)"
  ],
  "alias_imports": {
   "analise-prs/resgate-261115/auditoria/bruto/diarios-sessao/": {
@@ -66,11 +66,11 @@
  "commits": {
   "convencao": "conventional commits (observado)",
   "exemplos": [
+   "feat: painel do segmento mostra as tags mais usadas no público (talkx_segment_tags) (#3407)",
    "feat: liga o log de entrega da campanha (talkx_campaign_logs) no painel E74 (#3405)",
    "feat: liga o retorno da campanha (conversões, receita e ROI) no Analytics (#3404)",
    "chore(db): sincronizar artefatos derivados do banco (#3399)",
-   "feat(edge): dead-letter reprocessável quando o ingest da mensagem recebida falha (E35) (#3397)",
-   "feat: trilha de auditoria das conexoes e reconciliacao de INSTANCE_GONE (#3398)"
+   "feat(edge): dead-letter reprocessável quando o ingest da mensagem recebida falha (E35) (#3397)"
   ]
  },
  "pr_template": ".github/PULL_REQUEST_TEMPLATE.md",

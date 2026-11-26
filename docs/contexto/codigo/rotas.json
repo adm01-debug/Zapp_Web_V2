@@ -521,6 +521,7 @@
     "useTalkXOverviewStats",
     "useTalkXResumeChecklist",
     "useTalkXSegmentProgress",
+    "useTalkXSegmentTags",
     "useTalkXSegments",
     "useTalkXServerResumePrecheck",
     "useTalkXServiceStatus",
@@ -1050,6 +1051,7 @@
     "useTalkXOverviewStats",
     "useTalkXResumeChecklist",
     "useTalkXSegmentProgress",
+    "useTalkXSegmentTags",
     "useTalkXSegments",
     "useTalkXServerResumePrecheck",
     "useTalkXServiceStatus",
@@ -1480,7 +1482,7 @@
     "unknown",
     "user"
    ],
-   "arquivos_puxados": 1607
+   "arquivos_puxados": 1609
   },
   {
    "protegida": false,
@@ -7802,6 +7804,7 @@
     "useTalkXOverviewStats",
     "useTalkXResumeChecklist",
     "useTalkXSegmentProgress",
+    "useTalkXSegmentTags",
     "useTalkXSegments",
     "useTalkXServerResumePrecheck",
     "useTalkXServiceStatus",
@@ -7884,6 +7887,7 @@
     "useTalkXOverviewStats",
     "useTalkXResumeChecklist",
     "useTalkXSegmentProgress",
+    "useTalkXSegmentTags",
     "useTalkXSegments",
     "useTalkXServerResumePrecheck",
     "useTalkXServiceStatus",
@@ -7997,7 +8001,7 @@
     "tab",
     "tablist"
    ],
-   "arquivos_puxados": 268
+   "arquivos_puxados": 270
   },
   {
    "id": "talkx-kit",

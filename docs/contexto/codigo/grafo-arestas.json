@@ -6667,6 +6667,7 @@
    "src/components/dashboard/overview/DashboardKpiCard.tsx",
    "src/components/talkx/kit/states.tsx",
    "src/components/talkx/segments/SegmentSideList.tsx",
+   "src/components/talkx/segments/SegmentTagsBlock.tsx",
    "src/components/talkx/segments/TalkXSegmentBuilder.tsx",
    "src/components/talkx/segments/segmentBuilderReducer.ts",
    "src/components/talkx/segments/segmentValidation.ts",
@@ -7007,6 +7008,10 @@
    "src/hooks/auth/useAuth.tsx",
    "src/hooks/integrations/useTalkXSegments.ts",
    "src/lib/utils.ts"
+  ],
+  "src/components/talkx/segments/SegmentTagsBlock.tsx": [
+   "src/components/talkx/talkxShared.ts",
+   "src/hooks/integrations/useTalkXSegmentTags.ts"
   ],
   "src/components/talkx/segments/TalkXSegmentBuilder.tsx": [
    "src/components/dashboard/overview/DashboardCard.tsx",
@@ -9585,6 +9590,9 @@
   "src/hooks/integrations/useTalkXSegmentProgress.ts": [
    "src/components/talkx/tracking/talkxSegmentProgress.ts",
    "src/lib/supabaseHelpers.ts"
+  ],
+  "src/hooks/integrations/useTalkXSegmentTags.ts": [
+   "src/integrations/supabase/client.ts"
   ],
   "src/hooks/integrations/useTalkXSegments.ts": [
    "src/hooks/auth/useAuth.tsx",

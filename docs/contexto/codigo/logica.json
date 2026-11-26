@@ -870,7 +870,7 @@
    "zod_schemas": 0,
    "flags": [],
    "papeis": [],
-   "usado_por": 394,
+   "usado_por": 395,
    "usado_por_modulos": [
     "components/admin",
     "components/agents",
@@ -939,7 +939,7 @@
     "pages/admin",
     "services"
    ],
-   "coberto_por_testes": 39,
+   "coberto_por_testes": 40,
    "orfao": false
   },
   {

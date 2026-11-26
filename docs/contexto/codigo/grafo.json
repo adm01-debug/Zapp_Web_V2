@@ -1,8 +1,8 @@
 {
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
- "nos": 2431,
- "arestas": 8367,
+ "nos": 2433,
+ "arestas": 8371,
  "hubs": [
   {
    "arquivo": "src/lib/utils.ts",
@@ -10,7 +10,7 @@
   },
   {
    "arquivo": "src/integrations/supabase/client.ts",
-   "importado_por": 433
+   "importado_por": 435
   },
   {
    "arquivo": "src/components/ui/button.tsx",
@@ -85,12 +85,12 @@
    "importado_por": 58
   },
   {
-   "arquivo": "src/components/ui/switch.tsx",
+   "arquivo": "src/components/talkx/talkxShared.ts",
    "importado_por": 57
   },
   {
-   "arquivo": "src/components/talkx/talkxShared.ts",
-   "importado_por": 56
+   "arquivo": "src/components/ui/switch.tsx",
+   "importado_por": 57
   },
   {
    "arquivo": "supabase/functions/_shared/schemas.ts",

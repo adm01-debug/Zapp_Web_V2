@@ -1,7 +1,7 @@
 {
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
- "total": 525,
+ "total": 526,
  "hooks": [
   {
    "arquivo": "analise-prs/resgate-261118-lote2/src/hooks/useMotionSeguro.ts",
@@ -9553,6 +9553,27 @@
     "src/hooks/talkx/talkxAiSuggestions.ts"
    ],
    "coberto_por_testes": 33
+  },
+  {
+   "arquivo": "src/hooks/integrations/useTalkXSegmentTags.ts",
+   "hooks_exportados": [
+    "useTalkXSegmentTags"
+   ],
+   "linhas": 84,
+   "dominio": "hooks/integrations",
+   "tabelas": [],
+   "rpcs": [],
+   "edges": [],
+   "hooks_internos": [
+    "useMemo",
+    "useQuery"
+   ],
+   "canais_realtime": [],
+   "usado_por": 1,
+   "usado_por_arquivos": [
+    "src/components/talkx/segments/SegmentTagsBlock.tsx"
+   ],
+   "coberto_por_testes": 1
   },
   {
    "arquivo": "src/hooks/integrations/useTalkXServerResumePrecheck.ts",
