@@ -37,6 +37,13 @@ function checaManifest(policies: EffectivePolicy[], tabela: string): void {
 
 const ADMIN_OU_SUPERVISOR = /is_admin_or_supervisor\(\s*auth\.uid\(\)\s*\)/;
 
+/**
+ * Exclusao de conexao: so admin. A migration 20261126011000 fechou o DELETE em
+ * is_admin — apagar a conexao tambem apaga a instancia no provedor (acao
+ * delete-instance da Edge), sem desfazer.
+ */
+const ADMIN = /is_admin\(\s*auth\.uid\(\)\s*\)/;
+
 /** Comandos de escrita — `FOR ALL` e avaliado contra cada um deles. */
 const ESCRITA: ComandoRls[] = ['INSERT', 'UPDATE', 'DELETE'];
 
@@ -113,15 +120,17 @@ describe('RLS real: whatsapp_connections (schema resolvido das migrations)', () 
     }
   });
 
-  it('INSERT/UPDATE/DELETE exigem admin ou supervisor', () => {
+  it('INSERT/UPDATE exigem admin ou supervisor; DELETE, so admin', () => {
     // FOR ALL cobre os quatro comandos: cada comando de escrita precisa de
     // ao menos uma policy cobridora, toda ela com predicado de admin.
-    for (const comando of ESCRITA) {
+    for (const comando of ['INSERT', 'UPDATE'] as ComandoRls[]) {
       expect(
         comandoProtegido(policies, comando, ADMIN_OU_SUPERVISOR),
         `${comando} sem cobertura admin/supervisor`,
       ).toBe(true);
     }
+    // DELETE e destrutivo (apaga a conexao e a instancia no provedor): so admin.
+    expect(comandoProtegido(policies, 'DELETE', ADMIN), 'DELETE sem cobertura admin').toBe(true);
     const escrita = policies.filter((p) => ESCRITA.some((c) => cobreComando(p, c)));
     for (const p of escrita) {
       expect(p.roles).toContain('authenticated');
