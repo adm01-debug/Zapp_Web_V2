@@ -12,6 +12,7 @@ const routeModules: Record<string, () => Promise<unknown>> = {
   '/admin/roles': () => import('@/pages/admin/RolesPage'),
   '/admin/rate-limit': () => import('@/pages/admin/RateLimitDashboard'),
   '/admin/auditoria-contatos': () => import('@/pages/admin/ContactAuditPage'),
+  '/admin/protecao-contatos': () => import('@/pages/admin/ContactProtectionPage'),
   '/install': () => import('@/pages/Install'),
 };
 

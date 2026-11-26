@@ -209,6 +209,28 @@ export function SecurityView() {
                     <Card>
                       <CardHeader>
                         <CardTitle className="flex items-center gap-2">
+                          <ShieldCheck className="w-5 h-5 text-primary" />
+                          Proteção de Contatos
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <p className="text-sm text-muted-foreground">
+                          Mascaramento, bloqueio de cópia/impressão, marca d'água e limite de fichas
+                          por papel
+                        </p>
+                        <Button 
+                          variant="outline" 
+                          className="mt-4"
+                          onClick={() => navigate('/admin/protecao-contatos')}
+                        >
+                          Configurar Proteção
+                        </Button>
+                      </CardContent>
+                    </Card>
+
+                    <Card>
+                      <CardHeader>
+                        <CardTitle className="flex items-center gap-2">
                           <Users className="w-5 h-5 text-primary" />
                           Gerenciamento de Roles
                         </CardTitle>
