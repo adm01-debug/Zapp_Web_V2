@@ -340,6 +340,19 @@ jobs:
           SKIP_DOCKER_SHIM: "1"
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/anon-privileges-contact-messages.test.sh
 
+      # N-127/N-127b (resgate): template do Talk X em campanha nao pode ser apagado —
+      # o DELETE direto na tabela era aceito pela policy de dono/staff e a FK
+      # ON DELETE SET NULL orfava a campanha. O harness prova o delta em PostgreSQL 17
+      # descartavel (duplicar copia conteudo e variantes, arquivar preserva updated_at,
+      # trigger BEFORE DELETE recusa 'talkx_template_in_use', delete RPC atomico contra
+      # campanha concorrente). SKIP_DOCKER_SHIM=1 porque cria os papeis
+      # anon/authenticated/service_role (globais no cluster) e inicia container proprio.
+      - name: Provar trava de exclusao de template do Talk X (N-127/N-127b)
+        env:
+          TALKX_N127_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
+          SKIP_DOCKER_SHIM: "1"
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/talkx-template-duplicate-archive-delete.test.sh
+
       # M-DB-02: nenhuma SECURITY DEFINER de public com EXECUTE para PUBLIC/anon
       # (a T26 abriu uma assim por create or replace com parametro novo).
       - name: Simular SECURITY DEFINER aberta para PUBLIC/anon
