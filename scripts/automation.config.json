@@ -4059,6 +4059,14 @@
       "reason": "Legado mantido no fluxo existente; referências literais: .github/workflows/db-guard.yml, .github/workflows/types-sync.yml. O dispatcher não executa esta operação."
     },
     {
+      "id": "legacy-f9fd67e33134c002",
+      "kind": "legacy",
+      "files": ["scripts/db-audit/city-whitelist-network-policy.test.sh"],
+      "manual": ["sh", "scripts/db-audit/city-whitelist-network-policy.test.sh"],
+      "triggers": ["manual"],
+      "reason": "Legado mantido no fluxo existente; referências literais: .github/workflows/db-guard.yml. O dispatcher não executa esta operação."
+    },
+    {
       "id": "legacy-068cca30ba05a716",
       "kind": "legacy",
       "files": [
