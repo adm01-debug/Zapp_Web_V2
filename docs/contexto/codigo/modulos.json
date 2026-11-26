@@ -7379,9 +7379,9 @@
   },
   {
    "modulo": "components/talkx",
-   "arquivos": 108,
-   "testes": 173,
-   "linhas": 26748,
+   "arquivos": 110,
+   "testes": 174,
+   "linhas": 26924,
    "itens_menu": [
     "Campanhas"
    ],
@@ -7390,7 +7390,7 @@
     "talkx-kit"
    ],
    "rotas_http": [],
-   "componentes": 70,
+   "componentes": 71,
    "hooks_locais": [
     "useActiveDepartments",
     "useAnimationFrame",

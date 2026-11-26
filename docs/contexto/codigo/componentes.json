@@ -1,7 +1,7 @@
 {
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
- "total": 941,
+ "total": 942,
  "orfaos": 45,
  "nomes_duplicados": {
   "AchievementBadge": [
@@ -3595,7 +3595,7 @@
    ],
    "tabelas": [],
    "edges": [],
-   "usado_por": 40,
+   "usado_por": 41,
    "orfao": false
   },
   {
@@ -12194,7 +12194,7 @@
     "TalkXWizardReview"
    ],
    "export_default": null,
-   "linhas": 449,
+   "linhas": 462,
    "dominio": "components/talkx",
    "hooks_locais": [
     "useContactCustomFields",
@@ -12415,6 +12415,21 @@
    ],
    "export_default": null,
    "linhas": 61,
+   "dominio": "components/talkx",
+   "hooks_locais": [],
+   "tabelas": [],
+   "edges": [],
+   "usado_por": 1,
+   "orfao": false
+  },
+  {
+   "arquivo": "src/components/talkx/tracking/TalkXTestSendCard.tsx",
+   "exports": [
+    "TalkXSendTest",
+    "TalkXTestSendCard"
+   ],
+   "export_default": null,
+   "linhas": 124,
    "dominio": "components/talkx",
    "hooks_locais": [],
    "tabelas": [],
@@ -14191,7 +14206,7 @@
    "hooks_locais": [],
    "tabelas": [],
    "edges": [],
-   "usado_por": 174,
+   "usado_por": 175,
    "orfao": false
   },
   {
@@ -14205,7 +14220,7 @@
    "hooks_locais": [],
    "tabelas": [],
    "edges": [],
-   "usado_por": 116,
+   "usado_por": 117,
    "orfao": false
   },
   {

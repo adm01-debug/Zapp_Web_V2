@@ -6791,6 +6791,7 @@
    "src/components/talkx/TalkXMessagePreview.tsx",
    "src/components/talkx/kit/states.tsx",
    "src/components/talkx/talkxShared.ts",
+   "src/components/talkx/tracking/TalkXTestSendCard.tsx",
    "src/components/talkx/useCampaignEditor.ts",
    "src/components/talkx/useTalkXLifecycle.tsx",
    "src/components/ui/checkbox.tsx",
@@ -7141,6 +7142,13 @@
   "src/components/talkx/tracking/TalkXServerResumePrecheck.tsx": [
    "src/hooks/integrations/useTalkXServerResumePrecheck.ts",
    "src/lib/utils.ts"
+  ],
+  "src/components/talkx/tracking/TalkXTestSendCard.tsx": [
+   "src/components/dashboard/overview/DashboardCard.tsx",
+   "src/components/talkx/talkxShared.ts",
+   "src/components/talkx/tracking/talkxTestSend.ts",
+   "src/components/ui/input.tsx",
+   "src/components/ui/label.tsx"
   ],
   "src/components/talkx/tracking/talkxCampaignRules.ts": [
    "src/components/talkx/talkxLimits.ts",

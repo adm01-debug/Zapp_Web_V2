@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "ec33e1ea1b6df90d5cf8e74b7944f3ed45df5857",
+  "commit": "3eb193aa2869186b0f2f47b81bf7306dafd3cbc9",
   "branch": "main",
-  "data_commit": "2026-11-26T09:33:18-03:00",
+  "data_commit": "2026-11-26T10:06:51-03:00",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "3eb193aa",
+    "data": "2026-11-26",
+    "assunto": "feat(talkx): campanha ganha o envio de teste antes de lancar (E47) (#3409)"
+   },
    {
     "sha": "ec33e1ea",
     "data": "2026-11-26",
@@ -126,14 +131,9 @@
     "sha": "26469075",
     "data": "2026-11-25",
     "assunto": "chore(contexto): main recebe o snapshot gerado por PR automatica (#3375)"
-   },
-   {
-    "sha": "1e7fec6a",
-    "data": "2026-11-25",
-    "assunto": "infra: valida a virada do dominio principal para o build do V2 (#3374)"
    }
   ],
-  "arquivos_mudados_7d": 2784,
+  "arquivos_mudados_7d": 2789,
   "pastas_mais_mudadas_30d": [
    {
     "pasta": "docs/contexto/supabase",
@@ -165,7 +165,7 @@
    },
    {
     "pasta": "src/components/talkx",
-    "mudancas": 372
+    "mudancas": 377
    },
    {
     "pasta": "analise-prs/resgate-261115/dossies",
@@ -207,7 +207,7 @@
    },
    {
     "arquivo": "docs/talkx/ESTADOS.md",
-    "mudancas": 18
+    "mudancas": 19
    },
    {
     "arquivo": "docs/DB-INVENTORY.md",
@@ -238,12 +238,12 @@
     "mudancas": 10
    },
    {
-    "arquivo": "PENDENCIAS.md",
+    "arquivo": "docs/agentes/github-ci.md",
     "mudancas": 10
    },
    {
-    "arquivo": "docs/agentes/github-ci.md",
-    "mudancas": 10
+    "arquivo": "PENDENCIAS.md",
+    "mudancas": 9
    },
    {
     "arquivo": "docs/ci/README.md",
@@ -314,21 +314,21 @@
   ]
  },
  "contagens": {
-  "arquivos_total": 14855,
-  "arquivos_codigo": 5187,
-  "linhas_codigo": 962169,
+  "arquivos_total": 14858,
+  "arquivos_codigo": 5190,
+  "linhas_codigo": 962476,
   "rotas": 18,
   "rotas_http_backend": 11,
   "vistas_por_id": 55,
   "itens_menu": 61,
   "modulos": 149,
-  "componentes": 941,
+  "componentes": 942,
   "hooks": 526,
   "edge_functions": 94,
   "tabelas": 224,
   "migrations": 1161,
   "cron_jobs": 29,
-  "testes": 2846,
+  "testes": 2847,
   "workflows": 26,
   "scripts": 458,
   "docs_md": 3988
@@ -739,8 +739,8 @@
    "linhas": 638
   },
   "src/components": {
-   "arquivos": 2330,
-   "linhas": 396844
+   "arquivos": 2333,
+   "linhas": 397151
   },
   "src/config": {
    "arquivos": 3,
@@ -878,7 +878,7 @@
   },
   {
    "arquivo": "src/components/talkx/useCampaignEditor.ts",
-   "linhas": 1286
+   "linhas": 1289
   },
   {
    "arquivo": "supabase/functions/multiplix-send/index.ts",

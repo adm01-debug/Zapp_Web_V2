@@ -1,15 +1,15 @@
 {
  "meta": {
-  "sha": "ec33e1ea1b6df90d5cf8e74b7944f3ed45df5857",
+  "sha": "3eb193aa2869186b0f2f47b81bf7306dafd3cbc9",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-26 12:35 UTC",
-  "files_total": 14702,
-  "code_files": 8232,
-  "code_lines": 1240232
+  "generated_at": "2026-11-26 13:17 UTC",
+  "files_total": 14705,
+  "code_files": 8235,
+  "code_lines": 1240539
  },
  "version": "1.3.2",
- "facts_hash": "f67c8222798deef1",
+ "facts_hash": "8f75f6f5917ea2f0",
  "stack": {
   "frameworks": [
    "React + Vite",
@@ -368,8 +368,8 @@
   "package_manager": "bun",
   "languages": {
    ".sql": 3072,
-   ".tsx": 2498,
-   ".ts": 2039,
+   ".tsx": 2500,
+   ".ts": 2040,
    ".mjs": 496,
    ".py": 125,
    ".cjs": 19,
@@ -73187,7 +73187,7 @@
     "file": ".github/workflows/types-sync.yml"
    }
   ],
-  "components_count": 2332,
+  "components_count": 2335,
   "hooks": [
    {
     "name": "useMotionSeguro",
@@ -76583,8 +76583,8 @@
   },
   {
    "module": "src/components",
-   "files": 2330,
-   "lines": 396844,
+   "files": 2333,
+   "lines": 397151,
    "tables": [
     "agent_skills",
     "agent_visibility_grants",
@@ -99789,6 +99789,22 @@
    {
     "file": "src/components/talkx/tracking/talkxSegmentProgress.ts",
     "text": "mas a lista não pode aparecer fora de ordem se o servidor mudar de plano."
+   },
+   {
+    "file": "src/components/talkx/tracking/talkxTestSend.ts",
+    "text": "talkxTestSend.ts — E47/X067: regra pura do envio de teste da campanha."
+   },
+   {
+    "file": "src/components/talkx/tracking/talkxTestSend.ts",
+    "text": "// O caminho `action: \"test\"` da edge `talkx-send` já existia (limite X067 de 5 testes"
+   },
+   {
+    "file": "src/components/talkx/tracking/talkxTestSend.ts",
+    "text": "validação do número e a leitura da mensagem de erro da Edge, para o card"
+   },
+   {
+    "file": "src/components/talkx/tracking/talkxTestSend.ts",
+    "text": "`{ error }` no corpo (ex.: 429 \"Limite de envios de teste atingido\") e o"
    },
    {
     "file": "src/components/talkx/tracking/talkxTimelineCopy.ts",
@@ -136384,6 +136400,12 @@
     "name": "summaryTotals",
     "params": "points: TalkXSentSummaryPoint[]",
     "body": "return points.reduce( (acc, p) => ({ sent: acc.sent + (p.sent ?? 0), delivered: acc.delivered + (p.delivered ?? 0), replied: acc.replied + (p.replied ?? 0), }), { sent: 0, delivered: 0, replied: 0 }, );"
+   },
+   {
+    "file": "src/components/talkx/tracking/talkxTestSend.ts",
+    "name": "validTestPhone",
+    "params": "raw: string",
+    "body": "const digits = (raw ?? '').replace(/\\D/g, ''); return digits.length >= 10 && digits.length <= 15 ? digits : null;"
    },
    {
     "file": "src/components/tasks/shared/sheet/rodape.ts",
@@ -178228,6 +178250,58 @@
    {
     "file": "src/components/talkx/__tests__/TalkXTemplatesRail.test.tsx",
     "name": "erro de leitura SOBE — não vira "
+   },
+   {
+    "file": "src/components/talkx/__tests__/TalkXTestSendCard.test.tsx",
+    "name": "validTestPhone"
+   },
+   {
+    "file": "src/components/talkx/__tests__/TalkXTestSendCard.test.tsx",
+    "name": "normaliza o número para dígitos"
+   },
+   {
+    "file": "src/components/talkx/__tests__/TalkXTestSendCard.test.tsx",
+    "name": "recusa número curto, longo ou vazio"
+   },
+   {
+    "file": "src/components/talkx/__tests__/TalkXTestSendCard.test.tsx",
+    "name": "testSendErrorMessage"
+   },
+   {
+    "file": "src/components/talkx/__tests__/TalkXTestSendCard.test.tsx",
+    "name": "usa o motivo do corpo da Edge (429 do limite X067)"
+   },
+   {
+    "file": "src/components/talkx/__tests__/TalkXTestSendCard.test.tsx",
+    "name": "cai na mensagem do erro quando não há corpo legível"
+   },
+   {
+    "file": "src/components/talkx/__tests__/TalkXTestSendCard.test.tsx",
+    "name": "TalkXTestSendCard"
+   },
+   {
+    "file": "src/components/talkx/__tests__/TalkXTestSendCard.test.tsx",
+    "name": "bloqueia o envio sem conexão de WhatsApp"
+   },
+   {
+    "file": "src/components/talkx/__tests__/TalkXTestSendCard.test.tsx",
+    "name": "bloqueia o envio sem mensagem na campanha"
+   },
+   {
+    "file": "src/components/talkx/__tests__/TalkXTestSendCard.test.tsx",
+    "name": "só habilita com número completo e avisa quando está inválido"
+   },
+   {
+    "file": "src/components/talkx/__tests__/TalkXTestSendCard.test.tsx",
+    "name": "envia o número normalizado com a mídia da campanha e mostra o id do provedor"
+   },
+   {
+    "file": "src/components/talkx/__tests__/TalkXTestSendCard.test.tsx",
+    "name": "mostra o motivo real da recusa da Edge"
+   },
+   {
+    "file": "src/components/talkx/__tests__/TalkXTestSendCard.test.tsx",
+    "name": "mostra "
    },
    {
     "file": "src/components/talkx/__tests__/TalkXVariablesGrammar.test.tsx",
@@ -341873,7 +341947,7 @@
   },
   "src/components/talkx/TalkXWizardDelivery.tsx": {
    "path": "src/components/talkx/TalkXWizardDelivery.tsx",
-   "lines": 449,
+   "lines": 462,
    "exports": [
     "function TalkXWizardDelivery",
     "function TalkXWizardReview"
@@ -342309,7 +342383,7 @@
   },
   "src/components/talkx/useCampaignEditor.ts": {
    "path": "src/components/talkx/useCampaignEditor.ts",
-   "lines": 1286,
+   "lines": 1289,
    "exports": [
     "const VARIABLES",
     "const MORE_VARIABLES",
@@ -344872,6 +344946,29 @@
     "sem nenhum template na base mínima o ranking é vazio (a tela diz ",
     "bater no teto é AMOSTRA: não afirma taxa por template (truncated)",
     "erro de leitura SOBE — não vira "
+   ]
+  },
+  "src/components/talkx/__tests__/TalkXTestSendCard.test.tsx": {
+   "path": "src/components/talkx/__tests__/TalkXTestSendCard.test.tsx",
+   "lines": 131,
+   "is_test": true,
+   "rule_comments": [
+    "com o id do provedor e o motivo real da recusa (ex.: limite X067 de 5 testes)."
+   ],
+   "tests": [
+    "validTestPhone",
+    "normaliza o número para dígitos",
+    "recusa número curto, longo ou vazio",
+    "testSendErrorMessage",
+    "usa o motivo do corpo da Edge (429 do limite X067)",
+    "cai na mensagem do erro quando não há corpo legível",
+    "TalkXTestSendCard",
+    "bloqueia o envio sem conexão de WhatsApp",
+    "bloqueia o envio sem mensagem na campanha",
+    "só habilita com número completo e avisa quando está inválido",
+    "envia o número normalizado com a mídia da campanha e mostra o id do provedor",
+    "mostra o motivo real da recusa da Edge",
+    "mostra "
    ]
   },
   "src/components/talkx/__tests__/TalkXVariablesGrammar.test.tsx": {
@@ -347691,6 +347788,14 @@
    ],
    "doc": "N-097 (X142) — resultado da pré-checagem de retomada feita no servidor. Mostra `can_resume` e a lista de `blockers`; sem resultado (carregando, sem permissão, erro) não renderiza nada."
   },
+  "src/components/talkx/tracking/TalkXTestSendCard.tsx": {
+   "path": "src/components/talkx/tracking/TalkXTestSendCard.tsx",
+   "lines": 124,
+   "exports": [
+    "type TalkXSendTest",
+    "function TalkXTestSendCard"
+   ]
+  },
   "src/components/talkx/tracking/talkxCampaignRules.ts": {
    "path": "src/components/talkx/tracking/talkxCampaignRules.ts",
    "lines": 126,
@@ -347864,6 +347969,28 @@
      "name": "summaryTotals",
      "params": "points: TalkXSentSummaryPoint[]",
      "body": "return points.reduce( (acc, p) => ({ sent: acc.sent + (p.sent ?? 0), delivered: acc.delivered + (p.delivered ?? 0), replied: acc.replied + (p.replied ?? 0), }), { sent: 0, delivered: 0, replied: 0 }, );"
+    }
+   ]
+  },
+  "src/components/talkx/tracking/talkxTestSend.ts": {
+   "path": "src/components/talkx/tracking/talkxTestSend.ts",
+   "lines": 36,
+   "exports": [
+    "function validTestPhone",
+    "function testSendErrorMessage"
+   ],
+   "rule_comments": [
+    "talkxTestSend.ts — E47/X067: regra pura do envio de teste da campanha.",
+    "// O caminho `action: \"test\"` da edge `talkx-send` já existia (limite X067 de 5 testes",
+    "validação do número e a leitura da mensagem de erro da Edge, para o card",
+    "`{ error }` no corpo (ex.: 429 \"Limite de envios de teste atingido\") e o"
+   ],
+   "doc": "talkxTestSend.ts — E47/X067: regra pura do envio de teste da campanha. O caminho `action: \"test\"` da edge `talkx-send` já existia (limite X067 de 5 testes por 10 minutos, mídia assinada, idempotência IA-047 via `talkx_test_send_claims` e auditoria em `talkx_test_sends`), mas nenhuma tela da CAMPANHA …",
+   "calc_fns": [
+    {
+     "name": "validTestPhone",
+     "params": "raw: string",
+     "body": "const digits = (raw ?? '').replace(/\\D/g, ''); return digits.length >= 10 && digits.length <= 15 ? digits : null;"
     }
    ]
   },
@@ -427990,10 +428117,24 @@
   }
  },
  "git": {
-  "sha": "ec33e1ea1b6df90d5cf8e74b7944f3ed45df5857",
+  "sha": "3eb193aa2869186b0f2f47b81bf7306dafd3cbc9",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "3eb193aa",
+    "date": "2026-11-26",
+    "author": "adm01-debug",
+    "subject": "feat(talkx): campanha ganha o envio de teste antes de lancar (E47) (#3409)",
+    "files": [
+     "docs/talkx/ESTADOS.md",
+     "src/components/talkx/TalkXWizardDelivery.tsx",
+     "src/components/talkx/__tests__/TalkXTestSendCard.test.tsx",
+     "src/components/talkx/tracking/TalkXTestSendCard.tsx",
+     "src/components/talkx/tracking/talkxTestSend.ts",
+     "src/components/talkx/useCampaignEditor.ts"
+    ]
+   },
    {
     "sha": "ec33e1ea",
     "date": "2026-11-26",
@@ -429697,36 +429838,9 @@
      "analise-prs/resgate-261118-lote3/resolve-2381-from-main/supabase/functions/_shared/copilot-tick.ts",
      "analise-prs/resgate-261118-lote3/resolve-2381-from-main/supabase/functions/ai-jobs-worker/index.ts"
     ]
-   },
-   {
-    "sha": "06a1cbe6",
-    "date": "2026-11-25",
-    "author": "adm01-debug",
-    "subject": "feat(automacao): recupera harness local da PR #2926 sobre o main atual (#3366)",
-    "files": [
-     ".github/workflows/automation-local.yml",
-     ".gitignore",
-     "docs/AUTOMACAO_LOCAL.md",
-     "docs/agentes/github-ci.md",
-     "docs/ci/README.md",
-     "graphify.local.json",
-     "package.json",
-     "scripts/automation.config.json",
-     "scripts/automation.mjs",
-     "scripts/automation.unit.mjs",
-     "scripts/ci/ci-docs-baseline.unit.mjs",
-     "scripts/graphify-local.mjs",
-     "scripts/graphify-local.unit.mjs",
-     "scripts/maintenance/README.md",
-     "scripts/maintenance/config.example.json"
-    ]
    }
   ],
   "hot_files": [
-   [
-    "scripts/automation.config.json",
-    6
-   ],
    [
     "supabase/deployment-manifest.json",
     6
@@ -429736,16 +429850,20 @@
     5
    ],
    [
+    "scripts/automation.config.json",
+    5
+   ],
+   [
+    "docs/talkx/ESTADOS.md",
+    4
+   ],
+   [
     ".github/workflows/db-guard.yml",
     4
    ],
    [
     "ESTADO.md",
     4
-   ],
-   [
-    "docs/talkx/ESTADOS.md",
-    3
    ],
    [
     "src/components/talkx/TalkXAnalytics.tsx",
@@ -429772,12 +429890,28 @@
     2
    ],
    [
-    "docs/ci/README.md",
+    "scripts/ci/eslint-baseline.json",
     2
    ],
    [
-    "scripts/ci/eslint-baseline.json",
-    2
+    "src/components/talkx/TalkXWizardDelivery.tsx",
+    1
+   ],
+   [
+    "src/components/talkx/__tests__/TalkXTestSendCard.test.tsx",
+    1
+   ],
+   [
+    "src/components/talkx/tracking/TalkXTestSendCard.tsx",
+    1
+   ],
+   [
+    "src/components/talkx/tracking/talkxTestSend.ts",
+    1
+   ],
+   [
+    "src/components/talkx/useCampaignEditor.ts",
+    1
    ],
    [
     "src/components/talkx/TalkXSegments.tsx",
@@ -429785,22 +429919,6 @@
    ],
    [
     "src/components/talkx/__tests__/SegmentTagsBlock.test.tsx",
-    1
-   ],
-   [
-    "src/components/talkx/segments/SegmentTagsBlock.tsx",
-    1
-   ],
-   [
-    "src/hooks/integrations/__tests__/useTalkXSegmentTags.test.ts",
-    1
-   ],
-   [
-    "src/hooks/integrations/useTalkXSegmentTags.ts",
-    1
-   ],
-   [
-    "src/components/talkx/__tests__/TalkXCampaignLogsCard.test.tsx",
     1
    ]
   ]

@@ -1,7 +1,7 @@
 # Contexto do projeto para agentes de IA
 
 GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.
-Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR dela) a cada push em `main` e a cada 10 minutos pelo workflow `contexto.yml`; índice único das três fontes em `docs/contexto/00-INDEX.md`. Gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `ec33e1ea1b6df90d5cf8e74b7944f3ed45df5857` (2026-11-26T09:33:18-03:00).
+Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR dela) a cada push em `main` e a cada 10 minutos pelo workflow `contexto.yml`; índice único das três fontes em `docs/contexto/00-INDEX.md`. Gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `3eb193aa2869186b0f2f47b81bf7306dafd3cbc9` (2026-11-26T10:06:51-03:00).
 
 ## Como usar (leia antes de planejar ou executar qualquer tarefa)
 1. **Tela/rota/menu** → `rotas.json` (url/vista/menu → arquivo → hooks → tabelas → edges; `rotas_http_backend` para APIs) e `modulos.json` (módulo inteiro + dependências entre módulos).
@@ -14,7 +14,7 @@ Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR
 Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua tarefa; não carregue tudo.
 
 ## Stack
-- linguagens: TypeScript (4542), Markdown (3988), SQL (3072), JSON (1939), JavaScript (524), Shell (256), Python (125), YAML (43)
+- linguagens: TypeScript (4545), Markdown (3988), SQL (3072), JSON (1939), JavaScript (524), Shell (256), Python (125), YAML (43)
 - linguagem_principal: TypeScript
 - framework: React
 - backend_http: n/d
@@ -34,31 +34,31 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 ## Números
 | item | qtd |
 |---|---|
-| arquivos_total | 14855 |
-| arquivos_codigo | 5187 |
-| linhas_codigo | 962169 |
+| arquivos_total | 14858 |
+| arquivos_codigo | 5190 |
+| linhas_codigo | 962476 |
 | rotas | 18 |
 | rotas_http_backend | 11 |
 | vistas_por_id | 55 |
 | itens_menu | 61 |
 | modulos | 149 |
-| componentes | 941 |
+| componentes | 942 |
 | hooks | 526 |
 | edge_functions | 94 |
 | tabelas | 224 |
 | migrations | 1161 |
 | cron_jobs | 29 |
-| testes | 2846 |
+| testes | 2847 |
 | workflows | 26 |
 | scripts | 458 |
 | docs_md | 3988 |
 
 ## Onde ficam as coisas
 - telas: src/components (54), src/pages (18)
-- componentes: src/components (906), src/pages (26), src/features (2)
+- componentes: src/components (907), src/pages (26), src/features (2)
 - hooks: src/hooks (441), src/components (74), src/contexts (2)
 - servicos_logica: src/lib (157), src/services (20), src/utils (8)
-- testes: co-localizado (__tests__) (2118), outro (260), co-localizado (*.test) (203)
+- testes: co-localizado (__tests__) (2119), outro (260), co-localizado (*.test) (203)
 - edge_functions: supabase/functions
 - migrations: supabase/migrations
 - scripts: scripts/db-audit (309), scripts/ci (43), scripts/e2e-isolated (41)
@@ -108,7 +108,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 | components/schedule | 1 | 1 | 1 | 17 | 2 | 7 |
 | components/security | 2 | 2 | 24 | 30 | 6 | 17 |
 | components/settings | 2 | 2 | 45 | 48 | 8 | 30 |
-| components/talkx | 1 | 2 | 108 | 81 | 7 | 24 |
+| components/talkx | 1 | 2 | 110 | 81 | 7 | 24 |
 | components/tasks | 1 | 1 | 52 | 27 | 2 | 11 |
 | components/team-chat | 1 | 1 | 27 | 67 | 9 | 15 |
 | components/theme | 0 | 0 | 5 | 2 | 0 | 0 |
@@ -375,7 +375,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - env de integração (só nomes): ANTHROPIC_API_KEY, BITRIX_WEBHOOK_URL, CHATBOT_L1_WEBHOOK_SECRET, CRON_SECRET, ELEVENLABS_WEBHOOK_SECRET, EVOLUTION_API_FLAVOR, EVOLUTION_API_KEY, EVOLUTION_API_URL, EVOLUTION_INSTANCE_NAME, EVOLUTION_INSTANCE_TOKEN, EVOLUTION_VPS_SUPABASE_ANON_KEY, EVOLUTION_VPS_SUPABASE_URL, EVOLUTION_WEBHOOK_ENFORCE, EVOLUTION_WEBHOOK_SECRET, GMAIL_CAS_JWT, GMAIL_CAS_POSTGREST_URL, GMAIL_OIDC_AUDIENCE, GMAIL_OIDC_EMAIL, GMAIL_OIDC_JWKS_URL, GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, GOOGLE_REDIRECT_URI, GROQ_API_KEY, INTERNAL_ALERT_SECRET, MULTIPLIX_SCOPE_HMAC_SECRET, OPENAI_API_KEY, PREVIEW_EGRESS_SHARED_SECRET, RESEND_API_KEY, TALKX_CONVERT_SECRET, VITE_ENABLE_GMAIL_INTEGRATION, VITE_SENTRY_DSN, VITE_SENTRY_ENVIRONMENT, WEBHOOK_SECRET, WHATSAPP_APP_SECRET, WHATSAPP_VERIFY_TOKEN
 
 ## Permissões / papéis
-- papéis no código: alert (129), status (115), admin (71), agent (63), supervisor (39), user (38), dialog (30), img (21), region (21), button (20), group (19), authenticated (18), tab (16), service_role (15), tablist (15), listbox (14), radiogroup (14), menuitem (11), option (11), radio (11), anon (10), progressbar (10), combobox (9), system (9), note (8), alertdialog (7), toolbar (7), list (6), log (5), menu (5), tabpanel (5), article (4), complementary (4), assistant (3), cliente (3), grid (3), leader (3), main (3), navigation (3), presentation (3), row (3), separator (3), slider (3), tooltip (3), RH (2), follower (2), form (2), fornecedor (2), gridcell (2), listitem (2), string (2), switch (2), A (1), B (1), ausente (1), banner (1), body (1), checkbox (1), customer (1), driver (1), edge (1), fundo (1), gateway (1), grand (1), html (1), intermediary (1), link (1), member (1), parent (1), positive (1), postgres (1), primary (1), public (1), search (1), special_agent (1), sup (1), target (1), textbox (1), texto (1), timer (1), unknown (1), untrusted (1)
+- papéis no código: alert (129), status (116), admin (71), agent (63), supervisor (39), user (38), dialog (30), img (21), region (21), button (20), group (19), authenticated (18), tab (16), service_role (15), tablist (15), listbox (14), radiogroup (14), menuitem (11), option (11), radio (11), anon (10), progressbar (10), combobox (9), system (9), note (8), alertdialog (7), toolbar (7), list (6), log (5), menu (5), tabpanel (5), article (4), complementary (4), assistant (3), cliente (3), grid (3), leader (3), main (3), navigation (3), presentation (3), row (3), separator (3), slider (3), tooltip (3), RH (2), follower (2), form (2), fornecedor (2), gridcell (2), listitem (2), string (2), switch (2), A (1), B (1), ausente (1), banner (1), body (1), checkbox (1), customer (1), driver (1), edge (1), fundo (1), gateway (1), grand (1), html (1), intermediary (1), link (1), member (1), parent (1), positive (1), postgres (1), primary (1), public (1), search (1), special_agent (1), sup (1), target (1), textbox (1), texto (1), timer (1), unknown (1), untrusted (1)
 - enums de papel: app_role: admin|supervisor|agent
 - guards: src/components/auth/ProtectedRoute.tsx, src/components/copilot/DiscountGuardrailBanner.tsx · rotas protegidas: 8 · públicas: /*, /2fa, /access-denied, /auth, /auth/callback, /forgot-password, /install, /reset-password, /verify-email
 - feature flags: ENABLE_ANALYTICS, ENABLE_DEBUG, ENABLE_GAMIFICATION, ENABLE_GMAIL_INTEGRATION, ENABLE_IMAGE_TRANSFORMATION, FEATURE_AUDIT, FEATURE_CTA, FEATURE_FLAGS_QUERY_KEY, FEATURE_GATES, FEATURE_REGISTRY, FEATURE_TILE, FEATURE_X, crm.integration, inbox.talk-me, nova-tela, video_call
@@ -398,15 +398,15 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - possiveis_segredos_no_codigo: 4 — ex.: scripts/ai-context/cenarios.mjs:102, scripts/ci/edge-coverage-authz.unit.mjs:398, scripts/ci/inventario-banco.unit.mjs:147
 
 ## Grafo de código (graphify)
-- 96550 nós · 161712 arestas · 8870 comunidades · grafo do commit `ec33e1ea`
-- comunidades maiores: Communities (8869 total, 3472 thin omitted) (5379), lucide-react (1019), cn (872), ref_node_fs (774), DashboardView.tsx (633), vitest (506), ExternalProductManagement.tsx (480), useAuth (477), ContactsView.tsx (454), validation.ts (446), @testing-library/react (442), RealtimeInboxView.tsx (436)
+- 96562 nós · 161749 arestas · 9102 comunidades · grafo do commit `3eb193aa`
+- comunidades maiores: Communities (8869 total, 3472 thin omitted) (5378), cn (1404), TalkXSuppression.tsx (1333), react (1292), sonner (1098), vitest (828), DashboardView.tsx (679), chat.ts (654), ref_node_fs (535), validation.ts (495), WorkItemSheet.tsx (452), FilesTab.tsx (386)
 - símbolos mais chamados: cn() (src/lib/utils.ts), useAuth() (src/hooks/auth/useAuth.tsx), jsonResponse() (supabase/functions/_shared/validation.ts), errorResponse() (supabase/functions/_shared/validation.ts), handleCors() (supabase/functions/_shared/validation.ts), fail() (scripts/e2e-isolated/network-proof-policy.mjs), Logger (supabase/functions/_shared/validation.ts), requireEnv() (supabase/functions/_shared/validation.ts), fmtInt() (src/components/talkx/kit/format.ts), .from() (supabase/functions/_shared/evolution-types.ts), useUserRole() (src/hooks/system/useUserRole.ts), validationErrorResponse() (supabase/functions/_shared/schemas.ts)
 - consulta local: `graphify query "<pergunta>"`, `graphify path "<A>" "<B>"`, `graphify explain "<X>"`
 
 ## Hotspots (arquivos mais alterados, 90 dias)
 - supabase/deployment-manifest.json (38)
 - ESTADO.md (27)
-- docs/talkx/ESTADOS.md (18)
+- docs/talkx/ESTADOS.md (19)
 - docs/DB-INVENTORY.md (17)
 - supabase/schema-manifest.json (17)
 - .github/workflows/db-guard.yml (15)
@@ -414,8 +414,8 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - supabase/schema-catalog.json (15)
 - scripts/db-audit/grants-baseline.json (11)
 - .github/workflows/ci.yml (10)
-- PENDENCIAS.md (10)
 - docs/agentes/github-ci.md (10)
+- PENDENCIAS.md (9)
 - docs/ci/README.md (9)
 - supabase/functions/evolution-api/index.ts (9)
 - scripts/ci/ci-docs-baseline.unit.mjs (8)
@@ -541,6 +541,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - CHANGELOG topo: [Unreleased]
 
 ## Últimos commits
+- 2026-11-26 `3eb193aa` feat(talkx): campanha ganha o envio de teste antes de lancar (E47) (#3409)
 - 2026-11-26 `ec33e1ea` feat: painel do segmento mostra as tags mais usadas no público (talkx_segment_tags) (#3407)
 - 2026-11-26 `bcfebb7a` feat: liga o log de entrega da campanha (talkx_campaign_logs) no painel E74 (#3405)
 - 2026-11-26 `515fbecb` feat: liga o retorno da campanha (conversões, receita e ROI) no Analytics (#3404)
@@ -555,7 +556,6 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - 2026-11-25 `bd4e9fd0` fix: semeia as chaves de desligamento da IA (IA-009 secao 2.1 e 2.2) (#3385)
 - 2026-11-26 `c8163184` feat: devolve a fila morta do Multiplix ao cartao de saude da integracao (#3392)
 - 2026-11-25 `34b5d25e` feat: kill switch por provedor (IA-009 2.2) e pausa de bot por conexao (IA-009 2.3) (#3386)
-- 2026-11-25 `e4c2b861` fix: tooltip do prazo usa a regra única de data e o módulo prazoCompleto (#3391)
 
 ## Arquivos deste diretório
 - `docs/contexto/codigo/rotas.json`

@@ -1439,7 +1439,7 @@
    "hooks_exportados": [
     "useCampaignEditor"
    ],
-   "linhas": 1286,
+   "linhas": 1289,
    "dominio": "components/talkx",
    "tabelas": [
     "profiles",
