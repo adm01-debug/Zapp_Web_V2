@@ -482,4 +482,82 @@ psql_file "$migration_revoke_anon" >/dev/null
 psql_file "$migration_tasks_insert" >/dev/null
 printf '[PASS] %s\n' 'reenvio das 3 migrations idempotente'
 
+
+# =====================================================================================
+# "Responder depois": lembrete ligado à mensagem (20261126221500_remind_me_about_message)
+# Resgate 2610111021471d: a RPC cria a tarefa do PRÓPRIO chamador ligada à mensagem.
+# Ela roda aqui como papel real (authenticated/anon), sobre a migration de verdade:
+# janela do lembrete, dono, contato herdado, isolamento entre perfis e SET NULL.
+# =====================================================================================
+remind_migration="$repo_root/supabase/migrations/20261126221500_remind_me_about_message.sql"
+[[ -f "$remind_migration" ]] || fail "migration nao encontrada: $remind_migration"
+
+# Colunas que o replay de producao ja tem (20260928140000) e que a RPC usa.
+psql_sql "ALTER TABLE public.conversation_tasks
+  ADD COLUMN IF NOT EXISTS description text,
+  ADD COLUMN IF NOT EXISTS remind_at timestamptz;" >/dev/null
+psql_file "$remind_migration" >/dev/null
+
+# O harness so tinha a policy de INSERT; em producao a leitura de conversation_tasks
+# vem das migrations reais. A menor policy que deixa observar a linha criada:
+psql_sql "CREATE POLICY tasks_select_own_probe ON public.conversation_tasks
+  FOR SELECT TO authenticated USING (created_by = public.current_profile_id());" >/dev/null
+
+message_visible='40000000-0000-0000-0000-000000000001'
+message_hidden='40000000-0000-0000-0000-000000000002'
+message_missing='40000000-0000-0000-0000-0000000000ff'
+message_probe='40000000-0000-0000-0000-0000000000aa'
+contact_visible='30000000-0000-0000-0000-000000000001'
+user_owner='20000000-0000-0000-0000-000000000001'
+profile_owner='10000000-0000-0000-0000-000000000001'
+user_outsider='20000000-0000-0000-0000-000000000003'
+remind_rpc='public.remind_me_about_message(uuid,timestamptz,text)'
+psql_sql "INSERT INTO public.messages (id, contact_id) VALUES ('$message_probe', '$contact_visible');" >/dev/null
+
+[[ "$(psql_sql "SELECT has_function_privilege('anon','$remind_rpc','EXECUTE')")" == 'f' ]] || fail 'anon pode executar remind_me_about_message'
+[[ "$(psql_sql "SELECT has_function_privilege('authenticated','$remind_rpc','EXECUTE')")" == 't' ]] || fail 'authenticated nao pode executar remind_me_about_message'
+[[ "$(psql_sql "SELECT count(*) FROM information_schema.routine_privileges WHERE routine_schema='public' AND routine_name='remind_me_about_message' AND grantee IN ('PUBLIC','anon')")" == '0' ]] || fail 'PUBLIC ou anon conservou EXECUTE na RPC'
+[[ "$(psql_sql "SELECT count(*) FROM pg_proc p WHERE p.proname='remind_me_about_message' AND p.prosecdef AND 'search_path=pg_catalog, public'=ANY(p.proconfig)")" == '1' ]] || fail 'RPC sem SECURITY DEFINER/search_path fixo'
+[[ "$(psql_sql "SELECT count(*) FROM pg_indexes WHERE schemaname='public' AND tablename='conversation_tasks' AND indexname='idx_tasks_owner_message'")" == '1' ]] || fail 'indice parcial do vinculo mensagem x dono nao existe'
+
+task_id="$(psql_sql "SET ROLE authenticated; SET request.jwt.claim.sub='$user_owner'; SELECT public.remind_me_about_message('$message_visible', now() + interval '1 hour', 'Falar com o cliente');")"
+[[ -n "$task_id" ]] || fail 'RPC nao retornou o id da tarefa'
+[[ "$(psql_sql "SELECT created_by FROM public.conversation_tasks WHERE id='$task_id'")" == "$profile_owner" ]] || fail 'dono do lembrete nao e o chamador'
+[[ "$(psql_sql "SELECT message_id FROM public.conversation_tasks WHERE id='$task_id'")" == "$message_visible" ]] || fail 'lembrete nao ficou ligado a mensagem'
+[[ "$(psql_sql "SELECT contact_id FROM public.conversation_tasks WHERE id='$task_id'")" == "$contact_visible" ]] || fail 'lembrete nao herdou o contato da mensagem'
+[[ "$(psql_sql "SELECT status FROM public.conversation_tasks WHERE id='$task_id'")" == 'todo' ]] || fail 'lembrete nao nasceu como tarefa todo'
+[[ "$(psql_sql "SELECT title FROM public.conversation_tasks WHERE id='$task_id'")" == 'Falar com o cliente' ]] || fail 'nota do lembrete nao virou titulo'
+[[ "$(psql_sql "SELECT description IS NULL FROM public.conversation_tasks WHERE id='$task_id'")" == 't' ]] || fail 'lembrete gravou descricao'
+
+# Nota em branco cai no titulo padrao; nenhum texto de mensagem e lido ou copiado.
+default_id="$(psql_sql "SET ROLE authenticated; SET request.jwt.claim.sub='$user_owner'; SELECT public.remind_me_about_message('$message_visible', now() + interval '2 hours', '   ');")"
+[[ "$(psql_sql "SELECT title FROM public.conversation_tasks WHERE id='$default_id'")" == 'Responder depois' ]] || fail 'nota vazia nao caiu no titulo padrao'
+
+[[ "$(psql_sql "SET ROLE authenticated; SET request.jwt.claim.sub='$user_owner'; SELECT count(*) FROM public.conversation_tasks WHERE id='$task_id';")" == '1' ]] || fail 'dono nao ve o proprio lembrete'
+[[ "$(psql_sql "SET ROLE authenticated; SET request.jwt.claim.sub='$user_outsider'; SELECT count(*) FROM public.conversation_tasks WHERE id='$task_id';")" == '0' ]] || fail 'outsider ve o lembrete de outro dono'
+
+expect_failure 'lembrete no passado recusado' "SET ROLE authenticated; SET request.jwt.claim.sub='$user_owner'; SELECT public.remind_me_about_message('$message_visible', now() - interval '1 minute');"
+expect_failure 'lembrete acima de 90 dias recusado' "SET ROLE authenticated; SET request.jwt.claim.sub='$user_owner'; SELECT public.remind_me_about_message('$message_visible', now() + interval '91 days');"
+expect_failure 'mensagem sem acesso recusada' "SET ROLE authenticated; SET request.jwt.claim.sub='$user_outsider'; SELECT public.remind_me_about_message('$message_visible', now() + interval '1 hour');"
+expect_failure 'mensagem inexistente recusada' "SET ROLE authenticated; SET request.jwt.claim.sub='$user_owner'; SELECT public.remind_me_about_message('$message_missing', now() + interval '1 hour');"
+expect_failure 'anon nao cria lembrete' "SET ROLE anon; SELECT public.remind_me_about_message('$message_visible', now() + interval '1 hour');"
+
+# Inexistente e sem acesso respondem o MESMO erro (sem oraculo de enumeracao).
+hidden_err="$(psql_sql "SET ROLE authenticated; SET request.jwt.claim.sub='$user_outsider'; SELECT public.remind_me_about_message('$message_hidden', now() + interval '1 hour');" 2>&1 || true)"
+missing_err="$(psql_sql "SET ROLE authenticated; SET request.jwt.claim.sub='$user_owner'; SELECT public.remind_me_about_message('$message_missing', now() + interval '1 hour');" 2>&1 || true)"
+[[ "$hidden_err" == *message_not_visible* ]] || fail "sem acesso nao respondeu message_not_visible: $hidden_err"
+[[ "$missing_err" == *message_not_visible* ]] || fail "inexistente nao respondeu message_not_visible: $missing_err"
+[[ "$(psql_sql "SELECT count(*) FROM public.conversation_tasks WHERE message_id='$message_hidden' OR message_id='$message_missing'")" == '0' ]] || fail 'recusa gravou tarefa'
+
+# A mensagem pode sumir sem derrubar o lembrete (ON DELETE SET NULL, sem cascata).
+probe_id="$(psql_sql "SET ROLE authenticated; SET request.jwt.claim.sub='$user_owner'; SELECT public.remind_me_about_message('$message_probe', now() + interval '1 hour');")"
+psql_sql "DELETE FROM public.messages WHERE id='$message_probe';" >/dev/null
+[[ "$(psql_sql "SELECT message_id IS NULL FROM public.conversation_tasks WHERE id='$probe_id'")" == 't' ]] || fail 'apagar a mensagem nao soltou o vinculo (SET NULL)'
+[[ "$(psql_sql "SELECT count(*) FROM public.conversation_tasks WHERE id='$probe_id'")" == '1' ]] || fail 'apagar a mensagem derrubou o lembrete'
+
+# Reenvio idempotente da migration.
+psql_file "$remind_migration" >/dev/null
+[[ "$(psql_sql "SELECT count(*) FROM pg_indexes WHERE schemaname='public' AND tablename='conversation_tasks' AND indexname='idx_tasks_owner_message'")" == '1' ]] || fail 'reenvio duplicou o indice do lembrete'
+printf '[PASS] %s\n' 'lembrete de mensagem (responder depois) sob papel real, com SET NULL'
+
 printf 'Inbox contact authorization PostgreSQL 17 behavioral contract: PASS\n'
