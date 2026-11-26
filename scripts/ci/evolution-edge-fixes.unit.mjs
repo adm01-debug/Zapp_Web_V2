@@ -241,9 +241,12 @@ test("stripInstanceToken declarado em escopo de módulo, não dentro de create-c
 test("delete-instance: requer admin e limpa a linha em whatsapp_connections após sucesso", () => {
   const deleteAt = apiSrc.indexOf("if (action === 'delete-instance')");
   assert.notEqual(deleteAt, -1);
-  const block = apiSrc.slice(deleteAt, deleteAt + 1200);
+  const block = apiSrc.slice(deleteAt, deleteAt + 4500);
 
-  assert.match(block, /await requireAdmin\(\)/, "delete-instance precisa checar requireAdmin()");
+  // A exigência subiu de requireAdmin() (que aceita supervisor) para isCallerAdmin():
+  // excluir conexão apaga a instância no provedor, então o gate precisa ser is_admin
+  // estrito — igual à policy de DELETE de whatsapp_connections.
+  assert.match(block, /await isCallerAdmin\(\)/, "delete-instance precisa checar isCallerAdmin()");
   assert.match(block, /whatsapp_connections'\)\.delete\(\)\.eq\('instance_id'/, "delete-instance precisa deletar a linha em whatsapp_connections");
   // A limpeza só roda quando não há erro — precisa estar dentro de um guard de !error
   assert.match(block, /if \(!deleteBody\?\.error\)/, "delete-instance: limpeza do banco só pode rodar quando a GO não retornou erro");

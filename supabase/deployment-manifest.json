@@ -8,7 +8,7 @@
   },
   "summary": {
     "function_count": 93,
-    "source_file_count": 185,
+    "source_file_count": 186,
     "verify_jwt_true": 77,
     "verify_jwt_false": 16
   },
@@ -128,6 +128,11 @@
       "path": "supabase/functions/_shared/assistant-playbook.ts",
       "bytes": 6590,
       "sha256": "4d9a7ce006290bb44d7cd6aad985ac753b83798f7be245fe6a03de642262666b"
+    },
+    {
+      "path": "supabase/functions/_shared/connection-audit.ts",
+      "bytes": 2779,
+      "sha256": "0e7b23ef2290131f67a218607855c8f0ea3e61c6abd0ad028e2bf787adfcb03b"
     },
     {
       "path": "supabase/functions/_shared/contracts.ts",
@@ -671,8 +676,8 @@
     },
     {
       "path": "supabase/functions/evolution-api/index.ts",
-      "bytes": 109430,
-      "sha256": "6b2f7e0eea76e602c1141c1cf74bf5e709f31bdc34d873d09dad8a88c15d048b"
+      "bytes": 116349,
+      "sha256": "efba51f2a0f539f6d07575af3703dc70def25a6060d338c1fcf01d994cb6542a"
     },
     {
       "path": "supabase/functions/evolution-sync/index.ts",
@@ -2027,8 +2032,9 @@
       "name": "evolution-api",
       "entrypoint": "supabase/functions/evolution-api/index.ts",
       "verify_jwt": true,
-      "source_sha256": "be18f089c845b5c0ea4a6dbbee098a5ebd5aa7f5d2742e45d1b077e7fd7feffb",
+      "source_sha256": "8031926d8df99b7ce5de7f8abccd2c791d63115a7e7a1f250dc9bc3a6437b008",
       "source_files": [
+        "supabase/functions/_shared/connection-audit.ts",
         "supabase/functions/_shared/cors-origins.ts",
         "supabase/functions/_shared/cron-secret-auth.ts",
         "supabase/functions/_shared/evolution-api-proxy.ts",
@@ -2906,5 +2912,5 @@
       ]
     }
   ],
-  "manifest_sha256": "a52c14a3985218930f56c6bbaca67a7d7ebf0bef9a6cbb67d02e60010a941eea"
+  "manifest_sha256": "ab42fae85f5ff0bf33eb2113f2963388d4f0e3a08f3cf85ae3b5c2d47c51bb90"
 }

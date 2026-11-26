@@ -14,6 +14,7 @@ import {
 } from "../_shared/evolution-go-token-sync.ts";
 import { goHistoryNotSupported } from "../_shared/evolution-sync-actions.ts";
 import { timingSafeStringEqual } from "../_shared/cron-secret-auth.ts";
+import { writeConnectionAuditLog } from "../_shared/connection-audit.ts";
 
 /**
  * Ação da Evolution v2 sem equivalente na Evolution GO: responde 200 com
@@ -25,6 +26,26 @@ function goActionNotSupported(actionName: string, corsHeaders: Record<string, st
     success: false, notSupported: true,
     message: `${actionName} não é suportado na Evolution GO.`,
   }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+}
+
+/**
+ * B2 (12/10/2026): a instância pode não existir mais no provedor (apagada lá
+ * antes, ou linha local órfã de uma criação incompleta). O proxy traduz o 404 do
+ * provedor para `{ error: true, status: 404, message }` e os forks variam na
+ * mensagem. Reconhecer esses sinais permite RECONCILIAR (apagar a linha local e
+ * devolver `INSTANCE_GONE`, que o front já trata) em vez de devolver um erro
+ * genérico que deixa a conexão fantasma presa na lista.
+ */
+export function isInstanceGonePayload(payload: { error?: unknown; status?: unknown; message?: unknown }): boolean {
+  if (!payload || payload.error !== true) return false;
+  if (Number(payload.status) === 404) return true;
+  const message = String(payload.message ?? '').toLowerCase();
+  return message.includes('not found')
+    || message.includes('não encontr')
+    || message.includes('nao encontr')
+    || message.includes('does not exist')
+    || message.includes('não existe')
+    || message.includes('nao existe');
 }
 import { classifyEvolutionAction, decideControlAuthz, decideMessageAuthorAuthz, decideSendAuthz, extractTargetMessageExternalId, sanitizeStatusPayload, type EvolutionAuthzDecision, type MessageAuthorRow } from "../_shared/evolution-control-authz.ts";
 import { AUTO_PAUSE_MINUTES, AUTO_PAUSE_REASON, PAUSE_BLOCKED_ACTIONS } from "../_shared/instance-pause-actions.ts";
@@ -63,6 +84,7 @@ export async function handleEvolutionApi(req: Request, _injected?: EvolutionApiD
   const corsHeaders = getCorsHeaders(req);
 
   const ip = getClientIP(req);
+  const userAgent = req.headers.get('user-agent');
   const rl = checkRateLimit(`evolution:${ip}`, 120, 60_000);
   if (!rl.allowed) {
     return new Response(JSON.stringify({ error: 'Rate limit exceeded' }), {
@@ -674,6 +696,18 @@ export async function handleEvolutionApi(req: Request, _injected?: EvolutionApiD
         });
       }
 
+      // Trilha: quem criou a conexão, qual instância e em qual flavor — sem
+      // número, token ou QR. Falha de auditoria não bloqueia a criação (já
+      // ocorreu no banco e no provedor) — o helper só loga.
+      await writeConnectionAuditLog(supabase, {
+        userId: callerUserId,
+        action: 'connection_created',
+        entityId: row.id,
+        details: { instance_id: instance, name: connName, flavor: isGoFlavor ? 'go' : 'v2' },
+        ipAddress: ip,
+        userAgent,
+      });
+
       return new Response(JSON.stringify({ connection: row, evolution: stripInstanceToken(createData) }), {
         status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
@@ -724,6 +758,21 @@ export async function handleEvolutionApi(req: Request, _injected?: EvolutionApiD
       // poll de /instance/qr, recriação de sessão órfã) — rotas nativas do GO,
       // sem instância no path. O v2 usa /instance/connect/{instance} e devolve
       // o pareamento no PRÓPRIO corpo.
+      // Trilha: no máximo UM registro de `connect` por invocação (o fluxo tem
+      // vários retornos de sucesso) — sem número, token ou QR. Entidade
+      // identificada por instance_id em details.
+      let connectAudited = false;
+      const auditConnectOnce = async (details: Record<string, unknown>): Promise<void> => {
+        if (connectAudited) return;
+        connectAudited = true;
+        await writeConnectionAuditLog(supabase, {
+          userId: callerUserId,
+          action: 'connection_connect',
+          details: { instance_id: instance, flavor: isGoFlavor ? 'go' : 'v2', ...details },
+          ipAddress: ip,
+          userAgent,
+        });
+      };
       if (!isGoFlavor) {
         const route = resolveSessionRoute('v2', 'connect', instance);
         const v2Fetch = await safeFetch(`${evolutionApiUrl}${route.path}`, {
@@ -748,11 +797,13 @@ export async function handleEvolutionApi(req: Request, _injected?: EvolutionApiD
         const qr = qrFromV2Connect(data);
         if (qr) {
           await supabase.from('whatsapp_connections').update({ qr_code: qr.base64, status: 'qr_pending', instance_id: instance }).eq('instance_id', instance);
+          await auditConnectOnce({ status: 'qr_pending' });
           // stripInstanceToken: o v2 pode ecoar hash/token da instância no corpo do connect.
           return new Response(JSON.stringify({ ...(stripInstanceToken(data) as Record<string, unknown>), status: 'qr_pending', qrcode: qr }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
         }
         if (sessionStateFromV2(data) === 'open') {
           await supabase.from('whatsapp_connections').update({ status: 'connected', qr_code: null }).eq('instance_id', instance);
+          await auditConnectOnce({ status: 'connected' });
           return new Response(JSON.stringify({ ...(stripInstanceToken(data) as Record<string, unknown>), status: 'connected' }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
         }
         // Mesma convenção dos outros ramos: 200 com error:true (o front lê
@@ -914,6 +965,7 @@ export async function handleEvolutionApi(req: Request, _injected?: EvolutionApiD
       }
       if (qr.base64) {
         await supabase.from('whatsapp_connections').update({ qr_code: qr.base64, status: 'qr_pending', instance_id: instance }).eq('instance_id', instance);
+        await auditConnectOnce({ status: 'qr_pending' });
         // stripInstanceToken: a GO pode ecoar credencial no corpo do connect.
         return new Response(JSON.stringify({ ...(stripInstanceToken(data) as Record<string, unknown>), status: 'qr_pending', qrcode: { base64: qr.base64, code: qr.code } }), { status: 200, headers: jsonHeaders });
       }
@@ -966,6 +1018,7 @@ export async function handleEvolutionApi(req: Request, _injected?: EvolutionApiD
       const loggedIn = (isConnected && isLoggedIn) || (!hasInnerFlags && stData.state === 'open');
       if (loggedIn) {
         await supabase.from('whatsapp_connections').update({ status: 'connected', qr_code: null }).eq('instance_id', instance);
+        await auditConnectOnce({ status: 'connected' });
         return new Response(JSON.stringify({ status: 'connected' }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
       }
       // Sessão órfã: a GO guarda o JID de um device que o celular já desvinculou
@@ -1065,6 +1118,17 @@ export async function handleEvolutionApi(req: Request, _injected?: EvolutionApiD
           }
           if (healed.base64) {
             await supabase.from('whatsapp_connections').update({ qr_code: healed.base64, status: 'qr_pending' }).eq('instance_id', instance);
+            // Trilha: a recriação destrutiva da instância órfã (apagou o device
+            // store no GO) é registrada à parte do `connect`, que também grava a
+            // própria linha — sem QR nem token.
+            await writeConnectionAuditLog(supabase, {
+              userId: callerUserId,
+              action: 'connection_session_recreated',
+              details: { instance_id: instance, flavor: 'go', go_instance_id: goOrphan.id, reason: 'orphan_session' },
+              ipAddress: ip,
+              userAgent,
+            });
+            await auditConnectOnce({ status: 'qr_pending', recovered: true });
             return new Response(JSON.stringify(stripInstanceToken({ status: 'qr_pending', qrcode: { base64: healed.base64, code: healed.code }, recovered: true })), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
           }
         }
@@ -1180,23 +1244,98 @@ export async function handleEvolutionApi(req: Request, _injected?: EvolutionApiD
       // Guard: não sobrescrever qr_pending com disconnected — usuário pode ter iniciado
       // novo pareamento enquanto o logout era processado (race entre telas distintas).
       await supabase.from('whatsapp_connections').update({ status: 'disconnected' }).eq('instance_id', instance).neq('status', 'qr_pending');
+      // Trilha: quem desconectou e qual instância/flavor — sem número nem token.
+      // (Só no caminho de sucesso: falha do provedor já retornou acima.)
+      await writeConnectionAuditLog(supabase, {
+        userId: callerUserId,
+        action: 'connection_disconnect',
+        details: { instance_id: instance, flavor: isGoFlavor ? 'go' : 'v2' },
+        ipAddress: ip,
+        userAgent,
+      });
       return new Response(JSON.stringify(data), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
     if (action === 'delete-instance') {
-      const adminError = await requireAdmin();
-      if (adminError) return adminError;
+      // Excluir conexão é destrutivo (apaga a linha e a instância no provedor):
+      // a exigência é is_admin de verdade, NÃO o `requireAdmin` genérico, que
+      // aceita supervisor. A policy de DELETE da tabela também passou a exigir
+      // is_admin (migration 20261126011000_connections_delete_admin_only) — como
+      // a Edge fala com o banco por service_role (ignora a RLS), o gate estrito
+      // precisa existir também aqui.
+      if (!(await isCallerAdmin())) {
+        return new Response(JSON.stringify({ error: true, message: 'Apenas administradores podem excluir conexões.' }), { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      }
+      // Lê a conexão ANTES de apagar: o id (uuid) e o nome vão para a trilha de
+      // auditoria depois que a linha deixar de existir.
+      const { data: connRow } = await supabase
+        .from('whatsapp_connections')
+        .select('id, name, instance_id')
+        .eq('instance_id', instance)
+        .maybeSingle();
       let deleteRes: Response;
+      // B2 (12/10/2026): a instância pode não existir mais no provedor (apagada
+      // lá antes, ou a linha local sobrou de uma criação incompleta). Antes isso
+      // virava 404 e o front travava, deixando a conexão fantasma presa na lista;
+      // agora é tratado como estado a reconciliar: apaga a linha local e devolve
+      // INSTANCE_GONE para o front recarregar. A trilha registra o motivo.
+      const deleteLocalAndAuditGone = async (): Promise<void> => {
+        await supabase.from('whatsapp_connections').delete().eq('instance_id', instance);
+        await writeConnectionAuditLog(supabase, {
+          userId: callerUserId,
+          action: 'connection_deleted',
+          entityId: connRow?.id ?? null,
+          details: {
+            instance_id: instance,
+            name: connRow?.name ?? null,
+            flavor: isGoFlavor ? 'go' : 'v2',
+            reason: 'instance_gone',
+          },
+          ipAddress: ip,
+          userAgent,
+        });
+      };
+      const instanceGoneResponse = (): Response => new Response(JSON.stringify({
+        error: true,
+        code: 'INSTANCE_GONE',
+        message: 'A instância não existe mais na Evolution API. A conexão local foi removida — crie uma nova conexão.',
+      }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
       if (isGoFlavor) {
         const goId = await resolveGoInstanceId(instance);
-        if (!goId) return new Response(JSON.stringify({ error: true, status: 404, message: 'Instância não encontrada na Evolution GO.' }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+        if (!goId) {
+          await deleteLocalAndAuditGone();
+          return instanceGoneResponse();
+        }
         deleteRes = await proxy(`/instance/delete/${goId}`, 'DELETE');
       } else {
         deleteRes = await proxy(`/instance/delete/${instance}`, 'DELETE', body);
       }
-      const deleteBody: { error?: unknown; [k: string]: unknown } = await deleteRes.json().catch(() => ({}));
+      const deleteBody: { error?: unknown; status?: unknown; message?: unknown; [k: string]: unknown } = await deleteRes.json().catch(() => ({}));
+      // A GO responde 404 quando o endpoint/instância não existe; o proxy converte
+      // para { error: true, status: 404, message }. Também aceita a mensagem
+      // textual (forks variam) — mesmos sinais que "não existe".
+      if (deleteBody?.error && isInstanceGonePayload(deleteBody)) {
+        await deleteLocalAndAuditGone();
+        return instanceGoneResponse();
+      }
       if (!deleteBody?.error) {
         await supabase.from('whatsapp_connections').delete().eq('instance_id', instance);
+        // Trilha: mesmo helper/formato das demais ações de conexão. entity_id é
+        // uuid — o id textual da instância e o nome seguem em details. Falha de
+        // auditoria NÃO bloqueia: a conexão já foi apagada e o erro é só logado
+        // (o operador não pode receber erro que sugira que a exclusão falhou).
+        await writeConnectionAuditLog(supabase, {
+          userId: callerUserId,
+          action: 'connection_deleted',
+          entityId: connRow?.id ?? null,
+          details: {
+            instance_id: instance,
+            name: connRow?.name ?? null,
+            flavor: isGoFlavor ? 'go' : 'v2',
+          },
+          ipAddress: ip,
+          userAgent,
+        });
       }
       return new Response(JSON.stringify(deleteBody), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
