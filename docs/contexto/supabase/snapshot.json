@@ -67754,7 +67754,7 @@
           "search_path=public, pg_temp"
         ],
         "definition": null,
-        "definition_sha": "86153534f280cc24",
+        "definition_sha": "c6537f03837ce647",
         "execute_api_roles": "authenticated, service_role",
         "execute_public": false,
         "is_trigger_fn": false,
@@ -68198,9 +68198,7 @@
           ],
           "code_total_files": 2,
           "cron": [],
-          "db": [
-            "public.talkx_campaign_pace"
-          ],
+          "db": [],
           "triggers": [],
           "views": []
         },
@@ -68209,7 +68207,7 @@
           "search_path=public, pg_temp"
         ],
         "definition": null,
-        "definition_sha": "910d5fc833be6977",
+        "definition_sha": "cdb46897e63194d0",
         "execute_api_roles": "service_role",
         "execute_public": false,
         "is_trigger_fn": false,
@@ -68217,6 +68215,39 @@
         "language": "plpgsql",
         "leakproof": false,
         "name": "talkx_connection_send_budget",
+        "owner": "postgres",
+        "returns": "jsonb",
+        "schema": "public",
+        "security_definer": true,
+        "strict": false,
+        "volatility": "stable"
+      },
+      {
+        "args": "p_connection_id uuid",
+        "callers": {
+          "code": [],
+          "code_total_files": 0,
+          "cron": [],
+          "db": [
+            "public.talkx_campaign_pace",
+            "public.talkx_connection_send_budget"
+          ],
+          "triggers": [],
+          "views": []
+        },
+        "comment": "Miolo de talkx_connection_send_budget sem gate de papel. Chamar apenas de funcoes SECURITY DEFINER que ja validaram admin/supervisor ou service_role; nao tem grant para anon/authenticated.",
+        "config": [
+          "search_path=public, pg_temp"
+        ],
+        "definition": null,
+        "definition_sha": "18da353ba42930f4",
+        "execute_api_roles": "service_role",
+        "execute_public": false,
+        "is_trigger_fn": false,
+        "kind": "function",
+        "language": "plpgsql",
+        "leakproof": false,
+        "name": "talkx_connection_send_budget_internal",
         "owner": "postgres",
         "returns": "jsonb",
         "schema": "public",
@@ -68596,7 +68627,7 @@
           "cron": [],
           "db": [
             "public.multiplix_connection_daily_usage",
-            "public.talkx_connection_send_budget"
+            "public.talkx_connection_send_budget_internal"
           ],
           "triggers": [],
           "views": []
@@ -90616,9 +90647,15 @@
       },
       {
         "name": "paridade_policies_admin_prod",
-        "statements": 1,
-        "statements_sha": "b06e542bb0156dd8",
+        "statements": 25,
+        "statements_sha": "29b1ef073ede4e7b",
         "version": "20261126234500"
+      },
+      {
+        "name": "talkx_campaign_pace_orcamento_interno",
+        "statements": 11,
+        "statements_sha": "03be1b2fb6ae23d7",
+        "version": "20261127001500"
       }
     ],
     "policies": [

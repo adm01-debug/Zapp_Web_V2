@@ -2,6 +2,13 @@
 
 Diff semântico gerado a cada coleta em que algo mudou.
 
+## 2026-11-26 12:19 UTC
+
+- **functions** adicionado (1): `public.talkx_connection_send_budget_internal(p_connection_id uuid)`
+- **functions** alterado (3): `public.talkx_campaign_pace(p_campaign_id uuid)`, `public.talkx_connection_send_budget(p_connection_id uuid)`, `public.talkx_multiplix_connection_sent_count(p_connection_id uuid, p_since timestamp with time zone)`
+- **migrations** adicionado (1): `20261127001500_talkx_campaign_pace_orcamento_interno`
+- **migrations** alterado (1): `20261126234500_paridade_policies_admin_prod`
+
 ## 2026-11-26 04:15 UTC
 
 - **functions** alterado (8): `public.archive_talkx_template(p_template_id uuid, p_archived boolean)`, `public.delete_talkx_template(p_template_id uuid)`, `public.duplicate_talkx_template(p_template_id uuid)`, `public.get_profile_id_for_user(_user_id uuid)`, `public.guard_talkx_template_delete()`, `public.ingest_inbound_message(p_connection_id uuid, p_phone text, p_push_name text, p_content text, p_message_type text, p_media_url text, p_external_id text, p_created_at timestamp with time zone)`, `public.is_admin(_user_id uuid)`, `public.is_admin_or_supervisor(_user_id uuid)`

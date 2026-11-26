@@ -25,6 +25,6 @@ BEGIN
     );
   END IF;
 
-  RETURN public.talkx_connection_send_budget(v_connection_id);
+  RETURN public.talkx_connection_send_budget_internal(v_connection_id);
 END;
 $function$
