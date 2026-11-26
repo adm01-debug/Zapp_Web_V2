@@ -431,7 +431,7 @@ function useDebouncedValue<T>(value: T, delayMs: number): T {
 }
 
 export function useCampaignEditor(campaign: TalkXCampaign | null, onClose: () => void, initial?: { segmentIds?: string[]; templateId?: string; step?: WizardStep }) {
-  const { saveDraftCampaign, updateCampaign, snapshotDraftAudience, startCampaign } = useTalkX();
+  const { saveDraftCampaign, updateCampaign, snapshotDraftAudience, startCampaign, sendTest } = useTalkX();
   const {
     segments,
     isLoading: segmentsLoading,
@@ -1280,6 +1280,9 @@ export function useCampaignEditor(campaign: TalkXCampaign | null, onClose: () =>
     connections, contacts, companies, filteredContacts,
     previewMessage, estimatedTime, estimatedSeconds, audienceTotal, suppressedCount, eligibleCount,
     toggleContact, selectAll, handleSave,
+    // E47 — envio de teste da campanha (edge `talkx-send`, action `test`): o
+    // mesmo `useTalkX` que já dá salvamento/lançamento à tela, sem instância nova.
+    sendTest,
     clearFilters, toggleMedia, toggleSchedule, onClose,
   };
 }

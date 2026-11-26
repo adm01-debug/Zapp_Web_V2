@@ -36,7 +36,7 @@ com `VITE_TALKX_KIT=1`, lido de `src/components/talkx/kit/forcedState.ts`):
 | `src/components/talkx/TalkXTemplateImportDialog.tsx` | — | — | — | — | — | — |
 | `src/components/talkx/TalkXTemplates.tsx` | `422`, `426`, `433` | `374`, `420`, `462`, `496` | `416` | — | — | — |
 | `src/components/talkx/TalkXView.tsx` | `573` | `63`, `517`, `570` | `566` | — | `706` | — |
-| `src/components/talkx/TalkXWizardDelivery.tsx` | — | — | — | — | `65` | — |
+| `src/components/talkx/TalkXWizardDelivery.tsx` | — | — | — | — | `66` | — |
 
 ## Resumo
 

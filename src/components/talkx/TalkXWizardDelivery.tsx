@@ -17,6 +17,7 @@ import { IconTile, WhatsAppBubble, RailCard, MetaRow, InsightCard, OBJECTIVES, S
 import { useTalkXLifecycle, TalkXLifecycleDialog } from './useTalkXLifecycle';
 import type { TalkXPreviewInteractive } from './TalkXMessagePreview';
 import { TalkXNoData } from './kit/states';
+import { TalkXTestSendCard } from './tracking/TalkXTestSendCard';
 import { useTalkXInsights } from '@/hooks/integrations/useTalkXInsights';
 import { formatScheduleRelative, type WizardStep } from './useCampaignEditor';
 import { useContactCustomFields } from '@/hooks/crm/useContactCustomFields';
@@ -391,6 +392,18 @@ export function TalkXWizardReview({ ed, campaign, onLaunched, onEditStep }: { ed
 
       <Section icon={Smartphone} color="green" title="Prévia no WhatsApp" subtitle="Veja como sua mensagem será exibida para o contato.">
         <WhatsAppBubble text={personalizePreview(ed.messageTemplate, sample, sampleCustomValues)} mediaUrl={ed.hasMedia ? ed.mediaUrl : null} mediaType={ed.hasMedia ? ed.mediaType : null} senderName={connection?.name ?? 'ZAPP'} interactive={templateInteractive} />
+        {/* E47 — o envio de teste da campanha só existia na edge (`talkx-send`,
+            action `test`): o operador lançava sem ver a mensagem real chegar no
+            WhatsApp. O card usa a conexão e a mídia escolhidas nesta campanha. */}
+        <div className="mt-4">
+          <TalkXTestSendCard
+            connectionId={ed.connectionId ?? null}
+            message={ed.messageTemplate}
+            mediaUrl={ed.hasMedia ? ed.mediaUrl : null}
+            mediaType={ed.hasMedia ? ed.mediaType : null}
+            sendTest={ed.sendTest}
+          />
+        </div>
       </Section>
 
       <div className="space-y-4 min-w-0">
