@@ -1,7 +1,7 @@
 {
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
- "total": 949,
+ "total": 950,
  "orfaos": 45,
  "nomes_duplicados": {
   "AchievementBadge": [
@@ -3611,7 +3611,7 @@
    ],
    "tabelas": [],
    "edges": [],
-   "usado_por": 42,
+   "usado_por": 43,
    "orfao": false
   },
   {
@@ -11618,7 +11618,7 @@
    "hooks_locais": [],
    "tabelas": [],
    "edges": [],
-   "usado_por": 16,
+   "usado_por": 17,
    "orfao": false
   },
   {
@@ -12128,7 +12128,7 @@
     "TalkXSettings"
    ],
    "export_default": null,
-   "linhas": 138,
+   "linhas": 141,
    "dominio": "components/talkx",
    "hooks_locais": [
     "useTalkXSettingUpdate",
@@ -12282,6 +12282,24 @@
    "linhas": 104,
    "dominio": "components/talkx",
    "hooks_locais": [],
+   "tabelas": [],
+   "edges": [],
+   "usado_por": 1,
+   "orfao": false
+  },
+  {
+   "arquivo": "src/components/talkx/tracking/TalkXDataJobsCard.tsx",
+   "exports": [
+    "TalkXDataJobsCard",
+    "TalkXDataJobsList",
+    "TalkXDataJobsListProps"
+   ],
+   "export_default": null,
+   "linhas": 76,
+   "dominio": "components/talkx",
+   "hooks_locais": [
+    "useTalkXDataJobs"
+   ],
    "tabelas": [],
    "edges": [],
    "usado_por": 1,

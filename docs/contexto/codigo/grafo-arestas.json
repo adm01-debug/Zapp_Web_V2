@@ -6712,6 +6712,7 @@
   "src/components/talkx/TalkXSettings.tsx": [
    "src/components/talkx/kit/states.tsx",
    "src/components/talkx/talkxShared.ts",
+   "src/components/talkx/tracking/TalkXDataJobsCard.tsx",
    "src/components/ui/button.tsx",
    "src/components/ui/input.tsx",
    "src/components/ui/label.tsx",
@@ -7110,6 +7111,13 @@
    "src/components/talkx/talkxShared.ts",
    "src/components/talkx/tracking/talkxCampaignRules.ts"
   ],
+  "src/components/talkx/tracking/TalkXDataJobsCard.tsx": [
+   "src/components/dashboard/overview/DashboardCard.tsx",
+   "src/components/talkx/kit/states.tsx",
+   "src/components/talkx/talkxShared.ts",
+   "src/components/talkx/tracking/talkxDataJobs.ts",
+   "src/hooks/integrations/useTalkXDataJobs.ts"
+  ],
   "src/components/talkx/tracking/TalkXEngineAlertsCard.tsx": [
    "src/components/dashboard/overview/DashboardCard.tsx",
    "src/components/talkx/talkxShared.ts",
@@ -7190,6 +7198,9 @@
   "src/components/talkx/tracking/talkxCampaignRules.ts": [
    "src/components/talkx/talkxLimits.ts",
    "src/hooks/integrations/useTalkX.ts"
+  ],
+  "src/components/talkx/tracking/talkxDataJobs.ts": [
+   "src/components/talkx/talkxShared.ts"
   ],
   "src/components/talkx/tracking/talkxHealth.ts": [
    "src/components/talkx/talkxShared.ts"
@@ -9600,6 +9611,9 @@
    "src/integrations/supabase/client.ts"
   ],
   "src/hooks/integrations/useTalkXConnectionStatus.ts": [
+   "src/integrations/supabase/client.ts"
+  ],
+  "src/hooks/integrations/useTalkXDataJobs.ts": [
    "src/integrations/supabase/client.ts"
   ],
   "src/hooks/integrations/useTalkXEngineAlerts.ts": [

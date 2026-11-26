@@ -1,7 +1,7 @@
 {
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
- "total": 530,
+ "total": 531,
  "hooks": [
   {
    "arquivo": "analise-prs/resgate-261118-lote2/src/hooks/useMotionSeguro.ts",
@@ -9296,6 +9296,26 @@
    "usado_por_arquivos": [
     "src/components/talkx/TalkXCampaignScheduled.tsx",
     "src/components/talkx/TalkXLiveMonitor.tsx"
+   ],
+   "coberto_por_testes": 0
+  },
+  {
+   "arquivo": "src/hooks/integrations/useTalkXDataJobs.ts",
+   "hooks_exportados": [
+    "useTalkXDataJobs"
+   ],
+   "linhas": 43,
+   "dominio": "hooks/integrations",
+   "tabelas": [
+    "talkx_data_jobs"
+   ],
+   "rpcs": [],
+   "edges": [],
+   "hooks_internos": [],
+   "canais_realtime": [],
+   "usado_por": 1,
+   "usado_por_arquivos": [
+    "src/components/talkx/tracking/TalkXDataJobsCard.tsx"
    ],
    "coberto_por_testes": 0
   },

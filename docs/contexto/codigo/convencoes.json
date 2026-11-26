@@ -7,12 +7,12 @@
    "src/pages (21)"
   ],
   "componentes": [
-   "src/components (911)",
+   "src/components (912)",
    "src/pages (29)",
    "src/features (2)"
   ],
   "hooks": [
-   "src/hooks (445)",
+   "src/hooks (446)",
    "src/components (74)",
    "src/contexts (2)"
   ],
@@ -22,7 +22,7 @@
    "src/utils (8)"
   ],
   "testes": [
-   "co-localizado (__tests__) (2127)",
+   "co-localizado (__tests__) (2129)",
    "outro (260)",
    "co-localizado (*.test) (203)"
   ],
@@ -48,7 +48,7 @@
  },
  "barrels_index": 74,
  "extensao_componentes": [
-  ".tsx (949)"
+  ".tsx (950)"
  ],
  "alias_imports": {
   "analise-prs/resgate-261115/auditoria/bruto/diarios-sessao/": {
@@ -66,11 +66,11 @@
  "commits": {
   "convencao": "conventional commits (observado)",
   "exemplos": [
+   "feat(talkx): painel dos jobs de dados nas configuracoes (#3415)",
    "feat(admin): historico das limpezas do cache de previas ganha tela (#3414)",
    "feat(seguranca): politica de protecao de contatos ganha tela de gestao (#3413)",
    "feat(seguranca): trilha de exclusoes e bloqueios de contato ganha tela (#3412)",
-   "feat(talkx): liga os alertas do motor (talkx_alerts) no acompanhamento (#3408)",
-   "feat(talkx): campanha ganha o envio de teste antes de lancar (E47) (#3409)"
+   "feat(talkx): liga os alertas do motor (talkx_alerts) no acompanhamento (#3408)"
   ]
  },
  "pr_template": ".github/PULL_REQUEST_TEMPLATE.md",

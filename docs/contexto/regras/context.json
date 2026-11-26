@@ -1,15 +1,15 @@
 {
  "meta": {
-  "sha": "1fad01a79df8d8df1fc9a5f47571aa2770a723bb",
+  "sha": "f5a9f52f258e86511f72a0ad8b5a27a88d14882d",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-26 15:06 UTC",
-  "files_total": 14725,
-  "code_files": 8255,
-  "code_lines": 1244014
+  "generated_at": "2026-11-26 15:58 UTC",
+  "files_total": 14730,
+  "code_files": 8260,
+  "code_lines": 1244411
  },
  "version": "1.3.2",
- "facts_hash": "f1c2dd2c4abbdea9",
+ "facts_hash": "9f8e4b1243d4dfa7",
  "stack": {
   "frameworks": [
    "React + Vite",
@@ -368,8 +368,8 @@
   "package_manager": "bun",
   "languages": {
    ".sql": 3072,
-   ".tsx": 2514,
-   ".ts": 2046,
+   ".tsx": 2516,
+   ".ts": 2049,
    ".mjs": 496,
    ".py": 125,
    ".cjs": 19,
@@ -73208,7 +73208,7 @@
     "file": ".github/workflows/types-sync.yml"
    }
   ],
-  "components_count": 2344,
+  "components_count": 2348,
   "hooks": [
    {
     "name": "useMotionSeguro",
@@ -74873,6 +74873,10 @@
    {
     "name": "useTalkXConnectionStatus",
     "file": "src/hooks/integrations/useTalkXConnectionStatus.ts"
+   },
+   {
+    "name": "useTalkXDataJobs",
+    "file": "src/hooks/integrations/useTalkXDataJobs.ts"
    },
    {
     "name": "useTalkXEngineAlerts",
@@ -76644,8 +76648,8 @@
   },
   {
    "module": "src/components",
-   "files": 2342,
-   "lines": 398687,
+   "files": 2346,
+   "lines": 399041,
    "tables": [
     "agent_skills",
     "agent_visibility_grants",
@@ -76992,8 +76996,8 @@
   },
   {
    "module": "src/hooks",
-   "files": 1061,
-   "lines": 172298,
+   "files": 1062,
+   "lines": 172341,
    "tables": [
     "agent_achievements",
     "agent_stats",
@@ -77078,6 +77082,7 @@
     "talkx_blacklist",
     "talkx_campaign_metrics",
     "talkx_campaigns",
+    "talkx_data_jobs",
     "talkx_link_clicks",
     "talkx_recipients",
     "talkx_segments",
@@ -80648,6 +80653,11 @@
      "supabase/functions/talkx-send/process-recipient.ts"
     ]
    },
+   "talkx_data_jobs": {
+    "select": [
+     "src/hooks/integrations/useTalkXDataJobs.ts"
+    ]
+   },
    "talkx_delivery_log": {
     "insert": [
      "supabase/functions/talkx-send/index.ts"
@@ -81997,6 +82007,14 @@
     "typing_delay_max",
     "typing_delay_min",
     "whatsapp_connection_id"
+   ],
+   "talkx_data_jobs": [
+    "enabled",
+    "interval_minutes",
+    "job",
+    "last_finished_at",
+    "last_started_at",
+    "updated_at"
    ],
    "talkx_link_clicks": [
     "clicked_at",
@@ -85211,7 +85229,6 @@
    "talkx_campaign_segments",
    "talkx_contact_attributes",
    "talkx_conversions",
-   "talkx_data_jobs",
    "talkx_ddd_regions",
    "talkx_help_views",
    "talkx_segment_fields",
@@ -86930,6 +86947,11 @@
     "file": "src/components/talkx/report/talkxReportCharts.ts",
     "name": "TalkXReportHeatmapMetric",
     "values": "replied | sent | clicked"
+   },
+   {
+    "file": "src/components/talkx/tracking/talkxDataJobs.ts",
+    "name": "TalkXDataJobState",
+    "values": "desativado | em_execucao | nunca_executou | atrasado | em_dia"
    },
    {
     "file": "src/components/talkx/tracking/talkxHealth.ts",
@@ -99856,6 +99878,14 @@
     "text": "a tela libera a comparação pela mesma regra, nunca pela soma."
    },
    {
+    "file": "src/components/talkx/tracking/TalkXDataJobsCard.tsx",
+    "text": "quem escreve é o agendador, com `service_role`. Logo, o painel é somente leitura — e é"
+   },
+   {
+    "file": "src/components/talkx/tracking/TalkXDataJobsCard.tsx",
+    "text": "// A regra dos estados está em ./talkxDataJobs.ts (o lint só admite componente exportado"
+   },
+   {
     "file": "src/components/talkx/tracking/TalkXEngineAlertsCard.tsx",
     "text": "// Apresentação apenas: leitura e tradução dos `kind`/`payload` estão em"
    },
@@ -99926,6 +99956,18 @@
    {
     "file": "src/components/talkx/tracking/talkxCampaignRules.ts",
     "text": "sem avisar (bug da varredura de QA: antes o máximo era ajustado em silêncio"
+   },
+   {
+    "file": "src/components/talkx/tracking/talkxDataJobs.ts",
+    "text": "talkxDataJobs.ts — regra pura do painel \"Jobs de dados\" (Configurações do Talk X)."
+   },
+   {
+    "file": "src/components/talkx/tracking/talkxDataJobs.ts",
+    "text": "// A regra vive fora do .tsx porque o lint (react-refresh/only-export-components) só"
+   },
+   {
+    "file": "src/components/talkx/tracking/talkxDataJobs.ts",
+    "text": "* De quanto em quanto tempo ele deve rodar (`talkx_data_jobs.interval_minutes`). */"
    },
    {
     "file": "src/components/talkx/tracking/talkxHealth.ts",
@@ -101598,6 +101640,10 @@
    {
     "file": "src/hooks/integrations/useTalkXCommandItems.ts",
     "text": "select('id,name,status').limit(50) e as telas de campanha perdem campos."
+   },
+   {
+    "file": "src/hooks/integrations/useTalkXDataJobs.ts",
+    "text": "* Jobs de dados do Talk X (somente leitura — quem escreve é o agendador, com"
    },
    {
     "file": "src/hooks/integrations/useTalkXEngineAlerts.ts",
@@ -116300,6 +116346,11 @@
     "file": "src/components/talkx/tracking/TalkXRecipientsTable.tsx",
     "name": "PAGE_SIZE",
     "value": "50"
+   },
+   {
+    "file": "src/components/talkx/tracking/talkxDataJobs.ts",
+    "name": "DATA_JOB_GRACE_CYCLES",
+    "value": "2"
    },
    {
     "file": "src/components/talkx/tracking/talkxHealth.ts",
@@ -176206,6 +176257,14 @@
     "name": "TL-175D-a — contador do card "
    },
    {
+    "file": "src/components/talkx/__tests__/TalkXDataJobsList.test.tsx",
+    "name": "TalkXDataJobsList"
+   },
+   {
+    "file": "src/components/talkx/__tests__/TalkXDataJobsList.test.tsx",
+    "name": "mostra cada job com estado, intervalo e última execução"
+   },
+   {
     "file": "src/components/talkx/__tests__/TalkXEngineAlertsCard.test.tsx",
     "name": "TalkXEngineAlertsCard"
    },
@@ -179360,6 +179419,42 @@
    {
     "file": "src/components/talkx/__tests__/talkxCampaignDraft.test.ts",
     "name": "copies configuration but never execution, schedule or authorship"
+   },
+   {
+    "file": "src/components/talkx/__tests__/talkxDataJobs.test.ts",
+    "name": "deriveDataJobView"
+   },
+   {
+    "file": "src/components/talkx/__tests__/talkxDataJobs.test.ts",
+    "name": "job ativo que nunca executou aparece como "
+   },
+   {
+    "file": "src/components/talkx/__tests__/talkxDataJobs.test.ts",
+    "name": "job desligado não é atrasado, mesmo sem execução recente"
+   },
+   {
+    "file": "src/components/talkx/__tests__/talkxDataJobs.test.ts",
+    "name": "começou depois do último fim: está em execução"
+   },
+   {
+    "file": "src/components/talkx/__tests__/talkxDataJobs.test.ts",
+    "name": "terminou dentro do ciclo esperado: em dia"
+   },
+   {
+    "file": "src/components/talkx/__tests__/talkxDataJobs.test.ts",
+    "name": "terminou há 3 dias num job diário: atrasado com o tempo além do previsto"
+   },
+   {
+    "file": "src/components/talkx/__tests__/talkxDataJobs.test.ts",
+    "name": "job de hora em hora tolera um ciclo perdido e reprova dois"
+   },
+   {
+    "file": "src/components/talkx/__tests__/talkxDataJobs.test.ts",
+    "name": "fmtDataJobInterval"
+   },
+   {
+    "file": "src/components/talkx/__tests__/talkxDataJobs.test.ts",
+    "name": "traduz os minutos que o banco guarda"
    },
    {
     "file": "src/components/talkx/__tests__/talkxKitUsage.guard.test.ts",
@@ -263808,9 +263903,12 @@
    "src/components/calls/__tests__/calls-access.test.ts",
    "src/components/inbox/AudioMessagePlayer.tsx",
    "src/components/inbox/__tests__/AudioMessagePlayer.transcricao.test.tsx",
+   "src/components/talkx/tracking/TalkXDataJobsCard.tsx",
+   "src/components/talkx/tracking/talkxDataJobs.ts",
    "src/hooks/gamification/__tests__/gamificacaoSemEscritaNoCliente.test.ts",
    "src/hooks/gamification/useAgentGamification.ts",
    "src/hooks/integrations/useTalkXCampaignLogs.ts",
+   "src/hooks/integrations/useTalkXDataJobs.ts",
    "src/hooks/integrations/useTalkXResumeChecklist.ts",
    "src/hooks/team-chat/__tests__/useDepartmentManagement.test.tsx",
    "src/hooks/team-chat/__tests__/useDepartmentWhatsAppCredentials.contrato-rpc.test.tsx",
@@ -342378,7 +342476,7 @@
   },
   "src/components/talkx/TalkXSettings.tsx": {
    "path": "src/components/talkx/TalkXSettings.tsx",
-   "lines": 138,
+   "lines": 141,
    "exports": [
     "function TalkXSettings"
    ],
@@ -343639,7 +343737,7 @@
   },
   "src/components/talkx/__tests__/TalkXA11yControlesECartoes.test.tsx": {
    "path": "src/components/talkx/__tests__/TalkXA11yControlesECartoes.test.tsx",
-   "lines": 173,
+   "lines": 179,
    "is_test": true,
    "rule_comments": [
     "A biblioteca de templates passou a ler a permissao de download (exportar CSV/JSON"
@@ -344260,6 +344358,15 @@
    ],
    "tests": [
     "TL-175D-a — contador do card "
+   ]
+  },
+  "src/components/talkx/__tests__/TalkXDataJobsList.test.tsx": {
+   "path": "src/components/talkx/__tests__/TalkXDataJobsList.test.tsx",
+   "lines": 46,
+   "is_test": true,
+   "tests": [
+    "TalkXDataJobsList",
+    "mostra cada job com estado, intervalo e última execução"
    ]
   },
   "src/components/talkx/__tests__/TalkXEngineAlertsCard.test.tsx": {
@@ -346121,6 +346228,25 @@
    "tests": [
     "duplicateTalkXCampaignDraft",
     "copies configuration but never execution, schedule or authorship"
+   ]
+  },
+  "src/components/talkx/__tests__/talkxDataJobs.test.ts": {
+   "path": "src/components/talkx/__tests__/talkxDataJobs.test.ts",
+   "lines": 89,
+   "is_test": true,
+   "rule_comments": [
+    "* Regra do painel \"Jobs de dados\" (`talkx_data_jobs`)."
+   ],
+   "tests": [
+    "deriveDataJobView",
+    "job ativo que nunca executou aparece como ",
+    "job desligado não é atrasado, mesmo sem execução recente",
+    "começou depois do último fim: está em execução",
+    "terminou dentro do ciclo esperado: em dia",
+    "terminou há 3 dias num job diário: atrasado com o tempo além do previsto",
+    "job de hora em hora tolera um ciclo perdido e reprova dois",
+    "fmtDataJobInterval",
+    "traduz os minutos que o banco guarda"
    ]
   },
   "src/components/talkx/__tests__/talkxKitUsage.guard.test.ts": {
@@ -348260,6 +348386,21 @@
    ],
    "doc": "X154 (TL-161) — Card \"Ações da Campanha\" + bloco \"Configurações Atuais\" (tela 12). O card de ações vivia em faixa horizontal no fim de `TalkXCampaignRunning` (CR:673-722), sem mostrar as regras que estão valendo. Aqui ele passa a ser um componente próprio, com os botões EMPILHADOS, e ganha o bloco \" …"
   },
+  "src/components/talkx/tracking/TalkXDataJobsCard.tsx": {
+   "path": "src/components/talkx/tracking/TalkXDataJobsCard.tsx",
+   "lines": 76,
+   "exports": [
+    "interface TalkXDataJobsListProps",
+    "function TalkXDataJobsList",
+    "function TalkXDataJobsCard"
+   ],
+   "rule_comments": [
+    "quem escreve é o agendador, com `service_role`. Logo, o painel é somente leitura — e é",
+    "// A regra dos estados está em ./talkxDataJobs.ts (o lint só admite componente exportado"
+   ],
+   "doc": "TalkXDataJobsCard.tsx — painel \"Jobs de dados\" das Configurações do Talk X. `talkx_data_jobs` registra os jobs de DADOS do módulo (recarga dos atributos RFM que a segmentação consome). A tabela só tem leitura para o usuário: quem escreve é o agendador, com `service_role`. Logo, o painel é somente le …",
+   "uses_service_role": true
+  },
   "src/components/talkx/tracking/TalkXEngineAlertsCard.tsx": {
    "path": "src/components/talkx/tracking/TalkXEngineAlertsCard.tsx",
    "lines": 85,
@@ -348562,6 +348703,37 @@
     "mínimo não pode passar do máximo — nunca salvar um valor diferente do digitado",
     "sem avisar (bug da varredura de QA: antes o máximo era ajustado em silêncio"
    ]
+  },
+  "src/components/talkx/tracking/talkxDataJobs.ts": {
+   "path": "src/components/talkx/tracking/talkxDataJobs.ts",
+   "lines": 134,
+   "exports": [
+    "type TalkXDataJobState",
+    "interface TalkXDataJobInput",
+    "interface TalkXDataJobView",
+    "const DATA_JOB_GRACE_CYCLES",
+    "function fmtDataJobInterval",
+    "function deriveDataJobView"
+   ],
+   "enums": [
+    {
+     "name": "TalkXDataJobState",
+     "values": "desativado | em_execucao | nunca_executou | atrasado | em_dia"
+    }
+   ],
+   "params": [
+    {
+     "name": "DATA_JOB_GRACE_CYCLES",
+     "value": "2"
+    }
+   ],
+   "rule_comments": [
+    "talkxDataJobs.ts — regra pura do painel \"Jobs de dados\" (Configurações do Talk X).",
+    "// A regra vive fora do .tsx porque o lint (react-refresh/only-export-components) só",
+    "* De quanto em quanto tempo ele deve rodar (`talkx_data_jobs.interval_minutes`). */"
+   ],
+   "doc": "talkxDataJobs.ts — regra pura do painel \"Jobs de dados\" (Configurações do Talk X). `talkx_data_jobs` é o registro dos jobs de DADOS do módulo (hoje só o `recompute_purchase_metrics`, que recalcula os atributos RFM dos contatos). A tabela não tem escrita para o usuário: quem grava é o agendador, com …",
+   "uses_service_role": true
   },
   "src/components/talkx/tracking/talkxHealth.ts": {
    "path": "src/components/talkx/tracking/talkxHealth.ts",
@@ -373610,6 +373782,37 @@
    "hooks": [
     "useTalkXConnectionStatus"
    ]
+  },
+  "src/hooks/integrations/useTalkXDataJobs.ts": {
+   "path": "src/hooks/integrations/useTalkXDataJobs.ts",
+   "lines": 43,
+   "exports": [
+    "interface TalkXDataJob",
+    "function useTalkXDataJobs"
+   ],
+   "tables": [
+    {
+     "table": "talkx_data_jobs",
+     "op": "select"
+    }
+   ],
+   "table_cols": {
+    "talkx_data_jobs": [
+     "enabled",
+     "interval_minutes",
+     "job",
+     "last_finished_at",
+     "last_started_at",
+     "updated_at"
+    ]
+   },
+   "rule_comments": [
+    "* Jobs de dados do Talk X (somente leitura — quem escreve é o agendador, com"
+   ],
+   "hooks": [
+    "useTalkXDataJobs"
+   ],
+   "uses_service_role": true
   },
   "src/hooks/integrations/useTalkXEngineAlerts.ts": {
    "path": "src/hooks/integrations/useTalkXEngineAlerts.ts",
@@ -429260,10 +429463,27 @@
   }
  },
  "git": {
-  "sha": "1fad01a79df8d8df1fc9a5f47571aa2770a723bb",
+  "sha": "f5a9f52f258e86511f72a0ad8b5a27a88d14882d",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "f5a9f52f",
+    "date": "2026-11-26",
+    "author": "adm01-debug",
+    "subject": "feat(talkx): painel dos jobs de dados nas configuracoes (#3415)",
+    "files": [
+     "docs/DB-INVENTORY.md",
+     "docs/talkx/ESTADOS.md",
+     "src/components/talkx/TalkXSettings.tsx",
+     "src/components/talkx/__tests__/TalkXA11yControlesECartoes.test.tsx",
+     "src/components/talkx/__tests__/TalkXDataJobsList.test.tsx",
+     "src/components/talkx/__tests__/talkxDataJobs.test.ts",
+     "src/components/talkx/tracking/TalkXDataJobsCard.tsx",
+     "src/components/talkx/tracking/talkxDataJobs.ts",
+     "src/hooks/integrations/useTalkXDataJobs.ts"
+    ]
+   },
    {
     "sha": "1fad01a7",
     "date": "2026-11-26",
@@ -429693,38 +429913,20 @@
     "files": [
      ".github/workflows/contexto.yml"
     ]
-   },
-   {
-    "sha": "1e7fec6a",
-    "date": "2026-11-25",
-    "author": "adm01-debug",
-    "subject": "infra: valida a virada do dominio principal para o build do V2 (#3374)",
-    "files": [
-     ".github/workflows/front-release-targets.yml",
-     "scripts/automation.config.json",
-     "scripts/ci/front-release-targets.unit.mjs",
-     "scripts/ci/verify-release-targets-dominio.unit.mjs",
-     "scripts/vercel/README.md",
-     "scripts/vercel/verify-release-targets.mjs"
-    ]
    }
   ],
   "hot_files": [
    [
     "docs/DB-INVENTORY.md",
-    9
+    10
+   ],
+   [
+    "docs/talkx/ESTADOS.md",
+    6
    ],
    [
     "supabase/deployment-manifest.json",
     6
-   ],
-   [
-    "docs/talkx/ESTADOS.md",
-    5
-   ],
-   [
-    "scripts/automation.config.json",
-    5
    ],
    [
     "src/components/security/SecurityView.tsx",
@@ -429736,6 +429938,10 @@
    ],
    [
     "ESTADO.md",
+    4
+   ],
+   [
+    "scripts/automation.config.json",
     4
    ],
    [
@@ -429775,19 +429981,19 @@
     2
    ],
    [
-    "src/components/admin/LinkPreviewCachePanel.tsx",
+    "src/components/talkx/TalkXSettings.tsx",
     1
    ],
    [
-    "src/components/admin/__tests__/LinkPreviewCachePanel.test.tsx",
+    "src/components/talkx/__tests__/TalkXA11yControlesECartoes.test.tsx",
     1
    ],
    [
-    "src/hooks/__tests__/useLinkPreviewCacheMetrics.test.tsx",
+    "src/components/talkx/__tests__/TalkXDataJobsList.test.tsx",
     1
    ],
    [
-    "src/hooks/system/useLinkPreviewCacheMetrics.ts",
+    "src/components/talkx/__tests__/talkxDataJobs.test.ts",
     1
    ]
   ]

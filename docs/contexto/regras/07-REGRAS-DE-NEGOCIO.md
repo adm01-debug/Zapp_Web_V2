@@ -1,6 +1,6 @@
 # 07 · REGRAS DE NEGÓCIO
 
-> Gerado automaticamente por AI Context Sync v1.3.2 · commit `1fad01a79d` · branch `main` · 2026-11-26 15:06 UTC
+> Gerado automaticamente por AI Context Sync v1.3.2 · commit `f5a9f52f25` · branch `main` · 2026-11-26 15:58 UTC
 > Não edite à mão — regras humanas vão em `manual/`.
 
 ## A. Regras escritas por humanos (`manual/` — prioridade máxima, nunca sobrescrito)
@@ -1737,6 +1737,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | TalkXReportGranularity | day \| hour | `src/components/talkx/report/talkxReportCharts.ts` |
 | TalkXReportFunnelStepKey | sent \| delivered \| replied \| clicked \| converted | `src/components/talkx/report/talkxReportCharts.ts` |
 | TalkXReportHeatmapMetric | replied \| sent \| clicked | `src/components/talkx/report/talkxReportCharts.ts` |
+| TalkXDataJobState | desativado \| em_execucao \| nunca_executou \| atrasado \| em_dia | `src/components/talkx/tracking/talkxDataJobs.ts` |
 | TalkXWorkerState | sending \| stalled \| paused_manual \| paused_auto \| done | `src/components/talkx/tracking/talkxHealth.ts` |
 | SUMMARY_WINDOWS | { id: '24h', label: 'Últimas 24 horas', minutes: 1440 }, { id: '12h', label: 'Últimas 12 horas', minutes: 720 }, { id: '6h', label: 'Últimas 6 horas', minutes: 360 }, | `src/components/talkx/tracking/talkxSentSummary.ts` |
 | TaskMode | list \| board \| agenda | `src/components/tasks/shared/ModeSwitcher.tsx` |
@@ -1928,8 +1929,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | STATUS_PALETTE | CHART_COLORS.resolved, CHART_COLORS.pending, CHART_COLORS.waiting, CHART_COLORS.open, | `src/lib/chartColors.ts` |
 | SENTIMENT_PALETTE | CHART_COLORS.positive, CHART_COLORS.neutral, CHART_COLORS.negative, | `src/lib/chartColors.ts` |
 | ContactHealthFieldKey | name \| phone \| email \| company \| job_title \| contact_type \| address \| assigned_to | `src/lib/contactHealth.ts` |
-| ContactHealthLevel | completo \| bom \| incompleto \| critico \| indefinido | `src/lib/contactHealth.ts` |
-| … +158 linhas — lista completa em `context.json` | | |
+| … +159 linhas — lista completa em `context.json` | | |
 
 ## F. Validações de entrada
 
@@ -3890,6 +3890,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `SPARK_POINTS` | `7` | `src/components/talkx/tracking/TalkXLiveKpiRow.tsx` |
 | `MAX_DAY_OPTIONS` | `31` | `src/components/talkx/tracking/TalkXMonitorHeader.tsx` |
 | `PAGE_SIZE` | `50` | `src/components/talkx/tracking/TalkXRecipientsTable.tsx` |
+| `DATA_JOB_GRACE_CYCLES` | `2` | `src/components/talkx/tracking/talkxDataJobs.ts` |
 | `TALKX_STALL_MIN_MS` | `180` | `src/components/talkx/tracking/talkxHealth.ts` |
 | `TALKX_RATE_WINDOW_MIN` | `5` | `src/components/talkx/tracking/talkxHealth.ts` |
 | `SEGMENT_PREVIEW_SIZE` | `4` | `src/components/talkx/tracking/talkxSegmentProgress.ts` |
@@ -3937,8 +3938,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `SUPERVISOR_PAGE_SIZE` | `200` | `src/hooks/admin/useSupervisorQueue.ts` |
 | `DEFAULT_REFRESH_MS` | `60` | `src/hooks/admin/useSupervisorQueue.ts` |
 | `RECENT_SENDS_WINDOW_DAYS` | `30` | `src/hooks/agents/useAgentRecentSends.ts` |
-| `DAY_MS` | `24` | `src/hooks/agents/useAgentRecentSends.ts` |
-| … +722 linhas — lista completa em `context.json` | | |
+| … +723 linhas — lista completa em `context.json` | | |
 
 ### H.2 Prazos, expirações e janelas de tempo
 
@@ -4768,7 +4768,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `owner` | `supabase/migrations/20260927270018_team_chat_e28_fix_find_or_create_race.sql` |
 | `anon` | `supabase/migrations/20260927340000_fix_add_agent_xp_negative_and_guard.sql` |
 
-## K. Testes como especificação (23204 testes em 2462 arquivos — nomes completos em `context.json`)
+## K. Testes como especificação (23215 testes em 2464 arquivos — nomes completos em `context.json`)
 
 | Arquivo | Testes | Exemplos do que o sistema DEVE fazer |
 |---|---|---|
@@ -5072,7 +5072,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `supabase/functions/ai-transcribe-audio/openrouter-stt.test.ts` | 17 | formato: containers que a edge reconhece viram a extensão do input_audio · formato: mime de outro tipo ou desconhecido não vira extensão inventada · formato: parâmetro do content-type (codecs) não atrapalha e o case não importa · base64: buffer maior que o bloco interno é convertido byte a byte … |
 | `supabase/functions/multiplix-dispatch/actions/__tests__/listing.test.ts` | 17 | dispatch.list escopo: sem permissao ampla so devolve os disparos do dono · dispatch.list escopo: usuario sem profile e sem permissao -> lista vazia (nao consulta a tabela) · dispatch.list escopo: a permissao ampla ve os disparos de qualquer dono · dispatch.list paginacao: limit/offset recortam na ordem created_at desc e total e exato … |
 | `supabase/functions/talkx-ai/index.test.ts` | 17 | X076: flag ai_insights desligada recusa com 403 ai_disabled e não paga o proxy · X076: orçamento mensal no padrão (0 = desligado) recusa com 403 ai_disabled · X076: gasto do mês no teto recusa com 429 budget_exceeded e não paga o proxy · X076: gasto abaixo do teto passa (o teto não é desligamento geral) … |
-| … +2162 linhas — lista completa em `context.json` | | |
+| … +2164 linhas — lista completa em `context.json` | | |
 
 ## L. Eventos de webhook tratados (contratos com sistemas externos)
 
@@ -5591,4 +5591,4 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | Mostra no máximo 2 sugestões para não poluir o painel | `src/components/inbox/copilot/MissingQuestions.tsx` |
 | * CV-035/036 — Alerta de ocasião comercial detectada + prazo de entrega. | `src/components/inbox/copilot/OccasionAlert.tsx` |
 | Sobe/desce a linha uma posição por vez, trocando apenas de lugar os objetos | `src/components/inbox/interactive-builder/useInteractiveMessage.ts` |
-| … +1878 linhas — lista completa em `context.json` | |
+| … +1884 linhas — lista completa em `context.json` | |

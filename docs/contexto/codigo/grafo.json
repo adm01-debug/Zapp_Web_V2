@@ -1,8 +1,8 @@
 {
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
- "nos": 2447,
- "arestas": 8424,
+ "nos": 2450,
+ "arestas": 8432,
  "hubs": [
   {
    "arquivo": "src/lib/utils.ts",
@@ -10,7 +10,7 @@
   },
   {
    "arquivo": "src/integrations/supabase/client.ts",
-   "importado_por": 438
+   "importado_por": 439
   },
   {
    "arquivo": "src/components/ui/button.tsx",
@@ -78,7 +78,7 @@
   },
   {
    "arquivo": "src/components/talkx/talkxShared.ts",
-   "importado_por": 59
+   "importado_por": 61
   },
   {
    "arquivo": "src/components/ui/avatar.tsx",
@@ -129,12 +129,12 @@
    "importado_por": 46
   },
   {
-   "arquivo": "src/hooks/integrations/useGmail.ts",
+   "arquivo": "src/components/dashboard/overview/DashboardCard.tsx",
    "importado_por": 45
   },
   {
-   "arquivo": "src/components/dashboard/overview/DashboardCard.tsx",
-   "importado_por": 44
+   "arquivo": "src/hooks/integrations/useGmail.ts",
+   "importado_por": 45
   },
   {
    "arquivo": "src/components/ui/dropdown-menu.tsx",

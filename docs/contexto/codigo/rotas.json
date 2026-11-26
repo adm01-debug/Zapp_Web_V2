@@ -506,6 +506,7 @@
     "useTalkXCommandItems",
     "useTalkXConfirm",
     "useTalkXConnectionStatus",
+    "useTalkXDataJobs",
     "useTalkXEngineAlerts",
     "useTalkXEventLogger",
     "useTalkXEvents",
@@ -1038,6 +1039,7 @@
     "useTalkXCommandItems",
     "useTalkXConfirm",
     "useTalkXConnectionStatus",
+    "useTalkXDataJobs",
     "useTalkXEngineAlerts",
     "useTalkXEventLogger",
     "useTalkXEvents",
@@ -1228,6 +1230,7 @@
     "talkx_blacklist",
     "talkx_campaign_metrics",
     "talkx_campaigns",
+    "talkx_data_jobs",
     "talkx_link_clicks",
     "talkx_recipients",
     "talkx_segments",
@@ -1484,7 +1487,7 @@
     "unknown",
     "user"
    ],
-   "arquivos_puxados": 1613
+   "arquivos_puxados": 1616
   },
   {
    "protegida": false,
@@ -8057,6 +8060,7 @@
     "useTalkXCommandItems",
     "useTalkXConfirm",
     "useTalkXConnectionStatus",
+    "useTalkXDataJobs",
     "useTalkXEngineAlerts",
     "useTalkXEventLogger",
     "useTalkXEvents",
@@ -8142,6 +8146,7 @@
     "useTalkXCommandItems",
     "useTalkXConfirm",
     "useTalkXConnectionStatus",
+    "useTalkXDataJobs",
     "useTalkXEngineAlerts",
     "useTalkXEventLogger",
     "useTalkXEvents",
@@ -8190,6 +8195,7 @@
     "talkx_blacklist",
     "talkx_campaign_metrics",
     "talkx_campaigns",
+    "talkx_data_jobs",
     "talkx_link_clicks",
     "talkx_recipients",
     "talkx_segments",
@@ -8271,7 +8277,7 @@
     "tab",
     "tablist"
    ],
-   "arquivos_puxados": 274
+   "arquivos_puxados": 277
   },
   {
    "id": "talkx-kit",

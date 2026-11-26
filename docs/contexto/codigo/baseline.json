@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "1fad01a79df8d8df1fc9a5f47571aa2770a723bb",
+  "commit": "f5a9f52f258e86511f72a0ad8b5a27a88d14882d",
   "branch": "main",
-  "data_commit": "2026-11-26T15:05:25Z",
+  "data_commit": "2026-11-26T15:52:52Z",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "f5a9f52f",
+    "data": "2026-11-26",
+    "assunto": "feat(talkx): painel dos jobs de dados nas configuracoes (#3415)"
+   },
    {
     "sha": "1fad01a7",
     "data": "2026-11-26",
@@ -126,14 +131,9 @@
     "sha": "d91f6507",
     "data": "2026-11-25",
     "assunto": "feat: redige PII e segredos em logs, auditoria e telemetria (#3382)"
-   },
-   {
-    "sha": "73476eff",
-    "data": "2026-11-25",
-    "assunto": "feat(playbooks): ativo/inativo, exclusao com confirmacao e acesso por teclado (#3381)"
    }
   ],
-  "arquivos_mudados_7d": 2812,
+  "arquivos_mudados_7d": 2819,
   "pastas_mais_mudadas_30d": [
    {
     "pasta": "docs/contexto/supabase",
@@ -165,7 +165,7 @@
    },
    {
     "pasta": "src/components/talkx",
-    "mudancas": 380
+    "mudancas": 386
    },
    {
     "pasta": "analise-prs/resgate-261115/dossies",
@@ -185,7 +185,7 @@
    },
    {
     "pasta": "src/hooks/integrations",
-    "mudancas": 156
+    "mudancas": 157
    },
    {
     "pasta": "src/components/contacts",
@@ -207,11 +207,11 @@
    },
    {
     "arquivo": "docs/DB-INVENTORY.md",
-    "mudancas": 21
+    "mudancas": 22
    },
    {
     "arquivo": "docs/talkx/ESTADOS.md",
-    "mudancas": 20
+    "mudancas": 21
    },
    {
     "arquivo": "supabase/schema-manifest.json",
@@ -242,16 +242,16 @@
     "mudancas": 10
    },
    {
-    "arquivo": "PENDENCIAS.md",
-    "mudancas": 9
-   },
-   {
     "arquivo": "docs/ci/README.md",
     "mudancas": 9
    },
    {
     "arquivo": "supabase/functions/evolution-api/index.ts",
     "mudancas": 9
+   },
+   {
+    "arquivo": "PENDENCIAS.md",
+    "mudancas": 8
    },
    {
     "arquivo": "scripts/ci/ci-docs-baseline.unit.mjs",
@@ -314,21 +314,21 @@
   ]
  },
  "contagens": {
-  "arquivos_total": 14878,
-  "arquivos_codigo": 5210,
-  "linhas_codigo": 965951,
+  "arquivos_total": 14883,
+  "arquivos_codigo": 5215,
+  "linhas_codigo": 966348,
   "rotas": 21,
   "rotas_http_backend": 11,
   "vistas_por_id": 55,
   "itens_menu": 61,
   "modulos": 149,
-  "componentes": 949,
-  "hooks": 530,
+  "componentes": 950,
+  "hooks": 531,
   "edge_functions": 94,
   "tabelas": 224,
   "migrations": 1161,
   "cron_jobs": 29,
-  "testes": 2855,
+  "testes": 2857,
   "workflows": 26,
   "scripts": 458,
   "docs_md": 3988
@@ -739,8 +739,8 @@
    "linhas": 638
   },
   "src/components": {
-   "arquivos": 2342,
-   "linhas": 398687
+   "arquivos": 2346,
+   "linhas": 399041
   },
   "src/config": {
    "arquivos": 3,
@@ -759,8 +759,8 @@
    "linhas": 3293
   },
   "src/hooks": {
-   "arquivos": 1061,
-   "linhas": 172298
+   "arquivos": 1062,
+   "linhas": 172341
   },
   "src/i18n": {
    "arquivos": 2,
@@ -942,7 +942,7 @@
   }
  ],
  "qualidade": {
-  "any": 396,
+  "any": 397,
   "console_log": 505,
   "ts_ignore": 0,
   "eslint_disable": 1,
