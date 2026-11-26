@@ -5,18 +5,18 @@
   "vitest",
   "playwright"
  ],
- "total": 2838,
+ "total": 2840,
  "por_tipo": {
   "contrato": 116,
   "e2e": 76,
   "pytest": 3,
   "qa": 10,
-  "unit": 2541
+  "unit": 2543
  },
  "onde_ficam": [
   {
    "padrao": "co-localizado (__tests__)",
-   "arquivos": 2111
+   "arquivos": 2112
   },
   {
    "padrao": "outro",
@@ -24,7 +24,7 @@
   },
   {
    "padrao": "co-localizado (*.test)",
-   "arquivos": 202
+   "arquivos": 203
   },
   {
    "padrao": "tests/",
@@ -23528,6 +23528,16 @@
    "casos": 16
   },
   {
+   "arquivo": "supabase/functions/_shared/__tests__/webhook-dead-letter.test.ts",
+   "tipo": "unit",
+   "linhas": 148,
+   "testa": [
+    "supabase/functions/_shared/evolution-types.ts",
+    "supabase/functions/_shared/webhook-dead-letter.ts"
+   ],
+   "casos": 8
+  },
+  {
    "arquivo": "supabase/functions/_shared/__tests__/webhook-edit-reaction-connection-scope.test.ts",
    "tipo": "unit",
    "linhas": 228,
@@ -24255,12 +24265,12 @@
   {
    "arquivo": "supabase/functions/evolution-webhook/index.test.ts",
    "tipo": "unit",
-   "linhas": 70,
+   "linhas": 262,
    "testa": [
-    "supabase/functions/_shared/validation.ts",
+    "supabase/functions/_shared/evolution-helpers.ts",
     "supabase/functions/evolution-webhook/index.ts"
    ],
-   "casos": 1
+   "casos": 5
   },
   {
    "arquivo": "supabase/functions/external-db-bridge/filters-validation.test.ts",
@@ -25010,6 +25020,15 @@
     "supabase/functions/webhook-diagnostic/index.ts"
    ],
    "casos": 5
+  },
+  {
+   "arquivo": "supabase/functions/webhook-replay/index.test.ts",
+   "tipo": "unit",
+   "linhas": 198,
+   "testa": [
+    "supabase/functions/webhook-replay/index.ts"
+   ],
+   "casos": 6
   },
   {
    "arquivo": "supabase/functions/whatsapp-webhook/index.test.ts",
@@ -27435,13 +27454,13 @@
   "supabase/functions/_shared/evolution-go-adapter.ts": 8,
   "supabase/functions/_shared/evolution-go-routes.ts": 2,
   "supabase/functions/_shared/evolution-go-token-sync.ts": 1,
-  "supabase/functions/_shared/evolution-helpers.ts": 16,
+  "supabase/functions/_shared/evolution-helpers.ts": 17,
   "supabase/functions/_shared/evolution-instance-token.ts": 6,
   "supabase/functions/_shared/evolution-media.ts": 1,
   "supabase/functions/_shared/evolution-send.ts": 4,
   "supabase/functions/_shared/evolution-session-routes.ts": 1,
   "supabase/functions/_shared/evolution-sync-actions.ts": 2,
-  "supabase/functions/_shared/evolution-types.ts": 26,
+  "supabase/functions/_shared/evolution-types.ts": 27,
   "supabase/functions/_shared/evolution-webhook-handlers.ts": 11,
   "supabase/functions/_shared/evolution-webhook-messages.ts": 10,
   "supabase/functions/_shared/evolution-webhook-msg-handlers.ts": 7,
@@ -27478,8 +27497,9 @@
   "supabase/functions/_shared/talkx-resume-policy.ts": 2,
   "supabase/functions/_shared/talkx-tracking-token.ts": 1,
   "supabase/functions/_shared/talkx-window.ts": 2,
-  "supabase/functions/_shared/validation.ts": 22,
+  "supabase/functions/_shared/validation.ts": 21,
   "supabase/functions/_shared/voice-copilot-authz.ts": 1,
+  "supabase/functions/_shared/webhook-dead-letter.ts": 1,
   "supabase/functions/_shared/webhook-signature.ts": 2,
   "supabase/functions/ai-auto-tag/index.ts": 2,
   "supabase/functions/ai-churn-analysis/churn-risk.ts": 1,
@@ -27578,6 +27598,7 @@
   "supabase/functions/webauthn/index.ts": 1,
   "supabase/functions/webauthn/verify.ts": 1,
   "supabase/functions/webhook-diagnostic/index.ts": 4,
+  "supabase/functions/webhook-replay/index.ts": 1,
   "supabase/functions/whatsapp-webhook/index.ts": 2
  },
  "sem_teste": {

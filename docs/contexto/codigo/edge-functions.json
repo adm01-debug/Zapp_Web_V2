@@ -2,7 +2,7 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "pasta": "supabase/functions",
- "total": 93,
+ "total": 94,
  "verify_jwt_false": [
   "ai-usage-outbox-drain",
   "auth-login",
@@ -109,6 +109,7 @@
   "supabase/functions/_shared/__tests__/voice-copilot-authz.test.ts",
   "supabase/functions/_shared/__tests__/webhook-auth-gates.test.ts",
   "supabase/functions/_shared/__tests__/webhook-auth-shadow.test.ts",
+  "supabase/functions/_shared/__tests__/webhook-dead-letter.test.ts",
   "supabase/functions/_shared/__tests__/webhook-edit-reaction-connection-scope.test.ts",
   "supabase/functions/_shared/__tests__/webhook-signature-ambiguity.test.ts",
   "supabase/functions/_shared/__tests__/webhook-signature.test.ts",
@@ -220,6 +221,7 @@
   "supabase/functions/_shared/validation.logger.test.ts",
   "supabase/functions/_shared/validation.ts",
   "supabase/functions/_shared/voice-copilot-authz.ts",
+  "supabase/functions/_shared/webhook-dead-letter.ts",
   "supabase/functions/_shared/webhook-signature.ts"
  ],
  "edges": [
@@ -1836,7 +1838,7 @@
    "nome": "evolution-webhook",
    "entrada": "supabase/functions/evolution-webhook/index.ts",
    "arquivos": 1,
-   "linhas": 337,
+   "linhas": 358,
    "verify_jwt": false,
    "metodos": [
     "POST"
@@ -3367,6 +3369,41 @@
    "chamada_por_sql_ou_cron": false,
    "orfa": false,
    "testes": 4
+  },
+  {
+   "nome": "webhook-replay",
+   "entrada": "supabase/functions/webhook-replay/index.ts",
+   "arquivos": 1,
+   "linhas": 176,
+   "verify_jwt": true,
+   "metodos": [
+    "POST"
+   ],
+   "tabelas": [
+    "webhook_failures"
+   ],
+   "rpcs": [
+    "ingest_inbound_message",
+    "is_admin_or_supervisor"
+   ],
+   "env": [
+    "SUPABASE_ANON_KEY",
+    "SUPABASE_SERVICE_ROLE_KEY",
+    "SUPABASE_URL"
+   ],
+   "buckets": [],
+   "chama_edges": [],
+   "hosts_externos": [],
+   "usa_shared": [
+    "evolution-control-authz.ts",
+    "validation.ts",
+    "webhook-dead-letter.ts"
+   ],
+   "chamada_pelo_front": [],
+   "chamada_por_edges": [],
+   "chamada_por_sql_ou_cron": false,
+   "orfa": true,
+   "testes": 1
   },
   {
    "nome": "whatsapp-webhook",

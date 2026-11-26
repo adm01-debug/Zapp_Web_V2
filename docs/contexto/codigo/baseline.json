@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "284367aa5013c9d03700b17488c44eff2cdb413f",
+  "commit": "6e6264b6f49cfc709898b951fd346cd83466481f",
   "branch": "main",
-  "data_commit": "2026-11-26T03:45:03Z",
+  "data_commit": "2026-11-26T04:03:10Z",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "6e6264b6",
+    "data": "2026-11-26",
+    "assunto": "feat(edge): dead-letter reprocessável quando o ingest da mensagem recebida falha (E35) (#3397)"
+   },
    {
     "sha": "284367aa",
     "data": "2026-11-26",
@@ -126,14 +131,9 @@
     "sha": "51918129",
     "data": "2026-11-25",
     "assunto": "chore: aposenta acervo de resgate 261118 lote3 ja triado (1.029 arquivos, zero perdas) (#3371)"
-   },
-   {
-    "sha": "06a1cbe6",
-    "data": "2026-11-25",
-    "assunto": "feat(automacao): recupera harness local da PR #2926 sobre o main atual (#3366)"
    }
   ],
-  "arquivos_mudados_7d": 2773,
+  "arquivos_mudados_7d": 2782,
   "pastas_mais_mudadas_30d": [
    {
     "pasta": "docs/contexto/supabase",
@@ -173,7 +173,7 @@
    },
    {
     "pasta": "supabase/functions/_shared",
-    "mudancas": 249
+    "mudancas": 252
    },
    {
     "pasta": "analise-prs/resgate-261118-lote3/hermes",
@@ -199,15 +199,23 @@
   "arquivos_mais_mudados_90d": [
    {
     "arquivo": "supabase/deployment-manifest.json",
-    "mudancas": 38
+    "mudancas": 39
    },
    {
     "arquivo": "ESTADO.md",
-    "mudancas": 26
+    "mudancas": 27
    },
    {
     "arquivo": "supabase/schema-manifest.json",
     "mudancas": 16
+   },
+   {
+    "arquivo": ".github/workflows/db-guard.yml",
+    "mudancas": 15
+   },
+   {
+    "arquivo": "docs/DB-INVENTORY.md",
+    "mudancas": 15
    },
    {
     "arquivo": "docs/talkx/ESTADOS.md",
@@ -218,20 +226,8 @@
     "mudancas": 15
    },
    {
-    "arquivo": ".github/workflows/db-guard.yml",
-    "mudancas": 14
-   },
-   {
-    "arquivo": "docs/DB-INVENTORY.md",
-    "mudancas": 14
-   },
-   {
     "arquivo": "supabase/schema-catalog.json",
     "mudancas": 14
-   },
-   {
-    "arquivo": "scripts/db-audit/grants-baseline.json",
-    "mudancas": 11
    },
    {
     "arquivo": ".github/workflows/ci.yml",
@@ -243,6 +239,10 @@
    },
    {
     "arquivo": "docs/agentes/github-ci.md",
+    "mudancas": 10
+   },
+   {
+    "arquivo": "scripts/db-audit/grants-baseline.json",
     "mudancas": 10
    },
    {
@@ -270,6 +270,10 @@
     "mudancas": 6
    },
    {
+    "arquivo": "scripts/automation.config.json",
+    "mudancas": 6
+   },
+   {
     "arquivo": "src/components/talkx/TalkXView.tsx",
     "mudancas": 6
    },
@@ -292,10 +296,6 @@
    {
     "arquivo": "docs/contexto/regras/manual/regras.md",
     "mudancas": 5
-   },
-   {
-    "arquivo": "docs/prod-readiness.md",
-    "mudancas": 5
    }
   ],
   "autores_30d": [
@@ -314,9 +314,9 @@
   ]
  },
  "contagens": {
-  "arquivos_total": 14836,
-  "arquivos_codigo": 5171,
-  "linhas_codigo": 959402,
+  "arquivos_total": 14843,
+  "arquivos_codigo": 5175,
+  "linhas_codigo": 960359,
   "rotas": 18,
   "rotas_http_backend": 11,
   "vistas_por_id": 55,
@@ -324,13 +324,13 @@
   "modulos": 149,
   "componentes": 938,
   "hooks": 523,
-  "edge_functions": 93,
+  "edge_functions": 94,
   "tabelas": 224,
-  "migrations": 1160,
+  "migrations": 1161,
   "cron_jobs": 29,
-  "testes": 2838,
+  "testes": 2840,
   "workflows": 26,
-  "scripts": 456,
+  "scripts": 458,
   "docs_md": 3988
  },
  "por_pasta": {
@@ -815,8 +815,8 @@
    "linhas": 1708
   },
   "supabase/functions": {
-   "arquivos": 436,
-   "linhas": 132354
+   "arquivos": 440,
+   "linhas": 133311
   },
   "tailwind.config.ts": {
    "arquivos": 1,
@@ -857,12 +857,12 @@
    "linhas": 1749
   },
   {
-   "arquivo": "scripts/ci/ci-local.mjs",
-   "linhas": 1497
+   "arquivo": "supabase/functions/_shared/evolution-webhook-messages.ts",
+   "linhas": 1549
   },
   {
-   "arquivo": "supabase/functions/_shared/evolution-webhook-messages.ts",
-   "linhas": 1490
+   "arquivo": "scripts/ci/ci-local.mjs",
+   "linhas": 1497
   },
   {
    "arquivo": "supabase/functions/talkx-send/index.ts",
@@ -1314,7 +1314,8 @@
    "talkx-report",
    "talkx-scheduler",
    "talkx-storage-purge",
-   "voice-copilot-action"
+   "voice-copilot-action",
+   "webhook-replay"
   ],
   "edges_chamadas_sem_pasta": [],
   "tabelas_sem_rls": [],
@@ -1338,7 +1339,8 @@
    "geo_blocking_settings",
    "global_settings",
    "talkx_contact_attributes",
-   "talkx_settings"
+   "talkx_settings",
+   "webhook_failures"
   ],
   "rpcs_sem_definicao": [
    "admin_set_role",

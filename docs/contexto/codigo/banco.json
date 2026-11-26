@@ -8,7 +8,7 @@
   "supabase/migrations",
   "typeorm"
  ],
- "migrations": 1160,
+ "migrations": 1161,
  "seeds": [
   "docs/contexto/supabase/functions/public/seed_default_goals_for_profile__12ae32cb1ec02d01.sql",
   "e2e/fixtures/seed-talk-me.sql",
@@ -31145,6 +31145,13 @@
      "default": null,
      "ref": null
     },
+    "external_id": {
+     "tipo": "text",
+     "nn": false,
+     "pk": false,
+     "default": null,
+     "ref": null
+    },
     "id": {
      "tipo": "uuid",
      "nn": false,
@@ -31167,6 +31174,13 @@
      "ref": null
     },
     "payload_truncated": {
+     "tipo": "jsonb",
+     "nn": false,
+     "pk": false,
+     "default": null,
+     "ref": null
+    },
+    "replay_payload": {
      "tipo": "jsonb",
      "nn": false,
      "pk": false,
@@ -31211,6 +31225,11 @@
      "unico": false
     },
     {
+     "nome": "webhook_failures_replay_pendente_idx",
+     "colunas": "endpoint, error_at",
+     "unico": false
+    },
+    {
      "nome": "webhook_failures_resolved_idx",
      "colunas": "resolved, error_at DESC",
      "unico": false
@@ -31232,14 +31251,20 @@
     "retry_count": "number"
    },
    "drift": {
-    "so_na_migration": [],
+    "so_na_migration": [
+     "external_id",
+     "replay_payload"
+    ],
     "so_no_types": []
    },
    "usada_no_front": 0,
-   "usada_em_edges": [],
+   "usada_em_edges": [
+    "_shared",
+    "webhook-replay"
+   ],
    "triggers": [],
    "sem_rls": false,
-   "nao_usada": true
+   "nao_usada": false
   },
   "webhook_rate_limits": {
    "colunas": {
@@ -32766,7 +32791,7 @@
   {
    "nome": "ingest_inbound_message",
    "definida": true,
-   "usada_em": 2
+   "usada_em": 3
   },
   {
    "nome": "is_account_locked",
@@ -32781,7 +32806,7 @@
   {
    "nome": "is_admin_or_supervisor",
    "definida": true,
-   "usada_em": 25
+   "usada_em": 26
   },
   {
    "nome": "is_contact_visible_to_user",

@@ -11184,7 +11184,8 @@
    "supabase/functions/_shared/evolution-send.ts",
    "supabase/functions/_shared/evolution-types.ts",
    "supabase/functions/_shared/media-egress.ts",
-   "supabase/functions/_shared/talkx-reply.ts"
+   "supabase/functions/_shared/talkx-reply.ts",
+   "supabase/functions/_shared/webhook-dead-letter.ts"
   ],
   "supabase/functions/_shared/evolution-webhook-msg-handlers.ts": [
    "supabase/functions/_shared/evolution-helpers.ts",
@@ -11287,6 +11288,9 @@
    "supabase/functions/_shared/cors-origins.ts",
    "supabase/functions/_shared/rate-limit-log.ts",
    "supabase/functions/_shared/request-policy.ts"
+  ],
+  "supabase/functions/_shared/webhook-dead-letter.ts": [
+   "supabase/functions/_shared/evolution-types.ts"
   ],
   "supabase/functions/_shared/webhook-signature.ts": [
    "supabase/functions/_shared/hmac-validation.ts"
@@ -11911,6 +11915,11 @@
    "supabase/functions/_shared/evolution-instance-token.ts",
    "supabase/functions/_shared/evolution-send.ts",
    "supabase/functions/_shared/validation.ts"
+  ],
+  "supabase/functions/webhook-replay/index.ts": [
+   "supabase/functions/_shared/evolution-control-authz.ts",
+   "supabase/functions/_shared/validation.ts",
+   "supabase/functions/_shared/webhook-dead-letter.ts"
   ],
   "supabase/functions/whatsapp-webhook/index.ts": [
    "supabase/functions/_shared/cron-secret-auth.ts",

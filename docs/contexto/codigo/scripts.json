@@ -1,7 +1,7 @@
 {
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
- "total": 456,
+ "total": 458,
  "scripts": [
   {
    "arquivo": "scripts/ai-context/cenarios.mjs",
@@ -979,6 +979,26 @@
    "arquivo": "scripts/db-audit/check-webhook-failures-acl.test.sh",
    "descricao": null,
    "linhas": 151,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [
+    "db-guard.yml"
+   ],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/check-webhook-failures-replay.sql",
+   "descricao": null,
+   "linhas": 105,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/check-webhook-failures-replay.test.sh",
+   "descricao": "Prova da migration 20261126010000_webhook_failures_replay.sql num PostgreSQL descartável (nunca produção): as colunas do replay existem, o índice da fila",
+   "linhas": 135,
    "env": [],
    "npm_scripts": [],
    "workflows": [

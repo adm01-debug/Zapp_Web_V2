@@ -3,12 +3,12 @@
  "format_version": 2,
  "stack": {
   "linguagens": [
-   "TypeScript (4526)",
+   "TypeScript (4530)",
    "Markdown (3988)",
-   "SQL (3070)",
+   "SQL (3072)",
    "JSON (1939)",
    "JavaScript (524)",
-   "Shell (255)",
+   "Shell (256)",
    "Python (125)",
    "YAML (43)"
   ],
@@ -461,6 +461,7 @@
     "scripts/db-audit/check-reconcile-ledger-drift.test.sh",
     "scripts/db-audit/check-secdef-public-execute.test.sh",
     "scripts/db-audit/check-webhook-failures-acl.test.sh",
+    "scripts/db-audit/check-webhook-failures-replay.test.sh",
     "scripts/db-audit/city-whitelist-network-policy.test.sh",
     "scripts/db-audit/commit-copilot-tick.test.sh",
     "scripts/db-audit/connections-delete-admin-only.test.sh",
@@ -1274,7 +1275,7 @@
   {
    "arquivo": "ESTADO.md",
    "titulo": "ESTADO.md — o que está ligado e quem chama",
-   "linhas": 154
+   "linhas": 156
   },
   {
    "arquivo": "FEATURE_REGISTRY.md",
@@ -1354,7 +1355,7 @@
   {
    "arquivo": "docs/DB-INVENTORY.md",
    "titulo": "Inventário de objetos do banco — `public`",
-   "linhas": 294
+   "linhas": 296
   },
   {
    "arquivo": "docs/DB-SECURITY.md",
@@ -1848,11 +1849,11 @@
   ],
   "hosts_externos": [
    {
-    "host": "stub.supabase.co",
-    "arquivos": 38
+    "host": "edge.invalid",
+    "arquivos": 37
    },
    {
-    "host": "edge.invalid",
+    "host": "stub.supabase.co",
     "arquivos": 37
    },
    {
@@ -2737,6 +2738,10 @@
    },
    {
     "host": "signed.invalid",
+    "arquivos": 1
+   },
+   {
+    "host": "sintetico.exemplo.invalid",
     "arquivos": 1
    },
    {

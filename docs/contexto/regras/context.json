@@ -1,15 +1,15 @@
 {
  "meta": {
-  "sha": "284367aa5013c9d03700b17488c44eff2cdb413f",
+  "sha": "6e6264b6f49cfc709898b951fd346cd83466481f",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-26 03:47 UTC",
-  "files_total": 14683,
-  "code_files": 8214,
-  "code_lines": 1237303
+  "generated_at": "2026-11-26 04:04 UTC",
+  "files_total": 14690,
+  "code_files": 8220,
+  "code_lines": 1238422
  },
  "version": "1.3.2",
- "facts_hash": "4a67ea8592abc14b",
+ "facts_hash": "3dfdcd673fdba6ba",
  "stack": {
   "frameworks": [
    "React + Vite",
@@ -367,9 +367,9 @@
   ],
   "package_manager": "bun",
   "languages": {
-   ".sql": 3070,
+   ".sql": 3072,
    ".tsx": 2492,
-   ".ts": 2029,
+   ".ts": 2033,
    ".mjs": 496,
    ".py": 125,
    ".cjs": 19,
@@ -11940,6 +11940,13 @@
       "fk": "",
       "generated": "",
       "src": "supabase/migrations/20260830153000_webhook_failures_dead_letter.sql"
+     },
+     {
+      "name": "external_id",
+      "type": "TEXT",
+      "fk": "",
+      "generated": "",
+      "src": "supabase/migrations/20261126010000_webhook_failures_replay.sql"
      }
     ],
     "constraints": [],
@@ -45916,6 +45923,14 @@
     "src": "supabase/migrations/20261122200000_x076_talkx_ai_requests.sql"
    },
    {
+    "name": "webhook_failures_replay_pendente_idx",
+    "table": "webhook_failures",
+    "columns": "endpoint, error_at",
+    "unique": false,
+    "where": "WHERE NOT resolved AND replay_payload IS NOT NULL",
+    "src": "supabase/migrations/20261126010000_webhook_failures_replay.sql"
+   },
+   {
     "name": "idx_tasks_owner_message",
     "table": "conversation_tasks",
     "columns": "created_by, message_id",
@@ -48588,6 +48603,7 @@
    "supabase/migrations/20261124120000_drop_rpcs_e2e_orfas.sql",
    "supabase/migrations/20261125120000_ai_providers_endpoint_secret_binding.sql",
    "supabase/migrations/20261125130000_ia009_kill_switch_chaves.sql",
+   "supabase/migrations/20261126010000_webhook_failures_replay.sql",
    "supabase/migrations/20261126010508_city_whitelist_network_policy.sql",
    "supabase/migrations/20261126011000_connections_delete_admin_only.sql",
    "supabase/migrations/20261126213000_talkx_template_duplicate_archive_delete.sql",
@@ -63638,6 +63654,22 @@
    {
     "kind": "revoke",
     "privs": "all",
+    "object": "webhook_failures",
+    "objkind": "table",
+    "roles": "anon, authenticated",
+    "src": "supabase/migrations/20261126010000_webhook_failures_replay.sql"
+   },
+   {
+    "kind": "grant",
+    "privs": "select, insert, update, delete",
+    "object": "webhook_failures",
+    "objkind": "table",
+    "roles": "service_role",
+    "src": "supabase/migrations/20261126010000_webhook_failures_replay.sql"
+   },
+   {
+    "kind": "revoke",
+    "privs": "all",
     "object": "city_whitelist",
     "objkind": "table",
     "roles": "public, anon",
@@ -69590,6 +69622,8 @@
    "column:search_events.had_results": "falso = a busca nao devolveu nenhum resultado.",
    "column:search_events.result_kind": "Tipo do resultado clicado; null quando nao houve clique.",
    "column:copilot_sessions.brinde_state": "CV-026 -- estado acumulado B.R.I.N.D.E da sessao; atualizado atomicamente por merge_brinde_state().",
+   "column:webhook_failures.external_id": "Id do evento no provedor (key.id). Chave de idempotencia do replay contra ux_messages_dedup.",
+   "column:webhook_failures.replay_payload": "Argumentos validados do ingest_inbound_message para reprocessar o evento. Contem telefone, TEXTO (p_content) e URL de midia (p_media_url) — acesso restrito a service_role; anon/authenticated sem privilegio. Ao resolver, a linha e mantida para auditoria (somente resolved/resolved_at mudam); sem purga automatica nesta change.",
    "column:talkx_templates.archived_at": "N-127: quando nao nulo, o template esta arquivado e sai da lista ativa (archived_at IS NULL). Nao apaga conteudo, variantes nem historico."
   },
   "types_file": "src/integrations/supabase/types.ts"
@@ -71176,6 +71210,7 @@
      "talkx_recipients",
      "talkx_settings",
      "warroom_alerts",
+     "webhook_failures",
      "whatsapp_connections"
     ],
     "env": [
@@ -72385,6 +72420,33 @@
     "side_effects": [],
     "webhook_events": [],
     "idempotency": false
+   },
+   {
+    "name": "webhook-replay",
+    "file": "supabase/functions/webhook-replay/index.ts",
+    "methods": [
+     "POST?"
+    ],
+    "auth": "service_role (ignora RLS) + valida JWT do usuário",
+    "tables": [
+     "profiles",
+     "webhook_failures"
+    ],
+    "env": [
+     "SUPABASE_ANON_KEY",
+     "SUPABASE_SERVICE_ROLE_KEY",
+     "SUPABASE_URL"
+    ],
+    "external": [],
+    "invokes": [],
+    "doc": "",
+    "errors": [
+     "Method not allowed",
+     "Não autenticado."
+    ],
+    "side_effects": [],
+    "webhook_events": [],
+    "idempotency": true
    },
    {
     "name": "whatsapp-webhook",
@@ -76161,8 +76223,8 @@
   },
   {
    "module": "scripts",
-   "files": 505,
-   "lines": 106718,
+   "files": 506,
+   "lines": 106823,
    "tables": [
     "a",
     "alem_do_limite",
@@ -77898,8 +77960,8 @@
   },
   {
    "module": "supabase/functions",
-   "files": 436,
-   "lines": 132354,
+   "files": 440,
+   "lines": 133311,
    "tables": [
     "agent_stats",
     "ai_conversation_tags",
@@ -77992,6 +78054,7 @@
     "user_settings",
     "warroom_alerts",
     "webauthn_challenges",
+    "webhook_failures",
     "webhook_rate_limits",
     "whatsapp_connections"
    ],
@@ -78136,8 +78199,8 @@
   },
   {
    "module": "supabase/migrations",
-   "files": 1160,
-   "lines": 116631,
+   "files": 1161,
+   "lines": 116688,
    "tables": [
     "audit_logs",
     "department_invites",
@@ -80771,6 +80834,17 @@
      "supabase/functions/webauthn/index.ts"
     ]
    },
+   "webhook_failures": {
+    "insert": [
+     "supabase/functions/_shared/webhook-dead-letter.ts"
+    ],
+    "select": [
+     "supabase/functions/webhook-replay/index.ts"
+    ],
+    "update": [
+     "supabase/functions/webhook-replay/index.ts"
+    ]
+   },
    "webhook_rate_limits": {
     "select": [
      "supabase/functions/metrics/index.ts"
@@ -81980,6 +82054,14 @@
     "type",
     "user_id"
    ],
+   "webhook_failures": [
+    "endpoint",
+    "external_id",
+    "id",
+    "replay_payload",
+    "resolved",
+    "retry_count"
+   ],
    "webhook_rate_limits": [
     "id",
     "window_start"
@@ -82960,7 +83042,8 @@
     "supabase/functions/gmail-sync/index.ts",
     "supabase/functions/promogifts-catalog/index.ts",
     "supabase/functions/send-scheduled-report/index.ts",
-    "supabase/functions/webhook-diagnostic/index.ts"
+    "supabase/functions/webhook-diagnostic/index.ts",
+    "supabase/functions/webhook-replay/index.ts"
    ],
    "SUPABASE_API_URL": [
     "scripts/inventario/gerar-banco.mjs"
@@ -83010,7 +83093,6 @@
     "supabase/functions/bitrix-api/index.ts",
     "supabase/functions/copilot-live/index.ts",
     "supabase/functions/evolution-api/index.ts",
-    "supabase/functions/evolution-webhook/index.test.ts",
     "supabase/functions/evolution-webhook/index.ts",
     "supabase/functions/fetch-link-preview/index.ts",
     "supabase/functions/gmail-sync/gmail-labels-mutation.test.ts",
@@ -83024,6 +83106,7 @@
     "supabase/functions/talkx-report/index.ts",
     "supabase/functions/talkx-send/index.ts",
     "supabase/functions/webhook-diagnostic/index.ts",
+    "supabase/functions/webhook-replay/index.ts",
     "tests/contracts/warroom-rpcs-params.contract.test.ts"
    ],
    "SUPABASE_SNAPSHOT_PUBLICACAO": [
@@ -83052,7 +83135,6 @@
     "supabase/functions/bitrix-api/index.ts",
     "supabase/functions/copilot-live/index.ts",
     "supabase/functions/evolution-api/index.ts",
-    "supabase/functions/evolution-webhook/index.test.ts",
     "supabase/functions/evolution-webhook/index.ts",
     "supabase/functions/external-db-proxy/index.ts",
     "supabase/functions/fetch-link-preview/index.ts",
@@ -83067,6 +83149,7 @@
     "supabase/functions/talkx-report/index.ts",
     "supabase/functions/talkx-send/index.ts",
     "supabase/functions/webhook-diagnostic/index.ts",
+    "supabase/functions/webhook-replay/index.ts",
     "tests/contracts/warroom-rpcs-params.contract.test.ts"
    ],
    "TALKX_AI_TRAIL_TEST_POSTGRES_IMAGE": [
@@ -83611,6 +83694,7 @@
    ],
    "ingest_inbound_message": [
     "supabase/functions/_shared/evolution-webhook-messages.ts",
+    "supabase/functions/webhook-replay/index.ts",
     "supabase/functions/whatsapp-webhook/index.ts"
    ],
    "is_account_locked": [
@@ -83651,7 +83735,8 @@
     "supabase/functions/send-scheduled-report/index.ts",
     "supabase/functions/talkx-ai/index.ts",
     "supabase/functions/talkx-send/index.ts",
-    "supabase/functions/webhook-diagnostic/index.ts"
+    "supabase/functions/webhook-diagnostic/index.ts",
+    "supabase/functions/webhook-replay/index.ts"
    ],
    "is_contact_visible_to_user": [
     "supabase/functions/evolution-api/index.ts"
@@ -85015,8 +85100,7 @@
    "users",
    "version_reservations",
    "voice_command_logs",
-   "voip_profile_credentials",
-   "webhook_failures"
+   "voip_profile_credentials"
   ],
   "columns_unknown": [
    {
@@ -85034,6 +85118,10 @@
    {
     "table": "products",
     "column": "novelty_expires_at"
+   },
+   {
+    "table": "webhook_failures",
+    "column": "replay_payload"
    }
   ]
  },
@@ -88282,6 +88370,11 @@
     "file": "supabase/functions/_shared/voice-copilot-authz.ts",
     "name": "REASSIGN_ALLOWED_ROLES",
     "values": "'admin', 'supervisor'"
+   },
+   {
+    "file": "supabase/functions/_shared/webhook-dead-letter.ts",
+    "name": "FailureKind",
+    "values": "transient | permanent"
    },
    {
     "file": "supabase/functions/_shared/webhook-signature.ts",
@@ -97092,6 +97185,14 @@
     "msg": "value too long to pad to "
    },
    {
+    "file": "supabase/functions/webhook-replay/index.ts",
+    "msg": "Method not allowed"
+   },
+   {
+    "file": "supabase/functions/webhook-replay/index.ts",
+    "msg": "Não autenticado."
+   },
+   {
     "file": "supabase/functions/whatsapp-webhook/index.ts",
     "msg": "Forbidden"
    },
@@ -104362,6 +104463,22 @@
    {
     "file": "supabase/functions/_shared/voice-copilot-authz.ts",
     "text": "para OUTRA pessoa exige admin/supervisor. A regra vive aqui, em função pura,"
+   },
+   {
+    "file": "supabase/functions/_shared/webhook-dead-letter.ts",
+    "text": "mensagem falha, e como decidir se o provedor deve REENVIAR o evento."
+   },
+   {
+    "file": "supabase/functions/_shared/webhook-dead-letter.ts",
+    "text": "22xxx = data exception (payload inválido: tipo/limite) — permanente;"
+   },
+   {
+    "file": "supabase/functions/_shared/webhook-dead-letter.ts",
+    "text": "* JSON canônico (chaves ordenadas) — o hash não pode depender da ordem. */"
+   },
+   {
+    "file": "supabase/functions/_shared/webhook-dead-letter.ts",
+    "text": "* Grava o evento na dead-letter. NUNCA lança: uma falha ao registrar não pode"
    },
    {
     "file": "supabase/functions/_shared/webhook-signature.ts",
@@ -118831,6 +118948,16 @@
     "value": "'Sem permissão para reatribuir conversa para outro agente.'"
    },
    {
+    "file": "supabase/functions/_shared/webhook-dead-letter.ts",
+    "name": "SNAPSHOT_MAX_TEXT",
+    "value": "120"
+   },
+   {
+    "file": "supabase/functions/_shared/webhook-dead-letter.ts",
+    "name": "ERROR_MAX_TEXT",
+    "value": "1000"
+   },
+   {
     "file": "supabase/functions/_shared/webhook-signature.ts",
     "name": "DEFAULT_TOLERANCE_SECONDS",
     "value": "300"
@@ -119689,6 +119816,16 @@
     "file": "supabase/functions/webauthn/verify.ts",
     "name": "COSE_CRV_P256",
     "value": "1"
+   },
+   {
+    "file": "supabase/functions/webhook-replay/index.ts",
+    "name": "MAX_REPLAY_BATCH",
+    "value": "50"
+   },
+   {
+    "file": "supabase/functions/webhook-replay/index.ts",
+    "name": "DEFAULT_REPLAY_BATCH",
+    "value": "20"
    }
   ],
   "transition_maps": [
@@ -220255,6 +220392,38 @@
     "name": "logGmailOidcAuthShadow: well-formed JWT -> decodes aud/iss without throwing and without verifying signature"
    },
    {
+    "file": "supabase/functions/_shared/__tests__/webhook-dead-letter.test.ts",
+    "name": "classifyIngestFailure: 22/23/42/P0 são permanentes; resto é transitório"
+   },
+   {
+    "file": "supabase/functions/_shared/__tests__/webhook-dead-letter.test.ts",
+    "name": "buildDeadLetterSnapshot: lista FECHADA de campos, sem telefone/JID/conteúdo"
+   },
+   {
+    "file": "supabase/functions/_shared/__tests__/webhook-dead-letter.test.ts",
+    "name": "buildDeadLetterSnapshot: texto longo é truncado e valor estranho vira null"
+   },
+   {
+    "file": "supabase/functions/_shared/__tests__/webhook-dead-letter.test.ts",
+    "name": "maskPhoneLike: telefone não sobra inteiro em log/coluna"
+   },
+   {
+    "file": "supabase/functions/_shared/__tests__/webhook-dead-letter.test.ts",
+    "name": "payloadSha256: determinístico, 64 hex, independente da ordem das chaves"
+   },
+   {
+    "file": "supabase/functions/_shared/__tests__/webhook-dead-letter.test.ts",
+    "name": "recordWebhookFailure: grava as colunas do replay, sem telefone no diagnóstico"
+   },
+   {
+    "file": "supabase/functions/_shared/__tests__/webhook-dead-letter.test.ts",
+    "name": "recordWebhookFailure: erro do insert é engolido (não mascara a falha original)"
+   },
+   {
+    "file": "supabase/functions/_shared/__tests__/webhook-dead-letter.test.ts",
+    "name": "recordWebhookFailure: exceção do client também é engolida"
+   },
+   {
     "file": "supabase/functions/_shared/__tests__/webhook-edit-reaction-connection-scope.test.ts",
     "name": "#187: messages.edited da conexão A altera a mensagem de A e não a de B"
    },
@@ -223360,7 +223529,19 @@
    },
    {
     "file": "supabase/functions/evolution-webhook/index.test.ts",
-    "name": "rate limit persistente: o webhook consulta o RPC e responde 429 com Retry-After"
+    "name": "falha transitória no ingest: 503 + evento na dead-letter"
+   },
+   {
+    "file": "supabase/functions/evolution-webhook/index.test.ts",
+    "name": "falha permanente no ingest: 200 + evento na dead-letter (reenviar não ajuda)"
+   },
+   {
+    "file": "supabase/functions/evolution-webhook/index.test.ts",
+    "name": "ingest OK: 200 sem tocar a dead-letter"
+   },
+   {
+    "file": "supabase/functions/evolution-webhook/index.test.ts",
+    "name": "falha permanente + dead-letter indisponivel: 503 (nada some sem registro)"
    },
    {
     "file": "supabase/functions/external-db-bridge/filters-validation.test.ts",
@@ -226881,6 +227062,30 @@
    {
     "file": "supabase/functions/webhook-diagnostic/selftest.test.ts",
     "name": "flavor v2: eventos esperados são os nomes do v2 (não os do GO)"
+   },
+   {
+    "file": "supabase/functions/webhook-replay/index.test.ts",
+    "name": "replay: reprocessa quem tem payload, pula payload incompleto e resolve a fila"
+   },
+   {
+    "file": "supabase/functions/webhook-replay/index.test.ts",
+    "name": "replay é idempotente: a segunda passada não reenvia o que já saiu da fila"
+   },
+   {
+    "file": "supabase/functions/webhook-replay/index.test.ts",
+    "name": "replay: RPC falhou de novo → volta para a fila com retry_count + 1"
+   },
+   {
+    "file": "supabase/functions/webhook-replay/index.test.ts",
+    "name": "replay: não-admin recebe 403 e a RPC nem é chamada"
+   },
+   {
+    "file": "supabase/functions/webhook-replay/index.test.ts",
+    "name": "replay: sem sessão válida recebe 401 e a RPC nem é chamada"
+   },
+   {
+    "file": "supabase/functions/webhook-replay/index.test.ts",
+    "name": "replay: lote é limitado por MAX_REPLAY_BATCH"
    },
    {
     "file": "supabase/functions/whatsapp-webhook/index.test.ts",
@@ -262534,6 +262739,7 @@
    "scripts/db-audit/check-live-invariants.sql",
    "scripts/db-audit/check-mcp-exec-acl.sql",
    "scripts/db-audit/check-webhook-failures-acl.sql",
+   "scripts/db-audit/check-webhook-failures-replay.sql",
    "scripts/db-audit/contracts/20260831120000.sql",
    "scripts/db-audit/crm-sync-outbox-contract.test.mjs",
    "scripts/db-audit/grants-baseline.sql",
@@ -262601,6 +262807,7 @@
    "supabase/functions/_shared/__tests__/request-policy-city.test.ts",
    "supabase/functions/_shared/__tests__/talkx-reply-window.test.ts",
    "supabase/functions/_shared/__tests__/webhook-auth-gates.test.ts",
+   "supabase/functions/_shared/__tests__/webhook-dead-letter.test.ts",
    "supabase/functions/_shared/ai-audio-authz.ts",
    "supabase/functions/_shared/ai-audio-input.ts",
    "supabase/functions/_shared/ai-auth.ts",
@@ -262629,6 +262836,7 @@
    "supabase/functions/_shared/talkx-reply.ts",
    "supabase/functions/_shared/validation.ts",
    "supabase/functions/_shared/voice-copilot-authz.ts",
+   "supabase/functions/_shared/webhook-dead-letter.ts",
    "supabase/functions/ai-auto-tag/index.test.ts",
    "supabase/functions/ai-auto-tag/index.ts",
    "supabase/functions/ai-churn-analysis/index.test.ts",
@@ -262754,6 +262962,7 @@
    "supabase/functions/webauthn/index.test.ts",
    "supabase/functions/webauthn/index.ts",
    "supabase/functions/webhook-diagnostic/index.ts",
+   "supabase/functions/webhook-replay/index.ts",
    "supabase/functions/whatsapp-webhook/index.test.ts",
    "supabase/functions/whatsapp-webhook/index.ts",
    "supabase/migrations/20260319210215_7e6c3714-7ce1-4cd3-930c-f25b87b10103.sql",
@@ -263179,6 +263388,7 @@
    "supabase/migrations/20261122190000_ia055_precos_entrada_e_saida.sql",
    "supabase/migrations/20261124120000_drop_rpcs_e2e_orfas.sql",
    "supabase/migrations/20261125120000_ai_providers_endpoint_secret_binding.sql",
+   "supabase/migrations/20261126010000_webhook_failures_replay.sql",
    "supabase/migrations/20261126010508_city_whitelist_network_policy.sql",
    "supabase/migrations/20261126011000_connections_delete_admin_only.sql",
    "supabase/migrations/20261126213000_talkx_template_duplicate_archive_delete.sql",
@@ -278443,6 +278653,22 @@
    {
     "kind": "revoke",
     "privs": "all",
+    "object": "webhook_failures",
+    "objkind": "table",
+    "roles": "anon, authenticated",
+    "src": "supabase/migrations/20261126010000_webhook_failures_replay.sql"
+   },
+   {
+    "kind": "grant",
+    "privs": "select, insert, update, delete",
+    "object": "webhook_failures",
+    "objkind": "table",
+    "roles": "service_role",
+    "src": "supabase/migrations/20261126010000_webhook_failures_replay.sql"
+   },
+   {
+    "kind": "revoke",
+    "privs": "all",
     "object": "city_whitelist",
     "objkind": "table",
     "roles": "public, anon",
@@ -280815,6 +281041,11 @@
    {
     "kind": "coluna",
     "msg": "coluna `novelty_expires_at` usada no código não existe no schema de `products`",
+    "where": []
+   },
+   {
+    "kind": "coluna",
+    "msg": "coluna `replay_payload` usada no código não existe no schema de `webhook_failures`",
     "where": []
    },
    {
@@ -300116,6 +300347,11 @@
   "scripts/db-audit/check-webhook-failures-acl.sql": {
    "path": "scripts/db-audit/check-webhook-failures-acl.sql",
    "lines": 150,
+   "uses_service_role": true
+  },
+  "scripts/db-audit/check-webhook-failures-replay.sql": {
+   "path": "scripts/db-audit/check-webhook-failures-replay.sql",
+   "lines": 105,
    "uses_service_role": true
   },
   "scripts/db-audit/compose-confirm-hash.mjs": {
@@ -399195,8 +399431,9 @@
   },
   "supabase/functions/_shared/evolution-webhook-messages.ts": {
    "path": "supabase/functions/_shared/evolution-webhook-messages.ts",
-   "lines": 1490,
+   "lines": 1549,
    "exports": [
+    "interface InboundResult",
     "interface OptOutKeyword",
     "function resetOptOutKeywordCache",
     "function normalizeOptOutText",
@@ -401214,6 +401451,52 @@
    "doc": "Regra de autorização da reatribuição de conversa do copiloto de voz. Lacuna L4 da matriz docs/ia/IA-004-matriz-autorizacao.md (caso de aceite N19): o ramo `assign_conversation` de supabase/functions/voice-copilot-action/index.ts checava VISIBILIDADE do contato (RLS real do caller), mas não o PAPEL. …",
    "uses_service_role": true
   },
+  "supabase/functions/_shared/webhook-dead-letter.ts": {
+   "path": "supabase/functions/_shared/webhook-dead-letter.ts",
+   "lines": 163,
+   "exports": [
+    "const WEBHOOK_DEAD_LETTER_ENDPOINT",
+    "type FailureKind",
+    "function classifyIngestFailure",
+    "function maskPhoneLike",
+    "interface DeadLetterSnapshotInput",
+    "function buildDeadLetterSnapshot",
+    "function payloadSha256",
+    "interface ReplayArgs",
+    "interface DeadLetterInput",
+    "function buildDeadLetterRow",
+    "function recordWebhookFailure"
+   ],
+   "tables": [
+    {
+     "table": "webhook_failures",
+     "op": "insert"
+    }
+   ],
+   "enums": [
+    {
+     "name": "FailureKind",
+     "values": "transient | permanent"
+    }
+   ],
+   "params": [
+    {
+     "name": "SNAPSHOT_MAX_TEXT",
+     "value": "120"
+    },
+    {
+     "name": "ERROR_MAX_TEXT",
+     "value": "1000"
+    }
+   ],
+   "rule_comments": [
+    "mensagem falha, e como decidir se o provedor deve REENVIAR o evento.",
+    "22xxx = data exception (payload inválido: tipo/limite) — permanente;",
+    "* JSON canônico (chaves ordenadas) — o hash não pode depender da ordem. */",
+    "* Grava o evento na dead-letter. NUNCA lança: uma falha ao registrar não pode"
+   ],
+   "uses_service_role": true
+  },
   "supabase/functions/_shared/webhook-signature.ts": {
    "path": "supabase/functions/_shared/webhook-signature.ts",
    "lines": 93,
@@ -403009,6 +403292,32 @@
     "logGmailOidcAuthShadow: Authorization present but not a JWT -> never throws",
     "logGmailOidcAuthShadow: well-formed JWT -> decodes aud/iss without throwing and without verifying signature"
    ]
+  },
+  "supabase/functions/_shared/__tests__/webhook-dead-letter.test.ts": {
+   "path": "supabase/functions/_shared/__tests__/webhook-dead-letter.test.ts",
+   "lines": 148,
+   "is_test": true,
+   "errors": [
+    "client morto"
+   ],
+   "params": [
+    {
+     "name": "TELEFONE",
+     "value": "\"5511988887777\""
+    }
+   ],
+   "doc": "Dead-letter de webhook: a prova do que vai para `webhook_failures` e de como o erro é classificado em transitório/permanente. Run with: deno test --config scripts/ci/deno.json --frozen supabase/functions/_shared/__tests__/webhook-dead-letter.test.ts",
+   "tests": [
+    "classifyIngestFailure: 22/23/42/P0 são permanentes; resto é transitório",
+    "buildDeadLetterSnapshot: lista FECHADA de campos, sem telefone/JID/conteúdo",
+    "buildDeadLetterSnapshot: texto longo é truncado e valor estranho vira null",
+    "maskPhoneLike: telefone não sobra inteiro em log/coluna",
+    "payloadSha256: determinístico, 64 hex, independente da ordem das chaves",
+    "recordWebhookFailure: grava as colunas do replay, sem telefone no diagnóstico",
+    "recordWebhookFailure: erro do insert é engolido (não mascara a falha original)",
+    "recordWebhookFailure: exceção do client também é engolida"
+   ],
+   "uses_service_role": true
   },
   "supabase/functions/_shared/__tests__/webhook-edit-reaction-connection-scope.test.ts": {
    "path": "supabase/functions/_shared/__tests__/webhook-edit-reaction-connection-scope.test.ts",
@@ -409277,26 +409586,27 @@
   },
   "supabase/functions/evolution-webhook/index.test.ts": {
    "path": "supabase/functions/evolution-webhook/index.test.ts",
-   "lines": 70,
+   "lines": 262,
    "is_test": true,
-   "env": [
-    "SUPABASE_SERVICE_ROLE_KEY",
-    "SUPABASE_URL"
+   "params": [
+    {
+     "name": "TELEFONE",
+     "value": "\"5511988887777\""
+    }
    ],
-   "rule_comments": [
-    "Cartão t_0b69c58a — o rate-limit do webhook da Evolution passou a viver FORA do",
-    "`checkRateLimit`. Antes, cada isolate novo recomeçava o contador; agora o limite"
-   ],
-   "doc": "Cartão t_0b69c58a — o rate-limit do webhook da Evolution passou a viver FORA do isolate (RPC service_role `consume_rate_limit`), não mais no `Map` em memória de `checkRateLimit`. Antes, cada isolate novo recomeçava o contador; agora o limite é compartilhado e sobrevive ao reinício do isolate. O que …",
    "tests": [
-    "rate limit persistente: o webhook consulta o RPC e responde 429 com Retry-After"
+    "falha transitória no ingest: 503 + evento na dead-letter",
+    "falha permanente no ingest: 200 + evento na dead-letter (reenviar não ajuda)",
+    "ingest OK: 200 sem tocar a dead-letter",
+    "falha permanente + dead-letter indisponivel: 503 (nada some sem registro)"
    ],
    "uses_service_role": true
   },
   "supabase/functions/evolution-webhook/index.ts": {
    "path": "supabase/functions/evolution-webhook/index.ts",
-   "lines": 337,
+   "lines": 358,
    "exports": [
+    "interface EvolutionWebhookDeps",
     "function handleEvolutionWebhook"
    ],
    "tables": [
@@ -417295,6 +417605,77 @@
     "flavor v2: eventos esperados são os nomes do v2 (não os do GO)"
    ]
   },
+  "supabase/functions/webhook-replay/index.test.ts": {
+   "path": "supabase/functions/webhook-replay/index.test.ts",
+   "lines": 198,
+   "is_test": true,
+   "tests": [
+    "replay: reprocessa quem tem payload, pula payload incompleto e resolve a fila",
+    "replay é idempotente: a segunda passada não reenvia o que já saiu da fila",
+    "replay: RPC falhou de novo → volta para a fila com retry_count + 1",
+    "replay: não-admin recebe 403 e a RPC nem é chamada",
+    "replay: sem sessão válida recebe 401 e a RPC nem é chamada",
+    "replay: lote é limitado por MAX_REPLAY_BATCH"
+   ]
+  },
+  "supabase/functions/webhook-replay/index.ts": {
+   "path": "supabase/functions/webhook-replay/index.ts",
+   "lines": 176,
+   "exports": [
+    "const MAX_REPLAY_BATCH",
+    "interface WebhookReplayDeps",
+    "interface WebhookReplayResult",
+    "function handleWebhookReplay"
+   ],
+   "tables": [
+    {
+     "table": "webhook_failures",
+     "op": "select"
+    },
+    {
+     "table": "webhook_failures",
+     "op": "update"
+    },
+    {
+     "table": "webhook_failures",
+     "op": "update"
+    }
+   ],
+   "table_cols": {
+    "webhook_failures": [
+     "endpoint",
+     "external_id",
+     "id",
+     "replay_payload",
+     "resolved",
+     "retry_count"
+    ]
+   },
+   "rpc": [
+    "ingest_inbound_message",
+    "is_admin_or_supervisor"
+   ],
+   "env": [
+    "SUPABASE_ANON_KEY",
+    "SUPABASE_SERVICE_ROLE_KEY",
+    "SUPABASE_URL"
+   ],
+   "errors": [
+    "Method not allowed",
+    "Não autenticado."
+   ],
+   "params": [
+    {
+     "name": "MAX_REPLAY_BATCH",
+     "value": "50"
+    },
+    {
+     "name": "DEFAULT_REPLAY_BATCH",
+     "value": "20"
+    }
+   ],
+   "uses_service_role": true
+  },
   "supabase/functions/whatsapp-webhook/index.test.ts": {
    "path": "supabase/functions/whatsapp-webhook/index.test.ts",
    "lines": 575,
@@ -423042,6 +423423,11 @@
    "path": "supabase/migrations/20261125130000_ia009_kill_switch_chaves.sql",
    "lines": 65
   },
+  "supabase/migrations/20261126010000_webhook_failures_replay.sql": {
+   "path": "supabase/migrations/20261126010000_webhook_failures_replay.sql",
+   "lines": 57,
+   "uses_service_role": true
+  },
   "supabase/migrations/20261126010508_city_whitelist_network_policy.sql": {
    "path": "supabase/migrations/20261126010508_city_whitelist_network_policy.sql",
    "lines": 348,
@@ -426993,10 +427379,33 @@
   }
  },
  "git": {
-  "sha": "284367aa5013c9d03700b17488c44eff2cdb413f",
+  "sha": "6e6264b6f49cfc709898b951fd346cd83466481f",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "6e6264b6",
+    "date": "2026-11-26",
+    "author": "adm01-debug",
+    "subject": "feat(edge): dead-letter reprocessável quando o ingest da mensagem recebida falha (E35) (#3397)",
+    "files": [
+     ".github/workflows/db-guard.yml",
+     "ESTADO.md",
+     "docs/DB-INVENTORY.md",
+     "scripts/automation.config.json",
+     "scripts/db-audit/check-webhook-failures-replay.sql",
+     "scripts/db-audit/check-webhook-failures-replay.test.sh",
+     "supabase/deployment-manifest.json",
+     "supabase/functions/_shared/__tests__/webhook-dead-letter.test.ts",
+     "supabase/functions/_shared/evolution-webhook-messages.ts",
+     "supabase/functions/_shared/webhook-dead-letter.ts",
+     "supabase/functions/evolution-webhook/index.test.ts",
+     "supabase/functions/evolution-webhook/index.ts",
+     "supabase/functions/webhook-replay/index.test.ts",
+     "supabase/functions/webhook-replay/index.ts",
+     "supabase/migrations/20261126010000_webhook_failures_replay.sql"
+    ]
+   },
    {
     "sha": "284367aa",
     "date": "2026-11-26",
@@ -428690,49 +429099,27 @@
      "ESTADO.md",
      "scripts/ci/docs-estado-registry-convention.unit.mjs"
     ]
-   },
-   {
-    "sha": "f6d0d50c",
-    "date": "2026-11-24",
-    "author": "adm01-debug",
-    "subject": "chore(resgate): preserva dossiês e mapas do resgate na main (#3364)",
-    "files": [
-     "AUDIT-A-PROCESSAR-261031.md",
-     "RESGATE-ANALISE-261031.md",
-     "TRIAGEM-PRS-GITHUB-261031.md",
-     "docs/resgate/MAPA_pos-24-10.md",
-     "docs/resgate/progresso_pos-24-10.json",
-     "resgate-online/RELATORIO_RESGATE.md",
-     "resgate-online/dossies/C007.md",
-     "resgate-online/dossies/C011.md",
-     "resgate-online/dossies/C019.md",
-     "resgate-online/dossies/C097.md",
-     "resgate-online/dossies/C098.md",
-     "resgate-online/dossies/C110.md",
-     "resgate-online/dossies/C121.md",
-     "resgate-online/dossies/C130.md",
-     "resgate-online/dossies/C297.md",
-     "resgate-online/dossies/C303.md",
-     "resgate-online/progresso.json",
-     "supabase/tests/instance_pause_investigation.sql"
-    ]
    }
   ],
   "hot_files": [
    [
     "scripts/automation.config.json",
-    5
+    6
    ],
    [
     "supabase/deployment-manifest.json",
-    5
+    6
    ],
    [
     "ESTADO.md",
-    4
+    5
    ],
    [
     ".github/workflows/db-guard.yml",
+    4
+   ],
+   [
+    "docs/DB-INVENTORY.md",
     3
    ],
    [
@@ -428744,7 +429131,7 @@
     3
    ],
    [
-    "docs/DB-INVENTORY.md",
+    "supabase/functions/_shared/evolution-webhook-messages.ts",
     2
    ],
    [
@@ -428772,31 +429159,27 @@
     2
    ],
    [
-    "scripts/ci/evolution-edge-fixes.unit.mjs",
+    "scripts/db-audit/check-webhook-failures-replay.sql",
     1
    ],
    [
-    "scripts/db-audit/connections-delete-admin-only.test.sh",
+    "scripts/db-audit/check-webhook-failures-replay.test.sh",
     1
    ],
    [
-    "src/lib/__tests__/rlsGroupAccess.test.ts",
+    "supabase/functions/_shared/__tests__/webhook-dead-letter.test.ts",
     1
    ],
    [
-    "supabase/functions/_shared/__tests__/fake-evolution.ts",
+    "supabase/functions/_shared/webhook-dead-letter.ts",
     1
    ],
    [
-    "supabase/functions/_shared/connection-audit.ts",
+    "supabase/functions/evolution-webhook/index.test.ts",
     1
    ],
    [
-    "supabase/functions/evolution-api/index.test.ts",
-    1
-   ],
-   [
-    "supabase/functions/evolution-api/index.ts",
+    "supabase/functions/evolution-webhook/index.ts",
     1
    ]
   ]

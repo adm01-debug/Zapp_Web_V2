@@ -22,14 +22,14 @@
    "src/utils (8)"
   ],
   "testes": [
-   "co-localizado (__tests__) (2111)",
+   "co-localizado (__tests__) (2112)",
    "outro (260)",
-   "co-localizado (*.test) (202)"
+   "co-localizado (*.test) (203)"
   ],
   "edge_functions": "supabase/functions",
   "migrations": "supabase/migrations",
   "scripts": [
-   "scripts/db-audit (307)",
+   "scripts/db-audit (309)",
    "scripts/ci (43)",
    "scripts/e2e-isolated (41)"
   ],
@@ -46,7 +46,7 @@
   "edge_functions": "kebab-case (96%)",
   "tabelas": "snake_case (92%)"
  },
- "barrels_index": 73,
+ "barrels_index": 74,
  "extensao_componentes": [
   ".tsx (938)"
  ],
@@ -66,11 +66,11 @@
  "commits": {
   "convencao": "conventional commits (observado)",
   "exemplos": [
+   "feat(edge): dead-letter reprocessável quando o ingest da mensagem recebida falha (E35) (#3397)",
    "feat: trilha de auditoria das conexoes e reconciliacao de INSTANCE_GONE (#3398)",
    "fix: trava exclusao de template do Talk X em campanha (N-127/N-127b) (#3394)",
    "feat: acoes por mensagem (favoritar, fixar, responder depois, denunciar) (#3395)",
-   "feat: bloqueio de login por cidade (paridade Promo Gifts V4) (#3393)",
-   "feat: Sala de Crise mede pelo agregado crisis_room_snapshot (fim das 4 consultas no navegador) (#3396)"
+   "feat: bloqueio de login por cidade (paridade Promo Gifts V4) (#3393)"
   ]
  },
  "pr_template": ".github/PULL_REQUEST_TEMPLATE.md",

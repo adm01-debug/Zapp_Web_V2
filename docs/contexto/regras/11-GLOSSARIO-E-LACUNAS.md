@@ -1,6 +1,6 @@
 # 11 · GLOSSÁRIO, DADOS DE REFERÊNCIA E LACUNAS
 
-> Gerado automaticamente por AI Context Sync v1.3.2 · commit `284367aa50` · branch `main` · 2026-11-26 03:47 UTC
+> Gerado automaticamente por AI Context Sync v1.3.2 · commit `6e6264b6f4` · branch `main` · 2026-11-26 04:04 UTC
 > Não edite à mão — regras humanas vão em `manual/`.
 
 ## Glossário do domínio (entidades do sistema)
@@ -228,7 +228,7 @@
 | `voip_profile_credentials` | _(sem COMMENT ON TABLE — significado não documentado)_ | 6 colunas | types.ts |
 | `warroom_alerts` | _(sem COMMENT ON TABLE — significado não documentado)_ | 9 colunas | migration |
 | `webauthn_challenges` | _(sem COMMENT ON TABLE — significado não documentado)_ | 6 colunas | migration |
-| `webhook_failures` | Dead-letter dos webhooks (endpoint, evento, payload truncado, erro, retries). ACL restrita a service_role. | 11 colunas | migration |
+| `webhook_failures` | Dead-letter dos webhooks (endpoint, evento, payload truncado, erro, retries). ACL restrita a service_role. | 12 colunas | migration |
 | `webhook_rate_limits` | _(sem COMMENT ON TABLE — significado não documentado)_ | 6 colunas | migration |
 | `whatsapp_connection_queues` | _(sem COMMENT ON TABLE — significado não documentado)_ | 4 colunas | migration |
 | `whatsapp_connections` | Instancias da Evolution GO conectadas (instance_id unico), status da sessao e configuracao de webhook. | 25 colunas | migration |
@@ -307,7 +307,7 @@
 | `AlertSeverity` (TS) | critical \| warning |  | `src/components/monitoring/hooks/useConnectionIncidents.ts` |
 | `INSTANCE_PAUSES_QUERY_KEY` (TS) | 'instance-pauses' |  | `src/components/monitoring/hooks/useInstancePauses.ts` |
 | `MetricStatus` (TS) | good \| warning \| critical |  | `src/components/performance/metricThresholds.ts` |
-| … +379 linhas — lista completa em `context.json` | | | |
+| … +380 linhas — lista completa em `context.json` | | | |
 
 ## Dados de referência (seed — planos, categorias, perfis fixos)
 
@@ -401,6 +401,7 @@
 | coluna | coluna `company` usada no código não existe no schema de `talkx_blacklist` |  |
 | coluna | coluna `is_new` usada no código não existe no schema de `products` |  |
 | coluna | coluna `novelty_expires_at` usada no código não existe no schema de `products` |  |
+| coluna | coluna `replay_payload` usada no código não existe no schema de `webhook_failures` |  |
 | tabela | tabela `a` usada no código não existe nas migrations/types do repo | `scripts/ai-context/cenarios.mjs` |
 | tabela | tabela `alem_do_limite` usada no código não existe nas migrations/types do repo | `scripts/ci/inventario-rotas.unit.mjs` |
 | tabela | tabela `audit_log` usada no código não existe nas migrations/types do repo | `scripts/ci/supabase-usage-guard-forward-projection.unit.mjs` |

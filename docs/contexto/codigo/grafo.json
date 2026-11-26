@@ -1,8 +1,8 @@
 {
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
- "nos": 2425,
- "arestas": 8348,
+ "nos": 2427,
+ "arestas": 8353,
  "hubs": [
   {
    "arquivo": "src/lib/utils.ts",
@@ -157,12 +157,12 @@
    "importado_por": 38
   },
   {
-   "arquivo": "supabase/functions/_shared/ai-generate.ts",
-   "importado_por": 36
+   "arquivo": "supabase/functions/_shared/evolution-types.ts",
+   "importado_por": 37
   },
   {
-   "arquivo": "src/integrations/supabase/types.ts",
-   "importado_por": 35
+   "arquivo": "supabase/functions/_shared/ai-generate.ts",
+   "importado_por": 36
   }
  ],
  "ciclos": {

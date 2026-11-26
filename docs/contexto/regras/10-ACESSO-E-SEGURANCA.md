@@ -1,6 +1,6 @@
 # 10 · ACESSO E SEGURANÇA — quem pode o quê
 
-> Gerado automaticamente por AI Context Sync v1.3.2 · commit `284367aa50` · branch `main` · 2026-11-26 03:47 UTC
+> Gerado automaticamente por AI Context Sync v1.3.2 · commit `6e6264b6f4` · branch `main` · 2026-11-26 04:04 UTC
 > Não edite à mão — regras humanas vão em `manual/`.
 
 ## Perfis / roles identificados
@@ -248,7 +248,7 @@
 
 > `—` com RLS ligado = ninguém além de service_role. `sem RLS` = qualquer chave anon lê/escreve tudo.
 
-## Onde o RLS é IGNORADO (service_role) — 1196 arquivo(s)
+## Onde o RLS é IGNORADO (service_role) — 1201 arquivo(s)
 
 - `analise-prs/resgate-261118-lote2/scripts/db-audit/validate-post-apply.mjs`
 - `analise-prs/resgate-261118-lote2/supabase/migrations/20261016193300_copilot_tick_trigger.sql`
@@ -400,7 +400,7 @@
 - `docs/contexto/supabase/migrations/20260319210228_f33bb285-7797-4bfe-93c6-94f4096b83a6.sql`
 - `docs/contexto/supabase/migrations/20260320133103_90061855-3227-445f-a47a-a15c38ac5cf2.sql`
 - `docs/contexto/supabase/migrations/20260401002519_b7df7d1f-2caf-48c2-a23b-62df9f4fc772.sql`
-- … +1046 (lista completa em `context.json`)
+- … +1051 (lista completa em `context.json`)
 
 ## Funções SQL `SECURITY DEFINER` (rodam com privilégio do dono, ignoram RLS)
 
@@ -905,7 +905,7 @@ Middleware matcher (Next.js): nenhum
 | grant | service_role | select | `gmail_accounts_safe`, `gmail_accounts_safe`, `password_reset_requests_safe`, `profiles_public`, `gmail_accounts_safe`, `gmail_accounts_safe`, `password_reset_requests_safe`, `profiles_public`, `searchbox_budget_alert_cron`, `sla_alert_events` |
 | grant | service_role | select, insert | `contact_deletion_audit`, `audit_logs`, `contact_block_audit` |
 | grant | service_role | select, insert, update | `multiplix_events`, `searchbox_budget_alert_emails`, `talkx_segment_library_history`, `talkx_contact_attributes`, `public` |
-| grant | service_role | select, insert, update, delete | `webhook_failures`, `talkx_template_variants`, `talkx_template_versions`, `talkx_campaign_segments`, `talkx_segment_versions`, `sla_alert_preferences`, `instance_pauses`, `qr_attempts`, `password_reset_requests` |
+| grant | service_role | select, insert, update, delete | `webhook_failures`, `talkx_template_variants`, `talkx_template_versions`, `talkx_campaign_segments`, `talkx_segment_versions`, `sla_alert_preferences`, `instance_pauses`, `qr_attempts`, `webhook_failures`, `password_reset_requests` |
 | grant | service_role | usage, select | `public` |
 | grant | service_role, authenticated | execute | `talkx_overview_stats`, `talkx_campaign_report`, `talkx_segment_tags`, `talkx_benchmarks`, `talkx_benchmarks`, `talkx_campaign_pace`, `catalog_rate_limit_hit`, `catalog_rate_limit_hit`, `catalog_rate_limit_hit`, `talkx_benchmarks`, `talkx_insights` |
 | grant | service_role, authenticated, postgres | execute | `search_contacts` |
@@ -937,7 +937,7 @@ Middleware matcher (Next.js): nenhum
 | revoke | anon | truncate | `passkey_credentials` |
 | revoke | anon | update | `passkey_credentials` |
 | revoke | anon ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA public REVOKE SELECT ON TABLES FROM anon | select | `public` |
-| revoke | anon, authenticated | all | `edge_rate_limits`, `crm_sync_outbox`, `crm_contact_links`, `talkx_links`, `talkx_link_clicks`, `talkx_conversions`, `security_acl_alerts`, `score_security_acl`, `purge_voice_command_logs` |
+| revoke | anon, authenticated | all | `edge_rate_limits`, `crm_sync_outbox`, `crm_contact_links`, `talkx_links`, `talkx_link_clicks`, `talkx_conversions`, `security_acl_alerts`, `score_security_acl`, `purge_voice_command_logs`, `webhook_failures` |
 | revoke | anon, authenticated | all privileges | `catalog_favorites`, `catalog_send_events`, `message_attempts` |
 | revoke | anon, authenticated | execute | `messages_sla_first_response_trigger`, `messages_sla_first_response_trigger`, `calculate_level`, `normalize_contact_phone`, `record_talkx_link_click`, `record_talkx_link_click`, `record_talkx_link_click`, `record_talkx_link_click`, `notify_due_reminders`, `expire_orphan_user_sessions` |
 | revoke | anon, authenticated | maintain | `public` |
