@@ -7,6 +7,7 @@ import { AlertCard, ModuleHeader, KpiCardSkeleton } from './talkxShared';
 import { TalkXQueryBoundary } from './kit/states';
 import { useTalkXSettings, useTalkXSettingUpdate } from '@/hooks/integrations/useTalkXSettings';
 import { Settings, Save, RotateCcw } from 'lucide-react';
+import { TalkXDataJobsCard } from './tracking/TalkXDataJobsCard';
 
 function displayValue(v: unknown): string {
   if (typeof v === 'object' && v !== null) return JSON.stringify(v);
@@ -132,6 +133,8 @@ export function TalkXSettings() {
           );
         })}
       </div>
+
+      <TalkXDataJobsCard />
     </div>
   );
 }
