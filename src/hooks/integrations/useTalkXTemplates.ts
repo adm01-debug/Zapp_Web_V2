@@ -41,12 +41,17 @@ type SnapshotArgs = Omit<GeneratedSnapshotArgs, 'p_description' | 'p_media_url' 
   p_media_type: string | null;
 };
 
+/** Texto do erro sem assumir a forma (Error, PostgrestError ou desconhecido). */
+function errorText(error: unknown): string {
+  if (error instanceof Error) return error.message;
+  if (typeof error === 'object' && error !== null && 'message' in error) {
+    return String((error as { message: unknown }).message);
+  }
+  return '';
+}
+
 function templateUpdateErrorMessage(error: unknown): string {
-  const message = error instanceof Error
-    ? error.message
-    : (typeof error === 'object' && error !== null && 'message' in error)
-      ? String((error as { message: unknown }).message)
-      : '';
+  const message = errorText(error);
   if (message.includes('talkx_template_stale_version')) {
     return 'Este template foi alterado por outra pessoa. Recarregue a lista antes de salvar novamente.';
   }
@@ -57,6 +62,16 @@ function templateUpdateErrorMessage(error: unknown): string {
     return 'O template contém dados inválidos. Revise os campos e tente novamente.';
   }
   return 'Não foi possível atualizar o template. Tente novamente.';
+}
+
+function templateDeleteErrorMessage(error: unknown): string {
+  const message = errorText(error);
+  // N-127: o trigger BEFORE DELETE e a RPC recusam apagar template vinculado a
+  // campanha — sem traduzir, o usuario veria so o codigo cru do banco.
+  if (message.includes('talkx_template_in_use')) {
+    return 'Este template está em uso por uma campanha. Desvincule ou exclua a campanha antes de apagar o template.';
+  }
+  return `Erro ao excluir: ${message}`;
 }
 
 export type TemplateVariant = {
@@ -155,7 +170,7 @@ export function useTalkXTemplates() {
       if (error) throw error;
     },
     onSuccess: () => { invalidate(); toast.success('Template excluído'); },
-    onError: (e: Error) => toast.error(`Erro ao excluir: ${e.message}`),
+    onError: (e: Error) => toast.error(templateDeleteErrorMessage(e)),
   });
 
   const duplicateTemplate = useMutation({

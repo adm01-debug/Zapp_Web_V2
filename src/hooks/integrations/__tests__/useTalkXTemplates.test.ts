@@ -387,6 +387,18 @@ describe('useTalkXTemplates — deleteTemplate', () => {
 
     expect(toastError).toHaveBeenCalledWith('Erro ao excluir: permission denied');
   });
+
+  it('traduz a trava de exclusao de template em campanha (N-127)', async () => {
+    mutationResult = { data: null, error: { message: 'talkx_template_in_use' } };
+    const { result } = renderHook(() => useTalkXTemplates(), { wrapper: wrapper() });
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+    await act(async () => {
+      await result.current.deleteTemplate.mutateAsync('tpl-1').catch(() => undefined);
+    });
+
+    expect(toastError).toHaveBeenCalledWith('Este template está em uso por uma campanha. Desvincule ou exclua a campanha antes de apagar o template.');
+  });
 });
 
 describe('useTalkXTemplates — duplicateTemplate', () => {
