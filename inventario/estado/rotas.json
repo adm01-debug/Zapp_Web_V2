@@ -3,9 +3,9 @@
   "fonte": "scripts/inventario/gerar-rotas.mjs (le AppRoutes.tsx, ViewRouter.tsx, lazyViews.ts, navigation.service.ts e os imports de cada tela)",
   "resumo": {
     "urls": 21,
-    "telas": 55,
-    "itens_de_menu": 53,
-    "hooks_distintos": 417,
+    "telas": 56,
+    "itens_de_menu": 54,
+    "hooks_distintos": 420,
     "problemas": 2
   },
   "urls": [
@@ -487,8 +487,12 @@
         "atalho": null,
         "layout": null
       },
-      "arquivos_lidos": 4,
+      "arquivos_lidos": 6,
       "hooks": [
+        {
+          "nome": "useAIBudgetSummary",
+          "arquivo": "src/hooks/analytics/useAIBudgetSummary.ts"
+        },
         {
           "nome": "useAIUsageDashboard",
           "arquivo": "src/hooks/analytics/useAIUsageDashboard.ts"
@@ -496,7 +500,9 @@
       ],
       "buckets": [],
       "edges": [],
-      "rpcs": [],
+      "rpcs": [
+        "resumo_orcamento_ia"
+      ],
       "tabelas": [
         "ai_usage_logs",
         "profiles"
@@ -1159,6 +1165,83 @@
         "user_roles",
         "user_settings",
         "whatsapp_connections"
+      ],
+      "imports_quebrados": []
+    },
+    {
+      "id": "copilot-retention",
+      "url": "/?view=copilot-retention",
+      "componente": "CopilotRetentionPage",
+      "arquivo": "src/pages/admin/CopilotRetentionPage.tsx",
+      "especial": false,
+      "menu": {
+        "rotulo": "Retenção Copiloto",
+        "secao": "groups",
+        "grupo": "Sistema",
+        "papeis": [
+          "admin",
+          "supervisor"
+        ],
+        "permissao": null,
+        "atalho": null,
+        "layout": null
+      },
+      "arquivos_lidos": 41,
+      "hooks": [
+        {
+          "nome": "useAppBootstrap",
+          "arquivo": "src/hooks/system/useAppBootstrap.ts"
+        },
+        {
+          "nome": "useAuth",
+          "arquivo": "src/hooks/auth/useAuth.tsx"
+        },
+        {
+          "nome": "useCopilotRetention",
+          "arquivo": "src/hooks/copilot/useCopilotRetention.ts"
+        },
+        {
+          "nome": "useMessageUpdateBatcher",
+          "arquivo": "src/hooks/realtime/useMessageUpdateBatcher.ts"
+        },
+        {
+          "nome": "useNotificationSettings",
+          "arquivo": "src/hooks/system/useNotificationSettings.ts"
+        },
+        {
+          "nome": "useRealtimeNotifications",
+          "arquivo": "src/hooks/realtime/useRealtimeNotifications.ts"
+        },
+        {
+          "nome": "useSupabaseRealtime",
+          "arquivo": "src/hooks/realtime/useSupabaseRealtime.ts"
+        },
+        {
+          "nome": "useUserRole",
+          "arquivo": "src/hooks/system/useUserRole.ts"
+        }
+      ],
+      "buckets": [],
+      "edges": [
+        "auth-login",
+        "detect-new-device",
+        "message-delivery"
+      ],
+      "rpcs": [
+        "app_bootstrap",
+        "enqueue_outbound_message",
+        "enqueue_rich_outbound_message",
+        "get_inbox_contact_summaries",
+        "recalcular_retencao_copiloto",
+        "user_has_permission"
+      ],
+      "tabelas": [
+        "contacts",
+        "copilot_retention_aggregates",
+        "messages",
+        "profiles",
+        "user_roles",
+        "user_settings"
       ],
       "imports_quebrados": []
     },
@@ -4616,7 +4699,7 @@
         "atalho": null,
         "layout": null
       },
-      "arquivos_lidos": 227,
+      "arquivos_lidos": 230,
       "hooks": [
         {
           "nome": "useActiveDepartments",
@@ -4753,6 +4836,10 @@
         {
           "nome": "useTalkXConnectionStatus",
           "arquivo": "src/hooks/integrations/useTalkXConnectionStatus.ts"
+        },
+        {
+          "nome": "useTalkXDataJobs",
+          "arquivo": "src/hooks/integrations/useTalkXDataJobs.ts"
         },
         {
           "nome": "useTalkXEngineAlerts",
@@ -4943,6 +5030,7 @@
         "talkx_campaign_metrics",
         "talkx_campaign_segments",
         "talkx_campaigns",
+        "talkx_data_jobs",
         "talkx_link_clicks",
         "talkx_links",
         "talkx_optout_keywords",
@@ -5951,6 +6039,12 @@
     }
   ],
   "hooks": {
+    "useAIBudgetSummary": {
+      "arquivo": "src/hooks/analytics/useAIBudgetSummary.ts",
+      "telas": [
+        "ai-usage"
+      ]
+    },
     "useAIFeatureNavigation": {
       "arquivo": "src/components/dashboard/aiFeatures.ts",
       "telas": [
@@ -6140,6 +6234,7 @@
         "agents",
         "connections",
         "contacts",
+        "copilot-retention",
         "crm360",
         "dashboard",
         "inbox",
@@ -6222,6 +6317,7 @@
         "catalog",
         "connections",
         "contacts",
+        "copilot-retention",
         "crm360",
         "dashboard",
         "email-chat",
@@ -6757,6 +6853,12 @@
       "arquivo": "src/hooks/copilot/useCopilotFeedback.ts",
       "telas": [
         "inbox"
+      ]
+    },
+    "useCopilotRetention": {
+      "arquivo": "src/hooks/copilot/useCopilotRetention.ts",
+      "telas": [
+        "copilot-retention"
       ]
     },
     "useCopilotSession": {
@@ -7560,6 +7662,7 @@
         "catalog",
         "connections",
         "contacts",
+        "copilot-retention",
         "crm360",
         "dashboard",
         "email-chat",
@@ -7763,6 +7866,7 @@
         "catalog",
         "connections",
         "contacts",
+        "copilot-retention",
         "crm360",
         "dashboard",
         "email-chat",
@@ -8010,6 +8114,7 @@
         "catalog",
         "connections",
         "contacts",
+        "copilot-retention",
         "crm360",
         "dashboard",
         "email-chat",
@@ -8297,6 +8402,7 @@
         "catalog",
         "connections",
         "contacts",
+        "copilot-retention",
         "crm360",
         "dashboard",
         "email-chat",
@@ -8397,6 +8503,12 @@
     },
     "useTalkXConnectionStatus": {
       "arquivo": "src/hooks/integrations/useTalkXConnectionStatus.ts",
+      "telas": [
+        "talkx"
+      ]
+    },
+    "useTalkXDataJobs": {
+      "arquivo": "src/hooks/integrations/useTalkXDataJobs.ts",
       "telas": [
         "talkx"
       ]
@@ -8761,6 +8873,7 @@
         "agents",
         "connections",
         "contacts",
+        "copilot-retention",
         "crm360",
         "dashboard",
         "inbox",
