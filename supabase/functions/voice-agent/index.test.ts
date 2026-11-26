@@ -38,7 +38,7 @@ const SUPABASE = "https://stub.supabase.co";
 const SERVICE_KEY = "service-role-sintetica-1234567890";
 const USER_ID = "11111111-2222-4333-8444-555555555555";
 const PROVEDOR = "https://provedor-ia.test/v1/chat/completions";
-const SEGREDO_PROVEDOR = "CHAVE_PROVEDOR_VOZ_TESTE";
+const SEGREDO_PROVEDOR = "OPENAI_API_KEY";
 
 const PROVEDOR_PADRAO = {
   id: "00000000-0000-4000-8000-0000000000bb",
