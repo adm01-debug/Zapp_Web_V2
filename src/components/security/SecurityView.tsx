@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Shield, Key, Lock, Activity, Users, Bell, Smartphone, LayoutDashboard, Fingerprint, Globe, FileText, Gauge, ShieldAlert, ShieldCheck } from 'lucide-react';
+import { Shield, Key, Lock, Activity, Users, Bell, Smartphone, LayoutDashboard, Fingerprint, Globe, FileText, Gauge, ShieldAlert, ShieldCheck, Database } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -202,6 +202,50 @@ export function SecurityView() {
                           onClick={() => navigate('/admin/auditoria-contatos')}
                         >
                           Ver Trilha
+                        </Button>
+                      </CardContent>
+                    </Card>
+
+                    <Card>
+                      <CardHeader>
+                        <CardTitle className="flex items-center gap-2">
+                          <ShieldCheck className="w-5 h-5 text-primary" />
+                          Proteção de Contatos
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <p className="text-sm text-muted-foreground">
+                          Mascaramento, bloqueio de cópia/impressão, marca d'água e limite de fichas
+                          por papel
+                        </p>
+                        <Button 
+                          variant="outline" 
+                          className="mt-4"
+                          onClick={() => navigate('/admin/protecao-contatos')}
+                        >
+                          Configurar Proteção
+                        </Button>
+                      </CardContent>
+                    </Card>
+
+                    <Card>
+                      <CardHeader>
+                        <CardTitle className="flex items-center gap-2">
+                          <Database className="w-5 h-5 text-primary" />
+                          Cache de Prévias de Link
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <p className="text-sm text-muted-foreground">
+                          Histórico das limpezas automáticas: removidos, linhas restantes e tamanho
+                          da tabela a cada execução
+                        </p>
+                        <Button 
+                          variant="outline" 
+                          className="mt-4"
+                          onClick={() => navigate('/admin/cache-previas')}
+                        >
+                          Ver Histórico do Cache
                         </Button>
                       </CardContent>
                     </Card>
