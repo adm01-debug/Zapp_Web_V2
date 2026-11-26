@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "809dc4b6ae850a1f08409373af750e6c6a534f2c",
+  "commit": "5bddef577a60ae99a2daa85a8d0529a22ef1ffc7",
   "branch": "main",
-  "data_commit": "2026-11-26T21:53:53Z",
+  "data_commit": "2026-11-26T22:23:43Z",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "5bddef57",
+    "data": "2026-11-26",
+    "assunto": "fix(db): ledger de orçamento de IA fica visível (resumo agregado para admin) (#3419)"
+   },
    {
     "sha": "809dc4b6",
     "data": "2026-11-26",
@@ -126,14 +131,9 @@
     "sha": "9f9ec852",
     "data": "2026-11-25",
     "assunto": "feat: bloqueio de login por cidade (paridade Promo Gifts V4) (#3393)"
-   },
-   {
-    "sha": "71d923d1",
-    "data": "2026-11-26",
-    "assunto": "feat: Sala de Crise mede pelo agregado crisis_room_snapshot (fim das 4 consultas no navegador) (#3396)"
    }
   ],
-  "arquivos_mudados_7d": 2858,
+  "arquivos_mudados_7d": 2859,
   "pastas_mais_mudadas_30d": [
    {
     "pasta": "docs/contexto/supabase",
@@ -314,7 +314,7 @@
   ]
  },
  "contagens": {
-  "arquivos_total": 14915,
+  "arquivos_total": 14916,
   "arquivos_codigo": 5243,
   "linhas_codigo": 970515,
   "rotas": 21,
@@ -326,7 +326,7 @@
   "hooks": 537,
   "edge_functions": 94,
   "tabelas": 224,
-  "migrations": 1165,
+  "migrations": 1166,
   "cron_jobs": 29,
   "testes": 2869,
   "workflows": 26,

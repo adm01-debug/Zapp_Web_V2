@@ -1,7 +1,7 @@
 # Contexto do projeto para agentes de IA
 
 GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.
-Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR dela) a cada push em `main` e a cada 10 minutos pelo workflow `contexto.yml`; índice único das três fontes em `docs/contexto/00-INDEX.md`. Gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `809dc4b6ae850a1f08409373af750e6c6a534f2c` (2026-11-26T21:53:53Z).
+Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR dela) a cada push em `main` e a cada 10 minutos pelo workflow `contexto.yml`; índice único das três fontes em `docs/contexto/00-INDEX.md`. Gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `5bddef577a60ae99a2daa85a8d0529a22ef1ffc7` (2026-11-26T22:23:43Z).
 
 ## Como usar (leia antes de planejar ou executar qualquer tarefa)
 1. **Tela/rota/menu** → `rotas.json` (url/vista/menu → arquivo → hooks → tabelas → edges; `rotas_http_backend` para APIs) e `modulos.json` (módulo inteiro + dependências entre módulos).
@@ -14,7 +14,7 @@ Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR
 Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua tarefa; não carregue tudo.
 
 ## Stack
-- linguagens: TypeScript (4598), Markdown (3988), SQL (3076), JSON (1939), JavaScript (524), Shell (256), Python (125), YAML (43)
+- linguagens: TypeScript (4598), Markdown (3988), SQL (3077), JSON (1939), JavaScript (524), Shell (256), Python (125), YAML (43)
 - linguagem_principal: TypeScript
 - framework: React
 - backend_http: n/d
@@ -34,7 +34,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 ## Números
 | item | qtd |
 |---|---|
-| arquivos_total | 14915 |
+| arquivos_total | 14916 |
 | arquivos_codigo | 5243 |
 | linhas_codigo | 970515 |
 | rotas | 21 |
@@ -46,7 +46,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 | hooks | 537 |
 | edge_functions | 94 |
 | tabelas | 224 |
-| migrations | 1165 |
+| migrations | 1166 |
 | cron_jobs | 29 |
 | testes | 2869 |
 | workflows | 26 |
@@ -404,8 +404,8 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - possiveis_segredos_no_codigo: 4 — ex.: scripts/ai-context/cenarios.mjs:102, scripts/ci/edge-coverage-authz.unit.mjs:398, scripts/ci/inventario-banco.unit.mjs:147
 
 ## Grafo de código (graphify)
-- 96928 nós · 162741 arestas · 9022 comunidades · grafo do commit `809dc4b6`
-- comunidades maiores: Communities (8869 total, 3472 thin omitted) (5379), react (1250), TalkXSuppression.tsx (1200), lucide-react (1167), vitest (1036), utils.ts (801), ExternalProductManagement.tsx (640), validation.ts (637), cn (626), ref_node_fs (597), chat.ts (574), ref_https (488)
+- 96931 nós · 162743 arestas · 8958 comunidades · grafo do commit `5bddef57`
+- comunidades maiores: Communities (8869 total, 3472 thin omitted) (5376), TalkXSuppression.tsx (1261), vitest (1012), react (983), @tanstack/react-query (773), sonner (640), utils.ts (633), DashboardView.tsx (582), RealtimeInboxView.tsx (534), ref_node_assert (532), cn (465), e2e-isolated-runtime.unit.mjs (441)
 - símbolos mais chamados: cn() (src/lib/utils.ts), useAuth() (src/hooks/auth/useAuth.tsx), jsonResponse() (supabase/functions/_shared/validation.ts), errorResponse() (supabase/functions/_shared/validation.ts), handleCors() (supabase/functions/_shared/validation.ts), fail() (scripts/e2e-isolated/network-proof-policy.mjs), Logger (supabase/functions/_shared/validation.ts), requireEnv() (supabase/functions/_shared/validation.ts), fmtInt() (src/components/talkx/kit/format.ts), useUserRole() (src/hooks/system/useUserRole.ts), .from() (supabase/functions/_shared/evolution-types.ts), validationErrorResponse() (supabase/functions/_shared/schemas.ts)
 - consulta local: `graphify query "<pergunta>"`, `graphify path "<A>" "<B>"`, `graphify explain "<X>"`
 
@@ -547,6 +547,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - CHANGELOG topo: [Unreleased]
 
 ## Últimos commits
+- 2026-11-26 `5bddef57` fix(db): ledger de orçamento de IA fica visível (resumo agregado para admin) (#3419)
 - 2026-11-26 `809dc4b6` chore(db): sincronizar artefatos derivados do banco (#3425)
 - 2026-11-26 `f3061b66` fix: painel mostra o orçamento de envio da campanha (talkx_campaign_pace destravado para admin) (#3406)
 - 2026-11-26 `4465e392` feat(copiloto): tela de retenção do copiloto RADAR (agregado diário por atendente) (#3418)
@@ -561,7 +562,6 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - 2026-11-26 `87ddee79` feat(seguranca): politica de protecao de contatos ganha tela de gestao (#3413)
 - 2026-11-26 `583c6450` feat(seguranca): trilha de exclusoes e bloqueios de contato ganha tela (#3412)
 - 2026-11-26 `0a6acffd` feat(talkx): liga os alertas do motor (talkx_alerts) no acompanhamento (#3408)
-- 2026-11-26 `3eb193aa` feat(talkx): campanha ganha o envio de teste antes de lancar (E47) (#3409)
 
 ## Arquivos deste diretório
 - `docs/contexto/codigo/rotas.json`

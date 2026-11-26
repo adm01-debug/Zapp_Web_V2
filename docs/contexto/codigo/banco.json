@@ -8,7 +8,7 @@
   "supabase/migrations",
   "typeorm"
  ],
- "migrations": 1165,
+ "migrations": 1166,
  "seeds": [
   "docs/contexto/supabase/functions/public/seed_default_goals_for_profile__12ae32cb1ec02d01.sql",
   "e2e/fixtures/seed-talk-me.sql",
@@ -481,6 +481,7 @@
   "resolve_talkx_outcome_unknown",
   "resolve_unconfirmed_message",
   "resume_instance",
+  "resumo_orcamento_ia",
   "retry_talkx_recipient",
   "retry_talkx_recipients",
   "return_conversation_to_queue",

@@ -1,15 +1,15 @@
 {
  "meta": {
-  "sha": "809dc4b6ae850a1f08409373af750e6c6a534f2c",
+  "sha": "5bddef577a60ae99a2daa85a8d0529a22ef1ffc7",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-26 22:23 UTC",
-  "files_total": 14762,
-  "code_files": 8292,
-  "code_lines": 1249166
+  "generated_at": "2026-11-26 22:30 UTC",
+  "files_total": 14763,
+  "code_files": 8293,
+  "code_lines": 1249266
  },
  "version": "1.3.2",
- "facts_hash": "2e53af50d8b32d84",
+ "facts_hash": "c7839a42ac5625bf",
  "stack": {
   "frameworks": [
    "React + Vite",
@@ -367,7 +367,7 @@
   ],
   "package_manager": "bun",
   "languages": {
-   ".sql": 3076,
+   ".sql": 3077,
    ".tsx": 2529,
    ".ts": 2064,
    ".mjs": 496,
@@ -35547,6 +35547,26 @@
     ],
     "tables": []
    },
+   "resumo_orcamento_ia": {
+    "args": "p_dias integer DEFAULT 30",
+    "returns": "jsonb",
+    "lang": "plpgsql",
+    "src": "supabase/migrations/20261127170000_rpc_resumo_orcamento_ia.sql",
+    "security_definer": true,
+    "search_path": true,
+    "body": "DECLARE v_dias integer; v_desde timestamptz; v_resultado jsonb; BEGIN IF COALESCE(auth.role(), '') <> 'service_role' AND COALESCE(public.is_admin_or_supervisor(auth.uid()), false) IS NOT TRUE THEN RAISE EXCEPTION 'ai_budget_role_required' USING ERRCODE = '42501'; END IF; v_dias := GREATEST(1, LEAST(COALESCE(p_dias, 30), 365)); v_desde := now() - make_interval(days => v_dias); WITH base AS ( SELECT r.id, r.function_name, r.status, r.reserved_tokens, r.actual_tokens, r.user_id, r.created_at, r.expires_at FROM public.ai_budget_reservations r WHERE r.created_at >= v_desde ), por_status AS ( SELECT status, count(*)::integer AS execucoes, COALESCE(sum(reserved_tokens), 0)::bigint AS reservado, COA …",
+    "raises": [
+     "ai_budget_role_required"
+    ],
+    "tables": [
+     "ai_budget_reservations",
+     "base",
+     "por_dia",
+     "por_funcao",
+     "por_status",
+     "v_resultado"
+    ]
+   },
    "uid": {
     "args": "",
     "returns": "uuid",
@@ -36173,17 +36193,6 @@
     "tables": []
    },
    "resume_instance": {
-    "args": "",
-    "returns": "?",
-    "lang": "",
-    "src": "src/integrations/supabase/types.ts",
-    "security_definer": false,
-    "search_path": false,
-    "body": "",
-    "raises": [],
-    "tables": []
-   },
-   "resumo_orcamento_ia": {
     "args": "",
     "returns": "?",
     "lang": "",
@@ -48688,6 +48697,7 @@
    "supabase/migrations/20261127001500_talkx_campaign_pace_orcamento_interno.sql",
    "supabase/migrations/20261127140000_fix_retencao_copiloto.sql",
    "supabase/migrations/20261127150000_recover_talkx_send_budget_internal.sql",
+   "supabase/migrations/20261127170000_rpc_resumo_orcamento_ia.sql",
    "supabase/tests/admin_inbox_silence.sql",
    "supabase/tests/admin_unlock_login_autorizacao.sql",
    "supabase/tests/agent_workload.sql",
@@ -63971,6 +63981,22 @@
     "src": "supabase/migrations/20261127150000_recover_talkx_send_budget_internal.sql"
    },
    {
+    "kind": "revoke",
+    "privs": "all",
+    "object": "resumo_orcamento_ia",
+    "objkind": "function",
+    "roles": "PUBLIC, anon",
+    "src": "supabase/migrations/20261127170000_rpc_resumo_orcamento_ia.sql"
+   },
+   {
+    "kind": "grant",
+    "privs": "execute",
+    "object": "resumo_orcamento_ia",
+    "objkind": "function",
+    "roles": "service_role, authenticated",
+    "src": "supabase/migrations/20261127170000_rpc_resumo_orcamento_ia.sql"
+   },
+   {
     "kind": "grant",
     "privs": "select",
     "object": "profiles",
@@ -69392,6 +69418,11 @@
     "function": "talkx_campaign_pace",
     "msg": "talkx_campaign_role_required",
     "src": "supabase/migrations/20261127150000_recover_talkx_send_budget_internal.sql"
+   },
+   {
+    "function": "resumo_orcamento_ia",
+    "msg": "ai_budget_role_required",
+    "src": "supabase/migrations/20261127170000_rpc_resumo_orcamento_ia.sql"
    },
    {
     "function": "espera_contem",
@@ -78500,8 +78531,8 @@
   },
   {
    "module": "supabase/migrations",
-   "files": 1165,
-   "lines": 117276,
+   "files": 1166,
+   "lines": 117376,
    "tables": [
     "audit_logs",
     "department_invites",
@@ -106836,6 +106867,10 @@
    {
     "file": "supabase/migrations/20261117120000_talkx_x091_template_stats_rpcs.sql",
     "text": "*somente agregados**: nenhum `contact_id`, telefone ou conteudo de"
+   },
+   {
+    "file": "supabase/migrations/20261127170000_rpc_resumo_orcamento_ia.sql",
+    "text": "`trava`     = reservas ainda abertas cujo prazo ja venceu (o reconcile limpa)."
    }
   ],
   "db_constraints": [
@@ -251049,6 +251084,26 @@
     ],
     "tables": []
    },
+   "resumo_orcamento_ia": {
+    "args": "p_dias integer DEFAULT 30",
+    "returns": "jsonb",
+    "lang": "plpgsql",
+    "src": "supabase/migrations/20261127170000_rpc_resumo_orcamento_ia.sql",
+    "security_definer": true,
+    "search_path": true,
+    "body": "DECLARE v_dias integer; v_desde timestamptz; v_resultado jsonb; BEGIN IF COALESCE(auth.role(), '') <> 'service_role' AND COALESCE(public.is_admin_or_supervisor(auth.uid()), false) IS NOT TRUE THEN RAISE EXCEPTION 'ai_budget_role_required' USING ERRCODE = '42501'; END IF; v_dias := GREATEST(1, LEAST(COALESCE(p_dias, 30), 365)); v_desde := now() - make_interval(days => v_dias); WITH base AS ( SELECT r.id, r.function_name, r.status, r.reserved_tokens, r.actual_tokens, r.user_id, r.created_at, r.expires_at FROM public.ai_budget_reservations r WHERE r.created_at >= v_desde ), por_status AS ( SELECT status, count(*)::integer AS execucoes, COALESCE(sum(reserved_tokens), 0)::bigint AS reservado, COA …",
+    "raises": [
+     "ai_budget_role_required"
+    ],
+    "tables": [
+     "ai_budget_reservations",
+     "base",
+     "por_dia",
+     "por_funcao",
+     "por_status",
+     "v_resultado"
+    ]
+   },
    "uid": {
     "args": "",
     "returns": "uuid",
@@ -251675,17 +251730,6 @@
     "tables": []
    },
    "resume_instance": {
-    "args": "",
-    "returns": "?",
-    "lang": "",
-    "src": "src/integrations/supabase/types.ts",
-    "security_definer": false,
-    "search_path": false,
-    "body": "",
-    "raises": [],
-    "tables": []
-   },
-   "resumo_orcamento_ia": {
     "args": "",
     "returns": "?",
     "lang": "",
@@ -256831,6 +256875,11 @@
     "function": "talkx_campaign_pace",
     "msg": "talkx_campaign_role_required",
     "src": "supabase/migrations/20261127150000_recover_talkx_send_budget_internal.sql"
+   },
+   {
+    "function": "resumo_orcamento_ia",
+    "msg": "ai_budget_role_required",
+    "src": "supabase/migrations/20261127170000_rpc_resumo_orcamento_ia.sql"
    },
    {
     "function": "espera_contem",
@@ -265583,6 +265632,7 @@
    "supabase/migrations/20261127001500_talkx_campaign_pace_orcamento_interno.sql",
    "supabase/migrations/20261127140000_fix_retencao_copiloto.sql",
    "supabase/migrations/20261127150000_recover_talkx_send_budget_internal.sql",
+   "supabase/migrations/20261127170000_rpc_resumo_orcamento_ia.sql",
    "supabase/tests/admin_inbox_silence.sql",
    "supabase/tests/admin_unlock_login_autorizacao.sql",
    "supabase/tests/agent_workload.sql",
@@ -265967,6 +266017,7 @@
    "resolve_sla_alert",
    "resolve_talkx_outcome_unknown",
    "resolve_unconfirmed_message",
+   "resumo_orcamento_ia",
    "retry_talkx_recipient",
    "retry_talkx_recipients",
    "return_conversation_to_queue",
@@ -281082,6 +281133,22 @@
     "objkind": "function",
     "roles": "service_role",
     "src": "supabase/migrations/20261127150000_recover_talkx_send_budget_internal.sql"
+   },
+   {
+    "kind": "revoke",
+    "privs": "all",
+    "object": "resumo_orcamento_ia",
+    "objkind": "function",
+    "roles": "PUBLIC, anon",
+    "src": "supabase/migrations/20261127170000_rpc_resumo_orcamento_ia.sql"
+   },
+   {
+    "kind": "grant",
+    "privs": "execute",
+    "object": "resumo_orcamento_ia",
+    "objkind": "function",
+    "roles": "service_role, authenticated",
+    "src": "supabase/migrations/20261127170000_rpc_resumo_orcamento_ia.sql"
    },
    {
     "kind": "grant",
@@ -427446,6 +427513,14 @@
    ],
    "uses_service_role": true
   },
+  "supabase/migrations/20261127170000_rpc_resumo_orcamento_ia.sql": {
+   "path": "supabase/migrations/20261127170000_rpc_resumo_orcamento_ia.sql",
+   "lines": 100,
+   "rule_comments": [
+    "`trava`     = reservas ainda abertas cujo prazo ja venceu (o reconcile limpa)."
+   ],
+   "uses_service_role": true
+  },
   "supabase/tests/admin_inbox_silence.sql": {
    "path": "supabase/tests/admin_inbox_silence.sql",
    "lines": 310,
@@ -431367,10 +431442,19 @@
   }
  },
  "git": {
-  "sha": "809dc4b6ae850a1f08409373af750e6c6a534f2c",
+  "sha": "5bddef577a60ae99a2daa85a8d0529a22ef1ffc7",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "5bddef57",
+    "date": "2026-11-26",
+    "author": "adm01-debug",
+    "subject": "fix(db): ledger de orçamento de IA fica visível (resumo agregado para admin) (#3419)",
+    "files": [
+     "supabase/migrations/20261127170000_rpc_resumo_orcamento_ia.sql"
+    ]
+   },
    {
     "sha": "809dc4b6",
     "date": "2026-11-26",
@@ -431843,17 +431927,6 @@
      "supabase/functions/_shared/evolution-webhook-messages.ts",
      "supabase/functions/ai-proxy/index.test.ts",
      "supabase/functions/ai-proxy/index.ts"
-    ]
-   },
-   {
-    "sha": "e4c2b861",
-    "date": "2026-11-25",
-    "author": "adm01-debug",
-    "subject": "fix: tooltip do prazo usa a regra única de data e o módulo prazoCompleto (#3391)",
-    "files": [
-     "src/components/tasks/__tests__/prazoCompleto.test.ts",
-     "src/components/tasks/list/prazoCompleto.ts",
-     "src/components/tasks/list/taskRowCells.tsx"
     ]
    }
   ],

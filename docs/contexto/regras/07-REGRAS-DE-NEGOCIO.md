@@ -1,6 +1,6 @@
 # 07 · REGRAS DE NEGÓCIO
 
-> Gerado automaticamente por AI Context Sync v1.3.2 · commit `809dc4b6ae` · branch `main` · 2026-11-26 22:23 UTC
+> Gerado automaticamente por AI Context Sync v1.3.2 · commit `5bddef577a` · branch `main` · 2026-11-26 22:30 UTC
 > Não edite à mão — regras humanas vão em `manual/`.
 
 ## A. Regras escritas por humanos (`manual/` — prioridade máxima, nunca sobrescrito)
@@ -1204,7 +1204,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `cleanup_expired_challenges` | cleanup_expired_challenges: operacao restrita a service_role | `supabase/migrations/20261003272707_reconcile_local_replay_with_canonical.sql` |
 | `cleanup_link_preview_cache` | cleanup_link_preview_cache: operacao restrita a service_role | `supabase/migrations/20261003272707_reconcile_local_replay_with_canonical.sql` |
 | `clear_login_attempts` | clear_login_attempts: operacao nao autorizada para role=% email=% | `supabase/migrations/20261003272707_reconcile_local_replay_with_canonical.sql` |
-| … +727 linhas — lista completa em `context.json` | | |
+| … +728 linhas — lista completa em `context.json` | | |
 
 ## E. Estados, máquinas de estado e transições
 
@@ -5599,4 +5599,4 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | Mostra no máximo 2 sugestões para não poluir o painel | `src/components/inbox/copilot/MissingQuestions.tsx` |
 | * CV-035/036 — Alerta de ocasião comercial detectada + prazo de entrega. | `src/components/inbox/copilot/OccasionAlert.tsx` |
 | Sobe/desce a linha uma posição por vez, trocando apenas de lugar os objetos | `src/components/inbox/interactive-builder/useInteractiveMessage.ts` |
-| … +1889 linhas — lista completa em `context.json` | |
+| … +1890 linhas — lista completa em `context.json` | |
