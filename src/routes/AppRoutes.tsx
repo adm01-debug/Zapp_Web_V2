@@ -21,6 +21,7 @@ const SLADashboard = lazyWithRetry(() => import("../pages/SLADashboard"));
 const SLAHistory = lazyWithRetry(() => import("../pages/SLAHistory"));
 const RolesPage = lazyWithRetry(() => import("../pages/admin/RolesPage"));
 const RateLimitDashboard = lazyWithRetry(() => import("../pages/admin/RateLimitDashboard"));
+const ContactAuditPage = lazyWithRetry(() => import("../pages/admin/ContactAuditPage"));
 const Install = lazyWithRetry(() => import("../pages/Install"));
 const AccessDenied = lazyWithRetry(() => import("../pages/AccessDenied"));
 const ChatPopup = lazyWithRetry(() => import("../pages/ChatPopup"));
@@ -152,6 +153,14 @@ export function AppRoutes() {
             element={
               <ProtectedRoute requiredRoles={["admin"]}>
                 <RateLimitDashboard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/auditoria-contatos"
+            element={
+              <ProtectedRoute requiredRoles={["admin", "supervisor"]}>
+                <ContactAuditPage />
               </ProtectedRoute>
             }
           />
