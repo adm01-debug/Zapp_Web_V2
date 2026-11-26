@@ -1,8 +1,8 @@
 // talkxDataJobs.ts — regra pura do painel "Jobs de dados" (Configurações do Talk X).
 //
 // `talkx_data_jobs` é o registro dos jobs de DADOS do módulo (hoje só o
-// `recompute_purchase_metrics`, que recalcula os atributos RFM de
-// `talkx_contact_attributes`). A tabela não tem escrita para o usuário: quem grava é o
+// `recompute_purchase_metrics`, que recalcula os atributos RFM dos contatos). A tabela
+// não tem escrita para o usuário: quem grava é o
 // agendador, com `service_role`. Por isso o painel só LÊ — e é essa leitura que faltava:
 // sem ela, um job que nunca rodou (ou que parou) não aparecia em lugar nenhum da tela, e
 // a segmentação por RFM seguia vazia sem ninguém saber por quê.

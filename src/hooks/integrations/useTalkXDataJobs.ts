@@ -5,7 +5,7 @@ import { supabase } from '@/integrations/supabase/client';
  * Linha de `talkx_data_jobs` — o registro dos jobs de DADOS do Talk X.
  *
  * Hoje existe um job: `recompute_purchase_metrics`, que recalcula os atributos de compra
- * (RFM) de `talkx_contact_attributes`, os mesmos que a segmentação usa.
+ * (RFM) dos contatos, os mesmos que a segmentação usa.
  */
 export interface TalkXDataJob {
   job: string;

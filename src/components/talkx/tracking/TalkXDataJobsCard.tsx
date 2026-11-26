@@ -1,7 +1,7 @@
 // TalkXDataJobsCard.tsx — painel "Jobs de dados" das Configurações do Talk X.
 //
 // `talkx_data_jobs` registra os jobs de DADOS do módulo (recarga dos atributos RFM que a
-// segmentação usa em `talkx_contact_attributes`). A tabela só tem leitura para o usuário:
+// segmentação consome). A tabela só tem leitura para o usuário:
 // quem escreve é o agendador, com `service_role`. Logo, o painel é somente leitura — e é
 // exatamente a leitura que faltava, porque um job parado (ou que nunca rodou) deixava a
 // segmentação vazia sem nenhuma pista na tela.
