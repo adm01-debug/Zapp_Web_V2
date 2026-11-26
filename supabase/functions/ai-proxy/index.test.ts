@@ -75,7 +75,7 @@ const ENV_KEYS = [
   "SUPABASE_URL",
   "SUPABASE_ANON_KEY",
   "SUPABASE_SERVICE_ROLE_KEY",
-  "OPENAI_TEST_KEY",
+  "OPENAI_API_KEY",
 ] as const;
 
 function withEnv(values: Partial<Record<(typeof ENV_KEYS)[number], string>>, fn: () => Promise<void>) {
@@ -97,7 +97,7 @@ const ENV_OK = {
   SUPABASE_URL: "https://stub.supabase.co",
   SUPABASE_ANON_KEY: "anon-key-de-teste",
   SUPABASE_SERVICE_ROLE_KEY: "service-role-key-de-teste",
-  OPENAI_TEST_KEY: "sk-teste-do-provedor",
+  OPENAI_API_KEY: "sk-teste-do-provedor",
 };
 
 const USER = "20000000-0000-0000-0000-00000000000a";
@@ -112,7 +112,7 @@ const PROVIDER_ROW = {
   name: "OpenAI (diagnostico)",
   provider_type: "openai_compatible",
   api_endpoint: "https://api.openai.com/v1/chat/completions",
-  api_key_secret_name: "OPENAI_TEST_KEY",
+  api_key_secret_name: "OPENAI_API_KEY",
   model: MODELO_DO_SERVIDOR,
   system_prompt: null,
   // O modelo do cliente está LIBERADO no config: sem a correção o proxy usava

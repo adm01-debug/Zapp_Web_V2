@@ -187,7 +187,7 @@ async function abrirCenario(cenario: Cenario): Promise<CenarioVivo> {
       name: "Provedor Falso",
       provider_type: "openai_compatible",
       api_endpoint: urlIA,
-      api_key_secret_name: "FAKE_AI_KEY",
+      api_key_secret_name: "OPENAI_API_KEY",
       model: "modelo-falso",
       is_active: true,
       is_default: true,
@@ -245,7 +245,7 @@ async function abrirCenario(cenario: Cenario): Promise<CenarioVivo> {
     SUPABASE_URL: urlDB,
     SUPABASE_SERVICE_ROLE_KEY: "service-role-falso",
     CHATBOT_L1_WEBHOOK_SECRET: SEGREDO_WEBHOOK,
-    FAKE_AI_KEY: "chave-falsa",
+    OPENAI_API_KEY: "chave-falsa",
   };
   for (const [chave, valor] of Object.entries(novas)) {
     anteriores.set(chave, Deno.env.get(chave));
