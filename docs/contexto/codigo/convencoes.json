@@ -4,15 +4,15 @@
  "onde_ficam": {
   "telas": [
    "src/components (54)",
-   "src/pages (21)"
+   "src/pages (22)"
   ],
   "componentes": [
-   "src/components (915)",
-   "src/pages (30)",
+   "src/components (916)",
+   "src/pages (31)",
    "src/features (2)"
   ],
   "hooks": [
-   "src/hooks (449)",
+   "src/hooks (450)",
    "src/components (74)",
    "src/contexts (2)"
   ],
@@ -22,7 +22,7 @@
    "src/utils (8)"
   ],
   "testes": [
-   "co-localizado (__tests__) (2138)",
+   "co-localizado (__tests__) (2139)",
    "outro (260)",
    "co-localizado (*.test) (203)"
   ],
@@ -48,7 +48,7 @@
  },
  "barrels_index": 74,
  "extensao_componentes": [
-  ".tsx (954)"
+  ".tsx (956)"
  ],
  "alias_imports": {
   "analise-prs/resgate-261115/auditoria/bruto/diarios-sessao/": {
@@ -66,11 +66,11 @@
  "commits": {
   "convencao": "conventional commits (observado)",
   "exemplos": [
+   "feat(copiloto): tela de retenção do copiloto RADAR (agregado diário por atendente) (#3418)",
    "fix: restaura paridade de RLS entre producao e o replay das migrations (12 policies de admin) (#3401)",
    "chore(db): sincronizar artefatos derivados do banco (#3421)",
    "fix(db): cron de retenção do copiloto nunca gravou (subquery + kind errado) (#3417)",
-   "feat(admin): aba Orçamento no Consumo IA — reservado x consumido do ledger (#3420)",
-   "feat(admin): dominios confiaveis do cadastro automatico ganham tela (#3416)"
+   "feat(admin): aba Orçamento no Consumo IA — reservado x consumido do ledger (#3420)"
   ]
  },
  "pr_template": ".github/PULL_REQUEST_TEMPLATE.md",

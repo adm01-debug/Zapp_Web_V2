@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "12371410d53eb61a9de149d24894bb62d2919094",
+  "commit": "4465e3920a47e5366157bab2863165c30e0e2d1b",
   "branch": "main",
-  "data_commit": "2026-11-26T17:00:07-03:00",
+  "data_commit": "2026-11-26T17:40:26-03:00",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "4465e392",
+    "data": "2026-11-26",
+    "assunto": "feat(copiloto): tela de retenção do copiloto RADAR (agregado diário por atendente) (#3418)"
+   },
    {
     "sha": "12371410",
     "data": "2026-11-26",
@@ -126,14 +131,9 @@
     "sha": "bd4e9fd0",
     "data": "2026-11-25",
     "assunto": "fix: semeia as chaves de desligamento da IA (IA-009 secao 2.1 e 2.2) (#3385)"
-   },
-   {
-    "sha": "c8163184",
-    "data": "2026-11-26",
-    "assunto": "feat: devolve a fila morta do Multiplix ao cartao de saude da integracao (#3392)"
    }
   ],
-  "arquivos_mudados_7d": 2848,
+  "arquivos_mudados_7d": 2853,
   "pastas_mais_mudadas_30d": [
    {
     "pasta": "docs/contexto/supabase",
@@ -199,14 +199,14 @@
   "arquivos_mais_mudados_90d": [
    {
     "arquivo": "supabase/deployment-manifest.json",
-    "mudancas": 38
-   },
-   {
-    "arquivo": "ESTADO.md",
-    "mudancas": 27
+    "mudancas": 37
    },
    {
     "arquivo": "docs/DB-INVENTORY.md",
+    "mudancas": 28
+   },
+   {
+    "arquivo": "ESTADO.md",
     "mudancas": 27
    },
    {
@@ -314,21 +314,21 @@
   ]
  },
  "contagens": {
-  "arquivos_total": 14906,
-  "arquivos_codigo": 5235,
-  "linhas_codigo": 969177,
+  "arquivos_total": 14910,
+  "arquivos_codigo": 5239,
+  "linhas_codigo": 969871,
   "rotas": 21,
   "rotas_http_backend": 11,
-  "vistas_por_id": 55,
-  "itens_menu": 61,
+  "vistas_por_id": 56,
+  "itens_menu": 62,
   "modulos": 149,
-  "componentes": 954,
-  "hooks": 535,
+  "componentes": 956,
+  "hooks": 536,
   "edge_functions": 94,
   "tabelas": 224,
   "migrations": 1164,
   "cron_jobs": 29,
-  "testes": 2866,
+  "testes": 2867,
   "workflows": 26,
   "scripts": 458,
   "docs_md": 3988
@@ -739,8 +739,8 @@
    "linhas": 638
   },
   "src/components": {
-   "arquivos": 2352,
-   "linhas": 399904
+   "arquivos": 2353,
+   "linhas": 400135
   },
   "src/config": {
    "arquivos": 3,
@@ -759,8 +759,8 @@
    "linhas": 3293
   },
   "src/hooks": {
-   "arquivos": 1071,
-   "linhas": 173657
+   "arquivos": 1073,
+   "linhas": 174082
   },
   "src/i18n": {
    "arquivos": 2,
@@ -779,8 +779,8 @@
    "linhas": 131
   },
   "src/pages": {
-   "arquivos": 83,
-   "linhas": 12165
+   "arquivos": 84,
+   "linhas": 12200
   },
   "src/providers": {
    "arquivos": 10,
@@ -796,7 +796,7 @@
   },
   "src/services": {
    "arquivos": 38,
-   "linhas": 5992
+   "linhas": 5995
   },
   "src/styles": {
    "arquivos": 10,

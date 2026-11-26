@@ -480,6 +480,12 @@
    "src/components/ui/switch.tsx",
    "src/hooks/system/useUserRole.ts"
   ],
+  "src/components/admin/CopilotRetentionPanel.tsx": [
+   "src/components/ui/alert.tsx",
+   "src/components/ui/button.tsx",
+   "src/components/ui/card.tsx",
+   "src/hooks/copilot/useCopilotRetention.ts"
+  ],
   "src/components/admin/CrisisRoom.tsx": [
    "src/components/ui/badge.tsx",
    "src/components/ui/button.tsx",
@@ -9008,6 +9014,9 @@
    "src/integrations/supabase/client.ts",
    "src/lib/logger.ts"
   ],
+  "src/hooks/copilot/useCopilotRetention.ts": [
+   "src/integrations/supabase/client.ts"
+  ],
   "src/hooks/copilot/useCopilotSession.ts": [
    "src/data/copilot/sale-stages.ts",
    "src/integrations/supabase/client.ts"
@@ -10937,6 +10946,11 @@
    "src/components/security/ContactProtectionPolicyPanel.tsx",
    "src/hooks/system/useUserRole.ts"
   ],
+  "src/pages/admin/CopilotRetentionPage.tsx": [
+   "src/components/admin/CopilotRetentionPanel.tsx",
+   "src/components/ui/card.tsx",
+   "src/hooks/system/useUserRole.ts"
+  ],
   "src/pages/admin/LinkPreviewCachePage.tsx": [
    "src/components/admin/LinkPreviewCachePanel.tsx",
    "src/components/ui/button.tsx",
@@ -11047,7 +11061,8 @@
    "src/components/wallet/ClientWalletView.tsx",
    "src/components/whatsapp-flows/WhatsAppFlowsBuilder.tsx",
    "src/lib/lazyWithRetry.ts",
-   "src/pages/AdminTelemetriaPage.tsx"
+   "src/pages/AdminTelemetriaPage.tsx",
+   "src/pages/admin/CopilotRetentionPage.tsx"
   ],
   "src/pages/queue-details/QueueContactsTable.tsx": [
    "src/components/ui/avatar.tsx",

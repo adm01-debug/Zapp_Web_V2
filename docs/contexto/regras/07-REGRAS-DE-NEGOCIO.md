@@ -1,6 +1,6 @@
 # 07 · REGRAS DE NEGÓCIO
 
-> Gerado automaticamente por AI Context Sync v1.3.2 · commit `12371410d5` · branch `main` · 2026-11-26 20:15 UTC
+> Gerado automaticamente por AI Context Sync v1.3.2 · commit `4465e3920a` · branch `main` · 2026-11-26 21:21 UTC
 > Não edite à mão — regras humanas vão em `manual/`.
 
 ## A. Regras escritas por humanos (`manual/` — prioridade máxima, nunca sobrescrito)
@@ -1805,6 +1805,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | FeedbackRating | positive \| negative | `src/hooks/copilot/useCopilotFeedback.ts` |
 | FeedbackReason | errou_fato \| tom_errado \| fora_de_hora \| generica | `src/hooks/copilot/useCopilotFeedback.ts` |
 | SuggestionOutcome | accepted \| edited \| rejected \| ignored | `src/hooks/copilot/useCopilotLearning.ts` |
+| JANELAS_DIAS | 7, 14, 30 | `src/hooks/copilot/useCopilotRetention.ts` |
 | BrindeLetter | B \| R \| I \| N \| D \| E | `src/hooks/copilot/useCopilotSession.ts` |
 | InsightPriority | critical \| high \| medium \| low | `src/hooks/copilot/useCopilotSupervisor.ts` |
 | InsightSource | objection \| purchase_signal \| speed_to_lead \| guardrail \| silence \| loss_risk \| discount_guardrail \| deadline | `src/hooks/copilot/useCopilotSupervisor.ts` |
@@ -1928,8 +1929,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | FILTER_PARAM_KEYS | 'q', 'status', 'tags', 'agent', 'from', 'to', 'type' | `src/hooks/voice/voiceActionPlan.ts` |
 | VoiceSessionEndReason | inactivity \| duration \| hidden | `src/hooks/voice/voiceSessionLimits.ts` |
 | AuditAction | login \| logout \| message_sent \| message_received \| contact_created \| contact_updated \| connection_created \| connection_deleted \| call_started \| call_ended \| transfer \| settings_changed \| client_error \| searchbox_session \| searchbox_cost_guard \| searchbox_budget_warning \| searchbox_selected \| location_sent \| unauthorized_access | `src/lib/audit.ts` |
-| CHART_PALETTE | CHART_COLORS.primary, CHART_COLORS.secondary, CHART_COLORS.tertiary, CHART_COLORS.quaternary, CHART_COLORS.quinary, CHART_COLORS.senary, CHART_COLORS.septenary, CHART_COLORS.octonary, CHART_COLORS.nonary, CHART_COLORS.denary, | `src/lib/chartColors.ts` |
-| … +165 linhas — lista completa em `context.json` | | |
+| … +166 linhas — lista completa em `context.json` | | |
 
 ## F. Validações de entrada
 
@@ -3946,7 +3946,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `SUPERVISOR_PAGE_SIZE` | `200` | `src/hooks/admin/useSupervisorQueue.ts` |
 | `DEFAULT_REFRESH_MS` | `60` | `src/hooks/admin/useSupervisorQueue.ts` |
 | `RECENT_SENDS_WINDOW_DAYS` | `30` | `src/hooks/agents/useAgentRecentSends.ts` |
-| … +725 linhas — lista completa em `context.json` | | |
+| … +727 linhas — lista completa em `context.json` | | |
 
 ### H.2 Prazos, expirações e janelas de tempo
 
@@ -4701,7 +4701,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | disk-full | `scripts/ci/e2e-isolated-provider-readiness.unit.mjs` |
 | must-not-read-service-role | `scripts/ci/e2e-isolated-provider-readiness.unit.mjs` |
 | synthetic transport rejection | `scripts/ci/e2e-isolated-runtime-probe.unit.mjs` |
-| … +1905 linhas — lista completa em `context.json` | |
+| … +1906 linhas — lista completa em `context.json` | |
 
 ## J. Controle de acesso no código (checagens de perfil/permissão)
 
@@ -4776,7 +4776,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `owner` | `supabase/migrations/20260927270018_team_chat_e28_fix_find_or_create_race.sql` |
 | `anon` | `supabase/migrations/20260927340000_fix_add_agent_xp_negative_and_guard.sql` |
 
-## K. Testes como especificação (23294 testes em 2472 arquivos — nomes completos em `context.json`)
+## K. Testes como especificação (23309 testes em 2473 arquivos — nomes completos em `context.json`)
 
 | Arquivo | Testes | Exemplos do que o sistema DEVE fazer |
 |---|---|---|
@@ -5080,7 +5080,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `supabase/functions/_shared/__tests__/ai-context-revalidation.test.ts` | 17 | requestId válido é aceito nos quatro schemas · requestId malformado é rejeitado (não é ecoado como lixo) · cliente ANTIGO (sem requestId/contextVersion) continua aceito — compatibilidade · periodKey (nome canônico do frontend) é aceito como apelido da versão de contexto … |
 | `supabase/functions/ai-transcribe-audio/openrouter-stt.test.ts` | 17 | formato: containers que a edge reconhece viram a extensão do input_audio · formato: mime de outro tipo ou desconhecido não vira extensão inventada · formato: parâmetro do content-type (codecs) não atrapalha e o case não importa · base64: buffer maior que o bloco interno é convertido byte a byte … |
 | `supabase/functions/multiplix-dispatch/actions/__tests__/listing.test.ts` | 17 | dispatch.list escopo: sem permissao ampla so devolve os disparos do dono · dispatch.list escopo: usuario sem profile e sem permissao -> lista vazia (nao consulta a tabela) · dispatch.list escopo: a permissao ampla ve os disparos de qualquer dono · dispatch.list paginacao: limit/offset recortam na ordem created_at desc e total e exato … |
-| … +2172 linhas — lista completa em `context.json` | | |
+| … +2173 linhas — lista completa em `context.json` | | |
 
 ## L. Eventos de webhook tratados (contratos com sistemas externos)
 

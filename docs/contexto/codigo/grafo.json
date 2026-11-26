@@ -1,8 +1,8 @@
 {
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
- "nos": 2461,
- "arestas": 8476,
+ "nos": 2464,
+ "arestas": 8485,
  "hubs": [
   {
    "arquivo": "src/lib/utils.ts",
@@ -10,11 +10,11 @@
   },
   {
    "arquivo": "src/integrations/supabase/client.ts",
-   "importado_por": 442
+   "importado_por": 443
   },
   {
    "arquivo": "src/components/ui/button.tsx",
-   "importado_por": 422
+   "importado_por": 423
   },
   {
    "arquivo": "src/lib/logger.ts",
@@ -26,7 +26,7 @@
   },
   {
    "arquivo": "src/components/ui/card.tsx",
-   "importado_por": 204
+   "importado_por": 206
   },
   {
    "arquivo": "src/components/ui/tooltip.tsx",
@@ -110,7 +110,7 @@
   },
   {
    "arquivo": "src/hooks/system/useUserRole.ts",
-   "importado_por": 48
+   "importado_por": 49
   },
   {
    "arquivo": "src/components/ui/popover.tsx",
@@ -577,7 +577,7 @@
   },
   {
    "modulo": "pages",
-   "depende_de": 64,
+   "depende_de": 65,
    "importado_por": 3
   },
   {

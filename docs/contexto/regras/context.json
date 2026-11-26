@@ -1,15 +1,15 @@
 {
  "meta": {
-  "sha": "12371410d53eb61a9de149d24894bb62d2919094",
+  "sha": "4465e3920a47e5366157bab2863165c30e0e2d1b",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-26 20:15 UTC",
-  "files_total": 14753,
-  "code_files": 8283,
-  "code_lines": 1247676
+  "generated_at": "2026-11-26 21:21 UTC",
+  "files_total": 14757,
+  "code_files": 8287,
+  "code_lines": 1248370
  },
  "version": "1.3.2",
- "facts_hash": "d3ee1feb29ec4181",
+ "facts_hash": "97c16877675b5f87",
  "stack": {
   "frameworks": [
    "React + Vite",
@@ -368,8 +368,8 @@
   "package_manager": "bun",
   "languages": {
    ".sql": 3075,
-   ".tsx": 2525,
-   ".ts": 2060,
+   ".tsx": 2527,
+   ".ts": 2062,
    ".mjs": 496,
    ".py": 125,
    ".cjs": 19,
@@ -73320,7 +73320,7 @@
     "file": ".github/workflows/types-sync.yml"
    }
   ],
-  "components_count": 2354,
+  "components_count": 2355,
   "hooks": [
    {
     "name": "useMotionSeguro",
@@ -74261,6 +74261,10 @@
    {
     "name": "useCopilotLearning",
     "file": "src/hooks/copilot/useCopilotLearning.ts"
+   },
+   {
+    "name": "useCopilotRetention",
+    "file": "src/hooks/copilot/useCopilotRetention.ts"
    },
    {
     "name": "useCopilotSession",
@@ -76780,8 +76784,8 @@
   },
   {
    "module": "src/components",
-   "files": 2352,
-   "lines": 399904,
+   "files": 2353,
+   "lines": 400135,
    "tables": [
     "agent_skills",
     "agent_visibility_grants",
@@ -76852,6 +76856,7 @@
     "AdminCRMDashboard.tsx: AdminCRMDashboard",
     "AdminUsersTable.tsx: AdminUsersTable",
     "AdminView.tsx: AdminView",
+    "CopilotRetentionPanel.tsx: CopilotRetentionPanel",
     "CrisisRoom.tsx: CrisisRoom",
     "CronJobsTab.tsx: CronJobsTab",
     "CrossTabDedupePanel.tsx: CrossTabDedupePanel",
@@ -76878,8 +76883,7 @@
     "inviteErrors.ts: readInviteFailure, describeInviteError",
     "AutoTicketClassifier.tsx: AutoTicketClassifier",
     "ChurnPredictionDashboard.tsx: ChurnPredictionDashboard",
-    "churnRisk.ts: ChurnContact, ChurnRisk, getRiskLevel, computeChurnRisk",
-    "ticketClassification.ts: ClassifiedTicket, CATEGORIES, PRIORITY_MAP, classifyTag, derivePriority, getCategoryInfo"
+    "churnRisk.ts: ChurnContact, ChurnRisk, getRiskLevel, computeChurnRisk"
    ],
    "docs": [
     "ErrorBoundary.tsx: @deprecated Import directly from '@/components/errors/ErrorBoundary' instead. This file is a compatibility shim. The canonical ErrorBoundary lives at src/components/errors/ErrorBoundary.tsx. Any new code should import from there. Re-exporting everything so existing imports of '@/components/ErrorBoun …",
@@ -76960,6 +76964,7 @@
     "src/components/admin/AdminCRMDashboard.tsx",
     "src/components/admin/AdminUsersTable.tsx",
     "src/components/admin/AdminView.tsx",
+    "src/components/admin/CopilotRetentionPanel.tsx",
     "src/components/admin/CrisisRoom.tsx",
     "src/components/admin/CronJobsTab.tsx",
     "src/components/admin/CrossTabDedupePanel.tsx",
@@ -77015,8 +77020,7 @@
     "src/components/admin/__tests__/useAdminData.select.test.ts",
     "src/components/admin/__tests__/useAdminDataColumns.test.ts",
     "src/components/admin/__tests__/useAdminDataCreateUser.test.ts",
-    "src/components/admin/__tests__/useAdminDataRamal.test.ts",
-    "src/components/admin/__tests__/useAdminDataRoleChange.test.ts"
+    "src/components/admin/__tests__/useAdminDataRamal.test.ts"
    ]
   },
   {
@@ -77128,8 +77132,8 @@
   },
   {
    "module": "src/hooks",
-   "files": 1071,
-   "lines": 173657,
+   "files": 1073,
+   "lines": 174082,
    "tables": [
     "agent_achievements",
     "agent_stats",
@@ -77636,8 +77640,8 @@
   },
   {
    "module": "src/pages",
-   "files": 83,
-   "lines": 12165,
+   "files": 84,
+   "lines": 12200,
    "tables": [
     "app_settings",
     "audit_logs",
@@ -77668,6 +77672,7 @@
     "lazyViews.ts: RealtimeInboxView, DashboardView, SentimentAlertsDashboard, AgentsView, QueuesView, ContactsView",
     "ContactAuditPage.tsx: ContactAuditPage",
     "ContactProtectionPage.tsx: ContactProtectionPage",
+    "CopilotRetentionPage.tsx: CopilotRetentionPage",
     "LinkPreviewCachePage.tsx: LinkPreviewCachePage",
     "RateLimitDashboard.tsx: RateLimitDashboard",
     "RolesPage.tsx: RolesPage",
@@ -77770,6 +77775,7 @@
     "src/pages/__tests__/twoFactorAuth.retrySaida.test.tsx",
     "src/pages/admin/ContactAuditPage.tsx",
     "src/pages/admin/ContactProtectionPage.tsx",
+    "src/pages/admin/CopilotRetentionPage.tsx",
     "src/pages/admin/LinkPreviewCachePage.tsx",
     "src/pages/admin/RateLimitDashboard.tsx",
     "src/pages/admin/RolesPage.tsx",
@@ -77796,8 +77802,7 @@
     "src/pages/queue-details/QueueContactsTable.tsx",
     "src/pages/queue-details/QueueMetricsCards.tsx",
     "src/pages/queue-details/queueMetrics.ts",
-    "src/pages/queue-details/__tests__/QueueDetails.configurar.test.tsx",
-    "src/pages/queue-details/__tests__/QueueDetails.consultas.test.tsx"
+    "src/pages/queue-details/__tests__/QueueDetails.configurar.test.tsx"
    ]
   },
   {
@@ -77893,7 +77898,7 @@
   {
    "module": "src/services",
    "files": 38,
-   "lines": 5992,
+   "lines": 5995,
    "tables": [
     "ai_conversation_tags",
     "audit_logs",
@@ -80359,6 +80364,7 @@
      "src/hooks/chat/useMessageSignature.ts",
      "src/hooks/chat/useScheduledMessages.ts",
      "src/hooks/chat/useWhisperMessagesMutation.ts",
+     "src/hooks/copilot/useCopilotRetention.ts",
      "src/hooks/crm/useAgents.ts",
      "src/hooks/crm/useAgentsLite.ts",
      "src/hooks/dashboard/useDashboardStats.ts",
@@ -84956,6 +84962,10 @@
     "count": 1
    },
    {
+    "file": "src/hooks/copilot/useCopilotRetention.ts",
+    "count": 1
+   },
+   {
     "file": "src/hooks/crm/useAgentPresence.ts",
     "count": 2
    },
@@ -87462,6 +87472,11 @@
     "file": "src/hooks/copilot/useCopilotLearning.ts",
     "name": "SuggestionOutcome",
     "values": "accepted | edited | rejected | ignored"
+   },
+   {
+    "file": "src/hooks/copilot/useCopilotRetention.ts",
+    "name": "JANELAS_DIAS",
+    "values": "7, 14, 30"
    },
    {
     "file": "src/hooks/copilot/useCopilotSession.ts",
@@ -91857,6 +91872,10 @@
    {
     "file": "src/components/admin/AdminView.tsx",
     "msg": " className="
+   },
+   {
+    "file": "src/components/admin/CopilotRetentionPanel.tsx",
+    "msg": ";\nimport { Button } from "
    },
    {
     "file": "src/components/admin/CrisisRoom.tsx",
@@ -117158,6 +117177,16 @@
     "file": "src/hooks/contacts/useContainerColumns.ts",
     "name": "COLUMNS_PREFERENCE_DEFAULT",
     "value": "2"
+   },
+   {
+    "file": "src/hooks/copilot/useCopilotRetention.ts",
+    "name": "TABELA_RETENCAO",
+    "value": "'copilot_retention_aggregates'"
+   },
+   {
+    "file": "src/hooks/copilot/useCopilotRetention.ts",
+    "name": "DIAS_PADRAO",
+    "value": "14"
    },
    {
     "file": "src/hooks/copilot/useGhostText.ts",
@@ -198080,6 +198109,66 @@
    {
     "file": "src/hooks/copilot/__tests__/useCopilotFeedback.test.ts",
     "name": "recordFeedback: registra rating negative com motivo"
+   },
+   {
+    "file": "src/hooks/copilot/__tests__/useCopilotRetention.test.ts",
+    "name": "diaLimite"
+   },
+   {
+    "file": "src/hooks/copilot/__tests__/useCopilotRetention.test.ts",
+    "name": "devolve o primeiro dia da janela, contando o dia de hoje"
+   },
+   {
+    "file": "src/hooks/copilot/__tests__/useCopilotRetention.test.ts",
+    "name": "atravessa a virada do mes sem perder o zero a esquerda"
+   },
+   {
+    "file": "src/hooks/copilot/__tests__/useCopilotRetention.test.ts",
+    "name": "mapLinha"
+   },
+   {
+    "file": "src/hooks/copilot/__tests__/useCopilotRetention.test.ts",
+    "name": "resolve o nome pela ponte user_id e converte numeric do PostgREST"
+   },
+   {
+    "file": "src/hooks/copilot/__tests__/useCopilotRetention.test.ts",
+    "name": "sem nome no perfil nao inventa identidade nem quebra"
+   },
+   {
+    "file": "src/hooks/copilot/__tests__/useCopilotRetention.test.ts",
+    "name": "resumirRetencao"
+   },
+   {
+    "file": "src/hooks/copilot/__tests__/useCopilotRetention.test.ts",
+    "name": "soma a janela inteira e conta atendentes e dias distintos"
+   },
+   {
+    "file": "src/hooks/copilot/__tests__/useCopilotRetention.test.ts",
+    "name": "temperatura media e ponderada pelas sessoes, nao media das medias"
+   },
+   {
+    "file": "src/hooks/copilot/__tests__/useCopilotRetention.test.ts",
+    "name": "dia sem sessoes nao puxa a temperatura para baixo"
+   },
+   {
+    "file": "src/hooks/copilot/__tests__/useCopilotRetention.test.ts",
+    "name": "janela sem dados devolve zero e temperatura nula"
+   },
+   {
+    "file": "src/hooks/copilot/__tests__/useCopilotRetention.test.ts",
+    "name": "agruparPorAtendente"
+   },
+   {
+    "file": "src/hooks/copilot/__tests__/useCopilotRetention.test.ts",
+    "name": "ordena pelo mais ativo e conta os dias de cada atendente"
+   },
+   {
+    "file": "src/hooks/copilot/__tests__/useCopilotRetention.test.ts",
+    "name": "agruparPorDia"
+   },
+   {
+    "file": "src/hooks/copilot/__tests__/useCopilotRetention.test.ts",
+    "name": "soma por dia, conta atendentes distintos e vem do mais recente para o mais antigo"
    },
    {
     "file": "src/hooks/copilot/__tests__/useDataMasking.test.ts",
@@ -283818,6 +283907,13 @@
    },
    {
     "kind": "dinâmico",
+    "msg": "1 chamada(s) `.from(variável)` — tabela só conhecida em runtime",
+    "where": [
+     "src/hooks/copilot/useCopilotRetention.ts"
+    ]
+   },
+   {
+    "kind": "dinâmico",
     "msg": "2 chamada(s) `.from(variável)` — tabela só conhecida em runtime",
     "where": [
      "src/hooks/crm/useAgentPresence.ts"
@@ -308013,6 +308109,16 @@
     "grupos principais da navegação). A permissão `google_calendar` era oferecida aqui e",
     "supervisor não deve nem ver a aba (evita abrir uma tela que só daria acesso negado).",
     "`profiles.access_level` está DEPRECATED: o campo é registro, não permissão. */}"
+   ]
+  },
+  "src/components/admin/CopilotRetentionPanel.tsx": {
+   "path": "src/components/admin/CopilotRetentionPanel.tsx",
+   "lines": 231,
+   "exports": [
+    "function CopilotRetentionPanel"
+   ],
+   "errors": [
+    ";\nimport { Button } from "
    ]
   },
   "src/components/admin/CrisisRoom.tsx": {
@@ -367153,6 +367259,59 @@
     "useCopilotLearning"
    ]
   },
+  "src/hooks/copilot/useCopilotRetention.ts": {
+   "path": "src/hooks/copilot/useCopilotRetention.ts",
+   "lines": 269,
+   "exports": [
+    "const TABELA_RETENCAO",
+    "const QUERY_KEY_RETENCAO",
+    "const DIAS_PADRAO",
+    "const JANELAS_DIAS",
+    "type JanelaDias",
+    "interface RetencaoLinha",
+    "interface RetencaoPorAtendente",
+    "interface RetencaoPorDia",
+    "interface RetencaoResumo",
+    "function diaLimite",
+    "function mapLinha",
+    "function resumirRetencao",
+    "function agruparPorAtendente",
+    "function agruparPorDia",
+    "function useCopilotRetention"
+   ],
+   "tables": [
+    {
+     "table": "profiles",
+     "op": "select"
+    }
+   ],
+   "table_cols": {
+    "profiles": [
+     "name",
+     "user_id"
+    ]
+   },
+   "dyn_from": 1,
+   "enums": [
+    {
+     "name": "JANELAS_DIAS",
+     "values": "7, 14, 30"
+    }
+   ],
+   "params": [
+    {
+     "name": "TABELA_RETENCAO",
+     "value": "'copilot_retention_aggregates'"
+    },
+    {
+     "name": "DIAS_PADRAO",
+     "value": "14"
+    }
+   ],
+   "hooks": [
+    "useCopilotRetention"
+   ]
+  },
   "src/hooks/copilot/useCopilotSession.ts": {
    "path": "src/hooks/copilot/useCopilotSession.ts",
    "lines": 136,
@@ -368374,6 +368533,33 @@
     "recordEditDistance: não chama insert se sugestão vazia",
     "recordFeedback: registra rating positive",
     "recordFeedback: registra rating negative com motivo"
+   ]
+  },
+  "src/hooks/copilot/__tests__/useCopilotRetention.test.ts": {
+   "path": "src/hooks/copilot/__tests__/useCopilotRetention.test.ts",
+   "lines": 156,
+   "is_test": true,
+   "rule_comments": [
+    "e `profiles.user_id`, nao `profiles.id`), a media de temperatura (nao pode ser",
+    "media de medias) e a contagem por dia (nao pode somar duas vezes o mesmo dia)."
+   ],
+   "doc": "CV-143: a serie de retencao do copiloto. Os helpers sao puros porque a tela depende de tres coisas que erram silenciosamente: o nome do atendente (a ponte e `profiles.user_id`, nao `profiles.id`), a media de temperatura (nao pode ser media de medias) e a contagem por dia (nao pode somar duas vezes o …",
+   "tests": [
+    "diaLimite",
+    "devolve o primeiro dia da janela, contando o dia de hoje",
+    "atravessa a virada do mes sem perder o zero a esquerda",
+    "mapLinha",
+    "resolve o nome pela ponte user_id e converte numeric do PostgREST",
+    "sem nome no perfil nao inventa identidade nem quebra",
+    "resumirRetencao",
+    "soma a janela inteira e conta atendentes e dias distintos",
+    "temperatura media e ponderada pelas sessoes, nao media das medias",
+    "dia sem sessoes nao puxa a temperatura para baixo",
+    "janela sem dados devolve zero e temperatura nula",
+    "agruparPorAtendente",
+    "ordena pelo mais ativo e conta os dias de cada atendente",
+    "agruparPorDia",
+    "soma por dia, conta atendentes distintos e vem do mais recente para o mais antigo"
    ]
   },
   "src/hooks/copilot/__tests__/useDataMasking.test.ts": {
@@ -394781,7 +394967,7 @@
   },
   "src/pages/ViewRouter.tsx": {
    "path": "src/pages/ViewRouter.tsx",
-   "lines": 271,
+   "lines": 272,
    "exports": [
     "function ViewRouter"
    ],
@@ -394792,7 +394978,7 @@
   },
   "src/pages/lazyViews.ts": {
    "path": "src/pages/lazyViews.ts",
-   "lines": 65,
+   "lines": 67,
    "exports": [
     "const RealtimeInboxView",
     "const DashboardView",
@@ -394843,6 +395029,7 @@
     "const MediaMigrationTool",
     "const CRM360ExplorerView",
     "const AIUsageDashboard",
+    "const CopilotRetentionPage",
     "const SearchInsightsView",
     "const TalkXView",
     "const TalkXKitView",
@@ -395586,6 +395773,13 @@
    "lines": 37,
    "exports": [
     "function ContactProtectionPage"
+   ]
+  },
+  "src/pages/admin/CopilotRetentionPage.tsx": {
+   "path": "src/pages/admin/CopilotRetentionPage.tsx",
+   "lines": 32,
+   "exports": [
+    "function CopilotRetentionPage"
    ]
   },
   "src/pages/admin/LinkPreviewCachePage.tsx": {
@@ -397478,7 +397672,7 @@
   },
   "src/services/navigation.service.ts": {
    "path": "src/services/navigation.service.ts",
-   "lines": 217,
+   "lines": 220,
    "exports": [
     "interface NavItem",
     "interface NavGroup",
@@ -430827,10 +431021,29 @@
   }
  },
  "git": {
-  "sha": "12371410d53eb61a9de149d24894bb62d2919094",
+  "sha": "4465e3920a47e5366157bab2863165c30e0e2d1b",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "4465e392",
+    "date": "2026-11-26",
+    "author": "adm01-debug",
+    "subject": "feat(copiloto): tela de retenção do copiloto RADAR (agregado diário por atendente) (#3418)",
+    "files": [
+     "FEATURE_REGISTRY.md",
+     "docs/DB-INVENTORY.md",
+     "inventario/estado/rotas.json",
+     "performance-budget.json",
+     "src/components/admin/CopilotRetentionPanel.tsx",
+     "src/hooks/copilot/__tests__/useCopilotRetention.test.ts",
+     "src/hooks/copilot/useCopilotRetention.ts",
+     "src/pages/ViewRouter.tsx",
+     "src/pages/admin/CopilotRetentionPage.tsx",
+     "src/pages/lazyViews.ts",
+     "src/services/navigation.service.ts"
+    ]
+   },
    {
     "sha": "12371410",
     "date": "2026-11-26",
@@ -431291,24 +431504,12 @@
     "files": [
      "e2e/inbox-contact-sidebar.spec.ts"
     ]
-   },
-   {
-    "sha": "078aacb5",
-    "date": "2026-11-25",
-    "author": "adm01-debug",
-    "subject": "feat: tela da linha do tempo de SLA no painel do contato (#3383)",
-    "files": [
-     "src/components/inbox/ContactDetails.tsx",
-     "src/components/inbox/contact-details/SlaTimelineSection.tsx",
-     "src/components/inbox/contact-details/__tests__/SlaTimelineSection.test.tsx",
-     "src/components/inbox/contact-details/sidebar/sidebarSections.ts"
-    ]
    }
   ],
   "hot_files": [
    [
     "docs/DB-INVENTORY.md",
-    15
+    16
    ],
    [
     "docs/talkx/ESTADOS.md",
@@ -431317,6 +431518,10 @@
    [
     "supabase/deployment-manifest.json",
     5
+   ],
+   [
+    "inventario/estado/rotas.json",
+    4
    ],
    [
     "src/components/security/SecurityView.tsx",
@@ -431340,10 +431545,6 @@
    ],
    [
     "supabase/schema-manifest.json",
-    3
-   ],
-   [
-    "inventario/estado/rotas.json",
     3
    ],
    [

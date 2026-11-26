@@ -1,7 +1,7 @@
 {
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
- "total": 954,
+ "total": 956,
  "orfaos": 45,
  "nomes_duplicados": {
   "AchievementBadge": [
@@ -354,6 +354,22 @@
    "linhas": 72,
    "dominio": "components/admin",
    "hooks_locais": [],
+   "tabelas": [],
+   "edges": [],
+   "usado_por": 1,
+   "orfao": false
+  },
+  {
+   "arquivo": "src/components/admin/CopilotRetentionPanel.tsx",
+   "exports": [
+    "CopilotRetentionPanel"
+   ],
+   "export_default": null,
+   "linhas": 231,
+   "dominio": "components/admin",
+   "hooks_locais": [
+    "useCopilotRetention"
+   ],
    "tabelas": [],
    "edges": [],
    "usado_por": 1,
@@ -13819,7 +13835,7 @@
    "hooks_locais": [],
    "tabelas": [],
    "edges": [],
-   "usado_por": 17,
+   "usado_por": 18,
    "orfao": false
   },
   {
@@ -13890,7 +13906,7 @@
    "hooks_locais": [],
    "tabelas": [],
    "edges": [],
-   "usado_por": 418,
+   "usado_por": 419,
    "orfao": false
   },
   {
@@ -13925,7 +13941,7 @@
    "hooks_locais": [],
    "tabelas": [],
    "edges": [],
-   "usado_por": 202,
+   "usado_por": 204,
    "orfao": false
   },
   {
@@ -15450,6 +15466,22 @@
    "orfao": false
   },
   {
+   "arquivo": "src/pages/admin/CopilotRetentionPage.tsx",
+   "exports": [
+    "CopilotRetentionPage"
+   ],
+   "export_default": null,
+   "linhas": 32,
+   "dominio": "pages/admin",
+   "hooks_locais": [
+    "useUserRole"
+   ],
+   "tabelas": [],
+   "edges": [],
+   "usado_por": 1,
+   "orfao": false
+  },
+  {
    "arquivo": "src/pages/admin/LinkPreviewCachePage.tsx",
    "exports": [
     "LinkPreviewCachePage"
@@ -15795,7 +15827,7 @@
     "ViewRouter"
    ],
    "export_default": null,
-   "linhas": 271,
+   "linhas": 272,
    "dominio": "pages",
    "hooks_locais": [
     "useAriaAnnouncer",

@@ -290,9 +290,9 @@
   },
   {
    "modulo": "components/admin",
-   "arquivos": 27,
+   "arquivos": 28,
    "testes": 41,
-   "linhas": 5672,
+   "linhas": 5903,
    "itens_menu": [
     "Admin",
     "Consumo IA",
@@ -311,7 +311,7 @@
     "supervisao"
    ],
    "rotas_http": [],
-   "componentes": 24,
+   "componentes": 25,
    "hooks_locais": [
     "useAIBudgetSummary",
     "useAIUsageDashboard",
@@ -320,6 +320,7 @@
     "useAuth",
     "useCRMIntegrationEnabled",
     "useConnectionsHealth",
+    "useCopilotRetention",
     "useCrisisRoomMetrics",
     "useExternalMutation",
     "useExternalSelect",
@@ -463,6 +464,7 @@
     "hooks/analytics",
     "hooks/business",
     "hooks/connections",
+    "hooks/copilot",
     "hooks/integrations",
     "hooks/system",
     "integrations/supabase",
@@ -3809,6 +3811,7 @@
     "useConversationViewers",
     "useCopilotFeedback",
     "useCopilotLearning",
+    "useCopilotRetention",
     "useCopilotSession",
     "useCopilotSupervisor",
     "useCostDashboard",
@@ -10276,9 +10279,9 @@
   },
   {
    "modulo": "hooks/copilot",
-   "arquivos": 63,
-   "testes": 12,
-   "linhas": 4583,
+   "arquivos": 64,
+   "testes": 13,
+   "linhas": 4852,
    "itens_menu": [],
    "telas": [],
    "rotas_http": [],
@@ -10297,6 +10300,7 @@
     "useConversationScore",
     "useCopilotFeedback",
     "useCopilotLearning",
+    "useCopilotRetention",
     "useCopilotSession",
     "useCopilotSupervisor",
     "useCostDashboard",
@@ -10431,6 +10435,7 @@
     "useConversationScore",
     "useCopilotFeedback",
     "useCopilotLearning",
+    "useCopilotRetention",
     "useCopilotSession",
     "useCopilotSupervisor",
     "useCostDashboard",
@@ -10522,11 +10527,13 @@
     "tabelas": [
      "copilot_feedback",
      "copilot_insights",
-     "copilot_sessions"
+     "copilot_sessions",
+     "profiles"
     ],
     "rpcs": []
    },
    "importado_por_outros_modulos": [
+    "components/admin",
     "components/copilot",
     "components/inbox",
     "hooks/inbox"
@@ -10538,7 +10545,9 @@
     "integrations/supabase",
     "lib"
    ],
-   "pacotes_externos": []
+   "pacotes_externos": [
+    "@tanstack/react-query"
+   ]
   },
   {
    "modulo": "hooks/crm",
@@ -12747,6 +12756,7 @@
     "useConversationViewers",
     "useCopilotFeedback",
     "useCopilotLearning",
+    "useCopilotRetention",
     "useCopilotSession",
     "useCopilotSupervisor",
     "useCostDashboard",
@@ -15161,7 +15171,7 @@
    "modulo": "pages",
    "arquivos": 18,
    "testes": 0,
-   "linhas": 3187,
+   "linhas": 3190,
    "itens_menu": [
     "Telemetria BD"
    ],
@@ -15321,6 +15331,7 @@
     "useConversationViewers",
     "useCopilotFeedback",
     "useCopilotLearning",
+    "useCopilotRetention",
     "useCopilotSession",
     "useCopilotSupervisor",
     "useCostDashboard",
@@ -16177,6 +16188,7 @@
     "hooks/ui",
     "integrations/supabase",
     "lib",
+    "pages/admin",
     "pages/admin-telemetria",
     "pages/queue-details",
     "services",
@@ -16221,25 +16233,29 @@
   },
   {
    "modulo": "pages/admin",
-   "arquivos": 10,
+   "arquivos": 11,
    "testes": 7,
-   "linhas": 1445,
-   "itens_menu": [],
+   "linhas": 1477,
+   "itens_menu": [
+    "Retenção Copiloto"
+   ],
    "telas": [
     "/admin/auditoria-contatos",
     "/admin/cache-previas",
     "/admin/protecao-contatos",
     "/admin/rate-limit",
-    "/admin/roles"
+    "/admin/roles",
+    "copilot-retention"
    ],
    "rotas_http": [],
-   "componentes": 6,
+   "componentes": 7,
    "hooks_locais": [
     "useAdminData",
     "useAppBootstrap",
     "useAuth",
     "useContactAuditTrail",
     "useContactProtectionPolicies",
+    "useCopilotRetention",
     "useDeleteContactProtectionPolicy",
     "useLinkPreviewCacheMetrics",
     "useMessageUpdateBatcher",
@@ -16309,6 +16325,7 @@
     "admin",
     "agent",
     "alert",
+    "group",
     "status",
     "supervisor"
    ],
@@ -16325,6 +16342,7 @@
    },
    "importado_por_outros_modulos": [
     "hooks/system",
+    "pages",
     "routes"
    ],
    "depende_de_modulos": [
@@ -16711,6 +16729,7 @@
     "useConversationViewers",
     "useCopilotFeedback",
     "useCopilotLearning",
+    "useCopilotRetention",
     "useCopilotSession",
     "useCopilotSupervisor",
     "useCostDashboard",
@@ -17614,7 +17633,7 @@
    "modulo": "services",
    "arquivos": 17,
    "testes": 0,
-   "linhas": 2690,
+   "linhas": 2693,
    "itens_menu": [],
    "telas": [],
    "rotas_http": [],

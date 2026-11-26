@@ -1,6 +1,6 @@
 # 11 · GLOSSÁRIO, DADOS DE REFERÊNCIA E LACUNAS
 
-> Gerado automaticamente por AI Context Sync v1.3.2 · commit `12371410d5` · branch `main` · 2026-11-26 20:15 UTC
+> Gerado automaticamente por AI Context Sync v1.3.2 · commit `4465e3920a` · branch `main` · 2026-11-26 21:21 UTC
 > Não edite à mão — regras humanas vão em `manual/`.
 
 ## Glossário do domínio (entidades do sistema)
@@ -307,7 +307,7 @@
 | `AlertSeverity` (TS) | critical \| warning |  | `src/components/monitoring/hooks/useConnectionIncidents.ts` |
 | `INSTANCE_PAUSES_QUERY_KEY` (TS) | 'instance-pauses' |  | `src/components/monitoring/hooks/useInstancePauses.ts` |
 | `MetricStatus` (TS) | good \| warning \| critical |  | `src/components/performance/metricThresholds.ts` |
-| … +394 linhas — lista completa em `context.json` | | | |
+| … +395 linhas — lista completa em `context.json` | | | |
 
 ## Dados de referência (seed — planos, categorias, perfis fixos)
 
@@ -513,6 +513,7 @@
 | dinâmico | 1 chamada(s) `.from(variável)` — tabela só conhecida em runtime | `src/hooks/chat/useContactMedia.ts` |
 | dinâmico | 1 chamada(s) `.from(variável)` — tabela só conhecida em runtime | `src/hooks/chat/__tests__/useLatestAnalysis.test.tsx` |
 | dinâmico | 1 chamada(s) `.from(variável)` — tabela só conhecida em runtime | `src/hooks/communication/useAudioPlayer.ts` |
+| dinâmico | 1 chamada(s) `.from(variável)` — tabela só conhecida em runtime | `src/hooks/copilot/useCopilotRetention.ts` |
 | dinâmico | 2 chamada(s) `.from(variável)` — tabela só conhecida em runtime | `src/hooks/crm/useAgentPresence.ts` |
 | dinâmico | 1 chamada(s) `.from(variável)` — tabela só conhecida em runtime | `src/hooks/integrations/useKnowledgeBase.ts` |
 | dinâmico | 1 chamada(s) `.from(variável)` — tabela só conhecida em runtime | `src/hooks/integrations/__tests__/useTalkXInsights.defeito-223.test.tsx` |

@@ -4,9 +4,9 @@
  "resumo": {
   "urls": 21,
   "rotas_http_backend": 11,
-  "vistas_por_id": 55,
-  "itens_menu": 61,
-  "lazy": 156
+  "vistas_por_id": 56,
+  "itens_menu": 62,
+  "lazy": 157
  },
  "urls": [
   {
@@ -164,6 +164,7 @@
     "useConversationViewers",
     "useCopilotFeedback",
     "useCopilotLearning",
+    "useCopilotRetention",
     "useCopilotSession",
     "useCopilotSupervisor",
     "useCostDashboard",
@@ -737,6 +738,7 @@
     "useConversationViewers",
     "useCopilotFeedback",
     "useCopilotLearning",
+    "useCopilotRetention",
     "useCopilotSession",
     "useCopilotSupervisor",
     "useCostDashboard",
@@ -1493,7 +1495,7 @@
     "unknown",
     "user"
    ],
-   "arquivos_puxados": 1620
+   "arquivos_puxados": 1623
   },
   {
    "protegida": false,
@@ -4669,6 +4671,84 @@
     "tabpanel"
    ],
    "arquivos_puxados": 242
+  },
+  {
+   "id": "copilot-retention",
+   "componente": "CopilotRetentionPage",
+   "arquivo": "src/pages/admin/CopilotRetentionPage.tsx",
+   "registrada_em": "src/pages/ViewRouter.tsx",
+   "hooks": [
+    "useAppBootstrap",
+    "useAuth",
+    "useCallback",
+    "useContext",
+    "useCopilotRetention",
+    "useEffect",
+    "useMemo",
+    "useMessageUpdateBatcher",
+    "useMutation",
+    "useNotificationLeader",
+    "useNotificationSettings",
+    "useOfflineCache",
+    "usePublishIncomingAlertIdentity",
+    "useQuery",
+    "useQueryClient",
+    "useRealtimeMessages",
+    "useRealtimeNotifications",
+    "useRealtimeReconnectingNotice",
+    "useRealtimeStatus",
+    "useRef",
+    "useState",
+    "useSyncExternalStore",
+    "useTeamAlertsPreference",
+    "useToast",
+    "useUserRole"
+   ],
+   "hooks_locais": [
+    "useAppBootstrap",
+    "useAuth",
+    "useCopilotRetention",
+    "useMessageUpdateBatcher",
+    "useNotificationSettings",
+    "useOfflineCache",
+    "usePublishIncomingAlertIdentity",
+    "useRealtimeMessages",
+    "useRealtimeNotifications",
+    "useRealtimeReconnectingNotice",
+    "useRealtimeStatus",
+    "useTeamAlertsPreference",
+    "useToast",
+    "useUserRole"
+   ],
+   "tabelas": [
+    "contacts",
+    "messages",
+    "profiles",
+    "user_roles",
+    "user_settings"
+   ],
+   "rpcs": [
+    "app_bootstrap",
+    "enqueue_outbound_message",
+    "enqueue_rich_outbound_message",
+    "get_inbox_contact_summaries",
+    "user_has_permission"
+   ],
+   "edges": [
+    "auth-login",
+    "detect-new-device"
+   ],
+   "canais_realtime": [
+    "chat-reactions:${messageId}"
+   ],
+   "flags": [],
+   "papeis": [
+    "admin",
+    "alert",
+    "group",
+    "supervisor"
+   ],
+   "arquivos_puxados": 55
   },
   {
    "id": "crm360",
@@ -9794,6 +9874,18 @@
    "resolve_para": "src/components/reports/AdvancedReportsView.tsx"
   },
   {
+   "rotulo": "Retenção Copiloto",
+   "destino": "copilot-retention",
+   "grupo": null,
+   "papeis": [
+    "admin",
+    "supervisor"
+   ],
+   "papeis_nao_resolvidos": null,
+   "definido_em": "src/services/navigation.service.ts",
+   "resolve_para": "src/pages/admin/CopilotRetentionPage.tsx"
+  },
+  {
    "rotulo": "Segurança",
    "destino": "security",
    "grupo": null,
@@ -9983,6 +10075,7 @@
   "ContactProtectionPage": "src/pages/admin/ContactProtectionPage.tsx",
   "ContactsView": "src/components/contacts/ContactsView.tsx",
   "ConversationSummary": "src/components/inbox/ConversationSummary.tsx",
+  "CopilotRetentionPage": "src/pages/admin/CopilotRetentionPage.tsx",
   "Crm360Tab": "src/components/inbox/tabs/Crm360Tab.tsx",
   "DashboardView": "src/components/dashboard/DashboardView.tsx",
   "DiagnosticsView": "src/components/diagnostics/DiagnosticsView.tsx",

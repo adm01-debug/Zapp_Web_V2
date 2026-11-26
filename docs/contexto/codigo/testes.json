@@ -5,18 +5,18 @@
   "vitest",
   "playwright"
  ],
- "total": 2866,
+ "total": 2867,
  "por_tipo": {
   "contrato": 116,
   "e2e": 76,
   "pytest": 3,
   "qa": 10,
-  "unit": 2569
+  "unit": 2570
  },
  "onde_ficam": [
   {
    "padrao": "co-localizado (__tests__)",
-   "arquivos": 2138
+   "arquivos": 2139
   },
   {
    "padrao": "outro",
@@ -18145,6 +18145,15 @@
    "casos": 5
   },
   {
+   "arquivo": "src/hooks/copilot/__tests__/useCopilotRetention.test.ts",
+   "tipo": "unit",
+   "linhas": 156,
+   "testa": [
+    "src/hooks/copilot/useCopilotRetention.ts"
+   ],
+   "casos": 10
+  },
+  {
    "arquivo": "src/hooks/copilot/__tests__/useDataMasking.test.ts",
    "tipo": "unit",
    "linhas": 57,
@@ -27214,6 +27223,7 @@
   "src/hooks/copilot/useAttachmentSuggestion.ts": 1,
   "src/hooks/copilot/useConversationScore.ts": 2,
   "src/hooks/copilot/useCopilotFeedback.ts": 1,
+  "src/hooks/copilot/useCopilotRetention.ts": 1,
   "src/hooks/copilot/useCopilotSession.ts": 2,
   "src/hooks/copilot/useDataMasking.ts": 3,
   "src/hooks/copilot/useDeadlineCalculator.ts": 1,

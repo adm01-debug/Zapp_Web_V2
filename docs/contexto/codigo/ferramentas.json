@@ -3,7 +3,7 @@
  "format_version": 2,
  "stack": {
   "linguagens": [
-   "TypeScript (4590)",
+   "TypeScript (4594)",
    "Markdown (3988)",
    "SQL (3075)",
    "JSON (1939)",
@@ -1280,7 +1280,7 @@
   {
    "arquivo": "FEATURE_REGISTRY.md",
    "titulo": "FEATURE_REGISTRY.md — registro das views do V2",
-   "linhas": 108
+   "linhas": 109
   },
   {
    "arquivo": "HANDOFF_NEXT_SESSION.md",
@@ -3005,6 +3005,10 @@
     "ocorrencias": 30
    },
    {
+    "papel": "group",
+    "ocorrencias": 21
+   },
+   {
     "papel": "img",
     "ocorrencias": 21
    },
@@ -3014,10 +3018,6 @@
    },
    {
     "papel": "button",
-    "ocorrencias": 20
-   },
-   {
-    "papel": "group",
     "ocorrencias": 20
    },
    {
@@ -3559,6 +3559,13 @@
    },
    {
     "rotulo": "Relatórios",
+    "papeis": [
+     "admin",
+     "supervisor"
+    ]
+   },
+   {
+    "rotulo": "Retenção Copiloto",
     "papeis": [
      "admin",
      "supervisor"
