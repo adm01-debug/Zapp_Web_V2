@@ -89812,6 +89812,12 @@
         "statements": 1,
         "statements_sha": "5e3d74b853976a0d",
         "version": "20261124120000"
+      },
+      {
+        "name": "ia009_kill_switch_chaves",
+        "statements": 1,
+        "statements_sha": "57d2ce6d6e854520",
+        "version": "20261125130000"
       }
     ],
     "policies": [
