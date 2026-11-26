@@ -5,10 +5,10 @@
   "linguagens": [
    "TypeScript (4525)",
    "Markdown (3988)",
-   "SQL (3067)",
+   "SQL (3069)",
    "JSON (1939)",
    "JavaScript (524)",
-   "Shell (253)",
+   "Shell (254)",
    "Python (125)",
    "YAML (43)"
   ],
@@ -613,6 +613,7 @@
     "scripts/db-audit/talkx-suppression-read-rpcs.test.sh",
     "scripts/db-audit/talkx-suppression-reasons.test.sh",
     "scripts/db-audit/talkx-template-columns.test.sh",
+    "scripts/db-audit/talkx-template-duplicate-archive-delete.test.sh",
     "scripts/db-audit/talkx-template-history-behavior.test.sh",
     "scripts/db-audit/talkx-template-second-update-snapshot.test.sh",
     "scripts/db-audit/talkx-tick-expurgo.test.sh",

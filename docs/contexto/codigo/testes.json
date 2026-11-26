@@ -19415,11 +19415,11 @@
   {
    "arquivo": "src/hooks/integrations/__tests__/useTalkXTemplates.test.ts",
    "tipo": "unit",
-   "linhas": 638,
+   "linhas": 650,
    "testa": [
     "src/hooks/integrations/useTalkXTemplates.ts"
    ],
-   "casos": 32
+   "casos": 33
   },
   {
    "arquivo": "src/hooks/integrations/__tests__/useTalkXTemplates.testTemplate.host.test.tsx",

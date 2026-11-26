@@ -8,7 +8,7 @@
   "supabase/migrations",
   "typeorm"
  ],
- "migrations": 1157,
+ "migrations": 1159,
  "seeds": [
   "docs/contexto/supabase/functions/public/seed_default_goals_for_profile__12ae32cb1ec02d01.sql",
   "e2e/fixtures/seed-talk-me.sql",
@@ -156,6 +156,7 @@
   "apply_client_wallet",
   "apply_pg_cron_escalonamento",
   "apply_zapp_cron_secrets_l5",
+  "archive_talkx_template",
   "assume_conversation",
   "attribute_multiplix_item_reply",
   "attribute_talkx_reply",
@@ -234,11 +235,13 @@
   "delete_contacts",
   "delete_department",
   "delete_talkx_campaign",
+  "delete_talkx_template",
   "delivery_stats",
   "department_audit_logs_fill_profile_name",
   "departments_overview",
   "dispatch_scheduled_messages",
   "duplicate_talkx_campaign",
+  "duplicate_talkx_template",
   "edit_message",
   "effective_role",
   "encrypt_gmail_token",
@@ -321,6 +324,7 @@
   "guard_message_provenance_fields",
   "guard_multiplix_event_immutable",
   "guard_talkx_campaign_recurrence_series",
+  "guard_talkx_template_delete",
   "guard_talkx_template_update",
   "guard_talkx_template_version_immutable",
   "handle_conversation_closure_gamification",
@@ -1597,6 +1601,13 @@
    "evento": "insert or update or delete",
    "tabela": "talkx_template_versions",
    "funcao": "guard_talkx_template_version_immutable"
+  },
+  {
+   "nome": "trg_guard_talkx_template_delete",
+   "quando": "before",
+   "evento": "delete",
+   "tabela": "talkx_templates",
+   "funcao": "guard_talkx_template_delete"
   },
   {
    "nome": "trg_guard_talkx_template_update",
@@ -28618,6 +28629,7 @@
     "talkx-send"
    ],
    "triggers": [
+    "trg_guard_talkx_template_delete",
     "trg_guard_talkx_template_update",
     "trg_validate_talkx_template_input",
     "update_talkx_templates_updated_at"

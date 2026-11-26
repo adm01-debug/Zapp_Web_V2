@@ -1,7 +1,7 @@
 {
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
- "total": 454,
+ "total": 455,
  "scripts": [
   {
    "arquivo": "scripts/ai-context/cenarios.mjs",
@@ -3346,6 +3346,17 @@
    "arquivo": "scripts/db-audit/talkx-template-columns.test.sh",
    "descricao": "N-126b (fonte X083, parte 2 de 2): prova por script as 8 colunas novas de public.talkx_templates criadas pela migration 20261011000020_talkx_templates_channel_media_archive.sql",
    "linhas": 304,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [
+    "db-guard.yml"
+   ],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/talkx-template-duplicate-archive-delete.test.sh",
+   "descricao": "Harness descartável (Docker postgres:17-alpine) — N-127. Prova, em PostgreSQL 17, o delta do cartão N-127 (duplicar / arquivar /",
+   "linhas": 563,
    "env": [],
    "npm_scripts": [],
    "workflows": [

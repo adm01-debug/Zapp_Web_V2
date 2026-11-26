@@ -29,7 +29,7 @@
   "edge_functions": "supabase/functions",
   "migrations": "supabase/migrations",
   "scripts": [
-   "scripts/db-audit (305)",
+   "scripts/db-audit (306)",
    "scripts/ci (43)",
    "scripts/e2e-isolated (41)"
   ],
@@ -66,11 +66,11 @@
  "commits": {
   "convencao": "conventional commits (observado)",
   "exemplos": [
+   "fix: trava exclusao de template do Talk X em campanha (N-127/N-127b) (#3394)",
    "feat: acoes por mensagem (favoritar, fixar, responder depois, denunciar) (#3395)",
    "feat: bloqueio de login por cidade (paridade Promo Gifts V4) (#3393)",
    "feat: Sala de Crise mede pelo agregado crisis_room_snapshot (fim das 4 consultas no navegador) (#3396)",
-   "fix: allowlist de credencial de provedor e vínculo endpoint/secret no banco (IA-EGRESS-001) (#3384)",
-   "fix: semeia as chaves de desligamento da IA (IA-009 secao 2.1 e 2.2) (#3385)"
+   "fix: allowlist de credencial de provedor e vínculo endpoint/secret no banco (IA-EGRESS-001) (#3384)"
   ]
  },
  "pr_template": ".github/PULL_REQUEST_TEMPLATE.md",

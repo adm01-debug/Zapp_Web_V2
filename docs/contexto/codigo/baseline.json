@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "3d99ff1c5be8d4c3f1647e5125599f18649b01fd",
+  "commit": "501f3bb50768d6ed7fd622b8f5e772c52026a474",
   "branch": "main",
-  "data_commit": "2026-11-26T03:06:45Z",
+  "data_commit": "2026-11-26T03:22:16Z",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "501f3bb5",
+    "data": "2026-11-26",
+    "assunto": "fix: trava exclusao de template do Talk X em campanha (N-127/N-127b) (#3394)"
+   },
    {
     "sha": "3d99ff1c",
     "data": "2026-11-26",
@@ -126,14 +131,9 @@
     "sha": "6d87cf6c",
     "data": "2026-11-25",
     "assunto": "feat(ci): restaura a fila de merge serial (auto-update-pr-branch) (#3368)"
-   },
-   {
-    "sha": "e1a545c6",
-    "data": "2026-11-24",
-    "assunto": "feat(manutencao): porta o harness de manutencao completo da PR #2926 (#3370)"
    }
   ],
-  "arquivos_mudados_7d": 2762,
+  "arquivos_mudados_7d": 2767,
   "pastas_mais_mudadas_30d": [
    {
     "pasta": "docs/contexto/supabase",
@@ -185,7 +185,7 @@
    },
    {
     "pasta": "src/hooks/integrations",
-    "mudancas": 146
+    "mudancas": 148
    },
    {
     "pasta": "src/components/contacts",
@@ -203,7 +203,7 @@
    },
    {
     "arquivo": "ESTADO.md",
-    "mudancas": 24
+    "mudancas": 25
    },
    {
     "arquivo": "supabase/schema-manifest.json",
@@ -227,11 +227,7 @@
    },
    {
     "arquivo": ".github/workflows/db-guard.yml",
-    "mudancas": 12
-   },
-   {
-    "arquivo": "PENDENCIAS.md",
-    "mudancas": 11
+    "mudancas": 13
    },
    {
     "arquivo": "scripts/db-audit/grants-baseline.json",
@@ -239,6 +235,10 @@
    },
    {
     "arquivo": ".github/workflows/ci.yml",
+    "mudancas": 10
+   },
+   {
+    "arquivo": "PENDENCIAS.md",
     "mudancas": 10
    },
    {
@@ -282,10 +282,6 @@
     "mudancas": 5
    },
    {
-    "arquivo": "RELATORIO_CI.md",
-    "mudancas": 5
-   },
-   {
     "arquivo": "bun.lock",
     "mudancas": 5
    },
@@ -295,6 +291,10 @@
    },
    {
     "arquivo": "docs/contexto/regras/manual/regras.md",
+    "mudancas": 5
+   },
+   {
+    "arquivo": "docs/prod-readiness.md",
     "mudancas": 5
    }
   ],
@@ -314,9 +314,9 @@
   ]
  },
  "contagens": {
-  "arquivos_total": 14830,
+  "arquivos_total": 14833,
   "arquivos_codigo": 5170,
-  "linhas_codigo": 958969,
+  "linhas_codigo": 958996,
   "rotas": 18,
   "rotas_http_backend": 11,
   "vistas_por_id": 55,
@@ -326,11 +326,11 @@
   "hooks": 523,
   "edge_functions": 93,
   "tabelas": 224,
-  "migrations": 1157,
+  "migrations": 1159,
   "cron_jobs": 29,
   "testes": 2838,
   "workflows": 26,
-  "scripts": 454,
+  "scripts": 455,
   "docs_md": 3988
  },
  "por_pasta": {
@@ -760,7 +760,7 @@
   },
   "src/hooks": {
    "arquivos": 1047,
-   "linhas": 169534
+   "linhas": 169561
   },
   "src/i18n": {
    "arquivos": 2,

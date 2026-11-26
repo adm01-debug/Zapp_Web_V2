@@ -1,7 +1,7 @@
 # Contexto do projeto para agentes de IA
 
 GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.
-Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR dela) a cada push em `main` e a cada 10 minutos pelo workflow `contexto.yml`; índice único das três fontes em `docs/contexto/00-INDEX.md`. Gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `3d99ff1c5be8d4c3f1647e5125599f18649b01fd` (2026-11-26T03:06:45Z).
+Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR dela) a cada push em `main` e a cada 10 minutos pelo workflow `contexto.yml`; índice único das três fontes em `docs/contexto/00-INDEX.md`. Gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `501f3bb50768d6ed7fd622b8f5e772c52026a474` (2026-11-26T03:22:16Z).
 
 ## Como usar (leia antes de planejar ou executar qualquer tarefa)
 1. **Tela/rota/menu** → `rotas.json` (url/vista/menu → arquivo → hooks → tabelas → edges; `rotas_http_backend` para APIs) e `modulos.json` (módulo inteiro + dependências entre módulos).
@@ -14,7 +14,7 @@ Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR
 Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua tarefa; não carregue tudo.
 
 ## Stack
-- linguagens: TypeScript (4525), Markdown (3988), SQL (3067), JSON (1939), JavaScript (524), Shell (253), Python (125), YAML (43)
+- linguagens: TypeScript (4525), Markdown (3988), SQL (3069), JSON (1939), JavaScript (524), Shell (254), Python (125), YAML (43)
 - linguagem_principal: TypeScript
 - framework: React
 - backend_http: n/d
@@ -34,9 +34,9 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 ## Números
 | item | qtd |
 |---|---|
-| arquivos_total | 14830 |
+| arquivos_total | 14833 |
 | arquivos_codigo | 5170 |
-| linhas_codigo | 958969 |
+| linhas_codigo | 958996 |
 | rotas | 18 |
 | rotas_http_backend | 11 |
 | vistas_por_id | 55 |
@@ -46,11 +46,11 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 | hooks | 523 |
 | edge_functions | 93 |
 | tabelas | 224 |
-| migrations | 1157 |
+| migrations | 1159 |
 | cron_jobs | 29 |
 | testes | 2838 |
 | workflows | 26 |
-| scripts | 454 |
+| scripts | 455 |
 | docs_md | 3988 |
 
 ## Onde ficam as coisas
@@ -61,7 +61,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - testes: co-localizado (__tests__) (2111), outro (260), co-localizado (*.test) (202)
 - edge_functions: supabase/functions
 - migrations: supabase/migrations
-- scripts: scripts/db-audit (305), scripts/ci (43), scripts/e2e-isolated (41)
+- scripts: scripts/db-audit (306), scripts/ci (43), scripts/e2e-isolated (41)
 - docs: docs (34), (raiz) (15), .github (1)
 - nomenclatura: {"componentes":"PascalCase (91%)","hooks":"use + PascalCase","servicos":"camelCase (73%)","edge_functions":"kebab-case (96%)","tabelas":"snake_case (92%)"}
 - instruções para agentes no repo: AGENTS.md, CLAUDE.md
@@ -397,23 +397,23 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - possiveis_segredos_no_codigo: 4 — ex.: scripts/ai-context/cenarios.mjs:102, scripts/ci/edge-coverage-authz.unit.mjs:398, scripts/ci/inventario-banco.unit.mjs:147
 
 ## Grafo de código (graphify)
-- 96371 nós · 161302 arestas · 9018 comunidades · grafo do commit `3d99ff1c`
-- comunidades maiores: Communities (8869 total, 3472 thin omitted) (5377), react (1268), lucide-react (1213), TalkXSuppression.tsx (1162), cn (1076), vitest (732), react-router-dom (689), ref_node_fs (632), validation.ts (595), chat.ts (584), ExternalProductManagement.tsx (547), useMyWorkItems.ts (439)
+- 96401 nós · 161347 arestas · 9058 comunidades · grafo do commit `501f3bb5`
+- comunidades maiores: Communities (8869 total, 3472 thin omitted) (5377), TalkXSuppression.tsx (1505), lucide-react (1385), react (1338), utils.ts (1104), vitest (848), cn (647), DashboardView.tsx (570), ref_node_fs (515), ref_https (424), errorResponse (421), framer-motion (416)
 - símbolos mais chamados: cn() (src/lib/utils.ts), useAuth() (src/hooks/auth/useAuth.tsx), jsonResponse() (supabase/functions/_shared/validation.ts), errorResponse() (supabase/functions/_shared/validation.ts), handleCors() (supabase/functions/_shared/validation.ts), fail() (scripts/e2e-isolated/network-proof-policy.mjs), Logger (supabase/functions/_shared/validation.ts), requireEnv() (supabase/functions/_shared/validation.ts), fmtInt() (src/components/talkx/kit/format.ts), useUserRole() (src/hooks/system/useUserRole.ts), validationErrorResponse() (supabase/functions/_shared/schemas.ts), .from() (supabase/functions/_shared/evolution-types.ts)
 - consulta local: `graphify query "<pergunta>"`, `graphify path "<A>" "<B>"`, `graphify explain "<X>"`
 
 ## Hotspots (arquivos mais alterados, 90 dias)
 - supabase/deployment-manifest.json (37)
-- ESTADO.md (24)
+- ESTADO.md (25)
 - supabase/schema-manifest.json (16)
 - docs/talkx/ESTADOS.md (15)
 - src/integrations/supabase/types.ts (15)
 - docs/DB-INVENTORY.md (14)
 - supabase/schema-catalog.json (14)
-- .github/workflows/db-guard.yml (12)
-- PENDENCIAS.md (11)
+- .github/workflows/db-guard.yml (13)
 - scripts/db-audit/grants-baseline.json (11)
 - .github/workflows/ci.yml (10)
+- PENDENCIAS.md (10)
 - docs/agentes/github-ci.md (10)
 - docs/ci/README.md (9)
 - scripts/ci/ci-docs-baseline.unit.mjs (8)
@@ -540,6 +540,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - CHANGELOG topo: [Unreleased]
 
 ## Últimos commits
+- 2026-11-26 `501f3bb5` fix: trava exclusao de template do Talk X em campanha (N-127/N-127b) (#3394)
 - 2026-11-26 `3d99ff1c` feat: acoes por mensagem (favoritar, fixar, responder depois, denunciar) (#3395)
 - 2026-11-25 `9f9ec852` feat: bloqueio de login por cidade (paridade Promo Gifts V4) (#3393)
 - 2026-11-26 `71d923d1` feat: Sala de Crise mede pelo agregado crisis_room_snapshot (fim das 4 consultas no navegador) (#3396)
@@ -554,7 +555,6 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - 2026-11-25 `d91f6507` feat: redige PII e segredos em logs, auditoria e telemetria (#3382)
 - 2026-11-25 `73476eff` feat(playbooks): ativo/inativo, exclusao com confirmacao e acesso por teclado (#3381)
 - 2026-11-25 `9086dfdb` fix: novidade do catalogo passa a usar a expiracao do banco (regra do Promo Gifts V4) (#3379)
-- 2026-11-25 `d2e992a9` fix: ls-remote dos pins repete com backoff quando o runner leva 403 (#3378)
 
 ## Arquivos deste diretório
 - `docs/contexto/codigo/rotas.json`

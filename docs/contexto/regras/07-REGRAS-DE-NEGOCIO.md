@@ -1,6 +1,6 @@
 # 07 · REGRAS DE NEGÓCIO
 
-> Gerado automaticamente por AI Context Sync v1.3.2 · commit `3d99ff1c5b` · branch `main` · 2026-11-26 03:12 UTC
+> Gerado automaticamente por AI Context Sync v1.3.2 · commit `501f3bb507` · branch `main` · 2026-11-26 03:29 UTC
 > Não edite à mão — regras humanas vão em `manual/`.
 
 ## A. Regras escritas por humanos (`manual/` — prioridade máxima, nunca sobrescrito)
@@ -893,6 +893,7 @@ Demais dúvidas: nenhuma (entrevista concluída em 2026-11-03). Novas dúvidas: 
 | trg_conversation_closures_force_author | BEFORE INSERT OR UPDATE OF CLOSED_BY | `conversation_closures` | `force_conversation_closure_author` |  |
 | trg_contacts_conversation_status_rpc_only | BEFORE UPDATE OF CONVERSATION_STATUS | `contacts` | `guard_conversation_status_direct_update` | `OLD.conversation_status IS DISTINCT FROM NEW.conversation_status` |
 | trg_copilot_tick_on_contact_message | AFTER INSERT | `messages` | `enqueue_copilot_tick_on_contact_message` | `NEW.sender = 'contact'` |
+| trg_guard_talkx_template_delete | BEFORE DELETE | `talkx_templates` | `guard_talkx_template_delete` |  |
 | update_queues_updated_at | BEFORE UPDATE | `queues` | `update_updated_at_column` |  |
 | update_rate_limit_configs_updated_at | BEFORE UPDATE | `rate_limit_configs` | `update_updated_at_column` |  |
 | update_messages_updated_at | BEFORE UPDATE | `messages` | `update_updated_at_column` |  |
@@ -925,7 +926,6 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `validate_talkx_template_input` | invalid_talkx_template | `supabase/migrations/20260909210000_canonicalize_talkx_template_history.sql` |
 | `increment_talkx_template_use` | authentication_required | `supabase/migrations/20260909210000_canonicalize_talkx_template_history.sql` |
 | `increment_talkx_template_use` | talkx_template_not_found | `supabase/migrations/20260909210000_canonicalize_talkx_template_history.sql` |
-| `guard_talkx_template_update` | talkx_template_update_requires_authorized_rpc | `supabase/migrations/20260909210000_canonicalize_talkx_template_history.sql` |
 | `guard_talkx_template_version_immutable` | talkx_template_history_requires_authorized_rpc | `supabase/migrations/20260909210000_canonicalize_talkx_template_history.sql` |
 | `guard_conversation_closure_request_id` | closure_request_id_internal_field_forbidden | `supabase/migrations/20260909220000_add_message_delivery_and_atomic_closure_rpcs.sql` |
 | `guard_conversation_event_closure_id` | event_closure_id_internal_field_forbidden | `supabase/migrations/20260909220000_add_message_delivery_and_atomic_closure_rpcs.sql` |
@@ -1203,7 +1203,8 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `add_agent_xp` | p_xp must be a positive integer, got % | `supabase/migrations/20261003272707_reconcile_local_replay_with_canonical.sql` |
 | `add_agent_xp` | p_xp exceeds single-call maximum of 500, got % | `supabase/migrations/20261003272707_reconcile_local_replay_with_canonical.sql` |
 | `cleanup_expired_challenges` | cleanup_expired_challenges: operacao restrita a service_role | `supabase/migrations/20261003272707_reconcile_local_replay_with_canonical.sql` |
-| … +725 linhas — lista completa em `context.json` | | |
+| `cleanup_link_preview_cache` | cleanup_link_preview_cache: operacao restrita a service_role | `supabase/migrations/20261003272707_reconcile_local_replay_with_canonical.sql` |
+| … +726 linhas — lista completa em `context.json` | | |
 
 ## E. Estados, máquinas de estado e transições
 
@@ -4682,7 +4683,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | disk-full | `scripts/ci/e2e-isolated-provider-readiness.unit.mjs` |
 | must-not-read-service-role | `scripts/ci/e2e-isolated-provider-readiness.unit.mjs` |
 | synthetic transport rejection | `scripts/ci/e2e-isolated-runtime-probe.unit.mjs` |
-| … +1884 linhas — lista completa em `context.json` | |
+| … +1883 linhas — lista completa em `context.json` | |
 
 ## J. Controle de acesso no código (checagens de perfil/permissão)
 
@@ -4756,7 +4757,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `owner` | `supabase/migrations/20260927270018_team_chat_e28_fix_find_or_create_race.sql` |
 | `anon` | `supabase/migrations/20260927340000_fix_add_agent_xp_negative_and_guard.sql` |
 
-## K. Testes como especificação (23014 testes em 2445 arquivos — nomes completos em `context.json`)
+## K. Testes como especificação (23015 testes em 2445 arquivos — nomes completos em `context.json`)
 
 | Arquivo | Testes | Exemplos do que o sistema DEVE fazer |
 |---|---|---|
@@ -4801,10 +4802,10 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `src/hooks/integrations/__tests__/useTalkXSegments.test.ts` | 42 | rulesToPostgrest · fails closed instead of dropping an unknown rule · keeps a valid rule as a PostgREST filter · escapes a trailing backslash before quoting, so the filter string cannot stay open … |
 | `src/providers/__tests__/CallSessionProvider.test.tsx` | 42 | CallSessionProvider (T10) · aceite:  · openDialer emite zapp:navigate e sincroniza useNavigationHistory para voip · mantém os campos que a UI antiga consome (TelefoniaView/DialPad/ActiveCallBar) … |
 | `supabase/functions/crm-integration/index.test.ts` | 42 | sidebar lookup resolves the expected RPC and logs only bounded telemetry · sidebar lookup returns 409 when the stable identity differs · intelligence lookup returns 409 when the stable identity differs · intelligence lookup resolves when the external identity matches the stable link … |
+| `src/hooks/integrations/__tests__/useTalkXTemplates.test.ts` | 41 | useTalkXTemplates — listagem · carrega a lista com o select do criador e a ordem por uso/atualizacao · expoe lista vazia quando o banco responde null · propaga o erro de RLS/rede da listagem (nao engole) … |
 | `supabase/functions/connection-health-check/index.test.ts` | 41 | E24: cada conexão consulta o provedor com o token DELA, nunca com a chave global · E24: sem token próprio no Vault a instância não é consultada com a credencial de outra · E24: falha ao LER a credencial do Vault não usa a rede e registra o motivo · E25: GO logada SEM socket (Connected:false, LoggedIn:true) → degraded, nunca healthy … |
 | `tests/contracts/ai-vision-classifiers-mock.contract.test.ts` | 41 | (1) visão: imagem embutida em DATA URL, download autenticado e modelo do servidor · classify-emoji baixa no servidor e envia  · classify-sticker segue a MESMA rota: data URL embutida e endpoint de visão · o endpoint do provedor de TEXTO padrão NUNCA é chamado quando a modalidade é visão … |
 | `src/hooks/chat/__tests__/useForwardMessage.test.ts` | 40 | useForwardMessage — carga dos destinos ao abrir · só consulta o banco quando  · com allowGroups=false não busca a tabela de grupos · erro de rede/RLS ao buscar contatos: lista vazia, erro registrado e isLoading de volta a false … |
-| `src/hooks/integrations/__tests__/useTalkXTemplates.test.ts` | 40 | useTalkXTemplates — listagem · carrega a lista com o select do criador e a ordem por uso/atualizacao · expoe lista vazia quando o banco responde null · propaga o erro de RLS/rede da listagem (nao engole) … |
 | `src/lib/calls/adapters/__tests__/SipCallAdapter.test.ts` | 40 | SipCallAdapter — host, destino e validação do número (T09) · o host da URI vem do UA, não da sessão · é discável quando a URI resolve, e a URI leva o número com o host do UA · número malformado (a URI não resolve) não é discável … |
 | `tests/contracts/ai-rate-limit-e-orcamento.contract.test.ts` | 40 | (1) sharedRateLimit: contador atômico com decisão inclusiva (IA-043) · dentro do limite → allowed · no limite EXATO → allowed (limite é inclusivo) · acima do limite → bloqueado … |
 | `src/components/catalog/__tests__/ProductDetailDialog.test.tsx` | 39 | ProductDetailDialog — Fase 6 (galeria, SKU, rodapé) · mostra o contador  · com 1 imagem so nao mostra contador · seta → avanca a galeria e atualiza o contador … |

@@ -9605,7 +9605,7 @@
    "hooks_exportados": [
     "useTalkXTemplates"
    ],
-   "linhas": 256,
+   "linhas": 271,
    "dominio": "hooks/integrations",
    "tabelas": [
     "talkx_recipients",
