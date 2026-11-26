@@ -2,6 +2,10 @@
 
 Diff semântico gerado a cada coleta em que algo mudou.
 
+## 2026-11-26 00:33 UTC
+
+- **functions** alterado (2): `public.count_multiplix_dead_letters(p_dispatch_id uuid)`, `public.list_multiplix_dead_letters(p_limit integer, p_dispatch_id uuid)`
+
 ## 2026-11-25 03:16 UTC
 
 - **realtime** adicionado (1): `supabase_realtime_messages_publication:realtime.messages_2026_11_28`
