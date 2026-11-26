@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "96edd3a8df45b1b210368f5b68a69d73b14fec76",
+  "commit": "4e81b2b13e73b3533a320fd5a678f51f9065a959",
   "branch": "main",
-  "data_commit": "2026-11-26T16:22:20Z",
+  "data_commit": "2026-11-26T17:06:13Z",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "4e81b2b1",
+    "data": "2026-11-26",
+    "assunto": "feat(admin): aba Orçamento no Consumo IA — reservado x consumido do ledger (#3420)"
+   },
    {
     "sha": "96edd3a8",
     "data": "2026-11-26",
@@ -126,14 +131,9 @@
     "sha": "6ee63ddb",
     "data": "2026-11-25",
     "assunto": "fix: canal único de realtime nas conexões e reconciliação de INSTANCE_GONE (#3390)"
-   },
-   {
-    "sha": "4855bda8",
-    "data": "2026-11-25",
-    "assunto": "fix: asserção do E2E da sidebar não confunde a seção de SLA com o accordion antigo (#3389)"
    }
   ],
-  "arquivos_mudados_7d": 2844,
+  "arquivos_mudados_7d": 2848,
   "pastas_mais_mudadas_30d": [
    {
     "pasta": "docs/contexto/supabase",
@@ -207,7 +207,7 @@
    },
    {
     "arquivo": "docs/DB-INVENTORY.md",
-    "mudancas": 24
+    "mudancas": 25
    },
    {
     "arquivo": "docs/talkx/ESTADOS.md",
@@ -314,21 +314,21 @@
   ]
  },
  "contagens": {
-  "arquivos_total": 14900,
-  "arquivos_codigo": 5232,
-  "linhas_codigo": 968668,
+  "arquivos_total": 14903,
+  "arquivos_codigo": 5235,
+  "linhas_codigo": 969164,
   "rotas": 21,
   "rotas_http_backend": 11,
   "vistas_por_id": 55,
   "itens_menu": 61,
   "modulos": 149,
-  "componentes": 953,
-  "hooks": 534,
+  "componentes": 954,
+  "hooks": 535,
   "edge_functions": 94,
   "tabelas": 224,
   "migrations": 1161,
   "cron_jobs": 29,
-  "testes": 2865,
+  "testes": 2866,
   "workflows": 26,
   "scripts": 458,
   "docs_md": 3988
@@ -739,8 +739,8 @@
    "linhas": 638
   },
   "src/components": {
-   "arquivos": 2351,
-   "linhas": 399680
+   "arquivos": 2352,
+   "linhas": 399904
   },
   "src/config": {
    "arquivos": 3,
@@ -759,8 +759,8 @@
    "linhas": 3293
   },
   "src/hooks": {
-   "arquivos": 1069,
-   "linhas": 173385
+   "arquivos": 1071,
+   "linhas": 173657
   },
   "src/i18n": {
    "arquivos": 2,

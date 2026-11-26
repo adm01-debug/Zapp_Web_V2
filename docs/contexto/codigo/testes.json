@@ -5,18 +5,18 @@
   "vitest",
   "playwright"
  ],
- "total": 2865,
+ "total": 2866,
  "por_tipo": {
   "contrato": 116,
   "e2e": 76,
   "pytest": 3,
   "qa": 10,
-  "unit": 2568
+  "unit": 2569
  },
  "onde_ficam": [
   {
    "padrao": "co-localizado (__tests__)",
-   "arquivos": 2137
+   "arquivos": 2138
   },
   {
    "padrao": "outro",
@@ -16955,6 +16955,15 @@
    "casos": 3
   },
   {
+   "arquivo": "src/hooks/analytics/__tests__/useAIBudgetSummary.test.ts",
+   "tipo": "unit",
+   "linhas": 101,
+   "testa": [
+    "src/hooks/analytics/useAIBudgetSummary.ts"
+   ],
+   "casos": 12
+  },
+  {
    "arquivo": "src/hooks/analytics/__tests__/useAIStats.test.tsx",
    "tipo": "unit",
    "linhas": 507,
@@ -27093,6 +27102,7 @@
   "src/hooks/admin/useSearchInsights.ts": 1,
   "src/hooks/admin/useSupervisorQueue.ts": 1,
   "src/hooks/agents/useAgentRecentSends.ts": 1,
+  "src/hooks/analytics/useAIBudgetSummary.ts": 1,
   "src/hooks/analytics/useAIStats.ts": 2,
   "src/hooks/analytics/useAIUsageDashboard.ts": 3,
   "src/hooks/analytics/useDashboardData.ts": 2,

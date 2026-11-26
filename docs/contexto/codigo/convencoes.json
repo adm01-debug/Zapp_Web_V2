@@ -7,12 +7,12 @@
    "src/pages (21)"
   ],
   "componentes": [
-   "src/components (914)",
+   "src/components (915)",
    "src/pages (30)",
    "src/features (2)"
   ],
   "hooks": [
-   "src/hooks (448)",
+   "src/hooks (449)",
    "src/components (74)",
    "src/contexts (2)"
   ],
@@ -22,7 +22,7 @@
    "src/utils (8)"
   ],
   "testes": [
-   "co-localizado (__tests__) (2137)",
+   "co-localizado (__tests__) (2138)",
    "outro (260)",
    "co-localizado (*.test) (203)"
   ],
@@ -48,7 +48,7 @@
  },
  "barrels_index": 74,
  "extensao_componentes": [
-  ".tsx (953)"
+  ".tsx (954)"
  ],
  "alias_imports": {
   "analise-prs/resgate-261115/auditoria/bruto/diarios-sessao/": {
@@ -66,11 +66,11 @@
  "commits": {
   "convencao": "conventional commits (observado)",
   "exemplos": [
+   "feat(admin): aba Orçamento no Consumo IA — reservado x consumido do ledger (#3420)",
    "feat(admin): dominios confiaveis do cadastro automatico ganham tela (#3416)",
    "feat(sla): alertas de SLA ganham trilha auditavel, resolucao e preferencias por usuario (#3411)",
    "feat(talkx): painel dos jobs de dados nas configuracoes (#3415)",
-   "feat(admin): historico das limpezas do cache de previas ganha tela (#3414)",
-   "feat(seguranca): politica de protecao de contatos ganha tela de gestao (#3413)"
+   "feat(admin): historico das limpezas do cache de previas ganha tela (#3414)"
   ]
  },
  "pr_template": ".github/PULL_REQUEST_TEMPLATE.md",

@@ -290,9 +290,9 @@
   },
   {
    "modulo": "components/admin",
-   "arquivos": 26,
+   "arquivos": 27,
    "testes": 41,
-   "linhas": 5448,
+   "linhas": 5672,
    "itens_menu": [
     "Admin",
     "Consumo IA",
@@ -311,8 +311,9 @@
     "supervisao"
    ],
    "rotas_http": [],
-   "componentes": 23,
+   "componentes": 24,
    "hooks_locais": [
+    "useAIBudgetSummary",
     "useAIUsageDashboard",
     "useAdminData",
     "useAppBootstrap",
@@ -411,6 +412,7 @@
     "alert",
     "article",
     "customer",
+    "group",
     "link",
     "presentation",
     "progressbar",
@@ -3673,6 +3675,7 @@
    "rotas_http": [],
    "componentes": 17,
    "hooks_locais": [
+    "useAIBudgetSummary",
     "useAIFeatureNavigation",
     "useAIInsights",
     "useAIProviders",
@@ -8957,14 +8960,15 @@
   },
   {
    "modulo": "hooks/analytics",
-   "arquivos": 16,
-   "testes": 16,
-   "linhas": 2786,
+   "arquivos": 17,
+   "testes": 17,
+   "linhas": 2957,
    "itens_menu": [],
    "telas": [],
    "rotas_http": [],
    "componentes": 0,
    "hooks_locais": [
+    "useAIBudgetSummary",
     "useAIInsights",
     "useAIStats",
     "useAIUsageDashboard",
@@ -9014,6 +9018,7 @@
    ],
    "hooks_definidos": [
     "useActiveAIProvider",
+    "useAIBudgetSummary",
     "useAIStats",
     "useAIUsageDashboard",
     "useDashboardData",
@@ -12605,6 +12610,7 @@
    "rotas_http": [],
    "componentes": 0,
    "hooks_locais": [
+    "useAIBudgetSummary",
     "useAIFeatureNavigation",
     "useAIInsights",
     "useAIProviders",
@@ -15180,6 +15186,7 @@
    "rotas_http": [],
    "componentes": 17,
    "hooks_locais": [
+    "useAIBudgetSummary",
     "useAIFeatureNavigation",
     "useAIInsights",
     "useAIProviders",
@@ -16567,6 +16574,7 @@
    "rotas_http": [],
    "componentes": 1,
    "hooks_locais": [
+    "useAIBudgetSummary",
     "useAIFeatureNavigation",
     "useAIInsights",
     "useAIProviders",

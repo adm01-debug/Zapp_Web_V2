@@ -24,6 +24,7 @@
    "definida_em": "src/routes/AppRoutes.tsx",
    "redireciona": null,
    "hooks": [
+    "useAIBudgetSummary",
     "useAIFeatureNavigation",
     "useAIInsights",
     "useAIProviders",
@@ -602,6 +603,7 @@
     "useZenMode"
    ],
    "hooks_locais": [
+    "useAIBudgetSummary",
     "useAIFeatureNavigation",
     "useAIInsights",
     "useAIProviders",
@@ -1491,7 +1493,7 @@
     "unknown",
     "user"
    ],
-   "arquivos_puxados": 1618
+   "arquivos_puxados": 1620
   },
   {
    "protegida": false,
@@ -3996,12 +3998,14 @@
    "arquivo": "src/components/admin/AIUsageDashboard.tsx",
    "registrada_em": "src/pages/ViewRouter.tsx",
    "hooks": [
+    "useAIBudgetSummary",
     "useAIUsageDashboard",
     "useMemo",
     "useQuery",
     "useState"
    ],
    "hooks_locais": [
+    "useAIBudgetSummary",
     "useAIUsageDashboard"
    ],
    "tabelas": [
@@ -4014,9 +4018,10 @@
    "flags": [],
    "papeis": [
     "alert",
+    "group",
     "status"
    ],
-   "arquivos_puxados": 13
+   "arquivos_puxados": 15
   },
   {
    "id": "audit-logs",

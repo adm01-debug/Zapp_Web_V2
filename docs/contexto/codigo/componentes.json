@@ -1,7 +1,7 @@
 {
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
- "total": 953,
+ "total": 954,
  "orfaos": 45,
  "nomes_duplicados": {
   "AchievementBadge": [
@@ -300,12 +300,28 @@
    "orfao": false
   },
   {
+   "arquivo": "src/components/admin/AIBudgetTab.tsx",
+   "exports": [
+    "AIBudgetTab"
+   ],
+   "export_default": null,
+   "linhas": 221,
+   "dominio": "components/admin",
+   "hooks_locais": [
+    "useAIBudgetSummary"
+   ],
+   "tabelas": [],
+   "edges": [],
+   "usado_por": 1,
+   "orfao": false
+  },
+  {
    "arquivo": "src/components/admin/AIUsageDashboard.tsx",
    "exports": [
     "AIUsageDashboard"
    ],
    "export_default": null,
-   "linhas": 194,
+   "linhas": 197,
    "dominio": "components/admin",
    "hooks_locais": [
     "useAIUsageDashboard"
@@ -13874,7 +13890,7 @@
    "hooks_locais": [],
    "tabelas": [],
    "edges": [],
-   "usado_por": 417,
+   "usado_por": 418,
    "orfao": false
   },
   {
@@ -13909,7 +13925,7 @@
    "hooks_locais": [],
    "tabelas": [],
    "edges": [],
-   "usado_por": 201,
+   "usado_por": 202,
    "orfao": false
   },
   {

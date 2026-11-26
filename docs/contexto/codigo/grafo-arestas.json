@@ -400,7 +400,13 @@
   "src/components/a11y/a11yHooks.tsx": [
    "src/lib/utils.ts"
   ],
+  "src/components/admin/AIBudgetTab.tsx": [
+   "src/components/ui/button.tsx",
+   "src/components/ui/card.tsx",
+   "src/hooks/analytics/useAIBudgetSummary.ts"
+  ],
   "src/components/admin/AIUsageDashboard.tsx": [
+   "src/components/admin/AIBudgetTab.tsx",
    "src/components/admin/AIUsageLogsTab.tsx",
    "src/components/admin/AIUsageUsersTab.tsx",
    "src/components/ui/badge.tsx",
@@ -8271,6 +8277,9 @@
    "src/hooks/analytics/usePerformance.ts",
    "src/hooks/analytics/usePerformanceSnapshots.ts",
    "src/hooks/analytics/useRealtimeDashboard.ts"
+  ],
+  "src/hooks/analytics/useAIBudgetSummary.ts": [
+   "src/integrations/supabase/client.ts"
   ],
   "src/hooks/analytics/useAIStats.ts": [
    "src/integrations/supabase/client.ts",

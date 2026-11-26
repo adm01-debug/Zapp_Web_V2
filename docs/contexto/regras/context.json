@@ -1,15 +1,15 @@
 {
  "meta": {
-  "sha": "96edd3a8df45b1b210368f5b68a69d73b14fec76",
+  "sha": "4e81b2b13e73b3533a320fd5a678f51f9065a959",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-26 16:26 UTC",
-  "files_total": 14747,
-  "code_files": 8277,
-  "code_lines": 1246731
+  "generated_at": "2026-11-26 17:08 UTC",
+  "files_total": 14750,
+  "code_files": 8280,
+  "code_lines": 1247227
  },
  "version": "1.3.2",
- "facts_hash": "a850b9fffe8b79bd",
+ "facts_hash": "bea757f3eefa8fb8",
  "stack": {
   "frameworks": [
    "React + Vite",
@@ -368,8 +368,8 @@
   "package_manager": "bun",
   "languages": {
    ".sql": 3072,
-   ".tsx": 2524,
-   ".ts": 2058,
+   ".tsx": 2525,
+   ".ts": 2060,
    ".mjs": 496,
    ".py": 125,
    ".cjs": 19,
@@ -73214,7 +73214,7 @@
     "file": ".github/workflows/types-sync.yml"
    }
   ],
-  "components_count": 2353,
+  "components_count": 2354,
   "hooks": [
    {
     "name": "useMotionSeguro",
@@ -73587,6 +73587,10 @@
    {
     "name": "useAgentRecentSends",
     "file": "src/hooks/agents/useAgentRecentSends.ts"
+   },
+   {
+    "name": "useAIBudgetSummary",
+    "file": "src/hooks/analytics/useAIBudgetSummary.ts"
    },
    {
     "name": "useAIStats",
@@ -76670,8 +76674,8 @@
   },
   {
    "module": "src/components",
-   "files": 2351,
-   "lines": 399680,
+   "files": 2352,
+   "lines": 399904,
    "tables": [
     "agent_skills",
     "agent_visibility_grants",
@@ -76734,6 +76738,7 @@
     "ThemeInitializer.tsx: ThemeInitializer",
     "a11yComponents.tsx: SkipLinks, LiveRegion, FocusRing, KeyboardShortcut, AccessibleList, FocusTrap",
     "a11yHooks.tsx: useRovingTabindex, useFocusVisible, useVimNavigation, useAnnouncer, useFocusManagement",
+    "AIBudgetTab.tsx: AIBudgetTab",
     "AIUsageDashboard.tsx: AIUsageDashboard",
     "AIUsageLogsTab.tsx: AIUsageLogsTab",
     "AIUsageUsersTab.tsx: AIUsageUsersTab",
@@ -76768,8 +76773,7 @@
     "AutoTicketClassifier.tsx: AutoTicketClassifier",
     "ChurnPredictionDashboard.tsx: ChurnPredictionDashboard",
     "churnRisk.ts: ChurnContact, ChurnRisk, getRiskLevel, computeChurnRisk",
-    "ticketClassification.ts: ClassifiedTicket, CATEGORIES, PRIORITY_MAP, classifyTag, derivePriority, getCategoryInfo",
-    "EvolutionDisconnectBanner.tsx: EvolutionDisconnectBanner"
+    "ticketClassification.ts: ClassifiedTicket, CATEGORIES, PRIORITY_MAP, classifyTag, derivePriority, getCategoryInfo"
    ],
    "docs": [
     "ErrorBoundary.tsx: @deprecated Import directly from '@/components/errors/ErrorBoundary' instead. This file is a compatibility shim. The canonical ErrorBoundary lives at src/components/errors/ErrorBoundary.tsx. Any new code should import from there. Re-exporting everything so existing imports of '@/components/ErrorBoun …",
@@ -76842,6 +76846,7 @@
     "src/components/a11y/a11yComponents.tsx",
     "src/components/a11y/a11yHooks.tsx",
     "src/components/a11y/__tests__/CustomModalFocus.test.tsx",
+    "src/components/admin/AIBudgetTab.tsx",
     "src/components/admin/AIUsageDashboard.tsx",
     "src/components/admin/AIUsageLogsTab.tsx",
     "src/components/admin/AIUsageUsersTab.tsx",
@@ -76905,8 +76910,7 @@
     "src/components/admin/__tests__/useAdminDataColumns.test.ts",
     "src/components/admin/__tests__/useAdminDataCreateUser.test.ts",
     "src/components/admin/__tests__/useAdminDataRamal.test.ts",
-    "src/components/admin/__tests__/useAdminDataRoleChange.test.ts",
-    "src/components/admin/__tests__/useAdminDataToggleActive.lastAdmin.test.ts"
+    "src/components/admin/__tests__/useAdminDataRoleChange.test.ts"
    ]
   },
   {
@@ -77018,8 +77022,8 @@
   },
   {
    "module": "src/hooks",
-   "files": 1069,
-   "lines": 173385,
+   "files": 1071,
+   "lines": 173657,
    "tables": [
     "agent_achievements",
     "agent_stats",
@@ -77137,6 +77141,7 @@
     "useSupervisorQueue.ts: OPEN_CONVERSATION_STATUSES, SUPERVISOR_PAGE_SIZE, DEFAULT_REFRESH_MS, SupervisorQueueRow, SupervisorQueueSummary, UseSupervisorQueueOptions",
     "useAgentPendingCounts.ts: AgentPendingCounts, AGENT_PENDING_COUNTS_KEY, useAgentPendingCounts",
     "useAgentRecentSends.ts: RECENT_SENDS_WINDOW_DAYS, AgentRecentSends, AGENT_RECENT_SENDS_KEY, useAgentRecentSends",
+    "useAIBudgetSummary.ts: OrcamentoJanela, OrcamentoPorStatus, OrcamentoPorFuncao, OrcamentoPorDia, ResumoOrcamentoIA, JANELAS_ORCAMENTO",
     "useAIStats.ts: PeriodOption, TrendData, SentimentAlert, AIStats, calculateTrend, useAIStats",
     "useAIUsageDashboard.ts: TimeFilter, UsageLog, AiUsageSummary, LOGS_PER_PAGE, FUNCTION_COLORS, FUNCTION_LABELS",
     "useActiveAIProvider.ts: ActiveAIProvider, useActiveAIProvider",
@@ -77168,8 +77173,7 @@
     "useCSAT.ts: CSATSurvey, CSATStats, useCSAT, CSATAgentBreakdown, CSATQueueBreakdown, CSATTimelinePoint",
     "useClientWallet.ts: useClientWallet",
     "useCrisisRoomMetrics.ts: CRISIS_ROOM_REFETCH_INTERVAL_MS, CRISIS_ROOM_RPC, CRISIS_ROOM_QUERY_KEY, CrisisRoomSnapshot, CrisisMetricKey, CrisisSeverity",
-    "useDemandPrediction.ts: PredictionPoint, DemandInsights, useDemandPrediction",
-    "useNPSSurveys.ts: NPSSurvey, NPS_SURVEY_LIMIT, useNPSSurveys"
+    "useDemandPrediction.ts: PredictionPoint, DemandInsights, useDemandPrediction"
    ],
    "docs": [
     "realtimeSharedTopic.test.tsx: Regressao do bump supabase-js 2.116 (#460): desde a realtime-js 2.101, `.on()` em canal ja inscrito lanca erro e `supabase.channel(nome)` reaproveita o canal de mesmo nome. Hooks com topico fixo montados em dois componentes ao mesmo tempo (TalkXView > TalkXCampaignScheduled, QueuesView > QueueGoalsD …",
@@ -87119,6 +87123,11 @@
     "values": "'agents-recent-sends'"
    },
    {
+    "file": "src/hooks/analytics/useAIBudgetSummary.ts",
+    "name": "JANELAS_ORCAMENTO",
+    "values": "7, 30, 90"
+   },
+   {
     "file": "src/hooks/analytics/useAIUsageDashboard.ts",
     "name": "TimeFilter",
     "values": "1h | 6h | 24h | 7d | 30d"
@@ -91722,6 +91731,14 @@
    {
     "file": "src/main.tsx",
     "msg": "Root element not found"
+   },
+   {
+    "file": "src/components/admin/AIBudgetTab.tsx",
+    "msg": " data-testid="
+   },
+   {
+    "file": "src/components/admin/AIBudgetTab.tsx",
+    "msg": ">\n            O resumo do orçamento não pôde ser carregado: {error instanceof Error ? error.message : "
    },
    {
     "file": "src/components/admin/AIUsageDashboard.tsx",
@@ -128461,6 +128478,24 @@
     "kind": "filtra"
    },
    {
+    "file": "src/hooks/analytics/useAIBudgetSummary.ts",
+    "field": "status",
+    "value": "settled",
+    "kind": "compara"
+   },
+   {
+    "file": "src/hooks/analytics/useAIBudgetSummary.ts",
+    "field": "status",
+    "value": "released",
+    "kind": "compara"
+   },
+   {
+    "file": "src/hooks/analytics/useAIBudgetSummary.ts",
+    "field": "status",
+    "value": "reserved",
+    "kind": "compara"
+   },
+   {
     "file": "src/hooks/analytics/useDashboardData.ts",
     "field": "conversation_status",
     "value": "open",
@@ -136939,6 +136974,12 @@
     "name": "generateVoice",
     "params": "",
     "body": "if (!name.trim()) { toast.error('Dê um nome para a voz'); return; } setGenerating(true); try { const { data: { session } } = await supabase.auth.getSession(); const response = await fetch( `${SUPABASE_URL}/functions/v1/elevenlabs-voice-design`, { method: 'POST', headers: { 'Content-Type': 'application/json', apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${session?.access_token || SUPABASE_ANON_KEY}`, }, body: JSON.stringify({ action: 'generate', name, description: `${description}. Gender: ${ …"
+   },
+   {
+    "file": "src/hooks/analytics/useAIBudgetSummary.ts",
+    "name": "taxaDevolucao",
+    "params": "devolvido: number, reservado: number",
+    "body": "if (!reservado) return null; return (devolvido / reservado) * 100;"
    },
    {
     "file": "src/hooks/analytics/useAIStats.ts",
@@ -193213,6 +193254,74 @@
    {
     "file": "src/hooks/analytics/__tests__/sentiment-vocabulario.test.tsx",
     "name": "inclui legado EN e crítico, mantém o significado e não conta desconhecido como negativo"
+   },
+   {
+    "file": "src/hooks/analytics/__tests__/useAIBudgetSummary.test.ts",
+    "name": "normalizarResumo"
+   },
+   {
+    "file": "src/hooks/analytics/__tests__/useAIBudgetSummary.test.ts",
+    "name": "devolve estrutura vazia quando a RPC não retorna nada"
+   },
+   {
+    "file": "src/hooks/analytics/__tests__/useAIBudgetSummary.test.ts",
+    "name": "converte números em texto e ignora itens inválidos"
+   },
+   {
+    "file": "src/hooks/analytics/__tests__/useAIBudgetSummary.test.ts",
+    "name": "ordena funções por reservado e dias por data"
+   },
+   {
+    "file": "src/hooks/analytics/__tests__/useAIBudgetSummary.test.ts",
+    "name": "desvioEstimativa"
+   },
+   {
+    "file": "src/hooks/analytics/__tests__/useAIBudgetSummary.test.ts",
+    "name": "mede o consumo acima da reserva em percentual"
+   },
+   {
+    "file": "src/hooks/analytics/__tests__/useAIBudgetSummary.test.ts",
+    "name": "é negativo quando o consumo fica abaixo da reserva"
+   },
+   {
+    "file": "src/hooks/analytics/__tests__/useAIBudgetSummary.test.ts",
+    "name": "não divide por zero"
+   },
+   {
+    "file": "src/hooks/analytics/__tests__/useAIBudgetSummary.test.ts",
+    "name": "taxaDevolucao"
+   },
+   {
+    "file": "src/hooks/analytics/__tests__/useAIBudgetSummary.test.ts",
+    "name": "mede a fatia devolvida da reserva"
+   },
+   {
+    "file": "src/hooks/analytics/__tests__/useAIBudgetSummary.test.ts",
+    "name": "não divide por zero"
+   },
+   {
+    "file": "src/hooks/analytics/__tests__/useAIBudgetSummary.test.ts",
+    "name": "formatarTokensCompacto"
+   },
+   {
+    "file": "src/hooks/analytics/__tests__/useAIBudgetSummary.test.ts",
+    "name": "mantém números pequenos com separador local"
+   },
+   {
+    "file": "src/hooks/analytics/__tests__/useAIBudgetSummary.test.ts",
+    "name": "compacta milhões e bilhões"
+   },
+   {
+    "file": "src/hooks/analytics/__tests__/useAIBudgetSummary.test.ts",
+    "name": "preserva o sinal de valores negativos"
+   },
+   {
+    "file": "src/hooks/analytics/__tests__/useAIBudgetSummary.test.ts",
+    "name": "rotuloStatus"
+   },
+   {
+    "file": "src/hooks/analytics/__tests__/useAIBudgetSummary.test.ts",
+    "name": "traduz as situações do ledger"
    },
    {
     "file": "src/hooks/analytics/__tests__/useAIStats.test.tsx",
@@ -260235,6 +260344,15 @@
      "published": [
       "compara:src/components/whatsapp-flows/WhatsAppFlowsBuilder.tsx"
      ],
+     "settled": [
+      "compara:src/hooks/analytics/useAIBudgetSummary.ts"
+     ],
+     "released": [
+      "compara:src/hooks/analytics/useAIBudgetSummary.ts"
+     ],
+     "reserved": [
+      "compara:src/hooks/analytics/useAIBudgetSummary.ts"
+     ],
      "fulfilled": [
       "compara:src/hooks/analytics/useGoalNotifications.ts",
       "compara:src/hooks/integrations/useWhatsAppStatus.ts",
@@ -307517,9 +307635,20 @@
     "MobileDrawerMenu move, contém e devolve o foco e fecha com Escape"
    ]
   },
+  "src/components/admin/AIBudgetTab.tsx": {
+   "path": "src/components/admin/AIBudgetTab.tsx",
+   "lines": 221,
+   "exports": [
+    "function AIBudgetTab"
+   ],
+   "errors": [
+    " data-testid=",
+    ">\n            O resumo do orçamento não pôde ser carregado: {error instanceof Error ? error.message : "
+   ]
+  },
   "src/components/admin/AIUsageDashboard.tsx": {
    "path": "src/components/admin/AIUsageDashboard.tsx",
-   "lines": 194,
+   "lines": 197,
    "exports": [
     "function AIUsageDashboard"
    ],
@@ -358964,6 +359093,57 @@
    "lines": 12,
    "doc": "Barrel export for hooks/analytics"
   },
+  "src/hooks/analytics/useAIBudgetSummary.ts": {
+   "path": "src/hooks/analytics/useAIBudgetSummary.ts",
+   "lines": 171,
+   "exports": [
+    "interface OrcamentoJanela",
+    "interface OrcamentoPorStatus",
+    "interface OrcamentoPorFuncao",
+    "interface OrcamentoPorDia",
+    "interface ResumoOrcamentoIA",
+    "const JANELAS_ORCAMENTO",
+    "function normalizarResumo",
+    "function desvioEstimativa",
+    "function taxaDevolucao",
+    "function formatarTokensCompacto",
+    "function rotuloStatus",
+    "function useAIBudgetSummary"
+   ],
+   "enums": [
+    {
+     "name": "JANELAS_ORCAMENTO",
+     "values": "7, 30, 90"
+    }
+   ],
+   "status_values": [
+    {
+     "field": "status",
+     "value": "settled",
+     "kind": "compara"
+    },
+    {
+     "field": "status",
+     "value": "released",
+     "kind": "compara"
+    },
+    {
+     "field": "status",
+     "value": "reserved",
+     "kind": "compara"
+    }
+   ],
+   "hooks": [
+    "useAIBudgetSummary"
+   ],
+   "calc_fns": [
+    {
+     "name": "taxaDevolucao",
+     "params": "devolvido: number, reservado: number",
+     "body": "if (!reservado) return null; return (devolvido / reservado) * 100;"
+    }
+   ]
+  },
   "src/hooks/analytics/useAIStats.ts": {
    "path": "src/hooks/analytics/useAIStats.ts",
    "lines": 168,
@@ -359747,6 +359927,30 @@
     "classe canônica não é zerada: dois positivos pt-BR contam dois",
     "useRecentSentimentAlerts — alertas no vocabulário canônico (IA-SENTIMENT-001)",
     "inclui legado EN e crítico, mantém o significado e não conta desconhecido como negativo"
+   ]
+  },
+  "src/hooks/analytics/__tests__/useAIBudgetSummary.test.ts": {
+   "path": "src/hooks/analytics/__tests__/useAIBudgetSummary.test.ts",
+   "lines": 101,
+   "is_test": true,
+   "tests": [
+    "normalizarResumo",
+    "devolve estrutura vazia quando a RPC não retorna nada",
+    "converte números em texto e ignora itens inválidos",
+    "ordena funções por reservado e dias por data",
+    "desvioEstimativa",
+    "mede o consumo acima da reserva em percentual",
+    "é negativo quando o consumo fica abaixo da reserva",
+    "não divide por zero",
+    "taxaDevolucao",
+    "mede a fatia devolvida da reserva",
+    "não divide por zero",
+    "formatarTokensCompacto",
+    "mantém números pequenos com separador local",
+    "compacta milhões e bilhões",
+    "preserva o sinal de valores negativos",
+    "rotuloStatus",
+    "traduz as situações do ledger"
    ]
   },
   "src/hooks/analytics/__tests__/useAIStats.test.tsx": {
@@ -430371,10 +430575,24 @@
   }
  },
  "git": {
-  "sha": "96edd3a8df45b1b210368f5b68a69d73b14fec76",
+  "sha": "4e81b2b13e73b3533a320fd5a678f51f9065a959",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "4e81b2b1",
+    "date": "2026-11-26",
+    "author": "adm01-debug",
+    "subject": "feat(admin): aba Orçamento no Consumo IA — reservado x consumido do ledger (#3420)",
+    "files": [
+     "docs/DB-INVENTORY.md",
+     "scripts/db-audit/known-violations.json",
+     "src/components/admin/AIBudgetTab.tsx",
+     "src/components/admin/AIUsageDashboard.tsx",
+     "src/hooks/analytics/__tests__/useAIBudgetSummary.test.ts",
+     "src/hooks/analytics/useAIBudgetSummary.ts"
+    ]
+   },
    {
     "sha": "96edd3a8",
     "date": "2026-11-26",
@@ -430833,22 +431051,12 @@
      "supabase/functions/promogifts-catalog/index.test.ts",
      "supabase/functions/promogifts-catalog/index.ts"
     ]
-   },
-   {
-    "sha": "d2e992a9",
-    "date": "2026-11-25",
-    "author": "adm01-debug",
-    "subject": "fix: ls-remote dos pins repete com backoff quando o runner leva 403 (#3378)",
-    "files": [
-     "scripts/ci/check-workflow-pins-resolvem.mjs",
-     "scripts/ci/check-workflow-pins-resolvem.unit.mjs"
-    ]
    }
   ],
   "hot_files": [
    [
     "docs/DB-INVENTORY.md",
-    12
+    13
    ],
    [
     "docs/talkx/ESTADOS.md",
@@ -430911,19 +431119,19 @@
     2
    ],
    [
-    "src/pages/admin/RolesPage.tsx",
+    "scripts/db-audit/known-violations.json",
     1
    ],
    [
-    "src/pages/admin/TrustedDomainsPanel.tsx",
+    "src/components/admin/AIBudgetTab.tsx",
     1
    ],
    [
-    "src/pages/admin/__tests__/TrustedDomainsPanel.test.tsx",
+    "src/components/admin/AIUsageDashboard.tsx",
     1
    ],
    [
-    "src/pages/admin/__tests__/trustedDomains.test.ts",
+    "src/hooks/analytics/__tests__/useAIBudgetSummary.test.ts",
     1
    ]
   ]

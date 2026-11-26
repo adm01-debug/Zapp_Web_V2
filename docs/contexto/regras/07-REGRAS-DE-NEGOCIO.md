@@ -1,6 +1,6 @@
 # 07 · REGRAS DE NEGÓCIO
 
-> Gerado automaticamente por AI Context Sync v1.3.2 · commit `96edd3a8df` · branch `main` · 2026-11-26 16:26 UTC
+> Gerado automaticamente por AI Context Sync v1.3.2 · commit `4e81b2b13e` · branch `main` · 2026-11-26 17:08 UTC
 > Não edite à mão — regras humanas vão em `manual/`.
 
 ## A. Regras escritas por humanos (`manual/` — prioridade máxima, nunca sobrescrito)
@@ -1623,7 +1623,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `state` | `closed` | compara, escreve | `src/components/monitoring/hooks/useMonitoringNotifications.ts`<br>`src/hooks/chat/useTypingPresence.ts`<br>`supabase/functions/_shared/ai-circuit.ts` |
 | `state` | `confirmed` | compara, escreve | `supabase/functions/_shared/effect-reconcile.ts` |
 | `state` | `connected` | compara | `src/components/omnichannel/OmnichannelInbox.tsx`<br>`supabase/functions/webhook-diagnostic/index.ts` |
-| … +264 linhas — lista completa em `context.json` | | | |
+| … +267 linhas — lista completa em `context.json` | | | |
 
 ### E.4 Enums e listas de valores
 
@@ -1758,6 +1758,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | OPEN_CONVERSATION_STATUSES | 'open', 'waiting', 'pending' | `src/hooks/admin/useSupervisorQueue.ts` |
 | AGENT_PENDING_COUNTS_KEY | 'agents-pending-counts' | `src/hooks/agents/useAgentPendingCounts.ts` |
 | AGENT_RECENT_SENDS_KEY | 'agents-recent-sends' | `src/hooks/agents/useAgentRecentSends.ts` |
+| JANELAS_ORCAMENTO | 7, 30, 90 | `src/hooks/analytics/useAIBudgetSummary.ts` |
 | TimeFilter | 1h \| 6h \| 24h \| 7d \| 30d | `src/hooks/analytics/useAIUsageDashboard.ts` |
 | WidgetSize | small \| medium \| large \| full | `src/hooks/analytics/useDashboardWidgets.ts` |
 | InsightPeriod | 24h \| 7d \| 30d | `src/hooks/analytics/useRecentAnalyses.ts` |
@@ -1928,8 +1929,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | VoiceSessionEndReason | inactivity \| duration \| hidden | `src/hooks/voice/voiceSessionLimits.ts` |
 | AuditAction | login \| logout \| message_sent \| message_received \| contact_created \| contact_updated \| connection_created \| connection_deleted \| call_started \| call_ended \| transfer \| settings_changed \| client_error \| searchbox_session \| searchbox_cost_guard \| searchbox_budget_warning \| searchbox_selected \| location_sent \| unauthorized_access | `src/lib/audit.ts` |
 | CHART_PALETTE | CHART_COLORS.primary, CHART_COLORS.secondary, CHART_COLORS.tertiary, CHART_COLORS.quaternary, CHART_COLORS.quinary, CHART_COLORS.senary, CHART_COLORS.septenary, CHART_COLORS.octonary, CHART_COLORS.nonary, CHART_COLORS.denary, | `src/lib/chartColors.ts` |
-| CHART_PALETTE_MINI | CHART_COLORS.primary, CHART_COLORS.secondary, CHART_COLORS.tertiary, CHART_COLORS.quaternary, CHART_COLORS.quinary, | `src/lib/chartColors.ts` |
-| … +164 linhas — lista completa em `context.json` | | |
+| … +165 linhas — lista completa em `context.json` | | |
 
 ## F. Validações de entrada
 
@@ -2878,6 +2878,10 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 - **generateVoice()** — `src/components/voice/ElevenLabsVoiceDesign.tsx`
   ```
   if (!name.trim()) { toast.error('Dê um nome para a voz'); return; } setGenerating(true); try { const { data: { session } } = await supabase.auth.getSession(); const response = await fetch( `${SUPABASE_URL}/functions/v1/elevenlabs-voice-design`, { method: 'POST', headers: { 'Content-Type': 'application/json', apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${session?.access_token || SUPABASE_ANON_KEY}`, }, body: JSON.stringify({ action: 'generate', name, description: `${description}. Gender: ${ …
+  ```
+- **taxaDevolucao(devolvido: number, reservado: number)** — `src/hooks/analytics/useAIBudgetSummary.ts`
+  ```
+  if (!reservado) return null; return (devolvido / reservado) * 100;
   ```
 - **calculateTrend(current: number | null, previous: number | null)** — `src/hooks/analytics/useAIStats.ts`
   ```
@@ -4697,7 +4701,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | disk-full | `scripts/ci/e2e-isolated-provider-readiness.unit.mjs` |
 | must-not-read-service-role | `scripts/ci/e2e-isolated-provider-readiness.unit.mjs` |
 | synthetic transport rejection | `scripts/ci/e2e-isolated-runtime-probe.unit.mjs` |
-| … +1903 linhas — lista completa em `context.json` | |
+| … +1905 linhas — lista completa em `context.json` | |
 
 ## J. Controle de acesso no código (checagens de perfil/permissão)
 
@@ -4772,7 +4776,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `owner` | `supabase/migrations/20260927270018_team_chat_e28_fix_find_or_create_race.sql` |
 | `anon` | `supabase/migrations/20260927340000_fix_add_agent_xp_negative_and_guard.sql` |
 
-## K. Testes como especificação (23277 testes em 2471 arquivos — nomes completos em `context.json`)
+## K. Testes como especificação (23294 testes em 2472 arquivos — nomes completos em `context.json`)
 
 | Arquivo | Testes | Exemplos do que o sistema DEVE fazer |
 |---|---|---|
@@ -5065,6 +5069,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `src/hooks/__tests__/useDeviceDetection.test.tsx` | 17 | useDeviceDetection · reusa o aviso único por sessão do provider de auth (sem segunda chamada a detect-new-device) · initializes with loading=true · returns empty devices initially … |
 | `src/hooks/__tests__/useParallax.test.ts` | 17 | useParallax · initializes with zero offset · initializes scrollProgress at zero · getTransform returns translateY by default … |
 | `src/hooks/__tests__/useSLANotifications.contract.test.ts` | 17 | useSLANotifications — contrato do payload · estouro marca o alerta de erro com a ação Abrir conversa e 10s de exibição · estouro já marcado no INSERT também avisa (dedupe é do hook, não do clique) · estouro que já vinha marcado na linha anterior não repete o aviso … |
+| `src/hooks/analytics/__tests__/useAIBudgetSummary.test.ts` | 17 | normalizarResumo · devolve estrutura vazia quando a RPC não retorna nada · converte números em texto e ignora itens inválidos · ordena funções por reservado e dias por data … |
 | `src/hooks/chat/__tests__/useForwardMedia.test.ts` | 17 | forwardMediaMessages — etapa 36: copia por par e locator do path copiado · 2 arquivos x 2 destinos = 4 copias e 4 envios, mediaUrl = getPublicUrl do path copiado · item de áudio copia e gera locator no bucket audio-messages · item não resolvível é marcado como não encaminhável e NÃO tenta copiar … |
 | `src/hooks/communication/__tests__/mediaVolume.players.test.tsx` | 17 | S41 — MediaPreviewDialog (janela do arquivo) obedece o volume das mídias · o vídeo do visualizador obedece ao volume global (S41) · o áudio do visualizador obedece ao volume global (S41) · S42 — AudioMessagePlayer (via useAudioPlayer) obedece … |
 | `src/hooks/contacts/__tests__/useContactSearchV2.test.tsx` | 17 | useContactSearchV2 — busca na primeira letra, no debounce curto · consulta a RPC local no debounce (≤ 300 ms) e devolve o resultado · espaço em volta não vira busca e o campo vazio não consulta · useContactSearchV2 — corrida entre buscas … |
@@ -5075,8 +5080,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `supabase/functions/_shared/__tests__/ai-context-revalidation.test.ts` | 17 | requestId válido é aceito nos quatro schemas · requestId malformado é rejeitado (não é ecoado como lixo) · cliente ANTIGO (sem requestId/contextVersion) continua aceito — compatibilidade · periodKey (nome canônico do frontend) é aceito como apelido da versão de contexto … |
 | `supabase/functions/ai-transcribe-audio/openrouter-stt.test.ts` | 17 | formato: containers que a edge reconhece viram a extensão do input_audio · formato: mime de outro tipo ou desconhecido não vira extensão inventada · formato: parâmetro do content-type (codecs) não atrapalha e o case não importa · base64: buffer maior que o bloco interno é convertido byte a byte … |
 | `supabase/functions/multiplix-dispatch/actions/__tests__/listing.test.ts` | 17 | dispatch.list escopo: sem permissao ampla so devolve os disparos do dono · dispatch.list escopo: usuario sem profile e sem permissao -> lista vazia (nao consulta a tabela) · dispatch.list escopo: a permissao ampla ve os disparos de qualquer dono · dispatch.list paginacao: limit/offset recortam na ordem created_at desc e total e exato … |
-| `supabase/functions/talkx-ai/index.test.ts` | 17 | X076: flag ai_insights desligada recusa com 403 ai_disabled e não paga o proxy · X076: orçamento mensal no padrão (0 = desligado) recusa com 403 ai_disabled · X076: gasto do mês no teto recusa com 429 budget_exceeded e não paga o proxy · X076: gasto abaixo do teto passa (o teto não é desligamento geral) … |
-| … +2171 linhas — lista completa em `context.json` | | |
+| … +2172 linhas — lista completa em `context.json` | | |
 
 ## L. Eventos de webhook tratados (contratos com sistemas externos)
 
