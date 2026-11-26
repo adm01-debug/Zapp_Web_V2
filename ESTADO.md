@@ -21,11 +21,11 @@ partir do código e falha quando:
 
 | Grupo | Edges |
 |---|---|
-| A | 64 |
+| A | 65 |
 | B | 2 |
 | C | 4 |
 | D | 6 |
-| E | 18 |
+| E | 17 |
 | **total** | **94** |
 
 ## Tabela
@@ -124,7 +124,7 @@ partir do código e falha quando:
 | `voice-copilot-action` | E | — sem chamador no repositório — |
 | `webauthn` | A | `src/hooks/auth/useWebAuthn.ts:51` · `src/hooks/auth/useWebAuthn.ts:83` · `src/hooks/auth/useWebAuthn.ts:106` · `src/hooks/auth/useWebAuthn.ts:136` |
 | `webhook-diagnostic` | A | `src/components/monitoring/hooks/useMonitoringActions.ts:79` |
-| `webhook-replay` | E | — sem chamador no repositório — |
+| `webhook-replay` | A | `src/services/deadLetter.service.ts:58` |
 | `whatsapp-webhook` | D | `supabase/config.toml:11` |
 
 ## Órfãs (23) — GATE B
@@ -153,4 +153,3 @@ mantém a lista honesta.
 - `talkx-scheduler`
 - `talkx-storage-purge`
 - `voice-copilot-action`
-- `webhook-replay`
