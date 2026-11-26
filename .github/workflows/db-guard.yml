@@ -316,6 +316,17 @@ jobs:
       - name: Simular contrato de acesso da auto-reconexao de conexoes
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/auto-reconnect-logs.test.sh
 
+      # Exclusao de conexao: a policy de DELETE exigia so is_admin_or_supervisor,
+      # entao o SUPERVISOR apagava a conexao pela tabela e a Edge (service_role,
+      # que ignora RLS) apagava a instancia no provedor em nome dele. O harness
+      # aplica a migration sobre PostgreSQL descartavel e prova, por papel, que
+      # so o admin apaga e que INSERT/UPDATE do supervisor seguem valendo.
+      - name: Simular autorizacao admin-only da exclusao de conexao
+        env:
+          CONN_DELETE_ADMIN_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
+          SKIP_DOCKER_SHIM: "1"
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/connections-delete-admin-only.test.sh
+
       # Harness descartavel na mesma major do banco oficial. Exercita o SQL real e
       # prova que cada regressao de ACL/contrato encerra com codigo nao zero.
       - name: Simular regressões do contrato mcp_exec
