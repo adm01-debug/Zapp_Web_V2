@@ -2,11 +2,21 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "d91ac94ff23aee5eb2babfac0853194179e0bb3d",
+  "commit": "12371410d53eb61a9de149d24894bb62d2919094",
   "branch": "main",
-  "data_commit": "2026-11-26T16:01:01-03:00",
+  "data_commit": "2026-11-26T17:00:07-03:00",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "12371410",
+    "data": "2026-11-26",
+    "assunto": "fix: restaura paridade de RLS entre producao e o replay das migrations (12 policies de admin) (#3401)"
+   },
+   {
+    "sha": "31dd9f0f",
+    "data": "2026-11-26",
+    "assunto": "chore(db): sincronizar artefatos derivados do banco (#3421)"
+   },
    {
     "sha": "d91ac94f",
     "data": "2026-11-26",
@@ -121,19 +131,9 @@
     "sha": "c8163184",
     "data": "2026-11-26",
     "assunto": "feat: devolve a fila morta do Multiplix ao cartao de saude da integracao (#3392)"
-   },
-   {
-    "sha": "34b5d25e",
-    "data": "2026-11-25",
-    "assunto": "feat: kill switch por provedor (IA-009 2.2) e pausa de bot por conexao (IA-009 2.3) (#3386)"
-   },
-   {
-    "sha": "e4c2b861",
-    "data": "2026-11-25",
-    "assunto": "fix: tooltip do prazo usa a regra única de data e o módulo prazoCompleto (#3391)"
    }
   ],
-  "arquivos_mudados_7d": 2847,
+  "arquivos_mudados_7d": 2848,
   "pastas_mais_mudadas_30d": [
    {
     "pasta": "docs/contexto/supabase",
@@ -207,7 +207,7 @@
    },
    {
     "arquivo": "docs/DB-INVENTORY.md",
-    "mudancas": 26
+    "mudancas": 27
    },
    {
     "arquivo": "docs/talkx/ESTADOS.md",
@@ -215,23 +215,23 @@
    },
    {
     "arquivo": "supabase/schema-manifest.json",
-    "mudancas": 18
+    "mudancas": 19
    },
    {
     "arquivo": "supabase/schema-catalog.json",
+    "mudancas": 17
+   },
+   {
+    "arquivo": "src/integrations/supabase/types.ts",
     "mudancas": 16
    },
    {
     "arquivo": ".github/workflows/db-guard.yml",
-    "mudancas": 15
-   },
-   {
-    "arquivo": "src/integrations/supabase/types.ts",
-    "mudancas": 15
+    "mudancas": 14
    },
    {
     "arquivo": "scripts/db-audit/grants-baseline.json",
-    "mudancas": 11
+    "mudancas": 12
    },
    {
     "arquivo": ".github/workflows/ci.yml",
@@ -274,6 +274,10 @@
     "mudancas": 6
    },
    {
+    "arquivo": "scripts/db-audit/known-violations.json",
+    "mudancas": 6
+   },
+   {
     "arquivo": "src/components/talkx/TalkXView.tsx",
     "mudancas": 6
    },
@@ -292,20 +296,16 @@
    {
     "arquivo": "docs/audits/edge-functions-authz-coverage.md",
     "mudancas": 5
-   },
-   {
-    "arquivo": "docs/contexto/regras/manual/regras.md",
-    "mudancas": 5
    }
   ],
   "autores_30d": [
    {
     "autor": "adm01-debug",
-    "commits": 285
+    "commits": 284
    },
    {
     "autor": "github-actions[bot]",
-    "commits": 11
+    "commits": 12
    },
    {
     "autor": "dependabot[bot]",
@@ -314,9 +314,9 @@
   ]
  },
  "contagens": {
-  "arquivos_total": 14905,
+  "arquivos_total": 14906,
   "arquivos_codigo": 5235,
-  "linhas_codigo": 969164,
+  "linhas_codigo": 969177,
   "rotas": 21,
   "rotas_http_backend": 11,
   "vistas_por_id": 55,
@@ -326,7 +326,7 @@
   "hooks": 535,
   "edge_functions": 94,
   "tabelas": 224,
-  "migrations": 1163,
+  "migrations": 1164,
   "cron_jobs": 29,
   "testes": 2866,
   "workflows": 26,
@@ -768,7 +768,7 @@
   },
   "src/integrations": {
    "arquivos": 4,
-   "linhas": 16100
+   "linhas": 16113
   },
   "src/lib": {
    "arquivos": 302,
@@ -842,7 +842,7 @@
  "maiores_arquivos": [
   {
    "arquivo": "src/integrations/supabase/types.ts",
-   "linhas": 16027
+   "linhas": 16040
   },
   {
    "arquivo": "scripts/regras_negocio/generate.py",

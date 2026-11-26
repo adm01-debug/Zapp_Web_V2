@@ -1,6 +1,6 @@
 # 07 · REGRAS DE NEGÓCIO
 
-> Gerado automaticamente por AI Context Sync v1.3.2 · commit `d91ac94ff2` · branch `main` · 2026-11-26 19:02 UTC
+> Gerado automaticamente por AI Context Sync v1.3.2 · commit `12371410d5` · branch `main` · 2026-11-26 20:15 UTC
 > Não edite à mão — regras humanas vão em `manual/`.
 
 ## A. Regras escritas por humanos (`manual/` — prioridade máxima, nunca sobrescrito)
@@ -168,7 +168,6 @@ Demais dúvidas: nenhuma (entrevista concluída em 2026-11-03). Novas dúvidas: 
 | `user_sessions` | Users can delete their own sessions | DELETE | authenticated | permissive | `user_id = auth.uid()` |  |
 | `notifications` | Users can delete own notifications | DELETE | authenticated | permissive | `user_id = auth.uid()` |  |
 | `webauthn_challenges` | Users can manage own challenges | ALL | authenticated | permissive | `user_id = auth.uid()` | `user_id = auth.uid()` |
-| `security_alerts` | Admins can insert security alerts | INSERT | authenticated | permissive |  | `public.is_admin_or_supervisor(auth.uid())` |
 | `security_alerts` | Admins can manage security alerts | ALL | authenticated | permissive | `public.is_admin_or_supervisor(auth.uid())` | `public.is_admin_or_supervisor(auth.uid())` |
 | `geo_blocking_settings` | Authenticated can view geo settings | SELECT | authenticated | permissive | `true` |  |
 | `geo_blocking_settings` | Admins can manage geo settings | ALL | authenticated | permissive | `public.is_admin_or_supervisor(auth.uid())` | `public.is_admin_or_supervisor(auth.uid())` |
@@ -205,11 +204,6 @@ Demais dúvidas: nenhuma (entrevista concluída em 2026-11-03). Novas dúvidas: 
 | `ai_conversation_tags` | Admins can update ai tags | UPDATE | authenticated | permissive | `public.is_admin_or_supervisor(auth.uid())` |  |
 | `ai_conversation_tags` | Admins can delete ai tags | DELETE | authenticated | permissive | `public.is_admin_or_supervisor(auth.uid())` |  |
 | `contact_tags` | Authenticated can delete contact tags | DELETE | authenticated | permissive | `contact_id IN ( SELECT c.id FROM contacts c WHERE c.assigned_to IN (SELECT id FROM profiles WHERE user_id = auth.uid()) ) OR public.is_admin_or_supervisor(auth.uid())` |  |
-| `campaigns` | Admins can insert campaigns | INSERT | authenticated | permissive |  | `public.is_admin_or_supervisor(auth.uid())` |
-| `chatbot_flows` | Admins can insert chatbot flows | INSERT | authenticated | permissive |  | `public.is_admin_or_supervisor(auth.uid())` |
-| `campaign_contacts` | Admins can insert campaign contacts | INSERT | authenticated | permissive |  | `public.is_admin_or_supervisor(auth.uid())` |
-| `whatsapp_templates` | Admins can insert templates | INSERT | authenticated | permissive |  | `public.is_admin_or_supervisor(auth.uid())` |
-| `scheduled_reports` | Admins can insert scheduled reports | INSERT | authenticated | permissive |  | `public.is_admin_or_supervisor(auth.uid())` |
 | `warroom_alerts` | Admins can insert alerts | INSERT | authenticated | permissive |  | `public.is_admin_or_supervisor(auth.uid())` |
 | `rate_limit_logs` | Admins can insert rate limit logs | INSERT | authenticated | permissive |  | `public.is_admin_or_supervisor(auth.uid())` |
 | `goals_configurations` | Users can view their own goals | SELECT | authenticated | permissive | `profile_id IN (SELECT id FROM profiles WHERE user_id = auth.uid()) OR public.is_admin_or_supervisor(auth.uid())` |  |
@@ -225,7 +219,6 @@ Demais dúvidas: nenhuma (entrevista concluída em 2026-11-03). Novas dúvidas: 
 | `passkey_credentials` | Users can delete own passkeys | DELETE | authenticated | permissive | `user_id = auth.uid()` |  |
 | `products` | Authenticated users can view products | SELECT | authenticated | permissive | `true` |  |
 | `products` | Admins can manage products | ALL | authenticated | permissive | `public.is_admin_or_supervisor(auth.uid())` | `public.is_admin_or_supervisor(auth.uid())` |
-| `products` | Admins can insert products | INSERT | authenticated | permissive |  | `public.is_admin_or_supervisor(auth.uid())` |
 | `queue_goals` | Authenticated users can view queue goals | SELECT | authenticated | permissive | `true` |  |
 | `queue_goals` | Admins can manage queue goals | ALL | authenticated | permissive | `public.is_admin_or_supervisor(auth.uid())` | `public.is_admin_or_supervisor(auth.uid())` |
 | `queue_members` | Authenticated users can view queue members | SELECT | authenticated | permissive | `true` |  |
@@ -255,7 +248,6 @@ Demais dúvidas: nenhuma (entrevista concluída em 2026-11-03). Novas dúvidas: 
 | `entity_versions` | Admins can view entity versions | SELECT | authenticated | permissive | `public.is_admin_or_supervisor(auth.uid())` |  |
 | `calls` | Users can view own calls | SELECT | authenticated | permissive | `agent_id IN (SELECT id FROM profiles WHERE user_id = auth.uid()) OR public.is_admin_or_supervisor(auth.uid())` |  |
 | `csat_surveys` | Users can view own CSAT surveys | SELECT | authenticated | permissive | `agent_id IN (SELECT id FROM profiles WHERE user_id = auth.uid()) OR public.is_admin_or_supervisor(auth.uid())` |  |
-| `scheduled_reports` | Admins can view scheduled reports | SELECT | authenticated | permissive | `public.is_admin_or_supervisor(auth.uid())` |  |
 | `ai_conversation_tags` | Users can insert ai tags for assigned contacts | INSERT | authenticated | permissive |  | `contact_id IN ( SELECT c.id FROM contacts c WHERE c.assigned_to IN (SELECT id FROM profiles WHERE user_id = auth.uid()) ) OR public.is_admin_or_supervisor(auth.uid())` |
 | `contact_custom_fields` | Users can insert custom fields for assigned contacts | INSERT | authenticated | permissive |  | `contact_id IN ( SELECT c.id FROM contacts c WHERE c.assigned_to IN (SELECT id FROM profiles WHERE user_id = auth.uid()) ) OR public.is_admin_or_supervisor(auth.uid())` |
 | `contact_tags` | Users can insert tags for assigned contacts | INSERT | authenticated | permissive |  | `contact_id IN ( SELECT c.id FROM contacts c WHERE c.assigned_to IN (SELECT id FROM profiles WHERE user_id = auth.uid()) ) OR public.is_admin_or_supervisor(auth.uid())` |
@@ -267,8 +259,6 @@ Demais dúvidas: nenhuma (entrevista concluída em 2026-11-03). Novas dúvidas: 
 | `contact_custom_fields` | Authenticated can view custom fields | SELECT | authenticated | permissive | `contact_id IN ( SELECT c.id FROM contacts c WHERE c.assigned_to IN ( SELECT p.id FROM profiles p WHERE p.user_id = auth.uid() ) ) OR is_admin_or_supervisor(auth.uid())` |  |
 | `chatbot_executions` | Authenticated can view chatbot executions | SELECT | authenticated | permissive | `contact_id IN ( SELECT c.id FROM contacts c WHERE c.assigned_to IN (SELECT p.id FROM profiles p WHERE p.user_id = auth.uid()) ) OR is_admin_or_supervisor(auth.uid())` |  |
 | `deal_activities` | Admins can view deal activities | SELECT | authenticated | permissive | `is_admin_or_supervisor(auth.uid())` |  |
-| `meta_capi_events` | Admins can view capi events | SELECT | authenticated | permissive | `is_admin_or_supervisor(auth.uid())` |  |
-| `campaign_contacts` | Admins can view campaign contacts | SELECT | authenticated | permissive | `is_admin_or_supervisor(auth.uid())` |  |
 | `followup_executions` | Authenticated can view followup executions | SELECT | authenticated | permissive | `contact_id IN ( SELECT c.id FROM contacts c WHERE c.assigned_to IN (SELECT p.id FROM profiles p WHERE p.user_id = auth.uid()) ) OR is_admin_or_supervisor(auth.uid())` |  |
 | `rate_limit_configs` | Admins can read rate limit configs | SELECT | authenticated | permissive | `is_admin_or_supervisor(auth.uid())` |  |
 | `contact_tags` | Users can view contact tags | SELECT | authenticated | permissive | `contact_id IN (SELECT c.id FROM contacts c WHERE c.assigned_to IN (SELECT p.id FROM profiles p WHERE p.user_id = auth.uid())) OR is_admin_or_supervisor(auth.uid())` |  |
@@ -385,8 +375,6 @@ Demais dúvidas: nenhuma (entrevista concluída em 2026-11-03). Novas dúvidas: 
 | `conversation_memory` | Agents or admins can view memory | SELECT | authenticated | permissive | `is_contact_visible_to_user(contact_id, auth.uid()) OR is_admin_or_supervisor(auth.uid())` |  |
 | `conversation_closures` | Agents or admins can view closures | SELECT | authenticated | permissive | `is_contact_visible_to_user(contact_id, auth.uid()) OR is_admin_or_supervisor(auth.uid())` |  |
 | `conversation_events` | Agents or admins can view conversation events | SELECT | authenticated | permissive | `is_contact_visible_to_user(contact_id, auth.uid()) OR is_admin_or_supervisor(auth.uid())` |  |
-| `followup_sequences` | Admins can view followup sequences | SELECT | authenticated | permissive | `is_admin_or_supervisor(auth.uid())` |  |
-| `followup_steps` | Admins can view followup steps | SELECT | authenticated | permissive | `is_admin_or_supervisor(auth.uid())` |  |
 | `ai_conversation_tags` | Agents can delete tags on assigned contacts | DELETE | authenticated | permissive | `EXISTS ( SELECT 1 FROM public.contacts c JOIN public.profiles p ON p.id = c.assigned_to WHERE c.id = ai_conversation_tags.contact_id AND p.user_id = auth.uid() ) OR public.is_admin_or_supervisor(auth.uid())` |  |
 | `talkx_blacklist` | Only admins can view blacklist | SELECT | authenticated | permissive | `public.is_admin_or_supervisor(auth.uid())` |  |
 | `campaigns` | Campaigns visible to admins or creator | SELECT | authenticated | permissive | `public.is_admin_or_supervisor(auth.uid()) OR created_by = (SELECT id FROM public.profiles WHERE user_id = auth.uid() LIMIT 1)` |  |
@@ -423,6 +411,18 @@ Demais dúvidas: nenhuma (entrevista concluída em 2026-11-03). Novas dúvidas: 
 | `permissions` | Admins can manage permissions | ALL | authenticated | permissive | `is_admin(auth.uid())` | `is_admin(auth.uid())` |
 | `role_permissions` | Admins can manage role permissions | ALL | authenticated | permissive | `is_admin(auth.uid())` | `is_admin(auth.uid())` |
 | `permissions` | Admin supervisor can view permissions | SELECT | authenticated | permissive | `is_admin_or_supervisor(auth.uid())` |  |
+| `role_permissions` | Admin supervisor can view role permissions | SELECT | authenticated | permissive | `is_admin_or_supervisor(auth.uid())` |  |
+| `conversation_sla` | conversation_sla_select_policy | SELECT | authenticated | permissive | `is_admin_or_supervisor(auth.uid()) OR contact_id IN ( SELECT c.id FROM public.contacts c WHERE c.assigned_to IN (SELECT get_visible_agent_ids(auth.uid())) )` |  |
+| `blocked_ips` | Admins can insert blocked IPs | INSERT | authenticated | permissive |  | `is_admin(auth.uid())` |
+| `blocked_ips` | Admins can update blocked IPs | UPDATE | authenticated | permissive | `is_admin(auth.uid())` |  |
+| `blocked_ips` | Admins can delete blocked IPs | DELETE | authenticated | permissive | `is_admin(auth.uid())` |  |
+| `blocked_countries` | Admins can insert blocked countries | INSERT | authenticated | permissive |  | `is_admin(auth.uid())` |
+| `blocked_countries` | Admins can delete blocked countries | DELETE | authenticated | permissive | `is_admin(auth.uid())` |  |
+| `allowed_countries` | Admins can insert allowed countries | INSERT | authenticated | permissive |  | `is_admin(auth.uid())` |
+| `allowed_countries` | Admins can delete allowed countries | DELETE | authenticated | permissive | `is_admin(auth.uid())` |  |
+| `connection_health_logs` | Admins can insert health logs | INSERT | authenticated | permissive |  | `is_admin(auth.uid())` |
+| `connection_health_logs` | Admins can delete health logs | DELETE | authenticated | permissive | `is_admin(auth.uid())` |  |
+| `rate_limit_configs` | Admins can manage rate limit configs | ALL | authenticated | permissive | `is_admin(auth.uid())` | `is_admin(auth.uid())` |
 | … +289 linhas — lista completa em `context.json` | | | | | | |
 
 ## C. Restrições de dados (obrigatório / único / default / CHECK / FK / calculada)

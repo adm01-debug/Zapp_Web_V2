@@ -14372,7 +14372,7 @@
    "modulo": "integrations/supabase",
    "arquivos": 3,
    "testes": 1,
-   "linhas": 16088,
+   "linhas": 16101,
    "itens_menu": [],
    "telas": [],
    "rotas_http": [],

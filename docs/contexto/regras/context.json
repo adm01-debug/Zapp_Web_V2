@@ -1,15 +1,15 @@
 {
  "meta": {
-  "sha": "d91ac94ff23aee5eb2babfac0853194179e0bb3d",
+  "sha": "12371410d53eb61a9de149d24894bb62d2919094",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-26 19:02 UTC",
-  "files_total": 14752,
-  "code_files": 8282,
-  "code_lines": 1247532
+  "generated_at": "2026-11-26 20:15 UTC",
+  "files_total": 14753,
+  "code_files": 8283,
+  "code_lines": 1247676
  },
  "version": "1.3.2",
- "facts_hash": "18b925cb60071647",
+ "facts_hash": "d3ee1feb29ec4181",
  "stack": {
   "frameworks": [
    "React + Vite",
@@ -367,7 +367,7 @@
   ],
   "package_manager": "bun",
   "languages": {
-   ".sql": 3074,
+   ".sql": 3075,
    ".tsx": 2525,
    ".ts": 2060,
    ".mjs": 496,
@@ -19477,16 +19477,6 @@
     "src": "supabase/migrations/20260317222352_fcce5475-4dde-4840-ade1-487446bbff42.sql"
    },
    {
-    "name": "Admins can insert security alerts",
-    "table": "security_alerts",
-    "cmd": "INSERT",
-    "roles": "authenticated",
-    "mode": "permissive",
-    "using": "",
-    "check": "public.is_admin_or_supervisor(auth.uid())",
-    "src": "supabase/migrations/20260317222352_fcce5475-4dde-4840-ade1-487446bbff42.sql"
-   },
-   {
     "name": "Admins can manage security alerts",
     "table": "security_alerts",
     "cmd": "ALL",
@@ -19847,56 +19837,6 @@
     "src": "supabase/migrations/20260317222534_cc94813a-a022-44e5-846f-f4164d9a4308.sql"
    },
    {
-    "name": "Admins can insert campaigns",
-    "table": "campaigns",
-    "cmd": "INSERT",
-    "roles": "authenticated",
-    "mode": "permissive",
-    "using": "",
-    "check": "public.is_admin_or_supervisor(auth.uid())",
-    "src": "supabase/migrations/20260317222534_cc94813a-a022-44e5-846f-f4164d9a4308.sql"
-   },
-   {
-    "name": "Admins can insert chatbot flows",
-    "table": "chatbot_flows",
-    "cmd": "INSERT",
-    "roles": "authenticated",
-    "mode": "permissive",
-    "using": "",
-    "check": "public.is_admin_or_supervisor(auth.uid())",
-    "src": "supabase/migrations/20260317222534_cc94813a-a022-44e5-846f-f4164d9a4308.sql"
-   },
-   {
-    "name": "Admins can insert campaign contacts",
-    "table": "campaign_contacts",
-    "cmd": "INSERT",
-    "roles": "authenticated",
-    "mode": "permissive",
-    "using": "",
-    "check": "public.is_admin_or_supervisor(auth.uid())",
-    "src": "supabase/migrations/20260317222534_cc94813a-a022-44e5-846f-f4164d9a4308.sql"
-   },
-   {
-    "name": "Admins can insert templates",
-    "table": "whatsapp_templates",
-    "cmd": "INSERT",
-    "roles": "authenticated",
-    "mode": "permissive",
-    "using": "",
-    "check": "public.is_admin_or_supervisor(auth.uid())",
-    "src": "supabase/migrations/20260317222534_cc94813a-a022-44e5-846f-f4164d9a4308.sql"
-   },
-   {
-    "name": "Admins can insert scheduled reports",
-    "table": "scheduled_reports",
-    "cmd": "INSERT",
-    "roles": "authenticated",
-    "mode": "permissive",
-    "using": "",
-    "check": "public.is_admin_or_supervisor(auth.uid())",
-    "src": "supabase/migrations/20260317222534_cc94813a-a022-44e5-846f-f4164d9a4308.sql"
-   },
-   {
     "name": "Admins can insert alerts",
     "table": "warroom_alerts",
     "cmd": "INSERT",
@@ -20043,16 +19983,6 @@
     "roles": "authenticated",
     "mode": "permissive",
     "using": "public.is_admin_or_supervisor(auth.uid())",
-    "check": "public.is_admin_or_supervisor(auth.uid())",
-    "src": "supabase/migrations/20260317222728_b1aba63c-0318-4b63-913b-67da91c1a290.sql"
-   },
-   {
-    "name": "Admins can insert products",
-    "table": "products",
-    "cmd": "INSERT",
-    "roles": "authenticated",
-    "mode": "permissive",
-    "using": "",
     "check": "public.is_admin_or_supervisor(auth.uid())",
     "src": "supabase/migrations/20260317222728_b1aba63c-0318-4b63-913b-67da91c1a290.sql"
    },
@@ -20347,16 +20277,6 @@
     "src": "supabase/migrations/20260317223223_c85cceeb-728c-476f-af90-92e9ba976a7a.sql"
    },
    {
-    "name": "Admins can view scheduled reports",
-    "table": "scheduled_reports",
-    "cmd": "SELECT",
-    "roles": "authenticated",
-    "mode": "permissive",
-    "using": "public.is_admin_or_supervisor(auth.uid())",
-    "check": "",
-    "src": "supabase/migrations/20260317223223_c85cceeb-728c-476f-af90-92e9ba976a7a.sql"
-   },
-   {
     "name": "Users can insert ai tags for assigned contacts",
     "table": "ai_conversation_tags",
     "cmd": "INSERT",
@@ -20459,26 +20379,6 @@
    {
     "name": "Admins can view deal activities",
     "table": "deal_activities",
-    "cmd": "SELECT",
-    "roles": "authenticated",
-    "mode": "permissive",
-    "using": "is_admin_or_supervisor(auth.uid())",
-    "check": "",
-    "src": "supabase/migrations/20260318121108_dc06df42-f7ee-4361-bb05-5d3aba125bba.sql"
-   },
-   {
-    "name": "Admins can view capi events",
-    "table": "meta_capi_events",
-    "cmd": "SELECT",
-    "roles": "authenticated",
-    "mode": "permissive",
-    "using": "is_admin_or_supervisor(auth.uid())",
-    "check": "",
-    "src": "supabase/migrations/20260318121108_dc06df42-f7ee-4361-bb05-5d3aba125bba.sql"
-   },
-   {
-    "name": "Admins can view campaign contacts",
-    "table": "campaign_contacts",
     "cmd": "SELECT",
     "roles": "authenticated",
     "mode": "permissive",
@@ -21643,26 +21543,6 @@
     "roles": "authenticated",
     "mode": "permissive",
     "using": "is_contact_visible_to_user(contact_id, auth.uid()) OR is_admin_or_supervisor(auth.uid())",
-    "check": "",
-    "src": "supabase/migrations/20260409222809_7b8a951e-3892-4b0f-84b1-68820d2d2f27.sql"
-   },
-   {
-    "name": "Admins can view followup sequences",
-    "table": "followup_sequences",
-    "cmd": "SELECT",
-    "roles": "authenticated",
-    "mode": "permissive",
-    "using": "is_admin_or_supervisor(auth.uid())",
-    "check": "",
-    "src": "supabase/migrations/20260409222809_7b8a951e-3892-4b0f-84b1-68820d2d2f27.sql"
-   },
-   {
-    "name": "Admins can view followup steps",
-    "table": "followup_steps",
-    "cmd": "SELECT",
-    "roles": "authenticated",
-    "mode": "permissive",
-    "using": "is_admin_or_supervisor(auth.uid())",
     "check": "",
     "src": "supabase/migrations/20260409222809_7b8a951e-3892-4b0f-84b1-68820d2d2f27.sql"
    },
@@ -24815,6 +24695,126 @@
     "using": "public.is_admin(auth.uid())",
     "check": "",
     "src": "supabase/migrations/20261126011000_connections_delete_admin_only.sql"
+   },
+   {
+    "name": "Admins can insert campaigns",
+    "table": "campaigns",
+    "cmd": "INSERT",
+    "roles": "authenticated",
+    "mode": "permissive",
+    "using": "",
+    "check": "public.is_admin_or_supervisor(auth.uid())",
+    "src": "supabase/migrations/20261126234500_paridade_policies_admin_prod.sql"
+   },
+   {
+    "name": "Admins can insert chatbot flows",
+    "table": "chatbot_flows",
+    "cmd": "INSERT",
+    "roles": "authenticated",
+    "mode": "permissive",
+    "using": "",
+    "check": "public.is_admin_or_supervisor(auth.uid())",
+    "src": "supabase/migrations/20261126234500_paridade_policies_admin_prod.sql"
+   },
+   {
+    "name": "Admins can insert campaign contacts",
+    "table": "campaign_contacts",
+    "cmd": "INSERT",
+    "roles": "authenticated",
+    "mode": "permissive",
+    "using": "",
+    "check": "public.is_admin_or_supervisor(auth.uid())",
+    "src": "supabase/migrations/20261126234500_paridade_policies_admin_prod.sql"
+   },
+   {
+    "name": "Admins can insert templates",
+    "table": "whatsapp_templates",
+    "cmd": "INSERT",
+    "roles": "authenticated",
+    "mode": "permissive",
+    "using": "",
+    "check": "public.is_admin_or_supervisor(auth.uid())",
+    "src": "supabase/migrations/20261126234500_paridade_policies_admin_prod.sql"
+   },
+   {
+    "name": "Admins can insert scheduled reports",
+    "table": "scheduled_reports",
+    "cmd": "INSERT",
+    "roles": "authenticated",
+    "mode": "permissive",
+    "using": "",
+    "check": "public.is_admin_or_supervisor(auth.uid())",
+    "src": "supabase/migrations/20261126234500_paridade_policies_admin_prod.sql"
+   },
+   {
+    "name": "Admins can view capi events",
+    "table": "meta_capi_events",
+    "cmd": "SELECT",
+    "roles": "authenticated",
+    "mode": "permissive",
+    "using": "public.is_admin_or_supervisor(auth.uid())",
+    "check": "",
+    "src": "supabase/migrations/20261126234500_paridade_policies_admin_prod.sql"
+   },
+   {
+    "name": "Admins can view campaign contacts",
+    "table": "campaign_contacts",
+    "cmd": "SELECT",
+    "roles": "authenticated",
+    "mode": "permissive",
+    "using": "public.is_admin_or_supervisor(auth.uid())",
+    "check": "",
+    "src": "supabase/migrations/20261126234500_paridade_policies_admin_prod.sql"
+   },
+   {
+    "name": "Admins can insert security alerts",
+    "table": "security_alerts",
+    "cmd": "INSERT",
+    "roles": "authenticated",
+    "mode": "permissive",
+    "using": "",
+    "check": "public.is_admin_or_supervisor(auth.uid())",
+    "src": "supabase/migrations/20261126234500_paridade_policies_admin_prod.sql"
+   },
+   {
+    "name": "Admins can insert products",
+    "table": "products",
+    "cmd": "INSERT",
+    "roles": "authenticated",
+    "mode": "permissive",
+    "using": "",
+    "check": "public.is_admin_or_supervisor(auth.uid())",
+    "src": "supabase/migrations/20261126234500_paridade_policies_admin_prod.sql"
+   },
+   {
+    "name": "Admins can view scheduled reports",
+    "table": "scheduled_reports",
+    "cmd": "SELECT",
+    "roles": "authenticated",
+    "mode": "permissive",
+    "using": "public.is_admin_or_supervisor(auth.uid())",
+    "check": "",
+    "src": "supabase/migrations/20261126234500_paridade_policies_admin_prod.sql"
+   },
+   {
+    "name": "Admins can view followup sequences",
+    "table": "followup_sequences",
+    "cmd": "SELECT",
+    "roles": "authenticated",
+    "mode": "permissive",
+    "using": "public.is_admin_or_supervisor(auth.uid())",
+    "check": "",
+    "src": "supabase/migrations/20261126234500_paridade_policies_admin_prod.sql"
+   },
+   {
+    "name": "Admins can view followup steps",
+    "table": "followup_steps",
+    "cmd": "SELECT",
+    "roles": "authenticated",
+    "mode": "permissive",
+    "using": "public.is_admin_or_supervisor(auth.uid())",
+    "check": "",
+    "src": "supabase/migrations/20261126234500_paridade_policies_admin_prod.sql"
    },
    {
     "name": "admin_supervisor_retention",
@@ -36173,6 +36173,17 @@
     "tables": []
    },
    "resume_instance": {
+    "args": "",
+    "returns": "?",
+    "lang": "",
+    "src": "src/integrations/supabase/types.ts",
+    "security_definer": false,
+    "search_path": false,
+    "body": "",
+    "raises": [],
+    "tables": []
+   },
+   "resumo_orcamento_ia": {
     "args": "",
     "returns": "?",
     "lang": "",
@@ -48662,6 +48673,7 @@
    "supabase/migrations/20261126213000_talkx_template_duplicate_archive_delete.sql",
    "supabase/migrations/20261126213001_talkx_template_delete_atomic.sql",
    "supabase/migrations/20261126221500_remind_me_about_message.sql",
+   "supabase/migrations/20261126234500_paridade_policies_admin_prod.sql",
    "supabase/migrations/20261127140000_fix_retencao_copiloto.sql",
    "supabase/migrations/20261127150000_recover_talkx_send_budget_internal.sql",
    "supabase/tests/admin_inbox_silence.sql",
@@ -77416,7 +77428,7 @@
   {
    "module": "src/integrations",
    "files": 4,
-   "lines": 16100,
+   "lines": 16113,
    "tables": [],
    "exports": [
     "client.ts: SUPABASE_ANON_KEY, GOOGLE_OAUTH_ENABLED, supabase, SupabaseClient",
@@ -78427,8 +78439,8 @@
   },
   {
    "module": "supabase/migrations",
-   "files": 1163,
-   "lines": 116993,
+   "files": 1164,
+   "lines": 117124,
    "tables": [
     "audit_logs",
     "department_invites",
@@ -234682,16 +234694,6 @@
     "src": "supabase/migrations/20260317222352_fcce5475-4dde-4840-ade1-487446bbff42.sql"
    },
    {
-    "name": "Admins can insert security alerts",
-    "table": "security_alerts",
-    "cmd": "INSERT",
-    "roles": "authenticated",
-    "mode": "permissive",
-    "using": "",
-    "check": "public.is_admin_or_supervisor(auth.uid())",
-    "src": "supabase/migrations/20260317222352_fcce5475-4dde-4840-ade1-487446bbff42.sql"
-   },
-   {
     "name": "Admins can manage security alerts",
     "table": "security_alerts",
     "cmd": "ALL",
@@ -235052,56 +235054,6 @@
     "src": "supabase/migrations/20260317222534_cc94813a-a022-44e5-846f-f4164d9a4308.sql"
    },
    {
-    "name": "Admins can insert campaigns",
-    "table": "campaigns",
-    "cmd": "INSERT",
-    "roles": "authenticated",
-    "mode": "permissive",
-    "using": "",
-    "check": "public.is_admin_or_supervisor(auth.uid())",
-    "src": "supabase/migrations/20260317222534_cc94813a-a022-44e5-846f-f4164d9a4308.sql"
-   },
-   {
-    "name": "Admins can insert chatbot flows",
-    "table": "chatbot_flows",
-    "cmd": "INSERT",
-    "roles": "authenticated",
-    "mode": "permissive",
-    "using": "",
-    "check": "public.is_admin_or_supervisor(auth.uid())",
-    "src": "supabase/migrations/20260317222534_cc94813a-a022-44e5-846f-f4164d9a4308.sql"
-   },
-   {
-    "name": "Admins can insert campaign contacts",
-    "table": "campaign_contacts",
-    "cmd": "INSERT",
-    "roles": "authenticated",
-    "mode": "permissive",
-    "using": "",
-    "check": "public.is_admin_or_supervisor(auth.uid())",
-    "src": "supabase/migrations/20260317222534_cc94813a-a022-44e5-846f-f4164d9a4308.sql"
-   },
-   {
-    "name": "Admins can insert templates",
-    "table": "whatsapp_templates",
-    "cmd": "INSERT",
-    "roles": "authenticated",
-    "mode": "permissive",
-    "using": "",
-    "check": "public.is_admin_or_supervisor(auth.uid())",
-    "src": "supabase/migrations/20260317222534_cc94813a-a022-44e5-846f-f4164d9a4308.sql"
-   },
-   {
-    "name": "Admins can insert scheduled reports",
-    "table": "scheduled_reports",
-    "cmd": "INSERT",
-    "roles": "authenticated",
-    "mode": "permissive",
-    "using": "",
-    "check": "public.is_admin_or_supervisor(auth.uid())",
-    "src": "supabase/migrations/20260317222534_cc94813a-a022-44e5-846f-f4164d9a4308.sql"
-   },
-   {
     "name": "Admins can insert alerts",
     "table": "warroom_alerts",
     "cmd": "INSERT",
@@ -235248,16 +235200,6 @@
     "roles": "authenticated",
     "mode": "permissive",
     "using": "public.is_admin_or_supervisor(auth.uid())",
-    "check": "public.is_admin_or_supervisor(auth.uid())",
-    "src": "supabase/migrations/20260317222728_b1aba63c-0318-4b63-913b-67da91c1a290.sql"
-   },
-   {
-    "name": "Admins can insert products",
-    "table": "products",
-    "cmd": "INSERT",
-    "roles": "authenticated",
-    "mode": "permissive",
-    "using": "",
     "check": "public.is_admin_or_supervisor(auth.uid())",
     "src": "supabase/migrations/20260317222728_b1aba63c-0318-4b63-913b-67da91c1a290.sql"
    },
@@ -235552,16 +235494,6 @@
     "src": "supabase/migrations/20260317223223_c85cceeb-728c-476f-af90-92e9ba976a7a.sql"
    },
    {
-    "name": "Admins can view scheduled reports",
-    "table": "scheduled_reports",
-    "cmd": "SELECT",
-    "roles": "authenticated",
-    "mode": "permissive",
-    "using": "public.is_admin_or_supervisor(auth.uid())",
-    "check": "",
-    "src": "supabase/migrations/20260317223223_c85cceeb-728c-476f-af90-92e9ba976a7a.sql"
-   },
-   {
     "name": "Users can insert ai tags for assigned contacts",
     "table": "ai_conversation_tags",
     "cmd": "INSERT",
@@ -235664,26 +235596,6 @@
    {
     "name": "Admins can view deal activities",
     "table": "deal_activities",
-    "cmd": "SELECT",
-    "roles": "authenticated",
-    "mode": "permissive",
-    "using": "is_admin_or_supervisor(auth.uid())",
-    "check": "",
-    "src": "supabase/migrations/20260318121108_dc06df42-f7ee-4361-bb05-5d3aba125bba.sql"
-   },
-   {
-    "name": "Admins can view capi events",
-    "table": "meta_capi_events",
-    "cmd": "SELECT",
-    "roles": "authenticated",
-    "mode": "permissive",
-    "using": "is_admin_or_supervisor(auth.uid())",
-    "check": "",
-    "src": "supabase/migrations/20260318121108_dc06df42-f7ee-4361-bb05-5d3aba125bba.sql"
-   },
-   {
-    "name": "Admins can view campaign contacts",
-    "table": "campaign_contacts",
     "cmd": "SELECT",
     "roles": "authenticated",
     "mode": "permissive",
@@ -236848,26 +236760,6 @@
     "roles": "authenticated",
     "mode": "permissive",
     "using": "is_contact_visible_to_user(contact_id, auth.uid()) OR is_admin_or_supervisor(auth.uid())",
-    "check": "",
-    "src": "supabase/migrations/20260409222809_7b8a951e-3892-4b0f-84b1-68820d2d2f27.sql"
-   },
-   {
-    "name": "Admins can view followup sequences",
-    "table": "followup_sequences",
-    "cmd": "SELECT",
-    "roles": "authenticated",
-    "mode": "permissive",
-    "using": "is_admin_or_supervisor(auth.uid())",
-    "check": "",
-    "src": "supabase/migrations/20260409222809_7b8a951e-3892-4b0f-84b1-68820d2d2f27.sql"
-   },
-   {
-    "name": "Admins can view followup steps",
-    "table": "followup_steps",
-    "cmd": "SELECT",
-    "roles": "authenticated",
-    "mode": "permissive",
-    "using": "is_admin_or_supervisor(auth.uid())",
     "check": "",
     "src": "supabase/migrations/20260409222809_7b8a951e-3892-4b0f-84b1-68820d2d2f27.sql"
    },
@@ -240020,6 +239912,126 @@
     "using": "public.is_admin(auth.uid())",
     "check": "",
     "src": "supabase/migrations/20261126011000_connections_delete_admin_only.sql"
+   },
+   {
+    "name": "Admins can insert campaigns",
+    "table": "campaigns",
+    "cmd": "INSERT",
+    "roles": "authenticated",
+    "mode": "permissive",
+    "using": "",
+    "check": "public.is_admin_or_supervisor(auth.uid())",
+    "src": "supabase/migrations/20261126234500_paridade_policies_admin_prod.sql"
+   },
+   {
+    "name": "Admins can insert chatbot flows",
+    "table": "chatbot_flows",
+    "cmd": "INSERT",
+    "roles": "authenticated",
+    "mode": "permissive",
+    "using": "",
+    "check": "public.is_admin_or_supervisor(auth.uid())",
+    "src": "supabase/migrations/20261126234500_paridade_policies_admin_prod.sql"
+   },
+   {
+    "name": "Admins can insert campaign contacts",
+    "table": "campaign_contacts",
+    "cmd": "INSERT",
+    "roles": "authenticated",
+    "mode": "permissive",
+    "using": "",
+    "check": "public.is_admin_or_supervisor(auth.uid())",
+    "src": "supabase/migrations/20261126234500_paridade_policies_admin_prod.sql"
+   },
+   {
+    "name": "Admins can insert templates",
+    "table": "whatsapp_templates",
+    "cmd": "INSERT",
+    "roles": "authenticated",
+    "mode": "permissive",
+    "using": "",
+    "check": "public.is_admin_or_supervisor(auth.uid())",
+    "src": "supabase/migrations/20261126234500_paridade_policies_admin_prod.sql"
+   },
+   {
+    "name": "Admins can insert scheduled reports",
+    "table": "scheduled_reports",
+    "cmd": "INSERT",
+    "roles": "authenticated",
+    "mode": "permissive",
+    "using": "",
+    "check": "public.is_admin_or_supervisor(auth.uid())",
+    "src": "supabase/migrations/20261126234500_paridade_policies_admin_prod.sql"
+   },
+   {
+    "name": "Admins can view capi events",
+    "table": "meta_capi_events",
+    "cmd": "SELECT",
+    "roles": "authenticated",
+    "mode": "permissive",
+    "using": "public.is_admin_or_supervisor(auth.uid())",
+    "check": "",
+    "src": "supabase/migrations/20261126234500_paridade_policies_admin_prod.sql"
+   },
+   {
+    "name": "Admins can view campaign contacts",
+    "table": "campaign_contacts",
+    "cmd": "SELECT",
+    "roles": "authenticated",
+    "mode": "permissive",
+    "using": "public.is_admin_or_supervisor(auth.uid())",
+    "check": "",
+    "src": "supabase/migrations/20261126234500_paridade_policies_admin_prod.sql"
+   },
+   {
+    "name": "Admins can insert security alerts",
+    "table": "security_alerts",
+    "cmd": "INSERT",
+    "roles": "authenticated",
+    "mode": "permissive",
+    "using": "",
+    "check": "public.is_admin_or_supervisor(auth.uid())",
+    "src": "supabase/migrations/20261126234500_paridade_policies_admin_prod.sql"
+   },
+   {
+    "name": "Admins can insert products",
+    "table": "products",
+    "cmd": "INSERT",
+    "roles": "authenticated",
+    "mode": "permissive",
+    "using": "",
+    "check": "public.is_admin_or_supervisor(auth.uid())",
+    "src": "supabase/migrations/20261126234500_paridade_policies_admin_prod.sql"
+   },
+   {
+    "name": "Admins can view scheduled reports",
+    "table": "scheduled_reports",
+    "cmd": "SELECT",
+    "roles": "authenticated",
+    "mode": "permissive",
+    "using": "public.is_admin_or_supervisor(auth.uid())",
+    "check": "",
+    "src": "supabase/migrations/20261126234500_paridade_policies_admin_prod.sql"
+   },
+   {
+    "name": "Admins can view followup sequences",
+    "table": "followup_sequences",
+    "cmd": "SELECT",
+    "roles": "authenticated",
+    "mode": "permissive",
+    "using": "public.is_admin_or_supervisor(auth.uid())",
+    "check": "",
+    "src": "supabase/migrations/20261126234500_paridade_policies_admin_prod.sql"
+   },
+   {
+    "name": "Admins can view followup steps",
+    "table": "followup_steps",
+    "cmd": "SELECT",
+    "roles": "authenticated",
+    "mode": "permissive",
+    "using": "public.is_admin_or_supervisor(auth.uid())",
+    "check": "",
+    "src": "supabase/migrations/20261126234500_paridade_policies_admin_prod.sql"
    },
    {
     "name": "admin_supervisor_retention",
@@ -251388,6 +251400,17 @@
     "raises": [],
     "tables": []
    },
+   "resumo_orcamento_ia": {
+    "args": "",
+    "returns": "?",
+    "lang": "",
+    "src": "src/integrations/supabase/types.ts",
+    "security_definer": false,
+    "search_path": false,
+    "body": "",
+    "raises": [],
+    "tables": []
+   },
    "score_security_acl": {
     "args": "",
     "returns": "?",
@@ -261454,7 +261477,7 @@
     "rls": "enabled",
     "SELECT": [
      "authenticated: is_admin_or_supervisor(auth.uid())",
-     "authenticated: is_admin_or_supervisor(auth.uid())"
+     "authenticated: public.is_admin_or_supervisor(auth.uid())"
     ],
     "INSERT": [
      "authenticated: is_admin_or_supervisor(auth.uid())",
@@ -262322,7 +262345,7 @@
     "rls": "enabled",
     "SELECT": [
      "authenticated: public.is_admin_or_supervisor(auth.uid())",
-     "authenticated: is_admin_or_supervisor(auth.uid())"
+     "authenticated: public.is_admin_or_supervisor(auth.uid())"
     ],
     "INSERT": [
      "authenticated: public.is_admin_or_supervisor(auth.uid())"
@@ -262338,7 +262361,7 @@
     "rls": "enabled",
     "SELECT": [
      "authenticated: public.is_admin_or_supervisor(auth.uid())",
-     "authenticated: is_admin_or_supervisor(auth.uid())"
+     "authenticated: public.is_admin_or_supervisor(auth.uid())"
     ],
     "INSERT": [
      "authenticated: public.is_admin_or_supervisor(auth.uid())"
@@ -262601,7 +262624,7 @@
     "rls": "enabled",
     "SELECT": [
      "authenticated: public.is_admin_or_supervisor(auth.uid())",
-     "authenticated: is_admin_or_supervisor(auth.uid())"
+     "authenticated: public.is_admin_or_supervisor(auth.uid())"
     ],
     "INSERT": [
      "authenticated: public.is_admin_or_supervisor(auth.uid())"
@@ -386177,7 +386200,7 @@
   },
   "src/integrations/supabase/types.ts": {
    "path": "src/integrations/supabase/types.ts",
-   "lines": 16027,
+   "lines": 16040,
    "exports": [
     "type Json",
     "type Database",
@@ -426861,6 +426884,10 @@
     "notify_due_tasks"
    ]
   },
+  "supabase/migrations/20261126234500_paridade_policies_admin_prod.sql": {
+   "path": "supabase/migrations/20261126234500_paridade_policies_admin_prod.sql",
+   "lines": 131
+  },
   "supabase/migrations/20261127140000_fix_retencao_copiloto.sql": {
    "path": "supabase/migrations/20261127140000_fix_retencao_copiloto.sql",
    "lines": 179,
@@ -430800,10 +430827,33 @@
   }
  },
  "git": {
-  "sha": "d91ac94ff23aee5eb2babfac0853194179e0bb3d",
+  "sha": "12371410d53eb61a9de149d24894bb62d2919094",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "12371410",
+    "date": "2026-11-26",
+    "author": "adm01-debug",
+    "subject": "fix: restaura paridade de RLS entre producao e o replay das migrations (12 policies de admin) (#3401)",
+    "files": [
+     "supabase/migrations/20261126234500_paridade_policies_admin_prod.sql"
+    ]
+   },
+   {
+    "sha": "31dd9f0f",
+    "date": "2026-11-26",
+    "author": "github-actions[bot]",
+    "subject": "chore(db): sincronizar artefatos derivados do banco (#3421)",
+    "files": [
+     "docs/DB-INVENTORY.md",
+     "scripts/db-audit/grants-baseline.json",
+     "scripts/db-audit/known-violations.json",
+     "src/integrations/supabase/types.ts",
+     "supabase/schema-catalog.json",
+     "supabase/schema-manifest.json"
+    ]
+   },
    {
     "sha": "d91ac94f",
     "date": "2026-11-26",
@@ -431253,34 +431303,12 @@
      "src/components/inbox/contact-details/__tests__/SlaTimelineSection.test.tsx",
      "src/components/inbox/contact-details/sidebar/sidebarSections.ts"
     ]
-   },
-   {
-    "sha": "d91f6507",
-    "date": "2026-11-25",
-    "author": "adm01-debug",
-    "subject": "feat: redige PII e segredos em logs, auditoria e telemetria (#3382)",
-    "files": [
-     "src/lib/__tests__/redactPII.test.ts",
-     "src/lib/errorReporter.ts",
-     "src/lib/logger.ts",
-     "src/lib/redactPII.ts"
-    ]
-   },
-   {
-    "sha": "73476eff",
-    "date": "2026-11-25",
-    "author": "adm01-debug",
-    "subject": "feat(playbooks): ativo/inativo, exclusao com confirmacao e acesso por teclado (#3381)",
-    "files": [
-     "src/__tests__/a11y/icon-buttons-baseline.json",
-     "src/components/admin/PlaybooksManager.tsx"
-    ]
    }
   ],
   "hot_files": [
    [
     "docs/DB-INVENTORY.md",
-    14
+    15
    ],
    [
     "docs/talkx/ESTADOS.md",
@@ -431307,6 +431335,14 @@
     4
    ],
    [
+    "supabase/schema-catalog.json",
+    3
+   ],
+   [
+    "supabase/schema-manifest.json",
+    3
+   ],
+   [
     "inventario/estado/rotas.json",
     3
    ],
@@ -431319,11 +431355,15 @@
     3
    ],
    [
-    "supabase/schema-catalog.json",
+    "scripts/db-audit/grants-baseline.json",
     2
    ],
    [
-    "supabase/schema-manifest.json",
+    "scripts/db-audit/known-violations.json",
+    2
+   ],
+   [
+    "src/integrations/supabase/types.ts",
     2
    ],
    [
@@ -431345,18 +431385,6 @@
    [
     "supabase/functions/ai-proxy/index.test.ts",
     2
-   ],
-   [
-    "supabase/functions/ai-proxy/index.ts",
-    2
-   ],
-   [
-    "supabase/migrations/20261127140000_fix_retencao_copiloto.sql",
-    1
-   ],
-   [
-    "supabase/migrations/20261127150000_recover_talkx_send_budget_internal.sql",
-    1
    ]
   ]
  }
