@@ -262,7 +262,7 @@ RLS em `supabase/schema-manifest.json`; este documento não os repete.
 | `voip_profile_credentials` | Credenciais de ramal VoIP por usuário (SIP e autenticação) | roadmap | — |
 | `warroom_alerts` | Alertas do war-room (tipo, origem e leitura) | ativo | `src/components/dashboard/__tests__/WarRoomDashboard.estado-a11y.test.tsx`, `src/hooks/__tests__/useWarRoomAlerts.test.tsx`, `src/hooks/business/useWarRoomAlerts.ts` … |
 | `webauthn_challenges` | Desafios WebAuthn pendentes, com validade | ativo | `supabase/functions/webauthn/index.test.ts`, `supabase/functions/webauthn/index.ts` |
-| `webhook_failures` | Falhas de webhook registradas (endpoint, evento e payload truncado) | parcial | `.github/workflows/db-migrate.yml`, `scripts/ci/db-migrate-contratos.unit.mjs`, `scripts/db-audit/check-webhook-failures-acl.sql` … |
+| `webhook_failures` | Falhas de webhook registradas (endpoint, evento e payload truncado) | ativo | `supabase/functions/_shared/webhook-dead-letter.ts`, `supabase/functions/evolution-webhook/index.ts`, `supabase/functions/webhook-replay/index.ts` |
 | `webhook_rate_limits` | Contador de webhooks por instância e tipo de evento, em janela | ativo | `supabase/functions/metrics/index.test.ts`, `supabase/functions/metrics/index.ts` |
 | `whatsapp_connection_queues` | Vínculo entre conexão de WhatsApp e fila de atendimento | ativo | `src/hooks/__tests__/useConnectionQueues.test.tsx`, `src/hooks/inbox/useConnectionQueues.ts`, `scripts/db-audit/dispatch-scheduled-messages.test.sh` … |
 | `whatsapp_connections` | Conexões de WhatsApp (instância, telefone, estado e QR) | ativo | `src/__tests__/rls-boundary.test.ts`, `src/components/admin/__tests__/CrisisRoom.canais.test.tsx`, `src/components/agents/ConnectionsHeader.tsx` … |
@@ -285,9 +285,11 @@ inventário apura hoje:
 - `link_preview_cache_metrics` e `mfa_sessions` (§8.2, "via de escrita ausente ou acoplamento
   mínimo") também estão como `roadmap`: nenhum arquivo do repositório as cita — o efeito que a
   auditoria descrevia (limpeza por cron, policy esperando o produtor) vive no banco, não aqui.
-- `ai_budget_reservations`, `talkx_alerts`, `talkx_conversions` e
-  `webhook_failures` são `parcial`: só o ferramental (`scripts/db-audit/`, `scripts/qa/`,
-  `.github/workflows/`) as cita. `multiplix_audience_members`, `multiplix_audiences` e
+- `ai_budget_reservations`, `talkx_alerts` e `talkx_conversions` são `parcial`: só o
+  ferramental (`scripts/db-audit/`, `scripts/qa/`, `.github/workflows/`) as cita.
+  `webhook_failures` passou a `ativo` (E35): o ingest de mensagem recebida grava nela
+  (`_shared/webhook-dead-letter.ts`), o roteador responde 503 para pedir reenvio em falha
+  transitória e a Edge `webhook-replay` reprocessa a fila. `multiplix_audience_members`, `multiplix_audiences` e
   `talkx_campaign_segments` saíram dessa lista: viraram `ativo` (consumidoras de produto).
 
 As contagens de 28/08 (124 tabelas) são históricas; o catálogo de hoje tem 210.
