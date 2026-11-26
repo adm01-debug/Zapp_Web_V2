@@ -14,6 +14,20 @@ import {
 import { persistMediaToStorage, persistMediaViaApi, persistBase64Media, parseMessageContent } from "./evolution-media.ts";
 import { downloadMediaWithEgressPolicy, SMALL_MEDIA_DOWNLOAD_MAX_BYTES } from "./media-egress.ts";
 import type { EvolutionDbClient, EvolutionRow } from "./evolution-types.ts";
+import {
+  buildDeadLetterSnapshot,
+  classifyIngestFailure,
+  recordWebhookFailure,
+  type ReplayArgs,
+} from "./webhook-dead-letter.ts";
+
+/** Desfecho do processamento de uma mensagem recebida. */
+export interface InboundResult {
+  ok: boolean;
+  retryable: boolean;
+}
+
+const INBOUND_OK: InboundResult = { ok: true, retryable: false };
 import { capabilityFlagKeyForFunction, isAiBotPaused } from "./ai-feature-flags.ts";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -1060,7 +1074,7 @@ export async function handleIncomingMessage(
   supabase: EvolutionDbClient, instance: string, data: Record<string, unknown>,
   key: { remoteJid?: string; remoteJidAlt?: string; participant?: string; participantAlt?: string; fromMe: boolean; id: string },
   supabaseUrl: string, supabaseServiceKey: string
-) {
+): Promise<InboundResult> {
   const payloadKey = isRecord(data.key) ? data.key : null;
   const bestJid = resolveEventJid(key, payloadKey, data);
 
@@ -1087,11 +1101,11 @@ export async function handleIncomingMessage(
   const phone = normalizePhone(bestJid ?? undefined);
   if (!phone || bestJid?.includes('@g.us')) {
     console.log(`[INCOMING] Ignored message ${key.id}: unresolved sender`, { bestJid: maskJidForLog(bestJid) });
-    return;
+    return INBOUND_OK;
   }
   const message = data.message as Record<string, unknown> | undefined;
   const parsed = parseMessageContent(message, data);
-  if (parsed.messageType === 'reaction') return;
+  if (parsed.messageType === 'reaction') return INBOUND_OK;
 
   let { mediaUrl } = parsed;
   let { content } = parsed;
@@ -1107,11 +1121,11 @@ export async function handleIncomingMessage(
   // linha fantasma vazia — mesmo guard que o caminho de saída já tem.
   if (!content && messageType === 'text' && !mediaUrl) {
     console.log(`[INCOMING] Ignored empty message ${key.id}`);
-    return;
+    return INBOUND_OK;
   }
 
   const connection = await getConnectionByInstance(supabase, instance);
-  if (!connection) return;
+  if (!connection) return INBOUND_OK;
 
   if (messageType === 'sticker') {
     mediaUrl = await handleStickerMedia(supabase, instance, data, message, key);
@@ -1132,7 +1146,7 @@ export async function handleIncomingMessage(
   // (ux_messages_dedup, preservando status/conteudo de mensagem apagada).
   // Antes eram 3-5 round-trips sem atomicidade; falha no meio deixava contato
   // sem mensagem ou relink parcial.
-  const { data: txRows, error: txError } = await supabase.rpc('ingest_inbound_message', {
+  const replayArgs: ReplayArgs = {
     p_connection_id: connection.id,
     p_phone: phone,
     p_push_name: (data.pushName as string) || null,
@@ -1141,18 +1155,62 @@ export async function handleIncomingMessage(
     p_media_url: mediaUrl,
     p_external_id: key.id,
     p_created_at: messageCreatedAt,
-  });
+  };
+  const { data: txRows, error: txError } = await supabase.rpc('ingest_inbound_message', replayArgs);
   if (txError) {
-    console.error('[INCOMING] ingest_inbound_message failed:', { code: txError.code, message: txError.message, externalId: key.id, bestJid: maskJidForLog(bestJid), phone: phone ? `${phone.substring(0, 6)}***` : null, messageType });
-    return;
+    // Sem telefone/bestJid no log: o identificador fica no hash da dead-letter.
+    console.error('[INCOMING] ingest_inbound_message failed:', { code: txError.code, externalId: key.id, messageType });
+    const kind = classifyIngestFailure(txError.code);
+    const recorded = await recordWebhookFailure(supabase, {
+      externalId: key.id,
+      eventType: 'messages.upsert',
+      instance,
+      errorMessage: txError.message,
+      errorCode: txError.code ?? null,
+      snapshot: buildDeadLetterSnapshot({
+        event: 'messages.upsert',
+        instance,
+        messageId: key.id,
+        fromMe: key.fromMe,
+        messageType,
+        messageTimestamp: data.messageTimestamp,
+      }),
+      replayArgs,
+    });
+    // Sem registro na dead-letter nao ha prova do evento: pede reenvio (503)
+    // mesmo em falha permanente — nada some so com console.error.
+    return { ok: false, retryable: kind === 'transient' || !recorded };
   }
   const tx = (Array.isArray(txRows) ? txRows[0] : txRows) as {
     contact_id: string; contact_name: string | null; assigned_to: string | null; avatar_url: string | null;
     contact_created: boolean; message_id: string | null; outcome: 'inserted' | 'updated' | 'duplicate';
   } | null;
   if (!tx?.contact_id) {
-    console.error('[INCOMING] ingest_inbound_message returned no contact', { externalId: key.id, phone: phone ? `${phone.substring(0, 6)}***` : null });
-    return;
+    console.error('[INCOMING] ingest_inbound_message returned no contact', { externalId: key.id, messageType });
+    // A RPC respondeu sem contato: nao da para dizer que e permanente — pode ser
+    // corrida de conexao. Registra a evidencia e deixa o provedor reenviar.
+    const recorded = await recordWebhookFailure(supabase, {
+      externalId: key.id,
+      eventType: 'messages.upsert',
+      instance,
+      errorMessage: 'ingest_inbound_message nao retornou contato',
+      errorCode: null,
+      snapshot: buildDeadLetterSnapshot({
+        event: 'messages.upsert',
+        instance,
+        messageId: key.id,
+        fromMe: key.fromMe,
+        messageType,
+        messageTimestamp: data.messageTimestamp,
+      }),
+      replayArgs,
+    });
+    if (!recorded) {
+      // A dead-letter tambem falhou: sem prova do evento, o reenvio do
+      // provedor e a unica chance da mensagem.
+      console.error('[INCOMING] dead-letter indisponivel para evento sem contato:', { externalId: key.id });
+    }
+    return { ok: false, retryable: true };
   }
 
   // Avatar fica fora da transacao: chamada externa a Evolution GO.
@@ -1166,7 +1224,7 @@ export async function handleIncomingMessage(
 
   if (tx.outcome === 'duplicate' || !tx.message_id) {
     console.warn(`[INCOMING] Duplicate silently ignored (race condition): ${key.id}`);
-    return;
+    return INBOUND_OK;
   }
 
   // PK-09: carteira por regra no contato que CHEGA. A tela da carteira promete
@@ -1341,6 +1399,7 @@ export async function handleIncomingMessage(
       }, supabaseUrl);
     }
   }
+  return INBOUND_OK;
 }
 
 /**

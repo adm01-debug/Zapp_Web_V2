@@ -328,6 +328,15 @@ jobs:
           WEBHOOK_ACL_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/check-webhook-failures-acl.test.sh
 
+      # E35: a dead-letter só serve se o evento puder ser REPROCESSADO. O harness
+      # aplica as migrations reais e prova que external_id/replay_payload existem,
+      # que o índice parcial da fila ignora o já resolvido e que o ACL continua
+      # fechado (service_role grava/lê o replay; anon e authenticated negados).
+      - name: Simular regressão da dead-letter reprocessável de webhooks (E35)
+        env:
+          WEBHOOK_REPLAY_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/check-webhook-failures-replay.test.sh
+
       # SEC-RLS_CONTATOS_MENSAGENS-05 (P2 defesa em profundidade): 17 tabelas de
       # contatos/mensagens concediam a `anon` os 8 privilegios de tabela (inclusive
       # TRUNCATE, que ignora RLS). O harness reproduz a ACL legada, aplica a migration

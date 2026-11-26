@@ -7,9 +7,9 @@
     "sha256": "e281325190a78e3b5972633a9a4b5ff8c332abfba4d7a4066c8d7e3fd89c7a18"
   },
   "summary": {
-    "function_count": 93,
-    "source_file_count": 184,
-    "verify_jwt_true": 77,
+    "function_count": 94,
+    "source_file_count": 186,
+    "verify_jwt_true": 78,
     "verify_jwt_false": 16
   },
   "orphan_allowlist": ["sicoob-bridge", "sicoob-bridge-reply"],
@@ -231,8 +231,8 @@
     },
     {
       "path": "supabase/functions/_shared/evolution-webhook-messages.ts",
-      "bytes": 72019,
-      "sha256": "ce0a9eaef093eff23c6cbfd106d32a54b8ba10e07452d9715e37c2ba71d7b190"
+      "bytes": 74092,
+      "sha256": "e1152df061997dc26746ffa1d81d25218a4dda20febc6ef0a72326cc5bcef954"
     },
     {
       "path": "supabase/functions/_shared/evolution-webhook-msg-handlers.ts",
@@ -408,6 +408,11 @@
       "path": "supabase/functions/_shared/voice-copilot-authz.ts",
       "bytes": 2736,
       "sha256": "c491b2431c16f9218cb116de8e9e076b8bafa72a11c71f04a80f0bcd868956e5"
+    },
+    {
+      "path": "supabase/functions/_shared/webhook-dead-letter.ts",
+      "bytes": 6352,
+      "sha256": "f231c28daed67af5f942c38bdf7301bb04344254da2a601e16d0730c21138cab"
     },
     {
       "path": "supabase/functions/_shared/webhook-signature.ts",
@@ -676,8 +681,8 @@
     },
     {
       "path": "supabase/functions/evolution-webhook/index.ts",
-      "bytes": 17661,
-      "sha256": "b0e541f2e6c29f6f3f15badbc72ffe6279640cc1c696192de9c3abce5522a1e7"
+      "bytes": 18782,
+      "sha256": "c3161b41a3ed110c8aff6a9e9561b4cddff03f107b2b56d515ade8ee34f61a8e"
     },
     {
       "path": "supabase/functions/external-db-bridge/index.ts",
@@ -928,6 +933,11 @@
       "path": "supabase/functions/webhook-diagnostic/index.ts",
       "bytes": 18106,
       "sha256": "1a992164c90f6b009652a849c18c430a3122656334d93462d4281569a530b13a"
+    },
+    {
+      "path": "supabase/functions/webhook-replay/index.ts",
+      "bytes": 7409,
+      "sha256": "e6220e851a84d3fd9f559ef618d40863065035637cf692084a1ac39a4c515d96"
     },
     {
       "path": "supabase/functions/whatsapp-webhook/index.ts",
@@ -2033,7 +2043,7 @@
       "name": "evolution-webhook",
       "entrypoint": "supabase/functions/evolution-webhook/index.ts",
       "verify_jwt": false,
-      "source_sha256": "7db6efebec47c481f2bbc707b6ca1d7ab4ce31b0c3dbfb6ddd9818712746fde4",
+      "source_sha256": "942f79f78f984c68ab480bea0c9ce3a652d765701118a783c7b4c986fb5536af",
       "source_files": [
         "supabase/functions/_shared/ai-feature-flags.ts",
         "supabase/functions/_shared/ai-jobs.ts",
@@ -2060,6 +2070,7 @@
         "supabase/functions/_shared/ssrf.ts",
         "supabase/functions/_shared/talkx-reply.ts",
         "supabase/functions/_shared/validation.ts",
+        "supabase/functions/_shared/webhook-dead-letter.ts",
         "supabase/functions/evolution-webhook/index.ts"
       ]
     },
@@ -2842,6 +2853,23 @@
       ]
     },
     {
+      "name": "webhook-replay",
+      "entrypoint": "supabase/functions/webhook-replay/index.ts",
+      "verify_jwt": true,
+      "source_sha256": "d00c118bb48394e7bc07b94c62fb7590cd27a4677a6eee3ba0ecc69afad46e54",
+      "source_files": [
+        "supabase/functions/_shared/cors-origins.ts",
+        "supabase/functions/_shared/evolution-control-authz.ts",
+        "supabase/functions/_shared/evolution-types.ts",
+        "supabase/functions/_shared/hmac-validation.ts",
+        "supabase/functions/_shared/rate-limit-log.ts",
+        "supabase/functions/_shared/request-policy.ts",
+        "supabase/functions/_shared/validation.ts",
+        "supabase/functions/_shared/webhook-dead-letter.ts",
+        "supabase/functions/webhook-replay/index.ts"
+      ]
+    },
+    {
       "name": "whatsapp-webhook",
       "entrypoint": "supabase/functions/whatsapp-webhook/index.ts",
       "verify_jwt": false,
@@ -2863,5 +2891,5 @@
       ]
     }
   ],
-  "manifest_sha256": "420030f9c5c346cbc19b58591213878b0acaa50089f01036024701d942a26aa5"
+  "manifest_sha256": "6533e4fd99958f3f11822ff2fe728427cf3185417e99815ea99f490a0d30cc42"
 }
