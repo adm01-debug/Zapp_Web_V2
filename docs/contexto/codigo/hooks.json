@@ -1,7 +1,7 @@
 {
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
- "total": 536,
+ "total": 537,
  "hooks": [
   {
    "arquivo": "analise-prs/resgate-261118-lote2/src/hooks/useMotionSeguro.ts",
@@ -9229,6 +9229,26 @@
    "usado_por": 1,
    "usado_por_arquivos": [
     "src/components/talkx/analytics/TalkXCampaignLogsCard.tsx"
+   ],
+   "coberto_por_testes": 2
+  },
+  {
+   "arquivo": "src/hooks/integrations/useTalkXCampaignPace.ts",
+   "hooks_exportados": [
+    "useTalkXCampaignPace"
+   ],
+   "linhas": 192,
+   "dominio": "hooks/integrations",
+   "tabelas": [],
+   "rpcs": [],
+   "edges": [],
+   "hooks_internos": [
+    "useQuery"
+   ],
+   "canais_realtime": [],
+   "usado_por": 1,
+   "usado_por_arquivos": [
+    "src/components/talkx/analytics/TalkXCampaignPaceCard.tsx"
    ],
    "coberto_por_testes": 2
   },

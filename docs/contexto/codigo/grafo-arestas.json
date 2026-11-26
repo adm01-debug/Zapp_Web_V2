@@ -6551,6 +6551,7 @@
    "src/components/talkx/analytics/AnalyticsFunnel.tsx",
    "src/components/talkx/analytics/AnalyticsPerformanceChart.tsx",
    "src/components/talkx/analytics/TalkXCampaignLogsCard.tsx",
+   "src/components/talkx/analytics/TalkXCampaignPaceCard.tsx",
    "src/components/talkx/analytics/TalkXCampaignRevenueCard.tsx",
    "src/components/talkx/kit/states.tsx",
    "src/components/talkx/talkxAnalyticsFilters.ts",
@@ -6895,6 +6896,11 @@
    "src/components/talkx/talkxShared.ts",
    "src/hooks/crm/useCRMAdminAccess.ts",
    "src/hooks/integrations/useTalkXCampaignLogs.ts",
+   "src/lib/utils.ts"
+  ],
+  "src/components/talkx/analytics/TalkXCampaignPaceCard.tsx": [
+   "src/components/talkx/talkxShared.ts",
+   "src/hooks/integrations/useTalkXCampaignPace.ts",
    "src/lib/utils.ts"
   ],
   "src/components/talkx/analytics/TalkXCampaignRevenueCard.tsx": [
@@ -9634,6 +9640,9 @@
   "src/hooks/integrations/useTalkXCampaignLogs.ts": [
    "src/integrations/supabase/client.ts",
    "src/lib/supabaseHelpers.ts"
+  ],
+  "src/hooks/integrations/useTalkXCampaignPace.ts": [
+   "src/integrations/supabase/client.ts"
   ],
   "src/hooks/integrations/useTalkXCampaignRevenue.ts": [
    "src/integrations/supabase/client.ts"

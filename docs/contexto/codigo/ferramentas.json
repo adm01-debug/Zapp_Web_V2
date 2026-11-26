@@ -3,9 +3,9 @@
  "format_version": 2,
  "stack": {
   "linguagens": [
-   "TypeScript (4594)",
+   "TypeScript (4598)",
    "Markdown (3988)",
-   "SQL (3075)",
+   "SQL (3076)",
    "JSON (1939)",
    "JavaScript (524)",
    "Shell (256)",
@@ -2982,7 +2982,7 @@
    },
    {
     "papel": "status",
-    "ocorrencias": 116
+    "ocorrencias": 117
    },
    {
     "papel": "admin",
@@ -3053,15 +3053,15 @@
     "ocorrencias": 11
    },
    {
+    "papel": "progressbar",
+    "ocorrencias": 11
+   },
+   {
     "papel": "radio",
     "ocorrencias": 11
    },
    {
     "papel": "anon",
-    "ocorrencias": 10
-   },
-   {
-    "papel": "progressbar",
     "ocorrencias": 10
    },
    {

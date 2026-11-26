@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "4465e3920a47e5366157bab2863165c30e0e2d1b",
+  "commit": "f3061b66e7b1b72e17837b281fd271ddd2a1f11d",
   "branch": "main",
-  "data_commit": "2026-11-26T17:40:26-03:00",
+  "data_commit": "2026-11-26T21:20:53Z",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "f3061b66",
+    "data": "2026-11-26",
+    "assunto": "fix: painel mostra o orçamento de envio da campanha (talkx_campaign_pace destravado para admin) (#3406)"
+   },
    {
     "sha": "4465e392",
     "data": "2026-11-26",
@@ -126,14 +131,9 @@
     "sha": "de31ddec",
     "data": "2026-11-26",
     "assunto": "fix: allowlist de credencial de provedor e vínculo endpoint/secret no banco (IA-EGRESS-001) (#3384)"
-   },
-   {
-    "sha": "bd4e9fd0",
-    "data": "2026-11-25",
-    "assunto": "fix: semeia as chaves de desligamento da IA (IA-009 secao 2.1 e 2.2) (#3385)"
    }
   ],
-  "arquivos_mudados_7d": 2853,
+  "arquivos_mudados_7d": 2858,
   "pastas_mais_mudadas_30d": [
    {
     "pasta": "docs/contexto/supabase",
@@ -165,7 +165,7 @@
    },
    {
     "pasta": "src/components/talkx",
-    "mudancas": 384
+    "mudancas": 387
    },
    {
     "pasta": "analise-prs/resgate-261115/dossies",
@@ -185,7 +185,7 @@
    },
    {
     "pasta": "src/hooks/integrations",
-    "mudancas": 157
+    "mudancas": 159
    },
    {
     "pasta": "src/components/contacts",
@@ -207,11 +207,11 @@
    },
    {
     "arquivo": "ESTADO.md",
-    "mudancas": 27
+    "mudancas": 26
    },
    {
     "arquivo": "docs/talkx/ESTADOS.md",
-    "mudancas": 21
+    "mudancas": 22
    },
    {
     "arquivo": "supabase/schema-manifest.json",
@@ -314,21 +314,21 @@
   ]
  },
  "contagens": {
-  "arquivos_total": 14910,
-  "arquivos_codigo": 5239,
-  "linhas_codigo": 969871,
+  "arquivos_total": 14915,
+  "arquivos_codigo": 5243,
+  "linhas_codigo": 970502,
   "rotas": 21,
   "rotas_http_backend": 11,
   "vistas_por_id": 56,
   "itens_menu": 62,
   "modulos": 149,
-  "componentes": 956,
-  "hooks": 536,
+  "componentes": 957,
+  "hooks": 537,
   "edge_functions": 94,
   "tabelas": 224,
-  "migrations": 1164,
+  "migrations": 1165,
   "cron_jobs": 29,
-  "testes": 2867,
+  "testes": 2869,
   "workflows": 26,
   "scripts": 458,
   "docs_md": 3988
@@ -739,8 +739,8 @@
    "linhas": 638
   },
   "src/components": {
-   "arquivos": 2353,
-   "linhas": 400135
+   "arquivos": 2355,
+   "linhas": 400389
   },
   "src/config": {
    "arquivos": 3,
@@ -759,8 +759,8 @@
    "linhas": 3293
   },
   "src/hooks": {
-   "arquivos": 1073,
-   "linhas": 174082
+   "arquivos": 1075,
+   "linhas": 174459
   },
   "src/i18n": {
    "arquivos": 2,

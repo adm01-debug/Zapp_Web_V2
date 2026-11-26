@@ -1,15 +1,15 @@
 {
  "meta": {
-  "sha": "4465e3920a47e5366157bab2863165c30e0e2d1b",
+  "sha": "f3061b66e7b1b72e17837b281fd271ddd2a1f11d",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-26 21:21 UTC",
-  "files_total": 14757,
-  "code_files": 8287,
-  "code_lines": 1248370
+  "generated_at": "2026-11-26 21:29 UTC",
+  "files_total": 14762,
+  "code_files": 8292,
+  "code_lines": 1249153
  },
  "version": "1.3.2",
- "facts_hash": "97c16877675b5f87",
+ "facts_hash": "afa5ed84c0e0a81d",
  "stack": {
   "frameworks": [
    "React + Vite",
@@ -367,9 +367,9 @@
   ],
   "package_manager": "bun",
   "languages": {
-   ".sql": 3075,
-   ".tsx": 2527,
-   ".ts": 2062,
+   ".sql": 3076,
+   ".tsx": 2529,
+   ".ts": 2064,
    ".mjs": 496,
    ".py": 125,
    ".cjs": 19,
@@ -35496,6 +35496,23 @@
      "v_task_id"
     ]
    },
+   "talkx_connection_send_budget_internal": {
+    "args": "p_connection_id uuid",
+    "returns": "jsonb",
+    "lang": "plpgsql",
+    "src": "supabase/migrations/20261127150000_recover_talkx_send_budget_internal.sql",
+    "security_definer": true,
+    "search_path": true,
+    "body": "DECLARE v_minute_limit integer; v_day_limit integer; v_minute_sent integer; v_day_sent integer; v_minute_start timestamptz; v_day_start timestamptz; v_next_day_at timestamptz; BEGIN IF p_connection_id IS NULL THEN RAISE EXCEPTION 'invalid_talkx_connection' USING ERRCODE = '22023'; END IF; SELECT COALESCE((settings.value)::text::integer, 6) INTO v_minute_limit FROM public.talkx_settings settings WHERE settings.key = 'max_per_minute_per_connection'; SELECT COALESCE((settings.value)::text::integer, 500) INTO v_day_limit FROM public.talkx_settings settings WHERE settings.key = 'daily_limit_per_connection'; v_minute_start := statement_timestamp() - interval '1 minute'; v_day_start := date_trunc(' …",
+    "raises": [
+     "invalid_talkx_connection"
+    ],
+    "tables": [
+     "talkx_settings",
+     "v_day_limit",
+     "v_minute_limit"
+    ]
+   },
    "run_copilot_retention": {
     "args": "p_target_date date DEFAULT (current_date - 1",
     "returns": "void",
@@ -35529,23 +35546,6 @@
      "somente admin ou supervisor pode recalcular a retencao do copiloto"
     ],
     "tables": []
-   },
-   "talkx_connection_send_budget_internal": {
-    "args": "p_connection_id uuid",
-    "returns": "jsonb",
-    "lang": "plpgsql",
-    "src": "supabase/migrations/20261127150000_recover_talkx_send_budget_internal.sql",
-    "security_definer": true,
-    "search_path": true,
-    "body": "DECLARE v_minute_limit integer; v_day_limit integer; v_minute_sent integer; v_day_sent integer; v_minute_start timestamptz; v_day_start timestamptz; v_next_day_at timestamptz; BEGIN IF p_connection_id IS NULL THEN RAISE EXCEPTION 'invalid_talkx_connection' USING ERRCODE = '22023'; END IF; SELECT COALESCE((settings.value)::text::integer, 6) INTO v_minute_limit FROM public.talkx_settings settings WHERE settings.key = 'max_per_minute_per_connection'; SELECT COALESCE((settings.value)::text::integer, 500) INTO v_day_limit FROM public.talkx_settings settings WHERE settings.key = 'daily_limit_per_connection'; v_minute_start := statement_timestamp() - interval '1 minute'; v_day_start := date_trunc(' …",
-    "raises": [
-     "invalid_talkx_connection"
-    ],
-    "tables": [
-     "talkx_settings",
-     "v_day_limit",
-     "v_minute_limit"
-    ]
    },
    "uid": {
     "args": "",
@@ -48674,6 +48674,7 @@
    "supabase/migrations/20261126213001_talkx_template_delete_atomic.sql",
    "supabase/migrations/20261126221500_remind_me_about_message.sql",
    "supabase/migrations/20261126234500_paridade_policies_admin_prod.sql",
+   "supabase/migrations/20261127001500_talkx_campaign_pace_orcamento_interno.sql",
    "supabase/migrations/20261127140000_fix_retencao_copiloto.sql",
    "supabase/migrations/20261127150000_recover_talkx_send_budget_internal.sql",
    "supabase/tests/admin_inbox_silence.sql",
@@ -63873,6 +63874,46 @@
    {
     "kind": "revoke",
     "privs": "all",
+    "object": "talkx_connection_send_budget_internal",
+    "objkind": "function",
+    "roles": "PUBLIC, anon, authenticated",
+    "src": "supabase/migrations/20261127001500_talkx_campaign_pace_orcamento_interno.sql"
+   },
+   {
+    "kind": "revoke",
+    "privs": "all",
+    "object": "talkx_connection_send_budget",
+    "objkind": "function",
+    "roles": "PUBLIC, anon, authenticated",
+    "src": "supabase/migrations/20261127001500_talkx_campaign_pace_orcamento_interno.sql"
+   },
+   {
+    "kind": "grant",
+    "privs": "execute",
+    "object": "talkx_connection_send_budget",
+    "objkind": "function",
+    "roles": "service_role",
+    "src": "supabase/migrations/20261127001500_talkx_campaign_pace_orcamento_interno.sql"
+   },
+   {
+    "kind": "revoke",
+    "privs": "all",
+    "object": "talkx_campaign_pace",
+    "objkind": "function",
+    "roles": "PUBLIC, anon",
+    "src": "supabase/migrations/20261127001500_talkx_campaign_pace_orcamento_interno.sql"
+   },
+   {
+    "kind": "grant",
+    "privs": "execute",
+    "object": "talkx_campaign_pace",
+    "objkind": "function",
+    "roles": "service_role, authenticated",
+    "src": "supabase/migrations/20261127001500_talkx_campaign_pace_orcamento_interno.sql"
+   },
+   {
+    "kind": "revoke",
+    "privs": "all",
     "object": "run_copilot_retention",
     "objkind": "function",
     "roles": "PUBLIC, anon, authenticated",
@@ -73320,7 +73361,7 @@
     "file": ".github/workflows/types-sync.yml"
    }
   ],
-  "components_count": 2355,
+  "components_count": 2357,
   "hooks": [
    {
     "name": "useMotionSeguro",
@@ -74973,6 +75014,10 @@
    {
     "name": "useTalkXCampaignLogs",
     "file": "src/hooks/integrations/useTalkXCampaignLogs.ts"
+   },
+   {
+    "name": "useTalkXCampaignPace",
+    "file": "src/hooks/integrations/useTalkXCampaignPace.ts"
    },
    {
     "name": "useTalkXCampaignRevenue",
@@ -76784,8 +76829,8 @@
   },
   {
    "module": "src/components",
-   "files": 2353,
-   "lines": 400135,
+   "files": 2355,
+   "lines": 400389,
    "tables": [
     "agent_skills",
     "agent_visibility_grants",
@@ -77132,8 +77177,8 @@
   },
   {
    "module": "src/hooks",
-   "files": 1073,
-   "lines": 174082,
+   "files": 1075,
+   "lines": 174459,
    "tables": [
     "agent_achievements",
     "agent_stats",
@@ -78444,8 +78489,8 @@
   },
   {
    "module": "supabase/migrations",
-   "files": 1164,
-   "lines": 117124,
+   "files": 1165,
+   "lines": 117276,
    "tables": [
     "audit_logs",
     "department_invites",
@@ -100010,6 +100055,10 @@
     "text": "tela não afirma falta de permissão, mostra o carregamento."
    },
    {
+    "file": "src/components/talkx/analytics/TalkXCampaignPaceCard.tsx",
+    "text": "* Falta de permissão (42501): a tela explica, não mostra \"nenhum envio\". */"
+   },
+   {
     "file": "src/components/talkx/help/talkxHelpMarkdown.tsx",
     "text": "* X189 — renderizador mínimo de markdown dos artigos da Ajuda."
    },
@@ -101892,6 +101941,14 @@
    {
     "file": "src/hooks/integrations/useTalkXAbStats.ts",
     "text": "* Sem `variantId` a decisão é automática (o banco aplica a regra dos 2"
+   },
+   {
+    "file": "src/hooks/integrations/useTalkXCampaignPace.ts",
+    "text": "* `true` quando o erro é falta de permissão (42501), não falha de leitura. */"
+   },
+   {
+    "file": "src/hooks/integrations/useTalkXCampaignPace.ts",
+    "text": "* Falta de permissão (42501) — a tela mostra \"restrito\", não \"erro\". */"
    },
    {
     "file": "src/hooks/integrations/useTalkXCampaignRevenue.ts",
@@ -139543,6 +139600,14 @@
     "line": "IF p_remind_at > now() + interval '90 days' THEN"
    },
    {
+    "file": "supabase/migrations/20261127001500_talkx_campaign_pace_orcamento_interno.sql",
+    "line": "v_minute_start := statement_timestamp() - interval '1 minute';"
+   },
+   {
+    "file": "supabase/migrations/20261127001500_talkx_campaign_pace_orcamento_interno.sql",
+    "line": "v_next_day_at := v_day_start + interval '1 day';"
+   },
+   {
     "file": "supabase/migrations/20261127140000_fix_retencao_copiloto.sql",
     "line": "FOR v_dia IN SELECT generate_series(current_date - 30, current_date - 1, interval '1 day')::date LOOP"
    },
@@ -176163,6 +176228,38 @@
     "name": "enquanto carrega mostra esqueleto, não o vazio"
    },
    {
+    "file": "src/components/talkx/__tests__/TalkXCampaignPaceCard.test.tsx",
+    "name": "TalkXCampaignPaceCard"
+   },
+   {
+    "file": "src/components/talkx/__tests__/TalkXCampaignPaceCard.test.tsx",
+    "name": "mostra os dois tetos, o enviado e o que resta"
+   },
+   {
+    "file": "src/components/talkx/__tests__/TalkXCampaignPaceCard.test.tsx",
+    "name": "a barra do minuto cheio fica em 100% e a do dia em 24%"
+   },
+   {
+    "file": "src/components/talkx/__tests__/TalkXCampaignPaceCard.test.tsx",
+    "name": "mostra o tempo até a cota do dia virar"
+   },
+   {
+    "file": "src/components/talkx/__tests__/TalkXCampaignPaceCard.test.tsx",
+    "name": "sem permissão mostra aviso próprio em vez de "
+   },
+   {
+    "file": "src/components/talkx/__tests__/TalkXCampaignPaceCard.test.tsx",
+    "name": "erro real mostra o estado de erro com a mensagem traduzida"
+   },
+   {
+    "file": "src/components/talkx/__tests__/TalkXCampaignPaceCard.test.tsx",
+    "name": "campanha sem conexão explica, em vez de mostrar 0 de 0"
+   },
+   {
+    "file": "src/components/talkx/__tests__/TalkXCampaignPaceCard.test.tsx",
+    "name": "carregando mostra esqueleto, sem números falsos"
+   },
+   {
     "file": "src/components/talkx/__tests__/TalkXCampaignPaused.test.tsx",
     "name": "TalkXCampaignPaused — cabeçalho, banner e ações (Tela 13)"
    },
@@ -202961,6 +203058,94 @@
    {
     "file": "src/hooks/integrations/__tests__/useTalkXCampaignLogs.test.ts",
     "name": "resolve o nome dos destinatários da página carregada"
+   },
+   {
+    "file": "src/hooks/integrations/__tests__/useTalkXCampaignPace.test.ts",
+    "name": "paceFromServer (X018)"
+   },
+   {
+    "file": "src/hooks/integrations/__tests__/useTalkXCampaignPace.test.ts",
+    "name": "lê o payload real da RPC"
+   },
+   {
+    "file": "src/hooks/integrations/__tests__/useTalkXCampaignPace.test.ts",
+    "name": "contas como string e decimais não viram NaN"
+   },
+   {
+    "file": "src/hooks/integrations/__tests__/useTalkXCampaignPace.test.ts",
+    "name": "sem *_remaining o saldo é calculado do teto menos o enviado"
+   },
+   {
+    "file": "src/hooks/integrations/__tests__/useTalkXCampaignPace.test.ts",
+    "name": "nada sai negativo nem acima do teto"
+   },
+   {
+    "file": "src/hooks/integrations/__tests__/useTalkXCampaignPace.test.ts",
+    "name": "payload vazio, nulo ou inválido devolve orçamento zerado"
+   },
+   {
+    "file": "src/hooks/integrations/__tests__/useTalkXCampaignPace.test.ts",
+    "name": "isEmptyPace (X018)"
+   },
+   {
+    "file": "src/hooks/integrations/__tests__/useTalkXCampaignPace.test.ts",
+    "name": "campanha sem conexão devolve tudo zerado"
+   },
+   {
+    "file": "src/hooks/integrations/__tests__/useTalkXCampaignPace.test.ts",
+    "name": "campanha com teto não é vazia mesmo sem envios"
+   },
+   {
+    "file": "src/hooks/integrations/__tests__/useTalkXCampaignPace.test.ts",
+    "name": "permissão e erros (X018)"
+   },
+   {
+    "file": "src/hooks/integrations/__tests__/useTalkXCampaignPace.test.ts",
+    "name": "reconhece o 42501 da RPC"
+   },
+   {
+    "file": "src/hooks/integrations/__tests__/useTalkXCampaignPace.test.ts",
+    "name": "traduz os erros do servidor para a tela"
+   },
+   {
+    "file": "src/hooks/integrations/__tests__/useTalkXCampaignPace.test.ts",
+    "name": "paceUsagePercent (X018)"
+   },
+   {
+    "file": "src/hooks/integrations/__tests__/useTalkXCampaignPace.test.ts",
+    "name": "mede o quanto do teto já foi usado"
+   },
+   {
+    "file": "src/hooks/integrations/__tests__/useTalkXCampaignPace.test.ts",
+    "name": "teto zero não divide por zero"
+   },
+   {
+    "file": "src/hooks/integrations/__tests__/useTalkXCampaignPace.test.ts",
+    "name": "describeNextReset (X018)"
+   },
+   {
+    "file": "src/hooks/integrations/__tests__/useTalkXCampaignPace.test.ts",
+    "name": "mostra quanto falta para a cota do dia virar"
+   },
+   {
+    "file": "src/hooks/integrations/__tests__/useTalkXCampaignPace.test.ts",
+    "name": "sem conexão ou já vencido não inventa contagem"
+   },
+   {
+    "file": "src/hooks/integrations/__tests__/useTalkXCampaignPace.test.ts",
+    "name": "useTalkXCampaignPace (X018)"
+   },
+   {
+    "file": "src/hooks/integrations/__tests__/useTalkXCampaignPace.test.ts",
+    "name": "chama a RPC com o id da campanha e devolve o orçamento"
+   },
+   {
+    "file": "src/hooks/integrations/__tests__/useTalkXCampaignPace.test.ts",
+    "name": "42501 vira "
+   },
+   {
+    "file": "src/hooks/integrations/__tests__/useTalkXCampaignPace.test.ts",
+    "name": "sem campanha selecionada não consulta o servidor"
    },
    {
     "file": "src/hooks/integrations/__tests__/useTalkXCampaignRevenue.test.ts",
@@ -250802,6 +250987,23 @@
      "v_task_id"
     ]
    },
+   "talkx_connection_send_budget_internal": {
+    "args": "p_connection_id uuid",
+    "returns": "jsonb",
+    "lang": "plpgsql",
+    "src": "supabase/migrations/20261127150000_recover_talkx_send_budget_internal.sql",
+    "security_definer": true,
+    "search_path": true,
+    "body": "DECLARE v_minute_limit integer; v_day_limit integer; v_minute_sent integer; v_day_sent integer; v_minute_start timestamptz; v_day_start timestamptz; v_next_day_at timestamptz; BEGIN IF p_connection_id IS NULL THEN RAISE EXCEPTION 'invalid_talkx_connection' USING ERRCODE = '22023'; END IF; SELECT COALESCE((settings.value)::text::integer, 6) INTO v_minute_limit FROM public.talkx_settings settings WHERE settings.key = 'max_per_minute_per_connection'; SELECT COALESCE((settings.value)::text::integer, 500) INTO v_day_limit FROM public.talkx_settings settings WHERE settings.key = 'daily_limit_per_connection'; v_minute_start := statement_timestamp() - interval '1 minute'; v_day_start := date_trunc(' …",
+    "raises": [
+     "invalid_talkx_connection"
+    ],
+    "tables": [
+     "talkx_settings",
+     "v_day_limit",
+     "v_minute_limit"
+    ]
+   },
    "run_copilot_retention": {
     "args": "p_target_date date DEFAULT (current_date - 1",
     "returns": "void",
@@ -250835,23 +251037,6 @@
      "somente admin ou supervisor pode recalcular a retencao do copiloto"
     ],
     "tables": []
-   },
-   "talkx_connection_send_budget_internal": {
-    "args": "p_connection_id uuid",
-    "returns": "jsonb",
-    "lang": "plpgsql",
-    "src": "supabase/migrations/20261127150000_recover_talkx_send_budget_internal.sql",
-    "security_definer": true,
-    "search_path": true,
-    "body": "DECLARE v_minute_limit integer; v_day_limit integer; v_minute_sent integer; v_day_sent integer; v_minute_start timestamptz; v_day_start timestamptz; v_next_day_at timestamptz; BEGIN IF p_connection_id IS NULL THEN RAISE EXCEPTION 'invalid_talkx_connection' USING ERRCODE = '22023'; END IF; SELECT COALESCE((settings.value)::text::integer, 6) INTO v_minute_limit FROM public.talkx_settings settings WHERE settings.key = 'max_per_minute_per_connection'; SELECT COALESCE((settings.value)::text::integer, 500) INTO v_day_limit FROM public.talkx_settings settings WHERE settings.key = 'daily_limit_per_connection'; v_minute_start := statement_timestamp() - interval '1 minute'; v_day_start := date_trunc(' …",
-    "raises": [
-     "invalid_talkx_connection"
-    ],
-    "tables": [
-     "talkx_settings",
-     "v_day_limit",
-     "v_minute_limit"
-    ]
    },
    "uid": {
     "args": "",
@@ -264760,7 +264945,9 @@
    "src/components/talkx/tracking/talkxDataJobs.ts",
    "src/hooks/gamification/__tests__/gamificacaoSemEscritaNoCliente.test.ts",
    "src/hooks/gamification/useAgentGamification.ts",
+   "src/hooks/integrations/__tests__/useTalkXCampaignPace.test.ts",
    "src/hooks/integrations/useTalkXCampaignLogs.ts",
+   "src/hooks/integrations/useTalkXCampaignPace.ts",
    "src/hooks/integrations/useTalkXDataJobs.ts",
    "src/hooks/integrations/useTalkXResumeChecklist.ts",
    "src/hooks/team-chat/__tests__/useDepartmentManagement.test.tsx",
@@ -265371,6 +265558,7 @@
    "supabase/migrations/20261126010508_city_whitelist_network_policy.sql",
    "supabase/migrations/20261126011000_connections_delete_admin_only.sql",
    "supabase/migrations/20261126213000_talkx_template_duplicate_archive_delete.sql",
+   "supabase/migrations/20261127001500_talkx_campaign_pace_orcamento_interno.sql",
    "supabase/migrations/20261127140000_fix_retencao_copiloto.sql",
    "supabase/migrations/20261127150000_recover_talkx_send_budget_internal.sql",
    "supabase/tests/admin_inbox_silence.sql",
@@ -280784,6 +280972,46 @@
     "objkind": "function",
     "roles": "authenticated",
     "src": "supabase/migrations/20261126221500_remind_me_about_message.sql"
+   },
+   {
+    "kind": "revoke",
+    "privs": "all",
+    "object": "talkx_connection_send_budget_internal",
+    "objkind": "function",
+    "roles": "PUBLIC, anon, authenticated",
+    "src": "supabase/migrations/20261127001500_talkx_campaign_pace_orcamento_interno.sql"
+   },
+   {
+    "kind": "revoke",
+    "privs": "all",
+    "object": "talkx_connection_send_budget",
+    "objkind": "function",
+    "roles": "PUBLIC, anon, authenticated",
+    "src": "supabase/migrations/20261127001500_talkx_campaign_pace_orcamento_interno.sql"
+   },
+   {
+    "kind": "grant",
+    "privs": "execute",
+    "object": "talkx_connection_send_budget",
+    "objkind": "function",
+    "roles": "service_role",
+    "src": "supabase/migrations/20261127001500_talkx_campaign_pace_orcamento_interno.sql"
+   },
+   {
+    "kind": "revoke",
+    "privs": "all",
+    "object": "talkx_campaign_pace",
+    "objkind": "function",
+    "roles": "PUBLIC, anon",
+    "src": "supabase/migrations/20261127001500_talkx_campaign_pace_orcamento_interno.sql"
+   },
+   {
+    "kind": "grant",
+    "privs": "execute",
+    "object": "talkx_campaign_pace",
+    "objkind": "function",
+    "roles": "service_role, authenticated",
+    "src": "supabase/migrations/20261127001500_talkx_campaign_pace_orcamento_interno.sql"
    },
    {
     "kind": "revoke",
@@ -342838,7 +343066,7 @@
   },
   "src/components/talkx/TalkXAnalytics.tsx": {
    "path": "src/components/talkx/TalkXAnalytics.tsx",
-   "lines": 742,
+   "lines": 748,
    "exports": [
     "function TalkXAnalytics"
    ],
@@ -344998,6 +345226,24 @@
     "carregando a próxima página o botão trava para não duplicar a chamada",
     "última página avisa que o log terminou",
     "enquanto carrega mostra esqueleto, não o vazio"
+   ]
+  },
+  "src/components/talkx/__tests__/TalkXCampaignPaceCard.test.tsx": {
+   "path": "src/components/talkx/__tests__/TalkXCampaignPaceCard.test.tsx",
+   "lines": 82,
+   "is_test": true,
+   "rule_comments": [
+    "* O caso que o teste protege: falta de permissão (42501) não pode aparecer como"
+   ],
+   "tests": [
+    "TalkXCampaignPaceCard",
+    "mostra os dois tetos, o enviado e o que resta",
+    "a barra do minuto cheio fica em 100% e a do dia em 24%",
+    "mostra o tempo até a cota do dia virar",
+    "sem permissão mostra aviso próprio em vez de ",
+    "erro real mostra o estado de erro com a mensagem traduzida",
+    "campanha sem conexão explica, em vez de mostrar 0 de 0",
+    "carregando mostra esqueleto, sem números falsos"
    ]
   },
   "src/components/talkx/__tests__/TalkXCampaignPaused.test.tsx": {
@@ -347785,6 +348031,18 @@
    "rule_comments": [
     "* `false` = sem permissão; `undefined` = permissão ainda sendo checada. */",
     "tela não afirma falta de permissão, mostra o carregamento."
+   ]
+  },
+  "src/components/talkx/analytics/TalkXCampaignPaceCard.tsx": {
+   "path": "src/components/talkx/analytics/TalkXCampaignPaceCard.tsx",
+   "lines": 166,
+   "exports": [
+    "interface TalkXCampaignPaceCardProps",
+    "function TalkXCampaignPaceCard",
+    "function TalkXCampaignPacePanel"
+   ],
+   "rule_comments": [
+    "* Falta de permissão (42501): a tela explica, não mostra \"nenhum envio\". */"
    ]
   },
   "src/components/talkx/analytics/TalkXCampaignRevenueCard.tsx": {
@@ -374843,6 +375101,30 @@
    ],
    "uses_service_role": true
   },
+  "src/hooks/integrations/useTalkXCampaignPace.ts": {
+   "path": "src/hooks/integrations/useTalkXCampaignPace.ts",
+   "lines": 192,
+   "exports": [
+    "type TalkXCampaignPacePayload",
+    "interface TalkXCampaignPaceNumbers",
+    "function paceFromServer",
+    "function isEmptyPace",
+    "function isPaceForbidden",
+    "function describePaceError",
+    "function paceUsagePercent",
+    "function describeNextReset",
+    "interface TalkXCampaignPaceResult",
+    "function useTalkXCampaignPace"
+   ],
+   "rule_comments": [
+    "* `true` quando o erro é falta de permissão (42501), não falha de leitura. */",
+    "* Falta de permissão (42501) — a tela mostra \"restrito\", não \"erro\". */"
+   ],
+   "hooks": [
+    "useTalkXCampaignPace"
+   ],
+   "uses_service_role": true
+  },
   "src/hooks/integrations/useTalkXCampaignRevenue.ts": {
    "path": "src/hooks/integrations/useTalkXCampaignRevenue.ts",
    "lines": 166,
@@ -377280,6 +377562,39 @@
     "sem campanha selecionada não chama a RPC",
     "resolve o nome dos destinatários da página carregada"
    ]
+  },
+  "src/hooks/integrations/__tests__/useTalkXCampaignPace.test.ts": {
+   "path": "src/hooks/integrations/__tests__/useTalkXCampaignPace.test.ts",
+   "lines": 185,
+   "is_test": true,
+   "rule_comments": [
+    "day_remaining, next_day_at}`) e o caminho de permissão (42501"
+   ],
+   "tests": [
+    "paceFromServer (X018)",
+    "lê o payload real da RPC",
+    "contas como string e decimais não viram NaN",
+    "sem *_remaining o saldo é calculado do teto menos o enviado",
+    "nada sai negativo nem acima do teto",
+    "payload vazio, nulo ou inválido devolve orçamento zerado",
+    "isEmptyPace (X018)",
+    "campanha sem conexão devolve tudo zerado",
+    "campanha com teto não é vazia mesmo sem envios",
+    "permissão e erros (X018)",
+    "reconhece o 42501 da RPC",
+    "traduz os erros do servidor para a tela",
+    "paceUsagePercent (X018)",
+    "mede o quanto do teto já foi usado",
+    "teto zero não divide por zero",
+    "describeNextReset (X018)",
+    "mostra quanto falta para a cota do dia virar",
+    "sem conexão ou já vencido não inventa contagem",
+    "useTalkXCampaignPace (X018)",
+    "chama a RPC com o id da campanha e devolve o orçamento",
+    "42501 vira ",
+    "sem campanha selecionada não consulta o servidor"
+   ],
+   "uses_service_role": true
   },
   "src/hooks/integrations/__tests__/useTalkXCampaignRevenue.test.ts": {
    "path": "src/hooks/integrations/__tests__/useTalkXCampaignRevenue.test.ts",
@@ -427082,6 +427397,15 @@
    "path": "supabase/migrations/20261126234500_paridade_policies_admin_prod.sql",
    "lines": 131
   },
+  "supabase/migrations/20261127001500_talkx_campaign_pace_orcamento_interno.sql": {
+   "path": "supabase/migrations/20261127001500_talkx_campaign_pace_orcamento_interno.sql",
+   "lines": 152,
+   "temporal": [
+    "v_minute_start := statement_timestamp() - interval '1 minute';",
+    "v_next_day_at := v_day_start + interval '1 day';"
+   ],
+   "uses_service_role": true
+  },
   "supabase/migrations/20261127140000_fix_retencao_copiloto.sql": {
    "path": "supabase/migrations/20261127140000_fix_retencao_copiloto.sql",
    "lines": 179,
@@ -431021,10 +431345,25 @@
   }
  },
  "git": {
-  "sha": "4465e3920a47e5366157bab2863165c30e0e2d1b",
+  "sha": "f3061b66e7b1b72e17837b281fd271ddd2a1f11d",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "f3061b66",
+    "date": "2026-11-26",
+    "author": "adm01-debug",
+    "subject": "fix: painel mostra o orçamento de envio da campanha (talkx_campaign_pace destravado para admin) (#3406)",
+    "files": [
+     "docs/talkx/ESTADOS.md",
+     "src/components/talkx/TalkXAnalytics.tsx",
+     "src/components/talkx/__tests__/TalkXCampaignPaceCard.test.tsx",
+     "src/components/talkx/analytics/TalkXCampaignPaceCard.tsx",
+     "src/hooks/integrations/__tests__/useTalkXCampaignPace.test.ts",
+     "src/hooks/integrations/useTalkXCampaignPace.ts",
+     "supabase/migrations/20261127001500_talkx_campaign_pace_orcamento_interno.sql"
+    ]
+   },
    {
     "sha": "4465e392",
     "date": "2026-11-26",
@@ -431495,15 +431834,6 @@
      "src/hooks/inbox/useConnectionsManager.ts",
      "src/hooks/inbox/useConnectionsRealtime.ts"
     ]
-   },
-   {
-    "sha": "4855bda8",
-    "date": "2026-11-25",
-    "author": "adm01-debug",
-    "subject": "fix: asserção do E2E da sidebar não confunde a seção de SLA com o accordion antigo (#3389)",
-    "files": [
-     "e2e/inbox-contact-sidebar.spec.ts"
-    ]
    }
   ],
   "hot_files": [
@@ -431513,7 +431843,7 @@
    ],
    [
     "docs/talkx/ESTADOS.md",
-    6
+    7
    ],
    [
     "supabase/deployment-manifest.json",
@@ -431538,6 +431868,10 @@
    [
     "scripts/automation.config.json",
     4
+   ],
+   [
+    "src/components/talkx/TalkXAnalytics.tsx",
+    3
    ],
    [
     "supabase/schema-catalog.json",
@@ -431565,10 +431899,6 @@
    ],
    [
     "src/integrations/supabase/types.ts",
-    2
-   ],
-   [
-    "src/components/talkx/TalkXAnalytics.tsx",
     2
    ],
    [

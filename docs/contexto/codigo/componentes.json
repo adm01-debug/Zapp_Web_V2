@@ -1,7 +1,7 @@
 {
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
- "total": 956,
+ "total": 957,
  "orfaos": 45,
  "nomes_duplicados": {
   "AchievementBadge": [
@@ -11424,6 +11424,24 @@
    "orfao": false
   },
   {
+   "arquivo": "src/components/talkx/analytics/TalkXCampaignPaceCard.tsx",
+   "exports": [
+    "TalkXCampaignPaceCard",
+    "TalkXCampaignPaceCardProps",
+    "TalkXCampaignPacePanel"
+   ],
+   "export_default": null,
+   "linhas": 166,
+   "dominio": "components/talkx",
+   "hooks_locais": [
+    "useTalkXCampaignPace"
+   ],
+   "tabelas": [],
+   "edges": [],
+   "usado_por": 1,
+   "orfao": false
+  },
+  {
    "arquivo": "src/components/talkx/analytics/TalkXCampaignRevenueCard.tsx",
    "exports": [
     "TalkXCampaignRevenueCard",
@@ -11903,7 +11921,7 @@
     "TalkXAnalytics"
    ],
    "export_default": null,
-   "linhas": 742,
+   "linhas": 748,
    "dominio": "components/talkx",
    "hooks_locais": [
     "useActiveDepartments",

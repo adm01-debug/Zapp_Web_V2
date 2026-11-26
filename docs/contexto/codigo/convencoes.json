@@ -7,12 +7,12 @@
    "src/pages (22)"
   ],
   "componentes": [
-   "src/components (916)",
+   "src/components (917)",
    "src/pages (31)",
    "src/features (2)"
   ],
   "hooks": [
-   "src/hooks (450)",
+   "src/hooks (451)",
    "src/components (74)",
    "src/contexts (2)"
   ],
@@ -22,7 +22,7 @@
    "src/utils (8)"
   ],
   "testes": [
-   "co-localizado (__tests__) (2139)",
+   "co-localizado (__tests__) (2141)",
    "outro (260)",
    "co-localizado (*.test) (203)"
   ],
@@ -48,7 +48,7 @@
  },
  "barrels_index": 74,
  "extensao_componentes": [
-  ".tsx (956)"
+  ".tsx (957)"
  ],
  "alias_imports": {
   "analise-prs/resgate-261115/auditoria/bruto/diarios-sessao/": {
@@ -66,11 +66,11 @@
  "commits": {
   "convencao": "conventional commits (observado)",
   "exemplos": [
+   "fix: painel mostra o orçamento de envio da campanha (talkx_campaign_pace destravado para admin) (#3406)",
    "feat(copiloto): tela de retenção do copiloto RADAR (agregado diário por atendente) (#3418)",
    "fix: restaura paridade de RLS entre producao e o replay das migrations (12 policies de admin) (#3401)",
    "chore(db): sincronizar artefatos derivados do banco (#3421)",
-   "fix(db): cron de retenção do copiloto nunca gravou (subquery + kind errado) (#3417)",
-   "feat(admin): aba Orçamento no Consumo IA — reservado x consumido do ledger (#3420)"
+   "fix(db): cron de retenção do copiloto nunca gravou (subquery + kind errado) (#3417)"
   ]
  },
  "pr_template": ".github/PULL_REQUEST_TEMPLATE.md",
