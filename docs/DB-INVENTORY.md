@@ -40,13 +40,13 @@ confere que todo caminho listado é consumidor de verdade; ela não obriga a lis
 
 | Objeto | Quantidade |
 |---|---|
-| Tabelas (`tables`) | 215 |
+| Tabelas (`tables`) | 216 |
 | Views (`views`) | 13 |
-| Colunas (`columns`) | 2401 |
-| Funções (`functions`) | 403 |
-| Assinaturas de função (`function_signatures`) | 405 |
-| Funções de gatilho (`trigger_functions`) | 103 |
-| Restrições de verificação (`check_constraints`) | 259 |
+| Colunas (`columns`) | 2411 |
+| Funções (`functions`) | 410 |
+| Assinaturas de função (`function_signatures`) | 412 |
+| Funções de gatilho (`trigger_functions`) | 104 |
+| Restrições de verificação (`check_constraints`) | 263 |
 
 As tabelas estão inventariadas uma a uma na seção seguinte. Views, funções, colunas e restrições
 têm o inventário completo no catálogo (`supabase/schema-catalog.json`) e o manifesto com hash de
@@ -97,6 +97,7 @@ RLS em `supabase/schema-manifest.json`; este documento não os repete.
 | `channel_routing_rules` | Regras de roteamento por canal para fila, com prioridade e condições | ativo | `src/components/omnichannel/ChannelRoutingRules.tsx`, `src/components/omnichannel/__tests__/ChannelRoutingRules.a11y.test.tsx`, `src/components/omnichannel/__tests__/cadastroSemExecutor.test.tsx` … |
 | `chatbot_executions` | Execuções dos fluxos de chatbot, com nó atual e variáveis | ativo | `src/components/chatbot/ChatbotExecutionsDashboard.tsx`, `src/components/chatbot/ChatbotHonestNotice.tsx` |
 | `chatbot_flows` | Fluxos de chatbot (gatilho, nós e publicação) | ativo | `src/components/chatbot/ChatbotExecutionsDashboard.tsx`, `src/components/chatbot/ChatbotHonestNotice.tsx`, `src/components/settings/ChatbotL1Config.tsx` … |
+| `city_whitelist` | Cidades liberadas para operação, com quem autorizou e quando | ativo | `src/hooks/security/useCityWhitelist.ts`, `supabase/functions/_shared/request-policy.ts`, `scripts/db-audit/city-whitelist-network-policy.test.sh` |
 | `client_wallet_rules` | Regras da carteira de clientes por agente e conexão | ativo | `src/hooks/business/__tests__/useClientWallet.test.tsx`, `src/hooks/business/useClientWallet.ts` |
 | `connection_alert_preferences` | Preferências de alerta de saúde da conexão por usuário. | ativo | `src/components/alerts/__tests__/EvolutionDisconnectBanner.a11y.test.tsx`, `src/components/alerts/__tests__/EvolutionDisconnectBanner.behavior.test.tsx`, `src/components/alerts/__tests__/EvolutionDisconnectBanner.janela-manutencao.test.tsx` … |
 | `connection_health_logs` | Histórico de saúde das conexões (latência, estado e erro) | ativo | `src/components/diagnostics/ConnectionHealthPanel.tsx`, `src/components/diagnostics/__tests__/DiagnosticsView.health.test.tsx`, `src/components/monitoring/MonitoringEventTimeline.tsx` … |

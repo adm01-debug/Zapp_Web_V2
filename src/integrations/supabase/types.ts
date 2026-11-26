@@ -2068,6 +2068,33 @@ export type Database = {
           },
         ]
       }
+      city_whitelist: {
+        Row: {
+          city_key: string | null
+          city_name: string
+          created_at: string
+          created_by: string | null
+          id: string
+          is_active: boolean
+        }
+        Insert: {
+          city_key?: string | null
+          city_name: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_active?: boolean
+        }
+        Update: {
+          city_key?: string | null
+          city_name?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_active?: boolean
+        }
+        Relationships: []
+      }
       client_wallet_rules: {
         Row: {
           agent_id: string
@@ -3140,6 +3167,7 @@ export type Database = {
           description: string | null
           due_date: string | null
           id: string
+          message_id: string | null
           migrated_from_reminder_id: string | null
           notified_at: string | null
           position: number
@@ -3162,6 +3190,7 @@ export type Database = {
           description?: string | null
           due_date?: string | null
           id?: string
+          message_id?: string | null
           migrated_from_reminder_id?: string | null
           notified_at?: string | null
           position?: number
@@ -3184,6 +3213,7 @@ export type Database = {
           description?: string | null
           due_date?: string | null
           id?: string
+          message_id?: string | null
           migrated_from_reminder_id?: string | null
           notified_at?: string | null
           position?: number
@@ -3230,6 +3260,13 @@ export type Database = {
             columns: ["created_by"]
             isOneToOne: false
             referencedRelation: "profiles_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "conversation_tasks_message_id_fkey"
+            columns: ["message_id"]
+            isOneToOne: false
+            referencedRelation: "messages"
             referencedColumns: ["id"]
           },
           {
@@ -4905,6 +4942,7 @@ export type Database = {
       }
       geo_blocking_settings: {
         Row: {
+          city_whitelist_enabled: boolean
           created_at: string
           id: string
           mode: string
@@ -4912,6 +4950,7 @@ export type Database = {
           updated_by: string | null
         }
         Insert: {
+          city_whitelist_enabled?: boolean
           created_at?: string
           id?: string
           mode?: string
@@ -4919,6 +4958,7 @@ export type Database = {
           updated_by?: string | null
         }
         Update: {
+          city_whitelist_enabled?: boolean
           created_at?: string
           id?: string
           mode?: string
@@ -11519,10 +11559,12 @@ export type Database = {
           error_at: string
           error_message: string
           event_type: string | null
+          external_id: string | null
           id: string
           instance: string | null
           payload_sha256: string | null
           payload_truncated: Json | null
+          replay_payload: Json | null
           resolved: boolean
           resolved_at: string | null
           retry_count: number
@@ -11532,10 +11574,12 @@ export type Database = {
           error_at?: string
           error_message: string
           event_type?: string | null
+          external_id?: string | null
           id?: string
           instance?: string | null
           payload_sha256?: string | null
           payload_truncated?: Json | null
+          replay_payload?: Json | null
           resolved?: boolean
           resolved_at?: string | null
           retry_count?: number
@@ -11545,10 +11589,12 @@ export type Database = {
           error_at?: string
           error_message?: string
           event_type?: string | null
+          external_id?: string | null
           id?: string
           instance?: string | null
           payload_sha256?: string | null
           payload_truncated?: Json | null
+          replay_payload?: Json | null
           resolved?: boolean
           resolved_at?: string | null
           retry_count?: number
@@ -12643,6 +12689,14 @@ export type Database = {
       ai_is_canonical_priority: { Args: { p_value: string }; Returns: boolean }
       ai_is_canonical_sentiment: { Args: { p_value: string }; Returns: boolean }
       ai_is_canonical_urgency: { Args: { p_value: string }; Returns: boolean }
+      ai_provider_endpoint_is_safe: {
+        Args: { endpoint: string }
+        Returns: boolean
+      }
+      ai_provider_secret_name_is_safe: {
+        Args: { secret_name: string }
+        Returns: boolean
+      }
       ai_rate_limit_hit: {
         Args: { p_key: string; p_window_start: string }
         Returns: number
@@ -12671,6 +12725,10 @@ export type Database = {
         Returns: number
       }
       apply_zapp_cron_secrets_l5: { Args: never; Returns: undefined }
+      archive_talkx_template: {
+        Args: { p_archived?: boolean; p_template_id: string }
+        Returns: Json
+      }
       assume_conversation: { Args: { p_contact_id: string }; Returns: Json }
       attribute_multiplix_item_reply: {
         Args: {
@@ -13235,6 +13293,7 @@ export type Database = {
         Args: { p_campaign_id: string }
         Returns: string
       }
+      delete_talkx_template: { Args: { p_template_id: string }; Returns: Json }
       delivery_stats: {
         Args: { p_contact_id: string; p_hours?: number }
         Returns: Json
@@ -13347,6 +13406,10 @@ export type Database = {
           isOneToOne: true
           isSetofReturn: false
         }
+      }
+      duplicate_talkx_template: {
+        Args: { p_template_id: string }
+        Returns: Json
       }
       edit_message: {
         Args: { p_message_id: string; p_new_content: string }
@@ -14418,6 +14481,7 @@ export type Database = {
           ip_seen: string
         }[]
       }
+      normalize_city_name: { Args: { p_city: string }; Returns: string }
       notify_due_reminders: { Args: never; Returns: number }
       notify_due_tasks: { Args: never; Returns: number }
       notify_searchbox_budget: { Args: never; Returns: number }
@@ -14658,6 +14722,10 @@ export type Database = {
         Args: { p_claim_token: string; p_recipient_id: string }
         Returns: boolean
       }
+      remind_me_about_message: {
+        Args: { p_message_id: string; p_note?: string; p_remind_at: string }
+        Returns: string
+      }
       remove_contact_tag: {
         Args: { p_contact_id: string; p_tag: string }
         Returns: string[]
@@ -14764,10 +14832,11 @@ export type Database = {
       resolve_contact_guard_actor: { Args: never; Returns: string }
       resolve_network_policy: {
         Args: {
+          p_city?: string
           p_country_code: string
-          p_default_max_requests: number
-          p_default_window_seconds: number
-          p_endpoint: string
+          p_default_max_requests?: number
+          p_default_window_seconds?: number
+          p_endpoint?: string
           p_ip: string
         }
         Returns: {
