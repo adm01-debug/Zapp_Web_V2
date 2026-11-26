@@ -10,6 +10,11 @@ import { describeAccessError, isAccessDeniedError } from '@/lib/rlsError';
  * Os campos vêm da RPC `admin_list_cron_jobs()`. O texto do COMANDO SQL do job
  * (`cron.job.command`) não existe aqui de propósito: a RPC não o devolve e a tela
  * não pode mostrá-lo.
+ *
+ * `permitido` vem da própria RPC: a agenda devolve TODOS os jobs do pg_cron, mas só
+ * os que estão na allow-list aceitam ligar/desligar (`admin_toggle_cron_job`). Os
+ * demais aparecem como leitura — sem isso, um job que falha todo dia (o caso do
+ * `copilot-retention-daily`, 7 falhas em 7 dias em 26/11/2026) não aparecia em tela.
  */
 export interface TarefaAgendada {
   jobname: string;
@@ -18,6 +23,7 @@ export interface TarefaAgendada {
   last_status: string | null;
   last_run_at: string | null;
   last_return_message: string | null;
+  permitido: boolean;
 }
 
 // A RPC devolve o texto cru do `RAISE EXCEPTION` (ex.: "admin_list_cron_jobs:
@@ -54,6 +60,7 @@ export function useTarefasAgendadas() {
         last_status: linha.last_status ?? null,
         last_run_at: linha.last_run_at ?? null,
         last_return_message: linha.last_return_message ?? null,
+        permitido: linha.permitido === true,
       }));
     },
     staleTime: 30_000,

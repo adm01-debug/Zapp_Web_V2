@@ -12629,6 +12629,7 @@ export type Database = {
           last_return_message: string
           last_run_at: string
           last_status: string
+          permitido: boolean
           schedule: string
         }[]
       }
