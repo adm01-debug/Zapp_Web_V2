@@ -42,6 +42,12 @@ vi.mock('@/hooks/integrations/useTalkXSettings', () => ({
   useTalkXSettingUpdate: () => ({ mutate: vi.fn(), isPending: false }),
 }));
 
+// O painel "Jobs de dados" (talkx_data_jobs) tem consulta própria: sem provider de
+// react-query neste render, o mock mantém o foco do teste nos controles da tela 17.
+vi.mock('@/hooks/integrations/useTalkXDataJobs', () => ({
+  useTalkXDataJobs: () => ({ data: [], isLoading: false, error: null, refetch: vi.fn() }),
+}));
+
 vi.mock('@/hooks/integrations/useTalkXTemplates', () => ({
   useTalkXTemplates: () => ({
     templates: [
