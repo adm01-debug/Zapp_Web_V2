@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "73c76a78423470f9db324a144222b5abae8b9704",
+  "commit": "515fbecb8b172f032e58c6691b7cb2ee1a1b715a",
   "branch": "main",
-  "data_commit": "2026-11-26T04:18:38Z",
+  "data_commit": "2026-11-26T08:20:14-03:00",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "515fbecb",
+    "data": "2026-11-26",
+    "assunto": "feat: liga o retorno da campanha (conversões, receita e ROI) no Analytics (#3404)"
+   },
    {
     "sha": "73c76a78",
     "data": "2026-11-26",
@@ -126,14 +131,9 @@
     "sha": "1d87b06f",
     "data": "2026-11-25",
     "assunto": "chore(lint): reancora baseline nas posicoes atuais (divida inalterada, 540 = 540) (#3373)"
-   },
-   {
-    "sha": "3be6edc8",
-    "data": "2026-11-25",
-    "assunto": "chore: sincroniza docs/contexto com a publicacao oficial (mapa deixa de citar 149 caminhos mortos) (#3372)"
    }
   ],
-  "arquivos_mudados_7d": 2780,
+  "arquivos_mudados_7d": 2775,
   "pastas_mais_mudadas_30d": [
    {
     "pasta": "docs/contexto/supabase",
@@ -165,7 +165,7 @@
    },
    {
     "pasta": "src/components/talkx",
-    "mudancas": 363
+    "mudancas": 366
    },
    {
     "pasta": "analise-prs/resgate-261115/dossies",
@@ -185,7 +185,7 @@
    },
    {
     "pasta": "src/hooks/integrations",
-    "mudancas": 148
+    "mudancas": 150
    },
    {
     "pasta": "src/components/contacts",
@@ -199,26 +199,26 @@
   "arquivos_mais_mudados_90d": [
    {
     "arquivo": "supabase/deployment-manifest.json",
-    "mudancas": 39
+    "mudancas": 38
    },
    {
     "arquivo": "ESTADO.md",
     "mudancas": 27
    },
    {
+    "arquivo": "docs/DB-INVENTORY.md",
+    "mudancas": 17
+   },
+   {
     "arquivo": "supabase/schema-manifest.json",
     "mudancas": 17
    },
    {
-    "arquivo": "docs/DB-INVENTORY.md",
+    "arquivo": "docs/talkx/ESTADOS.md",
     "mudancas": 16
    },
    {
     "arquivo": ".github/workflows/db-guard.yml",
-    "mudancas": 15
-   },
-   {
-    "arquivo": "docs/talkx/ESTADOS.md",
     "mudancas": 15
    },
    {
@@ -314,21 +314,21 @@
   ]
  },
  "contagens": {
-  "arquivos_total": 14843,
-  "arquivos_codigo": 5175,
-  "linhas_codigo": 960428,
+  "arquivos_total": 14847,
+  "arquivos_codigo": 5179,
+  "linhas_codigo": 961019,
   "rotas": 18,
   "rotas_http_backend": 11,
   "vistas_por_id": 55,
   "itens_menu": 61,
   "modulos": 149,
-  "componentes": 938,
-  "hooks": 523,
+  "componentes": 939,
+  "hooks": 524,
   "edge_functions": 94,
   "tabelas": 224,
   "migrations": 1161,
   "cron_jobs": 29,
-  "testes": 2840,
+  "testes": 2842,
   "workflows": 26,
   "scripts": 458,
   "docs_md": 3988
@@ -739,8 +739,8 @@
    "linhas": 638
   },
   "src/components": {
-   "arquivos": 2324,
-   "linhas": 396040
+   "arquivos": 2326,
+   "linhas": 396382
   },
   "src/config": {
    "arquivos": 3,
@@ -759,8 +759,8 @@
    "linhas": 3293
   },
   "src/hooks": {
-   "arquivos": 1047,
-   "linhas": 169561
+   "arquivos": 1049,
+   "linhas": 169810
   },
   "src/i18n": {
    "arquivos": 2,

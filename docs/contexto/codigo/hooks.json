@@ -1,7 +1,7 @@
 {
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
- "total": 523,
+ "total": 524,
  "hooks": [
   {
    "arquivo": "analise-prs/resgate-261118-lote2/src/hooks/useMotionSeguro.ts",
@@ -7049,12 +7049,13 @@
     "useQuery"
    ],
    "canais_realtime": [],
-   "usado_por": 5,
+   "usado_por": 6,
    "usado_por_arquivos": [
     "src/components/contacts/AdvancedCRMSearch.tsx",
     "src/components/contacts/ContactsView.tsx",
     "src/components/talkx/TalkXAnalytics.tsx",
     "src/components/talkx/TalkXCampaignWizard.tsx",
+    "src/components/talkx/analytics/TalkXCampaignRevenueCard.tsx",
     "src/hooks/dashboard/useDailyMetricsKpis.ts"
    ],
    "coberto_por_testes": 0
@@ -9161,6 +9162,28 @@
    "canais_realtime": [],
    "usado_por": 0,
    "usado_por_arquivos": [],
+   "coberto_por_testes": 1
+  },
+  {
+   "arquivo": "src/hooks/integrations/useTalkXCampaignRevenue.ts",
+   "hooks_exportados": [
+    "useTalkXCampaignRevenue"
+   ],
+   "linhas": 166,
+   "dominio": "hooks/integrations",
+   "tabelas": [],
+   "rpcs": [],
+   "edges": [],
+   "hooks_internos": [
+    "useMutation",
+    "useQuery",
+    "useQueryClient"
+   ],
+   "canais_realtime": [],
+   "usado_por": 1,
+   "usado_por_arquivos": [
+    "src/components/talkx/analytics/TalkXCampaignRevenueCard.tsx"
+   ],
    "coberto_por_testes": 1
   },
   {

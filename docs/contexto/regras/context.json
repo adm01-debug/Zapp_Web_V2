@@ -1,15 +1,15 @@
 {
  "meta": {
-  "sha": "73c76a78423470f9db324a144222b5abae8b9704",
+  "sha": "515fbecb8b172f032e58c6691b7cb2ee1a1b715a",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-26 05:14 UTC",
-  "files_total": 14690,
-  "code_files": 8220,
-  "code_lines": 1238491
+  "generated_at": "2026-11-26 11:22 UTC",
+  "files_total": 14694,
+  "code_files": 8224,
+  "code_lines": 1239082
  },
  "version": "1.3.2",
- "facts_hash": "72a88c3d58f56d27",
+ "facts_hash": "0a82c3df2851b600",
  "stack": {
   "frameworks": [
    "React + Vite",
@@ -368,8 +368,8 @@
   "package_manager": "bun",
   "languages": {
    ".sql": 3072,
-   ".tsx": 2492,
-   ".ts": 2033,
+   ".tsx": 2494,
+   ".ts": 2035,
    ".mjs": 496,
    ".py": 125,
    ".cjs": 19,
@@ -73187,7 +73187,7 @@
     "file": ".github/workflows/types-sync.yml"
    }
   ],
-  "components_count": 2326,
+  "components_count": 2328,
   "hooks": [
    {
     "name": "useMotionSeguro",
@@ -74828,6 +74828,10 @@
    {
     "name": "useTalkXCampaign",
     "file": "src/hooks/integrations/useTalkXCampaignList.ts"
+   },
+   {
+    "name": "useTalkXCampaignRevenue",
+    "file": "src/hooks/integrations/useTalkXCampaignRevenue.ts"
    },
    {
     "name": "useTalkXCampaignSummary",
@@ -76571,8 +76575,8 @@
   },
   {
    "module": "src/components",
-   "files": 2324,
-   "lines": 396040,
+   "files": 2326,
+   "lines": 396382,
    "tables": [
     "agent_skills",
     "agent_visibility_grants",
@@ -76919,8 +76923,8 @@
   },
   {
    "module": "src/hooks",
-   "files": 1047,
-   "lines": 169561,
+   "files": 1049,
+   "lines": 169810,
    "tables": [
     "agent_achievements",
     "agent_stats",
@@ -93463,6 +93467,10 @@
     "msg": "Seu perfil não foi identificado. Entre novamente para enviar a mídia."
    },
    {
+    "file": "src/components/talkx/analytics/TalkXCampaignRevenueCard.tsx",
+    "msg": " className="
+   },
+   {
     "file": "src/components/talkx/help/talkxHelpIndex.ts",
     "msg": "${id}.md: "
    },
@@ -101361,6 +101369,18 @@
    {
     "file": "src/hooks/integrations/useTalkXAbStats.ts",
     "text": "* Sem `variantId` a decisão é automática (o banco aplica a regra dos 2"
+   },
+   {
+    "file": "src/hooks/integrations/useTalkXCampaignRevenue.ts",
+    "text": "* Conversões atribuídas à campanha (negócio ganho). */"
+   },
+   {
+    "file": "src/hooks/integrations/useTalkXCampaignRevenue.ts",
+    "text": "string em outros payloads (`\"0.00\"`); a tela não pode receber `NaN`."
+   },
+   {
+    "file": "src/hooks/integrations/useTalkXCampaignRevenue.ts",
+    "text": "regra fica explícita para o caso de um replay antigo devolver 0."
    },
    {
     "file": "src/hooks/integrations/useTalkXCommandItems.ts",
@@ -139224,6 +139244,10 @@
     "line": "return <Cell key={entry.name} fill={`hsl(var(--primary) / ${0.3 + intensity * 0.7})`} />;"
    },
    {
+    "file": "src/components/talkx/analytics/TalkXCampaignRevenueCard.tsx",
+    "line": "* ele o ROI fica indefinido, então a tela explica em vez de mostrar 0%."
+   },
+   {
     "file": "src/components/talkx/report/talkxReportCharts.ts",
     "line": "return `hsl(var(--primary) / ${(0.12 + intensity * 0.8).toFixed(2)})`;"
    },
@@ -175194,6 +175218,42 @@
     "name": "campanha retomada por fora: avisa o contêiner pai para navegar"
    },
    {
+    "file": "src/components/talkx/__tests__/TalkXCampaignRevenueCard.test.tsx",
+    "name": "Retorno da campanha — TalkXCampaignRevenueCard (X041)"
+   },
+   {
+    "file": "src/components/talkx/__tests__/TalkXCampaignRevenueCard.test.tsx",
+    "name": "mostra conversões, receita em reais e ROI do servidor"
+   },
+   {
+    "file": "src/components/talkx/__tests__/TalkXCampaignRevenueCard.test.tsx",
+    "name": "sem investimento, o ROI é "
+   },
+   {
+    "file": "src/components/talkx/__tests__/TalkXCampaignRevenueCard.test.tsx",
+    "name": "ROI negativo aparece com sinal"
+   },
+   {
+    "file": "src/components/talkx/__tests__/TalkXCampaignRevenueCard.test.tsx",
+    "name": "quem não é admin vê o investimento, mas não consegue editar"
+   },
+   {
+    "file": "src/components/talkx/__tests__/TalkXCampaignRevenueCard.test.tsx",
+    "name": "admin digita "
+   },
+   {
+    "file": "src/components/talkx/__tests__/TalkXCampaignRevenueCard.test.tsx",
+    "name": "valor inválido bloqueia o salvar e explica o formato"
+   },
+   {
+    "file": "src/components/talkx/__tests__/TalkXCampaignRevenueCard.test.tsx",
+    "name": "erro de gravação aparece em aria-live (role=alert)"
+   },
+   {
+    "file": "src/components/talkx/__tests__/TalkXCampaignRevenueCard.test.tsx",
+    "name": "falha ao carregar mostra erro com ação de tentar novamente"
+   },
+   {
     "file": "src/components/talkx/__tests__/TalkXCampaignRunning.checklist.test.tsx",
     "name": "TalkXCampaignRunning — checklist na campanha pausada (X159)"
    },
@@ -201416,6 +201476,50 @@
    {
     "file": "src/hooks/integrations/__tests__/useTalkXCampaignList.test.ts",
     "name": "sem id a consulta não sai"
+   },
+   {
+    "file": "src/hooks/integrations/__tests__/useTalkXCampaignRevenue.test.ts",
+    "name": "revenueFromServer (X041)"
+   },
+   {
+    "file": "src/hooks/integrations/__tests__/useTalkXCampaignRevenue.test.ts",
+    "name": "lê o payload real da RPC"
+   },
+   {
+    "file": "src/hooks/integrations/__tests__/useTalkXCampaignRevenue.test.ts",
+    "name": "campanha sem investimento não inventa ROI (produção devolve null)"
+   },
+   {
+    "file": "src/hooks/integrations/__tests__/useTalkXCampaignRevenue.test.ts",
+    "name": "investimento zerado mantém ROI indefinido em vez de 0%"
+   },
+   {
+    "file": "src/hooks/integrations/__tests__/useTalkXCampaignRevenue.test.ts",
+    "name": "numeric como string ("
+   },
+   {
+    "file": "src/hooks/integrations/__tests__/useTalkXCampaignRevenue.test.ts",
+    "name": "payload vazio ou inválido não vira NaN na tela"
+   },
+   {
+    "file": "src/hooks/integrations/__tests__/useTalkXCampaignRevenue.test.ts",
+    "name": "parseInvestmentInput (X041)"
+   },
+   {
+    "file": "src/hooks/integrations/__tests__/useTalkXCampaignRevenue.test.ts",
+    "name": "aceita os formatos que o usuário digita"
+   },
+   {
+    "file": "src/hooks/integrations/__tests__/useTalkXCampaignRevenue.test.ts",
+    "name": "recusa o que não é dinheiro"
+   },
+   {
+    "file": "src/hooks/integrations/__tests__/useTalkXCampaignRevenue.test.ts",
+    "name": "describeInvestmentError (X041)"
+   },
+   {
+    "file": "src/hooks/integrations/__tests__/useTalkXCampaignRevenue.test.ts",
+    "name": "traduz os códigos que o servidor levanta"
    },
    {
     "file": "src/hooks/integrations/__tests__/useTalkXCampaignSummary.test.ts",
@@ -340578,7 +340682,7 @@
   },
   "src/components/talkx/TalkXAnalytics.tsx": {
    "path": "src/components/talkx/TalkXAnalytics.tsx",
-   "lines": 729,
+   "lines": 735,
    "exports": [
     "function TalkXAnalytics"
    ],
@@ -342721,6 +342825,25 @@
     "consulta com erro: mostra o erro e não o conteúdo",
     "sem a campanha na lista: mostra o vazio, não o conteúdo",
     "campanha retomada por fora: avisa o contêiner pai para navegar"
+   ]
+  },
+  "src/components/talkx/__tests__/TalkXCampaignRevenueCard.test.tsx": {
+   "path": "src/components/talkx/__tests__/TalkXCampaignRevenueCard.test.tsx",
+   "lines": 122,
+   "is_test": true,
+   "errors": [
+    ").textContent)\n      .toBe("
+   ],
+   "tests": [
+    "Retorno da campanha — TalkXCampaignRevenueCard (X041)",
+    "mostra conversões, receita em reais e ROI do servidor",
+    "sem investimento, o ROI é ",
+    "ROI negativo aparece com sinal",
+    "quem não é admin vê o investimento, mas não consegue editar",
+    "admin digita ",
+    "valor inválido bloqueia o salvar e explica o formato",
+    "erro de gravação aparece em aria-live (role=alert)",
+    "falha ao carregar mostra erro com ação de tentar novamente"
    ]
   },
   "src/components/talkx/__tests__/TalkXCampaignRunning.checklist.test.tsx": {
@@ -345384,6 +345507,21 @@
    ],
    "rule_comments": [
     "* Falha de leitura da série: NÃO pode virar \"sem resultados\". */"
+   ]
+  },
+  "src/components/talkx/analytics/TalkXCampaignRevenueCard.tsx": {
+   "path": "src/components/talkx/analytics/TalkXCampaignRevenueCard.tsx",
+   "lines": 214,
+   "exports": [
+    "interface TalkXCampaignRevenueCardProps",
+    "function TalkXCampaignRevenueCard",
+    "function TalkXCampaignRevenuePanel"
+   ],
+   "errors": [
+    " className="
+   ],
+   "percents": [
+    "* ele o ROI fica indefinido, então a tela explica em vez de mostrar 0%."
    ]
   },
   "src/components/talkx/help/TalkXHelpArticle.tsx": {
@@ -372057,6 +372195,27 @@
     }
    ]
   },
+  "src/hooks/integrations/useTalkXCampaignRevenue.ts": {
+   "path": "src/hooks/integrations/useTalkXCampaignRevenue.ts",
+   "lines": 166,
+   "exports": [
+    "type TalkXCampaignRevenuePayload",
+    "interface TalkXCampaignRevenueNumbers",
+    "function revenueFromServer",
+    "function parseInvestmentInput",
+    "function describeInvestmentError",
+    "interface TalkXCampaignRevenueResult",
+    "function useTalkXCampaignRevenue"
+   ],
+   "rule_comments": [
+    "* Conversões atribuídas à campanha (negócio ganho). */",
+    "string em outros payloads (`\"0.00\"`); a tela não pode receber `NaN`.",
+    "regra fica explícita para o caso de um replay antigo devolver 0."
+   ],
+   "hooks": [
+    "useTalkXCampaignRevenue"
+   ]
+  },
   "src/hooks/integrations/useTalkXCampaignSummary.ts": {
    "path": "src/hooks/integrations/useTalkXCampaignSummary.ts",
    "lines": 115,
@@ -374346,6 +374505,24 @@
     "useTalkXCampaign — campanha por id para as rotas de View",
     "busca a campanha pelo id na coluna id",
     "sem id a consulta não sai"
+   ]
+  },
+  "src/hooks/integrations/__tests__/useTalkXCampaignRevenue.test.ts": {
+   "path": "src/hooks/integrations/__tests__/useTalkXCampaignRevenue.test.ts",
+   "lines": 83,
+   "is_test": true,
+   "tests": [
+    "revenueFromServer (X041)",
+    "lê o payload real da RPC",
+    "campanha sem investimento não inventa ROI (produção devolve null)",
+    "investimento zerado mantém ROI indefinido em vez de 0%",
+    "numeric como string (",
+    "payload vazio ou inválido não vira NaN na tela",
+    "parseInvestmentInput (X041)",
+    "aceita os formatos que o usuário digita",
+    "recusa o que não é dinheiro",
+    "describeInvestmentError (X041)",
+    "traduz os códigos que o servidor levanta"
    ]
   },
   "src/hooks/integrations/__tests__/useTalkXCampaignSummary.test.ts": {
@@ -427384,10 +427561,25 @@
   }
  },
  "git": {
-  "sha": "73c76a78423470f9db324a144222b5abae8b9704",
+  "sha": "515fbecb8b172f032e58c6691b7cb2ee1a1b715a",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "515fbecb",
+    "date": "2026-11-26",
+    "author": "adm01-debug",
+    "subject": "feat: liga o retorno da campanha (conversões, receita e ROI) no Analytics (#3404)",
+    "files": [
+     "docs/DB-INVENTORY.md",
+     "docs/talkx/ESTADOS.md",
+     "src/components/talkx/TalkXAnalytics.tsx",
+     "src/components/talkx/__tests__/TalkXCampaignRevenueCard.test.tsx",
+     "src/components/talkx/analytics/TalkXCampaignRevenueCard.tsx",
+     "src/hooks/integrations/__tests__/useTalkXCampaignRevenue.test.ts",
+     "src/hooks/integrations/useTalkXCampaignRevenue.ts"
+    ]
+   },
    {
     "sha": "73c76a78",
     "date": "2026-11-26",
@@ -429095,18 +429287,6 @@
      "scripts/maintenance/maintenance.unit.mjs",
      "scripts/maintenance/run.mjs"
     ]
-   },
-   {
-    "sha": "21396b9c",
-    "date": "2026-11-24",
-    "author": "adm01-debug",
-    "subject": "fix(ci): exige Replay local das migrations na main (#3367)",
-    "files": [
-     ".claude/commands/merge-prs.md",
-     "docs/agentes/github-ci.md",
-     "scripts/ci/github-settings-baseline.json",
-     "scripts/ci/github-settings-guard.unit.mjs"
-    ]
    }
   ],
   "hot_files": [
@@ -429120,7 +429300,7 @@
    ],
    [
     "docs/DB-INVENTORY.md",
-    4
+    5
    ],
    [
     ".github/workflows/db-guard.yml",
@@ -429132,10 +429312,6 @@
    ],
    [
     "docs/ci/README.md",
-    3
-   ],
-   [
-    "docs/agentes/github-ci.md",
     3
    ],
    [
@@ -429163,31 +429339,35 @@
     2
    ],
    [
+    "docs/agentes/github-ci.md",
+    2
+   ],
+   [
     "scripts/ci/ci-docs-baseline.unit.mjs",
     2
    ],
    [
-    "scripts/db-audit/grants-baseline.json",
+    "docs/talkx/ESTADOS.md",
     1
    ],
    [
-    "src/integrations/supabase/types.ts",
+    "src/components/talkx/TalkXAnalytics.tsx",
     1
    ],
    [
-    "supabase/schema-catalog.json",
+    "src/components/talkx/__tests__/TalkXCampaignRevenueCard.test.tsx",
     1
    ],
    [
-    "supabase/schema-manifest.json",
+    "src/components/talkx/analytics/TalkXCampaignRevenueCard.tsx",
     1
    ],
    [
-    "scripts/db-audit/check-webhook-failures-replay.sql",
+    "src/hooks/integrations/__tests__/useTalkXCampaignRevenue.test.ts",
     1
    ],
    [
-    "scripts/db-audit/check-webhook-failures-replay.test.sh",
+    "src/hooks/integrations/useTalkXCampaignRevenue.ts",
     1
    ]
   ]

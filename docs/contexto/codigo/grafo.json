@@ -1,16 +1,16 @@
 {
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
- "nos": 2427,
- "arestas": 8353,
+ "nos": 2429,
+ "arestas": 8360,
  "hubs": [
   {
    "arquivo": "src/lib/utils.ts",
-   "importado_por": 486
+   "importado_por": 487
   },
   {
    "arquivo": "src/integrations/supabase/client.ts",
-   "importado_por": 430
+   "importado_por": 431
   },
   {
    "arquivo": "src/components/ui/button.tsx",
@@ -94,7 +94,7 @@
   },
   {
    "arquivo": "src/components/talkx/talkxShared.ts",
-   "importado_por": 54
+   "importado_por": 55
   },
   {
    "arquivo": "src/hooks/integrations/useExternalCatalog.ts",
