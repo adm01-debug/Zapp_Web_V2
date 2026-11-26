@@ -8,7 +8,7 @@
   "supabase/migrations",
   "typeorm"
  ],
- "migrations": 1154,
+ "migrations": 1155,
  "seeds": [
   "docs/contexto/supabase/functions/public/seed_default_goals_for_profile__12ae32cb1ec02d01.sql",
   "e2e/fixtures/seed-talk-me.sql",
@@ -144,6 +144,8 @@
   "ai_is_canonical_priority",
   "ai_is_canonical_sentiment",
   "ai_is_canonical_urgency",
+  "ai_provider_endpoint_is_safe",
+  "ai_provider_secret_name_is_safe",
   "ai_rate_limit_hit",
   "ai_rate_limit_purge",
   "ai_sentiment_summary",

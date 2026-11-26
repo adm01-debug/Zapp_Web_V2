@@ -11061,6 +11061,7 @@
    "supabase/functions/_shared/ai-capabilities.ts",
    "supabase/functions/_shared/ai-circuit.ts",
    "supabase/functions/_shared/ai-feature-flags.ts",
+   "supabase/functions/_shared/ai-provider-egress.ts",
    "supabase/functions/_shared/ai-providers.ts",
    "supabase/functions/_shared/ai-routing.ts",
    "supabase/functions/_shared/ai-usage.ts"
@@ -11070,6 +11071,9 @@
    "supabase/functions/_shared/validation.ts"
   ],
   "supabase/functions/_shared/ai-image-input.ts": [
+   "supabase/functions/_shared/ssrf.ts"
+  ],
+  "supabase/functions/_shared/ai-provider-egress.ts": [
    "supabase/functions/_shared/ssrf.ts"
   ],
   "supabase/functions/_shared/ai-providers.ts": [
@@ -11385,6 +11389,7 @@
    "supabase/functions/_shared/ai-capabilities.ts",
    "supabase/functions/_shared/ai-feature-flags.ts",
    "supabase/functions/_shared/ai-guards.ts",
+   "supabase/functions/_shared/ai-provider-egress.ts",
    "supabase/functions/_shared/ai-providers.ts",
    "supabase/functions/_shared/ai-routing.ts",
    "supabase/functions/_shared/ai-usage.ts",

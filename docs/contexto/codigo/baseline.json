@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "bd4e9fd06fe52beb51d9d025d878de54c0608c29",
+  "commit": "de31ddec9c29caa989e878921723a93a15720b38",
   "branch": "main",
-  "data_commit": "2026-11-25T22:13:47-03:00",
+  "data_commit": "2026-11-26T01:48:29Z",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "de31ddec",
+    "data": "2026-11-26",
+    "assunto": "fix: allowlist de credencial de provedor e vínculo endpoint/secret no banco (IA-EGRESS-001) (#3384)"
+   },
    {
     "sha": "bd4e9fd0",
     "data": "2026-11-25",
@@ -126,14 +131,9 @@
     "sha": "f6d0d50c",
     "data": "2026-11-24",
     "assunto": "chore(resgate): preserva dossiês e mapas do resgate na main (#3364)"
-   },
-   {
-    "sha": "7d4d196e",
-    "data": "2026-11-24",
-    "assunto": "feat(inbox): analise de imagem do Copiloto no painel de conversa (#3362)"
    }
   ],
-  "arquivos_mudados_7d": 2731,
+  "arquivos_mudados_7d": 2734,
   "pastas_mais_mudadas_30d": [
    {
     "pasta": "docs/contexto/supabase",
@@ -173,7 +173,7 @@
    },
    {
     "pasta": "supabase/functions/_shared",
-    "mudancas": 241
+    "mudancas": 245
    },
    {
     "pasta": "analise-prs/resgate-261118-lote3/hermes",
@@ -199,7 +199,7 @@
   "arquivos_mais_mudados_90d": [
    {
     "arquivo": "supabase/deployment-manifest.json",
-    "mudancas": 36
+    "mudancas": 37
    },
    {
     "arquivo": "ESTADO.md",
@@ -274,6 +274,10 @@
     "mudancas": 6
    },
    {
+    "arquivo": "supabase/functions/copilot-live/index.test.ts",
+    "mudancas": 6
+   },
+   {
     "arquivo": ".github/workflows/types-sync.yml",
     "mudancas": 5
    },
@@ -291,10 +295,6 @@
    },
    {
     "arquivo": "docs/contexto/regras/manual/regras.md",
-    "mudancas": 5
-   },
-   {
-    "arquivo": "docs/prod-readiness.md",
     "mudancas": 5
    }
   ],
@@ -314,9 +314,9 @@
   ]
  },
  "contagens": {
-  "arquivos_total": 14809,
-  "arquivos_codigo": 5153,
-  "linhas_codigo": 955749,
+  "arquivos_total": 14812,
+  "arquivos_codigo": 5155,
+  "linhas_codigo": 956584,
   "rotas": 18,
   "rotas_http_backend": 11,
   "vistas_por_id": 55,
@@ -326,9 +326,9 @@
   "hooks": 517,
   "edge_functions": 93,
   "tabelas": 223,
-  "migrations": 1154,
+  "migrations": 1155,
   "cron_jobs": 29,
-  "testes": 2830,
+  "testes": 2831,
   "workflows": 26,
   "scripts": 453,
   "docs_md": 3988
@@ -815,8 +815,8 @@
    "linhas": 1708
   },
   "supabase/functions": {
-   "arquivos": 432,
-   "linhas": 130911
+   "arquivos": 434,
+   "linhas": 131746
   },
   "tailwind.config.ts": {
    "arquivos": 1,
@@ -889,16 +889,16 @@
    "linhas": 1228
   },
   {
+   "arquivo": "supabase/functions/_shared/ai-generate.ts",
+   "linhas": 1159
+  },
+  {
    "arquivo": "supabase/functions/connection-health-check/index.ts",
    "linhas": 1145
   },
   {
    "arquivo": "scripts/db-audit/check-migration-drift.mjs",
    "linhas": 1143
-  },
-  {
-   "arquivo": "supabase/functions/_shared/ai-generate.ts",
-   "linhas": 1140
   },
   {
    "arquivo": "scripts/ci/ci-local-lib.mjs",
@@ -937,8 +937,8 @@
    "linhas": 992
   },
   {
-   "arquivo": "docs/reconciliation/reaudit/2026-10-03/reports/auth/extend-second-pass.py",
-   "linhas": 975
+   "arquivo": "supabase/functions/ai-proxy/index.ts",
+   "linhas": 986
   }
  ],
  "qualidade": {

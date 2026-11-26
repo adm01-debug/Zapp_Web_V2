@@ -5,18 +5,18 @@
   "vitest",
   "playwright"
  ],
- "total": 2830,
+ "total": 2831,
  "por_tipo": {
   "contrato": 116,
   "e2e": 76,
   "pytest": 3,
   "qa": 10,
-  "unit": 2533
+  "unit": 2534
  },
  "onde_ficam": [
   {
    "padrao": "co-localizado (__tests__)",
-   "arquivos": 2103
+   "arquivos": 2104
   },
   {
    "padrao": "outro",
@@ -22729,6 +22729,15 @@
    "casos": 16
   },
   {
+   "arquivo": "supabase/functions/_shared/__tests__/ai-provider-egress.test.ts",
+   "tipo": "unit",
+   "linhas": 378,
+   "testa": [
+    "supabase/functions/_shared/ai-provider-egress.ts"
+   ],
+   "casos": 10
+  },
+  {
    "arquivo": "supabase/functions/_shared/__tests__/ai-quota-acao-calculada.test.ts",
    "tipo": "unit",
    "linhas": 264,
@@ -27333,6 +27342,7 @@
   "supabase/functions/_shared/ai-jobs.ts": 1,
   "supabase/functions/_shared/ai-json.ts": 1,
   "supabase/functions/_shared/ai-kb-ingest.ts": 1,
+  "supabase/functions/_shared/ai-provider-egress.ts": 1,
   "supabase/functions/_shared/ai-providers.ts": 1,
   "supabase/functions/_shared/ai-response-contracts.ts": 5,
   "supabase/functions/_shared/ai-routing.ts": 3,

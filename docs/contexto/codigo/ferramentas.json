@@ -3,9 +3,9 @@
  "format_version": 2,
  "stack": {
   "linguagens": [
-   "TypeScript (4508)",
+   "TypeScript (4510)",
    "Markdown (3988)",
-   "SQL (3064)",
+   "SQL (3065)",
    "JSON (1939)",
    "JavaScript (524)",
    "Shell (252)",
@@ -2005,6 +2005,10 @@
     "arquivos": 5
    },
    {
+    "host": "openrouter.ai",
+    "arquivos": 5
+   },
+   {
     "host": "proxy.invalid",
     "arquivos": 5
    },
@@ -2038,10 +2042,6 @@
    },
    {
     "host": "img.test",
-    "arquivos": 4
-   },
-   {
-    "host": "openrouter.ai",
     "arquivos": 4
    },
    {
@@ -2289,6 +2289,10 @@
     "arquivos": 2
    },
    {
+    "host": "127.0.0.1.nip.io",
+    "arquivos": 1
+   },
+   {
     "host": "a.cdn.parceiro.com",
     "arquivos": 1
    },
@@ -2297,7 +2301,19 @@
     "arquivos": 1
    },
    {
+    "host": "api.deepseek.com",
+    "arquivos": 1
+   },
+   {
     "host": "api.github.test",
+    "arquivos": 1
+   },
+   {
+    "host": "api.internal",
+    "arquivos": 1
+   },
+   {
+    "host": "api.local",
     "arquivos": 1
    },
    {
@@ -2310,6 +2326,10 @@
    },
    {
     "host": "api.x.com",
+    "arquivos": 1
+   },
+   {
+    "host": "api.z.ai",
     "arquivos": 1
    },
    {

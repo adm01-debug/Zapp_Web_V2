@@ -1,15 +1,15 @@
 {
  "meta": {
-  "sha": "bd4e9fd06fe52beb51d9d025d878de54c0608c29",
+  "sha": "de31ddec9c29caa989e878921723a93a15720b38",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-26 01:49 UTC",
-  "files_total": 14656,
-  "code_files": 8190,
-  "code_lines": 1232643
+  "generated_at": "2026-11-26 02:13 UTC",
+  "files_total": 14659,
+  "code_files": 8193,
+  "code_lines": 1233545
  },
  "version": "1.3.2",
- "facts_hash": "d0e238482541a276",
+ "facts_hash": "26a55bc3a5e33df5",
  "stack": {
   "frameworks": [
    "React + Vite",
@@ -367,9 +367,9 @@
   ],
   "package_manager": "bun",
   "languages": {
-   ".sql": 3064,
+   ".sql": 3065,
    ".tsx": 2484,
-   ".ts": 2019,
+   ".ts": 2021,
    ".mjs": 496,
    ".py": 125,
    ".cjs": 19,
@@ -9724,7 +9724,10 @@
       "src": "supabase/migrations/20260408194438_1ad57139-c089-4711-86e1-71d8f461e02d.sql"
      }
     ],
-    "constraints": [],
+    "constraints": [
+     "constraint ai_providers_api_key_secret_name_safe CHECK (public.ai_provider_secret_name_is_safe(api_key_secret_name))",
+     "constraint ai_providers_api_endpoint_safe CHECK (public.ai_provider_endpoint_is_safe(api_endpoint))"
+    ],
     "src": "supabase/migrations/20260408194438_1ad57139-c089-4711-86e1-71d8f461e02d.sql",
     "comment": "",
     "origin": "migration"
@@ -35289,6 +35292,28 @@
      "vault"
     ]
    },
+   "ai_provider_secret_name_is_safe": {
+    "args": "secret_name text",
+    "returns": "boolean",
+    "lang": "sql",
+    "src": "supabase/migrations/20261125120000_ai_providers_endpoint_secret_binding.sql",
+    "security_definer": false,
+    "search_path": false,
+    "body": "SELECT secret_name IS NULL OR secret_name = ANY (ARRAY[ 'DEEPSEEK_API_KEY', 'GLM_API_KEY', 'GROQ_API_KEY', 'LOVABLE_API_KEY', 'OPENAI_API_KEY', 'OPENROUTER_API_KEY' ]);",
+    "raises": [],
+    "tables": []
+   },
+   "ai_provider_endpoint_is_safe": {
+    "args": "endpoint text",
+    "returns": "boolean",
+    "lang": "sql",
+    "src": "supabase/migrations/20261125120000_ai_providers_endpoint_secret_binding.sql",
+    "security_definer": false,
+    "search_path": false,
+    "body": "SELECT endpoint IS NULL OR ( endpoint ~ '^https://' AND position('@' in endpoint) = 0 AND endpoint !~ '^https://[0-9]' AND endpoint !~ '^https://\\[[0-9a-fA-F:]+\\]' AND endpoint !~ '^https://[^/]+:[0-9]+' AND endpoint !~* '^https://([^/]*\\.)?(localhost|local|internal|lan|home|corp|intranet)([:/]|$)' );",
+    "raises": [],
+    "tables": []
+   },
    "uid": {
     "args": "",
     "returns": "uuid",
@@ -48380,6 +48405,7 @@
    "supabase/migrations/20261122190000_ia055_precos_entrada_e_saida.sql",
    "supabase/migrations/20261122200000_x076_talkx_ai_requests.sql",
    "supabase/migrations/20261124120000_drop_rpcs_e2e_orfas.sql",
+   "supabase/migrations/20261125120000_ai_providers_endpoint_secret_binding.sql",
    "supabase/migrations/20261125130000_ia009_kill_switch_chaves.sql",
    "supabase/tests/admin_inbox_silence.sql",
    "supabase/tests/admin_unlock_login_autorizacao.sql",
@@ -69931,7 +69957,8 @@
     "errors": [
      "Endpoint da API nao configurado para este provedor.",
      "Endpoint nao configurado para este agente/webhook.",
-     "Segredo ${secretName} nao encontrado nos secrets (Deno.env).",
+     "Nome de secret inválido para este provedor: ${secretValidation.reason}.",
+     "Segredo ${secretValidation.value} nao encontrado nos secrets (Deno.env).",
      "Tipo de provedor nao suportado: ${provider.provider_type}.",
      "api_key_secret_name nao configurado para este provedor."
     ],
@@ -77487,8 +77514,8 @@
   },
   {
    "module": "supabase/functions",
-   "files": 432,
-   "lines": 130911,
+   "files": 434,
+   "lines": 131746,
    "tables": [
     "agent_stats",
     "ai_conversation_tags",
@@ -77599,6 +77626,7 @@
     "ai-jobs.ts: AI_JOB_STATUSES, AiJobStatus, AI_JOB_TERMINAL_STATUSES, AI_JOB_TRANSITIONS, isTerminalAiJobStatus, canTransitionAiJob",
     "ai-json.ts: extractJsonObject, parseJsonObject",
     "ai-kb-ingest.ts: KB_INGEST_BUCKET, KB_FILE_PROCESSING_STATUSES, KbFileProcessingStatus, KB_TEXT_EXTENSIONS, KB_MAX_TEXT_CHARS, kbExtension",
+    "ai-provider-egress.ts: AI_PROVIDER_SECRET_ALLOWLIST, assertAiProviderEndpoint, AiEndpointValidation, AiResolvedEndpointValidation, AiSecretNameValidation, validateAiProviderEndpoint",
     "ai-providers.ts: callLovableAI, callOpenAICompatible, callCustomWebhook, AiFailureClass, MAX_TOTAL_ATTEMPTS, classifyFailure",
     "ai-response-contracts.ts: DEPARTMENT_VALUES, CONVERSATION_STATUS_VALUES, CHURN_RISK_VALUES, AgentPerformanceSchema, ConversationAnalysisOutput, ConversationSummaryOutput",
     "ai-routing.ts: AiPurpose, AI_PURPOSES, AiProviderRow, RoutedProvider, AiRoutingErrorCode, AiRoutingError",
@@ -77623,8 +77651,7 @@
     "evolution-go-routes.ts: GoRoute, translateV2ToGo",
     "evolution-go-token-sync.ts: SafeFetchResult, safeFetch, readJsonSafe, goErrorText, GoTokenLookupFailure, GoTokenLookup",
     "evolution-helpers.ts: WebhookPayload, isRecord, normalizeEventName, toEventRecords, maskJidForLog, normalizePhone",
-    "evolution-instance-token.ts: InstanceTokenClient, resetInstanceTokenCache, instanceNameFromV2Path, resolveInstanceToken",
-    "evolution-media.ts: isValidMediaBytes, persistMediaToStorage, persistBase64Media, persistMediaViaApi, ParsedMessage, parseMessageContent"
+    "evolution-instance-token.ts: InstanceTokenClient, resetInstanceTokenCache, instanceNameFromV2Path, resolveInstanceToken"
    ],
    "docs": [
     "ai-circuit.test.ts: IA-050 — circuit breaker por provedor de IA no despacho central. Defeito provado na auditoria (IA-CIRCUIT-001): `generateWithRouting` retentava e devolvia erro explícito, mas NUNCA suspendia um provedor que só falha — cada request novo voltava a bater no provedor caído (fetch real + espera + custo). …",
@@ -77657,6 +77684,7 @@
     "supabase/functions/_shared/ai-jobs.ts",
     "supabase/functions/_shared/ai-json.ts",
     "supabase/functions/_shared/ai-kb-ingest.ts",
+    "supabase/functions/_shared/ai-provider-egress.ts",
     "supabase/functions/_shared/ai-providers.test.ts",
     "supabase/functions/_shared/ai-providers.ts",
     "supabase/functions/_shared/ai-response-contracts.ts",
@@ -77719,14 +77747,13 @@
     "supabase/functions/_shared/talkx-delivery-connection.ts",
     "supabase/functions/_shared/talkx-reply.ts",
     "supabase/functions/_shared/talkx-resume-policy.ts",
-    "supabase/functions/_shared/talkx-tracking-token.ts",
-    "supabase/functions/_shared/talkx-window.ts"
+    "supabase/functions/_shared/talkx-tracking-token.ts"
    ]
   },
   {
    "module": "supabase/migrations",
-   "files": 1154,
-   "lines": 115624,
+   "files": 1155,
+   "lines": 115691,
    "tables": [
     "audit_logs",
     "department_invites",
@@ -94959,7 +94986,11 @@
    },
    {
     "file": "supabase/functions/_shared/ai-generate.ts",
-    "msg": "Segredo ${secretName} nao encontrado nos secrets (Deno.env) para o provedor ${label}."
+    "msg": "Nome de secret inválido para o provedor ${label}: ${secretValidation.reason}."
+   },
+   {
+    "file": "supabase/functions/_shared/ai-generate.ts",
+    "msg": "Segredo ${secretValidation.value} nao encontrado nos secrets (Deno.env) para o provedor ${label}."
    },
    {
     "file": "supabase/functions/_shared/ai-generate.ts",
@@ -95040,6 +95071,50 @@
    {
     "file": "supabase/functions/_shared/ai-jobs.ts",
     "msg": "priority fora da faixa ${MIN_PRIORITY}..${MAX_PRIORITY} em enqueueAiJob: ${priority}"
+   },
+   {
+    "file": "supabase/functions/_shared/ai-provider-egress.ts",
+    "msg": "DNS do provedor de IA mudou durante a requisição (possível DNS rebinding)"
+   },
+   {
+    "file": "supabase/functions/_shared/ai-provider-egress.ts",
+    "msg": "DNS do provedor de IA mudou durante a validação (possível DNS rebinding)"
+   },
+   {
+    "file": "supabase/functions/_shared/ai-provider-egress.ts",
+    "msg": "DNS sem resposta para o hostname"
+   },
+   {
+    "file": "supabase/functions/_shared/ai-provider-egress.ts",
+    "msg": "Endpoint de provedor de IA inválido: ${first.reason}"
+   },
+   {
+    "file": "supabase/functions/_shared/ai-provider-egress.ts",
+    "msg": "Endpoint de provedor de IA inválido: ${result.reason}"
+   },
+   {
+    "file": "supabase/functions/_shared/ai-provider-egress.ts",
+    "msg": "Endpoint de provedor de IA inválido: ${second.reason}"
+   },
+   {
+    "file": "supabase/functions/_shared/ai-provider-egress.ts",
+    "msg": "Endpoint de provedor de IA inválido: endpoint não é uma URL válida"
+   },
+   {
+    "file": "supabase/functions/_shared/ai-provider-egress.ts",
+    "msg": "Redirect de provedor de IA bloqueado: ${next.reason}"
+   },
+   {
+    "file": "supabase/functions/_shared/ai-provider-egress.ts",
+    "msg": "Redirect de provedor de IA para destino inválido"
+   },
+   {
+    "file": "supabase/functions/_shared/ai-provider-egress.ts",
+    "msg": "Redirect de provedor de IA para outra origem bloqueado"
+   },
+   {
+    "file": "supabase/functions/_shared/ai-provider-egress.ts",
+    "msg": "Redirect de provedor de IA sem destino válido ou em excesso"
    },
    {
     "file": "supabase/functions/_shared/ai-routing.ts",
@@ -95467,7 +95542,11 @@
    },
    {
     "file": "supabase/functions/ai-proxy/index.ts",
-    "msg": "Segredo ${secretName} nao encontrado nos secrets (Deno.env)."
+    "msg": "Nome de secret inválido para este provedor: ${secretValidation.reason}."
+   },
+   {
+    "file": "supabase/functions/ai-proxy/index.ts",
+    "msg": "Segredo ${secretValidation.value} nao encontrado nos secrets (Deno.env)."
    },
    {
     "file": "supabase/functions/ai-proxy/index.ts",
@@ -102994,6 +103073,26 @@
     "text": "do bucket (`..`). Quem chama NÃO deve baixar nada quando isto devolve `null`."
    },
    {
+    "file": "supabase/functions/_shared/ai-provider-egress.ts",
+    "text": "(proteção contra DNS rebinding — o host não pode \"trocar de endereço\" no"
+   },
+   {
+    "file": "supabase/functions/_shared/ai-provider-egress.ts",
+    "text": "* Texto apenas (sem DNS): é o mesmo nível de verificação que `media-egress`"
+   },
+   {
+    "file": "supabase/functions/_shared/ai-provider-egress.ts",
+    "text": "A validação por DNS resolvido (`validatedAiFetch`) fica pronta no módulo e"
+   },
+   {
+    "file": "supabase/functions/_shared/ai-provider-egress.ts",
+    "text": "* Literal de IP (IPv4 ou IPv6) — endpoint de provedor deve ser nome DNS, não IP. */"
+   },
+   {
+    "file": "supabase/functions/_shared/ai-provider-egress.ts",
+    "text": "* Resolver DNS usado na validação (default: `denoAiHostResolver`). */"
+   },
+   {
     "file": "supabase/functions/_shared/ai-providers.ts",
     "text": "* IA-TIMEOUT-001: o prazo cobre a requisição INTEIRA — headers E corpo. O"
    },
@@ -103932,6 +104031,10 @@
    {
     "file": "supabase/functions/ai-proxy/index.ts",
     "text": "apenas pelos filtros do módulo de roteamento."
+   },
+   {
+    "file": "supabase/functions/ai-proxy/index.ts",
+    "text": "(de infraestrutura ou não enumerado) não pode virar credencial de provedor."
    },
    {
     "file": "supabase/functions/ai-proxy/index.ts",
@@ -109631,6 +109734,16 @@
     "table": "ai_providers",
     "column": "updated_at",
     "rule": "default now()"
+   },
+   {
+    "table": "ai_providers",
+    "column": "(tabela)",
+    "rule": "constraint ai_providers_api_key_secret_name_safe CHECK (public.ai_provider_secret_name_is_safe(api_key_secret_name))"
+   },
+   {
+    "table": "ai_providers",
+    "column": "(tabela)",
+    "rule": "constraint ai_providers_api_endpoint_safe CHECK (public.ai_provider_endpoint_is_safe(api_endpoint))"
    },
    {
     "table": "talkx_campaigns",
@@ -136037,6 +136150,30 @@
     "name": "canTransitionAiJob",
     "params": "from: AiJobStatus, to: AiJobStatus",
     "body": "const allowed = AI_JOB_TRANSITIONS[from]; if (!Array.isArray(allowed)) return false; return (allowed as readonly AiJobStatus[]).includes(to);"
+   },
+   {
+    "file": "supabase/functions/_shared/ai-provider-egress.ts",
+    "name": "validateAiProviderEndpoint",
+    "params": "raw: string",
+    "body": "if (typeof raw !== \"string\") { return { ok: false, reason: \"endpoint não é texto\" }; } const trimmed = raw.trim(); if (trimmed.length === 0) { return { ok: false, reason: \"endpoint vazio\" }; } if (trimmed.length > MAX_ENDPOINT_CHARS) { return { ok: false, reason: \"endpoint excede o tamanho máximo\" }; } let url: URL; try { url = new URL(trimmed); } catch { return { ok: false, reason: \"endpoint não é uma URL válida\" }; } if (url.protocol !== \"https:\") { return { ok: false, reason: \"endpoint precis …"
+   },
+   {
+    "file": "supabase/functions/_shared/ai-provider-egress.ts",
+    "name": "validateAiProviderSecretName",
+    "params": "raw: string | null | undefined,",
+    "body": "if (typeof raw !== \"string\" || raw.trim() === \"\") { return { ok: false, reason: \"nome de secret ausente\" }; } const value = raw.trim(); if (!AI_PROVIDER_SECRET_ALLOWLIST.includes(value)) { return { ok: false, reason: \"nome de secret fora da allowlist de credenciais de provedor\", }; } return { ok: true, value };"
+   },
+   {
+    "file": "supabase/functions/_shared/ai-provider-egress.ts",
+    "name": "validateAiProviderEndpointResolved",
+    "params": "raw: string, resolver: AiHostResolver = denoAiHostResolver,",
+    "body": "const text = validateAiProviderEndpoint(raw); if (!text.ok) { return { ok: false, reason: text.reason }; } const hostname = text.url.hostname.toLowerCase(); let addresses: readonly string[]; try { addresses = await resolver(hostname); } catch { return { ok: false, reason: \"não foi possível resolver o DNS do endpoint\" }; } if (!Array.isArray(addresses) || addresses.length === 0) { return { ok: false, reason: \"endpoint não resolve para nenhum endereço\" }; } for (const address of addresses) { if ( …"
+   },
+   {
+    "file": "supabase/functions/_shared/ai-provider-egress.ts",
+    "name": "validatedAiFetch",
+    "params": "rawEndpoint: string, init: RequestInit, options: ValidatedAiFetchOptions = {},",
+    "body": "const fetcher: AiFetch = options.fetcher ?? ((input, reqInit) => fetch(input, reqInit)); const resolver = options.resolver ?? denoAiHostResolver; const maxRedirects = options.maxRedirects ?? 5; /** Endereços validados por hostname, fixados nesta requisição (anti-rebinding). */ const pinnedByHost = new Map<string, string>(); /** * Resolve + valida o host do alvo e confere a fixação. Na primeira vez, * reconfere a resolução imediatamente antes do envio: duas consultas seguidas * que discordem (ou …"
    },
    {
     "file": "supabase/functions/_shared/ai-providers.ts",
@@ -216909,6 +217046,46 @@
     "name": "SL-010: bot é PAUSA — só false explícito pausa; ausência não pausa nada"
    },
    {
+    "file": "supabase/functions/_shared/__tests__/ai-provider-egress.test.ts",
+    "name": "IA-EGRESS-001: endpoint de provedor exige https público sem credencial/porta"
+   },
+   {
+    "file": "supabase/functions/_shared/__tests__/ai-provider-egress.test.ts",
+    "name": "IA-EGRESS-001: endpoint de provedor bloqueia IP privado/literal/loopback/metadata"
+   },
+   {
+    "file": "supabase/functions/_shared/__tests__/ai-provider-egress.test.ts",
+    "name": "IA-EGRESS-001: secret fora da ALLOWLIST de provedor é recusado"
+   },
+   {
+    "file": "supabase/functions/_shared/__tests__/ai-provider-egress.test.ts",
+    "name": "IA-EGRESS-001: hostname que RESOLVE para IP privado é bloqueado antes do fetch"
+   },
+   {
+    "file": "supabase/functions/_shared/__tests__/ai-provider-egress.test.ts",
+    "name": "IA-EGRESS-001: falha ou resposta vazia de DNS bloqueia (fail-closed)"
+   },
+   {
+    "file": "supabase/functions/_shared/__tests__/ai-provider-egress.test.ts",
+    "name": "IA-EGRESS-001: DNS rebinding — host que troca de endereço é bloqueado"
+   },
+   {
+    "file": "supabase/functions/_shared/__tests__/ai-provider-egress.test.ts",
+    "name": "IA-EGRESS-001: validatedAiFetch segue redirect mesma origem e bloqueia privado/outra origem"
+   },
+   {
+    "file": "supabase/functions/_shared/__tests__/ai-provider-egress.test.ts",
+    "name": "IA-EGRESS-001: validatedAiFetch reescreve POST→GET e descarta body em 303/302"
+   },
+   {
+    "file": "supabase/functions/_shared/__tests__/ai-provider-egress.test.ts",
+    "name": "IA-EGRESS-001: assertAiProviderEndpoint recusa metadata/loopback/http"
+   },
+   {
+    "file": "supabase/functions/_shared/__tests__/ai-provider-egress.test.ts",
+    "name": "IA-EGRESS-001: assertAiProviderEndpoint aceita os endpoints públicos em produção"
+   },
+   {
     "file": "supabase/functions/_shared/__tests__/ai-quota-acao-calculada.test.ts",
     "name": "registrarAcaoCalculada: a ação grava uma linha que a quota diária conta"
    },
@@ -247561,6 +247738,28 @@
      "vault"
     ]
    },
+   "ai_provider_secret_name_is_safe": {
+    "args": "secret_name text",
+    "returns": "boolean",
+    "lang": "sql",
+    "src": "supabase/migrations/20261125120000_ai_providers_endpoint_secret_binding.sql",
+    "security_definer": false,
+    "search_path": false,
+    "body": "SELECT secret_name IS NULL OR secret_name = ANY (ARRAY[ 'DEEPSEEK_API_KEY', 'GLM_API_KEY', 'GROQ_API_KEY', 'LOVABLE_API_KEY', 'OPENAI_API_KEY', 'OPENROUTER_API_KEY' ]);",
+    "raises": [],
+    "tables": []
+   },
+   "ai_provider_endpoint_is_safe": {
+    "args": "endpoint text",
+    "returns": "boolean",
+    "lang": "sql",
+    "src": "supabase/migrations/20261125120000_ai_providers_endpoint_secret_binding.sql",
+    "security_definer": false,
+    "search_path": false,
+    "body": "SELECT endpoint IS NULL OR ( endpoint ~ '^https://' AND position('@' in endpoint) = 0 AND endpoint !~ '^https://[0-9]' AND endpoint !~ '^https://\\[[0-9a-fA-F:]+\\]' AND endpoint !~ '^https://[^/]+:[0-9]+' AND endpoint !~* '^https://([^/]*\\.)?(localhost|local|internal|lan|home|corp|intranet)([:/]|$)' );",
+    "raises": [],
+    "tables": []
+   },
    "uid": {
     "args": "",
     "returns": "uuid",
@@ -261374,6 +261573,7 @@
    "supabase/functions/_shared/__tests__/ai-audio-authz.test.ts",
    "supabase/functions/_shared/__tests__/ai-auth-service-path.test.ts",
    "supabase/functions/_shared/__tests__/ai-auth.test.ts",
+   "supabase/functions/_shared/__tests__/ai-provider-egress.test.ts",
    "supabase/functions/_shared/__tests__/ai-quota-acao-calculada.test.ts",
    "supabase/functions/_shared/__tests__/crm-integration-contract.test.ts",
    "supabase/functions/_shared/__tests__/evolution-typebot-events.test.ts",
@@ -261394,6 +261594,7 @@
    "supabase/functions/_shared/ai-guards.ts",
    "supabase/functions/_shared/ai-image-input.ts",
    "supabase/functions/_shared/ai-jobs.ts",
+   "supabase/functions/_shared/ai-provider-egress.ts",
    "supabase/functions/_shared/ai-usage-outbox-eventos.test.ts",
    "supabase/functions/_shared/ai-usage.test.ts",
    "supabase/functions/_shared/ai-usage.ts",
@@ -261958,6 +262159,7 @@
    "supabase/migrations/20261120080000_scheduled_report_cron.sql",
    "supabase/migrations/20261122190000_ia055_precos_entrada_e_saida.sql",
    "supabase/migrations/20261124120000_drop_rpcs_e2e_orfas.sql",
+   "supabase/migrations/20261125120000_ai_providers_endpoint_secret_binding.sql",
    "supabase/tests/admin_inbox_silence.sql",
    "supabase/tests/admin_unlock_login_autorizacao.sql",
    "supabase/tests/agent_workload.sql",
@@ -394535,7 +394737,7 @@
   },
   "supabase/functions/_shared/ai-generate.ts": {
    "path": "supabase/functions/_shared/ai-generate.ts",
-   "lines": 1140,
+   "lines": 1159,
    "exports": [
     "function resolveDefaultTimeoutMs",
     "const AI_TIMEOUT_ERROR_CODE",
@@ -394570,7 +394772,8 @@
     "Endpoint da API nao configurado para o provedor ${label}.",
     "Endpoint nao configurado para o provedor ${label}.",
     "NO_PROVIDER",
-    "Segredo ${secretName} nao encontrado nos secrets (Deno.env) para o provedor ${label}.",
+    "Nome de secret inválido para o provedor ${label}: ${secretValidation.reason}.",
+    "Segredo ${secretValidation.value} nao encontrado nos secrets (Deno.env) para o provedor ${label}.",
     "Tipo de provedor nao suportado: ${provider.provider_type} (${label}).",
     "Tipo de provedor sem caminho de chamada: custom_agent (${label}).",
     "api_key_secret_name nao configurado para o provedor ${label}.",
@@ -394969,6 +395172,68 @@
     "2. Formato sem extrator local NÃO vira artigo: o arquivo fica \"somente",
     "do bucket (`..`). Quem chama NÃO deve baixar nada quando isto devolve `null`."
    ]
+  },
+  "supabase/functions/_shared/ai-provider-egress.ts": {
+   "path": "supabase/functions/_shared/ai-provider-egress.ts",
+   "lines": 420,
+   "exports": [
+    "const AI_PROVIDER_SECRET_ALLOWLIST",
+    "function assertAiProviderEndpoint",
+    "type AiEndpointValidation",
+    "type AiResolvedEndpointValidation",
+    "type AiSecretNameValidation",
+    "function validateAiProviderEndpoint",
+    "function validateAiProviderSecretName",
+    "type AiHostResolver",
+    "const denoAiHostResolver",
+    "function validateAiProviderEndpointResolved",
+    "type AiFetch",
+    "interface ValidatedAiFetchOptions",
+    "function validatedAiFetch"
+   ],
+   "errors": [
+    "DNS do provedor de IA mudou durante a requisição (possível DNS rebinding)",
+    "DNS do provedor de IA mudou durante a validação (possível DNS rebinding)",
+    "DNS sem resposta para o hostname",
+    "Endpoint de provedor de IA inválido: ${first.reason}",
+    "Endpoint de provedor de IA inválido: ${result.reason}",
+    "Endpoint de provedor de IA inválido: ${second.reason}",
+    "Endpoint de provedor de IA inválido: endpoint não é uma URL válida",
+    "Redirect de provedor de IA bloqueado: ${next.reason}",
+    "Redirect de provedor de IA para destino inválido",
+    "Redirect de provedor de IA para outra origem bloqueado",
+    "Redirect de provedor de IA sem destino válido ou em excesso"
+   ],
+   "rule_comments": [
+    "(proteção contra DNS rebinding — o host não pode \"trocar de endereço\" no",
+    "* Texto apenas (sem DNS): é o mesmo nível de verificação que `media-egress`",
+    "A validação por DNS resolvido (`validatedAiFetch`) fica pronta no módulo e",
+    "* Literal de IP (IPv4 ou IPv6) — endpoint de provedor deve ser nome DNS, não IP. */",
+    "* Resolver DNS usado na validação (default: `denoAiHostResolver`). */"
+   ],
+   "calc_fns": [
+    {
+     "name": "validateAiProviderEndpoint",
+     "params": "raw: string",
+     "body": "if (typeof raw !== \"string\") { return { ok: false, reason: \"endpoint não é texto\" }; } const trimmed = raw.trim(); if (trimmed.length === 0) { return { ok: false, reason: \"endpoint vazio\" }; } if (trimmed.length > MAX_ENDPOINT_CHARS) { return { ok: false, reason: \"endpoint excede o tamanho máximo\" }; } let url: URL; try { url = new URL(trimmed); } catch { return { ok: false, reason: \"endpoint não é uma URL válida\" }; } if (url.protocol !== \"https:\") { return { ok: false, reason: \"endpoint precis …"
+    },
+    {
+     "name": "validateAiProviderSecretName",
+     "params": "raw: string | null | undefined,",
+     "body": "if (typeof raw !== \"string\" || raw.trim() === \"\") { return { ok: false, reason: \"nome de secret ausente\" }; } const value = raw.trim(); if (!AI_PROVIDER_SECRET_ALLOWLIST.includes(value)) { return { ok: false, reason: \"nome de secret fora da allowlist de credenciais de provedor\", }; } return { ok: true, value };"
+    },
+    {
+     "name": "validateAiProviderEndpointResolved",
+     "params": "raw: string, resolver: AiHostResolver = denoAiHostResolver,",
+     "body": "const text = validateAiProviderEndpoint(raw); if (!text.ok) { return { ok: false, reason: text.reason }; } const hostname = text.url.hostname.toLowerCase(); let addresses: readonly string[]; try { addresses = await resolver(hostname); } catch { return { ok: false, reason: \"não foi possível resolver o DNS do endpoint\" }; } if (!Array.isArray(addresses) || addresses.length === 0) { return { ok: false, reason: \"endpoint não resolve para nenhum endereço\" }; } for (const address of addresses) { if ( …"
+    },
+    {
+     "name": "validatedAiFetch",
+     "params": "rawEndpoint: string, init: RequestInit, options: ValidatedAiFetchOptions = {},",
+     "body": "const fetcher: AiFetch = options.fetcher ?? ((input, reqInit) => fetch(input, reqInit)); const resolver = options.resolver ?? denoAiHostResolver; const maxRedirects = options.maxRedirects ?? 5; /** Endereços validados por hostname, fixados nesta requisição (anti-rebinding). */ const pinnedByHost = new Map<string, string>(); /** * Resolve + valida o host do alvo e confere a fixação. Na primeira vez, * reconfere a resolução imediatamente antes do envio: duas consultas seguidas * que discordem (ou …"
+    }
+   ],
+   "uses_service_role": true
   },
   "supabase/functions/_shared/ai-providers.test.ts": {
    "path": "supabase/functions/_shared/ai-providers.test.ts",
@@ -399663,6 +399928,30 @@
     "SL-010: bot é PAUSA — só false explícito pausa; ausência não pausa nada"
    ]
   },
+  "supabase/functions/_shared/__tests__/ai-provider-egress.test.ts": {
+   "path": "supabase/functions/_shared/__tests__/ai-provider-egress.test.ts",
+   "lines": 378,
+   "is_test": true,
+   "errors": [
+    "NXDOMAIN"
+   ],
+   "rule_comments": [
+    "93.184.216.34/v1\", // IP público literal (provedor deve ser nome DNS)"
+   ],
+   "tests": [
+    "IA-EGRESS-001: endpoint de provedor exige https público sem credencial/porta",
+    "IA-EGRESS-001: endpoint de provedor bloqueia IP privado/literal/loopback/metadata",
+    "IA-EGRESS-001: secret fora da ALLOWLIST de provedor é recusado",
+    "IA-EGRESS-001: hostname que RESOLVE para IP privado é bloqueado antes do fetch",
+    "IA-EGRESS-001: falha ou resposta vazia de DNS bloqueia (fail-closed)",
+    "IA-EGRESS-001: DNS rebinding — host que troca de endereço é bloqueado",
+    "IA-EGRESS-001: validatedAiFetch segue redirect mesma origem e bloqueia privado/outra origem",
+    "IA-EGRESS-001: validatedAiFetch reescreve POST→GET e descarta body em 303/302",
+    "IA-EGRESS-001: assertAiProviderEndpoint recusa metadata/loopback/http",
+    "IA-EGRESS-001: assertAiProviderEndpoint aceita os endpoints públicos em produção"
+   ],
+   "uses_service_role": true
+  },
   "supabase/functions/_shared/__tests__/ai-quota-acao-calculada.test.ts": {
    "path": "supabase/functions/_shared/__tests__/ai-quota-acao-calculada.test.ts",
    "lines": 264,
@@ -403008,7 +403297,7 @@
   },
   "supabase/functions/ai-proxy/index.ts": {
    "path": "supabase/functions/ai-proxy/index.ts",
-   "lines": 968,
+   "lines": 986,
    "exports": [
     "function handleAiProxy"
    ],
@@ -403033,7 +403322,8 @@
    "errors": [
     "Endpoint da API nao configurado para este provedor.",
     "Endpoint nao configurado para este agente/webhook.",
-    "Segredo ${secretName} nao encontrado nos secrets (Deno.env).",
+    "Nome de secret inválido para este provedor: ${secretValidation.reason}.",
+    "Segredo ${secretValidation.value} nao encontrado nos secrets (Deno.env).",
     "Tipo de provedor nao suportado: ${provider.provider_type}.",
     "api_key_secret_name nao configurado para este provedor."
    ],
@@ -403077,6 +403367,7 @@
    "rule_comments": [
     "(sem `limit(1)` sem ORDER BY e sem inventar provedor), modelo decidido pelo SERVIDOR,",
     "apenas pelos filtros do módulo de roteamento.",
+    "(de infraestrutura ou não enumerado) não pode virar credencial de provedor.",
     "* Config para chamadas de chat (openai_compatible/google_gemini): corpo apenas com a",
     "allowlist do módulo e cabeçalhos apenas com os nomes permitidos. Nenhum espalhamento",
     "NO_PROVIDER/AMBIGUOUS_PROVIDER caem no default 503; só estes dois saem da regra.",
@@ -405399,7 +405690,7 @@
     },
     {
      "name": "SEGREDO_PROVEDOR",
-     "value": "\"CHAVE_PROVEDOR_COPILOTO_TESTE\""
+     "value": "\"OPENAI_API_KEY\""
     }
    ],
    "role_checks": [
@@ -414514,7 +414805,7 @@
     },
     {
      "name": "SEGREDO_PROVEDOR",
-     "value": "\"CHAVE_PROVEDOR_VOZ_TESTE\""
+     "value": "\"OPENAI_API_KEY\""
     }
    ],
    "tests": [
@@ -421187,6 +421478,11 @@
    "lines": 16,
    "uses_service_role": true
   },
+  "supabase/migrations/20261125120000_ai_providers_endpoint_secret_binding.sql": {
+   "path": "supabase/migrations/20261125120000_ai_providers_endpoint_secret_binding.sql",
+   "lines": 67,
+   "uses_service_role": true
+  },
   "supabase/migrations/20261125130000_ia009_kill_switch_chaves.sql": {
    "path": "supabase/migrations/20261125130000_ia009_kill_switch_chaves.sql",
    "lines": 65
@@ -425112,10 +425408,32 @@
   }
  },
  "git": {
-  "sha": "bd4e9fd06fe52beb51d9d025d878de54c0608c29",
+  "sha": "de31ddec9c29caa989e878921723a93a15720b38",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "de31ddec",
+    "date": "2026-11-25",
+    "author": "adm01-debug",
+    "subject": "fix: allowlist de credencial de provedor e vínculo endpoint/secret no banco (IA-EGRESS-001) (#3384)",
+    "files": [
+     "supabase/deployment-manifest.json",
+     "supabase/functions/_shared/__tests__/ai-provider-egress.test.ts",
+     "supabase/functions/_shared/ai-circuit.test.ts",
+     "supabase/functions/_shared/ai-generate.ts",
+     "supabase/functions/_shared/ai-provider-egress.ts",
+     "supabase/functions/ai-proxy/index.test.ts",
+     "supabase/functions/ai-proxy/index.ts",
+     "supabase/functions/chatbot-l1/index.test.ts",
+     "supabase/functions/classify-audio-meme/index.test.ts",
+     "supabase/functions/classify-emoji/index.test.ts",
+     "supabase/functions/classify-sticker/index.test.ts",
+     "supabase/functions/copilot-live/index.test.ts",
+     "supabase/functions/voice-agent/index.test.ts",
+     "supabase/migrations/20261125120000_ai_providers_endpoint_secret_binding.sql"
+    ]
+   },
    {
     "sha": "bd4e9fd0",
     "date": "2026-11-25",
@@ -426776,18 +427094,13 @@
     "files": [
      ".github/workflows/scorecard.yml"
     ]
-   },
-   {
-    "sha": "1437a664",
-    "date": "2026-11-24",
-    "author": "adm01-debug",
-    "subject": "infra: alinha o timeout do job E2E com a duracao real (~10 min) (#3355)",
-    "files": [
-     ".github/workflows/ci.yml"
-    ]
    }
   ],
   "hot_files": [
+   [
+    "supabase/deployment-manifest.json",
+    3
+   ],
    [
     "ESTADO.md",
     3
@@ -426801,11 +427114,19 @@
     3
    ],
    [
-    "supabase/deployment-manifest.json",
+    "supabase/functions/_shared/ai-circuit.test.ts",
     2
    ],
    [
-    ".github/workflows/ci.yml",
+    "supabase/functions/_shared/ai-generate.ts",
+    2
+   ],
+   [
+    "supabase/functions/ai-proxy/index.test.ts",
+    2
+   ],
+   [
+    "supabase/functions/ai-proxy/index.ts",
     2
    ],
    [
@@ -426821,51 +427142,39 @@
     2
    ],
    [
-    "supabase/migrations/20261125130000_ia009_kill_switch_chaves.sql",
+    "supabase/functions/_shared/__tests__/ai-provider-egress.test.ts",
     1
    ],
    [
-    "src/components/admin/AdminCRMDashboard.tsx",
+    "supabase/functions/_shared/ai-provider-egress.ts",
     1
    ],
    [
-    "src/components/admin/__tests__/AdminCRMDashboard.multiplix-dlq.test.tsx",
+    "supabase/functions/chatbot-l1/index.test.ts",
     1
    ],
    [
-    "src/hooks/system/useMultiplixDeadLetters.ts",
+    "supabase/functions/classify-audio-meme/index.test.ts",
     1
    ],
    [
-    "supabase/functions/_shared/__tests__/ai-feature-flags.test.ts",
+    "supabase/functions/classify-emoji/index.test.ts",
     1
    ],
    [
-    "supabase/functions/_shared/__tests__/evolution-webhook-messages.chatbot-l1.test.ts",
+    "supabase/functions/classify-sticker/index.test.ts",
     1
    ],
    [
-    "supabase/functions/_shared/ai-circuit.test.ts",
+    "supabase/functions/copilot-live/index.test.ts",
     1
    ],
    [
-    "supabase/functions/_shared/ai-feature-flags.ts",
+    "supabase/functions/voice-agent/index.test.ts",
     1
    ],
    [
-    "supabase/functions/_shared/ai-generate.ts",
-    1
-   ],
-   [
-    "supabase/functions/_shared/evolution-webhook-messages.ts",
-    1
-   ],
-   [
-    "supabase/functions/ai-proxy/index.test.ts",
-    1
-   ],
-   [
-    "supabase/functions/ai-proxy/index.ts",
+    "supabase/migrations/20261125120000_ai_providers_endpoint_secret_binding.sql",
     1
    ]
   ]
