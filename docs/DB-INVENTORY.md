@@ -106,7 +106,7 @@ RLS em `supabase/schema-manifest.json`; este documento não os repete.
 | `contact_deletion_audit` | Trilha de exclusões de contato (operação, janela e autor) | ativo | `src/components/security/ContactAuditTrailPanel.tsx`, `src/hooks/__tests__/useContactAuditTrail.test.tsx`, `src/hooks/security/useContactAuditTrail.ts` … |
 | `contact_identity_map` | Mapa de identidades do WhatsApp (lid ↔ jid) visto no webhook | ativo | `supabase/functions/_shared/evolution-webhook-messages.ts`, `scripts/db-audit/anon-privileges-contact-messages.test.sh`, `scripts/db-audit/inbox-contact-authorization.test.sh` |
 | `contact_notes` | Notas internas do contato, com autor | ativo | `src/components/contacts/ContactActivityTimeline.tsx`, `src/components/contacts/ContactNotes.tsx`, `src/components/contacts/__tests__/ContactActivityTimeline.eventos.test.tsx` … |
-| `contact_protection_policy` | Política de proteção de contato por regra de negócio | roadmap | — |
+| `contact_protection_policy` | Política de proteção de contato por regra de negócio | ativo | `src/hooks/security/useContactProtectionPolicy.ts` |
 | `contacts` | Cadastro central de contatos (telefone, e-mail, dono e campos de CRM) | ativo | `src/App.tsx`, `src/__tests__/a11y/icon-buttons-baseline.json`, `src/__tests__/coverage-catalogo.test.ts` … |
 | `copilot_conversation_scores` | Scores de qualidade de conversa do copilot de vendas | parcial | `scripts/db-audit/check-live-invariants.sql`, `scripts/db-audit/migration-evidence.json` |
 | `copilot_feedback` | Feedback do vendedor sobre sugestões do copilot (aceitou, editou, descartou; distância de edição) | ativo | `src/hooks/copilot/useCopilotFeedback.ts` |

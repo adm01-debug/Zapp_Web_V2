@@ -2,7 +2,7 @@
   "format_version": 1,
   "fonte": "scripts/inventario/gerar-rotas.mjs (le AppRoutes.tsx, ViewRouter.tsx, lazyViews.ts, navigation.service.ts e os imports de cada tela)",
   "resumo": {
-    "urls": 19,
+    "urls": 20,
     "telas": 55,
     "itens_de_menu": 53,
     "hooks_distintos": 417,
@@ -49,6 +49,16 @@
       "papeis": [
         "admin",
         "supervisor"
+      ],
+      "redireciona": null
+    },
+    {
+      "caminho": "/admin/protecao-contatos",
+      "componente": "ContactProtectionPage",
+      "arquivo": "src/pages/admin/ContactProtectionPage.tsx",
+      "protegida": true,
+      "papeis": [
+        "admin"
       ],
       "redireciona": null
     },
