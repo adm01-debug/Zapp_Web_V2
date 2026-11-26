@@ -26,6 +26,7 @@ import { TalkXServerResumePrecheck } from './tracking/TalkXServerResumePrecheck'
 import { useTalkXServerResumePrecheck } from '@/hooks/integrations/useTalkXServerResumePrecheck';
 import { TalkXQueryBoundary, TalkXEmptyState, TalkXSkeletonRows } from './kit/states';
 import { TalkXHealthCard } from './tracking/TalkXHealthCard';
+import { TalkXEngineAlertsCard } from './tracking/TalkXEngineAlertsCard';
 import { campaignPauseReason, talkxLastSentAt, talkxRatePerMinute, talkxStallWindowMs } from './tracking/talkxHealth';
 import { TalkXRecipientRowActions } from './tracking/TalkXRecipientRowActions';
 interface Props {
@@ -308,6 +309,8 @@ export function TalkXLiveMonitor({
             startedAt={campaign.started_at}
             onOpenHelp={onOpenHelp}
           />
+          {/* C-11/X158: `talkx_alerts` era escrita pelo motor e não tinha tela. */}
+          <TalkXEngineAlertsCard campaignId={campaignId} />
         </div>
       )}
 

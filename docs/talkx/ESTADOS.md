@@ -23,7 +23,7 @@ com `VITE_TALKX_KIT=1`, lido de `src/components/talkx/kit/forcedState.ts`):
 | `src/components/talkx/TalkXContactSelector.tsx` | — | — | — | — | — | — |
 | `src/components/talkx/TalkXHelp.tsx` | — | — | — | — | — | — |
 | `src/components/talkx/TalkXInteractiveEditor.tsx` | — | — | — | — | — | — |
-| `src/components/talkx/TalkXLiveMonitor.tsx` | `201`, `329` | `199`, `281`, `327`, `360` | `195`, `277`, `323`, `356` | — | — | — |
+| `src/components/talkx/TalkXLiveMonitor.tsx` | `202`, `332` | `200`, `282`, `330`, `363` | `196`, `278`, `326`, `359` | — | — | — |
 | `src/components/talkx/TalkXMediaDropzone.tsx` | — | — | — | — | — | — |
 | `src/components/talkx/TalkXMessageEditor.tsx` | — | — | — | — | — | — |
 | `src/components/talkx/TalkXMessagePreview.tsx` | — | — | — | — | — | — |
