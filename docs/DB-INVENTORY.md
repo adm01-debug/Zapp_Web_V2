@@ -161,10 +161,10 @@ RLS em `supabase/schema-manifest.json`; este documento não os repete.
 | `link_preview_cache_metrics` | Métricas de limpeza do cache de prévia (removidos, restantes e tempo) | roadmap | — |
 | `login_attempts` | Tentativas de login por e-mail e IP, base do bloqueio de conta | ativo | `supabase/functions/auth-login/index.test.ts`, `scripts/db-audit/login_gate_rpc.test.sh`, `scripts/db-audit/scope-public-policies-authenticated.test.sh` |
 | `message_attempts` | Tentativas de envio de mensagem (latência e desfecho) | ativo | `src/components/inbox/chat/messageSendTimeline.ts` |
-| `message_favorites` | Mensagens marcadas como favoritas pelo usuário | roadmap | — |
-| `message_pins` | Mensagens fixadas em conversa | roadmap | — |
+| `message_favorites` | Mensagens marcadas como favoritas pelo usuário | ativo | `src/components/inbox/chat/MessageHoverToolbar.tsx`, `src/hooks/chat/useMessageFavorites.ts` |
+| `message_pins` | Mensagens fixadas em conversa | ativo | `src/components/inbox/chat/MessageHoverToolbar.tsx`, `src/hooks/chat/useMessagePins.ts` |
 | `message_reactions` | Reações em mensagens do chat | ativo | `src/hooks/__tests__/useMessageReactions.test.tsx`, `src/hooks/chat/__tests__/useMessageReactions.transport-rejection.test.tsx`, `src/hooks/chat/useMessageReactions.ts` … |
-| `message_reports` | Denúncias de mensagem (tipo e autor) | roadmap | — |
+| `message_reports` | Denúncias de mensagem (tipo e autor) | ativo | `src/components/inbox/chat/MessageHoverToolbar.tsx`, `src/hooks/chat/useReportMessage.ts` |
 | `message_templates` | Modelos de mensagem e atalhos do usuário | ativo | `src/components/onboarding/checklistSteps.ts`, `src/hooks/__tests__/useOnboardingChecklist.test.tsx`, `src/hooks/chat/__tests__/buscas-silenciosas-aviso.test.tsx` … |
 | `messages` | Mensagens de conversa (contato, conexão, remetente, conteúdo e tipo) | ativo | `src/__tests__/rls-boundary.test.ts`, `src/__tests__/smoke.test.ts`, `src/adapters/__tests__/evolutionAdapter.unsupported-message-types.test.ts` … |
 | `meta_capi_events` | Eventos enviados à Meta Conversions API (nome, hora e origem) | ativo | `src/hooks/integrations/useMetaCAPIData.ts` |
