@@ -4,6 +4,7 @@ import { Badge } from '@/components/ui/badge';
 import { CheckCircle2, XCircle, AlertTriangle, Send, Shield, PlayCircle, Loader2, Radio, Copy } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { CrossTabDedupePanel } from '@/components/admin/CrossTabDedupePanel';
+import { DeadLetterReplayPanel } from './DeadLetterReplayPanel';
 import { toast } from 'sonner';
 import type { ConnectionInfo, WebhookTestResult, WebhookConfig } from './hooks/useEvolutionMonitoring';
 
@@ -172,6 +173,9 @@ export function MonitoringWebhookPanel({ connections, webhookTest, webhookConfig
           </CardContent>
         </Card>
       </div>
+
+      {/* Fila da dead-letter: eventos de webhook que falharam, com a ação de reprocessar. */}
+      <DeadLetterReplayPanel />
 
       {/* Atividade de dedupe entre abas: reivindicações de envio vistas de outras abas. */}
       <CrossTabDedupePanel />
