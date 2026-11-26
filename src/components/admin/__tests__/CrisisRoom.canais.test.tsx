@@ -15,27 +15,36 @@ import { render, screen, waitFor } from '@testing-library/react';
  * das conexões: assim o banner de crise só pode vir dela.
  */
 
-const { mockFrom, CONNECTIONS, PRESENCE } = vi.hoisted(() => ({
-  mockFrom: vi.fn(),
+const { CONNECTIONS, PRESENCA_SAUDAVEL } = vi.hoisted(() => ({
   CONNECTIONS: {
     connections: [] as unknown[],
     loading: false,
     error: null as string | null,
   },
-  PRESENCE: {
-    u1: 'online',
-    u2: 'online',
-    u3: 'online',
-    u4: 'online',
-  } as Record<string, string>,
+  PRESENCA_SAUDAVEL: {
+    metrics: [
+      { key: 'unanswered_messages', label: 'Msgs sem resposta (1h)', unit: 'msgs', value: 0, attention: 20, critical: 30, lowerIsWorse: false, severity: 'ok' },
+      { key: 'queue_ratio', label: 'Carga por agente', unit: 'conv/agente', value: 0, attention: 10, critical: 15, lowerIsWorse: false, severity: 'ok' },
+      { key: 'sla_breached', label: 'SLA estourados', unit: 'conversas', value: 0, attention: 5, critical: 10, lowerIsWorse: false, severity: 'ok' },
+      { key: 'online_agents', label: 'Agentes ativos', unit: 'online', value: 4, attention: 4, critical: 2, lowerIsWorse: true, severity: 'ok' },
+    ],
+    snapshot: { onlineAgents: 4, totalAgents: 4 },
+    isCrisis: false,
+    isError: false,
+    error: null,
+    isFirstLoad: false,
+    isRefreshing: false,
+    dataUpdatedAt: 0,
+    refetch: () => {},
+    refetchIntervalMs: 45_000,
+  } as Record<string, unknown>,
 }));
 
-vi.mock('@/integrations/supabase/client', () => ({
-  supabase: { from: (...args: unknown[]) => mockFrom(...args) },
-}));
-
-vi.mock('@/hooks/crm/useAgentPresence', () => ({
-  useAgentPresenceMap: () => PRESENCE,
+// As quatro métricas de operação vivem no agregado do banco (RPC); aqui só interessa
+// que elas estejam saudáveis e estáveis para que a variação venha das conexões.
+vi.mock('@/hooks/business/useCrisisRoomMetrics', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@/hooks/business/useCrisisRoomMetrics')>()),
+  useCrisisRoomMetrics: () => PRESENCA_SAUDAVEL,
 }));
 
 vi.mock('@/hooks/connections/useConnectionsHealth', () => ({
@@ -60,25 +69,7 @@ const conn = (id: string, healthy: boolean) => ({
   healthy,
 });
 
-const ENABLED_PROFILES = ['u1', 'u2', 'u3', 'u4'].map((user_id) => ({ user_id }));
-
-function chainable(finalResponse: unknown) {
-  const node: Record<string, unknown> = {};
-  node.eq = () => node;
-  node.in = () => node;
-  node.gte = () => node;
-  node.then = (resolve: (value: unknown) => unknown) =>
-    Promise.resolve(finalResponse).then(resolve);
-  return node;
-}
-
 beforeEach(() => {
-  vi.clearAllMocks();
-  mockFrom.mockImplementation((table: string) => {
-    if (table === 'profiles') return { select: () => chainable({ data: ENABLED_PROFILES, error: null }) };
-    if (table === 'conversation_sla') return { select: () => chainable({ data: null, count: 0, error: null }) };
-    return { select: () => chainable({ data: [], error: null }) };
-  });
   CONNECTIONS.connections = [];
   CONNECTIONS.loading = false;
   CONNECTIONS.error = null;
