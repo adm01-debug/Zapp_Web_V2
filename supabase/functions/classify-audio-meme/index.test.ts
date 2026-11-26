@@ -47,7 +47,7 @@ const FUNCTION_NAME = "classify-audio-meme";
 const RUN_ID = "9f4c1e2a-1b3d-4c5e-8a7b-0d1e2f3a4b5c";
 const USER_ID = "11111111-2222-4333-8444-555555555555";
 const PROVIDER_ID = "926d3eec-3324-47a8-872f-fd369bd187ac";
-const SECRET_NAME = "TEST_AI_PROVIDER_API_KEY";
+const SECRET_NAME = "OPENAI_API_KEY";
 const PROVIDER_ENDPOINT = "https://provedor-falso.test/v1/chat/completions";
 
 /** Linha de `ai_providers` que resolve 'tagging' (texto) pelo caminho de finalidade. */
