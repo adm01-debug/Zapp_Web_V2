@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "3eb193aa2869186b0f2f47b81bf7306dafd3cbc9",
+  "commit": "0a6acffd5d0ceac5ca5714c384fbde97be9579fb",
   "branch": "main",
-  "data_commit": "2026-11-26T10:06:51-03:00",
+  "data_commit": "2026-11-26T13:49:10Z",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "0a6acffd",
+    "data": "2026-11-26",
+    "assunto": "feat(talkx): liga os alertas do motor (talkx_alerts) no acompanhamento (#3408)"
+   },
    {
     "sha": "3eb193aa",
     "data": "2026-11-26",
@@ -126,14 +131,9 @@
     "sha": "57f6063f",
     "data": "2026-11-25",
     "assunto": "ci: roda o lint ratchet no CI (divida nova de lint nos arquivos do PR) (#3377)"
-   },
-   {
-    "sha": "26469075",
-    "data": "2026-11-25",
-    "assunto": "chore(contexto): main recebe o snapshot gerado por PR automatica (#3375)"
    }
   ],
-  "arquivos_mudados_7d": 2789,
+  "arquivos_mudados_7d": 2793,
   "pastas_mais_mudadas_30d": [
    {
     "pasta": "docs/contexto/supabase",
@@ -165,7 +165,7 @@
    },
    {
     "pasta": "src/components/talkx",
-    "mudancas": 377
+    "mudancas": 380
    },
    {
     "pasta": "analise-prs/resgate-261115/dossies",
@@ -180,11 +180,11 @@
     "mudancas": 232
    },
    {
-    "pasta": "src/hooks/__tests__",
-    "mudancas": 154
+    "pasta": "src/hooks/integrations",
+    "mudancas": 156
    },
    {
-    "pasta": "src/hooks/integrations",
+    "pasta": "src/hooks/__tests__",
     "mudancas": 154
    },
    {
@@ -207,11 +207,11 @@
    },
    {
     "arquivo": "docs/talkx/ESTADOS.md",
-    "mudancas": 19
+    "mudancas": 20
    },
    {
     "arquivo": "docs/DB-INVENTORY.md",
-    "mudancas": 17
+    "mudancas": 18
    },
    {
     "arquivo": "supabase/schema-manifest.json",
@@ -314,21 +314,21 @@
   ]
  },
  "contagens": {
-  "arquivos_total": 14858,
-  "arquivos_codigo": 5190,
-  "linhas_codigo": 962476,
+  "arquivos_total": 14862,
+  "arquivos_codigo": 5194,
+  "linhas_codigo": 962973,
   "rotas": 18,
   "rotas_http_backend": 11,
   "vistas_por_id": 55,
   "itens_menu": 61,
   "modulos": 149,
-  "componentes": 942,
-  "hooks": 526,
+  "componentes": 943,
+  "hooks": 527,
   "edge_functions": 94,
   "tabelas": 224,
   "migrations": 1161,
   "cron_jobs": 29,
-  "testes": 2847,
+  "testes": 2849,
   "workflows": 26,
   "scripts": 458,
   "docs_md": 3988
@@ -739,8 +739,8 @@
    "linhas": 638
   },
   "src/components": {
-   "arquivos": 2333,
-   "linhas": 397151
+   "arquivos": 2335,
+   "linhas": 397334
   },
   "src/config": {
    "arquivos": 3,
@@ -759,8 +759,8 @@
    "linhas": 3293
   },
   "src/hooks": {
-   "arquivos": 1053,
-   "linhas": 170498
+   "arquivos": 1055,
+   "linhas": 170812
   },
   "src/i18n": {
    "arquivos": 2,

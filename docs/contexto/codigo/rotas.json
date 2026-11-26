@@ -506,6 +506,7 @@
     "useTalkXCommandItems",
     "useTalkXConfirm",
     "useTalkXConnectionStatus",
+    "useTalkXEngineAlerts",
     "useTalkXEventLogger",
     "useTalkXEvents",
     "useTalkXFilterState",
@@ -1037,6 +1038,7 @@
     "useTalkXCommandItems",
     "useTalkXConfirm",
     "useTalkXConnectionStatus",
+    "useTalkXEngineAlerts",
     "useTalkXEventLogger",
     "useTalkXEvents",
     "useTalkXFilterState",
@@ -1482,7 +1484,7 @@
     "unknown",
     "user"
    ],
-   "arquivos_puxados": 1611
+   "arquivos_puxados": 1613
   },
   {
    "protegida": false,
@@ -7789,6 +7791,7 @@
     "useTalkXCommandItems",
     "useTalkXConfirm",
     "useTalkXConnectionStatus",
+    "useTalkXEngineAlerts",
     "useTalkXEventLogger",
     "useTalkXEvents",
     "useTalkXFilterState",
@@ -7873,6 +7876,7 @@
     "useTalkXCommandItems",
     "useTalkXConfirm",
     "useTalkXConnectionStatus",
+    "useTalkXEngineAlerts",
     "useTalkXEventLogger",
     "useTalkXEvents",
     "useTalkXFilterState",
@@ -8001,7 +8005,7 @@
     "tab",
     "tablist"
    ],
-   "arquivos_puxados": 272
+   "arquivos_puxados": 274
   },
   {
    "id": "talkx-kit",

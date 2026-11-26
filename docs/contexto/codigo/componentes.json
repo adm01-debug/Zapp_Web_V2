@@ -1,7 +1,7 @@
 {
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
- "total": 942,
+ "total": 943,
  "orfaos": 45,
  "nomes_duplicados": {
   "AchievementBadge": [
@@ -3595,7 +3595,7 @@
    ],
    "tabelas": [],
    "edges": [],
-   "usado_por": 41,
+   "usado_por": 42,
    "orfao": false
   },
   {
@@ -11948,7 +11948,7 @@
     "TalkXLiveMonitor"
    ],
    "export_default": null,
-   "linhas": 386,
+   "linhas": 389,
    "dominio": "components/talkx",
    "hooks_locais": [
     "useTalkXConnectionStatus",
@@ -12231,6 +12231,23 @@
    "linhas": 104,
    "dominio": "components/talkx",
    "hooks_locais": [],
+   "tabelas": [],
+   "edges": [],
+   "usado_por": 1,
+   "orfao": false
+  },
+  {
+   "arquivo": "src/components/talkx/tracking/TalkXEngineAlertsCard.tsx",
+   "exports": [
+    "TalkXEngineAlertsCard",
+    "TalkXEngineAlertsCardProps"
+   ],
+   "export_default": null,
+   "linhas": 85,
+   "dominio": "components/talkx",
+   "hooks_locais": [
+    "useTalkXEngineAlerts"
+   ],
    "tabelas": [],
    "edges": [],
    "usado_por": 1,

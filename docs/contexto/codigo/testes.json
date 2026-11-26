@@ -5,18 +5,18 @@
   "vitest",
   "playwright"
  ],
- "total": 2847,
+ "total": 2849,
  "por_tipo": {
   "contrato": 116,
   "e2e": 76,
   "pytest": 3,
   "qa": 10,
-  "unit": 2550
+  "unit": 2552
  },
  "onde_ficam": [
   {
    "padrao": "co-localizado (__tests__)",
-   "arquivos": 2119
+   "arquivos": 2121
   },
   {
    "padrao": "outro",
@@ -12747,6 +12747,15 @@
    "casos": 1
   },
   {
+   "arquivo": "src/components/talkx/__tests__/TalkXEngineAlertsCard.test.tsx",
+   "tipo": "unit",
+   "linhas": 95,
+   "testa": [
+    "src/components/talkx/tracking/TalkXEngineAlertsCard.tsx"
+   ],
+   "casos": 6
+  },
+  {
    "arquivo": "src/components/talkx/__tests__/TalkXHealthCard.test.tsx",
    "tipo": "unit",
    "linhas": 350,
@@ -19303,6 +19312,15 @@
     "src/hooks/integrations/useTalkXCommandItems.ts"
    ],
    "casos": 4
+  },
+  {
+   "arquivo": "src/hooks/integrations/__tests__/useTalkXEngineAlerts.test.ts",
+   "tipo": "unit",
+   "linhas": 161,
+   "testa": [
+    "src/hooks/integrations/useTalkXEngineAlerts.ts"
+   ],
+   "casos": 12
   },
   {
    "arquivo": "src/hooks/integrations/__tests__/useTalkXInsights.defeito-223.test.tsx",
@@ -26767,6 +26785,7 @@
   "src/components/talkx/talkxWizardRoute.ts": 2,
   "src/components/talkx/tracking/TalkXAbTestResults.tsx": 1,
   "src/components/talkx/tracking/TalkXCampaignActionsCard.tsx": 1,
+  "src/components/talkx/tracking/TalkXEngineAlertsCard.tsx": 1,
   "src/components/talkx/tracking/TalkXHealthCard.tsx": 1,
   "src/components/talkx/tracking/TalkXKeyMetricsCard.tsx": 1,
   "src/components/talkx/tracking/TalkXLimitsDialog.tsx": 1,
@@ -27136,6 +27155,7 @@
   "src/hooks/integrations/useTalkXCampaignSummary.ts": 1,
   "src/hooks/integrations/useTalkXCampaignTimeline.ts": 1,
   "src/hooks/integrations/useTalkXCommandItems.ts": 1,
+  "src/hooks/integrations/useTalkXEngineAlerts.ts": 1,
   "src/hooks/integrations/useTalkXEvents.ts": 1,
   "src/hooks/integrations/useTalkXInsights.ts": 4,
   "src/hooks/integrations/useTalkXLinks.ts": 3,

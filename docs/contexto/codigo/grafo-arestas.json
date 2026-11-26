@@ -6609,6 +6609,7 @@
    "src/components/dashboard/overview/DashboardCard.tsx",
    "src/components/talkx/kit/states.tsx",
    "src/components/talkx/talkxShared.ts",
+   "src/components/talkx/tracking/TalkXEngineAlertsCard.tsx",
    "src/components/talkx/tracking/TalkXHealthCard.tsx",
    "src/components/talkx/tracking/TalkXLiveKpiRow.tsx",
    "src/components/talkx/tracking/TalkXRecipientRowActions.tsx",
@@ -7077,6 +7078,11 @@
   "src/components/talkx/tracking/TalkXCampaignActionsCard.tsx": [
    "src/components/talkx/talkxShared.ts",
    "src/components/talkx/tracking/talkxCampaignRules.ts"
+  ],
+  "src/components/talkx/tracking/TalkXEngineAlertsCard.tsx": [
+   "src/components/dashboard/overview/DashboardCard.tsx",
+   "src/components/talkx/talkxShared.ts",
+   "src/hooks/integrations/useTalkXEngineAlerts.ts"
   ],
   "src/components/talkx/tracking/TalkXHealthCard.tsx": [
    "src/components/dashboard/overview/DashboardCard.tsx",
@@ -9564,6 +9570,9 @@
   ],
   "src/hooks/integrations/useTalkXConnectionStatus.ts": [
    "src/integrations/supabase/client.ts"
+  ],
+  "src/hooks/integrations/useTalkXEngineAlerts.ts": [
+   "src/lib/supabaseHelpers.ts"
   ],
   "src/hooks/integrations/useTalkXEvents.ts": [
    "src/hooks/auth/useAuth.tsx",

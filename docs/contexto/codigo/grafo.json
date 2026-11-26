@@ -1,8 +1,8 @@
 {
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
- "nos": 2435,
- "arestas": 8377,
+ "nos": 2437,
+ "arestas": 8382,
  "hubs": [
   {
    "arquivo": "src/lib/utils.ts",
@@ -77,12 +77,12 @@
    "importado_por": 66
   },
   {
-   "arquivo": "src/components/ui/avatar.tsx",
+   "arquivo": "src/components/talkx/talkxShared.ts",
    "importado_por": 59
   },
   {
-   "arquivo": "src/components/talkx/talkxShared.ts",
-   "importado_por": 58
+   "arquivo": "src/components/ui/avatar.tsx",
+   "importado_por": 59
   },
   {
    "arquivo": "src/components/ui/alert-dialog.tsx",
@@ -129,12 +129,12 @@
    "importado_por": 45
   },
   {
-   "arquivo": "src/hooks/system/useUserRole.ts",
+   "arquivo": "src/components/dashboard/overview/DashboardCard.tsx",
    "importado_por": 44
   },
   {
-   "arquivo": "src/components/dashboard/overview/DashboardCard.tsx",
-   "importado_por": 43
+   "arquivo": "src/hooks/system/useUserRole.ts",
+   "importado_por": 44
   },
   {
    "arquivo": "src/components/ui/dropdown-menu.tsx",
@@ -161,7 +161,7 @@
    "importado_por": 37
   },
   {
-   "arquivo": "supabase/functions/_shared/ai-generate.ts",
+   "arquivo": "src/lib/supabaseHelpers.ts",
    "importado_por": 36
   }
  ],
