@@ -2,6 +2,10 @@
 
 Diff semântico gerado a cada coleta em que algo mudou.
 
+## 2026-11-26 15:17 UTC
+
+- **functions** alterado (1): `public.get_my_protection_policy()`
+
 ## 2026-11-26 13:25 UTC
 
 - **functions** alterado (1): `public.talkx_segment_tags(p_segment uuid)`

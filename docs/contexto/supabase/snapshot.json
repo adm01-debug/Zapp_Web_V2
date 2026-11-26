@@ -56749,6 +56749,10 @@
         "callers": {
           "code": [
             {
+              "file": "src/hooks/security/useContactProtectionPolicy.ts",
+              "hits": 1
+            },
+            {
               "file": "supabase/migrations/20261015225226_ct091_contact_protection_policy.sql",
               "hits": 2
             },
@@ -56757,7 +56761,7 @@
               "hits": 1
             }
           ],
-          "code_total_files": 2,
+          "code_total_files": 3,
           "cron": [],
           "db": [],
           "triggers": [],
