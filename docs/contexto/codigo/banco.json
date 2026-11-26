@@ -8,7 +8,7 @@
   "supabase/migrations",
   "typeorm"
  ],
- "migrations": 1159,
+ "migrations": 1160,
  "seeds": [
   "docs/contexto/supabase/functions/public/seed_default_goals_for_profile__12ae32cb1ec02d01.sql",
   "e2e/fixtures/seed-talk-me.sql",
@@ -4350,6 +4350,7 @@
    },
    "usada_no_front": 7,
    "usada_em_edges": [
+    "_shared",
     "approve-password-reset",
     "connection-health-check",
     "create-user",

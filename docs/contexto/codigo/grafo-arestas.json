@@ -11126,6 +11126,9 @@
    "supabase/functions/_shared/ai-capabilities.ts",
    "supabase/functions/_shared/hmac-validation.ts"
   ],
+  "supabase/functions/_shared/connection-audit.ts": [
+   "supabase/functions/_shared/validation.ts"
+  ],
   "supabase/functions/_shared/contract-kit.ts": [
    "supabase/functions/_shared/contracts.ts",
    "supabase/functions/_shared/schemas.ts"
@@ -11623,6 +11626,7 @@
    "supabase/functions/_shared/webhook-signature.ts"
   ],
   "supabase/functions/evolution-api/index.ts": [
+   "supabase/functions/_shared/connection-audit.ts",
    "supabase/functions/_shared/cron-secret-auth.ts",
    "supabase/functions/_shared/evolution-api-proxy.ts",
    "supabase/functions/_shared/evolution-control-authz.ts",

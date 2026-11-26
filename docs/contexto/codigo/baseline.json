@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "501f3bb50768d6ed7fd622b8f5e772c52026a474",
+  "commit": "284367aa5013c9d03700b17488c44eff2cdb413f",
   "branch": "main",
-  "data_commit": "2026-11-26T03:22:16Z",
+  "data_commit": "2026-11-26T03:45:03Z",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "284367aa",
+    "data": "2026-11-26",
+    "assunto": "feat: trilha de auditoria das conexoes e reconciliacao de INSTANCE_GONE (#3398)"
+   },
    {
     "sha": "501f3bb5",
     "data": "2026-11-26",
@@ -126,14 +131,9 @@
     "sha": "06a1cbe6",
     "data": "2026-11-25",
     "assunto": "feat(automacao): recupera harness local da PR #2926 sobre o main atual (#3366)"
-   },
-   {
-    "sha": "6d87cf6c",
-    "data": "2026-11-25",
-    "assunto": "feat(ci): restaura a fila de merge serial (auto-update-pr-branch) (#3368)"
    }
   ],
-  "arquivos_mudados_7d": 2767,
+  "arquivos_mudados_7d": 2773,
   "pastas_mais_mudadas_30d": [
    {
     "pasta": "docs/contexto/supabase",
@@ -173,7 +173,7 @@
    },
    {
     "pasta": "supabase/functions/_shared",
-    "mudancas": 247
+    "mudancas": 249
    },
    {
     "pasta": "analise-prs/resgate-261118-lote3/hermes",
@@ -199,11 +199,11 @@
   "arquivos_mais_mudados_90d": [
    {
     "arquivo": "supabase/deployment-manifest.json",
-    "mudancas": 37
+    "mudancas": 38
    },
    {
     "arquivo": "ESTADO.md",
-    "mudancas": 25
+    "mudancas": 26
    },
    {
     "arquivo": "supabase/schema-manifest.json",
@@ -218,16 +218,16 @@
     "mudancas": 15
    },
    {
+    "arquivo": ".github/workflows/db-guard.yml",
+    "mudancas": 14
+   },
+   {
     "arquivo": "docs/DB-INVENTORY.md",
     "mudancas": 14
    },
    {
     "arquivo": "supabase/schema-catalog.json",
     "mudancas": 14
-   },
-   {
-    "arquivo": ".github/workflows/db-guard.yml",
-    "mudancas": 13
    },
    {
     "arquivo": "scripts/db-audit/grants-baseline.json",
@@ -250,11 +250,11 @@
     "mudancas": 9
    },
    {
-    "arquivo": "scripts/ci/ci-docs-baseline.unit.mjs",
-    "mudancas": 8
+    "arquivo": "supabase/functions/evolution-api/index.ts",
+    "mudancas": 9
    },
    {
-    "arquivo": "supabase/functions/evolution-api/index.ts",
+    "arquivo": "scripts/ci/ci-docs-baseline.unit.mjs",
     "mudancas": 8
    },
    {
@@ -314,9 +314,9 @@
   ]
  },
  "contagens": {
-  "arquivos_total": 14833,
-  "arquivos_codigo": 5170,
-  "linhas_codigo": 958996,
+  "arquivos_total": 14836,
+  "arquivos_codigo": 5171,
+  "linhas_codigo": 959402,
   "rotas": 18,
   "rotas_http_backend": 11,
   "vistas_por_id": 55,
@@ -326,11 +326,11 @@
   "hooks": 523,
   "edge_functions": 93,
   "tabelas": 224,
-  "migrations": 1159,
+  "migrations": 1160,
   "cron_jobs": 29,
   "testes": 2838,
   "workflows": 26,
-  "scripts": 455,
+  "scripts": 456,
   "docs_md": 3988
  },
  "por_pasta": {
@@ -632,7 +632,7 @@
   },
   "scripts/ci": {
    "arquivos": 231,
-   "linhas": 50521
+   "linhas": 50524
   },
   "scripts/db": {
    "arquivos": 2,
@@ -772,7 +772,7 @@
   },
   "src/lib": {
    "arquivos": 302,
-   "linhas": 40632
+   "linhas": 40641
   },
   "src/main.tsx": {
    "arquivos": 1,
@@ -815,8 +815,8 @@
    "linhas": 1708
   },
   "supabase/functions": {
-   "arquivos": 435,
-   "linhas": 131960
+   "arquivos": 436,
+   "linhas": 132354
   },
   "tailwind.config.ts": {
    "arquivos": 1,
@@ -854,7 +854,7 @@
   },
   {
    "arquivo": "supabase/functions/evolution-api/index.ts",
-   "linhas": 1610
+   "linhas": 1749
   },
   {
    "arquivo": "scripts/ci/ci-local.mjs",
@@ -942,7 +942,7 @@
   }
  ],
  "qualidade": {
-  "any": 392,
+  "any": 396,
   "console_log": 505,
   "ts_ignore": 0,
   "eslint_disable": 1,

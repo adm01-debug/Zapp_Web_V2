@@ -29,7 +29,7 @@
   "edge_functions": "supabase/functions",
   "migrations": "supabase/migrations",
   "scripts": [
-   "scripts/db-audit (306)",
+   "scripts/db-audit (307)",
    "scripts/ci (43)",
    "scripts/e2e-isolated (41)"
   ],
@@ -46,7 +46,7 @@
   "edge_functions": "kebab-case (96%)",
   "tabelas": "snake_case (92%)"
  },
- "barrels_index": 72,
+ "barrels_index": 73,
  "extensao_componentes": [
   ".tsx (938)"
  ],
@@ -66,11 +66,11 @@
  "commits": {
   "convencao": "conventional commits (observado)",
   "exemplos": [
+   "feat: trilha de auditoria das conexoes e reconciliacao de INSTANCE_GONE (#3398)",
    "fix: trava exclusao de template do Talk X em campanha (N-127/N-127b) (#3394)",
    "feat: acoes por mensagem (favoritar, fixar, responder depois, denunciar) (#3395)",
    "feat: bloqueio de login por cidade (paridade Promo Gifts V4) (#3393)",
-   "feat: Sala de Crise mede pelo agregado crisis_room_snapshot (fim das 4 consultas no navegador) (#3396)",
-   "fix: allowlist de credencial de provedor e vínculo endpoint/secret no banco (IA-EGRESS-001) (#3384)"
+   "feat: Sala de Crise mede pelo agregado crisis_room_snapshot (fim das 4 consultas no navegador) (#3396)"
   ]
  },
  "pr_template": ".github/PULL_REQUEST_TEMPLATE.md",

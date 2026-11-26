@@ -1,6 +1,6 @@
 # 07 · REGRAS DE NEGÓCIO
 
-> Gerado automaticamente por AI Context Sync v1.3.2 · commit `501f3bb507` · branch `main` · 2026-11-26 03:29 UTC
+> Gerado automaticamente por AI Context Sync v1.3.2 · commit `284367aa50` · branch `main` · 2026-11-26 03:47 UTC
 > Não edite à mão — regras humanas vão em `manual/`.
 
 ## A. Regras escritas por humanos (`manual/` — prioridade máxima, nunca sobrescrito)
@@ -289,7 +289,6 @@ Demais dúvidas: nenhuma (entrevista concluída em 2026-11-03). Novas dúvidas: 
 | `webhook_rate_limits` | Admins can view rate limits | SELECT | authenticated | permissive | `public.is_admin_or_supervisor(auth.uid())` |  |
 | `whatsapp_connections` | Admins can insert connections | INSERT | authenticated | permissive |  | `public.is_admin_or_supervisor(auth.uid())` |
 | `whatsapp_connections` | Admins can update connections | UPDATE | authenticated | permissive | `public.is_admin_or_supervisor(auth.uid())` |  |
-| `whatsapp_connections` | Admins can delete connections | DELETE | authenticated | permissive | `public.is_admin_or_supervisor(auth.uid())` |  |
 | `audio_memes` | Authenticated users can insert audio memes | INSERT | authenticated | permissive |  | `uploaded_by = auth.uid()` |
 | `audio_memes` | Authenticated users can update audio memes | UPDATE | authenticated | permissive | `(uploaded_by = auth.uid()) OR is_admin_or_supervisor(auth.uid())` | `(uploaded_by = auth.uid()) OR is_admin_or_supervisor(auth.uid())` |
 | `custom_emojis` | Authenticated users can insert custom emojis | INSERT | authenticated | permissive |  | `uploaded_by = auth.uid()` |
@@ -423,6 +422,7 @@ Demais dúvidas: nenhuma (entrevista concluída em 2026-11-03). Novas dúvidas: 
 | `email_attachments` | service_role inserts email attachments | INSERT | service_role | permissive |  | `true` |
 | `permissions` | Admins can manage permissions | ALL | authenticated | permissive | `is_admin(auth.uid())` | `is_admin(auth.uid())` |
 | `role_permissions` | Admins can manage role permissions | ALL | authenticated | permissive | `is_admin(auth.uid())` | `is_admin(auth.uid())` |
+| `permissions` | Admin supervisor can view permissions | SELECT | authenticated | permissive | `is_admin_or_supervisor(auth.uid())` |  |
 | … +288 linhas — lista completa em `context.json` | | | | | | |
 
 ## C. Restrições de dados (obrigatório / único / default / CHECK / FK / calculada)
@@ -4757,7 +4757,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `owner` | `supabase/migrations/20260927270018_team_chat_e28_fix_find_or_create_race.sql` |
 | `anon` | `supabase/migrations/20260927340000_fix_add_agent_xp_negative_and_guard.sql` |
 
-## K. Testes como especificação (23015 testes em 2445 arquivos — nomes completos em `context.json`)
+## K. Testes como especificação (23019 testes em 2445 arquivos — nomes completos em `context.json`)
 
 | Arquivo | Testes | Exemplos do que o sistema DEVE fazer |
 |---|---|---|
@@ -4769,7 +4769,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `src/hooks/__tests__/useExternalCatalog.test.ts` | 80 | useExternalCatalog · Initialization · initializes with empty state · exposes all expected methods … |
 | `src/hooks/tasks/__tests__/workItemAggregates.test.ts` | 80 | Fase F — correções da auditoria · a busca ignora acento e caixa:  · lista nula não derruba o recorte (guarda  · concluída SEM carimbo entra nos 7 dias da Lista (mesma regra do Quadro) … |
 | `supabase/functions/multiplix-send/index.test.ts` | 80 | personalize resolve {{empresa}} com o nome da empresa · personalize resolve {{saudacao}} para um período válido do dia · personalize mantém o texto byte a byte E reporta {{empresa}} sem valor em missing (MX06) · personalize usa fallback [variavel] para placeholder fora do conjunto fixo (nunca lança) … |
-| `supabase/functions/evolution-api/index.test.ts` | 73 | R2-API-001: ${action} sem papel devolve 403 e não produz I/O no provedor · R2-API-001: admin conserva a operação (set-webhook chega ao provedor) · R2-API-001: ${action} sem papel devolve 403 e não produz I/O no provedor · R2-API-001: ação desconhecida com admin passa o gate e cai no 404 do handler … |
+| `supabase/functions/evolution-api/index.test.ts` | 77 | R2-API-001: ${action} sem papel devolve 403 e não produz I/O no provedor · R2-API-001: admin conserva a operação (set-webhook chega ao provedor) · R2-API-001: ${action} sem papel devolve 403 e não produz I/O no provedor · R2-API-001: ação desconhecida com admin passa o gate e cai no 404 do handler … |
 | `src/components/talkx/__tests__/talkxTemplateFile.test.ts` | 72 | X093 · talkxTemplateFile — parseTemplateFile · CSV básico com cabeçalho name;content · CSV com BOM é limpo · CSV com aspas duplas em campo … |
 | `src/lib/__tests__/emailHtml.test.ts` | 70 | sanitizeEmailHtml — XSS básico · remove <script> · remove event handlers (onclick, onerror, onload) · remove javascript: em href … |
 | `src/hooks/__tests__/useEvolutionApi.test.ts` | 69 | useEvolutionApi - Exhaustive Test Suite · Initialization · starts with isLoading = false · exposes all supported functions … |
@@ -5580,4 +5580,4 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | Mostra no máximo 2 sugestões para não poluir o painel | `src/components/inbox/copilot/MissingQuestions.tsx` |
 | * CV-035/036 — Alerta de ocasião comercial detectada + prazo de entrega. | `src/components/inbox/copilot/OccasionAlert.tsx` |
 | Sobe/desce a linha uma posição por vez, trocando apenas de lugar os objetos | `src/components/inbox/interactive-builder/useInteractiveMessage.ts` |
-| … +1852 linhas — lista completa em `context.json` | |
+| … +1853 linhas — lista completa em `context.json` | |

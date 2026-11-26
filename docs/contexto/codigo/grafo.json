@@ -1,8 +1,8 @@
 {
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
- "nos": 2424,
- "arestas": 8346,
+ "nos": 2425,
+ "arestas": 8348,
  "hubs": [
   {
    "arquivo": "src/lib/utils.ts",
@@ -37,11 +37,11 @@
    "importado_por": 174
   },
   {
-   "arquivo": "src/types/chat.ts",
-   "importado_por": 130
+   "arquivo": "supabase/functions/_shared/validation.ts",
+   "importado_por": 131
   },
   {
-   "arquivo": "supabase/functions/_shared/validation.ts",
+   "arquivo": "src/types/chat.ts",
    "importado_por": 130
   },
   {

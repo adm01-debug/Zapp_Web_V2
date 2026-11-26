@@ -1622,7 +1622,7 @@
   {
    "arquivo": "scripts/ci/evolution-edge-fixes.unit.mjs",
    "tipo": "unit",
-   "linhas": 297,
+   "linhas": 300,
    "testa": [],
    "casos": 14
   },
@@ -21267,7 +21267,7 @@
   {
    "arquivo": "src/lib/__tests__/rlsGroupAccess.test.ts",
    "tipo": "unit",
-   "linhas": 131,
+   "linhas": 140,
    "testa": [],
    "casos": 7
   },
@@ -23190,7 +23190,7 @@
   {
    "arquivo": "supabase/functions/_shared/__tests__/fake-evolution.ts",
    "tipo": "unit",
-   "linhas": 148,
+   "linhas": 169,
    "testa": [],
    "casos": 0
   },
@@ -24223,13 +24223,13 @@
   {
    "arquivo": "supabase/functions/evolution-api/index.test.ts",
    "tipo": "unit",
-   "linhas": 2002,
+   "linhas": 2168,
    "testa": [
     "supabase/functions/_shared/evolution-instance-token.ts",
     "supabase/functions/_shared/schemas.ts",
     "supabase/functions/evolution-api/index.ts"
    ],
-   "casos": 73
+   "casos": 77
   },
   {
    "arquivo": "supabase/functions/evolution-api/session-flavor-routes.test.ts",

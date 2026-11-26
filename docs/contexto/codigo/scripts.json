@@ -1,7 +1,7 @@
 {
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
- "total": 455,
+ "total": 456,
  "scripts": [
   {
    "arquivo": "scripts/ai-context/cenarios.mjs",
@@ -1026,6 +1026,17 @@
    "env": [],
    "npm_scripts": [],
    "workflows": [],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/connections-delete-admin-only.test.sh",
+   "descricao": "Contrato de autorizacao da EXCLUSAO de conexao (DELETE em whatsapp_connections). Causa raiz: a policy de DELETE exigia apenas is_admin_or_supervisor, entao o",
+   "linhas": 226,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [
+    "db-guard.yml"
+   ],
    "orfao": false
   },
   {

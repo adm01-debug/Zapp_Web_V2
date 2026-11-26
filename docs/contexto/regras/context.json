@@ -1,15 +1,15 @@
 {
  "meta": {
-  "sha": "501f3bb50768d6ed7fd622b8f5e772c52026a474",
+  "sha": "284367aa5013c9d03700b17488c44eff2cdb413f",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-26 03:29 UTC",
-  "files_total": 14680,
-  "code_files": 8212,
-  "code_lines": 1236878
+  "generated_at": "2026-11-26 03:47 UTC",
+  "files_total": 14683,
+  "code_files": 8214,
+  "code_lines": 1237303
  },
  "version": "1.3.2",
- "facts_hash": "da718d994b7f6596",
+ "facts_hash": "4a67ea8592abc14b",
  "stack": {
   "frameworks": [
    "React + Vite",
@@ -367,9 +367,9 @@
   ],
   "package_manager": "bun",
   "languages": {
-   ".sql": 3069,
+   ".sql": 3070,
    ".tsx": 2492,
-   ".ts": 2028,
+   ".ts": 2029,
    ".mjs": 496,
    ".py": 125,
    ".cjs": 19,
@@ -20666,16 +20666,6 @@
     "src": "supabase/migrations/20260319134839_76acd83b-182d-46f0-a127-4a9bdbd0ddee.sql"
    },
    {
-    "name": "Admins can delete connections",
-    "table": "whatsapp_connections",
-    "cmd": "DELETE",
-    "roles": "authenticated",
-    "mode": "permissive",
-    "using": "public.is_admin_or_supervisor(auth.uid())",
-    "check": "",
-    "src": "supabase/migrations/20260319134839_76acd83b-182d-46f0-a127-4a9bdbd0ddee.sql"
-   },
-   {
     "name": "Authenticated users can insert audio memes",
     "table": "audio_memes",
     "cmd": "INSERT",
@@ -24794,6 +24784,16 @@
     "using": "public.is_admin_or_supervisor(auth.uid())",
     "check": "public.is_admin_or_supervisor(auth.uid())",
     "src": "supabase/migrations/20261126010508_city_whitelist_network_policy.sql"
+   },
+   {
+    "name": "Admins can delete connections",
+    "table": "whatsapp_connections",
+    "cmd": "DELETE",
+    "roles": "authenticated",
+    "mode": "permissive",
+    "using": "public.is_admin(auth.uid())",
+    "check": "",
+    "src": "supabase/migrations/20261126011000_connections_delete_admin_only.sql"
    },
    {
     "name": "Users can update own notifications",
@@ -48589,6 +48589,7 @@
    "supabase/migrations/20261125120000_ai_providers_endpoint_secret_binding.sql",
    "supabase/migrations/20261125130000_ia009_kill_switch_chaves.sql",
    "supabase/migrations/20261126010508_city_whitelist_network_policy.sql",
+   "supabase/migrations/20261126011000_connections_delete_admin_only.sql",
    "supabase/migrations/20261126213000_talkx_template_duplicate_archive_delete.sql",
    "supabase/migrations/20261126213001_talkx_template_delete_atomic.sql",
    "supabase/migrations/20261126221500_remind_me_about_message.sql",
@@ -76161,7 +76162,7 @@
   {
    "module": "scripts",
    "files": 505,
-   "lines": 106715,
+   "lines": 106718,
    "tables": [
     "a",
     "alem_do_limite",
@@ -77165,7 +77166,7 @@
   {
    "module": "src/lib",
    "files": 302,
-   "lines": 40632,
+   "lines": 40641,
    "tables": [
     "contacts",
     "conversation_tasks",
@@ -77897,8 +77898,8 @@
   },
   {
    "module": "supabase/functions",
-   "files": 435,
-   "lines": 131960,
+   "files": 436,
+   "lines": 132354,
    "tables": [
     "agent_stats",
     "ai_conversation_tags",
@@ -78018,6 +78019,7 @@
     "ai-vocabulary.ts: SENTIMENT_VALUES, Sentiment, URGENCY_VALUES, Urgency, OPERATIONAL_PRIORITY_VALUES, OperationalPriority",
     "assistant-gateway.ts: AssistantCapability, ASSISTANT_CAPABILITIES, CAPABILITY_LABELS, ContextSource, IntentSignals, normalizeQuery",
     "assistant-playbook.ts: AssistantAtuacao, ASSISTANT_ATUACOES, AssistantPlaybook, playbookFor, playbookPromptBlock",
+    "connection-audit.ts: ConnectionAuditEntry, writeConnectionAuditLog",
     "contract-kit.ts: VersionedSchemas, SchemaInput, ParseOk, ParseFail, ParseResult, contractHeaders",
     "contracts.ts: ContractVersion, V1_SUNSET, getContractVersion, deprecationHeaders, parseVersioned",
     "copilot-tick.ts: COPILOT_TICK_KIND, COPILOT_FUNCTION_NAME, COPILOT_CAPABILITY_KEY, MAX_NEW_MESSAGES, MAX_CONTEXT_MESSAGES, CopilotTickError",
@@ -78033,8 +78035,7 @@
     "evolution-go-adapter.ts: splitGoJid, inferGoReceiptFromMe, isGoPayload, translateGoPayload",
     "evolution-go-routes.ts: GoRoute, translateV2ToGo",
     "evolution-go-token-sync.ts: SafeFetchResult, safeFetch, readJsonSafe, goErrorText, GoTokenLookupFailure, GoTokenLookup",
-    "evolution-helpers.ts: WebhookPayload, isRecord, normalizeEventName, toEventRecords, maskJidForLog, normalizePhone",
-    "evolution-instance-token.ts: InstanceTokenClient, resetInstanceTokenCache, instanceNameFromV2Path, resolveInstanceToken"
+    "evolution-helpers.ts: WebhookPayload, isRecord, normalizeEventName, toEventRecords, maskJidForLog, normalizePhone"
    ],
    "docs": [
     "ai-circuit.test.ts: IA-050 — circuit breaker por provedor de IA no despacho central. Defeito provado na auditoria (IA-CIRCUIT-001): `generateWithRouting` retentava e devolvia erro explícito, mas NUNCA suspendia um provedor que só falha — cada request novo voltava a bater no provedor caído (fetch real + espera + custo). …",
@@ -78081,6 +78082,7 @@
     "supabase/functions/_shared/assistant-gateway.ts",
     "supabase/functions/_shared/assistant-playbook.test.ts",
     "supabase/functions/_shared/assistant-playbook.ts",
+    "supabase/functions/_shared/connection-audit.ts",
     "supabase/functions/_shared/contract-kit.ts",
     "supabase/functions/_shared/contracts.ts",
     "supabase/functions/_shared/copilot-tick.ts",
@@ -78129,14 +78131,13 @@
     "supabase/functions/_shared/sts-upload.ts",
     "supabase/functions/_shared/talkx-delivery-connection.ts",
     "supabase/functions/_shared/talkx-reply.ts",
-    "supabase/functions/_shared/talkx-resume-policy.ts",
-    "supabase/functions/_shared/talkx-tracking-token.ts"
+    "supabase/functions/_shared/talkx-resume-policy.ts"
    ]
   },
   {
    "module": "supabase/migrations",
-   "files": 1159,
-   "lines": 116612,
+   "files": 1160,
+   "lines": 116631,
    "tables": [
     "audit_logs",
     "department_invites",
@@ -78609,6 +78610,7 @@
      "tests/contracts/sentiment-alert-security.contract.test.ts"
     ],
     "insert": [
+     "supabase/functions/_shared/connection-audit.ts",
      "supabase/functions/approve-password-reset/index.ts",
      "supabase/functions/connection-health-check/index.ts",
      "supabase/functions/create-user/index.ts",
@@ -103770,6 +103772,10 @@
     "text": "perfil, o mínimo útil: agenda (leitura barata) + resumo."
    },
    {
+    "file": "supabase/functions/_shared/connection-audit.ts",
+    "text": "* Regra de ouro: falha de auditoria NUNCA bloqueia (nem mascara) a ação"
+   },
+   {
     "file": "supabase/functions/_shared/contract-kit.ts",
     "text": "* contract-kit — porta ÚNICA de validação de contrato das Edge Functions."
    },
@@ -105063,15 +105069,15 @@
    },
    {
     "file": "supabase/functions/evolution-api/index.ts",
+    "text": "Trilha: no máximo UM registro de `connect` por invocação (o fluxo tem"
+   },
+   {
+    "file": "supabase/functions/evolution-api/index.ts",
     "text": "(instance_service.go GetQr) e estourava o limite de 5 s. Toda falha"
    },
    {
     "file": "supabase/functions/evolution-api/index.ts",
     "text": "Só dorme entre leituras do QR se, ao acordar, ainda houver prazo para a"
-   },
-   {
-    "file": "supabase/functions/evolution-api/index.ts",
-    "text": "disparando a recriação da instância lá embaixo — resposta malformada não pode"
    },
    {
     "file": "supabase/functions/evolution-sync/index.ts",
@@ -134383,6 +134389,18 @@
    {
     "file": "supabase/functions/evolution-api/index.ts",
     "field": "status",
+    "value": "qr_pending",
+    "kind": "escreve"
+   },
+   {
+    "file": "supabase/functions/evolution-api/index.ts",
+    "field": "status",
+    "value": "connected",
+    "kind": "escreve"
+   },
+   {
+    "file": "supabase/functions/evolution-api/index.ts",
+    "field": "status",
     "value": "connected",
     "kind": "escreve"
    },
@@ -134396,6 +134414,12 @@
     "file": "supabase/functions/evolution-api/index.ts",
     "field": "type",
     "value": "svg",
+    "kind": "escreve"
+   },
+   {
+    "file": "supabase/functions/evolution-api/index.ts",
+    "field": "status",
+    "value": "qr_pending",
     "kind": "escreve"
    },
    {
@@ -134431,7 +134455,19 @@
    {
     "file": "supabase/functions/evolution-api/index.ts",
     "field": "status",
+    "value": "connected",
+    "kind": "escreve"
+   },
+   {
+    "file": "supabase/functions/evolution-api/index.ts",
+    "field": "status",
     "value": "connecting",
+    "kind": "escreve"
+   },
+   {
+    "file": "supabase/functions/evolution-api/index.ts",
+    "field": "status",
+    "value": "qr_pending",
     "kind": "escreve"
    },
    {
@@ -210336,7 +210372,7 @@
    },
    {
     "file": "src/lib/__tests__/rlsGroupAccess.test.ts",
-    "name": "INSERT/UPDATE/DELETE exigem admin ou supervisor"
+    "name": "INSERT/UPDATE exigem admin ou supervisor; DELETE, so admin"
    },
    {
     "file": "src/lib/__tests__/rlsSchemaGuard.test.ts",
@@ -223227,6 +223263,22 @@
     "name": "P1-GO-5 [${flavor}] ${action}: mensagem de OUTRO atendente é 403"
    },
    {
+    "file": "supabase/functions/evolution-api/index.test.ts",
+    "name": "E36 B2-07: isInstanceGonePayload só reconhece ausência (404/mensagem), não erro comum"
+   },
+   {
+    "file": "supabase/functions/evolution-api/index.test.ts",
+    "name": "E36 B2-01: supervisor NÃO exclui conexão (admin-only) e não toca o provedor"
+   },
+   {
+    "file": "supabase/functions/evolution-api/index.test.ts",
+    "name": "E36 B2-03: instância ausente no provedor devolve INSTANCE_GONE, apaga a linha local e registra o motivo"
+   },
+   {
+    "file": "supabase/functions/evolution-api/index.test.ts",
+    "name": "E36 CA1: admin exclui conexão existente — trilha com ator, IP e user-agent"
+   },
+   {
     "file": "supabase/functions/evolution-api/session-flavor-routes.test.ts",
     "name": "R2-API-015: matriz go/v2 escolhe método, path (com instância só no v2) e credencial"
    },
@@ -233853,16 +233905,6 @@
     "src": "supabase/migrations/20260319134839_76acd83b-182d-46f0-a127-4a9bdbd0ddee.sql"
    },
    {
-    "name": "Admins can delete connections",
-    "table": "whatsapp_connections",
-    "cmd": "DELETE",
-    "roles": "authenticated",
-    "mode": "permissive",
-    "using": "public.is_admin_or_supervisor(auth.uid())",
-    "check": "",
-    "src": "supabase/migrations/20260319134839_76acd83b-182d-46f0-a127-4a9bdbd0ddee.sql"
-   },
-   {
     "name": "Authenticated users can insert audio memes",
     "table": "audio_memes",
     "cmd": "INSERT",
@@ -237981,6 +238023,16 @@
     "using": "public.is_admin_or_supervisor(auth.uid())",
     "check": "public.is_admin_or_supervisor(auth.uid())",
     "src": "supabase/migrations/20261126010508_city_whitelist_network_policy.sql"
+   },
+   {
+    "name": "Admins can delete connections",
+    "table": "whatsapp_connections",
+    "cmd": "DELETE",
+    "roles": "authenticated",
+    "mode": "permissive",
+    "using": "public.is_admin(auth.uid())",
+    "check": "",
+    "src": "supabase/migrations/20261126011000_connections_delete_admin_only.sql"
    },
    {
     "name": "Users can update own notifications",
@@ -261909,7 +261961,7 @@
      "authenticated: public.is_admin_or_supervisor(auth.uid())"
     ],
     "DELETE": [
-     "authenticated: public.is_admin_or_supervisor(auth.uid())"
+     "authenticated: public.is_admin(auth.uid())"
     ]
    },
    "whatsapp_flows": {
@@ -263128,6 +263180,7 @@
    "supabase/migrations/20261124120000_drop_rpcs_e2e_orfas.sql",
    "supabase/migrations/20261125120000_ai_providers_endpoint_secret_binding.sql",
    "supabase/migrations/20261126010508_city_whitelist_network_policy.sql",
+   "supabase/migrations/20261126011000_connections_delete_admin_only.sql",
    "supabase/migrations/20261126213000_talkx_template_duplicate_archive_delete.sql",
    "supabase/tests/admin_inbox_silence.sql",
    "supabase/tests/admin_unlock_login_autorizacao.sql",
@@ -297507,7 +297560,7 @@
   },
   "scripts/ci/evolution-edge-fixes.unit.mjs": {
    "path": "scripts/ci/evolution-edge-fixes.unit.mjs",
-   "lines": 297,
+   "lines": 300,
    "tables": [
     {
      "table": "whatsapp_connections",
@@ -387110,7 +387163,7 @@
   },
   "src/lib/__tests__/rlsGroupAccess.test.ts": {
    "path": "src/lib/__tests__/rlsGroupAccess.test.ts",
-   "lines": 131,
+   "lines": 140,
    "is_test": true,
    "rule_comments": [
     "DELETE pelo USING: o predicado efetivo de cada comando nao pode ser"
@@ -387124,7 +387177,7 @@
     "RLS real: whatsapp_connections (schema resolvido das migrations)",
     "o conjunto de policies bate com o manifest do schema real",
     "SELECT e restrito a admin/supervisor — o espelho antigo dizia ",
-    "INSERT/UPDATE/DELETE exigem admin ou supervisor"
+    "INSERT/UPDATE exigem admin ou supervisor; DELETE, so admin"
    ]
   },
   "src/lib/__tests__/rlsSchemaGuard.test.ts": {
@@ -397501,6 +397554,23 @@
    ],
    "doc": "Fase 4 do assistente pessoal: treino por perfil. O perfil já existia na Fase 1 (`assistant_profiles.atividade`) e chegava ao motor só como rótulo. Aqui cada atuação ganha o seu conjunto de instruções, os seus objetivos e as capacidades que devem ser acionadas primeiro quando o pedido é vago (\"como e …"
   },
+  "supabase/functions/_shared/connection-audit.ts": {
+   "path": "supabase/functions/_shared/connection-audit.ts",
+   "lines": 68,
+   "exports": [
+    "interface ConnectionAuditEntry",
+    "function writeConnectionAuditLog"
+   ],
+   "tables": [
+    {
+     "table": "audit_logs",
+     "op": "insert"
+    }
+   ],
+   "rule_comments": [
+    "* Regra de ouro: falha de auditoria NUNCA bloqueia (nem mascara) a ação"
+   ]
+  },
   "supabase/functions/_shared/contract-kit.ts": {
    "path": "supabase/functions/_shared/contract-kit.ts",
    "lines": 124,
@@ -402237,7 +402307,7 @@
   },
   "supabase/functions/_shared/__tests__/fake-evolution.ts": {
    "path": "supabase/functions/_shared/__tests__/fake-evolution.ts",
-   "lines": 148,
+   "lines": 169,
    "is_test": true,
    "exports": [
     "type FakeEvolutionMode",
@@ -402251,7 +402321,7 @@
    "enums": [
     {
      "name": "FakeEvolutionMode",
-     "values": "ok | 500 | timeout | sem_id | 400_interativo"
+     "values": "ok | 500 | timeout | sem_id | 400_interativo | 404"
     }
    ],
    "rule_comments": [
@@ -408590,7 +408660,7 @@
   },
   "supabase/functions/evolution-api/index.test.ts": {
    "path": "supabase/functions/evolution-api/index.test.ts",
-   "lines": 2002,
+   "lines": 2168,
    "is_test": true,
    "errors": [
     "fake: listener não TCP",
@@ -408615,6 +408685,9 @@
      "name": "BAD_INSTANCE",
      "value": "\"../../instance/restart/OUTRA\""
     }
+   ],
+   "role_checks": [
+    "admin"
    ],
    "rule_comments": [
     "de recusar e a resposta virava `{ error: true, status: 504 }` — o limite de envio",
@@ -408697,13 +408770,18 @@
     "fetch-profile-picture: aceita JID de usuário e LID",
     "P1-GO-5 [${flavor}] ${action}: autor passa e o provedor recebe SÓ o id verificado",
     "P1-GO-5 [${flavor}] ${action}: PoC de ids divergentes é 403 e nada sai",
-    "P1-GO-5 [${flavor}] ${action}: mensagem de OUTRO atendente é 403"
+    "P1-GO-5 [${flavor}] ${action}: mensagem de OUTRO atendente é 403",
+    "E36 B2-07: isInstanceGonePayload só reconhece ausência (404/mensagem), não erro comum",
+    "E36 B2-01: supervisor NÃO exclui conexão (admin-only) e não toca o provedor",
+    "E36 B2-03: instância ausente no provedor devolve INSTANCE_GONE, apaga a linha local e registra o motivo",
+    "E36 CA1: admin exclui conexão existente — trilha com ator, IP e user-agent"
    ]
   },
   "supabase/functions/evolution-api/index.ts": {
    "path": "supabase/functions/evolution-api/index.ts",
-   "lines": 1610,
+   "lines": 1749,
    "exports": [
+    "function isInstanceGonePayload",
     "interface EvolutionApiDeps",
     "function handleEvolutionApi"
    ],
@@ -408794,6 +408872,14 @@
     },
     {
      "table": "whatsapp_connections",
+     "op": "select"
+    },
+    {
+     "table": "whatsapp_connections",
+     "op": "delete"
+    },
+    {
+     "table": "whatsapp_connections",
      "op": "delete"
     },
     {
@@ -408813,6 +408899,7 @@
     "whatsapp_connections": [
      "id",
      "instance_id",
+     "name",
      "status"
     ],
     "contacts": [
@@ -408906,6 +408993,16 @@
     },
     {
      "field": "status",
+     "value": "qr_pending",
+     "kind": "escreve"
+    },
+    {
+     "field": "status",
+     "value": "connected",
+     "kind": "escreve"
+    },
+    {
+     "field": "status",
      "value": "connected",
      "kind": "escreve"
     },
@@ -408917,6 +409014,11 @@
     {
      "field": "type",
      "value": "svg",
+     "kind": "escreve"
+    },
+    {
+     "field": "status",
+     "value": "qr_pending",
      "kind": "escreve"
     },
     {
@@ -408946,7 +409048,17 @@
     },
     {
      "field": "status",
+     "value": "connected",
+     "kind": "escreve"
+    },
+    {
+     "field": "status",
      "value": "connecting",
+     "kind": "escreve"
+    },
+    {
+     "field": "status",
+     "value": "qr_pending",
      "kind": "escreve"
     },
     {
@@ -409038,9 +409150,9 @@
     "colidem nesse segundo, e a mensagem não pode afirmar que foi o",
     "devolve o mesmo formato tanto pra erro de negócio da GO quanto pra",
     "de tokenError como antes. Mitigado pelo rate-limit da function e",
+    "Trilha: no máximo UM registro de `connect` por invocação (o fluxo tem",
     "(instance_service.go GetQr) e estourava o limite de 5 s. Toda falha",
-    "Só dorme entre leituras do QR se, ao acordar, ainda houver prazo para a",
-    "disparando a recriação da instância lá embaixo — resposta malformada não pode"
+    "Só dorme entre leituras do QR se, ao acordar, ainda houver prazo para a"
    ],
    "calc_fns": [
     {
@@ -422935,6 +423047,11 @@
    "lines": 348,
    "uses_service_role": true
   },
+  "supabase/migrations/20261126011000_connections_delete_admin_only.sql": {
+   "path": "supabase/migrations/20261126011000_connections_delete_admin_only.sql",
+   "lines": 19,
+   "uses_service_role": true
+  },
   "supabase/migrations/20261126213000_talkx_template_duplicate_archive_delete.sql": {
    "path": "supabase/migrations/20261126213000_talkx_template_duplicate_archive_delete.sql",
    "lines": 396,
@@ -426876,10 +426993,30 @@
   }
  },
  "git": {
-  "sha": "501f3bb50768d6ed7fd622b8f5e772c52026a474",
+  "sha": "284367aa5013c9d03700b17488c44eff2cdb413f",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "284367aa",
+    "date": "2026-11-26",
+    "author": "adm01-debug",
+    "subject": "feat: trilha de auditoria das conexoes e reconciliacao de INSTANCE_GONE (#3398)",
+    "files": [
+     ".github/workflows/db-guard.yml",
+     "ESTADO.md",
+     "scripts/automation.config.json",
+     "scripts/ci/evolution-edge-fixes.unit.mjs",
+     "scripts/db-audit/connections-delete-admin-only.test.sh",
+     "src/lib/__tests__/rlsGroupAccess.test.ts",
+     "supabase/deployment-manifest.json",
+     "supabase/functions/_shared/__tests__/fake-evolution.ts",
+     "supabase/functions/_shared/connection-audit.ts",
+     "supabase/functions/evolution-api/index.test.ts",
+     "supabase/functions/evolution-api/index.ts",
+     "supabase/migrations/20261126011000_connections_delete_admin_only.sql"
+    ]
+   },
    {
     "sha": "501f3bb5",
     "date": "2026-11-26",
@@ -428579,32 +428716,24 @@
      "resgate-online/progresso.json",
      "supabase/tests/instance_pause_investigation.sql"
     ]
-   },
-   {
-    "sha": "7d4d196e",
-    "date": "2026-11-24",
-    "author": "adm01-debug",
-    "subject": "feat(inbox): analise de imagem do Copiloto no painel de conversa (#3362)",
-    "files": [
-     "ESTADO.md",
-     "src/components/inbox/AIConversationAssistant.tsx",
-     "src/components/inbox/ai-tools/ImageAnalysisPanel.tsx",
-     "src/components/inbox/ai-tools/__tests__/ImageAnalysisPanel.test.tsx"
-    ]
    }
   ],
   "hot_files": [
+   [
+    "scripts/automation.config.json",
+    5
+   ],
+   [
+    "supabase/deployment-manifest.json",
+    5
+   ],
    [
     "ESTADO.md",
     4
    ],
    [
-    "scripts/automation.config.json",
-    4
-   ],
-   [
-    "supabase/deployment-manifest.json",
-    4
+    ".github/workflows/db-guard.yml",
+    3
    ],
    [
     "docs/ci/README.md",
@@ -428613,10 +428742,6 @@
    [
     "docs/agentes/github-ci.md",
     3
-   ],
-   [
-    ".github/workflows/db-guard.yml",
-    2
    ],
    [
     "docs/DB-INVENTORY.md",
@@ -428647,31 +428772,31 @@
     2
    ],
    [
-    "scripts/db-audit/talkx-template-duplicate-archive-delete.test.sh",
+    "scripts/ci/evolution-edge-fixes.unit.mjs",
     1
    ],
    [
-    "src/hooks/integrations/__tests__/useTalkXTemplates.test.ts",
+    "scripts/db-audit/connections-delete-admin-only.test.sh",
     1
    ],
    [
-    "src/hooks/integrations/useTalkXTemplates.ts",
+    "src/lib/__tests__/rlsGroupAccess.test.ts",
     1
    ],
    [
-    "supabase/migrations/20261126213000_talkx_template_duplicate_archive_delete.sql",
+    "supabase/functions/_shared/__tests__/fake-evolution.ts",
     1
    ],
    [
-    "supabase/migrations/20261126213001_talkx_template_delete_atomic.sql",
+    "supabase/functions/_shared/connection-audit.ts",
     1
    ],
    [
-    "scripts/db-audit/inbox-contact-authorization.test.sh",
+    "supabase/functions/evolution-api/index.test.ts",
     1
    ],
    [
-    "src/components/inbox/chat/MessageActionMenuItems.tsx",
+    "supabase/functions/evolution-api/index.ts",
     1
    ]
   ]
