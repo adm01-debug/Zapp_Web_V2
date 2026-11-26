@@ -268,7 +268,12 @@ function chamadasEdge() {
 }
 
 function chamadasProvedor() {
-  return fetchCalls.filter((c) => !c.url.includes("/functions/v1/chatbot-l1"));
+  // O gate de pausa por conexão (SL-010 §2.3) lê `feature_flags` no PostgREST antes de
+  // responder: é leitura de BANCO, não envio ao provedor — não entra na conta de
+  // "1 POST ao provedor" (que é o `sendText` da instância Evolution).
+  return fetchCalls.filter((c) =>
+    !c.url.includes("/functions/v1/chatbot-l1") && !c.url.includes("/rest/v1/feature_flags")
+  );
 }
 
 function insertResposta(chamadas: Chamada[]) {

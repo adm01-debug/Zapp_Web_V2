@@ -14,7 +14,7 @@ import {
 import { persistMediaToStorage, persistMediaViaApi, persistBase64Media, parseMessageContent } from "./evolution-media.ts";
 import { downloadMediaWithEgressPolicy, SMALL_MEDIA_DOWNLOAD_MAX_BYTES } from "./media-egress.ts";
 import type { EvolutionDbClient, EvolutionRow } from "./evolution-types.ts";
-import { capabilityFlagKeyForFunction } from "./ai-feature-flags.ts";
+import { capabilityFlagKeyForFunction, isAiBotPaused } from "./ai-feature-flags.ts";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // X030 — opt-out por palavra configurável + autoresposta pelo token da instância
@@ -873,6 +873,13 @@ export async function triggerChatbotL1IfNeeded(
 
     // Portão 2: flag de capacidade. Ausência/erro = desligado.
     if (!await readChatbotL1Flag(supabase)) return;
+
+    // Portão 2b (SL-010 / IA-009 §2.3): pausa DESTA conexão (`ai.bot.<connectionId>`).
+    // Pausa é explícita: linha ausente não pausa nada, então as outras conexões
+    // continuam respondendo — é o aceite do cartão ("pausar uma sem derrubar as
+    // outras"). Fica junto do portão de capacidade porque os dois decidem o mesmo:
+    // se este bot fala agora.
+    if (await isAiBotPaused(params.connectionId)) return;
 
     // Portão 1: a conexão precisa de um fluxo `ai_l1` ATIVO.
     const { data: fluxo, error: fluxoErr } = await supabase.from("chatbot_flows")
