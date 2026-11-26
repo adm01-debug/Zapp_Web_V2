@@ -2,7 +2,7 @@
   "format_version": 1,
   "fonte": "scripts/inventario/gerar-rotas.mjs (le AppRoutes.tsx, ViewRouter.tsx, lazyViews.ts, navigation.service.ts e os imports de cada tela)",
   "resumo": {
-    "urls": 20,
+    "urls": 21,
     "telas": 55,
     "itens_de_menu": 53,
     "hooks_distintos": 417,
@@ -45,6 +45,17 @@
       "caminho": "/admin/auditoria-contatos",
       "componente": "ContactAuditPage",
       "arquivo": "src/pages/admin/ContactAuditPage.tsx",
+      "protegida": true,
+      "papeis": [
+        "admin",
+        "supervisor"
+      ],
+      "redireciona": null
+    },
+    {
+      "caminho": "/admin/cache-previas",
+      "componente": "LinkPreviewCachePage",
+      "arquivo": "src/pages/admin/LinkPreviewCachePage.tsx",
       "protegida": true,
       "papeis": [
         "admin",

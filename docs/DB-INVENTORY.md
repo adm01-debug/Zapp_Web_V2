@@ -159,7 +159,7 @@ RLS em `supabase/schema-manifest.json`; este documento não os repete.
 | `knowledge_base_articles` | Artigos da base de conhecimento usada pela IA e pelo chatbot | ativo | `src/components/knowledge/__tests__/KnowledgeBaseView.erro.test.tsx`, `src/components/settings/ChatbotL1Config.tsx`, `src/components/settings/__tests__/ChatbotL1Config.test.tsx` … |
 | `knowledge_base_files` | Arquivos anexados aos artigos da base de conhecimento | ativo | `src/hooks/integrations/__tests__/useKnowledgeBase.erro.test.tsx`, `src/hooks/integrations/__tests__/useKnowledgeBase.fileActions.test.tsx`, `src/hooks/integrations/__tests__/useKnowledgeBase.uploadIngest.test.tsx` … |
 | `link_preview_cache` | Cache da prévia de links, com validade por hash de URL | ativo | `supabase/functions/fetch-link-preview/index.test.ts`, `supabase/functions/fetch-link-preview/index.ts` |
-| `link_preview_cache_metrics` | Métricas de limpeza do cache de prévia (removidos, restantes e tempo) | roadmap | — |
+| `link_preview_cache_metrics` | Métricas de limpeza do cache de prévia (removidos, restantes e tempo) | ativo | `src/hooks/__tests__/useLinkPreviewCacheMetrics.test.tsx`, `src/hooks/system/useLinkPreviewCacheMetrics.ts` |
 | `login_attempts` | Tentativas de login por e-mail e IP, base do bloqueio de conta | ativo | `supabase/functions/auth-login/index.test.ts`, `scripts/db-audit/login_gate_rpc.test.sh`, `scripts/db-audit/scope-public-policies-authenticated.test.sh` |
 | `message_attempts` | Tentativas de envio de mensagem (latência e desfecho) | ativo | `src/components/inbox/chat/messageSendTimeline.ts` |
 | `message_favorites` | Mensagens marcadas como favoritas pelo usuário | ativo | `src/components/inbox/chat/MessageHoverToolbar.tsx`, `src/hooks/chat/useMessageFavorites.ts` |

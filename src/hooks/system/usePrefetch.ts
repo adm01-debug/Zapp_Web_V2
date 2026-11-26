@@ -13,6 +13,7 @@ const routeModules: Record<string, () => Promise<unknown>> = {
   '/admin/rate-limit': () => import('@/pages/admin/RateLimitDashboard'),
   '/admin/auditoria-contatos': () => import('@/pages/admin/ContactAuditPage'),
   '/admin/protecao-contatos': () => import('@/pages/admin/ContactProtectionPage'),
+  '/admin/cache-previas': () => import('@/pages/admin/LinkPreviewCachePage'),
   '/install': () => import('@/pages/Install'),
 };
 

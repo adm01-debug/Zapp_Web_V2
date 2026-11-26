@@ -23,6 +23,7 @@ const RolesPage = lazyWithRetry(() => import("../pages/admin/RolesPage"));
 const RateLimitDashboard = lazyWithRetry(() => import("../pages/admin/RateLimitDashboard"));
 const ContactAuditPage = lazyWithRetry(() => import("../pages/admin/ContactAuditPage"));
 const ContactProtectionPage = lazyWithRetry(() => import("../pages/admin/ContactProtectionPage"));
+const LinkPreviewCachePage = lazyWithRetry(() => import("../pages/admin/LinkPreviewCachePage"));
 const Install = lazyWithRetry(() => import("../pages/Install"));
 const AccessDenied = lazyWithRetry(() => import("../pages/AccessDenied"));
 const ChatPopup = lazyWithRetry(() => import("../pages/ChatPopup"));
@@ -170,6 +171,14 @@ export function AppRoutes() {
             element={
               <ProtectedRoute requiredRoles={["admin"]}>
                 <ContactProtectionPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/cache-previas"
+            element={
+              <ProtectedRoute requiredRoles={["admin", "supervisor"]}>
+                <LinkPreviewCachePage />
               </ProtectedRoute>
             }
           />
