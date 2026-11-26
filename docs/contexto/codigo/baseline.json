@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "0a6acffd5d0ceac5ca5714c384fbde97be9579fb",
+  "commit": "583c645064738b5e887cb771ac6b18f303e46b27",
   "branch": "main",
-  "data_commit": "2026-11-26T13:49:10Z",
+  "data_commit": "2026-11-26T14:26:36Z",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "583c6450",
+    "data": "2026-11-26",
+    "assunto": "feat(seguranca): trilha de exclusoes e bloqueios de contato ganha tela (#3412)"
+   },
    {
     "sha": "0a6acffd",
     "data": "2026-11-26",
@@ -126,14 +131,9 @@
     "sha": "d2e992a9",
     "data": "2026-11-25",
     "assunto": "fix: ls-remote dos pins repete com backoff quando o runner leva 403 (#3378)"
-   },
-   {
-    "sha": "57f6063f",
-    "data": "2026-11-25",
-    "assunto": "ci: roda o lint ratchet no CI (divida nova de lint nos arquivos do PR) (#3377)"
    }
   ],
-  "arquivos_mudados_7d": 2793,
+  "arquivos_mudados_7d": 2802,
   "pastas_mais_mudadas_30d": [
    {
     "pasta": "docs/contexto/supabase",
@@ -149,7 +149,7 @@
    },
    {
     "pasta": "src/components/inbox",
-    "mudancas": 737
+    "mudancas": 736
    },
    {
     "pasta": "docs/reconciliation/reaudit",
@@ -185,7 +185,7 @@
    },
    {
     "pasta": "src/hooks/__tests__",
-    "mudancas": 154
+    "mudancas": 155
    },
    {
     "pasta": "src/components/contacts",
@@ -211,7 +211,7 @@
    },
    {
     "arquivo": "docs/DB-INVENTORY.md",
-    "mudancas": 18
+    "mudancas": 19
    },
    {
     "arquivo": "supabase/schema-manifest.json",
@@ -314,21 +314,21 @@
   ]
  },
  "contagens": {
-  "arquivos_total": 14862,
-  "arquivos_codigo": 5194,
-  "linhas_codigo": 962973,
-  "rotas": 18,
+  "arquivos_total": 14868,
+  "arquivos_codigo": 5200,
+  "linhas_codigo": 964192,
+  "rotas": 19,
   "rotas_http_backend": 11,
   "vistas_por_id": 55,
   "itens_menu": 61,
   "modulos": 149,
-  "componentes": 943,
-  "hooks": 527,
+  "componentes": 945,
+  "hooks": 528,
   "edge_functions": 94,
   "tabelas": 224,
   "migrations": 1161,
   "cron_jobs": 29,
-  "testes": 2849,
+  "testes": 2851,
   "workflows": 26,
   "scripts": 458,
   "docs_md": 3988
@@ -739,8 +739,8 @@
    "linhas": 638
   },
   "src/components": {
-   "arquivos": 2335,
-   "linhas": 397334
+   "arquivos": 2338,
+   "linhas": 397845
   },
   "src/config": {
    "arquivos": 3,
@@ -759,8 +759,8 @@
    "linhas": 3293
   },
   "src/hooks": {
-   "arquivos": 1055,
-   "linhas": 170812
+   "arquivos": 1057,
+   "linhas": 171473
   },
   "src/i18n": {
    "arquivos": 2,
@@ -779,8 +779,8 @@
    "linhas": 131
   },
   "src/pages": {
-   "arquivos": 75,
-   "linhas": 11416
+   "arquivos": 76,
+   "linhas": 11454
   },
   "src/providers": {
    "arquivos": 10,
@@ -788,7 +788,7 @@
   },
   "src/routes": {
    "arquivos": 2,
-   "linhas": 225
+   "linhas": 234
   },
   "src/segments": {
    "arquivos": 2,

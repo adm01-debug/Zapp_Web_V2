@@ -4,15 +4,15 @@
  "onde_ficam": {
   "telas": [
    "src/components (54)",
-   "src/pages (18)"
+   "src/pages (19)"
   ],
   "componentes": [
-   "src/components (908)",
-   "src/pages (26)",
+   "src/components (909)",
+   "src/pages (27)",
    "src/features (2)"
   ],
   "hooks": [
-   "src/hooks (442)",
+   "src/hooks (443)",
    "src/components (74)",
    "src/contexts (2)"
   ],
@@ -22,7 +22,7 @@
    "src/utils (8)"
   ],
   "testes": [
-   "co-localizado (__tests__) (2121)",
+   "co-localizado (__tests__) (2123)",
    "outro (260)",
    "co-localizado (*.test) (203)"
   ],
@@ -48,7 +48,7 @@
  },
  "barrels_index": 74,
  "extensao_componentes": [
-  ".tsx (943)"
+  ".tsx (945)"
  ],
  "alias_imports": {
   "analise-prs/resgate-261115/auditoria/bruto/diarios-sessao/": {
@@ -66,11 +66,11 @@
  "commits": {
   "convencao": "conventional commits (observado)",
   "exemplos": [
+   "feat(seguranca): trilha de exclusoes e bloqueios de contato ganha tela (#3412)",
    "feat(talkx): liga os alertas do motor (talkx_alerts) no acompanhamento (#3408)",
    "feat(talkx): campanha ganha o envio de teste antes de lancar (E47) (#3409)",
    "feat: painel do segmento mostra as tags mais usadas no público (talkx_segment_tags) (#3407)",
-   "feat: liga o log de entrega da campanha (talkx_campaign_logs) no painel E74 (#3405)",
-   "feat: liga o retorno da campanha (conversões, receita e ROI) no Analytics (#3404)"
+   "feat: liga o log de entrega da campanha (talkx_campaign_logs) no painel E74 (#3405)"
   ]
  },
  "pr_template": ".github/PULL_REQUEST_TEMPLATE.md",

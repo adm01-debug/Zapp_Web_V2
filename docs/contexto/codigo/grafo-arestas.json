@@ -5888,6 +5888,17 @@
    "src/components/ui/switch.tsx",
    "src/hooks/security/useCityWhitelist.ts"
   ],
+  "src/components/security/ContactAuditTrailPanel.tsx": [
+   "src/components/security/contactAuditLabels.ts",
+   "src/components/ui/badge.tsx",
+   "src/components/ui/button.tsx",
+   "src/components/ui/card.tsx",
+   "src/components/ui/input.tsx",
+   "src/components/ui/skeleton.tsx",
+   "src/components/ui/table.tsx",
+   "src/components/ui/tabs.tsx",
+   "src/hooks/security/useContactAuditTrail.ts"
+  ],
   "src/components/security/DeviceCard.tsx": [
    "src/components/ui/alert-dialog.tsx",
    "src/components/ui/badge.tsx",
@@ -6058,6 +6069,9 @@
    "src/components/ui/tabs.tsx",
    "src/hooks/system/useSecurityPushNotifications.ts",
    "src/hooks/system/useUserRole.ts"
+  ],
+  "src/components/security/contactAuditLabels.ts": [
+   "src/hooks/security/useContactAuditTrail.ts"
   ],
   "src/components/settings/AIProvidersManager.tsx": [
    "src/components/settings/ai-providers/AIProviderCard.tsx",
@@ -9748,6 +9762,10 @@
    "src/integrations/supabase/client.ts",
    "src/lib/logger.ts"
   ],
+  "src/hooks/security/useContactAuditTrail.ts": [
+   "src/integrations/supabase/client.ts",
+   "src/lib/logger.ts"
+  ],
   "src/hooks/security/usePasswordResetRequests.ts": [
    "src/integrations/supabase/client.ts",
    "src/lib/invokeEdge.ts",
@@ -9984,6 +10002,7 @@
    "src/pages/Install.tsx",
    "src/pages/SLADashboard.tsx",
    "src/pages/SLAHistory.tsx",
+   "src/pages/admin/ContactAuditPage.tsx",
    "src/pages/admin/RateLimitDashboard.tsx",
    "src/pages/admin/RolesPage.tsx"
   ],
@@ -10819,6 +10838,10 @@
    "src/lib/localDay.ts",
    "src/pages/admin-telemetria/telemetryTypes.ts"
   ],
+  "src/pages/admin/ContactAuditPage.tsx": [
+   "src/components/security/ContactAuditTrailPanel.tsx",
+   "src/hooks/system/useUserRole.ts"
+  ],
   "src/pages/admin/RateLimitDashboard.tsx": [
    "src/components/security/BlockedIPsPanel.tsx",
    "src/components/security/IPWhitelistPanel.tsx",
@@ -10983,6 +11006,7 @@
    "src/pages/SSOCallback.tsx",
    "src/pages/TwoFactorAuth.tsx",
    "src/pages/VerifyEmail.tsx",
+   "src/pages/admin/ContactAuditPage.tsx",
    "src/pages/admin/RateLimitDashboard.tsx",
    "src/pages/admin/RolesPage.tsx"
   ],

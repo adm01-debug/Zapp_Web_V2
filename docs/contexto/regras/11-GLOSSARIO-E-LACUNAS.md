@@ -1,6 +1,6 @@
 # 11 · GLOSSÁRIO, DADOS DE REFERÊNCIA E LACUNAS
 
-> Gerado automaticamente por AI Context Sync v1.3.2 · commit `0a6acffd5d` · branch `main` · 2026-11-26 13:55 UTC
+> Gerado automaticamente por AI Context Sync v1.3.2 · commit `583c645064` · branch `main` · 2026-11-26 14:31 UTC
 > Não edite à mão — regras humanas vão em `manual/`.
 
 ## Glossário do domínio (entidades do sistema)
@@ -307,7 +307,7 @@
 | `AlertSeverity` (TS) | critical \| warning |  | `src/components/monitoring/hooks/useConnectionIncidents.ts` |
 | `INSTANCE_PAUSES_QUERY_KEY` (TS) | 'instance-pauses' |  | `src/components/monitoring/hooks/useInstancePauses.ts` |
 | `MetricStatus` (TS) | good \| warning \| critical |  | `src/components/performance/metricThresholds.ts` |
-| … +381 linhas — lista completa em `context.json` | | | |
+| … +383 linhas — lista completa em `context.json` | | | |
 
 ## Dados de referência (seed — planos, categorias, perfis fixos)
 
@@ -375,12 +375,10 @@
 | status | valor `TIMED_OUT` para `status` usado no código não existe em nenhum enum do banco/TS | `compara:src/hooks/communication/useAudioMemes.ts`<br>`compara:src/hooks/realtime/useSupabaseRealtime.ts`<br>`compara:src/hooks/team-chat/useTeamConversations.ts`<br>`compara:src/hooks/team-chat/useTeamMessageReactions.ts` |
 | status | valor `offer` para `status` usado no código não existe em nenhum enum do banco/TS | `compara:src/hooks/communication/useIncomingCallListener.ts`<br>`compara:supabase/functions/_shared/notification-events.ts` |
 | status | valor `not-found` para `status` usado no código não existe em nenhum enum do banco/TS | `escreve:src/hooks/inbox/useRealtimeInbox.ts` |
-| status | valor `block` para `status` usado no código não existe em nenhum enum do banco/TS | `compara:src/hooks/integrations/useEvolutionApi.ts`<br>`escreve:src/hooks/integrations/useEvolutionApi.ts` |
 | status | valor `segstatus` para `status` usado no código não existe em nenhum enum do banco/TS | `escreve:src/hooks/integrations/useTalkXSegments.ts` |
 | status | valor `CLOSED` para `status` usado no código não existe em nenhum enum do banco/TS | `compara:src/hooks/realtime/useSupabaseRealtime.ts` |
 | status | valor `string` para `status` usado no código não existe em nenhum enum do banco/TS | `compara:src/lib/calls/terminoRemoto.ts`<br>`compara:src/services/outbound-message.service.ts`<br>`compara:supabase/functions/_shared/evolution-webhook-handlers.ts`<br>`compara:supabase/functions/elevenlabs-webhook/index.ts` |
 | status | valor `request_error` para `status` usado no código não existe em nenhum enum do banco/TS | `compara:supabase/functions/_shared/ai-usage.ts` |
-| status | valor `unblock` para `status` usado no código não existe em nenhum enum do banco/TS | `compara:supabase/functions/_shared/evolution-go-routes.ts` |
 | status | valor `approved_email_failed` para `status` usado no código não existe em nenhum enum do banco/TS | `escreve:supabase/functions/approve-password-reset/index.ts` |
 | status | valor `unhealthy` para `status` usado no código não existe em nenhum enum do banco/TS | `escreve:supabase/functions/health/index.ts` |
 | status | valor `selectContact` para `step` usado no código não existe em nenhum enum do banco/TS | `compara:src/components/catalog/CatalogBulkSendDialog.tsx`<br>`compara:src/components/catalog/SendProductDialog.tsx`<br>`compara:src/components/catalog/useSendProduct.ts` |
@@ -517,6 +515,7 @@
 | dinâmico | 2 chamada(s) `.from(variável)` — tabela só conhecida em runtime | `src/hooks/crm/useAgentPresence.ts` |
 | dinâmico | 1 chamada(s) `.from(variável)` — tabela só conhecida em runtime | `src/hooks/integrations/useKnowledgeBase.ts` |
 | dinâmico | 1 chamada(s) `.from(variável)` — tabela só conhecida em runtime | `src/hooks/integrations/__tests__/useTalkXInsights.defeito-223.test.tsx` |
+| dinâmico | 1 chamada(s) `.from(variável)` — tabela só conhecida em runtime | `src/hooks/security/useContactAuditTrail.ts` |
 | dinâmico | 1 chamada(s) `.from(variável)` — tabela só conhecida em runtime | `src/hooks/sticker-picker/__tests__/useStickerPicker.recentes.test.tsx` |
 | dinâmico | 1 chamada(s) `.from(variável)` — tabela só conhecida em runtime | `src/hooks/storage/useResolvedStorageUrl.ts` |
 | dinâmico | 1 chamada(s) `.from(variável)` — tabela só conhecida em runtime | `src/hooks/system/useGeoBlocking.ts` |

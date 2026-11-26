@@ -1,8 +1,8 @@
 {
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
- "nos": 2437,
- "arestas": 8382,
+ "nos": 2441,
+ "arestas": 8398,
  "hubs": [
   {
    "arquivo": "src/lib/utils.ts",
@@ -10,19 +10,19 @@
   },
   {
    "arquivo": "src/integrations/supabase/client.ts",
-   "importado_por": 435
+   "importado_por": 436
   },
   {
    "arquivo": "src/components/ui/button.tsx",
-   "importado_por": 414
+   "importado_por": 415
   },
   {
    "arquivo": "src/lib/logger.ts",
-   "importado_por": 228
+   "importado_por": 229
   },
   {
    "arquivo": "src/components/ui/badge.tsx",
-   "importado_por": 224
+   "importado_por": 225
   },
   {
    "arquivo": "src/components/ui/tooltip.tsx",
@@ -30,11 +30,11 @@
   },
   {
    "arquivo": "src/components/ui/card.tsx",
-   "importado_por": 196
+   "importado_por": 197
   },
   {
    "arquivo": "src/components/ui/input.tsx",
-   "importado_por": 175
+   "importado_por": 176
   },
   {
    "arquivo": "supabase/functions/_shared/validation.ts",
@@ -62,7 +62,7 @@
   },
   {
    "arquivo": "src/components/ui/skeleton.tsx",
-   "importado_por": 82
+   "importado_por": 83
   },
   {
    "arquivo": "src/components/ui/scroll-area.tsx",
@@ -129,11 +129,11 @@
    "importado_por": 45
   },
   {
-   "arquivo": "src/components/dashboard/overview/DashboardCard.tsx",
-   "importado_por": 44
+   "arquivo": "src/hooks/system/useUserRole.ts",
+   "importado_por": 45
   },
   {
-   "arquivo": "src/hooks/system/useUserRole.ts",
+   "arquivo": "src/components/dashboard/overview/DashboardCard.tsx",
    "importado_por": 44
   },
   {
@@ -142,7 +142,7 @@
   },
   {
    "arquivo": "src/components/ui/tabs.tsx",
-   "importado_por": 41
+   "importado_por": 42
   },
   {
    "arquivo": "src/hooks/chat/useRealtimeMessages.ts",

@@ -1,15 +1,15 @@
 {
  "meta": {
-  "sha": "0a6acffd5d0ceac5ca5714c384fbde97be9579fb",
+  "sha": "583c645064738b5e887cb771ac6b18f303e46b27",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-26 13:55 UTC",
-  "files_total": 14709,
-  "code_files": 8239,
-  "code_lines": 1241036
+  "generated_at": "2026-11-26 14:31 UTC",
+  "files_total": 14715,
+  "code_files": 8245,
+  "code_lines": 1242255
  },
  "version": "1.3.2",
- "facts_hash": "e9ab04b4cb04f801",
+ "facts_hash": "e7dfacc87be63167",
  "stack": {
   "frameworks": [
    "React + Vite",
@@ -368,8 +368,8 @@
   "package_manager": "bun",
   "languages": {
    ".sql": 3072,
-   ".tsx": 2502,
-   ".ts": 2042,
+   ".tsx": 2506,
+   ".ts": 2044,
    ".mjs": 496,
    ".py": 125,
    ".cjs": 19,
@@ -72711,6 +72711,13 @@
     "file": "scripts/ci/inventario-rotas.unit.mjs"
    },
    {
+    "path": "/admin/auditoria-contatos",
+    "component": "ContactAuditPage",
+    "guard": "ProtectedRoute",
+    "roles": [],
+    "file": "src/routes/AppRoutes.tsx"
+   },
+   {
     "path": "/admin/rate-limit",
     "component": "RateLimitDashboard",
     "guard": "ProtectedRoute",
@@ -73187,7 +73194,7 @@
     "file": ".github/workflows/types-sync.yml"
    }
   ],
-  "components_count": 2337,
+  "components_count": 2340,
   "hooks": [
    {
     "name": "useMotionSeguro",
@@ -75082,6 +75089,10 @@
     "file": "src/hooks/security/useCityWhitelist.ts"
    },
    {
+    "name": "useContactAuditTrail",
+    "file": "src/hooks/security/useContactAuditTrail.ts"
+   },
+   {
     "name": "usePasswordResetRequests",
     "file": "src/hooks/security/usePasswordResetRequests.ts"
    },
@@ -75731,6 +75742,10 @@
    {
     "guard": "ProtectedRoute",
     "file": "src/components/auth/__tests__/ProtectedRoute.saida.test.tsx"
+   },
+   {
+    "guard": "ProtectedRoute",
+    "file": "src/routes/AppRoutes.tsx"
    },
    {
     "guard": "ProtectedRoute",
@@ -76587,8 +76602,8 @@
   },
   {
    "module": "src/components",
-   "files": 2335,
-   "lines": 397334,
+   "files": 2338,
+   "lines": 397845,
    "tables": [
     "agent_skills",
     "agent_visibility_grants",
@@ -76935,8 +76950,8 @@
   },
   {
    "module": "src/hooks",
-   "files": 1055,
-   "lines": 170812,
+   "files": 1057,
+   "lines": 171473,
    "tables": [
     "agent_achievements",
     "agent_stats",
@@ -77090,7 +77105,7 @@
     "strictModeAlcance.test.tsx: E38 — MEDIÇÃO do alcance do StrictMode nos hooks que abrem recurso externo. O repo tem 82 hooks que fazem subscribe/timer/observer. Este arquivo mede os mais críticos: os que abrem conexão/timer e portanto mais sofrem com o remount duplo do StrictMode. Cada caso conta o que o React reporta em consol …",
     "useAudioRecorder.formato.test.ts: G9 — o gravador do inbox escolhe um formato que o navegador sabe gravar. Defeito original: `new MediaRecorder(stream, { mimeType: 'audio/webm;codecs=opus' })` fixo. No Safari (sem WebM) a construção lança e o `catch` genérico culpa o microfone; o blob e o upload também saíam sempre rotulados como we …",
     "useChatSearch.callback-ref.test.ts: PK-14 — o callback de busca do chat precisa ser lido na hora em que o debounce dispara, não na hora em que a query mudou. O timer de 200 ms do debounce guarda a closure do render em que `query` mudou. Se o pai troca `onSearchQueryChange` no meio (o ChatPanel troca `setSearchQuery` a cada render), o …",
-    "useContactCustomFields.remove.test.tsx: t_57b49f87: `removeField` não conferia linhas afetadas — com a RLS bloqueando o delete, o PostgREST responde `{ data: [], error: null }` e a tela dizia \"removido\" sem nada ter saído. Remover sem efeito precisa virar erro explícito."
+    "useContactAuditTrail.test.tsx: Trilha de contatos — `fetchContactAuditPage` / `useContactAuditTrail`. O sujeito é o hook REAL; a dublagem é a fronteira de rede (`supabase.from`). Regras provadas: operação fora do contrato do tipo descartada, filtros (operação/período/ids de contato) chegando ao PostgREST, teto da página provado p …"
    ],
    "deps": [
     "@elevenlabs/react",
@@ -77159,6 +77174,7 @@
     "src/hooks/__tests__/useChatSearch.test.ts",
     "src/hooks/__tests__/useChatbotFlows.test.tsx",
     "src/hooks/__tests__/useConnectionQueues.test.tsx",
+    "src/hooks/__tests__/useContactAuditTrail.test.tsx",
     "src/hooks/__tests__/useContactCustomFields.remove.test.tsx",
     "src/hooks/__tests__/useContactCustomFields.test.tsx",
     "src/hooks/__tests__/useContactNotes.test.tsx",
@@ -77202,8 +77218,7 @@
     "src/hooks/__tests__/useParallax.test.ts",
     "src/hooks/__tests__/usePerformance.test.ts",
     "src/hooks/__tests__/usePerformanceOptimizations.test.ts",
-    "src/hooks/__tests__/usePermissions.test.tsx",
-    "src/hooks/__tests__/usePushNotifications.sem-assinatura.test.ts"
+    "src/hooks/__tests__/usePermissions.test.tsx"
    ]
   },
   {
@@ -77439,8 +77454,8 @@
   },
   {
    "module": "src/pages",
-   "files": 75,
-   "lines": 11416,
+   "files": 76,
+   "lines": 11454,
    "tables": [
     "contacts",
     "conversation_sla",
@@ -77467,6 +77482,7 @@
     "VerifyEmail.tsx: VerifyEmail",
     "ViewRouter.tsx: ViewRouter",
     "lazyViews.ts: RealtimeInboxView, DashboardView, SentimentAlertsDashboard, AgentsView, QueuesView, ContactsView",
+    "ContactAuditPage.tsx: ContactAuditPage",
     "RateLimitDashboard.tsx: RateLimitDashboard",
     "RolesPage.tsx: RolesPage",
     "loadRolesWithProfiles.ts: RoleType, ProfileSummary, RoleWithProfile, loadRolesWithProfiles",
@@ -77563,6 +77579,7 @@
     "src/pages/__tests__/ViewRouter.talkx-permission.test.tsx",
     "src/pages/__tests__/n066-a11y-combobox-progressbar.test.tsx",
     "src/pages/__tests__/twoFactorAuth.retrySaida.test.tsx",
+    "src/pages/admin/ContactAuditPage.tsx",
     "src/pages/admin/RateLimitDashboard.tsx",
     "src/pages/admin/RolesPage.tsx",
     "src/pages/admin/loadRolesWithProfiles.ts",
@@ -77638,7 +77655,7 @@
   {
    "module": "src/routes",
    "files": 2,
-   "lines": 225,
+   "lines": 234,
    "tables": [],
    "exports": [
     "AppRoutes.tsx: AppRoutes"
@@ -79060,6 +79077,7 @@
      "src/hooks/integrations/useTalkXInsights.ts",
      "src/hooks/integrations/useWhatsAppStatus.ts",
      "src/hooks/queues/useQueueDetails.ts",
+     "src/hooks/security/useContactAuditTrail.ts",
      "src/hooks/sla/useSLANotifications.ts",
      "src/hooks/sla/useSLAScopeNames.ts",
      "src/hooks/system/useDiagnosticsData.ts",
@@ -80136,6 +80154,7 @@
      "src/hooks/queues/useQueueDetails.ts",
      "src/hooks/reactions/useBatchReactions.ts",
      "src/hooks/security/useAuditLogDashboard.ts",
+     "src/hooks/security/useContactAuditTrail.ts",
      "src/hooks/sla/useSLAMetrics.ts",
      "src/hooks/sla/useSLAScopeNames.ts",
      "src/hooks/system/useDownloadPermission.ts",
@@ -81254,6 +81273,7 @@
     "assigned_to",
     "avatar_fetch_attempted_at",
     "avatar_url",
+    "blocked_at",
     "company",
     "company_id",
     "consent_status",
@@ -84685,6 +84705,10 @@
     "count": 1
    },
    {
+    "file": "src/hooks/security/useContactAuditTrail.ts",
+    "count": 1
+   },
+   {
     "file": "src/hooks/sticker-picker/__tests__/useStickerPicker.recentes.test.tsx",
     "count": 1
    },
@@ -87536,6 +87560,16 @@
     "file": "src/hooks/realtime/realtimeStatusStore.ts",
     "name": "RealtimeStatus",
     "values": "idle | connecting | connected | disconnected"
+   },
+   {
+    "file": "src/hooks/security/useContactAuditTrail.ts",
+    "name": "ContactAuditKind",
+    "values": "deletion | block"
+   },
+   {
+    "file": "src/hooks/security/useContactAuditTrail.ts",
+    "name": "ContactAuditOperation",
+    "values": "delete | restore | purge | block | unblock | update_marker"
    },
    {
     "file": "src/hooks/sip/useSipConnection.ts",
@@ -99168,6 +99202,10 @@
     "text": "Contagem no servidor: a lista carrega só 5 e o contador não pode depender dela."
    },
    {
+    "file": "src/components/security/contactAuditLabels.ts",
+    "text": "* Id curto: o banco guarda o uuid, mas a tela não pode vazar 36 caracteres por linha. */"
+   },
+   {
     "file": "src/components/settings/AutomationSettings.tsx",
     "text": "for DIFERENTE de 'false'. A leitura do switch segue a mesma regra, senao a"
    },
@@ -101718,6 +101756,14 @@
    {
     "file": "src/hooks/security/useAuditLogDashboard.ts",
     "text": "**200 linhas** que a lista carrega (`.limit(200)`). Numa base maior que isso o"
+   },
+   {
+    "file": "src/hooks/security/useContactAuditTrail.ts",
+    "text": "nenhuma forma de consultá-las. A leitura é liberada por RLS apenas para admin/supervisão"
+   },
+   {
+    "file": "src/hooks/security/useContactAuditTrail.ts",
+    "text": "* Busca o contato por nome ou telefone; devolve os ids que a trilha deve filtrar. */"
    },
    {
     "file": "src/hooks/shortcuts/shortcutLabels.ts",
@@ -117280,6 +117326,11 @@
     "file": "src/hooks/security/useAuditLogDashboard.ts",
     "name": "DIA",
     "value": "24"
+   },
+   {
+    "file": "src/hooks/security/useContactAuditTrail.ts",
+    "name": "CONTACT_AUDIT_PAGE",
+    "value": "200"
    },
    {
     "file": "src/hooks/sip/useSipConnection.ts",
@@ -136301,6 +136352,12 @@
     "body": "if (!compareEnabled || previous === 0) return undefined; return ((current - previous) / previous) * 100;"
    },
    {
+    "file": "src/components/security/ContactAuditTrailPanel.tsx",
+    "name": "aplicarBusca",
+    "params": "",
+    "body": "setFiltros((atual) => ({ ...atual, search: termo.trim() }));"
+   },
+   {
     "file": "src/components/settings/SoundCustomizationPanel.tsx",
     "name": "aplicarSom",
     "params": "category: CategoryKey, soundId: SoundTypeOption",
@@ -137957,6 +138014,10 @@
    {
     "file": "src/hooks/security/useAuditLogDashboard.ts",
     "line": "const HORA = 60 * 60 * 1000;"
+   },
+   {
+    "file": "src/hooks/security/useContactAuditTrail.ts",
+    "line": "return new Date(agora - period * 24 * 60 * 60 * 1000).toISOString();"
    },
    {
     "file": "src/hooks/sla/useSLANotifications.ts",
@@ -172271,6 +172332,42 @@
     "name": "ligar o toggle grava city_whitelist_enabled=true"
    },
    {
+    "file": "src/components/security/__tests__/ContactAuditTrailPanel.test.tsx",
+    "name": "ContactAuditTrailPanel"
+   },
+   {
+    "file": "src/components/security/__tests__/ContactAuditTrailPanel.test.tsx",
+    "name": "mostra esqueleto enquanto carrega"
+   },
+   {
+    "file": "src/components/security/__tests__/ContactAuditTrailPanel.test.tsx",
+    "name": "mostra o erro de leitura e deixa tentar de novo"
+   },
+   {
+    "file": "src/components/security/__tests__/ContactAuditTrailPanel.test.tsx",
+    "name": "vazio de exclusões pede para ampliar o período"
+   },
+   {
+    "file": "src/components/security/__tests__/ContactAuditTrailPanel.test.tsx",
+    "name": "lista evento com contato, operação e autor degradado"
+   },
+   {
+    "file": "src/components/security/__tests__/ContactAuditTrailPanel.test.tsx",
+    "name": "trocar a aba zera a operação e muda o tipo"
+   },
+   {
+    "file": "src/components/security/__tests__/ContactAuditTrailPanel.test.tsx",
+    "name": "operação e período escolhidos chegam ao hook"
+   },
+   {
+    "file": "src/components/security/__tests__/ContactAuditTrailPanel.test.tsx",
+    "name": "busca só vai ao servidor depois de pedir, e limpar devolve tudo"
+   },
+   {
+    "file": "src/components/security/__tests__/ContactAuditTrailPanel.test.tsx",
+    "name": "sem mais páginas não oferece "
+   },
+   {
     "file": "src/components/security/__tests__/GeoBlockingPanel.a11y.test.tsx",
     "name": "a11y: botão de remover país com nome acessível"
    },
@@ -187449,6 +187546,62 @@
    {
     "file": "src/hooks/__tests__/useConnectionQueues.test.tsx",
     "name": "exposes addQueue and removeQueue"
+   },
+   {
+    "file": "src/hooks/__tests__/useContactAuditTrail.test.tsx",
+    "name": "contrato da trilha de contatos"
+   },
+   {
+    "file": "src/hooks/__tests__/useContactAuditTrail.test.tsx",
+    "name": "recusa operação que não pertence ao tipo da trilha"
+   },
+   {
+    "file": "src/hooks/__tests__/useContactAuditTrail.test.tsx",
+    "name": "a janela do período termina no instante pedido"
+   },
+   {
+    "file": "src/hooks/__tests__/useContactAuditTrail.test.tsx",
+    "name": "fetchContactAuditPage"
+   },
+   {
+    "file": "src/hooks/__tests__/useContactAuditTrail.test.tsx",
+    "name": "resolve contato e autor de cada evento"
+   },
+   {
+    "file": "src/hooks/__tests__/useContactAuditTrail.test.tsx",
+    "name": "mantém a linha quando o autor não existe mais em profiles"
+   },
+   {
+    "file": "src/hooks/__tests__/useContactAuditTrail.test.tsx",
+    "name": "descarta operação fora do contrato do tipo (bloqueio com "
+   },
+   {
+    "file": "src/hooks/__tests__/useContactAuditTrail.test.tsx",
+    "name": "prova que existe mais pedindo uma linha além da página"
+   },
+   {
+    "file": "src/hooks/__tests__/useContactAuditTrail.test.tsx",
+    "name": "leva operação, período e ids da busca para o servidor"
+   },
+   {
+    "file": "src/hooks/__tests__/useContactAuditTrail.test.tsx",
+    "name": "busca sem contato correspondente não consulta a trilha"
+   },
+   {
+    "file": "src/hooks/__tests__/useContactAuditTrail.test.tsx",
+    "name": "sem filtro de operação não manda "
+   },
+   {
+    "file": "src/hooks/__tests__/useContactAuditTrail.test.tsx",
+    "name": "useContactAuditTrail"
+   },
+   {
+    "file": "src/hooks/__tests__/useContactAuditTrail.test.tsx",
+    "name": "expõe os eventos da página e o estado de carregamento"
+   },
+   {
+    "file": "src/hooks/__tests__/useContactAuditTrail.test.tsx",
+    "name": "vira erro quando o PostgREST recusa a leitura (RLS)"
    },
    {
     "file": "src/hooks/__tests__/useContactCustomFields.remove.test.tsx",
@@ -279868,6 +280021,10 @@
    {
     "guard": "ProtectedRoute",
     "file": "src/routes/AppRoutes.tsx"
+   },
+   {
+    "guard": "ProtectedRoute",
+    "file": "src/routes/AppRoutes.tsx"
    }
   ],
   "protected_routes": [
@@ -279891,6 +280048,13 @@
     "guard": "ProtectedRoute",
     "roles": [],
     "file": "scripts/ci/inventario-rotas.unit.mjs"
+   },
+   {
+    "path": "/admin/auditoria-contatos",
+    "component": "ContactAuditPage",
+    "guard": "ProtectedRoute",
+    "roles": [],
+    "file": "src/routes/AppRoutes.tsx"
    },
    {
     "path": "/admin/rate-limit",
@@ -281424,14 +281588,6 @@
    },
    {
     "kind": "status",
-    "msg": "valor `block` para `status` usado no código não existe em nenhum enum do banco/TS",
-    "where": [
-     "compara:src/hooks/integrations/useEvolutionApi.ts",
-     "escreve:src/hooks/integrations/useEvolutionApi.ts"
-    ]
-   },
-   {
-    "kind": "status",
     "msg": "valor `segstatus` para `status` usado no código não existe em nenhum enum do banco/TS",
     "where": [
      "escreve:src/hooks/integrations/useTalkXSegments.ts"
@@ -281459,13 +281615,6 @@
     "msg": "valor `request_error` para `status` usado no código não existe em nenhum enum do banco/TS",
     "where": [
      "compara:supabase/functions/_shared/ai-usage.ts"
-    ]
-   },
-   {
-    "kind": "status",
-    "msg": "valor `unblock` para `status` usado no código não existe em nenhum enum do banco/TS",
-    "where": [
-     "compara:supabase/functions/_shared/evolution-go-routes.ts"
     ]
    },
    {
@@ -282429,6 +282578,13 @@
     "msg": "1 chamada(s) `.from(variável)` — tabela só conhecida em runtime",
     "where": [
      "src/hooks/integrations/__tests__/useTalkXInsights.defeito-223.test.tsx"
+    ]
+   },
+   {
+    "kind": "dinâmico",
+    "msg": "1 chamada(s) `.from(variável)` — tabela só conhecida em runtime",
+    "where": [
+     "src/hooks/security/useContactAuditTrail.ts"
     ]
    },
    {
@@ -338010,6 +338166,20 @@
     }
    ]
   },
+  "src/components/security/ContactAuditTrailPanel.tsx": {
+   "path": "src/components/security/ContactAuditTrailPanel.tsx",
+   "lines": 306,
+   "exports": [
+    "const ContactAuditTrailPanel"
+   ],
+   "calc_fns": [
+    {
+     "name": "aplicarBusca",
+     "params": "",
+     "body": "setFiltros((atual) => ({ ...atual, search: termo.trim() }));"
+    }
+   ]
+  },
   "src/components/security/DeviceCard.tsx": {
    "path": "src/components/security/DeviceCard.tsx",
    "lines": 110,
@@ -338404,16 +338574,31 @@
   },
   "src/components/security/SecurityView.tsx": {
    "path": "src/components/security/SecurityView.tsx",
-   "lines": 218,
+   "lines": 239,
    "exports": [
     "function SecurityView"
    ],
    "navigates": [
+    "/admin/auditoria-contatos",
     "/admin/rate-limit",
     "/admin/roles"
    ],
    "role_checks": [
     "admin"
+   ]
+  },
+  "src/components/security/contactAuditLabels.ts": {
+   "path": "src/components/security/contactAuditLabels.ts",
+   "lines": 42,
+   "exports": [
+    "function shortId",
+    "function contactAuditContactLabel",
+    "function contactAuditAuthorLabel",
+    "function contactAuditMarkerLabel",
+    "function contactAuditMarkerTransition"
+   ],
+   "rule_comments": [
+    "* Id curto: o banco guarda o uuid, mas a tela não pode vazar 36 caracteres por linha. */"
    ]
   },
   "src/components/security/__tests__/AclAlertsPanel.test.tsx": {
@@ -338591,6 +338776,23 @@
     "CityWhitelistPanel",
     "nasce desligado e lista as cidades",
     "ligar o toggle grava city_whitelist_enabled=true"
+   ]
+  },
+  "src/components/security/__tests__/ContactAuditTrailPanel.test.tsx": {
+   "path": "src/components/security/__tests__/ContactAuditTrailPanel.test.tsx",
+   "lines": 142,
+   "is_test": true,
+   "doc": "Painel da trilha de contatos. O sujeito é o componente REAL; o dublê é o hook de dados. Regras provadas: os quatro estados (carregando/erro/vazio/lista), o texto de vazio próprio de cada trilha, o autor degradado quando o perfil não existe, os filtros chegando ao hook (operação, período, aba, busca) …",
+   "tests": [
+    "ContactAuditTrailPanel",
+    "mostra esqueleto enquanto carrega",
+    "mostra o erro de leitura e deixa tentar de novo",
+    "vazio de exclusões pede para ampliar o período",
+    "lista evento com contato, operação e autor degradado",
+    "trocar a aba zera a operação e muda o tipo",
+    "operação e período escolhidos chegam ao hook",
+    "busca só vai ao servidor depois de pedir, e limpar devolve tudo",
+    "sem mais páginas não oferece "
    ]
   },
   "src/components/security/__tests__/GeoBlockingPanel.a11y.test.tsx": {
@@ -354954,6 +355156,28 @@
     "fetches queues for a connection",
     "does not fetch without connectionId",
     "exposes addQueue and removeQueue"
+   ]
+  },
+  "src/hooks/__tests__/useContactAuditTrail.test.tsx": {
+   "path": "src/hooks/__tests__/useContactAuditTrail.test.tsx",
+   "lines": 294,
+   "is_test": true,
+   "doc": "Trilha de contatos — `fetchContactAuditPage` / `useContactAuditTrail`. O sujeito é o hook REAL; a dublagem é a fronteira de rede (`supabase.from`). Regras provadas: operação fora do contrato do tipo descartada, filtros (operação/período/ids de contato) chegando ao PostgREST, teto da página provado p …",
+   "tests": [
+    "contrato da trilha de contatos",
+    "recusa operação que não pertence ao tipo da trilha",
+    "a janela do período termina no instante pedido",
+    "fetchContactAuditPage",
+    "resolve contato e autor de cada evento",
+    "mantém a linha quando o autor não existe mais em profiles",
+    "descarta operação fora do contrato do tipo (bloqueio com ",
+    "prova que existe mais pedindo uma linha além da página",
+    "leva operação, período e ids da busca para o servidor",
+    "busca sem contato correspondente não consulta a trilha",
+    "sem filtro de operação não manda ",
+    "useContactAuditTrail",
+    "expõe os eventos da página e o estado de carregamento",
+    "vira erro quando o PostgREST recusa a leitura (RLS)"
    ]
   },
   "src/hooks/__tests__/useContactCustomFields.remove.test.tsx": {
@@ -376774,6 +376998,93 @@
     "1"
    ]
   },
+  "src/hooks/security/useContactAuditTrail.ts": {
+   "path": "src/hooks/security/useContactAuditTrail.ts",
+   "lines": 366,
+   "exports": [
+    "const CONTACT_AUDIT_PAGE",
+    "type ContactAuditKind",
+    "type ContactAuditOperation",
+    "type ContactAuditOperationFilter",
+    "type ContactAuditPeriod",
+    "const CONTACT_AUDIT_OPERATIONS",
+    "const CONTACT_AUDIT_OPERATION_LABELS",
+    "const CONTACT_AUDIT_KIND_LABELS",
+    "const CONTACT_AUDIT_KINDS",
+    "const CONTACT_AUDIT_PERIOD_LABELS",
+    "const CONTACT_AUDIT_SOURCES",
+    "interface ContactAuditFilters",
+    "const DEFAULT_CONTACT_AUDIT_FILTERS",
+    "interface ContactAuditContact",
+    "interface ContactAuditEvent",
+    "interface ContactAuditPage",
+    "function isContactAuditOperation",
+    "function isContactAuditKind",
+    "function contactAuditSince",
+    "function fetchContactAuditPage",
+    "interface ContactAuditTrailData",
+    "function useContactAuditTrail"
+   ],
+   "tables": [
+    {
+     "table": "contacts",
+     "op": "select"
+    },
+    {
+     "table": "contacts",
+     "op": "select"
+    },
+    {
+     "table": "profiles",
+     "op": "select"
+    },
+    {
+     "table": "profiles",
+     "op": "select"
+    }
+   ],
+   "table_cols": {
+    "contacts": [
+     "blocked_at",
+     "deleted_at",
+     "id",
+     "name",
+     "phone"
+    ],
+    "profiles": [
+     "id",
+     "name",
+     "user_id"
+    ]
+   },
+   "dyn_from": 1,
+   "enums": [
+    {
+     "name": "ContactAuditKind",
+     "values": "deletion | block"
+    },
+    {
+     "name": "ContactAuditOperation",
+     "values": "delete | restore | purge | block | unblock | update_marker"
+    }
+   ],
+   "params": [
+    {
+     "name": "CONTACT_AUDIT_PAGE",
+     "value": "200"
+    }
+   ],
+   "rule_comments": [
+    "nenhuma forma de consultá-las. A leitura é liberada por RLS apenas para admin/supervisão",
+    "* Busca o contato por nome ou telefone; devolve os ids que a trilha deve filtrar. */"
+   ],
+   "hooks": [
+    "useContactAuditTrail"
+   ],
+   "temporal": [
+    "return new Date(agora - period * 24 * 60 * 60 * 1000).toISOString();"
+   ]
+  },
   "src/hooks/security/usePasswordResetRequests.ts": {
    "path": "src/hooks/security/usePasswordResetRequests.ts",
    "lines": 92,
@@ -379083,7 +379394,7 @@
   },
   "src/hooks/system/usePrefetch.ts": {
    "path": "src/hooks/system/usePrefetch.ts",
-   "lines": 46,
+   "lines": 47,
    "exports": [
     "function prefetchRoute",
     "function usePrefetch"
@@ -393272,6 +393583,13 @@
     "não existe segundo botão de saída na verificação: o Cancelar é quem encerra a sessão"
    ]
   },
+  "src/pages/admin/ContactAuditPage.tsx": {
+   "path": "src/pages/admin/ContactAuditPage.tsx",
+   "lines": 38,
+   "exports": [
+    "function ContactAuditPage"
+   ]
+  },
   "src/pages/admin/RateLimitDashboard.tsx": {
    "path": "src/pages/admin/RateLimitDashboard.tsx",
    "lines": 477,
@@ -394212,7 +394530,7 @@
   },
   "src/routes/AppRoutes.tsx": {
    "path": "src/routes/AppRoutes.tsx",
-   "lines": 166,
+   "lines": 175,
    "exports": [
     "function AppRoutes"
    ],
@@ -394308,6 +394626,12 @@
      "roles": []
     },
     {
+     "path": "/admin/auditoria-contatos",
+     "component": "ContactAuditPage",
+     "guard": "ProtectedRoute",
+     "roles": []
+    },
+    {
      "path": "/multiplix",
      "component": "Navigate",
      "guard": "",
@@ -394324,6 +394648,7 @@
     "\n        >\n          <div className="
    ],
    "guards": [
+    "ProtectedRoute",
     "ProtectedRoute",
     "ProtectedRoute",
     "ProtectedRoute",
@@ -428336,10 +428661,29 @@
   }
  },
  "git": {
-  "sha": "0a6acffd5d0ceac5ca5714c384fbde97be9579fb",
+  "sha": "583c645064738b5e887cb771ac6b18f303e46b27",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "583c6450",
+    "date": "2026-11-26",
+    "author": "adm01-debug",
+    "subject": "feat(seguranca): trilha de exclusoes e bloqueios de contato ganha tela (#3412)",
+    "files": [
+     "docs/DB-INVENTORY.md",
+     "inventario/estado/rotas.json",
+     "src/components/security/ContactAuditTrailPanel.tsx",
+     "src/components/security/SecurityView.tsx",
+     "src/components/security/__tests__/ContactAuditTrailPanel.test.tsx",
+     "src/components/security/contactAuditLabels.ts",
+     "src/hooks/__tests__/useContactAuditTrail.test.tsx",
+     "src/hooks/security/useContactAuditTrail.ts",
+     "src/hooks/system/usePrefetch.ts",
+     "src/pages/admin/ContactAuditPage.tsx",
+     "src/routes/AppRoutes.tsx"
+    ]
+   },
    {
     "sha": "0a6acffd",
     "date": "2026-11-26",
@@ -428747,299 +429091,12 @@
     "files": [
      "scripts/ci/eslint-baseline.json"
     ]
-   },
-   {
-    "sha": "3be6edc8",
-    "date": "2026-11-25",
-    "author": "adm01-debug",
-    "subject": "chore: sincroniza docs/contexto com a publicacao oficial (mapa deixa de citar 149 caminhos mortos) (#3372)",
-    "files": [
-     "docs/contexto/00-INDEX.md",
-     "docs/contexto/codigo/GRAPH_REPORT.md",
-     "docs/contexto/codigo/INDEX.md",
-     "docs/contexto/codigo/banco.json",
-     "docs/contexto/codigo/baseline.json",
-     "docs/contexto/codigo/componentes.json",
-     "docs/contexto/codigo/convencoes.json",
-     "docs/contexto/codigo/edge-functions.json",
-     "docs/contexto/codigo/ferramentas.json",
-     "docs/contexto/codigo/grafo-arestas.json",
-     "docs/contexto/codigo/grafo-graphify.json",
-     "docs/contexto/codigo/grafo.json",
-     "docs/contexto/codigo/hooks.json",
-     "docs/contexto/codigo/logica.json",
-     "docs/contexto/codigo/manifest.json",
-     "docs/contexto/codigo/modulos.json",
-     "docs/contexto/codigo/rotas.json",
-     "docs/contexto/codigo/scripts.json",
-     "docs/contexto/codigo/testes.json",
-     "docs/contexto/regras/07-REGRAS-DE-NEGOCIO.md",
-     "docs/contexto/regras/10-ACESSO-E-SEGURANCA.md",
-     "docs/contexto/regras/11-GLOSSARIO-E-LACUNAS.md",
-     "docs/contexto/regras/context.json",
-     "docs/contexto/regras/manifest.json",
-     "docs/contexto/supabase/CHANGELOG.md",
-     "docs/contexto/supabase/README.md",
-     "docs/contexto/supabase/functions.md",
-     "docs/contexto/supabase/functions/public/ai_usage_cost_summary__912132d06dbc1b34.sql",
-     "docs/contexto/supabase/functions/public/get_scheduled_report_cron_secret__12ae32cb1ec02d01.sql",
-     "docs/contexto/supabase/functions/public/has_role__582c15feaee5796c.sql",
-     "docs/contexto/supabase/functions/public/is_admin__e207a757f8e4efc0.sql",
-     "docs/contexto/supabase/functions/public/is_admin_or_supervisor__e207a757f8e4efc0.sql",
-     "docs/contexto/supabase/functions/public/talkx_next_recipients__fcafbf6cc8ff8a95.sql",
-     "docs/contexto/supabase/functions/public/trigger_due_scheduled_report_configs__12ae32cb1ec02d01.sql",
-     "docs/contexto/supabase/indexes.md",
-     "docs/contexto/supabase/lints.md",
-     "docs/contexto/supabase/manifest.json",
-     "docs/contexto/supabase/migrations.md",
-     "docs/contexto/supabase/migrations/20261118210000_talkx_next_recipients_variant_id.sql",
-     "docs/contexto/supabase/migrations/20261120080000_scheduled_report_cron.sql",
-     "docs/contexto/supabase/migrations/20261121190000_assistant_profiles.sql",
-     "docs/contexto/supabase/migrations/20261122190000_ia055_precos_entrada_e_saida.sql",
-     "docs/contexto/supabase/migrations/20261122200000_x076_talkx_ai_requests.sql",
-     "docs/contexto/supabase/migrations/20261124120000_drop_rpcs_e2e_orfas.sql",
-     "docs/contexto/supabase/policies.md",
-     "docs/contexto/supabase/realtime.md",
-     "docs/contexto/supabase/relationships.md",
-     "docs/contexto/supabase/schemas.md",
-     "docs/contexto/supabase/snapshot.json",
-     "docs/contexto/supabase/stats.json",
-     "docs/contexto/supabase/stats.md",
-     "docs/contexto/supabase/tables.md",
-     "docs/contexto/supabase/tables/bkp_261023/agent_stats.md",
-     "docs/contexto/supabase/tables/bkp_261023/contacts.md",
-     "docs/contexto/supabase/tables/bkp_261023/csat_surveys.md",
-     "docs/contexto/supabase/tables/bkp_261023/functions_before.md",
-     "docs/contexto/supabase/tables/bkp_261023/global_settings.md",
-     "docs/contexto/supabase/tables/bkp_261023/policies_before.md",
-     "docs/contexto/supabase/tables/bkp_261023/schema_migrations.md",
-     "docs/contexto/supabase/tables/bkp_261023/team_messages.md",
-     "docs/contexto/supabase/tables/bkp_261023/user_settings.md",
-     "docs/contexto/supabase/tables/ops/hermes_change_log.md",
-     "docs/contexto/supabase/tables/public/agent_achievements.md",
-     "docs/contexto/supabase/tables/public/agent_mini_game_xp_daily.md",
-     "docs/contexto/supabase/tables/public/agent_presence.md",
-     "docs/contexto/supabase/tables/public/agent_skills.md",
-     "docs/contexto/supabase/tables/public/agent_stats.md",
-     "docs/contexto/supabase/tables/public/agent_visibility_grants.md",
-     "docs/contexto/supabase/tables/public/ai_budget_reservations.md",
-     "docs/contexto/supabase/tables/public/ai_conversation_tags.md",
-     "docs/contexto/supabase/tables/public/ai_jobs.md",
-     "docs/contexto/supabase/tables/public/ai_model_prices.md",
-     "docs/contexto/supabase/tables/public/ai_providers.md",
-     "docs/contexto/supabase/tables/public/ai_usage_logs.md",
-     "docs/contexto/supabase/tables/public/ai_usage_outbox.md",
-     "docs/contexto/supabase/tables/public/allowed_countries.md",
-     "docs/contexto/supabase/tables/public/app_settings.md",
-     "docs/contexto/supabase/tables/public/assistant_profiles.md",
-     "docs/contexto/supabase/tables/public/audio_meme_favorites.md",
-     "docs/contexto/supabase/tables/public/audio_memes.md",
-     "docs/contexto/supabase/tables/public/audit_logs.md",
-     "docs/contexto/supabase/tables/public/auto_close_config.md",
-     "docs/contexto/supabase/tables/public/automations.md",
-     "docs/contexto/supabase/tables/public/away_message_log.md",
-     "docs/contexto/supabase/tables/public/away_messages.md",
-     "docs/contexto/supabase/tables/public/blocked_countries.md",
-     "docs/contexto/supabase/tables/public/blocked_ips.md",
-     "docs/contexto/supabase/tables/public/business_hours.md",
-     "docs/contexto/supabase/tables/public/calls.md",
-     "docs/contexto/supabase/tables/public/campaign_ab_variants.md",
-     "docs/contexto/supabase/tables/public/campaign_contacts.md",
-     "docs/contexto/supabase/tables/public/campaigns.md",
-     "docs/contexto/supabase/tables/public/catalog_favorites.md",
-     "docs/contexto/supabase/tables/public/catalog_rate_limit_hits.md",
-     "docs/contexto/supabase/tables/public/catalog_rate_limits.md",
-     "docs/contexto/supabase/tables/public/catalog_send_events.md",
-     "docs/contexto/supabase/tables/public/channel_connections.md",
-     "docs/contexto/supabase/tables/public/channel_routing_rules.md",
-     "docs/contexto/supabase/tables/public/chatbot_executions.md",
-     "docs/contexto/supabase/tables/public/chatbot_flows.md",
-     "docs/contexto/supabase/tables/public/client_wallet_rules.md",
-     "docs/contexto/supabase/tables/public/connection_alert_preferences.md",
-     "docs/contexto/supabase/tables/public/connection_health_logs.md",
-     "docs/contexto/supabase/tables/public/contact_block_audit.md",
-     "docs/contexto/supabase/tables/public/contact_custom_fields.md",
-     "docs/contexto/supabase/tables/public/contact_deletion_audit.md",
-     "docs/contexto/supabase/tables/public/contact_identity_map.md",
-     "docs/contexto/supabase/tables/public/contact_notes.md",
-     "docs/contexto/supabase/tables/public/contact_protection_policy.md",
-     "docs/contexto/supabase/tables/public/contacts.md",
-     "docs/contexto/supabase/tables/public/conversation_analyses.md",
-     "docs/contexto/supabase/tables/public/conversation_closures.md",
-     "docs/contexto/supabase/tables/public/conversation_events.md",
-     "docs/contexto/supabase/tables/public/conversation_memory.md",
-     "docs/contexto/supabase/tables/public/conversation_sla.md",
-     "docs/contexto/supabase/tables/public/conversation_snoozes.md",
-     "docs/contexto/supabase/tables/public/conversation_tasks.md",
-     "docs/contexto/supabase/tables/public/copilot_conversation_scores.md",
-     "docs/contexto/supabase/tables/public/copilot_feedback.md",
-     "docs/contexto/supabase/tables/public/copilot_help_requests.md",
-     "docs/contexto/supabase/tables/public/copilot_insights.md",
-     "docs/contexto/supabase/tables/public/copilot_learning_moments.md",
-     "docs/contexto/supabase/tables/public/copilot_objection_catalog.md",
-     "docs/contexto/supabase/tables/public/copilot_outcomes.md",
-     "docs/contexto/supabase/tables/public/copilot_retention_aggregates.md",
-     "docs/contexto/supabase/tables/public/copilot_seller_settings.md",
-     "docs/contexto/supabase/tables/public/copilot_sessions.md",
-     "docs/contexto/supabase/tables/public/copilot_usage.md",
-     "docs/contexto/supabase/tables/public/crisis_room_alerts.md",
-     "docs/contexto/supabase/tables/public/crm_contact_links.md",
-     "docs/contexto/supabase/tables/public/crm_sync_outbox.md",
-     "docs/contexto/supabase/tables/public/csat_auto_config.md",
-     "docs/contexto/supabase/tables/public/csat_surveys.md",
-     "docs/contexto/supabase/tables/public/custom_emojis.md",
-     "docs/contexto/supabase/tables/public/deal_activities.md",
-     "docs/contexto/supabase/tables/public/department_audit_logs.md",
-     "docs/contexto/supabase/tables/public/department_invitations.md",
-     "docs/contexto/supabase/tables/public/department_invites.md",
-     "docs/contexto/supabase/tables/public/departments.md",
-     "docs/contexto/supabase/tables/public/edge_rate_limits.md",
-     "docs/contexto/supabase/tables/public/email_attachments.md",
-     "docs/contexto/supabase/tables/public/email_labels.md",
-     "docs/contexto/supabase/tables/public/email_messages.md",
-     "docs/contexto/supabase/tables/public/email_signatures.md",
-     "docs/contexto/supabase/tables/public/email_threads.md",
-     "docs/contexto/supabase/tables/public/entity_versions.md",
-     "docs/contexto/supabase/tables/public/favorite_contacts.md",
-     "docs/contexto/supabase/tables/public/feature_flags.md",
-     "docs/contexto/supabase/tables/public/followup_executions.md",
-     "docs/contexto/supabase/tables/public/followup_sequences.md",
-     "docs/contexto/supabase/tables/public/followup_steps.md",
-     "docs/contexto/supabase/tables/public/geo_blocking_settings.md",
-     "docs/contexto/supabase/tables/public/global_settings.md",
-     "docs/contexto/supabase/tables/public/gmail_accounts.md",
-     "docs/contexto/supabase/tables/public/gmail_oauth_states.md",
-     "docs/contexto/supabase/tables/public/goals_configurations.md",
-     "docs/contexto/supabase/tables/public/instance_pauses.md",
-     "docs/contexto/supabase/tables/public/ip_whitelist.md",
-     "docs/contexto/supabase/tables/public/knowledge_base_articles.md",
-     "docs/contexto/supabase/tables/public/knowledge_base_files.md",
-     "docs/contexto/supabase/tables/public/link_preview_cache.md",
-     "docs/contexto/supabase/tables/public/link_preview_cache_metrics.md",
-     "docs/contexto/supabase/tables/public/login_attempts.md",
-     "docs/contexto/supabase/tables/public/message_attempts.md",
-     "docs/contexto/supabase/tables/public/message_favorites.md",
-     "docs/contexto/supabase/tables/public/message_pins.md",
-     "docs/contexto/supabase/tables/public/message_reactions.md",
-     "docs/contexto/supabase/tables/public/message_reports.md",
-     "docs/contexto/supabase/tables/public/message_templates.md",
-     "docs/contexto/supabase/tables/public/messages.md",
-     "docs/contexto/supabase/tables/public/meta_capi_events.md",
-     "docs/contexto/supabase/tables/public/mfa_sessions.md",
-     "docs/contexto/supabase/tables/public/multiplix_audience_members.md",
-     "docs/contexto/supabase/tables/public/multiplix_audiences.md",
-     "docs/contexto/supabase/tables/public/multiplix_blocks.md",
-     "docs/contexto/supabase/tables/public/multiplix_delivery_items.md",
-     "docs/contexto/supabase/tables/public/multiplix_dispatches.md",
-     "docs/contexto/supabase/tables/public/multiplix_events.md",
-     "docs/contexto/supabase/tables/public/multiplix_recipients.md",
-     "docs/contexto/supabase/tables/public/multiplix_voice_assets.md",
-     "docs/contexto/supabase/tables/public/multiplix_voice_grants.md",
-     "docs/contexto/supabase/tables/public/notifications.md",
-     "docs/contexto/supabase/tables/public/nps_surveys.md",
-     "docs/contexto/supabase/tables/public/number_reputation.md",
-     "docs/contexto/supabase/tables/public/outbox_events.md",
-     "docs/contexto/supabase/tables/public/passkey_credentials.md",
-     "docs/contexto/supabase/tables/public/password_reset_requests.md",
-     "docs/contexto/supabase/tables/public/performance_snapshots.md",
-     "docs/contexto/supabase/tables/public/permissions.md",
-     "docs/contexto/supabase/tables/public/pinned_conversations.md",
-     "docs/contexto/supabase/tables/public/playbooks.md",
-     "docs/contexto/supabase/tables/public/products.md",
-     "docs/contexto/supabase/tables/public/profiles.md",
-     "docs/contexto/supabase/tables/public/qr_attempts.md",
-     "docs/contexto/supabase/tables/public/query_telemetry.md",
-     "docs/contexto/supabase/tables/public/queue_goals.md",
-     "docs/contexto/supabase/tables/public/queue_members.md",
-     "docs/contexto/supabase/tables/public/queue_positions.md",
-     "docs/contexto/supabase/tables/public/queue_skill_requirements.md",
-     "docs/contexto/supabase/tables/public/queues.md",
-     "docs/contexto/supabase/tables/public/rate_limit_configs.md",
-     "docs/contexto/supabase/tables/public/rate_limit_logs.md",
-     "docs/contexto/supabase/tables/public/rb_message_reactions_contato_20261007001008.md",
-     "docs/contexto/supabase/tables/public/rb_message_reactions_one_per_agent_20261107121000.md",
-     "docs/contexto/supabase/tables/public/reconnection_logs.md",
-     "docs/contexto/supabase/tables/public/reminders.md",
-     "docs/contexto/supabase/tables/public/role_permissions.md",
-     "docs/contexto/supabase/tables/public/sales_deals.md",
-     "docs/contexto/supabase/tables/public/sales_pipeline_stages.md",
-     "docs/contexto/supabase/tables/public/saved_filters.md",
-     "docs/contexto/supabase/tables/public/scheduled_messages.md",
-     "docs/contexto/supabase/tables/public/scheduled_report_configs.md",
-     "docs/contexto/supabase/tables/public/scheduled_reports.md",
-     "docs/contexto/supabase/tables/public/search_events.md",
-     "docs/contexto/supabase/tables/public/searchbox_budget_alert_cron.md",
-     "docs/contexto/supabase/tables/public/searchbox_budget_alert_emails.md",
-     "docs/contexto/supabase/tables/public/security_acl_alerts.md",
-     "docs/contexto/supabase/tables/public/security_alerts.md",
-     "docs/contexto/supabase/tables/public/sicoob_contact_mapping.md",
-     "docs/contexto/supabase/tables/public/sla_alert_events.md",
-     "docs/contexto/supabase/tables/public/sla_alert_preferences.md",
-     "docs/contexto/supabase/tables/public/sla_configurations.md",
-     "docs/contexto/supabase/tables/public/sla_rules.md",
-     "docs/contexto/supabase/tables/public/stickers.md",
-     "docs/contexto/supabase/tables/public/talkx_ai_requests.md",
-     "docs/contexto/supabase/tables/public/talkx_alerts.md",
-     "docs/contexto/supabase/tables/public/talkx_blacklist.md",
-     "docs/contexto/supabase/tables/public/talkx_campaign_events.md",
-     "docs/contexto/supabase/tables/public/talkx_campaign_segments.md",
-     "docs/contexto/supabase/tables/public/talkx_campaigns.md",
-     "docs/contexto/supabase/tables/public/talkx_contact_attributes.md",
-     "docs/contexto/supabase/tables/public/talkx_conversions.md",
-     "docs/contexto/supabase/tables/public/talkx_data_jobs.md",
-     "docs/contexto/supabase/tables/public/talkx_delivery_log.md",
-     "docs/contexto/supabase/tables/public/talkx_help_views.md",
-     "docs/contexto/supabase/tables/public/talkx_link_clicks.md",
-     "docs/contexto/supabase/tables/public/talkx_links.md",
-     "docs/contexto/supabase/tables/public/talkx_optout_keywords.md",
-     "docs/contexto/supabase/tables/public/talkx_recipients.md",
-     "docs/contexto/supabase/tables/public/talkx_segment_fields.md",
-     "docs/contexto/supabase/tables/public/talkx_segment_library_history.md",
-     "docs/contexto/supabase/tables/public/talkx_segment_versions.md",
-     "docs/contexto/supabase/tables/public/talkx_segments.md",
-     "docs/contexto/supabase/tables/public/talkx_settings.md",
-     "docs/contexto/supabase/tables/public/talkx_storage_purge_queue.md",
-     "docs/contexto/supabase/tables/public/talkx_suppression_reasons.md",
-     "docs/contexto/supabase/tables/public/talkx_template_variants.md",
-     "docs/contexto/supabase/tables/public/talkx_template_versions.md",
-     "docs/contexto/supabase/tables/public/talkx_templates.md",
-     "docs/contexto/supabase/tables/public/talkx_test_send_claims.md",
-     "docs/contexto/supabase/tables/public/talkx_test_sends.md",
-     "docs/contexto/supabase/tables/public/team_chat_media_acl_r2_db_020_rb.md",
-     "docs/contexto/supabase/tables/public/team_conversation_members.md",
-     "docs/contexto/supabase/tables/public/team_conversations.md",
-     "docs/contexto/supabase/tables/public/team_message_reactions.md",
-     "docs/contexto/supabase/tables/public/team_message_receipts.md",
-     "docs/contexto/supabase/tables/public/team_messages.md",
-     "docs/contexto/supabase/tables/public/training_sessions.md",
-     "docs/contexto/supabase/tables/public/user_devices.md",
-     "docs/contexto/supabase/tables/public/user_roles.md",
-     "docs/contexto/supabase/tables/public/user_service_accounts.md",
-     "docs/contexto/supabase/tables/public/user_sessions.md",
-     "docs/contexto/supabase/tables/public/user_settings.md",
-     "docs/contexto/supabase/tables/public/voice_command_logs.md",
-     "docs/contexto/supabase/tables/public/voip_profile_credentials.md",
-     "docs/contexto/supabase/tables/public/warroom_alerts.md",
-     "docs/contexto/supabase/tables/public/webauthn_challenges.md",
-     "docs/contexto/supabase/tables/public/webhook_failures.md",
-     "docs/contexto/supabase/tables/public/webhook_rate_limits.md",
-     "docs/contexto/supabase/tables/public/whatsapp_connection_queues.md",
-     "docs/contexto/supabase/tables/public/whatsapp_connections.md",
-     "docs/contexto/supabase/tables/public/whatsapp_flows.md",
-     "docs/contexto/supabase/tables/public/whatsapp_groups.md",
-     "docs/contexto/supabase/tables/public/whatsapp_templates.md",
-     "docs/contexto/supabase/tables/public/whisper_messages.md",
-     "docs/contexto/supabase/tables/public/zapp_fn_before.md",
-     "docs/contexto/supabase/tables/public/zapp_mig133_log.md",
-     "docs/contexto/supabase/vault.md",
-     "docs/contexto/supabase/views.md"
-    ]
    }
   ],
   "hot_files": [
    [
     "docs/DB-INVENTORY.md",
-    6
+    7
    ],
    [
     "supabase/deployment-manifest.json",
@@ -429060,6 +429117,10 @@
    [
     "ESTADO.md",
     4
+   ],
+   [
+    "src/components/security/SecurityView.tsx",
+    2
    ],
    [
     "src/components/talkx/TalkXAnalytics.tsx",
@@ -429090,31 +429151,27 @@
     2
    ],
    [
-    "src/components/talkx/TalkXLiveMonitor.tsx",
+    "inventario/estado/rotas.json",
     1
    ],
    [
-    "src/components/talkx/__tests__/TalkXEngineAlertsCard.test.tsx",
+    "src/components/security/ContactAuditTrailPanel.tsx",
     1
    ],
    [
-    "src/components/talkx/tracking/TalkXEngineAlertsCard.tsx",
+    "src/components/security/__tests__/ContactAuditTrailPanel.test.tsx",
     1
    ],
    [
-    "src/hooks/integrations/__tests__/useTalkXEngineAlerts.test.ts",
+    "src/components/security/contactAuditLabels.ts",
     1
    ],
    [
-    "src/hooks/integrations/useTalkXEngineAlerts.ts",
+    "src/hooks/__tests__/useContactAuditTrail.test.tsx",
     1
    ],
    [
-    "src/components/talkx/TalkXWizardDelivery.tsx",
-    1
-   ],
-   [
-    "src/components/talkx/__tests__/TalkXTestSendCard.test.tsx",
+    "src/hooks/security/useContactAuditTrail.ts",
     1
    ]
   ]

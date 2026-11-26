@@ -2,11 +2,11 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "resumo": {
-  "urls": 18,
+  "urls": 19,
   "rotas_http_backend": 11,
   "vistas_por_id": 55,
   "itens_menu": 61,
-  "lazy": 153
+  "lazy": 154
  },
  "urls": [
   {
@@ -1617,6 +1617,92 @@
    "flags": [],
    "papeis": [],
    "arquivos_puxados": 3
+  },
+  {
+   "protegida": true,
+   "wrappers": [
+    "ProtectedRoute"
+   ],
+   "pai": null,
+   "indice": false,
+   "lazy": true,
+   "tipo": "tela",
+   "caminho": "/admin/auditoria-contatos",
+   "componente": "ContactAuditPage",
+   "arquivo": "src/pages/admin/ContactAuditPage.tsx",
+   "definida_em": "src/routes/AppRoutes.tsx",
+   "redireciona": null,
+   "hooks": [
+    "useAppBootstrap",
+    "useAuth",
+    "useCallback",
+    "useContactAuditTrail",
+    "useContext",
+    "useEffect",
+    "useInfiniteQuery",
+    "useMemo",
+    "useMessageUpdateBatcher",
+    "useNotificationLeader",
+    "useNotificationSettings",
+    "useOfflineCache",
+    "usePublishIncomingAlertIdentity",
+    "useQuery",
+    "useQueryClient",
+    "useRealtimeMessages",
+    "useRealtimeNotifications",
+    "useRealtimeReconnectingNotice",
+    "useRealtimeStatus",
+    "useRef",
+    "useState",
+    "useSyncExternalStore",
+    "useTeamAlertsPreference",
+    "useToast",
+    "useUserRole"
+   ],
+   "hooks_locais": [
+    "useAppBootstrap",
+    "useAuth",
+    "useContactAuditTrail",
+    "useMessageUpdateBatcher",
+    "useNotificationSettings",
+    "useOfflineCache",
+    "usePublishIncomingAlertIdentity",
+    "useRealtimeMessages",
+    "useRealtimeNotifications",
+    "useRealtimeReconnectingNotice",
+    "useRealtimeStatus",
+    "useTeamAlertsPreference",
+    "useToast",
+    "useUserRole"
+   ],
+   "tabelas": [
+    "contacts",
+    "messages",
+    "profiles",
+    "user_roles",
+    "user_settings"
+   ],
+   "rpcs": [
+    "app_bootstrap",
+    "enqueue_outbound_message",
+    "enqueue_rich_outbound_message",
+    "get_inbox_contact_summaries",
+    "user_has_permission"
+   ],
+   "edges": [
+    "auth-login",
+    "detect-new-device"
+   ],
+   "canais_realtime": [
+    "chat-reactions:${messageId}"
+   ],
+   "flags": [],
+   "papeis": [
+    "admin",
+    "status",
+    "supervisor"
+   ],
+   "arquivos_puxados": 60
   },
   {
    "protegida": true,
@@ -9683,6 +9769,7 @@
   "CommandPaletteHost": "src/components/keyboard/CommandPaletteHost.tsx",
   "ConnectionToast": "src/components/ui/offline-indicator.tsx",
   "ConnectionsView": "src/components/connections/ConnectionsView.tsx",
+  "ContactAuditPage": "src/pages/admin/ContactAuditPage.tsx",
   "ContactDetails": "src/components/inbox/ContactDetails.tsx",
   "ContactDetailsResponsive": "src/components/inbox/ContactDetailsResponsive.tsx",
   "ContactsView": "src/components/contacts/ContactsView.tsx",

@@ -1,6 +1,6 @@
 # 07 · REGRAS DE NEGÓCIO
 
-> Gerado automaticamente por AI Context Sync v1.3.2 · commit `0a6acffd5d` · branch `main` · 2026-11-26 13:55 UTC
+> Gerado automaticamente por AI Context Sync v1.3.2 · commit `583c645064` · branch `main` · 2026-11-26 14:31 UTC
 > Não edite à mão — regras humanas vão em `manual/`.
 
 ## A. Regras escritas por humanos (`manual/` — prioridade máxima, nunca sobrescrito)
@@ -1877,6 +1877,8 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | TALKX_TEMPLATE_STATS_PERIODS | 7, 30, 90 | `src/hooks/integrations/useTalkXTemplateStats.ts` |
 | RealtimeChannelHealth | connecting \| connected \| error | `src/hooks/realtime/realtimeStatusStore.ts` |
 | RealtimeStatus | idle \| connecting \| connected \| disconnected | `src/hooks/realtime/realtimeStatusStore.ts` |
+| ContactAuditKind | deletion \| block | `src/hooks/security/useContactAuditTrail.ts` |
+| ContactAuditOperation | delete \| restore \| purge \| block \| unblock \| update_marker | `src/hooks/security/useContactAuditTrail.ts` |
 | SipStatus | idle \| connecting \| registered \| reconnecting \| unavailable | `src/hooks/sip/useSipConnection.ts` |
 | FirstResponseOutcome | on_time \| breached \| pending | `src/hooks/sla/slaFirstResponse.ts` |
 | SLAStatus | ok \| warning \| breached | `src/hooks/sla/useSLACalculation.ts` |
@@ -1927,9 +1929,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | AcaoNaAtualizacao | recarregar-agora \| avisar-e-recarregar-ao-esconder | `src/lib/deployment-update.ts` |
 | EmailErrorKind | offline \| permission \| authentication \| rate-limit \| server \| unknown | `src/lib/emailErrorState.ts` |
 | EmailThreadStateFilter | all \| unread \| starred | `src/lib/emailThreadQuery.ts` |
-| EmailThreadPeriodFilter | all \| today \| 7d \| 30d | `src/lib/emailThreadQuery.ts` |
-| SenderKind | self \| agent \| contact \| team | `src/lib/fileSenderIdentity.ts` |
-| … +152 linhas — lista completa em `context.json` | | |
+| … +154 linhas — lista completa em `context.json` | | |
 
 ## F. Validações de entrada
 
@@ -2750,6 +2750,10 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 - **calculateTrend(current: number, previous: number)** — `src/components/reports/useReportsData.ts`
   ```
   if (!compareEnabled || previous === 0) return undefined; return ((current - previous) / previous) * 100;
+  ```
+- **aplicarBusca()** — `src/components/security/ContactAuditTrailPanel.tsx`
+  ```
+  setFiltros((atual) => ({ ...atual, search: termo.trim() }));
   ```
 - **aplicarSom(category: CategoryKey, soundId: SoundTypeOption)** — `src/components/settings/SoundCustomizationPanel.tsx`
   ```
@@ -3934,7 +3938,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `DEFAULT_REFRESH_MS` | `60` | `src/hooks/admin/useSupervisorQueue.ts` |
 | `RECENT_SENDS_WINDOW_DAYS` | `30` | `src/hooks/agents/useAgentRecentSends.ts` |
 | `DAY_MS` | `24` | `src/hooks/agents/useAgentRecentSends.ts` |
-| … +717 linhas — lista completa em `context.json` | | |
+| … +718 linhas — lista completa em `context.json` | | |
 
 ### H.2 Prazos, expirações e janelas de tempo
 
@@ -4093,6 +4097,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `staleTime: 60 * 60 * 1000,` | `src/hooks/integrations/useTalkXInsights.ts` |
 | `staleTime: 5 * 60 * 1000,` | `src/hooks/integrations/useTalkXSettings.ts` |
 | `const HORA = 60 * 60 * 1000;` | `src/hooks/security/useAuditLogDashboard.ts` |
+| `return new Date(agora - period * 24 * 60 * 60 * 1000).toISOString();` | `src/hooks/security/useContactAuditTrail.ts` |
 | `export const SLA_ALERT_DEDUPE_TTL_MS = 24 * 60 * 60 * 1000;` | `src/hooks/sla/useSLANotifications.ts` |
 | `const HEARTBEAT_DEGRADADO_MS = 60 * 60 * 1000;` | `src/hooks/system/useDiagnosticsData.ts` |
 | `const HEARTBEAT_SAUDAVEL_MS = 15 * 60 * 1000;` | `src/hooks/system/useDiagnosticsData.ts` |
@@ -4239,8 +4244,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `v_window := interval '60 seconds';` | `supabase/migrations/20261007000311_catalogo_rate_limit_politica_confiavel.sql` |
 | `v_minute_start := statement_timestamp() - interval '1 minute';` | `supabase/migrations/20261009031223_talkx_multiplix_consumo_compartilhado.sql` |
 | `v_next_day_at := v_day_start + interval '1 day';` | `supabase/migrations/20261009031223_talkx_multiplix_consumo_compartilhado.sql` |
-| `-- create or replace function public.record_talkx_conversion(p_campaign_id uuid, p_external_ref text, p_value numeric, p_source text, p_currency text default 'B …` | `supabase/migrations/20261009031958_talkx_v4_x041_atribuicao_negocio_ganho_receita_roi.sql` |
-| … +93 linhas — lista completa em `context.json` | |
+| … +94 linhas — lista completa em `context.json` | |
 
 ### H.3 Limites de paginação
 
@@ -4763,7 +4767,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `owner` | `supabase/migrations/20260927270018_team_chat_e28_fix_find_or_create_race.sql` |
 | `anon` | `supabase/migrations/20260927340000_fix_add_agent_xp_negative_and_guard.sql` |
 
-## K. Testes como especificação (23142 testes em 2456 arquivos — nomes completos em `context.json`)
+## K. Testes como especificação (23165 testes em 2458 arquivos — nomes completos em `context.json`)
 
 | Arquivo | Testes | Exemplos do que o sistema DEVE fazer |
 |---|---|---|
@@ -5067,7 +5071,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `supabase/functions/ai-transcribe-audio/openrouter-stt.test.ts` | 17 | formato: containers que a edge reconhece viram a extensão do input_audio · formato: mime de outro tipo ou desconhecido não vira extensão inventada · formato: parâmetro do content-type (codecs) não atrapalha e o case não importa · base64: buffer maior que o bloco interno é convertido byte a byte … |
 | `supabase/functions/multiplix-dispatch/actions/__tests__/listing.test.ts` | 17 | dispatch.list escopo: sem permissao ampla so devolve os disparos do dono · dispatch.list escopo: usuario sem profile e sem permissao -> lista vazia (nao consulta a tabela) · dispatch.list escopo: a permissao ampla ve os disparos de qualquer dono · dispatch.list paginacao: limit/offset recortam na ordem created_at desc e total e exato … |
 | `supabase/functions/talkx-ai/index.test.ts` | 17 | X076: flag ai_insights desligada recusa com 403 ai_disabled e não paga o proxy · X076: orçamento mensal no padrão (0 = desligado) recusa com 403 ai_disabled · X076: gasto do mês no teto recusa com 429 budget_exceeded e não paga o proxy · X076: gasto abaixo do teto passa (o teto não é desligamento geral) … |
-| … +2156 linhas — lista completa em `context.json` | | |
+| … +2158 linhas — lista completa em `context.json` | | |
 
 ## L. Eventos de webhook tratados (contratos com sistemas externos)
 
@@ -5586,4 +5590,4 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | Mostra no máximo 2 sugestões para não poluir o painel | `src/components/inbox/copilot/MissingQuestions.tsx` |
 | * CV-035/036 — Alerta de ocasião comercial detectada + prazo de entrega. | `src/components/inbox/copilot/OccasionAlert.tsx` |
 | Sobe/desce a linha uma posição por vez, trocando apenas de lugar os objetos | `src/components/inbox/interactive-builder/useInteractiveMessage.ts` |
-| … +1870 linhas — lista completa em `context.json` | |
+| … +1873 linhas — lista completa em `context.json` | |

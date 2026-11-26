@@ -6932,9 +6932,9 @@
   },
   {
    "modulo": "components/security",
-   "arquivos": 24,
-   "testes": 30,
-   "linhas": 4503,
+   "arquivos": 26,
+   "testes": 31,
+   "linhas": 4872,
    "itens_menu": [
     "Auditoria",
     "Segurança"
@@ -6944,12 +6944,13 @@
     "security"
    ],
    "rotas_http": [],
-   "componentes": 24,
+   "componentes": 25,
    "hooks_locais": [
     "useAppBootstrap",
     "useAuditLogDashboard",
     "useAuth",
     "useCityWhitelist",
+    "useContactAuditTrail",
     "useDeviceDetection",
     "useGeoBlocking",
     "useHasVerifiedTotp",
@@ -8773,7 +8774,7 @@
   {
    "modulo": "hooks/__tests__",
    "arquivos": 0,
-   "testes": 146,
+   "testes": 147,
    "linhas": 0,
    "itens_menu": [],
    "telas": [],
@@ -12140,9 +12141,9 @@
   },
   {
    "modulo": "hooks/security",
-   "arquivos": 3,
+   "arquivos": 4,
    "testes": 0,
-   "linhas": 449,
+   "linhas": 815,
    "itens_menu": [],
    "telas": [],
    "rotas_http": [],
@@ -12150,11 +12151,13 @@
    "hooks_locais": [
     "useAuditLogDashboard",
     "useCityWhitelist",
+    "useContactAuditTrail",
     "usePasswordResetRequests"
    ],
    "hooks_definidos": [
     "useAuditLogDashboard",
     "useCityWhitelist",
+    "useContactAuditTrail",
     "usePasswordResetRequests"
    ],
    "edges": [
@@ -12163,6 +12166,7 @@
    "tabelas": [
     "audit_logs",
     "city_whitelist",
+    "contacts",
     "geo_blocking_settings",
     "password_reset_requests_safe",
     "profiles"
@@ -12182,6 +12186,7 @@
     "tabelas": [
      "audit_logs",
      "city_whitelist",
+     "contacts",
      "geo_blocking_settings",
      "password_reset_requests_safe",
      "profiles"
@@ -12196,6 +12201,7 @@
     "lib"
    ],
    "pacotes_externos": [
+    "@tanstack/react-query",
     "sonner"
    ]
   },
@@ -12508,7 +12514,7 @@
    "modulo": "hooks/system",
    "arquivos": 43,
    "testes": 20,
-   "linhas": 6138,
+   "linhas": 6139,
    "itens_menu": [],
    "telas": [],
    "rotas_http": [],
@@ -12609,6 +12615,7 @@
     "useConnectionsManager",
     "useConnectionsRealtime",
     "useContactAgenda",
+    "useContactAuditTrail",
     "useContactCrm360",
     "useContactCustomFields",
     "useContactDeliveryStats",
@@ -16094,20 +16101,22 @@
   },
   {
    "modulo": "pages/admin",
-   "arquivos": 4,
+   "arquivos": 5,
    "testes": 5,
-   "linhas": 877,
+   "linhas": 915,
    "itens_menu": [],
    "telas": [
+    "/admin/auditoria-contatos",
     "/admin/rate-limit",
     "/admin/roles"
    ],
    "rotas_http": [],
-   "componentes": 2,
+   "componentes": 3,
    "hooks_locais": [
     "useAdminData",
     "useAppBootstrap",
     "useAuth",
+    "useContactAuditTrail",
     "useMessageUpdateBatcher",
     "useNotificationSettings",
     "useOfflineCache",
@@ -16166,6 +16175,7 @@
     "admin",
     "agent",
     "alert",
+    "status",
     "supervisor"
    ],
    "diretos": {
@@ -16421,7 +16431,7 @@
    "modulo": "routes",
    "arquivos": 1,
    "testes": 0,
-   "linhas": 166,
+   "linhas": 175,
    "itens_menu": [],
    "telas": [],
    "rotas_http": [],
@@ -16522,6 +16532,7 @@
     "useConnectionsManager",
     "useConnectionsRealtime",
     "useContactAgenda",
+    "useContactAuditTrail",
     "useContactCrm360",
     "useContactCustomFields",
     "useContactDeliveryStats",

@@ -1,7 +1,7 @@
 {
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
- "total": 943,
+ "total": 945,
  "orfaos": 45,
  "nomes_duplicados": {
   "AchievementBadge": [
@@ -10277,6 +10277,22 @@
    "orfao": false
   },
   {
+   "arquivo": "src/components/security/ContactAuditTrailPanel.tsx",
+   "exports": [
+    "ContactAuditTrailPanel"
+   ],
+   "export_default": null,
+   "linhas": 306,
+   "dominio": "components/security",
+   "hooks_locais": [
+    "useContactAuditTrail"
+   ],
+   "tabelas": [],
+   "edges": [],
+   "usado_por": 1,
+   "orfao": false
+  },
+  {
    "arquivo": "src/components/security/DeviceCard.tsx",
    "exports": [
     "DeviceCard",
@@ -10583,7 +10599,7 @@
     "SecurityView"
    ],
    "export_default": null,
-   "linhas": 218,
+   "linhas": 239,
    "dominio": "components/security",
    "hooks_locais": [
     "useSecurityPushNotifications",
@@ -13735,7 +13751,7 @@
    "hooks_locais": [],
    "tabelas": [],
    "edges": [],
-   "usado_por": 222,
+   "usado_por": 223,
    "orfao": false
   },
   {
@@ -13772,7 +13788,7 @@
    "hooks_locais": [],
    "tabelas": [],
    "edges": [],
-   "usado_por": 410,
+   "usado_por": 411,
    "orfao": false
   },
   {
@@ -13807,7 +13823,7 @@
    "hooks_locais": [],
    "tabelas": [],
    "edges": [],
-   "usado_por": 194,
+   "usado_por": 195,
    "orfao": false
   },
   {
@@ -14223,7 +14239,7 @@
    "hooks_locais": [],
    "tabelas": [],
    "edges": [],
-   "usado_por": 175,
+   "usado_por": 176,
    "orfao": false
   },
   {
@@ -14623,7 +14639,7 @@
    "hooks_locais": [],
    "tabelas": [],
    "edges": [],
-   "usado_por": 81,
+   "usado_por": 82,
    "orfao": false
   },
   {
@@ -14765,7 +14781,7 @@
    "hooks_locais": [],
    "tabelas": [],
    "edges": [],
-   "usado_por": 14,
+   "usado_por": 15,
    "orfao": false
   },
   {
@@ -14782,7 +14798,7 @@
    "hooks_locais": [],
    "tabelas": [],
    "edges": [],
-   "usado_por": 39,
+   "usado_por": 40,
    "orfao": false
   },
   {
@@ -15300,6 +15316,22 @@
    "orfao": false
   },
   {
+   "arquivo": "src/pages/admin/ContactAuditPage.tsx",
+   "exports": [
+    "ContactAuditPage"
+   ],
+   "export_default": "ContactAuditPage",
+   "linhas": 38,
+   "dominio": "pages/admin",
+   "hooks_locais": [
+    "useUserRole"
+   ],
+   "tabelas": [],
+   "edges": [],
+   "usado_por": 2,
+   "orfao": false
+  },
+  {
    "arquivo": "src/pages/admin/RateLimitDashboard.tsx",
    "exports": [
     "RateLimitDashboard"
@@ -15669,7 +15701,7 @@
     "AppRoutes"
    ],
    "export_default": null,
-   "linhas": 166,
+   "linhas": 175,
    "dominio": "routes",
    "hooks_locais": [],
    "tabelas": [],

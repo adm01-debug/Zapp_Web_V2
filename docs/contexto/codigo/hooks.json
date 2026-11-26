@@ -1,7 +1,7 @@
 {
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
- "total": 527,
+ "total": 528,
  "hooks": [
   {
    "arquivo": "analise-prs/resgate-261118-lote2/src/hooks/useMotionSeguro.ts",
@@ -10263,6 +10263,30 @@
    "coberto_por_testes": 0
   },
   {
+   "arquivo": "src/hooks/security/useContactAuditTrail.ts",
+   "hooks_exportados": [
+    "useContactAuditTrail"
+   ],
+   "linhas": 366,
+   "dominio": "hooks/security",
+   "tabelas": [
+    "contacts",
+    "profiles"
+   ],
+   "rpcs": [],
+   "edges": [],
+   "hooks_internos": [
+    "useInfiniteQuery"
+   ],
+   "canais_realtime": [],
+   "usado_por": 2,
+   "usado_por_arquivos": [
+    "src/components/security/ContactAuditTrailPanel.tsx",
+    "src/components/security/contactAuditLabels.ts"
+   ],
+   "coberto_por_testes": 2
+  },
+  {
    "arquivo": "src/hooks/security/usePasswordResetRequests.ts",
    "hooks_exportados": [
     "usePasswordResetRequests"
@@ -11383,7 +11407,7 @@
    "hooks_exportados": [
     "usePrefetch"
    ],
-   "linhas": 46,
+   "linhas": 47,
    "dominio": "hooks/system",
    "tabelas": [],
    "rpcs": [],
@@ -11729,7 +11753,7 @@
     "useMemo"
    ],
    "canais_realtime": [],
-   "usado_por": 39,
+   "usado_por": 40,
    "usado_por_arquivos": [
     "src/components/CommandPalette.tsx",
     "src/components/admin/AdminUsersTable.tsx",
