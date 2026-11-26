@@ -18,6 +18,7 @@ import type { PerformancePeriod, PerformancePoint } from './analytics/AnalyticsP
 import { AnalyticsFunnel } from './analytics/AnalyticsFunnel';
 import { TalkXCampaignRevenuePanel } from './analytics/TalkXCampaignRevenueCard';
 import { TalkXCampaignLogsPanel } from './analytics/TalkXCampaignLogsCard';
+import { TalkXCampaignPacePanel } from './analytics/TalkXCampaignPaceCard';
 import type { FunnelStep } from './analytics/AnalyticsFunnel';
 import { goTab, pushTalkXWizardRoute } from './talkxRoute';
 import { CHART_TICK_FONT_SIZE, CHART_TICK_FONT_SIZE_SM, CHART_TOOLTIP_FONT_SIZE, CHART_LABEL_FONT_SIZE } from '@/lib/chart-theme';
@@ -621,6 +622,11 @@ export function TalkXAnalytics({ campaigns, isLoading, isError }: Props) {
               servidor em talkx_campaign_revenue, com investimento editável. */}
           <div className="mb-4">
             <TalkXCampaignRevenuePanel campaignId={selectedCampaignId} />
+          </div>
+          {/* X018: orçamento de envio da conexão (por minuto e por dia) — lido do
+              servidor em talkx_campaign_pace, que exige admin/supervisor. */}
+          <div className="mb-4">
+            <TalkXCampaignPacePanel campaignId={selectedCampaignId} />
           </div>
           {panelLoading ? (
             <div className="space-y-2">{Array.from({ length: 4 }).map((_, i) => <div key={i} className="h-9 bg-muted/40 rounded-lg animate-pulse" />)}</div>
