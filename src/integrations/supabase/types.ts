@@ -14579,6 +14579,10 @@ export type Database = {
         Returns: number
       }
       reassign_overloaded_agents: { Args: never; Returns: number }
+      recalcular_retencao_copiloto: {
+        Args: { p_dias?: number }
+        Returns: number
+      }
       record_away_message: {
         Args: { p_connection_id: string; p_contact_id: string }
         Returns: boolean
@@ -14870,6 +14874,7 @@ export type Database = {
         Returns: string
       }
       resume_instance: { Args: { p_instance: string }; Returns: number }
+      resumo_orcamento_ia: { Args: { p_dias?: number }; Returns: Json }
       retry_talkx_recipient: {
         Args: { p_recipient_id: string }
         Returns: boolean
@@ -14911,7 +14916,10 @@ export type Database = {
           waiting_contacts: number
         }[]
       }
-      run_copilot_retention: { Args: never; Returns: undefined }
+      run_copilot_retention: {
+        Args: { p_target_date?: string }
+        Returns: undefined
+      }
       run_crm_sync_outbox_cleanup: {
         Args: {
           p_dead_letter_days?: number
@@ -15425,6 +15433,10 @@ export type Database = {
         Returns: string
       }
       talkx_connection_send_budget: {
+        Args: { p_connection_id: string }
+        Returns: Json
+      }
+      talkx_connection_send_budget_internal: {
         Args: { p_connection_id: string }
         Returns: Json
       }

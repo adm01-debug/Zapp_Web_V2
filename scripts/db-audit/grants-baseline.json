@@ -6,6 +6,6 @@
     "anon_table_select": [
     ],
     "how_to_regenerate": "scripts/db-audit/grants-baseline.sql (E26)",
-    "service_role_execute_count": 426,
-    "authenticated_execute_count": 238
+    "service_role_execute_count": 429,
+    "authenticated_execute_count": 239
 }
