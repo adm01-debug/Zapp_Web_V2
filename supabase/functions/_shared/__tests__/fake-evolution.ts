@@ -17,7 +17,7 @@
  * qualquer modo — senão a presença travaria o laço.
  */
 
-export type FakeEvolutionMode = "ok" | "500" | "timeout" | "sem_id" | "400_interativo";
+export type FakeEvolutionMode = "ok" | "500" | "timeout" | "sem_id" | "400_interativo" | "404";
 
 export interface FakeEvolutionPost {
   /** rota relativa recebida (ex.: `/message/sendText/PRINCIPAL`). */
@@ -26,6 +26,8 @@ export interface FakeEvolutionPost {
   body: Record<string, unknown>;
   /** true só para rotas de mensagem (`/message/...`), false para presença. */
   isMessage: boolean;
+  /** método HTTP recebido; ausente equivale a POST (compatibilidade). */
+  method?: string;
 }
 
 export interface FakeEvolution {
@@ -56,14 +58,33 @@ export function createFakeEvolution(
   const server = Deno.serve(
     { hostname: options.hostname ?? "127.0.0.1", port: 0, onListen() {} },
     async (req) => {
+      const url = new URL(req.url);
+      const path = url.pathname;
+
+      // DELETE: exclusão de instância (`/instance/delete/...`). O provedor
+      // responde 200 quando apaga e 404 quando a instância já não existe — os
+      // dois desfechos que a Edge precisa reconciliar. Registrado em `posts`
+      // (com o método) para o teste provar que a chamada aconteceu.
+      if (req.method === "DELETE") {
+        posts.push({ path, method: "DELETE", body: {}, isMessage: false });
+        if (mode === "404") {
+          return new Response(JSON.stringify({ error: true, status: 404, message: "Instance not found" }), {
+            status: 404,
+            headers: { "Content-Type": "application/json" },
+          });
+        }
+        return new Response(JSON.stringify({ status: "SUCCESS" }), {
+          status: 200,
+          headers: { "Content-Type": "application/json" },
+        });
+      }
+
       if (req.method !== "POST") {
         return new Response(JSON.stringify({ error: "method_not_allowed" }), {
           status: 405,
           headers: { "Content-Type": "application/json" },
         });
       }
-      const url = new URL(req.url);
-      const path = url.pathname;
 
       // Presença (digitação): best-effort no motor, sempre 200.
       if (path.startsWith("/chat/")) {

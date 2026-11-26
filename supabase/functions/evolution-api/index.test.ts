@@ -1,5 +1,5 @@
 import { assertEquals, assert } from "https://deno.land/std@0.168.0/testing/asserts.ts";
-import { handleEvolutionApi, type EvolutionApiDeps } from "./index.ts";
+import { handleEvolutionApi, isInstanceGonePayload, type EvolutionApiDeps } from "./index.ts";
 import { EvolutionApiRequestSchema } from "../_shared/schemas.ts";
 import { createFakeEvolution } from "../_shared/__tests__/fake-evolution.ts";
 import { resetInstanceTokenCache } from "../_shared/evolution-instance-token.ts";
@@ -1999,3 +1999,169 @@ for (const flavor of ["v2", "go"]) {
     });
   }
 }
+
+/* ── E36: trilha de auditoria das conexões + reconciliação de INSTANCE_GONE ────
+   Resgate do trabalho parcial de 12/10/2026 (branch 26101220111b56): a edge
+   nunca emitia o `INSTANCE_GONE` que o front já trata (useConnectionsManager) e
+   só o `delete-instance` deixava rastro em `audit_logs` — create-connection,
+   connect, disconnect e a recriação destrutiva de sessão órfã não registravam
+   QUEM fez. Estes testes provam o comportamento novo e o gate admin-only. */
+
+const DELETE_INSTANCE_BODY = { instanceName: "PRINCIPAL" };
+
+/** Caller que diferencia admin de supervisor (o gate do delete exige admin). */
+function makeDeleteCallerClient(opts: { admin: boolean }): any {
+  return {
+    auth: {
+      getUser: () => Promise.resolve({ data: { user: { id: "admin-1" } }, error: null }),
+    },
+    rpc: (fn: string, args?: Record<string, unknown>) => {
+      if (fn === "has_role") {
+        return Promise.resolve({ data: opts.admin && args?._role === "admin", error: null });
+      }
+      // Supervisor: passa na matriz genérica de controle (is_admin_or_supervisor),
+      // mas NÃO no gate do delete (has_role('admin') / is_admin).
+      if (fn === "is_admin_or_supervisor") return Promise.resolve({ data: true, error: null });
+      if (fn === "is_admin") return Promise.resolve({ data: opts.admin, error: null });
+      return Promise.resolve({ data: null, error: null });
+    },
+  };
+}
+
+/** Service client que serve a linha da conexão e captura delete/insert de trilha. */
+function makeDeleteServiceClient(row: Record<string, unknown> | null = { id: CONN_ID, name: "Principal", instance_id: "PRINCIPAL" }) {
+  const auditInserts: any[] = [];
+  const deletedInstances: string[] = [];
+  const client: any = {
+    rpc: (fn: string) =>
+      fn === "get_instance_token"
+        ? Promise.resolve({ data: "vault-instance-token", error: null })
+        : Promise.resolve({ data: null, error: null }),
+    from: (table: string) => {
+      if (table === "whatsapp_connections") {
+        return {
+          select: () => ({
+            eq: () => ({ maybeSingle: () => Promise.resolve({ data: row, error: null }) }),
+          }),
+          delete: () => ({
+            eq: (_column: string, value: string) => {
+              deletedInstances.push(value);
+              return Promise.resolve({ data: null, error: null });
+            },
+          }),
+        };
+      }
+      if (table === "audit_logs") {
+        return {
+          insert: (auditRow: any) => {
+            auditInserts.push(auditRow);
+            return Promise.resolve({ data: null, error: null });
+          },
+        };
+      }
+      return makeQuery();
+    },
+  };
+  return { client, auditInserts, deletedInstances };
+}
+
+function deleteInstanceRequest(userAgent = "deno-test/1.0"): Request {
+  return new Request("http://localhost/functions/v1/evolution-api/delete-instance", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": TEST_JWT,
+      "x-real-ip": nextIp(),
+      "user-agent": userAgent,
+    },
+    body: JSON.stringify(DELETE_INSTANCE_BODY),
+  });
+}
+
+Deno.test("E36 B2-07: isInstanceGonePayload só reconhece ausência (404/mensagem), não erro comum", () => {
+  assert(isInstanceGonePayload({ error: true, status: 404 }));
+  assert(isInstanceGonePayload({ error: true, message: "Instance not found" }));
+  assert(isInstanceGonePayload({ error: true, message: "Instância não encontrada" }));
+  assert(isInstanceGonePayload({ error: true, message: "does not exist" }));
+  assertEquals(isInstanceGonePayload({ error: true, status: 500, message: "boom" }), false);
+  assertEquals(isInstanceGonePayload({ status: "success" }), false);
+  assertEquals(isInstanceGonePayload({ error: false, status: 404 }), false);
+});
+
+Deno.test("E36 B2-01: supervisor NÃO exclui conexão (admin-only) e não toca o provedor", async () => {
+  const fake = createFakeEvolution();
+  Deno.env.set("EVOLUTION_API_URL", fake.url);
+  Deno.env.set("EVOLUTION_API_FLAVOR", "v2");
+  const svc = makeDeleteServiceClient();
+  try {
+    const res = await handleEvolutionApi(deleteInstanceRequest(), {
+      callerClient: makeDeleteCallerClient({ admin: false }),
+      supabase: svc.client,
+    });
+    assertEquals(res.status, 403, "exclusão de conexão exige is_admin, não supervisor");
+    const json = await res.json();
+    assert(json?.error === true);
+    assert(String(json?.message ?? "").includes("administradores"));
+    assertEquals(fake.posts.length, 0, "sem I/O no provedor");
+    assertEquals(svc.deletedInstances.length, 0, "nada pode ser apagado no banco");
+    assertEquals(svc.auditInserts.length, 0, "sem exclusão, sem trilha");
+  } finally {
+    await fake.stop();
+  }
+});
+
+Deno.test("E36 B2-03: instância ausente no provedor devolve INSTANCE_GONE, apaga a linha local e registra o motivo", async () => {
+  const fake = createFakeEvolution({ mode: "404" });
+  Deno.env.set("EVOLUTION_API_URL", fake.url);
+  Deno.env.set("EVOLUTION_API_FLAVOR", "v2");
+  const svc = makeDeleteServiceClient();
+  try {
+    const res = await handleEvolutionApi(deleteInstanceRequest(), {
+      callerClient: makeDeleteCallerClient({ admin: true }),
+      supabase: svc.client,
+    });
+    assertEquals(res.status, 200);
+    const json = await res.json();
+    assertEquals(json?.code, "INSTANCE_GONE", "o front já trata este código; a edge precisa emitir");
+    assert(json?.error === true);
+    assertEquals(svc.deletedInstances, ["PRINCIPAL"], "a conexão fantasma sai da lista");
+    assertEquals(svc.auditInserts.length, 1, "uma linha de trilha");
+    const trail = svc.auditInserts[0];
+    assertEquals(trail.action, "connection_deleted");
+    assertEquals(trail.entity_type, "connection");
+    assertEquals(trail.entity_id, CONN_ID);
+    assertEquals(trail.user_id, "admin-1");
+    assertEquals(trail.details?.instance_id, "PRINCIPAL");
+    assertEquals(trail.details?.reason, "instance_gone");
+    assert(!JSON.stringify(trail).includes("vault-instance-token"), "trilha não guarda credencial");
+  } finally {
+    await fake.stop();
+  }
+});
+
+Deno.test("E36 CA1: admin exclui conexão existente — trilha com ator, IP e user-agent", async () => {
+  const fake = createFakeEvolution({ mode: "ok" });
+  Deno.env.set("EVOLUTION_API_URL", fake.url);
+  Deno.env.set("EVOLUTION_API_FLAVOR", "v2");
+  const svc = makeDeleteServiceClient();
+  try {
+    const res = await handleEvolutionApi(deleteInstanceRequest("agente-web/7.7"), {
+      callerClient: makeDeleteCallerClient({ admin: true }),
+      supabase: svc.client,
+    });
+    assertEquals(res.status, 200);
+    const json = await res.json();
+    assertEquals(json?.error, undefined, "exclusão bem-sucedida não devolve error");
+    assertEquals(svc.deletedInstances, ["PRINCIPAL"]);
+    assertEquals(svc.auditInserts.length, 1);
+    const trail = svc.auditInserts[0];
+    assertEquals(trail.action, "connection_deleted");
+    assertEquals(trail.entity_id, CONN_ID);
+    assertEquals(trail.details?.reason, undefined, "exclusão normal não é reconciliação");
+    assertEquals(trail.user_agent, "agente-web/7.7", "user-agent vai para a trilha");
+    assert(trail.ip_address, "IP vai para a trilha");
+    assertEquals(fake.posts.filter((p) => p.method === "DELETE").length, 1, "um DELETE no provedor");
+  } finally {
+    await fake.stop();
+  }
+});
