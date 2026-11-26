@@ -17,6 +17,8 @@
  * - Whitelist de IP NÃO isenta país: o módulo sempre encaminha IP E país à RPC e
  *   respeita a decisão combinada que ela devolve (a isenção só vale para bloqueio
  *   por IP, dentro da RPC).
+ * - Cidade: mesma regra do país (header de infra confiável, `cf-ipcity`); ausente
+ *   vira `null` e a RPC falha fechado quando a whitelist de cidades está ativa.
  * - Endpoint: explícito no chamador e validado aqui, nunca derivado de body
  *   controlado pelo cliente.
  * - Falha/erro da RPC falha fechado (503); a resposta nunca revela listas/regras.
@@ -37,6 +39,17 @@ import {
  * porta de bypass via spoofing.
  */
 export const TRUSTED_COUNTRY_HEADER_NAMES: readonly string[] = ["cf-ipcountry"];
+
+/**
+ * Cabeçalhos confiáveis que podem carregar a CIDADE do chamador (mesma regra do
+ * país: só header que a infra sobrescreve). `cf-ipcity` é emitido pelo Cloudflare
+ * quando o "Add visitor location headers" está ligado — sem ele a cidade chega
+ * ausente e, com a whitelist de cidades ativa, a RPC falha fechado.
+ */
+export const TRUSTED_CITY_HEADER_NAMES: readonly string[] = ["cf-ipcity"];
+
+/** Tamanho máximo aceito para o nome de cidade (igual ao CHECK de city_whitelist). */
+const MAX_CITY_LENGTH = 128;
 
 /**
  * Formato do identificador canônico de endpoint: 1..128 caracteres ASCII
@@ -67,6 +80,47 @@ export function extractCountryCode(req: Request): string | null {
     const value = req.headers.get(name);
     if (value !== null) {
       const normalized = normalizeCountryCode(value);
+      if (normalized !== null) return normalized;
+    }
+  }
+  return null;
+}
+
+/**
+ * Cidade bruta de header: o runtime entrega bytes não-ASCII como latin1, então um
+ * valor UTF-8 ("São Paulo") chega como "SÃ£o Paulo". Tenta reinterpretar como UTF-8;
+ * se não for UTF-8 válido, mantém o valor original. Vazio, com controle ou maior que
+ * o limite vira `null` (cidade ausente) — nunca um valor inventado.
+ */
+export function normalizeCity(raw: string | null | undefined): string | null {
+  if (!raw) return null;
+  let value = raw;
+  /* eslint-disable no-control-regex */
+  // deno-lint-ignore no-control-regex
+  if (/[\u0080-ÿ]/.test(value) && !/[^\u0000-ÿ]/.test(value)) {
+  /* eslint-enable no-control-regex */
+    try {
+      const bytes = Uint8Array.from(value, (c) => c.charCodeAt(0));
+      value = new TextDecoder("utf-8", { fatal: true }).decode(bytes);
+    } catch {
+      // não é UTF-8: segue com o valor como veio
+    }
+  }
+  value = value.trim().replace(/\s+/g, " ");
+  if (value === "" || value.length > MAX_CITY_LENGTH) return null;
+  /* eslint-disable no-control-regex */
+  // deno-lint-ignore no-control-regex
+  if (/[\u0000-\u001f\u007f]/.test(value)) return null;
+  /* eslint-enable no-control-regex */
+  return value;
+}
+
+/** Cidade do chamador vindo apenas de header confiável. */
+export function extractCity(req: Request): string | null {
+  for (const name of TRUSTED_CITY_HEADER_NAMES) {
+    const value = req.headers.get(name);
+    if (value !== null) {
+      const normalized = normalizeCity(value);
       if (normalized !== null) return normalized;
     }
   }
@@ -115,7 +169,7 @@ export interface NetworkPolicyOptions {
  */
 export type NetworkPolicyDecision =
   | { allowed: true; rateLimitMaxRequests: number; rateLimitWindowSeconds: number }
-  | { allowed: false; status: 403; reason: "ip_blocked" | "country_blocked" }
+  | { allowed: false; status: 403; reason: "ip_blocked" | "country_blocked" | "city_blocked" }
   | { allowed: false; status: 503 };
 
 /**
@@ -137,11 +191,13 @@ export async function resolveNetworkPolicy(
 
   const ip = getClientIP(req);
   const countryCode = extractCountryCode(req);
+  const city = extractCity(req);
 
   try {
     const { data, error } = await opts.rpc.rpc("resolve_network_policy", {
       p_ip: ip,
       p_country_code: countryCode,
+      p_city: city,
       p_endpoint: endpoint,
       p_default_max_requests: opts.defaultMaxRequests,
       p_default_window_seconds: opts.defaultWindowSeconds,
@@ -175,10 +231,11 @@ export async function resolveNetworkPolicy(
       return { allowed: true, rateLimitMaxRequests, rateLimitWindowSeconds };
     }
 
-    // Negada: a RPC só devolve categorias ('ip_blocked' | 'country_blocked').
-    // Qualquer outra grafia cai na categoria genérica — nunca vaza regra/lista.
-    const reason: "ip_blocked" | "country_blocked" =
-      row.reason === "ip_blocked" ? "ip_blocked" : "country_blocked";
+    // Negada: a RPC só devolve categorias ('ip_blocked' | 'country_blocked' |
+    // 'city_blocked'). Qualquer outra grafia cai na categoria genérica — nunca
+    // vaza regra/lista.
+    const reason: "ip_blocked" | "country_blocked" | "city_blocked" =
+      row.reason === "ip_blocked" || row.reason === "city_blocked" ? row.reason : "country_blocked";
     // Registro best-effort da negação (fire-and-forget). Só entra a categoria
     // server-side; o corpo ao cliente continua genérico. `request_count` fica 1
     // (a negação é por política, não por contagem de janela).
