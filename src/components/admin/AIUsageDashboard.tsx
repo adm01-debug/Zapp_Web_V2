@@ -10,6 +10,7 @@ import { useAIUsageDashboard, FUNCTION_COLORS, FUNCTION_LABELS } from '@/hooks/a
 import type { TimeFilter } from '@/hooks/analytics/useAIUsageDashboard';
 import { AIUsageLogsTab } from './AIUsageLogsTab';
 import { AIUsageUsersTab } from './AIUsageUsersTab';
+import { AIBudgetTab } from './AIBudgetTab';
 
 export function AIUsageDashboard() {
   const {
@@ -87,6 +88,7 @@ export function AIUsageDashboard() {
         <TabsList>
           <TabsTrigger value="overview">Visão Geral</TabsTrigger>
           <TabsTrigger value="users">Por Usuário</TabsTrigger>
+          <TabsTrigger value="budget">Orçamento</TabsTrigger>
           <TabsTrigger value="logs">Logs Detalhados</TabsTrigger>
         </TabsList>
 
@@ -152,6 +154,7 @@ export function AIUsageDashboard() {
         </TabsContent>
 
         <TabsContent value="users" className="space-y-4"><AIUsageUsersTab userUsage={userUsage} profileMap={profileMap as Map<string, { name?: string; email?: string }>} /></TabsContent>
+        <TabsContent value="budget" className="space-y-4"><AIBudgetTab /></TabsContent>
         <TabsContent value="logs"><AIUsageLogsTab logs={logs} logsTotal={logsTotal} logsPage={logsPage} setLogsPage={setLogsPage} isLoading={isLoadingLogs} logsError={logsError} onRetry={refetch} profileMap={profileMap as Map<string, { name?: string; email?: string }>} /></TabsContent>
       </Tabs>
 
