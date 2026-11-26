@@ -227,7 +227,7 @@ RLS em `supabase/schema-manifest.json`; este documento não os repete.
 | `talkx_campaign_segments` | Segmentos usados por cada campanha TalkX, em ordem | ativo | `src/components/talkx/__tests__/TalkXCampaignRunning.checklist.test.tsx`, `src/components/talkx/__tests__/TalkXResumeChecklist.test.tsx`, `src/components/talkx/tracking/talkxSegmentProgress.ts` … |
 | `talkx_campaigns` | Campanhas TalkX (modelo, variáveis, ritmo de digitação e estado) | ativo | `src/components/talkx/TalkXLiveMonitor.tsx`, `src/components/talkx/__tests__/TalkXA11yNomePapel.test.tsx`, `src/components/talkx/__tests__/TalkXLiveMonitor.kpiRow.test.tsx` … |
 | `talkx_contact_attributes` | Atributos de contato derivados pelo TalkX (RFM e engajamento) | parcial | `scripts/db-audit/talkx-contact-attributes.test.sh` |
-| `talkx_conversions` | Conversões atribuídas aos links das campanhas TalkX | parcial | `scripts/db-audit/talkx-conversion-defaults.test.sh`, `scripts/db-audit/talkx-e90-links-contract.test.mjs`, `scripts/db-audit/talkx-links-conversions.test.sh` … |
+| `talkx_conversions` | Conversões atribuídas aos links das campanhas TalkX | ativo | `src/hooks/integrations/useTalkXCampaignRevenue.ts`, `scripts/db-audit/talkx-conversion-defaults.test.sh`, `scripts/db-audit/talkx-e90-links-contract.test.mjs` … |
 | `talkx_data_jobs` | Jobs de dados do TalkX (carga de atributos RFM e enriquecimento) | roadmap | — |
 | `talkx_delivery_log` | Log de entrega das campanhas TalkX (tentativa, etapa e desfecho) | ativo | `supabase/functions/talkx-send/_test-utils.ts`, `supabase/functions/talkx-send/index.ts`, `supabase/functions/talkx-send/r3-delta-011-excecao-nao-perde-log.test.ts` … |
 | `talkx_help_views` | Visualizações da central de ajuda do TalkX por usuário | ativo | `src/components/talkx/TalkXHelp.tsx`, `src/components/talkx/help/recordTalkXHelpView.ts` |
@@ -286,11 +286,11 @@ inventário apura hoje:
 - `link_preview_cache_metrics` e `mfa_sessions` (§8.2, "via de escrita ausente ou acoplamento
   mínimo") também estão como `roadmap`: nenhum arquivo do repositório as cita — o efeito que a
   auditoria descrevia (limpeza por cron, policy esperando o produtor) vive no banco, não aqui.
-- `ai_budget_reservations`, `talkx_alerts` e `talkx_conversions` são `parcial`: só o
+- `ai_budget_reservations` e `talkx_alerts` são `parcial`: só o
   ferramental (`scripts/db-audit/`, `scripts/qa/`, `.github/workflows/`) as cita.
   `webhook_failures` passou a `ativo` (E35): o ingest de mensagem recebida grava nela
   (`_shared/webhook-dead-letter.ts`), o roteador responde 503 para pedir reenvio em falha
-  transitória e a Edge `webhook-replay` reprocessa a fila. `multiplix_audience_members`, `multiplix_audiences` e
-  `talkx_campaign_segments` saíram dessa lista: viraram `ativo` (consumidoras de produto).
+  transitória e a Edge `webhook-replay` reprocessa a fila. `multiplix_audience_members`, `multiplix_audiences`, `talkx_campaign_segments` e
+  `talkx_conversions` saíram dessa lista: viraram `ativo` (consumidoras de produto).
 
 As contagens de 28/08 (124 tabelas) são históricas; o catálogo de hoje tem 210.
