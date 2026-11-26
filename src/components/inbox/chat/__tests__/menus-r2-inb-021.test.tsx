@@ -7,9 +7,10 @@ import { toast } from 'sonner';
 
 // R2-INB-021 (item 317): o menu do balão e o menu do header exibiam itens que
 // anunciavam uma ação e não concluíam nada (Favoritar/Fixar/Responder depois/
-// Reportar no balão; "Adicionar tag" no header). Aqui se prova o consumidor:
-// nenhuma dessas entradas é oferecida e cada entrada que sobra conclui a
-// operação declarada no clique.
+// Reportar no balão; "Adicionar tag" no header). No header a regra segue de pé:
+// "Adicionar tag" continua fora. No balão as quatro voltaram porque as tabelas,
+// RPCs e hooks passaram a existir — e aqui se prova que cada uma chega à
+// operação declarada, junto com as entradas que já existiam.
 
 const mocks = vi.hoisted(() => ({
   updateEq: vi.fn(),
@@ -17,6 +18,11 @@ const mocks = vi.hoisted(() => ({
   markMessageAsRead: vi.fn(),
   markMessageAsUnread: vi.fn(),
   useApplicableSLA: vi.fn(),
+  toggleFavorite: vi.fn(),
+  pin: vi.fn(),
+  unpin: vi.fn(),
+  remind: vi.fn(),
+  report: vi.fn(),
 }));
 
 vi.mock('@/hooks/crm/useExternalContact360', () => ({
@@ -81,6 +87,43 @@ vi.mock('@/components/inbox/SpeedSelector', () => ({ SpeedSelector: () => null }
 vi.mock('@/components/inbox/RealtimeCollaboration', () => ({ RealtimeCollaboration: () => null }));
 vi.mock('@/components/inbox/contact-details/AnalysisBadges', () => ({ AnalysisBadges: () => null }));
 vi.mock('@/components/inbox/contact-details/BusinessHoursBadge', () => ({ BusinessHoursBadge: () => null }));
+
+// As operações por mensagem são reais (tabelas + RPCs); aqui se prova que o menu
+// as alcança. Os hooks são espiões para a asserção ser sobre o id da mensagem
+// clicada, sem QueryClientProvider nem consulta ao banco.
+vi.mock('@/hooks/chat/useMessageFavorites', () => ({
+  useMessageFavorites: () => ({ favoriteIds: new Set<string>(), isLoading: false, isFavorite: () => false, refetch: vi.fn() }),
+  useToggleMessageFavorite: () => ({ toggleFavorite: mocks.toggleFavorite, isToggling: false }),
+}));
+
+vi.mock('@/hooks/chat/useMessagePins', () => ({
+  PIN_LIMIT: 3,
+  useMessagePins: () => ({
+    pins: [],
+    isLoading: false,
+    isPinned: () => false,
+    pin: mocks.pin,
+    unpin: mocks.unpin,
+    isPinning: false,
+    isUnpinning: false,
+    refetch: vi.fn(),
+  }),
+}));
+
+vi.mock('@/hooks/chat/useRemindMessage', () => ({
+  useRemindMessage: () => ({ remind: mocks.remind, isSaving: false }),
+}));
+
+vi.mock('@/hooks/chat/useReportMessage', () => ({
+  useReportMessage: () => ({
+    report: mocks.report,
+    isReported: () => false,
+    reportedIds: new Set<string>(),
+    isLoading: false,
+    isReporting: false,
+    refetch: vi.fn(),
+  }),
+}));
 
 // Radix DropdownMenu não abre de forma confiável sob jsdom+fireEvent — mock
 // simples que renderiza o conteúdo sempre "aberto" (mesmo padrão de
@@ -182,18 +225,35 @@ beforeEach(() => {
   mocks.markMessageAsRead.mockResolvedValue(undefined);
   mocks.markMessageAsUnread.mockResolvedValue(undefined);
   mocks.useApplicableSLA.mockReturnValue({ data: null, isLoading: false });
+  mocks.toggleFavorite.mockResolvedValue(true);
+  mocks.pin.mockResolvedValue(undefined);
+  mocks.unpin.mockResolvedValue(undefined);
+  mocks.remind.mockResolvedValue('task-1');
+  mocks.report.mockResolvedValue('report-1');
 });
 
 describe('menu do balão — R2-INB-021', () => {
-  it('não oferece mais as ações que não concluíam nada', () => {
+  it('volta a oferecer as quatro ações agora que a operação existe', () => {
     renderToolbar(makeMessage());
 
-    for (const morta of ['Favoritar', 'Fixar', 'Responder depois', 'Em 1 hora', 'Em 3 horas', 'Amanhã', 'Reportar']) {
-      expect(screen.queryByText(morta)).toBeNull();
+    for (const viva of [
+      'Favoritar mensagem',
+      'Fixar mensagem (máx. 3)',
+      'Responder depois',
+      'Em 1 hora',
+      'Amanhã às 9h',
+      'Em 3 dias às 9h',
+      'Denunciar mensagem',
+      'Spam',
+      'Conteúdo impróprio',
+      'Urgência',
+      'Outro motivo',
+    ]) {
+      expect(screen.getByText(viva)).toBeTruthy();
     }
   });
 
-  it('reportar também não aparece no balão de mensagem recebida', () => {
+  it('denunciar também aparece no balão de mensagem recebida', () => {
     render(
       <MessageHoverToolbar
         message={makeMessage({ sender: 'contact' })}
@@ -212,9 +272,28 @@ describe('menu do balão — R2-INB-021', () => {
       />
     );
 
-    for (const morta of ['Favoritar', 'Fixar', 'Responder depois', 'Reportar']) {
-      expect(screen.queryByText(morta)).toBeNull();
-    }
+    expect(screen.getByText('Denunciar mensagem')).toBeTruthy();
+    expect(screen.getByText('Favoritar mensagem')).toBeTruthy();
+  });
+
+  it('cada ação por mensagem chega à operação declarada', async () => {
+    renderToolbar(makeMessage());
+
+    fireEvent.click(screen.getByText('Favoritar mensagem'));
+    await waitFor(() => expect(mocks.toggleFavorite).toHaveBeenCalledWith('m-1'));
+
+    fireEvent.click(screen.getByText('Fixar mensagem (máx. 3)'));
+    await waitFor(() => expect(mocks.pin).toHaveBeenCalledWith('m-1'));
+    expect(mocks.unpin).not.toHaveBeenCalled();
+
+    fireEvent.click(screen.getByText('Em 1 hora'));
+    await waitFor(() => expect(mocks.remind).toHaveBeenCalledTimes(1));
+    const [idLembrete, quando] = mocks.remind.mock.calls[0] as [string, Date];
+    expect(idLembrete).toBe('m-1');
+    expect(quando.getTime()).toBeGreaterThan(Date.now());
+
+    fireEvent.click(screen.getByText('Conteúdo impróprio'));
+    await waitFor(() => expect(mocks.report).toHaveBeenCalledWith('m-1', 'improprio'));
   });
 
   it('cada ação que sobrou no menu conclui a operação declarada', async () => {
