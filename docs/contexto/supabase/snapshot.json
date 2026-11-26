@@ -34898,6 +34898,40 @@
       },
       {
         "columns": [
+          "api_endpoint"
+        ],
+        "deferrable": false,
+        "definition": "CHECK (ai_provider_endpoint_is_safe(api_endpoint))",
+        "name": "ai_providers_api_endpoint_safe",
+        "on_delete": null,
+        "on_update": null,
+        "ref_columns": [],
+        "ref_schema": null,
+        "ref_table": null,
+        "schema": "public",
+        "table": "ai_providers",
+        "type": "CHECK",
+        "validated": true
+      },
+      {
+        "columns": [
+          "api_key_secret_name"
+        ],
+        "deferrable": false,
+        "definition": "CHECK (ai_provider_secret_name_is_safe(api_key_secret_name))",
+        "name": "ai_providers_api_key_secret_name_safe",
+        "on_delete": null,
+        "on_update": null,
+        "ref_columns": [],
+        "ref_schema": null,
+        "ref_table": null,
+        "schema": "public",
+        "table": "ai_providers",
+        "type": "CHECK",
+        "validated": true
+      },
+      {
+        "columns": [
           "created_by"
         ],
         "deferrable": false,
@@ -50069,6 +50103,72 @@
         "volatility": "immutable"
       },
       {
+        "args": "endpoint text",
+        "callers": {
+          "code": [
+            {
+              "file": "supabase/migrations/20261125120000_ai_providers_endpoint_secret_binding.sql",
+              "hits": 1
+            }
+          ],
+          "code_total_files": 1,
+          "cron": [],
+          "db": [],
+          "triggers": [],
+          "views": []
+        },
+        "comment": null,
+        "config": null,
+        "definition": null,
+        "definition_sha": "e9b6b177c7cbc3cc",
+        "execute_api_roles": "authenticated, service_role",
+        "execute_public": false,
+        "is_trigger_fn": false,
+        "kind": "function",
+        "language": "sql",
+        "leakproof": false,
+        "name": "ai_provider_endpoint_is_safe",
+        "owner": "postgres",
+        "returns": "boolean",
+        "schema": "public",
+        "security_definer": false,
+        "strict": false,
+        "volatility": "immutable"
+      },
+      {
+        "args": "secret_name text",
+        "callers": {
+          "code": [
+            {
+              "file": "supabase/migrations/20261125120000_ai_providers_endpoint_secret_binding.sql",
+              "hits": 1
+            }
+          ],
+          "code_total_files": 1,
+          "cron": [],
+          "db": [],
+          "triggers": [],
+          "views": []
+        },
+        "comment": null,
+        "config": null,
+        "definition": null,
+        "definition_sha": "3a81bbd98bd5477b",
+        "execute_api_roles": "authenticated, service_role",
+        "execute_public": false,
+        "is_trigger_fn": false,
+        "kind": "function",
+        "language": "sql",
+        "leakproof": false,
+        "name": "ai_provider_secret_name_is_safe",
+        "owner": "postgres",
+        "returns": "boolean",
+        "schema": "public",
+        "security_definer": false,
+        "strict": false,
+        "volatility": "immutable"
+      },
+      {
         "args": "p_key text, p_window_start timestamp with time zone",
         "callers": {
           "code": [
@@ -53157,8 +53257,17 @@
       {
         "args": "",
         "callers": {
-          "code": [],
-          "code_total_files": 0,
+          "code": [
+            {
+              "file": "src/components/admin/CrisisRoom.tsx",
+              "hits": 1
+            },
+            {
+              "file": "src/hooks/business/useCrisisRoomMetrics.ts",
+              "hits": 1
+            }
+          ],
+          "code_total_files": 2,
           "cron": [],
           "db": [],
           "triggers": [],
@@ -89812,6 +89921,12 @@
         "statements": 1,
         "statements_sha": "5e3d74b853976a0d",
         "version": "20261124120000"
+      },
+      {
+        "name": "ai_providers_endpoint_secret_binding",
+        "statements": 1,
+        "statements_sha": "eaa93059d855c85c",
+        "version": "20261125120000"
       },
       {
         "name": "ia009_kill_switch_chaves",

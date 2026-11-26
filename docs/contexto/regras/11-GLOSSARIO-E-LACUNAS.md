@@ -1,6 +1,6 @@
 # 11 · GLOSSÁRIO, DADOS DE REFERÊNCIA E LACUNAS
 
-> Gerado automaticamente por AI Context Sync v1.3.2 · commit `de31ddec9c` · branch `main` · 2026-11-26 02:13 UTC
+> Gerado automaticamente por AI Context Sync v1.3.2 · commit `71d923d1d0` · branch `main` · 2026-11-26 02:30 UTC
 > Não edite à mão — regras humanas vão em `manual/`.
 
 ## Glossário do domínio (entidades do sistema)
@@ -307,7 +307,7 @@
 | `INSTANCE_PAUSES_QUERY_KEY` (TS) | 'instance-pauses' |  | `src/components/monitoring/hooks/useInstancePauses.ts` |
 | `MetricStatus` (TS) | good \| warning \| critical |  | `src/components/performance/metricThresholds.ts` |
 | `PeriodOption` (TS) | 7d \| 14d \| 30d \| custom |  | `src/components/queues/PeriodSelector.tsx` |
-| … +374 linhas — lista completa em `context.json` | | | |
+| … +377 linhas — lista completa em `context.json` | | | |
 
 ## Dados de referência (seed — planos, categorias, perfis fixos)
 

@@ -2,6 +2,13 @@
 
 Diff semântico gerado a cada coleta em que algo mudou.
 
+## 2026-11-26 02:29 UTC
+
+- **constraints** adicionado (2): `public.ai_providers.ai_providers_api_endpoint_safe`, `public.ai_providers.ai_providers_api_key_secret_name_safe`
+- **functions** adicionado (2): `public.ai_provider_endpoint_is_safe(endpoint text)`, `public.ai_provider_secret_name_is_safe(secret_name text)`
+- **functions** alterado (1): `public.crisis_room_snapshot()`
+- **migrations** adicionado (1): `20261125120000_ai_providers_endpoint_secret_binding`
+
 ## 2026-11-26 01:20 UTC
 
 - **migrations** adicionado (1): `20261125130000_ia009_kill_switch_chaves`

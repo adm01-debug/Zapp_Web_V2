@@ -1,7 +1,7 @@
 {
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
- "nos": 2416,
+ "nos": 2417,
  "arestas": 8323,
  "hubs": [
   {
@@ -626,14 +626,14 @@
    "importado_por": 12
   },
   {
-   "modulo": "hooks/crm",
-   "depende_de": 10,
-   "importado_por": 19
-  },
-  {
    "modulo": "components/settings",
    "depende_de": 22,
    "importado_por": 6
+  },
+  {
+   "modulo": "hooks/crm",
+   "depende_de": 10,
+   "importado_por": 18
   },
   {
    "modulo": "hooks/inbox",

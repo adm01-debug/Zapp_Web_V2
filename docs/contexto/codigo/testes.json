@@ -5,18 +5,18 @@
   "vitest",
   "playwright"
  ],
- "total": 2831,
+ "total": 2832,
  "por_tipo": {
   "contrato": 116,
   "e2e": 76,
   "pytest": 3,
   "qa": 10,
-  "unit": 2534
+  "unit": 2535
  },
  "onde_ficam": [
   {
    "padrao": "co-localizado (__tests__)",
-   "arquivos": 2104
+   "arquivos": 2105
   },
   {
    "padrao": "outro",
@@ -3437,20 +3437,22 @@
   {
    "arquivo": "src/components/admin/__tests__/CrisisRoom.canais.test.tsx",
    "tipo": "unit",
-   "linhas": 154,
+   "linhas": 145,
    "testa": [
-    "src/components/admin/CrisisRoom.tsx"
+    "src/components/admin/CrisisRoom.tsx",
+    "src/hooks/business/useCrisisRoomMetrics.ts"
    ],
    "casos": 6
   },
   {
    "arquivo": "src/components/admin/__tests__/CrisisRoom.metricas.test.tsx",
    "tipo": "unit",
-   "linhas": 240,
+   "linhas": 183,
    "testa": [
-    "src/components/admin/CrisisRoom.tsx"
+    "src/components/admin/CrisisRoom.tsx",
+    "src/hooks/business/useCrisisRoomMetrics.ts"
    ],
-   "casos": 4
+   "casos": 5
   },
   {
    "arquivo": "src/components/admin/__tests__/CronJobsTab.tarefas.test.tsx",
@@ -17063,6 +17065,15 @@
    "casos": 17
   },
   {
+   "arquivo": "src/hooks/business/__tests__/useCrisisRoomMetrics.test.tsx",
+   "tipo": "unit",
+   "linhas": 222,
+   "testa": [
+    "src/hooks/business/useCrisisRoomMetrics.ts"
+   ],
+   "casos": 11
+  },
+  {
    "arquivo": "src/hooks/business/__tests__/useNPSSurveys.falha.test.tsx",
    "tipo": "unit",
    "linhas": 95,
@@ -26779,6 +26790,7 @@
   "src/hooks/business/useBusinessHoursCheck.ts": 1,
   "src/hooks/business/useCSAT.ts": 3,
   "src/hooks/business/useClientWallet.ts": 1,
+  "src/hooks/business/useCrisisRoomMetrics.ts": 3,
   "src/hooks/business/useNPSSurveys.ts": 2,
   "src/hooks/business/useQueueAnalytics.ts": 1,
   "src/hooks/business/useQueueGoals.ts": 5,

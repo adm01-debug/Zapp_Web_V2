@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "de31ddec9c29caa989e878921723a93a15720b38",
+  "commit": "71d923d1d004345d13fc760fa4f417ddb2891643",
   "branch": "main",
-  "data_commit": "2026-11-26T01:48:29Z",
+  "data_commit": "2026-11-26T02:13:25Z",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "71d923d1",
+    "data": "2026-11-26",
+    "assunto": "feat: Sala de Crise mede pelo agregado crisis_room_snapshot (fim das 4 consultas no navegador) (#3396)"
+   },
    {
     "sha": "de31ddec",
     "data": "2026-11-26",
@@ -126,14 +131,9 @@
     "sha": "06d10c80",
     "data": "2026-11-24",
     "assunto": "fix(ci): guard enxerga wrapper que passa o nome da edge — gmail-send e gmail-sync saem de orfas (#3365)"
-   },
-   {
-    "sha": "f6d0d50c",
-    "data": "2026-11-24",
-    "assunto": "chore(resgate): preserva dossiês e mapas do resgate na main (#3364)"
    }
   ],
-  "arquivos_mudados_7d": 2734,
+  "arquivos_mudados_7d": 2739,
   "pastas_mais_mudadas_30d": [
    {
     "pasta": "docs/contexto/supabase",
@@ -223,7 +223,7 @@
    },
    {
     "arquivo": "docs/DB-INVENTORY.md",
-    "mudancas": 12
+    "mudancas": 13
    },
    {
     "arquivo": ".github/workflows/db-guard.yml",
@@ -314,21 +314,21 @@
   ]
  },
  "contagens": {
-  "arquivos_total": 14812,
-  "arquivos_codigo": 5155,
-  "linhas_codigo": 956584,
+  "arquivos_total": 14814,
+  "arquivos_codigo": 5157,
+  "linhas_codigo": 956955,
   "rotas": 18,
   "rotas_http_backend": 11,
   "vistas_por_id": 55,
   "itens_menu": 61,
   "modulos": 149,
   "componentes": 936,
-  "hooks": 517,
+  "hooks": 518,
   "edge_functions": 93,
   "tabelas": 223,
   "migrations": 1155,
   "cron_jobs": 29,
-  "testes": 2831,
+  "testes": 2832,
   "workflows": 26,
   "scripts": 453,
   "docs_md": 3988
@@ -740,7 +740,7 @@
   },
   "src/components": {
    "arquivos": 2321,
-   "linhas": 395537
+   "linhas": 395403
   },
   "src/config": {
    "arquivos": 3,
@@ -759,8 +759,8 @@
    "linhas": 3293
   },
   "src/hooks": {
-   "arquivos": 1036,
-   "linhas": 167866
+   "arquivos": 1038,
+   "linhas": 168371
   },
   "src/i18n": {
    "arquivos": 2,

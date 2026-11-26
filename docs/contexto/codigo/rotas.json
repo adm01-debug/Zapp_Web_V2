@@ -169,6 +169,7 @@
     "useCreateDepartmentInvite",
     "useCreateMultiplixDispatch",
     "useCreateTeamConversation",
+    "useCrisisRoomMetrics",
     "useCurrentModule",
     "useCustomEmojis",
     "useCustomShortcuts",
@@ -199,6 +200,7 @@
     "useDiscountGuardrail",
     "useDocumentBadge",
     "useDocumentTitle",
+    "useDocumentVisible",
     "useDownloadPermission",
     "useDraftOwnerId",
     "useEditTeamMessage",
@@ -727,6 +729,7 @@
     "useCreateDepartmentInvite",
     "useCreateMultiplixDispatch",
     "useCreateTeamConversation",
+    "useCrisisRoomMetrics",
     "useCurrentModule",
     "useCustomEmojis",
     "useCustomShortcuts",
@@ -1452,7 +1455,7 @@
     "unknown",
     "user"
    ],
-   "arquivos_puxados": 1595
+   "arquivos_puxados": 1596
   },
   {
    "protegida": false,
@@ -7523,19 +7526,18 @@
    "arquivo": "src/components/admin/SupervisaoView.tsx",
    "registrada_em": "src/pages/ViewRouter.tsx",
    "hooks": [
-    "useAgentPresenceJoin",
-    "useAgentPresenceMap",
     "useAppBootstrap",
     "useAuth",
     "useCallback",
     "useConnectionsHealth",
     "useContext",
+    "useCrisisRoomMetrics",
+    "useDocumentVisible",
     "useEffect",
     "useLayoutContext",
     "useLocation",
     "useMemo",
     "useMessageUpdateBatcher",
-    "useMyPresenceStatus",
     "useNavigate",
     "useNotificationLeader",
     "useNotificationSettings",
@@ -7560,14 +7562,12 @@
     "useUserRole"
    ],
    "hooks_locais": [
-    "useAgentPresenceJoin",
-    "useAgentPresenceMap",
     "useAppBootstrap",
     "useAuth",
     "useConnectionsHealth",
+    "useCrisisRoomMetrics",
     "useLayoutContext",
     "useMessageUpdateBatcher",
-    "useMyPresenceStatus",
     "useNotificationSettings",
     "useOfflineCache",
     "usePublishIncomingAlertIdentity",
@@ -7586,7 +7586,6 @@
    ],
    "tabelas": [
     "contacts",
-    "conversation_sla",
     "messages",
     "playbooks",
     "profiles",
@@ -7612,7 +7611,6 @@
     "detect-new-device"
    ],
    "canais_realtime": [
-    "agent-presence-changes",
     "chat-reactions:${messageId}"
    ],
    "flags": [],

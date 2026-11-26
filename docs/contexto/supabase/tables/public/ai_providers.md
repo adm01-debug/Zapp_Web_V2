@@ -66,6 +66,8 @@ Políticas RLS (nome, operação, papéis e modo; as expressões permanecem no c
 
 | nome | tipo | definição | on delete | on update | validada |
 |---|---|---|---|---|---|
+| ai_providers_api_endpoint_safe | CHECK | `CHECK (ai_provider_endpoint_is_safe(api_endpoint))` |  |  | sim |
+| ai_providers_api_key_secret_name_safe | CHECK | `CHECK (ai_provider_secret_name_is_safe(api_key_secret_name))` |  |  | sim |
 | ai_providers_created_by_fkey | FOREIGN KEY | `FOREIGN KEY (created_by) REFERENCES profiles(id)` | NO ACTION | NO ACTION | sim |
 | ai_providers_pkey | PRIMARY KEY | `PRIMARY KEY (id)` |  |  | sim |
 

@@ -1,6 +1,6 @@
 # 07 · REGRAS DE NEGÓCIO
 
-> Gerado automaticamente por AI Context Sync v1.3.2 · commit `de31ddec9c` · branch `main` · 2026-11-26 02:13 UTC
+> Gerado automaticamente por AI Context Sync v1.3.2 · commit `71d923d1d0` · branch `main` · 2026-11-26 02:30 UTC
 > Não edite à mão — regras humanas vão em `manual/`.
 
 ## A. Regras escritas por humanos (`manual/` — prioridade máxima, nunca sobrescrito)
@@ -1764,6 +1764,9 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | TomPreferido | direto \| consultivo \| formal | `src/hooks/assistant/useAssistantProfile.ts` |
 | MFA_TOTP_QUERY_KEY | 'mfa-verified-totp' | `src/hooks/auth/useMFA.ts` |
 | ReauthMotivo | senha_incorreta \| conta_bloqueada \| indisponivel \| rede \| codigo_necessario \| codigo_incorreto | `src/hooks/auth/useReauthentication.ts` |
+| CrisisMetricKey | unanswered_messages \| queue_ratio \| sla_breached \| online_agents | `src/hooks/business/useCrisisRoomMetrics.ts` |
+| CrisisSeverity | ok \| warning \| critical \| unknown | `src/hooks/business/useCrisisRoomMetrics.ts` |
+| CRISIS_ROOM_QUERY_KEY | 'crisis-room-snapshot' | `src/hooks/business/useCrisisRoomMetrics.ts` |
 | QUEUE_GOAL_BANDS | 50, 75, 100 | `src/hooks/business/useQueueGoals.ts` |
 | QUEUE_GOAL_BANDS_INVERTED | 25, 50, 75 | `src/hooks/business/useQueueGoals.ts` |
 | SNOOZE_DURATIONS | '1h', '3h', 'tomorrow', 'nextweek' | `src/hooks/chat/snoozeDurations.ts` |
@@ -1925,10 +1928,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | SenderKind | self \| agent \| contact \| team | `src/lib/fileSenderIdentity.ts` |
 | PauseWindow | 24h \| 7d | `src/lib/instancePauseSeries.ts` |
 | GoalPeriodKey | today \| week \| month | `src/lib/localDay.ts` |
-| GeoFailureKind | aborted \| timeout \| rate_limited \| http \| network \| not_found | `src/lib/mapboxGeocode.ts` |
-| MapboxFailureKind | timeout \| unauthorized \| rate_limited \| server_error \| network \| invalid_token \| forbidden \| unknown | `src/lib/mapboxToken.ts` |
-| NavegadorDetectado | Edge \| Opera \| Firefox \| Samsung Internet \| Chrome \| Safari \| Unknown | `src/lib/parseUserAgent.ts` |
-| … +146 linhas — lista completa em `context.json` | | |
+| … +149 linhas — lista completa em `context.json` | | |
 
 ## F. Validações de entrada
 
@@ -2875,6 +2875,10 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 - **computeAbandonmentRate(messages: AbandonmentMessage[], windowEnd: Date,)** — `src/hooks/business/useAbandonmentRate.ts`
   ```
   const byContact = new Map<string, AbandonmentMessage[]>(); for (const message of messages) { if (!message.contact_id || !message.created_at) continue; const list = byContact.get(message.contact_id); if (list) list.push(message); else byContact.set(message.contact_id, [message]); } let responded = 0; let abandoned = 0; let waiting = 0; for (const contactMessages of byContact.values()) { for (const session of sessionsOf(contactMessages)) { const clientMessages = session.filter(m => m.sender === 'c …
+  ```
+- **crisisSeverity(key: CrisisMetricKey, value: number | null)** — `src/hooks/business/useCrisisRoomMetrics.ts`
+  ```
+  if (value == null || !Number.isFinite(value)) return 'unknown'; const { attention, critical, lowerIsWorse } = CRISIS_THRESHOLDS[key]; if (lowerIsWorse) { if (value < critical) return 'critical'; if (value < attention) return 'warning'; return 'ok'; } if (value > critical) return 'critical'; if (value > attention) return 'warning'; return 'ok';
   ```
 - **generatePredictionFromHistory(messageHistory: { hour: number; count: number }[])** — `src/hooks/business/useDemandPrediction.ts`
   ```
@@ -3922,7 +3926,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `DEFAULT_REFRESH_MS` | `60` | `src/hooks/admin/useSupervisorQueue.ts` |
 | `RECENT_SENDS_WINDOW_DAYS` | `30` | `src/hooks/agents/useAgentRecentSends.ts` |
 | `DAY_MS` | `24` | `src/hooks/agents/useAgentRecentSends.ts` |
-| … +704 linhas — lista completa em `context.json` | | |
+| … +706 linhas — lista completa em `context.json` | | |
 
 ### H.2 Prazos, expirações e janelas de tempo
 
@@ -3942,7 +3946,6 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `staleTime: 10 * 60 * 1000,` | `src/components/admin/AdminCRMDashboard.tsx` |
 | `staleTime: 15 * 60 * 1000,` | `src/components/admin/AdminCRMDashboard.tsx` |
 | `staleTime: 5 * 60 * 1000,` | `src/components/admin/AdminCRMDashboard.tsx` |
-| `const oneHourAgo = new Date(now.getTime() - 60 * 60 * 1000);` | `src/components/admin/CrisisRoom.tsx` |
 | `const periodStart = new Date(now.getTime() - 24 * 60 * 60 * 1000).toISOString();` | `src/components/admin/SupervisorCopilot.tsx` |
 | `return { since: new Date(now.getTime() - 24 * 60 * 60 * 1000).toISOString(), now };` | `src/components/admin/SupervisorCopilot.tsx` |
 | `: 6 * 60 * 60_000;` | `src/components/admin/telemetry/TelemetryCharts.tsx` |
@@ -4228,7 +4231,8 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `v_minute_start := statement_timestamp() - interval '1 minute';` | `supabase/migrations/20261009031223_talkx_multiplix_consumo_compartilhado.sql` |
 | `v_next_day_at := v_day_start + interval '1 day';` | `supabase/migrations/20261009031223_talkx_multiplix_consumo_compartilhado.sql` |
 | `-- create or replace function public.record_talkx_conversion(p_campaign_id uuid, p_external_ref text, p_value numeric, p_source text, p_currency text default 'B …` | `supabase/migrations/20261009031958_talkx_v4_x041_atribuicao_negocio_ganho_receita_roi.sql` |
-| … +92 linhas — lista completa em `context.json` | |
+| `IF p_occurred_at > now() + interval '1 hour' THEN` | `supabase/migrations/20261009031958_talkx_v4_x041_atribuicao_negocio_ganho_receita_roi.sql` |
+| … +91 linhas — lista completa em `context.json` | |
 
 ### H.3 Limites de paginação
 
@@ -4675,7 +4679,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | disk-full | `scripts/ci/e2e-isolated-provider-readiness.unit.mjs` |
 | must-not-read-service-role | `scripts/ci/e2e-isolated-provider-readiness.unit.mjs` |
 | synthetic transport rejection | `scripts/ci/e2e-isolated-runtime-probe.unit.mjs` |
-| … +1874 linhas — lista completa em `context.json` | |
+| … +1878 linhas — lista completa em `context.json` | |
 
 ## J. Controle de acesso no código (checagens de perfil/permissão)
 
@@ -4749,7 +4753,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `owner` | `supabase/migrations/20260927270018_team_chat_e28_fix_find_or_create_race.sql` |
 | `anon` | `supabase/migrations/20260927340000_fix_add_agent_xp_negative_and_guard.sql` |
 
-## K. Testes como especificação (22968 testes em 2438 arquivos — nomes completos em `context.json`)
+## K. Testes como especificação (22982 testes em 2439 arquivos — nomes completos em `context.json`)
 
 | Arquivo | Testes | Exemplos do que o sistema DEVE fazer |
 |---|---|---|
@@ -5053,7 +5057,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `supabase/functions/multiplix-dispatch/actions/__tests__/listing.test.ts` | 17 | dispatch.list escopo: sem permissao ampla so devolve os disparos do dono · dispatch.list escopo: usuario sem profile e sem permissao -> lista vazia (nao consulta a tabela) · dispatch.list escopo: a permissao ampla ve os disparos de qualquer dono · dispatch.list paginacao: limit/offset recortam na ordem created_at desc e total e exato … |
 | `supabase/functions/talkx-ai/index.test.ts` | 17 | X076: flag ai_insights desligada recusa com 403 ai_disabled e não paga o proxy · X076: orçamento mensal no padrão (0 = desligado) recusa com 403 ai_disabled · X076: gasto do mês no teto recusa com 429 budget_exceeded e não paga o proxy · X076: gasto abaixo do teto passa (o teto não é desligamento geral) … |
 | `tests/contracts/ai-values.contract.test.ts` | 17 | IA-023 · normalizeScore nunca inventa número · trata ausência como ausência (não como 50 nem 3) · rejeita string numérica em vez de coagir ( · rejeita NaN/Infinity … |
-| … +2138 linhas — lista completa em `context.json` | | |
+| … +2139 linhas — lista completa em `context.json` | | |
 
 ## L. Eventos de webhook tratados (contratos com sistemas externos)
 
@@ -5300,7 +5304,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | grupos principais da navegação). A permissão `google_calendar` era oferecida aqui e | `src/components/admin/AdminView.tsx` |
 | supervisor não deve nem ver a aba (evita abrir uma tela que só daria acesso negado). | `src/components/admin/AdminView.tsx` |
 | `profiles.access_level` está DEPRECATED: o campo é registro, não permissão. */} | `src/components/admin/AdminView.tsx` |
-| (`profiles.is_active`) é permissão de acesso, não presença — R2-AUTH-036/R2-MOD-030. | `src/components/admin/CrisisRoom.tsx` |
+| * Cartões em "não medido" — enquanto não há agregado bom (primeira carga, permissão | `src/components/admin/CrisisRoom.tsx` |
 | TODAS as sessões do usuário alvo. NUNCA atualizar apenas | `src/components/admin/ForceLogoutButton.tsx` |
 | qualquer uma delas nao pode sobrescrever o ultimo dado bom com zero. | `src/components/admin/GmailWebhookMonitor.tsx` |
 | e cliques por tipo de resultado. Leitura apenas — esta tela NÃO exporta, não | `src/components/admin/SearchInsightsView.tsx` |
@@ -5570,4 +5574,4 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | Mostra no máximo 2 sugestões para não poluir o painel | `src/components/inbox/copilot/MissingQuestions.tsx` |
 | * CV-035/036 — Alerta de ocasião comercial detectada + prazo de entrega. | `src/components/inbox/copilot/OccasionAlert.tsx` |
 | Sobe/desce a linha uma posição por vez, trocando apenas de lugar os objetos | `src/components/inbox/interactive-builder/useInteractiveMessage.ts` |
-| … +1839 linhas — lista completa em `context.json` | |
+| … +1843 linhas — lista completa em `context.json` | |

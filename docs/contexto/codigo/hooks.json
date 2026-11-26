@@ -1,7 +1,7 @@
 {
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
- "total": 517,
+ "total": 518,
  "hooks": [
   {
    "arquivo": "analise-prs/resgate-261118-lote2/src/hooks/useMotionSeguro.ts",
@@ -2879,6 +2879,30 @@
     "src/hooks/business/index.ts"
    ],
    "coberto_por_testes": 1
+  },
+  {
+   "arquivo": "src/hooks/business/useCrisisRoomMetrics.ts",
+   "hooks_exportados": [
+    "useCrisisRoomMetrics"
+   ],
+   "linhas": 283,
+   "dominio": "hooks/business",
+   "tabelas": [],
+   "rpcs": [],
+   "edges": [],
+   "hooks_internos": [
+    "useDocumentVisible",
+    "useEffect",
+    "useQuery",
+    "useRef",
+    "useState"
+   ],
+   "canais_realtime": [],
+   "usado_por": 1,
+   "usado_por_arquivos": [
+    "src/components/admin/CrisisRoom.tsx"
+   ],
+   "coberto_por_testes": 3
   },
   {
    "arquivo": "src/hooks/business/useCSAT.ts",
@@ -6499,9 +6523,8 @@
    "canais_realtime": [
     "agent-presence-changes"
    ],
-   "usado_por": 7,
+   "usado_por": 6,
    "usado_por_arquivos": [
-    "src/components/admin/CrisisRoom.tsx",
     "src/components/layout/AppShell.tsx",
     "src/components/layout/SidebarUserPill.tsx",
     "src/hooks/analytics/useDashboardData.ts",

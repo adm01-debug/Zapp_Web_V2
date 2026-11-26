@@ -1,15 +1,15 @@
 {
  "meta": {
-  "sha": "de31ddec9c29caa989e878921723a93a15720b38",
+  "sha": "71d923d1d004345d13fc760fa4f417ddb2891643",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-26 02:13 UTC",
-  "files_total": 14659,
-  "code_files": 8193,
-  "code_lines": 1233545
+  "generated_at": "2026-11-26 02:30 UTC",
+  "files_total": 14661,
+  "code_files": 8195,
+  "code_lines": 1233916
  },
  "version": "1.3.2",
- "facts_hash": "26a55bc3a5e33df5",
+ "facts_hash": "f5b3f45b71a6300c",
  "stack": {
   "frameworks": [
    "React + Vite",
@@ -368,8 +368,8 @@
   "package_manager": "bun",
   "languages": {
    ".sql": 3065,
-   ".tsx": 2484,
-   ".ts": 2021,
+   ".tsx": 2485,
+   ".ts": 2022,
    ".mjs": 496,
    ".py": 125,
    ".cjs": 19,
@@ -73292,6 +73292,10 @@
     "file": "src/hooks/business/useClientWallet.ts"
    },
    {
+    "name": "useCrisisRoomMetrics",
+    "file": "src/hooks/business/useCrisisRoomMetrics.ts"
+   },
+   {
     "name": "useDemandPrediction",
     "file": "src/hooks/business/useDemandPrediction.ts"
    },
@@ -76114,7 +76118,7 @@
   {
    "module": "src/components",
    "files": 2321,
-   "lines": 395537,
+   "lines": 395403,
    "tables": [
     "agent_skills",
     "agent_visibility_grants",
@@ -76138,7 +76142,6 @@
     "conversation_analyses",
     "conversation_closures",
     "conversation_events",
-    "conversation_sla",
     "crm_contact_links",
     "csat_auto_config",
     "email_threads",
@@ -76462,8 +76465,8 @@
   },
   {
    "module": "src/hooks",
-   "files": 1036,
-   "lines": 167866,
+   "files": 1038,
+   "lines": 168371,
    "tables": [
     "agent_achievements",
     "agent_stats",
@@ -76603,10 +76606,10 @@
     "useBusinessHoursCheck.ts: getSaoPauloDayOfWeek, useBusinessHoursCheck",
     "useCSAT.ts: CSATSurvey, CSATStats, useCSAT, CSATAgentBreakdown, CSATQueueBreakdown, CSATTimelinePoint",
     "useClientWallet.ts: useClientWallet",
+    "useCrisisRoomMetrics.ts: CRISIS_ROOM_REFETCH_INTERVAL_MS, CRISIS_ROOM_RPC, CRISIS_ROOM_QUERY_KEY, CrisisRoomSnapshot, CrisisMetricKey, CrisisSeverity",
     "useDemandPrediction.ts: PredictionPoint, DemandInsights, useDemandPrediction",
     "useNPSSurveys.ts: NPSSurvey, NPS_SURVEY_LIMIT, useNPSSurveys",
-    "useQueueAnalytics.ts: useQueueAnalytics",
-    "useQueueGoals.ts: QueueGoal, QueueAlert, QueueGoalMetricsRow, QueueGoalMetricDefinition, QUEUE_GOAL_METRICS, QUEUE_GOAL_BANDS"
+    "useQueueAnalytics.ts: useQueueAnalytics"
    ],
    "docs": [
     "realtimeSharedTopic.test.tsx: Regressao do bump supabase-js 2.116 (#460): desde a realtime-js 2.101, `.on()` em canal ja inscrito lanca erro e `supabase.channel(nome)` reaproveita o canal de mesmo nome. Hooks com topico fixo montados em dois componentes ao mesmo tempo (TalkXView > TalkXCampaignScheduled, QueuesView > QueueGoalsD …",
@@ -78722,7 +78725,6 @@
    },
    "conversation_sla": {
     "select": [
-     "src/components/admin/CrisisRoom.tsx",
      "src/hooks/analytics/useGoalNotifications.ts",
      "src/hooks/business/useWarRoomAlerts.ts",
      "src/hooks/chat/useNextBestAction.ts",
@@ -79233,7 +79235,6 @@
    "messages": {
     "select": [
      "src/__tests__/rls-boundary.test.ts",
-     "src/components/admin/CrisisRoom.tsx",
      "src/components/admin/SupervisorCopilot.tsx",
      "src/components/contacts/ContactActivityTimeline.tsx",
      "src/components/dashboard/ActivityHeatmap.tsx",
@@ -79595,7 +79596,6 @@
     ],
     "select": [
      "src/__tests__/rls-boundary.test.ts",
-     "src/components/admin/CrisisRoom.tsx",
      "src/components/admin/SupervisorCopilot.tsx",
      "src/components/admin/TrainingMode.tsx",
      "src/components/admin/VisibilityGrantsManager.tsx",
@@ -86433,6 +86433,21 @@
     "values": "senha_incorreta | conta_bloqueada | indisponivel | rede | codigo_necessario | codigo_incorreto"
    },
    {
+    "file": "src/hooks/business/useCrisisRoomMetrics.ts",
+    "name": "CrisisMetricKey",
+    "values": "unanswered_messages | queue_ratio | sla_breached | online_agents"
+   },
+   {
+    "file": "src/hooks/business/useCrisisRoomMetrics.ts",
+    "name": "CrisisSeverity",
+    "values": "ok | warning | critical | unknown"
+   },
+   {
+    "file": "src/hooks/business/useCrisisRoomMetrics.ts",
+    "name": "CRISIS_ROOM_QUERY_KEY",
+    "values": "'crisis-room-snapshot'"
+   },
+   {
     "file": "src/hooks/business/useQueueGoals.ts",
     "name": "QUEUE_GOAL_BANDS",
     "values": "50, 75, 100"
@@ -90925,6 +90940,10 @@
     "msg": " className="
    },
    {
+    "file": "src/components/admin/CrisisRoom.tsx",
+    "msg": " className="
+   },
+   {
     "file": "src/components/admin/CronJobsTab.tsx",
     "msg": " className="
    },
@@ -93275,6 +93294,18 @@
    {
     "file": "src/hooks/business/useClientWallet.ts",
     "msg": "Preencha o nome e selecione um vendedor."
+   },
+   {
+    "file": "src/hooks/business/useCrisisRoomMetrics.ts",
+    "msg": "Sala de Crise: resposta inválida (${campo} ausente)"
+   },
+   {
+    "file": "src/hooks/business/useCrisisRoomMetrics.ts",
+    "msg": "Sala de Crise: resposta inválida (agregado ausente)"
+   },
+   {
+    "file": "src/hooks/business/useCrisisRoomMetrics.ts",
+    "msg": "Sala de Crise: resposta inválida (queue_ratio)"
    },
    {
     "file": "src/hooks/business/useNPSSurveys.ts",
@@ -97074,7 +97105,7 @@
    },
    {
     "file": "src/components/admin/CrisisRoom.tsx",
-    "text": "(`profiles.is_active`) é permissão de acesso, não presença — R2-AUTH-036/R2-MOD-030."
+    "text": "* Cartões em \"não medido\" — enquanto não há agregado bom (primeira carga, permissão"
    },
    {
     "file": "src/components/admin/ForceLogoutButton.tsx",
@@ -99735,6 +99766,22 @@
    {
     "file": "src/hooks/business/useCSAT.ts",
     "text": "Mesma regra do hook de lista: a janela so contabiliza pesquisa respondida."
+   },
+   {
+    "file": "src/hooks/business/useCrisisRoomMetrics.ts",
+    "text": "* `unknown` existe para o valor que NÃO foi medido (`null`): a tela não pode pintar"
+   },
+   {
+    "file": "src/hooks/business/useCrisisRoomMetrics.ts",
+    "text": "medida legítima (operação calma) e não pode nascer de uma resposta quebrada."
+   },
+   {
+    "file": "src/hooks/business/useCrisisRoomMetrics.ts",
+    "text": "* Falha na leitura (permissão negada, rede, agregado inválido). Nunca vira zero. */"
+   },
+   {
+    "file": "src/hooks/business/useCrisisRoomMetrics.ts",
+    "text": "`null` (e não `false`) quando não há medição: a tela não pode anunciar"
    },
    {
     "file": "src/hooks/business/useNPSSurveys.ts",
@@ -115618,6 +115665,16 @@
     "value": "50"
    },
    {
+    "file": "src/hooks/business/useCrisisRoomMetrics.ts",
+    "name": "CRISIS_ROOM_REFETCH_INTERVAL_MS",
+    "value": "45"
+   },
+   {
+    "file": "src/hooks/business/useCrisisRoomMetrics.ts",
+    "name": "CRISIS_ROOM_RPC",
+    "value": "'crisis_room_snapshot'"
+   },
+   {
     "file": "src/hooks/business/useNPSSurveys.ts",
     "name": "NPS_SURVEY_LIMIT",
     "value": "500"
@@ -119498,18 +119555,6 @@
     "field": "role",
     "value": "agent",
     "kind": "escreve"
-   },
-   {
-    "file": "src/components/admin/CrisisRoom.tsx",
-    "field": "status",
-    "value": "online",
-    "kind": "compara"
-   },
-   {
-    "file": "src/components/admin/CrisisRoom.tsx",
-    "field": "role",
-    "value": "agent",
-    "kind": "filtra"
    },
    {
     "file": "src/components/admin/GmailWebhookMonitor.tsx",
@@ -135600,6 +135645,12 @@
     "body": "const byContact = new Map<string, AbandonmentMessage[]>(); for (const message of messages) { if (!message.contact_id || !message.created_at) continue; const list = byContact.get(message.contact_id); if (list) list.push(message); else byContact.set(message.contact_id, [message]); } let responded = 0; let abandoned = 0; let waiting = 0; for (const contactMessages of byContact.values()) { for (const session of sessionsOf(contactMessages)) { const clientMessages = session.filter(m => m.sender === 'c …"
    },
    {
+    "file": "src/hooks/business/useCrisisRoomMetrics.ts",
+    "name": "crisisSeverity",
+    "params": "key: CrisisMetricKey, value: number | null",
+    "body": "if (value == null || !Number.isFinite(value)) return 'unknown'; const { attention, critical, lowerIsWorse } = CRISIS_THRESHOLDS[key]; if (lowerIsWorse) { if (value < critical) return 'critical'; if (value < attention) return 'warning'; return 'ok'; } if (value > critical) return 'critical'; if (value > attention) return 'warning'; return 'ok';"
+   },
+   {
     "file": "src/hooks/business/useDemandPrediction.ts",
     "name": "generatePredictionFromHistory",
     "params": "messageHistory: { hour: number; count: number }[]",
@@ -136496,10 +136547,6 @@
    {
     "file": "src/components/admin/AdminCRMDashboard.tsx",
     "line": "staleTime: 5 * 60 * 1000,"
-   },
-   {
-    "file": "src/components/admin/CrisisRoom.tsx",
-    "line": "const oneHourAgo = new Date(now.getTime() - 60 * 60 * 1000);"
    },
    {
     "file": "src/components/admin/SupervisorCopilot.tsx",
@@ -143023,23 +143070,27 @@
    },
    {
     "file": "src/components/admin/__tests__/CrisisRoom.metricas.test.tsx",
-    "name": "CrisisRoom — pendência e presença reais, não proxies (R2-AUTH-036)"
+    "name": "CrisisRoom — agregado da RPC vira cartão, sem recálculo no navegador"
    },
    {
     "file": "src/components/admin/__tests__/CrisisRoom.metricas.test.tsx",
-    "name": "mensagem já respondida na última hora não conta como "
+    "name": "mostra exatamente o que a RPC mediu, com os dois limiares de cada cartão"
    },
    {
     "file": "src/components/admin/__tests__/CrisisRoom.metricas.test.tsx",
-    "name": "conta habilitada sem presença online não é agente ativo"
+    "name": "zero medido aparece como 0 e mantém "
    },
    {
     "file": "src/components/admin/__tests__/CrisisRoom.metricas.test.tsx",
-    "name": "conta só a pendência real e divide a carga por agente online"
+    "name": "sem agente online a carga sai "
    },
    {
     "file": "src/components/admin/__tests__/CrisisRoom.metricas.test.tsx",
-    "name": "sem agente online a carga não é medida — sai "
+    "name": "leitura que falha deixa todos os cartões em "
+   },
+   {
+    "file": "src/components/admin/__tests__/CrisisRoom.metricas.test.tsx",
+    "name": "primeira carga mostra esqueleto, não cartão zerado"
    },
    {
     "file": "src/components/admin/__tests__/CronJobsTab.tarefas.test.tsx",
@@ -192144,6 +192195,58 @@
    {
     "file": "src/hooks/business/__tests__/useClientWallet.test.tsx",
     "name": "exclusão negada pelo RLS repõe a regra na posição original e avisa o usuário"
+   },
+   {
+    "file": "src/hooks/business/__tests__/useCrisisRoomMetrics.test.tsx",
+    "name": "useCrisisRoomMetrics — Sala de Crise (PF-02)"
+   },
+   {
+    "file": "src/hooks/business/__tests__/useCrisisRoomMetrics.test.tsx",
+    "name": "busca o agregado da RPC e entrega os 4 cartões com os dois limiares"
+   },
+   {
+    "file": "src/hooks/business/__tests__/useCrisisRoomMetrics.test.tsx",
+    "name": "erro da RPC vira erro explícito e nunca zero"
+   },
+   {
+    "file": "src/hooks/business/__tests__/useCrisisRoomMetrics.test.tsx",
+    "name": "agregado quebrado (campo ausente) falha em vez de virar zero"
+   },
+   {
+    "file": "src/hooks/business/__tests__/useCrisisRoomMetrics.test.tsx",
+    "name": "queue_ratio nulo é "
+   },
+   {
+    "file": "src/hooks/business/__tests__/useCrisisRoomMetrics.test.tsx",
+    "name": "atualiza sozinho no intervalo configurado"
+   },
+   {
+    "file": "src/hooks/business/__tests__/useCrisisRoomMetrics.test.tsx",
+    "name": "aba oculta pausa o relógio e ao voltar mede de novo na hora"
+   },
+   {
+    "file": "src/hooks/business/__tests__/useCrisisRoomMetrics.test.tsx",
+    "name": "reconexão de rede re-sincroniza mesmo com o QueryClient do consumidor desligado"
+   },
+   {
+    "file": "src/hooks/business/__tests__/useCrisisRoomMetrics.test.tsx",
+    "name": "useCrisisRoomMetrics — parsing e severidade"
+   },
+   {
+    "file": "src/hooks/business/__tests__/useCrisisRoomMetrics.test.tsx",
+    "name": "parse rejeita agregado ausente/ não numérico sem inventar zero"
+   },
+   {
+    "file": "src/hooks/business/__tests__/useCrisisRoomMetrics.test.tsx",
+    "name": "parse mantém zero medido como zero e ratio nulo como null"
+   },
+   {
+    "file": "src/hooks/business/__tests__/useCrisisRoomMetrics.test.tsx",
+    "name": "severidade: zero é ok, não medido é unknown, limiares de piso contam invertido"
+   },
+   {
+    "file": "src/hooks/business/__tests__/useCrisisRoomMetrics.test.tsx",
+    "name": "a RPC chamada é crisis_room_snapshot"
    },
    {
     "file": "src/hooks/business/__tests__/useNPSSurveys.falha.test.tsx",
@@ -256481,7 +256584,6 @@
       "escreve:src/components/admin/AdminView.tsx",
       "escreve:src/components/admin/TrainingMode.tsx",
       "escreve:src/components/agents/InviteAgentDialog.tsx",
-      "filtra:src/components/admin/CrisisRoom.tsx",
       "filtra:src/components/admin/VisibilityGrantsManager.tsx"
      ],
      "system": [
@@ -256678,20 +256780,6 @@
       "escreve:supabase/functions/ai-transcribe-audio/index.ts",
       "filtra:supabase/functions/_shared/ai-circuit.ts"
      ],
-     "online": [
-      "compara:src/components/admin/CrisisRoom.tsx",
-      "compara:src/components/agents/AgentsView.tsx",
-      "compara:src/components/inbox/TransferDialog.tsx",
-      "compara:src/components/inbox/WhisperMode.tsx",
-      "compara:src/components/inbox/collaboration/HandoffDialog.tsx",
-      "compara:src/components/ui/avatar.tsx",
-      "compara:src/hooks/business/useWarRoomData.ts",
-      "compara:src/hooks/crm/useAgents.ts",
-      "compara:src/hooks/system/useSupabaseConnectivity.ts",
-      "escreve:src/components/layout/ProfileMenuContent.tsx",
-      "escreve:src/hooks/business/useWarRoomData.ts",
-      "escreve:src/hooks/crm/useAgents.ts"
-     ],
      "synced": [
       "compara:src/components/admin/GmailWebhookMonitor.tsx"
      ],
@@ -256819,6 +256907,19 @@
       "escreve:supabase/functions/ai-kb-ingest/index.ts",
       "escreve:supabase/functions/ai-transcribe-audio/index.ts",
       "filtra:supabase/functions/talkx-scheduler/index.ts"
+     ],
+     "online": [
+      "compara:src/components/agents/AgentsView.tsx",
+      "compara:src/components/inbox/TransferDialog.tsx",
+      "compara:src/components/inbox/WhisperMode.tsx",
+      "compara:src/components/inbox/collaboration/HandoffDialog.tsx",
+      "compara:src/components/ui/avatar.tsx",
+      "compara:src/hooks/business/useWarRoomData.ts",
+      "compara:src/hooks/crm/useAgents.ts",
+      "compara:src/hooks/system/useSupabaseConnectivity.ts",
+      "escreve:src/components/layout/ProfileMenuContent.tsx",
+      "escreve:src/hooks/business/useWarRoomData.ts",
+      "escreve:src/hooks/crm/useAgents.ts"
      ],
      "away": [
       "compara:src/components/agents/AgentsView.tsx",
@@ -304623,62 +304724,15 @@
   },
   "src/components/admin/CrisisRoom.tsx": {
    "path": "src/components/admin/CrisisRoom.tsx",
-   "lines": 265,
+   "lines": 197,
    "exports": [
     "function CrisisRoom"
    ],
-   "tables": [
-    {
-     "table": "messages",
-     "op": "select"
-    },
-    {
-     "table": "messages",
-     "op": "select"
-    },
-    {
-     "table": "profiles",
-     "op": "select"
-    },
-    {
-     "table": "conversation_sla",
-     "op": "select"
-    }
-   ],
-   "table_cols": {
-    "messages": [
-     "contact_id",
-     "created_at",
-     "id",
-     "sender"
-    ],
-    "profiles": [
-     "is_active",
-     "role",
-     "user_id"
-    ],
-    "conversation_sla": [
-     "first_response_breached",
-     "id"
-    ]
-   },
-   "status_values": [
-    {
-     "field": "status",
-     "value": "online",
-     "kind": "compara"
-    },
-    {
-     "field": "role",
-     "value": "agent",
-     "kind": "filtra"
-    }
+   "errors": [
+    " className="
    ],
    "rule_comments": [
-    "(`profiles.is_active`) é permissão de acesso, não presença — R2-AUTH-036/R2-MOD-030."
-   ],
-   "temporal": [
-    "const oneHourAgo = new Date(now.getTime() - 60 * 60 * 1000);"
+    "* Cartões em \"não medido\" — enquanto não há agregado bom (primeira carga, permissão"
    ]
   },
   "src/components/admin/CronJobsTab.tsx": {
@@ -305690,7 +305744,7 @@
   },
   "src/components/admin/__tests__/CrisisRoom.canais.test.tsx": {
    "path": "src/components/admin/__tests__/CrisisRoom.canais.test.tsx",
-   "lines": 154,
+   "lines": 145,
    "is_test": true,
    "tests": [
     "CrisisRoom — canais de WhatsApp ativos (PJ-06)",
@@ -305704,20 +305758,21 @@
   },
   "src/components/admin/__tests__/CrisisRoom.metricas.test.tsx": {
    "path": "src/components/admin/__tests__/CrisisRoom.metricas.test.tsx",
-   "lines": 240,
+   "lines": 183,
    "is_test": true,
-   "params": [
-    {
-     "name": "MINUTE",
-     "value": "60"
-    }
+   "errors": [
+    ").textContent).toContain("
+   ],
+   "rule_comments": [
+    "`queue_ratio` nulo NÃO pode virar 0: a carga por agente é indeterminada."
    ],
    "tests": [
-    "CrisisRoom — pendência e presença reais, não proxies (R2-AUTH-036)",
-    "mensagem já respondida na última hora não conta como ",
-    "conta habilitada sem presença online não é agente ativo",
-    "conta só a pendência real e divide a carga por agente online",
-    "sem agente online a carga não é medida — sai "
+    "CrisisRoom — agregado da RPC vira cartão, sem recálculo no navegador",
+    "mostra exatamente o que a RPC mediu, com os dois limiares de cada cartão",
+    "zero medido aparece como 0 e mantém ",
+    "sem agente online a carga sai ",
+    "leitura que falha deixa todos os cartões em ",
+    "primeira carga mostra esqueleto, não cartão zerado"
    ]
   },
   "src/components/admin/__tests__/CronJobsTab.tarefas.test.tsx": {
@@ -357363,6 +357418,73 @@
     "useClientWallet"
    ]
   },
+  "src/hooks/business/useCrisisRoomMetrics.ts": {
+   "path": "src/hooks/business/useCrisisRoomMetrics.ts",
+   "lines": 283,
+   "exports": [
+    "const CRISIS_ROOM_REFETCH_INTERVAL_MS",
+    "const CRISIS_ROOM_RPC",
+    "const CRISIS_ROOM_QUERY_KEY",
+    "interface CrisisRoomSnapshot",
+    "type CrisisMetricKey",
+    "type CrisisSeverity",
+    "interface CrisisThresholds",
+    "const CRISIS_THRESHOLDS",
+    "interface CrisisMetricReadout",
+    "const METRIC_LABELS",
+    "function crisisSeverity",
+    "function buildCrisisMetricReadouts",
+    "function parseCrisisRoomSnapshot",
+    "interface UseCrisisRoomMetricsOptions",
+    "interface UseCrisisRoomMetricsResult",
+    "function useCrisisRoomMetrics"
+   ],
+   "errors": [
+    "Sala de Crise: resposta inválida (${campo} ausente)",
+    "Sala de Crise: resposta inválida (agregado ausente)",
+    "Sala de Crise: resposta inválida (queue_ratio)"
+   ],
+   "enums": [
+    {
+     "name": "CrisisMetricKey",
+     "values": "unanswered_messages | queue_ratio | sla_breached | online_agents"
+    },
+    {
+     "name": "CrisisSeverity",
+     "values": "ok | warning | critical | unknown"
+    },
+    {
+     "name": "CRISIS_ROOM_QUERY_KEY",
+     "values": "'crisis-room-snapshot'"
+    }
+   ],
+   "params": [
+    {
+     "name": "CRISIS_ROOM_REFETCH_INTERVAL_MS",
+     "value": "45"
+    },
+    {
+     "name": "CRISIS_ROOM_RPC",
+     "value": "'crisis_room_snapshot'"
+    }
+   ],
+   "rule_comments": [
+    "* `unknown` existe para o valor que NÃO foi medido (`null`): a tela não pode pintar",
+    "medida legítima (operação calma) e não pode nascer de uma resposta quebrada.",
+    "* Falha na leitura (permissão negada, rede, agregado inválido). Nunca vira zero. */",
+    "`null` (e não `false`) quando não há medição: a tela não pode anunciar"
+   ],
+   "hooks": [
+    "useCrisisRoomMetrics"
+   ],
+   "calc_fns": [
+    {
+     "name": "crisisSeverity",
+     "params": "key: CrisisMetricKey, value: number | null",
+     "body": "if (value == null || !Number.isFinite(value)) return 'unknown'; const { attention, critical, lowerIsWorse } = CRISIS_THRESHOLDS[key]; if (lowerIsWorse) { if (value < critical) return 'critical'; if (value < attention) return 'warning'; return 'ok'; } if (value > critical) return 'critical'; if (value > attention) return 'warning'; return 'ok';"
+    }
+   ]
+  },
   "src/hooks/business/useDemandPrediction.ts": {
    "path": "src/hooks/business/useDemandPrediction.ts",
    "lines": 91,
@@ -357935,6 +358057,26 @@
     "exclui no banco, tira da lista e avisa",
     "exclusão negada pelo RLS mantém a lista intacta",
     "exclusão negada pelo RLS repõe a regra na posição original e avisa o usuário"
+   ]
+  },
+  "src/hooks/business/__tests__/useCrisisRoomMetrics.test.tsx": {
+   "path": "src/hooks/business/__tests__/useCrisisRoomMetrics.test.tsx",
+   "lines": 222,
+   "is_test": true,
+   "tests": [
+    "useCrisisRoomMetrics — Sala de Crise (PF-02)",
+    "busca o agregado da RPC e entrega os 4 cartões com os dois limiares",
+    "erro da RPC vira erro explícito e nunca zero",
+    "agregado quebrado (campo ausente) falha em vez de virar zero",
+    "queue_ratio nulo é ",
+    "atualiza sozinho no intervalo configurado",
+    "aba oculta pausa o relógio e ao voltar mede de novo na hora",
+    "reconexão de rede re-sincroniza mesmo com o QueryClient do consumidor desligado",
+    "useCrisisRoomMetrics — parsing e severidade",
+    "parse rejeita agregado ausente/ não numérico sem inventar zero",
+    "parse mantém zero medido como zero e ratio nulo como null",
+    "severidade: zero é ok, não medido é unknown, limiares de piso contam invertido",
+    "a RPC chamada é crisis_room_snapshot"
    ]
   },
   "src/hooks/business/__tests__/useNPSSurveys.falha.test.tsx": {
@@ -425408,10 +425550,24 @@
   }
  },
  "git": {
-  "sha": "de31ddec9c29caa989e878921723a93a15720b38",
+  "sha": "71d923d1d004345d13fc760fa4f417ddb2891643",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "71d923d1",
+    "date": "2026-11-25",
+    "author": "adm01-debug",
+    "subject": "feat: Sala de Crise mede pelo agregado crisis_room_snapshot (fim das 4 consultas no navegador) (#3396)",
+    "files": [
+     "docs/DB-INVENTORY.md",
+     "src/components/admin/CrisisRoom.tsx",
+     "src/components/admin/__tests__/CrisisRoom.canais.test.tsx",
+     "src/components/admin/__tests__/CrisisRoom.metricas.test.tsx",
+     "src/hooks/business/__tests__/useCrisisRoomMetrics.test.tsx",
+     "src/hooks/business/useCrisisRoomMetrics.ts"
+    ]
+   },
    {
     "sha": "de31ddec",
     "date": "2026-11-25",
@@ -427085,15 +427241,6 @@
     "files": [
      "src/components/tasks/shared/QuickAdd.tsx"
     ]
-   },
-   {
-    "sha": "36701c06",
-    "date": "2026-11-24",
-    "author": "adm01-debug",
-    "subject": "fix(ci): volta o pin do scorecard-action para v2.5.0 (#3358)",
-    "files": [
-     ".github/workflows/scorecard.yml"
-    ]
    }
   ],
   "hot_files": [
@@ -427112,6 +427259,10 @@
    [
     "docs/agentes/github-ci.md",
     3
+   ],
+   [
+    "docs/DB-INVENTORY.md",
+    2
    ],
    [
     "supabase/functions/_shared/ai-circuit.test.ts",
@@ -427142,6 +427293,26 @@
     2
    ],
    [
+    "src/components/admin/CrisisRoom.tsx",
+    1
+   ],
+   [
+    "src/components/admin/__tests__/CrisisRoom.canais.test.tsx",
+    1
+   ],
+   [
+    "src/components/admin/__tests__/CrisisRoom.metricas.test.tsx",
+    1
+   ],
+   [
+    "src/hooks/business/__tests__/useCrisisRoomMetrics.test.tsx",
+    1
+   ],
+   [
+    "src/hooks/business/useCrisisRoomMetrics.ts",
+    1
+   ],
+   [
     "supabase/functions/_shared/__tests__/ai-provider-egress.test.ts",
     1
    ],
@@ -427151,30 +427322,6 @@
    ],
    [
     "supabase/functions/chatbot-l1/index.test.ts",
-    1
-   ],
-   [
-    "supabase/functions/classify-audio-meme/index.test.ts",
-    1
-   ],
-   [
-    "supabase/functions/classify-emoji/index.test.ts",
-    1
-   ],
-   [
-    "supabase/functions/classify-sticker/index.test.ts",
-    1
-   ],
-   [
-    "supabase/functions/copilot-live/index.test.ts",
-    1
-   ],
-   [
-    "supabase/functions/voice-agent/index.test.ts",
-    1
-   ],
-   [
-    "supabase/migrations/20261125120000_ai_providers_endpoint_secret_binding.sql",
     1
    ]
   ]

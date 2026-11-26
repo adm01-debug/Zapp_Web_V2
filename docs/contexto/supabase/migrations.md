@@ -1157,4 +1157,5 @@ SQL em `migrations/<versao>_<nome>.sql`. Mudanças feitas pelo Dashboard/SQL Edi
 | 20261122190000 | [ia055_precos_entrada_e_saida](migrations/20261122190000_ia055_precos_entrada_e_saida.sql) | 8 |
 | 20261122200000 | [x076_talkx_ai_requests](migrations/20261122200000_x076_talkx_ai_requests.sql) | 13 |
 | 20261124120000 | [drop_rpcs_e2e_orfas](migrations/20261124120000_drop_rpcs_e2e_orfas.sql) | 1 |
+| 20261125120000 | [ai_providers_endpoint_secret_binding](migrations/20261125120000_ai_providers_endpoint_secret_binding.sql) | 1 |
 | 20261125130000 | [ia009_kill_switch_chaves](migrations/20261125130000_ia009_kill_switch_chaves.sql) | 1 |

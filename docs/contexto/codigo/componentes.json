@@ -349,17 +349,13 @@
     "CrisisRoom"
    ],
    "export_default": null,
-   "linhas": 265,
+   "linhas": 197,
    "dominio": "components/admin",
    "hooks_locais": [
-    "useAgentPresenceMap",
-    "useConnectionsHealth"
+    "useConnectionsHealth",
+    "useCrisisRoomMetrics"
    ],
-   "tabelas": [
-    "conversation_sla",
-    "messages",
-    "profiles"
-   ],
+   "tabelas": [],
    "edges": [],
    "usado_por": 1,
    "orfao": false

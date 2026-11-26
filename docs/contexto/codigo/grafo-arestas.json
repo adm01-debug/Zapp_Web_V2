@@ -478,9 +478,8 @@
    "src/components/ui/badge.tsx",
    "src/components/ui/button.tsx",
    "src/components/ui/card.tsx",
-   "src/hooks/connections/useConnectionsHealth.ts",
-   "src/hooks/crm/useAgentPresence.ts",
-   "src/integrations/supabase/client.ts"
+   "src/hooks/business/useCrisisRoomMetrics.ts",
+   "src/hooks/connections/useConnectionsHealth.ts"
   ],
   "src/components/admin/CronJobsTab.tsx": [
    "src/components/admin/useTarefasAgendadas.ts",
@@ -8334,6 +8333,9 @@
   ],
   "src/hooks/business/useClientWallet.ts": [
    "src/hooks/ui/use-toast.ts",
+   "src/integrations/supabase/client.ts"
+  ],
+  "src/hooks/business/useCrisisRoomMetrics.ts": [
    "src/integrations/supabase/client.ts"
   ],
   "src/hooks/business/useDemandPrediction.ts": [
