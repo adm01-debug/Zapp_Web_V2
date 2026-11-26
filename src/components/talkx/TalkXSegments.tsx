@@ -12,6 +12,7 @@ import { useTalkXSegments, emptyRules, RULE_FIELDS, RULE_OPS, useAudienceEstimat
 import { RailCard, MetaRow, TalkXEmptyState, TalkXSkeletonRows, FilterBarV2, TalkXPagination, Th, Td, KpiCardSkeleton, TalkXConfirmDialog, TalkXBulkBar, fmtInt, fmtDateTime, fmtAgo } from './talkxShared';
 import { TalkXQueryBoundary } from './kit/states';
 import { TalkXSegmentBuilder } from './segments/TalkXSegmentBuilder';
+import { SegmentTagsBlock } from './segments/SegmentTagsBlock';
 import { SegmentSideList } from './segments/SegmentSideList';
 import type { SegmentBuilderContent } from './segments/segmentBuilderReducer';
 import { validateSegmentRules } from './segments/segmentValidation';
@@ -823,6 +824,9 @@ function SegmentDetailRail({ s, onEdit, onCampaign, onClose, onFavorite }: {
             ))}
           </div>
         )}
+        {/* X157 — tags mais usadas por quem já recebeu campanha deste segmento.
+            A RPC `talkx_segment_tags` existia sem nenhuma tela lendo (C-11). */}
+        <SegmentTagsBlock segmentId={s.id} />
         <div className="flex flex-col gap-2 mt-1">
           <PrimaryButton icon={Zap} onClick={onCampaign} disabled={s.status !== 'active'} className="w-full justify-center">Usar em campanha</PrimaryButton>
           {s.status !== 'active' && <p className="text-xs text-destructive text-center">Segmento inativo: não pode ser usado em campanha.</p>}
