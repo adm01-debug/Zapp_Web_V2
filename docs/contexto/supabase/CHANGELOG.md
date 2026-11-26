@@ -2,6 +2,10 @@
 
 Diff semântico gerado a cada coleta em que algo mudou.
 
+## 2026-11-26 13:25 UTC
+
+- **functions** alterado (1): `public.talkx_segment_tags(p_segment uuid)`
+
 ## 2026-11-26 12:19 UTC
 
 - **functions** adicionado (1): `public.talkx_connection_send_budget_internal(p_connection_id uuid)`
