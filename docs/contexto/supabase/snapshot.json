@@ -50776,8 +50776,13 @@
       {
         "args": "p_template_id uuid, p_archived boolean",
         "callers": {
-          "code": [],
-          "code_total_files": 0,
+          "code": [
+            {
+              "file": "supabase/migrations/20261126213000_talkx_template_duplicate_archive_delete.sql",
+              "hits": 1
+            }
+          ],
+          "code_total_files": 1,
           "cron": [],
           "db": [],
           "triggers": [],
@@ -54311,8 +54316,17 @@
       {
         "args": "p_template_id uuid",
         "callers": {
-          "code": [],
-          "code_total_files": 0,
+          "code": [
+            {
+              "file": "supabase/migrations/20261126213000_talkx_template_duplicate_archive_delete.sql",
+              "hits": 1
+            },
+            {
+              "file": "supabase/migrations/20261126213001_talkx_template_delete_atomic.sql",
+              "hits": 1
+            }
+          ],
+          "code_total_files": 2,
           "cron": [],
           "db": [],
           "triggers": [],
@@ -54534,8 +54548,13 @@
       {
         "args": "p_template_id uuid",
         "callers": {
-          "code": [],
-          "code_total_files": 0,
+          "code": [
+            {
+              "file": "supabase/migrations/20261126213000_talkx_template_duplicate_archive_delete.sql",
+              "hits": 1
+            }
+          ],
+          "code_total_files": 1,
           "cron": [],
           "db": [],
           "triggers": [],
@@ -56967,7 +56986,7 @@
               "hits": 1
             }
           ],
-          "code_total_files": 72,
+          "code_total_files": 74,
           "cron": [],
           "db": [
             "public.archive_talkx_template",
@@ -58138,8 +58157,13 @@
       {
         "args": "",
         "callers": {
-          "code": [],
-          "code_total_files": 0,
+          "code": [
+            {
+              "file": "supabase/migrations/20261126213000_talkx_template_duplicate_archive_delete.sql",
+              "hits": 1
+            }
+          ],
+          "code_total_files": 1,
           "cron": [],
           "db": [],
           "triggers": [
@@ -58927,6 +58951,10 @@
               "hits": 1
             },
             {
+              "file": "supabase/functions/webhook-replay/index.ts",
+              "hits": 1
+            },
+            {
               "file": "supabase/functions/whatsapp-webhook/index.ts",
               "hits": 1
             },
@@ -58935,7 +58963,7 @@
               "hits": 1
             }
           ],
-          "code_total_files": 3,
+          "code_total_files": 4,
           "cron": [],
           "db": [],
           "triggers": [],
@@ -59196,7 +59224,7 @@
               "hits": 2
             }
           ],
-          "code_total_files": 35,
+          "code_total_files": 36,
           "cron": [],
           "db": [
             "public.admin_list_cron_jobs",
@@ -59356,11 +59384,11 @@
               "hits": 1
             },
             {
-              "file": "supabase/migrations/20251215025014_fcc5bc79-55e3-4972-8765-6a7840fdce5a.sql",
-              "hits": 2
+              "file": "supabase/functions/webhook-replay/index.ts",
+              "hits": 1
             }
           ],
-          "code_total_files": 412,
+          "code_total_files": 416,
           "cron": [],
           "db": [
             "public.add_agent_xp",
@@ -83453,13 +83481,85 @@
       {
         "code": "policy_auth_fn_not_wrapped",
         "detail": "Policy chama auth.uid()/jwt() sem `(select ...)`: é reavaliada por linha; envolva em subselect.",
+        "object": "public.campaign_contacts.Admins can insert campaign contacts",
+        "severity": "BAIXA"
+      },
+      {
+        "code": "policy_auth_fn_not_wrapped",
+        "detail": "Policy chama auth.uid()/jwt() sem `(select ...)`: é reavaliada por linha; envolva em subselect.",
+        "object": "public.campaign_contacts.Admins can view campaign contacts",
+        "severity": "BAIXA"
+      },
+      {
+        "code": "policy_auth_fn_not_wrapped",
+        "detail": "Policy chama auth.uid()/jwt() sem `(select ...)`: é reavaliada por linha; envolva em subselect.",
+        "object": "public.campaigns.Admins can insert campaigns",
+        "severity": "BAIXA"
+      },
+      {
+        "code": "policy_auth_fn_not_wrapped",
+        "detail": "Policy chama auth.uid()/jwt() sem `(select ...)`: é reavaliada por linha; envolva em subselect.",
+        "object": "public.chatbot_flows.Admins can insert chatbot flows",
+        "severity": "BAIXA"
+      },
+      {
+        "code": "policy_auth_fn_not_wrapped",
+        "detail": "Policy chama auth.uid()/jwt() sem `(select ...)`: é reavaliada por linha; envolva em subselect.",
         "object": "public.city_whitelist.Admins can manage city whitelist",
         "severity": "BAIXA"
       },
       {
         "code": "policy_auth_fn_not_wrapped",
         "detail": "Policy chama auth.uid()/jwt() sem `(select ...)`: é reavaliada por linha; envolva em subselect.",
+        "object": "public.followup_sequences.Admins can view followup sequences",
+        "severity": "BAIXA"
+      },
+      {
+        "code": "policy_auth_fn_not_wrapped",
+        "detail": "Policy chama auth.uid()/jwt() sem `(select ...)`: é reavaliada por linha; envolva em subselect.",
+        "object": "public.followup_steps.Admins can view followup steps",
+        "severity": "BAIXA"
+      },
+      {
+        "code": "policy_auth_fn_not_wrapped",
+        "detail": "Policy chama auth.uid()/jwt() sem `(select ...)`: é reavaliada por linha; envolva em subselect.",
+        "object": "public.meta_capi_events.Admins can view capi events",
+        "severity": "BAIXA"
+      },
+      {
+        "code": "policy_auth_fn_not_wrapped",
+        "detail": "Policy chama auth.uid()/jwt() sem `(select ...)`: é reavaliada por linha; envolva em subselect.",
+        "object": "public.products.Admins can insert products",
+        "severity": "BAIXA"
+      },
+      {
+        "code": "policy_auth_fn_not_wrapped",
+        "detail": "Policy chama auth.uid()/jwt() sem `(select ...)`: é reavaliada por linha; envolva em subselect.",
+        "object": "public.scheduled_reports.Admins can insert scheduled reports",
+        "severity": "BAIXA"
+      },
+      {
+        "code": "policy_auth_fn_not_wrapped",
+        "detail": "Policy chama auth.uid()/jwt() sem `(select ...)`: é reavaliada por linha; envolva em subselect.",
+        "object": "public.scheduled_reports.Admins can view scheduled reports",
+        "severity": "BAIXA"
+      },
+      {
+        "code": "policy_auth_fn_not_wrapped",
+        "detail": "Policy chama auth.uid()/jwt() sem `(select ...)`: é reavaliada por linha; envolva em subselect.",
+        "object": "public.security_alerts.Admins can insert security alerts",
+        "severity": "BAIXA"
+      },
+      {
+        "code": "policy_auth_fn_not_wrapped",
+        "detail": "Policy chama auth.uid()/jwt() sem `(select ...)`: é reavaliada por linha; envolva em subselect.",
         "object": "public.whatsapp_connections.Admins can delete connections",
+        "severity": "BAIXA"
+      },
+      {
+        "code": "policy_auth_fn_not_wrapped",
+        "detail": "Policy chama auth.uid()/jwt() sem `(select ...)`: é reavaliada por linha; envolva em subselect.",
+        "object": "public.whatsapp_templates.Admins can insert templates",
         "severity": "BAIXA"
       },
       {
@@ -90513,6 +90613,12 @@
         "statements": 1,
         "statements_sha": "d8df6c72836857be",
         "version": "20261126221500"
+      },
+      {
+        "name": "paridade_policies_admin_prod",
+        "statements": 1,
+        "statements_sha": "b06e542bb0156dd8",
+        "version": "20261126234500"
       }
     ],
     "policies": [
@@ -91334,6 +91440,18 @@
         "with_check": null
       },
       {
+        "cmd": "INSERT",
+        "name": "Admins can insert campaign contacts",
+        "permissive": "PERMISSIVE",
+        "roles": [
+          "authenticated"
+        ],
+        "schema": "public",
+        "table": "campaign_contacts",
+        "using": null,
+        "with_check": "is_admin_or_supervisor(auth.uid())"
+      },
+      {
         "cmd": "ALL",
         "name": "Admins can manage campaign contacts",
         "permissive": "PERMISSIVE",
@@ -91344,6 +91462,30 @@
         "table": "campaign_contacts",
         "using": "is_admin_or_supervisor(( SELECT auth.uid() AS uid))",
         "with_check": null
+      },
+      {
+        "cmd": "SELECT",
+        "name": "Admins can view campaign contacts",
+        "permissive": "PERMISSIVE",
+        "roles": [
+          "authenticated"
+        ],
+        "schema": "public",
+        "table": "campaign_contacts",
+        "using": "is_admin_or_supervisor(auth.uid())",
+        "with_check": null
+      },
+      {
+        "cmd": "INSERT",
+        "name": "Admins can insert campaigns",
+        "permissive": "PERMISSIVE",
+        "roles": [
+          "authenticated"
+        ],
+        "schema": "public",
+        "table": "campaigns",
+        "using": null,
+        "with_check": "is_admin_or_supervisor(auth.uid())"
       },
       {
         "cmd": "ALL",
@@ -91464,6 +91606,18 @@
         "table": "chatbot_executions",
         "using": "((contact_id IN ( SELECT c.id\n   FROM contacts c\n  WHERE (c.assigned_to IN ( SELECT p.id\n           FROM profiles p\n          WHERE (p.user_id = ( SELECT auth.uid() AS uid)))))) OR is_admin_or_supervisor(( SELECT auth.uid() AS uid)))",
         "with_check": null
+      },
+      {
+        "cmd": "INSERT",
+        "name": "Admins can insert chatbot flows",
+        "permissive": "PERMISSIVE",
+        "roles": [
+          "authenticated"
+        ],
+        "schema": "public",
+        "table": "chatbot_flows",
+        "using": null,
+        "with_check": "is_admin_or_supervisor(auth.uid())"
       },
       {
         "cmd": "ALL",
@@ -93062,6 +93216,18 @@
         "with_check": "is_admin_or_supervisor(( SELECT auth.uid() AS uid))"
       },
       {
+        "cmd": "SELECT",
+        "name": "Admins can view followup sequences",
+        "permissive": "PERMISSIVE",
+        "roles": [
+          "authenticated"
+        ],
+        "schema": "public",
+        "table": "followup_sequences",
+        "using": "is_admin_or_supervisor(auth.uid())",
+        "with_check": null
+      },
+      {
         "cmd": "ALL",
         "name": "Admins can manage followup steps",
         "permissive": "PERMISSIVE",
@@ -93072,6 +93238,18 @@
         "table": "followup_steps",
         "using": "is_admin_or_supervisor(( SELECT auth.uid() AS uid))",
         "with_check": "is_admin_or_supervisor(( SELECT auth.uid() AS uid))"
+      },
+      {
+        "cmd": "SELECT",
+        "name": "Admins can view followup steps",
+        "permissive": "PERMISSIVE",
+        "roles": [
+          "authenticated"
+        ],
+        "schema": "public",
+        "table": "followup_steps",
+        "using": "is_admin_or_supervisor(auth.uid())",
+        "with_check": null
       },
       {
         "cmd": "ALL",
@@ -93588,6 +93766,18 @@
         "table": "meta_capi_events",
         "using": "is_admin_or_supervisor(( SELECT auth.uid() AS uid))",
         "with_check": "is_admin_or_supervisor(( SELECT auth.uid() AS uid))"
+      },
+      {
+        "cmd": "SELECT",
+        "name": "Admins can view capi events",
+        "permissive": "PERMISSIVE",
+        "roles": [
+          "authenticated"
+        ],
+        "schema": "public",
+        "table": "meta_capi_events",
+        "using": "is_admin_or_supervisor(auth.uid())",
+        "with_check": null
       },
       {
         "cmd": "ALL",
@@ -94274,6 +94464,18 @@
         "with_check": null
       },
       {
+        "cmd": "INSERT",
+        "name": "Admins can insert products",
+        "permissive": "PERMISSIVE",
+        "roles": [
+          "authenticated"
+        ],
+        "schema": "public",
+        "table": "products",
+        "using": null,
+        "with_check": "is_admin_or_supervisor(auth.uid())"
+      },
+      {
         "cmd": "ALL",
         "name": "Admins can manage products",
         "permissive": "PERMISSIVE",
@@ -94862,6 +95064,18 @@
         "with_check": "(is_admin(( SELECT auth.uid() AS uid)) OR (created_by = get_profile_id_for_user(( SELECT auth.uid() AS uid))))"
       },
       {
+        "cmd": "INSERT",
+        "name": "Admins can insert scheduled reports",
+        "permissive": "PERMISSIVE",
+        "roles": [
+          "authenticated"
+        ],
+        "schema": "public",
+        "table": "scheduled_reports",
+        "using": null,
+        "with_check": "is_admin_or_supervisor(auth.uid())"
+      },
+      {
         "cmd": "ALL",
         "name": "Admins can manage scheduled reports",
         "permissive": "PERMISSIVE",
@@ -94875,6 +95089,18 @@
       },
       {
         "cmd": "SELECT",
+        "name": "Admins can view scheduled reports",
+        "permissive": "PERMISSIVE",
+        "roles": [
+          "authenticated"
+        ],
+        "schema": "public",
+        "table": "scheduled_reports",
+        "using": "is_admin_or_supervisor(auth.uid())",
+        "with_check": null
+      },
+      {
+        "cmd": "SELECT",
         "name": "Admins veem alertas de ACL",
         "permissive": "PERMISSIVE",
         "roles": [
@@ -94884,6 +95110,18 @@
         "table": "security_acl_alerts",
         "using": "is_admin(( SELECT auth.uid() AS uid))",
         "with_check": null
+      },
+      {
+        "cmd": "INSERT",
+        "name": "Admins can insert security alerts",
+        "permissive": "PERMISSIVE",
+        "roles": [
+          "authenticated"
+        ],
+        "schema": "public",
+        "table": "security_alerts",
+        "using": null,
+        "with_check": "is_admin_or_supervisor(auth.uid())"
       },
       {
         "cmd": "ALL",
@@ -96588,6 +96826,18 @@
         "table": "whatsapp_groups",
         "using": "true",
         "with_check": null
+      },
+      {
+        "cmd": "INSERT",
+        "name": "Admins can insert templates",
+        "permissive": "PERMISSIVE",
+        "roles": [
+          "authenticated"
+        ],
+        "schema": "public",
+        "table": "whatsapp_templates",
+        "using": null,
+        "with_check": "is_admin_or_supervisor(auth.uid())"
       },
       {
         "cmd": "ALL",

@@ -31,7 +31,7 @@ security_alerts_self_select [command=SELECT; roles=authenticated; PERMISSIVE]
 | owner | postgres |
 | RLS habilitado | sim |
 | RLS forçado (owner) | não |
-| policies | 2 |
+| policies | 3 |
 | realtime (publication) | não |
 | replica identity | full |
 | vem de extensão | não |
@@ -75,6 +75,16 @@ security_alerts_self_select [command=SELECT; roles=authenticated; PERMISSIVE]
 
 
 ## Policies (RLS)
+
+### `Admins can insert security alerts`
+
+| campo | valor |
+|---|---|
+| comando | INSERT |
+| tipo | PERMISSIVE |
+| roles | authenticated |
+| USING |  |
+| WITH CHECK | `is_admin_or_supervisor(auth.uid())` |
 
 ### `Admins can manage security alerts`
 

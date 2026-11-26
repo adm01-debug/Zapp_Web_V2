@@ -28,7 +28,7 @@ Políticas RLS (nome, operação, papéis e modo; as expressões permanecem no c
 | owner | postgres |
 | RLS habilitado | sim |
 | RLS forçado (owner) | não |
-| policies | 1 |
+| policies | 2 |
 | realtime (publication) | não |
 | replica identity | default |
 | vem de extensão | não |
@@ -78,6 +78,16 @@ Políticas RLS (nome, operação, papéis e modo; as expressões permanecem no c
 | roles | authenticated |
 | USING | `is_admin_or_supervisor(( SELECT auth.uid() AS uid))` |
 | WITH CHECK | `is_admin_or_supervisor(( SELECT auth.uid() AS uid))` |
+
+### `Admins can view capi events`
+
+| campo | valor |
+|---|---|
+| comando | SELECT |
+| tipo | PERMISSIVE |
+| roles | authenticated |
+| USING | `is_admin_or_supervisor(auth.uid())` |
+| WITH CHECK |  |
 
 
 ## Triggers

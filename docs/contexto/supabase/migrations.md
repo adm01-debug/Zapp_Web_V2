@@ -1165,3 +1165,4 @@ SQL em `migrations/<versao>_<nome>.sql`. Mudanças feitas pelo Dashboard/SQL Edi
 | 20261126213000 | [talkx_template_duplicate_archive_delete](migrations/20261126213000_talkx_template_duplicate_archive_delete.sql) | 1 |
 | 20261126213001 | [talkx_template_delete_atomic](migrations/20261126213001_talkx_template_delete_atomic.sql) | 1 |
 | 20261126221500 | [remind_me_about_message](migrations/20261126221500_remind_me_about_message.sql) | 1 |
+| 20261126234500 | [paridade_policies_admin_prod](migrations/20261126234500_paridade_policies_admin_prod.sql) | 1 |

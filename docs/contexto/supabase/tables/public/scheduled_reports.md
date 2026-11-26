@@ -28,7 +28,7 @@ Políticas RLS (nome, operação, papéis e modo; as expressões permanecem no c
 | owner | postgres |
 | RLS habilitado | sim |
 | RLS forçado (owner) | não |
-| policies | 1 |
+| policies | 3 |
 | realtime (publication) | não |
 | replica identity | default |
 | vem de extensão | não |
@@ -68,6 +68,16 @@ Políticas RLS (nome, operação, papéis e modo; as expressões permanecem no c
 
 ## Policies (RLS)
 
+### `Admins can insert scheduled reports`
+
+| campo | valor |
+|---|---|
+| comando | INSERT |
+| tipo | PERMISSIVE |
+| roles | authenticated |
+| USING |  |
+| WITH CHECK | `is_admin_or_supervisor(auth.uid())` |
+
 ### `Admins can manage scheduled reports`
 
 | campo | valor |
@@ -76,6 +86,16 @@ Políticas RLS (nome, operação, papéis e modo; as expressões permanecem no c
 | tipo | PERMISSIVE |
 | roles | authenticated |
 | USING | `is_admin_or_supervisor(( SELECT auth.uid() AS uid))` |
+| WITH CHECK |  |
+
+### `Admins can view scheduled reports`
+
+| campo | valor |
+|---|---|
+| comando | SELECT |
+| tipo | PERMISSIVE |
+| roles | authenticated |
+| USING | `is_admin_or_supervisor(auth.uid())` |
 | WITH CHECK |  |
 
 
