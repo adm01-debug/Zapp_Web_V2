@@ -15780,6 +15780,19 @@ export type Database = {
       }
       warroom_agent_today: { Args: { p_date?: string }; Returns: Json }
       warroom_queue_stats: { Args: never; Returns: Json }
+      webhook_dead_letter_fila: {
+        Args: { p_limit?: number }
+        Returns: {
+          endpoint: string
+          error_at: string
+          event_type: string
+          external_id: string
+          id: string
+          retry_count: number
+          tem_payload: boolean
+          total: number
+        }[]
+      }
     }
     Enums: {
       ai_provider_type:

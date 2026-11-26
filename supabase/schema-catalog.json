@@ -3059,7 +3059,8 @@
         "user_has_permission",
         "validate_talkx_send_weekdays",
         "warroom_agent_today",
-        "warroom_queue_stats"
+        "warroom_queue_stats",
+        "webhook_dead_letter_fila"
     ],
     "generated_at": "2026-11-26",
     "format_version": 2,
@@ -3855,6 +3856,7 @@
         "user_has_permission(_user_id uuid, _permission_name text)->boolean|kind=f",
         "validate_talkx_send_weekdays(p_weekdays jsonb, p_error text)->smallint[]|kind=f",
         "warroom_agent_today(p_date date)->jsonb|kind=f",
-        "warroom_queue_stats()->jsonb|kind=f"
+        "warroom_queue_stats()->jsonb|kind=f",
+        "webhook_dead_letter_fila(p_limit integer)->TABLE(id uuid, external_id text, endpoint text, event_type text, retry_count integer, error_at timestamp with time zone, tem_payload boolean, total bigint)|kind=f"
     ]
 }
