@@ -39,6 +39,7 @@ Políticas RLS (nome, operação, papéis e modo; as expressões permanecem no c
 | 3 | `updated_by` | `uuid` | sim |  |  |  |
 | 4 | `created_at` | `timestamp with time zone` | não | `now()` |  |  |
 | 5 | `updated_at` | `timestamp with time zone` | não | `now()` |  |  |
+| 6 | `city_whitelist_enabled` | `boolean` | não | `false` |  |  |
 
 
 ## Constraints

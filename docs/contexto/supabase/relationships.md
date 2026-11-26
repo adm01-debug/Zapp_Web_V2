@@ -50,6 +50,7 @@
 | public.chatbot_executions | flow_id | public.chatbot_flows | id | CASCADE | NO ACTION |
 | public.chatbot_flows | created_by | public.profiles | id | NO ACTION | NO ACTION |
 | public.chatbot_flows | whatsapp_connection_id | public.whatsapp_connections | id | NO ACTION | NO ACTION |
+| public.city_whitelist | created_by | auth.users | id | SET NULL | NO ACTION |
 | public.client_wallet_rules | agent_id | public.profiles | id | CASCADE | NO ACTION |
 | public.client_wallet_rules | whatsapp_connection_id | public.whatsapp_connections | id | CASCADE | NO ACTION |
 | public.connection_alert_preferences | user_id | auth.users | id | CASCADE | NO ACTION |
@@ -82,6 +83,7 @@
 | public.conversation_tasks | assigned_to | public.profiles | id | SET NULL | NO ACTION |
 | public.conversation_tasks | contact_id | public.contacts | id | SET NULL | NO ACTION |
 | public.conversation_tasks | created_by | public.profiles | id | SET NULL | NO ACTION |
+| public.conversation_tasks | message_id | public.messages | id | SET NULL | NO ACTION |
 | public.conversation_tasks | migrated_from_reminder_id | public.reminders | id | SET NULL | NO ACTION |
 | public.copilot_feedback | created_by | auth.users | id | NO ACTION | NO ACTION |
 | public.copilot_insights | profile_id | auth.users | id | NO ACTION | NO ACTION |

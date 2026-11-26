@@ -16,7 +16,11 @@ BEGIN
      AND NEW.custom_variables IS NOT DISTINCT FROM OLD.custom_variables
      AND NEW.created_by IS NOT DISTINCT FROM OLD.created_by
      AND NEW.created_at IS NOT DISTINCT FROM OLD.created_at
-     AND NEW.use_count = OLD.use_count + 1 THEN
+     AND (
+       NEW.use_count = OLD.use_count + 1
+       OR (NEW.use_count IS NOT DISTINCT FROM OLD.use_count
+           AND NEW.archived_at IS DISTINCT FROM OLD.archived_at)
+     ) THEN
     NEW.updated_at := OLD.updated_at;
   ELSE
     NEW.updated_at := transaction_timestamp();

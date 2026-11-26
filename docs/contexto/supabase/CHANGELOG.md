@@ -2,6 +2,24 @@
 
 Diff semântico gerado a cada coleta em que algo mudou.
 
+## 2026-11-26 03:24 UTC
+
+- **colunas** adicionado (10): `public.city_whitelist.city_key`, `public.city_whitelist.city_name`, `public.city_whitelist.created_at`, `public.city_whitelist.created_by`, `public.city_whitelist.id`, `public.city_whitelist.is_active`, `public.conversation_tasks.message_id`, `public.geo_blocking_settings.city_whitelist_enabled`, `public.webhook_failures.external_id`, `public.webhook_failures.replay_payload`
+- **colunas** alterado (1): `public.talkx_templates.archived_at`
+- **constraints** adicionado (6): `public.city_whitelist.city_whitelist_city_key_key`, `public.city_whitelist.city_whitelist_city_key_not_empty`, `public.city_whitelist.city_whitelist_city_name_check`, `public.city_whitelist.city_whitelist_created_by_fkey`, `public.city_whitelist.city_whitelist_pkey`, `public.conversation_tasks.conversation_tasks_message_id_fkey`
+- **functions** adicionado (7): `public.archive_talkx_template(p_template_id uuid, p_archived boolean)`, `public.delete_talkx_template(p_template_id uuid)`, `public.duplicate_talkx_template(p_template_id uuid)`, `public.guard_talkx_template_delete()`, `public.normalize_city_name(p_city text)`, `public.remind_me_about_message(p_message_id uuid, p_remind_at timestamp with time zone, p_note text)`, `public.resolve_network_policy(p_ip text, p_country_code text, p_city text, p_endpoint text, p_default_max_requests integer, p_default_window_seconds integer)`
+- **functions** removido (1): `public.resolve_network_policy(p_ip text, p_country_code text, p_endpoint text, p_default_max_requests integer, p_default_window_seconds integer)`
+- **functions** alterado (11): `public.current_profile_id()`, `public.get_profile_id_for_user(_user_id uuid)`, `public.guard_talkx_template_update()`, `public.is_admin_or_supervisor(_user_id uuid)`, `public.is_contact_visible_to_user(_contact_id uuid, _user_id uuid)`, `public.notify_due_tasks()`, `public.pin_message(p_message_id uuid)`, `public.report_message(p_message_id uuid, p_reason text, p_note text)`, `public.set_talkx_template_updated_at()`, `public.toggle_message_favorite(p_message_id uuid)`, `public.unpin_message(p_message_id uuid)`
+- **indexes** adicionado (4): `public.city_whitelist_city_key_key`, `public.city_whitelist_pkey`, `public.idx_tasks_owner_message`, `public.webhook_failures_replay_pendente_idx`
+- **lints** adicionado (4): `fk_without_index:public.city_whitelist.city_whitelist_created_by_fkey`, `fk_without_index:public.conversation_tasks.conversation_tasks_message_id_fkey`, `policy_auth_fn_not_wrapped:public.city_whitelist.Admins can manage city whitelist`, `policy_auth_fn_not_wrapped:public.whatsapp_connections.Admins can delete connections`
+- **migrations** adicionado (6): `20261126010000_webhook_failures_replay`, `20261126010508_city_whitelist_network_policy`, `20261126011000_connections_delete_admin_only`, `20261126213000_talkx_template_duplicate_archive_delete`, `20261126213001_talkx_template_delete_atomic`, `20261126221500_remind_me_about_message`
+- **policies (RLS)** adicionado (1): `public.city_whitelist.Admins can manage city whitelist`
+- **policies (RLS)** alterado (1): `public.whatsapp_connections.Admins can delete connections`
+- **realtime** adicionado (1): `supabase_realtime_messages_publication:realtime.messages_2026_11_29`
+- **realtime** removido (1): `supabase_realtime_messages_publication:realtime.messages_2026_11_22`
+- **tabelas** adicionado (1): `public.city_whitelist`
+- **triggers** adicionado (1): `public.talkx_templates.trg_guard_talkx_template_delete`
+
 ## 2026-11-26 02:29 UTC
 
 - **constraints** adicionado (2): `public.ai_providers.ai_providers_api_endpoint_safe`, `public.ai_providers.ai_providers_api_key_secret_name_safe`

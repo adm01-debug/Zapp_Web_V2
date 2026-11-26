@@ -151,6 +151,7 @@ messages_select_policy [command=SELECT; roles=authenticated; PERMISSIVE]
 
 | tabela | constraint | colunas | on delete |
 |---|---|---|---|
+| public.conversation_tasks | conversation_tasks_message_id_fkey | message_id | SET NULL |
 | public.message_attempts | message_attempts_message_id_fkey | message_id | CASCADE |
 | public.message_favorites | message_favorites_message_id_fkey | message_id | CASCADE |
 | public.message_pins | message_pins_message_id_fkey | message_id | CASCADE |

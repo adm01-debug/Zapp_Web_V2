@@ -52,6 +52,27 @@ BEGIN
     RETURN NEW;
   END IF;
 
+  -- N-127: arquivar/desarquivar toca SOMENTE archived_at. Metadado de estado,
+  -- nao conteudo — nao exige snapshot. Todo o conteudo (nome, texto, midia,
+  -- tags, categoria, status, variaveis) continua travado pelo ramo acima.
+  IF NEW.id IS NOT DISTINCT FROM OLD.id
+     AND NEW.name IS NOT DISTINCT FROM OLD.name
+     AND NEW.description IS NOT DISTINCT FROM OLD.description
+     AND NEW.category IS NOT DISTINCT FROM OLD.category
+     AND NEW.content IS NOT DISTINCT FROM OLD.content
+     AND NEW.media_url IS NOT DISTINCT FROM OLD.media_url
+     AND NEW.media_type IS NOT DISTINCT FROM OLD.media_type
+     AND NEW.tags IS NOT DISTINCT FROM OLD.tags
+     AND NEW.status IS NOT DISTINCT FROM OLD.status
+     AND NEW.custom_variables IS NOT DISTINCT FROM OLD.custom_variables
+     AND NEW.created_by IS NOT DISTINCT FROM OLD.created_by
+     AND NEW.created_at IS NOT DISTINCT FROM OLD.created_at
+     AND NEW.updated_at IS NOT DISTINCT FROM OLD.updated_at
+     AND NEW.use_count IS NOT DISTINCT FROM OLD.use_count
+     AND NEW.archived_at IS DISTINCT FROM OLD.archived_at THEN
+    RETURN NEW;
+  END IF;
+
   RAISE EXCEPTION 'talkx_template_update_requires_authorized_rpc'
     USING ERRCODE = '42501';
 END;

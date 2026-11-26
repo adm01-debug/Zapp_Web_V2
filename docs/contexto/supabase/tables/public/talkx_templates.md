@@ -80,7 +80,7 @@ talkx_templates_update [command=UPDATE; roles=authenticated; PERMISSIVE]
 | 20 | `media_size_bytes` | `bigint` | sim |  |  |  |
 | 21 | `media_width` | `integer` | sim |  |  |  |
 | 22 | `media_height` | `integer` | sim |  |  |  |
-| 23 | `archived_at` | `timestamp with time zone` | sim |  |  |  |
+| 23 | `archived_at` | `timestamp with time zone` | sim |  |  | N-127: quando nao nulo, o template esta arquivado e sai da lista ativa (archived_at IS NULL). Nao apaga conteudo, variantes nem historico. |
 
 
 ## Constraints
@@ -163,6 +163,7 @@ talkx_templates_update [command=UPDATE; roles=authenticated; PERMISSIVE]
 
 | nome | timing | eventos | nível | status | função |
 |---|---|---|---|---|---|
+| trg_guard_talkx_template_delete | BEFORE | DELETE | ROW | enabled | public.guard_talkx_template_delete |
 | trg_guard_talkx_template_update | BEFORE | UPDATE | ROW | enabled | public.guard_talkx_template_update |
 | trg_validate_talkx_template_input | BEFORE | INSERT OR UPDATE | ROW | enabled | public.validate_talkx_template_input |
 | update_talkx_templates_updated_at | BEFORE | UPDATE | ROW | enabled | public.set_talkx_template_updated_at |

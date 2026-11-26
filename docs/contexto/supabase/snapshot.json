@@ -7997,6 +7997,84 @@
         "nullable": false,
         "position": 1,
         "schema": "public",
+        "table": "city_whitelist",
+        "type": "uuid"
+      },
+      {
+        "comment": null,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "is_enum": false,
+        "name": "city_name",
+        "nullable": false,
+        "position": 2,
+        "schema": "public",
+        "table": "city_whitelist",
+        "type": "text"
+      },
+      {
+        "comment": null,
+        "default": "normalize_city_name(city_name)",
+        "generated": "s",
+        "identity": null,
+        "is_enum": false,
+        "name": "city_key",
+        "nullable": true,
+        "position": 3,
+        "schema": "public",
+        "table": "city_whitelist",
+        "type": "text"
+      },
+      {
+        "comment": null,
+        "default": "true",
+        "generated": null,
+        "identity": null,
+        "is_enum": false,
+        "name": "is_active",
+        "nullable": false,
+        "position": 4,
+        "schema": "public",
+        "table": "city_whitelist",
+        "type": "boolean"
+      },
+      {
+        "comment": null,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "is_enum": false,
+        "name": "created_by",
+        "nullable": true,
+        "position": 5,
+        "schema": "public",
+        "table": "city_whitelist",
+        "type": "uuid"
+      },
+      {
+        "comment": null,
+        "default": "now()",
+        "generated": null,
+        "identity": null,
+        "is_enum": false,
+        "name": "created_at",
+        "nullable": false,
+        "position": 6,
+        "schema": "public",
+        "table": "city_whitelist",
+        "type": "timestamp with time zone"
+      },
+      {
+        "comment": null,
+        "default": "gen_random_uuid()",
+        "generated": null,
+        "identity": null,
+        "is_enum": false,
+        "name": "id",
+        "nullable": false,
+        "position": 1,
+        "schema": "public",
         "table": "client_wallet_rules",
         "type": "uuid"
       },
@@ -10713,6 +10791,19 @@
         "name": "migrated_from_reminder_id",
         "nullable": true,
         "position": 20,
+        "schema": "public",
+        "table": "conversation_tasks",
+        "type": "uuid"
+      },
+      {
+        "comment": null,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "is_enum": false,
+        "name": "message_id",
+        "nullable": true,
+        "position": 21,
         "schema": "public",
         "table": "conversation_tasks",
         "type": "uuid"
@@ -15123,6 +15214,19 @@
         "schema": "public",
         "table": "geo_blocking_settings",
         "type": "timestamp with time zone"
+      },
+      {
+        "comment": null,
+        "default": "false",
+        "generated": null,
+        "identity": null,
+        "is_enum": false,
+        "name": "city_whitelist_enabled",
+        "nullable": false,
+        "position": 6,
+        "schema": "public",
+        "table": "geo_blocking_settings",
+        "type": "boolean"
       },
       {
         "comment": null,
@@ -30036,7 +30140,7 @@
         "type": "integer"
       },
       {
-        "comment": null,
+        "comment": "N-127: quando nao nulo, o template esta arquivado e sai da lista ativa (archived_at IS NULL). Nao apaga conteudo, variantes nem historico.",
         "default": null,
         "generated": null,
         "identity": null,
@@ -32634,6 +32738,32 @@
         "schema": "public",
         "table": "webhook_failures",
         "type": "timestamp with time zone"
+      },
+      {
+        "comment": "Id do evento no provedor (key.id). Chave de idempotencia do replay contra ux_messages_dedup.",
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "is_enum": false,
+        "name": "external_id",
+        "nullable": true,
+        "position": 12,
+        "schema": "public",
+        "table": "webhook_failures",
+        "type": "text"
+      },
+      {
+        "comment": "Argumentos validados do ingest_inbound_message para reprocessar o evento. Contem telefone, TEXTO (p_content) e URL de midia (p_media_url) — acesso restrito a service_role; anon/authenticated sem privilegio. Ao resolver, a linha e mantida para auditoria (somente resolved/resolved_at mudam); sem purga automatica nesta change.",
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "is_enum": false,
+        "name": "replay_payload",
+        "nullable": true,
+        "position": 13,
+        "schema": "public",
+        "table": "webhook_failures",
+        "type": "jsonb"
       },
       {
         "comment": null,
@@ -36540,6 +36670,93 @@
       },
       {
         "columns": [
+          "city_key"
+        ],
+        "deferrable": false,
+        "definition": "UNIQUE (city_key)",
+        "name": "city_whitelist_city_key_key",
+        "on_delete": null,
+        "on_update": null,
+        "ref_columns": [],
+        "ref_schema": null,
+        "ref_table": null,
+        "schema": "public",
+        "table": "city_whitelist",
+        "type": "UNIQUE",
+        "validated": true
+      },
+      {
+        "columns": [
+          "city_key"
+        ],
+        "deferrable": false,
+        "definition": "CHECK (city_key IS NOT NULL)",
+        "name": "city_whitelist_city_key_not_empty",
+        "on_delete": null,
+        "on_update": null,
+        "ref_columns": [],
+        "ref_schema": null,
+        "ref_table": null,
+        "schema": "public",
+        "table": "city_whitelist",
+        "type": "CHECK",
+        "validated": true
+      },
+      {
+        "columns": [
+          "city_name"
+        ],
+        "deferrable": false,
+        "definition": "CHECK (btrim(city_name) <> ''::text AND char_length(city_name) <= 128)",
+        "name": "city_whitelist_city_name_check",
+        "on_delete": null,
+        "on_update": null,
+        "ref_columns": [],
+        "ref_schema": null,
+        "ref_table": null,
+        "schema": "public",
+        "table": "city_whitelist",
+        "type": "CHECK",
+        "validated": true
+      },
+      {
+        "columns": [
+          "created_by"
+        ],
+        "deferrable": false,
+        "definition": "FOREIGN KEY (created_by) REFERENCES auth.users(id) ON DELETE SET NULL",
+        "name": "city_whitelist_created_by_fkey",
+        "on_delete": "SET NULL",
+        "on_update": "NO ACTION",
+        "ref_columns": [
+          "id"
+        ],
+        "ref_schema": "auth",
+        "ref_table": "users",
+        "schema": "public",
+        "table": "city_whitelist",
+        "type": "FOREIGN KEY",
+        "validated": true
+      },
+      {
+        "columns": [
+          "id"
+        ],
+        "deferrable": false,
+        "definition": "PRIMARY KEY (id)",
+        "name": "city_whitelist_pkey",
+        "on_delete": null,
+        "on_update": null,
+        "ref_columns": [],
+        "ref_schema": null,
+        "ref_table": null,
+        "schema": "public",
+        "table": "city_whitelist",
+        "type": "PRIMARY KEY",
+        "validated": true
+      },
+      {
+        "columns": [
           "agent_id"
         ],
         "deferrable": false,
@@ -37775,6 +37992,25 @@
         ],
         "ref_schema": "public",
         "ref_table": "profiles",
+        "schema": "public",
+        "table": "conversation_tasks",
+        "type": "FOREIGN KEY",
+        "validated": true
+      },
+      {
+        "columns": [
+          "message_id"
+        ],
+        "deferrable": false,
+        "definition": "FOREIGN KEY (message_id) REFERENCES messages(id) ON DELETE SET NULL",
+        "name": "conversation_tasks_message_id_fkey",
+        "on_delete": "SET NULL",
+        "on_update": "NO ACTION",
+        "ref_columns": [
+          "id"
+        ],
+        "ref_schema": "public",
+        "ref_table": "messages",
         "schema": "public",
         "table": "conversation_tasks",
         "type": "FOREIGN KEY",
@@ -50538,6 +50774,36 @@
         "volatility": "volatile"
       },
       {
+        "args": "p_template_id uuid, p_archived boolean",
+        "callers": {
+          "code": [],
+          "code_total_files": 0,
+          "cron": [],
+          "db": [],
+          "triggers": [],
+          "views": []
+        },
+        "comment": null,
+        "config": [
+          "search_path=public, pg_temp"
+        ],
+        "definition": null,
+        "definition_sha": "ecb548ac938f8934",
+        "execute_api_roles": "authenticated, service_role",
+        "execute_public": false,
+        "is_trigger_fn": false,
+        "kind": "function",
+        "language": "plpgsql",
+        "leakproof": false,
+        "name": "archive_talkx_template",
+        "owner": "postgres",
+        "returns": "jsonb",
+        "schema": "public",
+        "security_definer": true,
+        "strict": false,
+        "volatility": "volatile"
+      },
+      {
         "args": "p_contact_id uuid",
         "callers": {
           "code": [],
@@ -53456,7 +53722,7 @@
               "hits": 2
             }
           ],
-          "code_total_files": 59,
+          "code_total_files": 60,
           "cron": [],
           "db": [
             "public.accept_department_invite",
@@ -53472,6 +53738,7 @@
             "public.get_team_messages_page",
             "public.leave_team_group",
             "public.mark_team_conversation_read",
+            "public.remind_me_about_message",
             "public.remove_team_member",
             "public.request_department_access",
             "public.search_team_messages",
@@ -54042,6 +54309,36 @@
         "volatility": "volatile"
       },
       {
+        "args": "p_template_id uuid",
+        "callers": {
+          "code": [],
+          "code_total_files": 0,
+          "cron": [],
+          "db": [],
+          "triggers": [],
+          "views": []
+        },
+        "comment": null,
+        "config": [
+          "search_path=public, pg_temp"
+        ],
+        "definition": null,
+        "definition_sha": "45de2eb433335fd3",
+        "execute_api_roles": "authenticated, service_role",
+        "execute_public": false,
+        "is_trigger_fn": false,
+        "kind": "function",
+        "language": "plpgsql",
+        "leakproof": false,
+        "name": "delete_talkx_template",
+        "owner": "postgres",
+        "returns": "jsonb",
+        "schema": "public",
+        "security_definer": true,
+        "strict": false,
+        "volatility": "volatile"
+      },
+      {
         "args": "p_contact_id uuid, p_hours integer",
         "callers": {
           "code": [
@@ -54229,6 +54526,36 @@
         "name": "duplicate_talkx_campaign",
         "owner": "postgres",
         "returns": "talkx_campaigns",
+        "schema": "public",
+        "security_definer": true,
+        "strict": false,
+        "volatility": "volatile"
+      },
+      {
+        "args": "p_template_id uuid",
+        "callers": {
+          "code": [],
+          "code_total_files": 0,
+          "cron": [],
+          "db": [],
+          "triggers": [],
+          "views": []
+        },
+        "comment": null,
+        "config": [
+          "search_path=public, pg_temp"
+        ],
+        "definition": null,
+        "definition_sha": "e543c47f6ea2ef55",
+        "execute_api_roles": "authenticated, service_role",
+        "execute_public": false,
+        "is_trigger_fn": false,
+        "kind": "function",
+        "language": "plpgsql",
+        "leakproof": false,
+        "name": "duplicate_talkx_template",
+        "owner": "postgres",
+        "returns": "jsonb",
         "schema": "public",
         "security_definer": true,
         "strict": false,
@@ -56643,6 +56970,7 @@
           "code_total_files": 72,
           "cron": [],
           "db": [
+            "public.archive_talkx_template",
             "public.assume_conversation",
             "public.can_delete_contacts",
             "public.can_edit_contact",
@@ -56652,6 +56980,8 @@
             "public.dashboard_kpi",
             "public.delete_contact",
             "public.delete_contacts",
+            "public.delete_talkx_template",
+            "public.duplicate_talkx_template",
             "public.force_conversation_closure_author",
             "public.get_connection_instance",
             "public.get_connection_qr_code",
@@ -57808,6 +58138,38 @@
       {
         "args": "",
         "callers": {
+          "code": [],
+          "code_total_files": 0,
+          "cron": [],
+          "db": [],
+          "triggers": [
+            "public.talkx_templates.trg_guard_talkx_template_delete"
+          ],
+          "views": []
+        },
+        "comment": null,
+        "config": [
+          "search_path=public, pg_temp"
+        ],
+        "definition": null,
+        "definition_sha": "720565c435945105",
+        "execute_api_roles": "service_role",
+        "execute_public": false,
+        "is_trigger_fn": true,
+        "kind": "function",
+        "language": "plpgsql",
+        "leakproof": false,
+        "name": "guard_talkx_template_delete",
+        "owner": "postgres",
+        "returns": "trigger",
+        "schema": "public",
+        "security_definer": false,
+        "strict": false,
+        "volatility": "volatile"
+      },
+      {
+        "args": "",
+        "callers": {
           "code": [
             {
               "file": "supabase/migrations/20260909210000_canonicalize_talkx_template_history.sql",
@@ -57831,7 +58193,7 @@
           "search_path=public, pg_temp"
         ],
         "definition": null,
-        "definition_sha": "4d4eb5ccbeae9cb1",
+        "definition_sha": "411ebcee7512255f",
         "execute_api_roles": null,
         "execute_public": false,
         "is_trigger_fn": true,
@@ -58998,7 +59360,7 @@
               "hits": 2
             }
           ],
-          "code_total_files": 411,
+          "code_total_files": 412,
           "cron": [],
           "db": [
             "public.add_agent_xp",
@@ -59008,6 +59370,7 @@
             "public.ai_usage_cost_summary",
             "public.app_bootstrap",
             "public.apply_client_wallet",
+            "public.archive_talkx_template",
             "public.assume_conversation",
             "public.can_delete_contacts",
             "public.can_edit_contact",
@@ -59029,7 +59392,9 @@
             "public.delete_contact",
             "public.delete_contacts",
             "public.delete_talkx_campaign",
+            "public.delete_talkx_template",
             "public.duplicate_talkx_campaign",
+            "public.duplicate_talkx_template",
             "public.enforce_talkx_campaign_mutability",
             "public.enqueue_group_outbound_message",
             "public.enqueue_outbound_message",
@@ -59276,7 +59641,7 @@
               "hits": 1
             }
           ],
-          "code_total_files": 56,
+          "code_total_files": 57,
           "cron": [],
           "db": [
             "public.can_access_realtime_topic",
@@ -59297,6 +59662,7 @@
             "public.prevent_call_contact_redirect",
             "public.prevent_conversation_task_field_forgery",
             "public.record_sla_alert",
+            "public.remind_me_about_message",
             "public.reopen_conversation",
             "public.replace_talkx_draft_recipients",
             "public.report_message",
@@ -61502,6 +61868,43 @@
         "volatility": "stable"
       },
       {
+        "args": "p_city text",
+        "callers": {
+          "code": [
+            {
+              "file": "supabase/migrations/20261126010508_city_whitelist_network_policy.sql",
+              "hits": 2
+            }
+          ],
+          "code_total_files": 1,
+          "cron": [],
+          "db": [
+            "public.resolve_network_policy"
+          ],
+          "triggers": [],
+          "views": []
+        },
+        "comment": null,
+        "config": [
+          "search_path=public"
+        ],
+        "definition": null,
+        "definition_sha": "4361f4fab69532ee",
+        "execute_api_roles": "authenticated, service_role",
+        "execute_public": false,
+        "is_trigger_fn": false,
+        "kind": "function",
+        "language": "sql",
+        "leakproof": false,
+        "name": "normalize_city_name",
+        "owner": "postgres",
+        "returns": "text",
+        "schema": "public",
+        "security_definer": false,
+        "strict": false,
+        "volatility": "immutable"
+      },
+      {
         "args": "",
         "callers": {
           "code": [
@@ -61600,9 +62003,13 @@
             {
               "file": "supabase/migrations/20261011205122_tasks_rearm_on_remind_change.sql",
               "hits": 1
+            },
+            {
+              "file": "supabase/migrations/20261126221500_remind_me_about_message.sql",
+              "hits": 1
             }
           ],
-          "code_total_files": 3,
+          "code_total_files": 4,
           "cron": [],
           "db": [],
           "triggers": [],
@@ -62008,11 +62415,15 @@
         "callers": {
           "code": [
             {
+              "file": "src/hooks/chat/useMessagePins.ts",
+              "hits": 1
+            },
+            {
               "file": "supabase/migrations/20261011125915_message_favorites_pins_reports.sql",
               "hits": 2
             }
           ],
-          "code_total_files": 1,
+          "code_total_files": 2,
           "cron": [],
           "db": [],
           "triggers": [],
@@ -63673,6 +64084,45 @@
         "volatility": "volatile"
       },
       {
+        "args": "p_message_id uuid, p_remind_at timestamp with time zone, p_note text",
+        "callers": {
+          "code": [
+            {
+              "file": "src/hooks/chat/useRemindMessage.ts",
+              "hits": 1
+            },
+            {
+              "file": "supabase/migrations/20261126221500_remind_me_about_message.sql",
+              "hits": 1
+            }
+          ],
+          "code_total_files": 2,
+          "cron": [],
+          "db": [],
+          "triggers": [],
+          "views": []
+        },
+        "comment": null,
+        "config": [
+          "search_path=pg_catalog, public"
+        ],
+        "definition": null,
+        "definition_sha": "598e81817f449bbe",
+        "execute_api_roles": "authenticated, service_role",
+        "execute_public": false,
+        "is_trigger_fn": false,
+        "kind": "function",
+        "language": "plpgsql",
+        "leakproof": false,
+        "name": "remind_me_about_message",
+        "owner": "postgres",
+        "returns": "uuid",
+        "schema": "public",
+        "security_definer": true,
+        "strict": false,
+        "volatility": "volatile"
+      },
+      {
         "args": "p_contact_id uuid, p_tag text",
         "callers": {
           "code": [],
@@ -64041,6 +64491,10 @@
         "callers": {
           "code": [
             {
+              "file": "src/hooks/chat/useReportMessage.ts",
+              "hits": 1
+            },
+            {
               "file": "supabase/migrations/20261011125915_message_favorites_pins_reports.sql",
               "hits": 1
             },
@@ -64049,7 +64503,7 @@
               "hits": 1
             }
           ],
-          "code_total_files": 2,
+          "code_total_files": 3,
           "cron": [],
           "db": [],
           "triggers": [],
@@ -64398,7 +64852,7 @@
         "volatility": "stable"
       },
       {
-        "args": "p_ip text, p_country_code text, p_endpoint text, p_default_max_requests integer, p_default_window_seconds integer",
+        "args": "p_ip text, p_country_code text, p_city text, p_endpoint text, p_default_max_requests integer, p_default_window_seconds integer",
         "callers": {
           "code": [
             {
@@ -64416,12 +64870,12 @@
           "triggers": [],
           "views": []
         },
-        "comment": "R2-AUTH-022 (27.1): fronteira canônica de decisão de política de rede. Decide IP (whitelist isenta só bloqueio), país (geo_blocking_settings, falha fechada) e rate limit efetivo (rate_limit_configs ativo prevalece; senão, parâmetros do chamador). Chamada por Edge Functions com service_role.",
+        "comment": "R2-AUTH-022 (27.1) + cidade: fronteira canônica de decisão de política de rede. Decide IP (whitelist isenta só bloqueio), país (geo_blocking_settings, falha fechada), cidade (city_whitelist_enabled + city_whitelist, falha fechada, nasce desligado) e rate limit efetivo. Chamada por Edge Functions com service_role.",
         "config": [
-          "search_path=public, pg_temp"
+          "search_path=public"
         ],
         "definition": null,
-        "definition_sha": "80fac9b7e89b9841",
+        "definition_sha": "d3e24bf7e6864bf5",
         "execute_api_roles": "service_role",
         "execute_public": false,
         "is_trigger_fn": false,
@@ -65958,7 +66412,7 @@
           "search_path=public, pg_temp"
         ],
         "definition": null,
-        "definition_sha": "338109ed6452301f",
+        "definition_sha": "efd6f1b4c1a33d84",
         "execute_api_roles": null,
         "execute_public": false,
         "is_trigger_fn": true,
@@ -69459,11 +69913,15 @@
         "callers": {
           "code": [
             {
+              "file": "src/hooks/chat/useMessageFavorites.ts",
+              "hits": 1
+            },
+            {
               "file": "supabase/migrations/20261011125915_message_favorites_pins_reports.sql",
               "hits": 1
             }
           ],
-          "code_total_files": 1,
+          "code_total_files": 2,
           "cron": [],
           "db": [],
           "triggers": [],
@@ -70183,11 +70641,15 @@
         "callers": {
           "code": [
             {
+              "file": "src/hooks/chat/useMessagePins.ts",
+              "hits": 1
+            },
+            {
               "file": "supabase/migrations/20261011125915_message_favorites_pins_reports.sql",
               "hits": 2
             }
           ],
-          "code_total_files": 1,
+          "code_total_files": 2,
           "cron": [],
           "db": [],
           "triggers": [],
@@ -73387,6 +73849,34 @@
       },
       {
         "columns": [
+          "city_key"
+        ],
+        "definition": "CREATE UNIQUE INDEX city_whitelist_city_key_key ON public.city_whitelist USING btree (city_key)",
+        "is_primary": false,
+        "is_unique": true,
+        "is_valid": true,
+        "method": "btree",
+        "name": "city_whitelist_city_key_key",
+        "predicate": null,
+        "schema": "public",
+        "table": "city_whitelist"
+      },
+      {
+        "columns": [
+          "id"
+        ],
+        "definition": "CREATE UNIQUE INDEX city_whitelist_pkey ON public.city_whitelist USING btree (id)",
+        "is_primary": true,
+        "is_unique": true,
+        "is_valid": true,
+        "method": "btree",
+        "name": "city_whitelist_pkey",
+        "predicate": null,
+        "schema": "public",
+        "table": "city_whitelist"
+      },
+      {
+        "columns": [
           "id"
         ],
         "definition": "CREATE UNIQUE INDEX client_wallet_rules_pkey ON public.client_wallet_rules USING btree (id)",
@@ -74689,6 +75179,21 @@
         "method": "btree",
         "name": "idx_tasks_contact",
         "predicate": null,
+        "schema": "public",
+        "table": "conversation_tasks"
+      },
+      {
+        "columns": [
+          "created_by",
+          "message_id"
+        ],
+        "definition": "CREATE INDEX idx_tasks_owner_message ON public.conversation_tasks USING btree (created_by, message_id) WHERE (message_id IS NOT NULL)",
+        "is_primary": false,
+        "is_unique": false,
+        "is_valid": true,
+        "method": "btree",
+        "name": "idx_tasks_owner_message",
+        "predicate": "(message_id IS NOT NULL)",
         "schema": "public",
         "table": "conversation_tasks"
       },
@@ -82431,6 +82936,21 @@
       },
       {
         "columns": [
+          "endpoint",
+          "error_at"
+        ],
+        "definition": "CREATE INDEX webhook_failures_replay_pendente_idx ON public.webhook_failures USING btree (endpoint, error_at) WHERE ((NOT resolved) AND (replay_payload IS NOT NULL))",
+        "is_primary": false,
+        "is_unique": false,
+        "is_valid": true,
+        "method": "btree",
+        "name": "webhook_failures_replay_pendente_idx",
+        "predicate": "((NOT resolved) AND (replay_payload IS NOT NULL))",
+        "schema": "public",
+        "table": "webhook_failures"
+      },
+      {
+        "columns": [
           "resolved",
           "error_at"
         ],
@@ -82917,6 +83437,30 @@
         "detail": "RLS ligado sem policies: inacessível via API (só service_role).",
         "object": "public.voip_profile_credentials",
         "severity": "MÉDIA"
+      },
+      {
+        "code": "fk_without_index",
+        "detail": "FK sem índice nas colunas ['created_by']: joins e DELETE/UPDATE na tabela pai ficam lentos.",
+        "object": "public.city_whitelist.city_whitelist_created_by_fkey",
+        "severity": "BAIXA"
+      },
+      {
+        "code": "fk_without_index",
+        "detail": "FK sem índice nas colunas ['message_id']: joins e DELETE/UPDATE na tabela pai ficam lentos.",
+        "object": "public.conversation_tasks.conversation_tasks_message_id_fkey",
+        "severity": "BAIXA"
+      },
+      {
+        "code": "policy_auth_fn_not_wrapped",
+        "detail": "Policy chama auth.uid()/jwt() sem `(select ...)`: é reavaliada por linha; envolva em subselect.",
+        "object": "public.city_whitelist.Admins can manage city whitelist",
+        "severity": "BAIXA"
+      },
+      {
+        "code": "policy_auth_fn_not_wrapped",
+        "detail": "Policy chama auth.uid()/jwt() sem `(select ...)`: é reavaliada por linha; envolva em subselect.",
+        "object": "public.whatsapp_connections.Admins can delete connections",
+        "severity": "BAIXA"
       },
       {
         "code": "policy_auth_fn_not_wrapped",
@@ -89933,6 +90477,42 @@
         "statements": 1,
         "statements_sha": "57d2ce6d6e854520",
         "version": "20261125130000"
+      },
+      {
+        "name": "webhook_failures_replay",
+        "statements": 1,
+        "statements_sha": "b60bbb08d4ad05c3",
+        "version": "20261126010000"
+      },
+      {
+        "name": "city_whitelist_network_policy",
+        "statements": 1,
+        "statements_sha": "9083335afa6df406",
+        "version": "20261126010508"
+      },
+      {
+        "name": "connections_delete_admin_only",
+        "statements": 1,
+        "statements_sha": "c1f79363df019317",
+        "version": "20261126011000"
+      },
+      {
+        "name": "talkx_template_duplicate_archive_delete",
+        "statements": 1,
+        "statements_sha": "c6a165429c074dc2",
+        "version": "20261126213000"
+      },
+      {
+        "name": "talkx_template_delete_atomic",
+        "statements": 1,
+        "statements_sha": "b92ca75bf2e7c304",
+        "version": "20261126213001"
+      },
+      {
+        "name": "remind_me_about_message",
+        "statements": 1,
+        "statements_sha": "d8df6c72836857be",
+        "version": "20261126221500"
       }
     ],
     "policies": [
@@ -90908,6 +91488,18 @@
         "table": "chatbot_flows",
         "using": "true",
         "with_check": null
+      },
+      {
+        "cmd": "ALL",
+        "name": "Admins can manage city whitelist",
+        "permissive": "PERMISSIVE",
+        "roles": [
+          "authenticated"
+        ],
+        "schema": "public",
+        "table": "city_whitelist",
+        "using": "is_admin_or_supervisor(auth.uid())",
+        "with_check": "is_admin_or_supervisor(auth.uid())"
       },
       {
         "cmd": "ALL",
@@ -95922,7 +96514,7 @@
         ],
         "schema": "public",
         "table": "whatsapp_connections",
-        "using": "is_admin_or_supervisor(( SELECT auth.uid() AS uid))",
+        "using": "is_admin(auth.uid())",
         "with_check": null
       },
       {
@@ -96709,11 +97301,6 @@
         {
           "publication": "supabase_realtime_messages_publication",
           "schema": "realtime",
-          "table": "messages_2026_11_22"
-        },
-        {
-          "publication": "supabase_realtime_messages_publication",
-          "schema": "realtime",
           "table": "messages_2026_11_23"
         },
         {
@@ -96740,6 +97327,11 @@
           "publication": "supabase_realtime_messages_publication",
           "schema": "realtime",
           "table": "messages_2026_11_28"
+        },
+        {
+          "publication": "supabase_realtime_messages_publication",
+          "schema": "realtime",
+          "table": "messages_2026_11_29"
         }
       ]
     },
@@ -97895,6 +98487,21 @@
         "is_partition": false,
         "kind": "table",
         "name": "chatbot_flows",
+        "owner": "postgres",
+        "parent": null,
+        "partition_bound": null,
+        "partition_key": null,
+        "replica_identity": "default",
+        "rls_enabled": true,
+        "rls_forced": false,
+        "schema": "public"
+      },
+      {
+        "comment": null,
+        "from_extension": false,
+        "is_partition": false,
+        "kind": "table",
+        "name": "city_whitelist",
         "owner": "postgres",
         "parent": null,
         "partition_bound": null,
@@ -102017,6 +102624,17 @@
         "schema": "public",
         "status": "enabled",
         "table": "talkx_template_versions",
+        "timing": "BEFORE"
+      },
+      {
+        "definition": "CREATE TRIGGER trg_guard_talkx_template_delete BEFORE DELETE ON talkx_templates FOR EACH ROW EXECUTE FUNCTION guard_talkx_template_delete()",
+        "events": "DELETE",
+        "function": "public.guard_talkx_template_delete",
+        "level": "ROW",
+        "name": "trg_guard_talkx_template_delete",
+        "schema": "public",
+        "status": "enabled",
+        "table": "talkx_templates",
         "timing": "BEFORE"
       },
       {

@@ -48,6 +48,8 @@ service_role_full [command=ALL; roles=service_role; PERMISSIVE]
 | 9 | `retry_count` | `integer` | não | `0` |  |  |
 | 10 | `resolved` | `boolean` | não | `false` |  |  |
 | 11 | `resolved_at` | `timestamp with time zone` | sim |  |  |  |
+| 12 | `external_id` | `text` | sim |  |  | Id do evento no provedor (key.id). Chave de idempotencia do replay contra ux_messages_dedup. |
+| 13 | `replay_payload` | `jsonb` | sim |  |  | Argumentos validados do ingest_inbound_message para reprocessar o evento. Contem telefone, TEXTO (p_content) e URL de midia (p_media_url) — acesso restrito a service_role; anon/authenticated sem privilegio. Ao resolver, a linha e mantida para auditoria (somente resolved/resolved_at mudam); sem purga automatica nesta change. |
 
 
 ## Constraints
@@ -63,6 +65,7 @@ service_role_full [command=ALL; roles=service_role; PERMISSIVE]
 |---|---|---|---|---|---|---|
 | webhook_failures_endpoint_idx | btree | endpoint, error_at | não | sim |  | `CREATE INDEX webhook_failures_endpoint_idx ON public.webhook_failures USING btree (endpoint, error_at DESC)` |
 | webhook_failures_pkey | btree | id | sim | sim |  | `CREATE UNIQUE INDEX webhook_failures_pkey ON public.webhook_failures USING btree (id)` |
+| webhook_failures_replay_pendente_idx | btree | endpoint, error_at | não | sim | `((NOT resolved) AND (replay_payload IS NOT NULL))` | `CREATE INDEX webhook_failures_replay_pendente_idx ON public.webhook_failures USING btree (endpoint, error_at) WHERE ((NOT resolved) AND (replay_payload IS NOT NULL))` |
 | webhook_failures_resolved_idx | btree | resolved, error_at | não | sim | `(NOT resolved)` | `CREATE INDEX webhook_failures_resolved_idx ON public.webhook_failures USING btree (resolved, error_at DESC) WHERE (NOT resolved)` |
 
 

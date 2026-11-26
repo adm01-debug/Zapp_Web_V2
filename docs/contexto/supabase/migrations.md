@@ -1159,3 +1159,9 @@ SQL em `migrations/<versao>_<nome>.sql`. Mudanças feitas pelo Dashboard/SQL Edi
 | 20261124120000 | [drop_rpcs_e2e_orfas](migrations/20261124120000_drop_rpcs_e2e_orfas.sql) | 1 |
 | 20261125120000 | [ai_providers_endpoint_secret_binding](migrations/20261125120000_ai_providers_endpoint_secret_binding.sql) | 1 |
 | 20261125130000 | [ia009_kill_switch_chaves](migrations/20261125130000_ia009_kill_switch_chaves.sql) | 1 |
+| 20261126010000 | [webhook_failures_replay](migrations/20261126010000_webhook_failures_replay.sql) | 1 |
+| 20261126010508 | [city_whitelist_network_policy](migrations/20261126010508_city_whitelist_network_policy.sql) | 1 |
+| 20261126011000 | [connections_delete_admin_only](migrations/20261126011000_connections_delete_admin_only.sql) | 1 |
+| 20261126213000 | [talkx_template_duplicate_archive_delete](migrations/20261126213000_talkx_template_duplicate_archive_delete.sql) | 1 |
+| 20261126213001 | [talkx_template_delete_atomic](migrations/20261126213001_talkx_template_delete_atomic.sql) | 1 |
+| 20261126221500 | [remind_me_about_message](migrations/20261126221500_remind_me_about_message.sql) | 1 |

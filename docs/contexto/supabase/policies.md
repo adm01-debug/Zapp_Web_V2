@@ -86,6 +86,7 @@ Visão consolidada (inclui `storage.objects` e `realtime.messages`); detalhes po
 | public.chatbot_executions | Authenticated can view chatbot executions | SELECT | PERMISSIVE | authenticated | `((contact_id IN ( SELECT c.id    FROM contacts c   WHERE (c.assigned_to IN ( SELECT p.id            FROM profiles p           WHERE (p.user_id = ( SELECT auth.uid() AS uid)))))) OR is_admin_or_supervisor(( SELECT auth.uid() AS uid)))` |  |
 | public.chatbot_flows | Admins can manage chatbot flows | ALL | PERMISSIVE | authenticated | `is_admin_or_supervisor(( SELECT auth.uid() AS uid))` |  |
 | public.chatbot_flows | Authenticated can view chatbot flows | SELECT | PERMISSIVE | authenticated | `true` |  |
+| public.city_whitelist | Admins can manage city whitelist | ALL | PERMISSIVE | authenticated | `is_admin_or_supervisor(auth.uid())` | `is_admin_or_supervisor(auth.uid())` |
 | public.client_wallet_rules | Admins can manage wallet rules | ALL | PERMISSIVE | authenticated | `is_admin_or_supervisor(( SELECT auth.uid() AS uid))` | `is_admin_or_supervisor(( SELECT auth.uid() AS uid))` |
 | public.client_wallet_rules | Wallet rules visible to admins only | SELECT | PERMISSIVE | authenticated | `is_admin_or_supervisor(( SELECT auth.uid() AS uid))` |  |
 | public.connection_alert_preferences | connection_alert_preferences_delete_own | DELETE | PERMISSIVE | authenticated | `(user_id = ( SELECT ( SELECT auth.uid() AS uid) AS uid))` |  |
@@ -503,7 +504,7 @@ Visão consolidada (inclui `storage.objects` e `realtime.messages`); detalhes po
 | public.whatsapp_connection_queues | Admins can manage connection queues | ALL | PERMISSIVE | authenticated | `is_admin(( SELECT auth.uid() AS uid))` |  |
 | public.whatsapp_connection_queues | Authenticated can view connection queues | SELECT | PERMISSIVE | authenticated | `true` |  |
 | public.whatsapp_connections | Admin supervisor view connections | SELECT | PERMISSIVE | authenticated | `is_admin_or_supervisor(( SELECT auth.uid() AS uid))` |  |
-| public.whatsapp_connections | Admins can delete connections | DELETE | PERMISSIVE | authenticated | `is_admin_or_supervisor(( SELECT auth.uid() AS uid))` |  |
+| public.whatsapp_connections | Admins can delete connections | DELETE | PERMISSIVE | authenticated | `is_admin(auth.uid())` |  |
 | public.whatsapp_connections | Admins can insert connections | INSERT | PERMISSIVE | authenticated |  | `is_admin_or_supervisor(( SELECT auth.uid() AS uid))` |
 | public.whatsapp_connections | Admins can update connections | UPDATE | PERMISSIVE | authenticated | `is_admin_or_supervisor(( SELECT auth.uid() AS uid))` |  |
 | public.whatsapp_flows | Admins can manage whatsapp flows | ALL | PERMISSIVE | authenticated | `is_admin_or_supervisor(( SELECT auth.uid() AS uid))` | `is_admin_or_supervisor(( SELECT auth.uid() AS uid))` |

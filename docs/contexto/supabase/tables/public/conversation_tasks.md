@@ -76,6 +76,7 @@ tasks_update_own [command=UPDATE; roles=authenticated; PERMISSIVE]
 | 18 | `status_changed_at` | `timestamp with time zone` | não | `now()` |  |  |
 | 19 | `client_task_id` | `uuid` | sim |  |  | IA-047: chave idempotente do clique de criação de tarefa (ux_conversation_tasks_creator_client_key: created_by+client_task_id único, parcial). |
 | 20 | `migrated_from_reminder_id` | `uuid` | sim |  |  |  |
+| 21 | `message_id` | `uuid` | sim |  |  |  |
 
 
 ## Constraints
@@ -85,6 +86,7 @@ tasks_update_own [command=UPDATE; roles=authenticated; PERMISSIVE]
 | conversation_tasks_assigned_to_fkey | FOREIGN KEY | `FOREIGN KEY (assigned_to) REFERENCES profiles(id) ON DELETE SET NULL` | SET NULL | NO ACTION | sim |
 | conversation_tasks_contact_id_fkey | FOREIGN KEY | `FOREIGN KEY (contact_id) REFERENCES contacts(id) ON DELETE SET NULL` | SET NULL | NO ACTION | sim |
 | conversation_tasks_created_by_fkey | FOREIGN KEY | `FOREIGN KEY (created_by) REFERENCES profiles(id) ON DELETE SET NULL` | SET NULL | NO ACTION | sim |
+| conversation_tasks_message_id_fkey | FOREIGN KEY | `FOREIGN KEY (message_id) REFERENCES messages(id) ON DELETE SET NULL` | SET NULL | NO ACTION | sim |
 | conversation_tasks_migrated_from_reminder_id_fkey | FOREIGN KEY | `FOREIGN KEY (migrated_from_reminder_id) REFERENCES reminders(id) ON DELETE SET NULL` | SET NULL | NO ACTION | sim |
 | conversation_tasks_pkey | PRIMARY KEY | `PRIMARY KEY (id)` |  |  | sim |
 | conversation_tasks_status_check | CHECK | `CHECK (status = ANY (ARRAY['backlog'::text, 'todo'::text, 'doing'::text, 'waiting'::text, 'done'::text, 'cancelled'::text]))` |  |  | sim |
@@ -108,6 +110,7 @@ tasks_update_own [command=UPDATE; roles=authenticated; PERMISSIVE]
 | idx_conversation_tasks_owner_status_position | btree | created_by, status, position | não | sim |  | `CREATE INDEX idx_conversation_tasks_owner_status_position ON public.conversation_tasks USING btree (created_by, status, "position")` |
 | idx_tasks_assigned | btree | assigned_to | não | sim |  | `CREATE INDEX idx_tasks_assigned ON public.conversation_tasks USING btree (assigned_to)` |
 | idx_tasks_contact | btree | contact_id | não | sim |  | `CREATE INDEX idx_tasks_contact ON public.conversation_tasks USING btree (contact_id)` |
+| idx_tasks_owner_message | btree | created_by, message_id | não | sim | `(message_id IS NOT NULL)` | `CREATE INDEX idx_tasks_owner_message ON public.conversation_tasks USING btree (created_by, message_id) WHERE (message_id IS NOT NULL)` |
 | idx_tasks_owner_remind_pending | btree | created_by, remind_at | não | sim | `((remind_at IS NOT NULL) AND (notified_at IS NULL) AND (status <> ALL (ARRAY['done'::text, 'cancelled'::text])))` | `CREATE INDEX idx_tasks_owner_remind_pending ON public.conversation_tasks USING btree (created_by, remind_at) WHERE ((remind_at IS NOT NULL) AND (notified_at IS NULL) AND (status <> ALL (ARRAY['done'::text, 'cancelled'::text])))` |
 | idx_tasks_owner_status_due | btree | created_by, status, due_date | não | sim |  | `CREATE INDEX idx_tasks_owner_status_due ON public.conversation_tasks USING btree (created_by, status, due_date)` |
 | idx_tasks_status | btree | status | não | sim |  | `CREATE INDEX idx_tasks_status ON public.conversation_tasks USING btree (status)` |

@@ -165,7 +165,7 @@ Políticas RLS (nome, operação, papéis e modo; as expressões permanecem no c
 | comando | DELETE |
 | tipo | PERMISSIVE |
 | roles | authenticated |
-| USING | `is_admin_or_supervisor(( SELECT auth.uid() AS uid))` |
+| USING | `is_admin(auth.uid())` |
 | WITH CHECK |  |
 
 ### `Admins can insert connections`

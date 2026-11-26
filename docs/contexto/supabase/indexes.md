@@ -136,6 +136,8 @@ Uso e tamanho em `stats.md`.
 | public.chatbot_flows | idx_chatbot_flows_active | btree | is_active | não | sim |  |
 | public.chatbot_flows | idx_chatbot_flows_created_by | btree | created_by | não | sim |  |
 | public.chatbot_flows | idx_chatbot_flows_whatsapp_connection_id | btree | whatsapp_connection_id | não | sim |  |
+| public.city_whitelist | city_whitelist_city_key_key | btree | city_key | sim | sim |  |
+| public.city_whitelist | city_whitelist_pkey | btree | id | sim | sim |  |
 | public.client_wallet_rules | client_wallet_rules_pkey | btree | id | sim | sim |  |
 | public.client_wallet_rules | idx_client_wallet_rules_agent_id | btree | agent_id | não | sim |  |
 | public.client_wallet_rules | idx_client_wallet_rules_whatsapp_connection_id | btree | whatsapp_connection_id | não | sim |  |
@@ -228,6 +230,7 @@ Uso e tamanho em `stats.md`.
 | public.conversation_tasks | idx_conversation_tasks_owner_status_position | btree | created_by, status, position | não | sim |  |
 | public.conversation_tasks | idx_tasks_assigned | btree | assigned_to | não | sim |  |
 | public.conversation_tasks | idx_tasks_contact | btree | contact_id | não | sim |  |
+| public.conversation_tasks | idx_tasks_owner_message | btree | created_by, message_id | não | sim | `(message_id IS NOT NULL)` |
 | public.conversation_tasks | idx_tasks_owner_remind_pending | btree | created_by, remind_at | não | sim | `((remind_at IS NOT NULL) AND (notified_at IS NULL) AND (status <> ALL (ARRAY['done'::text, 'cancelled'::text])))` |
 | public.conversation_tasks | idx_tasks_owner_status_due | btree | created_by, status, due_date | não | sim |  |
 | public.conversation_tasks | idx_tasks_status | btree | status | não | sim |  |
@@ -773,6 +776,7 @@ Uso e tamanho em `stats.md`.
 | public.webauthn_challenges | webauthn_challenges_pkey | btree | id | sim | sim |  |
 | public.webhook_failures | webhook_failures_endpoint_idx | btree | endpoint, error_at | não | sim |  |
 | public.webhook_failures | webhook_failures_pkey | btree | id | sim | sim |  |
+| public.webhook_failures | webhook_failures_replay_pendente_idx | btree | endpoint, error_at | não | sim | `((NOT resolved) AND (replay_payload IS NOT NULL))` |
 | public.webhook_failures | webhook_failures_resolved_idx | btree | resolved, error_at | não | sim | `(NOT resolved)` |
 | public.webhook_rate_limits | idx_rate_limits_instance_window | btree | instance_id, window_start | não | sim |  |
 | public.webhook_rate_limits | webhook_rate_limits_pkey | btree | id | sim | sim |  |

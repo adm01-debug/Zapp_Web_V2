@@ -1,18 +1,19 @@
-CREATE OR REPLACE FUNCTION public.resolve_network_policy(p_ip text, p_country_code text, p_endpoint text, p_default_max_requests integer, p_default_window_seconds integer)
+CREATE OR REPLACE FUNCTION public.resolve_network_policy(p_ip text, p_country_code text, p_city text DEFAULT NULL::text, p_endpoint text DEFAULT NULL::text, p_default_max_requests integer DEFAULT NULL::integer, p_default_window_seconds integer DEFAULT NULL::integer)
  RETURNS TABLE(allowed boolean, reason text, rate_limit_max_requests integer, rate_limit_window_seconds integer)
  LANGUAGE plpgsql
  STABLE SECURITY DEFINER
- SET search_path TO 'public', 'pg_temp'
+ SET search_path TO 'public'
 AS $function$
 declare
   v_geo_mode text;
+  v_city_enabled boolean;
   v_country text;
+  v_city_key text;
   v_ip_whitelisted boolean;
   v_ip_blocked boolean;
   v_max integer;
   v_window integer;
 begin
-  -- Validação de entradas (impossível decidir → exceção; o chamador converte em 503).
   if p_ip is null or btrim(p_ip) = '' then
     raise exception 'resolve_network_policy: p_ip obrigatorio' using errcode = '22023';
   end if;
@@ -26,11 +27,10 @@ begin
     raise exception 'resolve_network_policy: p_default_window_seconds invalido' using errcode = '22023';
   end if;
 
-  -- País normalizado (maiúsculo, trim); vazio vira ausente (NULL).
   v_country := nullif(upper(btrim(coalesce(p_country_code, ''))), '');
+  v_city_key := public.normalize_city_name(p_city);
 
   -- --- Resolução de rate limit (configurável) ----------------------------
-  -- Regra ativa que casa (exato ou padrão com '*') prevalece; empates determinísticos.
   select rc.max_requests, rc.window_seconds
     into v_max, v_window
     from public.rate_limit_configs rc
@@ -48,14 +48,12 @@ begin
      rc.id asc
    limit 1;
 
-  -- Sem regra: preserva os parâmetros do chamador.
   if v_max is null then
     v_max := p_default_max_requests;
     v_window := p_default_window_seconds;
   end if;
 
   -- --- 1) Política de IP -------------------------------------------------
-  -- Whitelist isenta SOMENTE o bloqueio por IP (não autenticação, país nem rate limit).
   select exists (select 1 from public.ip_whitelist where ip_address = p_ip)
     into v_ip_whitelisted;
 
@@ -73,15 +71,15 @@ begin
   end if;
 
   -- --- 2) Política de país (sempre aplicada, mesmo com IP whitelisted) ---
-  select s.mode into v_geo_mode
+  -- Modo de país e toggle de cidade saem da MESMA linha de configuração.
+  select s.mode, s.city_whitelist_enabled into v_geo_mode, v_city_enabled
     from public.geo_blocking_settings s
    order by s.updated_at desc nulls last, s.created_at desc nulls last, s.id asc
    limit 1;
 
   if v_geo_mode is null or v_geo_mode = 'disabled' then
-    null; -- permite
+    null;
   elsif v_geo_mode = 'whitelist' then
-    -- whitelist vazia ou país ausente nega todos (falha fechada)
     if v_country is null or not exists (
       select 1 from public.allowed_countries where country_code = v_country
     ) then
@@ -89,7 +87,6 @@ begin
       return;
     end if;
   elsif v_geo_mode = 'blacklist' then
-    -- país ausente falha fechado; listado nega; fora da lista permite
     if v_country is null or exists (
       select 1 from public.blocked_countries where country_code = v_country
     ) then
@@ -97,9 +94,21 @@ begin
       return;
     end if;
   else
-    -- modo desconhecido: falha fechada
     return query select false, 'country_blocked'::text, v_max, v_window;
     return;
+  end if;
+
+  -- --- 3) Política de cidade (sempre aplicada, mesmo com IP whitelisted) --
+  -- Só atua com o toggle ligado. Ligado: cidade ausente, fora da lista, inativa ou
+  -- lista vazia => nega (falha fechada).
+  if coalesce(v_city_enabled, false) then
+    if v_city_key is null or not exists (
+      select 1 from public.city_whitelist w
+       where w.city_key = v_city_key and w.is_active
+    ) then
+      return query select false, 'city_blocked'::text, v_max, v_window;
+      return;
+    end if;
   end if;
 
   return query select true, null::text, v_max, v_window;

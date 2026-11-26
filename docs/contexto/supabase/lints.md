@@ -24,6 +24,10 @@ Verificações objetivas feitas no catálogo. Um agente deve ler isto antes de p
 | MÉDIA | rls_no_policies | public.talkx_test_send_claims | RLS ligado sem policies: inacessível via API (só service_role). |
 | MÉDIA | rls_no_policies | public.team_chat_media_acl_r2_db_020_rb | RLS ligado sem policies: inacessível via API (só service_role). |
 | MÉDIA | rls_no_policies | public.voip_profile_credentials | RLS ligado sem policies: inacessível via API (só service_role). |
+| BAIXA | fk_without_index | public.city_whitelist.city_whitelist_created_by_fkey | FK sem índice nas colunas ['created_by']: joins e DELETE/UPDATE na tabela pai ficam lentos. |
+| BAIXA | fk_without_index | public.conversation_tasks.conversation_tasks_message_id_fkey | FK sem índice nas colunas ['message_id']: joins e DELETE/UPDATE na tabela pai ficam lentos. |
+| BAIXA | policy_auth_fn_not_wrapped | public.city_whitelist.Admins can manage city whitelist | Policy chama auth.uid()/jwt() sem `(select ...)`: é reavaliada por linha; envolva em subselect. |
+| BAIXA | policy_auth_fn_not_wrapped | public.whatsapp_connections.Admins can delete connections | Policy chama auth.uid()/jwt() sem `(select ...)`: é reavaliada por linha; envolva em subselect. |
 | BAIXA | policy_auth_fn_not_wrapped | storage.objects.Admins can delete team chat files | Policy chama auth.uid()/jwt() sem `(select ...)`: é reavaliada por linha; envolva em subselect. |
 | BAIXA | policy_auth_fn_not_wrapped | storage.objects.Auth upload audio memes owned | Policy chama auth.uid()/jwt() sem `(select ...)`: é reavaliada por linha; envolva em subselect. |
 | BAIXA | policy_auth_fn_not_wrapped | storage.objects.Auth upload custom emojis owned | Policy chama auth.uid()/jwt() sem `(select ...)`: é reavaliada por linha; envolva em subselect. |
