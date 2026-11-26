@@ -1,15 +1,15 @@
 {
  "meta": {
-  "sha": "5bddef577a60ae99a2daa85a8d0529a22ef1ffc7",
+  "sha": "c0a66203dba77f9a7d1f25a78a91be7aa4115540",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-26 22:30 UTC",
-  "files_total": 14763,
-  "code_files": 8293,
-  "code_lines": 1249266
+  "generated_at": "2026-11-26 23:08 UTC",
+  "files_total": 14768,
+  "code_files": 8298,
+  "code_lines": 1249723
  },
  "version": "1.3.2",
- "facts_hash": "c7839a42ac5625bf",
+ "facts_hash": "a5fd33057b124a37",
  "stack": {
   "frameworks": [
    "React + Vite",
@@ -367,9 +367,9 @@
   ],
   "package_manager": "bun",
   "languages": {
-   ".sql": 3077,
-   ".tsx": 2529,
-   ".ts": 2064,
+   ".sql": 3078,
+   ".tsx": 2531,
+   ".ts": 2066,
    ".mjs": 496,
    ".py": 125,
    ".cjs": 19,
@@ -35567,6 +35567,19 @@
      "v_resultado"
     ]
    },
+   "webhook_dead_letter_fila": {
+    "args": "p_limit integer DEFAULT 50",
+    "returns": "TABLE (\n  id uuid,\n  external_id text,\n  endpoint text,\n  event_type text,\n  retry_count integer,\n  error_at timestamptz,\n  tem_payload boolean,\n  total bigint\n)",
+    "lang": "sql",
+    "src": "supabase/migrations/20261127180000_dead_letter_fila_rpc.sql",
+    "security_definer": true,
+    "search_path": true,
+    "body": "SELECT f.id, f.external_id, f.endpoint, f.event_type, f.retry_count, f.error_at, (f.replay_payload IS NOT NULL) AS tem_payload, count(*) OVER () AS total FROM public.webhook_failures f WHERE f.resolved = false AND public.is_admin_or_supervisor(auth.uid()) ORDER BY f.error_at ASC LIMIT greatest(1, least(coalesce(p_limit, 50), 200));",
+    "raises": [],
+    "tables": [
+     "webhook_failures"
+    ]
+   },
    "uid": {
     "args": "",
     "returns": "uuid",
@@ -36226,17 +36239,6 @@
     "tables": []
    },
    "set_voip_profile_credentials": {
-    "args": "",
-    "returns": "?",
-    "lang": "",
-    "src": "src/integrations/supabase/types.ts",
-    "security_definer": false,
-    "search_path": false,
-    "body": "",
-    "raises": [],
-    "tables": []
-   },
-   "webhook_dead_letter_fila": {
     "args": "",
     "returns": "?",
     "lang": "",
@@ -48698,6 +48700,7 @@
    "supabase/migrations/20261127140000_fix_retencao_copiloto.sql",
    "supabase/migrations/20261127150000_recover_talkx_send_budget_internal.sql",
    "supabase/migrations/20261127170000_rpc_resumo_orcamento_ia.sql",
+   "supabase/migrations/20261127180000_dead_letter_fila_rpc.sql",
    "supabase/tests/admin_inbox_silence.sql",
    "supabase/tests/admin_unlock_login_autorizacao.sql",
    "supabase/tests/agent_workload.sql",
@@ -63997,6 +64000,22 @@
     "src": "supabase/migrations/20261127170000_rpc_resumo_orcamento_ia.sql"
    },
    {
+    "kind": "revoke",
+    "privs": "execute",
+    "object": "webhook_dead_letter_fila",
+    "objkind": "function",
+    "roles": "PUBLIC, anon",
+    "src": "supabase/migrations/20261127180000_dead_letter_fila_rpc.sql"
+   },
+   {
+    "kind": "grant",
+    "privs": "execute",
+    "object": "webhook_dead_letter_fila",
+    "objkind": "function",
+    "roles": "authenticated, service_role",
+    "src": "supabase/migrations/20261127180000_dead_letter_fila_rpc.sql"
+   },
+   {
     "kind": "grant",
     "privs": "select",
     "object": "profiles",
@@ -73403,7 +73422,7 @@
     "file": ".github/workflows/types-sync.yml"
    }
   ],
-  "components_count": 2357,
+  "components_count": 2360,
   "hooks": [
    {
     "name": "useMotionSeguro",
@@ -73580,6 +73599,10 @@
    {
     "name": "useConnectionIncidents",
     "file": "src/components/monitoring/hooks/useConnectionIncidents.ts"
+   },
+   {
+    "name": "useDeadLetterReplay",
+    "file": "src/components/monitoring/hooks/useDeadLetterReplay.ts"
    },
    {
     "name": "useEvolutionMonitoring",
@@ -76871,8 +76894,8 @@
   },
   {
    "module": "src/components",
-   "files": 2355,
-   "lines": 400389,
+   "files": 2358,
+   "lines": 400728,
    "tables": [
     "agent_skills",
     "agent_visibility_grants",
@@ -77984,8 +78007,8 @@
   },
   {
    "module": "src/services",
-   "files": 38,
-   "lines": 5995,
+   "files": 39,
+   "lines": 6059,
    "tables": [
     "ai_conversation_tags",
     "audit_logs",
@@ -78011,6 +78034,7 @@
     "contact-bulk.service.ts: BulkMutationOutcome, emptyOutcome, pendingIds, applyContactFieldUpdate, applyContactTagChange",
     "contact-merge.service.ts: mergeContactsAtomic",
     "contact.service.ts: Contact, CONTACT_NOTES_PAGE_SIZE, SearchContactsParams, ContactService",
+    "deadLetter.service.ts: DEAD_LETTER_LIMITE, DeadLetterItem, ReplayResultado, fetchDeadLetterFila, reprocessarDeadLetter",
     "evolution.service.ts: EvolutionInstance, EvolutionConnectionStatus, EvolutionMessagePayload, getEvolutionInstances, getEvolutionInstanceById, getEvolutionInstanceByName",
     "inbox.service.ts: InboxFilterTag, fetchInboxFilterTags, InboxSilenceConversation, InboxSilenceConnection, fetchInboxSilence",
     "instance-pauses.service.ts: InstancePause, PAUSE_NOTES_MAX_LENGTH, PAUSES_LIST_LIMIT, PAUSES_LOAD_ERROR, validateInvestigationNotes, fetchInstancePauses",
@@ -78024,12 +78048,12 @@
     "singu-adapter.ts: mapSinguBatchEntry, realAdapter, getSinguAdapter"
    ],
    "docs": [
+    "deadLetter.service.ts: Fila da dead-letter de webhooks: leitura da fila e disparo do replay. A leitura é a RPC `webhook_dead_letter_fila` (SECURITY DEFINER, guarda `is_admin_or_supervisor` no WHERE, devolve a fila sem payload) da migration `20261127180000_dead_letter_fila_rpc.sql`. O replay é a MESMA Edge admin-only `webh …",
     "evolution.service.ts: Evolution API Service Layer Centralizes all Evolution API calls, instance management, and connection status operations. Hooks should call these functions instead of building requests ad-hoc, which reduces duplication and makes mocking/testing easier. @module services/evolution.service",
     "contact.service.custom-fields.test.ts: t_57b49f87: a tabela `contact_custom_fields` tem índice ÚNICO em (contact_id, field_name). Sem `onConflict` o PostgREST resolve o conflito pela chave primária e reescrever um campo com o mesmo nome devolve 23505 (o Salvar falhava no campo que já existia). E o delete precisa devolver as linhas afetad …",
     "contact.service.enriched.test.ts: A4-D (auditoria adversarial, onda 2): o editor de contato abria com endereço vazio porque a query `contact-enriched` não pedia NENHUMA das 6 colunas de endereço da tabela `contacts`. Com o campo vazio, salvar qualquer outra alteração grava o endereço como nulo (perda de dado).",
     "contact.service.legacy.test.ts: F5 do plano de Contatos (D4): legados ficam fora por padrão. O front só envia `include_legacy` quando o toggle está ligado — sem ele a RPC usa o default (false).",
-    "navigation.search-insights.test.ts: HZ1-06 — item de menu \"Insights de Busca\". A entrada vive no grupo Sistema com o filtro STAFF_ROLES (admin/supervisor), o mesmo das telas de admin — a RPC que alimenta a tela nega os demais (42501). O menu e a rota leem o MESMO metadata (NavigationService), então este teste cobre as duas pontas: que …",
-    "singu-adapter.mock.ts: MÓDULO SÓ-DEV/TESTE — adaptador de teste do Singu (nunca entra no bundle de produção: ele só é alcançado pelo `import()` dinâmico dentro do ramo `import.meta.env.DEV` de `singu-adapter.ts`). Chave das fixtures = id do contato do Zapp; valor = contrato único `ContactSinguSummary`. Dados sintéticos: n …"
+    "navigation.search-insights.test.ts: HZ1-06 — item de menu \"Insights de Busca\". A entrada vive no grupo Sistema com o filtro STAFF_ROLES (admin/supervisor), o mesmo das telas de admin — a RPC que alimenta a tela nega os demais (42501). O menu e a rota leem o MESMO metadata (NavigationService), então este teste cobre as duas pontas: que …"
    ],
    "deps": [
     "@supabase/supabase-js",
@@ -78054,6 +78078,7 @@
     "src/services/contact-bulk.service.ts",
     "src/services/contact-merge.service.ts",
     "src/services/contact.service.ts",
+    "src/services/deadLetter.service.ts",
     "src/services/evolution.service.ts",
     "src/services/inbox.service.ts",
     "src/services/index.ts",
@@ -78531,8 +78556,8 @@
   },
   {
    "module": "supabase/migrations",
-   "files": 1166,
-   "lines": 117376,
+   "files": 1167,
+   "lines": 117430,
    "tables": [
     "audit_logs",
     "department_invites",
@@ -84777,6 +84802,9 @@
    ],
    "webhook-diagnostic": [
     "src/components/monitoring/hooks/useMonitoringActions.ts"
+   ],
+   "webhook-replay": [
+    "src/services/deadLetter.service.ts"
    ]
   },
   "storage": {
@@ -93409,6 +93437,18 @@
     "msg": "\n              initial={{ opacity: 0, y: -10 }}\n              animate={{ opacity: 1, y: 0 }}\n              className="
    },
    {
+    "file": "src/components/monitoring/DeadLetterReplayPanel.tsx",
+    "msg": ">\n            <span className="
+   },
+   {
+    "file": "src/components/monitoring/DeadLetterReplayPanel.tsx",
+    "msg": ">\n            Falha ao reprocessar ({erroAcao}).\n          </p>\n        )}\n\n        {resultado && !carregando && (\n          <p className="
+   },
+   {
+    "file": "src/components/monitoring/DeadLetterReplayPanel.tsx",
+    "msg": "Nao foi possivel reprocessar a fila"
+   },
+   {
     "file": "src/components/monitoring/DeviceChatsPanel.tsx",
     "msg": "Escolha a conexão."
    },
@@ -99515,6 +99555,10 @@
    {
     "file": "src/components/mfa/MFASettings.tsx",
     "text": "fetchFactors passou a relançar (PH-07): erro de leitura não pode virar"
+   },
+   {
+    "file": "src/components/monitoring/DeadLetterReplayPanel.tsx",
+    "text": "e a funcao devolve apenas contadores depois de agir. O admin apertava o botao"
    },
    {
     "file": "src/components/monitoring/MonitoringConnectionsList.tsx",
@@ -119100,6 +119144,11 @@
     "file": "src/services/contact.service.ts",
     "name": "DAY_MS",
     "value": "24"
+   },
+   {
+    "file": "src/services/deadLetter.service.ts",
+    "name": "DEAD_LETTER_LIMITE",
+    "value": "50"
    },
    {
     "file": "src/services/instance-pauses.service.ts",
@@ -170268,6 +170317,26 @@
    {
     "file": "src/components/mobile/__tests__/VoiceDictationButton.test.tsx",
     "name": "is disabled when disabled prop is true"
+   },
+   {
+    "file": "src/components/monitoring/__tests__/DeadLetterReplayPanel.behavior.test.tsx",
+    "name": "DeadLetterReplayPanel"
+   },
+   {
+    "file": "src/components/monitoring/__tests__/DeadLetterReplayPanel.behavior.test.tsx",
+    "name": "mostra a fila com os itens e marca quem nao tem payload de replay"
+   },
+   {
+    "file": "src/components/monitoring/__tests__/DeadLetterReplayPanel.behavior.test.tsx",
+    "name": "mostra estado vazio quando a fila esta limpa"
+   },
+   {
+    "file": "src/components/monitoring/__tests__/DeadLetterReplayPanel.behavior.test.tsx",
+    "name": "mostra o erro de leitura e refaz a chamada em "
+   },
+   {
+    "file": "src/components/monitoring/__tests__/DeadLetterReplayPanel.behavior.test.tsx",
+    "name": "reprocessa pela edge admin-only, mostra o resumo e recarrega a fila"
    },
    {
     "file": "src/components/monitoring/__tests__/EvolutionMonitoringDashboard.inbox-silence.test.tsx",
@@ -234290,6 +234359,10 @@
     "call": "invoke("
    },
    {
+    "file": "src/services/deadLetter.service.ts",
+    "call": "invoke("
+   },
+   {
     "file": "src/services/evolution.service.ts",
     "call": "invoke("
    },
@@ -251104,6 +251177,19 @@
      "v_resultado"
     ]
    },
+   "webhook_dead_letter_fila": {
+    "args": "p_limit integer DEFAULT 50",
+    "returns": "TABLE (\n  id uuid,\n  external_id text,\n  endpoint text,\n  event_type text,\n  retry_count integer,\n  error_at timestamptz,\n  tem_payload boolean,\n  total bigint\n)",
+    "lang": "sql",
+    "src": "supabase/migrations/20261127180000_dead_letter_fila_rpc.sql",
+    "security_definer": true,
+    "search_path": true,
+    "body": "SELECT f.id, f.external_id, f.endpoint, f.event_type, f.retry_count, f.error_at, (f.replay_payload IS NOT NULL) AS tem_payload, count(*) OVER () AS total FROM public.webhook_failures f WHERE f.resolved = false AND public.is_admin_or_supervisor(auth.uid()) ORDER BY f.error_at ASC LIMIT greatest(1, least(coalesce(p_limit, 50), 200));",
+    "raises": [],
+    "tables": [
+     "webhook_failures"
+    ]
+   },
    "uid": {
     "args": "",
     "returns": "uuid",
@@ -251763,17 +251849,6 @@
     "tables": []
    },
    "set_voip_profile_credentials": {
-    "args": "",
-    "returns": "?",
-    "lang": "",
-    "src": "src/integrations/supabase/types.ts",
-    "security_definer": false,
-    "search_path": false,
-    "body": "",
-    "raises": [],
-    "tables": []
-   },
-   "webhook_dead_letter_fila": {
     "args": "",
     "returns": "?",
     "lang": "",
@@ -265012,6 +265087,7 @@
    "src/components/calls/__tests__/calls-access.test.ts",
    "src/components/inbox/AudioMessagePlayer.tsx",
    "src/components/inbox/__tests__/AudioMessagePlayer.transcricao.test.tsx",
+   "src/components/monitoring/DeadLetterReplayPanel.tsx",
    "src/components/talkx/tracking/TalkXDataJobsCard.tsx",
    "src/components/talkx/tracking/talkxDataJobs.ts",
    "src/hooks/gamification/__tests__/gamificacaoSemEscritaNoCliente.test.ts",
@@ -265633,6 +265709,7 @@
    "supabase/migrations/20261127140000_fix_retencao_copiloto.sql",
    "supabase/migrations/20261127150000_recover_talkx_send_budget_internal.sql",
    "supabase/migrations/20261127170000_rpc_resumo_orcamento_ia.sql",
+   "supabase/migrations/20261127180000_dead_letter_fila_rpc.sql",
    "supabase/tests/admin_inbox_silence.sql",
    "supabase/tests/admin_unlock_login_autorizacao.sql",
    "supabase/tests/agent_workload.sql",
@@ -266147,6 +266224,7 @@
    "user_has_permission",
    "warroom_agent_today",
    "warroom_queue_stats",
+   "webhook_dead_letter_fila",
    "whisper_messages_valida_audio_path",
    "z296_aplicar_rollback",
    "z296_hits",
@@ -281149,6 +281227,22 @@
     "objkind": "function",
     "roles": "service_role, authenticated",
     "src": "supabase/migrations/20261127170000_rpc_resumo_orcamento_ia.sql"
+   },
+   {
+    "kind": "revoke",
+    "privs": "execute",
+    "object": "webhook_dead_letter_fila",
+    "objkind": "function",
+    "roles": "PUBLIC, anon",
+    "src": "supabase/migrations/20261127180000_dead_letter_fila_rpc.sql"
+   },
+   {
+    "kind": "grant",
+    "privs": "execute",
+    "object": "webhook_dead_letter_fila",
+    "objkind": "function",
+    "roles": "authenticated, service_role",
+    "src": "supabase/migrations/20261127180000_dead_letter_fila_rpc.sql"
    },
    {
     "kind": "grant",
@@ -335885,6 +335979,22 @@
     "is disabled when disabled prop is true"
    ]
   },
+  "src/components/monitoring/DeadLetterReplayPanel.tsx": {
+   "path": "src/components/monitoring/DeadLetterReplayPanel.tsx",
+   "lines": 159,
+   "exports": [
+    "function DeadLetterReplayPanel"
+   ],
+   "errors": [
+    ">\n            <span className=",
+    ">\n            Falha ao reprocessar ({erroAcao}).\n          </p>\n        )}\n\n        {resultado && !carregando && (\n          <p className=",
+    "Nao foi possivel reprocessar a fila"
+   ],
+   "rule_comments": [
+    "e a funcao devolve apenas contadores depois de agir. O admin apertava o botao"
+   ],
+   "uses_service_role": true
+  },
   "src/components/monitoring/DeviceChatsPanel.tsx": {
    "path": "src/components/monitoring/DeviceChatsPanel.tsx",
    "lines": 78,
@@ -336249,7 +336359,7 @@
   },
   "src/components/monitoring/MonitoringWebhookPanel.tsx": {
    "path": "src/components/monitoring/MonitoringWebhookPanel.tsx",
-   "lines": 181,
+   "lines": 185,
    "exports": [
     "function MonitoringWebhookPanel"
    ],
@@ -336289,6 +336399,25 @@
      "value": "success",
      "kind": "compara"
     }
+   ]
+  },
+  "src/components/monitoring/__tests__/DeadLetterReplayPanel.behavior.test.tsx": {
+   "path": "src/components/monitoring/__tests__/DeadLetterReplayPanel.behavior.test.tsx",
+   "lines": 107,
+   "is_test": true,
+   "errors": [
+    ");\n    expect(alerta.textContent).toMatch(/sem permiss/i);\n\n    h.rpc.mockResolvedValue({ data: [LINHA], error: null });\n    fireEvent.click(screen.getByRole("
+   ],
+   "doc": "`DeadLetterReplayPanel` ? painel real (componente + hook) com o client do Supabase mockado, provando pela TELA: 1. a fila da dead-letter aparece (evento, tipo, tentativas, quando falhou); 2. linha sem `replay_payload` e sinalizada e nao conta como \"pronta\"; 3. estado vazio quando a RPC devolve zero …",
+   "tests": [
+    "DeadLetterReplayPanel",
+    "mostra a fila com os itens e marca quem nao tem payload de replay",
+    "mostra estado vazio quando a fila esta limpa",
+    "mostra o erro de leitura e refaz a chamada em ",
+    "reprocessa pela edge admin-only, mostra o resumo e recarrega a fila"
+   ],
+   "side_effects": [
+    "invoke("
    ]
   },
   "src/components/monitoring/__tests__/EvolutionMonitoringDashboard.inbox-silence.test.tsx": {
@@ -336709,6 +336838,17 @@
    ],
    "percents": [
     "/** Uptime de 24 h por conexão, derivado do histórico. Não fabrica 100%. */"
+   ]
+  },
+  "src/components/monitoring/hooks/useDeadLetterReplay.ts": {
+   "path": "src/components/monitoring/hooks/useDeadLetterReplay.ts",
+   "lines": 69,
+   "exports": [
+    "function useDeadLetterReplay"
+   ],
+   "doc": "`useDeadLetterReplay` — estado da fila da dead-letter + a ação de reprocessar. O acesso ao banco e à Edge fica no service (`@/services/deadLetter.service`): hook de componente não importa o client do Supabase. A RPC de leitura (`webhook_dead_letter_fila`, migration `20261127180000`) e a Edge de repl …",
+   "hooks": [
+    "useDeadLetterReplay"
    ]
   },
   "src/components/monitoring/hooks/useEvolutionMonitoring.ts": {
@@ -397761,6 +397901,30 @@
     "200"
    ]
   },
+  "src/services/deadLetter.service.ts": {
+   "path": "src/services/deadLetter.service.ts",
+   "lines": 64,
+   "exports": [
+    "const DEAD_LETTER_LIMITE",
+    "interface DeadLetterItem",
+    "interface ReplayResultado",
+    "function fetchDeadLetterFila",
+    "function reprocessarDeadLetter"
+   ],
+   "invokes": [
+    "webhook-replay"
+   ],
+   "params": [
+    {
+     "name": "DEAD_LETTER_LIMITE",
+     "value": "50"
+    }
+   ],
+   "doc": "Fila da dead-letter de webhooks: leitura da fila e disparo do replay. A leitura é a RPC `webhook_dead_letter_fila` (SECURITY DEFINER, guarda `is_admin_or_supervisor` no WHERE, devolve a fila sem payload) da migration `20261127180000_dead_letter_fila_rpc.sql`. O replay é a MESMA Edge admin-only `webh …",
+   "side_effects": [
+    "invoke("
+   ]
+  },
   "src/services/evolution.service.ts": {
    "path": "src/services/evolution.service.ts",
    "lines": 222,
@@ -427521,6 +427685,11 @@
    ],
    "uses_service_role": true
   },
+  "supabase/migrations/20261127180000_dead_letter_fila_rpc.sql": {
+   "path": "supabase/migrations/20261127180000_dead_letter_fila_rpc.sql",
+   "lines": 54,
+   "uses_service_role": true
+  },
   "supabase/tests/admin_inbox_silence.sql": {
    "path": "supabase/tests/admin_inbox_silence.sql",
    "lines": 310,
@@ -431442,10 +431611,25 @@
   }
  },
  "git": {
-  "sha": "5bddef577a60ae99a2daa85a8d0529a22ef1ffc7",
+  "sha": "c0a66203dba77f9a7d1f25a78a91be7aa4115540",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "c0a66203",
+    "date": "2026-11-26",
+    "author": "adm01-debug",
+    "subject": "feat: tela da fila da dead-letter de webhooks com replay (#3424)",
+    "files": [
+     "ESTADO.md",
+     "src/components/monitoring/DeadLetterReplayPanel.tsx",
+     "src/components/monitoring/MonitoringWebhookPanel.tsx",
+     "src/components/monitoring/__tests__/DeadLetterReplayPanel.behavior.test.tsx",
+     "src/components/monitoring/hooks/useDeadLetterReplay.ts",
+     "src/services/deadLetter.service.ts",
+     "supabase/migrations/20261127180000_dead_letter_fila_rpc.sql"
+    ]
+   },
    {
     "sha": "5bddef57",
     "date": "2026-11-26",
@@ -431910,24 +432094,6 @@
      "src/components/admin/__tests__/AdminCRMDashboard.multiplix-dlq.test.tsx",
      "src/hooks/system/useMultiplixDeadLetters.ts"
     ]
-   },
-   {
-    "sha": "34b5d25e",
-    "date": "2026-11-25",
-    "author": "adm01-debug",
-    "subject": "feat: kill switch por provedor (IA-009 2.2) e pausa de bot por conexao (IA-009 2.3) (#3386)",
-    "files": [
-     "ESTADO.md",
-     "supabase/deployment-manifest.json",
-     "supabase/functions/_shared/__tests__/ai-feature-flags.test.ts",
-     "supabase/functions/_shared/__tests__/evolution-webhook-messages.chatbot-l1.test.ts",
-     "supabase/functions/_shared/ai-circuit.test.ts",
-     "supabase/functions/_shared/ai-feature-flags.ts",
-     "supabase/functions/_shared/ai-generate.ts",
-     "supabase/functions/_shared/evolution-webhook-messages.ts",
-     "supabase/functions/ai-proxy/index.test.ts",
-     "supabase/functions/ai-proxy/index.ts"
-    ]
    }
   ],
   "hot_files": [
@@ -431940,8 +432106,8 @@
     7
    ],
    [
-    "supabase/deployment-manifest.json",
-    5
+    "ESTADO.md",
+    4
    ],
    [
     "supabase/schema-catalog.json",
@@ -431964,11 +432130,11 @@
     4
    ],
    [
-    "ESTADO.md",
+    "scripts/automation.config.json",
     4
    ],
    [
-    "scripts/automation.config.json",
+    "supabase/deployment-manifest.json",
     4
    ],
    [
@@ -431996,20 +432162,20 @@
     2
    ],
    [
-    "supabase/functions/_shared/evolution-webhook-messages.ts",
-    2
+    "src/components/monitoring/DeadLetterReplayPanel.tsx",
+    1
    ],
    [
-    "supabase/functions/_shared/ai-circuit.test.ts",
-    2
+    "src/components/monitoring/MonitoringWebhookPanel.tsx",
+    1
    ],
    [
-    "supabase/functions/_shared/ai-generate.ts",
-    2
+    "src/components/monitoring/__tests__/DeadLetterReplayPanel.behavior.test.tsx",
+    1
    ],
    [
-    "supabase/functions/ai-proxy/index.test.ts",
-    2
+    "src/components/monitoring/hooks/useDeadLetterReplay.ts",
+    1
    ]
   ]
  }

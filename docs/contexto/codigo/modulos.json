@@ -3831,6 +3831,7 @@
     "useDashboardUrlFilters",
     "useDashboardWidgets",
     "useDataMasking",
+    "useDeadLetterReplay",
     "useDeadlineCalculator",
     "useDebounce",
     "useDebouncedCallback",
@@ -4244,7 +4245,8 @@
     "voice-agent",
     "voice-changer",
     "webauthn",
-    "webhook-diagnostic"
+    "webhook-diagnostic",
+    "webhook-replay"
    ],
    "tabelas": [
     "agent_achievements",
@@ -4872,9 +4874,9 @@
   },
   {
    "modulo": "components/monitoring",
-   "arquivos": 23,
-   "testes": 17,
-   "linhas": 3853,
+   "arquivos": 25,
+   "testes": 18,
+   "linhas": 4085,
    "itens_menu": [
     "Monitor Evolution"
    ],
@@ -4882,11 +4884,12 @@
     "evolution-monitor"
    ],
    "rotas_http": [],
-   "componentes": 15,
+   "componentes": 16,
    "hooks_locais": [
     "useAuth",
     "useConnectionIncidents",
     "useConnectionOptions",
+    "useDeadLetterReplay",
     "useEvolutionApi",
     "useEvolutionApiCore",
     "useEvolutionGroups",
@@ -4913,6 +4916,7 @@
    ],
    "hooks_definidos": [
     "useConnectionIncidents",
+    "useDeadLetterReplay",
     "useEvolutionMonitoring",
     "useInboxSilence",
     "useInstancePauses",
@@ -4926,7 +4930,8 @@
     "detect-new-device",
     "evolution-api",
     "evolution-webhook",
-    "webhook-diagnostic"
+    "webhook-diagnostic",
+    "webhook-replay"
    ],
    "tabelas": [
     "connection_health_logs",
@@ -12781,6 +12786,7 @@
     "useDashboardUrlFilters",
     "useDashboardWidgets",
     "useDataMasking",
+    "useDeadLetterReplay",
     "useDeadlineCalculator",
     "useDebounce",
     "useDebouncedCallback",
@@ -13281,7 +13287,8 @@
     "voice-agent",
     "voice-changer",
     "webauthn",
-    "webhook-diagnostic"
+    "webhook-diagnostic",
+    "webhook-replay"
    ],
    "tabelas": [
     "agent_achievements",
@@ -15356,6 +15363,7 @@
     "useDashboardUrlFilters",
     "useDashboardWidgets",
     "useDataMasking",
+    "useDeadLetterReplay",
     "useDeadlineCalculator",
     "useDebounce",
     "useDebouncedCallback",
@@ -15788,7 +15796,8 @@
     "voice-agent",
     "voice-changer",
     "webauthn",
-    "webhook-diagnostic"
+    "webhook-diagnostic",
+    "webhook-replay"
    ],
    "tabelas": [
     "agent_achievements",
@@ -16755,6 +16764,7 @@
     "useDashboardUrlFilters",
     "useDashboardWidgets",
     "useDataMasking",
+    "useDeadLetterReplay",
     "useDeadlineCalculator",
     "useDebounce",
     "useDebouncedCallback",
@@ -17197,7 +17207,8 @@
     "voice-agent",
     "voice-changer",
     "webauthn",
-    "webhook-diagnostic"
+    "webhook-diagnostic",
+    "webhook-replay"
    ],
    "tabelas": [
     "agent_achievements",
@@ -17638,9 +17649,9 @@
   },
   {
    "modulo": "services",
-   "arquivos": 17,
+   "arquivos": 18,
    "testes": 0,
-   "linhas": 2693,
+   "linhas": 2757,
    "itens_menu": [],
    "telas": [],
    "rotas_http": [],
@@ -17663,7 +17674,8 @@
     "auth-login",
     "crm-integration",
     "detect-new-device",
-    "external-db-proxy"
+    "external-db-proxy",
+    "webhook-replay"
    ],
    "tabelas": [
     "ai_conversation_tags",
@@ -17708,7 +17720,9 @@
    "flags": [],
    "papeis": [],
    "diretos": {
-    "edges": [],
+    "edges": [
+     "webhook-replay"
+    ],
     "tabelas": [
      "ai_conversation_tags",
      "audit_logs",

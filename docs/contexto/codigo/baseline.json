@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "5bddef577a60ae99a2daa85a8d0529a22ef1ffc7",
+  "commit": "c0a66203dba77f9a7d1f25a78a91be7aa4115540",
   "branch": "main",
-  "data_commit": "2026-11-26T22:23:43Z",
+  "data_commit": "2026-11-26T22:55:55Z",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "c0a66203",
+    "data": "2026-11-26",
+    "assunto": "feat: tela da fila da dead-letter de webhooks com replay (#3424)"
+   },
    {
     "sha": "5bddef57",
     "data": "2026-11-26",
@@ -126,14 +131,9 @@
     "sha": "3d99ff1c",
     "data": "2026-11-26",
     "assunto": "feat: acoes por mensagem (favoritar, fixar, responder depois, denunciar) (#3395)"
-   },
-   {
-    "sha": "9f9ec852",
-    "data": "2026-11-25",
-    "assunto": "feat: bloqueio de login por cidade (paridade Promo Gifts V4) (#3393)"
    }
   ],
-  "arquivos_mudados_7d": 2859,
+  "arquivos_mudados_7d": 2865,
   "pastas_mais_mudadas_30d": [
    {
     "pasta": "docs/contexto/supabase",
@@ -207,7 +207,7 @@
    },
    {
     "arquivo": "ESTADO.md",
-    "mudancas": 26
+    "mudancas": 27
    },
    {
     "arquivo": "docs/talkx/ESTADOS.md",
@@ -314,21 +314,21 @@
   ]
  },
  "contagens": {
-  "arquivos_total": 14916,
-  "arquivos_codigo": 5243,
-  "linhas_codigo": 970515,
+  "arquivos_total": 14921,
+  "arquivos_codigo": 5247,
+  "linhas_codigo": 970918,
   "rotas": 21,
   "rotas_http_backend": 11,
   "vistas_por_id": 56,
   "itens_menu": 62,
   "modulos": 149,
-  "componentes": 957,
-  "hooks": 537,
+  "componentes": 958,
+  "hooks": 538,
   "edge_functions": 94,
   "tabelas": 224,
-  "migrations": 1166,
+  "migrations": 1167,
   "cron_jobs": 29,
-  "testes": 2869,
+  "testes": 2870,
   "workflows": 26,
   "scripts": 458,
   "docs_md": 3988
@@ -739,8 +739,8 @@
    "linhas": 638
   },
   "src/components": {
-   "arquivos": 2355,
-   "linhas": 400389
+   "arquivos": 2358,
+   "linhas": 400728
   },
   "src/config": {
    "arquivos": 3,
@@ -795,8 +795,8 @@
    "linhas": 393
   },
   "src/services": {
-   "arquivos": 38,
-   "linhas": 5995
+   "arquivos": 39,
+   "linhas": 6059
   },
   "src/styles": {
    "arquivos": 10,
@@ -1314,8 +1314,7 @@
    "talkx-report",
    "talkx-scheduler",
    "talkx-storage-purge",
-   "voice-copilot-action",
-   "webhook-replay"
+   "voice-copilot-action"
   ],
   "edges_chamadas_sem_pasta": [],
   "tabelas_sem_rls": [],

@@ -1,6 +1,6 @@
 # 07 · REGRAS DE NEGÓCIO
 
-> Gerado automaticamente por AI Context Sync v1.3.2 · commit `5bddef577a` · branch `main` · 2026-11-26 22:30 UTC
+> Gerado automaticamente por AI Context Sync v1.3.2 · commit `c0a66203db` · branch `main` · 2026-11-26 23:08 UTC
 > Não edite à mão — regras humanas vão em `manual/`.
 
 ## A. Regras escritas por humanos (`manual/` — prioridade máxima, nunca sobrescrito)
@@ -3946,7 +3946,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `SUPERVISOR_PAGE_SIZE` | `200` | `src/hooks/admin/useSupervisorQueue.ts` |
 | `DEFAULT_REFRESH_MS` | `60` | `src/hooks/admin/useSupervisorQueue.ts` |
 | `RECENT_SENDS_WINDOW_DAYS` | `30` | `src/hooks/agents/useAgentRecentSends.ts` |
-| … +727 linhas — lista completa em `context.json` | | |
+| … +728 linhas — lista completa em `context.json` | | |
 
 ### H.2 Prazos, expirações e janelas de tempo
 
@@ -4701,7 +4701,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | disk-full | `scripts/ci/e2e-isolated-provider-readiness.unit.mjs` |
 | must-not-read-service-role | `scripts/ci/e2e-isolated-provider-readiness.unit.mjs` |
 | synthetic transport rejection | `scripts/ci/e2e-isolated-runtime-probe.unit.mjs` |
-| … +1906 linhas — lista completa em `context.json` | |
+| … +1909 linhas — lista completa em `context.json` | |
 
 ## J. Controle de acesso no código (checagens de perfil/permissão)
 
@@ -4776,7 +4776,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `owner` | `supabase/migrations/20260927270018_team_chat_e28_fix_find_or_create_race.sql` |
 | `anon` | `supabase/migrations/20260927340000_fix_add_agent_xp_negative_and_guard.sql` |
 
-## K. Testes como especificação (23339 testes em 2475 arquivos — nomes completos em `context.json`)
+## K. Testes como especificação (23344 testes em 2476 arquivos — nomes completos em `context.json`)
 
 | Arquivo | Testes | Exemplos do que o sistema DEVE fazer |
 |---|---|---|
@@ -5080,7 +5080,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `src/lib/audio/__tests__/gravacaoFormato.test.ts` | 17 | escolherMimeGravacao · escolhe webm/opus quando o navegador suporta (Chrome/Edge/Firefox) · escolhe audio/mp4 no Safari, que recusa webm · devolve null quando nenhum formato da lista é suportado (navegador decide o padrão) … |
 | `supabase/functions/_shared/__tests__/ai-context-revalidation.test.ts` | 17 | requestId válido é aceito nos quatro schemas · requestId malformado é rejeitado (não é ecoado como lixo) · cliente ANTIGO (sem requestId/contextVersion) continua aceito — compatibilidade · periodKey (nome canônico do frontend) é aceito como apelido da versão de contexto … |
 | `supabase/functions/ai-transcribe-audio/openrouter-stt.test.ts` | 17 | formato: containers que a edge reconhece viram a extensão do input_audio · formato: mime de outro tipo ou desconhecido não vira extensão inventada · formato: parâmetro do content-type (codecs) não atrapalha e o case não importa · base64: buffer maior que o bloco interno é convertido byte a byte … |
-| … +2175 linhas — lista completa em `context.json` | | |
+| … +2176 linhas — lista completa em `context.json` | | |
 
 ## L. Eventos de webhook tratados (contratos com sistemas externos)
 
@@ -5226,6 +5226,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `notify_on_warning` | `src/lib/schemas/slaRule.ts` |
 | `notify` | `src/lib/whatsapp/sendConnection.ts` |
 | `invoke(` | `src/pages/ResetPassword.tsx` |
+| `invoke(` | `src/services/deadLetter.service.ts` |
 | `invoke(` | `src/services/evolution.service.ts` |
 | `enqueue(` | `src/services/outbound-message.service.ts` |
 | `enqueue(` | `supabase/functions/_shared/ai-providers.ts` |
@@ -5599,4 +5600,4 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | Mostra no máximo 2 sugestões para não poluir o painel | `src/components/inbox/copilot/MissingQuestions.tsx` |
 | * CV-035/036 — Alerta de ocasião comercial detectada + prazo de entrega. | `src/components/inbox/copilot/OccasionAlert.tsx` |
 | Sobe/desce a linha uma posição por vez, trocando apenas de lugar os objetos | `src/components/inbox/interactive-builder/useInteractiveMessage.ts` |
-| … +1890 linhas — lista completa em `context.json` | |
+| … +1891 linhas — lista completa em `context.json` | |

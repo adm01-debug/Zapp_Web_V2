@@ -1,7 +1,7 @@
 {
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
- "total": 216,
+ "total": 217,
  "por_camada": {
   "adapters": 2,
   "config": 2,
@@ -12,7 +12,7 @@
   "providers": 1,
   "python": 15,
   "segments": 1,
-  "services": 20,
+  "services": 21,
   "utils": 8
  },
  "arquivos": [
@@ -870,7 +870,7 @@
    "zod_schemas": 0,
    "flags": [],
    "papeis": [],
-   "usado_por": 404,
+   "usado_por": 405,
    "usado_por_modulos": [
     "components/admin",
     "components/agents",
@@ -6130,6 +6130,35 @@
    "usado_por_modulos": [],
    "coberto_por_testes": 1,
    "orfao": true
+  },
+  {
+   "arquivo": "src/services/deadLetter.service.ts",
+   "camada": "services",
+   "exports": [
+    "DEAD_LETTER_LIMITE",
+    "DeadLetterItem",
+    "ReplayResultado",
+    "fetchDeadLetterFila",
+    "reprocessarDeadLetter"
+   ],
+   "export_default": null,
+   "linhas": 64,
+   "tabelas": [],
+   "rpcs": [],
+   "edges": [
+    "webhook-replay"
+   ],
+   "env": [],
+   "externos": [],
+   "zod_schemas": 0,
+   "flags": [],
+   "papeis": [],
+   "usado_por": 1,
+   "usado_por_modulos": [
+    "components/monitoring"
+   ],
+   "coberto_por_testes": 0,
+   "orfao": false
   },
   {
    "arquivo": "src/services/evolution.service.ts",

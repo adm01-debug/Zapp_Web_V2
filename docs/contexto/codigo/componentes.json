@@ -1,7 +1,7 @@
 {
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
- "total": 957,
+ "total": 958,
  "orfaos": 45,
  "nomes_duplicados": {
   "AchievementBadge": [
@@ -9140,6 +9140,22 @@
    "orfao": false
   },
   {
+   "arquivo": "src/components/monitoring/DeadLetterReplayPanel.tsx",
+   "exports": [
+    "DeadLetterReplayPanel"
+   ],
+   "export_default": null,
+   "linhas": 159,
+   "dominio": "components/monitoring",
+   "hooks_locais": [
+    "useDeadLetterReplay"
+   ],
+   "tabelas": [],
+   "edges": [],
+   "usado_por": 1,
+   "orfao": false
+  },
+  {
    "arquivo": "src/components/monitoring/DeviceChatsPanel.tsx",
    "exports": [
     "DeviceChatsPanel"
@@ -9365,7 +9381,7 @@
     "MonitoringWebhookPanel"
    ],
    "export_default": null,
-   "linhas": 181,
+   "linhas": 185,
    "dominio": "components/monitoring",
    "hooks_locais": [],
    "tabelas": [],
@@ -13887,7 +13903,7 @@
    "hooks_locais": [],
    "tabelas": [],
    "edges": [],
-   "usado_por": 227,
+   "usado_por": 228,
    "orfao": false
   },
   {
@@ -13924,7 +13940,7 @@
    "hooks_locais": [],
    "tabelas": [],
    "edges": [],
-   "usado_por": 419,
+   "usado_por": 420,
    "orfao": false
   },
   {
@@ -13959,7 +13975,7 @@
    "hooks_locais": [],
    "tabelas": [],
    "edges": [],
-   "usado_por": 204,
+   "usado_por": 205,
    "orfao": false
   },
   {
@@ -14294,7 +14310,7 @@
    "hooks_locais": [],
    "tabelas": [],
    "edges": [],
-   "usado_por": 1,
+   "usado_por": 2,
    "orfao": false
   },
   {
@@ -14917,7 +14933,7 @@
    "hooks_locais": [],
    "tabelas": [],
    "edges": [],
-   "usado_por": 15,
+   "usado_por": 16,
    "orfao": false
   },
   {

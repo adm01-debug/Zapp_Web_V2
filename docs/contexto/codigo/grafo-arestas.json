@@ -5186,6 +5186,14 @@
    "src/hooks/communication/useSpeechToText.ts",
    "src/lib/utils.ts"
   ],
+  "src/components/monitoring/DeadLetterReplayPanel.tsx": [
+   "src/components/monitoring/hooks/useDeadLetterReplay.ts",
+   "src/components/ui/EmptyState.tsx",
+   "src/components/ui/badge.tsx",
+   "src/components/ui/button.tsx",
+   "src/components/ui/card.tsx",
+   "src/components/ui/table.tsx"
+  ],
   "src/components/monitoring/DeviceChatsPanel.tsx": [
    "src/components/evolution/ConnectionSelect.tsx",
    "src/components/evolution/evolutionUi.ts",
@@ -5314,6 +5322,7 @@
   ],
   "src/components/monitoring/MonitoringWebhookPanel.tsx": [
    "src/components/admin/CrossTabDedupePanel.tsx",
+   "src/components/monitoring/DeadLetterReplayPanel.tsx",
    "src/components/monitoring/hooks/useEvolutionMonitoring.ts",
    "src/components/ui/badge.tsx",
    "src/components/ui/button.tsx",
@@ -5324,6 +5333,10 @@
    "src/components/monitoring/hooks/types.ts",
    "src/lib/logger.ts",
    "src/services/connection-health.service.ts"
+  ],
+  "src/components/monitoring/hooks/useDeadLetterReplay.ts": [
+   "src/components/monitoring/hooks/types.ts",
+   "src/services/deadLetter.service.ts"
   ],
   "src/components/monitoring/hooks/useEvolutionMonitoring.ts": [
    "src/components/monitoring/hooks/types.ts",
@@ -11189,6 +11202,9 @@
    "src/services/crm/external-crm.service.ts",
    "src/services/crm/singu-adapter.mock.ts",
    "src/types/contactSingu.ts"
+  ],
+  "src/services/deadLetter.service.ts": [
+   "src/integrations/supabase/client.ts"
   ],
   "src/services/evolution.service.ts": [
    "src/integrations/supabase/client.ts"

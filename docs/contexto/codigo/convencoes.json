@@ -7,22 +7,22 @@
    "src/pages (22)"
   ],
   "componentes": [
-   "src/components (917)",
+   "src/components (918)",
    "src/pages (31)",
    "src/features (2)"
   ],
   "hooks": [
    "src/hooks (451)",
-   "src/components (74)",
+   "src/components (75)",
    "src/contexts (2)"
   ],
   "servicos_logica": [
    "src/lib (157)",
-   "src/services (20)",
+   "src/services (21)",
    "src/utils (8)"
   ],
   "testes": [
-   "co-localizado (__tests__) (2141)",
+   "co-localizado (__tests__) (2142)",
    "outro (260)",
    "co-localizado (*.test) (203)"
   ],
@@ -48,7 +48,7 @@
  },
  "barrels_index": 74,
  "extensao_componentes": [
-  ".tsx (957)"
+  ".tsx (958)"
  ],
  "alias_imports": {
   "analise-prs/resgate-261115/auditoria/bruto/diarios-sessao/": {
@@ -66,11 +66,11 @@
  "commits": {
   "convencao": "conventional commits (observado)",
   "exemplos": [
+   "feat: tela da fila da dead-letter de webhooks com replay (#3424)",
    "fix(db): ledger de orçamento de IA fica visível (resumo agregado para admin) (#3419)",
    "chore(db): sincronizar artefatos derivados do banco (#3425)",
    "fix: painel mostra o orçamento de envio da campanha (talkx_campaign_pace destravado para admin) (#3406)",
-   "feat(copiloto): tela de retenção do copiloto RADAR (agregado diário por atendente) (#3418)",
-   "fix: restaura paridade de RLS entre producao e o replay das migrations (12 policies de admin) (#3401)"
+   "feat(copiloto): tela de retenção do copiloto RADAR (agregado diário por atendente) (#3418)"
   ]
  },
  "pr_template": ".github/PULL_REQUEST_TEMPLATE.md",

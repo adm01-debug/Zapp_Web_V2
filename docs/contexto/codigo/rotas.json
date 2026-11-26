@@ -184,6 +184,7 @@
     "useDashboardUrlFilters",
     "useDashboardWidgets",
     "useDataMasking",
+    "useDeadLetterReplay",
     "useDeadlineCalculator",
     "useDebounce",
     "useDebouncedCallback",
@@ -759,6 +760,7 @@
     "useDashboardUrlFilters",
     "useDashboardWidgets",
     "useDataMasking",
+    "useDeadLetterReplay",
     "useDeadlineCalculator",
     "useDebounce",
     "useDebouncedCallback",
@@ -1413,7 +1415,8 @@
     "voice-agent",
     "voice-changer",
     "webauthn",
-    "webhook-diagnostic"
+    "webhook-diagnostic",
+    "webhook-replay"
    ],
    "canais_realtime": [
     "agent-presence-changes",
@@ -1497,7 +1500,7 @@
     "unknown",
     "user"
    ],
-   "arquivos_puxados": 1625
+   "arquivos_puxados": 1628
   },
   {
    "protegida": false,
@@ -5251,6 +5254,7 @@
     "useConnectionIncidents",
     "useConnectionOptions",
     "useContext",
+    "useDeadLetterReplay",
     "useEffect",
     "useEvolutionApi",
     "useEvolutionApiCore",
@@ -5287,6 +5291,7 @@
     "useAuth",
     "useConnectionIncidents",
     "useConnectionOptions",
+    "useDeadLetterReplay",
     "useEvolutionApi",
     "useEvolutionApiCore",
     "useEvolutionGroups",
@@ -5335,7 +5340,8 @@
     "detect-new-device",
     "evolution-api",
     "evolution-webhook",
-    "webhook-diagnostic"
+    "webhook-diagnostic",
+    "webhook-replay"
    ],
    "canais_realtime": [
     "chat-reactions:${messageId}",
@@ -5352,7 +5358,7 @@
     "tab",
     "tablist"
    ],
-   "arquivos_puxados": 103
+   "arquivos_puxados": 106
   },
   {
    "id": "gmail",
