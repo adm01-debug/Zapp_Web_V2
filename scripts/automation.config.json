@@ -3778,6 +3778,14 @@
       "reason": "Legado mantido no fluxo existente; referências literais: .github/workflows/db-guard.yml, .github/workflows/types-sync.yml. O dispatcher não executa esta operação."
     },
     {
+      "id": "legacy-e115addc13fe1204",
+      "kind": "legacy",
+      "files": ["scripts/db-audit/talkx-template-duplicate-archive-delete.test.sh"],
+      "manual": ["sh", "scripts/db-audit/talkx-template-duplicate-archive-delete.test.sh"],
+      "triggers": ["manual"],
+      "reason": "Legado mantido no fluxo existente; referências literais: .github/workflows/db-guard.yml. O dispatcher não executa esta operação."
+    },
+    {
       "id": "legacy-f3ea04dff6fa5148",
       "kind": "legacy",
       "files": ["scripts/db-audit/talkx-template-history-behavior.test.sh"],
