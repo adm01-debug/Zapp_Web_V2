@@ -499,6 +499,7 @@
     "useTalkX",
     "useTalkXAbStats",
     "useTalkXAnalytics",
+    "useTalkXCampaignLogs",
     "useTalkXCampaignRevenue",
     "useTalkXCampaignSummary",
     "useTalkXCampaignTimeline",
@@ -1028,6 +1029,7 @@
     "useTalkX",
     "useTalkXAbStats",
     "useTalkXAnalytics",
+    "useTalkXCampaignLogs",
     "useTalkXCampaignRevenue",
     "useTalkXCampaignSummary",
     "useTalkXCampaignTimeline",
@@ -1478,7 +1480,7 @@
     "unknown",
     "user"
    ],
-   "arquivos_puxados": 1605
+   "arquivos_puxados": 1607
   },
   {
    "protegida": false,
@@ -7778,6 +7780,7 @@
     "useTalkX",
     "useTalkXAbStats",
     "useTalkXAnalytics",
+    "useTalkXCampaignLogs",
     "useTalkXCampaignRevenue",
     "useTalkXCampaignSummary",
     "useTalkXCampaignTimeline",
@@ -7860,6 +7863,7 @@
     "useTalkX",
     "useTalkXAbStats",
     "useTalkXAnalytics",
+    "useTalkXCampaignLogs",
     "useTalkXCampaignRevenue",
     "useTalkXCampaignSummary",
     "useTalkXCampaignTimeline",
@@ -7993,7 +7997,7 @@
     "tab",
     "tablist"
    ],
-   "arquivos_puxados": 266
+   "arquivos_puxados": 268
   },
   {
    "id": "talkx-kit",

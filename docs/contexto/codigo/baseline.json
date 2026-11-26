@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "515fbecb8b172f032e58c6691b7cb2ee1a1b715a",
+  "commit": "bcfebb7a2cc9c61cd6b7d717399e28261c63cc71",
   "branch": "main",
-  "data_commit": "2026-11-26T08:20:14-03:00",
+  "data_commit": "2026-11-26T08:46:38-03:00",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "bcfebb7a",
+    "data": "2026-11-26",
+    "assunto": "feat: liga o log de entrega da campanha (talkx_campaign_logs) no painel E74 (#3405)"
+   },
    {
     "sha": "515fbecb",
     "data": "2026-11-26",
@@ -126,14 +131,9 @@
     "sha": "985b4e38",
     "data": "2026-11-25",
     "assunto": "fix(lint): ratchet aceita ocorrencia identica deslocada de linha (#3376)"
-   },
-   {
-    "sha": "1d87b06f",
-    "data": "2026-11-25",
-    "assunto": "chore(lint): reancora baseline nas posicoes atuais (divida inalterada, 540 = 540) (#3373)"
    }
   ],
-  "arquivos_mudados_7d": 2775,
+  "arquivos_mudados_7d": 2779,
   "pastas_mais_mudadas_30d": [
    {
     "pasta": "docs/contexto/supabase",
@@ -165,7 +165,7 @@
    },
    {
     "pasta": "src/components/talkx",
-    "mudancas": 366
+    "mudancas": 369
    },
    {
     "pasta": "analise-prs/resgate-261115/dossies",
@@ -185,7 +185,7 @@
    },
    {
     "pasta": "src/hooks/integrations",
-    "mudancas": 150
+    "mudancas": 152
    },
    {
     "pasta": "src/components/contacts",
@@ -210,12 +210,12 @@
     "mudancas": 17
    },
    {
-    "arquivo": "supabase/schema-manifest.json",
+    "arquivo": "docs/talkx/ESTADOS.md",
     "mudancas": 17
    },
    {
-    "arquivo": "docs/talkx/ESTADOS.md",
-    "mudancas": 16
+    "arquivo": "supabase/schema-manifest.json",
+    "mudancas": 17
    },
    {
     "arquivo": ".github/workflows/db-guard.yml",
@@ -314,21 +314,21 @@
   ]
  },
  "contagens": {
-  "arquivos_total": 14847,
-  "arquivos_codigo": 5179,
-  "linhas_codigo": 961019,
+  "arquivos_total": 14851,
+  "arquivos_codigo": 5183,
+  "linhas_codigo": 961823,
   "rotas": 18,
   "rotas_http_backend": 11,
   "vistas_por_id": 55,
   "itens_menu": 61,
   "modulos": 149,
-  "componentes": 939,
-  "hooks": 524,
+  "componentes": 940,
+  "hooks": 525,
   "edge_functions": 94,
   "tabelas": 224,
   "migrations": 1161,
   "cron_jobs": 29,
-  "testes": 2842,
+  "testes": 2844,
   "workflows": 26,
   "scripts": 458,
   "docs_md": 3988
@@ -739,8 +739,8 @@
    "linhas": 638
   },
   "src/components": {
-   "arquivos": 2326,
-   "linhas": 396382
+   "arquivos": 2328,
+   "linhas": 396712
   },
   "src/config": {
    "arquivos": 3,
@@ -759,8 +759,8 @@
    "linhas": 3293
   },
   "src/hooks": {
-   "arquivos": 1049,
-   "linhas": 169810
+   "arquivos": 1051,
+   "linhas": 170284
   },
   "src/i18n": {
    "arquivos": 2,

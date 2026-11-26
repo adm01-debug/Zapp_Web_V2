@@ -1,15 +1,15 @@
 {
  "meta": {
-  "sha": "515fbecb8b172f032e58c6691b7cb2ee1a1b715a",
+  "sha": "bcfebb7a2cc9c61cd6b7d717399e28261c63cc71",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-26 11:22 UTC",
-  "files_total": 14694,
-  "code_files": 8224,
-  "code_lines": 1239082
+  "generated_at": "2026-11-26 11:49 UTC",
+  "files_total": 14698,
+  "code_files": 8228,
+  "code_lines": 1239886
  },
  "version": "1.3.2",
- "facts_hash": "0a82c3df2851b600",
+ "facts_hash": "6617c5d15aa8b106",
  "stack": {
   "frameworks": [
    "React + Vite",
@@ -368,8 +368,8 @@
   "package_manager": "bun",
   "languages": {
    ".sql": 3072,
-   ".tsx": 2494,
-   ".ts": 2035,
+   ".tsx": 2496,
+   ".ts": 2037,
    ".mjs": 496,
    ".py": 125,
    ".cjs": 19,
@@ -73187,7 +73187,7 @@
     "file": ".github/workflows/types-sync.yml"
    }
   ],
-  "components_count": 2328,
+  "components_count": 2330,
   "hooks": [
    {
     "name": "useMotionSeguro",
@@ -74828,6 +74828,10 @@
    {
     "name": "useTalkXCampaign",
     "file": "src/hooks/integrations/useTalkXCampaignList.ts"
+   },
+   {
+    "name": "useTalkXCampaignLogs",
+    "file": "src/hooks/integrations/useTalkXCampaignLogs.ts"
    },
    {
     "name": "useTalkXCampaignRevenue",
@@ -76575,8 +76579,8 @@
   },
   {
    "module": "src/components",
-   "files": 2326,
-   "lines": 396382,
+   "files": 2328,
+   "lines": 396712,
    "tables": [
     "agent_skills",
     "agent_visibility_grants",
@@ -76923,8 +76927,8 @@
   },
   {
    "module": "src/hooks",
-   "files": 1049,
-   "lines": 169810,
+   "files": 1051,
+   "lines": 170284,
    "tables": [
     "agent_achievements",
     "agent_stats",
@@ -97389,6 +97393,10 @@
     "value": "admin"
    },
    {
+    "file": "src/components/talkx/analytics/TalkXCampaignLogsCard.tsx",
+    "value": "false"
+   },
+   {
     "file": "src/hooks/copilot/useCopilotSession.ts",
     "value": "string"
    },
@@ -99529,6 +99537,14 @@
    {
     "file": "src/components/talkx/analytics/AnalyticsPerformanceChart.tsx",
     "text": "* Falha de leitura da série: NÃO pode virar \"sem resultados\". */"
+   },
+   {
+    "file": "src/components/talkx/analytics/TalkXCampaignLogsCard.tsx",
+    "text": "* `false` = sem permissão; `undefined` = permissão ainda sendo checada. */"
+   },
+   {
+    "file": "src/components/talkx/analytics/TalkXCampaignLogsCard.tsx",
+    "text": "tela não afirma falta de permissão, mostra o carregamento."
    },
    {
     "file": "src/components/talkx/help/talkxHelpMarkdown.tsx",
@@ -116968,6 +116984,11 @@
     "value": "'created_at'"
    },
    {
+    "file": "src/hooks/integrations/useTalkXCampaignLogs.ts",
+    "name": "TALKX_CAMPAIGN_LOG_PAGE_SIZE",
+    "value": "100"
+   },
+   {
     "file": "src/hooks/integrations/useTalkXCampaignTimeline.ts",
     "name": "TIMELINE_PAGE_SIZE",
     "value": "20"
@@ -129415,6 +129436,12 @@
     "file": "src/hooks/integrations/useTalkXCampaignList.ts",
     "field": "status",
     "value": "SUBSCRIBED",
+    "kind": "compara"
+   },
+   {
+    "file": "src/hooks/integrations/useTalkXCampaignLogs.ts",
+    "field": "stage",
+    "value": "string",
     "kind": "compara"
    },
    {
@@ -175174,6 +175201,50 @@
     "name": "mostra o nome da conexão e nunca o UUID dela"
    },
    {
+    "file": "src/components/talkx/__tests__/TalkXCampaignLogsCard.test.tsx",
+    "name": "TalkXCampaignLogsCard"
+   },
+   {
+    "file": "src/components/talkx/__tests__/TalkXCampaignLogsCard.test.tsx",
+    "name": "mostra etapa, resultado, nome do destinatário, erro traduzido e duração"
+   },
+   {
+    "file": "src/components/talkx/__tests__/TalkXCampaignLogsCard.test.tsx",
+    "name": "sem nome resolvido mostra o id curto em vez de vazio"
+   },
+   {
+    "file": "src/components/talkx/__tests__/TalkXCampaignLogsCard.test.tsx",
+    "name": "lista vazia explica que o motor ainda não registrou nada"
+   },
+   {
+    "file": "src/components/talkx/__tests__/TalkXCampaignLogsCard.test.tsx",
+    "name": "erro da consulta vence a lista vazia"
+   },
+   {
+    "file": "src/components/talkx/__tests__/TalkXCampaignLogsCard.test.tsx",
+    "name": "sem permissão explica o motivo e não mostra tabela nem vazio"
+   },
+   {
+    "file": "src/components/talkx/__tests__/TalkXCampaignLogsCard.test.tsx",
+    "name": "permissão ainda em checagem não vira "
+   },
+   {
+    "file": "src/components/talkx/__tests__/TalkXCampaignLogsCard.test.tsx",
+    "name": "página com mais resultados oferece "
+   },
+   {
+    "file": "src/components/talkx/__tests__/TalkXCampaignLogsCard.test.tsx",
+    "name": "carregando a próxima página o botão trava para não duplicar a chamada"
+   },
+   {
+    "file": "src/components/talkx/__tests__/TalkXCampaignLogsCard.test.tsx",
+    "name": "última página avisa que o log terminou"
+   },
+   {
+    "file": "src/components/talkx/__tests__/TalkXCampaignLogsCard.test.tsx",
+    "name": "enquanto carrega mostra esqueleto, não o vazio"
+   },
+   {
     "file": "src/components/talkx/__tests__/TalkXCampaignPaused.test.tsx",
     "name": "TalkXCampaignPaused — cabeçalho, banner e ações (Tela 13)"
    },
@@ -201476,6 +201547,90 @@
    {
     "file": "src/hooks/integrations/__tests__/useTalkXCampaignList.test.ts",
     "name": "sem id a consulta não sai"
+   },
+   {
+    "file": "src/hooks/integrations/__tests__/useTalkXCampaignLogs.test.ts",
+    "name": "logRowFromServer"
+   },
+   {
+    "file": "src/hooks/integrations/__tests__/useTalkXCampaignLogs.test.ts",
+    "name": "mapeia a linha da RPC para o contrato da tela"
+   },
+   {
+    "file": "src/hooks/integrations/__tests__/useTalkXCampaignLogs.test.ts",
+    "name": "descarta linha sem id ou sem created_at em vez de renderizar lixo"
+   },
+   {
+    "file": "src/hooks/integrations/__tests__/useTalkXCampaignLogs.test.ts",
+    "name": "normaliza campos opcionais vazios e negativos"
+   },
+   {
+    "file": "src/hooks/integrations/__tests__/useTalkXCampaignLogs.test.ts",
+    "name": "nextLogCursor"
+   },
+   {
+    "file": "src/hooks/integrations/__tests__/useTalkXCampaignLogs.test.ts",
+    "name": "sem página cheia não existe próxima página"
+   },
+   {
+    "file": "src/hooks/integrations/__tests__/useTalkXCampaignLogs.test.ts",
+    "name": "página cheia aponta para created_at + id da última linha (cursor composto)"
+   },
+   {
+    "file": "src/hooks/integrations/__tests__/useTalkXCampaignLogs.test.ts",
+    "name": "rótulos do log"
+   },
+   {
+    "file": "src/hooks/integrations/__tests__/useTalkXCampaignLogs.test.ts",
+    "name": "traduz etapas e resultados conhecidos e preserva desconhecidos"
+   },
+   {
+    "file": "src/hooks/integrations/__tests__/useTalkXCampaignLogs.test.ts",
+    "name": "só pinta de verde o que foi enviado e de vermelho o que falhou"
+   },
+   {
+    "file": "src/hooks/integrations/__tests__/useTalkXCampaignLogs.test.ts",
+    "name": "traduz códigos conhecidos e mantém o número cru quando não conhece"
+   },
+   {
+    "file": "src/hooks/integrations/__tests__/useTalkXCampaignLogs.test.ts",
+    "name": "formata duração em ms e em segundos"
+   },
+   {
+    "file": "src/hooks/integrations/__tests__/useTalkXCampaignLogs.test.ts",
+    "name": "fetchTalkXCampaignLogPage"
+   },
+   {
+    "file": "src/hooks/integrations/__tests__/useTalkXCampaignLogs.test.ts",
+    "name": "primeira página não manda cursor e pede o limite da tela"
+   },
+   {
+    "file": "src/hooks/integrations/__tests__/useTalkXCampaignLogs.test.ts",
+    "name": "página seguinte reenvia o cursor composto inteiro"
+   },
+   {
+    "file": "src/hooks/integrations/__tests__/useTalkXCampaignLogs.test.ts",
+    "name": "propaga o erro da RPC (o 42501 precisa chegar na tela)"
+   },
+   {
+    "file": "src/hooks/integrations/__tests__/useTalkXCampaignLogs.test.ts",
+    "name": "resposta que não é lista vira página vazia"
+   },
+   {
+    "file": "src/hooks/integrations/__tests__/useTalkXCampaignLogs.test.ts",
+    "name": "useTalkXCampaignLogs"
+   },
+   {
+    "file": "src/hooks/integrations/__tests__/useTalkXCampaignLogs.test.ts",
+    "name": "carrega a primeira página e "
+   },
+   {
+    "file": "src/hooks/integrations/__tests__/useTalkXCampaignLogs.test.ts",
+    "name": "sem campanha selecionada não chama a RPC"
+   },
+   {
+    "file": "src/hooks/integrations/__tests__/useTalkXCampaignLogs.test.ts",
+    "name": "resolve o nome dos destinatários da página carregada"
    },
    {
     "file": "src/hooks/integrations/__tests__/useTalkXCampaignRevenue.test.ts",
@@ -259052,6 +259207,7 @@
       "escreve:src/components/inbox/location-picker/useLocationPicker.ts"
      ],
      "string": [
+      "compara:src/hooks/integrations/useTalkXCampaignLogs.ts",
       "compara:src/lib/mapboxToken.ts"
      ],
      "rpc_error": [
@@ -262897,6 +263053,7 @@
    "src/components/inbox/__tests__/AudioMessagePlayer.transcricao.test.tsx",
    "src/hooks/gamification/__tests__/gamificacaoSemEscritaNoCliente.test.ts",
    "src/hooks/gamification/useAgentGamification.ts",
+   "src/hooks/integrations/useTalkXCampaignLogs.ts",
    "src/hooks/integrations/useTalkXResumeChecklist.ts",
    "src/hooks/team-chat/__tests__/useDepartmentManagement.test.tsx",
    "src/hooks/team-chat/__tests__/useDepartmentWhatsAppCredentials.contrato-rpc.test.tsx",
@@ -281085,6 +281242,7 @@
     "kind": "status",
     "msg": "valor `string` para `stage` usado no código não existe em nenhum enum do banco/TS",
     "where": [
+     "compara:src/hooks/integrations/useTalkXCampaignLogs.ts",
      "compara:src/lib/mapboxToken.ts"
     ]
    },
@@ -340682,7 +340840,7 @@
   },
   "src/components/talkx/TalkXAnalytics.tsx": {
    "path": "src/components/talkx/TalkXAnalytics.tsx",
-   "lines": 735,
+   "lines": 742,
    "exports": [
     "function TalkXAnalytics"
    ],
@@ -342807,6 +342965,28 @@
     "campanha pausada troca ",
     "TalkXCampaignRunning · aba Configurações (X154)",
     "mostra o nome da conexão e nunca o UUID dela"
+   ]
+  },
+  "src/components/talkx/__tests__/TalkXCampaignLogsCard.test.tsx": {
+   "path": "src/components/talkx/__tests__/TalkXCampaignLogsCard.test.tsx",
+   "lines": 101,
+   "is_test": true,
+   "rule_comments": [
+    "levanta 42501). Um usuário comum não pode ver \"nenhuma execução\" — isso",
+    "confundiria falta de permissão com falta de log."
+   ],
+   "tests": [
+    "TalkXCampaignLogsCard",
+    "mostra etapa, resultado, nome do destinatário, erro traduzido e duração",
+    "sem nome resolvido mostra o id curto em vez de vazio",
+    "lista vazia explica que o motor ainda não registrou nada",
+    "erro da consulta vence a lista vazia",
+    "sem permissão explica o motivo e não mostra tabela nem vazio",
+    "permissão ainda em checagem não vira ",
+    "página com mais resultados oferece ",
+    "carregando a próxima página o botão trava para não duplicar a chamada",
+    "última página avisa que o log terminou",
+    "enquanto carrega mostra esqueleto, não o vazio"
    ]
   },
   "src/components/talkx/__tests__/TalkXCampaignPaused.test.tsx": {
@@ -345507,6 +345687,22 @@
    ],
    "rule_comments": [
     "* Falha de leitura da série: NÃO pode virar \"sem resultados\". */"
+   ]
+  },
+  "src/components/talkx/analytics/TalkXCampaignLogsCard.tsx": {
+   "path": "src/components/talkx/analytics/TalkXCampaignLogsCard.tsx",
+   "lines": 222,
+   "exports": [
+    "interface TalkXCampaignLogsCardProps",
+    "function TalkXCampaignLogsCard",
+    "function TalkXCampaignLogsPanel"
+   ],
+   "role_checks": [
+    "false"
+   ],
+   "rule_comments": [
+    "* `false` = sem permissão; `undefined` = permissão ainda sendo checada. */",
+    "tela não afirma falta de permissão, mostra o carregamento."
    ]
   },
   "src/components/talkx/analytics/TalkXCampaignRevenueCard.tsx": {
@@ -372195,6 +372391,43 @@
     }
    ]
   },
+  "src/hooks/integrations/useTalkXCampaignLogs.ts": {
+   "path": "src/hooks/integrations/useTalkXCampaignLogs.ts",
+   "lines": 251,
+   "exports": [
+    "const TALKX_CAMPAIGN_LOG_PAGE_SIZE",
+    "interface TalkXCampaignLogRow",
+    "interface TalkXCampaignLogCursor",
+    "interface TalkXCampaignLogPage",
+    "interface TalkXCampaignLogPerson",
+    "function logRowFromServer",
+    "function nextLogCursor",
+    "function stageLabel",
+    "function outcomeLabel",
+    "function outcomeTone",
+    "function describeLogError",
+    "function formatLogDuration",
+    "function fetchTalkXCampaignLogPage",
+    "function useTalkXCampaignLogs"
+   ],
+   "params": [
+    {
+     "name": "TALKX_CAMPAIGN_LOG_PAGE_SIZE",
+     "value": "100"
+    }
+   ],
+   "status_values": [
+    {
+     "field": "stage",
+     "value": "string",
+     "kind": "compara"
+    }
+   ],
+   "hooks": [
+    "useTalkXCampaignLogs"
+   ],
+   "uses_service_role": true
+  },
   "src/hooks/integrations/useTalkXCampaignRevenue.ts": {
    "path": "src/hooks/integrations/useTalkXCampaignRevenue.ts",
    "lines": 166,
@@ -374505,6 +374738,34 @@
     "useTalkXCampaign — campanha por id para as rotas de View",
     "busca a campanha pelo id na coluna id",
     "sem id a consulta não sai"
+   ]
+  },
+  "src/hooks/integrations/__tests__/useTalkXCampaignLogs.test.ts": {
+   "path": "src/hooks/integrations/__tests__/useTalkXCampaignLogs.test.ts",
+   "lines": 223,
+   "is_test": true,
+   "tests": [
+    "logRowFromServer",
+    "mapeia a linha da RPC para o contrato da tela",
+    "descarta linha sem id ou sem created_at em vez de renderizar lixo",
+    "normaliza campos opcionais vazios e negativos",
+    "nextLogCursor",
+    "sem página cheia não existe próxima página",
+    "página cheia aponta para created_at + id da última linha (cursor composto)",
+    "rótulos do log",
+    "traduz etapas e resultados conhecidos e preserva desconhecidos",
+    "só pinta de verde o que foi enviado e de vermelho o que falhou",
+    "traduz códigos conhecidos e mantém o número cru quando não conhece",
+    "formata duração em ms e em segundos",
+    "fetchTalkXCampaignLogPage",
+    "primeira página não manda cursor e pede o limite da tela",
+    "página seguinte reenvia o cursor composto inteiro",
+    "propaga o erro da RPC (o 42501 precisa chegar na tela)",
+    "resposta que não é lista vira página vazia",
+    "useTalkXCampaignLogs",
+    "carrega a primeira página e ",
+    "sem campanha selecionada não chama a RPC",
+    "resolve o nome dos destinatários da página carregada"
    ]
   },
   "src/hooks/integrations/__tests__/useTalkXCampaignRevenue.test.ts": {
@@ -427561,10 +427822,24 @@
   }
  },
  "git": {
-  "sha": "515fbecb8b172f032e58c6691b7cb2ee1a1b715a",
+  "sha": "bcfebb7a2cc9c61cd6b7d717399e28261c63cc71",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "bcfebb7a",
+    "date": "2026-11-26",
+    "author": "adm01-debug",
+    "subject": "feat: liga o log de entrega da campanha (talkx_campaign_logs) no painel E74 (#3405)",
+    "files": [
+     "docs/talkx/ESTADOS.md",
+     "src/components/talkx/TalkXAnalytics.tsx",
+     "src/components/talkx/__tests__/TalkXCampaignLogsCard.test.tsx",
+     "src/components/talkx/analytics/TalkXCampaignLogsCard.tsx",
+     "src/hooks/integrations/__tests__/useTalkXCampaignLogs.test.ts",
+     "src/hooks/integrations/useTalkXCampaignLogs.ts"
+    ]
+   },
    {
     "sha": "515fbecb",
     "date": "2026-11-26",
@@ -429275,18 +429550,6 @@
      "docs/ci/README.md",
      "scripts/ci/ci-docs-baseline.unit.mjs"
     ]
-   },
-   {
-    "sha": "e1a545c6",
-    "date": "2026-11-24",
-    "author": "adm01-debug",
-    "subject": "feat(manutencao): porta o harness de manutencao completo da PR #2926 (#3370)",
-    "files": [
-     "scripts/maintenance/config.json",
-     "scripts/maintenance/lib.mjs",
-     "scripts/maintenance/maintenance.unit.mjs",
-     "scripts/maintenance/run.mjs"
-    ]
    }
   ],
   "hot_files": [
@@ -429313,6 +429576,14 @@
    [
     "docs/ci/README.md",
     3
+   ],
+   [
+    "docs/talkx/ESTADOS.md",
+    2
+   ],
+   [
+    "src/components/talkx/TalkXAnalytics.tsx",
+    2
    ],
    [
     "supabase/functions/_shared/evolution-webhook-messages.ts",
@@ -429347,27 +429618,19 @@
     2
    ],
    [
-    "docs/talkx/ESTADOS.md",
+    "src/components/talkx/__tests__/TalkXCampaignLogsCard.test.tsx",
     1
    ],
    [
-    "src/components/talkx/TalkXAnalytics.tsx",
+    "src/components/talkx/analytics/TalkXCampaignLogsCard.tsx",
     1
    ],
    [
-    "src/components/talkx/__tests__/TalkXCampaignRevenueCard.test.tsx",
+    "src/hooks/integrations/__tests__/useTalkXCampaignLogs.test.ts",
     1
    ],
    [
-    "src/components/talkx/analytics/TalkXCampaignRevenueCard.tsx",
-    1
-   ],
-   [
-    "src/hooks/integrations/__tests__/useTalkXCampaignRevenue.test.ts",
-    1
-   ],
-   [
-    "src/hooks/integrations/useTalkXCampaignRevenue.ts",
+    "src/hooks/integrations/useTalkXCampaignLogs.ts",
     1
    ]
   ]

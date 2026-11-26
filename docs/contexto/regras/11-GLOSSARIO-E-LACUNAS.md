@@ -1,6 +1,6 @@
 # 11 · GLOSSÁRIO, DADOS DE REFERÊNCIA E LACUNAS
 
-> Gerado automaticamente por AI Context Sync v1.3.2 · commit `515fbecb8b` · branch `main` · 2026-11-26 11:22 UTC
+> Gerado automaticamente por AI Context Sync v1.3.2 · commit `bcfebb7a2c` · branch `main` · 2026-11-26 11:49 UTC
 > Não edite à mão — regras humanas vão em `manual/`.
 
 ## Glossário do domínio (entidades do sistema)
@@ -389,7 +389,7 @@
 | status | valor `qr` para `step` usado no código não existe em nenhum enum do banco/TS | `compara:src/components/mfa/MFAEnroll.tsx` |
 | status | valor `stop` para `step` usado no código não existe em nenhum enum do banco/TS | `compara:supabase/functions/talkx-send/index.ts` |
 | status | valor `loaded` para `stage` usado no código não existe em nenhum enum do banco/TS | `compara:src/components/catalog/catalogShared.tsx`<br>`escreve:src/components/catalog/catalogShared.tsx` |
-| status | valor `string` para `stage` usado no código não existe em nenhum enum do banco/TS | `compara:src/lib/mapboxToken.ts` |
+| status | valor `string` para `stage` usado no código não existe em nenhum enum do banco/TS | `compara:src/hooks/integrations/useTalkXCampaignLogs.ts`<br>`compara:src/lib/mapboxToken.ts` |
 | status | valor `rpc_error` para `stage` usado no código não existe em nenhum enum do banco/TS | `escreve:supabase/functions/_shared/ai-budget.ts` |
 | status | valor `no_rows` para `stage` usado no código não existe em nenhum enum do banco/TS | `escreve:supabase/functions/_shared/ai-budget.ts` |
 | status | valor `bad_shape` para `stage` usado no código não existe em nenhum enum do banco/TS | `escreve:supabase/functions/_shared/ai-budget.ts` |

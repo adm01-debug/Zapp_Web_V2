@@ -5,18 +5,18 @@
   "vitest",
   "playwright"
  ],
- "total": 2842,
+ "total": 2844,
  "por_tipo": {
   "contrato": 116,
   "e2e": 76,
   "pytest": 3,
   "qa": 10,
-  "unit": 2545
+  "unit": 2547
  },
  "onde_ficam": [
   {
    "padrao": "co-localizado (__tests__)",
-   "arquivos": 2114
+   "arquivos": 2116
   },
   {
    "padrao": "outro",
@@ -12540,6 +12540,16 @@
    "casos": 1
   },
   {
+   "arquivo": "src/components/talkx/__tests__/TalkXCampaignLogsCard.test.tsx",
+   "tipo": "unit",
+   "linhas": 101,
+   "testa": [
+    "src/components/talkx/analytics/TalkXCampaignLogsCard.tsx",
+    "src/hooks/integrations/useTalkXCampaignLogs.ts"
+   ],
+   "casos": 10
+  },
+  {
    "arquivo": "src/components/talkx/__tests__/TalkXCampaignPaused.test.tsx",
    "tipo": "unit",
    "linhas": 255,
@@ -19235,6 +19245,17 @@
     "src/hooks/integrations/useTalkXCampaignList.ts"
    ],
    "casos": 15
+  },
+  {
+   "arquivo": "src/hooks/integrations/__tests__/useTalkXCampaignLogs.test.ts",
+   "tipo": "unit",
+   "linhas": 223,
+   "testa": [
+    "src/hooks/integrations/useTalkXCampaignLogs.ts",
+    "src/integrations/supabase/client.ts",
+    "src/lib/supabaseHelpers.ts"
+   ],
+   "casos": 16
   },
   {
    "arquivo": "src/hooks/integrations/__tests__/useTalkXCampaignRevenue.test.ts",
@@ -26666,6 +26687,7 @@
   "src/components/talkx/__dev__/TalkXKit.tsx": 1,
   "src/components/talkx/analytics/AnalyticsFunnel.tsx": 1,
   "src/components/talkx/analytics/AnalyticsPerformanceChart.tsx": 1,
+  "src/components/talkx/analytics/TalkXCampaignLogsCard.tsx": 1,
   "src/components/talkx/analytics/TalkXCampaignRevenueCard.tsx": 1,
   "src/components/talkx/help/TalkXHelpArticle.tsx": 1,
   "src/components/talkx/help/TalkXHelpCenter.tsx": 4,
@@ -27077,6 +27099,7 @@
   "src/hooks/integrations/useTalkXAbStats.ts": 1,
   "src/hooks/integrations/useTalkXAnalytics.ts": 3,
   "src/hooks/integrations/useTalkXCampaignList.ts": 1,
+  "src/hooks/integrations/useTalkXCampaignLogs.ts": 2,
   "src/hooks/integrations/useTalkXCampaignRevenue.ts": 1,
   "src/hooks/integrations/useTalkXCampaignSummary.ts": 1,
   "src/hooks/integrations/useTalkXCampaignTimeline.ts": 1,
@@ -27231,7 +27254,7 @@
   "src/hooks/voice/types.ts": 2,
   "src/hooks/voice/voiceActionPlan.ts": 1,
   "src/i18n/index.ts": 1,
-  "src/integrations/supabase/client.ts": 38,
+  "src/integrations/supabase/client.ts": 39,
   "src/integrations/supabase/externalClient.ts": 1,
   "src/integrations/supabase/types.ts": 2,
   "src/lib/__fixtures__/mapbox/forward-avenida-paulista-1000.json": 2,
@@ -27364,7 +27387,7 @@
   "src/lib/stickerImage.ts": 1,
   "src/lib/storage_object_reference.ts": 3,
   "src/lib/storage_object_upload.ts": 1,
-  "src/lib/supabaseHelpers.ts": 2,
+  "src/lib/supabaseHelpers.ts": 3,
   "src/lib/supervisorPriority.ts": 1,
   "src/lib/talkxCsv.ts": 1,
   "src/lib/teamChatDraftSession.ts": 1,

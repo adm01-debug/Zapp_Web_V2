@@ -870,7 +870,7 @@
    "zod_schemas": 0,
    "flags": [],
    "papeis": [],
-   "usado_por": 393,
+   "usado_por": 394,
    "usado_por_modulos": [
     "components/admin",
     "components/agents",
@@ -939,7 +939,7 @@
     "pages/admin",
     "services"
    ],
-   "coberto_por_testes": 38,
+   "coberto_por_testes": 39,
    "orfao": false
   },
   {
@@ -5257,7 +5257,7 @@
    "zod_schemas": 0,
    "flags": [],
    "papeis": [],
-   "usado_por": 31,
+   "usado_por": 32,
    "usado_por_modulos": [
     "components/admin",
     "components/security",
@@ -5268,7 +5268,7 @@
     "pages",
     "pages/admin"
    ],
-   "coberto_por_testes": 2,
+   "coberto_por_testes": 3,
    "orfao": false
   },
   {
@@ -5531,7 +5531,7 @@
    "zod_schemas": 0,
    "flags": [],
    "papeis": [],
-   "usado_por": 485,
+   "usado_por": 486,
    "usado_por_modulos": [
     "components",
     "components/a11y",
