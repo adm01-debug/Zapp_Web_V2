@@ -17,6 +17,7 @@ import { AnalyticsPerformanceChart } from './analytics/AnalyticsPerformanceChart
 import type { PerformancePeriod, PerformancePoint } from './analytics/AnalyticsPerformanceChart';
 import { AnalyticsFunnel } from './analytics/AnalyticsFunnel';
 import { TalkXCampaignRevenuePanel } from './analytics/TalkXCampaignRevenueCard';
+import { TalkXCampaignLogsPanel } from './analytics/TalkXCampaignLogsCard';
 import type { FunnelStep } from './analytics/AnalyticsFunnel';
 import { goTab, pushTalkXWizardRoute } from './talkxRoute';
 import { CHART_TICK_FONT_SIZE, CHART_TICK_FONT_SIZE_SM, CHART_TOOLTIP_FONT_SIZE, CHART_LABEL_FONT_SIZE } from '@/lib/chart-theme';
@@ -649,6 +650,12 @@ export function TalkXAnalytics({ campaigns, isLoading, isError }: Props) {
               {(panelRecipients?.length ?? 0) >= 200 && <p className="text-2xs text-muted-foreground text-center mt-2">Exibindo primeiros 200 registros.</p>}
             </div>
           )}
+          {/* C-11/X033: log de entrega — uma linha por etapa/tentativa do motor
+              (talkx_campaign_logs, admin/supervisor). É a resposta para "por que
+              este destinatário não recebeu?", que o status final não dá. */}
+          <div className="mt-4">
+            <TalkXCampaignLogsPanel campaignId={selectedCampaignId} />
+          </div>
         </section>
       )}
 
