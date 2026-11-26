@@ -1,7 +1,7 @@
 # Contexto do projeto para agentes de IA
 
 GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.
-Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR dela) a cada push em `main` e a cada 10 minutos pelo workflow `contexto.yml`; índice único das três fontes em `docs/contexto/00-INDEX.md`. Gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `c81631844c52fc292aa4159bee8f9af11d9d445e` (2026-11-26T00:06:31Z).
+Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR dela) a cada push em `main` e a cada 10 minutos pelo workflow `contexto.yml`; índice único das três fontes em `docs/contexto/00-INDEX.md`. Gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `bd4e9fd06fe52beb51d9d025d878de54c0608c29` (2026-11-25T22:13:47-03:00).
 
 ## Como usar (leia antes de planejar ou executar qualquer tarefa)
 1. **Tela/rota/menu** → `rotas.json` (url/vista/menu → arquivo → hooks → tabelas → edges; `rotas_http_backend` para APIs) e `modulos.json` (módulo inteiro + dependências entre módulos).
@@ -14,7 +14,7 @@ Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR
 Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua tarefa; não carregue tudo.
 
 ## Stack
-- linguagens: TypeScript (4508), Markdown (3988), SQL (3063), JSON (1939), JavaScript (524), Shell (252), Python (125), YAML (43)
+- linguagens: TypeScript (4508), Markdown (3988), SQL (3064), JSON (1939), JavaScript (524), Shell (252), Python (125), YAML (43)
 - linguagem_principal: TypeScript
 - framework: React
 - backend_http: n/d
@@ -34,7 +34,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 ## Números
 | item | qtd |
 |---|---|
-| arquivos_total | 14808 |
+| arquivos_total | 14809 |
 | arquivos_codigo | 5153 |
 | linhas_codigo | 955749 |
 | rotas | 18 |
@@ -46,7 +46,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 | hooks | 517 |
 | edge_functions | 93 |
 | tabelas | 223 |
-| migrations | 1153 |
+| migrations | 1154 |
 | cron_jobs | 29 |
 | testes | 2830 |
 | workflows | 26 |
@@ -397,7 +397,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - possiveis_segredos_no_codigo: 4 — ex.: scripts/ai-context/cenarios.mjs:102, scripts/ci/edge-coverage-authz.unit.mjs:398, scripts/ci/inventario-banco.unit.mjs:147
 
 ## Grafo de código (graphify)
-- 96215 nós · 160955 arestas · 8939 comunidades · grafo do commit `c8163184`
+- 96216 nós · 160955 arestas · 8940 comunidades · grafo do commit `bd4e9fd0`
 - comunidades maiores: Communities (8869 total, 3472 thin omitted) (5376), TalkXSuppression.tsx (1284), react (1264), cn (992), vitest (919), framer-motion (897), lucide-react (846), ExternalProductManagement.tsx (759), react-router-dom (660), validation.ts (643), ref_https (497), ref_node_fs (463)
 - símbolos mais chamados: cn() (src/lib/utils.ts), useAuth() (src/hooks/auth/useAuth.tsx), jsonResponse() (supabase/functions/_shared/validation.ts), errorResponse() (supabase/functions/_shared/validation.ts), handleCors() (supabase/functions/_shared/validation.ts), fail() (scripts/e2e-isolated/network-proof-policy.mjs), Logger (supabase/functions/_shared/validation.ts), requireEnv() (supabase/functions/_shared/validation.ts), fmtInt() (src/components/talkx/kit/format.ts), useUserRole() (src/hooks/system/useUserRole.ts), validationErrorResponse() (supabase/functions/_shared/schemas.ts), .from() (supabase/functions/_shared/evolution-types.ts)
 - consulta local: `graphify query "<pergunta>"`, `graphify path "<A>" "<B>"`, `graphify explain "<X>"`
@@ -412,11 +412,11 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - docs/DB-INVENTORY.md (12)
 - .github/workflows/db-guard.yml (11)
 - PENDENCIAS.md (11)
-- docs/agentes/github-ci.md (11)
 - scripts/db-audit/grants-baseline.json (11)
 - .github/workflows/ci.yml (10)
-- docs/ci/README.md (10)
-- scripts/ci/ci-docs-baseline.unit.mjs (9)
+- docs/agentes/github-ci.md (10)
+- docs/ci/README.md (9)
+- scripts/ci/ci-docs-baseline.unit.mjs (8)
 - supabase/functions/evolution-api/index.ts (8)
 
 ## Workflows
@@ -540,6 +540,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - CHANGELOG topo: [Unreleased]
 
 ## Últimos commits
+- 2026-11-25 `bd4e9fd0` fix: semeia as chaves de desligamento da IA (IA-009 secao 2.1 e 2.2) (#3385)
 - 2026-11-26 `c8163184` feat: devolve a fila morta do Multiplix ao cartao de saude da integracao (#3392)
 - 2026-11-25 `34b5d25e` feat: kill switch por provedor (IA-009 2.2) e pausa de bot por conexao (IA-009 2.3) (#3386)
 - 2026-11-25 `e4c2b861` fix: tooltip do prazo usa a regra única de data e o módulo prazoCompleto (#3391)
@@ -554,7 +555,6 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - 2026-11-25 `26469075` chore(contexto): main recebe o snapshot gerado por PR automatica (#3375)
 - 2026-11-25 `1e7fec6a` infra: valida a virada do dominio principal para o build do V2 (#3374)
 - 2026-11-25 `985b4e38` fix(lint): ratchet aceita ocorrencia identica deslocada de linha (#3376)
-- 2026-11-25 `1d87b06f` chore(lint): reancora baseline nas posicoes atuais (divida inalterada, 540 = 540) (#3373)
 
 ## Arquivos deste diretório
 - `docs/contexto/codigo/rotas.json`

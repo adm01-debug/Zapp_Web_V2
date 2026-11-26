@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "c81631844c52fc292aa4159bee8f9af11d9d445e",
+  "commit": "bd4e9fd06fe52beb51d9d025d878de54c0608c29",
   "branch": "main",
-  "data_commit": "2026-11-26T00:06:31Z",
+  "data_commit": "2026-11-25T22:13:47-03:00",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "bd4e9fd0",
+    "data": "2026-11-25",
+    "assunto": "fix: semeia as chaves de desligamento da IA (IA-009 secao 2.1 e 2.2) (#3385)"
+   },
    {
     "sha": "c8163184",
     "data": "2026-11-26",
@@ -126,14 +131,9 @@
     "sha": "7d4d196e",
     "data": "2026-11-24",
     "assunto": "feat(inbox): analise de imagem do Copiloto no painel de conversa (#3362)"
-   },
-   {
-    "sha": "c3127e8f",
-    "data": "2026-11-24",
-    "assunto": "chore(db): sincronizar artefatos derivados do banco (#3361)"
    }
   ],
-  "arquivos_mudados_7d": 2740,
+  "arquivos_mudados_7d": 2731,
   "pastas_mais_mudadas_30d": [
    {
     "pasta": "docs/contexto/supabase",
@@ -234,10 +234,6 @@
     "mudancas": 11
    },
    {
-    "arquivo": "docs/agentes/github-ci.md",
-    "mudancas": 11
-   },
-   {
     "arquivo": "scripts/db-audit/grants-baseline.json",
     "mudancas": 11
    },
@@ -246,12 +242,16 @@
     "mudancas": 10
    },
    {
-    "arquivo": "docs/ci/README.md",
+    "arquivo": "docs/agentes/github-ci.md",
     "mudancas": 10
    },
    {
-    "arquivo": "scripts/ci/ci-docs-baseline.unit.mjs",
+    "arquivo": "docs/ci/README.md",
     "mudancas": 9
+   },
+   {
+    "arquivo": "scripts/ci/ci-docs-baseline.unit.mjs",
+    "mudancas": 8
    },
    {
     "arquivo": "supabase/functions/evolution-api/index.ts",
@@ -314,7 +314,7 @@
   ]
  },
  "contagens": {
-  "arquivos_total": 14808,
+  "arquivos_total": 14809,
   "arquivos_codigo": 5153,
   "linhas_codigo": 955749,
   "rotas": 18,
@@ -326,7 +326,7 @@
   "hooks": 517,
   "edge_functions": 93,
   "tabelas": 223,
-  "migrations": 1153,
+  "migrations": 1154,
   "cron_jobs": 29,
   "testes": 2830,
   "workflows": 26,
