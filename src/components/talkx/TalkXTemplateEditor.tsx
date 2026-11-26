@@ -1,9 +1,9 @@
 import React, { useEffect, useState, useMemo, useRef, useSyncExternalStore } from 'react';
 import {
-  X, Check, Copy, ChevronLeft, ChevronRight, FileText, BarChart3, Image, Video, Music, Send, CheckCircle, XCircle, History, RotateCcw,
+  X, Check, Copy, ChevronLeft, ChevronRight, FileText, BarChart3, Image, Video, Music, Send, History, RotateCcw,
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
-import { TalkXDialogShell } from './kit/dialogs';
+import { TalkXTemplateTestDialog } from './TalkXTemplateTestDialog';
 import { Sheet, SheetContent, SheetTitle } from '@/components/ui/sheet';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -80,7 +80,7 @@ export function TalkXTemplateEditor({
   onActiveTemplateChange, onClose, onOpenMonitor,
 }: Props) {
   const {
-    createTemplate, updateTemplate, duplicateTemplate, testTemplate, fetchVersionHistory, fetchVariants,
+    createTemplate, updateTemplate, duplicateTemplate, fetchVersionHistory, fetchVariants,
     saveVariant, deleteVariant, countVariantRecipients,
   } = useTalkXTemplates();
   const messageEditorRef = useRef<TalkXMessageEditorHandle>(null);
@@ -99,11 +99,9 @@ export function TalkXTemplateEditor({
   const [eTagInput, setETagInput] = useState('');
   const [eCustomVars, setECustomVars] = useState<string[]>(editing?.custom_variables ?? []);
   const [eCustomVarInput, setECustomVarInput] = useState('');
-  // E47: test sheet
+  // E47: test sheet — a janela é a MESMA do cartão/lista (`TalkXTemplateTestDialog`),
+  // que escolhe a conexão (o `talkx-send` exige `connectionId`).
   const [showTest, setShowTest] = useState(false);
-  const [testPhone, setTestPhone] = useState('');
-  const [testing, setTesting] = useState(false);
-  const [testResult, setTestResult] = useState<{ ok: boolean; msg: string } | null>(null);
   const [saving, setSaving] = useState(false);
   const [activeTemplateId, setActiveTemplateId] = useState<string | null>(editing?.id ?? null);
   const [expectedUpdatedAt, setExpectedUpdatedAt] = useState<string | null>(editing?.updated_at ?? null);
@@ -260,24 +258,7 @@ export function TalkXTemplateEditor({
   const insertAtCursor = (text: string) => messageEditorRef.current?.insertAtCursor(text);
 
 
-  /** E47: envia mensagem de teste para o numero informado */
-  const handleTest = async () => {
-    const phone = testPhone.replace(/\D/g, '');
-    if (!phone || phone.length < 10) { setTestResult({ ok: false, msg: 'Número inválido' }); return; }
-    if (!eContent.trim()) { setTestResult({ ok: false, msg: 'Template vazio' }); return; }
-    setTesting(true); setTestResult(null);
-    try {
-      await testTemplate({ templateContent: eContent, mediaUrl: eHasMedia ? eMediaUrl : null, mediaType: eHasMedia ? eMediaType : null, phone, customVariables: eCustomVars });
-      setTestResult({ ok: true, msg: `Mensagem enviada para ${phone}` });
-    } catch (e) {
-      setTestResult({ ok: false, msg: e instanceof Error ? e.message : 'Erro desconhecido' });
-    } finally {
-      setTesting(false);
-    }
-  };
-
-
-  /** R2-MOD-024: a origem (template) da resposta ainda é o template ativo? */
+  // V26 — variáveis conhecidas do editor: as built-in + as personalizadas deste template.
   const isActiveOrigin = (templateId: string | null | undefined) =>
     !!templateId && templateId === activeTemplateIdRef.current;
 
@@ -611,7 +592,7 @@ export function TalkXTemplateEditor({
             {editing && (
               <GhostButton icon={Copy} onClick={() => { duplicateTemplate.mutate(activeTemplate ?? editing); onClose(); }}>Duplicar</GhostButton>
             )}
-            <GhostButton icon={Send} onClick={() => { setShowTest(true); setTestResult(null); }}>Testar</GhostButton>
+            <GhostButton icon={Send} onClick={() => setShowTest(true)}>Testar</GhostButton>
             <PrimaryButton
               icon={saving ? undefined : Check}
               onClick={save}
@@ -828,30 +809,24 @@ export function TalkXTemplateEditor({
         {painelLateral}
       </aside>
 
-      {/* E47: Test Dialog */}
+      {/* E47: Test Dialog — a mesma janela do cartão/lista (escolhe a conexão) */}
       {dialogo}
-      <TalkXDialogShell
-        open={showTest}
-        onClose={() => setShowTest(false)}
-        title="Testar template"
-        description="Envia a mensagem personalizada para um número via WhatsApp."
-        className="max-w-sm"
-        footer={<>
-          <button type="button" onClick={() => setShowTest(false)} className="flex-1 h-9 rounded-lg border border-border/70 bg-input/40 text-[13px] font-medium">Fechar</button>
-          <button type="button" onClick={handleTest} disabled={testing || !testPhone.trim()} className="flex-1 h-9 rounded-lg bg-primary text-white text-[13px] font-semibold disabled:opacity-50 flex items-center justify-center gap-1.5">{testing ? 'Enviando...' : (<><Send className="w-3.5 h-3.5" /> Enviar</>)}</button>
-        </>}
-      >
-        <div>
-          <Label htmlFor="talkx-template-test-phone" className="text-xs text-foreground-secondary">Número de destino</Label>
-          <Input id="talkx-template-test-phone" value={testPhone} onChange={(e) => setTestPhone(e.target.value)} placeholder="5541999001234" className="mt-1.5 h-10 bg-input/40 border-border/70 font-mono" />
-        </div>
-        {testResult && (
-          <div className={testResult.ok ? 'mt-2 flex items-center gap-2 text-dash-green text-xs' : 'mt-2 flex items-center gap-2 text-dash-red text-xs'}>
-            {testResult.ok ? <CheckCircle className="w-4 h-4 flex-shrink-0" /> : <XCircle className="w-4 h-4 flex-shrink-0" />}
-            {testResult.msg}
-          </div>
-        )}
-      </TalkXDialogShell>
+      {showTest && (
+        <TalkXTemplateTestDialog
+          template={editing ?? {
+            id: activeTemplateId ?? '', name: eName || 'Novo template', description: null,
+            category: eCat, content: eContent, media_url: eMediaUrl || null, media_type: eMediaType || null,
+            tags: eTags, status: eStatus, use_count: 0, custom_variables: eCustomVars,
+            created_by: null, created_at: '', updated_at: expectedUpdatedAt ?? '',
+          }}
+          open
+          onClose={() => setShowTest(false)}
+          contentOverride={eContent}
+          mediaUrlOverride={eHasMedia ? eMediaUrl : null}
+          mediaTypeOverride={eHasMedia ? eMediaType : null}
+          customVariables={eCustomVars}
+        />
+      )}
     </div>
   );
 }
