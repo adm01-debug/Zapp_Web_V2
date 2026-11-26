@@ -7,12 +7,12 @@
    "src/pages (18)"
   ],
   "componentes": [
-   "src/components (901)",
+   "src/components (902)",
    "src/pages (26)",
    "src/features (2)"
   ],
   "hooks": [
-   "src/hooks (433)",
+   "src/hooks (434)",
    "src/components (74)",
    "src/contexts (2)"
   ],
@@ -22,14 +22,14 @@
    "src/utils (8)"
   ],
   "testes": [
-   "co-localizado (__tests__) (2105)",
+   "co-localizado (__tests__) (2107)",
    "outro (260)",
    "co-localizado (*.test) (202)"
   ],
   "edge_functions": "supabase/functions",
   "migrations": "supabase/migrations",
   "scripts": [
-   "scripts/db-audit (304)",
+   "scripts/db-audit (305)",
    "scripts/ci (43)",
    "scripts/e2e-isolated (41)"
   ],
@@ -40,15 +40,15 @@
   ]
  },
  "nomenclatura": {
-  "componentes": "PascalCase (90%)",
+  "componentes": "PascalCase (91%)",
   "hooks": "use + PascalCase",
   "servicos": "camelCase (73%)",
   "edge_functions": "kebab-case (96%)",
-  "tabelas": "snake_case (91%)"
+  "tabelas": "snake_case (92%)"
  },
  "barrels_index": 72,
  "extensao_componentes": [
-  ".tsx (936)"
+  ".tsx (937)"
  ],
  "alias_imports": {
   "analise-prs/resgate-261115/auditoria/bruto/diarios-sessao/": {
@@ -66,11 +66,11 @@
  "commits": {
   "convencao": "conventional commits (observado)",
   "exemplos": [
+   "feat: bloqueio de login por cidade (paridade Promo Gifts V4) (#3393)",
    "feat: Sala de Crise mede pelo agregado crisis_room_snapshot (fim das 4 consultas no navegador) (#3396)",
    "fix: allowlist de credencial de provedor e vínculo endpoint/secret no banco (IA-EGRESS-001) (#3384)",
    "fix: semeia as chaves de desligamento da IA (IA-009 secao 2.1 e 2.2) (#3385)",
-   "feat: devolve a fila morta do Multiplix ao cartao de saude da integracao (#3392)",
-   "feat: kill switch por provedor (IA-009 2.2) e pausa de bot por conexao (IA-009 2.3) (#3386)"
+   "feat: devolve a fila morta do Multiplix ao cartao de saude da integracao (#3392)"
   ]
  },
  "pr_template": ".github/PULL_REQUEST_TEMPLATE.md",

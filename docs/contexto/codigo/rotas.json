@@ -105,6 +105,7 @@
     "useChatSearch",
     "useChatTextSize",
     "useChatbotFlows",
+    "useCityWhitelist",
     "useClientErrors",
     "useClientWallet",
     "useCoachingTip",
@@ -668,6 +669,7 @@
     "useChatSearch",
     "useChatTextSize",
     "useChatbotFlows",
+    "useCityWhitelist",
     "useClientErrors",
     "useClientWallet",
     "useCoachingTip",
@@ -1131,6 +1133,7 @@
     "channel_routing_rules",
     "chatbot_executions",
     "chatbot_flows",
+    "city_whitelist",
     "client_wallet_rules",
     "connection_alert_preferences",
     "connection_health_logs",
@@ -1455,7 +1458,7 @@
     "unknown",
     "user"
    ],
-   "arquivos_puxados": 1596
+   "arquivos_puxados": 1598
   },
   {
    "protegida": false,
@@ -7148,6 +7151,7 @@
     "useAuditLogDashboard",
     "useAuth",
     "useCallback",
+    "useCityWhitelist",
     "useContext",
     "useDeviceDetection",
     "useEffect",
@@ -7188,6 +7192,7 @@
     "useAppBootstrap",
     "useAuditLogDashboard",
     "useAuth",
+    "useCityWhitelist",
     "useDeviceDetection",
     "useGeoBlocking",
     "useHasVerifiedTotp",
@@ -7219,6 +7224,7 @@
     "audit_logs",
     "blocked_countries",
     "blocked_ips",
+    "city_whitelist",
     "contacts",
     "geo_blocking_settings",
     "ip_whitelist",
@@ -7258,7 +7264,7 @@
     "status",
     "supervisor"
    ],
-   "arquivos_puxados": 113
+   "arquivos_puxados": 115
   },
   {
    "id": "sentiment",

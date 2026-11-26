@@ -1,7 +1,7 @@
 {
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
- "total": 453,
+ "total": 454,
  "scripts": [
   {
    "arquivo": "scripts/ai-context/cenarios.mjs",
@@ -979,6 +979,17 @@
    "arquivo": "scripts/db-audit/check-webhook-failures-acl.test.sh",
    "descricao": null,
    "linhas": 151,
+   "env": [],
+   "npm_scripts": [],
+   "workflows": [
+    "db-guard.yml"
+   ],
+   "orfao": false
+  },
+  {
+   "arquivo": "scripts/db-audit/city-whitelist-network-policy.test.sh",
+   "descricao": "Bloqueio de login por CIDADE na RPC canônica resolve_network_policy (R2-AUTH-022). Prova, em PostgreSQL descartável, chamando a RPC REAL (nada de mock):",
+   "linhas": 298,
    "env": [],
    "npm_scripts": [],
    "workflows": [

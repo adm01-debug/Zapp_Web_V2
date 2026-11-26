@@ -3737,6 +3737,7 @@
     "useChatSearch",
     "useChatTextSize",
     "useChatbotFlows",
+    "useCityWhitelist",
     "useClientErrors",
     "useClientWallet",
     "useCoachingTip",
@@ -4240,6 +4241,7 @@
     "channel_routing_rules",
     "chatbot_executions",
     "chatbot_flows",
+    "city_whitelist",
     "client_wallet_rules",
     "connection_alert_preferences",
     "connection_health_logs",
@@ -5851,6 +5853,7 @@
     "useChatPanelHandlers",
     "useChatSearch",
     "useChatTextSize",
+    "useCityWhitelist",
     "useClientWallet",
     "useCoachingTip",
     "useConnectionAlertPreferences",
@@ -6253,6 +6256,7 @@
     "catalog_favorites",
     "catalog_send_events",
     "chatbot_flows",
+    "city_whitelist",
     "client_wallet_rules",
     "connection_alert_preferences",
     "contact_custom_fields",
@@ -6872,9 +6876,9 @@
   },
   {
    "modulo": "components/security",
-   "arquivos": 23,
-   "testes": 29,
-   "linhas": 4300,
+   "arquivos": 24,
+   "testes": 30,
+   "linhas": 4503,
    "itens_menu": [
     "Auditoria",
     "Segurança"
@@ -6884,11 +6888,12 @@
     "security"
    ],
    "rotas_http": [],
-   "componentes": 23,
+   "componentes": 24,
    "hooks_locais": [
     "useAppBootstrap",
     "useAuditLogDashboard",
     "useAuth",
+    "useCityWhitelist",
     "useDeviceDetection",
     "useGeoBlocking",
     "useHasVerifiedTotp",
@@ -6930,6 +6935,7 @@
     "audit_logs",
     "blocked_countries",
     "blocked_ips",
+    "city_whitelist",
     "contacts",
     "geo_blocking_settings",
     "ip_whitelist",
@@ -12040,19 +12046,21 @@
   },
   {
    "modulo": "hooks/security",
-   "arquivos": 2,
+   "arquivos": 3,
    "testes": 0,
-   "linhas": 329,
+   "linhas": 449,
    "itens_menu": [],
    "telas": [],
    "rotas_http": [],
    "componentes": 0,
    "hooks_locais": [
     "useAuditLogDashboard",
+    "useCityWhitelist",
     "usePasswordResetRequests"
    ],
    "hooks_definidos": [
     "useAuditLogDashboard",
+    "useCityWhitelist",
     "usePasswordResetRequests"
    ],
    "edges": [
@@ -12060,6 +12068,8 @@
    ],
    "tabelas": [
     "audit_logs",
+    "city_whitelist",
+    "geo_blocking_settings",
     "password_reset_requests_safe",
     "profiles"
    ],
@@ -12077,6 +12087,8 @@
     ],
     "tabelas": [
      "audit_logs",
+     "city_whitelist",
+     "geo_blocking_settings",
      "password_reset_requests_safe",
      "profiles"
     ],
@@ -12487,6 +12499,7 @@
     "useChatSearch",
     "useChatTextSize",
     "useChatbotFlows",
+    "useCityWhitelist",
     "useClientErrors",
     "useClientWallet",
     "useCoachingTip",
@@ -13070,6 +13083,7 @@
     "channel_routing_rules",
     "chatbot_executions",
     "chatbot_flows",
+    "city_whitelist",
     "client_wallet_rules",
     "connection_alert_preferences",
     "connection_health_logs",
@@ -15022,6 +15036,7 @@
     "useChatSearch",
     "useChatTextSize",
     "useChatbotFlows",
+    "useCityWhitelist",
     "useClientErrors",
     "useClientWallet",
     "useCoachingTip",
@@ -15542,6 +15557,7 @@
     "channel_routing_rules",
     "chatbot_executions",
     "chatbot_flows",
+    "city_whitelist",
     "client_wallet_rules",
     "connection_alert_preferences",
     "connection_health_logs",
@@ -16362,6 +16378,7 @@
     "useChatSearch",
     "useChatTextSize",
     "useChatbotFlows",
+    "useCityWhitelist",
     "useClientErrors",
     "useClientWallet",
     "useCoachingTip",
@@ -16887,6 +16904,7 @@
     "channel_routing_rules",
     "chatbot_executions",
     "chatbot_flows",
+    "city_whitelist",
     "client_wallet_rules",
     "connection_alert_preferences",
     "connection_health_logs",

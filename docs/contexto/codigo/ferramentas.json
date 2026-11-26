@@ -3,12 +3,12 @@
  "format_version": 2,
  "stack": {
   "linguagens": [
-   "TypeScript (4512)",
+   "TypeScript (4516)",
    "Markdown (3988)",
-   "SQL (3065)",
+   "SQL (3066)",
    "JSON (1939)",
    "JavaScript (524)",
-   "Shell (252)",
+   "Shell (253)",
    "Python (125)",
    "YAML (43)"
   ],
@@ -461,6 +461,7 @@
     "scripts/db-audit/check-reconcile-ledger-drift.test.sh",
     "scripts/db-audit/check-secdef-public-execute.test.sh",
     "scripts/db-audit/check-webhook-failures-acl.test.sh",
+    "scripts/db-audit/city-whitelist-network-policy.test.sh",
     "scripts/db-audit/commit-copilot-tick.test.sh",
     "scripts/db-audit/contacts-legacy-visibility.test.sh",
     "scripts/db-audit/contacts-soft-delete-and-status.test.sh",
@@ -1877,16 +1878,16 @@
     "arquivos": 18
    },
    {
+    "host": "example.supabase.co",
+    "arquivos": 14
+   },
+   {
     "host": "exemplo.test",
     "arquivos": 14
    },
    {
     "host": "projeto.supabase.co",
     "arquivos": 14
-   },
-   {
-    "host": "example.supabase.co",
-    "arquivos": 13
    },
    {
     "host": "supabase-test.example",

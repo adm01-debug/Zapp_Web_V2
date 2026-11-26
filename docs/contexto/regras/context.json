@@ -1,15 +1,15 @@
 {
  "meta": {
-  "sha": "71d923d1d004345d13fc760fa4f417ddb2891643",
+  "sha": "9f9ec852845499de067bb4788ceb22f8463e6c88",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-26 02:30 UTC",
-  "files_total": 14661,
-  "code_files": 8195,
-  "code_lines": 1233916
+  "generated_at": "2026-11-26 02:56 UTC",
+  "files_total": 14667,
+  "code_files": 8200,
+  "code_lines": 1234858
  },
  "version": "1.3.2",
- "facts_hash": "f5b3f45b71a6300c",
+ "facts_hash": "377d09d1bdd9d6b5",
  "stack": {
   "frameworks": [
    "React + Vite",
@@ -367,9 +367,9 @@
   ],
   "package_manager": "bun",
   "languages": {
-   ".sql": 3065,
-   ".tsx": 2485,
-   ".ts": 2022,
+   ".sql": 3066,
+   ".tsx": 2487,
+   ".ts": 2024,
    ".mjs": 496,
    ".py": 125,
    ".cjs": 19,
@@ -4977,6 +4977,13 @@
       "fk": "",
       "generated": "",
       "src": "supabase/migrations/20251231131019_8cdee99f-d19b-4efc-bdd1-7bb592007792.sql"
+     },
+     {
+      "name": "city_whitelist_enabled",
+      "type": "boolean not null default false",
+      "fk": "",
+      "generated": "",
+      "src": "supabase/migrations/20261126010508_city_whitelist_network_policy.sql"
      }
     ],
     "constraints": [],
@@ -18290,6 +18297,59 @@
     "comment": "Registro de envio da mensagem de ausência por contato+conexão (janela de 24 h consultada por should_send_away_message). Só service_role, via RPC.",
     "origin": "migration"
    },
+   "city_whitelist": {
+    "columns": [
+     {
+      "name": "id",
+      "type": "uuid primary key default gen_random_uuid()",
+      "fk": "",
+      "generated": "",
+      "src": "supabase/migrations/20261126010508_city_whitelist_network_policy.sql"
+     },
+     {
+      "name": "city_name",
+      "type": "text not null check (btrim(city_name) <> '' and char_length(city_name) <= 128)",
+      "fk": "",
+      "generated": "",
+      "src": "supabase/migrations/20261126010508_city_whitelist_network_policy.sql"
+     },
+     {
+      "name": "city_key",
+      "type": "text generated always as (public.normalize_city_name(city_name)) stored",
+      "fk": "",
+      "generated": "public.normalize_city_name(city_name)",
+      "src": "supabase/migrations/20261126010508_city_whitelist_network_policy.sql"
+     },
+     {
+      "name": "is_active",
+      "type": "boolean not null default true",
+      "fk": "",
+      "generated": "",
+      "src": "supabase/migrations/20261126010508_city_whitelist_network_policy.sql"
+     },
+     {
+      "name": "created_by",
+      "type": "uuid references auth.users(id) on delete set null",
+      "fk": "users.id on delete set null",
+      "generated": "",
+      "src": "supabase/migrations/20261126010508_city_whitelist_network_policy.sql"
+     },
+     {
+      "name": "created_at",
+      "type": "timestamptz not null default now()",
+      "fk": "",
+      "generated": "",
+      "src": "supabase/migrations/20261126010508_city_whitelist_network_policy.sql"
+     }
+    ],
+    "constraints": [
+     "constraint city_whitelist_city_key_not_empty check (city_key is not null)",
+     "constraint city_whitelist_city_key_key unique (city_key)"
+    ],
+    "src": "supabase/migrations/20261126010508_city_whitelist_network_policy.sql",
+    "comment": "",
+    "origin": "migration"
+   },
    "auth.users": {
     "columns": [
      {
@@ -24726,6 +24786,16 @@
     "src": "supabase/migrations/20261122200000_x076_talkx_ai_requests.sql"
    },
    {
+    "name": "Admins can manage city whitelist",
+    "table": "city_whitelist",
+    "cmd": "ALL",
+    "roles": "authenticated",
+    "mode": "permissive",
+    "using": "public.is_admin_or_supervisor(auth.uid())",
+    "check": "public.is_admin_or_supervisor(auth.uid())",
+    "src": "supabase/migrations/20261126010508_city_whitelist_network_policy.sql"
+   },
+   {
     "name": "Users can update own notifications",
     "table": "notifications",
     "cmd": "UPDATE",
@@ -28628,33 +28698,6 @@
      "contacts",
      "crm_contact_links",
      "v_existing"
-    ]
-   },
-   "resolve_network_policy": {
-    "args": "p_ip text, p_country_code text, p_endpoint text, p_default_max_requests integer, p_default_window_seconds integer",
-    "returns": "table (\n  allowed boolean,\n  reason text,\n  rate_limit_max_requests integer,\n  rate_limit_window_seconds integer\n)",
-    "lang": "plpgsql",
-    "src": "supabase/migrations/20261004182245_resolve_network_policy_rpc.sql",
-    "security_definer": true,
-    "search_path": true,
-    "body": "declare v_geo_mode text; v_country text; v_ip_whitelisted boolean; v_ip_blocked boolean; v_max integer; v_window integer; begin if p_ip is null or btrim(p_ip) = '' then raise exception 'resolve_network_policy: p_ip obrigatorio' using errcode = '22023'; end if; if p_endpoint is null or btrim(p_endpoint) = '' then raise exception 'resolve_network_policy: p_endpoint obrigatorio' using errcode = '22023'; end if; if p_default_max_requests is null or p_default_max_requests < 1 then raise exception 'resolve_network_policy: p_default_max_requests invalido' using errcode = '22023'; end if; if p_default_window_seconds is null or p_default_window_seconds < 1 then raise exception 'resolve_network_policy …",
-    "raises": [
-     "resolve_network_policy: p_ip obrigatorio",
-     "resolve_network_policy: p_endpoint obrigatorio",
-     "resolve_network_policy: p_default_max_requests invalido",
-     "resolve_network_policy: p_default_window_seconds invalido"
-    ],
-    "tables": [
-     "allowed_countries",
-     "blocked_countries",
-     "blocked_ips",
-     "geo_blocking_settings",
-     "ip_whitelist",
-     "rate_limit_configs",
-     "v_geo_mode",
-     "v_ip_blocked",
-     "v_ip_whitelisted",
-     "v_max"
     ]
    },
    "is_team_conversation_creator": {
@@ -35313,6 +35356,45 @@
     "body": "SELECT endpoint IS NULL OR ( endpoint ~ '^https://' AND position('@' in endpoint) = 0 AND endpoint !~ '^https://[0-9]' AND endpoint !~ '^https://\\[[0-9a-fA-F:]+\\]' AND endpoint !~ '^https://[^/]+:[0-9]+' AND endpoint !~* '^https://([^/]*\\.)?(localhost|local|internal|lan|home|corp|intranet)([:/]|$)' );",
     "raises": [],
     "tables": []
+   },
+   "normalize_city_name": {
+    "args": "p_city text",
+    "returns": "text",
+    "lang": "sql",
+    "src": "supabase/migrations/20261126010508_city_whitelist_network_policy.sql",
+    "security_definer": false,
+    "search_path": true,
+    "body": "select nullif( btrim(regexp_replace( translate( lower(coalesce(p_city, '')), 'áàâãäåāăąçćčďéèêëēěęíìîïīłñńňóòôõöøōőŕřśšşťúùûüūůűýÿźžż', 'aaaaaaaaacccdeeeeeeeiiiiilnnnooooooooorrssstuuuuuuuyyzzz' ), '\\s+', ' ', 'g' )), '' )",
+    "raises": [],
+    "tables": []
+   },
+   "resolve_network_policy": {
+    "args": "p_ip text, p_country_code text, p_city text DEFAULT NULL, p_endpoint text DEFAULT NULL, p_default_max_requests integer DEFAULT NULL, p_default_window_seconds integer DEFAULT NULL",
+    "returns": "table (\n  allowed boolean,\n  reason text,\n  rate_limit_max_requests integer,\n  rate_limit_window_seconds integer\n)",
+    "lang": "plpgsql",
+    "src": "supabase/migrations/20261126010508_city_whitelist_network_policy.sql",
+    "security_definer": true,
+    "search_path": true,
+    "body": "declare v_geo_mode text; v_city_enabled boolean; v_country text; v_city_key text; v_ip_whitelisted boolean; v_ip_blocked boolean; v_max integer; v_window integer; begin if p_ip is null or btrim(p_ip) = '' then raise exception 'resolve_network_policy: p_ip obrigatorio' using errcode = '22023'; end if; if p_endpoint is null or btrim(p_endpoint) = '' then raise exception 'resolve_network_policy: p_endpoint obrigatorio' using errcode = '22023'; end if; if p_default_max_requests is null or p_default_max_requests < 1 then raise exception 'resolve_network_policy: p_default_max_requests invalido' using errcode = '22023'; end if; if p_default_window_seconds is null or p_default_window_seconds < 1 the …",
+    "raises": [
+     "resolve_network_policy: p_ip obrigatorio",
+     "resolve_network_policy: p_endpoint obrigatorio",
+     "resolve_network_policy: p_default_max_requests invalido",
+     "resolve_network_policy: p_default_window_seconds invalido"
+    ],
+    "tables": [
+     "allowed_countries",
+     "blocked_countries",
+     "blocked_ips",
+     "city_whitelist",
+     "geo_blocking_settings",
+     "ip_whitelist",
+     "rate_limit_configs",
+     "v_geo_mode",
+     "v_ip_blocked",
+     "v_ip_whitelisted",
+     "v_max"
+    ]
    },
    "uid": {
     "args": "",
@@ -48407,6 +48489,7 @@
    "supabase/migrations/20261124120000_drop_rpcs_e2e_orfas.sql",
    "supabase/migrations/20261125120000_ai_providers_endpoint_secret_binding.sql",
    "supabase/migrations/20261125130000_ia009_kill_switch_chaves.sql",
+   "supabase/migrations/20261126010508_city_whitelist_network_policy.sql",
    "supabase/tests/admin_inbox_silence.sql",
    "supabase/tests/admin_unlock_login_autorizacao.sql",
    "supabase/tests/agent_workload.sql",
@@ -48724,6 +48807,7 @@
    "away_message_log": "enabled",
    "assistant_profiles": "enabled",
    "talkx_ai_requests": "enabled",
+   "city_whitelist": "enabled",
    "zz_prova_sem_rls": "enabled",
    "zz_prova_policy": "enabled"
   },
@@ -63449,6 +63533,46 @@
     "src": "supabase/migrations/20261122200000_x076_talkx_ai_requests.sql"
    },
    {
+    "kind": "revoke",
+    "privs": "all",
+    "object": "city_whitelist",
+    "objkind": "table",
+    "roles": "public, anon",
+    "src": "supabase/migrations/20261126010508_city_whitelist_network_policy.sql"
+   },
+   {
+    "kind": "grant",
+    "privs": "select, insert, update, delete",
+    "object": "city_whitelist",
+    "objkind": "table",
+    "roles": "authenticated",
+    "src": "supabase/migrations/20261126010508_city_whitelist_network_policy.sql"
+   },
+   {
+    "kind": "grant",
+    "privs": "all",
+    "object": "city_whitelist",
+    "objkind": "table",
+    "roles": "service_role",
+    "src": "supabase/migrations/20261126010508_city_whitelist_network_policy.sql"
+   },
+   {
+    "kind": "revoke",
+    "privs": "all",
+    "object": "resolve_network_policy",
+    "objkind": "function",
+    "roles": "public, anon, authenticated",
+    "src": "supabase/migrations/20261126010508_city_whitelist_network_policy.sql"
+   },
+   {
+    "kind": "grant",
+    "privs": "execute",
+    "object": "resolve_network_policy",
+    "objkind": "function",
+    "roles": "service_role",
+    "src": "supabase/migrations/20261126010508_city_whitelist_network_policy.sql"
+   },
+   {
     "kind": "grant",
     "privs": "select",
     "object": "profiles",
@@ -65535,26 +65659,6 @@
     "function": "revoke_auth_sessions",
     "msg": "scope others exige actor_user_id e preserve_session_id",
     "src": "supabase/migrations/20261004181921_revoke_auth_sessions.sql"
-   },
-   {
-    "function": "resolve_network_policy",
-    "msg": "resolve_network_policy: p_ip obrigatorio",
-    "src": "supabase/migrations/20261004182245_resolve_network_policy_rpc.sql"
-   },
-   {
-    "function": "resolve_network_policy",
-    "msg": "resolve_network_policy: p_endpoint obrigatorio",
-    "src": "supabase/migrations/20261004182245_resolve_network_policy_rpc.sql"
-   },
-   {
-    "function": "resolve_network_policy",
-    "msg": "resolve_network_policy: p_default_max_requests invalido",
-    "src": "supabase/migrations/20261004182245_resolve_network_policy_rpc.sql"
-   },
-   {
-    "function": "resolve_network_policy",
-    "msg": "resolve_network_policy: p_default_window_seconds invalido",
-    "src": "supabase/migrations/20261004182245_resolve_network_policy_rpc.sql"
    },
    {
     "function": "set_team_member_role",
@@ -68835,6 +68939,26 @@
     "function": "set_talkx_campaign_ab",
     "msg": "talkx_campaign_ab_locked",
     "src": "supabase/migrations/20261119010000_talkx_set_campaign_ab.sql"
+   },
+   {
+    "function": "resolve_network_policy",
+    "msg": "resolve_network_policy: p_ip obrigatorio",
+    "src": "supabase/migrations/20261126010508_city_whitelist_network_policy.sql"
+   },
+   {
+    "function": "resolve_network_policy",
+    "msg": "resolve_network_policy: p_endpoint obrigatorio",
+    "src": "supabase/migrations/20261126010508_city_whitelist_network_policy.sql"
+   },
+   {
+    "function": "resolve_network_policy",
+    "msg": "resolve_network_policy: p_default_max_requests invalido",
+    "src": "supabase/migrations/20261126010508_city_whitelist_network_policy.sql"
+   },
+   {
+    "function": "resolve_network_policy",
+    "msg": "resolve_network_policy: p_default_window_seconds invalido",
+    "src": "supabase/migrations/20261126010508_city_whitelist_network_policy.sql"
    },
    {
     "function": "espera_contem",
@@ -72757,7 +72881,7 @@
     "file": ".github/workflows/types-sync.yml"
    }
   ],
-  "components_count": 2323,
+  "components_count": 2325,
   "hooks": [
    {
     "name": "useMotionSeguro",
@@ -74612,6 +74736,10 @@
     "file": "src/hooks/security/useAuditLogDashboard.ts"
    },
    {
+    "name": "useCityWhitelist",
+    "file": "src/hooks/security/useCityWhitelist.ts"
+   },
+   {
     "name": "usePasswordResetRequests",
     "file": "src/hooks/security/usePasswordResetRequests.ts"
    },
@@ -76117,8 +76245,8 @@
   },
   {
    "module": "src/components",
-   "files": 2321,
-   "lines": 395403,
+   "files": 2323,
+   "lines": 395663,
    "tables": [
     "agent_skills",
     "agent_visibility_grants",
@@ -76465,8 +76593,8 @@
   },
   {
    "module": "src/hooks",
-   "files": 1038,
-   "lines": 168371,
+   "files": 1039,
+   "lines": 168491,
    "tables": [
     "agent_achievements",
     "agent_stats",
@@ -77517,8 +77645,8 @@
   },
   {
    "module": "supabase/functions",
-   "files": 434,
-   "lines": 131746,
+   "files": 435,
+   "lines": 131960,
    "tables": [
     "agent_stats",
     "ai_conversation_tags",
@@ -77755,8 +77883,8 @@
   },
   {
    "module": "supabase/migrations",
-   "files": 1155,
-   "lines": 115691,
+   "files": 1156,
+   "lines": 116039,
    "tables": [
     "audit_logs",
     "department_invites",
@@ -79047,6 +79175,9 @@
     ]
    },
    "geo_blocking_settings": {
+    "ref": [
+     "src/hooks/security/useCityWhitelist.ts"
+    ],
     "select": [
      "src/hooks/system/useGeoBlocking.ts",
      "src/hooks/system/useLoginBlockedLog.ts"
@@ -84529,6 +84660,7 @@
    "campaigns",
    "catalog_rate_limit_hits",
    "catalog_rate_limits",
+   "city_whitelist",
    "contact_block_audit",
    "contact_deletion_audit",
    "contact_protection_policy",
@@ -85704,6 +85836,11 @@
     "file": "src/components/security/BlockedIPDialogs.tsx",
     "field": "duration",
     "rules": "type=number"
+   },
+   {
+    "file": "src/components/security/CityWhitelistPanel.tsx",
+    "field": "city-name",
+    "rules": "max"
    },
    {
     "file": "src/components/settings/AutoCloseSettings.tsx",
@@ -94394,6 +94531,30 @@
    {
     "file": "src/hooks/realtime/messageSender.ts",
     "msg": "Tipo de mensagem não suportado pelo envio seguro: ${messageType}"
+   },
+   {
+    "file": "src/hooks/security/useCityWhitelist.ts",
+    "msg": "Erro ao adicionar cidade"
+   },
+   {
+    "file": "src/hooks/security/useCityWhitelist.ts",
+    "msg": "Erro ao alterar bloqueio por cidade"
+   },
+   {
+    "file": "src/hooks/security/useCityWhitelist.ts",
+    "msg": "Erro ao carregar cidades"
+   },
+   {
+    "file": "src/hooks/security/useCityWhitelist.ts",
+    "msg": "Erro ao remover cidade"
+   },
+   {
+    "file": "src/hooks/security/useCityWhitelist.ts",
+    "msg": "Esta cidade já está na lista"
+   },
+   {
+    "file": "src/hooks/security/useCityWhitelist.ts",
+    "msg": "Informe o nome da cidade"
    },
    {
     "file": "src/hooks/security/usePasswordResetRequests.ts",
@@ -103697,7 +103858,27 @@
    },
    {
     "file": "supabase/functions/_shared/request-policy.ts",
+    "text": "- Cidade: mesma regra do país (header de infra confiável, `cf-ipcity`); ausente"
+   },
+   {
+    "file": "supabase/functions/_shared/request-policy.ts",
+    "text": "* Cabeçalhos confiáveis que podem carregar a CIDADE do chamador (mesma regra do"
+   },
+   {
+    "file": "supabase/functions/_shared/request-policy.ts",
+    "text": "* Tamanho máximo aceito para o nome de cidade (igual ao CHECK de city_whitelist). */"
+   },
+   {
+    "file": "supabase/functions/_shared/request-policy.ts",
     "text": "* País do chamador vindo apenas de header confiável, normalizado ISO alpha-2. */"
+   },
+   {
+    "file": "supabase/functions/_shared/request-policy.ts",
+    "text": "o limite vira `null` (cidade ausente) — nunca um valor inventado."
+   },
+   {
+    "file": "supabase/functions/_shared/request-policy.ts",
+    "text": "* Cidade do chamador vindo apenas de header confiável. */"
    },
    {
     "file": "supabase/functions/_shared/request-policy.ts",
@@ -103709,7 +103890,7 @@
    },
    {
     "file": "supabase/functions/_shared/request-policy.ts",
-    "text": "Qualquer outra grafia cai na categoria genérica — nunca vaza regra/lista."
+    "text": "vaza regra/lista."
    },
    {
     "file": "supabase/functions/_shared/schemas.ts",
@@ -107261,6 +107442,11 @@
     "table": "geo_blocking_settings",
     "column": "updated_at",
     "rule": "default now()"
+   },
+   {
+    "table": "geo_blocking_settings",
+    "column": "city_whitelist_enabled",
+    "rule": "default false"
    },
    {
     "table": "password_reset_requests",
@@ -113838,6 +114024,46 @@
     "rule": "default now()"
    },
    {
+    "table": "city_whitelist",
+    "column": "id",
+    "rule": "PK; default gen_random_uuid()"
+   },
+   {
+    "table": "city_whitelist",
+    "column": "city_name",
+    "rule": "obrigatório; CHECK btrim(city_name) <> '' and char_length(city_name) <= 128"
+   },
+   {
+    "table": "city_whitelist",
+    "column": "city_key",
+    "rule": "CALCULADA = public.normalize_city_name(city_name)"
+   },
+   {
+    "table": "city_whitelist",
+    "column": "is_active",
+    "rule": "default true"
+   },
+   {
+    "table": "city_whitelist",
+    "column": "created_by",
+    "rule": "FK → users.id on delete set null"
+   },
+   {
+    "table": "city_whitelist",
+    "column": "created_at",
+    "rule": "default now()"
+   },
+   {
+    "table": "city_whitelist",
+    "column": "(tabela)",
+    "rule": "constraint city_whitelist_city_key_not_empty check (city_key is not null)"
+   },
+   {
+    "table": "city_whitelist",
+    "column": "(tabela)",
+    "rule": "constraint city_whitelist_city_key_key unique (city_key)"
+   },
+   {
     "table": "auth.users",
     "column": "id",
     "rule": "PK"
@@ -118198,6 +118424,11 @@
     "file": "supabase/functions/_shared/rate-limit-log.ts",
     "name": "RATE_LIMIT_LOGS_TABLE",
     "value": "\"rate_limit_logs\""
+   },
+   {
+    "file": "supabase/functions/_shared/request-policy.ts",
+    "name": "MAX_CITY_LENGTH",
+    "value": "128"
    },
    {
     "file": "supabase/functions/_shared/schemas.ts",
@@ -171389,6 +171620,18 @@
     "name": "DeviceCard: a lixeira anuncia "
    },
    {
+    "file": "src/components/security/__tests__/CityWhitelistPanel.test.tsx",
+    "name": "CityWhitelistPanel"
+   },
+   {
+    "file": "src/components/security/__tests__/CityWhitelistPanel.test.tsx",
+    "name": "nasce desligado e lista as cidades"
+   },
+   {
+    "file": "src/components/security/__tests__/CityWhitelistPanel.test.tsx",
+    "name": "ligar o toggle grava city_whitelist_enabled=true"
+   },
+   {
     "file": "src/components/security/__tests__/GeoBlockingPanel.a11y.test.tsx",
     "name": "a11y: botão de remover país com nome acessível"
    },
@@ -219001,6 +219244,30 @@
     "name": "falha de gravação no 429 NÃO quebra a requisição (segue allowed:false)"
    },
    {
+    "file": "supabase/functions/_shared/__tests__/request-policy-city.test.ts",
+    "name": "handler real encaminha cf-ipcity à RPC como p_city (UTF-8 recuperado)"
+   },
+   {
+    "file": "supabase/functions/_shared/__tests__/request-policy-city.test.ts",
+    "name": "sem cf-ipcity a RPC recebe p_city null (a RPC falha fechado com a lista ativa)"
+   },
+   {
+    "file": "supabase/functions/_shared/__tests__/request-policy-city.test.ts",
+    "name": "cidade enviada no body ou em header não confiável é ignorada"
+   },
+   {
+    "file": "supabase/functions/_shared/__tests__/request-policy-city.test.ts",
+    "name": "city_blocked: 403 genérico igual ao de país, sem efeitos colaterais"
+   },
+   {
+    "file": "supabase/functions/_shared/__tests__/request-policy-city.test.ts",
+    "name": "normalizeCity: UTF-8 como latin1, espaços, vazio, controle e tamanho"
+   },
+   {
+    "file": "supabase/functions/_shared/__tests__/request-policy-city.test.ts",
+    "name": "extractCity: só cf-ipcity; header inválido vira null"
+   },
+   {
     "file": "supabase/functions/_shared/__tests__/request-policy.test.ts",
     "name": "normalizeCountryCode: trim + uppercase + ISO alpha-2 estrito"
    },
@@ -237275,6 +237542,16 @@
     "src": "supabase/migrations/20261122200000_x076_talkx_ai_requests.sql"
    },
    {
+    "name": "Admins can manage city whitelist",
+    "table": "city_whitelist",
+    "cmd": "ALL",
+    "roles": "authenticated",
+    "mode": "permissive",
+    "using": "public.is_admin_or_supervisor(auth.uid())",
+    "check": "public.is_admin_or_supervisor(auth.uid())",
+    "src": "supabase/migrations/20261126010508_city_whitelist_network_policy.sql"
+   },
+   {
     "name": "Users can update own notifications",
     "table": "notifications",
     "cmd": "UPDATE",
@@ -241177,33 +241454,6 @@
      "contacts",
      "crm_contact_links",
      "v_existing"
-    ]
-   },
-   "resolve_network_policy": {
-    "args": "p_ip text, p_country_code text, p_endpoint text, p_default_max_requests integer, p_default_window_seconds integer",
-    "returns": "table (\n  allowed boolean,\n  reason text,\n  rate_limit_max_requests integer,\n  rate_limit_window_seconds integer\n)",
-    "lang": "plpgsql",
-    "src": "supabase/migrations/20261004182245_resolve_network_policy_rpc.sql",
-    "security_definer": true,
-    "search_path": true,
-    "body": "declare v_geo_mode text; v_country text; v_ip_whitelisted boolean; v_ip_blocked boolean; v_max integer; v_window integer; begin if p_ip is null or btrim(p_ip) = '' then raise exception 'resolve_network_policy: p_ip obrigatorio' using errcode = '22023'; end if; if p_endpoint is null or btrim(p_endpoint) = '' then raise exception 'resolve_network_policy: p_endpoint obrigatorio' using errcode = '22023'; end if; if p_default_max_requests is null or p_default_max_requests < 1 then raise exception 'resolve_network_policy: p_default_max_requests invalido' using errcode = '22023'; end if; if p_default_window_seconds is null or p_default_window_seconds < 1 then raise exception 'resolve_network_policy …",
-    "raises": [
-     "resolve_network_policy: p_ip obrigatorio",
-     "resolve_network_policy: p_endpoint obrigatorio",
-     "resolve_network_policy: p_default_max_requests invalido",
-     "resolve_network_policy: p_default_window_seconds invalido"
-    ],
-    "tables": [
-     "allowed_countries",
-     "blocked_countries",
-     "blocked_ips",
-     "geo_blocking_settings",
-     "ip_whitelist",
-     "rate_limit_configs",
-     "v_geo_mode",
-     "v_ip_blocked",
-     "v_ip_whitelisted",
-     "v_max"
     ]
    },
    "is_team_conversation_creator": {
@@ -247863,6 +248113,45 @@
     "raises": [],
     "tables": []
    },
+   "normalize_city_name": {
+    "args": "p_city text",
+    "returns": "text",
+    "lang": "sql",
+    "src": "supabase/migrations/20261126010508_city_whitelist_network_policy.sql",
+    "security_definer": false,
+    "search_path": true,
+    "body": "select nullif( btrim(regexp_replace( translate( lower(coalesce(p_city, '')), 'áàâãäåāăąçćčďéèêëēěęíìîïīłñńňóòôõöøōőŕřśšşťúùûüūůűýÿźžż', 'aaaaaaaaacccdeeeeeeeiiiiilnnnooooooooorrssstuuuuuuuyyzzz' ), '\\s+', ' ', 'g' )), '' )",
+    "raises": [],
+    "tables": []
+   },
+   "resolve_network_policy": {
+    "args": "p_ip text, p_country_code text, p_city text DEFAULT NULL, p_endpoint text DEFAULT NULL, p_default_max_requests integer DEFAULT NULL, p_default_window_seconds integer DEFAULT NULL",
+    "returns": "table (\n  allowed boolean,\n  reason text,\n  rate_limit_max_requests integer,\n  rate_limit_window_seconds integer\n)",
+    "lang": "plpgsql",
+    "src": "supabase/migrations/20261126010508_city_whitelist_network_policy.sql",
+    "security_definer": true,
+    "search_path": true,
+    "body": "declare v_geo_mode text; v_city_enabled boolean; v_country text; v_city_key text; v_ip_whitelisted boolean; v_ip_blocked boolean; v_max integer; v_window integer; begin if p_ip is null or btrim(p_ip) = '' then raise exception 'resolve_network_policy: p_ip obrigatorio' using errcode = '22023'; end if; if p_endpoint is null or btrim(p_endpoint) = '' then raise exception 'resolve_network_policy: p_endpoint obrigatorio' using errcode = '22023'; end if; if p_default_max_requests is null or p_default_max_requests < 1 then raise exception 'resolve_network_policy: p_default_max_requests invalido' using errcode = '22023'; end if; if p_default_window_seconds is null or p_default_window_seconds < 1 the …",
+    "raises": [
+     "resolve_network_policy: p_ip obrigatorio",
+     "resolve_network_policy: p_endpoint obrigatorio",
+     "resolve_network_policy: p_default_max_requests invalido",
+     "resolve_network_policy: p_default_window_seconds invalido"
+    ],
+    "tables": [
+     "allowed_countries",
+     "blocked_countries",
+     "blocked_ips",
+     "city_whitelist",
+     "geo_blocking_settings",
+     "ip_whitelist",
+     "rate_limit_configs",
+     "v_geo_mode",
+     "v_ip_blocked",
+     "v_ip_whitelisted",
+     "v_max"
+    ]
+   },
    "uid": {
     "args": "",
     "returns": "uuid",
@@ -250288,26 +250577,6 @@
     "function": "revoke_auth_sessions",
     "msg": "scope others exige actor_user_id e preserve_session_id",
     "src": "supabase/migrations/20261004181921_revoke_auth_sessions.sql"
-   },
-   {
-    "function": "resolve_network_policy",
-    "msg": "resolve_network_policy: p_ip obrigatorio",
-    "src": "supabase/migrations/20261004182245_resolve_network_policy_rpc.sql"
-   },
-   {
-    "function": "resolve_network_policy",
-    "msg": "resolve_network_policy: p_endpoint obrigatorio",
-    "src": "supabase/migrations/20261004182245_resolve_network_policy_rpc.sql"
-   },
-   {
-    "function": "resolve_network_policy",
-    "msg": "resolve_network_policy: p_default_max_requests invalido",
-    "src": "supabase/migrations/20261004182245_resolve_network_policy_rpc.sql"
-   },
-   {
-    "function": "resolve_network_policy",
-    "msg": "resolve_network_policy: p_default_window_seconds invalido",
-    "src": "supabase/migrations/20261004182245_resolve_network_policy_rpc.sql"
    },
    {
     "function": "set_team_member_role",
@@ -253590,6 +253859,26 @@
     "src": "supabase/migrations/20261119010000_talkx_set_campaign_ab.sql"
    },
    {
+    "function": "resolve_network_policy",
+    "msg": "resolve_network_policy: p_ip obrigatorio",
+    "src": "supabase/migrations/20261126010508_city_whitelist_network_policy.sql"
+   },
+   {
+    "function": "resolve_network_policy",
+    "msg": "resolve_network_policy: p_endpoint obrigatorio",
+    "src": "supabase/migrations/20261126010508_city_whitelist_network_policy.sql"
+   },
+   {
+    "function": "resolve_network_policy",
+    "msg": "resolve_network_policy: p_default_max_requests invalido",
+    "src": "supabase/migrations/20261126010508_city_whitelist_network_policy.sql"
+   },
+   {
+    "function": "resolve_network_policy",
+    "msg": "resolve_network_policy: p_default_window_seconds invalido",
+    "src": "supabase/migrations/20261126010508_city_whitelist_network_policy.sql"
+   },
+   {
     "function": "espera_contem",
     "msg": "LA FALHOU [%]: \"%\" nao contem \"%\"",
     "src": "supabase/tests/admin_unlock_login_autorizacao.sql"
@@ -253725,6 +254014,11 @@
     "table": "ai_usage_logs",
     "column": "total_tokens",
     "expr": "input_tokens + output_tokens"
+   },
+   {
+    "table": "city_whitelist",
+    "column": "city_key",
+    "expr": "public.normalize_city_name(city_name)"
    }
   ],
   "db_views": {
@@ -254113,6 +254407,10 @@
    {
     "file": "src/hooks/security/useAuditLogDashboard.ts",
     "limit": "200"
+   },
+   {
+    "file": "src/hooks/security/useCityWhitelist.ts",
+    "limit": "1"
    },
    {
     "file": "src/hooks/sla/useApplicableSLA.ts",
@@ -258627,6 +258925,21 @@
      "authenticated: is_admin_or_supervisor(auth.uid())"
     ]
    },
+   "city_whitelist": {
+    "rls": "enabled",
+    "SELECT": [
+     "authenticated: public.is_admin_or_supervisor(auth.uid())"
+    ],
+    "INSERT": [
+     "authenticated: public.is_admin_or_supervisor(auth.uid())"
+    ],
+    "UPDATE": [
+     "authenticated: public.is_admin_or_supervisor(auth.uid())"
+    ],
+    "DELETE": [
+     "authenticated: public.is_admin_or_supervisor(auth.uid())"
+    ]
+   },
    "client_wallet_rules": {
     "rls": "enabled",
     "SELECT": [
@@ -261681,6 +261994,7 @@
    "supabase/functions/_shared/__tests__/evolution-webhook-event-coverage.test.ts",
    "supabase/functions/_shared/__tests__/gmail-cursor-cas-db.test.ts",
    "supabase/functions/_shared/__tests__/gmail-history-cas-db.test.ts",
+   "supabase/functions/_shared/__tests__/request-policy-city.test.ts",
    "supabase/functions/_shared/__tests__/talkx-reply-window.test.ts",
    "supabase/functions/_shared/__tests__/webhook-auth-gates.test.ts",
    "supabase/functions/_shared/ai-audio-authz.ts",
@@ -262261,6 +262575,7 @@
    "supabase/migrations/20261122190000_ia055_precos_entrada_e_saida.sql",
    "supabase/migrations/20261124120000_drop_rpcs_e2e_orfas.sql",
    "supabase/migrations/20261125120000_ai_providers_endpoint_secret_binding.sql",
+   "supabase/migrations/20261126010508_city_whitelist_network_policy.sql",
    "supabase/tests/admin_inbox_silence.sql",
    "supabase/tests/admin_unlock_login_autorizacao.sql",
    "supabase/tests/agent_workload.sql",
@@ -277516,6 +277831,46 @@
     "src": "supabase/migrations/20261122200000_x076_talkx_ai_requests.sql"
    },
    {
+    "kind": "revoke",
+    "privs": "all",
+    "object": "city_whitelist",
+    "objkind": "table",
+    "roles": "public, anon",
+    "src": "supabase/migrations/20261126010508_city_whitelist_network_policy.sql"
+   },
+   {
+    "kind": "grant",
+    "privs": "select, insert, update, delete",
+    "object": "city_whitelist",
+    "objkind": "table",
+    "roles": "authenticated",
+    "src": "supabase/migrations/20261126010508_city_whitelist_network_policy.sql"
+   },
+   {
+    "kind": "grant",
+    "privs": "all",
+    "object": "city_whitelist",
+    "objkind": "table",
+    "roles": "service_role",
+    "src": "supabase/migrations/20261126010508_city_whitelist_network_policy.sql"
+   },
+   {
+    "kind": "revoke",
+    "privs": "all",
+    "object": "resolve_network_policy",
+    "objkind": "function",
+    "roles": "public, anon, authenticated",
+    "src": "supabase/migrations/20261126010508_city_whitelist_network_policy.sql"
+   },
+   {
+    "kind": "grant",
+    "privs": "execute",
+    "object": "resolve_network_policy",
+    "objkind": "function",
+    "roles": "service_role",
+    "src": "supabase/migrations/20261126010508_city_whitelist_network_policy.sql"
+   },
+   {
     "kind": "grant",
     "privs": "select",
     "object": "profiles",
@@ -278250,6 +278605,10 @@
    [
     "talkx_suppression_reasons",
     "active"
+   ],
+   [
+    "city_whitelist",
+    "is_active"
    ]
   ],
   "audit": {
@@ -278948,6 +279307,10 @@
     "updated_at"
    ],
    "away_message_log": [],
+   "city_whitelist": [
+    "created_at",
+    "created_by"
+   ],
    "auth.users": [],
    "storage.buckets": [],
    "storage.objects": [],
@@ -280838,7 +281201,7 @@
    "`message_attempts.provider_status` é uma coluna de status sem enum/CHECK — os valores válidos e as transições permitidas não estão no banco.",
    "`copilot_objection_catalog.status` é uma coluna de status sem enum/CHECK — os valores válidos e as transições permitidas não estão no banco.",
    "`_zapp_mig133_log.status` é uma coluna de status sem enum/CHECK — os valores válidos e as transições permitidas não estão no banco.",
-   "165/228 tabelas sem `COMMENT ON TABLE` — o significado de negócio não está no schema: `copilot_presence`, `copilot_sessions`, `copilot_insights`, `copilot_insight_feedback`, `client_wallet_rules`, `calls`, `whatsapp_groups`, `message_templates`, `agent_stats`, `agent_achievements`, `queue_members`, `queue_goals` …",
+   "166/229 tabelas sem `COMMENT ON TABLE` — o significado de negócio não está no schema: `copilot_presence`, `copilot_sessions`, `copilot_insights`, `copilot_insight_feedback`, `client_wallet_rules`, `calls`, `whatsapp_groups`, `message_templates`, `agent_stats`, `agent_achievements`, `queue_members`, `queue_goals` …",
    "Há tabelas usadas no código sem migration no repo — o schema real pode ter sido alterado pelo painel."
   ]
  },
@@ -336121,6 +336484,19 @@
     " data-testid="
    ]
   },
+  "src/components/security/CityWhitelistPanel.tsx": {
+   "path": "src/components/security/CityWhitelistPanel.tsx",
+   "lines": 199,
+   "exports": [
+    "function CityWhitelistPanel"
+   ],
+   "html_constraints": [
+    {
+     "field": "city-name",
+     "rules": "max"
+    }
+   ]
+  },
   "src/components/security/DeviceCard.tsx": {
    "path": "src/components/security/DeviceCard.tsx",
    "lines": 110,
@@ -336515,7 +336891,7 @@
   },
   "src/components/security/SecurityView.tsx": {
    "path": "src/components/security/SecurityView.tsx",
-   "lines": 214,
+   "lines": 218,
    "exports": [
     "function SecurityView"
    ],
@@ -336692,6 +337068,16 @@
     "BlockedIPsPanel: a lixeira anuncia ",
     "IPWhitelistPanel: a lixeira anuncia ",
     "DeviceCard: a lixeira anuncia "
+   ]
+  },
+  "src/components/security/__tests__/CityWhitelistPanel.test.tsx": {
+   "path": "src/components/security/__tests__/CityWhitelistPanel.test.tsx",
+   "lines": 57,
+   "is_test": true,
+   "tests": [
+    "CityWhitelistPanel",
+    "nasce desligado e lista as cidades",
+    "ligar o toggle grava city_whitelist_enabled=true"
    ]
   },
   "src/components/security/__tests__/GeoBlockingPanel.a11y.test.tsx": {
@@ -374263,6 +374649,34 @@
     "200"
    ]
   },
+  "src/hooks/security/useCityWhitelist.ts": {
+   "path": "src/hooks/security/useCityWhitelist.ts",
+   "lines": 120,
+   "exports": [
+    "interface WhitelistedCity",
+    "function useCityWhitelist"
+   ],
+   "tables": [
+    {
+     "table": "geo_blocking_settings",
+     "op": "ref"
+    }
+   ],
+   "errors": [
+    "Erro ao adicionar cidade",
+    "Erro ao alterar bloqueio por cidade",
+    "Erro ao carregar cidades",
+    "Erro ao remover cidade",
+    "Esta cidade já está na lista",
+    "Informe o nome da cidade"
+   ],
+   "hooks": [
+    "useCityWhitelist"
+   ],
+   "pagination": [
+    "1"
+   ]
+  },
   "src/hooks/security/usePasswordResetRequests.ts": {
    "path": "src/hooks/security/usePasswordResetRequests.ts",
    "lines": 92,
@@ -399081,11 +399495,14 @@
   },
   "supabase/functions/_shared/request-policy.ts": {
    "path": "supabase/functions/_shared/request-policy.ts",
-   "lines": 212,
+   "lines": 269,
    "exports": [
     "const TRUSTED_COUNTRY_HEADER_NAMES",
+    "const TRUSTED_CITY_HEADER_NAMES",
     "function normalizeCountryCode",
     "function extractCountryCode",
+    "function normalizeCity",
+    "function extractCity",
     "function isValidEndpoint",
     "interface NetworkPolicyRpcClient",
     "interface NetworkPolicyOptions",
@@ -399096,11 +399513,22 @@
    "rpc": [
     "resolve_network_policy"
    ],
+   "params": [
+    {
+     "name": "MAX_CITY_LENGTH",
+     "value": "128"
+    }
+   ],
    "rule_comments": [
+    "- Cidade: mesma regra do país (header de infra confiável, `cf-ipcity`); ausente",
+    "* Cabeçalhos confiáveis que podem carregar a CIDADE do chamador (mesma regra do",
+    "* Tamanho máximo aceito para o nome de cidade (igual ao CHECK de city_whitelist). */",
     "* País do chamador vindo apenas de header confiável, normalizado ISO alpha-2. */",
+    "o limite vira `null` (cidade ausente) — nunca um valor inventado.",
+    "* Cidade do chamador vindo apenas de header confiável. */",
     "nunca derivado de body controlado pelo cliente. Aceita apenas strings de",
     "* `rpc` deve ser um client service_role (única role com EXECUTE na função);",
-    "Qualquer outra grafia cai na categoria genérica — nunca vaza regra/lista."
+    "vaza regra/lista."
    ],
    "uses_service_role": true
   },
@@ -401297,6 +401725,28 @@
     "errorResponse só inclui Retry-After quando o tempo de espera é conhecido",
     "falha de gravação no 429 NÃO quebra a requisição (segue allowed:false)"
    ]
+  },
+  "supabase/functions/_shared/__tests__/request-policy-city.test.ts": {
+   "path": "supabase/functions/_shared/__tests__/request-policy-city.test.ts",
+   "lines": 157,
+   "is_test": true,
+   "rule_comments": [
+    "handler REAL (`handleLogin` de auth-login); o gate de lockout/rate limit chega",
+    "Sem efeito colateral: o gate de lockout/rate limit também não é consumido."
+   ],
+   "doc": "Bloqueio de login por CIDADE (paridade Promo Gifts V4) — fronteira R2-AUTH-022. OFFLINE: o client service_role e o client anônimo são injetados no handler REAL (`handleLogin` de auth-login); o gate de lockout/rate limit chega como a RPC `consume_login_gate` no mesmo fake. Prova que: * a cidade vem S …",
+   "temporal": [
+    "session: { access_token: \"t\", refresh_token: \"r\", expires_in: 3600, expires_at: null, token_type: \"bearer\" },"
+   ],
+   "tests": [
+    "handler real encaminha cf-ipcity à RPC como p_city (UTF-8 recuperado)",
+    "sem cf-ipcity a RPC recebe p_city null (a RPC falha fechado com a lista ativa)",
+    "cidade enviada no body ou em header não confiável é ignorada",
+    "city_blocked: 403 genérico igual ao de país, sem efeitos colaterais",
+    "normalizeCity: UTF-8 como latin1, espaços, vazio, controle e tamanho",
+    "extractCity: só cf-ipcity; header inválido vira null"
+   ],
+   "uses_service_role": true
   },
   "supabase/functions/_shared/__tests__/request-policy.test.ts": {
    "path": "supabase/functions/_shared/__tests__/request-policy.test.ts",
@@ -421629,6 +422079,11 @@
    "path": "supabase/migrations/20261125130000_ia009_kill_switch_chaves.sql",
    "lines": 65
   },
+  "supabase/migrations/20261126010508_city_whitelist_network_policy.sql": {
+   "path": "supabase/migrations/20261126010508_city_whitelist_network_policy.sql",
+   "lines": 348,
+   "uses_service_role": true
+  },
   "supabase/tests/admin_inbox_silence.sql": {
    "path": "supabase/tests/admin_inbox_silence.sql",
    "lines": 310,
@@ -425550,10 +426005,29 @@
   }
  },
  "git": {
-  "sha": "71d923d1d004345d13fc760fa4f417ddb2891643",
+  "sha": "9f9ec852845499de067bb4788ceb22f8463e6c88",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "9f9ec852",
+    "date": "2026-11-25",
+    "author": "adm01-debug",
+    "subject": "feat: bloqueio de login por cidade (paridade Promo Gifts V4) (#3393)",
+    "files": [
+     ".github/workflows/db-guard.yml",
+     "scripts/automation.config.json",
+     "scripts/db-audit/city-whitelist-network-policy.test.sh",
+     "src/components/security/CityWhitelistPanel.tsx",
+     "src/components/security/SecurityView.tsx",
+     "src/components/security/__tests__/CityWhitelistPanel.test.tsx",
+     "src/hooks/security/useCityWhitelist.ts",
+     "supabase/deployment-manifest.json",
+     "supabase/functions/_shared/__tests__/request-policy-city.test.ts",
+     "supabase/functions/_shared/request-policy.ts",
+     "supabase/migrations/20261126010508_city_whitelist_network_policy.sql"
+    ]
+   },
    {
     "sha": "71d923d1",
     "date": "2026-11-25",
@@ -427232,20 +427706,15 @@
      "scripts/ci/redigir-relatorio.mjs",
      "supabase/migrations/20261124120000_drop_rpcs_e2e_orfas.sql"
     ]
-   },
-   {
-    "sha": "feee9f79",
-    "date": "2026-11-24",
-    "author": "adm01-debug",
-    "subject": "fix(tarefas): restaura o foco da captura apos o commit, sem corrida (#3359)",
-    "files": [
-     "src/components/tasks/shared/QuickAdd.tsx"
-    ]
    }
   ],
   "hot_files": [
    [
     "supabase/deployment-manifest.json",
+    4
+   ],
+   [
+    "scripts/automation.config.json",
     3
    ],
    [
@@ -427285,43 +427754,39 @@
     2
    ],
    [
-    "scripts/automation.config.json",
-    2
-   ],
-   [
     "scripts/ci/ci-docs-baseline.unit.mjs",
     2
    ],
    [
-    "src/components/admin/CrisisRoom.tsx",
+    ".github/workflows/db-guard.yml",
     1
    ],
    [
-    "src/components/admin/__tests__/CrisisRoom.canais.test.tsx",
+    "scripts/db-audit/city-whitelist-network-policy.test.sh",
     1
    ],
    [
-    "src/components/admin/__tests__/CrisisRoom.metricas.test.tsx",
+    "src/components/security/CityWhitelistPanel.tsx",
     1
    ],
    [
-    "src/hooks/business/__tests__/useCrisisRoomMetrics.test.tsx",
+    "src/components/security/SecurityView.tsx",
     1
    ],
    [
-    "src/hooks/business/useCrisisRoomMetrics.ts",
+    "src/components/security/__tests__/CityWhitelistPanel.test.tsx",
     1
    ],
    [
-    "supabase/functions/_shared/__tests__/ai-provider-egress.test.ts",
+    "src/hooks/security/useCityWhitelist.ts",
     1
    ],
    [
-    "supabase/functions/_shared/ai-provider-egress.ts",
+    "supabase/functions/_shared/__tests__/request-policy-city.test.ts",
     1
    ],
    [
-    "supabase/functions/chatbot-l1/index.test.ts",
+    "supabase/functions/_shared/request-policy.ts",
     1
    ]
   ]

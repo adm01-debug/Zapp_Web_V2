@@ -1,6 +1,6 @@
 # 07 · REGRAS DE NEGÓCIO
 
-> Gerado automaticamente por AI Context Sync v1.3.2 · commit `71d923d1d0` · branch `main` · 2026-11-26 02:30 UTC
+> Gerado automaticamente por AI Context Sync v1.3.2 · commit `9f9ec85284` · branch `main` · 2026-11-26 02:56 UTC
 > Não edite à mão — regras humanas vão em `manual/`.
 
 ## A. Regras escritas por humanos (`manual/` — prioridade máxima, nunca sobrescrito)
@@ -423,7 +423,7 @@ Demais dúvidas: nenhuma (entrevista concluída em 2026-11-03). Novas dúvidas: 
 | `email_attachments` | service_role inserts email attachments | INSERT | service_role | permissive |  | `true` |
 | `permissions` | Admins can manage permissions | ALL | authenticated | permissive | `is_admin(auth.uid())` | `is_admin(auth.uid())` |
 | `role_permissions` | Admins can manage role permissions | ALL | authenticated | permissive | `is_admin(auth.uid())` | `is_admin(auth.uid())` |
-| … +287 linhas — lista completa em `context.json` | | | | | | |
+| … +288 linhas — lista completa em `context.json` | | | | | | |
 
 ## C. Restrições de dados (obrigatório / único / default / CHECK / FK / calculada)
 
@@ -729,7 +729,7 @@ Demais dúvidas: nenhuma (entrevista concluída em 2026-11-03). Novas dúvidas: 
 | `role_permissions` | `permission_id` | obrigatório |
 | `role_permissions` | `role` | obrigatório |
 | `user_devices` | `id` | PK; default gen_random_uuid() |
-| … +1409 linhas — lista completa em `context.json` | | |
+| … +1418 linhas — lista completa em `context.json` | | |
 
 ## D. Automações no banco (triggers e funções — regras que rodam sozinhas)
 
@@ -2439,6 +2439,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `notesId` | max | `src/components/monitoring/MonitoringInstancePauses.tsx` |
 | `edit-queue-max-wait` | max, type=number, min=1, max | `src/components/queues/EditQueueDialog.tsx` |
 | `duration` | type=number | `src/components/security/BlockedIPDialogs.tsx` |
+| `city-name` | max | `src/components/security/CityWhitelistPanel.tsx` |
 | `inactivity-hours` | type=number, min=1, max=168 | `src/components/settings/AutoCloseSettings.tsx` |
 | `custom-sound-upload` | accept=audio/mp3,audio/wav,audio/ogg,audio/mpeg | `src/components/settings/SoundCustomizationPanel.tsx` |
 | `sla-name` | max | `src/components/settings/sla/SLARuleFormDialog.tsx` |
@@ -2466,6 +2467,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | Tabela | Coluna | Expressão |
 |---|---|---|
 | `ai_usage_logs` | `total_tokens` | `input_tokens + output_tokens` |
+| `city_whitelist` | `city_key` | `public.normalize_city_name(city_name)` |
 
 ### G.2 Views (consultas derivadas)
 
@@ -3926,7 +3928,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `DEFAULT_REFRESH_MS` | `60` | `src/hooks/admin/useSupervisorQueue.ts` |
 | `RECENT_SENDS_WINDOW_DAYS` | `30` | `src/hooks/agents/useAgentRecentSends.ts` |
 | `DAY_MS` | `24` | `src/hooks/agents/useAgentRecentSends.ts` |
-| … +706 linhas — lista completa em `context.json` | | |
+| … +707 linhas — lista completa em `context.json` | | |
 
 ### H.2 Prazos, expirações e janelas de tempo
 
@@ -4320,6 +4322,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | 10 | `src/hooks/integrations/useWhatsAppStatus.ts` |
 | 50 | `src/hooks/queues/useQueueDetails.ts` |
 | 200 | `src/hooks/security/useAuditLogDashboard.ts` |
+| 1 | `src/hooks/security/useCityWhitelist.ts` |
 | 1 | `src/hooks/sla/useApplicableSLA.ts` |
 | 1000 | `src/hooks/sticker-picker/useStickerPicker.ts` |
 | 1 | `src/hooks/system/useDiagnosticsData.ts` |
@@ -4679,7 +4682,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | disk-full | `scripts/ci/e2e-isolated-provider-readiness.unit.mjs` |
 | must-not-read-service-role | `scripts/ci/e2e-isolated-provider-readiness.unit.mjs` |
 | synthetic transport rejection | `scripts/ci/e2e-isolated-runtime-probe.unit.mjs` |
-| … +1878 linhas — lista completa em `context.json` | |
+| … +1884 linhas — lista completa em `context.json` | |
 
 ## J. Controle de acesso no código (checagens de perfil/permissão)
 
@@ -4753,7 +4756,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `owner` | `supabase/migrations/20260927270018_team_chat_e28_fix_find_or_create_race.sql` |
 | `anon` | `supabase/migrations/20260927340000_fix_add_agent_xp_negative_and_guard.sql` |
 
-## K. Testes como especificação (22982 testes em 2439 arquivos — nomes completos em `context.json`)
+## K. Testes como especificação (22991 testes em 2441 arquivos — nomes completos em `context.json`)
 
 | Arquivo | Testes | Exemplos do que o sistema DEVE fazer |
 |---|---|---|
@@ -5057,7 +5060,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `supabase/functions/multiplix-dispatch/actions/__tests__/listing.test.ts` | 17 | dispatch.list escopo: sem permissao ampla so devolve os disparos do dono · dispatch.list escopo: usuario sem profile e sem permissao -> lista vazia (nao consulta a tabela) · dispatch.list escopo: a permissao ampla ve os disparos de qualquer dono · dispatch.list paginacao: limit/offset recortam na ordem created_at desc e total e exato … |
 | `supabase/functions/talkx-ai/index.test.ts` | 17 | X076: flag ai_insights desligada recusa com 403 ai_disabled e não paga o proxy · X076: orçamento mensal no padrão (0 = desligado) recusa com 403 ai_disabled · X076: gasto do mês no teto recusa com 429 budget_exceeded e não paga o proxy · X076: gasto abaixo do teto passa (o teto não é desligamento geral) … |
 | `tests/contracts/ai-values.contract.test.ts` | 17 | IA-023 · normalizeScore nunca inventa número · trata ausência como ausência (não como 50 nem 3) · rejeita string numérica em vez de coagir ( · rejeita NaN/Infinity … |
-| … +2139 linhas — lista completa em `context.json` | | |
+| … +2141 linhas — lista completa em `context.json` | | |
 
 ## L. Eventos de webhook tratados (contratos com sistemas externos)
 
@@ -5574,4 +5577,4 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | Mostra no máximo 2 sugestões para não poluir o painel | `src/components/inbox/copilot/MissingQuestions.tsx` |
 | * CV-035/036 — Alerta de ocasião comercial detectada + prazo de entrega. | `src/components/inbox/copilot/OccasionAlert.tsx` |
 | Sobe/desce a linha uma posição por vez, trocando apenas de lugar os objetos | `src/components/inbox/interactive-builder/useInteractiveMessage.ts` |
-| … +1843 linhas — lista completa em `context.json` | |
+| … +1848 linhas — lista completa em `context.json` | |

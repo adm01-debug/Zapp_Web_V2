@@ -1,7 +1,7 @@
 {
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
- "total": 936,
+ "total": 937,
  "orfaos": 45,
  "nomes_duplicados": {
   "AchievementBadge": [
@@ -10241,6 +10241,22 @@
    "orfao": false
   },
   {
+   "arquivo": "src/components/security/CityWhitelistPanel.tsx",
+   "exports": [
+    "CityWhitelistPanel"
+   ],
+   "export_default": null,
+   "linhas": 199,
+   "dominio": "components/security",
+   "hooks_locais": [
+    "useCityWhitelist"
+   ],
+   "tabelas": [],
+   "edges": [],
+   "usado_por": 1,
+   "orfao": false
+  },
+  {
    "arquivo": "src/components/security/DeviceCard.tsx",
    "exports": [
     "DeviceCard",
@@ -10547,7 +10563,7 @@
     "SecurityView"
    ],
    "export_default": null,
-   "linhas": 214,
+   "linhas": 218,
    "dominio": "components/security",
    "hooks_locais": [
     "useSecurityPushNotifications",
@@ -13563,7 +13579,7 @@
    "hooks_locais": [],
    "tabelas": [],
    "edges": [],
-   "usado_por": 57,
+   "usado_por": 58,
    "orfao": false
   },
   {
@@ -13650,7 +13666,7 @@
    "hooks_locais": [],
    "tabelas": [],
    "edges": [],
-   "usado_por": 409,
+   "usado_por": 410,
    "orfao": false
   },
   {
@@ -13685,7 +13701,7 @@
    "hooks_locais": [],
    "tabelas": [],
    "edges": [],
-   "usado_por": 193,
+   "usado_por": 194,
    "orfao": false
   },
   {
@@ -13825,7 +13841,7 @@
    "hooks_locais": [],
    "tabelas": [],
    "edges": [],
-   "usado_por": 98,
+   "usado_por": 99,
    "orfao": false
   },
   {
@@ -14101,7 +14117,7 @@
    "hooks_locais": [],
    "tabelas": [],
    "edges": [],
-   "usado_por": 173,
+   "usado_por": 174,
    "orfao": false
   },
   {
@@ -14115,7 +14131,7 @@
    "hooks_locais": [],
    "tabelas": [],
    "edges": [],
-   "usado_por": 115,
+   "usado_por": 116,
    "orfao": false
   },
   {
@@ -14622,7 +14638,7 @@
    "hooks_locais": [],
    "tabelas": [],
    "edges": [],
-   "usado_por": 56,
+   "usado_por": 57,
    "orfao": false
   },
   {

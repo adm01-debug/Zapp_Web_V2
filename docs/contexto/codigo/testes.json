@@ -5,18 +5,18 @@
   "vitest",
   "playwright"
  ],
- "total": 2832,
+ "total": 2834,
  "por_tipo": {
   "contrato": 116,
   "e2e": 76,
   "pytest": 3,
   "qa": 10,
-  "unit": 2535
+  "unit": 2537
  },
  "onde_ficam": [
   {
    "padrao": "co-localizado (__tests__)",
-   "arquivos": 2105
+   "arquivos": 2107
   },
   {
    "padrao": "outro",
@@ -11638,6 +11638,15 @@
     "src/components/security/IPWhitelistPanel.tsx"
    ],
    "casos": 3
+  },
+  {
+   "arquivo": "src/components/security/__tests__/CityWhitelistPanel.test.tsx",
+   "tipo": "unit",
+   "linhas": 57,
+   "testa": [
+    "src/components/security/CityWhitelistPanel.tsx"
+   ],
+   "casos": 2
   },
   {
    "arquivo": "src/components/security/__tests__/GeoBlockingPanel.a11y.test.tsx",
@@ -23298,6 +23307,16 @@
    "casos": 16
   },
   {
+   "arquivo": "supabase/functions/_shared/__tests__/request-policy-city.test.ts",
+   "tipo": "unit",
+   "linhas": 157,
+   "testa": [
+    "supabase/functions/_shared/request-policy.ts",
+    "supabase/functions/auth-login/index.ts"
+   ],
+   "casos": 6
+  },
+  {
    "arquivo": "supabase/functions/_shared/__tests__/request-policy.test.ts",
    "tipo": "unit",
    "linhas": 248,
@@ -26496,6 +26515,7 @@
   "src/components/security/AuditLogDashboard.tsx": 3,
   "src/components/security/BlockedIPDialogs.tsx": 1,
   "src/components/security/BlockedIPsPanel.tsx": 4,
+  "src/components/security/CityWhitelistPanel.tsx": 1,
   "src/components/security/DeviceCard.tsx": 1,
   "src/components/security/GeoBlockingPanel.tsx": 2,
   "src/components/security/IPWhitelistPanel.tsx": 4,
@@ -27408,7 +27428,7 @@
   "supabase/functions/_shared/providers/registry.ts": 1,
   "supabase/functions/_shared/providers/types.ts": 1,
   "supabase/functions/_shared/rate-limit-log.ts": 1,
-  "supabase/functions/_shared/request-policy.ts": 2,
+  "supabase/functions/_shared/request-policy.ts": 3,
   "supabase/functions/_shared/schemas.ts": 12,
   "supabase/functions/_shared/secure-egress.ts": 1,
   "supabase/functions/_shared/ssrf.ts": 1,
@@ -27442,7 +27462,7 @@
   "supabase/functions/ai-usage-outbox-drain/index.ts": 1,
   "supabase/functions/approve-password-reset/index.ts": 1,
   "supabase/functions/assistant-gateway/index.ts": 1,
-  "supabase/functions/auth-login/index.ts": 1,
+  "supabase/functions/auth-login/index.ts": 2,
   "supabase/functions/auto-close-conversations/index.ts": 1,
   "supabase/functions/automation-suggest-reply/index.ts": 1,
   "supabase/functions/batch-fetch-avatars/index.ts": 2,
@@ -27632,6 +27652,7 @@
    "src/hooks/performance/useObservers.ts",
    "src/hooks/performance/useTimingHooks.ts",
    "src/hooks/security/useAuditLogDashboard.ts",
+   "src/hooks/security/useCityWhitelist.ts",
    "src/hooks/security/usePasswordResetRequests.ts",
    "src/hooks/sla/useContactFirstResponseSLA.ts",
    "src/hooks/system/useFeatureFlag.ts",

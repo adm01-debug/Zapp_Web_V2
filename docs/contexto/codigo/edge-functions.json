@@ -90,6 +90,7 @@
   "supabase/functions/_shared/__tests__/postgrest-filters.test.ts",
   "supabase/functions/_shared/__tests__/r2-api-016-webhook-status-envelope.test.ts",
   "supabase/functions/_shared/__tests__/rate-limit-log.test.ts",
+  "supabase/functions/_shared/__tests__/request-policy-city.test.ts",
   "supabase/functions/_shared/__tests__/request-policy.test.ts",
   "supabase/functions/_shared/__tests__/require-auth-profile-active.test.ts",
   "supabase/functions/_shared/__tests__/secure-egress.test.ts",

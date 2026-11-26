@@ -8,7 +8,7 @@
   "supabase/migrations",
   "typeorm"
  ],
- "migrations": 1155,
+ "migrations": 1156,
  "seeds": [
   "docs/contexto/supabase/functions/public/seed_default_goals_for_profile__12ae32cb1ec02d01.sql",
   "e2e/fixtures/seed-talk-me.sql",
@@ -394,6 +394,7 @@
   "my_active_sessions",
   "my_calls_kpi",
   "my_network_status",
+  "normalize_city_name",
   "normalize_contact_phone",
   "notify_due_reminders",
   "notify_due_tasks",
@@ -6826,6 +6827,71 @@
    "triggers": [
     "update_chatbot_flows_updated_at"
    ],
+   "sem_rls": false,
+   "nao_usada": false
+  },
+  "city_whitelist": {
+   "colunas": {
+    "city_key": {
+     "tipo": "text",
+     "nn": false,
+     "pk": false,
+     "default": null,
+     "ref": null
+    },
+    "city_name": {
+     "tipo": "text",
+     "nn": true,
+     "pk": false,
+     "default": null,
+     "ref": null
+    },
+    "created_at": {
+     "tipo": "timestamptz",
+     "nn": true,
+     "pk": false,
+     "default": "now()",
+     "ref": null
+    },
+    "created_by": {
+     "tipo": "uuid",
+     "nn": false,
+     "pk": false,
+     "default": null,
+     "ref": "auth"
+    },
+    "id": {
+     "tipo": "uuid",
+     "nn": false,
+     "pk": true,
+     "default": "gen_random_uuid()",
+     "ref": null
+    },
+    "is_active": {
+     "tipo": "boolean",
+     "nn": true,
+     "pk": false,
+     "default": "true",
+     "ref": null
+    }
+   },
+   "rls": true,
+   "policies": [
+    {
+     "nome": "Admins can manage city whitelist",
+     "comando": "all",
+     "para": "authenticated",
+     "tipo": "permissive"
+    }
+   ],
+   "indices": [],
+   "fks": [
+    "created_by->auth"
+   ],
+   "criada_em": "20261126010508_city_whitelist_network_policy.sql",
+   "usada_no_front": 1,
+   "usada_em_edges": [],
+   "triggers": [],
    "sem_rls": false,
    "nao_usada": false
   },
@@ -14021,6 +14087,13 @@
   },
   "geo_blocking_settings": {
    "colunas": {
+    "city_whitelist_enabled": {
+     "tipo": "boolean",
+     "nn": true,
+     "pk": false,
+     "default": "false",
+     "ref": null
+    },
     "created_at": {
      "tipo": "timestamp with time zone",
      "nn": true,
@@ -14097,10 +14170,12 @@
     "updated_by": "string | null"
    },
    "drift": {
-    "so_na_migration": [],
+    "so_na_migration": [
+     "city_whitelist_enabled"
+    ],
     "so_no_types": []
    },
-   "usada_no_front": 2,
+   "usada_no_front": 3,
    "usada_em_edges": [],
    "triggers": [
     "update_geo_blocking_settings_updated_at"

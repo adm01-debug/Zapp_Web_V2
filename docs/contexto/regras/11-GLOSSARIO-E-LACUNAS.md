@@ -1,6 +1,6 @@
 # 11 · GLOSSÁRIO, DADOS DE REFERÊNCIA E LACUNAS
 
-> Gerado automaticamente por AI Context Sync v1.3.2 · commit `71d923d1d0` · branch `main` · 2026-11-26 02:30 UTC
+> Gerado automaticamente por AI Context Sync v1.3.2 · commit `9f9ec85284` · branch `main` · 2026-11-26 02:56 UTC
 > Não edite à mão — regras humanas vão em `manual/`.
 
 ## Glossário do domínio (entidades do sistema)
@@ -50,6 +50,7 @@
 | `channel_routing_rules` | _(sem COMMENT ON TABLE — significado não documentado)_ | 8 colunas | migration |
 | `chatbot_executions` | _(sem COMMENT ON TABLE — significado não documentado)_ | 10 colunas | migration |
 | `chatbot_flows` | _(sem COMMENT ON TABLE — significado não documentado)_ | 15 colunas | migration |
+| `city_whitelist` | _(sem COMMENT ON TABLE — significado não documentado)_ | 6 colunas | migration |
 | `client_wallet_rules` | _(sem COMMENT ON TABLE — significado não documentado)_ | 7 colunas | migration |
 | `connection_alert_preferences` | Preferencias por usuario de alerta de conexao (canais: navegador/e-mail; tipos: degradada/desconectada). Uma linha por usuario; RLS por linha; sem DELETE. | 8 colunas | migration |
 | `connection_health_logs` | _(sem COMMENT ON TABLE — significado não documentado)_ | 7 colunas | migration |
@@ -103,7 +104,7 @@
 | `followup_executions` | _(sem COMMENT ON TABLE — significado não documentado)_ | 9 colunas | migration |
 | `followup_sequences` | _(sem COMMENT ON TABLE — significado não documentado)_ | 8 colunas | migration |
 | `followup_steps` | _(sem COMMENT ON TABLE — significado não documentado)_ | 8 colunas | migration |
-| `geo_blocking_settings` | _(sem COMMENT ON TABLE — significado não documentado)_ | 5 colunas | migration |
+| `geo_blocking_settings` | _(sem COMMENT ON TABLE — significado não documentado)_ | 6 colunas | migration |
 | `global_settings` | _(sem COMMENT ON TABLE — significado não documentado)_ | 7 colunas | migration |
 | `gmail_accounts` | _(sem COMMENT ON TABLE — significado não documentado)_ | 16 colunas | migration |
 | `gmail_oauth_states` | [RLS-sem-policy: intencional] Estados temporários do fluxo OAuth do Gmail (PKCE/state). Criados e consumidos pela edge function gmail-oauth (service_role). Expiração automática. | 6 colunas | migration |
@@ -306,8 +307,7 @@
 | `AlertSeverity` (TS) | critical \| warning |  | `src/components/monitoring/hooks/useConnectionIncidents.ts` |
 | `INSTANCE_PAUSES_QUERY_KEY` (TS) | 'instance-pauses' |  | `src/components/monitoring/hooks/useInstancePauses.ts` |
 | `MetricStatus` (TS) | good \| warning \| critical |  | `src/components/performance/metricThresholds.ts` |
-| `PeriodOption` (TS) | 7d \| 14d \| 30d \| custom |  | `src/components/queues/PeriodSelector.tsx` |
-| … +377 linhas — lista completa em `context.json` | | | |
+| … +378 linhas — lista completa em `context.json` | | | |
 
 ## Dados de referência (seed — planos, categorias, perfis fixos)
 
@@ -596,7 +596,7 @@
 - `message_attempts.provider_status` é uma coluna de status sem enum/CHECK — os valores válidos e as transições permitidas não estão no banco.
 - `copilot_objection_catalog.status` é uma coluna de status sem enum/CHECK — os valores válidos e as transições permitidas não estão no banco.
 - `_zapp_mig133_log.status` é uma coluna de status sem enum/CHECK — os valores válidos e as transições permitidas não estão no banco.
-- 165/228 tabelas sem `COMMENT ON TABLE` — o significado de negócio não está no schema: `copilot_presence`, `copilot_sessions`, `copilot_insights`, `copilot_insight_feedback`, `client_wallet_rules`, `calls`, `whatsapp_groups`, `message_templates`, `agent_stats`, `agent_achievements`, `queue_members`, `queue_goals` …
+- 166/229 tabelas sem `COMMENT ON TABLE` — o significado de negócio não está no schema: `copilot_presence`, `copilot_sessions`, `copilot_insights`, `copilot_insight_feedback`, `client_wallet_rules`, `calls`, `whatsapp_groups`, `message_templates`, `agent_stats`, `agent_achievements`, `queue_members`, `queue_goals` …
 - Há tabelas usadas no código sem migration no repo — o schema real pode ter sido alterado pelo painel.
 
 ## Regras manuais presentes
