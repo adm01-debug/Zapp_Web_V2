@@ -5,6 +5,7 @@ import { Reply, Forward, Copy, MoreVertical, Trash2, CheckCheck, EyeOff, Pencil,
 import { Message } from '@/types/chat';
 import { TextToSpeechButton } from '../TextToSpeechButton';
 import { MessageSendHistorySheet } from './MessageSendHistorySheet';
+import { MessageActionMenuItems } from './MessageActionMenuItems';
 import { markUnreadInZapp } from '@/services/message-unread.service';
 import { useEvolutionApi } from '@/hooks/integrations/useEvolutionApi';
 import { supabase } from '@/integrations/supabase/client';
@@ -194,12 +195,16 @@ export function MessageHoverToolbar({
             )}
 
             {/*
-              R2-INB-021 (item 317): Favoritar/Fixar/Responder depois/Reportar
-              saíram daqui. Eram entradas visíveis sem handler e sem nenhuma
-              implementação de mensagem (tabela, hook ou serviço) — a interface
-              anunciava operações que não concluía. Voltar a oferecê-las só
-              quando existir a operação por trás; até então, não anunciar.
+              R2-INB-021 (item 317) tirou Favoritar/Fixar/Responder depois/Reportar
+              daqui enquanto não existia operação por trás. As tabelas e RPCs
+              entraram (message_favorites/message_pins/message_reports,
+              toggle_message_favorite, pin_message, unpin_message,
+              report_message, remind_me_about_message): as quatro voltam, agora
+              com handler real, em MessageActionMenuItems — montado só com o menu
+              aberto, para a conversa não carregar estado que ninguém vê.
             */}
+            <MessageActionMenuItems message={message} />
+
             <DropdownMenuItem className="gap-2 cursor-pointer" onClick={handleMarkRead}>
               <CheckCheck className="w-4 h-4" /> Marcar como lida
             </DropdownMenuItem>

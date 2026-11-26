@@ -55,6 +55,43 @@ vi.mock('@/components/inbox/TextToSpeechButton', () => ({
   TextToSpeechButton: () => null,
 }));
 
+// As quatro ações por mensagem (MessageActionMenuItems) usam react-query e RPCs
+// reais. O alvo aqui é o "Histórico de envio", não a operação: os hooks entram
+// inertes para o teste seguir hermético, sem QueryClientProvider.
+vi.mock('@/hooks/chat/useMessageFavorites', () => ({
+  useMessageFavorites: () => ({ favoriteIds: new Set<string>(), isLoading: false, isFavorite: () => false, refetch: vi.fn() }),
+  useToggleMessageFavorite: () => ({ toggleFavorite: vi.fn(), isToggling: false }),
+}));
+
+vi.mock('@/hooks/chat/useMessagePins', () => ({
+  PIN_LIMIT: 3,
+  useMessagePins: () => ({
+    pins: [],
+    isLoading: false,
+    isPinned: () => false,
+    pin: vi.fn(),
+    unpin: vi.fn(),
+    isPinning: false,
+    isUnpinning: false,
+    refetch: vi.fn(),
+  }),
+}));
+
+vi.mock('@/hooks/chat/useRemindMessage', () => ({
+  useRemindMessage: () => ({ remind: vi.fn(), isSaving: false }),
+}));
+
+vi.mock('@/hooks/chat/useReportMessage', () => ({
+  useReportMessage: () => ({
+    report: vi.fn(),
+    isReported: () => false,
+    reportedIds: new Set<string>(),
+    isLoading: false,
+    isReporting: false,
+    refetch: vi.fn(),
+  }),
+}));
+
 // Mesmo padrão de MessageHoverToolbar.delete.test.tsx: o Radix DropdownMenu não abre de
 // forma confiável sob jsdom, então o conteúdo é renderizado sempre visível.
 vi.mock('@/components/ui/dropdown-menu', () => ({
@@ -67,6 +104,9 @@ vi.mock('@/components/ui/dropdown-menu', () => ({
     <button type="button" onClick={onClick}>{children}</button>
   ),
   DropdownMenuSeparator: () => <hr />,
+  DropdownMenuSub: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+  DropdownMenuSubContent: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+  DropdownMenuSubTrigger: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
 }));
 
 /** Linha de `public.messages` como as RPCs de entrega a deixam (só o que importa aqui). */
