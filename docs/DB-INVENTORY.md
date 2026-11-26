@@ -221,7 +221,7 @@ RLS em `supabase/schema-manifest.json`; este documento não os repete.
 | `sla_rules` | Regras de SLA por prioridade, fila ou contato | ativo | `src/hooks/__tests__/helpers/alertBehaviorTestKit.ts`, `src/hooks/sla/__tests__/useApplicableSLA.test.tsx`, `src/hooks/sla/__tests__/useContactSlaTimeline.test.tsx` … |
 | `stickers` | Figurinhas do chat, por categoria e autor | ativo | `src/components/inbox/StickerPicker.tsx`, `src/components/inbox/__tests__/StickerPicker.catalogo.test.tsx`, `src/components/inbox/chat/MessageBubble.tsx` … |
 | `talkx_ai_requests` | Trilha de chamadas de IA do TalkX (tipo, entidade, tokens, custo e status) | ativo | `supabase/functions/talkx-ai/index.ts`, `supabase/functions/talkx-ai/index.test.ts`, `scripts/db-audit/talkx-ai-requests-trail.test.mjs` |
-| `talkx_alerts` | Alertas do motor TalkX (tipo, campanha e payload) | parcial | `scripts/db-audit/talkx-alerts-outcome-unknown-lote.test.sh`, `scripts/db-audit/talkx-engine-health.test.sh`, `scripts/db-audit/talkx-expurgo-escopo-ai-jobs.test.sh` … |
+| `talkx_alerts` | Alertas do motor TalkX (tipo, campanha e payload) | ativo | `src/components/talkx/TalkXLiveMonitor.tsx`, `src/components/talkx/tracking/TalkXEngineAlertsCard.tsx`, `src/hooks/integrations/useTalkXEngineAlerts.ts` … |
 | `talkx_blacklist` | Lista de supressão do TalkX (contato, motivo e origem) | ativo | `src/components/talkx/TalkXSuppression.tsx`, `src/components/talkx/__tests__/TalkXSuppression.actions.test.tsx`, `src/components/talkx/__tests__/TalkXSuppression.atividade.test.tsx` … |
 | `talkx_campaign_events` | Eventos de campanha TalkX (tipo, mensagem e ator) | ativo | `src/components/talkx/TalkXSuppression.tsx`, `src/components/talkx/__tests__/TalkXCampaignRunning.checklist.test.tsx`, `src/components/talkx/__tests__/TalkXResumeChecklist.test.tsx` … |
 | `talkx_campaign_segments` | Segmentos usados por cada campanha TalkX, em ordem | ativo | `src/components/talkx/__tests__/TalkXCampaignRunning.checklist.test.tsx`, `src/components/talkx/__tests__/TalkXResumeChecklist.test.tsx`, `src/components/talkx/tracking/talkxSegmentProgress.ts` … |
@@ -286,8 +286,10 @@ inventário apura hoje:
 - `link_preview_cache_metrics` e `mfa_sessions` (§8.2, "via de escrita ausente ou acoplamento
   mínimo") também estão como `roadmap`: nenhum arquivo do repositório as cita — o efeito que a
   auditoria descrevia (limpeza por cron, policy esperando o produtor) vive no banco, não aqui.
-- `ai_budget_reservations` e `talkx_alerts` são `parcial`: só o
-  ferramental (`scripts/db-audit/`, `scripts/qa/`, `.github/workflows/`) as cita.
+- `ai_budget_reservations` é `parcial`: só o ferramental (`scripts/db-audit/`,
+  `scripts/qa/`, `.github/workflows/`) a cita. `talkx_alerts` saiu dessa lista e virou
+  `ativo`: o card "Alertas do motor" lê os alertas abertos no acompanhamento da campanha
+  (`src/hooks/integrations/useTalkXEngineAlerts.ts`, montado em `TalkXLiveMonitor.tsx`).
   `webhook_failures` passou a `ativo` (E35): o ingest de mensagem recebida grava nela
   (`_shared/webhook-dead-letter.ts`), o roteador responde 503 para pedir reenvio em falha
   transitória e a Edge `webhook-replay` reprocessa a fila. `multiplix_audience_members`, `multiplix_audiences`, `talkx_campaign_segments` e
