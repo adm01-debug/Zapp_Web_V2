@@ -2,6 +2,10 @@
 
 Diff semântico gerado a cada coleta em que algo mudou.
 
+## 2026-11-26 20:49 UTC
+
+- **functions** alterado (1): `public.is_admin_or_supervisor(_user_id uuid)`
+
 ## 2026-11-26 19:17 UTC
 
 - **functions** adicionado (1): `public.webhook_dead_letter_fila(p_limit integer)`
