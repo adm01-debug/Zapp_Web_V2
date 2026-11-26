@@ -60,6 +60,12 @@ vi.mock('@/components/queues/SLADashboard', () => ({
 vi.mock('@/components/sla/SLAHistoryDashboard', () => ({
   SLAHistoryDashboard: () => <div data-testid="corpo-sla-historico" />,
 }));
+vi.mock('@/components/sla/SLAAlertHistoryPanel', () => ({
+  SLAAlertHistoryPanel: () => <div data-testid="corpo-alertas-sla" />,
+}));
+vi.mock('@/components/sla/SLAAlertPreferencesCard', () => ({
+  SLAAlertPreferencesCard: () => <div data-testid="prefs-alertas-sla" />,
+}));
 vi.mock('@/components/dashboard/FloatingParticles', () => ({ FloatingParticles: () => null }));
 vi.mock('@/components/effects/AuroraBorealis', () => ({ AuroraBorealis: () => null }));
 
