@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "583c645064738b5e887cb771ac6b18f303e46b27",
+  "commit": "87ddee79ffbf3654ef588817749831d2d42aa7d9",
   "branch": "main",
-  "data_commit": "2026-11-26T14:26:36Z",
+  "data_commit": "2026-11-26T14:50:42Z",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "87ddee79",
+    "data": "2026-11-26",
+    "assunto": "feat(seguranca): politica de protecao de contatos ganha tela de gestao (#3413)"
+   },
    {
     "sha": "583c6450",
     "data": "2026-11-26",
@@ -126,14 +131,9 @@
     "sha": "9086dfdb",
     "data": "2026-11-25",
     "assunto": "fix: novidade do catalogo passa a usar a expiracao do banco (regra do Promo Gifts V4) (#3379)"
-   },
-   {
-    "sha": "d2e992a9",
-    "data": "2026-11-25",
-    "assunto": "fix: ls-remote dos pins repete com backoff quando o runner leva 403 (#3378)"
    }
   ],
-  "arquivos_mudados_7d": 2802,
+  "arquivos_mudados_7d": 2807,
   "pastas_mais_mudadas_30d": [
    {
     "pasta": "docs/contexto/supabase",
@@ -180,12 +180,12 @@
     "mudancas": 232
    },
    {
-    "pasta": "src/hooks/integrations",
+    "pasta": "src/hooks/__tests__",
     "mudancas": 156
    },
    {
-    "pasta": "src/hooks/__tests__",
-    "mudancas": 155
+    "pasta": "src/hooks/integrations",
+    "mudancas": 156
    },
    {
     "pasta": "src/components/contacts",
@@ -206,12 +206,12 @@
     "mudancas": 27
    },
    {
-    "arquivo": "docs/talkx/ESTADOS.md",
+    "arquivo": "docs/DB-INVENTORY.md",
     "mudancas": 20
    },
    {
-    "arquivo": "docs/DB-INVENTORY.md",
-    "mudancas": 19
+    "arquivo": "docs/talkx/ESTADOS.md",
+    "mudancas": 20
    },
    {
     "arquivo": "supabase/schema-manifest.json",
@@ -314,21 +314,21 @@
   ]
  },
  "contagens": {
-  "arquivos_total": 14868,
-  "arquivos_codigo": 5200,
-  "linhas_codigo": 964192,
-  "rotas": 19,
+  "arquivos_total": 14873,
+  "arquivos_codigo": 5205,
+  "linhas_codigo": 965322,
+  "rotas": 20,
   "rotas_http_backend": 11,
   "vistas_por_id": 55,
   "itens_menu": 61,
   "modulos": 149,
-  "componentes": 945,
-  "hooks": 528,
+  "componentes": 947,
+  "hooks": 529,
   "edge_functions": 94,
   "tabelas": 224,
   "migrations": 1161,
   "cron_jobs": 29,
-  "testes": 2851,
+  "testes": 2853,
   "workflows": 26,
   "scripts": 458,
   "docs_md": 3988
@@ -739,8 +739,8 @@
    "linhas": 638
   },
   "src/components": {
-   "arquivos": 2338,
-   "linhas": 397845
+   "arquivos": 2340,
+   "linhas": 398394
   },
   "src/config": {
    "arquivos": 3,
@@ -759,8 +759,8 @@
    "linhas": 3293
   },
   "src/hooks": {
-   "arquivos": 1057,
-   "linhas": 171473
+   "arquivos": 1059,
+   "linhas": 172008
   },
   "src/i18n": {
    "arquivos": 2,
@@ -779,8 +779,8 @@
    "linhas": 131
   },
   "src/pages": {
-   "arquivos": 76,
-   "linhas": 11454
+   "arquivos": 77,
+   "linhas": 11491
   },
   "src/providers": {
    "arquivos": 10,
@@ -788,7 +788,7 @@
   },
   "src/routes": {
    "arquivos": 2,
-   "linhas": 234
+   "linhas": 243
   },
   "src/segments": {
    "arquivos": 2,

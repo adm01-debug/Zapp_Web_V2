@@ -1,6 +1,6 @@
 # 07 · REGRAS DE NEGÓCIO
 
-> Gerado automaticamente por AI Context Sync v1.3.2 · commit `583c645064` · branch `main` · 2026-11-26 14:31 UTC
+> Gerado automaticamente por AI Context Sync v1.3.2 · commit `87ddee79ff` · branch `main` · 2026-11-26 14:54 UTC
 > Não edite à mão — regras humanas vão em `manual/`.
 
 ## A. Regras escritas por humanos (`manual/` — prioridade máxima, nunca sobrescrito)
@@ -1879,6 +1879,10 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | RealtimeStatus | idle \| connecting \| connected \| disconnected | `src/hooks/realtime/realtimeStatusStore.ts` |
 | ContactAuditKind | deletion \| block | `src/hooks/security/useContactAuditTrail.ts` |
 | ContactAuditOperation | delete \| restore \| purge \| block \| unblock \| update_marker | `src/hooks/security/useContactAuditTrail.ts` |
+| ContactProtectionScope | admin \| supervisor \| agent | `src/hooks/security/useContactProtectionPolicy.ts` |
+| ContactProtectionOrigin | papel \| global \| padrao | `src/hooks/security/useContactProtectionPolicy.ts` |
+| CONTACT_PROTECTION_QUERY_KEY | 'contact-protection-policies' | `src/hooks/security/useContactProtectionPolicy.ts` |
+| MY_CONTACT_PROTECTION_QUERY_KEY | 'my-contact-protection-policy' | `src/hooks/security/useContactProtectionPolicy.ts` |
 | SipStatus | idle \| connecting \| registered \| reconnecting \| unavailable | `src/hooks/sip/useSipConnection.ts` |
 | FirstResponseOutcome | on_time \| breached \| pending | `src/hooks/sla/slaFirstResponse.ts` |
 | SLAStatus | ok \| warning \| breached | `src/hooks/sla/useSLACalculation.ts` |
@@ -1925,11 +1929,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | SENTIMENT_PALETTE | CHART_COLORS.positive, CHART_COLORS.neutral, CHART_COLORS.negative, | `src/lib/chartColors.ts` |
 | ContactHealthFieldKey | name \| phone \| email \| company \| job_title \| contact_type \| address \| assigned_to | `src/lib/contactHealth.ts` |
 | ContactHealthLevel | completo \| bom \| incompleto \| critico \| indefinido | `src/lib/contactHealth.ts` |
-| CRMIntegrationAction | rpc \| select \| mutate \| contactLookup \| contactLookupBatch \| emailContactContext \| linkEmailContactCompany \| enqueueSync \| health \| companyNames \| roleNames | `src/lib/crmIntegration.ts` |
-| AcaoNaAtualizacao | recarregar-agora \| avisar-e-recarregar-ao-esconder | `src/lib/deployment-update.ts` |
-| EmailErrorKind | offline \| permission \| authentication \| rate-limit \| server \| unknown | `src/lib/emailErrorState.ts` |
-| EmailThreadStateFilter | all \| unread \| starred | `src/lib/emailThreadQuery.ts` |
-| … +154 linhas — lista completa em `context.json` | | |
+| … +158 linhas — lista completa em `context.json` | | |
 
 ## F. Validações de entrada
 
@@ -3938,7 +3938,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `DEFAULT_REFRESH_MS` | `60` | `src/hooks/admin/useSupervisorQueue.ts` |
 | `RECENT_SENDS_WINDOW_DAYS` | `30` | `src/hooks/agents/useAgentRecentSends.ts` |
 | `DAY_MS` | `24` | `src/hooks/agents/useAgentRecentSends.ts` |
-| … +718 linhas — lista completa em `context.json` | | |
+| … +719 linhas — lista completa em `context.json` | | |
 
 ### H.2 Prazos, expirações e janelas de tempo
 
@@ -4333,6 +4333,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | 50 | `src/hooks/queues/useQueueDetails.ts` |
 | 200 | `src/hooks/security/useAuditLogDashboard.ts` |
 | 1 | `src/hooks/security/useCityWhitelist.ts` |
+| 20 | `src/hooks/security/useContactProtectionPolicy.ts` |
 | 1 | `src/hooks/sla/useApplicableSLA.ts` |
 | 1000 | `src/hooks/sticker-picker/useStickerPicker.ts` |
 | 1 | `src/hooks/system/useDiagnosticsData.ts` |
@@ -4692,7 +4693,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | disk-full | `scripts/ci/e2e-isolated-provider-readiness.unit.mjs` |
 | must-not-read-service-role | `scripts/ci/e2e-isolated-provider-readiness.unit.mjs` |
 | synthetic transport rejection | `scripts/ci/e2e-isolated-runtime-probe.unit.mjs` |
-| … +1888 linhas — lista completa em `context.json` | |
+| … +1893 linhas — lista completa em `context.json` | |
 
 ## J. Controle de acesso no código (checagens de perfil/permissão)
 
@@ -4767,7 +4768,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `owner` | `supabase/migrations/20260927270018_team_chat_e28_fix_find_or_create_race.sql` |
 | `anon` | `supabase/migrations/20260927340000_fix_add_agent_xp_negative_and_guard.sql` |
 
-## K. Testes como especificação (23165 testes em 2458 arquivos — nomes completos em `context.json`)
+## K. Testes como especificação (23185 testes em 2460 arquivos — nomes completos em `context.json`)
 
 | Arquivo | Testes | Exemplos do que o sistema DEVE fazer |
 |---|---|---|
@@ -5071,7 +5072,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `supabase/functions/ai-transcribe-audio/openrouter-stt.test.ts` | 17 | formato: containers que a edge reconhece viram a extensão do input_audio · formato: mime de outro tipo ou desconhecido não vira extensão inventada · formato: parâmetro do content-type (codecs) não atrapalha e o case não importa · base64: buffer maior que o bloco interno é convertido byte a byte … |
 | `supabase/functions/multiplix-dispatch/actions/__tests__/listing.test.ts` | 17 | dispatch.list escopo: sem permissao ampla so devolve os disparos do dono · dispatch.list escopo: usuario sem profile e sem permissao -> lista vazia (nao consulta a tabela) · dispatch.list escopo: a permissao ampla ve os disparos de qualquer dono · dispatch.list paginacao: limit/offset recortam na ordem created_at desc e total e exato … |
 | `supabase/functions/talkx-ai/index.test.ts` | 17 | X076: flag ai_insights desligada recusa com 403 ai_disabled e não paga o proxy · X076: orçamento mensal no padrão (0 = desligado) recusa com 403 ai_disabled · X076: gasto do mês no teto recusa com 429 budget_exceeded e não paga o proxy · X076: gasto abaixo do teto passa (o teto não é desligamento geral) … |
-| … +2158 linhas — lista completa em `context.json` | | |
+| … +2160 linhas — lista completa em `context.json` | | |
 
 ## L. Eventos de webhook tratados (contratos com sistemas externos)
 
@@ -5590,4 +5591,4 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | Mostra no máximo 2 sugestões para não poluir o painel | `src/components/inbox/copilot/MissingQuestions.tsx` |
 | * CV-035/036 — Alerta de ocasião comercial detectada + prazo de entrega. | `src/components/inbox/copilot/OccasionAlert.tsx` |
 | Sobe/desce a linha uma posição por vez, trocando apenas de lugar os objetos | `src/components/inbox/interactive-builder/useInteractiveMessage.ts` |
-| … +1873 linhas — lista completa em `context.json` | |
+| … +1878 linhas — lista completa em `context.json` | |

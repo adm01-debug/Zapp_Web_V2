@@ -1,15 +1,15 @@
 {
  "meta": {
-  "sha": "583c645064738b5e887cb771ac6b18f303e46b27",
+  "sha": "87ddee79ffbf3654ef588817749831d2d42aa7d9",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-26 14:31 UTC",
-  "files_total": 14715,
-  "code_files": 8245,
-  "code_lines": 1242255
+  "generated_at": "2026-11-26 14:54 UTC",
+  "files_total": 14720,
+  "code_files": 8250,
+  "code_lines": 1243385
  },
  "version": "1.3.2",
- "facts_hash": "e7dfacc87be63167",
+ "facts_hash": "fb8374a5b6851da0",
  "stack": {
   "frameworks": [
    "React + Vite",
@@ -368,8 +368,8 @@
   "package_manager": "bun",
   "languages": {
    ".sql": 3072,
-   ".tsx": 2506,
-   ".ts": 2044,
+   ".tsx": 2510,
+   ".ts": 2045,
    ".mjs": 496,
    ".py": 125,
    ".cjs": 19,
@@ -72718,6 +72718,13 @@
     "file": "src/routes/AppRoutes.tsx"
    },
    {
+    "path": "/admin/protecao-contatos",
+    "component": "ContactProtectionPage",
+    "guard": "ProtectedRoute",
+    "roles": [],
+    "file": "src/routes/AppRoutes.tsx"
+   },
+   {
     "path": "/admin/rate-limit",
     "component": "RateLimitDashboard",
     "guard": "ProtectedRoute",
@@ -73194,7 +73201,7 @@
     "file": ".github/workflows/types-sync.yml"
    }
   ],
-  "components_count": 2340,
+  "components_count": 2342,
   "hooks": [
    {
     "name": "useMotionSeguro",
@@ -75093,6 +75100,22 @@
     "file": "src/hooks/security/useContactAuditTrail.ts"
    },
    {
+    "name": "useContactProtectionPolicies",
+    "file": "src/hooks/security/useContactProtectionPolicy.ts"
+   },
+   {
+    "name": "useMyContactProtectionPolicy",
+    "file": "src/hooks/security/useContactProtectionPolicy.ts"
+   },
+   {
+    "name": "useSaveContactProtectionPolicy",
+    "file": "src/hooks/security/useContactProtectionPolicy.ts"
+   },
+   {
+    "name": "useDeleteContactProtectionPolicy",
+    "file": "src/hooks/security/useContactProtectionPolicy.ts"
+   },
+   {
     "name": "usePasswordResetRequests",
     "file": "src/hooks/security/usePasswordResetRequests.ts"
    },
@@ -75742,6 +75765,10 @@
    {
     "guard": "ProtectedRoute",
     "file": "src/components/auth/__tests__/ProtectedRoute.saida.test.tsx"
+   },
+   {
+    "guard": "ProtectedRoute",
+    "file": "src/routes/AppRoutes.tsx"
    },
    {
     "guard": "ProtectedRoute",
@@ -76602,8 +76629,8 @@
   },
   {
    "module": "src/components",
-   "files": 2338,
-   "lines": 397845,
+   "files": 2340,
+   "lines": 398394,
    "tables": [
     "agent_skills",
     "agent_visibility_grants",
@@ -76950,8 +76977,8 @@
   },
   {
    "module": "src/hooks",
-   "files": 1057,
-   "lines": 171473,
+   "files": 1059,
+   "lines": 172008,
    "tables": [
     "agent_achievements",
     "agent_stats",
@@ -76973,6 +77000,7 @@
     "connection_alert_preferences",
     "connection_health_logs",
     "contact_notes",
+    "contact_protection_policy",
     "contacts",
     "conversation_analyses",
     "conversation_closures",
@@ -77178,6 +77206,7 @@
     "src/hooks/__tests__/useContactCustomFields.remove.test.tsx",
     "src/hooks/__tests__/useContactCustomFields.test.tsx",
     "src/hooks/__tests__/useContactNotes.test.tsx",
+    "src/hooks/__tests__/useContactProtectionPolicy.test.tsx",
     "src/hooks/__tests__/useConversationAnalyses.test.tsx",
     "src/hooks/__tests__/useCustomShortcuts.instancias.test.tsx",
     "src/hooks/__tests__/useCustomShortcuts.test.ts",
@@ -77217,8 +77246,7 @@
     "src/hooks/__tests__/useOnboardingChecklist.test.tsx",
     "src/hooks/__tests__/useParallax.test.ts",
     "src/hooks/__tests__/usePerformance.test.ts",
-    "src/hooks/__tests__/usePerformanceOptimizations.test.ts",
-    "src/hooks/__tests__/usePermissions.test.tsx"
+    "src/hooks/__tests__/usePerformanceOptimizations.test.ts"
    ]
   },
   {
@@ -77454,8 +77482,8 @@
   },
   {
    "module": "src/pages",
-   "files": 76,
-   "lines": 11454,
+   "files": 77,
+   "lines": 11491,
    "tables": [
     "contacts",
     "conversation_sla",
@@ -77483,6 +77511,7 @@
     "ViewRouter.tsx: ViewRouter",
     "lazyViews.ts: RealtimeInboxView, DashboardView, SentimentAlertsDashboard, AgentsView, QueuesView, ContactsView",
     "ContactAuditPage.tsx: ContactAuditPage",
+    "ContactProtectionPage.tsx: ContactProtectionPage",
     "RateLimitDashboard.tsx: RateLimitDashboard",
     "RolesPage.tsx: RolesPage",
     "loadRolesWithProfiles.ts: RoleType, ProfileSummary, RoleWithProfile, loadRolesWithProfiles",
@@ -77580,6 +77609,7 @@
     "src/pages/__tests__/n066-a11y-combobox-progressbar.test.tsx",
     "src/pages/__tests__/twoFactorAuth.retrySaida.test.tsx",
     "src/pages/admin/ContactAuditPage.tsx",
+    "src/pages/admin/ContactProtectionPage.tsx",
     "src/pages/admin/RateLimitDashboard.tsx",
     "src/pages/admin/RolesPage.tsx",
     "src/pages/admin/loadRolesWithProfiles.ts",
@@ -77655,7 +77685,7 @@
   {
    "module": "src/routes",
    "files": 2,
-   "lines": 234,
+   "lines": 243,
    "tables": [],
    "exports": [
     "AppRoutes.tsx: AppRoutes"
@@ -79023,6 +79053,20 @@
    "contact_phones": {
     "select": [
      "supabase/functions/crm-integration/index.ts"
+    ]
+   },
+   "contact_protection_policy": {
+    "select": [
+     "src/hooks/security/useContactProtectionPolicy.ts"
+    ],
+    "update": [
+     "src/hooks/security/useContactProtectionPolicy.ts"
+    ],
+    "insert": [
+     "src/hooks/security/useContactProtectionPolicy.ts"
+    ],
+    "delete": [
+     "src/hooks/security/useContactProtectionPolicy.ts"
     ]
    },
    "contacts": {
@@ -81265,6 +81309,9 @@
    "contact_phones": [
     "contact_id",
     "numero_e164"
+   ],
+   "contact_protection_policy": [
+    "id"
    ],
    "contacts": [
     "ai_priority",
@@ -83691,6 +83738,9 @@
    "get_multiplix_cron_secret": [
     "supabase/functions/multiplix-send/index.ts"
    ],
+   "get_my_protection_policy": [
+    "src/hooks/security/useContactProtectionPolicy.ts"
+   ],
    "get_own_gmail_accounts": [
     "src/components/admin/GmailWebhookMonitor.tsx",
     "src/hooks/integrations/useGmail.ts"
@@ -85099,7 +85149,6 @@
    "city_whitelist",
    "contact_block_audit",
    "contact_deletion_audit",
-   "contact_protection_policy",
    "copilot_conversation_scores",
    "copilot_help_requests",
    "copilot_insight_feedback",
@@ -87570,6 +87619,26 @@
     "file": "src/hooks/security/useContactAuditTrail.ts",
     "name": "ContactAuditOperation",
     "values": "delete | restore | purge | block | unblock | update_marker"
+   },
+   {
+    "file": "src/hooks/security/useContactProtectionPolicy.ts",
+    "name": "ContactProtectionScope",
+    "values": "admin | supervisor | agent"
+   },
+   {
+    "file": "src/hooks/security/useContactProtectionPolicy.ts",
+    "name": "ContactProtectionOrigin",
+    "values": "papel | global | padrao"
+   },
+   {
+    "file": "src/hooks/security/useContactProtectionPolicy.ts",
+    "name": "CONTACT_PROTECTION_QUERY_KEY",
+    "values": "'contact-protection-policies'"
+   },
+   {
+    "file": "src/hooks/security/useContactProtectionPolicy.ts",
+    "name": "MY_CONTACT_PROTECTION_QUERY_KEY",
+    "values": "'my-contact-protection-policy'"
    },
    {
     "file": "src/hooks/sip/useSipConnection.ts",
@@ -95022,6 +95091,26 @@
     "msg": "Informe o nome da cidade"
    },
    {
+    "file": "src/hooks/security/useContactProtectionPolicy.ts",
+    "msg": "Não foi possível remover a exceção"
+   },
+   {
+    "file": "src/hooks/security/useContactProtectionPolicy.ts",
+    "msg": "Não foi possível salvar a política de proteção"
+   },
+   {
+    "file": "src/hooks/security/useContactProtectionPolicy.ts",
+    "msg": "get_my_protection_policy devolveu origem desconhecida: ${linha.origem}"
+   },
+   {
+    "file": "src/hooks/security/useContactProtectionPolicy.ts",
+    "msg": "get_my_protection_policy não devolveu a política efetiva"
+   },
+   {
+    "file": "src/hooks/security/useContactProtectionPolicy.ts",
+    "msg": "nenhuma regra foi removida (você tem permissão de admin?)"
+   },
+   {
     "file": "src/hooks/security/usePasswordResetRequests.ts",
     "msg": "Erro ao carregar solicitações"
    },
@@ -101764,6 +101853,26 @@
    {
     "file": "src/hooks/security/useContactAuditTrail.ts",
     "text": "* Busca o contato por nome ou telefone; devolve os ids que a trilha deve filtrar. */"
+   },
+   {
+    "file": "src/hooks/security/useContactProtectionPolicy.ts",
+    "text": "bloquear impressao, marca d'agua, mascarar contato, limite de fichas por hora) deixa de ser"
+   },
+   {
+    "file": "src/hooks/security/useContactProtectionPolicy.ts",
+    "text": "decisao do navegador e passa a ser regra do sistema, vinda do banco\". A tabela tem a linha"
+   },
+   {
+    "file": "src/hooks/security/useContactProtectionPolicy.ts",
+    "text": "diz de onde veio — é o que evita a tela mentir sobre qual regra está valendo."
+   },
+   {
+    "file": "src/hooks/security/useContactProtectionPolicy.ts",
+    "text": "* Linha existente; ausente = criar a regra do escopo. */"
+   },
+   {
+    "file": "src/hooks/security/useContactProtectionPolicy.ts",
+    "text": "* Grava a regra do escopo. Criar e atualizar são explícitos (insert/update por id) em vez de"
    },
    {
     "file": "src/hooks/shortcuts/shortcutLabels.ts",
@@ -117331,6 +117440,11 @@
     "file": "src/hooks/security/useContactAuditTrail.ts",
     "name": "CONTACT_AUDIT_PAGE",
     "value": "200"
+   },
+   {
+    "file": "src/hooks/security/useContactProtectionPolicy.ts",
+    "name": "CONTACT_PROTECTION_GLOBAL_LABEL",
+    "value": "'Padrão do sistema (todos os papéis)'"
    },
    {
     "file": "src/hooks/sip/useSipConnection.ts",
@@ -172368,6 +172482,34 @@
     "name": "sem mais páginas não oferece "
    },
    {
+    "file": "src/components/security/__tests__/ContactProtectionPolicyPanel.test.tsx",
+    "name": "ContactProtectionPolicyPanel"
+   },
+   {
+    "file": "src/components/security/__tests__/ContactProtectionPolicyPanel.test.tsx",
+    "name": "mostra esqueleto enquanto lê as regras"
+   },
+   {
+    "file": "src/components/security/__tests__/ContactProtectionPolicyPanel.test.tsx",
+    "name": "mostra o erro de leitura e deixa tentar de novo"
+   },
+   {
+    "file": "src/components/security/__tests__/ContactProtectionPolicyPanel.test.tsx",
+    "name": "diz de onde vem a política que está valendo"
+   },
+   {
+    "file": "src/components/security/__tests__/ContactProtectionPolicyPanel.test.tsx",
+    "name": "salva o padrão do sistema com o que foi mexido"
+   },
+   {
+    "file": "src/components/security/__tests__/ContactProtectionPolicyPanel.test.tsx",
+    "name": "papel sem regra herda o padrão e cria a própria a partir dele"
+   },
+   {
+    "file": "src/components/security/__tests__/ContactProtectionPolicyPanel.test.tsx",
+    "name": "remove a exceção do papel pelo id da regra"
+   },
+   {
     "file": "src/components/security/__tests__/GeoBlockingPanel.a11y.test.tsx",
     "name": "a11y: botão de remover país com nome acessível"
    },
@@ -187662,6 +187804,58 @@
    {
     "file": "src/hooks/__tests__/useContactNotes.test.tsx",
     "name": "requires user to be logged in"
+   },
+   {
+    "file": "src/hooks/__tests__/useContactProtectionPolicy.test.tsx",
+    "name": "fetchMyContactProtectionPolicy"
+   },
+   {
+    "file": "src/hooks/__tests__/useContactProtectionPolicy.test.tsx",
+    "name": "traduz a linha da RPC, inclusive a origem"
+   },
+   {
+    "file": "src/hooks/__tests__/useContactProtectionPolicy.test.tsx",
+    "name": "recusa origem que o contrato não conhece"
+   },
+   {
+    "file": "src/hooks/__tests__/useContactProtectionPolicy.test.tsx",
+    "name": "erro quando a RPC não devolve linha"
+   },
+   {
+    "file": "src/hooks/__tests__/useContactProtectionPolicy.test.tsx",
+    "name": "propaga o erro do banco"
+   },
+   {
+    "file": "src/hooks/__tests__/useContactProtectionPolicy.test.tsx",
+    "name": "fetchContactProtectionPolicies"
+   },
+   {
+    "file": "src/hooks/__tests__/useContactProtectionPolicy.test.tsx",
+    "name": "devolve o escopo global e o do papel, do global para os papéis"
+   },
+   {
+    "file": "src/hooks/__tests__/useContactProtectionPolicy.test.tsx",
+    "name": "saveContactProtectionPolicy"
+   },
+   {
+    "file": "src/hooks/__tests__/useContactProtectionPolicy.test.tsx",
+    "name": "cria a regra do papel com colunas do banco"
+   },
+   {
+    "file": "src/hooks/__tests__/useContactProtectionPolicy.test.tsx",
+    "name": "atualiza pelo id quando a regra já existe"
+   },
+   {
+    "file": "src/hooks/__tests__/useContactProtectionPolicy.test.tsx",
+    "name": "deleteContactProtectionPolicy"
+   },
+   {
+    "file": "src/hooks/__tests__/useContactProtectionPolicy.test.tsx",
+    "name": "confirma a remoção pelo id devolvido"
+   },
+   {
+    "file": "src/hooks/__tests__/useContactProtectionPolicy.test.tsx",
+    "name": "falha quando o banco não apagou nada"
    },
    {
     "file": "src/hooks/__tests__/useConversationAnalyses.test.tsx",
@@ -255934,6 +256128,10 @@
     "limit": "1"
    },
    {
+    "file": "src/hooks/security/useContactProtectionPolicy.ts",
+    "limit": "20"
+   },
+   {
     "file": "src/hooks/sla/useApplicableSLA.ts",
     "limit": "1"
    },
@@ -280025,6 +280223,10 @@
    {
     "guard": "ProtectedRoute",
     "file": "src/routes/AppRoutes.tsx"
+   },
+   {
+    "guard": "ProtectedRoute",
+    "file": "src/routes/AppRoutes.tsx"
    }
   ],
   "protected_routes": [
@@ -280052,6 +280254,13 @@
    {
     "path": "/admin/auditoria-contatos",
     "component": "ContactAuditPage",
+    "guard": "ProtectedRoute",
+    "roles": [],
+    "file": "src/routes/AppRoutes.tsx"
+   },
+   {
+    "path": "/admin/protecao-contatos",
+    "component": "ContactProtectionPage",
     "guard": "ProtectedRoute",
     "roles": [],
     "file": "src/routes/AppRoutes.tsx"
@@ -338180,6 +338389,13 @@
     }
    ]
   },
+  "src/components/security/ContactProtectionPolicyPanel.tsx": {
+   "path": "src/components/security/ContactProtectionPolicyPanel.tsx",
+   "lines": 358,
+   "exports": [
+    "const ContactProtectionPolicyPanel"
+   ]
+  },
   "src/components/security/DeviceCard.tsx": {
    "path": "src/components/security/DeviceCard.tsx",
    "lines": 110,
@@ -338574,12 +338790,13 @@
   },
   "src/components/security/SecurityView.tsx": {
    "path": "src/components/security/SecurityView.tsx",
-   "lines": 239,
+   "lines": 261,
    "exports": [
     "function SecurityView"
    ],
    "navigates": [
     "/admin/auditoria-contatos",
+    "/admin/protecao-contatos",
     "/admin/rate-limit",
     "/admin/roles"
    ],
@@ -338793,6 +339010,21 @@
     "operação e período escolhidos chegam ao hook",
     "busca só vai ao servidor depois de pedir, e limpar devolve tudo",
     "sem mais páginas não oferece "
+   ]
+  },
+  "src/components/security/__tests__/ContactProtectionPolicyPanel.test.tsx": {
+   "path": "src/components/security/__tests__/ContactProtectionPolicyPanel.test.tsx",
+   "lines": 169,
+   "is_test": true,
+   "doc": "Painel da política de proteção de contatos. O sujeito é o componente REAL; o dublê é o contrato de dados. Regras provadas: os estados de carregamento e erro, o que está valendo para quem está logado (inclusive a origem), editar o padrão do sistema, criar a exceção de um papel a partir do que ele her …",
+   "tests": [
+    "ContactProtectionPolicyPanel",
+    "mostra esqueleto enquanto lê as regras",
+    "mostra o erro de leitura e deixa tentar de novo",
+    "diz de onde vem a política que está valendo",
+    "salva o padrão do sistema com o que foi mexido",
+    "papel sem regra herda o padrão e cria a própria a partir dele",
+    "remove a exceção do papel pelo id da regra"
    ]
   },
   "src/components/security/__tests__/GeoBlockingPanel.a11y.test.tsx": {
@@ -355215,6 +355447,27 @@
     "returns empty notes for new contact",
     "handles fetch error",
     "requires user to be logged in"
+   ]
+  },
+  "src/hooks/__tests__/useContactProtectionPolicy.test.tsx": {
+   "path": "src/hooks/__tests__/useContactProtectionPolicy.test.tsx",
+   "lines": 225,
+   "is_test": true,
+   "doc": "Política de proteção de contatos — leitura (tabela + RPC) e escrita. O sujeito são as funções REAIS do contrato; a dublagem é a fronteira de rede (`supabase.from`/ `rpc`). Regras provadas: linha por escopo com `scope_role` nulo virando o padrão global, `origem` da RPC traduzida (e origem desconhecid …",
+   "tests": [
+    "fetchMyContactProtectionPolicy",
+    "traduz a linha da RPC, inclusive a origem",
+    "recusa origem que o contrato não conhece",
+    "erro quando a RPC não devolve linha",
+    "propaga o erro do banco",
+    "fetchContactProtectionPolicies",
+    "devolve o escopo global e o do papel, do global para os papéis",
+    "saveContactProtectionPolicy",
+    "cria a regra do papel com colunas do banco",
+    "atualiza pelo id quando a regra já existe",
+    "deleteContactProtectionPolicy",
+    "confirma a remoção pelo id devolvido",
+    "falha quando o banco não apagou nada"
    ]
   },
   "src/hooks/__tests__/useConversationAnalyses.test.tsx": {
@@ -377085,6 +377338,110 @@
     "return new Date(agora - period * 24 * 60 * 60 * 1000).toISOString();"
    ]
   },
+  "src/hooks/security/useContactProtectionPolicy.ts": {
+   "path": "src/hooks/security/useContactProtectionPolicy.ts",
+   "lines": 309,
+   "exports": [
+    "type ContactProtectionScope",
+    "const CONTACT_PROTECTION_SCOPES",
+    "const CONTACT_PROTECTION_SCOPE_LABELS",
+    "const CONTACT_PROTECTION_GLOBAL_LABEL",
+    "interface ContactProtectionValues",
+    "const CONTACT_PROTECTION_DEFAULTS",
+    "interface ContactProtectionField",
+    "const CONTACT_PROTECTION_FIELDS",
+    "type ContactProtectionOrigin",
+    "const CONTACT_PROTECTION_ORIGIN_LABELS",
+    "interface ContactProtectionPolicy",
+    "interface MyContactProtectionPolicy",
+    "function isProtectionOrigin",
+    "function mapPolicyRow",
+    "function fetchContactProtectionPolicies",
+    "function fetchMyContactProtectionPolicy",
+    "function pickProtectionValues",
+    "function saveContactProtectionPolicy",
+    "function deleteContactProtectionPolicy",
+    "const CONTACT_PROTECTION_QUERY_KEY",
+    "const MY_CONTACT_PROTECTION_QUERY_KEY",
+    "function useContactProtectionPolicies",
+    "function useMyContactProtectionPolicy",
+    "function useSaveContactProtectionPolicy",
+    "function useDeleteContactProtectionPolicy"
+   ],
+   "tables": [
+    {
+     "table": "contact_protection_policy",
+     "op": "select"
+    },
+    {
+     "table": "contact_protection_policy",
+     "op": "update"
+    },
+    {
+     "table": "contact_protection_policy",
+     "op": "insert"
+    },
+    {
+     "table": "contact_protection_policy",
+     "op": "delete,select"
+    }
+   ],
+   "table_cols": {
+    "contact_protection_policy": [
+     "id"
+    ]
+   },
+   "rpc": [
+    "get_my_protection_policy"
+   ],
+   "errors": [
+    "Não foi possível remover a exceção",
+    "Não foi possível salvar a política de proteção",
+    "get_my_protection_policy devolveu origem desconhecida: ${linha.origem}",
+    "get_my_protection_policy não devolveu a política efetiva",
+    "nenhuma regra foi removida (você tem permissão de admin?)"
+   ],
+   "enums": [
+    {
+     "name": "ContactProtectionScope",
+     "values": "admin | supervisor | agent"
+    },
+    {
+     "name": "ContactProtectionOrigin",
+     "values": "papel | global | padrao"
+    },
+    {
+     "name": "CONTACT_PROTECTION_QUERY_KEY",
+     "values": "'contact-protection-policies'"
+    },
+    {
+     "name": "MY_CONTACT_PROTECTION_QUERY_KEY",
+     "values": "'my-contact-protection-policy'"
+    }
+   ],
+   "params": [
+    {
+     "name": "CONTACT_PROTECTION_GLOBAL_LABEL",
+     "value": "'Padrão do sistema (todos os papéis)'"
+    }
+   ],
+   "rule_comments": [
+    "bloquear impressao, marca d'agua, mascarar contato, limite de fichas por hora) deixa de ser",
+    "decisao do navegador e passa a ser regra do sistema, vinda do banco\". A tabela tem a linha",
+    "diz de onde veio — é o que evita a tela mentir sobre qual regra está valendo.",
+    "* Linha existente; ausente = criar a regra do escopo. */",
+    "* Grava a regra do escopo. Criar e atualizar são explícitos (insert/update por id) em vez de"
+   ],
+   "hooks": [
+    "useContactProtectionPolicies",
+    "useMyContactProtectionPolicy",
+    "useSaveContactProtectionPolicy",
+    "useDeleteContactProtectionPolicy"
+   ],
+   "pagination": [
+    "20"
+   ]
+  },
   "src/hooks/security/usePasswordResetRequests.ts": {
    "path": "src/hooks/security/usePasswordResetRequests.ts",
    "lines": 92,
@@ -379394,7 +379751,7 @@
   },
   "src/hooks/system/usePrefetch.ts": {
    "path": "src/hooks/system/usePrefetch.ts",
-   "lines": 47,
+   "lines": 48,
    "exports": [
     "function prefetchRoute",
     "function usePrefetch"
@@ -393590,6 +393947,13 @@
     "function ContactAuditPage"
    ]
   },
+  "src/pages/admin/ContactProtectionPage.tsx": {
+   "path": "src/pages/admin/ContactProtectionPage.tsx",
+   "lines": 37,
+   "exports": [
+    "function ContactProtectionPage"
+   ]
+  },
   "src/pages/admin/RateLimitDashboard.tsx": {
    "path": "src/pages/admin/RateLimitDashboard.tsx",
    "lines": 477,
@@ -394530,7 +394894,7 @@
   },
   "src/routes/AppRoutes.tsx": {
    "path": "src/routes/AppRoutes.tsx",
-   "lines": 175,
+   "lines": 184,
    "exports": [
     "function AppRoutes"
    ],
@@ -394632,6 +394996,12 @@
      "roles": []
     },
     {
+     "path": "/admin/protecao-contatos",
+     "component": "ContactProtectionPage",
+     "guard": "ProtectedRoute",
+     "roles": []
+    },
+    {
      "path": "/multiplix",
      "component": "Navigate",
      "guard": "",
@@ -394648,6 +395018,7 @@
     "\n        >\n          <div className="
    ],
    "guards": [
+    "ProtectedRoute",
     "ProtectedRoute",
     "ProtectedRoute",
     "ProtectedRoute",
@@ -428661,10 +429032,28 @@
   }
  },
  "git": {
-  "sha": "583c645064738b5e887cb771ac6b18f303e46b27",
+  "sha": "87ddee79ffbf3654ef588817749831d2d42aa7d9",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "87ddee79",
+    "date": "2026-11-26",
+    "author": "adm01-debug",
+    "subject": "feat(seguranca): politica de protecao de contatos ganha tela de gestao (#3413)",
+    "files": [
+     "docs/DB-INVENTORY.md",
+     "inventario/estado/rotas.json",
+     "src/components/security/ContactProtectionPolicyPanel.tsx",
+     "src/components/security/SecurityView.tsx",
+     "src/components/security/__tests__/ContactProtectionPolicyPanel.test.tsx",
+     "src/hooks/__tests__/useContactProtectionPolicy.test.tsx",
+     "src/hooks/security/useContactProtectionPolicy.ts",
+     "src/hooks/system/usePrefetch.ts",
+     "src/pages/admin/ContactProtectionPage.tsx",
+     "src/routes/AppRoutes.tsx"
+    ]
+   },
    {
     "sha": "583c6450",
     "date": "2026-11-26",
@@ -429082,21 +429471,12 @@
      "scripts/ci/lint-ratchet.mjs",
      "scripts/ci/lint-ratchet.unit.mjs"
     ]
-   },
-   {
-    "sha": "1d87b06f",
-    "date": "2026-11-25",
-    "author": "adm01-debug",
-    "subject": "chore(lint): reancora baseline nas posicoes atuais (divida inalterada, 540 = 540) (#3373)",
-    "files": [
-     "scripts/ci/eslint-baseline.json"
-    ]
    }
   ],
   "hot_files": [
    [
     "docs/DB-INVENTORY.md",
-    7
+    8
    ],
    [
     "supabase/deployment-manifest.json",
@@ -429120,6 +429500,18 @@
    ],
    [
     "src/components/security/SecurityView.tsx",
+    3
+   ],
+   [
+    "inventario/estado/rotas.json",
+    2
+   ],
+   [
+    "src/hooks/system/usePrefetch.ts",
+    2
+   ],
+   [
+    "src/routes/AppRoutes.tsx",
     2
    ],
    [
@@ -429147,31 +429539,19 @@
     2
    ],
    [
-    "scripts/ci/eslint-baseline.json",
-    2
-   ],
-   [
-    "inventario/estado/rotas.json",
+    "src/components/security/ContactProtectionPolicyPanel.tsx",
     1
    ],
    [
-    "src/components/security/ContactAuditTrailPanel.tsx",
+    "src/components/security/__tests__/ContactProtectionPolicyPanel.test.tsx",
     1
    ],
    [
-    "src/components/security/__tests__/ContactAuditTrailPanel.test.tsx",
+    "src/hooks/__tests__/useContactProtectionPolicy.test.tsx",
     1
    ],
    [
-    "src/components/security/contactAuditLabels.ts",
-    1
-   ],
-   [
-    "src/hooks/__tests__/useContactAuditTrail.test.tsx",
-    1
-   ],
-   [
-    "src/hooks/security/useContactAuditTrail.ts",
+    "src/hooks/security/useContactProtectionPolicy.ts",
     1
    ]
   ]

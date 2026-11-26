@@ -1,7 +1,7 @@
 {
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
- "total": 945,
+ "total": 947,
  "orfaos": 45,
  "nomes_duplicados": {
   "AchievementBadge": [
@@ -10293,6 +10293,25 @@
    "orfao": false
   },
   {
+   "arquivo": "src/components/security/ContactProtectionPolicyPanel.tsx",
+   "exports": [
+    "ContactProtectionPolicyPanel"
+   ],
+   "export_default": null,
+   "linhas": 358,
+   "dominio": "components/security",
+   "hooks_locais": [
+    "useContactProtectionPolicies",
+    "useDeleteContactProtectionPolicy",
+    "useMyContactProtectionPolicy",
+    "useSaveContactProtectionPolicy"
+   ],
+   "tabelas": [],
+   "edges": [],
+   "usado_por": 1,
+   "orfao": false
+  },
+  {
    "arquivo": "src/components/security/DeviceCard.tsx",
    "exports": [
     "DeviceCard",
@@ -10599,7 +10618,7 @@
     "SecurityView"
    ],
    "export_default": null,
-   "linhas": 239,
+   "linhas": 261,
    "dominio": "components/security",
    "hooks_locais": [
     "useSecurityPushNotifications",
@@ -13751,7 +13770,7 @@
    "hooks_locais": [],
    "tabelas": [],
    "edges": [],
-   "usado_por": 223,
+   "usado_por": 224,
    "orfao": false
   },
   {
@@ -13788,7 +13807,7 @@
    "hooks_locais": [],
    "tabelas": [],
    "edges": [],
-   "usado_por": 411,
+   "usado_por": 412,
    "orfao": false
   },
   {
@@ -13823,7 +13842,7 @@
    "hooks_locais": [],
    "tabelas": [],
    "edges": [],
-   "usado_por": 195,
+   "usado_por": 196,
    "orfao": false
   },
   {
@@ -14239,7 +14258,7 @@
    "hooks_locais": [],
    "tabelas": [],
    "edges": [],
-   "usado_por": 176,
+   "usado_por": 177,
    "orfao": false
   },
   {
@@ -14253,7 +14272,7 @@
    "hooks_locais": [],
    "tabelas": [],
    "edges": [],
-   "usado_por": 117,
+   "usado_por": 118,
    "orfao": false
   },
   {
@@ -14639,7 +14658,7 @@
    "hooks_locais": [],
    "tabelas": [],
    "edges": [],
-   "usado_por": 82,
+   "usado_por": 83,
    "orfao": false
   },
   {
@@ -14760,7 +14779,7 @@
    "hooks_locais": [],
    "tabelas": [],
    "edges": [],
-   "usado_por": 57,
+   "usado_por": 58,
    "orfao": false
   },
   {
@@ -15332,6 +15351,22 @@
    "orfao": false
   },
   {
+   "arquivo": "src/pages/admin/ContactProtectionPage.tsx",
+   "exports": [
+    "ContactProtectionPage"
+   ],
+   "export_default": "ContactProtectionPage",
+   "linhas": 37,
+   "dominio": "pages/admin",
+   "hooks_locais": [
+    "useUserRole"
+   ],
+   "tabelas": [],
+   "edges": [],
+   "usado_por": 2,
+   "orfao": false
+  },
+  {
    "arquivo": "src/pages/admin/RateLimitDashboard.tsx",
    "exports": [
     "RateLimitDashboard"
@@ -15701,7 +15736,7 @@
     "AppRoutes"
    ],
    "export_default": null,
-   "linhas": 175,
+   "linhas": 184,
    "dominio": "routes",
    "hooks_locais": [],
    "tabelas": [],

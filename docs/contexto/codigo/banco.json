@@ -8000,11 +8000,11 @@
     "so_na_migration": [],
     "so_no_types": []
    },
-   "usada_no_front": 0,
+   "usada_no_front": 1,
    "usada_em_edges": [],
    "triggers": [],
    "sem_rls": false,
-   "nao_usada": true
+   "nao_usada": false
   },
   "contacts": {
    "colunas": {
@@ -32729,6 +32729,11 @@
   },
   {
    "nome": "get_multiplix_cron_secret",
+   "definida": true,
+   "usada_em": 1
+  },
+  {
+   "nome": "get_my_protection_policy",
    "definida": true,
    "usada_em": 1
   },

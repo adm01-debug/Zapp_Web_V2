@@ -5,18 +5,18 @@
   "vitest",
   "playwright"
  ],
- "total": 2851,
+ "total": 2853,
  "por_tipo": {
   "contrato": 116,
   "e2e": 76,
   "pytest": 3,
   "qa": 10,
-  "unit": 2554
+  "unit": 2556
  },
  "onde_ficam": [
   {
    "padrao": "co-localizado (__tests__)",
-   "arquivos": 2123
+   "arquivos": 2125
   },
   {
    "padrao": "outro",
@@ -11659,6 +11659,16 @@
    "casos": 9
   },
   {
+   "arquivo": "src/components/security/__tests__/ContactProtectionPolicyPanel.test.tsx",
+   "tipo": "unit",
+   "linhas": 169,
+   "testa": [
+    "src/components/security/ContactProtectionPolicyPanel.tsx",
+    "src/hooks/security/useContactProtectionPolicy.ts"
+   ],
+   "casos": 7
+  },
+  {
    "arquivo": "src/components/security/__tests__/GeoBlockingPanel.a11y.test.tsx",
    "tipo": "unit",
    "linhas": 93,
@@ -15843,6 +15853,15 @@
     "src/hooks/crm/useContactNotes.ts"
    ],
    "casos": 4
+  },
+  {
+   "arquivo": "src/hooks/__tests__/useContactProtectionPolicy.test.tsx",
+   "tipo": "unit",
+   "linhas": 225,
+   "testa": [
+    "src/hooks/security/useContactProtectionPolicy.ts"
+   ],
+   "casos": 9
   },
   {
    "arquivo": "src/hooks/__tests__/useConversationAnalyses.test.tsx",
@@ -26677,6 +26696,7 @@
   "src/components/security/BlockedIPsPanel.tsx": 4,
   "src/components/security/CityWhitelistPanel.tsx": 1,
   "src/components/security/ContactAuditTrailPanel.tsx": 1,
+  "src/components/security/ContactProtectionPolicyPanel.tsx": 1,
   "src/components/security/DeviceCard.tsx": 1,
   "src/components/security/GeoBlockingPanel.tsx": 2,
   "src/components/security/IPWhitelistPanel.tsx": 4,
@@ -27210,6 +27230,7 @@
   "src/hooks/realtime/useSupabaseRealtime.ts": 6,
   "src/hooks/realtime/useVisiblePolling.ts": 2,
   "src/hooks/security/useContactAuditTrail.ts": 2,
+  "src/hooks/security/useContactProtectionPolicy.ts": 2,
   "src/hooks/shortcuts/defaultShortcuts.ts": 5,
   "src/hooks/shortcuts/shortcutLabels.ts": 1,
   "src/hooks/shortcuts/taskShortcutLabels.ts": 1,
@@ -27720,7 +27741,8 @@
  },
  "sem_teste": {
   "telas": [
-   "src/pages/admin/ContactAuditPage.tsx"
+   "src/pages/admin/ContactAuditPage.tsx",
+   "src/pages/admin/ContactProtectionPage.tsx"
   ],
   "hooks": [
    "analise-prs/resgate-regra8-261118/src/hooks/copilot/useMultimodalAnalysis.ts",

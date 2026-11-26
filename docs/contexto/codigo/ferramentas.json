@@ -3,7 +3,7 @@
  "format_version": 2,
  "stack": {
   "linguagens": [
-   "TypeScript (4555)",
+   "TypeScript (4560)",
    "Markdown (3988)",
    "SQL (3072)",
    "JSON (1939)",
@@ -3332,7 +3332,7 @@
    "src/components/auth/ProtectedRoute.tsx",
    "src/components/copilot/DiscountGuardrailBanner.tsx"
   ],
-  "rotas_protegidas": 9,
+  "rotas_protegidas": 10,
   "rotas_publicas": [
    "/*",
    "/2fa",

@@ -2,11 +2,11 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "resumo": {
-  "urls": 19,
+  "urls": 20,
   "rotas_http_backend": 11,
   "vistas_por_id": 55,
   "itens_menu": 61,
-  "lazy": 154
+  "lazy": 155
  },
  "urls": [
   {
@@ -1703,6 +1703,100 @@
     "supervisor"
    ],
    "arquivos_puxados": 60
+  },
+  {
+   "protegida": true,
+   "wrappers": [
+    "ProtectedRoute"
+   ],
+   "pai": null,
+   "indice": false,
+   "lazy": true,
+   "tipo": "tela",
+   "caminho": "/admin/protecao-contatos",
+   "componente": "ContactProtectionPage",
+   "arquivo": "src/pages/admin/ContactProtectionPage.tsx",
+   "definida_em": "src/routes/AppRoutes.tsx",
+   "redireciona": null,
+   "hooks": [
+    "useAppBootstrap",
+    "useAuth",
+    "useCallback",
+    "useContactProtectionPolicies",
+    "useContext",
+    "useDeleteContactProtectionPolicy",
+    "useEffect",
+    "useMemo",
+    "useMessageUpdateBatcher",
+    "useMutation",
+    "useMyContactProtectionPolicy",
+    "useNotificationLeader",
+    "useNotificationSettings",
+    "useOfflineCache",
+    "usePublishIncomingAlertIdentity",
+    "useQuery",
+    "useQueryClient",
+    "useRealtimeMessages",
+    "useRealtimeNotifications",
+    "useRealtimeReconnectingNotice",
+    "useRealtimeStatus",
+    "useRef",
+    "useSaveContactProtectionPolicy",
+    "useState",
+    "useSyncExternalStore",
+    "useTeamAlertsPreference",
+    "useToast",
+    "useUserRole"
+   ],
+   "hooks_locais": [
+    "useAppBootstrap",
+    "useAuth",
+    "useContactProtectionPolicies",
+    "useDeleteContactProtectionPolicy",
+    "useMessageUpdateBatcher",
+    "useMyContactProtectionPolicy",
+    "useNotificationSettings",
+    "useOfflineCache",
+    "usePublishIncomingAlertIdentity",
+    "useRealtimeMessages",
+    "useRealtimeNotifications",
+    "useRealtimeReconnectingNotice",
+    "useRealtimeStatus",
+    "useSaveContactProtectionPolicy",
+    "useTeamAlertsPreference",
+    "useToast",
+    "useUserRole"
+   ],
+   "tabelas": [
+    "contact_protection_policy",
+    "contacts",
+    "messages",
+    "profiles",
+    "user_roles",
+    "user_settings"
+   ],
+   "rpcs": [
+    "app_bootstrap",
+    "enqueue_outbound_message",
+    "enqueue_rich_outbound_message",
+    "get_inbox_contact_summaries",
+    "get_my_protection_policy",
+    "user_has_permission"
+   ],
+   "edges": [
+    "auth-login",
+    "detect-new-device"
+   ],
+   "canais_realtime": [
+    "chat-reactions:${messageId}"
+   ],
+   "flags": [],
+   "papeis": [
+    "admin",
+    "status",
+    "supervisor"
+   ],
+   "arquivos_puxados": 59
   },
   {
    "protegida": true,
@@ -9772,6 +9866,7 @@
   "ContactAuditPage": "src/pages/admin/ContactAuditPage.tsx",
   "ContactDetails": "src/components/inbox/ContactDetails.tsx",
   "ContactDetailsResponsive": "src/components/inbox/ContactDetailsResponsive.tsx",
+  "ContactProtectionPage": "src/pages/admin/ContactProtectionPage.tsx",
   "ContactsView": "src/components/contacts/ContactsView.tsx",
   "ConversationSummary": "src/components/inbox/ConversationSummary.tsx",
   "Crm360Tab": "src/components/inbox/tabs/Crm360Tab.tsx",
