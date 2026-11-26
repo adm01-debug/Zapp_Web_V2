@@ -145,7 +145,10 @@ export function AIBudgetTab() {
                 <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
                 <XAxis dataKey="dia" fontSize={11} className="fill-muted-foreground" />
                 <YAxis fontSize={11} className="fill-muted-foreground" tickFormatter={(v: number) => formatarTokensCompacto(v)} />
-                <Tooltip formatter={(v: number) => `${v.toLocaleString('pt-BR')} tokens`} contentStyle={tooltipStyle} />
+                <Tooltip
+                  formatter={(v) => `${Number(v).toLocaleString('pt-BR')} tokens`}
+                  contentStyle={tooltipStyle}
+                />
                 <Legend />
                 <Bar dataKey="reservado" name="Reservado" fill="hsl(var(--muted-foreground))" radius={[2, 2, 0, 0]} />
                 <Bar dataKey="consumido" name="Consumido" fill="hsl(var(--primary))" radius={[2, 2, 0, 0]} />
