@@ -215,8 +215,8 @@ RLS em `supabase/schema-manifest.json`; este documento não os repete.
 | `security_acl_alerts` | Alertas de ACL de segurança (violação de política e IP) | ativo | `src/components/security/AclAlertsPanel.tsx` |
 | `security_alerts` | Alertas de segurança (tipo, severidade e IP de origem) | ativo | `src/components/security/RateLimitRealtimeAlerts.tsx`, `src/components/security/SecurityOverview.tsx`, `src/hooks/system/__tests__/useSecurityPushNotifications.test.ts` … |
 | `sicoob_contact_mapping` | Mapeamento entre contato do Zapp, usuário Sicoob e agente | parcial | `scripts/db-audit/anon-privileges-contact-messages.test.sh`, `scripts/db-audit/inbox-contact-authorization.test.sh`, `scripts/db-audit/profiles-can-download-authorization.test.sh` |
-| `sla_alert_events` | Eventos de alerta de SLA disparados por violação | roadmap | — |
-| `sla_alert_preferences` | Preferências de recebimento de alertas de SLA por usuário | roadmap | — |
+| `sla_alert_events` | Eventos de alerta de SLA disparados por violação | ativo | `src/components/sla/SLAAlertHistoryPanel.tsx`, `src/hooks/sla/__tests__/useSlaAlertEvents.test.tsx`, `src/hooks/sla/slaAlertPreferences.ts` … |
+| `sla_alert_preferences` | Preferências de recebimento de alertas de SLA por usuário | ativo | `src/components/sla/SLAAlertPreferencesCard.tsx`, `src/hooks/sla/__tests__/useSlaAlertPreferences.test.tsx`, `src/hooks/sla/slaAlertPreferences.ts` … |
 | `sla_configurations` | Configurações de SLA (tempo de primeira resposta e de resolução) | ativo | `src/hooks/__tests__/helpers/alertBehaviorTestKit.ts`, `src/hooks/sla/__tests__/useSLAConfigurations.test.tsx`, `src/hooks/sla/useApplicableSLA.ts` … |
 | `sla_rules` | Regras de SLA por prioridade, fila ou contato | ativo | `src/hooks/__tests__/helpers/alertBehaviorTestKit.ts`, `src/hooks/sla/__tests__/useApplicableSLA.test.tsx`, `src/hooks/sla/__tests__/useContactSlaTimeline.test.tsx` … |
 | `stickers` | Figurinhas do chat, por categoria e autor | ativo | `src/components/inbox/StickerPicker.tsx`, `src/components/inbox/__tests__/StickerPicker.catalogo.test.tsx`, `src/components/inbox/chat/MessageBubble.tsx` … |

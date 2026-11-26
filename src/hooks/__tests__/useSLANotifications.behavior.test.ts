@@ -1,4 +1,5 @@
 import '@/hooks/__tests__/helpers/alertMocks';
+import '@/hooks/__tests__/helpers/slaAlertPreferencesMock';
 import { describe, it, expect, beforeEach } from 'vitest';
 import { renderHook, waitFor } from '@testing-library/react';
 
@@ -14,10 +15,16 @@ import {
 } from '@/hooks/__tests__/helpers/alertBehaviorTestKit';
 
 import { useSLANotifications } from '@/hooks/sla/useSLANotifications';
+import { DEFAULT_SLA_ALERT_PREFERENCES } from '@/hooks/sla/slaAlertPreferences';
+import {
+  resetSlaAlertPreferences,
+  slaAlertPreferencesCfg,
+} from '@/hooks/__tests__/helpers/slaAlertPreferencesMock';
 
 const SLA_1 = '11111111-1111-4111-8111-111111111111';
 const SLA_2 = '33333333-3333-4333-8333-333333333333';
 const SLA_3 = '44444444-4444-4444-8444-444444444444';
+const SLA_4 = '55555555-5555-4555-8555-555555555555';
 const CONTATO_ID = '22222222-2222-4222-8222-222222222222';
 
 /** Deixa as promessas do handler assentarem (o canal entrega `void`). */
@@ -40,6 +47,7 @@ function violacao(id: string, jaMarcado: boolean) {
 describe('useSLANotifications — efeito do alerta', () => {
   beforeEach(() => {
     resetAlertKit();
+    resetSlaAlertPreferences();
     settingsCfg.slaSoundType = 'alert';
     settingsCfg.soundVolume = 60;
   });
@@ -69,6 +77,16 @@ describe('useSLANotifications — efeito do alerta', () => {
     renderHook(() => useSLANotifications());
 
     await callbacks[0](violacao(SLA_3, true));
+    await assentar();
+
+    expect(playNotificationSound).not.toHaveBeenCalled();
+  });
+  it('não toca quando a preferência da conta desliga os avisos de SLA', async () => {
+    slaAlertPreferencesCfg.preferences = { ...DEFAULT_SLA_ALERT_PREFERENCES, enabled: false };
+    renderHook(() => useSLANotifications());
+
+    expect(callbacks.length).toBeGreaterThan(0);
+    await callbacks[0](violacao(SLA_4, false));
     await assentar();
 
     expect(playNotificationSound).not.toHaveBeenCalled();
