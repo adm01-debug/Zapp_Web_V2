@@ -49814,12 +49814,12 @@
           "triggers": [],
           "views": []
         },
-        "comment": null,
+        "comment": "Painel admin (Tarefas agendadas): devolve TODOS os jobs do pg_cron com a ultima execucao; `permitido` marca os que admin_toggle_cron_job aceita ligar/desligar (allow-list fixa). SECURITY DEFINER com guarda is_admin(auth.uid()).",
         "config": [
           "search_path=pg_catalog, public, cron"
         ],
         "definition": null,
-        "definition_sha": "9279db223f71e9fc",
+        "definition_sha": "c1f619bc6e1446a1",
         "execute_api_roles": "authenticated",
         "execute_public": false,
         "is_trigger_fn": false,
@@ -49828,7 +49828,7 @@
         "leakproof": false,
         "name": "admin_list_cron_jobs",
         "owner": "postgres",
-        "returns": "TABLE(jobname text, schedule text, active boolean, last_status text, last_run_at timestamp with time zone, last_return_message text)",
+        "returns": "TABLE(jobname text, schedule text, active boolean, last_status text, last_run_at timestamp with time zone, last_return_message text, permitido boolean)",
         "schema": "public",
         "security_definer": true,
         "strict": false,
@@ -59396,7 +59396,7 @@
               "hits": 1
             }
           ],
-          "code_total_files": 416,
+          "code_total_files": 418,
           "cron": [],
           "db": [
             "public.add_agent_xp",
@@ -59527,7 +59527,8 @@
             "public.update_talkx_campaign_limits",
             "public.update_talkx_template_with_snapshot",
             "public.warroom_agent_today",
-            "public.warroom_queue_stats"
+            "public.warroom_queue_stats",
+            "public.webhook_dead_letter_fila"
           ],
           "triggers": [],
           "views": [
@@ -63225,8 +63226,13 @@
       {
         "args": "p_dias integer",
         "callers": {
-          "code": [],
-          "code_total_files": 0,
+          "code": [
+            {
+              "file": "supabase/migrations/20261127140000_fix_retencao_copiloto.sql",
+              "hits": 1
+            }
+          ],
+          "code_total_files": 1,
           "cron": [],
           "db": [],
           "triggers": [],
@@ -65393,9 +65399,13 @@
             {
               "file": "supabase/migrations/20261115050000_copilot_retention_aggregates.sql",
               "hits": 1
+            },
+            {
+              "file": "supabase/migrations/20261127140000_fix_retencao_copiloto.sql",
+              "hits": 4
             }
           ],
-          "code_total_files": 1,
+          "code_total_files": 2,
           "cron": [],
           "db": [
             "public.recalcular_retencao_copiloto"
@@ -67822,8 +67832,13 @@
       {
         "args": "p_campaign_id uuid",
         "callers": {
-          "code": [],
-          "code_total_files": 0,
+          "code": [
+            {
+              "file": "supabase/migrations/20261127150000_recover_talkx_send_budget_internal.sql",
+              "hits": 1
+            }
+          ],
+          "code_total_files": 1,
           "cron": [],
           "db": [],
           "triggers": [],
@@ -68274,9 +68289,13 @@
             {
               "file": "supabase/migrations/20261002551230_talkx_limits_ritmo.sql",
               "hits": 1
+            },
+            {
+              "file": "supabase/migrations/20261127150000_recover_talkx_send_budget_internal.sql",
+              "hits": 1
             }
           ],
-          "code_total_files": 2,
+          "code_total_files": 3,
           "cron": [],
           "db": [],
           "triggers": [],
@@ -68305,8 +68324,13 @@
       {
         "args": "p_connection_id uuid",
         "callers": {
-          "code": [],
-          "code_total_files": 0,
+          "code": [
+            {
+              "file": "supabase/migrations/20261127150000_recover_talkx_send_budget_internal.sql",
+              "hits": 3
+            }
+          ],
+          "code_total_files": 1,
           "cron": [],
           "db": [
             "public.talkx_campaign_pace",
@@ -68701,9 +68725,13 @@
             {
               "file": "supabase/migrations/20261009031223_talkx_multiplix_consumo_compartilhado.sql",
               "hits": 3
+            },
+            {
+              "file": "supabase/migrations/20261127150000_recover_talkx_send_budget_internal.sql",
+              "hits": 2
             }
           ],
-          "code_total_files": 1,
+          "code_total_files": 2,
           "cron": [],
           "db": [
             "public.multiplix_connection_daily_usage",
@@ -71686,6 +71714,36 @@
         "name": "warroom_queue_stats",
         "owner": "postgres",
         "returns": "jsonb",
+        "schema": "public",
+        "security_definer": true,
+        "strict": false,
+        "volatility": "stable"
+      },
+      {
+        "args": "p_limit integer",
+        "callers": {
+          "code": [],
+          "code_total_files": 0,
+          "cron": [],
+          "db": [],
+          "triggers": [],
+          "views": []
+        },
+        "comment": "Fila nao resolvida de webhook_failures para admin/supervisor (sem payload/PII). Consumida por DeadLetterReplayPanel.",
+        "config": [
+          "search_path=public"
+        ],
+        "definition": null,
+        "definition_sha": "1323d5579aaa52b0",
+        "execute_api_roles": "authenticated, service_role",
+        "execute_public": false,
+        "is_trigger_fn": false,
+        "kind": "function",
+        "language": "sql",
+        "leakproof": false,
+        "name": "webhook_dead_letter_fila",
+        "owner": "postgres",
+        "returns": "TABLE(id uuid, external_id text, endpoint text, event_type text, retry_count integer, error_at timestamp with time zone, tem_payload boolean, total bigint)",
         "schema": "public",
         "security_definer": true,
         "strict": false,
@@ -90747,6 +90805,42 @@
         "statements": 11,
         "statements_sha": "03be1b2fb6ae23d7",
         "version": "20261127001500"
+      },
+      {
+        "name": "painel_tarefas_visiveis",
+        "statements": 7,
+        "statements_sha": "c82ba8995a10dd53",
+        "version": "20261127130000"
+      },
+      {
+        "name": "fix_retencao_copiloto",
+        "statements": 12,
+        "statements_sha": "4c49c7cb5e18d5d1",
+        "version": "20261127140000"
+      },
+      {
+        "name": "recover_talkx_send_budget_internal",
+        "statements": 6,
+        "statements_sha": "3d1673674decb880",
+        "version": "20261127150000"
+      },
+      {
+        "name": "talkx_test_sends_grant_read",
+        "statements": 1,
+        "statements_sha": "4636903555e41e47",
+        "version": "20261127160000"
+      },
+      {
+        "name": "rpc_resumo_orcamento_ia",
+        "statements": 4,
+        "statements_sha": "e3cd21dc5cff107e",
+        "version": "20261127170000"
+      },
+      {
+        "name": "dead_letter_fila_rpc",
+        "statements": 4,
+        "statements_sha": "e25f715e652b9735",
+        "version": "20261127180000"
       }
     ],
     "policies": [

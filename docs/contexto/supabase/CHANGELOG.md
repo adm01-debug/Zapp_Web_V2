@@ -2,6 +2,12 @@
 
 Diff semântico gerado a cada coleta em que algo mudou.
 
+## 2026-11-26 19:17 UTC
+
+- **functions** adicionado (1): `public.webhook_dead_letter_fila(p_limit integer)`
+- **functions** alterado (8): `public.admin_list_cron_jobs()`, `public.is_admin_or_supervisor(_user_id uuid)`, `public.recalcular_retencao_copiloto(p_dias integer)`, `public.run_copilot_retention(p_target_date date)`, `public.talkx_campaign_pace(p_campaign_id uuid)`, `public.talkx_connection_send_budget(p_connection_id uuid)`, `public.talkx_connection_send_budget_internal(p_connection_id uuid)`, `public.talkx_multiplix_connection_sent_count(p_connection_id uuid, p_since timestamp with time zone)`
+- **migrations** adicionado (6): `20261127130000_painel_tarefas_visiveis`, `20261127140000_fix_retencao_copiloto`, `20261127150000_recover_talkx_send_budget_internal`, `20261127160000_talkx_test_sends_grant_read`, `20261127170000_rpc_resumo_orcamento_ia`, `20261127180000_dead_letter_fila_rpc`
+
 ## 2026-11-26 17:15 UTC
 
 - **functions** adicionado (3): `public.recalcular_retencao_copiloto(p_dias integer)`, `public.resumo_orcamento_ia(p_dias integer)`, `public.run_copilot_retention(p_target_date date)`

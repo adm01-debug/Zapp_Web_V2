@@ -1167,3 +1167,9 @@ SQL em `migrations/<versao>_<nome>.sql`. Mudanças feitas pelo Dashboard/SQL Edi
 | 20261126221500 | [remind_me_about_message](migrations/20261126221500_remind_me_about_message.sql) | 1 |
 | 20261126234500 | [paridade_policies_admin_prod](migrations/20261126234500_paridade_policies_admin_prod.sql) | 25 |
 | 20261127001500 | [talkx_campaign_pace_orcamento_interno](migrations/20261127001500_talkx_campaign_pace_orcamento_interno.sql) | 11 |
+| 20261127130000 | [painel_tarefas_visiveis](migrations/20261127130000_painel_tarefas_visiveis.sql) | 7 |
+| 20261127140000 | [fix_retencao_copiloto](migrations/20261127140000_fix_retencao_copiloto.sql) | 12 |
+| 20261127150000 | [recover_talkx_send_budget_internal](migrations/20261127150000_recover_talkx_send_budget_internal.sql) | 6 |
+| 20261127160000 | [talkx_test_sends_grant_read](migrations/20261127160000_talkx_test_sends_grant_read.sql) | 1 |
+| 20261127170000 | [rpc_resumo_orcamento_ia](migrations/20261127170000_rpc_resumo_orcamento_ia.sql) | 4 |
+| 20261127180000 | [dead_letter_fila_rpc](migrations/20261127180000_dead_letter_fila_rpc.sql) | 4 |
