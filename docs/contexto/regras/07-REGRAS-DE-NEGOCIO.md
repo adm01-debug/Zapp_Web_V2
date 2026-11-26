@@ -1,6 +1,6 @@
 # 07 · REGRAS DE NEGÓCIO
 
-> Gerado automaticamente por AI Context Sync v1.3.2 · commit `4e81b2b13e` · branch `main` · 2026-11-26 17:08 UTC
+> Gerado automaticamente por AI Context Sync v1.3.2 · commit `d91ac94ff2` · branch `main` · 2026-11-26 19:02 UTC
 > Não edite à mão — regras humanas vão em `manual/`.
 
 ## A. Regras escritas por humanos (`manual/` — prioridade máxima, nunca sobrescrito)
@@ -423,7 +423,7 @@ Demais dúvidas: nenhuma (entrevista concluída em 2026-11-03). Novas dúvidas: 
 | `permissions` | Admins can manage permissions | ALL | authenticated | permissive | `is_admin(auth.uid())` | `is_admin(auth.uid())` |
 | `role_permissions` | Admins can manage role permissions | ALL | authenticated | permissive | `is_admin(auth.uid())` | `is_admin(auth.uid())` |
 | `permissions` | Admin supervisor can view permissions | SELECT | authenticated | permissive | `is_admin_or_supervisor(auth.uid())` |  |
-| … +288 linhas — lista completa em `context.json` | | | | | | |
+| … +289 linhas — lista completa em `context.json` | | | | | | |
 
 ## C. Restrições de dados (obrigatório / único / default / CHECK / FK / calculada)
 
@@ -1121,7 +1121,6 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `record_incoming_call_event` | incoming call contact not found | `supabase/migrations/20261002531230_t26_record_incoming_call_event_direction.sql` |
 | `record_incoming_call_event` | incoming call connection does not match contact | `supabase/migrations/20261002531230_t26_record_incoming_call_event_direction.sql` |
 | `record_incoming_call_event` | incoming call notification identity conflict | `supabase/migrations/20261002531230_t26_record_incoming_call_event_direction.sql` |
-| `talkx_campaign_pace` | talkx_campaign_role_required | `supabase/migrations/20261002551230_talkx_limits_ritmo.sql` |
 | `record_multiplix_item_delivered` | service_role_required | `supabase/migrations/20261002561230_f58_reconcile_item_receipts.sql` |
 | `record_multiplix_item_delivered` | invalid_multiplix_delivery_ack | `supabase/migrations/20261002561230_f58_reconcile_item_receipts.sql` |
 | `record_multiplix_item_delivered` | invalid_multiplix_delivery_event | `supabase/migrations/20261002561230_f58_reconcile_item_receipts.sql` |
@@ -1204,7 +1203,8 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `add_agent_xp` | p_xp exceeds single-call maximum of 500, got % | `supabase/migrations/20261003272707_reconcile_local_replay_with_canonical.sql` |
 | `cleanup_expired_challenges` | cleanup_expired_challenges: operacao restrita a service_role | `supabase/migrations/20261003272707_reconcile_local_replay_with_canonical.sql` |
 | `cleanup_link_preview_cache` | cleanup_link_preview_cache: operacao restrita a service_role | `supabase/migrations/20261003272707_reconcile_local_replay_with_canonical.sql` |
-| … +726 linhas — lista completa em `context.json` | | |
+| `clear_login_attempts` | clear_login_attempts: operacao nao autorizada para role=% email=% | `supabase/migrations/20261003272707_reconcile_local_replay_with_canonical.sql` |
+| … +727 linhas — lista completa em `context.json` | | |
 
 ## E. Estados, máquinas de estado e transições
 
@@ -4252,7 +4252,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `v_window := interval '60 seconds';` | `supabase/migrations/20261007000311_catalogo_rate_limit_politica_confiavel.sql` |
 | `v_minute_start := statement_timestamp() - interval '1 minute';` | `supabase/migrations/20261009031223_talkx_multiplix_consumo_compartilhado.sql` |
 | `v_next_day_at := v_day_start + interval '1 day';` | `supabase/migrations/20261009031223_talkx_multiplix_consumo_compartilhado.sql` |
-| … +94 linhas — lista completa em `context.json` | |
+| … +98 linhas — lista completa em `context.json` | |
 
 ### H.3 Limites de paginação
 

@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "4e81b2b13e73b3533a320fd5a678f51f9065a959",
+  "commit": "d91ac94ff23aee5eb2babfac0853194179e0bb3d",
   "branch": "main",
-  "data_commit": "2026-11-26T17:06:13Z",
+  "data_commit": "2026-11-26T16:01:01-03:00",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "d91ac94f",
+    "data": "2026-11-26",
+    "assunto": "fix(db): cron de retenção do copiloto nunca gravou (subquery + kind errado) (#3417)"
+   },
    {
     "sha": "4e81b2b1",
     "data": "2026-11-26",
@@ -126,14 +131,9 @@
     "sha": "e4c2b861",
     "data": "2026-11-25",
     "assunto": "fix: tooltip do prazo usa a regra única de data e o módulo prazoCompleto (#3391)"
-   },
-   {
-    "sha": "6ee63ddb",
-    "data": "2026-11-25",
-    "assunto": "fix: canal único de realtime nas conexões e reconciliação de INSTANCE_GONE (#3390)"
    }
   ],
-  "arquivos_mudados_7d": 2848,
+  "arquivos_mudados_7d": 2847,
   "pastas_mais_mudadas_30d": [
    {
     "pasta": "docs/contexto/supabase",
@@ -165,7 +165,7 @@
    },
    {
     "pasta": "src/components/talkx",
-    "mudancas": 386
+    "mudancas": 384
    },
    {
     "pasta": "analise-prs/resgate-261115/dossies",
@@ -207,7 +207,7 @@
    },
    {
     "arquivo": "docs/DB-INVENTORY.md",
-    "mudancas": 25
+    "mudancas": 26
    },
    {
     "arquivo": "docs/talkx/ESTADOS.md",
@@ -215,7 +215,11 @@
    },
    {
     "arquivo": "supabase/schema-manifest.json",
-    "mudancas": 17
+    "mudancas": 18
+   },
+   {
+    "arquivo": "supabase/schema-catalog.json",
+    "mudancas": 16
    },
    {
     "arquivo": ".github/workflows/db-guard.yml",
@@ -223,10 +227,6 @@
    },
    {
     "arquivo": "src/integrations/supabase/types.ts",
-    "mudancas": 15
-   },
-   {
-    "arquivo": "supabase/schema-catalog.json",
     "mudancas": 15
    },
    {
@@ -314,7 +314,7 @@
   ]
  },
  "contagens": {
-  "arquivos_total": 14903,
+  "arquivos_total": 14905,
   "arquivos_codigo": 5235,
   "linhas_codigo": 969164,
   "rotas": 21,
@@ -326,7 +326,7 @@
   "hooks": 535,
   "edge_functions": 94,
   "tabelas": 224,
-  "migrations": 1161,
+  "migrations": 1163,
   "cron_jobs": 29,
   "testes": 2866,
   "workflows": 26,

@@ -1,15 +1,15 @@
 {
  "meta": {
-  "sha": "4e81b2b13e73b3533a320fd5a678f51f9065a959",
+  "sha": "d91ac94ff23aee5eb2babfac0853194179e0bb3d",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-26 17:08 UTC",
-  "files_total": 14750,
-  "code_files": 8280,
-  "code_lines": 1247227
+  "generated_at": "2026-11-26 19:02 UTC",
+  "files_total": 14752,
+  "code_files": 8282,
+  "code_lines": 1247532
  },
  "version": "1.3.2",
- "facts_hash": "bea757f3eefa8fb8",
+ "facts_hash": "18b925cb60071647",
  "stack": {
   "frameworks": [
    "React + Vite",
@@ -367,7 +367,7 @@
   ],
   "package_manager": "bun",
   "languages": {
-   ".sql": 3072,
+   ".sql": 3074,
    ".tsx": 2525,
    ".ts": 2060,
    ".mjs": 496,
@@ -24817,6 +24817,16 @@
     "src": "supabase/migrations/20261126011000_connections_delete_admin_only.sql"
    },
    {
+    "name": "admin_supervisor_retention",
+    "table": "copilot_retention_aggregates",
+    "cmd": "SELECT",
+    "roles": "authenticated",
+    "mode": "permissive",
+    "using": "public.is_admin_or_supervisor(auth.uid())",
+    "check": "",
+    "src": "supabase/migrations/20261127140000_fix_retencao_copiloto.sql"
+   },
+   {
     "name": "Users can update own notifications",
     "table": "notifications",
     "cmd": "UPDATE",
@@ -26555,23 +26565,6 @@
     "body": "BEGIN IF current_setting('request.jwt.claims', true) IS NOT NULL AND current_user = 'authenticated' THEN IF TG_OP = 'INSERT' THEN NEW.retained_at := NULL; ELSE NEW.retained_at := OLD.retained_at; IF OLD.retained_at IS NOT NULL THEN NEW.final_text := NULL; END IF; END IF; END IF; RETURN NEW; END;",
     "raises": [],
     "tables": []
-   },
-   "run_copilot_retention": {
-    "args": "",
-    "returns": "void",
-    "lang": "plpgsql",
-    "src": "supabase/migrations/20261115050000_copilot_retention_aggregates.sql",
-    "security_definer": true,
-    "search_path": true,
-    "body": "DECLARE v_target_date date := current_date - 1; BEGIN INSERT INTO public.copilot_retention_aggregates ( profile_id, agg_date, sessions_opened, ticks_processed, insights_gen, brinde_complete, avg_temperature, updated_at ) SELECT s.profile_id, v_target_date, COUNT(DISTINCT s.id) AS sessions_opened, (SELECT COUNT(*) FROM public.ai_jobs j WHERE j.payload->>'session_id' = s.id::text AND j.kind = 'copilot_tick' AND j.available_at >= v_target_date AND j.available_at < v_target_date + 1) AS ticks_processed, COUNT(DISTINCT i.id) AS insights_gen, COUNT(DISTINCT s.id) FILTER (WHERE s.brinde_meter = 6) AS brinde_complete, AVG(s.temperature) AS avg_temperature FROM public.copilot_sessions s LEFT JOIN pub …",
-    "raises": [],
-    "tables": [
-     "SET",
-     "ai_jobs",
-     "copilot_insights",
-     "copilot_retention_aggregates",
-     "copilot_sessions"
-    ]
    },
    "auto_assign_contact": {
     "args": "",
@@ -31611,28 +31604,23 @@
     "args": "p_connection_id uuid",
     "returns": "jsonb",
     "lang": "plpgsql",
-    "src": "supabase/migrations/20261009031223_talkx_multiplix_consumo_compartilhado.sql",
+    "src": "supabase/migrations/20261127150000_recover_talkx_send_budget_internal.sql",
     "security_definer": true,
     "search_path": true,
-    "body": "DECLARE v_minute_limit integer; v_day_limit integer; v_minute_sent integer; v_day_sent integer; v_minute_start timestamptz; v_day_start timestamptz; v_next_day_at timestamptz; BEGIN IF COALESCE(auth.role(), '') <> 'service_role' THEN RAISE EXCEPTION 'service_role_required' USING ERRCODE = '42501'; END IF; IF p_connection_id IS NULL THEN RAISE EXCEPTION 'invalid_talkx_connection' USING ERRCODE = '22023'; END IF; SELECT COALESCE((settings.value)::text::integer, 6) INTO v_minute_limit FROM public.talkx_settings settings WHERE settings.key = 'max_per_minute_per_connection'; SELECT COALESCE((settings.value)::text::integer, 500) INTO v_day_limit FROM public.talkx_settings settings WHERE settings.k …",
+    "body": "BEGIN IF COALESCE(auth.role(), '') <> 'service_role' THEN RAISE EXCEPTION 'service_role_required' USING ERRCODE = '42501'; END IF; RETURN public.talkx_connection_send_budget_internal(p_connection_id); END;",
     "raises": [
-     "service_role_required",
-     "invalid_talkx_connection"
+     "service_role_required"
     ],
-    "tables": [
-     "talkx_settings",
-     "v_day_limit",
-     "v_minute_limit"
-    ]
+    "tables": []
    },
    "talkx_campaign_pace": {
     "args": "p_campaign_id uuid",
     "returns": "jsonb",
     "lang": "plpgsql",
-    "src": "supabase/migrations/20261002551230_talkx_limits_ritmo.sql",
+    "src": "supabase/migrations/20261127150000_recover_talkx_send_budget_internal.sql",
     "security_definer": true,
     "search_path": true,
-    "body": "DECLARE v_connection_id uuid; BEGIN IF COALESCE(auth.role(), '') = 'service_role' THEN NULL; ELSIF COALESCE(public.is_admin_or_supervisor(auth.uid()), false) IS NOT TRUE THEN RAISE EXCEPTION 'talkx_campaign_role_required' USING ERRCODE = '42501'; END IF; SELECT campaign.whatsapp_connection_id INTO v_connection_id FROM public.talkx_campaigns campaign WHERE campaign.id = p_campaign_id; IF v_connection_id IS NULL THEN RETURN jsonb_build_object( 'minute_limit', 0, 'minute_sent', 0, 'minute_remaining', 0, 'day_limit', 0, 'day_sent', 0, 'day_remaining', 0, 'next_day_at', null ); END IF; RETURN public.talkx_connection_send_budget(v_connection_id); END;",
+    "body": "DECLARE v_connection_id uuid; BEGIN IF COALESCE(auth.role(), '') = 'service_role' THEN NULL; ELSIF COALESCE(public.is_admin_or_supervisor(auth.uid()), false) IS NOT TRUE THEN RAISE EXCEPTION 'talkx_campaign_role_required' USING ERRCODE = '42501'; END IF; SELECT campaign.whatsapp_connection_id INTO v_connection_id FROM public.talkx_campaigns campaign WHERE campaign.id = p_campaign_id; IF v_connection_id IS NULL THEN RETURN jsonb_build_object( 'minute_limit', 0, 'minute_sent', 0, 'minute_remaining', 0, 'day_limit', 0, 'day_sent', 0, 'day_remaining', 0, 'next_day_at', null ); END IF; RETURN public.talkx_connection_send_budget_internal(v_connection_id); END;",
     "raises": [
      "talkx_campaign_role_required"
     ],
@@ -35506,6 +35494,57 @@
      "messages",
      "v_contact_id",
      "v_task_id"
+    ]
+   },
+   "run_copilot_retention": {
+    "args": "p_target_date date DEFAULT (current_date - 1",
+    "returns": "void",
+    "lang": "plpgsql",
+    "src": "supabase/migrations/20261127140000_fix_retencao_copiloto.sql",
+    "security_definer": true,
+    "search_path": true,
+    "body": "DECLARE v_linhas integer; BEGIN WITH sessoes AS ( SELECT s.id AS session_id, s.profile_id, s.brinde_meter, s.temperature FROM public.copilot_sessions s WHERE s.started_at >= p_target_date AND s.started_at < p_target_date + 1 ), por_perfil AS ( SELECT profile_id, count(*) AS sessions_opened, count(*) FILTER (WHERE brinde_meter = 6) AS brinde_complete, avg(temperature) AS avg_temperature FROM sessoes GROUP BY profile_id ), ticks AS ( SELECT se.profile_id, count(*) AS ticks_processed FROM sessoes se JOIN public.ai_jobs j ON j.payload->>'session_id' = se.session_id::text AND j.kind = 'copilot.tick' AND j.status = 'succeeded' AND j.available_at >= p_target_date AND j.available_at < p_target_date …",
+    "raises": [],
+    "tables": [
+     "SET",
+     "ai_jobs",
+     "copilot_insights",
+     "copilot_retention_aggregates",
+     "copilot_sessions",
+     "insights",
+     "por_perfil",
+     "sessoes",
+     "ticks"
+    ]
+   },
+   "recalcular_retencao_copiloto": {
+    "args": "p_dias integer DEFAULT 7",
+    "returns": "integer",
+    "lang": "plpgsql",
+    "src": "supabase/migrations/20261127140000_fix_retencao_copiloto.sql",
+    "security_definer": true,
+    "search_path": true,
+    "body": "DECLARE v_dia date; v_dias integer := least(greatest(coalesce(p_dias, 7), 1), 90); v_total integer := 0; BEGIN IF NOT public.is_admin_or_supervisor(auth.uid()) THEN RAISE EXCEPTION 'somente admin ou supervisor pode recalcular a retencao do copiloto' USING ERRCODE = '42501'; END IF; FOR v_dia IN SELECT generate_series(current_date - v_dias, current_date, interval '1 day')::date LOOP PERFORM public.run_copilot_retention(v_dia); v_total := v_total + 1; END LOOP; RETURN v_total; END;",
+    "raises": [
+     "somente admin ou supervisor pode recalcular a retencao do copiloto"
+    ],
+    "tables": []
+   },
+   "talkx_connection_send_budget_internal": {
+    "args": "p_connection_id uuid",
+    "returns": "jsonb",
+    "lang": "plpgsql",
+    "src": "supabase/migrations/20261127150000_recover_talkx_send_budget_internal.sql",
+    "security_definer": true,
+    "search_path": true,
+    "body": "DECLARE v_minute_limit integer; v_day_limit integer; v_minute_sent integer; v_day_sent integer; v_minute_start timestamptz; v_day_start timestamptz; v_next_day_at timestamptz; BEGIN IF p_connection_id IS NULL THEN RAISE EXCEPTION 'invalid_talkx_connection' USING ERRCODE = '22023'; END IF; SELECT COALESCE((settings.value)::text::integer, 6) INTO v_minute_limit FROM public.talkx_settings settings WHERE settings.key = 'max_per_minute_per_connection'; SELECT COALESCE((settings.value)::text::integer, 500) INTO v_day_limit FROM public.talkx_settings settings WHERE settings.key = 'daily_limit_per_connection'; v_minute_start := statement_timestamp() - interval '1 minute'; v_day_start := date_trunc(' …",
+    "raises": [
+     "invalid_talkx_connection"
+    ],
+    "tables": [
+     "talkx_settings",
+     "v_day_limit",
+     "v_minute_limit"
     ]
    },
    "uid": {
@@ -48623,6 +48662,8 @@
    "supabase/migrations/20261126213000_talkx_template_duplicate_archive_delete.sql",
    "supabase/migrations/20261126213001_talkx_template_delete_atomic.sql",
    "supabase/migrations/20261126221500_remind_me_about_message.sql",
+   "supabase/migrations/20261127140000_fix_retencao_copiloto.sql",
+   "supabase/migrations/20261127150000_recover_talkx_send_budget_internal.sql",
    "supabase/tests/admin_inbox_silence.sql",
    "supabase/tests/admin_unlock_login_autorizacao.sql",
    "supabase/tests/agent_workload.sql",
@@ -63818,6 +63859,54 @@
     "src": "supabase/migrations/20261126221500_remind_me_about_message.sql"
    },
    {
+    "kind": "revoke",
+    "privs": "all",
+    "object": "run_copilot_retention",
+    "objkind": "function",
+    "roles": "PUBLIC, anon, authenticated",
+    "src": "supabase/migrations/20261127140000_fix_retencao_copiloto.sql"
+   },
+   {
+    "kind": "grant",
+    "privs": "execute",
+    "object": "run_copilot_retention",
+    "objkind": "function",
+    "roles": "service_role",
+    "src": "supabase/migrations/20261127140000_fix_retencao_copiloto.sql"
+   },
+   {
+    "kind": "revoke",
+    "privs": "all",
+    "object": "recalcular_retencao_copiloto",
+    "objkind": "function",
+    "roles": "PUBLIC, anon",
+    "src": "supabase/migrations/20261127140000_fix_retencao_copiloto.sql"
+   },
+   {
+    "kind": "grant",
+    "privs": "execute",
+    "object": "recalcular_retencao_copiloto",
+    "objkind": "function",
+    "roles": "authenticated, service_role",
+    "src": "supabase/migrations/20261127140000_fix_retencao_copiloto.sql"
+   },
+   {
+    "kind": "revoke",
+    "privs": "all",
+    "object": "talkx_connection_send_budget_internal",
+    "objkind": "function",
+    "roles": "PUBLIC, anon, authenticated",
+    "src": "supabase/migrations/20261127150000_recover_talkx_send_budget_internal.sql"
+   },
+   {
+    "kind": "grant",
+    "privs": "execute",
+    "object": "talkx_connection_send_budget_internal",
+    "objkind": "function",
+    "roles": "service_role",
+    "src": "supabase/migrations/20261127150000_recover_talkx_send_budget_internal.sql"
+   },
+   {
     "kind": "grant",
     "privs": "select",
     "object": "profiles",
@@ -65321,11 +65410,6 @@
     "src": "supabase/migrations/20261002531230_t26_record_incoming_call_event_direction.sql"
    },
    {
-    "function": "talkx_campaign_pace",
-    "msg": "talkx_campaign_role_required",
-    "src": "supabase/migrations/20261002551230_talkx_limits_ritmo.sql"
-   },
-   {
     "function": "record_multiplix_item_delivered",
     "msg": "service_role_required",
     "src": "supabase/migrations/20261002561230_f58_reconcile_item_receipts.sql"
@@ -66518,16 +66602,6 @@
    {
     "function": "multiplix_connection_daily_usage",
     "msg": "invalid_multiplix_connection",
-    "src": "supabase/migrations/20261009031223_talkx_multiplix_consumo_compartilhado.sql"
-   },
-   {
-    "function": "talkx_connection_send_budget",
-    "msg": "service_role_required",
-    "src": "supabase/migrations/20261009031223_talkx_multiplix_consumo_compartilhado.sql"
-   },
-   {
-    "function": "talkx_connection_send_budget",
-    "msg": "invalid_talkx_connection",
     "src": "supabase/migrations/20261009031223_talkx_multiplix_consumo_compartilhado.sql"
    },
    {
@@ -69234,6 +69308,26 @@
     "function": "remind_me_about_message",
     "msg": "profile_not_found",
     "src": "supabase/migrations/20261126221500_remind_me_about_message.sql"
+   },
+   {
+    "function": "recalcular_retencao_copiloto",
+    "msg": "somente admin ou supervisor pode recalcular a retencao do copiloto",
+    "src": "supabase/migrations/20261127140000_fix_retencao_copiloto.sql"
+   },
+   {
+    "function": "talkx_connection_send_budget_internal",
+    "msg": "invalid_talkx_connection",
+    "src": "supabase/migrations/20261127150000_recover_talkx_send_budget_internal.sql"
+   },
+   {
+    "function": "talkx_connection_send_budget",
+    "msg": "service_role_required",
+    "src": "supabase/migrations/20261127150000_recover_talkx_send_budget_internal.sql"
+   },
+   {
+    "function": "talkx_campaign_pace",
+    "msg": "talkx_campaign_role_required",
+    "src": "supabase/migrations/20261127150000_recover_talkx_send_budget_internal.sql"
    },
    {
     "function": "espera_contem",
@@ -78333,8 +78427,8 @@
   },
   {
    "module": "supabase/migrations",
-   "files": 1161,
-   "lines": 116688,
+   "files": 1163,
+   "lines": 116993,
    "tables": [
     "audit_logs",
     "department_invites",
@@ -139406,6 +139500,22 @@
    {
     "file": "supabase/migrations/20261126221500_remind_me_about_message.sql",
     "line": "IF p_remind_at > now() + interval '90 days' THEN"
+   },
+   {
+    "file": "supabase/migrations/20261127140000_fix_retencao_copiloto.sql",
+    "line": "FOR v_dia IN SELECT generate_series(current_date - 30, current_date - 1, interval '1 day')::date LOOP"
+   },
+   {
+    "file": "supabase/migrations/20261127140000_fix_retencao_copiloto.sql",
+    "line": "FOR v_dia IN SELECT generate_series(current_date - v_dias, current_date, interval '1 day')::date LOOP"
+   },
+   {
+    "file": "supabase/migrations/20261127150000_recover_talkx_send_budget_internal.sql",
+    "line": "v_minute_start := statement_timestamp() - interval '1 minute';"
+   },
+   {
+    "file": "supabase/migrations/20261127150000_recover_talkx_send_budget_internal.sql",
+    "line": "v_next_day_at := v_day_start + interval '1 day';"
    },
    {
     "file": "supabase-export/BLOCO_01_schema_completo.sql",
@@ -239912,6 +240022,16 @@
     "src": "supabase/migrations/20261126011000_connections_delete_admin_only.sql"
    },
    {
+    "name": "admin_supervisor_retention",
+    "table": "copilot_retention_aggregates",
+    "cmd": "SELECT",
+    "roles": "authenticated",
+    "mode": "permissive",
+    "using": "public.is_admin_or_supervisor(auth.uid())",
+    "check": "",
+    "src": "supabase/migrations/20261127140000_fix_retencao_copiloto.sql"
+   },
+   {
     "name": "Users can update own notifications",
     "table": "notifications",
     "cmd": "UPDATE",
@@ -241650,23 +241770,6 @@
     "body": "BEGIN IF current_setting('request.jwt.claims', true) IS NOT NULL AND current_user = 'authenticated' THEN IF TG_OP = 'INSERT' THEN NEW.retained_at := NULL; ELSE NEW.retained_at := OLD.retained_at; IF OLD.retained_at IS NOT NULL THEN NEW.final_text := NULL; END IF; END IF; END IF; RETURN NEW; END;",
     "raises": [],
     "tables": []
-   },
-   "run_copilot_retention": {
-    "args": "",
-    "returns": "void",
-    "lang": "plpgsql",
-    "src": "supabase/migrations/20261115050000_copilot_retention_aggregates.sql",
-    "security_definer": true,
-    "search_path": true,
-    "body": "DECLARE v_target_date date := current_date - 1; BEGIN INSERT INTO public.copilot_retention_aggregates ( profile_id, agg_date, sessions_opened, ticks_processed, insights_gen, brinde_complete, avg_temperature, updated_at ) SELECT s.profile_id, v_target_date, COUNT(DISTINCT s.id) AS sessions_opened, (SELECT COUNT(*) FROM public.ai_jobs j WHERE j.payload->>'session_id' = s.id::text AND j.kind = 'copilot_tick' AND j.available_at >= v_target_date AND j.available_at < v_target_date + 1) AS ticks_processed, COUNT(DISTINCT i.id) AS insights_gen, COUNT(DISTINCT s.id) FILTER (WHERE s.brinde_meter = 6) AS brinde_complete, AVG(s.temperature) AS avg_temperature FROM public.copilot_sessions s LEFT JOIN pub …",
-    "raises": [],
-    "tables": [
-     "SET",
-     "ai_jobs",
-     "copilot_insights",
-     "copilot_retention_aggregates",
-     "copilot_sessions"
-    ]
    },
    "auto_assign_contact": {
     "args": "",
@@ -246706,28 +246809,23 @@
     "args": "p_connection_id uuid",
     "returns": "jsonb",
     "lang": "plpgsql",
-    "src": "supabase/migrations/20261009031223_talkx_multiplix_consumo_compartilhado.sql",
+    "src": "supabase/migrations/20261127150000_recover_talkx_send_budget_internal.sql",
     "security_definer": true,
     "search_path": true,
-    "body": "DECLARE v_minute_limit integer; v_day_limit integer; v_minute_sent integer; v_day_sent integer; v_minute_start timestamptz; v_day_start timestamptz; v_next_day_at timestamptz; BEGIN IF COALESCE(auth.role(), '') <> 'service_role' THEN RAISE EXCEPTION 'service_role_required' USING ERRCODE = '42501'; END IF; IF p_connection_id IS NULL THEN RAISE EXCEPTION 'invalid_talkx_connection' USING ERRCODE = '22023'; END IF; SELECT COALESCE((settings.value)::text::integer, 6) INTO v_minute_limit FROM public.talkx_settings settings WHERE settings.key = 'max_per_minute_per_connection'; SELECT COALESCE((settings.value)::text::integer, 500) INTO v_day_limit FROM public.talkx_settings settings WHERE settings.k …",
+    "body": "BEGIN IF COALESCE(auth.role(), '') <> 'service_role' THEN RAISE EXCEPTION 'service_role_required' USING ERRCODE = '42501'; END IF; RETURN public.talkx_connection_send_budget_internal(p_connection_id); END;",
     "raises": [
-     "service_role_required",
-     "invalid_talkx_connection"
+     "service_role_required"
     ],
-    "tables": [
-     "talkx_settings",
-     "v_day_limit",
-     "v_minute_limit"
-    ]
+    "tables": []
    },
    "talkx_campaign_pace": {
     "args": "p_campaign_id uuid",
     "returns": "jsonb",
     "lang": "plpgsql",
-    "src": "supabase/migrations/20261002551230_talkx_limits_ritmo.sql",
+    "src": "supabase/migrations/20261127150000_recover_talkx_send_budget_internal.sql",
     "security_definer": true,
     "search_path": true,
-    "body": "DECLARE v_connection_id uuid; BEGIN IF COALESCE(auth.role(), '') = 'service_role' THEN NULL; ELSIF COALESCE(public.is_admin_or_supervisor(auth.uid()), false) IS NOT TRUE THEN RAISE EXCEPTION 'talkx_campaign_role_required' USING ERRCODE = '42501'; END IF; SELECT campaign.whatsapp_connection_id INTO v_connection_id FROM public.talkx_campaigns campaign WHERE campaign.id = p_campaign_id; IF v_connection_id IS NULL THEN RETURN jsonb_build_object( 'minute_limit', 0, 'minute_sent', 0, 'minute_remaining', 0, 'day_limit', 0, 'day_sent', 0, 'day_remaining', 0, 'next_day_at', null ); END IF; RETURN public.talkx_connection_send_budget(v_connection_id); END;",
+    "body": "DECLARE v_connection_id uuid; BEGIN IF COALESCE(auth.role(), '') = 'service_role' THEN NULL; ELSIF COALESCE(public.is_admin_or_supervisor(auth.uid()), false) IS NOT TRUE THEN RAISE EXCEPTION 'talkx_campaign_role_required' USING ERRCODE = '42501'; END IF; SELECT campaign.whatsapp_connection_id INTO v_connection_id FROM public.talkx_campaigns campaign WHERE campaign.id = p_campaign_id; IF v_connection_id IS NULL THEN RETURN jsonb_build_object( 'minute_limit', 0, 'minute_sent', 0, 'minute_remaining', 0, 'day_limit', 0, 'day_sent', 0, 'day_remaining', 0, 'next_day_at', null ); END IF; RETURN public.talkx_connection_send_budget_internal(v_connection_id); END;",
     "raises": [
      "talkx_campaign_role_required"
     ],
@@ -250603,6 +250701,57 @@
      "v_task_id"
     ]
    },
+   "run_copilot_retention": {
+    "args": "p_target_date date DEFAULT (current_date - 1",
+    "returns": "void",
+    "lang": "plpgsql",
+    "src": "supabase/migrations/20261127140000_fix_retencao_copiloto.sql",
+    "security_definer": true,
+    "search_path": true,
+    "body": "DECLARE v_linhas integer; BEGIN WITH sessoes AS ( SELECT s.id AS session_id, s.profile_id, s.brinde_meter, s.temperature FROM public.copilot_sessions s WHERE s.started_at >= p_target_date AND s.started_at < p_target_date + 1 ), por_perfil AS ( SELECT profile_id, count(*) AS sessions_opened, count(*) FILTER (WHERE brinde_meter = 6) AS brinde_complete, avg(temperature) AS avg_temperature FROM sessoes GROUP BY profile_id ), ticks AS ( SELECT se.profile_id, count(*) AS ticks_processed FROM sessoes se JOIN public.ai_jobs j ON j.payload->>'session_id' = se.session_id::text AND j.kind = 'copilot.tick' AND j.status = 'succeeded' AND j.available_at >= p_target_date AND j.available_at < p_target_date …",
+    "raises": [],
+    "tables": [
+     "SET",
+     "ai_jobs",
+     "copilot_insights",
+     "copilot_retention_aggregates",
+     "copilot_sessions",
+     "insights",
+     "por_perfil",
+     "sessoes",
+     "ticks"
+    ]
+   },
+   "recalcular_retencao_copiloto": {
+    "args": "p_dias integer DEFAULT 7",
+    "returns": "integer",
+    "lang": "plpgsql",
+    "src": "supabase/migrations/20261127140000_fix_retencao_copiloto.sql",
+    "security_definer": true,
+    "search_path": true,
+    "body": "DECLARE v_dia date; v_dias integer := least(greatest(coalesce(p_dias, 7), 1), 90); v_total integer := 0; BEGIN IF NOT public.is_admin_or_supervisor(auth.uid()) THEN RAISE EXCEPTION 'somente admin ou supervisor pode recalcular a retencao do copiloto' USING ERRCODE = '42501'; END IF; FOR v_dia IN SELECT generate_series(current_date - v_dias, current_date, interval '1 day')::date LOOP PERFORM public.run_copilot_retention(v_dia); v_total := v_total + 1; END LOOP; RETURN v_total; END;",
+    "raises": [
+     "somente admin ou supervisor pode recalcular a retencao do copiloto"
+    ],
+    "tables": []
+   },
+   "talkx_connection_send_budget_internal": {
+    "args": "p_connection_id uuid",
+    "returns": "jsonb",
+    "lang": "plpgsql",
+    "src": "supabase/migrations/20261127150000_recover_talkx_send_budget_internal.sql",
+    "security_definer": true,
+    "search_path": true,
+    "body": "DECLARE v_minute_limit integer; v_day_limit integer; v_minute_sent integer; v_day_sent integer; v_minute_start timestamptz; v_day_start timestamptz; v_next_day_at timestamptz; BEGIN IF p_connection_id IS NULL THEN RAISE EXCEPTION 'invalid_talkx_connection' USING ERRCODE = '22023'; END IF; SELECT COALESCE((settings.value)::text::integer, 6) INTO v_minute_limit FROM public.talkx_settings settings WHERE settings.key = 'max_per_minute_per_connection'; SELECT COALESCE((settings.value)::text::integer, 500) INTO v_day_limit FROM public.talkx_settings settings WHERE settings.key = 'daily_limit_per_connection'; v_minute_start := statement_timestamp() - interval '1 minute'; v_day_start := date_trunc(' …",
+    "raises": [
+     "invalid_talkx_connection"
+    ],
+    "tables": [
+     "talkx_settings",
+     "v_day_limit",
+     "v_minute_limit"
+    ]
+   },
    "uid": {
     "args": "",
     "returns": "uuid",
@@ -252445,11 +252594,6 @@
     "src": "supabase/migrations/20261002531230_t26_record_incoming_call_event_direction.sql"
    },
    {
-    "function": "talkx_campaign_pace",
-    "msg": "talkx_campaign_role_required",
-    "src": "supabase/migrations/20261002551230_talkx_limits_ritmo.sql"
-   },
-   {
     "function": "record_multiplix_item_delivered",
     "msg": "service_role_required",
     "src": "supabase/migrations/20261002561230_f58_reconcile_item_receipts.sql"
@@ -253642,16 +253786,6 @@
    {
     "function": "multiplix_connection_daily_usage",
     "msg": "invalid_multiplix_connection",
-    "src": "supabase/migrations/20261009031223_talkx_multiplix_consumo_compartilhado.sql"
-   },
-   {
-    "function": "talkx_connection_send_budget",
-    "msg": "service_role_required",
-    "src": "supabase/migrations/20261009031223_talkx_multiplix_consumo_compartilhado.sql"
-   },
-   {
-    "function": "talkx_connection_send_budget",
-    "msg": "invalid_talkx_connection",
     "src": "supabase/migrations/20261009031223_talkx_multiplix_consumo_compartilhado.sql"
    },
    {
@@ -256358,6 +256492,26 @@
     "function": "remind_me_about_message",
     "msg": "profile_not_found",
     "src": "supabase/migrations/20261126221500_remind_me_about_message.sql"
+   },
+   {
+    "function": "recalcular_retencao_copiloto",
+    "msg": "somente admin ou supervisor pode recalcular a retencao do copiloto",
+    "src": "supabase/migrations/20261127140000_fix_retencao_copiloto.sql"
+   },
+   {
+    "function": "talkx_connection_send_budget_internal",
+    "msg": "invalid_talkx_connection",
+    "src": "supabase/migrations/20261127150000_recover_talkx_send_budget_internal.sql"
+   },
+   {
+    "function": "talkx_connection_send_budget",
+    "msg": "service_role_required",
+    "src": "supabase/migrations/20261127150000_recover_talkx_send_budget_internal.sql"
+   },
+   {
+    "function": "talkx_campaign_pace",
+    "msg": "talkx_campaign_role_required",
+    "src": "supabase/migrations/20261127150000_recover_talkx_send_budget_internal.sql"
    },
    {
     "function": "espera_contem",
@@ -261819,7 +261973,8 @@
     "SELECT": [
      "service_role: true",
      "authenticated: profile_id = auth.uid()",
-     "service_role: true"
+     "service_role: true",
+     "authenticated: public.is_admin_or_supervisor(auth.uid())"
     ],
     "INSERT": [
      "service_role: true",
@@ -265104,6 +265259,8 @@
    "supabase/migrations/20261126010508_city_whitelist_network_policy.sql",
    "supabase/migrations/20261126011000_connections_delete_admin_only.sql",
    "supabase/migrations/20261126213000_talkx_template_duplicate_archive_delete.sql",
+   "supabase/migrations/20261127140000_fix_retencao_copiloto.sql",
+   "supabase/migrations/20261127150000_recover_talkx_send_budget_internal.sql",
    "supabase/tests/admin_inbox_silence.sql",
    "supabase/tests/admin_unlock_login_autorizacao.sql",
    "supabase/tests/agent_workload.sql",
@@ -265442,6 +265599,7 @@
    "reap_ai_jobs",
    "reassign_absent_agents",
    "reassign_overloaded_agents",
+   "recalcular_retencao_copiloto",
    "record_away_message",
    "record_failed_login",
    "record_multiplix_item_delivered",
@@ -265551,6 +265709,7 @@
    "talkx_campaign_window_open",
    "talkx_compile_segment_rules",
    "talkx_connection_send_budget",
+   "talkx_connection_send_budget_internal",
    "talkx_delete_link",
    "talkx_engine_alerts",
    "talkx_engine_cron_runs",
@@ -280513,6 +280672,54 @@
     "objkind": "function",
     "roles": "authenticated",
     "src": "supabase/migrations/20261126221500_remind_me_about_message.sql"
+   },
+   {
+    "kind": "revoke",
+    "privs": "all",
+    "object": "run_copilot_retention",
+    "objkind": "function",
+    "roles": "PUBLIC, anon, authenticated",
+    "src": "supabase/migrations/20261127140000_fix_retencao_copiloto.sql"
+   },
+   {
+    "kind": "grant",
+    "privs": "execute",
+    "object": "run_copilot_retention",
+    "objkind": "function",
+    "roles": "service_role",
+    "src": "supabase/migrations/20261127140000_fix_retencao_copiloto.sql"
+   },
+   {
+    "kind": "revoke",
+    "privs": "all",
+    "object": "recalcular_retencao_copiloto",
+    "objkind": "function",
+    "roles": "PUBLIC, anon",
+    "src": "supabase/migrations/20261127140000_fix_retencao_copiloto.sql"
+   },
+   {
+    "kind": "grant",
+    "privs": "execute",
+    "object": "recalcular_retencao_copiloto",
+    "objkind": "function",
+    "roles": "authenticated, service_role",
+    "src": "supabase/migrations/20261127140000_fix_retencao_copiloto.sql"
+   },
+   {
+    "kind": "revoke",
+    "privs": "all",
+    "object": "talkx_connection_send_budget_internal",
+    "objkind": "function",
+    "roles": "PUBLIC, anon, authenticated",
+    "src": "supabase/migrations/20261127150000_recover_talkx_send_budget_internal.sql"
+   },
+   {
+    "kind": "grant",
+    "privs": "execute",
+    "object": "talkx_connection_send_budget_internal",
+    "objkind": "function",
+    "roles": "service_role",
+    "src": "supabase/migrations/20261127150000_recover_talkx_send_budget_internal.sql"
    },
    {
     "kind": "grant",
@@ -426654,6 +426861,24 @@
     "notify_due_tasks"
    ]
   },
+  "supabase/migrations/20261127140000_fix_retencao_copiloto.sql": {
+   "path": "supabase/migrations/20261127140000_fix_retencao_copiloto.sql",
+   "lines": 179,
+   "temporal": [
+    "FOR v_dia IN SELECT generate_series(current_date - 30, current_date - 1, interval '1 day')::date LOOP",
+    "FOR v_dia IN SELECT generate_series(current_date - v_dias, current_date, interval '1 day')::date LOOP"
+   ],
+   "uses_service_role": true
+  },
+  "supabase/migrations/20261127150000_recover_talkx_send_budget_internal.sql": {
+   "path": "supabase/migrations/20261127150000_recover_talkx_send_budget_internal.sql",
+   "lines": 126,
+   "temporal": [
+    "v_minute_start := statement_timestamp() - interval '1 minute';",
+    "v_next_day_at := v_day_start + interval '1 day';"
+   ],
+   "uses_service_role": true
+  },
   "supabase/tests/admin_inbox_silence.sql": {
    "path": "supabase/tests/admin_inbox_silence.sql",
    "lines": 310,
@@ -430575,10 +430800,23 @@
   }
  },
  "git": {
-  "sha": "4e81b2b13e73b3533a320fd5a678f51f9065a959",
+  "sha": "d91ac94ff23aee5eb2babfac0853194179e0bb3d",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "d91ac94f",
+    "date": "2026-11-26",
+    "author": "adm01-debug",
+    "subject": "fix(db): cron de retenção do copiloto nunca gravou (subquery + kind errado) (#3417)",
+    "files": [
+     "docs/DB-INVENTORY.md",
+     "supabase/migrations/20261127140000_fix_retencao_copiloto.sql",
+     "supabase/migrations/20261127150000_recover_talkx_send_budget_internal.sql",
+     "supabase/schema-catalog.json",
+     "supabase/schema-manifest.json"
+    ]
+   },
    {
     "sha": "4e81b2b1",
     "date": "2026-11-26",
@@ -431037,26 +431275,12 @@
      "src/__tests__/a11y/icon-buttons-baseline.json",
      "src/components/admin/PlaybooksManager.tsx"
     ]
-   },
-   {
-    "sha": "9086dfdb",
-    "date": "2026-11-25",
-    "author": "adm01-debug",
-    "subject": "fix: novidade do catalogo passa a usar a expiracao do banco (regra do Promo Gifts V4) (#3379)",
-    "files": [
-     "docs/pendencias/filtro-novidades-com-contagem-vinda-da-edge-ct64.md",
-     "src/components/catalog/CatalogRail.tsx",
-     "supabase/deployment-manifest.json",
-     "supabase/functions/promogifts-catalog/index.actions.test.ts",
-     "supabase/functions/promogifts-catalog/index.test.ts",
-     "supabase/functions/promogifts-catalog/index.ts"
-    ]
    }
   ],
   "hot_files": [
    [
     "docs/DB-INVENTORY.md",
-    13
+    14
    ],
    [
     "docs/talkx/ESTADOS.md",
@@ -431064,7 +431288,7 @@
    ],
    [
     "supabase/deployment-manifest.json",
-    6
+    5
    ],
    [
     "src/components/security/SecurityView.tsx",
@@ -431095,6 +431319,14 @@
     3
    ],
    [
+    "supabase/schema-catalog.json",
+    2
+   ],
+   [
+    "supabase/schema-manifest.json",
+    2
+   ],
+   [
     "src/components/talkx/TalkXAnalytics.tsx",
     2
    ],
@@ -431119,19 +431351,11 @@
     2
    ],
    [
-    "scripts/db-audit/known-violations.json",
+    "supabase/migrations/20261127140000_fix_retencao_copiloto.sql",
     1
    ],
    [
-    "src/components/admin/AIBudgetTab.tsx",
-    1
-   ],
-   [
-    "src/components/admin/AIUsageDashboard.tsx",
-    1
-   ],
-   [
-    "src/hooks/analytics/__tests__/useAIBudgetSummary.test.ts",
+    "supabase/migrations/20261127150000_recover_talkx_send_budget_internal.sql",
     1
    ]
   ]

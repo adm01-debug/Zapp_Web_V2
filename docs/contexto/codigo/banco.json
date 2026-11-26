@@ -8,7 +8,7 @@
   "supabase/migrations",
   "typeorm"
  ],
- "migrations": 1161,
+ "migrations": 1163,
  "seeds": [
   "docs/contexto/supabase/functions/public/seed_default_goals_for_profile__12ae32cb1ec02d01.sql",
   "e2e/fixtures/seed-talk-me.sql",
@@ -432,6 +432,7 @@
   "reap_ai_jobs",
   "reassign_absent_agents",
   "reassign_overloaded_agents",
+  "recalcular_retencao_copiloto",
   "record_away_message",
   "record_failed_login",
   "record_multiplix_item_delivered",
@@ -560,6 +561,7 @@
   "talkx_campaign_window_open",
   "talkx_compile_segment_rules",
   "talkx_connection_send_budget",
+  "talkx_connection_send_budget_internal",
   "talkx_delete_link",
   "talkx_engine_alerts",
   "talkx_engine_cron_runs",
@@ -10655,6 +10657,12 @@
    },
    "rls": true,
    "policies": [
+    {
+     "nome": "admin_supervisor_retention",
+     "comando": "select",
+     "para": "authenticated",
+     "tipo": "permissive"
+    },
     {
      "nome": "own_retention",
      "comando": "select",

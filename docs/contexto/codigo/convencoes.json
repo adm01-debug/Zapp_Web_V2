@@ -66,11 +66,11 @@
  "commits": {
   "convencao": "conventional commits (observado)",
   "exemplos": [
+   "fix(db): cron de retenção do copiloto nunca gravou (subquery + kind errado) (#3417)",
    "feat(admin): aba Orçamento no Consumo IA — reservado x consumido do ledger (#3420)",
    "feat(admin): dominios confiaveis do cadastro automatico ganham tela (#3416)",
    "feat(sla): alertas de SLA ganham trilha auditavel, resolucao e preferencias por usuario (#3411)",
-   "feat(talkx): painel dos jobs de dados nas configuracoes (#3415)",
-   "feat(admin): historico das limpezas do cache de previas ganha tela (#3414)"
+   "feat(talkx): painel dos jobs de dados nas configuracoes (#3415)"
   ]
  },
  "pr_template": ".github/PULL_REQUEST_TEMPLATE.md",

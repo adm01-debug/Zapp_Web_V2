@@ -1,6 +1,6 @@
 # 10 · ACESSO E SEGURANÇA — quem pode o quê
 
-> Gerado automaticamente por AI Context Sync v1.3.2 · commit `4e81b2b13e` · branch `main` · 2026-11-26 17:08 UTC
+> Gerado automaticamente por AI Context Sync v1.3.2 · commit `d91ac94ff2` · branch `main` · 2026-11-26 19:02 UTC
 > Não edite à mão — regras humanas vão em `manual/`.
 
 ## Perfis / roles identificados
@@ -86,7 +86,7 @@
 | `copilot_objection_catalog` | enabled | authenticated: true | authenticated: submitted_by = auth.uid() | — | — |
 | `copilot_outcomes` | enabled | authenticated: seller_id = auth.uid() | authenticated: seller_id = auth.uid() | — | — |
 | `copilot_presence` | enabled | authenticated: profile_id IN (SELECT id FROM public.profiles WHERE user_id = auth.uid())<br>service_role: true | authenticated: profile_id IN (SELECT id FROM public.profiles WHERE user_id = auth.uid())<br>service_role: true | authenticated: profile_id IN (SELECT id FROM public.profiles WHERE user_id = auth.uid())<br>service_role: true | authenticated: profile_id IN (SELECT id FROM public.profiles WHERE user_id = auth.uid())<br>service_role: true |
-| `copilot_retention_aggregates` | enabled | service_role: true<br>authenticated: profile_id = auth.uid()<br>service_role: true | service_role: true<br>service_role: true | service_role: true<br>service_role: true | service_role: true<br>service_role: true |
+| `copilot_retention_aggregates` | enabled | service_role: true<br>authenticated: profile_id = auth.uid()<br>service_role: true<br>authenticated: public.is_admin_or_supervisor(auth.uid()) | service_role: true<br>service_role: true | service_role: true<br>service_role: true | service_role: true<br>service_role: true |
 | `copilot_seller_settings` | enabled | authenticated: seller_id = auth.uid() | authenticated: seller_id = auth.uid() | authenticated: seller_id = auth.uid() | — |
 | `copilot_sessions` | enabled | authenticated: profile_id IN ( SELECT id FROM public.profiles WHERE user_id = auth.uid() )<br>service_role: true<br>public: profile_id = auth.uid()<br>service_role: true | authenticated: profile_id IN ( SELECT id FROM public.profiles WHERE user_id = auth.uid() )<br>service_role: true<br>public: profile_id = auth.uid()<br>service_role: true | authenticated: profile_id IN ( SELECT id FROM public.profiles WHERE user_id = auth.uid() )<br>service_role: true<br>public: profile_id = auth.uid()<br>service_role: true | authenticated: profile_id IN ( SELECT id FROM public.profiles WHERE user_id = auth.uid() )<br>service_role: true<br>public: profile_id = auth.uid()<br>service_role: true |
 | `copilot_usage` | enabled | authenticated: seller_id = auth.uid() | authenticated: seller_id = auth.uid() | — | — |
@@ -248,7 +248,7 @@
 
 > `—` com RLS ligado = ninguém além de service_role. `sem RLS` = qualquer chave anon lê/escreve tudo.
 
-## Onde o RLS é IGNORADO (service_role) — 1205 arquivo(s)
+## Onde o RLS é IGNORADO (service_role) — 1207 arquivo(s)
 
 - `analise-prs/resgate-261118-lote2/scripts/db-audit/validate-post-apply.mjs`
 - `analise-prs/resgate-261118-lote2/supabase/migrations/20261016193300_copilot_tick_trigger.sql`
@@ -400,7 +400,7 @@
 - `docs/contexto/supabase/migrations/20260319210228_f33bb285-7797-4bfe-93c6-94f4096b83a6.sql`
 - `docs/contexto/supabase/migrations/20260320133103_90061855-3227-445f-a47a-a15c38ac5cf2.sql`
 - `docs/contexto/supabase/migrations/20260401002519_b7df7d1f-2caf-48c2-a23b-62df9f4fc772.sql`
-- … +1055 (lista completa em `context.json`)
+- … +1057 (lista completa em `context.json`)
 
 ## Funções SQL `SECURITY DEFINER` (rodam com privilégio do dono, ignoram RLS)
 
@@ -647,6 +647,7 @@
 - `reap_ai_jobs`
 - `reassign_absent_agents`
 - `reassign_overloaded_agents`
+- `recalcular_retencao_copiloto`
 - `record_away_message`
 - `record_failed_login`
 - `record_multiplix_item_delivered`
@@ -756,6 +757,7 @@
 - `talkx_campaign_window_open`
 - `talkx_compile_segment_rules`
 - `talkx_connection_send_budget`
+- `talkx_connection_send_budget_internal`
 - `talkx_delete_link`
 - `talkx_engine_alerts`
 - `talkx_engine_cron_runs`
@@ -898,13 +900,13 @@ Middleware matcher (Next.js): nenhum
 | grant | authenticated, anon, service_role | execute | `pg_temp.assert_permitido`, `pg_temp.assert_negado`, `is_contact_visible_to_user`, `get_visible_agent_ids`, `get_profile_id_for_user`, `is_admin_or_supervisor` |
 | grant | authenticated, anon, service_role | insert | `prova_hz503_asserts` |
 | grant | authenticated, anon, service_role | select, insert, update, delete | `password_reset_requests`, `conversation_analyses` |
-| grant | authenticated, service_role | execute | `get_department_whatsapp_credentials`, `dashboard_leaderboard`, `search_contacts`, `ai_usage_cost_summary`, `merge_contacts_atomic`, `get_department_whatsapp_credentials`, `get_crm_sync_health`, `get_crm_sync_health`, `merge_contacts_atomic`, `get_profile_id_for_user`, `get_visible_agent_ids`, `is_contact_visible_to_user`, `close_conversation_atomic`, `is_valid_talkx_schedule_timezone`, `is_valid_talkx_schedule_timezone` … +128 |
+| grant | authenticated, service_role | execute | `get_department_whatsapp_credentials`, `dashboard_leaderboard`, `search_contacts`, `ai_usage_cost_summary`, `merge_contacts_atomic`, `get_department_whatsapp_credentials`, `get_crm_sync_health`, `get_crm_sync_health`, `merge_contacts_atomic`, `get_profile_id_for_user`, `get_visible_agent_ids`, `is_contact_visible_to_user`, `close_conversation_atomic`, `is_valid_talkx_schedule_timezone`, `is_valid_talkx_schedule_timezone` … +129 |
 | grant | authenticated, service_role | select | `talkx_campaign_optouts`, `talkx_engine_health`, `talkx_engine_health`, `talkx_ddd_regions`, `security_acl_alerts`, `talkx_campaign_optouts`, `profiles`, `user_roles`, `t88_ids`, `profiles`, `profiles` |
 | grant | authenticated, service_role | select, insert, update | `messages` |
 | grant | authenticated, service_role | select, insert, update, delete | `contact_notes`, `contact_protection_policy` |
 | grant | postgres | execute | `set_conversation_status`, `set_conversation_status`, `set_conversation_status`, `set_conversation_status`, `set_conversation_status`, `set_conversation_status` |
 | grant | service_role | all | `audio_meme_favorites`, `link_preview_cache`, `link_preview_cache_metrics`, `audio_meme_favorites`, `link_preview_cache`, `link_preview_cache_metrics`, `talkx_links`, `talkx_link_clicks`, `talkx_conversions`, `talkx_settings`, `multiplix_delivery_items`, `ai_budget_reservations`, `ai_jobs`, `talkx_test_send_claims`, `talkx_optout_keywords` … +19 |
-| grant | service_role | execute | `mark_outbound_post_started`, `claim_outbound_message`, `run_copilot_retention`, `cleanup_link_preview_cache`, `get_identity_matrix`, `set_conversation_status`, `purge_talkx_expired_data`, `retry_talkx_recipient`, `get_team_profiles`, `cleanup_link_preview_cache`, `encrypt_gmail_token`, `decrypt_gmail_token`, `get_gmail_tokens`, `store_gmail_tokens`, `get_identity_matrix` … +237 |
+| grant | service_role | execute | `mark_outbound_post_started`, `claim_outbound_message`, `run_copilot_retention`, `cleanup_link_preview_cache`, `get_identity_matrix`, `set_conversation_status`, `purge_talkx_expired_data`, `retry_talkx_recipient`, `get_team_profiles`, `cleanup_link_preview_cache`, `encrypt_gmail_token`, `decrypt_gmail_token`, `get_gmail_tokens`, `store_gmail_tokens`, `get_identity_matrix` … +239 |
 | grant | service_role | select | `gmail_accounts_safe`, `gmail_accounts_safe`, `password_reset_requests_safe`, `profiles_public`, `gmail_accounts_safe`, `gmail_accounts_safe`, `password_reset_requests_safe`, `profiles_public`, `searchbox_budget_alert_cron`, `sla_alert_events` |
 | grant | service_role | select, insert | `contact_deletion_audit`, `audit_logs`, `contact_block_audit` |
 | grant | service_role | select, insert, update | `multiplix_events`, `searchbox_budget_alert_emails`, `talkx_segment_library_history`, `talkx_contact_attributes`, `public` |
@@ -915,9 +917,9 @@ Middleware matcher (Next.js): nenhum
 | grant | service_role, postgres | execute | `mcp_exec`, `mcp_exec_many` |
 | revoke | PUBLIC | all | `run_copilot_retention`, `get_identity_matrix`, `dashboard_leaderboard`, `get_identity_matrix`, `enqueue_crm_sync_from_closure`, `enforce_talkx_campaign_mutability`, `enforce_talkx_recipient_snapshot_mutability`, `enforce_talkx_campaign_mutability`, `enforce_talkx_recipient_snapshot_mutability`, `enforce_talkx_campaign_mutability`, `is_valid_talkx_schedule_timezone`, `talkx_overview_stats`, `talkx_campaign_report`, `talkx_segment_tags`, `talkx_benchmarks` … +52 |
 | revoke | PUBLIC | execute | `dashboard_kpi`, `dashboard_contact_counts`, `dashboard_hourly_volume`, `set_conversation_status`, `record_failed_login`, `messages_sla_first_response_trigger`, `calculate_level`, `normalize_contact_phone`, `dashboard_kpi`, `dashboard_contact_counts`, `dashboard_hourly_volume`, `grant_agent_achievement`, `grant_agent_achievement`, `add_agent_xp`, `update_agent_streak` … +31 |
-| revoke | PUBLIC, anon | all | `resolve_unconfirmed_message`, `mark_first_response`, `mark_first_response`, `mark_first_response`, `count_searchbox_sessions_this_month`, `merge_contacts_atomic`, `mark_first_response`, `mark_first_response`, `mark_first_response`, `get_crm_sync_health`, `get_crm_sync_health`, `merge_contacts_atomic`, `get_profile_id_for_user`, `get_visible_agent_ids`, `is_contact_visible_to_user` … +132 |
+| revoke | PUBLIC, anon | all | `resolve_unconfirmed_message`, `mark_first_response`, `mark_first_response`, `mark_first_response`, `count_searchbox_sessions_this_month`, `merge_contacts_atomic`, `mark_first_response`, `mark_first_response`, `mark_first_response`, `get_crm_sync_health`, `get_crm_sync_health`, `merge_contacts_atomic`, `get_profile_id_for_user`, `get_visible_agent_ids`, `is_contact_visible_to_user` … +133 |
 | revoke | PUBLIC, anon | execute | `get_department_whatsapp_credentials`, `get_identity_matrix`, `get_own_lockout_status`, `effective_role`, `is_admin`, `is_ip_blocked`, `is_ip_whitelisted`, `is_country_allowed`, `is_country_blocked`, `audit_role_permissions_changes`, `sync_profile_role_from_user_roles`, `sync_thread_last_sender`, `update_device_last_seen`, `update_global_settings_updated_at`, `update_updated_at_column` … +87 |
-| revoke | PUBLIC, anon, authenticated | all | `enqueue_copilot_tick_on_contact_message`, `mark_outbound_post_started`, `claim_outbound_message`, `register_first_response_internal`, `register_first_response_internal`, `notify_due_reminders`, `guard_message_provenance_fields`, `backfill_reminders_to_conversation_tasks`, `purge_talkx_expired_data`, `guard_contact_note_identity`, `retry_talkx_recipient`, `grant_agent_achievement_internal`, `encrypt_gmail_token`, `decrypt_gmail_token`, `get_gmail_tokens` … +238 |
+| revoke | PUBLIC, anon, authenticated | all | `enqueue_copilot_tick_on_contact_message`, `mark_outbound_post_started`, `claim_outbound_message`, `register_first_response_internal`, `register_first_response_internal`, `notify_due_reminders`, `guard_message_provenance_fields`, `backfill_reminders_to_conversation_tasks`, `purge_talkx_expired_data`, `guard_contact_note_identity`, `retry_talkx_recipient`, `grant_agent_achievement_internal`, `encrypt_gmail_token`, `decrypt_gmail_token`, `get_gmail_tokens` … +240 |
 | revoke | PUBLIC, anon, authenticated | all privileges | `webhook_failures` |
 | revoke | PUBLIC, anon, authenticated | execute | `multiplix_audiences_validate_shared_roles`, `consume_rate_limit`, `phone_variants`, `ingest_inbound_message`, `reschedule_talkx_recipient`, `transition_talkx_campaign`, `expire_stale_agent_presence`, `handle_message_gamification`, `handle_conversation_closure_gamification`, `get_department_whatsapp_credentials`, `get_department_whatsapp_api_key`, `record_incoming_call_event`, `sanitize_reset_request`, `team_receipts_fill_conversation_id`, `team_reactions_force_conversation_id` … +25 |
 | revoke | PUBLIC, anon, authenticated | truncate, references, trigger | `public` |
