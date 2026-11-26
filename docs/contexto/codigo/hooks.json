@@ -1,7 +1,7 @@
 {
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
- "total": 531,
+ "total": 533,
  "hooks": [
   {
    "arquivo": "analise-prs/resgate-261118-lote2/src/hooks/useMotionSeguro.ts",
@@ -2608,7 +2608,7 @@
     "useState"
    ],
    "canais_realtime": [],
-   "usado_por": 111,
+   "usado_por": 113,
    "usado_por_arquivos": [
     "src/App.tsx",
     "src/components/auth/ProtectedRoute.tsx",
@@ -10455,6 +10455,63 @@
    "coberto_por_testes": 1
   },
   {
+   "arquivo": "src/hooks/sla/useSlaAlertEvents.ts",
+   "hooks_exportados": [
+    "useSlaAlertEvents"
+   ],
+   "linhas": 192,
+   "dominio": "hooks/sla",
+   "tabelas": [
+    "contacts",
+    "sla_alert_events"
+   ],
+   "rpcs": [
+    "resolve_sla_alert"
+   ],
+   "edges": [],
+   "hooks_internos": [
+    "useAuth",
+    "useMutation",
+    "useQuery",
+    "useQueryClient"
+   ],
+   "canais_realtime": [],
+   "usado_por": 3,
+   "usado_por_arquivos": [
+    "src/components/sla/SLAAlertHistoryPanel.tsx",
+    "src/components/sla/slaAlertLabels.ts",
+    "src/hooks/sla/index.ts"
+   ],
+   "coberto_por_testes": 2
+  },
+  {
+   "arquivo": "src/hooks/sla/useSlaAlertPreferences.ts",
+   "hooks_exportados": [
+    "useSlaAlertPreferences"
+   ],
+   "linhas": 97,
+   "dominio": "hooks/sla",
+   "tabelas": [
+    "sla_alert_preferences"
+   ],
+   "rpcs": [],
+   "edges": [],
+   "hooks_internos": [
+    "useAuth",
+    "useMutation",
+    "useQuery",
+    "useQueryClient"
+   ],
+   "canais_realtime": [],
+   "usado_por": 3,
+   "usado_por_arquivos": [
+    "src/components/sla/SLAAlertPreferencesCard.tsx",
+    "src/hooks/sla/index.ts",
+    "src/hooks/sla/useSLANotifications.ts"
+   ],
+   "coberto_por_testes": 1
+  },
+  {
    "arquivo": "src/hooks/sla/useSLACalculation.ts",
    "hooks_exportados": [
     "useSLACalculation"
@@ -10561,20 +10618,23 @@
    "hooks_exportados": [
     "useSLANotifications"
    ],
-   "linhas": 412,
+   "linhas": 466,
    "dominio": "hooks/sla",
    "tabelas": [
     "contacts",
     "sla_configurations",
     "sla_rules"
    ],
-   "rpcs": [],
+   "rpcs": [
+    "record_sla_alert"
+   ],
    "edges": [],
    "hooks_internos": [
     "useAuth",
     "useEffect",
     "useNotificationSettings",
-    "useRef"
+    "useRef",
+    "useSlaAlertPreferences"
    ],
    "canais_realtime": [],
    "usado_por": 2,
@@ -11822,7 +11882,7 @@
     "useMemo"
    ],
    "canais_realtime": [],
-   "usado_por": 42,
+   "usado_por": 43,
    "usado_por_arquivos": [
     "src/components/CommandPalette.tsx",
     "src/components/admin/AdminUsersTable.tsx",

@@ -1,8 +1,8 @@
 {
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
- "nos": 2450,
- "arestas": 8432,
+ "nos": 2456,
+ "arestas": 8464,
  "hubs": [
   {
    "arquivo": "src/lib/utils.ts",
@@ -10,23 +10,23 @@
   },
   {
    "arquivo": "src/integrations/supabase/client.ts",
-   "importado_por": 439
+   "importado_por": 441
   },
   {
    "arquivo": "src/components/ui/button.tsx",
-   "importado_por": 418
+   "importado_por": 420
   },
   {
    "arquivo": "src/lib/logger.ts",
-   "importado_por": 230
+   "importado_por": 232
   },
   {
    "arquivo": "src/components/ui/badge.tsx",
-   "importado_por": 227
+   "importado_por": 228
   },
   {
    "arquivo": "src/components/ui/card.tsx",
-   "importado_por": 200
+   "importado_por": 202
   },
   {
    "arquivo": "src/components/ui/tooltip.tsx",
@@ -45,12 +45,12 @@
    "importado_por": 130
   },
   {
-   "arquivo": "src/components/ui/label.tsx",
-   "importado_por": 119
+   "arquivo": "src/hooks/auth/useAuth.tsx",
+   "importado_por": 121
   },
   {
-   "arquivo": "src/hooks/auth/useAuth.tsx",
-   "importado_por": 119
+   "arquivo": "src/components/ui/label.tsx",
+   "importado_por": 120
   },
   {
    "arquivo": "src/components/ui/select.tsx",
@@ -62,7 +62,7 @@
   },
   {
    "arquivo": "src/components/ui/skeleton.tsx",
-   "importado_por": 84
+   "importado_por": 86
   },
   {
    "arquivo": "src/components/ui/scroll-area.tsx",
@@ -85,11 +85,11 @@
    "importado_por": 59
   },
   {
-   "arquivo": "src/components/ui/alert-dialog.tsx",
-   "importado_por": 58
+   "arquivo": "src/components/ui/switch.tsx",
+   "importado_por": 59
   },
   {
-   "arquivo": "src/components/ui/switch.tsx",
+   "arquivo": "src/components/ui/alert-dialog.tsx",
    "importado_por": 58
   },
   {
@@ -109,6 +109,10 @@
    "importado_por": 49
   },
   {
+   "arquivo": "src/hooks/system/useUserRole.ts",
+   "importado_por": 48
+  },
+  {
    "arquivo": "src/components/ui/popover.tsx",
    "importado_por": 47
   },
@@ -118,10 +122,6 @@
   },
   {
    "arquivo": "src/hooks/integrations/useTalkXSegments.ts",
-   "importado_por": 47
-  },
-  {
-   "arquivo": "src/hooks/system/useUserRole.ts",
    "importado_por": 47
   },
   {
@@ -588,7 +588,7 @@
   {
    "modulo": "hooks/system",
    "depende_de": 13,
-   "importado_por": 42
+   "importado_por": 43
   },
   {
    "modulo": "hooks/integrations",

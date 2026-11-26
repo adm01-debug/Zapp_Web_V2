@@ -1,6 +1,6 @@
 # 11 · GLOSSÁRIO, DADOS DE REFERÊNCIA E LACUNAS
 
-> Gerado automaticamente por AI Context Sync v1.3.2 · commit `f5a9f52f25` · branch `main` · 2026-11-26 15:58 UTC
+> Gerado automaticamente por AI Context Sync v1.3.2 · commit `9d6d73a64e` · branch `main` · 2026-11-26 16:08 UTC
 > Não edite à mão — regras humanas vão em `manual/`.
 
 ## Glossário do domínio (entidades do sistema)
@@ -307,7 +307,7 @@
 | `AlertSeverity` (TS) | critical \| warning |  | `src/components/monitoring/hooks/useConnectionIncidents.ts` |
 | `INSTANCE_PAUSES_QUERY_KEY` (TS) | 'instance-pauses' |  | `src/components/monitoring/hooks/useInstancePauses.ts` |
 | `MetricStatus` (TS) | good \| warning \| critical |  | `src/components/performance/metricThresholds.ts` |
-| … +388 linhas — lista completa em `context.json` | | | |
+| … +391 linhas — lista completa em `context.json` | | | |
 
 ## Dados de referência (seed — planos, categorias, perfis fixos)
 
@@ -454,6 +454,7 @@
 | rls | `link_preview_cache`: RLS ligado sem nenhuma política → só service_role acessa |  |
 | rls | `messages`: front faz DELETE mas nenhuma política RLS permite DELETE → vai falhar/retornar vazio para usuários | `src/components/monitoring/hooks/useMonitoringActions.ts` |
 | rls | `query_telemetry`: front faz SELECT mas nenhuma política RLS permite SELECT → vai falhar/retornar vazio para usuários | `src/pages/AdminTelemetriaPage.tsx` |
+| rls | `sla_alert_preferences`: acessada do front (1 arquivo(s)) sem RLS (disabled) | `src/hooks/sla/useSlaAlertPreferences.ts` |
 | rls | `talkx_test_send_claims`: RLS ligado sem nenhuma política → só service_role acessa |  |
 | rls | `whisper_messages`: front faz UPDATE mas nenhuma política RLS permite UPDATE → vai falhar/retornar vazio para usuários | `src/components/inbox/WhisperMode.tsx` |
 | edge | edge function `dashboard-edge` invocada mas não existe em supabase/functions/ | `scripts/ai-context/gerar.unit.mjs` |

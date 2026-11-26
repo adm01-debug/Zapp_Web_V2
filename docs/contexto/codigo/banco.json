@@ -8522,7 +8522,7 @@
     "so_na_migration": [],
     "so_no_types": []
    },
-   "usada_no_front": 60,
+   "usada_no_front": 61,
    "usada_em_edges": [
     "_shared",
     "ai-auto-tag",
@@ -23532,11 +23532,11 @@
     "so_na_migration": [],
     "so_no_types": []
    },
-   "usada_no_front": 0,
+   "usada_no_front": 1,
    "usada_em_edges": [],
    "triggers": [],
    "sem_rls": false,
-   "nao_usada": true
+   "nao_usada": false
   },
   "sla_alert_preferences": {
    "colunas": {
@@ -23629,13 +23629,13 @@
     "so_na_migration": [],
     "so_no_types": []
    },
-   "usada_no_front": 0,
+   "usada_no_front": 1,
    "usada_em_edges": [],
    "triggers": [
     "sla_alert_preferences_set_updated_at"
    ],
    "sem_rls": false,
-   "nao_usada": true
+   "nao_usada": false
   },
   "sla_configurations": {
    "colunas": {
@@ -33053,6 +33053,11 @@
    "usada_em": 1
   },
   {
+   "nome": "record_sla_alert",
+   "definida": true,
+   "usada_em": 1
+  },
+  {
    "nome": "record_talkx_conversion",
    "definida": true,
    "usada_em": 1
@@ -33144,6 +33149,11 @@
   },
   {
    "nome": "resolve_network_policy",
+   "definida": true,
+   "usada_em": 1
+  },
+  {
+   "nome": "resolve_sla_alert",
    "definida": true,
    "usada_em": 1
   },

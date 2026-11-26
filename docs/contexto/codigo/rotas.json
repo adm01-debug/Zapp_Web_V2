@@ -478,6 +478,7 @@
     "useSilenceDetector",
     "useSipClient",
     "useSipConnection",
+    "useSlaAlertPreferences",
     "useSmartTemplates",
     "useSpeechToText",
     "useSpeedToLead",
@@ -1014,6 +1015,7 @@
     "useSilenceDetector",
     "useSipClient",
     "useSipConnection",
+    "useSlaAlertPreferences",
     "useSmartTemplates",
     "useSpeechToText",
     "useSpeedToLead",
@@ -1224,6 +1226,7 @@
     "scheduled_messages",
     "scheduled_report_configs",
     "security_alerts",
+    "sla_alert_preferences",
     "sla_configurations",
     "sla_rules",
     "stickers",
@@ -1306,6 +1309,7 @@
     "purge_gmail_account_data",
     "reassign_absent_agents",
     "reassign_overloaded_agents",
+    "record_sla_alert",
     "remind_me_about_message",
     "reopen_conversation",
     "report_message",
@@ -1487,7 +1491,7 @@
     "unknown",
     "user"
    ],
-   "arquivos_puxados": 1616
+   "arquivos_puxados": 1618
   },
   {
    "protegida": false,
@@ -3286,6 +3290,8 @@
     "useSendToContact",
     "useSidebarCollapse",
     "useSidebarFavorites",
+    "useSlaAlertEvents",
+    "useSlaAlertPreferences",
     "useState",
     "useSyncExternalStore",
     "useTeamAlertsPreference",
@@ -3324,6 +3330,8 @@
     "useSendToContact",
     "useSidebarCollapse",
     "useSidebarFavorites",
+    "useSlaAlertEvents",
+    "useSlaAlertPreferences",
     "useTeamAlertsPreference",
     "useTheme",
     "useToast",
@@ -3341,6 +3349,8 @@
     "messages",
     "notifications",
     "profiles",
+    "sla_alert_events",
+    "sla_alert_preferences",
     "user_roles",
     "user_settings"
    ],
@@ -3349,6 +3359,7 @@
     "enqueue_outbound_message",
     "enqueue_rich_outbound_message",
     "get_inbox_contact_summaries",
+    "resolve_sla_alert",
     "user_has_permission"
    ],
    "edges": [
@@ -3370,7 +3381,7 @@
     "status",
     "supervisor"
    ],
-   "arquivos_puxados": 124
+   "arquivos_puxados": 130
   },
   {
    "protegida": false,

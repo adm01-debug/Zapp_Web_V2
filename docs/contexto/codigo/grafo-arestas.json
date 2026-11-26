@@ -6498,6 +6498,26 @@
   "src/components/shared/ConversationEmptyState.tsx": [
    "src/lib/utils.ts"
   ],
+  "src/components/sla/SLAAlertHistoryPanel.tsx": [
+   "src/components/sla/slaAlertLabels.ts",
+   "src/components/ui/badge.tsx",
+   "src/components/ui/button.tsx",
+   "src/components/ui/card.tsx",
+   "src/components/ui/skeleton.tsx",
+   "src/components/ui/toggle-group.tsx",
+   "src/hooks/sla/slaAlertPreferences.ts",
+   "src/hooks/sla/useSlaAlertEvents.ts",
+   "src/hooks/system/useUserRole.ts"
+  ],
+  "src/components/sla/SLAAlertPreferencesCard.tsx": [
+   "src/components/ui/button.tsx",
+   "src/components/ui/card.tsx",
+   "src/components/ui/label.tsx",
+   "src/components/ui/skeleton.tsx",
+   "src/components/ui/switch.tsx",
+   "src/hooks/sla/slaAlertPreferences.ts",
+   "src/hooks/sla/useSlaAlertPreferences.ts"
+  ],
   "src/components/sla/SLACharts.tsx": [
    "src/components/ui/badge.tsx",
    "src/components/ui/card.tsx",
@@ -6511,6 +6531,9 @@
    "src/components/ui/toggle-group.tsx",
    "src/hooks/sla/useSLAHistory.ts",
    "src/lib/utils.ts"
+  ],
+  "src/components/sla/slaAlertLabels.ts": [
+   "src/hooks/sla/useSlaAlertEvents.ts"
   ],
   "src/components/talkx/TalkXAnalytics.tsx": [
    "src/components/talkx/analytics/AnalyticsFunnel.tsx",
@@ -9826,6 +9849,7 @@
    "src/lib/logger.ts"
   ],
   "src/hooks/sla/index.ts": [
+   "src/hooks/sla/slaAlertPreferences.ts",
    "src/hooks/sla/slaFirstResponse.ts",
    "src/hooks/sla/useApplicableSLA.ts",
    "src/hooks/sla/useSLACalculation.ts",
@@ -9835,7 +9859,9 @@
    "src/hooks/sla/useSLANotifications.ts",
    "src/hooks/sla/useSLARules.ts",
    "src/hooks/sla/useSLARulesCounts.ts",
-   "src/hooks/sla/useSLAScopeNames.ts"
+   "src/hooks/sla/useSLAScopeNames.ts",
+   "src/hooks/sla/useSlaAlertEvents.ts",
+   "src/hooks/sla/useSlaAlertPreferences.ts"
   ],
   "src/hooks/sla/useApplicableSLA.ts": [
    "src/integrations/supabase/client.ts"
@@ -9866,6 +9892,8 @@
   "src/hooks/sla/useSLANotifications.ts": [
    "src/components/catalog/useSendProduct.ts",
    "src/hooks/auth/useAuth.tsx",
+   "src/hooks/sla/slaAlertPreferences.ts",
+   "src/hooks/sla/useSlaAlertPreferences.ts",
    "src/hooks/system/useNotificationSettings.ts",
    "src/integrations/supabase/client.ts",
    "src/lib/logger.ts",
@@ -9887,6 +9915,18 @@
    "src/hooks/sla/isValidUUID.ts",
    "src/hooks/sla/useSLARules.ts",
    "src/integrations/supabase/client.ts"
+  ],
+  "src/hooks/sla/useSlaAlertEvents.ts": [
+   "src/hooks/auth/useAuth.tsx",
+   "src/hooks/sla/slaAlertPreferences.ts",
+   "src/integrations/supabase/client.ts",
+   "src/lib/logger.ts"
+  ],
+  "src/hooks/sla/useSlaAlertPreferences.ts": [
+   "src/hooks/auth/useAuth.tsx",
+   "src/hooks/sla/slaAlertPreferences.ts",
+   "src/integrations/supabase/client.ts",
+   "src/lib/logger.ts"
   ],
   "src/hooks/sticker-picker/index.ts": [
    "src/hooks/sticker-picker/useStickerPicker.ts"
@@ -10813,6 +10853,8 @@
    "src/components/dashboard/FloatingParticles.tsx",
    "src/components/effects/AuroraBorealis.tsx",
    "src/components/layout/Sidebar.tsx",
+   "src/components/sla/SLAAlertHistoryPanel.tsx",
+   "src/components/sla/SLAAlertPreferencesCard.tsx",
    "src/components/sla/SLAHistoryDashboard.tsx"
   ],
   "src/pages/SSOCallback.tsx": [

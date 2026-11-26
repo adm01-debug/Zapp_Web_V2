@@ -1,15 +1,15 @@
 {
  "meta": {
-  "sha": "f5a9f52f258e86511f72a0ad8b5a27a88d14882d",
+  "sha": "9d6d73a64e9a5a80f929e053c96b8e10c381c0ea",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-26 15:58 UTC",
-  "files_total": 14730,
-  "code_files": 8260,
-  "code_lines": 1244411
+  "generated_at": "2026-11-26 16:08 UTC",
+  "files_total": 14742,
+  "code_files": 8272,
+  "code_lines": 1246106
  },
  "version": "1.3.2",
- "facts_hash": "9f8e4b1243d4dfa7",
+ "facts_hash": "f8c6c71ab97c9871",
  "stack": {
   "frameworks": [
    "React + Vite",
@@ -368,8 +368,8 @@
   "package_manager": "bun",
   "languages": {
    ".sql": 3072,
-   ".tsx": 2516,
-   ".ts": 2049,
+   ".tsx": 2522,
+   ".ts": 2055,
    ".mjs": 496,
    ".py": 125,
    ".cjs": 19,
@@ -69709,6 +69709,7 @@
      "notifications",
      "profiles",
      "queue_goals",
+     "sla_alert_preferences",
      "sla_configurations",
      "sla_rules",
      "user_roles",
@@ -69726,9 +69727,10 @@
      "get_inbox_contact_summaries",
      "inbox_unread_total",
      "log_audit_event",
+     "record_sla_alert",
      "user_has_permission"
     ],
-    "deps_count": 175
+    "deps_count": 177
    },
    {
     "path": "/2fa",
@@ -69910,11 +69912,14 @@
     "file": "src/pages/SLAHistory.tsx",
     "component": "SLAHistory",
     "tables_transitive": [
+     "contacts",
      "conversation_sla",
      "conversation_tasks",
      "email_threads",
      "notifications",
      "profiles",
+     "sla_alert_events",
+     "sla_alert_preferences",
      "user_roles",
      "user_settings"
     ],
@@ -69923,9 +69928,10 @@
     ],
     "rpc_transitive": [
      "app_bootstrap",
+     "resolve_sla_alert",
      "user_has_permission"
     ],
-    "deps_count": 85
+    "deps_count": 91
    },
    {
     "path": "/verify-email",
@@ -73208,7 +73214,7 @@
     "file": ".github/workflows/types-sync.yml"
    }
   ],
-  "components_count": 2348,
+  "components_count": 2353,
   "hooks": [
    {
     "name": "useMotionSeguro",
@@ -75179,6 +75185,14 @@
     "file": "src/hooks/sla/useSLAScopeNames.ts"
    },
    {
+    "name": "useSlaAlertEvents",
+    "file": "src/hooks/sla/useSlaAlertEvents.ts"
+   },
+   {
+    "name": "useSlaAlertPreferences",
+    "file": "src/hooks/sla/useSlaAlertPreferences.ts"
+   },
+   {
     "name": "useStickerPicker",
     "file": "src/hooks/sticker-picker/useStickerPicker.ts"
    },
@@ -76648,8 +76662,8 @@
   },
   {
    "module": "src/components",
-   "files": 2346,
-   "lines": 399041,
+   "files": 2351,
+   "lines": 399680,
    "tables": [
     "agent_skills",
     "agent_visibility_grants",
@@ -76996,8 +77010,8 @@
   },
   {
    "module": "src/hooks",
-   "files": 1062,
-   "lines": 172341,
+   "files": 1069,
+   "lines": 173385,
    "tables": [
     "agent_achievements",
     "agent_stats",
@@ -77076,6 +77090,8 @@
     "scheduled_report_configs",
     "scheduled_reports",
     "security_alerts",
+    "sla_alert_events",
+    "sla_alert_preferences",
     "sla_configurations",
     "sla_rules",
     "stickers",
@@ -77107,6 +77123,7 @@
    ],
    "exports": [
     "alertBehaviorTestKit.ts: playNotificationSound, showBrowserNotification, requestNotificationPermission, toast, sonnerToast, invoke",
+    "slaAlertPreferencesMock.ts: slaAlertPreferencesCfg, resetSlaAlertPreferences, slaAlertPreferencesMock",
     "slaDenominadorFixture.ts: SlaFixtureRow, R2SLA001, slaFixtureDenominadores, slaFixtureComRespostaNoPrazo, slaFixtureSoPendentes",
     "useSearchInsights.ts: SearchInsightsPeriod, SEARCH_INSIGHTS_PERIODS, DEFAULT_SEARCH_INSIGHTS_PERIOD, SearchInsights, searchInsightsQueryKey, SearchInsightsError",
     "useSupervisorQueue.ts: OPEN_CONVERSATION_STATUSES, SUPERVISOR_PAGE_SIZE, DEFAULT_REFRESH_MS, SupervisorQueueRow, SupervisorQueueSummary, UseSupervisorQueueOptions",
@@ -77144,8 +77161,7 @@
     "useClientWallet.ts: useClientWallet",
     "useCrisisRoomMetrics.ts: CRISIS_ROOM_REFETCH_INTERVAL_MS, CRISIS_ROOM_RPC, CRISIS_ROOM_QUERY_KEY, CrisisRoomSnapshot, CrisisMetricKey, CrisisSeverity",
     "useDemandPrediction.ts: PredictionPoint, DemandInsights, useDemandPrediction",
-    "useNPSSurveys.ts: NPSSurvey, NPS_SURVEY_LIMIT, useNPSSurveys",
-    "useQueueAnalytics.ts: useQueueAnalytics"
+    "useNPSSurveys.ts: NPSSurvey, NPS_SURVEY_LIMIT, useNPSSurveys"
    ],
    "docs": [
     "realtimeSharedTopic.test.tsx: Regressao do bump supabase-js 2.116 (#460): desde a realtime-js 2.101, `.on()` em canal ja inscrito lanca erro e `supabase.channel(nome)` reaproveita o canal de mesmo nome. Hooks com topico fixo montados em dois componentes ao mesmo tempo (TalkXView > TalkXCampaignScheduled, QueuesView > QueueGoalsD …",
@@ -77503,7 +77519,7 @@
   {
    "module": "src/pages",
    "files": 78,
-   "lines": 11528,
+   "lines": 11540,
    "tables": [
     "contacts",
     "conversation_sla",
@@ -79146,6 +79162,7 @@
      "src/hooks/security/useContactAuditTrail.ts",
      "src/hooks/sla/useSLANotifications.ts",
      "src/hooks/sla/useSLAScopeNames.ts",
+     "src/hooks/sla/useSlaAlertEvents.ts",
      "src/hooks/system/useDiagnosticsData.ts",
      "src/lib/retry.ts",
      "src/pages/ChatPopup.tsx",
@@ -80493,6 +80510,19 @@
    "shared_nao_conta": {
     "ref": [
      "scripts/ci/gerar-matriz-edge-tabela.unit.mjs"
+    ]
+   },
+   "sla_alert_events": {
+    "select": [
+     "src/hooks/sla/useSlaAlertEvents.ts"
+    ]
+   },
+   "sla_alert_preferences": {
+    "select": [
+     "src/hooks/sla/useSlaAlertPreferences.ts"
+    ],
+    "upsert": [
+     "src/hooks/sla/useSlaAlertPreferences.ts"
     ]
    },
    "sla_configurations": {
@@ -81928,6 +81958,9 @@
     "created_at",
     "id",
     "is_resolved",
+    "user_id"
+   ],
+   "sla_alert_preferences": [
     "user_id"
    ],
    "sla_configurations": [
@@ -84043,6 +84076,9 @@
    "record_multiplix_recipient_delivered": [
     "supabase/functions/_shared/evolution-webhook-msg-handlers.ts"
    ],
+   "record_sla_alert": [
+    "src/hooks/sla/useSLANotifications.ts"
+   ],
    "record_talkx_conversion": [
     "supabase/functions/talkx-link/index.ts"
    ],
@@ -84102,6 +84138,9 @@
    ],
    "resolve_network_policy": [
     "supabase/functions/_shared/request-policy.ts"
+   ],
+   "resolve_sla_alert": [
+    "src/hooks/sla/useSlaAlertEvents.ts"
    ],
    "resume_instance": [
     "src/services/instance-pauses.service.ts"
@@ -85221,8 +85260,6 @@
    "searchbox_budget_alert_emails",
    "security_acl_alerts",
    "sicoob_contact_mapping",
-   "sla_alert_events",
-   "sla_alert_preferences",
    "tags",
    "talkx_ai_requests",
    "talkx_alerts",
@@ -87689,6 +87726,16 @@
     "values": "idle | connecting | registered | reconnecting | unavailable"
    },
    {
+    "file": "src/hooks/sla/slaAlertPreferences.ts",
+    "name": "SlaAlertType",
+    "values": "first_response | resolution"
+   },
+   {
+    "file": "src/hooks/sla/slaAlertPreferences.ts",
+    "name": "SlaAlertSeverity",
+    "values": "warning | breached"
+   },
+   {
     "file": "src/hooks/sla/slaFirstResponse.ts",
     "name": "FirstResponseOutcome",
     "values": "on_time | breached | pending"
@@ -87712,6 +87759,11 @@
     "file": "src/hooks/sla/useSLARules.ts",
     "name": "SLARuleScope",
     "values": "contact | company | job_title | contact_type | queue | agent"
+   },
+   {
+    "file": "src/hooks/sla/useSlaAlertEvents.ts",
+    "name": "SlaAlertStatusFilter",
+    "values": "ativos | resolvidos | todos"
    },
    {
     "file": "src/hooks/system/useConnectionAlertPreferences.ts",
@@ -93458,6 +93510,10 @@
     "msg": "Não foi possível salvar o tema"
    },
    {
+    "file": "src/components/sla/SLAAlertHistoryPanel.tsx",
+    "msg": "), então\n * esta lista é a trilha do que o sistema avisou — inclusive para quem desligou os avisos na própria\n * preferência. Resolver aqui fecha o ciclo ("
+   },
+   {
     "file": "src/components/talkx/TalkXCampaignPaused.tsx",
     "msg": "Campanha encerrada."
    },
@@ -95172,6 +95228,22 @@
    {
     "file": "src/hooks/sip/useSipConnection.ts",
     "msg": "URI SIP inválida"
+   },
+   {
+    "file": "src/hooks/sla/useSLANotifications.ts",
+    "msg": ", {\n      p_contact_id: contactId,\n      p_alert_type: alertType,\n      p_severity: severity,\n    });\n    if (error) {\n      log.warn("
+   },
+   {
+    "file": "src/hooks/sla/useSlaAlertEvents.ts",
+    "msg": " → texto para quem está na tela. As chaves são as do próprio corpo das\n * funções ("
+   },
+   {
+    "file": "src/hooks/sla/useSlaAlertEvents.ts",
+    "msg": "); a resolução passa pelo\n * RPC "
+   },
+   {
+    "file": "src/hooks/sla/useSlaAlertPreferences.ts",
+    "msg": "Sessão expirada — entre novamente para salvar as preferências"
    },
    {
     "file": "src/hooks/sticker-picker/useStickerPicker.ts",
@@ -101962,6 +102034,14 @@
     "text": "Ela também NÃO pode mexer nos refs: o `start()` dela pode rejeitar"
    },
    {
+    "file": "src/hooks/sla/slaAlertPreferences.ts",
+    "text": "* Prazo que o alerta vigia (mesmos valores de `sla_alert_events.alert_type`). */"
+   },
+   {
+    "file": "src/hooks/sla/slaAlertPreferences.ts",
+    "text": "* `warning` = perto do limite; `breached` = prazo estourado (`sla_alert_events.severity`). */"
+   },
+   {
     "file": "src/hooks/sla/slaFirstResponse.ts",
     "text": "prazo\". Com dez registros — um respondido fora do prazo e nove pendentes — o painel dizia 0% e o"
    },
@@ -102131,11 +102211,11 @@
    },
    {
     "file": "src/hooks/sla/useSLANotifications.ts",
-    "text": "* Avisos de risco agendados: id da linha de SLA → timer do limiar (70% do prazo). */"
+    "text": "permissão (contato fora do escopo do usuário) o registro não acontece e o log guarda só o"
    },
    {
     "file": "src/hooks/sla/useSLANotifications.ts",
-    "text": "Marca o desmonte: um `handleRow` em voo (consulta do prazo) não pode agendar timer nem"
+    "text": "* Avisos de risco agendados: id da linha de SLA → timer do limiar (70% do prazo). */"
    },
    {
     "file": "src/hooks/sla/useSLARulesCounts.ts",
@@ -117578,6 +117658,11 @@
     "value": "5"
    },
    {
+    "file": "src/hooks/sla/useSlaAlertEvents.ts",
+    "name": "SLA_ALERT_EVENTS_LIMIT",
+    "value": "100"
+   },
+   {
     "file": "src/hooks/sticker-picker/useStickerPicker.ts",
     "name": "RECENT_LIMIT",
     "value": "8"
@@ -126055,6 +126140,18 @@
     "kind": "escreve"
    },
    {
+    "file": "src/components/sla/SLAAlertHistoryPanel.tsx",
+    "field": "status",
+    "value": "ativos",
+    "kind": "compara"
+   },
+   {
+    "file": "src/components/sla/SLAAlertHistoryPanel.tsx",
+    "field": "status",
+    "value": "ativos",
+    "kind": "compara"
+   },
+   {
     "file": "src/components/talkx/TalkXAnalytics.tsx",
     "field": "status",
     "value": "sending",
@@ -130171,6 +130268,12 @@
     "kind": "compara"
    },
    {
+    "file": "src/hooks/sla/slaAlertPreferences.ts",
+    "field": "type",
+    "value": "first_response",
+    "kind": "compara"
+   },
+   {
     "file": "src/hooks/sla/useSLACalculation.ts",
     "field": "status",
     "value": "breached",
@@ -130187,6 +130290,36 @@
     "field": "status",
     "value": "ok",
     "kind": "escreve"
+   },
+   {
+    "file": "src/hooks/sla/useSlaAlertEvents.ts",
+    "field": "status",
+    "value": "ativos",
+    "kind": "escreve"
+   },
+   {
+    "file": "src/hooks/sla/useSlaAlertEvents.ts",
+    "field": "type",
+    "value": "todos",
+    "kind": "escreve"
+   },
+   {
+    "file": "src/hooks/sla/useSlaAlertEvents.ts",
+    "field": "status",
+    "value": "ativos",
+    "kind": "compara"
+   },
+   {
+    "file": "src/hooks/sla/useSlaAlertEvents.ts",
+    "field": "status",
+    "value": "resolvidos",
+    "kind": "compara"
+   },
+   {
+    "file": "src/hooks/sla/useSlaAlertEvents.ts",
+    "field": "type",
+    "value": "todos",
+    "kind": "compara"
    },
    {
     "file": "src/hooks/system/useDiagnosticsData.ts",
@@ -174861,6 +174994,78 @@
     "name": "Email usa o componente compartilhado"
    },
    {
+    "file": "src/components/sla/__tests__/SLAAlertHistoryPanel.test.tsx",
+    "name": "slaAlertContactLabel"
+   },
+   {
+    "file": "src/components/sla/__tests__/SLAAlertHistoryPanel.test.tsx",
+    "name": "cai do nome para o telefone e, sem os dois, para o id curto"
+   },
+   {
+    "file": "src/components/sla/__tests__/SLAAlertHistoryPanel.test.tsx",
+    "name": "SLAAlertHistoryPanel (%s)"
+   },
+   {
+    "file": "src/components/sla/__tests__/SLAAlertHistoryPanel.test.tsx",
+    "name": "CARREGANDO: mostra esqueleto, não "
+   },
+   {
+    "file": "src/components/sla/__tests__/SLAAlertHistoryPanel.test.tsx",
+    "name": "ERRO: estado de erro com "
+   },
+   {
+    "file": "src/components/sla/__tests__/SLAAlertHistoryPanel.test.tsx",
+    "name": "ATUALIZAR: o botão refaz a consulta (a tabela não está na publicação de Realtime)"
+   },
+   {
+    "file": "src/components/sla/__tests__/SLAAlertHistoryPanel.test.tsx",
+    "name": "VAZIO: diz que não há alerta aberto"
+   },
+   {
+    "file": "src/components/sla/__tests__/SLAAlertHistoryPanel.test.tsx",
+    "name": "LISTA: mostra contato, tipo, severidade e resolve o alerta aberto"
+   },
+   {
+    "file": "src/components/sla/__tests__/SLAAlertHistoryPanel.test.tsx",
+    "name": "SEM SUPERVISÃO: explica quem resolve, sem botão"
+   },
+   {
+    "file": "src/components/sla/__tests__/SLAAlertHistoryPanel.test.tsx",
+    "name": "RESOLVENDO: botão fica desabilitado no alerta em envio"
+   },
+   {
+    "file": "src/components/sla/__tests__/SLAAlertHistoryPanel.test.tsx",
+    "name": "FILTRO: trocar para "
+   },
+   {
+    "file": "src/components/sla/__tests__/SLAAlertPreferencesCard.test.tsx",
+    "name": "SLAAlertPreferencesCard (%s)"
+   },
+   {
+    "file": "src/components/sla/__tests__/SLAAlertPreferencesCard.test.tsx",
+    "name": "CARREGANDO: esqueleto"
+   },
+   {
+    "file": "src/components/sla/__tests__/SLAAlertPreferencesCard.test.tsx",
+    "name": "ERRO: avisa que a leitura falhou e refaz"
+   },
+   {
+    "file": "src/components/sla/__tests__/SLAAlertPreferencesCard.test.tsx",
+    "name": "FORMULÁRIO: parte do valor do servidor"
+   },
+   {
+    "file": "src/components/sla/__tests__/SLAAlertPreferencesCard.test.tsx",
+    "name": "CHAVE GERAL desligada desabilita os filhos"
+   },
+   {
+    "file": "src/components/sla/__tests__/SLAAlertPreferencesCard.test.tsx",
+    "name": "ALTERAR grava o objeto completo (upsert da própria linha)"
+   },
+   {
+    "file": "src/components/sla/__tests__/SLAAlertPreferencesCard.test.tsx",
+    "name": "SALVANDO: interruptores travados durante a gravação"
+   },
+   {
     "file": "src/components/sla/__tests__/SLAHistoryDashboard.sem-dados-erro.test.tsx",
     "name": "SLAHistoryDashboard (%s)"
    },
@@ -191129,6 +191334,10 @@
     "name": "não toca quando o estouro já vinha marcado (não é novidade)"
    },
    {
+    "file": "src/hooks/__tests__/useSLANotifications.behavior.test.ts",
+    "name": "não toca quando a preferência da conta desliga os avisos de SLA"
+   },
+   {
     "file": "src/hooks/__tests__/useSLANotifications.contract.test.ts",
     "name": "useSLANotifications — contrato do payload"
    },
@@ -204209,6 +204418,50 @@
     "name": "R2-CALL-004: erro no teardown nao prende os refs (reconexao continua possivel)"
    },
    {
+    "file": "src/hooks/sla/__tests__/slaAlertPreferences.test.ts",
+    "name": "normalizeSlaAlertPreferences"
+   },
+   {
+    "file": "src/hooks/sla/__tests__/slaAlertPreferences.test.ts",
+    "name": "sem linha (usuário novo) devolve o default da tabela"
+   },
+   {
+    "file": "src/hooks/sla/__tests__/slaAlertPreferences.test.ts",
+    "name": "linha parcial ou com nulo cai no default do campo"
+   },
+   {
+    "file": "src/hooks/sla/__tests__/slaAlertPreferences.test.ts",
+    "name": "lê as colunas snake_case do banco"
+   },
+   {
+    "file": "src/hooks/sla/__tests__/slaAlertPreferences.test.ts",
+    "name": "slaAlertAllowed"
+   },
+   {
+    "file": "src/hooks/sla/__tests__/slaAlertPreferences.test.ts",
+    "name": "com tudo ligado todo aviso sai"
+   },
+   {
+    "file": "src/hooks/sla/__tests__/slaAlertPreferences.test.ts",
+    "name": "chave geral desligada fecha todos os avisos"
+   },
+   {
+    "file": "src/hooks/sla/__tests__/slaAlertPreferences.test.ts",
+    "name": "tipo desligado não fecha o outro tipo"
+   },
+   {
+    "file": "src/hooks/sla/__tests__/slaAlertPreferences.test.ts",
+    "name": "severidade desligada não fecha a outra severidade"
+   },
+   {
+    "file": "src/hooks/sla/__tests__/slaAlertPreferences.test.ts",
+    "name": "guardas de tipo e severidade"
+   },
+   {
+    "file": "src/hooks/sla/__tests__/slaAlertPreferences.test.ts",
+    "name": "aceita só os valores do contrato da tabela"
+   },
+   {
     "file": "src/hooks/sla/__tests__/useApplicableSLA.test.tsx",
     "name": "useApplicableSLA — contrato da hierarquia de regras (R2-SLA-003)"
    },
@@ -204475,6 +204728,78 @@
    {
     "file": "src/hooks/sla/__tests__/useSLAScopeNames.test.tsx",
     "name": "escopo sem ids não consulta"
+   },
+   {
+    "file": "src/hooks/sla/__tests__/useSlaAlertEvents.test.tsx",
+    "name": "fetchSlaAlertEvents"
+   },
+   {
+    "file": "src/hooks/sla/__tests__/useSlaAlertEvents.test.tsx",
+    "name": "padrão: só abertos, mais recentes primeiro, com teto de leitura"
+   },
+   {
+    "file": "src/hooks/sla/__tests__/useSlaAlertEvents.test.tsx",
+    "name": "resolvidos + tipo + severidade viram filtro no servidor"
+   },
+   {
+    "file": "src/hooks/sla/__tests__/useSlaAlertEvents.test.tsx",
+    "name": "linha fora do contrato (tipo/severidade desconhecidos) é descartada"
+   },
+   {
+    "file": "src/hooks/sla/__tests__/useSlaAlertEvents.test.tsx",
+    "name": "falha ao ler os contatos não apaga a lista (alerta sem nome)"
+   },
+   {
+    "file": "src/hooks/sla/__tests__/useSlaAlertEvents.test.tsx",
+    "name": "erro da consulta de eventos sobe para a tela"
+   },
+   {
+    "file": "src/hooks/sla/__tests__/useSlaAlertEvents.test.tsx",
+    "name": "useSlaAlertEvents"
+   },
+   {
+    "file": "src/hooks/sla/__tests__/useSlaAlertEvents.test.tsx",
+    "name": "recarrega a lista por demanda"
+   },
+   {
+    "file": "src/hooks/sla/__tests__/useSlaAlertEvents.test.tsx",
+    "name": "resolve pelo RPC, avisa e invalida o cache"
+   },
+   {
+    "file": "src/hooks/sla/__tests__/useSlaAlertEvents.test.tsx",
+    "name": "recusa do RPC vira mensagem de negócio (não o erro cru do banco)"
+   },
+   {
+    "file": "src/hooks/sla/__tests__/useSlaAlertEvents.test.tsx",
+    "name": "sem sessão não consulta o banco"
+   },
+   {
+    "file": "src/hooks/sla/__tests__/useSlaAlertPreferences.test.tsx",
+    "name": "useSlaAlertPreferences"
+   },
+   {
+    "file": "src/hooks/sla/__tests__/useSlaAlertPreferences.test.tsx",
+    "name": "lê a própria linha e devolve as preferências normalizadas"
+   },
+   {
+    "file": "src/hooks/sla/__tests__/useSlaAlertPreferences.test.tsx",
+    "name": "sem linha no banco (usuário novo) vale o default da tabela"
+   },
+   {
+    "file": "src/hooks/sla/__tests__/useSlaAlertPreferences.test.tsx",
+    "name": "erro de leitura é exposto (não vira "
+   },
+   {
+    "file": "src/hooks/sla/__tests__/useSlaAlertPreferences.test.tsx",
+    "name": "grava com upsert na própria linha e atualiza o cache"
+   },
+   {
+    "file": "src/hooks/sla/__tests__/useSlaAlertPreferences.test.tsx",
+    "name": "recusa do banco aparece no toast e não inventa sucesso"
+   },
+   {
+    "file": "src/hooks/sla/__tests__/useSlaAlertPreferences.test.tsx",
+    "name": "sem sessão não consulta o banco"
    },
    {
     "file": "src/hooks/sticker-picker/__tests__/useStickerPicker.exclusao.test.tsx",
@@ -258287,6 +258612,13 @@
      "style": [
       "compara:src/hooks/performance/useDataOptimization.ts"
      ],
+     "first_response": [
+      "compara:src/hooks/sla/slaAlertPreferences.ts"
+     ],
+     "todos": [
+      "compara:src/hooks/sla/useSlaAlertEvents.ts",
+      "escreve:src/hooks/sla/useSlaAlertEvents.ts"
+     ],
      "system": [
       "compara:supabase/functions/_shared/gmail-helpers.ts",
       "compara:supabase/functions/gmail-sync/index.ts",
@@ -259742,6 +260074,11 @@
       "compara:src/components/settings/ai-providers/AIProviderHealthPanel.tsx",
       "compara:supabase/functions/_shared/ai-usage.ts"
      ],
+     "ativos": [
+      "compara:src/components/sla/SLAAlertHistoryPanel.tsx",
+      "compara:src/hooks/sla/useSlaAlertEvents.ts",
+      "escreve:src/hooks/sla/useSlaAlertEvents.ts"
+     ],
      "decided": [
       "compara:src/components/talkx/TalkXCampaignRunning.tsx",
       "compara:src/hooks/integrations/useTalkXAbStats.ts",
@@ -259854,6 +260191,9 @@
      ],
      "CLOSED": [
       "compara:src/hooks/realtime/useSupabaseRealtime.ts"
+     ],
+     "resolvidos": [
+      "compara:src/hooks/sla/useSlaAlertEvents.ts"
      ],
      "status": [
       "escreve:src/hooks/system/useUrlFilters.ts"
@@ -263390,6 +263730,13 @@
     "issue": "front faz SELECT mas nenhuma política RLS permite SELECT → vai falhar/retornar vazio para usuários",
     "files": [
      "src/pages/AdminTelemetriaPage.tsx"
+    ]
+   },
+   {
+    "table": "sla_alert_preferences",
+    "issue": "acessada do front (1 arquivo(s)) sem RLS (disabled)",
+    "files": [
+     "src/hooks/sla/useSlaAlertPreferences.ts"
     ]
    },
    {
@@ -282573,6 +282920,13 @@
     "msg": "`query_telemetry`: front faz SELECT mas nenhuma política RLS permite SELECT → vai falhar/retornar vazio para usuários",
     "where": [
      "src/pages/AdminTelemetriaPage.tsx"
+    ]
+   },
+   {
+    "kind": "rls",
+    "msg": "`sla_alert_preferences`: acessada do front (1 arquivo(s)) sem RLS (disabled)",
+    "where": [
+     "src/hooks/sla/useSlaAlertPreferences.ts"
     ]
    },
    {
@@ -341786,6 +342140,35 @@
     "Email usa o componente compartilhado"
    ]
   },
+  "src/components/sla/SLAAlertHistoryPanel.tsx": {
+   "path": "src/components/sla/SLAAlertHistoryPanel.tsx",
+   "lines": 217,
+   "exports": [
+    "const SLAAlertHistoryPanel"
+   ],
+   "errors": [
+    "), então\n * esta lista é a trilha do que o sistema avisou — inclusive para quem desligou os avisos na própria\n * preferência. Resolver aqui fecha o ciclo ("
+   ],
+   "status_values": [
+    {
+     "field": "status",
+     "value": "ativos",
+     "kind": "compara"
+    },
+    {
+     "field": "status",
+     "value": "ativos",
+     "kind": "compara"
+    }
+   ]
+  },
+  "src/components/sla/SLAAlertPreferencesCard.tsx": {
+   "path": "src/components/sla/SLAAlertPreferencesCard.tsx",
+   "lines": 160,
+   "exports": [
+    "const SLAAlertPreferencesCard"
+   ]
+  },
   "src/components/sla/SLACharts.tsx": {
    "path": "src/components/sla/SLACharts.tsx",
    "lines": 129,
@@ -341803,6 +342186,53 @@
    ],
    "percents": [
     "// Sem 1ª resposta avaliada a taxa não existe: nada de 0%/100% no resumo nem nos gráficos."
+   ]
+  },
+  "src/components/sla/slaAlertLabels.ts": {
+   "path": "src/components/sla/slaAlertLabels.ts",
+   "lines": 12,
+   "exports": [
+    "function slaAlertContactLabel"
+   ]
+  },
+  "src/components/sla/__tests__/SLAAlertHistoryPanel.test.tsx": {
+   "path": "src/components/sla/__tests__/SLAAlertHistoryPanel.test.tsx",
+   "lines": 147,
+   "is_test": true,
+   "doc": "Painel de alertas de SLA — estados e ações. O hook é dublado; o que se prova aqui é a tela: carregando ≠ erro ≠ vazio, o nome do contato não desaparece, \"Resolver\" só aparece para supervisão e só nos alertas abertos, e o filtro de status chega ao hook.",
+   "tests": [
+    "slaAlertContactLabel",
+    "cai do nome para o telefone e, sem os dois, para o id curto",
+    "SLAAlertHistoryPanel (%s)",
+    "CARREGANDO: mostra esqueleto, não ",
+    "ERRO: estado de erro com ",
+    "ATUALIZAR: o botão refaz a consulta (a tabela não está na publicação de Realtime)",
+    "VAZIO: diz que não há alerta aberto",
+    "LISTA: mostra contato, tipo, severidade e resolve o alerta aberto",
+    "SEM SUPERVISÃO: explica quem resolve, sem botão",
+    "RESOLVENDO: botão fica desabilitado no alerta em envio",
+    "FILTRO: trocar para "
+   ],
+   "side_effects": [
+    ".add('dark'"
+   ]
+  },
+  "src/components/sla/__tests__/SLAAlertPreferencesCard.test.tsx": {
+   "path": "src/components/sla/__tests__/SLAAlertPreferencesCard.test.tsx",
+   "lines": 103,
+   "is_test": true,
+   "doc": "Cartão de preferências de alerta de SLA. O hook é dublado; o que se prova é a tela: carregando ≠ erro ≠ formulário, o valor do servidor é o que aparece, a chave geral desliga os filhos e cada interruptor grava o objeto completo (upsert da própria linha), não um campo solto.",
+   "tests": [
+    "SLAAlertPreferencesCard (%s)",
+    "CARREGANDO: esqueleto",
+    "ERRO: avisa que a leitura falhou e refaz",
+    "FORMULÁRIO: parte do valor do servidor",
+    "CHAVE GERAL desligada desabilita os filhos",
+    "ALTERAR grava o objeto completo (upsert da própria linha)",
+    "SALVANDO: interruptores travados durante a gravação"
+   ],
+   "side_effects": [
+    ".add('dark'"
    ]
   },
   "src/components/sla/__tests__/SLAHistoryDashboard.sem-dados-erro.test.tsx": {
@@ -357187,7 +357617,7 @@
   },
   "src/hooks/__tests__/useSLANotifications.behavior.test.ts": {
    "path": "src/hooks/__tests__/useSLANotifications.behavior.test.ts",
-   "lines": 77,
+   "lines": 95,
    "is_test": true,
    "errors": [
     ", 60);\n    });\n  });\n\n  it(",
@@ -357205,18 +357635,23 @@
     {
      "name": "SLA_3",
      "value": "'44444444-4444-4444-8444-444444444444'"
+    },
+    {
+     "name": "SLA_4",
+     "value": "'55555555-5555-4555-8555-555555555555'"
     }
    ],
    "tests": [
     "useSLANotifications — efeito do alerta",
     "toca com o tipo e o volume persistidos quando o SLA de primeira resposta estoura",
     "não toca quando o alerta de SLA está desligado no painel",
-    "não toca quando o estouro já vinha marcado (não é novidade)"
+    "não toca quando o estouro já vinha marcado (não é novidade)",
+    "não toca quando a preferência da conta desliga os avisos de SLA"
    ]
   },
   "src/hooks/__tests__/useSLANotifications.contract.test.ts": {
    "path": "src/hooks/__tests__/useSLANotifications.contract.test.ts",
-   "lines": 283,
+   "lines": 284,
    "is_test": true,
    "rule_comments": [
     "* O corpo mínimo que o canal entrega: os mesmos campos da tabela `conversation_sla`. */",
@@ -357245,7 +357680,7 @@
   },
   "src/hooks/__tests__/useSLANotifications.policy.test.ts": {
    "path": "src/hooks/__tests__/useSLANotifications.policy.test.ts",
-   "lines": 187,
+   "lines": 188,
    "is_test": true,
    "rule_comments": [
     "* O aviso de risco só sai quando a regra aplicável pede (padrão: avisar) e as notas de escalonamento",
@@ -358114,6 +358549,17 @@
     "novo (6,6% no PR #1261, limite 3%): o andaime de mock é idêntico em todos os hooks de alerta, e"
    ],
    "doc": "Registro ÚNICO dos mocks de dependências dos testes de comportamento de alerta. Os arquivos de teste importam este módulo (efeito colateral) em vez de repetir o mesmo bloco de `vi.mock(...)`. A repetição era exatamente o que o SonarCloud contava como duplicação em código novo (6,6% no PR #1261, limi …"
+  },
+  "src/hooks/__tests__/helpers/slaAlertPreferencesMock.ts": {
+   "path": "src/hooks/__tests__/helpers/slaAlertPreferencesMock.ts",
+   "lines": 41,
+   "is_test": true,
+   "exports": [
+    "const slaAlertPreferencesCfg",
+    "function resetSlaAlertPreferences",
+    "function slaAlertPreferencesMock"
+   ],
+   "doc": "Mock do hook de preferências de alerta de SLA para os testes de `useSLANotifications`. O hook real lê `sla_alert_preferences` por react-query; nos testes de comportamento do alerta a preferência é só um interruptor de entrada — como o mock de \"Abrir conversa\" (`alertContactMock`), ela entra mockada: …"
   },
   "src/hooks/__tests__/helpers/slaDenominadorFixture.ts": {
    "path": "src/hooks/__tests__/helpers/slaDenominadorFixture.ts",
@@ -378046,7 +378492,7 @@
   },
   "src/hooks/sla/index.ts": {
    "path": "src/hooks/sla/index.ts",
-   "lines": 12,
+   "lines": 15,
    "doc": "Barrel export for hooks/sla"
   },
   "src/hooks/sla/isValidUUID.ts": {
@@ -378057,6 +378503,47 @@
     "function normalizeScopeIds"
    ],
    "doc": "Guarda de UUID para ids vindos de dados legados/URL antes de irem ao PostgREST: um `contact_id`/`queue_id`/`agent_id` malformado em `.in()` faz a API responder 400 (22P02) e a lista/nome do escopo fica em branco sem aviso. Mesmo padrão de `isValidUUID` em `@/hooks/communication/useCalls` e `ehUuid` …"
+  },
+  "src/hooks/sla/slaAlertPreferences.ts": {
+   "path": "src/hooks/sla/slaAlertPreferences.ts",
+   "lines": 110,
+   "exports": [
+    "type SlaAlertType",
+    "type SlaAlertSeverity",
+    "interface SlaAlertPreferences",
+    "const DEFAULT_SLA_ALERT_PREFERENCES",
+    "interface SlaAlertPreferenceRow",
+    "const SLA_ALERT_TYPE_LABELS",
+    "const SLA_ALERT_SEVERITY_LABELS",
+    "const SLA_ALERT_TYPES",
+    "const SLA_ALERT_SEVERITIES",
+    "function isSlaAlertType",
+    "function isSlaAlertSeverity",
+    "function normalizeSlaAlertPreferences",
+    "function slaAlertAllowed"
+   ],
+   "enums": [
+    {
+     "name": "SlaAlertType",
+     "values": "first_response | resolution"
+    },
+    {
+     "name": "SlaAlertSeverity",
+     "values": "warning | breached"
+    }
+   ],
+   "status_values": [
+    {
+     "field": "type",
+     "value": "first_response",
+     "kind": "compara"
+    }
+   ],
+   "rule_comments": [
+    "* Prazo que o alerta vigia (mesmos valores de `sla_alert_events.alert_type`). */",
+    "* `warning` = perto do limite; `breached` = prazo estourado (`sla_alert_events.severity`). */"
+   ],
+   "doc": "Preferências de alerta de SLA (`sla_alert_preferences`) — contrato puro. A linha é por usuário. Sem linha valem os defaults da própria tabela (tudo ligado): usuário novo tem de ser avisado como sempre foi. `enabled` é o desligamento geral — desligado, nenhum aviso sai, independentemente dos controle …"
   },
   "src/hooks/sla/slaFirstResponse.ts": {
    "path": "src/hooks/sla/slaFirstResponse.ts",
@@ -378424,7 +378911,7 @@
   },
   "src/hooks/sla/useSLANotifications.ts": {
    "path": "src/hooks/sla/useSLANotifications.ts",
-   "lines": 412,
+   "lines": 466,
    "exports": [
     "const SLA_ALERT_DEDUPE_TTL_MS",
     "const SLA_WARNING_TOAST_MS",
@@ -378475,6 +378962,12 @@
      "queue_id"
     ]
    },
+   "rpc": [
+    "record_sla_alert"
+   ],
+   "errors": [
+    ", {\n      p_contact_id: contactId,\n      p_alert_type: alertType,\n      p_severity: severity,\n    });\n    if (error) {\n      log.warn("
+   ],
    "zod": [
     {
      "name": "slaRowSchema",
@@ -378523,8 +379016,8 @@
     "Regra ilegível não pode silenciar aviso: cai no padrão.",
     "* Prazo de primeira resposta da própria linha: uma consulta por chave primária.",
     "entre abas/consultas concorrentes, e expira para o próximo ciclo do SLA poder avisar de novo.",
-    "* Avisos de risco agendados: id da linha de SLA → timer do limiar (70% do prazo). */",
-    "Marca o desmonte: um `handleRow` em voo (consulta do prazo) não pode agendar timer nem"
+    "permissão (contato fora do escopo do usuário) o registro não acontece e o log guarda só o",
+    "* Avisos de risco agendados: id da linha de SLA → timer do limiar (70% do prazo). */"
    ],
    "hooks": [
     "useSLANotifications"
@@ -378655,6 +379148,138 @@
    },
    "hooks": [
     "useSLAScopeNames"
+   ]
+  },
+  "src/hooks/sla/useSlaAlertEvents.ts": {
+   "path": "src/hooks/sla/useSlaAlertEvents.ts",
+   "lines": 192,
+   "exports": [
+    "type SlaAlertStatusFilter",
+    "type SlaAlertTypeFilter",
+    "type SlaAlertSeverityFilter",
+    "interface SlaAlertFilters",
+    "const DEFAULT_SLA_ALERT_FILTERS",
+    "const SLA_ALERT_EVENTS_LIMIT",
+    "const SLA_ALERT_EVENTS_QUERY_KEY",
+    "interface SlaAlertEvent",
+    "function slaAlertErrorMessage",
+    "function fetchSlaAlertEvents",
+    "function useSlaAlertEvents"
+   ],
+   "tables": [
+    {
+     "table": "sla_alert_events",
+     "op": "select"
+    },
+    {
+     "table": "contacts",
+     "op": "select"
+    }
+   ],
+   "table_cols": {
+    "contacts": [
+     "id",
+     "name",
+     "phone"
+    ]
+   },
+   "rpc": [
+    "resolve_sla_alert"
+   ],
+   "errors": [
+    " → texto para quem está na tela. As chaves são as do próprio corpo das\n * funções (",
+    "); a resolução passa pelo\n * RPC "
+   ],
+   "enums": [
+    {
+     "name": "SlaAlertStatusFilter",
+     "values": "ativos | resolvidos | todos"
+    }
+   ],
+   "params": [
+    {
+     "name": "SLA_ALERT_EVENTS_LIMIT",
+     "value": "100"
+    }
+   ],
+   "status_values": [
+    {
+     "field": "status",
+     "value": "ativos",
+     "kind": "escreve"
+    },
+    {
+     "field": "type",
+     "value": "todos",
+     "kind": "escreve"
+    },
+    {
+     "field": "status",
+     "value": "ativos",
+     "kind": "compara"
+    },
+    {
+     "field": "status",
+     "value": "resolvidos",
+     "kind": "compara"
+    },
+    {
+     "field": "type",
+     "value": "todos",
+     "kind": "compara"
+    }
+   ],
+   "hooks": [
+    "useSlaAlertEvents"
+   ]
+  },
+  "src/hooks/sla/useSlaAlertPreferences.ts": {
+   "path": "src/hooks/sla/useSlaAlertPreferences.ts",
+   "lines": 97,
+   "exports": [
+    "const SLA_ALERT_PREFERENCES_QUERY_KEY",
+    "function fetchSlaAlertPreferences",
+    "function useSlaAlertPreferences"
+   ],
+   "tables": [
+    {
+     "table": "sla_alert_preferences",
+     "op": "select"
+    },
+    {
+     "table": "sla_alert_preferences",
+     "op": "upsert"
+    }
+   ],
+   "table_cols": {
+    "sla_alert_preferences": [
+     "user_id"
+    ]
+   },
+   "errors": [
+    "Sessão expirada — entre novamente para salvar as preferências"
+   ],
+   "hooks": [
+    "useSlaAlertPreferences"
+   ]
+  },
+  "src/hooks/sla/__tests__/slaAlertPreferences.test.ts": {
+   "path": "src/hooks/sla/__tests__/slaAlertPreferences.test.ts",
+   "lines": 86,
+   "is_test": true,
+   "doc": "Preferências de alerta de SLA — contrato puro (`slaAlertPreferences`). Regras provadas: default da tabela (tudo ligado), linha parcial/nula caindo no default, a chave geral fechando todos os avisos, e cada tipo/severidade decidindo só o seu próprio aviso.",
+   "tests": [
+    "normalizeSlaAlertPreferences",
+    "sem linha (usuário novo) devolve o default da tabela",
+    "linha parcial ou com nulo cai no default do campo",
+    "lê as colunas snake_case do banco",
+    "slaAlertAllowed",
+    "com tudo ligado todo aviso sai",
+    "chave geral desligada fecha todos os avisos",
+    "tipo desligado não fecha o outro tipo",
+    "severidade desligada não fecha a outra severidade",
+    "guardas de tipo e severidade",
+    "aceita só os valores do contrato da tabela"
    ]
   },
   "src/hooks/sla/__tests__/useApplicableSLA.test.tsx": {
@@ -378795,6 +379420,43 @@
     "com um id inválido junto de válidos, consulta só os válidos — ordem estável e sem repetição",
     "consulta apenas o escopo ativo",
     "escopo sem ids não consulta"
+   ]
+  },
+  "src/hooks/sla/__tests__/useSlaAlertEvents.test.tsx": {
+   "path": "src/hooks/sla/__tests__/useSlaAlertEvents.test.tsx",
+   "lines": 239,
+   "is_test": true,
+   "errors": [
+    " (mensagens de erro traduzidas) e recarga por demanda. Sem assinatura de\n * Realtime: ",
+    ", args: { p_event_id: "
+   ],
+   "tests": [
+    "fetchSlaAlertEvents",
+    "padrão: só abertos, mais recentes primeiro, com teto de leitura",
+    "resolvidos + tipo + severidade viram filtro no servidor",
+    "linha fora do contrato (tipo/severidade desconhecidos) é descartada",
+    "falha ao ler os contatos não apaga a lista (alerta sem nome)",
+    "erro da consulta de eventos sobe para a tela",
+    "useSlaAlertEvents",
+    "recarrega a lista por demanda",
+    "resolve pelo RPC, avisa e invalida o cache",
+    "recusa do RPC vira mensagem de negócio (não o erro cru do banco)",
+    "sem sessão não consulta o banco"
+   ]
+  },
+  "src/hooks/sla/__tests__/useSlaAlertPreferences.test.tsx": {
+   "path": "src/hooks/sla/__tests__/useSlaAlertPreferences.test.tsx",
+   "lines": 202,
+   "is_test": true,
+   "doc": "Preferências de alerta de SLA — `useSlaAlertPreferences`. O sujeito é o hook REAL; a dublagem é a fronteira de rede (`supabase.from`). Regras provadas: leitura da própria linha, default quando não existe linha, upsert com `user_id` do logado (a RLS só aceita a própria linha), erro de leitura exposto …",
+   "tests": [
+    "useSlaAlertPreferences",
+    "lê a própria linha e devolve as preferências normalizadas",
+    "sem linha no banco (usuário novo) vale o default da tabela",
+    "erro de leitura é exposto (não vira ",
+    "grava com upsert na própria linha e atualiza o cache",
+    "recusa do banco aparece no toast e não inventa sucesso",
+    "sem sessão não consulta o banco"
    ]
   },
   "src/hooks/sticker-picker/index.ts": {
@@ -393412,7 +394074,7 @@
   },
   "src/pages/SLAHistory.tsx": {
    "path": "src/pages/SLAHistory.tsx",
-   "lines": 37,
+   "lines": 43,
    "exports": [
     "default SLAHistory"
    ],
@@ -394134,7 +394796,7 @@
   },
   "src/pages/__tests__/SLADashboard.sidebar-navegacao.test.tsx": {
    "path": "src/pages/__tests__/SLADashboard.sidebar-navegacao.test.tsx",
-   "lines": 154,
+   "lines": 160,
    "is_test": true,
    "routes": [
     {
@@ -429463,10 +430125,38 @@
   }
  },
  "git": {
-  "sha": "f5a9f52f258e86511f72a0ad8b5a27a88d14882d",
+  "sha": "9d6d73a64e9a5a80f929e053c96b8e10c381c0ea",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "9d6d73a6",
+    "date": "2026-11-26",
+    "author": "adm01-debug",
+    "subject": "feat(sla): alertas de SLA ganham trilha auditavel, resolucao e preferencias por usuario (#3411)",
+    "files": [
+     "docs/DB-INVENTORY.md",
+     "src/components/sla/SLAAlertHistoryPanel.tsx",
+     "src/components/sla/SLAAlertPreferencesCard.tsx",
+     "src/components/sla/__tests__/SLAAlertHistoryPanel.test.tsx",
+     "src/components/sla/__tests__/SLAAlertPreferencesCard.test.tsx",
+     "src/components/sla/slaAlertLabels.ts",
+     "src/hooks/__tests__/helpers/slaAlertPreferencesMock.ts",
+     "src/hooks/__tests__/useSLANotifications.behavior.test.ts",
+     "src/hooks/__tests__/useSLANotifications.contract.test.ts",
+     "src/hooks/__tests__/useSLANotifications.policy.test.ts",
+     "src/hooks/sla/__tests__/slaAlertPreferences.test.ts",
+     "src/hooks/sla/__tests__/useSlaAlertEvents.test.tsx",
+     "src/hooks/sla/__tests__/useSlaAlertPreferences.test.tsx",
+     "src/hooks/sla/index.ts",
+     "src/hooks/sla/slaAlertPreferences.ts",
+     "src/hooks/sla/useSLANotifications.ts",
+     "src/hooks/sla/useSlaAlertEvents.ts",
+     "src/hooks/sla/useSlaAlertPreferences.ts",
+     "src/pages/SLAHistory.tsx",
+     "src/pages/__tests__/SLADashboard.sidebar-navegacao.test.tsx"
+    ]
+   },
    {
     "sha": "f5a9f52f",
     "date": "2026-11-26",
@@ -429904,21 +430594,12 @@
      "scripts/ci/ci-gate.unit.mjs",
      "scripts/ci/eslint-baseline.json"
     ]
-   },
-   {
-    "sha": "26469075",
-    "date": "2026-11-25",
-    "author": "adm01-debug",
-    "subject": "chore(contexto): main recebe o snapshot gerado por PR automatica (#3375)",
-    "files": [
-     ".github/workflows/contexto.yml"
-    ]
    }
   ],
   "hot_files": [
    [
     "docs/DB-INVENTORY.md",
-    10
+    11
    ],
    [
     "docs/talkx/ESTADOS.md",
@@ -429981,19 +430662,19 @@
     2
    ],
    [
-    "src/components/talkx/TalkXSettings.tsx",
+    "src/components/sla/SLAAlertHistoryPanel.tsx",
     1
    ],
    [
-    "src/components/talkx/__tests__/TalkXA11yControlesECartoes.test.tsx",
+    "src/components/sla/SLAAlertPreferencesCard.tsx",
     1
    ],
    [
-    "src/components/talkx/__tests__/TalkXDataJobsList.test.tsx",
+    "src/components/sla/__tests__/SLAAlertHistoryPanel.test.tsx",
     1
    ],
    [
-    "src/components/talkx/__tests__/talkxDataJobs.test.ts",
+    "src/components/sla/__tests__/SLAAlertPreferencesCard.test.tsx",
     1
    ]
   ]

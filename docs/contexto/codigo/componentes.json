@@ -1,7 +1,7 @@
 {
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
- "total": 950,
+ "total": 952,
  "orfaos": 45,
  "nomes_duplicados": {
   "AchievementBadge": [
@@ -11261,6 +11261,39 @@
    "orfao": false
   },
   {
+   "arquivo": "src/components/sla/SLAAlertHistoryPanel.tsx",
+   "exports": [
+    "SLAAlertHistoryPanel"
+   ],
+   "export_default": null,
+   "linhas": 217,
+   "dominio": "components/sla",
+   "hooks_locais": [
+    "useSlaAlertEvents",
+    "useUserRole"
+   ],
+   "tabelas": [],
+   "edges": [],
+   "usado_por": 1,
+   "orfao": false
+  },
+  {
+   "arquivo": "src/components/sla/SLAAlertPreferencesCard.tsx",
+   "exports": [
+    "SLAAlertPreferencesCard"
+   ],
+   "export_default": null,
+   "linhas": 160,
+   "dominio": "components/sla",
+   "hooks_locais": [
+    "useSlaAlertPreferences"
+   ],
+   "tabelas": [],
+   "edges": [],
+   "usado_por": 1,
+   "orfao": false
+  },
+  {
    "arquivo": "src/components/sla/SLACharts.tsx",
    "exports": [
     "SLABestWorstDays",
@@ -13804,7 +13837,7 @@
    "hooks_locais": [],
    "tabelas": [],
    "edges": [],
-   "usado_por": 225,
+   "usado_por": 226,
    "orfao": false
   },
   {
@@ -13841,7 +13874,7 @@
    "hooks_locais": [],
    "tabelas": [],
    "edges": [],
-   "usado_por": 414,
+   "usado_por": 416,
    "orfao": false
   },
   {
@@ -13876,7 +13909,7 @@
    "hooks_locais": [],
    "tabelas": [],
    "edges": [],
-   "usado_por": 198,
+   "usado_por": 200,
    "orfao": false
   },
   {
@@ -14306,7 +14339,7 @@
    "hooks_locais": [],
    "tabelas": [],
    "edges": [],
-   "usado_por": 118,
+   "usado_por": 119,
    "orfao": false
   },
   {
@@ -14692,7 +14725,7 @@
    "hooks_locais": [],
    "tabelas": [],
    "edges": [],
-   "usado_por": 83,
+   "usado_por": 85,
    "orfao": false
   },
   {
@@ -14813,7 +14846,7 @@
    "hooks_locais": [],
    "tabelas": [],
    "edges": [],
-   "usado_por": 58,
+   "usado_por": 59,
    "orfao": false
   },
   {
@@ -14917,7 +14950,7 @@
    "hooks_locais": [],
    "tabelas": [],
    "edges": [],
-   "usado_por": 7,
+   "usado_por": 8,
    "orfao": false
   },
   {
@@ -15258,7 +15291,7 @@
    ],
    "tabelas": [],
    "edges": [],
-   "usado_por": 111,
+   "usado_por": 113,
    "orfao": false
   },
   {
@@ -15670,7 +15703,7 @@
     "SLAHistory"
    ],
    "export_default": "SLAHistory",
-   "linhas": 37,
+   "linhas": 43,
    "dominio": "pages",
    "hooks_locais": [],
    "tabelas": [],

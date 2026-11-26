@@ -1,6 +1,6 @@
 # 10 · ACESSO E SEGURANÇA — quem pode o quê
 
-> Gerado automaticamente por AI Context Sync v1.3.2 · commit `f5a9f52f25` · branch `main` · 2026-11-26 15:58 UTC
+> Gerado automaticamente por AI Context Sync v1.3.2 · commit `9d6d73a64e` · branch `main` · 2026-11-26 16:08 UTC
 > Não edite à mão — regras humanas vão em `manual/`.
 
 ## Perfis / roles identificados
@@ -983,6 +983,7 @@ Middleware matcher (Next.js): nenhum
 | `link_preview_cache` | RLS ligado sem nenhuma política → só service_role acessa |  |
 | `messages` | front faz DELETE mas nenhuma política RLS permite DELETE → vai falhar/retornar vazio para usuários | `src/components/monitoring/hooks/useMonitoringActions.ts` |
 | `query_telemetry` | front faz SELECT mas nenhuma política RLS permite SELECT → vai falhar/retornar vazio para usuários | `src/pages/AdminTelemetriaPage.tsx` |
+| `sla_alert_preferences` | acessada do front (1 arquivo(s)) sem RLS (disabled) | `src/hooks/sla/useSlaAlertPreferences.ts` |
 | `talkx_test_send_claims` | RLS ligado sem nenhuma política → só service_role acessa |  |
 | `whisper_messages` | front faz UPDATE mas nenhuma política RLS permite UPDATE → vai falhar/retornar vazio para usuários | `src/components/inbox/WhisperMode.tsx` |
 

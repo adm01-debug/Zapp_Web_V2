@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "f5a9f52f258e86511f72a0ad8b5a27a88d14882d",
+  "commit": "9d6d73a64e9a5a80f929e053c96b8e10c381c0ea",
   "branch": "main",
-  "data_commit": "2026-11-26T15:52:52Z",
+  "data_commit": "2026-11-26T16:06:39Z",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "9d6d73a6",
+    "data": "2026-11-26",
+    "assunto": "feat(sla): alertas de SLA ganham trilha auditavel, resolucao e preferencias por usuario (#3411)"
+   },
    {
     "sha": "f5a9f52f",
     "data": "2026-11-26",
@@ -126,14 +131,9 @@
     "sha": "078aacb5",
     "data": "2026-11-25",
     "assunto": "feat: tela da linha do tempo de SLA no painel do contato (#3383)"
-   },
-   {
-    "sha": "d91f6507",
-    "data": "2026-11-25",
-    "assunto": "feat: redige PII e segredos em logs, auditoria e telemetria (#3382)"
    }
   ],
-  "arquivos_mudados_7d": 2819,
+  "arquivos_mudados_7d": 2838,
   "pastas_mais_mudadas_30d": [
    {
     "pasta": "docs/contexto/supabase",
@@ -181,7 +181,7 @@
    },
    {
     "pasta": "src/hooks/__tests__",
-    "mudancas": 157
+    "mudancas": 161
    },
    {
     "pasta": "src/hooks/integrations",
@@ -207,7 +207,7 @@
    },
    {
     "arquivo": "docs/DB-INVENTORY.md",
-    "mudancas": 22
+    "mudancas": 23
    },
    {
     "arquivo": "docs/talkx/ESTADOS.md",
@@ -314,21 +314,21 @@
   ]
  },
  "contagens": {
-  "arquivos_total": 14883,
-  "arquivos_codigo": 5215,
-  "linhas_codigo": 966348,
+  "arquivos_total": 14895,
+  "arquivos_codigo": 5227,
+  "linhas_codigo": 968043,
   "rotas": 21,
   "rotas_http_backend": 11,
   "vistas_por_id": 55,
   "itens_menu": 61,
   "modulos": 149,
-  "componentes": 950,
-  "hooks": 531,
+  "componentes": 952,
+  "hooks": 533,
   "edge_functions": 94,
   "tabelas": 224,
   "migrations": 1161,
   "cron_jobs": 29,
-  "testes": 2857,
+  "testes": 2863,
   "workflows": 26,
   "scripts": 458,
   "docs_md": 3988
@@ -739,8 +739,8 @@
    "linhas": 638
   },
   "src/components": {
-   "arquivos": 2346,
-   "linhas": 399041
+   "arquivos": 2351,
+   "linhas": 399680
   },
   "src/config": {
    "arquivos": 3,
@@ -759,8 +759,8 @@
    "linhas": 3293
   },
   "src/hooks": {
-   "arquivos": 1062,
-   "linhas": 172341
+   "arquivos": 1069,
+   "linhas": 173385
   },
   "src/i18n": {
    "arquivos": 2,
@@ -780,7 +780,7 @@
   },
   "src/pages": {
    "arquivos": 78,
-   "linhas": 11528
+   "linhas": 11540
   },
   "src/providers": {
    "arquivos": 10,

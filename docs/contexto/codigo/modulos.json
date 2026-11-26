@@ -5153,6 +5153,7 @@
     "useSLANotifications",
     "useSecurityPushNotifications",
     "useSendToContact",
+    "useSlaAlertPreferences",
     "useTeamAlertsPreference",
     "useToast",
     "useVisiblePolling",
@@ -5177,6 +5178,7 @@
     "profiles",
     "queue_goals",
     "security_alerts",
+    "sla_alert_preferences",
     "sla_configurations",
     "sla_rules",
     "user_settings"
@@ -5184,7 +5186,8 @@
    "rpcs": [
     "enqueue_outbound_message",
     "enqueue_rich_outbound_message",
-    "get_inbox_contact_summaries"
+    "get_inbox_contact_summaries",
+    "record_sla_alert"
    ],
    "buckets": [],
    "canais_realtime": [
@@ -7345,28 +7348,66 @@
   },
   {
    "modulo": "components/sla",
-   "arquivos": 2,
-   "testes": 1,
-   "linhas": 260,
+   "arquivos": 5,
+   "testes": 3,
+   "linhas": 649,
    "itens_menu": [],
    "telas": [],
    "rotas_http": [],
-   "componentes": 2,
+   "componentes": 4,
    "hooks_locais": [
-    "useSLAHistory"
+    "useAppBootstrap",
+    "useAuth",
+    "useMessageUpdateBatcher",
+    "useNotificationSettings",
+    "useOfflineCache",
+    "usePublishIncomingAlertIdentity",
+    "useRealtimeMessages",
+    "useRealtimeNotifications",
+    "useRealtimeReconnectingNotice",
+    "useRealtimeStatus",
+    "useSLAHistory",
+    "useSlaAlertEvents",
+    "useSlaAlertPreferences",
+    "useTeamAlertsPreference",
+    "useToast",
+    "useUserRole"
    ],
    "hooks_definidos": [],
-   "edges": [],
-   "tabelas": [
-    "conversation_sla"
+   "edges": [
+    "auth-login",
+    "detect-new-device"
    ],
-   "rpcs": [],
+   "tabelas": [
+    "contacts",
+    "conversation_sla",
+    "messages",
+    "profiles",
+    "sla_alert_events",
+    "sla_alert_preferences",
+    "user_roles",
+    "user_settings"
+   ],
+   "rpcs": [
+    "app_bootstrap",
+    "enqueue_outbound_message",
+    "enqueue_rich_outbound_message",
+    "get_inbox_contact_summaries",
+    "resolve_sla_alert",
+    "user_has_permission"
+   ],
    "buckets": [],
-   "canais_realtime": [],
-   "env": [],
+   "canais_realtime": [
+    "chat-reactions:${messageId}"
+   ],
+   "env": [
+    "DEV"
+   ],
    "flags": [],
    "papeis": [
-    "status"
+    "admin",
+    "status",
+    "supervisor"
    ],
    "diretos": {
     "edges": [],
@@ -7379,10 +7420,12 @@
    "depende_de_modulos": [
     "components/ui",
     "hooks/sla",
+    "hooks/system",
     "lib"
    ],
    "pacotes_externos": [
     "@tanstack/react-query",
+    "date-fns",
     "framer-motion",
     "lucide-react",
     "recharts"
@@ -8785,7 +8828,7 @@
   {
    "modulo": "hooks/__tests__",
    "arquivos": 0,
-   "testes": 149,
+   "testes": 150,
    "linhas": 0,
    "itens_menu": [],
    "telas": [],
@@ -12320,9 +12363,9 @@
   },
   {
    "modulo": "hooks/sla",
-   "arquivos": 14,
-   "testes": 7,
-   "linhas": 1825,
+   "arquivos": 17,
+   "testes": 10,
+   "linhas": 2281,
    "itens_menu": [],
    "telas": [],
    "rotas_http": [],
@@ -12350,6 +12393,8 @@
     "useSLARulesCounts",
     "useSLAScopeNames",
     "useSendToContact",
+    "useSlaAlertEvents",
+    "useSlaAlertPreferences",
     "useTeamAlertsPreference",
     "useToast"
    ],
@@ -12357,6 +12402,8 @@
     "useApplicableSLA",
     "useContactFirstResponseSLA",
     "useContactSlaTimeline",
+    "useSlaAlertEvents",
+    "useSlaAlertPreferences",
     "useSLACalculation",
     "useSLAConfigurations",
     "useSLAHistory",
@@ -12382,6 +12429,8 @@
     "messages",
     "profiles",
     "queues",
+    "sla_alert_events",
+    "sla_alert_preferences",
     "sla_configurations",
     "sla_rules",
     "user_settings"
@@ -12393,6 +12442,8 @@
     "enqueue_rich_outbound_message",
     "get_inbox_contact_summaries",
     "get_last_message_dates",
+    "record_sla_alert",
+    "resolve_sla_alert",
     "search_contacts"
    ],
    "buckets": [],
@@ -12412,10 +12463,15 @@
      "conversation_sla",
      "profiles",
      "queues",
+     "sla_alert_events",
+     "sla_alert_preferences",
      "sla_configurations",
      "sla_rules"
     ],
-    "rpcs": []
+    "rpcs": [
+     "record_sla_alert",
+     "resolve_sla_alert"
+    ]
    },
    "importado_por_outros_modulos": [
     "components/dashboard",
@@ -12980,6 +13036,8 @@
     "useSipClient",
     "useSipConnection",
     "useSkillBasedAssign",
+    "useSlaAlertEvents",
+    "useSlaAlertPreferences",
     "useSmartTemplates",
     "useSpeechToText",
     "useSpeedToLead",
@@ -13303,6 +13361,8 @@
     "scheduled_messages",
     "scheduled_report_configs",
     "security_alerts",
+    "sla_alert_events",
+    "sla_alert_preferences",
     "sla_configurations",
     "sla_rules",
     "stickers",
@@ -13387,9 +13447,11 @@
     "purge_gmail_account_data",
     "reassign_absent_agents",
     "reassign_overloaded_agents",
+    "record_sla_alert",
     "remind_me_about_message",
     "reopen_conversation",
     "report_message",
+    "resolve_sla_alert",
     "resume_instance",
     "retry_talkx_recipients",
     "search_contacts",
@@ -13585,6 +13647,7 @@
     "components/permissions",
     "components/security",
     "components/settings",
+    "components/sla",
     "components/talkx",
     "components/team-chat",
     "components/ui",
@@ -15089,7 +15152,7 @@
    "modulo": "pages",
    "arquivos": 18,
    "testes": 0,
-   "linhas": 3181,
+   "linhas": 3187,
    "itens_menu": [
     "Telemetria BD"
    ],
@@ -15531,6 +15594,8 @@
     "useSilenceDetector",
     "useSipClient",
     "useSipConnection",
+    "useSlaAlertEvents",
+    "useSlaAlertPreferences",
     "useSmartTemplates",
     "useSpeechToText",
     "useSpeedToLead",
@@ -15795,6 +15860,8 @@
     "scheduled_messages",
     "scheduled_report_configs",
     "security_alerts",
+    "sla_alert_events",
+    "sla_alert_preferences",
     "sla_configurations",
     "sla_rules",
     "stickers",
@@ -15878,9 +15945,11 @@
     "purge_gmail_account_data",
     "reassign_absent_agents",
     "reassign_overloaded_agents",
+    "record_sla_alert",
     "remind_me_about_message",
     "reopen_conversation",
     "report_message",
+    "resolve_sla_alert",
     "resume_instance",
     "retry_talkx_recipients",
     "search_contacts",
@@ -16914,6 +16983,8 @@
     "useSilenceDetector",
     "useSipClient",
     "useSipConnection",
+    "useSlaAlertEvents",
+    "useSlaAlertPreferences",
     "useSmartTemplates",
     "useSpeechToText",
     "useSpeedToLead",
@@ -17183,6 +17254,8 @@
     "scheduled_messages",
     "scheduled_report_configs",
     "security_alerts",
+    "sla_alert_events",
+    "sla_alert_preferences",
     "sla_configurations",
     "sla_rules",
     "stickers",
@@ -17267,9 +17340,11 @@
     "purge_gmail_account_data",
     "reassign_absent_agents",
     "reassign_overloaded_agents",
+    "record_sla_alert",
     "remind_me_about_message",
     "reopen_conversation",
     "report_message",
+    "resolve_sla_alert",
     "resume_instance",
     "retry_talkx_recipients",
     "search_contacts",

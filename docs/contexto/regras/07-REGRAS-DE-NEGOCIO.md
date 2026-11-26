@@ -1,6 +1,6 @@
 # 07 · REGRAS DE NEGÓCIO
 
-> Gerado automaticamente por AI Context Sync v1.3.2 · commit `f5a9f52f25` · branch `main` · 2026-11-26 15:58 UTC
+> Gerado automaticamente por AI Context Sync v1.3.2 · commit `9d6d73a64e` · branch `main` · 2026-11-26 16:08 UTC
 > Não edite à mão — regras humanas vão em `manual/`.
 
 ## A. Regras escritas por humanos (`manual/` — prioridade máxima, nunca sobrescrito)
@@ -1455,6 +1455,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `type` | `file` | compara | `src/components/inbox/chat/useChatPanelHandlers.ts` |
 | `type` | `filtered-empty` | compara | `src/components/contacts/ContactEmptyState.tsx` |
 | `type` | `first-input` | escreve | `src/hooks/analytics/usePerformanceOptimizations.ts`<br>`src/lib/web-vitals.ts` |
+| `type` | `first_response` | compara | `src/hooks/sla/slaAlertPreferences.ts` |
 | `type` | `follow_up` | escreve | `src/hooks/chat/useNextBestAction.ts` |
 | `type` | `followup` | compara | `src/components/inbox/AISuggestions.tsx` |
 | `type` | `form` | compara | `src/components/performance/LazyRoutes.tsx` |
@@ -1576,6 +1577,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `type` | `text` | compara, escreve | `analise-prs/resgate-regra8-261118/supabase/functions/ai-multimodal-analysis/index.ts`<br>`src/components/catalog/sendTemplatePayload.ts`<br>`src/components/inbox/AdvancedMessageMenu.tsx`<br>`src/components/inbox/ForwardMessageDialog.tsx`<br>`src/components/inbox/InteractiveMessage.tsx`<br>… +16 |
 | `type` | `time_inactive` | escreve | `src/components/automations/automationConstants.ts` |
 | `type` | `timing` | escreve | `src/hooks/integrations/useTalkXInsights.ts` |
+| `type` | `todos` | compara, escreve | `src/hooks/sla/useSlaAlertEvents.ts` |
 | `type` | `toggleAlarm` | compara, escreve | `src/hooks/tasks/useTasksFilters.ts` |
 | `type` | `toggleDone` | compara, escreve | `src/hooks/tasks/useTasksFilters.ts` |
 | `type` | `totp` | escreve | `src/hooks/auth/useMFA.ts` |
@@ -1621,9 +1623,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `state` | `closed` | compara, escreve | `src/components/monitoring/hooks/useMonitoringNotifications.ts`<br>`src/hooks/chat/useTypingPresence.ts`<br>`supabase/functions/_shared/ai-circuit.ts` |
 | `state` | `confirmed` | compara, escreve | `supabase/functions/_shared/effect-reconcile.ts` |
 | `state` | `connected` | compara | `src/components/omnichannel/OmnichannelInbox.tsx`<br>`supabase/functions/webhook-diagnostic/index.ts` |
-| `state` | `current` | compara, escreve | `src/components/inbox/chat/MessageSendHistorySheet.tsx`<br>`src/components/inbox/chat/messageSendTimeline.ts` |
-| `state` | `done` | compara, escreve | `src/components/inbox/chat/messageSendTimeline.ts`<br>`src/components/inbox/contact-details/StoryViewer.tsx` |
-| … +260 linhas — lista completa em `context.json` | | | |
+| … +264 linhas — lista completa em `context.json` | | | |
 
 ### E.4 Enums e listas de valores
 
@@ -1885,11 +1885,14 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | CONTACT_PROTECTION_QUERY_KEY | 'contact-protection-policies' | `src/hooks/security/useContactProtectionPolicy.ts` |
 | MY_CONTACT_PROTECTION_QUERY_KEY | 'my-contact-protection-policy' | `src/hooks/security/useContactProtectionPolicy.ts` |
 | SipStatus | idle \| connecting \| registered \| reconnecting \| unavailable | `src/hooks/sip/useSipConnection.ts` |
+| SlaAlertType | first_response \| resolution | `src/hooks/sla/slaAlertPreferences.ts` |
+| SlaAlertSeverity | warning \| breached | `src/hooks/sla/slaAlertPreferences.ts` |
 | FirstResponseOutcome | on_time \| breached \| pending | `src/hooks/sla/slaFirstResponse.ts` |
 | SLAStatus | ok \| warning \| breached | `src/hooks/sla/useSLACalculation.ts` |
 | HistoryPeriod | 7d \| 14d \| 30d \| 90d | `src/hooks/sla/useSLAHistory.ts` |
 | PeriodFilter | today \| week \| month \| all | `src/hooks/sla/useSLAMetrics.ts` |
 | SLARuleScope | contact \| company \| job_title \| contact_type \| queue \| agent | `src/hooks/sla/useSLARules.ts` |
+| SlaAlertStatusFilter | ativos \| resolvidos \| todos | `src/hooks/sla/useSlaAlertEvents.ts` |
 | ConnectionAlertKind | degraded \| disconnected | `src/hooks/system/useConnectionAlertPreferences.ts` |
 | HealthStatus | healthy \| degraded \| down \| unauthorized \| unknown | `src/hooks/system/useDiagnosticsData.ts` |
 | FEATURE_FLAGS_QUERY_KEY | 'feature-flags' | `src/hooks/system/useFeatureFlag.ts` |
@@ -1926,10 +1929,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | AuditAction | login \| logout \| message_sent \| message_received \| contact_created \| contact_updated \| connection_created \| connection_deleted \| call_started \| call_ended \| transfer \| settings_changed \| client_error \| searchbox_session \| searchbox_cost_guard \| searchbox_budget_warning \| searchbox_selected \| location_sent \| unauthorized_access | `src/lib/audit.ts` |
 | CHART_PALETTE | CHART_COLORS.primary, CHART_COLORS.secondary, CHART_COLORS.tertiary, CHART_COLORS.quaternary, CHART_COLORS.quinary, CHART_COLORS.senary, CHART_COLORS.septenary, CHART_COLORS.octonary, CHART_COLORS.nonary, CHART_COLORS.denary, | `src/lib/chartColors.ts` |
 | CHART_PALETTE_MINI | CHART_COLORS.primary, CHART_COLORS.secondary, CHART_COLORS.tertiary, CHART_COLORS.quaternary, CHART_COLORS.quinary, | `src/lib/chartColors.ts` |
-| STATUS_PALETTE | CHART_COLORS.resolved, CHART_COLORS.pending, CHART_COLORS.waiting, CHART_COLORS.open, | `src/lib/chartColors.ts` |
-| SENTIMENT_PALETTE | CHART_COLORS.positive, CHART_COLORS.neutral, CHART_COLORS.negative, | `src/lib/chartColors.ts` |
-| ContactHealthFieldKey | name \| phone \| email \| company \| job_title \| contact_type \| address \| assigned_to | `src/lib/contactHealth.ts` |
-| … +159 linhas — lista completa em `context.json` | | |
+| … +162 linhas — lista completa em `context.json` | | |
 
 ## F. Validações de entrada
 
@@ -3938,7 +3938,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `SUPERVISOR_PAGE_SIZE` | `200` | `src/hooks/admin/useSupervisorQueue.ts` |
 | `DEFAULT_REFRESH_MS` | `60` | `src/hooks/admin/useSupervisorQueue.ts` |
 | `RECENT_SENDS_WINDOW_DAYS` | `30` | `src/hooks/agents/useAgentRecentSends.ts` |
-| … +723 linhas — lista completa em `context.json` | | |
+| … +724 linhas — lista completa em `context.json` | | |
 
 ### H.2 Prazos, expirações e janelas de tempo
 
@@ -4693,7 +4693,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | disk-full | `scripts/ci/e2e-isolated-provider-readiness.unit.mjs` |
 | must-not-read-service-role | `scripts/ci/e2e-isolated-provider-readiness.unit.mjs` |
 | synthetic transport rejection | `scripts/ci/e2e-isolated-runtime-probe.unit.mjs` |
-| … +1894 linhas — lista completa em `context.json` | |
+| … +1899 linhas — lista completa em `context.json` | |
 
 ## J. Controle de acesso no código (checagens de perfil/permissão)
 
@@ -4768,7 +4768,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `owner` | `supabase/migrations/20260927270018_team_chat_e28_fix_find_or_create_race.sql` |
 | `anon` | `supabase/migrations/20260927340000_fix_add_agent_xp_negative_and_guard.sql` |
 
-## K. Testes como especificação (23215 testes em 2464 arquivos — nomes completos em `context.json`)
+## K. Testes como especificação (23263 testes em 2469 arquivos — nomes completos em `context.json`)
 
 | Arquivo | Testes | Exemplos do que o sistema DEVE fazer |
 |---|---|---|
@@ -5072,7 +5072,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `supabase/functions/ai-transcribe-audio/openrouter-stt.test.ts` | 17 | formato: containers que a edge reconhece viram a extensão do input_audio · formato: mime de outro tipo ou desconhecido não vira extensão inventada · formato: parâmetro do content-type (codecs) não atrapalha e o case não importa · base64: buffer maior que o bloco interno é convertido byte a byte … |
 | `supabase/functions/multiplix-dispatch/actions/__tests__/listing.test.ts` | 17 | dispatch.list escopo: sem permissao ampla so devolve os disparos do dono · dispatch.list escopo: usuario sem profile e sem permissao -> lista vazia (nao consulta a tabela) · dispatch.list escopo: a permissao ampla ve os disparos de qualquer dono · dispatch.list paginacao: limit/offset recortam na ordem created_at desc e total e exato … |
 | `supabase/functions/talkx-ai/index.test.ts` | 17 | X076: flag ai_insights desligada recusa com 403 ai_disabled e não paga o proxy · X076: orçamento mensal no padrão (0 = desligado) recusa com 403 ai_disabled · X076: gasto do mês no teto recusa com 429 budget_exceeded e não paga o proxy · X076: gasto abaixo do teto passa (o teto não é desligamento geral) … |
-| … +2164 linhas — lista completa em `context.json` | | |
+| … +2169 linhas — lista completa em `context.json` | | |
 
 ## L. Eventos de webhook tratados (contratos com sistemas externos)
 
@@ -5591,4 +5591,4 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | Mostra no máximo 2 sugestões para não poluir o painel | `src/components/inbox/copilot/MissingQuestions.tsx` |
 | * CV-035/036 — Alerta de ocasião comercial detectada + prazo de entrega. | `src/components/inbox/copilot/OccasionAlert.tsx` |
 | Sobe/desce a linha uma posição por vez, trocando apenas de lugar os objetos | `src/components/inbox/interactive-builder/useInteractiveMessage.ts` |
-| … +1884 linhas — lista completa em `context.json` | |
+| … +1886 linhas — lista completa em `context.json` | |
