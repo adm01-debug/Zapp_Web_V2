@@ -1,9 +1,10 @@
 import { AnimatePresence, motion } from 'framer-motion';
-import { Shield, Users, UserPlus, Trash2, Search, Loader2, Crown, Eye, Headphones, Star, AlertTriangle, RotateCw } from 'lucide-react';
+import { Shield, Users, UserPlus, Trash2, Search, Loader2, Crown, Eye, Headphones, Star, AlertTriangle, RotateCw, Globe2 } from 'lucide-react';
 import { useUserRole } from '@/hooks/system/useUserRole';
 import { useRolesPageState, type UserWithRole } from './useRolesPageState';
 import { PermissionMatrix } from '@/components/permissions/PermissionMatrix';
 import { VisibilityGrantsManager } from '@/components/admin/VisibilityGrantsManager';
+import { TrustedDomainsPanel } from './TrustedDomainsPanel';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -60,6 +61,7 @@ export default function RolesPage() {
           <TabsTrigger value="users"><Users className="w-4 h-4 mr-2" />Usuários</TabsTrigger>
           <TabsTrigger value="permissions"><Shield className="w-4 h-4 mr-2" />Permissões</TabsTrigger>
           <TabsTrigger value="visibility"><Star className="w-4 h-4 mr-2" />Visibilidade</TabsTrigger>
+          <TabsTrigger value="trusted-domains"><Globe2 className="w-4 h-4 mr-2" />Cadastro automático</TabsTrigger>
         </TabsList>
 
         <TabsContent value="users" className="space-y-4 mt-4">
@@ -133,6 +135,7 @@ export default function RolesPage() {
 
         <TabsContent value="permissions" className="mt-4"><PermissionMatrix /></TabsContent>
         <TabsContent value="visibility" className="mt-4"><VisibilityGrantsManager /></TabsContent>
+        <TabsContent value="trusted-domains" className="mt-4"><TrustedDomainsPanel /></TabsContent>
       </Tabs>
 
       <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
