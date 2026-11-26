@@ -4,40 +4,32 @@ import { render, screen, waitFor } from '@testing-library/react';
 /**
  * R2-AUTH-036 (item 260, P2) — Sala de Crise.
  *
+ * A medição das quatro métricas de operação saiu do navegador para o agregado
+ * `public.crisis_room_snapshot()` (hook `useCrisisRoomMetrics`); as regras de cálculo
+ * no banco têm prova própria em `scripts/db-audit/crisis-room-snapshot.test.sh`. A
+ * prova AQUI é o que a TELA mostra sobre o que o agregado devolve:
+ *   1. nenhum recálculo no navegador — a tela não consulta tabela nenhuma;
+ *   2. "zero medido" e "não medido" não se confundem: `queue_ratio` nulo sai "—";
+ *   3. leitura que falha deixa TODOS os cartões em "—" com selo "Sem medição" —
+ *      jamais "Operação normal" (nem zero) sobre um dado que não existe.
+ *
  * Antes: `loadMetrics` tratava TODA mensagem `sender=contact` da última hora como
  * "sem resposta" (inclusive as já respondidas) e usava `profiles.is_active`
- * (conta habilitada) como se fosse presença de agente — tanto no cartão
- * "Agentes ativos" ("online") quanto no denominador da "Carga por agente"
- * (rotulada conv/agente). O payload abaixo tem mensagens todas respondidas e
- * contas habilitadas offline: nenhum desses proxies pode mexer no diagnóstico.
- *
- * A prova aqui é o que a tela MOSTRA (valor de cada cartão e banner de crise),
- * renderizando o componente real e deixando o efeito de montagem rodar.
+ * (conta habilitada) como se fosse presença de agente — o conserto dessas duas
+ * regras vive no SQL, provado pelo harness do banco.
  */
 
-const { mockFrom, PRESENCE, FIXTURE } = vi.hoisted(() => ({
+const { mockFrom, HOOK } = vi.hoisted(() => ({
   mockFrom: vi.fn(),
-  PRESENCE: {} as Record<string, string>,
-  FIXTURE: {
-    inbound: [] as unknown[],
-    replies: [] as unknown[],
-    profiles: [] as unknown[],
-    slaCount: 0,
-  },
+  HOOK: { atual: {} as Record<string, unknown> },
 }));
 
 vi.mock('@/integrations/supabase/client', () => ({
   supabase: { from: (...args: unknown[]) => mockFrom(...args) },
 }));
 
-// Mesma origem de presença do Dashboard/War Room (`agent_presence`), não o cadastro.
-vi.mock('@/hooks/crm/useAgentPresence', () => ({
-  useAgentPresenceMap: () => PRESENCE,
-}));
-
-// Store global dos canais de WhatsApp (PJ-06): aqui só interessa que ele NÃO abra
-// assinatura própria neste cenário — sem conexão cadastrada o cartão de canais sai
-// "não medido" e nenhuma métrica de rede entra no diagnóstico deste teste.
+// Mesmo caminho de mock do cartão de canais: sem conexão cadastrada ele sai "não
+// medido" e nenhuma métrica de rede entra no diagnóstico deste teste.
 vi.mock('@/hooks/connections/useConnectionsHealth', () => ({
   useConnectionsHealth: () => ({
     connections: [],
@@ -49,108 +41,62 @@ vi.mock('@/hooks/connections/useConnectionsHealth', () => ({
   }),
 }));
 
+// O hook é substituído, mas as funções de contrato (`parseCrisisRoomSnapshot` e
+// `buildCrisisMetricReadouts`) seguem REAIS: é o agregado cru da RPC que entra aqui.
+vi.mock('@/hooks/business/useCrisisRoomMetrics', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@/hooks/business/useCrisisRoomMetrics')>()),
+  useCrisisRoomMetrics: () => HOOK.atual,
+}));
+
 import { CrisisRoom } from '@/components/admin/CrisisRoom';
+import {
+  parseCrisisRoomSnapshot,
+  buildCrisisMetricReadouts,
+} from '@/hooks/business/useCrisisRoomMetrics';
 
-const MINUTE = 60_000;
-const NOW = Date.now();
+const BASE = {
+  metrics: undefined,
+  snapshot: undefined,
+  isCrisis: null,
+  isError: false,
+  error: null,
+  isFirstLoad: false,
+  isRefreshing: false,
+  dataUpdatedAt: 0,
+  refetch: () => {},
+  refetchIntervalMs: 45_000,
+};
 
-/** Mensagem recebida `minAgo` minutos atrás, já com `contact_id`. */
-const inbound = (contactId: string, minAgo: number) => ({
-  id: `in-${contactId}-${minAgo}`,
-  contact_id: contactId,
-  created_at: new Date(NOW - minAgo * MINUTE).toISOString(),
-});
-
-/** Resposta do atendimento — precisa ser POSTERIOR à recebida para tirá-la da pendência. */
-const reply = (contactId: string, minAgo: number) => ({
-  contact_id: contactId,
-  created_at: new Date(NOW - minAgo * MINUTE).toISOString(),
-});
-
-const enabledAccount = (userId: string) => ({ user_id: userId });
-
-function setPresence(map: Record<string, string>) {
-  for (const key of Object.keys(PRESENCE)) delete PRESENCE[key];
-  Object.assign(PRESENCE, map);
+/** Agregado cru como a RPC devolve (`jsonb`), com os padrões já preenchidos. */
+function agregado(overrides: Record<string, unknown>) {
+  return {
+    unanswered_messages: 0,
+    unanswered_conversations: 0,
+    online_agents: 4,
+    total_agents: 4,
+    sla_breached: 0,
+    queue_ratio: 0,
+    window_minutes: 60,
+    sla_window_hours: 24,
+    generated_at: '2026-11-26T22:00:00.000Z',
+    ...overrides,
+  };
 }
 
-function setupFixture(input: {
-  inbound: unknown[];
-  replies?: unknown[];
-  profiles: unknown[];
-  online?: string[];
-  awayOffline?: string[];
-  slaCount?: number;
-}) {
-  FIXTURE.inbound = input.inbound;
-  FIXTURE.replies = input.replies ?? [];
-  FIXTURE.profiles = input.profiles;
-  FIXTURE.slaCount = input.slaCount ?? 0;
-  setPresence({
-    ...Object.fromEntries((input.online ?? []).map(id => [id, 'online'])),
-    ...Object.fromEntries((input.awayOffline ?? []).map(id => [id, 'offline'])),
-  });
-}
-
-function chainable(finalResponse: unknown) {
-  const node: Record<string, unknown> = {};
-  node.eq = () => node;
-  node.in = () => node;
-  node.gte = () => node;
-  node.then = (resolve: (value: unknown) => unknown) =>
-    Promise.resolve(finalResponse).then(resolve);
-  return node;
+/** Liga a tela a um agregado real, passando pelo parse do hook. */
+function comAgregado(overrides: Record<string, unknown>) {
+  const snapshot = parseCrisisRoomSnapshot(agregado(overrides));
+  HOOK.atual = {
+    ...BASE,
+    snapshot,
+    metrics: buildCrisisMetricReadouts(snapshot),
+    isCrisis: buildCrisisMetricReadouts(snapshot).some((m) => m.severity === 'critical'),
+  };
 }
 
 beforeEach(() => {
   vi.clearAllMocks();
-  mockFrom.mockImplementation((table: string) => {
-    if (table === 'messages') {
-      let sender: string | null = null;
-      return {
-        select: (_columns?: unknown, options?: { count?: string; head?: boolean }) => {
-          const node: Record<string, unknown> = {};
-          node.eq = (column: string, value: string) => {
-            if (column === 'sender') sender = value;
-            return node;
-          };
-          node.gte = () => node;
-          node.then = (resolve: (value: unknown) => unknown) => {
-            // A consulta antiga era `select('id',{count:'exact',head:true})`: o
-            // servidor devolve `count`, não linhas. Entregar o count real mantém
-            // a versão antiga com o valor DEFEITUOSO (todo sender=contact da hora).
-            if (options?.head) {
-              return Promise.resolve({
-                data: null,
-                count: FIXTURE.inbound.length,
-                error: null,
-              }).then(resolve);
-            }
-            return Promise.resolve({
-              data: sender === 'agent' ? FIXTURE.replies : FIXTURE.inbound,
-              error: null,
-            }).then(resolve);
-          };
-          return node;
-        },
-      };
-    }
-    if (table === 'profiles') {
-      // A consulta antiga era `select('id',{count:'exact',head:true})` e usava `count`
-      // (contas habilitadas). Devolver o count real mantém a versão antiga com o
-      // valor DEFEITUOSO em vez de zero por formato de mock.
-      return {
-        select: (_columns?: unknown, options?: { count?: string; head?: boolean }) =>
-          chainable(options?.head
-            ? { data: null, count: FIXTURE.profiles.length, error: null }
-            : { data: FIXTURE.profiles, error: null }),
-      };
-    }
-    if (table === 'conversation_sla') {
-      return { select: () => chainable({ data: null, count: FIXTURE.slaCount, error: null }) };
-    }
-    return { select: () => chainable({ data: [], error: null }) };
-  });
+  HOOK.atual = { ...BASE };
 });
 
 /** Valor exibido no cartão cujo rótulo é `label` (o <p> do número precede o do rótulo). */
@@ -160,80 +106,77 @@ async function metricValue(label: string) {
   return labelEl.previousElementSibling?.textContent ?? null;
 }
 
-describe('CrisisRoom — pendência e presença reais, não proxies (R2-AUTH-036)', () => {
-  it('mensagem já respondida na última hora não conta como "sem resposta"', async () => {
-    // 40 mensagens recebidas em 8 conversas, TODAS com resposta posterior.
-    const contacts = Array.from({ length: 8 }, (_, i) => `c-${i}`);
-    const unansweredBox: unknown[] = [];
-    const repliesBox: unknown[] = [];
-    contacts.forEach((contactId, i) => {
-      for (let n = 0; n < 5; n += 1) {
-        unansweredBox.push(inbound(contactId, 50 - n));
-        repliesBox.push(reply(contactId, 49 - n));
-      }
-    });
-    setupFixture({
-      inbound: unansweredBox,
-      replies: repliesBox,
-      profiles: ['u-1', 'u-2', 'u-3', 'u-4'].map(enabledAccount),
-      online: ['u-1', 'u-2', 'u-3', 'u-4'],
+describe('CrisisRoom — agregado da RPC vira cartão, sem recálculo no navegador', () => {
+  it('mostra exatamente o que a RPC mediu, com os dois limiares de cada cartão', async () => {
+    comAgregado({
+      unanswered_messages: 42,
+      unanswered_conversations: 12,
+      online_agents: 3,
+      total_agents: 9,
+      sla_breached: 7,
+      queue_ratio: 4,
     });
 
     render(<CrisisRoom />);
 
-    // Antes do conserto: 40 (todo sender=contact da hora) -> "Crítico" -> banner de crise.
-    expect(await metricValue('Msgs sem resposta (1h)')).toBe('0');
-    expect(await metricValue('Agentes ativos')).toBe('4');
-    expect(screen.getByText('🟢 Operação normal')).toBeInTheDocument();
-    expect(screen.queryByText('Operação em estado crítico!')).not.toBeInTheDocument();
-  });
-
-  it('conta habilitada sem presença online não é agente ativo', async () => {
-    setupFixture({
-      inbound: [],
-      profiles: ['u-1', 'u-2', 'u-3'].map(enabledAccount),
-      online: ['u-1'],
-      awayOffline: ['u-2', 'u-3'],
-    });
-
-    render(<CrisisRoom />);
-
-    // Antes do conserto: 3 (profiles.is_active) e a operação aparecia como normal.
-    expect(await metricValue('Agentes ativos')).toBe('1');
+    expect(await metricValue('Msgs sem resposta (1h)')).toBe('42');
+    expect(await metricValue('Carga por agente')).toBe('4');
+    expect(await metricValue('SLA estourados')).toBe('7');
+    expect(await metricValue('Agentes ativos')).toBe('3');
+    // 42 > 30 = crítico; SLA 7 > 5 = atenção; 3 agentes < 4 = atenção.
     expect(screen.getByText('🔴 MODO CRISE ATIVO')).toBeInTheDocument();
     expect(screen.getByText('Operação em estado crítico!')).toBeInTheDocument();
+    // Nenhuma consulta de tabela: a pendência não é recontada aqui.
+    expect(mockFrom).not.toHaveBeenCalled();
   });
 
-  it('conta só a pendência real e divide a carga por agente online', async () => {
-    setupFixture({
-      inbound: [
-        inbound('c-a', 40), inbound('c-a', 30), // respondidas
-        inbound('c-b', 25), inbound('c-b', 20), // pendentes (mesma conversa)
-        inbound('c-c', 10),                     // pendente
-      ],
-      replies: [reply('c-a', 35), reply('c-a', 28)],
-      profiles: ['u-1', 'u-2'].map(enabledAccount),
-      online: ['u-1', 'u-2'],
-    });
+  it('zero medido aparece como 0 e mantém "Operação normal"', async () => {
+    comAgregado({ unanswered_messages: 0, online_agents: 4, sla_breached: 0, queue_ratio: 0 });
 
     render(<CrisisRoom />);
 
-    // 3 mensagens pendentes (2 já respondidas ficam de fora) / 2 agentes online -> 1
-    expect(await metricValue('Msgs sem resposta (1h)')).toBe('3');
-    expect(await metricValue('Carga por agente')).toBe('1');
+    expect(await metricValue('Msgs sem resposta (1h)')).toBe('0');
+    expect(await metricValue('Carga por agente')).toBe('0');
+    expect(screen.getByText('🟢 Operação normal')).toBeInTheDocument();
+    // Zero medido NÃO é "sem medição": só o cartão de canais (sem conexão cadastrada
+    // neste teste) sai como não medido.
+    expect(screen.getAllByText('Sem medição').length).toBe(1);
   });
 
-  it('sem agente online a carga não é medida — sai "—", não zero', async () => {
-    setupFixture({
-      inbound: [inbound('c-a', 10)],
-      profiles: ['u-1', 'u-2'].map(enabledAccount),
-      awayOffline: ['u-1', 'u-2'],
-    });
+  it('sem agente online a carga sai "—" (não medida) e o zero medido de agentes é crítico', async () => {
+    comAgregado({ online_agents: 0, queue_ratio: null, unanswered_messages: 0, sla_breached: 0 });
 
     render(<CrisisRoom />);
 
-    // Antes do conserto: round(1 / 2 contas habilitadas) = 1 no cartão "conv/agente".
+    // `queue_ratio` nulo NÃO pode virar 0: a carga por agente é indeterminada.
     expect(await metricValue('Carga por agente')).toBe('—');
+    // `online_agents` = 0 é medida legítima (ninguém online), e é crítica.
     expect(await metricValue('Agentes ativos')).toBe('0');
+    expect(screen.getByText('🔴 MODO CRISE ATIVO')).toBeInTheDocument();
+  });
+
+  it('leitura que falha deixa todos os cartões em "—" e nunca diz "Operação normal"', async () => {
+    HOOK.atual = {
+      ...BASE,
+      isError: true,
+      error: new Error('crisis_room_snapshot requires admin or supervisor'),
+    };
+
+    render(<CrisisRoom />);
+
+    await waitFor(() => expect(screen.getAllByText('—').length).toBeGreaterThanOrEqual(4));
+    expect(screen.getByText('⚪ Sem medição')).toBeInTheDocument();
+    expect(screen.queryByText('🟢 Operação normal')).toBeNull();
+    expect(screen.queryByText('🔴 MODO CRISE ATIVO')).toBeNull();
+    expect(screen.getByRole('alert').textContent).toContain('requires admin or supervisor');
+  });
+
+  it('primeira carga mostra esqueleto, não cartão zerado', async () => {
+    HOOK.atual = { ...BASE, isFirstLoad: true };
+
+    render(<CrisisRoom />);
+
+    expect(screen.queryByText('Msgs sem resposta (1h)')).toBeNull();
+    expect(screen.queryByText('0')).toBeNull();
   });
 });

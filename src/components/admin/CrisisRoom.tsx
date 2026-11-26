@@ -1,11 +1,15 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
-import { supabase } from '@/integrations/supabase/client';
-import { useAgentPresenceMap } from '@/hooks/crm/useAgentPresence';
+import { useMemo } from 'react';
+import {
+  useCrisisRoomMetrics,
+  CRISIS_THRESHOLDS,
+  METRIC_LABELS,
+  type CrisisMetricKey,
+} from '@/hooks/business/useCrisisRoomMetrics';
 import { useConnectionsHealth, type ConnectionHealth } from '@/hooks/connections/useConnectionsHealth';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { AlertTriangle, Users, Clock, MessageSquare, TrendingUp, ShieldAlert, CheckCircle2, XCircle, Siren, Smartphone } from 'lucide-react';
+import { AlertTriangle, Users, Clock, MessageSquare, Siren, Smartphone } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 interface CrisisMetric {
@@ -14,9 +18,31 @@ interface CrisisMetric {
   value: number | null;
   threshold: number;
   unit: string;
-  severity: 'ok' | 'warning' | 'critical';
+  severity: 'ok' | 'warning' | 'critical' | 'unknown';
   icon: typeof AlertTriangle;
 }
+
+/** Ícone de cada métrica do agregado (`crisis_room_snapshot` devolve só os números). */
+const METRIC_ICONS: Record<CrisisMetricKey, typeof AlertTriangle> = {
+  unanswered_messages: MessageSquare,
+  queue_ratio: Users,
+  sla_breached: Clock,
+  online_agents: Users,
+};
+
+/**
+ * Cartões em "não medido" — enquanto não há agregado bom (primeira carga, permissão
+ * negada, rede). Valor "—" com severidade `unknown`: zero NUNCA pode nascer de uma
+ * leitura que falhou (PF-02), porque zero é uma medida legítima (operação calma).
+ */
+const SEM_MEDICAO: CrisisMetric[] = (Object.keys(CRISIS_THRESHOLDS) as CrisisMetricKey[]).map((key) => ({
+  label: METRIC_LABELS[key].label,
+  value: null,
+  threshold: CRISIS_THRESHOLDS[key].attention,
+  unit: METRIC_LABELS[key].unit,
+  severity: 'unknown',
+  icon: METRIC_ICONS[key],
+}));
 
 /**
  * Cartão "Canais no WhatsApp" — o eixo "canais ativos" do monitor de realtime
@@ -40,156 +66,48 @@ function connectionsMetric(
     value: measured ? online : null,
     threshold: total,
     unit: 'online',
-    severity: !measured ? 'ok' : online === 0 ? 'critical' : online < total ? 'warning' : 'ok',
+    severity: !measured ? 'unknown' : online === 0 ? 'critical' : online < total ? 'warning' : 'ok',
     icon: Smartphone,
   };
 }
 
 export function CrisisRoom() {
-  const [crisisMetrics, setCrisisMetrics] = useState<CrisisMetric[]>([]);
-  const [loading, setLoading] = useState(true);
-  // Presença real dos usuários (`agent_presence`, com heartbeat). Cadastro habilitado
-  // (`profiles.is_active`) é permissão de acesso, não presença — R2-AUTH-036/R2-MOD-030.
-  const presence = useAgentPresenceMap();
+  // As quatro métricas de operação (pendências, carga, SLA e agentes online) vêm do
+  // agregado `public.crisis_room_snapshot()`, medido no banco (R2-AUTH-036/PF-02).
+  // Antes a tela somava 4 consultas soltas no navegador, cortadas em 1.000 linhas pelo
+  // PostgREST e sem checar `.error` — falha de leitura virava zero e selo verde.
+  const crisis = useCrisisRoomMetrics();
   // Estado global dos canais de WhatsApp: o app já mantém UMA assinatura de realtime
   // (`useConnectionsHealth`); a Sala de Crise lê esse estado em vez de abrir canal próprio.
   const connectionsHealth = useConnectionsHealth();
 
-  const onlineUserIds = useMemo(
-    () => new Set(
-      Object.entries(presence)
-        .filter(([, status]) => status === 'online')
-        .map(([userId]) => userId),
-    ),
-    [presence],
-  );
-  // Chave estável do conjunto online: o mapa de presença é recriado a cada recompute
-  // (stale/heartbeat), e sem isso o efeito refaria as consultas sem o conjunto mudar.
-  const onlineKey = [...onlineUserIds].sort().join(',');
-
   // O que a tela mostra: as quatro métricas de operação + os canais de WhatsApp.
   const metrics = useMemo(
     () => [
-      ...crisisMetrics,
+      ...(crisis.metrics
+        ? crisis.metrics.map((readout) => ({
+            label: readout.label,
+            value: readout.value,
+            threshold: readout.attention,
+            unit: readout.unit,
+            severity: readout.severity,
+            icon: METRIC_ICONS[readout.key],
+          }))
+        : SEM_MEDICAO),
       connectionsMetric(connectionsHealth.connections, connectionsHealth.loading, connectionsHealth.error),
     ],
-    [crisisMetrics, connectionsHealth.connections, connectionsHealth.loading, connectionsHealth.error],
+    [crisis.metrics, connectionsHealth.connections, connectionsHealth.loading, connectionsHealth.error],
   );
-  // Crise = alguma métrica crítica, derivada do que está na tela. Antes o estado era
-  // recalculado só dentro do load e não enxergava o cartão de canais.
+  // Crise = alguma métrica crítica, derivada do que está na tela (inclui os canais).
   const isCrisis = useMemo(() => metrics.some((metric) => metric.severity === 'critical'), [metrics]);
-
-  const loadMetrics = useCallback(async () => {
-    setLoading(true);
-    const now = new Date();
-    const oneHourAgo = new Date(now.getTime() - 60 * 60 * 1000);
-
-    const [inbound, replies, agentProfiles, breachedSLA] = await Promise.all([
-      // Mensagens RECEBIDAS na última hora (candidatas a pendência). `contact_id` vem
-      // junto porque a resposta é por conversa, não pelo volume recebido.
-      supabase.from('messages').select('id, contact_id, created_at')
-        .eq('sender', 'contact').gte('created_at', oneHourAgo.toISOString()),
-      // Respostas do atendimento na mesma janela: qualquer resposta posterior à
-      // mensagem recebida tira aquela mensagem da pendência.
-      supabase.from('messages').select('contact_id, created_at')
-        .eq('sender', 'agent').gte('created_at', oneHourAgo.toISOString()),
-      // Contas habilitadas de atendimento (agente/supervisor/admin). É o universo de
-      // quem PODE estar online; presença entra pela tabela `agent_presence`.
-      supabase.from('profiles').select('user_id')
-        .eq('is_active', true).in('role', ['agent', 'admin', 'supervisor']),
-      supabase.from('conversation_sla').select('id', { count: 'exact', head: true })
-        .eq('first_response_breached', true),
-    ]);
-
-    const inboundRows = (inbound.data ?? []) as { id: string; contact_id: string | null; created_at: string }[];
-    const replyRows = (replies.data ?? []) as { contact_id: string | null; created_at: string }[];
-
-    // Última resposta do atendimento por conversa.
-    const lastReplyByContact = new Map<string, number>();
-    for (const reply of replyRows) {
-      if (!reply.contact_id) continue;
-      const repliedAt = Date.parse(reply.created_at);
-      const previous = lastReplyByContact.get(reply.contact_id);
-      if (previous == null || repliedAt > previous) lastReplyByContact.set(reply.contact_id, repliedAt);
-    }
-
-    // Só conta como "sem resposta" o que ainda não recebeu resposta posterior.
-    // Antes, todo `sender=contact` da hora entrava — mensagem já respondida inflava a crise.
-    const unansweredContacts = new Set<string>();
-    let unansweredCount = 0;
-    for (const message of inboundRows) {
-      const repliedAt = message.contact_id ? lastReplyByContact.get(message.contact_id) : undefined;
-      if (repliedAt != null && repliedAt > Date.parse(message.created_at)) continue;
-      unansweredCount += 1;
-      if (message.contact_id) unansweredContacts.add(message.contact_id);
-    }
-
-    // "Agentes ativos" = conta habilitada de atendimento COM presença online.
-    const enabledUserIds = new Set(
-      ((agentProfiles.data ?? []) as { user_id: string | null }[])
-        .map(p => p.user_id)
-        .filter((id): id is string => !!id),
-    );
-    const onlineIds = new Set(onlineKey ? onlineKey.split(',') : []);
-    const onlineAgentCount = [...onlineIds].filter(id => enabledUserIds.has(id)).length;
-
-    // Carga pendente por atendente: conversas sem resposta por agente ONLINE.
-    // Denominador era o cadastro habilitado (contas offline inflavam a "carga");
-    // sem ninguém online a razão não é medida — sai `null`, não zero.
-    const unansweredConversations = unansweredContacts.size;
-    const queueRatio = onlineAgentCount > 0
-      ? Math.round(unansweredConversations / onlineAgentCount)
-      : null;
-    const slaBreached = breachedSLA.count || 0;
-
-    const buildMetrics: CrisisMetric[] = [
-      {
-        label: 'Msgs sem resposta (1h)',
-        value: unansweredCount,
-        threshold: 20,
-        unit: 'msgs',
-        severity: unansweredCount > 30 ? 'critical' : unansweredCount > 20 ? 'warning' : 'ok',
-        icon: MessageSquare,
-      },
-      {
-        label: 'Carga por agente',
-        value: queueRatio,
-        threshold: 10,
-        unit: 'conv/agente',
-        severity: queueRatio == null ? 'ok' : queueRatio > 15 ? 'critical' : queueRatio > 10 ? 'warning' : 'ok',
-        icon: Users,
-      },
-      {
-        label: 'SLA estourados',
-        value: slaBreached,
-        threshold: 5,
-        unit: 'conversas',
-        severity: slaBreached > 10 ? 'critical' : slaBreached > 5 ? 'warning' : 'ok',
-        icon: Clock,
-      },
-      {
-        label: 'Agentes ativos',
-        value: onlineAgentCount,
-        threshold: 2,
-        unit: 'online',
-        severity: onlineAgentCount < 2 ? 'critical' : onlineAgentCount < 4 ? 'warning' : 'ok',
-        icon: Users,
-      },
-    ];
-
-    setCrisisMetrics(buildMetrics);
-    setLoading(false);
-  }, [onlineKey]);
-
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- fetch-on-mount padrão, sem estado derivado de props para sincronizar.
-    loadMetrics();
-  }, [loadMetrics]);
+  // Sem agregado bom: nem "Operação normal", nem cartão zerado.
+  const semMedicao = !crisis.metrics;
 
   const severityConfig = {
     ok: { bg: 'bg-success/10', border: 'border-success/30', text: 'text-success', label: 'Normal' },
     warning: { bg: 'bg-warning/10', border: 'border-warning/30', text: 'text-warning', label: 'Atenção' },
     critical: { bg: 'bg-destructive/10', border: 'border-destructive/30', text: 'text-destructive', label: 'Crítico' },
+    unknown: { bg: 'bg-muted/20', border: 'border-muted', text: 'text-muted-foreground', label: 'Sem medição' },
   };
 
   return (
@@ -203,7 +121,7 @@ export function CrisisRoom() {
           <p className="text-sm text-muted-foreground">Monitor em tempo real da operação</p>
         </div>
         <Badge variant={isCrisis ? 'destructive' : 'outline'} className="text-xs">
-          {isCrisis ? '🔴 MODO CRISE ATIVO' : '🟢 Operação normal'}
+          {isCrisis ? '🔴 MODO CRISE ATIVO' : semMedicao ? '⚪ Sem medição' : '🟢 Operação normal'}
         </Badge>
       </div>
 
@@ -220,9 +138,17 @@ export function CrisisRoom() {
         </motion.div>
       )}
 
-      {loading ? (
+      {/* Leitura falhou: os cartões ficam em "—" até o agregado voltar. */}
+      {semMedicao && !crisis.isFirstLoad && (
+        <div role="alert" className="p-3 rounded-xl bg-muted/40 border border-muted text-xs text-muted-foreground">
+          Sem medição{crisis.error?.message ? `: ${crisis.error.message}` : ''}. Os cartões ficam em "—" até a
+          leitura da operação voltar.
+        </div>
+      )}
+
+      {crisis.isFirstLoad ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          {[1,2,3,4].map(i => <div key={i} className="h-32 bg-muted/20 rounded-xl animate-pulse" />)}
+          {[1,2,3,4,5].map(i => <div key={i} className="h-32 bg-muted/20 rounded-xl animate-pulse" />)}
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -255,7 +181,13 @@ export function CrisisRoom() {
       )}
 
       <div className="flex gap-2">
-        <Button variant="outline" onClick={loadMetrics} className="text-xs">
+        <Button
+          variant="outline"
+          onClick={crisis.refetch}
+          disabled={crisis.isRefreshing}
+          aria-busy={crisis.isRefreshing}
+          className="text-xs"
+        >
           🔄 Atualizar métricas
         </Button>
       </div>
