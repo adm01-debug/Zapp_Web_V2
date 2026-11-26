@@ -1,6 +1,6 @@
 # 07 · REGRAS DE NEGÓCIO
 
-> Gerado automaticamente por AI Context Sync v1.3.2 · commit `9f9ec85284` · branch `main` · 2026-11-26 02:56 UTC
+> Gerado automaticamente por AI Context Sync v1.3.2 · commit `3d99ff1c5b` · branch `main` · 2026-11-26 03:12 UTC
 > Não edite à mão — regras humanas vão em `manual/`.
 
 ## A. Regras escritas por humanos (`manual/` — prioridade máxima, nunca sobrescrito)
@@ -1203,7 +1203,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `add_agent_xp` | p_xp must be a positive integer, got % | `supabase/migrations/20261003272707_reconcile_local_replay_with_canonical.sql` |
 | `add_agent_xp` | p_xp exceeds single-call maximum of 500, got % | `supabase/migrations/20261003272707_reconcile_local_replay_with_canonical.sql` |
 | `cleanup_expired_challenges` | cleanup_expired_challenges: operacao restrita a service_role | `supabase/migrations/20261003272707_reconcile_local_replay_with_canonical.sql` |
-| … +720 linhas — lista completa em `context.json` | | |
+| … +725 linhas — lista completa em `context.json` | | |
 
 ## E. Estados, máquinas de estado e transições
 
@@ -1783,6 +1783,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | ForwardMediaKind | image \| video \| audio \| document | `src/hooks/chat/useForwardMedia.ts` |
 | PdfThumbnailEstado | loading \| ready \| sem-previa \| erro | `src/hooks/chat/usePdfThumbnail.ts` |
 | ProductAvailability | disponivel \| confirmar | `src/hooks/chat/useRecommendedProducts.ts` |
+| ReportReason | spam \| improprio \| urgencia \| outro | `src/hooks/chat/useReportMessage.ts` |
 | ScheduledMessageStatus | pending \| sent \| failed \| cancelled | `src/hooks/chat/useScheduledMessages.ts` |
 | REPORT_TYPES | { value: 'dashboard_summary', label: 'Resumo do Dashboard', icon: 'BarChart3', description: 'Métricas gerais de atendimento' }, { value: 'agent_performance', label: 'Performance de Agentes', icon: 'Users', description: 'Relatório individual por agente' }, { value: 'conversation_analytics', label: 'A … | `src/hooks/chat/useScheduledReports.ts` |
 | FREQUENCIES | { value: 'daily', label: 'Diário', description: 'Todos os dias às 8h' }, { value: 'weekly', label: 'Semanal', description: 'Toda segunda-feira às 8h' }, { value: 'monthly', label: 'Mensal', description: 'Primeiro dia do mês às 8h' }, | `src/hooks/chat/useScheduledReports.ts` |
@@ -1927,8 +1928,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | EmailThreadPeriodFilter | all \| today \| 7d \| 30d | `src/lib/emailThreadQuery.ts` |
 | SenderKind | self \| agent \| contact \| team | `src/lib/fileSenderIdentity.ts` |
 | PauseWindow | 24h \| 7d | `src/lib/instancePauseSeries.ts` |
-| GoalPeriodKey | today \| week \| month | `src/lib/localDay.ts` |
-| … +149 linhas — lista completa em `context.json` | | |
+| … +150 linhas — lista completa em `context.json` | | |
 
 ## F. Validações de entrada
 
@@ -3928,7 +3928,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `DEFAULT_REFRESH_MS` | `60` | `src/hooks/admin/useSupervisorQueue.ts` |
 | `RECENT_SENDS_WINDOW_DAYS` | `30` | `src/hooks/agents/useAgentRecentSends.ts` |
 | `DAY_MS` | `24` | `src/hooks/agents/useAgentRecentSends.ts` |
-| … +707 linhas — lista completa em `context.json` | | |
+| … +709 linhas — lista completa em `context.json` | | |
 
 ### H.2 Prazos, expirações e janelas de tempo
 
@@ -3982,6 +3982,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `setTimeout(() => setCopied(false), 2000);` | `src/components/inbox/ai-tools/AIResponseCard.tsx` |
 | `const DAY_MS = 24 * 60 * 60 * 1000;` | `src/components/inbox/ai-tools/PeriodFilterSelector.tsx` |
 | `const SESSION_GAP_MS = 4 * 60 * 60 * 1000;` | `src/components/inbox/ai-tools/PeriodFilterSelector.tsx` |
+| `{ label: 'Em 1 hora', at: () => new Date(Date.now() + 60 * 60 * 1000) },` | `src/components/inbox/chat/MessageActionMenuItems.tsx` |
 | `export const PRESENCE_ONLINE_WINDOW_MS = 2 * 60 * 1000;` | `src/components/inbox/chat/contactPresence.ts` |
 | `{ enableHighAccuracy: true, timeout: 10000 }` | `src/components/inbox/location-picker/useLocationPicker.ts` |
 | `const timer = setTimeout(() => setShowCelebration(false), 2000);` | `src/components/leaderboard/LeaderboardHelpers.tsx` |
@@ -4233,8 +4234,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `v_minute_start := statement_timestamp() - interval '1 minute';` | `supabase/migrations/20261009031223_talkx_multiplix_consumo_compartilhado.sql` |
 | `v_next_day_at := v_day_start + interval '1 day';` | `supabase/migrations/20261009031223_talkx_multiplix_consumo_compartilhado.sql` |
 | `-- create or replace function public.record_talkx_conversion(p_campaign_id uuid, p_external_ref text, p_value numeric, p_source text, p_currency text default 'B …` | `supabase/migrations/20261009031958_talkx_v4_x041_atribuicao_negocio_ganho_receita_roi.sql` |
-| `IF p_occurred_at > now() + interval '1 hour' THEN` | `supabase/migrations/20261009031958_talkx_v4_x041_atribuicao_negocio_ganho_receita_roi.sql` |
-| … +91 linhas — lista completa em `context.json` | |
+| … +93 linhas — lista completa em `context.json` | |
 
 ### H.3 Limites de paginação
 
@@ -4756,7 +4756,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `owner` | `supabase/migrations/20260927270018_team_chat_e28_fix_find_or_create_race.sql` |
 | `anon` | `supabase/migrations/20260927340000_fix_add_agent_xp_negative_and_guard.sql` |
 
-## K. Testes como especificação (22991 testes em 2441 arquivos — nomes completos em `context.json`)
+## K. Testes como especificação (23014 testes em 2445 arquivos — nomes completos em `context.json`)
 
 | Arquivo | Testes | Exemplos do que o sistema DEVE fazer |
 |---|---|---|
@@ -5060,7 +5060,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `supabase/functions/multiplix-dispatch/actions/__tests__/listing.test.ts` | 17 | dispatch.list escopo: sem permissao ampla so devolve os disparos do dono · dispatch.list escopo: usuario sem profile e sem permissao -> lista vazia (nao consulta a tabela) · dispatch.list escopo: a permissao ampla ve os disparos de qualquer dono · dispatch.list paginacao: limit/offset recortam na ordem created_at desc e total e exato … |
 | `supabase/functions/talkx-ai/index.test.ts` | 17 | X076: flag ai_insights desligada recusa com 403 ai_disabled e não paga o proxy · X076: orçamento mensal no padrão (0 = desligado) recusa com 403 ai_disabled · X076: gasto do mês no teto recusa com 429 budget_exceeded e não paga o proxy · X076: gasto abaixo do teto passa (o teto não é desligamento geral) … |
 | `tests/contracts/ai-values.contract.test.ts` | 17 | IA-023 · normalizeScore nunca inventa número · trata ausência como ausência (não como 50 nem 3) · rejeita string numérica em vez de coagir ( · rejeita NaN/Infinity … |
-| … +2141 linhas — lista completa em `context.json` | | |
+| … +2145 linhas — lista completa em `context.json` | | |
 
 ## L. Eventos de webhook tratados (contratos com sistemas externos)
 
@@ -5267,6 +5267,8 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `notify` | `supabase/migrations/20261011205122_tasks_rearm_on_remind_change.sql` |
 | `notify_due_tasks` | `supabase/migrations/20261011205122_tasks_rearm_on_remind_change.sql` |
 | `messages.create` | `supabase/migrations/20261014133908_agent_workload.sql` |
+| `notify` | `supabase/migrations/20261126221500_remind_me_about_message.sql` |
+| `notify_due_tasks` | `supabase/migrations/20261126221500_remind_me_about_message.sql` |
 | `notify_sicoob_on_reply` | `supabase-export/BLOCO_01_schema_completo.sql` |
 | `notify_sicoob_on_reply` | `supabase-export/BLOCO_04_functions.sql` |
 | `notify_sicoob_on_reply` | `supabase-export/BLOCO_05_triggers.sql` |
@@ -5577,4 +5579,4 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | Mostra no máximo 2 sugestões para não poluir o painel | `src/components/inbox/copilot/MissingQuestions.tsx` |
 | * CV-035/036 — Alerta de ocasião comercial detectada + prazo de entrega. | `src/components/inbox/copilot/OccasionAlert.tsx` |
 | Sobe/desce a linha uma posição por vez, trocando apenas de lugar os objetos | `src/components/inbox/interactive-builder/useInteractiveMessage.ts` |
-| … +1848 linhas — lista completa em `context.json` | |
+| … +1852 linhas — lista completa em `context.json` | |

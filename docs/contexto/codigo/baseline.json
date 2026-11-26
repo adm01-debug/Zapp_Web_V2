@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "9f9ec852845499de067bb4788ceb22f8463e6c88",
+  "commit": "3d99ff1c5be8d4c3f1647e5125599f18649b01fd",
   "branch": "main",
-  "data_commit": "2026-11-25T23:48:10-03:00",
+  "data_commit": "2026-11-26T03:06:45Z",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "3d99ff1c",
+    "data": "2026-11-26",
+    "assunto": "feat: acoes por mensagem (favoritar, fixar, responder depois, denunciar) (#3395)"
+   },
    {
     "sha": "9f9ec852",
     "data": "2026-11-25",
@@ -126,14 +131,9 @@
     "sha": "e1a545c6",
     "data": "2026-11-24",
     "assunto": "feat(manutencao): porta o harness de manutencao completo da PR #2926 (#3370)"
-   },
-   {
-    "sha": "21396b9c",
-    "data": "2026-11-24",
-    "assunto": "fix(ci): exige Replay local das migrations na main (#3367)"
    }
   ],
-  "arquivos_mudados_7d": 2746,
+  "arquivos_mudados_7d": 2762,
   "pastas_mais_mudadas_30d": [
    {
     "pasta": "docs/contexto/supabase",
@@ -149,7 +149,7 @@
    },
    {
     "pasta": "src/components/inbox",
-    "mudancas": 731
+    "mudancas": 737
    },
    {
     "pasta": "docs/reconciliation/reaudit",
@@ -181,7 +181,7 @@
    },
    {
     "pasta": "src/hooks/__tests__",
-    "mudancas": 155
+    "mudancas": 154
    },
    {
     "pasta": "src/hooks/integrations",
@@ -218,12 +218,12 @@
     "mudancas": 15
    },
    {
-    "arquivo": "supabase/schema-catalog.json",
+    "arquivo": "docs/DB-INVENTORY.md",
     "mudancas": 14
    },
    {
-    "arquivo": "docs/DB-INVENTORY.md",
-    "mudancas": 13
+    "arquivo": "supabase/schema-catalog.json",
+    "mudancas": 14
    },
    {
     "arquivo": ".github/workflows/db-guard.yml",
@@ -314,21 +314,21 @@
   ]
  },
  "contagens": {
-  "arquivos_total": 14820,
-  "arquivos_codigo": 5161,
-  "linhas_codigo": 957549,
+  "arquivos_total": 14830,
+  "arquivos_codigo": 5170,
+  "linhas_codigo": 958969,
   "rotas": 18,
   "rotas_http_backend": 11,
   "vistas_por_id": 55,
   "itens_menu": 61,
   "modulos": 149,
-  "componentes": 937,
-  "hooks": 519,
+  "componentes": 938,
+  "hooks": 523,
   "edge_functions": 93,
   "tabelas": 224,
-  "migrations": 1156,
+  "migrations": 1157,
   "cron_jobs": 29,
-  "testes": 2834,
+  "testes": 2838,
   "workflows": 26,
   "scripts": 454,
   "docs_md": 3988
@@ -739,8 +739,8 @@
    "linhas": 638
   },
   "src/components": {
-   "arquivos": 2323,
-   "linhas": 395663
+   "arquivos": 2324,
+   "linhas": 396040
   },
   "src/config": {
    "arquivos": 3,
@@ -759,8 +759,8 @@
    "linhas": 3293
   },
   "src/hooks": {
-   "arquivos": 1039,
-   "linhas": 168491
+   "arquivos": 1047,
+   "linhas": 169534
   },
   "src/i18n": {
    "arquivos": 2,
@@ -1332,6 +1332,7 @@
   ],
   "tabelas_com_drift_migration_vs_types": [
    "app_settings",
+   "conversation_tasks",
    "edge_rate_limits",
    "feature_flags",
    "geo_blocking_settings",

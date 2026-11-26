@@ -1694,7 +1694,7 @@
   {
    "arquivo": "scripts/db-audit/inbox-contact-authorization.test.sh",
    "descricao": null,
-   "linhas": 486,
+   "linhas": 564,
    "env": [
     "RUNTIME_JSON"
    ],

@@ -1,6 +1,6 @@
 # 10 · ACESSO E SEGURANÇA — quem pode o quê
 
-> Gerado automaticamente por AI Context Sync v1.3.2 · commit `9f9ec85284` · branch `main` · 2026-11-26 02:56 UTC
+> Gerado automaticamente por AI Context Sync v1.3.2 · commit `3d99ff1c5b` · branch `main` · 2026-11-26 03:12 UTC
 > Não edite à mão — regras humanas vão em `manual/`.
 
 ## Perfis / roles identificados
@@ -665,6 +665,7 @@
 - `release_multiplix_recipient_claim`
 - `release_talkx_campaign_worker`
 - `release_talkx_recipient_claim`
+- `remind_me_about_message`
 - `remove_contact_tag`
 - `remove_team_member`
 - `remove_wa_label_from_all_contacts`
@@ -878,7 +879,7 @@ Middleware matcher (Next.js): nenhum
 | grant | anon, authenticated, service_role | all | `talkx_settings` |
 | grant | anon, authenticated, service_role | execute | `multiplix_audiences_validate_shared_roles`, `multiplix_audiences_validate_shared_roles`, `auth.uid`, `auth.uid` |
 | grant | authenticated | delete | `multiplix_recipients` |
-| grant | authenticated | execute | `e2e_fixture_message`, `log_search_event`, `resolve_unconfirmed_message`, `get_team_profiles`, `fn_list_audio_memes_for_user`, `fn_toggle_user_meme_favorite`, `fn_list_audio_meme_categories`, `fn_send_audio_meme`, `mark_first_response`, `mark_first_response`, `mark_first_response`, `dashboard_kpi`, `dashboard_hourly_volume`, `dashboard_contact_counts`, `dashboard_hourly_volume` … +199 |
+| grant | authenticated | execute | `e2e_fixture_message`, `log_search_event`, `resolve_unconfirmed_message`, `get_team_profiles`, `fn_list_audio_memes_for_user`, `fn_toggle_user_meme_favorite`, `fn_list_audio_meme_categories`, `fn_send_audio_meme`, `mark_first_response`, `mark_first_response`, `mark_first_response`, `dashboard_kpi`, `dashboard_hourly_volume`, `dashboard_contact_counts`, `dashboard_hourly_volume` … +200 |
 | grant | authenticated | insert | `search_events` |
 | grant | authenticated | insert, select | `t3_errs` |
 | grant | authenticated | insert, update, delete | `feature_flags` |
@@ -906,7 +907,7 @@ Middleware matcher (Next.js): nenhum
 | grant | service_role, authenticated | execute | `talkx_overview_stats`, `talkx_campaign_report`, `talkx_segment_tags`, `talkx_benchmarks`, `talkx_benchmarks`, `talkx_campaign_pace`, `catalog_rate_limit_hit`, `catalog_rate_limit_hit`, `catalog_rate_limit_hit`, `talkx_benchmarks`, `talkx_insights` |
 | grant | service_role, authenticated, postgres | execute | `search_contacts` |
 | grant | service_role, postgres | execute | `mcp_exec`, `mcp_exec_many` |
-| revoke | PUBLIC | all | `run_copilot_retention`, `get_identity_matrix`, `dashboard_leaderboard`, `get_identity_matrix`, `enqueue_crm_sync_from_closure`, `enforce_talkx_campaign_mutability`, `enforce_talkx_recipient_snapshot_mutability`, `enforce_talkx_campaign_mutability`, `enforce_talkx_recipient_snapshot_mutability`, `enforce_talkx_campaign_mutability`, `is_valid_talkx_schedule_timezone`, `talkx_overview_stats`, `talkx_campaign_report`, `talkx_segment_tags`, `talkx_benchmarks` … +51 |
+| revoke | PUBLIC | all | `run_copilot_retention`, `get_identity_matrix`, `dashboard_leaderboard`, `get_identity_matrix`, `enqueue_crm_sync_from_closure`, `enforce_talkx_campaign_mutability`, `enforce_talkx_recipient_snapshot_mutability`, `enforce_talkx_campaign_mutability`, `enforce_talkx_recipient_snapshot_mutability`, `enforce_talkx_campaign_mutability`, `is_valid_talkx_schedule_timezone`, `talkx_overview_stats`, `talkx_campaign_report`, `talkx_segment_tags`, `talkx_benchmarks` … +52 |
 | revoke | PUBLIC | execute | `dashboard_kpi`, `dashboard_contact_counts`, `dashboard_hourly_volume`, `set_conversation_status`, `record_failed_login`, `messages_sla_first_response_trigger`, `calculate_level`, `normalize_contact_phone`, `dashboard_kpi`, `dashboard_contact_counts`, `dashboard_hourly_volume`, `grant_agent_achievement`, `grant_agent_achievement`, `add_agent_xp`, `update_agent_streak` … +31 |
 | revoke | PUBLIC, anon | all | `resolve_unconfirmed_message`, `mark_first_response`, `mark_first_response`, `mark_first_response`, `count_searchbox_sessions_this_month`, `merge_contacts_atomic`, `mark_first_response`, `mark_first_response`, `mark_first_response`, `get_crm_sync_health`, `get_crm_sync_health`, `merge_contacts_atomic`, `get_profile_id_for_user`, `get_visible_agent_ids`, `is_contact_visible_to_user` … +132 |
 | revoke | PUBLIC, anon | execute | `get_department_whatsapp_credentials`, `get_identity_matrix`, `get_own_lockout_status`, `effective_role`, `is_admin`, `is_ip_blocked`, `is_ip_whitelisted`, `is_country_allowed`, `is_country_blocked`, `audit_role_permissions_changes`, `sync_profile_role_from_user_roles`, `sync_thread_last_sender`, `update_device_last_seen`, `update_global_settings_updated_at`, `update_updated_at_column` … +87 |
@@ -919,7 +920,7 @@ Middleware matcher (Next.js): nenhum
 | revoke | PUBLIC, anon, authenticated, service_role | execute | `audit_contact_deletion_change`, `audit_contact_address_change`, `audit_role_changes`, `audit_role_permissions_changes`, `department_audit_logs_fill_profile_name`, `record_talkx_campaign_lifecycle_event`, `set_talkx_recipient_status_changed_at`, `conversation_task_rearm_on_remind_change`, `audit_contact_block_change`, `sanitize_reset_request`, `rate_limit_reset_requests` |
 | revoke | PUBLIC, anon, service_role | all | `enqueue_outbound_message`, `enqueue_rich_outbound_message`, `replace_talkx_draft_recipients`, `save_talkx_campaign_draft`, `enqueue_outbound_message`, `enqueue_outbound_message`, `enqueue_rich_outbound_message`, `enqueue_outbound_message`, `log_unauthorized_inbox_scope`, `enqueue_group_outbound_message`, `admin_list_cron_jobs`, `admin_toggle_cron_job`, `set_contact_blocked`, `crisis_room_snapshot`, `talkx_block_recipient` … +3 |
 | revoke | PUBLIC, authenticated | execute | `run_copilot_retention` |
-| revoke | anon | all | `feature_flags`, `search_my_calls`, `my_calls_kpi`, `upsert_my_call`, `set_call_agent_notes`, `team_conversations`, `team_conversation_members`, `team_messages`, `team_message_reactions`, `team_message_receipts`, `departments`, `department_invitations`, `department_invites`, `department_audit_logs`, `multiplix_dispatches` … +31 |
+| revoke | anon | all | `feature_flags`, `search_my_calls`, `my_calls_kpi`, `upsert_my_call`, `set_call_agent_notes`, `team_conversations`, `team_conversation_members`, `team_messages`, `team_message_reactions`, `team_message_receipts`, `departments`, `department_invitations`, `department_invites`, `department_audit_logs`, `multiplix_dispatches` … +32 |
 | revoke | anon | all privileges | `contact_notes` |
 | revoke | anon | delete | `passkey_credentials` |
 | revoke | anon | execute | `record_failed_login`, `is_account_locked`, `is_account_locked`, `record_failed_login`, `dashboard_kpi`, `dashboard_contact_counts`, `dashboard_hourly_volume`, `dashboard_leaderboard`, `sync_contact_status_on_closure`, `is_account_locked`, `is_account_locked`, `record_failed_login`, `talkx_benchmarks`, `talkx_benchmarks`, `set_conversation_status` … +53 |

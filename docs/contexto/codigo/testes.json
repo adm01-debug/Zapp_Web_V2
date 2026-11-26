@@ -5,18 +5,18 @@
   "vitest",
   "playwright"
  ],
- "total": 2834,
+ "total": 2838,
  "por_tipo": {
   "contrato": 116,
   "e2e": 76,
   "pytest": 3,
   "qa": 10,
-  "unit": 2537
+  "unit": 2541
  },
  "onde_ficam": [
   {
    "padrao": "co-localizado (__tests__)",
-   "arquivos": 2107
+   "arquivos": 2111
   },
   {
    "padrao": "outro",
@@ -8834,13 +8834,13 @@
   {
    "arquivo": "src/components/inbox/chat/__tests__/menus-r2-inb-021.test.tsx",
    "tipo": "unit",
-   "linhas": 266,
+   "linhas": 345,
    "testa": [
     "src/components/inbox/chat/ChatPanelHeader.tsx",
     "src/components/inbox/chat/MessageHoverToolbar.tsx",
     "src/types/chat.ts"
    ],
-   "casos": 5
+   "casos": 6
   },
   {
    "arquivo": "src/components/inbox/chat/__tests__/MessageBubble.chat-text-size.test.tsx",
@@ -8917,7 +8917,7 @@
   {
    "arquivo": "src/components/inbox/chat/__tests__/MessageHoverToolbar.delete.test.tsx",
    "tipo": "unit",
-   "linhas": 185,
+   "linhas": 222,
    "testa": [
     "src/components/inbox/chat/MessageHoverToolbar.tsx",
     "src/types/chat.ts"
@@ -8927,7 +8927,7 @@
   {
    "arquivo": "src/components/inbox/chat/__tests__/MessageHoverToolbar.historico-envio.test.tsx",
    "tipo": "unit",
-   "linhas": 143,
+   "linhas": 183,
    "testa": [
     "src/components/inbox/chat/MessageHoverToolbar.tsx",
     "src/types/chat.ts"
@@ -8937,7 +8937,7 @@
   {
    "arquivo": "src/components/inbox/chat/__tests__/MessageHoverToolbar.nao-lida.test.tsx",
    "tipo": "unit",
-   "linhas": 159,
+   "linhas": 199,
    "testa": [
     "src/components/inbox/chat/MessageHoverToolbar.tsx",
     "src/types/chat.ts"
@@ -17486,6 +17486,24 @@
    "casos": 10
   },
   {
+   "arquivo": "src/hooks/chat/__tests__/useMessageFavorites.test.tsx",
+   "tipo": "unit",
+   "linhas": 144,
+   "testa": [
+    "src/hooks/chat/useMessageFavorites.ts"
+   ],
+   "casos": 4
+  },
+  {
+   "arquivo": "src/hooks/chat/__tests__/useMessagePins.test.tsx",
+   "tipo": "unit",
+   "linhas": 176,
+   "testa": [
+    "src/hooks/chat/useMessagePins.ts"
+   ],
+   "casos": 5
+  },
+  {
    "arquivo": "src/hooks/chat/__tests__/useMessageReactions.transport-rejection.test.tsx",
    "tipo": "unit",
    "linhas": 373,
@@ -17609,6 +17627,24 @@
     "src/hooks/chat/useRecommendedProducts.ts"
    ],
    "casos": 6
+  },
+  {
+   "arquivo": "src/hooks/chat/__tests__/useRemindMessage.test.tsx",
+   "tipo": "unit",
+   "linhas": 99,
+   "testa": [
+    "src/hooks/chat/useRemindMessage.ts"
+   ],
+   "casos": 4
+  },
+  {
+   "arquivo": "src/hooks/chat/__tests__/useReportMessage.test.tsx",
+   "tipo": "unit",
+   "linhas": 106,
+   "testa": [
+    "src/hooks/chat/useReportMessage.ts"
+   ],
+   "casos": 3
   },
   {
    "arquivo": "src/hooks/chat/__tests__/useScheduledReports.test.tsx",
@@ -26852,6 +26888,8 @@
   "src/hooks/chat/useForwardMessage.ts": 3,
   "src/hooks/chat/useLatestAnalysis.ts": 1,
   "src/hooks/chat/useMediaSenderProfiles.ts": 2,
+  "src/hooks/chat/useMessageFavorites.ts": 1,
+  "src/hooks/chat/useMessagePins.ts": 1,
   "src/hooks/chat/useMessageReactions.ts": 4,
   "src/hooks/chat/useMessageSignature.ts": 2,
   "src/hooks/chat/useMessageStatus.ts": 1,
@@ -26863,6 +26901,8 @@
   "src/hooks/chat/useQuickReplies.ts": 5,
   "src/hooks/chat/useRealtimeMessages.ts": 21,
   "src/hooks/chat/useRecommendedProducts.ts": 1,
+  "src/hooks/chat/useRemindMessage.ts": 1,
+  "src/hooks/chat/useReportMessage.ts": 1,
   "src/hooks/chat/useSavedFilters.ts": 1,
   "src/hooks/chat/useScheduledMessages.ts": 1,
   "src/hooks/chat/useScheduledReports.ts": 2,

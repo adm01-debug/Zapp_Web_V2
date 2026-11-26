@@ -8,7 +8,7 @@
   "supabase/migrations",
   "typeorm"
  ],
- "migrations": 1156,
+ "migrations": 1157,
  "seeds": [
   "docs/contexto/supabase/functions/public/seed_default_goals_for_profile__12ae32cb1ec02d01.sql",
   "e2e/fixtures/seed-talk-me.sql",
@@ -450,6 +450,7 @@
   "release_multiplix_recipient_claim",
   "release_talkx_campaign_worker",
   "release_talkx_recipient_claim",
+  "remind_me_about_message",
   "remove_contact_tag",
   "remove_team_member",
   "remove_wa_label_from_all_contacts",
@@ -9599,6 +9600,13 @@
      "default": "gen_random_uuid()",
      "ref": null
     },
+    "message_id": {
+     "tipo": "uuid",
+     "nn": false,
+     "pk": false,
+     "default": null,
+     "ref": "messages"
+    },
     "migrated_from_reminder_id": {
      "tipo": "uuid",
      "nn": false,
@@ -9737,6 +9745,11 @@
      "unico": false
     },
     {
+     "nome": "idx_tasks_owner_message",
+     "colunas": "created_by, message_id",
+     "unico": false
+    },
+    {
      "nome": "idx_tasks_owner_remind_pending",
      "colunas": "created_by, remind_at",
      "unico": false
@@ -9766,6 +9779,7 @@
     "assigned_to->profiles",
     "contact_id->contacts",
     "created_by->profiles",
+    "message_id->messages",
     "migrated_from_reminder_id->reminders"
    ],
    "criada_em": "20260409014536_3a836b4b-1e37-411c-b8af-45d918304272.sql",
@@ -9792,7 +9806,9 @@
     "waiting_reason": "string | null"
    },
    "drift": {
-    "so_na_migration": [],
+    "so_na_migration": [
+     "message_id"
+    ],
     "so_no_types": []
    },
    "usada_no_front": 6,
@@ -15622,11 +15638,11 @@
     "so_na_migration": [],
     "so_no_types": []
    },
-   "usada_no_front": 0,
+   "usada_no_front": 1,
    "usada_em_edges": [],
    "triggers": [],
    "sem_rls": false,
-   "nao_usada": true
+   "nao_usada": false
   },
   "message_pins": {
    "colunas": {
@@ -15699,13 +15715,13 @@
     "so_na_migration": [],
     "so_no_types": []
    },
-   "usada_no_front": 0,
+   "usada_no_front": 1,
    "usada_em_edges": [],
    "triggers": [
     "message_pins_force_contact_id"
    ],
    "sem_rls": false,
-   "nao_usada": true
+   "nao_usada": false
   },
   "message_reactions": {
    "colunas": {
@@ -15939,11 +15955,11 @@
     "so_na_migration": [],
     "so_no_types": []
    },
-   "usada_no_front": 0,
+   "usada_no_front": 1,
    "usada_em_edges": [],
    "triggers": [],
    "sem_rls": false,
-   "nao_usada": true
+   "nao_usada": false
   },
   "message_templates": {
    "colunas": {
@@ -32930,6 +32946,11 @@
    "usada_em": 1
   },
   {
+   "nome": "pin_message",
+   "definida": true,
+   "usada_em": 1
+  },
+  {
    "nome": "purge_gmail_account_data",
    "definida": true,
    "usada_em": 1
@@ -33020,6 +33041,11 @@
    "usada_em": 1
   },
   {
+   "nome": "remind_me_about_message",
+   "definida": true,
+   "usada_em": 1
+  },
+  {
    "nome": "remove_wa_label_from_all_contacts",
    "definida": true,
    "usada_em": 1
@@ -33046,6 +33072,11 @@
   },
   {
    "nome": "replace_ai_conversation_tags",
+   "definida": true,
+   "usada_em": 1
+  },
+  {
+   "nome": "report_message",
    "definida": true,
    "usada_em": 1
   },
@@ -33290,6 +33321,11 @@
    "usada_em": 1
   },
   {
+   "nome": "toggle_message_favorite",
+   "definida": true,
+   "usada_em": 1
+  },
+  {
    "nome": "toggle_team_reaction",
    "definida": true,
    "usada_em": 1
@@ -33318,6 +33354,11 @@
    "nome": "transition_talkx_campaign",
    "definida": true,
    "usada_em": 3
+  },
+  {
+   "nome": "unpin_message",
+   "definida": true,
+   "usada_em": 1
   },
   {
    "nome": "update_own_profile",

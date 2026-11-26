@@ -1,7 +1,7 @@
 {
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
- "total": 519,
+ "total": 523,
  "hooks": [
   {
    "arquivo": "analise-prs/resgate-261118-lote2/src/hooks/useMotionSeguro.ts",
@@ -3965,6 +3965,62 @@
    "coberto_por_testes": 2
   },
   {
+   "arquivo": "src/hooks/chat/useMessageFavorites.ts",
+   "hooks_exportados": [
+    "useMessageFavorites",
+    "useToggleMessageFavorite"
+   ],
+   "linhas": 138,
+   "dominio": "hooks/chat",
+   "tabelas": [
+    "message_favorites"
+   ],
+   "rpcs": [
+    "toggle_message_favorite"
+   ],
+   "edges": [],
+   "hooks_internos": [
+    "useCallback",
+    "useMutation",
+    "useQuery",
+    "useQueryClient"
+   ],
+   "canais_realtime": [],
+   "usado_por": 1,
+   "usado_por_arquivos": [
+    "src/components/inbox/chat/MessageActionMenuItems.tsx"
+   ],
+   "coberto_por_testes": 1
+  },
+  {
+   "arquivo": "src/hooks/chat/useMessagePins.ts",
+   "hooks_exportados": [
+    "useMessagePins"
+   ],
+   "linhas": 176,
+   "dominio": "hooks/chat",
+   "tabelas": [
+    "message_pins"
+   ],
+   "rpcs": [
+    "pin_message",
+    "unpin_message"
+   ],
+   "edges": [],
+   "hooks_internos": [
+    "useCallback",
+    "useMutation",
+    "useQuery",
+    "useQueryClient"
+   ],
+   "canais_realtime": [],
+   "usado_por": 1,
+   "usado_por_arquivos": [
+    "src/components/inbox/chat/MessageActionMenuItems.tsx"
+   ],
+   "coberto_por_testes": 1
+  },
+  {
    "arquivo": "src/hooks/chat/useMessageReactions.ts",
    "hooks_exportados": [
     "useMessageReactions",
@@ -4278,6 +4334,56 @@
    "usado_por": 1,
    "usado_por_arquivos": [
     "src/components/inbox/tabs/AiTab.tsx"
+   ],
+   "coberto_por_testes": 1
+  },
+  {
+   "arquivo": "src/hooks/chat/useRemindMessage.ts",
+   "hooks_exportados": [
+    "useRemindMessage"
+   ],
+   "linhas": 74,
+   "dominio": "hooks/chat",
+   "tabelas": [],
+   "rpcs": [
+    "remind_me_about_message"
+   ],
+   "edges": [],
+   "hooks_internos": [
+    "useCallback",
+    "useMutation"
+   ],
+   "canais_realtime": [],
+   "usado_por": 1,
+   "usado_por_arquivos": [
+    "src/components/inbox/chat/MessageActionMenuItems.tsx"
+   ],
+   "coberto_por_testes": 1
+  },
+  {
+   "arquivo": "src/hooks/chat/useReportMessage.ts",
+   "hooks_exportados": [
+    "useReportMessage"
+   ],
+   "linhas": 130,
+   "dominio": "hooks/chat",
+   "tabelas": [
+    "message_reports"
+   ],
+   "rpcs": [
+    "report_message"
+   ],
+   "edges": [],
+   "hooks_internos": [
+    "useCallback",
+    "useMutation",
+    "useQuery",
+    "useQueryClient"
+   ],
+   "canais_realtime": [],
+   "usado_por": 1,
+   "usado_por_arquivos": [
+    "src/components/inbox/chat/MessageActionMenuItems.tsx"
    ],
    "coberto_por_testes": 1
   },

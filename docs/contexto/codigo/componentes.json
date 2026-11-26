@@ -1,7 +1,7 @@
 {
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
- "total": 937,
+ "total": 938,
  "orfaos": 45,
  "nomes_duplicados": {
   "AchievementBadge": [
@@ -5490,6 +5490,26 @@
    "orfao": false
   },
   {
+   "arquivo": "src/components/inbox/chat/MessageActionMenuItems.tsx",
+   "exports": [
+    "MessageActionMenuItems"
+   ],
+   "export_default": null,
+   "linhas": 176,
+   "dominio": "components/inbox",
+   "hooks_locais": [
+    "useMessageFavorites",
+    "useMessagePins",
+    "useRemindMessage",
+    "useReportMessage",
+    "useToggleMessageFavorite"
+   ],
+   "tabelas": [],
+   "edges": [],
+   "usado_por": 1,
+   "orfao": false
+  },
+  {
    "arquivo": "src/components/inbox/chat/MessageBubble.tsx",
    "exports": [
     "MessageBubble"
@@ -5532,7 +5552,7 @@
     "MessageHoverToolbar"
    ],
    "export_default": null,
-   "linhas": 246,
+   "linhas": 251,
    "dominio": "components/inbox",
    "hooks_locais": [
     "useEvolutionApi"
@@ -13892,7 +13912,7 @@
    "hooks_locais": [],
    "tabelas": [],
    "edges": [],
-   "usado_por": 41,
+   "usado_por": 42,
    "orfao": false
   },
   {

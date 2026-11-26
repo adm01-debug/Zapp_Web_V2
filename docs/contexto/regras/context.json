@@ -1,15 +1,15 @@
 {
  "meta": {
-  "sha": "9f9ec852845499de067bb4788ceb22f8463e6c88",
+  "sha": "3d99ff1c5be8d4c3f1647e5125599f18649b01fd",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-26 02:56 UTC",
-  "files_total": 14667,
-  "code_files": 8200,
-  "code_lines": 1234858
+  "generated_at": "2026-11-26 03:12 UTC",
+  "files_total": 14677,
+  "code_files": 8210,
+  "code_lines": 1236374
  },
  "version": "1.3.2",
- "facts_hash": "377d09d1bdd9d6b5",
+ "facts_hash": "7508dbc58433c53d",
  "stack": {
   "frameworks": [
    "React + Vite",
@@ -367,9 +367,9 @@
   ],
   "package_manager": "bun",
   "languages": {
-   ".sql": 3066,
-   ".tsx": 2487,
-   ".ts": 2024,
+   ".sql": 3067,
+   ".tsx": 2492,
+   ".ts": 2028,
    ".mjs": 496,
    ".py": 125,
    ".cjs": 19,
@@ -35396,6 +35396,28 @@
      "v_max"
     ]
    },
+   "remind_me_about_message": {
+    "args": "p_message_id uuid, p_remind_at timestamptz, p_note text DEFAULT NULL",
+    "returns": "uuid",
+    "lang": "plpgsql",
+    "src": "supabase/migrations/20261126221500_remind_me_about_message.sql",
+    "security_definer": true,
+    "search_path": true,
+    "body": "DECLARE v_caller uuid := auth.uid(); v_profile_id uuid; v_contact_id uuid; v_title text; v_task_id uuid; BEGIN IF v_caller IS NULL THEN RAISE EXCEPTION 'auth_required' USING ERRCODE = '42501'; END IF; IF p_remind_at IS NULL OR p_remind_at <= now() THEN RAISE EXCEPTION 'remind_at_in_past' USING ERRCODE = '22023'; END IF; IF p_remind_at > now() + interval '90 days' THEN RAISE EXCEPTION 'remind_at_too_far' USING ERRCODE = '22023'; END IF; SELECT m.contact_id INTO v_contact_id FROM public.messages AS m WHERE m.id = p_message_id; IF v_contact_id IS NULL OR NOT public.is_contact_visible_to_user(v_contact_id, v_caller) THEN RAISE EXCEPTION 'message_not_visible' USING ERRCODE = '42501'; END IF; v_pr …",
+    "raises": [
+     "auth_required",
+     "remind_at_in_past",
+     "remind_at_too_far",
+     "message_not_visible",
+     "profile_not_found"
+    ],
+    "tables": [
+     "conversation_tasks",
+     "messages",
+     "v_contact_id",
+     "v_task_id"
+    ]
+   },
    "uid": {
     "args": "",
     "returns": "uuid",
@@ -45825,6 +45847,14 @@
     "src": "supabase/migrations/20261122200000_x076_talkx_ai_requests.sql"
    },
    {
+    "name": "idx_tasks_owner_message",
+    "table": "conversation_tasks",
+    "columns": "created_by, message_id",
+    "unique": false,
+    "where": "WHERE message_id IS NOT NULL",
+    "src": "supabase/migrations/20261126221500_remind_me_about_message.sql"
+   },
+   {
     "name": "idx_ai_conversation_tags_contact_id",
     "table": "ai_conversation_tags",
     "columns": "contact_id",
@@ -48490,6 +48520,7 @@
    "supabase/migrations/20261125120000_ai_providers_endpoint_secret_binding.sql",
    "supabase/migrations/20261125130000_ia009_kill_switch_chaves.sql",
    "supabase/migrations/20261126010508_city_whitelist_network_policy.sql",
+   "supabase/migrations/20261126221500_remind_me_about_message.sql",
    "supabase/tests/admin_inbox_silence.sql",
    "supabase/tests/admin_unlock_login_autorizacao.sql",
    "supabase/tests/agent_workload.sql",
@@ -63573,6 +63604,30 @@
     "src": "supabase/migrations/20261126010508_city_whitelist_network_policy.sql"
    },
    {
+    "kind": "revoke",
+    "privs": "all",
+    "object": "remind_me_about_message",
+    "objkind": "function",
+    "roles": "PUBLIC",
+    "src": "supabase/migrations/20261126221500_remind_me_about_message.sql"
+   },
+   {
+    "kind": "revoke",
+    "privs": "all",
+    "object": "remind_me_about_message",
+    "objkind": "function",
+    "roles": "anon",
+    "src": "supabase/migrations/20261126221500_remind_me_about_message.sql"
+   },
+   {
+    "kind": "grant",
+    "privs": "execute",
+    "object": "remind_me_about_message",
+    "objkind": "function",
+    "roles": "authenticated",
+    "src": "supabase/migrations/20261126221500_remind_me_about_message.sql"
+   },
+   {
     "kind": "grant",
     "privs": "select",
     "object": "profiles",
@@ -68961,6 +69016,31 @@
     "src": "supabase/migrations/20261126010508_city_whitelist_network_policy.sql"
    },
    {
+    "function": "remind_me_about_message",
+    "msg": "auth_required",
+    "src": "supabase/migrations/20261126221500_remind_me_about_message.sql"
+   },
+   {
+    "function": "remind_me_about_message",
+    "msg": "remind_at_in_past",
+    "src": "supabase/migrations/20261126221500_remind_me_about_message.sql"
+   },
+   {
+    "function": "remind_me_about_message",
+    "msg": "remind_at_too_far",
+    "src": "supabase/migrations/20261126221500_remind_me_about_message.sql"
+   },
+   {
+    "function": "remind_me_about_message",
+    "msg": "message_not_visible",
+    "src": "supabase/migrations/20261126221500_remind_me_about_message.sql"
+   },
+   {
+    "function": "remind_me_about_message",
+    "msg": "profile_not_found",
+    "src": "supabase/migrations/20261126221500_remind_me_about_message.sql"
+   },
+   {
     "function": "espera_contem",
     "msg": "LA FALHOU [%]: \"%\" nao contem \"%\"",
     "src": "supabase/tests/admin_unlock_login_autorizacao.sql"
@@ -72881,7 +72961,7 @@
     "file": ".github/workflows/types-sync.yml"
    }
   ],
-  "components_count": 2325,
+  "components_count": 2326,
   "hooks": [
    {
     "name": "useMotionSeguro",
@@ -73584,6 +73664,18 @@
     "file": "src/hooks/chat/useMediaSenderProfiles.ts"
    },
    {
+    "name": "useMessageFavorites",
+    "file": "src/hooks/chat/useMessageFavorites.ts"
+   },
+   {
+    "name": "useToggleMessageFavorite",
+    "file": "src/hooks/chat/useMessageFavorites.ts"
+   },
+   {
+    "name": "useMessagePins",
+    "file": "src/hooks/chat/useMessagePins.ts"
+   },
+   {
     "name": "useMessageReactions",
     "file": "src/hooks/chat/useMessageReactions.ts"
    },
@@ -73626,6 +73718,14 @@
    {
     "name": "useRecommendedProducts",
     "file": "src/hooks/chat/useRecommendedProducts.ts"
+   },
+   {
+    "name": "useRemindMessage",
+    "file": "src/hooks/chat/useRemindMessage.ts"
+   },
+   {
+    "name": "useReportMessage",
+    "file": "src/hooks/chat/useReportMessage.ts"
    },
    {
     "name": "useSavedFilters",
@@ -76245,8 +76345,8 @@
   },
   {
    "module": "src/components",
-   "files": 2323,
-   "lines": 395663,
+   "files": 2324,
+   "lines": 396040,
    "tables": [
     "agent_skills",
     "agent_visibility_grants",
@@ -76593,8 +76693,8 @@
   },
   {
    "module": "src/hooks",
-   "files": 1039,
-   "lines": 168491,
+   "files": 1047,
+   "lines": 169534,
    "tables": [
     "agent_achievements",
     "agent_stats",
@@ -76644,7 +76744,10 @@
     "goals_configurations",
     "knowledge_base_articles",
     "knowledge_base_files",
+    "message_favorites",
+    "message_pins",
     "message_reactions",
+    "message_reports",
     "message_templates",
     "messages",
     "meta_capi_events",
@@ -77883,8 +77986,8 @@
   },
   {
    "module": "supabase/migrations",
-   "files": 1156,
-   "lines": 116039,
+   "files": 1157,
+   "lines": 116135,
    "tables": [
     "audit_logs",
     "department_invites",
@@ -79328,6 +79431,16 @@
      "supabase/functions/fetch-link-preview/index.ts"
     ]
    },
+   "message_favorites": {
+    "select": [
+     "src/hooks/chat/useMessageFavorites.ts"
+    ]
+   },
+   "message_pins": {
+    "select": [
+     "src/hooks/chat/useMessagePins.ts"
+    ]
+   },
    "message_reactions": {
     "select": [
      "src/hooks/chat/useMessageReactions.ts",
@@ -79341,6 +79454,11 @@
     "delete": [
      "src/hooks/reactions/useReactionMutations.ts",
      "supabase/functions/_shared/evolution-helpers.ts"
+    ]
+   },
+   "message_reports": {
+    "select": [
+     "src/hooks/chat/useReportMessage.ts"
     ]
    },
    "message_templates": {
@@ -81162,11 +81280,24 @@
     "preview",
     "url_hash"
    ],
+   "message_favorites": [
+    "message_id"
+   ],
+   "message_pins": [
+    "contact_id",
+    "id",
+    "message_id",
+    "pinned_at",
+    "pinned_by"
+   ],
    "message_reactions": [
     "contact_id",
     "emoji",
     "message_id",
     "user_id"
+   ],
+   "message_reports": [
+    "message_id"
    ],
    "message_templates": [
     "id",
@@ -83501,6 +83632,9 @@
    "persist_talkx_recipient_message_snapshot": [
     "supabase/functions/talkx-send/process-recipient.ts"
    ],
+   "pin_message": [
+    "src/hooks/chat/useMessagePins.ts"
+   ],
    "purge_gmail_account_data": [
     "src/hooks/integrations/useGmailDataPurge.ts"
    ],
@@ -83563,6 +83697,9 @@
    "release_talkx_recipient_claim": [
     "supabase/functions/talkx-send/process-recipient.ts"
    ],
+   "remind_me_about_message": [
+    "src/hooks/chat/useRemindMessage.ts"
+   ],
    "remove_wa_label_from_all_contacts": [
     "supabase/functions/_shared/evolution-webhook-handlers.ts"
    ],
@@ -83582,6 +83719,9 @@
    "replace_ai_conversation_tags": [
     "supabase/functions/ai-auto-tag/index.ts",
     "tests/contracts/ai-auto-tag-writes.contract.test.ts"
+   ],
+   "report_message": [
+    "src/hooks/chat/useReportMessage.ts"
    ],
    "reschedule_multiplix_item": [
     "supabase/functions/multiplix-send/index.ts"
@@ -83751,6 +83891,9 @@
    "talkx_upsert_link": [
     "src/hooks/integrations/useTalkXLinks.ts"
    ],
+   "toggle_message_favorite": [
+    "src/hooks/chat/useMessageFavorites.ts"
+   ],
    "toggle_team_reaction": [
     "src/hooks/team-chat/useTeamMessageReactions.ts"
    ],
@@ -83774,6 +83917,9 @@
     "supabase/functions/connection-health-check/index.ts",
     "supabase/functions/talkx-send/index.ts",
     "supabase/functions/talkx-send/process-recipient.ts"
+   ],
+   "unpin_message": [
+    "src/hooks/chat/useMessagePins.ts"
    ],
    "update_own_profile": [
     "src/hooks/auth/useSecureProfile.ts"
@@ -84683,9 +84829,6 @@
    "link_preview_cache_metrics",
    "login_attempts",
    "message_attempts",
-   "message_favorites",
-   "message_pins",
-   "message_reports",
    "mfa_sessions",
    "objects",
    "optout_call_log",
@@ -86663,6 +86806,11 @@
     "file": "src/hooks/chat/useRecommendedProducts.ts",
     "name": "ProductAvailability",
     "values": "disponivel | confirmar"
+   },
+   {
+    "file": "src/hooks/chat/useReportMessage.ts",
+    "name": "ReportReason",
+    "values": "spam | improprio | urgencia | outro"
    },
    {
     "file": "src/hooks/chat/useScheduledMessages.ts",
@@ -100197,6 +100345,18 @@
     "text": "Mesma regra do `usePeriodFilter` da IA: sair do personalizado limpa as datas escolhidas."
    },
    {
+    "file": "src/hooks/chat/useMessageFavorites.ts",
+    "text": "de propósito); `42501` é o SQLSTATE das recusas de permissão. */"
+   },
+   {
+    "file": "src/hooks/chat/useMessagePins.ts",
+    "text": "* A03 — fixar/desafixar mensagem (máximo de 3 por conversa)."
+   },
+   {
+    "file": "src/hooks/chat/useMessagePins.ts",
+    "text": "* Limite imposto pela RPC `pin_message`. A tela usa para avisar antes de tentar. */"
+   },
+   {
     "file": "src/hooks/chat/useMessages.ts",
     "text": "sem elas (DEFAULT: so a PK) ela nao pode ser feita aqui — e nao precisa: este canal so"
    },
@@ -100235,6 +100395,10 @@
    {
     "file": "src/hooks/chat/useRecommendedProducts.ts",
     "text": "prazo) não têm fonte autorizada no catálogo; não são afirmadas aqui em vez de"
+   },
+   {
+    "file": "src/hooks/chat/useRemindMessage.ts",
+    "text": "* Cria o lembrete de uma mensagem para a data/hora escolhida. A validação de"
    },
    {
     "file": "src/hooks/chat/useSavedFilters.ts",
@@ -116011,6 +116175,11 @@
     "value": "'id, name, nickname, avatar_url'"
    },
    {
+    "file": "src/hooks/chat/useMessagePins.ts",
+    "name": "PIN_LIMIT",
+    "value": "3"
+   },
+   {
     "file": "src/hooks/chat/useMessages.ts",
     "name": "MESSAGES_PAGE_SIZE",
     "value": "100"
@@ -116019,6 +116188,11 @@
     "file": "src/hooks/chat/usePdfThumbnail.ts",
     "name": "PDF_THUMBNAIL_LARGURA",
     "value": "320"
+   },
+   {
+    "file": "src/hooks/chat/useReportMessage.ts",
+    "name": "ALREADY_REPORTED",
+    "value": "'already_reported'"
    },
    {
     "file": "src/hooks/chat/useSavedFilters.ts",
@@ -136916,6 +137090,10 @@
     "line": "const SESSION_GAP_MS = 4 * 60 * 60 * 1000;"
    },
    {
+    "file": "src/components/inbox/chat/MessageActionMenuItems.tsx",
+    "line": "{ label: 'Em 1 hora', at: () => new Date(Date.now() + 60 * 60 * 1000) },"
+   },
+   {
     "file": "src/components/inbox/chat/contactPresence.ts",
     "line": "export const PRESENCE_ONLINE_WINDOW_MS = 2 * 60 * 1000;"
    },
@@ -138270,6 +138448,10 @@
    {
     "file": "supabase/migrations/20261117120000_talkx_x091_template_stats_rpcs.sql",
     "line": "WHERE created_at >= date_trunc('month', v_now) - interval '1 month'"
+   },
+   {
+    "file": "supabase/migrations/20261126221500_remind_me_about_message.sql",
+    "line": "IF p_remind_at > now() + interval '90 days' THEN"
    },
    {
     "file": "supabase-export/BLOCO_01_schema_completo.sql",
@@ -162225,11 +162407,15 @@
    },
    {
     "file": "src/components/inbox/chat/__tests__/menus-r2-inb-021.test.tsx",
-    "name": "não oferece mais as ações que não concluíam nada"
+    "name": "volta a oferecer as quatro ações agora que a operação existe"
    },
    {
     "file": "src/components/inbox/chat/__tests__/menus-r2-inb-021.test.tsx",
-    "name": "reportar também não aparece no balão de mensagem recebida"
+    "name": "denunciar também aparece no balão de mensagem recebida"
+   },
+   {
+    "file": "src/components/inbox/chat/__tests__/menus-r2-inb-021.test.tsx",
+    "name": "cada ação por mensagem chega à operação declarada"
    },
    {
     "file": "src/components/inbox/chat/__tests__/menus-r2-inb-021.test.tsx",
@@ -194312,6 +194498,58 @@
     "name": "sem ids devolve mapa vazio sem tocar no banco"
    },
    {
+    "file": "src/hooks/chat/__tests__/useMessageFavorites.test.tsx",
+    "name": "useMessageFavorites — leitura"
+   },
+   {
+    "file": "src/hooks/chat/__tests__/useMessageFavorites.test.tsx",
+    "name": "carrega o conjunto de favoritas da conversa filtrando pelo contato"
+   },
+   {
+    "file": "src/hooks/chat/__tests__/useMessageFavorites.test.tsx",
+    "name": "não consulta o banco quando o contato é nulo"
+   },
+   {
+    "file": "src/hooks/chat/__tests__/useMessageFavorites.test.tsx",
+    "name": "useToggleMessageFavorite — escrita"
+   },
+   {
+    "file": "src/hooks/chat/__tests__/useMessageFavorites.test.tsx",
+    "name": "favorita de forma otimista (antes da RPC responder) e confirma depois"
+   },
+   {
+    "file": "src/hooks/chat/__tests__/useMessageFavorites.test.tsx",
+    "name": "desfaz o otimismo e traduz o erro quando a RPC nega a mensagem"
+   },
+   {
+    "file": "src/hooks/chat/__tests__/useMessagePins.test.tsx",
+    "name": "useMessagePins — leitura"
+   },
+   {
+    "file": "src/hooks/chat/__tests__/useMessagePins.test.tsx",
+    "name": "carrega as fixadas do contato com ordem determinística"
+   },
+   {
+    "file": "src/hooks/chat/__tests__/useMessagePins.test.tsx",
+    "name": "não assina realtime enquanto a tabela não estiver na publicação revisada"
+   },
+   {
+    "file": "src/hooks/chat/__tests__/useMessagePins.test.tsx",
+    "name": "useMessagePins — escrita"
+   },
+   {
+    "file": "src/hooks/chat/__tests__/useMessagePins.test.tsx",
+    "name": "fixa de forma otimista (antes da RPC responder) e confirma depois"
+   },
+   {
+    "file": "src/hooks/chat/__tests__/useMessagePins.test.tsx",
+    "name": "desfaz o otimismo e traduz o limite de 3 fixadas"
+   },
+   {
+    "file": "src/hooks/chat/__tests__/useMessagePins.test.tsx",
+    "name": "desafixa removendo da lista e traduz a falta de permissão"
+   },
+   {
     "file": "src/hooks/chat/__tests__/useMessageReactions.transport-rejection.test.tsx",
     "name": "useMessageReactions — rejeição do transporte no contrato público (R2-INB-032)"
    },
@@ -194706,6 +194944,42 @@
    {
     "file": "src/hooks/chat/__tests__/useRecommendedProducts.test.tsx",
     "name": "match esgotado não "
+   },
+   {
+    "file": "src/hooks/chat/__tests__/useRemindMessage.test.tsx",
+    "name": "useRemindMessage"
+   },
+   {
+    "file": "src/hooks/chat/__tests__/useRemindMessage.test.tsx",
+    "name": "cria o lembrete com a data em ISO e a nota"
+   },
+   {
+    "file": "src/hooks/chat/__tests__/useRemindMessage.test.tsx",
+    "name": "traduz a data no passado"
+   },
+   {
+    "file": "src/hooks/chat/__tests__/useRemindMessage.test.tsx",
+    "name": "traduz a data acima de 90 dias"
+   },
+   {
+    "file": "src/hooks/chat/__tests__/useRemindMessage.test.tsx",
+    "name": "traduz a falta de permissão sobre a mensagem"
+   },
+   {
+    "file": "src/hooks/chat/__tests__/useReportMessage.test.tsx",
+    "name": "useReportMessage"
+   },
+   {
+    "file": "src/hooks/chat/__tests__/useReportMessage.test.tsx",
+    "name": "reporta passando motivo e nota para a RPC e marca como reportada"
+   },
+   {
+    "file": "src/hooks/chat/__tests__/useReportMessage.test.tsx",
+    "name": "barra a mensagem já reportada sem chamar a RPC de novo"
+   },
+   {
+    "file": "src/hooks/chat/__tests__/useReportMessage.test.tsx",
+    "name": "traduz o motivo inválido devolvido pelo banco"
    },
    {
     "file": "src/hooks/chat/__tests__/useScheduledReports.test.tsx",
@@ -231740,6 +232014,14 @@
     "call": "messages.create"
    },
    {
+    "file": "supabase/migrations/20261126221500_remind_me_about_message.sql",
+    "call": "notify"
+   },
+   {
+    "file": "supabase/migrations/20261126221500_remind_me_about_message.sql",
+    "call": "notify_due_tasks"
+   },
+   {
     "file": "supabase-export/BLOCO_01_schema_completo.sql",
     "call": "notify_sicoob_on_reply"
    },
@@ -248152,6 +248434,28 @@
      "v_max"
     ]
    },
+   "remind_me_about_message": {
+    "args": "p_message_id uuid, p_remind_at timestamptz, p_note text DEFAULT NULL",
+    "returns": "uuid",
+    "lang": "plpgsql",
+    "src": "supabase/migrations/20261126221500_remind_me_about_message.sql",
+    "security_definer": true,
+    "search_path": true,
+    "body": "DECLARE v_caller uuid := auth.uid(); v_profile_id uuid; v_contact_id uuid; v_title text; v_task_id uuid; BEGIN IF v_caller IS NULL THEN RAISE EXCEPTION 'auth_required' USING ERRCODE = '42501'; END IF; IF p_remind_at IS NULL OR p_remind_at <= now() THEN RAISE EXCEPTION 'remind_at_in_past' USING ERRCODE = '22023'; END IF; IF p_remind_at > now() + interval '90 days' THEN RAISE EXCEPTION 'remind_at_too_far' USING ERRCODE = '22023'; END IF; SELECT m.contact_id INTO v_contact_id FROM public.messages AS m WHERE m.id = p_message_id; IF v_contact_id IS NULL OR NOT public.is_contact_visible_to_user(v_contact_id, v_caller) THEN RAISE EXCEPTION 'message_not_visible' USING ERRCODE = '42501'; END IF; v_pr …",
+    "raises": [
+     "auth_required",
+     "remind_at_in_past",
+     "remind_at_too_far",
+     "message_not_visible",
+     "profile_not_found"
+    ],
+    "tables": [
+     "conversation_tasks",
+     "messages",
+     "v_contact_id",
+     "v_task_id"
+    ]
+   },
    "uid": {
     "args": "",
     "returns": "uuid",
@@ -253877,6 +254181,31 @@
     "function": "resolve_network_policy",
     "msg": "resolve_network_policy: p_default_window_seconds invalido",
     "src": "supabase/migrations/20261126010508_city_whitelist_network_policy.sql"
+   },
+   {
+    "function": "remind_me_about_message",
+    "msg": "auth_required",
+    "src": "supabase/migrations/20261126221500_remind_me_about_message.sql"
+   },
+   {
+    "function": "remind_me_about_message",
+    "msg": "remind_at_in_past",
+    "src": "supabase/migrations/20261126221500_remind_me_about_message.sql"
+   },
+   {
+    "function": "remind_me_about_message",
+    "msg": "remind_at_too_far",
+    "src": "supabase/migrations/20261126221500_remind_me_about_message.sql"
+   },
+   {
+    "function": "remind_me_about_message",
+    "msg": "message_not_visible",
+    "src": "supabase/migrations/20261126221500_remind_me_about_message.sql"
+   },
+   {
+    "function": "remind_me_about_message",
+    "msg": "profile_not_found",
+    "src": "supabase/migrations/20261126221500_remind_me_about_message.sql"
    },
    {
     "function": "espera_contem",
@@ -262932,6 +263261,7 @@
    "release_multiplix_recipient_claim",
    "release_talkx_campaign_worker",
    "release_talkx_recipient_claim",
+   "remind_me_about_message",
    "remove_contact_tag",
    "remove_team_member",
    "remove_wa_label_from_all_contacts",
@@ -277869,6 +278199,30 @@
     "objkind": "function",
     "roles": "service_role",
     "src": "supabase/migrations/20261126010508_city_whitelist_network_policy.sql"
+   },
+   {
+    "kind": "revoke",
+    "privs": "all",
+    "object": "remind_me_about_message",
+    "objkind": "function",
+    "roles": "PUBLIC",
+    "src": "supabase/migrations/20261126221500_remind_me_about_message.sql"
+   },
+   {
+    "kind": "revoke",
+    "privs": "all",
+    "object": "remind_me_about_message",
+    "objkind": "function",
+    "roles": "anon",
+    "src": "supabase/migrations/20261126221500_remind_me_about_message.sql"
+   },
+   {
+    "kind": "grant",
+    "privs": "execute",
+    "object": "remind_me_about_message",
+    "objkind": "function",
+    "roles": "authenticated",
+    "src": "supabase/migrations/20261126221500_remind_me_about_message.sql"
    },
    {
     "kind": "grant",
@@ -324205,6 +324559,16 @@
     "50"
    ]
   },
+  "src/components/inbox/chat/MessageActionMenuItems.tsx": {
+   "path": "src/components/inbox/chat/MessageActionMenuItems.tsx",
+   "lines": 176,
+   "exports": [
+    "function MessageActionMenuItems"
+   ],
+   "temporal": [
+    "{ label: 'Em 1 hora', at: () => new Date(Date.now() + 60 * 60 * 1000) },"
+   ]
+  },
   "src/components/inbox/chat/MessageBubble.tsx": {
    "path": "src/components/inbox/chat/MessageBubble.tsx",
    "lines": 426,
@@ -324373,7 +324737,7 @@
   },
   "src/components/inbox/chat/MessageHoverToolbar.tsx": {
    "path": "src/components/inbox/chat/MessageHoverToolbar.tsx",
-   "lines": 246,
+   "lines": 251,
    "exports": [
     "function MessageHoverToolbar"
    ],
@@ -325565,7 +325929,7 @@
   },
   "src/components/inbox/chat/__tests__/MessageHoverToolbar.delete.test.tsx": {
    "path": "src/components/inbox/chat/__tests__/MessageHoverToolbar.delete.test.tsx",
-   "lines": 185,
+   "lines": 222,
    "is_test": true,
    "rule_comments": [
     "R2-INB-014: o delete do menu hover NÃO pode confirmar sucesso quando a"
@@ -325582,7 +325946,7 @@
   },
   "src/components/inbox/chat/__tests__/MessageHoverToolbar.historico-envio.test.tsx": {
    "path": "src/components/inbox/chat/__tests__/MessageHoverToolbar.historico-envio.test.tsx",
-   "lines": 143,
+   "lines": 183,
    "is_test": true,
    "tests": [
     "MessageHoverToolbar — Histórico de envio no menu da mensagem (SL-198/061)",
@@ -325592,7 +325956,7 @@
   },
   "src/components/inbox/chat/__tests__/MessageHoverToolbar.nao-lida.test.tsx": {
    "path": "src/components/inbox/chat/__tests__/MessageHoverToolbar.nao-lida.test.tsx",
-   "lines": 159,
+   "lines": 199,
    "is_test": true,
    "tests": [
     "MessageHoverToolbar — marcar como não lida (P2-GO-6)",
@@ -325770,12 +326134,16 @@
   },
   "src/components/inbox/chat/__tests__/menus-r2-inb-021.test.tsx": {
    "path": "src/components/inbox/chat/__tests__/menus-r2-inb-021.test.tsx",
-   "lines": 266,
+   "lines": 345,
    "is_test": true,
+   "rule_comments": [
+    "Reportar no balão; \"Adicionar tag\" no header). No header a regra segue de pé:"
+   ],
    "tests": [
     "menu do balão — R2-INB-021",
-    "não oferece mais as ações que não concluíam nada",
-    "reportar também não aparece no balão de mensagem recebida",
+    "volta a oferecer as quatro ações agora que a operação existe",
+    "denunciar também aparece no balão de mensagem recebida",
+    "cada ação por mensagem chega à operação declarada",
     "cada ação que sobrou no menu conclui a operação declarada",
     "menu do header — R2-INB-021",
     "não oferece mais ",
@@ -359927,6 +360295,81 @@
     "staleTime: 5 * 60 * 1000,"
    ]
   },
+  "src/hooks/chat/useMessageFavorites.ts": {
+   "path": "src/hooks/chat/useMessageFavorites.ts",
+   "lines": 138,
+   "exports": [
+    "const messageFavoritesKey",
+    "interface UseMessageFavoritesResult",
+    "function useMessageFavorites",
+    "interface UseToggleMessageFavoriteResult",
+    "function useToggleMessageFavorite"
+   ],
+   "tables": [
+    {
+     "table": "message_favorites",
+     "op": "select"
+    }
+   ],
+   "table_cols": {
+    "message_favorites": [
+     "message_id"
+    ]
+   },
+   "rpc": [
+    "toggle_message_favorite"
+   ],
+   "rule_comments": [
+    "de propósito); `42501` é o SQLSTATE das recusas de permissão. */"
+   ],
+   "hooks": [
+    "useMessageFavorites",
+    "useToggleMessageFavorite"
+   ]
+  },
+  "src/hooks/chat/useMessagePins.ts": {
+   "path": "src/hooks/chat/useMessagePins.ts",
+   "lines": 176,
+   "exports": [
+    "const PIN_LIMIT",
+    "interface MessagePin",
+    "const messagePinsKey",
+    "interface UseMessagePinsResult",
+    "function useMessagePins"
+   ],
+   "tables": [
+    {
+     "table": "message_pins",
+     "op": "select"
+    }
+   ],
+   "table_cols": {
+    "message_pins": [
+     "contact_id",
+     "id",
+     "message_id",
+     "pinned_at",
+     "pinned_by"
+    ]
+   },
+   "rpc": [
+    "pin_message",
+    "unpin_message"
+   ],
+   "params": [
+    {
+     "name": "PIN_LIMIT",
+     "value": "3"
+    }
+   ],
+   "rule_comments": [
+    "* A03 — fixar/desafixar mensagem (máximo de 3 por conversa).",
+    "* Limite imposto pela RPC `pin_message`. A tela usa para avisar antes de tentar. */"
+   ],
+   "hooks": [
+    "useMessagePins"
+   ]
+  },
   "src/hooks/chat/useMessageReactions.ts": {
    "path": "src/hooks/chat/useMessageReactions.ts",
    "lines": 140,
@@ -360418,6 +360861,62 @@
    ],
    "pagination": [
     "20"
+   ]
+  },
+  "src/hooks/chat/useRemindMessage.ts": {
+   "path": "src/hooks/chat/useRemindMessage.ts",
+   "lines": 74,
+   "exports": [
+    "interface UseRemindMessageResult",
+    "function useRemindMessage"
+   ],
+   "rpc": [
+    "remind_me_about_message"
+   ],
+   "rule_comments": [
+    "* Cria o lembrete de uma mensagem para a data/hora escolhida. A validação de"
+   ],
+   "hooks": [
+    "useRemindMessage"
+   ]
+  },
+  "src/hooks/chat/useReportMessage.ts": {
+   "path": "src/hooks/chat/useReportMessage.ts",
+   "lines": 130,
+   "exports": [
+    "type ReportReason",
+    "const reportReasonsKey",
+    "interface UseReportMessageResult",
+    "function useReportMessage"
+   ],
+   "tables": [
+    {
+     "table": "message_reports",
+     "op": "select"
+    }
+   ],
+   "table_cols": {
+    "message_reports": [
+     "message_id"
+    ]
+   },
+   "rpc": [
+    "report_message"
+   ],
+   "enums": [
+    {
+     "name": "ReportReason",
+     "values": "spam | improprio | urgencia | outro"
+    }
+   ],
+   "params": [
+    {
+     "name": "ALREADY_REPORTED",
+     "value": "'already_reported'"
+    }
+   ],
+   "hooks": [
+    "useReportMessage"
    ]
   },
   "src/hooks/chat/useSavedFilters.ts": {
@@ -361485,6 +361984,36 @@
     "sem ids devolve mapa vazio sem tocar no banco"
    ]
   },
+  "src/hooks/chat/__tests__/useMessageFavorites.test.tsx": {
+   "path": "src/hooks/chat/__tests__/useMessageFavorites.test.tsx",
+   "lines": 144,
+   "is_test": true,
+   "tests": [
+    "useMessageFavorites — leitura",
+    "carrega o conjunto de favoritas da conversa filtrando pelo contato",
+    "não consulta o banco quando o contato é nulo",
+    "useToggleMessageFavorite — escrita",
+    "favorita de forma otimista (antes da RPC responder) e confirma depois",
+    "desfaz o otimismo e traduz o erro quando a RPC nega a mensagem"
+   ]
+  },
+  "src/hooks/chat/__tests__/useMessagePins.test.tsx": {
+   "path": "src/hooks/chat/__tests__/useMessagePins.test.tsx",
+   "lines": 176,
+   "is_test": true,
+   "rule_comments": [
+    "rollback e tradução do limite de 3 e da falta de permissão. Sem assinatura de"
+   ],
+   "tests": [
+    "useMessagePins — leitura",
+    "carrega as fixadas do contato com ordem determinística",
+    "não assina realtime enquanto a tabela não estiver na publicação revisada",
+    "useMessagePins — escrita",
+    "fixa de forma otimista (antes da RPC responder) e confirma depois",
+    "desfaz o otimismo e traduz o limite de 3 fixadas",
+    "desafixa removendo da lista e traduz a falta de permissão"
+   ]
+  },
   "src/hooks/chat/__tests__/useMessageReactions.transport-rejection.test.tsx": {
    "path": "src/hooks/chat/__tests__/useMessageReactions.transport-rejection.test.tsx",
    "lines": 373,
@@ -361745,6 +362274,29 @@
     "no fallback para o catálogo recente (contato sem interesse que casa) o estoque também é respeitado",
     "com toda a categoria pedida esgotada, cai para o catálogo recente disponível em vez de devolver lista vazia",
     "match esgotado não "
+   ]
+  },
+  "src/hooks/chat/__tests__/useRemindMessage.test.tsx": {
+   "path": "src/hooks/chat/__tests__/useRemindMessage.test.tsx",
+   "lines": 99,
+   "is_test": true,
+   "tests": [
+    "useRemindMessage",
+    "cria o lembrete com a data em ISO e a nota",
+    "traduz a data no passado",
+    "traduz a data acima de 90 dias",
+    "traduz a falta de permissão sobre a mensagem"
+   ]
+  },
+  "src/hooks/chat/__tests__/useReportMessage.test.tsx": {
+   "path": "src/hooks/chat/__tests__/useReportMessage.test.tsx",
+   "lines": 106,
+   "is_test": true,
+   "tests": [
+    "useReportMessage",
+    "reporta passando motivo e nota para a RPC e marca como reportada",
+    "barra a mensagem já reportada sem chamar a RPC de novo",
+    "traduz o motivo inválido devolvido pelo banco"
    ]
   },
   "src/hooks/chat/__tests__/useScheduledReports.test.tsx": {
@@ -422084,6 +422636,17 @@
    "lines": 348,
    "uses_service_role": true
   },
+  "supabase/migrations/20261126221500_remind_me_about_message.sql": {
+   "path": "supabase/migrations/20261126221500_remind_me_about_message.sql",
+   "lines": 96,
+   "temporal": [
+    "IF p_remind_at > now() + interval '90 days' THEN"
+   ],
+   "side_effects": [
+    "notify",
+    "notify_due_tasks"
+   ]
+  },
   "supabase/tests/admin_inbox_silence.sql": {
    "path": "supabase/tests/admin_inbox_silence.sql",
    "lines": 310,
@@ -426005,10 +426568,35 @@
   }
  },
  "git": {
-  "sha": "9f9ec852845499de067bb4788ceb22f8463e6c88",
+  "sha": "3d99ff1c5be8d4c3f1647e5125599f18649b01fd",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "3d99ff1c",
+    "date": "2026-11-26",
+    "author": "adm01-debug",
+    "subject": "feat: acoes por mensagem (favoritar, fixar, responder depois, denunciar) (#3395)",
+    "files": [
+     "docs/DB-INVENTORY.md",
+     "scripts/db-audit/inbox-contact-authorization.test.sh",
+     "src/components/inbox/chat/MessageActionMenuItems.tsx",
+     "src/components/inbox/chat/MessageHoverToolbar.tsx",
+     "src/components/inbox/chat/__tests__/MessageHoverToolbar.delete.test.tsx",
+     "src/components/inbox/chat/__tests__/MessageHoverToolbar.historico-envio.test.tsx",
+     "src/components/inbox/chat/__tests__/MessageHoverToolbar.nao-lida.test.tsx",
+     "src/components/inbox/chat/__tests__/menus-r2-inb-021.test.tsx",
+     "src/hooks/chat/__tests__/useMessageFavorites.test.tsx",
+     "src/hooks/chat/__tests__/useMessagePins.test.tsx",
+     "src/hooks/chat/__tests__/useRemindMessage.test.tsx",
+     "src/hooks/chat/__tests__/useReportMessage.test.tsx",
+     "src/hooks/chat/useMessageFavorites.ts",
+     "src/hooks/chat/useMessagePins.ts",
+     "src/hooks/chat/useRemindMessage.ts",
+     "src/hooks/chat/useReportMessage.ts",
+     "supabase/migrations/20261126221500_remind_me_about_message.sql"
+    ]
+   },
    {
     "sha": "9f9ec852",
     "date": "2026-11-25",
@@ -427692,26 +428280,16 @@
      "supabase/schema-catalog.json",
      "supabase/schema-manifest.json"
     ]
-   },
-   {
-    "sha": "697de6eb",
-    "date": "2026-11-24",
-    "author": "adm01-debug",
-    "subject": "chore: remove teardown de produção morto do E2E e dropa as 2 RPCs órfãs (#3360)",
-    "files": [
-     ".github/workflows/e2e-logado.yml",
-     "scripts/ci/e2e-logado-workflow.unit.mjs",
-     "scripts/ci/e2e-teardown.mjs",
-     "scripts/ci/e2e-teardown.unit.mjs",
-     "scripts/ci/redigir-relatorio.mjs",
-     "supabase/migrations/20261124120000_drop_rpcs_e2e_orfas.sql"
-    ]
    }
   ],
   "hot_files": [
    [
     "supabase/deployment-manifest.json",
     4
+   ],
+   [
+    "docs/DB-INVENTORY.md",
+    3
    ],
    [
     "scripts/automation.config.json",
@@ -427728,10 +428306,6 @@
    [
     "docs/agentes/github-ci.md",
     3
-   ],
-   [
-    "docs/DB-INVENTORY.md",
-    2
    ],
    [
     "supabase/functions/_shared/ai-circuit.test.ts",
@@ -427758,35 +428332,35 @@
     2
    ],
    [
-    ".github/workflows/db-guard.yml",
+    "scripts/db-audit/inbox-contact-authorization.test.sh",
     1
    ],
    [
-    "scripts/db-audit/city-whitelist-network-policy.test.sh",
+    "src/components/inbox/chat/MessageActionMenuItems.tsx",
     1
    ],
    [
-    "src/components/security/CityWhitelistPanel.tsx",
+    "src/components/inbox/chat/MessageHoverToolbar.tsx",
     1
    ],
    [
-    "src/components/security/SecurityView.tsx",
+    "src/components/inbox/chat/__tests__/MessageHoverToolbar.delete.test.tsx",
     1
    ],
    [
-    "src/components/security/__tests__/CityWhitelistPanel.test.tsx",
+    "src/components/inbox/chat/__tests__/MessageHoverToolbar.historico-envio.test.tsx",
     1
    ],
    [
-    "src/hooks/security/useCityWhitelist.ts",
+    "src/components/inbox/chat/__tests__/MessageHoverToolbar.nao-lida.test.tsx",
     1
    ],
    [
-    "supabase/functions/_shared/__tests__/request-policy-city.test.ts",
+    "src/components/inbox/chat/__tests__/menus-r2-inb-021.test.tsx",
     1
    ],
    [
-    "supabase/functions/_shared/request-policy.ts",
+    "src/hooks/chat/__tests__/useMessageFavorites.test.tsx",
     1
    ]
   ]

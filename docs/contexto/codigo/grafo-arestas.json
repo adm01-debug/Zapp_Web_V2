@@ -3850,6 +3850,15 @@
    "src/integrations/supabase/client.ts",
    "src/lib/utils.ts"
   ],
+  "src/components/inbox/chat/MessageActionMenuItems.tsx": [
+   "src/components/ui/dropdown-menu.tsx",
+   "src/hooks/chat/useMessageFavorites.ts",
+   "src/hooks/chat/useMessagePins.ts",
+   "src/hooks/chat/useRemindMessage.ts",
+   "src/hooks/chat/useReportMessage.ts",
+   "src/lib/utils.ts",
+   "src/types/chat.ts"
+  ],
   "src/components/inbox/chat/MessageBubble.tsx": [
    "src/components/inbox/AudioMessagePlayer.tsx",
    "src/components/inbox/DeletedMessagePlaceholder.tsx",
@@ -3885,6 +3894,7 @@
   ],
   "src/components/inbox/chat/MessageHoverToolbar.tsx": [
    "src/components/inbox/TextToSpeechButton.tsx",
+   "src/components/inbox/chat/MessageActionMenuItems.tsx",
    "src/components/inbox/chat/MessageSendHistorySheet.tsx",
    "src/components/inbox/hoverActions.ts",
    "src/components/ui/dropdown-menu.tsx",
@@ -8546,6 +8556,12 @@
    "src/integrations/supabase/client.ts",
    "src/lib/fileSenderIdentity.ts"
   ],
+  "src/hooks/chat/useMessageFavorites.ts": [
+   "src/integrations/supabase/client.ts"
+  ],
+  "src/hooks/chat/useMessagePins.ts": [
+   "src/integrations/supabase/client.ts"
+  ],
   "src/hooks/chat/useMessageReactions.ts": [
    "src/hooks/auth/useAuth.tsx",
    "src/hooks/reactions/types.ts",
@@ -8616,6 +8632,12 @@
    "src/types/contact.ts"
   ],
   "src/hooks/chat/useRecommendedProducts.ts": [
+   "src/integrations/supabase/client.ts"
+  ],
+  "src/hooks/chat/useRemindMessage.ts": [
+   "src/integrations/supabase/client.ts"
+  ],
+  "src/hooks/chat/useReportMessage.ts": [
    "src/integrations/supabase/client.ts"
   ],
   "src/hooks/chat/useSavedFilters.ts": [
