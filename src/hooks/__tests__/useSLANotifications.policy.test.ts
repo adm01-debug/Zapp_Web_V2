@@ -1,5 +1,6 @@
 import '@/hooks/__tests__/helpers/alertMocks';
 import '@/hooks/__tests__/helpers/alertContactMock';
+import '@/hooks/__tests__/helpers/slaAlertPreferencesMock';
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { renderHook } from '@testing-library/react';
 
