@@ -159,6 +159,7 @@ Visão consolidada (inclui `storage.objects` e `realtime.messages`); detalhes po
 | public.copilot_objection_catalog | copilot_objection_catalog_select | SELECT | PERMISSIVE | authenticated | `true` |  |
 | public.copilot_outcomes | copilot_outcomes_insert | INSERT | PERMISSIVE | authenticated |  | `(seller_id = ( SELECT auth.uid() AS uid))` |
 | public.copilot_outcomes | copilot_outcomes_select | SELECT | PERMISSIVE | authenticated | `(seller_id = ( SELECT auth.uid() AS uid))` |  |
+| public.copilot_retention_aggregates | admin_supervisor_retention | SELECT | PERMISSIVE | authenticated | `is_admin_or_supervisor(auth.uid())` |  |
 | public.copilot_retention_aggregates | own_retention | SELECT | PERMISSIVE | authenticated | `(profile_id = ( SELECT auth.uid() AS uid))` |  |
 | public.copilot_retention_aggregates | service_role_retention | ALL | PERMISSIVE | service_role | `true` | `true` |
 | public.copilot_seller_settings | copilot_seller_settings_insert | INSERT | PERMISSIVE | authenticated |  | `(seller_id = ( SELECT ( SELECT auth.uid() AS uid) AS uid))` |

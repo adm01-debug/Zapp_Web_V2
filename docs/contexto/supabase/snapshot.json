@@ -58474,6 +58474,10 @@
         "callers": {
           "code": [
             {
+              "file": "src/pages/admin/trustedDomains.ts",
+              "hits": 1
+            },
+            {
               "file": "supabase/migrations/20251215025014_fcc5bc79-55e3-4972-8765-6a7840fdce5a.sql",
               "hits": 1
             },
@@ -58502,7 +58506,7 @@
               "hits": 1
             }
           ],
-          "code_total_files": 7,
+          "code_total_files": 8,
           "cron": [],
           "db": [],
           "triggers": [
@@ -59461,6 +59465,7 @@
             "public.prevent_profile_privilege_escalation",
             "public.reassign_absent_agents",
             "public.reassign_overloaded_agents",
+            "public.recalcular_retencao_copiloto",
             "public.record_sla_alert",
             "public.replace_talkx_draft_recipients",
             "public.require_contact_edit_permission",
@@ -59469,6 +59474,7 @@
             "public.resolve_talkx_outcome_unknown",
             "public.resolve_unconfirmed_message",
             "public.resume_instance",
+            "public.resumo_orcamento_ia",
             "public.retry_talkx_recipients",
             "public.return_conversation_to_queue",
             "public.rpc_queue_goal_metrics",
@@ -63217,6 +63223,36 @@
         "volatility": "volatile"
       },
       {
+        "args": "p_dias integer",
+        "callers": {
+          "code": [],
+          "code_total_files": 0,
+          "cron": [],
+          "db": [],
+          "triggers": [],
+          "views": []
+        },
+        "comment": "CV-143 - recalcula a retencao do copiloto RADAR dos ultimos N dias (1 a 90); exclusivo de admin/supervisor.",
+        "config": [
+          "search_path=public, pg_temp"
+        ],
+        "definition": null,
+        "definition_sha": "5a4f2cf47136b83b",
+        "execute_api_roles": "authenticated, service_role",
+        "execute_public": false,
+        "is_trigger_fn": false,
+        "kind": "function",
+        "language": "plpgsql",
+        "leakproof": false,
+        "name": "recalcular_retencao_copiloto",
+        "owner": "postgres",
+        "returns": "integer",
+        "schema": "public",
+        "security_definer": true,
+        "strict": false,
+        "volatility": "volatile"
+      },
+      {
         "args": "p_contact_id uuid, p_connection_id uuid",
         "callers": {
           "code": [
@@ -63490,11 +63526,15 @@
         "callers": {
           "code": [
             {
+              "file": "src/hooks/sla/useSLANotifications.ts",
+              "hits": 1
+            },
+            {
               "file": "supabase/migrations/20261011180337_sla_alert_events_and_preferences.sql",
               "hits": 1
             }
           ],
-          "code_total_files": 1,
+          "code_total_files": 2,
           "cron": [],
           "db": [],
           "triggers": [],
@@ -64966,11 +65006,15 @@
         "callers": {
           "code": [
             {
+              "file": "src/hooks/sla/useSlaAlertEvents.ts",
+              "hits": 1
+            },
+            {
               "file": "supabase/migrations/20261011180337_sla_alert_events_and_preferences.sql",
               "hits": 1
             }
           ],
-          "code_total_files": 1,
+          "code_total_files": 2,
           "cron": [],
           "db": [],
           "triggers": [],
@@ -65107,6 +65151,36 @@
         "security_definer": true,
         "strict": false,
         "volatility": "volatile"
+      },
+      {
+        "args": "p_dias integer",
+        "callers": {
+          "code": [],
+          "code_total_files": 0,
+          "cron": [],
+          "db": [],
+          "triggers": [],
+          "views": []
+        },
+        "comment": "Resumo agregado do ledger de orcamento de IA (reservado/consumido/devolvido) para admin e supervisor.",
+        "config": [
+          "search_path=public, pg_temp"
+        ],
+        "definition": null,
+        "definition_sha": "ee8a174432baab14",
+        "execute_api_roles": "authenticated, service_role",
+        "execute_public": false,
+        "is_trigger_fn": false,
+        "kind": "function",
+        "language": "plpgsql",
+        "leakproof": false,
+        "name": "resumo_orcamento_ia",
+        "owner": "postgres",
+        "returns": "jsonb",
+        "schema": "public",
+        "security_definer": true,
+        "strict": false,
+        "volatility": "stable"
       },
       {
         "args": "p_recipient_id uuid",
@@ -65313,7 +65387,7 @@
         "volatility": "stable"
       },
       {
-        "args": "",
+        "args": "p_target_date date",
         "callers": {
           "code": [
             {
@@ -65323,17 +65397,19 @@
           ],
           "code_total_files": 1,
           "cron": [],
-          "db": [],
+          "db": [
+            "public.recalcular_retencao_copiloto"
+          ],
           "triggers": [],
           "views": []
         },
-        "comment": "CV-143 — computa e armazena métricas do dia anterior; executado pelo cron às 02:00 UTC.",
+        "comment": "CV-143 - agrega a retencao do copiloto RADAR de um dia (padrao: ontem); rodada pelo cron as 02:00 UTC.",
         "config": [
           "search_path=public, pg_temp"
         ],
         "definition": null,
-        "definition_sha": "d08876b323c8e318",
-        "execute_api_roles": "authenticated, service_role",
+        "definition_sha": "6f67ab6e35e5eeec",
+        "execute_api_roles": "service_role",
         "execute_public": false,
         "is_trigger_fn": false,
         "kind": "function",
@@ -68239,7 +68315,7 @@
           "triggers": [],
           "views": []
         },
-        "comment": "Miolo de talkx_connection_send_budget sem gate de papel. Chamar apenas de funcoes SECURITY DEFINER que ja validaram admin/supervisor ou service_role; nao tem grant para anon/authenticated.",
+        "comment": "Orcamento por conexao (minuto/dia) sem checagem de papel; uso interno das RPCs talkx_connection_send_budget e talkx_campaign_pace.",
         "config": [
           "search_path=public, pg_temp"
         ],
@@ -83551,6 +83627,12 @@
       {
         "code": "policy_auth_fn_not_wrapped",
         "detail": "Policy chama auth.uid()/jwt() sem `(select ...)`: é reavaliada por linha; envolva em subselect.",
+        "object": "public.copilot_retention_aggregates.admin_supervisor_retention",
+        "severity": "BAIXA"
+      },
+      {
+        "code": "policy_auth_fn_not_wrapped",
+        "detail": "Policy chama auth.uid()/jwt() sem `(select ...)`: é reavaliada por linha; envolva em subselect.",
         "object": "public.followup_sequences.Admins can view followup sequences",
         "severity": "BAIXA"
       },
@@ -92515,6 +92597,18 @@
         "schema": "public",
         "table": "copilot_outcomes",
         "using": "(seller_id = ( SELECT auth.uid() AS uid))",
+        "with_check": null
+      },
+      {
+        "cmd": "SELECT",
+        "name": "admin_supervisor_retention",
+        "permissive": "PERMISSIVE",
+        "roles": [
+          "authenticated"
+        ],
+        "schema": "public",
+        "table": "copilot_retention_aggregates",
+        "using": "is_admin_or_supervisor(auth.uid())",
         "with_check": null
       },
       {

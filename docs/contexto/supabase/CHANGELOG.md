@@ -2,6 +2,14 @@
 
 Diff semântico gerado a cada coleta em que algo mudou.
 
+## 2026-11-26 17:15 UTC
+
+- **functions** adicionado (3): `public.recalcular_retencao_copiloto(p_dias integer)`, `public.resumo_orcamento_ia(p_dias integer)`, `public.run_copilot_retention(p_target_date date)`
+- **functions** removido (1): `public.run_copilot_retention()`
+- **functions** alterado (5): `public.handle_new_user_role()`, `public.is_admin_or_supervisor(_user_id uuid)`, `public.record_sla_alert(p_contact_id uuid, p_alert_type text, p_severity text)`, `public.resolve_sla_alert(p_event_id uuid)`, `public.talkx_connection_send_budget_internal(p_connection_id uuid)`
+- **lints** adicionado (1): `policy_auth_fn_not_wrapped:public.copilot_retention_aggregates.admin_supervisor_retention`
+- **policies (RLS)** adicionado (1): `public.copilot_retention_aggregates.admin_supervisor_retention`
+
 ## 2026-11-26 15:17 UTC
 
 - **functions** alterado (1): `public.get_my_protection_policy()`

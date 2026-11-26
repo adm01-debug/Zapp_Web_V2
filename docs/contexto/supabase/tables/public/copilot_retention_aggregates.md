@@ -29,7 +29,7 @@ service_role_retention [command=ALL; roles=service_role; PERMISSIVE]
 | owner | postgres |
 | RLS habilitado | sim |
 | RLS forçado (owner) | não |
-| policies | 2 |
+| policies | 3 |
 | realtime (publication) | não |
 | replica identity | default |
 | vem de extensão | não |
@@ -70,6 +70,16 @@ service_role_retention [command=ALL; roles=service_role; PERMISSIVE]
 
 
 ## Policies (RLS)
+
+### `admin_supervisor_retention`
+
+| campo | valor |
+|---|---|
+| comando | SELECT |
+| tipo | PERMISSIVE |
+| roles | authenticated |
+| USING | `is_admin_or_supervisor(auth.uid())` |
+| WITH CHECK |  |
 
 ### `own_retention`
 
