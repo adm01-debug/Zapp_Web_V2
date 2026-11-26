@@ -2,6 +2,8 @@ import { useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Sidebar } from '@/components/layout/Sidebar';
 import { SLAHistoryDashboard } from '@/components/sla/SLAHistoryDashboard';
+import { SLAAlertHistoryPanel } from '@/components/sla/SLAAlertHistoryPanel';
+import { SLAAlertPreferencesCard } from '@/components/sla/SLAAlertPreferencesCard';
 import { FloatingParticles } from '@/components/dashboard/FloatingParticles';
 import { AuroraBorealis } from '@/components/effects/AuroraBorealis';
 
@@ -27,6 +29,10 @@ const SLAHistory = () => {
         <FloatingParticles />
         <div className="relative z-10">
           <SLAHistoryDashboard />
+          <div className="mt-6 grid gap-6 xl:grid-cols-[minmax(0,1fr)_380px]">
+            <SLAAlertHistoryPanel />
+            <SLAAlertPreferencesCard />
+          </div>
         </div>
       </main>
     </div>

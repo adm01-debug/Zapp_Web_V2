@@ -10,6 +10,12 @@ import { uniqueRealtimeTopic } from '@/lib/realtimeTopic';
 import { claimNotificationEvent } from '@/lib/notificationDedupe';
 import { openContactChat } from '@/components/catalog/useSendProduct';
 import { slaStatusForDuration, SLA_RISK_RATIO } from '@/lib/slaTimeline';
+import { useSlaAlertPreferences } from './useSlaAlertPreferences';
+import {
+  slaAlertAllowed,
+  type SlaAlertSeverity,
+  type SlaAlertType,
+} from './slaAlertPreferences';
 
 const log = getLogger('SLANotifications');
 
@@ -205,9 +211,42 @@ async function resolveFirstResponseMinutes(configurationId: string | null): Prom
  * Dedupe por linha de SLA com TTL de 24h em `claimNotificationEvent`: o mesmo alerta não repete nem
  * entre abas/consultas concorrentes, e expira para o próximo ciclo do SLA poder avisar de novo.
  */
+/**
+ * Grava o risco/estouro na trilha auditável (`sla_alert_events`) via `record_sla_alert`.
+ *
+ * O RPC é idempotente enquanto o alerta está aberto (índice único parcial por contato/tipo/
+ * severidade), então chamar de cada aba não duplica. Falha aqui nunca engole o aviso: sem
+ * permissão (contato fora do escopo do usuário) o registro não acontece e o log guarda só o
+ * código do erro — nada de dado pessoal.
+ */
+async function recordSlaAlert(
+  contactId: string,
+  alertType: SlaAlertType,
+  severity: SlaAlertSeverity,
+): Promise<void> {
+  try {
+    const { error } = await supabase.rpc('record_sla_alert', {
+      p_contact_id: contactId,
+      p_alert_type: alertType,
+      p_severity: severity,
+    });
+    if (error) {
+      log.warn('alerta de SLA não registrado em sla_alert_events', {
+        code: error.code,
+        message: error.message,
+      });
+    }
+  } catch (error) {
+    log.warn('falha ao registrar o alerta de SLA', { error });
+  }
+}
+
 export function useSLANotifications(): void {
   const { user } = useAuth();
   const { settings: painelSettings, isQuietHours } = useNotificationSettings();
+  // Preferência da própria conta (`sla_alert_preferences`): decide se o AVISO sai. O registro em
+  // `sla_alert_events` é auditoria do sistema e não depende dela.
+  const { preferences: alertPreferences } = useSlaAlertPreferences();
   const userId = user?.id ?? null;
 
   // Ajustes do painel em ref: o handler lê o valor do momento em que o alerta chega. Sem isso os
@@ -215,10 +254,13 @@ export function useSLANotifications(): void {
   // derrubado e recriado a cada render (a assinatura do Supabase ia e voltava sem parar).
   const settingsRef = useRef(painelSettings);
   const quietHoursRef = useRef(isQuietHours);
+  // Mesma razão do painel: a preferência é lida no instante do alerta, sem recriar o canal.
+  const alertPreferencesRef = useRef(alertPreferences);
   useEffect(() => {
     settingsRef.current = painelSettings;
     quietHoursRef.current = isQuietHours;
-  }, [painelSettings, isQuietHours]);
+    alertPreferencesRef.current = alertPreferences;
+  }, [painelSettings, isQuietHours, alertPreferences]);
 
   /** Avisos de risco agendados: id da linha de SLA → timer do limiar (70% do prazo). */
   const riskTimers = useRef(new Map<string, ReturnType<typeof setTimeout>>());
@@ -270,6 +312,18 @@ export function useSLANotifications(): void {
       // A regra aplicável manda não avisar no risco: nada é apresentado nem reivindicado. O estouro
       // continua avisando — `notify_on_warning` fala do aviso, não da violação do prazo.
       if (severity === 'warning' && !policy.notifyOnWarning) return;
+
+      const tipo: SlaAlertType = 'first_response';
+      const severidade: SlaAlertSeverity = severity === 'breach' ? 'breached' : 'warning';
+
+      // Trilha auditável antes do aviso: o evento é do sistema (histórico da tela de SLA), a
+      // preferência abaixo é só sobre avisar ESTE usuário.
+      await recordSlaAlert(contactId, tipo, severidade);
+      if (cancelled) return;
+
+      if (!slaAlertAllowed(alertPreferencesRef.current, { type: tipo, severity: severidade })) {
+        return;
+      }
 
       const prefix = severity === 'breach' ? 'sla-breach' : 'sla-warning';
       if (!claimNotificationEvent(`${prefix}:${slaId}`, SLA_ALERT_DEDUPE_TTL_MS)) return;
