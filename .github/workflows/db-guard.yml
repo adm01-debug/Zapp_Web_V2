@@ -286,6 +286,14 @@ jobs:
           SKIP_DOCKER_SHIM: "1"
         run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/catalog-manifest.test.sh
 
+      # Tres containers no mesmo run (estado anterior, migration aplicada e copia
+      # mutada): o shim mapeia um container a um unico banco, entao docker real.
+      - name: Provar bloqueio de login por cidade no PostgreSQL descartavel
+        env:
+          CITY_POLICY_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
+          SKIP_DOCKER_SHIM: "1"
+        run: bash scripts/db-audit/retry-disposable-postgres-test.sh bash scripts/db-audit/city-whitelist-network-policy.test.sh
+
       - name: Provar politica confiavel do rate limit do catalogo
         env:
           CATALOG_RATE_LIMIT_TEST_POSTGRES_IMAGE: ${{ env.POSTGRES_TEST_IMAGE }}
