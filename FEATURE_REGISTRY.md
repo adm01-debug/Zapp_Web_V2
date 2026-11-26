@@ -79,6 +79,7 @@ ou rota vazia derrubam o teste até este arquivo ser atualizado.
 | `media-migration` | `MediaMigrationTool` | `src/components/admin/MediaMigrationTool.tsx` | Full | `src/lib/invokeEdge.ts` |
 | `crm360` | `CRM360ExplorerView` | `src/components/crm360/CRM360ExplorerView.tsx` | Full | `src/hooks/system/useUserRole.ts` |
 | `ai-usage` | `AIUsageDashboard` | `src/components/admin/AIUsageDashboard.tsx` | Full | `src/hooks/analytics/useAIUsageDashboard.ts` |
+| `copilot-retention` | `CopilotRetentionPage` | `src/pages/admin/CopilotRetentionPage.tsx` | Full | `src/hooks/system/useUserRole.ts` |
 | `search-insights` | `SearchInsightsView` | `src/components/admin/SearchInsightsView.tsx` | Full | `src/hooks/admin/useSearchInsights.ts` |
 | `supervisao` | `SupervisaoView` | `src/components/admin/SupervisaoView.tsx` | Full | `src/hooks/system/useUserRole.ts` |
 | `sla` | `SLADashboardView` | `src/components/queues/SLADashboard.tsx` | Full | `src/hooks/sla/useSLAMetrics.ts` |
