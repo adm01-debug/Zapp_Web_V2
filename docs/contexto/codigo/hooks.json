@@ -1,7 +1,7 @@
 {
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
- "total": 516,
+ "total": 517,
  "hooks": [
   {
    "arquivo": "analise-prs/resgate-261118-lote2/src/hooks/useMotionSeguro.ts",
@@ -10861,6 +10861,30 @@
     "src/components/security/LoginBlockedLogPanel.tsx"
    ],
    "coberto_por_testes": 1
+  },
+  {
+   "arquivo": "src/hooks/system/useMultiplixDeadLetters.ts",
+   "hooks_exportados": [
+    "useMultiplixDeadLetterCount",
+    "useMultiplixDeadLetters"
+   ],
+   "linhas": 60,
+   "dominio": "hooks/system",
+   "tabelas": [],
+   "rpcs": [
+    "count_multiplix_dead_letters",
+    "list_multiplix_dead_letters"
+   ],
+   "edges": [],
+   "hooks_internos": [
+    "useQuery"
+   ],
+   "canais_realtime": [],
+   "usado_por": 1,
+   "usado_por_arquivos": [
+    "src/components/admin/AdminCRMDashboard.tsx"
+   ],
+   "coberto_por_testes": 0
   },
   {
    "arquivo": "src/hooks/system/useMyNetworkStatus.ts",

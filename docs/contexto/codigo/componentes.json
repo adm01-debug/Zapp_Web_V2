@@ -255,11 +255,13 @@
     "AdminCRMDashboard"
    ],
    "export_default": null,
-   "linhas": 348,
+   "linhas": 418,
    "dominio": "components/admin",
    "hooks_locais": [
     "useCRMIntegrationEnabled",
-    "useExternalSelect"
+    "useExternalSelect",
+    "useMultiplixDeadLetterCount",
+    "useMultiplixDeadLetters"
    ],
    "tabelas": [],
    "edges": [],

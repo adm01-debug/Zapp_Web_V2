@@ -340,6 +340,8 @@
     "useMultiplixAudienceSave",
     "useMultiplixAudienceSelect",
     "useMultiplixCount",
+    "useMultiplixDeadLetterCount",
+    "useMultiplixDeadLetters",
     "useMultiplixDispatch",
     "useMultiplixDispatchAction",
     "useMultiplixDispatchesList",
@@ -875,6 +877,8 @@
     "useMultiplixAudienceSave",
     "useMultiplixAudienceSelect",
     "useMultiplixCount",
+    "useMultiplixDeadLetterCount",
+    "useMultiplixDeadLetters",
     "useMultiplixDispatch",
     "useMultiplixDispatchAction",
     "useMultiplixDispatchesList",
@@ -1228,6 +1232,7 @@
     "can_delete_contacts",
     "close_conversation_atomic",
     "contacts_count_by_type",
+    "count_multiplix_dead_letters",
     "count_searchbox_sessions_this_month",
     "create_department_invite",
     "create_team_group_conversation",
@@ -1257,6 +1262,7 @@
     "inbox_unread_total",
     "increment_custom_emoji_use",
     "is_admin_or_supervisor",
+    "list_multiplix_dead_letters",
     "log_audit_event",
     "log_search_event",
     "log_talkx_campaign_checklist",
@@ -1446,7 +1452,7 @@
     "unknown",
     "user"
    ],
-   "arquivos_puxados": 1594
+   "arquivos_puxados": 1595
   },
   {
    "protegida": false,
@@ -3443,6 +3449,8 @@
     "useLayoutEffect",
     "useMemo",
     "useMessageUpdateBatcher",
+    "useMultiplixDeadLetterCount",
+    "useMultiplixDeadLetters",
     "useMutation",
     "useNavigationHistory",
     "useNotificationLeader",
@@ -3474,6 +3482,8 @@
     "useFeatureFlag",
     "useFeatureFlags",
     "useMessageUpdateBatcher",
+    "useMultiplixDeadLetterCount",
+    "useMultiplixDeadLetters",
     "useNavigationHistory",
     "useNotificationSettings",
     "useOfflineCache",
@@ -3501,9 +3511,11 @@
    "rpcs": [
     "admin_set_role",
     "app_bootstrap",
+    "count_multiplix_dead_letters",
     "enqueue_outbound_message",
     "enqueue_rich_outbound_message",
     "get_inbox_contact_summaries",
+    "list_multiplix_dead_letters",
     "log_audit_event",
     "user_has_permission"
    ],
@@ -3532,7 +3544,7 @@
     "tablist",
     "tabpanel"
    ],
-   "arquivos_puxados": 97
+   "arquivos_puxados": 98
   },
   {
    "id": "agents",

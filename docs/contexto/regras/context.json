@@ -1,15 +1,15 @@
 {
  "meta": {
-  "sha": "34b5d25e207a838afaa5e289e1285fc00225ce52",
+  "sha": "c81631844c52fc292aa4159bee8f9af11d9d445e",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-25 23:55 UTC",
-  "files_total": 14653,
-  "code_files": 8187,
-  "code_lines": 1232287
+  "generated_at": "2026-11-26 00:13 UTC",
+  "files_total": 14655,
+  "code_files": 8189,
+  "code_lines": 1232578
  },
  "version": "1.3.2",
- "facts_hash": "386226123bb2d1e0",
+ "facts_hash": "ec2daf62d117e3b1",
  "stack": {
   "frameworks": [
    "React + Vite",
@@ -368,8 +368,8 @@
   "package_manager": "bun",
   "languages": {
    ".sql": 3063,
-   ".tsx": 2483,
-   ".ts": 2018,
+   ".tsx": 2484,
+   ".ts": 2019,
    ".mjs": 496,
    ".py": 125,
    ".cjs": 19,
@@ -72729,7 +72729,7 @@
     "file": ".github/workflows/types-sync.yml"
    }
   ],
-  "components_count": 2322,
+  "components_count": 2323,
   "hooks": [
    {
     "name": "useMotionSeguro",
@@ -74716,6 +74716,14 @@
     "file": "src/hooks/system/useLoginBlockedLog.ts"
    },
    {
+    "name": "useMultiplixDeadLetterCount",
+    "file": "src/hooks/system/useMultiplixDeadLetters.ts"
+   },
+   {
+    "name": "useMultiplixDeadLetters",
+    "file": "src/hooks/system/useMultiplixDeadLetters.ts"
+   },
+   {
     "name": "useMyNetworkStatus",
     "file": "src/hooks/system/useMyNetworkStatus.ts"
    },
@@ -76077,8 +76085,8 @@
   },
   {
    "module": "src/components",
-   "files": 2320,
-   "lines": 395306,
+   "files": 2321,
+   "lines": 395537,
    "tables": [
     "agent_skills",
     "agent_visibility_grants",
@@ -76276,6 +76284,7 @@
     "src/components/admin/useTarefasAgendadas.ts",
     "src/components/admin/__tests__/AIUsageDashboard.estado-a11y.test.tsx",
     "src/components/admin/__tests__/AdminCRMDashboard.explorer-crm360.test.tsx",
+    "src/components/admin/__tests__/AdminCRMDashboard.multiplix-dlq.test.tsx",
     "src/components/admin/__tests__/AdminUsersTable.a11y.test.tsx",
     "src/components/admin/__tests__/AdminUsersTable.confirmarDesativacao.test.tsx",
     "src/components/admin/__tests__/AdminUsersTable.hierarchy.test.tsx",
@@ -76313,8 +76322,7 @@
     "src/components/admin/__tests__/useAdminDataRoleChange.test.ts",
     "src/components/admin/__tests__/useAdminDataToggleActive.lastAdmin.test.ts",
     "src/components/admin/__tests__/useAdminDataToggleActive.test.ts",
-    "src/components/admin/telemetry/TelemetryCharts.tsx",
-    "src/components/agents/AgentsView.tsx"
+    "src/components/admin/telemetry/TelemetryCharts.tsx"
    ]
   },
   {
@@ -76426,8 +76434,8 @@
   },
   {
    "module": "src/hooks",
-   "files": 1035,
-   "lines": 167806,
+   "files": 1036,
+   "lines": 167866,
    "tables": [
     "agent_achievements",
     "agent_stats",
@@ -82966,6 +82974,9 @@
    "contacts_count_by_type": [
     "src/services/contact.service.ts"
    ],
+   "count_multiplix_dead_letters": [
+    "src/hooks/system/useMultiplixDeadLetters.ts"
+   ],
    "count_searchbox_sessions_this_month": [
     "src/lib/mapboxCostGuard.ts"
    ],
@@ -83220,6 +83231,9 @@
    ],
    "list_multiplix_claimable_items": [
     "supabase/functions/multiplix-send/index.ts"
+   ],
+   "list_multiplix_dead_letters": [
+    "src/hooks/system/useMultiplixDeadLetters.ts"
    ],
    "log_audit_event": [
     "src/components/compliance/LGPDComplianceView.tsx",
@@ -94423,6 +94437,10 @@
     "msg": "Nenhum registro de global_settings foi atualizado para a chave "
    },
    {
+    "file": "src/hooks/system/useMultiplixDeadLetters.ts",
+    "msg": "count_multiplix_dead_letters não retornou um número"
+   },
+   {
     "file": "src/hooks/system/useNotificationSettings.ts",
     "msg": ",\n  goalSoundType: "
    },
@@ -101177,6 +101195,10 @@
    {
     "file": "src/hooks/system/useLoginBlockedLog.ts",
     "text": "Acesso a dados fica fora do componente (regra lint no-restricted-imports)."
+   },
+   {
+    "file": "src/hooks/system/useMultiplixDeadLetters.ts",
+    "text": "DENTRO delas (SECURITY DEFINER), então o \"sem permissão\" chega aqui como `error`"
    },
    {
     "file": "src/hooks/system/useNavigationHistory.ts",
@@ -142552,6 +142574,26 @@
    {
     "file": "src/components/admin/__tests__/AdminCRMDashboard.explorer-crm360.test.tsx",
     "name": "falha de consulta (isError) mostra "
+   },
+   {
+    "file": "src/components/admin/__tests__/AdminCRMDashboard.multiplix-dlq.test.tsx",
+    "name": "AdminCRMDashboard — dead letter do Multiplix"
+   },
+   {
+    "file": "src/components/admin/__tests__/AdminCRMDashboard.multiplix-dlq.test.tsx",
+    "name": "mostra o contador real devolvido pela RPC"
+   },
+   {
+    "file": "src/components/admin/__tests__/AdminCRMDashboard.multiplix-dlq.test.tsx",
+    "name": "leitura negada mostra "
+   },
+   {
+    "file": "src/components/admin/__tests__/AdminCRMDashboard.multiplix-dlq.test.tsx",
+    "name": "a lista somente leitura traz id, horário e motivo — e nada de destino/payload"
+   },
+   {
+    "file": "src/components/admin/__tests__/AdminCRMDashboard.multiplix-dlq.test.tsx",
+    "name": "sem violações de acessibilidade e sem cor literal em tema claro e escuro"
    },
    {
     "file": "src/components/admin/__tests__/AdminUsersTable.a11y.test.tsx",
@@ -304287,7 +304329,7 @@
   },
   "src/components/admin/AdminCRMDashboard.tsx": {
    "path": "src/components/admin/AdminCRMDashboard.tsx",
-   "lines": 348,
+   "lines": 418,
    "exports": [
     "const AdminCRMDashboard"
    ],
@@ -305252,6 +305294,24 @@
     "CRM indisponível (meta.unavailable) mostra ",
     "carregando (isLoading) mantém os rótulos dos seis cartões no DOM",
     "falha de consulta (isError) mostra "
+   ]
+  },
+  "src/components/admin/__tests__/AdminCRMDashboard.multiplix-dlq.test.tsx": {
+   "path": "src/components/admin/__tests__/AdminCRMDashboard.multiplix-dlq.test.tsx",
+   "lines": 161,
+   "is_test": true,
+   "rule_comments": [
+    "fila morta. O cartão existente agora mostra o contador e uma lista somente"
+   ],
+   "tests": [
+    "AdminCRMDashboard — dead letter do Multiplix",
+    "mostra o contador real devolvido pela RPC",
+    "leitura negada mostra ",
+    "a lista somente leitura traz id, horário e motivo — e nada de destino/payload",
+    "sem violações de acessibilidade e sem cor literal em tema claro e escuro"
+   ],
+   "side_effects": [
+    ".add('dark'"
    ]
   },
   "src/components/admin/__tests__/AdminUsersTable.a11y.test.tsx": {
@@ -375761,6 +375821,29 @@
     "1"
    ]
   },
+  "src/hooks/system/useMultiplixDeadLetters.ts": {
+   "path": "src/hooks/system/useMultiplixDeadLetters.ts",
+   "lines": 60,
+   "exports": [
+    "interface MultiplixDeadLetter",
+    "function useMultiplixDeadLetterCount",
+    "function useMultiplixDeadLetters"
+   ],
+   "rpc": [
+    "count_multiplix_dead_letters",
+    "list_multiplix_dead_letters"
+   ],
+   "errors": [
+    "count_multiplix_dead_letters não retornou um número"
+   ],
+   "rule_comments": [
+    "DENTRO delas (SECURITY DEFINER), então o \"sem permissão\" chega aqui como `error`"
+   ],
+   "hooks": [
+    "useMultiplixDeadLetterCount",
+    "useMultiplixDeadLetters"
+   ]
+  },
   "src/hooks/system/useMyNetworkStatus.ts": {
    "path": "src/hooks/system/useMyNetworkStatus.ts",
    "lines": 63,
@@ -425024,10 +425107,21 @@
   }
  },
  "git": {
-  "sha": "34b5d25e207a838afaa5e289e1285fc00225ce52",
+  "sha": "c81631844c52fc292aa4159bee8f9af11d9d445e",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "c8163184",
+    "date": "2026-11-25",
+    "author": "adm01-debug",
+    "subject": "feat: devolve a fila morta do Multiplix ao cartao de saude da integracao (#3392)",
+    "files": [
+     "src/components/admin/AdminCRMDashboard.tsx",
+     "src/components/admin/__tests__/AdminCRMDashboard.multiplix-dlq.test.tsx",
+     "src/hooks/system/useMultiplixDeadLetters.ts"
+    ]
+   },
    {
     "sha": "34b5d25e",
     "date": "2026-11-25",
@@ -426687,15 +426781,6 @@
      "scripts/ci/e2e-isolated-pull-image.unit.mjs",
      "scripts/e2e-isolated/pull-image.mjs"
     ]
-   },
-   {
-    "sha": "83a70c3e",
-    "date": "2026-11-24",
-    "author": "github-actions[bot]",
-    "subject": "chore(db): sincronizar artefatos derivados do banco (#3356)",
-    "files": [
-     "supabase/schema-manifest.json"
-    ]
    }
   ],
   "hot_files": [
@@ -426732,8 +426817,16 @@
     2
    ],
    [
-    "supabase/schema-manifest.json",
-    2
+    "src/components/admin/AdminCRMDashboard.tsx",
+    1
+   ],
+   [
+    "src/components/admin/__tests__/AdminCRMDashboard.multiplix-dlq.test.tsx",
+    1
+   ],
+   [
+    "src/hooks/system/useMultiplixDeadLetters.ts",
+    1
    ],
    [
     "supabase/functions/_shared/__tests__/ai-feature-flags.test.ts",
@@ -426769,14 +426862,6 @@
    ],
    [
     "src/components/tasks/__tests__/prazoCompleto.test.ts",
-    1
-   ],
-   [
-    "src/components/tasks/list/prazoCompleto.ts",
-    1
-   ],
-   [
-    "src/components/tasks/list/taskRowCells.tsx",
     1
    ]
   ]

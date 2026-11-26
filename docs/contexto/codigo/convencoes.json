@@ -12,7 +12,7 @@
    "src/features (2)"
   ],
   "hooks": [
-   "src/hooks (431)",
+   "src/hooks (432)",
    "src/components (74)",
    "src/contexts (2)"
   ],
@@ -22,7 +22,7 @@
    "src/utils (8)"
   ],
   "testes": [
-   "co-localizado (__tests__) (2102)",
+   "co-localizado (__tests__) (2103)",
    "outro (260)",
    "co-localizado (*.test) (202)"
   ],
@@ -66,11 +66,11 @@
  "commits": {
   "convencao": "conventional commits (observado)",
   "exemplos": [
+   "feat: devolve a fila morta do Multiplix ao cartao de saude da integracao (#3392)",
    "feat: kill switch por provedor (IA-009 2.2) e pausa de bot por conexao (IA-009 2.3) (#3386)",
    "fix: tooltip do prazo usa a regra única de data e o módulo prazoCompleto (#3391)",
    "fix: canal único de realtime nas conexões e reconciliação de INSTANCE_GONE (#3390)",
-   "fix: asserção do E2E da sidebar não confunde a seção de SLA com o accordion antigo (#3389)",
-   "feat: tela da linha do tempo de SLA no painel do contato (#3383)"
+   "fix: asserção do E2E da sidebar não confunde a seção de SLA com o accordion antigo (#3389)"
   ]
  },
  "pr_template": ".github/PULL_REQUEST_TEMPLATE.md",

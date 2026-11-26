@@ -433,6 +433,7 @@
    "src/components/ui/skeleton.tsx",
    "src/hooks/integrations/useExternalDB.ts",
    "src/hooks/system/useCRMIntegrationEnabled.ts",
+   "src/hooks/system/useMultiplixDeadLetters.ts",
    "src/hooks/system/useNavigationHistory.ts",
    "src/lib/crmIntegration.ts",
    "src/types/externalDB.ts"
@@ -9855,6 +9856,9 @@
   ],
   "src/hooks/system/useLoginBlockedLog.ts": [
    "src/hooks/realtime/useVisiblePolling.ts",
+   "src/integrations/supabase/client.ts"
+  ],
+  "src/hooks/system/useMultiplixDeadLetters.ts": [
    "src/integrations/supabase/client.ts"
   ],
   "src/hooks/system/useMyNetworkStatus.ts": [

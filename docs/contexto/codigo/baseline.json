@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "34b5d25e207a838afaa5e289e1285fc00225ce52",
+  "commit": "c81631844c52fc292aa4159bee8f9af11d9d445e",
   "branch": "main",
-  "data_commit": "2026-11-25T23:49:06Z",
+  "data_commit": "2026-11-26T00:06:31Z",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "c8163184",
+    "data": "2026-11-26",
+    "assunto": "feat: devolve a fila morta do Multiplix ao cartao de saude da integracao (#3392)"
+   },
    {
     "sha": "34b5d25e",
     "data": "2026-11-25",
@@ -126,14 +131,9 @@
     "sha": "c3127e8f",
     "data": "2026-11-24",
     "assunto": "chore(db): sincronizar artefatos derivados do banco (#3361)"
-   },
-   {
-    "sha": "697de6eb",
-    "data": "2026-11-24",
-    "assunto": "chore: remove teardown de produção morto do E2E e dropa as 2 RPCs órfãs (#3360)"
    }
   ],
-  "arquivos_mudados_7d": 2737,
+  "arquivos_mudados_7d": 2740,
   "pastas_mais_mudadas_30d": [
    {
     "pasta": "docs/contexto/supabase",
@@ -314,21 +314,21 @@
   ]
  },
  "contagens": {
-  "arquivos_total": 14806,
-  "arquivos_codigo": 5151,
-  "linhas_codigo": 955458,
+  "arquivos_total": 14808,
+  "arquivos_codigo": 5153,
+  "linhas_codigo": 955749,
   "rotas": 18,
   "rotas_http_backend": 11,
   "vistas_por_id": 55,
   "itens_menu": 61,
   "modulos": 149,
   "componentes": 936,
-  "hooks": 516,
+  "hooks": 517,
   "edge_functions": 93,
   "tabelas": 223,
   "migrations": 1153,
   "cron_jobs": 29,
-  "testes": 2829,
+  "testes": 2830,
   "workflows": 26,
   "scripts": 453,
   "docs_md": 3988
@@ -739,8 +739,8 @@
    "linhas": 638
   },
   "src/components": {
-   "arquivos": 2320,
-   "linhas": 395306
+   "arquivos": 2321,
+   "linhas": 395537
   },
   "src/config": {
    "arquivos": 3,
@@ -759,8 +759,8 @@
    "linhas": 3293
   },
   "src/hooks": {
-   "arquivos": 1035,
-   "linhas": 167806
+   "arquivos": 1036,
+   "linhas": 167866
   },
   "src/i18n": {
    "arquivos": 2,

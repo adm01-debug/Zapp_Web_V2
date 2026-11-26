@@ -32413,6 +32413,11 @@
    "usada_em": 1
   },
   {
+   "nome": "count_multiplix_dead_letters",
+   "definida": true,
+   "usada_em": 1
+  },
+  {
    "nome": "count_searchbox_sessions_this_month",
    "definida": true,
    "usada_em": 1
@@ -32699,6 +32704,11 @@
   },
   {
    "nome": "list_multiplix_claimable_items",
+   "definida": true,
+   "usada_em": 1
+  },
+  {
+   "nome": "list_multiplix_dead_letters",
    "definida": true,
    "usada_em": 1
   },
