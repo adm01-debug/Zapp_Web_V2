@@ -4,15 +4,15 @@
  "onde_ficam": {
   "telas": [
    "src/components (54)",
-   "src/pages (20)"
+   "src/pages (21)"
   ],
   "componentes": [
-   "src/components (910)",
-   "src/pages (28)",
+   "src/components (911)",
+   "src/pages (29)",
    "src/features (2)"
   ],
   "hooks": [
-   "src/hooks (444)",
+   "src/hooks (445)",
    "src/components (74)",
    "src/contexts (2)"
   ],
@@ -22,7 +22,7 @@
    "src/utils (8)"
   ],
   "testes": [
-   "co-localizado (__tests__) (2125)",
+   "co-localizado (__tests__) (2127)",
    "outro (260)",
    "co-localizado (*.test) (203)"
   ],
@@ -48,7 +48,7 @@
  },
  "barrels_index": 74,
  "extensao_componentes": [
-  ".tsx (947)"
+  ".tsx (949)"
  ],
  "alias_imports": {
   "analise-prs/resgate-261115/auditoria/bruto/diarios-sessao/": {
@@ -66,11 +66,11 @@
  "commits": {
   "convencao": "conventional commits (observado)",
   "exemplos": [
+   "feat(admin): historico das limpezas do cache de previas ganha tela (#3414)",
    "feat(seguranca): politica de protecao de contatos ganha tela de gestao (#3413)",
    "feat(seguranca): trilha de exclusoes e bloqueios de contato ganha tela (#3412)",
    "feat(talkx): liga os alertas do motor (talkx_alerts) no acompanhamento (#3408)",
-   "feat(talkx): campanha ganha o envio de teste antes de lancar (E47) (#3409)",
-   "feat: painel do segmento mostra as tags mais usadas no público (talkx_segment_tags) (#3407)"
+   "feat(talkx): campanha ganha o envio de teste antes de lancar (E47) (#3409)"
   ]
  },
  "pr_template": ".github/PULL_REQUEST_TEMPLATE.md",

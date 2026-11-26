@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "87ddee79ffbf3654ef588817749831d2d42aa7d9",
+  "commit": "1fad01a79df8d8df1fc9a5f47571aa2770a723bb",
   "branch": "main",
-  "data_commit": "2026-11-26T14:50:42Z",
+  "data_commit": "2026-11-26T15:05:25Z",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "1fad01a7",
+    "data": "2026-11-26",
+    "assunto": "feat(admin): historico das limpezas do cache de previas ganha tela (#3414)"
+   },
    {
     "sha": "87ddee79",
     "data": "2026-11-26",
@@ -126,14 +131,9 @@
     "sha": "73476eff",
     "data": "2026-11-25",
     "assunto": "feat(playbooks): ativo/inativo, exclusao com confirmacao e acesso por teclado (#3381)"
-   },
-   {
-    "sha": "9086dfdb",
-    "data": "2026-11-25",
-    "assunto": "fix: novidade do catalogo passa a usar a expiracao do banco (regra do Promo Gifts V4) (#3379)"
    }
   ],
-  "arquivos_mudados_7d": 2807,
+  "arquivos_mudados_7d": 2812,
   "pastas_mais_mudadas_30d": [
    {
     "pasta": "docs/contexto/supabase",
@@ -181,7 +181,7 @@
    },
    {
     "pasta": "src/hooks/__tests__",
-    "mudancas": 156
+    "mudancas": 157
    },
    {
     "pasta": "src/hooks/integrations",
@@ -207,7 +207,7 @@
    },
    {
     "arquivo": "docs/DB-INVENTORY.md",
-    "mudancas": 20
+    "mudancas": 21
    },
    {
     "arquivo": "docs/talkx/ESTADOS.md",
@@ -314,21 +314,21 @@
   ]
  },
  "contagens": {
-  "arquivos_total": 14873,
-  "arquivos_codigo": 5205,
-  "linhas_codigo": 965322,
-  "rotas": 20,
+  "arquivos_total": 14878,
+  "arquivos_codigo": 5210,
+  "linhas_codigo": 965951,
+  "rotas": 21,
   "rotas_http_backend": 11,
   "vistas_por_id": 55,
   "itens_menu": 61,
   "modulos": 149,
-  "componentes": 947,
-  "hooks": 529,
+  "componentes": 949,
+  "hooks": 530,
   "edge_functions": 94,
   "tabelas": 224,
   "migrations": 1161,
   "cron_jobs": 29,
-  "testes": 2853,
+  "testes": 2855,
   "workflows": 26,
   "scripts": 458,
   "docs_md": 3988
@@ -739,8 +739,8 @@
    "linhas": 638
   },
   "src/components": {
-   "arquivos": 2340,
-   "linhas": 398394
+   "arquivos": 2342,
+   "linhas": 398687
   },
   "src/config": {
    "arquivos": 3,
@@ -759,8 +759,8 @@
    "linhas": 3293
   },
   "src/hooks": {
-   "arquivos": 1059,
-   "linhas": 172008
+   "arquivos": 1061,
+   "linhas": 172298
   },
   "src/i18n": {
    "arquivos": 2,
@@ -779,8 +779,8 @@
    "linhas": 131
   },
   "src/pages": {
-   "arquivos": 77,
-   "linhas": 11491
+   "arquivos": 78,
+   "linhas": 11528
   },
   "src/providers": {
    "arquivos": 10,
@@ -788,7 +788,7 @@
   },
   "src/routes": {
    "arquivos": 2,
-   "linhas": 243
+   "linhas": 252
   },
   "src/segments": {
    "arquivos": 2,

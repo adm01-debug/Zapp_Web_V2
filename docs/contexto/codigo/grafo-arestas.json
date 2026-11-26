@@ -512,6 +512,13 @@
    "src/integrations/supabase/client.ts",
    "src/lib/logger.ts"
   ],
+  "src/components/admin/LinkPreviewCachePanel.tsx": [
+   "src/components/ui/alert.tsx",
+   "src/components/ui/badge.tsx",
+   "src/components/ui/button.tsx",
+   "src/components/ui/card.tsx",
+   "src/hooks/system/useLinkPreviewCacheMetrics.ts"
+  ],
   "src/components/admin/MediaMigrationTool.tsx": [
    "src/components/ui/alert-dialog.tsx",
    "src/components/ui/badge.tsx",
@@ -9972,6 +9979,9 @@
   "src/hooks/system/useInfiniteScroll.ts": [
    "src/lib/supabaseHelpers.ts"
   ],
+  "src/hooks/system/useLinkPreviewCacheMetrics.ts": [
+   "src/integrations/supabase/client.ts"
+  ],
   "src/hooks/system/useLoginBlockedLog.ts": [
    "src/hooks/realtime/useVisiblePolling.ts",
    "src/integrations/supabase/client.ts"
@@ -10018,6 +10028,7 @@
    "src/pages/SLAHistory.tsx",
    "src/pages/admin/ContactAuditPage.tsx",
    "src/pages/admin/ContactProtectionPage.tsx",
+   "src/pages/admin/LinkPreviewCachePage.tsx",
    "src/pages/admin/RateLimitDashboard.tsx",
    "src/pages/admin/RolesPage.tsx"
   ],
@@ -10861,6 +10872,12 @@
    "src/components/security/ContactProtectionPolicyPanel.tsx",
    "src/hooks/system/useUserRole.ts"
   ],
+  "src/pages/admin/LinkPreviewCachePage.tsx": [
+   "src/components/admin/LinkPreviewCachePanel.tsx",
+   "src/components/ui/button.tsx",
+   "src/components/ui/card.tsx",
+   "src/hooks/system/useUserRole.ts"
+  ],
   "src/pages/admin/RateLimitDashboard.tsx": [
    "src/components/security/BlockedIPsPanel.tsx",
    "src/components/security/IPWhitelistPanel.tsx",
@@ -11027,6 +11044,7 @@
    "src/pages/VerifyEmail.tsx",
    "src/pages/admin/ContactAuditPage.tsx",
    "src/pages/admin/ContactProtectionPage.tsx",
+   "src/pages/admin/LinkPreviewCachePage.tsx",
    "src/pages/admin/RateLimitDashboard.tsx",
    "src/pages/admin/RolesPage.tsx"
   ],

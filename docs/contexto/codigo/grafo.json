@@ -1,8 +1,8 @@
 {
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
- "nos": 2444,
- "arestas": 8412,
+ "nos": 2447,
+ "arestas": 8424,
  "hubs": [
   {
    "arquivo": "src/lib/utils.ts",
@@ -10,11 +10,11 @@
   },
   {
    "arquivo": "src/integrations/supabase/client.ts",
-   "importado_por": 437
+   "importado_por": 438
   },
   {
    "arquivo": "src/components/ui/button.tsx",
-   "importado_por": 416
+   "importado_por": 418
   },
   {
    "arquivo": "src/lib/logger.ts",
@@ -22,15 +22,15 @@
   },
   {
    "arquivo": "src/components/ui/badge.tsx",
-   "importado_por": 226
+   "importado_por": 227
+  },
+  {
+   "arquivo": "src/components/ui/card.tsx",
+   "importado_por": 200
   },
   {
    "arquivo": "src/components/ui/tooltip.tsx",
    "importado_por": 199
-  },
-  {
-   "arquivo": "src/components/ui/card.tsx",
-   "importado_por": 198
   },
   {
    "arquivo": "src/components/ui/input.tsx",
@@ -122,7 +122,7 @@
   },
   {
    "arquivo": "src/hooks/system/useUserRole.ts",
-   "importado_por": 46
+   "importado_por": 47
   },
   {
    "arquivo": "src/lib/localDay.ts",

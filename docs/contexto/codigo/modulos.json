@@ -290,9 +290,9 @@
   },
   {
    "modulo": "components/admin",
-   "arquivos": 25,
-   "testes": 40,
-   "linhas": 5292,
+   "arquivos": 26,
+   "testes": 41,
+   "linhas": 5448,
    "itens_menu": [
     "Admin",
     "Consumo IA",
@@ -311,7 +311,7 @@
     "supervisao"
    ],
    "rotas_http": [],
-   "componentes": 22,
+   "componentes": 23,
    "hooks_locais": [
     "useAIUsageDashboard",
     "useAdminData",
@@ -325,6 +325,7 @@
     "useFeatureFlag",
     "useFeatureFlags",
     "useLayoutContext",
+    "useLinkPreviewCacheMetrics",
     "useMessageUpdateBatcher",
     "useMultiplixDeadLetterCount",
     "useMultiplixDeadLetters",
@@ -6934,7 +6935,7 @@
    "modulo": "components/security",
    "arquivos": 27,
    "testes": 32,
-   "linhas": 5252,
+   "linhas": 5274,
    "itens_menu": [
     "Auditoria",
     "Segurança"
@@ -8780,7 +8781,7 @@
   {
    "modulo": "hooks/__tests__",
    "arquivos": 0,
-   "testes": 148,
+   "testes": 149,
    "linhas": 0,
    "itens_menu": [],
    "telas": [],
@@ -12532,9 +12533,9 @@
   },
   {
    "modulo": "hooks/system",
-   "arquivos": 43,
+   "arquivos": 44,
    "testes": 20,
-   "linhas": 6140,
+   "linhas": 6271,
    "itens_menu": [],
    "telas": [],
    "rotas_http": [],
@@ -12802,6 +12803,7 @@
     "useLearningMoment",
     "useLeaveConversation",
     "useLgpdFilter",
+    "useLinkPreviewCacheMetrics",
     "useLiveScoring",
     "useLiveSuggestions",
     "useLocationPicker",
@@ -13105,6 +13107,7 @@
     "useIdleCallback",
     "useIdleScheduler",
     "useInfiniteScroll",
+    "useLinkPreviewCacheMetrics",
     "useLoginBlockedLog",
     "useMultiplixDeadLetterCount",
     "useMultiplixDeadLetters",
@@ -16127,18 +16130,19 @@
   },
   {
    "modulo": "pages/admin",
-   "arquivos": 6,
+   "arquivos": 7,
    "testes": 5,
-   "linhas": 952,
+   "linhas": 989,
    "itens_menu": [],
    "telas": [
     "/admin/auditoria-contatos",
+    "/admin/cache-previas",
     "/admin/protecao-contatos",
     "/admin/rate-limit",
     "/admin/roles"
    ],
    "rotas_http": [],
-   "componentes": 4,
+   "componentes": 5,
    "hooks_locais": [
     "useAdminData",
     "useAppBootstrap",
@@ -16146,6 +16150,7 @@
     "useContactAuditTrail",
     "useContactProtectionPolicies",
     "useDeleteContactProtectionPolicy",
+    "useLinkPreviewCacheMetrics",
     "useMessageUpdateBatcher",
     "useMyContactProtectionPolicy",
     "useNotificationSettings",
@@ -16238,6 +16243,7 @@
     "date-fns",
     "framer-motion",
     "lucide-react",
+    "react-router-dom",
     "sonner"
    ]
   },
@@ -16464,7 +16470,7 @@
    "modulo": "routes",
    "arquivos": 1,
    "testes": 0,
-   "linhas": 184,
+   "linhas": 193,
    "itens_menu": [],
    "telas": [],
    "rotas_http": [],
@@ -16729,6 +16735,7 @@
     "useLearningMoment",
     "useLeaveConversation",
     "useLgpdFilter",
+    "useLinkPreviewCacheMetrics",
     "useLiveScoring",
     "useLiveSuggestions",
     "useLocationPicker",

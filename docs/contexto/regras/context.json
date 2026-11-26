@@ -1,15 +1,15 @@
 {
  "meta": {
-  "sha": "87ddee79ffbf3654ef588817749831d2d42aa7d9",
+  "sha": "1fad01a79df8d8df1fc9a5f47571aa2770a723bb",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-26 14:54 UTC",
-  "files_total": 14720,
-  "code_files": 8250,
-  "code_lines": 1243385
+  "generated_at": "2026-11-26 15:06 UTC",
+  "files_total": 14725,
+  "code_files": 8255,
+  "code_lines": 1244014
  },
  "version": "1.3.2",
- "facts_hash": "fb8374a5b6851da0",
+ "facts_hash": "f1c2dd2c4abbdea9",
  "stack": {
   "frameworks": [
    "React + Vite",
@@ -368,8 +368,8 @@
   "package_manager": "bun",
   "languages": {
    ".sql": 3072,
-   ".tsx": 2510,
-   ".ts": 2045,
+   ".tsx": 2514,
+   ".ts": 2046,
    ".mjs": 496,
    ".py": 125,
    ".cjs": 19,
@@ -72718,6 +72718,13 @@
     "file": "src/routes/AppRoutes.tsx"
    },
    {
+    "path": "/admin/cache-previas",
+    "component": "LinkPreviewCachePage",
+    "guard": "ProtectedRoute",
+    "roles": [],
+    "file": "src/routes/AppRoutes.tsx"
+   },
+   {
     "path": "/admin/protecao-contatos",
     "component": "ContactProtectionPage",
     "guard": "ProtectedRoute",
@@ -73201,7 +73208,7 @@
     "file": ".github/workflows/types-sync.yml"
    }
   ],
-  "components_count": 2342,
+  "components_count": 2344,
   "hooks": [
    {
     "name": "useMotionSeguro",
@@ -75248,6 +75255,10 @@
     "file": "src/hooks/system/useInfiniteScroll.ts"
    },
    {
+    "name": "useLinkPreviewCacheMetrics",
+    "file": "src/hooks/system/useLinkPreviewCacheMetrics.ts"
+   },
+   {
     "name": "useLoginBlockedLog",
     "file": "src/hooks/system/useLoginBlockedLog.ts"
    },
@@ -75765,6 +75776,10 @@
    {
     "guard": "ProtectedRoute",
     "file": "src/components/auth/__tests__/ProtectedRoute.saida.test.tsx"
+   },
+   {
+    "guard": "ProtectedRoute",
+    "file": "src/routes/AppRoutes.tsx"
    },
    {
     "guard": "ProtectedRoute",
@@ -76629,8 +76644,8 @@
   },
   {
    "module": "src/components",
-   "files": 2340,
-   "lines": 398394,
+   "files": 2342,
+   "lines": 398687,
    "tables": [
     "agent_skills",
     "agent_visibility_grants",
@@ -76705,6 +76720,7 @@
     "CrossTabDedupePanel.tsx: CrossTabDedupePanel",
     "ForceLogoutButton.tsx: ForceLogoutButton",
     "GmailWebhookMonitor.tsx: GmailWebhookMonitor",
+    "LinkPreviewCachePanel.tsx: LinkPreviewCachePanel",
     "MediaMigrationTool.tsx: MediaMigrationTool",
     "PlaybooksManager.tsx: PlaybooksManager",
     "PublicApiDashboard.tsx: PublicApiDashboard",
@@ -76727,8 +76743,7 @@
     "ChurnPredictionDashboard.tsx: ChurnPredictionDashboard",
     "churnRisk.ts: ChurnContact, ChurnRisk, getRiskLevel, computeChurnRisk",
     "ticketClassification.ts: ClassifiedTicket, CATEGORIES, PRIORITY_MAP, classifyTag, derivePriority, getCategoryInfo",
-    "EvolutionDisconnectBanner.tsx: EvolutionDisconnectBanner",
-    "HeroBenefits.tsx: HeroBenefits"
+    "EvolutionDisconnectBanner.tsx: EvolutionDisconnectBanner"
    ],
    "docs": [
     "ErrorBoundary.tsx: @deprecated Import directly from '@/components/errors/ErrorBoundary' instead. This file is a compatibility shim. The canonical ErrorBoundary lives at src/components/errors/ErrorBoundary.tsx. Any new code should import from there. Re-exporting everything so existing imports of '@/components/ErrorBoun …",
@@ -76813,6 +76828,7 @@
     "src/components/admin/CrossTabDedupePanel.tsx",
     "src/components/admin/ForceLogoutButton.tsx",
     "src/components/admin/GmailWebhookMonitor.tsx",
+    "src/components/admin/LinkPreviewCachePanel.tsx",
     "src/components/admin/MediaMigrationTool.tsx",
     "src/components/admin/PlaybooksManager.tsx",
     "src/components/admin/PublicApiDashboard.tsx",
@@ -76847,6 +76863,7 @@
     "src/components/admin/__tests__/CrossTabDedupePanel.test.tsx",
     "src/components/admin/__tests__/ForceLogoutButton.test.tsx",
     "src/components/admin/__tests__/GmailWebhookMonitor.falha-consulta.test.tsx",
+    "src/components/admin/__tests__/LinkPreviewCachePanel.test.tsx",
     "src/components/admin/__tests__/MediaMigrationTool.progresso.test.tsx",
     "src/components/admin/__tests__/MediaMigrationTool.test.tsx",
     "src/components/admin/__tests__/PublicApiDashboard.disabled.test.tsx",
@@ -76863,9 +76880,7 @@
     "src/components/admin/__tests__/useAdminDataCreateUser.test.ts",
     "src/components/admin/__tests__/useAdminDataRamal.test.ts",
     "src/components/admin/__tests__/useAdminDataRoleChange.test.ts",
-    "src/components/admin/__tests__/useAdminDataToggleActive.lastAdmin.test.ts",
-    "src/components/admin/__tests__/useAdminDataToggleActive.test.ts",
-    "src/components/admin/telemetry/TelemetryCharts.tsx"
+    "src/components/admin/__tests__/useAdminDataToggleActive.lastAdmin.test.ts"
    ]
   },
   {
@@ -76977,8 +76992,8 @@
   },
   {
    "module": "src/hooks",
-   "files": 1059,
-   "lines": 172008,
+   "files": 1061,
+   "lines": 172298,
    "tables": [
     "agent_achievements",
     "agent_stats",
@@ -77232,6 +77247,7 @@
     "src/hooks/__tests__/useInfiniteScroll.test.tsx",
     "src/hooks/__tests__/useIsMobile.test.ts",
     "src/hooks/__tests__/useKeyboardShortcuts.test.ts",
+    "src/hooks/__tests__/useLinkPreviewCacheMetrics.test.tsx",
     "src/hooks/__tests__/useLoadingState.test.tsx",
     "src/hooks/__tests__/useMFA.test.tsx",
     "src/hooks/__tests__/useMessageReactions.test.tsx",
@@ -77245,8 +77261,7 @@
     "src/hooks/__tests__/useOnboarding.test.tsx",
     "src/hooks/__tests__/useOnboardingChecklist.test.tsx",
     "src/hooks/__tests__/useParallax.test.ts",
-    "src/hooks/__tests__/usePerformance.test.ts",
-    "src/hooks/__tests__/usePerformanceOptimizations.test.ts"
+    "src/hooks/__tests__/usePerformance.test.ts"
    ]
   },
   {
@@ -77482,8 +77497,8 @@
   },
   {
    "module": "src/pages",
-   "files": 77,
-   "lines": 11491,
+   "files": 78,
+   "lines": 11528,
    "tables": [
     "contacts",
     "conversation_sla",
@@ -77512,6 +77527,7 @@
     "lazyViews.ts: RealtimeInboxView, DashboardView, SentimentAlertsDashboard, AgentsView, QueuesView, ContactsView",
     "ContactAuditPage.tsx: ContactAuditPage",
     "ContactProtectionPage.tsx: ContactProtectionPage",
+    "LinkPreviewCachePage.tsx: LinkPreviewCachePage",
     "RateLimitDashboard.tsx: RateLimitDashboard",
     "RolesPage.tsx: RolesPage",
     "loadRolesWithProfiles.ts: RoleType, ProfileSummary, RoleWithProfile, loadRolesWithProfiles",
@@ -77610,6 +77626,7 @@
     "src/pages/__tests__/twoFactorAuth.retrySaida.test.tsx",
     "src/pages/admin/ContactAuditPage.tsx",
     "src/pages/admin/ContactProtectionPage.tsx",
+    "src/pages/admin/LinkPreviewCachePage.tsx",
     "src/pages/admin/RateLimitDashboard.tsx",
     "src/pages/admin/RolesPage.tsx",
     "src/pages/admin/loadRolesWithProfiles.ts",
@@ -77685,7 +77702,7 @@
   {
    "module": "src/routes",
    "files": 2,
-   "lines": 243,
+   "lines": 252,
    "tables": [],
    "exports": [
     "AppRoutes.tsx: AppRoutes"
@@ -84771,6 +84788,10 @@
     "count": 1
    },
    {
+    "file": "src/hooks/system/useLinkPreviewCacheMetrics.ts",
+    "count": 1
+   },
+   {
     "file": "src/hooks/team-chat/uploadTeamMedia.ts",
     "count": 1
    },
@@ -91617,6 +91638,10 @@
    {
     "file": "src/components/admin/GmailWebhookMonitor.tsx",
     "msg": " className="
+   },
+   {
+    "file": "src/components/admin/LinkPreviewCachePanel.tsx",
+    "msg": ";\nimport { Badge } from "
    },
    {
     "file": "src/components/admin/PlaybooksManager.tsx",
@@ -117555,6 +117580,21 @@
     "file": "src/hooks/system/useDiagnosticsData.ts",
     "name": "HEARTBEAT_DEGRADADO_MS",
     "value": "60"
+   },
+   {
+    "file": "src/hooks/system/useLinkPreviewCacheMetrics.ts",
+    "name": "TABELA_METRICAS",
+    "value": "'link_preview_cache_metrics'"
+   },
+   {
+    "file": "src/hooks/system/useLinkPreviewCacheMetrics.ts",
+    "name": "LIMITE_EXECUCOES",
+    "value": "50"
+   },
+   {
+    "file": "src/hooks/system/useLinkPreviewCacheMetrics.ts",
+    "name": "LIMIAR_TAMANHO_BYTES",
+    "value": "50"
    },
    {
     "file": "src/hooks/system/useLoginBlockedLog.ts",
@@ -144280,6 +144320,34 @@
    {
     "file": "src/components/admin/__tests__/GmailWebhookMonitor.falha-consulta.test.tsx",
     "name": "zero real da consulta bem-sucedida continua sendo zero (não vira "
+   },
+   {
+    "file": "src/components/admin/__tests__/LinkPreviewCachePanel.test.tsx",
+    "name": "LinkPreviewCachePanel"
+   },
+   {
+    "file": "src/components/admin/__tests__/LinkPreviewCachePanel.test.tsx",
+    "name": "mostra carregando enquanto o histórico não chegou"
+   },
+   {
+    "file": "src/components/admin/__tests__/LinkPreviewCachePanel.test.tsx",
+    "name": "mostra o erro devolvido pelo PostgREST"
+   },
+   {
+    "file": "src/components/admin/__tests__/LinkPreviewCachePanel.test.tsx",
+    "name": "explica quando a rotina nunca rodou"
+   },
+   {
+    "file": "src/components/admin/__tests__/LinkPreviewCachePanel.test.tsx",
+    "name": "resume a última limpeza e lista o histórico"
+   },
+   {
+    "file": "src/components/admin/__tests__/LinkPreviewCachePanel.test.tsx",
+    "name": "alarma quando a tabela passa do limiar operacional"
+   },
+   {
+    "file": "src/components/admin/__tests__/LinkPreviewCachePanel.test.tsx",
+    "name": "refaz a consulta no botão de atualizar"
    },
    {
     "file": "src/components/admin/__tests__/MediaMigrationTool.progresso.test.tsx",
@@ -189280,6 +189348,54 @@
    {
     "file": "src/hooks/__tests__/useKeyboardShortcuts.test.ts",
     "name": "is case-insensitive for key matching"
+   },
+   {
+    "file": "src/hooks/__tests__/useLinkPreviewCacheMetrics.test.tsx",
+    "name": "fetchLinkPreviewCacheRuns"
+   },
+   {
+    "file": "src/hooks/__tests__/useLinkPreviewCacheMetrics.test.tsx",
+    "name": "lê a tabela de métricas da mais recente para a mais antiga, com teto"
+   },
+   {
+    "file": "src/hooks/__tests__/useLinkPreviewCacheMetrics.test.tsx",
+    "name": "respeita um teto diferente do padrão"
+   },
+   {
+    "file": "src/hooks/__tests__/useLinkPreviewCacheMetrics.test.tsx",
+    "name": "propaga o erro do PostgREST em vez de devolver lista vazia"
+   },
+   {
+    "file": "src/hooks/__tests__/useLinkPreviewCacheMetrics.test.tsx",
+    "name": "formatarBytes"
+   },
+   {
+    "file": "src/hooks/__tests__/useLinkPreviewCacheMetrics.test.tsx",
+    "name": "mantém bytes inteiros e usa a unidade certa nos múltiplos"
+   },
+   {
+    "file": "src/hooks/__tests__/useLinkPreviewCacheMetrics.test.tsx",
+    "name": "resumirExecucoes"
+   },
+   {
+    "file": "src/hooks/__tests__/useLinkPreviewCacheMetrics.test.tsx",
+    "name": "sem histórico não inventa execução nem alarme"
+   },
+   {
+    "file": "src/hooks/__tests__/useLinkPreviewCacheMetrics.test.tsx",
+    "name": "compara o tamanho com a limpeza anterior e calcula a média"
+   },
+   {
+    "file": "src/hooks/__tests__/useLinkPreviewCacheMetrics.test.tsx",
+    "name": "sinaliza quando a última medição passa do limiar operacional"
+   },
+   {
+    "file": "src/hooks/__tests__/useLinkPreviewCacheMetrics.test.tsx",
+    "name": "useLinkPreviewCacheMetrics"
+   },
+   {
+    "file": "src/hooks/__tests__/useLinkPreviewCacheMetrics.test.tsx",
+    "name": "entrega o histórico e o resumo já calculado"
    },
    {
     "file": "src/hooks/__tests__/useLoadingState.test.tsx",
@@ -280227,6 +280343,10 @@
    {
     "guard": "ProtectedRoute",
     "file": "src/routes/AppRoutes.tsx"
+   },
+   {
+    "guard": "ProtectedRoute",
+    "file": "src/routes/AppRoutes.tsx"
    }
   ],
   "protected_routes": [
@@ -280254,6 +280374,13 @@
    {
     "path": "/admin/auditoria-contatos",
     "component": "ContactAuditPage",
+    "guard": "ProtectedRoute",
+    "roles": [],
+    "file": "src/routes/AppRoutes.tsx"
+   },
+   {
+    "path": "/admin/cache-previas",
+    "component": "LinkPreviewCachePage",
     "guard": "ProtectedRoute",
     "roles": [],
     "file": "src/routes/AppRoutes.tsx"
@@ -282815,6 +282942,13 @@
     "msg": "1 chamada(s) `.from(variável)` — tabela só conhecida em runtime",
     "where": [
      "src/hooks/system/useGeoBlocking.ts"
+    ]
+   },
+   {
+    "kind": "dinâmico",
+    "msg": "1 chamada(s) `.from(variável)` — tabela só conhecida em runtime",
+    "where": [
+     "src/hooks/system/useLinkPreviewCacheMetrics.ts"
     ]
    },
    {
@@ -307051,6 +307185,16 @@
     "qualquer uma delas nao pode sobrescrever o ultimo dado bom com zero."
    ]
   },
+  "src/components/admin/LinkPreviewCachePanel.tsx": {
+   "path": "src/components/admin/LinkPreviewCachePanel.tsx",
+   "lines": 156,
+   "exports": [
+    "function LinkPreviewCachePanel"
+   ],
+   "errors": [
+    ";\nimport { Badge } from "
+   ]
+  },
   "src/components/admin/MediaMigrationTool.tsx": {
    "path": "src/components/admin/MediaMigrationTool.tsx",
    "lines": 329,
@@ -308103,6 +308247,21 @@
     "primeira carga falhando: campos aparecem como desconhecidos (—), sem contagem zero falsa",
     "falha só na contagem não publica as contas: o resultado das três consultas é atômico",
     "zero real da consulta bem-sucedida continua sendo zero (não vira "
+   ]
+  },
+  "src/components/admin/__tests__/LinkPreviewCachePanel.test.tsx": {
+   "path": "src/components/admin/__tests__/LinkPreviewCachePanel.test.tsx",
+   "lines": 115,
+   "is_test": true,
+   "doc": "Painel do cache de prévias de link — estados da tela e o que ela mostra do histórico. O sujeito é o componente REAL; a dublagem é o hook de dados (as funções puras do módulo ficam reais via importOriginal). Regras provadas: carregando, erro, histórico vazio, resumo com variação/média, alarme de limi …",
+   "tests": [
+    "LinkPreviewCachePanel",
+    "mostra carregando enquanto o histórico não chegou",
+    "mostra o erro devolvido pelo PostgREST",
+    "explica quando a rotina nunca rodou",
+    "resume a última limpeza e lista o histórico",
+    "alarma quando a tabela passa do limiar operacional",
+    "refaz a consulta no botão de atualizar"
    ]
   },
   "src/components/admin/__tests__/MediaMigrationTool.progresso.test.tsx": {
@@ -338790,12 +338949,13 @@
   },
   "src/components/security/SecurityView.tsx": {
    "path": "src/components/security/SecurityView.tsx",
-   "lines": 261,
+   "lines": 283,
    "exports": [
     "function SecurityView"
    ],
    "navigates": [
     "/admin/auditoria-contatos",
+    "/admin/cache-previas",
     "/admin/protecao-contatos",
     "/admin/rate-limit",
     "/admin/roles"
@@ -356064,6 +356224,26 @@
     "supports Alt modifier",
     "cleans up on unmount",
     "is case-insensitive for key matching"
+   ]
+  },
+  "src/hooks/__tests__/useLinkPreviewCacheMetrics.test.tsx": {
+   "path": "src/hooks/__tests__/useLinkPreviewCacheMetrics.test.tsx",
+   "lines": 159,
+   "is_test": true,
+   "doc": "Cache de prévias de link — `fetchLinkPreviewCacheRuns` / `resumirExecucoes`. O sujeito é o hook REAL; a dublagem é a fronteira de rede (`supabase.from`). Regras provadas: colunas do contrato mapeadas, histórico pedido do mais recente para o mais antigo com teto, erro do PostgREST propagado (não vira …",
+   "tests": [
+    "fetchLinkPreviewCacheRuns",
+    "lê a tabela de métricas da mais recente para a mais antiga, com teto",
+    "respeita um teto diferente do padrão",
+    "propaga o erro do PostgREST em vez de devolver lista vazia",
+    "formatarBytes",
+    "mantém bytes inteiros e usa a unidade certa nos múltiplos",
+    "resumirExecucoes",
+    "sem histórico não inventa execução nem alarme",
+    "compara o tamanho com a limpeza anterior e calcula a média",
+    "sinaliza quando a última medição passa do limiar operacional",
+    "useLinkPreviewCacheMetrics",
+    "entrega o histórico e o resumo já calculado"
    ]
   },
   "src/hooks/__tests__/useLoadingState.test.tsx": {
@@ -379290,6 +379470,40 @@
     "useInfiniteScroll"
    ]
   },
+  "src/hooks/system/useLinkPreviewCacheMetrics.ts": {
+   "path": "src/hooks/system/useLinkPreviewCacheMetrics.ts",
+   "lines": 130,
+   "exports": [
+    "interface LinkPreviewCacheRun",
+    "interface LinkPreviewCacheResumo",
+    "const TABELA_METRICAS",
+    "const LIMITE_EXECUCOES",
+    "const LIMIAR_TAMANHO_BYTES",
+    "function mapExecucao",
+    "function fetchLinkPreviewCacheRuns",
+    "function formatarBytes",
+    "function resumirExecucoes",
+    "function useLinkPreviewCacheMetrics"
+   ],
+   "dyn_from": 1,
+   "params": [
+    {
+     "name": "TABELA_METRICAS",
+     "value": "'link_preview_cache_metrics'"
+    },
+    {
+     "name": "LIMITE_EXECUCOES",
+     "value": "50"
+    },
+    {
+     "name": "LIMIAR_TAMANHO_BYTES",
+     "value": "50"
+    }
+   ],
+   "hooks": [
+    "useLinkPreviewCacheMetrics"
+   ]
+  },
   "src/hooks/system/useLoginBlockedLog.ts": {
    "path": "src/hooks/system/useLoginBlockedLog.ts",
    "lines": 59,
@@ -379751,7 +379965,7 @@
   },
   "src/hooks/system/usePrefetch.ts": {
    "path": "src/hooks/system/usePrefetch.ts",
-   "lines": 48,
+   "lines": 49,
    "exports": [
     "function prefetchRoute",
     "function usePrefetch"
@@ -393954,6 +394168,13 @@
     "function ContactProtectionPage"
    ]
   },
+  "src/pages/admin/LinkPreviewCachePage.tsx": {
+   "path": "src/pages/admin/LinkPreviewCachePage.tsx",
+   "lines": 37,
+   "exports": [
+    "function LinkPreviewCachePage"
+   ]
+  },
   "src/pages/admin/RateLimitDashboard.tsx": {
    "path": "src/pages/admin/RateLimitDashboard.tsx",
    "lines": 477,
@@ -394894,7 +395115,7 @@
   },
   "src/routes/AppRoutes.tsx": {
    "path": "src/routes/AppRoutes.tsx",
-   "lines": 184,
+   "lines": 193,
    "exports": [
     "function AppRoutes"
    ],
@@ -395002,6 +395223,12 @@
      "roles": []
     },
     {
+     "path": "/admin/cache-previas",
+     "component": "LinkPreviewCachePage",
+     "guard": "ProtectedRoute",
+     "roles": []
+    },
+    {
      "path": "/multiplix",
      "component": "Navigate",
      "guard": "",
@@ -395018,6 +395245,7 @@
     "\n        >\n          <div className="
    ],
    "guards": [
+    "ProtectedRoute",
     "ProtectedRoute",
     "ProtectedRoute",
     "ProtectedRoute",
@@ -429032,10 +429260,28 @@
   }
  },
  "git": {
-  "sha": "87ddee79ffbf3654ef588817749831d2d42aa7d9",
+  "sha": "1fad01a79df8d8df1fc9a5f47571aa2770a723bb",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "1fad01a7",
+    "date": "2026-11-26",
+    "author": "adm01-debug",
+    "subject": "feat(admin): historico das limpezas do cache de previas ganha tela (#3414)",
+    "files": [
+     "docs/DB-INVENTORY.md",
+     "inventario/estado/rotas.json",
+     "src/components/admin/LinkPreviewCachePanel.tsx",
+     "src/components/admin/__tests__/LinkPreviewCachePanel.test.tsx",
+     "src/components/security/SecurityView.tsx",
+     "src/hooks/__tests__/useLinkPreviewCacheMetrics.test.tsx",
+     "src/hooks/system/useLinkPreviewCacheMetrics.ts",
+     "src/hooks/system/usePrefetch.ts",
+     "src/pages/admin/LinkPreviewCachePage.tsx",
+     "src/routes/AppRoutes.tsx"
+    ]
+   },
    {
     "sha": "87ddee79",
     "date": "2026-11-26",
@@ -429461,22 +429707,12 @@
      "scripts/vercel/README.md",
      "scripts/vercel/verify-release-targets.mjs"
     ]
-   },
-   {
-    "sha": "985b4e38",
-    "date": "2026-11-25",
-    "author": "adm01-debug",
-    "subject": "fix(lint): ratchet aceita ocorrencia identica deslocada de linha (#3376)",
-    "files": [
-     "scripts/ci/lint-ratchet.mjs",
-     "scripts/ci/lint-ratchet.unit.mjs"
-    ]
    }
   ],
   "hot_files": [
    [
     "docs/DB-INVENTORY.md",
-    8
+    9
    ],
    [
     "supabase/deployment-manifest.json",
@@ -429491,6 +429727,10 @@
     5
    ],
    [
+    "src/components/security/SecurityView.tsx",
+    4
+   ],
+   [
     ".github/workflows/db-guard.yml",
     4
    ],
@@ -429499,20 +429739,16 @@
     4
    ],
    [
-    "src/components/security/SecurityView.tsx",
+    "inventario/estado/rotas.json",
     3
    ],
    [
-    "inventario/estado/rotas.json",
-    2
-   ],
-   [
     "src/hooks/system/usePrefetch.ts",
-    2
+    3
    ],
    [
     "src/routes/AppRoutes.tsx",
-    2
+    3
    ],
    [
     "src/components/talkx/TalkXAnalytics.tsx",
@@ -429539,19 +429775,19 @@
     2
    ],
    [
-    "src/components/security/ContactProtectionPolicyPanel.tsx",
+    "src/components/admin/LinkPreviewCachePanel.tsx",
     1
    ],
    [
-    "src/components/security/__tests__/ContactProtectionPolicyPanel.test.tsx",
+    "src/components/admin/__tests__/LinkPreviewCachePanel.test.tsx",
     1
    ],
    [
-    "src/hooks/__tests__/useContactProtectionPolicy.test.tsx",
+    "src/hooks/__tests__/useLinkPreviewCacheMetrics.test.tsx",
     1
    ],
    [
-    "src/hooks/security/useContactProtectionPolicy.ts",
+    "src/hooks/system/useLinkPreviewCacheMetrics.ts",
     1
    ]
   ]

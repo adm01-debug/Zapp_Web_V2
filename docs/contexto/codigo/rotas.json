@@ -2,11 +2,11 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "resumo": {
-  "urls": 20,
+  "urls": 21,
   "rotas_http_backend": 11,
   "vistas_por_id": 55,
   "itens_menu": 61,
-  "lazy": 155
+  "lazy": 156
  },
  "urls": [
   {
@@ -1703,6 +1703,92 @@
     "supervisor"
    ],
    "arquivos_puxados": 60
+  },
+  {
+   "protegida": true,
+   "wrappers": [
+    "ProtectedRoute"
+   ],
+   "pai": null,
+   "indice": false,
+   "lazy": true,
+   "tipo": "tela",
+   "caminho": "/admin/cache-previas",
+   "componente": "LinkPreviewCachePage",
+   "arquivo": "src/pages/admin/LinkPreviewCachePage.tsx",
+   "definida_em": "src/routes/AppRoutes.tsx",
+   "redireciona": null,
+   "hooks": [
+    "useAppBootstrap",
+    "useAuth",
+    "useCallback",
+    "useContext",
+    "useEffect",
+    "useLinkPreviewCacheMetrics",
+    "useMemo",
+    "useMessageUpdateBatcher",
+    "useNavigate",
+    "useNotificationLeader",
+    "useNotificationSettings",
+    "useOfflineCache",
+    "usePublishIncomingAlertIdentity",
+    "useQuery",
+    "useQueryClient",
+    "useRealtimeMessages",
+    "useRealtimeNotifications",
+    "useRealtimeReconnectingNotice",
+    "useRealtimeStatus",
+    "useRef",
+    "useState",
+    "useSyncExternalStore",
+    "useTeamAlertsPreference",
+    "useToast",
+    "useUserRole"
+   ],
+   "hooks_locais": [
+    "useAppBootstrap",
+    "useAuth",
+    "useLinkPreviewCacheMetrics",
+    "useMessageUpdateBatcher",
+    "useNotificationSettings",
+    "useOfflineCache",
+    "usePublishIncomingAlertIdentity",
+    "useRealtimeMessages",
+    "useRealtimeNotifications",
+    "useRealtimeReconnectingNotice",
+    "useRealtimeStatus",
+    "useTeamAlertsPreference",
+    "useToast",
+    "useUserRole"
+   ],
+   "tabelas": [
+    "contacts",
+    "messages",
+    "profiles",
+    "user_roles",
+    "user_settings"
+   ],
+   "rpcs": [
+    "app_bootstrap",
+    "enqueue_outbound_message",
+    "enqueue_rich_outbound_message",
+    "get_inbox_contact_summaries",
+    "user_has_permission"
+   ],
+   "edges": [
+    "auth-login",
+    "detect-new-device"
+   ],
+   "canais_realtime": [
+    "chat-reactions:${messageId}"
+   ],
+   "flags": [],
+   "papeis": [
+    "admin",
+    "alert",
+    "supervisor"
+   ],
+   "arquivos_puxados": 56
   },
   {
    "protegida": true,
@@ -9910,6 +9996,7 @@
   "LazyTranscriptionsHistoryView": "src/components/transcriptions/TranscriptionsHistoryView.tsx",
   "LazyVoiceOverlay": "src/components/voice/VoiceSearchOverlayConnected.tsx",
   "LegacyToaster": "src/components/ui/toaster.tsx",
+  "LinkPreviewCachePage": "src/pages/admin/LinkPreviewCachePage.tsx",
   "LocationMessageDisplay": "src/components/inbox/LocationMessage.tsx",
   "LocationPicker": "src/components/inbox/LocationPicker.tsx",
   "MediaMigrationTool": "src/components/admin/MediaMigrationTool.tsx",

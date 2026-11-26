@@ -1,7 +1,7 @@
 {
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
- "total": 947,
+ "total": 949,
  "orfaos": 45,
  "nomes_duplicados": {
   "AchievementBadge": [
@@ -421,6 +421,22 @@
    "edges": [
     "gmail-webhook"
    ],
+   "usado_por": 1,
+   "orfao": false
+  },
+  {
+   "arquivo": "src/components/admin/LinkPreviewCachePanel.tsx",
+   "exports": [
+    "LinkPreviewCachePanel"
+   ],
+   "export_default": null,
+   "linhas": 156,
+   "dominio": "components/admin",
+   "hooks_locais": [
+    "useLinkPreviewCacheMetrics"
+   ],
+   "tabelas": [],
+   "edges": [],
    "usado_por": 1,
    "orfao": false
   },
@@ -10618,7 +10634,7 @@
     "SecurityView"
    ],
    "export_default": null,
-   "linhas": 261,
+   "linhas": 283,
    "dominio": "components/security",
    "hooks_locais": [
     "useSecurityPushNotifications",
@@ -13736,7 +13752,7 @@
    "hooks_locais": [],
    "tabelas": [],
    "edges": [],
-   "usado_por": 16,
+   "usado_por": 17,
    "orfao": false
   },
   {
@@ -13770,7 +13786,7 @@
    "hooks_locais": [],
    "tabelas": [],
    "edges": [],
-   "usado_por": 224,
+   "usado_por": 225,
    "orfao": false
   },
   {
@@ -13807,7 +13823,7 @@
    "hooks_locais": [],
    "tabelas": [],
    "edges": [],
-   "usado_por": 412,
+   "usado_por": 414,
    "orfao": false
   },
   {
@@ -13842,7 +13858,7 @@
    "hooks_locais": [],
    "tabelas": [],
    "edges": [],
-   "usado_por": 196,
+   "usado_por": 198,
    "orfao": false
   },
   {
@@ -15367,6 +15383,22 @@
    "orfao": false
   },
   {
+   "arquivo": "src/pages/admin/LinkPreviewCachePage.tsx",
+   "exports": [
+    "LinkPreviewCachePage"
+   ],
+   "export_default": "LinkPreviewCachePage",
+   "linhas": 37,
+   "dominio": "pages/admin",
+   "hooks_locais": [
+    "useUserRole"
+   ],
+   "tabelas": [],
+   "edges": [],
+   "usado_por": 2,
+   "orfao": false
+  },
+  {
    "arquivo": "src/pages/admin/RateLimitDashboard.tsx",
    "exports": [
     "RateLimitDashboard"
@@ -15736,7 +15768,7 @@
     "AppRoutes"
    ],
    "export_default": null,
-   "linhas": 184,
+   "linhas": 193,
    "dominio": "routes",
    "hooks_locais": [],
    "tabelas": [],
