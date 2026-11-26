@@ -1,7 +1,7 @@
 # Contexto do projeto para agentes de IA
 
 GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.
-Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR dela) a cada push em `main` e a cada 10 minutos pelo workflow `contexto.yml`; índice único das três fontes em `docs/contexto/00-INDEX.md`. Gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `f3061b66e7b1b72e17837b281fd271ddd2a1f11d` (2026-11-26T21:20:53Z).
+Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR dela) a cada push em `main` e a cada 10 minutos pelo workflow `contexto.yml`; índice único das três fontes em `docs/contexto/00-INDEX.md`. Gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `809dc4b6ae850a1f08409373af750e6c6a534f2c` (2026-11-26T21:53:53Z).
 
 ## Como usar (leia antes de planejar ou executar qualquer tarefa)
 1. **Tela/rota/menu** → `rotas.json` (url/vista/menu → arquivo → hooks → tabelas → edges; `rotas_http_backend` para APIs) e `modulos.json` (módulo inteiro + dependências entre módulos).
@@ -36,7 +36,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 |---|---|
 | arquivos_total | 14915 |
 | arquivos_codigo | 5243 |
-| linhas_codigo | 970502 |
+| linhas_codigo | 970515 |
 | rotas | 21 |
 | rotas_http_backend | 11 |
 | vistas_por_id | 56 |
@@ -404,21 +404,21 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - possiveis_segredos_no_codigo: 4 — ex.: scripts/ai-context/cenarios.mjs:102, scripts/ci/edge-coverage-authz.unit.mjs:398, scripts/ci/inventario-banco.unit.mjs:147
 
 ## Grafo de código (graphify)
-- 96928 nós · 162741 arestas · 9022 comunidades · grafo do commit `f3061b66`
+- 96928 nós · 162741 arestas · 9022 comunidades · grafo do commit `809dc4b6`
 - comunidades maiores: Communities (8869 total, 3472 thin omitted) (5379), react (1250), TalkXSuppression.tsx (1200), lucide-react (1167), vitest (1036), utils.ts (801), ExternalProductManagement.tsx (640), validation.ts (637), cn (626), ref_node_fs (597), chat.ts (574), ref_https (488)
 - símbolos mais chamados: cn() (src/lib/utils.ts), useAuth() (src/hooks/auth/useAuth.tsx), jsonResponse() (supabase/functions/_shared/validation.ts), errorResponse() (supabase/functions/_shared/validation.ts), handleCors() (supabase/functions/_shared/validation.ts), fail() (scripts/e2e-isolated/network-proof-policy.mjs), Logger (supabase/functions/_shared/validation.ts), requireEnv() (supabase/functions/_shared/validation.ts), fmtInt() (src/components/talkx/kit/format.ts), useUserRole() (src/hooks/system/useUserRole.ts), .from() (supabase/functions/_shared/evolution-types.ts), validationErrorResponse() (supabase/functions/_shared/schemas.ts)
 - consulta local: `graphify query "<pergunta>"`, `graphify path "<A>" "<B>"`, `graphify explain "<X>"`
 
 ## Hotspots (arquivos mais alterados, 90 dias)
 - supabase/deployment-manifest.json (37)
-- docs/DB-INVENTORY.md (28)
+- docs/DB-INVENTORY.md (29)
 - ESTADO.md (26)
 - docs/talkx/ESTADOS.md (22)
-- supabase/schema-manifest.json (19)
-- supabase/schema-catalog.json (17)
-- src/integrations/supabase/types.ts (16)
+- supabase/schema-manifest.json (20)
+- supabase/schema-catalog.json (18)
+- src/integrations/supabase/types.ts (17)
 - .github/workflows/db-guard.yml (14)
-- scripts/db-audit/grants-baseline.json (12)
+- scripts/db-audit/grants-baseline.json (13)
 - .github/workflows/ci.yml (10)
 - docs/agentes/github-ci.md (10)
 - docs/ci/README.md (9)
@@ -547,6 +547,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - CHANGELOG topo: [Unreleased]
 
 ## Últimos commits
+- 2026-11-26 `809dc4b6` chore(db): sincronizar artefatos derivados do banco (#3425)
 - 2026-11-26 `f3061b66` fix: painel mostra o orçamento de envio da campanha (talkx_campaign_pace destravado para admin) (#3406)
 - 2026-11-26 `4465e392` feat(copiloto): tela de retenção do copiloto RADAR (agregado diário por atendente) (#3418)
 - 2026-11-26 `12371410` fix: restaura paridade de RLS entre producao e o replay das migrations (12 policies de admin) (#3401)
@@ -561,7 +562,6 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - 2026-11-26 `583c6450` feat(seguranca): trilha de exclusoes e bloqueios de contato ganha tela (#3412)
 - 2026-11-26 `0a6acffd` feat(talkx): liga os alertas do motor (talkx_alerts) no acompanhamento (#3408)
 - 2026-11-26 `3eb193aa` feat(talkx): campanha ganha o envio de teste antes de lancar (E47) (#3409)
-- 2026-11-26 `ec33e1ea` feat: painel do segmento mostra as tags mais usadas no público (talkx_segment_tags) (#3407)
 
 ## Arquivos deste diretório
 - `docs/contexto/codigo/rotas.json`

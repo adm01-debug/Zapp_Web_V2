@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "f3061b66e7b1b72e17837b281fd271ddd2a1f11d",
+  "commit": "809dc4b6ae850a1f08409373af750e6c6a534f2c",
   "branch": "main",
-  "data_commit": "2026-11-26T21:20:53Z",
+  "data_commit": "2026-11-26T21:53:53Z",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "809dc4b6",
+    "data": "2026-11-26",
+    "assunto": "chore(db): sincronizar artefatos derivados do banco (#3425)"
+   },
    {
     "sha": "f3061b66",
     "data": "2026-11-26",
@@ -126,11 +131,6 @@
     "sha": "71d923d1",
     "data": "2026-11-26",
     "assunto": "feat: Sala de Crise mede pelo agregado crisis_room_snapshot (fim das 4 consultas no navegador) (#3396)"
-   },
-   {
-    "sha": "de31ddec",
-    "data": "2026-11-26",
-    "assunto": "fix: allowlist de credencial de provedor e vínculo endpoint/secret no banco (IA-EGRESS-001) (#3384)"
    }
   ],
   "arquivos_mudados_7d": 2858,
@@ -185,7 +185,7 @@
    },
    {
     "pasta": "src/hooks/integrations",
-    "mudancas": 159
+    "mudancas": 157
    },
    {
     "pasta": "src/components/contacts",
@@ -203,7 +203,7 @@
    },
    {
     "arquivo": "docs/DB-INVENTORY.md",
-    "mudancas": 28
+    "mudancas": 29
    },
    {
     "arquivo": "ESTADO.md",
@@ -215,15 +215,15 @@
    },
    {
     "arquivo": "supabase/schema-manifest.json",
-    "mudancas": 19
+    "mudancas": 20
    },
    {
     "arquivo": "supabase/schema-catalog.json",
-    "mudancas": 17
+    "mudancas": 18
    },
    {
     "arquivo": "src/integrations/supabase/types.ts",
-    "mudancas": 16
+    "mudancas": 17
    },
    {
     "arquivo": ".github/workflows/db-guard.yml",
@@ -231,7 +231,7 @@
    },
    {
     "arquivo": "scripts/db-audit/grants-baseline.json",
-    "mudancas": 12
+    "mudancas": 13
    },
    {
     "arquivo": ".github/workflows/ci.yml",
@@ -301,11 +301,11 @@
   "autores_30d": [
    {
     "autor": "adm01-debug",
-    "commits": 284
+    "commits": 283
    },
    {
     "autor": "github-actions[bot]",
-    "commits": 12
+    "commits": 13
    },
    {
     "autor": "dependabot[bot]",
@@ -316,7 +316,7 @@
  "contagens": {
   "arquivos_total": 14915,
   "arquivos_codigo": 5243,
-  "linhas_codigo": 970502,
+  "linhas_codigo": 970515,
   "rotas": 21,
   "rotas_http_backend": 11,
   "vistas_por_id": 56,
@@ -768,7 +768,7 @@
   },
   "src/integrations": {
    "arquivos": 4,
-   "linhas": 16113
+   "linhas": 16126
   },
   "src/lib": {
    "arquivos": 302,
@@ -842,7 +842,7 @@
  "maiores_arquivos": [
   {
    "arquivo": "src/integrations/supabase/types.ts",
-   "linhas": 16040
+   "linhas": 16053
   },
   {
    "arquivo": "scripts/regras_negocio/generate.py",

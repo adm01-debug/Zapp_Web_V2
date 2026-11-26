@@ -59396,7 +59396,7 @@
               "hits": 1
             }
           ],
-          "code_total_files": 419,
+          "code_total_files": 420,
           "cron": [],
           "db": [
             "public.add_agent_xp",
@@ -68291,11 +68291,15 @@
               "hits": 1
             },
             {
+              "file": "supabase/migrations/20261127001500_talkx_campaign_pace_orcamento_interno.sql",
+              "hits": 2
+            },
+            {
               "file": "supabase/migrations/20261127150000_recover_talkx_send_budget_internal.sql",
               "hits": 1
             }
           ],
-          "code_total_files": 3,
+          "code_total_files": 4,
           "cron": [],
           "db": [],
           "triggers": [],
@@ -68326,11 +68330,15 @@
         "callers": {
           "code": [
             {
+              "file": "supabase/migrations/20261127001500_talkx_campaign_pace_orcamento_interno.sql",
+              "hits": 3
+            },
+            {
               "file": "supabase/migrations/20261127150000_recover_talkx_send_budget_internal.sql",
               "hits": 3
             }
           ],
-          "code_total_files": 1,
+          "code_total_files": 2,
           "cron": [],
           "db": [
             "public.talkx_campaign_pace",
@@ -68727,11 +68735,15 @@
               "hits": 3
             },
             {
+              "file": "supabase/migrations/20261127001500_talkx_campaign_pace_orcamento_interno.sql",
+              "hits": 2
+            },
+            {
               "file": "supabase/migrations/20261127150000_recover_talkx_send_budget_internal.sql",
               "hits": 2
             }
           ],
-          "code_total_files": 2,
+          "code_total_files": 3,
           "cron": [],
           "db": [
             "public.multiplix_connection_daily_usage",

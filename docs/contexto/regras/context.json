@@ -1,15 +1,15 @@
 {
  "meta": {
-  "sha": "f3061b66e7b1b72e17837b281fd271ddd2a1f11d",
+  "sha": "809dc4b6ae850a1f08409373af750e6c6a534f2c",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-26 21:29 UTC",
+  "generated_at": "2026-11-26 22:23 UTC",
   "files_total": 14762,
   "code_files": 8292,
-  "code_lines": 1249153
+  "code_lines": 1249166
  },
  "version": "1.3.2",
- "facts_hash": "afa5ed84c0e0a81d",
+ "facts_hash": "2e53af50d8b32d84",
  "stack": {
   "frameworks": [
    "React + Vite",
@@ -36217,6 +36217,17 @@
     "tables": []
    },
    "set_voip_profile_credentials": {
+    "args": "",
+    "returns": "?",
+    "lang": "",
+    "src": "src/integrations/supabase/types.ts",
+    "security_definer": false,
+    "search_path": false,
+    "body": "",
+    "raises": [],
+    "tables": []
+   },
+   "webhook_dead_letter_fila": {
     "args": "",
     "returns": "?",
     "lang": "",
@@ -77477,7 +77488,7 @@
   {
    "module": "src/integrations",
    "files": 4,
-   "lines": 16113,
+   "lines": 16126,
    "tables": [],
    "exports": [
     "client.ts: SUPABASE_ANON_KEY, GOOGLE_OAUTH_ENABLED, supabase, SupabaseClient",
@@ -251717,6 +251728,17 @@
     "body": "",
     "raises": [],
     "tables": []
+   },
+   "webhook_dead_letter_fila": {
+    "args": "",
+    "returns": "?",
+    "lang": "",
+    "src": "src/integrations/supabase/types.ts",
+    "security_definer": false,
+    "search_path": false,
+    "body": "",
+    "raises": [],
+    "tables": []
    }
   },
   "db_enums": {
@@ -386701,7 +386723,7 @@
   },
   "src/integrations/supabase/types.ts": {
    "path": "src/integrations/supabase/types.ts",
-   "lines": 16040,
+   "lines": 16053,
    "exports": [
     "type Json",
     "type Database",
@@ -431345,10 +431367,23 @@
   }
  },
  "git": {
-  "sha": "f3061b66e7b1b72e17837b281fd271ddd2a1f11d",
+  "sha": "809dc4b6ae850a1f08409373af750e6c6a534f2c",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "809dc4b6",
+    "date": "2026-11-26",
+    "author": "github-actions[bot]",
+    "subject": "chore(db): sincronizar artefatos derivados do banco (#3425)",
+    "files": [
+     "docs/DB-INVENTORY.md",
+     "scripts/db-audit/grants-baseline.json",
+     "src/integrations/supabase/types.ts",
+     "supabase/schema-catalog.json",
+     "supabase/schema-manifest.json"
+    ]
+   },
    {
     "sha": "f3061b66",
     "date": "2026-11-26",
@@ -431820,26 +431855,12 @@
      "src/components/tasks/list/prazoCompleto.ts",
      "src/components/tasks/list/taskRowCells.tsx"
     ]
-   },
-   {
-    "sha": "6ee63ddb",
-    "date": "2026-11-25",
-    "author": "adm01-debug",
-    "subject": "fix: canal único de realtime nas conexões e reconciliação de INSTANCE_GONE (#3390)",
-    "files": [
-     "src/components/alerts/EvolutionDisconnectBanner.tsx",
-     "src/components/alerts/__tests__/EvolutionDisconnectBanner.realtime.test.tsx",
-     "src/hooks/inbox/__tests__/useConnectionsManager.b2.test.ts",
-     "src/hooks/inbox/__tests__/useConnectionsRealtime.test.ts",
-     "src/hooks/inbox/useConnectionsManager.ts",
-     "src/hooks/inbox/useConnectionsRealtime.ts"
-    ]
    }
   ],
   "hot_files": [
    [
     "docs/DB-INVENTORY.md",
-    16
+    17
    ],
    [
     "docs/talkx/ESTADOS.md",
@@ -431848,6 +431869,14 @@
    [
     "supabase/deployment-manifest.json",
     5
+   ],
+   [
+    "supabase/schema-catalog.json",
+    4
+   ],
+   [
+    "supabase/schema-manifest.json",
+    4
    ],
    [
     "inventario/estado/rotas.json",
@@ -431870,15 +431899,15 @@
     4
    ],
    [
+    "scripts/db-audit/grants-baseline.json",
+    3
+   ],
+   [
+    "src/integrations/supabase/types.ts",
+    3
+   ],
+   [
     "src/components/talkx/TalkXAnalytics.tsx",
-    3
-   ],
-   [
-    "supabase/schema-catalog.json",
-    3
-   ],
-   [
-    "supabase/schema-manifest.json",
     3
    ],
    [
@@ -431890,15 +431919,7 @@
     3
    ],
    [
-    "scripts/db-audit/grants-baseline.json",
-    2
-   ],
-   [
     "scripts/db-audit/known-violations.json",
-    2
-   ],
-   [
-    "src/integrations/supabase/types.ts",
     2
    ],
    [

@@ -2,6 +2,10 @@
 
 Diff semântico gerado a cada coleta em que algo mudou.
 
+## 2026-11-26 22:22 UTC
+
+- **functions** alterado (4): `public.is_admin_or_supervisor(_user_id uuid)`, `public.talkx_connection_send_budget(p_connection_id uuid)`, `public.talkx_connection_send_budget_internal(p_connection_id uuid)`, `public.talkx_multiplix_connection_sent_count(p_connection_id uuid, p_since timestamp with time zone)`
+
 ## 2026-11-26 20:49 UTC
 
 - **functions** alterado (1): `public.is_admin_or_supervisor(_user_id uuid)`
