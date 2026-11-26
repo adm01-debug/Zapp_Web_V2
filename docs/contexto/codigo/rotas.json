@@ -2002,12 +2002,14 @@
     "useCallback",
     "useContext",
     "useEffect",
+    "useId",
     "useMemo",
     "useMessageUpdateBatcher",
     "useNotificationLeader",
     "useNotificationSettings",
     "useOfflineCache",
     "usePermissions",
+    "useProvisionamentoRecente",
     "usePublishIncomingAlertIdentity",
     "useQuery",
     "useQueryClient",
@@ -2021,6 +2023,7 @@
     "useSyncExternalStore",
     "useTeamAlertsPreference",
     "useToast",
+    "useTrustedDomains",
     "useUserRole"
    ],
    "hooks_locais": [
@@ -2031,6 +2034,7 @@
     "useNotificationSettings",
     "useOfflineCache",
     "usePermissions",
+    "useProvisionamentoRecente",
     "usePublishIncomingAlertIdentity",
     "useRealtimeMessages",
     "useRealtimeNotifications",
@@ -2039,10 +2043,12 @@
     "useRolesPageState",
     "useTeamAlertsPreference",
     "useToast",
+    "useTrustedDomains",
     "useUserRole"
    ],
    "tabelas": [
     "agent_visibility_grants",
+    "app_settings",
     "audit_logs",
     "avatars",
     "contacts",
@@ -2075,7 +2081,7 @@
     "alert",
     "supervisor"
    ],
-   "arquivos_puxados": 68
+   "arquivos_puxados": 71
   },
   {
    "protegida": false,

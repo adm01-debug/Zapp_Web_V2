@@ -1,7 +1,7 @@
 {
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
- "total": 952,
+ "total": 953,
  "orfaos": 45,
  "nomes_duplicados": {
   "AchievementBadge": [
@@ -13837,7 +13837,7 @@
    "hooks_locais": [],
    "tabelas": [],
    "edges": [],
-   "usado_por": 226,
+   "usado_por": 227,
    "orfao": false
   },
   {
@@ -13874,7 +13874,7 @@
    "hooks_locais": [],
    "tabelas": [],
    "edges": [],
-   "usado_por": 416,
+   "usado_por": 417,
    "orfao": false
   },
   {
@@ -13909,7 +13909,7 @@
    "hooks_locais": [],
    "tabelas": [],
    "edges": [],
-   "usado_por": 200,
+   "usado_por": 201,
    "orfao": false
   },
   {
@@ -14325,7 +14325,7 @@
    "hooks_locais": [],
    "tabelas": [],
    "edges": [],
-   "usado_por": 177,
+   "usado_por": 178,
    "orfao": false
   },
   {
@@ -15472,7 +15472,7 @@
     "RolesPage"
    ],
    "export_default": "RolesPage",
-   "linhas": 198,
+   "linhas": 201,
    "dominio": "pages/admin",
    "hooks_locais": [
     "useRolesPageState",
@@ -15481,6 +15481,23 @@
    "tabelas": [],
    "edges": [],
    "usado_por": 2,
+   "orfao": false
+  },
+  {
+   "arquivo": "src/pages/admin/TrustedDomainsPanel.tsx",
+   "exports": [
+    "TrustedDomainsPanel"
+   ],
+   "export_default": null,
+   "linhas": 237,
+   "dominio": "pages/admin",
+   "hooks_locais": [
+    "useProvisionamentoRecente",
+    "useTrustedDomains"
+   ],
+   "tabelas": [],
+   "edges": [],
+   "usado_por": 1,
    "orfao": false
   },
   {

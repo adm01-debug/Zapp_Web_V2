@@ -10963,7 +10963,16 @@
    "src/components/ui/select.tsx",
    "src/components/ui/tabs.tsx",
    "src/hooks/system/useUserRole.ts",
+   "src/pages/admin/TrustedDomainsPanel.tsx",
    "src/pages/admin/useRolesPageState.ts"
+  ],
+  "src/pages/admin/TrustedDomainsPanel.tsx": [
+   "src/components/ui/badge.tsx",
+   "src/components/ui/button.tsx",
+   "src/components/ui/card.tsx",
+   "src/components/ui/input.tsx",
+   "src/pages/admin/trustedDomains.ts",
+   "src/pages/admin/useTrustedDomains.ts"
   ],
   "src/pages/admin/loadRolesWithProfiles.ts": [
    "src/lib/supabaseHelpers.ts"

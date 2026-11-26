@@ -3,7 +3,7 @@
  "format_version": 2,
  "stack": {
   "linguagens": [
-   "TypeScript (4582)",
+   "TypeScript (4587)",
    "Markdown (3988)",
    "SQL (3072)",
    "JSON (1939)",
@@ -2605,6 +2605,10 @@
     "arquivos": 1
    },
    {
+    "host": "outra.com",
+    "arquivos": 1
+   },
+   {
     "host": "outro.com",
     "arquivos": 1
    },
@@ -2974,7 +2978,7 @@
   "papeis_no_codigo": [
    {
     "papel": "alert",
-    "ocorrencias": 129
+    "ocorrencias": 130
    },
    {
     "papel": "status",

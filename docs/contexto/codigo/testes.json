@@ -5,18 +5,18 @@
   "vitest",
   "playwright"
  ],
- "total": 2863,
+ "total": 2865,
  "por_tipo": {
   "contrato": 116,
   "e2e": 76,
   "pytest": 3,
   "qa": 10,
-  "unit": 2566
+  "unit": 2568
  },
  "onde_ficam": [
   {
    "padrao": "co-localizado (__tests__)",
-   "arquivos": 2135
+   "arquivos": 2137
   },
   {
    "padrao": "outro",
@@ -22405,6 +22405,24 @@
    "casos": 2
   },
   {
+   "arquivo": "src/pages/admin/__tests__/trustedDomains.test.ts",
+   "tipo": "unit",
+   "linhas": 50,
+   "testa": [
+    "src/pages/admin/trustedDomains.ts"
+   ],
+   "casos": 6
+  },
+  {
+   "arquivo": "src/pages/admin/__tests__/TrustedDomainsPanel.test.tsx",
+   "tipo": "unit",
+   "linhas": 119,
+   "testa": [
+    "src/pages/admin/TrustedDomainsPanel.tsx"
+   ],
+   "casos": 6
+  },
+  {
    "arquivo": "src/pages/admin/__tests__/useRolesPageState.adminSetRole.test.ts",
    "tipo": "unit",
    "linhas": 117,
@@ -27625,7 +27643,9 @@
   "src/pages/admin-telemetria/telemetryUtils.tsx": 2,
   "src/pages/admin/RateLimitDashboard.tsx": 2,
   "src/pages/admin/RolesPage.tsx": 2,
+  "src/pages/admin/TrustedDomainsPanel.tsx": 1,
   "src/pages/admin/loadRolesWithProfiles.ts": 1,
+  "src/pages/admin/trustedDomains.ts": 1,
   "src/pages/admin/useRolesPageState.ts": 1,
   "src/pages/lazyViews.ts": 2,
   "src/pages/queue-details/queueMetrics.ts": 1,
@@ -27983,7 +28003,8 @@
    "src/hooks/ui/useSwipeGesture.ts",
    "src/hooks/ui/useZenMode.ts",
    "src/hooks/voice/useVoiceAgent.ts",
-   "src/lib/debounce.ts"
+   "src/lib/debounce.ts",
+   "src/pages/admin/useTrustedDomains.ts"
   ],
   "edges": [
    "ai-enhance-message"

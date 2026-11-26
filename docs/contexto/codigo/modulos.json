@@ -12962,6 +12962,7 @@
     "usePriceAnchoring",
     "useProductRecommendation",
     "usePromptVersioning",
+    "useProvisionamentoRecente",
     "usePublishIncomingAlertIdentity",
     "usePullToRefresh",
     "usePurchaseSignals",
@@ -13120,6 +13121,7 @@
     "useTranscriptionNotifications",
     "useTransferConversation",
     "useTransferConversationDepartment",
+    "useTrustedDomains",
     "useTypingPresence",
     "useUnconfirmedMessages",
     "useUndoableAction",
@@ -13269,6 +13271,7 @@
     "ai_providers",
     "ai_usage_logs",
     "allowed_countries",
+    "app_settings",
     "assistant_profiles",
     "audio_memes",
     "audit_logs",
@@ -16211,9 +16214,9 @@
   },
   {
    "modulo": "pages/admin",
-   "arquivos": 7,
-   "testes": 5,
-   "linhas": 989,
+   "arquivos": 10,
+   "testes": 7,
+   "linhas": 1445,
    "itens_menu": [],
    "telas": [
     "/admin/auditoria-contatos",
@@ -16223,7 +16226,7 @@
     "/admin/roles"
    ],
    "rotas_http": [],
-   "componentes": 5,
+   "componentes": 6,
    "hooks_locais": [
     "useAdminData",
     "useAppBootstrap",
@@ -16237,6 +16240,7 @@
     "useNotificationSettings",
     "useOfflineCache",
     "usePermissions",
+    "useProvisionamentoRecente",
     "usePublishIncomingAlertIdentity",
     "useRateLimitLogs",
     "useRealtimeMessages",
@@ -16247,11 +16251,14 @@
     "useSaveContactProtectionPolicy",
     "useTeamAlertsPreference",
     "useToast",
+    "useTrustedDomains",
     "useUserRole",
     "useVisiblePolling"
    ],
    "hooks_definidos": [
-    "useRolesPageState"
+    "useRolesPageState",
+    "useProvisionamentoRecente",
+    "useTrustedDomains"
    ],
    "edges": [
     "auth-login",
@@ -16259,6 +16266,7 @@
    ],
    "tabelas": [
     "agent_visibility_grants",
+    "app_settings",
     "audit_logs",
     "avatars",
     "blocked_ips",
@@ -16300,6 +16308,7 @@
    "diretos": {
     "edges": [],
     "tabelas": [
+     "app_settings",
      "profiles",
      "user_roles"
     ],
@@ -16321,6 +16330,7 @@
     "lib"
    ],
    "pacotes_externos": [
+    "@tanstack/react-query",
     "date-fns",
     "framer-motion",
     "lucide-react",
@@ -16909,6 +16919,7 @@
     "usePriceAnchoring",
     "useProductRecommendation",
     "usePromptVersioning",
+    "useProvisionamentoRecente",
     "usePublishIncomingAlertIdentity",
     "usePullToRefresh",
     "usePurchaseSignals",
@@ -17068,6 +17079,7 @@
     "useTransferConversation",
     "useTransferConversationDepartment",
     "useTransitionPreferences",
+    "useTrustedDomains",
     "useTypingPresence",
     "useUnconfirmedMessages",
     "useUndoableAction",
@@ -17162,6 +17174,7 @@
     "ai_providers",
     "ai_usage_logs",
     "allowed_countries",
+    "app_settings",
     "assistant_profiles",
     "audio_memes",
     "audit_logs",

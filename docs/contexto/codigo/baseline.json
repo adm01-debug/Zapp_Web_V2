@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "9d6d73a64e9a5a80f929e053c96b8e10c381c0ea",
+  "commit": "96edd3a8df45b1b210368f5b68a69d73b14fec76",
   "branch": "main",
-  "data_commit": "2026-11-26T16:06:39Z",
+  "data_commit": "2026-11-26T16:22:20Z",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "96edd3a8",
+    "data": "2026-11-26",
+    "assunto": "feat(admin): dominios confiaveis do cadastro automatico ganham tela (#3416)"
+   },
    {
     "sha": "9d6d73a6",
     "data": "2026-11-26",
@@ -126,14 +131,9 @@
     "sha": "4855bda8",
     "data": "2026-11-25",
     "assunto": "fix: asserção do E2E da sidebar não confunde a seção de SLA com o accordion antigo (#3389)"
-   },
-   {
-    "sha": "078aacb5",
-    "data": "2026-11-25",
-    "assunto": "feat: tela da linha do tempo de SLA no painel do contato (#3383)"
    }
   ],
-  "arquivos_mudados_7d": 2838,
+  "arquivos_mudados_7d": 2844,
   "pastas_mais_mudadas_30d": [
    {
     "pasta": "docs/contexto/supabase",
@@ -207,7 +207,7 @@
    },
    {
     "arquivo": "docs/DB-INVENTORY.md",
-    "mudancas": 23
+    "mudancas": 24
    },
    {
     "arquivo": "docs/talkx/ESTADOS.md",
@@ -314,21 +314,21 @@
   ]
  },
  "contagens": {
-  "arquivos_total": 14895,
-  "arquivos_codigo": 5227,
-  "linhas_codigo": 968043,
+  "arquivos_total": 14900,
+  "arquivos_codigo": 5232,
+  "linhas_codigo": 968668,
   "rotas": 21,
   "rotas_http_backend": 11,
   "vistas_por_id": 55,
   "itens_menu": 61,
   "modulos": 149,
-  "componentes": 952,
-  "hooks": 533,
+  "componentes": 953,
+  "hooks": 534,
   "edge_functions": 94,
   "tabelas": 224,
   "migrations": 1161,
   "cron_jobs": 29,
-  "testes": 2863,
+  "testes": 2865,
   "workflows": 26,
   "scripts": 458,
   "docs_md": 3988
@@ -779,8 +779,8 @@
    "linhas": 131
   },
   "src/pages": {
-   "arquivos": 78,
-   "linhas": 11540
+   "arquivos": 83,
+   "linhas": 12165
   },
   "src/providers": {
    "arquivos": 10,

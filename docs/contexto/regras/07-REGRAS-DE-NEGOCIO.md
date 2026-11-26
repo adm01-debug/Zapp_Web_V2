@@ -1,6 +1,6 @@
 # 07 · REGRAS DE NEGÓCIO
 
-> Gerado automaticamente por AI Context Sync v1.3.2 · commit `9d6d73a64e` · branch `main` · 2026-11-26 16:08 UTC
+> Gerado automaticamente por AI Context Sync v1.3.2 · commit `96edd3a8df` · branch `main` · 2026-11-26 16:26 UTC
 > Não edite à mão — regras humanas vão em `manual/`.
 
 ## A. Regras escritas por humanos (`manual/` — prioridade máxima, nunca sobrescrito)
@@ -1929,7 +1929,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | AuditAction | login \| logout \| message_sent \| message_received \| contact_created \| contact_updated \| connection_created \| connection_deleted \| call_started \| call_ended \| transfer \| settings_changed \| client_error \| searchbox_session \| searchbox_cost_guard \| searchbox_budget_warning \| searchbox_selected \| location_sent \| unauthorized_access | `src/lib/audit.ts` |
 | CHART_PALETTE | CHART_COLORS.primary, CHART_COLORS.secondary, CHART_COLORS.tertiary, CHART_COLORS.quaternary, CHART_COLORS.quinary, CHART_COLORS.senary, CHART_COLORS.septenary, CHART_COLORS.octonary, CHART_COLORS.nonary, CHART_COLORS.denary, | `src/lib/chartColors.ts` |
 | CHART_PALETTE_MINI | CHART_COLORS.primary, CHART_COLORS.secondary, CHART_COLORS.tertiary, CHART_COLORS.quaternary, CHART_COLORS.quinary, | `src/lib/chartColors.ts` |
-| … +162 linhas — lista completa em `context.json` | | |
+| … +164 linhas — lista completa em `context.json` | | |
 
 ## F. Validações de entrada
 
@@ -3207,6 +3207,10 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
   ```
   let messagesSent = 0; let messagesReceived = 0; for (const item of buckets.messages) { if (item.row.sender === 'agent') messagesSent += 1; else messagesReceived += 1; } let emailsSent = 0; let emailsReceived = 0; for (const item of buckets.emails) { if (item.row.direction === 'outbound') emailsSent += 1; else emailsReceived += 1; } const totals: JourneyTotals = { messages: buckets.messages.length, messagesSent, messagesReceived, emails: buckets.emails.length, emailsSent, emailsReceived, calls: b …
   ```
+- **validarDominio(bruto: string, existentes: string[])** — `src/pages/admin/trustedDomains.ts`
+  ```
+  const dominio = normalizarDominio(bruto); if (!dominio) return 'Informe um domínio, por exemplo empresa.com.br'; if (dominio.includes('@')) return 'Informe apenas o domínio, sem o e-mail (ex.: empresa.com.br)'; if (!DOMINIO_VALIDO.test(dominio)) { return 'Domínio inválido: use letras, números, hífen e ponto (ex.: empresa.com.br)'; } if (existentes.includes(dominio)) return `${dominio} já está na lista`; return null;
+  ```
 - **computeTopOffenders(rows: { rpc_name: string | null; table_name: string | null; duration_ms: number }[])** — `src/pages/admin-telemetria/telemetryUtils.tsx`
   ```
   const tableStats = new Map<string, { count: number; totalMs: number; maxMs: number }>(); for (const r of rows) { const key = r.rpc_name || r.table_name || "unknown"; const prev = tableStats.get(key) || { count: 0, totalMs: 0, maxMs: 0 }; tableStats.set(key, { count: prev.count + 1, totalMs: prev.totalMs + r.duration_ms, maxMs: Math.max(prev.maxMs, r.duration_ms), }); } return [...tableStats.entries()].sort((a, b) => b[1].count - a[1].count).slice(0, 8);
@@ -3938,7 +3942,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `SUPERVISOR_PAGE_SIZE` | `200` | `src/hooks/admin/useSupervisorQueue.ts` |
 | `DEFAULT_REFRESH_MS` | `60` | `src/hooks/admin/useSupervisorQueue.ts` |
 | `RECENT_SENDS_WINDOW_DAYS` | `30` | `src/hooks/agents/useAgentRecentSends.ts` |
-| … +724 linhas — lista completa em `context.json` | | |
+| … +725 linhas — lista completa em `context.json` | | |
 
 ### H.2 Prazos, expirações e janelas de tempo
 
@@ -4693,7 +4697,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | disk-full | `scripts/ci/e2e-isolated-provider-readiness.unit.mjs` |
 | must-not-read-service-role | `scripts/ci/e2e-isolated-provider-readiness.unit.mjs` |
 | synthetic transport rejection | `scripts/ci/e2e-isolated-runtime-probe.unit.mjs` |
-| … +1899 linhas — lista completa em `context.json` | |
+| … +1903 linhas — lista completa em `context.json` | |
 
 ## J. Controle de acesso no código (checagens de perfil/permissão)
 
@@ -4768,7 +4772,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `owner` | `supabase/migrations/20260927270018_team_chat_e28_fix_find_or_create_race.sql` |
 | `anon` | `supabase/migrations/20260927340000_fix_add_agent_xp_negative_and_guard.sql` |
 
-## K. Testes como especificação (23263 testes em 2469 arquivos — nomes completos em `context.json`)
+## K. Testes como especificação (23277 testes em 2471 arquivos — nomes completos em `context.json`)
 
 | Arquivo | Testes | Exemplos do que o sistema DEVE fazer |
 |---|---|---|
@@ -5072,7 +5076,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `supabase/functions/ai-transcribe-audio/openrouter-stt.test.ts` | 17 | formato: containers que a edge reconhece viram a extensão do input_audio · formato: mime de outro tipo ou desconhecido não vira extensão inventada · formato: parâmetro do content-type (codecs) não atrapalha e o case não importa · base64: buffer maior que o bloco interno é convertido byte a byte … |
 | `supabase/functions/multiplix-dispatch/actions/__tests__/listing.test.ts` | 17 | dispatch.list escopo: sem permissao ampla so devolve os disparos do dono · dispatch.list escopo: usuario sem profile e sem permissao -> lista vazia (nao consulta a tabela) · dispatch.list escopo: a permissao ampla ve os disparos de qualquer dono · dispatch.list paginacao: limit/offset recortam na ordem created_at desc e total e exato … |
 | `supabase/functions/talkx-ai/index.test.ts` | 17 | X076: flag ai_insights desligada recusa com 403 ai_disabled e não paga o proxy · X076: orçamento mensal no padrão (0 = desligado) recusa com 403 ai_disabled · X076: gasto do mês no teto recusa com 429 budget_exceeded e não paga o proxy · X076: gasto abaixo do teto passa (o teto não é desligamento geral) … |
-| … +2169 linhas — lista completa em `context.json` | | |
+| … +2171 linhas — lista completa em `context.json` | | |
 
 ## L. Eventos de webhook tratados (contratos com sistemas externos)
 

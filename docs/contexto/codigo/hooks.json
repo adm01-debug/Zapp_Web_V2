@@ -1,7 +1,7 @@
 {
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
- "total": 533,
+ "total": 534,
  "hooks": [
   {
    "arquivo": "analise-prs/resgate-261118-lote2/src/hooks/useMotionSeguro.ts",
@@ -13467,6 +13467,31 @@
     "src/pages/admin/RolesPage.tsx"
    ],
    "coberto_por_testes": 1
+  },
+  {
+   "arquivo": "src/pages/admin/useTrustedDomains.ts",
+   "hooks_exportados": [
+    "useProvisionamentoRecente",
+    "useTrustedDomains"
+   ],
+   "linhas": 130,
+   "dominio": "pages/admin",
+   "tabelas": [
+    "app_settings"
+   ],
+   "rpcs": [],
+   "edges": [],
+   "hooks_internos": [
+    "useCallback",
+    "useQuery",
+    "useQueryClient"
+   ],
+   "canais_realtime": [],
+   "usado_por": 1,
+   "usado_por_arquivos": [
+    "src/pages/admin/TrustedDomainsPanel.tsx"
+   ],
+   "coberto_por_testes": 0
   },
   {
    "arquivo": "src/providers/CallSessionProvider.tsx",

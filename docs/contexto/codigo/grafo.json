@@ -1,8 +1,8 @@
 {
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
- "nos": 2456,
- "arestas": 8464,
+ "nos": 2459,
+ "arestas": 8471,
  "hubs": [
   {
    "arquivo": "src/lib/utils.ts",
@@ -14,7 +14,7 @@
   },
   {
    "arquivo": "src/components/ui/button.tsx",
-   "importado_por": 420
+   "importado_por": 421
   },
   {
    "arquivo": "src/lib/logger.ts",
@@ -22,11 +22,11 @@
   },
   {
    "arquivo": "src/components/ui/badge.tsx",
-   "importado_por": 228
+   "importado_por": 229
   },
   {
    "arquivo": "src/components/ui/card.tsx",
-   "importado_por": 202
+   "importado_por": 203
   },
   {
    "arquivo": "src/components/ui/tooltip.tsx",
@@ -34,7 +34,7 @@
   },
   {
    "arquivo": "src/components/ui/input.tsx",
-   "importado_por": 177
+   "importado_por": 178
   },
   {
    "arquivo": "supabase/functions/_shared/validation.ts",
