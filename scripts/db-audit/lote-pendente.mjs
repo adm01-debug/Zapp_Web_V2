@@ -7,14 +7,18 @@
  *   exit 0 — sem drift e sem apply-pendente (clean)
  *   exit 1 — drift real (arquivo em produção sem par no disco, ou vice-versa)
  *   exit 2 — somente apply-pendente (migrations no disco sem ledger no banco)
+ *   exit 3 — falha de infraestrutura (leitura de migrations ou consulta ao
+ *            ledger). Não é drift nem apply pendente: precisa falhar o CI.
  *
  * Cada chamador aplica sua própria política sobre exit 2:
  *   db-live-guard  → em push trata como neutro (exit 0); em schedule/dispatch
  *                    mantém exit 2 para abrir issue.
  *   types-sync     → usa exit 2 para setar awaiting_apply=true e pular gates.
+ * Exit 3 nunca é tratado como neutro por nenhum chamador.
  *
  * Uso:
  *   node scripts/db-audit/lote-pendente.mjs [-- <args extras para check-migration-drift>]
+ *   DRIFT_SCRIPT=<caminho>  substitui o script comparado (usado nos testes)
  */
 
 import { spawnSync } from 'node:child_process';
@@ -23,7 +27,8 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const DRIFT_SCRIPT = path.join(__dirname, 'check-migration-drift.mjs');
+const DRIFT_SCRIPT = process.env.DRIFT_SCRIPT
+  || path.join(__dirname, 'check-migration-drift.mjs');
 
 function writeSummary(lines) {
   const summaryPath = process.env.GITHUB_STEP_SUMMARY;
@@ -50,7 +55,10 @@ if (!process.env.DESTINO_URL) {
     { stdio: 'inherit', encoding: 'utf8' },
   );
 
-  const rc = result.status ?? 1;
+  // Falha ao executar o comparador (script ausente, sem permissao, sinal) e
+  // falha de infraestrutura relatada por ele: nunca tratadas como drift nem
+  // como apply pendente.
+  const rc = result.error ? 3 : (result.status ?? 1);
 
   if (rc === 0) {
     writeSummary([
@@ -67,6 +75,17 @@ if (!process.env.DESTINO_URL) {
       'O apply acontecerá no ciclo de lote do dia (db-migrate.yml).',
       '',
       '> Não é drift — é o estado esperado entre o merge e o apply.',
+    ]);
+  } else if (rc === 3) {
+    // O comparador separa falha de leitura/consulta (3) de apply-pendente (2):
+    // banco inacessivel nao pode passar como estado esperado.
+    writeSummary([
+      '### ❌ Lote pendente — falha de infraestrutura',
+      '',
+      'Não foi possível ler as migrations locais ou consultar o ledger do banco.',
+      'O estado das migrations é **desconhecido** — não é apply pendente nem drift.',
+      '',
+      'Verifique `DESTINO_URL`, a conectividade com o banco e o log do passo.',
     ]);
   } else {
     writeSummary([
