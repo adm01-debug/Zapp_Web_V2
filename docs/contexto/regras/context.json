@@ -1,10 +1,10 @@
 {
  "meta": {
-  "sha": "196b1baef7d8e20d569d3e6ec0b9b72b023e84d0",
+  "sha": "f9097fe74b318f421570a1c8dd39738579ffd093",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
-  "generated_at": "2026-11-27 00:47 UTC",
-  "files_total": 14772,
+  "generated_at": "2026-11-27 01:15 UTC",
+  "files_total": 14773,
   "code_files": 8302,
   "code_lines": 1250410
  },
@@ -431786,10 +431786,19 @@
   }
  },
  "git": {
-  "sha": "196b1baef7d8e20d569d3e6ec0b9b72b023e84d0",
+  "sha": "f9097fe74b318f421570a1c8dd39738579ffd093",
   "branch": "main",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "commits": [
+   {
+    "sha": "f9097fe7",
+    "date": "2026-11-26",
+    "author": "adm01-debug",
+    "subject": "chore(audit): reauditoria GitHub Actions 2026-11-26 (#3403)",
+    "files": [
+     "docs/audits/PLANO_GITHUB_ACTIONS_100_ETAPAS_2026-11-26.md"
+    ]
+   },
    {
     "sha": "196b1bae",
     "date": "2026-11-26",
@@ -432263,26 +432272,12 @@
      "supabase/functions/_shared/request-policy.ts",
      "supabase/migrations/20261126010508_city_whitelist_network_policy.sql"
     ]
-   },
-   {
-    "sha": "71d923d1",
-    "date": "2026-11-25",
-    "author": "adm01-debug",
-    "subject": "feat: Sala de Crise mede pelo agregado crisis_room_snapshot (fim das 4 consultas no navegador) (#3396)",
-    "files": [
-     "docs/DB-INVENTORY.md",
-     "src/components/admin/CrisisRoom.tsx",
-     "src/components/admin/__tests__/CrisisRoom.canais.test.tsx",
-     "src/components/admin/__tests__/CrisisRoom.metricas.test.tsx",
-     "src/hooks/business/__tests__/useCrisisRoomMetrics.test.tsx",
-     "src/hooks/business/useCrisisRoomMetrics.ts"
-    ]
    }
   ],
   "hot_files": [
    [
     "docs/DB-INVENTORY.md",
-    17
+    16
    ],
    [
     "docs/talkx/ESTADOS.md",
@@ -432357,7 +432352,7 @@
     2
    ],
    [
-    "src/components/talkx/TalkXTemplateEditor.tsx",
+    "docs/audits/PLANO_GITHUB_ACTIONS_100_ETAPAS_2026-11-26.md",
     1
    ]
   ]

@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "196b1baef7d8e20d569d3e6ec0b9b72b023e84d0",
+  "commit": "f9097fe74b318f421570a1c8dd39738579ffd093",
   "branch": "main",
-  "data_commit": "2026-11-27T00:45:24Z",
+  "data_commit": "2026-11-27T01:00:34Z",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "f9097fe7",
+    "data": "2026-11-27",
+    "assunto": "chore(audit): reauditoria GitHub Actions 2026-11-26 (#3403)"
+   },
    {
     "sha": "196b1bae",
     "data": "2026-11-27",
@@ -126,14 +131,9 @@
     "sha": "73c76a78",
     "data": "2026-11-26",
     "assunto": "chore(db): sincronizar artefatos derivados do banco (#3399)"
-   },
-   {
-    "sha": "6e6264b6",
-    "data": "2026-11-26",
-    "assunto": "feat(edge): dead-letter reprocessável quando o ingest da mensagem recebida falha (E35) (#3397)"
    }
   ],
-  "arquivos_mudados_7d": 2886,
+  "arquivos_mudados_7d": 2887,
   "pastas_mais_mudadas_30d": [
    {
     "pasta": "docs/contexto/supabase",
@@ -199,7 +199,7 @@
   "arquivos_mais_mudados_90d": [
    {
     "arquivo": "supabase/deployment-manifest.json",
-    "mudancas": 37
+    "mudancas": 36
    },
    {
     "arquivo": "docs/DB-INVENTORY.md",
@@ -314,7 +314,7 @@
   ]
  },
  "contagens": {
-  "arquivos_total": 14925,
+  "arquivos_total": 14926,
   "arquivos_codigo": 5249,
   "linhas_codigo": 971508,
   "rotas": 21,
@@ -331,7 +331,7 @@
   "testes": 2871,
   "workflows": 26,
   "scripts": 458,
-  "docs_md": 3988
+  "docs_md": 3989
  },
  "por_pasta": {
   "analise-prs/resgate-261115": {

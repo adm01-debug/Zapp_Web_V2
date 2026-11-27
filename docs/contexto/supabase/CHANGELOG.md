@@ -2,6 +2,10 @@
 
 Diff semântico gerado a cada coleta em que algo mudou.
 
+## 2026-11-27 01:14 UTC
+
+- **functions** alterado (3): `public.archive_talkx_template(p_template_id uuid, p_archived boolean)`, `public.delete_talkx_template(p_template_id uuid)`, `public.duplicate_talkx_template(p_template_id uuid)`
+
 ## 2026-11-27 00:44 UTC
 
 - **functions** alterado (4): `public.admin_cron_jobs_permitidos()`, `public.admin_list_cron_jobs()`, `public.admin_toggle_cron_job(p_jobname text, p_ativo boolean)`, `public.is_admin(_user_id uuid)`

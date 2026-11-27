@@ -50790,11 +50790,15 @@
         "callers": {
           "code": [
             {
+              "file": "src/hooks/integrations/useTalkXTemplates.ts",
+              "hits": 1
+            },
+            {
               "file": "supabase/migrations/20261126213000_talkx_template_duplicate_archive_delete.sql",
               "hits": 1
             }
           ],
-          "code_total_files": 1,
+          "code_total_files": 2,
           "cron": [],
           "db": [],
           "triggers": [],
@@ -54330,6 +54334,10 @@
         "callers": {
           "code": [
             {
+              "file": "src/hooks/integrations/useTalkXTemplates.ts",
+              "hits": 1
+            },
+            {
               "file": "supabase/migrations/20261126213000_talkx_template_duplicate_archive_delete.sql",
               "hits": 1
             },
@@ -54338,7 +54346,7 @@
               "hits": 1
             }
           ],
-          "code_total_files": 2,
+          "code_total_files": 3,
           "cron": [],
           "db": [],
           "triggers": [],
@@ -54562,11 +54570,15 @@
         "callers": {
           "code": [
             {
+              "file": "src/hooks/integrations/useTalkXTemplates.ts",
+              "hits": 1
+            },
+            {
               "file": "supabase/migrations/20261126213000_talkx_template_duplicate_archive_delete.sql",
               "hits": 1
             }
           ],
-          "code_total_files": 1,
+          "code_total_files": 2,
           "cron": [],
           "db": [],
           "triggers": [],
