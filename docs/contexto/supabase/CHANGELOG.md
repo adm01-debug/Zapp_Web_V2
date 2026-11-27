@@ -2,6 +2,10 @@
 
 Diff semântico gerado a cada coleta em que algo mudou.
 
+## 2026-11-27 00:44 UTC
+
+- **functions** alterado (4): `public.admin_cron_jobs_permitidos()`, `public.admin_list_cron_jobs()`, `public.admin_toggle_cron_job(p_jobname text, p_ativo boolean)`, `public.is_admin(_user_id uuid)`
+
 ## 2026-11-26 23:42 UTC
 
 - **functions** alterado (1): `public.is_admin_or_supervisor(_user_id uuid)`

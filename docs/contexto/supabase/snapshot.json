@@ -49729,9 +49729,13 @@
             {
               "file": "supabase/migrations/20261011173000_admin_cron_jobs.sql",
               "hits": 2
+            },
+            {
+              "file": "supabase/migrations/20261127130000_painel_tarefas_visiveis.sql",
+              "hits": 2
             }
           ],
-          "code_total_files": 1,
+          "code_total_files": 2,
           "cron": [],
           "db": [
             "public.admin_list_cron_jobs",
@@ -49806,9 +49810,13 @@
             {
               "file": "supabase/migrations/20261011173000_admin_cron_jobs.sql",
               "hits": 1
+            },
+            {
+              "file": "supabase/migrations/20261127130000_painel_tarefas_visiveis.sql",
+              "hits": 1
             }
           ],
-          "code_total_files": 1,
+          "code_total_files": 2,
           "cron": [],
           "db": [],
           "triggers": [],
@@ -49892,9 +49900,13 @@
             {
               "file": "supabase/migrations/20261011173000_admin_cron_jobs.sql",
               "hits": 1
+            },
+            {
+              "file": "supabase/migrations/20261127130000_painel_tarefas_visiveis.sql",
+              "hits": 1
             }
           ],
-          "code_total_files": 1,
+          "code_total_files": 2,
           "cron": [],
           "db": [],
           "triggers": [],
@@ -59232,7 +59244,7 @@
               "hits": 2
             }
           ],
-          "code_total_files": 36,
+          "code_total_files": 37,
           "cron": [],
           "db": [
             "public.admin_list_cron_jobs",
