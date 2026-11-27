@@ -27,6 +27,7 @@ const ATIVA = {
   last_status: 'succeeded',
   last_run_at: '2026-10-15T12:00:00.000Z',
   last_return_message: 'sincronizacao concluida',
+  permitido: true,
 };
 
 const PAUSADA = {
@@ -36,6 +37,7 @@ const PAUSADA = {
   last_status: 'failed',
   last_run_at: '2026-10-15T11:00:00.000Z',
   last_return_message: 'timeout ao notificar',
+  permitido: true,
 };
 
 const NUNCA_RODOU = {
@@ -45,6 +47,7 @@ const NUNCA_RODOU = {
   last_status: null,
   last_run_at: null,
   last_return_message: null,
+  permitido: true,
 };
 
 function resolverLista(linhas: unknown[]) {
@@ -96,6 +99,16 @@ describe('CronJobsTab — leitura da agenda do banco', () => {
 
     const colunas = screen.getAllByRole('columnheader').map((c) => c.textContent);
     expect(colunas).toEqual(['Nome', 'Agenda', 'Situação', 'Última execução', 'Resultado', 'Pausar/ativar']);
+  });
+
+  it('job fora da allow-list aparece só para leitura, sem switch', async () => {
+    resolverLista([{ ...NUNCA_RODOU, jobname: 'copilot-retention-daily', permitido: false }]);
+    render(<CronJobsTab />, { wrapper: TestQueryWrapper });
+
+    expect(await screen.findByText('copilot-retention-daily')).toBeInTheDocument();
+    // 26/11/2026: com o filtro antigo este job (7 falhas em 7 dias) nem aparecia na tela.
+    expect(screen.getByText('Somente leitura')).toBeInTheDocument();
+    expect(screen.queryByRole('switch')).not.toBeInTheDocument();
   });
 
   it('estado vazio quando a lista volta sem jobs', async () => {
