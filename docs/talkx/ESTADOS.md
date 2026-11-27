@@ -32,20 +32,21 @@ com `VITE_TALKX_KIT=1`, lido de `src/components/talkx/kit/forcedState.ts`):
 | `src/components/talkx/TalkXSegments.tsx` | `515`, `517` | `440`, `513`, `623` | `450`, `509` | — | — | — |
 | `src/components/talkx/TalkXSettings.tsx` | — | `33` | `29` | — | — | — |
 | `src/components/talkx/TalkXSuppression.tsx` | `616`, `618` | `614`, `694`, `850` | `610` | — | — | — |
-| `src/components/talkx/TalkXTemplateEditor.tsx` | — | `519` | `515` | — | — | — |
+| `src/components/talkx/TalkXTemplateEditor.tsx` | — | `500` | `496` | — | — | — |
 | `src/components/talkx/TalkXTemplateImportDialog.tsx` | — | — | — | — | — | — |
-| `src/components/talkx/TalkXTemplates.tsx` | `422`, `426`, `433` | `374`, `420`, `462`, `496` | `416` | — | — | — |
+| `src/components/talkx/TalkXTemplateTestDialog.tsx` | — | — | — | — | — | — |
+| `src/components/talkx/TalkXTemplates.tsx` | `432`, `436`, `443` | `384`, `430`, `472`, `506` | `426` | — | — | — |
 | `src/components/talkx/TalkXView.tsx` | `573` | `63`, `517`, `570` | `566` | — | `706` | — |
 | `src/components/talkx/TalkXWizardDelivery.tsx` | — | — | — | — | `66` | — |
 
 ## Resumo
 
-- **Vazio**: 9 de 23 telas
-- **Carregando (esqueleto)**: 12 de 23 telas
-- **Erro de consulta**: 12 de 23 telas
-- **CRM 360 indisponível**: 0 de 23 telas
-- **WhatsApp desconectado**: 3 de 23 telas
-- **Sem permissão**: 0 de 23 telas
+- **Vazio**: 9 de 24 telas
+- **Carregando (esqueleto)**: 12 de 24 telas
+- **Erro de consulta**: 12 de 24 telas
+- **CRM 360 indisponível**: 0 de 24 telas
+- **WhatsApp desconectado**: 3 de 24 telas
+- **Sem permissão**: 0 de 24 telas
 
 ## Como usar
 

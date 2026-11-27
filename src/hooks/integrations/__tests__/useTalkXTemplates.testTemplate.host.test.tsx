@@ -67,7 +67,7 @@ describe('SEC-FE-01 — testTemplate manda o JWT só para o host canônico', () 
     const { result } = renderHook(() => useTalkXTemplates(), { wrapper: criarWrapper() });
     await waitFor(() => expect(result.current.testTemplate).toBeTypeOf('function'));
 
-    await result.current.testTemplate({ templateContent: 'Olá', phone: '+5511999999999' });
+    await result.current.testTemplate({ templateContent: 'Olá', phone: '+5511999999999', connectionId: 'conn-1' });
 
     expect(fetchMock).toHaveBeenCalledTimes(1);
     const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
@@ -81,6 +81,7 @@ describe('SEC-FE-01 — testTemplate manda o JWT só para o host canônico', () 
       action: 'test',
       templateContent: 'Olá',
       phone: '+5511999999999',
+      connectionId: 'conn-1',
     });
   });
 });

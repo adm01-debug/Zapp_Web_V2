@@ -61,6 +61,12 @@ vi.mock('@/hooks/integrations/useTalkXTemplates', () => ({
   }),
 }));
 
+// A janela "Testar template" escolhe a conexão que envia (react-query real no
+// componente): aqui a lista vem fixa, sem rede.
+vi.mock('@/hooks/connections/useConnectionOptions', () => ({
+  useConnectionOptions: () => ({ data: [{ id: 'conn-1', name: 'WhatsApp 1', instance_id: 'i1' }], isLoading: false }),
+}));
+
 import { TalkXTemplateEditor } from '../TalkXTemplateEditor';
 
 const renderEditor = () => render(
