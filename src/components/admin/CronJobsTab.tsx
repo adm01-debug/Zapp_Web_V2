@@ -83,7 +83,7 @@ export function CronJobsTab() {
           <CardTitle className="flex items-center gap-2 text-base">
             <CalendarClock className="w-5 h-5 text-primary" aria-hidden="true" /> Tarefas agendadas
           </CardTitle>
-          <p className="text-sm text-muted-foreground">Agendadores do banco que a aplicação usa. Pausar um deles interrompe a rotina até ser reativado.</p>
+          <p className="text-sm text-muted-foreground">Agendadores do banco que a aplicação usa. Pausar um deles interrompe a rotina até ser reativado. Tarefas de manutenção e de limpeza aparecem como leitura: elas não têm caminho de pausa.</p>
         </div>
         <Button variant="outline" size="sm" onClick={() => void recarregar()} disabled={alterando !== null}>
           <RefreshCw className="w-4 h-4 mr-2" aria-hidden="true" /> Atualizar
@@ -132,13 +132,19 @@ export function CronJobsTab() {
                       )}
                     </TableCell>
                     <TableCell className="text-right">
-                      <Switch
-                        checked={tarefa.active}
-                        disabled={alterando !== null}
-                        aria-label={tarefa.active ? `Pausar a tarefa ${tarefa.jobname}` : `Ativar a tarefa ${tarefa.jobname}`}
-                        onCheckedChange={() => setConfirmacao(tarefa)}
-                      />
-                      {emAlteracao && <span className="sr-only" role="status">Alterando {tarefa.jobname}…</span>}
+                      {tarefa.permitido ? (
+                        <>
+                          <Switch
+                            checked={tarefa.active}
+                            disabled={alterando !== null}
+                            aria-label={tarefa.active ? `Pausar a tarefa ${tarefa.jobname}` : `Ativar a tarefa ${tarefa.jobname}`}
+                            onCheckedChange={() => setConfirmacao(tarefa)}
+                          />
+                          {emAlteracao && <span className="sr-only" role="status">Alterando {tarefa.jobname}…</span>}
+                        </>
+                      ) : (
+                        <span className="text-xs text-muted-foreground">Somente leitura</span>
+                      )}
                     </TableCell>
                   </TableRow>
                 );

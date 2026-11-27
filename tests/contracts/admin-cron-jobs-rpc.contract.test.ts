@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { readFileSync, readdirSync } from 'node:fs';
+import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 
 // Contrato da migration das RPCs do painel admin de cron jobs (paridade V3 -> V2, 11/10/2026).
@@ -12,10 +12,28 @@ const RAIZ = process.cwd();
 const DIR_MIGRACOES = join(RAIZ, 'supabase', 'migrations');
 const ARQ_TIPOS = join(RAIZ, 'src', 'integrations', 'supabase', 'types.ts');
 
+// O contrato da ALLOW-LIST e do TOGGLE vive na migration original (20261011173000). O nome
+// do arquivo fica fixado para que uma migration futura com "admin_cron_jobs" no nome nao
+// troque o alvo deste teste: a definicao VIGENTE da leitura e lida por
+// `lerUltimaDefinicaoDeLista()` (painel_tarefas_visiveis, 27/11/2026).
+const ARQ_CONTRATO_ALLOWLIST = '20261011173000_admin_cron_jobs.sql';
+
 function lerMigration(): string {
-  const nome = readdirSync(DIR_MIGRACOES).find((f) => f.includes('admin_cron_jobs') && f.endsWith('.sql'));
-  if (!nome) throw new Error('migration admin_cron_jobs nao encontrada');
-  return readFileSync(join(DIR_MIGRACOES, nome), 'utf8');
+  const caminho = join(DIR_MIGRACOES, ARQ_CONTRATO_ALLOWLIST);
+  if (!existsSync(caminho)) throw new Error('migration ' + ARQ_CONTRATO_ALLOWLIST + ' nao encontrada');
+  return readFileSync(caminho, 'utf8');
+}
+
+// A definicao mais NOVA de admin_list_cron_jobs entre todas as migrations (a efetiva no
+// banco). A leitura deixou de filtrar pela allow-list em 27/11/2026 para que a aba "Tarefas
+// agendadas" mostre tambem o job que nao pode ser pausado.
+function lerUltimaDefinicaoDeLista(): string {
+  const arquivos = readdirSync(DIR_MIGRACOES).filter((f) => f.endsWith('.sql')).sort().reverse();
+  for (const nome of arquivos) {
+    const conteudo = readFileSync(join(DIR_MIGRACOES, nome), 'utf8');
+    if (/(create or replace\s+)?function public\.admin_list_cron_jobs\s*\(/i.test(conteudo)) return conteudo;
+  }
+  throw new Error('nenhuma migration declara admin_list_cron_jobs');
 }
 
 const sql = lerMigration();
@@ -89,6 +107,22 @@ describe('contrato admin_list_cron_jobs / admin_toggle_cron_job', () => {
     expect(corpo).not.toMatch(/vacuum-|cleanup-/);
   });
 
+  it('a leitura vigente lista TODOS os jobs e separa quem aceita ligar/desligar', () => {
+    const sqlLista = lerUltimaDefinicaoDeLista();
+    const inicio = sqlLista.search(/(create or replace\s+)?function public\.admin_list_cron_jobs\s*\(/i);
+    const corpo = sqlLista.slice(inicio, sqlLista.indexOf('$$;', inicio));
+    // 26/11/2026: com o filtro da allow-list na LEITURA, 21 dos 30 jobs do banco ficavam
+    // fora da tela — foi assim que copilot-retention-daily juntou 7 falhas em 7 dias sem
+    // aparecer em lugar nenhum. A leitura nao filtra; quem separa e a coluna `permitido`.
+    expect(corpo).not.toMatch(/where\s+j\.jobname = any \(public\.admin_cron_jobs_permitidos\(\)\)/i);
+    expect(corpo).toMatch(/j\.jobname = any \(public\.admin_cron_jobs_permitidos\(\)\)/i);
+    expect(corpo).toMatch(/permitido boolean/i);
+    // a leitura segue restrita a admin e sem acesso de PUBLIC/anon/service_role
+    expect(corpo).toMatch(/if not public\.is_admin\(auth\.uid\(\)\) then/i);
+    expect(sqlLista).toMatch(/revoke all on function public\.admin_list_cron_jobs\(\)\s*from public, anon, service_role;/i);
+    expect(sqlLista).toMatch(/grant execute on function public\.admin_list_cron_jobs\(\) to authenticated;/i);
+  });
+
   it('liga/desliga NO LUGAR (cron.alter_job) e nunca recria por unschedule/schedule', () => {
     const inicio = sql.indexOf('CREATE OR REPLACE FUNCTION public.admin_toggle_cron_job');
     const corpo = sql.slice(inicio, sql.indexOf('$$;', inicio));
@@ -124,10 +158,12 @@ describe('contrato admin_list_cron_jobs / admin_toggle_cron_job', () => {
     expect(sql).not.toMatch(/grant execute on function [^;]+ to [^;]*\bpublic\b/i);
   });
 
-  it('os tipos gerados batem com os campos do retorno de admin_list_cron_jobs', () => {
-    const inicio = sql.indexOf('CREATE OR REPLACE FUNCTION public.admin_list_cron_jobs');
-    const retorno = sql
-      .slice(inicio, sql.indexOf(') language', inicio))
+  it('os tipos gerados batem com os campos do retorno vigente de admin_list_cron_jobs', () => {
+    const sqlLista = lerUltimaDefinicaoDeLista();
+    const inicio = sqlLista.search(/(create or replace\s+)?function public\.admin_list_cron_jobs\s*\(/i);
+    const corpoDef = sqlLista.slice(inicio);
+    const retorno = corpoDef
+      .slice(0, corpoDef.search(/\bas\s+\$\$/i))
       .match(/returns table \(([\s\S]*?)\)/i)![1]
       .split(',')
       .map((l) => l.trim().split(/\s+/)[0])
