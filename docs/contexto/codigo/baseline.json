@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "f9097fe74b318f421570a1c8dd39738579ffd093",
+  "commit": "b7a8641b139b1a0c844685e9d161d84e2dcb9729",
   "branch": "main",
-  "data_commit": "2026-11-27T01:00:34Z",
+  "data_commit": "2026-11-27T01:14:52Z",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "b7a8641b",
+    "data": "2026-11-27",
+    "assunto": "feat(journey): recupera o hook da timeline do historico (J08) (#3429)"
+   },
    {
     "sha": "f9097fe7",
     "data": "2026-11-27",
@@ -126,14 +131,9 @@
     "sha": "515fbecb",
     "data": "2026-11-26",
     "assunto": "feat: liga o retorno da campanha (conversões, receita e ROI) no Analytics (#3404)"
-   },
-   {
-    "sha": "73c76a78",
-    "data": "2026-11-26",
-    "assunto": "chore(db): sincronizar artefatos derivados do banco (#3399)"
    }
   ],
-  "arquivos_mudados_7d": 2887,
+  "arquivos_mudados_7d": 2889,
   "pastas_mais_mudadas_30d": [
    {
     "pasta": "docs/contexto/supabase",
@@ -314,21 +314,21 @@
   ]
  },
  "contagens": {
-  "arquivos_total": 14926,
-  "arquivos_codigo": 5249,
-  "linhas_codigo": 971508,
+  "arquivos_total": 14928,
+  "arquivos_codigo": 5251,
+  "linhas_codigo": 972827,
   "rotas": 21,
   "rotas_http_backend": 11,
   "vistas_por_id": 56,
   "itens_menu": 62,
   "modulos": 149,
   "componentes": 959,
-  "hooks": 538,
+  "hooks": 539,
   "edge_functions": 94,
   "tabelas": 224,
   "migrations": 1169,
   "cron_jobs": 29,
-  "testes": 2871,
+  "testes": 2872,
   "workflows": 26,
   "scripts": 458,
   "docs_md": 3989
@@ -759,8 +759,8 @@
    "linhas": 3293
   },
   "src/hooks": {
-   "arquivos": 1075,
-   "linhas": 174536
+   "arquivos": 1077,
+   "linhas": 175855
   },
   "src/i18n": {
    "arquivos": 2,
@@ -947,7 +947,7 @@
   "ts_ignore": 0,
   "eslint_disable": 1,
   "todos": 54,
-  "arquivos_acima_500_linhas": 115
+  "arquivos_acima_500_linhas": 116
  },
  "todos": [
   {

@@ -8617,6 +8617,17 @@
    "src/integrations/supabase/client.ts",
    "src/lib/journey/rawRows.ts"
   ],
+  "src/hooks/chat/journey/useJourneyTimeline.ts": [
+   "src/hooks/chat/journey/useJourneyCalls.ts",
+   "src/hooks/chat/journey/useJourneyEmails.ts",
+   "src/integrations/supabase/client.ts",
+   "src/lib/journey/mappers.ts",
+   "src/lib/journey/model.ts",
+   "src/lib/journey/periodRange.ts",
+   "src/lib/journey/rawRows.ts",
+   "src/lib/journey/stats.ts",
+   "src/lib/localDay.ts"
+  ],
   "src/hooks/chat/useAutomationSuggestions.ts": [
    "src/integrations/supabase/client.ts"
   ],

@@ -1,7 +1,7 @@
 # Contexto do projeto para agentes de IA
 
 GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.
-Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR dela) a cada push em `main` e a cada 10 minutos pelo workflow `contexto.yml`; índice único das três fontes em `docs/contexto/00-INDEX.md`. Gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `f9097fe74b318f421570a1c8dd39738579ffd093` (2026-11-27T01:00:34Z).
+Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR dela) a cada push em `main` e a cada 10 minutos pelo workflow `contexto.yml`; índice único das três fontes em `docs/contexto/00-INDEX.md`. Gere local com `node scripts/ai-context/gerar.mjs`. Commit-base: `b7a8641b139b1a0c844685e9d161d84e2dcb9729` (2026-11-27T01:14:52Z).
 
 ## Como usar (leia antes de planejar ou executar qualquer tarefa)
 1. **Tela/rota/menu** → `rotas.json` (url/vista/menu → arquivo → hooks → tabelas → edges; `rotas_http_backend` para APIs) e `modulos.json` (módulo inteiro + dependências entre módulos).
@@ -14,7 +14,7 @@ Publicado em `docs/contexto/codigo/` na branch `contexto` (gerada, nunca abra PR
 Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua tarefa; não carregue tudo.
 
 ## Stack
-- linguagens: TypeScript (4604), Markdown (3989), SQL (3080), JSON (1939), JavaScript (524), Shell (256), Python (125), YAML (43)
+- linguagens: TypeScript (4606), Markdown (3989), SQL (3080), JSON (1939), JavaScript (524), Shell (256), Python (125), YAML (43)
 - linguagem_principal: TypeScript
 - framework: React
 - backend_http: n/d
@@ -34,21 +34,21 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 ## Números
 | item | qtd |
 |---|---|
-| arquivos_total | 14926 |
-| arquivos_codigo | 5249 |
-| linhas_codigo | 971508 |
+| arquivos_total | 14928 |
+| arquivos_codigo | 5251 |
+| linhas_codigo | 972827 |
 | rotas | 21 |
 | rotas_http_backend | 11 |
 | vistas_por_id | 56 |
 | itens_menu | 62 |
 | modulos | 149 |
 | componentes | 959 |
-| hooks | 538 |
+| hooks | 539 |
 | edge_functions | 94 |
 | tabelas | 224 |
 | migrations | 1169 |
 | cron_jobs | 29 |
-| testes | 2871 |
+| testes | 2872 |
 | workflows | 26 |
 | scripts | 458 |
 | docs_md | 3989 |
@@ -56,9 +56,9 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 ## Onde ficam as coisas
 - telas: src/components (54), src/pages (22)
 - componentes: src/components (919), src/pages (31), src/features (2)
-- hooks: src/hooks (451), src/components (75), src/contexts (2)
+- hooks: src/hooks (452), src/components (75), src/contexts (2)
 - servicos_logica: src/lib (157), src/services (21), src/utils (8)
-- testes: co-localizado (__tests__) (2143), outro (260), co-localizado (*.test) (203)
+- testes: co-localizado (__tests__) (2144), outro (260), co-localizado (*.test) (203)
 - edge_functions: supabase/functions
 - migrations: supabase/migrations
 - scripts: scripts/db-audit (309), scripts/ci (43), scripts/e2e-isolated (41)
@@ -124,7 +124,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 | hooks/auth | 0 | 0 | 7 | 18 | 3 | 5 |
 | hooks/business | 0 | 0 | 15 | 32 | 2 | 15 |
 | hooks/calls | 0 | 0 | 8 | 31 | 4 | 8 |
-| hooks/chat | 0 | 0 | 53 | 88 | 6 | 39 |
+| hooks/chat | 0 | 0 | 54 | 89 | 6 | 39 |
 | hooks/communication | 0 | 0 | 17 | 27 | 7 | 6 |
 | hooks/copilot | 0 | 0 | 64 | 76 | 2 | 8 |
 | hooks/crm | 0 | 0 | 28 | 48 | 4 | 17 |
@@ -404,8 +404,8 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - possiveis_segredos_no_codigo: 4 — ex.: scripts/ai-context/cenarios.mjs:102, scripts/ci/edge-coverage-authz.unit.mjs:398, scripts/ci/inventario-banco.unit.mjs:147
 
 ## Grafo de código (graphify)
-- 96997 nós · 162883 arestas · 9108 comunidades · grafo do commit `f9097fe7`
-- comunidades maiores: Communities (8869 total, 3472 thin omitted) (5377), cn (1201), lucide-react (1172), @tanstack/react-query (970), vitest (796), TalkXSuppression.tsx (773), ref_node_fs (604), DashboardView.tsx (566), validation.ts (539), react (515), ExternalProductManagement.tsx (483), schemas.ts (483)
+- 97056 nós · 163031 arestas · 8919 comunidades · grafo do commit `b7a8641b`
+- comunidades maiores: Communities (8869 total, 3472 thin omitted) (5379), lucide-react (1282), react (1227), vitest (930), ref_node_fs (773), cn (739), DashboardView.tsx (700), WorkItemSheet.tsx (491), tooltip.tsx (486), framer-motion (480), TalkXCampaignWizard.tsx (439), chat.ts (400)
 - símbolos mais chamados: cn() (src/lib/utils.ts), useAuth() (src/hooks/auth/useAuth.tsx), jsonResponse() (supabase/functions/_shared/validation.ts), errorResponse() (supabase/functions/_shared/validation.ts), handleCors() (supabase/functions/_shared/validation.ts), fail() (scripts/e2e-isolated/network-proof-policy.mjs), Logger (supabase/functions/_shared/validation.ts), requireEnv() (supabase/functions/_shared/validation.ts), fmtInt() (src/components/talkx/kit/format.ts), useUserRole() (src/hooks/system/useUserRole.ts), .from() (supabase/functions/_shared/evolution-types.ts), validationErrorResponse() (supabase/functions/_shared/schemas.ts)
 - consulta local: `graphify query "<pergunta>"`, `graphify path "<A>" "<B>"`, `graphify explain "<X>"`
 
@@ -547,6 +547,7 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - CHANGELOG topo: [Unreleased]
 
 ## Últimos commits
+- 2026-11-27 `b7a8641b` feat(journey): recupera o hook da timeline do historico (J08) (#3429)
 - 2026-11-27 `f9097fe7` chore(audit): reauditoria GitHub Actions 2026-11-26 (#3403)
 - 2026-11-27 `196b1bae` feat(talkx): tela para arquivar, duplicar, excluir e testar template (#3426)
 - 2026-11-27 `c6865c72` feat(admin): aba Tarefas agendadas passa a ver todos os 30 jobs do banco (#3422)
@@ -561,7 +562,6 @@ Os JSONs são grandes: filtre com `grep`/`jq` pelo caminho/arquivo/tabela da sua
 - 2026-11-26 `d91ac94f` fix(db): cron de retenção do copiloto nunca gravou (subquery + kind errado) (#3417)
 - 2026-11-26 `4e81b2b1` feat(admin): aba Orçamento no Consumo IA — reservado x consumido do ledger (#3420)
 - 2026-11-26 `96edd3a8` feat(admin): dominios confiaveis do cadastro automatico ganham tela (#3416)
-- 2026-11-26 `9d6d73a6` feat(sla): alertas de SLA ganham trilha auditavel, resolucao e preferencias por usuario (#3411)
 
 ## Arquivos deste diretório
 - `docs/contexto/codigo/rotas.json`

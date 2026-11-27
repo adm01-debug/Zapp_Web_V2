@@ -1,7 +1,7 @@
 {
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
- "total": 538,
+ "total": 539,
  "hooks": [
   {
    "arquivo": "analise-prs/resgate-261118-lote2/src/hooks/useMotionSeguro.ts",
@@ -3441,8 +3441,10 @@
     "useMemo"
    ],
    "canais_realtime": [],
-   "usado_por": 0,
-   "usado_por_arquivos": [],
+   "usado_por": 1,
+   "usado_por_arquivos": [
+    "src/hooks/chat/journey/useJourneyTimeline.ts"
+   ],
    "coberto_por_testes": 1
   },
   {
@@ -3460,6 +3462,40 @@
    "hooks_internos": [
     "useInfiniteQuery",
     "useMemo"
+   ],
+   "canais_realtime": [],
+   "usado_por": 1,
+   "usado_por_arquivos": [
+    "src/hooks/chat/journey/useJourneyTimeline.ts"
+   ],
+   "coberto_por_testes": 1
+  },
+  {
+   "arquivo": "src/hooks/chat/journey/useJourneyTimeline.ts",
+   "hooks_exportados": [
+    "useJourneyTimeline"
+   ],
+   "linhas": 820,
+   "dominio": "hooks/chat",
+   "tabelas": [
+    "calls",
+    "contact_notes",
+    "conversation_events",
+    "conversation_tasks",
+    "deal_activities",
+    "email_messages",
+    "messages",
+    "sales_deals"
+   ],
+   "rpcs": [],
+   "edges": [],
+   "hooks_internos": [
+    "useCallback",
+    "useInfiniteQuery",
+    "useJourneyCalls",
+    "useJourneyEmails",
+    "useMemo",
+    "useQuery"
    ],
    "canais_realtime": [],
    "usado_por": 0,

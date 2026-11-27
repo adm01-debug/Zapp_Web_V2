@@ -5,18 +5,18 @@
   "vitest",
   "playwright"
  ],
- "total": 2871,
+ "total": 2872,
  "por_tipo": {
   "contrato": 116,
   "e2e": 76,
   "pytest": 3,
   "qa": 10,
-  "unit": 2574
+  "unit": 2575
  },
  "onde_ficam": [
   {
    "padrao": "co-localizado (__tests__)",
-   "arquivos": 2143
+   "arquivos": 2144
   },
   {
    "padrao": "outro",
@@ -17923,6 +17923,16 @@
    "casos": 7
   },
   {
+   "arquivo": "src/hooks/chat/journey/__tests__/useJourneyTimeline.test.tsx",
+   "tipo": "unit",
+   "linhas": 499,
+   "testa": [
+    "src/hooks/chat/journey/useJourneyTimeline.ts",
+    "src/lib/journey/periodRange.ts"
+   ],
+   "casos": 13
+  },
+  {
    "arquivo": "src/hooks/communication/__tests__/audioExclusivo.players.test.tsx",
    "tipo": "unit",
    "linhas": 236,
@@ -27195,6 +27205,7 @@
   "src/hooks/chat/journey/useJourneyActors.ts": 1,
   "src/hooks/chat/journey/useJourneyCalls.ts": 1,
   "src/hooks/chat/journey/useJourneyEmails.ts": 1,
+  "src/hooks/chat/journey/useJourneyTimeline.ts": 1,
   "src/hooks/chat/sendQueue.ts": 1,
   "src/hooks/chat/snoozeDurations.ts": 1,
   "src/hooks/chat/typingPresenceStore.ts": 2,
@@ -27620,7 +27631,7 @@
   "src/lib/journey/health.ts": 1,
   "src/lib/journey/mappers.ts": 1,
   "src/lib/journey/model.ts": 6,
-  "src/lib/journey/periodRange.ts": 3,
+  "src/lib/journey/periodRange.ts": 4,
   "src/lib/journey/rawRows.ts": 1,
   "src/lib/journey/stats.ts": 1,
   "src/lib/lazyToast.ts": 4,

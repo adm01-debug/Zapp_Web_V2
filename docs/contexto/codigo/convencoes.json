@@ -12,7 +12,7 @@
    "src/features (2)"
   ],
   "hooks": [
-   "src/hooks (451)",
+   "src/hooks (452)",
    "src/components (75)",
    "src/contexts (2)"
   ],
@@ -22,7 +22,7 @@
    "src/utils (8)"
   ],
   "testes": [
-   "co-localizado (__tests__) (2143)",
+   "co-localizado (__tests__) (2144)",
    "outro (260)",
    "co-localizado (*.test) (203)"
   ],
@@ -66,11 +66,11 @@
  "commits": {
   "convencao": "conventional commits (observado)",
   "exemplos": [
+   "feat(journey): recupera o hook da timeline do historico (J08) (#3429)",
    "chore(audit): reauditoria GitHub Actions 2026-11-26 (#3403)",
    "feat(talkx): tela para arquivar, duplicar, excluir e testar template (#3426)",
    "feat(admin): aba Tarefas agendadas passa a ver todos os 30 jobs do banco (#3422)",
-   "fix(talkx): trilha do envio de teste volta a ser legivel (grant select) (#3410)",
-   "feat: tela da fila da dead-letter de webhooks com replay (#3424)"
+   "fix(talkx): trilha do envio de teste volta a ser legivel (grant select) (#3410)"
   ]
  },
  "pr_template": ".github/PULL_REQUEST_TEMPLATE.md",

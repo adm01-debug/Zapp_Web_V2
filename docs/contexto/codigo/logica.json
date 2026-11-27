@@ -870,7 +870,7 @@
    "zod_schemas": 0,
    "flags": [],
    "papeis": [],
-   "usado_por": 405,
+   "usado_por": 406,
    "usado_por_modulos": [
     "components/admin",
     "components/agents",
@@ -3491,7 +3491,7 @@
    "zod_schemas": 0,
    "flags": [],
    "papeis": [],
-   "usado_por": 1,
+   "usado_por": 2,
    "usado_por_modulos": [
     "hooks/chat"
    ],
@@ -3530,7 +3530,7 @@
    "zod_schemas": 0,
    "flags": [],
    "papeis": [],
-   "usado_por": 5,
+   "usado_por": 6,
    "usado_por_modulos": [
     "components/inbox",
     "hooks/chat",
@@ -3564,12 +3564,13 @@
    "zod_schemas": 0,
    "flags": [],
    "papeis": [],
-   "usado_por": 2,
+   "usado_por": 3,
    "usado_por_modulos": [
     "components/inbox",
+    "hooks/chat",
     "lib"
    ],
-   "coberto_por_testes": 3,
+   "coberto_por_testes": 4,
    "orfao": false
   },
   {
@@ -3596,7 +3597,7 @@
    "zod_schemas": 0,
    "flags": [],
    "papeis": [],
-   "usado_por": 3,
+   "usado_por": 4,
    "usado_por_modulos": [
     "hooks/chat",
     "lib/journey"
@@ -3654,10 +3655,12 @@
    "zod_schemas": 0,
    "flags": [],
    "papeis": [],
-   "usado_por": 0,
-   "usado_por_modulos": [],
+   "usado_por": 1,
+   "usado_por_modulos": [
+    "hooks/chat"
+   ],
    "coberto_por_testes": 1,
-   "orfao": true
+   "orfao": false
   },
   {
    "arquivo": "src/lib/lazyToast.ts",
@@ -3757,7 +3760,7 @@
    "zod_schemas": 0,
    "flags": [],
    "papeis": [],
-   "usado_por": 31,
+   "usado_por": 32,
    "usado_por_modulos": [
     "components/contacts",
     "components/dashboard",

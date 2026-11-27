@@ -1,8 +1,8 @@
 {
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
- "nos": 2470,
- "arestas": 8509,
+ "nos": 2471,
+ "arestas": 8518,
  "hubs": [
   {
    "arquivo": "src/lib/utils.ts",
@@ -10,7 +10,7 @@
   },
   {
    "arquivo": "src/integrations/supabase/client.ts",
-   "importado_por": 446
+   "importado_por": 447
   },
   {
    "arquivo": "src/components/ui/button.tsx",
@@ -126,7 +126,7 @@
   },
   {
    "arquivo": "src/lib/localDay.ts",
-   "importado_por": 46
+   "importado_por": 47
   },
   {
    "arquivo": "src/components/dashboard/overview/DashboardCard.tsx",
@@ -510,8 +510,7 @@
   "src/hooks/business/index.ts",
   "src/hooks/chat/index.ts",
   "src/hooks/chat/journey/useJourneyActors.ts",
-  "src/hooks/chat/journey/useJourneyCalls.ts",
-  "src/hooks/chat/journey/useJourneyEmails.ts",
+  "src/hooks/chat/journey/useJourneyTimeline.ts",
   "src/hooks/chat/useAutomationSuggestions.ts",
   "src/hooks/chat/useMessageStatus.ts",
   "src/hooks/communication/index.ts",
@@ -550,7 +549,6 @@
   "src/lib/calls/WhatsAppCallEngine.ts",
   "src/lib/chartColors.ts",
   "src/lib/engagementScore.ts",
-  "src/lib/journey/stats.ts",
   "src/lib/mentionText.ts",
   "src/lib/runGuard.ts",
   "src/lib/zappSchemas.ts",

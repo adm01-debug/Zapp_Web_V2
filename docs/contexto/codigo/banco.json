@@ -5376,7 +5376,7 @@
     "so_na_migration": [],
     "so_no_types": []
    },
-   "usada_no_front": 4,
+   "usada_no_front": 5,
    "usada_em_edges": [
     "get-call-recording",
     "sync-call-records"
@@ -7875,7 +7875,7 @@
     "so_na_migration": [],
     "so_no_types": []
    },
-   "usada_no_front": 6,
+   "usada_no_front": 7,
    "usada_em_edges": [
     "_shared",
     "ai-suggest-reply",
@@ -9161,7 +9161,7 @@
     "so_na_migration": [],
     "so_no_types": []
    },
-   "usada_no_front": 5,
+   "usada_no_front": 6,
    "usada_em_edges": [
     "_shared"
    ],
@@ -9838,7 +9838,7 @@
     "so_na_migration": [],
     "so_no_types": []
    },
-   "usada_no_front": 6,
+   "usada_no_front": 7,
    "usada_em_edges": [
     "assistant-gateway",
     "copilot-live",
@@ -12124,7 +12124,7 @@
     "so_na_migration": [],
     "so_no_types": []
    },
-   "usada_no_front": 2,
+   "usada_no_front": 3,
    "usada_em_edges": [],
    "triggers": [],
    "sem_rls": false,
@@ -13107,7 +13107,7 @@
     "so_na_migration": [],
     "so_no_types": []
    },
-   "usada_no_front": 4,
+   "usada_no_front": 5,
    "usada_em_edges": [
     "_shared",
     "crm-integration",
@@ -16629,7 +16629,7 @@
     "so_na_migration": [],
     "so_no_types": []
    },
-   "usada_no_front": 46,
+   "usada_no_front": 47,
    "usada_em_edges": [
     "_shared",
     "ai-auto-tag",
@@ -22092,7 +22092,7 @@
     "so_na_migration": [],
     "so_no_types": []
    },
-   "usada_no_front": 3,
+   "usada_no_front": 4,
    "usada_em_edges": [
     "assistant-gateway"
    ],
