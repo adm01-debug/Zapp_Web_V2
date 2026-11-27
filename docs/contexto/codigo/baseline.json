@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "1c90916bd587db99cb753688122f535e72c114b4",
+  "commit": "c6865c72fb4de063d9543d427e633fb251601178",
   "branch": "main",
-  "data_commit": "2026-11-26T23:38:08Z",
+  "data_commit": "2026-11-27T00:17:21Z",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "c6865c72",
+    "data": "2026-11-27",
+    "assunto": "feat(admin): aba Tarefas agendadas passa a ver todos os 30 jobs do banco (#3422)"
+   },
    {
     "sha": "1c90916b",
     "data": "2026-11-26",
@@ -126,14 +131,9 @@
     "sha": "284367aa",
     "data": "2026-11-26",
     "assunto": "feat: trilha de auditoria das conexoes e reconciliacao de INSTANCE_GONE (#3398)"
-   },
-   {
-    "sha": "501f3bb5",
-    "data": "2026-11-26",
-    "assunto": "fix: trava exclusao de template do Talk X em campanha (N-127/N-127b) (#3394)"
    }
   ],
-  "arquivos_mudados_7d": 2866,
+  "arquivos_mudados_7d": 2872,
   "pastas_mais_mudadas_30d": [
    {
     "pasta": "docs/contexto/supabase",
@@ -314,9 +314,9 @@
   ]
  },
  "contagens": {
-  "arquivos_total": 14922,
+  "arquivos_total": 14923,
   "arquivos_codigo": 5247,
-  "linhas_codigo": 970918,
+  "linhas_codigo": 970981,
   "rotas": 21,
   "rotas_http_backend": 11,
   "vistas_por_id": 56,
@@ -326,7 +326,7 @@
   "hooks": 538,
   "edge_functions": 94,
   "tabelas": 224,
-  "migrations": 1168,
+  "migrations": 1169,
   "cron_jobs": 29,
   "testes": 2870,
   "workflows": 26,
@@ -740,7 +740,7 @@
   },
   "src/components": {
    "arquivos": 2358,
-   "linhas": 400728
+   "linhas": 400755
   },
   "src/config": {
    "arquivos": 3,
@@ -824,7 +824,7 @@
   },
   "tests/contracts": {
    "arquivos": 97,
-   "linhas": 21249
+   "linhas": 21285
   },
   "vite.config.ts": {
    "arquivos": 1,

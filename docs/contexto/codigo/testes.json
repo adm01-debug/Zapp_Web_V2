@@ -3419,7 +3419,7 @@
   {
    "arquivo": "src/components/admin/__tests__/AdminView.tarefas-agendadas.test.tsx",
    "tipo": "unit",
-   "linhas": 95,
+   "linhas": 96,
    "testa": [
     "src/components/admin/AdminView.tsx"
    ],
@@ -3457,11 +3457,11 @@
   {
    "arquivo": "src/components/admin/__tests__/CronJobsTab.tarefas.test.tsx",
    "tipo": "unit",
-   "linhas": 213,
+   "linhas": 226,
    "testa": [
     "src/components/admin/CronJobsTab.tsx"
    ],
-   "casos": 12
+   "casos": 13
   },
   {
    "arquivo": "src/components/admin/__tests__/CrossTabDedupePanel.test.tsx",
@@ -25348,9 +25348,9 @@
   {
    "arquivo": "tests/contracts/admin-cron-jobs-rpc.contract.test.ts",
    "tipo": "contrato",
-   "linhas": 145,
+   "linhas": 181,
    "testa": [],
-   "casos": 9
+   "casos": 11
   },
   {
    "arquivo": "tests/contracts/ai-auto-tag-writes.contract.test.ts",

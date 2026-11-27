@@ -1,6 +1,6 @@
 # 10 · ACESSO E SEGURANÇA — quem pode o quê
 
-> Gerado automaticamente por AI Context Sync v1.3.2 · commit `1c90916bd5` · branch `main` · 2026-11-27 00:00 UTC
+> Gerado automaticamente por AI Context Sync v1.3.2 · commit `c6865c72fb` · branch `main` · 2026-11-27 00:32 UTC
 > Não edite à mão — regras humanas vão em `manual/`.
 
 ## Perfis / roles identificados
@@ -248,7 +248,7 @@
 
 > `—` com RLS ligado = ninguém além de service_role. `sem RLS` = qualquer chave anon lê/escreve tudo.
 
-## Onde o RLS é IGNORADO (service_role) — 1214 arquivo(s)
+## Onde o RLS é IGNORADO (service_role) — 1215 arquivo(s)
 
 - `analise-prs/resgate-261118-lote2/scripts/db-audit/validate-post-apply.mjs`
 - `analise-prs/resgate-261118-lote2/supabase/migrations/20261016193300_copilot_tick_trigger.sql`
@@ -400,7 +400,7 @@
 - `docs/contexto/supabase/migrations/20260319210228_f33bb285-7797-4bfe-93c6-94f4096b83a6.sql`
 - `docs/contexto/supabase/migrations/20260320133103_90061855-3227-445f-a47a-a15c38ac5cf2.sql`
 - `docs/contexto/supabase/migrations/20260401002519_b7df7d1f-2caf-48c2-a23b-62df9f4fc772.sql`
-- … +1064 (lista completa em `context.json`)
+- … +1065 (lista completa em `context.json`)
 
 ## Funções SQL `SECURITY DEFINER` (rodam com privilégio do dono, ignoram RLS)
 
@@ -889,7 +889,7 @@ Middleware matcher (Next.js): nenhum
 | grant | anon, authenticated, service_role | all | `talkx_settings` |
 | grant | anon, authenticated, service_role | execute | `multiplix_audiences_validate_shared_roles`, `multiplix_audiences_validate_shared_roles`, `auth.uid`, `auth.uid` |
 | grant | authenticated | delete | `multiplix_recipients` |
-| grant | authenticated | execute | `e2e_fixture_message`, `log_search_event`, `resolve_unconfirmed_message`, `get_team_profiles`, `fn_list_audio_memes_for_user`, `fn_toggle_user_meme_favorite`, `fn_list_audio_meme_categories`, `fn_send_audio_meme`, `mark_first_response`, `mark_first_response`, `mark_first_response`, `dashboard_kpi`, `dashboard_hourly_volume`, `dashboard_contact_counts`, `dashboard_hourly_volume` … +203 |
+| grant | authenticated | execute | `e2e_fixture_message`, `log_search_event`, `resolve_unconfirmed_message`, `get_team_profiles`, `fn_list_audio_memes_for_user`, `fn_toggle_user_meme_favorite`, `fn_list_audio_meme_categories`, `fn_send_audio_meme`, `mark_first_response`, `mark_first_response`, `mark_first_response`, `dashboard_kpi`, `dashboard_hourly_volume`, `dashboard_contact_counts`, `dashboard_hourly_volume` … +204 |
 | grant | authenticated | insert | `search_events` |
 | grant | authenticated | insert, select | `t3_errs` |
 | grant | authenticated | insert, update, delete | `feature_flags` |
@@ -972,7 +972,7 @@ Middleware matcher (Next.js): nenhum
 | revoke | public, anon, authenticated | all | `log_search_event`, `talkx_suppress_contact`, `talkx_suppress_contact`, `ai_rate_limit_hit`, `ai_rate_limit_purge`, `ai_budget_reservations`, `ai_budget_reserve`, `ai_budget_settle`, `ai_budget_release`, `ai_budget_reconcile`, `ai_jobs`, `get_ai_jobs_cron_secret`, `enqueue_ai_job`, `claim_ai_jobs`, `heartbeat_ai_job` … +36 |
 | revoke | public, anon, authenticated | execute | `talkx_segment_versions_trim`, `talkx_segment_block_in_use`, `whisper_messages_valida_audio_path`, `whisper_messages_valida_audio_path` |
 | revoke | public, anon, authenticated, service_role | all | `set_default_whatsapp_connection`, `voip_profile_credentials` |
-| revoke | public, anon, service_role | all | `ai_sentiment_summary`, `app_bootstrap` |
+| revoke | public, anon, service_role | all | `ai_sentiment_summary`, `app_bootstrap`, `admin_list_cron_jobs` |
 | revoke | service_role | all | `increment_custom_emoji_use`, `sentiment_trend` |
 | revoke | service_role | all privileges | `webhook_failures`, `audit_logs` |
 | revoke | service_role | execute | `enqueue_outbound_message`, `guard_message_delivery_internal_fields`, `guard_conversation_closure_request_id`, `guard_conversation_event_closure_id`, `mark_pause_investigated` |

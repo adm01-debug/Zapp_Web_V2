@@ -398,7 +398,7 @@
     "CronJobsTab"
    ],
    "export_default": null,
-   "linhas": 174,
+   "linhas": 180,
    "dominio": "components/admin",
    "hooks_locais": [
     "useTarefasAgendadas"

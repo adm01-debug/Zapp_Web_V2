@@ -156,7 +156,7 @@
    "hooks_exportados": [
     "useTarefasAgendadas"
    ],
-   "linhas": 103,
+   "linhas": 110,
    "dominio": "components/admin",
    "tabelas": [],
    "rpcs": [],
