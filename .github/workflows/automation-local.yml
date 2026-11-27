@@ -40,9 +40,11 @@ jobs:
         uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
         with:
           node-version: '24'
+      - name: Garante ripgrep para o inventario de repo
+        run: command -v rg || sudo apt-get install -y ripgrep
       - name: Valida perfis, aliases e encadeamentos
         run: node scripts/automation.mjs doctor --static
       - name: Executa suites registradas de automação
         run: node scripts/automation.mjs test
       - name: Suites explícitas para o inventário de CI existente
-        run: node --test --test-concurrency=1 scripts/automation.unit.mjs scripts/graphify-local.unit.mjs
+        run: node --test --test-concurrency=1 scripts/automation.unit.mjs scripts/graphify-local.unit.mjs scripts/db-audit/talkx-kit-usage.test.mjs scripts/inventario/gerar-repo.unit.mjs
