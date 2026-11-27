@@ -1,6 +1,6 @@
 # 07 · REGRAS DE NEGÓCIO
 
-> Gerado automaticamente por AI Context Sync v1.3.2 · commit `c6865c72fb` · branch `main` · 2026-11-27 00:32 UTC
+> Gerado automaticamente por AI Context Sync v1.3.2 · commit `196b1baef7` · branch `main` · 2026-11-27 00:47 UTC
 > Não edite à mão — regras humanas vão em `manual/`.
 
 ## A. Regras escritas por humanos (`manual/` — prioridade máxima, nunca sobrescrito)
@@ -4701,7 +4701,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | disk-full | `scripts/ci/e2e-isolated-provider-readiness.unit.mjs` |
 | must-not-read-service-role | `scripts/ci/e2e-isolated-provider-readiness.unit.mjs` |
 | synthetic transport rejection | `scripts/ci/e2e-isolated-runtime-probe.unit.mjs` |
-| … +1909 linhas — lista completa em `context.json` | |
+| … +1910 linhas — lista completa em `context.json` | |
 
 ## J. Controle de acesso no código (checagens de perfil/permissão)
 
@@ -4776,7 +4776,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `owner` | `supabase/migrations/20260927270018_team_chat_e28_fix_find_or_create_race.sql` |
 | `anon` | `supabase/migrations/20260927340000_fix_add_agent_xp_negative_and_guard.sql` |
 
-## K. Testes como especificação (23346 testes em 2476 arquivos — nomes completos em `context.json`)
+## K. Testes como especificação (23358 testes em 2477 arquivos — nomes completos em `context.json`)
 
 | Arquivo | Testes | Exemplos do que o sistema DEVE fazer |
 |---|---|---|
@@ -4812,6 +4812,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `tests/contracts/ai-routing.contract.test.ts` | 47 | IA-031/034 — resolveProvider: um padrão por finalidade, nunca arbitrário · exatamente 1 padrão ativo para a finalidade → resolve para ele · 0 padrões → NO_PROVIDER (a ausência vira indisponibilidade explícita) · 2+ padrões para a mesma finalidade → AMBIGUOUS_PROVIDER (jamais escolher uma) … |
 | `src/components/ai/__tests__/ChurnPredictionDashboard.test.tsx` | 46 | ChurnPredictionDashboard · Rendering · renders title · renders subtitle … |
 | `src/components/performance/__tests__/PerformanceMonitor.test.tsx` | 46 | PerformanceMonitor · Rendering · renders title · renders subtitle … |
+| `src/hooks/integrations/__tests__/useTalkXTemplates.test.ts` | 45 | useTalkXTemplates — listagem · carrega a lista com o select do criador e a ordem por uso/atualizacao · expoe lista vazia quando o banco responde null · propaga o erro de RLS/rede da listagem (nao engole) … |
 | `src/components/catalog/__tests__/ExternalProductManagement.test.tsx` | 43 | ExternalProductManagement · mostra o título e a contagem total de produtos · E32: chip de sync recente mostra  · E32: chip de sync com mais de 24h mostra data/hora (tom neutro) … |
 | `src/components/catalog/__tests__/CatalogRail.test.tsx` | 42 | CatalogRail — E51 banner · renderiza a copy do banner e nao inclui o placeholder do mock · usa o 1o produto em destaque COM imagem (ignora destaque sem foto) · le a foto de primary_image_url (campo canonico do ExternalProduct) … |
 | `src/components/catalog/__tests__/SendProductDialog.test.tsx` | 42 | SendProductDialog — Fase 7 (E72-E75 parcial) · mostra o contador de caracteres da mensagem (E73) · acima de 2000 caracteres, desabilita  · dentro do limite,  … |
@@ -4821,7 +4822,6 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `src/hooks/integrations/__tests__/useTalkXSegments.test.ts` | 42 | rulesToPostgrest · fails closed instead of dropping an unknown rule · keeps a valid rule as a PostgREST filter · escapes a trailing backslash before quoting, so the filter string cannot stay open … |
 | `src/providers/__tests__/CallSessionProvider.test.tsx` | 42 | CallSessionProvider (T10) · aceite:  · openDialer emite zapp:navigate e sincroniza useNavigationHistory para voip · mantém os campos que a UI antiga consome (TelefoniaView/DialPad/ActiveCallBar) … |
 | `supabase/functions/crm-integration/index.test.ts` | 42 | sidebar lookup resolves the expected RPC and logs only bounded telemetry · sidebar lookup returns 409 when the stable identity differs · intelligence lookup returns 409 when the stable identity differs · intelligence lookup resolves when the external identity matches the stable link … |
-| `src/hooks/integrations/__tests__/useTalkXTemplates.test.ts` | 41 | useTalkXTemplates — listagem · carrega a lista com o select do criador e a ordem por uso/atualizacao · expoe lista vazia quando o banco responde null · propaga o erro de RLS/rede da listagem (nao engole) … |
 | `supabase/functions/connection-health-check/index.test.ts` | 41 | E24: cada conexão consulta o provedor com o token DELA, nunca com a chave global · E24: sem token próprio no Vault a instância não é consultada com a credencial de outra · E24: falha ao LER a credencial do Vault não usa a rede e registra o motivo · E25: GO logada SEM socket (Connected:false, LoggedIn:true) → degraded, nunca healthy … |
 | `tests/contracts/ai-vision-classifiers-mock.contract.test.ts` | 41 | (1) visão: imagem embutida em DATA URL, download autenticado e modelo do servidor · classify-emoji baixa no servidor e envia  · classify-sticker segue a MESMA rota: data URL embutida e endpoint de visão · o endpoint do provedor de TEXTO padrão NUNCA é chamado quando a modalidade é visão … |
 | `src/hooks/chat/__tests__/useForwardMessage.test.ts` | 40 | useForwardMessage — carga dos destinos ao abrir · só consulta o banco quando  · com allowGroups=false não busca a tabela de grupos · erro de rede/RLS ao buscar contatos: lista vazia, erro registrado e isLoading de volta a false … |
@@ -5080,7 +5080,7 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | `src/lib/audio/__tests__/gravacaoFormato.test.ts` | 17 | escolherMimeGravacao · escolhe webm/opus quando o navegador suporta (Chrome/Edge/Firefox) · escolhe audio/mp4 no Safari, que recusa webm · devolve null quando nenhum formato da lista é suportado (navegador decide o padrão) … |
 | `supabase/functions/_shared/__tests__/ai-context-revalidation.test.ts` | 17 | requestId válido é aceito nos quatro schemas · requestId malformado é rejeitado (não é ecoado como lixo) · cliente ANTIGO (sem requestId/contextVersion) continua aceito — compatibilidade · periodKey (nome canônico do frontend) é aceito como apelido da versão de contexto … |
 | `supabase/functions/ai-transcribe-audio/openrouter-stt.test.ts` | 17 | formato: containers que a edge reconhece viram a extensão do input_audio · formato: mime de outro tipo ou desconhecido não vira extensão inventada · formato: parâmetro do content-type (codecs) não atrapalha e o case não importa · base64: buffer maior que o bloco interno é convertido byte a byte … |
-| … +2176 linhas — lista completa em `context.json` | | |
+| … +2177 linhas — lista completa em `context.json` | | |
 
 ## L. Eventos de webhook tratados (contratos com sistemas externos)
 
@@ -5600,4 +5600,4 @@ Erros lançados por funções SQL (`RAISE EXCEPTION` = regra de negócio no banc
 | Mostra no máximo 2 sugestões para não poluir o painel | `src/components/inbox/copilot/MissingQuestions.tsx` |
 | * CV-035/036 — Alerta de ocasião comercial detectada + prazo de entrega. | `src/components/inbox/copilot/OccasionAlert.tsx` |
 | Sobe/desce a linha uma posição por vez, trocando apenas de lugar os objetos | `src/components/inbox/interactive-builder/useInteractiveMessage.ts` |
-| … +1891 linhas — lista completa em `context.json` | |
+| … +1893 linhas — lista completa em `context.json` | |

@@ -1270,6 +1270,7 @@
    "rpcs": [
     "admin_set_role",
     "app_bootstrap",
+    "archive_talkx_template",
     "can_delete_contacts",
     "close_conversation_atomic",
     "contacts_count_by_type",
@@ -1283,7 +1284,9 @@
     "dashboard_sentiment_alerts",
     "delete_contact",
     "delete_contacts",
+    "delete_talkx_template",
     "delivery_stats",
+    "duplicate_talkx_template",
     "enqueue_group_outbound_message",
     "enqueue_outbound_message",
     "enqueue_rich_outbound_message",
@@ -1500,7 +1503,7 @@
     "unknown",
     "user"
    ],
-   "arquivos_puxados": 1628
+   "arquivos_puxados": 1629
   },
   {
    "protegida": false,
@@ -8113,6 +8116,7 @@
     "useCatalogQuickSearch",
     "useCatalogRecentSends",
     "useCommandPalette",
+    "useConnectionOptions",
     "useContactCustomFields",
     "useContactSearch",
     "useContext",
@@ -8220,6 +8224,7 @@
     "useCatalogQuickSearch",
     "useCatalogRecentSends",
     "useCommandPalette",
+    "useConnectionOptions",
     "useContactCustomFields",
     "useContactSearch",
     "useCustomShortcuts",
@@ -8321,8 +8326,11 @@
    ],
    "rpcs": [
     "app_bootstrap",
+    "archive_talkx_template",
     "can_delete_contacts",
     "contacts_count_by_type",
+    "delete_talkx_template",
+    "duplicate_talkx_template",
     "enqueue_outbound_message",
     "enqueue_rich_outbound_message",
     "get_inbox_contact_summaries",
@@ -8389,7 +8397,7 @@
     "tab",
     "tablist"
    ],
-   "arquivos_puxados": 279
+   "arquivos_puxados": 281
   },
   {
    "id": "talkx-kit",

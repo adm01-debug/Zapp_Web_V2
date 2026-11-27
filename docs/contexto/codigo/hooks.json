@@ -5077,7 +5077,7 @@
     "useQuery"
    ],
    "canais_realtime": [],
-   "usado_por": 7,
+   "usado_por": 8,
    "usado_por_arquivos": [
     "src/components/calls/OfferCallButton.tsx",
     "src/components/catalog/MetaTemplatesDialog.tsx",
@@ -5085,7 +5085,8 @@
     "src/components/evolution/ConnectionSelect.tsx",
     "src/components/evolution/evolutionUi.ts",
     "src/components/inbox/contact-details/WhatsAppCatalogSection.tsx",
-    "src/components/monitoring/DeviceChatsPanel.tsx"
+    "src/components/monitoring/DeviceChatsPanel.tsx",
+    "src/components/talkx/TalkXTemplateTestDialog.tsx"
    ],
    "coberto_por_testes": 0
   },
@@ -9800,7 +9801,7 @@
    "hooks_exportados": [
     "useTalkXTemplates"
    ],
-   "linhas": 271,
+   "linhas": 306,
    "dominio": "hooks/integrations",
    "tabelas": [
     "talkx_recipients",
@@ -9808,6 +9809,9 @@
     "talkx_template_versions"
    ],
    "rpcs": [
+    "archive_talkx_template",
+    "delete_talkx_template",
+    "duplicate_talkx_template",
     "update_talkx_template_with_snapshot"
    ],
    "edges": [
@@ -9820,10 +9824,11 @@
     "useQueryClient"
    ],
    "canais_realtime": [],
-   "usado_por": 5,
+   "usado_por": 6,
    "usado_por_arquivos": [
     "src/components/talkx/TalkXTemplateEditor.tsx",
     "src/components/talkx/TalkXTemplateImportDialog.tsx",
+    "src/components/talkx/TalkXTemplateTestDialog.tsx",
     "src/components/talkx/TalkXTemplates.tsx",
     "src/components/talkx/TalkXView.tsx",
     "src/components/talkx/useCampaignEditor.ts"
@@ -11969,7 +11974,7 @@
     "useMemo"
    ],
    "canais_realtime": [],
-   "usado_por": 44,
+   "usado_por": 45,
    "usado_por_arquivos": [
     "src/components/CommandPalette.tsx",
     "src/components/admin/AdminUsersTable.tsx",

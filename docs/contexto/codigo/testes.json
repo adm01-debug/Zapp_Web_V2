@@ -5,18 +5,18 @@
   "vitest",
   "playwright"
  ],
- "total": 2870,
+ "total": 2871,
  "por_tipo": {
   "contrato": 116,
   "e2e": 76,
   "pytest": 3,
   "qa": 10,
-  "unit": 2573
+  "unit": 2574
  },
  "onde_ficam": [
   {
    "padrao": "co-localizado (__tests__)",
-   "arquivos": 2142
+   "arquivos": 2143
   },
   {
    "padrao": "outro",
@@ -12477,7 +12477,7 @@
   {
    "arquivo": "src/components/talkx/__tests__/TalkXA11yControlesECartoes.test.tsx",
    "tipo": "unit",
-   "linhas": 179,
+   "linhas": 184,
    "testa": [
     "src/components/talkx/TalkXSettings.tsx",
     "src/components/talkx/TalkXTemplates.tsx"
@@ -13521,7 +13521,7 @@
   {
    "arquivo": "src/components/talkx/__tests__/TalkXTemplateEditor.campos.test.tsx",
    "tipo": "unit",
-   "linhas": 124,
+   "linhas": 130,
    "testa": [
     "src/components/talkx/TalkXTemplateEditor.tsx"
    ],
@@ -13576,7 +13576,7 @@
   {
    "arquivo": "src/components/talkx/__tests__/TalkXTemplateKpis.test.tsx",
    "tipo": "unit",
-   "linhas": 308,
+   "linhas": 313,
    "testa": [
     "src/components/talkx/TalkXTemplateEditor.tsx",
     "src/components/talkx/TalkXTemplates.tsx",
@@ -13594,9 +13594,18 @@
    "casos": 6
   },
   {
+   "arquivo": "src/components/talkx/__tests__/TalkXTemplates.acoesTemplate.test.tsx",
+   "tipo": "unit",
+   "linhas": 205,
+   "testa": [
+    "src/components/talkx/TalkXTemplates.tsx"
+   ],
+   "casos": 6
+  },
+  {
    "arquivo": "src/components/talkx/__tests__/TalkXTemplates.duplicarAtalho.test.tsx",
    "tipo": "unit",
-   "linhas": 125,
+   "linhas": 130,
    "testa": [
     "src/components/talkx/TalkXTemplates.tsx"
    ],
@@ -13605,7 +13614,7 @@
   {
    "arquivo": "src/components/talkx/__tests__/TalkXTemplates.gallery.test.tsx",
    "tipo": "unit",
-   "linhas": 257,
+   "linhas": 262,
    "testa": [
     "src/components/talkx/TalkXTemplates.tsx",
     "src/components/talkx/kit/format.ts"
@@ -13615,7 +13624,7 @@
   {
    "arquivo": "src/components/talkx/__tests__/TalkXTemplates.importSobrescreve.test.tsx",
    "tipo": "unit",
-   "linhas": 202,
+   "linhas": 207,
    "testa": [
     "src/components/talkx/TalkXTemplates.tsx"
    ],
@@ -13624,7 +13633,7 @@
   {
    "arquivo": "src/components/talkx/__tests__/TalkXTemplates.route.test.tsx",
    "tipo": "unit",
-   "linhas": 213,
+   "linhas": 218,
    "testa": [
     "src/components/talkx/TalkXTemplates.tsx"
    ],
@@ -13633,7 +13642,7 @@
   {
    "arquivo": "src/components/talkx/__tests__/TalkXTemplates.states.test.tsx",
    "tipo": "unit",
-   "linhas": 78,
+   "linhas": 83,
    "testa": [
     "src/components/talkx/TalkXTemplates.tsx"
    ],
@@ -13642,7 +13651,7 @@
   {
    "arquivo": "src/components/talkx/__tests__/TalkXTemplatesRail.test.tsx",
    "tipo": "unit",
-   "linhas": 275,
+   "linhas": 280,
    "testa": [
     "src/components/talkx/TalkXTemplates.tsx",
     "src/hooks/integrations/useTalkXTemplatesConversion.ts"
@@ -13761,7 +13770,7 @@
   {
    "arquivo": "src/components/talkx/__tests__/TalkXView.templates.test.tsx",
    "tipo": "unit",
-   "linhas": 136,
+   "linhas": 141,
    "testa": [
     "src/components/talkx/TalkXView.tsx"
    ],
@@ -19654,16 +19663,16 @@
   {
    "arquivo": "src/hooks/integrations/__tests__/useTalkXTemplates.test.ts",
    "tipo": "unit",
-   "linhas": 650,
+   "linhas": 691,
    "testa": [
     "src/hooks/integrations/useTalkXTemplates.ts"
    ],
-   "casos": 33
+   "casos": 36
   },
   {
    "arquivo": "src/hooks/integrations/__tests__/useTalkXTemplates.testTemplate.host.test.tsx",
    "tipo": "unit",
-   "linhas": 87,
+   "linhas": 88,
    "testa": [
     "src/config/supabase.ts",
     "src/hooks/integrations/useTalkXTemplates.ts"
@@ -26934,7 +26943,7 @@
   "src/components/talkx/TalkXSuppression.tsx": 17,
   "src/components/talkx/TalkXTemplateEditor.tsx": 8,
   "src/components/talkx/TalkXTemplateImportDialog.tsx": 1,
-  "src/components/talkx/TalkXTemplates.tsx": 12,
+  "src/components/talkx/TalkXTemplates.tsx": 13,
   "src/components/talkx/TalkXView.tsx": 13,
   "src/components/talkx/TalkXWizardDelivery.tsx": 8,
   "src/components/talkx/__dev__/TalkXKit.tsx": 1,

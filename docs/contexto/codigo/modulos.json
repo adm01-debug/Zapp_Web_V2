@@ -3556,8 +3556,11 @@
    ],
    "rpcs": [
     "app_bootstrap",
+    "archive_talkx_template",
     "can_delete_contacts",
     "contacts_count_by_type",
+    "delete_talkx_template",
+    "duplicate_talkx_template",
     "enqueue_outbound_message",
     "enqueue_rich_outbound_message",
     "get_inbox_contact_summaries",
@@ -4380,6 +4383,7 @@
    "rpcs": [
     "admin_set_role",
     "app_bootstrap",
+    "archive_talkx_template",
     "can_delete_contacts",
     "close_conversation_atomic",
     "contacts_count_by_type",
@@ -4393,7 +4397,9 @@
     "dashboard_sentiment_alerts",
     "delete_contact",
     "delete_contacts",
+    "delete_talkx_template",
     "delivery_stats",
+    "duplicate_talkx_template",
     "enqueue_group_outbound_message",
     "enqueue_outbound_message",
     "enqueue_rich_outbound_message",
@@ -7445,9 +7451,9 @@
   },
   {
    "modulo": "components/talkx",
-   "arquivos": 114,
-   "testes": 178,
-   "linhas": 27397,
+   "arquivos": 115,
+   "testes": 179,
+   "linhas": 27591,
    "itens_menu": [
     "Campanhas"
    ],
@@ -7456,7 +7462,7 @@
     "talkx-kit"
    ],
    "rotas_http": [],
-   "componentes": 74,
+   "componentes": 75,
    "hooks_locais": [
     "useActiveDepartments",
     "useAnimationFrame",
@@ -7470,6 +7476,7 @@
     "useCatalogQuickSearch",
     "useCatalogRecentSends",
     "useCommandPalette",
+    "useConnectionOptions",
     "useContactCustomFields",
     "useContactSearch",
     "useCustomShortcuts",
@@ -7591,8 +7598,11 @@
    ],
    "rpcs": [
     "app_bootstrap",
+    "archive_talkx_template",
     "can_delete_contacts",
     "contacts_count_by_type",
+    "delete_talkx_template",
+    "duplicate_talkx_template",
     "enqueue_outbound_message",
     "enqueue_rich_outbound_message",
     "get_inbox_contact_summaries",
@@ -7693,6 +7703,7 @@
     "components/keyboard",
     "components/ui",
     "hooks/auth",
+    "hooks/connections",
     "hooks/crm",
     "hooks/groups",
     "hooks/integrations",
@@ -10184,7 +10195,8 @@
     "components/connections",
     "components/evolution",
     "components/inbox",
-    "components/monitoring"
+    "components/monitoring",
+    "components/talkx"
    ],
    "depende_de_modulos": [
     "components/monitoring",
@@ -11472,7 +11484,7 @@
    "modulo": "hooks/integrations",
    "arquivos": 67,
    "testes": 67,
-   "linhas": 12713,
+   "linhas": 12748,
    "itens_menu": [],
    "telas": [],
    "rotas_http": [],
@@ -11738,6 +11750,9 @@
    ],
    "rpcs": [
     "app_bootstrap",
+    "archive_talkx_template",
+    "delete_talkx_template",
+    "duplicate_talkx_template",
     "enqueue_outbound_message",
     "enqueue_rich_outbound_message",
     "get_inbox_contact_summaries",
@@ -11831,6 +11846,9 @@
      "whatsapp_templates"
     ],
     "rpcs": [
+     "archive_talkx_template",
+     "delete_talkx_template",
+     "duplicate_talkx_template",
      "get_own_gmail_accounts",
      "increment_custom_emoji_use",
      "log_talkx_campaign_checklist",
@@ -13429,6 +13447,7 @@
    "rpcs": [
     "admin_set_role",
     "app_bootstrap",
+    "archive_talkx_template",
     "can_delete_contacts",
     "clear_login_attempts",
     "close_conversation_atomic",
@@ -13443,7 +13462,9 @@
     "dashboard_sentiment_alerts",
     "delete_contact",
     "delete_contacts",
+    "delete_talkx_template",
     "delivery_stats",
+    "duplicate_talkx_template",
     "enqueue_group_outbound_message",
     "enqueue_outbound_message",
     "enqueue_rich_outbound_message",
@@ -15933,6 +15954,7 @@
    "rpcs": [
     "admin_set_role",
     "app_bootstrap",
+    "archive_talkx_template",
     "can_delete_contacts",
     "clear_login_attempts",
     "close_conversation_atomic",
@@ -15947,7 +15969,9 @@
     "dashboard_sentiment_alerts",
     "delete_contact",
     "delete_contacts",
+    "delete_talkx_template",
     "delivery_stats",
+    "duplicate_talkx_template",
     "enqueue_group_outbound_message",
     "enqueue_outbound_message",
     "enqueue_rich_outbound_message",
@@ -17349,6 +17373,7 @@
    "rpcs": [
     "admin_set_role",
     "app_bootstrap",
+    "archive_talkx_template",
     "can_delete_contacts",
     "clear_login_attempts",
     "close_conversation_atomic",
@@ -17363,7 +17388,9 @@
     "dashboard_sentiment_alerts",
     "delete_contact",
     "delete_contacts",
+    "delete_talkx_template",
     "delivery_stats",
+    "duplicate_talkx_template",
     "enqueue_group_outbound_message",
     "enqueue_outbound_message",
     "enqueue_rich_outbound_message",

@@ -2,11 +2,16 @@
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
  "git": {
-  "commit": "c6865c72fb4de063d9543d427e633fb251601178",
+  "commit": "196b1baef7d8e20d569d3e6ec0b9b72b023e84d0",
   "branch": "main",
-  "data_commit": "2026-11-27T00:17:21Z",
+  "data_commit": "2026-11-27T00:45:24Z",
   "remote": "https://github.com/adm01-debug/Zapp_Web_V2",
   "ultimos_commits": [
+   {
+    "sha": "196b1bae",
+    "data": "2026-11-27",
+    "assunto": "feat(talkx): tela para arquivar, duplicar, excluir e testar template (#3426)"
+   },
    {
     "sha": "c6865c72",
     "data": "2026-11-27",
@@ -126,14 +131,9 @@
     "sha": "6e6264b6",
     "data": "2026-11-26",
     "assunto": "feat(edge): dead-letter reprocessável quando o ingest da mensagem recebida falha (E35) (#3397)"
-   },
-   {
-    "sha": "284367aa",
-    "data": "2026-11-26",
-    "assunto": "feat: trilha de auditoria das conexoes e reconciliacao de INSTANCE_GONE (#3398)"
    }
   ],
-  "arquivos_mudados_7d": 2872,
+  "arquivos_mudados_7d": 2886,
   "pastas_mais_mudadas_30d": [
    {
     "pasta": "docs/contexto/supabase",
@@ -165,7 +165,7 @@
    },
    {
     "pasta": "src/components/talkx",
-    "mudancas": 387
+    "mudancas": 401
    },
    {
     "pasta": "analise-prs/resgate-261115/dossies",
@@ -185,7 +185,7 @@
    },
    {
     "pasta": "src/hooks/integrations",
-    "mudancas": 157
+    "mudancas": 160
    },
    {
     "pasta": "src/components/contacts",
@@ -207,11 +207,11 @@
    },
    {
     "arquivo": "ESTADO.md",
-    "mudancas": 27
+    "mudancas": 28
    },
    {
     "arquivo": "docs/talkx/ESTADOS.md",
-    "mudancas": 22
+    "mudancas": 23
    },
    {
     "arquivo": "supabase/schema-manifest.json",
@@ -314,21 +314,21 @@
   ]
  },
  "contagens": {
-  "arquivos_total": 14923,
-  "arquivos_codigo": 5247,
-  "linhas_codigo": 970981,
+  "arquivos_total": 14925,
+  "arquivos_codigo": 5249,
+  "linhas_codigo": 971508,
   "rotas": 21,
   "rotas_http_backend": 11,
   "vistas_por_id": 56,
   "itens_menu": 62,
   "modulos": 149,
-  "componentes": 958,
+  "componentes": 959,
   "hooks": 538,
   "edge_functions": 94,
   "tabelas": 224,
   "migrations": 1169,
   "cron_jobs": 29,
-  "testes": 2870,
+  "testes": 2871,
   "workflows": 26,
   "scripts": 458,
   "docs_md": 3988
@@ -739,8 +739,8 @@
    "linhas": 638
   },
   "src/components": {
-   "arquivos": 2358,
-   "linhas": 400755
+   "arquivos": 2360,
+   "linhas": 401205
   },
   "src/config": {
    "arquivos": 3,
@@ -760,7 +760,7 @@
   },
   "src/hooks": {
    "arquivos": 1075,
-   "linhas": 174459
+   "linhas": 174536
   },
   "src/i18n": {
    "arquivos": 2,
@@ -946,7 +946,7 @@
   "console_log": 505,
   "ts_ignore": 0,
   "eslint_disable": 1,
-  "todos": 53,
+  "todos": 54,
   "arquivos_acima_500_linhas": 115
  },
  "todos": [
@@ -1057,6 +1057,12 @@
    "linha": 6,
    "tipo": "TODO",
    "texto": "contato com qualquer mensagem de agente no"
+  },
+  {
+   "arquivo": "src/components/talkx/TalkXTemplateTestDialog.tsx",
+   "linha": 100,
+   "tipo": "TODO",
+   "texto": "render (loop). A origem da busca é"
   },
   {
    "arquivo": "src/components/talkx/__tests__/TalkXSegments.filtrosPaginacao.test.tsx",

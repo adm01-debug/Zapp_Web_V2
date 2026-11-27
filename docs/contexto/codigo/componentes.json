@@ -1,7 +1,7 @@
 {
  "aviso": "GERADO AUTOMATICAMENTE por scripts/ai-context/gerar.mjs — não editar à mão; será sobrescrito.",
  "format_version": 2,
- "total": 958,
+ "total": 959,
  "orfaos": 45,
  "nomes_duplicados": {
   "AchievementBadge": [
@@ -12267,7 +12267,7 @@
     "TalkXTemplateEditor"
    ],
    "export_default": null,
-   "linhas": 858,
+   "linhas": 833,
    "dominio": "components/talkx",
    "hooks_locais": [
     "useTalkX",
@@ -12302,17 +12302,35 @@
     "TemplateListItem"
    ],
    "export_default": null,
-   "linhas": 676,
+   "linhas": 694,
    "dominio": "components/talkx",
    "hooks_locais": [
     "useDownloadPermission",
     "useTalkXFilterState",
     "useTalkXTemplateLibraryStats",
-    "useTalkXTemplates"
+    "useTalkXTemplates",
+    "useUserRole"
    ],
    "tabelas": [],
    "edges": [],
    "usado_por": 1,
+   "orfao": false
+  },
+  {
+   "arquivo": "src/components/talkx/TalkXTemplateTestDialog.tsx",
+   "exports": [
+    "TalkXTemplateTestDialog"
+   ],
+   "export_default": null,
+   "linhas": 201,
+   "dominio": "components/talkx",
+   "hooks_locais": [
+    "useConnectionOptions",
+    "useTalkXTemplates"
+   ],
+   "tabelas": [],
+   "edges": [],
+   "usado_por": 2,
    "orfao": false
   },
   {
@@ -14391,7 +14409,7 @@
    "hooks_locais": [],
    "tabelas": [],
    "edges": [],
-   "usado_por": 178,
+   "usado_por": 179,
    "orfao": false
   },
   {
@@ -14405,7 +14423,7 @@
    "hooks_locais": [],
    "tabelas": [],
    "edges": [],
-   "usado_por": 119,
+   "usado_por": 120,
    "orfao": false
   },
   {
@@ -14734,7 +14752,7 @@
    "hooks_locais": [],
    "tabelas": [],
    "edges": [],
-   "usado_por": 116,
+   "usado_por": 117,
    "orfao": false
   },
   {

@@ -32428,6 +32428,11 @@
    "usada_em": 1
   },
   {
+   "nome": "archive_talkx_template",
+   "definida": true,
+   "usada_em": 1
+  },
+  {
    "nome": "attribute_multiplix_item_reply",
    "definida": true,
    "usada_em": 1
@@ -32613,7 +32618,17 @@
    "usada_em": 1
   },
   {
+   "nome": "delete_talkx_template",
+   "definida": true,
+   "usada_em": 1
+  },
+  {
    "nome": "delivery_stats",
+   "definida": true,
+   "usada_em": 1
+  },
+  {
+   "nome": "duplicate_talkx_template",
    "definida": true,
    "usada_em": 1
   },
